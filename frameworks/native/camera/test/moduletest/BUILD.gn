@@ -48,6 +48,7 @@ ohos_moduletest("camera_base_function_moduletest") {
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
     "ipc:ipc_core",
+    "samgr:samgr_proxy",
   ]
 
   cflags = [
@@ -257,6 +258,7 @@ ohos_moduletest("camera_moving_photo_moduletest") {
     "os_account:os_account_innerkits",
     "resource_management:librawfile",
     "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
   ]
 
   cflags = [ "-fPIC" ]
@@ -302,6 +304,7 @@ ohos_moduletest("camera_session_moduletest") {
     "hitrace:hitrace_meter",
     "init:libbegetutil",
     "ipc:ipc_core",
+    "samgr:samgr_proxy",
   ]
 
   cflags = [
