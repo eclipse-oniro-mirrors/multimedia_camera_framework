@@ -20,6 +20,8 @@
 #include "gmock/gmock.h"
 #include "message_parcel.h"
 #include "surface.h"
+#include "hcamera_device.h"
+#include "input/camera_manager.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -37,6 +39,10 @@ public:
 
     /* TearDown:Execute after each test case */
     void TearDown();
+    
+    sptr<CameraManager> cameraManager_ = nullptr;
+
+    static sptr<HCameraHostManager> cameraHostManager_;
 };
 } // CameraStandard
 } // OHOS

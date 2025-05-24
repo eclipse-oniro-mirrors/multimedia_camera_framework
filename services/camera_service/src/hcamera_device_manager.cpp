@@ -587,6 +587,7 @@ std::vector<sptr<HCameraDeviceHolder>> HCameraDeviceManager::SortDeviceByPriorit
     return sortedList;
 }
 
+//LCOV_EXCL_STOP
 bool CameraConcurrentSelector::CanOpenCameraconcurrently(std::vector<sptr<HCameraDeviceHolder>> reservedCameras,
                                                          std::vector<std::vector<std::int32_t>> concurrentCameraTable)
 {
@@ -715,5 +716,6 @@ bool CameraConcurrentSelector::ConcurrentWithRetainedDevicesOrNot(sptr<HCameraDe
            (targetConcurrencyType == cameraIdNeedConfirm->GetDevice()->GetTargetConcurrencyType() &&
             targetConcurrencyType == requestCameraHolder_->GetDevice()->GetTargetConcurrencyType());
 }
+//LCOV_EXCL_STOP
 } // namespace CameraStandard
 } // namespace OHOS
