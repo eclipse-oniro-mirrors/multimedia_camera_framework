@@ -38,6 +38,7 @@
 #include "time_lapse_photo_session_taihe.h"
 #include "video_session_taihe.h"
 #include "video_session_for_sys_taihe.h"
+#include "depth_data_output_taihe.h"
 #include "preview_output_taihe.h"
 #include "photo_output_taihe.h"
 #include "video_output_taihe.h"
@@ -819,6 +820,36 @@ CameraInput CameraManagerImpl::CreateCameraInputWithPosition(CameraPosition posi
     CHECK_EXECUTE(retCode != OHOS::CameraStandard::CameraErrorCode::SUCCESS,
         CameraUtilsTaihe::ThrowError(retCode, "CreateCameraInput failed."));
     return make_holder<CameraInputImpl, CameraInput>(cameraInput);
+}
+
+
+DepthDataOutput CameraManagerImpl::CreateDepthDataOutput(DepthProfile const& profile)
+{
+    auto Result = [](OHOS::sptr<OHOS::CameraStandard::CaptureOutput> output, OHOS::sptr<OHOS::Surface> surface) {
+        return make_holder<DepthDataOutputImpl, DepthDataOutput>(output, surface);
+    };
+    CHECK_ERROR_RETURN_RET_LOG(cameraManager_ == nullptr, Result(nullptr, nullptr), "cameraManager_ is nullptr");
+    OHOS::CameraStandard::CameraFormat cameraFormat =
+        static_cast<OHOS::CameraStandard::CameraFormat>(profile.format.get_value());
+    OHOS::CameraStandard::DepthDataAccuracy depthDataAccuracy =
+    static_cast<OHOS::CameraStandard::DepthDataAccuracy>(profile.dataAccuracy.get_value());
+    OHOS::CameraStandard::Size size { static_cast<uint32_t>(profile.size.width),
+                                      static_cast<uint32_t>(profile.size.height) };
+    OHOS::CameraStandard::DepthProfile depthProfile(cameraFormat, depthDataAccuracy, size);
+    MEDIA_INFO_LOG(
+        "CameraManagerAni::CreateDepthDataOutputInstance ParseDepthProfile "
+        "size.width = %{public}d, size.height = %{public}d, format = %{public}d, dataAccuracy = %{public}d,",
+        depthProfile.size_.width, depthProfile.size_.height, depthProfile.format_, depthProfile.dataAccuracy_);
+    OHOS::sptr<OHOS::Surface> depthDataSurface = nullptr;
+    MEDIA_INFO_LOG("create surface as consumer");
+    depthDataSurface = OHOS::Surface::CreateSurfaceAsConsumer("depthDataOutput");
+    CHECK_ERROR_RETURN_RET_LOG(depthDataSurface == nullptr, Result(nullptr, nullptr), "failed to get surface");
+    OHOS::sptr<OHOS::IBufferProducer> surfaceProducer = depthDataSurface->GetProducer();
+    OHOS::sptr<OHOS::CameraStandard::DepthDataOutput> depthDataOutput;
+    int retCode = cameraManager_->CreateDepthDataOutput(depthProfile, surfaceProducer, &depthDataOutput);
+    CHECK_ERROR_RETURN_RET_LOG(!CameraUtilsTaihe::CheckError(retCode) || depthDataOutput == nullptr,
+        Result(nullptr, nullptr), "failed to create CreateDepthDataOutput");
+    return Result(depthDataOutput, depthDataSurface);
 }
 
 void CameraManagerImpl::ProcessCameraInfo(OHOS::sptr<OHOS::CameraStandard::CameraManager>& cameraManager,

@@ -1,0 +1,66 @@
+/*
+ * Copyright (C) 2025 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+@!namespace("@ohos.multimedia.cameraPicker", "cameraPicker")
+
+@!sts_inject("""
+static { loadLibrary("camera_picker_taihe.z"); }
+""")
+
+from ohos.multimedia.camera use CameraPosition;
+
+@class
+struct PickerProfile {
+  cameraPosition: CameraPosition;
+  saveUri: Optional<String>;
+  videoDuration: Optional<i32>;
+}
+
+enum PickerMediaType : String {
+  PHOTO = "photo",
+  VIDEO = "video"
+}
+
+@class
+struct PickerResult {
+  resultCode: i32;
+  resultUri: String;
+  mediaType: PickerMediaType;
+}
+
+interface CameraPickerJsAsyncContext {
+  GetSpecificImplPtr(): i64;
+}
+
+function PickStart(context: @sts_type("Context") Opaque, mediaTypes: Array<PickerMediaType>, pickerProfile: PickerProfile): CameraPickerJsAsyncContext;
+function PickAsync(asyncContext: CameraPickerJsAsyncContext): void;
+function GetPickerResult(asyncContext: CameraPickerJsAsyncContext): PickerResult;
+@!sts_inject("""
+function pick(context: Context, mediaTypes: Array<PickerMediaType>, pickerProfile: PickerProfile): Promise<PickerResult> {
+  return new Promise<PickerResult>((resolve, reject): void => {
+    let src = PickStart_inner(context, mediaTypes, pickerProfile);
+    taskpool.execute((): void => {
+      PickAsync_inner(src);
+    })
+    .then((ret: NullishType): void => {
+      let res = GetPickerResult_inner(src);
+      resolve(ret as PickerResult);
+    })
+    .catch((ret: NullishType): void => {
+      reject(ret as BusinessError);
+    });
+});
+}
+""")

@@ -180,6 +180,26 @@ CameraFormat CameraUtilsTaihe::ToTaiheCameraFormat(OHOS::CameraStandard::CameraF
     return CameraFormat::key_t::CAMERA_FORMAT_YUV_420_SP;
 }
 
+DepthDataQualityLevel CameraUtilsTaihe::ToTaiheDepthDataQualityLevel(int32_t level)
+{
+    auto itr = g_nativeToAniDepthDataQualityLevel.find(level);
+    if (itr != g_nativeToAniDepthDataQualityLevel.end()) {
+        return DepthDataQualityLevel(itr->second);
+    }
+    CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT, "ToTaiheDepthDataQualityLevel fail");
+    return DepthDataQualityLevel::key_t::DEPTH_DATA_QUALITY_BAD;
+}
+
+DepthDataAccuracy CameraUtilsTaihe::ToTaiheDepthDataAccuracy(OHOS::CameraStandard::DepthDataAccuracy dataAccuracy)
+{
+    auto itr = g_nativeToAniDepthDataAccuracy.find(dataAccuracy);
+    if (itr != g_nativeToAniDepthDataAccuracy.end()) {
+        return DepthDataAccuracy(itr->second);
+    }
+    CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT, "ToTaiheDepthDataAccuracy fail");
+    return DepthDataAccuracy::key_t::DEPTH_DATA_ACCURACY_RELATIVE;
+}
+
 FocusState CameraUtilsTaihe::ToTaiheFocusState(OHOS::CameraStandard::FocusCallback::FocusState format)
 {
     auto itr = g_nativeToAniFocusState.find(format);
