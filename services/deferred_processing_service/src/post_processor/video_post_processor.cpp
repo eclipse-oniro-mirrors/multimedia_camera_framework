@@ -274,7 +274,7 @@ void VideoPostProcessor::RemoveRequest(const std::string& videoId)
     DP_INFO_LOG("DPS_VIDEO: RemoveVideo to ive, videoId: %{public}s, ret: %{public}d", videoId.c_str(), ret);
 }
 
-void VideoPostProcessor::PauseRequest(const std::string& videoId, const ScheduleType& type)
+void VideoPostProcessor::PauseRequest(const std::string& videoId, const SchedulerType& type)
 {
     auto session = GetVideoSession();
     DP_CHECK_ERROR_RETURN_LOG(session == nullptr, "video session is nullptr.");
@@ -452,7 +452,6 @@ DeferredVideoWorkPtr VideoPostProcessor::GetRunningWork(const std::string& video
 
 void VideoPostProcessor::OnSessionDied()
 {
-    DP_ERR_LOG("DPS_VIDEO: session died!");
     SetVideoSession(nullptr);
     std::vector<std::string> crashJobs;
     for (const auto& item : runningWork_) {
@@ -510,7 +509,6 @@ void VideoPostProcessor::OnError(const std::string& videoId, DpsError errorCode)
 
 void VideoPostProcessor::OnStateChanged(HdiStatus hdiStatus)
 {
-    DP_INFO_LOG("DPS_VIDEO: HdiStatus: %{public}d", hdiStatus);
     EventsMonitor::GetInstance().NotifyVideoEnhanceStatus(hdiStatus);
 }
 

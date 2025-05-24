@@ -35,11 +35,11 @@ void VideoJobRepository::AddVideoJob(const std::string& videoId,
     const sptr<IPCFileDescriptor>& srcFd, const sptr<IPCFileDescriptor>& dstFd)
 {
     DP_INFO_LOG("DPS_VIDEO: AddVideoJob videoId: %{public}s", videoId.c_str());
+    DeferredVideoJobPtr jobPtr = std::make_shared<DeferredVideoJob>(videoId, srcFd, dstFd);
     DeferredVideoJobPtr jobPtrFind = GetJobUnLocked(videoId);
     DP_CHECK_RETURN_LOG(jobPtrFind != nullptr, "already existed, videoId: %{public}s", videoId.c_str());
 
-    DeferredVideoJobPtr jobPtr = std::make_shared<DeferredVideoJob>(videoId, srcFd, dstFd);
-    jobPtr->SetJobStatus(VideoJobStatus::PENDING);
+    jobPtr->SetJobState(VideoJobState::PENDING);
     jobMap_.emplace(videoId, jobPtr);
     jobQueue_->Push(jobPtr);
     DP_INFO_LOG("DPS_VIDEO: Add video job size: %{public}d, videoId: %{public}s, srcFd: %{public}d",
@@ -56,14 +56,14 @@ bool VideoJobRepository::RemoveVideoJob(const std::string& videoId, bool restora
         "does not existed, videoId: %{public}s", videoId.c_str());
 
     // LCOV_EXCL_START
-    isNeedStop = jobPtrFind->GetCurStatus() == VideoJobStatus::RUNNING;
+    isNeedStop = jobPtrFind->GetCurStatus() == VideoJobState::RUNNING;
     if (!restorable) {
         jobMap_.erase(videoId);
         jobQueue_->Remove(jobPtrFind);
         DP_INFO_LOG("DPS_VIDEO: job size: %{public}d, videoId: %{public}s",
             static_cast<int>(jobQueue_->GetSize()), videoId.c_str());
     }
-    jobPtrFind->SetJobStatus(VideoJobStatus::DELETED);
+    jobPtrFind->SetJobState(VideoJobState::DELETED);
     UpdateRunningCountUnLocked(false, jobPtrFind);
     return isNeedStop;
     // LCOV_EXCL_STOP
@@ -76,7 +76,7 @@ void VideoJobRepository::RestoreVideoJob(const std::string& videoId)
     DP_CHECK_RETURN_LOG(jobPtrFind == nullptr, "does not existed, videoId: %{public}s", videoId.c_str());
 
     // LCOV_EXCL_START
-    bool statusChanged = jobPtrFind->SetJobStatus(VideoJobStatus::PENDING);
+    bool statusChanged = jobPtrFind->SetJobState(VideoJobState::PENDING);
     DP_CHECK_EXECUTE(statusChanged, jobQueue_->Update(jobPtrFind));
     // LCOV_EXCL_STOP
 }
@@ -88,7 +88,7 @@ void VideoJobRepository::SetJobPending(const std::string& videoId)
     DP_CHECK_RETURN_LOG(jobPtrFind == nullptr, "does not existed, videoId: %{public}s", videoId.c_str());
 
     // LCOV_EXCL_START
-    bool statusChanged = jobPtrFind->SetJobStatus(VideoJobStatus::PENDING);
+    bool statusChanged = jobPtrFind->SetJobState(VideoJobState::PENDING);
     UpdateRunningCountUnLocked(statusChanged, jobPtrFind);
     NotifyJobChangedUnLocked(statusChanged, jobPtrFind);
     // LCOV_EXCL_STOP
@@ -101,7 +101,7 @@ void VideoJobRepository::SetJobRunning(const std::string& videoId)
     DP_CHECK_RETURN_LOG(jobPtrFind == nullptr, "does not existed, videoId: %{public}s", videoId.c_str());
 
     // LCOV_EXCL_START
-    bool statusChanged = jobPtrFind->SetJobStatus(VideoJobStatus::RUNNING);
+    bool statusChanged = jobPtrFind->SetJobState(VideoJobState::RUNNING);
     UpdateRunningCountUnLocked(statusChanged, jobPtrFind);
     // LCOV_EXCL_STOP
 }
@@ -113,7 +113,7 @@ void VideoJobRepository::SetJobCompleted(const std::string& videoId)
     DP_CHECK_RETURN_LOG(jobPtrFind == nullptr, "does not existed, videoId: %{public}s", videoId.c_str());
 
     // LCOV_EXCL_START
-    bool statusChanged = jobPtrFind->SetJobStatus(VideoJobStatus::COMPLETED);
+    bool statusChanged = jobPtrFind->SetJobState(VideoJobState::COMPLETED);
     UpdateRunningCountUnLocked(statusChanged, jobPtrFind);
     NotifyJobChangedUnLocked(statusChanged, jobPtrFind);
     // LCOV_EXCL_STOP
@@ -126,7 +126,7 @@ void VideoJobRepository::SetJobFailed(const std::string& videoId)
     DP_CHECK_RETURN_LOG(jobPtrFind == nullptr, "does not existed, videoId: %{public}s", videoId.c_str());
 
     // LCOV_EXCL_START
-    bool statusChanged = jobPtrFind->SetJobStatus(VideoJobStatus::FAILED);
+    bool statusChanged = jobPtrFind->SetJobState(VideoJobState::FAILED);
     UpdateRunningCountUnLocked(statusChanged, jobPtrFind);
     NotifyJobChangedUnLocked(statusChanged, jobPtrFind);
     // LCOV_EXCL_STOP
@@ -139,7 +139,7 @@ void VideoJobRepository::SetJobPause(const std::string& videoId)
     DP_CHECK_RETURN_LOG(jobPtrFind == nullptr, "does not existed, videoId: %{public}s", videoId.c_str());
 
     // LCOV_EXCL_START
-    bool statusChanged = jobPtrFind->SetJobStatus(VideoJobStatus::PAUSE);
+    bool statusChanged = jobPtrFind->SetJobState(VideoJobState::PAUSE);
     UpdateRunningCountUnLocked(statusChanged, jobPtrFind);
     // LCOV_EXCL_STOP
 }
@@ -151,7 +151,7 @@ void VideoJobRepository::SetJobError(const std::string& videoId)
     DP_CHECK_RETURN_LOG(jobPtrFind == nullptr, "does not existed, videoId: %{public}s", videoId.c_str());
 
     // LCOV_EXCL_START
-    bool statusChanged = jobPtrFind->SetJobStatus(VideoJobStatus::ERROR);
+    bool statusChanged = jobPtrFind->SetJobState(VideoJobState::ERROR);
     UpdateRunningCountUnLocked(statusChanged, jobPtrFind);
     NotifyJobChangedUnLocked(statusChanged, jobPtrFind);
     // LCOV_EXCL_STOP
@@ -162,10 +162,10 @@ DeferredVideoJobPtr VideoJobRepository::GetJob()
     DP_INFO_LOG("DPS_VIDEO: Video job size: %{public}d, running num: %{public}d",
         jobQueue_->GetSize(), static_cast<int32_t>(runningSet_.size()));
     auto jobPtr = jobQueue_->Peek();
-    DP_CHECK_RETURN_RET(jobPtr == nullptr || jobPtr->GetCurStatus() >= VideoJobStatus::RUNNING, nullptr);
+    DP_CHECK_RETURN_RET(jobPtr == nullptr || jobPtr->GetCurStatus() >= VideoJobState::RUNNING, nullptr);
 
-    if (jobPtr->GetCurStatus() == VideoJobStatus::FAILED) {
-        jobPtr->SetJobStatus(VideoJobStatus::PENDING);
+    if (jobPtr->GetCurStatus() == VideoJobState::FAILED) {
+        jobPtr->SetJobState(VideoJobState::PENDING);
         jobQueue_->Update(jobPtr);
     }
     return jobPtr;
@@ -204,7 +204,7 @@ DeferredVideoJobPtr VideoJobRepository::GetJobUnLocked(const std::string& videoI
 
 void VideoJobRepository::NotifyJobChangedUnLocked(bool statusChanged, DeferredVideoJobPtr jobPtr)
 {
-    DP_INFO_LOG("DPS_VIDEO: JobStatusChanged: %{public}d, videoId: %{public}s",
+    DP_INFO_LOG("DPS_VIDEO: JobStateChanged: %{public}d, videoId: %{public}s",
         statusChanged, jobPtr->GetVideoId().c_str());
     if (auto listenerSptr = jobListener_.lock()) {
         listenerSptr->OnVideoJobChanged(jobPtr);
@@ -216,10 +216,10 @@ void VideoJobRepository::UpdateRunningCountUnLocked(bool statusChanged, const De
 {
     DP_CHECK_EXECUTE(statusChanged, jobQueue_->Update(jobPtr));
 
-    if (statusChanged && (jobPtr->GetPreStatus() == VideoJobStatus::RUNNING)) {
+    if (statusChanged && (jobPtr->GetPreStatus() == VideoJobState::RUNNING)) {
         runningSet_.erase(jobPtr->GetVideoId());
     }
-    if (statusChanged && (jobPtr->GetCurStatus() == VideoJobStatus::RUNNING)) {
+    if (statusChanged && (jobPtr->GetCurStatus() == VideoJobState::RUNNING)) {
         runningSet_.emplace(jobPtr->GetVideoId());
     }
     DP_INFO_LOG("DPS_VIDEO: Video running jobs num: %{public}d, videoId: %{public}s",

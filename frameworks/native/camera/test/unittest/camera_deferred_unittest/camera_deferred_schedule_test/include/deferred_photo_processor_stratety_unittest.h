@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,6 +16,7 @@
 #ifndef DEFERRED_PHOTO_PROCESSER_STRATETY_UNITTEST_H
 #define DEFERRED_PHOTO_PROCESSER_STRATETY_UNITTEST_H
 
+#include "photo_strategy_center.h"
 #include "gtest/gtest.h"
 
 #define TRAILING_DURATION_ONE_SEC   1
@@ -24,7 +25,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
-
+namespace DeferredProcessing {
 class DeferredPhotoProcessorStratetyUnittest : public testing::Test {
 public:
     /* SetUpTestCase:The preset action of the test suite is executed before the first TestCase */
@@ -41,10 +42,16 @@ public:
 
     void NativeAuthorization();
 
-    uint64_t tokenId_;
-    int32_t uid_;
-    int32_t userId_;
+    int32_t userId_ = 1;
+    std::shared_ptr<PhotoStrategyCenter> strategyCenter_ {nullptr};
 };
+
+template <typename T, typename U>
+inline std::shared_ptr<T> ReinterpretPointerCast(const std::shared_ptr<U> &ptr) noexcept
+{
+    return std::shared_ptr<T>(ptr, reinterpret_cast<T *>(ptr.get()));
+}
+} // DeferredProcessing
 } // CameraStandard
 } // OHOS
 #endif // DEFERRED_PHOTO_PROCESSER_STRATETY_UNITTEST_H

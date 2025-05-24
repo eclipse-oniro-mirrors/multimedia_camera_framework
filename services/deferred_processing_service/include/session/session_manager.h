@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,26 +16,27 @@
 #ifndef OHOS_CAMERA_DPS_SESSION_MANAGER_H
 #define OHOS_CAMERA_DPS_SESSION_MANAGER_H
 
+#include "enable_shared_create.h"
 #include "photo_session_info.h"
-#include "safe_map.h"
 #include "session_coordinator.h"
 #include "video_session_info.h"
 
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-class SessionManager {
+class SessionManager : public EnableSharedCreateInit<SessionManager> {
 public:
-    static std::shared_ptr<SessionManager> Create();
     ~SessionManager();
     
-    void Initialize();
+    int32_t Initialize() override;
     void Start();
     void Stop();
     sptr<IDeferredPhotoProcessingSession> CreateDeferredPhotoProcessingSession(const int32_t userId,
         const sptr<IDeferredPhotoProcessingSessionCallback>& callback);
     sptr<PhotoSessionInfo> GetPhotoInfo(const int32_t userId);
-    std::shared_ptr<IImageProcessCallbacks> GetImageProcCallbacks();
+    void AddPhotoSession(const sptr<PhotoSessionInfo>& sessionInfo);
+    void DeletePhotoSession(const int32_t userId);
+
     sptr<IDeferredPhotoProcessingSessionCallback> GetCallback(const int32_t userId);
     sptr<IDeferredVideoProcessingSession> CreateDeferredVideoProcessingSession(const int32_t userId,
         const sptr<IDeferredVideoProcessingSessionCallback>& callback);

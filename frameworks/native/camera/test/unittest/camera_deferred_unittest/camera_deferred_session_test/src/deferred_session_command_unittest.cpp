@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -55,8 +55,10 @@ void DeferredSessionCommandUnitTest::TearDown(void)
 void DeferredSessionCommandUnitTest::PrepareFd()
 {
     srcFd_ = sptr<IPCFileDescriptor>::MakeSptr(dup(videoSourceFd_));
+    fdsan_exchange_owner_tag(srcFd_->GetFd(), 0, LOG_DOMAIN);
     ASSERT_NE(srcFd_, nullptr);
     dstFd_ = sptr<IPCFileDescriptor>::MakeSptr(dup(videoDestinationFd_));
+    fdsan_exchange_owner_tag(dstFd_->GetFd(), 0, LOG_DOMAIN);
     ASSERT_NE(dstFd_, nullptr);
 }
 

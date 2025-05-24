@@ -61,7 +61,7 @@ ohos_fuzztest("VideoStrategyCenterFuzzTest") {
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/base",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/event_monitor/impl",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/event_monitor/base",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/impl",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/state",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/command_server",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/video_processor",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/media_manager",

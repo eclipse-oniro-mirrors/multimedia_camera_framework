@@ -83,15 +83,8 @@ void PhotoJobRepositoryFuzzer::PhotoJobRepositoryFuzzTest()
     fuzz_->RequestJob(imageId);
     fuzz_->CancelJob(imageId);
     fuzz_->RestoreJob(imageId);
-    fuzz_->SetJobPending(imageId);
-    fuzz_->SetJobRunning(imageId);
-    fuzz_->SetJobCompleted(imageId);
-    fuzz_->SetJobFailed(imageId);
-    fuzz_->GetJobStatus(imageId);
-    fuzz_->GetLowPriorityJob();
-    fuzz_->GetNormalPriorityJob();
-    fuzz_->GetHighPriorityJob();
-    fuzz_->GetRunningJobCounts();
+    fuzz_->GetJobState(imageId);
+    fuzz_->GetJob();
     fuzz_->GetJobPriority(imageId);
     fuzz_->GetJobRunningPriority(imageId);
 }

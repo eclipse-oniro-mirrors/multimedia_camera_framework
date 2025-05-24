@@ -129,7 +129,6 @@ void HCameraService::OnStart()
         "HCameraService OnStart failed to init camera host manager.");
     // initialize deferred processing service.
     DeferredProcessing::DeferredProcessingService::GetInstance().Initialize();
-    DeferredProcessing::DeferredProcessingService::GetInstance().Start();
     cameraDataShareHelper_ = std::make_shared<CameraDataShareHelper>();
     AddSystemAbilityListener(DISTRIBUTED_KV_DATA_SERVICE_ABILITY_ID);
 #ifdef NOTIFICATION_ENABLE
@@ -155,7 +154,6 @@ void HCameraService::OnStop()
     MEDIA_INFO_LOG("HCameraService::OnStop called");
     cameraHostManager_->DeInit();
     UnregisterFoldStatusListener();
-    DeferredProcessing::DeferredProcessingService::GetInstance().Stop();
 }
 
 int32_t HCameraService::GetMuteModeFromDataShareHelper(bool &muteMode)
@@ -217,6 +215,12 @@ void HCameraService::OnReceiveEvent(const EventFwk::CommonEventData &data)
     if (action == COMMON_EVENT_SCREEN_UNLOCKED) {
         MEDIA_DEBUG_LOG("on receive usual.event.SCREEN_UNLOCKED.");
         CameraCommonEventManager::GetInstance()->SetScreenLocked(false);
+    }
+    if (action == COMMON_EVENT_RSS_MULTI_WINDOW_TYPE) {
+        MEDIA_DEBUG_LOG("on receive common.event.ressched.window.state.");
+        int32_t rssMultiWindowStatus = data.GetCode();
+        MEDIA_DEBUG_LOG("HCameraService::OnReceiveEvent rssMultiWindowStatus is %{public}d", rssMultiWindowStatus);
+        cameraHostManager_->NotifyDeviceStateChangeInfo(DeviceType::RSS_MULTI_WINDOW_TYPE, rssMultiWindowStatus);
     }
 }
 
@@ -298,6 +302,8 @@ void HCameraService::OnAddSystemAbility(int32_t systemAbilityId, const std::stri
             CameraCommonEventManager::GetInstance()->SubscribeCommonEvent(COMMON_EVENT_SCREEN_LOCKED,
                 std::bind(&HCameraService::OnReceiveEvent, this, std::placeholders::_1));
             CameraCommonEventManager::GetInstance()->SubscribeCommonEvent(COMMON_EVENT_SCREEN_UNLOCKED,
+                std::bind(&HCameraService::OnReceiveEvent, this, std::placeholders::_1));
+            CameraCommonEventManager::GetInstance()->SubscribeCommonEvent(COMMON_EVENT_RSS_MULTI_WINDOW_TYPE,
                 std::bind(&HCameraService::OnReceiveEvent, this, std::placeholders::_1));
             break;
 

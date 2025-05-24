@@ -25,7 +25,6 @@
 #include "token_setproc.h"
 #include "video_process_command.h"
 #include "dp_utils.h"
-#include "iimage_process_callbacks.h"
 #include "v1_3/iimage_process_callback.h"
 #include "dps.h"
 
@@ -35,7 +34,6 @@ using namespace OHOS::CameraStandard::DeferredProcessing;
 namespace OHOS {
 namespace CameraStandard {
 
-static constexpr int32_t BUFFER_HANDLE_RESERVE_TEST_SIZE = 16;
 constexpr int VIDEO_SOURCE_FD = 1;
 constexpr int VIDEO_DESTINATION_FD = 2;
 
@@ -71,48 +69,6 @@ void DeferredPostPorcessorUnitTest::NativeAuthorization()
     SetSelfTokenID(tokenId_);
     OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
 }
-
-class DeferredPhotoProcessorCallbacks : public IImageProcessCallbacks {
-public:
-    explicit DeferredPhotoProcessorCallbacks() {}
-
-    ~DeferredPhotoProcessorCallbacks() override {}
-
-    void OnProcessDone(const int32_t userId, const std::string& imageId,
-        const std::shared_ptr<BufferInfo>& bufferInfo) override {}
-
-    void OnProcessDoneExt(int userId, const std::string& imageId,
-        const std::shared_ptr<BufferInfoExt>& bufferInfo) override {}
-
-    void OnError(const int userId, const std::string& imageId, DpsError errorCode) override {}
-
-    void OnStateChanged(const int32_t userId, DpsStatus statusCode) override {}
-};
-
-class PhotoPostProcessor::PhotoProcessListener : public OHOS::HDI::Camera::V1_3::IImageProcessCallback {
-public:
-    explicit PhotoProcessListener(const int32_t userId, const std::weak_ptr<PhotoProcessResult>& processResult)
-        : userId_(userId), processResult_(processResult)
-    {
-        DP_DEBUG_LOG("entered.");
-    }
-
-    int32_t OnProcessDone(const std::string& imageId, const OHOS::HDI::Camera::V1_2::ImageBufferInfo& buffer) override;
-    int32_t OnProcessDoneExt(const std::string& imageId,
-        const OHOS::HDI::Camera::V1_3::ImageBufferInfoExt& buffer) override;
-    int32_t OnError(const std::string& imageId,  OHOS::HDI::Camera::V1_2::ErrorCode errorCode) override;
-    int32_t OnStatusChanged(OHOS::HDI::Camera::V1_2::SessionStatus status) override;
-
-private:
-    void ReportEvent(const std::string& imageId);
-    int32_t ProcessBufferInfo(const std::string& imageId, const OHOS::HDI::Camera::V1_2::ImageBufferInfo& buffer);
-    int32_t ProcessBufferInfoExt(const std::string& imageId,
-        const OHOS::HDI::Camera::V1_3::ImageBufferInfoExt& buffer);
-    std::shared_ptr<Media::Picture> AssemblePicture(const OHOS::HDI::Camera::V1_3::ImageBufferInfoExt& buffer);
-
-    const int32_t userId_;
-    std::weak_ptr<PhotoProcessResult> processResult_;
-};
 
 /*
  * Feature: Framework
@@ -150,7 +106,7 @@ HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_002, Te
     auto postProcessor = CreateShared<VideoPostProcessor>(userId_);
     ASSERT_NE(postProcessor, nullptr);
     postProcessor->Initialize();
-    ExecutionMode selectedExecutionMode = static_cast<ExecutionMode>(VIDEO_SOURCE_FD);
+    ExecutionMode selectedExecutionMode = static_cast<ExecutionMode>(1);
     postProcessor->SetExecutionMode(selectedExecutionMode);
     postProcessor->SetDefaultExecutionMode();
     std::vector<std::string> testStrings = {"test1", "test2"};
@@ -163,6 +119,8 @@ HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_002, Te
     std::string videoId_(testStrings[randomNum % testStrings.size()]);
     sptr<IPCFileDescriptor> srcFd_ = sptr<IPCFileDescriptor>::MakeSptr(dup(VIDEO_SOURCE_FD));
     sptr<IPCFileDescriptor> dstFd_ = sptr<IPCFileDescriptor>::MakeSptr(dup(VIDEO_DESTINATION_FD));
+    fdsan_exchange_owner_tag(srcFd_->GetFd(), 0, LOG_DOMAIN);
+    fdsan_exchange_owner_tag(dstFd_->GetFd(), 0, LOG_DOMAIN);
     DeferredVideoJobPtr jobPtr = std::make_shared<DeferredVideoJob>(videoId_, srcFd_, dstFd_);
     std::shared_ptr<DeferredVideoWork> work =
         std::make_shared<DeferredVideoWork>(jobPtr, selectedExecutionMode, isAutoSuspend);
@@ -219,161 +177,6 @@ HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_004, Te
 
 /*
  * Feature: Framework
- * Function: Test PhotoPostProcessor with abnormal branch
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test PhotoPostProcessor with abnormal branch
- */
-HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_005, TestSize.Level1)
-{
-    auto postProcessor = CreateShared<PhotoPostProcessor>(userId_);
-    ASSERT_NE(postProcessor, nullptr);
-    std::string imageId = "testImageId";
-    postProcessor->OnError(imageId, DpsError::DPS_ERROR_IMAGE_PROC_FAILED);
-    EXPECT_EQ(postProcessor->consecutiveTimeoutCount_, 0);
-    postProcessor->OnError(imageId, DpsError::DPS_ERROR_IMAGE_PROC_TIMEOUT);
-    EXPECT_EQ(postProcessor->consecutiveTimeoutCount_, 1);
-    postProcessor->consecutiveTimeoutCount_ = 10;
-    postProcessor->OnError(imageId, DpsError::DPS_ERROR_IMAGE_PROC_TIMEOUT);
-    EXPECT_EQ(postProcessor->consecutiveTimeoutCount_, 11);
-    postProcessor->OnError(imageId, DpsError::DPS_ERROR_IMAGE_PROC_FAILED);
-    EXPECT_EQ(postProcessor->consecutiveTimeoutCount_, 0);
-}
-
-/*
- * Feature: Framework
- * Function: Test PhotoProcessListener with abnormal branch
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test PhotoProcessListener with abnormal branch
- */
-HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_006, TestSize.Level1)
-{
-    int32_t userId = 1;
-    OHOS::HDI::Camera::V1_2::ErrorCode errorCode = OHOS::HDI::Camera::V1_2::ErrorCode::ERROR_INVALID_ID;
-    std::shared_ptr<PhotoProcessResult> sharedResult = std::make_shared<PhotoProcessResult>(userId);
-    std::weak_ptr<PhotoProcessResult> weakResultPtr = sharedResult;
-    sptr<DeferredProcessing::PhotoPostProcessor::PhotoProcessListener> listener =
-        new(std::nothrow) DeferredProcessing::PhotoPostProcessor::PhotoProcessListener(userId, weakResultPtr);
-    ASSERT_NE(listener, nullptr);
-
-    std::string imageId = "test_id";
-    OHOS::HDI::Camera::V1_2::ImageBufferInfo buffer;
-    size_t handleSize = sizeof(BufferHandle) + (sizeof(int32_t) * (BUFFER_HANDLE_RESERVE_TEST_SIZE * 2));
-    BufferHandle *handle = static_cast<BufferHandle *>(malloc(handleSize));
-    buffer.imageHandle = new(std::nothrow) HDI::Camera::V1_0::BufferHandleSequenceable(*handle);
-    buffer.metadata = new(std::nothrow) HDI::Camera::V1_0::MapDataSequenceable();
-    listener->OnProcessDone(imageId, buffer);
-    buffer.metadata = nullptr;
-    listener->OnProcessDone(imageId, buffer);
-    EXPECT_EQ(listener->OnError(imageId, errorCode), 0);
-    errorCode = OHOS::HDI::Camera::V1_2::ErrorCode::ERROR_PROCESS;
-    EXPECT_EQ(listener->OnError(imageId, errorCode), 0);
-    errorCode = OHOS::HDI::Camera::V1_2::ErrorCode::ERROR_TIMEOUT;
-    EXPECT_EQ(listener->OnError(imageId, errorCode), 0);
-    errorCode = OHOS::HDI::Camera::V1_2::ErrorCode::ERROR_HIGH_TEMPERATURE;
-    EXPECT_EQ(listener->OnError(imageId, errorCode), 0);
-    errorCode = OHOS::HDI::Camera::V1_2::ErrorCode::ERROR_ABNORMAL;
-    EXPECT_EQ(listener->OnError(imageId, errorCode), 0);
-    errorCode = OHOS::HDI::Camera::V1_2::ErrorCode::ERROR_ABORT;
-    EXPECT_EQ(listener->OnError(imageId, errorCode), 0);
-    errorCode = static_cast<OHOS::HDI::Camera::V1_2::ErrorCode>(10);
-    EXPECT_EQ(listener->OnError(imageId, errorCode), 0);
-
-    OHOS::HDI::Camera::V1_2::SessionStatus status = OHOS::HDI::Camera::V1_2::SessionStatus::SESSION_STATUS_READY;
-    EXPECT_EQ(listener->OnStatusChanged(status), 0);
-    status = OHOS::HDI::Camera::V1_2::SessionStatus::SESSION_STATUS_READY_SPACE_LIMIT_REACHED;
-    EXPECT_EQ(listener->OnStatusChanged(status), 0);
-    status = OHOS::HDI::Camera::V1_2::SessionStatus::SESSSON_STATUS_NOT_READY_TEMPORARILY;
-    EXPECT_EQ(listener->OnStatusChanged(status), 0);
-    status = OHOS::HDI::Camera::V1_2::SessionStatus::SESSION_STATUS_NOT_READY_OVERHEAT;
-    EXPECT_EQ(listener->OnStatusChanged(status), 0);
-    status = OHOS::HDI::Camera::V1_2::SessionStatus::SESSION_STATUS_NOT_READY_PREEMPTED;
-    EXPECT_EQ(listener->OnStatusChanged(status), 0);
-    status = static_cast<OHOS::HDI::Camera::V1_2::SessionStatus>(10);
-    EXPECT_EQ(listener->OnStatusChanged(status), 0);
-}
-
-/*
- * Feature: Framework
- * Function: Test AssemblePicture with abnormal branch
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test AssemblePicture with abnormal branch
- */
-HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_007, TestSize.Level1)
-{
-    int32_t userId = 1;
-    std::string imageId = "testImageId";
-    std::shared_ptr<PhotoProcessResult> sharedResult = std::make_shared<PhotoProcessResult>(userId);
-    std::weak_ptr<PhotoProcessResult> weakResultPtr = sharedResult;
-    sptr<DeferredProcessing::PhotoPostProcessor::PhotoProcessListener> listener =
-        new(std::nothrow) DeferredProcessing::PhotoPostProcessor::PhotoProcessListener(userId, weakResultPtr);
-    ASSERT_NE(listener, nullptr);
-
-    OHOS::HDI::Camera::V1_3::ImageBufferInfoExt buffer;
-    size_t handleSize = sizeof(BufferHandle) + (sizeof(int32_t) * (BUFFER_HANDLE_RESERVE_TEST_SIZE * 2));
-    BufferHandle *handle = static_cast<BufferHandle *>(malloc(handleSize));
-    buffer.imageHandle = new(std::nothrow) HDI::Camera::V1_0::BufferHandleSequenceable(*handle);
-    buffer.exifHandle = new(std::nothrow) HDI::Camera::V1_0::BufferHandleSequenceable(*handle);
-    buffer.metadata = new(std::nothrow) HDI::Camera::V1_0::MapDataSequenceable();
-    buffer.isExifValid = true;
-    listener->ProcessBufferInfoExt(imageId, buffer);
-    ASSERT_NE(listener->AssemblePicture(buffer), nullptr);
-    buffer.isExifValid = false;
-    ASSERT_NE(listener->AssemblePicture(buffer), nullptr);
-    buffer.metadata = nullptr;
-    listener->ProcessBufferInfoExt(imageId, buffer);
-    ASSERT_NE(listener->AssemblePicture(buffer), nullptr);
-    buffer.isExifValid = true;
-    ASSERT_NE(listener->AssemblePicture(buffer), nullptr);
-    free(handle);
-}
-
-/*
- * Feature: Framework
- * Function: Test OnError OnStatusChanged with abnormal branch
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test OnError OnStatusChanged with abnormal branch
- */
-HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_008, TestSize.Level1)
-{
-    auto postProcessor = CreateShared<PhotoPostProcessor>(userId_);
-    ASSERT_NE(postProcessor, nullptr);
-    int32_t userId = 1;
-    std::string imageId = "testImageId";
-    std::shared_ptr<PhotoProcessResult> sharedResult = std::make_shared<PhotoProcessResult>(userId);
-    std::weak_ptr<PhotoProcessResult> weakResultPtr = sharedResult;
-    sptr<DeferredProcessing::PhotoPostProcessor::PhotoProcessListener> listener =
-        new(std::nothrow) DeferredProcessing::PhotoPostProcessor::PhotoProcessListener(userId, weakResultPtr);
-    ASSERT_NE(listener, nullptr);
-    postProcessor->ProcessImage(imageId);
-    OHOS::HDI::Camera::V1_2::ErrorCode errorCode = OHOS::HDI::Camera::V1_2::ErrorCode::ERROR_INVALID_ID;
-    OHOS::HDI::Camera::V1_2::SessionStatus status = OHOS::HDI::Camera::V1_2::SessionStatus::SESSION_STATUS_READY;
-    sharedResult.reset();
-    std::shared_ptr<BufferInfo> bufferInfo = std::make_shared<BufferInfo>(nullptr, 0, true, true);
-    std::shared_ptr<BufferInfoExt> bufferInfoExt = std::make_shared<BufferInfoExt>(nullptr, 0, true, true);
-    auto callback = std::make_shared<DeferredPhotoProcessorCallbacks>();
-    ASSERT_NE(callback, nullptr);
-    postProcessor->callback_ = callback;
-    postProcessor->OnProcessDone(imageId, bufferInfo);
-    postProcessor->OnProcessDoneExt(imageId, bufferInfoExt);
-    postProcessor->OnError(imageId, DpsError::DPS_ERROR_IMAGE_PROC_TIMEOUT);
-    callback.reset();
-    postProcessor->OnProcessDone(imageId, bufferInfo);
-    postProcessor->OnProcessDoneExt(imageId, bufferInfoExt);
-    postProcessor->OnError(imageId, DpsError::DPS_ERROR_IMAGE_PROC_TIMEOUT);
-    EXPECT_EQ(listener->OnError(imageId, errorCode), 0);
-    EXPECT_EQ(listener->OnStatusChanged(status), 0);
-}
-
-/*
- * Feature: Framework
  * Function: Test StopMpeg with abnormal branch
  * SubFunction: NA
  * FunctionPoints: NA
@@ -401,8 +204,6 @@ HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_010, Te
     std::string imageId = "testImageId";
     auto successCommand = CreateShared<PhotoProcessSuccessCommand>(userId_, imageId, nullptr);
     EXPECT_EQ(successCommand->Executing(), DP_NULL_POINTER);
-    auto successExtCommand = CreateShared<PhotoProcessSuccessExtCommand>(userId_, imageId, nullptr);
-    EXPECT_EQ(successExtCommand->Executing(), DP_NULL_POINTER);
     DpsError errorCode = DpsError::DPS_ERROR_IMAGE_PROC_TIMEOUT;
     auto failedCommand = CreateShared<PhotoProcessFailedCommand>(userId_, imageId, errorCode);
     EXPECT_EQ(failedCommand->Executing(), DP_NULL_POINTER);
@@ -414,6 +215,20 @@ HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_010, Te
     EXPECT_EQ(videoProcessSuccessCommand->Executing(), DP_NULL_POINTER);
     auto videoProcessFailedCommand = CreateShared<VideoProcessFailedCommand>(userId_, imageId, errorCode);
     EXPECT_EQ(videoProcessFailedCommand->Executing(), DP_NULL_POINTER);
+}
+
+
+HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_012, TestSize.Level1)
+{
+    int32_t userId = 1;
+    auto sharedResult = std::make_shared<VideoProcessResult>(userId);
+    std::string videoId = "testId";
+    auto metaData = sptr<HDI::Camera::V1_0::MapDataSequenceable>::MakeSptr();
+    metaData->Set(VideoMetadataKeys::SCALING_FACTOR, 1.0);
+    metaData->Set(VideoMetadataKeys::INTERPOLATION_FRAME_PTS, "0");
+    metaData->Set(VideoMetadataKeys::STAGE_VID, "0");
+    auto ret = sharedResult->ProcessVideoInfo(videoId, metaData);
+    EXPECT_EQ(ret, DP_OK);
 }
 } // CameraStandard
 } // OHOS

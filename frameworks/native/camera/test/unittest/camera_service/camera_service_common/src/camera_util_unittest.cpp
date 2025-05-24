@@ -144,7 +144,7 @@ HWTEST_F(CameraUtilUnitTest, camera_util_unittest_002, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test HdiToServiceErrorV1_2 normal branches with different parameters.
  */
-HWTEST_F(CameraUtilUnitTest, camera_util_unittest_003, TestSize.Level1)
+HWTEST_F(CameraUtilUnitTest, camera_util_unittest_003, TestSize.Level0)
 {
     OHOS::HDI::Camera::V1_2::CamRetCode testRet = OHOS::HDI::Camera::V1_2::NO_ERROR;
     int32_t ret = HdiToServiceErrorV1_2(testRet);
@@ -187,7 +187,7 @@ HWTEST_F(CameraUtilUnitTest, camera_util_unittest_003, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test JudgmentPriority and IsSameClient function.
  */
-HWTEST_F(CameraUtilUnitTest, camera_util_unittest_004, TestSize.Level1)
+HWTEST_F(CameraUtilUnitTest, camera_util_unittest_004, TestSize.Level0)
 {
     pid_t pid = IPCSkeleton::GetCallingPid();
     int32_t ret = JudgmentPriority(pid, pid);
@@ -228,6 +228,95 @@ HWTEST_F(CameraUtilUnitTest, camera_util_unittest_005, TestSize.Level1)
     cameraPosition = OHOS_CAMERA_POSITION_FRONT;
     ret = GetStreamRotation(sensorOrientation, cameraPosition, disPlayRotation, deviceClass);
     EXPECT_EQ(ret, TEST_STREAM_ROTATION_5);
+
+
+    sensorOrientation = DISPALY_ROTATE_0;
+    cameraPosition = OHOS_CAMERA_POSITION_BACK;
+    disPlayRotation = DISPALY_ROTATE_0;
+    ret = GetStreamRotation(sensorOrientation, cameraPosition, disPlayRotation, deviceClass);
+    EXPECT_EQ(ret, STREAM_ROTATE_0);
+
+    disPlayRotation = DISPALY_ROTATE_2;
+    ret = GetStreamRotation(sensorOrientation, cameraPosition, disPlayRotation, deviceClass);
+    EXPECT_EQ(ret, STREAM_ROTATE_180);
+
+    disPlayRotation = DISPALY_ROTATE_3;
+    ret = GetStreamRotation(sensorOrientation, cameraPosition, disPlayRotation, deviceClass);
+    EXPECT_EQ(ret, STREAM_ROTATE_90);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test isIntegerRegex function.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test isIntegerRegex function.
+ */
+HWTEST_F(CameraUtilUnitTest, camera_util_unittest_006, TestSize.Level0)
+{
+    EXPECT_FALSE(isIntegerRegex(""));
+    EXPECT_TRUE(isIntegerRegex("-123"));
+    EXPECT_TRUE(isIntegerRegex("123"));
+    EXPECT_FALSE(isIntegerRegex("123a"));
+    EXPECT_FALSE(isIntegerRegex("123.1"));
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetValidCameraId function.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetValidCameraId function.
+ */
+HWTEST_F(CameraUtilUnitTest, camera_util_unittest_007, TestSize.Level0)
+{
+    std::string cameraId = "test_camera";
+    EXPECT_EQ(GetValidCameraId(cameraId), "test_camera");
+    cameraId = "test/camera";
+    EXPECT_EQ(GetValidCameraId(cameraId), "camera");
+    cameraId = "/test_camera";
+    EXPECT_EQ(GetValidCameraId(cameraId), "test_camera");
+    cameraId = "test_camera/";
+    EXPECT_EQ(GetValidCameraId(cameraId), "");
+}
+
+/*
+ * Feature: Framework
+ * Function: Test SplitString function.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SplitString function.
+ */
+HWTEST_F(CameraUtilUnitTest, camera_util_unittest_008, TestSize.Level0)
+{
+    std::string input = "";
+    char delimiter = ',';
+    std::vector<std::string> result = SplitString(input, delimiter);
+    EXPECT_TRUE(result.empty());
+
+    input = "HelloWorld";
+    delimiter = ',';
+    result = SplitString(input, delimiter);
+    EXPECT_EQ(result.size(), 1);
+    EXPECT_EQ(result[0], "HelloWorld");
+
+    input = "Hello,World";
+    delimiter = ',';
+    result = SplitString(input, delimiter);
+    EXPECT_EQ(result.size(), 2);
+    EXPECT_EQ(result[0], "Hello");
+    EXPECT_EQ(result[1], "World");
+
+    input = "Hello,,World";
+    delimiter = ',';
+    result = SplitString(input, delimiter);
+    EXPECT_EQ(result.size(), 3);
+    EXPECT_EQ(result[0], "Hello");
+    EXPECT_EQ(result[1], "");
+    EXPECT_EQ(result[2], "World");
 }
 } // CameraStandard
 } // OHOS

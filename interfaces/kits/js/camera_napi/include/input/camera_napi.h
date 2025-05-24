@@ -70,12 +70,6 @@ static const std::unordered_map<std::string, int32_t> mapExposureMode = {
     {"EXPOSURE_MODE_LOCKED", 0},
     {"EXPOSURE_MODE_AUTO", 1},
     {"EXPOSURE_MODE_CONTINUOUS_AUTO", 2},
-};
-
-static const std::unordered_map<std::string, int32_t> mapSysExposureMode = {
-    {"EXPOSURE_MODE_LOCKED", 0},
-    {"EXPOSURE_MODE_AUTO", 1},
-    {"EXPOSURE_MODE_CONTINUOUS_AUTO", 2},
     {"EXPOSURE_MODE_MANUAL", 3},
 };
 
@@ -404,6 +398,7 @@ static const std::unordered_map<std::string, int32_t> mapVideoMetaType = {
 static const std::unordered_map<std::string, int32_t> mapTripodStatus = {
     { "INVALID", 0 },
     { "ACTIVE", 1 },
+    { "ENTER", 2},
     { "ENTERING", 2 },
     { "EXITING", 3 },
 };

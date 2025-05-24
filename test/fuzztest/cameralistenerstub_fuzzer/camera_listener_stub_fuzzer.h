@@ -17,6 +17,7 @@
 #define CAMERA_LISTENER_STUB_FUZZER_H
 
 #include "hcamera_listener_stub.h"
+#include "<fuzzer/FuzzedDataProvider.h>"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -26,7 +27,7 @@ public:
 static bool hasPermission;
 static std::shared_ptr<CameraListenerStub> fuzz_;
 
-static void Test(uint8_t *rawData, size_t size);
+static void Test(uint8_t* data, size_t size);
 static void CheckPermission();
 };
 

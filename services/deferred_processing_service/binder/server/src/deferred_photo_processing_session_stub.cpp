@@ -96,7 +96,7 @@ int DeferredPhotoProcessingSessionStub::HandleAddImage(MessageParcel& data)
     bool discardable = data.ReadBool();
 
     int32_t ret = AddImage(imageId, metadata, discardable);
-    DP_INFO_LOG("DeferredPhotoProcessingSessionStub HandleAddImage result: %{public}d", ret);
+    DP_DEBUG_LOG("DeferredPhotoProcessingSessionStub HandleAddImage result: %{public}d", ret);
     return ret;
 }
 
@@ -107,7 +107,7 @@ int DeferredPhotoProcessingSessionStub::HandleRemoveImage(MessageParcel& data)
     bool restorable = data.ReadBool();
 
     int32_t ret = RemoveImage(imageId, restorable);
-    DP_INFO_LOG("DeferredPhotoProcessingSessionStub HandleRemoveImage result: %{public}d", ret);
+    DP_DEBUG_LOG("DeferredPhotoProcessingSessionStub HandleRemoveImage result: %{public}d", ret);
     return ret;
 }
 
@@ -117,7 +117,7 @@ int DeferredPhotoProcessingSessionStub::HandleRestoreImage(MessageParcel& data)
     std::string imageId = data.ReadString();
 
     int32_t ret = RestoreImage(imageId);
-    DP_INFO_LOG("DeferredPhotoProcessingSessionStub HandleRestoreImage result: %{public}d", ret);
+    DP_DEBUG_LOG("DeferredPhotoProcessingSessionStub HandleRestoreImage result: %{public}d", ret);
     return ret;
 }
 
@@ -128,7 +128,7 @@ int DeferredPhotoProcessingSessionStub::HandleProcessImage(MessageParcel& data)
     std::string imageId = data.ReadString();
     
     int32_t ret = ProcessImage(appName, imageId);
-    DP_INFO_LOG("DeferredPhotoProcessingSessionStub HandleProcessImage result: %{public}d", ret);
+    DP_DEBUG_LOG("DeferredPhotoProcessingSessionStub HandleProcessImage result: %{public}d", ret);
     return ret;
 }
 
@@ -137,7 +137,7 @@ int DeferredPhotoProcessingSessionStub::HandleCancelProcessImage(MessageParcel& 
     DP_DEBUG_LOG("DeferredPhotoProcessingSessionStub HandleCancelProcessImage enter");
     std::string imageId = data.ReadString();
     int32_t ret = CancelProcessImage(imageId);
-    DP_INFO_LOG("DeferredPhotoProcessingSessionStub HandleCancelProcessImage result: %{public}d", ret);
+    DP_DEBUG_LOG("DeferredPhotoProcessingSessionStub HandleCancelProcessImage result: %{public}d", ret);
     return ret;
 }
 

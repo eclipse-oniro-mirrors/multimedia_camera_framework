@@ -23,7 +23,7 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-enum class VideoJobStatus {
+enum class VideoJobState {
     NONE = 0,
     PAUSE = 1,
     PENDING = 2,
@@ -40,14 +40,14 @@ public:
         const sptr<IPCFileDescriptor>& dstFd);
     ~DeferredVideoJob();
 
-    inline VideoJobStatus GetCurStatus()
+    inline VideoJobState GetCurStatus()
     {
         DP_DEBUG_LOG("videoId: %{public}s, current status: %{public}d, previous status: %{public}d",
             videoId_.c_str(), curStatus_, preStatus_);
         return curStatus_;
     }
 
-    inline VideoJobStatus GetPreStatus()
+    inline VideoJobState GetPreStatus()
     {
         DP_DEBUG_LOG("videoId: %{public}s, current status: %{public}d, previous status: %{public}d",
             videoId_.c_str(), curStatus_, preStatus_);
@@ -84,13 +84,13 @@ public:
 
 private:
     friend class VideoJobRepository;
-    bool SetJobStatus(VideoJobStatus curStatus);
+    bool SetJobState(VideoJobState curStatus);
 
     const std::string videoId_;
     sptr<IPCFileDescriptor> srcFd_;
     sptr<IPCFileDescriptor> dstFd_;
-    VideoJobStatus preStatus_ {VideoJobStatus::NONE};
-    VideoJobStatus curStatus_ {VideoJobStatus::NONE};
+    VideoJobState preStatus_ {VideoJobState::NONE};
+    VideoJobState curStatus_ {VideoJobState::NONE};
     SteadyTimePoint createTime_;
 };
 using DeferredVideoJobPtr = std::shared_ptr<DeferredVideoJob>;

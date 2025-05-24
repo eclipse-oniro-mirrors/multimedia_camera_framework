@@ -41,7 +41,7 @@ void ThermalStrategy::handleEvent(const EventFwk::CommonEventData& data)
     AAFwk::Want want = data.GetWant();
     int level = want.GetIntParam(THERMAL_EVENT_ID, DEFAULT_LEVEL);
     DPSEventReport::GetInstance().SetTemperatureLevel(level);
-    DP_INFO_LOG("DPS_EVENT: ThermalLevelChanged level:%{public}d", level);
+    DP_INFO_LOG("DPS_EVENT: ThermalLevelChanged level: %{public}d", level);
     EventsMonitor::GetInstance().NotifyThermalLevel(level);
 }
 } // namespace DeferredProcessing

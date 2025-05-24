@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -66,7 +66,7 @@ int32_t DeferredPhotoProcessingSession::AddImage(const std::string& imageId, Dps
 {
     if (inSync_.load()) {
         std::lock_guard<std::mutex> lock(mutex_);
-        DP_INFO_LOG("AddImage error, inSync!");
+        DP_DEBUG_LOG("AddImage error, inSync!");
         auto info = std::make_shared<PhotoInfo>(discardable, metadata);
         imageIds_.emplace(imageId, info);
     } else {

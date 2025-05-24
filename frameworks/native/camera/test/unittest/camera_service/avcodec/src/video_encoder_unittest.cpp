@@ -355,5 +355,38 @@ HWTEST_F(VideoEncoderUnitTest, video_encoder_unittest_013, TestSize.Level1)
     EXPECT_EQ(ret, 1);
 }
 
+/*
+ * Feature: Framework
+ * Function: Test EnqueueBuffer abnormal branches.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test EnqueueBuffer abnormal branches.
+ */
+HWTEST_F(VideoEncoderUnitTest, video_encoder_unittest_014, TestSize.Level1)
+{
+    VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
+    ColorSpace colorSpace = ColorSpace::DISPLAY_P3;
+    sptr<SurfaceBuffer> videoBuffer = SurfaceBuffer::Create();
+    ASSERT_NE(videoBuffer, nullptr);
+
+    std::shared_ptr<VideoEncoder> encoder = make_unique<VideoEncoder>(type, colorSpace);
+    int32_t ret = encoder->Create(MIME_VIDEO_AVC.data());
+    EXPECT_EQ(ret, 0);
+    std::shared_ptr<Size> size = std::make_shared<Size>();
+    size->width = 1280;
+    size->height = 720;
+    auto mockCodecSurface = sptr<MockCodecSurface>(new MockCodecSurface());
+    encoder->codecSurface_ = mockCodecSurface;
+    int64_t timestamp = VIDEO_FRAMERATE;
+    GraphicTransformType graphicTransformType = GraphicTransformType::GRAPHIC_ROTATE_90;
+    sptr<FrameRecord> frameRecord = new (std::nothrow) FrameRecord(videoBuffer, timestamp, graphicTransformType);
+    int32_t keyFrameInterval = 1;
+    encoder->rotation_ = 0;
+    encoder->size_ = size;
+    encoder->isStarted_ = true;
+    EXPECT_FALSE(encoder->EnqueueBuffer(frameRecord, keyFrameInterval));
+}
+
 } // CameraStandard
 } // OHOS

@@ -37,10 +37,10 @@ DpsTimer::~DpsTimer()
 
 uint32_t DpsTimer::StartTimer(const TimerCallback& callback, uint32_t interval)
 {
-    DP_CHECK_ERROR_RETURN_RET_LOG(timer_ == nullptr, INVALID_TIMEID, "DpsTimer is nullptr");
+    DP_CHECK_ERROR_RETURN_RET_LOG(timer_ == nullptr, INVALID_TIMERID, "DpsTimer is nullptr");
 
     uint32_t ret = timer_->Register(callback, interval, true);
-    DP_CHECK_ERROR_RETURN_RET_LOG(ret == Utils::TIMER_ERR_DEAL_FAILED, INVALID_TIMEID, "Register timer failed");
+    DP_CHECK_ERROR_RETURN_RET_LOG(ret == Utils::TIMER_ERR_DEAL_FAILED, INVALID_TIMERID, "Register timer failed");
 
     DP_DEBUG_LOG("timerId is %{public}u, interval is %{public}u", ret, interval);
     return ret;
@@ -49,11 +49,11 @@ uint32_t DpsTimer::StartTimer(const TimerCallback& callback, uint32_t interval)
 void DpsTimer::StopTimer(uint32_t& timerId)
 {
     DP_DEBUG_LOG("timer shutting down, timerId = %{public}u", timerId);
-    DP_CHECK_ERROR_RETURN_LOG(timerId == INVALID_TIMEID, "Unregister timer failed, timerId is invalid");
+    DP_CHECK_ERROR_RETURN_LOG(timerId == INVALID_TIMERID, "Unregister timer failed, timerId is invalid");
     DP_CHECK_ERROR_RETURN_LOG(timer_ == nullptr, "DpsTimer is nullptr");
 
     timer_->Unregister(timerId);
-    timerId = INVALID_TIMEID;
+    timerId = INVALID_TIMERID;
 }
 } // namespace DeferredProcessing
 } // namespace CameraStandard

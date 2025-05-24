@@ -48,7 +48,7 @@ PhotoSyncCommand::PhotoSyncCommand(const int32_t userId,
     const std::unordered_map<std::string, std::shared_ptr<DeferredPhotoProcessingSession::PhotoInfo>>& imageIds)
     : SyncCommand(userId), imageIds_(imageIds)
 {
-    DP_DEBUG_LOG("VideoSyncCommand, video job num: %{public}d", static_cast<int32_t>(imageIds_.size()));
+    DP_DEBUG_LOG("PhotoSyncCommand, photo job num: %{public}d", static_cast<int32_t>(imageIds_.size()));
 }
 
 int32_t PhotoSyncCommand::Executing()
@@ -61,8 +61,8 @@ int32_t PhotoSyncCommand::Executing()
     auto processor = schedulerManager_->GetPhotoProcessor(userId_);
     DP_CHECK_ERROR_RETURN_RET_LOG(processor == nullptr, DP_NULL_POINTER, "PhotoProcessor is nullptr.");
 
-    std::vector<std::string> pendingImages;
-    bool isSuccess = processor->GetPendingImages(pendingImages);
+    std::vector<std::string> hdiImageIds;
+    bool isSuccess = processor->GetPendingImages(hdiImageIds);
     if (!isSuccess) {
         for (const auto& it : imageIds_) {
             processor->AddImage(it.first, it.second->discardable_, it.second->metadata_);
@@ -70,14 +70,11 @@ int32_t PhotoSyncCommand::Executing()
         return DP_OK;
     }
 
-    std::set<std::string> hdiImageIds(pendingImages.begin(), pendingImages.end());
     for (const auto& photoId : hdiImageIds) {
         auto item = imageIds_.find(photoId);
         if (item != imageIds_.end()) {
             processor->AddImage(photoId, item->second->discardable_, item->second->metadata_);
             imageIds_.erase(photoId);
-        } else {
-            processor->RemoveImage(photoId, false);
         }
     }
 
@@ -88,7 +85,6 @@ int32_t PhotoSyncCommand::Executing()
             callbacks->OnError(it.first, ErrorCode::ERROR_IMAGE_PROC_INVALID_PHOTO_ID);
         }
     }
-    pendingImages.clear();
     hdiImageIds.clear();
     return DP_OK;
 }

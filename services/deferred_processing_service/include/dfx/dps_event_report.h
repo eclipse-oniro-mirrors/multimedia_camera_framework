@@ -16,12 +16,8 @@
 #ifndef OHOS_CAMERA_DPS_DEFERRED_EVENT_REPORT_H
 #define OHOS_CAMERA_DPS_DEFERRED_EVENT_REPORT_H
 
-#include <cstdint>
-#include <string>
-#include <string>
-#include <schedule/photo_processor/photo_job_repository/deferred_photo_job.h>
+#include "basic_definitions.h"
 #include "deferred_processing_service_ipc_interface_code.h"
-#include <shared_mutex>
 
 namespace OHOS {
 namespace CameraStandard {

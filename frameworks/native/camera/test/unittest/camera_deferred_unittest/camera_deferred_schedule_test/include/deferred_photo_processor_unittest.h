@@ -16,13 +16,14 @@
 #ifndef DEFERRED_PHOTO_PROCESSER_UNITTEST_H
 #define DEFERRED_PHOTO_PROCESSER_UNITTEST_H
 
+#include "deferred_photo_processor.h"
 #include "gtest/gtest.h"
 
 #define SLEEP_TIME_FOR_WATCH_DOG 2
 
 namespace OHOS {
 namespace CameraStandard {
-
+namespace DeferredProcessing {
 class DeferredPhotoProcessorUnittest : public testing::Test {
 public:
     /* SetUpTestCase:The preset action of the test suite is executed before the first TestCase */
@@ -37,12 +38,9 @@ public:
     /* TearDown:Execute after each test case */
     void TearDown();
 
-    void NativeAuthorization();
-
-    uint64_t tokenId_;
-    int32_t uid_;
-    int32_t userId_;
+    std::shared_ptr<DeferredPhotoProcessor> process_ {nullptr};
 };
+} // DeferredProcessing
 } // CameraStandard
 } // OHOS
 #endif // DEFERRED_PHOTO_PROCESSER_UNITTEST_H

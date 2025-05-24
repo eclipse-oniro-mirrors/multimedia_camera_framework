@@ -827,6 +827,7 @@ public:
     void SaveOldMeta(std::string cameraId, std::shared_ptr<OHOS::Camera::CameraMetadata> metadata);
     std::shared_ptr<OHOS::Camera::CameraMetadata> GetOldMeta(std::string cameraId);
     void SetOldMetatoInput(sptr<CameraDevice>& cameraObj, std::shared_ptr<OHOS::Camera::CameraMetadata> metadata);
+    std::string GetBundleName();
 protected:
     // Only for UT
     explicit CameraManager(sptr<ICameraService> serviceProxy) : serviceProxyPrivate_(serviceProxy)
@@ -953,7 +954,6 @@ private:
     }
 
     void CheckWhiteList();
-    std::string GetBundleName();
     std::mutex cameraDeviceListMutex_;
     std::mutex innerCameraMutex_;
     std::vector<sptr<CameraDevice>> cameraDeviceList_ = {};
@@ -1047,6 +1047,7 @@ private:
         cachedFlashStatus_[cameraId] = status;
     }
 
+    bool CheckCameraStatusValid(sptr<CameraDevice> cameraInfo);
     std::mutex cachedCameraStatusMutex_;
     unordered_map<string, std::shared_ptr<CameraStatusInfo>> cachedCameraStatus_;
     std::mutex cachedFlashStatusMutex_;

@@ -18,7 +18,7 @@
 
 #include "iremote_broker.h"
 #include "ipc_file_descriptor.h"
-#include "basic_definitions.h"
+
 namespace OHOS {
 namespace CameraStandard {
 class PictureIntf;

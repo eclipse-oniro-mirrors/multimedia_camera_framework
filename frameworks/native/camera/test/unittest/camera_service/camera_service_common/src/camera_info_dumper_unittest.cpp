@@ -76,6 +76,8 @@ HWTEST_F(CameraInfoDumperUnitTest, camera_info_dumper_unittest_001, TestSize.Lev
 
     infoDumper.Tip(msg_1);
     EXPECT_EQ(infoDumper.dumperString_, "# testMsg_1\n  testMsg_1\ntestMsg_1\n");
+    infoDumper.Pop();
+    EXPECT_EQ(infoDumper.depth_, 0);
 }
 } // CameraStandard
 } // OHOS

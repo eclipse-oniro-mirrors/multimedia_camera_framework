@@ -21,7 +21,7 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-class DeferredVideoController::StateListener : public IVideoStateChangeListener {
+class DeferredVideoController::StateListener : public IStateChangeListener<SchedulerType, SchedulerInfo> {
 public:
     explicit StateListener(const std::weak_ptr<DeferredVideoController>& controller) : controller_(controller)
     {
@@ -33,7 +33,7 @@ public:
         DP_DEBUG_LOG("entered.");
     }
 
-    void OnSchedulerChanged(const ScheduleType& type, const ScheduleInfo& scheduleInfo) override
+    void OnSchedulerChanged(const SchedulerType& type, const SchedulerInfo& scheduleInfo) override
     {
         auto controller = controller_.lock();
         DP_CHECK_ERROR_RETURN_LOG(controller == nullptr, "VideoController is nullptr.");
@@ -88,7 +88,7 @@ void DeferredVideoController::Initialize()
     DP_CHECK_ERROR_RETURN_LOG(repository_ == nullptr, "VideoJobRepository is nullptr.");
 
     repository_->RegisterJobListener(videoJobChangeListener_);
-    videoStrategyCenter_ = CreateShared<VideoStrategyCenter>(userId_, repository_);
+    videoStrategyCenter_ = CreateShared<VideoStrategyCenter>(repository_);
     videoStrategyCenter_->Initialize();
     videoStateChangeListener_ = std::make_shared<StateListener>(weak_from_this());
     videoStrategyCenter_->RegisterStateChangeListener(videoStateChangeListener_);
@@ -142,7 +142,7 @@ void DeferredVideoController::OnVideoJobChanged(const DeferredVideoJobPtr& jobPt
     TryDoSchedule();
 }
 
-void DeferredVideoController::OnSchedulerChanged(const ScheduleType& type, const ScheduleInfo& scheduleInfo)
+void DeferredVideoController::OnSchedulerChanged(const SchedulerType& type, const SchedulerInfo& scheduleInfo)
 {
     DP_INFO_LOG("DPS_VIDEO: Video isNeedStop: %{public}d, isCharging: %{public}d",
         scheduleInfo.isNeedStop, scheduleInfo.isCharging);
@@ -168,7 +168,7 @@ void DeferredVideoController::TryDoSchedule()
     PostProcess(work);
 }
 
-void DeferredVideoController::PauseRequests(const ScheduleType& type)
+void DeferredVideoController::PauseRequests(const SchedulerType& type)
 {
     DP_DEBUG_LOG("entered.");
     DP_CHECK_ERROR_RETURN_LOG(repository_ == nullptr, "VideoJobRepository is nullptr.");
@@ -197,7 +197,7 @@ void DeferredVideoController::SetDefaultExecutionMode()
 
 void DeferredVideoController::StartSuspendLock()
 {
-    DP_CHECK_RETURN(normalTimeId_ != INVALID_TIMEID);
+    DP_CHECK_RETURN(normalTimeId_ != INVALID_TIMERID);
     uint32_t processTime = static_cast<uint32_t>(
         std::min(videoStrategyCenter_->GetAvailableTime(), ONCE_PROCESS_TIME));
     normalTimeId_ = DpsTimer::GetInstance().StartTimer([&]() {OnTimerOut();}, processTime);
@@ -208,7 +208,7 @@ void DeferredVideoController::StartSuspendLock()
 
 void DeferredVideoController::StopSuspendLock()
 {
-    DP_CHECK_RETURN(normalTimeId_ == INVALID_TIMEID);
+    DP_CHECK_RETURN(normalTimeId_ == INVALID_TIMERID);
     DPSProwerManager::GetInstance().SetAutoSuspend(true);
     DP_INFO_LOG("DpsTimer stop: normal schedule timeId: %{public}d.", normalTimeId_);
     DpsTimer::GetInstance().StopTimer(normalTimeId_);
@@ -227,7 +227,7 @@ void DeferredVideoController::HandleNormalSchedule(const DeferredVideoWorkPtr& w
 void DeferredVideoController::OnTimerOut()
 {
     DP_INFO_LOG("DpsTimer end: normal schedule time out timeId: %{public}u", normalTimeId_);
-    normalTimeId_ = INVALID_TIMEID;
+    normalTimeId_ = INVALID_TIMERID;
     videoStrategyCenter_->UpdateSingleTime(false);
     PauseRequests(NORMAL_TIME_STATE);
 }

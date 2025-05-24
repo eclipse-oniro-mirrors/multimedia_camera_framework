@@ -17,6 +17,7 @@
 #define OHOS_CAMERA_DPS_PHOTO_PROCESS_COMMAND_H
 
 #include "command.h"
+#include "image_info.h"
 #include "photo_post_processor.h"
 #include "scheduler_manager.h"
 
@@ -33,35 +34,21 @@ protected:
 
     const int32_t userId_;
     std::atomic<bool> initialized_ {false};
-    std::shared_ptr<PhotoPostProcessor> postProcessor_ {nullptr};
+    std::shared_ptr<DeferredPhotoProcessor> photoProcessor_ {nullptr};
 };
 
 class PhotoProcessSuccessCommand : public PhotoProcessCommand {
     DECLARE_CMD_CLASS(PhotoProcessSuccessCommand);
 public:
     PhotoProcessSuccessCommand(const int32_t userId, const std::string& imageId,
-        const std::shared_ptr<BufferInfo>& bufferInfo);
+        std::unique_ptr<ImageInfo> imageInfo);
     ~PhotoProcessSuccessCommand() override = default;
 
 protected:
     int32_t Executing() override;
 
     const std::string imageId_;
-    std::shared_ptr<BufferInfo> bufferInfo_;
-};
-
-class PhotoProcessSuccessExtCommand : public PhotoProcessCommand {
-    DECLARE_CMD_CLASS(PhotoProcessSuccessExtCommand);
-public:
-    PhotoProcessSuccessExtCommand(const int32_t userId, const std::string& imageId,
-        const std::shared_ptr<BufferInfoExt>& bufferInfo);
-    ~PhotoProcessSuccessExtCommand() override = default;
-
-protected:
-    int32_t Executing() override;
-
-    const std::string imageId_;
-    std::shared_ptr<BufferInfoExt> bufferInfo_;
+    std::unique_ptr<ImageInfo> imageInfo_;
 };
 
 class PhotoProcessFailedCommand : public PhotoProcessCommand {
@@ -77,20 +64,13 @@ protected:
     DpsError error_;
 };
 
-class PhotoStateChangedCommand : public PhotoProcessCommand {
-    DECLARE_CMD_CLASS(PhotoStateChangedCommand);
+class PhotoProcessTimeOutCommand : public PhotoProcessFailedCommand {
+    DECLARE_CMD_CLASS(PhotoProcessTimeOutCommand);
 public:
-    PhotoStateChangedCommand(const int32_t userId, HdiStatus status)
-        : PhotoProcessCommand(userId), status_(status)
-    {
-        DP_DEBUG_LOG("entered.");
-    }
-    ~PhotoStateChangedCommand() override = default;
+    using PhotoProcessFailedCommand::PhotoProcessFailedCommand;
 
 protected:
     int32_t Executing() override;
-
-    HdiStatus status_;
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

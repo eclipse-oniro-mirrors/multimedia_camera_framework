@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -23,7 +23,6 @@
 #include "errors.h"
 #include "gtest/gtest.h"
 #include "ivideo_job_repository_listener.h"
-#include "iphoto_job_repository_listener.h"
 #include "ivideo_process_callbacks.h"
 #include "video_session_info.h"
 #include "photo_session_info.h"

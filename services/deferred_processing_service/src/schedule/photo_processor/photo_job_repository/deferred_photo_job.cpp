@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -14,152 +14,148 @@
  */
 
 #include "deferred_photo_job.h"
+
 #include "dp_log.h"
 
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-
-
-DeferredPhotoWork::DeferredPhotoWork(DeferredPhotoJobPtr jobPtr, ExecutionMode mode)
-    : jobPtr_(jobPtr),
-      executionMode_(mode)
+void PhotoState::OnStateEntered()
 {
-    //DPS_LOG
+    auto listener = listener_.lock();
+    DP_CHECK_ERROR_RETURN_LOG(listener == nullptr, "Joblistener is nullptr.");
+    listener->TryDoNextJob(imageId_, true);
 }
 
-DeferredPhotoWork::~DeferredPhotoWork()
+void AddState::OnStateEntered()
 {
-    jobPtr_ = nullptr;
+    DP_DEBUG_LOG("entered.");
 }
 
-DeferredPhotoJobPtr DeferredPhotoWork::GetDeferredPhotoJob()
+void AddState::OnStateExited()
 {
-    return jobPtr_;
+    auto listener = listener_.lock();
+    DP_CHECK_ERROR_RETURN_LOG(listener == nullptr, "Joblistener is nullptr.");
+    listener->UpdateJobSize();
 }
 
-ExecutionMode DeferredPhotoWork::GetExecutionMode()
+void PendingState::OnStateEntered()
 {
-    return executionMode_;
+    DP_DEBUG_LOG("entered.");
 }
 
-DeferredPhotoJob::DeferredPhotoJob(const std::string& imageId, bool discardable, DpsMetadata& metadata)
-    : imageId_(imageId),
-      discardable_(discardable),
-      metadata_(metadata),
-      prePriority_(PhotoJobPriority::NONE),
-      curPriority_(PhotoJobPriority::NONE),
-      runningPriority_(PhotoJobPriority::NONE),
-      preStatus_(PhotoJobStatus::NONE),
-      curStatus_(PhotoJobStatus::NONE),
-      photoJobType_(0)
+void RunningState::OnStateEntered()
 {
-    //DPS_LOG
+    auto listener = listener_.lock();
+    DP_CHECK_ERROR_RETURN_LOG(listener == nullptr, "Joblistener is nullptr.");
+    listener->UpdateRunningJob(imageId_, true);
+    listener->TryDoNextJob(imageId_, false);
 }
 
-DeferredPhotoJob::~DeferredPhotoJob()
+void RunningState::OnStateExited()
 {
-    //DPS_LOG
+    auto listener = listener_.lock();
+    DP_CHECK_ERROR_RETURN_LOG(listener == nullptr, "Joblistener is nullptr.");
+    listener->UpdateRunningJob(imageId_, false);
 }
 
-PhotoJobPriority DeferredPhotoJob::GetCurPriority()
+void DeleteState::OnStateEntered()
 {
-    DP_DEBUG_LOG("imageId: %{public}s, current priority: %{public}d, previous priority: %{public}d",
-        imageId_.c_str(), curPriority_, prePriority_);
-    return curPriority_;
+    auto listener = listener_.lock();
+    DP_CHECK_ERROR_RETURN_LOG(listener == nullptr, "Joblistener is nullptr.");
+    listener->UpdateJobSize();
 }
 
-PhotoJobPriority DeferredPhotoJob::GetPrePriority()
+DeferredPhotoJob::DeferredPhotoJob(const std::string& imageId, const PhotoJobType photoJobType, const bool discardable,
+    const std::weak_ptr<IJobStateChangeListener>& jobChangeListener)
+    : imageId_(imageId), photoJobType_(photoJobType), discardable_(discardable),
+      createTime_(GetSteadyNow()), jobChangeListener_(jobChangeListener)
 {
-    DP_DEBUG_LOG("imageId: %{public}s, current priority: %{public}d, previous priority: %{public}d",
-        imageId_.c_str(), curPriority_, prePriority_);
-    return prePriority_;
+    DP_DEBUG_LOG("entered.");
+    add_ = std::make_shared<AddState>(imageId, jobChangeListener_);
+    pending_ = std::make_shared<PendingState>(imageId, jobChangeListener_);
+    failed_ = std::make_shared<FailedState>(imageId, jobChangeListener_);
+    running_ = std::make_shared<RunningState>(imageId, jobChangeListener_);
+    completed_ = std::make_shared<CompletedState>(imageId, jobChangeListener_);
+    error_ = std::make_shared<ErrorState>(imageId, jobChangeListener_);
+    delete_ = std::make_shared<DeleteState>(imageId, jobChangeListener_);
+    ChangeStateTo(add_);
+    SetJobPriority(JobPriority::NORMAL);
 }
 
-PhotoJobPriority DeferredPhotoJob::GetRunningPriority()
+bool DeferredPhotoJob::Prepare()
 {
-    DP_DEBUG_LOG("imageId: %{public}s, current priority: %{public}d, previous priority: %{public}d,"
-        "running priority: %{public}d", imageId_.c_str(), curPriority_, prePriority_, runningPriority_);
-    return runningPriority_;
+    ChangeStateTo(pending_);
+    return true;
 }
 
-PhotoJobStatus DeferredPhotoJob::GetCurStatus()
+bool DeferredPhotoJob::Start(uint32_t timerId)
 {
-    DP_DEBUG_LOG("imageId: %{public}s, current status: %{public}d, previous status: %{public}d",
-        imageId_.c_str(), curStatus_, preStatus_);
-    return curStatus_;
+    timerId_ = timerId;
+    ChangeStateTo(running_);
+    RecordJobRunningPriority();
+    return true;
+}
+bool DeferredPhotoJob::Complete()
+{
+    ResetTimer();
+    ChangeStateTo(completed_);
+    return true;
 }
 
-PhotoJobStatus DeferredPhotoJob::GetPreStatus()
+bool DeferredPhotoJob::Fail()
 {
-    DP_DEBUG_LOG("imageId: %{public}s, current status: %{public}d, previous status: %{public}d",
-        imageId_.c_str(), curStatus_, preStatus_);
-    return preStatus_;
+    SetJobPriority(JobPriority::NORMAL);
+    ResetTimer();
+    ChangeStateTo(failed_);
+    return true;
 }
 
-std::string DeferredPhotoJob::GetImageId()
+bool DeferredPhotoJob::Error()
 {
-    return imageId_;
+    SetJobPriority(JobPriority::NORMAL);
+    ResetTimer();
+    ChangeStateTo(error_);
+    return true;
 }
 
-
-int32_t DeferredPhotoJob::GetDeferredProcType()
+bool DeferredPhotoJob::Delete()
 {
-    int32_t type;
-    metadata_.Get(DEFERRED_PROCESSING_TYPE_KEY, type);
-    DP_DEBUG_LOG("imageId: %{public}s, deferred proc type: %{public}d", imageId_.c_str(), type);
-    return type;
+    SetJobPriority(JobPriority::NONE);
+    ResetTimer();
+    ChangeStateTo(delete_);
+    return true;
 }
 
-bool DeferredPhotoJob::GetDiscardable()
+bool DeferredPhotoJob::SetJobPriority(JobPriority priority)
 {
-    return discardable_;
+    DP_INFO_LOG("imageId: %{public}s, current priority: %{public}d, priority to set: %{public}d",
+        imageId_.c_str(), priority_, priority);
+    DP_CHECK_EXECUTE(priority == JobPriority::HIGH, UpdateTime());
+    DP_CHECK_RETURN_RET(priority_ == priority, false);
+    auto listener = jobChangeListener_.lock();
+    DP_CHECK_ERROR_RETURN_RET_LOG(listener == nullptr, true, "Joblistener is nullptr.");
+    listener->UpdatePriorityJob(priority, priority_);
+    priority_ = priority;
+    return true;
 }
 
-void DeferredPhotoJob::SetPhotoJobType(int photoJobType)
+void DeferredPhotoJob::SetExecutionMode(ExecutionMode mode)
 {
-    photoJobType_ = photoJobType;
+    DP_DEBUG_LOG("imageId: %{public}s, ExecutionMode to set: %{public}d", imageId_.c_str(), mode);
+    executionMode_ = mode;
 }
 
-int DeferredPhotoJob::GetPhotoJobType()
+void DeferredPhotoJob::UpdateTime()
 {
-    return photoJobType_;
-}
-
-bool DeferredPhotoJob::SetJobStatus(PhotoJobStatus status)
-{
-    DP_DEBUG_LOG("imageId: %{public}s, current status: %{public}d, "
-        "previous status: %{public}d, status to set: %{public}d",
-        imageId_.c_str(), curStatus_, preStatus_, status);
-    if (curStatus_ == status) {
-        return false;
-    } else {
-        preStatus_ = curStatus_;
-        curStatus_ = status;
-        return true;
-    }
-}
-
-bool DeferredPhotoJob::SetJobPriority(PhotoJobPriority priority)
-{
-    DP_DEBUG_LOG("imageId: %{public}s, current priority: %{public}d, "
-        "previous priority: %{public}d, priority to set: %{public}d",
-        imageId_.c_str(), curPriority_, prePriority_, priority);
-    if (curPriority_ == priority) {
-        return false;
-    } else {
-        prePriority_ = curPriority_;
-        curPriority_ = priority;
-        return true;
-    }
+    createTime_ = GetSteadyNow();
 }
 
 void DeferredPhotoJob::RecordJobRunningPriority()
 {
-    DP_DEBUG_LOG("imageId: %{public}s, priority recorded: %{public}d, "
-        "current priority: %{public}d, previous priority: %{public}d",
-        imageId_.c_str(), curPriority_, prePriority_, curPriority_);
-    runningPriority_ = curPriority_;
+    DP_DEBUG_LOG("imageId: %{public}s, current priority: %{public}d, running priority: %{public}d",
+        imageId_.c_str(), priority_, runningPriority_);
+    runningPriority_ = priority_;
 }
 } // namespace DeferredProcessing
 } // namespace CameraStandard

@@ -35,6 +35,7 @@ namespace CameraStandard {
 constexpr static uint32_t CAMERA_STREAM_REPEAT_ON_DEFAULT = 1;
 const uint32_t CONST_0 = 0;
 const uint32_t PHOTO_MODE = 1;
+const uint32_t NUM_ONE = 1;
 const uint32_t METADATA_ITEM_SIZE = 20;
 const uint32_t METADATA_DATA_SIZE = 200;
 using namespace OHOS::HDI::Camera::V1_1;
@@ -316,7 +317,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_008, TestSize.Level1)
     camera_metadata_item_t item;
     int32_t mode = 110;
     int32_t res;
-    streamRepeat->cameraAbility_->addEntry(OHOS_CONTROL_CAPTURE_MIRROR_SUPPORTED, &dfxSwitch, 1);
+    streamRepeat->cameraAbility_->addEntry(OHOS_CONTROL_CAPTURE_MIRROR_SUPPORTED, &dfxSwitch, NUM_ONE);
     streamRepeat->SetMirrorForLivePhoto(isEnable, mode);
     res = OHOS::Camera::FindCameraMetadataItem(streamRepeat->cameraAbility_->get(),
         OHOS_CONTROL_CAPTURE_MIRROR_SUPPORTED, &item);

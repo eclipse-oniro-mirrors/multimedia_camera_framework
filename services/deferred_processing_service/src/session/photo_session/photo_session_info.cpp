@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -64,8 +64,7 @@ private:
 };
 
 PhotoSessionInfo::PhotoSessionInfo(const int32_t userId, const sptr<IDeferredPhotoProcessingSessionCallback>& callback)
-    : userId_(userId),
-      callback_(callback)
+    : userId_(userId), callback_(callback)
 {
     DP_DEBUG_LOG("entered. userId: %{public}d.", userId_);
     Initialize();
@@ -103,13 +102,17 @@ sptr<IDeferredPhotoProcessingSessionCallback> PhotoSessionInfo::GetRemoteCallbac
 
 void PhotoSessionInfo::OnCallbackDied()
 {
+    {
+        std::lock_guard lock(callbackMutex_);
+        callback_ = nullptr;
+    }
     auto ret = DPS_SendUrgentCommand<DeletePhotoSessionCommand>(this);
     DP_CHECK_ERROR_PRINT_LOG(ret != DP_OK, "DeletePhotoSession failed.");
 }
 
 void PhotoSessionInfo::SetCallback(const sptr<IDeferredPhotoProcessingSessionCallback>& callback)
 {
-    DP_INFO_LOG("Reset phot callback.");
+    DP_INFO_LOG("Reset photo callback.");
     std::lock_guard lock(callbackMutex_);
     isCreate_ = false;
     callback_ = callback;

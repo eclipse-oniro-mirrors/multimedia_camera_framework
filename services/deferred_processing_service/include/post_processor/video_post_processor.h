@@ -43,7 +43,7 @@ public:
     void SetDefaultExecutionMode();
     void ProcessRequest(const DeferredVideoWorkPtr& work);
     void RemoveRequest(const std::string& videoId);
-    void PauseRequest(const std::string& videoId, const ScheduleType& type);
+    void PauseRequest(const std::string& videoId, const SchedulerType& type);
     DeferredVideoWorkPtr GetRunningWork(const std::string& videoId);
     void OnProcessDone(const std::string& videoId, std::unique_ptr<MediaUserInfo> userInfo);
     void OnError(const std::string& videoId, DpsError errorCode);

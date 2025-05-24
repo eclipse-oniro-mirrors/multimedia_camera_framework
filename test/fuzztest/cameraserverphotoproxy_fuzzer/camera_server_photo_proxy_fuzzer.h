@@ -18,13 +18,14 @@
 
 #include "camera_server_photo_proxy.h"
 #include <memory>
+#include <fuzzer/FuzzedDataProvider.h>
 
 namespace OHOS {
 namespace CameraStandard {
 class CameraServerPhotoProxyFuzzer {
 public:
 static std::shared_ptr<CameraServerPhotoProxy> fuzz_;
-static void CameraServerPhotoProxyFuzzTest();
+static void CameraServerPhotoProxyFuzzTest(FuzzedDataProvider& fdp);
 };
 } //CameraStandard
 } //OHOS

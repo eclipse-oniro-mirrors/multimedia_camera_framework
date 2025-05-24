@@ -27,6 +27,7 @@ const std::string BEAUTY_NOTIFICATION_CONTENT_ON = "summary_closed_beauty";
 const std::string BEAUTY_NOTIFICATION_CONTENT_OFF = "summary_opened_beauty";
 const std::string BEAUTY_NOTIFICATION_BUTTON_ON = "open_beauty";
 const std::string BEAUTY_NOTIFICATION_BUTTON_OFF = "close_beauty";
+const uint32_t BEAUTY_NOTIFICATION_CLOSE_SOUND_FLAG = 1 << 0;
 const uint32_t BEAUTY_NOTIFICATION_CONTROL_FLAG = 1 << 9;
 const uint32_t BEAUTY_NOTIFICATION_LOCKSCREEN_FLAG = 1 << 1;
 const uint32_t BEAUTY_NOTIFICATION_CLOSE_VIBRATION_FLAG = 1 << 4;
@@ -85,7 +86,8 @@ void CameraBeautyNotification::PublishNotification(bool isRecordTimes)
     request.SetSlotType(OHOS::Notification::NotificationConstant::SlotType::SOCIAL_COMMUNICATION);
     request.SetNotificationId(BEAUTY_NOTIFICATION_ID);
     request.SetGroupName(BEAUTY_NOTIFICATION_GROUP_NAME);
-    uint32_t baseFlag = BEAUTY_NOTIFICATION_CLOSE_VIBRATION_FLAG | BEAUTY_NOTIFICATION_LOCKSCREEN_FLAG;
+    uint32_t baseFlag = BEAUTY_NOTIFICATION_CLOSE_SOUND_FLAG |
+        BEAUTY_NOTIFICATION_CLOSE_VIBRATION_FLAG | BEAUTY_NOTIFICATION_LOCKSCREEN_FLAG;
 
     bool isBanner = beautyTimes < CONTROL_FLAG_LIMIT;
     if (isBanner) {

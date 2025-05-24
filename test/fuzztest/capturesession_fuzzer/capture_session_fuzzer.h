@@ -18,28 +18,28 @@
 
 #include "session/capture_session.h"
 #include "iremote_proxy.h"
+#include "fuzzer/FuzzedDataProvider.h"
 
 namespace OHOS {
 namespace CameraStandard {
 namespace CaptureSessionFuzzer {
 
-void Test(uint8_t *rawData, size_t size);
-void TestSession(sptr<CaptureSession> session, uint8_t *rawData, size_t size);
-void TestWhiteBalance(sptr<CaptureSession> session, uint8_t *rawData, size_t size);
-void TestExposure(sptr<CaptureSession> session, uint8_t *rawData, size_t size);
-void TestFocus(sptr<CaptureSession> session, uint8_t *rawData, size_t size);
-void TestZoom(sptr<CaptureSession> session, uint8_t *rawData, size_t size);
-void TestCallback(sptr<CaptureSession> session, uint8_t *rawData, size_t size);
-void TestStabilization(sptr<CaptureSession> session, uint8_t *rawData, size_t size);
-void TestFlash(sptr<CaptureSession> session, uint8_t *rawData, size_t size);
-void TestCreateMediaLibrary(sptr<CaptureSession> session, uint8_t *rawData, size_t size);
-void TestProcess(sptr<CaptureSession> session, uint8_t *rawData, size_t size);
-void TestAperture(sptr<CaptureSession> session, uint8_t *rawData, size_t size);
-void TestBeauty(sptr<CaptureSession> session, uint8_t *rawData, size_t size);
-void TestOther(sptr<CaptureSession> session, uint8_t *rawData, size_t size);
-void TestOther2(sptr<CaptureSession> session, uint8_t *rawData, size_t size);
-void TestOther3(sptr<CaptureSession> session, uint8_t *rawData, size_t size);
-void TestAdd(sptr<CaptureSession> session, uint8_t *rawData, size_t size);
+void Test(uint8_t* data, size_t size);
+void TestSession(sptr<CaptureSession> session, FuzzedDataProvider& fdp);
+void TestExposure(sptr<CaptureSession> session, FuzzedDataProvider& fdp);
+void TestFocus(sptr<CaptureSession> session, FuzzedDataProvider& fdp);
+void TestZoom(sptr<CaptureSession> session, FuzzedDataProvider& fdp);
+void TestCallback(sptr<CaptureSession> session, FuzzedDataProvider& fdp);
+void TestStabilization(sptr<CaptureSession> session, FuzzedDataProvider& fdp);
+void TestFlash(sptr<CaptureSession> session, FuzzedDataProvider& fdp);
+void TestCreateMediaLibrary(sptr<CaptureSession> session, FuzzedDataProvider& fdp);
+void TestProcess(sptr<CaptureSession> session, FuzzedDataProvider& fdp);
+void TestAperture(sptr<CaptureSession> session, FuzzedDataProvider& fdp);
+void TestBeauty(sptr<CaptureSession> session, FuzzedDataProvider& fdp);
+void TestOther(sptr<CaptureSession> session, FuzzedDataProvider& fdp);
+void TestOther2(sptr<CaptureSession> session, FuzzedDataProvider& fdp);
+void TestOther3(sptr<CaptureSession> session, FuzzedDataProvider& fdp);
+void TestAdd(sptr<CaptureSession> session, FuzzedDataProvider& fdp);
 
 class SessionCallbackMock : public SessionCallback {
 public:

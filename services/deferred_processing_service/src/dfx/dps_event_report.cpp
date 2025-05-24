@@ -81,7 +81,7 @@ int DPSEventReport::GetTotalTime (uint64_t beginTime, uint64_t endTime)
 
 void DPSEventReport::ReportImageModeChange(ExecutionMode executionMode)
 {
-    DP_INFO_LOG("ReportImageModeChange enter.");
+    DP_DEBUG_LOG("ReportImageModeChange enter.");
     HiSysEventWrite(
         CAMERA_FWK_UE,
         "DPS_IMAGE_MODE_CHANGE",

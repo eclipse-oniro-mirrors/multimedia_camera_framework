@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,7 +16,6 @@
 #include "camera_deferred_base_unittest.h"
 #include <cstdint>
 #include <vector>
-#include "hcamera_service.h"
 #include "camera_manager.h"
 #include "camera_util.h"
 #include "gmock/gmock.h"
@@ -45,25 +44,13 @@ const uint32_t ADD_TIME_MILLI_SECONDS = 10000;
 namespace OHOS {
 namespace CameraStandard {
 
-void DeferredBaseUnitTest::SetUpTestCase(void)
-{
-    MEDIA_DEBUG_LOG("DeferredBaseUnitTest::SetUpTestCase started!");
-}
+void DeferredBaseUnitTest::SetUpTestCase(void) {}
 
-void DeferredBaseUnitTest::TearDownTestCase(void)
-{
-    MEDIA_DEBUG_LOG("DeferredBaseUnitTest::TearDownTestCase started!");
-}
+void DeferredBaseUnitTest::TearDownTestCase(void) {}
 
-void DeferredBaseUnitTest::SetUp()
-{
-    MEDIA_DEBUG_LOG("SetUp");
-}
+void DeferredBaseUnitTest::SetUp() {}
 
-void DeferredBaseUnitTest::TearDown()
-{
-    MEDIA_DEBUG_LOG("DeferredBaseUnitTest::TearDown started!");
-}
+void DeferredBaseUnitTest::TearDown() {}
 
 /*
  * Feature: Framework
@@ -317,7 +304,6 @@ HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_011, TestSize.Level
     DeferredProcessing::DPS_GetCommandServer();
     DeferredProcessing::DPS_GetSessionManager();
     DeferredProcessing::DPS_GetSchedulerManager();
-    EXPECT_EQ(DeferredProcessing::DPS_Initialize(), 0);
     EXPECT_EQ(DeferredProcessing::DPS_Initialize(), 0);
 }
 
