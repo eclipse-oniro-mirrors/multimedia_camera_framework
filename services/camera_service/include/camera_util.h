@@ -196,6 +196,8 @@ std::vector<std::string> SplitString(const std::string& input, char delimiter);
 
 int64_t GetTimestamp();
 
+bool isIntegerRegex(const std::string& input);
+
 inline bool IsCameraDebugOn()
 {
     return g_cameraDebugOn;
