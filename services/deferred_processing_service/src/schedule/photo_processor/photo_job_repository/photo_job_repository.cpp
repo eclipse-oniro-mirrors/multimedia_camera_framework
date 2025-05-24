@@ -373,6 +373,19 @@ int PhotoJobRepository::GetBackgroundJobSize()
     return size;
 }
 
+int PhotoJobRepository::GetBackgroundIdleJobSize()
+{
+    int size = static_cast<int>(backgroundJobMap_.size());
+    for (auto& ptr : backgroundJobMap_) {
+        if ((ptr.second->GetCurStatus() == PhotoJobStatus::COMPLETED) ||
+            (ptr.second->GetCurStatus() == PhotoJobStatus::DELETED)) {
+            size--;
+        }
+    }
+    DP_DEBUG_LOG("background idle job size: %{public}d", size);
+    return size;
+}
+
 int PhotoJobRepository::GetOfflineJobSize()
 {
     int size = static_cast<int>(offlineJobMap_.size());
