@@ -32,6 +32,8 @@
 #include "camera_security_utils.h"
 #include "capture_scene_const.h"
 #include "features/moon_capture_boost_feature.h"
+#include "hcapture_session_callback_stub.h"
+#include "icapture_session_callback.h"
 #include "input/camera_input.h"
 #include "input/camera_manager.h"
 #include "ipc_skeleton.h"
@@ -201,6 +203,22 @@ int32_t CaptureSessionCallback::OnError(int32_t errorCode)
         captureSession_->GetApplicationCallback()->OnError(errorCode);
     } else {
         MEDIA_INFO_LOG("CaptureSessionCallback::ApplicationCallback not set!, Discarding callback");
+    }
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t PressureStatusCallback::OnPressureStatusChanged(PressureStatus status)
+{
+    MEDIA_INFO_LOG("PressureStatusCallback::OnPressureStatusChanged() is called, status: %{public}d", status);
+    if (captureSession_ != nullptr) {
+        auto callback = captureSession_->GetPressureCallback();
+        if (callback) {
+            callback->OnPressureStatusChanged(status);
+        } else {
+            MEDIA_INFO_LOG("PressureStatusCallback::GetPressureCallback not set!, Discarding callback");
+        }
+    } else {
+        MEDIA_INFO_LOG("PressureStatusCallback captureSession not set!, Discarding callback");
     }
     return CameraErrorCode::SUCCESS;
 }
@@ -1097,7 +1115,9 @@ int32_t CaptureSession::Release()
     SessionRemoveDeathRecipient();
     std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
     captureSessionCallback_ = nullptr;
+    pressureStatusCallback_ = nullptr;
     appCallback_ = nullptr;
+    appPressureCallback_ = nullptr;
     exposureCallback_ = nullptr;
     focusCallback_ = nullptr;
     macroStatusCallback_ = nullptr;
@@ -1138,6 +1158,33 @@ void CaptureSession::SetCallback(std::shared_ptr<SessionCallback> callback)
     return;
 }
 
+void CaptureSession::SetPressureCallback(std::shared_ptr<PressureCallback> callback)
+{
+    CHECK_ERROR_PRINT_LOG(callback == nullptr, "CaptureSession::SetPressureCallback Unregistering application callback!");
+    int32_t errorCode = CAMERA_OK;
+    std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
+    appPressureCallback_ = callback;
+    auto captureSession = GetCaptureSession();
+    if (appPressureCallback_ != nullptr && captureSession != nullptr) {
+        if (pressureStatusCallback_ == nullptr) {
+            pressureStatusCallback_ = new (std::nothrow) PressureStatusCallback(this);
+            CHECK_ERROR_RETURN_LOG(pressureStatusCallback_ == nullptr, "failed to new pressureStatusCallback_!");
+        }
+        if (captureSession) {
+            errorCode = captureSession->SetPressureCallback(pressureStatusCallback_);
+            if (errorCode != CAMERA_OK) {
+                MEDIA_ERR_LOG(
+                    "CaptureSession::SetPressureCallback: Failed to register callback, errorCode: %{public}d", errorCode);
+                pressureStatusCallback_ = nullptr;
+                appPressureCallback_ = nullptr;
+            }
+        } else {
+            MEDIA_ERR_LOG("CaptureSession::SetPressureCallback captureSession is nullptr");
+        }
+    }
+    return;
+}
+
 int32_t CaptureSession::SetPreviewRotation(std::string &deviceClass)
 {
     int32_t errorCode = CAMERA_OK;
@@ -1155,6 +1202,12 @@ std::shared_ptr<SessionCallback> CaptureSession::GetApplicationCallback()
 {
     std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
     return appCallback_;
+}
+
+std::shared_ptr<PressureCallback> CaptureSession::GetPressureCallback()
+{
+    std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
+    return appPressureCallback_;
 }
 
 std::shared_ptr<ExposureCallback> CaptureSession::GetExposureCallback()

@@ -32,6 +32,17 @@ public:
 private:
     static inline BrokerDelegator<HCaptureSessionCallbackProxy> delegator_;
 };
+
+class EXPORT_API HPressureStatusCallbackProxy : public IRemoteProxy<IPressureStatusCallback> {
+public:
+    explicit HPressureStatusCallbackProxy(const sptr<IRemoteObject> &impl);
+    virtual ~HPressureStatusCallbackProxy() = default;
+
+    int32_t OnPressureStatusChanged(PressureStatus status) override;
+
+private:
+    static inline BrokerDelegator<HPressureStatusCallbackProxy> delegator_;
+};
 } // namespace CameraStandard
 } // namespace OHOS
 #endif // OHOS_CAMERA_HCAPTURE_SESSION_CALLBACK_PROXY_H

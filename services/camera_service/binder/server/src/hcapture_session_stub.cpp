@@ -20,6 +20,7 @@
 #include "camera_service_ipc_interface_code.h"
 #include "camera_photo_proxy.h"
 #include <memory>
+#include <stdint.h>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -69,8 +70,14 @@ int HCaptureSessionStub::OnRemoteRequest(
         case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_SET_CALLBACK):
             errCode = HandleSetCallback(data);
             break;
+        case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_SET_PRESSURE_CALLBACK):
+            errCode = HandleSetPressureCallback(data);
+            break;
         case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_UNSET_CALLBACK):
             errCode = UnSetCallback();
+            break;
+        case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_UNSET_PRESSURE_CALLBACK):
+            errCode = UnSetPressureCallback();
             break;
         case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_GET_SESSION_STATE):
             errCode = HandleGetSessionState(reply);
@@ -209,6 +216,18 @@ int32_t HCaptureSessionStub::HandleSetCallback(MessageParcel &data)
     CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, IPC_STUB_INVALID_DATA_ERR,
         "HCaptureSessionStub HandleSetCallback callback is null");
     return SetCallback(callback);
+}
+
+int32_t HCaptureSessionStub::HandleSetPressureCallback(MessageParcel &data)
+{
+    MEDIA_INFO_LOG("HandleSetPressureCallback");
+    auto remoteObject = data.ReadRemoteObject();
+    CHECK_ERROR_RETURN_RET_LOG(remoteObject == nullptr, IPC_STUB_INVALID_DATA_ERR,
+        "HCaptureSessionStub HandleSetPressureCallback PressureStatusCallback is null");
+    auto callback = iface_cast<IPressureStatusCallback>(remoteObject);
+    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, IPC_STUB_INVALID_DATA_ERR,
+        "HCaptureSessionStub HandleSetPressureCallback callback is null");
+    return SetPressureCallback(callback);
 }
 
 int32_t HCaptureSessionStub::HandleGetSessionState(MessageParcel &reply)

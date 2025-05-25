@@ -3557,5 +3557,29 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_084, Test
     EXPECT_EQ(ret, CAMERA_OK);
 }
 
+/*
+ * Feature: Framework
+ * Function: RegisterSystemPressureLevelCallback and UnRegisterSystemPressureLevelCallback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test RegisterSystemPressureLevelCallback and UnRegisterSystemPressureLevelCallback
+ */
+HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_085, TestSize.Level0)
+{
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+    ret = OH_CaptureSession_RegisterSystemPressureLevelCallback(captureSession,
+        CameraCaptureSessionSystemPressureLevelCb);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_UnregisterSystemPressureLevelCallback(captureSession,
+        CameraCaptureSessionSystemPressureLevelCb);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
+}
+
 } // CameraStandard
 } // OHOS

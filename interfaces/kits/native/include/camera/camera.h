@@ -1152,6 +1152,39 @@ typedef struct Camera_ConcurrentInfo {
     uint32_t modeAndCapabilitySize;
 } Camera_ConcurrentInfo;
 
+/**
+ * @brief Enum for system pressure level.
+ *
+ * @since 20
+ * @version 1.0
+ */
+typedef enum Camera_SystemPressureLevel {
+    /**
+     * System pressure normal.
+     */
+    SYSTEM_PRESSURE_NORMAL = 0,
+
+    /**
+     * System pressure mild.
+     */
+    SYSTEM_PRESSURE_MILD = 1,
+
+    /**
+     * System pressure severe.
+     */
+    SYSTEM_PRESSURE_SEVERE = 2,
+
+    /**
+     * System pressure critical.
+     */
+    SYSTEM_PRESSURE_CRITICAL = 3,
+
+    /**
+     * System pressure shutdown.
+     */
+    SYSTEM_PRESSURE_SHUTDOWN = 4
+} Camera_SystemPressureLevel;
+
 #ifdef __cplusplus
 }
 #endif

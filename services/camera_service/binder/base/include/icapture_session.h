@@ -61,6 +61,10 @@ public:
 
     virtual int32_t UnSetCallback() = 0;
 
+    virtual int32_t SetPressureCallback(sptr<IPressureStatusCallback> &callback) = 0;
+
+    virtual int32_t UnSetPressureCallback() = 0;
+
     virtual int32_t GetSessionState(CaptureSessionState &sessionState) = 0;
 
     virtual int32_t SetSmoothZoom(int32_t smoothZoomType, int32_t operationMode,

@@ -20,12 +20,27 @@
 
 namespace OHOS {
 namespace CameraStandard {
+enum PressureStatus {
+    SYSTEM_PRESSURE_NORMAL = 0,
+    SYSTEM_PRESSURE_MILD,
+    SYSTEM_PRESSURE_SEVERE,
+    SYSTEM_PRESSURE_CRITICAL,
+    SYSTEM_PRESSURE_SHUTDOWN
+};
 class ICaptureSessionCallback : public IRemoteBroker {
 public:
     virtual int32_t OnError(int32_t errorCode) = 0;
 
     DECLARE_INTERFACE_DESCRIPTOR(u"ICaptureSessionCallback");
 };
+
+class IPressureStatusCallback : public IRemoteBroker {
+public:
+    virtual int32_t OnPressureStatusChanged(PressureStatus status) = 0;
+ 
+    DECLARE_INTERFACE_DESCRIPTOR(u"IPressureStatusCallback");
+};
+
 } // namespace CameraStandard
 } // namespace OHOS
 #endif // OHOS_CAMERA_ICAPTURE_SESSION_CALLBACK_H

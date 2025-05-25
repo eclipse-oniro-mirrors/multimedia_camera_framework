@@ -158,6 +158,12 @@ public:
     Camera_ErrorCode UnregisterAutoDeviceSwitchStatusCallback(
         OH_CaptureSession_OnAutoDeviceSwitchStatusChange autoDeviceSwitchStatusChange);
 
+    Camera_ErrorCode RegisterSystemPressureLevelCallback(
+        OH_CaptureSession_OnSystemPressureLevel systemPressureLevel);
+    
+    Camera_ErrorCode UnRegisterSystemPressureLevelCallback(
+        OH_CaptureSession_OnSystemPressureLevel systemPressureLevel);
+
     Camera_ErrorCode IsAutoDeviceSwitchSupported(bool* isSupported);
 
     Camera_ErrorCode EnableAutoDeviceSwitch(bool enabled);

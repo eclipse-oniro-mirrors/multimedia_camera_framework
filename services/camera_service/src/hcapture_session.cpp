@@ -26,6 +26,7 @@
 #include <mutex>
 #include <new>
 #include <sched.h>
+#include <stdint.h>
 #include <string>
 #include <sync_fence.h>
 #include <utility>
@@ -55,6 +56,7 @@
 #include "hstream_metadata.h"
 #include "hstream_repeat.h"
 #include "icapture_session.h"
+#include "icapture_session_callback.h"
 #include "iconsumer_surface.h"
 #include "image_type.h"
 #include "ipc_skeleton.h"
@@ -1259,6 +1261,8 @@ int32_t HCaptureSession::Release(CaptureSessionReleaseType type)
         }
         sptr<ICaptureSessionCallback> emptyCallback = nullptr;
         SetCallback(emptyCallback);
+        sptr<IPressureStatusCallback> emptyPressureCallback = nullptr;
+        SetPressureCallback(emptyPressureCallback);
         stateMachine_.Transfer(CaptureSessionState::SESSION_RELEASED);
         isSessionStarted_ = false;
     });
@@ -1319,6 +1323,31 @@ int32_t HCaptureSession::UnSetCallback()
 {
     // Not implement yet.
     return CAMERA_OK;
+}
+
+int32_t HCaptureSession::SetPressureCallback(sptr<IPressureStatusCallback>& callback)
+{
+    if (callback == nullptr) {
+        MEDIA_WARNING_LOG("HCaptureSession::SetPressureCallback callback is null, we "
+                          "should clear the callback, sessionID: %{public}d",
+            GetSessionId());
+    }
+    innerPressureCallback_ = callback;
+
+    return CAMERA_OK;
+}
+
+int32_t HCaptureSession::UnSetPressureCallback()
+{
+    innerPressureCallback_ = nullptr;
+    return CAMERA_OK;
+}
+
+void HCaptureSession::SetPressureStatus(PressureStatus status)
+{
+    MEDIA_INFO_LOG("HCaptureSession::SetPressureStatus(), status: %{public}d", status);
+    CHECK_ERROR_RETURN_LOG(innerPressureCallback_ == nullptr, "innerPressureCallback is null.");
+    innerPressureCallback_->OnPressureStatusChanged(status);
 }
 
 std::string HCaptureSession::GetSessionState()

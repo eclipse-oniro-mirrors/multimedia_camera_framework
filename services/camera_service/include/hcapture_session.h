@@ -15,6 +15,8 @@
 
 #ifndef OHOS_CAMERA_H_CAPTURE_SESSION_H
 #define OHOS_CAMERA_H_CAPTURE_SESSION_H
+#include "icapture_session_callback.h"
+#include <stdint.h>
 #define EXPORT_API __attribute__((visibility("default")))
 
 #include <atomic>
@@ -115,6 +117,10 @@ public:
     static void DestroyStubObjectForPid(pid_t pid);
     int32_t SetCallback(sptr<ICaptureSessionCallback>& callback) override;
     int32_t UnSetCallback() override;
+
+    int32_t SetPressureCallback(sptr<IPressureStatusCallback>& callback) override;
+    int32_t UnSetPressureCallback() override;
+    void SetPressureStatus(PressureStatus status);
 
     int32_t GetSessionState(CaptureSessionState& sessionState) override;
     int32_t GetActiveColorSpace(ColorSpace& colorSpace) override;
@@ -234,6 +240,7 @@ private:
     void UpdateSettingForSpecialBundle();
     void ClearMovingPhotoRepeatStream();
     StateMachine stateMachine_;
+    sptr<IPressureStatusCallback> innerPressureCallback_;
 
     #ifdef CAMERA_USE_SENSOR
         std::mutex sensorLock_;

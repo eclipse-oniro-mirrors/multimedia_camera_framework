@@ -14,6 +14,7 @@
  */
 
 #include "kits/native/include/camera/capture_session.h"
+#include "camera.h"
 #include "impl/capture_session_impl.h"
 #include "camera_log.h"
 #include "hilog/log.h"
@@ -62,6 +63,34 @@ Camera_ErrorCode OH_CaptureSession_UnregisterSmoothZoomInfoCallback(Camera_Captu
     CHECK_ERROR_RETURN_RET_LOG(smoothZoomInfoCallback == nullptr, CAMERA_INVALID_ARGUMENT,
         "Invalid argument, callback is null!");
     session->UnregisterSmoothZoomInfoCallback(smoothZoomInfoCallback);
+    return CAMERA_OK;
+}
+
+/**
+ * @since 20
+ * @version 1.0
+ */
+Camera_ErrorCode OH_CaptureSession_RegisterSystemPressureLevelCallback(Camera_CaptureSession* session,
+    OH_CaptureSession_OnSystemPressureLevel systemPressureLevel)
+{
+    CHECK_ERROR_RETURN_RET_LOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    CHECK_ERROR_RETURN_RET_LOG(systemPressureLevel == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, callback is null!");
+    session->RegisterSystemPressureLevelCallback(systemPressureLevel);
+    return CAMERA_OK;
+}
+
+/**
+ * @since 20
+ * @version 1.0
+ */
+Camera_ErrorCode OH_CaptureSession_UnregisterSystemPressureLevelCallback(Camera_CaptureSession* session,
+    OH_CaptureSession_OnSystemPressureLevel systemPressureLevel)
+{
+    CHECK_ERROR_RETURN_RET_LOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    CHECK_ERROR_RETURN_RET_LOG(systemPressureLevel == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, callback is null!");
+    session->UnRegisterSystemPressureLevelCallback(systemPressureLevel);
     return CAMERA_OK;
 }
 

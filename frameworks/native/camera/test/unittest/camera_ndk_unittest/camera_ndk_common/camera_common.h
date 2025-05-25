@@ -19,6 +19,7 @@
 #include "gtest/gtest.h"
 #include "camera/camera_manager.h"
 #include <refbase.h>
+#include "camera/capture_session.h"
 #include "camera/photo_output.h"
 
 #include "image_receiver.h"
@@ -69,6 +70,8 @@ public:
         Camera_SmoothZoomInfo* smoothZoomInfo);
     static void CameraCaptureSessionAutoDeviceSwitchStatusCb(Camera_CaptureSession* session,
         Camera_AutoDeviceSwitchStatusInfo* smoothZoomInfo);
+    static void CameraCaptureSessionSystemPressureLevelCb(Camera_CaptureSession* session,
+        Camera_SystemPressureLevel* pressureLevel);
     static void CameraManagerOnCameraStatusCb(Camera_Manager* cameraManager, Camera_StatusInfo* status);
     static void CameraManagerOnCameraTorchStatusCb(Camera_Manager* cameraManager, Camera_TorchStatusInfo* status);
     static void CameraManagerOnCameraFoldStatusCb(Camera_Manager* cameraManager, Camera_FoldStatusInfo* status);

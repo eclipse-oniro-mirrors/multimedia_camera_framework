@@ -15,7 +15,9 @@
 
 #ifndef OHOS_CAMERA_H_CAMERA_SERVICE_H
 #define OHOS_CAMERA_H_CAMERA_SERVICE_H
+#include <cstdint>
 #include <mutex>
+#include <stdint.h>
 #include "camera_metadata_info.h"
 #define EXPORT_API __attribute__((visibility("default")))
 
@@ -182,6 +184,7 @@ private:
     int32_t MuteCameraFunc(bool muteMode);
     int8_t ChooseFisrtBootFoldCamIdx(
         FoldStatus curFoldStatus, std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList);
+    PressureStatus TransferTemperToPressure(int32_t temperLevel);
 #ifdef NOTIFICATION_ENABLE
     int32_t SetBeauty(int32_t beautyStatus);
 #endif
@@ -307,6 +310,7 @@ private:
     bool isFoldRegister = false;
     sptr<IFoldServiceCallback> innerFoldCallback_;
     std::vector<CameraRotateStrategyInfo> cameraRotateStrategyInfos_;
+    pid_t pressurePid_;
     std::mutex freezedPidListMutex_;
     std::set<int32_t> freezedPidList_;
     std::map<uint32_t, std::map<string, std::function<void()>>> delayCbtaskMap_;

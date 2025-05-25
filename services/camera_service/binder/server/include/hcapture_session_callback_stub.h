@@ -29,6 +29,15 @@ public:
 private:
     int HandleSessionOnError(MessageParcel& data);
 };
+
+class HPressureStatusCallbackStub : public IRemoteStub<IPressureStatusCallback> {
+public:
+    int OnRemoteRequest(uint32_t code, MessageParcel &data,
+                                MessageParcel &reply, MessageOption &option) override;
+ 
+private:
+    int HandlePressureStatusChange(MessageParcel& data);
+};
 } // namespace CameraStandard
 } // namespace OHOS
 #endif // OHOS_CAMERA_HCAPTURE_SESSION_CALLBACK_STUB_H
