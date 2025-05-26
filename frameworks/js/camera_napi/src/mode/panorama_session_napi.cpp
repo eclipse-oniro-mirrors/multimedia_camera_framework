@@ -49,7 +49,7 @@ napi_value PanoramaSessionNapi::Init(napi_env env, napi_value exports)
     napi_value ctorObj;
 
     std::vector<std::vector<napi_property_descriptor>> descriptors = { camera_process_props, focus_props,
-        auto_exposure_props, color_effect_props, auto_wb_props, manual_wb_props };
+        auto_exposure_props, color_effect_props, white_balance_props };
 
     std::vector<napi_property_descriptor> panorama_session_props =
         CameraNapiUtils::GetPropertyDescriptor(descriptors);
@@ -129,4 +129,4 @@ napi_value PanoramaSessionNapi::PanoramaSessionNapiConstructor(napi_env env, nap
 }
 
 } // CameraStandard
-} // OHOS
+} // OHOS

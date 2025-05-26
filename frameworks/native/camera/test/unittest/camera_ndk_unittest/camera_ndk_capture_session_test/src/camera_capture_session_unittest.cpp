@@ -23,6 +23,7 @@
 #include "token_setproc.h"
 #include "nativetoken_kit.h"
 #include "capture_session_impl.h"
+#include "camera/camera.h"
 
 using namespace testing::ext;
 
@@ -3579,6 +3580,107 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_085, Test
     EXPECT_EQ(ret, CAMERA_OK);
 
     EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: IsWhiteBalanceModeSupported
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsWhiteBalanceModeSupported
+ */
+HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_086, TestSize.Level0)
+{
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+
+    bool isSupported = false;
+    ret = OH_CaptureSession_IsWhiteBalanceModeSupported(captureSession, WHITE_BALANCE_MODE_AUTO, &isSupported);
+    MEDIA_INFO_LOG("OH_CaptureSession_IsWhiteBalanceModeSupported isSupported: %{public}d", isSupported);
+    EXPECT_EQ(ret, CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: GetWhiteBalanceMode
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetWhiteBalanceMode
+ */
+HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_087, TestSize.Level0)
+{
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+
+    Camera_WhiteBalanceMode whiteBalanceMode = WHITE_BALANCE_MODE_AUTO;
+    ret = OH_CaptureSession_GetWhiteBalanceMode(captureSession, &whiteBalanceMode);
+    MEDIA_INFO_LOG("OH_CaptureSession_GetWhiteBalanceMode whiteBalanceMode: %{public}d", whiteBalanceMode);
+    EXPECT_EQ(ret, CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: IsAutoDeviceSwitchSupported
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsAutoDeviceSwitchSupported with abnormal branch
+ */
+HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_088, TestSize.Level0)
+{
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+
+    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_VIDEO);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_Input *cameraInput = nullptr;
+    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(cameraInput, nullptr);
+    ret = OH_CameraInput_Open(cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_BeginConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_VideoOutput* videoOutput = CreateVideoOutput();
+    ASSERT_NE(videoOutput, nullptr);
+    ret = OH_CaptureSession_AddVideoOutput(captureSession, videoOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_CommitConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    int32_t min = 0;
+    int32_t max = 0;
+    ret = OH_CaptureSession_GetWhiteBalanceRange(captureSession, &min, &max);
+    EXPECT_EQ(ret, CAMERA_OK);
+    int32_t value = 3000;
+    ret = OH_CaptureSession_SetWhiteBalance(captureSession, value);
+    EXPECT_EQ(ret, CAMERA_OK);
+    value = 0;
+    ret = OH_CaptureSession_GetWhiteBalance(captureSession, &value);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_SetWhiteBalanceMode(captureSession, Camera_WhiteBalanceMode::WHITE_BALANCE_MODE_DAYLIGHT);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_WhiteBalanceMode mode;
+    ret = OH_CaptureSession_GetWhiteBalanceMode(captureSession, &mode);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+
+    ret = OH_VideoOutput_Release(videoOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CameraInput_Release(cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_Release(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
 }
 
 } // CameraStandard

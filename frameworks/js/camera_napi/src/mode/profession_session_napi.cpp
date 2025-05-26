@@ -96,10 +96,8 @@ napi_value ProfessionSessionNapi::Init(napi_env env, napi_value exports)
     std::vector<std::vector<napi_property_descriptor>> descriptors = {
         CameraSessionNapi::camera_process_props, CameraSessionNapi::zoom_props,
         CameraSessionNapi::color_effect_props, CameraSessionNapi::flash_props,
-        CameraSessionNapi::auto_wb_props, CameraSessionNapi::manual_wb_props,
         CameraSessionNapi::focus_props, ProfessionSessionNapi::manual_iso_props,
-        ProfessionSessionNapi::auto_wb_props, ProfessionSessionNapi::manual_wb_props,
-        ProfessionSessionNapi::pro_session_props, aperture_props,
+        ProfessionSessionNapi::white_balance_props, pro_session_props, aperture_props,
         manual_exposure_props, pro_manual_focus_props };
     std::vector<napi_property_descriptor> professional_session_props =
         CameraNapiUtils::GetPropertyDescriptor(descriptors);
