@@ -16,6 +16,7 @@
 #include "capture_session_unittest.h"
 #include "gtest/gtest.h"
 #include <cstdint>
+#include <memory>
 #include <vector>
 #include "access_token.h"
 #include "accesstoken_kit.h"
@@ -5009,6 +5010,24 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_027, TestSize
     EXPECT_EQ(CAMERA_OK, videoOutput->Release());
     EXPECT_EQ(CAMERA_OK, input->Close());
     EXPECT_EQ(CAMERA_OK, session->Release());
+}
+
+/*
+ * Feature: Framework
+ * Function: Test PressureStatusCallback with Constructor and Destructors.
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test Constructor and Destructors for just call.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_028, TestSize.Level0)
+{
+    std::shared_ptr<PressureStatusCallback> pressureStatusCallback = std::make_shared<PressureStatusCallback>();
+    EXPECT_EQ(pressureStatusCallback->captureSession_, nullptr);
+    std::shared_ptr<PressureStatusCallback> pressureStatusCallback2 =
+        std::make_shared<PressureStatusCallback>(nullptr);
+    EXPECT_EQ(pressureStatusCallback2->captureSession_, nullptr);
 }
 
 /*

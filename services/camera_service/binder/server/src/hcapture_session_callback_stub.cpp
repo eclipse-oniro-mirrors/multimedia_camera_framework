@@ -15,6 +15,7 @@
 
 #include "hcapture_session_callback_stub.h"
 #include "camera_log.h"
+#include "icapture_session_callback.h"
 #include "camera_service_ipc_interface_code.h"
 
 namespace OHOS {
@@ -37,10 +38,34 @@ int HCaptureSessionCallbackStub::OnRemoteRequest(
     return errCode;
 }
 
+int HPressureStatusCallbackStub::OnRemoteRequest(
+    uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option)
+{
+    MEDIA_INFO_LOG("HPressureStatusCallbackStub::OnRemoteRequest");
+    int errCode = -1;
+    CHECK_ERROR_RETURN_RET(data.ReadInterfaceToken() != GetDescriptor(), errCode);
+    switch (code) {
+        case static_cast<uint32_t>(CaptureSessionCallbackInterfaceCode::CAMERA_CAPTURE_SESSINO_PRESSURE_CALLBACK):
+            errCode = HPressureStatusCallbackStub::HandlePressureStatusChange(data);
+            break;
+        default:
+            MEDIA_ERR_LOG("HCaptureSessionCallbackStub request code %{public}d not handled", code);
+            errCode = IPCObjectStub::OnRemoteRequest(code, data, reply, option);
+            break;
+    }
+    return errCode;
+}
+
 int HCaptureSessionCallbackStub::HandleSessionOnError(MessageParcel& data)
 {
     int32_t errorCode = data.ReadInt32();
     return OnError(errorCode);
+}
+
+int HPressureStatusCallbackStub::HandlePressureStatusChange(MessageParcel& data)
+{
+    int32_t statues = data.ReadInt32();
+    return OnPressureStatusChanged((PressureStatus)statues);
 }
 } // namespace CameraStandard
 } // namespace OHOS

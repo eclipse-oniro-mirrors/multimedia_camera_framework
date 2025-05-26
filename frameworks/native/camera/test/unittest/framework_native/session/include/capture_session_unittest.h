@@ -20,6 +20,7 @@
 #include "capture_session.h"
 #include "camera_manager.h"
 #include "camera_log.h"
+#include "icapture_session_callback.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -57,6 +58,14 @@ public:
     void OnMacroStatusChanged(MacroStatus status)
     {
         MEDIA_DEBUG_LOG("AppMacroStatusCallback");
+    }
+};
+
+class AppPressureStatusCallback : public PressureCallback {
+public:
+    void OnPressureStatusChanged(PressureStatus status)
+    {
+        MEDIA_DEBUG_LOG("AppPressureStatusCallback");
     }
 };
 

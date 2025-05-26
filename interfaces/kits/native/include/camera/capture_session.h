@@ -105,6 +105,16 @@ typedef void (*OH_CaptureSession_OnAutoDeviceSwitchStatusChange)(Camera_CaptureS
     Camera_AutoDeviceSwitchStatusInfo* autoDeviceSwitchStatusInfo);
 
 /**
+ * @brief Capture session system pressure level callback.
+ *
+ * @param session the {@link Camera_CaptureSession} which deliver the callback.
+ * @param systemPressureLevel the {@link Camera_SystemPressureLevel} which delivered by the callback.
+ * @since 20
+ */
+typedef void (*OH_CaptureSession_OnSystemPressureLevel)(Camera_CaptureSession* session,
+    Camera_SystemPressureLevel* systemPressureLevel);
+
+/**
  * @brief A listener for capture session.
  *
  * @see OH_CaptureSession_RegisterCallback
@@ -928,6 +938,30 @@ Camera_ErrorCode OH_CaptureSession_EnableAutoDeviceSwitch(Camera_CaptureSession*
  */
 Camera_ErrorCode OH_CaptureSession_SetQualityPrioritization(
     Camera_CaptureSession* session, Camera_QualityPrioritization qualityPrioritization);
+
+/**
+ * @brief Register system pressure level callback.
+ *
+ * @param session the {@link Camera_CaptureSession} instance.
+ * @param systemPressureLevel the {@link OH_CaptureSession_OnSystemPressureLevel} to be registered.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ * @since 20
+ */
+Camera_ErrorCode OH_CaptureSession_RegisterSystemPressureLevelCallback(Camera_CaptureSession* session,
+    OH_CaptureSession_OnSystemPressureLevel systemPressureLevel);
+
+/**
+ * @brief Unregister system pressure level callback.
+ *
+ * @param session the {@link Camera_CaptureSession} instance.
+ * @param systemPressureLevel the {@link OH_CaptureSession_OnSystemPressureLevel} to be unregistered.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ * @since 20
+ */
+Camera_ErrorCode OH_CaptureSession_UnregisterSystemPressureLevelCallback(Camera_CaptureSession* session,
+    OH_CaptureSession_OnSystemPressureLevel systemPressureLevel);
 
 /**
  * @brief Check whether macro ability is supported.

@@ -21,11 +21,13 @@
 #include <parameter.h>
 #include <parameters.h>
 #include <securec.h>
+#include <stdint.h>
 #include <string>
 #include <unordered_set>
 #include <vector>
 
 #include "access_token.h"
+#include "icapture_session_callback.h"
 #ifdef NOTIFICATION_ENABLE
 #include "camera_beauty_notification.h"
 #endif
@@ -222,6 +224,35 @@ void HCameraService::OnReceiveEvent(const EventFwk::CommonEventData &data)
         MEDIA_DEBUG_LOG("HCameraService::OnReceiveEvent rssMultiWindowStatus is %{public}d", rssMultiWindowStatus);
         cameraHostManager_->NotifyDeviceStateChangeInfo(DeviceType::RSS_MULTI_WINDOW_TYPE, rssMultiWindowStatus);
     }
+    if (action == EventFwk::CommonEventSupport::COMMON_EVENT_THERMAL_LEVEL_CHANGED) {
+        int32_t temperLevel = data.GetWant().GetIntParam("0", -1);
+        MEDIA_INFO_LOG("On receive thermal %{public}d ", temperLevel);
+ 
+        sptr<HCaptureSession> captureSession_ = nullptr;
+        auto &sessionManager = HCameraSessionManager::GetInstance();
+        captureSession_ = sessionManager.GetGroupDefaultSession(pressurePid_);
+        CHECK_ERROR_RETURN_LOG(captureSession_ == nullptr, "captureSession is null");
+        captureSession_->SetPressureStatus(TransferTemperToPressure(temperLevel));
+    }
+}
+
+PressureStatus HCameraService::TransferTemperToPressure(int32_t temperLevel) {
+    switch (temperLevel) {
+        case 0:
+        case 1:
+            return PressureStatus::SYSTEM_PRESSURE_NORMAL;
+        case 2:
+            return PressureStatus::SYSTEM_PRESSURE_MILD;
+        case 3:
+        case 4:
+            return PressureStatus::SYSTEM_PRESSURE_SEVERE;
+        case 5:
+        case 6:
+            return PressureStatus::SYSTEM_PRESSURE_CRITICAL;
+        case 7:
+            return PressureStatus::SYSTEM_PRESSURE_SHUTDOWN;
+    }
+    return PressureStatus::SYSTEM_PRESSURE_NORMAL;
 }
 
 #ifdef NOTIFICATION_ENABLE
@@ -302,6 +333,9 @@ void HCameraService::OnAddSystemAbility(int32_t systemAbilityId, const std::stri
             CameraCommonEventManager::GetInstance()->SubscribeCommonEvent(COMMON_EVENT_SCREEN_LOCKED,
                 std::bind(&HCameraService::OnReceiveEvent, this, std::placeholders::_1));
             CameraCommonEventManager::GetInstance()->SubscribeCommonEvent(COMMON_EVENT_SCREEN_UNLOCKED,
+                std::bind(&HCameraService::OnReceiveEvent, this, std::placeholders::_1));
+            CameraCommonEventManager::GetInstance()->SubscribeCommonEvent(
+                EventFwk::CommonEventSupport::COMMON_EVENT_THERMAL_LEVEL_CHANGED,
                 std::bind(&HCameraService::OnReceiveEvent, this, std::placeholders::_1));
             CameraCommonEventManager::GetInstance()->SubscribeCommonEvent(COMMON_EVENT_RSS_MULTI_WINDOW_TYPE,
                 std::bind(&HCameraService::OnReceiveEvent, this, std::placeholders::_1));
@@ -543,6 +577,7 @@ int32_t HCameraService::CreateCaptureSession(sptr<ICaptureSession>& session, int
             "HCameraService::CreateCaptureSession", rc, false, CameraReportUtils::GetCallerInfo());
         return rc;
     }
+    pressurePid_ = IPCSkeleton::GetCallingPid();
     captureSession->SetCameraRotateStrategyInfos(CameraRoateParamManager::GetInstance().GetCameraRotateStrategyInfos());
     session = captureSession;
 

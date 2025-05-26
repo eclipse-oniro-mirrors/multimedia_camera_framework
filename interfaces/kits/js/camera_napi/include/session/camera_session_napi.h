@@ -25,6 +25,7 @@
 #include "ability/camera_ability_napi.h"
 #include "camera_napi_utils.h"
 #include "capture_scene_const.h"
+#include "icapture_session_callback.h"
 #include "input/camera_device.h"
 #include "input/camera_input_napi.h"
 #include "input/camera_manager.h"
@@ -160,11 +161,30 @@ private:
     void OnErrorCallbackAsync(int32_t errorCode) const;
 };
 
+class PressureCallbackListener : public PressureCallback, public ListenerBase,
+    public std::enable_shared_from_this<PressureCallbackListener> {
+public:
+    PressureCallbackListener(napi_env env) : ListenerBase(env) {}
+    ~PressureCallbackListener() = default;
+    void OnPressureStatusChanged(PressureStatus status) override;
+
+private:
+    void OnPressureCallback(PressureStatus status) const;
+    void OnPressureCallbackAsync(PressureStatus status) const;
+};
+
 struct SessionCallbackInfo {
     int32_t errorCode_;
     weak_ptr<const SessionCallbackListener> listener_;
     SessionCallbackInfo(int32_t errorCode, shared_ptr<const SessionCallbackListener> listener)
         : errorCode_(errorCode), listener_(listener) {}
+};
+
+struct PressureCallbackInfo {
+    PressureStatus status_;
+    weak_ptr<const PressureCallbackListener> listener_;
+    PressureCallbackInfo(PressureStatus status, shared_ptr<const PressureCallbackListener> listener)
+        : status_(status), listener_(listener) {}
 };
 
 class SmoothZoomCallbackListener : public SmoothZoomCallback, public ListenerBase,
@@ -409,6 +429,7 @@ public:
     sptr<CaptureSession> cameraSession_;
     std::shared_ptr<FocusCallbackListener> focusCallback_;
     std::shared_ptr<SessionCallbackListener> sessionCallback_;
+    std::shared_ptr<PressureCallbackListener> pressureCallback_;
     std::shared_ptr<ExposureCallbackListener> exposureCallback_;
     std::shared_ptr<MacroStatusCallbackListener> macroStatusCallback_;
     std::shared_ptr<MoonCaptureBoostCallbackListener> moonCaptureBoostCallback_;
@@ -538,6 +559,10 @@ protected:
     virtual void RegisterFocusTrackingInfoCallbackListener(const std::string& eventName,
         napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
     virtual void UnregisterFocusTrackingInfoCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    virtual void RegisterPressureStatusCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    virtual void UnregisterPressureStatusCallbackListener(const std::string& eventName,
         napi_env env, napi_value callback, const std::vector<napi_value>& args);
 };
 

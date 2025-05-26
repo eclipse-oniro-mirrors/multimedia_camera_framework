@@ -190,6 +190,18 @@ public:
     virtual void OnError(int32_t errorCode) = 0;
 };
 
+class PressureCallback {
+public:
+    PressureCallback() = default;
+    virtual ~PressureCallback() = default;
+    /**
+     * @brief Called when pressure status changed during capture session callback.
+     *
+     * @param status Indicates the pressure status.
+     */
+    virtual void OnPressureStatusChanged(PressureStatus status) = 0;
+};
+
 class ExposureCallback {
 public:
     enum ExposureState {
@@ -283,6 +295,21 @@ public:
     }
 
     int32_t OnError(int32_t errorCode) override;
+};
+
+class PressureStatusCallback : public HPressureStatusCallbackStub {
+public:
+    CaptureSession* captureSession_ = nullptr;
+    PressureStatusCallback() : captureSession_(nullptr) {}
+
+    explicit PressureStatusCallback(CaptureSession* captureSession) : captureSession_(captureSession) {}
+
+    ~PressureStatusCallback()
+    {
+        captureSession_ = nullptr;
+    }
+
+    int32_t OnPressureStatusChanged(PressureStatus status) override;
 };
 
 class SmoothZoomCallback {
@@ -467,11 +494,25 @@ public:
     void SetCallback(std::shared_ptr<SessionCallback> callback);
 
     /**
+     * @brief Set the pressure callback for the capture session.
+     *
+     * @param PressureCallback pointer to be triggered.
+     */
+    void SetPressureCallback(std::shared_ptr<PressureCallback>);
+
+    /**
      * @brief Get the application callback information.
      *
      * @return Returns the pointer to SessionCallback set by application.
      */
     std::shared_ptr<SessionCallback> GetApplicationCallback();
+
+    /**
+     * @brief Get the pressure callback information.
+     *
+     * @return Returns the pointer to PressureCallback set by application.
+     */
+    std::shared_ptr<PressureCallback> GetPressureCallback();
 
     /**
      * @brief Get the ExposureCallback.
@@ -1984,7 +2025,9 @@ private:
     std::mutex captureSessionMutex_;
     sptr<ICaptureSession> innerCaptureSession_ = nullptr;
     std::shared_ptr<SessionCallback> appCallback_;
+    std::shared_ptr<PressureCallback> appPressureCallback_;
     sptr<ICaptureSessionCallback> captureSessionCallback_;
+    sptr<IPressureStatusCallback> pressureStatusCallback_;
     std::shared_ptr<ExposureCallback> exposureCallback_;
     std::shared_ptr<FocusCallback> focusCallback_;
     std::shared_ptr<MacroStatusCallback> macroStatusCallback_;

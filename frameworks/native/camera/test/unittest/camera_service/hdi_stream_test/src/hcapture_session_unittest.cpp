@@ -21,6 +21,7 @@
 #include "camera_util.h"
 #include "gmock/gmock.h"
 #include "hap_token_info.h"
+#include "icapture_session_callback.h"
 #include "ipc_skeleton.h"
 #include "metadata_utils.h"
 #include "nativetoken_kit.h"
@@ -118,6 +119,12 @@ class MockHCaptureSessionCallbackStub : public HCaptureSessionCallbackStub {
 public:
     MOCK_METHOD1(OnError, int32_t(int32_t errorCode));
     ~MockHCaptureSessionCallbackStub() {}
+};
+
+class MockHPressureStatusCallbackStub : public HPressureStatusCallbackStub {
+public:
+    MOCK_METHOD1(OnPressureStatusChanged,int32_t(PressureStatus status));
+    ~MockHPressureStatusCallbackStub() {}
 };
 /*
  * Feature: HCaptureSession
@@ -1721,6 +1728,9 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_032, TestSize.Level
     sptr<ICaptureSessionCallback> callback1 = nullptr;
     camSession->SetCallback(callback1);
 
+    sptr<IPressureStatusCallback> pressureCallback = nullptr;
+    camSession->SetPressureCallback(pressureCallback);
+
     CameraInfoDumper infoDumper(0);
     camSession->DumpSessionInfo(infoDumper);
     camSession->DumpSessions(infoDumper);
@@ -2357,6 +2367,29 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_052, TestSize.Level
 
     EXPECT_EQ(device->Close(), CAMERA_OK);
     EXPECT_EQ(session->Release(), CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test HCaptureSessionCallbackStub with OnRemoteRequest
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OnRemoteRequest for switch of CAMERA_CAPTURE_SESSION_ON_ERROR
+ */
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_053, TestSize.Level0)
+{
+    MockHPressureStatusCallbackStub stub;
+    MessageParcel data;
+    data.WriteInterfaceToken(stub.GetDescriptor());
+    data.RewindRead(0);
+    MessageParcel reply;
+    MessageOption option;
+    uint32_t code = CaptureSessionCallbackInterfaceCode::CAMERA_CAPTURE_SESSINO_PRESSURE_CALLBACK;
+    EXPECT_CALL(stub, OnPressureStatusChanged(_))
+        .WillOnce(Return(0));
+    int errCode = stub.OnRemoteRequest(code, data, reply, option);
+    EXPECT_EQ(errCode, 0);
 }
 
 } // namespace CameraStandard

@@ -16,6 +16,8 @@
 #include "hcapture_session_proxy.h"
 #include "camera_log.h"
 #include "camera_service_ipc_interface_code.h"
+#include <cstdint>
+#include <stdint.h>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -209,6 +211,22 @@ int32_t HCaptureSessionProxy::SetCallback(sptr<ICaptureSessionCallback> &callbac
     return error;
 }
 
+int32_t HCaptureSessionProxy::SetPressureCallback(sptr<IPressureStatusCallback> &callback) 
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, IPC_PROXY_ERR,
+        "HCaptureSessionProxy SetPressureCallback callback is null");
+
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteRemoteObject(callback->AsObject());
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_SET_PRESSURE_CALLBACK), data, reply, option);
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HCaptureSessionProxy SetPressureCallback failed, error: %{public}d", error);
+    return error;
+}
+
 int32_t HCaptureSessionProxy::UnSetCallback()
 {
     MessageParcel data;
@@ -219,6 +237,21 @@ int32_t HCaptureSessionProxy::UnSetCallback()
         static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_UNSET_CALLBACK), data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HCaptureSessionProxy UnSetCallback failed, error: %{public}d", error);
+    }
+    return error;
+}
+
+int32_t HCaptureSessionProxy::UnSetPressureCallback()
+{
+    MEDIA_INFO_LOG("UnSetPressureCallback");
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    data.WriteInterfaceToken(GetDescriptor());
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_UNSET_PRESSURE_CALLBACK), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HCaptureSessionProxy UnSetPressureCallback failed, error: %{public}d", error);
     }
     return error;
 }

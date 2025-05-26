@@ -38,6 +38,7 @@ private:
     int32_t HandleRemoveOutput(MessageParcel& data);
     int32_t HandleSaveRestoreParam(MessageParcel& data);
     int32_t HandleSetCallback(MessageParcel& data);
+    int32_t HandleSetPressureCallback(MessageParcel& data);
     int32_t HandleGetSessionState(MessageParcel& reply);
     int32_t HandleGetActiveColorSpace(MessageParcel& reply);
     int32_t HandleSetColorSpace(MessageParcel& data);

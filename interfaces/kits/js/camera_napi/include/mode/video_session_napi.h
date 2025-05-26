@@ -36,6 +36,11 @@ public:
     napi_env env_;
     sptr<VideoSession> videoSession_;
     static thread_local napi_ref sConstructor_;
+protected:
+    void RegisterPressureStatusCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce) override;
+    void UnregisterPressureStatusCallbackListener(
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
 };
 }
 }

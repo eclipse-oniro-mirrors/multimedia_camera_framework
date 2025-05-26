@@ -15,6 +15,7 @@
 
 #include "hcapture_session_callback_proxy.h"
 #include "camera_log.h"
+#include "icapture_session_callback.h"
 #include "camera_service_ipc_interface_code.h"
 
 namespace OHOS {
@@ -35,6 +36,27 @@ int32_t HCaptureSessionCallbackProxy::OnError(int32_t errorCode)
         static_cast<uint32_t>(CaptureSessionCallbackInterfaceCode::CAMERA_CAPTURE_SESSION_ON_ERROR),
         data, reply, option);
     CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HCaptureSessionCallbackProxy OnError failed, error: %{public}d", error);
+    return error;
+}
+
+HPressureStatusCallbackProxy::HPressureStatusCallbackProxy(const sptr<IRemoteObject> &impl)
+    : IRemoteProxy<IPressureStatusCallback>(impl) { }
+
+int32_t HPressureStatusCallbackProxy::OnPressureStatusChanged(PressureStatus status)
+{
+    MEDIA_INFO_LOG("HPressureStatusCallbackProxy::OnPressureStatusChanged");
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    option.SetFlags(option.TF_ASYNC);
+
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteInt32(status);
+
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CaptureSessionCallbackInterfaceCode::CAMERA_CAPTURE_SESSINO_PRESSURE_CALLBACK),
+        data, reply, option);
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HCaptureSessionCallbackProxy OnPressureStatusChanged failed, error: %{public}d", error);
     return error;
 }
 } // namespace CameraStandard

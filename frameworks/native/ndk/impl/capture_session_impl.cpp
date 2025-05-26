@@ -18,6 +18,8 @@
 #include "camera_log.h"
 #include "camera_util.h"
 #include "capture_scene_const.h"
+#include "capture_session.h"
+#include "icapture_session_callback.h"
 
 using namespace std;
 using namespace OHOS;
@@ -142,6 +144,27 @@ public:
 private:
     Camera_CaptureSession* captureSession_;
     OH_CaptureSession_OnAutoDeviceSwitchStatusChange autoDeviceSwitchStatusCallback_ = nullptr;
+};
+
+class InnerPressureStatusCallback : public PressureCallback {
+public:
+    InnerPressureStatusCallback(Camera_CaptureSession* captureSession,
+    OH_CaptureSession_OnSystemPressureLevel systemPressureLevel)
+    : captureSession_(captureSession), systemPressureLevel_(*systemPressureLevel) {};
+    ~InnerPressureStatusCallback() = default;
+
+    void OnPressureStatusChanged(PressureStatus status) override
+    {
+        MEDIA_INFO_LOG("OnPressureStatusChanged is called!");
+        if (captureSession_ != nullptr && systemPressureLevel_ != nullptr) {
+            Camera_SystemPressureLevel level = (Camera_SystemPressureLevel)status;
+            systemPressureLevel_(captureSession_, &level);
+        }
+    }
+
+private:
+    Camera_CaptureSession* captureSession_;
+    OH_CaptureSession_OnSystemPressureLevel systemPressureLevel_ = nullptr;
 };
 
 bool IsCurrentModeInList(OHOS::sptr<CaptureSession> innerCaptureSession, const std::vector<SceneMode> modes)
@@ -788,6 +811,31 @@ Camera_ErrorCode Camera_CaptureSession::UnregisterAutoDeviceSwitchStatusCallback
     OH_CaptureSession_OnAutoDeviceSwitchStatusChange autoDeviceSwitchStatusChange)
 {
     innerCaptureSession_->SetAutoDeviceSwitchCallback(nullptr);
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_CaptureSession::RegisterSystemPressureLevelCallback(
+    OH_CaptureSession_OnSystemPressureLevel systemPressureLevel)
+{
+    MEDIA_INFO_LOG("Camera_CaptureSession::RegisterSystemPressureLevelCallback");
+    shared_ptr<InnerPressureStatusCallback> innerPressureStatusCallback =
+        make_shared<InnerPressureStatusCallback>(this, systemPressureLevel);
+    CHECK_ERROR_RETURN_RET_LOG(innerPressureStatusCallback == nullptr, CAMERA_SERVICE_FATAL_ERROR,
+        "create innerCallback failed!");
+    SceneMode currentMode = innerCaptureSession_->GetMode();
+    if (currentMode != SceneMode::CAPTURE && currentMode != SceneMode::VIDEO) {
+        MEDIA_ERR_LOG("SystemPressureLevelCallback do not support current session: %{public}d", currentMode);
+        return CAMERA_INVALID_ARGUMENT;
+    }
+    innerCaptureSession_->SetPressureCallback(innerPressureStatusCallback);
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_CaptureSession::UnRegisterSystemPressureLevelCallback(
+    OH_CaptureSession_OnSystemPressureLevel systemPressureLevel)
+{
+    MEDIA_INFO_LOG("Camera_CaptureSession::UnregisterSystemPressureLevelCallback");
+    innerCaptureSession_->SetPressureCallback(nullptr);
     return CAMERA_OK;
 }
 

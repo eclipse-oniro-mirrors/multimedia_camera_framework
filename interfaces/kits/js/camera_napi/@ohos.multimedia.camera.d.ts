@@ -123,6 +123,55 @@ function getCameraManager(context: Context): CameraManager;
   }
 
   /**
+   * Enum for the system pressure level.
+   *
+   * @enum { number }
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @since 20
+   */
+    enum SystemPressureLevel {
+      /**
+       * System pressure normal.
+       *
+       * @syscap SystemCapability.Multimedia.Camera.Core
+       * @since 20
+       */
+      SYSTEM_PRESSURE_NORMAL = 0,
+   
+      /**
+       * System pressure mild.
+       *
+       * @syscap SystemCapability.Multimedia.Camera.Core
+       * @since 20
+       */
+      SYSTEM_PRESSURE_MILD = 1,
+   
+      /**
+       * System pressure severe.
+       *
+       * @syscap SystemCapability.Multimedia.Camera.Core
+       * @since 20
+       */
+      SYSTEM_PRESSURE_SEVERE = 2,
+   
+      /**
+       * System pressure critical.
+       *
+       * @syscap SystemCapability.Multimedia.Camera.Core
+       * @since 20
+       */
+      SYSTEM_PRESSURE_CRITICAL = 3,
+   
+      /**
+       * System pressure shutdown.
+       *
+       * @syscap SystemCapability.Multimedia.Camera.Core
+       * @since 20
+       */
+      SYSTEM_PRESSURE_SHUTDOWN = 4
+    }
+
+  /**
    * Profile for camera streams.
    *
    * @typedef Profile
@@ -4943,6 +4992,26 @@ function getCameraManager(context: Context): CameraManager;
     off(type: 'macroStatusChanged', callback?: AsyncCallback<boolean>): void;
 
     /**
+     * Subscribes to system pressure level callback.
+     *
+     * @param { 'systemPressureLevel' } type - Event type.
+     * @param { AsyncCallback<SystemPressureLevel> } callback - Callback used to return the result.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 20
+     */
+    on(type: 'systemPressureLevel', callback: AsyncCallback<SystemPressureLevel>): void;
+ 
+    /**
+     * Unsubscribes to system pressure level callback.
+     *
+     * @param { 'systemPressureLevel' } type - Event type.
+     * @param { AsyncCallback<SystemPressureLevel> } callback - Callback used to return the result.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 20
+     */
+    off(type: 'systemPressureLevel', callback?: AsyncCallback<SystemPressureLevel>): void;
+
+    /**
      * Subscribes to feature detection results.
      *
      * @param { 'featureDetection' } type - Event type.
@@ -5197,6 +5266,26 @@ function getCameraManager(context: Context): CameraManager;
      * @since 11
      */
     off(type: 'macroStatusChanged', callback?: AsyncCallback<boolean>): void;
+
+    /**
+     * Subscribes to system pressure level callback.
+     *
+     * @param { 'systemPressureLevel' } type - Event type.
+     * @param { AsyncCallback<SystemPressureLevel> } callback - Callback used to return the result.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 20
+     */
+    on(type: 'systemPressureLevel', callback: AsyncCallback<SystemPressureLevel>): void;
+ 
+    /**
+     * Unsubscribes to system pressure level callback.
+     *
+     * @param { 'systemPressureLevel' } type - Event type.
+     * @param { AsyncCallback<SystemPressureLevel> } callback - Callback used to return the result.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 20
+     */
+    off(type: 'systemPressureLevel', callback?: AsyncCallback<SystemPressureLevel>): void;   
 
     /**
      * Subscribes to lcd flash status.

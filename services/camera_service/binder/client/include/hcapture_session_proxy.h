@@ -50,7 +50,11 @@ public:
 
     int32_t SetCallback(sptr<ICaptureSessionCallback> &callback) override;
 
+    int32_t SetPressureCallback(sptr<IPressureStatusCallback> &callback) override;
+
     int32_t UnSetCallback() override;
+
+    int32_t UnSetPressureCallback() override;
 
     int32_t GetSessionState(CaptureSessionState &sessionState) override;
 

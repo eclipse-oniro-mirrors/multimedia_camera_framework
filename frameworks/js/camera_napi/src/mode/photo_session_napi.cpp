@@ -119,5 +119,28 @@ napi_value PhotoSessionNapi::PhotoSessionNapiConstructor(napi_env env, napi_call
     MEDIA_ERR_LOG("PhotoSessionNapi call Failed!");
     return result;
 }
+
+void PhotoSessionNapi::RegisterPressureStatusCallbackListener(
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+{
+    MEDIA_INFO_LOG("PhotoSessionNapi::RegisterPressureStatusCallbackListener");
+    if (pressureCallback_ == nullptr) {
+        pressureCallback_ = std::make_shared<PressureCallbackListener>(env);
+        cameraSession_->SetPressureCallback(pressureCallback_);
+    }
+    pressureCallback_->SaveCallbackReference(eventName, callback, isOnce);
+}
+
+void PhotoSessionNapi::UnregisterPressureStatusCallbackListener(
+    const std::string &eventName, napi_env env, napi_value callback, const std::vector<napi_value> &args)
+{
+    MEDIA_INFO_LOG("PhotoSessionNapi::UnregisterPressureStatusCallbackListener");
+    if (pressureCallback_ == nullptr) {
+        MEDIA_INFO_LOG("pressureCallback is null");
+        return;
+    }
+    pressureCallback_->RemoveCallbackRef(eventName, callback);
+}
+
 } // namespace CameraStandard
 } // namespace OHOS

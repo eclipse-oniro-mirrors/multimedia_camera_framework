@@ -14,6 +14,7 @@
  */
 
 #include "camera_common.h"
+#include "camera/capture_session.h"
 #include "camera_log.h"
 #include "test_common.h"
 #include "ipc_skeleton.h"
@@ -316,6 +317,12 @@ void CameraNdkCommon::CameraCaptureSessionOnSmoothZoomInfoCb(Camera_CaptureSessi
 
 void CameraNdkCommon::CameraCaptureSessionAutoDeviceSwitchStatusCb(Camera_CaptureSession* session,
     Camera_AutoDeviceSwitchStatusInfo* autoDeviceSwitchStatusInfo)
+{
+    MEDIA_DEBUG_LOG("fun:%s", __FUNCTION__);
+}
+
+void CameraNdkCommon::CameraCaptureSessionSystemPressureLevelCb(Camera_CaptureSession* session,
+    Camera_SystemPressureLevel* pressureLevel)
 {
     MEDIA_DEBUG_LOG("fun:%s", __FUNCTION__);
 }

@@ -23,6 +23,7 @@
 #include <vector>
 
 #include "camera_error_code.h"
+#include "camera_log.h"
 #include "camera_napi_const.h"
 #include "camera_napi_param_parser.h"
 #include "camera_napi_security_utils.h"
@@ -31,6 +32,7 @@
 #include "camera_output_capability.h"
 #include "capture_scene_const.h"
 #include "capture_session.h"
+#include "icapture_session_callback.h"
 #include "js_native_api.h"
 #include "js_native_api_types.h"
 #include "listener_base.h"
@@ -536,6 +538,46 @@ void SessionCallbackListener::OnError(int32_t errorCode)
 {
     MEDIA_DEBUG_LOG("OnError is called, errorCode: %{public}d", errorCode);
     OnErrorCallbackAsync(errorCode);
+}
+
+void PressureCallbackListener::OnPressureCallbackAsync(PressureStatus status) const
+{
+    MEDIA_INFO_LOG("OnPressureCallbackAsync is called");
+    std::unique_ptr<PressureCallbackInfo> callbackInfo =
+        std::make_unique<PressureCallbackInfo>(status, shared_from_this());
+    PressureCallbackInfo *event = callbackInfo.get();
+    auto task = [event]() {
+        PressureCallbackInfo* callbackInfo = reinterpret_cast<PressureCallbackInfo *>(event);
+        if (callbackInfo) {
+            auto listener = callbackInfo->listener_.lock();
+            if (listener != nullptr) {
+                listener->OnPressureCallback(callbackInfo->status_);
+            }
+            delete callbackInfo;
+        }
+    };
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
+        MEDIA_ERR_LOG("failed to execute work");
+    } else {
+        callbackInfo.release();
+    }
+}
+
+void PressureCallbackListener::OnPressureCallback(PressureStatus status) const
+{
+    MEDIA_INFO_LOG("OnPressureCallback is called   %{public}d ", status);
+    napi_value result[ARGS_TWO] = {nullptr, nullptr};
+    napi_value retVal;
+    napi_get_undefined(env_, &result[PARAM0]);
+    napi_create_int32(env_, status, &result[PARAM1]);
+    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
+    ExecuteCallback("systemPressureLevel", callbackNapiPara);
+}
+
+void PressureCallbackListener::OnPressureStatusChanged(PressureStatus status)
+{
+    MEDIA_INFO_LOG("OnPressureStatusChanged is called, status: %{public}d", status);
+    OnPressureCallbackAsync(status);
 }
 
 void SmoothZoomCallbackListener::OnSmoothZoomCallbackAsync(int32_t duration) const
@@ -4433,6 +4475,9 @@ const CameraSessionNapi::EmitterFunctions CameraSessionNapi::fun_map_ = {
     { "macroStatusChanged", {
         &CameraSessionNapi::RegisterMacroStatusCallbackListener,
         &CameraSessionNapi::UnregisterMacroStatusCallbackListener } },
+    { "systemPressureLevel", {
+        &CameraSessionNapi::RegisterPressureStatusCallbackListener,
+        &CameraSessionNapi::UnregisterPressureStatusCallbackListener } },
     { "moonCaptureBoostStatus", {
         &CameraSessionNapi::RegisterMoonCaptureBoostCallbackListener,
         &CameraSessionNapi::UnregisterMoonCaptureBoostCallbackListener } },
@@ -4593,5 +4638,20 @@ void CameraSessionNapi::UnregisterAutoDeviceSwitchCallbackListener(
     CHECK_ERROR_RETURN_LOG(autoDeviceSwitchCallback_ == nullptr, "autoDeviceSwitchCallback is nullptr.");
     autoDeviceSwitchCallback_->RemoveCallbackRef(eventName, callback);
 }
+
+void CameraSessionNapi::RegisterPressureStatusCallbackListener(
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+{
+    CameraNapiUtils::ThrowError(env, CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "this type callback can not be registered in current session!");
+}
+
+void CameraSessionNapi::UnregisterPressureStatusCallbackListener(
+    const std::string &eventName, napi_env env, napi_value callback, const std::vector<napi_value> &args)
+{
+    CameraNapiUtils::ThrowError(env, CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "this type callback can not be registered in current session!");
+}
+
 } // namespace CameraStandard
 } // namespace OHOS
