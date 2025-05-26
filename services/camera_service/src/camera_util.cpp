@@ -522,5 +522,22 @@ int64_t GetTimestamp()
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch());
     return duration.count();
 }
+
+bool isIntegerRegex(const std::string& input)
+{
+    size_t start = 0;
+    if (input.empty()) {
+        return false;
+    }
+    if (input[0] == '-' && input.size() > 1) {
+        start = 1; // deal negative sign
+    }
+    for (size_t i = start; i < input.size(); ++i) {
+        if (!std::isdigit(input[i])) {
+            return false;
+        }
+    }
+    return true;
+}
 } // namespace CameraStandard
 } // namespace OHOS
