@@ -1927,6 +1927,8 @@ private:
     volatile bool isSetTripodDetectionEnable_ = false;
     volatile bool isSetSecureOutput_ = false;
     std::atomic<bool> isSetLowLightBoostEnable_ = false;
+    std::atomic<bool> isSmoothZooming_  = false;
+    std::atomic<float> targetZoomRatio_  = -1.0;
     static const std::unordered_map<camera_focus_state_t, FocusCallback::FocusState> metaFocusStateMap_;
     static const std::unordered_map<camera_exposure_state_t, ExposureCallback::ExposureState> metaExposureStateMap_;
 
