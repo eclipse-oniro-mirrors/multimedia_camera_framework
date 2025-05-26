@@ -1577,6 +1577,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_066, Test
 {
     cameraManager_->cameraDeviceList_.clear();
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
     std::vector<bool> cameraConcurrentType = {};
     std::vector<std::vector<SceneMode>> modes = {};
     std::vector<std::vector<sptr<CameraOutputCapability>>> outputCapabilities = {};
@@ -1597,6 +1598,8 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_066, Test
         if (isSupported) {
             cameraManager_->GetCameraConcurrentInfos(
                 concurrentCameras, cameraConcurrentType, modes, outputCapabilities);
+            EXPECT_NE(modes.size(), 0);
+            EXPECT_NE(outputCapabilities.size(), 0);
         }
     }
 }
