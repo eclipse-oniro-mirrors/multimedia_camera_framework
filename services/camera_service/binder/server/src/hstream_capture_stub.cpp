@@ -121,6 +121,7 @@ int32_t HStreamCaptureStub::HandleConfirmCapture(MessageParcel &data)
 
 int32_t HStreamCaptureStub::HandleSetThumbnail(MessageParcel &data)
 {
+    CHECK_ERROR_RETURN_RET(!CheckSystemApp(), CAMERA_NO_PERMISSION);
     sptr<IRemoteObject> remoteObj = data.ReadRemoteObject();
     CHECK_ERROR_RETURN_RET_LOG(remoteObj == nullptr, IPC_STUB_INVALID_DATA_ERR,
         "HStreamCaptureStub HandleCreatePhotoOutput BufferProducer is null");
@@ -135,6 +136,7 @@ int32_t HStreamCaptureStub::HandleSetThumbnail(MessageParcel &data)
 
 int32_t HStreamCaptureStub::HandleEnableRawDelivery(MessageParcel &data)
 {
+    CHECK_ERROR_RETURN_RET(!CheckSystemApp(), CAMERA_NO_PERMISSION);
     bool enabled = data.ReadBool();
     int32_t ret = EnableRawDelivery(enabled);
     MEDIA_DEBUG_LOG("HStreamCaptureStub HandleEnableRawDelivery result: %{public}d", ret);
@@ -222,6 +224,7 @@ int32_t HStreamCaptureStub::HandleAcquireBufferToPrepareProxy(MessageParcel& dat
 
 int32_t HStreamCaptureStub::HandleEnableOfflinePhoto(MessageParcel& data)
 {
+    CHECK_ERROR_RETURN_RET(!CheckSystemApp(), CAMERA_NO_PERMISSION);
     bool isEnable = data.ReadBool();
     int32_t ret = EnableOfflinePhoto(isEnable);
     CHECK_ERROR_PRINT_LOG(ret != ERR_NONE,
