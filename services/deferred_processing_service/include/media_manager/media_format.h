@@ -31,6 +31,7 @@ const std::string TIMED_METADATA_VALUE = "com.openharmony.timed_metadata.vid_mak
 const std::string SCALING_FACTOR_KEY = "com.openharmony.scaling_factor";
 const std::string INTERPOLATION_FRAME_PTS_KEY = "com.openharmony.interp_frame_pts";
 const std::string STAGE_VID_KEY = "com.openharmony.stage_vid";
+const std::string STAGE_ENC_PARAM_KEY = "com.openharmony.encParam";
 
 constexpr double DEFAULT_SCALING_FACTOR = -1.0;
 
@@ -64,7 +65,7 @@ struct CodecInfo {
     int32_t width;
     int32_t height;
     int32_t rotation;
-    int32_t bitMode;
+    Media::Plugins::VideoEncodeBitrateMode bitMode;
     bool isHdrvivid;
 };
 

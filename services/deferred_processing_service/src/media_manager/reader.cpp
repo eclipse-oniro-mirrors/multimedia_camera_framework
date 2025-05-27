@@ -15,6 +15,7 @@
 
 #include "reader.h"
 
+#include "dp_utils.h"
 #include "track_factory.h"
 
 namespace OHOS {
@@ -141,8 +142,21 @@ void Reader::GetSourceMediaInfo(std::shared_ptr<MediaInfo>& mediaInfo) const
     CheckAndGetValue(sourceFormat_, Tag::MEDIA_LATITUDE, mediaInfo->latitude);
     CheckAndGetValue(sourceFormat_, Tag::MEDIA_LONGITUDE, mediaInfo->longitude);
     CheckAndGetValue(userFormat_, LIVE_PHOTO_COVERTIME, mediaInfo->livePhotoCovertime);
-    DP_INFO_LOG("MediaInfo creationTime: %{public}s, duration: %{public}" PRId64 ", livePhotoCovertime: %{public}f",
-        mediaInfo->creationTime.c_str(), mediaInfo->codecInfo.duration, mediaInfo->livePhotoCovertime);
+    std::string encParam;
+    CheckAndGetValue(userFormat_, STAGE_ENC_PARAM_KEY, encParam);
+    auto result = ParseKeyValue(encParam);
+    for (const auto& [tag, value] : result) {
+        if (tag == Tag::VIDEO_ENCODE_BITRATE_MODE) {
+            mediaInfo->codecInfo.bitMode = MapVideoBitrateMode(value);
+        } else if (tag == Tag::MEDIA_BITRATE) {
+            int64_t bitRate;
+            DP_CHECK_EXECUTE(StrToI64(value, bitRate), mediaInfo->codecInfo.bitRate = bitRate);
+        }
+    }
+    DP_INFO_LOG("MediaInfo creationTime: %{public}s, duration: %{public}" PRId64 ", livePhotoCovertime: %{public}f, "
+        "bitMode: %{public}d, bitRate: %{public}" PRId64,
+        mediaInfo->creationTime.c_str(), mediaInfo->codecInfo.duration, mediaInfo->livePhotoCovertime,
+        mediaInfo->codecInfo.bitMode, mediaInfo->codecInfo.bitRate);
 }
 
 MediaManagerError Reader::GetTrackMediaInfo(const TrackFormat& trackFormat,
@@ -155,8 +169,8 @@ MediaManagerError Reader::GetTrackMediaInfo(const TrackFormat& trackFormat,
     CheckAndGetValue(format, Tag::VIDEO_WIDTH, mediaInfo->codecInfo.width);
     CheckAndGetValue(format, Tag::VIDEO_HEIGHT, mediaInfo->codecInfo.height);
     CheckAndGetValue(format, Tag::VIDEO_ROTATION, mediaInfo->codecInfo.rotation);
-    CheckAndGetValue(format, Tag::VIDEO_ENCODE_BITRATE_MODE, mediaInfo->codecInfo.bitMode);
-    CheckAndGetValue(format, Tag::MEDIA_BITRATE, mediaInfo->codecInfo.bitRate);
+    DP_CHECK_EXECUTE(mediaInfo->codecInfo.bitRate == 0,
+        CheckAndGetValue(format, Tag::MEDIA_BITRATE, mediaInfo->codecInfo.bitRate));
 
     int32_t intVal {DEFAULT_INT_VAL};
     if (CheckAndGetValue(format, Tag::VIDEO_COLOR_RANGE, intVal)) {
@@ -182,17 +196,32 @@ MediaManagerError Reader::GetTrackMediaInfo(const TrackFormat& trackFormat,
 
     DP_INFO_LOG("TrackMediaInfo colorRange: %{public}d, pixelFormat: %{public}d, colorPrimary: %{public}d, "
         "transfer: %{public}d, profile: %{public}d, level: %{public}d, bitRate: %{public}" PRId64 ", "
-        "fps: %{public}d, rotation: %{public}d, mime: %{public}s, isHdrvivid: %{public}d, bitMode: %{public}d",
+        "fps: %{public}d, rotation: %{public}d, mime: %{public}s, isHdrvivid: %{public}d",
         mediaInfo->codecInfo.colorRange, mediaInfo->codecInfo.pixelFormat, mediaInfo->codecInfo.colorPrimary,
         mediaInfo->codecInfo.colorTransferCharacter, mediaInfo->codecInfo.profile, mediaInfo->codecInfo.level,
         mediaInfo->codecInfo.bitRate, mediaInfo->codecInfo.fps, mediaInfo->codecInfo.rotation,
-        mediaInfo->codecInfo.mimeType.c_str(), mediaInfo->codecInfo.isHdrvivid, mediaInfo->codecInfo.bitMode);
+        mediaInfo->codecInfo.mimeType.c_str(), mediaInfo->codecInfo.isHdrvivid);
     return OK;
 }
 
 inline int32_t Reader::FixFPS(const double fps)
 {
     return fps < static_cast<double>(FPS_30) * FACTOR ? FPS_30 : FPS_60;
+}
+
+Media::Plugins::VideoEncodeBitrateMode Reader::MapVideoBitrateMode(const std::string& modeName) const
+{
+    static const std::unordered_map<std::string, Media::Plugins::VideoEncodeBitrateMode> modeMap = {
+        {"CBR", Media::Plugins::VideoEncodeBitrateMode::CBR},
+        {"VBR", Media::Plugins::VideoEncodeBitrateMode::VBR},
+        {"CQ", Media::Plugins::VideoEncodeBitrateMode::CQ},
+        {"CRF", Media::Plugins::VideoEncodeBitrateMode::CRF},
+        {"SQR", Media::Plugins::VideoEncodeBitrateMode::SQR},
+        {"CBR_VIDEOCALL", Media::Plugins::VideoEncodeBitrateMode::CBR_VIDEOCALL}
+    };
+    auto it = modeMap.find(modeName);
+    DP_CHECK_RETURN_RET(it == modeMap.end(), Media::Plugins::VideoEncodeBitrateMode::CBR);
+    return it->second;
 }
 } // namespace DeferredProcessing
 } // namespace CameraStandard

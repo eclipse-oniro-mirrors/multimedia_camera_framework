@@ -24,7 +24,6 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-using namespace MediaAVCodec;
 class Reader {
 public:
     Reader() = default;
@@ -47,6 +46,7 @@ private:
     MediaManagerError GetTrackMediaInfo(const TrackFormat& trackFormat, std::shared_ptr<MediaInfo>& mediaInfo) const;
     MediaManagerError InitTracksAndDemuxer();
     static int32_t FixFPS(const double fps);
+    Media::Plugins::VideoEncodeBitrateMode MapVideoBitrateMode(const std::string& modeName) const;
 
     template <typename T>
     bool CheckAndGetValue(const std::shared_ptr<Format>& format, const std::string_view& key, T& value) const

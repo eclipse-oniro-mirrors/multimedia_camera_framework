@@ -164,6 +164,7 @@ struct DpsCallerInfo {
 };
 
 DpsCallerInfo GetDpsCallerInfo();
+std::unordered_map<std::string, std::string> ParseKeyValue(const std::string& input);
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS
