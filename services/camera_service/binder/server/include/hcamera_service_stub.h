@@ -25,7 +25,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
-class HCameraRgmProxy : public IRemoteProxy<ICameraBroker> {
+class EXPORT_API HCameraRgmProxy : public IRemoteProxy<ICameraBroker> {
 public:
     explicit HCameraRgmProxy(const sptr<IRemoteObject> &impl);
     ~HCameraRgmProxy() = default;

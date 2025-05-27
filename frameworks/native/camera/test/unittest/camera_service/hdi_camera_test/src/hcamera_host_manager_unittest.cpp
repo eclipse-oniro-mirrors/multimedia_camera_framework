@@ -310,11 +310,11 @@ HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_007, TestSize.Lev
     const std::string cameraId2 = "456";
     const std::string cameraId3 = "789";
     sptr<HCameraRestoreParam> cameraRestoreParam1 = cameraHostManager_->GetRestoreParam(clientName1, cameraId1);
-    cameraRestoreParam1->SetCloseCameraTime({0, 0});
+    cameraRestoreParam1->mCloseCameraTime = {0, 0};
     sptr<HCameraRestoreParam> cameraRestoreParam2 = cameraHostManager_->GetRestoreParam(clientName2, cameraId2);
     timeval closeTime;
     gettimeofday(&closeTime, nullptr);
-    cameraRestoreParam2->SetCloseCameraTime(closeTime);
+    cameraRestoreParam2->mCloseCameraTime = closeTime;
     
     cameraHostManager_->UpdateRestoreParam(cameraRestoreParam1);
     cameraHostManager_->persistentParamMap_.emplace(clientName1,
