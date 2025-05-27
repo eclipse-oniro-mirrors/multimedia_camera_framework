@@ -36,8 +36,8 @@ std::map<SceneFeaturesMode, std::vector<SketchReferenceFovRange>> SketchWrapper:
 std::mutex SketchWrapper::g_sketchEnableRatioMutex_;
 std::map<SceneFeaturesMode, float> SketchWrapper::g_sketchEnableRatioMap_;
 
-SketchWrapper::SketchWrapper(wptr<IStreamCommon> hostStream, const Size size)
-    : hostStream_(hostStream), sketchSize_(size)
+SketchWrapper::SketchWrapper(wptr<IStreamCommon> hostStream, const Size size, bool isDynamicNotify)
+    : hostStream_(hostStream), sketchSize_(size), isDynamicNotify_(isDynamicNotify)
 {}
 
 int32_t SketchWrapper::Init(
@@ -45,14 +45,16 @@ int32_t SketchWrapper::Init(
 {
     sptr<IStreamCommon> hostStream = hostStream_.promote();
     CHECK_ERROR_RETURN_RET(hostStream == nullptr, CAMERA_INVALID_STATE);
-    UpdateSketchStaticInfo(deviceMetadata);
-    sketchEnableRatio_ = GetSketchEnableRatio(sceneFeaturesMode);
+    if (!isDynamicNotify_) {
+        UpdateSketchStaticInfo(deviceMetadata);
+        sketchEnableRatio_ = GetSketchEnableRatio(sceneFeaturesMode);
         SceneFeaturesMode dumpSceneFeaturesMode = sceneFeaturesMode;
         MEDIA_DEBUG_LOG("SketchWrapper::Init sceneFeaturesMode:%{public}s, sketchEnableRatio_:%{public}f",
             dumpSceneFeaturesMode.Dump().c_str(), sketchEnableRatio_);
-        IStreamRepeat* repeatStream = static_cast<IStreamRepeat*>(hostStream.GetRefPtr());
-        return repeatStream->ForkSketchStreamRepeat(
-            sketchSize_.width, sketchSize_.height, sketchStream_, sketchEnableRatio_);
+    }
+    IStreamRepeat* repeatStream = static_cast<IStreamRepeat*>(hostStream.GetRefPtr());
+    return repeatStream->ForkSketchStreamRepeat(
+        sketchSize_.width, sketchSize_.height, sketchStream_, sketchEnableRatio_);
 }
 
 int32_t SketchWrapper::AttachSketchSurface(sptr<Surface> sketchSurface)
@@ -64,6 +66,10 @@ int32_t SketchWrapper::AttachSketchSurface(sptr<Surface> sketchSurface)
 
 int32_t SketchWrapper::UpdateSketchRatio(float sketchRatio)
 {
+    if (isDynamicNotify_) {
+        // Ignore update sketch ratio
+        return CAMERA_OK;
+    }
     // SketchRatio value could be negative value
     MEDIA_DEBUG_LOG("Enter Into SketchWrapper::UpdateSketchRatio");
     CHECK_ERROR_RETURN_RET(sketchStream_ == nullptr, CAMERA_INVALID_STATE);
@@ -126,7 +132,12 @@ void SketchWrapper::OnSketchStatusChanged(const SceneFeaturesMode& sceneFeatures
 {
     auto manager = previewOutputCallbackManager_.promote();
     CHECK_ERROR_RETURN(manager == nullptr);
-    float sketchReferenceRatio = GetSketchReferenceFovRatio(sceneFeaturesMode, currentZoomRatio_);
+    float sketchReferenceRatio = -1.0f;
+    if (isDynamicNotify_) {
+        sketchReferenceRatio = sketchDynamicReferenceRatio_;
+    } else {
+        sketchReferenceRatio = GetSketchReferenceFovRatio(sceneFeaturesMode, currentZoomRatio_);
+    }
     std::lock_guard<std::mutex> lock(sketchStatusChangeMutex_);
     if (currentSketchStatusData_.sketchRatio != sketchReferenceRatio) {
         SketchStatusData statusData;
@@ -146,7 +157,12 @@ void SketchWrapper::OnSketchStatusChanged(SketchStatus sketchStatus, const Scene
 {
     auto manager = previewOutputCallbackManager_.promote();
     CHECK_ERROR_RETURN(manager == nullptr);
-    float sketchReferenceRatio = GetSketchReferenceFovRatio(sceneFeaturesMode, currentZoomRatio_);
+    float sketchReferenceRatio = -1.0f;
+    if (isDynamicNotify_) {
+        sketchReferenceRatio = sketchDynamicReferenceRatio_;
+    } else {
+        sketchReferenceRatio = GetSketchReferenceFovRatio(sceneFeaturesMode, currentZoomRatio_);
+    }
     std::lock_guard<std::mutex> lock(sketchStatusChangeMutex_);
     if (currentSketchStatusData_.status != sketchStatus ||
         currentSketchStatusData_.sketchRatio != sketchReferenceRatio) {
@@ -421,18 +437,48 @@ void SketchWrapper::AutoStream()
 int32_t SketchWrapper::OnMetadataDispatch(const SceneFeaturesMode& sceneFeaturesMode,
     const camera_device_metadata_tag_t tag, const camera_metadata_item_t& metadataItem)
 {
-    if (tag == OHOS_CONTROL_ZOOM_RATIO) {
-        MEDIA_DEBUG_LOG("SketchWrapper::OnMetadataDispatch get tag:OHOS_CONTROL_ZOOM_RATIO");
-        return OnMetadataChangedZoomRatio(sceneFeaturesMode, tag, metadataItem);
-    } else if (tag == OHOS_CONTROL_SMOOTH_ZOOM_RATIOS) {
-        MEDIA_DEBUG_LOG("SketchWrapper::OnMetadataDispatch get tag:OHOS_CONTROL_SMOOTH_ZOOM_RATIOS");
-        return OnMetadataChangedZoomRatio(sceneFeaturesMode, tag, metadataItem);
-    } else if (tag == OHOS_CONTROL_CAMERA_MACRO) {
-        return OnMetadataChangedMacro(sceneFeaturesMode, tag, metadataItem);
-    } else if (tag == OHOS_CONTROL_MOON_CAPTURE_BOOST) {
-        return OnMetadataChangedMoonCaptureBoost(sceneFeaturesMode, tag, metadataItem);
+    if (isDynamicNotify_) {
+        if (tag == OHOS_STATUS_SKETCH_STREAM_INFO) {
+            MEDIA_DEBUG_LOG("SketchWrapper::OnMetadataDispatch get tag:OHOS_STATUS_SKETCH_STREAM_INFO");
+            return OnMetadataChangedSketchDynamicNotify(metadataItem);
+        } else {
+            MEDIA_DEBUG_LOG("SketchWrapper::OnMetadataDispatch isDynamicNotify_ get unhandled tag:%{public}d",
+                static_cast<int32_t>(tag));
+        }
     } else {
-        MEDIA_DEBUG_LOG("SketchWrapper::OnMetadataDispatch get unhandled tag:%{public}d", static_cast<int32_t>(tag));
+        if (tag == OHOS_CONTROL_ZOOM_RATIO) {
+            MEDIA_DEBUG_LOG("SketchWrapper::OnMetadataDispatch get tag:OHOS_CONTROL_ZOOM_RATIO");
+            return OnMetadataChangedZoomRatio(sceneFeaturesMode, tag, metadataItem);
+        } else if (tag == OHOS_CONTROL_SMOOTH_ZOOM_RATIOS) {
+            MEDIA_DEBUG_LOG("SketchWrapper::OnMetadataDispatch get tag:OHOS_CONTROL_SMOOTH_ZOOM_RATIOS");
+            return OnMetadataChangedZoomRatio(sceneFeaturesMode, tag, metadataItem);
+        } else if (tag == OHOS_CONTROL_CAMERA_MACRO) {
+            return OnMetadataChangedMacro(sceneFeaturesMode, tag, metadataItem);
+        } else if (tag == OHOS_CONTROL_MOON_CAPTURE_BOOST) {
+            return OnMetadataChangedMoonCaptureBoost(sceneFeaturesMode, tag, metadataItem);
+        } else {
+            MEDIA_DEBUG_LOG(
+                "SketchWrapper::OnMetadataDispatch get unhandled tag:%{public}d", static_cast<int32_t>(tag));
+        }
+    }
+    return CAM_META_SUCCESS;
+}
+
+int32_t SketchWrapper::OnMetadataChangedSketchDynamicNotify(const camera_metadata_item_t& metadataItem)
+{
+    uint32_t dataLen = metadataItem.count;
+    if (dataLen != 2) { // data size is 2 ==> [isNeedStartSketch, sketchZoomRatio]
+        MEDIA_INFO_LOG("SketchWrapper::OnMetadataChangedSketchDynamicNotify recv error data, size:%{public}d", dataLen);
+        return CAM_META_SUCCESS;
+    }
+    auto infoStatus = static_cast<SketchStreamInfoStatus>(metadataItem.data.f[0]);
+    sketchDynamicReferenceRatio_ = metadataItem.data.f[1];
+    MEDIA_DEBUG_LOG("SketchWrapper::OnMetadataChangedSketchDynamicNotify infoStatus:%{public}d ratio:%{public}f",
+        infoStatus, sketchDynamicReferenceRatio_);
+    if (infoStatus == OHOS_CAMERA_SKETCH_STREAM_SUPPORT) {
+        StartSketchStream();
+    } else if (infoStatus == OHOS_CAMERA_SKETCH_STREAM_UNSUPPORT) {
+        StopSketchStream();
     }
     return CAM_META_SUCCESS;
 }
