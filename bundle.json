@@ -172,6 +172,7 @@
             }
           ],
           "test": [
+            "//foundation/multimedia/camera_framework/common/test/unittest:camera_common_utils_test",
             "//foundation/multimedia/camera_framework/frameworks/native/camera/test/moduletest:camera_base_function_moduletest",
             "//foundation/multimedia/camera_framework/frameworks/native/camera/test/moduletest:camera_deferred_photo_moduletest",
             "//foundation/multimedia/camera_framework/frameworks/native/camera/test/moduletest:camera_deferred_video_moduletest",
