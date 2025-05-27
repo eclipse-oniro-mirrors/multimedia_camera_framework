@@ -775,12 +775,12 @@ int32_t HCameraDevice::CloseDevice()
     MEDIA_INFO_LOG("HCameraDevice::CloseDevice start");
     CAMERA_SYNC_TRACE;
     ReleaseSessionBeforeCloseDevice();
+    bool isFoldable = OHOS::Rosen::DisplayManager::GetInstance().IsFoldable();
+    CHECK_EXECUTE(isFoldable, UnregisterFoldStatusListener());
     {
         std::lock_guard<std::mutex> lock(opMutex_);
         CHECK_ERROR_RETURN_RET_LOG(!isOpenedCameraDevice_.load(), CAMERA_OK,
             "HCameraDevice::CloseDevice device has benn closed");
-        bool isFoldable = OHOS::Rosen::DisplayManager::GetInstance().IsFoldable();
-        CHECK_EXECUTE(isFoldable, UnregisterFoldStatusListener());
         if (hdiCameraDevice_ != nullptr) {
             isOpenedCameraDevice_.store(false);
             MEDIA_INFO_LOG("Closing camera device: %{public}s start", cameraID_.c_str());
@@ -1133,6 +1133,7 @@ void HCameraDevice::DebugLogForAeRegions(const std::shared_ptr<OHOS::Camera::Cam
 
 void HCameraDevice::RegisterFoldStatusListener()
 {
+    std::lock_guard<std::mutex> lock(foldStateListenerMutex_);
     listener = new FoldScreenListener(cameraHostManager_, cameraID_);
     if (cameraHostManager_) {
         int foldStatus = static_cast<int>(OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus());
@@ -1152,11 +1153,13 @@ void HCameraDevice::RegisterFoldStatusListener()
 
 void HCameraDevice::UnregisterFoldStatusListener()
 {
+    std::lock_guard<std::mutex> lock(foldStateListenerMutex_);
     CHECK_ERROR_RETURN_LOG(listener == nullptr, "HCameraDevice::unRegisterFoldStatusListener  listener is null");
     auto ret = OHOS::Rosen::DisplayManager::GetInstance().UnregisterFoldStatusListener(listener);
     if (ret != OHOS::Rosen::DMError::DM_OK) {
         MEDIA_DEBUG_LOG("HCameraDevice::UnregisterFoldStatusListener failed");
     }
+    listener = nullptr;
 }
 
 int32_t HCameraDevice::EnableResult(std::vector<int32_t> &results)
