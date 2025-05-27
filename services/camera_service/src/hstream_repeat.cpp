@@ -70,7 +70,6 @@ int32_t HStreamRepeat::LinkInput(wptr<OHOS::HDI::Camera::V1_0::IStreamOperator> 
         "HStreamRepeat::LinkInput err, streamId:%{public}d ,err:%{public}d", GetFwkStreamId(), ret);
     CHECK_EXECUTE(repeatStreamType_ != RepeatStreamType::VIDEO, SetStreamTransform());
     if (repeatStreamType_ != RepeatStreamType::VIDEO) {
-        UpdateHalRoateSettings(cameraAbility);
         SetStreamTransform();
     } else {
 #ifdef HOOK_CAMERA_OPERATOR
@@ -237,12 +236,12 @@ int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> setti
     // open video dfx switch for hal, no need close
     if (repeatStreamType_ == RepeatStreamType::PREVIEW) {
         OpenVideoDfxSwitch(dynamicSetting);
-        UpdateHalRoateSettings(dynamicSetting);
     }
     if (repeatStreamType_ == RepeatStreamType::VIDEO || repeatStreamType_ == RepeatStreamType::LIVEPHOTO) {
         UpdateVideoSettings(dynamicSetting, enableMirror_);
     }
     if (repeatStreamType_ == RepeatStreamType::PREVIEW || repeatStreamType_ == RepeatStreamType::VIDEO) {
+        UpdateHalRoateSettings(dynamicSetting);
         UpdateFrameRateSettings(dynamicSetting);
     }
     if (repeatStreamType_ == RepeatStreamType::VIDEO) {

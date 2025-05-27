@@ -275,6 +275,7 @@ private:
     static void DropDetectionDataCallbackImpl(const OHOS::Rosen::MotionSensorEvent &motionData);
     std::mutex sensorLock_;
     std::mutex cameraCloseListenerMutex_;
+    std::mutex foldStateListenerMutex_;
     std::vector<wptr<IHCameraCloseListener>> cameraCloseListenerVec_;
 };
 } // namespace CameraStandard
