@@ -35,10 +35,10 @@ void VideoJobRepository::AddVideoJob(const std::string& videoId,
     const sptr<IPCFileDescriptor>& srcFd, const sptr<IPCFileDescriptor>& dstFd)
 {
     DP_INFO_LOG("DPS_VIDEO: AddVideoJob videoId: %{public}s", videoId.c_str());
+    DeferredVideoJobPtr jobPtr = std::make_shared<DeferredVideoJob>(videoId, srcFd, dstFd);
     DeferredVideoJobPtr jobPtrFind = GetJobUnLocked(videoId);
     DP_CHECK_RETURN_LOG(jobPtrFind != nullptr, "already existed, videoId: %{public}s", videoId.c_str());
 
-    DeferredVideoJobPtr jobPtr = std::make_shared<DeferredVideoJob>(videoId, srcFd, dstFd);
     jobPtr->SetJobStatus(VideoJobStatus::PENDING);
     jobMap_.emplace(videoId, jobPtr);
     jobQueue_->Push(jobPtr);
