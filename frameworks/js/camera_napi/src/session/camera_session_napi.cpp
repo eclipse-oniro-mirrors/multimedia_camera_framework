@@ -251,18 +251,15 @@ const std::vector<napi_property_descriptor> CameraSessionNapi::effect_suggestion
     DECLARE_NAPI_FUNCTION("updateEffectSuggestion", CameraSessionNapi::UpdateEffectSuggestion)
 };
 
-const std::vector<napi_property_descriptor> CameraSessionNapi::auto_wb_props = {
+const std::vector<napi_property_descriptor> CameraSessionNapi::white_balance_props = {
     DECLARE_NAPI_FUNCTION("getSupportedWhiteBalanceModes", CameraSessionNapi::GetSupportedWhiteBalanceModes),
+    DECLARE_NAPI_FUNCTION("isManualWhiteBalanceSupported", CameraSessionNapi::IsManualWhiteBalanceSupported),
     DECLARE_NAPI_FUNCTION("isWhiteBalanceModeSupported", CameraSessionNapi::IsWhiteBalanceModeSupported),
+    DECLARE_NAPI_FUNCTION("getWhiteBalanceRange", CameraSessionNapi::GetWhiteBalanceRange),
     DECLARE_NAPI_FUNCTION("getWhiteBalanceMode", CameraSessionNapi::GetWhiteBalanceMode),
     DECLARE_NAPI_FUNCTION("setWhiteBalanceMode", CameraSessionNapi::SetWhiteBalanceMode),
-};
-
-const std::vector<napi_property_descriptor> CameraSessionNapi::manual_wb_props = {
-    DECLARE_NAPI_FUNCTION("getWhiteBalanceRange", CameraSessionNapi::GetManualWhiteBalanceRange),
-    DECLARE_NAPI_FUNCTION("isManualWhiteBalanceSupported", CameraSessionNapi::IsManualWhiteBalanceSupported),
-    DECLARE_NAPI_FUNCTION("getWhiteBalance", CameraSessionNapi::GetManualWhiteBalance),
-    DECLARE_NAPI_FUNCTION("setWhiteBalance", CameraSessionNapi::SetManualWhiteBalance),
+    DECLARE_NAPI_FUNCTION("getWhiteBalance", CameraSessionNapi::GetWhiteBalance),
+    DECLARE_NAPI_FUNCTION("setWhiteBalance", CameraSessionNapi::SetWhiteBalance),
 };
 
 const std::vector<napi_property_descriptor> CameraSessionNapi::aperture_props = {
@@ -3838,9 +3835,9 @@ napi_value CameraSessionNapi::SetWhiteBalanceMode(napi_env env, napi_callback_in
 }
 
 // -----------------------------------------------manual_awb_props------------------------------------------------------
-napi_value CameraSessionNapi::GetManualWhiteBalanceRange(napi_env env, napi_callback_info info)
+napi_value CameraSessionNapi::GetWhiteBalanceRange(napi_env env, napi_callback_info info)
 {
-    MEDIA_DEBUG_LOG("GetManualWhiteBalanceRange is called");
+    MEDIA_DEBUG_LOG("GetWhiteBalanceRange is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ZERO;
@@ -3857,7 +3854,7 @@ napi_value CameraSessionNapi::GetManualWhiteBalanceRange(napi_env env, napi_call
         std::vector<int32_t> whiteBalanceRange = {};
         int32_t retCode = cameraSessionNapi->cameraSession_->GetManualWhiteBalanceRange(whiteBalanceRange);
         CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
-        MEDIA_INFO_LOG("ProfessionSessionNapi::GetManualWhiteBalanceRange len = %{public}zu", whiteBalanceRange.size());
+        MEDIA_INFO_LOG("ProfessionSessionNapi::GetWhiteBalanceRange len = %{public}zu", whiteBalanceRange.size());
 
         if (!whiteBalanceRange.empty() && napi_create_array(env, &result) == napi_ok) {
             for (size_t i = 0; i < whiteBalanceRange.size(); i++) {
@@ -3870,7 +3867,7 @@ napi_value CameraSessionNapi::GetManualWhiteBalanceRange(napi_env env, napi_call
             MEDIA_ERR_LOG("whiteBalanceRange is empty or failed to create array!");
         }
     } else {
-        MEDIA_ERR_LOG("GetManualWhiteBalanceRange call Failed!");
+        MEDIA_ERR_LOG("GetWhiteBalanceRange call Failed!");
     }
     return result;
 }
@@ -3902,9 +3899,9 @@ napi_value CameraSessionNapi::IsManualWhiteBalanceSupported(napi_env env, napi_c
     return result;
 }
 
-napi_value CameraSessionNapi::GetManualWhiteBalance(napi_env env, napi_callback_info info)
+napi_value CameraSessionNapi::GetWhiteBalance(napi_env env, napi_callback_info info)
 {
-    MEDIA_DEBUG_LOG("GetISO is called");
+    MEDIA_DEBUG_LOG("GetWhiteBalance is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ZERO;
@@ -3922,14 +3919,14 @@ napi_value CameraSessionNapi::GetManualWhiteBalance(napi_env env, napi_callback_
         CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         napi_create_int32(env, wbValue, &result);
     } else {
-        MEDIA_ERR_LOG("GetISO call Failed!");
+        MEDIA_ERR_LOG("GetWhiteBalance call Failed!");
     }
     return result;
 }
 
-napi_value CameraSessionNapi::SetManualWhiteBalance(napi_env env, napi_callback_info info)
+napi_value CameraSessionNapi::SetWhiteBalance(napi_env env, napi_callback_info info)
 {
-    MEDIA_DEBUG_LOG("SetManualWhiteBalance is called");
+    MEDIA_DEBUG_LOG("SetWhiteBalance is called");
     CAMERA_SYNC_TRACE;
     napi_status status;
     napi_value result = nullptr;
@@ -3947,10 +3944,10 @@ napi_value CameraSessionNapi::SetManualWhiteBalance(napi_env env, napi_callback_
         napi_get_value_int32(env, argv[PARAM0], &wbValue);
         cameraSessionNapi->cameraSession_->LockForControl();
         cameraSessionNapi->cameraSession_->SetManualWhiteBalance(wbValue);
-        MEDIA_INFO_LOG("ProfessionSessionNapi::SetManualWhiteBalance set wbValue:%{public}d", wbValue);
+        MEDIA_INFO_LOG("ProfessionSessionNapi::SetWhiteBalance set wbValue:%{public}d", wbValue);
         cameraSessionNapi->cameraSession_->UnlockForControl();
     } else {
-        MEDIA_ERR_LOG("SetManualWhiteBalance call Failed!");
+        MEDIA_ERR_LOG("SetWhiteBalance call Failed!");
     }
     return result;
 }

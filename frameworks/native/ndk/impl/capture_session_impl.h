@@ -172,6 +172,19 @@ public:
 
     Camera_ErrorCode EnableMacro(bool enabled);
 
+    Camera_ErrorCode IsWhiteBalanceModeSupported(
+            Camera_WhiteBalanceMode whiteBalanceMode, bool* isSupported);
+
+    Camera_ErrorCode GetWhiteBalanceMode(Camera_WhiteBalanceMode* whiteBalanceMode);
+
+    Camera_ErrorCode GetWhiteBalanceRange(int32_t *minColorTemperature, int32_t *maxColorTemperature);
+
+    Camera_ErrorCode GetWhiteBalance(int32_t *colorTemperature);
+
+    Camera_ErrorCode SetWhiteBalance(int32_t colorTemperature);
+
+    Camera_ErrorCode SetWhiteBalanceMode(Camera_WhiteBalanceMode whiteBalanceMode);
+
 private:
     OHOS::sptr<OHOS::CameraStandard::CaptureSession> innerCaptureSession_;
 };

@@ -782,6 +782,60 @@ Camera_ErrorCode OH_CaptureSession_EnableMacro(Camera_CaptureSession* session, b
     return session->EnableMacro(enabled);
 }
 
+Camera_ErrorCode OH_CaptureSession_IsWhiteBalanceModeSupported(
+    Camera_CaptureSession* session, Camera_WhiteBalanceMode whiteBalanceMode, bool* isSupported)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_IsWhiteBalanceModeSupported is called");
+    CHECK_ERROR_RETURN_RET_LOG(session == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, session is null!");
+
+    return session->IsWhiteBalanceModeSupported(whiteBalanceMode, isSupported);
+}
+
+Camera_ErrorCode OH_CaptureSession_GetWhiteBalanceMode(
+    Camera_CaptureSession* session, Camera_WhiteBalanceMode* whiteBalanceMode)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_GetWhiteBalanceMode is called");
+    CHECK_ERROR_RETURN_RET_LOG(session == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, session is null!");
+
+    return session->GetWhiteBalanceMode(whiteBalanceMode);
+}
+
+Camera_ErrorCode OH_CaptureSession_GetWhiteBalanceRange(Camera_CaptureSession* session, int32_t *minColorTemperature,
+     int32_t *maxColorTemperature)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_GetWhiteBalanceRange is called");
+    CHECK_ERROR_RETURN_RET_LOG(session == nullptr, CAMERA_INVALID_ARGUMENT,
+                               "Invalid argument, session is null!");
+    return session->GetWhiteBalanceRange(minColorTemperature, maxColorTemperature);
+}
+
+Camera_ErrorCode OH_CaptureSession_GetWhiteBalance(Camera_CaptureSession* session, int32_t *colorTemperature)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_GetWhiteBalance is called");
+    CHECK_ERROR_RETURN_RET_LOG(session == nullptr, CAMERA_INVALID_ARGUMENT,
+                               "Invalid argument, session is null!");
+    return session->GetWhiteBalance(colorTemperature);
+}
+
+Camera_ErrorCode OH_CaptureSession_SetWhiteBalance(Camera_CaptureSession* session, int32_t colorTemperature)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_SetWhiteBalance is called");
+    CHECK_ERROR_RETURN_RET_LOG(session == nullptr, CAMERA_INVALID_ARGUMENT,
+                               "Invalid argument, session is null!");
+    return session->SetWhiteBalance(colorTemperature);
+}
+
+Camera_ErrorCode OH_CaptureSession_SetWhiteBalanceMode(Camera_CaptureSession* session,
+    Camera_WhiteBalanceMode whiteBalanceMode)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_SetWhiteBalanceMode is called");
+    CHECK_ERROR_RETURN_RET_LOG(session == nullptr, CAMERA_INVALID_ARGUMENT,
+                               "Invalid argument, session is null!");
+    return session->SetWhiteBalanceMode(whiteBalanceMode);
+}
+
 #ifdef __cplusplus
 }
 #endif

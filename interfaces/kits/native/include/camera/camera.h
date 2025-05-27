@@ -1185,6 +1185,19 @@ typedef enum Camera_SystemPressureLevel {
     SYSTEM_PRESSURE_SHUTDOWN = 4
 } Camera_SystemPressureLevel;
 
+typedef enum Camera_WhiteBalanceMode {
+    /**
+     * Auto white balance mode.
+     */
+    WHITE_BALANCE_MODE_AUTO = 0,
+    WHITE_BALANCE_MODE_CLOUDY = 1,
+    WHITE_BALANCE_MODE_INCANDESCENT = 2,
+    WHITE_BALANCE_MODE_FLUORESCENT = 3,
+    WHITE_BALANCE_MODE_DAYLIGHT = 4,
+    WHITE_BALANCE_MODE_MANUAL = 5,
+    WHITE_BALANCE_MODE_LOCKED = 6
+} Camera_WhiteBalanceMode;
+
 #ifdef __cplusplus
 }
 #endif

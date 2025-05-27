@@ -988,6 +988,22 @@ Camera_ErrorCode OH_CaptureSession_IsMacroSupported(Camera_CaptureSession* sessi
  */
 Camera_ErrorCode OH_CaptureSession_EnableMacro(Camera_CaptureSession* session, bool enabled);
 
+Camera_ErrorCode OH_CaptureSession_IsWhiteBalanceModeSupported(
+    Camera_CaptureSession* session, Camera_WhiteBalanceMode whiteBalanceMode, bool* isSupported);
+
+Camera_ErrorCode OH_CaptureSession_GetWhiteBalanceMode(Camera_CaptureSession* session,
+    Camera_WhiteBalanceMode* whiteBalanceMode);
+
+Camera_ErrorCode OH_CaptureSession_GetWhiteBalanceRange(Camera_CaptureSession* session, int32_t *minColorTemperature,
+     int32_t *maxColorTemperature);
+
+Camera_ErrorCode OH_CaptureSession_GetWhiteBalance(Camera_CaptureSession* session, int32_t *colorTemperature);
+
+Camera_ErrorCode OH_CaptureSession_SetWhiteBalance(Camera_CaptureSession* session, int32_t colorTemperature);
+
+Camera_ErrorCode OH_CaptureSession_SetWhiteBalanceMode(Camera_CaptureSession* session,
+     Camera_WhiteBalanceMode whiteBalanceMode);
+
 #ifdef __cplusplus
 }
 #endif

@@ -888,3 +888,60 @@ Camera_ErrorCode Camera_CaptureSession::EnableMacro(bool enabled)
     innerCaptureSession_->UnlockForControl();
     return FrameworkToNdkCameraError(ret);
 }
+Camera_ErrorCode Camera_CaptureSession::IsWhiteBalanceModeSupported(Camera_WhiteBalanceMode whiteBalanceMode, bool* isSupported)
+{
+    MEDIA_DEBUG_LOG("Camera_CaptureSession::IsAutoDeviceSwitchSupported is called");
+    innerCaptureSession_->IsWhiteBalanceModeSupported(static_cast<WhiteBalanceMode>(whiteBalanceMode), *isSupported);
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_CaptureSession::GetWhiteBalanceMode(Camera_WhiteBalanceMode* whiteBalanceMode)
+{
+    MEDIA_DEBUG_LOG("Camera_CaptureSession::GetWhiteBalanceMode is called");
+    WhiteBalanceMode mode;
+    innerCaptureSession_->GetWhiteBalanceMode(mode);
+    *whiteBalanceMode = static_cast<Camera_WhiteBalanceMode>(mode);
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_CaptureSession::GetWhiteBalanceRange(int32_t *minColorTemperature, int32_t *maxColorTemperature)
+{
+    MEDIA_DEBUG_LOG("Camera_CaptureSession::GetWhiteBalanceRange is called");
+    std::vector<int32_t> whiteBalanceRange;
+    innerCaptureSession_->GetManualWhiteBalanceRange(whiteBalanceRange);
+    *minColorTemperature = 0;
+    *maxColorTemperature = 0;
+    size_t minLength = 2;
+    CHECK_ERROR_RETURN_RET_LOG(whiteBalanceRange.size() < minLength, CAMERA_SERVICE_FATAL_ERROR,
+        "The length of whiteBalanceRange is less than 2.");
+    *minColorTemperature = whiteBalanceRange.front();
+    *maxColorTemperature = whiteBalanceRange.back();
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_CaptureSession::GetWhiteBalance(int32_t *colorTemperature)
+{
+    MEDIA_DEBUG_LOG("Camera_CaptureSession::GetWhiteBalance is called");
+    int32_t wbValue = 0;
+    innerCaptureSession_->GetManualWhiteBalance(wbValue);
+    *colorTemperature = wbValue;
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_CaptureSession::SetWhiteBalance(int32_t colorTemperature)
+{
+    MEDIA_DEBUG_LOG("Camera_CaptureSession::SetWhiteBalance is called");
+    innerCaptureSession_->LockForControl();
+    innerCaptureSession_->SetManualWhiteBalance(colorTemperature);
+    innerCaptureSession_->UnlockForControl();
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_CaptureSession::SetWhiteBalanceMode(Camera_WhiteBalanceMode whiteBalanceMode)
+{
+    MEDIA_DEBUG_LOG("Camera_CaptureSession::SetWhiteBalanceMode is called");
+    innerCaptureSession_->LockForControl();
+    innerCaptureSession_->SetWhiteBalanceMode(static_cast<WhiteBalanceMode>(whiteBalanceMode));
+    innerCaptureSession_->UnlockForControl();
+    return CAMERA_OK;
+}

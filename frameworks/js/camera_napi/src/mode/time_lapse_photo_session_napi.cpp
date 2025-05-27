@@ -225,16 +225,6 @@ const vector<napi_property_descriptor> TimeLapsePhotoSessionNapi::manual_iso_pro
     DECLARE_NAPI_FUNCTION("getIsoRange", GetIsoRange),
 };
 
-const vector<napi_property_descriptor> TimeLapsePhotoSessionNapi::white_balance_props = {
-    // WhiteBalance properties.
-    DECLARE_NAPI_FUNCTION("isWhiteBalanceModeSupported", IsWhiteBalanceModeSupported),
-    DECLARE_NAPI_FUNCTION("getWhiteBalanceRange", GetWhiteBalanceRange),
-    DECLARE_NAPI_FUNCTION("getWhiteBalanceMode", GetWhiteBalanceMode),
-    DECLARE_NAPI_FUNCTION("setWhiteBalanceMode", SetWhiteBalanceMode),
-    DECLARE_NAPI_FUNCTION("getWhiteBalance", GetWhiteBalance),
-    DECLARE_NAPI_FUNCTION("setWhiteBalance", SetWhiteBalance),
-};
-
 napi_value TimeLapsePhotoSessionNapi::Init(napi_env env, napi_value exports)
 {
     MEDIA_DEBUG_LOG("%{public}s: Enter", __FUNCTION__);

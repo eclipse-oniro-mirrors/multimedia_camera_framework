@@ -68,7 +68,6 @@ public:
     static const vector<napi_property_descriptor> time_lapse_photo_props;
     static const vector<napi_property_descriptor> manual_exposure_props;
     static const vector<napi_property_descriptor> manual_iso_props;
-    static const vector<napi_property_descriptor> white_balance_props;
 
     static napi_value Init(napi_env env, napi_value exports);
     static napi_value CreateCameraSession(napi_env env);
