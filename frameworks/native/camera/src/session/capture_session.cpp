@@ -4775,7 +4775,7 @@ int32_t CaptureSession::GetSupportedWhiteBalanceModes(std::vector<WhiteBalanceMo
     CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, CameraErrorCode::SUCCESS,
         "GetSupportedWhiteBalanceModes camera metadata is null");
     camera_metadata_item_t item;
-    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_AWB_MODES, &item);
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_AWB_AVAILABLE_MODES, &item);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
         "CaptureSession::GetSupportedWhiteBalanceModes Failed with return code %{public}d", ret);
     // LCOV_EXCL_START
