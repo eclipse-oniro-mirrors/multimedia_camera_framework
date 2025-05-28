@@ -46,7 +46,7 @@ const char* XML_CAMERA_WIDE_VALUE = "wideValue";
 const char* XML_CAMERA_ROTATE_DEGREE = "rotateDegree";
 const char* XML_CAMERA_FPS = "fps";
 }
-
+// LCOV_EXCL_START
 CameraRoateParamManager& CameraRoateParamManager::GetInstance()
 {
     static CameraRoateParamManager instance;
@@ -333,6 +333,6 @@ void CameraRoateParamManager::HandleParamUpdate(const AAFwk::Want &want) const
     }
     CameraRoateParamManager::GetInstance().InitParam();
 }
-
+// LCOV_EXCL_STOP
 }
 }

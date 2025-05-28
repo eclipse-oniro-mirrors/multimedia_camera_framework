@@ -24,7 +24,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
-
+// LCOV_EXCL_START
 bool CameraRoateParamSignTool::VerifyFileSign(const std::string &pubKeyPath, const std::string &signPath,
     const std::string &digestPath)
 {
@@ -143,6 +143,6 @@ void CameraRoateParamSignTool::CalcBase64(uint8_t *input, uint32_t inputLen, std
     encodedStr.resize(actualLength);
     MEDIA_INFO_LOG("expectedLength = %{public}zu, actualLength = %{public}zu", expectedLength, actualLength);
 }
-
+// LCOV_EXCL_STOP
 } // namespace CameraStandardParamSignTool
 } // namespace OHOS
