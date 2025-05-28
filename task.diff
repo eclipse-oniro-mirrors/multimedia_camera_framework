@@ -1,0 +1,475 @@
+From ff6ea4a754d99373583fc12080d5cd59654a03c1 Mon Sep 17 00:00:00 2001
+From: s00888898 <s00888898@notesmail.huawei.com/>
+Date: Wed, 28 May 2025 15:20:08 +0800
+Subject: [PATCH] =?UTF-8?q?TicketNo:=20Description:=E5=8A=A8=E6=80=81?=
+ =?UTF-8?q?=E7=85=A7=E7=89=87=E5=BB=B6=E8=BF=9F=E9=87=8A=E6=94=BEtask=20Te?=
+ =?UTF-8?q?am:Gitee=20Feature=20or=20Bugfix:Bugfix=20Binary=20Source:Sync?=
+ =?UTF-8?q?=20from=20Bugfix=20PrivateCode(Yes/No):no?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Change-Id: I17473778697970e9c56f5738ff47442344fe75e8
+---
+ .../include/avcodec/avcodec_task_manager.h    |   3 +-
+ .../camera_service/include/hcamera_service.h  |   1 +
+ .../include/hstream_operator_manager.h        |   6 +
+ .../src/avcodec/avcodec_task_manager.cpp      |  24 +-
+ .../camera_service/src/hstream_operator.cpp   |  23 +-
+ .../src/hstream_operator_manager.cpp          | 238 ++++++++++--------
+ 6 files changed, 170 insertions(+), 125 deletions(-)
+
+diff --git a/services/camera_service/include/avcodec/avcodec_task_manager.h b/services/camera_service/include/avcodec/avcodec_task_manager.h
+index b666d25f2..e9759ae00 100644
+--- a/services/camera_service/include/avcodec/avcodec_task_manager.h
++++ b/services/camera_service/include/avcodec/avcodec_task_manager.h
+@@ -68,6 +68,7 @@ public:
+     void Stop();
+     void ClearTaskResource();
+     void SetVideoBufferDuration(uint32_t preBufferCount, uint32_t postBufferCount);
++    bool isEmptyVideoFdMap();
+     shared_ptr<TaskManager>& GetTaskManager();
+     shared_ptr<TaskManager>& GetEncoderManager();
+     uint32_t GetDeferredVideoEnhanceFlag(int32_t captureId);
+@@ -80,7 +81,7 @@ public:
+     std::map<int32_t, int64_t> mPEndTimeMap_ = {};
+ 
+ private:
+-    void FinishMuxer(sptr<AudioVideoMuxer> muxer);
++    void FinishMuxer(sptr<AudioVideoMuxer> muxer, int32_t captureId);
+     void ChooseVideoBuffer(vector<sptr<FrameRecord>> frameRecords, vector<sptr<FrameRecord>> &choosedBuffer,
+         int64_t shutterTime, int32_t captureId);
+     size_t FindIdrFrameIndex(vector<sptr<FrameRecord>> frameRecords,
+diff --git a/services/camera_service/include/hcamera_service.h b/services/camera_service/include/hcamera_service.h
+index 079d5586a..e19ab225f 100644
+--- a/services/camera_service/include/hcamera_service.h
++++ b/services/camera_service/include/hcamera_service.h
+@@ -17,6 +17,7 @@
+ #define OHOS_CAMERA_H_CAMERA_SERVICE_H
+ #include <mutex>
+ #include "camera_metadata_info.h"
++#include "task_manager.h"
+ #define EXPORT_API __attribute__((visibility("default")))
+ 
+ #include <iostream>
+diff --git a/services/camera_service/include/hstream_operator_manager.h b/services/camera_service/include/hstream_operator_manager.h
+index f24d25721..4de94691f 100644
+--- a/services/camera_service/include/hstream_operator_manager.h
++++ b/services/camera_service/include/hstream_operator_manager.h
+@@ -19,6 +19,7 @@
+ #include <refbase.h>
+ #include <set>
+ #include <mutex>
++#include "avcodec_task_manager.h"
+ #include "safe_map.h"
+ namespace OHOS {
+ namespace CameraStandard {
+@@ -38,6 +39,10 @@ public:
+ 
+     int32_t GetOfflineOutputSize();
+ 
++    void AddTaskManager(int32_t& hStreamOperatorId, sptr<AvcodecTaskManager> taskManager);
++
++    void RemoveTaskManager(int32_t& hStreamOperatorId);
++
+     std::vector<sptr<HStreamOperator>> GetStreamOperatorByPid(pid_t pidRequest);
+ 
+ private:
+@@ -45,6 +50,7 @@ private:
+     std::mutex mapMutex_;
+     static sptr<HStreamOperatorManager> streamOperatorManager_;
+     std::map<int32_t, sptr<HStreamOperator>> streamOperatorManagerMap_;
++    SafeMap<int32_t, sptr<AvcodecTaskManager>> taskManagerMap_;
+     static std::mutex instanceMutex_;
+     std::atomic<int32_t> streamOperatorIdGenerator_ = -1;
+ 
+diff --git a/services/camera_service/src/avcodec/avcodec_task_manager.cpp b/services/camera_service/src/avcodec/avcodec_task_manager.cpp
+index fc587b484..2b7f68fca 100644
+--- a/services/camera_service/src/avcodec/avcodec_task_manager.cpp
++++ b/services/camera_service/src/avcodec/avcodec_task_manager.cpp
+@@ -50,6 +50,7 @@ AvcodecTaskManager::~AvcodecTaskManager()
+ {
+     CAMERA_SYNC_TRACE;
+     Release();
++    ClearTaskResource();
+ }
+ 
+ AvcodecTaskManager::AvcodecTaskManager(sptr<AudioCapturerSession> audioCaptureSession,
+@@ -129,7 +130,7 @@ void AvcodecTaskManager::SetVideoFd(int64_t timestamp, shared_ptr<PhotoAssetIntf
+     lock_guard<mutex> lock(videoFdMutex_);
+     MEDIA_INFO_LOG("Set timestamp: %{public}" PRIu64 ", captureId: %{public}d", timestamp, captureId);
+     videoFdMap_.insert(std::make_pair(captureId, std::make_pair(timestamp, photoAssetProxy)));
+-    MEDIA_DEBUG_LOG("video map size:%{public}zu", videoFdMap_.size());
++    MEDIA_INFO_LOG("video map size:%{public}zu", videoFdMap_.size());
+     cvEmpty_.notify_all();
+ }
+ 
+@@ -191,7 +192,6 @@ sptr<AudioVideoMuxer> AvcodecTaskManager::CreateAVMuxer(vector<sptr<FrameRecord>
+     OH_AVOutputFormat format = AV_OUTPUT_FORMAT_MPEG_4;
+     int64_t timestamp = videoFdMap_[captureId].first;
+     auto photoAssetProxy = videoFdMap_[captureId].second;
+-    videoFdMap_.erase(captureId);
+     ChooseVideoBuffer(frameRecords, choosedBuffer, timestamp, captureId);
+     muxer->Create(format, photoAssetProxy);
+     muxer->SetRotation(captureRotation);
+@@ -235,7 +235,7 @@ sptr<AudioVideoMuxer> AvcodecTaskManager::CreateAVMuxer(vector<sptr<FrameRecord>
+     return muxer;
+ }
+ 
+-void AvcodecTaskManager::FinishMuxer(sptr<AudioVideoMuxer> muxer)
++void AvcodecTaskManager::FinishMuxer(sptr<AudioVideoMuxer> muxer, int32_t captureId)
+ {
+     CAMERA_SYNC_TRACE;
+     MEDIA_INFO_LOG("doMxuer video is finished");
+@@ -246,10 +246,19 @@ void AvcodecTaskManager::FinishMuxer(sptr<AudioVideoMuxer> muxer)
+         MEDIA_INFO_LOG("PhotoAssetProxy notify enter");
+         if (proxy) {
+             proxy->NotifyVideoSaveFinished();
++            lock_guard<mutex> lock(videoFdMutex_);
++            videoFdMap_.erase(captureId);
++            MEDIA_INFO_LOG("finishMuxer end, videoFdMap_ size is %{public}zu", videoFdMap_.size());
+         }
+     }
+ }
+ 
++bool AvcodecTaskManager::isEmptyVideoFdMap()
++{
++    lock_guard<mutex> lock(videoFdMutex_);
++    return videoFdMap_.empty();
++}
++
+ void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, uint64_t taskName,
+     int32_t captureRotation, int32_t captureId) __attribute__((no_sanitize("cfi")))
+ {
+@@ -264,7 +273,12 @@ void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, ui
+         vector<sptr<FrameRecord>> choosedBuffer;
+         sptr<AudioVideoMuxer> muxer = thisPtr->CreateAVMuxer(frameRecords, captureRotation, choosedBuffer, captureId);
+         CHECK_ERROR_RETURN_LOG(muxer == nullptr, "CreateAVMuxer failed");
+-        CHECK_ERROR_RETURN_LOG(choosedBuffer.empty(), "choosed empty buffer!");
++        if (choosedBuffer.empty()) {
++            lock_guard<mutex> lock(thisPtr->videoFdMutex_);
++            thisPtr->videoFdMap_.erase(captureId);
++            MEDIA_ERR_LOG("choosed empty buffer, videoFdMap_ size is %{public}zu", thisPtr->videoFdMap_.size());
++            return;
++        }
+         int64_t videoStartTime = choosedBuffer.front()->GetTimeStamp();
+         for (size_t index = 0; index < choosedBuffer.size(); index++) {
+             MEDIA_DEBUG_LOG("write sample index %{public}zu", index);
+@@ -296,7 +310,7 @@ void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, ui
+         thisPtr->PrepareAudioBuffer(choosedBuffer, audioRecords, processedAudioRecords);
+         thisPtr->CollectAudioBuffer(processedAudioRecords, muxer);
+         #endif
+-        thisPtr->FinishMuxer(muxer);
++        thisPtr->FinishMuxer(muxer, captureId);
+     });
+ }
+ 
+diff --git a/services/camera_service/src/hstream_operator.cpp b/services/camera_service/src/hstream_operator.cpp
+index 0e4f1ac95..a13058fa1 100644
+--- a/services/camera_service/src/hstream_operator.cpp
++++ b/services/camera_service/src/hstream_operator.cpp
+@@ -654,6 +654,8 @@ void HStreamOperator::ExpandMovingPhotoRepeatStream()
+             if (!taskManager_ && audioCapturerSession_) {
+                 taskManager_ = new AvcodecTaskManager(audioCapturerSession_, VideoCodecType::VIDEO_ENCODE_TYPE_HEVC,
+                     currColorSpace_);
++                // TODO add taskManager when expand
++                HStreamOperatorManager::GetInstance()->AddTaskManager(streamOperatorId_, taskManager_);
+                 taskManager_->SetVideoBufferDuration(preCacheFrameCount_, postCacheFrameCount_);
+             }
+             if (!videoCache_ && taskManager_) {
+@@ -758,19 +760,21 @@ void HStreamOperator::StopMovingPhoto() __attribute__((no_sanitize("cfi")))
+     MEDIA_DEBUG_LOG("Enter HStreamOperator::StopMovingPhoto");
+     std::lock_guard<std::mutex> lock(movingPhotoStatusLock_);
+     if (livephotoListener_) {
++        // data is stop
+         livephotoListener_->StopDrainOut();
+     }
+-    if (videoCache_) {
+-        videoCache_->ClearCache();
+-    }
++    // stop encode
++    // if (videoCache_) {
++    //     videoCache_->ClearCache();
++    // }
+     #ifdef MOVING_PHOTO_ADD_AUDIO
+     if (audioCapturerSession_) {
+         audioCapturerSession_->Stop();
+     }
+     #endif
+-    if (taskManager_) {
+-        taskManager_->Stop();
+-    }
++    // if (taskManager_) {
++    //     taskManager_->Stop();
++    // }
+ }
+ 
+ int32_t HStreamOperator::GetActiveColorSpace(ColorSpace& colorSpace)
+@@ -1088,10 +1092,8 @@ int32_t HStreamOperator::Release()
+     std::lock_guard<std::mutex> lock(movingPhotoStatusLock_);
+     CHECK_EXECUTE(livephotoListener_, livephotoListener_ = nullptr);
+     CHECK_EXECUTE(videoCache_, videoCache_ = nullptr);
+-    if (taskManager_) {
+-        taskManager_->ClearTaskResource();
+-        taskManager_ = nullptr;
+-    }
++    taskManager_ = nullptr;
++    HStreamOperatorManager::GetInstance()->RemoveTaskManager(streamOperatorId_);
+     MEDIA_INFO_LOG("HStreamOperator::Release execute success");
+     return errorCode;
+ }
+@@ -2095,7 +2097,6 @@ MovingPhotoListener::MovingPhotoListener(sptr<MovingPhotoSurfaceWrapper> surface
+       postCacheFrameCount_(postCacheFrameCount)
+ {
+     shutterTime_ = 0;
+-    bufferTaskManager_ = make_shared<TaskManager>("BufferTaskManager", OPERATOR_DEFAULT_ENCODER_THREAD_NUMBER, true);
+ }
+ 
+ MovingPhotoListener::~MovingPhotoListener()
+diff --git a/services/camera_service/src/hstream_operator_manager.cpp b/services/camera_service/src/hstream_operator_manager.cpp
+index 74ee2f221..05ad092f8 100644
+--- a/services/camera_service/src/hstream_operator_manager.cpp
++++ b/services/camera_service/src/hstream_operator_manager.cpp
+@@ -1,108 +1,130 @@
+-/*
+- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *     http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-
+-#include "hstream_operator_manager.h"
+-#include "hstream_operator.h"
+-#include "camera_dynamic_loader.h"
+-#include "camera_log.h"
+-
+-namespace OHOS {
+-namespace CameraStandard {
+-sptr<HStreamOperatorManager> HStreamOperatorManager::streamOperatorManager_;
+-std::mutex HStreamOperatorManager::instanceMutex_;
+-
+-HStreamOperatorManager::HStreamOperatorManager() {}
+-
+-HStreamOperatorManager::~HStreamOperatorManager()
+-{
+-    MEDIA_INFO_LOG("~HStreamOperatorManager");
+-}
+-
+-sptr<HStreamOperatorManager> &HStreamOperatorManager::GetInstance()
+-{
+-    if (HStreamOperatorManager::streamOperatorManager_ == nullptr) {
+-        std::unique_lock<std::mutex> lock(instanceMutex_);
+-        if (HStreamOperatorManager::streamOperatorManager_ == nullptr) {
+-            MEDIA_INFO_LOG("Initializing stream operator manager instance");
+-            HStreamOperatorManager::streamOperatorManager_ = new HStreamOperatorManager();
+-        }
+-    }
+-    return HStreamOperatorManager::streamOperatorManager_;
+-}
+-
+-void HStreamOperatorManager::AddStreamOperator(sptr<HStreamOperator> hStreamOperator)
+-{
+-    std::lock_guard<std::mutex> lock(mapMutex_);
+-    MEDIA_INFO_LOG("HStreamOperatorManager::AddStreamOperator start");
+-    int32_t streamOperatorId = GenerateStreamOperatorId();
+-    streamOperatorManagerMap_[streamOperatorId] = hStreamOperator;
+-    hStreamOperator->SetStreamOperatorId(streamOperatorId);
+-    MEDIA_INFO_LOG("HStreamOperatorManager::AddStreamOperator end hStreamOperatorId is %{public}d", streamOperatorId);
+-    return;
+-}
+-
+-void HStreamOperatorManager::RemoveStreamOperator(int32_t& hStreamOperatorId)
+-{
+-    MEDIA_INFO_LOG("HStreamOperatorManager::RemoveStreamOperator hStreamOperatorId is %{public}d", hStreamOperatorId);
+-    std::lock_guard<std::mutex> lock(mapMutex_);
+-    CHECK_ERROR_RETURN(hStreamOperatorId < 0);
+-    auto streamOperator = streamOperatorManagerMap_.find(hStreamOperatorId);
+-    CHECK_ERROR_RETURN(streamOperator == streamOperatorManagerMap_.end());
+-    streamOperatorManagerMap_.erase(hStreamOperatorId);
+-    if (streamOperatorManagerMap_.size() == 0) {
+-        CameraDynamicLoader::FreeDynamicLibDelayed(MEDIA_LIB_SO, LIB_DELAYED_UNLOAD_TIME);
+-    }
+-    MEDIA_INFO_LOG("HStreamOperatorManager::RemoveStreamOperator end");
+-    return;
+-}
+-
+-void HStreamOperatorManager::UpdateStreamOperator(int32_t& hStreamOperatorId)
+-{
+-    std::lock_guard<std::mutex> lock(mapMutex_);
+-    MEDIA_INFO_LOG("HStreamOperatorManager::UpdateStreamOperator hStreamOperatorId is %{public}d", hStreamOperatorId);
+-    auto StreamOperator = streamOperatorManagerMap_.find(hStreamOperatorId);
+-    CHECK_ERROR_RETURN(StreamOperator == streamOperatorManagerMap_.end());
+-}
+-
+-int32_t HStreamOperatorManager::GetOfflineOutputSize()
+-{
+-    MEDIA_INFO_LOG("HStreamOperatorManager::DfxReport size is %{public}zu", streamOperatorManagerMap_.size());
+-    int32_t offlineOutputCount = 0;
+-    for (auto streamOperator : streamOperatorManagerMap_) {
+-        int32_t tempSize = (streamOperator.second)->GetOfflineOutptSize();
+-        offlineOutputCount = offlineOutputCount + tempSize;
+-    }
+-    if (offlineOutputCount > 2) { // 2 is the threshold of the statistics
+-        MEDIA_INFO_LOG("HStreamOperatorManager::DfxReport offlineOutputCount is %{public}d", offlineOutputCount);
+-    }
+-    return offlineOutputCount;
+-}
+-
+-std::vector<sptr<HStreamOperator>> HStreamOperatorManager::GetStreamOperatorByPid(pid_t pidRequest)
+-{
+-    std::lock_guard<std::mutex> lock(mapMutex_);
+-    std::vector<sptr<HStreamOperator>> streamOperatorVec = {};
+-    for (auto streamOperator : streamOperatorManagerMap_) {
+-        if (pidRequest == (streamOperator.second)->GetPid()) {
+-            streamOperatorVec.push_back(streamOperator.second);
+-            MEDIA_INFO_LOG("HStreamOperatorManager::GetCameraByPid find");
+-        }
+-    }
+-    MEDIA_INFO_LOG("HStreamOperatorManager::GetStreamOperatorByPid pid is %{public}d size is %{public}zu", pidRequest,
+-        streamOperatorVec.size());
+-    return streamOperatorVec;
+-}
+-} // namespace CameraStandard
+-} // namespace OHOS
++/*
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++ 
++#include "hstream_operator_manager.h"
++#include "hstream_operator.h"
++#include "camera_dynamic_loader.h"
++#include "camera_log.h"
++ 
++namespace OHOS {
++namespace CameraStandard {
++sptr<HStreamOperatorManager> HStreamOperatorManager::streamOperatorManager_;
++std::mutex HStreamOperatorManager::instanceMutex_;
++ 
++HStreamOperatorManager::HStreamOperatorManager() {}
++ 
++HStreamOperatorManager::~HStreamOperatorManager()
++{
++    MEDIA_INFO_LOG("~HStreamOperatorManager");
++}
++ 
++sptr<HStreamOperatorManager> &HStreamOperatorManager::GetInstance()
++{
++    if (HStreamOperatorManager::streamOperatorManager_ == nullptr) {
++        std::unique_lock<std::mutex> lock(instanceMutex_);
++        if (HStreamOperatorManager::streamOperatorManager_ == nullptr) {
++            MEDIA_INFO_LOG("Initializing stream operator manager instance");
++            HStreamOperatorManager::streamOperatorManager_ = new HStreamOperatorManager();
++        }
++    }
++    return HStreamOperatorManager::streamOperatorManager_;
++}
++ 
++void HStreamOperatorManager::AddStreamOperator(sptr<HStreamOperator> hStreamOperator)
++{
++    std::lock_guard<std::mutex> lock(mapMutex_);
++    MEDIA_INFO_LOG("HStreamOperatorManager::AddStreamOperator start");
++    int32_t streamOperatorId = GenerateStreamOperatorId();
++    streamOperatorManagerMap_[streamOperatorId] = hStreamOperator;
++    hStreamOperator->SetStreamOperatorId(streamOperatorId);
++    MEDIA_INFO_LOG("HStreamOperatorManager::AddStreamOperator end hStreamOperatorId is %{public}d", streamOperatorId);
++    return;
++}
++ 
++void HStreamOperatorManager::RemoveStreamOperator(int32_t& hStreamOperatorId)
++{
++    MEDIA_INFO_LOG("HStreamOperatorManager::RemoveStreamOperator hStreamOperatorId is %{public}d", hStreamOperatorId);
++    std::lock_guard<std::mutex> lock(mapMutex_);
++    CHECK_ERROR_RETURN(hStreamOperatorId < 0);
++    auto streamOperator = streamOperatorManagerMap_.find(hStreamOperatorId);
++    CHECK_ERROR_RETURN(streamOperator == streamOperatorManagerMap_.end());
++    streamOperatorManagerMap_.erase(hStreamOperatorId);
++    if (streamOperatorManagerMap_.size() == 0) {
++        CameraDynamicLoader::FreeDynamicLibDelayed(MEDIA_LIB_SO, LIB_DELAYED_UNLOAD_TIME);
++    }
++    MEDIA_INFO_LOG("HStreamOperatorManager::RemoveStreamOperator end");
++    return;
++}
++
++void HStreamOperatorManager::AddTaskManager(int32_t& hStreamOperatorId, sptr<AvcodecTaskManager> taskManager)
++{
++    MEDIA_INFO_LOG("HStreamOperatorManager::AddTaskManager hStreamOperatorId is %{public}d", hStreamOperatorId);
++    taskManagerMap_.EnsureInsert(hStreamOperatorId, taskManager);
++}
++ 
++void HStreamOperatorManager::RemoveTaskManager(int32_t& hStreamOperatorId)
++{
++    auto thisPtr = sptr<HStreamOperatorManager>(this);
++    thread asyncThread = thread([thisPtr, hStreamOperatorId]() {
++        CAMERA_SYNC_TRACE;
++        MEDIA_INFO_LOG("HStreamOperatorManager::RemoveStreamOperator hStreamOperatorId is %{public}d",
++            hStreamOperatorId);
++        sptr<AvcodecTaskManager> taskManager = nullptr;
++        thisPtr->taskManagerMap_.Find(hStreamOperatorId, taskManager);
++        int32_t delayTime = taskManager == nullptr || (taskManager && taskManager->isEmptyVideoFdMap()) ? 0 : 30;
++        std::this_thread::sleep_for(std::chrono::seconds(delayTime));
++        thisPtr->taskManagerMap_.Erase(hStreamOperatorId);
++    });
++    asyncThread.detach();
++}
++ 
++void HStreamOperatorManager::UpdateStreamOperator(int32_t& hStreamOperatorId)
++{
++    std::lock_guard<std::mutex> lock(mapMutex_);
++    MEDIA_INFO_LOG("HStreamOperatorManager::UpdateStreamOperator hStreamOperatorId is %{public}d", hStreamOperatorId);
++    auto StreamOperator = streamOperatorManagerMap_.find(hStreamOperatorId);
++    CHECK_ERROR_RETURN(StreamOperator == streamOperatorManagerMap_.end());
++}
++ 
++int32_t HStreamOperatorManager::GetOfflineOutputSize()
++{
++    MEDIA_INFO_LOG("HStreamOperatorManager::DfxReport size is %{public}zu", streamOperatorManagerMap_.size());
++    int32_t offlineOutputCount = 0;
++    for (auto streamOperator : streamOperatorManagerMap_) {
++        int32_t tempSize = (streamOperator.second)->GetOfflineOutptSize();
++        offlineOutputCount = offlineOutputCount + tempSize;
++    }
++    if (offlineOutputCount > 2) { // 2 is the threshold of the statistics
++        MEDIA_INFO_LOG("HStreamOperatorManager::DfxReport offlineOutputCount is %{public}d", offlineOutputCount);
++    }
++    return offlineOutputCount;
++}
++ 
++std::vector<sptr<HStreamOperator>> HStreamOperatorManager::GetStreamOperatorByPid(pid_t pidRequest)
++{
++    std::lock_guard<std::mutex> lock(mapMutex_);
++    std::vector<sptr<HStreamOperator>> streamOperatorVec = {};
++    for (auto streamOperator : streamOperatorManagerMap_) {
++        if (pidRequest == (streamOperator.second)->GetPid()) {
++            streamOperatorVec.push_back(streamOperator.second);
++            MEDIA_INFO_LOG("HStreamOperatorManager::GetCameraByPid find");
++        }
++    }
++    MEDIA_INFO_LOG("HStreamOperatorManager::GetStreamOperatorByPid pid is %{public}d size is %{public}zu", pidRequest,
++        streamOperatorVec.size());
++    return streamOperatorVec;
++}
++} // namespace CameraStandard
++} // namespace OHOS
+\ No newline at end of file
+-- 
+2.45.2.huawei.8
+
