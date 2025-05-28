@@ -136,9 +136,7 @@ void CameraRoateParamSignTool::CalcBase64(uint8_t *input, uint32_t inputLen, std
     size_t expectedLength = 4 * ((inputLen + 2) / 3); // 4 3 is Fixed algorithm
     encodedStr.resize(expectedLength);
     int lengthTemp = EVP_EncodeBlock(reinterpret_cast<uint8_t *>(&encodedStr[0]), input, inputLen);
-    if (lengthTemp < 0) {
-        return;
-    }
+    CHECK_ERROR_RETURN(lengthTemp < 0);
     size_t actualLength = static_cast<size_t>(lengthTemp);
     encodedStr.resize(actualLength);
     MEDIA_INFO_LOG("expectedLength = %{public}zu, actualLength = %{public}zu", expectedLength, actualLength);

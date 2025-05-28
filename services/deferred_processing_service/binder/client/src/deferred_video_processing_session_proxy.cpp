@@ -38,11 +38,7 @@ ErrCode DeferredVideoProcessingSessionProxy::BeginSynchronize()
         return result;
     }
     ErrCode errCode = reply.ReadInt32();
-    if (FAILED(errCode)) {
-        return errCode;
-    }
-
-    return ERR_OK;
+    return FAILED(errCode) ? errCode : ERR_OK;
 }
 
 ErrCode DeferredVideoProcessingSessionProxy::EndSynchronize()
@@ -65,11 +61,7 @@ ErrCode DeferredVideoProcessingSessionProxy::EndSynchronize()
         return result;
     }
     ErrCode errCode = reply.ReadInt32();
-    if (FAILED(errCode)) {
-        return errCode;
-    }
-
-    return ERR_OK;
+    return FAILED(errCode) ? errCode : ERR_OK;
 }
 
 ErrCode DeferredVideoProcessingSessionProxy::AddVideo(
@@ -104,11 +96,7 @@ ErrCode DeferredVideoProcessingSessionProxy::AddVideo(
         return result;
     }
     ErrCode errCode = reply.ReadInt32();
-    if (FAILED(errCode)) {
-        return errCode;
-    }
-
-    return ERR_OK;
+    return FAILED(errCode) ? errCode : ERR_OK;
 }
 
 ErrCode DeferredVideoProcessingSessionProxy::RemoveVideo(
@@ -139,11 +127,7 @@ ErrCode DeferredVideoProcessingSessionProxy::RemoveVideo(
         return result;
     }
     ErrCode errCode = reply.ReadInt32();
-    if (FAILED(errCode)) {
-        return errCode;
-    }
-
-    return ERR_OK;
+    return FAILED(errCode) ? errCode : ERR_OK;
 }
 
 ErrCode DeferredVideoProcessingSessionProxy::RestoreVideo(
@@ -170,11 +154,7 @@ ErrCode DeferredVideoProcessingSessionProxy::RestoreVideo(
         return result;
     }
     ErrCode errCode = reply.ReadInt32();
-    if (FAILED(errCode)) {
-        return errCode;
-    }
-
-    return ERR_OK;
+    return FAILED(errCode) ? errCode : ERR_OK;
 }
 } // namespace DeferredProcessing
 } // namespace CameraStandard

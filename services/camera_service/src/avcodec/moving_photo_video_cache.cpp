@@ -67,13 +67,10 @@ void MovingPhotoVideoCache::DoMuxerVideo(std::vector<sptr<FrameRecord>> frameRec
         return a->GetTimeStamp() < b->GetTimeStamp();
     });
     std::lock_guard<std::mutex> lock(taskManagerLock_);
-    if (taskManager_) {
-        taskManager_->DoMuxerVideo(frameRecords, taskName, rotation, captureId);
-        auto thisPtr = sptr<MovingPhotoVideoCache>(this);
-        taskManager_->SubmitTask([thisPtr]() {
-            thisPtr->ClearCallbackHandler();
-        });
-    }
+    CHECK_ERROR_RETURN(!taskManager_);
+    taskManager_->DoMuxerVideo(frameRecords, taskName, rotation, captureId);
+    auto thisPtr = sptr<MovingPhotoVideoCache>(this);
+    taskManager_->SubmitTask([thisPtr]() { thisPtr->ClearCallbackHandler(); });
 }
 
 // Call this function after buffer has been encoded
@@ -176,10 +173,9 @@ void CachedFrameCallbackHandle::AbortCapture()
     std::lock_guard<std::mutex> lock(cacheFrameMutex_);
     isAbort_ = true;
     cacheRecords_.clear();
-    if (encodedEndCbFunc_ != nullptr) {
-        encodedEndCbFunc_(successCacheRecords_, taskName_, rotation_, captureId_);
-        encodedEndCbFunc_ = nullptr;
-    }
+    CHECK_ERROR_RETURN(encodedEndCbFunc_ == nullptr);
+    encodedEndCbFunc_(successCacheRecords_, taskName_, rotation_, captureId_);
+    encodedEndCbFunc_ = nullptr;
 }
 
 CachedFrameSet CachedFrameCallbackHandle::GetCacheRecord()

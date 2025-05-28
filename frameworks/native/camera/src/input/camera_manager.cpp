@@ -1625,9 +1625,7 @@ bool CameraManager::CheckCameraConcurrentId(std::unordered_map<std::string, int3
             cameraId = match[0];
         }
         MEDIA_DEBUG_LOG("CameraManager::CheckCameraConcurrentId check cameraId: %{public}s", cameraId.c_str());
-        if (!idmap.count(cameraId)) {
-            return false;
-        }
+        CHECK_ERROR_RETURN_RET(!idmap.count(cameraId), false);
     }
     return true;
 }
@@ -1666,9 +1664,7 @@ bool CameraManager::CheckConcurrentExecution(std::vector<sptr<CameraDevice>> cam
     uint32_t count = item.count;
     for (uint32_t i = 0; i < count; i++) {
         if (originInfo[i] == -1) {
-            if (CheckCameraConcurrentId(idmap, cameraIdv)) {
-                return true;
-            }
+            CHECK_ERROR_RETURN_RET(CheckCameraConcurrentId(idmap, cameraIdv), true);
             idmap.clear();
         } else {
             idmap[std::to_string(originInfo[i])]++;
@@ -1996,14 +1992,13 @@ void CameraManager::AlignVideoFpsProfile(std::vector<sptr<CameraDevice>>& camera
             }
         }
     }
-    if (frontCamera) {
-        frontCamera->modeVideoProfiles_[normalMode] = alignFrontVideoProfiles;
-        for (auto &frontProfile : alignFrontVideoProfiles) {
-            MEDIA_INFO_LOG("CameraManager::AlignVideoFpsProfile frontProfile "
-                           "w(%{public}d),h(%{public}d) fps min(%{public}d),min(%{public}d)",
-                           frontProfile.GetSize().width, frontProfile.GetSize().height,
-                           frontProfile.framerates_[minIndex], frontProfile.framerates_[maxIndex]);
-        }
+    CHECK_ERROR_RETURN(!frontCamera);
+    frontCamera->modeVideoProfiles_[normalMode] = alignFrontVideoProfiles;
+    for (auto& frontProfile : alignFrontVideoProfiles) {
+        MEDIA_INFO_LOG("CameraManager::AlignVideoFpsProfile frontProfile "
+                       "w(%{public}d),h(%{public}d) fps min(%{public}d),min(%{public}d)",
+            frontProfile.GetSize().width, frontProfile.GetSize().height, frontProfile.framerates_[minIndex],
+            frontProfile.framerates_[maxIndex]);
     }
 }
 
@@ -2698,9 +2693,7 @@ bool CameraManager::IsCameraMuteSupported()
 {
     bool isCameraMuteSupported = false;
     bool cacheResult = GetCameraDeviceAbilitySupportValue(CAMERA_ABILITY_SUPPORT_MUTE, isCameraMuteSupported);
-    if (cacheResult) {
-        return isCameraMuteSupported;
-    }
+    CHECK_ERROR_RETURN_RET(cacheResult, isCameraMuteSupported);
 
     auto serviceProxy = GetServiceProxy();
     CHECK_ERROR_RETURN_RET_LOG(serviceProxy == nullptr, false, "IsCameraMuteSupported serviceProxy is null");
@@ -2767,9 +2760,7 @@ bool CameraManager::IsTorchSupported()
 {
     bool isCameraTorchSupported = false;
     bool cacheResult = GetCameraDeviceAbilitySupportValue(CAMERA_ABILITY_SUPPORT_TORCH, isCameraTorchSupported);
-    if (cacheResult) {
-        return isCameraTorchSupported;
-    }
+    CHECK_ERROR_RETURN_RET(cacheResult, isCameraTorchSupported);
 
     auto serviceProxy = GetServiceProxy();
     CHECK_ERROR_RETURN_RET_LOG(serviceProxy == nullptr, false, "IsTorchSupported serviceProxy is null");

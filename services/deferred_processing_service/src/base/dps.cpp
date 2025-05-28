@@ -74,28 +74,19 @@ void DPS_Destroy()
 std::shared_ptr<CommandServer> DPS_GetCommandServer()
 {
     std::unique_lock<std::mutex> lock(g_dpsInfo.mutex);
-    if (g_dpsInfo.server) {
-        return g_dpsInfo.server;
-    }
-    return nullptr;
+    return g_dpsInfo.server ? g_dpsInfo.server : nullptr;
 }
 
 std::shared_ptr<SessionManager> DPS_GetSessionManager()
 {
     std::unique_lock<std::mutex> lock(g_dpsInfo.mutex);
-    if (g_dpsInfo.session) {
-        return g_dpsInfo.session;
-    }
-    return nullptr;
+    return g_dpsInfo.session ? g_dpsInfo.session : nullptr;
 }
 
 std::shared_ptr<SchedulerManager> DPS_GetSchedulerManager()
 {
     std::unique_lock<std::mutex> lock(g_dpsInfo.mutex);
-    if (g_dpsInfo.scheduler) {
-        return g_dpsInfo.scheduler;
-    }
-    return nullptr;
+    return g_dpsInfo.scheduler ? g_dpsInfo.scheduler : nullptr;
 }
 } // namespace DeferredProcessing
 } // namespace CameraStandard

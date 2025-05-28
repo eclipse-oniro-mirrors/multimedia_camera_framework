@@ -106,9 +106,8 @@ MpegManager::~MpegManager()
     if (outputFd_) {
         fdsan_close_with_tag(outputFd_->GetFd(), LOG_DOMAIN);
     }
-    if (tempFd_) {
-        fdsan_close_with_tag(tempFd_->GetFd(), LOG_DOMAIN);
-    }
+    DP_CHECK_RETURN(!tempFd_);
+    fdsan_close_with_tag(tempFd_->GetFd(), LOG_DOMAIN);
 }
 
 MediaManagerError MpegManager::Init(const std::string& requestId, const sptr<IPCFileDescriptor>& inputFd)

@@ -560,17 +560,13 @@ bool HCameraDeviceManager::IsProcessHasConcurrentDevice(pid_t pid)
 {
     std::lock_guard<std::mutex> lock(mapMutex_);
     auto mapIt = pidToCameras_.find(pid);
-    if (mapIt == pidToCameras_.end()) {
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET(mapIt == pidToCameras_.end(), false);
     for (auto& holder : mapIt->second) {
         auto device = holder->GetDevice();
         if (device == nullptr) {
             continue;
         }
-        if (device->IsDeviceOpenedByConcurrent()) {
-            return true;
-        }
+        CHECK_ERROR_RETURN_RET(device->IsDeviceOpenedByConcurrent(), true);
     }
     return false;
 }
@@ -609,9 +605,7 @@ bool CameraConcurrentSelector::CanOpenCameraconcurrently(std::vector<sptr<HCamer
         MEDIA_DEBUG_LOG("CameraConcurrentSelector::canOpenCameraconcurrently "
             "concurrentCameraTable_ current group: %{public}s", ss.str().c_str());
     }
-    if (reservedCameras.size() == 0) {
-        return true;
-    }
+    CHECK_ERROR_RETURN_RET(reservedCameras.size() == 0, true);
     std::vector<int32_t> cameraIds;
     for (const auto& camera : reservedCameras) {
         cameraIds.push_back(GetCameraIdNumber(camera->GetDevice()->GetCameraId()));

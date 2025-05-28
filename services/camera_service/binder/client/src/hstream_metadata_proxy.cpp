@@ -89,9 +89,7 @@ int32_t HStreamMetadataProxy::UnSetCallback()
     data.WriteInterfaceToken(GetDescriptor());
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamMetadataInterfaceCode::CAMERA_STREAM_META_UNSET_CALLBACK), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamMetadataProxy UnSetCallback failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HStreamMetadataProxy UnSetCallback failed, error: %{public}d", error);
     return error;
 }
 

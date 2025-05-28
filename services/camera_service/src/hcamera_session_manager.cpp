@@ -33,10 +33,8 @@ static const int32_t GROUP_SIZE_MAX_LIMIT = 10; // Default session max size is 1
 
 static size_t GetGroupSizeLimit(pid_t pid)
 {
-    if (HCameraDeviceManager::GetInstance()->IsProcessHasConcurrentDevice(pid)) {
-        return GROUP_SIZE_MAX_LIMIT;
-    }
-    return GROUP_SIZE_MIN_LIMIT;
+    return HCameraDeviceManager::GetInstance()->IsProcessHasConcurrentDevice(pid) ? GROUP_SIZE_MAX_LIMIT :
+                                                                                    GROUP_SIZE_MIN_LIMIT;
 }
 
 size_t HCameraSessionManager::GetTotalSessionSize()
@@ -59,10 +57,7 @@ size_t HCameraSessionManager::GetSessionSize(pid_t pid)
 {
     std::lock_guard<std::mutex> lock(totalSessionMapMutex_);
     auto it = totalSessionMap_.find(pid);
-    if (it != totalSessionMap_.end()) {
-        return it->second.size();
-    }
-    return 0;
+    return it != totalSessionMap_.end() ? it->second.size() : 0;
 }
 std::list<sptr<HCaptureSession>> HCameraSessionManager::GetTotalSession()
 {
@@ -81,9 +76,7 @@ std::list<sptr<HCaptureSession>> HCameraSessionManager::GetGroupSessions(pid_t p
     std::list<sptr<HCaptureSession>> totalList {};
     std::lock_guard<std::mutex> lock(totalSessionMapMutex_);
     auto mapIt = totalSessionMap_.find(pid);
-    if (mapIt == totalSessionMap_.end()) {
-        return totalList;
-    }
+    CHECK_ERROR_RETURN_RET(mapIt == totalSessionMap_.end(), totalList);
     for (auto& listIt : mapIt->second) {
         totalList.emplace_back(listIt);
     }
@@ -94,30 +87,20 @@ sptr<HCaptureSession> HCameraSessionManager::GetGroupDefaultSession(pid_t pid)
 {
     std::lock_guard<std::mutex> lock(totalSessionMapMutex_);
     auto mapIt = totalSessionMap_.find(pid);
-    if (mapIt == totalSessionMap_.end()) {
-        return nullptr;
-    }
+    CHECK_ERROR_RETURN_RET(mapIt == totalSessionMap_.end(), nullptr);
     auto& list = mapIt->second;
-    if (list.empty()) {
-        return nullptr;
-    }
-    return list.front();
+    return list.empty() ? nullptr : list.front();
 }
 
 CamServiceError HCameraSessionManager::AddSession(sptr<HCaptureSession> session)
 {
-    if (session == nullptr) {
-        return CAMERA_INVALID_ARG;
-    }
+    CHECK_ERROR_RETURN_RET(session == nullptr, CAMERA_INVALID_ARG);
     auto pid = session->GetPid();
     std::lock_guard<std::mutex> lock(totalSessionMapMutex_);
     auto& list = totalSessionMap_[pid];
     list.emplace_back(session);
 
-    if (list.size() > GetGroupSizeLimit(pid)) {
-        return CAMERA_SESSION_MAX_INSTANCE_NUMBER_REACHED;
-    }
-    return CAMERA_OK;
+    return list.size() > GetGroupSizeLimit(pid) ? CAMERA_SESSION_MAX_INSTANCE_NUMBER_REACHED : CAMERA_OK;
 }
 
 void HCameraSessionManager::RemoveSession(sptr<HCaptureSession> session)
@@ -133,9 +116,8 @@ void HCameraSessionManager::RemoveSession(sptr<HCaptureSession> session)
             break;
         }
     }
-    if (list.empty()) {
-        RemoveGroupNoLock(mapIt);
-    }
+    CHECK_ERROR_RETURN(!list.empty());
+    RemoveGroupNoLock(mapIt);
 }
 
 void HCameraSessionManager::PreemptOverflowSessions(pid_t pid)
@@ -145,14 +127,10 @@ void HCameraSessionManager::PreemptOverflowSessions(pid_t pid)
     {
         std::lock_guard<std::mutex> lock(totalSessionMapMutex_);
         auto mapIt = totalSessionMap_.find(pid);
-        if (mapIt == totalSessionMap_.end()) {
-            return;
-        }
+        CHECK_ERROR_RETURN(mapIt == totalSessionMap_.end());
         auto& list = mapIt->second;
         size_t currentListSize = list.size();
-        if (currentListSize <= limitSize) {
-            return;
-        }
+        CHECK_ERROR_RETURN(currentListSize <= limitSize);
         size_t overflowSize = currentListSize - limitSize;
         for (size_t i = 0; i < overflowSize; i++) {
             auto previousSession = list.front();

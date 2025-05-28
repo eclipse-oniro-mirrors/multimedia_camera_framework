@@ -112,76 +112,57 @@ DeferredPhotoProcSession::DeferredPhotoProcSession(int userId,
 DeferredPhotoProcSession::~DeferredPhotoProcSession()
 {
     MEDIA_INFO_LOG("DeferredPhotoProcSession::DeferredPhotoProcSession Destructor!");
-    if (remoteSession_ != nullptr) {
-        (void)remoteSession_->AsObject()->RemoveDeathRecipient(deathRecipient_);
-        remoteSession_ = nullptr;
-    }
+    CHECK_ERROR_RETURN(remoteSession_ == nullptr);
+    (void)remoteSession_->AsObject()->RemoveDeathRecipient(deathRecipient_);
+    remoteSession_ = nullptr;
 }
 
 void DeferredPhotoProcSession::BeginSynchronize()
 {
-    if (remoteSession_ == nullptr) {
-        MEDIA_ERR_LOG("DeferredPhotoProcSession::BeginSynchronize failed due to binder died.");
-    } else {
-        MEDIA_INFO_LOG("DeferredPhotoProcSession:BeginSynchronize() enter.");
-        remoteSession_->BeginSynchronize();
-    }
-    return;
+    CHECK_ERROR_RETURN_LOG(
+        remoteSession_ == nullptr, "DeferredPhotoProcSession::BeginSynchronize failed due to binder died.");
+
+    MEDIA_INFO_LOG("DeferredPhotoProcSession:BeginSynchronize() enter.");
+    remoteSession_->BeginSynchronize();
 }
 
 void DeferredPhotoProcSession::EndSynchronize()
 {
-    if (remoteSession_ == nullptr) {
-        MEDIA_ERR_LOG("DeferredPhotoProcSession::EndSynchronize failed due to binder died.");
-    } else {
-        MEDIA_INFO_LOG("DeferredPhotoProcSession::EndSynchronize() enter.");
-        remoteSession_->EndSynchronize();
-    }
-    return;
+    CHECK_ERROR_RETURN_LOG(
+        remoteSession_ == nullptr, "DeferredPhotoProcSession::EndSynchronize failed due to binder died.");
+    MEDIA_INFO_LOG("DeferredPhotoProcSession::EndSynchronize() enter.");
+    remoteSession_->EndSynchronize();
 }
 
 void DeferredPhotoProcSession::AddImage(const std::string& imageId, DpsMetadata& metadata, const bool discardable)
 {
-    if (remoteSession_ == nullptr) {
-        MEDIA_ERR_LOG("DeferredPhotoProcSession::AddImage failed due to binder died.");
-    } else {
-        MEDIA_INFO_LOG("DeferredPhotoProcSession::AddImage() enter.");
-        remoteSession_->AddImage(imageId, metadata, discardable);
-    }
-    return;
+    CHECK_ERROR_RETURN_LOG(remoteSession_ == nullptr, "DeferredPhotoProcSession::AddImage failed due to binder died.");
+    MEDIA_INFO_LOG("DeferredPhotoProcSession::AddImage() enter.");
+    remoteSession_->AddImage(imageId, metadata, discardable);
 }
 
 void DeferredPhotoProcSession::RemoveImage(const std::string& imageId, const bool restorable)
 {
-    if (remoteSession_ == nullptr) {
-        MEDIA_ERR_LOG("DeferredPhotoProcSession::RemoveImage failed due to binder died.");
-    } else {
-        MEDIA_INFO_LOG("DeferredPhotoProcSession RemoveImage() enter.");
-        remoteSession_->RemoveImage(imageId, restorable);
-    }
-    return;
+    CHECK_ERROR_RETURN_LOG(
+        remoteSession_ == nullptr, "DeferredPhotoProcSession::RemoveImage failed due to binder died.");
+    MEDIA_INFO_LOG("DeferredPhotoProcSession RemoveImage() enter.");
+    remoteSession_->RemoveImage(imageId, restorable);
 }
 
 void DeferredPhotoProcSession::RestoreImage(const std::string& imageId)
 {
-    if (remoteSession_ == nullptr) {
-        MEDIA_ERR_LOG("DeferredPhotoProcSession::RestoreImage failed due to binder died.");
-    } else {
-        MEDIA_INFO_LOG("DeferredPhotoProcSession RestoreImage() enter.");
-        remoteSession_->RestoreImage(imageId);
-    }
-    return;
+    CHECK_ERROR_RETURN_LOG(
+        remoteSession_ == nullptr, "DeferredPhotoProcSession::RestoreImage failed due to binder died.");
+    MEDIA_INFO_LOG("DeferredPhotoProcSession RestoreImage() enter.");
+    remoteSession_->RestoreImage(imageId);
 }
 
 void DeferredPhotoProcSession::ProcessImage(const std::string& appName, const std::string& imageId)
 {
-    if (remoteSession_ == nullptr) {
-        MEDIA_ERR_LOG("DeferredPhotoProcSession::ProcessImage failed due to binder died.");
-    } else {
-        MEDIA_INFO_LOG("DeferredPhotoProcSession::ProcessImage() enter.");
-        remoteSession_->ProcessImage(appName, imageId);
-    }
-    return;
+    CHECK_ERROR_RETURN_LOG(
+        remoteSession_ == nullptr, "DeferredPhotoProcSession::ProcessImage failed due to binder died.");
+    MEDIA_INFO_LOG("DeferredPhotoProcSession::ProcessImage() enter.");
+    remoteSession_->ProcessImage(appName, imageId);
 }
 
 bool DeferredPhotoProcSession::CancelProcessImage(const std::string& imageId)

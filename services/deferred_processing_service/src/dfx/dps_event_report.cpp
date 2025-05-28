@@ -73,10 +73,7 @@ void DPSEventReport::ReportImageProcessResult(const std::string& imageId, int32_
 
 int DPSEventReport::GetTotalTime (uint64_t beginTime, uint64_t endTime)
 {
-    if (beginTime < endTime) {
-        return endTime - beginTime;
-    }
-    return 0;
+    return beginTime < endTime ? endTime - beginTime : 0;
 }
 
 void DPSEventReport::ReportImageModeChange(ExecutionMode executionMode)

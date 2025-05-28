@@ -97,9 +97,7 @@ int32_t HStreamDepthDataProxy::UnSetCallback()
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamDepthDataInterfaceCode::CAMERA_STREAM_DEPTH_DATA_UNSET_CALLBACK), data, reply,
         option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamDepthDataProxy UnSetCallback failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HStreamDepthDataProxy UnSetCallback failed, error: %{public}d", error);
     return error;
 }
 

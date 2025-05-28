@@ -75,9 +75,8 @@ Camera_PreviewOutput::Camera_PreviewOutput(sptr<PreviewOutput> &innerPreviewOutp
 Camera_PreviewOutput::~Camera_PreviewOutput()
 {
     MEDIA_DEBUG_LOG("~Camera_PreviewOutput is called");
-    if (innerPreviewOutput_) {
-        innerPreviewOutput_ = nullptr;
-    }
+    CHECK_ERROR_RETURN(!innerPreviewOutput_);
+    innerPreviewOutput_ = nullptr;
 }
 
 Camera_ErrorCode Camera_PreviewOutput::RegisterCallback(PreviewOutput_Callbacks* callback)

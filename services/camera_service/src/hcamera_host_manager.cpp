@@ -828,11 +828,10 @@ void HCameraHostManager::CloseCameraDevice(const std::string& cameraId)
             deviceToDisconnect = iter->second;
         }
     }
-    if (deviceToDisconnect) {
-        MEDIA_DEBUG_LOG("HCameraDevice::CloseCameraDevice should clean %{public}s device", cameraId.c_str());
-        HCameraDevice* devicePtr = static_cast<HCameraDevice*>(deviceToDisconnect.GetRefPtr());
-        devicePtr->RemoveResourceWhenHostDied();
-    }
+    CHECK_ERROR_RETURN(!deviceToDisconnect);
+    MEDIA_DEBUG_LOG("HCameraDevice::CloseCameraDevice should clean %{public}s device", cameraId.c_str());
+    HCameraDevice* devicePtr = static_cast<HCameraDevice*>(deviceToDisconnect.GetRefPtr());
+    devicePtr->RemoveResourceWhenHostDied();
 }
 
 int32_t HCameraHostManager::GetCameras(std::vector<std::string>& cameraIds)
@@ -1035,23 +1034,21 @@ void HCameraHostManager::UpdateRestoreParamCloseTime(const std::string& clientNa
         return;
     }
 
-    if (itTransitent != transitentParamMap_.end()) {
-        MEDIA_INFO_LOG("HCameraHostManager::Update transient CloseTime ");
-        transitentParamMap_[clientName]->SetCloseCameraTime(closeTime);
-        isHasSavedParam = false;
-    }
+    CHECK_ERROR_RETURN(itTransitent == transitentParamMap_.end());
+    MEDIA_INFO_LOG("HCameraHostManager::Update transient CloseTime ");
+    transitentParamMap_[clientName]->SetCloseCameraTime(closeTime);
+    isHasSavedParam = false;
 }
 
 void HCameraHostManager::DeleteRestoreParam(const std::string& clientName, const std::string& cameraId)
 {
     MEDIA_DEBUG_LOG("HCameraHostManager::DeleteRestoreParam enter");
     auto itPersistent = persistentParamMap_.find(clientName);
-    if (itPersistent != persistentParamMap_.end()) {
-        auto iterParamMap = (itPersistent->second).find(cameraId);
-        if (iterParamMap != (itPersistent->second).end()) {
-            iterParamMap->second = nullptr;
-            (itPersistent->second).erase(cameraId);
-        }
+    CHECK_ERROR_RETURN(itPersistent == persistentParamMap_.end());
+    auto iterParamMap = (itPersistent->second).find(cameraId);
+    if (iterParamMap != (itPersistent->second).end()) {
+        iterParamMap->second = nullptr;
+        (itPersistent->second).erase(cameraId);
     }
 }
 

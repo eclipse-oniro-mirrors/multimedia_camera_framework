@@ -158,10 +158,9 @@ void HStreamRepeat::UpdateSketchStatus(SketchStatus status)
     CHECK_ERROR_RETURN(repeatStreamType_ != RepeatStreamType::SKETCH);
     auto parent = parentStreamRepeat_.promote();
     CHECK_ERROR_RETURN(parent == nullptr);
-    if (sketchStatus_ != status) {
-        sketchStatus_ = status;
-        parent->OnSketchStatusChanged(sketchStatus_);
-    }
+    CHECK_ERROR_RETURN(sketchStatus_ == status);
+    sketchStatus_ = status;
+    parent->OnSketchStatusChanged(sketchStatus_);
 }
 
 void HStreamRepeat::StartSketchStream(std::shared_ptr<OHOS::Camera::CameraMetadata> settings)
@@ -947,20 +946,19 @@ void HStreamRepeat::UpdateFrameRateSettings(std::shared_ptr<OHOS::Camera::Camera
     CHECK_ERROR_RETURN(settings == nullptr);
     bool status = false;
     camera_metadata_item_t item;
- 
-    if (streamFrameRateRange_.size() != 0) {
-        int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_FPS_RANGES, &item);
-        if (ret == CAM_META_ITEM_NOT_FOUND) {
-            MEDIA_DEBUG_LOG("HStreamRepeat::SetFrameRate Failed to find frame range");
-            status = settings->addEntry(
-                OHOS_CONTROL_FPS_RANGES, streamFrameRateRange_.data(), streamFrameRateRange_.size());
-        } else if (ret == CAM_META_SUCCESS) {
-            MEDIA_DEBUG_LOG("HStreamRepeat::SetFrameRate success to find frame range");
-            status = settings->updateEntry(
-                OHOS_CONTROL_FPS_RANGES, streamFrameRateRange_.data(), streamFrameRateRange_.size());
-        }
-        CHECK_ERROR_PRINT_LOG(!status, "HStreamRepeat::SetFrameRate Failed to set frame range");
+
+    CHECK_ERROR_RETURN(streamFrameRateRange_.size() == 0);
+    int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_FPS_RANGES, &item);
+    if (ret == CAM_META_ITEM_NOT_FOUND) {
+        MEDIA_DEBUG_LOG("HStreamRepeat::SetFrameRate Failed to find frame range");
+        status =
+            settings->addEntry(OHOS_CONTROL_FPS_RANGES, streamFrameRateRange_.data(), streamFrameRateRange_.size());
+    } else if (ret == CAM_META_SUCCESS) {
+        MEDIA_DEBUG_LOG("HStreamRepeat::SetFrameRate success to find frame range");
+        status =
+            settings->updateEntry(OHOS_CONTROL_FPS_RANGES, streamFrameRateRange_.data(), streamFrameRateRange_.size());
     }
+    CHECK_ERROR_PRINT_LOG(!status, "HStreamRepeat::SetFrameRate Failed to set frame range");
 }
 
 void HStreamRepeat::UpdateFrameMuteSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> &settings,

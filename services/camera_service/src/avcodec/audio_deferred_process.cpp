@@ -66,10 +66,8 @@ int32_t AudioDeferredProcess::ConfigOfflineAudioEffectChain()
 {
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("AudioDeferredProcess::ConfigOfflineAudioEffectChain Enter");
-    if (offlineEffectChain_->Configure(inputOptions_, outputOptions_) != 0) {
-        MEDIA_ERR_LOG("AudioDeferredProcess::ConfigOfflineAudioEffectChain Err");
-        return -1;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(offlineEffectChain_->Configure(inputOptions_, outputOptions_) != 0, -1,
+        "AudioDeferredProcess::ConfigOfflineAudioEffectChain Err");
     return CAMERA_OK;
 }
 

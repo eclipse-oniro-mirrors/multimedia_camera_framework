@@ -235,10 +235,9 @@ CameraAbilityContainer::~CameraAbilityContainer()
 void CameraAbilityContainer::OnAbilityChange()
 {
     auto session = session_.promote();
-    if (session != nullptr) {
-        MEDIA_DEBUG_LOG("CameraAbilityContainer OnAbilityChange");
-        session->ExecuteAbilityChangeCallback();
-    }
+    CHECK_ERROR_RETURN(session == nullptr);
+    MEDIA_DEBUG_LOG("CameraAbilityContainer OnAbilityChange");
+    session->ExecuteAbilityChangeCallback();
 }
 // LCOV_EXCL_STOP
 

@@ -74,9 +74,8 @@ Camera_VideoOutput::Camera_VideoOutput(sptr<VideoOutput> &innerVideoOutput) : in
 Camera_VideoOutput::~Camera_VideoOutput()
 {
     MEDIA_DEBUG_LOG("~Camera_VideoOutput is called");
-    if (innerVideoOutput_) {
-        innerVideoOutput_ = nullptr;
-    }
+    CHECK_ERROR_RETURN(!innerVideoOutput_);
+    innerVideoOutput_ = nullptr;
 }
 
 Camera_ErrorCode Camera_VideoOutput::RegisterCallback(VideoOutput_Callbacks* callback)

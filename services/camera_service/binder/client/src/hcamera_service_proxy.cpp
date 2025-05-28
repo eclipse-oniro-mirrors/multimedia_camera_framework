@@ -175,9 +175,8 @@ int32_t HCameraServiceProxy::UnSetCameraCallback()
     data.WriteInterfaceToken(GetDescriptor());
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_UNSET_CAMERA_CALLBACK), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceProxy UnSetCameraCallback failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(
+        error != ERR_NONE, "HCameraServiceProxy UnSetCameraCallback failed, error: %{public}d", error);
     return error;
 }
 
@@ -267,9 +266,8 @@ int32_t HCameraServiceProxy::UnSetFoldStatusCallback()
     data.WriteInterfaceToken(GetDescriptor());
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_UNSET_FOLD_CALLBACK), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceProxy UnSetFoldStatusCallback failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(
+        error != ERR_NONE, "HCameraServiceProxy UnSetFoldStatusCallback failed, error: %{public}d", error);
     return error;
 }
 

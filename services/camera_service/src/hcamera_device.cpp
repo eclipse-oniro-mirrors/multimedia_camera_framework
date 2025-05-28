@@ -549,13 +549,12 @@ void HCameraDevice::HandlePrivacyWhenOpenDeviceFail()
 {
     MEDIA_INFO_LOG("enter HandlePrivacyWhenOpenDeviceFail");
     auto cameraPrivacy = GetCameraPrivacy();
-    if (cameraPrivacy != nullptr) {
-        if (HCameraDeviceManager::GetInstance()->IsMultiCameraActive(cameraPid_) == false) {
-            MEDIA_INFO_LOG("do StopUsingPermissionCallback");
-            cameraPrivacy->StopUsingPermissionCallback();
-        }
-        cameraPrivacy->UnregisterPermissionCallback();
+    CHECK_ERROR_RETURN(cameraPrivacy == nullptr);
+    if (HCameraDeviceManager::GetInstance()->IsMultiCameraActive(cameraPid_) == false) {
+        MEDIA_INFO_LOG("do StopUsingPermissionCallback");
+        cameraPrivacy->StopUsingPermissionCallback();
     }
+        cameraPrivacy->UnregisterPermissionCallback();
 }
 
 void HCameraDevice::HandlePrivacyAfterCloseDevice()
@@ -592,14 +591,10 @@ void HCameraDevice::ReportDeviceProtectionStatus(const std::shared_ptr<OHOS::Cam
     CHECK_ERROR_RETURN_LOG(metadata == nullptr, "metadata is null");
     camera_metadata_item_t item;
     int ret = OHOS::Camera::FindCameraMetadataItem(metadata->get(), OHOS_DEVICE_PROTECTION_STATE, &item);
-    if (ret != CAM_META_SUCCESS || item.count == 0) {
-        return;
-    }
+    CHECK_ERROR_RETURN(ret != CAM_META_SUCCESS || item.count == 0);
     int32_t status = item.data.i32[0];
     MEDIA_INFO_LOG("HCameraDevice::ReportDeviceProtectionStatus status: %{public}d", status);
-    if (!CanReportDeviceProtectionStatus(status)) {
-        return;
-    }
+    CHECK_ERROR_RETURN(!CanReportDeviceProtectionStatus(status));
     if (clientName_ == SYSTEM_CAMERA) {
         auto callback = GetDeviceServiceCallback();
         auto itr = g_deviceProtectionToServiceError_.find(static_cast<DeviceProtectionStatus>(status));
@@ -673,25 +668,17 @@ bool HCameraDevice::ShowDeviceProtectionDialog(DeviceProtectionStatus status)
     const int32_t code = 4;
     std::string commandStr = BuildDeviceProtectionDialogCommand(status);
     auto itr = g_deviceProtectionToCallBack_.find(static_cast<DeviceProtectionStatus>(status));
-    if (itr == g_deviceProtectionToCallBack_.end()) {
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET(itr == g_deviceProtectionToCallBack_.end(), false);
     DeviceProtectionAbilityCallBack callback = itr->second;
 
     sptr<DeviceProtectionAbilityConnection> connection = sptr<DeviceProtectionAbilityConnection> (new (std::nothrow)
     DeviceProtectionAbilityConnection(commandStr, code, callback));
-    if (connection == nullptr) {
-        MEDIA_ERR_LOG("connection is nullptr");
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(connection == nullptr, false, "connection is nullptr");
     std::string identity = IPCSkeleton::ResetCallingIdentity();
     auto connectResult = AAFwk::ExtensionManagerClient::GetInstance().ConnectServiceExtensionAbility(want,
         connection, nullptr, DEFAULT_USER_ID);
     IPCSkeleton::SetCallingIdentity(identity);
-    if (connectResult != 0) {
-        MEDIA_ERR_LOG("ConnectServiceExtensionAbility Failed!");
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(connectResult != 0, false, "ConnectServiceExtensionAbility Failed!");
     return true;
 }
 
@@ -918,14 +905,13 @@ void HCameraDevice::UnPrepareZoom()
 {
     MEDIA_INFO_LOG("entered.");
     std::lock_guard<std::mutex> lock(unPrepareZoomMutex_);
-    if (inPrepareZoom_) {
-        inPrepareZoom_ = false;
-        uint32_t count = 1;
-        uint32_t prepareZoomType = OHOS_CAMERA_ZOOMSMOOTH_PREPARE_DISABLE;
-        std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = std::make_shared<OHOS::Camera::CameraMetadata>(1, 1);
-        metadata->addEntry(OHOS_CONTROL_PREPARE_ZOOM, &prepareZoomType, count);
-        UpdateSetting(metadata);
-    }
+    CHECK_ERROR_RETURN(!inPrepareZoom_);
+    inPrepareZoom_ = false;
+    uint32_t count = 1;
+    uint32_t prepareZoomType = OHOS_CAMERA_ZOOMSMOOTH_PREPARE_DISABLE;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = std::make_shared<OHOS::Camera::CameraMetadata>(1, 1);
+    metadata->addEntry(OHOS_CONTROL_PREPARE_ZOOM, &prepareZoomType, count);
+    UpdateSetting(metadata);
 }
 
 int32_t HCameraDevice::UpdateSetting(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings)

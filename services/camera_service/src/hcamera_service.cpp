@@ -1264,10 +1264,7 @@ std::shared_ptr<CameraStatusCallbacksInfo> HCameraService::GetCachedCameraStatus
 {
     std::lock_guard<std::mutex> lock(cameraStatusCallbacksMutex_);
     auto it = cameraStatusCallbacks_.find(cameraId);
-    if (it == cameraStatusCallbacks_.end()) {
-        return nullptr;
-    }
-    return it->second;
+    return it == cameraStatusCallbacks_.end() ? nullptr : it->second;
 }
 
 void HCameraService::CacheFlashStatus(const string& cameraId, FlashStatus flashStatus)
@@ -1280,10 +1277,7 @@ FlashStatus HCameraService::GetCachedFlashStatus(const string& cameraId)
 {
     std::lock_guard<std::mutex> lock(flashStatusCallbacksMutex_);
     auto it = flashStatusCallbacks_.find(cameraId);
-    if (it == flashStatusCallbacks_.end()) {
-        return FlashStatus::FLASH_STATUS_UNAVAILABLE;
-    }
-    return it->second;
+    return it == flashStatusCallbacks_.end() ? FlashStatus::FLASH_STATUS_UNAVAILABLE : it->second;
 }
 
 static std::map<PolicyType, Security::AccessToken::PolicyType> g_policyTypeMap_ = {
@@ -1747,13 +1741,12 @@ void HCameraService::DumpCameraZoom(common_metadata_header_t* metadataEntry, Cam
     }
 
     ret = OHOS::Camera::FindCameraMetadataItem(metadataEntry, OHOS_ABILITY_ZOOM_RATIO_RANGE, &item);
-    if (ret == CAM_META_SUCCESS) {
-        infoDumper.Msg("OHOS_ABILITY_ZOOM_RATIO_RANGE data size:" + to_string(item.count));
-        if (item.count == zoomRangeCount) {
-            infoDumper.Msg("Available Zoom Ratio Range:[" + to_string(item.data.f[minIndex]) +
-                           to_string(item.data.f[maxIndex]) + "]");
+    CHECK_ERROR_RETURN(ret != CAM_META_SUCCESS);
+    infoDumper.Msg("OHOS_ABILITY_ZOOM_RATIO_RANGE data size:" + to_string(item.count));
+    if (item.count == zoomRangeCount) {
+        infoDumper.Msg(
+            "Available Zoom Ratio Range:[" + to_string(item.data.f[minIndex]) + to_string(item.data.f[maxIndex]) + "]");
         }
-    }
 }
 
 void HCameraService::DumpCameraFlash(common_metadata_header_t* metadataEntry, CameraInfoDumper& infoDumper)
@@ -1779,15 +1772,14 @@ void HCameraService::DumpCameraCompensation(common_metadata_header_t *metadataEn
     int ret;
     infoDumper.Title("Compensation Related Info:");
     ret = OHOS::Camera::FindCameraMetadataItem(metadataEntry, OHOS_ABILITY_AE_COMPENSATION_RANGE, &item);
-    if (ret == CAM_META_SUCCESS) {
-        string compensationAbilityString = "Available Compensation Modes:[ ";
-        for (uint32_t i = 0; i < item.count; i++) {
+    CHECK_ERROR_RETURN(ret != CAM_META_SUCCESS);
+    string compensationAbilityString = "Available Compensation Modes:[ ";
+    for (uint32_t i = 0; i < item.count; i++) {
             int32_t val = item.data.i32[i];
             compensationAbilityString.append(to_string(val));
         }
         compensationAbilityString.append("]");
         infoDumper.Msg(compensationAbilityString);
-    }
 }
 
 void HCameraService::DumpCameraColorSpace(common_metadata_header_t *metadataEntry, CameraInfoDumper &infoDumper)
@@ -1796,15 +1788,14 @@ void HCameraService::DumpCameraColorSpace(common_metadata_header_t *metadataEntr
     int ret;
     infoDumper.Title("Color Space Related Info:");
     ret = OHOS::Camera::FindCameraMetadataItem(metadataEntry, OHOS_ABILITY_AVAILABLE_COLOR_SPACES, &item);
-    if (ret == CAM_META_SUCCESS) {
-        string colorSpaceAbilityString = "Available Color Space Modes:[ ";
-        for (uint32_t i = 0; i < item.count; i++) {
+    CHECK_ERROR_RETURN(ret != CAM_META_SUCCESS);
+    string colorSpaceAbilityString = "Available Color Space Modes:[ ";
+    for (uint32_t i = 0; i < item.count; i++) {
             int32_t val = item.data.i32[i];
             colorSpaceAbilityString.append(to_string(val));
         }
         colorSpaceAbilityString.append("]");
         infoDumper.Msg(colorSpaceAbilityString);
-    }
 }
 
 void HCameraService::DumpCameraAF(common_metadata_header_t *metadataEntry, CameraInfoDumper &infoDumper)
@@ -1851,13 +1842,9 @@ void HCameraService::DumpCameraSensorInfo(common_metadata_header_t* metadataEntr
     int32_t bottomIndex = 3;
     infoDumper.Title("Sensor Related Info:");
     ret = OHOS::Camera::FindCameraMetadataItem(metadataEntry, OHOS_SENSOR_INFO_ACTIVE_ARRAY_SIZE, &item);
-    if (ret == CAM_META_SUCCESS) {
-        infoDumper.Msg("Array:[" +
-            to_string(item.data.i32[leftIndex]) + " " +
-            to_string(item.data.i32[topIndex]) + " " +
-            to_string(item.data.i32[rightIndex]) + " " +
-            to_string(item.data.i32[bottomIndex]) + "]:\n");
-    }
+    CHECK_ERROR_RETURN(ret != CAM_META_SUCCESS);
+    infoDumper.Msg("Array:[" + to_string(item.data.i32[leftIndex]) + " " + to_string(item.data.i32[topIndex]) + " " +
+        to_string(item.data.i32[rightIndex]) + " " + to_string(item.data.i32[bottomIndex]) + "]:\n");
 }
 
 void HCameraService::DumpCameraVideoStabilization(common_metadata_header_t* metadataEntry, CameraInfoDumper& infoDumper)
@@ -1899,17 +1886,16 @@ void HCameraService::DumpCameraPrelaunch(common_metadata_header_t* metadataEntry
     int ret;
     infoDumper.Title("Camera Prelaunch Related Info:");
     ret = OHOS::Camera::FindCameraMetadataItem(metadataEntry, OHOS_ABILITY_PRELAUNCH_AVAILABLE, &item);
-    if (ret == CAM_META_SUCCESS) {
-        map<int, string>::const_iterator iter = g_cameraPrelaunchAvailable.find(item.data.u8[0]);
-        bool isSupport = false;
-        if (iter != g_cameraPrelaunchAvailable.end()) {
+    CHECK_ERROR_RETURN(ret != CAM_META_SUCCESS);
+    map<int, string>::const_iterator iter = g_cameraPrelaunchAvailable.find(item.data.u8[0]);
+    bool isSupport = false;
+    if (iter != g_cameraPrelaunchAvailable.end()) {
             isSupport = true;
         }
         std::string infoString = "Available Prelaunch Info:[";
         infoString.append(isSupport ? "True" : "False");
         infoString.append("]");
         infoDumper.Msg(infoString);
-    }
 }
 
 void HCameraService::DumpCameraThumbnail(common_metadata_header_t* metadataEntry, CameraInfoDumper& infoDumper)
@@ -1918,17 +1904,16 @@ void HCameraService::DumpCameraThumbnail(common_metadata_header_t* metadataEntry
     int ret;
     infoDumper.Title("Camera Thumbnail Related Info:");
     ret = OHOS::Camera::FindCameraMetadataItem(metadataEntry, OHOS_ABILITY_STREAM_QUICK_THUMBNAIL_AVAILABLE, &item);
-    if (ret == CAM_META_SUCCESS) {
-        map<int, string>::const_iterator iter = g_cameraQuickThumbnailAvailable.find(item.data.u8[0]);
-        bool isSupport = false;
-        if (iter != g_cameraQuickThumbnailAvailable.end()) {
+    CHECK_ERROR_RETURN(ret != CAM_META_SUCCESS);
+    map<int, string>::const_iterator iter = g_cameraQuickThumbnailAvailable.find(item.data.u8[0]);
+    bool isSupport = false;
+    if (iter != g_cameraQuickThumbnailAvailable.end()) {
             isSupport = true;
         }
         std::string infoString = "Available Thumbnail Info:[";
         infoString.append(isSupport ? "True" : "False");
         infoString.append("]");
         infoDumper.Msg(infoString);
-    }
 }
 
 void HCameraService::DumpCameraConcurrency(

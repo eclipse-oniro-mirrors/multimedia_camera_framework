@@ -32,17 +32,11 @@ int32_t DeferredVideoProcessingSessionStub::OnRemoteRequest(
     switch (code) {
         case COMMAND_BEGIN_SYNCHRONIZE: {
             ErrCode errCode = BeginSynchronize();
-            if (!reply.WriteInt32(errCode)) {
-                return ERR_INVALID_VALUE;
-            }
-            return ERR_NONE;
+            return !reply.WriteInt32(errCode) ? ERR_INVALID_VALUE : ERR_NONE;
         }
         case COMMAND_END_SYNCHRONIZE: {
             ErrCode errCode = EndSynchronize();
-            if (!reply.WriteInt32(errCode)) {
-                return ERR_INVALID_VALUE;
-            }
-            return ERR_NONE;
+            return !reply.WriteInt32(errCode) ? ERR_INVALID_VALUE : ERR_NONE;
         }
         case COMMAND_ADD_VIDEO: {
             std::string videoId = Str16ToStr8(data.ReadString16());
@@ -57,27 +51,18 @@ int32_t DeferredVideoProcessingSessionStub::OnRemoteRequest(
                 return ERR_INVALID_DATA;
             }
             ErrCode errCode = AddVideo(videoId, srcFd, dstFd);
-            if (!reply.WriteInt32(errCode)) {
-                return ERR_INVALID_VALUE;
-            }
-            return ERR_NONE;
+            return !reply.WriteInt32(errCode) ? ERR_INVALID_VALUE : ERR_NONE;
         }
         case COMMAND_REMOVE_VIDEO: {
             std::string videoId = Str16ToStr8(data.ReadString16());
             bool restorable = data.ReadInt32() == 1 ? true : false;
             ErrCode errCode = RemoveVideo(videoId, restorable);
-            if (!reply.WriteInt32(errCode)) {
-                return ERR_INVALID_VALUE;
-            }
-            return ERR_NONE;
+            return !reply.WriteInt32(errCode) ? ERR_INVALID_VALUE : ERR_NONE;
         }
         case COMMAND_RESTORE_VIDEO: {
             std::string videoId = Str16ToStr8(data.ReadString16());
             ErrCode errCode = RestoreVideo(videoId);
-            if (!reply.WriteInt32(errCode)) {
-                return ERR_INVALID_VALUE;
-            }
-            return ERR_NONE;
+            return !reply.WriteInt32(errCode) ? ERR_INVALID_VALUE : ERR_NONE;
         }
         default:
             return IPCObjectStub::OnRemoteRequest(code, data, reply, option);

@@ -625,27 +625,26 @@ void CaptureSession::FindTagId()
 {
     MEDIA_INFO_LOG("Enter Into CaptureSession::FindTagId");
     auto inputDevice = GetInputDevice();
-    if (inputDevice != nullptr) {
-        MEDIA_DEBUG_LOG("CaptureSession::FindTagId inputDevice not nullptr");
-        std::vector<vendorTag_t> vendorTagInfos;
-        sptr<CameraInput> camInput = (sptr<CameraInput>&)inputDevice;
-        int32_t ret = camInput->GetCameraAllVendorTags(vendorTagInfos);
-        CHECK_ERROR_RETURN_LOG(ret != CAMERA_OK, "Failed to GetCameraAllVendorTags");
-        for (auto info : vendorTagInfos) {
-            if (info.tagName == nullptr) {
-                continue;
-            }
-            if (strcmp(info.tagName, "hwSensorName") == 0) {
-                HAL_CUSTOM_SENSOR_MODULE_TYPE = info.tagId;
-            } else if (strcmp(info.tagName, "lensFocusDistance") == 0) {
-                HAL_CUSTOM_LENS_FOCUS_DISTANCE = info.tagId;
-            } else if (strcmp(info.tagName, "sensorSensitivity") == 0) {
-                HAL_CUSTOM_SENSOR_SENSITIVITY = info.tagId;
-            } else if (strcmp(info.tagName, "cameraLaserData") == 0) {
-                HAL_CUSTOM_LASER_DATA = info.tagId;
-            } else if (strcmp(info.tagName, "cameraArMode") == 0) {
-                HAL_CUSTOM_AR_MODE = info.tagId;
-            }
+    CHECK_ERROR_RETURN(inputDevice == nullptr);
+    MEDIA_DEBUG_LOG("CaptureSession::FindTagId inputDevice not nullptr");
+    std::vector<vendorTag_t> vendorTagInfos;
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)inputDevice;
+    int32_t ret = camInput->GetCameraAllVendorTags(vendorTagInfos);
+    CHECK_ERROR_RETURN_LOG(ret != CAMERA_OK, "Failed to GetCameraAllVendorTags");
+    for (auto info : vendorTagInfos) {
+        if (info.tagName == nullptr) {
+            continue;
+        }
+        if (strcmp(info.tagName, "hwSensorName") == 0) {
+            HAL_CUSTOM_SENSOR_MODULE_TYPE = info.tagId;
+        } else if (strcmp(info.tagName, "lensFocusDistance") == 0) {
+            HAL_CUSTOM_LENS_FOCUS_DISTANCE = info.tagId;
+        } else if (strcmp(info.tagName, "sensorSensitivity") == 0) {
+            HAL_CUSTOM_SENSOR_SENSITIVITY = info.tagId;
+        } else if (strcmp(info.tagName, "cameraLaserData") == 0) {
+            HAL_CUSTOM_LASER_DATA = info.tagId;
+        } else if (strcmp(info.tagName, "cameraArMode") == 0) {
+            HAL_CUSTOM_AR_MODE = info.tagId;
         }
     }
 }

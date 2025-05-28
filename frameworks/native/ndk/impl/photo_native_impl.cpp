@@ -32,10 +32,9 @@ OH_PhotoNative::~OH_PhotoNative()
         mainImage_ = nullptr;
     }
 
-    if (rawImage_) {
-        rawImage_->release();
-        rawImage_ = nullptr;
-    }
+    CHECK_ERROR_RETURN(!rawImage_);
+    rawImage_->release();
+    rawImage_ = nullptr;
 }
 
 Camera_ErrorCode OH_PhotoNative::GetMainImage(OH_ImageNative** mainImage)

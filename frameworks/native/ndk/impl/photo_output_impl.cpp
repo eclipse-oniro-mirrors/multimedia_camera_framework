@@ -53,10 +53,9 @@ Camera_PhotoOutput::~Camera_PhotoOutput()
     if (rawPhotoListener_) {
         rawPhotoListener_ = nullptr;
     }
-    if (photoNative_) {
-        delete photoNative_;
-        photoNative_ = nullptr;
-    }
+    CHECK_ERROR_RETURN(!photoNative_);
+    delete photoNative_;
+    photoNative_ = nullptr;
 }
 
 Camera_ErrorCode Camera_PhotoOutput::RegisterCallback(PhotoOutput_Callbacks* callback)

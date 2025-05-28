@@ -139,9 +139,7 @@ int32_t HCameraDeviceProxy::UnSetCallback()
     data.WriteInterfaceToken(GetDescriptor());
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_UNSET_CALLBACK), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraDeviceProxy UnSetCallback failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HCameraDeviceProxy UnSetCallback failed, error: %{public}d", error);
 
     return error;
 }

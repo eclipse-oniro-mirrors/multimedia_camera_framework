@@ -43,10 +43,7 @@ int32_t SharedBuffer::Initialize()
 
 int64_t SharedBuffer::GetSize()
 {
-    if (ashmem_ != nullptr) {
-        return ashmem_->GetAshmemSize();
-    }
-    return INVALID_FD;
+    return ashmem_ != nullptr ? ashmem_->GetAshmemSize() : INVALID_FD;
 }
 
 int32_t SharedBuffer::CopyFrom(uint8_t* address, int64_t bytes)
@@ -82,20 +79,16 @@ int32_t SharedBuffer::AllocateAshmemUnlocked()
 
 void SharedBuffer::DeallocAshmem()
 {
-    if (ashmem_ != nullptr) {
-        ashmem_->UnmapAshmem();
-        ashmem_->CloseAshmem();
-        ashmem_ = nullptr;
-        DP_DEBUG_LOG("dealloc ashmem capacity(%{public}" PRId64 ") success.", capacity_);
-    }
+    DP_CHECK_RETURN(ashmem_ == nullptr);
+    ashmem_->UnmapAshmem();
+    ashmem_->CloseAshmem();
+    ashmem_ = nullptr;
+    DP_DEBUG_LOG("dealloc ashmem capacity(%{public}" PRId64 ") success.", capacity_);
 }
 
 int SharedBuffer::GetFd() const
 {
-    if (ashmem_ != nullptr) {
-        return ashmem_->GetAshmemFd();
-    }
-    return INVALID_FD;
+    return ashmem_ != nullptr ? ashmem_->GetAshmemFd() : INVALID_FD;
 }
 // LCOV_EXCL_STOP
 } // namespace DeferredProcessing

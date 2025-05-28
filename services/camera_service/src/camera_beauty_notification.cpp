@@ -47,13 +47,9 @@ CameraBeautyNotification::~CameraBeautyNotification()
 
 sptr<CameraBeautyNotification> CameraBeautyNotification::GetInstance()
 {
-    if (instance_ != nullptr) {
-        return instance_;
-    }
+    CHECK_ERROR_RETURN_RET(instance_ != nullptr, instance_);
     std::lock_guard<std::mutex> lock(instanceMutex_);
-    if (instance_ != nullptr) {
-        return instance_;
-    }
+    CHECK_ERROR_RETURN_RET(instance_ != nullptr, instance_);
     instance_ = new (std::nothrow) CameraBeautyNotification();
     return instance_;
 }

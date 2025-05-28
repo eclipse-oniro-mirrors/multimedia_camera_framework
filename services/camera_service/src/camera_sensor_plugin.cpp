@@ -43,10 +43,9 @@ bool LoadMotionSensor(void)
 void UnloadMotionSensor(void)
 {
     MEDIA_INFO_LOG("unload motion plugin.");
-    if (g_handle != nullptr) {
-        dlclose(g_handle);
-        g_handle = nullptr;
-    }
+    CHECK_ERROR_RETURN(g_handle == nullptr);
+    dlclose(g_handle);
+    g_handle = nullptr;
 }
 
 __attribute__((no_sanitize("cfi"))) bool SubscribeCallback(int32_t motionType, OnMotionChangedPtr callback)
