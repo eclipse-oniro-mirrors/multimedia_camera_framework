@@ -266,6 +266,11 @@ HWTEST_F(HCameraDeviceManagerUnitTest, hcamera_device_manager_unittest_015, Test
         device, accessTokenId, cost, conflicting, firstTokenId);
     HCameraDeviceManager::GetInstance()->activeCameras_.push_back(testCamera);
     EXPECT_EQ(HCameraDeviceManager::GetInstance()->IsMultiCameraActive(pid), true);
+    auto it = std::find_if(HCameraDeviceManager::GetInstance()->activeCameras_.begin(),
+        HCameraDeviceManager::GetInstance()->activeCameras_.end(), [&](const sptr<HCameraDeviceHolder> &x) {
+        return x->GetDevice() == nullptr;
+    });
+     HCameraDeviceManager::GetInstance()->activeCameras_.erase(it);
 }
 } // CameraStandard
 } // OHOS
