@@ -1295,7 +1295,6 @@ void CameraManager::GetCameraConcurrentInfos(std::vector<sptr<CameraDevice>> cam
             retCode = Camera::FindCameraMetadataItem(cameraAbility->get(),
                 OHOS_ABILITY_CAMERA_LIMITED_CAPABILITIES, &item);
             if (retCode == CAM_META_SUCCESS) {
-                cameraDev->isConcurrentLimted_ = 1;
                 ParsingCameraConcurrentLimted(item, modeofThis, outputCapabilitiesofThis, cameraAbility, cameraObjnow);
             } else {
                 MEDIA_ERR_LOG("GetCameraConcurrentInfos error");
