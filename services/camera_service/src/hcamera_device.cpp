@@ -72,7 +72,6 @@ static const uint32_t DEVICE_DROP_INTERVAL = 600000;
 static std::mutex g_cameraHostManagerMutex;
 static sptr<HCameraHostManager> g_cameraHostManager = nullptr;
 static int64_t g_lastDeviceDropTime = 0;
-sptr<OHOS::Rosen::DisplayManager::IFoldStatusListener> listener;
 CallerInfo caller_;
 
 const std::vector<std::tuple<uint32_t, std::string, DFX_UB_NAME>> HCameraDevice::reportTagInfos_ = {
@@ -1134,7 +1133,7 @@ void HCameraDevice::DebugLogForAeRegions(const std::shared_ptr<OHOS::Camera::Cam
 void HCameraDevice::RegisterFoldStatusListener()
 {
     std::lock_guard<std::mutex> lock(foldStateListenerMutex_);
-    listener = new FoldScreenListener(cameraHostManager_, cameraID_);
+    listener_ = new FoldScreenListener(cameraHostManager_, cameraID_);
     if (cameraHostManager_) {
         int foldStatus = static_cast<int>(OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus());
         if (foldStatus == FoldStatus::HALF_FOLD) {
@@ -1142,10 +1141,10 @@ void HCameraDevice::RegisterFoldStatusListener()
         }
         cameraHostManager_->NotifyDeviceStateChangeInfo(DeviceType::FOLD_TYPE, foldStatus);
     }
-    auto ret = OHOS::Rosen::DisplayManager::GetInstance().RegisterFoldStatusListener(listener);
+    auto ret = OHOS::Rosen::DisplayManager::GetInstance().RegisterFoldStatusListener(listener_);
     if (ret != OHOS::Rosen::DMError::DM_OK) {
         MEDIA_DEBUG_LOG("HCameraDevice::RegisterFoldStatusListener failed");
-        listener = nullptr;
+        listener_ = nullptr;
     } else {
         MEDIA_DEBUG_LOG("HCameraDevice::RegisterFoldStatusListener success");
     }
@@ -1154,12 +1153,12 @@ void HCameraDevice::RegisterFoldStatusListener()
 void HCameraDevice::UnregisterFoldStatusListener()
 {
     std::lock_guard<std::mutex> lock(foldStateListenerMutex_);
-    CHECK_ERROR_RETURN_LOG(listener == nullptr, "HCameraDevice::unRegisterFoldStatusListener  listener is null");
-    auto ret = OHOS::Rosen::DisplayManager::GetInstance().UnregisterFoldStatusListener(listener);
+    CHECK_ERROR_RETURN_LOG(listener_ == nullptr, "HCameraDevice::unRegisterFoldStatusListener  listener is null");
+    auto ret = OHOS::Rosen::DisplayManager::GetInstance().UnregisterFoldStatusListener(listener_);
     if (ret != OHOS::Rosen::DMError::DM_OK) {
         MEDIA_DEBUG_LOG("HCameraDevice::UnregisterFoldStatusListener failed");
     }
-    listener = nullptr;
+    listener_ = nullptr;
 }
 
 int32_t HCameraDevice::EnableResult(std::vector<int32_t> &results)

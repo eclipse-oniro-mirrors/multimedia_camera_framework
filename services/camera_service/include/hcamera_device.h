@@ -181,6 +181,7 @@ public:
 
 private:
     class FoldScreenListener;
+    sptr<FoldScreenListener> listener_;
     static const std::vector<std::tuple<uint32_t, std::string, DFX_UB_NAME>> reportTagInfos_;
 
     std::mutex opMutex_; // Lock the operations updateSettings_, streamOperator_, and hdiCameraDevice_.
