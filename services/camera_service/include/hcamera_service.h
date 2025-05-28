@@ -19,6 +19,7 @@
 #include <mutex>
 #include <stdint.h>
 #include "camera_metadata_info.h"
+#include "task_manager.h"
 #define EXPORT_API __attribute__((visibility("default")))
 
 #include <iostream>
