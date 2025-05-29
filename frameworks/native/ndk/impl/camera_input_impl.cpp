@@ -47,9 +47,8 @@ Camera_Input::Camera_Input(sptr<CameraInput> &innerCameraInput) : innerCameraInp
 Camera_Input::~Camera_Input()
 {
     MEDIA_DEBUG_LOG("~Camera_Input is called");
-    if (innerCameraInput_) {
-        innerCameraInput_ = nullptr;
-    }
+    CHECK_ERROR_RETURN(!innerCameraInput_);
+    innerCameraInput_ = nullptr;
 }
 
 Camera_ErrorCode Camera_Input::RegisterCallback(CameraInput_Callbacks* callback)

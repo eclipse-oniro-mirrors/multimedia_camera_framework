@@ -34,10 +34,9 @@ CameraTimer::CameraTimer()
 CameraTimer::~CameraTimer()
 {
     MEDIA_INFO_LOG("entered.");
-    if (timer_) {
-        timer_->Shutdown();
-        timer_ = nullptr;
-    }
+    CHECK_ERROR_RETURN(!timer_);
+    timer_->Shutdown();
+    timer_ = nullptr;
 }
 
 void CameraTimer::IncreaseUserCount()

@@ -169,14 +169,10 @@ private:
 
 bool IsCurrentModeInList(OHOS::sptr<CaptureSession> innerCaptureSession, const std::vector<SceneMode> modes)
 {
-    if (innerCaptureSession == nullptr) {
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET(innerCaptureSession == nullptr, false);
     SceneMode currentMode = innerCaptureSession->GetMode();
     for (auto& mode : modes) {
-        if (currentMode == mode) {
-            return true;
-        }
+        CHECK_ERROR_RETURN_RET(currentMode == mode, true);
     }
     MEDIA_ERR_LOG("IsCurrentModeInList check fail, current mode is:%{public}d", currentMode);
     return false;
@@ -192,9 +188,8 @@ Camera_CaptureSession::Camera_CaptureSession(sptr<CaptureSession> &innerCaptureS
 Camera_CaptureSession::~Camera_CaptureSession()
 {
     MEDIA_DEBUG_LOG("~Camera_CaptureSession is called");
-    if (innerCaptureSession_) {
-        innerCaptureSession_ = nullptr;
-    }
+    CHECK_ERROR_RETURN(!innerCaptureSession_);
+    innerCaptureSession_ = nullptr;
 }
 
 Camera_ErrorCode Camera_CaptureSession::RegisterCallback(CaptureSession_Callbacks* callback)

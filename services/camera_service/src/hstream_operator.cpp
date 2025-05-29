@@ -413,9 +413,8 @@ void  HStreamOperator::GetStreamOperator()
         return;
     }
     std::lock_guard<std::mutex> lock(streamOperatorLock_);
-    if (streamOperator_ == nullptr) {
-        cameraDevice_->GetStreamOperator(this, streamOperator_);
-    }
+    CHECK_ERROR_RETURN(streamOperator_ != nullptr);
+    cameraDevice_->GetStreamOperator(this, streamOperator_);
 }
 
 bool HStreamOperator::IsOfflineCapture()
@@ -428,9 +427,7 @@ bool HStreamOperator::IsOfflineCapture()
             continue;
         }
         HStreamCapture* captureStream = static_cast<HStreamCapture*>(stream.GetRefPtr());
-        if (captureStream->IsHasSwitchToOffline()) {
-            return true;
-        }
+        CHECK_ERROR_RETURN_RET(captureStream->IsHasSwitchToOffline(), true);
     }
     return false;
 }
@@ -996,9 +993,8 @@ void HStreamOperator::ReleaseStreams()
         "hdiStreamIds:%{public}s,",
         fwkStreamIds.size(), Container2String(fwkStreamIds.begin(), fwkStreamIds.end()).c_str(),
         Container2String(hdiStreamIds.begin(), hdiStreamIds.end()).c_str());
-    if (!hdiStreamIds.empty()) {
-        ReleaseStreams(hdiStreamIds);
-    }
+    CHECK_ERROR_RETURN(hdiStreamIds.empty());
+    ReleaseStreams(hdiStreamIds);
 }
 
 int32_t HStreamOperator::GetOfflineOutptSize()
@@ -1241,9 +1237,7 @@ int32_t HStreamOperator::CalcRotationDegree(GravityData data)
     float y = data.y;
     float z = data.z;
     int degree = -1;
-    if ((x * x + y * y) * VALID_INCLINATION_ANGLE_THRESHOLD_COEFFICIENT < z * z) {
-        return degree;
-    }
+    CHECK_ERROR_RETURN_RET((x * x + y * y) * VALID_INCLINATION_ANGLE_THRESHOLD_COEFFICIENT < z * z, degree);
     // arccotx = pi / 2 - arctanx, 90 is used to calculate acot(in degree); degree = rad / pi * 180
     degree = 90 - static_cast<int>(round(atan2(y, -x) / M_PI * 180));
     // Normalize the degree to the range of 0~360
@@ -1423,9 +1417,8 @@ void RotatePicture(std::weak_ptr<PictureIntf> picture)
 {
     CAMERA_SYNC_TRACE;
     auto ptr = picture.lock();
-    if (ptr) {
-        ptr->RotatePicture();
-    }
+    CHECK_ERROR_RETURN(!ptr);
+    ptr->RotatePicture();
 }
 
 std::shared_ptr<PhotoAssetIntf> HStreamOperator::ProcessPhotoProxy(int32_t captureId,
@@ -1545,11 +1538,9 @@ int32_t HStreamOperator::OnCaptureStarted(int32_t captureId, const std::vector<i
 
 void HStreamOperator::StartRecord(uint64_t timestamp, int32_t rotation, int32_t captureId)
 {
-    if (isSetMotionPhoto_) {
-        taskManager_->SubmitTask([this, timestamp, rotation, captureId]() {
-            this->StartOnceRecord(timestamp, rotation, captureId);
-        });
-    }
+    CHECK_ERROR_RETURN(!isSetMotionPhoto_);
+    taskManager_->SubmitTask(
+        [this, timestamp, rotation, captureId]() { this->StartOnceRecord(timestamp, rotation, captureId); });
 }
 
 SessionDrainImageCallback::SessionDrainImageCallback(std::vector<sptr<FrameRecord>>& frameCacheList,
@@ -1612,10 +1603,7 @@ void HStreamOperator::StartOnceRecord(uint64_t timestamp, int32_t rotation, int3
     MEDIA_INFO_LOG("StartOnceRecord enter");
     // frameCacheList only used by now thread
     std::lock_guard<std::mutex> lock(movingPhotoStatusLock_);
-    if (!livephotoListener_) {
-        MEDIA_ERR_LOG("HCaptureSession::StartOnceRecord livephotoListener_ is null");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(!livephotoListener_, "HCaptureSession::StartOnceRecord livephotoListener_ is null");
     std::vector<sptr<FrameRecord>> frameCacheList;
     sptr<SessionDrainImageCallback> imageCallback = new SessionDrainImageCallback(frameCacheList,
         livephotoListener_, videoCache_, timestamp, rotation, captureId);
@@ -1892,9 +1880,7 @@ std::vector<int32_t> HStreamOperator::GetFrameRateRange()
     for (auto& item : repeatStreams) {
         auto curStreamRepeat = CastStream<HStreamRepeat>(item);
         auto repeatType = curStreamRepeat->GetRepeatStreamType();
-        if (repeatType == RepeatStreamType::PREVIEW) {
-            return curStreamRepeat->GetFrameRateRange();
-        }
+        CHECK_ERROR_RETURN_RET(repeatType == RepeatStreamType::PREVIEW, curStreamRepeat->GetFrameRateRange());
     }
     return {};
 }

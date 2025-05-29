@@ -179,9 +179,8 @@ Camera_Manager::Camera_Manager()
 Camera_Manager::~Camera_Manager()
 {
     MEDIA_DEBUG_LOG("~Camera_Manager is called");
-    if (cameraManager_) {
-        cameraManager_ = nullptr;
-    }
+    CHECK_ERROR_RETURN(!cameraManager_);
+    cameraManager_ = nullptr;
 }
 
 Camera_ErrorCode Camera_Manager::RegisterCallback(CameraManager_Callbacks* cameraStatusCallback)

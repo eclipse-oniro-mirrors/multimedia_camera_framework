@@ -45,11 +45,7 @@ ErrCode DeferredVideoProcessingSessionCallbackProxy::OnProcessVideoDone(
         return result;
     }
     ErrCode errCode = reply.ReadInt32();
-    if (FAILED(errCode)) {
-        return errCode;
-    }
-
-    return ERR_OK;
+    return FAILED(errCode) ? errCode : ERR_OK;
 }
 
 ErrCode DeferredVideoProcessingSessionCallbackProxy::OnError(
@@ -80,11 +76,7 @@ ErrCode DeferredVideoProcessingSessionCallbackProxy::OnError(
         return result;
     }
     ErrCode errCode = reply.ReadInt32();
-    if (FAILED(errCode)) {
-        return errCode;
-    }
-
-    return ERR_OK;
+    return FAILED(errCode) ? errCode : ERR_OK;
 }
 
 ErrCode DeferredVideoProcessingSessionCallbackProxy::OnStateChanged(
@@ -111,11 +103,7 @@ ErrCode DeferredVideoProcessingSessionCallbackProxy::OnStateChanged(
         return result;
     }
     ErrCode errCode = reply.ReadInt32();
-    if (FAILED(errCode)) {
-        return errCode;
-    }
-
-    return ERR_OK;
+    return FAILED(errCode) ? errCode : ERR_OK;
 }
 } // namespace DeferredProcessing
 } // namespace CameraStandard

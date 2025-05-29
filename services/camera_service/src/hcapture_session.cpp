@@ -124,9 +124,7 @@ CamServiceError HCaptureSession::NewInstance(
 {
     CamServiceError errCode = CAMERA_OK;
     sptr<HCaptureSession> session = new (std::nothrow) HCaptureSession(callerToken, opMode);
-    if (session == nullptr) {
-        return CAMERA_ALLOC_ERROR;
-    }
+    CHECK_ERROR_RETURN_RET(session == nullptr, CAMERA_ALLOC_ERROR);
 
     auto &sessionManager = HCameraSessionManager::GetInstance();
     MEDIA_DEBUG_LOG("HCaptureSession::NewInstance start, total "
@@ -887,9 +885,7 @@ int32_t HCaptureSession::GetRangeId(float& zoomRatio, std::vector<float>& crossZ
 {
     int32_t rangId = 0;
     for (; rangId < static_cast<int>(crossZoom.size()); rangId++) {
-        if (zoomRatio < crossZoom[rangId]) {
-            return rangId;
-        }
+        CHECK_ERROR_RETURN_RET(zoomRatio < crossZoom[rangId], rangId);
     }
     return rangId;
 }
@@ -970,10 +966,8 @@ bool HCaptureSession::QueryZoomBezierValue(std::vector<float> &zoomBezierValue)
     camera_metadata_item_t bezierItem;
     int retFindMeta =
         OHOS::Camera::FindCameraMetadataItem(ability->get(), OHOS_ABILITY_CAMERA_ZOOM_BEZIER_CURVC_POINT, &bezierItem);
-    if (retFindMeta == CAM_META_ITEM_NOT_FOUND) {
-        MEDIA_ERR_LOG("HCaptureSession::QueryZoomBezierValue() current bezierValue not found");
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(retFindMeta == CAM_META_ITEM_NOT_FOUND, false,
+        "HCaptureSession::QueryZoomBezierValue() current bezierValue not found");
     for (int i = 0; i < static_cast<int>(bezierItem.count); i++) {
         zoomBezierValue.push_back(bezierItem.data.f[i]);
         MEDIA_DEBUG_LOG("HCaptureSession::QueryZoomBezierValue()  bezierValue %{public}f.",
@@ -1160,13 +1154,9 @@ void HCaptureSession::UpdateSettingForSpecialBundle()
         auto frameRateRange = hStreamOperatorSptr->GetFrameRateRange();
         UpdateCameraRotateAngleAndZoom(infos, frameRateRange); // 普通设备无此参数
         auto cameraDevice = GetCameraDevice();
-        if (cameraDevice == nullptr) {
-            return;
-        }
+        CHECK_ERROR_RETURN(cameraDevice == nullptr);
         int32_t cameraPosition = cameraDevice->GetCameraPosition();
-        if (cameraPosition == OHOS_CAMERA_POSITION_FRONT) {
-            return;
-        }
+        CHECK_ERROR_RETURN(cameraPosition == OHOS_CAMERA_POSITION_FRONT);
         std::string specialBundle = system::GetParameter("const.camera.folded_lens_change", "default");
         if (specialBundle == bundleName_ && !frameRateRange.empty() && frameRateRange[0] == SPECIAL_BUNDLE_FPS) {
             std::shared_ptr<OHOS::Camera::CameraMetadata> settings =

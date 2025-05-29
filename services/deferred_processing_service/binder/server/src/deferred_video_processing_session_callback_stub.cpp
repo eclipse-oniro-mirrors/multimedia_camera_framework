@@ -34,27 +34,18 @@ int32_t DeferredVideoProcessingSessionCallbackStub::OnRemoteRequest(
             std::string videoId = Str16ToStr8(data.ReadString16());
             sptr<IPCFileDescriptor> fd(data.ReadParcelable<IPCFileDescriptor>());
             ErrCode errCode = OnProcessVideoDone(videoId, fd);
-            if (!reply.WriteInt32(errCode)) {
-                return ERR_INVALID_VALUE;
-            }
-            return ERR_NONE;
+            return !reply.WriteInt32(errCode) ? ERR_INVALID_VALUE : ERR_NONE;
         }
         case COMMAND_ON_ERROR: {
             std::string videoId = Str16ToStr8(data.ReadString16());
             int32_t errorCode = data.ReadInt32();
             ErrCode errCode = OnError(videoId, errorCode);
-            if (!reply.WriteInt32(errCode)) {
-                return ERR_INVALID_VALUE;
-            }
-            return ERR_NONE;
+            return !reply.WriteInt32(errCode) ? ERR_INVALID_VALUE : ERR_NONE;
         }
         case COMMAND_ON_STATE_CHANGED: {
             int32_t status = data.ReadInt32();
             ErrCode errCode = OnStateChanged(status);
-            if (!reply.WriteInt32(errCode)) {
-                return ERR_INVALID_VALUE;
-            }
-            return ERR_NONE;
+            return !reply.WriteInt32(errCode) ? ERR_INVALID_VALUE : ERR_NONE;
         }
         default:
             return IPCObjectStub::OnRemoteRequest(code, data, reply, option);

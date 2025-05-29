@@ -68,10 +68,9 @@ DeferredVideoProcSession::DeferredVideoProcSession(int userId,
 DeferredVideoProcSession::~DeferredVideoProcSession()
 {
     MEDIA_INFO_LOG("DeferredVideoProcSession::DeferredVideoProcSession Destructor!");
-    if (remoteSession_ != nullptr) {
-        (void)remoteSession_->AsObject()->RemoveDeathRecipient(deathRecipient_);
-        remoteSession_ = nullptr;
-    }
+    CHECK_ERROR_RETURN(remoteSession_ == nullptr);
+    (void)remoteSession_->AsObject()->RemoveDeathRecipient(deathRecipient_);
+    remoteSession_ = nullptr;
 }
 
 void DeferredVideoProcSession::BeginSynchronize()
@@ -154,20 +153,18 @@ void DeferredVideoProcSession::CameraServerDied(pid_t pid)
     }
     deathRecipient_ = nullptr;
     ReconnectDeferredProcessingSession();
-    if (callback_ != nullptr) {
-        MEDIA_INFO_LOG("Reconnect session successful, send sync requestion.");
-        callback_->OnError("", DpsErrorCode::ERROR_SESSION_SYNC_NEEDED);
-    }
+    CHECK_ERROR_RETURN(callback_ == nullptr);
+    MEDIA_INFO_LOG("Reconnect session successful, send sync requestion.");
+    callback_->OnError("", DpsErrorCode::ERROR_SESSION_SYNC_NEEDED);
 }
 
 void DeferredVideoProcSession::ReconnectDeferredProcessingSession()
 {
     MEDIA_INFO_LOG("DeferredVideoProcSession::ReconnectDeferredProcessingSession, enter.");
     ConnectDeferredProcessingSession();
-    if (remoteSession_ == nullptr) {
-        MEDIA_INFO_LOG("Reconnecting deferred processing session failed.");
-        ReconnectDeferredProcessingSession();
-    }
+    CHECK_ERROR_RETURN(remoteSession_ != nullptr);
+    MEDIA_INFO_LOG("Reconnecting deferred processing session failed.");
+    ReconnectDeferredProcessingSession();
 }
 
 void DeferredVideoProcSession::ConnectDeferredProcessingSession()

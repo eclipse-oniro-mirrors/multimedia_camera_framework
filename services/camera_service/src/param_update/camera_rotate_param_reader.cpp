@@ -68,10 +68,9 @@ std::string CameraRoateParamReader::GetPathVersion()
 {
     std::string path = GetConfigFilePath();
     MEDIA_INFO_LOG("GetPathVersion:%{public}s", path.c_str());
-    if (path.find(PARAM_UPDATE_ABS_PATH) != std::string::npos) {
-        return GetVersionInfoStr(PARAM_SERVICE_INSTALL_PATH + CAMERA_ROTATE_CFG_DIR + VERSION_FILE_NAME);
-    }
-    return GetVersionInfoStr(CAMERA_ROTATE_CFG_DIR + VERSION_FILE_NAME); // 返回本地的默认路径system/etc/camera/
+    return path.find(PARAM_UPDATE_ABS_PATH) != std::string::npos ?
+        GetVersionInfoStr(PARAM_SERVICE_INSTALL_PATH + CAMERA_ROTATE_CFG_DIR + VERSION_FILE_NAME) :
+        GetVersionInfoStr(CAMERA_ROTATE_CFG_DIR + VERSION_FILE_NAME); // 返回本地的默认路径system/etc/camera/
 };
 
 // 校验下载的参数文件是否合法
@@ -79,9 +78,7 @@ bool CameraRoateParamReader::VerifyCertSfFile(
     const std::string &certFile, const std::string &verifyFile, const std::string &manifestFile)
 {
     char *canonicalPath = realpath(verifyFile.c_str(), nullptr);
-    if (canonicalPath == nullptr) {
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET(canonicalPath == nullptr, false);
     // 验证CERT.SF文件是否合法
     if (!CameraRoateParamSignTool::VerifyFileSign(PUBKEY_PATH, certFile, canonicalPath)) {
         MEDIA_ERR_LOG("signToolManager verify failed %{public}s,%{public}s, %{public}s", PUBKEY_PATH.c_str(),
@@ -118,9 +115,7 @@ bool CameraRoateParamReader::VerifyParamFile(const std::string& cfgDirPath, cons
     std::string absFilePath = std::string(canonicalPath);
     std::string manifestFile = cfgDirPath + "/MANIFEST.MF";
     char *canonicalPathManifest = realpath(manifestFile.c_str(), nullptr);
-    if (canonicalPathManifest == nullptr) {
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET(canonicalPathManifest == nullptr, false);
     std::ifstream file(canonicalPathManifest);
     free(canonicalPathManifest);
     std::string line;

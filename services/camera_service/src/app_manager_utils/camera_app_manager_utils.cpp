@@ -62,9 +62,7 @@ sptr<OHOS::AppExecFwk::IAppMgr> CameraAppManagerUtils::GetAppManagerInstance()
 void CameraAppManagerUtils::GetForegroundApplications(std::vector<OHOS::AppExecFwk::AppStateData>& appsData)
 {
     auto appMgr = GetAppManagerInstance();
-    if (!appMgr) {
-        return;
-    }
+    CHECK_ERROR_RETURN(!appMgr);
     int32_t ret = appMgr->GetForegroundApplications(appsData);
     MEDIA_DEBUG_LOG("GetForegroundApplications, ret: %{public}u, num of apps: %{public}zu", ret, appsData.size());
 }

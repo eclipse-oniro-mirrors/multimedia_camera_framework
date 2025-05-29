@@ -386,9 +386,7 @@ uint32_t PhotoOutput::GetAuxiliaryPhotoHandle()
 template<typename T>
 sptr<T> CastStream(sptr<IStreamCommon> streamCommon)
 {
-    if (streamCommon == nullptr) {
-        return nullptr;
-    }
+    CHECK_ERROR_RETURN_RET(streamCommon == nullptr, nullptr);
     return static_cast<T*>(streamCommon.GetRefPtr());
 }
 

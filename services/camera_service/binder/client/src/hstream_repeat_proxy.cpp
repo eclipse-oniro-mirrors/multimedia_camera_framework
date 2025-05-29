@@ -300,9 +300,7 @@ int32_t HStreamRepeatProxy::ToggleAutoVideoFrameRate(bool isEnable)
     data.WriteBool(isEnable);
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_ENABLE_AUTO_FRAME_RATE), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamRepeatProxy SetCameraRotation failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HStreamRepeatProxy SetCameraRotation failed, error: %{public}d", error);
     return error;
 }
 } // namespace CameraStandard

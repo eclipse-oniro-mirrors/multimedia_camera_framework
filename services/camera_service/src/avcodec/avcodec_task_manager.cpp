@@ -291,13 +291,12 @@ void AvcodecTaskManager::IgnoreDeblur(vector<sptr<FrameRecord>> frameRecords,
 {
     MEDIA_INFO_LOG("IgnoreDeblur enter");
     choosedBuffer.clear();
-    if (!frameRecords.empty()) {
-        auto it = find_if(frameRecords.begin(), frameRecords.end(),
-            [](const sptr<FrameRecord>& frame) { return frame->IsIDRFrame(); });
-        while (it != frameRecords.end()) {
-            choosedBuffer.emplace_back(*it);
-            ++it;
-        }
+    CHECK_ERROR_RETURN(frameRecords.empty());
+    auto it = find_if(
+        frameRecords.begin(), frameRecords.end(), [](const sptr<FrameRecord>& frame) { return frame->IsIDRFrame(); });
+    while (it != frameRecords.end()) {
+        choosedBuffer.emplace_back(*it);
+        ++it;
     }
 }
 

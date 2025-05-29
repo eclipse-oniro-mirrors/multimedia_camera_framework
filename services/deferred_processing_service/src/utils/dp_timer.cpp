@@ -29,10 +29,9 @@ DpsTimer::DpsTimer() : timer_(std::make_unique<Utils::Timer>("DpsManagerTimer"))
 
 DpsTimer::~DpsTimer()
 {
-    if (timer_) {
-        timer_->Shutdown(true);
-        timer_ = nullptr;
-    }
+    DP_CHECK_RETURN(!timer_);
+    timer_->Shutdown(true);
+    timer_ = nullptr;
 }
 
 uint32_t DpsTimer::StartTimer(const TimerCallback& callback, uint32_t interval)

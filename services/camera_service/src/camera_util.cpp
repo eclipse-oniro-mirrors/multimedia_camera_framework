@@ -523,9 +523,7 @@ int64_t GetTimestamp()
 std::string GetFileStream(const std::string &filepath)
 {
     char *canonicalPath = realpath(filepath.c_str(), nullptr);
-    if (canonicalPath == nullptr) {
-        return NULL;
-    }
+    CHECK_ERROR_RETURN_RET(canonicalPath == nullptr, NULL);
     std::ifstream file(canonicalPath, std::ios::in | std::ios::binary);
     free(canonicalPath);
     // 文件流的异常处理，不能用try catch的形式
@@ -565,9 +563,7 @@ void TrimString(std::string &inputStr)
 bool RemoveFile(const std::string& path)
 {
     char *canonicalPath = realpath(path.c_str(), nullptr);
-    if (canonicalPath == nullptr) {
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET(canonicalPath == nullptr, false);
     if (remove(canonicalPath) == 0) {
         free(canonicalPath);
         MEDIA_INFO_LOG("File removed successfully.");
@@ -580,10 +576,7 @@ bool RemoveFile(const std::string& path)
 bool CheckPathExist(const char *path)
 {
     char *canonicalPath = realpath(path, nullptr);
-    if (canonicalPath == nullptr) {
-        MEDIA_ERR_LOG("CheckPathExist path is nullptr");
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(canonicalPath == nullptr, false, "CheckPathExist path is nullptr");
     std::ifstream profileStream(canonicalPath);
     free(canonicalPath);
     return profileStream.good();

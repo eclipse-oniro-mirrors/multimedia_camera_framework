@@ -73,9 +73,8 @@ CameraDevice::CameraDevice(
     dmDeviceInfo_.networkId = deviceInfo.networkId;
     MEDIA_INFO_LOG("camera cameraid = %{public}s, devicename: = %{public}s", cameraID_.c_str(),
         dmDeviceInfo_.deviceName.c_str());
-    if (metadata != nullptr) {
-        init(metadata->get());
-    }
+    CHECK_ERROR_RETURN(metadata == nullptr);
+    init(metadata->get());
 }
 
 CameraDevice::CameraDevice(

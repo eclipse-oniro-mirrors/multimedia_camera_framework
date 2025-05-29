@@ -86,9 +86,8 @@ Camera_MetadataOutput::Camera_MetadataOutput(sptr<MetadataOutput> &innerMetadata
 Camera_MetadataOutput::~Camera_MetadataOutput()
 {
     MEDIA_DEBUG_LOG("~Camera_MetadataOutput is called");
-    if (innerMetadataOutput_) {
-        innerMetadataOutput_ = nullptr;
-    }
+    CHECK_ERROR_RETURN(!innerMetadataOutput_);
+    innerMetadataOutput_ = nullptr;
 }
 
 Camera_ErrorCode Camera_MetadataOutput::RegisterCallback(MetadataOutput_Callbacks* callback)

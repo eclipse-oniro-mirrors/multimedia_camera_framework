@@ -23,10 +23,7 @@ namespace CameraSecurity {
 bool CheckSystemApp()
 {
     uint64_t tokenId = IPCSkeleton::GetSelfTokenID();
-    if (!Security::AccessToken::TokenIdKit::IsSystemAppByFullTokenID(tokenId)) {
-        return false;
-    }
-    return true;
+    return !Security::AccessToken::TokenIdKit::IsSystemAppByFullTokenID(tokenId) ? false : true;
 }
 } // namespace CameraSecurity
 } // namespace CameraStandard

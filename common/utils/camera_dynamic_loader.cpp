@@ -59,12 +59,11 @@ Dynamiclib::Dynamiclib(const string& libName) : libName_(libName)
 Dynamiclib::~Dynamiclib()
 {
     CAMERA_SYNC_TRACE;
-    if (libHandle_ != nullptr) {
-        int ret = dlclose(libHandle_);
-        MEDIA_INFO_LOG("Dynamiclib::~Dynamiclib dlclose name:%{public}s handle:%{public}u result:%{public}d",
-            libName_.c_str(), static_cast<uint32_t>(HANDLE_MASK & reinterpret_cast<uintptr_t>(libHandle_)), ret);
-        libHandle_ = nullptr;
-    }
+    CHECK_ERROR_RETURN(libHandle_ == nullptr);
+    int ret = dlclose(libHandle_);
+    MEDIA_INFO_LOG("Dynamiclib::~Dynamiclib dlclose name:%{public}s handle:%{public}u result:%{public}d",
+        libName_.c_str(), static_cast<uint32_t>(HANDLE_MASK & reinterpret_cast<uintptr_t>(libHandle_)), ret);
+    libHandle_ = nullptr;
 }
 
 bool Dynamiclib::IsLoaded()
