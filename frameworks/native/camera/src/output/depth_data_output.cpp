@@ -73,11 +73,10 @@ int32_t DepthDataOutput::Start()
     auto stream = GetStream();
     sptr<IStreamDepthData> itemStream = static_cast<IStreamDepthData*>(stream.GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
+    CHECK_ERROR_PRINT_LOG(itemStream == nullptr, "DepthDataOutput::Start itemStream is nullptr");
     if (itemStream) {
         errCode = itemStream->Start();
         CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "DepthDataOutput Failed to Start!, errCode: %{public}d", errCode);
-    } else {
-        MEDIA_ERR_LOG("DepthDataOutput::Start itemStream is nullptr");
     }
     return ServiceToCameraError(errCode);
 }
@@ -91,11 +90,10 @@ int32_t DepthDataOutput::Stop()
     auto stream = GetStream();
     sptr<IStreamDepthData> itemStream = static_cast<IStreamDepthData*>(stream.GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
+    CHECK_ERROR_PRINT_LOG(itemStream == nullptr, "DepthDataOutput::Stop itemStream is nullptr");
     if (itemStream) {
         errCode = itemStream->Stop();
         CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "DepthDataOutput Failed to Stop!, errCode: %{public}d", errCode);
-    } else {
-        MEDIA_ERR_LOG("DepthDataOutput::Stop itemStream is nullptr");
     }
     return ServiceToCameraError(errCode);
 }

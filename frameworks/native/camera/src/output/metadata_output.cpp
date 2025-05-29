@@ -266,11 +266,10 @@ void MetadataOutput::SetCallback(std::shared_ptr<MetadataObjectCallback> metadat
     } else {
         MEDIA_ERR_LOG("MetadataOutput::SetCallback() itemStream is nullptr");
     }
-    if (errorCode != CAMERA_OK) {
-        MEDIA_ERR_LOG("MetadataOutput::SetCallback(): Failed to register callback, errorCode: %{public}d", errorCode);
-        cameraMetadataCallback_ = nullptr;
-        appObjectCallback_ = nullptr;
-    }
+    CHECK_ERROR_RETURN(errorCode == CAMERA_OK);
+    MEDIA_ERR_LOG("MetadataOutput::SetCallback(): Failed to register callback, errorCode: %{public}d", errorCode);
+    cameraMetadataCallback_ = nullptr;
+    appObjectCallback_ = nullptr;
 }
 
 void MetadataOutput::SetCallback(std::shared_ptr<MetadataStateCallback> metadataStateCallback)
