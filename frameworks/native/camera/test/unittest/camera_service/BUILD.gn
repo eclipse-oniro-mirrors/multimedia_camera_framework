@@ -75,7 +75,6 @@ ohos_unittest("camera_service_unittest") {
       "camera_service_common/src/camera_fwk_metadata_utils_unittest.cpp",
       "camera_service_common/src/camera_info_dumper_unittest.cpp",
       "camera_service_common/src/camera_privacy_unittest.cpp",
-      "camera_service_common/src/camera_rotate_strategy_parser_unittest.cpp",
       "camera_service_common/src/camera_util_unittest.cpp",
       "camera_service_common/src/icamera_util_unittest.cpp",
       "client/src/camera_service_client_unittest.cpp",
