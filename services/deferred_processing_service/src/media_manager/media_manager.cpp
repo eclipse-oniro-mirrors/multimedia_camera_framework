@@ -77,13 +77,11 @@ MediaManagerError MediaManager::Pause()
     }
 
     DP_CHECK_ERROR_RETURN_RET_LOG(outputWriter_->Stop() == ERROR_FAIL, ERROR_FAIL, "Stop writer failed.");
-    if (curIFramePts_ == -1) {
-        curIFramePts_ = pausePts_;
-    }
-    DP_CHECK_ERROR_RETURN_RET_LOG(curIFramePts_ < pausePts_ || curIFramePts_ == -1,
+    prePFramePts_ = prePFramePts_ == -1 ? pausePts_ : prePFramePts_;
+    DP_CHECK_ERROR_RETURN_RET_LOG(prePFramePts_ < pausePts_ || prePFramePts_ == -1,
         PAUSE_ABNORMAL, "Pause abnormal, will reprocess recover.");
-    
-    std::string lastPts = TEMP_PTS_TAG + std::to_string(curIFramePts_);
+
+    std::string lastPts = TEMP_PTS_TAG + std::to_string(prePFramePts_);
     DP_INFO_LOG("pausePts: %{public}s", lastPts.c_str());
     auto off = lseek(outputFileFd_, 0, SEEK_END);
     DP_CHECK_ERROR_RETURN_RET_LOG(off == static_cast<off_t>(ERROR_FAIL), ERROR_FAIL, "Write temp lseek failed.");
@@ -123,17 +121,16 @@ MediaManagerError MediaManager::WriteSample(Media::Plugins::MediaType type, cons
     DP_CHECK_ERROR_RETURN_RET_LOG(outputWriter_ == nullptr, ERROR_FAIL, "Writer is nullptr.");
 
     auto ret = outputWriter_->Write(type, sample);
-    if (type == Media::Plugins::MediaType::VIDEO) {
-        finalPtsToDrop_ = sample->pts_;
-        // Update I-frame timestamp only for key frames.
-        if (sample->flag_ & AVCODEC_BUFFER_FLAG_SYNC_FRAME) {
-            curIFramePts_ = finalPtsToDrop_;
-        }
-    }
     DP_CHECK_ERROR_RETURN_RET_LOG(ret == ERROR_FAIL, ERROR_FAIL, "Writer sample type: %{public}d failed.", type);
-
+    if (type == Media::Plugins::MediaType::VIDEO) {
+        // Update P-frame timestamp only for key frames.
+        if (sample->flag_ & AVCODEC_BUFFER_FLAG_SYNC_FRAME) {
+            prePFramePts_ = finalPtsToDrop_;
+        }
+        finalPtsToDrop_ = sample->pts_;
+    }
     DP_DEBUG_LOG("ProcessPts: %{public}" PRId64 ", ProcessSyncPts: %{public}" PRId64,
-        sample->pts_, curIFramePts_);
+        sample->pts_, prePFramePts_);
     return OK;
 }
 

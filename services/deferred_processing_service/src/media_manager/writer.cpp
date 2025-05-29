@@ -50,7 +50,7 @@ MediaManagerError Writer::Write(Media::Plugins::MediaType type, const std::share
         DP_DEBUG_LOG("sample size: %{public}d", sample->memory_->GetSize());
     }
     
-    DP_CHECK_RETURN_RET_LOG(type == Media::Plugins::MediaType::VIDEO && sample->pts_ < lastPause_, OK,
+    DP_CHECK_RETURN_RET_LOG(type == Media::Plugins::MediaType::VIDEO && sample->pts_ <= lastPause_, OK,
         "MediaType: %{public}d, drop feame pts: %{public}" PRId64, type, sample->pts_);
 
     auto ret = outputMuxer_->WriteStream(type, sample);
