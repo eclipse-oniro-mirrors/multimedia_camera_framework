@@ -743,7 +743,7 @@ int32_t PhotoOutput::EnableMirror(bool isEnable)
     auto isSessionConfiged = session->IsSessionCommited() || session->IsSessionStarted();
     ret = session->EnableMovingPhotoMirror(isEnable, isSessionConfiged);
     CHECK_ERROR_RETURN_RET_LOG(ret != CameraErrorCode::SUCCESS, ret,
-            "PhotoOutput EnableMirror error!, ret is not success");
+        "PhotoOutput EnableMirror error!, ret is not success");
     return ret;
 }
 

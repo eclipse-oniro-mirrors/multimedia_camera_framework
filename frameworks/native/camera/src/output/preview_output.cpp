@@ -697,7 +697,7 @@ int32_t PreviewOutput::GetPreviewRotation(int32_t imageRotation)
     CHECK_ERROR_RETURN_RET_LOG(cameraObj == nullptr, SERVICE_FATL_ERROR,
         "PreviewOutput GetPreviewRotation error!, cameraObj is nullptr");
     uint32_t apiCompatibleVersion = CameraApiVersion::GetApiVersion();
-    // LCOV_EXCL_START	
+    // LCOV_EXCL_START
     if (apiCompatibleVersion < CameraApiVersion::APIVersion::API_FOURTEEN) {
         imageRotation = JudegRotationFunc(imageRotation);
     }
