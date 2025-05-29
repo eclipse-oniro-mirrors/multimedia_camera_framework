@@ -184,6 +184,7 @@ int32_t VideoOutput::Resume()
         errCode = itemStream->Start();
         isVideoStarted_ = true;
     }
+    return ServiceToCameraError(errCode);
 }
 
 int32_t VideoOutput::Pause()
