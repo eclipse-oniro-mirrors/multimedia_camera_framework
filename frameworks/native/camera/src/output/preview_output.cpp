@@ -96,11 +96,10 @@ int32_t PreviewOutput::Release()
         "PreviewOutput Failed to Release!, GetStream is nullptr");
     sptr<IStreamRepeat> itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
+    CHECK_ERROR_PRINT_LOG(itemStream == nullptr, "register surface consumer listener failed!");
     if (itemStream) {
         errCode = itemStream->Release();
         CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "Failed to release PreviewOutput!, errCode: %{public}d", errCode);
-    } else {
-        MEDIA_ERR_LOG("PreviewOutput::Release() itemStream is nullptr");
     }
     CaptureOutput::Release();
     return ServiceToCameraError(errCode);
@@ -553,15 +552,13 @@ void PreviewOutput::SetCallback(std::shared_ptr<PreviewStateCallback> callback)
     CHECK_ERROR_RETURN(stream == nullptr);
     bool isSuccess = previewOutputListenerManager_->AddListener(callback);
     CHECK_ERROR_RETURN(!isSuccess);
-    if (previewOutputListenerManager_->GetListenerCount() == 1) {
-        sptr<IStreamRepeatCallback> ipcCallback = previewOutputListenerManager_;
-        sptr<IStreamRepeat> itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
-        int32_t errCode = itemStream->SetCallback(ipcCallback);
-        if (errCode != CAMERA_OK) {
-            MEDIA_ERR_LOG("PreviewOutput::SetCallback fail");
-            previewOutputListenerManager_->RemoveListener(callback);
-        }
-    }
+    CHECK_ERROR_RETURN(!(previewOutputListenerManager_->GetListenerCount() == 1));
+    sptr<IStreamRepeatCallback> ipcCallback = previewOutputListenerManager_;
+    sptr<IStreamRepeat> itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
+    int32_t errCode = itemStream->SetCallback(ipcCallback);
+    CHECK_ERROR_RETURN(errCode == CAMERA_OK);
+    MEDIA_ERR_LOG("PreviewOutput::SetCallback fail");
+    previewOutputListenerManager_->RemoveListener(callback);
 }
 
 void PreviewOutput::RemoveCallback(std::shared_ptr<PreviewStateCallback> callback)
@@ -699,9 +696,11 @@ int32_t PreviewOutput::GetPreviewRotation(int32_t imageRotation)
     CHECK_ERROR_RETURN_RET_LOG(cameraObj == nullptr, SERVICE_FATL_ERROR,
         "PreviewOutput GetPreviewRotation error!, cameraObj is nullptr");
     uint32_t apiCompatibleVersion = CameraApiVersion::GetApiVersion();
+    // LCOV_EXCL_START
     if (apiCompatibleVersion < CameraApiVersion::APIVersion::API_FOURTEEN) {
         imageRotation = JudegRotationFunc(imageRotation);
     }
+    // LCOV_EXCL_STOP
     sensorOrientation = static_cast<int32_t>(cameraObj->GetCameraOrientation());
     result = (ImageRotation)((imageRotation + sensorOrientation) % CAPTURE_ROTATION_BASE);
     MEDIA_INFO_LOG("PreviewOutput GetPreviewRotation :result %{public}d, sensorOrientation:%{public}d",
@@ -748,13 +747,12 @@ int32_t PreviewOutput::SetPreviewRotation(int32_t imageRotation, bool isDisplayL
     auto stream = GetStream();
     sptr<IStreamRepeat> itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
+    CHECK_ERROR_RETURN_RET_LOG(itemStream == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
+        "PreviewOutput::SetCameraRotation() itemStream is nullptr");
     if (itemStream) {
         errCode = itemStream->SetCameraRotation(true, result);
         CHECK_ERROR_RETURN_RET_LOG(errCode != CAMERA_OK, SERVICE_FATL_ERROR,
             "Failed to SetCameraRotation!, errCode: %{public}d", errCode);
-    } else {
-        MEDIA_ERR_LOG("PreviewOutput::SetCameraRotation() itemStream is nullptr");
-        return CameraErrorCode::SERVICE_FATL_ERROR;
     }
     MEDIA_ERR_LOG("PreviewOutput SetPreviewRotation sucess");
     return CameraErrorCode::SUCCESS;

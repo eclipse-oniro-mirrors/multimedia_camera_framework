@@ -106,17 +106,15 @@ void VideoOutput::SetCallback(std::shared_ptr<VideoStateCallback> callback)
         int32_t errorCode = CAMERA_OK;
         auto stream = GetStream();
         sptr<IStreamRepeat> itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
+        CHECK_ERROR_PRINT_LOG(itemStream == nullptr, "VideoOutput::SetCallback itemStream is nullptr");
         if (itemStream) {
             errorCode = itemStream->SetCallback(svcCallback_);
-        } else {
-            MEDIA_ERR_LOG("VideoOutput::SetCallback itemStream is nullptr");
         }
 
-        if (errorCode != CAMERA_OK) {
-            MEDIA_ERR_LOG("VideoOutput::SetCallback: Failed to register callback, errorCode: %{public}d", errorCode);
-            svcCallback_ = nullptr;
-            appCallback_ = nullptr;
-        }
+        CHECK_ERROR_RETURN(errorCode == CAMERA_OK);
+        MEDIA_ERR_LOG("VideoOutput::SetCallback: Failed to register callback, errorCode: %{public}d", errorCode);
+        svcCallback_ = nullptr;
+        appCallback_ = nullptr;
     }
 }
 
@@ -136,12 +134,12 @@ int32_t VideoOutput::Start()
     auto stream = GetStream();
     sptr<IStreamRepeat> itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
+    CHECK_ERROR_RETURN_RET_LOG(itemStream == nullptr, ServiceToCameraError(errCode),
+        "VideoOutput::Start() itemStream is nullptr");
     if (itemStream) {
         errCode = itemStream->Start();
         CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "VideoOutput Failed to Start!, errCode: %{public}d", errCode);
         isVideoStarted_ = true;
-    } else {
-        MEDIA_ERR_LOG("VideoOutput::Start() itemStream is nullptr");
     }
     return ServiceToCameraError(errCode);
 }
@@ -155,12 +153,11 @@ int32_t VideoOutput::Stop()
     auto stream = GetStream();
     sptr<IStreamRepeat> itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
+    CHECK_ERROR_PRINT_LOG(itemStream == nullptr, "VideoOutput::Stop() itemStream is nullptr");
     if (itemStream) {
         errCode = itemStream->Stop();
         CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "VideoOutput Failed to Stop!, errCode: %{public}d", errCode);
         isVideoStarted_ = false;
-    } else {
-        MEDIA_ERR_LOG("VideoOutput::Stop() itemStream is nullptr");
     }
     if (!GetFrameRateRange().empty() && GetFrameRateRange()[0] >= FRAMERATE_120) {
         auto session = GetSession();
@@ -181,11 +178,11 @@ int32_t VideoOutput::Resume()
     auto stream = GetStream();
     sptr<IStreamRepeat> itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
+    CHECK_ERROR_RETURN_RET_LOG(itemStream == nullptr, ServiceToCameraError(errCode),
+        "VideoOutput::Resume() itemStream is nullptr");
     if (itemStream) {
         errCode = itemStream->Start();
         isVideoStarted_ = true;
-    } else {
-        MEDIA_ERR_LOG("VideoOutput::Resume() itemStream is nullptr");
     }
     return ServiceToCameraError(errCode);
 }
@@ -199,11 +196,11 @@ int32_t VideoOutput::Pause()
     auto stream = GetStream();
     sptr<IStreamRepeat> itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
+    CHECK_ERROR_RETURN_RET_LOG(itemStream == nullptr, errCode,
+        "VideoOutput::Pause() itemStream is nullptr");
     if (itemStream) {
         errCode = itemStream->Stop();
         isVideoStarted_ = false;
-    } else {
-        MEDIA_ERR_LOG("VideoOutput::Pause() itemStream is nullptr");
     }
     return errCode;
 }
@@ -242,10 +239,9 @@ int32_t VideoOutput::Release()
     auto stream = GetStream();
     sptr<IStreamRepeat> itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
+    CHECK_ERROR_PRINT_LOG(itemStream == nullptr, "VideoOutput::Release() itemStream is nullptr");
     if (itemStream) {
         errCode = itemStream->Release();
-    } else {
-        MEDIA_ERR_LOG("VideoOutput::Release() itemStream is nullptr");
     }
     CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "Failed to release VideoOutput!, errCode: %{public}d", errCode);
     CaptureOutput::Release();
@@ -660,11 +656,11 @@ int32_t VideoOutput::EnableAutoVideoFrameRate(bool enable)
         "VideoOutput::EnableAutoVideoFrameRate does not supported.");
     auto stream = GetStream();
     sptr<IStreamRepeat> itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
-    if (itemStream) {
-        int32_t ret = itemStream-> ToggleAutoVideoFrameRate(enable);
-        CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, ServiceToCameraError(ret),
-            "VideoOutput::EnableAutoVideoFrameRate failed to set auto frame rate");
-    }
+    CHECK_ERROR_RETURN_RET_LOG(itemStream == nullptr, CameraErrorCode::SUCCESS,
+        "VideoOutput::EnableAutoVideoFrameRate itemStream is nullptr.");
+    int32_t ret = itemStream-> ToggleAutoVideoFrameRate(enable);
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, ServiceToCameraError(ret),
+        "VideoOutput::EnableAutoVideoFrameRate failed to set auto frame rate");
     return CameraErrorCode::SUCCESS;
 }
 } // namespace CameraStandard

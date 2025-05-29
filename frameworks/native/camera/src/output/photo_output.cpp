@@ -453,11 +453,10 @@ void PhotoOutput::SetCallback(std::shared_ptr<PhotoStateCallback> callback)
         } else {
             MEDIA_ERR_LOG("PhotoOutput::SetCallback() itemStream is nullptr");
         }
-        if (errorCode != CAMERA_OK) {
-            MEDIA_ERR_LOG("PhotoOutput::SetCallback: Failed to register callback, errorCode: %{public}d", errorCode);
-            cameraSvcCallback_ = nullptr;
-            appCallback_ = nullptr;
-        }
+        CHECK_ERROR_RETURN(errorCode == CAMERA_OK);
+        MEDIA_ERR_LOG("PhotoOutput::SetCallback: Failed to register callback, errorCode: %{public}d", errorCode);
+        cameraSvcCallback_ = nullptr;
+        appCallback_ = nullptr;
     }
 }
 
@@ -554,10 +553,9 @@ void PhotoOutput::AcquireBufferToPrepareProxy(int32_t captureId)
 {
     auto stream = GetStream();
     sptr<IStreamCapture> itemStream = static_cast<IStreamCapture*>(stream.GetRefPtr());
+    CHECK_ERROR_PRINT_LOG(itemStream == nullptr, "PhotoOutput::AcquireBufferToPrepareProxy() itemStream is nullptr");
     if (itemStream) {
         itemStream->AcquireBufferToPrepareProxy(captureId);
-    } else {
-        MEDIA_ERR_LOG("PhotoOutput::AcquireBufferToPrepareProxy() itemStream is nullptr");
     }
 }
 
@@ -572,13 +570,12 @@ int32_t PhotoOutput::Capture(std::shared_ptr<PhotoCaptureSetting> photoCaptureSe
     defaultCaptureSetting_ = photoCaptureSettings;
     auto itemStream = CastStream<IStreamCapture>(GetStream());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
+    CHECK_ERROR_PRINT_LOG(itemStream == nullptr, "PhotoOutput::Capture() itemStream is nullptr");
     if (itemStream) {
         MEDIA_INFO_LOG("Capture start");
         session->EnableMovingPhotoMirror(photoCaptureSettings->GetMirror(), true);
         errCode = itemStream->Capture(photoCaptureSettings->GetCaptureMetadataSetting());
         MEDIA_INFO_LOG("Capture End");
-    } else {
-        MEDIA_ERR_LOG("PhotoOutput::Capture() itemStream is nullptr");
     }
     CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "PhotoOutput Failed to Capture!, errCode: %{public}d", errCode);
     return ServiceToCameraError(errCode);
@@ -598,13 +595,12 @@ int32_t PhotoOutput::Capture()
         std::make_shared<Camera::CameraMetadata>(items, dataLength);
     auto itemStream = CastStream<IStreamCapture>(GetStream());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
+    CHECK_ERROR_PRINT_LOG(itemStream == nullptr, "PhotoOutput::Capture() itemStream is nullptr");
     if (itemStream) {
         MEDIA_DEBUG_LOG("Capture start");
         session->EnableMovingPhotoMirror(false, true);
         errCode = itemStream->Capture(captureMetadataSetting);
         MEDIA_DEBUG_LOG("Capture end");
-    } else {
-        MEDIA_ERR_LOG("PhotoOutput::Capture() itemStream is nullptr");
     }
     CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "PhotoOutput Failed to Capture!, errCode: %{public}d", errCode);
     return ServiceToCameraError(errCode);
@@ -620,10 +616,9 @@ int32_t PhotoOutput::CancelCapture()
         CameraErrorCode::SERVICE_FATL_ERROR, "PhotoOutput Failed to CancelCapture, GetStream is nullptr");
     auto itemStream = CastStream<IStreamCapture>(GetStream());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
+    CHECK_ERROR_PRINT_LOG(itemStream == nullptr, "PhotoOutput::CancelCapture() itemStream is nullptr");
     if (itemStream) {
         errCode = itemStream->CancelCapture();
-    } else {
-        MEDIA_ERR_LOG("PhotoOutput::CancelCapture() itemStream is nullptr");
     }
     CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "PhotoOutput Failed to CancelCapture, errCode: %{public}d", errCode);
     return ServiceToCameraError(errCode);
@@ -741,14 +736,12 @@ int32_t PhotoOutput::EnableMirror(bool isEnable)
         "PhotoOutput EnableMirror error!, session is nullptr");
 
     int32_t ret = CAMERA_UNKNOWN_ERROR;
-    if (IsMirrorSupported()) {
-        auto isSessionConfiged = session->IsSessionCommited() || session->IsSessionStarted();
-        ret = session->EnableMovingPhotoMirror(isEnable, isSessionConfiged);
-        CHECK_ERROR_RETURN_RET_LOG(ret != CameraErrorCode::SUCCESS, ret,
-            "PhotoOutput EnableMirror error!, ret is not success");
-    } else {
-        MEDIA_ERR_LOG("PhotoOutput EnableMirror error!, mirror is not supported");
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!(IsMirrorSupported()), ret,
+        "PhotoOutput EnableMirror error!, mirror is not supported");
+    auto isSessionConfiged = session->IsSessionCommited() || session->IsSessionStarted();
+    ret = session->EnableMovingPhotoMirror(isEnable, isSessionConfiged);
+    CHECK_ERROR_RETURN_RET_LOG(ret != CameraErrorCode::SUCCESS, ret,
+        "PhotoOutput EnableMirror error!, ret is not success");
     return ret;
 }
 
@@ -929,10 +922,9 @@ int32_t PhotoOutput::SetMovingPhotoVideoCodecType(int32_t videoCodecType)
         "PhotoOutput Failed to SetMovingPhotoVideoCodecType!, GetStream is nullptr");
     auto itemStream = CastStream<IStreamCapture>(GetStream());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
+    CHECK_ERROR_PRINT_LOG(itemStream == nullptr, "PhotoOutput::SetMovingPhotoVideoCodecType() itemStream is nullptr");
     if (itemStream) {
         errCode = itemStream->SetMovingPhotoVideoCodecType(videoCodecType);
-    } else {
-        MEDIA_ERR_LOG("PhotoOutput::SetMovingPhotoVideoCodecType() itemStream is nullptr");
     }
     CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "PhotoOutput Failed to SetMovingPhotoVideoCodecType!, "
         "errCode: %{public}d", errCode);
@@ -943,17 +935,14 @@ bool PhotoOutput::UpdateMediaLibraryPhotoAssetProxy(sptr<CameraPhotoProxy> photo
 {
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     auto streamCapturePtr = CastStream<IStreamCapture>(GetStream());
-    if (streamCapturePtr) {
-        photoProxy->photoWidth_ = 0;
-        photoProxy->photoHeight_ = 0;
-        photoProxy->fileSize_ = 0;
-        errCode = streamCapturePtr->UpdateMediaLibraryPhotoAssetProxy(photoProxy);
-        CHECK_ERROR_RETURN_RET_LOG(errCode != CAMERA_OK, false,
-            "Failed to UpdateMediaLibraryPhotoAssetProxy! errCode: %{public}d", errCode);
-    } else {
-        MEDIA_ERR_LOG("PhotoOutput:UpdateMediaLibraryPhotoAssetProxy() itemStream is nullptr");
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!streamCapturePtr, false,
+        "PhotoOutput:UpdateMediaLibraryPhotoAssetProxy() itemStream is nullptr");
+    photoProxy->photoWidth_ = 0;
+    photoProxy->photoHeight_ = 0;
+    photoProxy->fileSize_ = 0;
+    errCode = streamCapturePtr->UpdateMediaLibraryPhotoAssetProxy(photoProxy);
+    CHECK_ERROR_RETURN_RET_LOG(errCode != CAMERA_OK, false,
+        "Failed to UpdateMediaLibraryPhotoAssetProxy! errCode: %{public}d", errCode);
     return true;
 }
 
@@ -1064,13 +1053,12 @@ int32_t PhotoOutput::GetPhotoRotation(int32_t imageRotation)
     }
     auto streamCapturePtr = CastStream<IStreamCapture>(GetStream());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
+    CHECK_ERROR_RETURN_RET_LOG(streamCapturePtr == nullptr, CameraErrorCode::SERVICE_FATL_ERROR;,
+        "PhotoOutput::SetCameraPhotoRotation() streamCapturePtr is nullptr");
     if (streamCapturePtr) {
         errCode = streamCapturePtr->SetCameraPhotoRotation(true);
         CHECK_ERROR_RETURN_RET_LOG(errCode != CAMERA_OK, SERVICE_FATL_ERROR,
             "Failed to SetCameraPhotoRotation!, errCode: %{public}d", errCode);
-    } else {
-        MEDIA_ERR_LOG("PhotoOutput::SetCameraPhotoRotation() streamCapturePtr is nullptr");
-        return CameraErrorCode::SERVICE_FATL_ERROR;
     }
     MEDIA_INFO_LOG("PhotoOutput GetPhotoRotation :result %{public}d, sensorOrientation:%{public}d",
         result, sensorOrientation);
