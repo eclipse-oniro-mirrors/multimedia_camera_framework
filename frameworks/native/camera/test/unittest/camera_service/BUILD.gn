@@ -81,6 +81,7 @@ ohos_unittest("camera_service_unittest") {
       "hdi_camera_test/src/hcamera_device_manager_unittest.cpp",
       "hdi_camera_test/src/hcamera_device_unittest.cpp",
       "hdi_camera_test/src/hcamera_preconfig_unittest.cpp",
+      "hdi_camera_test/src/hcamera_restore_param_unittest.cpp",
       "hdi_camera_test/src/hcamera_service_unittest.cpp",
       "param_update/src/camera_rotate_param_sign_tools_unittest.cpp",
       "param_update/src/camera_rotate_param_manager_unittest.cpp",
