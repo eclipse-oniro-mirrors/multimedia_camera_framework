@@ -529,7 +529,7 @@ int32_t HStreamRepeat::SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate)
     streamFrameRateRange_ = {minFrameRate, maxFrameRate};
     std::vector<uint8_t> ability;
     std::vector<uint8_t> repeatSettings;
-    CHECK_ERROR_RETURN_RET_LOG(cameraAbility_ == nullptr, CAMERA_DEVICE_DISCONNECT,
+    CHECK_ERROR_RETURN_RET_LOG(cameraAbility_ == nullptr, CAMERA_OK,
         "HStreamRepeat::SetFrameRate cameraAbility_ is null");
     {
         std::lock_guard<std::mutex> lock(cameraAbilityLock_);
