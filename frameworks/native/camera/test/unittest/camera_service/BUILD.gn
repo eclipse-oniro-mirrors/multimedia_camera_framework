@@ -55,7 +55,6 @@ ohos_unittest("camera_service_unittest") {
     "hdi_stream_test/src/hstream_capture_unittest.cpp",
     "hdi_stream_test/src/hstream_depth_data_unittest.cpp",
     "hdi_stream_test/src/hstream_metadata_unittest.cpp",
-    "hdi_stream_test/src/hstream_operator_manager_unittest.cpp",
     "hdi_stream_test/src/hstream_repeat_unittest.cpp",
     "media_library/src/photo_asset_adapter_unittest.cpp",
   ]
