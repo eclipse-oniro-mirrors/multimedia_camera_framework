@@ -552,7 +552,7 @@ void PreviewOutput::SetCallback(std::shared_ptr<PreviewStateCallback> callback)
     CHECK_ERROR_RETURN(stream == nullptr);
     bool isSuccess = previewOutputListenerManager_->AddListener(callback);
     CHECK_ERROR_RETURN(!isSuccess);
-    CHECK_ERROR_RETURN(!(previewOutputListenerManager_->GetListenerCount() = 1));
+    CHECK_ERROR_RETURN(!(previewOutputListenerManager_->GetListenerCount() == 1));
     sptr<IStreamRepeatCallback> ipcCallback = previewOutputListenerManager_;
     sptr<IStreamRepeat> itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
     int32_t errCode = itemStream->SetCallback(ipcCallback);
