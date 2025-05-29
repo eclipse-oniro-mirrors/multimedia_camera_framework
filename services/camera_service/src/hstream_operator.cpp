@@ -576,6 +576,7 @@ void HStreamOperator::ExpandMovingPhotoRepeatStream()
             if (!taskManager_ && audioCapturerSession_) {
                 taskManager_ = new AvcodecTaskManager(audioCapturerSession_, VideoCodecType::VIDEO_ENCODE_TYPE_HEVC,
                     currColorSpace_);
+                HStreamOperatorManager::GetInstance()->AddTaskManager(streamOperatorId_, taskManager_);
                 taskManager_->SetVideoBufferDuration(preCacheFrameCount_, postCacheFrameCount_);
             }
             if (!videoCache_ && taskManager_) {
@@ -678,11 +679,9 @@ void HStreamOperator::StopMovingPhoto() __attribute__((no_sanitize("cfi")))
     MEDIA_DEBUG_LOG("Enter HStreamOperator::StopMovingPhoto");
     std::lock_guard<std::mutex> lock(movingPhotoStatusLock_);
     CHECK_EXECUTE(livephotoListener_, livephotoListener_->StopDrainOut());
-    CHECK_EXECUTE(videoCache_, videoCache_->ClearCache());
 #ifdef MOVING_PHOTO_ADD_AUDIO
     CHECK_EXECUTE(audioCapturerSession_, audioCapturerSession_->Stop());
 #endif
-    CHECK_EXECUTE(taskManager_, taskManager_->Stop());
 }
 
 int32_t HStreamOperator::GetActiveColorSpace(ColorSpace& colorSpace)
@@ -1056,10 +1055,8 @@ int32_t HStreamOperator::Release()
     std::lock_guard<std::mutex> lock(movingPhotoStatusLock_);
     CHECK_EXECUTE(livephotoListener_, livephotoListener_ = nullptr);
     CHECK_EXECUTE(videoCache_, videoCache_ = nullptr);
-    if (taskManager_) {
-        taskManager_->ClearTaskResource();
-        taskManager_ = nullptr;
-    }
+    taskManager_ = nullptr;
+    HStreamOperatorManager::GetInstance()->RemoveTaskManager(streamOperatorId_);
     MEDIA_INFO_LOG("HStreamOperator::Release execute success");
     return errorCode;
 }

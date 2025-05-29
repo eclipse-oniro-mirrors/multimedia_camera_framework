@@ -68,6 +68,7 @@ public:
     void Stop();
     void ClearTaskResource();
     void SetVideoBufferDuration(uint32_t preBufferCount, uint32_t postBufferCount);
+    bool isEmptyVideoFdMap();
     shared_ptr<TaskManager>& GetTaskManager();
     shared_ptr<TaskManager>& GetEncoderManager();
     mutex startTimeMutex_;
@@ -76,7 +77,7 @@ public:
     std::map<int32_t, int64_t> mPEndTimeMap_ = {};
 
 private:
-    void FinishMuxer(sptr<AudioVideoMuxer> muxer);
+    void FinishMuxer(sptr<AudioVideoMuxer> muxer, int32_t captureId);
     void ChooseVideoBuffer(vector<sptr<FrameRecord>> frameRecords, vector<sptr<FrameRecord>> &choosedBuffer,
         int64_t shutterTime, int32_t captureId);
     size_t FindIdrFrameIndex(vector<sptr<FrameRecord>> frameRecords, int64_t clearVideoEndTime,
