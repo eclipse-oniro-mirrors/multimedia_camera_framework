@@ -55,7 +55,7 @@ private:
     int32_t tempFileFd_ {-1};
     int64_t recoverPts_ {-1};
     int64_t pausePts_ {-1};
-    int64_t curIFramePts_ {-1};
+    int64_t prePFramePts_ {-1};
     int64_t finalPtsToDrop_ {-1};
     bool hasAudio_ {false};
     bool started_ {false};
