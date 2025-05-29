@@ -2117,10 +2117,10 @@ void CaptureSession::ProcessAutoFocusUpdates(const std::shared_ptr<Camera::Camer
     CHECK_ERROR_RETURN_LOG(ret != CAM_META_SUCCESS, "Camera not support Focus mode");
     MEDIA_DEBUG_LOG("Focus mode: %{public}d", item.data.u8[0]);
     auto it = g_metaFocusModeMap_.find(static_cast<camera_focus_mode_enum_t>(item.data.u8[0]));
-    CHECK_EXECUTE(it != g_metaFocusModeMap_.end(), ProcessFocusDistanceUpdates(result));
+    CHECK_ERROR_RETURN_LOG(it == g_metaFocusModeMap_.end(), "Focus mode not support");
+    CHECK_EXECUTE(CameraSecurity::CheckSystemApp(), ProcessFocusDistanceUpdates(result));
     // continuous focus mode do not callback focusStateChange
-    CHECK_ERROR_RETURN(it == g_metaFocusModeMap_.end() ||
-        (it->second != FOCUS_MODE_AUTO && it->second != FOCUS_MODE_CONTINUOUS_AUTO));
+    CHECK_ERROR_RETURN((it->second != FOCUS_MODE_AUTO) && (it->second != FOCUS_MODE_CONTINUOUS_AUTO));
     // LCOV_EXCL_START
     ret = Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_FOCUS_STATE, &item);
     if (ret == CAM_META_SUCCESS) {
