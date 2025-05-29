@@ -556,10 +556,9 @@ void PreviewOutput::SetCallback(std::shared_ptr<PreviewStateCallback> callback)
     sptr<IStreamRepeatCallback> ipcCallback = previewOutputListenerManager_;
     sptr<IStreamRepeat> itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
     int32_t errCode = itemStream->SetCallback(ipcCallback);
-    if (errCode != CAMERA_OK) {
-        MEDIA_ERR_LOG("PreviewOutput::SetCallback fail");
-        previewOutputListenerManager_->RemoveListener(callback);
-    }
+    CHECK_ERROR_RETURN(errCode == CAMERA_OK);
+    MEDIA_ERR_LOG("PreviewOutput::SetCallback fail");
+    previewOutputListenerManager_->RemoveListener(callback);
 }
 
 void PreviewOutput::RemoveCallback(std::shared_ptr<PreviewStateCallback> callback)
