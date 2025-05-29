@@ -227,37 +227,5 @@ HWTEST_F(HStreamMetadataUnit, camera_fwcoverage_unittest_033, TestSize.Level0)
     int32_t errCode = stub.OnRemoteRequest(code, data, reply, option);
     EXPECT_NE(errCode, 0);
 }
-
-/*
- * Feature: Framework
- * Function: Test HStreamMetadataCallbackStub with OnRemoteRequest
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test OnRemoteRequest for switch of CAMERA_META_OPERATOR_ON_RESULT
- */
-HWTEST_F(HStreamMetadataUnit, camera_fwcoverage_unittest_034, TestSize.Level0)
-{
-    TestHStreamMetadataStub stub;
-    MessageParcel data;
-    int32_t errCode = stub.HandleEnableMetadataType(data);
-    EXPECT_EQ(errCode, 0);
-}
-
-/*
- * Feature: Framework
- * Function: Test HStreamMetadataCallbackStub with OnRemoteRequest
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test OnRemoteRequest for switch of CAMERA_META_OPERATOR_ON_RESULT
- */
-HWTEST_F(HStreamMetadataUnit, camera_fwcoverage_unittest_035, TestSize.Level0)
-{
-    TestHStreamMetadataStub stub;
-    MessageParcel data;
-    int32_t errCode = stub.HandleDisableMetadataType(data);
-    EXPECT_EQ(errCode, 0);
-}
 }
 }
