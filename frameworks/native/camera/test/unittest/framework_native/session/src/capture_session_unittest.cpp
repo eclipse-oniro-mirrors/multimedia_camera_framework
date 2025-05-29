@@ -7074,5 +7074,158 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_097, TestSize.Level0)
     std::vector<PortraitThemeType> supportedPortraitThemeTypes;
     EXPECT_EQ(session->GetSupportedPortraitThemeTypes(supportedPortraitThemeTypes), 0);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test CaptureSession with IsDepthFusionEnabled, IsMovingPhotoEnabled, SetMacroStatusCallback,
+ * IsSetEnableMacro, GeneratePreconfigProfiles, SetEffectSuggestionCallback, SetARCallback
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsDepthFusionEnabled, IsMovingPhotoEnabled, SetMacroStatusCallback,
+ * IsSetEnableMacro, GeneratePreconfigProfiles, SetEffectSuggestionCallback, SetARCallback for just call.
+ */
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_098, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    session->isDepthFusionEnable_ = false;
+    EXPECT_FALSE(session->IsDepthFusionEnabled());
+
+    session->isMovingPhotoEnabled_ = false;
+    EXPECT_FALSE(session->IsMovingPhotoEnabled());
+
+    session->SetMacroStatusCallback(nullptr);
+    EXPECT_EQ(session->GetMacroStatusCallback(), nullptr);
+
+    session->isSetMacroEnable_ = false;
+    EXPECT_FALSE(session->IsSetEnableMacro());
+
+    int32_t preconfigType = 4;
+    ProfileSizeRatio preconfigRatio = RATIO_1_1;
+    EXPECT_EQ(session->GeneratePreconfigProfiles(static_cast<PreconfigType>(preconfigType), preconfigRatio), nullptr);
+
+    session->SetEffectSuggestionCallback(nullptr);
+    EXPECT_EQ(session->effectSuggestionCallback_, nullptr);
+
+    session->SetARCallback(nullptr);
+    EXPECT_EQ(session->GetARCallback(), nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CaptureSession with IsDepthFusionEnabled, IsMovingPhotoEnabled, SetMacroStatusCallback,
+ * IsSetEnableMacro, GeneratePreconfigProfiles, SetEffectSuggestionCallback, SetARCallback
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsDepthFusionEnabled, IsMovingPhotoEnabled, SetMacroStatusCallback,
+ * IsSetEnableMacro, GeneratePreconfigProfiles, SetEffectSuggestionCallback, SetARCallback for just call.
+ */
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_099, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    session->isDepthFusionEnable_ = false;
+    EXPECT_FALSE(session->IsDepthFusionEnabled());
+
+    session->isMovingPhotoEnabled_ = false;
+    EXPECT_FALSE(session->IsMovingPhotoEnabled());
+
+    session->SetMacroStatusCallback(nullptr);
+    EXPECT_EQ(session->GetMacroStatusCallback(), nullptr);
+
+    session->isSetMacroEnable_ = false;
+    EXPECT_FALSE(session->IsSetEnableMacro());
+
+    int32_t preconfigType = 4;
+    ProfileSizeRatio preconfigRatio = UNSPECIFIED;
+    EXPECT_EQ(session->GeneratePreconfigProfiles(static_cast<PreconfigType>(preconfigType), preconfigRatio), nullptr);
+
+    session->SetEffectSuggestionCallback(nullptr);
+    EXPECT_EQ(session->effectSuggestionCallback_, nullptr);
+
+    session->SetARCallback(nullptr);
+    EXPECT_EQ(session->GetARCallback(), nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CaptureSession with IsDepthFusionEnabled, IsMovingPhotoEnabled, SetMacroStatusCallback,
+ * IsSetEnableMacro, GeneratePreconfigProfiles, SetEffectSuggestionCallback, SetARCallback
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsDepthFusionEnabled, IsMovingPhotoEnabled, SetMacroStatusCallback,
+ * IsSetEnableMacro, GeneratePreconfigProfiles, SetEffectSuggestionCallback, SetARCallback for just call.
+ */
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_100, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    session->isDepthFusionEnable_ = false;
+    EXPECT_FALSE(session->IsDepthFusionEnabled());
+
+    session->isMovingPhotoEnabled_ = false;
+    EXPECT_FALSE(session->IsMovingPhotoEnabled());
+
+    session->SetMacroStatusCallback(nullptr);
+    EXPECT_EQ(session->GetMacroStatusCallback(), nullptr);
+
+    session->isSetMacroEnable_ = false;
+    EXPECT_FALSE(session->IsSetEnableMacro());
+
+    int32_t preconfigType = 4;
+    ProfileSizeRatio preconfigRatio = RATIO_16_9;
+    EXPECT_EQ(session->GeneratePreconfigProfiles(static_cast<PreconfigType>(preconfigType), preconfigRatio), nullptr);
+
+    session->SetEffectSuggestionCallback(nullptr);
+    EXPECT_EQ(session->effectSuggestionCallback_, nullptr);
+
+    session->SetARCallback(nullptr);
+    EXPECT_EQ(session->GetARCallback(), nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CaptureSession with IsDepthFusionEnabled, IsMovingPhotoEnabled, SetMacroStatusCallback,
+ * IsSetEnableMacro, GeneratePreconfigProfiles, SetEffectSuggestionCallback, SetARCallback
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsDepthFusionEnabled, IsMovingPhotoEnabled, SetMacroStatusCallback,
+ * IsSetEnableMacro, GeneratePreconfigProfiles, SetEffectSuggestionCallback, SetARCallback for just call.
+ */
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_101, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    session->isDepthFusionEnable_ = false;
+    EXPECT_FALSE(session->IsDepthFusionEnabled());
+
+    session->isMovingPhotoEnabled_ = false;
+    EXPECT_FALSE(session->IsMovingPhotoEnabled());
+
+    session->SetMacroStatusCallback(nullptr);
+    EXPECT_EQ(session->GetMacroStatusCallback(), nullptr);
+
+    session->isSetMacroEnable_ = false;
+    EXPECT_FALSE(session->IsSetEnableMacro());
+
+    PreconfigType preconfigType = PRECONFIG_720P;
+    int32_t preconfigRatio = 3;
+    EXPECT_EQ(session->GeneratePreconfigProfiles(preconfigType,
+        static_cast<ProfileSizeRatio>(preconfigRatio)), nullptr);
+
+    session->SetEffectSuggestionCallback(nullptr);
+    EXPECT_EQ(session->effectSuggestionCallback_, nullptr);
+
+    session->SetARCallback(nullptr);
+    EXPECT_EQ(session->GetARCallback(), nullptr);
+}
 }
 }

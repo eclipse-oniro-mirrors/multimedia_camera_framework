@@ -20,6 +20,7 @@
 #include <vector>
 #include "access_token.h"
 #include "accesstoken_kit.h"
+#include "camera_device_ability_items.h"
 #include "camera_util.h"
 #include "gmock/gmock.h"
 #include "hap_token_info.h"
@@ -342,5 +343,123 @@ HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_005, TestSize.Level1
     input->Close();
 }
 
+/*
+ * Feature: Framework
+ * Function: Test VideoSession callback normal branches
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test VideoSession callback normal branches while metadata have ability
+ */
+HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_006, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::VIDEO);
+    ASSERT_NE(session, nullptr);
+    sptr<VideoSession> videoSession = static_cast<VideoSession*>(session.GetRefPtr());
+    ASSERT_NE(videoSession, nullptr);
+
+    FocusTrackingInfoParms parms = {.trackingMode = FOCUS_TRACKING_MODE_AUTO,
+        .trackingRegion  = {0.0, 0.0, 0.0, 0.0}};
+    sptr<OHOS::CameraStandard::FocusTrackingInfo> focusInfo = new OHOS::CameraStandard::FocusTrackingInfo(parms);
+    input->Close();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test VideoSession callback normal branches
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test VideoSession callback normal branches while metadata have ability
+ */
+HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_007, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::VIDEO);
+    ASSERT_NE(session, nullptr);
+    sptr<VideoSession> videoSession = static_cast<VideoSession*>(session.GetRefPtr());
+    ASSERT_NE(videoSession, nullptr);
+    int32_t preType = 4;
+    ProfileSizeRatio proSizeType = RATIO_16_9;
+    shared_ptr<PreconfigProfiles> res = videoSession->GeneratePreconfigProfiles(static_cast<PreconfigType>(preType),
+        proSizeType);
+    EXPECT_EQ(res, nullptr);
+    input->Close();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test VideoSession callback normal branches
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test VideoSession callback normal branches while metadata have ability
+ */
+HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_008, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::VIDEO);
+    ASSERT_NE(session, nullptr);
+    sptr<VideoSession> videoSession = static_cast<VideoSession*>(session.GetRefPtr());
+    ASSERT_NE(videoSession, nullptr);
+
+    shared_ptr<TestLightStatusCallback>lightCallback = std::make_shared<TestLightStatusCallback>();
+    videoSession->SetLightStatusCallback(lightCallback);
+    input->Close();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test VideoSession callback normal branches
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test VideoSession callback normal branches while metadata have ability
+ */
+HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_009, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::VIDEO);
+    ASSERT_NE(session, nullptr);
+    sptr<VideoSession> videoSession = static_cast<VideoSession*>(session.GetRefPtr());
+    ASSERT_NE(videoSession, nullptr);
+
+    shared_ptr<TestLightStatusCallback>lightCallback = std::make_shared<TestLightStatusCallback>();
+    videoSession->SetLightStatusCallback(lightCallback);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameras[0]->GetMetadata();
+    ASSERT_NE(metadata, nullptr);
+    OHOS::Camera::DeleteCameraMetadataItem(metadata->get(), OHOS_STATUS_LIGHT_STATUS);
+    uint8_t lightStart = 1;
+    videoSession->LockForControl();
+    metadata->addEntry(OHOS_STATUS_LIGHT_STATUS, &lightStart, 1);
+    videoSession->UnlockForControl();
+    videoSession->ProcessLightStatusChange(metadata);
+    input->Close();
+}
 }
 }

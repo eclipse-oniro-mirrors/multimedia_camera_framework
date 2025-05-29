@@ -253,5 +253,37 @@ HWTEST_F(CubicBezierUnitTest, cubic_bezier_unittest_012, TestSize.Level1)
     EXPECT_NE(result.size(), 0);
 }
 
+/*
+ * Feature: Framework
+ * Function: Test GetZoomArray.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetZoomArray normal branch.
+ */
+HWTEST_F(CubicBezierUnitTest, cubic_bezier_unittest_013, TestSize.Level1)
+{
+    auto cubicBezier = std::make_shared<CubicBezier>();
+    std::vector<float> zoomBezierValue = {0.0, 1.0, 0.5, 1.0, 1.0};
+    bool res = cubicBezier->SetBezierValue(zoomBezierValue);
+    EXPECT_EQ(res, true);
+}
+
+
+/*
+ * Feature: Framework
+ * Function: Test GetZoomArray.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetZoomArray normal branch.
+ */
+HWTEST_F(CubicBezierUnitTest, cubic_bezier_unittest_014, TestSize.Level1)
+{
+    auto cubicBezier = std::make_shared<CubicBezier>();
+    float value = 0.17421875;
+    float res = cubicBezier->BinarySearch(value);
+    EXPECT_NE(res, 0);
+}
 } // CameraStandard
 } // OHOS
