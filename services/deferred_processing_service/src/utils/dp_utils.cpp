@@ -80,6 +80,22 @@ DpsCallerInfo GetDpsCallerInfo()
     DP_DEBUG_LOG("GetDpsCallerInfo pid:%{public}d uid:%{public}d", dpsCallerInfo.pid, dpsCallerInfo.uid);
     return dpsCallerInfo;
 }
+
+std::unordered_map<std::string, std::string> ParseKeyValue(const std::string& input)
+{
+    std::unordered_map<std::string, std::string> result;
+    std::stringstream src(input);
+    std::string pair;
+    while (std::getline(src, pair, ':')) {
+        size_t pos = pair.find('=');
+        if (pos != std::string::npos) {
+            std::string key = pair.substr(0, pos);
+            std::string value = pair.substr(pos + 1);
+            result[key] = value;
+        }
+    }
+    return result;
+}
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS
