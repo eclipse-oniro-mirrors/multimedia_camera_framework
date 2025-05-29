@@ -21,6 +21,7 @@
 
 #include "access_token.h"
 #include "accesstoken_kit.h"
+#include "camera/metadata_output.h"
 #include "camera_log.h"
 #include "camera_manager.h"
 #include "camera_util.h"
@@ -1174,6 +1175,83 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_function_unittest_001, TestSi
     std::shared_ptr<HStreamMetadataCallbackImpl> hStreamMetadataCallbackImpl =
         std::make_shared<HStreamMetadataCallbackImpl>(nullptr);
     EXPECT_EQ(hStreamMetadataCallbackImpl->innerMetadataOutput, nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test metadataoutput with SetCapturingMetadataObjectTypes
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test metadataoutput when ObjectTypes is not empty
+ */
+HWTEST_F(CameraMetadataOutputUnit, metadata_output_function_unittest_002, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    ASSERT_FALSE(cameras.empty());
+
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureOutput> metadata = cameraManager_->CreateMetadataOutput();
+    ASSERT_NE(metadata, nullptr);
+    sptr<MetadataOutput> metadataOutput = (sptr<MetadataOutput>&)metadata;
+
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    session->BeginConfig();
+    session->AddInput(input);
+    session->AddOutput(metadata);
+    session->CommitConfig();
+    session->Start();
+
+    metadataOutput->appStateCallback_ = std::make_shared<MetadataStateCallbackTest>();
+    metadataOutput->appStateCallback_->OnError(CameraErrorCode::SERVICE_FATL_ERROR);
+
+    input->Close();
+    session->Stop();
+    session->Release();
+    input->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test metadataoutput with SetCapturingMetadataObjectTypes
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test metadataoutput when ObjectTypes is not empty
+ */
+HWTEST_F(CameraMetadataOutputUnit, metadata_output_function_unittest_003, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    ASSERT_FALSE(cameras.empty());
+
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureOutput> metadata = cameraManager_->CreateMetadataOutput();
+    ASSERT_NE(metadata, nullptr);
+    sptr<MetadataOutput> metadataOutput = (sptr<MetadataOutput>&)metadata;
+
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    session->BeginConfig();
+    session->AddInput(input);
+    session->AddOutput(metadata);
+    session->CommitConfig();
+    session->Start();
+
+    metadataOutput->appObjectCallback_ = std::make_shared<MetadataObjectCallbackTest>();
+    std::vector<sptr<MetadataObject>> metaObjects = {};
+    metadataOutput->appObjectCallback_->OnMetadataObjectsAvailable(metaObjects);
+
+    input->Close();
+    session->Stop();
+    session->Release();
+    input->Release();
 }
 }
 }

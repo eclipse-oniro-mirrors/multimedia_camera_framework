@@ -169,6 +169,5 @@ HWTEST_F(HStreamMetadataUnit, camera_fwcoverage_unittest_030, TestSize.Level1)
     int errCode = stub.OnRemoteRequest(code, data, reply, option);
     EXPECT_EQ(errCode, IPC_STUB_UNKNOW_TRANS_ERR);
 }
-
 }
 }

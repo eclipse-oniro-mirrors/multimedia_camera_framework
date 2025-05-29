@@ -61,5 +61,21 @@ HWTEST_F(SmoothZoomUnitTest, smooth_zoom_unittest_001, TestSize.Level1)
     ASSERT_TRUE(algorithm != nullptr);
 }
 
+/*
+ * Feature: Framework
+ * Function: Test GetZoomAlgorithm normal branches.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetZoomAlgorithm normal branches.
+ */
+HWTEST_F(SmoothZoomUnitTest, smooth_zoom_unittest_002, TestSize.Level1)
+{
+    int32_t mode = 1;
+
+    std::shared_ptr<IZoomAlgorithm> algorithm = SmoothZoom::GetZoomAlgorithm(static_cast<SmoothZoomType>(mode));
+
+    ASSERT_TRUE(algorithm != nullptr);
+}
 } // CameraStandard
 } // OHOS

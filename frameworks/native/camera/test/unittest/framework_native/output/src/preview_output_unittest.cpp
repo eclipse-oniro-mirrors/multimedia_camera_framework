@@ -21,6 +21,7 @@
 
 #include "access_token.h"
 #include "accesstoken_kit.h"
+#include "camera_error_code.h"
 #include "camera_log.h"
 #include "camera_manager.h"
 #include "camera_util.h"
@@ -790,6 +791,93 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_017, TestSize.Level1)
     ASSERT_NE(previewOutput->previewOutputListenerManager_, nullptr);
 
     preview->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test PreviewOutputCallbackImpl
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test PreviewOutputCallbackImpl
+ */
+HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_018, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    ASSERT_FALSE(cameras.empty());
+
+    sptr<CaptureOutput> preview = CreatePreviewOutput();
+    ASSERT_NE(preview, nullptr);
+
+    sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)preview;
+
+    auto callback = previewOutput->GetPreviewOutputListenerManager();
+    std::shared_ptr<TestPreviewOutputCallback> innerCallback =
+        std::make_shared<TestPreviewOutputCallback>("PreviewStateCallback");
+    ASSERT_NE(innerCallback, nullptr);
+    innerCallback->OnFrameStarted();
+
+    if (callback) {
+        callback = nullptr;
+    }
+}
+
+/*
+ * Feature: Framework
+ * Function: Test PreviewOutputCallbackImpl
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test PreviewOutputCallbackImpl
+ */
+HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_019, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    ASSERT_FALSE(cameras.empty());
+
+    sptr<CaptureOutput> preview = CreatePreviewOutput();
+    ASSERT_NE(preview, nullptr);
+
+    sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)preview;
+
+    auto callback = previewOutput->GetPreviewOutputListenerManager();
+    std::shared_ptr<TestPreviewOutputCallback> innerCallback =
+        std::make_shared<TestPreviewOutputCallback>("PreviewStateCallback");
+    ASSERT_NE(innerCallback, nullptr);
+    innerCallback->OnFrameEnded(0);
+
+    if (callback) {
+        callback = nullptr;
+    }
+}
+
+/*
+ * Feature: Framework
+ * Function: Test PreviewOutputCallbackImpl
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test PreviewOutputCallbackImpl
+ */
+HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_020, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    ASSERT_FALSE(cameras.empty());
+
+    sptr<CaptureOutput> preview = CreatePreviewOutput();
+    ASSERT_NE(preview, nullptr);
+
+    sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)preview;
+
+    auto callback = previewOutput->GetPreviewOutputListenerManager();
+    std::shared_ptr<TestPreviewOutputCallback> innerCallback =
+        std::make_shared<TestPreviewOutputCallback>("PreviewStateCallback");
+    ASSERT_NE(innerCallback, nullptr);
+    innerCallback->OnError(CameraErrorCode::SERVICE_FATL_ERROR);
+
+    if (callback) {
+        callback = nullptr;
+    }
 }
 }
 }

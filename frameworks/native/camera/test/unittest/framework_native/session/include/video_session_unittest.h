@@ -53,6 +53,12 @@ private:
     sptr<CameraManager> cameraManager_ = nullptr;
 };
 
+class TestLightStatusCallback : public LightStatusCallback {
+public:
+    TestLightStatusCallback() {}
+    ~TestLightStatusCallback() {}
+    void OnLightStatusChanged(LightStatus &status)  override {}
+};
 }
 }
 

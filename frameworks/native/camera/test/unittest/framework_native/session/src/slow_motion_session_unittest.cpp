@@ -368,6 +368,67 @@ HWTEST_F(CameraSlowMotionSessionUnitTest, slow_motion_session_function_unittest_
     EXPECT_EQ(slowMotionSession->EnableMotionDetection(isEnable), CameraErrorCode::SESSION_NOT_CONFIG);
 }
 
+/*
+ * Feature: Framework
+ * Function: Test SecureCameraSession ProcessCallbacks, OnSlowMotionStateChange, NormalizeRect, EnableMotionDetection
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test ProcessCallbacks, OnSlowMotionStateChange, NormalizeRect, EnableMotionDetection for just call.
+ */
+HWTEST_F(CameraSlowMotionSessionUnitTest, slow_motion_session_function_unittest_002, TestSize.Level0)
+{
+    sptr<CaptureSession> captureSession = cameraManager_->CreateCaptureSession(SceneMode::SLOW_MOTION);
+    ASSERT_NE(captureSession, nullptr);
+    sptr<SlowMotionSession> slowMotionSession =
+        static_cast<SlowMotionSession*>(captureSession.GetRefPtr());
+    ASSERT_NE(slowMotionSession, nullptr);
+
+    std::shared_ptr<TestSlowMotionStateCallback> callback = std::make_shared<TestSlowMotionStateCallback>();
+    slowMotionSession->SetCallback(callback);
+    slowMotionSession->OnSlowMotionStateChange(nullptr);
+    EXPECT_NE(slowMotionSession->GetApplicationCallback(), nullptr);
+
+    Rect rect;
+    slowMotionSession->NormalizeRect(rect);
+    EXPECT_EQ(rect.topLeftX, std::max(0.0, std::min(1.0, rect.topLeftX)));
+
+    bool isEnable = false;
+    EXPECT_EQ(slowMotionSession->EnableMotionDetection(isEnable), CameraErrorCode::SESSION_NOT_CONFIG);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test SecureCameraSession ProcessCallbacks, OnSlowMotionStateChange, NormalizeRect, EnableMotionDetection
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test ProcessCallbacks, OnSlowMotionStateChange, NormalizeRect, EnableMotionDetection for just call.
+ */
+HWTEST_F(CameraSlowMotionSessionUnitTest, slow_motion_session_function_unittest_003, TestSize.Level0)
+{
+    sptr<CaptureSession> captureSession = cameraManager_->CreateCaptureSession(SceneMode::SLOW_MOTION);
+    ASSERT_NE(captureSession, nullptr);
+    sptr<SlowMotionSession> slowMotionSession =
+        static_cast<SlowMotionSession*>(captureSession.GetRefPtr());
+    ASSERT_NE(slowMotionSession, nullptr);
+    SlowMotionSession::SlowMotionSessionMetadataResultProcessor processor(slowMotionSession);
+    uint64_t timestamp = 1;
+    auto metadata = make_shared<OHOS::Camera::CameraMetadata>(10, 100);
+    processor.ProcessCallbacks(timestamp, metadata);
+    std::shared_ptr<TestSlowMotionStateCallback> callback = std::make_shared<TestSlowMotionStateCallback>();
+    slowMotionSession->SetCallback(callback);
+    slowMotionSession->OnSlowMotionStateChange(metadata);
+    EXPECT_NE(slowMotionSession->GetApplicationCallback(), nullptr);
+
+    Rect rect;
+    slowMotionSession->NormalizeRect(rect);
+    EXPECT_EQ(rect.topLeftX, std::max(0.0, std::min(1.0, rect.topLeftX)));
+
+    bool isEnable = false;
+    EXPECT_EQ(slowMotionSession->EnableMotionDetection(isEnable), CameraErrorCode::SESSION_NOT_CONFIG);
+}
+
 bool CameraSlowMotionSessionUnitTest::IsAspectRatioEqual(float a, float b)
 {
     const float EPSILON = 1e-6f;

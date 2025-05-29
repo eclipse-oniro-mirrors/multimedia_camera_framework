@@ -117,5 +117,22 @@ HWTEST_F(CameraFwkMetadataUtilsUnitTest, camera_fwk_metadata_utils_unittest_003,
     bool ret = CameraFwkMetadataUtils::UpdateMetadataTag(item, dstMetadata);
     EXPECT_FALSE(ret);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test UpdateMetadataTag normal branch.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test UpdateMetadataTag normal branch.
+ */
+HWTEST_F(CameraFwkMetadataUtilsUnitTest, camera_fwk_metadata_utils_unittest_004, TestSize.Level0)
+{
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> testMetadata =
+        CameraFwkMetadataUtils::RecreateMetadata(metadata);
+    ASSERT_NE(testMetadata, nullptr);
+    CameraFwkMetadataUtils::LogFormatCameraMetadata(testMetadata);
+}
 } // CameraStandard
 } // OHOS

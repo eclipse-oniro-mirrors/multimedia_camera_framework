@@ -17,10 +17,12 @@
 
 #include "gtest/gtest.h"
 #include <cstdint>
+#include <memory>
 #include <vector>
 
 #include "access_token.h"
 #include "accesstoken_kit.h"
+#include "camera_error_code.h"
 #include "camera_log.h"
 #include "camera_manager.h"
 #include "camera_util.h"
@@ -34,6 +36,7 @@
 #include "test_common.h"
 #include "token_setproc.h"
 #include "os_account_manager.h"
+#include "video_output_impl.h"
 
 using namespace testing::ext;
 using ::testing::A;
@@ -614,6 +617,90 @@ HWTEST_F(CameraVedioOutputUnit, video_output_function_unittest_002, TestSize.Lev
     std::shared_ptr<VideoOutputCallbackImpl> videoOutputCallbackImpl2 =
         std::make_shared<VideoOutputCallbackImpl>(nullptr);
     EXPECT_EQ(videoOutputCallbackImpl2->videoOutput_, nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test videooutput with OnFrameStarted
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test videooutput with OnFrameStarted
+ */
+HWTEST_F(CameraVedioOutputUnit, video_output_function_unittest_003, TestSize.Level0)
+{
+    int32_t width = VIDEO_DEFAULT_WIDTH;
+    int32_t height = VIDEO_DEFAULT_HEIGHT;
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    CameraFormat videoFormat = CAMERA_FORMAT_YUV_420_SP;
+    Size videoSize;
+    videoSize.width = width;
+    videoSize.height = height;
+    std::vector<int32_t> videoFramerates = {30, 30};
+    VideoProfile videoProfile = VideoProfile(videoFormat, videoSize, videoFramerates);
+    sptr<VideoOutput> video = cameraManager_->CreateVideoOutput(videoProfile, surface);
+    ASSERT_NE(video, nullptr);
+
+    std::shared_ptr<VideoOutputCallbackImpl> callback = std::make_shared<VideoOutputCallbackImpl>(video);
+    std::shared_ptr<TestVideoOutputCallback> innerCallback =
+        std::make_shared<TestVideoOutputCallback>("VideoStateCallback");
+    innerCallback->OnFrameStarted();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test videooutput with OnFrameEnded
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test videooutput with OnFrameEnded
+ */
+HWTEST_F(CameraVedioOutputUnit, video_output_function_unittest_004, TestSize.Level0)
+{
+    int32_t width = VIDEO_DEFAULT_WIDTH;
+    int32_t height = VIDEO_DEFAULT_HEIGHT;
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    CameraFormat videoFormat = CAMERA_FORMAT_YUV_420_SP;
+    Size videoSize;
+    videoSize.width = width;
+    videoSize.height = height;
+    std::vector<int32_t> videoFramerates = {30, 30};
+    VideoProfile videoProfile = VideoProfile(videoFormat, videoSize, videoFramerates);
+    sptr<VideoOutput> video = cameraManager_->CreateVideoOutput(videoProfile, surface);
+    ASSERT_NE(video, nullptr);
+
+    std::shared_ptr<VideoOutputCallbackImpl> callback = std::make_shared<VideoOutputCallbackImpl>(video);
+    std::shared_ptr<TestVideoOutputCallback> innerCallback =
+        std::make_shared<TestVideoOutputCallback>("VideoStateCallback");
+    innerCallback->OnFrameEnded(0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test videooutput with OnError
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test videooutput with OnError
+ */
+HWTEST_F(CameraVedioOutputUnit, video_output_function_unittest_005, TestSize.Level0)
+{
+    int32_t width = VIDEO_DEFAULT_WIDTH;
+    int32_t height = VIDEO_DEFAULT_HEIGHT;
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    CameraFormat videoFormat = CAMERA_FORMAT_YUV_420_SP;
+    Size videoSize;
+    videoSize.width = width;
+    videoSize.height = height;
+    std::vector<int32_t> videoFramerates = {30, 30};
+    VideoProfile videoProfile = VideoProfile(videoFormat, videoSize, videoFramerates);
+    sptr<VideoOutput> video = cameraManager_->CreateVideoOutput(videoProfile, surface);
+    ASSERT_NE(video, nullptr);
+
+    std::shared_ptr<VideoOutputCallbackImpl> callback = std::make_shared<VideoOutputCallbackImpl>(video);
+    std::shared_ptr<TestVideoOutputCallback> innerCallback =
+        std::make_shared<TestVideoOutputCallback>("VideoStateCallback");
+    innerCallback->OnError(CameraErrorCode::SERVICE_FATL_ERROR);
 }
 }
 }
