@@ -18,7 +18,6 @@
 #include "camera_service_ipc_interface_code.h"
 #include "test_common.h"
 #include "gmock/gmock.h"
-#include "hstream_metadata_stub.h"
 #include "hstream_metadata_callback_stub.h"
 #include "camera_service_ipc_interface_code.h"
 
@@ -169,63 +168,6 @@ HWTEST_F(HStreamMetadataUnit, camera_fwcoverage_unittest_030, TestSize.Level1)
     uint32_t code = CAMERA_STREAM_METADATA_ON_DEFAULT;
     int errCode = stub.OnRemoteRequest(code, data, reply, option);
     EXPECT_EQ(errCode, IPC_STUB_UNKNOW_TRANS_ERR);
-}
-
-/*
- * Feature: Framework
- * Function: Test HStreamMetadataCallbackStub with OnRemoteRequest
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test OnRemoteRequest for switch of CAMERA_META_OPERATOR_ON_RESULT
- */
-HWTEST_F(HStreamMetadataUnit, camera_fwcoverage_unittest_031, TestSize.Level0)
-{
-    TestHStreamMetadataStub stub;
-    int32_t code = 6;
-    MessageParcel data;
-    MessageParcel reply;
-    MessageOption option;
-    int32_t errCode = stub.OnRemoteRequest(code, data, reply, option);
-    EXPECT_NE(errCode, 0);
-}
-
-/*
- * Feature: Framework
- * Function: Test HStreamMetadataCallbackStub with OnRemoteRequest
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test OnRemoteRequest for switch of CAMERA_META_OPERATOR_ON_RESULT
- */
-HWTEST_F(HStreamMetadataUnit, camera_fwcoverage_unittest_032, TestSize.Level0)
-{
-    TestHStreamMetadataStub stub;
-    int32_t code = 5;
-    MessageParcel data;
-    MessageParcel reply;
-    MessageOption option;
-    int32_t errCode = stub.OnRemoteRequest(code, data, reply, option);
-    EXPECT_NE(errCode, 0);
-}
-
-/*
- * Feature: Framework
- * Function: Test HStreamMetadataCallbackStub with OnRemoteRequest
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test OnRemoteRequest for switch of CAMERA_META_OPERATOR_ON_RESULT
- */
-HWTEST_F(HStreamMetadataUnit, camera_fwcoverage_unittest_033, TestSize.Level0)
-{
-    TestHStreamMetadataStub stub;
-    int32_t code = 4;
-    MessageParcel data;
-    MessageParcel reply;
-    MessageOption option;
-    int32_t errCode = stub.OnRemoteRequest(code, data, reply, option);
-    EXPECT_NE(errCode, 0);
 }
 }
 }

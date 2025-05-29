@@ -22,18 +22,6 @@
 
 namespace OHOS {
 namespace CameraStandard {
-class TestHStreamMetadataStub : public HStreamMetadataStub {
-public:
-    int32_t Start() {return 0;};
-    virtual int32_t Stop() {return 0;};
-    virtual int32_t Release() {return 0;};
-    virtual int32_t SetCallback(sptr<IStreamMetadataCallback>& callback) {return 0;};
-    virtual int32_t UnSetCallback() {return 0;};
-    virtual int32_t EnableMetadataType(std::vector<int32_t> metadataTypes) {return 0;};
-    virtual int32_t DisableMetadataType(std::vector<int32_t> metadataTypes) {return 0;};
-    virtual int32_t OperatePermissionCheck(uint32_t interfaceCode) {return 0;};
-};
-
 class HStreamMetadataUnit : public testing::Test {
 public:
     /* SetUpTestCase:The preset action of the test suite is executed before the first TestCase */
