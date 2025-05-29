@@ -111,11 +111,10 @@ void VideoOutput::SetCallback(std::shared_ptr<VideoStateCallback> callback)
             errorCode = itemStream->SetCallback(svcCallback_);
         }
 
-        if (errorCode != CAMERA_OK) {
-            MEDIA_ERR_LOG("VideoOutput::SetCallback: Failed to register callback, errorCode: %{public}d", errorCode);
-            svcCallback_ = nullptr;
-            appCallback_ = nullptr;
-        }
+        CHECK_ERROR_RETURN(errorCode == CAMERA_OK);
+        MEDIA_ERR_LOG("VideoOutput::SetCallback: Failed to register callback, errorCode: %{public}d", errorCode);
+        svcCallback_ = nullptr;
+        appCallback_ = nullptr;
     }
 }
 
