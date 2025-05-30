@@ -1526,19 +1526,11 @@ void PhotoOutputCallback::UpdateJSCallback(PhotoOutputEventType eventType, const
 ThumbnailListener::ThumbnailListener(napi_env env, const sptr<PhotoOutput> photoOutput)
     : ListenerBase(env), photoOutput_(photoOutput)
 {
-    if (taskManager_ == nullptr) {
-        constexpr int32_t numThreads = 1;
-        taskManager_ = std::make_shared<DeferredProcessing::TaskManager>("ThumbnailListener",
-            numThreads, true);
-    }
+    GetDefaultTaskManager();
 }
 ThumbnailListener::~ThumbnailListener()
 {
-    if (taskManager_) {
-        taskManager_->CancelAllTasks();
-        taskManager_.reset();
-        taskManager_ = nullptr;
-    }
+    ClearTaskManager();
 }
 
 void ThumbnailListener::ClearTaskManager()
@@ -1557,12 +1549,12 @@ void ThumbnailListener::OnBufferAvailable()
     MEDIA_INFO_LOG("ThumbnailListener::OnBufferAvailable is called");
     wptr<ThumbnailListener> thisPtr(this);
     {
-        std::lock_guard<std::mutex> lock(taskManagerMutex_);
-        if (taskManager_ == nullptr) {
+        auto taskManager = GetDefaultTaskManager();
+        if (taskManager == nullptr) {
             MEDIA_ERR_LOG("ThumbnailListener::OnBufferAvailable taskManager_ is null");
             return;
         }
-        taskManager_->SubmitTask([thisPtr]() {
+        taskManager->SubmitTask([thisPtr]() {
             auto listener = thisPtr.promote();
             if (listener) {
                 listener->ExecuteDeepCopySurfaceBuffer();
@@ -1573,6 +1565,16 @@ void ThumbnailListener::OnBufferAvailable()
     int32_t retCode = CameraManager::GetInstance()->RequireMemorySize(memSize);
     CHECK_ERROR_RETURN_LOG(retCode != 0, "ThumbnailListener::OnBufferAvailable RequireMemorySize failed");
     MEDIA_INFO_LOG("ThumbnailListener::OnBufferAvailable is end");
+}
+
+std::shared_ptr<DeferredProcessing::TaskManager> ThumbnailListener::GetDefaultTaskManager()
+{
+    constexpr int32_t numThreads = 1;
+    std::lock_guard<std::mutex> lock(taskManagerMutex_);
+    if (taskManager_ == nullptr) {
+        taskManager_ = std::make_shared<DeferredProcessing::TaskManager>("ThumbnailListener", numThreads, false);
+    }
+    return taskManager_;
 }
 
 OHOS::ColorManager::ColorSpaceName GetColorSpace(sptr<SurfaceBuffer> surfaceBuffer)
@@ -2752,7 +2754,8 @@ void PhotoOutputNapi::UnregisterQuickThumbnailCallbackListener(
     }
     if (thumbnailListener_ != nullptr) {
         thumbnailListener_->RemoveCallbackRef(eventName, callback);
-        if (thumbnailListener_->taskManager_) {
+        auto taskManager = thumbnailListener_->GetDefaultTaskManager();
+        if (taskManager) {
             thumbnailListener_->ClearTaskManager();
         }
     }

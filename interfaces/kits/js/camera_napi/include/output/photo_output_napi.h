@@ -261,8 +261,9 @@ public:
     virtual ~ThumbnailListener();
     void OnBufferAvailable() override;
     std::shared_ptr<DeferredProcessing::TaskManager> taskManager_ = nullptr;
+    
     void ClearTaskManager();
-    std::mutex taskManagerMutex_;
+    std::shared_ptr<DeferredProcessing::TaskManager> GetDefaultTaskManager();
 private:
     wptr<PhotoOutput> photoOutput_;
     void UpdateJSCallback() const;
@@ -283,6 +284,8 @@ private:
     static constexpr uint8_t PIXEL_SIZE_HDR_YUV = 3;
     static constexpr uint8_t  HDR_PIXEL_SIZE = 2;
     static constexpr uint8_t SDR_PIXEL_SIZE = 1;
+
+    std::mutex taskManagerMutex_;
 };
 
 struct ThumbnailListenerInfo {
