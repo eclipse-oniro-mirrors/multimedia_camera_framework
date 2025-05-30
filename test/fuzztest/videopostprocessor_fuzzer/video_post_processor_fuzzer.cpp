@@ -14,7 +14,8 @@
  */
 
 #include "video_post_processor_fuzzer.h"
-#include "foundation/multimedia/camera_framework/common/utils/camera_log.h"
+#include <fcntl.h>
+#include "dp_log.h"
 #include "ipc_file_descriptor.h"
 #include "securec.h"
 #include <fuzzer/FuzzedDataProvider.h>
@@ -29,6 +30,8 @@ using DeferredVideoJobPtr = std::shared_ptr<DeferredVideoJob>;
 std::shared_ptr<VideoPostProcessor> VideoPostProcessorFuzzer::processor_{nullptr};
 static constexpr int32_t MIN_SIZE_NUM = 460;
 constexpr int VIDEO_REQUEST_FD_ID = 1;
+const char* TEST_FILE_PATH_1 = "/data/test/VideoPostProcessorFuzzTest_test_file1.mp4";
+const char* TEST_FILE_PATH_2 = "/data/test/VideoPostProcessorFuzzTest_test_file2.mp4";
 
 void VideoPostProcessorFuzzer::VideoPostProcessorFuzzTest1(FuzzedDataProvider& fdp)
 {
@@ -44,8 +47,12 @@ void VideoPostProcessorFuzzer::VideoPostProcessorFuzzTest1(FuzzedDataProvider& f
     processor_->copyFileByFd(srcFd, dstFd);
     auto isAutoSuspend = fdp.ConsumeBool();
     std::string videoId1(testStrings[randomNum % testStrings.size()]);
-    sptr<IPCFileDescriptor> srcFd1 = sptr<IPCFileDescriptor>::MakeSptr(GetData<int>());
-    sptr<IPCFileDescriptor> dstFd1 = sptr<IPCFileDescriptor>::MakeSptr(GetData<int>());
+    int sfd = open(TEST_FILE_PATH_1, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+    int dfd = open(TEST_FILE_PATH_2, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+    fdsan_exchange_owner_tag(sfd, 0, LOG_DOMAIN);
+    fdsan_exchange_owner_tag(dfd, 0, LOG_DOMAIN);
+    sptr<IPCFileDescriptor> srcFd1 = sptr<IPCFileDescriptor>::MakeSptr(sfd);
+    sptr<IPCFileDescriptor> dstFd1 = sptr<IPCFileDescriptor>::MakeSptr(dfd);
     DeferredVideoJobPtr jobPtr = std::make_shared<DeferredVideoJob>(videoId1, srcFd1, dstFd1);
     std::shared_ptr<DeferredVideoWork> work =
         make_shared<DeferredVideoWork>(jobPtr, selectedExecutionMode, isAutoSuspend);
@@ -54,7 +61,8 @@ void VideoPostProcessorFuzzer::VideoPostProcessorFuzzTest1(FuzzedDataProvider& f
     processor_->ProcessRequest(work);
     processor_->RemoveRequest(videoId);
     constexpr int32_t executionModeCount2 = static_cast<int32_t>(SchedulerType::NORMAL_TIME_STATE) + 2;
-    ScheduleType selectedSchedulerType = static_cast<SchedulerType>(fdp.ConsumeIntegral<uint8_t>() % executionModeCount2);
+    SchedulerType selectedSchedulerType = static_cast<SchedulerType>(fdp.ConsumeIntegral<uint8_t>() %
+        executionModeCount2);
     constexpr int32_t executionModeCount3 = static_cast<int32_t>(DpsError::DPS_ERROR_VIDEO_PROC_INTERRUPTED) + 2;
     DpsError selectedDpsError = static_cast<DpsError>(fdp.ConsumeIntegral<uint8_t>() % executionModeCount3);
     constexpr int32_t executionModeCount4 = static_cast<int32_t>(MediaResult::PAUSE) + 2;
@@ -70,6 +78,9 @@ void VideoPostProcessorFuzzer::VideoPostProcessorFuzzTest1(FuzzedDataProvider& f
     processor_->OnError(videoId, selectedDpsError);
     processor_->OnStateChanged(selectedHdiStatus);
     processor_->OnTimerOut(videoId);
+
+    remove(TEST_FILE_PATH_1);
+    remove(TEST_FILE_PATH_2);
 }
 
 void VideoPostProcessorFuzzer::VideoPostProcessorFuzzTest2(FuzzedDataProvider& fdp)
@@ -96,7 +107,7 @@ void Test(uint8_t* data, size_t size)
     }
     auto videoPostProcessor = std::make_unique<VideoPostProcessorFuzzer>();
     if (videoPostProcessor == nullptr) {
-        MEDIA_INFO_LOG("videoPostProcessor is null");
+        DP_INFO_LOG("videoPostProcessor is null");
         return;
     }
     int32_t userId = fdp.ConsumeIntegral<int32_t>();

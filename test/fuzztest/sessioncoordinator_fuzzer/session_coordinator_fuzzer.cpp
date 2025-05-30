@@ -43,6 +43,10 @@ void SessionCoordinatorFuzzer::SessionCoordinatorFuzzTest(FuzzedDataProvider& fd
     uint8_t randomNum = fdp.ConsumeIntegral<int32_t>();
     std::vector<std::string> testStrings = {"test1", "test2"};
     std::string imageId(testStrings[randomNum % testStrings.size()]);
+    int32_t dataSize = fdp.ConsumeIntegralInRange<int32_t>(1, 10);
+    std::shared_ptr<DeferredProcessing::SharedBuffer> sharedBuffer =
+        std::make_shared<DeferredProcessing::SharedBuffer>(dataSize);
+    sharedBuffer->Initialize();
     DeferredProcessing::DpsError dpsError =
         static_cast<DeferredProcessing::DpsError>(fdp.ConsumeIntegral<int32_t>() % NUM_TRI);
     sptr<IPCFileDescriptor> ipcFd = sptr<IPCFileDescriptor>::MakeSptr(VIDEO_REQUEST_FD_ID);
