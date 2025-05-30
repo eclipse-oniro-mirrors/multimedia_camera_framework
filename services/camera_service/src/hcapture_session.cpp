@@ -1149,7 +1149,9 @@ void HCaptureSession::UpdateSettingForSpecialBundle()
 {
     OHOS::Rosen::FoldStatus foldstatus = OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus();
     auto hStreamOperatorSptr = GetStreamOperator();
-    if (hStreamOperatorSptr != nullptr && foldstatus == OHOS::Rosen::FoldStatus::FOLDED && !isHasFitedRotation_) {
+    bool isExec = hStreamOperatorSptr != nullptr &&
+        foldstatus == OHOS::Rosen::FoldStatus::FOLDED && !isHasFitedRotation_;
+    if (isExec) {
         auto infos = GetCameraRotateStrategyInfos();
         auto frameRateRange = hStreamOperatorSptr->GetFrameRateRange();
         UpdateCameraRotateAngleAndZoom(infos, frameRateRange); // 普通设备无此参数
@@ -1158,7 +1160,9 @@ void HCaptureSession::UpdateSettingForSpecialBundle()
         int32_t cameraPosition = cameraDevice->GetCameraPosition();
         CHECK_ERROR_RETURN(cameraPosition == OHOS_CAMERA_POSITION_FRONT);
         std::string specialBundle = system::GetParameter("const.camera.folded_lens_change", "default");
-        if (specialBundle == bundleName_ && !frameRateRange.empty() && frameRateRange[0] == SPECIAL_BUNDLE_FPS) {
+        bool isExecUpdate = specialBundle == bundleName_ && !frameRateRange.empty() &&
+            frameRateRange[0] == SPECIAL_BUNDLE_FPS;
+        if (isExecUpdate) {
             std::shared_ptr<OHOS::Camera::CameraMetadata> settings =
                 std::make_shared<OHOS::Camera::CameraMetadata>(1, 1);
             int32_t rotateDegree = SPECIAL_BUNDLE_ROTATE;

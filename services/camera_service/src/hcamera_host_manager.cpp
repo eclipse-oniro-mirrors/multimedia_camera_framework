@@ -306,6 +306,7 @@ int32_t HCameraHostManager::CameraHostInfo::OpenCamera(std::string& cameraId,
     sptr<OHOS::HDI::Camera::V1_1::ICameraDevice> hdiDevice_v1_1;
     sptr<OHOS::HDI::Camera::V1_2::ICameraDevice> hdiDevice_v1_2;
     sptr<OHOS::HDI::Camera::V1_3::ICameraDevice> hdiDevice_v1_3;
+    // LCOV_EXCL_START
     if (cameraHostProxyV1_3_ != nullptr && GetCameraHostVersion() >= GetVersionId(HDI_VERSION_1, HDI_VERSION_3)) {
         MEDIA_DEBUG_LOG("CameraHostInfo::OpenCamera ICameraDevice V1_3");
         if (isEnableSecCam) {
@@ -315,7 +316,6 @@ int32_t HCameraHostManager::CameraHostInfo::OpenCamera(std::string& cameraId,
             rc = (CamRetCode)(cameraHostProxyV1_3_->OpenCamera_V1_3(cameraId, callback, hdiDevice_v1_3));
         }
         pDevice = hdiDevice_v1_3.GetRefPtr();
-        // LCOV_EXCL_START
     } else if (cameraHostProxyV1_2_ != nullptr && GetCameraHostVersion() >=
         GetVersionId(HDI_VERSION_1, HDI_VERSION_2)) {
         MEDIA_DEBUG_LOG("CameraHostInfo::OpenCamera ICameraDevice V1_2");
@@ -329,8 +329,8 @@ int32_t HCameraHostManager::CameraHostInfo::OpenCamera(std::string& cameraId,
     } else {
         MEDIA_DEBUG_LOG("CameraHostInfo::OpenCamera ICameraDevice V1_0");
         rc = (CamRetCode)(cameraHostProxy_->OpenCamera(cameraId, callback, pDevice));
-        // LCOV_EXCL_STOP
     }
+    // LCOV_EXCL_STOP
     if (rc != HDI::Camera::V1_0::NO_ERROR) {
         MEDIA_ERR_LOG("CameraHostInfo::OpenCamera failed with error Code:%{public}d", rc);
         CameraReportUtils::ReportCameraError(
