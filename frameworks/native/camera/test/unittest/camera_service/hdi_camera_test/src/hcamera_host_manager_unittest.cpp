@@ -337,5 +337,164 @@ HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_007, TestSize.Lev
     EXPECT_EQ(cameraHostManager_->persistentParamMap_.size(), 2);
 }
 
+/*
+ * Feature: Framework
+ * Function: Test CheckCameraId.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CheckCameraId normal branch.
+ */
+HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_010, TestSize.Level1)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    const std::string cameraId = "123465";
+    const std::string checkCameraId = "654981";
+    std::string clientName = "testClientName";
+    sptr<HCameraRestoreParam> cameraRestoreParam = cameraHostManager_->GetRestoreParam(clientName, cameraId);
+    bool result = cameraHostManager_->CheckCameraId(cameraRestoreParam, checkCameraId);
+    EXPECT_FALSE(result);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test CheckCameraId.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CheckCameraId abnormal branch.
+ */
+HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_011, TestSize.Level1)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    const std::string cameraId = "123465";
+    std::string clientName = "testClientName";
+    sptr<HCameraRestoreParam> cameraRestoreParam = cameraHostManager_->GetRestoreParam(clientName, cameraId);
+    bool result = cameraHostManager_->CheckCameraId(cameraRestoreParam, cameraId);
+    EXPECT_TRUE(result);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test AddCameraDevice.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test AddCameraDevice abnormal branch.
+ */
+HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_012, TestSize.Level1)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->Open();
+
+    const std::string cameraId = "dadsada";
+    sptr<ICameraDeviceService> cameraDevice = camInput->GetCameraDevice();
+    cameraHostManager_->AddCameraDevice(cameraId, cameraDevice);
+    cameraHostManager_->AddCameraDevice(cameraId, cameraDevice);
+    cameraHostManager_->RemoveCameraDevice(cameraId);
+    cameraHostManager_->CloseCameraDevice(cameraId);
+    EXPECT_EQ(cameraHostManager_->cameraDevices_.size(), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test RemoveCameraDevice.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test RemoveCameraDevice abnormal branch.
+ */
+HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_013, TestSize.Level1)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->Open();
+
+    const std::string cameraId1 = "dadsada";
+    const std::string cameraId2 = "dfdfdss";
+    sptr<ICameraDeviceService> cameraDevice = camInput->GetCameraDevice();
+    cameraHostManager_->AddCameraDevice(cameraId1, cameraDevice);
+    cameraHostManager_->RemoveCameraDevice(cameraId2);
+    cameraHostManager_->AddCameraDevice(cameraId2, cameraDevice);
+    cameraHostManager_->RemoveCameraDevice(cameraId1);
+    cameraHostManager_->CloseCameraDevice(cameraId1);
+    EXPECT_NE(cameraHostManager_->cameraDevices_.size(), 0);
+    cameraHostManager_->RemoveCameraDevice(cameraId2);
+    cameraHostManager_->CloseCameraDevice(cameraId2);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test SetTorchLevel.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetTorchLevel abnormal branch.
+ */
+HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_014, TestSize.Level1)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    cameraHostManager_->Init();
+    ASSERT_NE(cameraHostManager_, nullptr);
+
+    cameraHostManager_->RemoveCameraHost(HCameraHostManager::LOCAL_SERVICE_NAME);
+    EXPECT_NE(cameraHostManager_->HCameraHostManager::SetTorchLevel(0), CAMERA_INVALID_ARG);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test NotifyDeviceStateChangeInfo.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test NotifyDeviceStateChangeInfo normal branch.
+ */
+HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_015, TestSize.Level1)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    cameraHostManager_->Init();
+    ASSERT_NE(cameraHostManager_, nullptr);
+
+    cameraHostManager_->RemoveCameraHost(HCameraHostManager::LOCAL_SERVICE_NAME);
+    cameraHostManager_->NotifyDeviceStateChangeInfo(1, 2);
+    cameraHostManager_->AddCameraHost(HCameraHostManager::LOCAL_SERVICE_NAME);
+    cameraHostManager_->NotifyDeviceStateChangeInfo(1, 2);
+}
+
+} // CameraStandard
+} // OHOS

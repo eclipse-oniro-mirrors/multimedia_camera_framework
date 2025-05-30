@@ -2046,11 +2046,9 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_044, TestSize.Level
 
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCaptureSession> camSession = nullptr;
-    sptr<HStreamOperator> hStreamOperator = nullptr;
     SceneMode mode = PORTRAIT;
-    InitSessionAndOperator(callerToken, mode, camSession, hStreamOperator);
+    HCaptureSession::NewInstance(callerToken, mode, camSession);
     ASSERT_NE(camSession, nullptr);
-    ASSERT_NE(hStreamOperator, nullptr);
 
     EXPECT_EQ(camSession->BeginConfig(), CAMERA_OK);
     EXPECT_EQ(camSession->AddInput(device), CAMERA_OK);
@@ -2093,11 +2091,9 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_045, TestSize.Level
 {
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCaptureSession> camSession = nullptr;
-    sptr<HStreamOperator> hStreamOperator = nullptr;
     SceneMode mode = PORTRAIT;
-    InitSessionAndOperator(callerToken, mode, camSession, hStreamOperator);
+    HCaptureSession::NewInstance(callerToken, mode, camSession);
     ASSERT_NE(camSession, nullptr);
-    ASSERT_NE(hStreamOperator, nullptr);
 
     float zoomRatio = 0.5;
     std::vector<float> crossZoom = {1.0, 2.0, 3.0};
@@ -2111,6 +2107,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_045, TestSize.Level
     zoomRatio = 2.0;
     actualId = camSession->GetRangeId(zoomRatio, crossZoom);
     EXPECT_EQ(actualId, 2);
+    camSession->Release();
 }
 
 /*
@@ -2125,11 +2122,9 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_046, TestSize.Level
 {
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCaptureSession> camSession = nullptr;
-    sptr<HStreamOperator> hStreamOperator = nullptr;
     SceneMode mode = PORTRAIT;
-    InitSessionAndOperator(callerToken, mode, camSession, hStreamOperator);
+    HCaptureSession::NewInstance(callerToken, mode, camSession);
     ASSERT_NE(camSession, nullptr);
-    ASSERT_NE(hStreamOperator, nullptr);
 
     float zoomPointA = 1.0f;
     float zoomPointB = 1.0f;
@@ -2143,6 +2138,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_046, TestSize.Level
     zoomPointB = 1.000001f;
     result = camSession->isEqual(zoomPointA, zoomPointB);
     EXPECT_TRUE(result);
+    camSession->Release();
 }
 
 /*
@@ -2157,11 +2153,9 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_047, TestSize.Level
 {
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCaptureSession> camSession = nullptr;
-    sptr<HStreamOperator> hStreamOperator = nullptr;
     SceneMode mode = PORTRAIT;
-    InitSessionAndOperator(callerToken, mode, camSession, hStreamOperator);
+    HCaptureSession::NewInstance(callerToken, mode, camSession);
     ASSERT_NE(camSession, nullptr);
-    ASSERT_NE(hStreamOperator, nullptr);
 
     std::vector<float> crossZoomAndTime = {1.0, 2.0, 3.0, 0.0, 5.0, 6.0};
     std::vector<float> crossZoom;
@@ -2174,25 +2168,24 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_047, TestSize.Level
     EXPECT_EQ(crossTime[0][1], 3.0);
     EXPECT_EQ(crossTime[1][0], 5.0);
     EXPECT_EQ(crossTime[1][1], 6.0);
+    camSession->Release();
 }
 
 /*
  * Feature: Framework
- * Function: Test GetCrossZoomAndTime
+ * Function: Test GetCrossWaitTime
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test GetCrossZoomAndTime when currentRangeId is WIDE_CAMERA_ZOOM_RANGE
+ * CaseDescription: Test GetCrossWaitTime when currentRangeId is WIDE_CAMERA_ZOOM_RANGE
  */
 HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_048, TestSize.Level1)
 {
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCaptureSession> camSession = nullptr;
-    sptr<HStreamOperator> hStreamOperator = nullptr;
     SceneMode mode = PORTRAIT;
-    InitSessionAndOperator(callerToken, mode, camSession, hStreamOperator);
+    HCaptureSession::NewInstance(callerToken, mode, camSession);
     ASSERT_NE(camSession, nullptr);
-    ASSERT_NE(hStreamOperator, nullptr);
 
     std::vector<std::vector<float>> crossTime = {
         {100.0, 199.0, 370.0},
@@ -2209,25 +2202,24 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_048, TestSize.Level
     targetRangeId = WIDE_CAMERA_ZOOM_RANGE;
     actualWaitTime = camSession->GetCrossWaitTime(crossTime, targetRangeId, currentRangeId);
     EXPECT_EQ(actualWaitTime, 100.0);
+    camSession->Release();
 }
 
 /*
  * Feature: Framework
- * Function: Test GetCrossZoomAndTime
+ * Function: Test GetCrossWaitTime
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test GetCrossZoomAndTime when currentRangeId is MAIN_CAMERA_ZOOM_RANGE
+ * CaseDescription: Test GetCrossWaitTime when currentRangeId is MAIN_CAMERA_ZOOM_RANGE
  */
 HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_049, TestSize.Level1)
 {
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCaptureSession> camSession = nullptr;
-    sptr<HStreamOperator> hStreamOperator = nullptr;
     SceneMode mode = PORTRAIT;
-    InitSessionAndOperator(callerToken, mode, camSession, hStreamOperator);
+    HCaptureSession::NewInstance(callerToken, mode, camSession);
     ASSERT_NE(camSession, nullptr);
-    ASSERT_NE(hStreamOperator, nullptr);
 
     std::vector<std::vector<float>> crossTime = {
         {100.0, 199.0, 370.0},
@@ -2248,25 +2240,24 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_049, TestSize.Level
     targetRangeId = MAIN_CAMERA_ZOOM_RANGE;
     actualWaitTime = camSession->GetCrossWaitTime(crossTime, targetRangeId, currentRangeId);
     EXPECT_EQ(actualWaitTime, 0.0);
+    camSession->Release();
 }
 
 /*
  * Feature: Framework
- * Function: Test GetCrossZoomAndTime
+ * Function: Test GetCrossWaitTime
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test GetCrossZoomAndTime when currentRangeId is TWO_X_EXIT_TELE_ZOOM_RANGE
+ * CaseDescription: Test GetCrossWaitTime when currentRangeId is TWO_X_EXIT_TELE_ZOOM_RANGE
  */
 HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_050, TestSize.Level1)
 {
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCaptureSession> camSession = nullptr;
-    sptr<HStreamOperator> hStreamOperator = nullptr;
     SceneMode mode = PORTRAIT;
-    InitSessionAndOperator(callerToken, mode, camSession, hStreamOperator);
+    HCaptureSession::NewInstance(callerToken, mode, camSession);
     ASSERT_NE(camSession, nullptr);
-    ASSERT_NE(hStreamOperator, nullptr);
 
     std::vector<std::vector<float>> crossTime = {
         {100.0, 199.0, 370.0},
@@ -2287,25 +2278,24 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_050, TestSize.Level
     targetRangeId = TWO_X_EXIT_TELE_ZOOM_RANGE;
     actualWaitTime = camSession->GetCrossWaitTime(crossTime, targetRangeId, currentRangeId);
     EXPECT_EQ(actualWaitTime, 0.0);
+    camSession->Release();
 }
 
 /*
  * Feature: Framework
- * Function: Test GetCrossZoomAndTime
+ * Function: Test GetCrossWaitTime
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test GetCrossZoomAndTime when currentRangeId is TELE_CAMERA_ZOOM_RANGE
+ * CaseDescription: Test GetCrossWaitTime when currentRangeId is TELE_CAMERA_ZOOM_RANGE
  */
 HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_051, TestSize.Level1)
 {
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCaptureSession> camSession = nullptr;
-    sptr<HStreamOperator> hStreamOperator = nullptr;
     SceneMode mode = PORTRAIT;
-    InitSessionAndOperator(callerToken, mode, camSession, hStreamOperator);
+    HCaptureSession::NewInstance(callerToken, mode, camSession);
     ASSERT_NE(camSession, nullptr);
-    ASSERT_NE(hStreamOperator, nullptr);
 
     std::vector<std::vector<float>> crossTime = {
         {100.0, 199.0, 370.0},
@@ -2326,6 +2316,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_051, TestSize.Level
     targetRangeId = TELE_CAMERA_ZOOM_RANGE;
     actualWaitTime = camSession->GetCrossWaitTime(crossTime, targetRangeId, currentRangeId);
     EXPECT_EQ(actualWaitTime, 299.0);
+    camSession->Release();
 }
 
 /*
@@ -2349,11 +2340,9 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_052, TestSize.Level
 
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCaptureSession> session = nullptr;
-    sptr<HStreamOperator> hStreamOperator = nullptr;
-    int32_t opMode = SceneMode::NORMAL;
-    InitSessionAndOperator(callerToken, opMode, session, hStreamOperator);
+    SceneMode mode = PORTRAIT;
+    HCaptureSession::NewInstance(callerToken, mode, session);
     ASSERT_NE(session, nullptr);
-    ASSERT_NE(hStreamOperator, nullptr);
 
     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
@@ -2390,6 +2379,164 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_053, TestSize.Level
         .WillOnce(Return(0));
     int errCode = stub.OnRemoteRequest(code, data, reply, option);
     EXPECT_EQ(errCode, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test AddInput
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test AddInput when cameraDevice is nullptr
+ */
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_054, TestSize.Level1)
+{
+    std::vector<string> cameraIds;
+    cameraService_->GetCameraIds(cameraIds);
+    ASSERT_NE(cameraIds.size(), 0);
+    cameraService_->SetServiceStatus(CameraServiceStatus::SERVICE_READY);
+    sptr<ICameraDeviceService> device = nullptr;
+    cameraService_->CreateCameraDevice(cameraIds[0], device);
+    ASSERT_NE(device, nullptr);
+    device->Open();
+
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCaptureSession> session = nullptr;
+    SceneMode mode = PORTRAIT;
+    HCaptureSession::NewInstance(callerToken, mode, session);
+    ASSERT_NE(session, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
+    EXPECT_EQ(session->AddInput(nullptr), CAMERA_INVALID_ARG);
+    EXPECT_EQ(session->AddInput(device), CAMERA_OK);
+    EXPECT_EQ(device->Close(), CAMERA_OK);
+    EXPECT_EQ(session->Release(), CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test AddOutput
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test AddOutput when stream is nullptr
+ */
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_055, TestSize.Level1)
+{
+    std::vector<string> cameraIds;
+    cameraService_->GetCameraIds(cameraIds);
+    ASSERT_NE(cameraIds.size(), 0);
+    cameraService_->SetServiceStatus(CameraServiceStatus::SERVICE_READY);
+    sptr<ICameraDeviceService> device = nullptr;
+    cameraService_->CreateCameraDevice(cameraIds[0], device);
+    ASSERT_NE(device, nullptr);
+    device->Open();
+
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCaptureSession> session = nullptr;
+    SceneMode mode = PORTRAIT;
+    HCaptureSession::NewInstance(callerToken, mode, session);
+    ASSERT_NE(session, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
+    EXPECT_EQ(session->AddInput(device), CAMERA_OK);
+    EXPECT_EQ(session->AddOutput(StreamType::REPEAT, nullptr), CAMERA_INVALID_ARG);
+    EXPECT_EQ(device->Close(), CAMERA_OK);
+    EXPECT_EQ(session->Release(), CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test RemoveInput
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test RemoveInput when cameraDevice is nullptr
+ */
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_056, TestSize.Level1)
+{
+    std::vector<string> cameraIds;
+    cameraService_->GetCameraIds(cameraIds);
+    ASSERT_NE(cameraIds.size(), 0);
+    cameraService_->SetServiceStatus(CameraServiceStatus::SERVICE_READY);
+    sptr<ICameraDeviceService> device = nullptr;
+    cameraService_->CreateCameraDevice(cameraIds[0], device);
+    ASSERT_NE(device, nullptr);
+    device->Open();
+
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCaptureSession> session = nullptr;
+    SceneMode mode = PORTRAIT;
+    HCaptureSession::NewInstance(callerToken, mode, session);
+    ASSERT_NE(session, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
+    EXPECT_EQ(session->AddInput(device), CAMERA_OK);
+    EXPECT_EQ(session->RemoveInput(nullptr), CAMERA_INVALID_ARG);
+    EXPECT_EQ(device->Close(), CAMERA_OK);
+    EXPECT_EQ(session->Release(), CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test RemoveOutput
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test RemoveOutput when stream is nullptr
+ */
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_057, TestSize.Level1)
+{
+    std::vector<string> cameraIds;
+    cameraService_->GetCameraIds(cameraIds);
+    ASSERT_NE(cameraIds.size(), 0);
+    cameraService_->SetServiceStatus(CameraServiceStatus::SERVICE_READY);
+    sptr<ICameraDeviceService> device = nullptr;
+    cameraService_->CreateCameraDevice(cameraIds[0], device);
+    ASSERT_NE(device, nullptr);
+    device->Open();
+
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCaptureSession> session = nullptr;
+    SceneMode mode = PORTRAIT;
+    HCaptureSession::NewInstance(callerToken, mode, session);
+    ASSERT_NE(session, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
+    EXPECT_EQ(session->AddInput(device), CAMERA_OK);
+
+    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
+    sptr<IBufferProducer> producer = surface->GetProducer();
+    sptr<HStreamRepeat> streamRepeat = new (std::nothrow) HStreamRepeat(producer, DEFAULT_FORMAT,
+        DEFAULT_WIDTH, DEFAULT_HEIGHT, RepeatStreamType::PREVIEW);
+    ASSERT_NE(streamRepeat, nullptr);
+
+    EXPECT_EQ(session->AddOutput(StreamType::REPEAT, streamRepeat), CAMERA_OK);
+    EXPECT_EQ(session->RemoveOutput(StreamType::REPEAT, nullptr), CAMERA_INVALID_ARG);
+    EXPECT_EQ(session->RemoveOutput(StreamType::REPEAT, streamRepeat), CAMERA_OK);
+    EXPECT_EQ(device->Close(), CAMERA_OK);
+    EXPECT_EQ(session->Release(), CAMERA_OK);
+}
+
+/*
+ * Feature: coverage
+ * Function: Test CommitConfigWithValidation when cameraDevice_ is nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CommitConfigWithValidation when cameraDevice_ is nullptr
+ */
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_058, TestSize.Level1)
+{
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCaptureSession> session = nullptr;
+    SceneMode mode = PORTRAIT;
+    HCaptureSession::NewInstance(callerToken, mode, session);
+    ASSERT_NE(session, nullptr);
+
+    session->cameraDevice_ = nullptr;
+    EXPECT_EQ(session->CommitConfigWithValidation(), CAMERA_INVALID_STATE);
+    session->Release();
 }
 
 } // namespace CameraStandard
