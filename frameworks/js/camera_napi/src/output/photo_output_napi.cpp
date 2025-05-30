@@ -1525,9 +1525,8 @@ void PhotoOutputCallback::UpdateJSCallback(PhotoOutputEventType eventType, const
 
 ThumbnailListener::ThumbnailListener(napi_env env, const sptr<PhotoOutput> photoOutput)
     : ListenerBase(env), photoOutput_(photoOutput)
-{
-    GetDefaultTaskManager();
-}
+{}
+
 ThumbnailListener::~ThumbnailListener()
 {
     ClearTaskManager();
