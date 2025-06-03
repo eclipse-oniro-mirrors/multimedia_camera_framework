@@ -81,7 +81,7 @@
         if (cond) {                                      \
             MEDIA_DEBUG_LOG(fmt, ##__VA_ARGS__);         \
         }                                                \
-    } while (0) 
+    } while (0)
 
 #define CHECK_ERROR_RETURN(cond)                      \
     do {                                              \
