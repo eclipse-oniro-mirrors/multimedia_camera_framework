@@ -76,20 +76,20 @@ napi_value PhotoSessionForSysNapi::CreateCameraSession(napi_env env)
     if (status == napi_ok) {
         sCameraSession_ = CameraManager::GetInstance()->CreateCaptureSession(SceneMode::CAPTURE);
         if (sCameraSession_ == nullptr) {
-            MEDIA_ERR_LOG("Failed to create Photo session instance");
+            MEDIA_ERR_LOG("PhotoSessionForSysNapi::CreateCameraSession Failed to create instance");
             napi_get_undefined(env, &result);
             return result;
         }
         status = napi_new_instance(env, constructor, 0, nullptr, &result);
         sCameraSession_ = nullptr;
         if (status == napi_ok && result != nullptr) {
-            MEDIA_DEBUG_LOG("success to create Photo session napi instance");
+            MEDIA_DEBUG_LOG("PhotoSessionForSysNapi::CreateCameraSession success to create napi instance");
             return result;
         } else {
-            MEDIA_ERR_LOG("Failed to create Photo session napi instance");
+            MEDIA_ERR_LOG("PhotoSessionForSysNapi::CreateCameraSession Failed to create napi instance");
         }
     }
-    MEDIA_ERR_LOG("Failed to create Photo session napi instance last");
+    MEDIA_ERR_LOG("PhotoSessionForSysNapi::CreateCameraSession Failed to create napi instance last");
     napi_get_undefined(env, &result);
     return result;
 }
@@ -105,16 +105,16 @@ napi_value PhotoSessionForSysNapi::PhotoSessionForSysNapiConstructor(napi_env en
     CAMERA_NAPI_GET_JS_OBJ_WITH_ZERO_ARGS(env, info, status, thisVar);
 
     if (status == napi_ok && thisVar != nullptr) {
-        std::unique_ptr<PhotoSessionForSysNapi> obj = std::make_unique<PhotoSessionForSysNapi>();
-        obj->env_ = env;
+        std::unique_ptr<PhotoSessionForSysNapi> photoSessionSysObj  = std::make_unique<PhotoSessionForSysNapi>();
+        photoSessionSysObj ->env_ = env;
         CHECK_ERROR_RETURN_RET_LOG(sCameraSession_ == nullptr, result, "sCameraSession_ is null");
-        obj->photoSession_ = static_cast<PhotoSession*>(sCameraSession_.GetRefPtr());
-        obj->cameraSession_ = obj->photoSession_;
-        CHECK_ERROR_RETURN_RET_LOG(obj->photoSession_ == nullptr, result, "photoSession_ is null");
-        status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
+        photoSessionSysObj ->photoSession_ = static_cast<PhotoSession*>(sCameraSession_.GetRefPtr());
+        photoSessionSysObj ->cameraSession_ = photoSessionSysObj ->photoSession_;
+        CHECK_ERROR_RETURN_RET_LOG(photoSessionSysObj ->photoSession_ == nullptr, result, "photoSession_ is null");
+        status = napi_wrap(env, thisVar, reinterpret_cast<void*>(photoSessionSysObj .get()),
             PhotoSessionForSysNapi::PhotoSessionForSysNapiDestructor, nullptr, nullptr);
         if (status == napi_ok) {
-            obj.release();
+            photoSessionSysObj .release();
             return thisVar;
         } else {
             MEDIA_ERR_LOG("PhotoSessionForSysNapi Failure wrapping js to native napi");

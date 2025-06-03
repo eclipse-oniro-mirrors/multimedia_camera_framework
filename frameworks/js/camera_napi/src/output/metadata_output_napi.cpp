@@ -36,27 +36,28 @@ thread_local uint32_t MetadataOutputNapi::metadataOutputTaskId = CAMERA_METADATA
 namespace {
 void AsyncCompleteCallback(napi_env env, napi_status status, void* data)
 {
-    auto context = static_cast<MetadataOutputAsyncContext*>(data);
-    CHECK_ERROR_RETURN_LOG(context == nullptr, "MetadataOutputNapi AsyncCompleteCallback context is null");
+    auto metadataOutputAsyncContext = static_cast<MetadataOutputAsyncContext*>(data);
+    CHECK_ERROR_RETURN_LOG(metadataOutputAsyncContext == nullptr, "MetadataOutputNapi AsyncCompleteCallback context is null");
     MEDIA_INFO_LOG("MetadataOutputNapi AsyncCompleteCallback %{public}s, status = %{public}d",
-        context->funcName.c_str(), context->status);
+        metadataOutputAsyncContext->funcName.c_str(), metadataOutputAsyncContext->status);
     std::unique_ptr<JSAsyncContextOutput> jsContext = std::make_unique<JSAsyncContextOutput>();
-    jsContext->status = context->status;
-    if (!context->status) {
+    jsContext->status = metadataOutputAsyncContext->status;
+    if (!metadataOutputAsyncContext->status) {
         CameraNapiUtils::CreateNapiErrorObject(
-            env, context->errorCode, "No Metadata object Types or create array failed!", jsContext);
+            env, metadataOutputAsyncContext->errorCode, "No Metadata object Types or create array failed!", jsContext);
     } else {
         napi_get_undefined(env, &jsContext->data);
     }
-    if (!context->funcName.empty() && context->taskId > 0) {
+    if (!metadataOutputAsyncContext->funcName.empty() && metadataOutputAsyncContext->taskId > 0) {
         // Finish async trace
-        CAMERA_FINISH_ASYNC_TRACE(context->funcName, context->taskId);
-        jsContext->funcName = context->funcName;
+        CAMERA_FINISH_ASYNC_TRACE(metadataOutputAsyncContext->funcName, metadataOutputAsyncContext->taskId);
+        jsContext->funcName = metadataOutputAsyncContext->funcName;
     }
-    CHECK_EXECUTE(context->work != nullptr,
-        CameraNapiUtils::InvokeJSAsyncMethod(env, context->deferred, context->callbackRef, context->work, *jsContext));
-    context->FreeHeldNapiValue(env);
-    delete context;
+    CHECK_EXECUTE(metadataOutputAsyncContext->work != nullptr,
+        CameraNapiUtils::InvokeJSAsyncMethod(env, metadataOutputAsyncContext->deferred,
+            metadataOutputAsyncContext->callbackRef, metadataOutputAsyncContext->work, *jsContext));
+    metadataOutputAsyncContext->FreeHeldNapiValue(env);
+    delete metadataOutputAsyncContext;
 }
 } // namespace
 
@@ -385,6 +386,7 @@ napi_value MetadataOutputNapi::AddMetadataObjectTypes(napi_env env, napi_callbac
     napi_value argv[ARGS_ONE] = {0};
     napi_value thisVar = nullptr;
     
+    MEDIA_DEBUG_LOG("MetadataOutputNapi::AddMetadataObjectTypes get js args");
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
     NAPI_ASSERT(env, argc <= ARGS_ONE, "requires 1 parameter maximum");
  
@@ -408,6 +410,7 @@ napi_value MetadataOutputNapi::RemoveMetadataObjectTypes(napi_env env, napi_call
     napi_value argv[ARGS_ONE] = {0};
     napi_value thisVar = nullptr;
     
+    MEDIA_DEBUG_LOG("MetadataOutputNapi::RemoveMetadataObjectTypes get js args");
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
     NAPI_ASSERT(env, argc <= ARGS_ONE, "requires 1 parameter maximum");
  

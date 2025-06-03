@@ -36,8 +36,8 @@ using namespace OHOS::HDI::Camera::V1_0;
 using namespace OHOS::HDI::Display::Graphic::Common::V1_0;
 using namespace OHOS::HDI::Display::Composer::V1_1;
 static const std::map<ColorSpace, CM_ColorSpaceType> g_fwkToMetaColorSpaceMap_ = {
-    {COLOR_SPACE_UNKNOWN, CM_COLORSPACE_NONE},
     {DISPLAY_P3, CM_P3_FULL},
+    {COLOR_SPACE_UNKNOWN, CM_COLORSPACE_NONE},
     {SRGB, CM_SRGB_FULL},
     {BT709, CM_BT709_FULL},
     {BT2020_HLG, CM_BT2020_HLG_FULL},

@@ -80,11 +80,11 @@ void FrameRecord::NotifyBufferRelease()
 void FrameRecord::DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<SurfaceBuffer> surfaceBuffer) const
 {
     BufferRequestConfig requestConfig = {
-        .width = surfaceBuffer->GetWidth(),
         .height = surfaceBuffer->GetHeight(),
         .strideAlignment = 0x8, // default stride is 8 Bytes.
         .format = surfaceBuffer->GetFormat(),
         .usage = surfaceBuffer->GetUsage(),
+        .width = surfaceBuffer->GetWidth(),
         .timeout = 0,
         .colorGamut = surfaceBuffer->GetSurfaceBufferColorGamut(),
         .transform = surfaceBuffer->GetSurfaceBufferTransform(),

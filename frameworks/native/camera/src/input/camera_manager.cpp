@@ -1508,7 +1508,7 @@ void CameraManager::GetMetadataInfos(camera_metadata_item_t item,
             j++;
         }
     }
-    int32_t modecount = 0;
+    int32_t mCount = 0;
     for (auto &modeInfo : modeInfosum) {
         std::vector<SpecInfo> specInfos;
         ProfilesWrapper profilesWrapper;
@@ -1519,11 +1519,11 @@ void CameraManager::GetMetadataInfos(camera_metadata_item_t item,
                 CreateProfileLevel4StreamType(profilesWrapper, specInfo.specId, streamInfo);
             }
         }
-        int32_t modename = modeofThis[modecount];
+        int32_t modename = modeofThis[mCount];
         SetCameraOutputCapabilityofthis(cameraOutputCapability, profilesWrapper,
             modename, cameraAbility);
         outputCapabilitiesofThis.push_back(cameraOutputCapability);
-        modecount++;
+        mCount++;
     }
 }
 
@@ -1591,13 +1591,13 @@ bool CameraManager::GetConcurrentType(std::vector<sptr<CameraDevice>> cameraDevi
         auto iter = fwToMetaCameraPosition_.find(cameraPosition);
         serviceProxy->GetIdforCameraConcurrentType(iter->second, idofthis);
 
-        std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility;
-        retCode = serviceProxy->GetConcurrentCameraAbility(idofthis, cameraAbility);
+        std::shared_ptr<OHOS::Camera::CameraMetadata> camAbility;
+        retCode = serviceProxy->GetConcurrentCameraAbility(idofthis, camAbility);
         if (retCode != CAMERA_OK) {
             continue;
         }
         camera_metadata_item_t item;
-        retCode = Camera::FindCameraMetadataItem(cameraAbility->get(), OHOS_ABILITY_CAMERA_CONCURRENT_TYPE, &item);
+        retCode = Camera::FindCameraMetadataItem(camAbility->get(), OHOS_ABILITY_CAMERA_CONCURRENT_TYPE, &item);
         if (retCode != CAMERA_OK) {
             cameraConcurrentType.clear();
             MEDIA_ERR_LOG("cameraAbility not support OHOS_ABILITY_CAMERA_CONCURRENT_TYPE");

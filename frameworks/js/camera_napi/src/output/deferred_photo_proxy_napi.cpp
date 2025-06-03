@@ -234,7 +234,7 @@ napi_value DeferredPhotoProxyNapi::Release(napi_env env, napi_callback_info info
             asyncContext.release();
         }
     } else {
-        MEDIA_ERR_LOG("Release call Failed!");
+        MEDIA_ERR_LOG("DeferredPhotoProxyNapi::Release call Failed!");
     }
     return result;
 }

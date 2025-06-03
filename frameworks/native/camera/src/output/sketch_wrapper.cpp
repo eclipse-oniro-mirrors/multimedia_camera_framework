@@ -338,11 +338,11 @@ void SketchWrapper::UpdateSketchConfigFromMoonCaptureBoostConfig(
     uint32_t currentMode = INVALID_MODE;
     float currentMinRatio = INVALID_ZOOM_RATIO;
     float currentMaxRatio = INVALID_ZOOM_RATIO;
-    SceneFeaturesMode currentSceneFeaturesMode;
+    SceneFeaturesMode currentSceneMode;
     for (uint32_t i = 0; i < item.count; i++) {
         if (currentMode == INVALID_MODE) {
             currentMode = static_cast<SceneMode>(item.data.ui32[i]);
-            currentSceneFeaturesMode =
+            currentSceneMode =
                 SceneFeaturesMode(static_cast<SceneMode>(currentMode), { FEATURE_MOON_CAPTURE_BOOST });
             continue;
         }
@@ -359,12 +359,12 @@ void SketchWrapper::UpdateSketchConfigFromMoonCaptureBoostConfig(
         fovRange.zoomMax = static_cast<float>(item.data.ui32[i + 1]) / SKETCH_DIV;        // Offset 1 data
         fovRange.referenceValue = static_cast<float>(item.data.ui32[i + 2]) / SKETCH_DIV; // Offset 2 data
         i = i + 2;                                                                        // Offset 2 data
-        InsertSketchReferenceFovRatioMapValue(currentSceneFeaturesMode, fovRange);
+        InsertSketchReferenceFovRatioMapValue(currentSceneMode, fovRange);
         MEDIA_DEBUG_LOG("SketchWrapper::UpdateSketchConfigFromMoonCaptureBoostConfig get sketch reference fov "
                         "ratio:mode->%{public}d %{public}f-%{public}f value->%{public}f",
             currentMode, fovRange.zoomMin, fovRange.zoomMax, fovRange.referenceValue);
         if (fovRange.zoomMax - currentMaxRatio >= -std::numeric_limits<float>::epsilon()) {
-            InsertSketchEnableRatioMapValue(currentSceneFeaturesMode, currentMinRatio);
+            InsertSketchEnableRatioMapValue(currentSceneMode, currentMinRatio);
             currentMode = INVALID_MODE;
             currentMinRatio = INVALID_ZOOM_RATIO;
             currentMaxRatio = INVALID_ZOOM_RATIO;

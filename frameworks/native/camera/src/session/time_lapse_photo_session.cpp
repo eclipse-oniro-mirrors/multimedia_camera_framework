@@ -769,8 +769,8 @@ int32_t TimeLapsePhotoSession::GetWhiteBalanceMode(WhiteBalanceMode& result)
 }
 
 const std::unordered_map<WhiteBalanceMode, camera_awb_mode_t> TimeLapsePhotoSession::fwkWhiteBalanceModeMap_ = {
-    { AWB_MODE_OFF, OHOS_CAMERA_AWB_MODE_OFF },
     { AWB_MODE_AUTO, OHOS_CAMERA_AWB_MODE_AUTO },
+    { AWB_MODE_OFF, OHOS_CAMERA_AWB_MODE_OFF },
     { AWB_MODE_INCANDESCENT, OHOS_CAMERA_AWB_MODE_INCANDESCENT },
     { AWB_MODE_FLUORESCENT, OHOS_CAMERA_AWB_MODE_FLUORESCENT },
     { AWB_MODE_WARM_FLUORESCENT, OHOS_CAMERA_AWB_MODE_WARM_FLUORESCENT },

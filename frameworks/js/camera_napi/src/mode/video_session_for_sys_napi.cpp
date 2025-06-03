@@ -71,7 +71,7 @@ napi_value VideoSessionForSysNapi::Init(napi_env env, napi_value exports)
 
 napi_value VideoSessionForSysNapi::CreateCameraSession(napi_env env)
 {
-    MEDIA_DEBUG_LOG("CreateCameraSession is called");
+    MEDIA_DEBUG_LOG("VideoSessionForSysNapi::CreateCameraSession is called");
     CAMERA_SYNC_TRACE;
     napi_status status;
     napi_value result = nullptr;
@@ -80,20 +80,20 @@ napi_value VideoSessionForSysNapi::CreateCameraSession(napi_env env)
     if (status == napi_ok) {
         sCameraSession_ = CameraManager::GetInstance()->CreateCaptureSession(SceneMode::VIDEO);
         if (sCameraSession_ == nullptr) {
-            MEDIA_ERR_LOG("Failed to create Video session instance");
+            MEDIA_ERR_LOG("VideoSessionForSysNapi::CreateCameraSession Failed to create instance");
             napi_get_undefined(env, &result);
             return result;
         }
         status = napi_new_instance(env, constructor, 0, nullptr, &result);
         sCameraSession_ = nullptr;
         if (status == napi_ok && result != nullptr) {
-            MEDIA_DEBUG_LOG("success to create Video session napi instance");
+            MEDIA_DEBUG_LOG("VideoSessionForSysNapi::CreateCameraSession success to create napi instance");
             return result;
         } else {
-            MEDIA_ERR_LOG("Failed to create Video session napi instance");
+            MEDIA_ERR_LOG("VideoSessionForSysNapi::CreateCameraSession Failed to create napi instance");
         }
     }
-    MEDIA_ERR_LOG("Failed to create Video session napi instance last");
+    MEDIA_ERR_LOG("VideoSessionForSysNapi::CreateCameraSession Failed to create napi instance last");
     napi_get_undefined(env, &result);
     return result;
 }
@@ -109,16 +109,16 @@ napi_value VideoSessionForSysNapi::VideoSessionForSysNapiConstructor(napi_env en
     CAMERA_NAPI_GET_JS_OBJ_WITH_ZERO_ARGS(env, info, status, thisVar);
 
     if (status == napi_ok && thisVar != nullptr) {
-        std::unique_ptr<VideoSessionForSysNapi> obj = std::make_unique<VideoSessionForSysNapi>();
-        obj->env_ = env;
+        std::unique_ptr<VideoSessionForSysNapi> videoSessionObj = std::make_unique<VideoSessionForSysNapi>();
+        videoSessionObj->env_ = env;
         CHECK_ERROR_RETURN_RET_LOG(sCameraSession_ == nullptr, result, "sCameraSession_ is null");
-        obj->videoSession_ = static_cast<VideoSession*>(sCameraSession_.GetRefPtr());
-        obj->cameraSession_ = obj->videoSession_;
-        CHECK_ERROR_RETURN_RET_LOG(obj->videoSession_ == nullptr, result, "videoSession_ is null");
-        status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
+        videoSessionObj->videoSession_ = static_cast<VideoSession*>(sCameraSession_.GetRefPtr());
+        videoSessionObj->cameraSession_ = videoSessionObj->videoSession_;
+        CHECK_ERROR_RETURN_RET_LOG(videoSessionObj->videoSession_ == nullptr, result, "videoSession_ is null");
+        status = napi_wrap(env, thisVar, reinterpret_cast<void*>(videoSessionObj.get()),
             VideoSessionForSysNapi::VideoSessionForSysNapiDestructor, nullptr, nullptr);
         if (status == napi_ok) {
-            obj.release();
+            videoSessionObj.release();
             return thisVar;
         } else {
             MEDIA_ERR_LOG("VideoSessionForSysNapi Failure wrapping js to native napi");
@@ -232,7 +232,7 @@ void LightStatusCallbackListener::OnLightStatusChangedCallbackAsync(LightStatus 
         }
     };
     if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
-        MEDIA_ERR_LOG("failed to execute work");
+        MEDIA_ERR_LOG("LightStatusCallbackListener::OnLightStatusChangedCallbackAsync failed to execute work");
     } else {
         callback.release();
     }

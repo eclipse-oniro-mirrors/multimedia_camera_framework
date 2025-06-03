@@ -270,20 +270,20 @@ napi_value TimeLapsePhotoSessionNapi::CreateCameraSession(napi_env env)
     if (status == napi_ok) {
         sCameraSession_ = CameraManager::GetInstance()->CreateCaptureSession(SceneMode::TIMELAPSE_PHOTO);
         if (sCameraSession_ == nullptr) {
-            MEDIA_ERR_LOG("Failed to create Profession session instance");
+            MEDIA_ERR_LOG("TimeLapsePhotoSessionNapi::CreateCameraSession Failed to create instance");
             napi_get_undefined(env, &result);
             return result;
         }
         status = napi_new_instance(env, constructor, 0, nullptr, &result);
         sCameraSession_ = nullptr;
         if (status == napi_ok && result != nullptr) {
-            MEDIA_DEBUG_LOG("success to create Profession session napi instance");
+            MEDIA_DEBUG_LOG("TimeLapsePhotoSessionNapi::CreateCameraSession success to create napi instance");
             return result;
         } else {
-            MEDIA_ERR_LOG("Failed to create Profession session napi instance");
+            MEDIA_ERR_LOG("TimeLapsePhotoSessionNapi::CreateCameraSession Failed to create napi instance");
         }
     }
-    MEDIA_ERR_LOG("Failed to create Profession session napi instance last");
+    MEDIA_ERR_LOG("TimeLapsePhotoSessionNapi::CreateCameraSession Failed to create napi instance last");
     napi_get_undefined(env, &result);
     return result;
 }
@@ -322,11 +322,11 @@ napi_value TimeLapsePhotoSessionNapi::StartTryAE(napi_env env, napi_callback_inf
     napi_status status;
     napi_value thisVar;
     CAMERA_NAPI_GET_JS_OBJ_WITH_ZERO_ARGS(env, info, status, thisVar);
-    TimeLapsePhotoSessionNapi* obj = Unwrap<TimeLapsePhotoSessionNapi>(env, thisVar);
-    CHECK_ERROR_RETURN_RET_LOG(obj == nullptr, nullptr, "%{public}s: Unwrap Napi Object Failed", __FUNCTION__);
-    obj->timeLapsePhotoSession_->LockForControl();
-    int32_t ret = obj->timeLapsePhotoSession_->StartTryAE();
-    obj->timeLapsePhotoSession_->UnlockForControl();
+    TimeLapsePhotoSessionNapi* timeLapseObj  = Unwrap<TimeLapsePhotoSessionNapi>(env, thisVar);
+    CHECK_ERROR_RETURN_RET_LOG(timeLapseObj  == nullptr, nullptr, "%{public}s: Unwrap Napi Object Failed", __FUNCTION__);
+    timeLapseObj ->timeLapsePhotoSession_->LockForControl();
+    int32_t ret = timeLapseObj ->timeLapsePhotoSession_->StartTryAE();
+    timeLapseObj ->timeLapsePhotoSession_->UnlockForControl();
     CHECK_ERROR_RETURN_RET_LOG(ret != CameraErrorCode::SUCCESS, nullptr,
         "%{public}s: StartTryAE() Failed", __FUNCTION__);
     napi_value result;
@@ -358,23 +358,23 @@ napi_value TimeLapsePhotoSessionNapi::GetSupportedTimeLapseIntervalRange(napi_en
     napi_status status;
     napi_value thisVar;
     CAMERA_NAPI_GET_JS_OBJ_WITH_ZERO_ARGS(env, info, status, thisVar);
-    TimeLapsePhotoSessionNapi* obj = Unwrap<TimeLapsePhotoSessionNapi>(env, thisVar);
-    CHECK_ERROR_RETURN_RET_LOG(obj == nullptr, nullptr, "%{public}s: Unwrap Napi Object Failed", __FUNCTION__);
+    TimeLapsePhotoSessionNapi* timeLapsePhotoObj = Unwrap<TimeLapsePhotoSessionNapi>(env, thisVar);
+    CHECK_ERROR_RETURN_RET_LOG(timeLapsePhotoObj == nullptr, nullptr, "%{public}s: Unwrap Napi Object Failed", __FUNCTION__);
     vector<int32_t> range;
-    int32_t ret = obj->timeLapsePhotoSession_->GetSupportedTimeLapseIntervalRange(range);
+    int32_t ret = timeLapsePhotoObj->timeLapsePhotoSession_->GetSupportedTimeLapseIntervalRange(range);
     CHECK_ERROR_RETURN_RET_LOG(ret != CameraErrorCode::SUCCESS, nullptr,
         "%{public}s: GetSupportedTimeLapseIntervalRange() Failed", __FUNCTION__);
-    napi_value result;
-    if (napi_create_array_with_length(env, range.size(), &result) == napi_ok) {
+    napi_value timeLapseIntervalRangeResult;
+    if (napi_create_array_with_length(env, range.size(), &timeLapseIntervalRangeResult) == napi_ok) {
         napi_value value;
         for (uint32_t i = 0; i < range.size(); i++) {
             napi_create_int32(env, range[i], &value);
-            napi_set_element(env, result, i, value);
+            napi_set_element(env, timeLapseIntervalRangeResult, i, value);
         }
     } else {
         MEDIA_ERR_LOG("%{public}s: Napi Create Array With Length Failed", __FUNCTION__);
     }
-    return result;
+    return timeLapseIntervalRangeResult;
 }
 
 napi_value TimeLapsePhotoSessionNapi::GetTimeLapseInterval(napi_env env, napi_callback_info info)
@@ -582,13 +582,13 @@ napi_value TimeLapsePhotoSessionNapi::SetExposureMeteringMode(napi_env env, napi
 {
     MEDIA_DEBUG_LOG("%{public}s: Enter", __FUNCTION__);
     TimeLapsePhotoSessionNapi* obj;
-    int32_t mode;
-    CameraNapiParamParser parser(env, info, obj, mode);
+    int32_t meteringMode;
+    CameraNapiParamParser parser(env, info, obj, meteringMode);
     CHECK_ERROR_RETURN_RET_LOG(!parser.AssertStatus(INVALID_ARGUMENT, "Invalid argument!"),
         nullptr, "%{public}s: Read Params Error", __FUNCTION__);
-    MEDIA_DEBUG_LOG("mode = %{public}d", mode);
+    MEDIA_DEBUG_LOG("meteringMode = %{public}d", meteringMode);
     obj->timeLapsePhotoSession_->LockForControl();
-    int32_t ret = obj->timeLapsePhotoSession_->SetExposureMeteringMode(static_cast<MeteringMode>(mode));
+    int32_t ret = obj->timeLapsePhotoSession_->SetExposureMeteringMode(static_cast<MeteringMode>(meteringMode));
     obj->timeLapsePhotoSession_->UnlockForControl();
     CHECK_ERROR_RETURN_RET_LOG(ret != CameraErrorCode::SUCCESS, nullptr,
         "%{public}s: SetExposureMeteringMode() Failed", __FUNCTION__);
@@ -659,23 +659,23 @@ napi_value TimeLapsePhotoSessionNapi::GetIsoRange(napi_env env, napi_callback_in
     napi_status status;
     napi_value thisVar;
     CAMERA_NAPI_GET_JS_OBJ_WITH_ZERO_ARGS(env, info, status, thisVar);
-    TimeLapsePhotoSessionNapi* obj = Unwrap<TimeLapsePhotoSessionNapi>(env, thisVar);
-    CHECK_ERROR_RETURN_RET_LOG(obj == nullptr, nullptr, "%{public}s: Unwrap Napi Object Failed", __FUNCTION__);
+    TimeLapsePhotoSessionNapi* timeLapsePhotoSessionObj = Unwrap<TimeLapsePhotoSessionNapi>(env, thisVar);
+    CHECK_ERROR_RETURN_RET_LOG(timeLapsePhotoSessionObj == nullptr, nullptr, "%{public}s: Unwrap Napi Object Failed", __FUNCTION__);
     vector<int32_t> range;
-    int32_t ret = obj->timeLapsePhotoSession_->GetIsoRange(range);
+    int32_t ret = timeLapsePhotoSessionObj->timeLapsePhotoSession_->GetIsoRange(range);
     CHECK_ERROR_RETURN_RET_LOG(ret != CameraErrorCode::SUCCESS, nullptr,
         "%{public}s: getIsoRange() Failed", __FUNCTION__);
-    napi_value result;
-    if (napi_create_array_with_length(env, range.size(), &result) == napi_ok) {
+    napi_value isoRangeResult;
+    if (napi_create_array_with_length(env, range.size(), &isoRangeResult) == napi_ok) {
         napi_value value;
         for (uint32_t i = 0; i < range.size(); i++) {
             napi_create_int32(env, range[i], &value);
-            napi_set_element(env, result, i, value);
+            napi_set_element(env, isoRangeResult, i, value);
         }
     } else {
         MEDIA_ERR_LOG("%{public}s: Napi Create Array With Length Failed", __FUNCTION__);
     }
-    return result;
+    return isoRangeResult;
 }
 
 // WhiteBalance
@@ -713,17 +713,17 @@ napi_value TimeLapsePhotoSessionNapi::GetWhiteBalanceRange(napi_env env, napi_ca
     int32_t ret = obj->timeLapsePhotoSession_->GetWhiteBalanceRange(range);
     CHECK_ERROR_RETURN_RET_LOG(ret != CameraErrorCode::SUCCESS, nullptr,
         "%{public}s: getWhiteBalanceRange() Failed", __FUNCTION__);
-    napi_value result;
-    if (napi_create_array_with_length(env, range.size(), &result) == napi_ok) {
+    napi_value whiteBalanceRangeResult;
+    if (napi_create_array_with_length(env, range.size(), &whiteBalanceRangeResult) == napi_ok) {
         napi_value value;
         for (uint32_t i = 0; i < range.size(); i++) {
             napi_create_int32(env, range[i], &value);
-            napi_set_element(env, result, i, value);
+            napi_set_element(env, whiteBalanceRangeResult, i, value);
         }
     } else {
         MEDIA_ERR_LOG("%{public}s: Napi Create Array With Length Failed", __FUNCTION__);
     }
-    return result;
+    return whiteBalanceRangeResult;
 }
 
 napi_value TimeLapsePhotoSessionNapi::GetWhiteBalanceMode(napi_env env, napi_callback_info info)
@@ -748,13 +748,13 @@ napi_value TimeLapsePhotoSessionNapi::SetWhiteBalanceMode(napi_env env, napi_cal
 {
     MEDIA_DEBUG_LOG("%{public}s: Enter", __FUNCTION__);
     TimeLapsePhotoSessionNapi* obj;
-    int32_t mode;
-    CameraNapiParamParser parser(env, info, obj, mode);
+    int32_t whiteBalanceMode;
+    CameraNapiParamParser parser(env, info, obj, whiteBalanceMode);
     CHECK_ERROR_RETURN_RET_LOG(!parser.AssertStatus(INVALID_ARGUMENT, "Invalid argument!"), nullptr,
         "%{public}s: Read Params Error", __FUNCTION__);
-    MEDIA_DEBUG_LOG("mode = %{public}d", mode);
+    MEDIA_DEBUG_LOG("whiteBalanceMode = %{public}d", whiteBalanceMode);
     obj->timeLapsePhotoSession_->LockForControl();
-    int32_t ret = obj->timeLapsePhotoSession_->SetWhiteBalanceMode(static_cast<WhiteBalanceMode>(mode));
+    int32_t ret = obj->timeLapsePhotoSession_->SetWhiteBalanceMode(static_cast<WhiteBalanceMode>(whiteBalanceMode));
     obj->timeLapsePhotoSession_->UnlockForControl();
     CHECK_ERROR_RETURN_RET_LOG(ret != CameraErrorCode::SUCCESS, nullptr,
         "%{public}s: setWhiteBalanceMode() Failed", __FUNCTION__);

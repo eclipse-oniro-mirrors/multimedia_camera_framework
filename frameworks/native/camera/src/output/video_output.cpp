@@ -441,7 +441,7 @@ int32_t VideoOutput::canSetFrameRateRange(int32_t minFrameRate, int32_t maxFrame
         CHECK_ERROR_RETURN_RET(item[minIndex] <= minFrameRate && item[maxIndex] >= maxFrameRate,
             CameraErrorCode::SUCCESS);
     }
-    MEDIA_WARNING_LOG("Can not set frame rate range with invalid parameters");
+    MEDIA_WARNING_LOG("VideoOutput canSetFrameRateRange Can not set frame rate range with invalid parameters");
     return CameraErrorCode::INVALID_ARGUMENT;
 }
 

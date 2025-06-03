@@ -37,30 +37,34 @@ namespace CameraStandard {
 namespace {
 void AsyncCompleteCallback(napi_env env, napi_status status, void* data)
 {
-    auto context = static_cast<CameraInputAsyncContext*>(data);
-    CHECK_ERROR_RETURN_LOG(context == nullptr, "CameraInputNapi AsyncCompleteCallback context is null");
-    MEDIA_INFO_LOG("CameraInputNapi AsyncCompleteCallback %{public}s, status = %{public}d", context->funcName.c_str(),
-        context->status);
+    auto cameraInputAsyncContext = static_cast<CameraInputAsyncContext*>(data);
+    CHECK_ERROR_RETURN_LOG(cameraInputAsyncContext == nullptr,
+        "CameraInputNapi AsyncCompleteCallback context is null");
+    MEDIA_INFO_LOG("CameraInputNapi AsyncCompleteCallback %{public}s, status = %{public}d",
+        cameraInputAsyncContext->funcName.c_str(), cameraInputAsyncContext->status);
     std::unique_ptr<JSAsyncContextOutput> jsContext = std::make_unique<JSAsyncContextOutput>();
-    jsContext->status = context->status;
-    if (!context->status) {
-        CameraNapiUtils::CreateNapiErrorObject(env, context->errorCode, context->errorMsg.c_str(), jsContext);
+    jsContext->status = cameraInputAsyncContext->status;
+    if (!cameraInputAsyncContext->status) {
+        CameraNapiUtils::CreateNapiErrorObject(env, cameraInputAsyncContext->errorCode,
+            cameraInputAsyncContext->errorMsg.c_str(), jsContext);
     } else {
-        if (context->isEnableSecCam) {
-            napi_create_bigint_uint64(env, context->secureCameraSeqId, &jsContext->data);
+        if (cameraInputAsyncContext->isEnableSecCam) {
+            napi_create_bigint_uint64(env, cameraInputAsyncContext->secureCameraSeqId, &jsContext->data);
         } else {
             napi_get_undefined(env, &jsContext->data);
         }
     }
-    if (!context->funcName.empty() && context->taskId > 0) {
+    if (!cameraInputAsyncContext->funcName.empty() && cameraInputAsyncContext->taskId > 0) {
         // Finish async trace
-        CAMERA_FINISH_ASYNC_TRACE(context->funcName, context->taskId);
-        jsContext->funcName = context->funcName.c_str();
+        CAMERA_FINISH_ASYNC_TRACE(cameraInputAsyncContext->funcName, cameraInputAsyncContext->taskId);
+        jsContext->funcName = cameraInputAsyncContext->funcName.c_str();
     }
-    CHECK_EXECUTE(context->work != nullptr,
-        CameraNapiUtils::InvokeJSAsyncMethod(env, context->deferred, context->callbackRef, context->work, *jsContext));
-    context->FreeHeldNapiValue(env);
-    delete context;
+    if (cameraInputAsyncContext->work != nullptr) {
+        CameraNapiUtils::InvokeJSAsyncMethod(env, cameraInputAsyncContext->deferred,
+            cameraInputAsyncContext->callbackRef, cameraInputAsyncContext->work, *jsContext);
+    }
+    cameraInputAsyncContext->FreeHeldNapiValue(env);
+    delete cameraInputAsyncContext;
 }
 } // namespace
 

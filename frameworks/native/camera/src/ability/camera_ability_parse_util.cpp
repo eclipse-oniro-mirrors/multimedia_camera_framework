@@ -26,7 +26,7 @@ void CameraAbilityParseUtil::GetModeInfo(
     CHECK_ERROR_RETURN(count == 0 || originInfo == nullptr);
     uint32_t i = 0;
     uint32_t j = i + STEP_THREE;
-    auto isModeEnd = [](int32_t *originInfo, uint32_t j) {
+    auto isEnd = [](int32_t *originInfo, uint32_t j) {
         return originInfo[j] == MODE_END && originInfo[j - 1] == SPEC_END &&
                 originInfo[j - 2] == STREAM_END && originInfo[j - 3] == DETAIL_END;
     };
@@ -35,7 +35,7 @@ void CameraAbilityParseUtil::GetModeInfo(
             j = j + STEP_FOUR;
             continue;
         }
-        if (isModeEnd(originInfo, j)) {
+        if (isEnd(originInfo, j)) {
             if (originInfo[i] == modeName) {
                 GetSpecInfo(originInfo, i + 1, j - 1, modeInfo);
                 break;
@@ -203,12 +203,12 @@ void CameraAbilityParseUtil::GetStreamInfo(int32_t *originInfo, uint32_t start, 
     uint32_t i = start;
     uint32_t j = i + STEP_ONE;
 
-    std::vector<std::pair<uint32_t, uint32_t>> streamIndexRange;
+    std::vector<std::pair<uint32_t, uint32_t>> streamRange;
     while (j <= end) {
         if (originInfo[j] == STREAM_END) {
             if (originInfo[j - 1] == DETAIL_END) {
                 std::pair<uint32_t, uint32_t> indexPair(i, j);
-                streamIndexRange.push_back(indexPair);
+                streamRange.push_back(indexPair);
                 i = j + STEP_ONE;
                 j = i + STEP_ONE;
             } else {
@@ -218,13 +218,13 @@ void CameraAbilityParseUtil::GetStreamInfo(int32_t *originInfo, uint32_t start, 
             j = j + STEP_TWO;
         }
     }
-    uint32_t streamTypeCount = streamIndexRange.size();
+    uint32_t streamTypeCount = streamRange.size();
     specInfo.streamInfos.resize(streamTypeCount);
 
     for (uint32_t k = 0; k < streamTypeCount; ++k) {
         StreamInfo& streamInfo = specInfo.streamInfos[k];
-        i = streamIndexRange[k].first;
-        j = streamIndexRange[k].second;
+        i = streamRange[k].first;
+        j = streamRange[k].second;
         streamInfo.streamType = originInfo[i];
         GetDetailInfo(originInfo, i + 1, j - 1, streamInfo);
     }
@@ -234,11 +234,11 @@ void CameraAbilityParseUtil::GetDetailInfo(int32_t *originInfo, uint32_t start, 
 {
     uint32_t i = start;
     uint32_t j = i;
-    std::vector<std::pair<uint32_t, uint32_t>> detailIndexRange;
+    std::vector<std::pair<uint32_t, uint32_t>> detailRange;
     while (j <= end) {
         if (originInfo[j] == DETAIL_END) {
             std::pair<uint32_t, uint32_t> indexPair(i, j);
-            detailIndexRange.push_back(indexPair);
+            detailRange.push_back(indexPair);
             i = j + STEP_ONE;
             j = i;
         } else {
@@ -246,13 +246,13 @@ void CameraAbilityParseUtil::GetDetailInfo(int32_t *originInfo, uint32_t start, 
         }
     }
 
-    uint32_t detailCount = detailIndexRange.size();
+    uint32_t detailCount = detailRange.size();
     streamInfo.detailInfos.resize(detailCount);
 
     for (uint32_t k = 0; k < detailCount; ++k) {
         auto &detailInfo = streamInfo.detailInfos[k];
-        i = detailIndexRange[k].first;
-        j = detailIndexRange[k].second;
+        i = detailRange[k].first;
+        j = detailRange[k].second;
         detailInfo.format = static_cast<uint32_t>(originInfo[i++]);
         detailInfo.width = static_cast<uint32_t>(originInfo[i++]);
         detailInfo.height = static_cast<uint32_t>(originInfo[i++]);
@@ -270,11 +270,11 @@ void CameraAbilityParseUtil::GetAvailableConfigInfo(
 {
     uint32_t i = start;
     uint32_t j = i;
-    std::vector<std::pair<uint32_t, uint32_t>> infoIndexRange;
+    std::vector<std::pair<uint32_t, uint32_t>> infoRange;
     while (j <= end) {
         if (originInfo[j] == TAG_END) {
             std::pair<uint32_t, uint32_t> indexPair(i, j-1);
-            infoIndexRange.push_back(indexPair);
+            infoRange.push_back(indexPair);
             i = j + STEP_ONE;
             j = i;
         } else {
@@ -282,11 +282,11 @@ void CameraAbilityParseUtil::GetAvailableConfigInfo(
         }
     }
 
-    uint32_t configInfoCount = infoIndexRange.size();
+    uint32_t configInfoCount = infoRange.size();
     availableConfig.configInfos.resize(configInfoCount);
     for (uint32_t k = 0; k < configInfoCount; ++k) {
-        i = infoIndexRange[k].first;
-        j = infoIndexRange[k].second;
+        i = infoRange[k].first;
+        j = infoRange[k].second;
         auto &configInfo = availableConfig.configInfos[k];
         configInfo.specId = originInfo[i++];
         configInfo.tagIds.resize(j - i + 1);

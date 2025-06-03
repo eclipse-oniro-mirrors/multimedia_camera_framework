@@ -73,20 +73,20 @@ napi_value ApertureVideoSessionNapi::CreateCameraSession(napi_env env)
     if (status == napi_ok) {
         sCameraSession_ = CameraManager::GetInstance()->CreateCaptureSession(SceneMode::APERTURE_VIDEO);
         if (sCameraSession_ == nullptr) {
-            MEDIA_ERR_LOG("Failed to create Photo session instance");
+            MEDIA_ERR_LOG("ApertureVideoSessionNapi::CreateCameraSession Failed to create instance");
             napi_get_undefined(env, &result);
             return result;
         }
         status = napi_new_instance(env, constructor, 0, nullptr, &result);
         sCameraSession_ = nullptr;
         if (status == napi_ok && result != nullptr) {
-            MEDIA_DEBUG_LOG("success to create Photo session napi instance");
+            MEDIA_DEBUG_LOG("ApertureVideoSessionNapi::CreateCameraSession success to create napi instance");
             return result;
         } else {
-            MEDIA_ERR_LOG("Failed to create Photo session napi instance");
+            MEDIA_ERR_LOG("ApertureVideoSessionNapi::CreateCameraSession Failed to create napi instance");
         }
     }
-    MEDIA_ERR_LOG("Failed to create Photo session napi instance last");
+    MEDIA_ERR_LOG("ApertureVideoSessionNapi::CreateCameraSession Failed to create napi instance last");
     napi_get_undefined(env, &result);
     return result;
 }

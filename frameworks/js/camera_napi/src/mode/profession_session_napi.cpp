@@ -119,7 +119,7 @@ napi_value ProfessionSessionNapi::Init(napi_env env, napi_value exports)
 
 napi_value ProfessionSessionNapi::CreateCameraSession(napi_env env, SceneMode mode)
 {
-    MEDIA_DEBUG_LOG("CreateCameraSession is called");
+    MEDIA_DEBUG_LOG("ProfessionSessionNapi::CreateCameraSession is called");
     CAMERA_SYNC_TRACE;
     napi_status status;
     napi_value result = nullptr;
@@ -128,20 +128,20 @@ napi_value ProfessionSessionNapi::CreateCameraSession(napi_env env, SceneMode mo
     if (status == napi_ok) {
         sCameraSession_ = CameraManager::GetInstance()->CreateCaptureSession(mode);
         if (sCameraSession_ == nullptr) {
-            MEDIA_ERR_LOG("Failed to create Profession session instance");
+            MEDIA_ERR_LOG("ProfessionSessionNapi::CreateCameraSession Failed to create instance");
             napi_get_undefined(env, &result);
             return result;
         }
         status = napi_new_instance(env, constructor, 0, nullptr, &result);
         sCameraSession_ = nullptr;
         if (status == napi_ok && result != nullptr) {
-            MEDIA_DEBUG_LOG("success to create Profession session napi instance");
+            MEDIA_DEBUG_LOG("ProfessionSessionNapi::CreateCameraSession success to create napi instance");
             return result;
         } else {
-            MEDIA_ERR_LOG("Failed to create Profession session napi instance");
+            MEDIA_ERR_LOG("ProfessionSessionNapi::CreateCameraSession Failed to create napi instance");
         }
     }
-    MEDIA_ERR_LOG("Failed to create Profession session napi instance last");
+    MEDIA_ERR_LOG("ProfessionSessionNapi::CreateCameraSession Failed to create napi instance last");
     napi_get_undefined(env, &result);
     return result;
 }
@@ -180,8 +180,8 @@ napi_value ProfessionSessionNapi::GetSupportedMeteringModes(napi_env env, napi_c
 {
     MEDIA_DEBUG_LOG("GetSupportedMeteringModes is called");
     napi_status status;
-    napi_value result = nullptr;
     size_t argc = ARGS_ZERO;
+    napi_value result = nullptr;
     napi_value argv[ARGS_ZERO];
     napi_value thisVar = nullptr;
 
@@ -215,11 +215,11 @@ napi_value ProfessionSessionNapi::GetSupportedMeteringModes(napi_env env, napi_c
 napi_value ProfessionSessionNapi::IsMeteringModeSupported(napi_env env, napi_callback_info info)
 {
     MEDIA_DEBUG_LOG("IsMeteringModeSupported is called");
+    napi_value thisVar = nullptr;
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ONE;
     napi_value argv[ARGS_ONE] = {0};
-    napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
 
@@ -359,10 +359,10 @@ napi_value ProfessionSessionNapi::SetExposureDuration(napi_env env, napi_callbac
     MEDIA_DEBUG_LOG("SetExposureDuration is called");
     CAMERA_SYNC_TRACE;
     napi_status status;
+    napi_value thisVar = nullptr;
     napi_value result = nullptr;
     size_t argc = ARGS_ONE;
     napi_value argv[ARGS_ONE] = {0};
-    napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
 
@@ -388,9 +388,9 @@ napi_value ProfessionSessionNapi::GetSupportedFocusAssistFlashModes(napi_env env
 {
     MEDIA_DEBUG_LOG("GetSupportedFocusAssistFlashModes is called");
     napi_status status;
-    napi_value result = nullptr;
     size_t argc = ARGS_ZERO;
     napi_value argv[ARGS_ZERO];
+    napi_value result = nullptr;
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
@@ -425,10 +425,10 @@ napi_value ProfessionSessionNapi::IsFocusAssistFlashModeSupported(napi_env env, 
 {
     MEDIA_DEBUG_LOG("IsFocusAssistFlashModeSupported is called");
     napi_status status;
+    napi_value thisVar = nullptr;
     napi_value result = nullptr;
     size_t argc = ARGS_ONE;
     napi_value argv[ARGS_ONE] = {0};
-    napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
 
@@ -627,10 +627,10 @@ napi_value ProfessionSessionNapi::GetSupportedExposureHintModes(napi_env env, na
 {
     MEDIA_DEBUG_LOG("GetSupportedExposureHintModes is called");
     napi_status status;
-    napi_value result = nullptr;
     size_t argc = ARGS_ZERO;
     napi_value argv[ARGS_ZERO];
     napi_value thisVar = nullptr;
+    napi_value result = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
 
@@ -840,7 +840,7 @@ void ExposureInfoCallbackListener::OnExposureInfoChangedCallbackAsync(ExposureIn
         }
     };
     if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
-        MEDIA_ERR_LOG("failed to execute work");
+        MEDIA_ERR_LOG("ExposureInfoCallbackListener::OnExposureInfoChangedCallbackAsync failed to execute work");
     } else {
         callback.release();
     }
@@ -925,7 +925,7 @@ void ApertureInfoCallbackListener::OnApertureInfoChangedCallbackAsync(ApertureIn
         }
     };
     if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
-        MEDIA_ERR_LOG("failed to execute work");
+        MEDIA_ERR_LOG("ApertureInfoCallbackListener::OnApertureInfoChangedCallbackAsync failed to execute work");
     } else {
         callback.release();
     }
@@ -967,7 +967,7 @@ void LuminationInfoCallbackListener::OnLuminationInfoChangedCallbackAsync(Lumina
         }
     };
     if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
-        MEDIA_ERR_LOG("failed to execute work");
+        MEDIA_ERR_LOG("LuminationInfoCallbackListener::OnLuminationInfoChangedCallbackAsync failed to execute work");
     } else {
         callback.release();
     }

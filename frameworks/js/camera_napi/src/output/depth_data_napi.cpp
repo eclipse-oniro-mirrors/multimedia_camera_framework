@@ -155,8 +155,8 @@ napi_value DepthDataNapi::CreateDepthData(napi_env env, napi_value format, napi_
 napi_value DepthDataNapi::GetFormat(napi_env env, napi_callback_info info)
 {
     MEDIA_DEBUG_LOG("GetFormat is called");
-    napi_status status;
     napi_value result = nullptr;
+    napi_status status;
     size_t argc = ARGS_ZERO;
     napi_value argv[ARGS_ZERO];
     napi_value thisVar = nullptr;
@@ -178,9 +178,9 @@ napi_value DepthDataNapi::GetFormat(napi_env env, napi_callback_info info)
 napi_value DepthDataNapi::GetDepthMap(napi_env env, napi_callback_info info)
 {
     MEDIA_DEBUG_LOG("GetDepthMap is called");
-    napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ZERO;
+    napi_status status;
     napi_value argv[ARGS_ZERO];
     napi_value thisVar = nullptr;
 
@@ -201,10 +201,10 @@ napi_value DepthDataNapi::GetDepthMap(napi_env env, napi_callback_info info)
 napi_value DepthDataNapi::GetQualityLevel(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("GetQualityLevel is called");
-    napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ZERO;
     napi_value argv[ARGS_ZERO];
+    napi_status status;
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
@@ -224,11 +224,11 @@ napi_value DepthDataNapi::GetQualityLevel(napi_env env, napi_callback_info info)
 napi_value DepthDataNapi::GetAccuracy(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("GetAccuracy is called");
-    napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ZERO;
     napi_value argv[ARGS_ZERO];
     napi_value thisVar = nullptr;
+    napi_status status;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
 
@@ -289,7 +289,7 @@ napi_value DepthDataNapi::Release(napi_env env, napi_callback_info info)
             asyncContext.release();
         }
     } else {
-        MEDIA_ERR_LOG("Release call Failed!");
+        MEDIA_ERR_LOG("DepthDataNapi::Release call Failed!");
     }
     return result;
 }

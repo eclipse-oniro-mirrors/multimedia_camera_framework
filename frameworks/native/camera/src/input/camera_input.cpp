@@ -101,14 +101,14 @@ CameraInput::CameraInput(sptr<ICameraDeviceService> &deviceObj,
 
 void CameraInput::GetMetadataFromService(sptr<CameraDevice> &device)
 {
-    CHECK_ERROR_RETURN_LOG(device == nullptr, "GetMetadataFromService device is nullptr");
+    CHECK_ERROR_RETURN_LOG(device == nullptr, "CameraInput::GetMetadataFromService device is nullptr");
     auto cameraId = device->GetID();
     auto serviceProxy = CameraManager::GetInstance()->GetServiceProxy();
-    CHECK_ERROR_RETURN_LOG(serviceProxy == nullptr, "GetMetadataFromService serviceProxy is null");
+    CHECK_ERROR_RETURN_LOG(serviceProxy == nullptr, "CameraInput::GetMetadataFromService serviceProxy is null");
     std::shared_ptr<OHOS::Camera::CameraMetadata> metaData;
     serviceProxy->GetCameraAbility(cameraId, metaData);
     CHECK_ERROR_RETURN_LOG(metaData == nullptr,
-        "GetMetadataFromService GetDeviceMetadata failed");
+        "CameraInput::GetMetadataFromService GetDeviceMetadata failed");
     device->AddMetadata(metaData);
 }
 void CameraInput::InitCameraInput()
@@ -116,12 +116,12 @@ void CameraInput::InitCameraInput()
     auto cameraObj = GetCameraDeviceInfo();
     auto deviceObj = GetCameraDevice();
     if (cameraObj) {
-        MEDIA_INFO_LOG("CameraInput::CameraInput Contructor Camera: %{public}s", cameraObj->GetID().c_str());
+        MEDIA_INFO_LOG("CameraInput::InitCameraInput Contructor Camera: %{public}s", cameraObj->GetID().c_str());
         GetMetadataFromService(cameraObj);
     }
     CameraDeviceSvcCallback_ = new(std::nothrow) CameraDeviceServiceCallback(this);
     CHECK_ERROR_RETURN_LOG(CameraDeviceSvcCallback_ == nullptr, "Failed to new CameraDeviceSvcCallback_!");
-    CHECK_ERROR_RETURN_LOG(!deviceObj, "CameraInput::CameraInput() deviceObj is nullptr");
+    CHECK_ERROR_RETURN_LOG(!deviceObj, "CameraInput::InitCameraInput() deviceObj is nullptr");
     deviceObj->SetCallback(CameraDeviceSvcCallback_);
     sptr<IRemoteObject> object = deviceObj->AsObject();
     CHECK_ERROR_RETURN(object == nullptr);
@@ -134,7 +134,7 @@ void CameraInput::InitCameraInput()
         CHECK_EXECUTE(ptr != nullptr, ptr->CameraServerDied(pid));
     });
     bool result = object->AddDeathRecipient(deathRecipient_);
-    CHECK_ERROR_RETURN_LOG(!result, "CameraInput::CameraInput failed to add deathRecipient");
+    CHECK_ERROR_RETURN_LOG(!result, "CameraInput::InitCameraInput failed to add deathRecipient");
     CameraTimer::GetInstance()->IncreaseUserCount();
 }
 
