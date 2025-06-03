@@ -148,6 +148,7 @@ public:
 
 private:
     class FoldScreenListener;
+    sptr<FoldScreenListener> listener_;
     static const std::vector<std::tuple<uint32_t, std::string, std::string>> reportTagInfos_;
 
     std::mutex opMutex_; // Lock the operations updateSettings_, streamOperator_, and hdiCameraDevice_.
@@ -226,6 +227,7 @@ private:
     std::mutex movingPhotoEndTimeCallbackLock_;
     std::function<void(int32_t, int64_t)> movingPhotoStartTimeCallback_;
     std::function<void(int32_t, int64_t)> movingPhotoEndTimeCallback_;
+    std::mutex foldStateListenerMutex_;
 };
 } // namespace CameraStandard
 } // namespace OHOS
