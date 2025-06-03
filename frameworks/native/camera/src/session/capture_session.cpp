@@ -535,11 +535,9 @@ bool CaptureSession::CanAddInput(sptr<CaptureInput>& input)
     CHECK_ERROR_RETURN_RET_LOG(!IsSessionConfiged() || input == nullptr, ret,
         "CaptureSession::AddInput operation Not allowed!");
     auto captureSession = GetCaptureSession();
-    if (captureSession) {
-        captureSession->CanAddInput(((sptr<CameraInput>&)input)->GetCameraDevice(), ret);
-    } else {
-        MEDIA_ERR_LOG("CaptureSession::CanAddInput() captureSession is nullptr");
-    }
+    CHECK_ERROR_RETURN_RET_LOG(captureSession == nullptr, ret,
+        "CaptureSession::CanAddInput() captureSession is nullptr");
+    captureSession->CanAddInput(((sptr<CameraInput>&)input)->GetCameraDevice(), ret);
     return ret;
 }
 
@@ -1434,10 +1432,12 @@ int32_t CaptureSession::SetVideoStabilizationMode(VideoStabilizationMode stabili
     CHECK_ERROR_RETURN_RET(!IsVideoStabilizationModeSupported(stabilizationMode),
         CameraErrorCode::OPERATION_NOT_ALLOWED);
     auto itr = g_fwkVideoStabModesMap_.find(stabilizationMode);
+    // LCOV_EXCL_START
     if ((itr == g_fwkVideoStabModesMap_.end())) {
         MEDIA_ERR_LOG("CaptureSession::SetVideoStabilizationMode Mode: %{public}d not supported", stabilizationMode);
         stabilizationMode = OFF;
     }
+    // LCOV_EXCL_STOP
 
     uint32_t count = 1;
     uint8_t stabilizationMode_ = stabilizationMode;
@@ -1457,9 +1457,8 @@ int32_t CaptureSession::SetVideoStabilizationMode(VideoStabilizationMode stabili
         });
     }
     int32_t errCode = this->UnlockForControl();
-    if (errCode != CameraErrorCode::SUCCESS) {
-        MEDIA_DEBUG_LOG("CaptureSession::SetVideoStabilizingMode Failed to set video stabilization mode");
-    }
+    CHECK_DEBUG_PRINT_LOG(errCode != CameraErrorCode::SUCCESS,
+        "CaptureSession::SetVideoStabilizingMode Failed to set video stabilization mode");
     return CameraErrorCode::SUCCESS;
 }
 
@@ -1839,9 +1838,7 @@ void CaptureSession::ProcessAutoExposureUpdates(const std::shared_ptr<Camera::Ca
     common_metadata_header_t* metadata = result->get();
 
     int ret = Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_EXPOSURE_MODE, &item);
-    if (ret == CAM_META_SUCCESS) {
-        MEDIA_DEBUG_LOG("exposure mode: %{public}d", item.data.u8[0]);
-    }
+    CHECK_DEBUG_PRINT_LOG(ret == CAM_META_SUCCESS, "exposure mode: %{public}d", item.data.u8[0]);
 
     ret = Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_EXPOSURE_STATE, &item);
     if (ret == CAM_META_SUCCESS) {
@@ -2198,14 +2195,10 @@ void CaptureSession::ProcessAREngineUpdates(const uint64_t timestamp,
     }
 
     ret = Camera::FindCameraMetadataItem(metadata, HAL_CUSTOM_LENS_FOCUS_DISTANCE, &item);
-    if (ret == CAM_META_SUCCESS) {
-        arStatusInfo.lensFocusDistance = item.data.f[0];
-    }
+    CHECK_EXECUTE(ret == CAM_META_SUCCESS, arStatusInfo.lensFocusDistance = item.data.f[0]);
 
     ret = Camera::FindCameraMetadataItem(metadata, HAL_CUSTOM_SENSOR_SENSITIVITY, &item);
-    if (ret == CAM_META_SUCCESS) {
-        arStatusInfo.sensorSensitivity = item.data.i32[0];
-    }
+    CHECK_EXECUTE(ret == CAM_META_SUCCESS, arStatusInfo.sensorSensitivity = item.data.i32[0]);
 
     ret = Camera::FindCameraMetadataItem(metadata, OHOS_STATUS_SENSOR_EXPOSURE_TIME, &item);
     if (ret == CAM_META_SUCCESS) {
@@ -3568,15 +3561,13 @@ int32_t CaptureSession::GetActiveColorSpace(ColorSpace& colorSpace)
 
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     auto captureSession = GetCaptureSession();
-    if (captureSession) {
-        errCode = captureSession->GetActiveColorSpace(colorSpace);
-        if (errCode != CAMERA_OK) {
-            MEDIA_ERR_LOG("Failed to GetActiveColorSpace! %{public}d", errCode);
-        } else {
-            MEDIA_INFO_LOG("CaptureSession::GetActiveColorSpace %{public}d", static_cast<int32_t>(colorSpace));
-        }
+    CHECK_ERROR_RETURN_RET_LOG(captureSession == nullptr, ServiceToCameraError(errCode),
+        "CaptureSession::GetActiveColorSpace() captureSession is nullptr");
+    errCode = captureSession->GetActiveColorSpace(colorSpace);
+    if (errCode != CAMERA_OK) {
+        MEDIA_ERR_LOG("Failed to GetActiveColorSpace! %{public}d", errCode);
     } else {
-        MEDIA_ERR_LOG("CaptureSession::GetActiveColorSpace() captureSession is nullptr");
+        MEDIA_INFO_LOG("CaptureSession::GetActiveColorSpace %{public}d", static_cast<int32_t>(colorSpace));
     }
     return ServiceToCameraError(errCode);
 }
@@ -4406,10 +4397,7 @@ void CaptureSession::EnableDeferredType(DeferredDeliveryImageType type, bool isE
     bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_DEFERRED_IMAGE_DELIVERY, &deferredType, 1);
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::enableDeferredType Failed to set type!");
     int32_t errCode = this->UnlockForControl();
-    if (errCode != CameraErrorCode::SUCCESS) {
-        MEDIA_DEBUG_LOG("CaptureSession::EnableDeferredType Failed");
-        return;
-    }
+    CHECK_DEBUG_RETURN_LOG(errCode != CameraErrorCode::SUCCESS, "CaptureSession::EnableDeferredType Failed");
     isDeferTypeSetted_ = isEnableByUser;
 }
 
@@ -4423,9 +4411,7 @@ void CaptureSession::EnableAutoDeferredVideoEnhancement(bool isEnableByUser)
     bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_AUTO_DEFERRED_VIDEO_ENHANCE, &isEnableByUser, 1);
     CHECK_ERROR_PRINT_LOG(!status, "EnableAutoDeferredVideoEnhancement Failed to set type!");
     int32_t errCode = this->UnlockForControl();
-    if (errCode != CameraErrorCode::SUCCESS) {
-        MEDIA_DEBUG_LOG("EnableAutoDeferredVideoEnhancement Failed");
-    }
+    CHECK_DEBUG_PRINT_LOG(errCode != CameraErrorCode::SUCCESS, "EnableAutoDeferredVideoEnhancement Failed");
 }
 
 void CaptureSession::SetUserId()

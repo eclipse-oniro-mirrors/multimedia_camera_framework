@@ -68,6 +68,21 @@
         }                                                \
     } while (0)
 
+#define CHECK_DEBUG_RETURN_LOG(cond, fmt, ...)         \
+    do {                                               \
+        if (cond) {                                    \
+            MEDIA_DEBUG_LOG(fmt, ##__VA_ARGS__);         \
+            return;                                    \
+        }                                              \
+    } while (0)
+ 
+#define CHECK_DEBUG_PRINT_LOG(cond, fmt, ...)            \
+    do {                                                 \
+        if (cond) {                                      \
+            MEDIA_DEBUG_LOG(fmt, ##__VA_ARGS__);         \
+        }                                                \
+    } while (0)
+
 #define CHECK_ERROR_RETURN(cond)                      \
     do {                                              \
         if (cond) {                                   \

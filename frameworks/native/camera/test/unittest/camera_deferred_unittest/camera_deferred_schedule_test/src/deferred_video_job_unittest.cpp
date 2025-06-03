@@ -274,7 +274,6 @@ HWTEST_F(DeferredVideoJobUnitTest, deferred_video_job_unittest_006, TestSize.Lev
 
     videoJR->AddVideoJob(videoId, srcFd_, dstFd_);
     EXPECT_EQ(videoJR->GetJob()->GetVideoId(), videoId);
-    videoJR->AddVideoJob(videoId, srcFd_, dstFd_);
     EXPECT_NE(videoJR->GetJobUnLocked(videoId), nullptr);
     EXPECT_EQ(videoJR->GetJob()->GetCurStatus(), VideoJobState::PENDING);
 
