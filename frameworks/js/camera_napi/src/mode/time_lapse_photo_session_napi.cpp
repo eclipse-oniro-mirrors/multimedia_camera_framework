@@ -359,7 +359,8 @@ napi_value TimeLapsePhotoSessionNapi::GetSupportedTimeLapseIntervalRange(napi_en
     napi_value thisVar;
     CAMERA_NAPI_GET_JS_OBJ_WITH_ZERO_ARGS(env, info, status, thisVar);
     TimeLapsePhotoSessionNapi* timeLapsePhotoObj = Unwrap<TimeLapsePhotoSessionNapi>(env, thisVar);
-    CHECK_ERROR_RETURN_RET_LOG(timeLapsePhotoObj == nullptr, nullptr, "%{public}s: Unwrap Napi Object Failed", __FUNCTION__);
+    CHECK_ERROR_RETURN_RET_LOG(timeLapsePhotoObj == nullptr,
+        nullptr, "%{public}s: Unwrap Napi Object Failed", __FUNCTION__);
     vector<int32_t> range;
     int32_t ret = timeLapsePhotoObj->timeLapsePhotoSession_->GetSupportedTimeLapseIntervalRange(range);
     CHECK_ERROR_RETURN_RET_LOG(ret != CameraErrorCode::SUCCESS, nullptr,
@@ -660,7 +661,8 @@ napi_value TimeLapsePhotoSessionNapi::GetIsoRange(napi_env env, napi_callback_in
     napi_value thisVar;
     CAMERA_NAPI_GET_JS_OBJ_WITH_ZERO_ARGS(env, info, status, thisVar);
     TimeLapsePhotoSessionNapi* timeLapsePhotoSessionObj = Unwrap<TimeLapsePhotoSessionNapi>(env, thisVar);
-    CHECK_ERROR_RETURN_RET_LOG(timeLapsePhotoSessionObj == nullptr, nullptr, "%{public}s: Unwrap Napi Object Failed", __FUNCTION__);
+    CHECK_ERROR_RETURN_RET_LOG(timeLapsePhotoSessionObj == nullptr, nullptr,
+        "%{public}s: Unwrap Napi Object Failed", __FUNCTION__);
     vector<int32_t> range;
     int32_t ret = timeLapsePhotoSessionObj->timeLapsePhotoSession_->GetIsoRange(range);
     CHECK_ERROR_RETURN_RET_LOG(ret != CameraErrorCode::SUCCESS, nullptr,

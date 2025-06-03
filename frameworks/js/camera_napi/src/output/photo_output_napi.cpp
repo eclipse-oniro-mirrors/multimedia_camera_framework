@@ -2116,7 +2116,7 @@ napi_value PhotoOutputNapi::CreatePhotoOutput(napi_env env, Profile& profile, st
             "Success to create photo output instance");
     }
     MEDIA_ERR_LOG("CreatePhotoOutput call Failed!");
-    return result;;
+    return result;
 }
 
 napi_value PhotoOutputNapi::CreatePhotoOutput(napi_env env, std::string surfaceId)

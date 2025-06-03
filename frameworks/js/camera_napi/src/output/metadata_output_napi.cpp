@@ -37,7 +37,8 @@ namespace {
 void AsyncCompleteCallback(napi_env env, napi_status status, void* data)
 {
     auto metadataOutputAsyncContext = static_cast<MetadataOutputAsyncContext*>(data);
-    CHECK_ERROR_RETURN_LOG(metadataOutputAsyncContext == nullptr, "MetadataOutputNapi AsyncCompleteCallback context is null");
+    CHECK_ERROR_RETURN_LOG(metadataOutputAsyncContext == nullptr,
+        "MetadataOutputNapi AsyncCompleteCallback context is null");
     MEDIA_INFO_LOG("MetadataOutputNapi AsyncCompleteCallback %{public}s, status = %{public}d",
         metadataOutputAsyncContext->funcName.c_str(), metadataOutputAsyncContext->status);
     std::unique_ptr<JSAsyncContextOutput> jsContext = std::make_unique<JSAsyncContextOutput>();

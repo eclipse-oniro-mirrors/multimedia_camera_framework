@@ -3735,7 +3735,8 @@ napi_value CameraSessionNapi::GetSupportedWhiteBalanceModes(napi_env env, napi_c
 
     napi_get_undefined(env, &result);
     status = napi_create_array(env, &result);
-    CHECK_ERROR_RETURN_RET_LOG(status != napi_ok, result, "CameraSessionNapi::GetSupportedWhiteBalanceModes napi_create_array call Failed!");
+    CHECK_ERROR_RETURN_RET_LOG(status != napi_ok, result,
+        "CameraSessionNapi::GetSupportedWhiteBalanceModes napi_create_array call Failed!");
     CameraSessionNapi* cameraSessionNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {

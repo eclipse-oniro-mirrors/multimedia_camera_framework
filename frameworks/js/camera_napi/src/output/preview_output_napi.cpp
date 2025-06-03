@@ -321,12 +321,14 @@ napi_value PreviewOutputNapi::CreatePreviewOutput(napi_env env, Profile& profile
         if (!surface) {
             surface = Media::ImageReceiver::getSurfaceById(surfaceId);
         }
-        CHECK_ERROR_RETURN_RET_LOG(surface == nullptr, result, "PreviewOutputNapi::CreatePreviewOutput failed to get surface");
+        CHECK_ERROR_RETURN_RET_LOG(surface == nullptr, result,
+            "PreviewOutputNapi::CreatePreviewOutput failed to get surface");
 
         surface->SetUserData(CameraManager::surfaceFormat, std::to_string(profile.GetCameraFormat()));
         int retCode = CameraManager::GetInstance()->CreatePreviewOutput(profile, surface, &sPreviewOutput_);
         CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
-        CHECK_ERROR_RETURN_RET_LOG(sPreviewOutput_ == nullptr, result, "PreviewOutputNapi::CreatePreviewOutput failed to create previewOutput");
+        CHECK_ERROR_RETURN_RET_LOG(sPreviewOutput_ == nullptr, result,
+            "PreviewOutputNapi::CreatePreviewOutput failed to create previewOutput");
         status = napi_new_instance(env, constructor, 0, nullptr, &result);
         sPreviewOutput_ = nullptr;
 
@@ -361,7 +363,8 @@ napi_value PreviewOutputNapi::CreatePreviewOutput(napi_env env, std::string surf
         CHECK_ERROR_RETURN_RET_LOG(surface == nullptr, result, "failed to get surface");
         int retCode = CameraManager::GetInstance()->CreatePreviewOutputWithoutProfile(surface, &sPreviewOutput_);
         CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
-        CHECK_ERROR_RETURN_RET_LOG(sPreviewOutput_ == nullptr, result, "failed to create previewOutput with only surfaceId");
+        CHECK_ERROR_RETURN_RET_LOG(sPreviewOutput_ == nullptr, result,
+            "failed to create previewOutput with only surfaceId");
         status = napi_new_instance(env, constructor, 0, nullptr, &result);
         sPreviewOutput_ = nullptr;
 

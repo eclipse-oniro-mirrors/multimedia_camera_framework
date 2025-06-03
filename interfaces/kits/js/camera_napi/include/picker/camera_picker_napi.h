@@ -71,14 +71,14 @@ struct PickerContextProxy {
         }
         switch (type_) {
             case PickerContextType::UI_EXTENSION: {
-                auto ctx = AbilityRuntime::Context::ConvertTo<AbilityRuntime::UIExtensionContext>(uiContext );
+                auto ctx = AbilityRuntime::Context::ConvertTo<AbilityRuntime::UIExtensionContext>(uiContext);
                 if (ctx != nullptr) {
                     return ctx->GetUIContent();
                 }
                 break;
             }
             case PickerContextType::ABILITY: {
-                auto ctx = AbilityRuntime::Context::ConvertTo<AbilityRuntime::AbilityContext>(uiContext );
+                auto ctx = AbilityRuntime::Context::ConvertTo<AbilityRuntime::AbilityContext>(uiContext);
                 if (ctx != nullptr) {
                     return ctx->GetUIContent();
                 }
