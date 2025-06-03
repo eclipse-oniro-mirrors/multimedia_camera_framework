@@ -3736,7 +3736,7 @@ napi_value CameraSessionNapi::GetSupportedWhiteBalanceModes(napi_env env, napi_c
         int32_t retCode = cameraSessionNapi->cameraSession_->GetSupportedWhiteBalanceModes(whiteBalanceModes);
         CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
 
-        MEDIA_INFO_LOG("ProfessionSessionNapi::GetSupportedWhiteBalanceModes len = %{public}zu",
+        MEDIA_INFO_LOG("CameraSessionNapi::GetSupportedWhiteBalanceModes len = %{public}zu",
             whiteBalanceModes.size());
         if (!whiteBalanceModes.empty()) {
             for (size_t i = 0; i < whiteBalanceModes.size(); i++) {
@@ -3826,7 +3826,7 @@ napi_value CameraSessionNapi::SetWhiteBalanceMode(napi_env env, napi_callback_in
         WhiteBalanceMode mode = (WhiteBalanceMode)value;
         cameraSessionNapi->cameraSession_->LockForControl();
         cameraSessionNapi->cameraSession_->SetWhiteBalanceMode(mode);
-        MEDIA_INFO_LOG("ProfessionSessionNapi::SetWhiteBalanceMode set mode:%{public}d", value);
+        MEDIA_INFO_LOG("CameraSessionNapi::SetWhiteBalanceMode set mode:%{public}d", value);
         cameraSessionNapi->cameraSession_->UnlockForControl();
     } else {
         MEDIA_ERR_LOG("SetWhiteBalanceMode call Failed!");
@@ -3854,7 +3854,7 @@ napi_value CameraSessionNapi::GetWhiteBalanceRange(napi_env env, napi_callback_i
         std::vector<int32_t> whiteBalanceRange = {};
         int32_t retCode = cameraSessionNapi->cameraSession_->GetManualWhiteBalanceRange(whiteBalanceRange);
         CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
-        MEDIA_INFO_LOG("ProfessionSessionNapi::GetWhiteBalanceRange len = %{public}zu", whiteBalanceRange.size());
+        MEDIA_INFO_LOG("CameraSessionNapi::GetWhiteBalanceRange len = %{public}zu", whiteBalanceRange.size());
 
         if (!whiteBalanceRange.empty() && napi_create_array(env, &result) == napi_ok) {
             for (size_t i = 0; i < whiteBalanceRange.size(); i++) {
@@ -3944,7 +3944,7 @@ napi_value CameraSessionNapi::SetWhiteBalance(napi_env env, napi_callback_info i
         napi_get_value_int32(env, argv[PARAM0], &wbValue);
         cameraSessionNapi->cameraSession_->LockForControl();
         cameraSessionNapi->cameraSession_->SetManualWhiteBalance(wbValue);
-        MEDIA_INFO_LOG("ProfessionSessionNapi::SetWhiteBalance set wbValue:%{public}d", wbValue);
+        MEDIA_INFO_LOG("CameraSessionNapi::SetWhiteBalance set wbValue:%{public}d", wbValue);
         cameraSessionNapi->cameraSession_->UnlockForControl();
     } else {
         MEDIA_ERR_LOG("SetWhiteBalance call Failed!");
