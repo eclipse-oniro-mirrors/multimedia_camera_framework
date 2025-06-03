@@ -7274,7 +7274,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_102, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test ConfigureVideoOutput with frameRateRange.size() < minFpsRangeSize
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_103 TestSize.Level0)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_103, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
