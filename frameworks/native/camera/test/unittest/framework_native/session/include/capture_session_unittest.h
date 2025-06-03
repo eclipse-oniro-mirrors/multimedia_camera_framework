@@ -117,6 +117,14 @@ public:
         return 0;
     }
 };
+
+class MockFeatureDetectionStatusCallback : public OHOS::CameraStandard::FeatureDetectionStatusCallback {
+    void OnFeatureDetectionStatusChanged(SceneFeature feature, FeatureDetectionStatus status) override {}
+    bool IsFeatureSubscribed(SceneFeature feature) override
+    {
+        return true;
+    }
+};
 }
 }
 #endif
