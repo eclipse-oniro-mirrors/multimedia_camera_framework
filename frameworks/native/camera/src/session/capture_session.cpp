@@ -4397,7 +4397,7 @@ void CaptureSession::EnableDeferredType(DeferredDeliveryImageType type, bool isE
     bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_DEFERRED_IMAGE_DELIVERY, &deferredType, 1);
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::enableDeferredType Failed to set type!");
     int32_t errCode = this->UnlockForControl();
-    CHECK_DEBUG_PRINT_LOG(res != CameraErrorCode::SUCCESS, "CaptureSession::EnableAutoCloudImageEnhancement Failed");
+    CHECK_DEBUG_RETURN_LOG(errCode != CameraErrorCode::SUCCESS, "CaptureSession::EnableDeferredType Failed");
     isDeferTypeSetted_ = isEnableByUser;
 }
 
@@ -4411,9 +4411,7 @@ void CaptureSession::EnableAutoDeferredVideoEnhancement(bool isEnableByUser)
     bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_AUTO_DEFERRED_VIDEO_ENHANCE, &isEnableByUser, 1);
     CHECK_ERROR_PRINT_LOG(!status, "EnableAutoDeferredVideoEnhancement Failed to set type!");
     int32_t errCode = this->UnlockForControl();
-    if (errCode != CameraErrorCode::SUCCESS) {
-        MEDIA_DEBUG_LOG("EnableAutoDeferredVideoEnhancement Failed");
-    }
+    CHECK_DEBUG_PRINT_LOG(errCode != CameraErrorCode::SUCCESS, "EnableAutoDeferredVideoEnhancement Failed");
 }
 
 void CaptureSession::SetUserId()
