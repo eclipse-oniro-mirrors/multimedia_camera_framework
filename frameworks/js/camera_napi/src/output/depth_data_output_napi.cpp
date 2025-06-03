@@ -210,7 +210,6 @@ void DepthDataOutputCallback::UpdateJSCallbackAsync(DepthDataOutputEventType eve
     };
     if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
         MEDIA_ERR_LOG("failed to execute work");
-        delete work;
     } else {
         callbackInfo.release();
     }
