@@ -42,7 +42,7 @@ void AvcodecTaskManagerFuzzer::AvcodecTaskManagerFuzzTest(FuzzedDataProvider& fd
     fuzz_->GetTaskManager();
     fuzz_->GetEncoderManager();
     int64_t timestamp = fdp.ConsumeIntegral<int64_t>();
-    GraphicTransformType formType =static_cast<GraphicTransformType>(fdp.ConsumeIntegral<uint8_t>()
+    GraphicTransformType formType = static_cast<GraphicTransformType>(fdp.ConsumeIntegral<uint8_t>()
         % (GraphicTransformType::GRAPHIC_ROTATE_BUTT + CONST_2));
     sptr<SurfaceBuffer> videoBuffer = SurfaceBuffer::Create();
     sptr<FrameRecord> frameRecord =
