@@ -135,8 +135,6 @@ void HStreamRepeatFuzzer::HStreamRepeatFuzzTest3(FuzzedDataProvider& fdp)
 #endif
     sptr<IStreamCapture> photoOutput = nullptr;
     fuzz_->AttachMetaSurface(producer, fdp.ConsumeIntegral<int32_t>());
-    fuzz_->ToggleAutoVideoFrameRate(fdp.ConsumeBool());
-    fuzz_->UpdateAutoFrameRateSettings(settings);
     std::shared_ptr<HStreamRepeatCallbackStub> callback = std::make_shared<HStreamRepeatCallbackStubDemo>();
     MessageParcel data;
     callback->HandleOnDeferredVideoEnhancementInfo(data);

@@ -289,19 +289,5 @@ int32_t HStreamRepeatProxy::SetCameraApi(uint32_t apiCompatibleVersion)
     CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HStreamRepeatProxy SetCameraApi failed, error: %{public}d", error);
     return error;
 }
-
-int32_t HStreamRepeatProxy::ToggleAutoVideoFrameRate(bool isEnable)
-{
-    MessageParcel data;
-    MessageParcel reply;
-    MessageOption option;
- 
-    data.WriteInterfaceToken(GetDescriptor());
-    data.WriteBool(isEnable);
-    int error = Remote()->SendRequest(
-        static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_ENABLE_AUTO_FRAME_RATE), data, reply, option);
-    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HStreamRepeatProxy SetCameraRotation failed, error: %{public}d", error);
-    return error;
-}
 } // namespace CameraStandard
 } // namespace OHOS

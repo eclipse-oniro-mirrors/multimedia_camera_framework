@@ -112,7 +112,6 @@ public:
     MOCK_METHOD1(SetMirror, int32_t(bool isEnable));
     MOCK_METHOD2(AttachMetaSurface, int32_t(const sptr<OHOS::IBufferProducer>& producer, int32_t videoMetaType));
     MOCK_METHOD2(SetCameraRotation, int32_t(bool isEnable, int32_t rotation));
-    MOCK_METHOD1(ToggleAutoVideoFrameRate, int32_t(bool isEnable));
     MOCK_METHOD1(OperatePermissionCheck, int32_t(uint32_t interfaceCode));
     MOCK_METHOD1(GetMirror, int32_t(bool& isEnable));
     MOCK_METHOD1(SetCameraApi, int32_t(uint32_t apiCompatibleVersion));
@@ -1192,29 +1191,6 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_046, TestSize.Level1)
     MessageOption option;
     uint32_t code = StreamRepeatInterfaceCode::CAMERA_GET_STREAM_MIRROR;
     EXPECT_CALL(stub, GetMirror(_))
-        .WillOnce(Return(ERR_NONE));
-    int errCode = stub.OnRemoteRequest(code, data, reply, option);
-    EXPECT_EQ(errCode, ERR_NONE);
-}
-
-/*
- * Feature: Framework
- * Function: Test HStreamRepeatStub with OnRemoteRequest
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test OnRemoteRequest for switch of CAMERA_ENABLE_AUTO_FRAME_RATE
- */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_047, TestSize.Level1)
-{
-    MockHStreamRepeatStub stub;
-    MessageParcel data;
-    data.WriteInterfaceToken(stub.GetDescriptor());
-    data.RewindRead(0);
-    MessageParcel reply;
-    MessageOption option;
-    uint32_t code = StreamRepeatInterfaceCode::CAMERA_ENABLE_AUTO_FRAME_RATE;
-    EXPECT_CALL(stub, ToggleAutoVideoFrameRate(_))
         .WillOnce(Return(ERR_NONE));
     int errCode = stub.OnRemoteRequest(code, data, reply, option);
     EXPECT_EQ(errCode, ERR_NONE);
