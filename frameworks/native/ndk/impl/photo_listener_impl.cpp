@@ -323,9 +323,8 @@ void RawPhotoListener::UnregisterCallback(OH_PhotoOutput_PhotoAvailable callback
     MEDIA_DEBUG_LOG("RawPhotoListener::UnregisterCallback");
     std::lock_guard<std::mutex> lock(g_photoImageMutex);
     MEDIA_INFO_LOG("RawPhotoListener::UnregisterCallback is called");
-    if (callback != nullptr && callback_ != nullptr) {
-        callback_ = nullptr;
-    }
+    CHECK_ERROR_RETURN(callback == nullptr || callback_ == nullptr);
+    callback_ = nullptr;
 }
 
 }

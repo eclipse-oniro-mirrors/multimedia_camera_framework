@@ -136,32 +136,31 @@ public:
     void OnFoldStatusChanged(const FoldStatusInfo& foldStatusInfo) const override
     {
         MEDIA_DEBUG_LOG("OnFoldStatusChanged is called!");
-        if (cameraManager_ != nullptr && (foldStatusCallback_ != nullptr)) {
-            Camera_FoldStatusInfo statusInfo;
-            auto cameraSize = foldStatusInfo.supportedCameras.size();
-            CHECK_ERROR_RETURN_LOG(cameraSize <= 0, "Invalid size.");
-            Camera_Device supportedCameras[cameraSize];
-            Camera_Device* supportedCamerasPtr[cameraSize];
-            uint32_t outSize = 0;
-            string cameraIds[cameraSize];
-            for (size_t index = 0; index < cameraSize; index++) {
-                Camera_Device* cameraDevice = &supportedCameras[outSize];
-                cameraDevice->cameraPosition =
-                    static_cast<Camera_Position>(foldStatusInfo.supportedCameras[index]->GetPosition());
-                cameraIds[outSize] = foldStatusInfo.supportedCameras[index]->GetID();
-                cameraDevice->cameraId = cameraIds[outSize].data();
-                cameraDevice->cameraType =
-                    static_cast<Camera_Type>(foldStatusInfo.supportedCameras[index]->GetCameraType());
-                cameraDevice->connectionType =
-                    static_cast<Camera_Connection>(foldStatusInfo.supportedCameras[index]->GetConnectionType());
-                supportedCamerasPtr[outSize] = cameraDevice;
-                outSize++;
-            }
-            statusInfo.supportedCameras = supportedCamerasPtr;
-            statusInfo.cameraSize = outSize;
-            statusInfo.foldStatus = (Camera_FoldStatus)foldStatusInfo.foldStatus;
-            foldStatusCallback_(cameraManager_, &statusInfo);
+        CHECK_ERROR_RETURN(cameraManager_ == nullptr || foldStatusCallback_ == nullptr);
+        Camera_FoldStatusInfo statusInfo;
+        auto cameraSize = foldStatusInfo.supportedCameras.size();
+        CHECK_ERROR_RETURN_LOG(cameraSize <= 0, "Invalid size.");
+        Camera_Device supportedCameras[cameraSize];
+        Camera_Device* supportedCamerasPtr[cameraSize];
+        uint32_t outSize = 0;
+        string cameraIds[cameraSize];
+        for (size_t index = 0; index < cameraSize; index++) {
+            Camera_Device* cameraDevice = &supportedCameras[outSize];
+            cameraDevice->cameraPosition =
+                static_cast<Camera_Position>(foldStatusInfo.supportedCameras[index]->GetPosition());
+            cameraIds[outSize] = foldStatusInfo.supportedCameras[index]->GetID();
+            cameraDevice->cameraId = cameraIds[outSize].data();
+            cameraDevice->cameraType =
+                static_cast<Camera_Type>(foldStatusInfo.supportedCameras[index]->GetCameraType());
+            cameraDevice->connectionType =
+                static_cast<Camera_Connection>(foldStatusInfo.supportedCameras[index]->GetConnectionType());
+            supportedCamerasPtr[outSize] = cameraDevice;
+            outSize++;
         }
+        statusInfo.supportedCameras = supportedCamerasPtr;
+        statusInfo.cameraSize = outSize;
+        statusInfo.foldStatus = (Camera_FoldStatus)foldStatusInfo.foldStatus;
+        foldStatusCallback_(cameraManager_, &statusInfo);
     }
 
 private:
@@ -514,12 +513,9 @@ Camera_ErrorCode Camera_Manager::CreateCameraInputWithPositionAndType(Camera_Pos
     sptr<CameraInput> innerCameraInput = nullptr;
     CameraPosition innerPosition = CameraPosition::CAMERA_POSITION_UNSPECIFIED;
     auto itr = g_NdkCameraPositionToFwk_.find(position);
-    if (itr != g_NdkCameraPositionToFwk_.end()) {
-        innerPosition = itr->second;
-    } else {
-        MEDIA_ERR_LOG("Camera_Manager::CreateCameraInputWithPositionAndType innerPosition not found!");
-        return CAMERA_INVALID_ARGUMENT;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(itr == g_NdkCameraPositionToFwk_.end(), CAMERA_INVALID_ARGUMENT,
+        "Camera_Manager::CreateCameraInputWithPositionAndType innerPosition not found!");
+    innerPosition = itr->second;
     CameraType innerType = static_cast<CameraType>(type);
 
     innerCameraInput = CameraManager::GetInstance()->CreateCameraInput(innerPosition, innerType);
@@ -544,9 +540,7 @@ Camera_ErrorCode Camera_Manager::CreatePreviewOutput(const Camera_Profile* profi
     std::istringstream iss(surfaceId);
     iss >> iSurfaceId;
     sptr<Surface> surface = SurfaceUtils::GetInstance()->GetSurface(iSurfaceId);
-    if (!surface) {
-        surface = Media::ImageReceiver::getSurfaceById(surfaceId);
-    }
+    surface = surface == nullptr ? Media::ImageReceiver::getSurfaceById(surfaceId) : surface;
     CHECK_ERROR_RETURN_RET_LOG(surface == nullptr, CAMERA_INVALID_ARGUMENT, "Failed to get previewOutput surface");
 
     surface->SetUserData(CameraManager::surfaceFormat, std::to_string(innerProfile.GetCameraFormat()));
@@ -566,9 +560,7 @@ Camera_ErrorCode Camera_Manager::CreatePreviewOutputUsedInPreconfig(const char* 
     std::istringstream iss(surfaceId);
     iss >> iSurfaceId;
     sptr<Surface> surface = SurfaceUtils::GetInstance()->GetSurface(iSurfaceId);
-    if (!surface) {
-        surface = Media::ImageReceiver::getSurfaceById(surfaceId);
-    }
+    surface = surface == nullptr ? Media::ImageReceiver::getSurfaceById(surfaceId) : surface;
     CHECK_ERROR_RETURN_RET_LOG(surface == nullptr, CAMERA_INVALID_ARGUMENT,
         "Camera_Manager::CreatePreviewOutputUsedInPreconfig get previewOutput surface fail!");
     int32_t retCode = CameraManager::GetInstance()->CreatePreviewOutputWithoutProfile(surface, &innerPreviewOutput);
@@ -676,9 +668,7 @@ Camera_ErrorCode Camera_Manager::CreateVideoOutput(const Camera_VideoProfile* pr
     std::istringstream iss(surfaceId);
     iss >> iSurfaceId;
     sptr<Surface> surface = SurfaceUtils::GetInstance()->GetSurface(iSurfaceId);
-    if (!surface) {
-        surface = Media::ImageReceiver::getSurfaceById(surfaceId);
-    }
+    surface = surface == nullptr ? Media::ImageReceiver::getSurfaceById(surfaceId) : surface;
     CHECK_ERROR_RETURN_RET_LOG(surface == nullptr, CAMERA_INVALID_ARGUMENT, "Failed to get videoOutput surface");
 
     surface->SetUserData(CameraManager::surfaceFormat, std::to_string(innerProfile.GetCameraFormat()));
@@ -730,21 +720,16 @@ Camera_ErrorCode Camera_Manager::GetCameraOrientation(Camera_Device* camera, uin
         cameraObjList.size());
     for (size_t index = 0; index < cameraObjList.size(); index++) {
         sptr<CameraDevice> innerCameraDevice = cameraObjList[index];
-        if (innerCameraDevice == nullptr) {
-            continue;
-        }
-        if (innerCameraDevice->GetID() == camera->cameraId) {
+        bool isExec = innerCameraDevice != nullptr && innerCameraDevice->GetID() == camera->cameraId
+        if (isExec) {
             cameraDevice = innerCameraDevice;
             break;
         }
     }
 
-    if (cameraDevice == nullptr) {
-        return CAMERA_SERVICE_FATAL_ERROR;
-    } else {
-        *orientation = cameraDevice->GetCameraOrientation();
-        return CAMERA_OK;
-    }
+    CHECK_ERROR_RETURN_RET(cameraDevice == nullptr, CAMERA_SERVICE_FATAL_ERROR);
+    *orientation = cameraDevice->GetCameraOrientation();
+    return CAMERA_OK;
 }
 
 Camera_ErrorCode Camera_Manager::GetHostDeviceName(Camera_Device* camera, char** hostDeviceName)
@@ -759,19 +744,16 @@ Camera_ErrorCode Camera_Manager::GetHostDeviceName(Camera_Device* camera, char**
         }
     }
 
-    if (device == nullptr) {
+    CHECK_ERROR_RETURN_RET(device == nullptr, CAMERA_SERVICE_FATAL_ERROR);
+    std::string deviceName = device->GetHostName();
+    *hostDeviceName = (char*)malloc(deviceName.size() + 1);
+    if (memcpy_s(*hostDeviceName, deviceName.size() + 1, deviceName.c_str(), deviceName.size()) != EOK) {
+        free(*hostDeviceName);
+        *hostDeviceName = nullptr;
         return CAMERA_SERVICE_FATAL_ERROR;
-    } else {
-        std::string deviceName = device->GetHostName();
-        *hostDeviceName = (char*)malloc(deviceName.size() + 1);
-        if (memcpy_s(*hostDeviceName, deviceName.size() + 1, deviceName.c_str(), deviceName.size()) != EOK) {
-            free(*hostDeviceName);
-            *hostDeviceName = nullptr;
-            return CAMERA_SERVICE_FATAL_ERROR;
-        }
-        (*hostDeviceName)[deviceName.size()] = '\0';
-        return CAMERA_OK;
     }
+    (*hostDeviceName)[deviceName.size()] = '\0';
+    return CAMERA_OK;
 }
 
 Camera_ErrorCode Camera_Manager::GetHostDeviceType(Camera_Device* camera, Camera_HostDeviceType* hostDeviceType)
@@ -786,22 +768,19 @@ Camera_ErrorCode Camera_Manager::GetHostDeviceType(Camera_Device* camera, Camera
         }
     }
 
-    if (device == nullptr) {
-        return CAMERA_SERVICE_FATAL_ERROR;
-    } else {
-        switch (device->GetDeviceType()) {
-            case Camera_HostDeviceType::HOST_DEVICE_TYPE_PHONE:
-                *hostDeviceType = Camera_HostDeviceType::HOST_DEVICE_TYPE_PHONE;
-                break;
-            case Camera_HostDeviceType::HOST_DEVICE_TYPE_TABLET:
-                *hostDeviceType = Camera_HostDeviceType::HOST_DEVICE_TYPE_TABLET;
-                break;
-            default:
-                *hostDeviceType = Camera_HostDeviceType::HOST_DEVICE_TYPE_UNKNOWN_TYPE;
-                break;
-        }
-        return CAMERA_OK;
+    CHECK_ERROR_RETURN_RET(device == nullptr, CAMERA_SERVICE_FATAL_ERROR);
+    switch (device->GetDeviceType()) {
+        case Camera_HostDeviceType::HOST_DEVICE_TYPE_PHONE:
+            *hostDeviceType = Camera_HostDeviceType::HOST_DEVICE_TYPE_PHONE;
+            break;
+        case Camera_HostDeviceType::HOST_DEVICE_TYPE_TABLET:
+            *hostDeviceType = Camera_HostDeviceType::HOST_DEVICE_TYPE_TABLET;
+            break;
+        default:
+            *hostDeviceType = Camera_HostDeviceType::HOST_DEVICE_TYPE_UNKNOWN_TYPE;
+            break;
     }
+    return CAMERA_OK;
 }
 
 Camera_ErrorCode Camera_Manager::GetSupportedSceneModes(Camera_Device* camera,
@@ -890,12 +869,9 @@ Camera_ErrorCode Camera_Manager::GetCameraDevice(Camera_Position position, Camer
 
     CameraPosition innerPosition = CameraPosition::CAMERA_POSITION_UNSPECIFIED;
     auto itr = g_NdkCameraPositionToFwk_.find(position);
-    if (itr != g_NdkCameraPositionToFwk_.end()) {
-        innerPosition = itr->second;
-    } else {
-        MEDIA_ERR_LOG("Camera_Manager::CreateCameraInputWithPositionAndType innerPosition not found!");
-        return CAMERA_INVALID_ARGUMENT;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(itr == g_NdkCameraPositionToFwk_.end(), CAMERA_INVALID_ARGUMENT,
+        "Camera_Manager::CreateCameraInputWithPositionAndType innerPosition not found!");
+    innerPosition = itr->second;
 
     CameraType innerType = static_cast<CameraType>(type);
     
@@ -905,11 +881,9 @@ Camera_ErrorCode Camera_Manager::GetCameraDevice(Camera_Position position, Camer
         "Camera_Manager::GetSupportedCameras  fail!");
     for (size_t i = 0; i < cameraObjList.size(); i++) {
         sptr<CameraDevice> cameraDevice = cameraObjList[i];
-        if (cameraDevice == nullptr) {
-            continue;
-        }
-        if (cameraDevice->GetPosition() == innerPosition &&
-            cameraDevice->GetCameraType() == innerType) {
+        bool isExec = cameraDevice != nullptr && cameraDevice->GetPosition() == innerPosition
+            && cameraDevice->GetCameraType() == innerType;
+        if (isExec) {
             cameraInfo = cameraDevice;
             break;
         }
