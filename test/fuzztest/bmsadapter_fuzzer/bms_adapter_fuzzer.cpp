@@ -88,7 +88,7 @@ void Test(uint8_t* data, size_t size)
         return;
     }
     
-    FuzzedDataProvider fdp(data,size);
+    FuzzedDataProvider fdp(data, size);
     if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
         return;
     }

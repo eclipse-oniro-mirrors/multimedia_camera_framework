@@ -86,7 +86,6 @@ void CameraListenerStubFuzzer::Test(uint8_t* data, size_t size)
         fuzz_->InvokerThread(code, dataMessageParcel, reply, option);
     }
 
-
     {
         MessageParcel dataMessageParcel;
         uint8_t dataSize = fdp.ConsumeIntegralInRange<uint8_t>(0, MAX_DATA_SIZE);

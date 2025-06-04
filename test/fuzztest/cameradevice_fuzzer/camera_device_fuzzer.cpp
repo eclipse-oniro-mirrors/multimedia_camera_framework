@@ -83,16 +83,17 @@ void CameraDeviceFuzzTest(FuzzedDataProvider& fdp)
     std::shared_ptr<OHOS::Camera::CameraMetadata> ability;
     ability = std::make_shared<OHOS::Camera::CameraMetadata>(itemCount, dataSize);
 
-    ability->addEntry(OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS, streamData.data(), streamData.size());
+    ability->addEntry(OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS,
+        streamData.data(), streamData.size());
 
     {
-        int32_t compensationRange[2] = {fdp.ConsumeIntegral<int32_t>(), fdp.ConsumeIntegral<int32_t>()};
+        int32_t compensationRange[2] =
+            {fdp.ConsumeIntegral<int32_t>(), fdp.ConsumeIntegral<int32_t>()};
         ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_RANGE, compensationRange,
             sizeof(compensationRange) / sizeof(compensationRange[0]));
     }
 
-    {                
-        
+    {
         float focalLength = fdp.ConsumeFloatingPoint<float>();
         ability->addEntry(OHOS_ABILITY_FOCAL_LENGTH, &focalLength, 1);
     }
@@ -108,7 +109,8 @@ void CameraDeviceFuzzTest(FuzzedDataProvider& fdp)
     }
 
     {
-        const camera_rational_t aeCompensationStep[] = {{fdp.ConsumeIntegral<int32_t>(), fdp.ConsumeIntegral<int32_t>()}};
+        const camera_rational_t aeCompensationStep[] = {{fdp.ConsumeIntegral<int32_t>(),
+            fdp.ConsumeIntegral<int32_t>()}};
         ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_STEP, &aeCompensationStep,
             sizeof(aeCompensationStep) / sizeof(aeCompensationStep[0]));
     }
@@ -138,7 +140,8 @@ void CameraDeviceFuzzTestUpdateSetting(FuzzedDataProvider& fdp)
     auto ability = std::make_shared<OHOS::Camera::CameraMetadata>(itemCount, dataSize);
     
     {
-        int32_t compensationRange[2] = {fdp.ConsumeIntegral<int32_t>(), fdp.ConsumeIntegral<int32_t>()};
+        int32_t compensationRange[2] = {fdp.ConsumeIntegral<int32_t>(),
+            fdp.ConsumeIntegral<int32_t>()};
         ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_RANGE, compensationRange,
             sizeof(compensationRange) / sizeof(compensationRange[0]));
     }
@@ -159,7 +162,8 @@ void CameraDeviceFuzzTestUpdateSetting(FuzzedDataProvider& fdp)
     }
 
     {
-        const camera_rational_t aeCompensationStep[] = {{fdp.ConsumeIntegral<int32_t>(), fdp.ConsumeIntegral<int32_t>()}};
+        const camera_rational_t aeCompensationStep[] = {{fdp.ConsumeIntegral<int32_t>(),
+            fdp.ConsumeIntegral<int32_t>()}};
         int8_t item = fdp.ConsumeIntegral<uint8_t>();
         ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_STEP, &aeCompensationStep,
             sizeof(aeCompensationStep) / sizeof(aeCompensationStep[0]));
@@ -249,7 +253,8 @@ void Test3(FuzzedDataProvider& fdp)
     GetPermission();
     auto manager = CameraManager::GetInstance();
     auto cameras = manager->GetSupportedCameras();
-    CHECK_ERROR_RETURN_LOG(cameras.size() < MIN_SIZE_NUM, "PhotoOutputFuzzer: GetSupportedCameras Error");
+    CHECK_ERROR_RETURN_LOG(cameras.size() < MIN_SIZE_NUM,
+        "PhotoOutputFuzzer: GetSupportedCameras Error");
     sptr<CameraDevice> camera = cameras[fdp.ConsumeIntegral<uint32_t>() % cameras.size()];
     camera->GetID();
     camera->GetMetadata();

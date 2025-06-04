@@ -33,15 +33,16 @@ std::shared_ptr<AvcodecTaskManager> AvcodecTaskManagerFuzzer::fuzz_{nullptr};
 void AvcodecTaskManagerFuzzer::AvcodecTaskManagerFuzzTest(FuzzedDataProvider& fdp)
 {
     sptr<AudioCapturerSession> session = new AudioCapturerSession();
-    VideoCodecType mode = static_cast<VideoCodecType>(fdp.ConsumeIntegral<uint8_t>() 
+    VideoCodecType mode = static_cast<VideoCodecType>(fdp.ConsumeIntegral<uint8_t>()
         % (VideoCodecType::VIDEO_ENCODE_TYPE_HEVC + CONST_2));
-    ColorSpace color = static_cast<ColorSpace>(fdp.ConsumeIntegral<uint8_t>() % (ColorSpace::H_LOG + CONST_2));
+    ColorSpace color = static_cast<ColorSpace>(fdp.ConsumeIntegral<uint8_t>()
+        % (ColorSpace::H_LOG + CONST_2));
     fuzz_ = std::make_shared<AvcodecTaskManager>(session, mode, color);
     CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
     fuzz_->GetTaskManager();
     fuzz_->GetEncoderManager();
     int64_t timestamp = fdp.ConsumeIntegral<int64_t>();
-    GraphicTransformType formType = static_cast<GraphicTransformType>(fdp.ConsumeIntegral<uint8_t>() 
+    GraphicTransformType formType =static_cast<GraphicTransformType>(fdp.ConsumeIntegral<uint8_t>()
         % (GraphicTransformType::GRAPHIC_ROTATE_BUTT + CONST_2));
     sptr<SurfaceBuffer> videoBuffer = SurfaceBuffer::Create();
     sptr<FrameRecord> frameRecord =
