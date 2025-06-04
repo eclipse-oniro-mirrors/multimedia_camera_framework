@@ -110,7 +110,7 @@ Camera_ErrorCode Camera_PhotoOutput::RegisterRawPhotoAvailableCallback(OH_PhotoO
     SurfaceError ret = innerPhotoOutput_->rawPhotoSurface_->RegisterConsumerListener(
         (sptr<IBufferConsumerListener>&)rawPhotoListener_);
     CHECK_ERROR_RETURN_RET_LOG(ret != SURFACE_ERROR_OK, CAMERA_SERVICE_FATAL_ERROR,
-    "Register surface consumer listener failed");
+        "Register surface consumer listener failed");
     rawPhotoListener_->SetCallback(callback);
     return CAMERA_OK;
 }
