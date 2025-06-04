@@ -323,7 +323,8 @@ napi_value TimeLapsePhotoSessionNapi::StartTryAE(napi_env env, napi_callback_inf
     napi_value thisVar;
     CAMERA_NAPI_GET_JS_OBJ_WITH_ZERO_ARGS(env, info, status, thisVar);
     TimeLapsePhotoSessionNapi* timeLapseObj  = Unwrap<TimeLapsePhotoSessionNapi>(env, thisVar);
-    CHECK_ERROR_RETURN_RET_LOG(timeLapseObj  == nullptr, nullptr, "%{public}s: Unwrap Napi Object Failed", __FUNCTION__);
+    CHECK_ERROR_RETURN_RET_LOG(timeLapseObj  == nullptr, nullptr,
+        "%{public}s: Unwrap Napi Object Failed", __FUNCTION__);
     timeLapseObj ->timeLapsePhotoSession_->LockForControl();
     int32_t ret = timeLapseObj ->timeLapsePhotoSession_->StartTryAE();
     timeLapseObj ->timeLapsePhotoSession_->UnlockForControl();

@@ -55,7 +55,7 @@ MoonCaptureBoostFeature::MoonCaptureBoostFeature(
         }
         SketchReferenceFovRange sketchReferencefovRange;
         sketchReferencefovRange.zoomMin = static_cast<float>(item.data.ui32[i]) / SKETCH_DIV;
-        sketchReferencefovRange.zoomMax = static_cast<float>(item.data.ui32[i + 1]) / SKETCH_DIV;        // Offset 1 data
+        sketchReferencefovRange.zoomMax = static_cast<float>(item.data.ui32[i + 1]) / SKETCH_DIV;  // Offset 1 data
         sketchReferencefovRange.referenceValue =
             static_cast<float>(item.data.ui32[i + 2]) / SKETCH_DIV; // Offset 2 data
         i = i + 2;                                                                        // Offset 2 data
