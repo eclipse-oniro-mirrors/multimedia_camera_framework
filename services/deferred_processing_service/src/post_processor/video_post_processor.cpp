@@ -324,6 +324,7 @@ bool VideoPostProcessor::ProcessStream(const StreamDescription& stream)
         surface = mpegManager_->GetSurface();
     } else if (stream.type == HDI::Camera::V1_3::MEDIA_STREAM_TYPE_MAKER) {
         surface = mpegManager_->GetMakerSurface();
+        DP_CHECK_EXECUTE(mpegManager_, mpegManager_->SetMarkSize(stream.width * stream.height));
     }
     DP_CHECK_ERROR_RETURN_RET_LOG(surface == nullptr, false, "Surface is nullptr.");
 

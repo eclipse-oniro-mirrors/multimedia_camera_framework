@@ -40,6 +40,7 @@ public:
     MediaManagerError NotifyEnd();
     sptr<IPCFileDescriptor> GetResultFd();
     void AddUserMeta(std::unique_ptr<MediaUserInfo> userInfo);
+    void SetMarkSize(int32_t size);
 
 private:
     class VideoCodecCallback;

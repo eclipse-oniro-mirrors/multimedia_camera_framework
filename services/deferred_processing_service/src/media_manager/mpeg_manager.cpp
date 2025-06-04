@@ -196,6 +196,11 @@ void MpegManager::AddUserMeta(std::unique_ptr<MediaUserInfo> userInfo)
     mediaManager_->AddUserMeta(userMeta);
 }
 
+void MpegManager::SetMarkSize(int32_t size)
+{
+    DP_CHECK_EXECUTE(mediaManager_, mediaManager_->SetMarkSize(size));
+}
+
 MediaManagerError MpegManager::InitVideoCodec()
 {
     DP_INFO_LOG("DPS_VIDEO: Create video codec.");
