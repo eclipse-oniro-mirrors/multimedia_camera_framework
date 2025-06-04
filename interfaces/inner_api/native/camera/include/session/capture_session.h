@@ -1900,6 +1900,7 @@ public:
      */
     void AddFunctionToMap(std::string ctrlTag, std::function<void()> func);
     void ExecuteAllFunctionsInMap();
+    void EnableAutoFrameRate(bool isEnable);
 protected:
 
     static const std::unordered_map<camera_awb_mode_t, WhiteBalanceMode> metaWhiteBalanceModeMap_;

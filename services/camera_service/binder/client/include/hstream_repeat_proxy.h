@@ -59,8 +59,6 @@ public:
 
     int32_t SetCameraApi(uint32_t apiCompatibleVersion) override;
 
-    int32_t ToggleAutoVideoFrameRate(bool isEnable) override;
-
 private:
     static inline BrokerDelegator<HStreamRepeatProxy> delegator_;
 };
