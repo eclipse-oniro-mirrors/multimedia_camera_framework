@@ -87,8 +87,7 @@ void CameraDeviceFuzzTest(FuzzedDataProvider& fdp)
         streamData.data(), streamData.size());
 
     {
-        int32_t compensationRange[2] =
-            {fdp.ConsumeIntegral<int32_t>(), fdp.ConsumeIntegral<int32_t>()};
+        int32_t compensationRange[2] = {fdp.ConsumeIntegral<int32_t>(), fdp.ConsumeIntegral<int32_t>()};
         ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_RANGE, compensationRange,
             sizeof(compensationRange) / sizeof(compensationRange[0]));
     }
