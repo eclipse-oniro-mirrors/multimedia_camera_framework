@@ -99,20 +99,19 @@ Camera_ErrorCode Camera_PhotoOutput::RegisterPhotoAvailableCallback(OH_PhotoOutp
 Camera_ErrorCode Camera_PhotoOutput::RegisterRawPhotoAvailableCallback(OH_PhotoOutput_PhotoAvailable callback)
 {
     std::shared_ptr<Profile> profile = innerPhotoOutput_->GetPhotoProfile();
-    if (rawPhotoListener_ == nullptr && profile != nullptr &&
-        innerPhotoOutput_->isRawImageDelivery_ &&
-        innerPhotoOutput_->rawPhotoSurface_ != nullptr) {
-        rawPhotoListener_ =
-            new (std::nothrow) RawPhotoListener(this, innerPhotoOutput_->rawPhotoSurface_);
-        CHECK_ERROR_RETURN_RET_LOG(rawPhotoListener_ == nullptr, CAMERA_SERVICE_FATAL_ERROR,
-            "Create raw photo listener failed");
+    bool isEnableRegister = rawPhotoListener_ == nullptr && profile != nullptr &&
+        innerPhotoOutput_->isRawImageDelivery_ && innerPhotoOutput_->rawPhotoSurface_ != nullptr;
+    CHECK_ERROR_RETURN_RET(isEnableRegister == false, CAMERA_OK);
+    rawPhotoListener_ =
+        new (std::nothrow) RawPhotoListener(this, innerPhotoOutput_->rawPhotoSurface_);
+    CHECK_ERROR_RETURN_RET_LOG(rawPhotoListener_ == nullptr, CAMERA_SERVICE_FATAL_ERROR,
+        "Create raw photo listener failed");
 
-        SurfaceError ret = innerPhotoOutput_->rawPhotoSurface_->RegisterConsumerListener(
-            (sptr<IBufferConsumerListener>&)rawPhotoListener_);
-        CHECK_ERROR_RETURN_RET_LOG(ret != SURFACE_ERROR_OK, CAMERA_SERVICE_FATAL_ERROR,
-            "Register surface consumer listener failed");
-        rawPhotoListener_->SetCallback(callback);
-    }
+    SurfaceError ret = innerPhotoOutput_->rawPhotoSurface_->RegisterConsumerListener(
+        (sptr<IBufferConsumerListener>&)rawPhotoListener_);
+    CHECK_ERROR_RETURN_RET_LOG(ret != SURFACE_ERROR_OK, CAMERA_SERVICE_FATAL_ERROR,
+        "Register surface consumer listener failed");
+    rawPhotoListener_->SetCallback(callback);
     return CAMERA_OK;
 }
 

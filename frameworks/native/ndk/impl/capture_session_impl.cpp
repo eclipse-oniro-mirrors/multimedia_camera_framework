@@ -771,12 +771,9 @@ Camera_ErrorCode Camera_CaptureSession::GetActiveColorSpace(OH_NativeBuffer_Colo
     int32_t ret = innerCaptureSession_->GetActiveColorSpace(innerColorSpace);
     CHECK_ERROR_RETURN_RET(ret != SUCCESS, FrameworkToNdkCameraError(ret));
     auto itr = g_fwToNdkColorSpace_.find(innerColorSpace);
-    if (itr != g_fwToNdkColorSpace_.end()) {
-        *colorSpace = itr->second;
-    } else {
-        MEDIA_ERR_LOG("colorSpace[%{public}d] is invalid", innerColorSpace);
-        return CAMERA_SERVICE_FATAL_ERROR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(itr == g_fwToNdkColorSpace_.end(),
+        CAMERA_SERVICE_FATAL_ERROR, "colorSpace[%{public}d] is invalid", innerColorSpace);
+    *colorSpace = itr->second;
     return CAMERA_OK;
 }
 
