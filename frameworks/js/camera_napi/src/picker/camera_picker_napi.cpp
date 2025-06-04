@@ -253,7 +253,7 @@ static std::shared_ptr<UIExtensionCallback> StartCameraAbility(
         MEDIA_ERR_LOG("StartCameraAbility CreateModalUIExtension fail");
         return nullptr;
     }
-    uiExtCallback->SetSessionId(sessionId);
+    uiCallback->SetSessionId(sessionId);
     return uiCallback;
 }
 

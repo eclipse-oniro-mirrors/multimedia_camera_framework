@@ -27,6 +27,7 @@
 #include "camera_output_capability.h"
 #include "listener_base.h"
 #include "napi/native_api.h"
+#include "napi/native_node_api.h"
 #include "napi/native_common.h"
 
 namespace OHOS {
