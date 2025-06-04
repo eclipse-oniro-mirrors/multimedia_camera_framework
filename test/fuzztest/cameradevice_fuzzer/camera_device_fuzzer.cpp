@@ -252,8 +252,7 @@ void Test3(FuzzedDataProvider& fdp)
     GetPermission();
     auto manager = CameraManager::GetInstance();
     auto cameras = manager->GetSupportedCameras();
-    CHECK_ERROR_RETURN_LOG(cameras.size() < MIN_SIZE_NUM,
-        "PhotoOutputFuzzer: GetSupportedCameras Error");
+    CHECK_ERROR_RETURN_LOG(cameras.size() < MIN_SIZE_NUM, "PhotoOutputFuzzer: GetSupportedCameras Error");
     sptr<CameraDevice> camera = cameras[fdp.ConsumeIntegral<uint32_t>() % cameras.size()];
     camera->GetID();
     camera->GetMetadata();
