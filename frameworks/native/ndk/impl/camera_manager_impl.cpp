@@ -721,7 +721,7 @@ Camera_ErrorCode Camera_Manager::GetCameraOrientation(Camera_Device* camera, uin
         cameraObjList.size());
     for (size_t index = 0; index < cameraObjList.size(); index++) {
         sptr<CameraDevice> innerCameraDevice = cameraObjList[index];
-        bool isExec = innerCameraDevice != nullptr && innerCameraDevice->GetID() == camera->cameraId
+        bool isExec = innerCameraDevice != nullptr && innerCameraDevice->GetID() == camera->cameraId;
         if (isExec) {
             cameraDevice = innerCameraDevice;
             break;
