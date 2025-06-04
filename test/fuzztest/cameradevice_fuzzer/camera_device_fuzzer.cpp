@@ -139,8 +139,7 @@ void CameraDeviceFuzzTestUpdateSetting(FuzzedDataProvider& fdp)
     auto ability = std::make_shared<OHOS::Camera::CameraMetadata>(itemCount, dataSize);
     
     {
-        int32_t compensationRange[2] = {fdp.ConsumeIntegral<int32_t>(),
-            fdp.ConsumeIntegral<int32_t>()};
+        int32_t compensationRange[2] = {fdp.ConsumeIntegral<int32_t>(), fdp.ConsumeIntegral<int32_t>()};
         ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_RANGE, compensationRange,
             sizeof(compensationRange) / sizeof(compensationRange[0]));
     }
