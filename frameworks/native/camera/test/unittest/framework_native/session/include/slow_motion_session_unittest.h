@@ -80,6 +80,9 @@ private:
     VideoProfile savedVideoProfile_;
 };
 
+class MockSlowMotionStateCallback : public OHOS::CameraStandard::SlowMotionStateCallback {
+    void OnSlowMotionState(const SlowMotionState state) override {}
+};
 }
 }
 
