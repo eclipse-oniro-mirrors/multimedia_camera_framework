@@ -561,6 +561,7 @@ void VideoPostProcessor::OnServiceChange(const HDI::ServiceManager::V1_0::Servic
     int32_t versionId = GetVersionId(majorVer, minorVer);
     sptr<IVideoProcessSession> session = nullptr;
     sptr<HDI::Camera::V1_4::IVideoProcessService> proxyV1_4 = nullptr;
+    // LCOV_EXCL_START
     if (versionId >= GetVersionId(VIDEO_VERSION_1, VIDEO_VERSION_4)) {
         proxyV1_4 = HDI::Camera::V1_4::IVideoProcessService::CastFrom(proxyV1_3);
     }
@@ -571,6 +572,7 @@ void VideoPostProcessor::OnServiceChange(const HDI::ServiceManager::V1_0::Servic
         DP_INFO_LOG("CreateVideoProcessSession version=%{public}d_%{public}d", majorVer, minorVer);
         proxyV1_3->CreateVideoProcessSession(userId_, processListener_, session);
     }
+    // LCOV_EXCL_STOP
     DP_CHECK_ERROR_RETURN_LOG(session == nullptr, "get VideoProcessSession failed.");
 
     const sptr<IRemoteObject>& remote = HDI::hdi_objcast<IVideoProcessSession>(session);

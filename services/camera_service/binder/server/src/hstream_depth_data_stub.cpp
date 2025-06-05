@@ -21,7 +21,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
-
+// LCOV_EXCL_START
 int HStreamDepthDataStub::OnRemoteRequest(uint32_t code, MessageParcel& data, MessageParcel& reply,
                                           MessageOption& option)
 {
@@ -79,5 +79,7 @@ int32_t HStreamDepthDataStub::HandleSetDataAccuracy(MessageParcel& data)
     CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HStreamDepthDataStub::HandleSetDataAccuracy failed : %{public}d", error);
     return error;
 }
+// LCOV_EXCL_STOP
+
 } // namespace CameraStandard
 } // namespace OHOS

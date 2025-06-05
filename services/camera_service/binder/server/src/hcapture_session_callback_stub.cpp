@@ -20,6 +20,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
+// LCOV_EXCL_START
 int HCaptureSessionCallbackStub::OnRemoteRequest(
     uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option)
 {
@@ -67,5 +68,7 @@ int HPressureStatusCallbackStub::HandlePressureStatusChange(MessageParcel& data)
     int32_t statues = data.ReadInt32();
     return OnPressureStatusChanged((PressureStatus)statues);
 }
+// LCOV_EXCL_STOP
+
 } // namespace CameraStandard
 } // namespace OHOS

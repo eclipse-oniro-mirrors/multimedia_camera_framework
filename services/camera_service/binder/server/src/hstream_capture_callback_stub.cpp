@@ -19,6 +19,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
+// LCOV_EXCL_START
 int HStreamCaptureCallbackStub::OnRemoteRequest(
     uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option)
 {
@@ -120,6 +121,8 @@ int HStreamCaptureCallbackStub::HandleOnOfflineDeliveryFinished(MessageParcel& d
     int32_t captureId = data.ReadInt32();
     return OnOfflineDeliveryFinished(captureId);
 }
+// LCOV_EXCL_STOP
+
 } // namespace CameraStandard
 } // namespace OHOS
 

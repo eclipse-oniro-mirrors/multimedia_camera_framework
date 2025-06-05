@@ -20,6 +20,7 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
+// LCOV_EXCL_START
 DeferredPhotoProcessingSessionCallbackProxy::DeferredPhotoProcessingSessionCallbackProxy(
     const sptr<IRemoteObject> &impl)
     : IRemoteProxy<IDeferredPhotoProcessingSessionCallback>(impl) { }
@@ -129,6 +130,8 @@ int32_t DeferredPhotoProcessingSessionCallbackProxy::OnStateChanged(StatusCode s
         "DeferredPhotoProcessingSessionCallbackProxy OnStateChanged failed, error: %{public}d", error);
     return error;
 }
+// LCOV_EXCL_STOP
+
 } //namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS

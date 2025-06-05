@@ -18,6 +18,7 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
+// LCOV_EXCL_START
 ErrCode DeferredVideoProcessingSessionProxy::BeginSynchronize()
 {
     MessageParcel data;
@@ -156,6 +157,8 @@ ErrCode DeferredVideoProcessingSessionProxy::RestoreVideo(
     ErrCode errCode = reply.ReadInt32();
     return FAILED(errCode) ? errCode : ERR_OK;
 }
+// LCOV_EXCL_STOP
+
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS

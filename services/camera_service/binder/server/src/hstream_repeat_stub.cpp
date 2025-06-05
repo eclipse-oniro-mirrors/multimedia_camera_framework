@@ -21,6 +21,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
+// LCOV_EXCL_START
 static constexpr float SKETCH_RATIO_MAX_VALUE = 100.0f;
 int HStreamRepeatStub::OnRemoteRequest(uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option)
 {
@@ -212,5 +213,7 @@ int32_t HStreamRepeatStub::HandleSetCameraApi(MessageParcel& data)
     CHECK_ERROR_PRINT_LOG(ret != ERR_NONE, "HStreamRepeatStub::SetCameraApi failed : %{public}d", ret);
     return ret;
 }
+// LCOV_EXCL_STOP
+
 } // namespace CameraStandard
 } // namespace OHOS

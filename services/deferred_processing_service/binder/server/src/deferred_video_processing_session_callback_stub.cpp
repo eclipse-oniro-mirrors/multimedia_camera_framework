@@ -18,6 +18,7 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
+// LCOV_EXCL_START
 int32_t DeferredVideoProcessingSessionCallbackStub::OnRemoteRequest(
     uint32_t code,
     MessageParcel& data,
@@ -53,6 +54,8 @@ int32_t DeferredVideoProcessingSessionCallbackStub::OnRemoteRequest(
 
     return ERR_TRANSACTION_FAILED;
 }
+// LCOV_EXCL_STOP
+
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS

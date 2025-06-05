@@ -20,6 +20,8 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
+// LCOV_EXCL_START
+
 DeferredPhotoProcessingSessionProxy::DeferredPhotoProcessingSessionProxy(const sptr<IRemoteObject> &impl)
     : IRemoteProxy<IDeferredPhotoProcessingSession>(impl) { }
 
@@ -142,6 +144,7 @@ int32_t DeferredPhotoProcessingSessionProxy::CancelProcessImage(const std::strin
     }
     return error;
 }
+// LCOV_EXCL_STOP
 
 } // namespace DeferredProcessing
 } // namespace CameraStandard

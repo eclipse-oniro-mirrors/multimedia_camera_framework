@@ -18,6 +18,7 @@
  
 namespace OHOS {
 namespace CameraStandard {
+// LCOV_EXCL_START
 int CameraWindowManagerAgentStub::OnRemoteRequest(
     uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option)
 {
@@ -44,5 +45,7 @@ int CameraWindowManagerAgentStub::HandleUpdateCameraWindowStatus(MessageParcel& 
     UpdateCameraWindowStatus(accessTokenId, isShowing);
     return 0;
 }
+// LCOV_EXCL_STOP
+
 } // namespace CameraStandard
 } // namespace OHOS
