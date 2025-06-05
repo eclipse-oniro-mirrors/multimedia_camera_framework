@@ -52,6 +52,7 @@
 #include "drain_manager.h"
 #include "audio_capturer_session.h"
 #include "safe_map.h"
+#include "display_manager.h"
 #ifdef CAMERA_USE_SENSOR
 #include "sensor_agent.h"
 #include "sensor_agent_type.h"
@@ -67,7 +68,6 @@ using namespace Media;
 constexpr uint32_t OPERATOR_DEFAULT_ENCODER_THREAD_NUMBER = 1;
 class PermissionStatusChangeCb;
 class CameraUseStateChangeCb;
-class DisplayRotationListener;
 class CameraServerPhotoProxy;
 
 class StreamContainer {
@@ -262,6 +262,23 @@ public:
     uint32_t postCacheFrameCount_ = CACHE_FRAME_COUNT;
     sptr<AvcodecTaskManager> taskManager_;
     std::vector<int32_t> GetFrameRateRange();
+
+    class DisplayRotationListener : public OHOS::Rosen::DisplayManager::IDisplayListener {
+    public:
+        explicit DisplayRotationListener() {};
+        virtual ~DisplayRotationListener() = default;
+        void OnCreate(Rosen::DisplayId) override {}
+        void OnDestroy(Rosen::DisplayId) override {}
+        void OnChange(Rosen::DisplayId displayId) override;
+
+        void AddHstreamRepeatForListener(sptr<HStreamRepeat> repeatStream);
+
+        void RemoveHstreamRepeatForListener(sptr<HStreamRepeat> repeatStream);
+
+    public:
+        std::list<sptr<HStreamRepeat>> repeatStreamList_;
+        std::mutex mStreamManagerLock_;
+    };
 
 private:
     int32_t Initialize(const uint32_t callerToken, int32_t opMode);
