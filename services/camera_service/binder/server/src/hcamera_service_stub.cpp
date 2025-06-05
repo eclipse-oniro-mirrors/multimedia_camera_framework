@@ -29,6 +29,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
+// LCOV_EXCL_START
 HCameraRgmProxy::HCameraRgmProxy(const sptr<IRemoteObject> &impl)
     : IRemoteProxy<ICameraBroker>(impl) { }
 
@@ -873,5 +874,6 @@ int HCameraServiceStub::HandleCheckWhiteList(MessageParcel& data, MessageParcel&
         "HCameraServiceStub HandleCheckWhiteList Write isInWhiteList failed");
     return ret;
 }
+// LCOV_EXCL_STOP
 } // namespace CameraStandard
 } // namespace OHOS

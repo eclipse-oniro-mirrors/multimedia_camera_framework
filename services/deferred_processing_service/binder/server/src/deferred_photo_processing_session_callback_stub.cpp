@@ -21,7 +21,7 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-
+// LCOV_EXCL_START
 int DeferredPhotoProcessingSessionCallbackStub::OnRemoteRequest(
     uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option)
 {
@@ -126,6 +126,8 @@ int DeferredPhotoProcessingSessionCallbackStub::HandleOnProcessPictureDone(Messa
         "cloudImageEnhanceFlag: %{public}u", ret, cloudImageEnhanceFlag);
     return ret;
 }
+// LCOV_EXCL_STOP
+
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS

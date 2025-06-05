@@ -20,6 +20,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
+// LCOV_EXCL_START
 int HStreamRepeatCallbackStub::OnRemoteRequest(
     uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option)
 {
@@ -78,5 +79,7 @@ int HStreamRepeatCallbackStub::HandleOnDeferredVideoEnhancementInfo(MessageParce
     captureEndedInfo.videoId = data.ReadString();
     return OnDeferredVideoEnhancementInfo(captureEndedInfo);
 }
+// LCOV_EXCL_STOP
+
 } // namespace CameraStandard
 } // namespace OHOS

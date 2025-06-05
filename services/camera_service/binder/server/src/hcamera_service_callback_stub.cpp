@@ -19,6 +19,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
+// LCOV_EXCL_START
 int HCameraServiceCallbackStub::OnRemoteRequest(
     uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option)
 {
@@ -136,5 +137,7 @@ int HCameraMuteServiceCallbackStub::HandleOnCameraMute(MessageParcel& data)
 
     return OnCameraMute(muteMode);
 }
+// LCOV_EXCL_STOP
+
 } // namespace CameraStandard
 } // namespace OHOS

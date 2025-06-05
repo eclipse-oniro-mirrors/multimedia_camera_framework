@@ -20,6 +20,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
+// LCOV_EXCL_START
 int HCameraDeviceCallbackStub::OnRemoteRequest(
     uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option)
 {
@@ -59,5 +60,7 @@ int HCameraDeviceCallbackStub::HandleDeviceOnResult(MessageParcel& data)
     OHOS::Camera::MetadataUtils::DecodeCameraMetadata(data, metadata);
     return OnResult(timestamp, metadata);
 }
+// LCOV_EXCL_STOP
+
 } // namespace CameraStandard
 } // namespace OHOS

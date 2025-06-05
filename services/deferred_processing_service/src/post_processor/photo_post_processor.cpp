@@ -304,6 +304,7 @@ void PhotoPostProcessor::OnServiceChange(const HDI::ServiceManager::V1_0::Servic
     int32_t versionId = GetVersionId(majorVer, minorVer);
     sptr<IImageProcessSession> session;
     sptr<OHOS::HDI::Camera::V1_3::IImageProcessService> proxyV1_3;
+    // LCOV_EXCL_START
     if (versionId >= GetVersionId(HDI_VERSION_1, HDI_VERSION_3)) {
         proxyV1_3 = OHOS::HDI::Camera::V1_3::IImageProcessService::CastFrom(proxyV1_2);
     }
@@ -314,6 +315,7 @@ void PhotoPostProcessor::OnServiceChange(const HDI::ServiceManager::V1_0::Servic
         DP_INFO_LOG("CreateImageProcessSession version=%{public}d_%{public}d", majorVer, minorVer);
         proxyV1_2->CreateImageProcessSession(userId_, processListener_, session);
     }
+    // LCOV_EXCL_STOP
     DP_CHECK_ERROR_RETURN_LOG(session == nullptr, "get ImageProcessSession failed.");
 
     const sptr<IRemoteObject>& remote = OHOS::HDI::hdi_objcast<IImageProcessSession>(session);

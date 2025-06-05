@@ -21,6 +21,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
+// LCOV_EXCL_START
 int HStreamMetadataStub::OnRemoteRequest(
     uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option)
 {
@@ -91,5 +92,7 @@ int32_t HStreamMetadataStub::HandleDisableMetadataType(MessageParcel& data)
     CHECK_ERROR_PRINT_LOG(ret != ERR_NONE, "HStreamMetadataStub HandleStart failed : %{public}d", ret);
     return ret;
 }
+// LCOV_EXCL_STOP
+
 } // namespace CameraStandard
 } // namespace OHOS

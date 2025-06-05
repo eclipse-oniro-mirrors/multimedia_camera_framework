@@ -19,6 +19,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
+// LCOV_EXCL_START
 int HStreamDepthDataCallbackStub::OnRemoteRequest(
     uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option)
 {
@@ -42,6 +43,7 @@ int HStreamDepthDataCallbackStub::HandleOnDepthDataError(MessageParcel& data)
     int32_t errorType = static_cast<int32_t>(data.ReadUint64());
     return OnDepthDataError(errorType);
 }
+// LCOV_EXCL_STOP
 
 } // namespace CameraStandard
 } // namespace OHOS

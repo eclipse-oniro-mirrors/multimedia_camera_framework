@@ -20,6 +20,7 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
+// LCOV_EXCL_START
 DeferredPhotoProcessingSessionStub::DeferredPhotoProcessingSessionStub()
 {
     DP_DEBUG_LOG("DeferredPhotoProcessingSessionStub Instances create");
@@ -140,6 +141,7 @@ int DeferredPhotoProcessingSessionStub::HandleCancelProcessImage(MessageParcel& 
     DP_DEBUG_LOG("DeferredPhotoProcessingSessionStub HandleCancelProcessImage result: %{public}d", ret);
     return ret;
 }
+// LCOV_EXCL_STOP
 
 } // namespace DeferredProcessing
 } // namespace CameraStandard

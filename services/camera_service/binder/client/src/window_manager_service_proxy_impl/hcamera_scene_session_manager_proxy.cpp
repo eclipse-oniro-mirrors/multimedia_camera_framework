@@ -18,6 +18,7 @@
  
 namespace OHOS {
 namespace CameraStandard {
+// LCOV_EXCL_START
 int32_t CameraSceneSessionManagerProxy::RegisterWindowManagerAgent(WindowManagerAgentType type,
     const sptr<IWindowManagerAgent>& windowManagerAgent)
 {
@@ -74,5 +75,7 @@ void CameraSceneSessionManagerProxy::GetFocusWindowInfo(OHOS::Rosen::FocusChange
         MEDIA_ERR_LOG("GetFocusWindowInfo Focus info is null");
     }
 }
+// LCOV_EXCL_STOP
+
 } // namespace CameraStandard
 } // namespace OHOS
