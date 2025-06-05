@@ -29,6 +29,14 @@ HStreamOperatorManager::HStreamOperatorManager() {}
 HStreamOperatorManager::~HStreamOperatorManager()
 {
     MEDIA_INFO_LOG("~HStreamOperatorManager");
+    CHECK_ERROR_RETURN(streamOperatorManagerMap_.empty());
+    MEDIA_INFO_LOG("~HStreamOperatorManager clear maps");
+    // avoid double free
+    {
+        decltype(streamOperatorManagerMap_) tempOpMap = std::move(streamOperatorManagerMap_);
+    }
+    MEDIA_INFO_LOG("~HStreamOperatorManager free dynamic lib");
+    CameraDynamicLoader::FreeDynamicLibDelayed(MEDIA_LIB_SO, LIB_DELAYED_UNLOAD_TIME);
 }
 
 sptr<HStreamOperatorManager> &HStreamOperatorManager::GetInstance()
@@ -60,7 +68,8 @@ void HStreamOperatorManager::RemoveStreamOperator(int32_t& hStreamOperatorId)
     std::lock_guard<std::mutex> lock(mapMutex_);
     CHECK_ERROR_RETURN(hStreamOperatorId < 0);
     auto streamOperator = streamOperatorManagerMap_.find(hStreamOperatorId);
-    CHECK_ERROR_RETURN(streamOperator == streamOperatorManagerMap_.end());
+    CHECK_ERROR_RETURN_LOG(streamOperator == streamOperatorManagerMap_.end(), "not found hStreamOperatorId: %{public}d",
+        hStreamOperatorId);
     streamOperatorManagerMap_.erase(hStreamOperatorId);
     if (streamOperatorManagerMap_.size() == 0) {
         CameraDynamicLoader::FreeDynamicLibDelayed(MEDIA_LIB_SO, LIB_DELAYED_UNLOAD_TIME);
@@ -77,17 +86,18 @@ void HStreamOperatorManager::AddTaskManager(int32_t& hStreamOperatorId, sptr<Avc
 
 void HStreamOperatorManager::RemoveTaskManager(int32_t& hStreamOperatorId)
 {
-    auto thisPtr = sptr<HStreamOperatorManager>(this);
-    thread asyncThread = thread([thisPtr, hStreamOperatorId]() {
+    MEDIA_INFO_LOG("HStreamOperatorManager::RemoveTaskManager hStreamOperatorId is %{public}d", hStreamOperatorId);
+    sptr<AvcodecTaskManager> taskManager = nullptr;
+    taskManagerMap_.Find(hStreamOperatorId, taskManager);
+    CHECK_ERROR_RETURN_LOG(!taskManager, "not found hStreamOperatorId: %{public}d", hStreamOperatorId);
+    thread asyncThread = thread([hStreamOperatorId, taskManager]() {
         CAMERA_SYNC_TRACE;
-        MEDIA_INFO_LOG("HStreamOperatorManager::RemoveStreamOperator hStreamOperatorId is %{public}d",
-            hStreamOperatorId);
-        sptr<AvcodecTaskManager> taskManager = nullptr;
-        thisPtr->taskManagerMap_.Find(hStreamOperatorId, taskManager);
+        MEDIA_INFO_LOG(
+            "HStreamOperatorManager::RemoveTaskManager thread hStreamOperatorId: %{public}d", hStreamOperatorId);
         int32_t delayTime = taskManager == nullptr || (taskManager && taskManager->isEmptyVideoFdMap()) ? 0 : 30;
         std::this_thread::sleep_for(std::chrono::seconds(delayTime));
-        thisPtr->taskManagerMap_.Erase(hStreamOperatorId);
     });
+    taskManagerMap_.Erase(hStreamOperatorId);
     asyncThread.detach();
 }
 
