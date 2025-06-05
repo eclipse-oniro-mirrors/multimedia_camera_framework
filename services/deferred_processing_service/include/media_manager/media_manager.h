@@ -24,6 +24,8 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
+static constexpr int32_t DEFAULT_MARK_INPUT_SIZE = 1024 * 28;
+
 class MediaManager {
 public:
     MediaManager() = default;
@@ -35,6 +37,7 @@ public:
     MediaManagerError ReadSample(Media::Plugins::MediaType type, std::shared_ptr<AVBuffer>& sample);
     MediaManagerError WriteSample(Media::Plugins::MediaType type, const std::shared_ptr<AVBuffer>& sample);
     void AddUserMeta(const std::shared_ptr<Meta>& userMeta);
+    void SetMarkSize(int32_t size);
 
     inline void GetMediaInfo(std::shared_ptr<MediaInfo>& mediaInfo)
     {
@@ -63,6 +66,7 @@ private:
     std::shared_ptr<Reader> recoverReader_ {nullptr};
     std::shared_ptr<Writer> outputWriter_ {nullptr};
     std::shared_ptr<MediaInfo> mediaInfo_ {nullptr};
+    int32_t markSize_ {DEFAULT_MARK_INPUT_SIZE};
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

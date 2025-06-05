@@ -27,7 +27,6 @@ namespace {
     constexpr int32_t TEMP_PTS_SIZE = 50;
     constexpr int32_t DEFAULT_CHANNEL_COUNT = 1;
     constexpr int32_t DEFAULT_AUDIO_INPUT_SIZE = 1024 * DEFAULT_CHANNEL_COUNT * sizeof(short);
-    constexpr int32_t DEFAULT_MARK_INPUT_SIZE = 1024 * 20;
     constexpr int32_t MAX_FRAME = 10000;
 }
 
@@ -77,8 +76,8 @@ MediaManagerError MediaManager::Pause()
     }
 
     DP_CHECK_ERROR_RETURN_RET_LOG(outputWriter_->Stop() == ERROR_FAIL, ERROR_FAIL, "Stop writer failed.");
-    prePFramePts_ = prePFramePts_ == -1 ? pausePts_ : prePFramePts_;
-    DP_CHECK_ERROR_RETURN_RET_LOG(prePFramePts_ < pausePts_ || prePFramePts_ == -1,
+    prePFramePts_ = prePFramePts_ <= 0 ? pausePts_ : prePFramePts_;
+    DP_CHECK_ERROR_RETURN_RET_LOG(prePFramePts_ <= 0 || prePFramePts_ < pausePts_,
         PAUSE_ABNORMAL, "Pause abnormal, will reprocess recover.");
 
     std::string lastPts = TEMP_PTS_TAG + std::to_string(prePFramePts_);
@@ -140,6 +139,11 @@ void MediaManager::AddUserMeta(const std::shared_ptr<Meta>& userMeta)
     outputWriter_->AddUserMeta(userMeta);
 }
 
+void MediaManager::SetMarkSize(int32_t size)
+{
+    DP_CHECK_EXECUTE(size > 0, markSize_ = size);
+}
+
 MediaManagerError MediaManager::Recover(const int64_t size)
 {
     DP_DEBUG_LOG("entered.");
@@ -162,7 +166,7 @@ MediaManagerError MediaManager::Recover(const int64_t size)
         if (sample->flag_ & AVCODEC_BUFFER_FLAG_SYNC_FRAME) {
             recoverPts_ = curPts;
         }
-        DP_LOOP_BREAK_LOG(curPts == pausePts_ || ret == EOS, "Recovering finished.");
+        DP_LOOP_BREAK_LOG(curPts > pausePts_ || ret == EOS, "Recovering finished.");
         DP_LOOP_ERROR_RETURN_RET_LOG(frameNum >= MAX_FRAME, ERROR_FAIL, "Over max size.");
 
         ret = outputWriter_->Write(Media::Plugins::MediaType::VIDEO, sample);
@@ -186,14 +190,14 @@ MediaManagerError MediaManager::RecoverDebugInfo()
 
     int32_t frameNum = 0;
     AVBufferConfig config;
-    config.size = DEFAULT_MARK_INPUT_SIZE;
+    config.size = markSize_;
     config.memoryType = MemoryType::SHARED_MEMORY;
     auto sample = AVBuffer::CreateAVBuffer(config);
     DP_CHECK_ERROR_RETURN_RET_LOG(sample == nullptr, ERROR_FAIL, "Create meta buffer failed.");
     for (;;) {
         auto ret = recoverReader_->Read(Media::Plugins::MediaType::TIMEDMETA, sample);
         DP_LOOP_ERROR_RETURN_RET_LOG(ret == ERROR_FAIL, ERROR_DEBUG_INFO, "Read debug data failed.");
-        DP_LOOP_BREAK_LOG(sample->pts_ == pausePts_ || ret == EOS, "Recovering debug data finished.");
+        DP_LOOP_BREAK_LOG(sample->pts_ > pausePts_ || ret == EOS, "Recovering debug data finished.");
 
         ret = outputWriter_->Write(Media::Plugins::MediaType::TIMEDMETA, sample);
         DP_LOOP_ERROR_RETURN_RET_LOG(ret == ERROR_FAIL, ERROR_DEBUG_INFO, "Write debug data failed.");
