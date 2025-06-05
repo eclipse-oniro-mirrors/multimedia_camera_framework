@@ -429,6 +429,50 @@ HWTEST_F(CameraSlowMotionSessionUnitTest, slow_motion_session_function_unittest_
     EXPECT_EQ(slowMotionSession->EnableMotionDetection(isEnable), CameraErrorCode::SESSION_NOT_CONFIG);
 }
 
+/*
+ * Feature: Framework
+ * Function: Test OnSlowMotionStateChange.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OnSlowMotionStateChange.
+ */
+HWTEST_F(CameraSlowMotionSessionUnitTest, slow_motion_session_function_unittest_004, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    sptr<CaptureSession> captureSession = cameraManager_->CreateCaptureSession(SceneMode::SLOW_MOTION);
+    sptr<SlowMotionSession> slowMotionSession =
+        static_cast<SlowMotionSession*>(captureSession.GetRefPtr());
+    ASSERT_NE(slowMotionSession, nullptr);
+
+    auto metadata = make_shared<OHOS::Camera::CameraMetadata>(10, 100);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadataNull = nullptr;
+    auto callback = make_shared<MockSlowMotionStateCallback>();
+    slowMotionSession->SetCallback(callback);
+
+    slowMotionSession->OnSlowMotionStateChange(metadataNull);
+    ASSERT_NE(slowMotionSession->GetApplicationCallback(), nullptr);
+
+    slowMotionSession->OnSlowMotionStateChange(metadata);
+    ASSERT_NE(slowMotionSession->GetApplicationCallback(), nullptr);
+
+    uint8_t state = 0;
+    metadata->addEntry(OHOS_STATUS_SLOW_MOTION_DETECTION, &state, 1);
+    slowMotionSession->OnSlowMotionStateChange(metadata);
+    ASSERT_NE(slowMotionSession->GetApplicationCallback(), nullptr);
+
+    auto metadata2 = make_shared<OHOS::Camera::CameraMetadata>(10, 100);
+    state = 6;
+    metadata2->addEntry(OHOS_STATUS_SLOW_MOTION_DETECTION, &state, 1);
+    slowMotionSession->OnSlowMotionStateChange(metadata2);
+    ASSERT_NE(slowMotionSession->GetApplicationCallback(), nullptr);
+}
+
 bool CameraSlowMotionSessionUnitTest::IsAspectRatioEqual(float a, float b)
 {
     const float EPSILON = 1e-6f;
