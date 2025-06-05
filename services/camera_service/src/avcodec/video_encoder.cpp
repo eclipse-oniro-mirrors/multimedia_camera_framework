@@ -208,6 +208,7 @@ bool VideoEncoder::EnqueueBuffer(sptr<FrameRecord> frameRecord, int32_t keyFrame
         std::lock_guard<std::mutex> lock(encoderMutex_);
         MediaAVCodec::Format format = MediaAVCodec::Format();
         format.PutIntValue(MediaDescriptionKey::MD_KEY_REQUEST_I_FRAME, true);
+        CHECK_ERROR_RETURN_RET_LOG(!encoder_, false, "encoder_ is null");
         encoder_->SetParameter(format);
     }
     sptr<SurfaceBuffer> buffer = frameRecord->GetSurfaceBuffer();
