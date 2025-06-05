@@ -40,7 +40,6 @@ private:
     int32_t HandleAttachMetaSurface(MessageParcel& data);
     int32_t HandleSetCameraRotation(MessageParcel& data);
     int32_t HandleSetCameraApi(MessageParcel& data);
-    int32_t HandleToggleAutoVideoFrameRate(MessageParcel& data);
 };
 } // namespace CameraStandard
 } // namespace OHOS

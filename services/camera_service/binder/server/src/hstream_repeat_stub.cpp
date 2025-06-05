@@ -76,9 +76,6 @@ int HStreamRepeatStub::OnRemoteRequest(uint32_t code, MessageParcel& data, Messa
         case static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_PRIVIEW_ROTATION):
             errCode = HandleSetCameraRotation(data);
             break;
-        case static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_ENABLE_AUTO_FRAME_RATE):
-            errCode = HandleToggleAutoVideoFrameRate(data);
-            break;
         case static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_API_VERSION):
             errCode = HandleSetCameraApi(data);
             break;
@@ -213,17 +210,6 @@ int32_t HStreamRepeatStub::HandleSetCameraApi(MessageParcel& data)
 
     int ret = SetCameraApi(apiCompatibleVersion);
     CHECK_ERROR_PRINT_LOG(ret != ERR_NONE, "HStreamRepeatStub::SetCameraApi failed : %{public}d", ret);
-    return ret;
-}
-
-int32_t HStreamRepeatStub::HandleToggleAutoVideoFrameRate(MessageParcel& data)
-{
-    CHECK_ERROR_RETURN_RET(!CheckSystemApp(), CAMERA_NO_PERMISSION);
-    bool isEnable = data.ReadBool();
- 
-    int ret = ToggleAutoVideoFrameRate(isEnable);
-    CHECK_ERROR_PRINT_LOG(ret != ERR_NONE,
-        "HStreamRepeatStub::HandleToggleAutoVideoFrameRate failed : %{public}d", ret);
     return ret;
 }
 } // namespace CameraStandard

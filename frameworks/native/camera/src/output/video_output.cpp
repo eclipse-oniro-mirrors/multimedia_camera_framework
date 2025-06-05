@@ -654,13 +654,9 @@ int32_t VideoOutput::EnableAutoVideoFrameRate(bool enable)
     bool isSupportedAutoVideoFps = IsAutoVideoFrameRateSupported();
     CHECK_ERROR_RETURN_RET_LOG(!isSupportedAutoVideoFps, CameraErrorCode::INVALID_ARGUMENT,
         "VideoOutput::EnableAutoVideoFrameRate does not supported.");
-    auto stream = GetStream();
-    sptr<IStreamRepeat> itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
-    CHECK_ERROR_RETURN_RET_LOG(itemStream == nullptr, CameraErrorCode::SUCCESS,
-        "VideoOutput::EnableAutoVideoFrameRate itemStream is nullptr.");
-    int32_t ret = itemStream-> ToggleAutoVideoFrameRate(enable);
-    CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, ServiceToCameraError(ret),
-        "VideoOutput::EnableAutoVideoFrameRate failed to set auto frame rate");
+    session->LockForControl();
+    session->EnableAutoFrameRate(enable);
+    session->UnlockForControl();
     return CameraErrorCode::SUCCESS;
 }
 } // namespace CameraStandard
