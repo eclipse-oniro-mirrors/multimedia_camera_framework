@@ -48,6 +48,7 @@ AvcodecTaskManager::~AvcodecTaskManager()
 {
     CAMERA_SYNC_TRACE;
     Release();
+    ClearTaskResource();
 }
 
 AvcodecTaskManager::AvcodecTaskManager(sptr<AudioCapturerSession> audioCaptureSession,
@@ -120,8 +121,13 @@ void AvcodecTaskManager::SetVideoFd(
     lock_guard<mutex> lock(videoFdMutex_);
     MEDIA_INFO_LOG("Set timestamp: %{public}" PRId64 ", captureId: %{public}d", timestamp, captureId);
     videoFdMap_.insert(std::make_pair(captureId, std::make_pair(timestamp, photoAssetProxy)));
-    MEDIA_DEBUG_LOG("video map size:%{public}zu", videoFdMap_.size());
+    MEDIA_INFO_LOG("video map size:%{public}zu", videoFdMap_.size());
     cvEmpty_.notify_all();
+}
+
+constexpr inline float MovingPhotoNanosecToMillisec(int64_t nanosec)
+{
+    return static_cast<float>(nanosec) / 1000000.0f;
 }
 
 sptr<AudioVideoMuxer> AvcodecTaskManager::CreateAVMuxer(vector<sptr<FrameRecord>> frameRecords, int32_t captureRotation,
@@ -140,13 +146,16 @@ sptr<AudioVideoMuxer> AvcodecTaskManager::CreateAVMuxer(vector<sptr<FrameRecord>
     OH_AVOutputFormat format = AV_OUTPUT_FORMAT_MPEG_4;
     int64_t timestamp = videoFdMap_[captureId].first;
     auto photoAssetProxy = videoFdMap_[captureId].second;
-    videoFdMap_.erase(captureId);
     ChooseVideoBuffer(frameRecords, choosedBuffer, timestamp, captureId);
     muxer->Create(format, photoAssetProxy);
     muxer->SetRotation(captureRotation);
     CHECK_EXECUTE(!choosedBuffer.empty(),
-        muxer->SetCoverTime(NanosecToMillisec(std::min(timestamp, choosedBuffer.back()->GetTimeStamp())
-        - choosedBuffer.front()->GetTimeStamp())));
+        {
+            muxer->SetCoverTime(MovingPhotoNanosecToMillisec(std::min(timestamp,
+                choosedBuffer.back()->GetTimeStamp()) - choosedBuffer.front()->GetTimeStamp()));
+            muxer->SetStartTime(MovingPhotoNanosecToMillisec(choosedBuffer.front()->GetTimeStamp()));
+        }
+    );
     auto formatVideo = make_shared<Format>();
     MEDIA_INFO_LOG("CreateAVMuxer videoCodecType_ = %{public}d", videoCodecType_);
     formatVideo->PutStringValue(MediaDescriptionKey::MD_KEY_CODEC_MIME, videoCodecType_
@@ -180,17 +189,26 @@ sptr<AudioVideoMuxer> AvcodecTaskManager::CreateAVMuxer(vector<sptr<FrameRecord>
     return muxer;
 }
 
-void AvcodecTaskManager::FinishMuxer(sptr<AudioVideoMuxer> muxer)
+void AvcodecTaskManager::FinishMuxer(sptr<AudioVideoMuxer> muxer, int32_t captureId)
 {
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("doMxuer video is finished");
-    if (muxer) {
-        muxer->Stop();
-        muxer->Release();
-        std::shared_ptr<PhotoAssetIntf> proxy = muxer->GetPhotoAssetProxy();
-        MEDIA_INFO_LOG("PhotoAssetProxy notify enter");
-        CHECK_EXECUTE(proxy, proxy->NotifyVideoSaveFinished());
-    }
+    CHECK_ERROR_RETURN(!muxer);
+    muxer->Stop();
+    muxer->Release();
+    std::shared_ptr<PhotoAssetIntf> proxy = muxer->GetPhotoAssetProxy();
+    MEDIA_INFO_LOG("PhotoAssetProxy notify enter");
+    CHECK_ERROR_RETURN(!proxy);
+    proxy->NotifyVideoSaveFinished();
+    lock_guard<mutex> lock(videoFdMutex_);
+    videoFdMap_.erase(captureId);
+    MEDIA_INFO_LOG("finishMuxer end, videoFdMap_ size is %{public}zu", videoFdMap_.size());
+}
+
+bool AvcodecTaskManager::isEmptyVideoFdMap()
+{
+    lock_guard<mutex> lock(videoFdMutex_);
+    return videoFdMap_.empty();
 }
 
 void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, uint64_t taskName,
@@ -207,7 +225,12 @@ void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, ui
         vector<sptr<FrameRecord>> choosedBuffer;
         sptr<AudioVideoMuxer> muxer = thisPtr->CreateAVMuxer(frameRecords, captureRotation, choosedBuffer, captureId);
         CHECK_ERROR_RETURN_LOG(muxer == nullptr, "CreateAVMuxer failed");
-        CHECK_ERROR_RETURN_LOG(choosedBuffer.empty(), "choosed empty buffer!");
+        if (choosedBuffer.empty()) {
+            lock_guard<mutex> lock(thisPtr->videoFdMutex_);
+            thisPtr->videoFdMap_.erase(captureId);
+            MEDIA_ERR_LOG("choosed empty buffer, videoFdMap_ size is %{public}zu", thisPtr->videoFdMap_.size());
+            return;
+        }
         int64_t videoStartTime = choosedBuffer.front()->GetTimeStamp();
         for (size_t index = 0; index < choosedBuffer.size(); index++) {
             MEDIA_DEBUG_LOG("write sample index %{public}zu", index);
@@ -238,7 +261,7 @@ void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, ui
         thisPtr->PrepareAudioBuffer(choosedBuffer, audioRecords, processedAudioRecords);
         thisPtr->CollectAudioBuffer(processedAudioRecords, muxer);
         #endif
-        thisPtr->FinishMuxer(muxer);
+        thisPtr->FinishMuxer(muxer, captureId);
     });
 }
 
