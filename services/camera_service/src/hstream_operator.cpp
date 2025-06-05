@@ -2108,7 +2108,7 @@ void MovingPhotoMetaListener::OnBufferAvailable()
     sptr<SyncFence> syncFence = SyncFence::INVALID_FENCE;
     SurfaceError surfaceRet = metaSurface->AcquireBuffer(buffer, syncFence, timestamp, damage);
     CHECK_ERROR_RETURN_LOG(surfaceRet != SURFACE_ERROR_OK, "Failed to acquire meta surface buffer");
-    surfaceRet = metaSurface->DetachBufferFromQueue(buffer, true);
+    surfaceRet = metaSurface->DetachBufferFromQueue(buffer);
     CHECK_ERROR_RETURN_LOG(surfaceRet != SURFACE_ERROR_OK, "Failed to detach meta buffer. %{public}d", surfaceRet);
     metaCache_->add({timestamp, buffer});
 }
