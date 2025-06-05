@@ -551,8 +551,12 @@ public:
     std::map<int32_t, sptr<SurfaceBuffer>> captureIdExifMap_;
     std::map<int32_t, sptr<SurfaceBuffer>> captureIdDebugMap_;
     std::atomic<bool> isRawImageDelivery_ = false;
-    std::shared_ptr<DeferredProcessing::TaskManager> taskManager_;
     std::map<int32_t, captureMonitorInfo> captureIdToCaptureInfoMap_;
+
+    void ClearTaskManager();
+    std::shared_ptr<DeferredProcessing::TaskManager> GetDefaultTaskManager();
+    std::shared_ptr<DeferredProcessing::TaskManager> SetDefaultTaskManager(std::string managerName,
+        int32_t numThreads);
 private:
     std::mutex callbackMutex_;
     std::mutex offlineStatusMutex_;
@@ -566,6 +570,9 @@ private:
     bool mIsHasEnableOfflinePhoto_ = false;
     bool isHasSwitched_ = false;
     bool isDepthBufferSupported_ = false;
+
+    std::mutex taskManagerMutex_;
+    std::shared_ptr<DeferredProcessing::TaskManager> taskManager_;
 };
 
 class HStreamCaptureCallbackImpl : public HStreamCaptureCallbackStub {

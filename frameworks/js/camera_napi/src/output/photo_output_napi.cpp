@@ -467,9 +467,10 @@ void AuxiliaryPhotoListener::OnBufferAvailable()
     MEDIA_INFO_LOG("AuxiliaryPhotoListener::OnBufferAvailable is called, surfaceName=%{public}s", surfaceName_.c_str());
     CHECK_ERROR_RETURN_LOG(!surface_, "AuxiliaryPhotoListener napi photoSurface_ is null");
     auto photoOutput = photoOutput_.promote();
-    if (photoOutput->taskManager_) {
+    auto taskManager = photoOutput->GetDefaultTaskManager();
+    if (taskManager) {
         wptr<AuxiliaryPhotoListener> thisPtr(this);
-        photoOutput->taskManager_->SubmitTask([thisPtr]() {
+        taskManager->SubmitTask([thisPtr]() {
             auto listener = thisPtr.promote();
             CHECK_EXECUTE(listener, listener->ExecuteDeepCopySurfaceBuffer());
         });
@@ -2054,10 +2055,10 @@ void PhotoOutputNapi::CreateMultiChannelPictureLisenter(napi_env env)
             photoListener_ = photoListener;
             pictureListener_ = pictureListener;
         }
-        if (photoOutput_->taskManager_ == nullptr) {
+        auto taskManager = photoOutput_->GetDefaultTaskManager();
+        if (taskManager == nullptr) {
             constexpr int32_t auxiliaryPictureCount = 4;
-            photoOutput_->taskManager_ = std::make_shared<DeferredProcessing::TaskManager>("AuxilaryPictureListener",
-                auxiliaryPictureCount, false);
+            taskManager = photoOutput_->SetDefaultTaskManager("AuxilaryPictureListener", auxiliaryPictureCount);
         }
     }
 }
@@ -2846,11 +2847,7 @@ void PhotoOutputNapi::UnregisterPhotoAssetAvailableCallbackListener(
         }
     }
     if (photoOutput_) {
-        if (photoOutput_->taskManager_) {
-            photoOutput_->taskManager_->CancelAllTasks();
-            photoOutput_->taskManager_.reset();
-            photoOutput_->taskManager_ = nullptr;
-        }
+        photoOutput_->ClearTaskManager();
     }
 }
 

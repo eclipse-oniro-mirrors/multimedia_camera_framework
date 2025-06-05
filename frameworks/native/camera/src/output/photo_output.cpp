@@ -326,11 +326,7 @@ PhotoOutput::~PhotoOutput()
 {
     MEDIA_DEBUG_LOG("Enter Into PhotoOutput::~PhotoOutput()");
     defaultCaptureSetting_ = nullptr;
-    if (taskManager_) {
-        taskManager_->CancelAllTasks();
-        taskManager_.reset();
-        taskManager_ = nullptr;
-    }
+    ClearTaskManager();
 }
 
 void PhotoOutput::SetNativeSurface(bool isNativeSurface)
@@ -559,6 +555,31 @@ void PhotoOutput::AcquireBufferToPrepareProxy(int32_t captureId)
     }
 }
 
+void PhotoOutput::ClearTaskManager()
+{
+    std::lock_guard<std::mutex> lock(taskManagerMutex_);
+    if (taskManager_ != nullptr) {
+        taskManager_->CancelAllTasks();
+        taskManager_ = nullptr;
+    }
+}
+
+std::shared_ptr<DeferredProcessing::TaskManager> PhotoOutput::GetDefaultTaskManager()
+{
+    std::lock_guard<std::mutex> lock(taskManagerMutex_);
+    return taskManager_;
+}
+
+std::shared_ptr<DeferredProcessing::TaskManager> PhotoOutput::SetDefaultTaskManager(std::string managerName,
+    int32_t numThreads)
+{
+    std::lock_guard<std::mutex> lock(taskManagerMutex_);
+    if (taskManager_ == nullptr) {
+        taskManager_ = std::make_shared<DeferredProcessing::TaskManager>(managerName, numThreads, false);
+    }
+    return taskManager_;
+}
+
 int32_t PhotoOutput::Capture(std::shared_ptr<PhotoCaptureSetting> photoCaptureSettings)
 {
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
@@ -684,11 +705,7 @@ int32_t PhotoOutput::Release()
     CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "PhotoOutput Failed to release!, errCode: %{public}d", errCode);
     defaultCaptureSetting_ = nullptr;
     CaptureOutput::Release();
-    if (taskManager_) {
-        taskManager_->CancelAllTasks();
-        taskManager_.reset();
-        taskManager_ = nullptr;
-    }
+    ClearTaskManager();
     return ServiceToCameraError(errCode);
 }
 
