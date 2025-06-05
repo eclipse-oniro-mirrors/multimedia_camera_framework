@@ -1,0 +1,53 @@
+From e79f756246a0cac2e539e18c8a3fcb263432a2d7 Mon Sep 17 00:00:00 2001
+From: n00564676 <n00564676@notesmail.huawei.com/>
+Date: Wed, 4 Jun 2025 09:59:32 +0800
+Subject: [PATCH] =?UTF-8?q?=E4=BF=9D=E7=95=99covertime=E7=B2=BE=E5=BA=A6?=
+ =?UTF-8?q?=20TicketNo:=20DTS2025060525206=20Description:=20=E4=BF=9D?=
+ =?UTF-8?q?=E7=95=99covertime=E7=B2=BE=E5=BA=A6=20Team:gitee=20Feature=20o?=
+ =?UTF-8?q?r=20Bugfix:=20Binary=20Source:=20sync=20from=20gitee=20PrivateC?=
+ =?UTF-8?q?ode(Yes/No):No=20------=20DO=20NOT=20MODIFY,=20AUTO-GENERATED!?=
+ =?UTF-8?q?=20------=20Gitee-Issue:=20#IC8XFP=20Time:=202025-05-20T02:52:1?=
+ =?UTF-8?q?8.329199Z=20PR-Num:=203323=20Gitee-PR:=20https://openharmony.gi?=
+ =?UTF-8?q?tee.com/openharmony/multimedia=5Fcamera=5Fframework/pulls/3323?=
+ =?UTF-8?q?=20cherry=20picked=20from=20commit=209c26f10f09dc48079549315253?=
+ =?UTF-8?q?e94268174dfd2d?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Change-Id: Idef26b0544903b406cee3c9ad159333478c71c1d
+---
+ .../camera_service/src/avcodec/avcodec_task_manager.cpp  | 9 +++++++--
+ 1 file changed, 7 insertions(+), 2 deletions(-)
+
+diff --git a/services/camera_service/src/avcodec/avcodec_task_manager.cpp b/services/camera_service/src/avcodec/avcodec_task_manager.cpp
+index 5b8823c34..d02e8ad50 100644
+--- a/services/camera_service/src/avcodec/avcodec_task_manager.cpp
++++ b/services/camera_service/src/avcodec/avcodec_task_manager.cpp
+@@ -133,6 +133,11 @@ void AvcodecTaskManager::SetVideoFd(int64_t timestamp, shared_ptr<PhotoAssetIntf
+     cvEmpty_.notify_all();
+ }
+ 
++constexpr inline float MovingPhotoNanosecToMillisec(int64_t nanosec)
++{
++    return static_cast<float>(nanosec) / 1000000.0f;
++}
++
+ sptr<AudioVideoMuxer> AvcodecTaskManager::CreateAVMuxer(vector<sptr<FrameRecord>> frameRecords, int32_t captureRotation,
+     vector<sptr<FrameRecord>> &choosedBuffer, int32_t captureId)
+ {
+@@ -154,9 +159,9 @@ sptr<AudioVideoMuxer> AvcodecTaskManager::CreateAVMuxer(vector<sptr<FrameRecord>
+     muxer->Create(format, photoAssetProxy);
+     muxer->SetRotation(captureRotation);
+     if (!choosedBuffer.empty()) {
+-        muxer->SetCoverTime(NanosecToMillisec(
++        muxer->SetCoverTime(MovingPhotoNanosecToMillisec(
+             std::min(timestamp, choosedBuffer.back()->GetTimeStamp()) - choosedBuffer.front()->GetTimeStamp()));
+-        muxer->SetStartTime(NanosecToMillisec(choosedBuffer.front()->GetTimeStamp()));
++        muxer->SetStartTime(MovingPhotoNanosecToMillisec(choosedBuffer.front()->GetTimeStamp()));
+     }
+     auto formatVideo = make_shared<Format>();
+     MEDIA_INFO_LOG("CreateAVMuxer videoCodecType_ = %{public}d", videoCodecType_);
+-- 
+2.45.2.huawei.8
+
