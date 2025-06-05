@@ -1025,7 +1025,7 @@ int32_t CaptureSession::RemoveOutput(sptr<CaptureOutput>& output)
 {
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("Enter Into CaptureSession::RemoveOutput");
-    CHECK_ERROR_RETURN_RET_LOG(!IsSessionConfiged(), CameraErrorCode::SESSION_NOT_CONFIG,
+    CHECK_ERROR_RETURN_RET_LOG(!IsSessionConfiged(), CameraErrorCode::OPERATION_NOT_ALLOWED,
         "CaptureSession::RemoveOutput session is not configed!");
     CHECK_ERROR_RETURN_RET_LOG(output == nullptr, ServiceToCameraError(CAMERA_INVALID_ARG),
         "CaptureSession::RemoveOutput output is null");
