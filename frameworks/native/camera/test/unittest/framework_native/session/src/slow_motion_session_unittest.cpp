@@ -437,7 +437,7 @@ HWTEST_F(CameraSlowMotionSessionUnitTest, slow_motion_session_function_unittest_
  * EnvConditions: NA
  * CaseDescription: Test OnSlowMotionStateChange.
  */
-HWTEST_F(CameraSlowMotionSessionUnitTest, slow_motion_session_function_unittest_002, TestSize.Level0)
+HWTEST_F(CameraSlowMotionSessionUnitTest, slow_motion_session_function_unittest_004, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
