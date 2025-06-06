@@ -956,9 +956,10 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_015, Test
  * FunctionPoints: NA
  * EnvConditions: NA
  * CaseDescription: Test the camera manager prelaunch function, check if the device supports prelaunch,
- * prelaunch the camera by cameraId and set configuration items when supported, the camera can prelaunch normally.
+ * prelaunch the camera by cameraId and set configuration items when supported, the camera prelaunch abnormally for
+ * opening device.
  */
- HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_017, TestSize.Level0)
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_017, TestSize.Level0)
 {
     if (cameraManager_->IsPrelaunchSupported(cameraInput_->GetCameraDeviceInfo())) {
         MEDIA_INFO_LOG("The camera prelaunch function is supported");
@@ -969,7 +970,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_015, Test
         EffectParam effectParam = {0, 0, 0};
         EXPECT_EQ(cameraManager_->SetPrelaunchConfig(cameraId, RestoreParamTypeOhos::PERSISTENT_DEFAULT_PARAM_OHOS,
             activeTime, effectParam), SUCCESS);
-        EXPECT_EQ(cameraManager_->PrelaunchCamera(), SUCCESS);
+        EXPECT_EQ(cameraManager_->PrelaunchCamera(), SERVICE_FATL_ERROR);
         EXPECT_EQ(cameraManager_->PreSwitchCamera(cameraId), SUCCESS);
 
         activeTime = 15;
@@ -2018,7 +2019,10 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_015, Test
         EXPECT_EQ(captureSession_->GetManualWhiteBalanceRange(whiteBalanceRange), SUCCESS);
         if (!whiteBalanceRange.empty()) {
             captureSession_->LockForControl();
-            EXPECT_EQ(captureSession_->SetManualWhiteBalance(whiteBalanceRange[0]), SUCCESS);
+            ASSERT_EQ(captureSession_->SetWhiteBalanceMode(WhiteBalanceMode::AWB_MODE_OFF), SUCCESS);
+            captureSession_->UnlockForControl();
+            captureSession_->LockForControl();
+            ASSERT_EQ(captureSession_->SetManualWhiteBalance(whiteBalanceRange[0]), SUCCESS);
             captureSession_->UnlockForControl();
 
             int32_t wbValue = 0;

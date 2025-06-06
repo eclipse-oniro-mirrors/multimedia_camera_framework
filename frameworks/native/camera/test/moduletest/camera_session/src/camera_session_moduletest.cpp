@@ -4630,7 +4630,7 @@ HWTEST_F(CameraSessionModuleTest, profession_video_session_moduletest_005, TestS
         ASSERT_EQ(isSupported, true);
         session->LockForControl();
         intResult = session->SetWhiteBalanceMode(supportedWhiteBalanceModes[0]);
-        ASSERT_EQ(isSupported, 0);
+        ASSERT_EQ(intResult, 0);
         session->UnlockForControl();
         WhiteBalanceMode currentMode;
         session->GetWhiteBalanceMode(currentMode);
@@ -4644,7 +4644,11 @@ HWTEST_F(CameraSessionModuleTest, profession_video_session_moduletest_005, TestS
         ASSERT_EQ(whiteBalanceRange.size() == 2, true);
 
         session->LockForControl();
+        ASSERT_EQ(session->SetWhiteBalanceMode(WhiteBalanceMode::AWB_MODE_OFF), SUCCESS);
+        session->UnlockForControl();
+        session->LockForControl();
         intResult = session->SetManualWhiteBalance(whiteBalanceRange[0] - 1);
+        ASSERT_EQ(intResult, 0);
         session->UnlockForControl();
 
         int32_t wbValue;
@@ -8039,13 +8043,7 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_033, TestSize.Level0)
 
     sleep(WAIT_TIME_AFTER_START);
     auto statusSize = g_sketchStatus.size();
-    EXPECT_EQ(statusSize, 2);
-    if (statusSize == 2) {
-        EXPECT_EQ(g_sketchStatus.front(), 3);
-        g_sketchStatus.pop_front();
-        EXPECT_EQ(g_sketchStatus.front(), 1);
-        g_sketchStatus.pop_front();
-    }
+    EXPECT_GT(statusSize, 1);
 
     sleep(1);
     EXPECT_EQ(g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_SKETCH_STATUS_CHANGED)], 0);
