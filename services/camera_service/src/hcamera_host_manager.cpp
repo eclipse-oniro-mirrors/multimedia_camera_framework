@@ -806,7 +806,6 @@ void HCameraHostManager::RemoveCameraDevice(const std::string& cameraId)
         auto statusCallback = statusCallback_.lock();
         CHECK_EXECUTE(statusCallback,
             statusCallback->OnCameraStatus(cameraId, CAMERA_STATUS_AVAILABLE, CallbackInvoker::APPLICATION));
-
     }
     {
         std::lock_guard<std::mutex> lock(openPrelaunchMutex_);

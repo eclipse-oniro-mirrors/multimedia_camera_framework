@@ -391,6 +391,7 @@ napi_value CameraPickerNapi::CreatePickerMediaType(napi_env env)
     MEDIA_DEBUG_LOG("CreatePickerMediaType is called");
     const char* pickerMediaType[] = { "PHOTO", "VIDEO" };
     const std::vector<std::string> pickerMediaTypeValue = { "photo", "video" };
+    const size_t typeSize = 2; // 2 is photo/video
 
     napi_value result = nullptr;
     napi_status status;
@@ -398,7 +399,7 @@ napi_value CameraPickerNapi::CreatePickerMediaType(napi_env env)
         status = napi_get_reference_value(env, mediaTypeRef_, &result);
         CHECK_ERROR_RETURN_RET(status == napi_ok, result);
     }
-    status = CameraNapiUtils::CreateObjectWithPropNameAndValues(env, &result, 2, pickerMediaType,
+    status = CameraNapiUtils::CreateObjectWithPropNameAndValues(env, &result, typeSize, pickerMediaType,
         pickerMediaTypeValue);
     if (status != napi_ok) {
         MEDIA_DEBUG_LOG("CreatePickerMediaType call end!");

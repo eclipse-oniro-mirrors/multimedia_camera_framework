@@ -279,7 +279,7 @@ private:
     std::vector<CameraRotateStrategyInfo> cameraRotateStrategyInfos_;
     bool isHasFitedRotation_ = false;
     std::string bundleName_ = "";
-     std::mutex cameraRotateUpdateBasicInfo_;
+    std::mutex cameraRotateUpdateBasicInfo_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

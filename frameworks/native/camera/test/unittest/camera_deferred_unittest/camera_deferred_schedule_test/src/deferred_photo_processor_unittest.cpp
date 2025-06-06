@@ -27,7 +27,7 @@ namespace CameraStandard {
 namespace DeferredProcessing {
 namespace {
     constexpr int32_t USER_ID = 100;
-    // constexpr int32_t OTHER_USER_ID = 101;
+
     const std::string TEST_IMAGE_1 = "testImage1";
     const std::string TEST_IMAGE_2 = "testImage2";
 }
