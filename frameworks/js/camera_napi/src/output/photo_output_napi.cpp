@@ -2058,7 +2058,9 @@ void PhotoOutputNapi::CreateMultiChannelPictureLisenter(napi_env env)
         auto taskManager = photoOutput_->GetDefaultTaskManager();
         if (taskManager == nullptr) {
             constexpr int32_t auxiliaryPictureCount = 4;
-            taskManager = photoOutput_->SetDefaultTaskManager("AuxilaryPictureListener", auxiliaryPictureCount);
+            auto taskManager = std::make_shared<DeferredProcessing::TaskManager>("AuxilaryPictureListener",
+                auxiliaryPictureCount, false);
+            photoOutput_->SetDefaultTaskManager(taskManager);
         }
     }
 }

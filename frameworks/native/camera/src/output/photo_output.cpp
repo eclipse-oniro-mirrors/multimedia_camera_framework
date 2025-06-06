@@ -570,14 +570,10 @@ std::shared_ptr<DeferredProcessing::TaskManager> PhotoOutput::GetDefaultTaskMana
     return taskManager_;
 }
 
-std::shared_ptr<DeferredProcessing::TaskManager> PhotoOutput::SetDefaultTaskManager(std::string managerName,
-    int32_t numThreads)
+void PhotoOutput::SetDefaultTaskManager(std::shared_ptr<DeferredProcessing::TaskManager> taskManager)
 {
     std::lock_guard<std::mutex> lock(taskManagerMutex_);
-    if (taskManager_ == nullptr) {
-        taskManager_ = std::make_shared<DeferredProcessing::TaskManager>(managerName, numThreads, false);
-    }
-    return taskManager_;
+    taskManager_ = taskManager;
 }
 
 int32_t PhotoOutput::Capture(std::shared_ptr<PhotoCaptureSetting> photoCaptureSettings)

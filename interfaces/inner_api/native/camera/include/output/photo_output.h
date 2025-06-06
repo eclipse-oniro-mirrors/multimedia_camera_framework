@@ -555,8 +555,7 @@ public:
 
     void ClearTaskManager();
     std::shared_ptr<DeferredProcessing::TaskManager> GetDefaultTaskManager();
-    std::shared_ptr<DeferredProcessing::TaskManager> SetDefaultTaskManager(std::string managerName,
-        int32_t numThreads);
+    void SetDefaultTaskManager(std::shared_ptr<DeferredProcessing::TaskManager> taskManager);
 private:
     std::mutex callbackMutex_;
     std::mutex offlineStatusMutex_;
