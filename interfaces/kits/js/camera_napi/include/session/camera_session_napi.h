@@ -329,6 +329,9 @@ public:
     static napi_value GetZoomRatioRange(napi_env env, napi_callback_info info);
     static napi_value GetZoomRatio(napi_env env, napi_callback_info info);
     static napi_value SetZoomRatio(napi_env env, napi_callback_info info);
+    static napi_value IsZoomCenterPointSupported(napi_env env, napi_callback_info info);
+    static napi_value GetZoomCenterPoint(napi_env env, napi_callback_info info);
+    static napi_value SetZoomCenterPoint(napi_env env, napi_callback_info info);
     static napi_value PrepareZoom(napi_env env, napi_callback_info info);
     static napi_value UnPrepareZoom(napi_env env, napi_callback_info info);
     static napi_value SetSmoothZoom(napi_env env, napi_callback_info info);
