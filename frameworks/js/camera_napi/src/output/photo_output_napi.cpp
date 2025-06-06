@@ -107,27 +107,30 @@ static const std::unordered_map<CM_ColorSpaceType, OHOS::ColorManager::ColorSpac
 
 void AsyncCompleteCallback(napi_env env, napi_status status, void* data)
 {
-    auto context = static_cast<PhotoOutputAsyncContext*>(data);
-    CHECK_ERROR_RETURN_LOG(context == nullptr, "CameraInputNapi AsyncCompleteCallback context is null");
-    MEDIA_INFO_LOG("CameraInputNapi AsyncCompleteCallback %{public}s, status = %{public}d", context->funcName.c_str(),
-        context->status);
+    auto photoOutputAsyncContext = static_cast<PhotoOutputAsyncContext*>(data);
+    CHECK_ERROR_RETURN_LOG(photoOutputAsyncContext == nullptr,
+        "CameraInputNapi AsyncCompleteCallback context is null");
+    MEDIA_INFO_LOG("CameraInputNapi AsyncCompleteCallback %{public}s, status = %{public}d",
+        photoOutputAsyncContext->funcName.c_str(), photoOutputAsyncContext->status);
     std::unique_ptr<JSAsyncContextOutput> jsContext = std::make_unique<JSAsyncContextOutput>();
-    jsContext->status = context->status;
-
-    if (!context->status) {
-        CameraNapiUtils::CreateNapiErrorObject(env, context->errorCode, context->errorMsg.c_str(), jsContext);
+    jsContext->status = photoOutputAsyncContext->status;
+ 
+    if (!photoOutputAsyncContext->status) {
+        CameraNapiUtils::CreateNapiErrorObject(env, photoOutputAsyncContext->errorCode,
+            photoOutputAsyncContext->errorMsg.c_str(), jsContext);
     } else {
         napi_get_undefined(env, &jsContext->data);
     }
-    if (!context->funcName.empty() && context->taskId > 0) {
+    if (!photoOutputAsyncContext->funcName.empty() && photoOutputAsyncContext->taskId > 0) {
         // Finish async trace
-        CAMERA_FINISH_ASYNC_TRACE(context->funcName, context->taskId);
-        jsContext->funcName = context->funcName;
+        CAMERA_FINISH_ASYNC_TRACE(photoOutputAsyncContext->funcName, photoOutputAsyncContext->taskId);
+        jsContext->funcName = photoOutputAsyncContext->funcName;
     }
-    CHECK_EXECUTE(context->work != nullptr,
-        CameraNapiUtils::InvokeJSAsyncMethod(env, context->deferred, context->callbackRef, context->work, *jsContext));
-    context->FreeHeldNapiValue(env);
-    delete context;
+    CHECK_EXECUTE(photoOutputAsyncContext->work != nullptr,
+        CameraNapiUtils::InvokeJSAsyncMethod(env, photoOutputAsyncContext->deferred,
+            photoOutputAsyncContext->callbackRef, photoOutputAsyncContext->work, *jsContext));
+    photoOutputAsyncContext->FreeHeldNapiValue(env);
+    delete photoOutputAsyncContext;
 }
 
 void ProcessCapture(PhotoOutputAsyncContext* context, bool isBurst)
@@ -348,8 +351,8 @@ void AuxiliaryPhotoListener::DeepCopyBuffer(
         "surfaceName=%{public}s captureId = %{public}d", surfaceBuffer->GetWidth(), surfaceBuffer->GetHeight(),
         surfaceBuffer->GetFormat(), surfaceName_.c_str(), captureId);
     BufferRequestConfig requestConfig = {
-        .width = surfaceBuffer->GetWidth(),
         .height = surfaceBuffer->GetHeight(),
+        .width = surfaceBuffer->GetWidth(),
         .strideAlignment = 0x8, // default stride is 8 Bytes.
         .format = surfaceBuffer->GetFormat(),
         .usage = surfaceBuffer->GetUsage(),
@@ -512,14 +515,14 @@ sptr<CameraPhotoProxy> CreateCameraPhotoProxy(sptr<SurfaceBuffer> surfaceBuffer)
     int32_t extraDataSize = 0;
     auto res = surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::dataSize, extraDataSize);
     if (res != 0) {
-        MEDIA_INFO_LOG("ExtraGet dataSize error %{public}d", res);
+        MEDIA_INFO_LOG("CreateCameraPhotoProxy ExtraGet dataSize error %{public}d", res);
     } else if (extraDataSize <= 0) {
-        MEDIA_INFO_LOG("ExtraGet dataSize Ok, but size <= 0");
+        MEDIA_INFO_LOG("CreateCameraPhotoProxy ExtraGet dataSize Ok, but size <= 0");
     } else if (static_cast<uint64_t>(extraDataSize) > size) {
         MEDIA_INFO_LOG("ExtraGet dataSize Ok,but dataSize %{public}d is bigger than bufferSize %{public}" PRIu64,
             extraDataSize, size);
     } else {
-        MEDIA_INFO_LOG("ExtraGet dataSize %{public}d", extraDataSize);
+        MEDIA_INFO_LOG("CreateCameraPhotoProxy ExtraGet dataSize %{public}d", extraDataSize);
         size = static_cast<uint64_t>(extraDataSize);
     }
     int32_t deferredImageFormat = 0;
@@ -533,7 +536,7 @@ sptr<CameraPhotoProxy> CreateCameraPhotoProxy(sptr<SurfaceBuffer> surfaceBuffer)
     res = surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::cloudImageEnhanceFlag, cloudImageEnhanceFlag);
     MEDIA_INFO_LOG("CreateCameraPhotoProxy extraGet cloudImageEnhanceFlag: %{public}d", cloudImageEnhanceFlag);
     if (res != 0) {
-        MEDIA_INFO_LOG("ExtraGet cloudImageEnhanceFlag error %{public}d", res);
+        MEDIA_INFO_LOG("CreateCameraPhotoProxy ExtraGet cloudImageEnhanceFlag error %{public}d", res);
     }
 
     sptr<CameraPhotoProxy> photoProxy = new(std::nothrow) CameraPhotoProxy(
@@ -936,9 +939,9 @@ void PhotoListener::DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<Su
         "captureId = %{public}d", surfaceBuffer->GetWidth(), surfaceBuffer->GetHeight(), surfaceBuffer->GetFormat(),
         "main", captureId);
     BufferRequestConfig requestConfig = {
-        .width = surfaceBuffer->GetWidth(),
         .height = surfaceBuffer->GetHeight(),
         .strideAlignment = 0x8, // default stride is 8 Bytes.
+        .width = surfaceBuffer->GetWidth(),
         .format = surfaceBuffer->GetFormat(),
         .usage = surfaceBuffer->GetUsage(),
         .timeout = 0,
@@ -1016,14 +1019,14 @@ void PhotoListener::CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, Buffer
     int32_t extraDataSize = 0;
     auto res = surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::dataSize, extraDataSize);
     if (res != 0) {
-        MEDIA_INFO_LOG("ExtraGet dataSize error %{public}d", res);
+        MEDIA_INFO_LOG("CreateMediaLibrary ExtraGet dataSize error %{public}d", res);
     } else if (extraDataSize <= 0) {
-        MEDIA_INFO_LOG("ExtraGet dataSize Ok, but size <= 0");
+        MEDIA_INFO_LOG("CreateMediaLibrary ExtraGet dataSize Ok, but size <= 0");
     } else if (static_cast<uint64_t>(extraDataSize) > size) {
         MEDIA_INFO_LOG("ExtraGet dataSize Ok,but dataSize %{public}d is bigger than bufferSize %{public}" PRIu64,
             extraDataSize, size);
     } else {
-        MEDIA_INFO_LOG("ExtraGet dataSize %{public}d", extraDataSize);
+        MEDIA_INFO_LOG("CreateMediaLibrary ExtraGet dataSize %{public}d", extraDataSize);
         size = static_cast<uint64_t>(extraDataSize);
     }
     int32_t deferredImageFormat = 0;
@@ -1769,7 +1772,7 @@ void ThumbnailListener::UpdateJSCallbackAsync(int32_t captureId, int64_t timesta
     std::unique_ptr<ThumbnailListenerInfo> callbackInfo =
         std::make_unique<ThumbnailListenerInfo>(this, captureId, timestamp, std::move(pixelMap));
     ThumbnailListenerInfo *event = callbackInfo.get();
-    auto task = [event]() {
+    auto taskAsync = [event]() {
         ThumbnailListenerInfo* callbackInfo = reinterpret_cast<ThumbnailListenerInfo*>(event);
         if (callbackInfo) {
             auto listener = callbackInfo->listener_.promote();
@@ -1781,7 +1784,7 @@ void ThumbnailListener::UpdateJSCallbackAsync(int32_t captureId, int64_t timesta
             delete callbackInfo;
         }
     };
-    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
+    if (napi_ok != napi_send_event(env_, taskAsync, napi_eprio_immediate)) {
         MEDIA_ERR_LOG("ThumbnailListener:UpdateJSCallbackAsync() failed to execute work");
     } else {
         callbackInfo.release();
@@ -2032,6 +2035,7 @@ bool PhotoOutputNapi::IsPhotoOutput(napi_env env, napi_value obj)
     if (status == napi_ok) {
         status = napi_instanceof(env, obj, constructor, &result);
         if (status != napi_ok) {
+            MEDIA_DEBUG_LOG("PhotoOutputNapi::IsPhotoOutput is failed");
             result = false;
         }
     }
@@ -2081,8 +2085,8 @@ napi_value PhotoOutputNapi::CreatePhotoOutput(napi_env env, Profile& profile, st
     CAMERA_SYNC_TRACE;
     napi_value result = nullptr;
     napi_get_undefined(env, &result);
-    napi_value constructor;
-    napi_status status = napi_get_reference_value(env, sConstructor_, &constructor);
+    napi_value constructors;
+    napi_status status = napi_get_reference_value(env, sConstructor_, &constructors);
     if (status == napi_ok) {
         MEDIA_INFO_LOG("CreatePhotoOutput surfaceId: %{public}s", surfaceId.c_str());
         sptr<Surface> photoSurface;
@@ -2106,7 +2110,7 @@ napi_value PhotoOutputNapi::CreatePhotoOutput(napi_env env, Profile& profile, st
             result, "failed to create CreatePhotoOutput");
         CHECK_EXECUTE(surfaceId == "", sPhotoOutput_->SetNativeSurface(true));
         CHECK_EXECUTE(sPhotoOutput_->IsYuvOrHeifPhoto(), sPhotoOutput_->CreateMultiChannel());
-        status = napi_new_instance(env, constructor, 0, nullptr, &result);
+        status = napi_new_instance(env, constructors, 0, nullptr, &result);
         sPhotoOutput_ = nullptr;
         CHECK_ERROR_RETURN_RET_LOG(status == napi_ok && result != nullptr, result,
             "Success to create photo output instance");
@@ -2298,14 +2302,14 @@ napi_value PhotoOutputNapi::Release(napi_env env, napi_callback_info info)
     MEDIA_INFO_LOG("Release is called");
     std::unique_ptr<PhotoOutputAsyncContext> asyncContext = std::make_unique<PhotoOutputAsyncContext>(
         "PhotoOutputNapi::Release", CameraNapiUtils::IncrementAndGet(photoOutputTaskId));
-    auto asyncFunction =
+    auto asyncFunc =
         std::make_shared<CameraNapiAsyncFunction>(env, "Release", asyncContext->callbackRef, asyncContext->deferred);
-    CameraNapiParamParser jsParamParser(env, info, asyncContext->objectInfo, asyncFunction);
+    CameraNapiParamParser jsParamParser(env, info, asyncContext->objectInfo, asyncFunc);
     CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument"), nullptr,
         "PhotoOutputNapi::Release invalid argument");
     asyncContext->HoldNapiValue(env, jsParamParser.GetThisVar());
     napi_status status = napi_create_async_work(
-        env, nullptr, asyncFunction->GetResourceName(),
+        env, nullptr, asyncFunc->GetResourceName(),
         [](napi_env env, void* data) {
             MEDIA_INFO_LOG("PhotoOutputNapi::Release running on worker");
             auto context = static_cast<PhotoOutputAsyncContext*>(data);
@@ -2319,15 +2323,15 @@ napi_value PhotoOutputNapi::Release(napi_env env, napi_callback_info info)
         AsyncCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
     if (status != napi_ok) {
         MEDIA_ERR_LOG("Failed to create napi_create_async_work for PhotoOutputNapi::Release");
-        asyncFunction->Reset();
+        asyncFunc->Reset();
     } else {
         asyncContext->queueTask =
             CameraNapiWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueTask("PhotoOutputNapi::Release");
         napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
         asyncContext.release();
     }
-    CHECK_ERROR_RETURN_RET(asyncFunction->GetAsyncFunctionType() == ASYNC_FUN_TYPE_PROMISE,
-        asyncFunction->GetPromise());
+    CHECK_ERROR_RETURN_RET(asyncFunc->GetAsyncFunctionType() == ASYNC_FUN_TYPE_PROMISE,
+        asyncFunc->GetPromise());
     return CameraNapiUtils::GetUndefinedValue(env);
 }
 
@@ -2388,6 +2392,7 @@ napi_value PhotoOutputNapi::IsQuickThumbnailSupported(napi_env env, napi_callbac
     napi_value argv[ARGS_ZERO];
     napi_value thisVar = nullptr;
 
+    MEDIA_DEBUG_LOG("PhotoOutputNapi::IsQuickThumbnailSupported get js args");
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
 
     napi_get_undefined(env, &result);
@@ -2411,6 +2416,7 @@ napi_value PhotoOutputNapi::DeferImageDeliveryFor(napi_env env, napi_callback_in
     size_t argc = ARGS_ONE;
     napi_value argv[ARGS_ONE] = {0};
     napi_value thisVar = nullptr;
+    MEDIA_DEBUG_LOG("PhotoOutputNapi::DeferImageDeliveryFor get js args");
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
     NAPI_ASSERT(env, argc == ARGS_ONE, "requires one parameter");
     napi_get_undefined(env, &result);
@@ -2434,6 +2440,7 @@ napi_value PhotoOutputNapi::IsDeferredImageDeliverySupported(napi_env env, napi_
     size_t argc = ARGS_ONE;
     napi_value argv[ARGS_ONE] = {0};
     napi_value thisVar = nullptr;
+    MEDIA_DEBUG_LOG("PhotoOutputNapi::IsDeferredImageDeliverySupported get js args");
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
     NAPI_ASSERT(env, argc == ARGS_ONE, "requires one parameter");
     napi_get_undefined(env, &result);
@@ -2514,7 +2521,7 @@ napi_value PhotoOutputNapi::GetPhotoRotation(napi_env env, napi_callback_info in
 
 napi_value PhotoOutputNapi::IsMovingPhotoSupported(napi_env env, napi_callback_info info)
 {
-    MEDIA_DEBUG_LOG("IsMotionPhotoSupported is called");
+    MEDIA_DEBUG_LOG("PhotoOutputNapi::IsMovingPhotoSupported is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ZERO;
@@ -2527,21 +2534,21 @@ napi_value PhotoOutputNapi::IsMovingPhotoSupported(napi_env env, napi_callback_i
     PhotoOutputNapi* photoOutputNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&photoOutputNapi));
     CHECK_ERROR_RETURN_RET_LOG(status != napi_ok || photoOutputNapi == nullptr, result,
-        "IsMotionPhotoSupported photoOutputNapi is null!");
+        "PhotoOutputNapi::IsMovingPhotoSupported photoOutputNapi is null!");
     auto session = photoOutputNapi->GetPhotoOutput()->GetSession();
     if (session != nullptr) {
         bool isSupported = session->IsMovingPhotoSupported();
         napi_get_boolean(env, isSupported, &result);
     } else {
         napi_get_boolean(env, false, &result);
-        MEDIA_ERR_LOG("IsMotionPhotoSupported call Failed!");
+        MEDIA_ERR_LOG("PhotoOutputNapi::IsMovingPhotoSupported call Failed!");
     }
     return result;
 }
 
 napi_value PhotoOutputNapi::EnableMovingPhoto(napi_env env, napi_callback_info info)
 {
-    MEDIA_DEBUG_LOG("enableMovingPhoto is called");
+    MEDIA_DEBUG_LOG("PhotoOutputNapi::enableMovingPhoto is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ONE;
@@ -2556,7 +2563,7 @@ napi_value PhotoOutputNapi::EnableMovingPhoto(napi_env env, napi_callback_info i
     PhotoOutputNapi* photoOutputNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&photoOutputNapi));
     CHECK_ERROR_RETURN_RET_LOG(status != napi_ok || photoOutputNapi == nullptr, result,
-        "EnableMovingPhoto photoOutputNapi is null!");
+        "PhotoOutputNapi::EnableMovingPhoto photoOutputNapi is null!");
     auto session = photoOutputNapi->GetPhotoOutput()->GetSession();
     if (session != nullptr) {
         bool isEnableMovingPhoto;
@@ -2574,7 +2581,7 @@ napi_value PhotoOutputNapi::EnableMovingPhoto(napi_env env, napi_callback_info i
 
 napi_value PhotoOutputNapi::GetSupportedMovingPhotoVideoCodecTypes(napi_env env, napi_callback_info info)
 {
-    MEDIA_DEBUG_LOG("IsMotionPhotoSupported is called");
+    MEDIA_DEBUG_LOG("PhotoOutputNapi::GetSupportedMovingPhotoVideoCodecTypes is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ZERO;
@@ -2587,7 +2594,7 @@ napi_value PhotoOutputNapi::GetSupportedMovingPhotoVideoCodecTypes(napi_env env,
     PhotoOutputNapi* photoOutputNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&photoOutputNapi));
     CHECK_ERROR_RETURN_RET_LOG(status != napi_ok || photoOutputNapi == nullptr, result,
-        "IsMotionPhotoSupported photoOutputNapi is null!");
+        "PhotoOutputNapi::GetSupportedMovingPhotoVideoCodecTypes photoOutputNapi is null!");
     vector<int32_t> videoCodecTypes = {VideoCodecType::VIDEO_ENCODE_TYPE_AVC, VideoCodecType::VIDEO_ENCODE_TYPE_HEVC};
     result = CameraNapiUtils::CreateJSArray(env, status, videoCodecTypes);
     if (status != napi_ok) {
@@ -2598,7 +2605,7 @@ napi_value PhotoOutputNapi::GetSupportedMovingPhotoVideoCodecTypes(napi_env env,
 
 napi_value PhotoOutputNapi::SetMovingPhotoVideoCodecType(napi_env env, napi_callback_info info)
 {
-    MEDIA_DEBUG_LOG("SetMovingPhotoVideoCodecType is called");
+    MEDIA_DEBUG_LOG("PhotoOutputNapi::SetMovingPhotoVideoCodecType is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ONE;
@@ -2613,7 +2620,7 @@ napi_value PhotoOutputNapi::SetMovingPhotoVideoCodecType(napi_env env, napi_call
     PhotoOutputNapi* photoOutputNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&photoOutputNapi));
     CHECK_ERROR_RETURN_RET_LOG(status != napi_ok || photoOutputNapi == nullptr, result,
-        "SetMovingPhotoVideoCodecType photoOutputNapi is null!");
+        "PhotoOutputNapi::SetMovingPhotoVideoCodecType photoOutputNapi is null!");
     if (photoOutputNapi->GetPhotoOutput() != nullptr) {
         int32_t codecType;
         napi_get_value_int32(env, argv[PARAM0], &codecType);
@@ -2626,7 +2633,7 @@ napi_value PhotoOutputNapi::SetMovingPhotoVideoCodecType(napi_env env, napi_call
 napi_value PhotoOutputNapi::EnableQuickThumbnail(napi_env env, napi_callback_info info)
 {
     CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
-        "SystemApi EnableQuickThumbnail is called!");
+        "SystemApi PhotoOutputNapi::EnableQuickThumbnail is called!");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ONE;
@@ -2677,7 +2684,7 @@ napi_value PhotoOutputNapi::IsRawDeliverySupported(napi_env env, napi_callback_i
 napi_value PhotoOutputNapi::EnableRawDelivery(napi_env env, napi_callback_info info)
 {
     CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
-        "SystemApi EnableRawDelivery is called!");
+        "SystemApi PhotoOutputNapi::EnableRawDelivery is called!");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ONE;

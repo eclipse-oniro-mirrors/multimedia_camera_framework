@@ -199,7 +199,7 @@ void DeferredPhotoProcSession::CameraServerDied(pid_t pid)
     deathRecipient_ = nullptr;
     ReconnectDeferredProcessingSession();
     if (callback_ != nullptr) {
-        MEDIA_INFO_LOG("Reconnect session successful, send sync requestion.");
+        MEDIA_INFO_LOG("DeferredPhotoProcSession Reconnect session successful, send sync requestion.");
         callback_->OnError("", DpsErrorCode::ERROR_SESSION_SYNC_NEEDED);
     }
     return;

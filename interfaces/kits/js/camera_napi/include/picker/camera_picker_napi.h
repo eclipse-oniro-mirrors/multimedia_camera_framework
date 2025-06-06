@@ -65,20 +65,20 @@ struct PickerContextProxy {
 
     Ace::UIContent* GetUIContent()
     {
-        auto context = mContext_.lock();
-        if (context == nullptr) {
+        auto uiContext  = mContext_.lock();
+        if (uiContext  == nullptr) {
             return nullptr;
         }
         switch (type_) {
             case PickerContextType::UI_EXTENSION: {
-                auto ctx = AbilityRuntime::Context::ConvertTo<AbilityRuntime::UIExtensionContext>(context);
+                auto ctx = AbilityRuntime::Context::ConvertTo<AbilityRuntime::UIExtensionContext>(uiContext);
                 if (ctx != nullptr) {
                     return ctx->GetUIContent();
                 }
                 break;
             }
             case PickerContextType::ABILITY: {
-                auto ctx = AbilityRuntime::Context::ConvertTo<AbilityRuntime::AbilityContext>(context);
+                auto ctx = AbilityRuntime::Context::ConvertTo<AbilityRuntime::AbilityContext>(uiContext);
                 if (ctx != nullptr) {
                     return ctx->GetUIContent();
                 }
@@ -106,13 +106,8 @@ public:
     void OnReceive(const OHOS::AAFwk::WantParams& request);
     void OnError(int32_t code, const std::string& name, const std::string& message);
     void OnRemoteReady(const std::shared_ptr<OHOS::Ace::ModalUIExtensionProxy>& uiProxy);
-    void OnDestroy();
     void CloseWindow();
-
-    inline void SetSessionId(int32_t sessionId)
-    {
-        sessionId_ = sessionId;
-    }
+    void OnDestroy();
 
     inline void WaitResultLock()
     {
@@ -122,10 +117,23 @@ public:
         }
     }
 
+    inline void SetSessionId(int32_t sessionId)
+    {
+        sessionId_ = sessionId;
+    }
+
     inline void NotifyResultLock()
     {
         std::unique_lock<std::mutex> lock(cbMutex_);
         cbFinishCondition_.notify_one();
+    }
+
+    inline std::string GetResultMediaType()
+    {
+        if (resultMode_ == "VIDEO") {
+            return "video";
+        }
+        return "photo";
     }
 
     inline int32_t GetResultCode()
@@ -138,20 +146,12 @@ public:
         return resultUri_;
     }
 
-    inline std::string GetResultMediaType()
-    {
-        if (resultMode_ == "VIDEO") {
-            return "video";
-        }
-        return "photo";
-    }
-
 private:
     bool FinishPicker(int32_t code);
     int32_t sessionId_ = 0;
     int32_t resultCode_ = 0;
-    std::string resultUri_ = "";
     std::string resultMode_ = "";
+    std::string resultUri_ = "";
     std::shared_ptr<PickerContextProxy> contextProxy_;
     std::condition_variable cbFinishCondition_;
     std::mutex cbMutex_;

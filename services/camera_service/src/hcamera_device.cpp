@@ -881,7 +881,7 @@ bool HCameraDevice::CheckMovingPhotoSupported(int32_t mode)
         uint32_t step = 3;
         for (uint32_t index = 0; index < metadataItem.count - 1;) {
             CHECK_EXECUTE(metadataItem.data.i32[index + 1] == 1, modes.push_back(metadataItem.data.i32[index]));
-            MEDIA_DEBUG_LOG("IsMovingPhotoSupported mode:%{public}d", metadataItem.data.i32[index]);
+            MEDIA_DEBUG_LOG("CheckMovingPhotoSupported mode:%{public}d", metadataItem.data.i32[index]);
             index += step;
         }
     }

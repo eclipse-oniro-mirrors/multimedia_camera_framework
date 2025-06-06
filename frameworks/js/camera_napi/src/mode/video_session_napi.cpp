@@ -64,7 +64,7 @@ napi_value VideoSessionNapi::Init(napi_env env, napi_value exports)
 
 napi_value VideoSessionNapi::CreateCameraSession(napi_env env)
 {
-    MEDIA_DEBUG_LOG("CreateCameraSession is called");
+    MEDIA_DEBUG_LOG("VideoSessionNapi::CreateCameraSession is called");
     CAMERA_SYNC_TRACE;
     napi_status status;
     napi_value result = nullptr;
@@ -73,20 +73,20 @@ napi_value VideoSessionNapi::CreateCameraSession(napi_env env)
     if (status == napi_ok) {
         sCameraSession_ = CameraManager::GetInstance()->CreateCaptureSession(SceneMode::VIDEO);
         if (sCameraSession_ == nullptr) {
-            MEDIA_ERR_LOG("Failed to create Video session instance");
+            MEDIA_ERR_LOG("VideoSessionNapi::CreateCameraSession Failed to create instance");
             napi_get_undefined(env, &result);
             return result;
         }
         status = napi_new_instance(env, constructor, 0, nullptr, &result);
         sCameraSession_ = nullptr;
         if (status == napi_ok && result != nullptr) {
-            MEDIA_DEBUG_LOG("success to create Video session napi instance");
+            MEDIA_DEBUG_LOG("VideoSessionNapi::CreateCameraSession success to create napi instance");
             return result;
         } else {
-            MEDIA_ERR_LOG("Failed to create Video session napi instance");
+            MEDIA_ERR_LOG("VideoSessionNapi::CreateCameraSession Failed to create napi instance");
         }
     }
-    MEDIA_ERR_LOG("Failed to create Video session napi instance last");
+    MEDIA_ERR_LOG("VideoSessionNapi::CreateCameraSession Failed to create napi instance last");
     napi_get_undefined(env, &result);
     return result;
 }

@@ -81,8 +81,8 @@ BufferHandle *CameraCloneBufferHandle(const BufferHandle *handle)
             return nullptr;
         }
     }
-    newHandle->width = handle->width;
     newHandle->stride = handle->stride;
+    newHandle->width = handle->width;
     newHandle->height = handle->height;
     newHandle->size = handle->size;
     newHandle->format = handle->format;

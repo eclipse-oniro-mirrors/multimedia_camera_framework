@@ -382,18 +382,19 @@ napi_value CameraNapiUtils::ProcessingPhysicalApertures(napi_env env, std::vecto
 napi_value CameraNapiUtils::CreateJSArray(napi_env env, napi_status &status,
     std::vector<int32_t> nativeArray)
 {
-    MEDIA_DEBUG_LOG("CreateJSArray is called");
-    napi_value jsArray = nullptr;
+    MEDIA_DEBUG_LOG("CameraNapiUtils::CreateJSArray is called");
+ 
     napi_value item = nullptr;
-
-    CHECK_ERROR_PRINT_LOG(nativeArray.empty(), "nativeArray is empty");
-
-    status = napi_create_array(env, &jsArray);
-    if (status == napi_ok) {
+    napi_value jsArray = nullptr;
+ 
+    if (nativeArray.empty()) {
+        MEDIA_ERR_LOG("nativeArray is empty");
         for (size_t i = 0; i < nativeArray.size(); i++) {
             napi_create_int32(env, nativeArray[i], &item);
-            CHECK_ERROR_RETURN_RET_LOG(napi_set_element(env, jsArray, i, item) != napi_ok, nullptr,
-                "Failed to create profile napi wrapper object");
+            if (napi_set_element(env, jsArray, i, item) != napi_ok) {
+                MEDIA_ERR_LOG("CameraNapiUtils::CreateJSArray Failed to create profile napi wrapper object");
+                return nullptr;
+            }
         }
     }
     return jsArray;

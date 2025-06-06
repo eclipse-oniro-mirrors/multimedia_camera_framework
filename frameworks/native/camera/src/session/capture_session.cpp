@@ -543,14 +543,14 @@ bool CaptureSession::CanAddInput(sptr<CaptureInput>& input)
 
 void CaptureSession::GetMetadataFromService(sptr<CameraDevice> device)
 {
-    CHECK_ERROR_RETURN_LOG(device == nullptr, "GetMetadataFromService device is nullptr");
+    CHECK_ERROR_RETURN_LOG(device == nullptr, "CaptureSession::GetMetadataFromService device is nullptr");
     auto cameraId = device->GetID();
     auto serviceProxy = CameraManager::GetInstance()->GetServiceProxy();
-    CHECK_ERROR_RETURN_LOG(serviceProxy == nullptr, "GetMetadataFromService serviceProxy is null");
+    CHECK_ERROR_RETURN_LOG(serviceProxy == nullptr, "CaptureSession::GetMetadataFromService serviceProxy is null");
     std::shared_ptr<OHOS::Camera::CameraMetadata> metaData;
     serviceProxy->GetCameraAbility(cameraId, metaData);
     CHECK_ERROR_RETURN_LOG(metaData == nullptr,
-        "GetMetadataFromService GetDeviceMetadata failed");
+        "CaptureSession::GetMetadataFromService GetDeviceMetadata failed");
     device->AddMetadata(metaData);
 }
 

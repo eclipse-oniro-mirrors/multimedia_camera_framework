@@ -64,7 +64,8 @@ CameraServerPhotoProxy::~CameraServerPhotoProxy()
 
 int32_t CameraServerPhotoProxy::CameraFreeBufferHandle(BufferHandle *handle)
 {
-    CHECK_ERROR_RETURN_RET_LOG(handle == nullptr, 0, "CameraFreeBufferHandle with nullptr handle");
+    CHECK_ERROR_RETURN_RET_LOG(handle == nullptr, 0,
+        "CameraServerPhotoProxy::CameraFreeBufferHandle with nullptr handle");
     if (handle->fd >= 0) {
         close(handle->fd);
         handle->fd = -1;

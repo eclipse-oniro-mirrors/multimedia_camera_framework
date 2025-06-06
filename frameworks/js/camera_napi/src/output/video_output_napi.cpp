@@ -27,6 +27,7 @@
 #include "camera_output_capability.h"
 #include "listener_base.h"
 #include "napi/native_api.h"
+#include "napi/native_node_api.h"
 #include "napi/native_common.h"
 
 namespace OHOS {
@@ -34,26 +35,29 @@ namespace CameraStandard {
 namespace {
 void AsyncCompleteCallback(napi_env env, napi_status status, void* data)
 {
-    auto context = static_cast<VideoOutputAsyncContext*>(data);
-    CHECK_ERROR_RETURN_LOG(context == nullptr, "VideoOutputNapi AsyncCompleteCallback context is null");
-    MEDIA_INFO_LOG("VideoOutputNapi AsyncCompleteCallback %{public}s, status = %{public}d", context->funcName.c_str(),
-        context->status);
+    auto videoOutputAsyncContext = static_cast<VideoOutputAsyncContext*>(data);
+    CHECK_ERROR_RETURN_LOG(videoOutputAsyncContext == nullptr,
+        "VideoOutputNapi AsyncCompleteCallback context is null");
+    MEDIA_INFO_LOG("VideoOutputNapi AsyncCompleteCallback %{public}s, status = %{public}d",
+        videoOutputAsyncContext->funcName.c_str(), videoOutputAsyncContext->status);
     std::unique_ptr<JSAsyncContextOutput> jsContext = std::make_unique<JSAsyncContextOutput>();
-    jsContext->status = context->status;
-    if (!context->status) {
-        CameraNapiUtils::CreateNapiErrorObject(env, context->errorCode, context->errorMsg.c_str(), jsContext);
+    jsContext->status = videoOutputAsyncContext->status;
+    if (!videoOutputAsyncContext->status) {
+        CameraNapiUtils::CreateNapiErrorObject(env, videoOutputAsyncContext->errorCode,
+            videoOutputAsyncContext->errorMsg.c_str(), jsContext);
     } else {
         napi_get_undefined(env, &jsContext->data);
     }
-    if (!context->funcName.empty() && context->taskId > 0) {
+    if (!videoOutputAsyncContext->funcName.empty() && videoOutputAsyncContext->taskId > 0) {
         // Finish async trace
-        CAMERA_FINISH_ASYNC_TRACE(context->funcName, context->taskId);
-        jsContext->funcName = context->funcName;
+        CAMERA_FINISH_ASYNC_TRACE(videoOutputAsyncContext->funcName, videoOutputAsyncContext->taskId);
+        jsContext->funcName = videoOutputAsyncContext->funcName;
     }
-    CHECK_EXECUTE(context->work != nullptr,
-        CameraNapiUtils::InvokeJSAsyncMethod(env, context->deferred, context->callbackRef, context->work, *jsContext));
-    context->FreeHeldNapiValue(env);
-    delete context;
+    CHECK_EXECUTE(videoOutputAsyncContext->work != nullptr,
+        CameraNapiUtils::InvokeJSAsyncMethod(env, videoOutputAsyncContext->deferred,
+            videoOutputAsyncContext->callbackRef, videoOutputAsyncContext->work, *jsContext));
+    videoOutputAsyncContext->FreeHeldNapiValue(env);
+    delete videoOutputAsyncContext;
 }
 } // namespace
 
@@ -66,26 +70,19 @@ VideoCallbackListener::VideoCallbackListener(napi_env env) : ListenerBase(env) {
 void VideoCallbackListener::UpdateJSCallbackAsync(VideoOutputEventType eventType, const VideoCallbackInfo& info) const
 {
     MEDIA_DEBUG_LOG("UpdateJSCallbackAsync is called");
-    uv_loop_s* loop = nullptr;
-    napi_get_uv_event_loop(env_, &loop);
-    CHECK_ERROR_RETURN_LOG(!loop, "failed to get event loop");
-    uv_work_t* work = new(std::nothrow) uv_work_t;
-    CHECK_ERROR_RETURN_LOG(!work, "failed to allocate work");
     std::unique_ptr<VideoOutputCallbackInfo> callbackInfo =
         std::make_unique<VideoOutputCallbackInfo>(eventType, info, shared_from_this());
-    work->data = callbackInfo.get();
-    int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
-        VideoOutputCallbackInfo* callbackInfo = reinterpret_cast<VideoOutputCallbackInfo *>(work->data);
+    VideoOutputCallbackInfo *event = callbackInfo.get();
+    auto task = [event]() {
+        VideoOutputCallbackInfo* callbackInfo = reinterpret_cast<VideoOutputCallbackInfo *>(event);
         if (callbackInfo) {
             auto listener = callbackInfo->listener_.lock();
             CHECK_EXECUTE(listener, listener->UpdateJSCallback(callbackInfo->eventType_, callbackInfo->info_));
             delete callbackInfo;
         }
-        delete work;
-    }, uv_qos_user_initiated);
-    if (ret) {
+    };
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
         MEDIA_ERR_LOG("failed to execute work");
-        delete work;
     }  else {
         callbackInfo.release();
     }
@@ -294,6 +291,7 @@ bool VideoOutputNapi::IsVideoOutput(napi_env env, napi_value obj)
     if (status == napi_ok) {
         status = napi_instanceof(env, obj, constructor, &result);
         if (status != napi_ok) {
+            MEDIA_DEBUG_LOG("VideoOutputNapi::IsVideoOutput is failed");
             result = false;
         }
     }
@@ -325,7 +323,7 @@ static napi_value CreateJSArray(napi_env env, napi_status &status, std::vector<V
         for (size_t i = 0; i < nativeArray.size(); i++) {
             napi_create_int32(env, nativeArray[i], &item);
             CHECK_ERROR_RETURN_RET_LOG(napi_set_element(env, jsArray, i, item) != napi_ok, nullptr,
-                "Failed to create profile napi wrapper object");
+                "CreateJSArray Failed to create profile napi wrapper object");
         }
     }
     return jsArray;
@@ -339,7 +337,8 @@ napi_value VideoOutputNapi::GetSupportedVideoMetaTypes(napi_env env, napi_callba
     size_t argc = ARGS_ZERO;
     napi_value argv[ARGS_ZERO];
     napi_value thisVar = nullptr;
- 
+
+    MEDIA_DEBUG_LOG("VideoOutputNapi::GetSupportedVideoMetaTypes get js args");
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
     NAPI_ASSERT(env, (argc == ARGS_ZERO), "requires no parameter.");
  
@@ -561,14 +560,15 @@ napi_value VideoOutputNapi::SetFrameRate(napi_env env, napi_callback_info info)
  
 napi_value VideoOutputNapi::GetActiveFrameRate(napi_env env, napi_callback_info info)
 {
-    MEDIA_DEBUG_LOG("GetFrameRate is called");
+    MEDIA_DEBUG_LOG("GetActiveFrameRate is called");
     CAMERA_SYNC_TRACE;
     napi_status status;
     napi_value result;
     size_t argc = ARGS_ZERO;
     napi_value argv[ARGS_ZERO];
     napi_value thisVar = nullptr;
- 
+
+    MEDIA_DEBUG_LOG("VideoOutputNapi::GetActiveFrameRate get js args");
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
     NAPI_ASSERT(env, (argc == ARGS_ZERO), "requires no parameter.");
  
@@ -579,7 +579,7 @@ napi_value VideoOutputNapi::GetActiveFrameRate(napi_env env, napi_callback_info 
         std::vector<int32_t> frameRateRange = videoOutputNapi->videoOutput_->GetFrameRateRange();
         CameraNapiUtils::CreateFrameRateJSArray(env, frameRateRange, result);
     } else {
-        MEDIA_ERR_LOG("GetFrameRate call failed!");
+        MEDIA_ERR_LOG("GetActiveFrameRate call failed!");
     }
     return result;
 }
@@ -594,7 +594,8 @@ napi_value VideoOutputNapi::GetSupportedFrameRates(napi_env env, napi_callback_i
     size_t argc = ARGS_ZERO;
     napi_value argv[ARGS_ZERO];
     napi_value thisVar = nullptr;
- 
+
+    MEDIA_DEBUG_LOG("VideoOutputNapi::GetSupportedFrameRates get js args");
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
     NAPI_ASSERT(env, (argc == ARGS_ZERO), "requires no parameter.");
     napi_get_undefined(env, &result);

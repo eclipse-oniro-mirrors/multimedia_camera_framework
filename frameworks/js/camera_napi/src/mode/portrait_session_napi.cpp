@@ -136,8 +136,8 @@ napi_value PortraitSessionNapi::GetSupportedPortraitEffects(napi_env env, napi_c
     MEDIA_DEBUG_LOG("GetPortraitEffect is called");
     napi_status status;
     napi_value result = nullptr;
-    size_t argc = ARGS_ZERO;
     napi_value argv[ARGS_ZERO];
+    size_t argc = ARGS_ZERO;
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);

@@ -84,7 +84,7 @@ CameraDevice::CameraDevice(
     dmDeviceInfo_.deviceName = deviceInfo.deviceName;
     dmDeviceInfo_.deviceTypeId = deviceInfo.deviceTypeId;
     dmDeviceInfo_.networkId = deviceInfo.networkId;
-    MEDIA_INFO_LOG("camera cameraid = %{public}s, devicename: = %{public}s", cameraID_.c_str(),
+    MEDIA_INFO_LOG("cameraDevice cameraid = %{public}s, devicename: = %{public}s", cameraID_.c_str(),
         dmDeviceInfo_.deviceName.c_str());
     CHECK_EXECUTE(metadata != nullptr, init(metadata->get()));
 }
@@ -108,63 +108,63 @@ void CameraDevice::init(common_metadata_header_t* metadata)
 {
     camera_metadata_item_t item;
     
-    int ret = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_POSITION, &item);
-    if (ret == CAM_META_SUCCESS) {
+    int cameraDeviceRet = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_POSITION, &item);
+    if (cameraDeviceRet == CAM_META_SUCCESS) {
         auto itr = metaToFwCameraPosition_.find(static_cast<camera_position_enum_t>(item.data.u8[0]));
         if (itr != metaToFwCameraPosition_.end()) {
             cameraPosition_ = itr->second;
         }
     }
 
-    ret = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_TYPE, &item);
-    if (ret == CAM_META_SUCCESS) {
+    cameraDeviceRet = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_TYPE, &item);
+    if (cameraDeviceRet == CAM_META_SUCCESS) {
         auto itr = metaToFwCameraType_.find(static_cast<camera_type_enum_t>(item.data.u8[0]));
         if (itr != metaToFwCameraType_.end()) {
             cameraType_ = itr->second;
         }
     }
 
-    ret = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_CONNECTION_TYPE, &item);
-    if (ret == CAM_META_SUCCESS) {
+    cameraDeviceRet = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_CONNECTION_TYPE, &item);
+    if (cameraDeviceRet == CAM_META_SUCCESS) {
         auto itr = metaToFwConnectionType_.find(static_cast<camera_connection_type_t>(item.data.u8[0]));
         if (itr != metaToFwConnectionType_.end()) {
             connectionType_ = itr->second;
         }
     }
 
-    ret = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_FOLDSCREEN_TYPE, &item);
-    if (ret == CAM_META_SUCCESS) {
+    cameraDeviceRet = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_FOLDSCREEN_TYPE, &item);
+    if (cameraDeviceRet == CAM_META_SUCCESS) {
         auto itr = metaToFwCameraFoldScreenType_.find(static_cast<camera_foldscreen_enum_t>(item.data.u8[0]));
         if (itr != metaToFwCameraFoldScreenType_.end()) {
             foldScreenType_ = itr->second;
         }
     }
 
-    ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_SENSOR_ORIENTATION, &item);
-    if (ret == CAM_META_SUCCESS) {
+    cameraDeviceRet = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_SENSOR_ORIENTATION, &item);
+    if (cameraDeviceRet == CAM_META_SUCCESS) {
         cameraOrientation_ = static_cast<uint32_t>(item.data.i32[0]);
     }
 
-    ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_IS_RETRACTABLE, &item);
-    if (ret == CAM_META_SUCCESS) {
+    cameraDeviceRet = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_IS_RETRACTABLE, &item);
+    if (cameraDeviceRet == CAM_META_SUCCESS) {
         isRetractable_ = static_cast<bool>(item.data.u8[0]);
         MEDIA_INFO_LOG("Get isRetractable_  = %{public}d", isRetractable_);
     }
 
     uint32_t moduleTypeTagId;
     if (isFindModuleTypeTag(moduleTypeTagId)) {
-        ret = Camera::FindCameraMetadataItem(metadata, moduleTypeTagId, &item);
-        if (ret == CAM_META_SUCCESS) {
+        cameraDeviceRet = Camera::FindCameraMetadataItem(metadata, moduleTypeTagId, &item);
+        if (cameraDeviceRet == CAM_META_SUCCESS) {
             moduleType_ = item.data.ui32[0];
         }
     }
 
-    ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_FOLD_STATUS, &item);
+    cameraDeviceRet = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_FOLD_STATUS, &item);
 
-    foldStatus_ = (ret == CAM_META_SUCCESS) ? item.data.u8[0] : OHOS_CAMERA_FOLD_STATUS_NONFOLDABLE;
+    foldStatus_ = (cameraDeviceRet == CAM_META_SUCCESS) ? item.data.u8[0] : OHOS_CAMERA_FOLD_STATUS_NONFOLDABLE;
 
-    ret = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_MODES, &item);
-    if (ret == CAM_META_SUCCESS) {
+    cameraDeviceRet = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_MODES, &item);
+    if (cameraDeviceRet == CAM_META_SUCCESS) {
         for (uint32_t i = 0; i < item.count; i++) {
             auto it = g_metaToFwSupportedMode_.find(static_cast<HDI::Camera::V1_3::OperationMode>(item.data.u8[i]));
             if (it != g_metaToFwSupportedMode_.end()) {
@@ -173,8 +173,8 @@ void CameraDevice::init(common_metadata_header_t* metadata)
         }
     }
 
-    ret = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_STATISTICS_DETECT_TYPE, &item);
-    if (ret == CAM_META_SUCCESS) {
+    cameraDeviceRet = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_STATISTICS_DETECT_TYPE, &item);
+    if (cameraDeviceRet == CAM_META_SUCCESS) {
         for (uint32_t i = 0; i < item.count; i++) {
             auto iterator = g_metaToFwCameraMetaDetect_.find(static_cast<StatisticsDetectType>(item.data.u8[i]));
             if (iterator != g_metaToFwCameraMetaDetect_.end()) {
@@ -183,9 +183,9 @@ void CameraDevice::init(common_metadata_header_t* metadata)
         }
     }
 
-    ret = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_PRELAUNCH_AVAILABLE, &item);
+    cameraDeviceRet = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_PRELAUNCH_AVAILABLE, &item);
 
-    isPrelaunch_ = (ret == CAM_META_SUCCESS && item.data.u8[0] == 1);
+    isPrelaunch_ = (cameraDeviceRet == CAM_META_SUCCESS && item.data.u8[0] == 1);
 
     MEDIA_INFO_LOG("camera position: %{public}d, camera type: %{public}d, camera connection type: %{public}d, "
                    "camera foldScreen type: %{public}d, camera orientation: %{public}d, isretractable: %{public}d, "

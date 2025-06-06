@@ -49,11 +49,11 @@ CameraPhotoProxy::CameraPhotoProxy(BufferHandle* bufferHandle, int32_t format,
     int32_t photoWidth, int32_t photoHeight, bool isHighQuality, int32_t captureId)
 {
     MEDIA_INFO_LOG("CameraPhotoProxy");
-    bufferHandle_ = bufferHandle;
     format_ = format;
     photoWidth_ = photoWidth;
     photoHeight_ = photoHeight;
     fileSize_ = 0;
+    bufferHandle_ = bufferHandle;
     isHighQuality_ = isHighQuality;
     deferredProcType_ = 0;
     isDeferredPhoto_ = 0;

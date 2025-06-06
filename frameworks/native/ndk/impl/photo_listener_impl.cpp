@@ -213,10 +213,10 @@ void PhotoListener::DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<Su
 {
     CAMERA_SYNC_TRACE;
     BufferRequestConfig requestConfig = {
-        .width = surfaceBuffer->GetWidth(),
         .height = surfaceBuffer->GetHeight(),
         .strideAlignment = 0x8, // default stride is 8 Bytes.
         .format = surfaceBuffer->GetFormat(),
+        .width = surfaceBuffer->GetWidth(),
         .usage = surfaceBuffer->GetUsage(),
         .timeout = 0,
         .colorGamut = surfaceBuffer->GetSurfaceBufferColorGamut(),

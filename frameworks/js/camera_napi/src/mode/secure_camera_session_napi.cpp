@@ -95,10 +95,10 @@ napi_value SecureCameraSessionNapi::CreateCameraSession(napi_env env)
 napi_value SecureCameraSessionNapi::AddSecureOutput(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("AddSecureOutput is called");
+    napi_value argv[ARGS_ONE] = {0};
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE] = {0};
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);

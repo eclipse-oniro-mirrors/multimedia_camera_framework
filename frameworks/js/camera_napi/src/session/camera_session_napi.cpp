@@ -1239,6 +1239,7 @@ napi_value CameraSessionNapi::CanAddOutput(napi_env env, napi_callback_info info
     napi_value argv[ARGS_ONE] = {0};
     napi_value thisVar = nullptr;
 
+    MEDIA_DEBUG_LOG("CameraSessionNapi::CanAddOutput get js args");
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
 
     napi_get_undefined(env, &result);
@@ -2565,8 +2566,8 @@ napi_value CameraSessionNapi::SetFilter(napi_env env, napi_callback_info info)
 {
     MEDIA_DEBUG_LOG("setFilter is called");
     CAMERA_SYNC_TRACE;
-    napi_status status;
     napi_value result = nullptr;
+    napi_status status;
     size_t argc = ARGS_ONE;
     napi_value argv[ARGS_ONE] = {0};
     napi_value thisVar = nullptr;
@@ -2601,6 +2602,7 @@ napi_value CameraSessionNapi::GetSupportedBeautyTypes(napi_env env, napi_callbac
     napi_value argv[ARGS_ZERO];
     napi_value thisVar = nullptr;
 
+    MEDIA_DEBUG_LOG("CameraSessionNapi::GetSupportedBeautyTypes get js args");
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
 
     napi_get_undefined(env, &result);
@@ -2631,9 +2633,9 @@ napi_value CameraSessionNapi::GetSupportedBeautyRange(napi_env env, napi_callbac
     CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
         "SystemApi GetSupportedBeautyRange is called!");
     MEDIA_DEBUG_LOG("GetSupportedBeautyRange is called");
-    napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ONE;
+    napi_status status;
     napi_value argv[ARGS_ONE];
     napi_value thisVar = nullptr;
 
@@ -2701,6 +2703,7 @@ napi_value CameraSessionNapi::SetBeauty(napi_env env, napi_callback_info info)
     napi_value argv[ARGS_TWO];
     napi_value thisVar = nullptr;
 
+    MEDIA_DEBUG_LOG("CameraSessionNapi::SetBeauty get js args");
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
 
     napi_get_undefined(env, &result);
@@ -2812,6 +2815,7 @@ napi_value CameraSessionNapi::GetSupportedColorSpaces(napi_env env, napi_callbac
     napi_value argv[ARGS_ZERO];
     napi_value thisVar = nullptr;
 
+    MEDIA_DEBUG_LOG("CameraSessionNapi::GetSupportedColorSpaces get js args");
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
 
     napi_get_undefined(env, &result);
@@ -2838,10 +2842,10 @@ napi_value CameraSessionNapi::GetSupportedColorSpaces(napi_env env, napi_callbac
 napi_value CameraSessionNapi::GetActiveColorSpace(napi_env env, napi_callback_info info)
 {
     MEDIA_DEBUG_LOG("GetActiveColorSpace is called");
-    napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ZERO;
     napi_value argv[ARGS_ZERO];
+    napi_status status;
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
@@ -2896,6 +2900,7 @@ napi_value CameraSessionNapi::GetSupportedColorEffects(napi_env env, napi_callba
     napi_value argv[ARGS_ZERO];
     napi_value thisVar = nullptr;
 
+    MEDIA_DEBUG_LOG("CameraSessionNapi::GetSupportedColorEffects get js args");
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
 
     napi_get_undefined(env, &result);
@@ -2922,11 +2927,11 @@ napi_value CameraSessionNapi::GetSupportedColorEffects(napi_env env, napi_callba
 napi_value CameraSessionNapi::GetColorEffect(napi_env env, napi_callback_info info)
 {
     MEDIA_DEBUG_LOG("GetColorEffect is called");
-    napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ZERO;
     napi_value argv[ARGS_ZERO];
     napi_value thisVar = nullptr;
+    napi_status status;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
 
@@ -2979,6 +2984,7 @@ napi_value CameraSessionNapi::GetFocusDistance(napi_env env, napi_callback_info 
     napi_value argv[ARGS_ZERO];
     napi_value thisVar = nullptr;
 
+    MEDIA_DEBUG_LOG("CameraSessionNapi::GetFocusDistance get js args");
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
 
     napi_get_undefined(env, &result);
@@ -3540,23 +3546,23 @@ napi_value CameraSessionNapi::IsEffectSuggestionSupported(napi_env env, napi_cal
         "SystemApi IsEffectSuggestionSupported is called!");
     MEDIA_DEBUG_LOG("IsEffectSuggestionSupported is called");
     napi_status status;
-    napi_value result = nullptr;
+    napi_value effectResult = nullptr;
     size_t argc = ARGS_ZERO;
     napi_value argv[ARGS_ZERO];
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
 
-    napi_get_undefined(env, &result);
+    napi_get_undefined(env, &effectResult);
     CameraSessionNapi* cameraSessionNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
         bool isEffectSuggestionSupported = cameraSessionNapi->cameraSession_->IsEffectSuggestionSupported();
-        napi_get_boolean(env, isEffectSuggestionSupported, &result);
+        napi_get_boolean(env, isEffectSuggestionSupported, &effectResult);
     } else {
         MEDIA_ERR_LOG("IsEffectSuggestionSupported call Failed!");
     }
-    return result;
+    return effectResult;
 }
 
 napi_value CameraSessionNapi::EnableEffectSuggestion(napi_env env, napi_callback_info info)
@@ -3600,6 +3606,7 @@ napi_value CameraSessionNapi::GetSupportedEffectSuggestionType(napi_env env, nap
     napi_value argv[ARGS_ZERO];
     napi_value thisVar = nullptr;
 
+    MEDIA_DEBUG_LOG("CameraSessionNapi::GetSupportedEffectSuggestionType get js args");
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
 
     napi_get_undefined(env, &result);
@@ -3654,9 +3661,9 @@ napi_value CameraSessionNapi::SetEffectSuggestionStatus(napi_env env, napi_callb
     CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env, false), nullptr,
         "SystemApi SetEffectSuggestionStatus is called!");
     MEDIA_INFO_LOG("SetEffectSuggestionStatus is called");
+    size_t argc = ARGS_ONE;
     napi_status status;
     napi_value result = nullptr;
-    size_t argc = ARGS_ONE;
     napi_value argv[ARGS_ONE] = {0};
     napi_value thisVar = nullptr;
 
@@ -3717,7 +3724,7 @@ napi_value CameraSessionNapi::UpdateEffectSuggestion(napi_env env, napi_callback
 // ------------------------------------------------auto_awb_props-------------------------------------------------------
 napi_value CameraSessionNapi::GetSupportedWhiteBalanceModes(napi_env env, napi_callback_info info)
 {
-    MEDIA_DEBUG_LOG("GetSupportedWhiteBalanceModes is called");
+    MEDIA_DEBUG_LOG("CameraSessionNapi::GetSupportedWhiteBalanceModes is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ZERO;
@@ -3728,7 +3735,8 @@ napi_value CameraSessionNapi::GetSupportedWhiteBalanceModes(napi_env env, napi_c
 
     napi_get_undefined(env, &result);
     status = napi_create_array(env, &result);
-    CHECK_ERROR_RETURN_RET_LOG(status != napi_ok, result, "napi_create_array call Failed!");
+    CHECK_ERROR_RETURN_RET_LOG(status != napi_ok, result,
+        "CameraSessionNapi::GetSupportedWhiteBalanceModes napi_create_array call Failed!");
     CameraSessionNapi* cameraSessionNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
@@ -3747,7 +3755,7 @@ napi_value CameraSessionNapi::GetSupportedWhiteBalanceModes(napi_env env, napi_c
             }
         }
     } else {
-        MEDIA_ERR_LOG("GetSupportedWhiteBalanceModes call Failed!");
+        MEDIA_ERR_LOG("CameraSessionNapi::GetSupportedWhiteBalanceModes call Failed!");
     }
     return result;
 }
@@ -3756,8 +3764,8 @@ napi_value CameraSessionNapi::IsWhiteBalanceModeSupported(napi_env env, napi_cal
 {
     MEDIA_DEBUG_LOG("IsWhiteBalanceModeSupported is called");
     napi_status status;
-    napi_value result = nullptr;
     size_t argc = ARGS_ONE;
+    napi_value result = nullptr;
     napi_value argv[ARGS_ONE] = {0};
     napi_value thisVar = nullptr;
 
@@ -3784,25 +3792,25 @@ napi_value CameraSessionNapi::GetWhiteBalanceMode(napi_env env, napi_callback_in
 {
     MEDIA_DEBUG_LOG("GetWhiteBalanceMode is called");
     napi_status status;
-    napi_value result = nullptr;
+    napi_value whiteBalanceResult = nullptr;
     size_t argc = ARGS_ZERO;
     napi_value argv[ARGS_ZERO];
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
 
-    napi_get_undefined(env, &result);
+    napi_get_undefined(env, &whiteBalanceResult);
     CameraSessionNapi* cameraSessionNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
         WhiteBalanceMode whiteBalanceMode;
         int32_t retCode = cameraSessionNapi->cameraSession_->GetWhiteBalanceMode(whiteBalanceMode);
         CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
-        napi_create_int32(env, whiteBalanceMode, &result);
+        napi_create_int32(env, whiteBalanceMode, &whiteBalanceResult);
     } else {
         MEDIA_ERR_LOG("GetWhiteBalanceMode call Failed!");
     }
-    return result;
+    return whiteBalanceResult;
 }
 
 napi_value CameraSessionNapi::SetWhiteBalanceMode(napi_env env, napi_callback_info info)
@@ -3839,14 +3847,14 @@ napi_value CameraSessionNapi::GetWhiteBalanceRange(napi_env env, napi_callback_i
 {
     MEDIA_DEBUG_LOG("GetWhiteBalanceRange is called");
     napi_status status;
-    napi_value result = nullptr;
+    napi_value whiteBalanceRangeResult = nullptr;
     size_t argc = ARGS_ZERO;
     napi_value argv[ARGS_ZERO];
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
 
-    napi_get_undefined(env, &result);
+    napi_get_undefined(env, &whiteBalanceRangeResult);
 
     CameraSessionNapi* cameraSessionNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
@@ -3856,12 +3864,12 @@ napi_value CameraSessionNapi::GetWhiteBalanceRange(napi_env env, napi_callback_i
         CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         MEDIA_INFO_LOG("CameraSessionNapi::GetWhiteBalanceRange len = %{public}zu", whiteBalanceRange.size());
 
-        if (!whiteBalanceRange.empty() && napi_create_array(env, &result) == napi_ok) {
+        if (!whiteBalanceRange.empty() && napi_create_array(env, &whiteBalanceRangeResult) == napi_ok) {
             for (size_t i = 0; i < whiteBalanceRange.size(); i++) {
                 int32_t iso = whiteBalanceRange[i];
                 napi_value value;
                 napi_create_int32(env, iso, &value);
-                napi_set_element(env, result, i, value);
+                napi_set_element(env, whiteBalanceRangeResult, i, value);
             }
         } else {
             MEDIA_ERR_LOG("whiteBalanceRange is empty or failed to create array!");
@@ -3869,34 +3877,34 @@ napi_value CameraSessionNapi::GetWhiteBalanceRange(napi_env env, napi_callback_i
     } else {
         MEDIA_ERR_LOG("GetWhiteBalanceRange call Failed!");
     }
-    return result;
+    return whiteBalanceRangeResult;
 }
 
 napi_value CameraSessionNapi::IsManualWhiteBalanceSupported(napi_env env, napi_callback_info info)
 {
     CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
-        "SystemApi IsManualIsoSupported is called!");
-    MEDIA_DEBUG_LOG("IsManualIsoSupported is called");
+        "SystemApi IsManualWhiteBalanceSupported is called!");
+    MEDIA_DEBUG_LOG("IsManualWhiteBalanceSupported is called");
     napi_status status;
-    napi_value result = nullptr;
+    napi_value manualWhiteBalanceSupportedResult = nullptr;
     size_t argc = ARGS_ZERO;
     napi_value argv[ARGS_ZERO];
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
 
-    napi_get_undefined(env, &result);
+    napi_get_undefined(env, &manualWhiteBalanceSupportedResult);
     CameraSessionNapi* cameraSessionNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
         bool isSupported;
         int32_t retCode = cameraSessionNapi->cameraSession_->IsManualWhiteBalanceSupported(isSupported);
         CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
-        napi_get_boolean(env, isSupported, &result);
+        napi_get_boolean(env, isSupported, &manualWhiteBalanceSupportedResult);
     } else {
         MEDIA_ERR_LOG("IsManualIsoSupported call Failed!");
     }
-    return result;
+    return manualWhiteBalanceSupportedResult;
 }
 
 napi_value CameraSessionNapi::GetWhiteBalance(napi_env env, napi_callback_info info)

@@ -193,7 +193,7 @@ static napi_value CreateSceneModeJSArray(napi_env env, napi_status status,
         for (size_t i = 0; i < nativeArray.size(); i++) {
             napi_create_int32(env, nativeArray[i], &item);
             CHECK_ERROR_RETURN_RET_LOG(napi_set_element(env, jsArray, i, item) != napi_ok, nullptr,
-                "Failed to create profile napi wrapper object");
+                "CreateSceneModeJSArray Failed to create profile napi wrapper object");
         }
     }
     return jsArray;

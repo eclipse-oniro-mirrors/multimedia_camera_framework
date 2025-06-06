@@ -53,17 +53,19 @@ MoonCaptureBoostFeature::MoonCaptureBoostFeature(
             currentMaxRatio = static_cast<float>(item.data.ui32[i]) / SKETCH_DIV;
             continue;
         }
-        SketchReferenceFovRange fovRange;
-        fovRange.zoomMin = static_cast<float>(item.data.ui32[i]) / SKETCH_DIV;
-        fovRange.zoomMax = static_cast<float>(item.data.ui32[i + 1]) / SKETCH_DIV;        // Offset 1 data
-        fovRange.referenceValue = static_cast<float>(item.data.ui32[i + 2]) / SKETCH_DIV; // Offset 2 data
+        SketchReferenceFovRange sketchReferencefovRange;
+        sketchReferencefovRange.zoomMin = static_cast<float>(item.data.ui32[i]) / SKETCH_DIV;
+        sketchReferencefovRange.zoomMax = static_cast<float>(item.data.ui32[i + 1]) / SKETCH_DIV;  // Offset 1 data
+        sketchReferencefovRange.referenceValue =
+            static_cast<float>(item.data.ui32[i + 2]) / SKETCH_DIV; // Offset 2 data
         i = i + 2;                                                                        // Offset 2 data
-        sketchFovRangeList_.emplace_back(fovRange);
+        sketchFovRangeList_.emplace_back(sketchReferencefovRange);
         MEDIA_DEBUG_LOG(
             "MoonCaptureBoostFeature::MoonCaptureBoostFeature get sketch reference fov ratio:mode->%{public}d "
             "%{public}f-%{public}f value->%{public}f",
-            currentMode, fovRange.zoomMin, fovRange.zoomMax, fovRange.referenceValue);
-        if (fovRange.zoomMax - currentMaxRatio >= -std::numeric_limits<float>::epsilon()) {
+            currentMode, sketchReferencefovRange.zoomMin,
+                sketchReferencefovRange.zoomMax, sketchReferencefovRange.referenceValue);
+        if (sketchReferencefovRange.zoomMax - currentMaxRatio >= -std::numeric_limits<float>::epsilon()) {
             if (currentMode == static_cast<uint32_t>(relatedMode_)) {
                 sketchZoomRatioRange_.zoomMin = currentMinRatio;
                 sketchZoomRatioRange_.zoomMax = currentMaxRatio;

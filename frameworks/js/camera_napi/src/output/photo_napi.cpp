@@ -134,6 +134,7 @@ napi_value PhotoNapi::GetMain(napi_env env, napi_callback_info info)
     napi_value argv[ARGS_ZERO];
     napi_value thisVar = nullptr;
 
+    MEDIA_DEBUG_LOG("PhotoNapi::GetMain get js args");
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
 
     napi_get_undefined(env, &result);
@@ -183,6 +184,7 @@ napi_value PhotoNapi::GetRaw(napi_env env, napi_callback_info info)
     napi_value argv[ARGS_ZERO];
     napi_value thisVar = nullptr;
 
+    MEDIA_DEBUG_LOG("PhotoNapi::GetRaw get js args");
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
 
     napi_get_undefined(env, &result);
@@ -249,7 +251,7 @@ napi_value PhotoNapi::Release(napi_env env, napi_callback_info info)
             asyncContext.release();
         }
     } else {
-        MEDIA_ERR_LOG("Release call Failed!");
+        MEDIA_ERR_LOG("PhotoNapi::Release call Failed!");
     }
     return result;
 }

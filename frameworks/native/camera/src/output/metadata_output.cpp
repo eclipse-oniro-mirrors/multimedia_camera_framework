@@ -164,7 +164,7 @@ int32_t MetadataOutput::AddMetadataObjectTypes(std::vector<MetadataObjectType> m
 {
     const size_t maxSize4NonSystemApp  = 1;
     if (!CameraSecurity::CheckSystemApp()) {
-        MEDIA_DEBUG_LOG("public calling for metadataOutput");
+        MEDIA_DEBUG_LOG("MetadataOutput::AddMetadataObjectTypes public calling for metadataOutput");
         if (metadataObjectTypes.size() > maxSize4NonSystemApp ||
             std::any_of(metadataObjectTypes.begin(), metadataObjectTypes.end(),
                 [](MetadataObjectType type) { return type != MetadataObjectType::FACE; })) {
@@ -210,7 +210,7 @@ int32_t MetadataOutput::RemoveMetadataObjectTypes(std::vector<MetadataObjectType
 {
     const size_t maxSize4NonSystemApp  = 1;
     if (!CameraSecurity::CheckSystemApp()) {
-        MEDIA_DEBUG_LOG("public calling for metadataOutput");
+        MEDIA_DEBUG_LOG("MetadataOutput::RemoveMetadataObjectTypes public calling for metadataOutput");
         if (metadataObjectTypes.size() > maxSize4NonSystemApp ||
             std::any_of(metadataObjectTypes.begin(), metadataObjectTypes.end(),
                 [](MetadataObjectType type) { return type != MetadataObjectType::FACE; })) {
@@ -507,7 +507,7 @@ void MetadataOutput::ProcessHumanFaceDetectInfo(sptr<MetadataObjectFactory> fact
                                                 bool isNeedMirror, bool isNeedFlip)
 {
     int32_t version = metadataItem.data.i32[index++];
-    MEDIA_DEBUG_LOG("isNeedMirror: %{public}d, isNeedFlip: %{public}d, version: %{public}d",
+    MEDIA_DEBUG_LOG("ProcessHumanFaceDetectInfo isNeedMirror: %{public}d, isNeedFlip: %{public}d, version: %{public}d",
         isNeedMirror, isNeedFlip, version);
     const int32_t rectLength = 4;
     const int32_t offsetOne = 1;
@@ -540,7 +540,7 @@ void MetadataOutput::ProcessCatFaceDetectInfo(sptr<MetadataObjectFactory> factor
                                               bool isNeedMirror, bool isNeedFlip)
 {
     int32_t version = metadataItem.data.i32[index++];
-    MEDIA_DEBUG_LOG("isNeedMirror: %{public}d, isNeedFlip: %{public}d, version: %{public}d",
+    MEDIA_DEBUG_LOG("ProcessCatFaceDetectInfo isNeedMirror: %{public}d, isNeedFlip: %{public}d, version: %{public}d",
         isNeedMirror, isNeedFlip, version);
     const int32_t rectLength = 4;
     const int32_t offsetOne = 1;
@@ -563,7 +563,7 @@ void MetadataOutput::ProcessDogFaceDetectInfo(sptr<MetadataObjectFactory> factor
                                               bool isNeedMirror, bool isNeedFlip)
 {
     int32_t version = metadataItem.data.i32[index++];
-    MEDIA_DEBUG_LOG("isNeedMirror: %{public}d, isNeedFlip: %{public}d, version: %{public}d",
+    MEDIA_DEBUG_LOG("ProcessDogFaceDetectInfo isNeedMirror: %{public}d, isNeedFlip: %{public}d, version: %{public}d",
         isNeedMirror, isNeedFlip, version);
     const int32_t rectLength = 4;
     const int32_t offsetOne = 1;

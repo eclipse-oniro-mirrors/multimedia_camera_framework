@@ -1606,9 +1606,9 @@ napi_value CameraManagerNapi::IsTorchSupported(napi_env env, napi_callback_info 
     CameraManagerNapi* cameraManagerNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraManagerNapi));
     if (status == napi_ok && cameraManagerNapi != nullptr) {
-        bool isTorchSupported = CameraManager::GetInstance()->IsTorchSupported();
-        MEDIA_DEBUG_LOG("IsTorchSupported : %{public}d", isTorchSupported);
-        napi_get_boolean(env, isTorchSupported, &result);
+        bool isSupported = CameraManager::GetInstance()->IsTorchSupported();
+        MEDIA_DEBUG_LOG("IsTorchSupported : %{public}d", isSupported);
+        napi_get_boolean(env, isSupported, &result);
     } else {
         MEDIA_ERR_LOG("IsTorchSupported call Failed!");
     }
@@ -1620,8 +1620,8 @@ napi_value CameraManagerNapi::IsTorchModeSupported(napi_env env, napi_callback_i
     MEDIA_INFO_LOG("IsTorchModeSupported is called");
     napi_status status;
     napi_value result = nullptr;
-    size_t argc = ARGS_ONE;
     napi_value argv[ARGS_ONE];
+    size_t argc = ARGS_ONE;
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
@@ -1658,9 +1658,9 @@ napi_value CameraManagerNapi::GetTorchMode(napi_env env, napi_callback_info info
     CameraManagerNapi* cameraManagerNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraManagerNapi));
     if (status == napi_ok && cameraManagerNapi != nullptr) {
-        TorchMode torchMode = CameraManager::GetInstance()->GetTorchMode();
-        MEDIA_DEBUG_LOG("GetTorchMode : %{public}d", torchMode);
-        napi_create_int32(env, torchMode, &result);
+        TorchMode mode = CameraManager::GetInstance()->GetTorchMode();
+        MEDIA_DEBUG_LOG("GetTorchMode : %{public}d", mode);
+        napi_create_int32(env, mode, &result);
     } else {
         MEDIA_ERR_LOG("GetTorchMode call Failed!");
     }
@@ -1672,8 +1672,8 @@ napi_value CameraManagerNapi::SetTorchMode(napi_env env, napi_callback_info info
     MEDIA_INFO_LOG("SetTorchMode is called");
     napi_status status;
     napi_value result = nullptr;
-    size_t argc = ARGS_ONE;
     napi_value argv[ARGS_ONE];
+    size_t argc = ARGS_ONE;
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);

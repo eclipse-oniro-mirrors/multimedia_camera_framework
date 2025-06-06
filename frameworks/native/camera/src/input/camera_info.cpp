@@ -59,24 +59,24 @@ void CameraInfo::init(common_metadata_header_t* metadata)
 {
     camera_metadata_item_t item;
 
-    int ret = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_POSITION, &item);
-    if (ret == CAM_META_SUCCESS) {
+    int cameraInfoRet = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_POSITION, &item);
+    if (cameraInfoRet == CAM_META_SUCCESS) {
         auto itr = metaToFwCameraPosition_.find(static_cast<camera_position_enum_t>(item.data.u8[0]));
         if (itr != metaToFwCameraPosition_.end()) {
             cameraPosition_ = itr->second;
         }
     }
 
-    ret = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_TYPE, &item);
-    if (ret == CAM_META_SUCCESS) {
+    cameraInfoRet = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_TYPE, &item);
+    if (cameraInfoRet == CAM_META_SUCCESS) {
         auto itr = metaToFwCameraType_.find(static_cast<camera_type_enum_t>(item.data.u8[0]));
         if (itr != metaToFwCameraType_.end()) {
             cameraType_ = itr->second;
         }
     }
 
-    ret = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_CONNECTION_TYPE, &item);
-    if (ret == CAM_META_SUCCESS) {
+    cameraInfoRet = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_CONNECTION_TYPE, &item);
+    if (cameraInfoRet == CAM_META_SUCCESS) {
         auto itr = metaToFwConnectionType_.find(static_cast<camera_connection_type_t>(item.data.u8[0]));
         if (itr != metaToFwConnectionType_.end()) {
             connectionType_ = itr->second;
