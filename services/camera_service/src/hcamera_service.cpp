@@ -105,6 +105,7 @@ HCameraService::HCameraService(int32_t systemAbilityId, bool runOnCreate)
         cameraHostManager_ == nullptr, "HCameraService OnStart failed to create HCameraHostManager obj");
     MEDIA_INFO_LOG("HCameraService Construct end");
     serviceStatus_ = CameraServiceStatus::SERVICE_NOT_READY;
+    pressurePid_ = 0;
 }
 
 HCameraService::HCameraService(sptr<HCameraHostManager> cameraHostManager)
