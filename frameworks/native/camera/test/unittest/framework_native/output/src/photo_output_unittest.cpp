@@ -1644,5 +1644,188 @@ HWTEST_F(CameraPhotoOutputUnit, EnableAutoAigcPhoto_003, TestSize.Level0)
         EXPECT_EQ(phtOutput->EnableAutoAigcPhoto(enabled), CAMERA_OK);
     }
 }
+
+/*
+ * Feature: Framework
+ * Function: EnableAutoAigcPhoto_ShouldReturnError_WhenOfflineNotSupported
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test est photooutput with IsAutoAigcPhotoSupported.
+ */
+HWTEST_F(CameraPhotoOutputUnit, IsAutoAigcPhotoSupported_004, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(photoOutput), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+    EXPECT_EQ(session->Start(), 0);
+
+    phtOutput->session_ = nullptr;
+    bool isAutoAigcPhotoSupported = false;
+    EXPECT_EQ(phtOutput->IsAutoAigcPhotoSupported(isAutoAigcPhotoSupported), SERVICE_FATL_ERROR);
+
+    phtOutput->session_ = session;
+    session->SetMode(SceneMode::CAPTURE);
+
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata =
+        session->GetInputDevice()->GetCameraDeviceInfo()->GetMetadata();
+    ASSERT_NE(metadata, nullptr);
+
+    uint8_t aigcSupport = static_cast<uint8_t>(SceneMode::CAPTURE);
+    bool status = AddOrUpdateMetadata(metadata, OHOS_ABILITY_AUTO_AIGC_PHOTO, &aigcSupport, 1);
+    ASSERT_TRUE(status);
+
+    EXPECT_EQ(phtOutput->IsAutoAigcPhotoSupported(isAutoAigcPhotoSupported), CAMERA_OK);
+    EXPECT_TRUE(isAutoAigcPhotoSupported);
+
+    OHOS::Camera::DeleteCameraMetadataItem(metadata->get(), OHOS_ABILITY_AUTO_AIGC_PHOTO);
+    EXPECT_EQ(phtOutput->IsAutoAigcPhotoSupported(isAutoAigcPhotoSupported), CAMERA_OK);
+    EXPECT_FALSE(isAutoAigcPhotoSupported);
+
+    input->Close();
+    session->Stop();
+    session->Release();
+    input->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: EnableAutoAigcPhoto_ShouldReturnError_WhenOfflineNotSupported
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test est photooutput with EnableMirror.
+ */
+HWTEST_F(CameraPhotoOutputUnit, EnableMirror_001, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->Open();
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(photoOutput), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+    EXPECT_EQ(session->Start(), 0);
+
+    bool isEnabled = true;
+    session->currentMode_ = SceneMode::PROFESSIONAL_PHOTO;
+    int32_t ret;
+    if (phtOutput->IsMirrorSupported()) {
+        auto isSessionConfiged = session->IsSessionCommited() || session->IsSessionStarted();
+        ret = session->EnableMovingPhotoMirror(isEnabled, isSessionConfiged);
+        EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
+    } else {
+        ret = phtOutput->EnableMirror(isEnabled);
+        EXPECT_EQ(ret, CAMERA_UNKNOWN_ERROR);
+    }
+
+    isEnabled = false;
+    if (phtOutput->IsMirrorSupported()) {
+        auto isSessionConfiged = session->IsSessionCommited() || session->IsSessionStarted();
+        ret = session->EnableMovingPhotoMirror(isEnabled, isSessionConfiged);
+        EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
+    } else {
+        ret = phtOutput->EnableMirror(isEnabled);
+        EXPECT_EQ(ret, CAMERA_UNKNOWN_ERROR);
+    }
+    input->Close();
+    session->Stop();
+    session->Release();
+    input->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: EnableAutoAigcPhoto_ShouldReturnError_WhenOfflineNotSupported
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test est photooutput with NotifyOfflinePhotoOutput.
+ */
+/*
+ * Feature: Framework
+ * Function: EnableAutoAigcPhoto_ShouldReturnError_WhenOfflineNotSupported
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test est photooutput with NotifyOfflinePhotoOutput.
+ */
+HWTEST_F(CameraPhotoOutputUnit, NotifyOfflinePhotoOutput_001, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    ASSERT_FALSE(cameras.empty());
+
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    int32_t ret = camInput->GetCameraDevice()->Open();
+    ASSERT_EQ(ret, CAMERA_OK);
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+    ASSERT_NE(phtOutput->GetStream().GetRefPtr(), nullptr);
+
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(photoOutput), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+    EXPECT_EQ(session->Start(), 0);
+
+    captureMonitorInfo timeStartIter;
+
+    auto it1 = phtOutput->captureIdToCaptureInfoMap_.find(1);
+    EXPECT_EQ(it1, phtOutput->captureIdToCaptureInfoMap_.end());
+
+    timeStartIter.timeStart = std::chrono::steady_clock::now() - std::chrono::seconds(2);
+    phtOutput->captureIdToCaptureInfoMap_.insert({2, timeStartIter});
+    auto it2 = phtOutput->captureIdToCaptureInfoMap_.find(2);
+    EXPECT_NE(it2, phtOutput->captureIdToCaptureInfoMap_.end());
+
+    phtOutput->NotifyOfflinePhotoOutput(2);
+    EXPECT_EQ(phtOutput->captureIdToCaptureInfoMap_.size(), 0);
+
+    phtOutput->SetSwitchOfflinePhotoOutput(true);
+    timeStartIter.timeStart = std::chrono::steady_clock::now();
+    phtOutput->captureIdToCaptureInfoMap_.insert({3, timeStartIter});
+    phtOutput->NotifyOfflinePhotoOutput(3);
+    EXPECT_EQ(phtOutput->captureIdToCaptureInfoMap_.size(), 0);
+
+    phtOutput->captureIdToCaptureInfoMap_.insert({4, timeStartIter});
+    phtOutput->captureIdToCaptureInfoMap_.insert({5, timeStartIter});
+    phtOutput->NotifyOfflinePhotoOutput(4);
+    EXPECT_EQ(phtOutput->captureIdToCaptureInfoMap_.size(), 1);
+    auto it5 = phtOutput->captureIdToCaptureInfoMap_.find(5);
+    EXPECT_NE(it5, phtOutput->captureIdToCaptureInfoMap_.end());
+
+    input->Close();
+    session->Stop();
+    session->Release();
+    input->Release();
+}
 }
 }

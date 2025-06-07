@@ -401,6 +401,10 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_006, TestSize.Level1)
     previewOutput->previewProfile_->format_ = CAMERA_FORMAT_INVALID;
     ret = previewOutput->FindSketchSize();
     EXPECT_EQ(ret, nullptr);
+
+    previewOutput->previewProfile_->format_ = CAMERA_FORMAT_YUV_422_UYVY;
+    ret = previewOutput->FindSketchSize();
+    EXPECT_EQ(ret, nullptr);
 }
 
 /*
