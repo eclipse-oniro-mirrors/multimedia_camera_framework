@@ -514,6 +514,134 @@ HWTEST_F(CameraSketchWrapperOutputUnit, sketch_wrapper_unittest_008, TestSize.Le
     EXPECT_EQ(sketchWrapper->OnMetadataDispatch(modeName, tag2, item), CAM_META_SUCCESS);
     const camera_device_metadata_tag_t tag3 = OHOS_CONTROL_MOON_CAPTURE_BOOST;
     EXPECT_EQ(sketchWrapper->OnMetadataDispatch(modeName, tag3, item), CAM_META_SUCCESS);
+    const camera_device_metadata_tag_t tag4 = OHOS_CONTROL_ZOOM_CROP_REGION;
+    EXPECT_EQ(sketchWrapper->OnMetadataDispatch(modeName, tag4, item), CAM_META_SUCCESS);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test UpdateSketchReferenceFovRatio
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test UpdateSketchReferenceFovRatio
+ */
+HWTEST_F(CameraSketchWrapperOutputUnit, sketch_wrapper_unittest_009, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    Size previewSize = { .width = 1440, .height = 1080 };
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
+    camInput->SetCameraSettings(camInput->GetCameraSettings());
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> deviceMetadata =
+        std::make_shared<OHOS::Camera::CameraMetadata>(METADATA_ITEM_SIZE, METADATA_DATA_SIZE);
+    ASSERT_NE(deviceMetadata, nullptr);
+    session->GetFeaturesMode();
+    Profile previewProfile = Profile(CAMERA_FORMAT_YCBCR_420_888, previewSize);
+    sptr<CaptureOutput> preview = cameraManager_->CreatePreviewOutput(previewProfile, surface);
+    ASSERT_NE(preview, nullptr);
+    auto previewOutput = (sptr<PreviewOutput>&)preview;
+
+    SketchWrapper* sketchWrapper = new (std::nothrow) SketchWrapper(previewOutput->GetStream(), previewSize);
+    ASSERT_NE(sketchWrapper, nullptr);
+    std::shared_ptr<PreviewStateCallback> setCallback =
+        std::make_shared<TestPreviewOutputCallback>("PreviewStateCallback");
+    ASSERT_NE(setCallback, nullptr);
+    camera_metadata_item_t item;
+    OHOS::Camera::FindCameraMetadataItem(deviceMetadata->get(), OHOS_CONTROL_ZOOM_RATIO, &item);
+
+    item.count = 9;
+    item.data.f = new float[item.count];
+
+    item.data.f[0] = 1.0f;
+    item.data.f[1] = 0.0f;
+    item.data.f[2] = 50.0f;
+    item.data.f[3] = 0.5f;
+    item.data.f[4] = 10.0f;
+    item.data.f[5] = 0.6f;
+    item.data.f[6] = 10.0f;
+    item.data.f[7] = 20.0f;
+    item.data.f[8] = 0.7f;
+
+    sketchWrapper->UpdateSketchReferenceFovRatio(item);
+
+    delete[] item.data.f;
+
+    EXPECT_EQ(preview->Release(), 0);
+    EXPECT_EQ(input->Release(), 0);
+    EXPECT_EQ(session->Release(), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetSketchReferenceFovRatio
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetSketchReferenceFovRatio
+ */
+HWTEST_F(CameraSketchWrapperOutputUnit, sketch_wrapper_unittest_010, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    Size previewSize = { .width = 1440, .height = 1080 };
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
+    camInput->SetCameraSettings(camInput->GetCameraSettings());
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> deviceMetadata =
+        std::make_shared<OHOS::Camera::CameraMetadata>(METADATA_ITEM_SIZE, METADATA_DATA_SIZE);
+    ASSERT_NE(deviceMetadata, nullptr);
+    session->GetFeaturesMode();
+    Profile previewProfile = Profile(CAMERA_FORMAT_YCBCR_420_888, previewSize);
+    sptr<CaptureOutput> preview = cameraManager_->CreatePreviewOutput(previewProfile, surface);
+    ASSERT_NE(preview, nullptr);
+    auto previewOutput = (sptr<PreviewOutput>&)preview;
+
+    SketchWrapper* sketchWrapper = new (std::nothrow) SketchWrapper(previewOutput->GetStream(), previewSize);
+    std::shared_ptr<PreviewStateCallback> setCallback =
+        std::make_shared<TestPreviewOutputCallback>("PreviewStateCallback");
+    ASSERT_NE(setCallback, nullptr);
+    camera_metadata_item_t item;
+    OHOS::Camera::FindCameraMetadataItem(deviceMetadata->get(), OHOS_CONTROL_ZOOM_RATIO, &item);
+
+    auto sketchReferenceFovRangeVec = std::vector<SketchReferenceFovRange>(5);
+    SketchReferenceFovRange sketchReferenceFovRange = { .zoomMin = 0.0f, .zoomMax = 50.0f, .referenceValue = -1.0f };
+    sketchReferenceFovRangeVec[0] = sketchReferenceFovRange;
+    sketchReferenceFovRange = { .zoomMin = 50.0f, .zoomMax = 100.0f, .referenceValue = -1.0f };
+    sketchReferenceFovRangeVec[1] = sketchReferenceFovRange;
+    sketchReferenceFovRange = { .zoomMin = 100.0f, .zoomMax = 150.0f, .referenceValue = -1.0f };
+    sketchReferenceFovRangeVec[2] = sketchReferenceFovRange;
+    sketchReferenceFovRange = { .zoomMin = 150.0f, .zoomMax = 200.0f, .referenceValue = -1.0f };
+    sketchReferenceFovRangeVec[3] = sketchReferenceFovRange;
+    sketchReferenceFovRange = { .zoomMin = 200.0f, .zoomMax = 250.0f, .referenceValue = -1.0f };
+    sketchReferenceFovRangeVec[4] = sketchReferenceFovRange;
+
+    SceneFeaturesMode illegalFeaturesMode(static_cast<SceneMode>(-1), {});
+    SketchWrapper::g_sketchReferenceFovRatioMap_[illegalFeaturesMode] = sketchReferenceFovRangeVec;
+    EXPECT_EQ(sketchWrapper->GetSketchReferenceFovRatio(illegalFeaturesMode, -1.0f), -1.0f);
+    EXPECT_EQ(sketchWrapper->GetSketchReferenceFovRatio(illegalFeaturesMode, 300.0f), -1.0f);
+
+    SceneFeaturesMode illegalFeaturesMode2(static_cast<SceneMode>(100), {});
+    SketchWrapper::g_sketchReferenceFovRatioMap_[illegalFeaturesMode2] = sketchReferenceFovRangeVec;
+    EXPECT_EQ(sketchWrapper->GetSketchReferenceFovRatio(illegalFeaturesMode2, -1.0f), -1.0f);
+    EXPECT_EQ(sketchWrapper->GetSketchReferenceFovRatio(illegalFeaturesMode2, 300.0f), -1.0f);
+    EXPECT_EQ(sketchWrapper->GetSketchReferenceFovRatio(illegalFeaturesMode2, 100.0f), -1.0f);
+    sketchWrapper->UpdateSketchReferenceFovRatio(item);
+
+    EXPECT_EQ(preview->Release(), 0);
+    EXPECT_EQ(input->Release(), 0);
+    EXPECT_EQ(session->Release(), 0);
 }
 }
 }
