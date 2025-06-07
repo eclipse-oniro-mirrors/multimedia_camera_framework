@@ -17,7 +17,6 @@
 
 #include <cstdint>
 #include <memory>
-#include <uv.h>
 
 #include "camera_device.h"
 #include "camera_error_code.h"
@@ -31,6 +30,7 @@
 #include "js_native_api.h"
 #include "napi/native_common.h"
 #include "napi/native_node_api.h"
+#include "common/qos_utils.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -278,6 +278,69 @@ sptr<CameraInput> CameraInputNapi::GetCameraInput()
     return cameraInput_;
 }
 
+void ConsumeWorkerQueueTask(CameraInputAsyncContext* context)
+{
+    CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(context->queueTask, [&context]() {
+        context->isEnableSecCam = CameraNapiUtils::GetEnableSecureCamera();
+        MEDIA_DEBUG_LOG("ConsumeWorkerQueueTask context->isEnableSecCam %{public}d", context->isEnableSecCam);
+        if (context->isEnableSecCam) {
+            context->errorCode = context->objectInfo->GetCameraInput()->Open(true, &context->secureCameraSeqId);
+            MEDIA_INFO_LOG("ConsumeWorkerQueueTask, SeqId = %{public}" PRIu64 "", context->secureCameraSeqId);
+        } else if (context->cameraConcurrentType != -1) {
+            context->errorCode = context->objectInfo->GetCameraInput()->Open(context->cameraConcurrentType);
+        } else {
+            context->errorCode = context->objectInfo->GetCameraInput()->Open();
+        }
+        context->status = context->errorCode == CameraErrorCode::SUCCESS;
+        CameraNapiUtils::IsEnableSecureCamera(false);
+    });
+}
+
+void CameraInputNapi::OpenCameraAsync(uv_work_t* work)
+{
+    if (!work) {
+        MEDIA_ERR_LOG("OpenCameraAsync null work");
+        return;
+    }
+    MEDIA_INFO_LOG("OpenCameraAsync running on worker");
+    auto context = static_cast<CameraInputAsyncContext*>(work->data);
+    CHECK_ERROR_RETURN_LOG(context->objectInfo == nullptr, "OpenCameraAsync async info is nullptr");
+    CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
+    ConsumeWorkerQueueTask(context);
+}
+
+void CameraInputNapi::UvWorkAsyncCompleted(uv_work_t* work, int status)
+{
+    auto context = static_cast<CameraInputAsyncContext*>(work->data);
+    CHECK_ERROR_RETURN_LOG(context == nullptr, "UvWorkAsyncCompleted context is null");
+    MEDIA_INFO_LOG("UvWorkAsyncCompleted %{public}s, status = %{public}d", context->funcName.c_str(),
+        context->status);
+    std::unique_ptr<JSAsyncContextOutput> jsContext = std::make_unique<JSAsyncContextOutput>();
+    jsContext->status = context->status;
+    if (!context->status) {
+        CameraNapiUtils::CreateNapiErrorObject(context->env, context->errorCode, context->errorMsg.c_str(), jsContext);
+    } else {
+        if (context->isEnableSecCam) {
+            napi_create_bigint_uint64(context->env, context->secureCameraSeqId, &jsContext->data);
+        } else {
+            napi_get_undefined(context->env, &jsContext->data);
+        }
+    }
+    if (!context->funcName.empty() && context->taskId > 0) {
+        // Finish async trace
+        CAMERA_FINISH_ASYNC_TRACE(context->funcName, context->taskId);
+        jsContext->funcName = context->funcName.c_str();
+    }
+    CHECK_EXECUTE(work != nullptr,
+        CameraNapiUtils::InvokeJSAsyncMethodWithUvWork(context->env, context->deferred,
+            context->callbackRef, *jsContext));
+    context->FreeHeldNapiValue(context->env);
+    delete context;
+    context = nullptr;
+    delete work;
+    work = nullptr;
+}
+
 napi_value CameraInputNapi::Open(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("Open is called");
@@ -304,36 +367,31 @@ napi_value CameraInputNapi::Open(napi_env env, napi_callback_info info)
     CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument"),
         nullptr, "CameraInputNapi::Open invalid argument");
     asyncContext->HoldNapiValue(env, jsParamParser.GetThisVar());
-    napi_status status = napi_create_async_work(
-        env, nullptr, asyncFunction->GetResourceName(),
-        [](napi_env env, void* data) {
-            MEDIA_INFO_LOG("CameraInputNapi::Open running on worker");
-            auto context = static_cast<CameraInputAsyncContext*>(data);
-            CHECK_ERROR_RETURN_LOG(context->objectInfo == nullptr, "CameraInputNapi::Open async info is nullptr");
-            CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
-            CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(context->queueTask, [&context]() {
-                context->isEnableSecCam = CameraNapiUtils::GetEnableSecureCamera();
-                MEDIA_DEBUG_LOG("CameraInputNapi::Open context->isEnableSecCam %{public}d", context->isEnableSecCam);
-                if (context->isEnableSecCam) {
-                    context->errorCode = context->objectInfo->GetCameraInput()->Open(true, &context->secureCameraSeqId);
-                    MEDIA_INFO_LOG("CameraInputNapi::Open, SeqId = %{public}" PRIu64 "", context->secureCameraSeqId);
-                } else if (context->cameraConcurrentType != -1) {
-                    context->errorCode = context->objectInfo->GetCameraInput()->Open(context->cameraConcurrentType);
-                } else {
-                    context->errorCode = context->objectInfo->GetCameraInput()->Open();
-                }
-                context->status = context->errorCode == CameraErrorCode::SUCCESS;
-                CameraNapiUtils::IsEnableSecureCamera(false);
-            });
-        },
-        AsyncCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
-    if (status != napi_ok) {
-        MEDIA_ERR_LOG("Failed to create napi_create_async_work for CameraInputNapi::Open");
+    asyncContext->env = env;
+    uv_qos_t uvQos = QosUtils::GetUvWorkQos();
+    MEDIA_DEBUG_LOG("CameraInputNapi::Open Qos level: %{public}d", uvQos);
+    uv_loop_s *loop = CameraInputNapi::GetEventLoop(env);
+    if (!loop) {
+        return nullptr;
+    }
+    uv_work_t *work = new(std::nothrow) uv_work_t;
+    if (work == nullptr) {
+        return nullptr;
+    }
+    work->data = static_cast<void*>(asyncContext.get());
+    int rev = uv_queue_work_with_qos(
+        loop, work, CameraInputNapi::OpenCameraAsync,
+        CameraInputNapi::UvWorkAsyncCompleted, uvQos);
+    if (rev != 0) {
+        MEDIA_ERR_LOG("Failed to call uv_queue_work_with_qos for CameraInputNapi::Open");
         asyncFunction->Reset();
+        if (work != nullptr) {
+            delete work;
+            work = nullptr;
+        }
     } else {
         asyncContext->queueTask =
             CameraNapiWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueTask("CameraInputNapi::Open");
-        napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
         asyncContext.release();
     }
     CHECK_ERROR_RETURN_RET(asyncFunction->GetAsyncFunctionType() == ASYNC_FUN_TYPE_PROMISE,
