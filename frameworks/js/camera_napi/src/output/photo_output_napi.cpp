@@ -785,7 +785,7 @@ void CleanAfterTransPicture(sptr<PhotoOutput> photoOutput, int32_t captureId)
 void PhotoListener::ProcessAuxiliaryPhoto(int64_t timestamp, sptr<PhotoOutput> photoOutput, int32_t captureId)
 {
     MEDIA_INFO_LOG("AssembleAuxiliaryPhoto begin captureId %{public}d, burstSeqId %{public}d",
-         captureId, GetBurstSeqId(captureId));
+        captureId, GetBurstSeqId(captureId));
     auto location = GetLocationBySettings(photoOutput->GetDefaultCaptureSetting());
     CHECK_EXECUTE(location && photoOutput->photoProxyMap_[captureId],
         photoOutput->photoProxyMap_[captureId]->SetLocation(location->latitude, location->longitude));

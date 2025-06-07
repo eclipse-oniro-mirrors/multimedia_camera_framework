@@ -23,7 +23,6 @@ namespace OHOS {
 namespace CameraStandard {
 
 SimpleTimer::SimpleTimer(std::function<void()> fun) : innerFun_(fun)  {
-
 };
 
 SimpleTimer::~SimpleTimer()
@@ -33,7 +32,7 @@ SimpleTimer::~SimpleTimer()
         timerStatus_ = CANCEL;
         timerCv_.notify_all();
         timerCv_.wait(lock, [this]() { return timerStatus_ == DONE; });
-    } else if(timerStatus_ == CANCEL) {
+    } else if (timerStatus_ == CANCEL) {
         timerCv_.wait(lock, [this]() { return timerStatus_ == DONE; });
     }
 }
