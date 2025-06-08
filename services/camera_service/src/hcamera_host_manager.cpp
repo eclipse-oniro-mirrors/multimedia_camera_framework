@@ -30,6 +30,7 @@
 #include <iterator>
 #include "rotate_plugin/camera_rotate_plugin.h"
 #include "camera_fwk_metadata_utils.h"
+#include "dp_utils.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -913,6 +914,10 @@ int32_t HCameraHostManager::OpenCameraDevice(std::string &cameraId,
             "HCameraHostManager::OpenCameraDevice sys is not allowed after prelaunch.");
         int32_t ret =  cameraHostInfo->OpenCamera(cameraId, callback, pDevice, isEnableSecCam);
         CHECK_EXECUTE(ret == 0, isHasOpenCamera_ = true);
+        if (startPrelaunchHandle_ != 0) {
+            DeferredProcessing::GetGlobalWatchdog().StopMonitor(startPrelaunchHandle_);
+            startPrelaunchHandle_ = 0;
+        }
         return ret;
     }
 }
@@ -956,6 +961,12 @@ int32_t HCameraHostManager::Prelaunch(const std::string& cameraId, std::string c
         CHECK_ERROR_RETURN_RET_LOG(isHasOpenCamera_, CAMERA_INVALID_ARG,
             "HCameraHostManager::Prelaunch failed that has been running");
         int32_t ret = cameraHostInfo->Prelaunch(cameraRestoreParam, muteMode_);
+        constexpr uint32_t delayMilli = 2 * 1000; // 2S 1000 is ms
+        DeferredProcessing::GetGlobalWatchdog().StartMonitor(startPrelaunchHandle_, delayMilli,
+            [this](uint32_t handle) {
+                this->isHasPrelaunch_ = false;
+                this->startPrelaunchHandle_ = 0;
+        });
         CHECK_EXECUTE(ret == 0, isHasPrelaunch_ = true);
         if (ret == 0 && cameraRestoreParam->GetRestoreParamType() ==
             RestoreParamTypeOhos::PERSISTENT_DEFAULT_PARAM_OHOS) {
