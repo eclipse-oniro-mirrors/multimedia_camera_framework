@@ -670,7 +670,8 @@ void PhotoListener::OnBufferAvailable()
 
 void FillNapiObjectWithCaptureId(napi_env env, int32_t captureId, napi_value &photoAsset)
 {
-    napi_value propertyName, propertyValue;
+    napi_value propertyName;
+    napi_value propertyValue;
     napi_create_string_utf8(env, "captureId", NAPI_AUTO_LENGTH, &propertyName);
     napi_create_int32(env, captureId, &propertyValue);
     napi_set_property(env, photoAsset, propertyName, propertyValue);
@@ -1800,7 +1801,8 @@ void FillPixelMapWithCaptureIdAndTimestamp(napi_env env, int32_t captureId, int6
             valueType == napi_undefined);
         return;
     }
-    napi_value propertyName, propertyValue;
+    napi_value propertyName;
+    napi_value propertyValue;
     napi_get_undefined(env, &propertyName);
     napi_get_undefined(env, &propertyValue);
     napi_create_string_utf8(env, "captureId", NAPI_AUTO_LENGTH, &propertyName);
