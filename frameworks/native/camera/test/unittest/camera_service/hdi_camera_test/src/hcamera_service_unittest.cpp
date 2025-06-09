@@ -1508,9 +1508,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_041, TestSize.Level1)
     sessionManager.AddSession(captureSession);
     EXPECT_EQ(cameraService_->GetCameraOutputStatus(pid, status), 0);
 
-    if (captureSession != nullptr) {
-        captureSession = nullptr;
-    }
+    captureSession->Release();
     device->Release();
     device->Close();
 }
