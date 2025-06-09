@@ -3598,7 +3598,7 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_086, Test
     ASSERT_NE(captureSession, nullptr);
 
     bool isSupported = false;
-    ret = OH_CaptureSession_IsWhiteBalanceModeSupported(captureSession, WHITE_BALANCE_MODE_AUTO, &isSupported);
+    ret = OH_CaptureSession_IsWhiteBalanceModeSupported(captureSession, CAMERA_WHITE_BALANCE_MODE_AUTO, &isSupported);
     MEDIA_INFO_LOG("OH_CaptureSession_IsWhiteBalanceModeSupported isSupported: %{public}d", isSupported);
     EXPECT_EQ(ret, CAMERA_OK);
 }
@@ -3619,7 +3619,7 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_087, Test
     EXPECT_EQ(ret, CAMERA_OK);
     ASSERT_NE(captureSession, nullptr);
 
-    Camera_WhiteBalanceMode whiteBalanceMode = WHITE_BALANCE_MODE_AUTO;
+    Camera_WhiteBalanceMode whiteBalanceMode = CAMERA_WHITE_BALANCE_MODE_AUTO;
     ret = OH_CaptureSession_GetWhiteBalanceMode(captureSession, &whiteBalanceMode);
     MEDIA_INFO_LOG("OH_CaptureSession_GetWhiteBalanceMode whiteBalanceMode: %{public}d", whiteBalanceMode);
     EXPECT_EQ(ret, CAMERA_OK);
@@ -3668,7 +3668,8 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_088, Test
     value = 0;
     ret = OH_CaptureSession_GetWhiteBalance(captureSession, &value);
     EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CaptureSession_SetWhiteBalanceMode(captureSession, Camera_WhiteBalanceMode::WHITE_BALANCE_MODE_DAYLIGHT);
+    ret = OH_CaptureSession_SetWhiteBalanceMode(captureSession,
+        Camera_WhiteBalanceMode::CAMERA_WHITE_BALANCE_MODE_DAYLIGHT);
     EXPECT_EQ(ret, CAMERA_OK);
     Camera_WhiteBalanceMode mode;
     ret = OH_CaptureSession_GetWhiteBalanceMode(captureSession, &mode);
