@@ -58,8 +58,6 @@ public:
 
     virtual int32_t SetCameraApi(uint32_t apiCompatibleVersion) = 0;
 
-    virtual int32_t ToggleAutoVideoFrameRate(bool isEnable) = 0;
-
     DECLARE_INTERFACE_DESCRIPTOR(u"IStreamRepeat");
 };
 } // namespace CameraStandard

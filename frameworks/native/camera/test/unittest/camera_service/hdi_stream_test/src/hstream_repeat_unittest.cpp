@@ -108,7 +108,6 @@ public:
     MOCK_METHOD1(SetMirror, int32_t(bool isEnable));
     MOCK_METHOD2(AttachMetaSurface, int32_t(const sptr<OHOS::IBufferProducer>& producer, int32_t videoMetaType));
     MOCK_METHOD2(SetCameraRotation, int32_t(bool isEnable, int32_t rotation));
-    MOCK_METHOD1(ToggleAutoVideoFrameRate, int32_t(bool isEnable));
     MOCK_METHOD1(OperatePermissionCheck, int32_t(uint32_t interfaceCode));
     MOCK_METHOD1(GetMirror, int32_t(bool& isEnable));
     MOCK_METHOD1(SetCameraApi, int32_t(uint32_t apiCompatibleVersion));

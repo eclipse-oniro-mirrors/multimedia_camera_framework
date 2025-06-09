@@ -6200,5 +6200,14 @@ int32_t CaptureSession::SetColorReservation(ColorReservationType colorReservatio
     // LCOV_EXCL_STOP
 }
 
+void CaptureSession::EnableAutoFrameRate(bool isEnable)
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_INFO_LOG("Enter EnableAutoFrameRate, isEnable:%{public}d", isEnable);
+    uint8_t enableValue = static_cast<uint8_t>(isEnable);
+    CHECK_ERROR_PRINT_LOG(!AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_AUTO_VIDEO_FRAME_RATE, &enableValue, 1),
+        "EnableAutoFrameRate Failed to enable OHOS_CONTROL_AUTO_VIDEO_FRAME_RATE");
+    // LCOV_EXCL_STOP
+}
 } // namespace CameraStandard
 } // namespace OHOS
