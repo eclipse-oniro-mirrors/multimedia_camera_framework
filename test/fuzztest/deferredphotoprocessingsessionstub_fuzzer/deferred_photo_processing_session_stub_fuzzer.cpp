@@ -16,7 +16,6 @@
 #include "deferred_photo_processing_session_stub_fuzzer.h"
 #include "deferred_processing_service.h"
 #include "foundation/multimedia/camera_framework/common/utils/camera_log.h"
-#include "deferred_processing_service_ipc_interface_code.h"
 #include "metadata_utils.h"
 #include "ipc_skeleton.h"
 #include "hap_token_info.h"
