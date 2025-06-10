@@ -19,6 +19,7 @@
 #include <atomic>
 #include <cstdint>
 #include <mutex>
+#include <uv.h>
 
 #include "camera_napi_event_emitter.h"
 #include "camera_napi_utils.h"
@@ -118,7 +119,8 @@ private:
         const std::vector<napi_value>& args, bool isOnce);
     void UnregisterOcclusionDetectCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
-
+    static void OpenCameraAsync(uv_work_t* work);
+    static void UvWorkAsyncCompleted(uv_work_t* work, int status);
     napi_env env_;
     std::string cameraId_;
     shared_ptr<ErrorCallbackListener> errorCallback_;
@@ -137,6 +139,7 @@ struct CameraInputAsyncContext : public AsyncContext {
     int32_t delayTime  = 0 ;
     uint64_t secureCameraSeqId = 0L;
     int32_t cameraConcurrentType = -1;
+    napi_env env = nullptr;
 };
 } // namespace CameraStandard
 } // namespace OHOS
