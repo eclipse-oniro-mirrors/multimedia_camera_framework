@@ -24,7 +24,7 @@
 #include "ideferred_video_processing_session.h"
 #include "ideferred_video_processing_session_callback.h"
 #include "deferred_video_processing_session_callback_stub.h"
-#include "hcamera_service_proxy.h"
+#include "camera_service_proxy.h"
 #include "ipc_file_descriptor.h"
 #include "deferred_type.h"
 

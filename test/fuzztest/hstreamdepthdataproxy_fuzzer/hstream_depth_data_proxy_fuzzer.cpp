@@ -26,7 +26,7 @@ static const uint8_t* RAW_DATA = nullptr;
 const size_t THRESHOLD = 10;
 static size_t g_dataSize = 0;
 static size_t g_pos;
-std::shared_ptr<HStreamDepthDataProxy> HStreamDepthDataProxyFuzzer::fuzz_{nullptr};
+std::shared_ptr<StreamDepthDataProxy> HStreamDepthDataProxyFuzzer::fuzz_{nullptr};
 
 /*
 * describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
@@ -71,7 +71,7 @@ void HStreamDepthDataProxyFuzzer::HStreamDepthDataProxyFuzzTest()
     if (object == nullptr) {
         return;
     }
-    fuzz_ = std::make_shared<HStreamDepthDataProxy>(object);
+    fuzz_ = std::make_shared<StreamDepthDataProxy>(object);
     CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
     fuzz_->Start();
     fuzz_->Stop();

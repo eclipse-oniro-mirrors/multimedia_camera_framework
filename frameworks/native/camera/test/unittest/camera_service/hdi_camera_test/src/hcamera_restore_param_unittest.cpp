@@ -16,6 +16,7 @@
 #include "hcamera_restore_param_unittest.h"
 #include "camera_log.h"
 #include "camera_metadata_info.h"
+#include "session/capture_scene_const.h"
 
 using namespace testing::ext;
 

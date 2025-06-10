@@ -133,7 +133,7 @@ int32_t VideoSyncCommand::Executing()
     if (info != nullptr) {
         auto callbacks =  info->GetRemoteCallback();
         for (const auto& it : videoIds_) {
-            callbacks->OnError(it.first, ErrorCode::ERROR_VIDEO_PROC_INVALID_VIDEO_ID);
+            callbacks->OnError(it.first, static_cast<int32_t>(ErrorCode::ERROR_VIDEO_PROC_INVALID_VIDEO_ID));
         }
     }
     pendingVidoes.clear();

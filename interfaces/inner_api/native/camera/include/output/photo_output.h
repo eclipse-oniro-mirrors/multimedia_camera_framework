@@ -23,7 +23,7 @@
 
 #include "camera_metadata_info.h"
 #include "capture_output.h"
-#include "hstream_capture_callback_stub.h"
+#include "stream_capture_callback_stub.h"
 #include "istream_capture.h"
 #include "camera_photo_proxy.h"
 #include "safe_map.h"
@@ -574,7 +574,7 @@ private:
     std::shared_ptr<DeferredProcessing::TaskManager> taskManager_;
 };
 
-class HStreamCaptureCallbackImpl : public HStreamCaptureCallbackStub {
+class HStreamCaptureCallbackImpl : public StreamCaptureCallbackStub {
 public:
     explicit HStreamCaptureCallbackImpl(PhotoOutput* photoOutput) : innerPhotoOutput_(photoOutput) {}
 

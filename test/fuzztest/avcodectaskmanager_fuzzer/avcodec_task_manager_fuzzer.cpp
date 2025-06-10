@@ -36,7 +36,7 @@ void AvcodecTaskManagerFuzzer::AvcodecTaskManagerFuzzTest(FuzzedDataProvider& fd
     VideoCodecType mode = static_cast<VideoCodecType>(fdp.ConsumeIntegral<uint8_t>()
         % (VideoCodecType::VIDEO_ENCODE_TYPE_HEVC + CONST_2));
     ColorSpace color = static_cast<ColorSpace>(fdp.ConsumeIntegral<uint8_t>()
-        % (ColorSpace::H_LOG + CONST_2));
+        % (ColorSpace::DISPLAY_P3 + CONST_2));
     fuzz_ = std::make_shared<AvcodecTaskManager>(session, mode, color);
     CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
     fuzz_->GetTaskManager();

@@ -150,7 +150,7 @@ void PictureAdapter::CreateWithDeepCopySurfaceBuffer(sptr<SurfaceBuffer> &surfac
     picture_ = Media::Picture::Create(newSurfaceBuffer);
 }
 
-bool PictureAdapter::Marshalling(Parcel &data)
+bool PictureAdapter::Marshalling(Parcel &data) const
 {
     MEDIA_INFO_LOG("PictureAdapter::Marshalling enter");
     std::shared_ptr<Media::Picture> picture = GetPicture();
@@ -158,7 +158,7 @@ bool PictureAdapter::Marshalling(Parcel &data)
     return picture->Marshalling(data);
 }
 
-void PictureAdapter::Unmarshalling(Parcel &data)
+void PictureAdapter::UnmarshallingPicture(Parcel &data)
 {
     MEDIA_INFO_LOG("PictureAdapter::Unmarshalling enter");
     picture_.reset(Media::Picture::Unmarshalling(data));
@@ -210,7 +210,7 @@ void PictureAdapter::RotatePicture()
     MEDIA_INFO_LOG("PictureAdapter::RotatePicture X");
 }
 
-std::shared_ptr<Media::Picture> PictureAdapter::GetPicture()
+std::shared_ptr<Media::Picture> PictureAdapter::GetPicture() const
 {
     return picture_;
 }

@@ -1,0 +1,50 @@
+/*
+ * Copyright (c) 2025 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package OHOS.CameraStandard;
+import CameraTypes;
+import ICameraDeviceService;
+import ICaptureSessionCallback;
+import IStreamCommon;
+import IPressureStatusCallback;
+sequenceable OHOS.IRemoteObject;
+option_stub_hooks on;
+
+interface ICaptureSession{
+  [ipccode 0] void BeginConfig();
+  [ipccode 1] void AddInput([in] ICameraDeviceService cameraDevice);
+  [ipccode 2] void CanAddInput([in] ICameraDeviceService cameraDevice, [inout] boolean results);
+  [ipccode 3] void AddOutput([in] StreamType streamType, [in] IRemoteObject stream);
+  [ipccode 4] void RemoveInput([in] ICameraDeviceService cameraDevice);
+  [ipccode 5] void RemoveOutput([in] StreamType streamType, [in] IRemoteObject stream);
+  [ipccode 6] void CommitConfig();
+  [ipccode 7] void Start();
+  [ipccode 8] void Stop();
+  [ipccode 9] void Release();
+  [ipccode 10] void SetCallback([in] ICaptureSessionCallback callbackFunc);
+  [ipccode 11] void SetPressureCallback([in] IPressureStatusCallback callbackFunc);
+  [ipccode 12] void GetSessionState([out] CaptureSessionState sessionState);
+  [ipccode 13] void GetActiveColorSpace([out] int colorSpace);
+  [ipccode 14] void SetColorSpace([in] int colorSpace, [in] boolean isNeedUpdate);
+  [ipccode 15] void SetSmoothZoom([in] int smoothZoomType, [in] int operationMode, [in] float targetZoomRatio, [out] float duration);
+  [ipccode 16] void SetFeatureMode([in] int featureMode);
+  [ipccode 17] void EnableMovingPhoto([in] boolean isEnable);
+  [ipccode 18] void EnableMovingPhotoMirror([in] boolean isMirror, [in] boolean isConfig);
+  [ipccode 19] void SetPreviewRotation([in] String deviceClass);
+  [ipccode 20] void UnSetCallback();
+  [ipccode 21] void UnSetPressureCallback();
+  [ipccode 22] void SetCommitConfigFlag([in] boolean isNeedCommitting);
+  [ipccode 23] void SetHasFitedRotation([in] boolean isHasFitedRotation);
+}

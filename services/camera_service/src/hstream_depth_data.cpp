@@ -20,7 +20,6 @@
 #include "camera_device_ability_items.h"
 #include "camera_log.h"
 #include "camera_metadata_operator.h"
-#include "camera_service_ipc_interface_code.h"
 #include "camera_util.h"
 #include "hstream_common.h"
 #include "ipc_skeleton.h"
@@ -200,7 +199,7 @@ int32_t HStreamDepthData::ReleaseStream(bool isDelay)
     return HStreamCommon::ReleaseStream(isDelay);
 }
 
-int32_t HStreamDepthData::SetCallback(sptr<IStreamDepthDataCallback>& callback)
+int32_t HStreamDepthData::SetCallback(const sptr<IStreamDepthDataCallback>& callback)
 {
     CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_INVALID_ARG,
         "HStreamDepthData::SetCallback callback is null");
@@ -240,8 +239,8 @@ void HStreamDepthData::DumpStreamInfo(CameraInfoDumper& infoDumper)
 
 int32_t HStreamDepthData::OperatePermissionCheck(uint32_t interfaceCode)
 {
-    switch (static_cast<StreamDepthDataInterfaceCode>(interfaceCode)) {
-        case StreamDepthDataInterfaceCode::CAMERA_STREAM_DEPTH_DATA_START: {
+    switch (static_cast<IStreamDepthDataIpcCode>(interfaceCode)) {
+        case IStreamDepthDataIpcCode::COMMAND_START: {
             auto callerToken = IPCSkeleton::GetCallingTokenID();
             CHECK_ERROR_RETURN_RET_LOG(callerToken_ != callerToken, CAMERA_OPERATION_NOT_ALLOWED,
                 "HStreamDepthData::OperatePermissionCheck fail, callerToken invalid!");
@@ -250,6 +249,19 @@ int32_t HStreamDepthData::OperatePermissionCheck(uint32_t interfaceCode)
         default:
             break;
     }
+    return CAMERA_OK;
+}
+
+int32_t HStreamDepthData::CallbackEnter([[maybe_unused]] uint32_t code)
+{
+    MEDIA_INFO_LOG("start, code:%{public}u", code);
+    DisableJeMalloc();
+    return OperatePermissionCheck(code);
+}
+
+int32_t HStreamDepthData::CallbackExit([[maybe_unused]] uint32_t code, [[maybe_unused]] int32_t result)
+{
+    MEDIA_INFO_LOG("leave, code:%{public}u, result:%{public}d", code, result);
     return CAMERA_OK;
 }
 } // namespace CameraStandard

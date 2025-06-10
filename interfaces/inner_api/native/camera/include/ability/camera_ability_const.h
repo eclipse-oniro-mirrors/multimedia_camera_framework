@@ -19,6 +19,7 @@
 #include <cstdint>
 #include <map>
 #include "camera_metadata_operator.h"
+#include "camera_types.h"
 namespace OHOS {
 namespace HDI {
 namespace Display {
@@ -143,6 +144,20 @@ enum FocusDrivenType {
 enum ColorReservationType {
     COLOR_RESERVATION_TYPE_NONE = 0,
     COLOR_RESERVATION_TYPE_PORTRAIT
+};
+
+enum FlashStatus {
+    FLASH_STATUS_OFF = 0,
+    FLASH_STATUS_ON,
+    FLASH_STATUS_UNAVAILABLE
+};
+
+enum CameraStatus {
+    CAMERA_STATUS_APPEAR = 0,
+    CAMERA_STATUS_DISAPPEAR,
+    CAMERA_STATUS_AVAILABLE,
+    CAMERA_STATUS_UNAVAILABLE,
+    CAMERA_SERVER_UNAVAILABLE
 };
 
 extern const std::unordered_map<camera_flash_mode_enum_t, FlashMode> g_metaFlashModeMap_;

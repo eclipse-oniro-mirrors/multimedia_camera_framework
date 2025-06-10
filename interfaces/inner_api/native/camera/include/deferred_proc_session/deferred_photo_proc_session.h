@@ -24,8 +24,9 @@
 #include "ideferred_photo_processing_session_callback.h"
 #include "deferred_photo_processing_session_callback_stub.h"
 #include "dps_metadata_info.h"
-#include "hcamera_service_proxy.h"
+#include "camera_service_proxy.h"
 #include "deferred_type.h"
+#include "deferred_processing_types.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -82,13 +83,18 @@ public:
         deferredPhotoProcSession_ = nullptr;
     }
 
-    int32_t OnProcessImageDone(const std::string &imageId, const sptr<IPCFileDescriptor> ipcFileDescriptor,
-        const long bytes, uint32_t cloudImageEnhanceFlag) override;
-    int32_t OnProcessImageDone(const std::string &imageId, std::shared_ptr<PictureIntf> picture,
+    int32_t OnProcessImageDone(const std::string &imageId, const sptr<IPCFileDescriptor>& ipcFileDescriptor,
+        int64_t bytes, uint32_t cloudImageEnhanceFlag) override;
+    int32_t OnProcessImageDone(const std::string &imageId, const std::shared_ptr<PictureIntf>& picture,
         uint32_t cloudImageEnhanceFlag) override;
-    int32_t OnDeliveryLowQualityImage(const std::string &imageId, std::shared_ptr<PictureIntf> picture) override;
-    int32_t OnError(const std::string &imageId, const DeferredProcessing::ErrorCode errorCode) override;
-    int32_t OnStateChanged(const DeferredProcessing::StatusCode status) override;
+    int32_t OnDeliveryLowQualityImage(const std::string &imageId, const std::shared_ptr<PictureIntf>& picture) override;
+    int32_t OnError(const std::string &imageId, DeferredProcessing::ErrorCode errorCode) override;
+    int32_t OnStateChanged(DeferredProcessing::StatusCode status) override;
+    int32_t CallbackParcel(
+        [[maybe_unused]] uint32_t code,
+        [[maybe_unused]] MessageParcel& data,
+        [[maybe_unused]] MessageParcel& reply,
+        [[maybe_unused]] MessageOption& option) override;
 
 private:
     sptr<DeferredPhotoProcSession> deferredPhotoProcSession_;

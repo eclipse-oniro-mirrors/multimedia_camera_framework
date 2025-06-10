@@ -31,12 +31,12 @@ public:
     void SetAuxiliaryPicture(sptr<SurfaceBuffer> &surfaceBuffer,
         CameraAuxiliaryPictureType type) override;
     void CreateWithDeepCopySurfaceBuffer(sptr<SurfaceBuffer> &surfaceBuffer) override;
-    bool Marshalling(Parcel &data) override;
-    void Unmarshalling(Parcel &data) override;
+    bool Marshalling(Parcel &data) const override;
+    void UnmarshallingPicture(Parcel &data) override;
     int32_t SetExifMetadata(sptr<SurfaceBuffer> &surfaceBuffer) override;
     bool SetMaintenanceData(sptr<SurfaceBuffer> &surfaceBuffer) override;
     void RotatePicture() override;
-    std::shared_ptr<Media::Picture> GetPicture();
+    std::shared_ptr<Media::Picture> GetPicture() const;
 private:
     // Keep the order of members in this class, the bottom member will be destroyed first
     std::shared_ptr<Media::Picture> picture_;

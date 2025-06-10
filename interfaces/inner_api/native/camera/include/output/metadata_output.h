@@ -24,7 +24,7 @@
 #include "camera_metadata_info.h"
 #include "camera_metadata_operator.h"
 #include "capture_output.h"
-#include "hstream_metadata_callback_stub.h"
+#include "stream_metadata_callback_stub.h"
 #include "iconsumer_surface.h"
 #include "istream_metadata.h"
 
@@ -446,7 +446,7 @@ private:
     wptr<MetadataOutput> metadata_;
 };
 
-class HStreamMetadataCallbackImpl : public HStreamMetadataCallbackStub {
+class HStreamMetadataCallbackImpl : public StreamMetadataCallbackStub {
 public:
     explicit HStreamMetadataCallbackImpl(MetadataOutput *metaDataOutput) : innerMetadataOutput(metaDataOutput) {}
 

@@ -34,13 +34,16 @@ namespace {
 
 class PhotoProcessingSessionCallbackMock : public DeferredPhotoProcessingSessionCallbackStub {
 public:
-    MOCK_METHOD3(OnProcessImageDone, int32_t(const std::string &imageId, std::shared_ptr<PictureIntf> picture,
-        uint32_t cloudImageEnhanceFlag));
-    MOCK_METHOD2(OnDeliveryLowQualityImage, int32_t(const std::string &imageId, std::shared_ptr<PictureIntf> picture));
-    MOCK_METHOD4(OnProcessImageDone, int32_t(const std::string &imageId, sptr<IPCFileDescriptor> ipcFd, const long bytes,
-        uint32_t cloudImageEnhanceFlag));
-    MOCK_METHOD2(OnError, int32_t(const std::string &imageId, const ErrorCode errorCode));
-    MOCK_METHOD1(OnStateChanged, int32_t(const StatusCode status));
+    MOCK_METHOD4(OnProcessImageDone, ErrCode(const std::string& imageId,
+        const sptr<IPCFileDescriptor>& ipcFd, int64_t bytes, uint32_t cloudImageEnhanceFlag));
+    MOCK_METHOD2(OnDeliveryLowQualityImage, ErrCode(const std::string& imageId,
+        const std::shared_ptr<PictureIntf>& picture));
+    MOCK_METHOD3(OnProcessImageDone, ErrCode(const std::string& imageId,
+        const std::shared_ptr<PictureIntf>& picture, uint32_t cloudImageEnhanceFlag));
+    MOCK_METHOD2(OnError, ErrCode(const std::string& imageId, ErrorCode errorCode));
+    MOCK_METHOD1(OnStateChanged, ErrCode(StatusCode status));
+    MOCK_METHOD4(CallbackParcel, int32_t(uint32_t code, MessageParcel& data,
+        MessageParcel& reply, MessageOption& option));
 };
 
 void DeferredPhotoProcessorUnittest::SetUpTestCase(void)

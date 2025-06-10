@@ -26,7 +26,7 @@ namespace OHOS {
 namespace CameraStandard {
 
 int32_t DeferredPhotoProcessingSessionCallback::OnProcessImageDone(const std::string &imageId,
-    const sptr<IPCFileDescriptor> ipcFileDescriptor, const long bytes, uint32_t cloudImageEnhanceFlag)
+    const sptr<IPCFileDescriptor>& ipcFileDescriptor, int64_t bytes, uint32_t cloudImageEnhanceFlag)
 {
     MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnProcessImageDone() is called!"
         "cloudImageEnhanceFlag: %{public}u", cloudImageEnhanceFlag);
@@ -36,7 +36,7 @@ int32_t DeferredPhotoProcessingSessionCallback::OnProcessImageDone(const std::st
     if (deferredPhotoProcSession_ != nullptr && deferredPhotoProcSession_->GetCallback() != nullptr) {
         if (addr == MAP_FAILED) {
             MEDIA_ERR_LOG("DeferredPhotoProcessingSessionCallback::OnProcessImageDone() mmap failed");
-            deferredPhotoProcSession_->GetCallback()->OnError(imageId, ERROR_IMAGE_PROC_FAILED);
+            deferredPhotoProcSession_->GetCallback()->OnError(imageId, DpsErrorCode::ERROR_IMAGE_PROC_FAILED);
             return 0;
         } else {
             deferredPhotoProcSession_->GetCallback()->OnProcessImageDone(imageId, static_cast<uint8_t*>(addr), bytes,
@@ -50,7 +50,7 @@ int32_t DeferredPhotoProcessingSessionCallback::OnProcessImageDone(const std::st
 }
 
 int32_t DeferredPhotoProcessingSessionCallback::OnError(const std::string &imageId,
-    const DeferredProcessing::ErrorCode errorCode)
+    DeferredProcessing::ErrorCode errorCode)
 {
     MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnError() is called, errorCode: %{public}d", errorCode);
     if (deferredPhotoProcSession_ != nullptr && deferredPhotoProcSession_->GetCallback() != nullptr) {
@@ -61,7 +61,7 @@ int32_t DeferredPhotoProcessingSessionCallback::OnError(const std::string &image
     return 0;
 }
 
-int32_t DeferredPhotoProcessingSessionCallback::OnStateChanged(const DeferredProcessing::StatusCode status)
+int32_t DeferredPhotoProcessingSessionCallback::OnStateChanged(DeferredProcessing::StatusCode status)
 {
     MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnStateChanged() is called, status:%{public}d", status);
     if (deferredPhotoProcSession_ != nullptr && deferredPhotoProcSession_->GetCallback() != nullptr) {
@@ -73,7 +73,7 @@ int32_t DeferredPhotoProcessingSessionCallback::OnStateChanged(const DeferredPro
 }
 
 int32_t DeferredPhotoProcessingSessionCallback::OnProcessImageDone(const std::string &imageId,
-    std::shared_ptr<PictureIntf> pictureIntf, uint32_t cloudImageEnhanceFlag)
+    const std::shared_ptr<PictureIntf>& pictureIntf, uint32_t cloudImageEnhanceFlag)
 {
     MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnProcessImageDone() is"
         "called, status:%{public}s, cloudImageEnhanceFlag: %{public}u", imageId.c_str(), cloudImageEnhanceFlag);
@@ -89,7 +89,7 @@ int32_t DeferredPhotoProcessingSessionCallback::OnProcessImageDone(const std::st
 }
 
 int32_t DeferredPhotoProcessingSessionCallback::OnDeliveryLowQualityImage(const std::string &imageId,
-    std::shared_ptr<PictureIntf> pictureIntf)
+    const std::shared_ptr<PictureIntf>& pictureIntf)
 {
     MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnDeliveryLowQualityImage() is"
         "called, status:%{public}s", imageId.c_str());
@@ -99,6 +99,60 @@ int32_t DeferredPhotoProcessingSessionCallback::OnDeliveryLowQualityImage(const 
         callback->OnDeliveryLowQualityImage(imageId, pictureIntf);
     }
     return 0;
+}
+
+int32_t DeferredPhotoProcessingSessionCallback::CallbackParcel([[maybe_unused]] uint32_t code,
+    [[maybe_unused]] MessageParcel& data, [[maybe_unused]] MessageParcel& reply, [[maybe_unused]] MessageOption& option)
+{
+    MEDIA_INFO_LOG("start, code:%{public}u", code);
+    if ((static_cast<IDeferredPhotoProcessingSessionCallbackIpcCode>(code)
+        != IDeferredPhotoProcessingSessionCallbackIpcCode::COMMAND_ON_DELIVERY_LOW_QUALITY_IMAGE)
+        && (static_cast<IDeferredPhotoProcessingSessionCallbackIpcCode>(code)
+        != IDeferredPhotoProcessingSessionCallbackIpcCode::
+        COMMAND_ON_PROCESS_IMAGE_DONE_IN_STRING_IN_SHARED_PTR_PICTUREINTF_IN_UNSIGNED_INT)) {
+        return ERR_NONE;
+    }
+    CHECK_ERROR_RETURN_RET(data.ReadInterfaceToken() != GetDescriptor(), ERR_TRANSACTION_FAILED);
+
+    switch (static_cast<IDeferredPhotoProcessingSessionCallbackIpcCode>(code)) {
+        case IDeferredPhotoProcessingSessionCallbackIpcCode::COMMAND_ON_DELIVERY_LOW_QUALITY_IMAGE: {
+            MEDIA_INFO_LOG("HandleProcessLowQualityImage enter");
+            std::string imageId = Str16ToStr8(data.ReadString16());
+            int32_t size = data.ReadInt32();
+            CHECK_ERROR_RETURN_RET_LOG(size == 0, ERR_INVALID_DATA, "Not an parcelable oject");
+            std::shared_ptr<PictureProxy> picturePtr = PictureProxy::CreatePictureProxy();
+            CHECK_ERROR_RETURN_RET_LOG(picturePtr == nullptr, ERR_INVALID_DATA, "picturePtr is nullptr");
+            MEDIA_INFO_LOG("HandleProcessLowQualityImage Picture::Unmarshalling E");
+            picturePtr->UnmarshallingPicture(data);
+            MEDIA_INFO_LOG("HandleProcessLowQualityImage Picture::Unmarshalling X");
+            ErrCode errCode = OnDeliveryLowQualityImage(imageId, picturePtr->GetPictureIntf());
+            MEDIA_INFO_LOG("HandleProcessLowQualityImage result: %{public}d", errCode);
+            CHECK_ERROR_RETURN_RET_LOG(!reply.WriteInt32(errCode), ERR_INVALID_VALUE,
+                "OnDeliveryLowQualityImage faild");
+            break;
+        }
+        case IDeferredPhotoProcessingSessionCallbackIpcCode::
+            COMMAND_ON_PROCESS_IMAGE_DONE_IN_STRING_IN_SHARED_PTR_PICTUREINTF_IN_UNSIGNED_INT: {
+            MEDIA_INFO_LOG("HandleOnProcessPictureDone enter");
+            std::string imageId = Str16ToStr8(data.ReadString16());
+            int32_t size = data.ReadInt32();
+            CHECK_ERROR_RETURN_RET_LOG(size == 0, ERR_INVALID_DATA, "Not an parcelable oject");
+            std::shared_ptr<PictureProxy> picturePtr = PictureProxy::CreatePictureProxy();
+            CHECK_ERROR_RETURN_RET_LOG(picturePtr == nullptr, IPC_STUB_INVALID_DATA_ERR, "picturePtr is nullptr");
+            MEDIA_INFO_LOG("HandleOnProcessPictureDone Picture::Unmarshalling E");
+            picturePtr->UnmarshallingPicture(data);
+            MEDIA_INFO_LOG("HandleOnProcessPictureDone Picture::Unmarshalling X");
+            uint32_t cloudImageEnhanceFlag = data.ReadUint32();
+            ErrCode errCode = OnProcessImageDone(imageId, picturePtr->GetPictureIntf(), cloudImageEnhanceFlag);
+            MEDIA_INFO_LOG("HandleOnProcessPictureDone result: %{public}d, cloudImageEnhanceFlag: %{public}u",
+                errCode, cloudImageEnhanceFlag);
+            CHECK_ERROR_RETURN_RET_LOG(!reply.WriteInt32(errCode), ERR_INVALID_VALUE, "OnProcessImageDone faild");
+            break;
+        }
+        default:
+            break;
+    }
+    return -1;
 }
 
 DeferredPhotoProcSession::DeferredPhotoProcSession(int userId,

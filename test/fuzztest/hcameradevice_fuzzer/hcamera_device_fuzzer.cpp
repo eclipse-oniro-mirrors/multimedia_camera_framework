@@ -30,7 +30,6 @@ namespace CameraStandard {
 using namespace OHOS::HDI::Camera::V1_0;
 static constexpr int32_t MIN_SIZE_NUM = 256;
 static constexpr int32_t NUM_1 = 1;
-const size_t THRESHOLD = 10;
 const int NUM_10 = 10;
 const int NUM_100 = 100;
 const size_t MAX_LENGTH_STRING = 64;
@@ -103,7 +102,7 @@ void HCameraDeviceFuzzer::HCameraDeviceFuzzTest3(FuzzedDataProvider& fdp)
     fuzz_->GetDeviceAbility();
     fuzz_->Open();
     uint64_t secureSeqId = fdp.ConsumeIntegral<int64_t>();
-    fuzz_->OpenSecureCamera(&secureSeqId);
+    fuzz_->OpenSecureCamera(secureSeqId);
     fuzz_->GetSecureCameraSeq(&secureSeqId);
     fuzz_->OpenDevice(isMoving);
     fuzz_->HandleFoldableDevice();
@@ -140,7 +139,7 @@ void HCameraDeviceFuzzer::HCameraDeviceFuzzTest4(FuzzedDataProvider& fdp)
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult;
     cameraResult = std::make_shared<OHOS::Camera::CameraMetadata>(NUM_10, NUM_100);
     std::function<void(int64_t, int64_t)> callback = [](int64_t start, int64_t end) {
-        MEDIA_INFO_LOG("Start: %ld, End: %ld\n", start, end);
+        MEDIA_INFO_LOG("Start: %lld, End: %lld\n", start, end);
     };
     fuzz_->SetMovingPhotoStartTimeCallback(callback);
     fuzz_->SetMovingPhotoEndTimeCallback(callback);

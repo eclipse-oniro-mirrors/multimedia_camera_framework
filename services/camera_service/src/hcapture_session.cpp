@@ -40,7 +40,6 @@
 #include "camera_report_dfx_uitls.h"
 #include "camera_report_uitls.h"
 #include "camera_server_photo_proxy.h"
-#include "camera_service_ipc_interface_code.h"
 #include "camera_util.h"
 #include "datetime_ex.h"
 #include "deferred_processing_service.h"
@@ -75,6 +74,7 @@
 #include "surface_buffer.h"
 #include "v1_0/types.h"
 #include "hstream_operator_manager.h"
+#include "camera_xcollie.h"
 #ifdef HOOK_CAMERA_OPERATOR
 #include "camera_rotate_plugin.h"
 #endif
@@ -261,7 +261,7 @@ int32_t HCaptureSession::BeginConfig()
     return errCode;
 }
 
-int32_t HCaptureSession::CanAddInput(sptr<ICameraDeviceService> cameraDevice, bool& result)
+int32_t HCaptureSession::CanAddInput(const sptr<ICameraDeviceService>& cameraDevice, bool& result)
 {
     CAMERA_SYNC_TRACE;
     int32_t errorCode = CAMERA_OK;
@@ -295,7 +295,7 @@ int32_t HCaptureSession::CanAddInput(sptr<ICameraDeviceService> cameraDevice, bo
     return errorCode;
 }
 
-int32_t HCaptureSession::AddInput(sptr<ICameraDeviceService> cameraDevice)
+int32_t HCaptureSession::AddInput(const sptr<ICameraDeviceService>& cameraDevice)
 {
     CAMERA_SYNC_TRACE;
     int32_t errorCode = CAMERA_OK;
@@ -392,7 +392,7 @@ public:
     std::mutex mStreamManagerLock_;
 };
 
-int32_t HCaptureSession::SetPreviewRotation(std::string &deviceClass)
+int32_t HCaptureSession::SetPreviewRotation(const std::string &deviceClass)
 {
     auto hStreamOperatorSptr = GetStreamOperator();
     CHECK_ERROR_RETURN_RET_LOG(hStreamOperatorSptr == nullptr, CAMERA_INVALID_ARG,
@@ -411,7 +411,24 @@ void HCaptureSession::InitialHStreamOperator()
     }
 }
 
-int32_t HCaptureSession::AddOutput(StreamType streamType, sptr<IStreamCommon> stream)
+int32_t HCaptureSession::AddOutput(StreamType streamType, const sptr<IRemoteObject>& remoteObj)
+{
+    CHECK_ERROR_RETURN_RET_LOG(remoteObj == nullptr, CAMERA_INVALID_ARG, "HCaptureSession remoteObj is null");
+    sptr<IStreamCommon> stream = nullptr;
+    if (streamType == StreamType::CAPTURE) {
+        stream = iface_cast<IStreamCapture>(remoteObj);
+    } else if (streamType == StreamType::REPEAT) {
+        stream = iface_cast<IStreamRepeat>(remoteObj);
+    }  else if (streamType == StreamType::METADATA) {
+        stream = iface_cast<IStreamMetadata>(remoteObj);
+    } else if (streamType == StreamType::DEPTH) {
+        stream = iface_cast<IStreamDepthData>(remoteObj);
+    }
+    CHECK_ERROR_RETURN_RET_LOG(stream == nullptr, CAMERA_INVALID_ARG, "HCaptureSession stream is null");
+    return AddOutputInner(streamType, stream);
+}
+
+int32_t HCaptureSession::AddOutputInner(StreamType streamType, const sptr<IStreamCommon>& stream)
 {
     int32_t errorCode = CAMERA_INVALID_ARG;
     if (stream == nullptr) {
@@ -448,7 +465,7 @@ int32_t HCaptureSession::AddOutput(StreamType streamType, sptr<IStreamCommon> st
     return errorCode;
 }
 
-int32_t HCaptureSession::RemoveInput(sptr<ICameraDeviceService> cameraDevice)
+int32_t HCaptureSession::RemoveInput(const sptr<ICameraDeviceService>& cameraDevice)
 {
     int32_t errorCode = CAMERA_OK;
     if (cameraDevice == nullptr) {
@@ -515,7 +532,24 @@ int32_t HCaptureSession::RemoveOutputStream(sptr<HStreamCommon> stream)
     return CAMERA_OK;
 }
 
-int32_t HCaptureSession::RemoveOutput(StreamType streamType, sptr<IStreamCommon> stream)
+int32_t HCaptureSession::RemoveOutput(StreamType streamType, const sptr<IRemoteObject>& remoteObj)
+{
+    CHECK_ERROR_RETURN_RET_LOG(remoteObj == nullptr, CAMERA_INVALID_ARG, "HCaptureSession remoteObj is null");
+    sptr<IStreamCommon> stream = nullptr;
+    if (streamType == StreamType::CAPTURE) {
+        stream = iface_cast<IStreamCapture>(remoteObj);
+    } else if (streamType == StreamType::REPEAT) {
+        stream = iface_cast<IStreamRepeat>(remoteObj);
+    }  else if (streamType == StreamType::METADATA) {
+        stream = iface_cast<IStreamMetadata>(remoteObj);
+    } else if (streamType == StreamType::DEPTH) {
+        stream = iface_cast<IStreamDepthData>(remoteObj);
+    }
+    CHECK_ERROR_RETURN_RET_LOG(stream == nullptr, CAMERA_INVALID_ARG, "HCaptureSession remoteObj is null");
+    return RemoveOutputInner(streamType, stream);
+}
+
+int32_t HCaptureSession::RemoveOutputInner(StreamType streamType, const sptr<IStreamCommon>& stream)
 {
     int32_t errorCode = CAMERA_INVALID_ARG;
     if (stream == nullptr) {
@@ -718,17 +752,20 @@ int32_t HCaptureSession::CommitConfig()
     return errorCode;
 }
 
-int32_t HCaptureSession::GetActiveColorSpace(ColorSpace& colorSpace)
+int32_t HCaptureSession::GetActiveColorSpace(int32_t& curColorSpace)
 {
     auto hStreamOperatorSptr = GetStreamOperator();
     CHECK_ERROR_RETURN_RET_LOG(hStreamOperatorSptr == nullptr, CAMERA_OK, "hStreamOperator is nullptr");
+    ColorSpace colorSpace;
     hStreamOperatorSptr->GetActiveColorSpace(colorSpace);
+    curColorSpace = static_cast<int32_t>(colorSpace);
     return CAMERA_OK;
 }
 
-int32_t HCaptureSession::SetColorSpace(ColorSpace colorSpace, bool isNeedUpdate)
+int32_t HCaptureSession::SetColorSpace(int32_t curColorSpace, bool isNeedUpdate)
 {
     int32_t result = CAMERA_OK;
+    ColorSpace colorSpace = static_cast<ColorSpace>(curColorSpace);
     stateMachine_.StateGuard(
         [&result, this, &colorSpace, &isNeedUpdate](CaptureSessionState currentState) {
             MEDIA_INFO_LOG("HCaptureSession::SetColorSpace() ColorSpace : %{public}d", colorSpace);
@@ -1276,8 +1313,8 @@ int32_t HCaptureSession::OperatePermissionCheck(uint32_t interfaceCode)
     CHECK_ERROR_RETURN_RET_LOG(stateMachine_.GetCurrentState() == CaptureSessionState::SESSION_RELEASED,
         CAMERA_INVALID_STATE,
         "HCaptureSession::OperatePermissionCheck session is released");
-    switch (static_cast<CaptureSessionInterfaceCode>(interfaceCode)) {
-        case CAMERA_CAPTURE_SESSION_START: {
+    switch (static_cast<ICaptureSessionIpcCode>(interfaceCode)) {
+        case ICaptureSessionIpcCode::COMMAND_START: {
             auto callerToken = IPCSkeleton::GetCallingTokenID();
             CHECK_ERROR_RETURN_RET_LOG(callerToken_ != callerToken, CAMERA_OPERATION_NOT_ALLOWED,
                 "HCaptureSession::OperatePermissionCheck fail, callerToken_ is : %{public}d, now token "
@@ -1287,6 +1324,33 @@ int32_t HCaptureSession::OperatePermissionCheck(uint32_t interfaceCode)
         default:
             break;
     }
+    return CAMERA_OK;
+}
+
+int32_t HCaptureSession::CallbackEnter([[maybe_unused]] uint32_t code)
+{
+    MEDIA_INFO_LOG("start, code:%{public}u", code);
+    DisableJeMalloc();
+    int32_t errCode = OperatePermissionCheck(code);
+    CHECK_ERROR_RETURN_RET_LOG(errCode != CAMERA_OK, errCode, "HCaptureSession::OperatePermissionCheck fail");
+
+    switch (static_cast<ICaptureSessionIpcCode>(code)) {
+        case ICaptureSessionIpcCode::COMMAND_SET_FEATURE_MODE: {
+            CHECK_ERROR_RETURN_RET_LOG(!CheckSystemApp(), CAMERA_NO_PERMISSION, "HCaptureSession::CheckSystemApp fail");
+            break;
+        }
+        case ICaptureSessionIpcCode::COMMAND_RELEASE: {
+            CameraXCollie cameraXCollie("hcaptureSessionStub::Release");
+            break;
+        }
+        default:
+            break;
+    }
+    return CAMERA_OK;
+}
+int32_t HCaptureSession::CallbackExit([[maybe_unused]] uint32_t code, [[maybe_unused]] int32_t result)
+{
+    MEDIA_INFO_LOG("leave, code:%{public}u, result:%{public}d", code, result);
     return CAMERA_OK;
 }
 
@@ -1302,7 +1366,7 @@ void HCaptureSession::DestroyStubObjectForPid(pid_t pid)
     MEDIA_DEBUG_LOG("camera stub session groups(%{public}zu).", sessionManager.GetGroupCount());
 }
 
-int32_t HCaptureSession::SetCallback(sptr<ICaptureSessionCallback>& callback)
+int32_t HCaptureSession::SetCallback(const sptr<ICaptureSessionCallback>& callback)
 {
     if (callback == nullptr) {
         MEDIA_WARNING_LOG("HCaptureSession::SetCallback callback is null, we "
@@ -1319,7 +1383,7 @@ int32_t HCaptureSession::UnSetCallback()
     return CAMERA_OK;
 }
 
-int32_t HCaptureSession::SetPressureCallback(sptr<IPressureStatusCallback>& callback)
+int32_t HCaptureSession::SetPressureCallback(const sptr<IPressureStatusCallback>& callback)
 {
     if (callback == nullptr) {
         MEDIA_WARNING_LOG("HCaptureSession::SetPressureCallback callback is null, we "

@@ -16,13 +16,14 @@
 #ifndef HSTREAM_DEPTH_STUB_FUZZER_H
 #define HSTREAM_DEPTH_STUB_FUZZER_H
 
-#include "hstream_depth_data_stub.h"
+#include "stream_depth_data_stub.h"
 #include <fuzzer/FuzzedDataProvider.h>
+#include "icamera_ipc_checker.h"
 
 namespace OHOS {
 namespace CameraStandard {
 
-class HStreamDepthDataStubFuzz : public HStreamDepthDataStub {
+class HStreamDepthDataStubFuzz : public StreamDepthDataStub, public ICameraIpcChecker {
 public:
     int32_t Start() override
     {
@@ -32,7 +33,7 @@ public:
     {
         return 0;
     }
-    int32_t SetCallback(sptr<IStreamDepthDataCallback>& callback) override
+    int32_t SetCallback(const sptr<IStreamDepthDataCallback>& callback) override
     {
         return 0;
     }
@@ -49,6 +50,14 @@ public:
         return 0;
     }
     int32_t OperatePermissionCheck(uint32_t interfaceCode) override
+    {
+        return 0;
+    }
+    int32_t CallbackEnter([[maybe_unused]] uint32_t code) override
+    {
+        return 0;
+    }
+    int32_t CallbackExit([[maybe_unused]] uint32_t code, [[maybe_unused]] int32_t result) override
     {
         return 0;
     }

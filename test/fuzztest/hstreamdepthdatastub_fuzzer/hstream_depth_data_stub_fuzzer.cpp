@@ -22,15 +22,13 @@
 #include "camera_metadata_info.h"
 #include "metadata_utils.h"
 #include "iconsumer_surface.h"
-#include "camera_service_ipc_interface_code.h"
 #include "securec.h"
-#include "hstream_depth_data_callback_proxy.h"
+#include "stream_depth_data_callback_proxy.h"
 
 namespace OHOS {
 namespace CameraStandard {
 static constexpr int32_t MIN_SIZE_NUM = 64;
 static constexpr int32_t MAX_CODE_NUM = 4;
-const size_t THRESHOLD = 10;
 static const size_t MAX_BUFFER_SIZE = 32;
 
 std::shared_ptr<HStreamDepthDataStubFuzz> HStreamDepthDataStubFuzzer::fuzz_{nullptr};
@@ -64,15 +62,6 @@ void Test(uint8_t* data, size_t size)
     for (uint32_t i = 0; i <= MAX_CODE_NUM; i++) {
         hstreamDepthDataStub->OnRemoteRequest(fdp, i);
     }
-    MessageParcel dataMessageParcel;
-    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    static const int32_t audioPolicyServiceId = fdp.ConsumeIntegral<int32_t>();
-    auto object = samgr->GetSystemAbility(audioPolicyServiceId);
-    auto proxy = std::make_shared<HStreamDepthDataCallbackProxy>(object);
-    dataMessageParcel.WriteRemoteObject(proxy->AsObject());
-    HStreamDepthDataStubFuzzer::fuzz_->HandleSetCallback(dataMessageParcel);
-    dataMessageParcel.WriteInt32(fdp.ConsumeIntegral<int32_t>());
-    HStreamDepthDataStubFuzzer::fuzz_->HandleSetDataAccuracy(dataMessageParcel);
 }
 
 } // namespace CameraStandard

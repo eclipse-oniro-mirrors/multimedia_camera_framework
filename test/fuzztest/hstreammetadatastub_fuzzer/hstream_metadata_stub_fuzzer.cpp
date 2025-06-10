@@ -22,9 +22,8 @@
 #include "camera_metadata_info.h"
 #include "metadata_utils.h"
 #include "iconsumer_surface.h"
-#include "camera_service_ipc_interface_code.h"
 #include "securec.h"
-#include "hstream_metadata_callback_proxy.h"
+#include "stream_metadata_callback_proxy.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -99,9 +98,8 @@ void Test()
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     static const int32_t audioPolicyServiceId = 3009;
     auto object = samgr->GetSystemAbility(audioPolicyServiceId);
-    auto proxy = std::make_shared<HStreamMetadataCallbackProxy>(object);
+    auto proxy = std::make_shared<StreamMetadataCallbackProxy>(object);
     dataMessageParcel.WriteRemoteObject(proxy->AsObject());
-    HStreamMetadataStubFuzzer::fuzz_->HandleSetCallback(dataMessageParcel);
 }
 
 typedef void (*TestFuncs[1])();

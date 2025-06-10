@@ -31,7 +31,8 @@
 #include <unordered_set>
 #include "camera_rotate_strategy_parser.h"
 #include "hcamera_device.h"
-#include "hcapture_session_stub.h"
+#include "capture_session_stub.h"
+
 #include "hstream_repeat.h"
 #include "hstream_operator.h"
 #include "icapture_session.h"
@@ -94,7 +95,7 @@ using MetaElementType = std::pair<int64_t, sptr<SurfaceBuffer>>;
 
 class CameraInfoDumper;
 
-class EXPORT_API HCaptureSession : public HCaptureSessionStub, public IHCameraCloseListener {
+class EXPORT_API HCaptureSession : public CaptureSessionStub, public IHCameraCloseListener, public ICameraIpcChecker {
 public:
     static CamServiceError NewInstance(const uint32_t callerToken, int32_t opMode, sptr<HCaptureSession>& outSession);
     virtual ~HCaptureSession();
@@ -102,12 +103,12 @@ public:
     int32_t BeginConfig() override;
     int32_t CommitConfig() override;
 
-    int32_t CanAddInput(sptr<ICameraDeviceService> cameraDevice, bool& result) override;
-    int32_t AddInput(sptr<ICameraDeviceService> cameraDevice) override;
-    int32_t AddOutput(StreamType streamType, sptr<IStreamCommon> stream) override;
+    int32_t CanAddInput(const sptr<ICameraDeviceService>& cameraDevice, bool& result) override;
+    int32_t AddInput(const sptr<ICameraDeviceService>& cameraDevice) override;
+    int32_t AddOutput(StreamType streamType, const sptr<IRemoteObject>& stream) override;
 
-    int32_t RemoveInput(sptr<ICameraDeviceService> cameraDevice) override;
-    int32_t RemoveOutput(StreamType streamType, sptr<IStreamCommon> stream) override;
+    int32_t RemoveInput(const sptr<ICameraDeviceService>& cameraDevice) override;
+    int32_t RemoveOutput(StreamType streamType, const sptr<IRemoteObject>& stream) override;
 
     int32_t Start() override;
     int32_t Stop() override;
@@ -115,16 +116,16 @@ public:
     int32_t Release(CaptureSessionReleaseType type);
 
     static void DestroyStubObjectForPid(pid_t pid);
-    int32_t SetCallback(sptr<ICaptureSessionCallback>& callback) override;
+    int32_t SetCallback(const sptr<ICaptureSessionCallback>& callback) override;
     int32_t UnSetCallback() override;
 
-    int32_t SetPressureCallback(sptr<IPressureStatusCallback>& callback) override;
+    int32_t SetPressureCallback(const sptr<IPressureStatusCallback>& callback) override;
     int32_t UnSetPressureCallback() override;
     void SetPressureStatus(PressureStatus status);
 
     int32_t GetSessionState(CaptureSessionState& sessionState) override;
-    int32_t GetActiveColorSpace(ColorSpace& colorSpace) override;
-    int32_t SetColorSpace(ColorSpace colorSpace, bool isNeedUpdate) override;
+    int32_t GetActiveColorSpace(int32_t& curColorSpace) override;
+    int32_t SetColorSpace(int32_t curColorSpace, bool isNeedUpdate) override;
     bool QueryFpsAndZoomRatio(
         float &currentFps, float &currentZoomRatio, std::vector<float> &crossZoomAndTime, int32_t operationMode);
     bool QueryZoomPerformance(
@@ -147,13 +148,15 @@ public:
     int32_t GetopMode();
 
     int32_t OperatePermissionCheck(uint32_t interfaceCode) override;
+    int32_t CallbackEnter([[maybe_unused]] uint32_t code) override;
+    int32_t CallbackExit([[maybe_unused]] uint32_t code, [[maybe_unused]] int32_t result) override;
     int32_t EnableMovingPhotoMirror(bool isMirror, bool isConfig) override;
     std::shared_ptr<PhotoAssetIntf> ProcessPhotoProxy(int32_t captureId,
         std::shared_ptr<PictureIntf> picturePtr, bool isBursting,
         sptr<CameraServerPhotoProxy> cameraPhotoProxy, std::string &uri);
     int32_t SetFeatureMode(int32_t featureMode) override;
     void GetOutputStatus(int32_t &status);
-    int32_t SetPreviewRotation(std::string &deviceClass) override;
+    int32_t SetPreviewRotation(const std::string &deviceClass) override;
     int32_t SetCommitConfigFlag(bool isNeedCommitting) override;
 
     void DumpSessionInfo(CameraInfoDumper& infoDumper);
@@ -253,6 +256,8 @@ private:
     #endif
 
     std::string GetConcurrentCameraIds(pid_t pid);
+    int32_t AddOutputInner(StreamType streamType, const sptr<IStreamCommon>& stream);
+    int32_t RemoveOutputInner(StreamType streamType, const sptr<IStreamCommon>& stream);
 
     std::mutex cbMutex_;
 

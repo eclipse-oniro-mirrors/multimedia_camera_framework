@@ -22,7 +22,6 @@
 #include "camera_metadata_info.h"
 #include "metadata_utils.h"
 #include "iconsumer_surface.h"
-#include "camera_service_ipc_interface_code.h"
 #include "securec.h"
 #include <memory>
 
@@ -83,8 +82,6 @@ void HCameraServiceCallbackStubFuzzer::HCameraServiceCallbackStubFuzzTest(int32_
     dataMessageParcel.WriteBuffer(RAW_DATA + sizeof(uint32_t), g_dataSize - sizeof(uint32_t));
     dataMessageParcel.RewindRead(0);
     fuzz->OnRemoteRequest(code, dataMessageParcel, reply, option);
-    fuzz->HandleOnCameraStatusChanged(dataMessageParcel);
-    fuzz->HandleOnFlashlightStatusChanged(dataMessageParcel);
 }
 
 void HCameraServiceCallbackStubFuzzer::HCameraMuteServiceCallbackStuFuzzTest(int32_t code)
@@ -104,7 +101,6 @@ void HCameraServiceCallbackStubFuzzer::HCameraMuteServiceCallbackStuFuzzTest(int
     dataMessageParcel.WriteBuffer(RAW_DATA + sizeof(uint32_t), g_dataSize - sizeof(uint32_t));
     dataMessageParcel.RewindRead(0);
     fuzz->OnRemoteRequest(code, dataMessageParcel, reply, option);
-    fuzz->HandleOnCameraMute(dataMessageParcel);
 }
 
 void HCameraServiceCallbackStubFuzzer::HTorchServiceCallbackStubFuzzTest(int32_t code)
@@ -124,7 +120,6 @@ void HCameraServiceCallbackStubFuzzer::HTorchServiceCallbackStubFuzzTest(int32_t
     dataMessageParcel.WriteBuffer(RAW_DATA + sizeof(uint32_t), g_dataSize - sizeof(uint32_t));
     dataMessageParcel.RewindRead(0);
     fuzz->OnRemoteRequest(code, dataMessageParcel, reply, option);
-    fuzz->HandleOnTorchStatusChange(dataMessageParcel);
 }
 
 void HCameraServiceCallbackStubFuzzer::HFoldServiceCallbackStubFuzzTest(int32_t code)
@@ -144,7 +139,6 @@ void HCameraServiceCallbackStubFuzzer::HFoldServiceCallbackStubFuzzTest(int32_t 
     dataMessageParcel.WriteBuffer(RAW_DATA + sizeof(uint32_t), g_dataSize - sizeof(uint32_t));
     dataMessageParcel.RewindRead(0);
     fuzz->OnRemoteRequest(code, dataMessageParcel, reply, option);
-    fuzz->HandleOnFoldStatusChanged(dataMessageParcel);
 }
 
 void Test()

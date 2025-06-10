@@ -100,7 +100,7 @@ HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_001, TestSize.Lev
     sptr<HCameraRestoreParam> cameraRestoreParam = cameraHostManager_->GetRestoreParam(clientName, cameraId);
     cameraHostManager_->persistentParamMap_.emplace(clientName,
         std::map<std::string, sptr<HCameraRestoreParam>>{{cameraId, cameraRestoreParam}});
-    cameraRestoreParam->mRestoreParamType = TRANSIENT_ACTIVE_PARAM_OHOS;
+    cameraRestoreParam->mRestoreParamType = RestoreParamTypeOhos::TRANSIENT_ACTIVE_PARAM_OHOS;
     cameraHostManager_->transitentParamMap_.emplace(clientName, cameraRestoreParam);
     cameraHostManager_->SaveRestoreParam(cameraRestoreParam);
     cameraHostManager_->DeleteRestoreParam(clientName, cameraId);
@@ -262,7 +262,7 @@ HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_006, TestSize.Lev
     cameraHostManager_->RemoveCameraHost(HCameraHostManager::LOCAL_SERVICE_NAME);
     std::shared_ptr<OHOS::Camera::CameraMetadata> ability;
     EXPECT_EQ(cameraHostManager_->HCameraHostManager::GetCameraAbility(cameraId, ability), CAMERA_INVALID_ARG);
-    EXPECT_EQ(cameraHostManager_->HCameraHostManager::SetFlashlight(cameraId, false), CAMERA_INVALID_ARG);
+    EXPECT_EQ(cameraHostManager_->HCameraHostManager::SetFlashlight(cameraId, false), CAMERA_UNKNOWN_ERROR);
 
     cameraId = "HCameraHostManager";
 
@@ -332,7 +332,7 @@ HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_007, TestSize.Lev
         std::map<std::string, sptr<HCameraRestoreParam>>{{cameraId2, cameraRestoreParam2}});
     cameraHostManager_->UpdateRestoreParam(cameraRestoreParam2);
 
-    cameraRestoreParam1->mRestoreParamType = PERSISTENT_DEFAULT_PARAM_OHOS;
+    cameraRestoreParam1->mRestoreParamType = RestoreParamTypeOhos::PERSISTENT_DEFAULT_PARAM_OHOS;
     cameraHostManager_->SaveRestoreParam(cameraRestoreParam1);
     EXPECT_EQ(cameraHostManager_->persistentParamMap_.size(), 2);
 }

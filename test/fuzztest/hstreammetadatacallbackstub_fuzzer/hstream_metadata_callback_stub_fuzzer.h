@@ -16,12 +16,12 @@
 #ifndef HSTREAM_METADATA_CALLBACK_STUB_FUZZER_H
 #define HSTREAM_METADATA_CALLBACK_STUB_FUZZER_H
 
-#include "hstream_metadata_callback_stub.h"
+#include "stream_metadata_callback_stub.h"
 
 namespace OHOS {
 namespace CameraStandard {
 
-class HStreamMetadataCallbackStubFuzz : public HStreamMetadataCallbackStub {
+class HStreamMetadataCallbackStubFuzz : public StreamMetadataCallbackStub {
 public:
     int OnRemoteRequest(uint32_t code, MessageParcel &data,
                                 MessageParcel &reply, MessageOption &option) override

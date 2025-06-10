@@ -17,6 +17,7 @@
 #include "hisysevent.h"
 #include "dp_log.h"
 #include "steady_clock.h"
+#include "ideferred_photo_processing_session.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -109,7 +110,7 @@ void DPSEventReport::SetEventInfo(const std::string& imageId, int32_t userId)
     dpsEventInfo.imageId = imageId;
     dpsEventInfo.userId = userId;
     dpsEventInfo.triggerMode = TrigerMode::TRIGER_ACTIVE;
-    dpsEventInfo.operatorStage = static_cast<uint32_t>(DeferredProcessingServiceInterfaceCode::DPS_ADD_IMAGE);
+    dpsEventInfo.operatorStage = static_cast<uint32_t>(IDeferredPhotoProcessingSessionIpcCode::COMMAND_ADD_IMAGE);
     dpsEventInfo.synchronizeTimeBeginTime = 0;
     dpsEventInfo.synchronizeTimeEndTime = 0;
     dpsEventInfo.dispatchTimeBeginTime = 0;

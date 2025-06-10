@@ -19,10 +19,8 @@
 #include "test_common.h"
 #include "camera_device.h"
 #include "capture_session.h"
-#include "camera_service_ipc_interface_code.h"
 #include "gmock/gmock.h"
-#include "hstream_depth_data_callback_stub.h"
-#include "camera_service_ipc_interface_code.h"
+#include "stream_depth_data_callback_stub.h"
 
 using namespace testing::ext;
 using ::testing::Return;
@@ -41,7 +39,7 @@ void HStreamDepthDataUnitTest::TearDown(void) {}
 
 void HStreamDepthDataUnitTest::SetUp(void) {}
 
-class MockHStreamDepthDataCallbackStub : public HStreamDepthDataCallbackStub {
+class MockHStreamDepthDataCallbackStub : public StreamDepthDataCallbackStub {
 public:
     MOCK_METHOD1(OnDepthDataError, int32_t(int32_t errorCode));
     ~MockHStreamDepthDataCallbackStub() {}
@@ -223,9 +221,9 @@ HWTEST_F(HStreamDepthDataUnitTest, hstream_depth_data_unittest_006, TestSize.Lev
     cameraService->CreateDepthDataOutput(producer, format, width, height, depthDataOutput);
     ASSERT_NE(depthDataOutput, nullptr);
     depthDataPtr = static_cast<HStreamDepthData*>(depthDataOutput.GetRefPtr());
-    int32_t ret01 = depthDataPtr->OperatePermissionCheck(CAMERA_STREAM_DEPTH_DATA_START);
+    int32_t ret01 = depthDataPtr->OperatePermissionCheck(static_cast<uint32_t>(IStreamDepthDataIpcCode::COMMAND_START));
     EXPECT_EQ(ret01, CAMERA_OK);
-    int32_t ret02 = depthDataPtr->OperatePermissionCheck(CAMERA_STREAM_DEPTH_DATA_STOP);
+    int32_t ret02 = depthDataPtr->OperatePermissionCheck(static_cast<uint32_t>(IStreamDepthDataIpcCode::COMMAND_STOP));
     EXPECT_EQ(ret02, CAMERA_OK);
 }
 
@@ -245,7 +243,7 @@ HWTEST_F(HStreamDepthDataUnitTest, hstream_depth_data_unittest_007, TestSize.Lev
     data.RewindRead(0);
     MessageParcel reply;
     MessageOption option;
-    uint32_t code = StreamDepthDataCallbackInterfaceCode::CAMERA_STREAM_DEPTH_DATA_ON_ERROR;
+    uint32_t code = static_cast<uint32_t>(IStreamDepthDataCallbackIpcCode::COMMAND_ON_DEPTH_DATA_ERROR);
     EXPECT_CALL(stub, OnDepthDataError(_))
         .WillOnce(Return(0));
     int errCode = stub.OnRemoteRequest(code, data, reply, option);

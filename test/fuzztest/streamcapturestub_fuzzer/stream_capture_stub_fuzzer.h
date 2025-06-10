@@ -16,7 +16,7 @@
 #ifndef STREAM_CAPTURE_STUB_FUZZER_H
 #define STREAM_CAPTURE_STUB_FUZZER_H
 
-#include "hstream_capture_stub.h"
+#include "stream_capture_stub.h"
 #include <fuzzer/FuzzedDataProvider.h>
 
 namespace OHOS {

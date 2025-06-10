@@ -58,7 +58,7 @@ std::shared_ptr<PictureProxy> PictureProxy::CreatePictureProxy()
     return pictureProxy;
 }
 
-std::shared_ptr<PictureIntf> PictureProxy::GetPictureIntf()
+std::shared_ptr<PictureIntf> PictureProxy::GetPictureIntf() const
 {
     return pictureIntf_;
 }
@@ -81,7 +81,7 @@ void PictureProxy::CreateWithDeepCopySurfaceBuffer(sptr<SurfaceBuffer> &surfaceB
     pictureIntf->CreateWithDeepCopySurfaceBuffer(surfaceBuffer);
 }
 
-bool PictureProxy::Marshalling(Parcel &data)
+bool PictureProxy::Marshalling(Parcel &data) const
 {
     MEDIA_INFO_LOG("PictureProxy::Marshalling enter");
     std::shared_ptr<PictureIntf> pictureIntf = GetPictureIntf();
@@ -89,12 +89,12 @@ bool PictureProxy::Marshalling(Parcel &data)
     return pictureIntf->Marshalling(data);
 }
 
-void PictureProxy::Unmarshalling(Parcel &data)
+void PictureProxy::UnmarshallingPicture(Parcel &data)
 {
     MEDIA_INFO_LOG("PictureProxy::Unmarshalling enter");
     std::shared_ptr<PictureIntf> pictureIntf = GetPictureIntf();
     CHECK_ERROR_RETURN_LOG(!pictureIntf, "PictureProxy::Unmarshalling failed! pictureIntf is nullptr");
-    pictureIntf->Unmarshalling(data);
+    pictureIntf->UnmarshallingPicture(data);
 }
 
 int32_t PictureProxy::SetExifMetadata(sptr<SurfaceBuffer> &surfaceBuffer)

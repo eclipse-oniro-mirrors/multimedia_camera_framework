@@ -42,7 +42,7 @@ int32_t DeferredPhotoProcessingSession::BeginSynchronize()
     std::lock_guard<std::mutex> lock(mutex_);
     inSync_.store(true);
     const std::string imageId = "default";
-    ReportEvent(imageId, DeferredProcessingServiceInterfaceCode::DPS_BEGIN_SYNCHRONIZE);
+    ReportEvent(imageId, static_cast<int32_t>(IDeferredPhotoProcessingSessionIpcCode::COMMAND_BEGIN_SYNCHRONIZE));
     return DP_OK;
 }
 
@@ -57,12 +57,13 @@ int32_t DeferredPhotoProcessingSession::EndSynchronize()
         DP_CHECK_ERROR_RETURN_RET_LOG(ret != DP_OK, ret, "photo synchronize failed, ret: %{public}d", ret);
         
         const std::string imageId = "default";
-        ReportEvent(imageId, DeferredProcessingServiceInterfaceCode::DPS_END_SYNCHRONIZE);
+        ReportEvent(imageId, static_cast<int32_t>(IDeferredPhotoProcessingSessionIpcCode::COMMAND_END_SYNCHRONIZE));
     }
     return DP_OK;
 }
 
-int32_t DeferredPhotoProcessingSession::AddImage(const std::string& imageId, DpsMetadata& metadata, bool discardable)
+int32_t DeferredPhotoProcessingSession::AddImage(const std::string& imageId, const DpsMetadata& metadata,
+    bool discardable)
 {
     if (inSync_.load()) {
         std::lock_guard<std::mutex> lock(mutex_);
@@ -75,7 +76,7 @@ int32_t DeferredPhotoProcessingSession::AddImage(const std::string& imageId, Dps
             "DPS_PHOTO: add imageId: %{public}s failed. ret: %{public}d", imageId.c_str(), ret);
     }
 
-    ReportEvent(imageId, DeferredProcessingServiceInterfaceCode::DPS_ADD_IMAGE);
+    ReportEvent(imageId, static_cast<int32_t>(IDeferredPhotoProcessingSessionIpcCode::COMMAND_ADD_IMAGE));
     return DP_OK;
 }
 
@@ -89,7 +90,7 @@ int32_t DeferredPhotoProcessingSession::RemoveImage(const std::string& imageId, 
             "DPS_PHOTO: remove imageId: %{public}s failed. ret: %{public}d", imageId.c_str(), ret);
     }
 
-    ReportEvent(imageId, DeferredProcessingServiceInterfaceCode::DPS_REMOVE_IMAGE);
+    ReportEvent(imageId, static_cast<int32_t>(IDeferredPhotoProcessingSessionIpcCode::COMMAND_REMOVE_IMAGE));
     return DP_OK;
 }
 
@@ -103,7 +104,7 @@ int32_t DeferredPhotoProcessingSession::RestoreImage(const std::string& imageId)
             "DPS_PHOTO: restore imageId: %{public}s failed. ret: %{public}u", imageId.c_str(), ret);
     }
 
-    ReportEvent(imageId, DeferredProcessingServiceInterfaceCode::DPS_RESTORE_IMAGE);
+    ReportEvent(imageId, static_cast<int32_t>(IDeferredPhotoProcessingSessionIpcCode::COMMAND_RESTORE_IMAGE));
     return DP_OK;
 }
 
@@ -117,7 +118,7 @@ int32_t DeferredPhotoProcessingSession::ProcessImage(const std::string& appName,
             "DPS_PHOTO: process imageId: %{public}s failed. ret: %{public}u", imageId.c_str(), ret);
     }
 
-    ReportEvent(imageId, DeferredProcessingServiceInterfaceCode::DPS_PROCESS_IMAGE);
+    ReportEvent(imageId, static_cast<int32_t>(IDeferredPhotoProcessingSessionIpcCode::COMMAND_PROCESS_IMAGE));
     return 0;
 }
 
@@ -131,7 +132,7 @@ int32_t DeferredPhotoProcessingSession::CancelProcessImage(const std::string& im
             "DPS_PHOTO: cance process imageId: %{public}s failed. ret: %{public}u", imageId.c_str(), ret);
     }
 
-    ReportEvent(imageId, DeferredProcessingServiceInterfaceCode::DPS_CANCEL_PROCESS_IMAGE);
+    ReportEvent(imageId, static_cast<int32_t>(IDeferredPhotoProcessingSessionIpcCode::COMMAND_CANCEL_PROCESS_IMAGE));
     return 0;
 }
 
@@ -143,37 +144,37 @@ void DeferredPhotoProcessingSession::ReportEvent(const std::string& imageId, int
     dpsEventInfo.userId = userId_;
     uint64_t beginTime = GetTimestampMilli();
     switch (static_cast<int32_t>(event)) {
-        case static_cast<int32_t>(DeferredProcessingServiceInterfaceCode::DPS_BEGIN_SYNCHRONIZE): {
+        case static_cast<int32_t>(IDeferredPhotoProcessingSessionIpcCode::COMMAND_BEGIN_SYNCHRONIZE): {
             dpsEventInfo.synchronizeTimeBeginTime = beginTime;
             DPSEventReport::GetInstance().ReportOperateImage(imageId, userId_, dpsEventInfo);
             break;
         }
-        case static_cast<int32_t>(DeferredProcessingServiceInterfaceCode::DPS_END_SYNCHRONIZE): {
+        case static_cast<int32_t>(IDeferredPhotoProcessingSessionIpcCode::COMMAND_END_SYNCHRONIZE): {
             dpsEventInfo.synchronizeTimeEndTime = beginTime;
             DPSEventReport::GetInstance().ReportOperateImage(imageId, userId_, dpsEventInfo);
             break;
         }
-        case static_cast<int32_t>(DeferredProcessingServiceInterfaceCode::DPS_ADD_IMAGE): {
+        case static_cast<int32_t>(IDeferredPhotoProcessingSessionIpcCode::COMMAND_ADD_IMAGE): {
             dpsEventInfo.dispatchTimeBeginTime = beginTime;
             break;
         }
-        case static_cast<int32_t>(DeferredProcessingServiceInterfaceCode::DPS_REMOVE_IMAGE): {
+        case static_cast<int32_t>(IDeferredPhotoProcessingSessionIpcCode::COMMAND_REMOVE_IMAGE): {
             dpsEventInfo.removeTimeBeginTime = beginTime;
             break;
         }
-        case static_cast<int32_t>(DeferredProcessingServiceInterfaceCode::DPS_RESTORE_IMAGE): {
+        case static_cast<int32_t>(IDeferredPhotoProcessingSessionIpcCode::COMMAND_RESTORE_IMAGE): {
             dpsEventInfo.restoreTimeBeginTime = beginTime;
             break;
         }
-        case static_cast<int32_t>(DeferredProcessingServiceInterfaceCode::DPS_PROCESS_IMAGE): {
+        case static_cast<int32_t>(IDeferredPhotoProcessingSessionIpcCode::COMMAND_PROCESS_IMAGE): {
             dpsEventInfo.processTimeBeginTime = beginTime;
             break;
         }
     }
 
-    if (event == DeferredProcessingServiceInterfaceCode::DPS_BEGIN_SYNCHRONIZE) {
+    if (event == static_cast<int32_t>(IDeferredPhotoProcessingSessionIpcCode::COMMAND_BEGIN_SYNCHRONIZE)) {
         return;
-    } else if (event == DeferredProcessingServiceInterfaceCode::DPS_END_SYNCHRONIZE) {
+    } else if (event == static_cast<int32_t>(IDeferredPhotoProcessingSessionIpcCode::COMMAND_END_SYNCHRONIZE)) {
         DPSEventReport::GetInstance().ReportImageProcessResult(imageId, userId_);
     } else {
         DPSEventReport::GetInstance().UpdateEventInfo(dpsEventInfo);

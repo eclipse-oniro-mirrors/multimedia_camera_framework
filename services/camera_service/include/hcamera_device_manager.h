@@ -289,7 +289,7 @@ public:
 
     bool IsMultiCameraActive(int32_t pid);
 
-    void SetPeerCallback(sptr<ICameraBroker>& callback);
+    void SetPeerCallback(const sptr<ICameraBroker>& callback);
 
     void UnsetPeerCallback();
 

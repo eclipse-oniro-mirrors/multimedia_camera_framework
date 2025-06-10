@@ -16,12 +16,12 @@
 #ifndef HSTREAM_DEPTH_CALLBACK_STUB_FUZZER_H
 #define HSTREAM_DEPTH_CALLBACK_STUB_FUZZER_H
 
-#include "hstream_depth_data_callback_stub.h"
+#include "stream_depth_data_callback_stub.h"
 
 namespace OHOS {
 namespace CameraStandard {
 
-class HStreamDepthDataCallbackFuzz : public HStreamDepthDataCallbackStub {
+class HStreamDepthDataCallbackFuzz : public StreamDepthDataCallbackStub {
 public:
     int32_t OnDepthDataError(int32_t errorCode) override
     {

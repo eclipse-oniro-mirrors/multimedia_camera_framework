@@ -24,11 +24,12 @@
 #include <refbase.h>
 
 #include "camera_metadata_info.h"
-#include "hstream_capture_stub.h"
+#include "stream_capture_stub.h"
 #include "hstream_common.h"
 #include "v1_0/istream_operator.h"
 #include "v1_2/istream_operator.h"
 #include "safe_map.h"
+#include "icamera_ipc_checker.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -56,7 +57,7 @@ private:
     std::mutex map_mutex_;
 };
 constexpr const char* BURST_UUID_UNSET = "";
-class EXPORT_API HStreamCapture : public HStreamCaptureStub, public HStreamCommon {
+class EXPORT_API HStreamCapture : public StreamCaptureStub, public HStreamCommon, public ICameraIpcChecker {
 public:
     HStreamCapture(sptr<OHOS::IBufferProducer> producer, int32_t format, int32_t width, int32_t height);
     ~HStreamCapture();
@@ -67,14 +68,14 @@ public:
     int32_t SetThumbnail(bool isEnabled, const sptr<OHOS::IBufferProducer> &producer) override;
     int32_t EnableRawDelivery(bool enabled) override;
     int32_t EnableMovingPhoto(bool enabled) override;
-    int32_t SetBufferProducerInfo(const std::string bufName, const sptr<OHOS::IBufferProducer> &producer) override;
+    int32_t SetBufferProducerInfo(const std::string& bufName, const sptr<OHOS::IBufferProducer> &producer) override;
     int32_t DeferImageDeliveryFor(int32_t type) override;
     int32_t Capture(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureSettings) override;
     int32_t CancelCapture() override;
     int32_t ConfirmCapture() override;
     int32_t ReleaseStream(bool isDelay) override;
     int32_t Release() override;
-    int32_t SetCallback(sptr<IStreamCaptureCallback> &callback) override;
+    int32_t SetCallback(const sptr<IStreamCaptureCallback> &callback) override;
     int32_t UnSetCallback() override;
     int32_t OnCaptureStarted(int32_t captureId);
     int32_t OnCaptureStarted(int32_t captureId, uint32_t exposureTime);
@@ -93,6 +94,8 @@ public:
     int32_t SetMovingPhotoVideoCodecType(int32_t videoCodecType) override;
     int32_t GetMovingPhotoVideoCodecType();
     int32_t OperatePermissionCheck(uint32_t interfaceCode) override;
+    int32_t CallbackEnter([[maybe_unused]] uint32_t code) override;
+    int32_t CallbackExit([[maybe_unused]] uint32_t code, [[maybe_unused]] int32_t result) override;
     SafeMap<int32_t, int32_t> rotationMap_ = {};
     bool IsBurstCapture(int32_t captureId) const;
     bool IsBurstCover(int32_t captureId) const;
@@ -102,7 +105,7 @@ public:
     void CheckResetBurstKey(int32_t captureId);
     int32_t SetCameraPhotoRotation(bool isEnable) override;
     int32_t CreateMediaLibraryPhotoAssetProxy(int32_t captureId);
-    int32_t UpdateMediaLibraryPhotoAssetProxy(sptr<CameraPhotoProxy> photoProxy) override;
+    int32_t UpdateMediaLibraryPhotoAssetProxy(const sptr<CameraPhotoProxy>& photoProxy) override;
     std::shared_ptr<PhotoAssetIntf> GetPhotoAssetInstance(int32_t captureId);
     bool GetAddPhotoProxyEnabled();
     int32_t AcquireBufferToPrepareProxy(int32_t captureId) override;
@@ -111,10 +114,16 @@ public:
     void SwitchToOffline();
     bool IsHasSwitchToOffline();
     void SetStreamOperator(wptr<HStreamOperator> hStreamOperator);
-    int32_t CreateMediaLibrary(sptr<CameraPhotoProxy>& photoProxy, std::string& uri, int32_t& cameraShotType,
+    int32_t CreateMediaLibrary(const sptr<CameraPhotoProxy>& photoProxy, std::string& uri, int32_t& cameraShotType,
         std::string& burstKey, int64_t timestamp) override;
-    int32_t CreateMediaLibrary(std::shared_ptr<PictureIntf> picture, sptr<CameraPhotoProxy> &photoProxy,
+    int32_t CreateMediaLibrary(const std::shared_ptr<PictureIntf>& picture, const sptr<CameraPhotoProxy> &photoProxy,
         std::string &uri, int32_t &cameraShotType, std::string& burstKey, int64_t timestamp) override;
+
+    int32_t CallbackParcel(
+        [[maybe_unused]] uint32_t code,
+        [[maybe_unused]] MessageParcel& data,
+        [[maybe_unused]] MessageParcel& reply,
+        [[maybe_unused]] MessageOption& option) override;
 
 private:
     int32_t CheckBurstCapture(const std::shared_ptr<OHOS::Camera::CameraMetadata>& captureSettings,

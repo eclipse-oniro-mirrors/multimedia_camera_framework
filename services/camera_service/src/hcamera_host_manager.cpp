@@ -87,7 +87,7 @@ public:
     const std::string& GetName();
     int32_t GetCameraHostVersion();
     int32_t GetCameras(std::vector<std::string>& cameraIds);
-    int32_t GetCameraAbility(std::string& cameraId, std::shared_ptr<OHOS::Camera::CameraMetadata>& ability);
+    int32_t GetCameraAbility(const std::string& cameraId, std::shared_ptr<OHOS::Camera::CameraMetadata>& ability);
     int32_t OpenCamera(std::string& cameraId, const sptr<ICameraDeviceCallback>& callback,
                        sptr<OHOS::HDI::Camera::V1_0::ICameraDevice>& pDevice, bool isEnableSecCam = false);
     int32_t SetFlashlight(const std::string& cameraId, bool isEnable);
@@ -157,21 +157,21 @@ void HCameraHostManager::CameraHostInfo::Cast2MultiVersionCameraHost()
 {
     cameraHostProxy_->GetVersion(majorVer_, minorVer_);
     MEDIA_INFO_LOG("CameraHostInfo::Init cameraHostProxy_version %{public}u _ %{public}u", majorVer_, minorVer_);
-    if (GetCameraHostVersion() > GetVersionId(HDI_VERSION_1, HDI_VERSION_2)) {
+    if (GetCameraHostVersion() > OHOS::CameraStandard::GetVersionId(HDI_VERSION_1, HDI_VERSION_2)) {
         MEDIA_DEBUG_LOG("CameraHostInfo::Init ICameraHost cast to V1_3");
         auto castResult_V1_3 = OHOS::HDI::Camera::V1_3::ICameraHost::CastFrom(cameraHostProxy_);
         if (castResult_V1_3 != nullptr) {
             cameraHostProxyV1_3_ = castResult_V1_3;
         }
     }
-    if (GetCameraHostVersion() > GetVersionId(1, 1)) {
+    if (GetCameraHostVersion() > OHOS::CameraStandard::GetVersionId(1, 1)) {
         MEDIA_DEBUG_LOG("CameraHostInfo::Init ICameraHost cast to V1_2");
         auto castResult_V1_2 = OHOS::HDI::Camera::V1_2::ICameraHost::CastFrom(cameraHostProxy_);
         if (castResult_V1_2 != nullptr) {
             cameraHostProxyV1_2_ = castResult_V1_2;
         }
     }
-    if (GetCameraHostVersion() > GetVersionId(1, 0)) {
+    if (GetCameraHostVersion() > OHOS::CameraStandard::GetVersionId(1, 0)) {
         MEDIA_DEBUG_LOG("CameraHostInfo::Init ICameraHost cast to V1_1");
         auto castResult_V1_1 = OHOS::HDI::Camera::V1_1::ICameraHost::CastFrom(cameraHostProxy_);
         if (castResult_V1_1 != nullptr) {
@@ -187,12 +187,13 @@ bool HCameraHostManager::CameraHostInfo::Init()
     CHECK_ERROR_RETURN_RET_LOG(cameraHostProxy_ == nullptr, false, "Failed to get ICameraHost");
     Cast2MultiVersionCameraHost();
 
-    if (cameraHostProxyV1_3_ != nullptr && GetCameraHostVersion() >= GetVersionId(HDI_VERSION_1, HDI_VERSION_3)) {
+    if (cameraHostProxyV1_3_ != nullptr && GetCameraHostVersion() >=
+        OHOS::CameraStandard::GetVersionId(HDI_VERSION_1, HDI_VERSION_3)) {
         MEDIA_DEBUG_LOG("CameraHostInfo::Init SetCallback ICameraHost V1_3");
         cameraHostProxyV1_3_->SetCallback_V1_2(this);
         // LCOV_EXCL_START
     } else if (cameraHostProxyV1_2_ != nullptr &&
-        GetCameraHostVersion() >= GetVersionId(HDI_VERSION_1, HDI_VERSION_2)) {
+        GetCameraHostVersion() >= OHOS::CameraStandard::GetVersionId(HDI_VERSION_1, HDI_VERSION_2)) {
         MEDIA_DEBUG_LOG("CameraHostInfo::Init SetCallback ICameraHost V1_2");
         cameraHostProxyV1_2_->SetCallback_V1_2(this);
     } else {
@@ -241,7 +242,7 @@ const std::string& HCameraHostManager::CameraHostInfo::GetName()
 int32_t HCameraHostManager::CameraHostInfo::GetCameraHostVersion()
 {
     MEDIA_DEBUG_LOG("cameraHostProxy_ GetVersion majorVer_: %{public}u, minorVers_: %{public}u", majorVer_, minorVer_);
-    return GetVersionId(majorVer_, minorVer_);
+    return OHOS::CameraStandard::GetVersionId(majorVer_, minorVer_);
 }
 
 int32_t HCameraHostManager::CameraHostInfo::GetCameras(std::vector<std::string>& cameraIds)
@@ -254,7 +255,7 @@ int32_t HCameraHostManager::CameraHostInfo::GetCameras(std::vector<std::string>&
     return CAMERA_OK;
 }
 
-int32_t HCameraHostManager::CameraHostInfo::GetCameraAbility(std::string& cameraId,
+int32_t HCameraHostManager::CameraHostInfo::GetCameraAbility(const std::string& cameraId,
     std::shared_ptr<OHOS::Camera::CameraMetadata>& ability)
 {
     auto deviceInfo = FindCameraDeviceInfo(cameraId);
@@ -308,7 +309,8 @@ int32_t HCameraHostManager::CameraHostInfo::OpenCamera(std::string& cameraId,
     sptr<OHOS::HDI::Camera::V1_2::ICameraDevice> hdiDevice_v1_2;
     sptr<OHOS::HDI::Camera::V1_3::ICameraDevice> hdiDevice_v1_3;
     // LCOV_EXCL_START
-    if (cameraHostProxyV1_3_ != nullptr && GetCameraHostVersion() >= GetVersionId(HDI_VERSION_1, HDI_VERSION_3)) {
+    if (cameraHostProxyV1_3_ != nullptr && GetCameraHostVersion() >=
+        OHOS::CameraStandard::GetVersionId(HDI_VERSION_1, HDI_VERSION_3)) {
         MEDIA_DEBUG_LOG("CameraHostInfo::OpenCamera ICameraDevice V1_3");
         if (isEnableSecCam) {
             MEDIA_INFO_LOG("CameraHostInfo::OpenCamera OpenSecureCamera");
@@ -318,12 +320,12 @@ int32_t HCameraHostManager::CameraHostInfo::OpenCamera(std::string& cameraId,
         }
         pDevice = hdiDevice_v1_3.GetRefPtr();
     } else if (cameraHostProxyV1_2_ != nullptr && GetCameraHostVersion() >=
-        GetVersionId(HDI_VERSION_1, HDI_VERSION_2)) {
+        OHOS::CameraStandard::GetVersionId(HDI_VERSION_1, HDI_VERSION_2)) {
         MEDIA_DEBUG_LOG("CameraHostInfo::OpenCamera ICameraDevice V1_2");
         rc = (CamRetCode)(cameraHostProxyV1_2_->OpenCamera_V1_2(cameraId, callback, hdiDevice_v1_2));
         pDevice = hdiDevice_v1_2.GetRefPtr();
     } else if (cameraHostProxyV1_1_ != nullptr
-        && GetCameraHostVersion() == GetVersionId(HDI_VERSION_1, HDI_VERSION_1)) {
+        && GetCameraHostVersion() == OHOS::CameraStandard::GetVersionId(HDI_VERSION_1, HDI_VERSION_1)) {
         MEDIA_DEBUG_LOG("CameraHostInfo::OpenCamera ICameraDevice V1_1");
         rc = (CamRetCode)(cameraHostProxyV1_1_->OpenCamera_V1_1(cameraId, callback, hdiDevice_v1_1));
         pDevice = hdiDevice_v1_1.GetRefPtr();
@@ -393,7 +395,7 @@ int32_t HCameraHostManager::CameraHostInfo::Prelaunch(sptr<HCameraRestoreParam> 
     CHECK_ERROR_RETURN_RET(CheckUserHasChanged(cameraRestoreParam->GetSetting()), CAMERA_UNKNOWN_ERROR);
     CHECK_ERROR_RETURN_RET_LOG(cameraHostProxy_ == nullptr, CAMERA_UNKNOWN_ERROR,
         "CameraHostInfo::Prelaunch cameraHostProxy_ is null");
-    CHECK_ERROR_RETURN_RET_LOG(GetCameraHostVersion() < GetVersionId(1, 1), CAMERA_UNKNOWN_ERROR,
+    CHECK_ERROR_RETURN_RET_LOG(GetCameraHostVersion() < OHOS::CameraStandard::GetVersionId(1, 1), CAMERA_UNKNOWN_ERROR,
         "CameraHostInfo::Prelaunch not support host V1_0!");
     MEDIA_INFO_LOG("CameraHostInfo::prelaunch for cameraId %{public}s", (cameraRestoreParam->GetCameraId()).c_str());
     for (auto& streamInfo : cameraRestoreParam->GetStreamInfo()) {
@@ -410,7 +412,7 @@ int32_t HCameraHostManager::CameraHostInfo::Prelaunch(sptr<HCameraRestoreParam> 
     int32_t opMode = cameraRestoreParam->GetCameraOpMode();
     bool isNeedRestore = IsNeedRestore(opMode, cameraRestoreParam->GetSetting(), prelaunchConfig.cameraId);
     CamRetCode rc;
-    if (cameraHostProxyV1_2_ != nullptr && GetCameraHostVersion() > GetVersionId(1, 1)) {
+    if (cameraHostProxyV1_2_ != nullptr && GetCameraHostVersion() > OHOS::CameraStandard::GetVersionId(1, 1)) {
         if (isNeedRestore) {
             MEDIA_INFO_LOG("CameraHostInfo::PrelaunchWithOpMode ICameraHost V1_2 %{public}d", opMode);
             rc = (CamRetCode)(cameraHostProxyV1_2_->PrelaunchWithOpMode(prelaunchConfig, opMode));
@@ -419,7 +421,7 @@ int32_t HCameraHostManager::CameraHostInfo::Prelaunch(sptr<HCameraRestoreParam> 
             rc = (CamRetCode)(cameraHostProxyV1_2_->Prelaunch(prelaunchConfig));
         }
         // LCOV_EXCL_START
-    } else if (cameraHostProxyV1_1_ != nullptr && GetCameraHostVersion() == GetVersionId(1, 1)) {
+    } else if (cameraHostProxyV1_1_ != nullptr && GetCameraHostVersion() == OHOS::CameraStandard::GetVersionId(1, 1)) {
         MEDIA_DEBUG_LOG("CameraHostInfo::Prelaunch ICameraHost V1_1");
         rc = (CamRetCode)(cameraHostProxyV1_1_->Prelaunch(prelaunchConfig));
     } else {
@@ -470,7 +472,7 @@ int32_t HCameraHostManager::CameraHostInfo::PreCameraSwitch(const std::string& c
     std::lock_guard<std::mutex> lock(mutex_);
     CHECK_ERROR_RETURN_RET_LOG(cameraHostProxy_ == nullptr, CAMERA_UNKNOWN_ERROR,
         "CameraHostInfo::PreCameraSwitch cameraHostProxy_ is null");
-    CHECK_ERROR_RETURN_RET_LOG(GetCameraHostVersion() <= GetVersionId(1, 1), CAMERA_UNKNOWN_ERROR,
+    CHECK_ERROR_RETURN_RET_LOG(GetCameraHostVersion() <= OHOS::CameraStandard::GetVersionId(1, 1), CAMERA_UNKNOWN_ERROR,
         "CameraHostInfo::PreCameraSwitch not support host V1_0 and V1_1!");
     if (cameraHostProxyV1_2_ != nullptr) {
         MEDIA_DEBUG_LOG("CameraHostInfo::PreCameraSwitch ICameraHost V1_2");
@@ -487,11 +489,11 @@ void HCameraHostManager::CameraHostInfo::NotifyDeviceStateChangeInfo(int notifyT
     CHECK_ERROR_RETURN_LOG(cameraHostProxy_ == nullptr, "CameraHostInfo::Prelaunch cameraHostProxy_ is null");
     MEDIA_DEBUG_LOG("CameraHostInfo::NotifyDeviceStateChangeInfo notifyType = %{public}d, deviceState = %{public}d",
         notifyType, deviceState);
-    if (cameraHostProxyV1_3_ != nullptr && GetCameraHostVersion() > GetVersionId(1, 1)) {
+    if (cameraHostProxyV1_3_ != nullptr && GetCameraHostVersion() > OHOS::CameraStandard::GetVersionId(1, 1)) {
         MEDIA_DEBUG_LOG("CameraHostInfo::NotifyDeviceStateChangeInfo ICameraHost V1_2");
         cameraHostProxyV1_3_->NotifyDeviceStateChangeInfo(notifyType, deviceState);
         // LCOV_EXCL_START
-    } else if (cameraHostProxyV1_2_ != nullptr && GetCameraHostVersion() > GetVersionId(1, 1)) {
+    } else if (cameraHostProxyV1_2_ != nullptr && GetCameraHostVersion() > OHOS::CameraStandard::GetVersionId(1, 1)) {
         MEDIA_DEBUG_LOG("CameraHostInfo::NotifyDeviceStateChangeInfo ICameraHost V1_2");
         cameraHostProxyV1_2_->NotifyDeviceStateChangeInfo(notifyType, deviceState);
         // LCOV_EXCL_STOP
@@ -618,20 +620,20 @@ int32_t HCameraHostManager::CameraHostInfo::OnFlashlightStatus_V1_2(FlashlightSt
             "CameraHostInfo::OnFlashlightStatus_V1_2 with status %{public}d failed due to no callback", status);
         return CAMERA_UNKNOWN_ERROR;
     }
-    TorchStatus torchStatus = TORCH_STATUS_OFF;
+    TorchStatus torchStatus = TorchStatus::TORCH_STATUS_OFF;
     switch (status) {
         case FLASHLIGHT_OFF:
-            torchStatus = TORCH_STATUS_OFF;
+            torchStatus = TorchStatus::TORCH_STATUS_OFF;
             MEDIA_INFO_LOG("CameraHostInfo::OnFlashlightStatus_V1_2, torch status is off");
             break;
 
         case FLASHLIGHT_ON:
-            torchStatus = TORCH_STATUS_ON;
+            torchStatus = TorchStatus::TORCH_STATUS_ON;
             MEDIA_INFO_LOG("CameraHostInfo::OnFlashlightStatus_V1_2, torch status is on");
             break;
 
         case FLASHLIGHT_UNAVAILABLE:
-            torchStatus = TORCH_STATUS_UNAVAILABLE;
+            torchStatus = TorchStatus::TORCH_STATUS_UNAVAILABLE;
             MEDIA_INFO_LOG("CameraHostInfo::OnFlashlightStatus_V1_2, torch status is unavailable");
             break;
 
@@ -881,7 +883,7 @@ int32_t HCameraHostManager::GetCameraIdSortedByCameraType(std::vector<std::strin
     return CAMERA_OK;
 }
 
-int32_t HCameraHostManager::GetCameraAbility(std::string &cameraId,
+int32_t HCameraHostManager::GetCameraAbility(const std::string &cameraId,
                                              std::shared_ptr<OHOS::Camera::CameraMetadata> &ability)
 {
     auto cameraHostInfo = FindCameraHostInfo(cameraId);
@@ -1163,7 +1165,8 @@ void HCameraHostManager::AddCameraHost(const std::string& svcName)
             statusCallback->OnCameraStatus(cameraId, CAMERA_STATUS_AVAILABLE);
         }
     }
-    CHECK_EXECUTE(statusCallback && svcName == LOCAL_SERVICE_NAME, statusCallback->OnTorchStatus(TORCH_STATUS_OFF));
+    CHECK_EXECUTE(statusCallback && svcName == LOCAL_SERVICE_NAME,
+        statusCallback->OnTorchStatus(TorchStatus::TORCH_STATUS_OFF));
 }
 
 void HCameraHostManager::RemoveCameraHost(const std::string& svcName)
@@ -1188,7 +1191,7 @@ void HCameraHostManager::RemoveCameraHost(const std::string& svcName)
     cameraHostInfos_.erase(it);
     auto statusCallback = statusCallback_.lock();
     CHECK_EXECUTE(statusCallback && svcName == LOCAL_SERVICE_NAME,
-        statusCallback->OnTorchStatus(TORCH_STATUS_UNAVAILABLE));
+        statusCallback->OnTorchStatus(TorchStatus::TORCH_STATUS_UNAVAILABLE));
 }
 
 sptr<HCameraHostManager::CameraHostInfo> HCameraHostManager::FindCameraHostInfo(const std::string& cameraId)

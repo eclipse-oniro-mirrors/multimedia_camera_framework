@@ -21,7 +21,6 @@
 
 #include "camera_log.h"
 #include "camera_server_photo_proxy.h"
-#include "camera_service_ipc_interface_code.h"
 #include "camera_util.h"
 #include "camera/v1_4/types.h"
 #include "hstream_common.h"
@@ -36,6 +35,8 @@
 #include "hstream_operator_manager.h"
 #include "hstream_operator.h"
 #include "display/graphic/common/v1_0/cm_color_space.h"
+#include "ability/camera_ability_const.h"
+#include "picture_proxy.h"
 #ifdef HOOK_CAMERA_OPERATOR
 #include "camera_rotate_plugin.h"
 #endif
@@ -219,7 +220,7 @@ int32_t HStreamCapture::EnableMovingPhoto(bool enabled)
 }
 // LCOV_EXCL_STOP
 
-int32_t HStreamCapture::SetBufferProducerInfo(const std::string bufName, const sptr<OHOS::IBufferProducer> &producer)
+int32_t HStreamCapture::SetBufferProducerInfo(const std::string& bufName, const sptr<OHOS::IBufferProducer> &producer)
 {
     std::string resStr = "";
     if (bufName == "rawImage") {
@@ -836,7 +837,7 @@ int32_t HStreamCapture::ReleaseStream(bool isDelay)
     return errorCode;
 }
 
-int32_t HStreamCapture::SetCallback(sptr<IStreamCaptureCallback> &callback)
+int32_t HStreamCapture::SetCallback(const sptr<IStreamCaptureCallback> &callback)
 {
     CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_INVALID_ARG, "HStreamCapture::SetCallback input is null");
     std::lock_guard<std::mutex> lock(callbackLock_);
@@ -992,8 +993,8 @@ void HStreamCapture::DumpStreamInfo(CameraInfoDumper& infoDumper)
 
 int32_t HStreamCapture::OperatePermissionCheck(uint32_t interfaceCode)
 {
-    switch (static_cast<StreamCaptureInterfaceCode>(interfaceCode)) {
-        case CAMERA_STREAM_CAPTURE_START: {
+    switch (static_cast<IStreamCaptureIpcCode>(interfaceCode)) {
+        case IStreamCaptureIpcCode::COMMAND_CAPTURE: {
             auto callerToken = IPCSkeleton::GetCallingTokenID();
             CHECK_ERROR_RETURN_RET_LOG(callerToken_ != callerToken, CAMERA_OPERATION_NOT_ALLOWED,
                 "HStreamCapture::OperatePermissionCheck fail, callerToken_ is : %{public}d, now token "
@@ -1003,6 +1004,33 @@ int32_t HStreamCapture::OperatePermissionCheck(uint32_t interfaceCode)
         default:
             break;
     }
+    return CAMERA_OK;
+}
+
+int32_t HStreamCapture::CallbackEnter([[maybe_unused]] uint32_t code)
+{
+    MEDIA_INFO_LOG("start, code:%{public}u", code);
+    DisableJeMalloc();
+    int32_t errCode = OperatePermissionCheck(code);
+    CHECK_ERROR_RETURN_RET_LOG(errCode != CAMERA_OK, errCode, "HStreamCapture::OperatePermissionCheck fail");
+    switch (static_cast<IStreamCaptureIpcCode>(code)) {
+        case IStreamCaptureIpcCode::COMMAND_SET_THUMBNAIL:
+        case IStreamCaptureIpcCode::COMMAND_ENABLE_RAW_DELIVERY:
+        case IStreamCaptureIpcCode::COMMAND_DEFER_IMAGE_DELIVERY_FOR:
+        case IStreamCaptureIpcCode::COMMAND_CONFIRM_CAPTURE:
+        case IStreamCaptureIpcCode::COMMAND_ENABLE_OFFLINE_PHOTO : {
+            CHECK_ERROR_RETURN_RET_LOG(!CheckSystemApp(), CAMERA_NO_PERMISSION, "HStreamCapture::CheckSystemApp fail");
+            break;
+        }
+        default:
+            break;
+    }
+    return CAMERA_OK;
+}
+
+int32_t HStreamCapture::CallbackExit([[maybe_unused]] uint32_t code, [[maybe_unused]] int32_t result)
+{
+    MEDIA_INFO_LOG("leave, code:%{public}u, result:%{public}d", code, result);
     return CAMERA_OK;
 }
 
@@ -1058,7 +1086,7 @@ void HStreamCapture::SetCameraPhotoProxyInfo(sptr<CameraServerPhotoProxy> camera
 }
 
 // LCOV_EXCL_START
-int32_t HStreamCapture::UpdateMediaLibraryPhotoAssetProxy(sptr<CameraPhotoProxy> photoProxy)
+int32_t HStreamCapture::UpdateMediaLibraryPhotoAssetProxy(const sptr<CameraPhotoProxy>& photoProxy)
 {
     CAMERA_SYNC_TRACE;
     if (isBursting_ || (GetMode() == static_cast<int32_t>(HDI::Camera::V1_3::OperationMode::PROFESSIONAL_PHOTO))) {
@@ -1096,8 +1124,9 @@ void HStreamCapture::SetStreamOperator(wptr<HStreamOperator> hStreamOperator)
 }
 
 // LCOV_EXCL_START
-int32_t HStreamCapture::CreateMediaLibrary(std::shared_ptr<PictureIntf> picture, sptr<CameraPhotoProxy>& photoProxy,
-    std::string& uri, int32_t& cameraShotType, std::string& burstKey, int64_t timestamp)
+int32_t HStreamCapture::CreateMediaLibrary(const std::shared_ptr<PictureIntf>& picture,
+    const sptr<CameraPhotoProxy>& photoProxy, std::string& uri, int32_t& cameraShotType,
+    std::string& burstKey, int64_t timestamp)
 {
     auto hStreamOperatorSptr_ = hStreamOperator_.promote();
     if (hStreamOperatorSptr_) {
@@ -1107,7 +1136,7 @@ int32_t HStreamCapture::CreateMediaLibrary(std::shared_ptr<PictureIntf> picture,
     return CAMERA_OK;
 }
 
-int32_t HStreamCapture::CreateMediaLibrary(sptr<CameraPhotoProxy>& photoProxy, std::string& uri,
+int32_t HStreamCapture::CreateMediaLibrary(const sptr<CameraPhotoProxy>& photoProxy, std::string& uri,
     int32_t& cameraShotType, std::string& burstKey, int64_t timestamp)
 {
     auto hStreamOperatorSptr_ = hStreamOperator_.promote();
@@ -1116,6 +1145,47 @@ int32_t HStreamCapture::CreateMediaLibrary(sptr<CameraPhotoProxy>& photoProxy, s
     }
     return CAMERA_OK;
 }
+
+int32_t HStreamCapture::CallbackParcel([[maybe_unused]] uint32_t code, [[maybe_unused]] MessageParcel& data,
+    [[maybe_unused]] MessageParcel& reply, [[maybe_unused]] MessageOption& option)
+{
+    MEDIA_INFO_LOG("start, code:%{public}u", code);
+    if ((static_cast<IStreamCaptureIpcCode>(code) !=
+        IStreamCaptureIpcCode::COMMAND_CREATE_MEDIA_LIBRARY_IN_SHARED_PTR_PICTUREINTF_IN_SPTR_CAMERAPHOTOPROXY_OUT_STRING_OUT_INT_OUT_STRING_IN_LONG)) {
+        return ERR_NONE;
+    }
+    CHECK_ERROR_RETURN_RET(data.ReadInterfaceToken() != GetDescriptor(), ERR_TRANSACTION_FAILED);
+
+    MEDIA_INFO_LOG("StreamCaptureStub HandleCreateMediaLibraryForPicture enter");
+    int32_t size = data.ReadInt32();
+    CHECK_ERROR_RETURN_RET_LOG(size == 0, ERR_INVALID_DATA, "Not an parcelable oject");
+    std::shared_ptr<PictureIntf> pictureProxy = PictureProxy::CreatePictureProxy();
+    CHECK_ERROR_RETURN_RET_LOG(pictureProxy == nullptr, ERR_INVALID_DATA,
+        "StreamCaptureStub HandleCreateMediaLibraryForPicture pictureProxy is null");
+    MEDIA_INFO_LOG("HStreamCaptureStub HandleCreateMediaLibraryForPicture Picture::Unmarshalling E");
+    pictureProxy->UnmarshallingPicture(data);
+    MEDIA_INFO_LOG("HStreamCaptureStub HandleCreateMediaLibraryForPicture Picture::Unmarshalling X");
+
+    sptr<CameraPhotoProxy> photoProxy = sptr<CameraPhotoProxy>(data.ReadParcelable<CameraPhotoProxy>());
+    CHECK_ERROR_RETURN_RET_LOG(photoProxy == nullptr, ERR_INVALID_DATA,
+        "HStreamCaptureStub HandleCreateMediaLibrary photoProxy is null");
+
+    int64_t timestamp = data.ReadInt64();
+    std::string uri;
+    int32_t cameraShotType = 0;
+    std::string burstKey;
+    MEDIA_INFO_LOG("HStreamCaptureStub HandleCreateMediaLibraryForPicture E");
+    ErrCode errCode = CreateMediaLibrary(pictureProxy, photoProxy, uri, cameraShotType, burstKey, timestamp);
+    MEDIA_INFO_LOG("HStreamCaptureStub HandleCreateMediaLibraryForPicture X");
+
+    CHECK_ERROR_RETURN_RET_LOG(!reply.WriteInt32(errCode), ERR_INVALID_VALUE, "CreateMediaLibrary faild");
+    CHECK_ERROR_RETURN_RET_LOG(!reply.WriteString16(Str8ToStr16(uri)), ERR_INVALID_DATA, "Write uri faild");
+    CHECK_ERROR_RETURN_RET_LOG(!reply.WriteInt32(cameraShotType), ERR_INVALID_DATA, "Write cameraShotType faild");
+    CHECK_ERROR_RETURN_RET_LOG(!reply.WriteString16(Str8ToStr16(burstKey)), ERR_INVALID_DATA, "Write burstKey faild");
+
+    return -1;
+}
+
 // LCOV_EXCL_STOP
 } // namespace CameraStandard
 } // namespace OHOS

@@ -28,11 +28,15 @@
 #include <unordered_map>
 
 #include "camera_stream_info_parse.h"
+#include "camera_types.h"
 #include "deferred_proc_session/deferred_photo_proc_session.h"
 #include "deferred_proc_session/deferred_video_proc_session.h"
 #include "hcamera_listener_stub.h"
-#include "hcamera_service_callback_stub.h"
-#include "hcamera_service_proxy.h"
+#include "camera_service_callback_stub.h"
+#include "camera_mute_service_callback_stub.h"
+#include "fold_service_callback_stub.h"
+#include "torch_service_callback_stub.h"
+#include "camera_service_proxy.h"
 #include "icamera_device_service.h"
 #include "icamera_service_callback.h"
 #include "input/camera_death_recipient.h"
@@ -1013,12 +1017,12 @@ private:
 };
 
 class CameraStatusListenerManager : public CameraManagerGetter,
-                                    public HCameraServiceCallbackStub,
+                                    public CameraServiceCallbackStub,
                                     public CameraListenerManager<CameraManagerCallback> {
 public:
     int32_t OnCameraStatusChanged(
-        const std::string& cameraId, const CameraStatus status, const std::string& bundleName) override;
-    int32_t OnFlashlightStatusChanged(const std::string& cameraId, const FlashStatus status) override;
+        const std::string& cameraId, const int32_t status, const std::string& bundleName) override;
+    int32_t OnFlashlightStatusChanged(const std::string& cameraId, const int32_t status) override;
 
     inline std::vector<std::shared_ptr<CameraStatusInfo>> GetCachedCameraStatus()
     {
@@ -1062,7 +1066,7 @@ private:
 };
 
 class TorchServiceListenerManager : public CameraManagerGetter,
-                                    public HTorchServiceCallbackStub,
+                                    public TorchServiceCallbackStub,
                                     public CameraListenerManager<TorchListener> {
 public:
     int32_t OnTorchStatusChange(const TorchStatus status) override;
@@ -1077,14 +1081,14 @@ private:
 };
 
 class CameraMuteListenerManager : public CameraManagerGetter,
-                                  public HCameraMuteServiceCallbackStub,
+                                  public CameraMuteServiceCallbackStub,
                                   public CameraListenerManager<CameraMuteListener> {
 public:
     int32_t OnCameraMute(bool muteMode) override;
 };
 
 class FoldStatusListenerManager : public CameraManagerGetter,
-                                  public HFoldServiceCallbackStub,
+                                  public FoldServiceCallbackStub,
                                   public CameraListenerManager<FoldListener> {
 public:
     int32_t OnFoldStatusChanged(const FoldStatus status) override;

@@ -16,7 +16,7 @@
 #ifndef CAMERA_INPUT_FUZZER_H
 #define CAMERA_INPUT_FUZZER_H
 
-#include "hstream_repeat_stub.h"
+#include "stream_repeat_stub.h"
 #include "input/camera_input.h"
 #include <fuzzer/FuzzedDataProvider.h>
 

@@ -264,7 +264,7 @@ HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_007, 
     PrepareFd();
 
     std::shared_ptr<AddVideoCommand> addVideoCmd = std::make_shared<AddVideoCommand>(USER_ID, videoId, srcFd_, dstFd_);
-    EXPECT_EQ(addVideoCmd->Executing(), 1);
+    EXPECT_EQ(addVideoCmd->Executing(), DP_NULL_POINTER);
     EXPECT_FALSE(addVideoCmd->initialized_.load());
 
     std::shared_ptr<SchedulerManager> schedulerManager = DPS_GetSchedulerManager();

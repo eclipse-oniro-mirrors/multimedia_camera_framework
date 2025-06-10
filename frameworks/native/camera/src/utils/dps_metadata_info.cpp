@@ -60,7 +60,7 @@ DpsMetadataError DpsMetadata::ReadFromParcel(MessageParcel &parcel)
     return ret;
 }
 
-DpsMetadataError DpsMetadata::WriteToParcel(MessageParcel &parcel)
+DpsMetadataError DpsMetadata::WriteToParcel(MessageParcel &parcel) const
 {
     parcel.WriteInt32(datas.size());
     for (const auto &[key, data] : datas) {
@@ -108,6 +108,21 @@ DpsMetadataError DpsMetadata::WriteToParcel(MessageParcel &parcel)
         }
     }
     return DPS_METADATA_OK;
+}
+
+bool DpsMetadata::Marshalling(Parcel& parcel) const
+{
+    DpsMetadataError ret = WriteToParcel(static_cast<MessageParcel&>(parcel));
+    DP_CHECK_ERROR_RETURN_RET_LOG(ret != DPS_METADATA_OK, false, "DpsMetadata Marshalling fail");
+    return true;
+}
+
+DpsMetadata* DpsMetadata::Unmarshalling(Parcel& parcel)
+{
+    DpsMetadata* metadata = new (std::nothrow) DpsMetadata();
+    DP_CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, nullptr, "create DpsMetadata fail");
+    metadata->ReadFromParcel(static_cast<MessageParcel&>(parcel));
+    return metadata;
 }
 
 DpsMetadataError DpsMetadata::Get(const std::string &key, int32_t &value) const

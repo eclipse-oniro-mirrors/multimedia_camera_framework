@@ -15,11 +15,10 @@
 
 #include "camera_log.h"
 #include "hstream_metadata_unittest.h"
-#include "camera_service_ipc_interface_code.h"
 #include "test_common.h"
 #include "gmock/gmock.h"
-#include "hstream_metadata_callback_stub.h"
-#include "camera_service_ipc_interface_code.h"
+#include "stream_metadata_callback_stub.h"
+#include "camera_metadata_info.h"
 
 using namespace testing::ext;
 using ::testing::Return;
@@ -38,7 +37,7 @@ void HStreamMetadataUnit::TearDown(void) {}
 
 void HStreamMetadataUnit::SetUp(void) {}
 
-class MockHStreamMetadataCallbackStub : public HStreamMetadataCallbackStub {
+class MockHStreamMetadataCallbackStub : public StreamMetadataCallbackStub {
 public:
     MOCK_METHOD2(OnMetadataResult, int32_t(const int32_t streamId,
         const std::shared_ptr<OHOS::Camera::CameraMetadata> &result));
@@ -62,7 +61,7 @@ HWTEST_F(HStreamMetadataUnit, hstream_metadata_unittest_001, TestSize.Level1)
     sptr<HStreamMetadata> streamMetadata =
         new(std::nothrow) HStreamMetadata(producer, format, {1});
     ASSERT_NE(streamMetadata, nullptr);
-    uint32_t interfaceCode = CAMERA_STREAM_META_START;
+    uint32_t interfaceCode = static_cast<uint32_t>(IStreamMetadataIpcCode::COMMAND_START);
     streamMetadata->callerToken_ = 110;
     int32_t ret = streamMetadata->OperatePermissionCheck(interfaceCode);
     EXPECT_EQ(ret, CAMERA_OPERATION_NOT_ALLOWED);
@@ -139,10 +138,13 @@ HWTEST_F(HStreamMetadataUnit, camera_fwcoverage_unittest_029, TestSize.Level1)
     MockHStreamMetadataCallbackStub stub;
     MessageParcel data;
     data.WriteInterfaceToken(stub.GetDescriptor());
-    data.RewindRead(0);
+    data.WriteInt32(0);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata =
+        std::make_shared<OHOS::Camera::CameraMetadata>(METADATA_ITEM_SIZE, METADATA_DATA_SIZE);
+    data.WriteParcelable(metadata.get());
     MessageParcel reply;
     MessageOption option;
-    uint32_t code = StreamMetadataCallbackInterfaceCode::CAMERA_META_OPERATOR_ON_RESULT;
+    uint32_t code = static_cast<uint32_t>(IStreamMetadataCallbackIpcCode::COMMAND_ON_METADATA_RESULT);
     EXPECT_CALL(stub, OnMetadataResult(_, _))
         .WillOnce(Return(0));
     int errCode = stub.OnRemoteRequest(code, data, reply, option);

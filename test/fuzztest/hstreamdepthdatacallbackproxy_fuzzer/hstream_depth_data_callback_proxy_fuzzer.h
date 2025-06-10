@@ -16,7 +16,7 @@
 #ifndef HSTREAM_DEPTH_CALLBACK_PROXY_FUZZER_H
 #define HSTREAM_DEPTH_CALLBACK_PROXY_FUZZER_H
 
-#include "hstream_depth_data_callback_proxy.h"
+#include "stream_depth_data_callback_proxy.h"
 #include "istream_depth_data_callback.h"
 
 namespace OHOS {
@@ -24,7 +24,7 @@ namespace CameraStandard {
 
 class HStreamDepthDataCallbackProxyFuzzer {
 public:
-static std::shared_ptr<HStreamDepthDataCallbackProxy> fuzz_;
+static std::shared_ptr<StreamDepthDataCallbackProxy> fuzz_;
 static void HStreamDepthDataCallbackProxyFuzzTest();
 };
 } //CameraStandard

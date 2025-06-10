@@ -23,7 +23,6 @@ namespace OHOS {
 namespace CameraStandard {
 using namespace DeferredProcessing;
 static constexpr int32_t MIN_SIZE_NUM = 64;
-const size_t THRESHOLD = 10;
 const size_t MAX_LENGTH_STRING = 64;
 std::shared_ptr<MpegManager> MpegManagerFuzzer::fuzz_{nullptr};
 

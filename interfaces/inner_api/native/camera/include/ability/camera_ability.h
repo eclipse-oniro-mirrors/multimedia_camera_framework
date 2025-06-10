@@ -22,6 +22,7 @@
 #include <cstdint>
 #include "ability/camera_ability_const.h"
 #include "session/capture_scene_const.h"
+#include "camera_types.h"
 
 namespace OHOS {
 namespace CameraStandard {

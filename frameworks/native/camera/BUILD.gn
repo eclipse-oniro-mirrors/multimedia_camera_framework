@@ -61,25 +61,8 @@ ohos_shared_library("camera_framework") {
   sources = [
     "${multimedia_camera_framework_path}/dynamic_libs/image_framework/src/picture_adapter.cpp",
     "${multimedia_camera_framework_path}/services/camera_service/binder/base/src/icamera_util.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/binder/client/src/hcamera_device_proxy.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/binder/client/src/hcamera_service_proxy.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/binder/client/src/hcapture_session_proxy.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/binder/client/src/hstream_capture_proxy.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/binder/client/src/hstream_depth_data_proxy.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/binder/client/src/hstream_metadata_proxy.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/binder/client/src/hstream_repeat_proxy.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/binder/server/src/hcamera_device_callback_stub.cpp",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/client/src/hcamera_broker_proxy.cpp",
     "${multimedia_camera_framework_path}/services/camera_service/binder/server/src/hcamera_listener_stub.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/binder/server/src/hcamera_service_callback_stub.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/binder/server/src/hcapture_session_callback_stub.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/binder/server/src/hstream_capture_callback_stub.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/binder/server/src/hstream_depth_data_callback_stub.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/binder/server/src/hstream_metadata_callback_stub.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/binder/server/src/hstream_repeat_callback_stub.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/client/src/deferred_photo_processing_session_proxy.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/client/src/deferred_video_processing_session_proxy.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/server/src/deferred_photo_processing_session_callback_stub.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/server/src/deferred_video_processing_session_callback_stub.cpp",
     "src/ability/camera_ability.cpp",
     "src/ability/camera_ability_builder.cpp",
     "src/ability/camera_ability_const.cpp",
@@ -151,6 +134,8 @@ ohos_shared_library("camera_framework") {
     ":camera_framework_public_config",
     ":camera_framework_local_config",
     ":camera_framework_drivers_config",
+    "${multimedia_camera_framework_path}/services/camera_service/idls:camera_sa_idl_config",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/idls:deferred_processing_service_idl_config",
   ]
 
   include_dirs = [
@@ -162,7 +147,10 @@ ohos_shared_library("camera_framework") {
 
   public_external_deps = [ "drivers_interface_camera:metadata" ]
 
-  deps = [ "${multimedia_camera_framework_path}/common:camera_utils" ]
+  deps = [ "${multimedia_camera_framework_path}/common:camera_utils",
+    "${multimedia_camera_framework_path}/services/camera_service/idls:camera_idl_sa_proxy",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/idls:camera_deferred_idl_sa_proxy",
+  ]
 
   external_deps = [
     "access_token:libtokenid_sdk",

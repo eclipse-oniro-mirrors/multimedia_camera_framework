@@ -24,7 +24,6 @@
 #include "camera_metadata_info.h"
 #include "metadata_utils.h"
 #include "iconsumer_surface.h"
-#include "camera_service_ipc_interface_code.h"
 #include <fuzzer/FuzzedDataProvider.h>
 
 namespace OHOS {

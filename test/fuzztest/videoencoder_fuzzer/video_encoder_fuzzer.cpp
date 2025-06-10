@@ -58,8 +58,6 @@ void VideoEncoderFuzzer::VideoEncoderFuzzTest(FuzzedDataProvider& fdp)
         new(std::nothrow) FrameRecord(videoBuffer, timestamp, type_);
     fuzz_->ReleaseSurfaceBuffer(frameRecord);
     fuzz_->NotifyEndOfStream();
-    uint32_t bufferIndex = GetData<uint32_t>();
-    fuzz_->FreeOutputData(bufferIndex);
     fuzz_->Stop();
 }
 

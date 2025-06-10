@@ -16,7 +16,7 @@
 #ifndef HSTREAM_DEPTH_PROXY_FUZZER_H
 #define HSTREAM_DEPTH_PROXY_FUZZER_H
 
-#include "hstream_depth_data_proxy.h"
+#include "stream_depth_data_proxy.h"
 #include "system_ability_definition.h"
 #include "iservice_registry.h"
 #include "token_setproc.h"
@@ -62,7 +62,7 @@ public:
 
 class HStreamDepthDataProxyFuzzer {
 public:
-static std::shared_ptr<HStreamDepthDataProxy> fuzz_;
+static std::shared_ptr<StreamDepthDataProxy> fuzz_;
 static void HStreamDepthDataProxyFuzzTest();
 };
 } //CameraStandard

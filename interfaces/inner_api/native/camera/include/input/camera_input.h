@@ -27,7 +27,7 @@
 #include "camera_device_ability_items.h"
 #include "camera_info.h"
 #include "capture_input.h"
-#include "hcamera_device_callback_stub.h"
+#include "camera_device_service_callback_stub.h"
 #include "icamera_device_service.h"
 #include "icamera_device_service_callback.h"
 #include "metadata_common_utils.h"
@@ -414,7 +414,7 @@ private:
     std::map<CameraPosition, camera_position_enum> positionMapping;
 };
 
-class CameraDeviceServiceCallback : public HCameraDeviceCallbackStub {
+class CameraDeviceServiceCallback : public CameraDeviceServiceCallbackStub {
 public:
     std::mutex deviceCallbackMutex_;
     wptr<CameraInput> camInput_ = nullptr;

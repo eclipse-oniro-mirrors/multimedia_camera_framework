@@ -24,7 +24,6 @@
 #include "camera_device_ability_items.h"
 #include "camera_log.h"
 #include "camera_metadata_operator.h"
-#include "camera_service_ipc_interface_code.h"
 #include "display_manager.h"
 #include "camera_util.h"
 #include "hstream_common.h"
@@ -357,7 +356,7 @@ int32_t HStreamRepeat::ReleaseStream(bool isDelay)
     return HStreamCommon::ReleaseStream(isDelay);
 }
 
-int32_t HStreamRepeat::SetCallback(sptr<IStreamRepeatCallback>& callback)
+int32_t HStreamRepeat::SetCallback(const sptr<IStreamRepeatCallback>& callback)
 {
     CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_INVALID_ARG, "HStreamRepeat::SetCallback callback is null");
     std::lock_guard<std::mutex> lock(callbackLock_);
@@ -490,7 +489,7 @@ int32_t HStreamRepeat::AddDeferredSurface(const sptr<OHOS::IBufferProducer>& pro
 }
 
 int32_t HStreamRepeat::ForkSketchStreamRepeat(
-    int32_t width, int32_t height, sptr<IStreamRepeat>& sketchStream, float sketchRatio)
+    int32_t width, int32_t height, sptr<IRemoteObject>& sketchStream, float sketchRatio)
 {
     CAMERA_SYNC_TRACE;
     std::lock_guard<std::mutex> lock(sketchStreamLock_);
@@ -503,7 +502,7 @@ int32_t HStreamRepeat::ForkSketchStreamRepeat(
         "HStreamRepeat::ForkSketchStreamRepeat HStreamRepeat allocation failed");
     MEDIA_DEBUG_LOG(
         "HStreamRepeat::ForkSketchStreamRepeat para is:%{public}dx%{public}d,%{public}f", width, height, sketchRatio);
-    sketchStream = streamRepeat;
+    sketchStream = streamRepeat->AsObject();
     sketchStreamRepeat_ = streamRepeat;
     sketchStreamRepeat_->sketchRatio_ = sketchRatio;
     sketchStreamRepeat_->parentStreamRepeat_ = this;
@@ -888,9 +887,9 @@ void HStreamRepeat::ApplyTransformBasedOnRotation(int32_t streamRotation, const 
 
 int32_t HStreamRepeat::OperatePermissionCheck(uint32_t interfaceCode)
 {
-    switch (static_cast<StreamRepeatInterfaceCode>(interfaceCode)) {
-        case CAMERA_START_VIDEO_RECORDING:
-        case CAMERA_FORK_SKETCH_STREAM_REPEAT: {
+    switch (static_cast<IStreamRepeatIpcCode>(interfaceCode)) {
+        case IStreamRepeatIpcCode::COMMAND_START:
+        case IStreamRepeatIpcCode::COMMAND_FORK_SKETCH_STREAM_REPEAT: {
             auto callerToken = IPCSkeleton::GetCallingTokenID();
             CHECK_ERROR_RETURN_RET_LOG(callerToken_ != callerToken, CAMERA_OPERATION_NOT_ALLOWED,
                 "HStreamRepeat::OperatePermissionCheck fail, callerToken_ is : %{public}d, now token "
@@ -900,6 +899,31 @@ int32_t HStreamRepeat::OperatePermissionCheck(uint32_t interfaceCode)
         default:
             break;
     }
+    return CAMERA_OK;
+}
+
+int32_t HStreamRepeat::CallbackEnter([[maybe_unused]] uint32_t code)
+{
+    MEDIA_INFO_LOG("start, code:%{public}u", code);
+    DisableJeMalloc();
+    int32_t errCode = OperatePermissionCheck(code);
+    CHECK_ERROR_RETURN_RET_LOG(errCode != CAMERA_OK, errCode, "HStreamRepeat::OperatePermissionCheck fail");
+    switch (static_cast<IStreamRepeatIpcCode>(code)) {
+        case IStreamRepeatIpcCode::COMMAND_ADD_DEFERRED_SURFACE:
+        case IStreamRepeatIpcCode::COMMAND_FORK_SKETCH_STREAM_REPEAT:
+        case IStreamRepeatIpcCode::COMMAND_UPDATE_SKETCH_RATIO: {
+            CHECK_ERROR_RETURN_RET_LOG(!CheckSystemApp(), CAMERA_NO_PERMISSION, "HStreamRepeat::CheckSystemApp fail");
+            break;
+        }
+        default:
+            break;
+    }
+    return CAMERA_OK;
+}
+
+int32_t HStreamRepeat::CallbackExit([[maybe_unused]] uint32_t code, [[maybe_unused]] int32_t result)
+{
+    MEDIA_INFO_LOG("leave, code:%{public}u, result:%{public}d", code, result);
     return CAMERA_OK;
 }
 

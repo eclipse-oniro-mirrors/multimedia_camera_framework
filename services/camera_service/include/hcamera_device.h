@@ -31,7 +31,7 @@
 #include "v1_0/icamera_device_callback.h"
 #include "camera_metadata_info.h"
 #include "camera_util.h"
-#include "hcamera_device_stub.h"
+#include "camera_device_service_stub.h"
 #include "hcamera_host_manager.h"
 #include "v1_0/icamera_device.h"
 #include "v1_1/icamera_device.h"
@@ -39,6 +39,7 @@
 #include "v1_3/icamera_device.h"
 #include "v1_0/icamera_host.h"
 #include "dfx/camera_report_uitls.h"
+#include "icamera_ipc_checker.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -53,14 +54,14 @@ public:
 };
 
 class EXPORT_API HCameraDevice
-    : public HCameraDeviceStub, public ICameraDeviceCallback {
+    : public CameraDeviceServiceStub, public ICameraDeviceCallback, public ICameraIpcChecker {
 public:
     explicit HCameraDevice(
         sptr<HCameraHostManager>& cameraHostManager, std::string cameraID, const uint32_t callingTokenId);
     ~HCameraDevice();
 
     int32_t Open() override;
-    int32_t OpenSecureCamera(uint64_t* secureSeqId) override;
+    int32_t OpenSecureCamera(uint64_t& secureSeqId) override;
     int32_t Open(int32_t concurrentType) override;
     int32_t Close() override;
     int32_t closeDelayed() override;
@@ -68,14 +69,14 @@ public:
     int32_t UpdateSetting(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings) override;
     int32_t SetUsedAsPosition(uint8_t value) override;
     int32_t UpdateSettingOnce(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
-    int32_t GetStatus(std::shared_ptr<OHOS::Camera::CameraMetadata> &metaIn,
+    int32_t GetStatus(const std::shared_ptr<OHOS::Camera::CameraMetadata> &metaIn,
             std::shared_ptr<OHOS::Camera::CameraMetadata> &metaOut) override;
     int32_t GetEnabledResults(std::vector<int32_t>& results) override;
-    int32_t EnableResult(std::vector<int32_t>& results) override;
-    int32_t DisableResult(std::vector<int32_t>& results) override;
+    int32_t EnableResult(const std::vector<int32_t>& results) override;
+    int32_t DisableResult(const std::vector<int32_t>& results) override;
     int32_t SetDeviceRetryTime() override;
     int32_t ReleaseStreams(std::vector<int32_t>& releaseStreamIds);
-    int32_t SetCallback(sptr<ICameraDeviceServiceCallback>& callback) override;
+    int32_t SetCallback(const sptr<ICameraDeviceServiceCallback>& callback) override;
     int32_t UnSetCallback() override;
     int32_t OnError(OHOS::HDI::Camera::V1_0::ErrorType type, int32_t errorCode) override;
     int32_t OnResult(uint64_t timestamp, const std::vector<uint8_t>& result) override;
@@ -95,6 +96,8 @@ public:
     int32_t GetCallerToken();
 
     int32_t OperatePermissionCheck(uint32_t interfaceCode) override;
+    int32_t CallbackEnter([[maybe_unused]] uint32_t code) override;
+    int32_t CallbackExit([[maybe_unused]] uint32_t code, [[maybe_unused]] int32_t result) override;
 
     int32_t ResetDeviceSettings();
     int32_t DispatchDefaultSettingToHdi();

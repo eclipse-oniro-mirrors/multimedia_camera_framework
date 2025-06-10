@@ -31,7 +31,6 @@ namespace OHOS {
 namespace CameraStandard {
 using OHOS::HDI::Camera::V1_0::ICameraDeviceCallback;
 static constexpr int32_t MIN_SIZE_NUM = 128;
-const size_t THRESHOLD = 10;
 const size_t MAX_LENGTH_STRING = 64;
 
 std::shared_ptr<HCameraHostManager> HCameraHostManagerFuzzer::fuzz_{nullptr};

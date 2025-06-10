@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-#include "buffer_info.h"
 #include "deferred_processing_service.h"
 #include "deferred_video_processing_session_stub_fuzzer.h"
 #include "foundation/multimedia/camera_framework/common/utils/camera_log.h"

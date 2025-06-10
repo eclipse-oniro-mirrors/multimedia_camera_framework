@@ -300,7 +300,7 @@ int CameraInput::Open(bool isEnableSecureCamera, uint64_t* secureSeqId)
 
     auto deviceObj = GetCameraDevice();
     if (deviceObj) {
-        retCode = isSupportSecCamera ? (deviceObj->OpenSecureCamera(secureSeqId)) : (deviceObj->Open());
+        retCode = isSupportSecCamera ? (deviceObj->OpenSecureCamera(*secureSeqId)) : (deviceObj->Open());
         CHECK_ERROR_PRINT_LOG(retCode != CAMERA_OK,
             "Failed to open Camera Input, retCode: %{public}d, isSupportSecCamera is %{public}d",
                 retCode, isSupportSecCamera);

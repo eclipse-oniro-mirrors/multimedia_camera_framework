@@ -77,7 +77,7 @@ int32_t VideoOutputCallbackImpl::OnSketchStatusChanged(SketchStatus status)
     return CAMERA_OK;
 }
 
-int32_t VideoOutputCallbackImpl::OnDeferredVideoEnhancementInfo(CaptureEndedInfoExt captureEndedInfo)
+int32_t VideoOutputCallbackImpl::OnDeferredVideoEnhancementInfo(const CaptureEndedInfoExt &captureEndedInfo)
 {
     MEDIA_INFO_LOG("VideoOutputCallbackImpl::OnDeferredVideoEnhancementInfo callback in video");
     auto item = videoOutput_.promote();

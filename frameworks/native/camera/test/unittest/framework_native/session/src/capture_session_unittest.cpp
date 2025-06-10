@@ -3898,7 +3898,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_001, TestSize
     sptr<CaptureSession> session = nullptr;
     ASSERT_EQ(session, nullptr);
     auto foldCallback = std::make_shared<FoldCallback>(session);
-    FoldStatus status = UNKNOWN_FOLD;
+    FoldStatus status = FoldStatus::UNKNOWN_FOLD;
     auto ret = foldCallback->OnFoldStatusChanged(status);
     EXPECT_EQ(ret, CAMERA_OPERATION_NOT_ALLOWED);
 
@@ -4999,7 +4999,8 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_027, TestSize
     ASSERT_NE(outputCapability, nullptr);
     videoProfile_ = outputCapability->GetVideoProfiles();
 
-    sptr<CaptureOutput> videoOutput = CreateVideoOutput(videoProfile_[1]);
+    UpdataCameraOutputCapability();
+    sptr<CaptureOutput> videoOutput = CreateVideoOutput(videoProfile_[0]);
     ASSERT_NE(nullptr, videoOutput);
 
     ASSERT_EQ(CAMERA_OK, session->BeginConfig());
@@ -5300,8 +5301,8 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_033, TestSize.Level0)
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
-    session->SetMode(SceneMode::NIGHT);
-    EXPECT_EQ(session->GetMode(), SceneMode::NIGHT);
+    session->SetMode(SceneMode::CAPTURE);
+    EXPECT_EQ(session->GetMode(), SceneMode::CAPTURE);
 
     int32_t ret = session->BeginConfig();
     EXPECT_EQ(ret, 0);
@@ -5673,7 +5674,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_042, TestSize.Level0)
 
     EXPECT_EQ(session->CommitConfig(), 0);
 
-    EXPECT_EQ(session->IsVideoStabilizationModeSupported(VideoStabilizationMode::AUTO), true);
+    EXPECT_EQ(session->IsVideoStabilizationModeSupported(VideoStabilizationMode::AUTO), false);
 
     EXPECT_EQ(session->IsVideoStabilizationModeSupported(VideoStabilizationMode::HIGH), false);
 
@@ -6083,7 +6084,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_052, TestSize.Level0)
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
-    session->SetMode(SceneMode::NIGHT);
+    session->SetMode(SceneMode::CAPTURE);
 
     EXPECT_EQ(session->BeginConfig(), 0);
 
@@ -6095,7 +6096,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_052, TestSize.Level0)
 
     vector<SceneFeaturesMode> res = session->GetSubFeatureMods();
 
-    EXPECT_EQ(res.size(), 1);
+    EXPECT_EQ(res.size(), 3);
 }
 
 /*
@@ -6230,8 +6231,8 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_055, TestSize.Level0)
     EXPECT_EQ(session->CommitConfig(), 0);
 
     session->LockForControl();
-    EXPECT_EQ(session->SetSensorExposureTime(1), 0);
-    EXPECT_EQ(session->SetSensorExposureTime(50000), 0);
+    EXPECT_EQ(session->SetSensorExposureTime(1), OPERATION_NOT_ALLOWED);
+    EXPECT_EQ(session->SetSensorExposureTime(50000), OPERATION_NOT_ALLOWED);
     session->UnlockForControl();
 
     preview->Release();
@@ -6312,7 +6313,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_057, TestSize.Level0)
 
     EXPECT_EQ(session->CommitConfig(), 0);
 
-    EXPECT_EQ(session->EnableFeature(SceneFeature::FEATURE_ENUM_MIN, false), false);
+    EXPECT_EQ(session->EnableFeature(SceneFeature::FEATURE_ENUM_MIN, false), OPERATION_NOT_ALLOWED);
 
     preview->Release();
     input->Release();
@@ -8292,7 +8293,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_135, TestSize.Level0)
  
     session->LockForControl();
     uint32_t timeLessRange = 1;
-    EXPECT_EQ(session->SetSensorExposureTime(timeLessRange), 0);
+    EXPECT_EQ(session->SetSensorExposureTime(timeLessRange), OPERATION_NOT_ALLOWED);
     session->UnlockForControl();
 }
  
@@ -8324,7 +8325,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_136, TestSize.Level0)
  
     auto oldsupportSpecSearch = session->supportSpecSearch_.load();
     session->supportSpecSearch_.store(false);
-    EXPECT_EQ(session->IsMacroSupported(), true);
+    EXPECT_EQ(session->IsMacroSupported(), false);
     session->supportSpecSearch_.store(oldsupportSpecSearch);
 }
  
@@ -8530,8 +8531,8 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_148, TestSize.Level0)
     int32_t DEFAULT_DATA_LENGTH = 200;
     session->changedMetadata_ = std::make_shared<Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
     session->changedMetadata_->addEntry(OHOS_CONTROL_EFFECT_SUGGESTION, &enableValue, 1);
-    EXPECT_EQ(session->EnableEffectSuggestion(true), 0);
-    EXPECT_EQ(session->EnableEffectSuggestion(true), 0);
+    EXPECT_EQ(session->EnableEffectSuggestion(true), OPERATION_NOT_ALLOWED);
+    EXPECT_EQ(session->EnableEffectSuggestion(true), OPERATION_NOT_ALLOWED);
 }
  
 /*

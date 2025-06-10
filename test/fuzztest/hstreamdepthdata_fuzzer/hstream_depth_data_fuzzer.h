@@ -17,7 +17,7 @@
 #define HSTREAM_DEPTH_DATA_FUZZER_H
 
 #include "hstream_depth_data.h"
-#include "hstream_depth_data_stub.h"
+#include "stream_depth_data_stub.h"
 #include "hstream_common.h"
 
 namespace OHOS {

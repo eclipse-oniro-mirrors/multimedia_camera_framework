@@ -24,9 +24,8 @@
 #include "camera_metadata_info.h"
 #include "metadata_utils.h"
 #include "iconsumer_surface.h"
-#include "camera_service_ipc_interface_code.h"
 #include "securec.h"
-#include "hstream_capture_callback_proxy.h"
+#include "stream_capture_callback_proxy.h"
 
 namespace OHOS {
 namespace CameraStandard {

@@ -44,35 +44,41 @@ void PhotoSessionUnitTest::TearDown()
 
 class PhotoProcessingSessionCallbackMock : public DeferredPhotoProcessingSessionCallbackStub {
 public:
-    int32_t OnProcessImageDone(const std::string &imageId, std::shared_ptr<PictureIntf> picture,
+    ErrCode OnProcessImageDone(const std::string& imageId, const sptr<IPCFileDescriptor>& ipcFd,
+        int64_t bytes, uint32_t cloudImageEnhanceFlag)
+    {
+        DP_DEBUG_LOG("entered.");
+        return 0;
+    }
+
+    ErrCode OnDeliveryLowQualityImage(const std::string& imageId, const std::shared_ptr<PictureIntf>& picture)
+    {
+        DP_DEBUG_LOG("entered.");
+        return 0;
+    }
+
+    ErrCode OnProcessImageDone(const std::string& imageId, const std::shared_ptr<PictureIntf>& picture,
         uint32_t cloudImageEnhanceFlag)
     {
         DP_DEBUG_LOG("entered.");
         return 0;
     }
 
-    int32_t OnDeliveryLowQualityImage(const std::string &imageId, std::shared_ptr<PictureIntf> picture)
+    ErrCode OnError(const std::string& imageId, ErrorCode errorCode)
     {
         DP_DEBUG_LOG("entered.");
         return 0;
     }
 
-    int32_t OnProcessImageDone(const std::string &imageId, sptr<IPCFileDescriptor> ipcFd, const long bytes,
-        uint32_t cloudImageEnhanceFlag)
+    ErrCode OnStateChanged(StatusCode status)
     {
         DP_DEBUG_LOG("entered.");
         return 0;
     }
 
-    int32_t OnError(const std::string &imageId, const ErrorCode errorCode)
+    int32_t CallbackParcel([[maybe_unused]] uint32_t code, [[maybe_unused]] MessageParcel& data,
+        [[maybe_unused]] MessageParcel& reply, [[maybe_unused]] MessageOption& option)
     {
-        DP_DEBUG_LOG("entered.");
-        return 0;
-    }
-
-    int32_t OnStateChanged(const StatusCode status)
-    {
-        DP_DEBUG_LOG("entered.");
         return 0;
     }
 };
@@ -143,7 +149,7 @@ HWTEST_F(PhotoSessionUnitTest, photo_session_unittest_007, TestSize.Level0)
     std::string imageId = "imageIdtest";
     DpsMetadata metadata;
     metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_BACKGROUND);
-    auto ret = photoProcessing->AddImage(imageId, metadata);
+    auto ret = photoProcessing->AddImage(imageId, metadata, false);
     EXPECT_EQ(ret, 0);
 }
 
@@ -154,7 +160,7 @@ HWTEST_F(PhotoSessionUnitTest, photo_session_unittest_008, TestSize.Level0)
     std::string imageId = "imageIdtest";
     DpsMetadata metadata;
     metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
-    auto ret = photoProcessing->AddImage(imageId, metadata);
+    auto ret = photoProcessing->AddImage(imageId, metadata, false);
     EXPECT_EQ(ret, 0);
 }
 
@@ -165,7 +171,7 @@ HWTEST_F(PhotoSessionUnitTest, photo_session_unittest_009, TestSize.Level0)
     std::string imageId = "imageIdtest";
     DpsMetadata metadata;
     metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
-    auto ret = photoProcessing->AddImage(imageId, metadata);
+    auto ret = photoProcessing->AddImage(imageId, metadata, false);
     EXPECT_EQ(ret, 0);
     ret = photoProcessing->RemoveImage(imageId, true);
     EXPECT_EQ(ret, 0);
@@ -180,7 +186,7 @@ HWTEST_F(PhotoSessionUnitTest, photo_session_unittest_010, TestSize.Level0)
     std::string imageId = "imageIdtest";
     DpsMetadata metadata;
     metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_BACKGROUND);
-    auto ret = photoProcessing->AddImage(imageId, metadata);
+    auto ret = photoProcessing->AddImage(imageId, metadata, false);
     EXPECT_EQ(ret, 0);
     ret = photoProcessing->RemoveImage(imageId, false);
     EXPECT_EQ(ret, 0);
@@ -193,7 +199,7 @@ HWTEST_F(PhotoSessionUnitTest, photo_session_unittest_011, TestSize.Level0)
     std::string imageId = "imageIdtest";
     DpsMetadata metadata;
     metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
-    auto ret = photoProcessing->AddImage(imageId, metadata);
+    auto ret = photoProcessing->AddImage(imageId, metadata, false);
     EXPECT_EQ(ret, 0);
     ret = photoProcessing->RemoveImage(imageId, false);
     EXPECT_EQ(ret, 0);
@@ -209,7 +215,7 @@ HWTEST_F(PhotoSessionUnitTest, photo_session_unittest_012, TestSize.Level0)
     std::string appName = "imagetest";
     DpsMetadata metadata;
     metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
-    auto ret = photoProcessing->AddImage(imageId, metadata);
+    auto ret = photoProcessing->AddImage(imageId, metadata, false);
     EXPECT_EQ(ret, 0);
     ret = photoProcessing->ProcessImage(appName, imageId);
     EXPECT_EQ(ret, 0);
@@ -223,7 +229,7 @@ HWTEST_F(PhotoSessionUnitTest, photo_session_unittest_013, TestSize.Level0)
     std::string appName = "imagetest";
     DpsMetadata metadata;
     metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
-    auto ret = photoProcessing->AddImage(imageId, metadata);
+    auto ret = photoProcessing->AddImage(imageId, metadata, false);
     EXPECT_EQ(ret, 0);
     ret = photoProcessing->ProcessImage(appName, imageId);
     EXPECT_EQ(ret, 0);
@@ -241,13 +247,13 @@ HWTEST_F(PhotoSessionUnitTest, photo_session_unittest_014, TestSize.Level0)
     metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
     auto ret = photoProcessing->BeginSynchronize();
     EXPECT_EQ(ret, 0);
-    ret = photoProcessing->AddImage(imageId, metadata);
+    ret = photoProcessing->AddImage(imageId, metadata, false);
     EXPECT_EQ(ret, 0);
     ret = photoProcessing->ProcessImage(appName, imageId);
     EXPECT_EQ(ret, 0);
     ret = photoProcessing->CancelProcessImage(imageId);
     EXPECT_EQ(ret, 0);
-    ret = photoProcessing->RemoveImage(imageId);
+    ret = photoProcessing->RemoveImage(imageId, false);
     EXPECT_EQ(ret, 0);
     ret = photoProcessing->RestoreImage(imageId);
     EXPECT_EQ(ret, 0);

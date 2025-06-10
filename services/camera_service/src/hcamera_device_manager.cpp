@@ -185,7 +185,7 @@ SafeMap<std::string, int32_t> &HCameraDeviceManager::GetCameraStateOfASide()
     return stateOfRgmCamera_;
 }
 
-void HCameraDeviceManager::SetPeerCallback(sptr<ICameraBroker>& callback)
+void HCameraDeviceManager::SetPeerCallback(const sptr<ICameraBroker>& callback)
 {
     CHECK_ERROR_RETURN_LOG(callback == nullptr, "HCameraDeviceManager::SetPeerCallback failed to set peer callback");
     std::lock_guard<std::mutex> lock(peerCbMutex_);

@@ -30,7 +30,6 @@ using namespace std;
 namespace OHOS {
 namespace CameraStandard {
 const std::u16string FORMMGR_INTERFACE_TOKEN = u"ICameraDeviceService";
-const size_t LIMITCOUNT = 4;
 const int32_t MIN_SIZE_NUM = 408;
 const int32_t NUM_10 = 10;
 const int32_t NUM_100 = 100;
@@ -160,9 +159,8 @@ void CameraDeviceFuzzTestUpdateSetting(FuzzedDataProvider& fdp)
     }
 
     {
-        const camera_rational_t aeCompensationStep[] = {{fdp.ConsumeIntegral<int32_t>(),
-            fdp.ConsumeIntegral<int32_t>()}};
-        int8_t item = fdp.ConsumeIntegral<uint8_t>();
+        const camera_rational_t aeCompensationStep[] = {
+            {fdp.ConsumeIntegral<int32_t>(), fdp.ConsumeIntegral<int32_t>()}};
         ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_STEP, &aeCompensationStep,
             sizeof(aeCompensationStep) / sizeof(aeCompensationStep[0]));
     }
@@ -206,7 +204,7 @@ void CameraDeviceFuzzTest2Case2(FuzzedDataProvider& fdp)
     fuzzCameraDevice->Close();
     uint64_t secureSeqId;
     fuzzCameraDevice->GetSecureCameraSeq(&secureSeqId);
-    fuzzCameraDevice->OpenSecureCamera(&secureSeqId);
+    fuzzCameraDevice->OpenSecureCamera(secureSeqId);
 }
 
 void CameraDeviceFuzzTest2(FuzzedDataProvider& fdp)
@@ -374,6 +372,6 @@ extern "C" int LLVMFuzzerTestOneInput(uint8_t* data, size_t size)
     OHOS::CameraStandard::Test3(fdp);
     OHOS::CameraStandard::TestXCollie(fdp);
     OHOS::CameraStandard::TestDynamicLoader(fdp);
-    TestCameraDeviceServiceCallback(fdp);
+    OHOS::CameraStandard::TestCameraDeviceServiceCallback(fdp);
     return 0;
 }

@@ -16,7 +16,6 @@
 #include "hstream_metadata.h"
 
 #include "camera_log.h"
-#include "camera_service_ipc_interface_code.h"
 #include "camera_util.h"
 #include "hstream_common.h"
 #include "ipc_skeleton.h"
@@ -103,8 +102,8 @@ void HStreamMetadata::DumpStreamInfo(CameraInfoDumper& infoDumper)
 
 int32_t HStreamMetadata::OperatePermissionCheck(uint32_t interfaceCode)
 {
-    switch (static_cast<StreamMetadataInterfaceCode>(interfaceCode)) {
-        case StreamMetadataInterfaceCode::CAMERA_STREAM_META_START: {
+    switch (static_cast<IStreamMetadataIpcCode>(interfaceCode)) {
+        case IStreamMetadataIpcCode::COMMAND_START: {
             auto callerToken = IPCSkeleton::GetCallingTokenID();
             CHECK_ERROR_RETURN_RET_LOG(callerToken_ != callerToken, CAMERA_OPERATION_NOT_ALLOWED,
                 "HStreamMetadata::OperatePermissionCheck fail, callerToken_ is : %{public}d, now token "
@@ -117,7 +116,19 @@ int32_t HStreamMetadata::OperatePermissionCheck(uint32_t interfaceCode)
     return CAMERA_OK;
 }
 
-int32_t HStreamMetadata::EnableMetadataType(std::vector<int32_t> metadataTypes)
+int32_t HStreamMetadata::CallbackEnter([[maybe_unused]] uint32_t code)
+{
+    MEDIA_INFO_LOG("start, code:%{public}u", code);
+    DisableJeMalloc();
+    return OperatePermissionCheck(code);
+}
+int32_t HStreamMetadata::CallbackExit([[maybe_unused]] uint32_t code, [[maybe_unused]] int32_t result)
+{
+    MEDIA_INFO_LOG("leave, code:%{public}u, result:%{public}d", code, result);
+    return CAMERA_OK;
+}
+
+int32_t HStreamMetadata::EnableMetadataType(const std::vector<int32_t>& metadataTypes)
 {
     int32_t rc = EnableOrDisableMetadataType(metadataTypes, true);
     CHECK_ERROR_RETURN_RET_LOG(rc != CAMERA_OK, rc, "HStreamMetadata::EnableMetadataType failed!");
@@ -127,7 +138,7 @@ int32_t HStreamMetadata::EnableMetadataType(std::vector<int32_t> metadataTypes)
     }
     return rc;
 }
-int32_t HStreamMetadata::DisableMetadataType(std::vector<int32_t> metadataTypes)
+int32_t HStreamMetadata::DisableMetadataType(const std::vector<int32_t>& metadataTypes)
 {
     int32_t rc = EnableOrDisableMetadataType(metadataTypes, false);
     CHECK_ERROR_RETURN_RET_LOG(rc != CAMERA_OK, rc, "HStreamMetadata::DisableMetadataType failed!");
@@ -150,7 +161,7 @@ int32_t HStreamMetadata::OnMetaResult(int32_t streamId, const std::vector<uint8_
     return CAMERA_OK;
 }
 
-int32_t HStreamMetadata::SetCallback(sptr<IStreamMetadataCallback>& callback)
+int32_t HStreamMetadata::SetCallback(const sptr<IStreamMetadataCallback>& callback)
 {
     CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_INVALID_ARG, "HStreamCapture::SetCallback input is null");
     std::lock_guard<std::mutex> lock(callbackLock_);
@@ -214,7 +225,7 @@ int32_t HStreamMetadata::EnableOrDisableMetadataType(const std::vector<int32_t>&
     return ret;
 }
 
-void HStreamMetadata::removeMetadataType(std::vector<int32_t>& metaRes, std::vector<int32_t>& metaTarget)
+void HStreamMetadata::removeMetadataType(const std::vector<int32_t>& metaRes, std::vector<int32_t>& metaTarget)
 {
     std::unordered_set<int32_t> set(metaRes.begin(), metaRes.end());
     metaTarget.erase(std::remove_if(metaTarget.begin(), metaTarget.end(),

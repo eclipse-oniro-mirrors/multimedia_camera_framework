@@ -15,6 +15,7 @@
 
 #include "hcamera_restore_param.h"
 #include "camera_log.h"
+#include "session/capture_scene_const.h"
 
 namespace OHOS {
 namespace CameraStandard {

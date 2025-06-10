@@ -17,7 +17,7 @@
 #define BMS_ADAPTER_FUZZER_H
 
 #include "bms_adapter.h"
-#include "<fuzzer/FuzzedDataProvider.h>"
+#include "fuzzer/FuzzedDataProvider.h"
 
 namespace OHOS {
 namespace CameraStandard {

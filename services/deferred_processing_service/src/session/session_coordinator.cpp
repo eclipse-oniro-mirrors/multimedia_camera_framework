@@ -128,7 +128,7 @@ void SessionCoordinator::OnVideoError(const int32_t userId, const std::string& v
         userId, videoCallbackMap_.size(), videoId.c_str(), errorCode);
     auto callback = GetRemoteVideoCallback(userId);
     if (callback != nullptr) {
-        callback->OnError(videoId, MapDpsErrorCode(errorCode));
+        callback->OnError(videoId, static_cast<int32_t>(MapDpsErrorCode(errorCode)));
     } else {
         DP_INFO_LOG("callback is null, videoId: %{public}s, errorCode: %{public}d", videoId.c_str(), errorCode);
     }
@@ -148,10 +148,10 @@ void SessionCoordinator::ProcessVideoResults(sptr<IDeferredVideoProcessingSessio
             callback->OnProcessVideoDone(result.requestId, result.ipcFd);
         }
         if (result.callbackType == CallbackType::ON_ERROR) {
-            callback->OnError(result.requestId, MapDpsErrorCode(result.errorCode));
+            callback->OnError(result.requestId, static_cast<int32_t>(MapDpsErrorCode(result.errorCode)));
         }
         if (result.callbackType == CallbackType::ON_STATE_CHANGED) {
-            callback->OnStateChanged(MapDpsStatus(result.statusCode));
+            callback->OnStateChanged(static_cast<int32_t>(MapDpsStatus(result.statusCode)));
         }
         pendingRequestResults_.pop_front();
     }
