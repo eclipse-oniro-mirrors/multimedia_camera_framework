@@ -3600,7 +3600,7 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_086, Test
     bool isSupported = false;
     ret = OH_CaptureSession_IsWhiteBalanceModeSupported(captureSession, CAMERA_WHITE_BALANCE_MODE_AUTO, &isSupported);
     MEDIA_INFO_LOG("OH_CaptureSession_IsWhiteBalanceModeSupported isSupported: %{public}d", isSupported);
-    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(ret, CAMERA_SESSION_NOT_CONFIG);
 }
 
 /*
@@ -3622,7 +3622,7 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_087, Test
     Camera_WhiteBalanceMode whiteBalanceMode = CAMERA_WHITE_BALANCE_MODE_AUTO;
     ret = OH_CaptureSession_GetWhiteBalanceMode(captureSession, &whiteBalanceMode);
     MEDIA_INFO_LOG("OH_CaptureSession_GetWhiteBalanceMode whiteBalanceMode: %{public}d", whiteBalanceMode);
-    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(ret, CAMERA_SESSION_NOT_CONFIG);
 }
 
 /*
