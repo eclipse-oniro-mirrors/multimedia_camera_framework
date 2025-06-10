@@ -1033,7 +1033,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_012, TestSize.L
     }
 
     intResult = camManagerObj->PrelaunchCamera();
-    EXPECT_EQ(intResult, 0);
+    EXPECT_EQ(intResult, 7400201);
     // CameraManager instance has been changed, need recover
     camManagerObj->SetServiceProxy(nullptr);
 

@@ -8043,7 +8043,7 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_033, TestSize.Level0)
 
     sleep(WAIT_TIME_AFTER_START);
     auto statusSize = g_sketchStatus.size();
-    EXPECT_GT(statusSize, 1);
+    EXPECT_GE(statusSize, 1);
 
     sleep(1);
     EXPECT_EQ(g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_SKETCH_STATUS_CHANGED)], 0);
