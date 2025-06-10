@@ -655,19 +655,12 @@ void HStreamOperator::SetColorSpaceForStreams()
 void HStreamOperator::CancelStreamsAndGetStreamInfos(std::vector<StreamInfo_V1_1> &streamInfos)
 {
     MEDIA_INFO_LOG("HStreamOperator::CancelStreamsAndGetStreamInfos enter.");
-    auto capStreams = streamContainer_.GetStreams(StreamType::CAPTURE);
-    std::for_each(capStreams.begin(), capStreams.end(), [this, &streamInfos](auto &stream) {
-        if (isSessionStarted_) {
+    auto streams = streamContainer_.GetAllStreams();
+    std::for_each(streams.begin(), streams.end(), [this, &streamInfos](auto &stream) {
+        CHECK_ERROR_RETURN(stream->GetStreamType() == StreamType::METADATA);
+        if (stream->GetStreamType() == StreamType::CAPTURE && isSessionStarted_) {
             static_cast<HStreamCapture *>(stream.GetRefPtr())->CancelCapture();
-        }
-        StreamInfo_V1_1 curStreamInfo;
-        stream->SetStreamInfo(curStreamInfo);
-        streamInfos.push_back(curStreamInfo);
-    });
-
-    auto repStreams = streamContainer_.GetStreams(StreamType::REPEAT);
-    std::for_each(repStreams.begin(), repStreams.end(), [this, &streamInfos](auto &stream) {
-        if (isSessionStarted_) {
+        } else if (stream->GetStreamType() == StreamType::REPEAT && isSessionStarted_) {
             static_cast<HStreamRepeat *>(stream.GetRefPtr())->Stop();
         }
         StreamInfo_V1_1 curStreamInfo;
@@ -680,10 +673,10 @@ void HStreamOperator::RestartStreams(const std::shared_ptr<OHOS::Camera::CameraM
 {
     MEDIA_INFO_LOG("HStreamOperator::RestartStreams() enter.");
     auto repStreams = streamContainer_.GetStreams(StreamType::REPEAT);
-    std::for_each(repStreams.begin(), repStreams.end(), [](auto& stream) {
+    std::for_each(repStreams.begin(), repStreams.end(), [&settings](auto &stream) {
         auto repStream = CastStream<HStreamRepeat>(stream);
         CHECK_ERROR_RETURN(repStream->GetRepeatStreamType() != RepeatStreamType::PREVIEW);
-        repStream->Start();
+        repStream->Start(settings);
     });
 }
 
@@ -893,9 +886,10 @@ void HStreamOperator::ReleaseStreams()
     CAMERA_SYNC_TRACE;
     std::vector<int32_t> fwkStreamIds;
     std::vector<int32_t> hdiStreamIds;
-    auto capStreams = streamContainer_.GetStreams(StreamType::CAPTURE);
-    for (auto& stream : capStreams) {
-        if (CastStream<HStreamCapture>(stream)->IsHasSwitchToOffline()) {
+    auto allStream = streamContainer_.GetAllStreams();
+    for (auto &stream : allStream) {
+        if (stream->GetStreamType() == StreamType::CAPTURE &&
+            CastStream<HStreamCapture>(stream)->IsHasSwitchToOffline()) {
             continue;
         }
         auto fwkStreamId = stream->GetFwkStreamId();
@@ -1828,6 +1822,10 @@ sptr<HStreamCommon> StreamContainer::GetStream(int32_t streamId)
     std::lock_guard<std::mutex> lock(streamsLock_);
     for (auto& pair : streams_) {
         for (auto& stream : pair.second) {
+            if (!stream) {
+                MEDIA_WARNING_LOG("stream is nullptr!, skip");
+                continue;
+            }
             CHECK_ERROR_RETURN_RET(stream->GetFwkStreamId() == streamId, stream);
         }
     }
@@ -1866,6 +1864,10 @@ std::list<sptr<HStreamCommon>> StreamContainer::GetStreams(const StreamType stre
     std::lock_guard<std::mutex> lock(streamsLock_);
     std::list<sptr<HStreamCommon>> totalOrderedStreams;
     for (auto& stream : streams_[streamType]) {
+        if (!stream) {
+            MEDIA_WARNING_LOG("stream is nullptr!, skip");
+            continue;
+        }
         auto insertPos = std::find_if(totalOrderedStreams.begin(), totalOrderedStreams.end(),
             [&stream](auto& it) { return stream->GetFwkStreamId() <= it->GetFwkStreamId(); });
         totalOrderedStreams.emplace(insertPos, stream);
@@ -1901,7 +1903,9 @@ MovingPhotoListener::MovingPhotoListener(sptr<MovingPhotoSurfaceWrapper> surface
 MovingPhotoListener::~MovingPhotoListener()
 {
     recorderBufferQueue_.SetActive(false);
-    metaCache_->clear();
+    if (metaCache_) {
+        metaCache_->clear();
+    }
     recorderBufferQueue_.Clear();
     MEDIA_ERR_LOG("HStreamRepeat::LivePhotoListener ~ end");
 }
