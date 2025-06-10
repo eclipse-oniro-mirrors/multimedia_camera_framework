@@ -53,6 +53,7 @@ ohos_shared_library("camera_napi") {
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/camera_napi_security_utils.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/camera_napi_utils.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/camera_napi_worker_queue_keeper.cpp",
+    "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/common/qos_utils.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/input/camera_input_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/input/camera_manager_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/input/camera_napi.cpp",
@@ -114,6 +115,7 @@ ohos_shared_library("camera_napi") {
     "media_library:media_library_manager",
     "media_library:medialibrary_nutils",
     "napi:ace_napi",
+    "qos_manager:qos",
     "samgr:samgr_proxy",
   ]
 
