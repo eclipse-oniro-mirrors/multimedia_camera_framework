@@ -298,12 +298,10 @@ void ConsumeWorkerQueueTask(CameraInputAsyncContext* context)
 
 void CameraInputNapi::OpenCameraAsync(uv_work_t* work)
 {
-    if (!work) {
-        MEDIA_ERR_LOG("OpenCameraAsync null work");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(work == nullptr, "OpenCameraAsync null work");
     MEDIA_INFO_LOG("OpenCameraAsync running on worker");
     auto context = static_cast<CameraInputAsyncContext*>(work->data);
+    CHECK_ERROR_RETURN_LOG(context == nullptr, "OpenCameraAsync context is null");
     CHECK_ERROR_RETURN_LOG(context->objectInfo == nullptr, "OpenCameraAsync async info is nullptr");
     CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
     ConsumeWorkerQueueTask(context);
@@ -311,6 +309,7 @@ void CameraInputNapi::OpenCameraAsync(uv_work_t* work)
 
 void CameraInputNapi::UvWorkAsyncCompleted(uv_work_t* work, int status)
 {
+    CHECK_ERROR_RETURN_LOG(work == nullptr, "UvWorkAsyncCompleted null work");
     auto context = static_cast<CameraInputAsyncContext*>(work->data);
     CHECK_ERROR_RETURN_LOG(context == nullptr, "UvWorkAsyncCompleted context is null");
     MEDIA_INFO_LOG("UvWorkAsyncCompleted %{public}s, status = %{public}d", context->funcName.c_str(),

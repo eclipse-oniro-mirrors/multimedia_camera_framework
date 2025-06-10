@@ -970,12 +970,10 @@ napi_value CameraSessionNapi::BeginConfig(napi_env env, napi_callback_info info)
 
 void CameraSessionNapi::CommitConfigAsync(uv_work_t* work)
 {
-    if (!work) {
-        MEDIA_ERR_LOG("CommitConfigAsync null work");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(work == nullptr, "CommitConfigAsync null work");
     MEDIA_INFO_LOG("CommitConfigAsync running on worker");
     auto context = static_cast<CameraSessionAsyncContext*>(work->data);
+    CHECK_ERROR_RETURN_LOG(context == nullptr, "CommitConfigAsync context is null");
     CHECK_ERROR_RETURN_LOG(
         context->objectInfo == nullptr, "CommitConfigAsync async info is nullptr");
     CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
@@ -988,6 +986,7 @@ void CameraSessionNapi::CommitConfigAsync(uv_work_t* work)
 
 void CameraSessionNapi::UvWorkAsyncCompleted(uv_work_t* work, int status)
 {
+    CHECK_ERROR_RETURN_LOG(work == nullptr, "UvWorkAsyncCompleted null work");
     auto context = static_cast<CameraSessionAsyncContext*>(work->data);
     CHECK_ERROR_RETURN_LOG(context == nullptr, "UvWorkAsyncCompleted context is null");
     MEDIA_INFO_LOG("UvWorkAsyncCompleted %{public}s, status = %{public}d", context->funcName.c_str(),
@@ -1337,12 +1336,10 @@ napi_value CameraSessionNapi::RemoveOutput(napi_env env, napi_callback_info info
 
 void CameraSessionNapi::StartAsync(uv_work_t* work)
 {
-    if (!work) {
-        MEDIA_ERR_LOG("StartAsync null work");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(work == nullptr, "StartAsync null work");
     MEDIA_INFO_LOG("StartAsync running on worker");
     auto context = static_cast<CameraSessionAsyncContext*>(work->data);
+    CHECK_ERROR_RETURN_LOG(context == nullptr, "StartAsync context is null");
     CHECK_ERROR_RETURN_LOG(context->objectInfo == nullptr, "StartAsync async info is nullptr");
     CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
     CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(context->queueTask, [&context]() {
