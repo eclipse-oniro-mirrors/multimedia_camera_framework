@@ -2178,5 +2178,32 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_061, TestSize.Level0)
     device->Release();
     device->Close();
 }
+
+/*
+ * Feature: CameraService
+ * Function: Test ResetRssPriority in class HCameraService
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test ResetRssPriority when preCameraId_ is null or is not null
+ */
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_068, TestSize.Level0)
+{
+    std::vector<string> cameraIds;
+    cameraService_->GetCameraIds(cameraIds);
+    ASSERT_NE(cameraIds.size(), 0);
+    cameraService_->SetServiceStatus(CameraServiceStatus::SERVICE_READY);
+    sptr<ICameraDeviceService> device = nullptr;
+    cameraService_->CreateCameraDevice(cameraIds[0], device);
+    ASSERT_NE(device, nullptr);
+    device->Open();
+
+    HCameraDeviceManager::GetInstance()->stateOfRgmCamera_.Clear();
+    cameraService_->preCameraId_ = cameraIds[0];
+    EXPECT_EQ(cameraService_->ResetRssPriority(), CAMERA_OK);
+
+    device->Release();
+    device->Close();
+}
 }
 }

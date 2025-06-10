@@ -172,6 +172,9 @@ int HCameraServiceStub::OnRemoteRequest(uint32_t code, MessageParcel& data, Mess
         case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_PRE_LAUNCH_CAMERA):
             errCode = HCameraServiceStub::HandlePrelaunchCamera(data, reply);
             break;
+        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_RESET_RSS_PRIORITY):
+            errCode = HCameraServiceStub::HandleResetRssPriority(data, reply);
+            break;
         case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_PRE_LAUNCH_CAMERA):
             errCode = HCameraServiceStub::HandleSetPrelaunchConfig(data, reply);
             break;
@@ -349,6 +352,17 @@ int HCameraServiceStub::HandlePrelaunchCamera(MessageParcel& data, MessageParcel
 
     int32_t ret = PrelaunchCamera();
     MEDIA_INFO_LOG("HCameraServiceStub HandlePrelaunchCamera result: %{public}d", ret);
+
+    return ret;
+}
+
+int HCameraServiceStub::HandleResetRssPriority(MessageParcel& data, MessageParcel& reply)
+{
+    MEDIA_DEBUG_LOG("HCameraServiceStub HandleResetRssPriority enter");
+    CHECK_ERROR_RETURN_RET(!CheckSystemApp(), CAMERA_NO_PERMISSION);
+
+    int32_t ret = ResetRssPriority();
+    MEDIA_INFO_LOG("HCameraServiceStub HandleResetRssPriority result: %{public}d", ret);
 
     return ret;
 }
