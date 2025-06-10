@@ -55,7 +55,7 @@ public:
 
     inline bool IsTimeReady()
     {
-        DP_INFO_LOG("DPS_VIDEO: TimeOk is: 0x%{public}x", isTimeOk_);
+        DP_INFO_LOG("DPS_VIDEO: TimeOk is: %{public}u", isTimeOk_);
         return isTimeOk_ == TIME_OK;
     }
 

@@ -223,7 +223,7 @@ void VideoStrategyCenter::UpdateSingleTime(bool isOk)
     } else {
         isTimeOk_ |= SINGLE_TIME_LIMIT;
     }
-    DP_INFO_LOG("DPS_VIDEO: Process time type: 0x%{public}x", isTimeOk_);
+    DP_INFO_LOG("DPS_VIDEO: Process time type: %{public}u", isTimeOk_);
 }
 
 void VideoStrategyCenter::UpdateAvailableTime(bool isNeedReset, int32_t useTime)
@@ -240,7 +240,7 @@ void VideoStrategyCenter::UpdateAvailableTime(bool isNeedReset, int32_t useTime)
         availableTime_ = 0;
         isTimeOk_ |= TOTAL_TIME_LIMIT;
     }
-    DP_INFO_LOG("DPS_VIDEO: Available process time: %{public}d, type: 0x%{public}x", availableTime_, isTimeOk_);
+    DP_INFO_LOG("DPS_VIDEO: Available process time: %{public}d, type: %{public}u", availableTime_, isTimeOk_);
 }
 
 SchedulerInfo VideoStrategyCenter::ReevaluateSchedulerInfo()
