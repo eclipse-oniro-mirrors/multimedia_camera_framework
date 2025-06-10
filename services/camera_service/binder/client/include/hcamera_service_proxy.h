@@ -98,6 +98,8 @@ public:
 
     int32_t PrelaunchCamera() override;
 
+    int32_t ResetRssPriority() override;
+
     int32_t PreSwitchCamera(const std::string cameraId) override;
 
     int32_t SetPrelaunchConfig(std::string cameraId, RestoreParamTypeOhos restoreParamType, int activeTime,

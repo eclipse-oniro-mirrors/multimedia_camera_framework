@@ -57,6 +57,8 @@
 #include "mem_mgr_constant.h"
 #endif
 #include "camera_rotate_param_manager.h"
+#include "res_type.h"
+#include "res_sched_client.h"
 #ifdef HOOK_CAMERA_OPERATOR
 #include "camera_rotate_plugin.h"
 #endif
@@ -1354,6 +1356,15 @@ int32_t HCameraService::PrelaunchCamera()
     RequireMemory();
 #endif
     return ret;
+}
+
+int32_t HCameraService::ResetRssPriority()
+{
+    MEDIA_INFO_LOG("HCameraService::ResetRssPriority");
+    std::unordered_map<std::string, std::string> payload;
+    OHOS::ResourceSchedule::ResSchedClient::GetInstance()
+        .ReportData(ResourceSchedule::ResType::RES_TYPE_CAMERA_RESET_PRIORITY, 0, payload);
+    return CAMERA_OK;
 }
 
 /**

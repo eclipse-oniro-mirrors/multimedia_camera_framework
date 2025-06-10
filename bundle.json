@@ -51,6 +51,7 @@
               "media_foundation",
               "media_library",
               "resource_management",
+              "resource_schedule_service",
               "napi",
               "os_account",
               "qos_manager",
