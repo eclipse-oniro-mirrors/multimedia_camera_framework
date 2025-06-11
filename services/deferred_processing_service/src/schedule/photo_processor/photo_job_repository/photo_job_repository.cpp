@@ -99,7 +99,7 @@ void PhotoJobRepository::AddDeferredJob(const std::string& imageId, bool discard
         offlineJobQueue_->Push(jobPtr);
     }
     jobPtr->Prepare();
-    ReportEvent(jobPtr, DeferredProcessingServiceInterfaceCode::DPS_ADD_IMAGE);
+    ReportEvent(jobPtr, IDeferredPhotoProcessingSessionIpcCode::COMMAND_ADD_IMAGE);
 }
 
 void PhotoJobRepository::RemoveDeferredJob(const std::string& imageId, bool restorable)
@@ -120,7 +120,7 @@ void PhotoJobRepository::RemoveDeferredJob(const std::string& imageId, bool rest
         offlineJobQueue_->Remove(jobPtr);
     }
     jobPtr->Delete();
-    ReportEvent(jobPtr, DeferredProcessingServiceInterfaceCode::DPS_REMOVE_IMAGE);
+    ReportEvent(jobPtr, IDeferredPhotoProcessingSessionIpcCode::COMMAND_REMOVE_IMAGE);
 }
 
 bool PhotoJobRepository::RequestJob(const std::string& imageId)
@@ -141,7 +141,7 @@ void PhotoJobRepository::CancelJob(const std::string& imageId)
     DP_INFO_LOG("DPS_PHOTO: CancelJob imageId: %{public}s", imageId.c_str());
     jobPtr->SetJobPriority(JobPriority::NORMAL);
     NotifyJobChanged(imageId, false);
-    ReportEvent(jobPtr, DeferredProcessingServiceInterfaceCode::DPS_CANCEL_PROCESS_IMAGE);
+    ReportEvent(jobPtr, IDeferredPhotoProcessingSessionIpcCode::COMMAND_CANCEL_PROCESS_IMAGE);
 }
 
 void PhotoJobRepository::RestoreJob(const std::string& imageId)
@@ -151,7 +151,7 @@ void PhotoJobRepository::RestoreJob(const std::string& imageId)
     DP_INFO_LOG("DPS_PHOTO: RestoreJob imageId: %{public}s", imageId.c_str());
     jobPtr->SetJobPriority(JobPriority::NORMAL);
     NotifyJobChanged(imageId, true);
-    ReportEvent(jobPtr, DeferredProcessingServiceInterfaceCode::DPS_RESTORE_IMAGE);
+    ReportEvent(jobPtr, IDeferredPhotoProcessingSessionIpcCode::COMMAND_RESTORE_IMAGE);
 }
 
 JobState PhotoJobRepository::GetJobState(const std::string& imageId)
@@ -208,7 +208,7 @@ void PhotoJobRepository::UpdateRunningJobUnLocked(const std::string& imageId, bo
 {
     if (running) {
         runningJob_.emplace(imageId);
-        ReportEvent(GetJobUnLocked(imageId), DeferredProcessingServiceInterfaceCode::DPS_PROCESS_IMAGE);
+        ReportEvent(GetJobUnLocked(imageId), IDeferredPhotoProcessingSessionIpcCode::COMMAND_PROCESS_IMAGE);
     } else {
         runningJob_.erase(imageId);
     }
@@ -321,7 +321,7 @@ bool PhotoJobRepository::IsRunningJob(const std::string& imageId)
     return runningJob_.find(imageId) != runningJob_.end();
 }
 
-void PhotoJobRepository::ReportEvent(const DeferredPhotoJobPtr& jobPtr, DeferredProcessingServiceInterfaceCode event)
+void PhotoJobRepository::ReportEvent(const DeferredPhotoJobPtr& jobPtr, IDeferredPhotoProcessingSessionIpcCode event)
 {
     DP_CHECK_ERROR_RETURN_LOG(jobPtr == nullptr, "DeferredPhotoJob is nullptr.");
     int32_t highJobNum = priotyToNum_.find(JobPriority::HIGH)->second;
@@ -336,22 +336,22 @@ void PhotoJobRepository::ReportEvent(const DeferredPhotoJobPtr& jobPtr, Deferred
     dpsEventInfo.highJobNum = highJobNum;
     dpsEventInfo.discardable = jobPtr->GetDiscardable();
     dpsEventInfo.photoJobType = jobPtr->GetPhotoJobType();
-    dpsEventInfo.operatorStage = event;
+    dpsEventInfo.operatorStage = static_cast<uint32_t>(event);
     uint64_t endTime = GetTimestampMilli();
     switch (static_cast<int32_t>(event)) {
-        case static_cast<int32_t>(DeferredProcessingServiceInterfaceCode::DPS_ADD_IMAGE): {
+        case static_cast<int32_t>(IDeferredPhotoProcessingSessionIpcCode::COMMAND_ADD_IMAGE): {
             dpsEventInfo.dispatchTimeEndTime = endTime;
             break;
         }
-        case static_cast<int32_t>(DeferredProcessingServiceInterfaceCode::DPS_REMOVE_IMAGE): {
+        case static_cast<int32_t>(IDeferredPhotoProcessingSessionIpcCode::COMMAND_REMOVE_IMAGE): {
             dpsEventInfo.removeTimeBeginTime = endTime;
             break;
         }
-        case static_cast<int32_t>(DeferredProcessingServiceInterfaceCode::DPS_RESTORE_IMAGE): {
+        case static_cast<int32_t>(IDeferredPhotoProcessingSessionIpcCode::COMMAND_RESTORE_IMAGE): {
             dpsEventInfo.restoreTimeBeginTime = endTime;
             break;
         }
-        case static_cast<int32_t>(DeferredProcessingServiceInterfaceCode::DPS_PROCESS_IMAGE): {
+        case static_cast<int32_t>(IDeferredPhotoProcessingSessionIpcCode::COMMAND_PROCESS_IMAGE): {
             dpsEventInfo.processTimeBeginTime = endTime;
             break;
         }

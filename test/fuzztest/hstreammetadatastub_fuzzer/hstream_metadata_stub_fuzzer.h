@@ -16,12 +16,13 @@
 #ifndef HSTREAM_METADATA_STUB_FUZZER_H
 #define HSTREAM_METADATA_STUB_FUZZER_H
 
-#include "hstream_metadata_stub.h"
+#include "stream_metadata_stub.h"
+#include "icamera_ipc_checker.h"
 
 namespace OHOS {
 namespace CameraStandard {
 
-class HStreamMetadataStubFuzz : public HStreamMetadataStub {
+class HStreamMetadataStubFuzz : public StreamMetadataStub, public ICameraIpcChecker {
 public:
     int32_t Start() override
     {
@@ -31,7 +32,7 @@ public:
     {
         return 0;
     }
-    int32_t SetCallback(sptr<IStreamMetadataCallback>& callback) override
+    int32_t SetCallback(const sptr<IStreamMetadataCallback>& callback) override
     {
         return 0;
     }
@@ -47,11 +48,19 @@ public:
     {
         return 0;
     }
-    int32_t EnableMetadataType(std::vector<int32_t> metadataTypes) override
+    int32_t EnableMetadataType(const std::vector<int32_t>& metadataTypes) override
     {
         return 0;
     }
-    int32_t DisableMetadataType(std::vector<int32_t> metadataTypes) override
+    int32_t DisableMetadataType(const std::vector<int32_t>& metadataTypes) override
+    {
+        return 0;
+    }
+    int32_t CallbackEnter([[maybe_unused]] uint32_t code) override
+    {
+        return 0;
+    }
+    int32_t CallbackExit([[maybe_unused]] uint32_t code, [[maybe_unused]] int32_t result) override
     {
         return 0;
     }

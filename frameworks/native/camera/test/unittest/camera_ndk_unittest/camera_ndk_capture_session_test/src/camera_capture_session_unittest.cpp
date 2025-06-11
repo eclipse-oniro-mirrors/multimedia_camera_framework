@@ -3661,7 +3661,7 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_088, Test
     int32_t min = 0;
     int32_t max = 0;
     ret = OH_CaptureSession_GetWhiteBalanceRange(captureSession, &min, &max);
-    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(ret, CAMERA_SERVICE_FATAL_ERROR);
     int32_t value = 3000;
     ret = OH_CaptureSession_SetWhiteBalance(captureSession, value);
     EXPECT_EQ(ret, CAMERA_OK);

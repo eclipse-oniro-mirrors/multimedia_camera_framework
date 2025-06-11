@@ -1028,13 +1028,13 @@ HWTEST_F(DeferredPhotoJobUnitTest, photo_job_repository_unittest_037, TestSize.L
     metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
     repository->AddDeferredJob(TEST_IMAGE_1, true, metadata);
     auto job = repository->GetJob();
-    repository->ReportEvent(nullptr, DPS_BEGIN_SYNCHRONIZE);
-    repository->ReportEvent(job, DPS_END_SYNCHRONIZE);
-    repository->ReportEvent(job, DPS_ADD_IMAGE);
-    repository->ReportEvent(job, DPS_REMOVE_IMAGE);
-    repository->ReportEvent(job, DPS_RESTORE_IMAGE);
-    repository->ReportEvent(job, DPS_PROCESS_IMAGE);
-    repository->ReportEvent(job, DPS_CANCEL_PROCESS_IMAGE);
+    repository->ReportEvent(nullptr, IDeferredPhotoProcessingSessionIpcCode::COMMAND_BEGIN_SYNCHRONIZE);
+    repository->ReportEvent(job, IDeferredPhotoProcessingSessionIpcCode::COMMAND_END_SYNCHRONIZE);
+    repository->ReportEvent(job, IDeferredPhotoProcessingSessionIpcCode::COMMAND_ADD_IMAGE);
+    repository->ReportEvent(job, IDeferredPhotoProcessingSessionIpcCode::COMMAND_REMOVE_IMAGE);
+    repository->ReportEvent(job, IDeferredPhotoProcessingSessionIpcCode::COMMAND_RESTORE_IMAGE);
+    repository->ReportEvent(job, IDeferredPhotoProcessingSessionIpcCode::COMMAND_PROCESS_IMAGE);
+    repository->ReportEvent(job, IDeferredPhotoProcessingSessionIpcCode::COMMAND_CANCEL_PROCESS_IMAGE);
     EXPECT_EQ(repository->GetOfflineJobSize(), 1);
 }
 } // namespace DeferredProcessing

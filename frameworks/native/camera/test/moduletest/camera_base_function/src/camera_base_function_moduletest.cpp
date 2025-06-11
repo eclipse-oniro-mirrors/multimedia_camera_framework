@@ -2862,7 +2862,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_068, Test
 
     EXPECT_EQ(captureSession_->BeginConfig(), SUCCESS);
     EXPECT_EQ(captureSession_->BeginConfig(), SESSION_CONFIG_LOCKED);
-    EXPECT_EQ(captureSession_->AddInput((sptr<CaptureInput>&)cameraInput_), SERVICE_FATL_ERROR);
+    EXPECT_EQ(captureSession_->AddInput((sptr<CaptureInput>&)cameraInput_), DEVICE_DISABLED);
 
     captureSession_->Release();
     EXPECT_EQ(captureSession_->BeginConfig(), SERVICE_FATL_ERROR);
@@ -4218,7 +4218,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_101, Test
 HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_102, TestSize.Level1)
 {
     std::string cameraIdtest = "";
-    FlashStatus status = FLASH_STATUS_OFF;
+    int32_t status = static_cast<int32_t>(FlashStatus::FLASH_STATUS_OFF);
 
     auto statusListenerManager = cameraManager_->GetCameraStatusListenerManager();
     ASSERT_NE(statusListenerManager, nullptr);

@@ -570,7 +570,7 @@ void PressureCallbackListener::OnPressureCallback(PressureStatus status) const
     napi_value result[ARGS_TWO] = {nullptr, nullptr};
     napi_value retVal;
     napi_get_undefined(env_, &result[PARAM0]);
-    napi_create_int32(env_, status, &result[PARAM1]);
+    napi_create_int32(env_, static_cast<int32_t>(status), &result[PARAM1]);
     ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
     ExecuteCallback("systemPressureLevel", callbackNapiPara);
 }

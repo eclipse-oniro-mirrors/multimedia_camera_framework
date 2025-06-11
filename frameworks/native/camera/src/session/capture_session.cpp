@@ -32,7 +32,7 @@
 #include "camera_security_utils.h"
 #include "capture_scene_const.h"
 #include "features/moon_capture_boost_feature.h"
-#include "hcapture_session_callback_stub.h"
+#include "capture_session_callback_stub.h"
 #include "icapture_session_callback.h"
 #include "input/camera_input.h"
 #include "input/camera_manager.h"
@@ -872,7 +872,9 @@ int32_t CaptureSession::AddOutput(sptr<CaptureOutput>& output)
     int32_t ret = AdaptOutputVideoHighFrameRate(output, captureSession);
     CHECK_ERROR_RETURN_RET_LOG(ret != CameraErrorCode::SUCCESS, ServiceToCameraError(CAMERA_INVALID_ARG),
         "CaptureSession::AddOutput An Error in the AdaptOutputVideoHighFrameRate");
-    int32_t errCode = captureSession->AddOutput(output->GetStreamType(), output->GetStream());
+    int32_t errCode = CAMERA_UNKNOWN_ERROR;
+    CHECK_EXECUTE(output->GetStream() != nullptr,
+        errCode = captureSession->AddOutput(output->GetStreamType(), output->GetStream()->AsObject()));
     if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_PHOTO) {
         photoOutput_ = output;
     }
@@ -1049,7 +1051,8 @@ int32_t CaptureSession::RemoveOutput(sptr<CaptureOutput>& output)
             ((sptr<PhotoOutput> &)photoOutput_)->IsHasEnableOfflinePhoto()) {
             ((sptr<PhotoOutput> &)photoOutput_)->SetSwitchOfflinePhotoOutput(true);
         }
-        errCode = captureSession->RemoveOutput(output->GetStreamType(), output->GetStream());
+        CHECK_EXECUTE(output->GetStream() != nullptr,
+            errCode = captureSession->RemoveOutput(output->GetStreamType(), output->GetStream()->AsObject()));
         CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "Failed to RemoveOutput!, %{public}d", errCode);
     } else {
         MEDIA_ERR_LOG("CaptureSession::RemoveOutput() captureSession is nullptr");
@@ -3563,11 +3566,13 @@ int32_t CaptureSession::GetActiveColorSpace(ColorSpace& colorSpace)
     auto captureSession = GetCaptureSession();
     CHECK_ERROR_RETURN_RET_LOG(captureSession == nullptr, ServiceToCameraError(errCode),
         "CaptureSession::GetActiveColorSpace() captureSession is nullptr");
-    errCode = captureSession->GetActiveColorSpace(colorSpace);
+    int32_t curColorSpace = 0;
+    errCode = captureSession->GetActiveColorSpace(curColorSpace);
     if (errCode != CAMERA_OK) {
         MEDIA_ERR_LOG("Failed to GetActiveColorSpace! %{public}d", errCode);
     } else {
-        MEDIA_INFO_LOG("CaptureSession::GetActiveColorSpace %{public}d", static_cast<int32_t>(colorSpace));
+        colorSpace = static_cast<ColorSpace>(curColorSpace);
+        MEDIA_INFO_LOG("CaptureSession::GetActiveColorSpace %{public}d", colorSpace);
     }
     return ServiceToCameraError(errCode);
 }
@@ -3593,7 +3598,7 @@ int32_t CaptureSession::SetColorSpace(ColorSpace colorSpace)
     }
     // 若session还未commit，则后续createStreams会把色域带下去；否则，SetColorSpace要走updateStreams
     MEDIA_DEBUG_LOG("CaptureSession::SetColorSpace, IsSessionCommited %{public}d", IsSessionCommited());
-    int32_t errCode = captureSession->SetColorSpace(colorSpace, IsSessionCommited());
+    int32_t errCode = captureSession->SetColorSpace(static_cast<int32_t>(colorSpace), IsSessionCommited());
     CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "Failed to SetColorSpace!, %{public}d", errCode);
     return ServiceToCameraError(errCode);
 }

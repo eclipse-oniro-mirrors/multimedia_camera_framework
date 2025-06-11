@@ -19,7 +19,7 @@
 #include "camera_util.h"
 #include "gmock/gmock.h"
 #include "hstream_capture.h"
-#include "hstream_capture_callback_stub.h"
+#include "stream_capture_callback_stub.h"
 #include "hstream_operator_unittest.h"
 #include "ipc_skeleton.h"
 #include "iservice_registry.h"

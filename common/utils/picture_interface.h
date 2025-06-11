@@ -32,18 +32,25 @@ enum class CameraAuxiliaryPictureType {
     FRAGMENT_MAP = 5,
 };
 
-class PictureIntf {
+class PictureIntf : public Parcelable {
 public:
     virtual ~PictureIntf() = default;
-    virtual void Create(sptr<SurfaceBuffer> &surfaceBuffer);
+    virtual void Create(sptr<SurfaceBuffer> &surfaceBuffer) = 0;
     virtual void SetAuxiliaryPicture(sptr<SurfaceBuffer> &surfaceBuffer,
-        CameraAuxiliaryPictureType type);
-    virtual void CreateWithDeepCopySurfaceBuffer(sptr<SurfaceBuffer> &surfaceBuffer);
-    virtual bool Marshalling(Parcel &data);
-    virtual void Unmarshalling(Parcel &data);
-    virtual int32_t SetExifMetadata(sptr<SurfaceBuffer> &surfaceBuffer);
-    virtual bool SetMaintenanceData(sptr<SurfaceBuffer> &surfaceBuffer);
-    virtual void RotatePicture();
+        CameraAuxiliaryPictureType type) = 0;
+    virtual void CreateWithDeepCopySurfaceBuffer(sptr<SurfaceBuffer> &surfaceBuffer) = 0;
+    virtual bool Marshalling(Parcel &data) const
+    {
+        return true;
+    }
+    static PictureIntf* Unmarshalling(Parcel &data)
+    {
+        return nullptr;
+    }
+    virtual void UnmarshallingPicture(Parcel &data) = 0;
+    virtual int32_t SetExifMetadata(sptr<SurfaceBuffer> &surfaceBuffer) = 0;
+    virtual bool SetMaintenanceData(sptr<SurfaceBuffer> &surfaceBuffer) = 0;
+    virtual void RotatePicture() = 0;
 };
 typedef PictureIntf* (*GetPictureAdapter)();
 } // namespace OHOS::CameraStandard

@@ -31,6 +31,7 @@
 #include "test_common.h"
 #include "token_setproc.h"
 #include "os_account_manager.h"
+#include "camera_types.h"
 
 using namespace testing::ext;
 
@@ -291,7 +292,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_009, Test
 {
     auto listenerManager = cameraManager_->GetCameraStatusListenerManager();
     std::string cameraId;
-    CameraStatus status = CAMERA_STATUS_APPEAR;
+    int32_t status = static_cast<int32_t>(CameraStatus::CAMERA_STATUS_APPEAR);
     std::string bundleName;
     listenerManager->ClearListeners();
     auto ret = listenerManager->OnCameraStatusChanged(cameraId, status, bundleName);
@@ -302,7 +303,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_009, Test
     ret = listenerManager->OnCameraStatusChanged(cameraId, status, bundleName);
     EXPECT_EQ(ret, CAMERA_OK);
 
-    status = CAMERA_STATUS_DISAPPEAR;
+    status = static_cast<int32_t>(CameraStatus::CAMERA_STATUS_DISAPPEAR);
     ret = listenerManager->OnCameraStatusChanged(cameraId, status, bundleName);
     EXPECT_EQ(ret, CAMERA_OK);
 }
@@ -319,7 +320,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_010, Test
 {
     auto listenerManager = cameraManager_->GetCameraStatusListenerManager();
     std::string cameraId;
-    FlashStatus status = FLASH_STATUS_OFF;
+    int32_t status = static_cast<int32_t>(FlashStatus::FLASH_STATUS_OFF);
     listenerManager->ClearListeners();
     auto ret = listenerManager->OnFlashlightStatusChanged(cameraId, status);
     EXPECT_EQ(ret, CAMERA_OK);

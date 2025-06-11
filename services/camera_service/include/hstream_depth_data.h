@@ -23,9 +23,10 @@
 
 #include "camera_metadata_info.h"
 #include "hstream_common.h"
-#include "hstream_depth_data_stub.h"
+#include "stream_depth_data_stub.h"
 #include "istream_depth_data_callback.h"
 #include "v1_0/istream_operator.h"
+#include "icamera_ipc_checker.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -35,7 +36,7 @@ enum class DepthDataStreamStatus {
     STARTED
 };
 
-class HStreamDepthData : public HStreamDepthDataStub, public HStreamCommon {
+class HStreamDepthData : public StreamDepthDataStub, public HStreamCommon, public ICameraIpcChecker {
 public:
     HStreamDepthData(
         sptr<OHOS::IBufferProducer> producer, int32_t format, int32_t width, int32_t height);
@@ -48,12 +49,14 @@ public:
     int32_t Release() override;
     int32_t Start() override;
     int32_t Stop() override;
-    int32_t SetCallback(sptr<IStreamDepthDataCallback>& callback) override;
+    int32_t SetCallback(const sptr<IStreamDepthDataCallback>& callback) override;
     int32_t UnSetCallback() override;
     int32_t OnDepthDataError(int32_t errorType);
     int32_t SetDataAccuracy(int32_t accuracy) override;
     void DumpStreamInfo(CameraInfoDumper& infoDumper) override;
     int32_t OperatePermissionCheck(uint32_t interfaceCode) override;
+    int32_t CallbackEnter([[maybe_unused]] uint32_t code) override;
+    int32_t CallbackExit([[maybe_unused]] uint32_t code, [[maybe_unused]] int32_t result) override;
 
 private:
     sptr<IStreamDepthDataCallback> streamDepthDataCallback_;

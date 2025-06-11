@@ -22,7 +22,7 @@
 namespace OHOS {
 namespace CameraStandard {
 
-class CameraPhotoProxy : public RefBase {
+class CameraPhotoProxy : public Parcelable {
 public:
     CameraPhotoProxy();
     CameraPhotoProxy(BufferHandle* bufferHandle, int32_t format, int32_t photoWidth,
@@ -31,7 +31,9 @@ public:
         int32_t photoHeight, bool isHighQuality, int32_t captureId, int32_t burstSeqId);
     virtual ~CameraPhotoProxy();
     void ReadFromParcel(MessageParcel &parcel);
-    void WriteToParcel(MessageParcel &parcel);
+    void WriteToParcel(MessageParcel &parcel) const;
+    virtual bool Marshalling(Parcel &parcel) const override;
+    static CameraPhotoProxy* Unmarshalling(Parcel &parcel);
     void SetDeferredAttrs(std::string photoId, int32_t deferredProcType, uint64_t fileSize, int32_t imageFormat);
     void SetLocation(double latitude, double longitude);
     void SetCloudImageEnhanceFlag(uint32_t cloudImageEnhanceFlag);
@@ -43,7 +45,7 @@ public:
     int32_t photoHeight_;
     size_t fileSize_;
     bool isHighQuality_;
-    std::mutex mutex_;
+    mutable std::mutex mutex_;
     std::string photoId_;
     int32_t deferredProcType_;
     int32_t isDeferredPhoto_;

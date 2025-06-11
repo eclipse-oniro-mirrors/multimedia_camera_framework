@@ -22,9 +22,8 @@
 namespace OHOS {
 namespace CameraStandard {
 static constexpr int32_t MIN_SIZE_NUM = 8;
-const size_t THRESHOLD = 10;
 
-std::shared_ptr<HStreamMetadataCallbackProxy> HStreamMetadataCallbackProxyFuzzer::fuzz_{nullptr};
+std::shared_ptr<StreamMetadataCallbackProxy> HStreamMetadataCallbackProxyFuzzer::fuzz_{nullptr};
 
 void HStreamMetadataCallbackProxyFuzzer::HStreamMetadataCallbackProxyFuzzTest(FuzzedDataProvider& fdp)
 {
@@ -32,7 +31,7 @@ void HStreamMetadataCallbackProxyFuzzer::HStreamMetadataCallbackProxyFuzzTest(Fu
         return;
     }
     sptr<IRemoteObject> impl;
-    fuzz_ = std::make_shared<HStreamMetadataCallbackProxy>(impl);
+    fuzz_ = std::make_shared<StreamMetadataCallbackProxy>(impl);
     CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
     int32_t streamId = fdp.ConsumeIntegral<int32_t>();
     const std::shared_ptr<OHOS::Camera::CameraMetadata> result;

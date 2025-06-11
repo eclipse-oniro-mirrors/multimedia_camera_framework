@@ -16,7 +16,7 @@
 #ifndef CAMERA_INPUT_FUZZER_H
 #define CAMERA_INPUT_FUZZER_H
 
-#include "hstream_capture_stub.h"
+#include "stream_capture_stub.h"
 
 namespace OHOS {
 namespace CameraStandard {

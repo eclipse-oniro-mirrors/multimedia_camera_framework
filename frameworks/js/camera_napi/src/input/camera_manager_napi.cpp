@@ -395,7 +395,7 @@ void FoldListenerNapi::OnFoldStatusChangedCallback(const FoldStatusInfo& foldSta
         napi_create_object(env_, &resultObj);
 
         napi_value foldStatusVal;
-        napi_create_int32(env_, foldStatusInfo.foldStatus, &foldStatusVal);
+        napi_create_int32(env_, static_cast<int32_t>(foldStatusInfo.foldStatus), &foldStatusVal);
         napi_set_named_property(env_, resultObj, "foldStatus", foldStatusVal);
         napi_value camerasArray;
         napi_create_array(env_, &camerasArray);

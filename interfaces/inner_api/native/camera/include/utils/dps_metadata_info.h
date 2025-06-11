@@ -39,10 +39,12 @@ enum DeferredProcessingType {
     DPS_OFFLINE,
 };
 
-class DpsMetadata {
+class DpsMetadata : public Parcelable {
 public:
+    static DpsMetadata* Unmarshalling(Parcel &parcel);
+    bool Marshalling(Parcel &parcel) const override;
     DpsMetadataError ReadFromParcel(MessageParcel &parcel);
-    DpsMetadataError WriteToParcel(MessageParcel &parcel);
+    DpsMetadataError WriteToParcel(MessageParcel &parcel) const;
     DpsMetadataError Get(const std::string &key, int32_t &value) const;
     DpsMetadataError Get(const std::string &key, int64_t &value) const;
     DpsMetadataError Get(const std::string &key, double &value) const;

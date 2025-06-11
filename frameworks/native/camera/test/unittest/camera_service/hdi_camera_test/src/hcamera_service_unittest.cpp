@@ -31,8 +31,7 @@
 #include "surface.h"
 #include "token_setproc.h"
 #include "os_account_manager.h"
-#include "hcamera_service_callback_stub.h"
-#include "camera_service_ipc_interface_code.h"
+#include "camera_service_callback_stub.h"
 #include "hcamera_session_manager.h"
 
 using namespace testing::ext;
@@ -104,20 +103,20 @@ void HCameraServiceUnit::NativeAuthorization()
     OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
 }
 
-class MockHCameraServiceCallbackStub : public HCameraServiceCallbackStub {
+class MockHCameraServiceCallbackStub : public CameraServiceCallbackStub {
 public:
-    MOCK_METHOD3(OnCameraStatusChanged, int32_t(const std::string&, const CameraStatus, const std::string&));
-    MOCK_METHOD2(OnFlashlightStatusChanged, int32_t(const std::string&, const FlashStatus));
+    MOCK_METHOD3(OnCameraStatusChanged, int32_t(const std::string&, const int32_t, const std::string&));
+    MOCK_METHOD2(OnFlashlightStatusChanged, int32_t(const std::string&, const int32_t));
     ~MockHCameraServiceCallbackStub() {}
 };
 
-class MockHFoldServiceCallbackStub : public HFoldServiceCallbackStub {
+class MockHFoldServiceCallbackStub : public FoldServiceCallbackStub {
 public:
     MOCK_METHOD1(OnFoldStatusChanged, int32_t(const FoldStatus status));
     ~MockHFoldServiceCallbackStub() {}
 };
 
-class MockHCameraMuteServiceCallbackStub : public HCameraMuteServiceCallbackStub {
+class MockHCameraMuteServiceCallbackStub : public CameraMuteServiceCallbackStub {
 public:
     MOCK_METHOD1(OnCameraMute, int32_t(bool muteMode));
     ~MockHCameraMuteServiceCallbackStub() {}
@@ -1079,7 +1078,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_027, TestSize.Level1)
     HCameraDeviceManager::GetInstance()->stateOfRgmCamera_.Clear();
     cameraIds[0].resize(0);
     cameraService_->preCameraId_.clear();
-    EXPECT_EQ(cameraService_->PrelaunchCamera(), 0);
+    EXPECT_EQ(cameraService_->PrelaunchCamera(), CAMERA_INVALID_ARG);
     EXPECT_EQ(cameraService_->PreSwitchCamera(cameraIds[0]), CAMERA_INVALID_ARG);
     device->Release();
     device->Close();
@@ -1839,7 +1838,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_049, TestSize.Level1)
 
 /*
  * Feature: Framework
- * Function: Test HCameraServiceCallbackStub with OnRemoteRequest
+ * Function: Test CameraServiceCallbackStub with OnRemoteRequest
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
@@ -1853,7 +1852,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_050, TestSize.Level1)
     data.RewindRead(0);
     MessageParcel reply;
     MessageOption option;
-    uint32_t code = CameraServiceCallbackInterfaceCode::CAMERA_CALLBACK_FLASHLIGHT_STATUS_CHANGED;
+    uint32_t code = static_cast<uint32_t>(ICameraServiceCallbackIpcCode::COMMAND_ON_FLASHLIGHT_STATUS_CHANGED);
     EXPECT_CALL(stub, OnFlashlightStatusChanged(_, _))
         .WillOnce(Return(0));
     int errCode = stub.OnRemoteRequest(code, data, reply, option);
@@ -1862,7 +1861,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_050, TestSize.Level1)
 
 /*
  * Feature: Framework
- * Function: Test HFoldServiceCallbackStub with OnRemoteRequest
+ * Function: Test FoldServiceCallbackStub with OnRemoteRequest
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
@@ -1876,7 +1875,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_051, TestSize.Level1)
     data.RewindRead(0);
     MessageParcel reply;
     MessageOption option;
-    uint32_t code = FoldServiceCallbackInterfaceCode::FOLD_CALLBACK_FOLD_STATUS_CHANGE;
+    uint32_t code = static_cast<uint32_t>(IFoldServiceCallbackIpcCode::COMMAND_ON_FOLD_STATUS_CHANGED);
     EXPECT_CALL(stub, OnFoldStatusChanged(_))
         .WillOnce(Return(0));
     int errCode = stub.OnRemoteRequest(code, data, reply, option);
@@ -1899,7 +1898,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_052, TestSize.Level1)
     data.RewindRead(0);
     MessageParcel reply;
     MessageOption option;
-    uint32_t code = CameraMuteServiceCallbackInterfaceCode::CAMERA_CALLBACK_MUTE_MODE;
+    uint32_t code = static_cast<uint32_t>(ICameraMuteServiceCallbackIpcCode::COMMAND_ON_CAMERA_MUTE);
     EXPECT_CALL(stub, OnCameraMute(_))
         .WillOnce(Return(0));
     int errCode = stub.OnRemoteRequest(code, data, reply, option);
@@ -2029,32 +2028,34 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_056, TestSize.Level0)
  */
 HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_057, TestSize.Level0)
 {
-     std::vector<string> cameraIds;
-     cameraService_->GetCameraIds(cameraIds);
-     ASSERT_NE(cameraIds.size(), 0);
-     cameraService_->SetServiceStatus(CameraServiceStatus::SERVICE_READY);
-     sptr<ICameraDeviceService> device = nullptr;
-     cameraService_->CreateCameraDevice(cameraIds[0], device);
-     ASSERT_NE(device, nullptr);
-     device->Open();
+    std::vector<string> cameraIds;
+    cameraService_->GetCameraIds(cameraIds);
+    ASSERT_NE(cameraIds.size(), 0);
+    cameraService_->SetServiceStatus(CameraServiceStatus::SERVICE_READY);
+    sptr<ICameraDeviceService> device = nullptr;
+    cameraService_->CreateCameraDevice(cameraIds[0], device);
+    ASSERT_NE(device, nullptr);
+    device->Open();
 
-     cameraService_->cameraServiceCallbacks_ = {};
-     cameraService_->cameraStatusCallbacks_ = {};
-     cameraService_->freezedPidList_.insert(IPCSkeleton::GetCallingPid());
-     cameraService_->OnCameraStatus(cameraIds[0], CameraStatus::CAMERA_STATUS_APPEAR, CallbackInvoker::APPLICATION);
-     EXPECT_TRUE(cameraService_->cameraStatusCallbacks_.empty());
-     EXPECT_EQ(cameraService_->UnSetCameraCallback(IPCSkeleton::GetCallingPid()), CAMERA_OK);
+    cameraService_->cameraServiceCallbacks_ = {};
+    cameraService_->cameraStatusCallbacks_ = {};
+    cameraService_->freezedPidList_.insert(IPCSkeleton::GetCallingPid());
+    cameraService_->OnCameraStatus(cameraIds[0], CameraStatus::CAMERA_STATUS_APPEAR,
+        CallbackInvoker::APPLICATION);
+    EXPECT_TRUE(cameraService_->cameraStatusCallbacks_.empty());
+    EXPECT_EQ(cameraService_->UnSetCameraCallback(IPCSkeleton::GetCallingPid()), CAMERA_OK);
 
-     sptr<ICameraServiceCallbackTest> callback = new ICameraServiceCallbackTest();
-     cameraService_->cameraServiceCallbacks_ = {{1, callback}, {2, nullptr}};
-     cameraService_->OnCameraStatus(cameraIds[0], CameraStatus::CAMERA_STATUS_APPEAR, CallbackInvoker::APPLICATION);
-     EXPECT_EQ(cameraService_->cameraStatusCallbacks_.size(), 1);
+    sptr<ICameraServiceCallbackTest> callback = new ICameraServiceCallbackTest();
+    cameraService_->cameraServiceCallbacks_ = {{1, callback}, {2, nullptr}};
+    cameraService_->OnCameraStatus(cameraIds[0], CameraStatus::CAMERA_STATUS_APPEAR,
+        CallbackInvoker::APPLICATION);
+    EXPECT_EQ(cameraService_->cameraStatusCallbacks_.size(), 1);
 
-     if (callback) {
-         callback = nullptr;
-     }
-     device->Release();
-     device->Close();
+    if (callback) {
+        callback = nullptr;
+    }
+    device->Release();
+    device->Close();
 }
 
 /*
@@ -2067,32 +2068,32 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_057, TestSize.Level0)
  */
 HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_058, TestSize.Level0)
 {
-     std::vector<string> cameraIds;
-     cameraService_->GetCameraIds(cameraIds);
-     ASSERT_NE(cameraIds.size(), 0);
-     cameraService_->SetServiceStatus(CameraServiceStatus::SERVICE_READY);
-     sptr<ICameraDeviceService> device = nullptr;
-     cameraService_->CreateCameraDevice(cameraIds[0], device);
-     ASSERT_NE(device, nullptr);
-     device->Open();
+    std::vector<string> cameraIds;
+    cameraService_->GetCameraIds(cameraIds);
+    ASSERT_NE(cameraIds.size(), 0);
+    cameraService_->SetServiceStatus(CameraServiceStatus::SERVICE_READY);
+    sptr<ICameraDeviceService> device = nullptr;
+    cameraService_->CreateCameraDevice(cameraIds[0], device);
+    ASSERT_NE(device, nullptr);
+    device->Open();
 
-     cameraService_->cameraServiceCallbacks_ = {};
-     cameraService_->cameraStatusCallbacks_ = {};
-     cameraService_->freezedPidList_.insert(IPCSkeleton::GetCallingPid());
-     cameraService_->OnCameraStatus(cameraIds[0], CameraStatus::CAMERA_STATUS_DISAPPEAR, CallbackInvoker::APPLICATION);
-     EXPECT_TRUE(cameraService_->cameraStatusCallbacks_.empty());
-     EXPECT_EQ(cameraService_->UnSetCameraCallback(IPCSkeleton::GetCallingPid()), CAMERA_OK);
+    cameraService_->cameraServiceCallbacks_ = {};
+    cameraService_->cameraStatusCallbacks_ = {};
+    cameraService_->freezedPidList_.insert(IPCSkeleton::GetCallingPid());
+    cameraService_->OnCameraStatus(cameraIds[0], CameraStatus::CAMERA_STATUS_DISAPPEAR, CallbackInvoker::APPLICATION);
+    EXPECT_TRUE(cameraService_->cameraStatusCallbacks_.empty());
+    EXPECT_EQ(cameraService_->UnSetCameraCallback(IPCSkeleton::GetCallingPid()), CAMERA_OK);
 
-     sptr<ICameraServiceCallbackTest> callback = new ICameraServiceCallbackTest();
-     cameraService_->cameraServiceCallbacks_ = {{1, callback}, {2, nullptr}};
-     cameraService_->OnCameraStatus(cameraIds[0], CameraStatus::CAMERA_STATUS_DISAPPEAR, CallbackInvoker::APPLICATION);
-     EXPECT_EQ(cameraService_->cameraStatusCallbacks_.size(), 1);
+    sptr<ICameraServiceCallbackTest> callback = new ICameraServiceCallbackTest();
+    cameraService_->cameraServiceCallbacks_ = {{1, callback}, {2, nullptr}};
+    cameraService_->OnCameraStatus(cameraIds[0], CameraStatus::CAMERA_STATUS_DISAPPEAR, CallbackInvoker::APPLICATION);
+    EXPECT_EQ(cameraService_->cameraStatusCallbacks_.size(), 1);
 
-     if (callback) {
-         callback = nullptr;
-     }
-     device->Release();
-     device->Close();
+    if (callback) {
+        callback = nullptr;
+    }
+    device->Release();
+    device->Close();
 }
 
 /*

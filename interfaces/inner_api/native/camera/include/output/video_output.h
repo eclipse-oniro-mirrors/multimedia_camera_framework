@@ -20,7 +20,7 @@
 #include <vector>
 
 #include "camera_metadata_info.h"
-#include "hstream_repeat_callback_stub.h"
+#include "stream_repeat_callback_stub.h"
 #include "istream_repeat.h"
 #include "istream_repeat_callback.h"
 #include "output/capture_output.h"
@@ -258,7 +258,7 @@ private:
     int32_t canSetFrameRateRange(int32_t minFrameRate, int32_t maxFrameRate);
 };
 
-class VideoOutputCallbackImpl : public HStreamRepeatCallbackStub {
+class VideoOutputCallbackImpl : public StreamRepeatCallbackStub {
 public:
     wptr<VideoOutput> videoOutput_ = nullptr;
     VideoOutputCallbackImpl() : videoOutput_(nullptr) {}
@@ -296,7 +296,7 @@ public:
      */
     int32_t OnSketchStatusChanged(SketchStatus status) override;
 
-    int32_t OnDeferredVideoEnhancementInfo(CaptureEndedInfoExt captureEndedInfo) override;
+    int32_t OnDeferredVideoEnhancementInfo(const CaptureEndedInfoExt &captureEndedInfo) override;
 };
 } // namespace CameraStandard
 } // namespace OHOS

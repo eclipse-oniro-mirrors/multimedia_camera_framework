@@ -49,7 +49,7 @@ void DeferredVideoProcessorFuzzer::DeferredVideoProcessorFuzzTest(FuzzedDataProv
     repository->SetJobPause(videoId);
     repository->SetJobError(videoId);
     center_ = std::make_shared<DeferredProcessing::VideoStrategyCenter>(repository);
-    CHECK_ERROR_RETURN_LOG(!center_, "Create center_ Error");
+    DP_CHECK_ERROR_RETURN_LOG(!center_, "Create center_ Error");
     const std::shared_ptr<VideoPostProcessor> postProcessor = std::make_shared<VideoPostProcessor>(userId);
     const std::shared_ptr<IVideoProcessCallbacksFuzz> callback = std::make_shared<IVideoProcessCallbacksFuzz>();
     fuzz_ = std::make_shared<DeferredVideoProcessor>(repository, postProcessor, callback);
@@ -61,14 +61,16 @@ void DeferredVideoProcessorFuzzer::DeferredVideoProcessorFuzzTest(FuzzedDataProv
     sptr<IPCFileDescriptor> dstFd = sptr<IPCFileDescriptor>::MakeSptr(dfd);
     std::shared_ptr<DeferredVideoJob> jobPtr = std::make_shared<DeferredVideoJob>(videoId, srcFd, dstFd);
     constexpr int32_t executionModeCount1 = static_cast<int32_t>(ExecutionMode::DUMMY) + 1;
-    ExecutionMode selectedExecutionMode = static_cast<ExecutionMode>(fdp.ConsumeIntegral<uint8_t>() % executionModeCount1);
+    ExecutionMode selectedExecutionMode =
+        static_cast<ExecutionMode>(fdp.ConsumeIntegral<uint8_t>() % executionModeCount1);
     std::shared_ptr<DeferredVideoWork> work =
         std::make_shared<DeferredVideoWork>(jobPtr, selectedExecutionMode, fdp.ConsumeBool());
     fuzz_->Initialize();
     fuzz_->PostProcess(work);
     constexpr int32_t executionModeCount2 =
         static_cast<int32_t>(SchedulerType::NORMAL_TIME_STATE) + NUM_TWO;
-    ScheduleType selectedScheduleType = static_cast<SchedulerType>(fdp.ConsumeIntegral<uint8_t>() % executionModeCount2);
+    SchedulerType selectedScheduleType =
+        static_cast<SchedulerType>(fdp.ConsumeIntegral<uint8_t>() % executionModeCount2);
     constexpr int32_t executionModeCount3 =
         static_cast<int32_t>(DpsError::DPS_ERROR_VIDEO_PROC_INTERRUPTED) + NUM_TWO;
     DpsError selectedDpsError = static_cast<DpsError>(fdp.ConsumeIntegral<uint8_t>() % executionModeCount3);

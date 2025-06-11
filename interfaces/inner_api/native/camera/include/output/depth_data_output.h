@@ -19,7 +19,7 @@
 #include <cstdint>
 #include "camera_output_capability.h"
 #include "capture_output.h"
-#include "hstream_depth_data_callback_stub.h"
+#include "stream_depth_data_callback_stub.h"
 #include "icamera_service.h"
 #include "istream_depth_data.h"
 #include "istream_depth_data_callback.h"
@@ -94,7 +94,7 @@ private:
     void CameraServerDied(pid_t pid) override;
 };
 
-class DepthDataOutputCallbackImpl : public HStreamDepthDataCallbackStub {
+class DepthDataOutputCallbackImpl : public StreamDepthDataCallbackStub {
 public:
     wptr<DepthDataOutput> depthDataOutput_ = nullptr;
     DepthDataOutputCallbackImpl() : depthDataOutput_(nullptr) {}
@@ -110,4 +110,4 @@ public:
 };
 } // namespace CameraStandard
 } // namespace OHOS
-#endif // OHOS_CAMERA_DEPTH_DATA_OUTPUT_H
+#endif // OHOS_CAMERA_DEPTH_DATA_OUTPUT_H

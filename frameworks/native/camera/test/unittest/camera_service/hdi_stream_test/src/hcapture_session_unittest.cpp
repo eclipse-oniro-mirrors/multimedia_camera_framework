@@ -30,8 +30,7 @@
 #include "token_setproc.h"
 #include "os_account_manager.h"
 #include "picture_interface.h"
-#include "hcapture_session_callback_stub.h"
-#include "camera_service_ipc_interface_code.h"
+#include "capture_session_callback_stub.h"
 
 using namespace testing::ext;
 using ::testing::Return;
@@ -114,13 +113,13 @@ void HCaptureSessionUnitTest::NativeAuthorization()
     OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
 }
 
-class MockHCaptureSessionCallbackStub : public HCaptureSessionCallbackStub {
+class MockHCaptureSessionCallbackStub : public CaptureSessionCallbackStub {
 public:
     MOCK_METHOD1(OnError, int32_t(int32_t errorCode));
     ~MockHCaptureSessionCallbackStub() {}
 };
 
-class MockHPressureStatusCallbackStub : public HPressureStatusCallbackStub {
+class MockHPressureStatusCallbackStub : public PressureStatusCallbackStub {
 public:
     MOCK_METHOD1(OnPressureStatusChanged,int32_t(PressureStatus status));
     ~MockHPressureStatusCallbackStub() {}
@@ -337,7 +336,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_005, TestSize.Level
         ASSERT_NE(supportedModes.size(), 0);
         if (find(supportedModes.begin(), supportedModes.end(), OperationMode::SECURE) != supportedModes.end()) {
             uint64_t secureSeqId = 1;
-            device->OpenSecureCamera(&secureSeqId);
+            device->OpenSecureCamera(secureSeqId);
 
             uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
             sptr<HCaptureSession> session = nullptr;
@@ -1402,7 +1401,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_028, TestSize.Level
     ret = camSession->RemoveInput(device);
     EXPECT_EQ(ret, 2);
 
-    sptr<IStreamCommon> stream_2 = nullptr;
+    sptr<IRemoteObject> stream_2 = nullptr;
     ret = camSession->AddOutput(StreamType::CAPTURE, stream_2);
     EXPECT_EQ(ret, 2);
 
@@ -1661,7 +1660,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_035, TestSize.Level
     ASSERT_NE(camSession, nullptr);
 
     bool isNeedUpdate = false;
-    ColorSpace colorSpace = ColorSpace::SRGB;
+    int32_t colorSpace = static_cast<int32_t>(ColorSpace::SRGB);
     EXPECT_EQ(camSession->SetColorSpace(colorSpace, isNeedUpdate), CAMERA_INVALID_STATE);
     EXPECT_EQ(camSession->SetColorSpace(colorSpace, isNeedUpdate), CAMERA_INVALID_STATE);
     camSession->Release();
@@ -1849,7 +1848,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_042, TestSize.Level
     data.RewindRead(0);
     MessageParcel reply;
     MessageOption option;
-    uint32_t code = CaptureSessionCallbackInterfaceCode::CAMERA_CAPTURE_SESSION_ON_ERROR;
+    uint32_t code = static_cast<uint32_t>(ICaptureSessionCallbackIpcCode::COMMAND_ON_ERROR);
     EXPECT_CALL(stub, OnError(_))
         .WillOnce(Return(0));
     int errCode = stub.OnRemoteRequest(code, data, reply, option);
@@ -2225,10 +2224,10 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_053, TestSize.Level
     MockHPressureStatusCallbackStub stub;
     MessageParcel data;
     data.WriteInterfaceToken(stub.GetDescriptor());
-    data.RewindRead(0);
+    data.WriteInt32(0);
     MessageParcel reply;
     MessageOption option;
-    uint32_t code = CaptureSessionCallbackInterfaceCode::CAMERA_CAPTURE_SESSINO_PRESSURE_CALLBACK;
+    uint32_t code = static_cast<uint32_t>(IPressureStatusCallbackIpcCode::COMMAND_ON_PRESSURE_STATUS_CHANGED);
     EXPECT_CALL(stub, OnPressureStatusChanged(_))
         .WillOnce(Return(0));
     int errCode = stub.OnRemoteRequest(code, data, reply, option);

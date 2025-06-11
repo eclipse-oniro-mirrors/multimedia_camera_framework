@@ -1,0 +1,37 @@
+/*
+ * Copyright (c) 2025 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package OHOS.CameraStandard;
+import ICameraDeviceServiceCallback;
+sequenceable CameraMetadataInfo..OHOS.Camera.CameraMetadata;
+option_stub_hooks on;
+
+interface ICameraDeviceService {
+   [ipccode 0] void Open();
+   [ipccode 1] void Close();
+   [ipccode 2] void Release();
+   [ipccode 3] void SetCallback([in] ICameraDeviceServiceCallback callbackFunc);
+   [ipccode 4] void UpdateSetting([in] sharedptr<CameraMetadata> settings);
+   [ipccode 5] void GetEnabledResults([out] int[] results);
+   [ipccode 6] void EnableResult([in] int[] results);
+   [ipccode 7] void DisableResult([in] int[] results);
+   [ipccode 8] void GetStatus([in] sharedptr<CameraMetadata> metaIn, [out] sharedptr<CameraMetadata> metaOut);
+   [ipccode 9] void SetUsedAsPosition([in] unsigned char value);
+   [ipccode 10] void closeDelayed();
+   [ipccode 11] void UnSetCallback();
+   [ipccode 12] void Open([in] int concurrentTypeofcamera);
+   [ipccode 13] void SetDeviceRetryTime();
+   [ipccode 14] void OpenSecureCamera([out] unsigned long secureSeqId);
+}

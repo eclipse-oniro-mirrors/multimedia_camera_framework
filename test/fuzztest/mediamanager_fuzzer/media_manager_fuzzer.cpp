@@ -22,7 +22,6 @@ namespace OHOS {
 namespace CameraStandard {
 using namespace DeferredProcessing;
 static constexpr int32_t MIN_SIZE_NUM = 256;
-const size_t THRESHOLD = 10;
 std::shared_ptr<MediaManager> MediaManagerFuzzer::fuzz_{nullptr};
 
 void MediaManagerFuzzer::MediaManagerFuzzTest(FuzzedDataProvider& fdp)

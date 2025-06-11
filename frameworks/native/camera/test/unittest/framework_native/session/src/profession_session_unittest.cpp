@@ -366,12 +366,13 @@ HWTEST_F(ProfessionSessionUnitTest, profession_session_function_unittest_003, Te
     input->Open();
 
     uint32_t val = 1;
-    session_->LockForControl();
-    ASSERT_NE(session_->changedMetadata_, nullptr);
-    OHOS::Camera::DeleteCameraMetadataItem(session_->changedMetadata_->get(), OHOS_STATUS_SENSOR_EXPOSURE_TIME);
-    session_->changedMetadata_->addEntry(OHOS_STATUS_SENSOR_EXPOSURE_TIME, &val, 1);
-    professionSession->ProcessSensorExposureTimeChange(session_->changedMetadata_);
-    session_->UnlockForControl();
+    professionSession->LockForControl();
+    ASSERT_NE(professionSession->changedMetadata_, nullptr);
+    OHOS::Camera::DeleteCameraMetadataItem(professionSession->changedMetadata_->get(),
+        OHOS_STATUS_SENSOR_EXPOSURE_TIME);
+    professionSession->changedMetadata_->addEntry(OHOS_STATUS_SENSOR_EXPOSURE_TIME, &val, 1);
+    professionSession->ProcessSensorExposureTimeChange(professionSession->changedMetadata_);
+    professionSession->UnlockForControl();
 }
 
 HWTEST_F(ProfessionSessionUnitTest, profession_session_function_unittest_004, TestSize.Level0)
@@ -386,15 +387,15 @@ HWTEST_F(ProfessionSessionUnitTest, profession_session_function_unittest_004, Te
     input->Open();
 
     uint32_t val = 1;
-    session_->LockForControl();
-    ASSERT_NE(session_->changedMetadata_, nullptr);
-    auto header = session_->changedMetadata_->get();
+    professionSession->LockForControl();
+    ASSERT_NE(professionSession->changedMetadata_, nullptr);
+    auto header = professionSession->changedMetadata_->get();
     if (header) {
         OHOS::Camera::DeleteCameraMetadataItem(header, OHOS_STATUS_ISO_VALUE);
     }
-    session_->changedMetadata_->addEntry(OHOS_STATUS_ISO_VALUE, &val, 1);
-    professionSession->ProcessIsoChange(session_->changedMetadata_);
-    session_->UnlockForControl();
+    professionSession->changedMetadata_->addEntry(OHOS_STATUS_ISO_VALUE, &val, 1);
+    professionSession->ProcessIsoChange(professionSession->changedMetadata_);
+    professionSession->UnlockForControl();
 }
 
 HWTEST_F(ProfessionSessionUnitTest, profession_session_function_unittest_005, TestSize.Level0)
@@ -409,15 +410,15 @@ HWTEST_F(ProfessionSessionUnitTest, profession_session_function_unittest_005, Te
     input->Open();
 
     float val = 1.0;
-    session_->LockForControl();
-    ASSERT_NE(session_->changedMetadata_, nullptr);
-    auto header = session_->changedMetadata_->get();
+    professionSession->LockForControl();
+    ASSERT_NE(professionSession->changedMetadata_, nullptr);
+    auto header = professionSession->changedMetadata_->get();
     if (header) {
         OHOS::Camera::DeleteCameraMetadataItem(header, OHOS_STATUS_CAMERA_APERTURE_VALUE);
     }
-    session_->changedMetadata_->addEntry(OHOS_STATUS_CAMERA_APERTURE_VALUE, &val, 1);
-    professionSession->ProcessApertureChange(session_->changedMetadata_);
-    session_->UnlockForControl();
+    professionSession->changedMetadata_->addEntry(OHOS_STATUS_CAMERA_APERTURE_VALUE, &val, 1);
+    professionSession->ProcessApertureChange(professionSession->changedMetadata_);
+    professionSession->UnlockForControl();
 }
 
 HWTEST_F(ProfessionSessionUnitTest, profession_session_function_unittest_006, TestSize.Level0)
@@ -432,15 +433,15 @@ HWTEST_F(ProfessionSessionUnitTest, profession_session_function_unittest_006, Te
     input->Open();
 
     uint32_t val = 1.0;
-    session_->LockForControl();
-    ASSERT_NE(session_->changedMetadata_, nullptr);
-    auto header = session_->changedMetadata_->get();
+    professionSession->LockForControl();
+    ASSERT_NE(professionSession->changedMetadata_, nullptr);
+    auto header = professionSession->changedMetadata_->get();
     if (header) {
         OHOS::Camera::DeleteCameraMetadataItem(header, OHOS_STATUS_ALGO_MEAN_Y);
     }
-    session_->changedMetadata_->addEntry(OHOS_STATUS_ALGO_MEAN_Y, &val, 1);
-    professionSession->ProcessLuminationChange(session_->changedMetadata_);
-    session_->UnlockForControl();
+    professionSession->changedMetadata_->addEntry(OHOS_STATUS_ALGO_MEAN_Y, &val, 1);
+    professionSession->ProcessLuminationChange(professionSession->changedMetadata_);
+    professionSession->UnlockForControl();
 }
 
 HWTEST_F(ProfessionSessionUnitTest, profession_session_function_unittest_007, TestSize.Level0)
@@ -455,15 +456,15 @@ HWTEST_F(ProfessionSessionUnitTest, profession_session_function_unittest_007, Te
     input->Open();
 
     uint8_t val = 1.0;
-    session_->LockForControl();
-    ASSERT_NE(session_->changedMetadata_, nullptr);
-    auto header = session_->changedMetadata_->get();
+    professionSession->LockForControl();
+    ASSERT_NE(professionSession->changedMetadata_, nullptr);
+    auto header = professionSession->changedMetadata_->get();
     if (header) {
         OHOS::Camera::DeleteCameraMetadataItem(header, OHOS_STATUS_PREVIEW_PHYSICAL_CAMERA_ID);
     }
-    session_->changedMetadata_->addEntry(OHOS_STATUS_PREVIEW_PHYSICAL_CAMERA_ID, &val, 1);
-    professionSession->ProcessPhysicalCameraSwitch(session_->changedMetadata_);
-    session_->UnlockForControl();
+    professionSession->changedMetadata_->addEntry(OHOS_STATUS_PREVIEW_PHYSICAL_CAMERA_ID, &val, 1);
+    professionSession->ProcessPhysicalCameraSwitch(professionSession->changedMetadata_);
+    professionSession->UnlockForControl();
 }
 
 /*

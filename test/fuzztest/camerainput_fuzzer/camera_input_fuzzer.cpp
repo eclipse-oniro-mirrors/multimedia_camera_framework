@@ -59,7 +59,7 @@ void GetPermission()
 void Test(uint8_t* data, size_t size)
 {
     FuzzedDataProvider fdp(data, size);
-+   if (fdp.remaining_bytes() < LIMITSIZE) {
+    if (fdp.remaining_bytes() < LIMITSIZE) {
         return;
     }
     GetPermission();

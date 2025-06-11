@@ -17,7 +17,7 @@
 #define CAMERA_LISTENER_STUB_FUZZER_H
 
 #include "hcamera_listener_stub.h"
-#include "<fuzzer/FuzzedDataProvider.h>"
+#include "fuzzer/FuzzedDataProvider.h"
 
 namespace OHOS {
 namespace CameraStandard {

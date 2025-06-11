@@ -18,6 +18,7 @@
 #include <string>
 #include "camera_error.h"
 #include "camera_utils.h"
+#include "camera_types.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -162,7 +163,7 @@ CArrCJCameraDevice CameraDeviceVetorToCArrCJCameraDevice(const std::vector<sptr<
 CJFoldStatusInfo FoldStatusInfoToCJFoldStatusInfo(const FoldStatusInfo &foldStatusInfo)
 {
     return CJFoldStatusInfo{CameraDeviceVetorToCArrCJCameraDevice(foldStatusInfo.supportedCameras),
-                            foldStatusInfo.foldStatus};
+                            static_cast<int32_t>(foldStatusInfo.foldStatus)};
 }
 
 CJTorchStatusInfo TorchStatusInfoToCJTorchStatusInfo(const TorchStatusInfo &torchStatusInfo)

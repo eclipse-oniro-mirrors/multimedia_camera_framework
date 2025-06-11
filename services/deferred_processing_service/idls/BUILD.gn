@@ -1,0 +1,147 @@
+# Copyright (c) 2025 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/config/components/idl_tool/idl.gni")
+import("./../../../multimedia_camera_framework.gni")
+
+idl_gen_interface("deferred_processing_service_idl_interface") {
+  sources = [
+    "IDeferredPhotoProcessingSession.idl",
+    "IDeferredVideoProcessingSession.idl",
+  ]
+  sources_callback = [
+    "IDeferredVideoProcessingSessionCallback.idl",
+    "IDeferredPhotoProcessingSessionCallback.idl"
+  ]
+
+  sources_common = [ "DeferredProcessingTypes.idl" ]
+
+
+  hitrace = "HITRACE_TAG_ABILITY_MANAGER"
+
+  subsystem_name = "multimedia"
+  part_name = "camera_framework"
+}
+
+config("deferred_processing_service_idl_config") {
+  include_dirs = [
+    ".",
+    "${target_gen_dir}",
+    "${multimedia_camera_framework_path}/common/utils",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include/utils",
+  ]
+}
+
+ohos_source_set("camera_deferred_idl_sa_proxy") {
+  output_values = get_target_outputs(":deferred_processing_service_idl_interface")
+  sources = filter_include(output_values,
+                           [
+                            "*_session_proxy.cpp",
+                            "*_callback_stub.cpp",
+                           ])
+
+  public_configs=[
+    ":deferred_processing_service_idl_config",
+  ]
+
+  deps = [ ":deferred_processing_service_idl_interface" ]
+
+  cflags = [
+    "-Wall",
+    "-fPIC",
+    "-fdata-sections",
+    "-ffunction-sections",
+    "-fno-asynchronous-unwind-tables",
+    "-fno-unwind-tables",
+    "-Os",
+  ]
+  if (target_cpu == "arm") {
+    cflags += [ "-DBINDER_IPC_32BIT" ]
+  }
+
+  sanitize = {
+    integer_overflow = true
+    ubsan = true
+    boundary_sanitize = true
+    cfi = true
+    cfi_cross_dso = true
+    cfi_vcall_icall_only = true
+    debug = false
+  }
+
+  external_deps = [
+    "c_utils:utils",
+    "hitrace:hitrace_meter",
+    "ipc:ipc_single",
+    "drivers_interface_camera:metadata",
+    "graphic_surface:surface",
+    "ipc:ipc_core",
+    "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
+  ]
+
+  part_name = "camera_framework"
+  subsystem_name = "multimedia"
+}
+
+ohos_source_set("camera_deferred_idl_sa_stub") {
+  output_values = get_target_outputs(":deferred_processing_service_idl_interface")
+  sources = filter_include(output_values,
+                           [
+                             "*_callback_proxy.cpp",
+                             "*_session_stub.cpp",
+                           ])
+
+  public_configs=[
+    ":deferred_processing_service_idl_config",
+  ]
+
+  deps = [ ":deferred_processing_service_idl_interface" ]
+
+  cflags = [
+    "-Wall",
+    "-fPIC",
+    "-fdata-sections",
+    "-ffunction-sections",
+    "-fno-asynchronous-unwind-tables",
+    "-fno-unwind-tables",
+    "-Os",
+  ]
+  if (target_cpu == "arm") {
+    cflags += [ "-DBINDER_IPC_32BIT" ]
+  }
+
+  sanitize = {
+    integer_overflow = true
+    ubsan = true
+    boundary_sanitize = true
+    cfi = true
+    cfi_cross_dso = true
+    cfi_vcall_icall_only = true
+    debug = false
+  }
+
+  external_deps = [
+    "c_utils:utils",
+    "hitrace:hitrace_meter",
+    "ipc:ipc_single",
+    "drivers_interface_camera:metadata",
+    "graphic_surface:surface",
+    "ipc:ipc_core",
+    "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
+  ]
+
+  part_name = "camera_framework"
+  subsystem_name = "multimedia"
+}

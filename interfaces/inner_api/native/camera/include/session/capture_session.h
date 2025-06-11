@@ -33,8 +33,8 @@
 #include "capture_scene_const.h"
 #include "color_space_info_parse.h"
 #include "features/moon_capture_boost_feature.h"
-#include "hcapture_session_callback_stub.h"
-#include "hcamera_service_callback_stub.h"
+#include "capture_session_callback_stub.h"
+#include "camera_service_callback_stub.h"
 #include "icamera_util.h"
 #include "icapture_session.h"
 #include "icapture_session_callback.h"
@@ -47,6 +47,9 @@
 #include "capture_scene_const.h"
 #include "ability/camera_ability.h"
 #include "ability/camera_ability_parse_util.h"
+#include "camera_types.h"
+#include "fold_service_callback_stub.h"
+#include "pressure_status_callback_stub.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -282,7 +285,7 @@ private:
     std::unordered_map<SceneFeature, FeatureDetectionStatus> featureStatusMap_;
 };
 
-class CaptureSessionCallback : public HCaptureSessionCallbackStub {
+class CaptureSessionCallback : public CaptureSessionCallbackStub {
 public:
     CaptureSession* captureSession_ = nullptr;
     CaptureSessionCallback() : captureSession_(nullptr) {}
@@ -297,7 +300,7 @@ public:
     int32_t OnError(int32_t errorCode) override;
 };
 
-class PressureStatusCallback : public HPressureStatusCallbackStub {
+class PressureStatusCallback : public PressureStatusCallbackStub {
 public:
     CaptureSession* captureSession_ = nullptr;
     PressureStatusCallback() : captureSession_(nullptr) {}
@@ -383,7 +386,7 @@ public:
     virtual void OnAutoDeviceSwitchStatusChange(bool isDeviceSwitched, bool isDeviceCapabilityChanged) const = 0 ;
 };
 
-class FoldCallback : public HFoldServiceCallbackStub {
+class FoldCallback : public FoldServiceCallbackStub {
 public:
     explicit FoldCallback(wptr<CaptureSession> captureSession) : captureSession_(captureSession) {}
     int32_t OnFoldStatusChanged(const FoldStatus status) override;

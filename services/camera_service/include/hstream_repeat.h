@@ -24,9 +24,10 @@
 
 #include "camera_metadata_info.h"
 #include "hstream_common.h"
-#include "hstream_repeat_stub.h"
+#include "stream_repeat_stub.h"
 #include "istream_repeat_callback.h"
 #include "v1_0/istream_operator.h"
+#include "icamera_ipc_checker.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -43,7 +44,7 @@ enum class RepeatStreamStatus {
     STARTED
 };
 #define CAMERA_API_VERSION_BASE 14
-class EXPORT_API HStreamRepeat : public HStreamRepeatStub, public HStreamCommon {
+class EXPORT_API HStreamRepeat : public StreamRepeatStub, public HStreamCommon, public ICameraIpcChecker {
 public:
     HStreamRepeat(
         sptr<OHOS::IBufferProducer> producer, int32_t format, int32_t width, int32_t height, RepeatStreamType type);
@@ -58,7 +59,7 @@ public:
     int32_t Start() override;
     int32_t Start(std::shared_ptr<OHOS::Camera::CameraMetadata> settings, bool isUpdateSeetings = false);
     int32_t Stop() override;
-    int32_t SetCallback(sptr<IStreamRepeatCallback>& callback) override;
+    int32_t SetCallback(const sptr<IStreamRepeatCallback>& callback) override;
     int32_t UnSetCallback() override;
 
     int32_t OnFrameStarted();
@@ -68,7 +69,7 @@ public:
     int32_t OnDeferredVideoEnhancementInfo(CaptureEndedInfoExt captureEndedInfo);
     int32_t AddDeferredSurface(const sptr<OHOS::IBufferProducer>& producer) override;
     int32_t ForkSketchStreamRepeat(
-        int32_t width, int32_t height, sptr<IStreamRepeat>& sketchStream, float sketchRatio) override;
+        int32_t width, int32_t height, sptr<IRemoteObject>& sketchStream, float sketchRatio) override;
     int32_t RemoveSketchStreamRepeat() override;
     int32_t EnableSecure(bool isEnable = false) override;
     int32_t UpdateSketchRatio(float sketchRatio) override;
@@ -78,6 +79,8 @@ public:
     void SetMovingPhotoStartCallback(std::function<void()> callback);
     void DumpStreamInfo(CameraInfoDumper& infoDumper) override;
     int32_t OperatePermissionCheck(uint32_t interfaceCode) override;
+    int32_t CallbackEnter([[maybe_unused]] uint32_t code) override;
+    int32_t CallbackExit([[maybe_unused]] uint32_t code, [[maybe_unused]] int32_t result) override;
     int32_t SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate) override;
     int32_t SetMirror(bool isEnable) override;
     int32_t GetMirror(bool& isEnable) override;

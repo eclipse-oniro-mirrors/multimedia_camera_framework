@@ -16,7 +16,7 @@
 #ifndef STREAM_METADATA_STUB_FUZZER_H
 #define STREAM_METADATA_STUB_FUZZER_H
 
-#include "hstream_metadata_stub.h"
+#include "stream_metadata_stub.h"
 #include <fuzzer/FuzzedDataProvider.h>
 
 namespace OHOS {

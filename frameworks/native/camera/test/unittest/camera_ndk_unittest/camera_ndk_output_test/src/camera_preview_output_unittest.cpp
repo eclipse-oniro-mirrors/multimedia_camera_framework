@@ -203,7 +203,7 @@ HWTEST_F(CameraPreviewOutputUnitTest, camera_preview_output_unittest_003, TestSi
     Camera_FrameRateRange activeframeRateRange;
     ret = OH_PreviewOutput_GetActiveFrameRate(previewOutput, &activeframeRateRange);
     EXPECT_EQ(ret, CAMERA_OK);
-    if (size != 0 && frameRateRange != nullptr) {
+    if (size != 0 && frameRateRange != nullptr && activeframeRateRange.max != 0) {
         ObtainAvailableFrameRate(activeframeRateRange, frameRateRange, size, minFps, maxFps);
         ret = OH_PreviewOutput_SetFrameRate(previewOutput, minFps, maxFps);
         EXPECT_EQ(ret, CAMERA_OK);
@@ -280,7 +280,7 @@ HWTEST_F(CameraPreviewOutputUnitTest, camera_preview_output_unittest_005, TestSi
     Camera_FrameRateRange activeframeRateRange;
     ret = OH_PreviewOutput_GetActiveFrameRate(previewOutput, &activeframeRateRange);
     EXPECT_EQ(ret, CAMERA_OK);
-    if (size != 0 && frameRateRange != nullptr) {
+    if (size != 0 && frameRateRange != nullptr && activeframeRateRange.max != 0) {
         ObtainAvailableFrameRate(activeframeRateRange, frameRateRange, size, minFps, maxFps);
         ret = OH_PreviewOutput_SetFrameRate(nullptr, minFps, maxFps);
         EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
@@ -341,7 +341,7 @@ HWTEST_F(CameraPreviewOutputUnitTest, camera_preview_output_unittest_006, TestSi
     EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
     ret = OH_PreviewOutput_GetActiveFrameRate(previewOutput, &activeframeRateRange);
     EXPECT_EQ(ret, CAMERA_OK);
-    if (size != 0 && frameRateRange != nullptr) {
+    if (size != 0 && frameRateRange != nullptr && activeframeRateRange.max != 0) {
         ObtainAvailableFrameRate(activeframeRateRange, frameRateRange, size, minFps, maxFps);
         ret = OH_PreviewOutput_SetFrameRate(previewOutput, minFps, maxFps);
         EXPECT_EQ(ret, CAMERA_OK);

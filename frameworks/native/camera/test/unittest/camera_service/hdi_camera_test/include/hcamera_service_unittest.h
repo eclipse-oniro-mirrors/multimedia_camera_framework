@@ -93,12 +93,12 @@ public:
 
 class ICameraServiceCallbackTest : public ICameraServiceCallback {
 public:
-    virtual int32_t OnCameraStatusChanged(const std::string& cameraId, const CameraStatus status,
+    virtual int32_t OnCameraStatusChanged(const std::string& cameraId, const int32_t status,
         const std::string& bundleName = "")
     {
         return 0;
     };
-    virtual int32_t OnFlashlightStatusChanged(const std::string& cameraId, const FlashStatus status)
+    virtual int32_t OnFlashlightStatusChanged(const std::string& cameraId, const int32_t status)
     {
         return 0;
     };

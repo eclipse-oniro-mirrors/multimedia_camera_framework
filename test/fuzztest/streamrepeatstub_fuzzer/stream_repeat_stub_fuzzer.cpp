@@ -23,7 +23,6 @@
 #include "accesstoken_kit.h"
 #include "iconsumer_surface.h"
 #include "metadata_utils.h"
-#include "camera_service_ipc_interface_code.h"
 
 namespace OHOS {
 namespace CameraStandard {

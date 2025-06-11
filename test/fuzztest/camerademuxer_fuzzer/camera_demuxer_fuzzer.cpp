@@ -21,7 +21,6 @@
 namespace OHOS {
 namespace CameraStandard {
 using namespace DeferredProcessing;
-static constexpr int32_t MIN_SIZE_NUM = 6;
 
 std::shared_ptr<Demuxer> CameraDemuxerFuzzer::fuzz_ {nullptr};
 

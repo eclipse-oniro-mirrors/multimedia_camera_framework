@@ -40,6 +40,7 @@
 #include "iservmgr_hdi.h"
 #include "iservstat_listener_hdi.h"
 #include "hcamera_restore_param.h"
+#include "ability/camera_ability_const.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -83,7 +84,8 @@ public:
     void CloseCameraDevice(const std::string& cameraId);
 
     virtual int32_t GetCameras(std::vector<std::string> &cameraIds);
-    virtual int32_t GetCameraAbility(std::string &cameraId, std::shared_ptr<OHOS::Camera::CameraMetadata> &ability);
+    virtual int32_t GetCameraAbility(const std::string &cameraId,
+        std::shared_ptr<OHOS::Camera::CameraMetadata> &ability);
     virtual int32_t GetCameraIdSortedByCameraType(std::vector<std::string>& cameraIds);
     virtual int32_t OpenCameraDevice(std::string &cameraId,
                                      const sptr<ICameraDeviceCallback> &callback,

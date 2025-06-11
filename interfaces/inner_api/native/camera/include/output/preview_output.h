@@ -23,7 +23,7 @@
 #include "camera_listener_manager.h"
 #include "camera_output_capability.h"
 #include "capture_output.h"
-#include "hstream_repeat_callback_stub.h"
+#include "stream_repeat_callback_stub.h"
 #include "icamera_service.h"
 #include "input/camera_device.h"
 #include "istream_repeat.h"
@@ -261,7 +261,7 @@ private:
     int32_t JudegRotationFunc(int32_t imageRotation);
 };
 
-class PreviewOutputListenerManager : public HStreamRepeatCallbackStub,
+class PreviewOutputListenerManager : public StreamRepeatCallbackStub,
                                      public CameraListenerManager<PreviewStateCallback> {
 public:
     /**
@@ -290,7 +290,7 @@ public:
      */
     int32_t OnSketchStatusChanged(SketchStatus status) override;
 
-    int32_t OnDeferredVideoEnhancementInfo(CaptureEndedInfoExt captureEndedInfo) override;
+    int32_t OnDeferredVideoEnhancementInfo(const CaptureEndedInfoExt &captureEndedInfo) override;
 
     void SetPreviewOutput(wptr<PreviewOutput> previewOutput);
     sptr<PreviewOutput> GetPreviewOutput();

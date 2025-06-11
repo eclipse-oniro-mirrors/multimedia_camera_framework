@@ -137,7 +137,7 @@ int32_t CameraPhotoProxy::CameraFreeBufferHandle()
     return 0;
 }
 
-void CameraPhotoProxy::WriteToParcel(MessageParcel &parcel)
+void CameraPhotoProxy::WriteToParcel(MessageParcel &parcel) const
 {
     std::lock_guard<std::mutex> lock(mutex_);
     parcel.WriteString(photoId_);
@@ -164,6 +164,20 @@ void CameraPhotoProxy::WriteToParcel(MessageParcel &parcel)
         MEDIA_ERR_LOG("PhotoProxy::WriteToParcel without bufferHandle_");
     }
     MEDIA_INFO_LOG("PhotoProxy::WriteToParcel");
+}
+
+bool CameraPhotoProxy::Marshalling(Parcel &parcel) const
+{
+    WriteToParcel(static_cast<MessageParcel&>(parcel));
+    return true;
+}
+
+CameraPhotoProxy* CameraPhotoProxy::Unmarshalling(Parcel &parcel)
+{
+    CameraPhotoProxy* cameraPhotoProxy = new (std::nothrow) CameraPhotoProxy();
+    CHECK_ERROR_RETURN_RET_LOG(cameraPhotoProxy == nullptr, nullptr, "create CameraPhotoProxy fail");
+    cameraPhotoProxy->ReadFromParcel(static_cast<MessageParcel&>(parcel));
+    return cameraPhotoProxy;
 }
 
 void CameraPhotoProxy::SetDeferredAttrs(std::string photoId, int32_t deferredProcType,

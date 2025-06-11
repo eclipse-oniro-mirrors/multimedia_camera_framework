@@ -112,9 +112,9 @@ const std::unordered_map<CameraFormat, camera_format_t> CameraManager::fwToMetaC
 };
 
 const std::unordered_map<CameraFoldStatus, FoldStatus> g_metaToFwCameraFoldStatus_ = {
-    {OHOS_CAMERA_FOLD_STATUS_NONFOLDABLE, UNKNOWN_FOLD},
-    {OHOS_CAMERA_FOLD_STATUS_EXPANDED, EXPAND},
-    {OHOS_CAMERA_FOLD_STATUS_FOLDED, FOLDED}
+    {OHOS_CAMERA_FOLD_STATUS_NONFOLDABLE, FoldStatus::UNKNOWN_FOLD},
+    {OHOS_CAMERA_FOLD_STATUS_EXPANDED, FoldStatus::EXPAND},
+    {OHOS_CAMERA_FOLD_STATUS_FOLDED, FoldStatus::FOLDED}
 };
 
 const std::set<int32_t> isTemplateMode_ = {
@@ -184,21 +184,22 @@ int32_t CameraManager::CreateListenerObject()
 }
 
 int32_t CameraStatusListenerManager::OnCameraStatusChanged(
-    const std::string& cameraId, const CameraStatus status, const std::string& bundleName)
+    const std::string& cameraId, const int32_t status, const std::string& bundleName)
 {
     MEDIA_INFO_LOG("OnCameraStatusChanged cameraId: %{public}s, status: %{public}d", cameraId.c_str(), status);
     auto cameraManager = GetCameraManager();
     CHECK_ERROR_RETURN_RET_LOG(cameraManager == nullptr, CAMERA_OK, "OnCameraStatusChanged CameraManager is nullptr");
 
     CameraStatusInfo cameraStatusInfo;
-    if (status == CAMERA_STATUS_APPEAR) {
+    if (status == static_cast<int32_t>(CameraStatus::CAMERA_STATUS_APPEAR)) {
         cameraManager->ClearCameraDeviceListCache();
         cameraManager->ClearCameraDeviceAbilitySupportMap();
     }
     sptr<CameraDevice> cameraInfo = cameraManager->GetCameraDeviceFromId(cameraId);
     cameraStatusInfo.cameraDevice = cameraInfo;
-    CHECK_EXECUTE(status == CAMERA_STATUS_DISAPPEAR, cameraManager->RemoveCameraDeviceFromCache(cameraId));
-    cameraStatusInfo.cameraStatus = status;
+    CHECK_EXECUTE(status == static_cast<int32_t>(CameraStatus::CAMERA_STATUS_DISAPPEAR),
+        cameraManager->RemoveCameraDeviceFromCache(cameraId));
+    cameraStatusInfo.cameraStatus = static_cast<CameraStatus>(status);
     cameraStatusInfo.bundleName = bundleName;
 
     CHECK_EXECUTE(!CheckCameraStatusValid(cameraInfo), return CAMERA_OK);
@@ -211,7 +212,8 @@ int32_t CameraStatusListenerManager::OnCameraStatusChanged(
     return CAMERA_OK;
 }
 
-int32_t CameraStatusListenerManager::OnFlashlightStatusChanged(const std::string& cameraId, const FlashStatus status)
+int32_t CameraStatusListenerManager::OnFlashlightStatusChanged(const std::string& cameraId,
+    const int32_t status)
 {
     MEDIA_INFO_LOG("cameraId: %{public}s, status: %{public}d", cameraId.c_str(), status);
     auto cameraManager = GetCameraManager();
@@ -219,8 +221,10 @@ int32_t CameraStatusListenerManager::OnFlashlightStatusChanged(const std::string
         cameraManager == nullptr, CAMERA_OK, "OnFlashlightStatusChanged CameraManager is nullptr");
     auto listenerManager = cameraManager->GetCameraStatusListenerManager();
     MEDIA_DEBUG_LOG("CameraStatusListenerManager listeners size: %{public}zu", listenerManager->GetListenerCount());
-    listenerManager->TriggerListener([&](auto listener) { listener->OnFlashlightStatusChanged(cameraId, status); });
-    listenerManager->CacheFlashStatus(cameraId, status);
+    listenerManager->TriggerListener([&](auto listener) {
+        listener->OnFlashlightStatusChanged(cameraId, static_cast<FlashStatus>(status));
+    });
+    listenerManager->CacheFlashStatus(cameraId, static_cast<FlashStatus>(status));
     return CAMERA_OK;
 }
 
@@ -2658,10 +2662,11 @@ int32_t CameraManager::UnSetTorchServiceCallback()
 
 int32_t CameraManager::SetFoldServiceCallback(sptr<IFoldServiceCallback>& callback)
 {
+    bool isInnerCallback = false;
     auto serviceProxy = GetServiceProxy();
     CHECK_ERROR_RETURN_RET_LOG(
         serviceProxy == nullptr, CAMERA_UNKNOWN_ERROR, "CameraManager::SetFoldServiceCallback serviceProxy is null");
-    int32_t retCode = serviceProxy->SetFoldStatusCallback(callback);
+    int32_t retCode = serviceProxy->SetFoldStatusCallback(callback, isInnerCallback);
     CHECK_ERROR_RETURN_RET_LOG(retCode != CAMERA_OK, retCode,
         "SetFoldServiceCallback Set service Callback failed, retCode: %{public}d", retCode);
     return CAMERA_OK;

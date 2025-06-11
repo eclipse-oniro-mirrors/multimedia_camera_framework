@@ -17,7 +17,6 @@
 #define OHOS_CAMERA_DPS_DEFERRED_EVENT_REPORT_H
 
 #include "basic_definitions.h"
-#include "deferred_processing_service_ipc_interface_code.h"
 
 namespace OHOS {
 namespace CameraStandard {

@@ -23,6 +23,7 @@
 #include "js_native_api_types.h"
 #include "istream_metadata.h"
 #include "napi/native_api.h"
+#include "camera_types.h"
 
 #ifdef NAPI_ASSERT
 #undef NAPI_ASSERT

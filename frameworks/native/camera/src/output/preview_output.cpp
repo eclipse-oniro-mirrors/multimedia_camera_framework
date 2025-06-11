@@ -32,7 +32,7 @@
 #include "camera_output_capability.h"
 #include "camera_rotation_api_utils.h"
 #include "camera_util.h"
-#include "hstream_repeat_callback_stub.h"
+#include "stream_repeat_callback_stub.h"
 #include "image_format.h"
 #include "istream_repeat.h"
 #include "istream_repeat_callback.h"
@@ -148,7 +148,7 @@ int32_t PreviewOutputListenerManager::OnSketchStatusChanged(SketchStatus status)
     return CAMERA_OK;
 }
 
-int32_t PreviewOutputListenerManager::OnDeferredVideoEnhancementInfo(CaptureEndedInfoExt captureEndedInfo)
+int32_t PreviewOutputListenerManager::OnDeferredVideoEnhancementInfo(const CaptureEndedInfoExt &captureEndedInfo)
 {
     MEDIA_INFO_LOG("PreviewOutput::OnDeferredVideoEnhancementInfo called");
     // empty impl

@@ -22,7 +22,6 @@
 #include "camera_metadata_info.h"
 #include "iconsumer_surface.h"
 #include "metadata_utils.h"
-#include "camera_service_ipc_interface_code.h"
 #include <fuzzer/FuzzedDataProvider.h>
 
 namespace {
@@ -67,7 +66,7 @@ namespace CameraStandard {
 namespace StreamMetadataStubFuzzer {
 
 bool g_hasPermission = false;
-sptr<HStreamMetadataStub> fuzz_{nullptr};
+sptr<StreamMetadataStub> fuzz_{nullptr};
 
 void CheckPermission()
 {
@@ -114,15 +113,15 @@ void Test_OnRemoteRequest(FuzzedDataProvider& fdp)
     uint32_t code;
     MessageParcel reply;
     MessageOption option;
-    std::vector<StreamMetadataInterfaceCode> streamMetadataInfo = {
-        CAMERA_STREAM_META_START,
-        CAMERA_STREAM_META_STOP,
-        CAMERA_STREAM_META_RELEASE,
-        CAMERA_STREAM_META_SET_CALLBACK,
-        CAMERA_STREAM_META_ENABLE_RESULTS,
-        CAMERA_STREAM_META_DISABLE_RESULTS,
-        CAMERA_STREAM_META_UNSET_CALLBACK,
-    };
+    std::vector<IStreamMetadataIpcCode> streamMetadataInfo = {
+            IStreamMetadataIpcCode::COMMAND_START,
+            IStreamMetadataIpcCode::COMMAND_STOP,
+            IStreamMetadataIpcCode::COMMAND_RELEASE,
+            IStreamMetadataIpcCode::COMMAND_SET_CALLBACK,
+            IStreamMetadataIpcCode::COMMAND_ENABLE_METADATA_TYPE,
+            IStreamMetadataIpcCode::COMMAND_DISABLE_METADATA_TYPE,
+            IStreamMetadataIpcCode::COMMAND_UN_SET_CALLBACK,
+        };
 
     code  = static_cast<uint32_t>(streamMetadataInfo[fdp.ConsumeIntegral<uint32_t>() % streamMetadataInfo.size()]);
     data.RewindRead(0);

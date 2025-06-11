@@ -16,26 +16,29 @@
 #ifndef HCAMERA_SERVICE_CALLBACK_STUB_FUZZER_H
 #define HCAMERA_SERVICE_CALLBACK_STUB_FUZZER_H
 
-#include "hcamera_service_callback_stub.h"
+#include "camera_service_callback_stub.h"
+#include "camera_mute_service_callback_stub.h"
+#include "torch_service_callback_stub.h"
+#include "fold_service_callback_stub.h"
 #include <memory>
 
 namespace OHOS {
 namespace CameraStandard {
 
-class HCameraServiceCallbackStubFuzz : public HCameraServiceCallbackStub {
+class HCameraServiceCallbackStubFuzz : public CameraServiceCallbackStub {
 public:
-    int32_t OnCameraStatusChanged(const std::string& cameraId, const CameraStatus status,
+    int32_t OnCameraStatusChanged(const std::string& cameraId, const int32_t status,
         const std::string& bundleName = "") override
     {
         return 0;
     }
-    int32_t OnFlashlightStatusChanged(const std::string& cameraId, const FlashStatus status) override
+    int32_t OnFlashlightStatusChanged(const std::string& cameraId, const int32_t status) override
     {
         return 0;
     }
 };
 
-class HCameraMuteServiceCallbackStubFuzz : public HCameraMuteServiceCallbackStub {
+class HCameraMuteServiceCallbackStubFuzz : public CameraMuteServiceCallbackStub {
 public:
     int32_t OnCameraMute(bool muteMode) override
     {
@@ -43,7 +46,7 @@ public:
     }
 };
 
-class HTorchServiceCallbackStubFuzz : public HTorchServiceCallbackStub {
+class HTorchServiceCallbackStubFuzz : public TorchServiceCallbackStub {
 public:
     int32_t OnTorchStatusChange(const TorchStatus status) override
     {
@@ -51,7 +54,7 @@ public:
     }
 };
 
-class HFoldServiceCallbackStubFuzz : public HFoldServiceCallbackStub {
+class HFoldServiceCallbackStubFuzz : public FoldServiceCallbackStub {
 public:
     int32_t OnFoldStatusChanged(const FoldStatus status) override
     {

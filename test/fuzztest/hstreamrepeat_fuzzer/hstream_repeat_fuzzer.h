@@ -16,15 +16,15 @@
 #ifndef HSTREAM_REPEAT_FUZZER_H
 #define HSTREAM_REPEAT_FUZZER_H
 
-#include "hstream_capture_stub.h"
+#include "stream_capture_stub.h"
 #include "hstream_repeat.h"
 #include "hcamera_device.h"
-#include "hstream_repeat_callback_stub.h"
+#include "stream_repeat_callback_stub.h"
 #include <fuzzer/FuzzedDataProvider.h>
 
 namespace OHOS {
 namespace CameraStandard {
-class HStreamRepeatCallbackStubDemo : public HStreamRepeatCallbackStub {
+class HStreamRepeatCallbackStubDemo : public StreamRepeatCallbackStub {
 public:
     int32_t OnFrameStarted() override
     {
@@ -42,7 +42,7 @@ public:
     {
         return 0;
     }
-    int32_t OnDeferredVideoEnhancementInfo(CaptureEndedInfoExt captureEndedInfo) override
+    int32_t OnDeferredVideoEnhancementInfo(const CaptureEndedInfoExt& captureEndedInfo) override
     {
         return 0;
     }

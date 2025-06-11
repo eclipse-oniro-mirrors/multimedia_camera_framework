@@ -16,7 +16,7 @@
 #ifndef STREAM_REPEAT_STUB_FUZZER_H
 #define STREAM_REPEAT_STUB_FUZZER_H
 
-#include "hstream_repeat_stub.h"
+#include "stream_repeat_stub.h"
 
 namespace OHOS {
 namespace CameraStandard {

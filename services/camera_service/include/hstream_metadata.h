@@ -18,16 +18,17 @@
 #define EXPORT_API __attribute__((visibility("default")))
 
 #include "camera_metadata_info.h"
-#include "hstream_metadata_stub.h"
+#include "stream_metadata_stub.h"
 #include "hstream_common.h"
 #include "v1_0/istream_operator.h"
+#include "icamera_ipc_checker.h"
 
 #include <refbase.h>
 #include <iostream>
 
 namespace OHOS {
 namespace CameraStandard {
-class EXPORT_API HStreamMetadata : public HStreamMetadataStub, public HStreamCommon {
+class EXPORT_API HStreamMetadata : public StreamMetadataStub, public HStreamCommon, public ICameraIpcChecker {
 public:
     HStreamMetadata(sptr<OHOS::IBufferProducer> producer, int32_t format, std::vector<int32_t> metadataTypes);
     ~HStreamMetadata();
@@ -39,17 +40,19 @@ public:
     int32_t Release() override;
     int32_t Start() override;
     int32_t Stop() override;
-    int32_t SetCallback(sptr<IStreamMetadataCallback>& callback) override;
+    int32_t SetCallback(const sptr<IStreamMetadataCallback>& callback) override;
     int32_t UnSetCallback() override;
-    int32_t EnableMetadataType(std::vector<int32_t> metadataTypes) override;
-    int32_t DisableMetadataType(std::vector<int32_t> metadataTypes) override;
+    int32_t EnableMetadataType(const std::vector<int32_t>& metadataTypes) override;
+    int32_t DisableMetadataType(const std::vector<int32_t>& metadataTypes) override;
     void DumpStreamInfo(CameraInfoDumper& infoDumper) override;
     int32_t OperatePermissionCheck(uint32_t interfaceCode) override;
     int32_t OnMetaResult(int32_t streamId, const std::vector<uint8_t>& result);
+    int32_t CallbackEnter([[maybe_unused]] uint32_t code) override;
+    int32_t CallbackExit([[maybe_unused]] uint32_t code, [[maybe_unused]] int32_t result) override;
 
 private:
     int32_t EnableOrDisableMetadataType(const std::vector<int32_t>& metadataTypes, const bool enable);
-    void removeMetadataType(std::vector<int32_t>& vec1, std::vector<int32_t>& vec2);
+    void removeMetadataType(const std::vector<int32_t>& vec1, std::vector<int32_t>& vec2);
     std::vector<int32_t> metadataObjectTypes_;
     std::mutex metadataTypeMutex_;
     std::atomic<bool> isStarted_ { false };

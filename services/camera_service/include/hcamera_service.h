@@ -37,7 +37,7 @@
 #include "display_manager.h"
 #include "hcamera_device.h"
 #include "hcamera_host_manager.h"
-#include "hcamera_service_stub.h"
+#include "camera_service_stub.h"
 #include "hcapture_session.h"
 #include "hstream_capture.h"
 #include "hstream_operator.h"
@@ -52,6 +52,7 @@
 #include "system_ability.h"
 #include "ideferred_photo_processing_session_callback.h"
 #include "ideferred_photo_processing_session.h"
+#include "input/i_standard_camera_listener.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -85,7 +86,7 @@ enum class CameraServiceStatus : int32_t {
 class CameraInfoDumper;
 
 class EXPORT_API HCameraService
-    : public SystemAbility, public HCameraServiceStub, public HCameraHostManager::StatusCallback,
+    : public SystemAbility, public CameraServiceStub, public HCameraHostManager::StatusCallback,
     public OHOS::Rosen::DisplayManager::IFoldStatusListener {
     DECLARE_SYSTEM_ABILITY(HCameraService);
 
@@ -98,15 +99,15 @@ public:
     int32_t GetCameras(vector<string>& cameraIds,
         vector<shared_ptr<OHOS::Camera::CameraMetadata>>& cameraAbilityList) override;
     int32_t GetCameraIds(std::vector<std::string>& cameraIds) override;
-    int32_t GetCameraAbility(std::string& cameraId,
+    int32_t GetCameraAbility(const std::string& cameraId,
         std::shared_ptr<OHOS::Camera::CameraMetadata>& cameraAbility) override;
-    int32_t CreateCameraDevice(string cameraId, sptr<ICameraDeviceService>& device) override;
+    int32_t CreateCameraDevice(const string& cameraId, sptr<ICameraDeviceService>& device) override;
     int32_t CreateCaptureSession(sptr<ICaptureSession>& session, int32_t opMode) override;
     int32_t CreateDeferredPhotoProcessingSession(int32_t userId,
-        sptr<DeferredProcessing::IDeferredPhotoProcessingSessionCallback>& callback,
+        const sptr<DeferredProcessing::IDeferredPhotoProcessingSessionCallback>& callback,
         sptr<DeferredProcessing::IDeferredPhotoProcessingSession>& session) override;
     int32_t CreateDeferredVideoProcessingSession(int32_t userId,
-        sptr<DeferredProcessing::IDeferredVideoProcessingSessionCallback>& callback,
+        const sptr<DeferredProcessing::IDeferredVideoProcessingSessionCallback>& callback,
         sptr<DeferredProcessing::IDeferredVideoProcessingSession>& session) override;
     int32_t CreatePhotoOutput(const sptr<OHOS::IBufferProducer>& producer, int32_t format, int32_t width,
         int32_t height, sptr<IStreamCapture>& photoOutput) override;
@@ -117,39 +118,41 @@ public:
     int32_t CreateDepthDataOutput(const sptr<OHOS::IBufferProducer>& producer, int32_t format, int32_t width,
         int32_t height, sptr<IStreamDepthData>& depthDataOutput) override;
     int32_t CreateMetadataOutput(const sptr<OHOS::IBufferProducer>& producer, int32_t format,
-        std::vector<int32_t> metadataTypes, sptr<IStreamMetadata>& metadataOutput) override;
+        const std::vector<int32_t>& metadataTypes, sptr<IStreamMetadata>& metadataOutput) override;
     int32_t CreateVideoOutput(const sptr<OHOS::IBufferProducer>& producer, int32_t format, int32_t width,
         int32_t height, sptr<IStreamRepeat>& videoOutput) override;
-    int32_t UnSetAllCallback(pid_t pid) override;
-    int32_t CloseCameraForDestory(pid_t pid) override;
-    int32_t SetCameraCallback(sptr<ICameraServiceCallback>& callback) override;
+    int32_t UnSetAllCallback(pid_t pid);
+    int32_t CloseCameraForDestory(pid_t pid);
+    int32_t SetCameraCallback(const sptr<ICameraServiceCallback>& callback) override;
     int32_t UnSetCameraCallback() override;
-    int32_t SetMuteCallback(sptr<ICameraMuteServiceCallback>& callback) override;
+    int32_t SetMuteCallback(const sptr<ICameraMuteServiceCallback>& callback) override;
     int32_t UnSetMuteCallback() override;
-    int32_t SetTorchCallback(sptr<ITorchServiceCallback>& callback) override;
+    int32_t SetTorchCallback(const sptr<ITorchServiceCallback>& callback) override;
     int32_t UnSetTorchCallback() override;
-    int32_t SetFoldStatusCallback(sptr<IFoldServiceCallback>& callback, bool isInnerCallback = false) override;
+    int32_t SetFoldStatusCallback(const sptr<IFoldServiceCallback>& callback, bool isInnerCallback) override;
     int32_t UnSetFoldStatusCallback() override;
     int32_t MuteCamera(bool muteMode) override;
     int32_t MuteCameraPersist(PolicyType policyType, bool isMute) override;
     int32_t PrelaunchCamera() override;
     int32_t ResetRssPriority() override;
-    int32_t PreSwitchCamera(const std::string cameraId) override;
-    int32_t SetPrelaunchConfig(string cameraId, RestoreParamTypeOhos restoreParamType, int activeTime,
-        EffectParam effectParam) override;
+    int32_t PreSwitchCamera(const std::string& cameraId) override;
+    int32_t SetPrelaunchConfig(const string& cameraId, RestoreParamTypeOhos restoreParamType, int activeTime,
+        const EffectParam& effectParam) override;
     int32_t IsTorchSupported(bool &isTorchSupported) override;
     int32_t IsCameraMuteSupported(bool& isCameraMuteSupported) override;
     int32_t IsCameraMuted(bool& muteMode) override;
     int32_t GetTorchStatus(int32_t &status) override;
     int32_t SetTorchLevel(float level) override;
-    int32_t AllowOpenByOHSide(std::string cameraId, int32_t state, bool &canOpenCamera) override;
-    int32_t NotifyCameraState(std::string cameraId, int32_t state) override;
-    int32_t SetPeerCallback(sptr<ICameraBroker>& callback) override;
+    int32_t AllowOpenByOHSide(const std::string& cameraId, int32_t state, bool &canOpenCamera) override;
+    int32_t NotifyCameraState(const std::string& cameraId, int32_t state) override;
+    int32_t SetPeerCallback(const sptr<ICameraBroker>& callback) override;
     int32_t UnsetPeerCallback() override;
     void OnDump() override;
     void OnStart() override;
     void OnStop() override;
     int32_t Dump(int fd, const vector<u16string>& args) override;
+    int DestroyStubObj() override;
+    int SetListenerObject(const sptr<IRemoteObject>& object) override;
 
     CameraServiceStatus GetServiceStatus();
     void SetServiceStatus(CameraServiceStatus);
@@ -170,9 +173,11 @@ public:
     void UnregisterFoldStatusListener();
     int32_t RequireMemorySize(int32_t memSize) override;
     int32_t GetIdforCameraConcurrentType(int32_t cameraPosition, std::string &cameraId) override;
-    int32_t GetConcurrentCameraAbility(std::string& cameraId,
+    int32_t GetConcurrentCameraAbility(const std::string& cameraId,
         std::shared_ptr<OHOS::Camera::CameraMetadata>& cameraAbility) override;
     int32_t CheckWhiteList(bool &isInWhiteList) override;
+    int32_t CallbackEnter([[maybe_unused]] uint32_t code) override;
+    int32_t CallbackExit([[maybe_unused]] uint32_t code, [[maybe_unused]] int32_t result) override;
 protected:
     explicit HCameraService(sptr<HCameraHostManager> cameraHostManager);
     void OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId) override;
@@ -187,6 +192,9 @@ private:
     int8_t ChooseFisrtBootFoldCamIdx(
         FoldStatus curFoldStatus, std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList);
     PressureStatus TransferTemperToPressure(int32_t temperLevel);
+    void ClearCameraListenerByPid(pid_t pid);
+    int DestroyStubForPid(pid_t pid);
+    void ClientDied(pid_t pid);
 #ifdef NOTIFICATION_ENABLE
     int32_t SetBeauty(int32_t beautyStatus);
 #endif
@@ -234,7 +242,7 @@ private:
     shared_ptr<CameraMetaInfo>GetCameraMetaInfo(std::string &cameraId,
         shared_ptr<OHOS::Camera::CameraMetadata>cameraAbility);
     void OnMute(bool muteMode);
-    void ExecutePidSetCallback(sptr<ICameraServiceCallback>& callback, std::vector<std::string> &cameraIds);
+    void ExecutePidSetCallback(const sptr<ICameraServiceCallback>& callback, std::vector<std::string> &cameraIds);
 
     void DumpCameraSummary(vector<string> cameraIds, CameraInfoDumper& infoDumper);
     void DumpCameraInfo(CameraInfoDumper& infoDumper, std::vector<std::string>& cameraIds,
@@ -287,6 +295,7 @@ private:
     map<uint32_t, sptr<IFoldServiceCallback>> foldServiceCallbacks_;
     map<uint32_t, sptr<ICameraMuteServiceCallback>> cameraMuteServiceCallbacks_;
     map<uint32_t, sptr<ICameraServiceCallback>> cameraServiceCallbacks_;
+    SafeMap<pid_t, sptr<IStandardCameraListener>> cameraListenerMap_;
 
     void CacheCameraStatus(const string& cameraId, std::shared_ptr<CameraStatusCallbacksInfo> info);
     std::shared_ptr<CameraStatusCallbacksInfo> GetCachedCameraStatus(const string& cameraId);

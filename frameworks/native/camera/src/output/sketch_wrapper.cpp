@@ -53,8 +53,11 @@ int32_t SketchWrapper::Init(
             dumpSceneFeaturesMode.Dump().c_str(), sketchEnableRatio_);
     }
     IStreamRepeat* repeatStream = static_cast<IStreamRepeat*>(hostStream.GetRefPtr());
-    return repeatStream->ForkSketchStreamRepeat(
-        sketchSize_.width, sketchSize_.height, sketchStream_, sketchEnableRatio_);
+    sptr<IRemoteObject> sketchSream = nullptr;
+    int32_t ret = repeatStream->ForkSketchStreamRepeat(
+        sketchSize_.width, sketchSize_.height, sketchSream, sketchEnableRatio_);
+    CHECK_EXECUTE(sketchSream != nullptr, sketchStream_ = iface_cast<IStreamRepeat>(sketchSream));
+    return ret;
 }
 
 int32_t SketchWrapper::AttachSketchSurface(sptr<Surface> sketchSurface)

@@ -26,7 +26,6 @@
 #include "accesstoken_kit.h"
 #include "camera_metadata_info.h"
 #include "metadata_utils.h"
-#include "camera_service_ipc_interface_code.h"
 #include "camera_device.h"
 #include "camera_manager.h"
 #include "ipc_skeleton.h"
@@ -36,7 +35,6 @@ namespace OHOS {
 namespace CameraStandard {
 using namespace OHOS::HDI::Camera::V1_0;
 static constexpr int32_t MIN_SIZE_NUM = 256;
-const size_t THRESHOLD = 10;
 const int32_t ITEMCOUNT = 10;
 const int32_t DATASIZE = 100;
 const int32_t PHOTO_WIDTH = 1280;
@@ -135,9 +133,6 @@ void HStreamRepeatFuzzer::HStreamRepeatFuzzTest3(FuzzedDataProvider& fdp)
 #endif
     sptr<IStreamCapture> photoOutput = nullptr;
     fuzz_->AttachMetaSurface(producer, fdp.ConsumeIntegral<int32_t>());
-    std::shared_ptr<HStreamRepeatCallbackStub> callback = std::make_shared<HStreamRepeatCallbackStubDemo>();
-    MessageParcel data;
-    callback->HandleOnDeferredVideoEnhancementInfo(data);
 }
 
 void Test(uint8_t* data, size_t size)

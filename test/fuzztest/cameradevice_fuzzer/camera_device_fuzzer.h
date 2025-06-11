@@ -19,7 +19,7 @@
 #include <iostream>
 #include "icamera_device_service_callback.h"
 #include "v1_3/icamera_device.h"
-#include "<fuzzer/FuzzedDataProvider.h>"
+#include "fuzzer/FuzzedDataProvider.h"
 namespace OHOS {
 namespace CameraStandard {
 

@@ -1,0 +1,87 @@
+/*
+ * Copyright (c) 2025 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package OHOS.CameraStandard;
+import CameraTypes;
+import ICameraDeviceService;
+import ICameraMuteServiceCallback;
+import ICaptureSession;
+import IFoldServiceCallback;
+import ITorchServiceCallback;
+import ICameraServiceCallback;
+import IStreamCapture;
+import IStreamRepeat;
+import IStreamMetadata;
+import IStreamDepthData;
+import ../../deferred_processing_service/idls/IDeferredPhotoProcessingSession;
+import ../../deferred_processing_service/idls/IDeferredVideoProcessingSession;
+
+sequenceable OHOS.IRemoteObject;
+sequenceable CameraMetadataInfo..OHOS.Camera.CameraMetadata;
+
+interface OHOS.IBufferProducer;
+interface ICameraBroker;
+interface OHOS.CameraStandard.DeferredProcessing.IDeferredVideoProcessingSessionCallback;
+interface OHOS.CameraStandard.DeferredProcessing.IDeferredPhotoProcessingSessionCallback;
+option_stub_hooks on;
+
+interface ICameraService{
+  [ipccode 0] void CreateCameraDevice([in] String cameraId, [out] ICameraDeviceService device);
+  [ipccode 1] void SetCameraCallback([in] ICameraServiceCallback callbackFunc);
+  [ipccode 2] void SetMuteCallback([in] ICameraMuteServiceCallback callbackFunc);
+  [ipccode 3] void SetTorchCallback([in] ITorchServiceCallback callbackFunc);
+  [ipccode 4] void GetCameras([out] List<String> cameraIds, [out] List<sharedptr<CameraMetadata>> cameraAbilityList);
+  [ipccode 5] void CreateCaptureSession([out] ICaptureSession session, [in] int operationMode);
+  [ipccode 6] void CreatePhotoOutput([in] IBufferProducer producer, [in] int format, [in] int width, [in] int height, [out] IStreamCapture photoOutput);
+  [ipccode 7] void CreatePreviewOutput([in] IBufferProducer producer, [in] int format, [in] int width, [in] int height, [out] IStreamRepeat previewOutput);
+  [ipccode 8] void CreateDeferredPreviewOutput([in] int format, [in] int width, [in] int height, [out] IStreamRepeat previewOutput);
+  [ipccode 9] void CreateVideoOutput([in] IBufferProducer producer, [in] int format, [in] int width, [in] int height, [out] IStreamRepeat videoOutput);
+  [ipccode 10] void SetListenerObject([in] IRemoteObject object);
+  [ipccode 11] void CreateMetadataOutput([in] IBufferProducer producer, [in] int format, [in] List<int> metadataTypes, [out] IStreamMetadata metadataOutput);
+  [ipccode 12] void MuteCamera([in] boolean muteMode);
+  [ipccode 13] void IsCameraMuted([inout] boolean muteMode);
+  [ipccode 14] void IsTorchSupported([out] boolean isTorchSupported);
+  [ipccode 15] void IsCameraMuteSupported([out] boolean isCameraMuteSupported);
+  [ipccode 16] void PrelaunchCamera();
+  [ipccode 17] void ResetRssPriority();
+  [ipccode 18] void SetPrelaunchConfig([in] String cameraId, [in] RestoreParamTypeOhos restoreParamType, [in] int activeTime, [in] EffectParam effectParam);
+  [ipccode 19] void SetTorchLevel([in] float level);
+  [ipccode 20] void PreSwitchCamera([in] String cameraId);
+  [ipccode 21] void CreateDeferredPhotoProcessingSession([in] int userId, [in] IDeferredPhotoProcessingSessionCallback callbackFunc, [out] IDeferredPhotoProcessingSession session);
+  [ipccode 22] void GetCameraIds([out] List<String> cameraIds);
+  [ipccode 23] void GetCameraAbility([in] String cameraId, [out] sharedptr<CameraMetadata> cameraAbility);
+  [ipccode 24] void DestroyStubObj();
+  [ipccode 25] void MuteCameraPersist([in] PolicyType policyType, [in] boolean isMute);
+  [ipccode 26] void ProxyForFreeze([in] Set<int> pidList, [in] boolean isProxy);
+  [ipccode 27] void ResetAllFreezeStatus();
+  [ipccode 28] void GetDmDeviceInfo([out] List<String> deviceInfos);
+  [ipccode 29] void SetFoldStatusCallback([in] IFoldServiceCallback callbackFunc, [in] boolean isInnerCallback);
+  [ipccode 30] void GetCameraOutputStatus([in] int pid, [out] int status);
+  [ipccode 31] void CreateDepthDataOutput([in] IBufferProducer producer, [in] int format, [in] int width, [in] int height, [out] IStreamDepthData depthDataOutput);
+  [ipccode 32] void CreateDeferredVideoProcessingSession([in] int userId, [in] IDeferredVideoProcessingSessionCallback callbackFunc, [out] IDeferredVideoProcessingSession session);
+  [ipccode 33] void RequireMemorySize([in] int memSize);
+  [ipccode 34] void GetIdforCameraConcurrentType([in] int cameraPosition, [out] String cameraId);
+  [ipccode 35] void GetConcurrentCameraAbility([in] String cameraId, [out] sharedptr<CameraMetadata> cameraAbility);
+  [ipccode 36] void GetTorchStatus([out] int status);
+  [ipccode 37] void UnSetCameraCallback();
+  [ipccode 38] void UnSetMuteCallback();
+  [ipccode 39] void UnSetTorchCallback();
+  [ipccode 40] void UnSetFoldStatusCallback();
+  [ipccode 41] void CheckWhiteList([inout] boolean isInWhiteList);
+  [ipccode 101] void AllowOpenByOHSide([in] String cameraId, [in] int state, [inout] boolean canOpenCamera);
+  [ipccode 102, oneway] void NotifyCameraState([in] String cameraId, [in] int state);
+  [ipccode 104] void SetPeerCallback([in] ICameraBroker callbackFunc);
+  [ipccode 105] void UnsetPeerCallback();
+}

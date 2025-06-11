@@ -16,7 +16,7 @@
 #ifndef CAMERA_INPUT_FUZZER_H
 #define CAMERA_INPUT_FUZZER_H
 
-#include "hcamera_device_stub.h"
+#include "camera_device_service_stub.h"
 #include "hcamera_device.h"
 #include <fuzzer/FuzzedDataProvider.h>
 

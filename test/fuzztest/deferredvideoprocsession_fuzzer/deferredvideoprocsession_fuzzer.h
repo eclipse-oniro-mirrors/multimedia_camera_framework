@@ -16,7 +16,7 @@
 #ifndef DEFERRED_VIDEO_PROC_SESSION_FUZZER_H
 #define DEFERRED_VIDEO_PROC_SESSION_FUZZER_H
 
-#include "hstream_repeat_stub.h"
+#include "stream_repeat_stub.h"
 #include "deferred_video_proc_session.h"
 #include "token_setproc.h"
 #include "iservice_registry.h"

@@ -23,6 +23,7 @@
 #include "camera_util.h"
 #include "surface_buffer.h"
 #include "icapture_session.h"
+#include "ability/camera_ability_const.h"
 
 namespace OHOS {
 namespace CameraStandard {

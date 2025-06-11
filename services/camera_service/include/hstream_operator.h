@@ -30,7 +30,8 @@
 #include "camera_util.h"
 #include "fixed_size_list.h"
 #include "hcamera_device.h"
-#include "hcapture_session_stub.h"
+#include "capture_session_stub.h"
+#include "session/capture_scene_const.h"
 #include "hstream_metadata.h"
 #include "hstream_repeat.h"
 #include "icapture_session.h"
@@ -165,9 +166,9 @@ public:
     int32_t GetCurrentStreamInfos(std::vector<StreamInfo_V1_1>& streamInfos);
     std::list<sptr<HStreamCommon>> GetAllStreams();
     int32_t EnableMovingPhotoMirror(bool isMirror, bool isConfig);
-    int32_t CreateMediaLibrary(sptr<CameraPhotoProxy>& photoProxy, std::string& uri, int32_t& cameraShotType,
+    int32_t CreateMediaLibrary(const sptr<CameraPhotoProxy>& photoProxy, std::string& uri, int32_t& cameraShotType,
         std::string& burstKey, int64_t timestamp);
-    int32_t CreateMediaLibrary(std::shared_ptr<PictureIntf> picture, sptr<CameraPhotoProxy> &photoProxy,
+    int32_t CreateMediaLibrary(std::shared_ptr<PictureIntf> picture, const sptr<CameraPhotoProxy> &photoProxy,
         std::string &uri, int32_t &cameraShotType, std::string& burstKey, int64_t timestamp);
     void SetCameraPhotoProxyInfo(sptr<CameraServerPhotoProxy> cameraPhotoProxy, int32_t &cameraShotType,
         bool &isBursting, std::string &burstKey);
@@ -178,7 +179,7 @@ public:
     void StartMovingPhotoEncode(int32_t rotation, uint64_t timestamp, int32_t format, int32_t captureId);
     void StartRecord(uint64_t timestamp, int32_t rotation, int32_t captureId);
     void GetOutputStatus(int32_t &status);
-    int32_t SetPreviewRotation(std::string &deviceClass);
+    int32_t SetPreviewRotation(const std::string &deviceClass);
     void ReleaseStreams();
     void StopMovingPhoto();
     int32_t GetActiveColorSpace(ColorSpace& colorSpace);

@@ -20,8 +20,7 @@
 #include "system_ability_definition.h"
 #include "iservice_registry.h"
 #include "gmock/gmock.h"
-#include "hstream_capture_callback_stub.h"
-#include "camera_service_ipc_interface_code.h"
+#include "stream_capture_callback_stub.h"
 
 using namespace testing::ext;
 using ::testing::Return;
@@ -120,7 +119,7 @@ public:
     }
 };
 
-class MockHStreamCaptureCallbackStub : public HStreamCaptureCallbackStub {
+class MockHStreamCaptureCallbackStub : public StreamCaptureCallbackStub {
 public:
     MOCK_METHOD1(OnCaptureStarted, int32_t(int32_t captureId));
     MOCK_METHOD2(OnCaptureStarted, int32_t(int32_t captureId, uint32_t exposureTime));
@@ -1478,17 +1477,18 @@ HWTEST_F(HStreamCaptureUnitTest, camera_fwcoverage_unittest_029, TestSize.Level1
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test OnRemoteRequest for switch of CAMERA_STREAM_CAPTURE_ON_CAPTURE_STARTED_V1_2
+ * CaseDescription: Test OnRemoteRequest for switch of COMMAND_ON_CAPTURE_STARTED
  */
 HWTEST_F(HStreamCaptureUnitTest, camera_fwcoverage_unittest_030, TestSize.Level1)
 {
     MockHStreamCaptureCallbackStub stub;
     MessageParcel data;
     data.WriteInterfaceToken(stub.GetDescriptor());
-    data.RewindRead(0);
+    data.WriteInt32(0);
     MessageParcel reply;
     MessageOption option;
-    uint32_t code = StreamCaptureCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_CAPTURE_STARTED_V1_2;
+    uint32_t code =
+    static_cast<uint32_t>(IStreamCaptureCallbackIpcCode::COMMAND_ON_CAPTURE_STARTED_IN_INT_IN_UNSIGNED_INT);
     EXPECT_CALL(stub, OnCaptureStarted(_, _))
         .WillOnce(Return(0));
     int errCode = stub.OnRemoteRequest(code, data, reply, option);
@@ -1501,22 +1501,22 @@ HWTEST_F(HStreamCaptureUnitTest, camera_fwcoverage_unittest_030, TestSize.Level1
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test OnRemoteRequest for switch of CAMERA_STREAM_CAPTURE_ON_CAPTURE_STARTED_V1_2
+ * CaseDescription: Test OnRemoteRequest for switch of COMMAND_ON_CAPTURE_ENDED
  */
 HWTEST_F(HStreamCaptureUnitTest, camera_fwcoverage_unittest_031, TestSize.Level1)
 {
     MockHStreamCaptureCallbackStub stub;
     MessageParcel data;
     data.WriteInterfaceToken(stub.GetDescriptor());
-    data.RewindRead(0);
+    data.WriteInt32(0);
     MessageParcel reply;
     MessageOption option;
 
-    uint32_t code = StreamCaptureCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_CAPTURE_ENDED;
+    uint32_t code = static_cast<uint32_t>(IStreamCaptureCallbackIpcCode::COMMAND_ON_CAPTURE_ENDED);
     EXPECT_CALL(stub, OnCaptureEnded(_, _))
-        .WillOnce(Return(1));
+        .WillOnce(Return(0));
     int errCode = stub.OnRemoteRequest(code, data, reply, option);
-    EXPECT_EQ(errCode, 1);
+    EXPECT_EQ(errCode, 0);
 }
 
 /*
@@ -1525,22 +1525,22 @@ HWTEST_F(HStreamCaptureUnitTest, camera_fwcoverage_unittest_031, TestSize.Level1
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test OnRemoteRequest for switch of CAMERA_STREAM_CAPTURE_ON_CAPTURE_STARTED_V1_2
+ * CaseDescription: Test OnRemoteRequest for switch of COMMAND_ON_CAPTURE_ERROR
  */
 HWTEST_F(HStreamCaptureUnitTest, camera_fwcoverage_unittest_032, TestSize.Level1)
 {
     MockHStreamCaptureCallbackStub stub;
     MessageParcel data;
     data.WriteInterfaceToken(stub.GetDescriptor());
-    data.RewindRead(0);
+    data.WriteInt32(0);
     MessageParcel reply;
     MessageOption option;
 
-    uint32_t code = StreamCaptureCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_CAPTURE_ERROR;
+    uint32_t code = static_cast<uint32_t>(IStreamCaptureCallbackIpcCode::COMMAND_ON_CAPTURE_ERROR);
     EXPECT_CALL(stub, OnCaptureError(_, _))
-        .WillOnce(Return(2));
+        .WillOnce(Return(0));
     int errCode = stub.OnRemoteRequest(code, data, reply, option);
-    EXPECT_EQ(errCode, 2);
+    EXPECT_EQ(errCode, 0);
 }
 
 /*
@@ -1549,7 +1549,7 @@ HWTEST_F(HStreamCaptureUnitTest, camera_fwcoverage_unittest_032, TestSize.Level1
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test OnRemoteRequest for switch of CAMERA_STREAM_CAPTURE_ON_CAPTURE_STARTED
+ * CaseDescription: Test OnRemoteRequest for switch of COMMAND_ON_CAPTURE_STARTED
  */
 HWTEST_F(HStreamCaptureUnitTest, camera_fwcoverage_unittest_033, TestSize.Level1)
 {
@@ -1560,7 +1560,7 @@ HWTEST_F(HStreamCaptureUnitTest, camera_fwcoverage_unittest_033, TestSize.Level1
     MessageParcel reply;
     MessageOption option;
  
-    uint32_t code = StreamCaptureCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_CAPTURE_STARTED;
+    uint32_t code = static_cast<uint32_t>(IStreamCaptureCallbackIpcCode::COMMAND_ON_CAPTURE_STARTED);
     EXPECT_CALL(stub, OnCaptureStarted(_))
         .WillOnce(Return(0));
     int errCode = stub.OnRemoteRequest(code, data, reply, option);
@@ -1580,11 +1580,11 @@ HWTEST_F(HStreamCaptureUnitTest, camera_fwcoverage_unittest_034, TestSize.Level1
     MockHStreamCaptureCallbackStub stub;
     MessageParcel data;
     data.WriteInterfaceToken(stub.GetDescriptor());
-    data.RewindRead(0);
+    data.WriteInt32(0);
     MessageParcel reply;
     MessageOption option;
  
-    uint32_t code = StreamCaptureCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_FRAME_SHUTTER;
+    uint32_t code = static_cast<uint32_t>(IStreamCaptureCallbackIpcCode::COMMAND_ON_FRAME_SHUTTER);
     EXPECT_CALL(stub, OnFrameShutter(_, _))
         .WillOnce(Return(0));
     int errCode = stub.OnRemoteRequest(code, data, reply, option);
@@ -1597,7 +1597,7 @@ HWTEST_F(HStreamCaptureUnitTest, camera_fwcoverage_unittest_034, TestSize.Level1
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test OnRemoteRequest for switch of CAMERA_STREAM_CAPTURE_ON_FRAME_SHUTTER_END
+ * CaseDescription: Test OnRemoteRequest for switch of COMMAND_ON_FRAME_SHUTTER_END
  */
 HWTEST_F(HStreamCaptureUnitTest, camera_fwcoverage_unittest_035, TestSize.Level1)
 {
@@ -1608,7 +1608,7 @@ HWTEST_F(HStreamCaptureUnitTest, camera_fwcoverage_unittest_035, TestSize.Level1
     MessageParcel reply;
     MessageOption option;
  
-    uint32_t code = StreamCaptureCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_FRAME_SHUTTER_END;
+    uint32_t code = static_cast<uint32_t>(IStreamCaptureCallbackIpcCode::COMMAND_ON_FRAME_SHUTTER_END);
     EXPECT_CALL(stub, OnFrameShutterEnd(_, _))
         .WillOnce(Return(0));
     int errCode = stub.OnRemoteRequest(code, data, reply, option);
@@ -1621,7 +1621,7 @@ HWTEST_F(HStreamCaptureUnitTest, camera_fwcoverage_unittest_035, TestSize.Level1
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test OnRemoteRequest for switch of CAMERA_STREAM_CAPTURE_ON_CAPTURE_READY
+ * CaseDescription: Test OnRemoteRequest for switch of COMMAND_ON_CAPTURE_READY
  */
 HWTEST_F(HStreamCaptureUnitTest, camera_fwcoverage_unittest_036, TestSize.Level1)
 {
@@ -1632,7 +1632,7 @@ HWTEST_F(HStreamCaptureUnitTest, camera_fwcoverage_unittest_036, TestSize.Level1
     MessageParcel reply;
     MessageOption option;
  
-    uint32_t code = StreamCaptureCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_CAPTURE_READY;
+    uint32_t code = static_cast<uint32_t>(IStreamCaptureCallbackIpcCode::COMMAND_ON_CAPTURE_READY);
     EXPECT_CALL(stub, OnCaptureReady(_, _))
         .WillOnce(Return(0));
     int errCode = stub.OnRemoteRequest(code, data, reply, option);
@@ -1645,7 +1645,7 @@ HWTEST_F(HStreamCaptureUnitTest, camera_fwcoverage_unittest_036, TestSize.Level1
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test OnRemoteRequest for switch of CAMERA_STREAM_CAPTURE_ON_OFFLINE_DELIVERY_FINISHED
+ * CaseDescription: Test OnRemoteRequest for switch of COMMAND_ON_OFFLINE_DELIVERY_FINISHED
  */
 HWTEST_F(HStreamCaptureUnitTest, camera_fwcoverage_unittest_037, TestSize.Level1)
 {
@@ -1656,7 +1656,7 @@ HWTEST_F(HStreamCaptureUnitTest, camera_fwcoverage_unittest_037, TestSize.Level1
     MessageParcel reply;
     MessageOption option;
     
-    uint32_t code = StreamCaptureCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_OFFLINE_DELIVERY_FINISHED;
+    uint32_t code = static_cast<uint32_t>(IStreamCaptureCallbackIpcCode::COMMAND_ON_OFFLINE_DELIVERY_FINISHED);
     EXPECT_CALL(stub, OnOfflineDeliveryFinished(_))
         .WillOnce(Return(0));
     int errCode = stub.OnRemoteRequest(code, data, reply, option);

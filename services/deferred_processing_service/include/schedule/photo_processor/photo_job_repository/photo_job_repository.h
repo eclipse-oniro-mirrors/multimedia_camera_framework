@@ -20,10 +20,10 @@
 
 #include "deferred_photo_job.h"
 #include "dps_metadata_info.h"
-#include "deferred_processing_service_ipc_interface_code.h"
 #include "enable_shared_create.h"
 #include "istate_change_listener.h"
 #include "photo_job_queue.h"
+#include "ideferred_photo_processing_session.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -78,7 +78,7 @@ protected:
     explicit PhotoJobRepository(const int32_t userId);
 
 private:
-    void ReportEvent(const DeferredPhotoJobPtr& jobPtr, DeferredProcessingServiceInterfaceCode event);
+    void ReportEvent(const DeferredPhotoJobPtr& jobPtr, IDeferredPhotoProcessingSessionIpcCode event);
 
     const int32_t userId_;
     std::unique_ptr<PhotoJobQueue> offlineJobQueue_ {nullptr};

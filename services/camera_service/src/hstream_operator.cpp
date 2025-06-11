@@ -40,7 +40,6 @@
 #include "camera_log.h"
 #include "camera_report_uitls.h"
 #include "camera_server_photo_proxy.h"
-#include "camera_service_ipc_interface_code.h"
 #include "camera_timer.h"
 #include "camera_util.h"
 #include "datetime_ex.h"
@@ -249,7 +248,7 @@ void HStreamOperator::UnRegisterDisplayListener(sptr<HStreamRepeat> repeatStream
     CHECK_EXECUTE(displayListener_, displayListener_->RemoveHstreamRepeatForListener(repeatStream));
 }
 
-int32_t HStreamOperator::SetPreviewRotation(std::string &deviceClass)
+int32_t HStreamOperator::SetPreviewRotation(const std::string &deviceClass)
 {
     enableStreamRotate_ = true;
     deviceClass_ = deviceClass;
@@ -1285,7 +1284,7 @@ void HStreamOperator::ConfigPayload(uint32_t pid, uint32_t tid, const char *bund
         strPid.c_str(), strTid.c_str(), strQos.c_str());
 }
 
-int32_t HStreamOperator::CreateMediaLibrary(sptr<CameraPhotoProxy>& photoProxy, std::string& uri,
+int32_t HStreamOperator::CreateMediaLibrary(const sptr<CameraPhotoProxy>& photoProxy, std::string& uri,
     int32_t& cameraShotType, std::string& burstKey, int64_t timestamp)
 {
     CAMERA_SYNC_TRACE;
@@ -1379,8 +1378,9 @@ std::shared_ptr<PhotoAssetIntf> HStreamOperator::ProcessPhotoProxy(int32_t captu
     return photoAssetProxy;
 }
 
-int32_t HStreamOperator::CreateMediaLibrary(std::shared_ptr<PictureIntf> picture, sptr<CameraPhotoProxy>& photoProxy,
-    std::string& uri, int32_t& cameraShotType, std::string& burstKey, int64_t timestamp)
+int32_t HStreamOperator::CreateMediaLibrary(std::shared_ptr<PictureIntf> picture,
+    const sptr<CameraPhotoProxy>& photoProxy, std::string& uri, int32_t& cameraShotType,
+    std::string& burstKey, int64_t timestamp)
 {
     CAMERA_SYNC_TRACE;
     const int MAX_RETRIES = 7;

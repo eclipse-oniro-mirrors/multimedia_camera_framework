@@ -38,7 +38,6 @@ static constexpr int32_t TWO_X_EXIT_TELE_ZOOM_RANGE = 2;
 static constexpr int32_t TELE_CAMERA_ZOOM_RANGE = 3;
 static constexpr int32_t MIN_SIZE_NUM = 256;
 static constexpr int32_t NUM_1 = 1;
-const size_t THRESHOLD = 10;
 const int NUM_10 = 10;
 const int NUM_100 = 100;
 
@@ -66,11 +65,11 @@ void HCaptureSessionFuzzer::HCaptureSessionFuzzTest1(FuzzedDataProvider& fdp)
     fuzz_->DumpCameraSessionSummary(infoDumper);
     fuzz_->OperatePermissionCheck(fdp.ConsumeIntegral<uint32_t>());
     fuzz_->EnableMovingPhotoMirror(fdp.ConsumeBool(), fdp.ConsumeBool());
-    ColorSpace getColorSpace;
+    int32_t getColorSpace;
     fuzz_->GetActiveColorSpace(getColorSpace);
     constexpr int32_t executionModeCount = static_cast<int32_t>(ColorSpace::P3_PQ_LIMIT) + NUM_1;
     ColorSpace colorSpace = static_cast<ColorSpace>(fdp.ConsumeIntegral<uint8_t>() % executionModeCount);
-    fuzz_->SetColorSpace(colorSpace, fdp.ConsumeBool());
+    fuzz_->SetColorSpace(static_cast<int32_t>(colorSpace), fdp.ConsumeBool());
     fuzz_->GetopMode();
     std::vector<StreamInfo_V1_1> streamInfos;
     fuzz_->GetCurrentStreamInfos(streamInfos);
