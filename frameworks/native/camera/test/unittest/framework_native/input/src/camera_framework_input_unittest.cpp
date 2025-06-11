@@ -839,5 +839,109 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_024, TestSize
     ASSERT_NE(input, nullptr);
     input->ControlAuxiliary(AuxiliaryType::CONTRACTLENS, AuxiliaryStatus::AUXILIARY_ON);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test cameraInput
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test cameraInput of OnResult abnormal branches
+ */
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_025, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> cameraInput = (sptr<CameraInput> &)input;
+
+    std::shared_ptr<CameraDeviceServiceCallback> cameraDeviceServiceCallback_test =
+        std::make_shared<CameraDeviceServiceCallback>();
+    EXPECT_NE(cameraDeviceServiceCallback_test, nullptr);
+    cameraInput->cameraObj_ = nullptr;
+    cameraDeviceServiceCallback_test->camInput_ = cameraInput;
+    const std::shared_ptr<OHOS::Camera::CameraMetadata> result;
+    auto res = cameraDeviceServiceCallback_test->OnResult(0, result);
+    EXPECT_EQ(res, CAMERA_INVALID_ARG);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameraInput
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test cameraInput of InitCameraInput
+ */
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_026, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> cameraInput = (sptr<CameraInput> &)input;
+    cameraInput->InitCameraInput();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameraInput
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test cameraInput of closeDelayed
+ */
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_027, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> cameraInput = (sptr<CameraInput> &)input;
+    cameraInput->cameraObj_ = nullptr;
+    int32_t delayTime = 1;
+    int32_t res = cameraInput->closeDelayed(delayTime);
+    EXPECT_EQ(res, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameraInput
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test cameraInput of SetInputUsedAsPosition abnormal branches
+ */
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_028, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> cameraInput = (sptr<CameraInput> &)input;
+    cameraInput->positionMapping = {};
+    CameraPosition usedAsPosition = CameraPosition::CAMERA_POSITION_UNSPECIFIED;
+    cameraInput->SetInputUsedAsPosition(usedAsPosition);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameraInput
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test cameraInput of SetInputUsedAsPosition abnormal branches
+ */
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_029, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> cameraInput = (sptr<CameraInput> &)input;
+    cameraInput->cameraObj_ = cameras[0];
+    cameraInput->RecoveryOldDevice();
+}
 }
 }

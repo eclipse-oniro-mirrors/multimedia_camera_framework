@@ -16,11 +16,14 @@
 #include "camera_framework_manager_unittest.h"
 #include "gtest/gtest.h"
 #include <cstdint>
+#include <memory>
 #include <vector>
 #include "access_token.h"
 #include "accesstoken_kit.h"
 #include "camera_device.h"
 #include "camera_log.h"
+#include "camera_manager.h"
+#include "camera_metadata_operator.h"
 #include "camera_util.h"
 #include "gmock/gmock.h"
 #include "hap_token_info.h"
@@ -66,6 +69,30 @@ void CameraFrameWorkManagerUnit::SetUp()
 void CameraFrameWorkManagerUnit::TearDown()
 {
     cameraManager_ = nullptr;
+}
+
+bool CameraManagerTest::ConvertMetaToFwkMode(const HDI::Camera::V1_3::OperationMode opMode, SceneMode &scMode)
+{
+    auto it = g_metaToFwSupportedMode_.find(opMode);
+    if (it != g_metaToFwSupportedMode_.end()) {
+        scMode = it->second;
+        MEDIA_DEBUG_LOG("ConvertMetaToFwkMode OperationMode = %{public}d to SceneMode %{public}d", opMode, scMode);
+        return true;
+    }
+    MEDIA_ERR_LOG("ConvertMetaToFwkMode OperationMode = %{public}d err", opMode);
+    return false;
+}
+
+bool CameraManagerTest::ConvertFwkToMetaMode(const SceneMode scMode, HDI::Camera::V1_3::OperationMode &opMode)
+{
+        auto it = g_fwToMetaSupportedMode_.find(scMode);
+    if (it != g_fwToMetaSupportedMode_.end()) {
+        opMode = it->second;
+        MEDIA_DEBUG_LOG("ConvertFwkToMetaMode SceneMode %{public}d to OperationMode = %{public}d", scMode, opMode);
+        return true;
+    }
+    MEDIA_ERR_LOG("ConvertFwkToMetaMode SceneMode = %{public}d err", scMode);
+    return false;
 }
 
 void CameraFrameWorkManagerUnit::NativeAuthorization()
@@ -1662,6 +1689,576 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_069, Test
         return manager->ResetRssPriority();
     }();
     EXPECT_EQ(ret, CameraErrorCode::SERVICE_FATL_ERROR);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test UnregisterFoldListener and UnregisterCameraMuteListener
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test UnregisterFoldListener and UnregisterCameraMuteListener for abnormal branch
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_070, TestSize.Level0)
+{
+    SceneMode scMode = SceneMode::NORMAL;
+    HDI::Camera::V1_3::OperationMode opMode;
+    sptr<CameraManagerTest> cameraManager =
+        new CameraManagerTest();
+    bool res = cameraManager->ConvertFwkToMetaMode(scMode, opMode);
+    EXPECT_EQ(res, true);
+    EXPECT_EQ(opMode, HDI::Camera::V1_3::OperationMode::NORMAL);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test UnregisterFoldListener and UnregisterCameraMuteListener
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test UnregisterFoldListener and UnregisterCameraMuteListener for abnormal branch
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_071, TestSize.Level0)
+{
+    SceneMode scMode;
+    HDI::Camera::V1_3::OperationMode opMode = HDI::Camera::V1_3::OperationMode::NORMAL;
+    sptr<CameraManagerTest> cameraManager =
+        new CameraManagerTest();
+    bool res = cameraManager->ConvertMetaToFwkMode(opMode, scMode);
+    EXPECT_EQ(res, true);
+    EXPECT_EQ(scMode, SceneMode::NORMAL);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CameraManager with OnCameraStatusChanged
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OnCameraStatusChanged  abnormal branches
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_072, TestSize.Level0)
+{
+    auto listenerManager = cameraManager_->GetCameraStatusListenerManager();
+    std::string cameraId;
+    CameraStatus status = CAMERA_STATUS_APPEAR;
+    std::string bundleName;
+    listenerManager->ClearListeners();
+    auto ret = listenerManager->OnCameraStatusChanged(cameraId, status, bundleName);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    cameraId = "device/0";
+    std::shared_ptr<TestCameraMngerCallback> setCallback = std::make_shared<TestCameraMngerCallback>("MgrCallback");
+    cameraManager_->RegisterCameraStatusCallback(setCallback);
+    ret = listenerManager->OnCameraStatusChanged(cameraId, status, bundleName);
+    EXPECT_EQ(ret, CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CameraManager with CreateCaptureSessionImpl
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CreateCaptureSessionImpl for ConvertFwkToMetaMode
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_073, TestSize.Level0)
+{
+    sptr<ICaptureSession> session = nullptr;
+    OperationMode opMode = OperationMode::NORMAL;
+    auto serviceProxy = cameraManager_->GetServiceProxy();
+    serviceProxy->CreateCaptureSession(session, opMode);
+    EXPECT_NE(session, nullptr);
+
+    SceneMode mode = TIMELAPSE_PHOTO;
+    EXPECT_NE(cameraManager_->CreateCaptureSessionImpl(mode, session), nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CameraManager with CreateDepthDataOutput
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CreateDepthDataOutput which two parameter for abnormal branches
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_074, TestSize.Level0)
+{
+    EXPECT_NE(cameraManager_->GetServiceProxy(), nullptr);
+    sptr<DepthDataOutput> depthDataOutput = nullptr;
+
+    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
+    ASSERT_NE(surface, nullptr);
+    sptr<IBufferProducer> surfaceProducer = surface->GetProducer();
+    EXPECT_NE(surfaceProducer, nullptr);
+
+    DepthDataAccuracy dataAccuracy = DEPTH_DATA_ACCURACY_INVALID;
+    Size size = { 100, 10 };
+
+    CameraFormat format = CAMERA_FORMAT_YCBCR_420_888;
+    DepthProfile depthProfileRet(format, dataAccuracy, size);
+    EXPECT_EQ(cameraManager_->CreateDepthDataOutput(depthProfileRet, surfaceProducer, &depthDataOutput),
+        CameraErrorCode::SUCCESS);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test create video output with videoFramerates as one
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test create video output with videoFramerates as one
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_075, TestSize.Level0)
+{
+    int32_t width = VIDEO_DEFAULT_WIDTH;
+    int32_t height = VIDEO_DEFAULT_HEIGHT;
+    CameraFormat videoFormat = CAMERA_FORMAT_YUV_420_SP;
+    sptr<Surface> surface = nullptr;
+    Size videoSize;
+    videoSize.width = width;
+    videoSize.height = height;
+    std::vector<int32_t> videoFramerates = {30};
+    VideoProfile videoProfile = VideoProfile(videoFormat, videoSize, videoFramerates);
+    sptr<VideoOutput> video = cameraManager_->CreateVideoOutput(videoProfile, surface);
+    ASSERT_EQ(video, nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test OnCameraServerAlive with three listener
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OnCameraServerAlive with three listener
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_076, TestSize.Level0)
+{
+    std::shared_ptr<CameraMuteListenerTest> muteListener =
+        std::make_shared<CameraMuteListenerTest>();
+    std::shared_ptr<TorchListenerTest> torchListener =
+        std::make_shared<TorchListenerTest>();
+    std::shared_ptr<FoldListenerTest> foldListener =
+        std::make_shared<FoldListenerTest>();
+    
+    ASSERT_NE(cameraManager_, nullptr);
+    cameraManager_->RegisterCameraMuteListener(muteListener);
+    cameraManager_->RegisterTorchListener(torchListener);
+    cameraManager_->RegisterFoldListener(foldListener);
+
+    cameraManager_->OnCameraServerAlive();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test AddServiceProxyDeathRecipient
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test AddServiceProxyDeathRecipient
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_077, TestSize.Level0)
+{
+    sptr<ICameraServiceCallback> callback = cameraManager_->GetCameraStatusListenerManager();
+    ASSERT_NE(callback, nullptr);
+
+    pid_t pid = 0;
+    cameraManager_->CameraServerDied(pid);
+    cameraManager_->SetServiceProxy(nullptr);
+    EXPECT_EQ(cameraManager_->AddServiceProxyDeathRecipient(), CameraErrorCode::SERVICE_FATL_ERROR);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test UnregisterCameraStatusCallback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test UnregisterCameraStatusCallback
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_078, TestSize.Level0)
+{
+    ASSERT_NE(cameraManager_, nullptr);
+    std::shared_ptr<CameraManagerCallbackTest> listener =
+        std::make_shared<CameraManagerCallbackTest>();
+
+    cameraManager_->UnregisterCameraStatusCallback(listener);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test UnregisterCameraMuteListener
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test UnregisterCameraMuteListener for listener is 0
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_079, TestSize.Level0)
+{
+    ASSERT_NE(cameraManager_, nullptr);
+    std::shared_ptr<CameraMuteListenerTest> listener =
+        std::make_shared<CameraMuteListenerTest>();
+
+    cameraManager_->UnregisterCameraMuteListener(listener);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test UnregisterCameraMuteListener
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test UnregisterCameraMuteListener for listener is 0
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_080, TestSize.Level0)
+{
+    ASSERT_NE(cameraManager_, nullptr);
+    std::shared_ptr<TorchListenerTest> listener =
+        std::make_shared<TorchListenerTest>();
+
+    cameraManager_->UnregisterTorchListener(listener);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetDmDeviceInfo serviceProxy is nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetDmDeviceInfo serviceProxy is nullptr
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_081, TestSize.Level0)
+{
+    std::vector<dmDeviceInfo> dmDeviceInfos = {};
+    dmDeviceInfos = cameraManager_->GetDmDeviceInfo();
+    EXPECT_EQ(dmDeviceInfos.size(), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetDmDeviceInfo serviceProxy is not nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetDmDeviceInfo serviceProxy is not nullptr
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_082, TestSize.Level0)
+{
+    int32_t res = cameraManager_->RefreshServiceProxy();
+    EXPECT_EQ(res, CameraErrorCode::SUCCESS);
+    std::vector<dmDeviceInfo> dmDeviceInfos = {};
+    dmDeviceInfos = cameraManager_->GetDmDeviceInfo();
+    EXPECT_EQ(dmDeviceInfos.size(), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetCameraOutputStatus serviceProxy is not nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetCameraOutputStatus serviceProxy is not nullptr
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_083, TestSize.Level0)
+{
+    std::string cameraId = "device/0";
+    int32_t size = 1;
+    std::vector<dmDeviceInfo> distributedCamInfo(size);
+    auto res = cameraManager_->GetDmDeviceInfo(cameraId, distributedCamInfo);
+    EXPECT_EQ(res.deviceName, "");
+}
+
+/*
+ * Feature: Framework
+ * Function: Test AlignVideoFpsProfile CAMERA_POSITION_BACK is 0
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test AlignVideoFpsProfile CAMERA_POSITION_BACK 0
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_084, TestSize.Level0)
+{
+    std::string cameraId = "device/0";
+    size_t itemCapacity = 0;
+    size_t dataCapacity = 0;
+    std::vector<sptr<CameraDevice>> deviceInfoList = {};
+    std::shared_ptr<Camera::CameraMetadata> metadata =
+        std::make_shared<Camera::CameraMetadata>(itemCapacity, dataCapacity);
+    sptr<CameraDevice> cameraObj = new (std::nothrow) CameraDevice(cameraId, metadata);
+    deviceInfoList.emplace_back(cameraObj);
+    deviceInfoList[0]->cameraPosition_ = CAMERA_POSITION_FRONT;
+
+    cameraManager_->AlignVideoFpsProfile(deviceInfoList);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test AlignVideoFpsProfile CAMERA_POSITION_FRONT is 0
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test AlignVideoFpsProfile CAMERA_POSITION_FRONT is 0
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_085, TestSize.Level0)
+{
+    std::string cameraId = "device/0";
+    size_t itemCapacity = 0;
+    size_t dataCapacity = 0;
+    std::vector<sptr<CameraDevice>> deviceInfoList = {};
+    std::shared_ptr<Camera::CameraMetadata> metadata =
+        std::make_shared<Camera::CameraMetadata>(itemCapacity, dataCapacity);
+    sptr<CameraDevice> cameraObj = new (std::nothrow) CameraDevice(cameraId, metadata);
+    deviceInfoList.emplace_back(cameraObj);
+    deviceInfoList[0]->cameraPosition_ = CAMERA_POSITION_BACK;
+
+    cameraManager_->AlignVideoFpsProfile(deviceInfoList);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CreateCameraInput CAMERA_POSITION_FOLD_INNER abnormal branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CreateCameraInput CAMERA_POSITION_FOLD_INNER abnormal branch
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_086, TestSize.Level0)
+{
+    std::string cameraId = "device/0";
+    size_t itemCapacity = 0;
+    size_t dataCapacity = 0;
+    std::shared_ptr<Camera::CameraMetadata> metadata =
+        std::make_shared<Camera::CameraMetadata>(itemCapacity, dataCapacity);
+    sptr<CameraDevice> cameraObj = new (std::nothrow) CameraDevice(cameraId, metadata);
+    cameraObj->cameraPosition_ = CameraPosition::CAMERA_POSITION_FOLD_INNER;
+    sptr<CameraInput> cameraInput;
+    int32_t res = cameraManager_->CreateCameraInput(cameraObj, &cameraInput);
+    EXPECT_EQ(res, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CreateCameraInput CAMERA_POSITION_FRONT abnormal branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CreateCameraInput CAMERA_POSITION_FRONT abnormal branch
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_087, TestSize.Level0)
+{
+    std::string cameraId = "device/0";
+    size_t itemCapacity = 0;
+    size_t dataCapacity = 0;
+    std::shared_ptr<Camera::CameraMetadata> metadata =
+        std::make_shared<Camera::CameraMetadata>(itemCapacity, dataCapacity);
+    sptr<CameraDevice> cameraObj = new (std::nothrow) CameraDevice(cameraId, metadata);
+    cameraObj->cameraPosition_ = CameraPosition::CAMERA_POSITION_FRONT;
+    sptr<CameraInput> cameraInput;
+    cameraManager_->foldScreenType_[0] = '4';
+    int32_t res = cameraManager_->CreateCameraInput(cameraObj, &cameraInput);
+    EXPECT_EQ(res, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CreateCameraInput CAMERA_POSITION_FRONT abnormal branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CreateCameraInput CAMERA_POSITION_FRONT abnormal branch
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_088, TestSize.Level0)
+{
+    CameraManager::ProfilesWrapper profilesWrapper = {};
+    int32_t modeName = SceneMode::NORMAL;
+    int32_t dat = 1;
+    camera_metadata_item_t item {
+        0,
+        0,
+        0,
+        1,
+    };
+    item.data.i32 = &dat;
+    cameraManager_->ParseExtendCapability(profilesWrapper, modeName, item);
+    EXPECT_EQ(profilesWrapper.photoProfiles.empty(), 1);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameramanager with CreateProfileLevel4StreamType
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CreateProfileLevel4StreamType for abnormal branches
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_089, TestSize.Level0)
+{
+    CameraManager::ProfilesWrapper profilesWrapper = {};
+    int32_t specId = 0;
+    ProfileDetailInfo profile1 = {
+        CAMERA_FORMAT_INVALID,
+        PHOTO_DEFAULT_WIDTH,
+        PHOTO_DEFAULT_HEIGHT,
+        FIXEDFPS_DEFAULT,
+        MINFPS_DEFAULT,
+        MAXFPS_DEFAULT,
+        {1, 2, 3}
+    };
+    ProfileDetailInfo profile2 = {
+        CAMERA_FORMAT_INVALID,
+        PHOTO_DEFAULT_WIDTH,
+        PHOTO_DEFAULT_HEIGHT,
+        FIXEDFPS_DEFAULT,
+        MINFPS_DEFAULT,
+        MAXFPS_DEFAULT,
+        {4, 5, 6}
+    };
+    StreamInfo streamInfo = {
+        7,
+        {profile1, profile2}
+    };
+    cameraManager_->CreateProfileLevel4StreamType(profilesWrapper, specId, streamInfo);
+    EXPECT_EQ(profilesWrapper.previewProfiles.size(), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameramanager with ParseSupportedOutputCapability
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test ParseSupportedOutputCapability for abnormal branches
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_090, TestSize.Level0)
+{
+    sptr<CameraDevice> camera;
+    int32_t modeName = 0;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility;
+    auto serviceProxy = cameraManager_->GetServiceProxy();
+    std::vector<std::string> cameraIds;
+    serviceProxy->GetCameraIds(cameraIds);
+    std::string cameraId = cameraIds[0];
+    int32_t retCode = serviceProxy->GetCameraAbility(cameraId, cameraAbility);
+    EXPECT_EQ(retCode, CAMERA_OK);
+    auto dmDeviceInfoList = cameraManager_->GetDmDeviceInfo();
+    auto dmDeviceInfo = cameraManager_->GetDmDeviceInfo(cameraId, dmDeviceInfoList);
+    sptr<CameraDevice> cameraObj = new (std::nothrow) CameraDevice(cameraId, dmDeviceInfo, cameraAbility);
+    modeName = SceneMode::CAPTURE_MACRO;
+    auto capability = cameraManager_->ParseSupportedOutputCapability(cameraObj, modeName, cameraAbility);
+    EXPECT_NE(capability, nullptr);
+}
+
+
+/*
+ * Feature: Framework
+ * Function: Test cameramanager with GetSupportPhotoFormat
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetSupportPhotoFormat for abnormal branches
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_091, TestSize.Level0)
+{
+    int32_t modeName = 0;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata;
+    auto res = cameraManager_->GetSupportPhotoFormat(modeName, metadata);
+    EXPECT_EQ(res.size(), 0);
+
+    modeName = -1;
+    auto serviceProxy = cameraManager_->GetServiceProxy();
+    EXPECT_NE(serviceProxy, nullptr);
+    std::vector<std::string> cameraIds;
+    serviceProxy->GetCameraIds(cameraIds);
+    std::string cameraId = cameraIds[0];
+    int32_t ret = serviceProxy->GetCameraAbility(cameraId, metadata);
+    EXPECT_EQ(ret, CAMERA_OK);
+    res = cameraManager_->GetSupportPhotoFormat(modeName, metadata);
+    EXPECT_NE(res.size(), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CreateProfile4StreamType
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CreateProfile4StreamType for abnormal branches
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_092, TestSize.Level0)
+{
+    DetailInfo info_0 {
+        0,
+        640,
+        480,
+        120,
+        60,
+        60,
+        0,
+        {0, 1, 2}
+    };
+    StreamRelatedInfo info_1;
+    info_1.detailInfoCount = 1;
+    info_1.detailInfo.push_back(info_0);
+    ModeInfo info_2;
+    info_2.streamInfo.push_back(info_1);
+    ExtendInfo info_3;
+    info_3.modeInfo.push_back(info_2);
+    MockCameraManager::ProfilesWrapper profile;
+    OutputCapStreamType type = OutputCapStreamType::PREVIEW;
+    cameraManager_->CreateProfile4StreamType(profile, type, 0, 0, info_3);
+    EXPECT_TRUE(profile.previewProfiles.empty());
+
+    info_0.minFps = 120;
+    cameraManager_->CreateProfile4StreamType(profile, type, 0, 0, info_3);
+    EXPECT_TRUE(profile.previewProfiles.empty());
+
+    type = OutputCapStreamType::STILL_CAPTURE;
+    cameraManager_->CreateProfile4StreamType(profile, type, 0, 0, info_3);
+    EXPECT_TRUE(profile.previewProfiles.empty());
+
+    type = OutputCapStreamType::VIDEO_STREAM;
+    cameraManager_->CreateProfile4StreamType(profile, type, 0, 0, info_3);
+    EXPECT_TRUE(profile.previewProfiles.empty());
+
+    type = static_cast<OutputCapStreamType>(-1);
+    cameraManager_->CreateProfile4StreamType(profile, type, 0, 0, info_3);
+    EXPECT_TRUE(profile.previewProfiles.empty());
+}
+
+/*
+ * Feature: Framework
+ * Function: Test TorchServiceCallback with OnTorchStatusChange
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OnTorchStatusChange for status is not enumType of TorchStatus
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_093, TestSize.Level0)
+{
+    auto listenerManager = cameraManager_->GetTorchServiceListenerManager();
+    int32_t status1 = 3;
+
+    EXPECT_NE(listenerManager->GetCameraManager(), nullptr);
+    EXPECT_TRUE(listenerManager->GetListenerCount() != 0);
+    auto ret = listenerManager->OnTorchStatusChange(static_cast<TorchStatus>(status1));
+    EXPECT_EQ(cameraManager_->torchMode_, TORCH_MODE_OFF);
+    EXPECT_EQ(ret, CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test TorchServiceCallback with OnTorchStatusChange
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OnTorchStatusChange for status is not enumType of TorchStatus
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_094, TestSize.Level0)
+{
+    cameraManager_->cameraDeviceAbilitySupportMap_.insert(
+        std::make_pair(CameraManagerTest::CameraAbilitySupportCacheKey::CAMERA_ABILITY_SUPPORT_MUTE, true));
+    bool res = cameraManager_->IsCameraMuteSupported();
+    EXPECT_EQ(res, true);
 }
 }
 }
