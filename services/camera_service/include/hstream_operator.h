@@ -281,6 +281,9 @@ public:
         std::mutex mStreamManagerLock_;
     };
 
+    void UpdateOrientationBaseGravity(int32_t rotationValue, int32_t sensorOrientation,
+        int32_t cameraPosition, int32_t& rotation);
+
 private:
     int32_t Initialize(const uint32_t callerToken, int32_t opMode);
     void RegisterDisplayListener(sptr<HStreamRepeat> repeat);
