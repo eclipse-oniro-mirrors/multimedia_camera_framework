@@ -721,8 +721,8 @@ Camera_ErrorCode Camera_Manager::GetCameraOrientation(Camera_Device* camera, uin
         cameraObjList.size());
     for (size_t index = 0; index < cameraObjList.size(); index++) {
         sptr<CameraDevice> innerCameraDevice = cameraObjList[index];
-        bool isExec = innerCameraDevice != nullptr && innerCameraDevice->GetID() == camera->cameraId;
-        if (isExec) {
+        bool isCameraMatched = innerCameraDevice != nullptr && innerCameraDevice->GetID() == camera->cameraId;
+        if (isCameraMatched) {
             cameraDevice = innerCameraDevice;
             break;
         }
@@ -882,9 +882,9 @@ Camera_ErrorCode Camera_Manager::GetCameraDevice(Camera_Position position, Camer
         "Camera_Manager::GetSupportedCameras  fail!");
     for (size_t i = 0; i < cameraObjList.size(); i++) {
         sptr<CameraDevice> cameraDevice = cameraObjList[i];
-        bool isExec = cameraDevice != nullptr && cameraDevice->GetPosition() == innerPosition
+        bool isFindCameraDevice = cameraDevice != nullptr && cameraDevice->GetPosition() == innerPosition
             && cameraDevice->GetCameraType() == innerType;
-        if (isExec) {
+        if (isFindCameraDevice) {
             cameraInfo = cameraDevice;
             break;
         }
