@@ -2182,6 +2182,35 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_061, TestSize.Level0)
 
 /*
  * Feature: CameraService
+ * Function: Test OnReceiveEvent in class HCameraService
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OnReceiveEvent when want.GetAction is "common.event.ressched.window.state"
+ */
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_062, TestSize.Level0)
+{
+    std::vector<string> cameraIds;
+    cameraService_->GetCameraIds(cameraIds);
+    ASSERT_NE(cameraIds.size(), 0);
+    cameraService_->SetServiceStatus(CameraServiceStatus::SERVICE_READY);
+    sptr<ICameraDeviceService> device = nullptr;
+    cameraService_->CreateCameraDevice(cameraIds[0], device);
+    ASSERT_NE(device, nullptr);
+    device->Open();
+
+    OHOS::AAFwk::Want want;
+    const std::string COMMON_EVENT_RSS_MULTI_WINDOW_TYPE = "common.event.ressched.window.state";
+    want.SetAction(COMMON_EVENT_RSS_MULTI_WINDOW_TYPE);
+    EventFwk::CommonEventData CommonEventData { want };
+    cameraService_->OnReceiveEvent(CommonEventData);
+    EXPECT_EQ(CommonEventData.GetWant().GetAction(), COMMON_EVENT_RSS_MULTI_WINDOW_TYPE);
+    device->Release();
+    device->Close();
+}
+
+/*
+ * Feature: CameraService
  * Function: Test ResetRssPriority in class HCameraService
  * SubFunction: NA
  * FunctionPoints: NA
