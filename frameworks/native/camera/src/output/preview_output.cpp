@@ -255,12 +255,12 @@ bool PreviewOutput::IsDynamicSketchNotifySupported()
 bool PreviewOutput::IsSketchSupported()
 {
     MEDIA_DEBUG_LOG("Enter Into PreviewOutput::IsSketchSupported");
-    if (IsDynamicSketchNotifySupported()) {
-        return true;
-    }
 
     auto sketchSize = FindSketchSize();
     CHECK_ERROR_RETURN_RET(sketchSize == nullptr, false);
+    if (IsDynamicSketchNotifySupported()) {
+        return true;
+    }
     MEDIA_INFO_LOG(
         "IsSketchSupported FindSketchSize Size is %{public}dx%{public}d", sketchSize->width, sketchSize->height);
     auto sketchRatio = GetSketchRatio();
