@@ -22,6 +22,7 @@
 namespace OHOS {
 namespace CameraStandard {
 bool CameraNapiUtils::mEnableSecure = false;
+
 void CameraNapiUtils::CreateNapiErrorObject(napi_env env, int32_t errorCode, const char* errString,
     std::unique_ptr<JSAsyncContextOutput> &jsContext)
 {
@@ -70,6 +71,37 @@ void CameraNapiUtils::InvokeJSAsyncMethod(napi_env env, napi_deferred deferred,
     }
     napi_delete_async_work(env, work);
     MEDIA_INFO_LOG("%{public}s, InvokeJSAsyncMethod inner end", funcName.c_str());
+}
+
+void CameraNapiUtils::InvokeJSAsyncMethodWithUvWork(napi_env env, napi_deferred deferred,
+    napi_ref callbackRef, const JSAsyncContextOutput &asyncContext)
+{
+    napi_value retVal;
+    napi_value callback = nullptr;
+    std::string funcName = asyncContext.funcName;
+    MEDIA_INFO_LOG("%{public}s, context->InvokeJSAsyncMethodWithUvWork start", funcName.c_str());
+    /* Deferred is used when JS Callback method expects a promise value */
+    if (deferred) {
+        if (asyncContext.status) {
+            napi_resolve_deferred(env, deferred, asyncContext.data);
+            MEDIA_INFO_LOG("%{public}s, InvokeJSAsyncMethodWithUvWork napi_resolve_deferred", funcName.c_str());
+        } else {
+            napi_reject_deferred(env, deferred, asyncContext.error);
+            MEDIA_ERR_LOG("%{public}s, InvokeJSAsyncMethodWithUvWork napi_reject_deferred", funcName.c_str());
+        }
+        MEDIA_INFO_LOG("%{public}s, InvokeJSAsyncMethodWithUvWork end deferred", funcName.c_str());
+    } else {
+        MEDIA_INFO_LOG("%{public}s, InvokeJSAsyncMethodWithUvWork callback", funcName.c_str());
+        napi_value result[ARGS_TWO];
+        result[PARAM0] = asyncContext.error;
+        result[PARAM1] = asyncContext.data;
+        napi_get_reference_value(env, callbackRef, &callback);
+        MEDIA_INFO_LOG("%{public}s, InvokeJSAsyncMethodWithUvWork napi_call_function start", funcName.c_str());
+        napi_call_function(env, nullptr, callback, ARGS_TWO, result, &retVal);
+        MEDIA_INFO_LOG("%{public}s, InvokeJSAsyncMethodWithUvWork napi_call_function end", funcName.c_str());
+        napi_delete_reference(env, callbackRef);
+    }
+    MEDIA_INFO_LOG("%{public}s, InvokeJSAsyncMethodWithUvWork inner end", funcName.c_str());
 }
 
 int32_t CameraNapiUtils::IncrementAndGet(uint32_t& num)
