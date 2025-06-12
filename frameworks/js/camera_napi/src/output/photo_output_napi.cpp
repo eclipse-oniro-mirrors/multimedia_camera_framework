@@ -3271,6 +3271,8 @@ napi_value PhotoOutputNapi::EnableAutoAigcPhoto(napi_env env, napi_callback_info
 void PhotoOutputNapi::RegisterOfflineDeliveryFinishedCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
+    CHECK_ERROR_RETURN_LOG(!CameraNapiSecurity::CheckSystemApp(env),
+        "PhotoOutputNapi::RegisterOfflineDeliveryFinishedCallbackListener:SystemApi is called");
     if (photoOutputCallback_ == nullptr) {
         photoOutputCallback_ = std::make_shared<PhotoOutputCallback>(env);
         photoOutput_->SetCallback(photoOutputCallback_);
@@ -3281,6 +3283,8 @@ void PhotoOutputNapi::RegisterOfflineDeliveryFinishedCallbackListener(
 void PhotoOutputNapi::UnregisterOfflineDeliveryFinishedCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
+    CHECK_ERROR_RETURN_LOG(!CameraNapiSecurity::CheckSystemApp(env),
+        "PhotoOutputNapi::UnregisterOfflineDeliveryFinishedCallbackListener:SystemApi is called");
     if (photoOutputCallback_ == nullptr) {
         MEDIA_ERR_LOG("photoOutputCallback is null");
         return;
