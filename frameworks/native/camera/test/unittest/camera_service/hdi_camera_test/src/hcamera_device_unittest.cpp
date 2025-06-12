@@ -847,5 +847,56 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_031, TestSize.Level0)
     CameraRotateStrategyInfo strategyInfo;
     ASSERT_EQ(camDevice->GetSigleStrategyInfo(strategyInfo), false);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test GetCameraConnectType
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetCameraConnectType
+ */
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_032, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+
+    EXPECT_EQ(camDevice->GetCameraConnectType(), 0);
+    const uint32_t METADATA_ITEM_SIZE = 10;
+    const uint32_t METADATA_DATA_SIZE = 100;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata =
+        std::make_shared<OHOS::Camera::CameraMetadata>(METADATA_ITEM_SIZE, METADATA_DATA_SIZE);
+    uint8_t status = 16;
+    metadata->addEntry(OHOS_ABILITY_CAMERA_CONNECTION_TYPE, &status, 1);
+    auto oldmeta = camDevice->deviceAbility_;
+    camDevice->deviceAbility_ = metadata;
+    ASSERT_NE(camDevice->GetCameraConnectType(), 0);
+    camDevice->deviceAbility_ = oldmeta;
+}
+
+/*
+ * Feature: Framework
+ * Function: Test ResetDeviceSettings with deviceMuteMode_
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test ResetDeviceSettings with deviceMuteMode_
+ */
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_033, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+
+    auto oldDeviceMuteMode_ = camDevice->deviceMuteMode_.load();
+    camDevice->deviceMuteMode_.store(true);
+    EXPECT_EQ(camDevice->ResetDeviceSettings(), 0);
+    camDevice->deviceMuteMode_.store(oldDeviceMuteMode_);
+}
 }
 }
