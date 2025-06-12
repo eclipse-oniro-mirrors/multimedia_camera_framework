@@ -856,6 +856,7 @@ int32_t HCameraHostManager::GetCameraIdSortedByCameraType(std::vector<std::strin
     if (!IsCameraHostInfoAdded(LOCAL_SERVICE_NAME)) {
         AddCameraHost(LOCAL_SERVICE_NAME);
     }
+    std::lock_guard<std::mutex> lock(mutex_);
     cameraIds.clear();
     for (const auto& cameraHost : cameraHostInfos_) {
         cameraHost->GetCameras(cameraIds);
