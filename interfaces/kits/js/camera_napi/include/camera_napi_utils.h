@@ -128,9 +128,6 @@ public:
     static void InvokeJSAsyncMethod(napi_env env, napi_deferred deferred, napi_ref callbackRef, napi_async_work work,
         const JSAsyncContextOutput& asyncContext);
 
-    static void InvokeJSAsyncMethodWithUvWork(napi_env env, napi_deferred deferred, napi_ref callbackRef,
-        const JSAsyncContextOutput& asyncContext);
-
     static int32_t IncrementAndGet(uint32_t& num);
 
     static void IsEnableSecureCamera(bool isEnable);
@@ -193,6 +190,7 @@ public:
     static napi_value CreateJSArray(napi_env env, napi_status &status, std::vector<int32_t> nativeArray);
     
     static napi_value ProcessingPhysicalApertures(napi_env env, std::vector<std::vector<float>> physicalApertures);
+
 private:
     explicit CameraNapiUtils() {};
 

@@ -70,13 +70,6 @@ public:
         }
         return CameraNapiUtils::GetUndefinedValue(env);
     }
-
-    static uv_loop_s* GetEventLoop(napi_env env)
-    {
-        uv_loop_s* loop = nullptr;
-        napi_get_uv_event_loop(env, &loop);
-        return loop;
-    }
 };
 } // namespace CameraStandard
 } // namespace OHOS
