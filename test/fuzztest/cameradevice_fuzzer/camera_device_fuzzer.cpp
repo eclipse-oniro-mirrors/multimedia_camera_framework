@@ -33,7 +33,7 @@ const std::u16string FORMMGR_INTERFACE_TOKEN = u"ICameraDeviceService";
 const int32_t MIN_SIZE_NUM = 408;
 const int32_t NUM_10 = 10;
 const int32_t NUM_100 = 100;
-const int32_t MAX_BUFFER_SIZE = 64;
+const int32_t MAX_BUFFER_SIZE = 16;
 bool g_isCameraDevicePermission = false;
 sptr<HCameraDevice> fuzzCameraDevice = nullptr;
 
@@ -78,7 +78,11 @@ void CameraDeviceFuzzTest(FuzzedDataProvider& fdp)
     int32_t itemCount = NUM_10;
     int32_t dataSize = NUM_100;
     uint8_t streamSize = fdp.ConsumeIntegralInRange<uint8_t>(0, MAX_BUFFER_SIZE);
-    std::vector<uint8_t> streamData = fdp.ConsumeBytes<uint8_t>(streamSize);
+    std::vector<uint8_t> intData = fdp.ConsumeBytes<uint8_t>(streamSize);
+    std::vector<int32_t> streamData ;
+    for (uint8_t byte : intData) {
+        streamData.push_back(static_cast<int32_t>(byte));
+    }
     std::shared_ptr<OHOS::Camera::CameraMetadata> ability;
     ability = std::make_shared<OHOS::Camera::CameraMetadata>(itemCount, dataSize);
 
