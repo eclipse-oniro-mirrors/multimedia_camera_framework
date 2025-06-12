@@ -27,24 +27,21 @@
 
 namespace OHOS {
 namespace CameraStandard {
-static constexpr int32_t MIN_SIZE_NUM = 64;
 static constexpr int32_t MAX_CODE_NUM = 4;
 static const size_t MAX_BUFFER_SIZE = 32;
+static constexpr int32_t MIN_SIZE_NUM = (MAX_BUFFER_SIZE + 1) * (MAX_CODE_NUM + 1) + 8;
 
 std::shared_ptr<HStreamDepthDataStubFuzz> HStreamDepthDataStubFuzzer::fuzz_{nullptr};
 
 void HStreamDepthDataStubFuzzer::OnRemoteRequest(FuzzedDataProvider& fdp, int32_t code)
 {
-    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
-        return;
-    }
     fuzz_ = std::make_shared<HStreamDepthDataStubFuzz>();
     CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
     MessageParcel reply;
     MessageOption option;
     MessageParcel dataMessageParcel;
     dataMessageParcel.WriteInterfaceToken(HStreamDepthDataStubFuzz::GetDescriptor());
-    size_t bufferSize = fdp.ConsumeIntegralInRange<size_t>(0, MAX_BUFFER_SIZE);
+    uint8_t bufferSize = fdp.ConsumeIntegralInRange<uint8_t>(0, MAX_BUFFER_SIZE);
     std::vector<uint8_t> buffer = fdp.ConsumeBytes<uint8_t>(bufferSize);
     dataMessageParcel.WriteBuffer(buffer.data(), buffer.size());
     dataMessageParcel.RewindRead(0);
@@ -53,6 +50,9 @@ void HStreamDepthDataStubFuzzer::OnRemoteRequest(FuzzedDataProvider& fdp, int32_
 
 void Test(uint8_t* data, size_t size)
 {
+    if (size < MIN_SIZE_NUM) {
+        return;
+    }
     FuzzedDataProvider fdp(data, size);
     auto hstreamDepthDataStub = std::make_unique<HStreamDepthDataStubFuzzer>();
     if (hstreamDepthDataStub == nullptr) {
@@ -62,6 +62,16 @@ void Test(uint8_t* data, size_t size)
     for (uint32_t i = 0; i <= MAX_CODE_NUM; i++) {
         hstreamDepthDataStub->OnRemoteRequest(fdp, i);
     }
+    HStreamDepthDataStubFuzzer::fuzz_ = std::make_shared<HStreamDepthDataStubFuzz>();
+    MessageParcel dataMessageParcel;
+    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    static const int32_t audioPolicyServiceId = fdp.ConsumeIntegral<int32_t>();
+    auto object = samgr->GetSystemAbility(audioPolicyServiceId);
+    auto proxy = std::make_shared<HStreamDepthDataCallbackProxy>(object);
+    dataMessageParcel.WriteRemoteObject(proxy->AsObject());
+    HStreamDepthDataStubFuzzer::fuzz_->HandleSetCallback(dataMessageParcel);
+    dataMessageParcel.WriteInt32(fdp.ConsumeIntegral<int32_t>());
+    HStreamDepthDataStubFuzzer::fuzz_->HandleSetDataAccuracy(dataMessageParcel);
 }
 
 } // namespace CameraStandard
