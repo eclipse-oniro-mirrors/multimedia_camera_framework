@@ -425,6 +425,8 @@ int32_t HCameraDevice::Close()
 int32_t HCameraDevice::closeDelayed()
 {
     CAMERA_SYNC_TRACE;
+    CHECK_ERROR_RETURN_RET_LOG(
+        !CheckSystemApp(), CAMERA_NO_PERMISSION, "HCameraDevice::closeDelayed:SystemApi is called");
     std::lock_guard<std::mutex> lock(g_deviceOpenCloseMutex_);
     MEDIA_INFO_LOG("HCameraDevice::closeDelayed Closing camera device: %{public}s", cameraID_.c_str());
     int32_t result = closeDelayedDevice();
@@ -1017,6 +1019,8 @@ int32_t HCameraDevice::UpdateSetting(const std::shared_ptr<OHOS::Camera::CameraM
 int32_t HCameraDevice::SetUsedAsPosition(uint8_t value)
 {
     MEDIA_INFO_LOG("HCameraDevice::SetUsedAsPosition as %{public}d", value);
+    CHECK_ERROR_RETURN_RET_LOG(
+        !CheckSystemApp(), CAMERA_NO_PERMISSION, "HCameraDevice::SetUsedAsPosition:SystemApi is called");
     usedAsPosition_ = value;
     // lockforcontrol
     return CAMERA_OK;
