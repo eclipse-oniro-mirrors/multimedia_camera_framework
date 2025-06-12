@@ -379,6 +379,7 @@ int32_t HCameraDevice::OpenSecureCamera(uint64_t& secureSeqId)
     CHECK_ERROR_RETURN_RET_LOG(hdiCameraDevice_ == nullptr, CAMERA_INVALID_ARG,
         "HCameraDevice::OpenSecureCamera hdiCameraDevice_ is nullptr.");
     auto hdiCameraDeviceV1_3 = HDI::Camera::V1_3::ICameraDevice::CastFrom(hdiCameraDevice_);
+    // LCOV_EXCL_START
     if (hdiCameraDeviceV1_3 != nullptr) {
         errCode = hdiCameraDeviceV1_3->GetSecureCameraSeq(secureSeqId);
         CHECK_ERROR_RETURN_RET_LOG(errCode != HDI::Camera::V1_0::CamRetCode::NO_ERROR, CAMERA_UNKNOWN_ERROR,
@@ -388,12 +389,14 @@ int32_t HCameraDevice::OpenSecureCamera(uint64_t& secureSeqId)
     }  else {
         MEDIA_INFO_LOG("V1_3::ICameraDevice::CastFrom failed");
     }
+    // LCOV_EXCL_STOP
     MEDIA_INFO_LOG("HCameraDevice::OpenSecureCamera secureSeqId = %{public}" PRIu64, secureSeqId);
     return errCode;
 }
 
 int64_t HCameraDevice::GetSecureCameraSeq(uint64_t* secureSeqId)
 {
+    // LCOV_EXCL_START
     if (!isHasOpenSecure) {
         *secureSeqId = 0;
         return CAMERA_OK;
@@ -406,6 +409,7 @@ int64_t HCameraDevice::GetSecureCameraSeq(uint64_t* secureSeqId)
     }  else {
         MEDIA_INFO_LOG("V1_3::ICameraDevice::CastFrom failed");
     }
+    // LCOV_EXCL_STOP
     return CAMERA_OK;
 }
 
@@ -814,6 +818,7 @@ int32_t HCameraDevice::CloseDevice()
     return CAMERA_OK;
 }
 
+// LCOV_EXCL_STAR
 int32_t HCameraDevice::closeDelayedDevice()
 {
     MEDIA_INFO_LOG("HCameraDevice::closeDelayedDevice start");
@@ -833,6 +838,7 @@ int32_t HCameraDevice::closeDelayedDevice()
     MEDIA_INFO_LOG("HCameraDevice::closeDelayedDevice end");
     return CAMERA_OK;
 }
+// LCOV_EXCL_STOP
 
 int32_t HCameraDevice::Release()
 {

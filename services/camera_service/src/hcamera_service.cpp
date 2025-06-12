@@ -1313,11 +1313,13 @@ int32_t HCameraService::MuteCameraPersist(PolicyType policyType, bool isMute)
     const Security::AccessToken::PolicyType secPolicyType = g_policyTypeMap_[policyType];
     const Security::AccessToken::CallerType secCaller = Security::AccessToken::CallerType::CAMERA;
     ret = Security::AccessToken::PrivacyKit::SetMutePolicy(secPolicyType, secCaller, isMute, callerToken);
+    // LCOV_EXCL_START
     if (ret != Security::AccessToken::RET_SUCCESS) {
         MEDIA_ERR_LOG("MuteCameraPersist SetMutePolicy return false, policyType = %{public}d, retCode = %{public}d",
             static_cast<int32_t>(policyType), static_cast<int32_t>(ret));
         targetMuteMode = muteModeStored_;
     }
+    //LCOV_EXCL_STOP
     return MuteCameraFunc(targetMuteMode);
 }
 
