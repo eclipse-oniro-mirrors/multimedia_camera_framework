@@ -449,7 +449,9 @@ public:
     static const std::vector<napi_property_descriptor> auto_switch_props;
     static const std::vector<napi_property_descriptor> quality_prioritization_props;
     static const std::vector<napi_property_descriptor> color_reservation_props;
-
+    static void CommitConfigAsync(uv_work_t* work);
+    static void StartAsync(uv_work_t* work);
+    static void UvWorkAsyncCompleted(uv_work_t* work, int status);
 protected:
     virtual void RegisterSlowMotionStateCb(const std::string& eventName, napi_env env, napi_value callback,
         const std::vector<napi_value>& args, bool isOnce);
@@ -545,6 +547,7 @@ struct CameraSessionAsyncContext : public AsyncContext {
     CameraSessionAsyncContext(std::string funcName, int32_t taskId) : AsyncContext(funcName, taskId) {};
     CameraSessionNapi* objectInfo = nullptr;
     std::string errorMsg;
+    napi_env env = nullptr;
 };
 } // namespace CameraStandard
 } // namespace OHOS
