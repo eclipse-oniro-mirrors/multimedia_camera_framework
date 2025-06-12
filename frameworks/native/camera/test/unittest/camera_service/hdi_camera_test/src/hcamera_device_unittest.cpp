@@ -786,5 +786,66 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_028, TestSize.Level0)
     camDevice->SetDeviceRetryTime();
     camDevice->DropDetectionDataCallbackImpl(motionData);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test UpdateCameraRotateAngleAndZoom without info
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test UpdateCameraRotateAngleAndZoom
+ */
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_029, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+    std::vector<int32_t> fpsRanges;
+    camDevice->UpdateCameraRotateAngleAndZoom(fpsRanges);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test UpdateCameraRotateAngleAndZoom with info
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test UpdateCameraRotateAngleAndZoom
+ */
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_030, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+    CameraRotateStrategyInfo strategyInfo = {GetClientNameByToken(callerToken), 0.0f, -1, -1};
+    std::vector<CameraRotateStrategyInfo> strategyInfos;
+    strategyInfos.push_back(strategyInfo);
+    camDevice->SetCameraRotateStrategyInfos(strategyInfos);
+    std::vector<int32_t> fpsRanges;
+    camDevice->UpdateCameraRotateAngleAndZoom(fpsRanges);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetSigleStrategyInfo
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetSigleStrategyInfo
+ */
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_031, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+    CameraRotateStrategyInfo strategyInfo;
+    ASSERT_EQ(camDevice->GetSigleStrategyInfo(strategyInfo), false);
+}
 }
 }

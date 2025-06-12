@@ -1045,6 +1045,8 @@ public:
         return statusList;
     }
 
+    bool CheckCameraStatusValid(sptr<CameraDevice> cameraInfo);
+
 private:
     inline void CacheCameraStatus(const std::string& cameraId, std::shared_ptr<CameraStatusInfo> statusInfo)
     {
@@ -1058,7 +1060,6 @@ private:
         cachedFlashStatus_[cameraId] = status;
     }
 
-    bool CheckCameraStatusValid(sptr<CameraDevice> cameraInfo);
     std::mutex cachedCameraStatusMutex_;
     unordered_map<string, std::shared_ptr<CameraStatusInfo>> cachedCameraStatus_;
     std::mutex cachedFlashStatusMutex_;

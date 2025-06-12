@@ -190,8 +190,6 @@ public:
         std::unordered_map<std::string, std::string> &mapPayload);
     void SetCameraRotateStrategyInfos(std::vector<CameraRotateStrategyInfo> infos);
     std::vector<CameraRotateStrategyInfo> GetCameraRotateStrategyInfos();
-    void UpdateCameraRotateAngleAndZoom(std::vector<CameraRotateStrategyInfo> &infos,
-        std::vector<int32_t> &frameRateRange);
 
     void BeforeDeviceClose() override;
 

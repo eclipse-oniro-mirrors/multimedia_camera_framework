@@ -560,6 +560,8 @@ int32_t HCameraService::CreateCameraDevice(const string& cameraId, sptr<ICameraD
         }
         device = cameraDevice;
         cameraDevice->SetDeviceMuteMode(muteModeStored_);
+        cameraDevice->SetCameraRotateStrategyInfos(
+            CameraRoateParamManager::GetInstance().GetCameraRotateStrategyInfos());
     }
     CAMERA_SYSEVENT_STATISTIC(CreateMsg("CameraManager_CreateCameraInput CameraId:%s", cameraId.c_str()));
     MEDIA_INFO_LOG("HCameraService::CreateCameraDevice execute success");
@@ -582,13 +584,11 @@ int32_t HCameraService::CreateCaptureSession(sptr<ICaptureSession>& session, int
             "HCameraService::CreateCaptureSession", rc, false, CameraReportUtils::GetCallerInfo());
         return rc;
     }
-    pressurePid_ = IPCSkeleton::GetCallingPid();
-    captureSession->SetCameraRotateStrategyInfos(CameraRoateParamManager::GetInstance().GetCameraRotateStrategyInfos());
     session = captureSession;
 
-    std::string clientName_ = GetClientBundle(IPCSkeleton::GetCallingUid());
 #ifdef HOOK_CAMERA_OPERATOR
-    CameraRotatePlugin::GetInstance()->SetCaptureSession(clientName_, captureSession);
+    std::string clientName = GetClientBundle(IPCSkeleton::GetCallingUid());
+    CameraRotatePlugin::GetInstance()->SetCaptureSession(clientName, captureSession);
 #endif
     return rc;
 }
