@@ -64,6 +64,7 @@
 #ifdef HOOK_CAMERA_OPERATOR
 #include "camera_rotate_plugin.h"
 #endif
+#include "camera_metadata.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -267,7 +268,6 @@ int32_t HCameraService::SetBeauty(int32_t beautyStatus)
     constexpr int32_t DEFAULT_DATA_LENGTH = 1;
     shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata =
         make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
-    int32_t ret;
     int32_t count = 1;
     uint8_t beautyLevel = 0;
     uint8_t beautyType = OHOS_CAMERA_BEAUTY_TYPE_OFF;
@@ -277,21 +277,8 @@ int32_t HCameraService::SetBeauty(int32_t beautyStatus)
     }
     MEDIA_INFO_LOG("HCameraService::SetBeauty beautyType: %{public}d, beautyLevel: %{public}d",
         beautyType, beautyLevel);
-    camera_metadata_item_t item;
-    ret = OHOS::Camera::FindCameraMetadataItem(changedMetadata->get(), OHOS_CONTROL_BEAUTY_TYPE, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        changedMetadata->addEntry(OHOS_CONTROL_BEAUTY_TYPE, &beautyType, count);
-    } else if (ret == CAM_META_SUCCESS) {
-        changedMetadata->updateEntry(OHOS_CONTROL_BEAUTY_TYPE, &beautyType, count);
-    }
-
-    ret = OHOS::Camera::FindCameraMetadataItem(changedMetadata->get(), OHOS_CONTROL_BEAUTY_AUTO_VALUE, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        changedMetadata->addEntry(OHOS_CONTROL_BEAUTY_AUTO_VALUE, &beautyLevel, count);
-    } else if (ret == CAM_META_SUCCESS) {
-        changedMetadata->updateEntry(OHOS_CONTROL_BEAUTY_AUTO_VALUE, &beautyLevel, count);
-    }
-
+    AddOrUpdateMetadata(changedMetadata, OHOS_CONTROL_BEAUTY_TYPE, &beautyType, count);
+    AddOrUpdateMetadata(changedMetadata, OHOS_CONTROL_BEAUTY_AUTO_VALUE, &beautyLevel, count);
     sptr<HCameraDeviceManager> deviceManager = HCameraDeviceManager::GetInstance();
     std::vector<sptr<HCameraDeviceHolder>> deviceHolderVector = deviceManager->GetActiveCameraHolders();
     for (sptr<HCameraDeviceHolder> activeDeviceHolder : deviceHolderVector) {
@@ -381,9 +368,7 @@ int32_t HCameraService::GetCameras(
         CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK || cameraAbility == nullptr, ret,
             "HCameraService::GetCameraAbility failed");
         auto cameraMetaInfo = GetCameraMetaInfo(id, cameraAbility);
-        if (cameraMetaInfo == nullptr) {
-            continue;
-        }
+        CHECK_ERROR_CONTINUE(cameraMetaInfo == nullptr);
         cameraInfos.emplace_back(cameraMetaInfo);
     }
     FillCameras(cameraInfos, cameraIds, cameraAbilityList);
@@ -578,7 +563,7 @@ int32_t HCameraService::CreateCaptureSession(sptr<ICaptureSession>& session, int
     OHOS::Security::AccessToken::AccessTokenID callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCaptureSession> captureSession = nullptr;
     rc = HCaptureSession::NewInstance(callerToken, opMode, captureSession);
-    if (rc != CAMERA_OK) {
+    if (rc != CAMERA_OK) { // LCOV_EXCL_LINE
         MEDIA_ERR_LOG("HCameraService::CreateCaptureSession allocation failed");
         CameraReportUtils::ReportCameraError(
             "HCameraService::CreateCaptureSession", rc, false, CameraReportUtils::GetCallerInfo());
@@ -695,7 +680,7 @@ int32_t HCameraService::CreatePreviewOutput(const sptr<OHOS::IBufferProducer>& p
     }
 #endif
     streamRepeatPreview = new (nothrow) HStreamRepeat(producer, format, width, height, RepeatStreamType::PREVIEW);
-    if (streamRepeatPreview == nullptr) {
+    if (streamRepeatPreview == nullptr) { // LCOV_EXCL_LINE
         rc = CAMERA_ALLOC_ERROR;
         MEDIA_ERR_LOG("HCameraService::CreatePreviewOutput HStreamRepeat allocation failed");
         CameraReportUtils::ReportCameraError(
@@ -725,7 +710,7 @@ int32_t HCameraService::CreateDepthDataOutput(const sptr<OHOS::IBufferProducer>&
         return rc;
     }
     streamDepthData = new (nothrow) HStreamDepthData(producer, format, width, height);
-    if (streamDepthData == nullptr) {
+    if (streamDepthData == nullptr) { // LCOV_EXCL_LINE
         rc = CAMERA_ALLOC_ERROR;
         MEDIA_ERR_LOG("HCameraService::CreateDepthDataOutput HStreamRepeat allocation failed");
         CameraReportUtils::ReportCameraError(
@@ -771,7 +756,7 @@ int32_t HCameraService::CreateVideoOutput(const sptr<OHOS::IBufferProducer>& pro
         return rc;
     }
     streamRepeatVideo = new (nothrow) HStreamRepeat(producer, format, width, height, RepeatStreamType::VIDEO);
-    if (streamRepeatVideo == nullptr) {
+    if (streamRepeatVideo == nullptr) { // LCOV_EXCL_LINE
         rc = CAMERA_ALLOC_ERROR;
         MEDIA_ERR_LOG("HCameraService::CreateVideoOutput HStreamRepeat allocation failed");
         CameraReportUtils::ReportCameraError(
@@ -847,9 +832,7 @@ void HCameraService::OnFlashlightStatus(const string& cameraId, FlashStatus stat
             continue;
         }
         uint32_t pid = it.first;
-        if (ShouldSkipStatusUpdates(pid)) {
-            continue;
-        }
+        CHECK_ERROR_CONTINUE(ShouldSkipStatusUpdates(pid));
         it.second->OnFlashlightStatusChanged(cameraId, status);
         CacheFlashStatus(cameraId, status);
     }
@@ -865,9 +848,7 @@ void HCameraService::OnMute(bool muteMode)
                 continue;
             }
             uint32_t pid = it.first;
-            if (ShouldSkipStatusUpdates(pid)) {
-                continue;
-            }
+            CHECK_ERROR_CONTINUE(ShouldSkipStatusUpdates(pid));
             it.second->OnCameraMute(muteMode);
             CAMERA_SYSEVENT_BEHAVIOR(CreateMsg("OnCameraMute! current Camera muteMode:%d", muteMode));
         }
@@ -900,9 +881,7 @@ void HCameraService::OnTorchStatus(TorchStatus status)
             continue;
         }
         uint32_t pid = it.first;
-        if (ShouldSkipStatusUpdates(pid)) {
-            continue;
-        }
+        CHECK_ERROR_CONTINUE(ShouldSkipStatusUpdates(pid));
         it.second->OnTorchStatusChange(status);
     }
 }
@@ -1176,17 +1155,14 @@ bool HCameraService::IsCameraMuteSupported(string cameraId)
     camera_metadata_item_t item;
     common_metadata_header_t* metadata = cameraAbility->get();
     ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_MUTE_MODES, &item);
-    if (ret == CAM_META_SUCCESS) {
-        for (uint32_t i = 0; i < item.count; i++) {
-            MEDIA_INFO_LOG("OHOS_ABILITY_MUTE_MODES %{public}d th is %{public}d", i, item.data.u8[i]);
-            if (item.data.u8[i] == OHOS_CAMERA_MUTE_MODE_SOLID_COLOR_BLACK) {
-                isMuteSupported = true;
-                break;
-            }
+    CHECK_ERROR_RETURN_RET_LOG(
+        ret != CAM_META_SUCCESS, false, "HCameraService::IsCameraMuted not find MUTE ability, ret: %{public}d", ret);
+    for (uint32_t i = 0; i < item.count; i++) {
+        MEDIA_INFO_LOG("OHOS_ABILITY_MUTE_MODES %{public}d th is %{public}d", i, item.data.u8[i]);
+        if (item.data.u8[i] == OHOS_CAMERA_MUTE_MODE_SOLID_COLOR_BLACK) {
+            isMuteSupported = true;
+            break;
         }
-    } else {
-        isMuteSupported = false;
-        MEDIA_ERR_LOG("HCameraService::IsCameraMuted not find MUTE ability");
     }
     MEDIA_DEBUG_LOG("HCameraService::IsCameraMuted supported: %{public}d", isMuteSupported);
     return isMuteSupported;
@@ -1202,16 +1178,10 @@ int32_t HCameraService::UpdateMuteSetting(sptr<HCameraDevice> cameraDevice, bool
     int32_t ret;
     int32_t count = 1;
     uint8_t mode = muteMode ? OHOS_CAMERA_MUTE_MODE_SOLID_COLOR_BLACK : OHOS_CAMERA_MUTE_MODE_OFF;
-    camera_metadata_item_t item;
 
     MEDIA_DEBUG_LOG("UpdateMuteSetting muteMode: %{public}d", muteMode);
 
-    ret = OHOS::Camera::FindCameraMetadataItem(changedMetadata->get(), OHOS_CONTROL_MUTE_MODE, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata->addEntry(OHOS_CONTROL_MUTE_MODE, &mode, count);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata->updateEntry(OHOS_CONTROL_MUTE_MODE, &mode, count);
-    }
+    AddOrUpdateMetadata(changedMetadata, OHOS_CONTROL_MUTE_MODE, &mode, count);
     ret = cameraDevice->UpdateSetting(changedMetadata);
     CHECK_ERROR_RETURN_RET_LOG(!status || ret != CAMERA_OK, CAMERA_UNKNOWN_ERROR, "UpdateMuteSetting muteMode Failed");
     return CAMERA_OK;
@@ -1333,7 +1303,7 @@ int32_t HCameraService::PrelaunchCamera()
         CAMERA_DEVICE_CONFLICT, "HCameraService::PrelaunchCamera there is a device active in A side, abort!");
     if (preCameraId_.empty()) {
         MEDIA_DEBUG_LOG("HCameraService::PrelaunchCamera firstBoot in");
-        if (OHOS::Rosen::DisplayManager::GetInstance().IsFoldable()) {
+        if (OHOS::Rosen::DisplayManager::GetInstance().IsFoldable()) { // LCOV_EXCL_LINE
             // foldable devices
             MEDIA_DEBUG_LOG("HCameraService::PrelaunchCamera firstBoot foldable");
             FoldStatus curFoldStatus = (FoldStatus)OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus();
@@ -1374,6 +1344,7 @@ int32_t HCameraService::ResetRssPriority()
     return CAMERA_OK;
 }
 
+// LCOV_EXCL_START
 /**
     camIdx select strategy:
     1. make sure curFoldStatus match foldStatusValue
@@ -1408,6 +1379,7 @@ int8_t HCameraService::ChooseFisrtBootFoldCamIdx(
             foldStatusValue = item.data.u8[0];
         } else {
             MEDIA_DEBUG_LOG("HCameraService::PrelaunchCamera device ablity not found");
+            foldStatusValue = 0;
         }
         ret = OHOS::Camera::FindCameraMetadataItem(cameraAbilityList[i]->get(), OHOS_ABILITY_CAMERA_POSITION, &item);
         if (ret == CAM_META_SUCCESS && item.count > 0) {
@@ -1415,6 +1387,7 @@ int8_t HCameraService::ChooseFisrtBootFoldCamIdx(
             positionValue = item.data.u8[0];
         } else {
             MEDIA_DEBUG_LOG("HCameraService::PrelaunchCamera device position not found");
+            positionValue = 0;
         }
         // check is fold supported
         bool isFoldSupported = false;
@@ -1437,6 +1410,7 @@ int8_t HCameraService::ChooseFisrtBootFoldCamIdx(
     }
     return camIdx;
 }
+// LCOV_EXCL_STOP
 
 int32_t HCameraService::PreSwitchCamera(const std::string& cameraId)
 {
@@ -1594,7 +1568,7 @@ int32_t HCameraService::IsTorchSupported(bool &isTorchSupported)
         int ret = OHOS::Camera::FindCameraMetadataItem(cameraAbility->get(), OHOS_ABILITY_FLASH_AVAILABLE, &item);
         if (ret == CAM_META_SUCCESS && item.count > 0) {
             MEDIA_DEBUG_LOG("OHOS_ABILITY_FLASH_AVAILABLE is %{public}d", item.data.u8[0]);
-            if (item.data.u8[0] == 1) {
+            if (item.data.u8[0] == 1) { // LCOV_EXCL_LINE
                 isTorchSupported = true;
                 break;
             }
@@ -1608,17 +1582,12 @@ int32_t HCameraService::IsCameraMuteSupported(bool &isCameraMuteSupported)
 {
     CHECK_ERROR_RETURN_RET_LOG(
         !CheckSystemApp(), CAMERA_NO_PERMISSION, "HCameraService::IsCameraMuteSupported:SystemApi is called");
-    isCameraMuteSupported = false;
     std::vector<std::string> cameraIds;
     std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList;
     int32_t retCode = GetCameras(cameraIds, cameraAbilityList);
     CHECK_ERROR_RETURN_RET_LOG(retCode != CAMERA_OK, retCode, "HCameraService::IsCameraMuteSupported failed");
-    for (auto& cameraId : cameraIds) {
-        isCameraMuteSupported = IsCameraMuteSupported(cameraId);
-        if (isCameraMuteSupported) {
-            break;
-        }
-    }
+    isCameraMuteSupported = std::any_of(
+        cameraIds.begin(), cameraIds.end(), [&](auto& cameraId) { return IsCameraMuteSupported(cameraId); });
     return retCode;
 }
 
@@ -2310,7 +2279,7 @@ int32_t HCameraService::GetDmDeviceInfo(std::vector<std::string> &deviceInfos)
     deviceManager.UnInitDeviceManager(pkgName);
     int size = static_cast<int>(deviceInfoList.size());
     MEDIA_INFO_LOG("HCameraService::GetDmDeviceInfo size=%{public}d", size);
-    if (size > 0) {
+    if (size > 0) { // LCOV_LINE_EXCL
         for (int i = 0; i < size; i++) {
             nlohmann::json deviceInfo;
             deviceInfo["deviceName"] = deviceInfoList[i].deviceName;
