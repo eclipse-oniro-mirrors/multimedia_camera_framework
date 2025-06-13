@@ -1357,6 +1357,18 @@ void RotatePicture(std::weak_ptr<PictureIntf> picture)
     ptr->RotatePicture();
 }
 
+bool HStreamOperator::IsIpsRotateSupported()
+{
+    bool ipsRotateSupported = false;
+    camera_metadata_item_t item;
+    bool ret = GetDeviceAbilityByMeta(OHOS_ABILITY_ROTATION_IN_IPS_SUPPORTED, &item);
+    if (ret && item.count > 0) {
+        ipsRotateSupported = static_cast<bool>(item.data.u8[0]);
+    }
+    MEDIA_INFO_LOG("HstreamOperator IsIpsRotateSupported %{public}d", ipsRotateSupported);
+    return ipsRotateSupported;
+}
+
 std::shared_ptr<PhotoAssetIntf> HStreamOperator::ProcessPhotoProxy(int32_t captureId,
     std::shared_ptr<PictureIntf> picturePtr, bool isBursting, sptr<CameraServerPhotoProxy> cameraPhotoProxy,
     std::string& uri)
@@ -1386,7 +1398,9 @@ std::shared_ptr<PhotoAssetIntf> HStreamOperator::ProcessPhotoProxy(int32_t captu
     CHECK_ERROR_RETURN_RET_LOG(photoAssetProxy == nullptr, nullptr, "photoAssetProxy is null");
     if (!isBursting && picturePtr) {
         MEDIA_DEBUG_LOG("CreateMediaLibrary RotatePicture E");
-        taskThread = std::thread(RotatePicture, picturePtr);
+        if (!IsIpsRotateSupported()) {
+            taskThread = std::thread(RotatePicture, picturePtr);
+        }
     }
     bool isProfessionalPhoto = (opMode_ == static_cast<int32_t>(HDI::Camera::V1_3::OperationMode::PROFESSIONAL_PHOTO));
     if (isBursting || captureStream->GetAddPhotoProxyEnabled() == false || isProfessionalPhoto) {
