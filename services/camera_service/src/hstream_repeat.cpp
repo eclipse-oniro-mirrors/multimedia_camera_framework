@@ -1080,6 +1080,8 @@ bool HStreamRepeat::IsNeedBeautyNotification()
 int32_t HStreamRepeat::AttachMetaSurface(const sptr<OHOS::IBufferProducer>& producer, int32_t videoMetaType)
 {
     MEDIA_INFO_LOG("HStreamRepeat::AttachMetaSurface called");
+    CHECK_ERROR_RETURN_RET_LOG(
+        !CheckSystemApp(), CAMERA_NO_PERMISSION, "HStreamRepeat::AttachMetaSurface:SystemApi is called");
     {
         CHECK_ERROR_RETURN_RET_LOG(producer == nullptr, CAMERA_INVALID_ARG,
             "HStreamRepeat::AttachMetaSurface producer is null");

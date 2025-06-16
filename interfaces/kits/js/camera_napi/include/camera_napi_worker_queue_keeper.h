@@ -37,7 +37,7 @@ public:
 
     std::shared_ptr<NapiWorkerQueueTask> AcquireWorkerQueueTask(const std::string& taskName);
     bool ConsumeWorkerQueueTask(std::shared_ptr<NapiWorkerQueueTask> queueTask, std::function<void(void)> func);
-
+    void RemoveWorkerTask(std::shared_ptr<NapiWorkerQueueTask> task);
 private:
     void WorkerQueueTasksResetCreateTimeNoLock(NapiWorkerQueueTaskTimePoint timePoint);
     bool WorkerLockCondition(std::shared_ptr<NapiWorkerQueueTask> queueTask, bool& isError);

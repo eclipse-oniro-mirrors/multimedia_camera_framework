@@ -702,6 +702,8 @@ void HStreamCapture::SetRotation(const std::shared_ptr<OHOS::Camera::CameraMetad
         MEDIA_INFO_LOG("set rotation camera real rotation %{public}d", rotation);
     }
     UpdateJpegBasicInfo(captureMetadataSetting_, rotation);
+    CHECK_EXECUTE(hStreamOperator, hStreamOperator->UpdateOrientationBaseGravity(rotation, sensorOrientation,
+        cameraPosition, rotation));
     bool status = false;
     if (result == CAM_META_ITEM_NOT_FOUND) {
         status = captureMetadataSetting_->addEntry(OHOS_JPEG_ORIENTATION, &rotation, 1);

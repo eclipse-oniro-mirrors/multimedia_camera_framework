@@ -92,6 +92,9 @@ namespace {
 #ifdef CAMERA_USE_SENSOR
 constexpr int32_t POSTURE_INTERVAL = 100000000; //100ms
 constexpr int VALID_INCLINATION_ANGLE_THRESHOLD_COEFFICIENT = 3;
+constexpr int32_t ROTATION_45_DEGREES = 45;
+constexpr int32_t ROTATION_90_DEGREES = 90;
+constexpr int32_t ROTATION_360_DEGREES = 360;
 #endif
 static GravityData gravityData = {0.0, 0.0, 0.0};
 static int32_t sensorRotation = 0;
@@ -842,6 +845,9 @@ int32_t HStreamOperator::StartPreviewStream(const std::shared_ptr<OHOS::Camera::
             break;
         }
     }
+#ifdef CAMERA_USE_SENSOR
+    RegisterSensorCallback();
+#endif
     return errorCode;
 }
 
@@ -964,6 +970,9 @@ int32_t HStreamOperator::Release()
     CHECK_EXECUTE(videoCache_, videoCache_ = nullptr);
     taskManager_ = nullptr;
     HStreamOperatorManager::GetInstance()->RemoveTaskManager(streamOperatorId_);
+#ifdef CAMERA_USE_SENSOR
+    UnRegisterSensorCallback();
+#endif
     MEDIA_INFO_LOG("HStreamOperator::Release execute success");
     return errorCode;
 }
@@ -1178,6 +1187,27 @@ void HStreamOperator::StartMovingPhotoEncode(int32_t rotation, uint64_t timestam
     StartRecord(timestamp, realRotation, captureId);
 }
 
+void HStreamOperator::UpdateOrientationBaseGravity(int32_t rotationValue, int32_t sensorOrientation,
+    int32_t cameraPosition, int32_t& rotation)
+{
+    CHECK_ERROR_RETURN_LOG(cameraDevice_ == nullptr, "cameraDevice is nullptr.");
+    CameraRotateStrategyInfo strategyInfo;
+    CHECK_ERROR_RETURN_LOG(!(cameraDevice_->GetSigleStrategyInfo(strategyInfo)), "Update roteta angle not supported");
+    OHOS::Rosen::FoldStatus foldstatus = OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus();
+    OHOS::Rosen::FoldDisplayMode displayMode = OHOS::Rosen::DisplayManager::GetInstance().GetFoldDisplayMode();
+    bool isValidDisplayStatus = (foldstatus == OHOS::Rosen::FoldStatus::FOLD_STATE_EXPAND_WITH_SECOND_EXPAND) &&
+        (displayMode == OHOS::Rosen::FoldDisplayMode::GLOBAL_FULL);
+    CHECK_ERROR_RETURN(!isValidDisplayStatus);
+    int32_t imageRotation = (sensorRotation + ROTATION_45_DEGREES) / ROTATION_90_DEGREES * ROTATION_90_DEGREES;
+    if (cameraPosition == OHOS_CAMERA_POSITION_BACK) {
+        rotation = (imageRotation + sensorOrientation) % ROTATION_360_DEGREES;
+    } else if (cameraPosition == OHOS_CAMERA_POSITION_FRONT) {
+        rotation = (sensorOrientation - imageRotation + ROTATION_360_DEGREES) % ROTATION_360_DEGREES;
+    }
+    MEDIA_INFO_LOG("UpdateOrientationBaseGravity sensorRotation is : %{public}d, rotation is %{public}d,",
+        sensorRotation, rotation);
+}
+
 std::string HStreamOperator::CreateDisplayName()
 {
     struct tm currentTime;
@@ -1327,6 +1357,18 @@ void RotatePicture(std::weak_ptr<PictureIntf> picture)
     ptr->RotatePicture();
 }
 
+bool HStreamOperator::IsIpsRotateSupported()
+{
+    bool ipsRotateSupported = false;
+    camera_metadata_item_t item;
+    bool ret = GetDeviceAbilityByMeta(OHOS_ABILITY_ROTATION_IN_IPS_SUPPORTED, &item);
+    if (ret && item.count > 0) {
+        ipsRotateSupported = static_cast<bool>(item.data.u8[0]);
+    }
+    MEDIA_INFO_LOG("HstreamOperator IsIpsRotateSupported %{public}d", ipsRotateSupported);
+    return ipsRotateSupported;
+}
+
 std::shared_ptr<PhotoAssetIntf> HStreamOperator::ProcessPhotoProxy(int32_t captureId,
     std::shared_ptr<PictureIntf> picturePtr, bool isBursting, sptr<CameraServerPhotoProxy> cameraPhotoProxy,
     std::string& uri)
@@ -1356,7 +1398,9 @@ std::shared_ptr<PhotoAssetIntf> HStreamOperator::ProcessPhotoProxy(int32_t captu
     CHECK_ERROR_RETURN_RET_LOG(photoAssetProxy == nullptr, nullptr, "photoAssetProxy is null");
     if (!isBursting && picturePtr) {
         MEDIA_DEBUG_LOG("CreateMediaLibrary RotatePicture E");
-        taskThread = std::thread(RotatePicture, picturePtr);
+        if (!IsIpsRotateSupported()) {
+            taskThread = std::thread(RotatePicture, picturePtr);
+        }
     }
     bool isProfessionalPhoto = (opMode_ == static_cast<int32_t>(HDI::Camera::V1_3::OperationMode::PROFESSIONAL_PHOTO));
     if (isBursting || captureStream->GetAddPhotoProxyEnabled() == false || isProfessionalPhoto) {

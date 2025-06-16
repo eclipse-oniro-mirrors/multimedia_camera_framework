@@ -281,6 +281,9 @@ public:
         std::mutex mStreamManagerLock_;
     };
 
+    void UpdateOrientationBaseGravity(int32_t rotationValue, int32_t sensorOrientation,
+        int32_t cameraPosition, int32_t& rotation);
+
 private:
     int32_t Initialize(const uint32_t callerToken, int32_t opMode);
     void RegisterDisplayListener(sptr<HStreamRepeat> repeat);
@@ -321,6 +324,7 @@ private:
     void UpdateMuteSetting(bool muteMode, std::shared_ptr<OHOS::Camera::CameraMetadata> &settings);
     int32_t GetMovingPhotoBufferDuration();
     void GetMovingPhotoStartAndEndTime();
+    bool IsIpsRotateSupported();
     void ConfigPayload(uint32_t pid, uint32_t tid, const char *bundleName, int32_t qosLevel,
         std::unordered_map<std::string, std::string> &mapPayload);
     std::shared_ptr<PhotoAssetIntf> ProcessPhotoProxy(int32_t captureId, std::shared_ptr<PictureIntf> picturePtr,

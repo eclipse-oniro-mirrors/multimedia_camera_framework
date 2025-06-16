@@ -4752,5 +4752,102 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_114, Test
         MEDIA_ERR_LOG("The camera prelaunch function is not supported");
     }
 }
+
+/*
+ * Feature: Camera base function
+ * Function: Test CameraDevice
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: test Constructor CameraDevice for null metadata
+ */
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_115, TestSize.Level0)
+{
+    std::string cameraId = cameraDevices_[0]->GetID();
+    dmDeviceInfo deviceInfo;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metaData = nullptr;
+    sptr<CameraDevice> cameraDevice = new (std::nothrow) CameraDevice(cameraId, deviceInfo, metaData);
+    ASSERT_NE(cameraDevice, nullptr);
+}
+
+/*
+ * Feature: Camera base function
+ * Function: Test isFindModuleTypeTag
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: test CameraDevice isFindModuleTypeTag
+ */
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_116, TestSize.Level0)
+{
+    std::string cameraId = cameraDevices_[0]->GetID();
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metaData = cameraDevices_[0]->GetMetadata();
+    sptr<CameraDevice> cameraDevice = new (std::nothrow) CameraDevice(cameraId, metaData);
+    ASSERT_NE(cameraDevice, nullptr);
+    uint32_t tagId;
+    bool res = cameraDevice->isFindModuleTypeTag(tagId);
+    EXPECT_EQ(res, true);
+}
+
+/*
+ * Feature: Camera base function
+ * Function: Test isFindModuleTypeTag
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: test CameraDevice init
+ */
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_117, TestSize.Level0)
+{
+    std::string cameraId = cameraDevices_[0]->GetID();
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metaData = cameraDevices_[0]->GetMetadata();
+    sptr<CameraDevice> cameraDevice = new (std::nothrow) CameraDevice(cameraId, metaData);
+    ASSERT_NE(cameraDevice, nullptr);
+    common_metadata_header_t metadata {
+        0,
+        1,
+        1,
+    };
+    cameraDevice->init(&metadata);
+    EXPECT_NE(cameraDevice->cameraPosition_, CAMERA_POSITION_UNSPECIFIED);
+}
+
+/*
+ * Feature: Camera base function
+ * Function: Test isFindModuleTypeTag
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: test CameraDevice init
+ */
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_118, TestSize.Level0)
+{
+    std::string cameraId = cameraDevices_[0]->GetID();
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metaData = cameraDevices_[0]->GetMetadata();
+    sptr<CameraDevice> cameraDevice = new (std::nothrow) CameraDevice(cameraId, metaData);
+    ASSERT_NE(cameraDevice, nullptr);
+    cameraDevice->zoomRatioRange_ = {};
+    std::vector<float> res = cameraDevice->GetZoomRatioRange();
+    EXPECT_NE(res.size(), 0);
+}
+
+/*
+ * Feature: Camera base function
+ * Function: Test isFindModuleTypeTag
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: test CameraDevice init
+ */
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_119, TestSize.Level0)
+{
+    std::string cameraId = cameraDevices_[0]->GetID();
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metaData = cameraDevices_[0]->GetMetadata();
+    sptr<CameraDevice> cameraDevice = new (std::nothrow) CameraDevice(cameraId, metaData);
+    ASSERT_NE(cameraDevice, nullptr);
+    cameraDevice->isConcurrentLimted_ = 1;
+    std::vector<float> res = cameraDevice->GetExposureBiasRange();
+    EXPECT_NE(res.size(), 0);
+}
 } // namespace CameraStandard
 } // namespace OHOS

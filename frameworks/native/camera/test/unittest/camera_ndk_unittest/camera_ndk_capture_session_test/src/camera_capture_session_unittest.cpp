@@ -3615,18 +3615,20 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_088, Test
     EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_CaptureSession_CommitConfig(captureSession);
     EXPECT_EQ(ret, CAMERA_OK);
+
+    bool isSupported = false;
+    ret = OH_CaptureSession_IsWhiteBalanceModeSupported(captureSession, CAMERA_WHITE_BALANCE_MODE_AUTO, &isSupported);
     int32_t min = 0;
     int32_t max = 0;
     ret = OH_CaptureSession_GetWhiteBalanceRange(captureSession, &min, &max);
-    EXPECT_EQ(ret, CAMERA_SERVICE_FATAL_ERROR);
+    EXPECT_EQ(ret, CAMERA_OK);
     int32_t value = 3000;
     ret = OH_CaptureSession_SetWhiteBalance(captureSession, value);
     EXPECT_EQ(ret, CAMERA_OK);
     value = 0;
     ret = OH_CaptureSession_GetWhiteBalance(captureSession, &value);
     EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CaptureSession_SetWhiteBalanceMode(captureSession,
-        Camera_WhiteBalanceMode::CAMERA_WHITE_BALANCE_MODE_DAYLIGHT);
+    ret = OH_CaptureSession_SetWhiteBalanceMode(captureSession, CAMERA_WHITE_BALANCE_MODE_AUTO);
     EXPECT_EQ(ret, CAMERA_OK);
     Camera_WhiteBalanceMode mode;
     ret = OH_CaptureSession_GetWhiteBalanceMode(captureSession, &mode);

@@ -45,6 +45,7 @@ using namespace OHOS::HDI::Camera::V1_1;
 const uint32_t METADATA_ITEM_SIZE = 20;
 const uint32_t METADATA_DATA_SIZE = 200;
 const std::string LOCAL_SERVICE_NAME = "camera_service";
+const int32_t BACK_CAM = 0;
 
 sptr<HCameraHostManager> HCameraServiceUnit::cameraHostManager_ = nullptr;
 
@@ -1987,7 +1988,337 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_055, TestSize.Level0)
     EventFwk::CommonEventData CommonEventData { want };
     cameraService_->OnReceiveEvent(CommonEventData);
     EXPECT_EQ(CommonEventData.GetWant().GetAction(), COMMON_EVENT_SCREEN_UNLOCKED);
+    device->Release();
+    device->Close();
+}
+
+/**
+ * @tc.name  : Test OnReceiveEvent API
+ * @tc.number: OnReceiveEvent_001
+ * @tc.desc  : Test OnReceiveEvent API, when want.GetAction is COMMON_EVENT_RSS_MULTI_WINDOW_TYPE
+ */
+HWTEST_F(HCameraServiceUnit, OnReceiveEvent_001, TestSize.Level0)
+{
+    std::vector<string> cameraIds;
+    cameraService_->GetCameraIds(cameraIds);
+    ASSERT_NE(cameraIds.size(), 0);
+    cameraService_->SetServiceStatus(CameraServiceStatus::SERVICE_READY);
+    sptr<ICameraDeviceService> device = nullptr;
+    cameraService_->CreateCameraDevice(cameraIds[0], device);
+    ASSERT_NE(device, nullptr);
+    device->Open();
+
+    OHOS::AAFwk::Want want;
+    want.SetAction(COMMON_EVENT_RSS_MULTI_WINDOW_TYPE);
+    EventFwk::CommonEventData CommonEventData { want };
+    cameraService_->OnReceiveEvent(CommonEventData);
+    EXPECT_EQ(CommonEventData.GetWant().GetAction(), COMMON_EVENT_RSS_MULTI_WINDOW_TYPE);
     EXPECT_EQ(CameraCommonEventManager::GetInstance()->IsScreenLocked(), false);
+    device->Release();
+    device->Close();
+}
+
+/**
+ * @tc.name  : Test NotifyDeviceStateChangeInfo_001 API
+ * @tc.number: NotifyDeviceStateChangeInfo_001
+ * @tc.desc  : Test NotifyDeviceStateChangeInfo_001 API
+ */
+HWTEST_F(HCameraServiceUnit, NotifyDeviceStateChangeInfo_001, TestSize.Level0)
+{
+    EXPECT_EQ(cameraService_->TransferTemperToPressure(TEMPER_PRESSURE_COOL), PressureStatus::SYSTEM_PRESSURE_NORMAL);
+    EXPECT_EQ(cameraService_->TransferTemperToPressure(TEMPER_PRESSURE_NORMAL), PressureStatus::SYSTEM_PRESSURE_NORMAL);
+    EXPECT_EQ(cameraService_->TransferTemperToPressure(TEMPER_PRESSURE_WARM), PressureStatus::SYSTEM_PRESSURE_MILD);
+    EXPECT_EQ(cameraService_->TransferTemperToPressure(TEMPER_PRESSURE_HOT), PressureStatus::SYSTEM_PRESSURE_SEVERE);
+    EXPECT_EQ(
+        cameraService_->TransferTemperToPressure(TEMPER_PRESSURE_OVERHEATED), PressureStatus::SYSTEM_PRESSURE_SEVERE);
+    EXPECT_EQ(
+        cameraService_->TransferTemperToPressure(TEMPER_PRESSURE_WARNING), PressureStatus::SYSTEM_PRESSURE_CRITICAL);
+    EXPECT_EQ(
+        cameraService_->TransferTemperToPressure(TEMPER_PRESSURE_EMERGENCY), PressureStatus::SYSTEM_PRESSURE_CRITICAL);
+    EXPECT_EQ(
+        cameraService_->TransferTemperToPressure(TEMPER_PRESSURE_ESCAPE), PressureStatus::SYSTEM_PRESSURE_SHUTDOWN);
+    EXPECT_EQ(cameraService_->TransferTemperToPressure(static_cast<TemperPressure>(TEMPER_PRESSURE_ESCAPE + 1)),
+        PressureStatus::SYSTEM_PRESSURE_NORMAL);
+}
+
+/**
+ * @tc.name  : Test SetBeauty_001 API
+ * @tc.number: SetBeauty_001
+ * @tc.desc  : Test SetBeauty_001 API, when activeDevice update metadata (isChangedMetadata)
+ */
+HWTEST_F(HCameraServiceUnit, SetBeauty_001, TestSize.Level0)
+{
+    std::vector<string> cameraIds;
+    cameraService_->GetCameraIds(cameraIds);
+    ASSERT_NE(cameraIds.size(), 0);
+    cameraService_->SetServiceStatus(CameraServiceStatus::SERVICE_READY);
+    sptr<ICameraDeviceService> device = nullptr;
+    cameraService_->CreateCameraDevice(cameraIds[0], device);
+    ASSERT_NE(device, nullptr);
+    device->Open();
+
+    cameraHostManager_->AddCameraHost(LOCAL_SERVICE_NAME);
+    shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility =
+        std::make_shared<OHOS::Camera::CameraMetadata>(METADATA_ITEM_SIZE, METADATA_DATA_SIZE);
+    ;
+    cameraHostManager_->GetCameraAbility(cameraIds[0], cameraAbility);
+    uint8_t value_u8 = static_cast<uint8_t>(OHOS_CAMERA_MUTE_MODE_SOLID_COLOR_BLACK);
+    cameraAbility->addEntry(OHOS_ABILITY_MUTE_MODES, &value_u8, sizeof(uint8_t));
+
+    sptr<HCameraDeviceManager> deviceManager = HCameraDeviceManager::GetInstance();
+    uint32_t callingTokenId = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new HCameraDevice(cameraHostManager_, cameraIds[0], callingTokenId);
+    int32_t cost = 0;
+    std::set<std::string> conflicting;
+    camDevice->GetCameraResourceCost(cost, conflicting);
+    int32_t uidOfRequestProcess = IPCSkeleton::GetCallingUid();
+    int32_t pidOfRequestProcess = IPCSkeleton::GetCallingPid();
+    uint32_t accessTokenIdOfRequestProc = IPCSkeleton::GetCallingTokenID();
+    uint32_t firstTokenIdOfRequestProc = IPCSkeleton::GetFirstTokenID();
+    sptr<HCameraDeviceHolder> cameraHolder = new HCameraDeviceHolder(pidOfRequestProcess, uidOfRequestProcess, 0, 1,
+        camDevice, accessTokenIdOfRequestProc, cost, conflicting, firstTokenIdOfRequestProc);
+    sptr<HCameraDeviceHolder> cameraHolder_1 = new HCameraDeviceHolder(pidOfRequestProcess, uidOfRequestProcess, 0, 1,
+        camDevice, accessTokenIdOfRequestProc, cost, conflicting, firstTokenIdOfRequestProc);
+    cameraHolder_1->device_ = nullptr;
+    deviceManager->activeCameras_.push_back(cameraHolder_1);
+    deviceManager->activeCameras_.push_back(cameraHolder);
+    cameraService_->cameraDataShareHelper_ = nullptr;
+    EXPECT_EQ(cameraService_->SetBeauty(BEAUTY_STATUS_ON), CAMERA_OK);
+
+    if (camDevice) {
+        camDevice = nullptr;
+    }
+    if (cameraHolder) {
+        cameraHolder = nullptr;
+    }
+    if (cameraHolder_1) {
+        cameraHolder_1 = nullptr;
+    }
+    device->Release();
+    device->Close();
+    deviceManager->activeCameras_.clear();
+}
+
+/**
+ * @tc.name  : Test AllowOpenByOHSide_001 API
+ * @tc.number: AllowOpenByOHSide_001
+ * @tc.desc  : Test AllowOpenByOHSide_001 API, when activePids is empty
+ */
+HWTEST_F(HCameraServiceUnit, AllowOpenByOHSide_001, TestSize.Level0)
+{
+    std::vector<string> cameraIds;
+    cameraService_->GetCameraIds(cameraIds);
+    ASSERT_NE(cameraIds.size(), 0);
+    cameraService_->SetServiceStatus(CameraServiceStatus::SERVICE_READY);
+    sptr<ICameraDeviceService> device = nullptr;
+    cameraService_->CreateCameraDevice(cameraIds[0], device);
+    ASSERT_NE(device, nullptr);
+    device->Open();
+
+    HCameraDeviceManager::GetInstance()->pidToCameras_.clear();
+    std::vector<pid_t> activePids = HCameraDeviceManager::GetInstance()->GetActiveClient();
+    EXPECT_TRUE(activePids.empty());
+
+    bool canOpenCamera = false;
+    auto rc = cameraService_->AllowOpenByOHSide(cameraIds[0], 0, canOpenCamera);
+    EXPECT_EQ(rc, CAMERA_OK);
+    EXPECT_EQ(canOpenCamera, true);
+
+    HCameraDeviceManager::GetInstance() = nullptr;
+    device->Release();
+    device->Close();
+}
+
+/**
+ * @tc.name  : Test IsTorchSupported_001 API
+ * @tc.number: IsTorchSupported_001
+ * @tc.desc  : Test IsTorchSupported_001 API, when error on finding tag
+ */
+HWTEST_F(HCameraServiceUnit, IsTorchSupported_001, TestSize.Level0)
+{
+    std::vector<string> cameraIds;
+    cameraService_->GetCameraIds(cameraIds);
+    ASSERT_NE(cameraIds.size(), 0);
+    cameraService_->SetServiceStatus(CameraServiceStatus::SERVICE_READY);
+    sptr<ICameraDeviceService> device = nullptr;
+    cameraService_->CreateCameraDevice(cameraIds[BACK_CAM], device);
+    ASSERT_NE(device, nullptr);
+    device->Open();
+
+    std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList;
+    cameraService_->GetCameras(cameraIds, cameraAbilityList);
+    ASSERT_NE(cameraIds.size(), 0);
+    ASSERT_NE(cameraAbilityList.size(), 0);
+    auto metadata = cameraAbilityList[BACK_CAM];
+    common_metadata_header_t* metadataEntry = metadata->get();
+    auto rc = OHOS::Camera::DeleteCameraMetadataItem(metadataEntry, OHOS_ABILITY_FLASH_AVAILABLE);
+    ASSERT_EQ(rc, CAM_META_SUCCESS);
+
+    bool isTorchSupported = false;
+    rc = cameraService_->IsTorchSupported(isTorchSupported);
+    EXPECT_EQ(rc, CAMERA_OK);
+    EXPECT_FALSE(isTorchSupported);
+
+    device->Release();
+    device->Close();
+}
+
+/**
+ * @tc.name  : Test DumpCameraAbility_001 API
+ * @tc.number: DumpCameraAbility_001
+ * @tc.desc  : Test DumpCameraAbility_001 API, when tags are'n found
+ */
+HWTEST_F(HCameraServiceUnit, DumpCameraAbility_001, TestSize.Level0)
+{
+    std::vector<string> cameraIds;
+    cameraService_->GetCameraIds(cameraIds);
+    ASSERT_NE(cameraIds.size(), 0);
+    cameraService_->SetServiceStatus(CameraServiceStatus::SERVICE_READY);
+    sptr<ICameraDeviceService> device = nullptr;
+    cameraService_->CreateCameraDevice(cameraIds[BACK_CAM], device);
+    ASSERT_NE(device, nullptr);
+    device->Open();
+
+    std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList;
+    cameraService_->GetCameras(cameraIds, cameraAbilityList);
+    ASSERT_NE(cameraIds.size(), 0);
+    ASSERT_NE(cameraAbilityList.size(), 0);
+    auto metadata = cameraAbilityList[BACK_CAM];
+    common_metadata_header_t* metadataEntry = metadata->get();
+    CameraInfoDumper infoDumper(0);
+    auto rc = OHOS::Camera::DeleteCameraMetadataItem(metadataEntry, OHOS_ABILITY_CAMERA_POSITION);
+    ASSERT_EQ(rc, CAM_META_SUCCESS);
+    rc = OHOS::Camera::DeleteCameraMetadataItem(metadataEntry, OHOS_ABILITY_CAMERA_TYPE);
+    ASSERT_EQ(rc, CAM_META_SUCCESS);
+    rc = OHOS::Camera::DeleteCameraMetadataItem(metadataEntry, OHOS_ABILITY_CAMERA_CONNECTION_TYPE);
+    ASSERT_EQ(rc, CAM_META_SUCCESS);
+    cameraService_->DumpCameraAbility(metadataEntry, infoDumper);
+
+    device->Release();
+    device->Close();
+}
+
+/**
+ * @tc.name  : Test DumpCameraAbility_001 API
+ * @tc.number: DumpCameraAbility_001
+ * @tc.desc  : Test DumpCameraAbility_001 API, when tag OHOS_ABILITY_STREAM_AVAILABLE_BASIC_CONFIGURATIONS has an
+ * invalid cameraFormat
+ */
+HWTEST_F(HCameraServiceUnit, DumpCameraStreamInfo_001, TestSize.Level0)
+{
+    std::vector<string> cameraIds;
+    cameraService_->GetCameraIds(cameraIds);
+    ASSERT_NE(cameraIds.size(), 0);
+    cameraService_->SetServiceStatus(CameraServiceStatus::SERVICE_READY);
+    sptr<ICameraDeviceService> device = nullptr;
+    cameraService_->CreateCameraDevice(cameraIds[BACK_CAM], device);
+    ASSERT_NE(device, nullptr);
+    device->Open();
+
+    std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList;
+    cameraService_->GetCameras(cameraIds, cameraAbilityList);
+    ASSERT_NE(cameraIds.size(), 0);
+    ASSERT_NE(cameraAbilityList.size(), 0);
+    auto metadata = cameraAbilityList[BACK_CAM];
+    common_metadata_header_t* metadataEntry = metadata->get();
+    CameraInfoDumper infoDumper(0);
+    std::vector<int32_t> basicConfigs = { 0, 1, 2 };
+    auto rc = AddOrUpdateMetadata(
+        metadataEntry, OHOS_ABILITY_STREAM_AVAILABLE_BASIC_CONFIGURATIONS, basicConfigs.data(), basicConfigs.size());
+    ASSERT_TRUE(rc);
+    cameraService_->DumpCameraStreamInfo(metadataEntry, infoDumper);
+
+    device->Release();
+    device->Close();
+}
+
+/**
+ * @tc.name  : Test DumpCameraZoom_001 API
+ * @tc.number: DumpCameraZoom_001
+ * @tc.desc  : Test DumpCameraZoom_001 API, when tags(OHOS_ABILITY_ZOOM_CAP, OHOS_ABILITY_ZOOM_RATIO_RANGE) have 2
+ * elements
+ */
+HWTEST_F(HCameraServiceUnit, DumpCameraZoom_001, TestSize.Level0)
+{
+    std::vector<string> cameraIds;
+    cameraService_->GetCameraIds(cameraIds);
+    ASSERT_NE(cameraIds.size(), 0);
+    cameraService_->SetServiceStatus(CameraServiceStatus::SERVICE_READY);
+    sptr<ICameraDeviceService> device = nullptr;
+    cameraService_->CreateCameraDevice(cameraIds[BACK_CAM], device);
+    ASSERT_NE(device, nullptr);
+    device->Open();
+
+    std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList;
+    cameraService_->GetCameras(cameraIds, cameraAbilityList);
+    ASSERT_NE(cameraIds.size(), 0);
+    ASSERT_NE(cameraAbilityList.size(), 0);
+    auto metadata = cameraAbilityList[BACK_CAM];
+    common_metadata_header_t* metadataEntry = metadata->get();
+    CameraInfoDumper infoDumper(0);
+    std::vector<int32_t> zoomCapConfigs = { 1, 2 };
+    std::vector<float> zoomRatioConfigs = { 1, 2 };
+    auto rc = AddOrUpdateMetadata(metadataEntry, OHOS_ABILITY_ZOOM_CAP, zoomCapConfigs.data(), zoomCapConfigs.size());
+    ASSERT_TRUE(rc);
+    rc = AddOrUpdateMetadata(
+        metadataEntry, OHOS_ABILITY_ZOOM_RATIO_RANGE, zoomRatioConfigs.data(), zoomRatioConfigs.size());
+    ASSERT_TRUE(rc);
+    cameraService_->DumpCameraZoom(metadataEntry, infoDumper);
+
+    device->Release();
+    device->Close();
+}
+
+/**
+ * @tc.name  : Test DumpCameraZoom_002 API
+ * @tc.number: DumpCameraZoom_002
+ * @tc.desc  : Test DumpCameraZoom_002 API, when tag(OHOS_ABILITY_SCENE_ZOOM_CAP) is't found
+ */
+HWTEST_F(HCameraServiceUnit, DumpCameraZoom_002, TestSize.Level0)
+{
+    std::vector<string> cameraIds;
+    cameraService_->GetCameraIds(cameraIds);
+    ASSERT_NE(cameraIds.size(), 0);
+    cameraService_->SetServiceStatus(CameraServiceStatus::SERVICE_READY);
+    sptr<ICameraDeviceService> device = nullptr;
+    cameraService_->CreateCameraDevice(cameraIds[BACK_CAM], device);
+    ASSERT_NE(device, nullptr);
+    device->Open();
+
+    std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList;
+    cameraService_->GetCameras(cameraIds, cameraAbilityList);
+    ASSERT_NE(cameraIds.size(), 0);
+    ASSERT_NE(cameraAbilityList.size(), 0);
+    auto metadata = cameraAbilityList[BACK_CAM];
+    common_metadata_header_t* metadataEntry = metadata->get();
+    CameraInfoDumper infoDumper(0);
+    auto rc = OHOS::Camera::DeleteCameraMetadataItem(metadataEntry, OHOS_ABILITY_SCENE_ZOOM_CAP);
+    ASSERT_EQ(rc, CAM_META_SUCCESS);
+    cameraService_->DumpCameraZoom(metadataEntry, infoDumper);
+
+    device->Release();
+    device->Close();
+}
+
+/**
+ * @tc.name  : Test Dump_001 API
+ * @tc.number: Dump_001
+ * @tc.desc  : Test Dump_001 API, when argSets count concurrency
+ */
+HWTEST_F(HCameraServiceUnit, Dump_001, TestSize.Level1)
+{
+    std::vector<string> cameraIds;
+    cameraService_->GetCameraIds(cameraIds);
+    ASSERT_NE(cameraIds.size(), 0);
+    cameraService_->SetServiceStatus(CameraServiceStatus::SERVICE_READY);
+    sptr<ICameraDeviceService> device = nullptr;
+    cameraService_->CreateCameraDevice(cameraIds[BACK_CAM], device);
+    ASSERT_NE(device, nullptr);
+    device->Open();
+
+    auto rc = cameraService_->Dump(0, std::vector<u16string>({ u"concurrency" }));
+    EXPECT_EQ(rc, OHOS::NO_ERROR);
+
     device->Release();
     device->Close();
 }
@@ -2231,6 +2562,130 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_068, TestSize.Level0)
     HCameraDeviceManager::GetInstance()->stateOfRgmCamera_.Clear();
     cameraService_->preCameraId_ = cameraIds[0];
     EXPECT_EQ(cameraService_->ResetRssPriority(), CAMERA_OK);
+
+    device->Release();
+    device->Close();
+}
+
+/*
+ * Feature: CameraService
+ * Function: Test OnReceiveEvent in class HCameraService
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OnReceiveEvent when want.GetAction is "COMMON_EVENT_RSS_MULTI_WINDOW_TYPE"
+ */
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_068, TestSize.Level0)
+{
+    std::vector<string> cameraIds;
+    cameraService_->GetCameraIds(cameraIds);
+    ASSERT_NE(cameraIds.size(), 0);
+    cameraService_->SetServiceStatus(CameraServiceStatus::SERVICE_READY);
+    sptr<ICameraDeviceService> device = nullptr;
+    cameraService_->CreateCameraDevice(cameraIds[0], device);
+    ASSERT_NE(device, nullptr);
+    device->Open();
+
+    OHOS::AAFwk::Want want;
+    want.SetAction(COMMON_EVENT_RSS_MULTI_WINDOW_TYPE);
+    EventFwk::CommonEventData CommonEventData { want };
+    cameraService_->OnReceiveEvent(CommonEventData);
+    EXPECT_EQ(CommonEventData.GetWant().GetAction(), COMMON_EVENT_RSS_MULTI_WINDOW_TYPE);
+    device->Release();
+    device->Close();
+}
+
+/*
+ * Feature: CameraService
+ * Function: Test TransferTemperToPressure
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test TransferTemperToPressure
+ */
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_069, TestSize.Level0)
+{
+    std::vector<string> cameraIds;
+    cameraService_->GetCameraIds(cameraIds);
+    ASSERT_NE(cameraIds.size(), 0);
+    cameraService_->SetServiceStatus(CameraServiceStatus::SERVICE_READY);
+    sptr<ICameraDeviceService> device = nullptr;
+    cameraService_->CreateCameraDevice(cameraIds[0], device);
+    ASSERT_NE(device, nullptr);
+    device->Open();
+
+    EXPECT_EQ(cameraService_->TransferTemperToPressure(0), 0);
+    EXPECT_EQ(cameraService_->TransferTemperToPressure(1), 0);
+    EXPECT_EQ(cameraService_->TransferTemperToPressure(2), 1);
+    EXPECT_EQ(cameraService_->TransferTemperToPressure(3), 2);
+    EXPECT_EQ(cameraService_->TransferTemperToPressure(4), 2);
+    EXPECT_EQ(cameraService_->TransferTemperToPressure(5), 3);
+    EXPECT_EQ(cameraService_->TransferTemperToPressure(6), 3);
+    EXPECT_EQ(cameraService_->TransferTemperToPressure(7), 4);
+    EXPECT_EQ(cameraService_->TransferTemperToPressure(8), 0);
+    device->Release();
+    device->Close();
+}
+
+/*
+ * Feature: CameraService
+ * Function: Test ChooseFisrtBootFoldCamIdx
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test ChooseFisrtBootFoldCamIdx
+ */
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_070, TestSize.Level0)
+{
+    std::vector<string> cameraIds;
+    cameraService_->GetCameraIds(cameraIds);
+    ASSERT_NE(cameraIds.size(), 0);
+    cameraService_->SetServiceStatus(CameraServiceStatus::SERVICE_READY);
+    sptr<ICameraDeviceService> device = nullptr;
+    cameraService_->CreateCameraDevice(cameraIds[0], device);
+    ASSERT_NE(device, nullptr);
+    device->Open();
+
+    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility =
+        std::make_shared<OHOS::Camera::CameraMetadata>(METADATA_ITEM_SIZE, METADATA_DATA_SIZE);
+    std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList;
+    cameraAbilityList.push_back(cameraAbility);
+    EXPECT_EQ(cameraService_->ChooseFisrtBootFoldCamIdx(FoldStatus::UNKNOWN_FOLD, cameraAbilityList), -1);
+
+    uint8_t value = 3;
+    cameraAbility->addEntry(OHOS_ABILITY_CAMERA_FOLD_STATUS, &value, 1);
+    uint8_t positionValue  = 0;
+    cameraAbility->addEntry(OHOS_ABILITY_CAMERA_POSITION, &positionValue, 1);
+    std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList2;
+    cameraAbilityList2.push_back(cameraAbility);
+
+    ASSERT_NE(cameraService_->ChooseFisrtBootFoldCamIdx(FoldStatus::FOLDED, cameraAbilityList2), -1);
+    ASSERT_NE(cameraService_->ChooseFisrtBootFoldCamIdx(FoldStatus::EXPAND, cameraAbilityList2), -1);
+    ASSERT_NE(cameraService_->ChooseFisrtBootFoldCamIdx(FoldStatus::HALF_FOLD, cameraAbilityList2), -1);
+
+    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility2 =
+        std::make_shared<OHOS::Camera::CameraMetadata>(METADATA_ITEM_SIZE, METADATA_DATA_SIZE);
+    value = 3;
+    cameraAbility2->addEntry(OHOS_ABILITY_CAMERA_FOLD_STATUS, &value, 1);
+    positionValue  = 1;
+    cameraAbility2->addEntry(OHOS_ABILITY_CAMERA_POSITION, &positionValue, 1);
+    std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList3;
+    cameraAbilityList3.push_back(cameraAbility2);
+    ASSERT_NE(cameraService_->ChooseFisrtBootFoldCamIdx(FoldStatus::FOLDED, cameraAbilityList3), -1);
+    ASSERT_NE(cameraService_->ChooseFisrtBootFoldCamIdx(FoldStatus::EXPAND, cameraAbilityList3), -1);
+    ASSERT_NE(cameraService_->ChooseFisrtBootFoldCamIdx(FoldStatus::HALF_FOLD, cameraAbilityList3), -1);
+
+    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility3 =
+        std::make_shared<OHOS::Camera::CameraMetadata>(METADATA_ITEM_SIZE, METADATA_DATA_SIZE);
+    value = 3;
+    cameraAbility3->addEntry(OHOS_ABILITY_CAMERA_FOLD_STATUS, &value, 1);
+    positionValue  = 2;
+    cameraAbility3->addEntry(OHOS_ABILITY_CAMERA_POSITION, &positionValue, 1);
+    std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList4;
+    cameraAbilityList4.push_back(cameraAbility3);
+    ASSERT_NE(cameraService_->ChooseFisrtBootFoldCamIdx(FoldStatus::FOLDED, cameraAbilityList4), -1);
+    ASSERT_NE(cameraService_->ChooseFisrtBootFoldCamIdx(FoldStatus::EXPAND, cameraAbilityList4), -1);
+    ASSERT_NE(cameraService_->ChooseFisrtBootFoldCamIdx(FoldStatus::HALF_FOLD, cameraAbilityList4), -1);
 
     device->Release();
     device->Close();

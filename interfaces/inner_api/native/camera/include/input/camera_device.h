@@ -265,6 +265,28 @@ public:
     */
     bool GetisRetractable();
 
+    /**
+    * @brief Get the camera equivalentFocalLength.
+    *
+    * @return Returns the camera equivalentFocalLength.
+    */
+    std::vector<int32_t> GetEquivalentFocalLength();
+    
+    /**
+    * @brief Init the camera equivalentFocalLength.
+    */
+    void InitEquivalentFocalLength(common_metadata_header_t* metadata);
+
+    /**
+    * @brief Init the default camera equivalentFocalLength.
+    */
+    void InitDefaultEquivalentFocalLength();
+
+    /**
+    * @brief Init the physical camera equivalentFocalLength.
+    */
+    void InitPhysicalEquivalentFocalLength(common_metadata_header_t* metadata);
+
     // or can we move definition completely in session only?
     /**
     * @brief Get the supported Zoom Ratio range.
@@ -356,6 +378,7 @@ private:
     CameraFoldScreenType foldScreenType_ = CAMERA_FOLDSCREEN_UNSPECIFIED;
     uint32_t cameraOrientation_ = 0;
     bool isRetractable_ = false;
+    std::vector<int32_t> equivalentFocalLength_ = {};
     uint32_t moduleType_ = 0;
     uint32_t foldStatus_ = 0;
     std::vector<SceneMode> supportedModes_ = {};

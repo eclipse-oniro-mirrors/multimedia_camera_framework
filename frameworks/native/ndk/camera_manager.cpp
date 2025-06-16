@@ -123,6 +123,8 @@ Camera_ErrorCode OH_CameraManager_GetSupportedCameraOutputCapability(Camera_Mana
         "lnvalid argument, cameraOutputCapability is null!");
     CHECK_ERROR_RETURN_RET_LOG(camera == nullptr, CAMERA_INVALID_ARGUMENT,
         "lnvalid argument,camera is null!");
+    CHECK_ERROR_RETURN_RET_LOG(camera->cameraId == nullptr, CAMERA_INVALID_ARGUMENT,
+        "lnvalid argument,cameraId is null!");
 
     return cameraManager->GetSupportedCameraOutputCapability(camera, cameraOutputCapability);
 }
@@ -137,6 +139,8 @@ Camera_ErrorCode OH_CameraManager_GetSupportedCameraOutputCapabilityWithSceneMod
         "lnvalid argument, camera is null!");
     CHECK_ERROR_RETURN_RET_LOG(cameraOutputCapability == nullptr, CAMERA_INVALID_ARGUMENT,
         "lnvalid argument, cameraOutputCapability is null!");
+    CHECK_ERROR_RETURN_RET_LOG(camera->cameraId == nullptr, CAMERA_INVALID_ARGUMENT,
+        "lnvalid argument,cameraId is null!");
 
     return cameraManager->GetSupportedCameraOutputCapabilityWithSceneMode(camera, sceneMode, cameraOutputCapability);
 }
