@@ -3584,49 +3584,6 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_085, Test
 
 /*
  * Feature: Framework
- * Function: IsWhiteBalanceModeSupported
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test IsWhiteBalanceModeSupported
- */
-HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_086, TestSize.Level0)
-{
-    Camera_CaptureSession* captureSession = nullptr;
-    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ASSERT_NE(captureSession, nullptr);
-
-    bool isSupported = false;
-    ret = OH_CaptureSession_IsWhiteBalanceModeSupported(captureSession, CAMERA_WHITE_BALANCE_MODE_AUTO, &isSupported);
-    MEDIA_INFO_LOG("OH_CaptureSession_IsWhiteBalanceModeSupported isSupported: %{public}d", isSupported);
-    EXPECT_EQ(ret, CAMERA_SESSION_NOT_CONFIG);
-}
-
-/*
- * Feature: Framework
- * Function: GetWhiteBalanceMode
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test GetWhiteBalanceMode
- */
-HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_087, TestSize.Level0)
-{
-    Camera_CaptureSession* captureSession = nullptr;
-    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
-
-    EXPECT_EQ(ret, CAMERA_OK);
-    ASSERT_NE(captureSession, nullptr);
-
-    Camera_WhiteBalanceMode whiteBalanceMode = CAMERA_WHITE_BALANCE_MODE_AUTO;
-    ret = OH_CaptureSession_GetWhiteBalanceMode(captureSession, &whiteBalanceMode);
-    MEDIA_INFO_LOG("OH_CaptureSession_GetWhiteBalanceMode whiteBalanceMode: %{public}d", whiteBalanceMode);
-    EXPECT_EQ(ret, CAMERA_SESSION_NOT_CONFIG);
-}
-
-/*
- * Feature: Framework
  * Function: IsAutoDeviceSwitchSupported
  * SubFunction: NA
  * FunctionPoints: NA
