@@ -1535,7 +1535,7 @@ ThumbnailListener::ThumbnailListener(napi_env env, const sptr<PhotoOutput> photo
 ThumbnailListener::~ThumbnailListener()
 {
     MEDIA_INFO_LOG("ThumbnailListener::~ThumbnailListener");
-     ClearTaskManager();
+    ClearTaskManager();
     auto photoOutput = photoOutput_.promote();
     CHECK_ERROR_RETURN_LOG(photoOutput == nullptr, "~ThumbnailListener photoOutput is nullptr");
     auto surface = photoOutput->thumbnailSurface_;
