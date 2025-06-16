@@ -90,13 +90,6 @@
         }                                             \
     } while (0)
 
-#define CHECK_ERROR_CONTINUE(cond) \
-    do {                           \
-        if (cond) {                \
-            continue;              \
-        }                          \
-    } while (0)
-
 #define CHECK_ERROR_RETURN_LOG(cond, fmt, ...)         \
     do {                                               \
         if (cond) {                                    \
