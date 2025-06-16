@@ -3588,7 +3588,7 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_085, Test
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test WhiteBalance with abnormal branch
+ * CaseDescription: Test WhiteBalance API
  */
 HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_088, TestSize.Level0)
 {
