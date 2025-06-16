@@ -2585,15 +2585,15 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_069, TestSize.Level0)
     ASSERT_NE(device, nullptr);
     device->Open();
 
-    EXPECT_EQ(cameraService_->TransferTemperToPressure(0), 0);
-    EXPECT_EQ(cameraService_->TransferTemperToPressure(1), 0);
-    EXPECT_EQ(cameraService_->TransferTemperToPressure(2), 1);
-    EXPECT_EQ(cameraService_->TransferTemperToPressure(3), 2);
-    EXPECT_EQ(cameraService_->TransferTemperToPressure(4), 2);
-    EXPECT_EQ(cameraService_->TransferTemperToPressure(5), 3);
-    EXPECT_EQ(cameraService_->TransferTemperToPressure(6), 3);
-    EXPECT_EQ(cameraService_->TransferTemperToPressure(7), 4);
-    EXPECT_EQ(cameraService_->TransferTemperToPressure(8), 0);
+    EXPECT_EQ(cameraService_->TransferTemperToPressure(0), PressureStatus::SYSTEM_PRESSURE_NORMAL);
+    EXPECT_EQ(cameraService_->TransferTemperToPressure(1), PressureStatus::SYSTEM_PRESSURE_NORMAL);
+    EXPECT_EQ(cameraService_->TransferTemperToPressure(2), PressureStatus::SYSTEM_PRESSURE_MILD);
+    EXPECT_EQ(cameraService_->TransferTemperToPressure(3), PressureStatus::SYSTEM_PRESSURE_SEVERE);
+    EXPECT_EQ(cameraService_->TransferTemperToPressure(4), PressureStatus::SYSTEM_PRESSURE_SEVERE);
+    EXPECT_EQ(cameraService_->TransferTemperToPressure(5), PressureStatus::SYSTEM_PRESSURE_CRITICAL);
+    EXPECT_EQ(cameraService_->TransferTemperToPressure(6), PressureStatus::SYSTEM_PRESSURE_CRITICAL);
+    EXPECT_EQ(cameraService_->TransferTemperToPressure(7), PressureStatus::SYSTEM_PRESSURE_SHUTDOWN);
+    EXPECT_EQ(cameraService_->TransferTemperToPressure(8), PressureStatus::SYSTEM_PRESSURE_NORMAL);
     device->Release();
     device->Close();
 }
