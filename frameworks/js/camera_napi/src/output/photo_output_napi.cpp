@@ -1534,7 +1534,15 @@ ThumbnailListener::ThumbnailListener(napi_env env, const sptr<PhotoOutput> photo
 
 ThumbnailListener::~ThumbnailListener()
 {
-    ClearTaskManager();
+    MEDIA_INFO_LOG("ThumbnailListener::~ThumbnailListener");
+     ClearTaskManager();
+    auto photoOutput = photoOutput_.promote();
+    CHECK_ERROR_RETURN_LOG(photoOutput == nullptr, "~ThumbnailListener photoOutput is nullptr");
+    auto surface = photoOutput->thumbnailSurface_;
+    if (surface) {
+        surface->CleanCache(true);
+        MEDIA_INFO_LOG("~ThumbnailListener clean buffer cache!");
+    }
 }
 
 void ThumbnailListener::ClearTaskManager()
@@ -1551,6 +1559,8 @@ void ThumbnailListener::OnBufferAvailable()
 {
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("ThumbnailListener::OnBufferAvailable is called");
+    recThumb_++;
+    CHECK_EXECUTE(recThumb_ >= std::numeric_limits<int32_t>::max(), recThumb_ = 0);
     wptr<ThumbnailListener> thisPtr(this);
     {
         auto taskManager = GetDefaultTaskManager();
@@ -1568,7 +1578,7 @@ void ThumbnailListener::OnBufferAvailable()
     constexpr int32_t memSize = 20 * 1024;
     int32_t retCode = CameraManager::GetInstance()->RequireMemorySize(memSize);
     CHECK_ERROR_RETURN_LOG(retCode != 0, "ThumbnailListener::OnBufferAvailable RequireMemorySize failed");
-    MEDIA_INFO_LOG("ThumbnailListener::OnBufferAvailable is end");
+    MEDIA_DEBUG_LOG("ThumbnailListener::OnBufferAvailable is end");
 }
 
 std::shared_ptr<DeferredProcessing::TaskManager> ThumbnailListener::GetDefaultTaskManager()
@@ -1628,23 +1638,35 @@ void ThumbnailListener::ExecuteDeepCopySurfaceBuffer()
     int32_t fence = -1;
     int64_t timestamp;
     OHOS::Rect damage;
-    MEDIA_DEBUG_LOG("ThumbnailListener surfaceName = Thumbnail AcquireBuffer before");
+    MEDIA_INFO_LOG("ThumbnailListener surfaceName = Thumbnail AcquireBuffer before");
     SurfaceError surfaceRet = surface->AcquireBuffer(surfaceBuffer, fence, timestamp, damage);
     MEDIA_DEBUG_LOG("ThumbnailListener surfaceName = Thumbnail AcquireBuffer end");
     CHECK_ERROR_RETURN_LOG(surfaceRet != SURFACE_ERROR_OK, "ThumbnailListener Failed to acquire surface buffer");
+    acqThumb_++;
+    CHECK_EXECUTE(acqThumb_ >= std::numeric_limits<int32_t>::max(), acqThumb_ = 0);
+    MEDIA_DEBUG_LOG("ThumbnailListener recv:%{public}d acq:%{public}d", recThumb_, acqThumb_);
+    CHECK_ERROR_PRINT_LOG(recThumb_ != acqThumb_, "exist thumb buffer not acquire!");
+    int32_t captureIdExt = GetCaptureId(surfaceBuffer);
+    int32_t captureId = -1;
     int32_t burstSeqId = -1;
-    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::burstSequenceId, burstSeqId);
-    if (burstSeqId != -1) {
-        surface->ReleaseBuffer(surfaceBuffer, -1);
-        return;
-    }
     int32_t thumbnailWidth = 0;
     int32_t thumbnailHeight = 0;
-    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::CameraStandard::dataWidth, thumbnailWidth);
-    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::CameraStandard::dataHeight, thumbnailHeight);
-    int32_t captureId = GetCaptureId(surfaceBuffer);
-    MEDIA_INFO_LOG("ThumbnailListener thumbnailWidth:%{public}d, thumbnailheight: %{public}d, captureId: %{public}d,"
-        "burstSeqId: %{public}d", thumbnailWidth, thumbnailHeight, captureId, burstSeqId);
+    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::captureId, captureId);
+    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::burstSequenceId, burstSeqId);
+    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::dataWidth, thumbnailWidth);
+    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::dataHeight, thumbnailHeight);
+    MEDIA_INFO_LOG("ThumbnailListener tw:%{public}d th:%{public}d cId:%{public}d bsId:%{public}d",
+        thumbnailWidth,
+        thumbnailHeight,
+        captureId,
+        burstSeqId);
+    GSError res;
+    if (burstSeqId != -1) {
+        res = surface->ReleaseBuffer(surfaceBuffer, -1);
+        CHECK_ERROR_PRINT_LOG(res != GSERROR_OK, "ReleaseBuffer bsId:%{public}d err:%{public}d", burstSeqId, res);
+        MEDIA_INFO_LOG("ThumbnailListener ReleaseBuffer, cId:%{public}d bsId:%{public}d", captureId, burstSeqId);
+        return;
+    }
     OHOS::ColorManager::ColorSpaceName colorSpace = GetColorSpace(surfaceBuffer);
     CHECK_ERROR_RETURN_LOG(colorSpace == OHOS::ColorManager::ColorSpaceName::NONE, "Thumbnail GetcolorSpace failed!");
     bool isHdr = colorSpace == OHOS::ColorManager::ColorSpaceName::BT2020_HLG;
@@ -1655,9 +1677,11 @@ void ThumbnailListener::ExecuteDeepCopySurfaceBuffer()
     CHECK_ERROR_RETURN_LOG(pixelMap == nullptr, "ThumbnailListener create pixelMap is nullptr");
     ThumbnailSetColorSpaceAndRotate(pixelMap, surfaceBuffer, colorSpace);
     MEDIA_DEBUG_LOG("ThumbnailListener ReleaseBuffer begin");
-    surface->ReleaseBuffer(surfaceBuffer, -1);
-    MEDIA_DEBUG_LOG("ThumbnailListener ReleaseBuffer end");
-    UpdateJSCallbackAsync(captureId, timestamp, std::move(pixelMap));
+    res = surface->ReleaseBuffer(surfaceBuffer, -1);
+    CHECK_ERROR_PRINT_LOG(res != GSERROR_OK, "ReleaseBuffer cId:%{public}d err:%{public}d", captureId, res);
+    MEDIA_DEBUG_LOG("ThumbnailListener ReleaseBuffer end, cId:%{public}d", captureId);
+    UpdateJSCallbackAsync(captureIdExt, timestamp, std::move(pixelMap));
+    MEDIA_INFO_LOG("ThumbnailListener ReleaseBuffer UpdateJSCallbackAsync cId:%{public}d end", captureId);
     auto photoProxy = CreateCameraPhotoProxy(surfaceBuffer);
     CHECK_ERROR_RETURN_LOG(photoProxy == nullptr, "photoProxy is nullptr");
     if (photoOutput->IsYuvOrHeifPhoto()) {
