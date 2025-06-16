@@ -58,6 +58,21 @@ public:
     virtual void OnError(const std::string& videoId, const DpsErrorCode errorCode) {};
     virtual void OnStateChanged(const DpsStatusCode status) {};
 };
+
+class CameraManagerCallbackTest : public CameraManagerCallback {
+public:
+    CameraManagerCallbackTest() = default;
+    virtual ~CameraManagerCallbackTest() = default;
+    void OnCameraStatusChanged(const CameraStatusInfo &cameraStatusInfo) const {};
+    void OnFlashlightStatusChanged(const std::string &cameraID, const FlashStatus flashStatus) const {};
+};
+
+class CameraManagerTest : public CameraManager {
+public:
+    bool ConvertMetaToFwkMode(const HDI::Camera::V1_3::OperationMode opMode, SceneMode &scMode);
+    bool ConvertFwkToMetaMode(const SceneMode scMode, HDI::Camera::V1_3::OperationMode &opMode);
+};
+
 class CameraFrameWorkManagerUnit : public testing::Test {
 public:
     static const int32_t PHOTO_DEFAULT_WIDTH = 1280;

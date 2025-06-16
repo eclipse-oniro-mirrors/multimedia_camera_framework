@@ -22,9 +22,6 @@ namespace OHOS {
 namespace CameraStandard {
 
 static const std::map<QOS::QosLevel, uv_qos_t> qosLevelToUvQosMap = {
-    {QOS::QosLevel::QOS_BACKGROUND, uv_qos_t::uv_qos_background},
-    {QOS::QosLevel::QOS_UTILITY, uv_qos_t::uv_qos_utility},
-    {QOS::QosLevel::QOS_DEFAULT, uv_qos_t::uv_qos_default},
     {QOS::QosLevel::QOS_USER_INITIATED, uv_qos_t::uv_qos_user_initiated},
     {QOS::QosLevel::QOS_DEADLINE_REQUEST, uv_qos_t::uv_qos_reserved},
     {QOS::QosLevel::QOS_USER_INTERACTIVE, uv_qos_t::uv_qos_user_interactive},

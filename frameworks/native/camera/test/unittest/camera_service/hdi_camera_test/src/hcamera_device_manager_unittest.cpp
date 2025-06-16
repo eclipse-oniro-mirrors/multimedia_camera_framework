@@ -272,5 +272,115 @@ HWTEST_F(HCameraDeviceManagerUnitTest, hcamera_device_manager_unittest_015, Test
     });
     HCameraDeviceManager::GetInstance()->activeCameras_.erase(it);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test GetCamerasByPid with non-existent pid.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetCamerasByPid with non-existent pid.
+ */
+HWTEST_F(HCameraDeviceManagerUnitTest, hcamera_device_manager_unittest_016, TestSize.Level0)
+{
+    cameraManager_ = CameraManager::GetInstance();
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+    pid_t pidRequest = 999999;
+
+    std::vector<sptr<HCameraDevice>>res = HCameraDeviceManager::GetInstance()->GetCamerasByPid(pidRequest);
+    EXPECT_EQ(res.size(), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetCamerasByPid with HCameraDeviceHolder is empty.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetCamerasByPid with HCameraDeviceHolder is empty.
+ */
+HWTEST_F(HCameraDeviceManagerUnitTest, hcamera_device_manager_unittest_017, TestSize.Level0)
+{
+    cameraManager_ = CameraManager::GetInstance();
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+    pid_t pidRequest = 999999;
+
+    std::vector<sptr<HCameraDeviceHolder>> emptyVec;
+    HCameraDeviceManager::GetInstance()->pidToCameras_[pidRequest] = emptyVec;
+    std::vector<sptr<HCameraDevice>>res = HCameraDeviceManager::GetInstance()->GetCamerasByPid(pidRequest);
+    EXPECT_EQ(res.size(), 0);
+    
+    auto it = HCameraDeviceManager::GetInstance()->pidToCameras_.find(pidRequest);
+    HCameraDeviceManager::GetInstance()->pidToCameras_.erase(it);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test DetermineHighestPriorityOwner.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test DetermineHighestPriorityOwner.
+ */
+HWTEST_F(HCameraDeviceManagerUnitTest, hcamera_device_manager_unittest_018, TestSize.Level0)
+{
+    sptr<CameraProcessPriority> requestPriority = new (std::nothrow) CameraProcessPriority(1, 1, 1);
+    int32_t highestPriority = 0;
+    int32_t owner = 0;
+    HCameraDeviceManager::GetInstance()->DetermineHighestPriorityOwner(highestPriority, owner, requestPriority);
+    ASSERT_NE(highestPriority, 0);
+    highestPriority = 100;
+    HCameraDeviceManager::GetInstance()->DetermineHighestPriorityOwner(highestPriority, owner, requestPriority);
+    EXPECT_NE(highestPriority, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test WouldEvict with nullptr.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test WouldEvict with nullptr.
+ */
+HWTEST_F(HCameraDeviceManagerUnitTest, hcamera_device_manager_unittest_019, TestSize.Level0)
+{
+    sptr<HCameraDeviceHolder> cameraRequestOpen = nullptr;
+    auto res = HCameraDeviceManager::GetInstance()->WouldEvict(cameraRequestOpen);
+    EXPECT_NE(res.size(), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test WouldEvict.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test WouldEvict.
+ */
+HWTEST_F(HCameraDeviceManagerUnitTest, hcamera_device_manager_unittest_020, TestSize.Level0)
+{
+    cameraManager_ = CameraManager::GetInstance();
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+    
+    int32_t pid = 9;
+    int32_t uid = 1;
+    int32_t state = 1;
+    int32_t focusState = 1;
+    pid_t pidRequest = 241228;
+    std::string cameraId = cameras[0]->GetID();
+    cameraHostManager_ = new HCameraHostManager(nullptr);
+    sptr<HCameraDevice> device = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, pidRequest);;
+    uint32_t accessTokenId = 1;
+    int32_t cost = 1;
+    std::set<std::string> conflicting;
+    uint32_t firstTokenId = 1;
+    sptr<HCameraDeviceHolder> cameraRequestOpen = new HCameraDeviceHolder(pid, uid, state, focusState,
+        device, accessTokenId, cost, conflicting, firstTokenId);
+    auto res = HCameraDeviceManager::GetInstance()->WouldEvict(cameraRequestOpen);
+    EXPECT_NE(res.size(), 0);
+}
 } // CameraStandard
 } // OHOS

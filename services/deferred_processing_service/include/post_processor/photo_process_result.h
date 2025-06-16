@@ -33,6 +33,7 @@ struct MetadataKeys {
     static constexpr auto CLOUD_FLAG = "cloudImageEnhanceFlag";
     static constexpr auto DEFERRED_FORMAT = "deferredImageFormat";
     static constexpr auto EXIF_SIZE = "exifDataSize";
+    static constexpr auto ROTATION_IN_IPS = "rotationInIps";
 };
 
 enum class PhotoFormat : int32_t {

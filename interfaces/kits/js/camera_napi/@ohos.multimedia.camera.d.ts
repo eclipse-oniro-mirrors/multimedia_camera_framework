@@ -1579,6 +1579,17 @@ function getCameraManager(context: Context): CameraManager;
      * @since 12
      */
     readonly cameraOrientation: number;
+
+    /**
+     * Camera equivalent focal length.
+     *
+     * @type { ?Array<number> }
+     * @readonly
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 19
+     */
+    readonly equivalentFocalLength ?: Array<number>;
   }
 
   /**

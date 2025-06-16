@@ -378,6 +378,8 @@ napi_value CameraInputNapi::Open(napi_env env, napi_callback_info info)
         return nullptr;
     }
     work->data = static_cast<void*>(asyncContext.get());
+    asyncContext->queueTask =
+        CameraNapiWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueTask("CameraInputNapi::Open");
     int rev = uv_queue_work_with_qos(
         loop, work, CameraInputNapi::OpenCameraAsync,
         CameraInputNapi::UvWorkAsyncCompleted, uvQos);
@@ -388,9 +390,8 @@ napi_value CameraInputNapi::Open(napi_env env, napi_callback_info info)
             delete work;
             work = nullptr;
         }
+        CameraNapiWorkerQueueKeeper::GetInstance()->RemoveWorkerTask(asyncContext->queueTask);
     } else {
-        asyncContext->queueTask =
-            CameraNapiWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueTask("CameraInputNapi::Open");
         asyncContext.release();
     }
     CHECK_ERROR_RETURN_RET(asyncFunction->GetAsyncFunctionType() == ASYNC_FUN_TYPE_PROMISE,
@@ -613,6 +614,8 @@ napi_value CameraInputNapi::Off(napi_env env, napi_callback_info info)
 napi_value CameraInputNapi::UsedAsPosition(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("CameraInputNapi::UsedAsPosition is called");
+    CHECK_ERROR_RETURN_RET_LOG(
+        !CameraNapiSecurity::CheckSystemApp(env), nullptr, "CameraInputNapi::UsedAsPosition:SystemApi is called");
     CameraInputNapi* cameraInputNapi = nullptr;
     int32_t cameraPosition;
     CameraNapiParamParser jsParamParser(env, info, cameraInputNapi, cameraPosition);

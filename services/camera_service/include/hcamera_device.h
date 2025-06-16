@@ -40,6 +40,7 @@
 #include "v1_0/icamera_host.h"
 #include "dfx/camera_report_uitls.h"
 #include "icamera_ipc_checker.h"
+#include "camera_rotate_strategy_parser.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -182,6 +183,10 @@ public:
         isDeviceOpenedByConcurrent_ = enable;
     }
 
+    void UpdateCameraRotateAngleAndZoom(std::vector<int32_t> &frameRateRange, bool isResetDegree = false);
+    void SetCameraRotateStrategyInfos(std::vector<CameraRotateStrategyInfo> infos);
+    bool GetSigleStrategyInfo(CameraRotateStrategyInfo &strategyInfo);
+
 private:
     class FoldScreenListener;
     sptr<FoldScreenListener> listener_;
@@ -265,6 +270,7 @@ private:
 #endif
     int32_t CameraHostMgrOpenCamera(bool isEnableSecCam);
     void GetMovingPhotoStartAndEndTime(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult);
+    std::vector<CameraRotateStrategyInfo> GetCameraRotateStrategyInfos();
     bool isMovingPhotoEnabled_ = false;
     std::mutex movingPhotoStartTimeCallbackLock_;
     std::mutex movingPhotoEndTimeCallbackLock_;
@@ -281,6 +287,9 @@ private:
     std::mutex cameraCloseListenerMutex_;
     std::mutex foldStateListenerMutex_;
     std::vector<wptr<IHCameraCloseListener>> cameraCloseListenerVec_;
+    std::mutex cameraRotateStrategyInfosLock_;
+    std::vector<CameraRotateStrategyInfo> cameraRotateStrategyInfos_;
+    std::string bundleName_ = "";
 };
 } // namespace CameraStandard
 } // namespace OHOS

@@ -1172,9 +1172,7 @@ int32_t HCaptureSession::Start()
         CHECK_ERROR_RETURN_LOG(hStreamOperatorSptr == nullptr, "hStreamOperatorSptr is null");
         UpdateSettingForSpecialBundle();
         errorCode = hStreamOperatorSptr->StartPreviewStream(settings, cameraPosition);
-        if (errorCode == CAMERA_OK) {
-            isSessionStarted_ = true;
-        }
+        CHECK_EXECUTE(errorCode == CAMERA_OK, isSessionStarted_ = true);
         stateMachine_.Transfer(CaptureSessionState::SESSION_STARTED);
     });
     MEDIA_INFO_LOG("HCaptureSession::Start execute success, sessionID: %{public}d", GetSessionId());
@@ -1185,28 +1183,30 @@ int32_t HCaptureSession::Start()
 void HCaptureSession::UpdateSettingForSpecialBundle()
 {
     OHOS::Rosen::FoldStatus foldstatus = OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus();
+    OHOS::Rosen::FoldDisplayMode displayMode = OHOS::Rosen::DisplayManager::GetInstance().GetFoldDisplayMode();
     auto hStreamOperatorSptr = GetStreamOperator();
-    bool isExec = hStreamOperatorSptr != nullptr &&
-        foldstatus == OHOS::Rosen::FoldStatus::FOLDED && !isHasFitedRotation_;
-    if (isExec) {
-        auto infos = GetCameraRotateStrategyInfos();
+    bool isValidDisplayStatus = (foldstatus == OHOS::Rosen::FoldStatus::FOLD_STATE_EXPAND_WITH_SECOND_EXPAND) &&
+        (displayMode == OHOS::Rosen::FoldDisplayMode::GLOBAL_FULL);
+    bool isExeUpdate = hStreamOperatorSptr != nullptr &&
+        (foldstatus == OHOS::Rosen::FoldStatus::FOLDED || isValidDisplayStatus) && !isHasFitedRotation_;
+    if (isExeUpdate) {
         auto frameRateRange = hStreamOperatorSptr->GetFrameRateRange();
-        UpdateCameraRotateAngleAndZoom(infos, frameRateRange); // 普通设备无此参数
         auto cameraDevice = GetCameraDevice();
         CHECK_ERROR_RETURN(cameraDevice == nullptr);
+        cameraDevice->UpdateCameraRotateAngleAndZoom(frameRateRange);
         int32_t cameraPosition = cameraDevice->GetCameraPosition();
         CHECK_ERROR_RETURN(cameraPosition == OHOS_CAMERA_POSITION_FRONT);
+        int uid = IPCSkeleton::GetCallingUid();
+        CHECK_EXECUTE(bundleName_ == "", bundleName_ = GetClientBundle(uid));
         std::string specialBundle = system::GetParameter("const.camera.folded_lens_change", "default");
-        bool isExecUpdate = specialBundle == bundleName_ && !frameRateRange.empty() &&
-            frameRateRange[0] == SPECIAL_BUNDLE_FPS;
-        if (isExecUpdate) {
-            std::shared_ptr<OHOS::Camera::CameraMetadata> settings =
-                std::make_shared<OHOS::Camera::CameraMetadata>(1, 1);
-            int32_t rotateDegree = SPECIAL_BUNDLE_ROTATE;
-            MEDIA_INFO_LOG("HCaptureSession::UpdateSettingForSpecialBundle rotateDegree: %{public}d.", rotateDegree);
-            settings->addEntry(OHOS_CONTROL_ROTATE_ANGLE, &rotateDegree, 1);
-            cameraDevice->UpdateSettingOnce(settings);
-        }
+        CHECK_ERROR_RETURN(specialBundle != bundleName_ || frameRateRange.empty() ||
+            frameRateRange[0] != SPECIAL_BUNDLE_FPS);
+        std::shared_ptr<OHOS::Camera::CameraMetadata> settings =
+            std::make_shared<OHOS::Camera::CameraMetadata>(1, 1);
+        int32_t rotateDegree = SPECIAL_BUNDLE_ROTATE;
+        MEDIA_INFO_LOG("HCaptureSession::UpdateSettingForSpecialBundle rotateDegree: %{public}d.", rotateDegree);
+        settings->addEntry(OHOS_CONTROL_ROTATE_ANGLE, &rotateDegree, 1);
+        cameraDevice->UpdateSettingOnce(settings);
     }
 }
 
@@ -1581,46 +1581,6 @@ bool StateMachine::Transfer(CaptureSessionState targetState)
         return true;
     }
     return false;
-}
-
-void HCaptureSession::UpdateCameraRotateAngleAndZoom(std::vector<CameraRotateStrategyInfo> &infos,
-    std::vector<int32_t> &frameRateRange)
-{
-    int uid = IPCSkeleton::GetCallingUid();
-    CHECK_EXECUTE(bundleName_ == "", bundleName_ = GetClientBundle(uid));
-    std::string bundleName = bundleName_;
-    auto it = std::find_if(infos.begin(), infos.end(), [&bundleName](const auto &info) {
-        return info.bundleName == bundleName;
-    });
-    CHECK_ERROR_RETURN_LOG(it == infos.end(), "Update roteta angle not supported");
-    auto flag = false;
-    CHECK_EXECUTE(it->fps <= 0, flag = true);
-    CHECK_EXECUTE(it->fps > 0 && frameRateRange.size() > 1 &&
-        it->fps == frameRateRange[1], flag = true);
-    CHECK_ERROR_RETURN(!flag);
-    std::shared_ptr<OHOS::Camera::CameraMetadata> settings = std::make_shared<OHOS::Camera::CameraMetadata>(1, 1);
-    int32_t rotateDegree = it->rotateDegree;
-    MEDIA_DEBUG_LOG("HCaptureSession::UpdateCameraRotateAngleAndZoom rotateDegree: %{public}d.", rotateDegree);
-    CHECK_EXECUTE(rotateDegree >= 0, settings->addEntry(OHOS_CONTROL_ROTATE_ANGLE, &rotateDegree, 1));
-    float zoom = it->wideValue;
-    MEDIA_DEBUG_LOG("HCaptureSession::UpdateCameraRotateAngleAndZoom zoom: %{public}f.", zoom);
-    CHECK_EXECUTE(zoom >= 0, settings->addEntry(OHOS_CONTROL_ZOOM_RATIO, &zoom, 1));
-    auto cameraDevive = GetCameraDevice();
-    CHECK_ERROR_RETURN_LOG(cameraDevive == nullptr, "cameraDevive is null.");
-    cameraDevive->UpdateSettingOnce(settings);
-    MEDIA_INFO_LOG("UpdateCameraRotateAngleAndZoom success.");
-}
-
-void HCaptureSession::SetCameraRotateStrategyInfos(std::vector<CameraRotateStrategyInfo> infos)
-{
-    std::lock_guard<std::mutex> lock(cameraRotateStrategyInfosLock_);
-    cameraRotateStrategyInfos_ = infos;
-}
-
-std::vector<CameraRotateStrategyInfo> HCaptureSession::GetCameraRotateStrategyInfos()
-{
-    std::lock_guard<std::mutex> lock(cameraRotateStrategyInfosLock_);
-    return cameraRotateStrategyInfos_;
 }
 
 #ifdef HOOK_CAMERA_OPERATOR

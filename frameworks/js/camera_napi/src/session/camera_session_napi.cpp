@@ -1036,6 +1036,8 @@ napi_value CameraSessionNapi::CommitConfig(napi_env env, napi_callback_info info
         return nullptr;
     }
     work->data = static_cast<void*>(asyncContext.get());
+    asyncContext->queueTask =
+        CameraNapiWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueTask("CameraSessionNapi::CommitConfig");
     int rev = uv_queue_work_with_qos(
         loop, work, CameraSessionNapi::CommitConfigAsync,
         CameraSessionNapi::UvWorkAsyncCompleted, uvQos);
@@ -1046,9 +1048,8 @@ napi_value CameraSessionNapi::CommitConfig(napi_env env, napi_callback_info info
             delete work;
             work = nullptr;
         }
+        CameraNapiWorkerQueueKeeper::GetInstance()->RemoveWorkerTask(asyncContext->queueTask);
     } else {
-        asyncContext->queueTask =
-            CameraNapiWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueTask("CameraSessionNapi::CommitConfig");
         asyncContext.release();
     }
     CHECK_ERROR_RETURN_RET(asyncFunction->GetAsyncFunctionType() == ASYNC_FUN_TYPE_PROMISE,
@@ -1372,6 +1373,8 @@ napi_value CameraSessionNapi::Start(napi_env env, napi_callback_info info)
         return nullptr;
     }
     work->data = static_cast<void*>(asyncContext.get());
+    asyncContext->queueTask =
+        CameraNapiWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueTask("CameraSessionNapi::Start");
     int rev = uv_queue_work_with_qos(
         loop, work, CameraSessionNapi::StartAsync,
         CameraSessionNapi::UvWorkAsyncCompleted, uvQos);
@@ -1382,9 +1385,8 @@ napi_value CameraSessionNapi::Start(napi_env env, napi_callback_info info)
             delete work;
             work = nullptr;
         }
+        CameraNapiWorkerQueueKeeper::GetInstance()->RemoveWorkerTask(asyncContext->queueTask);
     } else {
-        asyncContext->queueTask =
-            CameraNapiWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueTask("CameraSessionNapi::Start");
         asyncContext.release();
     }
     CHECK_ERROR_RETURN_RET(asyncFunction->GetAsyncFunctionType() == ASYNC_FUN_TYPE_PROMISE,

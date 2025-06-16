@@ -108,7 +108,9 @@ std::unique_ptr<ImageInfo> PhotoProcessResult::CreateFromMeta(int32_t defaultSiz
 std::shared_ptr<PictureIntf> PhotoProcessResult::AssemblePicture(const HDI::Camera::V1_3::ImageBufferInfoExt& buffer)
 {
     int32_t exifDataSize = 0;
+    int32_t rotationInIps = false;
     GetMetadataValue(buffer.metadata, MetadataKeys::EXIF_SIZE, exifDataSize);
+    GetMetadataValue(buffer.metadata, MetadataKeys::ROTATION_IN_IPS, rotationInIps);
     auto imageBuffer = TransBufferHandleToSurfaceBuffer(buffer.imageHandle->GetBufferHandle());
     DP_CHECK_ERROR_RETURN_RET_LOG(imageBuffer == nullptr, nullptr, "bufferHandle is nullptr.");
 
@@ -131,6 +133,7 @@ std::shared_ptr<PictureIntf> PhotoProcessResult::AssemblePicture(const HDI::Came
     }
 
     AssemleAuxilaryPicture(buffer, picture);
+    DP_CHECK_ERROR_RETURN_RET_LOG(rotationInIps, picture, "HAL rotationInIps");
     picture->RotatePicture();
     return picture;
 }

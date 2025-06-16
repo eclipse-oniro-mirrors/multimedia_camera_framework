@@ -21,6 +21,7 @@
 #include "dps_event_report.h"
 #include "events_monitor.h"
 #include "parameters.h"
+#include "camera_dynamic_loader.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -144,6 +145,8 @@ void DeferredPhotoController::NotifyScheduleState(bool workAvailable)
     } else {
         if (photoProcessor_->IsIdleState()) {
             scheduleState = DpsStatus::DPS_SESSION_STATE_IDLE;
+            // if there have no job in dps, unload libcamera_dynamic_picture.z.so
+            CameraDynamicLoader::FreeDynamicLibDelayed(PICTURE_SO, LIB_DELAYED_UNLOAD_TIME);
         } else {
             if (photoStrategyCenter_->GetHdiStatus() != HdiStatus::HDI_READY) {
                 scheduleState = DpsStatus::DPS_SESSION_STATE_SUSPENDED;
