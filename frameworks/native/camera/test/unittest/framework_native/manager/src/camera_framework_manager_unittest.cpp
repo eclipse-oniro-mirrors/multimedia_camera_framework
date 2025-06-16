@@ -1584,5 +1584,29 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_066, Test
         }
     }
 }
+
+/*
+ * Feature: Framework
+ * Function: Test cameraManager with ResetRssPriority
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test ResetRssPriority for Normal branches & abnormal branches
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_069, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+    sptr<CameraDevice> camera = cameras[0];
+    cameraManager_->IsPrelaunchSupported(camera);
+    int32_t ret = -1;
+    auto manager = cameraManager_;
+    ret = [&manager]() {
+        sptr<ICameraService> proxy = nullptr;
+        manager->SetServiceProxy(proxy);
+        return manager->ResetRssPriority();
+    }();
+    EXPECT_EQ(ret, CameraErrorCode::SERVICE_FATL_ERROR);
+}
 }
 }

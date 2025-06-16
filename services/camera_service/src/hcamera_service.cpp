@@ -47,6 +47,8 @@
 #include "ipc_skeleton.h"
 #include "iservice_registry.h"
 #include "os_account_manager.h"
+#include "res_type.h"
+#include "res_sched_client.h"
 #include "system_ability_definition.h"
 #include "tokenid_kit.h"
 #include "uri.h"
@@ -1284,6 +1286,15 @@ int32_t HCameraService::PrelaunchCamera()
     int32_t ret = cameraHostManager_->Prelaunch(preCameraId_, preCameraClient_);
     CHECK_ERROR_PRINT_LOG(ret != CAMERA_OK, "HCameraService::Prelaunch failed");
     return ret;
+}
+
+int32_t HCameraService::ResetRssPriority()
+{
+    MEDIA_INFO_LOG("HCameraService::ResetRssPriority");
+    std::unordered_map<std::string, std::string> payload;
+    OHOS::ResourceSchedule::ResSchedClient::GetInstance()
+        .ReportData(ResourceSchedule::ResType::RES_TYPE_CAMERA_RESET_PRIORITY, 0, payload);
+    return CAMERA_OK;
 }
 
 /**

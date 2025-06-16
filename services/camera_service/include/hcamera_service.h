@@ -129,6 +129,7 @@ public:
     int32_t MuteCamera(bool muteMode) override;
     int32_t MuteCameraPersist(PolicyType policyType, bool isMute) override;
     int32_t PrelaunchCamera() override;
+    int32_t ResetRssPriority() override;
     int32_t PreSwitchCamera(const std::string cameraId) override;
     int32_t SetPrelaunchConfig(string cameraId, RestoreParamTypeOhos restoreParamType, int activeTime,
         EffectParam effectParam) override;

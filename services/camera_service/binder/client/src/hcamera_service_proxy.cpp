@@ -17,6 +17,7 @@
 #include "camera_log.h"
 #include "metadata_utils.h"
 #include "camera_service_ipc_interface_code.h"
+#include <cstdint>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -589,6 +590,19 @@ int32_t HCameraServiceProxy::PrelaunchCamera()
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_PRE_LAUNCH_CAMERA), data, reply, option);
     CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HCameraServiceProxy::PrelaunchCamera failed, error: %{public}d", error);
+    return error;
+}
+
+int32_t HCameraServiceProxy::ResetRssPriority()
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    data.WriteInterfaceToken(GetDescriptor());
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_RESET_RSS_PRIORITY), data, reply, option);
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HCameraServiceProxy::ResetRssPriority failed, error: %{public}d", error);
     return error;
 }
 

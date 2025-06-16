@@ -1502,5 +1502,43 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_026, TestSize.L
     hCaptureSessionCallbackProxy->OnError(0);
 }
 
+/*
+ * Feature: Framework
+ * Function: Test anomalous branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: test ResetRssPriority the camera with serviceProxy_ null anomalous branch
+ */
+HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_027, TestSize.Level0)
+{
+    if (g_isSupportedDeviceStatus) {
+        GTEST_SKIP();
+    }
+    sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
+    ASSERT_NE(camManagerObj, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input_;
+    std::string cameraId = camInput->GetCameraId();
+    int activeTime = 0;
+    EffectParam effectParam = {0, 0, 0};
+
+    int32_t intResult = camManagerObj->SetPrelaunchConfig(cameraId, RestoreParamTypeOhos::TRANSIENT_ACTIVE_PARAM_OHOS,
+        activeTime, effectParam);
+    if (!IsSupportNow()) {
+        EXPECT_EQ(intResult, 7400201);
+    } else {
+        EXPECT_EQ(intResult, 0);
+    }
+
+    intResult = camManagerObj->ResetRssPriority();
+    EXPECT_EQ(intResult, 0);
+    // CameraManager instance has been changed, need recover
+    camManagerObj->SetServiceProxy(nullptr);
+
+    intResult = camManagerObj->ResetRssPriority();
+    EXPECT_EQ(intResult, 7400201);
+}
+
 }
 }
