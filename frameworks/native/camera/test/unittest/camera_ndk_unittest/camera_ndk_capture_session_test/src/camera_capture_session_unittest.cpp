@@ -3584,11 +3584,11 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_085, Test
 
 /*
  * Feature: Framework
- * Function: IsAutoDeviceSwitchSupported
+ * Function: WhiteBalance
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test IsAutoDeviceSwitchSupported with abnormal branch
+ * CaseDescription: Test WhiteBalance with abnormal branch
  */
 HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_088, TestSize.Level0)
 {
