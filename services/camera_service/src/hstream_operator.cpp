@@ -807,6 +807,7 @@ void HStreamOperator::GetMovingPhotoStartAndEndTime()
     CHECK_ERROR_RETURN_LOG(cameraDevice_ == nullptr, "HCaptureSession::GetMovingPhotoStartAndEndTime device is null");
     cameraDevice_->SetMovingPhotoStartTimeCallback([this](int32_t captureId, int64_t startTimeStamp) {
         MEDIA_INFO_LOG("SetMovingPhotoStartTimeCallback function enter");
+        std::lock_guard<mutex> statusLock(this->movingPhotoStatusLock_);
         CHECK_ERROR_RETURN_LOG(this->taskManager_ == nullptr, "Set start time callback taskManager_ is null");
         std::lock_guard<mutex> lock(this->taskManager_->startTimeMutex_);
         if (this->taskManager_->mPStartTimeMap_.count(captureId) == 0) {
@@ -817,6 +818,7 @@ void HStreamOperator::GetMovingPhotoStartAndEndTime()
     });
 
     cameraDevice_->SetMovingPhotoEndTimeCallback([this](int32_t captureId, int64_t endTimeStamp) {
+        std::lock_guard<mutex> statusLock(this->movingPhotoStatusLock_);
         CHECK_ERROR_RETURN_LOG(this->taskManager_ == nullptr, "Set end time callback taskManager_ is null");
         std::lock_guard<mutex> lock(this->taskManager_->endTimeMutex_);
         if (this->taskManager_->mPEndTimeMap_.count(captureId) == 0) {
