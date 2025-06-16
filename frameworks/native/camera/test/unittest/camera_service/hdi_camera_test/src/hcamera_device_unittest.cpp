@@ -898,5 +898,139 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_033, TestSize.Level0)
     EXPECT_EQ(camDevice->ResetDeviceSettings(), 0);
     camDevice->deviceMuteMode_.store(oldDeviceMuteMode_);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test closeDelayed
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test closeDelayed
+ */
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_034, TestSize.Level1)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+
+    cameraHostManager_->AddCameraHost(LOCAL_SERVICE_NAME);
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+
+    HCameraDeviceManager::GetInstance()->peerCallback_ = new (std::nothrow) ICameraBrokerTest();
+    ASSERT_NE(HCameraDeviceManager::GetInstance()->peerCallback_, nullptr);
+    int32_t ret = camDevice->HCameraDevice::Open();
+    EXPECT_EQ(ret, 0);
+
+    ret = camDevice->HCameraDevice::closeDelayed();
+    EXPECT_EQ(ret, 0);
+
+    ret = camDevice->HCameraDevice::Close();
+    EXPECT_EQ(ret, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test DebugLogTag
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test DebugLogTag
+ */
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_035, TestSize.Level1)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+
+    const uint32_t METADATA_ITEM_SIZE = 10;
+    const uint32_t METADATA_DATA_SIZE = 100;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata =
+        std::make_shared<OHOS::Camera::CameraMetadata>(METADATA_ITEM_SIZE, METADATA_DATA_SIZE);
+    string dfxUbStr = "";
+    int64_t data = 1;
+    metadata->addEntry(OHOS_CAMERA_SENSOR_START, &data, sizeof(int64_t));
+    camDevice->DebugLogTag(metadata, OHOS_CAMERA_SENSOR_START, "OHOS_CAMERA_SENSOR_START", dfxUbStr);
+
+    double data2 = 1.0f;
+    metadata->addEntry(OHOS_STREAM_JPEG_START, &data2, sizeof(double));
+    camDevice->DebugLogTag(
+        metadata, OHOS_STREAM_JPEG_START, "OHOS_STREAM_JPEG_START", dfxUbStr);
+
+    camera_rational_t data3 = {
+        .denominator = 1,
+        .numerator = 1,
+    };
+    metadata->addEntry(OHOS_STATUS_SENSOR_EXPOSURE_TIME, &data3, sizeof(camera_rational_t));
+    camDevice->DebugLogTag(metadata, OHOS_STATUS_SENSOR_EXPOSURE_TIME, "OHOS_STATUS_SENSOR_EXPOSURE_TIME", dfxUbStr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetClientName
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetClientName
+ */
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_036, TestSize.Level1)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+
+    cameraHostManager_->AddCameraHost(LOCAL_SERVICE_NAME);
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+
+    HCameraDeviceManager::GetInstance()->peerCallback_ = new (std::nothrow) ICameraBrokerTest();
+    ASSERT_NE(HCameraDeviceManager::GetInstance()->peerCallback_, nullptr);
+    int32_t ret = camDevice->HCameraDevice::Open();
+    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(camDevice->GetClientName(), "native_camera_tdd");
+
+    ret = camDevice->HCameraDevice::Close();
+    EXPECT_EQ(ret, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test DispatchDefaultSettingToHdi.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test DispatchDefaultSettingToHdi when IsCameraDebugOn() is true.
+ */
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_037, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+
+    int32_t data = 1;
+    SetCameraDebugValue(true);
+    camDevice->deviceOpenLifeCycleSettings_->addEntry(OHOS_CONTROL_MUTE_MODE, &data, 1);
+    int32_t result = camDevice->DispatchDefaultSettingToHdi();
+    camDevice->ResetDeviceOpenLifeCycleSettings();
+    SetCameraDebugValue(false);
+    EXPECT_EQ(result, 0);
+}
 }
 }
