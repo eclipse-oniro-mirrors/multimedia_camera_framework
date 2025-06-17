@@ -46,7 +46,7 @@ PhotoAssetAdapter::PhotoAssetAdapter(int32_t cameraShotType, int32_t uid)
     photoAssetProxy_ = g_mediaLibraryManager->CreatePhotoAssetProxy(
         static_cast<Media::CameraShotType>(cameraShotType), uid, userId_);
 }
-
+// LCOV_EXCL_START
 void PhotoAssetAdapter::AddPhotoProxy(sptr<Media::PhotoProxy> photoProxy)
 {
     if (photoProxy == nullptr) {
@@ -76,7 +76,7 @@ void PhotoAssetAdapter::NotifyVideoSaveFinished()
 {
     CHECK_EXECUTE(photoAssetProxy_, photoAssetProxy_->NotifyVideoSaveFinished());
 }
-
+// LCOV_EXCL_STOP
 extern "C" PhotoAssetIntf *createPhotoAssetIntf(int32_t cameraShotType, int32_t uid)
 {
     return new PhotoAssetAdapter(cameraShotType, uid);
