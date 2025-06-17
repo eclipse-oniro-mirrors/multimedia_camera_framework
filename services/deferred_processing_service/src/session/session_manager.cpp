@@ -57,7 +57,7 @@ sptr<IDeferredPhotoProcessingSession> SessionManager::CreateDeferredPhotoProcess
     const sptr<IDeferredPhotoProcessingSessionCallback>& callback)
 {
     DP_CHECK_ERROR_RETURN_RET_LOG(!initialized_.load(), nullptr, "failed due to uninitialized.");
-    
+
     DP_INFO_LOG("Create photo session for userId: %{public}d", userId);
     auto sessionInfo = GetPhotoInfo(userId);
     if (sessionInfo == nullptr) {
