@@ -57,9 +57,7 @@ sptr<IDeferredPhotoProcessingSession> SessionManager::CreateDeferredPhotoProcess
     const sptr<IDeferredPhotoProcessingSessionCallback>& callback)
 {
     DP_CHECK_ERROR_RETURN_RET_LOG(!initialized_.load(), nullptr, "failed due to uninitialized.");
-
     DP_INFO_LOG("Create photo session for userId: %{public}d", userId);
-    std::lock_guard<std::mutex> lock(photoSessionMutex_);
     auto sessionInfo = GetPhotoInfo(userId);
     if (sessionInfo == nullptr) {
         DP_INFO_LOG("Photo session creat susses");
@@ -76,6 +74,7 @@ sptr<IDeferredPhotoProcessingSession> SessionManager::CreateDeferredPhotoProcess
 
 sptr<PhotoSessionInfo> SessionManager::GetPhotoInfo(const int32_t userId)
 {
+    std::lock_guard<std::mutex> lock(photoSessionMutex_);
     auto it = photoSessionInfos_.find(userId);
     DP_CHECK_ERROR_RETURN_RET_LOG(it == photoSessionInfos_.end(), nullptr,
         "Not find PhotoSessionInfo for userId: %{public}d", userId);
@@ -85,6 +84,7 @@ sptr<PhotoSessionInfo> SessionManager::GetPhotoInfo(const int32_t userId)
 
 void SessionManager::AddPhotoSession(const sptr<PhotoSessionInfo>& sessionInfo)
 {
+    std::lock_guard<std::mutex> lock(photoSessionMutex_);
     int32_t userId = sessionInfo->GetUserId();
     DP_INFO_LOG("Add photo session userId: %{public}d", userId);
     photoSessionInfos_[userId] = sessionInfo;
@@ -92,6 +92,7 @@ void SessionManager::AddPhotoSession(const sptr<PhotoSessionInfo>& sessionInfo)
 
 void SessionManager::DeletePhotoSession(const int32_t userId)
 {
+    std::lock_guard<std::mutex> lock(photoSessionMutex_);
     if (photoSessionInfos_.erase(userId) > 0) {
         DP_INFO_LOG("Delete photo session userId: %{public}d", userId);
     }
