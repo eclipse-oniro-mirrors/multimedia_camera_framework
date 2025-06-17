@@ -118,13 +118,13 @@ int32_t HStreamMetadata::OperatePermissionCheck(uint32_t interfaceCode)
 
 int32_t HStreamMetadata::CallbackEnter([[maybe_unused]] uint32_t code)
 {
-    MEDIA_INFO_LOG("start, code:%{public}u", code);
+    MEDIA_DEBUG_LOG("start, code:%{public}u", code);
     DisableJeMalloc();
     return OperatePermissionCheck(code);
 }
 int32_t HStreamMetadata::CallbackExit([[maybe_unused]] uint32_t code, [[maybe_unused]] int32_t result)
 {
-    MEDIA_INFO_LOG("leave, code:%{public}u, result:%{public}d", code, result);
+    MEDIA_DEBUG_LOG("leave, code:%{public}u, result:%{public}d", code, result);
     return CAMERA_OK;
 }
 

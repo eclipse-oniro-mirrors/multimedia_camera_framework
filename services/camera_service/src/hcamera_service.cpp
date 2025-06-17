@@ -35,7 +35,6 @@
 #include "camera_log.h"
 #include "camera_report_uitls.h"
 #include "camera_util.h"
-#include "camera_types.h"
 #include "camera_common_event_manager.h"
 #include "datashare_predicates.h"
 #include "deferred_processing_service.h"
@@ -2365,7 +2364,7 @@ int32_t HCameraService::CheckWhiteList(bool &isInWhiteList)
 
 int32_t HCameraService::CallbackEnter([[maybe_unused]] uint32_t code)
 {
-    MEDIA_INFO_LOG("start, code:%{public}u", code);
+    MEDIA_DEBUG_LOG("start, code:%{public}u", code);
     DisableJeMalloc();
     CameraXCollie cameraXCollie = CameraXCollie("CameraServiceStub " + std::to_string(code));
     switch (static_cast<ICameraServiceIpcCode>(code)) {
@@ -2391,7 +2390,7 @@ int32_t HCameraService::CallbackEnter([[maybe_unused]] uint32_t code)
 }
 int32_t HCameraService::CallbackExit([[maybe_unused]] uint32_t code, [[maybe_unused]] int32_t result)
 {
-    MEDIA_INFO_LOG("leave, code:%{public}u, result:%{public}d", code, result);
+    MEDIA_DEBUG_LOG("leave, code:%{public}u, result:%{public}d", code, result);
     return CAMERA_OK;
 }
 } // namespace CameraStandard

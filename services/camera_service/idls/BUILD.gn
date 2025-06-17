@@ -72,7 +72,10 @@ ohos_source_set("camera_idl_sa_proxy") {
                              "*_types.cpp",
                            ])
 
-  public_configs = [ ":camera_sa_idl_config" ]
+  public_configs = [
+    ":camera_sa_idl_config",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/idls:deferred_processing_service_idl_config"
+  ]
 
   deps = [ ":camera_service_idl_interface" ]
 

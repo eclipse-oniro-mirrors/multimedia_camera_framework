@@ -15,7 +15,6 @@
 
 #include "camera_log.h"
 #include "camera_server_photo_proxy.h"
-#include "camera_service_ipc_interface_code.h"
 #include "camera_util.h"
 #include "gmock/gmock.h"
 #include "hstream_capture.h"

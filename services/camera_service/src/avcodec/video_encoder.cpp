@@ -31,7 +31,6 @@
 #include <sync_fence.h>
 #include "native_mfmagic.h"
 #include "media_description.h"
-#include "camera_types.h"
 
 namespace OHOS {
 namespace CameraStandard {

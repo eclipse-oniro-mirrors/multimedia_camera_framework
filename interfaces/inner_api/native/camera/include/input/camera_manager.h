@@ -28,7 +28,6 @@
 #include <unordered_map>
 
 #include "camera_stream_info_parse.h"
-#include "camera_types.h"
 #include "deferred_proc_session/deferred_photo_proc_session.h"
 #include "deferred_proc_session/deferred_video_proc_session.h"
 #include "hcamera_listener_stub.h"

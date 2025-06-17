@@ -35,7 +35,6 @@
 #include "hstream_operator_manager.h"
 #include "hstream_operator.h"
 #include "display/graphic/common/v1_0/cm_color_space.h"
-#include "ability/camera_ability_const.h"
 #include "picture_proxy.h"
 #ifdef HOOK_CAMERA_OPERATOR
 #include "camera_rotate_plugin.h"
@@ -1011,7 +1010,7 @@ int32_t HStreamCapture::OperatePermissionCheck(uint32_t interfaceCode)
 
 int32_t HStreamCapture::CallbackEnter([[maybe_unused]] uint32_t code)
 {
-    MEDIA_INFO_LOG("start, code:%{public}u", code);
+    MEDIA_DEBUG_LOG("start, code:%{public}u", code);
     DisableJeMalloc();
     int32_t errCode = OperatePermissionCheck(code);
     CHECK_ERROR_RETURN_RET_LOG(errCode != CAMERA_OK, errCode, "HStreamCapture::OperatePermissionCheck fail");
@@ -1032,7 +1031,7 @@ int32_t HStreamCapture::CallbackEnter([[maybe_unused]] uint32_t code)
 
 int32_t HStreamCapture::CallbackExit([[maybe_unused]] uint32_t code, [[maybe_unused]] int32_t result)
 {
-    MEDIA_INFO_LOG("leave, code:%{public}u, result:%{public}d", code, result);
+    MEDIA_DEBUG_LOG("leave, code:%{public}u, result:%{public}d", code, result);
     return CAMERA_OK;
 }
 
@@ -1151,22 +1150,22 @@ int32_t HStreamCapture::CreateMediaLibrary(const sptr<CameraPhotoProxy>& photoPr
 int32_t HStreamCapture::CallbackParcel([[maybe_unused]] uint32_t code, [[maybe_unused]] MessageParcel& data,
     [[maybe_unused]] MessageParcel& reply, [[maybe_unused]] MessageOption& option)
 {
-    MEDIA_INFO_LOG("start, code:%{public}u", code);
+    MEDIA_DEBUG_LOG("start, code:%{public}u", code);
     if ((static_cast<IStreamCaptureIpcCode>(code) !=
         IStreamCaptureIpcCode::COMMAND_CREATE_MEDIA_LIBRARY_IN_SHARED_PTR_PICTUREINTF_IN_SPTR_CAMERAPHOTOPROXY_OUT_STRING_OUT_INT_OUT_STRING_IN_LONG)) {
         return ERR_NONE;
     }
     CHECK_ERROR_RETURN_RET(data.ReadInterfaceToken() != GetDescriptor(), ERR_TRANSACTION_FAILED);
 
-    MEDIA_INFO_LOG("StreamCaptureStub HandleCreateMediaLibraryForPicture enter");
+    MEDIA_DEBUG_LOG("StreamCaptureStub HandleCreateMediaLibraryForPicture enter");
     int32_t size = data.ReadInt32();
     CHECK_ERROR_RETURN_RET_LOG(size == 0, ERR_INVALID_DATA, "Not an parcelable oject");
     std::shared_ptr<PictureIntf> pictureProxy = PictureProxy::CreatePictureProxy();
     CHECK_ERROR_RETURN_RET_LOG(pictureProxy == nullptr, ERR_INVALID_DATA,
         "StreamCaptureStub HandleCreateMediaLibraryForPicture pictureProxy is null");
-    MEDIA_INFO_LOG("HStreamCaptureStub HandleCreateMediaLibraryForPicture Picture::Unmarshalling E");
+    MEDIA_DEBUG_LOG("HStreamCaptureStub HandleCreateMediaLibraryForPicture Picture::Unmarshalling E");
     pictureProxy->UnmarshallingPicture(data);
-    MEDIA_INFO_LOG("HStreamCaptureStub HandleCreateMediaLibraryForPicture Picture::Unmarshalling X");
+    MEDIA_DEBUG_LOG("HStreamCaptureStub HandleCreateMediaLibraryForPicture Picture::Unmarshalling X");
 
     sptr<CameraPhotoProxy> photoProxy = sptr<CameraPhotoProxy>(data.ReadParcelable<CameraPhotoProxy>());
     CHECK_ERROR_RETURN_RET_LOG(photoProxy == nullptr, ERR_INVALID_DATA,
@@ -1176,9 +1175,9 @@ int32_t HStreamCapture::CallbackParcel([[maybe_unused]] uint32_t code, [[maybe_u
     std::string uri;
     int32_t cameraShotType = 0;
     std::string burstKey;
-    MEDIA_INFO_LOG("HStreamCaptureStub HandleCreateMediaLibraryForPicture E");
+    MEDIA_DEBUG_LOG("HStreamCaptureStub HandleCreateMediaLibraryForPicture E");
     ErrCode errCode = CreateMediaLibrary(pictureProxy, photoProxy, uri, cameraShotType, burstKey, timestamp);
-    MEDIA_INFO_LOG("HStreamCaptureStub HandleCreateMediaLibraryForPicture X");
+    MEDIA_DEBUG_LOG("HStreamCaptureStub HandleCreateMediaLibraryForPicture X");
 
     CHECK_ERROR_RETURN_RET_LOG(!reply.WriteInt32(errCode), ERR_INVALID_VALUE, "CreateMediaLibrary faild");
     CHECK_ERROR_RETURN_RET_LOG(!reply.WriteString16(Str8ToStr16(uri)), ERR_INVALID_DATA, "Write uri faild");
