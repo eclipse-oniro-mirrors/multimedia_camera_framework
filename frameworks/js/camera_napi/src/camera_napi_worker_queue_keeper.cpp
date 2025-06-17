@@ -128,5 +128,15 @@ bool CameraNapiWorkerQueueKeeper::ConsumeWorkerQueueTask(
     workerCond_.notify_all();
     return true;
 }
+
+void CameraNapiWorkerQueueKeeper::RemoveWorkerTask(std::shared_ptr<NapiWorkerQueueTask> task)
+{
+    CHECK_ERROR_RETURN_LOG(task == nullptr, "RemoveWorkerTask task is null");
+    std::lock_guard<std::mutex> lock(workerQueueTaskMutex_);
+    auto it = std::find(workerQueueTasks_.begin(), workerQueueTasks_.end(), task);
+    CHECK_ERROR_RETURN_LOG(it == workerQueueTasks_.end(), "RemoveWorkerTask not found task");
+    workerQueueTasks_.erase(it);
+    workerCond_.notify_all();
+}
 } // namespace CameraStandard
 } // namespace OHOS
