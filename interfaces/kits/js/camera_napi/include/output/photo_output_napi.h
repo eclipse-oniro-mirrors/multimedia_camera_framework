@@ -286,6 +286,8 @@ private:
     static constexpr uint8_t SDR_PIXEL_SIZE = 1;
 
     std::mutex taskManagerMutex_;
+    int32_t recThumb_ = 0;
+    int32_t acqThumb_ = 0;
 };
 
 struct ThumbnailListenerInfo {
