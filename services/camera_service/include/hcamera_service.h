@@ -17,6 +17,7 @@
 #define OHOS_CAMERA_H_CAMERA_SERVICE_H
 #include <mutex>
 #include "camera_metadata_info.h"
+#include "task_manager.h"
 #define EXPORT_API __attribute__((visibility("default")))
 
 #include <iostream>
