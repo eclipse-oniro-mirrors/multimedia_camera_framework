@@ -1,0 +1,31 @@
+diff --git a/frameworks/native/camera/src/session/capture_session.cpp b/frameworks/native/camera/src/session/capture_session.cpp
+index 6f649677f7d12318cb1457693c1eaa8bbfb37238..6dae4267d648459324c4b4558e9bc76e53cf733c 100644
+--- a/frameworks/native/camera/src/session/capture_session.cpp
++++ b/frameworks/native/camera/src/session/capture_session.cpp
+@@ -2117,10 +2117,10 @@ void CaptureSession::ProcessAutoFocusUpdates(const std::shared_ptr<Camera::Camer
+     CHECK_ERROR_RETURN_LOG(ret != CAM_META_SUCCESS, "Camera not support Focus mode");
+     MEDIA_DEBUG_LOG("Focus mode: %{public}d", item.data.u8[0]);
+     auto it = g_metaFocusModeMap_.find(static_cast<camera_focus_mode_enum_t>(item.data.u8[0]));
+-    CHECK_EXECUTE(it != g_metaFocusModeMap_.end(), ProcessFocusDistanceUpdates(result));
++    CHECK_ERROR_RETURN_LOG(it == g_metaFocusModeMap_.end(), "Focus mode not support");
++    CHECK_EXECUTE(CameraSecurity::CheckSystemApp(), ProcessFocusDistanceUpdates(result));
+     // continuous focus mode do not callback focusStateChange
+-    CHECK_ERROR_RETURN(it == g_metaFocusModeMap_.end() ||
+-        (it->second != FOCUS_MODE_AUTO && it->second != FOCUS_MODE_CONTINUOUS_AUTO));
++    CHECK_ERROR_RETURN((it->second != FOCUS_MODE_AUTO) && (it->second != FOCUS_MODE_CONTINUOUS_AUTO));
+     // LCOV_EXCL_START
+     ret = Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_FOCUS_STATE, &item);
+     if (ret == CAM_META_SUCCESS) {
+diff --git a/services/camera_service/src/hstream_repeat.cpp b/services/camera_service/src/hstream_repeat.cpp
+index 0f15c4fc60b74fbb484ff55c87ecaf00d9d17cf2..7b5064913e1cb794bc3f306d155f7e0207e00940 100644
+--- a/services/camera_service/src/hstream_repeat.cpp
++++ b/services/camera_service/src/hstream_repeat.cpp
+@@ -529,7 +529,7 @@ int32_t HStreamRepeat::SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate)
+     streamFrameRateRange_ = {minFrameRate, maxFrameRate};
+     std::vector<uint8_t> ability;
+     std::vector<uint8_t> repeatSettings;
+-    CHECK_ERROR_RETURN_RET_LOG(cameraAbility_ == nullptr, CAMERA_DEVICE_DISCONNECT,
++    CHECK_ERROR_RETURN_RET_LOG(cameraAbility_ == nullptr, CAMERA_OK,
+         "HStreamRepeat::SetFrameRate cameraAbility_ is null");
+     {
+         std::lock_guard<std::mutex> lock(cameraAbilityLock_);
