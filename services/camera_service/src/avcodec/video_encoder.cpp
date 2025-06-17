@@ -139,7 +139,7 @@ int32_t VideoEncoder::DetachCodecBuffer(sptr<SurfaceBuffer> &surfaceBuffer, sptr
     constexpr uint32_t waitForEver = -1;
     (void)syncFence->Wait(waitForEver);
     CHECK_ERROR_RETURN_RET_LOG(surfaceBuffer == nullptr, ret, "Failed to request codec Buffer");
-    ret = codecSurface_->DetachBufferFromQueue(surfaceBuffer, true);
+    ret = codecSurface_->DetachBufferFromQueue(surfaceBuffer);
     CHECK_ERROR_RETURN_RET_LOG(ret != SURFACE_ERROR_OK, ret, "Failed to detach buffer %{public}d", ret);
     return ret;
 }

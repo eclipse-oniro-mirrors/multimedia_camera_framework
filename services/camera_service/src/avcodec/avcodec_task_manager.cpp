@@ -125,6 +125,11 @@ void AvcodecTaskManager::SetVideoFd(
     cvEmpty_.notify_all();
 }
 
+constexpr inline float MovingPhotoNanosecToMillisec(int64_t nanosec)
+{
+    return static_cast<float>(nanosec) / 1000000.0f;
+}
+
 sptr<AudioVideoMuxer> AvcodecTaskManager::CreateAVMuxer(vector<sptr<FrameRecord>> frameRecords, int32_t captureRotation,
     vector<sptr<FrameRecord>> &choosedBuffer, int32_t captureId)
 {
@@ -145,8 +150,12 @@ sptr<AudioVideoMuxer> AvcodecTaskManager::CreateAVMuxer(vector<sptr<FrameRecord>
     muxer->Create(format, photoAssetProxy);
     muxer->SetRotation(captureRotation);
     CHECK_EXECUTE(!choosedBuffer.empty(),
-        muxer->SetCoverTime(NanosecToMillisec(std::min(timestamp, choosedBuffer.back()->GetTimeStamp())
-        - choosedBuffer.front()->GetTimeStamp())));
+        {
+            muxer->SetCoverTime(MovingPhotoNanosecToMillisec(std::min(timestamp,
+                choosedBuffer.back()->GetTimeStamp()) - choosedBuffer.front()->GetTimeStamp()));
+            muxer->SetStartTime(MovingPhotoNanosecToMillisec(choosedBuffer.front()->GetTimeStamp()));
+        }
+    );
     auto formatVideo = make_shared<Format>();
     MEDIA_INFO_LOG("CreateAVMuxer videoCodecType_ = %{public}d", videoCodecType_);
     formatVideo->PutStringValue(MediaDescriptionKey::MD_KEY_CODEC_MIME, videoCodecType_
