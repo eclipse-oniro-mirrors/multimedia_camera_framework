@@ -44,19 +44,19 @@ constexpr int VIDEO_REQUEST_FD_ID = 1;
 class TestDeferredPhotoProcSessionCallback : public IDeferredPhotoProcSessionCallback {
 public:
     void OnProcessImageDone(const std::string &imageId, std::shared_ptr<PictureIntf> picture,
-        uint32_t cloudImageEnhanceFlag){}
-    void OnDeliveryLowQualityImage(const std::string &imageId, std::shared_ptr<PictureIntf> picture){}
+        uint32_t cloudImageEnhanceFlag) {}
+    void OnDeliveryLowQualityImage(const std::string &imageId, std::shared_ptr<PictureIntf> picture) {}
     void OnProcessImageDone(const std::string& imageId, const uint8_t* addr, const long bytes,
-        uint32_t cloudImageEnhanceFlag){}
-    void OnError(const std::string& imageId, const DpsErrorCode errorCode){}
-    void OnStateChanged(const DpsStatusCode status){}
+        uint32_t cloudImageEnhanceFlag) {}
+    void OnError(const std::string& imageId, const DpsErrorCode errorCode) {}
+    void OnStateChanged(const DpsStatusCode status) {}
 };
 
 class TestDeferredVideoProcSessionCallback : public IDeferredVideoProcSessionCallback {
 public:
-    void OnProcessVideoDone(const std::string& videoId, const sptr<IPCFileDescriptor> ipcFd){}
-    void OnError(const std::string& videoId, const DpsErrorCode errorCode){}
-    void OnStateChanged(const DpsStatusCode status){}
+    void OnProcessVideoDone(const std::string& videoId, const sptr<IPCFileDescriptor> ipcFd) {}
+    void OnError(const std::string& videoId, const DpsErrorCode errorCode) {}
+    void OnStateChanged(const DpsStatusCode status) {}
 };
 
 std::shared_ptr<PictureIntf> GetPictureIntfInstance()

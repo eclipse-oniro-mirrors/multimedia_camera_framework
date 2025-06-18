@@ -952,7 +952,7 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_029, TestSize
  * EnvConditions: NA
  * CaseDescription: Test CreateDeferredPhotoProcessingSession
  */
-HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_026, TestSize.Level0)
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_030, TestSize.Level0)
 {
     sptr<DeferredPhotoProcSession> deferredProcSession =
         CameraManager::GetInstance()->CreateDeferredPhotoProcessingSession(
@@ -970,7 +970,7 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_026, TestSize
  * EnvConditions: NA
  * CaseDescription: Test CreateDeferredVideoProcessingSession
  */
-HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_027, TestSize.Level0)
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_031, TestSize.Level0)
 {
     sptr<DeferredVideoProcSession> deferredProcSession =
         CameraManager::GetInstance()->CreateDeferredVideoProcessingSession(
