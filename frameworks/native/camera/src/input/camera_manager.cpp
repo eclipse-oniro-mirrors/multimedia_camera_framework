@@ -438,6 +438,34 @@ int CameraManager::CreateDeferredVideoProcessingSession(int userId,
     return CameraErrorCode::SUCCESS;
 }
 
+sptr<MechSession> CameraManager::CreateMechSession(int userId)
+{
+    CAMERA_SYNC_TRACE;
+    sptr<MechSession> mechSession = nullptr;
+    int32_t retCode = CreateMechSession(userId, &mechSession);
+    CHECK_ERROR_RETURN_RET_LOG(retCode != CameraErrorCode::SUCCESS, nullptr,
+        "Failed to CreateMechSession with error code:%{public}d", retCode);
+    return mechSession;
+}
+ 
+int CameraManager::CreateMechSession(int userId, sptr<MechSession>* pMechSession)
+{
+    CAMERA_SYNC_TRACE;
+    sptr<MechSession> mechSession = nullptr;
+ 
+    mechSession = new(std::nothrow) MechSession();
+    CHECK_ERROR_RETURN_RET_LOG(mechSession == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
+        "CreateMechSession failed to new MechSession!");
+ 
+    *pMechSession = mechSession;
+    return CameraErrorCode::SUCCESS;
+}
+ 
+bool CameraManager::IsMechSupported()
+{
+    return true;
+}
+
 sptr<PhotoOutput> CameraManager::CreatePhotoOutput(sptr<IBufferProducer> &surface)
 {
     CAMERA_SYNC_TRACE;

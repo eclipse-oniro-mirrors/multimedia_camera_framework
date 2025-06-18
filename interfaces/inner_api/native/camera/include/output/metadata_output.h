@@ -24,6 +24,7 @@
 #include "camera_metadata_info.h"
 #include "camera_metadata_operator.h"
 #include "capture_output.h"
+#include "session/capture_session.h"
 #include "stream_metadata_callback_stub.h"
 #include "iconsumer_surface.h"
 #include "istream_metadata.h"
@@ -318,6 +319,55 @@ public:
     MetadataStateCallback() = default;
     virtual ~MetadataStateCallback() = default;
     virtual void OnError(int32_t errorCode) const = 0;
+};
+
+class FocusTrackingMetaInfo {
+public:
+    inline FocusTrackingMode GetTrackingMode()
+    {
+        return trackingMode_;
+    }
+
+    inline Rect GetTrackingRegion()
+    {
+        return trackingRegion_;
+    }
+
+    inline int32_t GetTrackingObjectId()
+    {
+        return trackingObjectId_;
+    }
+
+    inline std::vector<sptr<MetadataObject>> GetDetectedObjects()
+    {
+        return detectedObjects_;
+    }
+
+    inline void SetTrackingRegion(Rect& region)
+    {
+        trackingRegion_ = region;
+    }
+
+    inline void SetTrackingMode(FocusTrackingMode mode)
+    {
+        trackingMode_ = mode;
+    }
+
+    inline void SetTrackingObjectId(int32_t trackingObjectId)
+    {
+        trackingObjectId_ = trackingObjectId;
+    }
+
+    inline void SetDetectedObjects(std::vector<sptr<MetadataObject>> detectedObjects)
+    {
+        detectedObjects_ = detectedObjects;
+    }
+
+private:
+    FocusTrackingMode trackingMode_{FOCUS_TRACKING_MODE_AUTO};
+    Rect trackingRegion_{0.0, 0.0, 0.0, 0.0};
+    int32_t trackingObjectId_{-1};
+    std::vector<sptr<MetadataObject>> detectedObjects_{};
 };
 
 class MetadataOutput : public CaptureOutput {

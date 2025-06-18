@@ -87,6 +87,11 @@ enum UsageType {
     BOKEH = 0
 };
 
+enum FocusTrackingMode : int32_t {
+    FOCUS_TRACKING_MODE_AUTO = 0,
+    FOCUS_TRACKING_MODE_LOCKED,
+};
+
 struct PreconfigProfiles {
 public:
     explicit PreconfigProfiles(ColorSpace colorSpace) : colorSpace(colorSpace) {}
