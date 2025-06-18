@@ -41,7 +41,7 @@ public:
     void TearDown(void);
 
     void NativeAuthorization(void);
-    HStreamRepeat *CreateHStreamRepeat();
+    HStreamRepeat* CreateHStreamRepeat(RepeatStreamType type = RepeatStreamType::PREVIEW);
     sptr<CaptureOutput> CreatePhotoOutput(Profile& photoProfile);
 };
 } // CameraStandard
