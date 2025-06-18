@@ -17,8 +17,8 @@
 
 #include "session_coordinator.h"
 #include "deferred_photo_processor.h"
-#include "deferred_proc_session/deferred_photo_proc_session.h"
-#include "deferred_proc_session/deferred_video_proc_session.h"
+#include "deferred_photo_proc_session.h"
+#include "deferred_video_proc_session.h"
 #include "ipc_skeleton.h"
 #include "os_account_manager.h"
 #include "session/photo_session/deferred_photo_processing_session.h"

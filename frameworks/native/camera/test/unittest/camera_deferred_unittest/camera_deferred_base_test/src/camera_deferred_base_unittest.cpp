@@ -16,11 +16,9 @@
 #include "camera_deferred_base_unittest.h"
 #include <cstdint>
 #include <vector>
-#include "camera_manager.h"
 #include "camera_util.h"
 #include "gmock/gmock.h"
 #include "ipc_skeleton.h"
-#include "test_common.h"
 
 #include "session_manager.h"
 #include "shared_buffer.h"

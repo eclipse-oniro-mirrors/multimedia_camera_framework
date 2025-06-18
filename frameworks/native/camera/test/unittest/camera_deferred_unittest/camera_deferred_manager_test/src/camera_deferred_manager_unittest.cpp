@@ -19,7 +19,6 @@
 #include "mpeg_manager_factory.h"
 #include "track.h"
 #include "gmock/gmock.h"
-#include "test_common.h"
 #include "camera_log.h"
 
 using namespace testing::ext;
