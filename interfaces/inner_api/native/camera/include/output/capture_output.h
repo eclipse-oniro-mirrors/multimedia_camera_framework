@@ -31,7 +31,6 @@
 #include "icamera_util.h"
 #include "input/camera_death_recipient.h"
 #include "istream_common.h"
-#include "camera_types.h"
 
 namespace OHOS {
 class IBufferProducer;

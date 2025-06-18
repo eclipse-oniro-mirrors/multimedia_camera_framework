@@ -18,7 +18,6 @@
 #include <string>
 #include "camera_error.h"
 #include "camera_utils.h"
-#include "camera_types.h"
 
 namespace OHOS {
 namespace CameraStandard {

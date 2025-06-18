@@ -25,14 +25,14 @@ import IStreamCapture;
 import IStreamRepeat;
 import IStreamMetadata;
 import IStreamDepthData;
-import ../../deferred_processing_service/idls/IDeferredPhotoProcessingSession;
-import ../../deferred_processing_service/idls/IDeferredVideoProcessingSession;
 
 sequenceable OHOS.IRemoteObject;
 sequenceable CameraMetadataInfo..OHOS.Camera.CameraMetadata;
 
 interface OHOS.IBufferProducer;
 interface ICameraBroker;
+interface OHOS.CameraStandard.DeferredProcessing.IDeferredPhotoProcessingSession;
+interface OHOS.CameraStandard.DeferredProcessing.IDeferredVideoProcessingSession;
 interface OHOS.CameraStandard.DeferredProcessing.IDeferredVideoProcessingSessionCallback;
 interface OHOS.CameraStandard.DeferredProcessing.IDeferredPhotoProcessingSessionCallback;
 option_stub_hooks on;

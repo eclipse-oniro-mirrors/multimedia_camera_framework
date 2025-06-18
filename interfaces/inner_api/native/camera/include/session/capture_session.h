@@ -47,7 +47,6 @@
 #include "capture_scene_const.h"
 #include "ability/camera_ability.h"
 #include "ability/camera_ability_parse_util.h"
-#include "camera_types.h"
 #include "fold_service_callback_stub.h"
 #include "pressure_status_callback_stub.h"
 

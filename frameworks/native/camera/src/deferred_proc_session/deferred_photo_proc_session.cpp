@@ -104,34 +104,35 @@ int32_t DeferredPhotoProcessingSessionCallback::OnDeliveryLowQualityImage(const 
 int32_t DeferredPhotoProcessingSessionCallback::CallbackParcel([[maybe_unused]] uint32_t code,
     [[maybe_unused]] MessageParcel& data, [[maybe_unused]] MessageParcel& reply, [[maybe_unused]] MessageOption& option)
 {
-    MEDIA_INFO_LOG("start, code:%{public}u", code);
-    if ((static_cast<IDeferredPhotoProcessingSessionCallbackIpcCode>(code)
-        != IDeferredPhotoProcessingSessionCallbackIpcCode::COMMAND_ON_DELIVERY_LOW_QUALITY_IMAGE)
-        && (static_cast<IDeferredPhotoProcessingSessionCallbackIpcCode>(code)
-        != IDeferredPhotoProcessingSessionCallbackIpcCode::
+    MEDIA_DEBUG_LOG("start, code:%{public}u", code);
+    if ((static_cast<DeferredProcessing::IDeferredPhotoProcessingSessionCallbackIpcCode>(code)
+        != DeferredProcessing::IDeferredPhotoProcessingSessionCallbackIpcCode::COMMAND_ON_DELIVERY_LOW_QUALITY_IMAGE)
+        && (static_cast<DeferredProcessing::IDeferredPhotoProcessingSessionCallbackIpcCode>(code)
+        != DeferredProcessing::IDeferredPhotoProcessingSessionCallbackIpcCode::
         COMMAND_ON_PROCESS_IMAGE_DONE_IN_STRING_IN_SHARED_PTR_PICTUREINTF_IN_UNSIGNED_INT)) {
         return ERR_NONE;
     }
     CHECK_ERROR_RETURN_RET(data.ReadInterfaceToken() != GetDescriptor(), ERR_TRANSACTION_FAILED);
 
-    switch (static_cast<IDeferredPhotoProcessingSessionCallbackIpcCode>(code)) {
-        case IDeferredPhotoProcessingSessionCallbackIpcCode::COMMAND_ON_DELIVERY_LOW_QUALITY_IMAGE: {
+    switch (static_cast<DeferredProcessing::IDeferredPhotoProcessingSessionCallbackIpcCode>(code)) {
+        case DeferredProcessing::IDeferredPhotoProcessingSessionCallbackIpcCode::
+            COMMAND_ON_DELIVERY_LOW_QUALITY_IMAGE: {
             MEDIA_INFO_LOG("HandleProcessLowQualityImage enter");
             std::string imageId = Str16ToStr8(data.ReadString16());
             int32_t size = data.ReadInt32();
             CHECK_ERROR_RETURN_RET_LOG(size == 0, ERR_INVALID_DATA, "Not an parcelable oject");
             std::shared_ptr<PictureProxy> picturePtr = PictureProxy::CreatePictureProxy();
             CHECK_ERROR_RETURN_RET_LOG(picturePtr == nullptr, ERR_INVALID_DATA, "picturePtr is nullptr");
-            MEDIA_INFO_LOG("HandleProcessLowQualityImage Picture::Unmarshalling E");
+            MEDIA_DEBUG_LOG("HandleProcessLowQualityImage Picture::Unmarshalling E");
             picturePtr->UnmarshallingPicture(data);
-            MEDIA_INFO_LOG("HandleProcessLowQualityImage Picture::Unmarshalling X");
+            MEDIA_DEBUG_LOG("HandleProcessLowQualityImage Picture::Unmarshalling X");
             ErrCode errCode = OnDeliveryLowQualityImage(imageId, picturePtr->GetPictureIntf());
             MEDIA_INFO_LOG("HandleProcessLowQualityImage result: %{public}d", errCode);
             CHECK_ERROR_RETURN_RET_LOG(!reply.WriteInt32(errCode), ERR_INVALID_VALUE,
                 "OnDeliveryLowQualityImage faild");
             break;
         }
-        case IDeferredPhotoProcessingSessionCallbackIpcCode::
+        case DeferredProcessing::IDeferredPhotoProcessingSessionCallbackIpcCode::
             COMMAND_ON_PROCESS_IMAGE_DONE_IN_STRING_IN_SHARED_PTR_PICTUREINTF_IN_UNSIGNED_INT: {
             MEDIA_INFO_LOG("HandleOnProcessPictureDone enter");
             std::string imageId = Str16ToStr8(data.ReadString16());
@@ -139,9 +140,9 @@ int32_t DeferredPhotoProcessingSessionCallback::CallbackParcel([[maybe_unused]] 
             CHECK_ERROR_RETURN_RET_LOG(size == 0, ERR_INVALID_DATA, "Not an parcelable oject");
             std::shared_ptr<PictureProxy> picturePtr = PictureProxy::CreatePictureProxy();
             CHECK_ERROR_RETURN_RET_LOG(picturePtr == nullptr, IPC_STUB_INVALID_DATA_ERR, "picturePtr is nullptr");
-            MEDIA_INFO_LOG("HandleOnProcessPictureDone Picture::Unmarshalling E");
+            MEDIA_DEBUG_LOG("HandleOnProcessPictureDone Picture::Unmarshalling E");
             picturePtr->UnmarshallingPicture(data);
-            MEDIA_INFO_LOG("HandleOnProcessPictureDone Picture::Unmarshalling X");
+            MEDIA_DEBUG_LOG("HandleOnProcessPictureDone Picture::Unmarshalling X");
             uint32_t cloudImageEnhanceFlag = data.ReadUint32();
             ErrCode errCode = OnProcessImageDone(imageId, picturePtr->GetPictureIntf(), cloudImageEnhanceFlag);
             MEDIA_INFO_LOG("HandleOnProcessPictureDone result: %{public}d, cloudImageEnhanceFlag: %{public}u",

@@ -17,7 +17,6 @@
 #include "camera_error_code.h"
 #include "camera_util.h"
 #include "camera_log.h"
-#include "camera_service_ipc_interface_code.h"
 #include "icamera_service.h"
 
 namespace OHOS {

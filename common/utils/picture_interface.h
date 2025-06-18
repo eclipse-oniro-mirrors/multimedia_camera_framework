@@ -39,10 +39,6 @@ public:
     virtual void SetAuxiliaryPicture(sptr<SurfaceBuffer> &surfaceBuffer,
         CameraAuxiliaryPictureType type) = 0;
     virtual void CreateWithDeepCopySurfaceBuffer(sptr<SurfaceBuffer> &surfaceBuffer) = 0;
-    virtual bool Marshalling(Parcel &data) const
-    {
-        return true;
-    }
     static PictureIntf* Unmarshalling(Parcel &data)
     {
         return nullptr;
