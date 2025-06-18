@@ -51,6 +51,7 @@
 #include "output/preview_output.h"
 #include "output/video_output.h"
 #include "safe_map.h"
+#include "session/mech_session.h"
 #include "color_space_info_parse.h"
 
 namespace OHOS {
@@ -289,6 +290,28 @@ public:
     static int CreateDeferredVideoProcessingSession(int userId,
         std::shared_ptr<IDeferredVideoProcSessionCallback> callback,
         sptr<DeferredVideoProcSession> *pDeferredVideoProcSession);
+
+    /**
+     * @brief Create mech session.
+     *
+     * @return Returns pointer to mech session.
+     */
+    sptr<MechSession> CreateMechSession(int userId);
+ 
+    /**
+     * @brief Create Create mech session.
+     *
+     * @param pMechSession pointer to mech session instance.
+     * @return Returns error code.
+     */
+    int CreateMechSession(int userId, sptr<MechSession> *pMechSession);
+ 
+    /**
+     * @brief Get the support of mech.
+     *
+     * @return Returns true is supported, false is not supported.
+     */
+    bool IsMechSupported();
 
     /**
      * @brief Create photo output instance.

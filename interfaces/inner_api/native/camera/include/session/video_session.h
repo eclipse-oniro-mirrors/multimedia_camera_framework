@@ -28,10 +28,6 @@ namespace CameraStandard {
 
 class LightStatusCallback;
 
-enum FocusTrackingMode : int32_t {
-    FOCUS_TRACKING_MODE_AUTO = 0,
-};
-
 typedef struct {
     int32_t status;
 } LightStatus;
