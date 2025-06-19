@@ -943,5 +943,41 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_029, TestSize
     cameraInput->cameraObj_ = cameras[0];
     cameraInput->RecoveryOldDevice();
 }
+
+/*
+ * Feature: Framework
+ * Function: Test CreateDeferredPhotoProcessingSession
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CreateDeferredPhotoProcessingSession
+ */
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_030, TestSize.Level0)
+{
+    sptr<DeferredPhotoProcSession> deferredProcSession =
+        CameraManager::GetInstance()->CreateDeferredPhotoProcessingSession(
+        userId_, std::make_shared<TestDeferredPhotoProcSessionCallback>());
+ 
+    ASSERT_NE(deferredProcSession, nullptr);
+    ASSERT_NE(deferredProcSession->remoteSession_, nullptr);
+}
+ 
+/*
+ * Feature: Framework
+ * Function: Test CreateDeferredVideoProcessingSession
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CreateDeferredVideoProcessingSession
+ */
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_031, TestSize.Level0)
+{
+    sptr<DeferredVideoProcSession> deferredProcSession =
+        CameraManager::GetInstance()->CreateDeferredVideoProcessingSession(
+        userId_, std::make_shared<TestDeferredVideoProcSessionCallback>());
+ 
+    ASSERT_NE(deferredProcSession, nullptr);
+    ASSERT_NE(deferredProcSession->remoteSession_, nullptr);
+}
 }
 }
