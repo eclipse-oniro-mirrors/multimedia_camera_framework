@@ -176,5 +176,95 @@ HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_006, TestSize
     track2->SetFormat(format2, type);
     EXPECT_NE(track2->GetFormat().format, nullptr);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test Create
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test Create
+ */
+HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_007, TestSize.Level0)
+{
+    auto mediaManager = std::make_shared<MediaManager>();
+    ASSERT_NE(mediaManager, nullptr);
+    EXPECT_NE(mediaManager->Create(0, 0, -1), MediaManagerError::OK);
+}
+ 
+/*
+ * Feature: Framework
+ * Function: Test WriteSample
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test WriteSample
+ */
+HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_008, TestSize.Level0)
+{
+    auto mediaManager = std::make_shared<MediaManager>();
+    ASSERT_NE(mediaManager, nullptr);
+    mediaManager->outputWriter_ = std::make_shared<Writer>();
+    ASSERT_NE(mediaManager->outputWriter_, nullptr);
+    mediaManager->outputWriter_->outputMuxer_ = std::make_shared<Muxer>();
+    std::vector<uint8_t> memoryFlags = {
+        static_cast<uint8_t>(MemoryFlag::MEMORY_READ_ONLY),
+        static_cast<uint8_t>(MemoryFlag::MEMORY_WRITE_ONLY),
+        static_cast<uint8_t>(MemoryFlag::MEMORY_READ_WRITE)
+    };
+    Media::Plugins::MediaType type1 = Media::Plugins::MediaType::VIDEO;
+    uint8_t randomIndex = 1;
+    MemoryFlag selectedFlag = static_cast<MemoryFlag>(memoryFlags[randomIndex]);
+    std::shared_ptr<AVAllocator> avAllocator =
+        AVAllocatorFactory::CreateSharedAllocator(selectedFlag);
+    int32_t capacity = 1;
+    std::shared_ptr<AVBuffer> sample = AVBuffer::CreateAVBuffer(avAllocator, capacity);
+    mediaManager->started_ = false;
+    EXPECT_EQ(mediaManager->WriteSample(type1, sample), ERROR_FAIL);
+}
+ 
+/*
+ * Feature: Framework
+ * Function: Test InitWriter
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test InitWriter
+ */
+HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_009, TestSize.Level0)
+{
+    auto mediaManager = std::make_shared<MediaManager>();
+    ASSERT_NE(mediaManager, nullptr);
+    mediaManager->inputReader_ = std::make_shared<Reader>();
+    ASSERT_NE(mediaManager->inputReader_, nullptr);
+    std::shared_ptr<Track> track = std::make_shared<Track>();
+    mediaManager->inputReader_->tracks_[Media::Plugins::MediaType::AUDIO] = track;
+    //auto medinfo = std::make_shared<DeferredProcessing::MediaInfo>();
+    //struct MediaInfo medinfo;
+    mediaManager->mediaInfo_ = std::make_shared<DeferredProcessing::MediaInfo>();
+    EXPECT_EQ(mediaManager->InitWriter(), MediaManagerError::ERROR_FAIL);
+}
+ 
+/*
+ * Feature: Framework
+ * Function: Test MpegManagerFactory with Acquire
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test Acquire for abnormal branch and normal branch
+ */
+HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_011, TestSize.Level0)
+{
+    auto mpegManagerFactory = std::make_shared<MpegManagerFactory>();
+    ASSERT_NE(mpegManagerFactory, nullptr);
+    uint8_t randomNum = 1;
+    std::vector<std::string> testStrings = {"test1", "test2"};
+    std::string requestId(testStrings[randomNum % testStrings.size()]);
+    sptr<IPCFileDescriptor> inputFd = sptr<IPCFileDescriptor>::MakeSptr(dup(VIDEO_REQUEST_FD_ID));
+    ASSERT_NE(inputFd, nullptr);
+    auto mpegManager_ = std::make_shared<MpegManager>();
+    EXPECT_EQ(mpegManagerFactory->Acquire(requestId, inputFd), nullptr);
+    EXPECT_EQ(mpegManagerFactory->refCount_, 0);
+}
 } // CameraStandard
 } // OHOS

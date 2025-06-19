@@ -40,6 +40,10 @@ public:
 
     void NativeAuthorization(void);
 };
+
+class MockCameraOcclusionDetectCallback : public OHOS::CameraStandard::CameraOcclusionDetectCallback {
+    void OnCameraOcclusionDetected(const uint8_t isCameraOcclusion, const uint8_t isCameraLensDirty) const override {}
+};
 }
 }
 #endif
