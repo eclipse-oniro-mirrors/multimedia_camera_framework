@@ -345,15 +345,25 @@ void PhotoOutput::SetCallbackFlag(uint8_t callbackFlag)
     // if session is commit or start, and isEnableDeferred is oppsite, need to restart session config
     auto session = GetSession();
     if (beforeStatus != afterStatus && session) {
+        FocusMode focusMode = session->GetFocusMode();
+        FlashMode flashMode = session->GetFlashMode();
+        MEDIA_INFO_LOG("session restart when callback status changed %{public}d, %{public}d", focusMode, flashMode);
         if (session->IsSessionStarted()) {
-            MEDIA_INFO_LOG("session restart when callback status changed");
             session->BeginConfig();
             session->CommitConfig();
+            session->LockForControl();
+            session->SetFocusMode(focusMode);
+            session->SetFlashMode(flashMode);
+            session->UnlockForControl();
             session->Start();
         } else if (session->IsSessionCommited()) {
             MEDIA_INFO_LOG("session recommit when callback status changed");
             session->BeginConfig();
             session->CommitConfig();
+            session->LockForControl();
+            session->SetFocusMode(focusMode);
+            session->SetFlashMode(flashMode);
+            session->UnlockForControl();
         }
     }
 }
