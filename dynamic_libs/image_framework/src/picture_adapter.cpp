@@ -185,12 +185,13 @@ bool PictureAdapter::SetMaintenanceData(sptr<SurfaceBuffer> &surfaceBuffer)
 
 void PictureAdapter::RotatePicture()
 {
-    MEDIA_INFO_LOG("PictureAdapter::RotatePicture E");
+    MEDIA_DEBUG_LOG("PictureAdapter::RotatePicture E");
     std::shared_ptr<Media::Picture> picture = GetPicture();
     CHECK_ERROR_RETURN_LOG(!picture, "PictureAdapter::RotatePicture picture is nullptr");
     std::string orientation = GetAndSetExifOrientation(
         reinterpret_cast<OHOS::Media::ImageMetadata*>(picture->GetExifMetadata().get()));
     RotatePixelMap(picture->GetMainPixel(), orientation);
+    MEDIA_INFO_LOG("PictureAdapter::RotatePicture orientation:%{public}s", orientation.c_str());
     auto gainMap = picture->GetAuxiliaryPicture(Media::AuxiliaryPictureType::GAINMAP);
     if (gainMap) {
         RotatePixelMap(gainMap->GetContentPixel(), orientation);
