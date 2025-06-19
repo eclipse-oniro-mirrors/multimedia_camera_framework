@@ -1741,6 +1741,9 @@ int32_t HCaptureSession::UpdateSettingForFocusTrackingMech(bool isEnableMech)
     MEDIA_DEBUG_LOG("HCaptureSession::UpdateSettingForFocusTrackingMech is called, isEnableMech: %{public}d",
         isEnableMech);
     auto cameraDevice = GetCameraDevice();
+    CHECK_ERROR_RETURN_RET_LOG(cameraDevice == nullptr, CAMERA_INVALID_SESSION_CFG,
+        "HCaptureSession::UpdateSettingForFocusTrackingMech device is null");
+
     constexpr int32_t DEFAULT_ITEMS = 1;
     constexpr int32_t DEFAULT_DATA_LENGTH = 1;
     shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata =
@@ -1779,12 +1782,14 @@ bool HCaptureSession::GetCameraAppInfo(CameraAppInfo& appInfo)
     appInfo.opmode = opMode_;
     appInfo.equivalentFocus = GetEquivalentFocus();
     auto hStreamOperatorSptr = GetStreamOperator();
-    auto streams = hStreamOperatorSptr->GetAllStreams();
-    for (auto& stream : streams) {
-        if (stream->GetStreamType() == StreamType::REPEAT) {
-            auto curStreamRepeat = CastStream<HStreamRepeat>(stream);
-            appInfo.width = curStreamRepeat->width_;
-            appInfo.height = curStreamRepeat->height_;
+    if (hStreamOperatorSptr != nullptr) {
+        auto streams = hStreamOperatorSptr->GetAllStreams();
+        for (auto& stream : streams) {
+            if (stream->GetStreamType() == StreamType::REPEAT) {
+                auto curStreamRepeat = CastStream<HStreamRepeat>(stream);
+                appInfo.width = curStreamRepeat->width_;
+                appInfo.height = curStreamRepeat->height_;
+            }
         }
     }
     auto currentState = stateMachine_.GetCurrentState();

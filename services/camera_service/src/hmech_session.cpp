@@ -58,13 +58,13 @@ int32_t HMechSession::SetCallback(const sptr<IMechSessionCallback>& callback)
 
 int32_t HMechSession::CallbackEnter([[maybe_unused]] uint32_t code)
 {
-    MEDIA_INFO_LOG("start, code:%{public}u", code);
+    MEDIA_DEBUG_LOG("start, code:%{public}u", code);
     return CAMERA_OK;
 }
 
 int32_t HMechSession::CallbackExit([[maybe_unused]] uint32_t code, [[maybe_unused]] int32_t result)
 {
-    MEDIA_INFO_LOG("leave, code:%{public}u, result:%{public}d", code, result);
+    MEDIA_DEBUG_LOG("leave, code:%{public}u, result:%{public}d", code, result);
     return CAMERA_OK;
 }
 
@@ -106,6 +106,7 @@ sptr<IMechSessionCallback> HMechSession::GetCallback()
 
 bool HMechSession::IsEnableMech()
 {
+    std::lock_guard<std::mutex> lock(enableLock_);
     return isEnableMech_;
 }
 
