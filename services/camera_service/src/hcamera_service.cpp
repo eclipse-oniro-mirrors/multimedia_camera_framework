@@ -819,7 +819,7 @@ int32_t HCameraService::CreateMetadataOutput(const sptr<OHOS::IBufferProducer>& 
                 int32_t position = activeDevice->GetCameraPosition();
                 isNeedMirror = (position == static_cast<int32_t>(OHOS_CAMERA_POSITION_FRONT));
                 int32_t usedAsPosition = activeDevice->GetUsedAsPosition();
-                isNeedFlip = usedAsPosition == (usedAsPosition == static_cast<int32_t>(OHOS_CAMERA_POSITION_FRONT));
+                isNeedFlip = (usedAsPosition == static_cast<int32_t>(OHOS_CAMERA_POSITION_FRONT));
             }
         }
         mechSession->OnFocusTrackingInfo(streamId, isNeedMirror, isNeedFlip, result);
