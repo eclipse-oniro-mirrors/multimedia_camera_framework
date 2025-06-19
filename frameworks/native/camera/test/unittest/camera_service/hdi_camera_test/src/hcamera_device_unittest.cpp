@@ -1013,7 +1013,7 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_036, TestSize.Level1)
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test DispatchDefaultSettingToHdi when IsCameraDebugOn() is true.
+ * CaseDescription: Test DispatchDefaultSettingToHdi when IsCameraDebugOn() is true and hdiCameraDevice_ is nullptr.
  */
 HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_037, TestSize.Level0)
 {
@@ -1030,7 +1030,7 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_037, TestSize.Level0)
     int32_t result = camDevice->DispatchDefaultSettingToHdi();
     camDevice->ResetDeviceOpenLifeCycleSettings();
     SetCameraDebugValue(false);
-    EXPECT_EQ(result, 0);
+    EXPECT_EQ(result, CAMERA_INVALID_STATE);
 }
 }
 }

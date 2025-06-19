@@ -23,6 +23,7 @@
 #endif
 #include "camera_device_ability_items.h"
 #include "camera_log.h"
+#include "camera_metadata.h"
 #include "camera_metadata_operator.h"
 #include "display_manager.h"
 #include "camera_util.h"
@@ -540,18 +541,8 @@ int32_t HStreamRepeat::SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate)
         }
         CHECK_ERROR_RETURN_RET_LOG(dynamicSetting == nullptr, CAMERA_INVALID_ARG,
             "HStreamRepeat::SetFrameRate dynamicSetting is nullptr.");
-        camera_metadata_item_t item;
-        int ret = OHOS::Camera::FindCameraMetadataItem(dynamicSetting->get(), OHOS_CONTROL_FPS_RANGES, &item);
-        bool status = false;
-        if (ret == CAM_META_ITEM_NOT_FOUND) {
-            MEDIA_DEBUG_LOG("HStreamRepeat::SetFrameRate Failed to find frame range");
-            status = dynamicSetting->addEntry(
-                OHOS_CONTROL_FPS_RANGES, streamFrameRateRange_.data(), streamFrameRateRange_.size());
-        } else if (ret == CAM_META_SUCCESS) {
-            MEDIA_DEBUG_LOG("HStreamRepeat::SetFrameRate success to find frame range");
-            status = dynamicSetting->updateEntry(
-                OHOS_CONTROL_FPS_RANGES, streamFrameRateRange_.data(), streamFrameRateRange_.size());
-        }
+        bool status = AddOrUpdateMetadata(
+            dynamicSetting, OHOS_CONTROL_FPS_RANGES, streamFrameRateRange_.data(), streamFrameRateRange_.size());
         CHECK_ERROR_PRINT_LOG(!status, "HStreamRepeat::SetFrameRate Failed to set frame range");
         OHOS::Camera::MetadataUtils::ConvertMetadataToVec(dynamicSetting, repeatSettings);
     }
@@ -746,15 +737,15 @@ void HStreamRepeat::ProcessFixedTransform(int32_t& sensorOrientation, camera_pos
     }
     bool isTableFlag = system::GetBoolParameter("const.multimedia.enable_camera_rotation_compensation", 0);
     bool isNeedChangeRotation = system::GetBoolParameter("const.multimedia.enable_camera_rotation_change", 0);
-    if (isTableFlag) {
+    if (isTableFlag) { // LCOV_EXCL_LINE
         ProcessFixedDiffDeviceTransform(cameraPosition);
         return;
     }
-    if (isNeedChangeRotation) {
+    if (isNeedChangeRotation) { // LCOV_EXCL_LINE
         ProcessVerticalCameraPosition(sensorOrientation, cameraPosition);
         return;
     }
-    if (IsVerticalDevice()) {
+    if (IsVerticalDevice()) { // LCOV_EXCL_LINE
         ProcessVerticalCameraPosition(sensorOrientation, cameraPosition);
     } else {
         ProcessFixedDiffDeviceTransform(cameraPosition);
@@ -953,35 +944,17 @@ int32_t HStreamRepeat::EnableSecure(bool isEnabled)
 void HStreamRepeat::UpdateVideoSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> settings, uint8_t mirror)
 {
     CHECK_ERROR_RETURN_LOG(settings == nullptr, "HStreamRepeat::UpdateVideoSettings settings is nullptr");
-    bool status = false;
-    camera_metadata_item_t item;
     MEDIA_DEBUG_LOG("HStreamRepeat::UpdateVideoSettings set Mirror %{public}d", mirror);
-    int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_CAPTURE_MIRROR, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = settings->addEntry(OHOS_CONTROL_CAPTURE_MIRROR, &mirror, 1);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = settings->updateEntry(OHOS_CONTROL_CAPTURE_MIRROR, &mirror, 1);
-    }
+    bool status = AddOrUpdateMetadata(settings, OHOS_CONTROL_CAPTURE_MIRROR, &mirror, 1);
     CHECK_ERROR_PRINT_LOG(!status, "UpdateVideoSettings Failed to set mirroring in VideoSettings");
 }
 
 void HStreamRepeat::UpdateFrameRateSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> settings)
 {
     CHECK_ERROR_RETURN(settings == nullptr);
-    bool status = false;
-    camera_metadata_item_t item;
-
     CHECK_ERROR_RETURN(streamFrameRateRange_.size() == 0);
-    int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_FPS_RANGES, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        MEDIA_DEBUG_LOG("HStreamRepeat::SetFrameRate Failed to find frame range");
-        status =
-            settings->addEntry(OHOS_CONTROL_FPS_RANGES, streamFrameRateRange_.data(), streamFrameRateRange_.size());
-    } else if (ret == CAM_META_SUCCESS) {
-        MEDIA_DEBUG_LOG("HStreamRepeat::SetFrameRate success to find frame range");
-        status =
-            settings->updateEntry(OHOS_CONTROL_FPS_RANGES, streamFrameRateRange_.data(), streamFrameRateRange_.size());
-    }
+    bool status = AddOrUpdateMetadata(
+        settings, OHOS_CONTROL_FPS_RANGES, streamFrameRateRange_.data(), streamFrameRateRange_.size());
     CHECK_ERROR_PRINT_LOG(!status, "HStreamRepeat::SetFrameRate Failed to set frame range");
 }
 
@@ -989,19 +962,13 @@ void HStreamRepeat::UpdateFrameMuteSettings(std::shared_ptr<OHOS::Camera::Camera
                                             std::shared_ptr<OHOS::Camera::CameraMetadata> &dynamicSetting)
 {
     CHECK_ERROR_RETURN(settings == nullptr);
-    bool status = false;
     camera_metadata_item_t item;
     int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_MUTE_MODE, &item);
     CHECK_ERROR_RETURN(ret == CAM_META_ITEM_NOT_FOUND || item.count == 0);
     auto mode = item.data.u8[0];
     int32_t count = 1;
     CHECK_ERROR_RETURN_LOG(dynamicSetting == nullptr, "dynamicSetting is nullptr");
-    ret = OHOS::Camera::FindCameraMetadataItem(dynamicSetting->get(), OHOS_CONTROL_MUTE_MODE, &item);
-    if (ret == CAM_META_SUCCESS) {
-        status = dynamicSetting->updateEntry(OHOS_CONTROL_MUTE_MODE, &mode, count);
-    } else {
-        status = dynamicSetting->addEntry(OHOS_CONTROL_MUTE_MODE, &mode, count);
-    }
+    bool status = AddOrUpdateMetadata(dynamicSetting, OHOS_CONTROL_MUTE_MODE, &mode, count);
     CHECK_ERROR_PRINT_LOG(!status, "HStreamRepeat::UpdateFrameMuteSettings Failed to set frame mute");
 }
 
@@ -1031,26 +998,14 @@ void HStreamRepeat::UpdateBeautySettings(std::shared_ptr<OHOS::Camera::CameraMet
     CHECK_ERROR_RETURN_LOG(settings == nullptr, "HStreamRepeat::UpdateBeautySettings settings is nullptr");
     MEDIA_INFO_LOG("HStreamRepeat::UpdateBeautySettings enter");
     bool status = false;
-    camera_metadata_item_t item;
     int32_t count = 1;
     uint8_t beautyType = OHOS_CAMERA_BEAUTY_TYPE_AUTO;
     uint8_t beautyLevel = BEAUTY_LEVEL;
 
-    int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_BEAUTY_TYPE, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = settings->addEntry(OHOS_CONTROL_BEAUTY_TYPE, &beautyType, count);
-    } else if (ret == CAM_META_SUCCESS) {
-        MEDIA_DEBUG_LOG("HStreamRepeat::SetFrameRate success to find frame range");
-        status = settings->updateEntry(OHOS_CONTROL_BEAUTY_TYPE, &beautyType, count);
-    }
+    status = AddOrUpdateMetadata(settings, OHOS_CONTROL_BEAUTY_TYPE, &beautyType, count);
     CHECK_ERROR_PRINT_LOG(!status, "HStreamRepeat::SetFrameRate Failed to set beauty type");
 
-    ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_BEAUTY_AUTO_VALUE, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = settings->addEntry(OHOS_CONTROL_BEAUTY_AUTO_VALUE, &beautyLevel, count);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = settings->updateEntry(OHOS_CONTROL_BEAUTY_AUTO_VALUE, &beautyLevel, count);
-    }
+    status = AddOrUpdateMetadata(settings, OHOS_CONTROL_BEAUTY_AUTO_VALUE, &beautyLevel, count);
     CHECK_ERROR_PRINT_LOG(!status, "HStreamRepeat::SetFrameRate Failed to set beauty level");
 }
 
@@ -1059,6 +1014,7 @@ void HStreamRepeat::CancelNotification()
     CameraBeautyNotification::GetInstance()->CancelNotification();
 }
 
+// LCOV_EXCL_START
 bool HStreamRepeat::IsNeedBeautyNotification()
 {
     bool ret = false;
@@ -1096,6 +1052,7 @@ bool HStreamRepeat::IsNeedBeautyNotification()
     }
     return ret;
 }
+// LCOV_EXCL_STOP
 #endif
 
 int32_t HStreamRepeat::AttachMetaSurface(const sptr<OHOS::IBufferProducer>& producer, int32_t videoMetaType)

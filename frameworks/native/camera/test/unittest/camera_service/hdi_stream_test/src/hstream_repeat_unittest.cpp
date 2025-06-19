@@ -31,6 +31,7 @@ using ::testing::_;
 namespace OHOS {
 namespace CameraStandard {
 constexpr static uint32_t CAMERA_STREAM_REPEAT_ON_DEFAULT = 1;
+const uint32_t CONST_1 = 1;
 const uint32_t CONST_0 = 0;
 const uint32_t PHOTO_MODE = 1;
 const uint32_t NUM_ONE = 1;
@@ -61,7 +62,7 @@ public:
         ON_CALL(*this, DetachBufferQueue(_)).WillByDefault(Return(HDI::Camera::V1_0::NO_ERROR));
         ON_CALL(*this, ChangeToOfflineStream(_, _, _)).WillByDefault(Return(HDI::Camera::V1_0::NO_ERROR));
     }
-    ~MockStreamOperator() {}
+    virtual ~MockStreamOperator() {}
     MOCK_METHOD1(CreateStreams, int32_t(
         const std::vector<OHOS::HDI::Camera::V1_0::StreamInfo>& streamInfos));
     MOCK_METHOD1(CreateStreams_V1_1, int32_t(
@@ -115,7 +116,7 @@ public:
     MOCK_METHOD2(CallbackExit, int32_t(uint32_t code, int32_t result));
     MOCK_METHOD1(GetMirror, int32_t(bool& isEnable));
     MOCK_METHOD1(SetCameraApi, int32_t(uint32_t apiCompatibleVersion));
-    ~MockHStreamRepeatStub() {}
+    virtual ~MockHStreamRepeatStub() {}
 };
 
 class MockHStreamRepeatCallbackStub : public StreamRepeatCallbackStub {
@@ -125,7 +126,13 @@ public:
     MOCK_METHOD1(OnFrameError, int32_t(int32_t errorCode));
     MOCK_METHOD1(OnSketchStatusChanged, int32_t(SketchStatus status));
     MOCK_METHOD1(OnDeferredVideoEnhancementInfo, int32_t(const CaptureEndedInfoExt& captureEndedInfo));
-    ~MockHStreamRepeatCallbackStub() {}
+    MockHStreamRepeatCallbackStub()
+    {
+        ON_CALL(*this, OnFrameStarted()).WillByDefault(Return(CAMERA_OK));
+        ON_CALL(*this, OnDeferredVideoEnhancementInfo(_)).WillByDefault(Return(CAMERA_OK));
+        ON_CALL(*this, OnSketchStatusChanged(_)).WillByDefault(Return(CAMERA_OK));
+    }
+    virtual ~MockHStreamRepeatCallbackStub() {}
 };
 
 void HStreamRepeatUnit::SetUpTestCase(void) {}
@@ -136,15 +143,14 @@ void HStreamRepeatUnit::TearDown(void) {}
 
 void HStreamRepeatUnit::SetUp(void) {}
 
-HStreamRepeat* HStreamRepeatUnit::CreateHStreamRepeat()
+HStreamRepeat* HStreamRepeatUnit::CreateHStreamRepeat(RepeatStreamType type)
 {
     sptr<OHOS::IConsumerSurface> cSurface = IConsumerSurface::Create();
     sptr<OHOS::IBufferProducer> producer = cSurface->GetProducer();
     int32_t format = 1;
     int32_t width = 1920;
     int32_t height = 1080;
-    auto streamRepeat = new (std::nothrow)
-        HStreamRepeat(producer, format, width, height, RepeatStreamType::PREVIEW);
+    auto streamRepeat = new (std::nothrow) HStreamRepeat(producer, format, width, height, type);
     return streamRepeat;
 }
 
@@ -473,6 +479,57 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_015, TestSize.Level1)
     EXPECT_EQ(streamRepeat->producer_->GetTransform(transform), GSERROR_OK);
 }
 
+/**
+ * @tc.name  : Test ProcessVerticalCameraPosition API
+ * @tc.number: ProcessVerticalCameraPosition_001
+ * @tc.desc  : Test ProcessVerticalCameraPosition API, when streamRotation is STREAM_ROTATE_0 and cameraPosition is
+ * OHOS_CAMERA_POSITION_FRONT
+ */
+HWTEST_F(HStreamRepeatUnit, ProcessVerticalCameraPosition_001, TestSize.Level0)
+{
+    auto streamRepeat = CreateHStreamRepeat();
+    ASSERT_NE(streamRepeat, nullptr);
+    int32_t sensorOrientation = STREAM_ROTATE_0;
+    camera_position_enum_t cameraPosition = OHOS_CAMERA_POSITION_FRONT;
+    streamRepeat->ProcessVerticalCameraPosition(sensorOrientation, cameraPosition);
+    GraphicTransformType transform = GraphicTransformType::GRAPHIC_FLIP_H;
+    EXPECT_EQ(streamRepeat->producer_->GetTransform(transform), GSERROR_OK);
+}
+
+/**
+ * @tc.name  : Test ProcessVerticalCameraPosition API
+ * @tc.number: ProcessVerticalCameraPosition_002
+ * @tc.desc  : Test ProcessVerticalCameraPosition API, when streamRotation is STREAM_ROTATE_270 and cameraPosition
+ * is OHOS_CAMERA_POSITION_FRONT
+ */
+HWTEST_F(HStreamRepeatUnit, ProcessVerticalCameraPosition_002, TestSize.Level0)
+{
+    auto streamRepeat = CreateHStreamRepeat();
+    ASSERT_NE(streamRepeat, nullptr);
+    int32_t sensorOrientation = STREAM_ROTATE_270;
+    camera_position_enum_t cameraPosition = OHOS_CAMERA_POSITION_FRONT;
+    streamRepeat->ProcessVerticalCameraPosition(sensorOrientation, cameraPosition);
+    GraphicTransformType transform = GraphicTransformType::GRAPHIC_FLIP_H_ROT270;
+    EXPECT_EQ(streamRepeat->producer_->GetTransform(transform), GSERROR_OK);
+}
+
+/**
+ * @tc.name  : Test ProcessVerticalCameraPosition API
+ * @tc.number: ProcessVerticalCameraPosition_003
+ * @tc.desc  : Test ProcessVerticalCameraPosition API, when streamRotation is STREAM_ROTATE_270 and cameraPosition
+ * is't OHOS_CAMERA_POSITION_FRONT
+ */
+HWTEST_F(HStreamRepeatUnit, ProcessVerticalCameraPosition_003, TestSize.Level0)
+{
+    auto streamRepeat = CreateHStreamRepeat();
+    ASSERT_NE(streamRepeat, nullptr);
+    int32_t sensorOrientation = STREAM_ROTATE_270;
+    camera_position_enum_t cameraPosition = OHOS_CAMERA_POSITION_BACK;
+    streamRepeat->ProcessVerticalCameraPosition(sensorOrientation, cameraPosition);
+    GraphicTransformType transform = GraphicTransformType::GRAPHIC_ROTATE_270;
+    EXPECT_EQ(streamRepeat->producer_->GetTransform(transform), GSERROR_OK);
+}
+
 /*
  * Feature: Framework
  * Function: Test ProcessVerticalCameraPosition
@@ -772,6 +829,20 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_030, TestSize.Level1)
     EXPECT_EQ(ret, CAMERA_OPERATION_NOT_ALLOWED);
 }
 
+/**
+ * @tc.name  : Test OperatePermissionCheck API
+ * @tc.number: OperatePermissionCheck_001
+ * @tc.desc  : Test OperatePermissionCheck API, when interfaceCode is invalid
+ */
+HWTEST_F(HStreamRepeatUnit, OperatePermissionCheck_001, TestSize.Level0)
+{
+    auto streamRepeat = CreateHStreamRepeat();
+    ASSERT_NE(streamRepeat, nullptr);
+    uint32_t interfaceCode = static_cast<uint32_t>(IStreamRepeatIpcCode::COMMAND_FORK_SKETCH_STREAM_REPEAT) + 1;
+    int32_t ret = streamRepeat->OperatePermissionCheck(interfaceCode);
+    EXPECT_EQ(ret, CAMERA_OK);
+}
+
 /*
  * Feature: Framework
  * Function: Test OperatePermissionCheck
@@ -891,6 +962,44 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_033, TestSize.Level1)
     sptr<IBufferProducer> producer1 = Surface->GetProducer();
     sptr<HStreamRepeat> streamRepeat =
         new (std::nothrow) HStreamRepeat(nullptr, format, width, height, RepeatStreamType::PREVIEW);
+    ASSERT_NE(streamRepeat, nullptr);
+
+    EXPECT_EQ(streamRepeat->Start(), CAMERA_INVALID_STATE);
+    EXPECT_EQ(streamRepeat->SetCallback(callback), CAMERA_INVALID_ARG);
+    EXPECT_EQ(streamRepeat->AddDeferredSurface(producer), CAMERA_INVALID_ARG);
+    streamRepeat->DumpStreamInfo(infoDumper);
+    EXPECT_EQ(streamRepeat->AddDeferredSurface(producer1), CAMERA_INVALID_STATE);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata =
+        std::make_shared<OHOS::Camera::CameraMetadata>(METADATA_ITEM_SIZE, METADATA_DATA_SIZE);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata1 = nullptr;
+    sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator = new MockStreamOperator();
+    EXPECT_EQ(streamRepeat->LinkInput(streamOperator, metadata), CAMERA_OK);
+    streamRepeat->LinkInput(streamOperator, metadata1);
+    streamOperator = nullptr;
+    streamRepeat->LinkInput(streamOperator, metadata);
+    streamRepeat->DumpStreamInfo(infoDumper);
+    EXPECT_EQ(streamRepeat->Stop(), CAMERA_INVALID_STATE);
+}
+
+/**
+ * @tc.name  : Test LinkInput API
+ * @tc.number: LinkInput_001
+ * @tc.desc  : Test LinkInput API, when repeatStreamType_ is VIDEO
+ */
+HWTEST_F(HStreamRepeatUnit, LinkInput_001, TestSize.Level0)
+{
+    int32_t format = 0;
+    int32_t width = 0;
+    int32_t height = 0;
+    CameraInfoDumper infoDumper(0);
+    sptr<CameraManager> cameraManager = CameraManager::GetInstance();
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    sptr<IStreamRepeatCallback> callback = nullptr;
+    sptr<OHOS::IBufferProducer> producer = nullptr;
+    sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
+    sptr<IBufferProducer> producer1 = Surface->GetProducer();
+    sptr<HStreamRepeat> streamRepeat =
+        new (std::nothrow) HStreamRepeat(nullptr, format, width, height, RepeatStreamType::VIDEO);
     ASSERT_NE(streamRepeat, nullptr);
 
     EXPECT_EQ(streamRepeat->Start(), CAMERA_INVALID_STATE);
@@ -1058,6 +1167,94 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_039, TestSize.Level1)
     streamRepeat->SetStreamInfo(streamInfo);
 }
 
+/**
+ * @tc.name  : Test NotifyDeviceStateChangeInfo API
+ * @tc.number: NotifyDeviceStateChangeInfo_001
+ * @tc.desc  : Test NotifyDeviceStateChangeInfo API, when repeatStreamType_ is LIVEPHOTO
+ */
+HWTEST_F(HStreamRepeatUnit, SetStreamInfo_001, TestSize.Level0)
+{
+    int32_t format = CAMERA_FORMAT_YUV_420_SP;
+    int32_t width = PHOTO_DEFAULT_WIDTH;
+    int32_t height = PHOTO_DEFAULT_HEIGHT;
+
+    sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
+    sptr<IBufferProducer> producer = Surface->GetProducer();
+    auto streamRepeat = new (std::nothrow) HStreamRepeat(producer, format, width, height, RepeatStreamType::LIVEPHOTO);
+    ASSERT_NE(streamRepeat, nullptr);
+    StreamInfo_V1_1 streamInfo;
+    streamRepeat->SetStreamInfo(streamInfo);
+}
+
+/**
+ * @tc.name  : Test NotifyDeviceStateChangeInfo API
+ * @tc.number: NotifyDeviceStateChangeInfo_002
+ * @tc.desc  : Test NotifyDeviceStateChangeInfo API, when repeatStreamType_ is invalid
+ */
+HWTEST_F(HStreamRepeatUnit, SetStreamInfo_002, TestSize.Level0)
+{
+    int32_t format = CAMERA_FORMAT_YUV_420_SP;
+    int32_t width = PHOTO_DEFAULT_WIDTH;
+    int32_t height = PHOTO_DEFAULT_HEIGHT;
+
+    sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
+    sptr<IBufferProducer> producer = Surface->GetProducer();
+    auto streamRepeat = new (std::nothrow) HStreamRepeat(producer, format, width, height,
+        static_cast<RepeatStreamType>(static_cast<int32_t>(RepeatStreamType::LIVEPHOTO) + 1));
+    ASSERT_NE(streamRepeat, nullptr);
+    StreamInfo_V1_1 streamInfo;
+    streamRepeat->SetStreamInfo(streamInfo);
+}
+
+/**
+ * @tc.name  : Test StartSketchStream API
+ * @tc.number: StartSketchStream_001
+ * @tc.desc  : Test StartSketchStream API, when sketchStreamRepeat_ is nullptr
+ */
+HWTEST_F(HStreamRepeatUnit, StartSketchStream_001, TestSize.Level1)
+{
+    auto streamRepeat = CreateHStreamRepeat();
+    ASSERT_NE(streamRepeat, nullptr);
+    streamRepeat->sketchStreamRepeat_ = nullptr;
+    auto settings = std::make_shared<CameraMetadata>(10, 100);
+    streamRepeat->StartSketchStream(settings);
+}
+
+/**
+ * @tc.name  : Test StartSketchStream API
+ * @tc.number: StartSketchStream_002
+ * @tc.desc  : Test StartSketchStream API, when OHOS_CONTROL_ZOOM_RATIO is't found
+ */
+HWTEST_F(HStreamRepeatUnit, StartSketchStream_002, TestSize.Level1)
+{
+    auto streamRepeat = CreateHStreamRepeat();
+    ASSERT_NE(streamRepeat, nullptr);
+    auto streamRepeatSketch = CreateHStreamRepeat(RepeatStreamType::SKETCH);
+    streamRepeat->sketchStreamRepeat_ = streamRepeatSketch;
+    auto settings = std::make_shared<CameraMetadata>(10, 100);
+    streamRepeat->StartSketchStream(settings);
+}
+
+/**
+ * @tc.name  : Test StartSketchStream API
+ * @tc.number: StartSketchStream_003
+ * @tc.desc  : Test StartSketchStream API, when tagRatio is less than sketchStreamRepeat
+ */
+HWTEST_F(HStreamRepeatUnit, StartSketchStream_003, TestSize.Level1)
+{
+    auto streamRepeat = CreateHStreamRepeat();
+    ASSERT_NE(streamRepeat, nullptr);
+    auto streamRepeatSketch = CreateHStreamRepeat(RepeatStreamType::SKETCH);
+    streamRepeatSketch->sketchRatio_ = 2;
+    streamRepeat->sketchStreamRepeat_ = streamRepeatSketch;
+    auto settings = std::make_shared<CameraMetadata>(10, 100);
+    float zoomRatio = 1;
+    settings->addEntry(OHOS_CONTROL_ZOOM_RATIO, &zoomRatio, CONST_1);
+    ASSERT_FALSE(streamRepeatSketch->sketchRatio_ > 0 &&
+        zoomRatio - streamRepeatSketch->sketchRatio_ >= -std::numeric_limits<float>::epsilon());
+    streamRepeat->StartSketchStream(settings);
+}
+
 /*
  * Feature: Framework
  * Function: Test HStreamMetadataCallbackStub with OnRemoteRequest
@@ -1217,5 +1414,411 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_048, TestSize.Level1)
     EXPECT_EQ(errCode, ERR_NONE);
 }
 
+/**
+ * @tc.name  : Test ReleaseStream API
+ * @tc.number: ReleaseStream_001
+ * @tc.desc  : Test ReleaseStream API, when sketchStreamRepeat_ is't nullptr
+ */
+HWTEST_F(HStreamRepeatUnit, ReleaseStream_001, TestSize.Level1)
+{
+    auto streamRepeat = CreateHStreamRepeat();
+    ASSERT_NE(streamRepeat, nullptr);
+    streamRepeat->sketchStreamRepeat_ = CreateHStreamRepeat(RepeatStreamType::SKETCH);
+    auto ret = streamRepeat->ReleaseStream(false);
+    EXPECT_EQ(ret, CAMERA_OK);
+}
+
+/**
+ * @tc.name  : Test OnFrameStarted API
+ * @tc.number: OnFrameStarted_001
+ * @tc.desc  : Test OnFrameStarted API, when streamRepeatCallback_ is nullptr
+ */
+HWTEST_F(HStreamRepeatUnit, OnFrameStarted_001, TestSize.Level1)
+{
+    auto streamRepeat = CreateHStreamRepeat();
+    ASSERT_NE(streamRepeat, nullptr);
+    streamRepeat->streamRepeatCallback_ = nullptr;
+    auto ret = streamRepeat->OnFrameStarted();
+    EXPECT_EQ(ret, CAMERA_OK);
+}
+
+/**
+ * @tc.name  : Test OnFrameStarted API
+ * @tc.number: OnFrameStarted_002
+ * @tc.desc  : Test OnFrameStarted API, when streamRepeatCallback_ is't nullptr
+ */
+HWTEST_F(HStreamRepeatUnit, OnFrameStarted_002, TestSize.Level1)
+{
+    auto streamRepeat = CreateHStreamRepeat();
+    ASSERT_NE(streamRepeat, nullptr);
+    sptr<MockHStreamRepeatCallbackStub> callback = new MockHStreamRepeatCallbackStub();
+    ASSERT_NE(callback, nullptr);
+    streamRepeat->streamRepeatCallback_ = callback;
+    auto ret = streamRepeat->OnFrameStarted();
+    EXPECT_EQ(ret, CAMERA_OK);
+    testing::Mock::AllowLeak(callback.GetRefPtr());
+}
+
+/**
+ * @tc.name  : Test OnFrameStarted API
+ * @tc.number: OnFrameStarted_003
+ * @tc.desc  : Test OnFrameStarted API, when repeatStreamType_ is VIDEO
+ */
+HWTEST_F(HStreamRepeatUnit, OnFrameStarted_003, TestSize.Level1)
+{
+    auto streamRepeat = CreateHStreamRepeat(RepeatStreamType::VIDEO);
+    ASSERT_NE(streamRepeat, nullptr);
+    sptr<MockHStreamRepeatCallbackStub> callback = new MockHStreamRepeatCallbackStub();
+    ASSERT_NE(callback, nullptr);
+    streamRepeat->streamRepeatCallback_ = callback;
+    auto ret = streamRepeat->OnFrameStarted();
+    EXPECT_EQ(ret, CAMERA_OK);
+    testing::Mock::AllowLeak(callback.GetRefPtr());
+}
+
+/**
+ * @tc.name  : Test OnFrameEnded API
+ * @tc.number: OnFrameEnded_001
+ * @tc.desc  : Test OnFrameEnded API, when streamRepeatCallback_ is nullptr
+ */
+HWTEST_F(HStreamRepeatUnit, OnFrameEnded_001, TestSize.Level1)
+{
+    auto streamRepeat = CreateHStreamRepeat();
+    ASSERT_NE(streamRepeat, nullptr);
+    streamRepeat->streamRepeatCallback_ = nullptr;
+    auto ret = streamRepeat->OnFrameStarted();
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = streamRepeat->OnFrameEnded(CONST_0);
+    EXPECT_EQ(ret, CAMERA_OK);
+}
+
+/**
+ * @tc.name  : Test OnFrameEnded API
+ * @tc.number: OnFrameEnded_002
+ * @tc.desc  : Test OnFrameEnded API, when streamRepeatCallback_ is't nullptr
+ */
+HWTEST_F(HStreamRepeatUnit, OnFrameEnded_002, TestSize.Level1)
+{
+    auto streamRepeat = CreateHStreamRepeat();
+    ASSERT_NE(streamRepeat, nullptr);
+    sptr<MockHStreamRepeatCallbackStub> callback = new MockHStreamRepeatCallbackStub();
+    ASSERT_NE(callback, nullptr);
+    streamRepeat->streamRepeatCallback_ = callback;
+    auto ret = streamRepeat->OnFrameStarted();
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = streamRepeat->OnFrameEnded(CONST_0);
+    EXPECT_EQ(ret, CAMERA_OK);
+    testing::Mock::AllowLeak(callback.GetRefPtr());
+}
+
+/**
+ * @tc.name  : Test OnFrameEnded API
+ * @tc.number: OnFrameEnded_003
+ * @tc.desc  : Test OnFrameEnded API, when repeatStreamType_ is VIDEO
+ */
+HWTEST_F(HStreamRepeatUnit, OnFrameEnded_003, TestSize.Level1)
+{
+    auto streamRepeat = CreateHStreamRepeat(RepeatStreamType::VIDEO);
+    ASSERT_NE(streamRepeat, nullptr);
+    sptr<MockHStreamRepeatCallbackStub> callback = new MockHStreamRepeatCallbackStub();
+    ASSERT_NE(callback, nullptr);
+    streamRepeat->streamRepeatCallback_ = callback;
+    auto ret = streamRepeat->OnFrameStarted();
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = streamRepeat->OnFrameEnded(CONST_0);
+    EXPECT_EQ(ret, CAMERA_OK);
+    testing::Mock::AllowLeak(callback.GetRefPtr());
+}
+
+/**
+ * @tc.name  : Test OnDeferredVideoEnhancementInfo API
+ * @tc.number: OnDeferredVideoEnhancementInfo_001
+ * @tc.desc  : Test OnDeferredVideoEnhancementInfo API, when repeatStreamType_ is VIDEO and streamRepeatCallback_ is
+ * nullptr
+ */
+HWTEST_F(HStreamRepeatUnit, OnDeferredVideoEnhancementInfo_001, TestSize.Level1)
+{
+    auto streamRepeat = CreateHStreamRepeat(RepeatStreamType::VIDEO);
+    ASSERT_NE(streamRepeat, nullptr);
+    streamRepeat->streamRepeatCallback_ = nullptr;
+    auto ret = streamRepeat->OnDeferredVideoEnhancementInfo(CaptureEndedInfoExt());
+    EXPECT_EQ(ret, CAMERA_OK);
+}
+
+/**
+ * @tc.name  : Test OnDeferredVideoEnhancementInfo API
+ * @tc.number: OnDeferredVideoEnhancementInfo_002
+ * @tc.desc  : Test OnDeferredVideoEnhancementInfo API, when repeatStreamType_ is VIDEO and streamRepeatCallback_
+ * is't nullptr
+ */
+HWTEST_F(HStreamRepeatUnit, OnDeferredVideoEnhancementInfo_002, TestSize.Level1)
+{
+    auto streamRepeat = CreateHStreamRepeat(RepeatStreamType::VIDEO);
+    ASSERT_NE(streamRepeat, nullptr);
+    sptr<MockHStreamRepeatCallbackStub> callback = new MockHStreamRepeatCallbackStub();
+    ASSERT_NE(callback, nullptr);
+    streamRepeat->streamRepeatCallback_ = callback;
+    auto ret = streamRepeat->OnDeferredVideoEnhancementInfo(CaptureEndedInfoExt());
+    EXPECT_EQ(ret, CAMERA_OK);
+    testing::Mock::AllowLeak(callback.GetRefPtr());
+}
+
+/**
+ * @tc.name  : Test OnSketchStatusChanged API
+ * @tc.number: OnSketchStatusChanged_001
+ * @tc.desc  : Test OnSketchStatusChanged API, when streamRepeatCallback_ is nullptr
+ */
+HWTEST_F(HStreamRepeatUnit, OnSketchStatusChanged_001, TestSize.Level1)
+{
+    auto streamRepeat = CreateHStreamRepeat(RepeatStreamType::VIDEO);
+    ASSERT_NE(streamRepeat, nullptr);
+    streamRepeat->streamRepeatCallback_ = nullptr;
+    auto ret = streamRepeat->OnSketchStatusChanged(SketchStatus());
+    EXPECT_EQ(ret, CAMERA_OK);
+}
+
+/**
+ * @tc.name  : Test OnSketchStatusChanged API
+ * @tc.number: OnSketchStatusChanged_002
+ * @tc.desc  : Test OnSketchStatusChanged API, when streamRepeatCallback_ is't nullptr
+ */
+HWTEST_F(HStreamRepeatUnit, OnSketchStatusChanged_002, TestSize.Level1)
+{
+    auto streamRepeat = CreateHStreamRepeat(RepeatStreamType::VIDEO);
+    ASSERT_NE(streamRepeat, nullptr);
+    sptr<MockHStreamRepeatCallbackStub> callback = new MockHStreamRepeatCallbackStub();
+    ASSERT_NE(callback, nullptr);
+    streamRepeat->streamRepeatCallback_ = callback;
+    auto ret = streamRepeat->OnSketchStatusChanged(SketchStatus());
+    EXPECT_EQ(ret, CAMERA_OK);
+    testing::Mock::AllowLeak(callback.GetRefPtr());
+}
+
+/**
+ * @tc.name  : Test OnSketchStatusChanged API
+ * @tc.number: OnSketchStatusChanged_001
+ * @tc.desc  : Test OnSketchStatusChanged API, when streamRepeatCallback_ is't nullptr
+ */
+HWTEST_F(HStreamRepeatUnit, ForkSketchStreamRepeat_001, TestSize.Level1)
+{
+    auto streamRepeat = CreateHStreamRepeat(RepeatStreamType::VIDEO);
+    ASSERT_NE(streamRepeat, nullptr);
+    streamRepeat->sketchStreamRepeat_ = CreateHStreamRepeat(RepeatStreamType::SKETCH);
+    sptr<IRemoteObject> sketchStream;
+    auto ret = streamRepeat->ForkSketchStreamRepeat(
+        streamRepeat->width_, streamRepeat->height_, sketchStream, streamRepeat->sketchRatio_);
+    EXPECT_EQ(ret, CAMERA_OK);
+}
+
+/**
+ * @tc.name  : Test OnSketchStatusChanged API
+ * @tc.number: OnSketchStatusChanged_002
+ * @tc.desc  : Test OnSketchStatusChanged API, when streamRepeatCallback_ is nullptr
+ */
+HWTEST_F(HStreamRepeatUnit, ForkSketchStreamRepeat_002, TestSize.Level1)
+{
+    auto streamRepeat = CreateHStreamRepeat(RepeatStreamType::VIDEO);
+    ASSERT_NE(streamRepeat, nullptr);
+    streamRepeat->sketchStreamRepeat_ = nullptr;
+    sptr<IRemoteObject> sketchStream;
+    auto ret = streamRepeat->ForkSketchStreamRepeat(
+        streamRepeat->width_, streamRepeat->height_, sketchStream, streamRepeat->sketchRatio_);
+    EXPECT_EQ(ret, CAMERA_OK);
+}
+
+/**
+ * @tc.name  : Test SetFrameRate API
+ * @tc.number: SetFrameRate_001
+ * @tc.desc  : Test SetFrameRate API, when cameraAbility_ is nullptr
+ */
+HWTEST_F(HStreamRepeatUnit, SetFrameRate_001, TestSize.Level1)
+{
+    auto streamRepeat = CreateHStreamRepeat();
+    ASSERT_NE(streamRepeat, nullptr);
+    streamRepeat->cameraAbility_ = nullptr;
+    auto rc = streamRepeat->SetFrameRate(30, 60);
+    EXPECT_EQ(rc, CAMERA_OK);
+}
+
+/**
+ * @tc.name  : Test SetFrameRate API
+ * @tc.number: SetFrameRate_002
+ * @tc.desc  : Test SetFrameRate API, when cameraAbility_ is't nullptr
+ */
+HWTEST_F(HStreamRepeatUnit, SetFrameRate_002, TestSize.Level1)
+{
+    auto streamRepeat = CreateHStreamRepeat();
+    ASSERT_NE(streamRepeat, nullptr);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility =
+        std::make_shared<OHOS::Camera::CameraMetadata>(1, 1024);
+    ASSERT_NE(cameraAbility, nullptr);
+    streamRepeat->cameraAbility_ = cameraAbility;
+    auto rc = streamRepeat->SetFrameRate(30, 60);
+    EXPECT_EQ(rc, CAMERA_OK);
+}
+
+/**
+ * @tc.name  : Test SetFrameRate API
+ * @tc.number: SetFrameRate_003
+ * @tc.desc  : Test SetFrameRate API, when streamOperator is nullptr
+ */
+HWTEST_F(HStreamRepeatUnit, SetFrameRate_003, TestSize.Level1)
+{
+    auto streamRepeat = CreateHStreamRepeat();
+    ASSERT_NE(streamRepeat, nullptr);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility =
+        std::make_shared<OHOS::Camera::CameraMetadata>(1, 1024);
+    ASSERT_NE(cameraAbility, nullptr);
+    streamRepeat->cameraAbility_ = cameraAbility;
+    streamRepeat->streamOperator_ = nullptr;
+    auto rc = streamRepeat->SetFrameRate(30, 60);
+    EXPECT_EQ(rc, CAMERA_OK);
+}
+
+/**
+ * @tc.name  : Test SetFrameRate API
+ * @tc.number: SetFrameRate_004
+ * @tc.desc  : Test SetFrameRate API, when streamOperator is't nullptr and repeatStreamStatus_ is STOPED
+ */
+HWTEST_F(HStreamRepeatUnit, SetFrameRate_004, TestSize.Level1)
+{
+    auto streamRepeat = CreateHStreamRepeat();
+    ASSERT_NE(streamRepeat, nullptr);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility =
+        std::make_shared<OHOS::Camera::CameraMetadata>(1, 1024);
+    ASSERT_NE(cameraAbility, nullptr);
+    streamRepeat->cameraAbility_ = cameraAbility;
+    streamRepeat->streamOperator_ = new MockStreamOperator();
+    streamRepeat->repeatStreamStatus_ = RepeatStreamStatus::STOPED;
+    auto rc = streamRepeat->SetFrameRate(30, 60);
+    EXPECT_EQ(rc, CAMERA_OK);
+}
+
+/**
+ * @tc.name  : Test SetFrameRate API
+ * @tc.number: SetFrameRate_005
+ * @tc.desc  : Test SetFrameRate API, when streamOperator is't nullptr and repeatStreamStatus_ is STARTED
+ */
+HWTEST_F(HStreamRepeatUnit, SetFrameRate_005, TestSize.Level1)
+{
+    auto streamRepeat = CreateHStreamRepeat();
+    ASSERT_NE(streamRepeat, nullptr);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility =
+        std::make_shared<OHOS::Camera::CameraMetadata>(1, 1024);
+    ASSERT_NE(cameraAbility, nullptr);
+    streamRepeat->cameraAbility_ = cameraAbility;
+    streamRepeat->streamOperator_ = new MockStreamOperator();
+    streamRepeat->repeatStreamStatus_ = RepeatStreamStatus::STARTED;
+    auto rc = streamRepeat->SetFrameRate(30, 60);
+    EXPECT_EQ(rc, CAMERA_OK);
+}
+
+/**
+ * @tc.name  : Test SetMirrorForLivePhoto API
+ * @tc.number: SetMirrorForLivePhoto_001
+ * @tc.desc  : Test SetMirrorForLivePhoto API, when isMirrorSupported
+ */
+HWTEST_F(HStreamRepeatUnit, SetMirrorForLivePhoto_001, TestSize.Level0)
+{
+    auto streamRepeat = CreateHStreamRepeat();
+    ASSERT_NE(streamRepeat, nullptr);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility =
+        std::make_shared<OHOS::Camera::CameraMetadata>(1, 1024);
+    ASSERT_NE(cameraAbility, nullptr);
+    streamRepeat->cameraAbility_ = cameraAbility;
+    bool isEnable = true;
+    camera_metadata_item_t item;
+    int32_t mode = 110;
+    std::vector<uint8_t> data { 110, 2 };
+    int32_t res;
+    streamRepeat->cameraAbility_->addEntry(OHOS_CONTROL_CAPTURE_MIRROR_SUPPORTED, data.data(), data.size());
+    streamRepeat->SetMirrorForLivePhoto(isEnable, mode);
+    res = OHOS::Camera::FindCameraMetadataItem(
+        streamRepeat->cameraAbility_->get(), OHOS_CONTROL_CAPTURE_MIRROR_SUPPORTED, &item);
+    EXPECT_EQ(res, CAM_META_SUCCESS);
+    EXPECT_EQ(streamRepeat->enableMirror_, true);
+}
+
+/**
+ * @tc.name  : Test SetMirrorForLivePhoto API
+ * @tc.number: SetMirrorForLivePhoto_002
+ * @tc.desc  : Test SetMirrorForLivePhoto API, when isMirrorSupported is false
+ */
+HWTEST_F(HStreamRepeatUnit, SetMirrorForLivePhoto_002, TestSize.Level0)
+{
+    auto streamRepeat = CreateHStreamRepeat();
+    ASSERT_NE(streamRepeat, nullptr);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility =
+        std::make_shared<OHOS::Camera::CameraMetadata>(1, 1024);
+    ASSERT_NE(cameraAbility, nullptr);
+    streamRepeat->cameraAbility_ = cameraAbility;
+    std::vector<uint8_t> data { 0, 0 };
+    bool isEnable = true;
+    camera_metadata_item_t item;
+    int32_t mode = 110;
+    int32_t res;
+    streamRepeat->cameraAbility_->addEntry(OHOS_CONTROL_CAPTURE_MIRROR_SUPPORTED, data.data(), data.size());
+    streamRepeat->SetMirrorForLivePhoto(isEnable, mode);
+    res = OHOS::Camera::FindCameraMetadataItem(
+        streamRepeat->cameraAbility_->get(), OHOS_CONTROL_CAPTURE_MIRROR_SUPPORTED, &item);
+    EXPECT_EQ(res, CAM_META_SUCCESS);
+    EXPECT_EQ(streamRepeat->enableMirror_, false);
+}
+
+/**
+ * @tc.name  : Test ProcessFixedTransform API
+ * @tc.number: ProcessFixedTransform_001
+ * @tc.desc  : Test ProcessFixedTransform API, when enableCameraRotation_
+ */
+HWTEST_F(HStreamRepeatUnit, ProcessFixedTransform_001, TestSize.Level0)
+{
+    auto streamRepeat = CreateHStreamRepeat();
+    ASSERT_NE(streamRepeat, nullptr);
+    streamRepeat->enableCameraRotation_ = true;
+    int32_t sensorOrientation = STREAM_ROTATE_0;
+    camera_position_enum_t cameraPosition = camera_position_enum_t::OHOS_CAMERA_POSITION_BACK;
+    streamRepeat->ProcessFixedTransform(sensorOrientation, cameraPosition);
+}
+
+/**
+ * @tc.name  : Test ProcessFixedTransform API
+ * @tc.number: ProcessFixedTransform_002
+ * @tc.desc  : Test ProcessFixedTransform API, when enableCameraRotation_ is false
+ */
+HWTEST_F(HStreamRepeatUnit, ProcessFixedTransform_002, TestSize.Level0)
+{
+    auto streamRepeat = CreateHStreamRepeat();
+    ASSERT_NE(streamRepeat, nullptr);
+    streamRepeat->enableCameraRotation_ = false;
+    int32_t sensorOrientation = STREAM_ROTATE_0;
+    camera_position_enum_t cameraPosition = camera_position_enum_t::OHOS_CAMERA_POSITION_BACK;
+    streamRepeat->ProcessFixedTransform(sensorOrientation, cameraPosition);
+}
+
+/**
+ * @tc.name  : Test ProcessFixedDiffDeviceTransform API
+ * @tc.number: ProcessFixedDiffDeviceTransform_001
+ * @tc.desc  : Test ProcessFixedDiffDeviceTransform API, when cameraPosition is OHOS_CAMERA_POSITION_FRONT
+ */
+HWTEST_F(HStreamRepeatUnit, ProcessFixedDiffDeviceTransform_001, TestSize.Level0)
+{
+    auto streamRepeat = CreateHStreamRepeat();
+    ASSERT_NE(streamRepeat, nullptr);
+    camera_position_enum_t cameraPosition = camera_position_enum_t::OHOS_CAMERA_POSITION_FRONT;
+    streamRepeat->ProcessFixedDiffDeviceTransform(cameraPosition);
+}
+
+/**
+ * @tc.name  : Test ProcessFixedDiffDeviceTransform API
+ * @tc.number: ProcessFixedDiffDeviceTransform_002
+ * @tc.desc  : Test ProcessFixedDiffDeviceTransform API, when cameraPosition is't OHOS_CAMERA_POSITION_FRONT
+ */
+HWTEST_F(HStreamRepeatUnit, ProcessFixedDiffDeviceTransform_002, TestSize.Level0)
+{
+    auto streamRepeat = CreateHStreamRepeat();
+    ASSERT_NE(streamRepeat, nullptr);
+    camera_position_enum_t cameraPosition = camera_position_enum_t::OHOS_CAMERA_POSITION_BACK;
+    streamRepeat->ProcessFixedDiffDeviceTransform(cameraPosition);
+}
 }
 }
