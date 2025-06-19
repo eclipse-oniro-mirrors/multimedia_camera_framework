@@ -576,6 +576,17 @@ int32_t HCameraService::CreateCaptureSession(sptr<ICaptureSession>& session, int
     std::string clientName = GetClientBundle(IPCSkeleton::GetCallingUid());
     CameraRotatePlugin::GetInstance()->SetCaptureSession(clientName, captureSession);
 #endif
+    int32_t uid = IPCSkeleton::GetCallingUid();
+    int32_t userId;
+    AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(uid, userId);
+    MEDIA_DEBUG_LOG("HCameraService::CreateCaptureSession userId= %{public}d", userId);
+    captureSession->SetUserId(userId);
+
+    auto &sessionManager = HCameraSessionManager::GetInstance();
+    auto mechSession = sessionManager.GetMechSession(userId);
+    if (mechSession != nullptr && mechSession->IsEnableMech()) {
+        captureSession->SetMechDeliveryState(MechDeliveryState::NEED_ENABLE);
+    }
     return rc;
 }
 
@@ -611,6 +622,56 @@ int32_t HCameraService::CreateDeferredVideoProcessingSession(int32_t userId,
         callback);
     session = videoSession;
     return CAMERA_OK;
+}
+
+int32_t HCameraService::CreateMechSession(int32_t userId, sptr<IMechSession>& session)
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_INFO_LOG("HCameraService::CreateMechSession enter.");
+
+    OHOS::Security::AccessToken::AccessTokenID callerToken = IPCSkeleton::GetCallingTokenID();
+    string permissionName = OHOS_PERMISSION_CAMERA;
+    int32_t ret = CheckPermission(permissionName, callerToken);
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, ret,
+        "HCameraService::CreateMechSession failed permission is: %{public}s", permissionName.c_str());
+
+    auto &sessionManager = HCameraSessionManager::GetInstance();
+    if (sessionManager.GetMechSession(userId) != nullptr) {
+        MEDIA_ERR_LOG("MechSession has created, userId:%{public}d", userId);
+        return CAMERA_OPERATION_NOT_ALLOWED;
+    }
+    sptr<HMechSession> mechSession = new (std::nothrow) HMechSession(userId);
+    if (mechSession == nullptr) {
+        MEDIA_ERR_LOG("HMechSession::NewInstance mechSession is nullptr");
+        return CAMERA_ALLOC_ERROR;
+    }
+    session = mechSession;
+    sessionManager.AddMechSession(userId, mechSession);
+    return CAMERA_OK;
+}
+
+int32_t HCameraService::IsMechSupported(bool &isMechSupported)
+{
+    CAMERA_SYNC_TRACE;
+    isMechSupported = false;
+    std::vector<std::string> cameraIds;
+    std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList;
+    int32_t retCode = GetCameras(cameraIds, cameraAbilityList);
+    CHECK_ERROR_RETURN_RET_LOG(retCode != CAMERA_OK, retCode, "HCameraService::IsMechSupported failed");
+    for (auto& cameraAbility : cameraAbilityList) {
+        camera_metadata_item_t item;
+        int ret = OHOS::Camera::FindCameraMetadataItem(cameraAbility->get(),
+            OHOS_ABILITY_FOCUS_TRACKING_MECH_AVAILABLE, &item);
+        if (ret == CAM_META_SUCCESS && item.count > 0) {
+            MEDIA_DEBUG_LOG("IsMechSupported data is %{public}d", item.data.u8[0]);
+            if (item.data.u8[0] == OHOS_CAMERA_MECH_MODE_ON) {
+                isMechSupported = true;
+                break;
+            }
+        }
+    }
+    MEDIA_INFO_LOG("HCameraService::IsMechSupported success. isMechSupported: %{public}d", isMechSupported);
+    return retCode;
 }
 
 int32_t HCameraService::CreatePhotoOutput(const sptr<OHOS::IBufferProducer>& producer, int32_t format, int32_t width,
@@ -736,6 +797,33 @@ int32_t HCameraService::CreateMetadataOutput(const sptr<OHOS::IBufferProducer>& 
     CHECK_ERROR_RETURN_RET_LOG(streamMetadata == nullptr, CAMERA_ALLOC_ERROR,
         "HCameraService::CreateMetadataOutput HStreamMetadata allocation failed");
 
+    int32_t uid = IPCSkeleton::GetCallingUid();
+    int32_t userId;
+    AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(uid, userId);
+    MEDIA_DEBUG_LOG("HCameraService::CreateMetadataOutput userId= %{public}d", userId);
+    streamMetadata->SetUserId(userId);
+    streamMetadata->SetMechCallback([](int32_t streamId, const std::shared_ptr<OHOS::Camera::CameraMetadata> &result,
+        int32_t userId) {
+        auto &sessionManager = HCameraSessionManager::GetInstance();
+        auto mechSession = sessionManager.GetMechSession(userId);
+        if (mechSession == nullptr) {
+            return;
+        }
+        bool isNeedMirror = false;
+        bool isNeedFlip = false;
+        sptr<HCameraDeviceManager> deviceManager = HCameraDeviceManager::GetInstance();
+        std::vector<sptr<HCameraDeviceHolder>> deviceHolderVector = deviceManager->GetActiveCameraHolders();
+        for (sptr<HCameraDeviceHolder> activeDeviceHolder : deviceHolderVector) {
+            sptr<HCameraDevice> activeDevice = activeDeviceHolder->GetDevice();
+            if (activeDevice != nullptr && activeDevice->IsOpenedCameraDevice()) {
+                int32_t position = activeDevice->GetCameraPosition();
+                isNeedMirror = (position == static_cast<int32_t>(OHOS_CAMERA_POSITION_FRONT));
+                int32_t usedAsPosition = activeDevice->GetUsedAsPosition();
+                isNeedFlip = usedAsPosition == (usedAsPosition == static_cast<int32_t>(OHOS_CAMERA_POSITION_FRONT));
+            }
+        }
+        mechSession->OnFocusTrackingInfo(streamId, isNeedMirror, isNeedFlip, result);
+    });
     metadataOutput = streamMetadata;
     MEDIA_INFO_LOG("HCameraService::CreateMetadataOutput execute success");
     return CAMERA_OK;

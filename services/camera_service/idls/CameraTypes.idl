@@ -52,6 +52,7 @@ enum MetadataObjectType {
     SALIENT_DETECTION = 6,
     BAR_CODE_DETECTION = 7,
     BASE_FACE_DETECTION = 8,
+    HUMAN_HEAD = 9,
 };
 
 enum SketchStatus {
@@ -104,4 +105,16 @@ enum PressureStatus {
     SYSTEM_PRESSURE_SEVERE,
     SYSTEM_PRESSURE_CRITICAL,
     SYSTEM_PRESSURE_SHUTDOWN
+};
+
+struct CameraAppInfo {
+    int tokenId;
+    String cameraId;
+    int opmode;
+    float zoomValue;
+    int equivalentFocus;
+    int width;
+    int height;
+    boolean videoStatus;
+    int position;
 };

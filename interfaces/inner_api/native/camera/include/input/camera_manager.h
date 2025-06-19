@@ -297,7 +297,7 @@ public:
      * @return Returns pointer to mech session.
      */
     sptr<MechSession> CreateMechSession(int userId);
- 
+
     /**
      * @brief Create Create mech session.
      *
@@ -305,7 +305,7 @@ public:
      * @return Returns error code.
      */
     int CreateMechSession(int userId, sptr<MechSession> *pMechSession);
- 
+
     /**
      * @brief Get the support of mech.
      *
@@ -871,7 +871,11 @@ protected:
 
 private:
 
-    enum CameraAbilitySupportCacheKey { CAMERA_ABILITY_SUPPORT_TORCH, CAMERA_ABILITY_SUPPORT_MUTE };
+    enum CameraAbilitySupportCacheKey {
+        CAMERA_ABILITY_SUPPORT_TORCH,
+        CAMERA_ABILITY_SUPPORT_MUTE,
+        CAMERA_ABILITY_SUPPORT_MECH,
+    };
 
     explicit CameraManager();
     void InitCameraManager();

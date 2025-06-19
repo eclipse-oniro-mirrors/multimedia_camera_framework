@@ -20,6 +20,7 @@
 #include "camera_metadata_operator.h"
 #include "camera_output_capability.h"
 #include "camera_stream_info_parse.h"
+#include "output/metadata_output.h"
 #include "metadata_utils.h"
 #include "camera_metadata.h"
 
@@ -29,6 +30,40 @@ class MetadataCommonUtils {
 private:
     explicit MetadataCommonUtils() = default;
 
+    static void GetMetadataResults(const common_metadata_header_t *metadata,
+        std::vector<camera_metadata_item_t>& metadataResults, std::vector<uint32_t>& metadataTypes);
+
+    static int32_t ProcessMetaObjects(const int32_t streamId, std::vector<sptr<MetadataObject>>& metaObjects,
+                                            const std::vector<camera_metadata_item_t>& metadataItem,
+                                            const std::vector<uint32_t>& metadataTypes,
+                                            bool isNeedMirror, bool isNeedFlip);
+
+    static void GenerateObjects(const camera_metadata_item_t &metadataItem, MetadataObjectType type,
+                                        std::vector<sptr<MetadataObject>> &metaObjects,
+                                        bool isNeedMirror, bool isNeedFlip);
+
+    static void ProcessBaseInfo(sptr<MetadataObjectFactory> factoryPtr, const camera_metadata_item_t &metadataItem,
+                                        int32_t &index, MetadataObjectType typeFromHal, bool isNeedMirror,
+                                        bool isNeedFlip);
+
+    static void ProcessExternInfo(sptr<MetadataObjectFactory> factoryPtr,
+                                        const camera_metadata_item_t &metadataItem, int32_t &index,
+                                        MetadataObjectType typeFromHal, bool isNeedMirror, bool isNeedFlip);
+
+    static void ProcessHumanFaceDetectInfo(sptr<MetadataObjectFactory> factoryPtr,
+                                                    const camera_metadata_item_t &metadataItem, int32_t &index,
+                                                    bool isNeedMirror, bool isNeedFlip);
+
+    static void ProcessCatFaceDetectInfo(sptr<MetadataObjectFactory> factoryPtr,
+                                                const camera_metadata_item_t &metadataItem, int32_t &index,
+                                                bool isNeedMirror, bool isNeedFlip);
+
+    static void ProcessDogFaceDetectInfo(sptr<MetadataObjectFactory> factoryPtr,
+                                                const camera_metadata_item_t &metadataItem, int32_t &index,
+                                                bool isNeedMirror, bool isNeedFlip);
+
+    static Rect ProcessRectBox(int32_t offsetTopLeftX, int32_t offsetTopLeftY,
+        int32_t offsetBottomRightX, int32_t offsetBottomRightY, bool isNeedMirror, bool isNeedFlip);
 public:
     static std::shared_ptr<camera_metadata_item_t> GetCapabilityEntry(
         const std::shared_ptr<OHOS::Camera::CameraMetadata> metadata, uint32_t metadataTag);
@@ -38,6 +73,12 @@ public:
 
     static std::shared_ptr<OHOS::Camera::CameraMetadata> CopyMetadata(
         const std::shared_ptr<OHOS::Camera::CameraMetadata> srcMetadata);
+
+    static bool ProcessFocusTrackingModeInfo(const std::shared_ptr<OHOS::Camera::CameraMetadata>& metadata,
+        FocusTrackingMode& mode);
+
+    static bool ProcessMetaObjects(const int32_t streamId, const std::shared_ptr<OHOS::Camera::CameraMetadata>& result,
+        std::vector<sptr<MetadataObject>> &metaObjects, bool isNeedMirror, bool isNeedFlip);
 };
 
 std::vector<float> ParsePhysicalApertureRangeByMode(const camera_metadata_item_t &item, const int32_t modeName);

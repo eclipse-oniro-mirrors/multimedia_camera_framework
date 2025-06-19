@@ -109,6 +109,8 @@ private:
     void UpdateFrameRateSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> settings);
     void UpdateFrameMuteSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> &settings,
                                  std::shared_ptr<OHOS::Camera::CameraMetadata> &dynamicSetting);
+    void UpdateFrameMechSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> &settings,
+                                 std::shared_ptr<OHOS::Camera::CameraMetadata> &dynamicSetting);
     void SyncTransformToSketch();
     void UpdateHalRoateSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> settings);
 #ifdef NOTIFICATION_ENABLE

@@ -188,6 +188,7 @@ public:
     int32_t CheckIfColorSpaceMatchesFormat(ColorSpace colorSpace);
     int32_t StartPreviewStream(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings,
         camera_position_enum_t cameraPosition);
+    int32_t UpdateSettingForFocusTrackingMech(bool isEnableMech);
 
     int32_t CreateStreams(std::vector<HDI::Camera::V1_1::StreamInfo_V1_1>& streamInfos);
     sptr<OHOS::HDI::Camera::V1_1::IStreamOperator> GetStreamOperatorV1_1(

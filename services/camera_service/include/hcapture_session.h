@@ -62,6 +62,12 @@ enum class CaptureSessionReleaseType : int32_t {
     RELEASE_TYPE_OBJ_DIED,
 };
 
+enum class MechDeliveryState : int32_t {
+    NOT_ENABLED = 0,
+    NEED_ENABLE,
+    ENABLED,
+};
+
 class StateMachine {
 public:
     explicit StateMachine();
@@ -196,6 +202,14 @@ public:
     void OnSessionPreempt();
     void UpdateHookBasicInfo(std::map<int32_t, std::string> ParameterMap);
 
+    void SetUserId(int32_t userId);
+    int32_t GetUserId();
+    int32_t EnableMechDelivery(bool isEnableMech);
+    void SetMechDeliveryState(MechDeliveryState state);
+    bool GetCameraAppInfo(CameraAppInfo& appInfo);
+    uint32_t GetEquivalentFocus();
+    void OnCameraAppInfo();
+
 private:
     int32_t CommitConfigWithValidation();
     void InitDefaultColortSpace(SceneMode opMode);
@@ -239,6 +253,9 @@ private:
     int32_t SetHasFitedRotation(bool isHasFitedRotation) override;
     void InitialHStreamOperator();
     void UpdateSettingForSpecialBundle();
+    MechDeliveryState GetMechDeliveryState();
+    int32_t UpdateSettingForFocusTrackingMech(bool isEnableMech);
+    void UpdateSettingForFocusTrackingMechBeforeStart(std::shared_ptr<OHOS::Camera::CameraMetadata> &settings);
     void ClearMovingPhotoRepeatStream();
     StateMachine stateMachine_;
     sptr<IPressureStatusCallback> innerPressureCallback_;
@@ -283,6 +300,9 @@ private:
     bool isHasFitedRotation_ = false;
     std::string bundleName_ = "";
     std::mutex cameraRotateUpdateBasicInfo_;
+    int32_t userId_ = 0;
+    std::mutex mechDeliveryStateLock_;
+    MechDeliveryState mechDeliveryState_ = MechDeliveryState::NOT_ENABLED;
 };
 } // namespace CameraStandard
 } // namespace OHOS

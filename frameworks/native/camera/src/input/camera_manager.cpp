@@ -53,6 +53,7 @@
 #include "session/high_res_photo_session.h"
 #include "session/macro_photo_session.h"
 #include "session/macro_video_session.h"
+#include "session/mech_session.h"
 #include "session/night_session.h"
 #include "session/panorama_session.h"
 #include "session/photo_session.h"
@@ -447,23 +448,45 @@ sptr<MechSession> CameraManager::CreateMechSession(int userId)
         "Failed to CreateMechSession with error code:%{public}d", retCode);
     return mechSession;
 }
- 
+
 int CameraManager::CreateMechSession(int userId, sptr<MechSession>* pMechSession)
 {
     CAMERA_SYNC_TRACE;
+    sptr<IMechSession> session = nullptr;
     sptr<MechSession> mechSession = nullptr;
- 
-    mechSession = new(std::nothrow) MechSession();
+
+    auto serviceProxy = GetServiceProxy();
+    CHECK_ERROR_RETURN_RET_LOG(serviceProxy == nullptr, CameraErrorCode::INVALID_ARGUMENT,
+        "CreateMechSession(pMechSession) serviceProxy is nullptr");
+    int32_t retCode = serviceProxy->CreateMechSession(userId, session);
+    CHECK_ERROR_RETURN_RET_LOG(retCode != CAMERA_OK, retCode,
+        "Failed to get mech session!, %{public}d", retCode);
+    CHECK_ERROR_RETURN_RET_LOG(session == nullptr, retCode,
+        "CreateMechSession Failed to CreateMechSession as session is null");
+
+    mechSession = new(std::nothrow) MechSession(session);
     CHECK_ERROR_RETURN_RET_LOG(mechSession == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "CreateMechSession failed to new MechSession!");
- 
+
     *pMechSession = mechSession;
     return CameraErrorCode::SUCCESS;
 }
- 
+
 bool CameraManager::IsMechSupported()
 {
-    return true;
+    bool isMechSupported = false;
+    bool cacheResult = GetCameraDeviceAbilitySupportValue(CAMERA_ABILITY_SUPPORT_MECH, isMechSupported);
+    if (cacheResult) {
+        return isMechSupported;
+    }
+
+    auto serviceProxy = GetServiceProxy();
+    CHECK_ERROR_RETURN_RET_LOG(serviceProxy == nullptr, false, "IsMechSupported serviceProxy is null");
+    int32_t retCode = serviceProxy->IsMechSupported(isMechSupported);
+    CHECK_ERROR_RETURN_RET_LOG(retCode != CAMERA_OK, false, "IsMechSupported call failed, retCode: %{public}d",
+        retCode);
+    CacheCameraDeviceAbilitySupportValue(CAMERA_ABILITY_SUPPORT_MECH, isMechSupported);
+    return isMechSupported;
 }
 
 sptr<PhotoOutput> CameraManager::CreatePhotoOutput(sptr<IBufferProducer> &surface)

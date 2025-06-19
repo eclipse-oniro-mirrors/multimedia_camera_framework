@@ -37,7 +37,8 @@ static const std::unordered_map<MetadataObjectType, uint8_t> g_FwkToHALResultCam
     {MetadataObjectType::DOG_BODY, 5},
     {MetadataObjectType::SALIENT_DETECTION, 6},
     {MetadataObjectType::BAR_CODE_DETECTION, 7},
-    {MetadataObjectType::BASE_FACE_DETECTION, 8}
+    {MetadataObjectType::BASE_FACE_DETECTION, 8},
+    {MetadataObjectType::HUMAN_HEAD, 9}
 };
 
 using namespace OHOS::HDI::Camera::V1_0;
@@ -160,6 +161,10 @@ int32_t HStreamMetadata::OnMetaResult(int32_t streamId, const std::vector<uint8_
     }
     CHECK_EXECUTE(streamMetadataCallback_ != nullptr,
         streamMetadataCallback_->OnMetadataResult(streamId, cameraResult));
+    {
+        std::lock_guard<std::mutex> mechLock(mechCallbackLock_);
+        CHECK_EXECUTE(mechCallback_ != nullptr, mechCallback_(streamId, cameraResult, userId_));
+    }
     return CAMERA_OK;
 }
 
@@ -176,6 +181,18 @@ int32_t HStreamMetadata::UnSetCallback()
     std::lock_guard<std::mutex> lock(callbackLock_);
     streamMetadataCallback_ = nullptr;
     return CAMERA_OK;
+}
+
+void HStreamMetadata::SetUserId(int32_t userId)
+{
+    userId_ = userId;
+}
+
+void HStreamMetadata::SetMechCallback(std::function<void(int32_t, const std::shared_ptr<OHOS::Camera::CameraMetadata>&,
+    uint32_t)> callback)
+{
+    std::lock_guard<std::mutex> lock(mechCallbackLock_);
+    mechCallback_ = callback;
 }
 
 int32_t HStreamMetadata::EnableOrDisableMetadataType(const std::vector<int32_t>& metadataTypes, const bool enable)

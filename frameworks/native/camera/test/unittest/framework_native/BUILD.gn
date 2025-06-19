@@ -61,6 +61,7 @@ ohos_unittest("camera_framework_native_unittest") {
     "output/src/sketch_wrapper_unittest.cpp",
     "output/src/video_output_unittest.cpp",
     "session/src/capture_session_unittest.cpp",
+    "session/src/mech_session_unittest.cpp",
     "session/src/moon_capture_boost_feature_unittest.cpp",
     "session/src/night_session_unittest.cpp",
     "session/src/panorama_session_unittest.cpp",

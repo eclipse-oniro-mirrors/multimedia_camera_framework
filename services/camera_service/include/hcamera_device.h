@@ -105,6 +105,7 @@ public:
     void SetDeviceMuteMode(bool muteMode);
     uint8_t GetUsedAsPosition();
     bool GetDeviceMuteMode();
+    float GetZoomRatio();
     void EnableMovingPhoto(bool isMovingPhotoEnabled);
     static void DeviceEjectCallBack();
     static void DeviceFaultCallBack();
@@ -152,6 +153,8 @@ public:
     void SetMovingPhotoStartTimeCallback(std::function<void(int64_t, int64_t)> callback);
 
     void SetMovingPhotoEndTimeCallback(std::function<void(int64_t, int64_t)> callback);
+
+    void SetZoomInfoCallback(std::function<void()> callback);
 
     inline void SetCameraConcurrentType(int32_t cameraConcurrentTypenum)
     {
@@ -271,11 +274,6 @@ private:
     int32_t CameraHostMgrOpenCamera(bool isEnableSecCam);
     void GetMovingPhotoStartAndEndTime(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult);
     std::vector<CameraRotateStrategyInfo> GetCameraRotateStrategyInfos();
-    bool isMovingPhotoEnabled_ = false;
-    std::mutex movingPhotoStartTimeCallbackLock_;
-    std::mutex movingPhotoEndTimeCallbackLock_;
-    std::function<void(int32_t, int64_t)> movingPhotoStartTimeCallback_;
-    std::function<void(int32_t, int64_t)> movingPhotoEndTimeCallback_;
     void ReportDeviceProtectionStatus(const std::shared_ptr<OHOS::Camera::CameraMetadata> &metadata);
     bool CanReportDeviceProtectionStatus(int32_t status);
     bool ShowDeviceProtectionDialog(DeviceProtectionStatus status);
@@ -283,6 +281,13 @@ private:
     void RegisterSensorCallback();
     void UnRegisterSensorCallback();
     static void DropDetectionDataCallbackImpl(const OHOS::Rosen::MotionSensorEvent &motionData);
+    void ReportZoomInfos(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult);
+
+    bool isMovingPhotoEnabled_ = false;
+    std::mutex movingPhotoStartTimeCallbackLock_;
+    std::mutex movingPhotoEndTimeCallbackLock_;
+    std::function<void(int32_t, int64_t)> movingPhotoStartTimeCallback_;
+    std::function<void(int32_t, int64_t)> movingPhotoEndTimeCallback_;
     std::mutex sensorLock_;
     std::mutex cameraCloseListenerMutex_;
     std::mutex foldStateListenerMutex_;
@@ -290,6 +295,9 @@ private:
     std::mutex cameraRotateStrategyInfosLock_;
     std::vector<CameraRotateStrategyInfo> cameraRotateStrategyInfos_;
     std::string bundleName_ = "";
+    std::mutex zoomInfoCallbackLock_;
+    std::function<void()> zoomInfoCallback_;
+    float zoomRatio_ = 1.0f;
 };
 } // namespace CameraStandard
 } // namespace OHOS

@@ -253,6 +253,7 @@ int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> setti
     }
     if (settings != nullptr) {
         UpdateFrameMuteSettings(settings, dynamicSetting);
+        UpdateFrameMechSettings(settings, dynamicSetting);
     }
 #ifdef NOTIFICATION_ENABLE
     bool isNeedBeautyNotification = IsNeedBeautyNotification();
@@ -991,7 +992,7 @@ void HStreamRepeat::UpdateFrameMuteSettings(std::shared_ptr<OHOS::Camera::Camera
     bool status = false;
     camera_metadata_item_t item;
     int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_MUTE_MODE, &item);
-    CHECK_ERROR_RETURN(ret == CAM_META_ITEM_NOT_FOUND);
+    CHECK_ERROR_RETURN(ret == CAM_META_ITEM_NOT_FOUND || item.count == 0);
     auto mode = item.data.u8[0];
     int32_t count = 1;
     CHECK_ERROR_RETURN_LOG(dynamicSetting == nullptr, "dynamicSetting is nullptr");
@@ -1002,6 +1003,26 @@ void HStreamRepeat::UpdateFrameMuteSettings(std::shared_ptr<OHOS::Camera::Camera
         status = dynamicSetting->addEntry(OHOS_CONTROL_MUTE_MODE, &mode, count);
     }
     CHECK_ERROR_PRINT_LOG(!status, "HStreamRepeat::UpdateFrameMuteSettings Failed to set frame mute");
+}
+
+void HStreamRepeat::UpdateFrameMechSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> &settings,
+                                            std::shared_ptr<OHOS::Camera::CameraMetadata> &dynamicSetting)
+{
+    CHECK_ERROR_RETURN(settings == nullptr);
+    bool status = false;
+    camera_metadata_item_t item;
+    int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_FOCUS_TRACKING_MECH, &item);
+    CHECK_ERROR_RETURN(ret == CAM_META_ITEM_NOT_FOUND || item.count == 0);
+
+    auto mode = item.data.u8[0];
+    int32_t count = 1;
+    ret = OHOS::Camera::FindCameraMetadataItem(dynamicSetting->get(), OHOS_CONTROL_FOCUS_TRACKING_MECH, &item);
+    if (ret == CAM_META_SUCCESS) {
+        status = dynamicSetting->updateEntry(OHOS_CONTROL_FOCUS_TRACKING_MECH, &mode, count);
+    } else {
+        status = dynamicSetting->addEntry(OHOS_CONTROL_FOCUS_TRACKING_MECH, &mode, count);
+    }
+    CHECK_ERROR_PRINT_LOG(!status, "HStreamRepeat::UpdateFrameMechSettings Failed to set frame mech");
 }
 
 #ifdef NOTIFICATION_ENABLE
