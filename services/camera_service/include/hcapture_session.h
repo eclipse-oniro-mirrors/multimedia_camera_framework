@@ -295,6 +295,7 @@ public:
     std::vector<CameraRotateStrategyInfo> GetCameraRotateStrategyInfos();
     void UpdateCameraRotateAngleAndZoom(std::vector<CameraRotateStrategyInfo> &infos,
         std::vector<int32_t> &frameRateRange);
+    void RemoveTaskManager(sptr<AvcodecTaskManager> taskManager);
 
 private:
     int32_t Initialize(const uint32_t callerToken, int32_t opMode);
