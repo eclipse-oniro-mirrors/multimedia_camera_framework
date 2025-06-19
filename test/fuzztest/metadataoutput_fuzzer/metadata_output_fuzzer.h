@@ -16,7 +16,7 @@
 #ifndef METADATA_OUTPUT_FUZZER_H
 #define METADATA_OUTPUT_FUZZER_H
 
-#include "metadata_output.h"
+#include "metadata_common_utils.h"
 #include "iservice_registry.h"
 #include "system_ability_definition.h"
 #include "deferred_processing_service.h"

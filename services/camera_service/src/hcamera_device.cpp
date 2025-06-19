@@ -246,6 +246,11 @@ bool HCameraDevice::GetDeviceMuteMode()
     return deviceMuteMode_;
 }
 
+float HCameraDevice::GetZoomRatio()
+{
+    return zoomRatio_;
+}
+
 void HCameraDevice::EnableMovingPhoto(bool isMovingPhotoEnabled)
 {
     isMovingPhotoEnabled_ = isMovingPhotoEnabled;
@@ -1444,6 +1449,7 @@ int32_t HCameraDevice::OnResult(const uint64_t timestamp, const std::vector<uint
     ReportDeviceProtectionStatus(cameraResult);
     CHECK_EXECUTE(IsCameraDebugOn(), CheckOnResultData(cameraResult));
     CHECK_EXECUTE(isMovingPhotoEnabled_, GetMovingPhotoStartAndEndTime(cameraResult));
+    ReportZoomInfos(cameraResult);
     return CAMERA_OK;
 }
 
@@ -1484,6 +1490,33 @@ void HCameraDevice::SetMovingPhotoEndTimeCallback(std::function<void(int64_t, in
 {
     std::lock_guard<std::mutex> lock(movingPhotoEndTimeCallbackLock_);
     movingPhotoEndTimeCallback_ = callback;
+}
+
+void HCameraDevice::ReportZoomInfos(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult)
+{
+    std::lock_guard<std::mutex> lock(zoomInfoCallbackLock_);
+    if (!zoomInfoCallback_) {
+        return;
+    }
+    float zoomRatio = 1.0;
+    camera_metadata_item_t item;
+    int ret = OHOS::Camera::FindCameraMetadataItem(cameraResult->get(), OHOS_CONTROL_ZOOM_RATIO, &item);
+    if (ret != CAM_META_SUCCESS || item.count == 0) {
+        return;
+    }
+    zoomRatio = item.data.f[0];
+    MEDIA_DEBUG_LOG("ReportZoomInfos zoomRatio: %{public}f", zoomRatio);
+    if (zoomRatio != zoomRatio_) {
+        zoomRatio_ = zoomRatio;
+        zoomInfoCallback_();
+    }
+}
+
+void HCameraDevice::SetZoomInfoCallback(std::function<void()> callback)
+{
+    MEDIA_DEBUG_LOG("HCameraDevice::SetZoomInfoCallback enter.");
+    std::lock_guard<std::mutex> lock(zoomInfoCallbackLock_);
+    zoomInfoCallback_ = callback;
 }
 
 int32_t HCameraDevice::GetCallerToken()

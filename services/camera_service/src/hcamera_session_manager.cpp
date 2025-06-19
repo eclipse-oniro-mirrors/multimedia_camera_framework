@@ -24,6 +24,7 @@
 #include "camera_util.h"
 #include "hcamera_device_manager.h"
 #include "hcapture_session.h"
+#include "hmech_session.h"
 #include "parameters.h"
 
 namespace OHOS {
@@ -83,6 +84,20 @@ std::list<sptr<HCaptureSession>> HCameraSessionManager::GetGroupSessions(pid_t p
     return totalList;
 }
 
+std::vector<sptr<HCaptureSession>> HCameraSessionManager::GetUserSessions(int32_t userId)
+{
+    std::vector<sptr<HCaptureSession>> userList {};
+    std::lock_guard<std::mutex> lock(totalSessionMapMutex_);
+    for (auto it = totalSessionMap_.begin(); it != totalSessionMap_.end(); ++it) {
+        for (auto& listIt : it->second) {
+            if (listIt->GetUserId() == userId) {
+                userList.emplace_back(listIt);
+            }
+        }
+    }
+    return userList;
+}
+
 sptr<HCaptureSession> HCameraSessionManager::GetGroupDefaultSession(pid_t pid)
 {
     std::lock_guard<std::mutex> lock(totalSessionMapMutex_);
@@ -90,6 +105,16 @@ sptr<HCaptureSession> HCameraSessionManager::GetGroupDefaultSession(pid_t pid)
     CHECK_ERROR_RETURN_RET(mapIt == totalSessionMap_.end(), nullptr);
     auto& list = mapIt->second;
     return list.empty() ? nullptr : list.front();
+}
+
+sptr<HMechSession> HCameraSessionManager::GetMechSession(int32_t userId)
+{
+    std::lock_guard<std::mutex> lock(mechMapMutex_);
+    auto mapIt = mechSessionMap_.find(userId);
+    if (mapIt == mechSessionMap_.end()) {
+        return nullptr;
+    }
+    return mapIt->second;
 }
 
 CamServiceError HCameraSessionManager::AddSession(sptr<HCaptureSession> session)
@@ -101,6 +126,17 @@ CamServiceError HCameraSessionManager::AddSession(sptr<HCaptureSession> session)
     list.emplace_back(session);
 
     return list.size() > GetGroupSizeLimit(pid) ? CAMERA_SESSION_MAX_INSTANCE_NUMBER_REACHED : CAMERA_OK;
+}
+
+CamServiceError HCameraSessionManager::AddMechSession(int32_t userId,
+    sptr<HMechSession> mechSession)
+{
+    if (mechSession == nullptr) {
+        return CAMERA_INVALID_ARG;
+    }
+    std::lock_guard<std::mutex> lock(mechMapMutex_);
+    mechSessionMap_.insert(std::make_pair(userId, mechSession));
+    return CAMERA_OK;
 }
 
 void HCameraSessionManager::RemoveSession(sptr<HCaptureSession> session)
@@ -118,6 +154,12 @@ void HCameraSessionManager::RemoveSession(sptr<HCaptureSession> session)
     }
     CHECK_ERROR_RETURN(!list.empty());
     RemoveGroupNoLock(mapIt);
+}
+
+void HCameraSessionManager::RemoveMechSession(int32_t userId)
+{
+    std::lock_guard<std::mutex> lock(mechMapMutex_);
+    mechSessionMap_.erase(userId);
 }
 
 void HCameraSessionManager::PreemptOverflowSessions(pid_t pid)

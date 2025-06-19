@@ -58,6 +58,7 @@
 #include "icapture_session_callback.h"
 #include "iconsumer_surface.h"
 #include "image_type.h"
+#include "imech_session.h"
 #include "ipc_skeleton.h"
 #include "istream_common.h"
 #include "photo_asset_interface.h"
@@ -326,6 +327,13 @@ int32_t HCaptureSession::AddInput(const sptr<ICameraDeviceService>& cameraDevice
         MEDIA_INFO_LOG("HCaptureSession::AddInput device:%{public}s", hCameraDevice->GetCameraId().c_str());
         SetCameraDevice(hCameraDevice);
         hCameraDevice->DispatchDefaultSettingToHdi();
+        auto thisPtr = wptr<HCaptureSession>(this);
+        hCameraDevice->SetZoomInfoCallback([thisPtr]() {
+            auto ptr = thisPtr.promote();
+            if (ptr != nullptr) {
+                ptr->OnCameraAppInfo();
+            }
+        });
     });
     if (errorCode == CAMERA_OK) {
         CAMERA_SYSEVENT_STATISTIC(CreateMsg("CaptureSession::AddInput, sessionID: %d", GetSessionId()));
@@ -1166,6 +1174,7 @@ int32_t HCaptureSession::Start()
                            "%{public}d, sessionID: %{public}d", usedAsPositionU8, GetSessionId());
             DumpMetadata(settings);
             UpdateMuteSetting(cameraDevice->GetDeviceMuteMode(), settings);
+            UpdateSettingForFocusTrackingMechBeforeStart(settings);
         }
         camera_position_enum_t cameraPosition = static_cast<camera_position_enum_t>(usedAsPositionU8);
         auto hStreamOperatorSptr = GetStreamOperator();
@@ -1174,6 +1183,14 @@ int32_t HCaptureSession::Start()
         errorCode = hStreamOperatorSptr->StartPreviewStream(settings, cameraPosition);
         CHECK_EXECUTE(errorCode == CAMERA_OK, isSessionStarted_ = true);
         stateMachine_.Transfer(CaptureSessionState::SESSION_STARTED);
+        {
+            std::lock_guard<std::mutex> lock(mechDeliveryStateLock_);
+            if (mechDeliveryState_ == MechDeliveryState::NEED_ENABLE) {
+                hStreamOperatorSptr->UpdateSettingForFocusTrackingMech(true);
+                mechDeliveryState_ = MechDeliveryState::ENABLED;
+            }
+        }
+        OnCameraAppInfo();
     });
     MEDIA_INFO_LOG("HCaptureSession::Start execute success, sessionID: %{public}d", GetSessionId());
     MEDIA_INFO_LOG("%{public}s", GetConcurrentCameraIds(pid_).c_str());
@@ -1241,6 +1258,7 @@ int32_t HCaptureSession::Stop()
             isSessionStarted_ = false;
         }
         stateMachine_.Transfer(CaptureSessionState::SESSION_CONFIG_COMMITTED);
+        OnCameraAppInfo();
     });
     MEDIA_INFO_LOG("HCaptureSession::Stop execute success, sessionID: %{public}d", GetSessionId());
     return errorCode;
@@ -1682,5 +1700,168 @@ void HCaptureSession::DealPluginCode(ParameterMap ParameterMap, std::shared_ptr<
     }
 }
 #endif
+
+void HCaptureSession::SetUserId(int32_t userId)
+{
+    userId_ = userId;
+}
+
+int32_t HCaptureSession::GetUserId()
+{
+    return userId_;
+}
+
+void HCaptureSession::SetMechDeliveryState(MechDeliveryState state)
+{
+    std::lock_guard<std::mutex> lock(mechDeliveryStateLock_);
+    mechDeliveryState_ = state;
+}
+
+MechDeliveryState HCaptureSession::GetMechDeliveryState()
+{
+    std::lock_guard<std::mutex> lock(mechDeliveryStateLock_);
+    return mechDeliveryState_;
+}
+
+void HCaptureSession::UpdateSettingForFocusTrackingMechBeforeStart(std::shared_ptr<OHOS::Camera::CameraMetadata>&
+    settings)
+{
+    MEDIA_DEBUG_LOG("HCaptureSession::UpdateSettingForFocusTrackingMechBeforeStart is called");
+    std::lock_guard<std::mutex> lock(mechDeliveryStateLock_);
+    if (mechDeliveryState_ == MechDeliveryState::NEED_ENABLE) {
+        MEDIA_DEBUG_LOG("start EnableMechDelivery");
+        int32_t count = 1;
+        uint8_t value = OHOS_CAMERA_MECH_MODE_ON;
+        settings->addEntry(OHOS_CONTROL_FOCUS_TRACKING_MECH, &value, count);
+    }
+}
+
+int32_t HCaptureSession::UpdateSettingForFocusTrackingMech(bool isEnableMech)
+{
+    MEDIA_DEBUG_LOG("HCaptureSession::UpdateSettingForFocusTrackingMech is called, isEnableMech: %{public}d",
+        isEnableMech);
+    auto cameraDevice = GetCameraDevice();
+    constexpr int32_t DEFAULT_ITEMS = 1;
+    constexpr int32_t DEFAULT_DATA_LENGTH = 1;
+    shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata =
+        make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
+    bool status = false;
+    int32_t ret;
+    int32_t count = 1;
+    uint8_t value = isEnableMech? OHOS_CAMERA_MECH_MODE_ON : OHOS_CAMERA_MECH_MODE_OFF;
+    camera_metadata_item_t item;
+
+    ret = OHOS::Camera::FindCameraMetadataItem(changedMetadata->get(), OHOS_CONTROL_FOCUS_TRACKING_MECH, &item);
+    if (ret == CAM_META_ITEM_NOT_FOUND) {
+        status = changedMetadata->addEntry(OHOS_CONTROL_FOCUS_TRACKING_MECH, &value, count);
+    } else if (ret == CAM_META_SUCCESS) {
+        status = changedMetadata->updateEntry(OHOS_CONTROL_FOCUS_TRACKING_MECH, &value, count);
+    }
+    ret = cameraDevice->UpdateSetting(changedMetadata);
+    CHECK_ERROR_RETURN_RET_LOG(!status || ret != CAMERA_OK, CAMERA_UNKNOWN_ERROR,
+        "UpdateSettingForFocusTrackingMech Failed");
+    return CAMERA_OK;
+}
+
+bool HCaptureSession::GetCameraAppInfo(CameraAppInfo& appInfo)
+{
+    appInfo.zoomValue = 1.0f; // default zoom
+    appInfo.cameraId = "";
+    appInfo.position = -1;
+    appInfo.width = 0;
+    appInfo.height = 0;
+    if (cameraDevice_ != nullptr) {
+        appInfo.cameraId = cameraDevice_->GetCameraId();
+        appInfo.zoomValue = cameraDevice_->GetZoomRatio();
+        appInfo.position = cameraDevice_->GetCameraPosition();
+    }
+    appInfo.tokenId = callerToken_;
+    appInfo.opmode = opMode_;
+    appInfo.equivalentFocus = GetEquivalentFocus();
+    auto hStreamOperatorSptr = GetStreamOperator();
+    auto streams = hStreamOperatorSptr->GetAllStreams();
+    for (auto& stream : streams) {
+        if (stream->GetStreamType() == StreamType::REPEAT) {
+            auto curStreamRepeat = CastStream<HStreamRepeat>(stream);
+            appInfo.width = curStreamRepeat->width_;
+            appInfo.height = curStreamRepeat->height_;
+        }
+    }
+    auto currentState = stateMachine_.GetCurrentState();
+    appInfo.videoStatus = (currentState == CaptureSessionState::SESSION_STARTED);
+    return true;
+}
+
+void HCaptureSession::OnCameraAppInfo()
+{
+    auto &sessionManager = HCameraSessionManager::GetInstance();
+    auto mechSession = sessionManager.GetMechSession(userId_);
+    if (mechSession == nullptr) {
+        return;
+    }
+    CameraAppInfo appInfo;
+    if (!GetCameraAppInfo(appInfo)) {
+        MEDIA_INFO_LOG("HCaptureSession::OnCameraAppInfo GetCameraAppInfo failed");
+        return;
+    }
+    std::vector<CameraAppInfo> cameraAppInfos = {};
+    cameraAppInfos.emplace_back(appInfo);
+    mechSession->OnCameraAppInfo(cameraAppInfos);
+}
+
+uint32_t HCaptureSession::GetEquivalentFocus()
+{
+    auto cameraDevice = GetCameraDevice();
+    uint32_t equivalentFocus = 0;
+    CHECK_ERROR_RETURN_RET_LOG(cameraDevice == nullptr,
+        equivalentFocus,
+        "HCaptureSession::GetEquivalentFocus() "
+        "cameraDevice is null, sessionID: %{public}d",
+        GetSessionId());
+    std::shared_ptr<OHOS::Camera::CameraMetadata> ability = cameraDevice->GetDeviceAbility();
+    CHECK_ERROR_RETURN_RET(ability == nullptr, equivalentFocus);
+    camera_metadata_item_t item;
+    int ret = OHOS::Camera::FindCameraMetadataItem(ability->get(), OHOS_ABILITY_EQUIVALENT_FOCUS, &item);
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, equivalentFocus,
+        "HCaptureSession::GetEquivalentFocus get equivalentFocus failed");
+    for (uint32_t i = 0; i < item.count; i++) {
+        if ((i & 1) == 0) {
+            equivalentFocus = item.data.i32[i + 1];
+        }
+    }
+    MEDIA_DEBUG_LOG("HCaptureSession::GetEquivalentFocus equivalentFocus "
+                   "%{public}d, sessionID: %{public}d",
+        equivalentFocus,
+        GetSessionId());
+    return equivalentFocus;
+}
+
+int32_t HCaptureSession::EnableMechDelivery(bool isEnableMech)
+{
+    std::lock_guard<std::mutex> lock(mechDeliveryStateLock_);
+    auto currentState = stateMachine_.GetCurrentState();
+    switch (currentState) {
+        case CaptureSessionState::SESSION_INIT:
+        case CaptureSessionState::SESSION_CONFIG_INPROGRESS:
+        case CaptureSessionState::SESSION_CONFIG_COMMITTED:
+            isEnableMech ? mechDeliveryState_ = MechDeliveryState::NEED_ENABLE :
+                mechDeliveryState_ = MechDeliveryState::NOT_ENABLED;
+            break;
+        case CaptureSessionState::SESSION_STARTED:
+            isEnableMech ? mechDeliveryState_ = MechDeliveryState::ENABLED :
+                mechDeliveryState_ = MechDeliveryState::NOT_ENABLED;
+            UpdateSettingForFocusTrackingMech(isEnableMech);
+            {
+                auto hStreamOperatorSptr = GetStreamOperator();
+                if (hStreamOperatorSptr != nullptr) {
+                    hStreamOperatorSptr->UpdateSettingForFocusTrackingMech(isEnableMech);
+                }
+            }
+            break;
+        default:
+            break;
+    }
+    return CAMERA_OK;
+}
 }  // namespace CameraStandard
 }  // namespace OHOS

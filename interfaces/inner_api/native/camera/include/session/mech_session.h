@@ -18,22 +18,13 @@
 
 #include <refbase.h>
 
-#include "metadata_output.h"
+#include "mech_session_callback_stub.h"
+#include "imech_session.h"
 #include "input/camera_death_recipient.h"
+#include "metadata_common_utils.h"
 
 namespace OHOS {
 namespace CameraStandard {
-struct CameraAppInfo {
-    uint32_t tokenId = 0;
-    std::string cameraId = "";
-    uint32_t opmode = 0;
-    float zoomValue = 1.0f; // default zoom;
-    uint32_t equivalentFocus = 0;
-    int32_t width = 0;
-    int32_t height = 0;
-    bool videoStatus = false;
-    int32_t position = 0;
-};
 
 class MechSessionCallback : public RefBase {
 public:
@@ -45,35 +36,68 @@ public:
 
 class MechSession : public RefBase {
 public:
-    MechSession();
+    MechSession(sptr<IMechSession> session);
     virtual ~MechSession();
- 
+
     /**
      * @brief EnableMechDelivery.
      * @return Returns errCode.
      */
     int32_t EnableMechDelivery(bool isEnableMech);
- 
+
     /**
      * @brief Set the session callback for the MechSession.
      *
      * @param callback pointer to be triggered.
      */
     void SetCallback(std::shared_ptr<MechSessionCallback> callback);
- 
+
     /**
      * @brief Get the Callback.
      *
      * @return Returns the pointer to Callback.
      */
     std::shared_ptr<MechSessionCallback> GetCallback();
- 
+
     /**
      * @brief Releases MechSession instance.
      * @return Returns errCode.
      */
     int32_t Release();
+private:
+    sptr<IMechSession> GetRemoteSession();
+    void SetRemoteSession(sptr<IMechSession> remoteSession);
+    void RemoveDeathRecipient();
+    void CameraServerDied(pid_t pid);
+
+    std::mutex callbackMutex_;
+    std::shared_ptr<MechSessionCallback> appCallback_;
+    std::mutex remoteSessionMutex_;
+    sptr<IMechSession> remoteSession_ = nullptr;
+    sptr<CameraDeathRecipient> deathRecipient_ = nullptr;
+};
+
+class MechSessionCallbackImpl : public MechSessionCallbackStub {
+public:
+    explicit MechSessionCallbackImpl(sptr<MechSession> mechSession)
+        : mechSession_(mechSession)
+    {
+    }
+
+    ~MechSessionCallbackImpl()
+    {
+        mechSession_ = nullptr;
+    }
+
+    ErrCode OnFocusTrackingInfo(int32_t streamId, bool isNeedMirror, bool isNeedFlip,
+        const std::shared_ptr<OHOS::Camera::CameraMetadata>& result) override;
+    ErrCode OnCameraAppInfo(const std::vector<CameraAppInfo>& cameraAppInfos) override;
+
+private:
+    bool ProcessRectInfo(const std::shared_ptr<OHOS::Camera::CameraMetadata>& metadata,
+        Rect& rect);
+    wptr<MechSession> mechSession_;
 };
 } // namespace CameraStandard
 } // namespace OHOS
-#endif // OHOS_CAMERA_MECH_PHOTO_PROCESSOR_H
+#endif // OHOS_CAMERA_MECH_PHOTO_PROCESSOR_H

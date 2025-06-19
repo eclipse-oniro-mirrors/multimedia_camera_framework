@@ -20,6 +20,7 @@
 #include "hcamera_service.h"
 #include "input/camera_manager.h"
 #include "metadata_output.h"
+#include "metadata_common_utils.h"
 
 namespace OHOS {
 namespace CameraStandard {

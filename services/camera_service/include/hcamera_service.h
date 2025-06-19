@@ -39,6 +39,7 @@
 #include "hcamera_host_manager.h"
 #include "camera_service_stub.h"
 #include "hcapture_session.h"
+#include "hmech_session.h"
 #include "hstream_capture.h"
 #include "hstream_operator.h"
 #include "hstream_depth_data.h"
@@ -46,6 +47,7 @@
 #include "hstream_repeat.h"
 #include "datashare_helper.h"
 #include "icamera_service_callback.h"
+#include "imech_session_callback.h"
 #include "iremote_stub.h"
 #include "privacy_kit.h"
 #include "refbase.h"
@@ -109,6 +111,8 @@ public:
     int32_t CreateDeferredVideoProcessingSession(int32_t userId,
         const sptr<DeferredProcessing::IDeferredVideoProcessingSessionCallback>& callback,
         sptr<DeferredProcessing::IDeferredVideoProcessingSession>& session) override;
+    int32_t CreateMechSession(int32_t userId, sptr<IMechSession>& session) override;
+    int32_t IsMechSupported(bool &isMechSupported) override;
     int32_t CreatePhotoOutput(const sptr<OHOS::IBufferProducer>& producer, int32_t format, int32_t width,
         int32_t height, sptr<IStreamCapture>& photoOutput) override;
     int32_t CreateDeferredPreviewOutput(

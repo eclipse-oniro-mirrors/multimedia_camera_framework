@@ -851,6 +851,23 @@ int32_t HStreamOperator::StartPreviewStream(const std::shared_ptr<OHOS::Camera::
     return errorCode;
 }
 
+int32_t HStreamOperator::UpdateSettingForFocusTrackingMech(bool isEnableMech)
+{
+    auto allStreams = streamContainer_.GetAllStreams();
+    for (auto& item : allStreams) {
+        auto repeatType = item->GetStreamType();
+        if (repeatType != StreamType::METADATA) {
+            continue;
+        }
+        auto curStreamRepeat = CastStream<HStreamMetadata>(item);
+        std::vector<int32_t> metadataTypes;
+        metadataTypes.push_back(static_cast<int32_t>(MetadataObjectType::HUMAN_HEAD));
+        isEnableMech ? curStreamRepeat->EnableMetadataType(metadataTypes) :
+            curStreamRepeat->DisableMetadataType(metadataTypes);
+    }
+    return CAMERA_OK;
+}
+
 int32_t HStreamOperator::Stop()
 {
     CAMERA_SYNC_TRACE;

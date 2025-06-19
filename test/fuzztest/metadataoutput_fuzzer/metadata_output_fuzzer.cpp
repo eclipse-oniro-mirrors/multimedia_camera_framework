@@ -21,6 +21,7 @@
 #include "camera_device.h"
 #include "capture_input.h"
 #include "picture_proxy.h"
+
 namespace OHOS {
 namespace CameraStandard {
 using namespace DeferredProcessing;
@@ -115,11 +116,11 @@ void MetadataOutputFuzzer::MetadataOutputFuzzTest1(FuzzedDataProvider& fdp)
     fuzz_->ProcessMetadata(streamId, result, metaObjects, isNeedMirror, isNeedFlip);
     camera_metadata_item_t metadataItem;
     fuzz_->reportFaceResults_ = fdp.ConsumeBool();
-    fuzz_->GenerateObjects(metadataItem, type, metaObjects, isNeedMirror, isNeedFlip);
-    fuzz_->ProcessRectBox(fdp.ConsumeIntegral<int32_t>(), fdp.ConsumeIntegral<int32_t>(),
+    MetadataCommonUtils::GenerateObjects(metadataItem, type, metaObjects, isNeedMirror, isNeedFlip);
+    MetadataCommonUtils::ProcessRectBox(fdp.ConsumeIntegral<int32_t>(), fdp.ConsumeIntegral<int32_t>(),
         fdp.ConsumeIntegral<int32_t>(), fdp.ConsumeIntegral<int32_t>(), isNeedMirror, isNeedFlip);
     int32_t index = fdp.ConsumeIntegral<int32_t>();
-    fuzz_->ProcessExternInfo(factoryPtr, metadataItem, index, type, isNeedMirror, isNeedFlip);
+    MetadataCommonUtils::ProcessExternInfo(factoryPtr, metadataItem, index, type, isNeedMirror, isNeedFlip);
     fuzz_->GetSurface();
     fuzz_->surface_ = nullptr;
     fuzz_->ReleaseSurface();

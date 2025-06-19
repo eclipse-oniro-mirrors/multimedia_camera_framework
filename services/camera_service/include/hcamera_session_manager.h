@@ -30,6 +30,7 @@
 namespace OHOS {
 namespace CameraStandard {
 class HCaptureSession;
+class HMechSession;
 class SessionGroup : public std::list<sptr<HCaptureSession>> {};
 class HCameraSessionManager : public Singleton<HCameraSessionManager> {
 public:
@@ -38,9 +39,13 @@ public:
     size_t GetSessionSize(pid_t pid);
     std::list<sptr<HCaptureSession>> GetTotalSession();
     std::list<sptr<HCaptureSession>> GetGroupSessions(pid_t pid);
+    std::vector<sptr<HCaptureSession>> GetUserSessions(int32_t userId);
     sptr<HCaptureSession> GetGroupDefaultSession(pid_t pid);
+    sptr<HMechSession> GetMechSession(int32_t userId);
     CamServiceError AddSession(sptr<HCaptureSession> session);
+    CamServiceError AddMechSession(int32_t userId, sptr<HMechSession> mechSession);
     void RemoveSession(sptr<HCaptureSession> session);
+    void RemoveMechSession(int32_t userId);
     void RemoveGroup(pid_t pid);
     void PreemptOverflowSessions(pid_t pid);
 
@@ -49,6 +54,8 @@ private:
 
     std::mutex totalSessionMapMutex_;
     std::unordered_map<pid_t, SessionGroup> totalSessionMap_;
+    std::mutex mechMapMutex_;
+    std::unordered_map<int32_t, sptr<HMechSession>> mechSessionMap_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

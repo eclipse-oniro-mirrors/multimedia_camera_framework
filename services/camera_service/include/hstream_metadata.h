@@ -49,6 +49,9 @@ public:
     int32_t OnMetaResult(int32_t streamId, const std::vector<uint8_t>& result);
     int32_t CallbackEnter([[maybe_unused]] uint32_t code) override;
     int32_t CallbackExit([[maybe_unused]] uint32_t code, [[maybe_unused]] int32_t result) override;
+    void SetUserId(int32_t userId);
+    void SetMechCallback(std::function<void(int32_t,
+        const std::shared_ptr<OHOS::Camera::CameraMetadata>&, uint32_t)> callback);
 
 private:
     int32_t EnableOrDisableMetadataType(const std::vector<int32_t>& metadataTypes, const bool enable);
@@ -60,6 +63,9 @@ private:
     std::mutex callbackLock_;
     uint32_t majorVer_ = 0;
     uint32_t minorVer_ = 0;
+    std::mutex mechCallbackLock_;
+    std::function<void(int32_t, const std::shared_ptr<OHOS::Camera::CameraMetadata>&, uint32_t)> mechCallback_;
+    int32_t userId_;
 };
 } // namespace CameraStandard
 } // namespace OHOS
