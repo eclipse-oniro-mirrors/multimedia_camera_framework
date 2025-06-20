@@ -44,7 +44,8 @@ enum DFX_UB_NAME {
     DFX_UB_SET_FLASHMODE,
     DFX_UB_SET_FRAMERATERANGE,
     DFX_UB_MUTE_CAMERA,
-    DFX_UB_SET_QUALITY_PRIORITIZATION
+    DFX_UB_SET_QUALITY_PRIORITIZATION,
+    DFX_UB_ADD_USB_CAMERA
 };
 
 struct CallerInfo {
@@ -73,9 +74,12 @@ public:
     static CallerInfo GetCallerInfo();
     static void ReportCameraError(
         std::string funcName, int32_t errCode, bool isHdiErr, CallerInfo callerInfo);
+    static void ReportCameraErrorForUsb(
+            std::string funcName, int32_t errCode, bool isHdiErr, std::string connectionType, CallerInfo callerInfo);
     void ReportUserBehavior(DFX_UB_NAME behaviorName,
                                    std::string value,
                                    CallerInfo callerInfo);
+    void ReportUserBehaviorAddDevice(std::string behaviorName, std::string value, CallerInfo callerInfo);
 
     void SetOpenCamPerfPreInfo(const std::string& cameraId, CallerInfo caller);
     void SetOpenCamPerfStartInfo(const std::string& cameraId, CallerInfo caller);

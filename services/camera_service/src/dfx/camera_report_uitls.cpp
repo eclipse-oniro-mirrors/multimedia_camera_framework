@@ -449,5 +449,51 @@ void CameraReportUtils::SetVideoEndInfo(int32_t captureId)
         }
     }
 }
+
+void CameraReportUtils::ReportUserBehaviorAddDevice(string behaviorName, string value, CallerInfo callerInfo)
+{
+    unique_lock<mutex> lock(mutex_);
+    {
+        MEDIA_DEBUG_LOG("CameraReportUtils::ReportUserBehaviorAddDevice");
+        stringstream ss;
+        ss << "BEHAVIORNAME" << behaviorName
+        << ",MODE" << curMode_
+        << ",CAMERAID" << value
+        << ",PID" << callerInfo.pid
+        << ",UID" << callerInfo.uid
+        << ",TOKENID" << callerInfo.tokenID
+        << ",BUNDLENAME" << callerInfo.bundleName;
+
+        HiSysEventWrite(
+            HiviewDFX::HiSysEvent::Domain::CAMERA,
+            "USER_BEHAVIOR",
+            HiviewDFX::HiSysEvent::EventType::BEHAVIOR,
+            "MSG", ss.str());
+    }
+}
+
+void CameraReportUtils::ReportCameraErrorForUsb(string funcName,
+                                                int32_t errCode,
+                                                bool isHdiErr,
+                                                string connectionType,
+                                                CallerInfo callerInfo)
+{
+    string str = funcName;
+    if (isHdiErr) {
+        str += " faild, hdi errCode:" + to_string(errCode);
+    } else {
+        str += " faild, errCode:" + to_string(errCode);
+    }
+    str += " caller pid:" + to_string(callerInfo.pid)
+        + " uid:" + to_string(callerInfo.uid)
+        + " tokenID:" + to_string(callerInfo.tokenID)
+        + " bundleName:" + callerInfo.bundleName;
+        + " connectionType:" + connectionType;
+    HiSysEventWrite(
+        HiviewDFX::HiSysEvent::Domain::CAMERA,
+        "CAMERA_ERR",
+        HiviewDFX::HiSysEvent::EventType::FAULT,
+        "MSG", str);
+}
 } // namespace CameraStandard
 } // namespace OHOS

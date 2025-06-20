@@ -286,8 +286,17 @@ int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> setti
         if (rc != HDI::Camera::V1_0::NO_ERROR) {
             ResetCaptureId();
             MEDIA_ERR_LOG("HStreamRepeat::Start Failed with error Code:%{public}d", rc);
-            CameraReportUtils::ReportCameraError(
-                "HStreamRepeat::Start", rc, true, CameraReportUtils::GetCallerInfo());
+            camera_metadata_item_t item;
+            uint8_t connectionType = 0;
+            if (settings != nullptr) {
+                ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_ABILITY_CAMERA_CONNECTION_TYPE, &item);
+                if (ret == CAM_META_SUCCESS || item.count == 0) {
+                    connectionType = item.data.u8[0];
+                }
+            }
+            MEDIA_ERR_LOG("HStreamRepeat::Start Failed with error Code:%{public}d", rc);
+            CameraReportUtils::ReportCameraErrorForUsb(
+                "HStreamRepeat::Start", rc, true, std::to_string(connectionType), CameraReportUtils::GetCallerInfo());
             ret = HdiToServiceError(rc);
             UpdateSketchStatus(SketchStatus::STOPED);
         } else {

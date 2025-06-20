@@ -666,6 +666,23 @@ int32_t HCameraHostManager::CameraHostInfo::OnCameraEvent(const std::string& cam
             MEDIA_INFO_LOG("CameraHostInfo::OnCameraEvent camera %{public}s available", cameraId.c_str());
             svcStatus = CAMERA_STATUS_APPEAR;
             AddDevice(cameraId);
+            std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility;
+            camera_metadata_item_t item;
+            std::string camera = cameraId;
+            AddDevice(cameraId);
+            int32_t ret = GetCameraAbility(camera, cameraAbility);
+            CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK || cameraAbility == nullptr, CAMERA_DEVICE_ERROR,
+                "CameraHostInfo::OnCameraEvent can't get camera ability");
+            svcStatus = CAMERA_STATUS_APPEAR;
+            ret =
+                OHOS::Camera::FindCameraMetadataItem(cameraAbility->get(), OHOS_ABILITY_CAMERA_CONNECTION_TYPE, &item);
+            if (ret == CAM_META_SUCCESS) {
+                auto connectionType = item.data.u8[0];
+                if (connectionType == 1) {
+                    CameraReportUtils::GetInstance().ReportUserBehaviorAddDevice(
+                        "AddDevice", camera, CameraReportUtils::GetCallerInfo());
+                }
+            }
             break;
         }
         default:
