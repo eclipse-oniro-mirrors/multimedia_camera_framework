@@ -353,6 +353,13 @@ MediaManagerError MpegManager::ReleaseMakerBuffer(sptr<SurfaceBuffer>& buffer)
 sptr<IPCFileDescriptor> MpegManager::GetFileFd(const std::string& requestId, int flags, const std::string& tag)
 {
     std::string path = PATH + requestId + tag;
+
+    char* canonicalPath = realpath(path.c_str(), nullptr);
+    if (canonicalPath == nullptr) {
+        DP_ERR_LOG("Failed to canonicalize path: %{public}s", path.c_str());
+        return nullptr;
+    }
+    
     if (tag == TEMP_TAG) {
         tempPath_ = path;
     } else {
@@ -361,6 +368,7 @@ sptr<IPCFileDescriptor> MpegManager::GetFileFd(const std::string& requestId, int
     int fd = open(path.c_str(), flags, S_IRUSR | S_IWUSR);
     fdsan_exchange_owner_tag(fd, 0, LOG_DOMAIN);
     DP_DEBUG_LOG("GetFileFd path: %{public}s, fd: %{public}d", path.c_str(), fd);
+    free(canonicalPath);
     return sptr<IPCFileDescriptor>::MakeSptr(fd);
 }
 } // namespace DeferredProcessing

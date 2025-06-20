@@ -36,7 +36,8 @@ const char* TEST_FILE_PATH_2 = "/data/test/VideoPostProcessorFuzzTest_test_file2
 void VideoPostProcessorFuzzer::VideoPostProcessorFuzzTest1(FuzzedDataProvider& fdp)
 {
     constexpr int32_t executionModeCount1 = static_cast<int32_t>(ExecutionMode::DUMMY) + 1;
-    ExecutionMode selectedExecutionMode = static_cast<ExecutionMode>(fdp.ConsumeIntegral<uint8_t>() % executionModeCount1);
+    ExecutionMode selectedExecutionMode =
+        static_cast<ExecutionMode>(fdp.ConsumeIntegral<uint8_t>() % executionModeCount1);
     processor_->SetExecutionMode(selectedExecutionMode);
     processor_->SetDefaultExecutionMode();
     uint8_t randomNum = fdp.ConsumeIntegral<uint8_t>();
