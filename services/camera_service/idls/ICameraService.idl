@@ -55,7 +55,7 @@ interface ICameraService{
   [ipccode 13] void IsCameraMuted([inout] boolean muteMode);
   [ipccode 14] void IsTorchSupported([out] boolean isTorchSupported);
   [ipccode 15] void IsCameraMuteSupported([out] boolean isCameraMuteSupported);
-  [ipccode 16] void PrelaunchCamera();
+  [ipccode 16] void PrelaunchCamera([in] int flag);
   [ipccode 17] void ResetRssPriority();
   [ipccode 18] void SetPrelaunchConfig([in] String cameraId, [in] RestoreParamTypeOhos restoreParamType, [in] int activeTime, [in] EffectParam effectParam);
   [ipccode 19] void SetTorchLevel([in] float level);
