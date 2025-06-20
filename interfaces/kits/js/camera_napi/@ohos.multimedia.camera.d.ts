@@ -1587,7 +1587,7 @@ function getCameraManager(context: Context): CameraManager;
      * @readonly
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
-     * @since 19
+     * @since 20
      */
     readonly equivalentFocalLength ?: Array<number>;
   }
