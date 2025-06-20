@@ -54,7 +54,7 @@ void SessionCoordinatorFuzzer::SessionCoordinatorFuzzTest(FuzzedDataProvider& fd
     fuzz_->videoProcCallbacks_->OnError(userId, imageId, dpsError);
     std::vector<DeferredProcessing::DpsStatus> dpsStatusVec = {
         DeferredProcessing::DPS_SESSION_STATE_IDLE,
-        DeferredProcessing::DPS_SESSION_STATE_RUNNALBE,
+        DeferredProcessing::DPS_SESSION_STATE_RUNNABLE,
         DeferredProcessing::DPS_SESSION_STATE_RUNNING,
         DeferredProcessing::DPS_SESSION_STATE_SUSPENDED,
     };

@@ -151,7 +151,7 @@ void DeferredPhotoController::NotifyScheduleState(bool workAvailable)
             if (photoStrategyCenter_->GetHdiStatus() != HdiStatus::HDI_READY) {
                 scheduleState = DpsStatus::DPS_SESSION_STATE_SUSPENDED;
             } else {
-                scheduleState = DpsStatus::DPS_SESSION_STATE_RUNNALBE;
+                scheduleState = DpsStatus::DPS_SESSION_STATE_RUNNABLE;
             }
         }
     }

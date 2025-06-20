@@ -71,7 +71,7 @@ StatusCode MapDpsStatus(DpsStatus statusCode)
         case DpsStatus::DPS_SESSION_STATE_IDLE:
             code = StatusCode::SESSION_STATE_IDLE;
             break;
-        case DpsStatus::DPS_SESSION_STATE_RUNNALBE:
+        case DpsStatus::DPS_SESSION_STATE_RUNNABLE:
             code = StatusCode::SESSION_STATE_RUNNALBE;
             break;
         case DpsStatus::DPS_SESSION_STATE_RUNNING:
