@@ -26,6 +26,7 @@
 #include "video_session.h"
 #include "time_lapse_photo_session.h"
 #include "slow_motion_session.h"
+#include "camera_manager.h"
 
 
 namespace Ani::Camera {
@@ -35,7 +36,7 @@ using namespace OHOS;
 
 constexpr char CLASS_NAME_BUSINESSERROR[] = "L@ohos/base/BusinessError;";
 constexpr char CLASS_NAME_BOOLEAN[] = "Lstd/core/Boolean;";
-constexpr char CLASS_NAME_ENUM[] = "Lstd/core/Enum;";
+constexpr char ENUM_NAME_COLORSPACE[] = "L@ohos/graphics/colorSpaceManager/colorSpaceManager/ColorSpace;";
 
 const std::unordered_map<OHOS::CameraStandard::SceneMode, SceneMode> g_nativeToAniSupportedMode = {
     {OHOS::CameraStandard::SceneMode::CAPTURE, SceneMode::key_t::NORMAL_PHOTO},
@@ -202,11 +203,15 @@ const std::unordered_map<OHOS::CameraStandard::TimeLapsePreviewType,
 };
 
 const std::unordered_map<OHOS::CameraStandard::SlowMotionState, SlowMotionStatus> g_nativeToAniSlowMotionState = {
-    {OHOS::CameraStandard::SlowMotionState::DISABLE, SlowMotionStatus::key_t::DISABLE},
+    {OHOS::CameraStandard::SlowMotionState::DISABLE, SlowMotionStatus::key_t::DISABLED},
     {OHOS::CameraStandard::SlowMotionState::READY, SlowMotionStatus::key_t::READY},
-    {OHOS::CameraStandard::SlowMotionState::START, SlowMotionStatus::key_t::START},
-    {OHOS::CameraStandard::SlowMotionState::RECORDING, SlowMotionStatus::key_t::RECORDING},
-    {OHOS::CameraStandard::SlowMotionState::FINISH, SlowMotionStatus::key_t::FINISH},
+    {OHOS::CameraStandard::SlowMotionState::START, SlowMotionStatus::key_t::VIDEO_START},
+    {OHOS::CameraStandard::SlowMotionState::RECORDING, SlowMotionStatus::key_t::VIDEO_DONE},
+    {OHOS::CameraStandard::SlowMotionState::FINISH, SlowMotionStatus::key_t::FINISHED},
+};
+
+const std::unordered_map<int32_t, OHOS::CameraStandard::PolicyType> g_jsToFwPolicyType = {
+    {1, OHOS::CameraStandard::PolicyType::PRIVACY},
 };
 } // namespace Ani::Camera
 

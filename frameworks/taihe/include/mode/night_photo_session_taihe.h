@@ -27,16 +27,20 @@ namespace Camera {
 using namespace OHOS;
 using namespace ohos::multimedia::camera;
 
-class NightPhotoSessionImpl : public SessionImpl, public FlashQueryImpl, public ZoomQueryImpl {
+class NightPhotoSessionImpl : public SessionImpl, public FlashImpl, public ZoomImpl, public FocusImpl,
+                              public BeautyImpl, public AutoExposureImpl, public ColorManagementImpl,
+                              public ManualExposureImpl, public ColorEffectImpl {
 public:
-    explicit NightPhotoSessionImpl(sptr<OHOS::CameraStandard::CaptureSession> &obj) : SessionImpl(obj),
-        FlashQueryImpl(obj), ZoomQueryImpl(obj)
+    explicit NightPhotoSessionImpl(sptr<OHOS::CameraStandard::CaptureSession> &obj) : SessionImpl(obj)
     {
         if (obj != nullptr) {
             nightSession_ = static_cast<OHOS::CameraStandard::NightSession*>(obj.GetRefPtr());
         }
     }
     ~NightPhotoSessionImpl() = default;
+    int32_t GetExposure() override;
+    void SetExposure(int32_t exposure) override;
+    array<int32_t> GetSupportedExposureRange() override;
 private:
     sptr<OHOS::CameraStandard::NightSession> nightSession_ = nullptr;
 };

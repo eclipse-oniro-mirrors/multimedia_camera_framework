@@ -71,16 +71,27 @@ private:
     void OnLuminationInfoChangedCallback(OHOS::CameraStandard::LuminationInfo info) const;
 };
 
-class ProfessionalSessionImpl : public SessionImpl, public FlashQueryImpl, public ZoomQueryImpl {
+class ProfessionalSessionImpl : public SessionImpl, public FlashImpl, public ZoomImpl, public FocusImpl,
+                                public AutoExposureImpl, public WhiteBalanceImpl, public ManualExposureImpl,
+                                public ColorEffectImpl, public ManualIsoImpl, public ApertureImpl,
+                                public ManualFocusImpl {
 public:
-    explicit ProfessionalSessionImpl(sptr<OHOS::CameraStandard::CaptureSession> &obj) : SessionImpl(obj),
-        FlashQueryImpl(obj), ZoomQueryImpl(obj)
+    explicit ProfessionalSessionImpl(sptr<OHOS::CameraStandard::CaptureSession> &obj) : SessionImpl(obj)
     {
         if (obj != nullptr) {
             professionSession_ = static_cast<OHOS::CameraStandard::ProfessionSession*>(obj.GetRefPtr());
         }
     }
     virtual ~ProfessionalSessionImpl() = default;
+    void SetFocusAssist(bool enabled) override;
+    array<int32_t> GetIsoRange() override;
+    void SetIso(int32_t iso) override;
+    int32_t GetIso() override;
+    bool IsFocusAssistSupported() override;
+    bool IsManualIsoSupported() override;
+    ExposureMeteringMode GetExposureMeteringMode() override;
+    void SetExposureMeteringMode(ExposureMeteringMode aeMeteringMode) override;
+    bool IsExposureMeteringModeSupported(ExposureMeteringMode aeMeteringMode) override;
 private:
     sptr<OHOS::CameraStandard::ProfessionSession> professionSession_ = nullptr;
 

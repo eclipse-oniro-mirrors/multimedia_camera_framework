@@ -66,8 +66,9 @@ public:
     array<uint64_t> OpenByIsSecureEnabledSync(bool isSecureEnabled);
     void OpenByCameraConcurrentTypeSync(ohos::multimedia::camera::CameraConcurrentType type);
     void CloseSync();
-
+    void ControlAuxiliarySync(AuxiliaryType auxiliaryType, AuxiliaryStatus auxiliaryStatus);
     OHOS::sptr<OHOS::CameraStandard::CameraInput> GetCameraInput();
+    void CloseDelayedSync(int32_t time);
     inline int64_t GetSpecificImplPtr()
     {
         return reinterpret_cast<uintptr_t>(this);
@@ -98,7 +99,7 @@ struct CameraInputAsyncContext : public TaiheAsyncContext {
     {
         objectInfo = nullptr;
     }
-    std::shared_ptr<CameraInputImpl> objectInfo = nullptr;
+    CameraInputImpl* objectInfo = nullptr;
     bool isEnableSecCam = false;
     int32_t delayTime  = 0 ;
     uint64_t secureCameraSeqId = 0L;

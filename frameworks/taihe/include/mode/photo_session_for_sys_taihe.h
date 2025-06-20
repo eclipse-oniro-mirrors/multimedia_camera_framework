@@ -13,34 +13,28 @@
  * limitations under the License.
  */
 
-#ifndef FRAMEWORKS_TAIHE_INCLUDE_FLUORESCENCE_PHOTO_SESSION_TAIHE_H
-#define FRAMEWORKS_TAIHE_INCLUDE_FLUORESCENCE_PHOTO_SESSION_TAIHE_H
+#ifndef FRAMEWORKS_TAIHE_INCLUDE_PHOTO_SESSION_FOR_SYS_TAIHE_H
+#define FRAMEWORKS_TAIHE_INCLUDE_PHOTO_SESSION_FOR_SYS_TAIHE_H
 
 #include "ohos.multimedia.camera.proj.hpp"
 #include "ohos.multimedia.camera.impl.hpp"
 #include "session/camera_session_taihe.h"
-#include "session/fluorescence_photo_session.h"
+#include "session/photo_session.h"
 #include "taihe/runtime.hpp"
+#include "photo_session_taihe.h"
 
 namespace Ani {
 namespace Camera {
 using namespace OHOS;
 using namespace ohos::multimedia::camera;
-
-class FluorescencePhotoSessionImpl : public SessionImpl, public FlashImpl, public ZoomImpl, public FocusImpl,
-                                     public AutoExposureImpl {
+class PhotoSessionForSysImpl : public PhotoSessionImpl, public SceneDetectionImpl, public ColorEffectImpl,
+                               public BeautyImpl, public EffectSuggestionImpl, public MacroImpl,
+                               public DepthFusionImpl {
 public:
-    explicit FluorescencePhotoSessionImpl(sptr<OHOS::CameraStandard::CaptureSession> &obj) : SessionImpl(obj)
-    {
-        if (obj != nullptr) {
-            fluorescencePhotoSession_ = static_cast<OHOS::CameraStandard::FluorescencePhotoSession*>(obj.GetRefPtr());
-        }
-    }
-    ~FluorescencePhotoSessionImpl() = default;
-private:
-    sptr<OHOS::CameraStandard::FluorescencePhotoSession> fluorescencePhotoSession_ = nullptr;
+    explicit PhotoSessionForSysImpl(sptr<OHOS::CameraStandard::CaptureSession> &obj) : PhotoSessionImpl(obj) {}
+    ~PhotoSessionForSysImpl() = default;
 };
 } // namespace Camera
 } // namespace Ani
 
-#endif // FRAMEWORKS_TAIHE_INCLUDE_FLUORESCENCE_PHOTO_SESSION_TAIHE_H
+#endif // FRAMEWORKS_TAIHE_INCLUDE_PHOTO_SESSION_FOR_SYS_TAIHE_H

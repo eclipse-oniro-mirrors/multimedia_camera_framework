@@ -64,6 +64,8 @@ public:
     void OffError(optional_view<callback<void(uintptr_t)>> callback);
     void OnMetadataObjectsAvailable(callback_view<void(uintptr_t, array_view<MetadataObject>)> callback);
     void OffMetadataObjectsAvailable(optional_view<callback<void(uintptr_t, array_view<MetadataObject>)>> callback);
+    void RemoveMetadataObjectTypes(array_view<MetadataObjectType> types);
+    void AddMetadataObjectTypes(array_view<MetadataObjectType> types);
     std::shared_ptr<MetadataOutputCallbackListener> metadataOutputCallback_;
     std::shared_ptr<MetadataObjectsAvailableCallbackListener> metadataObjectsAvailableCallback_;
 private:
@@ -83,7 +85,7 @@ struct MetadataOutputAsyncContext : public TaiheAsyncContext {
     {
         objectInfo = nullptr;
     }
-    std::shared_ptr<MetadataOutputImpl> objectInfo = nullptr;
+    MetadataOutputImpl* objectInfo = nullptr;
     std::string errorMsg;
 };
 } // namespace Camera

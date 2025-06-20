@@ -27,10 +27,11 @@ namespace Camera {
 using namespace OHOS;
 using namespace ohos::multimedia::camera;
 
-class MacroPhotoSessionImpl : public SessionImpl, public FlashQueryImpl, public ZoomQueryImpl {
+class MacroPhotoSessionImpl : public SessionImpl, public FlashImpl, public ZoomImpl, public FocusImpl,
+                              public AutoExposureImpl, public ColorManagementImpl, public ColorEffectImpl,
+                              public ManualFocusImpl, public DepthFusionImpl {
 public:
-    explicit MacroPhotoSessionImpl(sptr<OHOS::CameraStandard::CaptureSession> &obj) : SessionImpl(obj),
-        FlashQueryImpl(obj), ZoomQueryImpl(obj)
+    explicit MacroPhotoSessionImpl(sptr<OHOS::CameraStandard::CaptureSession> &obj) : SessionImpl(obj)
     {
         if (obj != nullptr) {
             macroPhotoSession_ = static_cast<OHOS::CameraStandard::MacroPhotoSession*>(obj.GetRefPtr());

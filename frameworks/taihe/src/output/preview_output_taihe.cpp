@@ -14,10 +14,13 @@
  */
 
 #include "preview_output_taihe.h"
+
+#include "camera_manager.h"
 #include "camera_utils_taihe.h"
 #include "camera_log.h"
 #include "camera_security_utils_taihe.h"
 #include "camera_template_utils_taihe.h"
+#include "image_receiver.h"
 
 namespace Ani {
 namespace Camera {
@@ -108,6 +111,177 @@ PreviewOutputImpl::PreviewOutputImpl(OHOS::sptr<OHOS::CameraStandard::CaptureOut
     previewOutput_ = static_cast<OHOS::CameraStandard::PreviewOutput*>(output.GetRefPtr());
 }
 
+void PreviewOutputImpl::EnableSketch(bool enabled)
+{
+    CHECK_ERROR_RETURN_LOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi EnableSketch is called!");
+    CHECK_ERROR_RETURN_LOG(previewOutput_ == nullptr, "EnableSketch failed, videoOutput_ is nullptr");
+    int32_t retCode = previewOutput_->EnableSketch(enabled);
+    CHECK_ERROR_RETURN_LOG(!CameraUtilsTaihe::CheckError(retCode),
+        "PreviewOutputImpl::EnableSketch fail! %{public}d", retCode);
+}
+
+double PreviewOutputImpl::GetSketchRatio()
+{
+    double ratio = -1.0;
+    CHECK_ERROR_RETURN_RET_LOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), ratio,
+        "SystemApi GetSketchRatio is called!");
+    MEDIA_INFO_LOG("PreviewOutputImpl::GetSketchRatio is called");
+    CHECK_ERROR_RETURN_RET_LOG(previewOutput_ == nullptr, ratio, "GetSketchRatio failed, previewOutput_ is nullptr");
+    ratio = static_cast<double>(previewOutput_->GetSketchRatio());
+    return ratio;
+}
+
+void PreviewOutputImpl::AddDeferredSurface(string_view surfaceId)
+{
+    CHECK_ERROR_RETURN_LOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi AddDeferredSurface is called!");
+    std::string nativeStr(surfaceId);
+    uint64_t iSurfaceId;
+    std::istringstream iss(nativeStr);
+    iss >> iSurfaceId;
+    sptr<Surface> surface = SurfaceUtils::GetInstance()->GetSurface(iSurfaceId);
+    if (!surface) {
+        surface = OHOS::Media::ImageReceiver::getSurfaceById(nativeStr);
+    }
+    if (surface == nullptr) {
+        MEDIA_ERR_LOG("PreviewOutputImpl::AddDeferredSurface failed to get surface");
+        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT, "invalid argument surface get fail");
+        return;
+    }
+    CHECK_ERROR_RETURN_LOG(previewOutput_ == nullptr, "EnablAddDeferredSurfaceeSketch failed, videoOutput_ is nullptr");
+    auto previewProfile = previewOutput_->GetPreviewProfile();
+    CHECK_EXECUTE(previewProfile != nullptr, surface->SetUserData(
+        OHOS::CameraStandard::CameraManager::surfaceFormat, std::to_string(previewProfile->GetCameraFormat())));
+    previewOutput_->AddDeferredSurface(surface);
+}
+
+bool PreviewOutputImpl::IsSketchSupported()
+{
+    CHECK_ERROR_RETURN_RET_LOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), false,
+        "SystemApi IsSketchSupported is called!");
+    MEDIA_INFO_LOG("PreviewOutputImpl::IsSketchSupported is called");
+    CHECK_ERROR_RETURN_RET_LOG(previewOutput_ == nullptr, false, "IsSketchSupported failed, previewOutput_ is nullptr");
+    bool isSupported = previewOutput_->IsSketchSupported();
+    return isSupported;
+}
+
+array<FrameRateRange> PreviewOutputImpl::GetSupportedFrameRates()
+{
+    CHECK_ERROR_RETURN_RET_LOG(previewOutput_ == nullptr, array<FrameRateRange>(nullptr, 0),
+        "GetSupportedFrameRates failed, previewOutput_ is nullptr");
+    std::vector<std::vector<int32_t>> supportedFrameRatesRange = previewOutput_->GetSupportedFrameRates();
+    return CameraUtilsTaihe::ToTaiheArrayFrameRateRange(supportedFrameRatesRange);
+}
+
+FrameRateRange PreviewOutputImpl::GetActiveFrameRate()
+{
+    FrameRateRange res {
+        .min = -1,
+        .max = -1,
+    };
+    CHECK_ERROR_RETURN_RET_LOG(previewOutput_ == nullptr, res, "GetActiveFrameRate failed, previewOutput_ is nullptr");
+    std::vector<int32_t> frameRateRange = previewOutput_->GetFrameRateRange();
+    res.min = frameRateRange[0];
+    res.max = frameRateRange[1];
+    return res;
+}
+
+Profile PreviewOutputImpl::GetActiveProfile()
+{
+    Profile res {
+        .size = {
+            .height = -1,
+            .width = -1,
+        },
+        .format = CameraFormat::key_t::CAMERA_FORMAT_YUV_420_SP,
+    };
+    CHECK_ERROR_RETURN_RET_LOG(previewOutput_ == nullptr, res, "GetActiveProfile failed, previewOutput_ is nullptr");
+    auto profile = previewOutput_->GetPhotoProfile();
+    CHECK_ERROR_RETURN_RET_LOG(profile == nullptr, res, "GetActiveProfile failed, profile is nullptr");
+    CameraFormat cameraFormat = CameraUtilsTaihe::ToTaiheCameraFormat(profile->GetCameraFormat());
+    res.size.height = profile->GetSize().height;
+    res.size.width = profile->GetSize().width;
+    res.format = cameraFormat;
+    return res;
+}
+
+void PreviewOutputImpl::SetFrameRate(int32_t minFps, int32_t maxFps)
+{
+    if (previewOutput_ == nullptr) {
+        MEDIA_ERR_LOG("PreviewOutputImpl::SetFrameRate get native object fail");
+        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT, "get native object fail");
+        return;
+    }
+    int32_t retCode = previewOutput_->SetFrameRate(minFps, maxFps);
+    CHECK_ERROR_PRINT_LOG(!CameraUtilsTaihe::CheckError(retCode),
+        "PreviewOutputImpl::SetFrameRate fail %{public}d", retCode);
+}
+
+ImageRotation PreviewOutputImpl::GetPreviewRotation(int32_t displayRotation)
+{
+    CHECK_ERROR_RETURN_RET_LOG(previewOutput_ == nullptr, ImageRotation(static_cast<ImageRotation::key_t>(-1)),
+        "GetPreviewRotation failed, previewOutput_ is nullptr");
+    int32_t retCode = previewOutput_->GetPreviewRotation(displayRotation);
+    if (retCode == OHOS::CameraStandard::SERVICE_FATL_ERROR) {
+        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::SERVICE_FATL_ERROR,
+            "GetPreviewRotation Camera service fatal error.");
+        return ImageRotation(static_cast<ImageRotation::key_t>(-1));
+    }
+    if (retCode == OHOS::CameraStandard::INVALID_ARGUMENT) {
+        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT,
+            "GetPreviewRotation Camera invalid argument.");
+        return ImageRotation(static_cast<ImageRotation::key_t>(-1));
+    }
+    int32_t taiheRetCode = CameraUtilsTaihe::ToTaiheImageRotation(retCode);
+    return ImageRotation(static_cast<ImageRotation::key_t>(taiheRetCode));
+}
+
+void PreviewOutputImpl::SetPreviewRotation(ImageRotation previewRotation, optional_view<bool> isDisplayLocked)
+{
+    int32_t imageRotation = previewRotation.get_value();
+    bool displayLocked = false;
+    if (previewOutput_ == nullptr || imageRotation < 0 ||
+        imageRotation > OHOS::CameraStandard::CaptureOutput::ROTATION_270 ||
+        (imageRotation % OHOS::CameraStandard::CaptureOutput::ROTATION_90 != 0)) {
+        MEDIA_ERR_LOG("PreviewOutputImpl::SetPreviewRotation get native object fail");
+        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT, "get native object fail");
+        return;
+    }
+    if (isDisplayLocked.has_value()) {
+        displayLocked = isDisplayLocked.value();
+    }
+    int32_t retCode = previewOutput_->SetPreviewRotation(imageRotation, displayLocked);
+    CHECK_ERROR_RETURN_LOG(!CameraUtilsTaihe::CheckError(retCode),
+        "PreviewOutputImpl::SetPreviewRotation! %{public}d", retCode);
+}
+
+sptr<Surface> GetSurfaceFromSurfaceId(std::string& surfaceId)
+{
+    MEDIA_DEBUG_LOG("GetSurfaceFromSurfaceId enter");
+    char *ptr;
+    uint64_t iSurfaceId = std::strtoull(surfaceId.c_str(), &ptr, 10);
+    MEDIA_INFO_LOG("GetSurfaceFromSurfaceId surfaceId %{public}" PRIu64, iSurfaceId);
+
+    return SurfaceUtils::GetInstance()->GetSurface(iSurfaceId);
+}
+
+void PreviewOutputImpl::AttachSketchSurface(string_view surfaceId)
+{
+    CHECK_ERROR_RETURN_LOG(previewOutput_ == nullptr, "failed to AttachSketchSurface, previewOutput_ is nullptr");
+    CHECK_ERROR_RETURN_LOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi AttachSketchSurface is called!");
+    std::string nativeStr(surfaceId);
+    sptr<Surface> surface = GetSurfaceFromSurfaceId(nativeStr);
+    if (surface == nullptr) {
+        MEDIA_ERR_LOG("PreviewOutputImpl::AttachSketchSurface get surface is null");
+        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT, "input surface convert fail");
+        return;
+    }
+    int32_t retCode = previewOutput_->AttachSketchSurface(surface);
+    CHECK_ERROR_RETURN_LOG(!CameraUtilsTaihe::CheckError(retCode),
+        "PreviewOutputImpl::AttachSketchSurface! %{public}d", retCode);
+}
 
 void PreviewOutputImpl::ReleaseSync()
 {
@@ -117,7 +291,7 @@ void PreviewOutputImpl::ReleaseSync()
     CHECK_ERROR_RETURN_LOG(previewOutput_ == nullptr, "previewOutput_ is nullptr");
     asyncContext->queueTask =
         CameraTaiheWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueTask("PreviewOutputImpl::ReleaseSync");
-    asyncContext->objectInfo = std::make_shared<PreviewOutputImpl>(previewOutput_);
+    asyncContext->objectInfo = this;
     CAMERA_START_ASYNC_TRACE(asyncContext->funcName, asyncContext->taskId);
     CameraTaiheWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(asyncContext->queueTask, [&asyncContext]() {
         CHECK_ERROR_RETURN_LOG(asyncContext->objectInfo == nullptr, "previewOutput_ is nullptr");

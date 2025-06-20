@@ -14,12 +14,27 @@
  */
 
 #include "camera_const_ability_taihe.h"
-#include "camera_manager_taihe.h"
+#include "input/camera_manager_taihe.h"
 #include "camera_utils_taihe.h"
 #include "camera_security_utils_taihe.h"
 #include "camera_log.h"
 
 namespace Ani::Camera {
+
+enum Rotation {
+    ROTATION_0 = 0,
+    ROTATION_90 = 90,
+    ROTATION_180 = 180,
+    ROTATION_270 = 270
+};
+
+enum ReturnValues {
+    RETURN_VAL_0 = 0,
+    RETURN_VAL_1 = 1,
+    RETURN_VAL_2 = 2,
+    RETURN_VAL_3 = 3,
+    RETURN_VAL_DEFAULT = -1
+};
 
 bool CameraUtilsTaihe::mEnableSecure = false;
 
@@ -35,7 +50,7 @@ CameraPosition CameraUtilsTaihe::ToTaihePosition(OHOS::CameraStandard::CameraPos
         CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT, "ToTaihePosition fail");
         return CameraPosition::key_t::CAMERA_POSITION_UNSPECIFIED;
     }
-    MEDIA_ERR_LOG("ToTaihePosition itr->second position = %{public}d ", itr->second.get_value());
+    MEDIA_DEBUG_LOG("ToTaihePosition itr->second position = %{public}d ", itr->second.get_value());
     return itr->second;
 }
 
@@ -96,7 +111,7 @@ SlowMotionStatus CameraUtilsTaihe::ToTaiheSlowMotionState(OHOS::CameraStandard::
     auto itr = g_nativeToAniSlowMotionState.find(type);
     if (itr == g_nativeToAniSlowMotionState.end()) {
         CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT, "ToTaiheSlowMotionState fail");
-        return SlowMotionStatus::key_t::DISABLE;
+        return SlowMotionStatus::key_t::DISABLED;
     }
     return itr->second;
 }
@@ -131,6 +146,64 @@ FocusTrackingMode CameraUtilsTaihe::ToTaiheFocusTrackingMode(OHOS::CameraStandar
     return itr->second;
 }
 
+array<FrameRateRange> CameraUtilsTaihe::ToTaiheArrayFrameRateRange(std::vector<std::vector<int32_t>> ratesRange)
+{
+    std::vector<FrameRateRange> vec;
+    for (auto item : ratesRange) {
+        FrameRateRange res {
+            .min = item[0],
+            .max = item[1],
+        };
+        vec.emplace_back(res);
+    }
+    return array<FrameRateRange>(vec);
+}
+
+array<ZoomPointInfo> CameraUtilsTaihe::ToTaiheArrayZoomPointInfo(
+    std::vector<OHOS::CameraStandard::ZoomPointInfo> vecZoomPointInfoList)
+{
+    std::vector<ZoomPointInfo> vec;
+    for (auto item : vecZoomPointInfoList) {
+        ZoomPointInfo res {
+            .zoomRatio = static_cast<double>(item.zoomRatio),
+            .equivalentFocalLength = item.equivalentFocalLength,
+        };
+        vec.emplace_back(res);
+    }
+    return array<ZoomPointInfo>(vec);
+}
+
+array<PhysicalAperture> CameraUtilsTaihe::ToTaiheArrayPhysicalAperture(
+    std::vector<std::vector<float>> physicalApertures)
+{
+    std::vector<PhysicalAperture> resVec;
+    size_t zoomRangeSize = 2;
+    size_t zoomMinIndex = 0;
+    size_t zoomMaxIndex = 1;
+    std::vector<double> apertures;
+    for (size_t i = 0; i < physicalApertures.size(); i++) {
+        if (physicalApertures[i].size() <= zoomRangeSize) {
+            continue;
+        }
+        PhysicalAperture res {};
+        for (size_t y = 0; y < physicalApertures[i].size(); y++) {
+            if (y == zoomMinIndex) {
+                res.zoomRange.min = physicalApertures[i][y];
+                continue;
+            }
+            if (y == zoomMaxIndex) {
+                res.zoomRange.max = physicalApertures[i][y];
+                continue;
+            }
+            apertures.push_back(static_cast<double>(physicalApertures[i][y]));
+            res.apertures = array<double>(apertures);
+            apertures.clear();
+        }
+        resVec.push_back(res);
+    }
+    return array<PhysicalAperture>(resVec);
+}
+
 CameraDevice CameraUtilsTaihe::ToTaiheCameraDevice(sptr<OHOS::CameraStandard::CameraDevice> &obj)
 {
     CameraDevice cameraTaihe {
@@ -138,6 +211,10 @@ CameraDevice CameraUtilsTaihe::ToTaiheCameraDevice(sptr<OHOS::CameraStandard::Ca
         .cameraPosition = ToTaihePosition(obj->GetPosition()),
         .cameraType = ToTaiheCameraType(obj->GetCameraType()),
         .connectionType = ToTaiheConnectionType(obj->GetConnectionType()),
+        .isRetractable = optional<bool>::make(obj->GetisRetractable()),
+        .hostDeviceType = HostDeviceType::from_value(static_cast<int32_t>(obj->GetDeviceType())),
+        .hostDeviceName = ToTaiheString(obj->GetHostName()),
+        .cameraOrientation = obj->GetCameraOrientation(),
     };
     return cameraTaihe;
 }
@@ -160,10 +237,10 @@ array<SceneMode> CameraUtilsTaihe::ToTaiheArraySceneMode(const std::vector<OHOS:
         nativeToAniMap = g_nativeToAniSupportedModeSys;
     }
     for (auto &item : src) {
-        MEDIA_ERR_LOG("ToTaiheArraySceneMode src mode = %{public}d", item);
+        MEDIA_DEBUG_LOG("ToTaiheArraySceneMode src mode = %{public}d", item);
         auto itr = nativeToAniMap.find(item);
         if (itr != nativeToAniMap.end()) {
-            MEDIA_ERR_LOG("ToTaiheArraySceneMode itr->second mode = %{public}d ", itr->second.get_value());
+            MEDIA_DEBUG_LOG("ToTaiheArraySceneMode itr->second mode = %{public}d ", itr->second.get_value());
             vec.emplace_back(itr->second);
         }
     }
@@ -220,6 +297,22 @@ MetadataObjectType CameraUtilsTaihe::ToTaiheMetadataObjectType(OHOS::CameraStand
     return MetadataObjectType::key_t::FACE_DETECTION;
 }
 
+int32_t CameraUtilsTaihe::ToTaiheImageRotation(int32_t retCode)
+{
+    switch (retCode) {
+        case ROTATION_0:
+            return RETURN_VAL_0;
+        case ROTATION_90:
+            return RETURN_VAL_1;
+        case ROTATION_180:
+            return RETURN_VAL_2;
+        case ROTATION_270:
+            return RETURN_VAL_3;
+        default:
+            return RETURN_VAL_DEFAULT;
+    }
+}
+
 array<MetadataObject> CameraUtilsTaihe::ToTaiheMetadataObjectsAvailableData(
     const std::vector<sptr<OHOS::CameraStandard::MetadataObject>> metadataObjList)
 {
@@ -243,7 +336,6 @@ array<Profile> CameraUtilsTaihe::ToTaiheArrayProfiles(std::vector<OHOS::CameraSt
 {
     std::vector<Profile> vec;
     for (auto &item : profiles) {
-        MEDIA_ERR_LOG("ToTaiheArrayProfiles src mode = %{public}d", item.GetSize().height);
         CameraFormat cameraFormat = CameraUtilsTaihe::ToTaiheCameraFormat(item.GetCameraFormat());
         Profile aniProfile {
             .size = {
@@ -262,7 +354,6 @@ array<VideoProfile> CameraUtilsTaihe::ToTaiheArrayVideoProfiles(
 {
     std::vector<VideoProfile> vec;
     for (auto &item : profiles) {
-        MEDIA_ERR_LOG("ToTaiheArrayProfiles src mode = %{public}d", item.GetSize().height);
         auto frameRates = item.GetFrameRates();
         CameraFormat cameraFormat = CameraUtilsTaihe::ToTaiheCameraFormat(item.GetCameraFormat());
         VideoProfile aniProfile {
@@ -283,6 +374,66 @@ array<VideoProfile> CameraUtilsTaihe::ToTaiheArrayVideoProfiles(
     return array<VideoProfile>(vec);
 }
 
+array<DepthProfile> CameraUtilsTaihe::ToTaiheArrayDepthProfiles(
+    std::vector<OHOS::CameraStandard::DepthProfile> profiles)
+{
+    std::vector<DepthProfile> vec;
+    for (auto &item : profiles) {
+        CameraFormat cameraFormat = CameraUtilsTaihe::ToTaiheCameraFormat(item.GetCameraFormat());
+        DepthProfile aniProfile {
+            .size = {
+                .height = item.GetSize().height,
+                .width = item.GetSize().width,
+            },
+            .format = cameraFormat,
+            .dataAccuracy = ToTaiheDepthDataAccuracy(item.GetDataAccuracy()),
+        };
+        vec.emplace_back(aniProfile);
+    }
+    return array<DepthProfile>(vec);
+}
+
+MetadataObjectType MapMetadataObjSupportedTypesEnum(OHOS::CameraStandard::MetadataObjectType nativeMetadataObjType)
+{
+    switch (nativeMetadataObjType) {
+        case OHOS::CameraStandard::MetadataObjectType::FACE:
+            return MetadataObjectType::key_t::FACE_DETECTION;
+        case OHOS::CameraStandard::MetadataObjectType::HUMAN_BODY:
+            return MetadataObjectType::key_t::HUMAN_BODY;
+        case OHOS::CameraStandard::MetadataObjectType::CAT_FACE:
+            return MetadataObjectType::key_t::CAT_FACE;
+        case OHOS::CameraStandard::MetadataObjectType::CAT_BODY:
+            return MetadataObjectType::key_t::CAT_BODY;
+        case OHOS::CameraStandard::MetadataObjectType::DOG_FACE:
+            return MetadataObjectType::key_t::DOG_FACE;
+        case OHOS::CameraStandard::MetadataObjectType::DOG_BODY:
+            return MetadataObjectType::key_t::DOG_BODY;
+        case OHOS::CameraStandard::MetadataObjectType::SALIENT_DETECTION:
+            return MetadataObjectType::key_t::SALIENT_DETECTION;
+        case OHOS::CameraStandard::MetadataObjectType::BAR_CODE_DETECTION:
+            return MetadataObjectType::key_t::BAR_CODE_DETECTION;
+        default:
+            // do nothing
+            break;
+    }
+    CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT, "MapMetadataObjSupportedTypesEnum fail");
+    return MetadataObjectType::key_t::FACE_DETECTION;
+}
+
+array<MetadataObjectType> CameraUtilsTaihe::ToTaiheArrayMetadataTypes(
+    std::vector<OHOS::CameraStandard::MetadataObjectType> types)
+{
+    std::vector<MetadataObjectType> vec;
+    for (auto item : types) {
+        if (item > OHOS::CameraStandard::MetadataObjectType::BAR_CODE_DETECTION) {
+            continue;
+        }
+        MetadataObjectType type = MapMetadataObjSupportedTypesEnum(item);
+        vec.emplace_back(type);
+    }
+    return array<MetadataObjectType>(vec);
+}
+
 CameraOutputCapability CameraUtilsTaihe::ToTaiheCameraOutputCapability(
     sptr<OHOS::CameraStandard::CameraOutputCapability> &src)
 {
@@ -290,6 +441,8 @@ CameraOutputCapability CameraUtilsTaihe::ToTaiheCameraOutputCapability(
         .previewProfiles = ToTaiheArrayProfiles(src->GetPreviewProfiles()),
         .photoProfiles = ToTaiheArrayProfiles(src->GetPhotoProfiles()),
         .videoProfiles = ToTaiheArrayVideoProfiles(src->GetVideoProfiles()),
+        .depthProfiles = ToTaiheArrayDepthProfiles(src->GetDepthProfiles()),
+        .supportedMetadataObjectTypes = ToTaiheArrayMetadataTypes(src->GetSupportedMetadataObjectType()),
     };
     return aniCapability;
 }
@@ -299,7 +452,7 @@ SketchStatusData CameraUtilsTaihe::ToTaiheSketchStatusData(
 {
     SketchStatusData aniSketchStatusData {
         .status = static_cast<int32_t>(sketchStatusData.status),
-        .sketchRatio = static_cast<float>(sketchStatusData.sketchRatio),
+        .sketchRatio = sketchStatusData.sketchRatio,
     };
     return aniSketchStatusData;
 }
@@ -317,7 +470,7 @@ int32_t CameraUtilsTaihe::IncrementAndGet(uint32_t& num)
 bool CameraUtilsTaihe::CheckError(int32_t retCode)
 {
     if ((retCode != 0)) {
-        set_business_error(retCode, " ");
+        set_business_error(retCode, "Throw Error");
         return false;
     }
     return true;
@@ -327,6 +480,7 @@ ani_object CameraUtilsTaihe::ToBusinessError(ani_env *env, int32_t code, const s
 {
     ani_object err {};
     ani_class cls {};
+    CHECK_ERROR_RETURN_RET_LOG(env == nullptr, err, "env is nullptr");
     CHECK_ERROR_RETURN_RET_LOG(ANI_OK != env->FindClass(CLASS_NAME_BUSINESSERROR, &cls), err,
         "find class %{public}s failed", CLASS_NAME_BUSINESSERROR);
     ani_method ctor {};
@@ -347,28 +501,14 @@ ani_object CameraUtilsTaihe::ToBusinessError(ani_env *env, int32_t code, const s
     return error;
 }
 
-
-ani_object CameraUtilsTaihe::ToAniEnum(ani_env *env, int32_t taiheKey)
+int32_t CameraUtilsTaihe::EnumGetValueInt32(ani_env *env, ani_enum_item enumItem)
 {
-    ani_enum aniEnum {};
-    ani_object res {};
-    CHECK_ERROR_RETURN_RET_LOG(ANI_OK != env->FindEnum("I", &aniEnum), res,
-        "find class %{public}s failed", CLASS_NAME_ENUM);
-
-    ani_enum_item aniEnumItem {};
-    CHECK_ERROR_RETURN_RET_LOG(ANI_OK != env->Enum_GetEnumItemByIndex(aniEnum, static_cast<ani_size>(taiheKey),
-        &aniEnumItem), res, "get enum item failed");
-
-    ani_class cls {};
-    CHECK_ERROR_RETURN_RET_LOG(ANI_OK != env->FindClass(CLASS_NAME_ENUM, &cls), res,
-        "find class %{public}s failed", CLASS_NAME_ENUM);
-    ani_method ctor {};
-    CHECK_ERROR_RETURN_RET_LOG(ANI_OK != env->Class_FindMethod(cls, "<ctor>", "I:V", &ctor), res,
-        "find method BusinessError constructor failed");
-
-    CHECK_ERROR_RETURN_RET_LOG(ANI_OK != env->Object_New(cls, ctor, &res, aniEnumItem),
-        res, "new object %{public}s failed", CLASS_NAME_BUSINESSERROR);
-    return res;
+    CHECK_ERROR_RETURN_RET_LOG(env != nullptr, -1, "Invalid env");
+    int32_t value = -1;
+    ani_int aniInt {};
+    CHECK_ERROR_RETURN_RET_LOG(ANI_OK != env->EnumItem_GetValue_Int(enumItem, &aniInt), -1,
+        "EnumItem_GetValue_Int failed");
+    return reinterpret_cast<int32_t>(value);
 }
 
 bool CameraUtilsTaihe::GetEnableSecureCamera()
@@ -391,5 +531,34 @@ uintptr_t CameraUtilsTaihe::GetUndefined(ani_env* env)
     env->GetUndefined(&undefinedRef);
     ani_object undefinedObject = static_cast<ani_object>(undefinedRef);
     return reinterpret_cast<uintptr_t>(undefinedObject);
+}
+
+void CameraUtilsTaihe::ToNativeCameraOutputCapability(CameraOutputCapability const& outputCapability,
+    std::vector<OHOS::CameraStandard::Profile>& previewProfiles,
+    std::vector<OHOS::CameraStandard::Profile>& photoProfiles,
+    std::vector<OHOS::CameraStandard::VideoProfile>& videoProfiles)
+{
+    for (auto item : outputCapability.previewProfiles) {
+        OHOS::CameraStandard::Profile nativeProfile(
+            static_cast<OHOS::CameraStandard::CameraFormat>(item.format.get_value()),
+                { .height = item.size.height, .width = item.size.width });
+        previewProfiles.push_back(nativeProfile);
+    }
+    for (auto item : outputCapability.photoProfiles) {
+        OHOS::CameraStandard::Profile nativeProfile(
+            static_cast<OHOS::CameraStandard::CameraFormat>(item.format.get_value()),
+                { .height = item.size.height, .width = item.size.width });
+        photoProfiles.push_back(nativeProfile);
+    }
+
+    for (auto item : outputCapability.videoProfiles) {
+        std::vector<int32_t> framerates;
+        framerates.push_back(item.frameRateRange.min);
+        framerates.push_back(item.frameRateRange.max);
+        OHOS::CameraStandard::VideoProfile nativeProfile(
+            static_cast<OHOS::CameraStandard::CameraFormat>(item.base.format.get_value()),
+                { .height = item.base.size.height, .width = item.base.size.width }, framerates);
+        videoProfiles.push_back(nativeProfile);
+    }
 }
 } // namespace Ani::Camera

@@ -52,11 +52,11 @@ private:
     void OnLightStatusChangedCallback(OHOS::CameraStandard::LightStatus &status) const;
 };
 
-class VideoSessionForSysImpl : public VideoSessionImpl {
+class VideoSessionForSysImpl : public VideoSessionImpl, public ColorReservationImpl, public BeautyImpl,
+                               public ColorEffectImpl, public ApertureImpl, public MacroImpl {
 public:
     explicit VideoSessionForSysImpl(sptr<OHOS::CameraStandard::CaptureSession> &obj) : VideoSessionImpl(obj) {}
     ~VideoSessionForSysImpl() = default;
-
     std::shared_ptr<FocusTrackingCallbackListener> focusTrackingInfoCallback_ = nullptr;
     std::shared_ptr<LightStatusCallbackListener> lightStatusCallback_ = nullptr;
 

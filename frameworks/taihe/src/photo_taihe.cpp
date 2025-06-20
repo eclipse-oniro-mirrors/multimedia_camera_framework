@@ -12,13 +12,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "photo_taihe.h"
+#include "camera_log.h"
 
-@!namespace("@ohos.multimedia.camera")
+using namespace taihe;
+using namespace OHOS;
 
-@!sts_inject("""
-import type Context from 'application.BaseContext';
-import image from '@ohos.multimedia.image';
-import photoAccessHelper from '@ohos.file.photoAccessHelper';
-import { BusinessError, ErrorCallback, AsyncCallback, Callback } from '@ohos.base';
-import type colorSpaceManager from '@ohos.graphics.colorSpaceManager';
-""")
+namespace Ani {
+namespace Camera {
+void PhotoImpl::ReleaseSync()
+{
+    //to_do
+}
+} // namespace Camera
+} // namespace Ani

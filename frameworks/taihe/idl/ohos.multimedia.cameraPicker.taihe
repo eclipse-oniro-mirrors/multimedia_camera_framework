@@ -51,16 +51,21 @@ function GetPickerResult(asyncContext: CameraPickerJsAsyncContext): PickerResult
 function pick(context: Context, mediaTypes: Array<PickerMediaType>, pickerProfile: PickerProfile): Promise<PickerResult> {
   return new Promise<PickerResult>((resolve, reject): void => {
     let src = PickStart_inner(context, mediaTypes, pickerProfile);
-    taskpool.execute((): void => {
-      PickAsync_inner(src);
-    })
-    .then((ret: NullishType): void => {
-      let res = GetPickerResult_inner(src);
-      resolve(ret as PickerResult);
-    })
-    .catch((ret: NullishType): void => {
-      reject(ret as BusinessError);
-    });
-});
+    const worker = new EAWorker();
+    try {
+      let func = (src: CameraPickerJsAsyncContext) => { PickAsync_inner(src); };
+      let funcAsync = async (src: CameraPickerJsAsyncContext) => {
+        const job = worker.run<void>(func, src);
+        job.Await();
+        worker.join();
+        let res = GetPickerResult_inner(src);
+        resolve(res as PickerResult);
+      };
+      funcAsync(src);
+    } catch (e : BusinessError) {
+      worker.join()
+      reject(e as BusinessError);
+    }
+  });
 }
 """)

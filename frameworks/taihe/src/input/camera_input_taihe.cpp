@@ -85,7 +85,7 @@ void CameraInputImpl::OpenSync()
     CHECK_ERROR_RETURN_LOG(cameraInput_ == nullptr, "cameraInput_ is nullptr");
     asyncContext->queueTask =
         CameraTaiheWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueTask("CameraInputImpl::OpenSync");
-    asyncContext->objectInfo = std::make_shared<CameraInputImpl>(cameraInput_);
+    asyncContext->objectInfo = this;
     CAMERA_START_ASYNC_TRACE(asyncContext->funcName, asyncContext->taskId);
     CameraTaiheWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(asyncContext->queueTask, [&asyncContext]() {
         CHECK_ERROR_RETURN_LOG(asyncContext->objectInfo == nullptr, "cameraInput_ is nullptr");
@@ -109,7 +109,7 @@ array<uint64_t> CameraInputImpl::OpenByIsSecureEnabledSync(bool isSecureEnabled)
     asyncContext->queueTask =
         CameraTaiheWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueTask(
             "CameraInputImpl::OpenByIsSecureEnabledSync");
-    asyncContext->objectInfo = std::make_shared<CameraInputImpl>(cameraInput_);
+    asyncContext->objectInfo = this;
     CAMERA_START_ASYNC_TRACE(asyncContext->funcName, asyncContext->taskId);
     CameraTaiheWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(asyncContext->queueTask, [&asyncContext]() {
         CHECK_ERROR_RETURN_LOG(asyncContext->objectInfo == nullptr, "cameraInput_ is nullptr");
@@ -140,7 +140,7 @@ void CameraInputImpl::OpenByCameraConcurrentTypeSync(ohos::multimedia::camera::C
     asyncContext->queueTask =
         CameraTaiheWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueTask(
             "CameraInputImpl::OpenByCameraConcurrentTypeSync");
-    asyncContext->objectInfo = std::make_shared<CameraInputImpl>(cameraInput_);
+    asyncContext->objectInfo = this;
     CAMERA_START_ASYNC_TRACE(asyncContext->funcName, asyncContext->taskId);
     CameraTaiheWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(asyncContext->queueTask, [&asyncContext]() {
         CHECK_ERROR_RETURN_LOG(asyncContext->objectInfo == nullptr, "cameraInput_ is nullptr");
@@ -161,7 +161,7 @@ void CameraInputImpl::CloseSync()
     CHECK_ERROR_RETURN_LOG(cameraInput_ == nullptr, "cameraInput_ is nullptr");
     asyncContext->queueTask =
         CameraTaiheWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueTask("CameraInputImpl::CloseSync");
-    asyncContext->objectInfo = std::make_shared<CameraInputImpl>(cameraInput_);
+    asyncContext->objectInfo = this;
     CAMERA_START_ASYNC_TRACE(asyncContext->funcName, asyncContext->taskId);
     CameraTaiheWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(asyncContext->queueTask, [&asyncContext]() {
         CHECK_ERROR_RETURN_LOG(asyncContext->objectInfo == nullptr, "cameraInput_ is nullptr");
@@ -170,6 +170,40 @@ void CameraInputImpl::CloseSync()
         CameraUtilsTaihe::IsEnableSecureCamera(false);
     });
     CAMERA_FINISH_ASYNC_TRACE(asyncContext->funcName, asyncContext->taskId);
+}
+
+void CameraInputImpl::ControlAuxiliarySync(AuxiliaryType auxiliaryType, AuxiliaryStatus auxiliaryStatus)
+{
+    CHECK_ERROR_RETURN_LOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi ControlAuxiliary is called!");
+    CHECK_ERROR_RETURN_LOG(cameraInput_ == nullptr, "SystemApi ControlAuxiliary is called!");
+    cameraInput_->ControlAuxiliary(static_cast<const OHOS::CameraStandard::AuxiliaryType>(auxiliaryType.get_value()),
+        static_cast<const OHOS::CameraStandard::AuxiliaryStatus>(auxiliaryStatus.get_value()));
+}
+
+void CameraInputImpl::CloseDelayedSync(int32_t time)
+{
+    CHECK_ERROR_RETURN_LOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi closeDelayed is called!");
+    std::unique_ptr<CameraInputAsyncContext> asyncContext = std::make_unique<CameraInputAsyncContext>(
+        "CameraInputImpl::closeDelayed", CameraUtilsTaihe::IncrementAndGet(cameraInputTaskId_));
+    asyncContext->delayTime = time;
+    asyncContext->queueTask =
+        CameraTaiheWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueTask("CameraInputImpl::closeDelayed");
+    asyncContext->objectInfo = this;
+    CAMERA_START_ASYNC_TRACE(asyncContext->funcName, asyncContext->taskId);
+    CameraTaiheWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(asyncContext->queueTask, [&asyncContext]() {
+        CHECK_ERROR_RETURN_LOG(asyncContext->objectInfo == nullptr, "closeDelayed async info is nullptr");
+        auto cameraInput = asyncContext->objectInfo->GetCameraInput();
+        CHECK_ERROR_RETURN_LOG(cameraInput == nullptr, "closeDelayed GetCameraInput info is nullptr");
+        asyncContext->errorCode = cameraInput->closeDelayed(asyncContext->delayTime);
+        asyncContext->status = asyncContext->errorCode == OHOS::CameraStandard::CameraErrorCode::SUCCESS;
+    });
+    CAMERA_FINISH_ASYNC_TRACE(asyncContext->funcName, asyncContext->taskId);
+    if (! (asyncContext->status)) {
+        CameraUtilsTaihe::CheckError(asyncContext->errorCode);
+        return;
+    }
 }
 
 OHOS::sptr<OHOS::CameraStandard::CameraInput> CameraInputImpl::GetCameraInput()

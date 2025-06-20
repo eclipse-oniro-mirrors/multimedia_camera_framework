@@ -71,16 +71,44 @@ private:
     void OnTryAEInfoChangedCallback(OHOS::CameraStandard::TryAEInfo info) const;
 };
 
-class TimeLapsePhotoSessionImpl : public SessionImpl, public FlashQueryImpl, public ZoomQueryImpl {
+class TimeLapsePhotoSessionImpl : public SessionImpl, public FlashImpl, public ZoomImpl, public FocusImpl,
+                                  public AutoExposureImpl, public WhiteBalanceImpl, public ManualExposureImpl,
+                                  public ColorEffectImpl, public ManualIsoImpl, public ManualFocusImpl {
 public:
-    explicit TimeLapsePhotoSessionImpl(sptr<OHOS::CameraStandard::CaptureSession> &obj) : SessionImpl(obj),
-        FlashQueryImpl(obj), ZoomQueryImpl(obj)
+    explicit TimeLapsePhotoSessionImpl(sptr<OHOS::CameraStandard::CaptureSession> &obj) : SessionImpl(obj)
     {
         if (obj != nullptr) {
             timeLapsePhotoSession_ = static_cast<OHOS::CameraStandard::TimeLapsePhotoSession*>(obj.GetRefPtr());
         }
     }
     ~TimeLapsePhotoSessionImpl() = default;
+
+    void SetTimeLapsePreviewType(ohos::multimedia::camera::TimeLapsePreviewType type);
+    void SetTimeLapseInterval(int32_t interval);
+    int32_t GetTimeLapseInterval();
+    // ohos::multimedia::camera::TimeLapsePreviewType GetTimeLapsePreviewType();
+    void SetTimeLapseRecordState(ohos::multimedia::camera::TimeLapseRecordState state);
+    array<int32_t> GetSupportedTimeLapseIntervalRange();
+    void StartTryAE();
+    void StopTryAE();
+    bool IsTryAENeeded();
+    void SetIso(int32_t iso) override;
+    int32_t GetIso() override;
+    int32_t GetExposure() override;
+    void SetExposure(int32_t exposure) override;
+    array<int32_t> GetIsoRange() override;
+    bool IsManualIsoSupported() override;
+    bool IsWhiteBalanceModeSupported(WhiteBalanceMode mode) override;
+    void SetWhiteBalance(int32_t whiteBalance) override;
+    int32_t GetWhiteBalance() override;
+    void SetWhiteBalanceMode(WhiteBalanceMode mode) override;
+    WhiteBalanceMode GetWhiteBalanceMode() override;
+    ExposureMeteringMode GetExposureMeteringMode() override;
+    void SetExposureMeteringMode(ExposureMeteringMode aeMeteringMode) override;
+    bool IsExposureMeteringModeSupported(ExposureMeteringMode aeMeteringMode) override;
+    array<int32_t> GetSupportedExposureRange() override;
+    array<int32_t> GetWhiteBalanceRange() override;
+
 private:
     sptr<OHOS::CameraStandard::TimeLapsePhotoSession> timeLapsePhotoSession_ = nullptr;
 
@@ -111,5 +139,4 @@ protected:
 };
 } // namespace Camera
 } // namespace Ani
-
 #endif // FRAMEWORKS_TAIHE_INCLUDE_TIME_LAPSE_PHOTO_SESSION_TAIHE_H

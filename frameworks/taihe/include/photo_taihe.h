@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -12,13 +12,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef FRAMEWORKS_TAIHE_INCLUDE_PHOTO_TAIHE_H
+#define FRAMEWORKS_TAIHE_INCLUDE_PHOTO_TAIHE_H
 
-@!namespace("@ohos.multimedia.camera")
+#include "taihe/runtime.hpp"
+#include "camera_log.h"
 
-@!sts_inject("""
-import type Context from 'application.BaseContext';
-import image from '@ohos.multimedia.image';
-import photoAccessHelper from '@ohos.file.photoAccessHelper';
-import { BusinessError, ErrorCallback, AsyncCallback, Callback } from '@ohos.base';
-import type colorSpaceManager from '@ohos.graphics.colorSpaceManager';
-""")
+namespace Ani::Camera {
+class PhotoImpl {
+public:
+    PhotoImpl() {
+        // Don't forget to implement the constructor.
+    }
+
+    ~PhotoImpl() {
+        // Don't forget to implement the constructor.
+    }
+
+    void ReleaseSync();
+};
+} // namespace Ani::Camera
+#endif //FRAMEWORKS_TAIHE_INCLUDE_PHOTO_TAIHE_H

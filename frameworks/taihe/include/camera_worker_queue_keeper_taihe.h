@@ -64,6 +64,7 @@ public:
     std::string funcName;
     int32_t taskId = 0;
     int32_t errorCode = 0;
+    bool status = false;
     std::shared_ptr<TaiheWorkerQueueTask> queueTask = nullptr;
 };
 class CameraTaiheWorkerQueueKeeper {

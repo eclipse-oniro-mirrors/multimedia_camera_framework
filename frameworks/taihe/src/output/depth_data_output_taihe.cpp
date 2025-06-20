@@ -58,7 +58,7 @@ void DepthDataOutputImpl::StartSync()
     CHECK_ERROR_RETURN_LOG(depthDataOutput_ == nullptr, "depthDataOutput_ is nullptr");
     asyncContext->queueTask =
         CameraTaiheWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueTask("DepthDataOutputImpl::StartSync");
-    asyncContext->objectInfo = shared_from_this();
+    asyncContext->objectInfo = this;
     CAMERA_START_ASYNC_TRACE(asyncContext->funcName, asyncContext->taskId);
     CameraTaiheWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(asyncContext->queueTask, [&asyncContext]() {
         CHECK_ERROR_RETURN_LOG(asyncContext->objectInfo == nullptr, "depthDataOutput_ is nullptr");
@@ -76,7 +76,7 @@ void DepthDataOutputImpl::StopSync()
     CHECK_ERROR_RETURN_LOG(depthDataOutput_ == nullptr, "depthDataOutput_ is nullptr");
     asyncContext->queueTask =
         CameraTaiheWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueTask("DepthDataOutputImpl::StopSync");
-    asyncContext->objectInfo = shared_from_this();
+    asyncContext->objectInfo = this;
     CAMERA_START_ASYNC_TRACE(asyncContext->funcName, asyncContext->taskId);
     CameraTaiheWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(asyncContext->queueTask, [&asyncContext]() {
         CHECK_ERROR_RETURN_LOG(asyncContext->objectInfo == nullptr, "depthDataOutput_ is nullptr");
@@ -94,7 +94,7 @@ void DepthDataOutputImpl::ReleaseSync()
     CHECK_ERROR_RETURN_LOG(depthDataOutput_ == nullptr, "depthDataOutput_ is nullptr");
     asyncContext->queueTask =
         CameraTaiheWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueTask("DepthDataOutputImpl::ReleaseSync");
-    asyncContext->objectInfo = shared_from_this();
+    asyncContext->objectInfo = this;
     CAMERA_START_ASYNC_TRACE(asyncContext->funcName, asyncContext->taskId);
     CameraTaiheWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(asyncContext->queueTask, [&asyncContext]() {
         CHECK_ERROR_RETURN_LOG(asyncContext->objectInfo == nullptr, "depthDataOutput_ is nullptr");

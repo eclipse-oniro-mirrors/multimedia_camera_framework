@@ -126,7 +126,7 @@ struct DepthDataOutputTaiheAsyncContext : public TaiheAsyncContext {
     {
         objectInfo = nullptr;
     }
-    std::shared_ptr<DepthDataOutputImpl> objectInfo = nullptr;
+    DepthDataOutputImpl* objectInfo = nullptr;
 };
 } // namespace Camera
 } // namespace Ani

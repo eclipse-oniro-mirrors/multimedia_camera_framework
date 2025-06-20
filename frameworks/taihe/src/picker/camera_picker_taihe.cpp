@@ -219,37 +219,36 @@ void UIExtensionCallback::CloseWindow()
 CameraPickerJsAsyncContext PickStart(
     uintptr_t context, array_view<PickerMediaType> mediaTypes, PickerProfile const& pickerProfile)
 {
-    MEDIA_INFO_LOG("liyan CameraPicker PickStart");
+    MEDIA_INFO_LOG("CameraPicker PickStart");
     CameraPickerJsAsyncContext res =
         make_holder<CameraPickerJsAsyncContextImpl, CameraPickerJsAsyncContext>(nullptr);
     std::unique_ptr<CameraPickerAsyncContext> asyncCtx = std::make_unique<CameraPickerAsyncContext>();
     asyncCtx->contextProxy = GetAbilityContext(get_env(), context);
     CHECK_ERROR_RETURN_RET_LOG(asyncCtx->contextProxy == nullptr, res, "GetAbilityContext failed");
-    AAFwk::Want want;
-    SetPickerWantParams(want, asyncCtx->contextProxy, mediaTypes, pickerProfile);
+    SetPickerWantParams(asyncCtx->want, asyncCtx->contextProxy, mediaTypes, pickerProfile);
     asyncCtx->uiExtCallback = StartCameraAbility(asyncCtx->contextProxy, asyncCtx->want);
     CHECK_ERROR_RETURN_RET_LOG(asyncCtx->uiExtCallback == nullptr, res, "StartCameraAbility failed");
-    MEDIA_INFO_LOG("liyan CameraPicker PickStart end");
+    MEDIA_INFO_LOG("CameraPicker PickStart end");
     return make_holder<CameraPickerJsAsyncContextImpl, CameraPickerJsAsyncContext>(std::move(asyncCtx));
 }
 
 void PickAsync(ohos::multimedia::cameraPicker::weak::CameraPickerJsAsyncContext asyncContext)
 {
-    MEDIA_INFO_LOG("liyan CameraPicker PickAsync");
+    MEDIA_INFO_LOG("CameraPicker PickAsync");
     auto ctxImpl = reinterpret_cast<CameraPickerJsAsyncContextImpl *>(asyncContext->GetSpecificImplPtr());
     CHECK_ERROR_RETURN(ctxImpl == nullptr);
     auto ctx = ctxImpl->GetCameraPickerAsyncContext();
     CHECK_ERROR_RETURN(ctx == nullptr);
     ctx->bRetBool = false;
-    MEDIA_INFO_LOG("liyan CameraPicker PickAsync 11111");
+    MEDIA_INFO_LOG("CameraPicker PickAsync 11111");
     ctx->uiExtCallback->WaitResultLock();
-    MEDIA_INFO_LOG("liyan CameraPicker PickAsync end");
+    MEDIA_INFO_LOG("CameraPicker PickAsync end");
     MEDIA_INFO_LOG("CameraPicker wait result end");
 }
 
 PickerResult GetPickerResult(ohos::multimedia::cameraPicker::weak::CameraPickerJsAsyncContext asyncContext)
 {
-    MEDIA_INFO_LOG("liyan CameraPicker GetPickerResult");
+    MEDIA_INFO_LOG("CameraPicker GetPickerResult");
     PickerResult res = {.resultCode = -1, .resultUri = "", .mediaType = PickerMediaType::key_t::PHOTO};
     auto ctxImpl = reinterpret_cast<CameraPickerJsAsyncContextImpl *>(asyncContext->GetSpecificImplPtr());
     CHECK_ERROR_RETURN_RET_LOG(ctxImpl == nullptr, res, "ctxImpl is nullptr");

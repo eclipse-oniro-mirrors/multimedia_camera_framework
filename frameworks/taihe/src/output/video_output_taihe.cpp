@@ -15,6 +15,7 @@
 #include "video_output_taihe.h"
 #include "camera_utils_taihe.h"
 #include "camera_log.h"
+#include "camera_security_utils_taihe.h"
 #include "camera_template_utils_taihe.h"
 #include "camera_error_code.h"
 #include "camera_event_emitter_taihe.h"
@@ -22,7 +23,6 @@
 using namespace taihe;
 using namespace ohos::multimedia::camera;
 using namespace OHOS;
-using namespace std;
 
 namespace Ani {
 namespace Camera {
@@ -40,7 +40,7 @@ void VideoOutputImpl::StartSync()
     CHECK_ERROR_RETURN_LOG(videoOutput_ == nullptr, "videoOutput_ is nullptr");
     asyncContext->queueTask =
         CameraTaiheWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueTask("VideoOutputImpl::StartSync");
-    asyncContext->objectInfo = std::make_shared<VideoOutputImpl>(videoOutput_);
+    asyncContext->objectInfo = this;
     CAMERA_START_ASYNC_TRACE(asyncContext->funcName, asyncContext->taskId);
     CameraTaiheWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(asyncContext->queueTask, [&asyncContext]() {
         CHECK_ERROR_RETURN_LOG(asyncContext->objectInfo == nullptr, "videoOutput_ is nullptr");
@@ -58,12 +58,12 @@ void VideoOutputImpl::StopSync()
     CHECK_ERROR_RETURN_LOG(videoOutput_ == nullptr, "videoOutput_ is nullptr");
     asyncContext->queueTask =
         CameraTaiheWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueTask("VideoOutputImpl::StopSync");
-    asyncContext->objectInfo = std::make_shared<VideoOutputImpl>(videoOutput_);
+    asyncContext->objectInfo = this;
     CAMERA_START_ASYNC_TRACE(asyncContext->funcName, asyncContext->taskId);
     CameraTaiheWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(asyncContext->queueTask, [&asyncContext]() {
         CHECK_ERROR_RETURN_LOG(asyncContext->objectInfo == nullptr, "videoOutput_ is nullptr");
         asyncContext->errorCode = asyncContext->objectInfo->videoOutput_->Stop();
-        CameraUtilsTaihe::CheckError(asyncContext->errorCode);
+        MEDIA_INFO_LOG("VideoOutputImpl::StopSync asyncContext->errorCode : %{public}d", asyncContext->errorCode);
     });
     CAMERA_FINISH_ASYNC_TRACE(asyncContext->funcName, asyncContext->taskId);
 }
@@ -76,7 +76,7 @@ void VideoOutputImpl::ReleaseSync()
     CHECK_ERROR_RETURN_LOG(videoOutput_ == nullptr, "videoOutput_ is nullptr");
     asyncContext->queueTask =
         CameraTaiheWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueTask("VideoOutputImpl::ReleaseSync");
-    asyncContext->objectInfo = std::make_shared<VideoOutputImpl>(videoOutput_);
+    asyncContext->objectInfo = this;
     CAMERA_START_ASYNC_TRACE(asyncContext->funcName, asyncContext->taskId);
     CameraTaiheWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(asyncContext->queueTask, [&asyncContext]() {
         CHECK_ERROR_RETURN_LOG(asyncContext->objectInfo == nullptr, "videoOutput_ is nullptr");
@@ -84,6 +84,235 @@ void VideoOutputImpl::ReleaseSync()
         CameraUtilsTaihe::CheckError(asyncContext->errorCode);
     });
     CAMERA_FINISH_ASYNC_TRACE(asyncContext->funcName, asyncContext->taskId);
+}
+
+bool VideoOutputImpl::IsMirrorSupported()
+{
+    if (videoOutput_ == nullptr) {
+        MEDIA_ERR_LOG("VideoOutputImpl::IsMirrorSupported get native object fail");
+        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT, "get native object fail");
+        return false;
+    }
+    return videoOutput_->IsMirrorSupported();
+}
+
+void VideoOutputImpl::EnableMirror(bool enabled)
+{
+    if (videoOutput_ == nullptr) {
+        MEDIA_ERR_LOG("VideoOutputImpl::EnableMirror get native object fail");
+        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT, "get native object fail");
+        return;
+    }
+    int32_t retCode = videoOutput_->enableMirror(enabled);
+    CHECK_ERROR_PRINT_LOG(!CameraUtilsTaihe::CheckError(retCode),
+        "VideoOutputImpl::EnableAutoHighQualityPhoto fail %{public}d", retCode);
+}
+
+bool VideoOutputImpl::IsAutoVideoFrameRateSupported()
+{
+    CHECK_ERROR_RETURN_RET_LOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), false,
+        "SystemApi IsAutoVideoFrameRateSupported is called!");
+    CHECK_ERROR_RETURN_RET_LOG(videoOutput_ == nullptr, false,
+        "EnableAutoVideoFrameRate failed, videoOutput_ is nullptr");
+    if (videoOutput_ == nullptr) {
+        MEDIA_ERR_LOG("VideoOutputImpl::EnableAutoVideoFrameRate get native object fail");
+        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT, "get native object fail");
+        return false;
+    }
+    return videoOutput_->IsAutoVideoFrameRateSupported();
+}
+
+void VideoOutputImpl::EnableAutoVideoFrameRate(bool enabled)
+{
+    CHECK_ERROR_RETURN_LOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi EnableAutoVideoFrameRate is called!");
+    CHECK_ERROR_RETURN_LOG(videoOutput_ == nullptr, "EnableAutoVideoFrameRate failed, videoOutput_ is nullptr");
+    if (videoOutput_ == nullptr) {
+        MEDIA_ERR_LOG("VideoOutputImpl::EnableAutoVideoFrameRate get native object fail");
+        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT, "get native object fail");
+        return;
+    }
+    int32_t retCode = videoOutput_->EnableAutoVideoFrameRate(enabled);
+    CHECK_ERROR_PRINT_LOG(!CameraUtilsTaihe::CheckError(retCode),
+        "VideoOutputImpl::EnableAutoVideoFrameRate fail %{public}d", retCode);
+}
+
+bool VideoOutputImpl::IsAutoDeferredVideoEnhancementSupported()
+{
+    CHECK_ERROR_RETURN_RET_LOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), false,
+        "SystemApi IsAutoDeferredVideoEnhancementSupported is called!");
+    if (videoOutput_ == nullptr) {
+        MEDIA_ERR_LOG("VideoOutputImpl::IsAutoDeferredVideoEnhancementSupported get native object fail");
+        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT, "get native object fail");
+        return false;
+    }
+    int32_t res = videoOutput_->IsAutoDeferredVideoEnhancementSupported();
+    if (res > 1) {
+        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::SERVICE_FATL_ERROR, "inner fail");
+        return false;
+    }
+    return res == 1;
+}
+
+bool VideoOutputImpl::IsAutoDeferredVideoEnhancementEnabled()
+{
+    CHECK_ERROR_RETURN_RET_LOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), false,
+        "SystemApi IsAutoDeferredVideoEnhancementEnabled is called!");
+    if (videoOutput_ == nullptr) {
+        MEDIA_ERR_LOG("VideoOutputImpl::IsAutoDeferredVideoEnhancementEnabled get native object fail");
+        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT, "get native object fail");
+        return false;
+    }
+    int32_t res = videoOutput_->IsAutoDeferredVideoEnhancementEnabled();
+    if (res > 1) {
+        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::SERVICE_FATL_ERROR, "inner fail");
+        return false;
+    }
+    return res == 1;
+}
+
+array<FrameRateRange> VideoOutputImpl::GetSupportedFrameRates()
+{
+    CHECK_ERROR_RETURN_RET_LOG(videoOutput_ == nullptr, array<FrameRateRange>(nullptr, 0),
+        "GetSupportedFrameRates failed, videoOutput_ is nullptr");
+    std::vector<std::vector<int32_t>> supportedFrameRatesRange = videoOutput_->GetSupportedFrameRates();
+    return CameraUtilsTaihe::ToTaiheArrayFrameRateRange(supportedFrameRatesRange);
+}
+
+FrameRateRange VideoOutputImpl::GetActiveFrameRate()
+{
+    FrameRateRange res {
+        .min = -1,
+        .max = -1,
+    };
+    CHECK_ERROR_RETURN_RET_LOG(videoOutput_ == nullptr, res, "GetActiveFrameRate failed, videoOutput_ is nullptr");
+    std::vector<int32_t> frameRateRange = videoOutput_->GetFrameRateRange();
+    res.min = frameRateRange[0];
+    res.max = frameRateRange[1];
+    return res;
+}
+
+VideoProfile VideoOutputImpl::GetActiveProfile()
+{
+    VideoProfile res {
+        .base = {
+            .size = {
+                .height = 0,
+                .width = 0,
+            },
+            .format = CameraFormat::key_t::CAMERA_FORMAT_YUV_420_SP,
+        },
+        .frameRateRange = {
+            .min = -1,
+            .max = -1,
+        },
+    };
+    CHECK_ERROR_RETURN_RET_LOG(videoOutput_ == nullptr, res, "GetActiveProfile failed, videoOutput_ is nullptr");
+    auto profile = videoOutput_->GetVideoProfile();
+    CHECK_ERROR_RETURN_RET_LOG(profile == nullptr, res, "GetActiveProfile failed, profile is nullptr");
+    CameraFormat cameraFormat = CameraUtilsTaihe::ToTaiheCameraFormat(profile->GetCameraFormat());
+    res.base.size.height = profile->GetSize().height;
+    res.base.size.width = profile->GetSize().width;
+    res.base.format = cameraFormat;
+    auto frameRates = profile->GetFrameRates();
+    res.frameRateRange.min = frameRates[0] >= frameRates[1] ? frameRates[1] : frameRates[0];
+    res.frameRateRange.max = frameRates[0] >= frameRates[1] ? frameRates[0] : frameRates[1];
+    return res;
+}
+
+void VideoOutputImpl::SetFrameRate(int32_t minFps, int32_t maxFps)
+{
+    if (videoOutput_ == nullptr) {
+        MEDIA_ERR_LOG("VideoOutputImpl::SetFrameRate get native object fail");
+        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT, "get native object fail");
+        return;
+    }
+    int32_t retCode = videoOutput_->SetFrameRate(minFps, maxFps);
+    CHECK_ERROR_PRINT_LOG(!CameraUtilsTaihe::CheckError(retCode),
+        "VideoOutputImpl::SetFrameRate fail %{public}d", retCode);
+}
+
+void VideoOutputImpl::SetRotation(ImageRotation rotation)
+{
+    CHECK_ERROR_PRINT_LOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi SetRotation is called!");
+    if (videoOutput_ == nullptr) {
+        MEDIA_ERR_LOG("VideoOutputImpl::SetRotation get native object fail");
+        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT, "get native object fail");
+        return;
+    }
+    int32_t retCode = videoOutput_->SetRotation(rotation.get_value());
+    CHECK_ERROR_PRINT_LOG(!CameraUtilsTaihe::CheckError(retCode),
+        "VideoOutputImpl::EnableAutoVideoFrameRate fail %{public}d", retCode);
+}
+
+bool VideoOutputImpl::IsRotationSupported()
+{
+    CHECK_ERROR_RETURN_RET_LOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), false,
+        "SystemApi IsRotationSupported is called!");
+    if (videoOutput_ == nullptr) {
+        MEDIA_ERR_LOG("VideoOutputImpl::IsRotationSupported get native object fail");
+        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT, "get native object fail");
+        return false;
+    }
+    bool isSupported = false;
+    int32_t retCode = videoOutput_->IsRotationSupported(isSupported);
+    CHECK_ERROR_RETURN_RET_LOG(!CameraUtilsTaihe::CheckError(retCode), false,
+        "VideoOutputImpl::IsRotationSupported fail %{public}d", retCode);
+    return isSupported;
+}
+
+array<ImageRotation> VideoOutputImpl::GetSupportedRotations()
+{
+    CHECK_ERROR_RETURN_RET_LOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        array<ImageRotation>(nullptr, 0), "SystemApi GetSupportedRotations is called!");
+    if (videoOutput_ == nullptr) {
+        MEDIA_ERR_LOG("VideoOutputImpl::GetSupportedRotations get native object fail");
+        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT, "get native object fail");
+        return array<ImageRotation>(nullptr, 0);
+    }
+    std::vector<int32_t> supportedRotations;
+    int32_t retCode = videoOutput_->GetSupportedRotations(supportedRotations);
+    CHECK_ERROR_RETURN_RET(!CameraUtilsTaihe::CheckError(retCode), array<ImageRotation>(nullptr, 0));
+    return CameraUtilsTaihe::ToTaiheArrayEnum<ImageRotation, int32_t>(supportedRotations);
+}
+
+ImageRotation VideoOutputImpl::GetVideoRotation(int32_t deviceDegree)
+{
+    CHECK_ERROR_RETURN_RET_LOG(videoOutput_ == nullptr, ImageRotation(static_cast<ImageRotation::key_t>(-1)),
+        "GetVideoRotation failed, videoOutput_ is nullptr");
+    int32_t retCode = videoOutput_->GetVideoRotation(deviceDegree);
+    if (retCode == OHOS::CameraStandard::SERVICE_FATL_ERROR) {
+        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::SERVICE_FATL_ERROR,
+            "GetVideoRotation Camera service fatal error.");
+        return ImageRotation(static_cast<ImageRotation::key_t>(-1));
+    }
+    if (retCode == OHOS::CameraStandard::INVALID_ARGUMENT) {
+        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT,
+            "GetVideoRotation Camera invalid argument.");
+        return ImageRotation(static_cast<ImageRotation::key_t>(-1));
+    }
+    int32_t taiheRetCode = CameraUtilsTaihe::ToTaiheImageRotation(retCode);
+    return ImageRotation(static_cast<ImageRotation::key_t>(taiheRetCode));
+}
+
+void VideoOutputImpl::AttachMetaSurface(string_view surfaceId, VideoMetaType type)
+{
+    CHECK_ERROR_PRINT_LOG(videoOutput_ == nullptr, "AttachMetaSurface failed, videoOutput_ is nullptr");
+    uint64_t iSurfaceId;
+    std::istringstream iss((std::string(surfaceId)));
+    iss >> iSurfaceId;
+    sptr<Surface> surface = SurfaceUtils::GetInstance()->GetSurface(iSurfaceId);
+    CHECK_ERROR_PRINT_LOG(surface == nullptr, "failed to get surface from SurfaceUtils");
+    videoOutput_->AttachMetaSurface(surface, static_cast<OHOS::CameraStandard::VideoMetaType>(type.get_value()));
+}
+
+array<VideoMetaType> VideoOutputImpl::GetSupportedVideoMetaTypes()
+{
+    CHECK_ERROR_RETURN_RET_LOG(videoOutput_ == nullptr, array<VideoMetaType>(nullptr, 0),
+        "GetSupportedVideoMetaTypes failed, videoOutput_ is nullptr");
+    std::vector<OHOS::CameraStandard::VideoMetaType> videoMetaTypes = videoOutput_->GetSupportedVideoMetaTypes();
+    return CameraUtilsTaihe::ToTaiheArrayEnum<VideoMetaType, OHOS::CameraStandard::VideoMetaType>(videoMetaTypes);
 }
 
 void VideoCallbackListener::OnError(int32_t errorCode) const
@@ -167,7 +396,7 @@ void VideoOutputImpl::RegisterVideoOutputErrorCallbackListener(
 {
     if (videoCallback_ == nullptr) {
         ani_env *env = get_env();
-        videoCallback_ = make_shared<VideoCallbackListener>(env);
+        videoCallback_ = std::make_shared<VideoCallbackListener>(env);
         videoOutput_->SetCallback(videoCallback_);
     }
     videoCallback_->SaveCallbackReference(eventName, callback, isOnce);
@@ -185,7 +414,7 @@ void VideoOutputImpl::RegisterDeferredVideoCallbackListener(
 {
     if (videoCallback_ == nullptr) {
         ani_env *env = get_env();
-        videoCallback_ = make_shared<VideoCallbackListener>(env);
+        videoCallback_ = std::make_shared<VideoCallbackListener>(env);
         videoOutput_->SetCallback(videoCallback_);
     }
     videoCallback_->SaveCallbackReference(eventName, callback, isOnce);
@@ -203,7 +432,7 @@ void VideoOutputImpl::RegisterFrameStartCallbackListener(const std::string& even
 {
     if (videoCallback_ == nullptr) {
         ani_env *env = get_env();
-        videoCallback_ = make_shared<VideoCallbackListener>(env);
+        videoCallback_ = std::make_shared<VideoCallbackListener>(env);
         videoOutput_->SetCallback(videoCallback_);
     }
     videoCallback_->SaveCallbackReference(eventName, callback, isOnce);
@@ -221,7 +450,7 @@ void VideoOutputImpl::RegisterFrameEndCallbackListener(const std::string& eventN
 {
     if (videoCallback_ == nullptr) {
         ani_env *env = get_env();
-        videoCallback_ = make_shared<VideoCallbackListener>(env);
+        videoCallback_ = std::make_shared<VideoCallbackListener>(env);
         videoOutput_->SetCallback(videoCallback_);
     }
     videoCallback_->SaveCallbackReference(eventName, callback, isOnce);
@@ -298,6 +527,15 @@ void VideoOutputImpl::OffFrameEnd(optional_view<callback<void(uintptr_t, uintptr
 {
     MEDIA_ERR_LOG("VideoOutputImpl::OffFrameEnd");
     ListenerTemplate<VideoOutputImpl>::Off(this, callback, "frameEnd");
+}
+
+void VideoOutputImpl::EnableAutoDeferredVideoEnhancement(bool enabled)
+{
+    CHECK_ERROR_RETURN_LOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi EnableAutoVideoFrameRate is called!");
+    CHECK_ERROR_RETURN_LOG(videoOutput_ == nullptr, "EnableAutoVideoFrameRate failed, videoOutput_ is nullptr");
+    int32_t res = videoOutput_->EnableAutoDeferredVideoEnhancement(enabled);
+    CHECK_EXECUTE(res > 0, CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::SERVICE_FATL_ERROR, "inner fail"));
 }
 } // namespace Camera
 } // namespace Ani

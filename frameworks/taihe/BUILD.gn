@@ -43,8 +43,10 @@ taihe_shared_library("camera_taihe") {
 
   include_dirs = [
     "include",
+    "include/ability",
     "include/input",
     "include/output",
+    "include/query",
     "include/session",
     "include/mode",
     "include/picker",
@@ -55,7 +57,7 @@ taihe_shared_library("camera_taihe") {
   sources += [
     "src/camera_constructor_taihe.cpp",
     "src/input/camera_input_taihe.cpp",
-    "src/camera_manager_taihe.cpp",
+    "src/input/camera_manager_taihe.cpp",
     "src/camera_security_utils_taihe.cpp",
     "src/camera_utils_taihe.cpp",
     "src/camera_worker_queue_keeper_taihe.cpp",
@@ -67,11 +69,17 @@ taihe_shared_library("camera_taihe") {
     "src/output/preview_output_taihe.cpp",
     "src/output/video_output_taihe.cpp",
     "src/output/metadata_output_taihe.cpp",
+    "src/query/camera_query_taihe.cpp",
     "src/session/camera_session_taihe.cpp",
     "src/mode/professional_session_taihe.cpp",
+    "src/mode/portrait_photo_session_taihe.cpp",
+    "src/mode/light_painting_photo_session_taihe.cpp",
     "src/deferred_photo_proxy_taihe.cpp",
     "src/mode/time_lapse_photo_session_taihe.cpp",
+    "src/mode/photo_session_taihe.cpp",
+    "src/mode/video_session_taihe.cpp",
     "src/mode/video_session_for_sys_taihe.cpp",
+    "src/mode/night_photo_session_taihe.cpp",
     "src/mode/slow_motion_video_session_taihe.cpp",
   ]
 

@@ -27,10 +27,11 @@ namespace Camera {
 using namespace OHOS;
 using namespace ohos::multimedia::camera;
 
-class PanoramaPhotoSessionImpl : public SessionImpl, public FlashQueryImpl, public ZoomQueryImpl {
+class PanoramaPhotoSessionImpl : public SessionImpl, public FlashImpl, public ZoomImpl,
+                                 public AutoExposureImpl, public FocusImpl, public WhiteBalanceImpl,
+                                 public ColorEffectImpl {
 public:
-    explicit PanoramaPhotoSessionImpl(sptr<OHOS::CameraStandard::CaptureSession> &obj) : SessionImpl(obj),
-        FlashQueryImpl(obj), ZoomQueryImpl(obj)
+    explicit PanoramaPhotoSessionImpl(sptr<OHOS::CameraStandard::CaptureSession> &obj) : SessionImpl(obj)
     {
         if (obj != nullptr) {
             panoramaSession_ = static_cast<OHOS::CameraStandard::PanoramaSession*>(obj.GetRefPtr());

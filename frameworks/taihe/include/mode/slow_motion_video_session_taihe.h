@@ -40,16 +40,18 @@ private:
     void OnSlowMotionStateCb(const OHOS::CameraStandard::SlowMotionState state) const;
 };
 
-class SlowMotionVideoSessionImpl : public SessionImpl, public FlashQueryImpl, public ZoomQueryImpl {
+class SlowMotionVideoSessionImpl : public SessionImpl, public FlashImpl, public ZoomImpl, public FocusImpl,
+                                   public AutoExposureImpl, public ColorEffectImpl {
 public:
-    explicit SlowMotionVideoSessionImpl(sptr<OHOS::CameraStandard::CaptureSession> &obj) : SessionImpl(obj),
-        FlashQueryImpl(obj), ZoomQueryImpl(obj)
+    explicit SlowMotionVideoSessionImpl(sptr<OHOS::CameraStandard::CaptureSession> &obj) : SessionImpl(obj)
     {
         if (obj != nullptr) {
             slowMotionSession_ = static_cast<OHOS::CameraStandard::SlowMotionSession*>(obj.GetRefPtr());
         }
     }
     ~SlowMotionVideoSessionImpl() = default;
+    bool IsSlowMotionDetectionSupported();
+    void SetSlowMotionDetectionArea(ohos::multimedia::camera::Rect const& area);
     std::shared_ptr<SlowMotionStateListener> slowMotionState_ = nullptr;
 private:
     sptr<OHOS::CameraStandard::SlowMotionSession> slowMotionSession_ = nullptr;
