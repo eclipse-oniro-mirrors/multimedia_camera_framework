@@ -72,6 +72,7 @@ ohos_unittest("camera_ndk_test") {
     "access_token:libtoken_setproc",
     "av_codec:av_codec_client",
     "c_utils:utils",
+    "cJSON:cjson_static",
     "data_share:datashare_common",
     "data_share:datashare_consumer",
     "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
@@ -97,6 +98,7 @@ ohos_unittest("camera_ndk_test") {
     "napi:ace_napi",
     "resource_management:librawfile",
     "safwk:system_ability_fwk",
+    "selinux_adapter:librestorecon",
     "sensor:sensor_interface_native",
     "window_manager:libdm",
   ]

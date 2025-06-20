@@ -60,7 +60,7 @@
 #include "video_key_info.h"
 #include "camera_dynamic_loader.h"
 #include "metadata_helper.h"
-#include <drivers/interface/display/graphic/common/v1_0/cm_color_space.h>
+#include <v1_0/cm_color_space.h>
 #include "napi/native_node_api.h"
 #include "picture_proxy.h"
 #include "hdr_type.h"

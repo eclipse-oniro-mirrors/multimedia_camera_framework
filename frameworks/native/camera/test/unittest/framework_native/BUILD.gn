@@ -93,6 +93,7 @@ ohos_unittest("camera_framework_native_unittest") {
     "audio_framework:offline_audio_effect",
     "av_codec:av_codec_client",
     "c_utils:utils",
+    "cJSON:cjson_static",
     "common_event_service:cesfwk_innerkits",
     "data_share:datashare_common",
     "data_share:datashare_consumer",
@@ -117,17 +118,8 @@ ohos_unittest("camera_framework_native_unittest") {
     "os_account:os_account_innerkits",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
+    "selinux_adapter:librestorecon",
     "window_manager:libdm_lite",
-  ]
-
-  include_dirs += [
-    "${driver_peripheral_path}/interfaces/include",
-    "${driver_peripheral_path}/interfaces/hdi_ipc",
-    "${driver_peripheral_path}/interfaces/hdi_ipc/utils/include",
-    "${driver_peripheral_path}/interfaces/hdi_ipc/server/include",
-    "${driver_peripheral_path}/interfaces/hdi_ipc/callback/device/include",
-    "${driver_peripheral_path}/interfaces/hdi_ipc/callback/operator/include",
-    "${driver_peripheral_path}/interfaces/hdi_ipc/callback/host/include",
   ]
 
   defines = [ "private=public" ]

@@ -27,8 +27,8 @@
 #include "icamera_util.h"
 #include "metadata_utils.h"
 #include "metadata_common_utils.h"
-#include "timer.h"
-#include "time_broker.h"
+#include "timer/camera_deferred_timer.h"
+#include "timer/time_broker.h"
 
 namespace OHOS {
 namespace CameraStandard {

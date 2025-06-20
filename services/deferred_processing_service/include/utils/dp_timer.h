@@ -16,7 +16,7 @@
 #ifndef OHOS_CAMERA_DPS_TIMER_H
 #define OHOS_CAMERA_DPS_TIMER_H
 
-#include "commonlibrary/c_utils/base/include/timer.h"
+#include <timer.h>
 #include "singleton.h"
 
 namespace OHOS {
@@ -32,7 +32,7 @@ public:
     void StopTimer(uint32_t& timerId);
 
 private:
-    std::unique_ptr<Utils::Timer> timer_ {nullptr};
+    std::unique_ptr<OHOS::Utils::Timer> timer_ {nullptr};
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

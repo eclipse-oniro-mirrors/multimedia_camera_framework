@@ -15,7 +15,7 @@
 #ifndef CAMERA_TIMER_H
 #define CAMERA_TIMER_H
 
-#include "timer.h"
+#include <timer.h>
 #include "singleton.h"
 
 namespace OHOS {

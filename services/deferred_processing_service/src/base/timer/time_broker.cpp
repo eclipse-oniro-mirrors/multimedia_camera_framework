@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#include "time_broker.h"
-#include "steady_clock.h"
+#include "timer/time_broker.h"
+#include "timer/steady_clock.h"
 #include "dp_log.h"
 
 namespace OHOS {
