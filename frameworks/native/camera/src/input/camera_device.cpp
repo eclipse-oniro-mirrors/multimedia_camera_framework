@@ -196,6 +196,22 @@ void CameraDevice::init(common_metadata_header_t* metadata)
                    foldScreenType_, cameraOrientation_, isRetractable_, moduleType_, foldStatus_);
 }
 
+void CameraDevice::InitEquivalentFocalLength(common_metadata_header_t* metadata)
+{
+    std::vector<int32_t> equivalentFocalLength = {};
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_LENS_EQUIVALENT_FOCUS, &item);
+    if (ret == CAM_META_SUCCESS) {
+        for (uint32_t i = 0; i < item.count; i++) {
+            equivalentFocalLength.emplace_back(item.data.i32[i]);
+        }
+    }
+    equivalentFocalLength_ = equivalentFocalLength;
+    MEDIA_INFO_LOG("CameraDevice::InitEquivalentFocalLength, equivalentFocalLength size: %{public}zu, "
+        "equivalentFocalLength: %{public}s", equivalentFocalLength_.size(),
+        Container2String(equivalentFocalLength_.begin(), equivalentFocalLength_.end()).c_str());
+}
+
 std::string CameraDevice::GetID()
 {
     return cameraID_;
@@ -319,69 +335,10 @@ bool CameraDevice::GetisRetractable()
 
 std::vector<int32_t> CameraDevice::GetEquivalentFocalLength()
 {
+    MEDIA_INFO_LOG("CameraDevice::InitEquivalentFocalLength, equivalentFocalLength size: %{public}zu, "
+        "equivalentFocalLength: %{public}s", equivalentFocalLength_.size(),
+        Container2String(equivalentFocalLength_.begin(), equivalentFocalLength_.end()).c_str());
     return equivalentFocalLength_;
-}
-
-void CameraDevice::InitEquivalentFocalLength(common_metadata_header_t* metadata)
-{
-    if (cameraType_ == CAMERA_TYPE_DEFAULT) {
-        InitDefaultEquivalentFocalLength();
-    } else {
-        InitPhysicalEquivalentFocalLength(metadata);
-    }
-}
-
-void CameraDevice::InitDefaultEquivalentFocalLength()
-{
-    equivalentFocalLength_ = {};
-    auto serviceProxy = CameraManager::GetInstance()->GetServiceProxy();
-    std::vector<std::string> cameraIds;
-    int32_t retCode = serviceProxy->GetCameraIds(cameraIds);
-    CHECK_ERROR_RETURN_LOG(retCode != CAMERA_OK, "InitDefaultEquivalentFocalLength GetCameraIds failed, "
-        "retCode: %{public}d", retCode);
-    for (auto innerId : cameraIds) {
-        std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility;
-        retCode = serviceProxy->GetCameraAbility(innerId, cameraAbility);
-        CHECK_WARNING_CONTINUE_LOG(retCode != CAMERA_OK, "InitDefaultEquivalentFocalLength "
-            "GetCameraAbility failed, retCode: %{public}d", retCode);
-        camera_metadata_item_t item;
-        common_metadata_header_t* metadata = cameraAbility->get();
-
-        int ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_EQUIVALENT_FOCUS, &item);
-        CHECK_WARNING_CONTINUE_LOG(ret != CAM_META_SUCCESS, "InitDefaultEquivalentFocalLength Get Focus"
-            "failed, ret: %{public}d", ret);
-        CHECK_WARNING_CONTINUE_LOG(item.count <= 1, "InitDefaultEquivalentFocalLength Focus Length Error, "
-            "ret: %{public}d", ret);
-        int32_t equivalentFocalLength = item.data.i32[1];
-
-        CameraPosition innerPosition = CAMERA_POSITION_UNSPECIFIED;
-        ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_POSITION, &item);
-        if (ret == CAM_META_SUCCESS) {
-            auto itr = metaToFwCameraPosition_.find(static_cast<camera_position_enum_t>(item.data.u8[0]));
-            if (itr != metaToFwCameraPosition_.end()) {
-                innerPosition = itr->second;
-            }
-        }
-        if (innerPosition != CAMERA_POSITION_UNSPECIFIED) {
-            auto itr = std::find(equivalentFocalLength_.begin(), equivalentFocalLength_.end(), equivalentFocalLength);
-            if (itr == equivalentFocalLength_.end() && innerPosition == cameraPosition_) {
-                equivalentFocalLength_.emplace_back(equivalentFocalLength);
-            }
-        }
-    }
-}
-
-void CameraDevice::InitPhysicalEquivalentFocalLength(common_metadata_header_t* metadata)
-{
-    equivalentFocalLength_ = {};
-    camera_metadata_item_t item;
-    int ret = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_EQUIVALENT_FOCUS, &item);
-    CHECK_ERROR_RETURN_LOG(ret != CAM_META_SUCCESS, "InitPhysicalEquivalentFocalLength Get Focus "
-        "failed, retCode: %{public}d", ret);
-    CHECK_ERROR_RETURN_LOG(item.count <= 1, "InitPhysicalEquivalentFocalLength Focus Length Error, "
-        "retCode: %{public}d", ret);
-    int32_t equivalentFocalLength = item.data.i32[1];
-    equivalentFocalLength_.emplace_back(equivalentFocalLength);
 }
 
 uint32_t CameraDevice::GetModuleType()

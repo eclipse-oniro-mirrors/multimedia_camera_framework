@@ -185,5 +185,21 @@ HWTEST_F(CameraDeviceUnit, camera_device_unittest_006, TestSize.Level1)
     cameras[0]->foldScreenType_ = CAMERA_FOLDSCREEN_UNSPECIFIED;
     EXPECT_EQ(cameras[0]->GetPosition(), CameraPosition::CAMERA_POSITION_UNSPECIFIED);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test cameradevice with GetEquivalentFocalLength
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetEquivalentFocalLength
+ */
+HWTEST_F(CameraDeviceUnit, camera_device_unittest_007, TestSize.Level1)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+
+    cameras[0]->equivalentFocalLength_ = {15, 20};
+    EXPECT_EQ(cameras[0]->GetEquivalentFocalLength(), cameras[0]->equivalentFocalLength_);
+}
 }
 }

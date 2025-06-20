@@ -272,21 +272,6 @@ public:
     */
     std::vector<int32_t> GetEquivalentFocalLength();
     
-    /**
-    * @brief Init the camera equivalentFocalLength.
-    */
-    void InitEquivalentFocalLength(common_metadata_header_t* metadata);
-
-    /**
-    * @brief Init the default camera equivalentFocalLength.
-    */
-    void InitDefaultEquivalentFocalLength();
-
-    /**
-    * @brief Init the physical camera equivalentFocalLength.
-    */
-    void InitPhysicalEquivalentFocalLength(common_metadata_header_t* metadata);
-
     // or can we move definition completely in session only?
     /**
     * @brief Get the supported Zoom Ratio range.
@@ -392,6 +377,7 @@ private:
     static const std::unordered_map<camera_connection_type_t, ConnectionType> metaToFwConnectionType_;
     static const std::unordered_map<camera_foldscreen_enum_t, CameraFoldScreenType> metaToFwCameraFoldScreenType_;
     void init(common_metadata_header_t* metadataHeader);
+    void InitEquivalentFocalLength(common_metadata_header_t* metadata);
     bool isFindModuleTypeTag(uint32_t &tagId);
     bool isConcurrentDevice_ = false;
 };
