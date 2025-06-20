@@ -16,6 +16,7 @@
 #include "accesstoken_kit.h"
 #include "camera_error_code.h"
 #include "camera_log.h"
+#include "camera_manager.h"
 #include "camera_util.h"
 #include "camera_base_function_moduletest.h"
 #include "gtest/gtest.h"
@@ -4682,6 +4683,34 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_113, Test
     EXPECT_EQ(photoOutput->Release(), SUCCESS);
     EXPECT_EQ(photoOutput->IsAutoAigcPhotoSupported(isAutoAigcPhotoSupported), SERVICE_FATL_ERROR);
     EXPECT_EQ(photoOutput->EnableAutoAigcPhoto(isEnabled), SESSION_NOT_RUNNING);
+}
+
+/*
+ * Feature: Camera base function
+ * Function: Test the camera resetRssPriority function.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test the camera manager resetRssPriority function,
+ * reset the camera rss/qos priority when camera al.
+ */
+ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_114, TestSize.Level0)
+{
+    if (cameraManager_->IsPrelaunchSupported(cameraInput_->GetCameraDeviceInfo())) {
+        MEDIA_INFO_LOG("The camera prelaunch function is supported");
+
+        std::string cameraId = cameraInput_->GetCameraId();
+        ASSERT_NE(cameraId, "");
+        int activeTime = 0;
+        EffectParam effectParam = {0, 0, 0};
+        EXPECT_EQ(cameraManager_->SetPrelaunchConfig(cameraId, RestoreParamTypeOhos::PERSISTENT_DEFAULT_PARAM_OHOS,
+            activeTime, effectParam), SUCCESS);
+        EXPECT_EQ(cameraManager_->PrelaunchCamera(), SUCCESS);
+        EXPECT_EQ(cameraManager_->PreSwitchCamera(cameraId), SUCCESS);
+        EXPECT_EQ(cameraManager_->ResetRssPriority(), SUCCESS);
+    } else {
+        MEDIA_ERR_LOG("The camera prelaunch function is not supported");
+    }
 }
 } // namespace CameraStandard
 } // namespace OHOS

@@ -573,6 +573,7 @@ napi_value CameraManagerNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("muteCamera", MuteCamera),
         DECLARE_NAPI_FUNCTION("muteCameraPersistent", MuteCameraPersist),
         DECLARE_NAPI_FUNCTION("prelaunch", PrelaunchCamera),
+        DECLARE_NAPI_FUNCTION("resetRssPriority", ResetRssPriority),
         DECLARE_NAPI_FUNCTION("preSwitchCamera", PreSwitchCamera),
         DECLARE_NAPI_FUNCTION("isPrelaunchSupported", IsPrelaunchSupported),
         DECLARE_NAPI_FUNCTION("setPrelaunchConfig", SetPrelaunchConfig),
@@ -1530,6 +1531,23 @@ napi_value CameraManagerNapi::PrelaunchCamera(napi_env env, napi_callback_info i
     int32_t retCode = CameraManager::GetInstance()->PrelaunchCamera();
     CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), result);
     MEDIA_INFO_LOG("PrelaunchCamera");
+    napi_get_undefined(env, &result);
+    return result;
+}
+
+napi_value CameraManagerNapi::ResetRssPriority(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("ResetRssPriority is called");
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi ResetRssPriority is called!");
+        return nullptr;
+    }
+    napi_value result = nullptr;
+    int32_t retCode = CameraManager::GetInstance()->ResetRssPriority();
+    if (!CameraNapiUtils::CheckError(env, retCode)) {
+        return result;
+    }
+    MEDIA_INFO_LOG("ResetRssPriority");
     napi_get_undefined(env, &result);
     return result;
 }

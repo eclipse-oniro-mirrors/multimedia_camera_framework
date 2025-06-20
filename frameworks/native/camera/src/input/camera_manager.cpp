@@ -2650,6 +2650,16 @@ int32_t CameraManager::PrelaunchCamera()
     return ServiceToCameraError(retCode);
 }
 
+int32_t CameraManager::ResetRssPriority()
+{
+    MEDIA_INFO_LOG("CameraManager::ResetRssPriority");
+    auto serviceProxy = GetServiceProxy();
+    CHECK_ERROR_RETURN_RET_LOG(serviceProxy == nullptr, SERVICE_FATL_ERROR, "ResetRssPriority serviceProxy is null");
+    int32_t retCode = serviceProxy->ResetRssPriority();
+    CHECK_ERROR_PRINT_LOG(retCode != CAMERA_OK, "ResetRssPriority call failed, retCode: %{public}d", retCode);
+    return ServiceToCameraError(retCode);
+}
+
 int32_t CameraManager::PreSwitchCamera(const std::string cameraId)
 {
     auto serviceProxy = GetServiceProxy();

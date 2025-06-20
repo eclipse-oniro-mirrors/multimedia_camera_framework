@@ -621,6 +621,13 @@ public:
     int32_t PrelaunchCamera();
 
     /**
+     * @brief reset rss priority
+     *
+     * @return Server error code.
+     */
+    int32_t ResetRssPriority();
+
+    /**
      * @brief Pre-switch camera
      *
      * @return Server error code.

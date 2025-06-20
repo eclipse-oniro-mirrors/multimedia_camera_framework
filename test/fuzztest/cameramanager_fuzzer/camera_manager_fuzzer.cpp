@@ -179,6 +179,7 @@ void CameraManagerFuzzer::CameraManagerFuzzTest3()
     manager->IsCameraMuteSupported();
     manager->IsCameraMuted();
     manager->PrelaunchCamera();
+    manager->ResetRssPriority();
     manager->IsTorchSupported();
     TorchMode mode = TorchMode::TORCH_MODE_ON;
     manager->SetTorchMode(mode);
