@@ -2788,11 +2788,11 @@ int32_t CameraManager::MuteCameraPersist(PolicyType policyType, bool muteMode)
     return ServiceToCameraError(retCode);
 }
 
-int32_t CameraManager::PrelaunchCamera()
+int32_t CameraManager::PrelaunchCamera(int32_t flag)
 {
     auto serviceProxy = GetServiceProxy();
     CHECK_ERROR_RETURN_RET_LOG(serviceProxy == nullptr, SERVICE_FATL_ERROR, "PrelaunchCamera serviceProxy is null");
-    int32_t retCode = serviceProxy->PrelaunchCamera();
+    int32_t retCode = serviceProxy->PrelaunchCamera(flag);
     CHECK_ERROR_PRINT_LOG(retCode != CAMERA_OK, "PrelaunchCamera call failed, retCode: %{public}d", retCode);
     return ServiceToCameraError(retCode);
 }

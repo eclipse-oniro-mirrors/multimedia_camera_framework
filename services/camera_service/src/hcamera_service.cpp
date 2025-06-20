@@ -72,6 +72,10 @@ constexpr uint8_t POSITION_FOLD_INNER = 3;
 constexpr uint32_t ROOT_UID = 0;
 constexpr uint32_t FACE_CLIENT_UID = 1088;
 constexpr uint32_t RSS_UID = 1096;
+constexpr int32_t OLD_LAUNCH = -1;
+constexpr int32_t TOUCH_DOWN = 0;
+constexpr int32_t TOUCH_UP = 1;
+constexpr int32_t TOUCH_CANCEL = 2;
 static sptr<HCameraService> g_cameraServiceHolder = nullptr;
 static bool g_isFoldScreen = system::GetParameter("const.window.foldscreen.type", "") != "";
 
@@ -1390,10 +1394,18 @@ int32_t HCameraService::MuteCameraPersist(PolicyType policyType, bool isMute)
     return MuteCameraFunc(targetMuteMode);
 }
 
-int32_t HCameraService::PrelaunchCamera()
+int32_t HCameraService::PrelaunchCamera(int32_t flag)
 {
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("HCameraService::PrelaunchCamera");
+    #ifdef MEMMGR_OVERRID
+        PrelaunchRequireMemory(flag);
+    #endif
+    // only touch up and no flag enable prelaunch
+    if ((flag != 1) && (flag != -1)) {
+        return CAMERA_OK;
+    }
+    MEDIA_INFO_LOG("HCameraService::PrelaunchCamera E");
     CHECK_ERROR_RETURN_RET_LOG(HCameraDeviceManager::GetInstance()->GetCameraStateOfASide().Size() != 0,
         CAMERA_DEVICE_CONFLICT, "HCameraService::PrelaunchCamera there is a device active in A side, abort!");
     if (preCameraId_.empty()) {
@@ -1424,9 +1436,6 @@ int32_t HCameraService::PrelaunchCamera()
     CameraReportUtils::GetInstance().SetOpenCamPerfPreInfo(preCameraId_.c_str(), CameraReportUtils::GetCallerInfo());
     int32_t ret = cameraHostManager_->Prelaunch(preCameraId_, preCameraClient_);
     CHECK_ERROR_PRINT_LOG(ret != CAMERA_OK, "HCameraService::Prelaunch failed");
-#ifdef MEMMGR_OVERRID
-    RequireMemory();
-#endif
     return ret;
 }
 
@@ -2417,12 +2426,28 @@ int32_t HCameraService::RequireMemorySize(int32_t requiredMemSizeKB)
 }
 
 #ifdef MEMMGR_OVERRID
-void HCameraService::RequireMemory()
+void HCameraService::PrelaunchRequireMemory(int32_t flag)
 {
     CAMERA_SYNC_TRACE;
     int32_t pid = getpid();
     int32_t requiredMemSizeKB = 0;
-    Memory::MemMgrClient::GetInstance().RequireBigMem(pid, Memory::CAMERA_PRELAUNCH, requiredMemSizeKB, SYSTEM_CAMERA);
+
+    if (flag == TOUCH_DOWN) {
+        // touch down
+        MEDIA_INFO_LOG("PrelaunchRequireMemory touch down");
+        Memory::MemMgrClient::GetInstance().RequireBigMem(
+            pid, Memory::CAMERA_TOUCH_DOWN, requiredMemSizeKB, SYSTEM_CAMERA);
+    } else if (flag == TOUCH_UP || flag == OLD_LAUNCH) {
+        // touch up
+        MEDIA_INFO_LOG("PrelaunchRequireMemory touch up");
+        Memory::MemMgrClient::GetInstance().RequireBigMem(
+            pid, Memory::CAMERA_PRELAUNCH, requiredMemSizeKB, SYSTEM_CAMERA);
+    } else if (flag == TOUCH_CANCEL) {
+        // touch cancel
+        MEDIA_INFO_LOG("PrelaunchRequireMemory touch cancel");
+        Memory::MemMgrClient::GetInstance().RequireBigMem(
+            pid, Memory::CAMERA_LAUNCH_CANCEL, requiredMemSizeKB, SYSTEM_CAMERA);
+    }
 }
 #endif
 

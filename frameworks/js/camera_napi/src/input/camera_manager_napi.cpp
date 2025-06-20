@@ -1536,7 +1536,22 @@ napi_value CameraManagerNapi::PrelaunchCamera(napi_env env, napi_callback_info i
     CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env),
         nullptr, "SystemApi PrelaunchCamera is called!");
     napi_value result = nullptr;
-    int32_t retCode = CameraManager::GetInstance()->PrelaunchCamera();
+    int32_t retCode = 0;
+    size_t napiArgsSize = CameraNapiUtils::GetNapiArgs(env, info);
+    if (napiArgsSize == 1) {
+        MEDIA_INFO_LOG("PrelaunchCamera arg 1");
+        size_t argc = ARGS_ONE;
+        napi_value argv[ARGS_ONE] = {0};
+        napi_value thisVar = nullptr;
+        CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+        int32_t value = 0;
+        napi_get_value_int32(env, argv[PARAM0], &value);
+        MEDIA_INFO_LOG("PrelaunchCamera value:%{public}d", value);
+        retCode = CameraManager::GetInstance()->PrelaunchCamera(value);
+    } else if (napiArgsSize == 0) {
+        MEDIA_INFO_LOG("PrelaunchCamera arg 0");
+        retCode = CameraManager::GetInstance()->PrelaunchCamera();
+    }
     CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), result);
     MEDIA_INFO_LOG("PrelaunchCamera");
     napi_get_undefined(env, &result);
