@@ -72,10 +72,12 @@ constexpr uint8_t POSITION_FOLD_INNER = 3;
 constexpr uint32_t ROOT_UID = 0;
 constexpr uint32_t FACE_CLIENT_UID = 1088;
 constexpr uint32_t RSS_UID = 1096;
+#ifdef MEMMGR_OVERRID
 constexpr int32_t OLD_LAUNCH = -1;
 constexpr int32_t TOUCH_DOWN = 0;
 constexpr int32_t TOUCH_UP = 1;
 constexpr int32_t TOUCH_CANCEL = 2;
+#endif
 static sptr<HCameraService> g_cameraServiceHolder = nullptr;
 static bool g_isFoldScreen = system::GetParameter("const.window.foldscreen.type", "") != "";
 
