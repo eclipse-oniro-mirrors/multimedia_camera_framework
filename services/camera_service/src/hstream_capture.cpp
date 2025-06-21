@@ -576,8 +576,17 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
         ResetCaptureId();
         captureIdForConfirmCapture_ = CAPTURE_ID_UNSET;
         MEDIA_ERR_LOG("HStreamCapture::Capture failed with error Code: %{public}d", rc);
-        CameraReportUtils::ReportCameraError(
-            "HStreamCapture::Capture", rc, true, CameraReportUtils::GetCallerInfo());
+        camera_metadata_item_t item;
+        uint8_t connectionType = 0;
+        if (captureSettings != nullptr) {
+            ret = OHOS::Camera::FindCameraMetadataItem(
+                captureSettings->get(), OHOS_ABILITY_CAMERA_CONNECTION_TYPE, &item);
+            if (ret == CAM_META_SUCCESS || item.count == 0) {
+                connectionType = item.data.u8[0];
+            }
+        }
+        CameraReportUtils::ReportCameraErrorForUsb(
+            "HStreamCapture::Capture", rc, true, std::to_string(connectionType), CameraReportUtils::GetCallerInfo());
         ret = HdiToServiceError(rc);
     }
     camera_metadata_item_t item;
