@@ -421,5 +421,9 @@ HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_017, TestSize.Level
     EXPECT_TRUE(timer->active_);
 }
 
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_024, TestSize.Level0) {
+    int32_t level = 5;
+    EXPECT_EQ(ConvertPhotoThermalLevel(level), SystemPressureLevel::SEVERE);
+}
 } // CameraStandard
 } // OHOS
