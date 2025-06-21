@@ -41,7 +41,6 @@ public:
     /* TearDown:Execute after each test case */
     void TearDown(void);
 
-    void NativeAuthorization(void);
     sptr<CaptureOutput> CreatePhotoOutput(int32_t width = PHOTO_DEFAULT_WIDTH, int32_t height = PHOTO_DEFAULT_HEIGHT);
 };
 

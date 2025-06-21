@@ -13,35 +13,39 @@
  * limitations under the License.
  */
 
-#include "time_lapse_photo_session_unittest.h"
-#include "gtest/gtest.h"
 #include <cstdint>
 #include <vector>
+
 #include "access_token.h"
 #include "accesstoken_kit.h"
 #include "camera_util.h"
 #include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include "hap_token_info.h"
 #include "ipc_skeleton.h"
 #include "metadata_utils.h"
 #include "nativetoken_kit.h"
-#include "surface.h"
-#include "test_common.h"
-#include "token_setproc.h"
 #include "os_account_manager.h"
 #include "sketch_wrapper.h"
+#include "surface.h"
+#include "test_common.h"
+#include "test_token.h"
+#include "time_lapse_photo_session_unittest.h"
+#include "token_setproc.h"
 
 using namespace testing::ext;
 
 namespace OHOS {
 namespace CameraStandard {
-void TimeLapsePhotoSessionUnitTest::SetUpTestCase(void) {}
+void TimeLapsePhotoSessionUnitTest::SetUpTestCase(void)
+{
+    ASSERT_TRUE(TestToken::GetAllCameraPermission());
+}
 
 void TimeLapsePhotoSessionUnitTest::TearDownTestCase(void) {}
 
 void TimeLapsePhotoSessionUnitTest::SetUp()
 {
-    NativeAuthorization();
     cameraManager_ = CameraManager::GetInstance();
     ASSERT_NE(cameraManager_, nullptr);
 }
@@ -50,29 +54,6 @@ void TimeLapsePhotoSessionUnitTest::TearDown()
 {
     cameraManager_ = nullptr;
     MEDIA_DEBUG_LOG("TimeLapsePhotoSessionUnitTest TearDown");
-}
-
-void TimeLapsePhotoSessionUnitTest::NativeAuthorization()
-{
-    const char *perms[2];
-    perms[0] = "ohos.permission.DISTRIBUTED_DATASYNC";
-    perms[1] = "ohos.permission.CAMERA";
-    NativeTokenInfoParams infoInstance = {
-        .dcapsNum = 0,
-        .permsNum = 2,
-        .aclsNum = 0,
-        .dcaps = NULL,
-        .perms = perms,
-        .acls = NULL,
-        .processName = "native_camera_tdd",
-        .aplStr = "system_basic",
-    };
-    tokenId_ = GetAccessTokenId(&infoInstance);
-    uid_ = IPCSkeleton::GetCallingUid();
-    AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(uid_, userId_);
-    MEDIA_DEBUG_LOG("TimeLapsePhotoSessionUnitTest::NativeAuthorization g_uid:%{public}d", uid_);
-    SetSelfTokenID(tokenId_);
-    OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
 }
 
 /*

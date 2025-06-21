@@ -65,7 +65,6 @@ public:
     /* TearDown:Execute after each test case */
     void TearDown();
 
-    static void SetNativeToken();
     std::vector<SceneMode> GetSupportedSceneModes(sptr<CameraDevice>& camera);
     sptr<PreviewOutput> CreatePreviewOutput(Profile& profile);
     sptr<VideoOutput> CreateVideoOutput(VideoProfile& videoProfile);

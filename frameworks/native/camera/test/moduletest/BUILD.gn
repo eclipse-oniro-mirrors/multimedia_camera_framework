@@ -33,6 +33,7 @@ ohos_moduletest("camera_base_function_moduletest") {
   deps = [
     "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
     "${multimedia_camera_framework_path}/services/camera_service:camera_service",
+    "${multimedia_camera_framework_path}/test/test_common:test_common",
   ]
 
   external_deps = [
@@ -86,6 +87,7 @@ ohos_moduletest("camera_deferred_photo_moduletest") {
   deps = [
     "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
     "${multimedia_camera_framework_path}/services/camera_service:camera_service",
+    "${multimedia_camera_framework_path}/test/test_common:test_common",
   ]
 
   external_deps = [
@@ -140,6 +142,7 @@ ohos_moduletest("camera_deferred_video_moduletest") {
   deps = [
     "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
     "${multimedia_camera_framework_path}/services/camera_service:camera_service",
+    "${multimedia_camera_framework_path}/test/test_common:test_common",
   ]
 
   external_deps = [
@@ -192,6 +195,7 @@ ohos_moduletest("camera_format_YUV_moduletest") {
   deps = [
     "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
     "${multimedia_camera_framework_path}/services/camera_service:camera_service",
+    "${multimedia_camera_framework_path}/test/test_common:test_common",
   ]
 
   external_deps = [
@@ -239,7 +243,10 @@ ohos_moduletest("camera_moving_photo_moduletest") {
 
   sources = [ "camera_moving_photo/src/camera_moving_photo_moduletest.cpp" ]
 
-  deps = [ "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework" ]
+  deps = [
+    "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
+    "${multimedia_camera_framework_path}/test/test_common:test_common",
+  ]
 
   external_deps = [
     "access_token:libaccesstoken_sdk",
@@ -302,6 +309,7 @@ ohos_moduletest("camera_session_moduletest") {
   deps = [
     "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
     "${multimedia_camera_framework_path}/services/camera_service:camera_service",
+    "${multimedia_camera_framework_path}/test/test_common:test_common",
   ]
 
   external_deps = [

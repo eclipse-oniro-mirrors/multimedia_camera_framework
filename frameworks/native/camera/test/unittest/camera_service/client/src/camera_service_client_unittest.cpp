@@ -12,25 +12,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "camera_service_client_unittest.h"
 #include <vector>
+
+#include "accesstoken_kit.h"
+#include "camera_device_service_proxy.h"
 #include "camera_error_code.h"
 #include "camera_log.h"
+#include "camera_mute_service_callback_proxy.h"
+#include "camera_service_client_unittest.h"
+#include "capture_session.h"
+#include "fold_service_callback_proxy.h"
 #include "gtest/gtest.h"
-#include "camera_device_service_proxy.h"
+#include "hcamera_service.h"
 #include "input/camera_input.h"
 #include "input/camera_manager.h"
-#include "hcamera_service.h"
 #include "ipc_skeleton.h"
-#include "capture_session.h"
-#include "system_ability_definition.h"
 #include "iservice_registry.h"
-#include "accesstoken_kit.h"
 #include "nativetoken_kit.h"
+#include "system_ability_definition.h"
+#include "test_token.h"
 #include "token_setproc.h"
-#include "camera_mute_service_callback_proxy.h"
 #include "torch_service_callback_proxy.h"
-#include "fold_service_callback_proxy.h"
 
 using namespace testing::ext;
 using namespace OHOS::HDI::Camera::V1_0;
@@ -387,27 +389,6 @@ void CameraServiceClientUnit::ProcessSize()
     ASSERT_NE(session_, nullptr);
 }
 
-void CameraServiceClientUnit::SetNativeToken()
-{
-    uint64_t tokenId;
-    const char* perms[2];
-    perms[0] = "ohos.permission.DISTRIBUTED_DATASYNC";
-    perms[1] = "ohos.permission.CAMERA";
-    NativeTokenInfoParams infoInstance = {
-        .dcapsNum = 0,
-        .permsNum = 2,
-        .aclsNum = 0,
-        .dcaps = NULL,
-        .perms = perms,
-        .acls = NULL,
-        .processName = "native_camera_tdd",
-        .aplStr = "system_basic",
-    };
-    tokenId = GetAccessTokenId(&infoInstance);
-    SetSelfTokenID(tokenId);
-    OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
-}
-
 void CameraServiceClientUnit::SetUpInit()
 {
     previewFormat_ = CAMERA_FORMAT_YUV_420_SP;
@@ -424,9 +405,7 @@ void CameraServiceClientUnit::SetUpInit()
 void CameraServiceClientUnit::SetUpTestCase(void)
 {
     MEDIA_INFO_LOG("SetUpTestCase of camera test case!");
-    // set native token
-    SetNativeToken();
-    // set hap token please use SetHapToken();
+    ASSERT_TRUE(TestToken::GetAllCameraPermission());
 }
 
 void CameraServiceClientUnit::TearDownTestCase(void)

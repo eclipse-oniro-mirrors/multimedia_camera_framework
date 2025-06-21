@@ -32,6 +32,7 @@
 #include "surface.h"
 #include "os_account_manager.h"
 #include <fuzzer/FuzzedDataProvider.h>
+#include "test_token.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -118,35 +119,8 @@ sptr<CaptureOutput> CreatePhotoOutput()
     return nullptr;
 }
 
-void NativeAuthorization()
-{
-    const char *perms[2];
-    uint64_t tokenId = 0;
-    int32_t uid = 0;
-    int32_t userId = 0;
-    perms[0] = "ohos.permission.DISTRIBUTED_DATASYNC";
-    perms[1] = "ohos.permission.CAMERA";
-    NativeTokenInfoParams infoInstance = {
-        .dcapsNum = 0,
-        .permsNum = 2,
-        .aclsNum = 0,
-        .dcaps = NULL,
-        .perms = perms,
-        .acls = NULL,
-        .processName = "native_camera_tdd",
-        .aplStr = "system_basic",
-    };
-    tokenId = GetAccessTokenId(&infoInstance);
-    uid = IPCSkeleton::GetCallingUid();
-    AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(uid, userId);
-    MEDIA_DEBUG_LOG("CameraPortraitSessionUnitTest::NativeAuthorization TearDown");
-    SetSelfTokenID(tokenId);
-    OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
-}
-
 void PortraitSessionFuzzer::PortraitSessionFuzzTest(FuzzedDataProvider& fdp)
 {
-    NativeAuthorization();
     cameraManager_ = CameraManager::GetInstance();
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     CHECK_ERROR_RETURN_LOG(cameras.empty(), "PortraitSessionFuzzer: GetCameraDeviceListFromServer Error");
@@ -182,14 +156,14 @@ void PortraitSessionFuzzer::PortraitSessionFuzzTest(FuzzedDataProvider& fdp)
 
 void Test(uint8_t* data, size_t size)
 {
+    FuzzedDataProvider fdp(data, size);
+    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
+        return;
+    }
+    CHECK_ERROR_RETURN_LOG(!TestToken::GetAllCameraPermission(), "GetPermission error");
     auto portraitSession = std::make_unique<PortraitSessionFuzzer>();
     if (portraitSession == nullptr) {
         MEDIA_INFO_LOG("portraitSession is null");
-        return;
-    }
-    // std::cout << "aning PortraitSessionFuzzTest" << std::endl;
-    FuzzedDataProvider fdp(data, size);
-    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
         return;
     }
     portraitSession->PortraitSessionFuzzTest(fdp);

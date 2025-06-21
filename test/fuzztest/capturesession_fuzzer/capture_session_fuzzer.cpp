@@ -13,27 +13,30 @@
  * limitations under the License.
  */
 
-#include "capture_session_fuzzer.h"
+#include <cstddef>
+#include <cstdint>
+#include <memory>
+
+#include "accesstoken_kit.h"
 #include "camera_input.h"
 #include "camera_log.h"
 #include "camera_photo_proxy.h"
 #include "capture_input.h"
 #include "capture_output.h"
-#include "preview_output.h"
 #include "capture_scene_const.h"
+#include "capture_session_fuzzer.h"
 #include "input/camera_manager.h"
-#include "message_parcel.h"
-#include "refbase.h"
-#include <cstddef>
-#include <cstdint>
-#include <memory>
-#include "token_setproc.h"
-#include "nativetoken_kit.h"
-#include "accesstoken_kit.h"
-#include "iservice_registry.h"
-#include "system_ability_definition.h"
-#include "os_account_manager.h"
 #include "ipc_skeleton.h"
+#include "iservice_registry.h"
+#include "message_parcel.h"
+#include "nativetoken_kit.h"
+#include "os_account_manager.h"
+#include "preview_output.h"
+#include "refbase.h"
+#include "system_ability_definition.h"
+#include "test_token.h"
+#include "token_setproc.h"
+
 
 namespace OHOS {
 namespace CameraStandard {
@@ -53,31 +56,6 @@ SceneMode g_sceneMode;
 std::vector<Profile> previewProfile_ = {};
 
 sptr<CameraManager> manager_;
-
-void GetPermission()
-{
-    uint64_t tokenId;
-    int32_t uid = 0;
-    int32_t userId = 0;
-    const char* perms[2];
-    perms[0] = "ohos.permission.DISTRIBUTED_DATASYNC";
-    perms[1] = "ohos.permission.CAMERA";
-    NativeTokenInfoParams infoInstance = {
-        .dcapsNum = 0,
-        .permsNum = 2,
-        .aclsNum = 0,
-        .dcaps = NULL,
-        .perms = perms,
-        .acls = NULL,
-        .processName = "native_camera_tdd",
-        .aplStr = "system_basic",
-    };
-    tokenId = GetAccessTokenId(&infoInstance);
-    uid = IPCSkeleton::GetCallingUid();
-    AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(uid, userId);
-    SetSelfTokenID(tokenId);
-    OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
-}
 
 sptr<CaptureInput> GetCameraInput(FuzzedDataProvider& fdp)
 {
@@ -102,7 +80,7 @@ sptr<CaptureOutput> CreatePreviewOutput(Profile previewProfile)
 void Test(uint8_t* data, size_t size)
 {
     CHECK_ERROR_RETURN(size < LIMITSIZE);
-    GetPermission();
+    CHECK_ERROR_RETURN_LOG(!TestToken::GetAllCameraPermission(), "GetPermission error");
     manager_ = CameraManager::GetInstance();
     sptr<CaptureSession> session = manager_->CreateCaptureSession(SceneMode::CAPTURE);
     std::vector<sptr<CameraDevice>> cameras = manager_->GetCameraDeviceListFromServer();

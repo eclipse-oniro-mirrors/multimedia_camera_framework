@@ -36,7 +36,11 @@ ohos_fuzztest("SmoothZoomFuzzTest") {
 
   sources = [ "smooth_zoom_fuzzer.cpp" ]
 
-  deps = [ "../../../services/camera_service:camera_service" ]
+  deps = [
+    "../../../services/camera_service:camera_service",
+    "${multimedia_camera_framework_path}/test/test_common:test_common",
+  ]
+
   external_deps = [
     "ability_base:want",
     "access_token:libaccesstoken_sdk",

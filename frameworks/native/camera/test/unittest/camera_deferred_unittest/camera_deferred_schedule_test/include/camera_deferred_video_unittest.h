@@ -47,7 +47,6 @@ public:
     /* TearDown:Execute after each test case */
     void TearDown();
 
-    void NativeAuthorization();
     void BeginSchedule(bool isCharging);
     void PauseSchedule();
     uint64_t g_tokenId_;

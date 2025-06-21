@@ -34,7 +34,6 @@ public:
     /* TearDown:Execute after each test case */
     void TearDown(void);
 
-    void NativeAuthorization(void);
     sptr<CaptureOutput> CreatePreviewOutput();
 private:
     uint64_t tokenId_ = 0;

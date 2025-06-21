@@ -25,6 +25,8 @@
 #include "token_setproc.h"
 #include <fuzzer/FuzzedDataProvider.h>
 #include "hcamera_device.h"
+#include "test_token.h"
+
 using namespace std;
 
 namespace OHOS {
@@ -34,24 +36,7 @@ const int32_t MIN_SIZE_NUM = 408;
 const int32_t NUM_10 = 10;
 const int32_t NUM_100 = 100;
 const int32_t MAX_BUFFER_SIZE = 16;
-bool g_isCameraDevicePermission = false;
 sptr<HCameraDevice> fuzzCameraDevice = nullptr;
-
-void CameraDeviceFuzzTestGetPermission()
-{
-    if (!g_isCameraDevicePermission) {
-        uint64_t tokenId;
-        const char *perms[0];
-        perms[0] = "ohos.permission.CAMERA";
-        NativeTokenInfoParams infoInstance = { .dcapsNum = 0, .permsNum = 1, .aclsNum = 0, .dcaps = NULL,
-            .perms = perms, .acls = NULL, .processName = "camera_capture", .aplStr = "system_basic",
-        };
-        tokenId = GetAccessTokenId(&infoInstance);
-        SetSelfTokenID(tokenId);
-        OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
-        g_isCameraDevicePermission = true;
-    }
-}
 
 void PrepareHCameraDevice()
 {
@@ -73,8 +58,6 @@ void PrepareHCameraDevice()
 
 void CameraDeviceFuzzTest(FuzzedDataProvider& fdp)
 {
-    CameraDeviceFuzzTestGetPermission();
-    
     int32_t itemCount = NUM_10;
     int32_t dataSize = NUM_100;
     uint8_t streamSize = fdp.ConsumeIntegralInRange<uint8_t>(0, MAX_BUFFER_SIZE);
@@ -133,8 +116,6 @@ void CameraDeviceFuzzTest(FuzzedDataProvider& fdp)
 
 void CameraDeviceFuzzTestUpdateSetting(FuzzedDataProvider& fdp)
 {
-    CameraDeviceFuzzTestGetPermission();
-
     int32_t itemCount = NUM_10;
     int32_t dataSize = NUM_100;
     uint8_t streamSize = fdp.ConsumeIntegralInRange<uint8_t>(0, MAX_BUFFER_SIZE);
@@ -227,30 +208,8 @@ void CameraDeviceFuzzTest2(FuzzedDataProvider& fdp)
     }
 }
 
-void GetPermission()
-{
-    uint64_t tokenId;
-    const char* perms[2];
-    perms[0] = "ohos.permission.DISTRIBUTED_DATASYNC";
-    perms[1] = "ohos.permission.CAMERA";
-    NativeTokenInfoParams infoInstance = {
-        .dcapsNum = 0,
-        .permsNum = 2,
-        .aclsNum = 0,
-        .dcaps = NULL,
-        .perms = perms,
-        .acls = NULL,
-        .processName = "native_camera_tdd",
-        .aplStr = "system_basic",
-    };
-    tokenId = GetAccessTokenId(&infoInstance);
-    SetSelfTokenID(tokenId);
-    OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
-}
-
 void Test3(FuzzedDataProvider& fdp)
 {
-    GetPermission();
     auto manager = CameraManager::GetInstance();
     auto cameras = manager->GetSupportedCameras();
     CHECK_ERROR_RETURN_LOG(cameras.size() < MIN_SIZE_NUM, "PhotoOutputFuzzer: GetSupportedCameras Error");
@@ -369,7 +328,7 @@ extern "C" int LLVMFuzzerTestOneInput(uint8_t* data, size_t size)
     if (fdp.remaining_bytes() < OHOS::CameraStandard::MIN_SIZE_NUM) {
         return 0;
     }
-
+    CHECK_ERROR_RETURN_RET_LOG(!OHOS::CameraStandard::TestToken::GetAllCameraPermission(), 0, "GetPermission error");
     OHOS::CameraStandard::CameraDeviceFuzzTest(fdp);
     OHOS::CameraStandard::CameraDeviceFuzzTestUpdateSetting(fdp);
     OHOS::CameraStandard::CameraDeviceFuzzTest2(fdp);

@@ -14,13 +14,14 @@
  */
 
 #include "camera_log.h"
-#include "hstream_repeat_unittest.h"
 #include "camera_util.h"
-#include "test_common.h"
-#include "surface_type.h"
 #include "gmock/gmock.h"
+#include "hstream_repeat_unittest.h"
 #include "stream_repeat_callback_stub.h"
 #include "stream_repeat_stub.h"
+#include "surface_type.h"
+#include "test_common.h"
+#include "test_token.h"
 
 using namespace testing::ext;
 using ::testing::A;
@@ -135,7 +136,10 @@ public:
     virtual ~MockHStreamRepeatCallbackStub() {}
 };
 
-void HStreamRepeatUnit::SetUpTestCase(void) {}
+void HStreamRepeatUnit::SetUpTestCase(void)
+{
+    ASSERT_TRUE(TestToken::GetAllCameraPermission());
+}
 
 void HStreamRepeatUnit::TearDownTestCase(void) {}
 

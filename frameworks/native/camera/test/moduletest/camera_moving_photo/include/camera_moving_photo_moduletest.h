@@ -77,8 +77,6 @@ public:
     /* TearDown:Execute after each test case */
     void TearDown();
 
-    void NativeAuthorization();
-
 protected:
     void UpdataCameraOutputCapability(int32_t modeName = 0);
 

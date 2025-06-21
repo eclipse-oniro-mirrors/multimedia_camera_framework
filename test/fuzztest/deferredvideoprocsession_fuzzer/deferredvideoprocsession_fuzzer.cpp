@@ -13,17 +13,19 @@
  * limitations under the License.
  */
 
-#include "deferredvideoprocsession_fuzzer.h"
-#include "camera_log.h"
-#include "message_parcel.h"
 #include <cstddef>
 #include <cstdint>
 #include <memory>
-#include "token_setproc.h"
-#include "nativetoken_kit.h"
+
 #include "accesstoken_kit.h"
 #include "camera_error_code.h"
+#include "camera_log.h"
+#include "deferredvideoprocsession_fuzzer.h"
+#include "message_parcel.h"
+#include "nativetoken_kit.h"
 #include "securec.h"
+#include "test_token.h"
+#include "token_setproc.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -37,28 +39,6 @@ std::shared_ptr<IDeferredVideoProcSessionCallbackFuzz> sessionCallback_ =
     std::make_shared<IDeferredVideoProcSessionCallbackFuzz>();
 std::shared_ptr<DeferredVideoProcSession> deferredVideoProcSession_ =
     std::make_shared<DeferredVideoProcSession>(g_userId, sessionCallback_);
-
-
-void GetPermission()
-{
-    uint64_t tokenId;
-    const char* perms[2];
-    perms[0] = "ohos.permission.DISTRIBUTED_DATASYNC";
-    perms[1] = "ohos.permission.CAMERA";
-    NativeTokenInfoParams infoInstance = {
-        .dcapsNum = 0,
-        .permsNum = 2,
-        .aclsNum = 0,
-        .dcaps = NULL,
-        .perms = perms,
-        .acls = NULL,
-        .processName = "native_camera_tdd",
-        .aplStr = "system_basic",
-    };
-    tokenId = GetAccessTokenId(&infoInstance);
-    SetSelfTokenID(tokenId);
-    OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
-}
 
 auto createSession(int userId,
     std::shared_ptr<IDeferredVideoProcSessionCallback> callback,
@@ -87,8 +67,7 @@ void DeferredVideoProcSessionFuzzer::DeferredVideoProcSessionFuzzTest(FuzzedData
     if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
         return;
     }
-    GetPermission();
-
+    CHECK_ERROR_RETURN_LOG(!TestToken::GetAllCameraPermission(), "GetPermission error");
     std::string videoId(fdp.ConsumeRandomLengthString(MAX_LENGTH_STRING));
     sptr<IPCFileDescriptor> ipcFileDescriptor = nullptr;
     callback_->OnProcessVideoDone(videoId, ipcFileDescriptor);

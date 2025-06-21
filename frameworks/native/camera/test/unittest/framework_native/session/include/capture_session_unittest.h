@@ -88,8 +88,6 @@ public:
     /* TearDown:Execute after each test case */
     void TearDown(void);
 
-    void NativeAuthorization(void);
-
     void SessionControlParams(sptr<CaptureSession> session);
     void SessionCommit(sptr<CaptureSession> session);
     void UpdataCameraOutputCapability(int32_t modeName = 0);

@@ -40,8 +40,6 @@ public:
     /* TearDown:Execute after each test case */
     void TearDown(void);
 
-    void NativeAuthorization(void);
-
     void TestVideoSessionCallback();
 
     void TestVideoSessionPreconfig(sptr<CaptureInput>& input,

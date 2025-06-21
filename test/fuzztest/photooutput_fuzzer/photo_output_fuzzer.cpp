@@ -26,6 +26,7 @@
 #include "nativetoken_kit.h"
 #include "photo_output_fuzzer.h"
 #include "token_setproc.h"
+#include "test_token.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -33,33 +34,12 @@ namespace PhotoOutputFuzzer {
 const int32_t LIMITSIZE = 128;
 const int32_t CONST_2 = 2;
 
-void GetPermission()
-{
-    uint64_t tokenId;
-    const char* perms[2];
-    perms[0] = "ohos.permission.DISTRIBUTED_DATASYNC";
-    perms[1] = "ohos.permission.CAMERA";
-    NativeTokenInfoParams infoInstance = {
-        .dcapsNum = 0,
-        .permsNum = 2,
-        .aclsNum = 0,
-        .dcaps = NULL,
-        .perms = perms,
-        .acls = NULL,
-        .processName = "native_camera_tdd",
-        .aplStr = "system_basic",
-    };
-    tokenId = GetAccessTokenId(&infoInstance);
-    SetSelfTokenID(tokenId);
-    OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
-}
-
 void Test(uint8_t *rawData, size_t size)
 {
     if (rawData == nullptr || size < LIMITSIZE) {
         return;
     }
-    GetPermission();
+    CHECK_ERROR_RETURN_LOG(!TestToken::GetAllCameraPermission(), "GetPermission error");
     auto manager = CameraManager::GetInstance();
     CHECK_ERROR_RETURN_LOG(!manager, "PhotoOutputFuzzer: Get CameraManager instance Error");
     auto cameras = manager->GetSupportedCameras();

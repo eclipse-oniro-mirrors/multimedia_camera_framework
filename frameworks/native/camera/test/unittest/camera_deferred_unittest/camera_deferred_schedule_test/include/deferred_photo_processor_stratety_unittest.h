@@ -40,8 +40,6 @@ public:
     /* TearDown:Execute after each test case */
     void TearDown();
 
-    void NativeAuthorization();
-
     int32_t userId_ = 1;
     std::shared_ptr<PhotoStrategyCenter> strategyCenter_ {nullptr};
 };

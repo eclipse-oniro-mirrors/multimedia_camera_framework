@@ -44,7 +44,10 @@ ohos_fuzztest("CameraFwkMetadataUtilsFuzzTest") {
 
   sources = [ "camera_fwk_metadata_utils_fuzzer.cpp" ]
 
-  deps = [ "${multimedia_camera_framework_path}/services/camera_service:camera_service" ]
+  deps = [
+    "${multimedia_camera_framework_path}/services/camera_service:camera_service",
+    "${multimedia_camera_framework_path}/test/test_common:test_common",
+  ]
 
   external_deps = [
     "ability_base:want",

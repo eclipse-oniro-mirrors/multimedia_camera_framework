@@ -13,18 +13,21 @@
  * limitations under the License.
  */
 
-#include "camera_input_fuzzer.h"
+#include <cstddef>
+#include <cstdint>
+#include <memory>
+
+#include "accesstoken_kit.h"
 #include "camera_input.h"
+#include "camera_input_fuzzer.h"
 #include "camera_log.h"
 #include "input/camera_device.h"
 #include "input/camera_manager.h"
 #include "message_parcel.h"
-#include <cstddef>
-#include <cstdint>
-#include <memory>
-#include "token_setproc.h"
 #include "nativetoken_kit.h"
-#include "accesstoken_kit.h"
+#include "test_token.h"
+#include "token_setproc.h"
+
 
 namespace OHOS {
 namespace CameraStandard {
@@ -35,34 +38,13 @@ bool g_isCameraDevicePermission = false;
 static pid_t g_pid = 0;
 size_t max_length = 64;
 
-void GetPermission()
-{
-    uint64_t tokenId;
-    const char* perms[2];
-    perms[0] = "ohos.permission.DISTRIBUTED_DATASYNC";
-    perms[1] = "ohos.permission.CAMERA";
-    NativeTokenInfoParams infoInstance = {
-        .dcapsNum = 0,
-        .permsNum = 2,
-        .aclsNum = 0,
-        .dcaps = NULL,
-        .perms = perms,
-        .acls = NULL,
-        .processName = "native_camera_tdd",
-        .aplStr = "system_basic",
-    };
-    tokenId = GetAccessTokenId(&infoInstance);
-    SetSelfTokenID(tokenId);
-    OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
-}
-
 void Test(uint8_t* data, size_t size)
 {
     FuzzedDataProvider fdp(data, size);
     if (fdp.remaining_bytes() < LIMITSIZE) {
         return;
     }
-    GetPermission();
+    CHECK_ERROR_RETURN_LOG(!TestToken::GetAllCameraPermission(), "GetPermission error");
     auto manager = CameraManager::GetInstance();
     CHECK_ERROR_RETURN_LOG(!manager, "CameraInputFuzzer: Get CameraManager instance Error");
     auto cameras = manager->GetSupportedCameras();

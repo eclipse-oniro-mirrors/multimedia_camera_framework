@@ -13,23 +13,25 @@
  * limitations under the License.
  */
 
-#include "camera_framework_input_unittest.h"
-#include "gtest/gtest.h"
 #include <cstdint>
 #include <vector>
+
 #include "access_token.h"
 #include "accesstoken_kit.h"
+#include "camera_framework_input_unittest.h"
 #include "camera_log.h"
 #include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include "hap_token_info.h"
+#include "input/camera_service_system_ability_listener.h"
 #include "ipc_skeleton.h"
 #include "metadata_utils.h"
 #include "nativetoken_kit.h"
+#include "os_account_manager.h"
 #include "surface.h"
 #include "test_common.h"
+#include "test_token.h"
 #include "token_setproc.h"
-#include "os_account_manager.h"
-#include "input/camera_service_system_ability_listener.h"
 #include "utils/camera_rotation_api_utils.h"
 
 using namespace testing::ext;
@@ -48,13 +50,15 @@ public:
     }
 };
 
-void CameraFrameworkInputUnit::SetUpTestCase(void) {}
+void CameraFrameworkInputUnit::SetUpTestCase(void)
+{
+    ASSERT_TRUE(TestToken::GetAllCameraPermission());
+}
 
 void CameraFrameworkInputUnit::TearDownTestCase(void) {}
 
 void CameraFrameworkInputUnit::SetUp()
 {
-    NativeAuthorization();
     cameraManager_ = CameraManager::GetInstance();
     ASSERT_NE(cameraManager_, nullptr);
 }
@@ -62,29 +66,6 @@ void CameraFrameworkInputUnit::SetUp()
 void CameraFrameworkInputUnit::TearDown()
 {
     cameraManager_ = nullptr;
-}
-
-void CameraFrameworkInputUnit::NativeAuthorization()
-{
-    const char *perms[2];
-    perms[0] = "ohos.permission.DISTRIBUTED_DATASYNC";
-    perms[1] = "ohos.permission.CAMERA";
-    NativeTokenInfoParams infoInstance = {
-        .dcapsNum = 0,
-        .permsNum = 2,
-        .aclsNum = 0,
-        .dcaps = NULL,
-        .perms = perms,
-        .acls = NULL,
-        .processName = "native_camera_tdd",
-        .aplStr = "system_basic",
-    };
-    tokenId_ = GetAccessTokenId(&infoInstance);
-    uid_ = IPCSkeleton::GetCallingUid();
-    AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(uid_, userId_);
-    MEDIA_DEBUG_LOG("CameraFrameworkInputUnit::NativeAuthorization uid:%{public}d", uid_);
-    SetSelfTokenID(tokenId_);
-    OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
 }
 
 /*

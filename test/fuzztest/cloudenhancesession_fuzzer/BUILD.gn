@@ -44,6 +44,7 @@ ohos_fuzztest("CloudEnhanceSessionFuzzTest") {
   deps = [
     "${multimedia_camera_framework_path}/common:camera_utils",
     "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
+    "${multimedia_camera_framework_path}/test/test_common:test_common",
   ]
   external_deps = [
     "ability_base:want",

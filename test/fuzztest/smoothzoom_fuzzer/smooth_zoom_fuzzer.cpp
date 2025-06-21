@@ -23,6 +23,7 @@
 #include "camera_metadata_info.h"
 #include "metadata_utils.h"
 #include <fuzzer/FuzzedDataProvider.h>
+#include "test_token.h"
 
 namespace {
 
@@ -33,25 +34,8 @@ const int32_t LIMITSIZE = 12;
 namespace OHOS {
 namespace CameraStandard {
 
-bool SmoothZoomFuzzer::hasPermission = false;
 std::shared_ptr<SmoothZoom> SmoothZoomFuzzer::fuzz_{nullptr};
 static constexpr int32_t MIN_SIZE_NUM = 4;
-
-void SmoothZoomFuzzer::CheckPermission()
-{
-    if (!hasPermission) {
-        uint64_t tokenId;
-        const char *perms[0];
-        perms[0] = "ohos.permission.CAMERA";
-        NativeTokenInfoParams infoInstance = { .dcapsNum = 0, .permsNum = 1, .aclsNum = 0, .dcaps = NULL,
-            .perms = perms, .acls = NULL, .processName = "camera_capture", .aplStr = "system_basic",
-        };
-        tokenId = GetAccessTokenId(&infoInstance);
-        SetSelfTokenID(tokenId);
-        OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
-        hasPermission = true;
-    }
-}
 
 void SmoothZoomFuzzer::Test(uint8_t *rawData, size_t size)
 {
@@ -59,7 +43,7 @@ void SmoothZoomFuzzer::Test(uint8_t *rawData, size_t size)
     if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
         return;
     }
-    CheckPermission();
+    CHECK_ERROR_RETURN_LOG(!TestToken::GetAllCameraPermission(), "GetPermission error");
 
     fuzz_ = std::make_shared<SmoothZoom>();
     CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");

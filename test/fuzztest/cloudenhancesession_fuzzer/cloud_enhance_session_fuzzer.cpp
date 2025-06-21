@@ -30,6 +30,7 @@
 #include "nativetoken_kit.h"
 #include "accesstoken_kit.h"
 #include "picture.h"
+#include "test_token.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -43,27 +44,6 @@ CaptureOutput* curOutput;
 bool g_isSupported;
 bool g_isCameraDevicePermission = false;
 SceneMode g_sceneMode;
-
-void GetPermission()
-{
-    uint64_t tokenId;
-    const char* perms[2];
-    perms[0] = "ohos.permission.DISTRIBUTED_DATASYNC";
-    perms[1] = "ohos.permission.CAMERA";
-    NativeTokenInfoParams infoInstance = {
-        .dcapsNum = 0,
-        .permsNum = 2,
-        .aclsNum = 0,
-        .dcaps = NULL,
-        .perms = perms,
-        .acls = NULL,
-        .processName = "native_camera_tdd",
-        .aplStr = "system_basic",
-    };
-    tokenId = GetAccessTokenId(&infoInstance);
-    SetSelfTokenID(tokenId);
-    OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
-}
 
 sptr<CameraManager> manager;
 sptr<SurfaceBuffer> surfaceBuffer;
@@ -141,7 +121,7 @@ void TestSession(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
 void Test(uint8_t *rawData, size_t size)
 {
     CHECK_ERROR_RETURN(rawData == nullptr || size < LIMITSIZE);
-    GetPermission();
+    CHECK_ERROR_RETURN_LOG(!TestToken::GetAllCameraPermission(), "GetPermission error");
     MessageParcel data;
     data.WriteRawData(rawData, size);
     g_sceneMode = static_cast<SceneMode>(

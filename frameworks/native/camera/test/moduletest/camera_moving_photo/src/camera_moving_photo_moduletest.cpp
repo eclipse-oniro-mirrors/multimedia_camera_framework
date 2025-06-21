@@ -32,6 +32,7 @@
 #include "securec.h"
 #include "system_ability_definition.h"
 #include "test_common.h"
+#include "test_token.h"
 #include "token_setproc.h"
 #include "os_account_manager.h"
 #include "video_key_info.h"
@@ -239,6 +240,7 @@ CameraBufferExtraData PhotoListenerTest::GetCameraBufferExtraData(const sptr<Sur
 void CameraMovingPhotoModuleTest::SetUpTestCase(void)
 {
     MEDIA_DEBUG_LOG("CameraMovingPhotoModuleTest::SetUpTestCase started!");
+    ASSERT_TRUE(TestToken::GetAllCameraPermission());
 }
 
 void CameraMovingPhotoModuleTest::TearDownTestCase(void)
@@ -249,7 +251,6 @@ void CameraMovingPhotoModuleTest::TearDownTestCase(void)
 void CameraMovingPhotoModuleTest::SetUp()
 {
     MEDIA_INFO_LOG("CameraMovingPhotoModuleTest::SetUp start!");
-    NativeAuthorization();
 
     manager_ = CameraManager::GetInstance();
     ASSERT_NE(manager_, nullptr);
@@ -292,33 +293,6 @@ void CameraMovingPhotoModuleTest::TearDown()
     ReleaseMediaAsset();
 
     MEDIA_INFO_LOG("CameraMovingPhotoModuleTest::TearDown end!");
-}
-
-void CameraMovingPhotoModuleTest::NativeAuthorization()
-{
-    const char *perms[6];
-    perms[0] = "ohos.permission.CAMERA";
-    perms[1] = "ohos.permission.MICROPHONE";
-    perms[2] = "ohos.permission.READ_MEDIA";
-    perms[3] = "ohos.permission.WRITE_MEDIA";
-    perms[4] = "ohos.permission.READ_IMAGEVIDEO";
-    perms[5] = "ohos.permission.WRITE_IMAGEVIDEO";
-    NativeTokenInfoParams infoInstance = {
-        .dcapsNum = 0,
-        .permsNum = 6,
-        .aclsNum = 0,
-        .dcaps = NULL,
-        .perms = perms,
-        .acls = NULL,
-        .processName = "native_camera_tdd",
-        .aplStr = "system_basic",
-    };
-    tokenId_ = GetAccessTokenId(&infoInstance);
-    uid_ = IPCSkeleton::GetCallingUid();
-    AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(uid_, userId_);
-    MEDIA_DEBUG_LOG("CameraMovingPhotoModuleTest::NativeAuthorization uid:%{public}d", uid_);
-    SetSelfTokenID(tokenId_);
-    OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
 }
 
 void CameraMovingPhotoModuleTest::UpdataCameraOutputCapability(int32_t modeName)

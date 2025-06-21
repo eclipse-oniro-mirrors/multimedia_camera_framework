@@ -33,28 +33,6 @@ using namespace testing::ext;
 
 namespace OHOS {
 namespace CameraStandard {
-void CameraNdkCommon::SetNativeToken()
-{
-    // set native token
-    uint64_t tokenId;
-    const char* perms[2];
-    perms[0] = "ohos.permission.DISTRIBUTED_DATASYNC";
-    perms[1] = "ohos.permission.CAMERA";
-    NativeTokenInfoParams infoInstance = {
-        .dcapsNum = 0,
-        .permsNum = 2,
-        .aclsNum = 0,
-        .dcaps = NULL,
-        .perms = perms,
-        .acls = NULL,
-        .processName = "native_camera_tdd",
-        .aplStr = "system_basic",
-    };
-    tokenId = GetAccessTokenId(&infoInstance);
-    SetSelfTokenID(tokenId);
-    OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
-}
-
 void CameraNdkCommon::InitCamera(void)
 {
     Camera_ErrorCode ret = OH_Camera_GetCameraManager(&cameraManager);

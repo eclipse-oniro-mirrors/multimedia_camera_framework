@@ -37,7 +37,10 @@ ohos_fuzztest("TimeLapsePhotoSessionFuzzTest") {
 
   sources = [ "time_lapse_photo_session_fuzzer.cpp" ]
 
-  deps = [ "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework" ]
+  deps = [
+    "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
+    "${multimedia_camera_framework_path}/test/test_common:test_common",
+  ]
 
   external_deps = [
     "ability_base:want",

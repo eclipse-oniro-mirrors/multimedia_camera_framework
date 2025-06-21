@@ -34,7 +34,6 @@ public:
     /* TearDown:Execute after each test case */
     void TearDown(void);
 
-    void NativeAuthorization(void);
 private:
     uint64_t tokenId_ = 0;
     int32_t uid_ = 0;

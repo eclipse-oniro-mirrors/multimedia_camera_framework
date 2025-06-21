@@ -34,6 +34,7 @@
 #include "test_common.h"
 #include "token_setproc.h"
 #include "os_account_manager.h"
+#include "test_token.h"
 
 using namespace testing::ext;
 using ::testing::A;
@@ -50,37 +51,14 @@ using namespace OHOS::HDI::Camera::V1_1;
 
 void DeferredPhotoProxyUnit::SetUpTestCase(void) {}
 
-void DeferredPhotoProxyUnit::TearDownTestCase(void) {}
-
-void DeferredPhotoProxyUnit::SetUp()
+void DeferredPhotoProxyUnit::TearDownTestCase(void)
 {
-    NativeAuthorization();
+    ASSERT_TRUE(TestToken::GetAllCameraPermission());
 }
+
+void DeferredPhotoProxyUnit::SetUp() {}
 
 void DeferredPhotoProxyUnit::TearDown() {}
-
-void DeferredPhotoProxyUnit::NativeAuthorization()
-{
-    const char *perms[2];
-    perms[0] = "ohos.permission.DISTRIBUTED_DATASYNC";
-    perms[1] = "ohos.permission.CAMERA";
-    NativeTokenInfoParams infoInstance = {
-        .dcapsNum = 0,
-        .permsNum = 2,
-        .aclsNum = 0,
-        .dcaps = NULL,
-        .perms = perms,
-        .acls = NULL,
-        .processName = "native_camera_tdd",
-        .aplStr = "system_basic",
-    };
-    tokenId_ = GetAccessTokenId(&infoInstance);
-    uid_ = IPCSkeleton::GetCallingUid();
-    AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(uid_, userId_);
-    MEDIA_DEBUG_LOG("DeferredPhotoProxyUnit::NativeAuthorization uid:%{public}d", uid_);
-    SetSelfTokenID(tokenId_);
-    OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
-}
 
 /*
  * Feature: Framework

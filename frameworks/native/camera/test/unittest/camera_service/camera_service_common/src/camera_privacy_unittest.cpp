@@ -13,14 +13,14 @@
  * limitations under the License.
  */
 
-#include "camera_privacy_unittest.h"
-
 #include "camera_log.h"
 #include "camera_privacy.h"
+#include "camera_privacy_unittest.h"
 #include "capture_scene_const.h"
 #include "ipc_skeleton.h"
 #include "nativetoken_kit.h"
 #include "os_account_manager.h"
+#include "test_token.h"
 #include "token_setproc.h"
 
 using namespace testing::ext;
@@ -31,6 +31,7 @@ namespace CameraStandard {
 void CameraPrivacyUnitTest::SetUpTestCase(void)
 {
     MEDIA_DEBUG_LOG("CameraPrivacyUnitTest::SetUpTestCase started!");
+    ASSERT_TRUE(TestToken::GetAllCameraPermission());
 }
 
 void CameraPrivacyUnitTest::TearDownTestCase(void)
@@ -40,36 +41,12 @@ void CameraPrivacyUnitTest::TearDownTestCase(void)
 
 void CameraPrivacyUnitTest::SetUp()
 {
-    NativeAuthorization();
     MEDIA_DEBUG_LOG("CameraPrivacyUnitTest::SetUp started!");
 }
 
 void CameraPrivacyUnitTest::TearDown()
 {
     MEDIA_DEBUG_LOG("CameraPrivacyUnitTest::TearDown started!");
-}
-
-void CameraPrivacyUnitTest::NativeAuthorization()
-{
-    const char *perms[2];
-    perms[0] = "ohos.permission.DISTRIBUTED_DATASYNC";
-    perms[1] = "ohos.permission.CAMERA";
-    NativeTokenInfoParams infoInstance = {
-        .dcapsNum = 0,
-        .permsNum = 2,
-        .aclsNum = 0,
-        .dcaps = NULL,
-        .perms = perms,
-        .acls = NULL,
-        .processName = "native_camera_tdd",
-        .aplStr = "system_basic",
-    };
-    tokenId_ = GetAccessTokenId(&infoInstance);
-    uid_ = IPCSkeleton::GetCallingUid();
-    AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(uid_, userId_);
-    MEDIA_DEBUG_LOG("CameraPrivacyUnitTest::NativeAuthorization uid:%{public}d", uid_);
-    SetSelfTokenID(tokenId_);
-    OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
 }
 
 /*
@@ -86,9 +63,9 @@ HWTEST_F(CameraPrivacyUnitTest, camera_privacy_unittest_001, TestSize.Level0)
     uint32_t callingTokenId = IPCSkeleton::GetCallingTokenID();
     sptr<CameraPrivacy> cameraPrivacy = new CameraPrivacy(callingTokenId, IPCSkeleton::GetCallingPid());
     bool ret = cameraPrivacy->IsAllowUsingCamera();
-    EXPECT_FALSE(ret);
+    EXPECT_TRUE(ret);
     ret = cameraPrivacy->RegisterPermissionCallback();
-    EXPECT_FALSE(ret);
+    EXPECT_TRUE(ret);
     cameraPrivacy->UnregisterPermissionCallback();
     if (cameraPrivacy->IsAllowUsingCamera()) {
         bool ret = cameraPrivacy->AddCameraPermissionUsedRecord();

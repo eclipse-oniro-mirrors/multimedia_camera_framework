@@ -216,8 +216,6 @@ public:
     /* TearDown:Execute after each test case */
     void TearDown(void);
 
-    void NativeAuthorization(void);
-
     sptr<CaptureOutput> CreatePreviewOutput(int32_t width, int32_t height);
     sptr<CaptureOutput> CreatePhotoOutput(int32_t width, int32_t height);
     void ProcessPreviewProfiles(sptr<CameraOutputCapability>& outputcapability);
@@ -249,7 +247,6 @@ private:
     std::vector<int32_t> videoFrameRates_;
     std::vector<Profile> photoProfiles;
     std::vector<VideoProfile> videoProfiles;
-    static void SetNativeToken();
 };
 }
 }

@@ -43,7 +43,6 @@ private:
     int32_t userId_ = 0;
     sptr<CameraManager> cameraManager_ = nullptr;
     sptr<HCameraHostManager> cameraHostManager_ = nullptr;
-    void NativeAuthorization(void);
 };
 
 }

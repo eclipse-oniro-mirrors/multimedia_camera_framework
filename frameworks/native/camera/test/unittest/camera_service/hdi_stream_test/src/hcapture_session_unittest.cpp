@@ -13,24 +13,24 @@
  * limitations under the License.
  */
 
-#include "hcapture_session_unittest.h"
-
 #include "access_token.h"
 #include "accesstoken_kit.h"
 #include "camera_log.h"
 #include "camera_util.h"
+#include "capture_session_callback_stub.h"
 #include "gmock/gmock.h"
 #include "hap_token_info.h"
+#include "hcapture_session_unittest.h"
 #include "icapture_session_callback.h"
 #include "ipc_skeleton.h"
 #include "metadata_utils.h"
 #include "nativetoken_kit.h"
-#include "surface.h"
-#include "test_common.h"
-#include "token_setproc.h"
 #include "os_account_manager.h"
 #include "picture_interface.h"
-#include "capture_session_callback_stub.h"
+#include "surface.h"
+#include "test_common.h"
+#include "test_token.h"
+#include "token_setproc.h"
 
 using namespace testing::ext;
 using ::testing::Return;
@@ -51,20 +51,17 @@ constexpr int32_t WIDE_CAMERA_ZOOM_RANGE = 0;
 constexpr int32_t MAIN_CAMERA_ZOOM_RANGE = 1;
 constexpr int32_t TWO_X_EXIT_TELE_ZOOM_RANGE = 2;
 constexpr int32_t TELE_CAMERA_ZOOM_RANGE = 3;
+static const std::string TEST_BUNDLE_NAME = "ohos";
 
 void HCaptureSessionUnitTest::SetUpTestCase(void)
 {
-    MEDIA_DEBUG_LOG("HCaptureSessionUnitTest::SetUpTestCase started!");
+    ASSERT_TRUE(TestToken::GetAllCameraPermission());
 }
 
-void HCaptureSessionUnitTest::TearDownTestCase(void)
-{
-    MEDIA_DEBUG_LOG("HCaptureSessionUnitTest::TearDownTestCase started!");
-}
+void HCaptureSessionUnitTest::TearDownTestCase(void) {}
 
 void HCaptureSessionUnitTest::SetUp()
 {
-    NativeAuthorization();
     cameraHostManager_ = new HCameraHostManager(nullptr);
     cameraService_ = new HCameraService(cameraHostManager_);
     cameraManager_ = CameraManager::GetInstance();
@@ -88,29 +85,6 @@ void HCaptureSessionUnitTest::InitSessionAndOperator(uint32_t callerToken, int32
 {
     session = new (std::nothrow) HCaptureSession(callerToken, opMode);
     hStreamOperator = session->GetStreamOperator();
-}
-
-void HCaptureSessionUnitTest::NativeAuthorization()
-{
-    const char *perms[2];
-    perms[0] = "ohos.permission.DISTRIBUTED_DATASYNC";
-    perms[1] = "ohos.permission.CAMERA";
-    NativeTokenInfoParams infoInstance = {
-        .dcapsNum = 0,
-        .permsNum = 2,
-        .aclsNum = 0,
-        .dcaps = NULL,
-        .perms = perms,
-        .acls = NULL,
-        .processName = "native_camera_tdd",
-        .aplStr = "system_basic",
-    };
-    tokenId_ = GetAccessTokenId(&infoInstance);
-    uid_ = IPCSkeleton::GetCallingUid();
-    AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(uid_, userId_);
-    MEDIA_DEBUG_LOG("HCaptureSessionUnitTest::NativeAuthorization g_uid:%{public}d", uid_);
-    SetSelfTokenID(tokenId_);
-    OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
 }
 
 class MockHCaptureSessionCallbackStub : public CaptureSessionCallbackStub {
@@ -141,7 +115,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_001, TestSize.Level
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[0], device);
     ASSERT_NE(device, nullptr);
-    device->Open();
+    EXPECT_EQ(device->Open(), CAMERA_OK);
 
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCaptureSession> session = nullptr;

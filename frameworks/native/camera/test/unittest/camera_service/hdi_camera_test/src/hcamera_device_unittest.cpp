@@ -21,6 +21,7 @@
 #include "hcamera_service.h"
 #include "hcamera_device_unittest.h"
 #include "ipc_skeleton.h"
+#include "test_token.h"
 
 using namespace testing::ext;
 
@@ -33,6 +34,7 @@ const std::string LOCAL_SERVICE_NAME = "camera_service";
 void HCameraDeviceUnit::SetUpTestCase(void)
 {
     MEDIA_DEBUG_LOG("HCameraDeviceUnit::SetUpTestCase started!");
+    ASSERT_TRUE(TestToken::GetAllCameraPermission());
 }
 
 void HCameraDeviceUnit::TearDownTestCase(void)
@@ -43,33 +45,10 @@ void HCameraDeviceUnit::TearDownTestCase(void)
 void HCameraDeviceUnit::SetUp()
 {
     MEDIA_DEBUG_LOG("SetUp");
-    NativeAuthorization();
     cameraHostManager_ = new HCameraHostManager(nullptr);
     cameraManager_ = CameraManager::GetInstance();
 }
 
-void HCameraDeviceUnit::NativeAuthorization()
-{
-    const char *perms[2];
-    perms[0] = "ohos.permission.DISTRIBUTED_DATASYNC";
-    perms[1] = "ohos.permission.CAMERA";
-    NativeTokenInfoParams infoInstance = {
-        .dcapsNum = 0,
-        .permsNum = 2,
-        .aclsNum = 0,
-        .dcaps = NULL,
-        .perms = perms,
-        .acls = NULL,
-        .processName = "native_camera_tdd",
-        .aplStr = "system_basic",
-    };
-    tokenId_ = GetAccessTokenId(&infoInstance);
-    uid_ = IPCSkeleton::GetCallingUid();
-    AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(uid_, userId_);
-    MEDIA_DEBUG_LOG("CameraFrameworkUnitTest::NativeAuthorization uid:%{public}d", uid_);
-    SetSelfTokenID(tokenId_);
-    OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
-}
 void HCameraDeviceUnit::TearDown()
 {
     MEDIA_INFO_LOG("TearDown start");
@@ -283,7 +262,7 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_007, TestSize.Level1)
 
     camDevice->callerToken_ = 1;
     int32_t result = camDevice->CheckPermissionBeforeOpenDevice();
-    EXPECT_NE(result, CAMERA_OK);
+    EXPECT_EQ(result, CAMERA_OK);
 }
 
 /*

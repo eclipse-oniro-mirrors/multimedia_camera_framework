@@ -164,7 +164,6 @@ public:
     /* TearDown: Execute after each test case */
     void TearDown();
 
-    static void SetNativeToken();
     void UpdateCameraOutputCapability(int32_t index = 0, int32_t modeName = 0);
     void FilterPreviewProfiles(std::vector<Profile>& previewProfiles);
 
