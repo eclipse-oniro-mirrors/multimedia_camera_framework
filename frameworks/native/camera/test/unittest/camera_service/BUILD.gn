@@ -114,6 +114,7 @@ ohos_unittest("camera_service_unittest") {
     "bundle_framework:appexecfwk_base",
     "bundle_framework:appexecfwk_core",
     "c_utils:utils",
+    "cJSON:cjson_static",
     "data_share:datashare_common",
     "data_share:datashare_consumer",
     "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
@@ -145,6 +146,7 @@ ohos_unittest("camera_service_unittest") {
     "resource_management:librawfile",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
+    "selinux_adapter:librestorecon",
     "sensor:sensor_interface_native",
     "window_manager:libdm_lite",
   ]

@@ -44,7 +44,6 @@ ohos_shared_library("camera_napi") {
     "${multimedia_camera_framework_path}/services/camera_service/binder/base/include/",
     "${multimedia_camera_framework_path}/services/camera_service/binder/client/include",
     "${multimedia_camera_framework_path}/services/camera_service/binder/server/include",
-    "${multimedia_image_framework_path}/interfaces/innerkits/include",
   ]
   sources = [
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/ability/camera_ability_napi.cpp",
@@ -102,7 +101,7 @@ ohos_shared_library("camera_napi") {
     "drivers_interface_camera:libcamera_proxy_1.1",
     "drivers_interface_camera:libmap_data_sequenceable_1.0",
     "drivers_interface_camera:metadata",
-    "drivers_interface_display:display_commontype_idl_headers",
+    "drivers_interface_display:libdisplay_commontype_proxy_1.0",
     "graphic_2d:color_manager",
     "graphic_surface:surface",
     "hilog:libhilog",

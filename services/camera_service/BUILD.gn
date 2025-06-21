@@ -107,8 +107,6 @@ ohos_shared_library("camera_service") {
   }
 
   include_dirs = [
-    "//drivers/peripheral/display/interfaces/include",
-    "${graphic_surface_path}/surface/include",
     "${multimedia_camera_framework_path}/services/camera_service/include",
     "${multimedia_camera_framework_path}/common/utils",
     "${multimedia_camera_framework_path}/services/camera_service/binder/base/include/window_manager_service_utils",
@@ -127,8 +125,6 @@ ohos_shared_library("camera_service") {
     "${multimedia_camera_framework_path}/services/camera_service/binder/server/include",
     "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include",
     "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include/utils/",
-    "//foundation/window/window_manager/interfaces/innerkits/dm",
-    "//base/security/access_token/interfaces/innerkits/accesstoken/include",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/base/include",
@@ -264,20 +260,10 @@ ohos_shared_library("camera_service") {
   }
 
   if (config_policy_ext_enable) {
-    external_deps += [ "config_policy_ext:config_policy_ext_utils" ]
     defines += [ "CONFIG_POLICY_EXT_ENABLE" ]
   }
 
   defines += [ "MOVING_PHOTO_ADD_AUDIO" ]
-
-  include_dirs += [
-    "//drivers/peripheral/camera/interfaces/include",
-    "//drivers/peripheral/camera/interfaces/hdi_ipc",
-    "//drivers/peripheral/camera/interfaces/hdi_ipc/utils/include",
-    "//drivers/peripheral/camera/interfaces/hdi_ipc/callback/device/include",
-    "//drivers/peripheral/camera/interfaces/hdi_ipc/callback/operator/include",
-    "//drivers/peripheral/camera/interfaces/hdi_ipc/callback/host/include",
-  ]
 
   if (use_musl) {
     if (musl_use_jemalloc && musl_use_jemalloc_dfx_intf) {

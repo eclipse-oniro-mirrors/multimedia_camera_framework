@@ -15,9 +15,9 @@
 
 #include <securec.h>
 #include <algorithm>
-#include "timer_core.h"
+#include "timer/core/timer_core.h"
 #include "thread_utils.h"
-#include "steady_clock.h"
+#include "timer/steady_clock.h"
 #include "dp_log.h"
 
 namespace OHOS {

@@ -17,7 +17,7 @@
 #include "message_parcel.h"
 #include "securec.h"
 #include <memory>
-#include "timer.h"
+#include "timer/camera_deferred_timer.h"
 #include "input/camera_manager.h"
 #include "system_ability_definition.h"
 #include "iservice_registry.h"

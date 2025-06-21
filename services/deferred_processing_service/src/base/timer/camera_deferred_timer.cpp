@@ -13,9 +13,9 @@
  * limitations under the License.
  */
 
-#include "timer.h"
-#include "steady_clock.h"
-#include "core/timer_core.h"
+#include "timer/camera_deferred_timer.h"
+#include "timer/steady_clock.h"
+#include "timer/core/timer_core.h"
 #include "dp_log.h"
 
 namespace OHOS {

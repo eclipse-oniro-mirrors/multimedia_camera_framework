@@ -16,7 +16,7 @@
 #include "dps_event_report.h"
 #include "hisysevent.h"
 #include "dp_log.h"
-#include "steady_clock.h"
+#include "timer/steady_clock.h"
 #include "ideferred_photo_processing_session.h"
 
 namespace OHOS {

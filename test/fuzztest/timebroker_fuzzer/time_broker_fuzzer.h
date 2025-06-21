@@ -17,7 +17,7 @@
 #define TIME_BROKER_FUZZER_H
 
 #include <memory>
-#include "time_broker.h"
+#include "timer/time_broker.h"
 #include <fuzzer/FuzzedDataProvider.h>
 
 namespace OHOS {

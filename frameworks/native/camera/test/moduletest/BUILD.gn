@@ -40,15 +40,18 @@ ohos_moduletest("camera_base_function_moduletest") {
     "access_token:libnativetoken",
     "access_token:libtoken_setproc",
     "c_utils:utils",
+    "cJSON:cjson_static",
     "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
     "drivers_interface_camera:libcamera_proxy_1.0",
     "drivers_interface_camera:libcamera_proxy_1.1",
     "drivers_interface_camera:libmap_data_sequenceable_1.0",
     "graphic_surface:surface",
+    "hilog:libhilog",
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
     "ipc:ipc_core",
     "samgr:samgr_proxy",
+    "selinux_adapter:librestorecon",
   ]
 
   cflags = [
@@ -90,16 +93,19 @@ ohos_moduletest("camera_deferred_photo_moduletest") {
     "access_token:libnativetoken",
     "access_token:libtoken_setproc",
     "c_utils:utils",
+    "cJSON:cjson_static",
     "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
     "drivers_interface_camera:libcamera_proxy_1.0",
     "drivers_interface_camera:libcamera_proxy_1.1",
     "drivers_interface_camera:libmap_data_sequenceable_1.0",
     "graphic_surface:surface",
+    "hilog:libhilog",
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
     "image_framework:image",
     "image_framework:image_native",
     "ipc:ipc_core",
+    "selinux_adapter:librestorecon",
   ]
 
   cflags = [
@@ -141,14 +147,17 @@ ohos_moduletest("camera_deferred_video_moduletest") {
     "access_token:libnativetoken",
     "access_token:libtoken_setproc",
     "c_utils:utils",
+    "cJSON:cjson_static",
     "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
     "drivers_interface_camera:libcamera_proxy_1.0",
     "drivers_interface_camera:libcamera_proxy_1.1",
     "drivers_interface_camera:libmap_data_sequenceable_1.0",
     "graphic_surface:surface",
+    "hilog:libhilog",
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
     "ipc:ipc_core",
+    "selinux_adapter:librestorecon",
   ]
 
   cflags = [
@@ -190,15 +199,18 @@ ohos_moduletest("camera_format_YUV_moduletest") {
     "access_token:libnativetoken",
     "access_token:libtoken_setproc",
     "c_utils:utils",
+    "cJSON:cjson_static",
     "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
     "drivers_interface_camera:libcamera_proxy_1.0",
     "drivers_interface_camera:libcamera_proxy_1.1",
     "drivers_interface_camera:libmap_data_sequenceable_1.0",
     "graphic_surface:surface",
+    "hilog:libhilog",
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
     "ipc:ipc_core",
     "os_account:os_account_innerkits",
+    "selinux_adapter:librestorecon",
   ]
 
   cflags = [
@@ -234,6 +246,7 @@ ohos_moduletest("camera_moving_photo_moduletest") {
     "access_token:libnativetoken",
     "access_token:libtoken_setproc",
     "c_utils:utils",
+    "cJSON:cjson_static",
     "data_share:datashare_common",
     "data_share:datashare_consumer",
     "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
@@ -259,6 +272,7 @@ ohos_moduletest("camera_moving_photo_moduletest") {
     "resource_management:librawfile",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
+    "selinux_adapter:librestorecon",
   ]
 
   cflags = [ "-fPIC" ]
@@ -295,16 +309,19 @@ ohos_moduletest("camera_session_moduletest") {
     "access_token:libnativetoken",
     "access_token:libtoken_setproc",
     "c_utils:utils",
+    "cJSON:cjson_static",
     "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
     "drivers_interface_camera:libcamera_proxy_1.0",
     "drivers_interface_camera:libcamera_proxy_1.1",
     "drivers_interface_camera:libmap_data_sequenceable_1.0",
     "graphic_surface:surface",
+    "hilog:libhilog",
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
     "init:libbegetutil",
     "ipc:ipc_core",
     "samgr:samgr_proxy",
+    "selinux_adapter:librestorecon",
   ]
 
   cflags = [

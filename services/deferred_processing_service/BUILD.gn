@@ -219,15 +219,6 @@ ohos_shared_library("deferred_processing_service") {
     "window_manager:libdm",
   ]
 
-  include_dirs += [
-    "${driver_peripheral_path}/interfaces/include",
-    "${driver_peripheral_path}/interfaces/hdi_ipc",
-    "${driver_peripheral_path}/interfaces/hdi_ipc/utils/include",
-    "${driver_peripheral_path}/interfaces/hdi_ipc/callback/device/include",
-    "${driver_peripheral_path}/interfaces/hdi_ipc/callback/operator/include",
-    "${driver_peripheral_path}/interfaces/hdi_ipc/callback/host/include",
-  ]
-
   if (use_musl) {
     if (musl_use_jemalloc && musl_use_jemalloc_dfx_intf) {
       cflags += [ "-DCONFIG_USE_JEMALLOC_DFX_INTF" ]

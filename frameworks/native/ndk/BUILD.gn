@@ -35,8 +35,6 @@ ohos_shared_library("ohcamera") {
   }
 
   include_dirs = [
-    "${driver_disply_path}/interfaces/include",
-    "${graphic_surface_path}/surface/include",
     "${multimedia_camera_framework_path}/interfaces",
     "${multimedia_camera_framework_path}/interfaces/kits/native/include/camera",
     "${multimedia_camera_framework_path}/services/camera_service/include",

@@ -18,7 +18,7 @@
 #include "message_parcel.h"
 #include "securec.h"
 #include <memory>
-#include "timer.h"
+#include "timer/camera_deferred_timer.h"
 #include <fuzzer/FuzzedDataProvider.h>
 
 namespace OHOS {

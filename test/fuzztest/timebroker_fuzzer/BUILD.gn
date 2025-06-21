@@ -26,6 +26,7 @@ ohos_fuzztest("TimeBrokerFuzzTest") {
     "${multimedia_camera_framework_path}/services/camera_service/binder/server/include",
     "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include",
     "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include/output/",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/command_server",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/timer/core",

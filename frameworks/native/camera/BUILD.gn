@@ -47,14 +47,6 @@ config("camera_framework_local_config") {
   ]
 }
 
-config("camera_framework_drivers_config") {
-  include_dirs = [
-    "//drivers/peripheral/camera/interfaces/include",
-    "//drivers/peripheral/camera/interfaces/hdi_ipc",
-    "//drivers/peripheral/camera/interfaces/hdi_ipc/server",
-  ]
-}
-
 ohos_shared_library("camera_framework") {
   branch_protector_ret = "pac_ret"
   install_enable = true
@@ -134,16 +126,8 @@ ohos_shared_library("camera_framework") {
   public_configs = [
     ":camera_framework_public_config",
     ":camera_framework_local_config",
-    ":camera_framework_drivers_config",
     "${multimedia_camera_framework_path}/services/camera_service/idls:camera_sa_idl_config",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/idls:deferred_processing_service_idl_config",
-  ]
-
-  include_dirs = [
-    "${graphic_surface_path}/surface/include",
-    "${graphic_2d_path}/utils/buffer_handle/export",
-    "//utils/system/safwk/native/include",
-    "${window_manager_path}/interfaces/innerkits/dm",
   ]
 
   public_external_deps = [ "drivers_interface_camera:metadata" ]
