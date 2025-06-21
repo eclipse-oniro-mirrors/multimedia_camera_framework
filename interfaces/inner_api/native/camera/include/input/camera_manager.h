@@ -644,7 +644,7 @@ public:
      *
      * @return Server error code.
      */
-    int32_t PrelaunchCamera();
+    int32_t PrelaunchCamera(int32_t flag = -1);
 
     /**
      * @brief reset rss priority

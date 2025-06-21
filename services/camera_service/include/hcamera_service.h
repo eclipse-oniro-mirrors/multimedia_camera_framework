@@ -137,7 +137,7 @@ public:
     int32_t UnSetFoldStatusCallback() override;
     int32_t MuteCamera(bool muteMode) override;
     int32_t MuteCameraPersist(PolicyType policyType, bool isMute) override;
-    int32_t PrelaunchCamera() override;
+    int32_t PrelaunchCamera(int32_t flag) override;
     int32_t ResetRssPriority() override;
     int32_t PreSwitchCamera(const std::string& cameraId) override;
     int32_t SetPrelaunchConfig(const string& cameraId, RestoreParamTypeOhos restoreParamType, int activeTime,
@@ -204,7 +204,7 @@ private:
 #endif
 
 #ifdef MEMMGR_OVERRID
-    void RequireMemory();
+    void PrelaunchRequireMemory(int32_t flag);
 #endif
 
 #ifdef DEVICE_MANAGER
