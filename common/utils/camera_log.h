@@ -52,9 +52,12 @@
 #define MEDIA_ERR (-3)
 #define MEDIA_PERMISSION_DENIED (-4)
 
+#define CAMERA_LIKELY(x) __builtin_expect(!!(x), 1)
+#define CAMERA_UNLIKELY(x) __builtin_expect(!!(x), 0)
+
 #define CHECK_ERROR_RETURN_RET_LOG(cond, ret, fmt, ...)  \
     do {                                                 \
-        if (cond) {                                      \
+        if (CAMERA_UNLIKELY(cond)) {                     \
             MEDIA_ERR_LOG(fmt, ##__VA_ARGS__);           \
             return ret;                                  \
         }                                                \
@@ -62,37 +65,37 @@
 
 #define CHECK_DEBUG_RETURN_RET_LOG(cond, ret, fmt, ...)  \
     do {                                                 \
-        if (cond) {                                      \
-            MEDIA_DEBUG_LOG(fmt, ##__VA_ARGS__);           \
+        if (CAMERA_UNLIKELY(cond)) {                     \
+            MEDIA_DEBUG_LOG(fmt, ##__VA_ARGS__);         \
             return ret;                                  \
         }                                                \
     } while (0)
 
 #define CHECK_DEBUG_RETURN_LOG(cond, fmt, ...)         \
     do {                                               \
-        if (cond) {                                    \
-            MEDIA_DEBUG_LOG(fmt, ##__VA_ARGS__);         \
+        if (CAMERA_UNLIKELY(cond)) {                   \
+            MEDIA_DEBUG_LOG(fmt, ##__VA_ARGS__);       \
             return;                                    \
         }                                              \
     } while (0)
  
 #define CHECK_DEBUG_PRINT_LOG(cond, fmt, ...)            \
     do {                                                 \
-        if (cond) {                                      \
+        if (CAMERA_UNLIKELY(cond)) {                     \
             MEDIA_DEBUG_LOG(fmt, ##__VA_ARGS__);         \
         }                                                \
     } while (0)
 
 #define CHECK_ERROR_RETURN(cond)                      \
     do {                                              \
-        if (cond) {                                   \
+        if (CAMERA_UNLIKELY(cond)) {                  \
             return;                                   \
         }                                             \
     } while (0)
 
 #define CHECK_ERROR_RETURN_LOG(cond, fmt, ...)         \
     do {                                               \
-        if (cond) {                                    \
+        if (CAMERA_UNLIKELY(cond)) {                   \
             MEDIA_ERR_LOG(fmt, ##__VA_ARGS__);         \
             return;                                    \
         }                                              \
@@ -100,14 +103,14 @@
 
 #define CHECK_ERROR_PRINT_LOG(cond, fmt, ...)          \
     do {                                               \
-        if (cond) {                                    \
+        if (CAMERA_UNLIKELY(cond)) {                   \
             MEDIA_ERR_LOG(fmt, ##__VA_ARGS__);         \
         }                                              \
     } while (0)
 
 #define CHECK_ERROR_RETURN_RET(cond, ret)              \
     do {                                               \
-        if (cond) {                                    \
+        if (CAMERA_UNLIKELY(cond)) {                   \
             return ret;                                \
         }                                              \
     } while (0)
