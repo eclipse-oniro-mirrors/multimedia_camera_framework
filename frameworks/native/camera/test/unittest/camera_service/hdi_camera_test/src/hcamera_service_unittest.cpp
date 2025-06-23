@@ -1051,12 +1051,12 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_027, TestSize.Level1)
 
     HCameraDeviceManager::GetInstance()->stateOfRgmCamera_.Clear();
     cameraService_->preCameraId_ = cameraIds[0];
-    EXPECT_EQ(cameraService_->PrelaunchCamera(), CAMERA_INVALID_ARG);
+    EXPECT_EQ(cameraService_->PrelaunchCamera(0), CAMERA_INVALID_ARG);
 
     HCameraDeviceManager::GetInstance()->stateOfRgmCamera_.Clear();
     cameraIds[0].resize(0);
     cameraService_->preCameraId_.clear();
-    EXPECT_EQ(cameraService_->PrelaunchCamera(), CAMERA_INVALID_ARG);
+    EXPECT_EQ(cameraService_->PrelaunchCamera(0), CAMERA_INVALID_ARG);
     EXPECT_EQ(cameraService_->PreSwitchCamera(cameraIds[0]), CAMERA_INVALID_ARG);
     device->Release();
     device->Close();

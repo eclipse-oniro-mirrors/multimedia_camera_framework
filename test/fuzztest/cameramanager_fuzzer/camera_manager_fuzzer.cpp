@@ -139,7 +139,7 @@ void CameraManagerFuzzer::CameraManagerFuzzTest3(FuzzedDataProvider& fdp)
     cameraMuteServiceCallback.OnCameraMute(fdp.ConsumeBool());
     manager->IsCameraMuteSupported();
     manager->IsCameraMuted();
-    manager->PrelaunchCamera();
+    manager->PrelaunchCamera(0);
     manager->ResetRssPriority();
     manager->IsTorchSupported();
     TorchMode mode = TorchMode::TORCH_MODE_ON;
