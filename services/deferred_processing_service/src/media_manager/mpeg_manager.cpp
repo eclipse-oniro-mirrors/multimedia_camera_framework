@@ -353,13 +353,6 @@ MediaManagerError MpegManager::ReleaseMakerBuffer(sptr<SurfaceBuffer>& buffer)
 sptr<IPCFileDescriptor> MpegManager::GetFileFd(const std::string& requestId, int flags, const std::string& tag)
 {
     std::string path = PATH + requestId + tag;
-
-    char* canonicalPath = realpath(path.c_str(), nullptr);
-    if (canonicalPath == nullptr) {
-        DP_ERR_LOG("Failed to canonicalize path: %{public}s", path.c_str());
-        return nullptr;
-    }
-    
     if (tag == TEMP_TAG) {
         tempPath_ = path;
     } else {
