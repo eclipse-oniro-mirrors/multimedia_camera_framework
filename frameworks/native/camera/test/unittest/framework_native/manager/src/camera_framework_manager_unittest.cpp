@@ -251,7 +251,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_007, Test
     ret = [&manager]() {
         sptr<ICameraService> proxy = nullptr;
         manager->SetServiceProxy(proxy);
-        return manager->PrelaunchCamera();
+        return manager->PrelaunchCamera(0);
     }();
     EXPECT_EQ(ret, CameraErrorCode::SERVICE_FATL_ERROR);
 }

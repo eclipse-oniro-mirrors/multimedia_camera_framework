@@ -951,7 +951,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_017, Test
         EffectParam effectParam = {0, 0, 0};
         EXPECT_EQ(cameraManager_->SetPrelaunchConfig(cameraId, RestoreParamTypeOhos::PERSISTENT_DEFAULT_PARAM_OHOS,
             activeTime, effectParam), SUCCESS);
-        EXPECT_EQ(cameraManager_->PrelaunchCamera(), SERVICE_FATL_ERROR);
+        EXPECT_EQ(cameraManager_->PrelaunchCamera(0), SERVICE_FATL_ERROR);
         EXPECT_EQ(cameraManager_->PreSwitchCamera(cameraId), SUCCESS);
 
         activeTime = 15;
@@ -4725,7 +4725,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_114, Test
         EffectParam effectParam = {0, 0, 0};
         EXPECT_EQ(cameraManager_->SetPrelaunchConfig(cameraId, RestoreParamTypeOhos::PERSISTENT_DEFAULT_PARAM_OHOS,
             activeTime, effectParam), SUCCESS);
-        EXPECT_EQ(cameraManager_->PrelaunchCamera(), SUCCESS);
+        EXPECT_EQ(cameraManager_->PrelaunchCamera(0), SUCCESS);
         EXPECT_EQ(cameraManager_->PreSwitchCamera(cameraId), SUCCESS);
         EXPECT_EQ(cameraManager_->ResetRssPriority(), SUCCESS);
     } else {

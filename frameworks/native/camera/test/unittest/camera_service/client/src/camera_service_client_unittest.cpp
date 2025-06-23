@@ -1015,12 +1015,12 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_012, TestSize.L
         EXPECT_EQ(intResult, 0);
     }
 
-    intResult = camManagerObj->PrelaunchCamera();
+    intResult = camManagerObj->PrelaunchCamera(0);
     EXPECT_EQ(intResult, 7400201);
     // CameraManager instance has been changed, need recover
     camManagerObj->SetServiceProxy(nullptr);
 
-    intResult = camManagerObj->PrelaunchCamera();
+    intResult = camManagerObj->PrelaunchCamera(0);
     EXPECT_EQ(intResult, 7400201);
 
     bool isPreLaunchSupported = camManagerObj->IsPrelaunchSupported(cameras_[0]);
@@ -1150,7 +1150,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_015, TestSize.L
     hCameraServiceProxy->SetTorchCallback(torchSvcCallback);
     hCameraServiceProxy->MuteCamera(true);
     hCameraServiceProxy->MuteCamera(false);
-    hCameraServiceProxy->PrelaunchCamera();
+    hCameraServiceProxy->PrelaunchCamera(0);
     hCameraServiceProxy->SetPrelaunchConfig(cameras_[0]->GetID(),
         RestoreParamTypeOhos::NO_NEED_RESTORE_PARAM_OHOS, 0, effectParam);
     hCameraServiceProxy->SetTorchLevel(0);
@@ -1355,7 +1355,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_022, TestSize.L
     hCameraServiceProxy->SetTorchCallback(torchSvcCallback);
     hCameraServiceProxy->MuteCamera(true);
     hCameraServiceProxy->MuteCamera(false);
-    hCameraServiceProxy->PrelaunchCamera();
+    hCameraServiceProxy->PrelaunchCamera(0);
     hCameraServiceProxy->SetPrelaunchConfig(cameras_[0]->GetID(),
         RestoreParamTypeOhos::NO_NEED_RESTORE_PARAM_OHOS, 0, effectParam);
     hCameraServiceProxy->SetTorchLevel(0);
