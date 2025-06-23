@@ -275,11 +275,11 @@ int32_t GetCaptureId(sptr<SurfaceBuffer> surfaceBuffer)
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::captureId, captureId);
     if (burstSeqId != invalidSeqenceId && captureId >= 0) {
         maskBurstSeqId = ((captureId & captureIdMask) << captureIdShit) | burstSeqId;
-        MEDIA_INFO_LOG("PhotoListener captureId:%{public}d, burstSeqId:%{public}d, maskBurstSeqId = %{public}d",
+        MEDIA_DEBUG_LOG("PhotoListener captureId:%{public}d, burstSeqId:%{public}d, maskBurstSeqId = %{public}d",
             captureId, burstSeqId, maskBurstSeqId);
         return maskBurstSeqId;
     }
-    MEDIA_INFO_LOG("PhotoListener captureId:%{public}d, burstSeqId:%{public}d", captureId, burstSeqId);
+    MEDIA_DEBUG_LOG("PhotoListener captureId:%{public}d, burstSeqId:%{public}d", captureId, burstSeqId);
     return captureId;
 }
 
