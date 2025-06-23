@@ -168,6 +168,7 @@ ohos_unittest("camera_deferred_unittest") {
     "${multimedia_camera_framework_path}/common:camera_utils",
     "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/idls:camera_deferred_idl_sa_stub",
+    "${multimedia_camera_framework_path}/test/test_common:test_common",
   ]
 
   public_configs = [ "${multimedia_camera_framework_path}/services/deferred_processing_service/idls:deferred_processing_service_idl_config", ]
@@ -235,12 +236,12 @@ ohos_unittest("camera_deferred_unittest") {
     external_deps += [ "thermal_manager:thermalsrv_client" ]
     defines += [ "CAMERA_USE_THERMAL" ]
   }
- 
+
   if (use_battery_manager) {
     external_deps += [ "battery_manager:batterysrv_client" ]
     defines += [ "CAMERA_USE_BATTERY" ]
   }
- 
+
   if (use_power_manager) {
     external_deps += [ "power_manager:powermgr_client" ]
     defines += [ "CAMERA_USE_POWER" ]

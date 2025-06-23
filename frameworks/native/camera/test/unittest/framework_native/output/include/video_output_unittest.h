@@ -41,7 +41,6 @@ public:
     /* TearDown:Execute after each test case */
     void TearDown(void);
 
-    void NativeAuthorization(void);
     sptr<CaptureOutput> CreateVideoOutput();
 };
 

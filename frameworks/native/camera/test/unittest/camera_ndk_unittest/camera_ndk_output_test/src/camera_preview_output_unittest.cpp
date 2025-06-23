@@ -19,36 +19,22 @@
 #include "accesstoken_kit.h"
 #include "token_setproc.h"
 #include "nativetoken_kit.h"
+#include "test_token.h"
+
 using namespace testing::ext;
 
 namespace OHOS {
 namespace CameraStandard {
 
-void CameraPreviewOutputUnitTest::SetUpTestCase(void) {}
+void CameraPreviewOutputUnitTest::SetUpTestCase(void)
+{
+    ASSERT_TRUE(TestToken::GetAllCameraPermission());
+}
 
 void CameraPreviewOutputUnitTest::TearDownTestCase(void) {}
 
 void CameraPreviewOutputUnitTest::SetUp(void)
 {
-    // set native token
-    uint64_t tokenId;
-    const char *perms[2];
-    perms[0] = "ohos.permission.DISTRIBUTED_DATASYNC";
-    perms[1] = "ohos.permission.CAMERA";
-    NativeTokenInfoParams infoInstance = {
-        .dcapsNum = 0,
-        .permsNum = 2,
-        .aclsNum = 0,
-        .dcaps = NULL,
-        .perms = perms,
-        .acls = NULL,
-        .processName = "native_camera_tdd",
-        .aplStr = "system_basic",
-    };
-    tokenId = GetAccessTokenId(&infoInstance);
-    SetSelfTokenID(tokenId);
-    OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
-
     InitCamera();
 }
 

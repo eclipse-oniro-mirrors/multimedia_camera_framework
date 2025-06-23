@@ -37,8 +37,6 @@ public:
     void SetUp(void);
     /* TearDown:Execute after each test case */
     void TearDown(void);
-
-    void NativeAuthorization(void);
 };
 
 class MockCameraOcclusionDetectCallback : public OHOS::CameraStandard::CameraOcclusionDetectCallback {

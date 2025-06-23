@@ -13,42 +13,25 @@
  * limitations under the License.
  */
 
-#include "time_lapse_photo_session_fuzzer.h"
+#include <fuzzer/FuzzedDataProvider.h>
+
+#include "accesstoken_kit.h"
 #include "camera_log.h"
 #include "camera_output_capability.h"
 #include "input/camera_manager.h"
 #include "message_parcel.h"
-#include "time_lapse_photo_session.h"
-#include "token_setproc.h"
 #include "nativetoken_kit.h"
-#include "accesstoken_kit.h"
-#include <fuzzer/FuzzedDataProvider.h>
+#include "test_token.h"
+#include "time_lapse_photo_session.h"
+#include "time_lapse_photo_session_fuzzer.h"
+#include "token_setproc.h"
+
 
 namespace OHOS {
 namespace CameraStandard {
 namespace TimeLapsePhotoSessionFuzzer {
 const int32_t NUM_TWO = 2;
 static constexpr int32_t MIN_SIZE_NUM = 320;
-void GetPermission()
-{
-    uint64_t tokenId;
-    const char* perms[2];
-    perms[0] = "ohos.permission.DISTRIBUTED_DATASYNC";
-    perms[1] = "ohos.permission.CAMERA";
-    NativeTokenInfoParams infoInstance = {
-        .dcapsNum = 0,
-        .permsNum = 2,
-        .aclsNum = 0,
-        .dcaps = NULL,
-        .perms = perms,
-        .acls = NULL,
-        .processName = "native_camera_tdd",
-        .aplStr = "system_basic",
-    };
-    tokenId = GetAccessTokenId(&infoInstance);
-    SetSelfTokenID(tokenId);
-    OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
-}
 
 sptr<CameraManager> manager;
 sptr<TimeLapsePhotoSession> session;
@@ -485,7 +468,7 @@ void Test(uint8_t *rawData, size_t size)
     if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
          return;
     }
-    GetPermission();
+    CHECK_ERROR_RETURN_LOG(!TestToken::GetAllCameraPermission(), "GetPermission error");
     manager = CameraManager::GetInstance();
     sptr<CaptureSession> captureSession = manager->CreateCaptureSession(sceneMode);
     session = reinterpret_cast<TimeLapsePhotoSession*>(captureSession.GetRefPtr());

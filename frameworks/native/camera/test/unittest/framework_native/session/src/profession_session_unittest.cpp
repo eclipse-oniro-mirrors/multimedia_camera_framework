@@ -13,8 +13,6 @@
  * limitations under the License.
  */
 
-#include "profession_session_unittest.h"
-
 #include "access_token.h"
 #include "accesstoken_kit.h"
 #include "camera_error_code.h"
@@ -24,7 +22,9 @@
 #include "ipc_skeleton.h"
 #include "nativetoken_kit.h"
 #include "os_account_manager.h"
+#include "profession_session_unittest.h"
 #include "test_common.h"
+#include "test_token.h"
 #include "token_setproc.h"
 
 #define METERING_MODE_UNDEFINE (-1)
@@ -56,6 +56,7 @@ public:
 void ProfessionSessionUnitTest::SetUpTestCase(void)
 {
     MEDIA_DEBUG_LOG("DeferredProcUnitTest::SetUpTestCase started!");
+    ASSERT_TRUE(TestToken::GetAllCameraPermission());
 }
 
 void ProfessionSessionUnitTest::TearDownTestCase(void)
@@ -65,7 +66,6 @@ void ProfessionSessionUnitTest::TearDownTestCase(void)
 
 void ProfessionSessionUnitTest::SetUp()
 {
-    NativeAuthorization();
     manager_ = CameraManager::GetInstance();
     ASSERT_NE(manager_, nullptr);
     cameras_ = manager_->GetSupportedCameras();
@@ -89,27 +89,6 @@ void ProfessionSessionUnitTest::TearDown()
     manager_ = nullptr;
     session_ = nullptr;
     input_ = nullptr;
-}
-
-void ProfessionSessionUnitTest::NativeAuthorization()
-{
-    uint64_t tokenId;
-    const char* perms[2];
-    perms[0] = "ohos.permission.DISTRIBUTED_DATASYNC";
-    perms[1] = "ohos.permission.CAMERA";
-    NativeTokenInfoParams infoInstance = {
-        .dcapsNum = 0,
-        .permsNum = 2,
-        .aclsNum = 0,
-        .dcaps = NULL,
-        .perms = perms,
-        .acls = NULL,
-        .processName = "native_camera_tdd",
-        .aplStr = "system_basic",
-    };
-    tokenId = GetAccessTokenId(&infoInstance);
-    SetSelfTokenID(tokenId);
-    OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
 }
 
 bool ProfessionSessionUnitTest::IsSupportMode(SceneMode mode)

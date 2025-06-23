@@ -360,9 +360,6 @@ public:
     std::vector<Profile> previewProfiles_;
     std::vector<Profile> photoProfiles_;
     std::vector<VideoProfile> videoProfiles_;
-
-private:
-    static void SetNativeToken(void);
 };
 } // CameraStandard
 } // OHOS

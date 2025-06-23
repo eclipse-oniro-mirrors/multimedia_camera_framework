@@ -13,17 +13,19 @@
  * limitations under the License.
  */
 
-#include "stream_capture_fuzzer.h"
+#include <fuzzer/FuzzedDataProvider.h>
+
+#include "access_token.h"
+#include "accesstoken_kit.h"
 #include "foundation/multimedia/camera_framework/common/utils/camera_log.h"
-#include "metadata_utils.h"
+#include "hap_token_info.h"
 #include "iconsumer_surface.h"
 #include "ipc_skeleton.h"
-#include "access_token.h"
-#include "hap_token_info.h"
-#include "accesstoken_kit.h"
+#include "metadata_utils.h"
 #include "nativetoken_kit.h"
+#include "stream_capture_fuzzer.h"
+#include "test_token.h"
 #include "token_setproc.h"
-#include <fuzzer/FuzzedDataProvider.h>
 
 using namespace std;
 
@@ -35,31 +37,15 @@ const int32_t PHOTO_WIDTH = 1280;
 const int32_t PHOTO_HEIGHT = 960;
 const int32_t PHOTO_FORMAT = 2000;
 static constexpr int32_t MIN_SIZE_NUM = 120;
-bool g_isStreamCapturePermission = false;
-void StreamCaptureFuzzTestGetPermission()
-{
-    if (!g_isStreamCapturePermission) {
-        uint64_t tokenId;
-        const char *perms[0];
-        perms[0] = "ohos.permission.CAMERA";
-        NativeTokenInfoParams infoInstance = { .dcapsNum = 0, .permsNum = 1, .aclsNum = 0, .dcaps = NULL,
-            .perms = perms, .acls = NULL, .processName = "camera_capture", .aplStr = "system_basic",
-        };
-        tokenId = GetAccessTokenId(&infoInstance);
-        SetSelfTokenID(tokenId);
-        OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
-        g_isStreamCapturePermission = true;
-    }
-}
 
 void StreamCaptureFuzzTest(uint8_t *rawData, size_t size)
 {
     FuzzedDataProvider fdp(rawData, size);
     if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
-         return;
-     }
-    StreamCaptureFuzzTestGetPermission();
-    
+        return;
+    }
+    CHECK_ERROR_RETURN_LOG(!TestToken::GetAllCameraPermission(), "GetPermission error");
+
     int32_t itemCount = 10;
     int32_t dataSize = 100;
     std::vector<uint8_t> streams = fdp.ConsumeBytes<uint8_t>(dataSize);
@@ -68,7 +54,7 @@ void StreamCaptureFuzzTest(uint8_t *rawData, size_t size)
     ability->addEntry(OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS, streams.data(), streams.size() / LIMITCOUNT);
     int32_t compensationRange[2] = {fdp.ConsumeIntegral<int32_t>(), fdp.ConsumeIntegral<int32_t>()};
     ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_RANGE, compensationRange,
-                      sizeof(compensationRange) / sizeof(compensationRange[0]));
+        sizeof(compensationRange) / sizeof(compensationRange[0]));
     float focalLength = fdp.ConsumeFloatingPoint<float>();
     ability->addEntry(OHOS_ABILITY_FOCAL_LENGTH, &focalLength, 1);
 
@@ -80,7 +66,7 @@ void StreamCaptureFuzzTest(uint8_t *rawData, size_t size)
 
     const camera_rational_t aeCompensationStep[] = {{rawData[0], rawData[1]}};
     ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_STEP, &aeCompensationStep,
-                      sizeof(aeCompensationStep) / sizeof(aeCompensationStep[0]));
+        sizeof(aeCompensationStep) / sizeof(aeCompensationStep[0]));
 
     MessageParcel data;
     data.WriteInterfaceToken(FORMMGR_INTERFACE_TOKEN);

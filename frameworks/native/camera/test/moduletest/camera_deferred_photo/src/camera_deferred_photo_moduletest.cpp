@@ -20,6 +20,7 @@
 #include "iconsumer_surface.h"
 #include "image_format.h"
 #include "token_setproc.h"
+#include "test_token.h"
 
 using namespace testing::ext;
 
@@ -39,6 +40,7 @@ constexpr int32_t WAIT_FOR_PHOTO_CB = 2;
 void CameraDeferredPhotoModuleTest::SetUpTestCase(void)
 {
     MEDIA_INFO_LOG("CameraDeferredPhotoModuleTest::SetUpTestCase is called");
+    ASSERT_TRUE(TestToken::GetAllCameraPermission());
 }
 
 
@@ -51,7 +53,6 @@ void CameraDeferredPhotoModuleTest::SetUp()
 {
     g_num++;
     MEDIA_INFO_LOG("CameraDeferredPhotoModuleTest::SetUp is called, g_num = %{public}d", g_num);
-    SetNativeToken();
 
     cameraManager_ = CameraManager::GetInstance();
     ASSERT_NE(cameraManager_, nullptr);
@@ -122,27 +123,6 @@ void CameraDeferredPhotoModuleTest::TearDown()
     cameraInput_.clear();
     captureSession_.clear();
     cameraManager_.clear();
-}
-
-void CameraDeferredPhotoModuleTest::SetNativeToken()
-{
-    uint64_t tokenId;
-    const char* perms[2];
-    perms[0] = "ohos.permission.DISTRIBUTED_DATASYNC";
-    perms[1] = "ohos.permission.CAMERA";
-    NativeTokenInfoParams infoInstance = {
-        .dcapsNum = 0,
-        .permsNum = 2,
-        .aclsNum = 0,
-        .dcaps = NULL,
-        .perms = perms,
-        .acls = NULL,
-        .processName = "camera_deferred_photo_mst",
-        .aplStr = "system_basic",
-    };
-    tokenId = GetAccessTokenId(&infoInstance);
-    SetSelfTokenID(tokenId);
-    OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
 }
 
 std::vector<SceneMode> CameraDeferredPhotoModuleTest::GetSupportedSceneModes(sptr<CameraDevice>& camera)

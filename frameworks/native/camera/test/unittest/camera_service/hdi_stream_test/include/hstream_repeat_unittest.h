@@ -40,7 +40,6 @@ public:
     /* TearDown:Execute after each test case */
     void TearDown(void);
 
-    void NativeAuthorization(void);
     HStreamRepeat* CreateHStreamRepeat(RepeatStreamType type = RepeatStreamType::PREVIEW);
     sptr<CaptureOutput> CreatePhotoOutput(Profile& photoProfile);
 };

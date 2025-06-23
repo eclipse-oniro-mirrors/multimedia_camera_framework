@@ -21,6 +21,7 @@
 #include <memory>
 #include <vector>
 #include <thread>
+#include "test_token.h"
 
 using namespace testing::ext;
 
@@ -723,6 +724,7 @@ bool CameraSessionModuleTest::IsSupportNow()
 void CameraSessionModuleTest::SetUpTestCase(void)
 {
     MEDIA_INFO_LOG("SetUpTestCase of camera test case!");
+    ASSERT_TRUE(TestToken::GetAllCameraPermission());
 }
 
 void CameraSessionModuleTest::TearDownTestCase(void)
@@ -758,9 +760,6 @@ void CameraSessionModuleTest::SetUpInit()
 void CameraSessionModuleTest::SetUp()
 {
     MEDIA_INFO_LOG("SetUp");
-    // set native token
-    SetNativeToken();
-
     SetUpInit();
     manager_ = CameraManager::GetInstance();
     ASSERT_NE(manager_, nullptr);
@@ -826,27 +825,6 @@ void CameraSessionModuleTest::TearDown()
         input_->Release();
     }
     MEDIA_INFO_LOG("TearDown end");
-}
-
-void CameraSessionModuleTest::SetNativeToken()
-{
-    uint64_t tokenId;
-    const char* perms[2];
-    perms[0] = "ohos.permission.DISTRIBUTED_DATASYNC";
-    perms[1] = "ohos.permission.CAMERA";
-    NativeTokenInfoParams infoInstance = {
-        .dcapsNum = 0,
-        .permsNum = 2,
-        .aclsNum = 0,
-        .dcaps = NULL,
-        .perms = perms,
-        .acls = NULL,
-        .processName = "native_camera_tdd",
-        .aplStr = "system_basic",
-    };
-    tokenId = GetAccessTokenId(&infoInstance);
-    SetSelfTokenID(tokenId);
-    OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
 }
 
 bool CameraSessionModuleTest::IsSceneModeSupported(SceneMode mode)
@@ -7447,7 +7425,7 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_024, TestSize.Level1)
     std::vector<ColorSpace> colorSpaceLists = session_->GetSupportedColorSpaces();
     bool falg = false;
     for (auto curColorSpace : colorSpaceLists) {
-        if ( curColorSpace == ColorSpace::SRGB) {
+        if (curColorSpace == ColorSpace::SRGB) {
             falg = true;
             break;
         }

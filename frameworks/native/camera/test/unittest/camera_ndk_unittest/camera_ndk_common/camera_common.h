@@ -50,7 +50,6 @@ public:
     Camera_Device *cameraDevice = nullptr;
     uint32_t cameraDeviceSize = 0;
     std::shared_ptr<Media::ImageReceiver> imageReceiver;
-    static void SetNativeToken();
     void InitCamera(void);
     void ReleaseCamera(void);
     void ReleaseImageReceiver(void);

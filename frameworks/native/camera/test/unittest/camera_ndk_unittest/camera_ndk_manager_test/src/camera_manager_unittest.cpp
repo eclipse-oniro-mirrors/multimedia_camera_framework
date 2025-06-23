@@ -25,36 +25,22 @@
 #include "camera_error_code.h"
 #include "camera_output_capability.h"
 #include "camera_manager_impl.h"
+#include "test_token.h"
 
 using namespace testing::ext;
 
 namespace OHOS {
 namespace CameraStandard {
 
-void CameraManagerUnitTest::SetUpTestCase(void) {}
+void CameraManagerUnitTest::SetUpTestCase(void)
+{
+    ASSERT_TRUE(TestToken::GetAllCameraPermission());
+}
 
 void CameraManagerUnitTest::TearDownTestCase(void) {}
 
 void CameraManagerUnitTest::SetUp(void)
 {
-    uint64_t tokenId;
-    const char *perms[2];
-    perms[0] = "ohos.permission.DISTRIBUTED_DATASYNC";
-    perms[1] = "ohos.permission.CAMERA";
-    NativeTokenInfoParams infoInstance = {
-        .dcapsNum = 0,
-        .permsNum = 2,
-        .aclsNum = 0,
-        .dcaps = NULL,
-        .perms = perms,
-        .acls = NULL,
-        .processName = "native_camera_tdd",
-        .aplStr = "system_basic",
-    };
-    tokenId = GetAccessTokenId(&infoInstance);
-    SetSelfTokenID(tokenId);
-    OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
-
     InitCamera();
 }
 

@@ -39,8 +39,6 @@ public:
     /* TearDown:Execute after each test case */
     void TearDown(void);
 
-    void NativeAuthorization(void);
-
     void InitSessionAndOperator(uint32_t callerToken, int32_t opMode,
         sptr<HCaptureSession>&  session, sptr<HStreamOperator>&  hStreamOperator);
 

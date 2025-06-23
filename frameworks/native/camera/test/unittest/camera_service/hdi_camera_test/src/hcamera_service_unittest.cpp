@@ -29,6 +29,7 @@
 #include "nativetoken_kit.h"
 #include "slow_motion_session.h"
 #include "surface.h"
+#include "test_token.h"
 #include "token_setproc.h"
 #include "os_account_manager.h"
 #include "camera_service_callback_stub.h"
@@ -51,6 +52,7 @@ sptr<HCameraHostManager> HCameraServiceUnit::cameraHostManager_ = nullptr;
 
 void HCameraServiceUnit::SetUpTestCase(void)
 {
+    ASSERT_TRUE(TestToken::GetAllCameraPermission());
     cameraHostManager_ = new(std::nothrow) HCameraHostManager(nullptr);
 }
 
@@ -63,7 +65,6 @@ void HCameraServiceUnit::TearDownTestCase(void)
 
 void HCameraServiceUnit::SetUp()
 {
-    NativeAuthorization();
     cameraService_ = new(std::nothrow) HCameraService(cameraHostManager_);
     ASSERT_NE(cameraService_, nullptr);
     cameraManager_ = CameraManager::GetInstance();
@@ -78,30 +79,6 @@ void HCameraServiceUnit::TearDown()
     if (cameraManager_) {
         cameraManager_ = nullptr;
     }
-}
-
-void HCameraServiceUnit::NativeAuthorization()
-{
-    const char *perms[3];
-    perms[0] = "ohos.permission.DISTRIBUTED_DATASYNC";
-    perms[1] = "ohos.permission.CAMERA";
-    perms[2] = "ohos.permission.CAMERA_CONTROL";
-    NativeTokenInfoParams infoInstance = {
-        .dcapsNum = 0,
-        .permsNum = 3,
-        .aclsNum = 0,
-        .dcaps = NULL,
-        .perms = perms,
-        .acls = NULL,
-        .processName = "native_camera_tdd",
-        .aplStr = "system_basic",
-    };
-    tokenId_ = GetAccessTokenId(&infoInstance);
-    uid_ = IPCSkeleton::GetCallingUid();
-    AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(uid_, userId_);
-    MEDIA_DEBUG_LOG("HCameraServiceUnit::NativeAuthorization uid:%{public}d", uid_);
-    SetSelfTokenID(tokenId_);
-    OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
 }
 
 class MockHCameraServiceCallbackStub : public CameraServiceCallbackStub {

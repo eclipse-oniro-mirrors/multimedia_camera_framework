@@ -18,6 +18,7 @@
 #include "photo_listener_impl.h"
 #include "photo_listener_impl_unittest.h"
 #include "surface_buffer_impl.h"
+#include "test_token.h"
 #include "video_key_info.h"
 
 using namespace testing;
@@ -28,7 +29,7 @@ namespace CameraStandard {
 
 void PhotoListenerImplUnitTest::SetUpTestCase(void)
 {
-    SetNativeToken();
+    ASSERT_TRUE(TestToken::GetAllCameraPermission());
 }
 
 void PhotoListenerImplUnitTest::TearDownTestCase(void) {}
@@ -357,4 +358,4 @@ HWTEST_F(PhotoListenerImplUnitTest, UnregisterCallback_001, TestSize.Level1)
 }
 
 } // namespace CameraStandard
-} // namespace OHOS
+} // namespace OHOS

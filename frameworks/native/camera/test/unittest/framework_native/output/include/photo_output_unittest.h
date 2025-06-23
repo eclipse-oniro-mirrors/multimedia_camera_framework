@@ -47,8 +47,7 @@ public:
     void SetUp(void);
     /* TearDown:Execute after each test case */
     void TearDown(void);
-
-    void NativeAuthorization(void);
+    
     sptr<CaptureOutput> CreatePhotoOutput();
     std::map<int32_t, captureMonitorInfo> captureIdToCaptureInfoMap_;
 };

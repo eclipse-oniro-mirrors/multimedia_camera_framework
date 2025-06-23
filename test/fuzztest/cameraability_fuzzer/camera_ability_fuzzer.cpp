@@ -13,16 +13,18 @@
  * limitations under the License.
  */
 
-#include "camera_ability_fuzzer.h"
-#include "camera_log.h"
-#include "message_parcel.h"
-#include "securec.h"
 #include <cstddef>
 #include <cstdint>
 #include <memory>
-#include "token_setproc.h"
-#include "nativetoken_kit.h"
+
 #include "accesstoken_kit.h"
+#include "camera_ability_fuzzer.h"
+#include "camera_log.h"
+#include "message_parcel.h"
+#include "nativetoken_kit.h"
+#include "securec.h"
+#include "test_token.h"
+#include "token_setproc.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -35,30 +37,9 @@ std::shared_ptr<CameraAbility> CameraAbilityFuzzer::fuzz_{nullptr};
 * tips: only support basic type
 */
 
-void GetPermission()
-{
-    uint64_t tokenId;
-    const char* perms[2];
-    perms[0] = "ohos.permission.DISTRIBUTED_DATASYNC";
-    perms[1] = "ohos.permission.CAMERA";
-    NativeTokenInfoParams infoInstance = {
-        .dcapsNum = 0,
-        .permsNum = 2,
-        .aclsNum = 0,
-        .dcaps = NULL,
-        .perms = perms,
-        .acls = NULL,
-        .processName = "native_camera_tdd",
-        .aplStr = "system_basic",
-    };
-    tokenId = GetAccessTokenId(&infoInstance);
-    SetSelfTokenID(tokenId);
-    OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
-}
-
 void CameraAbilityFuzzer::CameraAbilityFuzzTest(FuzzedDataProvider& fdp)
 {
-    GetPermission();
+    CHECK_ERROR_RETURN_LOG(!TestToken::GetAllCameraPermission(), "GetPermission error");
     fuzz_ = std::make_shared<CameraAbility>();
     CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
     fuzz_->HasFlash();

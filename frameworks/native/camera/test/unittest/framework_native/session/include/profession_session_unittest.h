@@ -48,8 +48,6 @@ public:
     sptr<ProfessionSession> session_;
     sptr<CaptureInput> input_;
     SceneMode sceneMode_;
-
-    void NativeAuthorization();
 };
 } // CameraStandard
 } // OHOS

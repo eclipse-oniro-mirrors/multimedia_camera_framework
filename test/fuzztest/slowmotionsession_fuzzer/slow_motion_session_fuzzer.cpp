@@ -13,19 +13,19 @@
  * limitations under the License.
  */
 
-#include "slow_motion_session_fuzzer.h"
+#include "accesstoken_kit.h"
 #include "camera_log.h"
 #include "camera_output_capability.h"
 #include "input/camera_manager.h"
+#include "ipc_skeleton.h"
 #include "message_parcel.h"
+#include "nativetoken_kit.h"
+#include "os_account_manager.h"
+#include "securec.h"
+#include "slow_motion_session_fuzzer.h"
+#include "test_token.h"
 #include "time_lapse_photo_session.h"
 #include "token_setproc.h"
-#include "nativetoken_kit.h"
-#include "accesstoken_kit.h"
-#include "securec.h"
-#include "ipc_skeleton.h"
-#include "os_account_manager.h"
-
 
 namespace OHOS {
 namespace CameraStandard {
@@ -35,27 +35,6 @@ const int32_t DEFAULT_DATA_LENGTH = 100;
 sptr<CameraManager> manager;
 std::vector<Profile> previewProfile_ = {};
 std::vector<VideoProfile> videoProfile_;
-
-void GetPermission()
-{
-    uint64_t tokenId;
-    const char *perms[2];
-    perms[0] = "ohos.permission.DISTRIBUTED_DATASYNC";
-    perms[1] = "ohos.permission.CAMERA";
-    NativeTokenInfoParams infoInstance = {
-        .dcapsNum = 0,
-        .permsNum = 2,
-        .aclsNum = 0,
-        .dcaps = NULL,
-        .perms = perms,
-        .acls = NULL,
-        .processName = "native_camera_tdd",
-        .aplStr = "system_basic",
-    };
-    tokenId = GetAccessTokenId(&infoInstance);
-    SetSelfTokenID(tokenId);
-    OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
-}
 
 sptr<CaptureOutput> CreatePreviewOutput()
 {
@@ -89,7 +68,6 @@ sptr<CaptureOutput> CreateVideoOutput()
 
 void SlowMotionSessionFuzzer::SlowMotionSessionFuzzTest(FuzzedDataProvider& fdp)
 {
-    GetPermission();
     manager = CameraManager::GetInstance();
     sptr<CaptureSession> captureSession = manager->CreateCaptureSession(SceneMode::SLOW_MOTION);
     std::vector<sptr<CameraDevice>> cameras;
@@ -139,6 +117,7 @@ void Test(uint8_t* data, size_t size)
     if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
         return;
     }
+    CHECK_ERROR_RETURN_LOG(!TestToken::GetAllCameraPermission(), "GetPermission error");
     auto slowMotionSession = std::make_unique<SlowMotionSessionFuzzer>();
     if (slowMotionSession == nullptr) {
         MEDIA_INFO_LOG("slowMotionSession is null");

@@ -25,6 +25,7 @@
 #include "surface.h"
 #include "system_ability_definition.h"
 #include "test_common.h"
+#include "test_token.h"
 #include "token_setproc.h"
 
 using namespace testing::ext;
@@ -109,6 +110,7 @@ void WAIT(uint32_t duration)
 void CameraBaseFunctionModuleTest::SetUpTestCase(void)
 {
     MEDIA_INFO_LOG("SetUpTestCase start.");
+    ASSERT_TRUE(TestToken::GetAllCameraPermission());
     MEDIA_INFO_LOG("SetUpTestCase end.");
 }
 
@@ -121,8 +123,6 @@ void CameraBaseFunctionModuleTest::TearDownTestCase(void)
 void CameraBaseFunctionModuleTest::SetUp()
 {
     MEDIA_INFO_LOG("SetUp start.");
-    SetNativeToken();
-
     cameraManager_ = CameraManager::GetInstance();
     ASSERT_NE(cameraManager_, nullptr);
     cameraDevices_ = cameraManager_->GetSupportedCameras();
@@ -159,26 +159,6 @@ void CameraBaseFunctionModuleTest::TearDown()
     }
 
     MEDIA_INFO_LOG("TearDown end.");
-}
-
-void CameraBaseFunctionModuleTest::SetNativeToken()
-{
-    uint64_t tokenId;
-    const char* perms[0];
-    perms[0] = "ohos.permission.CAMERA";
-    NativeTokenInfoParams infoInstance = {
-        .dcapsNum = 0,
-        .permsNum = 1,
-        .aclsNum = 0,
-        .dcaps = NULL,
-        .perms = perms,
-        .acls = NULL,
-        .processName = "native_camera_mst",
-        .aplStr = "system_basic",
-    };
-    tokenId = GetAccessTokenId(&infoInstance);
-    SetSelfTokenID(tokenId);
-    OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
 }
 
 void CameraBaseFunctionModuleTest::UpdateCameraOutputCapability(int32_t index, int32_t modeName)

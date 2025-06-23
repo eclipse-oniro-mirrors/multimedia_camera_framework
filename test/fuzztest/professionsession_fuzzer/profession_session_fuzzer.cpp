@@ -13,18 +13,20 @@
  * limitations under the License.
  */
 
-#include "profession_session_fuzzer.h"
-#include "camera_log.h"
-#include "message_parcel.h"
-#include "securec.h"
 #include <cstddef>
 #include <cstdint>
 #include <memory>
-#include "token_setproc.h"
-#include "nativetoken_kit.h"
+
 #include "accesstoken_kit.h"
-#include "os_account_manager.h"
+#include "camera_log.h"
 #include "ipc_skeleton.h"
+#include "message_parcel.h"
+#include "nativetoken_kit.h"
+#include "os_account_manager.h"
+#include "profession_session_fuzzer.h"
+#include "securec.h"
+#include "test_token.h"
+#include "token_setproc.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -68,27 +70,6 @@ uint32_t GetArrLength(T& arr)
         return 0;
     }
     return sizeof(arr) / sizeof(arr[0]);
-}
-
-void GetPermission()
-{
-    uint64_t tokenId;
-    const char* perms[2];
-    perms[0] = "ohos.permission.DISTRIBUTED_DATASYNC";
-    perms[1] = "ohos.permission.CAMERA";
-    NativeTokenInfoParams infoInstance = {
-        .dcapsNum = 0,
-        .permsNum = 2,
-        .aclsNum = 0,
-        .dcaps = NULL,
-        .perms = perms,
-        .acls = NULL,
-        .processName = "native_camera_tdd",
-        .aplStr = "system_basic",
-    };
-    tokenId = GetAccessTokenId(&infoInstance);
-    SetSelfTokenID(tokenId);
-    OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
 }
 
 sptr<CaptureOutput> CreatePreviewOutput(Profile& profile)
@@ -176,7 +157,7 @@ void Test()
         MEDIA_INFO_LOG("professionSession is null");
         return;
     }
-    GetPermission();
+    CHECK_ERROR_RETURN_LOG(!TestToken::GetAllCameraPermission(), "GetPermission error");
     manager_ = CameraManager::GetInstance();
     sptr<CaptureSession> captureSession = manager_->CreateCaptureSession(SceneMode::PROFESSIONAL_VIDEO);
     ProfessionSessionFuzzer::fuzz_ = static_cast<ProfessionSession*>(captureSession.GetRefPtr());

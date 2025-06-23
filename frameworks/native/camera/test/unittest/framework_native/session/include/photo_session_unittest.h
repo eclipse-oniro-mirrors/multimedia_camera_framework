@@ -34,7 +34,6 @@ public:
     /* TearDown:Execute after each test case */
     void TearDown(void);
 
-    void NativeAuthorization(void);
     void TestPhotoSessionPreconfig(sptr<CaptureInput>& input,
             PreconfigType preconfigType, ProfileSizeRatio profileSizeRatio);
 private:

@@ -37,6 +37,7 @@
 #include "token_setproc.h"
 #include "os_account_manager.h"
 #include "video_output_impl.h"
+#include "test_token.h"
 
 using namespace testing::ext;
 using ::testing::A;
@@ -49,42 +50,21 @@ namespace OHOS {
 namespace CameraStandard {
 using namespace OHOS::HDI::Camera::V1_1;
 
-void CameraVedioOutputUnit::SetUpTestCase(void) {}
+void CameraVedioOutputUnit::SetUpTestCase(void)
+{
+    ASSERT_TRUE(TestToken::GetAllCameraPermission());
+}
 
 void CameraVedioOutputUnit::TearDownTestCase(void) {}
 
 void CameraVedioOutputUnit::SetUp()
 {
-    NativeAuthorization();
     cameraManager_ = CameraManager::GetInstance();
 }
 
 void CameraVedioOutputUnit::TearDown()
 {
     cameraManager_ = nullptr;
-}
-
-void CameraVedioOutputUnit::NativeAuthorization()
-{
-    const char *perms[2];
-    perms[0] = "ohos.permission.DISTRIBUTED_DATASYNC";
-    perms[1] = "ohos.permission.CAMERA";
-    NativeTokenInfoParams infoInstance = {
-        .dcapsNum = 0,
-        .permsNum = 2,
-        .aclsNum = 0,
-        .dcaps = NULL,
-        .perms = perms,
-        .acls = NULL,
-        .processName = "native_camera_tdd",
-        .aplStr = "system_basic",
-    };
-    tokenId_ = GetAccessTokenId(&infoInstance);
-    uid_ = IPCSkeleton::GetCallingUid();
-    AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(uid_, userId_);
-    MEDIA_DEBUG_LOG("CameraVedioOutputUnit::NativeAuthorization uid:%{public}d", uid_);
-    SetSelfTokenID(tokenId_);
-    OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
 }
 
 sptr<CaptureOutput> CameraVedioOutputUnit::CreateVideoOutput()

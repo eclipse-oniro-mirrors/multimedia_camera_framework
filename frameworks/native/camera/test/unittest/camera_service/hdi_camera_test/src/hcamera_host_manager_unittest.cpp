@@ -12,13 +12,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "hcamera_host_manager_unitest.h"
+#include "hcamera_service.h"
+#include "ipc_skeleton.h"
 #include "nativetoken_kit.h"
-#include "token_setproc.h"
 #include "os_account_manager.h"
 #include "output/sketch_wrapper.h"
-#include "hcamera_service.h"
-#include "hcamera_host_manager_unitest.h"
-#include "ipc_skeleton.h"
+#include "test_token.h"
+#include "token_setproc.h"
 
 using namespace testing::ext;
 using namespace OHOS::CameraStandard::DeferredProcessing;
@@ -31,6 +32,7 @@ using namespace OHOS::HDI::Camera::V1_1;
 void HCameraHostManagerUnit::SetUpTestCase(void)
 {
     MEDIA_DEBUG_LOG("HCameraHostManagerUnit::SetUpTestCase started!");
+    ASSERT_TRUE(TestToken::GetAllCameraPermission());
 }
 
 void HCameraHostManagerUnit::TearDownTestCase(void)
@@ -41,7 +43,6 @@ void HCameraHostManagerUnit::TearDownTestCase(void)
 void HCameraHostManagerUnit::SetUp()
 {
     MEDIA_DEBUG_LOG("SetUp");
-    NativeAuthorization();
     cameraHostManager_ = new HCameraHostManager(nullptr);
     ASSERT_NE(cameraHostManager_, nullptr);
     cameraManager_ = CameraManager::GetInstance();
@@ -56,29 +57,6 @@ void HCameraHostManagerUnit::TearDown()
     if (cameraHostManager_ != nullptr) {
         cameraHostManager_ = nullptr;
     }
-}
-
-void HCameraHostManagerUnit::NativeAuthorization()
-{
-    const char *perms[2];
-    perms[0] = "ohos.permission.DISTRIBUTED_DATASYNC";
-    perms[1] = "ohos.permission.CAMERA";
-    NativeTokenInfoParams infoInstance = {
-        .dcapsNum = 0,
-        .permsNum = 2,
-        .aclsNum = 0,
-        .dcaps = NULL,
-        .perms = perms,
-        .acls = NULL,
-        .processName = "native_camera_tdd",
-        .aplStr = "system_basic",
-    };
-    tokenId_ = GetAccessTokenId(&infoInstance);
-    uid_ = IPCSkeleton::GetCallingUid();
-    AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(uid_, userId_);
-    MEDIA_DEBUG_LOG("CameraInputUnitTest::NativeAuthorization uid:%{public}d", uid_);
-    SetSelfTokenID(tokenId_);
-    OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
 }
 
 /*

@@ -22,6 +22,7 @@
 #include "accesstoken_kit.h"
 #include "camera_metadata_info.h"
 #include "metadata_utils.h"
+#include "test_token.h"
 
 namespace {
 
@@ -32,31 +33,14 @@ const int32_t LIMITSIZE = 24;
 namespace OHOS {
 namespace CameraStandard {
 
-bool CameraRestoreParamFuzzer::hasPermission = false;
 std::shared_ptr<HCameraRestoreParam> CameraRestoreParamFuzzer::fuzz_{nullptr};
-
-void CameraRestoreParamFuzzer::CheckPermission()
-{
-    if (!hasPermission) {
-        uint64_t tokenId;
-        const char *perms[0];
-        perms[0] = "ohos.permission.CAMERA";
-        NativeTokenInfoParams infoInstance = { .dcapsNum = 0, .permsNum = 1, .aclsNum = 0, .dcaps = NULL,
-            .perms = perms, .acls = NULL, .processName = "camera_capture", .aplStr = "system_basic",
-        };
-        tokenId = GetAccessTokenId(&infoInstance);
-        SetSelfTokenID(tokenId);
-        OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
-        hasPermission = true;
-    }
-}
 
 void CameraRestoreParamFuzzer::Test(uint8_t* data, size_t size)
 {
     if (fdp.remaining_bytes() < LIMITSIZE) {
         return;
     }
-    CheckPermission();
+    CHECK_ERROR_RETURN_LOG(!TestToken::GetAllCameraPermission(), "GetPermission error");
 
     std::string clientName;
     std::string cameraId;

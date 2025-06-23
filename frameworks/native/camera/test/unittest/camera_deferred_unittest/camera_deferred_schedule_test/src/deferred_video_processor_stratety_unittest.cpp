@@ -14,13 +14,13 @@
  */
 
 #include "accesstoken_kit.h"
+#include "deferred_video_processor_stratety_unittest.h"
 #include "ipc_skeleton.h"
+#include "istate.h"
 #include "nativetoken_kit.h"
 #include "os_account_manager.h"
+#include "test_token.h"
 #include "token_setproc.h"
-
-#include "deferred_video_processor_stratety_unittest.h"
-#include "istate.h"
 #include "video_camera_state.h"
 #include "video_charging_state.h"
 #include "video_hal_state.h"
@@ -37,38 +37,16 @@ using namespace OHOS::CameraStandard::DeferredProcessing;
 namespace OHOS {
 namespace CameraStandard {
 
-void DeferredVideoProcessorStratetyUnittest::SetUpTestCase(void) {}
+void DeferredVideoProcessorStratetyUnittest::SetUpTestCase(void)
+{
+    ASSERT_TRUE(TestToken::GetAllCameraPermission());
+}
 
 void DeferredVideoProcessorStratetyUnittest::TearDownTestCase(void) {}
 
-void DeferredVideoProcessorStratetyUnittest::SetUp()
-{
-    NativeAuthorization();
-}
+void DeferredVideoProcessorStratetyUnittest::SetUp() {}
 
 void DeferredVideoProcessorStratetyUnittest::TearDown() {}
-
-void DeferredVideoProcessorStratetyUnittest::NativeAuthorization()
-{
-    const char *perms[2];
-    perms[0] = "ohos.permission.DISTRIBUTED_DATASYNC";
-    perms[1] = "ohos.permission.CAMERA";
-    NativeTokenInfoParams infoInstance = {
-        .dcapsNum = 0,
-        .permsNum = 2,
-        .aclsNum = 0,
-        .dcaps = NULL,
-        .perms = perms,
-        .acls = NULL,
-        .processName = "native_camera_tdd",
-        .aplStr = "system_basic",
-    };
-    tokenId_ = GetAccessTokenId(&infoInstance);
-    uid_ = IPCSkeleton::GetCallingUid();
-    AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(uid_, userId_);
-    SetSelfTokenID(tokenId_);
-    OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
-}
 
 /*
  * Feature: Deferred
