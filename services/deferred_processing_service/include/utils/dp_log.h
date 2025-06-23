@@ -58,9 +58,12 @@
 #define DP_SEND_COMMAND_FAILED (8)
 #define DP_NOT_AVAILABLE (9)
 
+#define DP_LIKELY(x) __builtin_expect(!!(x), 1)
+#define DP_UNLIKELY(x) __builtin_expect(!!(x), 0)
+
 #define DP_CHECK_ERROR_RETURN_RET_LOG(cond, ret, fmt, ...)  \
     do {                                                    \
-        if (cond) {                                         \
+        if (DP_UNLIKELY(cond)) {                            \
             DP_ERR_LOG(fmt, ##__VA_ARGS__);                 \
             return ret;                                     \
         }                                                   \
@@ -68,7 +71,7 @@
 
 #define DP_CHECK_ERROR_RETURN_LOG(cond, fmt, ...)           \
     do {                                                    \
-        if (cond) {                                         \
+        if (DP_UNLIKELY(cond)) {                            \
             DP_ERR_LOG(fmt, ##__VA_ARGS__);                 \
             return;                                         \
         }                                                   \
@@ -76,14 +79,14 @@
 
 #define DP_CHECK_ERROR_PRINT_LOG(cond, fmt, ...)            \
     do {                                                    \
-        if (cond) {                                         \
+        if (DP_UNLIKELY(cond)) {                            \
             DP_ERR_LOG(fmt, ##__VA_ARGS__);                 \
         }                                                   \
     } while (0)
 
 #define DP_CHECK_ERROR_BREAK_LOG(cond, fmt, ...)            \
     if (1) {                                                \
-        if (cond) {                                         \
+        if (DP_UNLIKELY(cond)) {                            \
             DP_ERR_LOG(fmt, ##__VA_ARGS__);                 \
             break;                                          \
         }                                                   \
