@@ -297,7 +297,7 @@ CameraOutputCapability CameraManagerImpl::GetSupportedOutputCapability(CameraDev
         aniToNativeMap = g_aniToNativeSupportedModeSys;
     }
     int32_t modeValue = mode.get_value();
-    MEDIA_ERR_LOG("GetSupportedOutputCapability SceneMode mode = %{public}d ", modeValue);
+    MEDIA_INFO_LOG("GetSupportedOutputCapability SceneMode mode = %{public}d ", modeValue);
     auto itr = aniToNativeMap.find(modeValue);
     if (itr != aniToNativeMap.end()) {
         sceneMode = itr->second;
@@ -306,7 +306,7 @@ CameraOutputCapability CameraManagerImpl::GetSupportedOutputCapability(CameraDev
         CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT, "Not support the input mode");
         return nullImpl;
     }
-    MEDIA_ERR_LOG("GetSupportedOutputCapability SceneMode sceneMode = %{public}d ", sceneMode);
+    MEDIA_INFO_LOG("GetSupportedOutputCapability SceneMode sceneMode = %{public}d ", sceneMode);
 
     if (cameraInfo == nullptr) {
         MEDIA_ERR_LOG("CameraManagerAni::GetSupportedOutputCapability get camera info fail");

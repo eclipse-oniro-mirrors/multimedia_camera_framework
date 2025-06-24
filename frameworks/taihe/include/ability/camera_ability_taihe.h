@@ -67,20 +67,20 @@ public:
 };
 
 class PhotoConflictFunctionsImpl : public FunctionsImpl, public ZoomQueryImpl, public MacroQueryImpl {
-    public:
+public:
     explicit PhotoConflictFunctionsImpl(sptr<OHOS::CameraStandard::CameraAbility> obj) : FunctionsImpl(obj) {}
     virtual ~PhotoConflictFunctionsImpl() = default;
 };
 
 class VideoConflictFunctionsImpl : public FunctionsImpl, public ZoomQueryImpl, public MacroQueryImpl {
-    public:
+public:
     explicit VideoConflictFunctionsImpl(sptr<OHOS::CameraStandard::CameraAbility> obj) : FunctionsImpl(obj) {}
     virtual ~VideoConflictFunctionsImpl() = default;
 };
 
 class PortraitPhotoConflictFunctionsImpl : public FunctionsImpl, public ZoomQueryImpl, public PortraitQueryImpl,
                                            public ApertureQueryImpl {
-    public:
+public:
     explicit PortraitPhotoConflictFunctionsImpl(sptr<OHOS::CameraStandard::CameraAbility> obj) : FunctionsImpl(obj) {}
     virtual ~PortraitPhotoConflictFunctionsImpl() = default;
 };

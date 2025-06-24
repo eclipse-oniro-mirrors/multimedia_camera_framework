@@ -33,8 +33,6 @@ void DepthDataImpl::ReleaseSync()
     asyncContext->objectInfo = this;
     CAMERA_START_ASYNC_TRACE(asyncContext->funcName, asyncContext->taskId);
     CameraTaiheWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(asyncContext->queueTask, [&asyncContext]() {
-        if (asyncContext->objectInfo != nullptr) {
-        }
         CameraUtilsTaihe::CheckError(asyncContext->errorCode);
     });
     CAMERA_FINISH_ASYNC_TRACE(asyncContext->funcName, asyncContext->taskId);

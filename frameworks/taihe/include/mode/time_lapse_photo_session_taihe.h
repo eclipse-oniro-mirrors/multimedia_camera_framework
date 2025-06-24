@@ -86,7 +86,6 @@ public:
     void SetTimeLapsePreviewType(ohos::multimedia::camera::TimeLapsePreviewType type);
     void SetTimeLapseInterval(int32_t interval);
     int32_t GetTimeLapseInterval();
-    // ohos::multimedia::camera::TimeLapsePreviewType GetTimeLapsePreviewType();
     void SetTimeLapseRecordState(ohos::multimedia::camera::TimeLapseRecordState state);
     array<int32_t> GetSupportedTimeLapseIntervalRange();
     void StartTryAE();
@@ -139,4 +138,5 @@ protected:
 };
 } // namespace Camera
 } // namespace Ani
+
 #endif // FRAMEWORKS_TAIHE_INCLUDE_TIME_LAPSE_PHOTO_SESSION_TAIHE_H

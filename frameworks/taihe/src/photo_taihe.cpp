@@ -22,7 +22,6 @@ namespace Ani {
 namespace Camera {
 void PhotoImpl::ReleaseSync()
 {
-    //to_do
 }
 } // namespace Camera
 } // namespace Ani

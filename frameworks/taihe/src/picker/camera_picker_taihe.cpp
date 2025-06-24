@@ -240,10 +240,8 @@ void PickAsync(ohos::multimedia::cameraPicker::weak::CameraPickerJsAsyncContext 
     auto ctx = ctxImpl->GetCameraPickerAsyncContext();
     CHECK_ERROR_RETURN(ctx == nullptr);
     ctx->bRetBool = false;
-    MEDIA_INFO_LOG("CameraPicker PickAsync 11111");
     ctx->uiExtCallback->WaitResultLock();
     MEDIA_INFO_LOG("CameraPicker PickAsync end");
-    MEDIA_INFO_LOG("CameraPicker wait result end");
 }
 
 PickerResult GetPickerResult(ohos::multimedia::cameraPicker::weak::CameraPickerJsAsyncContext asyncContext)

@@ -21,6 +21,10 @@
 
 namespace Ani::Camera {
 
+constexpr size_t ZOOM_RANGE_SIZE = 2;
+constexpr size_t ZOOM_MIN_INDEX = 0;
+constexpr size_t ZOOM_MAX_INDEX = 1;
+
 enum Rotation {
     ROTATION_0 = 0,
     ROTATION_90 = 90,
@@ -177,9 +181,9 @@ array<PhysicalAperture> CameraUtilsTaihe::ToTaiheArrayPhysicalAperture(
     std::vector<std::vector<float>> physicalApertures)
 {
     std::vector<PhysicalAperture> resVec;
-    size_t zoomRangeSize = 2;
-    size_t zoomMinIndex = 0;
-    size_t zoomMaxIndex = 1;
+    size_t zoomRangeSize = ZOOM_RANGE_SIZE;
+    size_t zoomMinIndex = ZOOM_MIN_INDEX;
+    size_t zoomMaxIndex = ZOOM_MAX_INDEX;
     std::vector<double> apertures;
     for (size_t i = 0; i < physicalApertures.size(); i++) {
         if (physicalApertures[i].size() <= zoomRangeSize) {

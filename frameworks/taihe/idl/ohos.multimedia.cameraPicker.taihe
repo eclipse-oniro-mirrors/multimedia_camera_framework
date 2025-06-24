@@ -64,7 +64,7 @@ function pick(context: Context, mediaTypes: Array<PickerMediaType>, pickerProfil
       funcAsync(src);
     } catch (e : BusinessError) {
       worker.join()
-      reject(e as BusinessError);
+      reject(e);
     }
   });
 }

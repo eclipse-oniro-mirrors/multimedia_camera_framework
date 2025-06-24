@@ -38,6 +38,8 @@ namespace Camera {
 using namespace OHOS;
 using namespace taihe;
 using namespace ohos::multimedia::camera;
+constexpr int32_t CAPTURE_ID_MASK = 0x0000FFFF;
+constexpr int32_t CAPTURE_ID_SHIFT = 16;
 static std::mutex g_photoImageMutex;
 static std::mutex g_assembleImageMutex;
 uint32_t PhotoOutputImpl::photoOutputTaskId_ = CAMERA_PHOTO_OUTPUT_TASKID;
@@ -109,8 +111,8 @@ int32_t GetCaptureId(sptr<SurfaceBuffer> surfaceBuffer)
     int32_t burstSeqId = -1;
     int32_t maskBurstSeqId;
     int32_t invalidSeqenceId = -1;
-    int32_t captureIdMask = 0x0000FFFF;
-    int32_t captureIdShit = 16;
+    int32_t captureIdMask = CAPTURE_ID_MASK;
+    int32_t captureIdShit = CAPTURE_ID_SHIFT;
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::burstSequenceId, burstSeqId);
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::captureId, captureId);
     if (burstSeqId != invalidSeqenceId && captureId >= 0) {
@@ -705,22 +707,15 @@ void PhotoListenerAni::ExecuteDeepCopySurfaceBuffer() __attribute__((no_sanitize
     }
     // deep copy buffer
     newSurfaceBuffer = SurfaceBuffer::Create();
-    MEDIA_DEBUG_LOG("ExecuteDeepCopySurfaceBuffer DeepCopyBuffer E");
     DeepCopyBuffer(newSurfaceBuffer, surfaceBuffer, captureId);
-    MEDIA_DEBUG_LOG("ExecuteDeepCopySurfaceBuffer DeepCopyBuffer X");
-    MEDIA_DEBUG_LOG("ExecuteDeepCopySurfaceBuffer ReleaseBuffer E");
     photoSurface_->ReleaseBuffer(surfaceBuffer, -1);
-    MEDIA_DEBUG_LOG("ExecuteDeepCopySurfaceBuffer ReleaseBuffer X");
     {
         std::lock_guard<std::mutex> lock(g_photoImageMutex);
         photoOutput = photoOutput_.promote();
-        MEDIA_INFO_LOG("PhotoListenerAni AssembleAuxiliaryPhoto 3");
         photoOutput->captureIdCountMap_[captureId] = auxiliaryCount;
         photoOutput->captureIdAuxiliaryCountMap_[captureId]++;
-        MEDIA_INFO_LOG("PhotoListenerAni AssembleAuxiliaryPhoto 4 captureId = %{public}d", captureId);
         photoProxy = CreateCameraPhotoProxy(surfaceBuffer);
         photoOutput->photoProxyMap_[captureId] = photoProxy;
-        MEDIA_INFO_LOG("PhotoListenerAni AssembleAuxiliaryPhoto 5");
         CHECK_ERROR_RETURN_LOG(!photoProxy, "photoProxy is nullptr");
         if (photoProxy->isHighQuality_ && (callbackFlag_ & OHOS::CameraStandard::CAPTURE_PHOTO) != 0) {
             UpdateMainPictureStageOneJSCallback(surfaceBuffer, timestamp);
@@ -728,11 +723,8 @@ void PhotoListenerAni::ExecuteDeepCopySurfaceBuffer() __attribute__((no_sanitize
         }
 
         BufferHandle* bufferHandle = newSurfaceBuffer->GetBufferHandle();
-        MEDIA_INFO_LOG("PhotoListenerAni AssembleAuxiliaryPhoto 6");
         CHECK_ERROR_RETURN_LOG(bufferHandle == nullptr, "invalid bufferHandle");
-        MEDIA_INFO_LOG("PhotoListenerAni AssembleAuxiliaryPhoto 7");
         newSurfaceBuffer->Map();
-        MEDIA_INFO_LOG("PhotoListenerAni AssembleAuxiliaryPhoto 8");
         photoProxy->bufferHandle_ = bufferHandle;
 
         std::shared_ptr<OHOS::CameraStandard::PictureIntf> pictureProxy =
@@ -1199,13 +1191,15 @@ std::unique_ptr<Media::PixelMap> ThumbnailListener::SetPixelMapYuvInfo(sptr<Surf
     uint8_t ratio = isHdr ? HDR_PIXEL_SIZE : SDR_PIXEL_SIZE;
     int32_t srcWidth = pixelMap->GetWidth();
     int32_t srcHeight = pixelMap->GetHeight();
-    Media::YUVDataInfo yuvDataInfo = { .yWidth = srcWidth,
-                                       .yHeight = srcHeight,
-                                       .uvWidth = srcWidth / 2,
-                                       .uvHeight = srcHeight / 2,
-                                       .yStride = srcWidth,
-                                       .uvStride = srcWidth,
-                                       .uvOffset = srcWidth * srcHeight};
+    Media::YUVDataInfo yuvDataInfo = {
+        .yWidth = srcWidth,
+        .yHeight = srcHeight,
+        .uvWidth = srcWidth / 2,
+        .uvHeight = srcHeight / 2,
+        .yStride = srcWidth,
+        .uvStride = srcWidth,
+        .uvOffset = srcWidth * srcHeight
+    };
     if (surfaceBuffer == nullptr) {
         pixelMap->SetImageYUVInfo(yuvDataInfo);
         return pixelMap;
@@ -1462,7 +1456,7 @@ void PhotoOutputImpl::RegisterPhotoAvailableCallbackListener(const std::string& 
 
     // Preconfig can't support rawPhotoListener.
     if (photoOutput_ != nullptr && profile_ != nullptr) {
-        rawCallback_ = callback; // todo
+        rawCallback_ = callback;
         CHECK_EXECUTE(profile_->GetCameraFormat() == OHOS::CameraStandard::CAMERA_FORMAT_YUV_420_SP,
             CreateMultiChannelPictureLisenter(get_env()));
     }
