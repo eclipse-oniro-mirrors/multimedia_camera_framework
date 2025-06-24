@@ -18,7 +18,8 @@ import("./../../multimedia_camera_framework.gni")
 
 subsystem_name = "multimedia"
 part_name = "camera_framework"
-taihe_generated_file_path = "$taihe_file_path/out/$subsystem_name/$part_name"
+taihe_generated_file_path_camera = "$taihe_file_path/out/$subsystem_name/$part_name/camera"
+taihe_generated_file_path_cameraPicker = "$taihe_file_path/out/$subsystem_name/$part_name/cameraPicker"
 
 copy_taihe_idl("copy_camera_taihe") {
   sources = [ "${multimedia_camera_framework_path}/frameworks/taihe/idl/ohos.multimedia.camera.taihe",
@@ -28,7 +29,7 @@ copy_taihe_idl("copy_camera_taihe") {
 }
 
 ohos_taihe("camera_run_taihe") {
-  taihe_generated_file_path = "$taihe_generated_file_path"
+  taihe_generated_file_path = "${taihe_generated_file_path_camera}"
   deps = [ ":copy_camera_taihe" ]
   outputs = [
     "$taihe_generated_file_path/src/ohos.multimedia.camera.ani.cpp",
@@ -37,7 +38,7 @@ ohos_taihe("camera_run_taihe") {
 }
 
 taihe_shared_library("camera_taihe") {
-  taihe_generated_file_path = "$taihe_generated_file_path"
+  taihe_generated_file_path = "${taihe_generated_file_path_camera}"
   subsystem_name = "$subsystem_name"
   part_name = "$part_name"
 
@@ -110,15 +111,15 @@ taihe_shared_library("camera_taihe") {
 }
 
 generate_static_abc("camera_framework_taihe_abc") {
-  base_url = "$taihe_generated_file_path"
-  files = [ "$taihe_generated_file_path/@ohos.multimedia.camera.ets" ]
+  base_url = "${taihe_generated_file_path_camera}"
+  files = [ "${taihe_generated_file_path_camera}/@ohos.multimedia.camera.ets" ]
   is_boot_abc = "True"
   device_dst_file = "/system/framework/camera_framework_taihe_abc.abc"
   dependencies = [ ":camera_run_taihe" ]
 }
 
 ohos_taihe("camera_picker_run_taihe") {
-  taihe_generated_file_path = "$taihe_generated_file_path"
+  taihe_generated_file_path = "${taihe_generated_file_path_cameraPicker}"
   deps = [ ":copy_camera_taihe" ]
   outputs = [
     "$taihe_generated_file_path/src/ohos.multimedia.cameraPicker.ani.cpp",
@@ -127,7 +128,7 @@ ohos_taihe("camera_picker_run_taihe") {
 }
 
 taihe_shared_library("camera_picker_taihe") {
-  taihe_generated_file_path = "$taihe_generated_file_path"
+  taihe_generated_file_path = "${taihe_generated_file_path_cameraPicker}"
   subsystem_name = "$subsystem_name"
   part_name = "$part_name"
 
@@ -181,8 +182,8 @@ taihe_shared_library("camera_picker_taihe") {
 }
 
 generate_static_abc("camera_picker_taihe_abc") {
-  base_url = "$taihe_generated_file_path"
-  files = [ "$taihe_generated_file_path/@ohos.multimedia.cameraPicker.ets" ]
+  base_url = "${taihe_generated_file_path_cameraPicker}"
+  files = [ "${taihe_generated_file_path_cameraPicker}/@ohos.multimedia.cameraPicker.ets" ]
   is_boot_abc = "True"
   device_dst_file = "/system/framework/camera_picker_taihe_abc.abc"
   dependencies = [ ":camera_picker_run_taihe" ]
