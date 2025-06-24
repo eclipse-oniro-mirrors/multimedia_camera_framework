@@ -65,6 +65,8 @@ enum SketchStatus {
 struct SketchStatusData{
     SketchStatus status;
     float sketchRatio;
+    float offsetx;
+    float offsety;
 };
 
 struct CaptureEndedInfoExt {
