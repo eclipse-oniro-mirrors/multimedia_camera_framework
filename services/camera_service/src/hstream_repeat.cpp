@@ -1042,7 +1042,7 @@ bool HStreamRepeat::IsNeedBeautyNotification()
     const int32_t INT32_ONE = 1;
     const int32_t INT32_TWO = 2;
     std::vector<std::string> configInfos = SplitString(notificationInfo, '#');
-    for (int i = 0; i < configInfos.size(); ++i) {
+    for (uint32_t i = 0; i < configInfos.size(); ++i) {
         std::vector<std::string> configInfo = SplitString(configInfos[i], '|');
         if (configInfo.size() < CONFIG_SIZE) {
             continue;
@@ -1100,7 +1100,7 @@ void HStreamRepeat::UpdateHalRoateSettings(std::shared_ptr<OHOS::Camera::CameraM
             status = settings->updateEntry(OHOS_CONTROL_ROTATE_ANGLE, &rotateAngle, 1);
         }
         CHECK_ERROR_PRINT_LOG(!status, "UpdateHalRoateSettings Failed");
-        if (rotateAngle & 0x1FFF) {  // Bit0~12 for angle and mirror
+        if (static_cast<uint32_t>(rotateAngle) & 0x1FFF) {  // Bit0~12 for angle and mirror
             enableCameraRotation_ = true;
         }
     }

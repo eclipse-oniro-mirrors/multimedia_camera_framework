@@ -100,7 +100,7 @@ void HCaptureSessionFuzzer::HCaptureSessionFuzzTest2(FuzzedDataProvider& fdp)
     float currentFps = fdp.ConsumeFloatingPoint<float>();
     float currentZoomRatio = fdp.ConsumeFloatingPoint<float>();
     std::vector<float> crossZoomAndTime;
-    int32_t operationMode = fdp.ConsumeIntegral<int32_t>();;
+    int32_t operationMode = fdp.ConsumeIntegral<int32_t>();
     fuzz_->QueryFpsAndZoomRatio(currentFps, currentZoomRatio, crossZoomAndTime, operationMode);
     fuzz_->GetSensorOritation();
     float zoomRatio = fdp.ConsumeFloatingPoint<float>();

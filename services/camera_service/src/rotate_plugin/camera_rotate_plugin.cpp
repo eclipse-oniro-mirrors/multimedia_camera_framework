@@ -406,7 +406,7 @@ bool CameraRotatePlugin::CreateVideoOutput(ParameterMap basicInfoMap, std::strin
     result = isIntegerRegex(updateParameter[PLUGIN_VIDEO_SURFACE_TRANSFORM]);
     CHECK_ERROR_RETURN_RET_LOG(!result, false, "CreateVideoOutput result not valid parameter");
     surfaceAppFwkType = updateParameter[PLUGIN_SURFACE_APP_FWK_TYPE];
-    transform = std::stoi(updateParameter[PLUGIN_VIDEO_SURFACE_TRANSFORM]);
+    transform = static_cast<uint32_t>(std::stoi(updateParameter[PLUGIN_VIDEO_SURFACE_TRANSFORM]));
     return true;
 }
 
@@ -425,7 +425,7 @@ bool CameraRotatePlugin::VideoStreamStart(ParameterMap basicInfoMap, std::string
         isIntegerRegex(updateParameter[PLUGIN_VIDEO_MIRROR]);
     CHECK_ERROR_RETURN_RET_LOG(!result, false, "VideoStreamStart result not valid parameter");
     surfaceAppFwkType = updateParameter[PLUGIN_SURFACE_APP_FWK_TYPE];
-    transform = std::stoi(updateParameter[PLUGIN_VIDEO_SURFACE_TRANSFORM]);
+    transform = static_cast<uint32_t>(std::stoi(updateParameter[PLUGIN_VIDEO_SURFACE_TRANSFORM]));
     mirror = std::stoi(updateParameter[PLUGIN_VIDEO_MIRROR]);
     return true;
 }
