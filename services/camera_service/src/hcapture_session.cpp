@@ -915,17 +915,11 @@ void HCaptureSession::StopMovingPhoto() __attribute__((no_sanitize("cfi")))
     if (livephotoListener_) {
         livephotoListener_->StopDrainOut();
     }
-    if (videoCache_) {
-        videoCache_->ClearCache();
-    }
     #ifdef MOVING_PHOTO_ADD_AUDIO
     if (audioCapturerSession_) {
         audioCapturerSession_->Stop();
     }
     #endif
-    if (taskManager_) {
-        taskManager_->Stop();
-    }
 }
 
 int32_t HCaptureSession::ValidateSession()
@@ -1637,12 +1631,24 @@ int32_t HCaptureSession::Release(CaptureSessionReleaseType type)
         livephotoListener_ = nullptr;
         videoCache_ = nullptr;
         if (taskManager_) {
-            taskManager_->ClearTaskResource();
+            RemoveTaskManager(taskManager_);
             taskManager_ = nullptr;
         }
     });
     MEDIA_INFO_LOG("HCaptureSession::Release execute success");
     return errorCode;
+}
+
+void HCaptureSession::RemoveTaskManager(sptr<AvcodecTaskManager> taskManager)
+{
+    MEDIA_INFO_LOG("HCaptureSession::RemoveTaskManager enter");
+    thread asyncThread = thread([taskManager]() {
+        CAMERA_SYNC_TRACE;
+        int32_t delayTime = taskManager == nullptr || (taskManager && taskManager->isEmptyVideoFdMap()) ? 0 : 30;
+        std::this_thread::sleep_for(std::chrono::seconds(delayTime));
+    });
+    asyncThread.detach();
+    MEDIA_INFO_LOG("HCaptureSession::RemoveTaskManager succeed");
 }
 
 int32_t HCaptureSession::Release()
