@@ -169,18 +169,18 @@ HWTEST_F(CameraDeviceUnit, camera_device_unittest_006, TestSize.Level1)
 
 /*
  * Feature: Framework
- * Function: Test cameradevice with GetEquivalentFocalLength
+ * Function: Test cameradevice with GetlensEquivalentFocalLength
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test GetEquivalentFocalLength
+ * CaseDescription: Test GetLensEquivalentFocalLength
  */
 HWTEST_F(CameraDeviceUnit, camera_device_unittest_007, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
 
-    cameras[0]->equivalentFocalLength_ = {15, 20};
-    EXPECT_EQ(cameras[0]->GetEquivalentFocalLength(), cameras[0]->equivalentFocalLength_);
+    cameras[0]->lensEquivalentFocalLength_ = {15, 20};
+    EXPECT_EQ(cameras[0]->GetLensEquivalentFocalLength(), cameras[0]->lensEquivalentFocalLength_);
 }
 }
 }
