@@ -373,6 +373,8 @@ private:
     bool isOfflineStreamOperator_ =  false;
     int32_t mlastCaptureId = 0;
     int32_t sensorRotation_ = 0;
+    std::map<int32_t, bool> curMotionPhotoStatus_;
+    std::mutex motionPhotoStatusLock_;
 };
 } // namespace CameraStandard
 } // namespace OHOS
