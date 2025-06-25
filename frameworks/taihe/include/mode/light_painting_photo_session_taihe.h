@@ -27,16 +27,19 @@ namespace Camera {
 using namespace OHOS;
 using namespace ohos::multimedia::camera;
 
-class LightPaintingPhotoSessionImpl : public SessionImpl, public FlashQueryImpl, public ZoomQueryImpl {
+class LightPaintingPhotoSessionImpl : public SessionImpl, public FlashImpl, public ZoomImpl,
+                                      public FocusImpl, public ColorEffectImpl {
 public:
-    explicit LightPaintingPhotoSessionImpl(sptr<OHOS::CameraStandard::CaptureSession> &obj) : SessionImpl(obj),
-        FlashQueryImpl(obj), ZoomQueryImpl(obj)
+    explicit LightPaintingPhotoSessionImpl(sptr<OHOS::CameraStandard::CaptureSession> &obj) : SessionImpl(obj)
     {
         if (obj != nullptr) {
             lightPaintingSession_ = static_cast<OHOS::CameraStandard::LightPaintingSession*>(obj.GetRefPtr());
         }
     }
     ~LightPaintingPhotoSessionImpl() = default;
+    array<LightPaintingType> GetSupportedLightPaintingTypes();
+    void SetLightPaintingType(LightPaintingType type);
+    LightPaintingType GetLightPaintingType();
 private:
     sptr<OHOS::CameraStandard::LightPaintingSession> lightPaintingSession_ = nullptr;
 };

@@ -41,7 +41,7 @@ void MetadataOutputImpl::StartSync()
     CHECK_ERROR_RETURN_LOG(metadataOutput_ == nullptr, "metadataOutput_ is nullptr");
     asyncContext->queueTask =
         CameraTaiheWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueTask("MetadataOutputImpl::StartSync");
-    asyncContext->objectInfo = std::make_shared<MetadataOutputImpl>(metadataOutput_);
+    asyncContext->objectInfo = this;
     CAMERA_START_ASYNC_TRACE(asyncContext->funcName, asyncContext->taskId);
     CameraTaiheWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(asyncContext->queueTask, [&asyncContext]() {
         CHECK_ERROR_RETURN_LOG(asyncContext->objectInfo == nullptr, "metadataOutput_ is nullptr");
@@ -59,7 +59,7 @@ void MetadataOutputImpl::StopSync()
     CHECK_ERROR_RETURN_LOG(metadataOutput_ == nullptr, "metadataOutput_ is nullptr");
     asyncContext->queueTask =
         CameraTaiheWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueTask("MetadataOutputImpl::StopSync");
-    asyncContext->objectInfo = std::make_shared<MetadataOutputImpl>(metadataOutput_);
+    asyncContext->objectInfo = this;
     CAMERA_START_ASYNC_TRACE(asyncContext->funcName, asyncContext->taskId);
     CameraTaiheWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(asyncContext->queueTask, [&asyncContext]() {
         CHECK_ERROR_RETURN_LOG(asyncContext->objectInfo == nullptr, "metadataOutput_ is nullptr");
@@ -77,7 +77,7 @@ void MetadataOutputImpl::ReleaseSync()
     CHECK_ERROR_RETURN_LOG(metadataOutput_ == nullptr, "metadataOutput_ is nullptr");
     asyncContext->queueTask =
         CameraTaiheWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueTask("MetadataOutputImpl::ReleaseSync");
-    asyncContext->objectInfo = std::make_shared<MetadataOutputImpl>(metadataOutput_);
+    asyncContext->objectInfo = this;
     CAMERA_START_ASYNC_TRACE(asyncContext->funcName, asyncContext->taskId);
     CameraTaiheWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(asyncContext->queueTask, [&asyncContext]() {
         CHECK_ERROR_RETURN_LOG(asyncContext->objectInfo == nullptr, "metadataOutput_ is nullptr");
@@ -196,6 +196,28 @@ void MetadataOutputImpl::OffMetadataObjectsAvailable(
     optional_view<callback<void(uintptr_t, array_view<MetadataObject>)>> callback)
 {
     ListenerTemplate<MetadataOutputImpl>::Off(this, callback, "metadataObjectsAvailable");
+}
+
+void MetadataOutputImpl::RemoveMetadataObjectTypes(array_view<MetadataObjectType> types)
+{
+    MEDIA_INFO_LOG("RemoveMetadataObjectTypes is called");
+    std::vector<OHOS::CameraStandard::MetadataObjectType> metadataObjectType;
+    for (const auto& item : types) {
+        metadataObjectType.push_back(static_cast<OHOS::CameraStandard::MetadataObjectType>(item.get_value()));
+    }
+    int32_t retCode = metadataOutput_->RemoveMetadataObjectTypes(metadataObjectType);
+    CHECK_ERROR_PRINT_LOG(!CameraUtilsTaihe::CheckError(retCode), "RemoveMetadataObjectTypes failure!");
+}
+
+void MetadataOutputImpl::AddMetadataObjectTypes(array_view<MetadataObjectType> types)
+{
+    MEDIA_INFO_LOG("AddMetadataObjectTypes is called");
+    std::vector<OHOS::CameraStandard::MetadataObjectType> metadataObjectType;
+    for (const auto& item : types) {
+        metadataObjectType.push_back(static_cast<OHOS::CameraStandard::MetadataObjectType>(item.get_value()));
+    }
+    int32_t retCode = metadataOutput_->AddMetadataObjectTypes(metadataObjectType);
+    CHECK_ERROR_PRINT_LOG(!CameraUtilsTaihe::CheckError(retCode), "AddMetadataObjectTypes failure!");
 }
 } // namespace Camera
 } // namespace Ani

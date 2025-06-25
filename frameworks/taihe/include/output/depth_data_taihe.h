@@ -39,6 +39,8 @@ public:
     DepthDataQualityLevel GetQualityLevel();
     DepthDataAccuracy GetDataAccuracy();
 
+    void ReleaseSync();
+
     inline int64_t GetSpecificImplPtr()
     {
         return reinterpret_cast<uintptr_t>(this);
@@ -54,7 +56,7 @@ private:
 
 struct DepthDataTaiheAsyncContext : public TaiheAsyncContext {
     DepthDataTaiheAsyncContext(std::string funcName, int32_t taskId) : TaiheAsyncContext(funcName, taskId) {};
-    std::shared_ptr<DepthDataImpl> objectInfo = nullptr;
+    DepthDataImpl* objectInfo = nullptr;
 
     ~DepthDataTaiheAsyncContext()
     {

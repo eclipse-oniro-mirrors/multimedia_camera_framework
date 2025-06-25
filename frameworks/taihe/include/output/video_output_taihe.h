@@ -26,6 +26,7 @@
 #include "video_output.h"
 #include "camera_event_emitter_taihe.h"
 #include "listener_base_taihe.h"
+#include "surface_utils.h"
 
 namespace Ani {
 namespace Camera {
@@ -67,8 +68,25 @@ public:
     void StopSync();
 
     void ReleaseSync() override;
-    const EmitterFunctions& GetEmitterFunctions() override;
+    void EnableAutoVideoFrameRate(bool enabled);
+    bool IsAutoVideoFrameRateSupported();
+    bool IsMirrorSupported();
+    void EnableMirror(bool enabled);
+    bool IsAutoDeferredVideoEnhancementSupported();
+    bool IsAutoDeferredVideoEnhancementEnabled();
+    array<FrameRateRange> GetSupportedFrameRates();
+    FrameRateRange GetActiveFrameRate();
+    VideoProfile GetActiveProfile();
+    void SetFrameRate(int32_t minFps, int32_t maxFps);
+    void SetRotation(ImageRotation rotation);
+    bool IsRotationSupported();
+    array<ImageRotation> GetSupportedRotations();
+    ImageRotation GetVideoRotation(int32_t deviceDegree);
+    void AttachMetaSurface(string_view surfaceId, VideoMetaType type);
+    array<VideoMetaType> GetSupportedVideoMetaTypes();
+    void EnableAutoDeferredVideoEnhancement(bool enabled);
 
+    const EmitterFunctions& GetEmitterFunctions() override;
     void OnError(callback_view<void(uintptr_t)> callback);
     void OffError(optional_view<callback<void(uintptr_t)>> callback);
     void OnDeferredVideoEnhancementInfo(callback_view<void(uintptr_t, DeferredVideoEnhancementInfo const&)> callback);
@@ -78,7 +96,6 @@ public:
     void OffFrameStart(optional_view<callback<void(uintptr_t, uintptr_t)>> callback);
     void OnFrameEnd(callback_view<void(uintptr_t, uintptr_t)> callback);
     void OffFrameEnd(optional_view<callback<void(uintptr_t, uintptr_t)>> callback);
-
     static uint32_t videoOutputTaskId_;
 private:
     void RegisterVideoOutputErrorCallbackListener(
@@ -105,7 +122,7 @@ struct VideoOutputTaiheAsyncContext : public TaiheAsyncContext {
     {
         objectInfo = nullptr;
     }
-    std::shared_ptr<VideoOutputImpl> objectInfo = nullptr;
+    VideoOutputImpl* objectInfo = nullptr;
     std::vector<int32_t> vecFrameRateRangeList;
 };
 } // namespace Camera

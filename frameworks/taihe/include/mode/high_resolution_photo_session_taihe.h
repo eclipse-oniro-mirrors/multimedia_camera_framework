@@ -27,10 +27,10 @@ namespace Camera {
 using namespace OHOS;
 using namespace ohos::multimedia::camera;
 
-class HighResolutionPhotoSessionImpl : public SessionImpl, public FlashQueryImpl, public ZoomQueryImpl {
+class HighResolutionPhotoSessionImpl : public SessionImpl, public FlashImpl, public ZoomImpl,
+                                       public FocusImpl, public AutoExposureImpl {
 public:
-    explicit HighResolutionPhotoSessionImpl(sptr<OHOS::CameraStandard::CaptureSession> &obj) : SessionImpl(obj),
-        FlashQueryImpl(obj), ZoomQueryImpl(obj)
+    explicit HighResolutionPhotoSessionImpl(sptr<OHOS::CameraStandard::CaptureSession> &obj) : SessionImpl(obj)
     {
         if (obj != nullptr) {
             highResPhotoSession_ = static_cast<OHOS::CameraStandard::HighResPhotoSession*>(obj.GetRefPtr());

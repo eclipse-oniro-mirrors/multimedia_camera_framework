@@ -13,7 +13,9 @@
  * limitations under the License.
  */
 
+#include  "camera_security_utils_taihe.h"
 #include "slow_motion_video_session_taihe.h"
+
 namespace Ani {
 namespace Camera {
 using namespace taihe;
@@ -62,6 +64,27 @@ void SlowMotionVideoSessionImpl::UnregisterSlowMotionStateCb(
     CHECK_ERROR_RETURN_LOG(slowMotionState_ == nullptr, "slowMotionStateListener_ is null");
     slowMotionState_->RemoveCallbackRef(eventName, callback);
     MEDIA_INFO_LOG("UnregisterSlowMotionStateCb success");
+}
+
+bool SlowMotionVideoSessionImpl::IsSlowMotionDetectionSupported()
+{
+    CHECK_ERROR_RETURN_RET_LOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), false,
+        "SystemApi IsSlowMotionDetectionSupported is called!");
+    CHECK_ERROR_RETURN_RET_LOG(slowMotionSession_ == nullptr, false, "slowMotionSession_ is null");
+    return slowMotionSession_->IsSlowMotionDetectionSupported();
+}
+
+void SlowMotionVideoSessionImpl::SetSlowMotionDetectionArea(ohos::multimedia::camera::Rect const& area)
+{
+    CHECK_ERROR_RETURN_LOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi SetSlowMotionDetectionArea is called!");
+    CHECK_ERROR_RETURN_LOG(slowMotionSession_ == nullptr, "slowMotionSession_ is null");
+    OHOS::CameraStandard::Rect rect = (OHOS::CameraStandard::Rect) {
+        .topLeftX = area.topLeftX,
+        .topLeftY = area.topLeftY,
+        .width = area.width,
+        .height = area.height };
+    slowMotionSession_->SetSlowMotionDetectionArea(rect);
 }
 } // namespace Ani
 } // namespace Camera

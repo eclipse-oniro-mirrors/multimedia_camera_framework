@@ -27,16 +27,22 @@ namespace Camera {
 using namespace OHOS;
 using namespace ohos::multimedia::camera;
 
-class PortraitPhotoSessionImpl : public SessionImpl, public FlashQueryImpl, public ZoomQueryImpl {
+class PortraitPhotoSessionImpl : public SessionImpl, public FlashImpl, public ZoomImpl, public FocusImpl,
+                                 public BeautyImpl, public AutoExposureImpl, public ColorManagementImpl,
+                                 public ColorEffectImpl, public ApertureImpl, public PortraitImpl {
 public:
-    explicit PortraitPhotoSessionImpl(sptr<OHOS::CameraStandard::CaptureSession> &obj) : SessionImpl(obj),
-        FlashQueryImpl(obj), ZoomQueryImpl(obj)
+    explicit PortraitPhotoSessionImpl(sptr<OHOS::CameraStandard::CaptureSession> &obj) : SessionImpl(obj)
     {
         if (obj != nullptr) {
             portraitSession_ = static_cast<OHOS::CameraStandard::PortraitSession*>(obj.GetRefPtr());
         }
     }
     ~PortraitPhotoSessionImpl() = default;
+    array<PortraitEffect> GetSupportedPortraitEffects() override;
+    void SetPortraitEffect(PortraitEffect effect) override;
+    PortraitEffect GetPortraitEffect() override;
+    taihe::array<PortraitPhotoFunctions> GetSessionFunctions(CameraOutputCapability const& outputCapability);
+    taihe::array<PortraitPhotoConflictFunctions> GetSessionConflictFunctions();
 private:
     sptr<OHOS::CameraStandard::PortraitSession> portraitSession_ = nullptr;
 };

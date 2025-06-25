@@ -24,9 +24,9 @@
 #include "capture_scene_const.h"
 #include "metadata_output.h"
 #include "video_session.h"
+#include "video_output.h"
 #include "time_lapse_photo_session.h"
 #include "slow_motion_session.h"
-
 
 namespace Ani::Camera {
 using namespace taihe;
@@ -43,6 +43,9 @@ public:
     static CameraFormat ToTaiheCameraFormat(OHOS::CameraStandard::CameraFormat format);
     static DepthDataQualityLevel ToTaiheDepthDataQualityLevel(int32_t level);
     static DepthDataAccuracy ToTaiheDepthDataAccuracy(OHOS::CameraStandard::DepthDataAccuracy dataAccuracy);
+    static array<DepthProfile> ToTaiheArrayDepthProfiles(std::vector<OHOS::CameraStandard::DepthProfile> profiles);
+    static array<MetadataObjectType> ToTaiheArrayMetadataTypes(
+        std::vector<OHOS::CameraStandard::MetadataObjectType> types);
     static FocusState ToTaiheFocusState(OHOS::CameraStandard::FocusCallback::FocusState format);
     static MetadataObjectType ToTaiheMetadataObjectType(OHOS::CameraStandard::MetadataObjectType format);
     static array<MetadataObject> ToTaiheMetadataObjectsAvailableData(
@@ -64,10 +67,15 @@ public:
         OHOS::CameraStandard::EffectSuggestionType effectSuggestionType);
     static LightStatus ToTaiheLightStatus(int32_t status);
     static FocusTrackingMode ToTaiheFocusTrackingMode(OHOS::CameraStandard::FocusTrackingMode mode);
+    static array<FrameRateRange> ToTaiheArrayFrameRateRange(std::vector<std::vector<int32_t>> ratesRange);
+    static array<PhysicalAperture> ToTaiheArrayPhysicalAperture(std::vector<std::vector<float>> physicalApertures);
+    static array<ZoomPointInfo> ToTaiheArrayZoomPointInfo(
+        std::vector<OHOS::CameraStandard::ZoomPointInfo> vecZoomPointInfoList);
     static int32_t IncrementAndGet(uint32_t& num);
+    static int32_t ToTaiheImageRotation(int32_t retCode);
     static bool CheckError(int32_t retCode);
     static ani_object ToBusinessError(ani_env *env, int32_t code, const std::string &message);
-    static ani_object ToAniEnum(ani_env *env, int32_t value);
+    static int32_t EnumGetValueInt32(ani_env *env, ani_enum_item enumItem);
     inline static void ThrowError(int32_t code, const char* message)
     {
         set_business_error(code, message);
@@ -76,6 +84,21 @@ public:
     static void IsEnableSecureCamera(bool isEnable);
     static uintptr_t GetUndefined(ani_env* env);
     static bool mEnableSecure;
+    static void ToNativeCameraOutputCapability(CameraOutputCapability const& outputCapability,
+        std::vector<OHOS::CameraStandard::Profile>& previewProfiles,
+        std::vector<OHOS::CameraStandard::Profile>& photoProfiles,
+        std::vector<OHOS::CameraStandard::VideoProfile>& videoProfileList);
+
+    template<typename T, typename E>
+    static inline array<T> ToTaiheArrayEnum(std::vector<E> src)
+    {
+        std::vector<T> vec;
+        for (auto item : src) {
+            T res = T(static_cast<typename T::key_t>(item));
+            vec.emplace_back(res);
+        }
+        return array<T>(vec);
+    }
 };
 } // namespace Ani::Camera
 

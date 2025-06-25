@@ -88,12 +88,15 @@ public:
     array<SceneMode> GetSupportedSceneModes(CameraDevice const& camera);
     CameraOutputCapability GetSupportedOutputCapability(CameraDevice const& camera, SceneMode mode);
     void Prelaunch();
+    void PreSwitchCamera(string_view cameraId);
     bool IsTorchSupported();
     bool IsCameraMuted();
     bool IsCameraMuteSupported();
+    bool IsPrelaunchSupported(CameraDevice const& camera);
     TorchMode GetTorchMode();
     void SetTorchMode(TorchMode mode);
     SessionUnion CreateSession(SceneMode mode);
+    void MuteCameraPersistent(bool mute, PolicyType type);
     void OnCameraMute(callback_view<void(uintptr_t, bool)> callback);
     void OffCameraMute(optional_view<callback<void(uintptr_t, bool)>> callback);
     void OnCameraStatus(callback_view<void(uintptr_t, CameraStatusInfo const&)> callback);
@@ -104,6 +107,7 @@ public:
     void OffTorchStatusChange(optional_view<callback<void(uintptr_t, TorchStatusInfo const&)>> callback);
     PreviewOutput CreatePreviewOutput(Profile const& profile, string_view surfaceId) ;
     PreviewOutput CreatePreviewOutputWithoutProfile(string_view surfaceId);
+    PreviewOutput CreateDeferredPreviewOutput(optional_view<Profile> profile);
     PhotoOutput CreatePhotoOutput(optional_view<Profile> profile);
     VideoOutput CreateVideoOutput(VideoProfile const& profile, string_view surfaceId);
     VideoOutput CreateVideoOutputWithoutProfile(string_view surfaceId);
@@ -111,6 +115,7 @@ public:
     CameraInput CreateCameraInputWithPosition(CameraPosition position, CameraType type);
     DepthDataOutput CreateDepthDataOutput(DepthProfile const& profile);
     MetadataOutput CreateMetadataOutput(array_view<MetadataObjectType> metadataObjectTypes);
+    void SetPrelaunchConfig(PrelaunchConfig const& prelaunchConfig);
     void RegisterCameraMuteCallbackListener(const std::string& eventName,
         std::shared_ptr<uintptr_t> callback, bool isOnce);
     void UnregisterCameraMuteCallbackListener(const std::string& eventName, std::shared_ptr<uintptr_t> callback);
@@ -124,7 +129,7 @@ public:
         std::shared_ptr<uintptr_t> callback, bool isOnce);
     void UnregisterFoldStatusCallbackListener(const std::string& eventName, std::shared_ptr<uintptr_t> callback);
     virtual const EmitterFunctions& GetEmitterFunctions() override;
-
+    bool IsTorchModeSupported(TorchMode mode);
 private:
     static void GetSupportedOutputCapabilityAdaptNormalMode(OHOS::CameraStandard::SceneMode fwkMode,
         OHOS::sptr<OHOS::CameraStandard::CameraDevice>& cameraInfo,

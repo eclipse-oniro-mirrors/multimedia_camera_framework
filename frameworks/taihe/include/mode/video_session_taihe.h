@@ -27,17 +27,23 @@ namespace Camera {
 using namespace OHOS;
 using namespace ohos::multimedia::camera;
 
-class VideoSessionImpl : public SessionImpl, public FlashQueryImpl, public ZoomQueryImpl {
+class VideoSessionImpl : public SessionImpl, public FlashImpl, public ZoomImpl, public StabilizationImpl,
+                         public AutoExposureImpl, public ColorManagementImpl, public AutoDeviceSwitchImpl,
+                         public FocusImpl {
 public:
-    explicit VideoSessionImpl(sptr<OHOS::CameraStandard::CaptureSession> &obj) : SessionImpl(obj),
-        FlashQueryImpl(obj), ZoomQueryImpl(obj)
+    explicit VideoSessionImpl(sptr<OHOS::CameraStandard::CaptureSession> &obj) : SessionImpl(obj)
     {
         if (obj != nullptr) {
             videoSession_ = static_cast<OHOS::CameraStandard::VideoSession*>(obj.GetRefPtr());
         }
     }
     ~VideoSessionImpl() = default;
-
+    void SetQualityPrioritization(QualityPrioritization quality);
+    void Preconfig(PreconfigType preconfigType, optional_view<PreconfigRatio> preconfigRatio);
+    bool CanPreconfig(PreconfigType preconfigType, optional_view<PreconfigRatio> preconfigRatio);
+    taihe::array<VideoFunctions> GetSessionFunctions(CameraOutputCapability const& outputCapability);
+    taihe::array<VideoConflictFunctions> GetSessionConflictFunctions();
+protected:
     sptr<OHOS::CameraStandard::VideoSession> videoSession_ = nullptr;
 };
 } // namespace Camera

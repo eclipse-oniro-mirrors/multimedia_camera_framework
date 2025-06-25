@@ -13,12 +13,108 @@
  * limitations under the License.
  */
 
+#include  "camera_security_utils_taihe.h"
 #include "professional_session_taihe.h"
 
 namespace Ani {
 namespace Camera {
 using namespace taihe;
 using namespace ohos::multimedia::camera;
+
+void ProfessionalSessionImpl::SetFocusAssist(bool enabled)
+{
+    CHECK_ERROR_RETURN_LOG(professionSession_ == nullptr, "professionSession_ is nullptr");
+    OHOS::CameraStandard::FocusAssistFlashMode mode =
+        OHOS::CameraStandard::FocusAssistFlashMode::FOCUS_ASSIST_FLASH_MODE_OFF;
+    if (enabled == true) {
+        mode = OHOS::CameraStandard::FocusAssistFlashMode::FOCUS_ASSIST_FLASH_MODE_AUTO;
+    }
+    professionSession_->LockForControl();
+    professionSession_->SetFocusAssistFlashMode(mode);
+    MEDIA_DEBUG_LOG("ProfessionalSessionImpl SetFocusAssistFlashMode set focusAssistFlash %{public}d!", mode);
+    professionSession_->UnlockForControl();
+}
+
+array<int32_t> ProfessionalSessionImpl::GetIsoRange()
+{
+    CHECK_ERROR_RETURN_RET_LOG(professionSession_ == nullptr, array<int32_t>(nullptr, 0),
+        "GetIsoRange failed, professionSession_ is nullptr!");
+    std::vector<int32_t> vecIsoList;
+    int32_t retCode = professionSession_->GetIsoRange(vecIsoList);
+    CHECK_ERROR_RETURN_RET(!CameraUtilsTaihe::CheckError(retCode), array<int32_t>(nullptr, 0));
+    MEDIA_INFO_LOG("ProfessionalSessionImpl::GetIsoRange len = %{public}zu", vecIsoList.size());
+    return array<int32_t>(vecIsoList);
+}
+
+void ProfessionalSessionImpl::SetIso(int32_t iso)
+{
+    CHECK_ERROR_RETURN_LOG(professionSession_ == nullptr, "SetIso failed, professionSession_ is nullptr!");
+    professionSession_->LockForControl();
+    int32_t retCode = professionSession_->SetISO(iso);
+    professionSession_->UnlockForControl();
+    CHECK_ERROR_RETURN(!CameraUtilsTaihe::CheckError(retCode));
+}
+
+int32_t ProfessionalSessionImpl::GetIso()
+{
+    int32_t iso = -1;
+    CHECK_ERROR_RETURN_RET_LOG(professionSession_ == nullptr, iso,
+        "GetIso failed, professionSession_ is nullptr!");
+    int32_t ret = professionSession_->GetISO(iso);
+    CHECK_ERROR_RETURN_RET_LOG(ret != OHOS::CameraStandard::CameraErrorCode::SUCCESS, iso,
+        "%{public}s: GetIso() Failed", __FUNCTION__);
+    return iso;
+}
+
+bool ProfessionalSessionImpl::IsFocusAssistSupported()
+{
+    CHECK_ERROR_RETURN_RET_LOG(professionSession_ == nullptr, false,
+        "IsFocusAssistSupported failed, professionSession_ is nullptr!");
+    return false;
+}
+
+bool ProfessionalSessionImpl::IsManualIsoSupported()
+{
+    CHECK_ERROR_RETURN_RET_LOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), false,
+        "SystemApi IsManualIsoSupported is called!");
+    CHECK_ERROR_RETURN_RET_LOG(professionSession_ == nullptr, false,
+        "IsManualIsoSupported failed, professionSession_ is nullptr!");
+    return professionSession_->IsManualIsoSupported();
+}
+
+bool ProfessionalSessionImpl::IsExposureMeteringModeSupported(ExposureMeteringMode aeMeteringMode)
+{
+    CHECK_ERROR_RETURN_RET_LOG(professionSession_ == nullptr, false,
+        "IsExposureMeteringModeSupported failed, professionSession_ is nullptr!");
+    bool supported = false;
+    int32_t ret = professionSession_->IsMeteringModeSupported(
+        static_cast<OHOS::CameraStandard::MeteringMode>(aeMeteringMode.get_value()), supported);
+    CHECK_ERROR_RETURN_RET_LOG(ret != OHOS::CameraStandard::CameraErrorCode::SUCCESS, false,
+        "%{public}s: IsExposureMeteringModeSupported() Failed", __FUNCTION__);
+    return supported;
+}
+
+void ProfessionalSessionImpl::SetExposureMeteringMode(ExposureMeteringMode aeMeteringMode)
+{
+    CHECK_ERROR_RETURN_LOG(professionSession_ == nullptr, "professionSession_ is nullptr");
+    professionSession_->LockForControl();
+    professionSession_->SetMeteringMode(
+        static_cast<OHOS::CameraStandard::MeteringMode>(aeMeteringMode.get_value()));
+    professionSession_->UnlockForControl();
+}
+
+ExposureMeteringMode ProfessionalSessionImpl::GetExposureMeteringMode()
+{
+    ExposureMeteringMode errType = ExposureMeteringMode(static_cast<ExposureMeteringMode::key_t>(-1));
+    CHECK_ERROR_RETURN_RET_LOG(professionSession_ == nullptr, errType,
+        "GetExposureMeteringMode timeLapsePhotoSession_ is null");
+    OHOS::CameraStandard::MeteringMode mode;
+    int32_t ret = professionSession_->GetMeteringMode(mode);
+    CHECK_ERROR_RETURN_RET_LOG(ret != OHOS::CameraStandard::CameraErrorCode::SUCCESS, errType,
+        "%{public}s: GetExposureMeteringMode() Failed", __FUNCTION__);
+    return ExposureMeteringMode(static_cast<ExposureMeteringMode::key_t>(mode));
+}
+
 void ProfessionalSessionImpl::RegisterIsoInfoCallbackListener(const std::string& eventName,
     std::shared_ptr<uintptr_t> callback, bool isOnce)
 {
@@ -123,7 +219,7 @@ void ApertureInfoCallbackListener::OnApertureInfoChangedCallback(OHOS::CameraSta
     MEDIA_DEBUG_LOG("OnApertureInfoChangedCallback is called");
     auto sharePtr = shared_from_this();
     auto task = [info, sharePtr]() {
-        ApertureInfo apertureInfo{  .aperture = optional<float>::make(info.apertureValue) };
+        ApertureInfo apertureInfo{  .aperture = optional<double>::make(static_cast<double>(info.apertureValue)) };
         CHECK_EXECUTE(sharePtr != nullptr, sharePtr->ExecuteAsyncCallback<ApertureInfo const&>(
             "apertureInfoChange", 0, "Callback is OK", apertureInfo));
     };
@@ -173,7 +269,7 @@ void LuminationInfoCallbackListener::OnLuminationInfoChangedCallback(OHOS::Camer
     MEDIA_DEBUG_LOG("OnLuminationInfoChangedCallback is called");
     auto sharePtr = shared_from_this();
     auto task = [info, sharePtr]() {
-        LuminationInfo luminationInfo{ optional<float>::make(info.luminationValue) };
+        LuminationInfo luminationInfo{ optional<double>::make(static_cast<double>(info.luminationValue)) };
         CHECK_EXECUTE(sharePtr != nullptr, sharePtr->ExecuteAsyncCallback<LuminationInfo const&>(
             "luminationInfoChange", 0, "Callback is OK", luminationInfo));
     };

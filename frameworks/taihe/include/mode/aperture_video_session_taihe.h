@@ -27,10 +27,10 @@ namespace Camera {
 using namespace OHOS;
 using namespace ohos::multimedia::camera;
 
-class ApertureVideoSessionImpl : public SessionImpl, public FlashQueryImpl, public ZoomQueryImpl {
+class ApertureVideoSessionImpl : public SessionImpl, public FlashImpl, public ZoomImpl, public FocusImpl,
+                                 public AutoExposureImpl, public ColorEffectImpl, public ApertureImpl {
 public:
-    explicit ApertureVideoSessionImpl(sptr<OHOS::CameraStandard::CaptureSession> &obj) : SessionImpl(obj),
-        FlashQueryImpl(obj), ZoomQueryImpl(obj)
+    explicit ApertureVideoSessionImpl(sptr<OHOS::CameraStandard::CaptureSession> &obj): SessionImpl(obj)
     {
         if (obj != nullptr) {
             apertureVideoSession_ = static_cast<OHOS::CameraStandard::ApertureVideoSession*>(obj.GetRefPtr());

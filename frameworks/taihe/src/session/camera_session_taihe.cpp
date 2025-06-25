@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 
+#include "camera_const_ability_taihe.h"
 #include "camera_utils_taihe.h"
 #include "camera_template_utils_taihe.h"
 #include "session/camera_session_taihe.h"
@@ -49,7 +50,7 @@ void SessionImpl::CommitConfigSync()
     CHECK_ERROR_RETURN_LOG(captureSession_ == nullptr, "captureSession_ is nullptr");
     asyncContext->queueTask =
         CameraTaiheWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueTask("SessionImpl::CommitConfigSync");
-    asyncContext->objectInfo = std::make_shared<SessionImpl>(captureSession_);
+    asyncContext->objectInfo = this;
     CAMERA_START_ASYNC_TRACE(asyncContext->funcName, asyncContext->taskId);
     CameraTaiheWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(asyncContext->queueTask, [&asyncContext]() {
         CHECK_ERROR_RETURN_LOG(asyncContext->objectInfo == nullptr, "captureSession_ is nullptr");
@@ -66,7 +67,7 @@ void SessionImpl::StartSync()
         "SessionImpl::StartSync", CameraUtilsTaihe::IncrementAndGet(cameraSessionTaskId_));
     CHECK_ERROR_RETURN_LOG(captureSession_ == nullptr, "captureSession_ is nullptr");
     asyncContext->queueTask = CameraTaiheWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueTask("SessionImpl::Start");
-    asyncContext->objectInfo = std::make_shared<SessionImpl>(captureSession_);
+    asyncContext->objectInfo = this;
     CAMERA_START_ASYNC_TRACE(asyncContext->funcName, asyncContext->taskId);
     CameraTaiheWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(asyncContext->queueTask, [&asyncContext]() {
         CHECK_ERROR_RETURN_LOG(asyncContext->objectInfo == nullptr, "captureSession_ is nullptr");
@@ -84,7 +85,7 @@ void SessionImpl::StopSync()
     CHECK_ERROR_RETURN_LOG(captureSession_ == nullptr, "captureSession_ is nullptr");
     asyncContext->queueTask =
         CameraTaiheWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueTask("SessionImpl::StopSync");
-    asyncContext->objectInfo = std::make_shared<SessionImpl>(captureSession_);
+    asyncContext->objectInfo = this;
     CAMERA_START_ASYNC_TRACE(asyncContext->funcName, asyncContext->taskId);
     CameraTaiheWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(asyncContext->queueTask, [&asyncContext]() {
         CHECK_ERROR_RETURN_LOG(asyncContext->objectInfo == nullptr, "captureSession_ is nullptr");
@@ -102,7 +103,7 @@ void SessionImpl::ReleaseSync()
     CHECK_ERROR_RETURN_LOG(captureSession_ == nullptr, "captureSession_ is nullptr");
     asyncContext->queueTask =
         CameraTaiheWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueTask("SessionImpl::ReleaseSync");
-    asyncContext->objectInfo = std::make_shared<SessionImpl>(captureSession_);
+    asyncContext->objectInfo = this;
     CAMERA_START_ASYNC_TRACE(asyncContext->funcName, asyncContext->taskId);
     CameraTaiheWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(asyncContext->queueTask, [&asyncContext]() {
         CHECK_ERROR_RETURN_LOG(asyncContext->objectInfo == nullptr, "captureSession_ is nullptr");
@@ -118,8 +119,45 @@ void SessionImpl::AddInput(weak::CameraInput cameraInput)
     CHECK_ERROR_RETURN_LOG(captureSession_ == nullptr, "AddInput captureSession_ is null");
     Ani::Camera::CameraInputImpl* inputImpl =
         reinterpret_cast<Ani::Camera::CameraInputImpl *>(cameraInput->GetSpecificImplPtr());
+    CHECK_ERROR_RETURN_LOG(inputImpl == nullptr, "AddInput inputImpl is null");
     sptr<OHOS::CameraStandard::CaptureInput> captureInput = inputImpl->GetCameraInput();
     int32_t ret = captureSession_->AddInput(captureInput);
+    CHECK_ERROR_RETURN(!CameraUtilsTaihe::CheckError(ret));
+}
+
+bool SessionImpl::CanAddInput(weak::CameraInput cameraInput)
+{
+    MEDIA_DEBUG_LOG("CanAddInput is called");
+    CHECK_ERROR_RETURN_RET_LOG(captureSession_ == nullptr, false, "CanAddInput captureSession_ is null");
+    Ani::Camera::CameraInputImpl* inputImpl =
+        reinterpret_cast<Ani::Camera::CameraInputImpl *>(cameraInput->GetSpecificImplPtr());
+    CHECK_ERROR_RETURN_RET_LOG(inputImpl == nullptr, false, "CanAddInput inputImpl is null");
+    sptr<OHOS::CameraStandard::CaptureInput> captureInput = inputImpl->GetCameraInput();
+    bool isSupported = captureSession_->CanAddInput(captureInput);
+    return isSupported;
+}
+
+bool SessionImpl::CanAddOutput(weak::CameraOutput cameraOutput)
+{
+    MEDIA_DEBUG_LOG("CanAddOutput is called");
+    CHECK_ERROR_RETURN_RET_LOG(captureSession_ == nullptr, false, "CanAddOutput captureSession_ is null");
+    Ani::Camera::CameraOutputImpl* outputImpl =
+        reinterpret_cast<Ani::Camera::CameraOutputImpl *>(cameraOutput->GetSpecificImplPtr());
+    CHECK_ERROR_RETURN_RET_LOG(outputImpl == nullptr, false, "CanAddOutput CameraOutputImpl is null");
+    sptr<OHOS::CameraStandard::CaptureOutput> captureOutput = outputImpl->GetCameraOutput();
+    CHECK_ERROR_RETURN_RET_LOG(captureOutput == nullptr, false, "CanAddOutput captureOutput is null");
+    bool isSupported = captureSession_->CanAddOutput(captureOutput);
+    return isSupported;
+}
+
+void SessionImpl::RemoveInput(weak::CameraInput cameraInput)
+{
+    CHECK_ERROR_RETURN_LOG(captureSession_ == nullptr, "RemoveInput captureSession_ is null");
+    Ani::Camera::CameraInputImpl* inputImpl =
+        reinterpret_cast<Ani::Camera::CameraInputImpl *>(cameraInput->GetSpecificImplPtr());
+    CHECK_ERROR_RETURN_LOG(inputImpl == nullptr, "RemoveInput inputImpl is null");
+    sptr<OHOS::CameraStandard::CaptureInput> captureInput = inputImpl->GetCameraInput();
+    int32_t ret = captureSession_->RemoveInput(captureInput);
     CHECK_ERROR_RETURN(!CameraUtilsTaihe::CheckError(ret));
 }
 
@@ -128,10 +166,58 @@ void SessionImpl::AddOutput(weak::CameraOutput cameraOutput)
     MEDIA_DEBUG_LOG("AddOutput is called");
     CHECK_ERROR_RETURN_LOG(captureSession_ == nullptr, "AddOutput captureSession_ is null");
     Ani::Camera::CameraOutputImpl* outputImpl =
-         reinterpret_cast<Ani::Camera::CameraOutputImpl *>(cameraOutput->GetSpecificImplPtr());
+        reinterpret_cast<Ani::Camera::CameraOutputImpl *>(cameraOutput->GetSpecificImplPtr());
+        CHECK_ERROR_RETURN_LOG(outputImpl == nullptr, "AddOutput CameraOutputImpl is null");
     sptr<OHOS::CameraStandard::CaptureOutput> captureOutput = outputImpl->GetCameraOutput();
+    CHECK_ERROR_RETURN_LOG(captureOutput == nullptr, "AddOutput captureOutput is null");
     int32_t ret = captureSession_->AddOutput(captureOutput);
     CHECK_ERROR_RETURN(!CameraUtilsTaihe::CheckError(ret));
+}
+
+void SessionImpl::RemoveOutput(weak::CameraOutput cameraOutput)
+{
+    CHECK_ERROR_RETURN_LOG(captureSession_ == nullptr, "AddOutput captureSession_ is null");
+    Ani::Camera::CameraOutputImpl* outputImpl =
+        reinterpret_cast<Ani::Camera::CameraOutputImpl *>(cameraOutput->GetSpecificImplPtr());
+    CHECK_ERROR_RETURN_LOG(outputImpl == nullptr, "AddOutput CameraOutputImpl is null");
+    sptr<OHOS::CameraStandard::CaptureOutput> captureOutput = outputImpl->GetCameraOutput();
+    CHECK_ERROR_RETURN_LOG(captureOutput == nullptr, "AddOutput captureOutput is null");
+    int32_t ret = captureSession_->RemoveOutput(captureOutput);
+    CHECK_ERROR_RETURN(!CameraUtilsTaihe::CheckError(ret));
+}
+
+void SessionImpl::SetUsage(UsageType usage, bool enabled)
+{
+    CHECK_ERROR_RETURN_LOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi SetUsage is called!");
+    CHECK_ERROR_RETURN_LOG(captureSession_ == nullptr, "SetUsage captureSession_ is null");
+    captureSession_->LockForControl();
+    captureSession_->SetUsage(static_cast<OHOS::CameraStandard::UsageType>(usage.get_value()), enabled);
+    captureSession_->UnlockForControl();
+}
+
+array<CameraOutputCapability> SessionImpl::GetCameraOutputCapabilities(CameraDevice const& camera)
+{
+    std::string nativeStr(camera.cameraId);
+    sptr<OHOS::CameraStandard::CameraDevice> cameraInfo =
+        OHOS::CameraStandard::CameraManager::GetInstance()->GetCameraDeviceFromId(nativeStr);
+    if (cameraInfo == nullptr) {
+        MEDIA_ERR_LOG("cameraInfo is null");
+        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::SERVICE_FATL_ERROR, "cameraInfo is null.");
+        return {};
+    }
+    CHECK_ERROR_RETURN_RET_LOG(captureSession_ == nullptr, {}, "GetCameraOutputCapabilities captureSession_ is null");
+    std::vector<sptr<OHOS::CameraStandard::CameraOutputCapability>> caplist =
+        captureSession_->GetCameraOutputCapabilities(cameraInfo);
+    std::vector<CameraOutputCapability> vec;
+    for (size_t i = 0; i < caplist.size(); i++) {
+        if (caplist[i] == nullptr) {
+            continue;
+        }
+        caplist[i]->RemoveDuplicatesProfiles();
+        vec.push_back(CameraUtilsTaihe::ToTaiheCameraOutputCapability(caplist[i]));
+    }
+    return array<CameraOutputCapability>(vec);
 }
 
 void SessionImpl::OnError(callback_view<void(uintptr_t)> callback)
@@ -538,7 +624,7 @@ void SessionImpl::OffFeatureDetection(SceneFeatureType featureType_,
 void SessionImpl::RegisterFeatureDetectionStatusListener(const std::string& eventName,
     std::shared_ptr<uintptr_t> callback, bool isOnce)
 {
-    CHECK_ERROR_RETURN_LOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(false),
+    CHECK_ERROR_RETURN_LOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
         "SystemApi on featureDetection is called!");
     if (featureType_ < OHOS::CameraStandard::SceneFeature::FEATURE_ENUM_MIN ||
         featureType_ >= OHOS::CameraStandard::SceneFeature::FEATURE_ENUM_MAX) {
@@ -569,7 +655,7 @@ void SessionImpl::RegisterFeatureDetectionStatusListener(const std::string& even
 void SessionImpl::UnregisterFeatureDetectionStatusListener(
     const std::string& eventName, std::shared_ptr<uintptr_t> callback)
 {
-    CHECK_ERROR_RETURN_LOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(false),
+    CHECK_ERROR_RETURN_LOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
         "SystemApi off featureDetection is called!");
     CHECK_ERROR_RETURN_LOG(featureDetectionCallback_ == nullptr, "featureDetectionCallback_ is null");
     if (featureType_ < OHOS::CameraStandard::SceneFeature::FEATURE_ENUM_MIN ||
@@ -647,7 +733,7 @@ void SessionImpl::OffMacroStatusChanged(optional_view<callback<void(uintptr_t, b
 void SessionImpl::RegisterMacroStatusCallbackListener(
     const std::string& eventName, std::shared_ptr<uintptr_t> callback, bool isOnce)
 {
-    CHECK_ERROR_RETURN_LOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(false),
+    CHECK_ERROR_RETURN_LOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
         "SystemApi on macroStatusChanged is called!");
     if (macroStatusCallback_ == nullptr) {
         ani_env *env = get_env();
@@ -660,7 +746,7 @@ void SessionImpl::RegisterMacroStatusCallbackListener(
 void SessionImpl::UnregisterMacroStatusCallbackListener(
     const std::string& eventName, std::shared_ptr<uintptr_t> callback)
 {
-    CHECK_ERROR_RETURN_LOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(false),
+    CHECK_ERROR_RETURN_LOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
         "SystemApi off macroStatusChanged is called!");
     CHECK_ERROR_RETURN_LOG(macroStatusCallback_ == nullptr, "macroStatusCallback is null");
     macroStatusCallback_->RemoveCallbackRef(eventName, callback);
@@ -699,7 +785,7 @@ void SessionImpl::OffLightStatusChange(
 void SessionImpl::RegisterLightStatusCallbackListener(
     const std::string& eventName, std::shared_ptr<uintptr_t> callback, bool isOnce)
 {
-    CHECK_ERROR_RETURN_LOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(false),
+    CHECK_ERROR_RETURN_LOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
         "SystemApi on lightStatusChange is called");
     CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::CameraErrorCode::OPERATION_NOT_ALLOWED,
         "this type callback can not be registered in current session!");
@@ -708,7 +794,7 @@ void SessionImpl::RegisterLightStatusCallbackListener(
 void SessionImpl::UnregisterLightStatusCallbackListener(
     const std::string& eventName, std::shared_ptr<uintptr_t> callback)
 {
-    CHECK_ERROR_RETURN_LOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(false),
+    CHECK_ERROR_RETURN_LOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
         "SystemApi off macroStatusChanged is called!");
     CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::CameraErrorCode::OPERATION_NOT_ALLOWED,
         "this type callback can not be registered in current session!");
@@ -729,7 +815,7 @@ void SessionImpl::OffFocusTrackingInfoAvailable(
 void SessionImpl::RegisterFocusTrackingInfoCallbackListener(
     const std::string& eventName, std::shared_ptr<uintptr_t> callback, bool isOnce)
 {
-    CHECK_ERROR_RETURN_LOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(false),
+    CHECK_ERROR_RETURN_LOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
         "SystemApi on focusTrackingInfoAvailable is called");
     CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::CameraErrorCode::OPERATION_NOT_ALLOWED,
         "this type callback can not be registered in current session!");
@@ -738,7 +824,7 @@ void SessionImpl::RegisterFocusTrackingInfoCallbackListener(
 void SessionImpl::UnregisterFocusTrackingInfoCallbackListener(
     const std::string& eventName, std::shared_ptr<uintptr_t> callback)
 {
-    CHECK_ERROR_RETURN_LOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(false),
+    CHECK_ERROR_RETURN_LOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
         "SystemApi off focusTrackingInfoAvailable is called");
     CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::CameraErrorCode::OPERATION_NOT_ALLOWED,
         "this type callback can not be registered in current session!");
@@ -759,7 +845,7 @@ void SessionImpl::OffEffectSuggestionChange(
 void SessionImpl::RegisterEffectSuggestionCallbackListener(
     const std::string& eventName, std::shared_ptr<uintptr_t> callback, bool isOnce)
 {
-    CHECK_ERROR_RETURN_LOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(false),
+    CHECK_ERROR_RETURN_LOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
         "SystemApi on effectSuggestionChange is called!");
     if (effectSuggestionCallback_ == nullptr) {
         ani_env *env = get_env();
@@ -773,7 +859,7 @@ void SessionImpl::RegisterEffectSuggestionCallbackListener(
 void SessionImpl::UnregisterEffectSuggestionCallbackListener(
     const std::string& eventName, std::shared_ptr<uintptr_t> callback)
 {
-    CHECK_ERROR_RETURN_LOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(false),
+    CHECK_ERROR_RETURN_LOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
         "SystemApi off effectSuggestionChange is called!");
     CHECK_ERROR_RETURN_LOG(effectSuggestionCallback_ == nullptr, "macroStatusCallback is null");
     effectSuggestionCallback_->RemoveCallbackRef(eventName, callback);
@@ -853,41 +939,6 @@ const SessionImpl::EmitterFunctions SessionImpl::fun_map_ = {
 const SessionImpl::EmitterFunctions& SessionImpl::GetEmitterFunctions()
 {
     return fun_map_;
-}
-
-
-bool FlashQueryImpl::HasFlash()
-{
-    MEDIA_DEBUG_LOG("HasFlash is called");
-    CHECK_ERROR_RETURN_RET_LOG(captureSession_ == nullptr, false, "HasFlash failed, captureSession is nullptr");
-    bool isSupported = false;
-    int retCode = captureSession_->HasFlash(isSupported);
-    if (retCode != 0) {
-        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::SERVICE_FATL_ERROR,
-            "failed to HasFlash, inner HasFlash failed");
-        return false;
-    }
-    return isSupported;
-}
-
-array<float> ZoomQueryImpl::GetZoomRatioRange()
-{
-    MEDIA_DEBUG_LOG("GetZoomRatioRange is called");
-    CHECK_ERROR_RETURN_RET_LOG(captureSession_ == nullptr, array<float>(0.0),
-        "GetZoomRatioRange failed, captureSession is nullptr");
-    std::vector<float> vecZoomRatioList;
-    int retCode = captureSession_->GetZoomRatioRange(vecZoomRatioList);
-    MEDIA_INFO_LOG("GetZoomRatioRange vecZoomRatioList len = %{public}zu", vecZoomRatioList.size());
-    if (retCode != 0) {
-        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::SERVICE_FATL_ERROR,
-            "failed to GetZoomRatioRange, inner GetZoomRatioRange failed");
-        return array<float>(0.0);
-    }
-    std::vector<float> vecZoomRatioListDouble;
-    for (float item : vecZoomRatioList) {
-        vecZoomRatioListDouble.push_back(item);
-    }
-    return array<float>(vecZoomRatioListDouble);
 }
 } // namespace Ani
 } // namespace Camera

@@ -23,6 +23,7 @@
 #include "camera_worker_queue_keeper_taihe.h"
 #include "camera_event_emitter_taihe.h"
 #include "listener_base_taihe.h"
+#include "camera_query_taihe.h"
 
 namespace Ani {
 namespace Camera {
@@ -121,12 +122,14 @@ private:
     void OnEffectSuggestionCallback(OHOS::CameraStandard::EffectSuggestionType effectSuggestionType) const;
 };
 
-class SessionImpl : public CameraAniEventEmitter<SessionImpl> {
+class SessionImpl : public CameraAniEventEmitter<SessionImpl>,
+                    virtual public SessionBase {
 public:
     explicit SessionImpl(sptr<OHOS::CameraStandard::CaptureSession> obj)
     {
         if (obj != nullptr) {
             captureSession_ = obj;
+            isSessionBase_ = true;
         }
     }
     virtual ~SessionImpl() = default;
@@ -137,7 +140,13 @@ public:
     void CommitConfigSync();
     void ReleaseSync();
     void AddInput(weak::CameraInput cameraInput);
+    void RemoveInput(weak::CameraInput cameraInput);
     void AddOutput(weak::CameraOutput cameraOutput);
+    void RemoveOutput(weak::CameraOutput cameraOutput);
+    void SetUsage(UsageType usage, bool enabled);
+    array<CameraOutputCapability> GetCameraOutputCapabilities(CameraDevice const& camera);
+    bool CanAddInput(weak::CameraInput cameraInput);
+    bool CanAddOutput(weak::CameraOutput cameraOutput);
 
     const EmitterFunctions& GetEmitterFunctions() override;
 
@@ -215,7 +224,6 @@ private:
     void UnregisterEffectSuggestionCallbackListener(const std::string& eventName, std::shared_ptr<uintptr_t> callback);
 
     static const EmitterFunctions fun_map_;
-    sptr<OHOS::CameraStandard::CaptureSession> captureSession_ = nullptr;
 
 protected:
     virtual void RegisterIsoInfoCallbackListener(const std::string& eventName, std::shared_ptr<uintptr_t> callback,
@@ -251,36 +259,6 @@ protected:
         std::shared_ptr<uintptr_t> callback);
 };
 
-class FlashQueryImpl {
-public:
-    explicit FlashQueryImpl(sptr<OHOS::CameraStandard::CaptureSession> obj)
-    {
-        if (obj != nullptr) {
-            captureSession_ = obj;
-        }
-    }
-    virtual ~FlashQueryImpl() = default;
-
-    bool HasFlash();
-private:
-    sptr<OHOS::CameraStandard::CaptureSession> captureSession_ = nullptr;
-};
-
-class ZoomQueryImpl {
-public:
-    explicit ZoomQueryImpl(sptr<OHOS::CameraStandard::CaptureSession> obj)
-    {
-        if (obj != nullptr) {
-            captureSession_ = obj;
-        }
-    }
-    virtual ~ZoomQueryImpl() = default;
-
-    array<float> GetZoomRatioRange();
-private:
-    sptr<OHOS::CameraStandard::CaptureSession> captureSession_ = nullptr;
-};
-
 struct SessionTaiheAsyncContext : public TaiheAsyncContext {
     SessionTaiheAsyncContext(std::string funcName, int32_t taskId) : TaiheAsyncContext(funcName, taskId) {};
 
@@ -288,7 +266,7 @@ struct SessionTaiheAsyncContext : public TaiheAsyncContext {
     {
         objectInfo = nullptr;
     }
-    std::shared_ptr<SessionImpl> objectInfo = nullptr;
+    SessionImpl* objectInfo = nullptr;
 };
 } // namespace Camera
 } // namespace Ani

@@ -29,6 +29,7 @@
 #include "night_photo_session_taihe.h"
 #include "panorama_photo_session_taihe.h"
 #include "photo_session_taihe.h"
+#include "photo_session_for_sys_taihe.h"
 #include "portrait_photo_session_taihe.h"
 #include "professional_photo_session_taihe.h"
 #include "professional_video_session_taihe.h"
@@ -47,6 +48,7 @@
 #include "camera_device.h"
 #include "camera_error_code.h"
 #include "camera_template_utils_taihe.h"
+#include "input/prelaunch_config.h"
 #include "image_receiver.h"
 #include "surface_utils.h"
 #include "event_handler.h"
@@ -135,7 +137,7 @@ void TorchListenerAni::OnTorchStatusChangeCallback(const OHOS::CameraStandard::T
     TorchStatusInfo statusInfo = {
         .isTorchAvailable = torchStatusInfo.isTorchAvailable,
         .isTorchActive= torchStatusInfo.isTorchActive,
-        .torchLevel = torchStatusInfo.torchLevel,
+        .torchLevel = static_cast<double>(torchStatusInfo.torchLevel),
     };
 
     auto sharePtr = shared_from_this();
@@ -168,6 +170,7 @@ void FoldListenerAni::OnFoldStatusChangedCallback(const OHOS::CameraStandard::Fo
 {
     FoldStatusInfo statusInfo = {
         .foldStatus = static_cast<FoldStatus::key_t>(foldStatusInfo.foldStatus),
+        .supportedCameras = CameraUtilsTaihe::ToTaiheArrayCameraDevice(foldStatusInfo.supportedCameras),
     };
 
     auto sharePtr = shared_from_this();
@@ -189,6 +192,7 @@ CameraManagerImpl::CameraManagerImpl()
 {
     cameraManager_ = OHOS::CameraStandard::CameraManager::GetInstance();
 }
+
 array<CameraDevice> CameraManagerImpl::GetSupportedCameras()
 {
     CHECK_ERROR_RETURN_RET_LOG(cameraManager_ == nullptr, array<CameraDevice>(nullptr, 0),
@@ -293,7 +297,7 @@ CameraOutputCapability CameraManagerImpl::GetSupportedOutputCapability(CameraDev
         aniToNativeMap = g_aniToNativeSupportedModeSys;
     }
     int32_t modeValue = mode.get_value();
-    MEDIA_ERR_LOG("liyan GetSupportedOutputCapability SceneMode mode = %{public}d ", modeValue);
+    MEDIA_INFO_LOG("GetSupportedOutputCapability SceneMode mode = %{public}d ", modeValue);
     auto itr = aniToNativeMap.find(modeValue);
     if (itr != aniToNativeMap.end()) {
         sceneMode = itr->second;
@@ -302,7 +306,7 @@ CameraOutputCapability CameraManagerImpl::GetSupportedOutputCapability(CameraDev
         CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT, "Not support the input mode");
         return nullImpl;
     }
-    MEDIA_ERR_LOG("liyan GetSupportedOutputCapability SceneMode sceneMode = %{public}d ", sceneMode);
+    MEDIA_INFO_LOG("GetSupportedOutputCapability SceneMode sceneMode = %{public}d ", sceneMode);
 
     if (cameraInfo == nullptr) {
         MEDIA_ERR_LOG("CameraManagerAni::GetSupportedOutputCapability get camera info fail");
@@ -333,6 +337,15 @@ void CameraManagerImpl::Prelaunch()
     CHECK_ERROR_RETURN(!CameraUtilsTaihe::CheckError(retCode));
 }
 
+void CameraManagerImpl::PreSwitchCamera(string_view cameraId)
+{
+    CHECK_ERROR_RETURN_LOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi PreSwitchCamera is called!");
+    CHECK_ERROR_RETURN_LOG(cameraManager_ == nullptr, "failed to PreSwitchCamera, cameraManager is nullprt");
+    int32_t retCode = cameraManager_->PreSwitchCamera(std::string(cameraId));
+    CHECK_ERROR_RETURN(!CameraUtilsTaihe::CheckError(retCode));
+}
+
 bool CameraManagerImpl::IsTorchSupported()
 {
     CHECK_ERROR_RETURN_RET_LOG(cameraManager_ == nullptr, false,
@@ -352,6 +365,21 @@ bool CameraManagerImpl::IsCameraMuteSupported()
     CHECK_ERROR_RETURN_RET_LOG(cameraManager_ == nullptr, false,
         "failed to IsCameraMuteSupported, cameraManager is nullprt");
     return cameraManager_->IsCameraMuteSupported();
+}
+
+bool CameraManagerImpl::IsPrelaunchSupported(CameraDevice const& camera)
+{
+    CHECK_ERROR_RETURN_RET_LOG(cameraManager_ == nullptr, false,
+        "failed to IsPrelaunchSupported, cameraManager is nullprt");
+    std::string nativeStr(camera.cameraId);
+    sptr<OHOS::CameraStandard::CameraDevice> cameraInfo = cameraManager_->GetCameraDeviceFromId(nativeStr);
+    if (cameraInfo != nullptr) {
+        bool isPrelaunchSupported = cameraManager_->IsPrelaunchSupported(cameraInfo);
+        return isPrelaunchSupported;
+    }
+    MEDIA_ERR_LOG("CameraManagerImpl::IsPrelaunchSupported cameraInfo is null!");
+    CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT, "cameraInfo is null.");
+    return false;
 }
 
 TorchMode CameraManagerImpl::GetTorchMode()
@@ -538,12 +566,23 @@ SessionUnion CreateVideoSession(sptr<OHOS::CameraStandard::CaptureSession> &sess
     }
 }
 
+SessionUnion CreatePhotoSession(sptr<OHOS::CameraStandard::CaptureSession> &session)
+{
+    if (OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(false)) {
+        return SessionUnion::make_photoSessionForSys(
+            make_holder<Ani::Camera::PhotoSessionForSysImpl, PhotoSessionForSys>(session));
+    } else {
+        return SessionUnion::make_photoSession(make_holder<Ani::Camera::PhotoSessionImpl,
+            PhotoSession>(session));
+    }
+}
+
 SessionUnion CameraManagerImpl::CreateSessionWithMode(OHOS::CameraStandard::SceneMode sceneModeInner)
 {
     sptr<OHOS::CameraStandard::CaptureSession> session = cameraManager_->CreateCaptureSession(sceneModeInner);
     switch (sceneModeInner) {
         case OHOS::CameraStandard::SceneMode::CAPTURE:
-            return SessionUnion::make_photoSession(make_holder<Ani::Camera::PhotoSessionImpl, PhotoSession>(session));
+            return CreatePhotoSession(session);
         case OHOS::CameraStandard::SceneMode::VIDEO:
             return CreateVideoSession(session);
         case OHOS::CameraStandard::SceneMode::PORTRAIT:
@@ -595,6 +634,19 @@ SessionUnion CameraManagerImpl::CreateSessionWithMode(OHOS::CameraStandard::Scen
             CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::PARAMETER_ERROR, "Invalid scene mode");
             return SessionUnion::make_session(make_holder<Ani::Camera::SessionImpl, Session>(session));
     }
+}
+
+void CameraManagerImpl::MuteCameraPersistent(bool mute, PolicyType type)
+{
+    CHECK_ERROR_RETURN_LOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi On cameraMute is called!");
+    CHECK_ERROR_RETURN_LOG(cameraManager_ == nullptr, "failed to MuteCameraPersistent, cameraManager is nullptr");
+    auto itr = g_jsToFwPolicyType.find(type);
+    if (itr == g_jsToFwPolicyType.end()) {
+        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT, "MuteCameraPersistent fail");
+        return;
+    }
+    cameraManager_->MuteCameraPersist(itr->second, mute);
 }
 
 SessionUnion CameraManagerImpl::CreateSession(SceneMode mode)
@@ -674,6 +726,25 @@ PreviewOutput CameraManagerImpl::CreatePreviewOutputWithoutProfile(string_view s
     CHECK_EXECUTE(previewOutput == nullptr,
         CameraUtilsTaihe::ThrowError(retCode, "failed to create preview output"));
     return make_holder<Ani::Camera::PreviewOutputImpl, PreviewOutput>(previewOutput);
+}
+
+PreviewOutput CameraManagerImpl::CreateDeferredPreviewOutput(optional_view<Profile> profile)
+{
+    auto Result = [](OHOS::sptr<OHOS::CameraStandard::PreviewOutput> output) {
+        return make_holder<PreviewOutputImpl, PreviewOutput>(output);
+    };
+    CHECK_ERROR_RETURN_RET_LOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), Result(nullptr),
+        "SystemApi CreateDeferredPreviewOutputInstance is called!");
+    CHECK_ERROR_RETURN_RET_LOG(!(profile.has_value()), Result(nullptr),
+        "CreateDeferredPreviewOutput args is invalid!");
+    OHOS::CameraStandard::Profile innerProfile {
+        static_cast<OHOS::CameraStandard::CameraFormat>(profile.value().format.get_value()),
+        OHOS::CameraStandard::Size{ profile.value().size.width, profile.value().size.height }
+    };
+    OHOS::sptr<OHOS::CameraStandard::PreviewOutput> previewOutput = nullptr;
+    previewOutput = OHOS::CameraStandard::CameraManager::GetInstance()->CreateDeferredPreviewOutput(innerProfile);
+    CHECK_ERROR_RETURN_RET_LOG(previewOutput == nullptr, Result(nullptr), "failed to create previewOutput");
+    return Result(previewOutput);
 }
 
 PhotoOutput CameraManagerImpl::CreatePhotoOutput(optional_view<Profile> profile)
@@ -869,6 +940,46 @@ void CameraManagerImpl::ProcessCameraInfo(OHOS::sptr<OHOS::CameraStandard::Camer
             break;
         }
     }
+}
+
+void CameraManagerImpl::SetPrelaunchConfig(PrelaunchConfig const& prelaunchConfig)
+{
+    CHECK_ERROR_RETURN_LOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi SetPrelaunchConfig is called!");
+    CHECK_ERROR_RETURN_LOG(cameraManager_ == nullptr, "failed to SetPrelaunchConfig, cameraManager is nullprt");
+    std::string cameraId(prelaunchConfig.cameraDevice.cameraId);
+    OHOS::CameraStandard::EffectParam effectParam;
+    OHOS::CameraStandard::PrelaunchConfig prelaunchConfigNative;
+    if (prelaunchConfig.restoreParamType.has_value()) {
+        prelaunchConfigNative.restoreParamType = static_cast<OHOS::CameraStandard::RestoreParamType>(
+            prelaunchConfig.restoreParamType.value().get_value());
+    }
+    if (prelaunchConfig.activeTime.has_value()) {
+        prelaunchConfigNative.activeTime = prelaunchConfig.activeTime.value();
+    }
+    if (prelaunchConfig.settingParam.has_value()) {
+        prelaunchConfigNative.settingParam.skinSmoothLevel = prelaunchConfig.settingParam.value().skinSmoothLevel;
+        prelaunchConfigNative.settingParam.skinTone = prelaunchConfig.settingParam.value().skinTone;
+        prelaunchConfigNative.settingParam.faceSlender = prelaunchConfig.settingParam.value().faceSlender;
+        effectParam.skinSmoothLevel = prelaunchConfig.settingParam.value().skinSmoothLevel;
+        effectParam.skinTone = prelaunchConfig.settingParam.value().skinTone;
+        effectParam.faceSlender = prelaunchConfig.settingParam.value().faceSlender;
+    }
+    MEDIA_INFO_LOG("SetPrelaunchConfig cameraId = %{public}s", cameraId.c_str());
+    int32_t retCode = cameraManager_->SetPrelaunchConfig(cameraId,
+        static_cast<OHOS::CameraStandard::RestoreParamTypeOhos>(prelaunchConfigNative.restoreParamType),
+        prelaunchConfigNative.activeTime, effectParam);
+    CHECK_ERROR_RETURN_LOG(!CameraUtilsTaihe::CheckError(retCode),
+        "CameraManagerImpl::SetPrelaunchConfig fail %{public}d", retCode);
+}
+
+bool CameraManagerImpl::IsTorchModeSupported(TorchMode mode)
+{
+    MEDIA_INFO_LOG("IsTorchModeSupported is called");
+    bool isTorchModeSupported = OHOS::CameraStandard::CameraManager::GetInstance()->IsTorchModeSupported(
+        static_cast<OHOS::CameraStandard::TorchMode>(mode.get_value()));
+    MEDIA_DEBUG_LOG("IsTorchModeSupported : %{public}d", isTorchModeSupported);
+    return isTorchModeSupported;
 }
 
 CameraManager getCameraManager(uintptr_t context)

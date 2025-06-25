@@ -23,6 +23,21 @@ namespace Ani {
 namespace Camera {
 uint32_t DepthDataImpl::depthDataTaskId_ = CAMERA_PREVIEW_OUTPUT_TASKID;
 
+void DepthDataImpl::ReleaseSync()
+{
+    MEDIA_DEBUG_LOG("ReleaseSync is called");
+    std::unique_ptr<DepthDataTaiheAsyncContext> asyncContext = std::make_unique<DepthDataTaiheAsyncContext>(
+        "DepthDataImpl::ReleaseSync", CameraUtilsTaihe::IncrementAndGet(depthDataTaskId_));
+    asyncContext->queueTask =
+        CameraTaiheWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueTask("DepthDataImpl::ReleaseSync");
+    asyncContext->objectInfo = this;
+    CAMERA_START_ASYNC_TRACE(asyncContext->funcName, asyncContext->taskId);
+    CameraTaiheWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(asyncContext->queueTask, [&asyncContext]() {
+        CameraUtilsTaihe::CheckError(asyncContext->errorCode);
+    });
+    CAMERA_FINISH_ASYNC_TRACE(asyncContext->funcName, asyncContext->taskId);
+}
+
 CameraFormat DepthDataImpl::GetFormat()
 {
     return CameraUtilsTaihe::ToTaiheCameraFormat(format_);

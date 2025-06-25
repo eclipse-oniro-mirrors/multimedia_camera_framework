@@ -28,6 +28,7 @@
 #include "camera_output_capability.h"
 #include "capture_output.h"
 #include "preview_output.h"
+#include "surface_utils.h"
 
 namespace Ani {
 namespace Camera {
@@ -58,8 +59,18 @@ class PreviewOutputImpl : public CameraOutputImpl,
 public:
     PreviewOutputImpl(OHOS::sptr<OHOS::CameraStandard::CaptureOutput> output);
     ~PreviewOutputImpl() = default;
-
+    void AddDeferredSurface(string_view surfaceId);
+    bool IsSketchSupported();
     void ReleaseSync() override;
+    void EnableSketch(bool enabled);
+    double GetSketchRatio();
+    array<FrameRateRange> GetSupportedFrameRates();
+    Profile GetActiveProfile();
+    FrameRateRange GetActiveFrameRate();
+    void SetFrameRate(int32_t minFps, int32_t maxFps);
+    ImageRotation GetPreviewRotation(int32_t displayRotation);
+    void SetPreviewRotation(ImageRotation previewRotation, optional_view<bool> isDisplayLocked);
+    void AttachSketchSurface(string_view surfaceId);
     void OnError(callback_view<void(uintptr_t)> callback);
     void OffError(optional_view<callback<void(uintptr_t)>> callback);
     void OnFrameStart(callback_view<void(uintptr_t, uintptr_t)> callback);
@@ -91,7 +102,7 @@ struct PreviewOutputTaiheAsyncContext : public TaiheAsyncContext {
     {
         objectInfo = nullptr;
     }
-    std::shared_ptr<PreviewOutputImpl> objectInfo = nullptr;
+    PreviewOutputImpl* objectInfo = nullptr;
 };
 } // namespace Camera
 } // namespace Ani

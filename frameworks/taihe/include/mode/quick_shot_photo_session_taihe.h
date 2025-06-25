@@ -27,10 +27,11 @@ namespace Camera {
 using namespace OHOS;
 using namespace ohos::multimedia::camera;
 
-class QuickShotPhotoSessionImpl : public SessionImpl, public FlashQueryImpl, public ZoomQueryImpl {
+class QuickShotPhotoSessionImpl : public SessionImpl, public FlashImpl, public ZoomImpl, public FocusImpl,
+                                  public AutoExposureImpl, public ColorManagementImpl, public ColorEffectImpl,
+                                  public EffectSuggestionImpl {
 public:
-    explicit QuickShotPhotoSessionImpl(sptr<OHOS::CameraStandard::CaptureSession> &obj) : SessionImpl(obj),
-        FlashQueryImpl(obj), ZoomQueryImpl(obj)
+    explicit QuickShotPhotoSessionImpl(sptr<OHOS::CameraStandard::CaptureSession> &obj) : SessionImpl(obj)
     {
         if (obj != nullptr) {
             quickShotPhotoSession_ = static_cast<OHOS::CameraStandard::QuickShotPhotoSession*>(obj.GetRefPtr());
