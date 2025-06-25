@@ -266,11 +266,11 @@ public:
     bool GetisRetractable();
 
     /**
-    * @brief Get the camera equivalentFocalLength.
+    * @brief Get the camera lensEquivalentFocalLength.
     *
-    * @return Returns the camera equivalentFocalLength.
+    * @return Returns the camera lensEquivalentFocalLength.
     */
-    std::vector<int32_t> GetEquivalentFocalLength();
+    std::vector<int32_t> GetLensEquivalentFocalLength();
     
     // or can we move definition completely in session only?
     /**
@@ -363,7 +363,7 @@ private:
     CameraFoldScreenType foldScreenType_ = CAMERA_FOLDSCREEN_UNSPECIFIED;
     uint32_t cameraOrientation_ = 0;
     bool isRetractable_ = false;
-    std::vector<int32_t> equivalentFocalLength_ = {};
+    std::vector<int32_t> lensEquivalentFocalLength_ = {};
     uint32_t moduleType_ = 0;
     uint32_t foldStatus_ = 0;
     std::vector<SceneMode> supportedModes_ = {};
@@ -377,7 +377,7 @@ private:
     static const std::unordered_map<camera_connection_type_t, ConnectionType> metaToFwConnectionType_;
     static const std::unordered_map<camera_foldscreen_enum_t, CameraFoldScreenType> metaToFwCameraFoldScreenType_;
     void init(common_metadata_header_t* metadataHeader);
-    void InitEquivalentFocalLength(common_metadata_header_t* metadata);
+    void InitLensEquivalentFocalLength(common_metadata_header_t* metadata);
     bool isFindModuleTypeTag(uint32_t &tagId);
     bool isConcurrentDevice_ = false;
 };

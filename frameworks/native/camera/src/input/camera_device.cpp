@@ -188,7 +188,7 @@ void CameraDevice::init(common_metadata_header_t* metadata)
 
     isPrelaunch_ = (cameraDeviceRet == CAM_META_SUCCESS && item.data.u8[0] == 1);
 
-    InitEquivalentFocalLength(metadata);
+    InitLensEquivalentFocalLength(metadata);
 
     MEDIA_INFO_LOG("camera position: %{public}d, camera type: %{public}d, camera connection type: %{public}d, "
                    "camera foldScreen type: %{public}d, camera orientation: %{public}d, isretractable: %{public}d, "
@@ -196,20 +196,20 @@ void CameraDevice::init(common_metadata_header_t* metadata)
                    foldScreenType_, cameraOrientation_, isRetractable_, moduleType_, foldStatus_);
 }
 
-void CameraDevice::InitEquivalentFocalLength(common_metadata_header_t* metadata)
+void CameraDevice::InitLensEquivalentFocalLength(common_metadata_header_t* metadata)
 {
-    std::vector<int32_t> equivalentFocalLength = {};
+    std::vector<int32_t> lensEquivalentFocalLength = {};
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_LENS_EQUIVALENT_FOCUS, &item);
     if (ret == CAM_META_SUCCESS) {
         for (uint32_t i = 0; i < item.count; i++) {
-            equivalentFocalLength.emplace_back(item.data.i32[i]);
+            lensEquivalentFocalLength.emplace_back(item.data.i32[i]);
         }
     }
-    equivalentFocalLength_ = equivalentFocalLength;
-    MEDIA_INFO_LOG("CameraDevice::InitEquivalentFocalLength, equivalentFocalLength size: %{public}zu, "
-        "equivalentFocalLength: %{public}s", equivalentFocalLength_.size(),
-        Container2String(equivalentFocalLength_.begin(), equivalentFocalLength_.end()).c_str());
+    lensEquivalentFocalLength_ = lensEquivalentFocalLength;
+    MEDIA_INFO_LOG("CameraDevice::InitLensEquivalentFocalLength, lensEquivalentFocalLength size: %{public}zu, "
+        "lensEquivalentFocalLength: %{public}s", lensEquivalentFocalLength_.size(),
+        Container2String(lensEquivalentFocalLength_.begin(), lensEquivalentFocalLength_.end()).c_str());
 }
 
 std::string CameraDevice::GetID()
@@ -333,12 +333,12 @@ bool CameraDevice::GetisRetractable()
     return isRetractable_;
 }
 
-std::vector<int32_t> CameraDevice::GetEquivalentFocalLength()
+std::vector<int32_t> CameraDevice::GetLensEquivalentFocalLength()
 {
-    MEDIA_INFO_LOG("CameraDevice::InitEquivalentFocalLength, equivalentFocalLength size: %{public}zu, "
-        "equivalentFocalLength: %{public}s", equivalentFocalLength_.size(),
-        Container2String(equivalentFocalLength_.begin(), equivalentFocalLength_.end()).c_str());
-    return equivalentFocalLength_;
+    MEDIA_INFO_LOG("CameraDevice::GetLensEquivalentFocalLength, lensEquivalentFocalLength size: %{public}zu, "
+        "lensEquivalentFocalLength: %{public}s", lensEquivalentFocalLength_.size(),
+        Container2String(lensEquivalentFocalLength_.begin(), lensEquivalentFocalLength_.end()).c_str());
+    return lensEquivalentFocalLength_;
 }
 
 uint32_t CameraDevice::GetModuleType()

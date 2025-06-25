@@ -1581,7 +1581,7 @@ function getCameraManager(context: Context): CameraManager;
     readonly cameraOrientation: number;
 
     /**
-     * Camera equivalent focal length.
+     * Camera lens equivalent focal length
      *
      * @type { ?Array<number> }
      * @readonly
@@ -1589,7 +1589,7 @@ function getCameraManager(context: Context): CameraManager;
      * @systemapi
      * @since 20
      */
-    readonly equivalentFocalLength ?: Array<number>;
+    readonly lensEquivalentFocalLength?: Array<number>;
   }
 
   /**
