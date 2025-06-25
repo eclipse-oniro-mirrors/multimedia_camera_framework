@@ -2508,5 +2508,16 @@ int32_t HCameraService::CallbackExit([[maybe_unused]] uint32_t code, [[maybe_unu
     MEDIA_DEBUG_LOG("leave, code:%{public}u, result:%{public}d", code, result);
     return CAMERA_OK;
 }
+
+int32_t HCameraService::GetCameraStorageSize(int64_t& size)
+{
+    CHECK_ERROR_RETURN_RET_LOG(
+        !CheckSystemApp(), CAMERA_NO_PERMISSION, "HCameraService::GetCameraStorageSize:SystemApi is called");
+    int32_t userId = 0;
+    int32_t uid = IPCSkeleton::GetCallingUid();
+    AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(uid, userId);
+    cameraHostManager_->GetCameraStorageSize(userId, size);
+    return CAMERA_OK;
+}
 } // namespace CameraStandard
 } // namespace OHOS

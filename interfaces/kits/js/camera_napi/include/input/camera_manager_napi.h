@@ -165,6 +165,7 @@ public:
     static napi_value Off(napi_env env, napi_callback_info info);
     static napi_value GetCameraDevice(napi_env env, napi_callback_info info);
     static napi_value GetCameraConcurrentInfos(napi_env env, napi_callback_info info);
+    static napi_value GetCameraStorageSize(napi_env env, napi_callback_info info);
 
     CameraManagerNapi();
     ~CameraManagerNapi() override;
@@ -214,17 +215,13 @@ private:
     static thread_local uint32_t cameraManagerTaskId;
 };
 
-struct CameraManagerContext : public AsyncContext {
-    std::string surfaceId;
-    CameraManagerNapi* managerInstance;
-    Profile profile;
-    VideoProfile videoProfile;
-    DepthProfile depthProfile;
-    CameraManagerAsyncCallbackModes modeForAsync;
-    std::string errString;
-    ~CameraManagerContext()
+struct CameraManagerAsyncContext : public AsyncContext {
+    CameraManagerAsyncContext(std::string funcName, int32_t taskId) : AsyncContext(funcName, taskId) {};
+    CameraManagerNapi* objectInfo = nullptr;
+    int64_t storageSize = 0;
+    ~CameraManagerAsyncContext()
     {
-        managerInstance = nullptr;
+        objectInfo = nullptr;
     }
 };
 } // namespace CameraStandard

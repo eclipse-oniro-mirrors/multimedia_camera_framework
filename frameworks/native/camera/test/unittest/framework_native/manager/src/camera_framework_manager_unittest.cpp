@@ -2241,5 +2241,21 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_094, Test
     bool res = cameraManager_->IsCameraMuteSupported();
     EXPECT_EQ(res, true);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test cameraManager GetCameraStorageSize
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test cameraManager GetCameraStorageSize
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_095, TestSize.Level0)
+{
+    cameraManager_->cameraDeviceList_.clear();
+    int64_t size = 0;
+    int ret = cameraManager_->GetCameraStorageSize(size);
+    EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
+}
 }
 }

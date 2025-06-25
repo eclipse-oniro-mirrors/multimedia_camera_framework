@@ -761,6 +761,13 @@ public:
     */
     void SetCameraManagerNull();
 
+    /**
+     * @brief Get storageSize.
+     *
+     * @return Returns camera storage.
+     */
+    int32_t GetCameraStorageSize(int64_t& storage);
+
     int32_t RequireMemorySize(int32_t memSize);
 
     int32_t CreatePreviewOutputStream(

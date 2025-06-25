@@ -101,6 +101,7 @@ public:
 
     int32_t GetCameraResourceCost(const std::string& cameraId,
         OHOS::HDI::Camera::V1_3::CameraDeviceResourceCost& resourceCost);
+    void GetCameraStorageSize(const int& userId, int64_t& storageSize);
 
     // CameraHostCallbackStub
     int32_t OnCameraStatus(const std::string& cameraId, HDI::Camera::V1_0::CameraStatus status) override;
@@ -498,6 +499,10 @@ void HCameraHostManager::CameraHostInfo::NotifyDeviceStateChangeInfo(int notifyT
         cameraHostProxyV1_2_->NotifyDeviceStateChangeInfo(notifyType, deviceState);
         // LCOV_EXCL_STOP
     }
+}
+
+void HCameraHostManager::CameraHostInfo::GetCameraStorageSize(const int& userId, int64_t& storageSize)
+{
 }
 
 bool HCameraHostManager::CameraHostInfo::CheckUserHasChanged(
@@ -1307,6 +1312,14 @@ void HCameraHostManager::GetPhysicCameraId(int32_t position, std::string &camera
             break;
         }
     }
+}
+
+void HCameraHostManager::GetCameraStorageSize(const int& userId, int64_t& storageSize)
+{
+    auto cameraHostInfo = FindLocalCameraHostInfo();
+    CHECK_ERROR_RETURN_LOG(cameraHostInfo == nullptr,
+        "HCameraHostManager::GetCameraStorageSize failed with not exist support device info");
+    cameraHostInfo->GetCameraStorageSize(userId, storageSize);
 }
 } // namespace CameraStandard
 } // namespace OHOS
