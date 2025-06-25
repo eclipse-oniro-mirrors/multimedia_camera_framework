@@ -554,7 +554,6 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
     CaptureInfo captureInfoPhoto;
     captureInfoPhoto.streamIds_ = { GetHdiStreamId() };
     ProcessCaptureInfoPhoto(captureInfoPhoto, captureSettings, preparedCaptureId);
-
     auto callingTokenId = IPCSkeleton::GetCallingTokenID();
     const std::string permissionName = "ohos.permission.CAMERA";
     AddCameraPermissionUsedRecord(callingTokenId, permissionName);
