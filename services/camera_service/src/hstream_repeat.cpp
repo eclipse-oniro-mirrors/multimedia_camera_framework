@@ -290,7 +290,7 @@ int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> setti
             uint8_t connectionType = 0;
             if (settings != nullptr) {
                 ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_ABILITY_CAMERA_CONNECTION_TYPE, &item);
-                if (ret == CAM_META_SUCCESS || item.count == 0) {
+                if (ret == CAM_META_SUCCESS || item.count > 0) {
                     connectionType = item.data.u8[0];
                 }
             }
