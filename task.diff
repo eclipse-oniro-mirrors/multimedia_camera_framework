@@ -1,230 +1,113 @@
-From 2f6614f1e309901f5d5b848d3d4c235d60007fcb Mon Sep 17 00:00:00 2001
-From: openharmony_ci <120357966@qq.com>
-Date: Thu, 29 May 2025 07:58:00 +0000
-Subject: [PATCH] =?UTF-8?q?=E4=BF=AE=E6=94=B9=E5=8A=A8=E6=80=81=E7=85=A7?=
- =?UTF-8?q?=E7=89=87=E5=BB=B6=E8=BF=9F=E9=87=8A=E6=94=BEtask?=
-MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
+From 1dd28cac2906b4385ab69eec021112c0b29f0a4e Mon Sep 17 00:00:00 2001
+From: s00888898 <s00888898@notesmail.huawei.com/>
+Date: Thu, 19 Jun 2025 22:23:03 +0800
+Subject: [PATCH] TicketNo:DTS2025061233604 Description:fix createAVMuxer
+ failed after cpature disable movingPhoto Team:Gitee Feature or Bugfix:Bugfix
+ Binary Source:Sync from Gitee PrivateCode(Yes/No):No
 
-TicketNo: DTS2025031327108
-Description: 修改动态照片延迟释放task
-Team:gitee
-Feature or Bugfix:
-Binary Source: sync from gitee
-PrivateCode(Yes/No):No
------- DO NOT MODIFY, AUTO-GENERATED! ------
-Gitee-Issue: #ICB82O
-Time: "2025-05-29T08:04:31.508346Z"
-PR-Num: 3383
-Gitee-PR: https://openharmony.gitee.com/openharmony/multimedia_camera_framework/pulls/3383
-
-☹️❌⛔code conflicts, please fix it and re-publish.
-HEAD detached at 747b56c78
-You are currently cherry-picking commit 17899341f.
-  (fix conflicts and run "git cherry-pick --continue")
-  (use "git cherry-pick --skip" to skip this patch)
-  (use "git cherry-pick --abort" to cancel the cherry-pick operation)
-
-Changes to be committed:
-	modified:   services/camera_service/include/avcodec/avcodec_task_manager.h
-	modified:   services/camera_service/include/hcamera_service.h
-cherry picked from commit 9cea76b23437ab32647f1cd7d5daf5f7a8120639
-
-Change-Id: I1748505864253de1ab6fa2477b34b55663c4829f
-Reviewed-by: z00856280,h00897201
-Approved-by: n00564676
-Merged-on: https://open.codehub.huawei.com/OpenSourceCenter_CR/openharmony/multimedia_camera_framework/-/change_requests/6292
-Merged-by: public hisicitools
-Reviewed-by: w00640748,n00564676
-Approved-by: n00564676
-Merged-on: https://open.codehub.huawei.com/OpenSourceCenter_CR/openharmony/multimedia_camera_framework/-/change_requests/6351
-Merged-by: public hisicitools
-Reviewed-by: w00640748,w30052493,z00856280
-Approved-by: n00564676
-Merged-on: https://open.codehub.huawei.com/OpenSourceCenter_CR/openharmony/multimedia_camera_framework/-/change_requests/6490
-Merged-by: public hisicitools
+Change-Id: I7a05269ff3ae8ee7e53873a7f12237ae0a52314b
 ---
- .../include/avcodec/avcodec_task_manager.h    |  3 +-
- .../camera_service/include/hcapture_session.h |  1 +
- .../src/avcodec/avcodec_task_manager.cpp      | 40 ++++++++++++-------
- .../camera_service/src/hcapture_session.cpp   | 24 ++++++-----
- 4 files changed, 43 insertions(+), 25 deletions(-)
+ .../camera_service/include/hstream_operator.h |  2 +
+ .../camera_service/src/hstream_operator.cpp   | 45 ++++++++++++++-----
+ 2 files changed, 35 insertions(+), 12 deletions(-)
 
-diff --git a/services/camera_service/include/avcodec/avcodec_task_manager.h b/services/camera_service/include/avcodec/avcodec_task_manager.h
-index 9e277d7c48..55330a8832 100644
---- a/services/camera_service/include/avcodec/avcodec_task_manager.h
-+++ b/services/camera_service/include/avcodec/avcodec_task_manager.h
-@@ -66,6 +66,7 @@ public:
-     void Stop();
-     void ClearTaskResource();
-     void SetVideoBufferDuration(uint32_t preBufferCount, uint32_t postBufferCount);
-+    bool isEmptyVideoFdMap();
-     shared_ptr<TaskManager>& GetTaskManager();
-     shared_ptr<TaskManager>& GetEncoderManager();
-     mutex startTimeMutex_;
-@@ -73,7 +74,7 @@ public:
-     std::map<int32_t, int64_t> mPStartTimeMap_ = {};
-     std::map<int32_t, int64_t> mPEndTimeMap_ = {};
- private:
--    void FinishMuxer(sptr<AudioVideoMuxer> muxer);
-+    void FinishMuxer(sptr<AudioVideoMuxer> muxer, int32_t captureId);
-     void ChooseVideoBuffer(vector<sptr<FrameRecord>> frameRecords, vector<sptr<FrameRecord>> &choosedBuffer,
-         int64_t shutterTime, int32_t captureId);
-     size_t FindIdrFrameIndex(vector<sptr<FrameRecord>> frameRecords, int64_t shutterTime, int32_t captureId);
-diff --git a/services/camera_service/include/hcapture_session.h b/services/camera_service/include/hcapture_session.h
-index c9fa86a015..d8a4c79a55 100644
---- a/services/camera_service/include/hcapture_session.h
-+++ b/services/camera_service/include/hcapture_session.h
-@@ -302,6 +302,7 @@ public:
- 
-     void BeforeDeviceClose() override;
-     void UpdateHookBasicInfo(std::map<int32_t, std::string> ParameterMap);
-+    void RemoveTaskManager(sptr<AvcodecTaskManager> taskManager);
- 
- private:
-     int32_t Initialize(const uint32_t callerToken, int32_t opMode);
-diff --git a/services/camera_service/src/avcodec/avcodec_task_manager.cpp b/services/camera_service/src/avcodec/avcodec_task_manager.cpp
-index 362a8de54c..7021ae83d2 100644
---- a/services/camera_service/src/avcodec/avcodec_task_manager.cpp
-+++ b/services/camera_service/src/avcodec/avcodec_task_manager.cpp
-@@ -50,6 +50,7 @@ AvcodecTaskManager::~AvcodecTaskManager()
+diff --git a/services/camera_service/include/hstream_operator.h b/services/camera_service/include/hstream_operator.h
+index 9891559193..cbcd104584 100644
+--- a/services/camera_service/include/hstream_operator.h
++++ b/services/camera_service/include/hstream_operator.h
+@@ -391,6 +391,8 @@ private:
+     bool isOfflineStreamOperator_ =  false;
+     int32_t mlastCaptureId = 0;
+     int32_t sensorRotation_ = 0;
++    std::map<int32_t, bool> curMotionPhotoStatus_;
++    std::mutex motionPhotoStatusLock_;
+ };
+ } // namespace CameraStandard
+ } // namespace OHOS
+diff --git a/services/camera_service/src/hstream_operator.cpp b/services/camera_service/src/hstream_operator.cpp
+index 4187631419..7c9f89433f 100644
+--- a/services/camera_service/src/hstream_operator.cpp
++++ b/services/camera_service/src/hstream_operator.cpp
+@@ -180,6 +180,10 @@ HStreamOperator::HStreamOperator(const uint32_t callingTokenId, int32_t opMode)
+ HStreamOperator::~HStreamOperator()
  {
      CAMERA_SYNC_TRACE;
++    {
++        std::lock_guard<std::mutex> lock(motionPhotoStatusLock_);
++        curMotionPhotoStatus_.clear();
++    }
      Release();
-+    ClearTaskResource();
  }
  
- AvcodecTaskManager::AvcodecTaskManager(sptr<AudioCapturerSession> audioCaptureSession,
-@@ -129,7 +130,7 @@ void AvcodecTaskManager::SetVideoFd(int64_t timestamp, shared_ptr<PhotoAssetIntf
-     lock_guard<mutex> lock(videoFdMutex_);
-     MEDIA_INFO_LOG("Set timestamp: %{public}" PRIu64 ", captureId: %{public}d", timestamp, captureId);
-     videoFdMap_.insert(std::make_pair(captureId, std::make_pair(timestamp, photoAssetProxy)));
--    MEDIA_DEBUG_LOG("video map size:%{public}zu", videoFdMap_.size());
-+    MEDIA_INFO_LOG("video map size:%{public}zu", videoFdMap_.size());
-     cvEmpty_.notify_all();
- }
- 
-@@ -149,7 +150,6 @@ sptr<AudioVideoMuxer> AvcodecTaskManager::CreateAVMuxer(vector<sptr<FrameRecord>
-     OH_AVOutputFormat format = AV_OUTPUT_FORMAT_MPEG_4;
-     int64_t timestamp = videoFdMap_[captureId].first;
-     auto photoAssetProxy = videoFdMap_[captureId].second;
--    videoFdMap_.erase(captureId);
-     ChooseVideoBuffer(frameRecords, choosedBuffer, timestamp, captureId);
-     muxer->Create(format, photoAssetProxy);
-     muxer->SetRotation(captureRotation);
-@@ -187,19 +187,26 @@ sptr<AudioVideoMuxer> AvcodecTaskManager::CreateAVMuxer(vector<sptr<FrameRecord>
-     return muxer;
- }
- 
--void AvcodecTaskManager::FinishMuxer(sptr<AudioVideoMuxer> muxer)
-+void AvcodecTaskManager::FinishMuxer(sptr<AudioVideoMuxer> muxer, int32_t captureId)
+@@ -1445,6 +1449,12 @@ void HStreamOperator::SetSensorRotation(int32_t rotationValue, int32_t sensorOri
+ void HStreamOperator::StartMovingPhotoEncode(int32_t rotation, uint64_t timestamp, int32_t format, int32_t captureId)
  {
-     CAMERA_SYNC_TRACE;
-     MEDIA_INFO_LOG("doMxuer video is finished");
--    if (muxer) {
--        muxer->Stop();
--        muxer->Release();
--        shared_ptr<PhotoAssetIntf> proxy = muxer->GetPhotoAssetProxy();
--        MEDIA_INFO_LOG("PhotoAssetProxy notify enter");
--        if (proxy) {
--            proxy->NotifyVideoSaveFinished();
--        }
--    }
-+    CHECK_ERROR_RETURN(!muxer);
-+    muxer->Stop();
-+    muxer->Release();
-+    std::shared_ptr<PhotoAssetIntf> proxy = muxer->GetPhotoAssetProxy();
-+    MEDIA_INFO_LOG("PhotoAssetProxy notify enter");
-+    CHECK_ERROR_RETURN(!proxy);
-+    proxy->NotifyVideoSaveFinished();
-+    lock_guard<mutex> lock(videoFdMutex_);
-+    videoFdMap_.erase(captureId);
-+    MEDIA_INFO_LOG("finishMuxer end, videoFdMap_ size is %{public}zu", videoFdMap_.size());
-+}
-+
-+bool AvcodecTaskManager::isEmptyVideoFdMap()
-+{
-+    lock_guard<mutex> lock(videoFdMutex_);
-+    return videoFdMap_.empty();
- }
- 
- void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, uint64_t taskName,
-@@ -216,7 +223,12 @@ void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, ui
-         vector<sptr<FrameRecord>> choosedBuffer;
-         sptr<AudioVideoMuxer> muxer = thisPtr->CreateAVMuxer(frameRecords, captureRotation, choosedBuffer, captureId);
-         CHECK_ERROR_RETURN_LOG(muxer == nullptr, "CreateAVMuxer failed");
--        CHECK_ERROR_RETURN_LOG(choosedBuffer.empty(), "choosed empty buffer!");
-+        if (choosedBuffer.empty()) {
-+            lock_guard<mutex> lock(thisPtr->videoFdMutex_);
-+            thisPtr->videoFdMap_.erase(captureId);
-+            MEDIA_ERR_LOG("choosed empty buffer, videoFdMap_ size is %{public}zu", thisPtr->videoFdMap_.size());
-+            return;
-+        }
-         int64_t videoStartTime = choosedBuffer.front()->GetTimeStamp();
-         for (size_t index = 0; index < choosedBuffer.size(); index++) {
-             MEDIA_DEBUG_LOG("write sample index %{public}zu", index);
-@@ -249,7 +261,7 @@ void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, ui
-         thisPtr->PrepareAudioBuffer(choosedBuffer, audioRecords, processedAudioRecords);
-         thisPtr->CollectAudioBuffer(processedAudioRecords, muxer);
-         #endif
--        thisPtr->FinishMuxer(muxer);
-+        thisPtr->FinishMuxer(muxer, captureId);
+     CHECK_ERROR_RETURN(!isSetMotionPhoto_);
++    {
++        std::lock_guard<std::mutex> lock(motionPhotoStatusLock_); 
++        curMotionPhotoStatus_[captureId] = isSetMotionPhoto_;
++        MEDIA_DEBUG_LOG("HStreamOperator::StartMovingPhotoEncode cptureId : %{public}d, isSetMotionPhto : %{public}d",
++            captureId, isSetMotionPhoto_);
++    }
+     int32_t addMirrorRotation = 0;
+     MEDIA_INFO_LOG("sensorRotation is : %{public}d", sensorRotation_);
+     if ((sensorRotation_ == STREAM_ROTATE_0 || sensorRotation_ == STREAM_ROTATE_180) && isMovingPhotoMirror_) {
+@@ -1601,11 +1611,17 @@ int32_t HStreamOperator::CreateMediaLibrary(sptr<CameraServerPhotoProxy>& camera
+         recorder->InsertPhotoAsset(timestamp, photoAssetProxy, captureId);
      });
- }
- 
-diff --git a/services/camera_service/src/hcapture_session.cpp b/services/camera_service/src/hcapture_session.cpp
-index 5b1d410a59..c309377c63 100644
---- a/services/camera_service/src/hcapture_session.cpp
-+++ b/services/camera_service/src/hcapture_session.cpp
-@@ -936,17 +936,11 @@ void HCaptureSession::StopMovingPhoto() __attribute__((no_sanitize("cfi")))
-     if (livephotoListener_) {
-         livephotoListener_->StopDrainOut();
-     }
--    if (videoCache_) {
--        videoCache_->ClearCache();
--    }
-     #ifdef MOVING_PHOTO_ADD_AUDIO
-     if (audioCapturerSession_) {
-         audioCapturerSession_->Stop();
+     #else
+-    if (!isBursting && isSetMotionPhoto_ && taskManager_) {
+-        MEDIA_INFO_LOG("taskManager setVideoFd start");
+-        taskManager_->SetVideoFd(timestamp, photoAssetProxy, captureId);
+-    } else {
+-        photoAssetProxy.reset();
++    {
++        std::lock_guard<std::mutex> lock(motionPhotoStatusLock_);
++        bool isSetMotionPhoto = curMotionPhotoStatus_.find(captureId) != curMotionPhotoStatus_.end()
++            &&  curMotionPhotoStatus_[captureId];
++        if (!isBursting && isSetMotionPhoto && taskManager_) {
++            MEDIA_INFO_LOG("taskManager setVideoFd start");
++            taskManager_->SetVideoFd(timestamp, photoAssetProxy, captureId);
++            curMotionPhotoStatus_.erase(captureId);
++        } else {
++            photoAssetProxy.reset();
++        }
      }
      #endif
--    if (taskManager_) {
--        taskManager_->Stop();
--    }
- }
- 
- int32_t HCaptureSession::ValidateSession()
-@@ -1804,15 +1798,25 @@ int32_t HCaptureSession::Release(CaptureSessionReleaseType type)
-         std::lock_guard<std::mutex> lock(movingPhotoStatusLock_);
-         livephotoListener_ = nullptr;
-         videoCache_ = nullptr;
--        if (taskManager_) {
--            taskManager_->ClearTaskResource();
--            taskManager_ = nullptr;
--        }
-+        RemoveTaskManager(taskManager_); 
-+        taskManager_ = nullptr;
+     CameraReportDfxUtils::GetInstance()->SetAddProxyEndInfo(captureId);
+@@ -1701,20 +1717,25 @@ int32_t HStreamOperator::CreateMediaLibrary(
+     std::shared_ptr<PhotoAssetIntf> photoAssetProxy =
+         ProcessPhotoProxy(captureId, picture, isBursting, photoProxy, uri);
+     CHECK_ERROR_RETURN_RET_LOG(photoAssetProxy == nullptr, CAMERA_INVALID_ARG, "photoAssetProxy is null");
+-
+     #ifdef USE_MOVING_PHOTO_PIPELINE
+     auto recorder = GetRecorder();
+     CHECK_EXECUTE(!isBursting && isSetMotionPhoto_ && recorder, {
+         recorder->InsertPhotoAsset(timestamp, photoAssetProxy, captureId);
      });
-     MEDIA_INFO_LOG("HCaptureSession::Release execute success");
-     return errorCode;
- }
- 
-+void HCaptureSession::RemoveTaskManager(sptr<AvcodecTaskManager> taskManager)
-+{
-+    MEDIA_INFO_LOG("HCaptureSession::RemoveTaskManager enter");
-+    thread asyncThread = thread([taskManager]() {
-+        CAMERA_SYNC_TRACE;
-+        int32_t delayTime = taskManager == nullptr || (taskManager && taskManager->isEmptyVideoFdMap()) ? 0 : 30;
-+        std::this_thread::sleep_for(std::chrono::seconds(delayTime));
-+    });
-+    asyncThread.detach();
-+    MEDIA_INFO_LOG("HCaptureSession::RemoveTaskManager succeed");
-+}
-+
- int32_t HCaptureSession::Release()
- {
-     MEDIA_INFO_LOG("HCaptureSession::Release()");
+     #else
+-    if (!isBursting && isSetMotionPhoto_ && taskManager_) {
+-        MEDIA_INFO_LOG("CreateMediaLibrary captureId :%{public}d", captureId);
+-        if (taskManager_) {
+-            taskManager_->SetVideoFd(timestamp, photoAssetProxy, captureId);
++    {
++        std::lock_guard<std::mutex> lock(motionPhotoStatusLock_);
++        bool isSetMotionPhoto = curMotionPhotoStatus_.find(captureId) != curMotionPhotoStatus_.end()
++            &&  curMotionPhotoStatus_[captureId];
++        if (!isBursting && isSetMotionPhoto && taskManager_) {
++            MEDIA_INFO_LOG("CreateMediaLibrary captureId :%{public}d", captureId);
++            if (taskManager_) {
++                taskManager_->SetVideoFd(timestamp, photoAssetProxy, captureId);    
++                curMotionPhotoStatus_.erase(captureId);
++            }
++        } else {
++            photoAssetProxy.reset();
+         }
+-    } else {
+-        photoAssetProxy.reset();
+     }
+     #endif
+     CameraReportDfxUtils::GetInstance()->SetAddProxyEndInfo(captureId);
 -- 
 2.45.2.huawei.8
 
