@@ -581,7 +581,7 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
         if (captureSettings != nullptr) {
             ret = OHOS::Camera::FindCameraMetadataItem(
                 captureSettings->get(), OHOS_ABILITY_CAMERA_CONNECTION_TYPE, &item);
-            if (ret == CAM_META_SUCCESS || item.count == 0) {
+            if (ret == CAM_META_SUCCESS || item.count > 0) {
                 connectionType = item.data.u8[0];
             }
         }
