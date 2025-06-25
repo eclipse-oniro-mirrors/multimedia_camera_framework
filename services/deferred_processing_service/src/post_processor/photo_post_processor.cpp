@@ -366,10 +366,13 @@ std::shared_ptr<Media::Picture> PhotoPostProcessor::PhotoProcessListener::Assemb
 {
     DP_INFO_LOG("entered");
     int32_t exifDataSize = 0;
+    int32_t rotationInIps = 0;
     if (buffer.metadata) {
         int32_t retExifDataSize = buffer.metadata->Get("exifDataSize", exifDataSize);
         DP_INFO_LOG("AssemblePicture retExifDataSize: %{public}d, exifDataSize: %{public}d",
             static_cast<int>(retExifDataSize), static_cast<int>(exifDataSize));
+        buffer.metadata->Get("rotationInIps", rotationInIps);
+        DP_INFO_LOG("AssemblePicture rotationInIps %{public}d", rotationInIps);
     }
     auto imageBuffer = TransBufferHandleToSurfaceBuffer(buffer.imageHandle->GetBufferHandle());
     DP_CHECK_ERROR_RETURN_RET_LOG(imageBuffer == nullptr, nullptr, "bufferHandle is nullptr.");
@@ -388,10 +391,10 @@ std::shared_ptr<Media::Picture> PhotoPostProcessor::PhotoProcessListener::Assemb
         }
         picture->SetExifMetadata(exifBuffer);
     }
-    if (picture) {
-        AssemleAuxilaryPicture(buffer, picture);
-        RotatePicture(picture);
-    }
+    DP_CHECK_ERROR_RETURN_RET_LOG(!picture, nullptr, "picture is null");
+    AssemleAuxilaryPicture(buffer, picture);
+    DP_CHECK_ERROR_RETURN_RET_LOG(rotationInIps, picture, "AssemblePicture HAL rotationInIps");
+    RotatePicture(picture);
     return picture;
 }
 

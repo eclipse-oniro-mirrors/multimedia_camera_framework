@@ -331,6 +331,7 @@ private:
     void ExpandSketchRepeatStream();
     void ExpandMovingPhotoRepeatStream();
     void ClearMovingPhotoRepeatStream();
+    bool GetDeviceAbilityByMeta(uint32_t item, camera_metadata_item_t* metadataItem);
     int32_t CreateMovingPhotoStreamRepeat(int32_t format, int32_t width, int32_t height,
         sptr<OHOS::IBufferProducer> producer);
     int32_t CheckIfColorSpaceMatchesFormat(ColorSpace colorSpace);
@@ -351,6 +352,7 @@ private:
     int32_t GetSensorOritation();
     int32_t GetMovingPhotoBufferDuration();
     void GetMovingPhotoStartAndEndTime();
+    bool IsIpsRotateSupported();
     void StartMovingPhoto(sptr<HStreamRepeat>& curStreamRepeat);
 
     std::string GetSessionState();

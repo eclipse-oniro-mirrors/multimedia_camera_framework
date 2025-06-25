@@ -2068,6 +2068,26 @@ void RotatePicture(std::shared_ptr<Media::Picture> picture)
     }
 }
 
+bool HCaptureSession::GetDeviceAbilityByMeta(uint32_t item, camera_metadata_item_t* metadataItem)
+{
+    CHECK_ERROR_RETURN_RET_LOG(cameraDevice_ == nullptr, false, "cameraDevice is nullptr.");
+    auto ability = cameraDevice_->GetDeviceAbility();
+    CHECK_ERROR_RETURN_RET(ability == nullptr, false);
+    int ret = OHOS::Camera::FindCameraMetadataItem(ability->get(), item, metadataItem);
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, false, "get ability failed.");
+    return true;
+}
+ 
+bool HCaptureSession::IsIpsRotateSupported()
+{
+    bool ipsRotateSupported = false;
+    camera_metadata_item_t item;
+    bool ret = GetDeviceAbilityByMeta(OHOS_ABILITY_ROTATION_IN_IPS_SUPPORTED, &item);
+    CHECK_EXECUTE(ret && item.count > 0, ipsRotateSupported = static_cast<bool>(item.data.u8[0]));
+    MEDIA_INFO_LOG("HstreamOperator IsIpsRotateSupported %{public}d", ipsRotateSupported);
+    return ipsRotateSupported;
+}
+
 int32_t HCaptureSession::CreateMediaLibrary(std::unique_ptr<Media::Picture> picture, sptr<CameraPhotoProxy> &photoProxy,
     std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp)
 {
@@ -2094,7 +2114,7 @@ int32_t HCaptureSession::CreateMediaLibrary(std::unique_ptr<Media::Picture> pict
     uri = photoAssetProxy->GetPhotoAssetUri();
     std::shared_ptr<Media::Picture> picturePtr(picture.release());
     if (!isBursting && picturePtr) {
-        RotatePicture(picturePtr);
+        CHECK_EXECUTE(!IsIpsRotateSupported(), RotatePicture(picturePtr));
     }
     DeferredProcessing::DeferredProcessingService::GetInstance().
         NotifyLowQualityImage(photoAssetProxy->GetUserId(), uri, picturePtr);
