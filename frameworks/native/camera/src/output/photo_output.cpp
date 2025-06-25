@@ -266,10 +266,10 @@ int32_t HStreamCaptureCallbackImpl::OnFrameShutterEnd(const int32_t captureId, c
     CHECK_ERROR_RETURN_RET(!photoOutput->IsHasEnableOfflinePhoto(), CAMERA_OK);
     uint32_t startCaptureHandle;
     constexpr uint32_t delayMilli = 10 * 1000; // 10S 1000 is ms
-    MEDIA_INFO_LOG("ThumbnailListener offline GetGlobalWatchdog StartMonitor, captureId=%{public}d", captureId);
+    MEDIA_INFO_LOG("offline GetGlobalWatchdog StartMonitor, captureId=%{public}d", captureId);
     DeferredProcessing::GetGlobalWatchdog().StartMonitor(
         startCaptureHandle, delayMilli, [captureId, photoOutput](uint32_t handle) {
-            MEDIA_INFO_LOG("ThumbnailListener offline Watchdog executed, handle: %{public}d, captureId= %{public}d",
+            MEDIA_INFO_LOG("offline Watchdog executed, handle: %{public}d, captureId= %{public}d",
                 static_cast<int>(handle), captureId);
             CHECK_ERROR_RETURN_LOG(photoOutput == nullptr, "photoOutput is release");
             bool canRelease =
