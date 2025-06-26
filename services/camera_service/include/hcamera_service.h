@@ -180,6 +180,7 @@ public:
     int32_t GetConcurrentCameraAbility(const std::string& cameraId,
         std::shared_ptr<OHOS::Camera::CameraMetadata>& cameraAbility) override;
     int32_t CheckWhiteList(bool &isInWhiteList) override;
+    int32_t GetCameraStorageSize(int64_t& size) override;
     int32_t CallbackEnter([[maybe_unused]] uint32_t code) override;
     int32_t CallbackExit([[maybe_unused]] uint32_t code, [[maybe_unused]] int32_t result) override;
 protected:

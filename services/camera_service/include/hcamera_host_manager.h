@@ -127,6 +127,8 @@ public:
 
     void GetPhysicCameraId(int32_t position, std::string &cameraid);
 
+    void GetCameraStorageSize(const int& userId, int64_t& storageSize);
+
 private:
     struct CameraDeviceInfo;
     class CameraHostInfo;

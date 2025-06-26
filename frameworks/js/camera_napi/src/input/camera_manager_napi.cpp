@@ -144,6 +144,33 @@ napi_value GetCachedSupportedCameras(napi_env env, const std::vector<sptr<Camera
 }
 } // namespace
 
+namespace {
+void AsyncCompleteCallback(napi_env env, napi_status status, void* data)
+{
+    auto context = static_cast<CameraManagerAsyncContext*>(data);
+    CHECK_ERROR_RETURN_LOG(context == nullptr, "CameraManagerNapi AsyncCompleteCallback context is null");
+    MEDIA_INFO_LOG("CameraManagerNapi AsyncCompleteCallback %{public}s, status = %{public}d", context->funcName.c_str(),
+        context->status);
+    std::unique_ptr<JSAsyncContextOutput> jsContext = std::make_unique<JSAsyncContextOutput>();
+    jsContext->status = context->status;
+    if (!context->status) {
+        CameraNapiUtils::CreateNapiErrorObject(env, context->errorCode, context->errorMsg.c_str(), jsContext);
+    } else {
+        napi_create_int64(env, context->storageSize, &jsContext->data);
+    }
+    if (!context->funcName.empty() && context->taskId > 0) {
+        // Finish async trace
+        CAMERA_FINISH_ASYNC_TRACE(context->funcName, context->taskId);
+        jsContext->funcName = context->funcName.c_str();
+    }
+    if (context->work != nullptr) {
+        CameraNapiUtils::InvokeJSAsyncMethod(env, context->deferred, context->callbackRef, context->work, *jsContext);
+    }
+    context->FreeHeldNapiValue(env);
+    delete context;
+}
+} // namespace
+
 using namespace std;
 using namespace CameraNapiSecurity;
 thread_local napi_ref CameraManagerNapi::sConstructor_ = nullptr;
@@ -592,6 +619,7 @@ napi_value CameraManagerNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("setTorchMode", SetTorchMode),
         DECLARE_NAPI_FUNCTION("getCameraDevice", GetCameraDevice),
         DECLARE_NAPI_FUNCTION("getCameraConcurrentInfos", GetCameraConcurrentInfos),
+        DECLARE_NAPI_FUNCTION("getCameraStorageSize", GetCameraStorageSize),
         DECLARE_NAPI_FUNCTION("on", On),
         DECLARE_NAPI_FUNCTION("once", Once),
         DECLARE_NAPI_FUNCTION("off", Off)
@@ -1072,6 +1100,55 @@ void CameraManagerNapi::ParseGetCameraConcurrentInfos(napi_env env, napi_value a
     }
 }
 
+napi_value CameraManagerNapi::GetCameraStorageSize(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("GetCameraStorageSize is called");
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi GetCameraStorageSize is called!");
+        return nullptr;
+    }
+    std::unique_ptr<CameraManagerAsyncContext> asyncContext = std::make_unique<CameraManagerAsyncContext>(
+        "CameraManagerNapi::GetCameraStorageSize", CameraNapiUtils::IncrementAndGet(cameraManagerTaskId));
+    auto asyncFunction =
+        std::make_shared<CameraNapiAsyncFunction>(env, "GetCameraStorageSize", asyncContext->callbackRef,
+            asyncContext->deferred);
+    CameraNapiParamParser jsParamParser(env, info, asyncContext->objectInfo, asyncFunction);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument")) {
+        MEDIA_ERR_LOG("CameraManagerNapi::GetCameraStorageSize invalid argument");
+        return nullptr;
+    }
+    asyncContext->HoldNapiValue(env, jsParamParser.GetThisVar());
+    napi_status status = napi_create_async_work(
+        env, nullptr, asyncFunction->GetResourceName(),
+        [](napi_env env, void* data) {
+            MEDIA_INFO_LOG("CameraManagerNapi::GetCameraStorageSize running on worker");
+            auto context = static_cast<CameraManagerAsyncContext*>(data);
+            CHECK_ERROR_RETURN_LOG(context->objectInfo == nullptr,
+                "CameraManagerNapi::GetCameraStorageSize async info is nullptr");
+            CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
+            CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(context->queueTask, [&context]() {
+                int64_t storageSize = 0;
+                context->errorCode = context->objectInfo->cameraManager_->GetCameraStorageSize(storageSize);
+                context->status = context->errorCode == CameraErrorCode::SUCCESS;
+                context->storageSize = storageSize;
+            });
+        },
+        AsyncCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
+    if (status != napi_ok) {
+        MEDIA_ERR_LOG("Failed to create napi_create_async_work for PreviewOutputNapi::Release");
+        asyncFunction->Reset();
+    } else {
+        asyncContext->queueTask =
+            CameraNapiWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueTask("PreviewOutputNapi::Release");
+        napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
+        asyncContext.release();
+    }
+    if (asyncFunction->GetAsyncFunctionType() == ASYNC_FUN_TYPE_PROMISE) {
+        return asyncFunction->GetPromise();
+    }
+    return CameraNapiUtils::GetUndefinedValue(env);
+}
+
 napi_value CameraManagerNapi::CreateCameraConcurrentResult(napi_env env, vector<sptr<CameraDevice>> &cameraDeviceArrray,
     std::vector<bool> &cameraConcurrentType, std::vector<std::vector<SceneMode>> &modes,
     std::vector<std::vector<sptr<CameraOutputCapability>>> &outputCapabilities)
@@ -1125,7 +1202,7 @@ napi_value CameraManagerNapi::CreateCameraConcurrentResult(napi_env env, vector<
     return resjsArray;
 }
 
-static napi_value CreateSceneModeJSArray(napi_env env, std::vector<SceneMode> nativeArray)
+static napi_value CreateSceneModeJSArray(napi_env env, std::vector<SceneMode>& nativeArray)
 {
     MEDIA_DEBUG_LOG("CreateSceneModeJSArray is called");
     napi_value jsArray = nullptr;

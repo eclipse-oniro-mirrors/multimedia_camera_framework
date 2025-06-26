@@ -2904,6 +2904,17 @@ int32_t CameraManager::SetPrelaunchConfig(
     return ServiceToCameraError(retCode);
 }
 
+int32_t CameraManager::GetCameraStorageSize(int64_t& size)
+{
+    auto serviceProxy = GetServiceProxy();
+    CHECK_ERROR_RETURN_RET_LOG(serviceProxy == nullptr, SERVICE_FATL_ERROR,
+        "GetCameraStorageSize serviceProxy is null");
+    int32_t retCode = serviceProxy->GetCameraStorageSize(size);
+    CHECK_ERROR_RETURN_RET_LOG(retCode != CAMERA_OK, ServiceToCameraError(retCode),
+        "GetStorageInfo call failed, retCode: %{public}d", retCode);
+    return ServiceToCameraError(retCode);
+}
+
 void CameraManager::SetCameraManagerNull()
 {
     MEDIA_INFO_LOG("CameraManager::SetCameraManagerNull() called");
