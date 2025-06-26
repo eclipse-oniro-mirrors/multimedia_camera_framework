@@ -74,7 +74,11 @@ void CameraUseStateChangeCb::StateChangeNotify(Security::AccessToken::AccessToke
         CHECK_ERROR_RETURN_LOG((isShowing == true) || (device == nullptr), "abnormal callback from privacy.");
         auto cameraPrivacy = device->GetCameraPrivacy();
         CHECK_ERROR_RETURN_LOG(cameraPrivacy == nullptr, "cameraPrivacy is nullptr.");
-        if (cameraPrivacy->WaitFor() == std::cv_status::timeout) {
+        bool isSystemCamera = (cameraPrivacy->GetClientName().find(CAMERA_TAG) != std::string::npos)
+            && CheckSystemApp();
+        MEDIA_INFO_LOG("CameraUseStateChangeCb::StateChangeNotify ClientName: %{public}s, isSystemCamera: %{public}d",
+            cameraPrivacy->GetClientName().c_str(), isSystemCamera);
+        if (cameraPrivacy->WaitFor(isSystemCamera) == std::cv_status::timeout) {
             MEDIA_INFO_LOG("CameraUseStateChangeCb::StateChangeNotify wait timeout");
             bool isForeground = CameraAppManagerUtils::IsForegroundApplication(tokenId);
             if ((isShowing == false) && (device != nullptr) && !isForeground) {
@@ -98,6 +102,11 @@ CameraPrivacy::~CameraPrivacy()
 bool CameraPrivacy::IsAllowUsingCamera()
 {
     return PrivacyKit::IsAllowedUsingPermission(callerToken_, OHOS_PERMISSION_CAMERA);
+}
+
+void CameraPrivacy::SetClientName(std::string clientName)
+{
+    clientName_ = clientName;
 }
 
 bool CameraPrivacy::RegisterPermissionCallback()

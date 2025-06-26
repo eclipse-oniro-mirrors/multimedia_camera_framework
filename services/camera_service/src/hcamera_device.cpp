@@ -492,6 +492,7 @@ int32_t HCameraDevice::OpenDevice(bool isEnableSecCam)
     AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(uid, clientUserId_);
     int tokenId = static_cast<int32_t>(IPCSkeleton::GetCallingTokenID());
     clientName_ = GetClientNameByToken(tokenId);
+    cameraPrivacy_->SetClientName(clientName_);
 #ifdef MEMMGR_OVERRID
     RequireMemory(Memory::CAMERA_START);
 #endif
