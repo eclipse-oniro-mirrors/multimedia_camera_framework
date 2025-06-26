@@ -115,8 +115,6 @@ void CameraOutputCapabilityFuzzer::CameraOutputCapabilityFuzzTest(FuzzedDataProv
  
     capabilityfuzz_->RemoveDuplicatesProfiles();
  
-    //capabilityfuzz_->RemoveDuplicatesProfile(videoProfilevec);
- 
     capabilityfuzz_->GetSupportedMetadataObjectType();
 }
  
