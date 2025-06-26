@@ -33,11 +33,6 @@ public:
 
     /* TearDown:Execute after each test case */
     void TearDown();
-
-    uint64_t tokenId_ = 0;
-    int32_t uid_ = 0;
-    int32_t userId_ = 0;
-    void NativeAuthorization();
 };
 }
 }

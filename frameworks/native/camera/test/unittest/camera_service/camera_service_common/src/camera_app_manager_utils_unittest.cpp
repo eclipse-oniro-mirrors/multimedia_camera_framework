@@ -23,6 +23,7 @@
 #include "nativetoken_kit.h"
 #include "os_account_manager.h"
 #include "token_setproc.h"
+#include "test_token.h"
 
 using namespace testing::ext;
 namespace OHOS {
@@ -31,6 +32,7 @@ using namespace OHOS::HDI::Camera::V1_1;
 void CameraAppManagerUtilsUnit::SetUpTestCase()
 {
     MEDIA_DEBUG_LOG("CameraPrivacyUnitTest::SetUpTestCase started!");
+    ASSERT_TRUE(TestToken::GetAllCameraPermission());
 }
 
 void CameraAppManagerUtilsUnit::TearDownTestCase()
@@ -40,36 +42,12 @@ void CameraAppManagerUtilsUnit::TearDownTestCase()
 
 void CameraAppManagerUtilsUnit::SetUp()
 {
-    NativeAuthorization();
     MEDIA_DEBUG_LOG("CameraPrivacyUnitTest::SetUp started!");
 }
 
 void CameraAppManagerUtilsUnit::TearDown()
 {
     MEDIA_DEBUG_LOG("CameraPrivacyUnitTest::TearDown started!");
-}
-
-void CameraAppManagerUtilsUnit::NativeAuthorization()
-{
-    const char *perms[2];
-    perms[0] = "ohos.permission.DISTRIBUTED_DATASYNC";
-    perms[1] = "ohos.permission.CAMERA";
-    NativeTokenInfoParams infoInstance = {
-        .dcapsNum = 0,
-        .permsNum = 2,
-        .aclsNum = 0,
-        .dcaps = NULL,
-        .perms = perms,
-        .acls = NULL,
-        .processName = "native_camera_tdd",
-        .aplStr = "system_basic",
-    };
-    tokenId_ = GetAccessTokenId(&infoInstance);
-    uid_ = IPCSkeleton::GetCallingUid();
-    AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(uid_, userId_);
-    MEDIA_DEBUG_LOG("CameraPrivacyUnitTest::NativeAuthorization uid:%{public}d", uid_);
-    SetSelfTokenID(tokenId_);
-    OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
 }
 
 /*
