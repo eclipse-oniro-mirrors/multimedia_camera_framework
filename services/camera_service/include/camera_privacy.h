@@ -24,9 +24,12 @@
 #include "privacy_kit.h"
 #include "state_customized_cbk.h"
 
+#define CAMERA_TAG ".camera"
+
 namespace OHOS {
 namespace CameraStandard {
 static const int32_t WAIT_RELEASE_STREAM_MS = 500; // 500ms
+static const int32_t WAIT_RELEASE_STREAM_MS_FOR_SYSTEM_CAMERA = 1500; // 1500ms
 class HCameraDevice;
 class PermissionStatusChangeCb : public Security::AccessToken::PermStateChangeCallbackCustomize {
 public:
@@ -53,11 +56,19 @@ public:
     void StopUsingPermissionCallback();
     bool AddCameraPermissionUsedRecord();
     bool IsAllowUsingCamera();
+    void SetClientName(std::string clientName);
 
-    inline std::cv_status WaitFor()
+    inline std::string GetClientName()
+    {
+        return clientName_;
+    }
+
+    inline std::cv_status WaitFor(bool isSystemCamera)
     {
         std::unique_lock<std::mutex> lock(canCloseMutex_);
-        return canClose_.wait_for(lock, std::chrono::milliseconds(WAIT_RELEASE_STREAM_MS));
+        int32_t waitReleaseStreamMs = isSystemCamera ? WAIT_RELEASE_STREAM_MS_FOR_SYSTEM_CAMERA :
+            WAIT_RELEASE_STREAM_MS;
+        return canClose_.wait_for(lock, std::chrono::milliseconds(waitReleaseStreamMs));
     }
 
     inline void Notify()
@@ -69,6 +80,7 @@ public:
 private:
     int32_t pid_;
     uint32_t callerToken_;
+    std::string clientName_;
     std::condition_variable canClose_;
     std::mutex canCloseMutex_;
     std::mutex permissionCbMutex_;
