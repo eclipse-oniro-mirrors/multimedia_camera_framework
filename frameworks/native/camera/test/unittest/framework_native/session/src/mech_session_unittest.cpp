@@ -32,6 +32,7 @@
 #include "hcapture_session.h"
 #include "hcamera_service.h"
 #include "session/video_session.h"
+#include "test_token.h"
 
 using namespace testing::ext;
 namespace OHOS {
@@ -39,13 +40,18 @@ namespace CameraStandard {
 using namespace OHOS::HDI::Camera::V1_1;
 static const int32_t PREVIEW_WIDTH = 1920;
 static const int32_t PREVIEW_HEIGHT = 1080;
-void MechSessionUnitTest::SetUpTestCase(void) {}
+void MechSessionUnitTest::SetUpTestCase(void)
+{
+    ASSERT_TRUE(TestToken::GetAllCameraPermission());
+}
 
 void MechSessionUnitTest::TearDownTestCase(void) {}
 
 void MechSessionUnitTest::SetUp()
 {
-    NativeAuthorization();
+    uid_ = IPCSkeleton::GetCallingUid();
+    AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(uid_, userId_);
+    MEDIA_DEBUG_LOG("MechSessionUnitTest::NativeAuthorization uid_:%{public}d, userId_:%{public}d", uid_, userId_);
     cameraManager_ = CameraManager::GetInstance();
     ASSERT_NE(cameraManager_, nullptr);
 }
@@ -56,29 +62,6 @@ void MechSessionUnitTest::TearDown()
     captureSession_ = nullptr;
     camInput_ = nullptr;
     MEDIA_DEBUG_LOG("MechSessionUnitTest TearDown");
-}
-
-void MechSessionUnitTest::NativeAuthorization()
-{
-    const char *perms[2];
-    perms[0] = "ohos.permission.DISTRIBUTED_DATASYNC";
-    perms[1] = "ohos.permission.CAMERA";
-    NativeTokenInfoParams infoInstance = {
-        .dcapsNum = 0,
-        .permsNum = 2,
-        .aclsNum = 0,
-        .dcaps = NULL,
-        .perms = perms,
-        .acls = NULL,
-        .processName = "native_camera_tdd",
-        .aplStr = "system_basic",
-    };
-    tokenId_ = GetAccessTokenId(&infoInstance);
-    uid_ = IPCSkeleton::GetCallingUid();
-    AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(uid_, userId_);
-    MEDIA_DEBUG_LOG("MechSessionUnitTest::NativeAuthorization uid_:%{public}d, userId_:%{public}d", uid_, userId_);
-    SetSelfTokenID(tokenId_);
-    OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
 }
 
 void MechSessionUnitTest::CommitConfig()

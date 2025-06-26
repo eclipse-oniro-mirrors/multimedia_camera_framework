@@ -33,15 +33,12 @@ public:
     void SetUp(void);
     /* TearDown:Execute after each test case */
     void TearDown(void);
-
-    void NativeAuthorization(void);
 private:
     void CommitConfig();
     void StartSession();
     void StopSession();
     void ReleaseSession();
 
-    uint64_t tokenId_ = 0;
     int32_t uid_ = 0;
     int32_t userId_ = 0;
     sptr<CameraManager> cameraManager_ = nullptr;
