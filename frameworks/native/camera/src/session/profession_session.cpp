@@ -173,7 +173,8 @@ int32_t ProfessionSession::GetIsoRange(std::vector<int32_t> &isoRange)
         "ProfessionSession::GetIsoRange camera deviceInfo is null");
     // Enabling rawImageDelivery implies using raw camera through the YUV profile, Therefore, we need to get raw camera
     // static metadata rather than get dynamic metadata.
-    auto metadata = isRawImageDelivery_ ? inputDeviceInfo->GetCachedMetadata() : GetMetadata();
+    bool isNeedPhysicalCameraMeta = isRawImageDelivery_ || photoProfile_.format_ == CAMERA_FORMAT_DNG_XDRAW;
+    auto metadata = isNeedPhysicalCameraMeta ? inputDeviceInfo->GetCachedMetadata() : GetMetadata();
     CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, CameraErrorCode::INVALID_ARGUMENT, "GetIsoRange metadata is null");
 
     camera_metadata_item_t item;
