@@ -152,7 +152,6 @@ private:
     bool isHasSavedParam = false;
     bool isHasPrelaunch_ = false;
     bool isHasOpenCamera_ = false;
-    uint32_t startPrelaunchHandle_ = 0;
 };
 
 class RegisterServStatListener : public HDI::ServiceManager::V1_0::ServStatListenerStub {
