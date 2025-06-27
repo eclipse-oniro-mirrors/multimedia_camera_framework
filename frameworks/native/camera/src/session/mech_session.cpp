@@ -26,7 +26,7 @@ constexpr int32_t FOCUS_TRACKING_REGION_DATA_CNT = 4;
 int32_t MechSessionCallbackImpl::OnFocusTrackingInfo(int32_t streamId, bool isNeedMirror, bool isNeedFlip,
     const std::shared_ptr<OHOS::Camera::CameraMetadata>& result)
 {
-    MEDIA_DEBUG_LOG("MechTest %{public}s is called!", __FUNCTION__);
+    MEDIA_DEBUG_LOG("%{public}s is called!", __FUNCTION__);
     int32_t ret = CAMERA_OK;
     auto mechSession = mechSession_.promote();
     CHECK_ERROR_RETURN_RET(!mechSession, ret);

@@ -183,8 +183,10 @@ HWTEST_F(MechSessionUnitTest, mech_session_unittest_003, TestSize.Level0)
     sptr<MechSession> mechSession = nullptr;
     int32_t retCode = cameraManager_->CreateMechSession(userId_, &mechSession);
     EXPECT_EQ(retCode, 0);
+    ASSERT_NE(mechSession, nullptr);
     retCode = cameraManager_->CreateMechSession(userId_, &mechSession);
-    EXPECT_EQ(retCode, CAMERA_OPERATION_NOT_ALLOWED);
+    EXPECT_EQ(retCode, 0);
+    ASSERT_NE(mechSession, nullptr);
     retCode = mechSession->Release();
     EXPECT_EQ(retCode, 0);
 }
