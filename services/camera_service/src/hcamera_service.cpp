@@ -642,11 +642,13 @@ int32_t HCameraService::CreateMechSession(int32_t userId, sptr<IMechSession>& se
         "HCameraService::CreateMechSession failed permission is: %{public}s", permissionName.c_str());
 
     auto &sessionManager = HCameraSessionManager::GetInstance();
-    if (sessionManager.GetMechSession(userId) != nullptr) {
-        MEDIA_ERR_LOG("MechSession has created, userId:%{public}d", userId);
-        return CAMERA_OPERATION_NOT_ALLOWED;
+    auto mechSession = sessionManager.GetMechSession(userId);
+    if (mechSession != nullptr) {
+        session = mechSession;
+        return CAMERA_OK;
     }
-    sptr<HMechSession> mechSession = new (std::nothrow) HMechSession(userId);
+
+    mechSession = new (std::nothrow) HMechSession(userId);
     if (mechSession == nullptr) {
         MEDIA_ERR_LOG("HMechSession::NewInstance mechSession is nullptr");
         return CAMERA_ALLOC_ERROR;
