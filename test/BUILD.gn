@@ -49,6 +49,7 @@ group("camera_fuzz_test") {
       "fuzztest/bmsadapter_fuzzer:fuzztest",
       "fuzztest/cameraabilitybuilder_fuzzer:fuzztest",
       "fuzztest/camerademuxer_fuzzer:fuzztest",
+      "fuzztest/cameraoutputcapability_fuzzer:fuzztest",
       "fuzztest/camerareportdfxutils_fuzzer:fuzztest",
       "fuzztest/camerawindowmanagerclient_fuzzer:fuzztest",
       "fuzztest/commandserver_fuzzer:fuzztest",
