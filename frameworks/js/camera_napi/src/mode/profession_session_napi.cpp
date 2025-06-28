@@ -48,6 +48,10 @@ const std::vector<napi_property_descriptor> ProfessionSessionNapi::manual_exposu
     DECLARE_NAPI_FUNCTION("getExposureMeteringMode", ProfessionSessionNapi::GetMeteringMode),
     DECLARE_NAPI_FUNCTION("setExposureMeteringMode", ProfessionSessionNapi::SetMeteringMode),
 
+    DECLARE_NAPI_FUNCTION("getSupportedExposureRange", ProfessionSessionNapi::GetExposureDurationRange),
+    DECLARE_NAPI_FUNCTION("getExposure", ProfessionSessionNapi::GetExposureDuration),
+    DECLARE_NAPI_FUNCTION("setExposure", ProfessionSessionNapi::SetExposureDuration),
+
     DECLARE_NAPI_FUNCTION("getExposureDurationRange", ProfessionSessionNapi::GetExposureDurationRange),
     DECLARE_NAPI_FUNCTION("getExposureDuration", ProfessionSessionNapi::GetExposureDuration),
     DECLARE_NAPI_FUNCTION("setExposureDuration", ProfessionSessionNapi::SetExposureDuration),
@@ -66,6 +70,11 @@ const std::vector<napi_property_descriptor> ProfessionSessionNapi::manual_iso_pr
     DECLARE_NAPI_FUNCTION("isManualISOSupported", ProfessionSessionNapi::IsManualIsoSupported),
     DECLARE_NAPI_FUNCTION("getISO", ProfessionSessionNapi::GetISO),
     DECLARE_NAPI_FUNCTION("setISO", ProfessionSessionNapi::SetISO),
+
+    DECLARE_NAPI_FUNCTION("getIsoRange", ProfessionSessionNapi::GetIsoRange),
+    DECLARE_NAPI_FUNCTION("isManualIsoSupported", ProfessionSessionNapi::IsManualIsoSupported),
+    DECLARE_NAPI_FUNCTION("getIso", ProfessionSessionNapi::GetISO),
+    DECLARE_NAPI_FUNCTION("setIso", ProfessionSessionNapi::SetISO),
 };
 
 const std::vector<napi_property_descriptor> ProfessionSessionNapi::pro_session_props = {
