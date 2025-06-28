@@ -30,7 +30,7 @@
 #include <iterator>
 #include "rotate_plugin/camera_rotate_plugin.h"
 #include "camera_fwk_metadata_utils.h"
-#include "dp_utils.h"
+#include "camera_simple_timer.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -39,6 +39,7 @@ const std::string HCameraHostManager::LOCAL_SERVICE_NAME = "camera_service";
 const std::string HCameraHostManager::DISTRIBUTED_SERVICE_NAME = "distributed_camera_provider_service";
 constexpr uint32_t MILLISEC_TIME = 1000;
 constexpr int32_t MAX_SYS_UID = 10000;
+std::shared_ptr<SimpleTimer> closeTimer_;
 
 using namespace OHOS::HDI::Camera::V1_0;
 struct HCameraHostManager::CameraDeviceInfo {
@@ -941,10 +942,7 @@ int32_t HCameraHostManager::OpenCameraDevice(std::string &cameraId,
             "HCameraHostManager::OpenCameraDevice sys is not allowed after prelaunch.");
         int32_t ret =  cameraHostInfo->OpenCamera(cameraId, callback, pDevice, isEnableSecCam);
         CHECK_EXECUTE(ret == 0, isHasOpenCamera_ = true);
-        if (startPrelaunchHandle_ != 0) {
-            DeferredProcessing::GetGlobalWatchdog().StopMonitor(startPrelaunchHandle_);
-            startPrelaunchHandle_ = 0;
-        }
+        CHECK_EXECUTE(closeTimer_, {closeTimer_->CancelTask(); closeTimer_ = nullptr;});
         return ret;
     }
 }
@@ -989,12 +987,12 @@ int32_t HCameraHostManager::Prelaunch(const std::string& cameraId, std::string c
             "HCameraHostManager::Prelaunch failed that has been running");
         int32_t ret = cameraHostInfo->Prelaunch(cameraRestoreParam, muteMode_);
         constexpr uint32_t delayMilli = 2 * 1000; // 2S 1000 is ms
-        DeferredProcessing::GetGlobalWatchdog().StartMonitor(startPrelaunchHandle_, delayMilli,
-            [this](uint32_t handle) {
-                this->isHasPrelaunch_ = false;
-                this->startPrelaunchHandle_ = 0;
+        CHECK_EXECUTE(closeTimer_, closeTimer_->CancelTask());
+        closeTimer_ = std::make_shared<SimpleTimer>([this] {
+            this->isHasPrelaunch_ = false;
         });
-        CHECK_EXECUTE(ret == 0, isHasPrelaunch_ = true);
+        bool isStartSuccess = closeTimer_->StartTask(delayMilli);
+        CHECK_EXECUTE(ret == 0 && isStartSuccess, isHasPrelaunch_ = true);
         if (ret == 0 && cameraRestoreParam->GetRestoreParamType() ==
             RestoreParamTypeOhos::PERSISTENT_DEFAULT_PARAM_OHOS) {
             return CAMERA_OK;
