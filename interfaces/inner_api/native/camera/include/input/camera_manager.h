@@ -335,6 +335,15 @@ public:
                           sptr<Surface> photoSurface);
 
     /**
+     * @brief Create photo output instance.
+     *
+     * @param profile photo profile.
+     * @param pPhotoOutput pointer to photo output instance.
+     * @return Returns error code.
+     */
+    int CreatePhotoOutput(Profile &profile, sptr<PhotoOutput> *pPhotoOutput);
+
+    /**
      * @brief Create photo output instance without profile.
      *
      * @param surface photo buffer surface.
@@ -352,6 +361,15 @@ public:
      */
     int CreatePhotoOutputWithoutProfile(sptr<IBufferProducer> surface,
         sptr<PhotoOutput>* pPhotoOutput, sptr<Surface> photoSurface);
+
+    /**
+     * @brief Create photo output instance without profile.
+     *
+     * @param surfaceId photo buffer surface id.
+     * @param pPhotoOutput pointer to photo output instance.
+     * @return Returns error code.
+     */
+    int CreatePhotoOutputWithoutProfile(std::string surfaceId, sptr<PhotoOutput>* pPhotoOutput);
 
     /**
      * @brief Create photo output instance using surface.
@@ -778,6 +796,9 @@ public:
 
     int32_t CreatePhotoOutputStream(
         sptr<IStreamCapture>& streamPtr, Profile& profile, const sptr<OHOS::IBufferProducer>& producer);
+
+    int32_t CreatePhotoOutputStream(
+        sptr<IStreamCapture>& streamPtr, Profile& profile, std::string surfaceId);
     /**
     * @brief clear remote stub obj.
     *

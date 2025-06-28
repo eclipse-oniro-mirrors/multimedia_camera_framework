@@ -31,6 +31,7 @@
 #include "test_common.h"
 #include "test_token.h"
 #include "token_setproc.h"
+#include "camera_server_photo_proxy.h"
 
 using namespace testing::ext;
 using ::testing::Return;
@@ -680,7 +681,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_013, TestSize.Level
     ASSERT_NE(session, nullptr);
     ASSERT_NE(hStreamOperator, nullptr);
 
-    sptr<CameraPhotoProxy> photoProxy{new CameraPhotoProxy()};
+    sptr<CameraServerPhotoProxy> photoProxy{new CameraServerPhotoProxy()};
     std::string uri;
     int32_t cameraShotType;
     string burstKey = "";
@@ -709,7 +710,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_014, TestSize.Level
     ASSERT_NE(hStreamOperator, nullptr);
 
     sptr<SurfaceBuffer> surfaceBuffer = SurfaceBuffer::Create();
-    sptr<CameraPhotoProxy> photoProxy{new CameraPhotoProxy()};
+    sptr<CameraServerPhotoProxy> photoProxy{new CameraServerPhotoProxy()};
     std::string uri;
     int32_t cameraShotType;
     string burstKey = "";
@@ -2845,7 +2846,8 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_073, TestSize.Level
     HCaptureSession::NewInstance(callerToken, mode, session);
     ASSERT_NE(session, nullptr);
 
-    EXPECT_NE(session->CreateDisplayName(), "");
+    std::string suffix = "132";
+    EXPECT_NE(session->CreateDisplayName(suffix), "");
     EXPECT_EQ(device->Close(), CAMERA_OK);
     EXPECT_EQ(session->Release(), CAMERA_OK);
 }

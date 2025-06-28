@@ -53,7 +53,6 @@ ohos_unittest("camera_framework_native_unittest") {
     "output/src/camera_output_capability_unittest.cpp",
     "output/src/camera_photo_proxy_unittest.cpp",
     "output/src/capture_output_unittest.cpp",
-    "output/src/deferred_photo_proxy_unittest.cpp",
     "output/src/depth_data_output_unittest.cpp",
     "output/src/metadata_output_unittest.cpp",
     "output/src/photo_output_unittest.cpp",

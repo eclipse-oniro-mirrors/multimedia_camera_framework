@@ -165,17 +165,10 @@ HWTEST_F(HStreamCaptureUnitTest, SetThumbnail001, TestSize.Level1)
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
     int32_t height = PHOTO_DEFAULT_HEIGHT;
-    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
-    ASSERT_NE(surface, nullptr);
-    sptr<IBufferProducer> producer = surface->GetProducer();
-    ASSERT_NE(producer, nullptr);
-    sptr<HStreamCapture> streamCapture = new(std::nothrow) HStreamCapture(producer, format, width, height);
+    sptr<HStreamCapture> streamCapture = new(std::nothrow) HStreamCapture(format, width, height);
     ASSERT_NE(streamCapture, nullptr);
-    sptr<OHOS::IBufferProducer> producer1 = nullptr;
-    EXPECT_EQ(streamCapture->SetThumbnail(false, producer1), CAMERA_OK);
-    EXPECT_EQ(streamCapture->SetThumbnail(false, producer), CAMERA_OK);
-    EXPECT_EQ(streamCapture->SetThumbnail(true, producer1), CAMERA_OK);
-    EXPECT_EQ(streamCapture->SetThumbnail(true, producer), CAMERA_OK);
+    EXPECT_EQ(streamCapture->SetThumbnail(false), CAMERA_OK);
+    EXPECT_EQ(streamCapture->SetThumbnail(true), CAMERA_OK);
     streamCapture->Release();
 }
 
@@ -1439,10 +1432,7 @@ HWTEST_F(HStreamCaptureUnitTest, camera_fwcoverage_unittest_029, TestSize.Level1
     ASSERT_NE(cameraManager, nullptr);
     std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
     sptr<IStreamCaptureCallback> callback = nullptr;
-    sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
-    sptr<IBufferProducer> producer = Surface->GetProducer();
-    sptr<OHOS::IBufferProducer> producer1 = nullptr;
-    sptr<HStreamCapture> streamCapture= new(std::nothrow) HStreamCapture(producer, format, width, height);
+    sptr<HStreamCapture> streamCapture= new(std::nothrow) HStreamCapture(format, width, height);
     ASSERT_NE(streamCapture, nullptr);
     auto cameraProxy = CameraManager::g_cameraManager->GetServiceProxy();
     ASSERT_NE(cameraProxy, nullptr);
@@ -1450,11 +1440,10 @@ HWTEST_F(HStreamCaptureUnitTest, camera_fwcoverage_unittest_029, TestSize.Level1
     std::string cameraId = cameras[0]->GetID();
     cameraProxy->GetCameraAbility(cameraId, metadata);
     ASSERT_NE(metadata, nullptr);
-    EXPECT_EQ(streamCapture->SetThumbnail(false, producer1), CAMERA_OK);
-    EXPECT_EQ(streamCapture->SetThumbnail(false, producer), CAMERA_OK);
-    EXPECT_EQ(streamCapture->SetThumbnail(true, producer1), CAMERA_OK);
+    EXPECT_EQ(streamCapture->SetThumbnail(false), CAMERA_OK);
+    EXPECT_EQ(streamCapture->SetThumbnail(true), CAMERA_OK);
     streamCapture->DumpStreamInfo(infoDumper);
-    EXPECT_EQ(streamCapture->SetThumbnail(true, producer), CAMERA_OK);
+    EXPECT_EQ(streamCapture->SetThumbnail(true), CAMERA_OK);
     streamCapture->SetRotation(metadata, captureId);
     sptr<OHOS::HDI::Camera::V1_1::IStreamOperator> streamOperator = nullptr;
     streamCapture->LinkInput(streamOperator, metadata);

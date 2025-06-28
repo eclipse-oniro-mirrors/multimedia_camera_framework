@@ -28,6 +28,7 @@
 #include "native_image.h"
 #include "output/camera_output_capability.h"
 #include "output/photo_output.h"
+#include "output/photo_output_callback.h"
 #include "pixel_map.h"
 
 namespace OHOS::Media {
@@ -65,6 +66,12 @@ struct CallbackInfo {
     int32_t frameCount = 0;
     int32_t errorCode;
     int32_t duration;
+    std::shared_ptr<Media::NativeImage> nativeImage;
+    std::shared_ptr<Media::PixelMap> pixelMap;
+    bool isRaw = false;
+    std::string uri;
+    int32_t cameraShotType;
+    std::string burstKey;
 };
 
 enum PhotoOutputEventType {
@@ -78,6 +85,7 @@ enum PhotoOutputEventType {
     CAPTURE_PHOTO_AVAILABLE,
     CAPTURE_DEFERRED_PHOTO_AVAILABLE,
     CAPTURE_PHOTO_ASSET_AVAILABLE,
+    CAPTURE_THUMBNAIL_AVAILABLE,
     CAPTURE_ESTIMATED_CAPTURE_DURATION,
     CAPTURE_START_WITH_INFO,
     CAPTURE_OFFLINE_DELIVERY_FINISHED
@@ -89,6 +97,7 @@ static EnumHelper<PhotoOutputEventType> PhotoOutputEventTypeHelper({
         {CAPTURE_FRAME_SHUTTER, CONST_CAPTURE_FRAME_SHUTTER},
         {CAPTURE_ERROR, CONST_CAPTURE_ERROR},
         {CAPTURE_PHOTO_AVAILABLE, CONST_CAPTURE_PHOTO_AVAILABLE},
+        {CAPTURE_THUMBNAIL_AVAILABLE, CONST_CAPTURE_QUICK_THUMBNAIL},
         {CAPTURE_DEFERRED_PHOTO_AVAILABLE, CONST_CAPTURE_DEFERRED_PHOTO_AVAILABLE},
         {CAPTURE_PHOTO_ASSET_AVAILABLE, CONST_CAPTURE_PHOTO_ASSET_AVAILABLE},
         {CAPTURE_FRAME_SHUTTER_END, CONST_CAPTURE_FRAME_SHUTTER_END},
@@ -116,105 +125,10 @@ static EnumHelper<SurfaceType> SurfaceTypeHelper({
     SurfaceType::INVALID_SURFACE
 );
 
-class PhotoBufferProcessor : public Media::IBufferProcessor {
-public:
-    explicit PhotoBufferProcessor(sptr<Surface> photoSurface) : photoSurface_(photoSurface) {}
-    ~PhotoBufferProcessor()
-    {
-        photoSurface_ = nullptr;
-    }
-    void BufferRelease(sptr<SurfaceBuffer>& buffer) override
-    {
-        if (photoSurface_ != nullptr) {
-            photoSurface_->ReleaseBuffer(buffer, -1);
-        }
-    }
-
-private:
-    sptr<Surface> photoSurface_ = nullptr;
-};
-
-class PhotoListener : public IBufferConsumerListener,
-                      public ListenerBase,
-                      public std::enable_shared_from_this<PhotoListener> {
-public:
-    explicit PhotoListener(napi_env env, const sptr<Surface> photoSurface, wptr<PhotoOutput> photoOutput);
-    virtual ~PhotoListener();
-    void OnBufferAvailable() override;
-    void SaveCallback(const std::string eventName, napi_value callback);
-    void RemoveCallback(const std::string eventName, napi_value callback);
-    void ExecuteDeepCopySurfaceBuffer();
-
-    void ClearTaskManager();
-    std::shared_ptr<DeferredProcessing::TaskManager> GetDefaultTaskManager();
-
-private:
-
-    void UpdateJSCallback(sptr<Surface> photoSurface) const;
-    void UpdateJSCallbackAsync(sptr<Surface> photoSurface) const;
-    void UpdatePictureJSCallback(int32_t captureId, const string uri, int32_t cameraShotType,
-        const std::string burstKey) const;
-    void UpdateMainPictureStageOneJSCallback(sptr<SurfaceBuffer> surfaceBuffer, int64_t timestamp) const;
-    void ExecutePhoto(sptr<SurfaceBuffer> surfaceBfuffer, int64_t timestamp) const;
-    void ExecuteDeferredPhoto(sptr<SurfaceBuffer> surfaceBuffer) const;
-    void DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<SurfaceBuffer> surfaceBuffer,
-        int32_t captureId) const;
-    void ExecutePhotoAsset(sptr<SurfaceBuffer> surfaceBuffer, bool isHighQuality, int64_t timestamp) const;
-    void CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, BufferHandle* bufferHandle, bool isHighQuality,
-        std::string& uri, int32_t& cameraShotType, std::string &burstKey, int64_t timestamp) const;
-    void AssembleAuxiliaryPhoto(int64_t timestamp, int32_t captureId);
-    void ProcessAuxiliaryPhoto(int64_t timestamp, sptr<PhotoOutput> photoOutput, int32_t captureId);
-    int32_t GetAuxiliaryPhotoCount(sptr<SurfaceBuffer> surfaceBuffer);
-    sptr<Surface> photoSurface_;
-    wptr<PhotoOutput> photoOutput_;
-    shared_ptr<PhotoBufferProcessor> bufferProcessor_;
-    uint8_t callbackFlag_ = 0;
-    std::mutex taskManagerMutex_;
-    std::shared_ptr<DeferredProcessing::TaskManager> taskManager_ = nullptr;
-};
-
-class RawPhotoListener : public IBufferConsumerListener, public ListenerBase,
-    public std::enable_shared_from_this<RawPhotoListener> {
-public:
-    explicit RawPhotoListener(napi_env env, const sptr<Surface> rawPhotoSurface);
-    ~RawPhotoListener() = default;
-    void OnBufferAvailable() override;
-
-private:
-    sptr<Surface> rawPhotoSurface_;
-    shared_ptr<PhotoBufferProcessor> bufferProcessor_;
-    void UpdateJSCallback(sptr<Surface> rawPhotoSurface) const;
-    void UpdateJSCallbackAsync(sptr<Surface> rawPhotoSurface) const;
-    void ExecuteRawPhoto(sptr<SurfaceBuffer> rawPhotoSurface) const;
-};
-
-class AuxiliaryPhotoListener : public IBufferConsumerListener {
-public:
-    explicit AuxiliaryPhotoListener(const std::string surfaceName, const sptr<Surface> surface,
-        wptr<PhotoOutput> photoOutput);
-    ~AuxiliaryPhotoListener() = default;
-    void OnBufferAvailable() override;
-    void ExecuteDeepCopySurfaceBuffer();
-private:
-    void DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<SurfaceBuffer> surfaceBuffer, int32_t) const;
-    std::string surfaceName_;
-    sptr<Surface> surface_;
-    wptr<PhotoOutput> photoOutput_;
-    shared_ptr<PhotoBufferProcessor> bufferProcessor_;
-};
-
-class PictureListener : public RefBase {
-public:
-    explicit PictureListener() = default;
-    ~PictureListener() = default;
-    void InitPictureListeners(napi_env env, wptr<PhotoOutput> photoOutput);
-    sptr<AuxiliaryPhotoListener> gainmapImageListener;
-    sptr<AuxiliaryPhotoListener> deepImageListener;
-    sptr<AuxiliaryPhotoListener> exifImageListener;
-    sptr<AuxiliaryPhotoListener> debugImageListener;
-};
-
 class PhotoOutputCallback : public PhotoStateCallback,
+                            public PhotoAvailableCallback,
+                            public PhotoAssetAvailableCallback,
+                            public ThumbnailCallback,
                             public ListenerBase,
                             public std::enable_shared_from_this<PhotoOutputCallback> {
 public:
@@ -230,6 +144,13 @@ public:
     void OnCaptureError(const int32_t captureId, const int32_t errorCode) const override;
     void OnEstimatedCaptureDuration(const int32_t duration) const override;
     void OnOfflineDeliveryFinished(const int32_t captureId) const override;
+    void OnPhotoAvailable(
+        const std::shared_ptr<Media::NativeImage> nativeImage, const bool isRaw = false) const override;
+    void OnPhotoAssetAvailable(const int32_t captureId, const std::string &uri, const int32_t cameraShotType,
+        const std::string &burstKey) const override;
+    void OnThumbnailAvailable(
+        const int32_t captureId, const int64_t timestamp, unique_ptr<Media::PixelMap> pixelMap) const override;
+ 
 
 private:
     void UpdateJSCallback(PhotoOutputEventType eventType, const CallbackInfo& info) const;
@@ -243,6 +164,9 @@ private:
     void ExecuteCaptureReadyCb(const CallbackInfo& info) const;
     void ExecuteEstimatedCaptureDurationCb(const CallbackInfo& info) const;
     void ExecuteOfflineDeliveryFinishedCb(const CallbackInfo& info) const;
+    void ExecutePhotoAvailableCb(const CallbackInfo& info) const;
+    void ExecutePhotoAssetAvailableCb(const CallbackInfo& info) const;
+    void ExecuteThumbnailAvailableCb(const CallbackInfo& info) const;
 };
 
 struct PhotoOutputCallbackInfo {
@@ -252,74 +176,6 @@ struct PhotoOutputCallbackInfo {
     PhotoOutputCallbackInfo(
         PhotoOutputEventType eventType, CallbackInfo info, shared_ptr<const PhotoOutputCallback> listener)
         : eventType_(eventType), info_(info), listener_(listener)
-    {}
-};
-
-class ThumbnailListener : public IBufferConsumerListener, public ListenerBase {
-public:
-    explicit ThumbnailListener(napi_env env, const sptr<PhotoOutput> photoOutput);
-    virtual ~ThumbnailListener();
-    void OnBufferAvailable() override;
-    std::shared_ptr<DeferredProcessing::TaskManager> taskManager_ = nullptr;
-    
-    void ClearTaskManager();
-    std::shared_ptr<DeferredProcessing::TaskManager> GetDefaultTaskManager();
-private:
-    wptr<PhotoOutput> photoOutput_;
-    void UpdateJSCallback() const;
-    void UpdateJSCallbackAsync();
-    void UpdateJSCallback(int32_t captureId, int64_t timestamp, unique_ptr<Media::PixelMap>) const;
-    void UpdateJSCallbackAsync(int32_t captureId, int64_t timestamp, unique_ptr<Media::PixelMap>);
-    void ExecuteDeepCopySurfaceBuffer();
-    
-    unique_ptr<Media::PixelMap> CreatePixelMapFromSurfaceBuffer(sptr<SurfaceBuffer> &surfaceBuffer,
-        int32_t width, int32_t height, bool isHdr);
-    unique_ptr<Media::PixelMap> SetPixelMapYuvInfo(sptr<SurfaceBuffer> &surfaceBuffer,
-        unique_ptr<Media::PixelMap> pixelMap, bool isHdr);
-    void DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<SurfaceBuffer> surfaceBuffer,
-        int32_t thumbnailWidth, int32_t thumbnailHeight, bool isHdr) const;
-
-    static constexpr int32_t PLANE_Y = 0;
-    static constexpr int32_t PLANE_U = 1;
-    static constexpr uint8_t PIXEL_SIZE_HDR_YUV = 3;
-    static constexpr uint8_t  HDR_PIXEL_SIZE = 2;
-    static constexpr uint8_t SDR_PIXEL_SIZE = 1;
-
-    std::mutex taskManagerMutex_;
-    int32_t recThumb_ = 0;
-    int32_t acqThumb_ = 0;
-};
-
-struct ThumbnailListenerInfo {
-    wptr<ThumbnailListener> listener_;
-    int32_t captureId_;
-    int64_t timestamp_;
-    unique_ptr<Media::PixelMap> pixelMap_;
-    ThumbnailListenerInfo(sptr<ThumbnailListener> listener, int32_t captureId,
-        int64_t timestamp, unique_ptr<Media::PixelMap> pixelMap)
-        : listener_(listener), captureId_(captureId), timestamp_(timestamp), pixelMap_(std::move(pixelMap))
-    {}
-};
-
-struct PhotoListenerInfo {
-    sptr<Surface> photoSurface_;
-    weak_ptr<const PhotoListener> listener_;
-    PhotoListenerInfo(sptr<Surface> photoSurface, shared_ptr<const PhotoListener> listener)
-        : photoSurface_(photoSurface), listener_(listener)
-    {}
-    int32_t captureId = 0;
-    std::string uri = "";
-    int32_t cameraShotType = 0;
-    std::string burstKey = "";
-    sptr<SurfaceBuffer> surfaceBuffer = nullptr;
-    int64_t timestamp = 0;
-};
-
-struct RawPhotoListenerInfo {
-    sptr<Surface> rawPhotoSurface_;
-    weak_ptr<const RawPhotoListener> listener_;
-    RawPhotoListenerInfo(sptr<Surface> rawPhotoSurface, shared_ptr<const RawPhotoListener> listener)
-        : rawPhotoSurface_(rawPhotoSurface), listener_(listener)
     {}
 };
 
@@ -440,13 +296,10 @@ private:
     bool isQuickThumbnailEnabled_ = false;
     bool isDeferredPhotoEnabled_ = false;
     bool isMirrorEnabled_ = false;
-    sptr<ThumbnailListener> thumbnailListener_;
-    sptr<PhotoListener> photoListener_;
-    sptr<RawPhotoListener> rawPhotoListener_;
-    sptr<PictureListener> pictureListener_;
     std::shared_ptr<PhotoOutputCallback> photoOutputCallback_;
     static thread_local uint32_t photoOutputTaskId;
     static thread_local napi_ref rawCallback_;
+    uint8_t callbackFlag_ = 0;
 };
 
 struct PhotoOutputNapiCaptureSetting {

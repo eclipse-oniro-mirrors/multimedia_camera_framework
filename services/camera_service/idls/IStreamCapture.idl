@@ -16,21 +16,24 @@
 package OHOS.CameraStandard;
 import CameraTypes;
 import IStreamCaptureCallback;
+import IStreamCapturePhotoAssetCallback;
 
 interface IStreamCommon;
 interface OHOS.IBufferProducer;
+interface OHOS.CameraStandard.IStreamCapturePhotoCallback;
+interface OHOS.CameraStandard.IStreamCaptureThumbnailCallback;
+
 sequenceable CameraMetadataInfo..OHOS.Camera.CameraMetadata;
 sequenceable CameraPhotoProxy..OHOS.CameraStandard.CameraPhotoProxy;
 sequenceable PictureInterface..OHOS.CameraStandard.PictureIntf;
 option_stub_hooks on;
-option_parcel_hooks on;
 
 interface IStreamCapture extends IStreamCommon {
   [ipccode 0] void Capture([in] sharedptr<CameraMetadata> captureSettings);
   [ipccode 1] void CancelCapture();
   [ipccode 2] void SetCallback([in] IStreamCaptureCallback callbackFunc);
   [ipccode 3] void Release();
-  [ipccode 4] void SetThumbnail([in] boolean isEnabled, [in] IBufferProducer producer);
+  [ipccode 4] void SetThumbnail([in] boolean isEnabled);
   [ipccode 5] void ConfirmCapture();
   [ipccode 6] void DeferImageDeliveryFor([in] int type);
   [ipccode 7] void IsDeferredPhotoEnabled();
@@ -40,10 +43,9 @@ interface IStreamCapture extends IStreamCommon {
   [ipccode 11] void EnableRawDelivery([in] boolean enabled);
   [ipccode 12] void SetCameraPhotoRotation([in] boolean isEnable);
   [ipccode 13] void EnableMovingPhoto([in] boolean enabled);
-  [ipccode 14] void AcquireBufferToPrepareProxy([in] int captureId);
-  [ipccode 15] void UpdateMediaLibraryPhotoAssetProxy([in] sptr<CameraPhotoProxy> photoProxy);
   [ipccode 16] void UnSetCallback();
   [ipccode 17] void EnableOfflinePhoto([in] boolean isEnable);
-  [ipccode 18] void CreateMediaLibrary([in] sptr<CameraPhotoProxy> photoProxy, [out] String uri, [out] int cameraShotType, [out] String burstKey, [in] long timestamp);
-  [ipccode 19] void CreateMediaLibrary([in] sharedptr<PictureIntf> pictureExt, [in] sptr<CameraPhotoProxy> photoProxy, [out] String uri, [out] int cameraShotType, [out] String burstKey, [in] long timestamp);
+  [ipccode 18] void SetPhotoAvailableCallback([in] IStreamCapturePhotoCallback callbackFunc);
+  [ipccode 19] void SetPhotoAssetAvailableCallback([in] IStreamCapturePhotoAssetCallback callbackFunc);
+  [ipccode 20] void SetThumbnailCallback([in] IStreamCaptureThumbnailCallback callbackFunc);
 }

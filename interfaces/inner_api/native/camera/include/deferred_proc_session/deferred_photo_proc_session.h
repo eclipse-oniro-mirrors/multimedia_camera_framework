@@ -41,6 +41,11 @@ public:
     virtual void OnDeliveryLowQualityImage(const std::string &imageId, std::shared_ptr<PictureIntf> picture) = 0;
     virtual void OnError(const std::string& imageId, const DpsErrorCode errorCode) = 0;
     virtual void OnStateChanged(const DpsStatusCode status) = 0;
+    int32_t CallbackParcel(
+        [[maybe_unused]] uint32_t code,
+        [[maybe_unused]] MessageParcel& data,
+        [[maybe_unused]] MessageParcel& reply,
+        [[maybe_unused]] MessageOption& option);
 };
 
 class DeferredPhotoProcSession : public RefBase {

@@ -45,12 +45,12 @@ Camera_ErrorCode OH_PhotoNative::GetMainImage(OH_ImageNative** mainImage)
     return CAMERA_OK;
 }
 
-void OH_PhotoNative::SetMainImage(std::shared_ptr<OHOS::Media::NativeImage> &mainImage)
+void OH_PhotoNative::SetMainImage(const std::shared_ptr<OHOS::Media::NativeImage> &mainImage)
 {
     mainImage_ = mainImage;
 }
 
-void OH_PhotoNative::SetRawImage(std::shared_ptr<OHOS::Media::NativeImage> &rawImage)
+void OH_PhotoNative::SetRawImage(const std::shared_ptr<OHOS::Media::NativeImage> &rawImage)
 {
     rawImage_ = rawImage;
 }

@@ -20,6 +20,7 @@ namespace CameraStandard {
 typedef PhotoAssetIntf* (*CreatePhotoAssetIntf)(int32_t, int32_t);
 std::shared_ptr<PhotoAssetProxy> PhotoAssetProxy::GetPhotoAssetProxy(int32_t shootType, int32_t callingUid)
 {
+    MEDIA_DEBUG_LOG("GetPhotoAssetProxy E callingUid:%{public}d", callingUid);
     auto dynamiclib = CameraDynamicLoader::GetDynamiclib(MEDIA_LIB_SO);
     CHECK_ERROR_RETURN_RET_LOG(
         dynamiclib == nullptr, nullptr, "PhotoAssetProxy::GetPhotoAssetProxy get dynamiclib fail");

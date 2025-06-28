@@ -1293,8 +1293,6 @@ HWTEST_F(CameraPhotoOutputUnitTest, camera_photo_output_unittest_029, TestSize.L
 {
     Camera_PhotoOutput *photoOutput = CreatePhotoOutput();
     ASSERT_NE(photoOutput, nullptr);
-    photoOutput->rawPhotoListener_ = new (std::nothrow) OHOS::CameraStandard::RawPhotoListener(photoOutput, nullptr);
-    ASSERT_NE(photoOutput->rawPhotoListener_, nullptr);
     photoOutput->photoNative_ = new OH_PhotoNative();
     ASSERT_NE(photoOutput->photoNative_, nullptr);
     EXPECT_EQ(OH_PhotoOutput_Release(photoOutput), CAMERA_OK);
@@ -1354,8 +1352,6 @@ HWTEST_F(CameraPhotoOutputUnitTest, camera_photo_output_unittest_031, TestSize.L
     ASSERT_NE(photoOutput, nullptr);
     ret = OH_PhotoOutput_RegisterPhotoAvailableCallback(photoOutput, CameraPhotoOutptOnPhotoAvailableCb);
     EXPECT_EQ(ret, CAMERA_OK);
-    photoOutput->rawPhotoListener_ = new (std::nothrow) OHOS::CameraStandard::RawPhotoListener(photoOutput, nullptr);
-    ASSERT_NE(photoOutput->rawPhotoListener_, nullptr);
     ret = OH_PhotoOutput_UnregisterPhotoAvailableCallback(photoOutput, CameraPhotoOutptOnPhotoAvailableCb);
     EXPECT_EQ(ret, CAMERA_OK);
     EXPECT_EQ(OH_PhotoOutput_Release(photoOutput), CAMERA_OK);

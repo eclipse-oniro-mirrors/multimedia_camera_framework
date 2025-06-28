@@ -712,6 +712,29 @@ int32_t HCameraService::CreatePhotoOutput(const sptr<OHOS::IBufferProducer>& pro
     return rc;
 }
 
+int32_t HCameraService::CreatePhotoOutput(
+    int32_t format, int32_t width, int32_t height, sptr<IStreamCapture> &photoOutput)
+{
+    CAMERA_SYNC_TRACE;
+    int32_t rc = CAMERA_OK;
+    MEDIA_INFO_LOG("HCameraService::CreatePhotoOutput prepare execute");
+    sptr<HStreamCapture> streamCapture = new (nothrow) HStreamCapture(format, width, height);
+    if (streamCapture == nullptr) {
+        rc = CAMERA_ALLOC_ERROR;
+        MEDIA_ERR_LOG("HCameraService::CreatePhotoOutput streamCapture is null");
+        CameraReportUtils::ReportCameraError(
+            "HCameraService::CreatePhotoOutput", rc, false, CameraReportUtils::GetCallerInfo());
+        return rc;
+    }
+
+    stringstream ss;
+    ss << "format=" << format << " width=" << width << " height=" << height;
+    CameraReportUtils::GetInstance().UpdateProfileInfo(ss.str());
+    photoOutput = streamCapture;
+    MEDIA_INFO_LOG("HCameraService::CreatePhotoOutput execute success");
+    return rc;
+}
+
 int32_t HCameraService::CreateDeferredPreviewOutput(
     int32_t format, int32_t width, int32_t height, sptr<IStreamRepeat>& previewOutput)
 {

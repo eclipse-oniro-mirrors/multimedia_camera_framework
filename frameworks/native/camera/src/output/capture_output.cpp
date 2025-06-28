@@ -29,6 +29,10 @@ CaptureOutput::CaptureOutput(CaptureOutputType outputType, StreamType streamType
     : outputType_(outputType), streamType_(streamType), stream_(stream), bufferProducer_(bufferProducer)
 {}
 
+CaptureOutput::CaptureOutput(CaptureOutputType outputType, StreamType streamType, sptr<IStreamCommon> stream)
+    : outputType_(outputType), streamType_(streamType), stream_(stream)
+{}
+
 void CaptureOutput::RegisterStreamBinderDied()
 {
     auto stream = GetStream();
@@ -50,6 +54,12 @@ sptr<IBufferProducer> CaptureOutput::GetBufferProducer()
 {
     std::lock_guard<std::mutex> lock(bufferProducerMutex_);
     return bufferProducer_;
+}
+
+std::string CaptureOutput::GetPhotoSurfaceId()
+{
+    std::lock_guard<std::mutex> lock(bufferProducerMutex_);
+    return surfaceId_;
 }
 
 void CaptureOutput::UnregisterStreamBinderDied()

@@ -44,15 +44,6 @@ Camera_PhotoOutput::~Camera_PhotoOutput()
     if (innerCallback_) {
         innerCallback_ = nullptr;
     }
-    if (photoSurface_) {
-        photoSurface_ = nullptr;
-    }
-    if (photoListener_) {
-        photoListener_ = nullptr;
-    }
-    if (rawPhotoListener_) {
-        rawPhotoListener_ = nullptr;
-    }
     CHECK_ERROR_RETURN(!photoNative_);
     delete photoNative_;
     photoNative_ = nullptr;
@@ -74,63 +65,34 @@ Camera_ErrorCode Camera_PhotoOutput::RegisterCallback(PhotoOutput_Callbacks* cal
 
 Camera_ErrorCode Camera_PhotoOutput::RegisterPhotoAvailableCallback(OH_PhotoOutput_PhotoAvailable callback)
 {
-    CHECK_ERROR_RETURN_RET_LOG(photoSurface_ == nullptr, CAMERA_OPERATION_NOT_ALLOWED,
-        "Photo surface is nullptr");
-
-    if (photoListener_ == nullptr) {
-        photoListener_ = new (std::nothrow) PhotoListener(this, photoSurface_);
-        CHECK_ERROR_RETURN_RET_LOG(photoListener_ == nullptr, CAMERA_SERVICE_FATAL_ERROR,
-            "Create photo listener failed");
-
-        SurfaceError ret = photoSurface_->RegisterConsumerListener((sptr<IBufferConsumerListener>&)photoListener_);
-        CHECK_ERROR_RETURN_RET_LOG(ret != SURFACE_ERROR_OK, CAMERA_SERVICE_FATAL_ERROR,
-            "Register surface consumer listener failed");
+    CHECK_ERROR_RETURN_RET_LOG(innerPhotoOutput_ == nullptr, CAMERA_SERVICE_FATAL_ERROR, "PhotoOutput is null!");
+    if (innerCallback_ == nullptr) {
+        innerCallback_ = make_shared<InnerPhotoOutputCallback>(this);
+        CHECK_ERROR_RETURN_RET_LOG(innerCallback_ == nullptr, CAMERA_SERVICE_FATAL_ERROR,
+            "create innerCallback_ failed!");
     }
 
-    photoListener_->SetPhotoAvailableCallback(callback);
+    innerPhotoOutput_->SetPhotoAvailableCallback(innerCallback_);
+    innerCallback_->SavePhotoAvailableCallback(callback);
     callbackFlag_ |= CAPTURE_PHOTO;
-    photoListener_->SetCallbackFlag(callbackFlag_);
     innerPhotoOutput_->SetCallbackFlag(callbackFlag_);
 
     // Preconfig can't support rawPhotoListener.
-    return RegisterRawPhotoAvailableCallback(callback);
-}
-
-Camera_ErrorCode Camera_PhotoOutput::RegisterRawPhotoAvailableCallback(OH_PhotoOutput_PhotoAvailable callback)
-{
-    std::shared_ptr<Profile> profile = innerPhotoOutput_->GetPhotoProfile();
-    bool isEnableRegister = rawPhotoListener_ == nullptr && profile != nullptr &&
-        innerPhotoOutput_->isRawImageDelivery_ && innerPhotoOutput_->rawPhotoSurface_ != nullptr;
-    CHECK_ERROR_RETURN_RET(isEnableRegister == false, CAMERA_OK);
-    rawPhotoListener_ =
-        new (std::nothrow) RawPhotoListener(this, innerPhotoOutput_->rawPhotoSurface_);
-    CHECK_ERROR_RETURN_RET_LOG(rawPhotoListener_ == nullptr, CAMERA_SERVICE_FATAL_ERROR,
-        "Create raw photo listener failed");
-
-    SurfaceError ret = innerPhotoOutput_->rawPhotoSurface_->RegisterConsumerListener(
-        (sptr<IBufferConsumerListener>&)rawPhotoListener_);
-    CHECK_ERROR_RETURN_RET_LOG(ret != SURFACE_ERROR_OK, CAMERA_SERVICE_FATAL_ERROR,
-        "Register surface consumer listener failed");
-    rawPhotoListener_->SetCallback(callback);
     return CAMERA_OK;
 }
 
 Camera_ErrorCode Camera_PhotoOutput::RegisterPhotoAssetAvailableCallback(OH_PhotoOutput_PhotoAssetAvailable callback)
 {
-    CHECK_ERROR_RETURN_RET_LOG(photoSurface_ == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Photo surface is invalid");
-    if (photoListener_ == nullptr) {
-        photoListener_ = new (std::nothrow) PhotoListener(this, photoSurface_);
-        CHECK_ERROR_RETURN_RET_LOG(photoListener_ == nullptr, CAMERA_SERVICE_FATAL_ERROR,
-            "Create raw photo listener failed");
-
-        SurfaceError ret = photoSurface_->RegisterConsumerListener((sptr<IBufferConsumerListener>&)photoListener_);
-        CHECK_ERROR_RETURN_RET_LOG(ret != SURFACE_ERROR_OK, CAMERA_SERVICE_FATAL_ERROR,
-            "Register surface consumer listener failed");
+    CHECK_ERROR_RETURN_RET_LOG(innerPhotoOutput_ == nullptr, CAMERA_SERVICE_FATAL_ERROR, "PhotoOutput is null!");
+    if (innerCallback_ == nullptr) {
+        innerCallback_ = make_shared<InnerPhotoOutputCallback>(this);
+        CHECK_ERROR_RETURN_RET_LOG(innerCallback_ == nullptr, CAMERA_SERVICE_FATAL_ERROR,
+            "create innerCallback_ failed!");
     }
-    photoListener_->SetPhotoAssetAvailableCallback(callback);
+
+    innerPhotoOutput_->SetPhotoAssetAvailableCallback(innerCallback_);
+    innerCallback_->SavePhotoAssetAvailableCallback(callback);
     callbackFlag_ |= CAPTURE_PHOTO_ASSET;
-    photoListener_->SetCallbackFlag(callbackFlag_);
     innerPhotoOutput_->SetCallbackFlag(callbackFlag_);
     return CAMERA_OK;
 }
@@ -259,32 +221,24 @@ Camera_ErrorCode Camera_PhotoOutput::UnregisterEstimatedCaptureDurationCallback(
 
 Camera_ErrorCode Camera_PhotoOutput::UnregisterPhotoAvailableCallback(OH_PhotoOutput_PhotoAvailable callback)
 {
-    if (callback != nullptr) {
-        if (photoListener_ != nullptr) {
-            callbackFlag_ &= ~CAPTURE_PHOTO;
-            photoListener_->SetCallbackFlag(callbackFlag_);
-            photoListener_->UnregisterPhotoAvailableCallback(callback);
-        }
-        CHECK_EXECUTE(rawPhotoListener_ != nullptr, rawPhotoListener_->UnregisterCallback(callback));
-    }
+    CHECK_ERROR_RETURN_RET_LOG(innerPhotoOutput_ == nullptr, CAMERA_OPERATION_NOT_ALLOWED, "PhotoOutput is null!");
+    CHECK_ERROR_RETURN_RET_LOG(innerCallback_ == nullptr, CAMERA_OPERATION_NOT_ALLOWED, "callback is null!");
+    innerPhotoOutput_->UnSetPhotoAvailableCallback();
+    callbackFlag_ &= ~CAPTURE_PHOTO;
+    innerPhotoOutput_->SetCallbackFlag(callbackFlag_);
+    innerCallback_->RemovePhotoAvailableCallback(callback);
     return CAMERA_OK;
 }
 
 Camera_ErrorCode Camera_PhotoOutput::UnregisterPhotoAssetAvailableCallback(OH_PhotoOutput_PhotoAssetAvailable callback)
 {
-    if (callback != nullptr) {
-        if (photoListener_ != nullptr) {
-            callbackFlag_ &= ~CAPTURE_PHOTO_ASSET;
-            photoListener_->SetCallbackFlag(callbackFlag_);
-            photoListener_->UnregisterPhotoAssetAvailableCallback(callback);
-        }
-    }
+    CHECK_ERROR_RETURN_RET_LOG(innerPhotoOutput_ == nullptr, CAMERA_OPERATION_NOT_ALLOWED, "PhotoOutput is null!");
+    CHECK_ERROR_RETURN_RET_LOG(innerCallback_ == nullptr, CAMERA_OPERATION_NOT_ALLOWED, "callback is null!");
+    innerPhotoOutput_->UnSetPhotoAssetAvailableCallback();
+    callbackFlag_ &= ~CAPTURE_PHOTO_ASSET;
+    innerPhotoOutput_->SetCallbackFlag(callbackFlag_);
+    innerCallback_->RemovePhotoAssetAvailableCallback(callback);
     return CAMERA_OK;
-}
-
-void Camera_PhotoOutput::SetPhotoSurface(OHOS::sptr<OHOS::Surface> &photoSurface)
-{
-    photoSurface_ = photoSurface;
 }
 
 Camera_ErrorCode Camera_PhotoOutput::Capture()
@@ -333,9 +287,7 @@ Camera_ErrorCode Camera_PhotoOutput::IsMirrorSupported(bool* isSupported)
 Camera_ErrorCode Camera_PhotoOutput::EnableMirror(bool enableMirror)
 {
     int32_t ret = innerPhotoOutput_->EnableMirror(enableMirror);
-    if (ret == napi_ok) {
-        isMirrorEnable_ = enableMirror;
-    }
+    isMirrorEnable_ = (ret == napi_ok) ? enableMirror : isMirrorEnable_;
     
     return FrameworkToNdkCameraError(ret);
 }
@@ -347,10 +299,8 @@ sptr<PhotoOutput> Camera_PhotoOutput::GetInnerPhotoOutput()
 
 OH_PhotoNative* Camera_PhotoOutput::CreateCameraPhotoNative(shared_ptr<Media::NativeImage> &image, bool isMain)
 {
-    if (!photoNative_) {
-        photoNative_ = new(std::nothrow) OH_PhotoNative;
-        CHECK_ERROR_RETURN_RET_LOG(photoNative_ == nullptr, nullptr, "Create camera photo native object failed");
-    }
+    photoNative_ = (photoNative_ == nullptr) ? new(std::nothrow) OH_PhotoNative : photoNative_;
+    CHECK_ERROR_RETURN_RET_LOG(photoNative_ == nullptr, nullptr, "Create camera photo native object failed");
 
     if (isMain) {
         photoNative_->SetMainImage(image);

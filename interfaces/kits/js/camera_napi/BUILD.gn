@@ -77,7 +77,6 @@ ohos_shared_library("camera_napi") {
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/mode/video_session_for_sys_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/mode/video_session_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/native_module_ohos_camera.cpp",
-    "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/output/deferred_photo_proxy_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/output/depth_data_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/output/depth_data_output_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/output/metadata_output_napi.cpp",
@@ -110,8 +109,6 @@ ohos_shared_library("camera_napi") {
     "image_framework:image",
     "image_framework:image_native",
     "ipc:ipc_core",
-    "media_library:media_library",
-    "media_library:media_library_manager",
     "media_library:medialibrary_nutils",
     "napi:ace_napi",
     "qos_manager:qos",
@@ -134,6 +131,14 @@ ohos_shared_library("camera_napi") {
     "-fPIC",
     "-DIMAGE_COLORSPACE_FLAG",
     "-Os",
+    "-fno-merge-all-constants",
+    "-flto",
+    "-ffunction-sections"
+  ]
+
+  ldflags = [
+    "-Wl,--gc-sections",
+    "-fPIE",
   ]
 
   version_script = "libcamera_napi.map"

@@ -404,12 +404,8 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_008, TestSize.Level1)
     EXPECT_NE(phtOutput->exifSurface_, nullptr);
     EXPECT_NE(phtOutput->debugSurface_, nullptr);
 
-    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer("rawImage");
-    int32_t ret = phtOutput->SetRawPhotoInfo(surface);
-    EXPECT_EQ(ret, CAMERA_OK);
-
     bool enabled = true;
-    ret = phtOutput->EnableRawDelivery(enabled);
+    int32_t ret = phtOutput->EnableRawDelivery(enabled);
     EXPECT_EQ(ret, CAMERA_OK);
 
     input->Close();
@@ -434,19 +430,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_009, TestSize.Level1)
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
     ASSERT_NE(photoOutput, nullptr);
     sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
-
-    phtOutput->thumbnailSurface_ = nullptr;
-    sptr<IBufferConsumerListener> listener = new TestIBufferConsumerListener();
-    phtOutput->SetThumbnailListener(listener);
-    EXPECT_EQ(phtOutput->thumbnailSurface_, nullptr);
-
-    phtOutput->thumbnailSurface_ = Surface::CreateSurfaceAsConsumer("thumbnailSurface");
-    phtOutput->SetThumbnailListener(listener);
-    EXPECT_NE(phtOutput->thumbnailSurface_, nullptr);
-
-    if (listener) {
-        listener = nullptr;
-    }
+    ASSERT_NE(phtOutput, nullptr);
 }
 
 /*
@@ -899,7 +883,6 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_020, TestSize.Level1)
     EXPECT_EQ(callback->OnCaptureStarted(captureId), 0);
 
     OHOS::Camera::DeleteCameraMetadataItem(metadata->get(), OHOS_ABILITY_CAPTURE_EXPECT_TIME);
-    phtOutput->AcquireBufferToPrepareProxy(captureId);
     EXPECT_EQ(callback->OnCaptureStarted(captureId), 0);
 
     phtOutput->appCallback_ = nullptr;
@@ -1100,8 +1083,6 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_026, TestSize.Level1)
     sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
 
     phtOutput->stream_ = nullptr;
-    sptr<CameraPhotoProxy> proxy =  new (std::nothrow) CameraPhotoProxy(nullptr, 0, 0, 0, false, 0);
-    phtOutput->UpdateMediaLibraryPhotoAssetProxy(proxy);
 }
 
 /*
@@ -1410,64 +1391,6 @@ HWTEST_F(CameraPhotoOutputUnit, SetSwitchOfflinePhotoOutput_ShouldSet_WhenFalse,
     ASSERT_NE(phtOutput, nullptr);
     phtOutput->SetSwitchOfflinePhotoOutput(false);
     EXPECT_FALSE(phtOutput->IsHasSwitchOfflinePhoto());
-}
-
-/*
- * Feature: Framework
- * Function: CreateMediaLibrary_Use_CameraPhotoProxy
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test CreateMediaLibrary method use CameraPhotoProxy
- */
-HWTEST_F(CameraPhotoOutputUnit, CreateMediaLibrary_001, TestSize.Level0)
-{
-    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
-    ASSERT_NE(photoOutput, nullptr);
-    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput> &)photoOutput;
-    ASSERT_NE(phtOutput, nullptr);
-    int32_t format = 0;
-    int32_t photoWidth = 0;
-    int32_t photoHeight = 0;
-    bool isHighQuality = false;
-    int32_t captureId = 0;
-    sptr<CameraPhotoProxy> photoProxy = new(std::nothrow) CameraPhotoProxy(
-        nullptr, format, photoWidth, photoHeight, isHighQuality, captureId);
-    std::string uri = "";
-    int32_t cameraShotType = 1;
-    std::string burstKey = "";
-    int64_t timestamp = 0;
-    phtOutput->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
-}
-
-
-/*
- * Feature: Framework
- * Function: CreateMediaLibrary_Use_PictureIntf
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test CreateMediaLibrary method use PictureIntf
- */
-HWTEST_F(CameraPhotoOutputUnit, CreateMediaLibrary_002, TestSize.Level0)
-{
-    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
-    ASSERT_NE(photoOutput, nullptr);
-    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput> &)photoOutput;
-    ASSERT_NE(phtOutput, nullptr);
-    int32_t format = 0;
-    int32_t photoWidth = 0;
-    int32_t photoHeight = 0;
-    bool isHighQuality = false;
-    int32_t captureId = 0;
-    std::shared_ptr<PictureIntf> picture = PictureProxy::CreatePictureProxy();
-    sptr<CameraPhotoProxy> photoProxy = new(std::nothrow) CameraPhotoProxy(
-        nullptr, format, photoWidth, photoHeight, isHighQuality, captureId);
-    std::string uri = "";
-    int32_t cameraShotType = 1;
-    std::string burstKey = "";
-    int64_t timestamp = 0;
-    phtOutput->CreateMediaLibrary(picture, photoProxy, uri, cameraShotType, burstKey, timestamp);
 }
 
 /*

@@ -25,7 +25,7 @@ static const char PHOTO_NAPI_CLASS_NAME[] = "Photo";
 class PhotoNapi {
 public:
     static napi_value Init(napi_env env, napi_value exports);
-    static napi_value CreatePhoto(napi_env env, napi_value mainImage);
+    static napi_value CreatePhoto(napi_env env, napi_value mainImage, bool isRaw = false);
     static napi_value CreateRawPhoto(napi_env env, napi_value mainImage);
     PhotoNapi();
     ~PhotoNapi();

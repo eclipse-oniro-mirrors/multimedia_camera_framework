@@ -21,6 +21,7 @@
 #include "gtest/gtest.h"
 #include "input/camera_manager.h"
 #include "session/capture_session.h"
+#include "photo_output_callback.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -116,6 +117,14 @@ public:
     TestMetadataStateCallback() = default;
     virtual ~TestMetadataStateCallback() = default;
     void OnError(int32_t errorCode) const override;
+};
+
+class TestThumbnailCallback : public ThumbnailCallback {
+public:
+    TestThumbnailCallback() = default;
+    virtual ~TestThumbnailCallback() = default;
+    void OnThumbnailAvailable(
+        const int32_t captureId, const int64_t timestamp, unique_ptr<Media::PixelMap> pixelMap) const override;
 };
 
 // ms

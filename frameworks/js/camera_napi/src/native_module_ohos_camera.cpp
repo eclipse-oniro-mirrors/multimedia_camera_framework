@@ -37,7 +37,6 @@
 #include "mode/time_lapse_photo_session_napi.h"
 #include "mode/video_session_for_sys_napi.h"
 #include "mode/video_session_napi.h"
-#include "output/deferred_photo_proxy_napi.h"
 #include "output/depth_data_napi.h"
 #include "output/depth_data_output_napi.h"
 #include "output/photo_napi.h"
@@ -85,7 +84,6 @@ static napi_value Export(napi_env env, napi_value exports)
     MacroVideoSessionNapi::Init(env, exports);
     ModeManagerNapi::Init(env, exports);
     PhotoNapi::Init(env, exports);
-    DeferredPhotoProxyNapi::Init(env, exports);
     SecureCameraSessionNapi::Init(env, exports);
     QuickShotPhotoSessionNapi::Init(env, exports);
     ApertureVideoSessionNapi::Init(env, exports);

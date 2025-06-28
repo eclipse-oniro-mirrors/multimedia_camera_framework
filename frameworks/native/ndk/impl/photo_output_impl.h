@@ -21,12 +21,15 @@
 #include "kits/native/include/camera/camera.h"
 #include "kits/native/include/camera/photo_output.h"
 #include "output/photo_output.h"
+#include "output/photo_output_callback.h"
 #include "camera_log.h"
 #include "camera_util.h"
-#include "photo_listener_impl.h"
 #include "photo_native_impl.h"
+#include "media_asset_helper.h"
 
-class InnerPhotoOutputCallback : public OHOS::CameraStandard::PhotoStateCallback {
+class InnerPhotoOutputCallback : public OHOS::CameraStandard::PhotoStateCallback,
+                                 public OHOS::CameraStandard::PhotoAvailableCallback,
+                                 public OHOS::CameraStandard::PhotoAssetAvailableCallback {
 public:
     explicit InnerPhotoOutputCallback(Camera_PhotoOutput* photoOutput) : photoOutput_(photoOutput)
     {
@@ -65,6 +68,16 @@ public:
     void SaveEstimatedCaptureDurationCallback(OH_PhotoOutput_EstimatedCaptureDuration callback)
     {
         estimatedCaptureDurationCallback_ = callback;
+    }
+
+    void SavePhotoAvailableCallback(OH_PhotoOutput_PhotoAvailable callback)
+    {
+        photoAvailableCallback_ = callback;
+    }
+ 
+    void SavePhotoAssetAvailableCallback(OH_PhotoOutput_PhotoAssetAvailable callback)
+    {
+        photoAssetAvailableCallback_ = callback;
     }
 
     void RemoveCallback(PhotoOutput_Callbacks* callback)
@@ -115,6 +128,20 @@ public:
     {
         if (callback != nullptr) {
             estimatedCaptureDurationCallback_ = nullptr;
+        }
+    }
+
+    void RemovePhotoAvailableCallback(OH_PhotoOutput_PhotoAvailable callback)
+    {
+        if (callback != nullptr) {
+            photoAvailableCallback_ = nullptr;
+        }
+    }
+ 
+    void RemovePhotoAssetAvailableCallback(OH_PhotoOutput_PhotoAssetAvailable callback)
+    {
+        if (callback != nullptr) {
+            photoAssetAvailableCallback_ = nullptr;
         }
     }
 
@@ -200,6 +227,37 @@ public:
     {
         MEDIA_DEBUG_LOG("OnOfflineDeliveryFinished is called");
     }
+
+    void OnPhotoAvailable(const std::shared_ptr<OHOS::Media::NativeImage> nativeImage, bool isRaw) const override
+    {
+        MEDIA_DEBUG_LOG("OnPhotoAvailable E");
+        CHECK_ERROR_RETURN_LOG(photoOutput_ == nullptr, "photoOutput is null");
+        CHECK_ERROR_RETURN_LOG(photoAvailableCallback_ == nullptr, "callback is null");
+        OH_PhotoNative *photoNative = new (std::nothrow) OH_PhotoNative;
+        CHECK_ERROR_RETURN_LOG(photoNative == nullptr, "Create photo native failed");
+        if (!isRaw) {
+            photoNative->SetMainImage(nativeImage);
+        } else {
+            photoNative->SetRawImage(nativeImage);
+        }
+        photoAvailableCallback_(photoOutput_, photoNative);
+        MEDIA_DEBUG_LOG("OnPhotoAvailable X");
+    }
+
+    void OnPhotoAssetAvailable(const int32_t captureId, const std::string &uri, int32_t cameraShotType,
+        const std::string &burstKey) const override
+    {
+        MEDIA_DEBUG_LOG("OnPhotoAssetAvailable E");
+        CHECK_ERROR_RETURN_LOG(photoOutput_ == nullptr, "photoOutput is null");
+        CHECK_ERROR_RETURN_LOG(photoAssetAvailableCallback_ == nullptr, "callback is null");
+        auto mediaAssetHelper = OHOS::Media::MediaAssetHelperFactory::CreateMediaAssetHelper();
+        CHECK_ERROR_RETURN_LOG(mediaAssetHelper == nullptr, "create media asset helper failed");
+        auto mediaAsset = mediaAssetHelper->GetMediaAsset(uri, cameraShotType, burstKey);
+        CHECK_ERROR_RETURN_LOG(mediaAsset == nullptr, "Create photo asset failed");
+        photoAssetAvailableCallback_(photoOutput_, mediaAsset);
+        MEDIA_DEBUG_LOG("OnPhotoAssetAvailable X");
+    }
+
 private:
     Camera_PhotoOutput* photoOutput_;
     PhotoOutput_Callbacks callback_;
@@ -208,6 +266,8 @@ private:
     OH_PhotoOutput_OnFrameShutterEnd frameShutterEndCallback_ = nullptr;
     OH_PhotoOutput_CaptureReady captureReadyCallback_ = nullptr;
     OH_PhotoOutput_EstimatedCaptureDuration estimatedCaptureDurationCallback_ = nullptr;
+    OH_PhotoOutput_PhotoAvailable photoAvailableCallback_ = nullptr;
+    OH_PhotoOutput_PhotoAssetAvailable photoAssetAvailableCallback_ = nullptr;
 };
 
 struct Camera_PhotoOutput {
@@ -259,7 +319,6 @@ public:
 
     OHOS::sptr<OHOS::CameraStandard::PhotoOutput> GetInnerPhotoOutput();
 
-    void SetPhotoSurface(OHOS::sptr<OHOS::Surface> &photoSurface);
 
     OH_PhotoNative* CreateCameraPhotoNative(std::shared_ptr<OHOS::Media::NativeImage> &image, bool isMain);
 
@@ -272,13 +331,9 @@ public:
     Camera_ErrorCode GetPhotoRotation(int32_t imageRotation, Camera_ImageRotation* cameraImageRotation);
 
 private:
-    Camera_ErrorCode RegisterRawPhotoAvailableCallback(OH_PhotoOutput_PhotoAvailable callback);
 
     OHOS::sptr<OHOS::CameraStandard::PhotoOutput> innerPhotoOutput_ = nullptr;
     std::shared_ptr<InnerPhotoOutputCallback> innerCallback_ = nullptr;
-    OHOS::sptr<OHOS::Surface> photoSurface_ = nullptr;
-    OHOS::sptr<OHOS::CameraStandard::PhotoListener> photoListener_ = nullptr;
-    OHOS::sptr<OHOS::CameraStandard::RawPhotoListener> rawPhotoListener_ = nullptr;
     uint8_t callbackFlag_ = 0;
     OH_PhotoNative *photoNative_ = nullptr;
     bool isMirrorEnable_ = false;

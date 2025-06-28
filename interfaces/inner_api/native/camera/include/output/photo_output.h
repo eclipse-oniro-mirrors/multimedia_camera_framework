@@ -33,6 +33,9 @@ namespace DeferredProcessing {
     class TaskManager;
 }
 class PictureIntf;
+class PhotoAvailableCallback;
+class PhotoAssetAvailableCallback;
+class ThumbnailCallback;
 class PhotoStateCallback {
 public:
     PhotoStateCallback() = default;
@@ -275,6 +278,7 @@ constexpr int32_t ROTATION_45_DEGREES = 45;
 constexpr int32_t ROTATION_90_DEGREES = 90;
 class PhotoOutput : public CaptureOutput {
 public:
+    explicit PhotoOutput();
     explicit PhotoOutput(sptr<IBufferProducer> bufferProducer);
     explicit PhotoOutput(sptr<IBufferProducer> bufferProducer, sptr<Surface> photoSurface);
     virtual ~PhotoOutput();
@@ -286,12 +290,14 @@ public:
      */
     void SetCallback(std::shared_ptr<PhotoStateCallback> callback);
 
-    /**
-     * @brief Set the thumbnail callback.
-     *
-     * @param listener set IBufferConsumerListener when on interface is called.
-     */
-    void SetThumbnailListener(sptr<IBufferConsumerListener>& listener);
+    void SetPhotoAvailableCallback(std::shared_ptr<PhotoAvailableCallback> callback);
+    void UnSetPhotoAvailableCallback();
+
+    void SetPhotoAssetAvailableCallback(std::shared_ptr<PhotoAssetAvailableCallback> callback);
+    void UnSetPhotoAssetAvailableCallback();
+
+    void SetThumbnailCallback(std::shared_ptr<ThumbnailCallback> callback);
+    void UnSetThumbnailAvailableCallback();
 
     /**
      * @brief Get the photo rotation.
@@ -313,13 +319,6 @@ public:
      * @return Returns the result of the raw imgage delivery enable.
      */
     int32_t EnableRawDelivery(bool enabled);
-
-    /**
-     * @brief Set the Thumbnail profile.
-     *
-     * @param isEnabled quickThumbnail is enabled.
-     */
-    int32_t SetRawPhotoInfo(sptr<Surface>& surface);
 
     /**
      * @brief Set the photo callback.
@@ -364,6 +363,12 @@ public:
      * @return Returns the pointer to PhotoStateCallback.
      */
     std::shared_ptr<PhotoStateCallback> GetApplicationCallback();
+
+    std::shared_ptr<PhotoAvailableCallback> GetAppPhotoCallback();
+
+    std::shared_ptr<PhotoAssetAvailableCallback> GetAppPhotoAssetCallback();
+
+    std::shared_ptr<ThumbnailCallback> GetAppThumbnailCallback();
 
     /**
      * @brief To check the photo capture is mirrored or not.
@@ -479,7 +484,6 @@ public:
     int32_t EnableDepthDataDelivery(bool enabled);
 
     int32_t EnableMovingPhoto(bool enabled);
-    bool UpdateMediaLibraryPhotoAssetProxy(sptr<CameraPhotoProxy> photoProxy);
 
     /**
      * Confirm if auto aigc photo supported.
@@ -536,8 +540,6 @@ public:
     void SetAuxiliaryPhotoHandle(uint32_t handle);
     uint32_t GetAuxiliaryPhotoHandle();
 
-    void AcquireBufferToPrepareProxy(int32_t captureId);
-
     uint32_t watchDogHandle_ = 0;
     std::mutex watchDogHandleMutex_;
     std::map<int32_t, int32_t> captureIdAuxiliaryCountMap_;
@@ -563,7 +565,13 @@ private:
     bool isNativeSurface_ = false;
     DeferredDeliveryImageType deferredType_ = DeferredDeliveryImageType::DELIVERY_NONE;
     std::shared_ptr<PhotoStateCallback> appCallback_;
+    std::shared_ptr<PhotoAvailableCallback> appPhotoCallback_;
+    std::shared_ptr<PhotoAssetAvailableCallback> appPhotoAssetCallback_;
+    std::shared_ptr<ThumbnailCallback> appThumbnailCallback_;
     sptr<IStreamCaptureCallback> cameraSvcCallback_;
+    sptr<IStreamCapturePhotoCallback> svcPhotoCallback_;
+    sptr<IStreamCapturePhotoAssetCallback> svcPhotoAssetCallback_;
+    sptr<IStreamCaptureThumbnailCallback> svcThumbnailCallback_;
     std::shared_ptr<PhotoCaptureSetting> defaultCaptureSetting_;
     void CameraServerDied(pid_t pid) override;
     bool mIsHasEnableOfflinePhoto_ = false;

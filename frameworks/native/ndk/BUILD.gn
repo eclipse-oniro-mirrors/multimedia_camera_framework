@@ -55,7 +55,6 @@ ohos_shared_library("ohcamera") {
     "impl/camera_util.cpp",
     "impl/capture_session_impl.cpp",
     "impl/metadata_output_impl.cpp",
-    "impl/photo_listener_impl.cpp",
     "impl/photo_native_impl.cpp",
     "impl/photo_output_impl.cpp",
     "impl/preview_output_impl.cpp",

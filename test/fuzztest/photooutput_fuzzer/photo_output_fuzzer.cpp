@@ -74,16 +74,12 @@ void TestOutput1(sptr<PhotoOutput> output, uint8_t *rawData, size_t size)
     MessageParcel data;
     data.WriteRawData(rawData, size);
     output->SetCallback(make_shared<PhotoStateCallbackMock>());
-    sptr<IBufferConsumerListener> listener = new IBufferConsumerListenerMock();
-    output->SetThumbnailListener(listener);
     data.RewindRead(0);
     output->SetThumbnail(data.ReadBool());
     sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
     CHECK_ERROR_RETURN_LOG(!photoSurface, "PhotoOutputFuzzer: Create photoSurface Error");
     sptr<IBufferProducer> producer = photoSurface->GetProducer();
     CHECK_ERROR_RETURN_LOG(!producer, "PhotoOutputFuzzer: GetProducer Error");
-    sptr<Surface> sf = Surface::CreateSurfaceAsProducer(producer);
-    output->SetRawPhotoInfo(sf);
     output->Capture(make_shared<PhotoCaptureSetting>());
     output->Capture();
     output->CancelCapture();
@@ -134,7 +130,6 @@ void TestOutput2(sptr<PhotoOutput> output, uint8_t *rawData, size_t size) __attr
     output->EnableDepthDataDelivery(data.ReadBool());
     output->CreateMultiChannel();
     data.RewindRead(0);
-    output->AcquireBufferToPrepareProxy(data.ReadInt32());
     data.RewindRead(0);
     output->EnableRawDelivery(data.ReadBool());
     data.RewindRead(0);

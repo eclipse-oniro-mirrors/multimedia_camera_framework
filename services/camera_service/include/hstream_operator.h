@@ -166,9 +166,9 @@ public:
     int32_t GetCurrentStreamInfos(std::vector<StreamInfo_V1_1>& streamInfos);
     std::list<sptr<HStreamCommon>> GetAllStreams();
     int32_t EnableMovingPhotoMirror(bool isMirror, bool isConfig);
-    int32_t CreateMediaLibrary(const sptr<CameraPhotoProxy>& photoProxy, std::string& uri, int32_t& cameraShotType,
+    int32_t CreateMediaLibrary(const sptr<CameraServerPhotoProxy>& photoProxy, std::string& uri, int32_t& cameraShotType,
         std::string& burstKey, int64_t timestamp);
-    int32_t CreateMediaLibrary(std::shared_ptr<PictureIntf> picture, const sptr<CameraPhotoProxy> &photoProxy,
+    int32_t CreateMediaLibrary(std::shared_ptr<PictureIntf> picture, const sptr<CameraServerPhotoProxy> &photoProxy,
         std::string &uri, int32_t &cameraShotType, std::string& burstKey, int64_t timestamp);
     void SetCameraPhotoProxyInfo(sptr<CameraServerPhotoProxy> cameraPhotoProxy, int32_t &cameraShotType,
         bool &isBursting, std::string &burstKey);
@@ -307,7 +307,7 @@ private:
         return hdiStreamIdGenerator_.fetch_add(1);
     }
 
-    string CreateDisplayName();
+    string CreateDisplayName(const std::string& suffix);
     string CreateBurstDisplayName(int32_t imageSeqId, int32_t seqId);
     int32_t AddOutputStream(sptr<HStreamCommon> stream);
     
