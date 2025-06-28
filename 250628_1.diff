@@ -1,558 +1,9 @@
- 
- void PhotoOutputNapi::RegisterDeferredPhotoProxyAvailableCallbackListener(
-     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
- {
--    CHECK_ERROR_RETURN_LOG(photoOutput_->GetPhotoSurface() == nullptr, "PhotoSurface is null!");
--    if (photoListener_ == nullptr) {
--        MEDIA_INFO_LOG("new deferred photoListener and register surface consumer listener");
--        sptr<PhotoListener> photoListener = new (std::nothrow)
--            PhotoListener(env, photoOutput_->GetPhotoSurface(), photoOutput_);
--        CHECK_ERROR_RETURN_LOG(photoListener == nullptr, "failed to new photoListener!");
--        SurfaceError ret =
--            photoOutput_->GetPhotoSurface()->RegisterConsumerListener((sptr<IBufferConsumerListener> &)photoListener);
--        CHECK_ERROR_PRINT_LOG(ret != SURFACE_ERROR_OK, "register surface consumer listener failed!");
--        photoListener_ = photoListener;
--    }
--    photoListener_->SaveCallback(CONST_CAPTURE_DEFERRED_PHOTO_AVAILABLE, callback);
-+    MEDIA_INFO_LOG("PhotoOutputNapi RegisterDeferredPhotoProxyAvailableCallbackListener!");
-+    CHECK_ERROR_RETURN_LOG(photoOutput_ == nullptr, "PhotoOutput is null!");
- }
- 
- void PhotoOutputNapi::UnregisterDeferredPhotoProxyAvailableCallbackListener(
-     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
- {
--    CHECK_EXECUTE(photoListener_ != nullptr,
--        photoListener_->RemoveCallback(CONST_CAPTURE_DEFERRED_PHOTO_AVAILABLE, callback));
-+    MEDIA_INFO_LOG("PhotoOutputNapi UnregisterDeferredPhotoProxyAvailableCallbackListener!");
- }
- 
- void PhotoOutputNapi::RegisterPhotoAssetAvailableCallbackListener(
-     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
- {
--    CHECK_ERROR_RETURN_LOG(photoOutput_->GetPhotoSurface() == nullptr, "PhotoSurface is null!");
--    CHECK_ERROR_RETURN_LOG(photoOutput_ == nullptr, "photoOutput_ is null!");
--    if (photoOutput_->IsYuvOrHeifPhoto()) {
--        CreateMultiChannelPictureLisenter(env);
--    } else {
--        CreateSingleChannelPhotoLisenter(env);
-+    MEDIA_INFO_LOG("PhotoOutputNapi RegisterPhotoAssetAvailableCallbackListener!");
-+    CHECK_ERROR_RETURN_LOG(photoOutput_ == nullptr, "PhotoOutput is null!");
-+    if (photoOutputCallback_ == nullptr) {
-+        photoOutputCallback_ = std::make_shared<PhotoOutputCallback>(env);
-+        photoOutput_->SetCallback(photoOutputCallback_);
-     }
--    CHECK_ERROR_RETURN_LOG(photoListener_ == nullptr, "photoListener_ is null!");
--    photoListener_->SaveCallback(CONST_CAPTURE_PHOTO_ASSET_AVAILABLE, callback);
-+    photoOutput_->SetPhotoAssetAvailableCallback(photoOutputCallback_);
-+    photoOutputCallback_->SaveCallbackReference(CONST_CAPTURE_PHOTO_ASSET_AVAILABLE, callback, isOnce);
-+    callbackFlag_ |= CAPTURE_PHOTO_ASSET;
-+    photoOutput_->SetCallbackFlag(callbackFlag_);
- }
- 
- void PhotoOutputNapi::UnregisterPhotoAssetAvailableCallbackListener(
-     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
- {
--    if (photoListener_ != nullptr) {
--        photoListener_->RemoveCallback(CONST_CAPTURE_PHOTO_ASSET_AVAILABLE, callback);
--        if (photoListener_->IsEmpty(CONST_CAPTURE_PHOTO_ASSET_AVAILABLE)) {
--            photoListener_->ClearTaskManager();
--        }
--    }
--    if (photoOutput_) {
--        photoOutput_->ClearTaskManager();
--    }
-+    CHECK_ERROR_RETURN_LOG(photoOutput_ == nullptr, "PhotoOutput is null!");
-+    CHECK_ERROR_RETURN_LOG(photoOutputCallback_ == nullptr, "photoOutputCallback is null!");
-+    photoOutput_->UnSetPhotoAssetAvailableCallback();
-+    callbackFlag_ &= ~CAPTURE_PHOTO_ASSET;
-+    photoOutput_->SetCallbackFlag(callbackFlag_);
-+    photoOutput_->DeferImageDeliveryFor(DeferredDeliveryImageType::DELIVERY_NONE);
-+    photoOutputCallback_->RemoveCallbackRef(CONST_CAPTURE_PHOTO_ASSET_AVAILABLE, callback);
- }
- 
- void PhotoOutputNapi::RegisterCaptureStartCallbackListener(
-diff --git a/frameworks/native/camera/BUILD.gn b/frameworks/native/camera/BUILD.gn
-index ec8e8fdf4..22471809d 100644
---- a/frameworks/native/camera/BUILD.gn
-+++ b/frameworks/native/camera/BUILD.gn
-@@ -54,6 +54,8 @@ ohos_shared_library("camera_framework") {
-     "${multimedia_camera_framework_path}/dynamic_libs/image_framework/src/picture_adapter.cpp",
-     "${multimedia_camera_framework_path}/services/camera_service/binder/base/src/icamera_util.cpp",
-     "${multimedia_camera_framework_path}/services/camera_service/binder/client/src/hcamera_broker_proxy.cpp",
-+    "${multimedia_camera_framework_path}/services/camera_service/binder/server/src/hstream_capture_photo_callback_stub.cpp",
-+    "${multimedia_camera_framework_path}/services/camera_service/binder/server/src/hstream_capture_thumbnail_callback_stub.cpp",
-     "${multimedia_camera_framework_path}/services/camera_service/binder/server/src/hcamera_listener_stub.cpp",
-     "src/ability/camera_ability.cpp",
-     "src/ability/camera_ability_builder.cpp",
-@@ -69,10 +71,10 @@ ohos_shared_library("camera_framework") {
-     "src/output/camera_output_capability.cpp",
-     "src/output/camera_photo_proxy.cpp",
-     "src/output/capture_output.cpp",
--    "src/output/deferred_photo_proxy.cpp",
-     "src/output/depth_data_output.cpp",
-     "src/output/metadata_output.cpp",
-     "src/output/photo_output.cpp",
-+    "src/output/photo_output_callback.cpp",
-     "src/output/preview_output.cpp",
-     "src/output/sketch_wrapper.cpp",
-     "src/output/video_output.cpp",
-@@ -109,8 +111,18 @@ ohos_shared_library("camera_framework") {
-     "-fPIC",
-     "-Wall",
-     "-DSUPPORT_CAMERA_AUTH",
-+    "-DIMAGE_COLORSPACE_FLAG",
-     "-Os",
-+    "-fno-merge-all-constants",
-+    "-flto",
-+    "-ffunction-sections"
-   ]
-+
-+  ldflags = [
-+    "-Wl,--gc-sections",
-+    "-fPIE",
-+  ]
-+  
-   if (target_cpu == "arm") {
-     cflags += [ "-DBINDER_IPC_32BIT" ]
-   }
-@@ -151,6 +163,7 @@ ohos_shared_library("camera_framework") {
-     "drivers_interface_camera:libcamera_proxy_1.3",
-     "drivers_interface_camera:libmap_data_sequenceable_1.0",
-     "drivers_interface_display:libdisplay_commontype_proxy_1.0",
-+    "graphic_2d:color_manager",
-     "graphic_2d:librender_service_client",
-     "graphic_surface:buffer_handle",
-     "graphic_surface:surface",
-diff --git a/frameworks/native/camera/src/input/camera_manager.cpp b/frameworks/native/camera/src/input/camera_manager.cpp
-index 898958d21..f4b9e2509 100644
---- a/frameworks/native/camera/src/input/camera_manager.cpp
-+++ b/frameworks/native/camera/src/input/camera_manager.cpp
-@@ -533,6 +533,19 @@ int CameraManager::CreatePhotoOutputWithoutProfile(sptr<IBufferProducer> surface
-     return CameraErrorCode::SUCCESS;
- }
- 
-+int CameraManager::CreatePhotoOutputWithoutProfile(std::string surfaceId, sptr<PhotoOutput>* pPhotoOutput)
-+{
-+    CAMERA_SYNC_TRACE;
-+    auto serviceProxy = GetServiceProxy();
-+    CHECK_ERROR_RETURN_RET_LOG((serviceProxy == nullptr), CameraErrorCode::INVALID_ARGUMENT,
-+        "CreatePhotoOutputWithoutProfile serviceProxy is null");
-+    sptr<PhotoOutput> photoOutput = new (std::nothrow) PhotoOutput();
-+    CHECK_ERROR_RETURN_RET(photoOutput == nullptr, CameraErrorCode::SERVICE_FATL_ERROR);
-+    photoOutput->AddTag(CaptureOutput::DYNAMIC_PROFILE);
-+    *pPhotoOutput = photoOutput;
-+    return CameraErrorCode::SUCCESS;
-+}
-+
- int CameraManager::CreatePhotoOutput(Profile &profile, sptr<IBufferProducer> &surface, sptr<PhotoOutput> *pPhotoOutput)
-     __attribute__((no_sanitize("cfi")))
- {
-@@ -586,6 +599,31 @@ int CameraManager::CreatePhotoOutput(Profile &profile, sptr<IBufferProducer> &su
-     return CameraErrorCode::SUCCESS;
- }
- 
-+int CameraManager::CreatePhotoOutput(Profile& profile, sptr<PhotoOutput>* pPhotoOutput)
-+{
-+    CAMERA_SYNC_TRACE;
-+    auto serviceProxy = GetServiceProxy();
-+    CHECK_ERROR_RETURN_RET_LOG(serviceProxy == nullptr, CameraErrorCode::INVALID_ARGUMENT,
-+        "CreatePhotoOutput serviceProxy is null or PhotoOutputSurface/profile is null");
-+    CHECK_ERROR_RETURN_RET_LOG((profile.GetCameraFormat() == CAMERA_FORMAT_INVALID) || (profile.GetSize().width == 0)
-+        || (profile.GetSize().height == 0), CameraErrorCode::INVALID_ARGUMENT,
-+        "CreatePhotoOutput invalid fomrat or width or height is zero");
-+    // to adapter yuv photo
-+    CameraFormat yuvFormat = profile.GetCameraFormat();
-+    camera_format_t metaFormat = GetCameraMetadataFormat(yuvFormat);
-+    sptr<IStreamCapture> streamCapture = nullptr;
-+    int32_t retCode =
-+        serviceProxy->CreatePhotoOutput(metaFormat, profile.GetSize().width, profile.GetSize().height, streamCapture);
-+    CHECK_ERROR_RETURN_RET_LOG(retCode != CAMERA_OK, ServiceToCameraError(retCode),
-+        "Failed to get stream capture object from hcamera service!, %{public}d", retCode);
-+    sptr<PhotoOutput> photoOutput = new(std::nothrow) PhotoOutput();
-+    CHECK_ERROR_RETURN_RET(photoOutput == nullptr, CameraErrorCode::SERVICE_FATL_ERROR);
-+    photoOutput->SetStream(streamCapture);
-+    photoOutput->SetPhotoProfile(profile);
-+    *pPhotoOutput = photoOutput;
-+    return CameraErrorCode::SUCCESS;
-+}
-+
- sptr<PreviewOutput> CameraManager::CreatePreviewOutput(Profile &profile, sptr<Surface> surface)
- {
-     CAMERA_SYNC_TRACE;
-@@ -675,6 +713,23 @@ int32_t CameraManager::CreatePhotoOutputStream(
-     return CameraErrorCode::SUCCESS;
- }
- 
-+int32_t CameraManager::CreatePhotoOutputStream(
-+    sptr<IStreamCapture>& streamPtr, Profile& profile, std::string surfaceId)
-+{
-+    auto serviceProxy = GetServiceProxy();
-+    CHECK_ERROR_RETURN_RET_LOG(serviceProxy == nullptr , CameraErrorCode::INVALID_ARGUMENT,
-+        "CameraManager::CreatePhotoOutputStream serviceProxy is null or producer is null");
-+
-+    CameraFormat yuvFormat = profile.GetCameraFormat();
-+    auto metaFormat = GetCameraMetadataFormat(yuvFormat);
-+    auto retCode =
-+        serviceProxy->CreatePhotoOutput(metaFormat, profile.GetSize().width, profile.GetSize().height, streamPtr);
-+    CHECK_ERROR_RETURN_RET_LOG(retCode != CAMERA_OK, ServiceToCameraError(retCode),
-+        "CameraManager::CreatePhotoOutputStream Failed to get stream capture object from hcamera service! "
-+        "%{public}d", retCode);
-+    return CameraErrorCode::SUCCESS;
-+}
-+
- int32_t CameraManager::ValidCreateOutputStream(Profile& profile, const sptr<OHOS::IBufferProducer>& producer)
- {
-     CHECK_ERROR_RETURN_RET_LOG(producer == nullptr, CameraErrorCode::INVALID_ARGUMENT,
-diff --git a/frameworks/native/camera/src/output/capture_output.cpp b/frameworks/native/camera/src/output/capture_output.cpp
-index d0614e95b..53a4c073a 100644
---- a/frameworks/native/camera/src/output/capture_output.cpp
-+++ b/frameworks/native/camera/src/output/capture_output.cpp
-@@ -29,6 +29,10 @@ CaptureOutput::CaptureOutput(CaptureOutputType outputType, StreamType streamType
-     : outputType_(outputType), streamType_(streamType), stream_(stream), bufferProducer_(bufferProducer)
- {}
- 
-+CaptureOutput::CaptureOutput(CaptureOutputType outputType, StreamType streamType, sptr<IStreamCommon> stream)
-+    : outputType_(outputType), streamType_(streamType), stream_(stream)
-+{}
-+
- void CaptureOutput::RegisterStreamBinderDied()
- {
-     auto stream = GetStream();
-@@ -52,6 +56,12 @@ sptr<IBufferProducer> CaptureOutput::GetBufferProducer()
-     return bufferProducer_;
- }
- 
-+std::string CaptureOutput::GetPhotoSurfaceId()
-+{
-+    std::lock_guard<std::mutex> lock(bufferProducerMutex_);
-+    return surfaceId_;
-+}
-+
- void CaptureOutput::UnregisterStreamBinderDied()
- {
-     std::lock_guard<std::mutex> lock(deathRecipientMutex_);
-diff --git a/frameworks/native/camera/src/output/photo_output.cpp b/frameworks/native/camera/src/output/photo_output.cpp
-index 9c67bcbcd..39c64deaa 100644
---- a/frameworks/native/camera/src/output/photo_output.cpp
-+++ b/frameworks/native/camera/src/output/photo_output.cpp
-@@ -18,6 +18,7 @@
- #include <mutex>
- #include <securec.h>
- 
-+#include "photo_output_callback.h"
- #include "camera_error_code.h"
- #include "camera_log.h"
- #include "camera_manager.h"
-@@ -27,10 +28,11 @@
- #include "input/camera_device.h"
- #include "session/capture_session.h"
- #include "session/night_session.h"
--#include "picture_interface.h"
- #include "task_manager.h"
- #include "dp_utils.h"
--
-+#include <drivers/interface/display/graphic/common/v1_0/cm_color_space.h>
-+#include <drivers/interface/display/graphic/common/v2_1/cm_color_space.h>
-+#include <pixel_map.h>
- using namespace std;
- 
- namespace OHOS {
-@@ -322,11 +324,16 @@ PhotoOutput::PhotoOutput(sptr<IBufferProducer> bufferProducer, sptr<Surface> pho
-     photoSurface_ = photoSurface;
- }
- 
-+PhotoOutput::PhotoOutput()
-+    : CaptureOutput(CAPTURE_OUTPUT_TYPE_PHOTO, StreamType::CAPTURE, nullptr)
-+{
-+    MEDIA_INFO_LOG("new PhotoOutput");
-+}
-+
- PhotoOutput::~PhotoOutput()
- {
-     MEDIA_DEBUG_LOG("Enter Into PhotoOutput::~PhotoOutput()");
-     defaultCaptureSetting_ = nullptr;
--    ClearTaskManager();
- }
- 
- void PhotoOutput::SetNativeSurface(bool isNativeSurface)
-@@ -466,15 +473,103 @@ void PhotoOutput::SetCallback(std::shared_ptr<PhotoStateCallback> callback)
-     }
- }
- 
--void PhotoOutput::SetThumbnailListener(sptr<IBufferConsumerListener>& listener)
-+void PhotoOutput::SetPhotoAvailableCallback(std::shared_ptr<PhotoAvailableCallback> callback)
-+{
-+    MEDIA_DEBUG_LOG("SetPhotoAvailableCallback E");
-+    CHECK_ERROR_RETURN_LOG(callback == nullptr, "photo callback nullptr");
-+    std::lock_guard<std::mutex> lock(outputCallbackMutex_);
-+    appPhotoCallback_ = nullptr;
-+    svcPhotoCallback_ = nullptr;
-+    appPhotoCallback_ = callback;
-+    svcPhotoCallback_ = new (std::nothrow) HStreamCapturePhotoCallbackImpl(this);
-+    CHECK_ERROR_RETURN_LOG(svcPhotoCallback_ == nullptr, "new photo svc callback err");
-+    auto itemStream = CastStream<IStreamCapture>(GetStream());
-+    int32_t errorCode = CAMERA_OK;
-+    if (itemStream) {
-+        errorCode = itemStream->SetPhotoAvailableCallback(svcPhotoCallback_);
-+    } else {
-+        MEDIA_ERR_LOG("SetPhotoAvailableCallback itemStream is nullptr");
-+    }
-+    if (errorCode != CAMERA_OK) {
-+        MEDIA_ERR_LOG("SetPhotoAvailableCallback Failed to register callback, errorCode: %{public}d", errorCode);
-+        svcPhotoCallback_ = nullptr;
-+        appPhotoCallback_ = nullptr;
-+    }
-+    MEDIA_DEBUG_LOG("SetPhotoAvailableCallback X");
-+}
-+
-+void PhotoOutput::UnSetPhotoAvailableCallback()
-+{
-+    MEDIA_DEBUG_LOG("UnSetPhotoAvailableCallback E");
-+    std::lock_guard<std::mutex> lock(outputCallbackMutex_);
-+    appPhotoCallback_ = nullptr;
-+    svcPhotoCallback_ = nullptr;
-+}
-+
-+void PhotoOutput::SetPhotoAssetAvailableCallback(std::shared_ptr<PhotoAssetAvailableCallback> callback)
-+{
-+    MEDIA_DEBUG_LOG("SetPhotoAssetAvailableCallback E");
-+    CHECK_ERROR_RETURN_LOG(callback == nullptr, "photoAsset callback nullptr");
-+    std::lock_guard<std::mutex> lock(outputCallbackMutex_);
-+    appPhotoAssetCallback_ = nullptr;
-+    svcPhotoAssetCallback_ = nullptr;
-+    appPhotoAssetCallback_ = callback;
-+    svcPhotoAssetCallback_ = new (std::nothrow) HStreamCapturePhotoAssetCallbackImpl(this);
-+    CHECK_ERROR_RETURN_LOG(svcPhotoAssetCallback_ == nullptr, "new photoAsset svc callback err");
-+    auto itemStream = CastStream<IStreamCapture>(GetStream());
-+    int32_t errorCode = CAMERA_OK;
-+    if (itemStream) {
-+        errorCode = itemStream->SetPhotoAssetAvailableCallback(svcPhotoAssetCallback_);
-+    } else {
-+        MEDIA_ERR_LOG("SetPhotoAssetAvailableCallback itemStream is nullptr");
-+    }
-+    if (errorCode != CAMERA_OK) {
-+        MEDIA_ERR_LOG("SetPhotoAssetAvailableCallback Failed to register callback, errorCode: %{public}d", errorCode);
-+        svcPhotoAssetCallback_ = nullptr;
-+        appPhotoAssetCallback_ = nullptr;
-+    }
-+    MEDIA_DEBUG_LOG("SetPhotoAssetAvailableCallback X");
-+}
-+
-+void PhotoOutput::UnSetPhotoAssetAvailableCallback()
-+{
-+    MEDIA_DEBUG_LOG("UnSetPhotoAssetAvailableCallback E");
-+    std::lock_guard<std::mutex> lock(outputCallbackMutex_);
-+    appPhotoAssetCallback_ = nullptr;
-+    svcPhotoAssetCallback_ = nullptr;
-+}
-+
-+void PhotoOutput::SetThumbnailCallback(std::shared_ptr<ThumbnailCallback> callback)
- {
--    if (thumbnailSurface_) {
--        SurfaceError ret = thumbnailSurface_->RegisterConsumerListener(listener);
--        CHECK_ERROR_PRINT_LOG(ret != SURFACE_ERROR_OK,
--            "PhotoOutput::SetThumbnailListener Surface consumer listener registration failed");
-+    MEDIA_DEBUG_LOG("SetThumbnailCallback E");
-+    CHECK_ERROR_RETURN_LOG(callback == nullptr, "photoAsset callback nullptr");
-+    std::lock_guard<std::mutex> lock(outputCallbackMutex_);
-+    appThumbnailCallback_ = nullptr;
-+    svcThumbnailCallback_ = nullptr;
-+    appThumbnailCallback_ = callback;
-+    svcThumbnailCallback_ = new (std::nothrow) HStreamCaptureThumbnailCallbackImpl(this);
-+    CHECK_ERROR_RETURN_LOG(svcThumbnailCallback_ == nullptr, "new photoAsset svc callback err");
-+    auto itemStream = CastStream<IStreamCapture>(GetStream());
-+    int32_t errorCode = CAMERA_OK;
-+    if (itemStream) {
-+        errorCode = itemStream->SetThumbnailCallback(svcThumbnailCallback_);
-     } else {
--        MEDIA_ERR_LOG("PhotoOutput SetThumbnailListener surface is null");
-+        MEDIA_ERR_LOG("SetThumbnailCallback itemStream is nullptr");
-+    }
-+    if (errorCode != CAMERA_OK) {
-+        MEDIA_ERR_LOG("SetThumbnailCallback Failed to register callback, errorCode: %{public}d", errorCode);
-+        svcThumbnailCallback_ = nullptr;
-+        appThumbnailCallback_ = nullptr;
-     }
-+    MEDIA_DEBUG_LOG("SetThumbnailCallback X");
-+}
-+
-+void PhotoOutput::UnSetThumbnailAvailableCallback()
-+{
-+    MEDIA_DEBUG_LOG("UnSetThumbnailAvailableCallback E");
-+    std::lock_guard<std::mutex> lock(outputCallbackMutex_);
-+    appThumbnailCallback_ = nullptr;
-+    svcThumbnailCallback_ = nullptr;
- }
- 
- int32_t PhotoOutput::SetThumbnail(bool isEnabled)
-@@ -490,12 +585,9 @@ int32_t PhotoOutput::SetThumbnail(bool isEnabled)
-     cameraObj = inputDevice->GetCameraDeviceInfo();
-     CHECK_ERROR_RETURN_RET_LOG(cameraObj == nullptr, SESSION_NOT_RUNNING,
-         "PhotoOutput SetThumbnail error!, cameraObj is nullptr");
--    !thumbnailSurface_ && (thumbnailSurface_ = Surface::CreateSurfaceAsConsumer("quickThumbnail"));
--    CHECK_ERROR_RETURN_RET_LOG(thumbnailSurface_ == nullptr, SERVICE_FATL_ERROR,
--        "PhotoOutput SetThumbnail Failed to create surface");
-     auto streamCapturePtr = CastStream<IStreamCapture>(GetStream());
-     CHECK_ERROR_RETURN_RET(streamCapturePtr == nullptr, SERVICE_FATL_ERROR);
--    return streamCapturePtr->SetThumbnail(isEnabled, thumbnailSurface_->GetProducer());
-+    return streamCapturePtr->SetThumbnail(isEnabled);
- }
- 
- int32_t PhotoOutput::EnableRawDelivery(bool enabled)
-@@ -509,13 +601,6 @@ int32_t PhotoOutput::EnableRawDelivery(bool enabled)
-     CHECK_ERROR_RETURN_RET_LOG(streamCapturePtr == nullptr, SERVICE_FATL_ERROR,
-         "PhotoOutput::EnableRawDelivery Failed to GetStream");
-     int32_t ret = CAMERA_OK;
--    if (rawPhotoSurface_ == nullptr) {
--        std::string bufferName = "rawImage";
--        rawPhotoSurface_ = Surface::CreateSurfaceAsConsumer(bufferName);
--        ret = streamCapturePtr->SetBufferProducerInfo(bufferName, rawPhotoSurface_->GetProducer());
--        CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, SERVICE_FATL_ERROR,
--            "PhotoOutput::EnableRawDelivery Failed to SetBufferProducerInfo");
--    }
-     if (session->EnableRawDelivery(enabled) == CameraErrorCode::SUCCESS) {
-         ret = streamCapturePtr->EnableRawDelivery(enabled);
-         CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, SERVICE_FATL_ERROR,
-@@ -539,15 +624,6 @@ int32_t PhotoOutput::EnableMovingPhoto(bool enabled)
-         "PhotoOutput::EnableMovingPhoto Failed");
-     return ret;
- }
--int32_t PhotoOutput::SetRawPhotoInfo(sptr<Surface> &surface)
--{
--    CAMERA_SYNC_TRACE;
--    auto streamCapturePtr = CastStream<IStreamCapture>(GetStream());
--    CHECK_ERROR_RETURN_RET_LOG(streamCapturePtr == nullptr, SERVICE_FATL_ERROR,
--        "PhotoOutput::SetRawPhotoInfo Failed to create surface");
--    rawPhotoSurface_ = surface;
--    return streamCapturePtr->SetBufferProducerInfo("rawImage", rawPhotoSurface_->GetProducer());
--}
- 
- std::shared_ptr<PhotoStateCallback> PhotoOutput::GetApplicationCallback()
- {
-@@ -555,14 +631,22 @@ std::shared_ptr<PhotoStateCallback> PhotoOutput::GetApplicationCallback()
-     return appCallback_;
- }
- 
--void PhotoOutput::AcquireBufferToPrepareProxy(int32_t captureId)
-+std::shared_ptr<ThumbnailCallback> PhotoOutput::GetAppThumbnailCallback()
- {
--    auto stream = GetStream();
--    sptr<IStreamCapture> itemStream = static_cast<IStreamCapture*>(stream.GetRefPtr());
--    CHECK_ERROR_PRINT_LOG(itemStream == nullptr, "PhotoOutput::AcquireBufferToPrepareProxy() itemStream is nullptr");
--    if (itemStream) {
--        itemStream->AcquireBufferToPrepareProxy(captureId);
--    }
-+    std::lock_guard<std::mutex> lock(outputCallbackMutex_);
-+    return appThumbnailCallback_;
-+}
-+
-+std::shared_ptr<PhotoAvailableCallback> PhotoOutput::GetAppPhotoCallback()
-+{
-+    std::lock_guard<std::mutex> lock(outputCallbackMutex_);
-+    return appPhotoCallback_;
-+}
-+
-+std::shared_ptr<PhotoAssetAvailableCallback> PhotoOutput::GetAppPhotoAssetCallback()
-+{
-+    std::lock_guard<std::mutex> lock(outputCallbackMutex_);
-+    return appPhotoAssetCallback_;
- }
- 
- void PhotoOutput::ClearTaskManager()
-@@ -675,15 +759,13 @@ int32_t PhotoOutput::CreateStream()
-     auto stream = GetStream();
-     CHECK_ERROR_RETURN_RET_LOG(stream != nullptr, CameraErrorCode::OPERATION_NOT_ALLOWED,
-         "PhotoOutput::CreateStream stream is not null");
--    auto producer = GetBufferProducer();
--    CHECK_ERROR_RETURN_RET_LOG(producer == nullptr, CameraErrorCode::OPERATION_NOT_ALLOWED,
--        "PhotoOutput::CreateStream producer is null");
-+    std::string surfaceId = GetPhotoSurfaceId();
-     sptr<IStreamCapture> streamPtr = nullptr;
-     auto photoProfile = GetPhotoProfile();
-     CHECK_ERROR_RETURN_RET_LOG(photoProfile == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
-         "PhotoOutput::CreateStream photoProfile is null");
- 
--    int32_t res = CameraManager::GetInstance()->CreatePhotoOutputStream(streamPtr, *photoProfile, GetBufferProducer());
-+    int32_t res = CameraManager::GetInstance()->CreatePhotoOutputStream(streamPtr, *photoProfile, surfaceId);
-     CHECK_ERROR_PRINT_LOG(res != CameraErrorCode::SUCCESS,
-         "PhotoOutput::CreateStream fail! error code :%{public}d", res);
-     SetStream(streamPtr);
-@@ -711,7 +793,6 @@ int32_t PhotoOutput::Release()
-     CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "PhotoOutput Failed to release!, errCode: %{public}d", errCode);
-     defaultCaptureSetting_ = nullptr;
-     CaptureOutput::Release();
--    ClearTaskManager();
-     return ServiceToCameraError(errCode);
- }
- 
-@@ -954,21 +1035,6 @@ int32_t PhotoOutput::SetMovingPhotoVideoCodecType(int32_t videoCodecType)
-     return ServiceToCameraError(errCode);
- }
- 
--bool PhotoOutput::UpdateMediaLibraryPhotoAssetProxy(sptr<CameraPhotoProxy> photoProxy)
--{
--    int32_t errCode = CAMERA_UNKNOWN_ERROR;
--    auto streamCapturePtr = CastStream<IStreamCapture>(GetStream());
--    CHECK_ERROR_RETURN_RET_LOG(!streamCapturePtr, false,
--        "PhotoOutput:UpdateMediaLibraryPhotoAssetProxy() itemStream is nullptr");
--    photoProxy->photoWidth_ = 0;
--    photoProxy->photoHeight_ = 0;
--    photoProxy->fileSize_ = 0;
--    errCode = streamCapturePtr->UpdateMediaLibraryPhotoAssetProxy(photoProxy);
--    CHECK_ERROR_RETURN_RET_LOG(errCode != CAMERA_OK, false,
--        "Failed to UpdateMediaLibraryPhotoAssetProxy! errCode: %{public}d", errCode);
--    return true;
--}
--
- void PhotoOutput::CameraServerDied(pid_t pid)
- {
-     MEDIA_ERR_LOG("camera server has died, pid:%{public}d!", pid);
-@@ -1256,39 +1322,5 @@ void PhotoOutput::NotifyOfflinePhotoOutput(int32_t captureId)
-         }
-     }
- }
--
--void PhotoOutput::CreateMediaLibrary(sptr<CameraPhotoProxy> photoProxy, std::string &uri, int32_t &cameraShotType,
--    std::string &burstKey, int64_t timestamp)
--{
--    MEDIA_INFO_LOG("PhotoOutput::CreateMediaLibrary E");
--    CAMERA_SYNC_TRACE;
--    int32_t errorCode = CAMERA_OK;
--    auto streamCapturePtr = CastStream<IStreamCapture>(GetStream());
--    if (streamCapturePtr) {
--        errorCode = streamCapturePtr->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
--        CHECK_ERROR_PRINT_LOG(errorCode != CAMERA_OK, "Failed to create media library, errorCode: %{public}d",
--                              errorCode);
--    } else {
--        MEDIA_ERR_LOG("PhotoOutput::CreateMediaLibrary streamCapturePtr is nullptr");
--    }
--    MEDIA_INFO_LOG("PhotoOutput::CreateMediaLibrary X");
--}
--
--void PhotoOutput::CreateMediaLibrary(std::shared_ptr<PictureIntf> picture, sptr<CameraPhotoProxy> photoProxy,
--    std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp)
--{
--    MEDIA_INFO_LOG("PhotoOutput::CreateMediaLibrary E");
--    CAMERA_SYNC_TRACE;
--    int32_t errorCode = CAMERA_OK;
--    auto streamCapturePtr = CastStream<IStreamCapture>(GetStream());
--    if (streamCapturePtr) {
--        errorCode = streamCapturePtr->CreateMediaLibrary(picture, photoProxy, uri, cameraShotType,
--                                                         burstKey, timestamp);
--        CHECK_ERROR_PRINT_LOG(errorCode != CAMERA_OK, "Failed to create media library, errorCode: %{public}d",
--                              errorCode);
--    } else {
--        MEDIA_ERR_LOG("PhotoOutput::CreateMediaLibrary streamCapturePtr is nullptr");
--    }
--}
- } // namespace CameraStandard
- } // namespace OHOS
-diff --git a/frameworks/native/camera/src/output/photo_output_callback.cpp b/frameworks/native/camera/src/output/photo_output_callback.cpp
+diff --git a/interfaces/inner_api/native/camera/include/output/photo_output_callback.h b/interfaces/inner_api/native/camera/include/output/photo_output_callback.h
 new file mode 100644
-index 000000000..c67211ab4
+index 000000000..1d9617c0b
 --- /dev/null
-+++ b/frameworks/native/camera/src/output/photo_output_callback.cpp
-@@ -0,0 +1,252 @@
++++ b/interfaces/inner_api/native/camera/include/output/photo_output_callback.h
+@@ -0,0 +1,141 @@
 +/*
 + * Copyright (c) 2025 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
@@ -568,1298 +19,1545 @@ index 000000000..c67211ab4
 + * limitations under the License.
 + */
 +
-+#include "output/photo_output_callback.h"
++#ifndef OHOS_CAMERA_PHOTO_OUTPUT_CALLBACK_H
++#define OHOS_CAMERA_PHOTO_OUTPUT_CALLBACK_H
 +
-+#include <mutex>
-+#include <securec.h>
-+
-+#include "photo_output.h"
-+#include "camera_log.h"
-+#include "camera_util.h"
-+#include "image_type.h"
-+#include "video_key_info.h"
-+#include <drivers/interface/display/graphic/common/v1_0/cm_color_space.h>
-+#include <drivers/interface/display/graphic/common/v2_1/cm_color_space.h>
-+#include "metadata_helper.h"
++#include "hstream_capture_photo_callback_stub.h"
++#include "hstream_capture_thumbnail_callback_stub.h"
++#include "stream_capture_photo_asset_callback_stub.h"
++#include <native_image.h>
 +#include <pixel_map.h>
-+#include "hdr_type.h"
-+using namespace std;
++
 +
 +namespace OHOS {
 +namespace CameraStandard {
-+using namespace OHOS::HDI::Display::Graphic::Common::V2_1;
-+using CM_ColorSpaceType_V2_1 = OHOS::HDI::Display::Graphic::Common::V2_1::CM_ColorSpaceType;
-+static const std::unordered_map<CM_ColorSpaceType_V2_1, OHOS::ColorManager::ColorSpaceName> COLORSPACE_MAP = {
-+    {CM_ColorSpaceType_V2_1::CM_COLORSPACE_NONE, OHOS::ColorManager::ColorSpaceName::NONE},
-+    {CM_ColorSpaceType_V2_1::CM_BT601_EBU_FULL, OHOS::ColorManager::ColorSpaceName::BT601_EBU},
-+    {CM_ColorSpaceType_V2_1::CM_BT601_SMPTE_C_FULL, OHOS::ColorManager::ColorSpaceName::BT601_SMPTE_C},
-+    {CM_ColorSpaceType_V2_1::CM_BT709_FULL, OHOS::ColorManager::ColorSpaceName::BT709},
-+    {CM_ColorSpaceType_V2_1::CM_BT2020_HLG_FULL, OHOS::ColorManager::ColorSpaceName::BT2020_HLG},
-+    {CM_ColorSpaceType_V2_1::CM_BT2020_PQ_FULL, OHOS::ColorManager::ColorSpaceName::BT2020_PQ},
-+    {CM_ColorSpaceType_V2_1::CM_BT601_EBU_LIMIT, OHOS::ColorManager::ColorSpaceName::BT601_EBU_LIMIT},
-+    {CM_ColorSpaceType_V2_1::CM_BT601_SMPTE_C_LIMIT, OHOS::ColorManager::ColorSpaceName::BT601_SMPTE_C_LIMIT},
-+    {CM_ColorSpaceType_V2_1::CM_BT709_LIMIT, OHOS::ColorManager::ColorSpaceName::BT709_LIMIT},
-+    {CM_ColorSpaceType_V2_1::CM_BT2020_HLG_LIMIT, OHOS::ColorManager::ColorSpaceName::BT2020_HLG_LIMIT},
-+    {CM_ColorSpaceType_V2_1::CM_BT2020_PQ_LIMIT, OHOS::ColorManager::ColorSpaceName::BT2020_PQ_LIMIT},
-+    {CM_ColorSpaceType_V2_1::CM_SRGB_FULL, OHOS::ColorManager::ColorSpaceName::SRGB},
-+    {CM_ColorSpaceType_V2_1::CM_P3_FULL, OHOS::ColorManager::ColorSpaceName::DISPLAY_P3},
-+    {CM_ColorSpaceType_V2_1::CM_P3_HLG_FULL, OHOS::ColorManager::ColorSpaceName::P3_HLG},
-+    {CM_ColorSpaceType_V2_1::CM_P3_PQ_FULL, OHOS::ColorManager::ColorSpaceName::P3_PQ},
-+    {CM_ColorSpaceType_V2_1::CM_ADOBERGB_FULL, OHOS::ColorManager::ColorSpaceName::ADOBE_RGB},
-+    {CM_ColorSpaceType_V2_1::CM_SRGB_LIMIT, OHOS::ColorManager::ColorSpaceName::SRGB_LIMIT},
-+    {CM_ColorSpaceType_V2_1::CM_P3_LIMIT, OHOS::ColorManager::ColorSpaceName::DISPLAY_P3_LIMIT},
-+    {CM_ColorSpaceType_V2_1::CM_P3_HLG_LIMIT, OHOS::ColorManager::ColorSpaceName::P3_HLG_LIMIT},
-+    {CM_ColorSpaceType_V2_1::CM_P3_PQ_LIMIT, OHOS::ColorManager::ColorSpaceName::P3_PQ_LIMIT},
-+    {CM_ColorSpaceType_V2_1::CM_ADOBERGB_LIMIT, OHOS::ColorManager::ColorSpaceName::ADOBE_RGB_LIMIT},
-+    {CM_ColorSpaceType_V2_1::CM_LINEAR_SRGB, OHOS::ColorManager::ColorSpaceName::LINEAR_SRGB},
-+    {CM_ColorSpaceType_V2_1::CM_LINEAR_BT709, OHOS::ColorManager::ColorSpaceName::LINEAR_BT709},
-+    {CM_ColorSpaceType_V2_1::CM_LINEAR_P3, OHOS::ColorManager::ColorSpaceName::LINEAR_P3},
-+    {CM_ColorSpaceType_V2_1::CM_LINEAR_BT2020, OHOS::ColorManager::ColorSpaceName::LINEAR_BT2020},
-+    {CM_ColorSpaceType_V2_1::CM_DISPLAY_SRGB, OHOS::ColorManager::ColorSpaceName::DISPLAY_SRGB},
-+    {CM_ColorSpaceType_V2_1::CM_DISPLAY_P3_SRGB, OHOS::ColorManager::ColorSpaceName::DISPLAY_P3_SRGB},
-+    {CM_ColorSpaceType_V2_1::CM_DISPLAY_P3_HLG, OHOS::ColorManager::ColorSpaceName::DISPLAY_P3_HLG},
-+    {CM_ColorSpaceType_V2_1::CM_DISPLAY_P3_PQ, OHOS::ColorManager::ColorSpaceName::DISPLAY_P3_PQ},
-+    {CM_ColorSpaceType_V2_1::CM_DISPLAY_BT2020_SRGB, OHOS::ColorManager::ColorSpaceName::DISPLAY_BT2020_SRGB},
-+    {CM_ColorSpaceType_V2_1::CM_DISPLAY_BT2020_HLG, OHOS::ColorManager::ColorSpaceName::DISPLAY_BT2020_HLG},
++class PhotoOutput;
++class PhotoAvailableCallback {
++public:
++    PhotoAvailableCallback() = default;
++    virtual ~PhotoAvailableCallback() = default;
++
++    virtual void OnPhotoAvailable(const std::shared_ptr<Media::NativeImage> nativeImage, bool isRaw) const = 0;
 +};
-+static constexpr int32_t PLANE_Y = 0;
-+static constexpr int32_t PLANE_U = 1;
-+static constexpr uint8_t PIXEL_SIZE_HDR_YUV = 3;
-+static constexpr uint8_t HDR_PIXEL_SIZE = 2;
-+static constexpr uint8_t SDR_PIXEL_SIZE = 1;
 +
-+int32_t HStreamCapturePhotoCallbackImpl::OnPhotoAvailable(
-+    sptr<SurfaceBuffer> surfaceBuffer, int64_t timestamp, bool isRaw)
-+{
-+    CAMERA_SYNC_TRACE;
-+    MEDIA_INFO_LOG("HStreamCapturePhotoCallbackImpl OnPhotoAvailable E");
-+    auto photoOutput = GetPhotoOutput();
-+    CHECK_ERROR_RETURN_RET_LOG(
-+        photoOutput == nullptr, CAMERA_OK, "HStreamCapturePhotoCallbackImpl::OnPhotoAvailable photoOutput is nullptr");
-+    auto callback = photoOutput->GetAppPhotoCallback();
-+    CHECK_ERROR_RETURN_RET_LOG(
-+        callback == nullptr, CAMERA_OK, "HStreamCapturePhotoCallbackImpl::OnPhotoAvailable callback is nullptr");
-+    std::shared_ptr<CameraBufferProcessor> bufferProcessor;
-+    std::shared_ptr<Media::NativeImage> image =
-+        std::make_shared<Media::NativeImage>(surfaceBuffer, bufferProcessor, timestamp);
-+    callback->OnPhotoAvailable(image, isRaw);
-+    MEDIA_INFO_LOG("HStreamCapturePhotoCallbackImpl OnPhotoAvailable X");
-+    return CAMERA_OK;
-+}
++class PhotoAssetAvailableCallback {
++public:
++    PhotoAssetAvailableCallback() = default;
++    virtual ~PhotoAssetAvailableCallback() = default;
 +
-+int32_t HStreamCapturePhotoAssetCallbackImpl::OnPhotoAssetAvailable(
-+    const int32_t captureId, const std::string &uri, int32_t cameraShotType, const std::string &burstKey)
-+{
-+    CAMERA_SYNC_TRACE;
-+    MEDIA_INFO_LOG("HStreamCapturePhotoAssetCallbackImpl OnPhotoAssetAvailable");
-+    auto photoOutput = GetPhotoOutput();
-+    CHECK_ERROR_RETURN_RET_LOG(photoOutput == nullptr,
-+        CAMERA_OK,
-+        "HStreamCapturePhotoAssetCallbackImpl::OnPhotoAssetAvailable photoOutput is nullptr");
-+    auto callback = photoOutput->GetAppPhotoAssetCallback();
-+    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr,
-+        CAMERA_OK,
-+        "HStreamCapturePhotoAssetCallbackImpl::OnPhotoAssetAvailable callback is nullptr");
-+    callback->OnPhotoAssetAvailable(captureId, uri, cameraShotType, burstKey);
-+    photoOutput->NotifyOfflinePhotoOutput(captureId);
-+    return CAMERA_OK;
-+}
++    virtual void OnPhotoAssetAvailable(const int32_t captureId, const std::string &uri,
++        int32_t cameraShotType, const std::string &burstKey) const = 0;
++};
 +
-+OHOS::ColorManager::ColorSpaceName GetColorSpace(sptr<SurfaceBuffer> surfaceBuffer)
-+{
-+    OHOS::ColorManager::ColorSpaceName colorSpace = OHOS::ColorManager::ColorSpaceName::NONE;
-+    HDI::Display::Graphic::Common::V1_0::CM_ColorSpaceType colorSpaceType;
-+    GSError gsErr = MetadataHelper::GetColorSpaceType(surfaceBuffer, colorSpaceType);
-+    if (gsErr != GSERROR_OK) {
-+        MEDIA_ERR_LOG("Failed to get colorSpaceType from surfaceBuffer!");
-+        return colorSpace;
-+    } else {
-+        MEDIA_INFO_LOG("Get current colorSpaceType is : %{public}d", colorSpaceType);
++class ThumbnailCallback {
++public:
++    ThumbnailCallback() = default;
++    virtual ~ThumbnailCallback() = default;
++
++    virtual void OnThumbnailAvailable(int32_t captureId, int64_t timestamp,
++        std::unique_ptr<Media::PixelMap> pixelMap) const = 0;
++};
++
++class CameraBufferProcessor : public Media::IBufferProcessor {
++public:
++    explicit CameraBufferProcessor(sptr<Surface> surface) : surface_(surface) {}
++    ~CameraBufferProcessor()
++    {
++        surface_ = nullptr;
 +    }
-+    CM_ColorSpaceType_V2_1 type2_1 = static_cast<CM_ColorSpaceType_V2_1>(colorSpaceType);
-+    auto it = COLORSPACE_MAP.find(type2_1);
-+    if (it != COLORSPACE_MAP.end()) {
-+        colorSpace = it->second;
-+        MEDIA_INFO_LOG("Current get colorSpaceName: %{public}d", colorSpace);
-+    } else {
-+        MEDIA_ERR_LOG("Current colorSpace is not supported!");
-+        return colorSpace;
++    void BufferRelease(sptr<SurfaceBuffer>& buffer) override
++    {
++        if (surface_ != nullptr) {
++            surface_->ReleaseBuffer(buffer, -1);
++        }
 +    }
-+    return colorSpace;
-+}
 +
-+void ThumbnailSetColorSpaceAndRotate(std::unique_ptr<Media::PixelMap> &pixelMap, sptr<SurfaceBuffer> surfaceBuffer,
-+    OHOS::ColorManager::ColorSpaceName colorSpaceName)
-+{
-+    int32_t thumbnailrotation = 0;
-+    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::dataRotation, thumbnailrotation);
-+    MEDIA_ERR_LOG("CamThumbnail current rotation is : %{public}d", thumbnailrotation);
-+    if (!pixelMap) {
-+        MEDIA_ERR_LOG("CamThumbnail Failed to create PixelMap.");
-+    } else {
-+        pixelMap->InnerSetColorSpace(OHOS::ColorManager::ColorSpace(colorSpaceName));
-+        pixelMap->rotate(thumbnailrotation);
++private:
++    wptr<Surface> surface_ = nullptr;
++};
++
++class HStreamCapturePhotoCallbackImpl : public HStreamCapturePhotoCallbackStub {
++public:
++    explicit HStreamCapturePhotoCallbackImpl(PhotoOutput* photoOutput) : innerPhotoOutput_(photoOutput) {}
++
++    ~HStreamCapturePhotoCallbackImpl() = default;
++
++    int32_t OnPhotoAvailable(sptr<SurfaceBuffer> surfaceBuffer, int64_t timestamp, bool isRaw) override;
++
++    inline sptr<PhotoOutput> GetPhotoOutput()
++    {
++        if (innerPhotoOutput_ == nullptr) {
++            return nullptr;
++        }
++        return innerPhotoOutput_.promote();
 +    }
-+}
 +
-+int32_t HStreamCaptureThumbnailCallbackImpl::OnThumbnailAvailable(sptr<SurfaceBuffer> surfaceBuffer, int64_t timestamp)
-+{
-+    CAMERA_SYNC_TRACE;
-+    MEDIA_INFO_LOG("CamThumbnail::OnThumbnailAvailable");
-+    auto photoOutput = GetPhotoOutput();
-+    CHECK_ERROR_RETURN_RET_LOG(photoOutput == nullptr, CAMERA_OK,
-+        "CamThumbnail::OnThumbnailAvailable photoOutput is nullptr");
-+    auto callback = photoOutput->GetAppThumbnailCallback();
-+    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_OK,
-+        "CamThumbnail::OnThumbnailAvailable callback is nullptr");
++private:
++    wptr<PhotoOutput> innerPhotoOutput_ = nullptr;
++};
 +
-+    // produce thumbnail
-+    int32_t thumbnailWidth = 0;
-+    int32_t thumbnailHeight = 0;
-+    int32_t burstSeqId = -1;
-+    int32_t captureId = 0;
-+    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::dataWidth, thumbnailWidth);
-+    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::dataHeight, thumbnailHeight);
-+    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::burstSequenceId, burstSeqId);
-+    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::captureId, captureId);
-+    MEDIA_INFO_LOG("OnThumbnailAvailable width:%{public}d, height: %{public}d, captureId: %{public}d,"
-+        "burstSeqId: %{public}d", thumbnailWidth, thumbnailHeight, captureId, burstSeqId);
-+    OHOS::ColorManager::ColorSpaceName colorSpace = GetColorSpace(surfaceBuffer);
-+    CHECK_ERROR_RETURN_RET_LOG(colorSpace == OHOS::ColorManager::ColorSpaceName::NONE, CAMERA_OK,
-+        "Thumbnail GetcolorSpace failed!");
-+    bool isHdr = colorSpace == OHOS::ColorManager::ColorSpaceName::BT2020_HLG;
-+    // create pixelMap
-+    std::unique_ptr<Media::PixelMap> pixelMap = CreatePixelMapFromSurfaceBuffer(surfaceBuffer,
-+        thumbnailWidth, thumbnailHeight, isHdr);
-+    CHECK_ERROR_PRINT_LOG(pixelMap == nullptr, "ThumbnailListener create pixelMap is nullptr");
-+    ThumbnailSetColorSpaceAndRotate(pixelMap, surfaceBuffer, colorSpace);
-+        
-+    callback->OnThumbnailAvailable(captureId, timestamp, std::move(pixelMap));
-+    return CAMERA_OK;
-+}
++class HStreamCapturePhotoAssetCallbackImpl : public StreamCapturePhotoAssetCallbackStub {
++public:
++    explicit HStreamCapturePhotoAssetCallbackImpl(PhotoOutput *photoOutput) : innerPhotoOutput_(photoOutput)
++    {}
 +
-+std::unique_ptr<Media::PixelMap> HStreamCaptureThumbnailCallbackImpl::CreatePixelMapFromSurfaceBuffer(
-+    sptr<SurfaceBuffer> &surfaceBuffer, int32_t width, int32_t height, bool isHdr)
-+{
-+    CHECK_ERROR_RETURN_RET_LOG(surfaceBuffer == nullptr, nullptr,
-+        "CamThumbnail::CreatePixelMapFromSurfaceBuffer surfaceBuffer is nullptr");
-+    MEDIA_INFO_LOG("CamThumbnail Width:%{public}d, height:%{public}d, isHdr:%{public}d, format:%{public}d",
-+        width, height, isHdr, surfaceBuffer->GetFormat());
-+    Media::InitializationOptions options {
-+        .size = { .width = width, .height = height } };
-+    options.srcPixelFormat = isHdr ? Media::PixelFormat::YCRCB_P010 : Media::PixelFormat::NV12;
-+    options.pixelFormat = isHdr ? Media::PixelFormat::YCRCB_P010 : Media::PixelFormat::NV12;
-+    options.useDMA = true;
-+    options.editable = isHdr;
-+    int32_t colorLength = width * height * PIXEL_SIZE_HDR_YUV;
-+    colorLength = isHdr ? colorLength : colorLength / HDR_PIXEL_SIZE;
-+    std::unique_ptr<Media::PixelMap> pixelMap = Media::PixelMap::Create(options);
-+    CHECK_ERROR_RETURN_RET_LOG(pixelMap == nullptr, nullptr,
-+        "CamThumbnail::CreatePixelMapFromSurfaceBuffer pixelMap is nullptr");
-+    void* nativeBuffer = surfaceBuffer.GetRefPtr();
-+    RefBase *ref = reinterpret_cast<RefBase *>(nativeBuffer);
-+    ref->IncStrongRef(ref);
-+    if (isHdr) {
-+        pixelMap->SetHdrType(OHOS::Media::ImageHdrType::HDR_VIVID_SINGLE);
++    ~HStreamCapturePhotoAssetCallbackImpl() = default;
++
++    int32_t OnPhotoAssetAvailable(
++        int32_t captureId, const std::string &uri, int32_t cameraShotType, const std::string &burstKey) override;
++
++    inline sptr<PhotoOutput> GetPhotoOutput()
++    {
++        if (innerPhotoOutput_ == nullptr) {
++            return nullptr;
++        }
++        return innerPhotoOutput_.promote();
 +    }
-+    pixelMap->SetPixelsAddr(surfaceBuffer->GetVirAddr(), surfaceBuffer.GetRefPtr(), colorLength,
-+        Media::AllocatorType::DMA_ALLOC, nullptr);
-+    
-+    MEDIA_DEBUG_LOG("CamThumbnail::CreatePixelMapFromSurfaceBuffer end");
-+    return SetPixelMapYuvInfo(surfaceBuffer, std::move(pixelMap), isHdr);
-+}
 +
-+std::unique_ptr<Media::PixelMap> HStreamCaptureThumbnailCallbackImpl::SetPixelMapYuvInfo(
-+    sptr<SurfaceBuffer> &surfaceBuffer, std::unique_ptr<Media::PixelMap> pixelMap, bool isHdr)
-+{
-+    MEDIA_INFO_LOG("CamThumbnail::SetPixelMapYuvInf enter");
-+    uint8_t ratio = isHdr ? HDR_PIXEL_SIZE : SDR_PIXEL_SIZE;
-+    int32_t srcWidth = pixelMap->GetWidth();
-+    int32_t srcHeight = pixelMap->GetHeight();
-+    Media::YUVDataInfo yuvDataInfo = { .yWidth = srcWidth,
-+                                       .yHeight = srcHeight,
-+                                       .uvWidth = srcWidth / 2,
-+                                       .uvHeight = srcHeight / 2,
-+                                       .yStride = srcWidth,
-+                                       .uvStride = srcWidth,
-+                                       .uvOffset = srcWidth * srcHeight};
-+    if (surfaceBuffer == nullptr) {
-+        pixelMap->SetImageYUVInfo(yuvDataInfo);
-+        return pixelMap;
-+    }
-+    OH_NativeBuffer_Planes *planes = nullptr;
-+    GSError retVal = surfaceBuffer->GetPlanesInfo(reinterpret_cast<void**>(&planes));
-+    if (retVal != OHOS::GSERROR_OK || planes == nullptr) {
-+        pixelMap->SetImageYUVInfo(yuvDataInfo);
-+        return pixelMap;
-+    }
-+    
-+    yuvDataInfo.yStride = planes->planes[PLANE_Y].columnStride / ratio;
-+    yuvDataInfo.uvStride = planes->planes[PLANE_U].columnStride / ratio;
-+    yuvDataInfo.yOffset = planes->planes[PLANE_Y].offset / ratio;
-+    yuvDataInfo.uvOffset = planes->planes[PLANE_U].offset / ratio;
++private:
++    wptr<PhotoOutput> innerPhotoOutput_ = nullptr;
++};
 +
-+    pixelMap->SetImageYUVInfo(yuvDataInfo);
-+    MEDIA_INFO_LOG("CamThumbnail::SetPixelMapYuvInf end");
-+    return pixelMap;
-+}
++class HStreamCaptureThumbnailCallbackImpl : public HStreamCaptureThumbnailCallbackStub {
++public:
++    explicit HStreamCaptureThumbnailCallbackImpl(PhotoOutput* photoOutput) : innerPhotoOutput_(photoOutput) {}
++
++    ~HStreamCaptureThumbnailCallbackImpl() = default;
++
++    int32_t OnThumbnailAvailable(sptr<SurfaceBuffer> surfaceBuffer, int64_t timestamp) override;
++
++    inline sptr<PhotoOutput> GetPhotoOutput()
++    {
++        if (innerPhotoOutput_ == nullptr) {
++            return nullptr;
++        }
++        return innerPhotoOutput_.promote();
++    }
++
++private:
++    std::unique_ptr<Media::PixelMap> CreatePixelMapFromSurfaceBuffer(sptr<SurfaceBuffer> &surfaceBuffer,
++        int32_t width, int32_t height, bool isHdr);
++    std::unique_ptr<Media::PixelMap> SetPixelMapYuvInfo(sptr<SurfaceBuffer> &surfaceBuffer,
++        std::unique_ptr<Media::PixelMap> pixelMap, bool isHdr);
++
++    wptr<PhotoOutput> innerPhotoOutput_ = nullptr;
++};
 +} // namespace CameraStandard
 +} // namespace OHOS
-diff --git a/frameworks/native/camera/test/moduletest/BUILD.gn b/frameworks/native/camera/test/moduletest/BUILD.gn
-index 63440300d..5ff5c570f 100644
---- a/frameworks/native/camera/test/moduletest/BUILD.gn
-+++ b/frameworks/native/camera/test/moduletest/BUILD.gn
-@@ -50,6 +50,7 @@ ohos_moduletest("camera_base_function_moduletest") {
-     "hilog:libhilog",
-     "hisysevent:libhisysevent",
-     "hitrace:hitrace_meter",
-+    "image_framework:image_native",
++#endif // OHOS_CAMERA_PHOTO_OUTPUT_CALLBACK_H
+diff --git a/interfaces/kits/js/camera_napi/BUILD.gn b/interfaces/kits/js/camera_napi/BUILD.gn
+index ff88303ad..7554d5a80 100644
+--- a/interfaces/kits/js/camera_napi/BUILD.gn
++++ b/interfaces/kits/js/camera_napi/BUILD.gn
+@@ -77,7 +77,6 @@ ohos_shared_library("camera_napi") {
+     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/mode/video_session_for_sys_napi.cpp",
+     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/mode/video_session_napi.cpp",
+     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/native_module_ohos_camera.cpp",
+-    "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/output/deferred_photo_proxy_napi.cpp",
+     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/output/depth_data_napi.cpp",
+     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/output/depth_data_output_napi.cpp",
+     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/output/metadata_output_napi.cpp",
+@@ -110,8 +109,6 @@ ohos_shared_library("camera_napi") {
+     "image_framework:image",
+     "image_framework:image_native",
      "ipc:ipc_core",
-     "samgr:samgr_proxy",
-     "selinux_adapter:librestorecon",
-diff --git a/frameworks/native/camera/test/moduletest/camera_base_function/include/camera_base_function_moduletest.h b/frameworks/native/camera/test/moduletest/camera_base_function/include/camera_base_function_moduletest.h
-index dc29f1886..4d5fffac4 100644
---- a/frameworks/native/camera/test/moduletest/camera_base_function/include/camera_base_function_moduletest.h
-+++ b/frameworks/native/camera/test/moduletest/camera_base_function/include/camera_base_function_moduletest.h
-@@ -21,6 +21,7 @@
- #include "gtest/gtest.h"
- #include "input/camera_manager.h"
- #include "session/capture_session.h"
-+#include "photo_output_callback.h"
- 
- namespace OHOS {
- namespace CameraStandard {
-@@ -118,6 +119,14 @@ public:
-     void OnError(int32_t errorCode) const override;
- };
- 
-+class TestThumbnailCallback : public ThumbnailCallback {
-+public:
-+    TestThumbnailCallback() = default;
-+    virtual ~TestThumbnailCallback() = default;
-+    void OnThumbnailAvailable(
-+        const int32_t captureId, const int64_t timestamp, unique_ptr<Media::PixelMap> pixelMap) const override;
-+};
+-    "media_library:media_library",
+-    "media_library:media_library_manager",
+     "media_library:medialibrary_nutils",
+     "napi:ace_napi",
+     "qos_manager:qos",
+@@ -134,6 +131,14 @@ ohos_shared_library("camera_napi") {
+     "-fPIC",
+     "-DIMAGE_COLORSPACE_FLAG",
+     "-Os",
++    "-fno-merge-all-constants",
++    "-flto",
++    "-ffunction-sections"
++  ]
 +
- // ms
- static const int32_t DURATION_AFTER_SESSION_START = 200;
- static const int32_t DURATION_BEFORE_SESSION_STOP = 200;
-diff --git a/frameworks/native/camera/test/moduletest/camera_base_function/src/camera_base_function_moduletest.cpp b/frameworks/native/camera/test/moduletest/camera_base_function/src/camera_base_function_moduletest.cpp
-index 93e0f25cc..34c360aa5 100644
---- a/frameworks/native/camera/test/moduletest/camera_base_function/src/camera_base_function_moduletest.cpp
-+++ b/frameworks/native/camera/test/moduletest/camera_base_function/src/camera_base_function_moduletest.cpp
-@@ -102,6 +102,12 @@ void TestMetadataStateCallback::OnError(int32_t errorCode) const
-     MEDIA_INFO_LOG("TestMetadataStateCallback::OnError called %{public}d", errorCode);
- }
- 
-+void TestThumbnailCallback::OnThumbnailAvailable(
-+    const int32_t captureId, const int64_t timestamp, unique_ptr<Media::PixelMap> pixelMap) const
-+{
-+    MEDIA_DEBUG_LOG("TestThumbnailCallback::OnThumbnailAvailable is called!");
-+}
-+
- void WAIT(uint32_t duration)
- {
-     std::this_thread::sleep_for(std::chrono::milliseconds(duration));
-@@ -2430,13 +2436,8 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_017, Test
-     WAIT(DURATION_AFTER_SESSION_START);
-     std::shared_ptr<PhotoCaptureSetting> photoSetting = std::make_shared<PhotoCaptureSetting>();
-     if (photoOutput->IsQuickThumbnailSupported()) {
--        sptr<IConsumerSurface> previewSurface = IConsumerSurface::Create();
--        sptr<SurfaceListener> surfaceListener = new SurfaceListener("Preview", SurfaceType::PREVIEW,
--            previewFd_, previewSurface);
--        sptr<IBufferConsumerListener> listener = (sptr<IBufferConsumerListener>&)surfaceListener;
--        ASSERT_NE(listener, nullptr);
--        photoOutput->SetThumbnailListener(listener);
--
-+        std::shared_ptr<TestThumbnailCallback> callback = std::make_shared<TestThumbnailCallback>();
-+        photoOutput->SetThumbnailCallback(callback);
-         EXPECT_EQ(photoOutput->SetThumbnail(true), SUCCESS);
-     }
-     EXPECT_EQ(photoOutput->Capture(photoSetting), SUCCESS);
-diff --git a/frameworks/native/camera/test/moduletest/camera_moving_photo/src/camera_moving_photo_moduletest.cpp b/frameworks/native/camera/test/moduletest/camera_moving_photo/src/camera_moving_photo_moduletest.cpp
-index 3a7e89b3f..2796dcb90 100644
---- a/frameworks/native/camera/test/moduletest/camera_moving_photo/src/camera_moving_photo_moduletest.cpp
-+++ b/frameworks/native/camera/test/moduletest/camera_moving_photo/src/camera_moving_photo_moduletest.cpp
-@@ -83,8 +83,6 @@ void PhotoListenerTest::OnBufferAvailable()
-         DeepCopyBuffer(newSurfaceBuffer, surfaceBuffer);
-         photoSurface_->ReleaseBuffer(surfaceBuffer, -1);
-         CHECK_ERROR_RETURN_LOG(newSurfaceBuffer == nullptr, "deep copy buffer failed");
--
--        ExecutePhotoAsset(newSurfaceBuffer, extraData, extraData.isDegradedImage == 0, timestamp);
-         MEDIA_DEBUG_LOG("PhotoListenerTest on capture photo asset callback end");
-     } else if (extraData.isDegradedImage == 0 && (callbackFlag_ & CAPTURE_PHOTO) != 0) {
-         MEDIA_DEBUG_LOG("PhotoListenerTest on capture photo callback");
-diff --git a/frameworks/native/camera/test/unittest/camera_ndk_unittest/BUILD.gn b/frameworks/native/camera/test/unittest/camera_ndk_unittest/BUILD.gn
-index 3dd3c58ca..3db14d7e6 100644
---- a/frameworks/native/camera/test/unittest/camera_ndk_unittest/BUILD.gn
-+++ b/frameworks/native/camera/test/unittest/camera_ndk_unittest/BUILD.gn
-@@ -41,7 +41,6 @@ ohos_unittest("camera_ndk_test") {
-     "${multimedia_camera_framework_path}/frameworks/native/ndk/impl/camera_util.cpp",
-     "${multimedia_camera_framework_path}/frameworks/native/ndk/impl/capture_session_impl.cpp",
-     "${multimedia_camera_framework_path}/frameworks/native/ndk/impl/metadata_output_impl.cpp",
--    "${multimedia_camera_framework_path}/frameworks/native/ndk/impl/photo_listener_impl.cpp",
-     "${multimedia_camera_framework_path}/frameworks/native/ndk/impl/photo_native_impl.cpp",
-     "${multimedia_camera_framework_path}/frameworks/native/ndk/impl/photo_output_impl.cpp",
-     "${multimedia_camera_framework_path}/frameworks/native/ndk/impl/preview_output_impl.cpp",
-@@ -55,7 +54,6 @@ ohos_unittest("camera_ndk_test") {
-     "camera_ndk_output_test/src/camera_preview_output_unittest.cpp",
-     "camera_ndk_output_test/src/camera_video_output_unittest.cpp",
-     "camera_ndk_photo_native_test/src/camera_photo_native_unittest.cpp",
--    "camera_ndk_photo_native_test/src/photo_listener_impl_unittest.cpp",
++  ldflags = [
++    "-Wl,--gc-sections",
++    "-fPIE",
    ]
  
-   deps = [
-diff --git a/frameworks/native/camera/test/unittest/camera_ndk_unittest/camera_ndk_output_test/src/camera_photo_output_unittest.cpp b/frameworks/native/camera/test/unittest/camera_ndk_unittest/camera_ndk_output_test/src/camera_photo_output_unittest.cpp
-index 07985bf4a..966046d30 100644
---- a/frameworks/native/camera/test/unittest/camera_ndk_unittest/camera_ndk_output_test/src/camera_photo_output_unittest.cpp
-+++ b/frameworks/native/camera/test/unittest/camera_ndk_unittest/camera_ndk_output_test/src/camera_photo_output_unittest.cpp
-@@ -1293,8 +1293,6 @@ HWTEST_F(CameraPhotoOutputUnitTest, camera_photo_output_unittest_029, TestSize.L
- {
-     Camera_PhotoOutput *photoOutput = CreatePhotoOutput();
-     ASSERT_NE(photoOutput, nullptr);
--    photoOutput->rawPhotoListener_ = new (std::nothrow) OHOS::CameraStandard::RawPhotoListener(photoOutput, nullptr);
--    ASSERT_NE(photoOutput->rawPhotoListener_, nullptr);
-     photoOutput->photoNative_ = new OH_PhotoNative();
-     ASSERT_NE(photoOutput->photoNative_, nullptr);
-     EXPECT_EQ(OH_PhotoOutput_Release(photoOutput), CAMERA_OK);
-@@ -1354,8 +1352,6 @@ HWTEST_F(CameraPhotoOutputUnitTest, camera_photo_output_unittest_031, TestSize.L
-     ASSERT_NE(photoOutput, nullptr);
-     ret = OH_PhotoOutput_RegisterPhotoAvailableCallback(photoOutput, CameraPhotoOutptOnPhotoAvailableCb);
-     EXPECT_EQ(ret, CAMERA_OK);
--    photoOutput->rawPhotoListener_ = new (std::nothrow) OHOS::CameraStandard::RawPhotoListener(photoOutput, nullptr);
--    ASSERT_NE(photoOutput->rawPhotoListener_, nullptr);
-     ret = OH_PhotoOutput_UnregisterPhotoAvailableCallback(photoOutput, CameraPhotoOutptOnPhotoAvailableCb);
-     EXPECT_EQ(ret, CAMERA_OK);
-     EXPECT_EQ(OH_PhotoOutput_Release(photoOutput), CAMERA_OK);
-diff --git a/frameworks/native/camera/test/unittest/camera_ndk_unittest/camera_ndk_photo_native_test/include/photo_listener_impl_unittest.h b/frameworks/native/camera/test/unittest/camera_ndk_unittest/camera_ndk_photo_native_test/include/photo_listener_impl_unittest.h
-deleted file mode 100644
-index 13a72fc95..000000000
---- a/frameworks/native/camera/test/unittest/camera_ndk_unittest/camera_ndk_photo_native_test/include/photo_listener_impl_unittest.h
-+++ /dev/null
-@@ -1,46 +0,0 @@
--/*
-- * Copyright (c) 2025-2025 Huawei Device Co., Ltd.
-- * Licensed under the Apache License, Version 2.0 (the "License");
-- * you may not use this file except in compliance with the License.
-- * You may obtain a copy of the License at
-- *
-- *     http://www.apache.org/licenses/LICENSE-2.0
-- *
-- * Unless required by applicable law or agreed to in writing, software
-- * distributed under the License is distributed on an "AS IS" BASIS,
-- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-- * See the License for the specific language governing permissions and
-- * limitations under the License.
-- */
--
--#ifndef CAMERA_PHOTO_NATIVE_UNITTEST_H
--#define CAMERA_PHOTO_NATIVE_UNITTEST_H
--
--#include <refbase.h>
--
--#include "camera_common.h"
--#include "gtest/gtest.h"
--
--namespace OHOS {
--namespace CameraStandard {
--class PhotoListener;
--class RawPhotoListener;
--class PhotoListenerImplUnitTest : public CameraNdkCommon, public testing::Test {
--public:
--    /* SetUpTestCase:The preset action of the test suite is executed before the first TestCase */
--    static void SetUpTestCase(void);
--    /* TearDownTestCase:The test suite cleanup action is executed after the last TestCase */
--    static void TearDownTestCase(void);
--    /* SetUp:Execute before each test case */
--    void SetUp(void);
--    /* TearDown:Execute after each test case */
--    void TearDown(void);
--
--    Camera_PhotoOutput* photoOutput_ = nullptr;
--    sptr<PhotoListener> photoListener_ = nullptr;
--    sptr<RawPhotoListener> rawPhotoListener_ = nullptr;
--    static bool isCalled;
--};
--} // namespace CameraStandard
--} // namespace OHOS
--#endif // CAMERA_PHOTO_NATIVE_UNITTEST_H
-\ No newline at end of file
-diff --git a/frameworks/native/camera/test/unittest/camera_service/BUILD.gn b/frameworks/native/camera/test/unittest/camera_service/BUILD.gn
-index 59f4b5575..a1b6b5b05 100644
---- a/frameworks/native/camera/test/unittest/camera_service/BUILD.gn
-+++ b/frameworks/native/camera/test/unittest/camera_service/BUILD.gn
-@@ -31,6 +31,7 @@ ohos_unittest("camera_service_unittest") {
-     "${multimedia_camera_framework_path}/services/camera_service/include/avcodec",
-     "${multimedia_camera_framework_path}/services/camera_service/include/avcodec/common",
-     "${multimedia_camera_framework_path}/services/camera_service/include/app_manager_utils",
-+    "${multimedia_camera_framework_path}/services/camera_service/include/camera_buffer_manager",
-     "${multimedia_camera_framework_path}/services/camera_service/include/media_library",
-     "${multimedia_camera_framework_path}/services/camera_service/include/param_update",
-     "${multimedia_camera_framework_path}/services/camera_service/include/dfx",
-@@ -50,6 +51,7 @@ ohos_unittest("camera_service_unittest") {
-   sources = [
-     "${multimedia_camera_framework_path}/dynamic_libs/media_library/src/photo_asset_adapter.cpp",
-     "${multimedia_camera_framework_path}/interfaces/inner_api/native/test/test_common.cpp",
-+    "${multimedia_camera_framework_path}/services/camera_service/src/avcodec/camera_server_photo_proxy.cpp",
-     "hdi_camera_test/src/hcamera_host_manager_unittest.cpp",
-     "hdi_stream_test/src/hcapture_session_unittest.cpp",
-     "hdi_stream_test/src/hstream_capture_unittest.cpp",
-@@ -121,6 +123,7 @@ ohos_unittest("camera_service_unittest") {
-     "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
-     "drivers_interface_camera:libcamera_proxy_1.0",
-     "drivers_interface_camera:libcamera_proxy_1.1",
-+    "drivers_interface_display:libdisplay_commontype_proxy_1.0",
-     "drivers_interface_camera:libmap_data_sequenceable_1.0",
-     "drivers_interface_camera:metadata",
-     "googletest:gmock_main",
-diff --git a/frameworks/native/camera/test/unittest/camera_service/client/src/camera_service_client_unittest.cpp b/frameworks/native/camera/test/unittest/camera_service/client/src/camera_service_client_unittest.cpp
-index 954d87b71..a32abcc10 100644
---- a/frameworks/native/camera/test/unittest/camera_service/client/src/camera_service_client_unittest.cpp
-+++ b/frameworks/native/camera/test/unittest/camera_service/client/src/camera_service_client_unittest.cpp
-@@ -814,14 +814,10 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_007, TestSize.L
-     EXPECT_EQ(intResult, 200);
- 
-     bool isEnabled = false;
--    sptr<OHOS::IBufferProducer> producer = nullptr;
--    intResult = capture->SetThumbnail(isEnabled, producer);
-+    intResult = capture->SetThumbnail(isEnabled);
-     EXPECT_EQ(intResult, 200);
- 
--    sptr<IConsumerSurface> previewSurface = IConsumerSurface::Create();
--    producer = previewSurface->GetProducer();
--
--    intResult = capture->SetThumbnail(isEnabled, producer);
-+    intResult = capture->SetThumbnail(isEnabled);
-     EXPECT_EQ(intResult, -1);
- 
-     std::shared_ptr<OHOS::Camera::CameraMetadata> captureSettings = nullptr;
-diff --git a/frameworks/native/camera/test/unittest/camera_service/hdi_stream_test/src/hcapture_session_unittest.cpp b/frameworks/native/camera/test/unittest/camera_service/hdi_stream_test/src/hcapture_session_unittest.cpp
-index 8ee6090ac..ce5cda6a7 100644
---- a/frameworks/native/camera/test/unittest/camera_service/hdi_stream_test/src/hcapture_session_unittest.cpp
-+++ b/frameworks/native/camera/test/unittest/camera_service/hdi_stream_test/src/hcapture_session_unittest.cpp
-@@ -31,6 +31,7 @@
- #include "test_common.h"
- #include "test_token.h"
- #include "token_setproc.h"
-+#include "camera_server_photo_proxy.h"
- 
- using namespace testing::ext;
- using ::testing::Return;
-@@ -680,7 +681,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_013, TestSize.Level
-     ASSERT_NE(session, nullptr);
-     ASSERT_NE(hStreamOperator, nullptr);
- 
--    sptr<CameraPhotoProxy> photoProxy{new CameraPhotoProxy()};
-+    sptr<CameraServerPhotoProxy> photoProxy{new CameraServerPhotoProxy()};
-     std::string uri;
-     int32_t cameraShotType;
-     string burstKey = "";
-@@ -709,7 +710,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_014, TestSize.Level
-     ASSERT_NE(hStreamOperator, nullptr);
- 
-     sptr<SurfaceBuffer> surfaceBuffer = SurfaceBuffer::Create();
--    sptr<CameraPhotoProxy> photoProxy{new CameraPhotoProxy()};
-+    sptr<CameraServerPhotoProxy> photoProxy{new CameraServerPhotoProxy()};
-     std::string uri;
-     int32_t cameraShotType;
-     string burstKey = "";
-@@ -2845,7 +2846,8 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_073, TestSize.Level
-     HCaptureSession::NewInstance(callerToken, mode, session);
-     ASSERT_NE(session, nullptr);
- 
--    EXPECT_NE(session->CreateDisplayName(), "");
-+    std::string suffix = "132";
-+    EXPECT_NE(session->CreateDisplayName(suffix), "");
-     EXPECT_EQ(device->Close(), CAMERA_OK);
-     EXPECT_EQ(session->Release(), CAMERA_OK);
- }
-diff --git a/frameworks/native/camera/test/unittest/camera_service/hdi_stream_test/src/hstream_capture_unittest.cpp b/frameworks/native/camera/test/unittest/camera_service/hdi_stream_test/src/hstream_capture_unittest.cpp
-index c0cfa5799..f34993d31 100644
---- a/frameworks/native/camera/test/unittest/camera_service/hdi_stream_test/src/hstream_capture_unittest.cpp
-+++ b/frameworks/native/camera/test/unittest/camera_service/hdi_stream_test/src/hstream_capture_unittest.cpp
-@@ -165,17 +165,10 @@ HWTEST_F(HStreamCaptureUnitTest, SetThumbnail001, TestSize.Level1)
-     int32_t format = CAMERA_FORMAT_YUV_420_SP;
-     int32_t width = PHOTO_DEFAULT_WIDTH;
-     int32_t height = PHOTO_DEFAULT_HEIGHT;
--    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
--    ASSERT_NE(surface, nullptr);
--    sptr<IBufferProducer> producer = surface->GetProducer();
--    ASSERT_NE(producer, nullptr);
--    sptr<HStreamCapture> streamCapture = new(std::nothrow) HStreamCapture(producer, format, width, height);
-+    sptr<HStreamCapture> streamCapture = new(std::nothrow) HStreamCapture(format, width, height);
-     ASSERT_NE(streamCapture, nullptr);
--    sptr<OHOS::IBufferProducer> producer1 = nullptr;
--    EXPECT_EQ(streamCapture->SetThumbnail(false, producer1), CAMERA_OK);
--    EXPECT_EQ(streamCapture->SetThumbnail(false, producer), CAMERA_OK);
--    EXPECT_EQ(streamCapture->SetThumbnail(true, producer1), CAMERA_OK);
--    EXPECT_EQ(streamCapture->SetThumbnail(true, producer), CAMERA_OK);
-+    EXPECT_EQ(streamCapture->SetThumbnail(false), CAMERA_OK);
-+    EXPECT_EQ(streamCapture->SetThumbnail(true), CAMERA_OK);
-     streamCapture->Release();
- }
- 
-@@ -1439,10 +1432,7 @@ HWTEST_F(HStreamCaptureUnitTest, camera_fwcoverage_unittest_029, TestSize.Level1
-     ASSERT_NE(cameraManager, nullptr);
-     std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
-     sptr<IStreamCaptureCallback> callback = nullptr;
--    sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
--    sptr<IBufferProducer> producer = Surface->GetProducer();
--    sptr<OHOS::IBufferProducer> producer1 = nullptr;
--    sptr<HStreamCapture> streamCapture= new(std::nothrow) HStreamCapture(producer, format, width, height);
-+    sptr<HStreamCapture> streamCapture= new(std::nothrow) HStreamCapture(format, width, height);
-     ASSERT_NE(streamCapture, nullptr);
-     auto cameraProxy = CameraManager::g_cameraManager->GetServiceProxy();
-     ASSERT_NE(cameraProxy, nullptr);
-@@ -1450,11 +1440,10 @@ HWTEST_F(HStreamCaptureUnitTest, camera_fwcoverage_unittest_029, TestSize.Level1
-     std::string cameraId = cameras[0]->GetID();
-     cameraProxy->GetCameraAbility(cameraId, metadata);
-     ASSERT_NE(metadata, nullptr);
--    EXPECT_EQ(streamCapture->SetThumbnail(false, producer1), CAMERA_OK);
--    EXPECT_EQ(streamCapture->SetThumbnail(false, producer), CAMERA_OK);
--    EXPECT_EQ(streamCapture->SetThumbnail(true, producer1), CAMERA_OK);
-+    EXPECT_EQ(streamCapture->SetThumbnail(false), CAMERA_OK);
-+    EXPECT_EQ(streamCapture->SetThumbnail(true), CAMERA_OK);
-     streamCapture->DumpStreamInfo(infoDumper);
--    EXPECT_EQ(streamCapture->SetThumbnail(true, producer), CAMERA_OK);
-+    EXPECT_EQ(streamCapture->SetThumbnail(true), CAMERA_OK);
-     streamCapture->SetRotation(metadata, captureId);
-     sptr<OHOS::HDI::Camera::V1_1::IStreamOperator> streamOperator = nullptr;
-     streamCapture->LinkInput(streamOperator, metadata);
-diff --git a/frameworks/native/camera/test/unittest/framework_native/BUILD.gn b/frameworks/native/camera/test/unittest/framework_native/BUILD.gn
-index 5b96f95ce..7eff06419 100644
---- a/frameworks/native/camera/test/unittest/framework_native/BUILD.gn
-+++ b/frameworks/native/camera/test/unittest/framework_native/BUILD.gn
-@@ -53,7 +53,6 @@ ohos_unittest("camera_framework_native_unittest") {
-     "output/src/camera_output_capability_unittest.cpp",
-     "output/src/camera_photo_proxy_unittest.cpp",
-     "output/src/capture_output_unittest.cpp",
--    "output/src/deferred_photo_proxy_unittest.cpp",
-     "output/src/depth_data_output_unittest.cpp",
-     "output/src/metadata_output_unittest.cpp",
-     "output/src/photo_output_unittest.cpp",
-diff --git a/frameworks/native/camera/test/unittest/framework_native/output/src/photo_output_unittest.cpp b/frameworks/native/camera/test/unittest/framework_native/output/src/photo_output_unittest.cpp
-index f18ef1057..02155a81a 100644
---- a/frameworks/native/camera/test/unittest/framework_native/output/src/photo_output_unittest.cpp
-+++ b/frameworks/native/camera/test/unittest/framework_native/output/src/photo_output_unittest.cpp
-@@ -404,12 +404,8 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_008, TestSize.Level1)
-     EXPECT_NE(phtOutput->exifSurface_, nullptr);
-     EXPECT_NE(phtOutput->debugSurface_, nullptr);
- 
--    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer("rawImage");
--    int32_t ret = phtOutput->SetRawPhotoInfo(surface);
--    EXPECT_EQ(ret, CAMERA_OK);
--
-     bool enabled = true;
--    ret = phtOutput->EnableRawDelivery(enabled);
-+    int32_t ret = phtOutput->EnableRawDelivery(enabled);
-     EXPECT_EQ(ret, CAMERA_OK);
- 
-     input->Close();
-@@ -434,19 +430,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_009, TestSize.Level1)
-     sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
-     ASSERT_NE(photoOutput, nullptr);
-     sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
--
--    phtOutput->thumbnailSurface_ = nullptr;
--    sptr<IBufferConsumerListener> listener = new TestIBufferConsumerListener();
--    phtOutput->SetThumbnailListener(listener);
--    EXPECT_EQ(phtOutput->thumbnailSurface_, nullptr);
--
--    phtOutput->thumbnailSurface_ = Surface::CreateSurfaceAsConsumer("thumbnailSurface");
--    phtOutput->SetThumbnailListener(listener);
--    EXPECT_NE(phtOutput->thumbnailSurface_, nullptr);
--
--    if (listener) {
--        listener = nullptr;
--    }
-+    ASSERT_NE(phtOutput, nullptr);
- }
- 
- /*
-@@ -899,7 +883,6 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_020, TestSize.Level1)
-     EXPECT_EQ(callback->OnCaptureStarted(captureId), 0);
- 
-     OHOS::Camera::DeleteCameraMetadataItem(metadata->get(), OHOS_ABILITY_CAPTURE_EXPECT_TIME);
--    phtOutput->AcquireBufferToPrepareProxy(captureId);
-     EXPECT_EQ(callback->OnCaptureStarted(captureId), 0);
- 
-     phtOutput->appCallback_ = nullptr;
-@@ -1100,8 +1083,6 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_026, TestSize.Level1)
-     sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
- 
-     phtOutput->stream_ = nullptr;
--    sptr<CameraPhotoProxy> proxy =  new (std::nothrow) CameraPhotoProxy(nullptr, 0, 0, 0, false, 0);
--    phtOutput->UpdateMediaLibraryPhotoAssetProxy(proxy);
- }
- 
- /*
-@@ -1412,64 +1393,6 @@ HWTEST_F(CameraPhotoOutputUnit, SetSwitchOfflinePhotoOutput_ShouldSet_WhenFalse,
-     EXPECT_FALSE(phtOutput->IsHasSwitchOfflinePhoto());
- }
- 
--/*
-- * Feature: Framework
-- * Function: CreateMediaLibrary_Use_CameraPhotoProxy
-- * SubFunction: NA
-- * FunctionPoints: NA
-- * EnvConditions: NA
-- * CaseDescription: Test CreateMediaLibrary method use CameraPhotoProxy
-- */
--HWTEST_F(CameraPhotoOutputUnit, CreateMediaLibrary_001, TestSize.Level0)
--{
--    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
--    ASSERT_NE(photoOutput, nullptr);
--    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput> &)photoOutput;
--    ASSERT_NE(phtOutput, nullptr);
--    int32_t format = 0;
--    int32_t photoWidth = 0;
--    int32_t photoHeight = 0;
--    bool isHighQuality = false;
--    int32_t captureId = 0;
--    sptr<CameraPhotoProxy> photoProxy = new(std::nothrow) CameraPhotoProxy(
--        nullptr, format, photoWidth, photoHeight, isHighQuality, captureId);
--    std::string uri = "";
--    int32_t cameraShotType = 1;
--    std::string burstKey = "";
--    int64_t timestamp = 0;
--    phtOutput->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
--}
--
--
--/*
-- * Feature: Framework
-- * Function: CreateMediaLibrary_Use_PictureIntf
-- * SubFunction: NA
-- * FunctionPoints: NA
-- * EnvConditions: NA
-- * CaseDescription: Test CreateMediaLibrary method use PictureIntf
-- */
--HWTEST_F(CameraPhotoOutputUnit, CreateMediaLibrary_002, TestSize.Level0)
--{
--    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
--    ASSERT_NE(photoOutput, nullptr);
--    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput> &)photoOutput;
--    ASSERT_NE(phtOutput, nullptr);
--    int32_t format = 0;
--    int32_t photoWidth = 0;
--    int32_t photoHeight = 0;
--    bool isHighQuality = false;
--    int32_t captureId = 0;
--    std::shared_ptr<PictureIntf> picture = PictureProxy::CreatePictureProxy();
--    sptr<CameraPhotoProxy> photoProxy = new(std::nothrow) CameraPhotoProxy(
--        nullptr, format, photoWidth, photoHeight, isHighQuality, captureId);
--    std::string uri = "";
--    int32_t cameraShotType = 1;
--    std::string burstKey = "";
--    int64_t timestamp = 0;
--    phtOutput->CreateMediaLibrary(picture, photoProxy, uri, cameraShotType, burstKey, timestamp);
--}
--
- /*
-  * Feature: Framework
-  * Function: IsAutoAigcPhotoSupported_ShouldReturnFalse_WhenSessionIsNull
-diff --git a/frameworks/native/ndk/BUILD.gn b/frameworks/native/ndk/BUILD.gn
-index cfdb60be5..ac09affa7 100644
---- a/frameworks/native/ndk/BUILD.gn
-+++ b/frameworks/native/ndk/BUILD.gn
-@@ -55,7 +55,6 @@ ohos_shared_library("ohcamera") {
-     "impl/camera_util.cpp",
-     "impl/capture_session_impl.cpp",
-     "impl/metadata_output_impl.cpp",
--    "impl/photo_listener_impl.cpp",
-     "impl/photo_native_impl.cpp",
-     "impl/photo_output_impl.cpp",
-     "impl/preview_output_impl.cpp",
-diff --git a/frameworks/native/ndk/impl/camera_manager_impl.cpp b/frameworks/native/ndk/impl/camera_manager_impl.cpp
-index e324ddbc2..4c361d881 100644
---- a/frameworks/native/ndk/impl/camera_manager_impl.cpp
-+++ b/frameworks/native/ndk/impl/camera_manager_impl.cpp
-@@ -583,14 +583,7 @@ Camera_ErrorCode Camera_Manager::CreatePhotoOutput(const Camera_Profile* profile
-     size.width = profile->size.width;
-     size.height = profile->size.height;
-     Profile innerProfile(static_cast<CameraFormat>(profile->format), size);
--
--    sptr<Surface> surface = Media::ImageReceiver::getSurfaceById(surfaceId);
--    CHECK_ERROR_RETURN_RET_LOG(surface == nullptr, CAMERA_INVALID_ARGUMENT, "Failed to get photoOutput surface");
--
--    surface->SetUserData(CameraManager::surfaceFormat, std::to_string(innerProfile.GetCameraFormat()));
--    sptr<IBufferProducer> surfaceProducer = surface->GetProducer();
--    int32_t retCode =
--        CameraManager::GetInstance()->CreatePhotoOutput(innerProfile, surfaceProducer, &innerPhotoOutput, surface);
-+    int32_t retCode = CameraManager::GetInstance()->CreatePhotoOutput(innerProfile, &innerPhotoOutput);
-     CHECK_ERROR_RETURN_RET(retCode != CameraErrorCode::SUCCESS, CAMERA_SERVICE_FATAL_ERROR);
-     Camera_PhotoOutput* out = new Camera_PhotoOutput(innerPhotoOutput);
-     *photoOutput = out;
-@@ -606,25 +599,13 @@ Camera_ErrorCode Camera_Manager::CreatePhotoOutputWithoutSurface(const Camera_Pr
-     size.width = profile->size.width;
-     size.height = profile->size.height;
-     Profile innerProfile(static_cast<CameraFormat>(profile->format), size);
--
--    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer(DEFAULT_SURFACEID);
--    CHECK_ERROR_RETURN_RET_LOG(surface == nullptr, CAMERA_INVALID_ARGUMENT,
--        "Failed to get photoOutput surface");
--
--    photoSurface_ = surface;
--    surface->SetUserData(CameraManager::surfaceFormat, std::to_string(innerProfile.GetCameraFormat()));
--    sptr<IBufferProducer> surfaceProducer = surface->GetProducer();
--    CHECK_ERROR_RETURN_RET_LOG(surfaceProducer == nullptr, CAMERA_SERVICE_FATAL_ERROR, "Get producer failed");
--
--    int32_t retCode = CameraManager::GetInstance()->CreatePhotoOutput(innerProfile,
--        surfaceProducer, &innerPhotoOutput, surface);
-+    int32_t retCode = CameraManager::GetInstance()->CreatePhotoOutput(innerProfile, &innerPhotoOutput);
-     CHECK_ERROR_RETURN_RET_LOG((retCode != CameraErrorCode::SUCCESS || innerPhotoOutput == nullptr),
-         CAMERA_SERVICE_FATAL_ERROR, "Create photo output failed");
- 
-     innerPhotoOutput->SetNativeSurface(true);
-     Camera_PhotoOutput* out = new Camera_PhotoOutput(innerPhotoOutput);
-     CHECK_ERROR_RETURN_RET_LOG(out == nullptr, CAMERA_SERVICE_FATAL_ERROR, "Create Camera_PhotoOutput failed");
--    out->SetPhotoSurface(surface);
-     *photoOutput = out;
-     return CAMERA_OK;
- }
-@@ -633,19 +614,8 @@ Camera_ErrorCode Camera_Manager::CreatePhotoOutputUsedInPreconfig(const char* su
-     Camera_PhotoOutput** photoOutput)
- {
-     sptr<PhotoOutput> innerPhotoOutput = nullptr;
--    sptr<Surface> surface = nullptr;
--    if (strcmp(surfaceId, "")) {
--        surface = Media::ImageReceiver::getSurfaceById(surfaceId);
--    } else {
--        surface = Surface::CreateSurfaceAsConsumer("photoOutput");
--    }
--    CHECK_ERROR_RETURN_RET_LOG(surface == nullptr, CAMERA_INVALID_ARGUMENT,
--        "Camera_Manager::CreatePhotoOutputUsedInPreconfig get photoOutput surface fail!");
--    sptr<IBufferProducer> surfaceProducer = surface->GetProducer();
--    CHECK_ERROR_RETURN_RET_LOG(surfaceProducer == nullptr, CAMERA_INVALID_ARGUMENT,
--        "Camera_Manager::CreatePhotoOutputUsedInPreconfig get surfaceProducer fail!");
-     int32_t retCode =
--        CameraManager::GetInstance()->CreatePhotoOutputWithoutProfile(surfaceProducer, &innerPhotoOutput, surface);
-+        +        CameraManager::GetInstance()->CreatePhotoOutputWithoutProfile(surfaceId, &innerPhotoOutput);
-     CHECK_ERROR_RETURN_RET_LOG(retCode != CameraErrorCode::SUCCESS, CAMERA_SERVICE_FATAL_ERROR,
-         "Camera_Manager::CreatePhotoOutputUsedInPreconfig create innerPhotoOutput fail!");
-     CHECK_ERROR_RETURN_RET_LOG(innerPhotoOutput == nullptr, CAMERA_SERVICE_FATAL_ERROR,
-diff --git a/frameworks/native/ndk/impl/photo_native_impl.cpp b/frameworks/native/ndk/impl/photo_native_impl.cpp
-index e8fedc2b0..b7dd1ab48 100644
---- a/frameworks/native/ndk/impl/photo_native_impl.cpp
-+++ b/frameworks/native/ndk/impl/photo_native_impl.cpp
-@@ -45,12 +45,12 @@ Camera_ErrorCode OH_PhotoNative::GetMainImage(OH_ImageNative** mainImage)
-     return CAMERA_OK;
- }
- 
--void OH_PhotoNative::SetMainImage(std::shared_ptr<OHOS::Media::NativeImage> &mainImage)
-+void OH_PhotoNative::SetMainImage(const std::shared_ptr<OHOS::Media::NativeImage> &mainImage)
- {
-     mainImage_ = mainImage;
- }
- 
--void OH_PhotoNative::SetRawImage(std::shared_ptr<OHOS::Media::NativeImage> &rawImage)
-+void OH_PhotoNative::SetRawImage(const std::shared_ptr<OHOS::Media::NativeImage> &rawImage)
- {
-     rawImage_ = rawImage;
- }
-diff --git a/frameworks/native/ndk/impl/photo_native_impl.h b/frameworks/native/ndk/impl/photo_native_impl.h
-index 12d4e76c8..05d4c2054 100644
---- a/frameworks/native/ndk/impl/photo_native_impl.h
-+++ b/frameworks/native/ndk/impl/photo_native_impl.h
-@@ -27,8 +27,8 @@ public:
- 
-     Camera_ErrorCode GetMainImage(OH_ImageNative** mainImage);
- 
--    void SetMainImage(std::shared_ptr<OHOS::Media::NativeImage> &mainImage);
--    void SetRawImage(std::shared_ptr<OHOS::Media::NativeImage> &rawImage);
-+    void SetMainImage(const std::shared_ptr<OHOS::Media::NativeImage> &mainImage);
-+    void SetRawImage(const std::shared_ptr<OHOS::Media::NativeImage> &rawImage);
- 
- private:
-     std::shared_ptr<OHOS::Media::NativeImage> mainImage_ = nullptr;
-diff --git a/frameworks/native/ndk/impl/photo_output_impl.cpp b/frameworks/native/ndk/impl/photo_output_impl.cpp
-index fb9a0b7fe..9fd1c3967 100644
---- a/frameworks/native/ndk/impl/photo_output_impl.cpp
-+++ b/frameworks/native/ndk/impl/photo_output_impl.cpp
-@@ -44,15 +44,6 @@ Camera_PhotoOutput::~Camera_PhotoOutput()
-     if (innerCallback_) {
-         innerCallback_ = nullptr;
-     }
--    if (photoSurface_) {
--        photoSurface_ = nullptr;
--    }
--    if (photoListener_) {
--        photoListener_ = nullptr;
--    }
--    if (rawPhotoListener_) {
--        rawPhotoListener_ = nullptr;
--    }
-     CHECK_ERROR_RETURN(!photoNative_);
-     delete photoNative_;
-     photoNative_ = nullptr;
-@@ -74,63 +65,34 @@ Camera_ErrorCode Camera_PhotoOutput::RegisterCallback(PhotoOutput_Callbacks* cal
- 
- Camera_ErrorCode Camera_PhotoOutput::RegisterPhotoAvailableCallback(OH_PhotoOutput_PhotoAvailable callback)
- {
--    CHECK_ERROR_RETURN_RET_LOG(photoSurface_ == nullptr, CAMERA_OPERATION_NOT_ALLOWED,
--        "Photo surface is nullptr");
--
--    if (photoListener_ == nullptr) {
--        photoListener_ = new (std::nothrow) PhotoListener(this, photoSurface_);
--        CHECK_ERROR_RETURN_RET_LOG(photoListener_ == nullptr, CAMERA_SERVICE_FATAL_ERROR,
--            "Create photo listener failed");
--
--        SurfaceError ret = photoSurface_->RegisterConsumerListener((sptr<IBufferConsumerListener>&)photoListener_);
--        CHECK_ERROR_RETURN_RET_LOG(ret != SURFACE_ERROR_OK, CAMERA_SERVICE_FATAL_ERROR,
--            "Register surface consumer listener failed");
-+    CHECK_ERROR_RETURN_RET_LOG(innerPhotoOutput_ == nullptr, CAMERA_SERVICE_FATAL_ERROR, "PhotoOutput is null!");
-+    if (innerCallback_ == nullptr) {
-+        innerCallback_ = make_shared<InnerPhotoOutputCallback>(this);
-+        CHECK_ERROR_RETURN_RET_LOG(innerCallback_ == nullptr, CAMERA_SERVICE_FATAL_ERROR,
-+            "create innerCallback_ failed!");
-     }
- 
--    photoListener_->SetPhotoAvailableCallback(callback);
-+    innerPhotoOutput_->SetPhotoAvailableCallback(innerCallback_);
-+    innerCallback_->SavePhotoAvailableCallback(callback);
-     callbackFlag_ |= CAPTURE_PHOTO;
--    photoListener_->SetCallbackFlag(callbackFlag_);
-     innerPhotoOutput_->SetCallbackFlag(callbackFlag_);
- 
-     // Preconfig can't support rawPhotoListener.
--    return RegisterRawPhotoAvailableCallback(callback);
--}
--
--Camera_ErrorCode Camera_PhotoOutput::RegisterRawPhotoAvailableCallback(OH_PhotoOutput_PhotoAvailable callback)
--{
--    std::shared_ptr<Profile> profile = innerPhotoOutput_->GetPhotoProfile();
--    bool isEnableRegister = rawPhotoListener_ == nullptr && profile != nullptr &&
--        innerPhotoOutput_->isRawImageDelivery_ && innerPhotoOutput_->rawPhotoSurface_ != nullptr;
--    CHECK_ERROR_RETURN_RET(isEnableRegister == false, CAMERA_OK);
--    rawPhotoListener_ =
--        new (std::nothrow) RawPhotoListener(this, innerPhotoOutput_->rawPhotoSurface_);
--    CHECK_ERROR_RETURN_RET_LOG(rawPhotoListener_ == nullptr, CAMERA_SERVICE_FATAL_ERROR,
--        "Create raw photo listener failed");
--
--    SurfaceError ret = innerPhotoOutput_->rawPhotoSurface_->RegisterConsumerListener(
--        (sptr<IBufferConsumerListener>&)rawPhotoListener_);
--    CHECK_ERROR_RETURN_RET_LOG(ret != SURFACE_ERROR_OK, CAMERA_SERVICE_FATAL_ERROR,
--        "Register surface consumer listener failed");
--    rawPhotoListener_->SetCallback(callback);
-     return CAMERA_OK;
- }
- 
- Camera_ErrorCode Camera_PhotoOutput::RegisterPhotoAssetAvailableCallback(OH_PhotoOutput_PhotoAssetAvailable callback)
- {
--    CHECK_ERROR_RETURN_RET_LOG(photoSurface_ == nullptr, CAMERA_INVALID_ARGUMENT,
--        "Photo surface is invalid");
--    if (photoListener_ == nullptr) {
--        photoListener_ = new (std::nothrow) PhotoListener(this, photoSurface_);
--        CHECK_ERROR_RETURN_RET_LOG(photoListener_ == nullptr, CAMERA_SERVICE_FATAL_ERROR,
--            "Create raw photo listener failed");
--
--        SurfaceError ret = photoSurface_->RegisterConsumerListener((sptr<IBufferConsumerListener>&)photoListener_);
--        CHECK_ERROR_RETURN_RET_LOG(ret != SURFACE_ERROR_OK, CAMERA_SERVICE_FATAL_ERROR,
--            "Register surface consumer listener failed");
-+    CHECK_ERROR_RETURN_RET_LOG(innerPhotoOutput_ == nullptr, CAMERA_SERVICE_FATAL_ERROR, "PhotoOutput is null!");
-+    if (innerCallback_ == nullptr) {
-+        innerCallback_ = make_shared<InnerPhotoOutputCallback>(this);
-+        CHECK_ERROR_RETURN_RET_LOG(innerCallback_ == nullptr, CAMERA_SERVICE_FATAL_ERROR,
-+            "create innerCallback_ failed!");
-     }
--    photoListener_->SetPhotoAssetAvailableCallback(callback);
-+
-+    innerPhotoOutput_->SetPhotoAssetAvailableCallback(innerCallback_);
-+    innerCallback_->SavePhotoAssetAvailableCallback(callback);
-     callbackFlag_ |= CAPTURE_PHOTO_ASSET;
--    photoListener_->SetCallbackFlag(callbackFlag_);
-     innerPhotoOutput_->SetCallbackFlag(callbackFlag_);
-     return CAMERA_OK;
- }
-@@ -259,34 +221,26 @@ Camera_ErrorCode Camera_PhotoOutput::UnregisterEstimatedCaptureDurationCallback(
- 
- Camera_ErrorCode Camera_PhotoOutput::UnregisterPhotoAvailableCallback(OH_PhotoOutput_PhotoAvailable callback)
- {
--    if (callback != nullptr) {
--        if (photoListener_ != nullptr) {
--            callbackFlag_ &= ~CAPTURE_PHOTO;
--            photoListener_->SetCallbackFlag(callbackFlag_);
--            photoListener_->UnregisterPhotoAvailableCallback(callback);
--        }
--        CHECK_EXECUTE(rawPhotoListener_ != nullptr, rawPhotoListener_->UnregisterCallback(callback));
--    }
-+    CHECK_ERROR_RETURN_RET_LOG(innerPhotoOutput_ == nullptr, CAMERA_OPERATION_NOT_ALLOWED, "PhotoOutput is null!");
-+    CHECK_ERROR_RETURN_RET_LOG(innerCallback_ == nullptr, CAMERA_OPERATION_NOT_ALLOWED, "callback is null!");
-+    innerPhotoOutput_->UnSetPhotoAvailableCallback();
-+    callbackFlag_ &= ~CAPTURE_PHOTO;
-+    innerPhotoOutput_->SetCallbackFlag(callbackFlag_);
-+    innerCallback_->RemovePhotoAvailableCallback(callback);
-     return CAMERA_OK;
- }
- 
- Camera_ErrorCode Camera_PhotoOutput::UnregisterPhotoAssetAvailableCallback(OH_PhotoOutput_PhotoAssetAvailable callback)
- {
--    if (callback != nullptr) {
--        if (photoListener_ != nullptr) {
--            callbackFlag_ &= ~CAPTURE_PHOTO_ASSET;
--            photoListener_->SetCallbackFlag(callbackFlag_);
--            photoListener_->UnregisterPhotoAssetAvailableCallback(callback);
--        }
--    }
-+    CHECK_ERROR_RETURN_RET_LOG(innerPhotoOutput_ == nullptr, CAMERA_OPERATION_NOT_ALLOWED, "PhotoOutput is null!");
-+    CHECK_ERROR_RETURN_RET_LOG(innerCallback_ == nullptr, CAMERA_OPERATION_NOT_ALLOWED, "callback is null!");
-+    innerPhotoOutput_->UnSetPhotoAssetAvailableCallback();
-+    callbackFlag_ &= ~CAPTURE_PHOTO_ASSET;
-+    innerPhotoOutput_->SetCallbackFlag(callbackFlag_);
-+    innerCallback_->RemovePhotoAssetAvailableCallback(callback);
-     return CAMERA_OK;
- }
- 
--void Camera_PhotoOutput::SetPhotoSurface(OHOS::sptr<OHOS::Surface> &photoSurface)
--{
--    photoSurface_ = photoSurface;
--}
--
- Camera_ErrorCode Camera_PhotoOutput::Capture()
- {
-     std::shared_ptr<PhotoCaptureSetting> capSettings = make_shared<PhotoCaptureSetting>();
-@@ -333,9 +287,7 @@ Camera_ErrorCode Camera_PhotoOutput::IsMirrorSupported(bool* isSupported)
- Camera_ErrorCode Camera_PhotoOutput::EnableMirror(bool enableMirror)
- {
-     int32_t ret = innerPhotoOutput_->EnableMirror(enableMirror);
--    if (ret == napi_ok) {
--        isMirrorEnable_ = enableMirror;
--    }
-+    isMirrorEnable_ = (ret == napi_ok) ? enableMirror : isMirrorEnable_;
-     
-     return FrameworkToNdkCameraError(ret);
- }
-@@ -347,10 +299,8 @@ sptr<PhotoOutput> Camera_PhotoOutput::GetInnerPhotoOutput()
- 
- OH_PhotoNative* Camera_PhotoOutput::CreateCameraPhotoNative(shared_ptr<Media::NativeImage> &image, bool isMain)
- {
--    if (!photoNative_) {
--        photoNative_ = new(std::nothrow) OH_PhotoNative;
--        CHECK_ERROR_RETURN_RET_LOG(photoNative_ == nullptr, nullptr, "Create camera photo native object failed");
--    }
-+    photoNative_ = (photoNative_ == nullptr) ? new(std::nothrow) OH_PhotoNative : photoNative_;
-+    CHECK_ERROR_RETURN_RET_LOG(photoNative_ == nullptr, nullptr, "Create camera photo native object failed");
- 
-     if (isMain) {
-         photoNative_->SetMainImage(image);
-diff --git a/frameworks/native/ndk/impl/photo_output_impl.h b/frameworks/native/ndk/impl/photo_output_impl.h
-index b42fd980e..476957f2f 100644
---- a/frameworks/native/ndk/impl/photo_output_impl.h
-+++ b/frameworks/native/ndk/impl/photo_output_impl.h
-@@ -21,12 +21,15 @@
- #include "kits/native/include/camera/camera.h"
- #include "kits/native/include/camera/photo_output.h"
+   version_script = "libcamera_napi.map"
+diff --git a/interfaces/kits/js/camera_napi/include/output/photo_napi.h b/interfaces/kits/js/camera_napi/include/output/photo_napi.h
+index d5423bb52..24ee4b1be 100644
+--- a/interfaces/kits/js/camera_napi/include/output/photo_napi.h
++++ b/interfaces/kits/js/camera_napi/include/output/photo_napi.h
+@@ -25,7 +25,7 @@ static const char PHOTO_NAPI_CLASS_NAME[] = "Photo";
+ class PhotoNapi {
+ public:
+     static napi_value Init(napi_env env, napi_value exports);
+-    static napi_value CreatePhoto(napi_env env, napi_value mainImage);
++    static napi_value CreatePhoto(napi_env env, napi_value mainImage, bool isRaw = false);
+     static napi_value CreateRawPhoto(napi_env env, napi_value mainImage);
+     PhotoNapi();
+     ~PhotoNapi();
+diff --git a/interfaces/kits/js/camera_napi/include/output/photo_output_napi.h b/interfaces/kits/js/camera_napi/include/output/photo_output_napi.h
+index 3a36248d1..51d86cd73 100644
+--- a/interfaces/kits/js/camera_napi/include/output/photo_output_napi.h
++++ b/interfaces/kits/js/camera_napi/include/output/photo_output_napi.h
+@@ -28,6 +28,7 @@
+ #include "native_image.h"
+ #include "output/camera_output_capability.h"
  #include "output/photo_output.h"
 +#include "output/photo_output_callback.h"
- #include "camera_log.h"
- #include "camera_util.h"
--#include "photo_listener_impl.h"
- #include "photo_native_impl.h"
-+#include "media_asset_helper.h"
+ #include "pixel_map.h"
  
--class InnerPhotoOutputCallback : public OHOS::CameraStandard::PhotoStateCallback {
-+class InnerPhotoOutputCallback : public OHOS::CameraStandard::PhotoStateCallback,
-+                                 public OHOS::CameraStandard::PhotoAvailableCallback,
-+                                 public OHOS::CameraStandard::PhotoAssetAvailableCallback {
+ namespace OHOS::Media {
+@@ -65,6 +66,12 @@ struct CallbackInfo {
+     int32_t frameCount = 0;
+     int32_t errorCode;
+     int32_t duration;
++    std::shared_ptr<Media::NativeImage> nativeImage;
++    std::shared_ptr<Media::PixelMap> pixelMap;
++    bool isRaw = false;
++    std::string uri;
++    int32_t cameraShotType;
++    std::string burstKey;
+ };
+ 
+ enum PhotoOutputEventType {
+@@ -78,6 +85,7 @@ enum PhotoOutputEventType {
+     CAPTURE_PHOTO_AVAILABLE,
+     CAPTURE_DEFERRED_PHOTO_AVAILABLE,
+     CAPTURE_PHOTO_ASSET_AVAILABLE,
++    CAPTURE_THUMBNAIL_AVAILABLE,
+     CAPTURE_ESTIMATED_CAPTURE_DURATION,
+     CAPTURE_START_WITH_INFO,
+     CAPTURE_OFFLINE_DELIVERY_FINISHED
+@@ -89,6 +97,7 @@ static EnumHelper<PhotoOutputEventType> PhotoOutputEventTypeHelper({
+         {CAPTURE_FRAME_SHUTTER, CONST_CAPTURE_FRAME_SHUTTER},
+         {CAPTURE_ERROR, CONST_CAPTURE_ERROR},
+         {CAPTURE_PHOTO_AVAILABLE, CONST_CAPTURE_PHOTO_AVAILABLE},
++        {CAPTURE_THUMBNAIL_AVAILABLE, CONST_CAPTURE_QUICK_THUMBNAIL},
+         {CAPTURE_DEFERRED_PHOTO_AVAILABLE, CONST_CAPTURE_DEFERRED_PHOTO_AVAILABLE},
+         {CAPTURE_PHOTO_ASSET_AVAILABLE, CONST_CAPTURE_PHOTO_ASSET_AVAILABLE},
+         {CAPTURE_FRAME_SHUTTER_END, CONST_CAPTURE_FRAME_SHUTTER_END},
+@@ -116,105 +125,10 @@ static EnumHelper<SurfaceType> SurfaceTypeHelper({
+     SurfaceType::INVALID_SURFACE
+ );
+ 
+-class PhotoBufferProcessor : public Media::IBufferProcessor {
+-public:
+-    explicit PhotoBufferProcessor(sptr<Surface> photoSurface) : photoSurface_(photoSurface) {}
+-    ~PhotoBufferProcessor()
+-    {
+-        photoSurface_ = nullptr;
+-    }
+-    void BufferRelease(sptr<SurfaceBuffer>& buffer) override
+-    {
+-        if (photoSurface_ != nullptr) {
+-            photoSurface_->ReleaseBuffer(buffer, -1);
+-        }
+-    }
+-
+-private:
+-    sptr<Surface> photoSurface_ = nullptr;
+-};
+-
+-class PhotoListener : public IBufferConsumerListener,
+-                      public ListenerBase,
+-                      public std::enable_shared_from_this<PhotoListener> {
+-public:
+-    explicit PhotoListener(napi_env env, const sptr<Surface> photoSurface, wptr<PhotoOutput> photoOutput);
+-    virtual ~PhotoListener();
+-    void OnBufferAvailable() override;
+-    void SaveCallback(const std::string eventName, napi_value callback);
+-    void RemoveCallback(const std::string eventName, napi_value callback);
+-    void ExecuteDeepCopySurfaceBuffer();
+-
+-    void ClearTaskManager();
+-    std::shared_ptr<DeferredProcessing::TaskManager> GetDefaultTaskManager();
+-
+-private:
+-
+-    void UpdateJSCallback(sptr<Surface> photoSurface) const;
+-    void UpdateJSCallbackAsync(sptr<Surface> photoSurface) const;
+-    void UpdatePictureJSCallback(int32_t captureId, const string uri, int32_t cameraShotType,
+-        const std::string burstKey) const;
+-    void UpdateMainPictureStageOneJSCallback(sptr<SurfaceBuffer> surfaceBuffer, int64_t timestamp) const;
+-    void ExecutePhoto(sptr<SurfaceBuffer> surfaceBfuffer, int64_t timestamp) const;
+-    void ExecuteDeferredPhoto(sptr<SurfaceBuffer> surfaceBuffer) const;
+-    void DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<SurfaceBuffer> surfaceBuffer,
+-        int32_t captureId) const;
+-    void ExecutePhotoAsset(sptr<SurfaceBuffer> surfaceBuffer, bool isHighQuality, int64_t timestamp) const;
+-    void CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, BufferHandle* bufferHandle, bool isHighQuality,
+-        std::string& uri, int32_t& cameraShotType, std::string &burstKey, int64_t timestamp) const;
+-    void AssembleAuxiliaryPhoto(int64_t timestamp, int32_t captureId);
+-    void ProcessAuxiliaryPhoto(int64_t timestamp, sptr<PhotoOutput> photoOutput, int32_t captureId);
+-    int32_t GetAuxiliaryPhotoCount(sptr<SurfaceBuffer> surfaceBuffer);
+-    sptr<Surface> photoSurface_;
+-    wptr<PhotoOutput> photoOutput_;
+-    shared_ptr<PhotoBufferProcessor> bufferProcessor_;
+-    uint8_t callbackFlag_ = 0;
+-    std::mutex taskManagerMutex_;
+-    std::shared_ptr<DeferredProcessing::TaskManager> taskManager_ = nullptr;
+-};
+-
+-class RawPhotoListener : public IBufferConsumerListener, public ListenerBase,
+-    public std::enable_shared_from_this<RawPhotoListener> {
+-public:
+-    explicit RawPhotoListener(napi_env env, const sptr<Surface> rawPhotoSurface);
+-    ~RawPhotoListener() = default;
+-    void OnBufferAvailable() override;
+-
+-private:
+-    sptr<Surface> rawPhotoSurface_;
+-    shared_ptr<PhotoBufferProcessor> bufferProcessor_;
+-    void UpdateJSCallback(sptr<Surface> rawPhotoSurface) const;
+-    void UpdateJSCallbackAsync(sptr<Surface> rawPhotoSurface) const;
+-    void ExecuteRawPhoto(sptr<SurfaceBuffer> rawPhotoSurface) const;
+-};
+-
+-class AuxiliaryPhotoListener : public IBufferConsumerListener {
+-public:
+-    explicit AuxiliaryPhotoListener(const std::string surfaceName, const sptr<Surface> surface,
+-        wptr<PhotoOutput> photoOutput);
+-    ~AuxiliaryPhotoListener() = default;
+-    void OnBufferAvailable() override;
+-    void ExecuteDeepCopySurfaceBuffer();
+-private:
+-    void DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<SurfaceBuffer> surfaceBuffer, int32_t) const;
+-    std::string surfaceName_;
+-    sptr<Surface> surface_;
+-    wptr<PhotoOutput> photoOutput_;
+-    shared_ptr<PhotoBufferProcessor> bufferProcessor_;
+-};
+-
+-class PictureListener : public RefBase {
+-public:
+-    explicit PictureListener() = default;
+-    ~PictureListener() = default;
+-    void InitPictureListeners(napi_env env, wptr<PhotoOutput> photoOutput);
+-    sptr<AuxiliaryPhotoListener> gainmapImageListener;
+-    sptr<AuxiliaryPhotoListener> deepImageListener;
+-    sptr<AuxiliaryPhotoListener> exifImageListener;
+-    sptr<AuxiliaryPhotoListener> debugImageListener;
+-};
+-
+ class PhotoOutputCallback : public PhotoStateCallback,
++                            public PhotoAvailableCallback,
++                            public PhotoAssetAvailableCallback,
++                            public ThumbnailCallback,
+                             public ListenerBase,
+                             public std::enable_shared_from_this<PhotoOutputCallback> {
  public:
-     explicit InnerPhotoOutputCallback(Camera_PhotoOutput* photoOutput) : photoOutput_(photoOutput)
-     {
-@@ -67,6 +70,16 @@ public:
-         estimatedCaptureDurationCallback_ = callback;
-     }
- 
-+    void SavePhotoAvailableCallback(OH_PhotoOutput_PhotoAvailable callback)
-+    {
-+        photoAvailableCallback_ = callback;
-+    }
+@@ -230,6 +144,13 @@ public:
+     void OnCaptureError(const int32_t captureId, const int32_t errorCode) const override;
+     void OnEstimatedCaptureDuration(const int32_t duration) const override;
+     void OnOfflineDeliveryFinished(const int32_t captureId) const override;
++    void OnPhotoAvailable(
++        const std::shared_ptr<Media::NativeImage> nativeImage, const bool isRaw = false) const override;
++    void OnPhotoAssetAvailable(const int32_t captureId, const std::string &uri, const int32_t cameraShotType,
++        const std::string &burstKey) const override;
++    void OnThumbnailAvailable(
++        const int32_t captureId, const int64_t timestamp, unique_ptr<Media::PixelMap> pixelMap) const override;
 + 
-+    void SavePhotoAssetAvailableCallback(OH_PhotoOutput_PhotoAssetAvailable callback)
-+    {
-+        photoAssetAvailableCallback_ = callback;
-+    }
-+
-     void RemoveCallback(PhotoOutput_Callbacks* callback)
-     {
-         if (callback->onFrameStart) {
-@@ -118,6 +131,20 @@ public:
-         }
-     }
  
-+    void RemovePhotoAvailableCallback(OH_PhotoOutput_PhotoAvailable callback)
-+    {
-+        if (callback != nullptr) {
-+            photoAvailableCallback_ = nullptr;
-+        }
-+    }
-+ 
-+    void RemovePhotoAssetAvailableCallback(OH_PhotoOutput_PhotoAssetAvailable callback)
-+    {
-+        if (callback != nullptr) {
-+            photoAssetAvailableCallback_ = nullptr;
-+        }
-+    }
-+
-     void OnCaptureStarted(const int32_t captureID) const override
-     {
-         MEDIA_DEBUG_LOG("OnCaptureStarted is called!, captureID: %{public}d", captureID);
-@@ -200,6 +227,37 @@ public:
-     {
-         MEDIA_DEBUG_LOG("OnOfflineDeliveryFinished is called");
-     }
-+
-+    void OnPhotoAvailable(const std::shared_ptr<OHOS::Media::NativeImage> nativeImage, bool isRaw) const override
-+    {
-+        MEDIA_DEBUG_LOG("OnPhotoAvailable E");
-+        CHECK_ERROR_RETURN_LOG(photoOutput_ == nullptr, "photoOutput is null");
-+        CHECK_ERROR_RETURN_LOG(photoAvailableCallback_ == nullptr, "callback is null");
-+        OH_PhotoNative *photoNative = new (std::nothrow) OH_PhotoNative;
-+        CHECK_ERROR_RETURN_LOG(photoNative == nullptr, "Create photo native failed");
-+        if (!isRaw) {
-+            photoNative->SetMainImage(nativeImage);
-+        } else {
-+            photoNative->SetRawImage(nativeImage);
-+        }
-+        photoAvailableCallback_(photoOutput_, photoNative);
-+        MEDIA_DEBUG_LOG("OnPhotoAvailable X");
-+    }
-+
-+    void OnPhotoAssetAvailable(const int32_t captureId, const std::string &uri, int32_t cameraShotType,
-+        const std::string &burstKey) const override
-+    {
-+        MEDIA_DEBUG_LOG("OnPhotoAssetAvailable E");
-+        CHECK_ERROR_RETURN_LOG(photoOutput_ == nullptr, "photoOutput is null");
-+        CHECK_ERROR_RETURN_LOG(photoAssetAvailableCallback_ == nullptr, "callback is null");
-+        auto mediaAssetHelper = OHOS::Media::MediaAssetHelperFactory::CreateMediaAssetHelper();
-+        CHECK_ERROR_RETURN_LOG(mediaAssetHelper == nullptr, "create media asset helper failed");
-+        auto mediaAsset = mediaAssetHelper->GetMediaAsset(uri, cameraShotType, burstKey);
-+        CHECK_ERROR_RETURN_LOG(mediaAsset == nullptr, "Create photo asset failed");
-+        photoAssetAvailableCallback_(photoOutput_, mediaAsset);
-+        MEDIA_DEBUG_LOG("OnPhotoAssetAvailable X");
-+    }
-+
  private:
-     Camera_PhotoOutput* photoOutput_;
-     PhotoOutput_Callbacks callback_;
-@@ -208,6 +266,8 @@ private:
-     OH_PhotoOutput_OnFrameShutterEnd frameShutterEndCallback_ = nullptr;
-     OH_PhotoOutput_CaptureReady captureReadyCallback_ = nullptr;
-     OH_PhotoOutput_EstimatedCaptureDuration estimatedCaptureDurationCallback_ = nullptr;
-+    OH_PhotoOutput_PhotoAvailable photoAvailableCallback_ = nullptr;
-+    OH_PhotoOutput_PhotoAssetAvailable photoAssetAvailableCallback_ = nullptr;
+     void UpdateJSCallback(PhotoOutputEventType eventType, const CallbackInfo& info) const;
+@@ -243,6 +164,9 @@ private:
+     void ExecuteCaptureReadyCb(const CallbackInfo& info) const;
+     void ExecuteEstimatedCaptureDurationCb(const CallbackInfo& info) const;
+     void ExecuteOfflineDeliveryFinishedCb(const CallbackInfo& info) const;
++    void ExecutePhotoAvailableCb(const CallbackInfo& info) const;
++    void ExecutePhotoAssetAvailableCb(const CallbackInfo& info) const;
++    void ExecuteThumbnailAvailableCb(const CallbackInfo& info) const;
  };
  
- struct Camera_PhotoOutput {
-@@ -259,7 +319,6 @@ public:
- 
-     OHOS::sptr<OHOS::CameraStandard::PhotoOutput> GetInnerPhotoOutput();
- 
--    void SetPhotoSurface(OHOS::sptr<OHOS::Surface> &photoSurface);
- 
-     OH_PhotoNative* CreateCameraPhotoNative(std::shared_ptr<OHOS::Media::NativeImage> &image, bool isMain);
- 
-@@ -272,13 +331,9 @@ public:
-     Camera_ErrorCode GetPhotoRotation(int32_t imageRotation, Camera_ImageRotation* cameraImageRotation);
- 
- private:
--    Camera_ErrorCode RegisterRawPhotoAvailableCallback(OH_PhotoOutput_PhotoAvailable callback);
- 
-     OHOS::sptr<OHOS::CameraStandard::PhotoOutput> innerPhotoOutput_ = nullptr;
-     std::shared_ptr<InnerPhotoOutputCallback> innerCallback_ = nullptr;
--    OHOS::sptr<OHOS::Surface> photoSurface_ = nullptr;
--    OHOS::sptr<OHOS::CameraStandard::PhotoListener> photoListener_ = nullptr;
--    OHOS::sptr<OHOS::CameraStandard::RawPhotoListener> rawPhotoListener_ = nullptr;
-     uint8_t callbackFlag_ = 0;
-     OH_PhotoNative *photoNative_ = nullptr;
-     bool isMirrorEnable_ = false;
-diff --git a/interfaces/inner_api/native/camera/include/deferred_proc_session/deferred_photo_proc_session.h b/interfaces/inner_api/native/camera/include/deferred_proc_session/deferred_photo_proc_session.h
-index ede619404..76418e8ab 100644
---- a/interfaces/inner_api/native/camera/include/deferred_proc_session/deferred_photo_proc_session.h
-+++ b/interfaces/inner_api/native/camera/include/deferred_proc_session/deferred_photo_proc_session.h
-@@ -41,6 +41,11 @@ public:
-     virtual void OnDeliveryLowQualityImage(const std::string &imageId, std::shared_ptr<PictureIntf> picture) = 0;
-     virtual void OnError(const std::string& imageId, const DpsErrorCode errorCode) = 0;
-     virtual void OnStateChanged(const DpsStatusCode status) = 0;
-+    int32_t CallbackParcel(
-+        [[maybe_unused]] uint32_t code,
-+        [[maybe_unused]] MessageParcel& data,
-+        [[maybe_unused]] MessageParcel& reply,
-+        [[maybe_unused]] MessageOption& option);
+ struct PhotoOutputCallbackInfo {
+@@ -255,74 +179,6 @@ struct PhotoOutputCallbackInfo {
+     {}
  };
  
- class DeferredPhotoProcSession : public RefBase {
-diff --git a/interfaces/inner_api/native/camera/include/input/camera_manager.h b/interfaces/inner_api/native/camera/include/input/camera_manager.h
-index 941fb1abf..525ab4183 100644
---- a/interfaces/inner_api/native/camera/include/input/camera_manager.h
-+++ b/interfaces/inner_api/native/camera/include/input/camera_manager.h
-@@ -334,6 +334,15 @@ public:
-     int CreatePhotoOutput(Profile &profile, sptr<IBufferProducer> &surfaceProducer, sptr<PhotoOutput> *pPhotoOutput,
-                           sptr<Surface> photoSurface);
+-class ThumbnailListener : public IBufferConsumerListener, public ListenerBase {
+-public:
+-    explicit ThumbnailListener(napi_env env, const sptr<PhotoOutput> photoOutput);
+-    virtual ~ThumbnailListener();
+-    void OnBufferAvailable() override;
+-    std::shared_ptr<DeferredProcessing::TaskManager> taskManager_ = nullptr;
+-    
+-    void ClearTaskManager();
+-    std::shared_ptr<DeferredProcessing::TaskManager> GetDefaultTaskManager();
+-private:
+-    wptr<PhotoOutput> photoOutput_;
+-    void UpdateJSCallback() const;
+-    void UpdateJSCallbackAsync();
+-    void UpdateJSCallback(int32_t captureId, int64_t timestamp, unique_ptr<Media::PixelMap>) const;
+-    void UpdateJSCallbackAsync(int32_t captureId, int64_t timestamp, unique_ptr<Media::PixelMap>);
+-    void ExecuteDeepCopySurfaceBuffer();
+-    
+-    unique_ptr<Media::PixelMap> CreatePixelMapFromSurfaceBuffer(sptr<SurfaceBuffer> &surfaceBuffer,
+-        int32_t width, int32_t height, bool isHdr);
+-    unique_ptr<Media::PixelMap> SetPixelMapYuvInfo(sptr<SurfaceBuffer> &surfaceBuffer,
+-        unique_ptr<Media::PixelMap> pixelMap, bool isHdr);
+-    void DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<SurfaceBuffer> surfaceBuffer,
+-        int32_t thumbnailWidth, int32_t thumbnailHeight, bool isHdr) const;
+-
+-    static constexpr int32_t PLANE_Y = 0;
+-    static constexpr int32_t PLANE_U = 1;
+-    static constexpr uint8_t PIXEL_SIZE_HDR_YUV = 3;
+-    static constexpr uint8_t  HDR_PIXEL_SIZE = 2;
+-    static constexpr uint8_t SDR_PIXEL_SIZE = 1;
+-
+-    std::mutex taskManagerMutex_;
+-    int32_t recThumb_ = 0;
+-    int32_t acqThumb_ = 0;
+-};
+-
+-struct ThumbnailListenerInfo {
+-    wptr<ThumbnailListener> listener_;
+-    int32_t captureId_;
+-    int64_t timestamp_;
+-    unique_ptr<Media::PixelMap> pixelMap_;
+-    ThumbnailListenerInfo(sptr<ThumbnailListener> listener, int32_t captureId,
+-        int64_t timestamp, unique_ptr<Media::PixelMap> pixelMap)
+-        : listener_(listener), captureId_(captureId), timestamp_(timestamp), pixelMap_(std::move(pixelMap))
+-    {}
+-};
+-
+-struct PhotoListenerInfo {
+-    sptr<Surface> photoSurface_;
+-    weak_ptr<const PhotoListener> listener_;
+-    PhotoListenerInfo(sptr<Surface> photoSurface, shared_ptr<const PhotoListener> listener)
+-        : photoSurface_(photoSurface), listener_(listener)
+-    {}
+-    int32_t captureId = 0;
+-    std::string uri = "";
+-    int32_t cameraShotType = 0;
+-    std::string burstKey = "";
+-    sptr<SurfaceBuffer> surfaceBuffer = nullptr;
+-    int64_t timestamp = 0;
+-};
+-
+-struct RawPhotoListenerInfo {
+-    sptr<Surface> rawPhotoSurface_;
+-    weak_ptr<const RawPhotoListener> listener_;
+-    RawPhotoListenerInfo(sptr<Surface> rawPhotoSurface, shared_ptr<const RawPhotoListener> listener)
+-        : rawPhotoSurface_(rawPhotoSurface), listener_(listener)
+-    {}
+-};
+-
+ struct PhotoOutputAsyncContext;
+ class PhotoOutputNapi : public CameraNapiEventEmitter<PhotoOutputNapi> {
+ public:
+@@ -440,13 +296,10 @@ private:
+     bool isQuickThumbnailEnabled_ = false;
+     bool isDeferredPhotoEnabled_ = false;
+     bool isMirrorEnabled_ = false;
+-    sptr<ThumbnailListener> thumbnailListener_;
+-    sptr<PhotoListener> photoListener_;
+-    sptr<RawPhotoListener> rawPhotoListener_;
+-    sptr<PictureListener> pictureListener_;
+     std::shared_ptr<PhotoOutputCallback> photoOutputCallback_;
+     static thread_local uint32_t photoOutputTaskId;
+     static thread_local napi_ref rawCallback_;
++    uint8_t callbackFlag_ = 0;
+ };
  
-+    /**
-+     * @brief Create photo output instance.
-+     *
-+     * @param profile photo profile.
-+     * @param pPhotoOutput pointer to photo output instance.
-+     * @return Returns error code.
-+     */
-+    int CreatePhotoOutput(Profile &profile, sptr<PhotoOutput> *pPhotoOutput);
+ struct PhotoOutputNapiCaptureSetting {
+diff --git a/services/camera_service/BUILD.gn b/services/camera_service/BUILD.gn
+index 1cf43ea58..4f81c355e 100644
+--- a/services/camera_service/BUILD.gn
++++ b/services/camera_service/BUILD.gn
+@@ -40,6 +40,11 @@ ohos_shared_library("camera_service") {
+     "src/avcodec/moving_photo_video_cache.cpp",
+     "src/avcodec/sample_callback.cpp",
+     "src/avcodec/video_encoder.cpp",
++    "src/camera_buffer_manager/photo_asset_auxiliary_consumer.cpp",
++    "src/camera_buffer_manager/photo_asset_buffer_consumer.cpp",
++    "src/camera_buffer_manager/photo_buffer_consumer.cpp",
++    "src/camera_buffer_manager/picture_assembler.cpp",
++    "src/camera_buffer_manager/thumbnail_buffer_consumer.cpp",
+     "src/camera_common_event_manager.cpp",
+     "src/camera_datashare_helper.cpp",
+     "src/camera_fwk_metadata_utils.cpp",
+@@ -83,10 +88,14 @@ ohos_shared_library("camera_service") {
+     "-Wall",
+     "-Os",
+     "-fstack-protector-strong",
++    "-fno-merge-all-constants",
++    "-flto",
++    "-ffunction-sections"
+   ]
+ 
+   ldflags = [
+     "-Wl,-z,relro,-z,now",
++    "-Wl,--gc-sections",
+     "-fPIE",
+   ]
+ 
+@@ -114,6 +123,7 @@ ohos_shared_library("camera_service") {
+     "${multimedia_camera_framework_path}/services/camera_service/binder/server/include/window_manager_service_callback_stub",
+     "${multimedia_camera_framework_path}/services/camera_service/include/adapter",
+     "${multimedia_camera_framework_path}/services/camera_service/include/app_manager_utils",
++    "${multimedia_camera_framework_path}/services/camera_service/include/camera_buffer_manager",
+     "${multimedia_camera_framework_path}/services/camera_service/include/dfx",
+     "${multimedia_camera_framework_path}/services/camera_service/include/smooth_zoom",
+     "${multimedia_camera_framework_path}/services/camera_service/include/avcodec",
+diff --git a/services/camera_service/binder/base/include/istream_capture_photo_callback.h b/services/camera_service/binder/base/include/istream_capture_photo_callback.h
+new file mode 100644
+index 000000000..5598ae817
+--- /dev/null
++++ b/services/camera_service/binder/base/include/istream_capture_photo_callback.h
+@@ -0,0 +1,36 @@
++/*
++ * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
 +
-     /**
-      * @brief Create photo output instance without profile.
-      *
-@@ -353,6 +362,15 @@ public:
-     int CreatePhotoOutputWithoutProfile(sptr<IBufferProducer> surface,
-         sptr<PhotoOutput>* pPhotoOutput, sptr<Surface> photoSurface);
- 
-+    /**
-+     * @brief Create photo output instance without profile.
-+     *
-+     * @param surfaceId photo buffer surface id.
-+     * @param pPhotoOutput pointer to photo output instance.
-+     * @return Returns error code.
-+     */
-+    int CreatePhotoOutputWithoutProfile(std::string surfaceId, sptr<PhotoOutput>* pPhotoOutput);
++#ifndef OHOS_CAMERA_ISTREAM_CAPTURE_PHOTO_CALLBACK_H
++#define OHOS_CAMERA_ISTREAM_CAPTURE_PHOTO_CALLBACK_H
 +
-     /**
-      * @brief Create photo output instance using surface.
-      *
-@@ -778,6 +796,9 @@ public:
- 
-     int32_t CreatePhotoOutputStream(
-         sptr<IStreamCapture>& streamPtr, Profile& profile, const sptr<OHOS::IBufferProducer>& producer);
++#include "iremote_broker.h"
++#include "surface_buffer.h"
 +
-+    int32_t CreatePhotoOutputStream(
-+        sptr<IStreamCapture>& streamPtr, Profile& profile, std::string surfaceId);
-     /**
-     * @brief clear remote stub obj.
-     *
-diff --git a/interfaces/inner_api/native/camera/include/output/capture_output.h b/interfaces/inner_api/native/camera/include/output/capture_output.h
-index 0ea7050ae..4f201e648 100644
---- a/interfaces/inner_api/native/camera/include/output/capture_output.h
-+++ b/interfaces/inner_api/native/camera/include/output/capture_output.h
-@@ -112,6 +112,7 @@ public:
-     };
-     explicit CaptureOutput(CaptureOutputType outputType, StreamType streamType, sptr<IBufferProducer> bufferProducer,
-         sptr<IStreamCommon> stream);
-+    explicit CaptureOutput(CaptureOutputType outputType, StreamType streamType, sptr<IStreamCommon> stream);
-     virtual ~CaptureOutput();
++namespace OHOS {
++namespace CameraStandard {
++enum StreamCapturePhotoCallbackInterfaceCode {
++    CAMERA_STREAM_CAPTURE_ON_PHOTO_AVAILABLE,
++};
++
++class IStreamCapturePhotoCallback : public IRemoteBroker {
++public:
++    virtual int32_t OnPhotoAvailable(sptr<SurfaceBuffer> surfaceBuffer, int64_t timestamp, bool isRaw) = 0;
++
++    DECLARE_INTERFACE_DESCRIPTOR(u"IStreamCapturePhotoCallback");
++};
++} // namespace CameraStandard
++} // namespace OHOS
++#endif // OHOS_CAMERA_ISTREAM_CAPTURE_PHOTO_CALLBACK_H
+diff --git a/services/camera_service/binder/base/include/istream_capture_thumbnail_callback.h b/services/camera_service/binder/base/include/istream_capture_thumbnail_callback.h
+new file mode 100644
+index 000000000..a7223b5a1
+--- /dev/null
++++ b/services/camera_service/binder/base/include/istream_capture_thumbnail_callback.h
+@@ -0,0 +1,36 @@
++/*
++ * Copyright (c) 2025 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#ifndef OHOS_CAMERA_ISTREAM_CAPTURE_THUMBNAIL_CALLBACK_H
++#define OHOS_CAMERA_ISTREAM_CAPTURE_THUMBNAIL_CALLBACK_H
++
++#include "iremote_broker.h"
++#include "surface_buffer.h"
++
++namespace OHOS {
++namespace CameraStandard {
++enum StreamCaptureThumbnailCallbackInterfaceCode {
++    CAMERA_STREAM_CAPTURE_ON_THUMBNAIL_AVAILABLE,
++};
++
++class IStreamCaptureThumbnailCallback : public IRemoteBroker {
++public:
++    virtual int32_t OnThumbnailAvailable(sptr<SurfaceBuffer> surfaceBuffer, int64_t timestamp) = 0;
++
++    DECLARE_INTERFACE_DESCRIPTOR(u"IStreamCaptureThumbnailCallback");
++};
++} // namespace CameraStandard
++} // namespace OHOS
++#endif // OHOS_CAMERA_ISTREAM_CAPTURE_THUMBNAIL_CALLBACK_H
+diff --git a/services/camera_service/binder/client/include/hstream_capture_photo_callback_proxy.h b/services/camera_service/binder/client/include/hstream_capture_photo_callback_proxy.h
+new file mode 100644
+index 000000000..4f6c8f82b
+--- /dev/null
++++ b/services/camera_service/binder/client/include/hstream_capture_photo_callback_proxy.h
+@@ -0,0 +1,38 @@
++/*
++ * Copyright (c) 2025 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#ifndef OHOS_CAMERA_HSTREAM_CAPTURE_THUMBNAIL_CALLBACK_PROXY_H
++#define OHOS_CAMERA_HSTREAM_CAPTURE_THUMBNAIL_CALLBACK_PROXY_H
++#define EXPORT_API __attribute__((visibility("default")))
++
++#include "iremote_proxy.h"
++#include "istream_capture_thumbnail_callback.h"
++
++namespace OHOS {
++namespace CameraStandard {
++class EXPORT_API HStreamCaptureThumbnailCallbackProxy : public IRemoteProxy<IStreamCaptureThumbnailCallback> {
++public:
++    explicit HStreamCaptureThumbnailCallbackProxy(const sptr<IRemoteObject> &impl);
++
++    virtual ~HStreamCaptureThumbnailCallbackProxy() = default;
++
++    int32_t OnThumbnailAvailable(sptr<SurfaceBuffer> surfaceBuffer, int64_t timestamp) override;
++
++private:
++    static inline BrokerDelegator<HStreamCaptureThumbnailCallbackProxy> delegator_;
++};
++} // namespace CameraStandard
++} // namespace OHOS
++#endif // OHOS_CAMERA_HSTREAM_CAPTURE_THUMBNAIL_CALLBACK_PROXY_H
+diff --git a/services/camera_service/binder/client/include/hstream_capture_thumbnail_callback_proxy.h b/services/camera_service/binder/client/include/hstream_capture_thumbnail_callback_proxy.h
+new file mode 100644
+index 000000000..4f6c8f82b
+--- /dev/null
++++ b/services/camera_service/binder/client/include/hstream_capture_thumbnail_callback_proxy.h
+@@ -0,0 +1,38 @@
++/*
++ * Copyright (c) 2025 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#ifndef OHOS_CAMERA_HSTREAM_CAPTURE_THUMBNAIL_CALLBACK_PROXY_H
++#define OHOS_CAMERA_HSTREAM_CAPTURE_THUMBNAIL_CALLBACK_PROXY_H
++#define EXPORT_API __attribute__((visibility("default")))
++
++#include "iremote_proxy.h"
++#include "istream_capture_thumbnail_callback.h"
++
++namespace OHOS {
++namespace CameraStandard {
++class EXPORT_API HStreamCaptureThumbnailCallbackProxy : public IRemoteProxy<IStreamCaptureThumbnailCallback> {
++public:
++    explicit HStreamCaptureThumbnailCallbackProxy(const sptr<IRemoteObject> &impl);
++
++    virtual ~HStreamCaptureThumbnailCallbackProxy() = default;
++
++    int32_t OnThumbnailAvailable(sptr<SurfaceBuffer> surfaceBuffer, int64_t timestamp) override;
++
++private:
++    static inline BrokerDelegator<HStreamCaptureThumbnailCallbackProxy> delegator_;
++};
++} // namespace CameraStandard
++} // namespace OHOS
++#endif // OHOS_CAMERA_HSTREAM_CAPTURE_THUMBNAIL_CALLBACK_PROXY_H
+diff --git a/services/camera_service/binder/client/src/hstream_capture_photo_callback_proxy.cpp b/services/camera_service/binder/client/src/hstream_capture_photo_callback_proxy.cpp
+new file mode 100644
+index 000000000..fe0df68fc
+--- /dev/null
++++ b/services/camera_service/binder/client/src/hstream_capture_photo_callback_proxy.cpp
+@@ -0,0 +1,55 @@
++/*
++ * Copyright (c) 2025 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#include "hstream_capture_photo_callback_proxy.h"
++#include "camera_log.h"
++
++namespace OHOS {
++namespace CameraStandard {
++
++HStreamCapturePhotoCallbackProxy::HStreamCapturePhotoCallbackProxy(const sptr<IRemoteObject> &impl)
++    : IRemoteProxy<IStreamCapturePhotoCallback>(impl)
++{
++    MEDIA_INFO_LOG("HStreamCapturePhotoCallbackProxy new E");
++}
++
++int32_t HStreamCapturePhotoCallbackProxy::OnPhotoAvailable(
++    sptr<SurfaceBuffer> surfaceBuffer, int64_t timestamp, bool isRaw)
++{
++    MEDIA_INFO_LOG("HStreamCapturePhotoCallbackProxy::OnPhotoAvailable is called!");
++    MessageParcel data;
++    MessageParcel reply;
++    MessageOption option;
++    option.SetFlags(option.TF_ASYNC);
++
++    data.WriteInterfaceToken(GetDescriptor());
++    surfaceBuffer->WriteToMessageParcel(data);
++    sptr<BufferExtraData> bufferExtraData = surfaceBuffer->GetExtraData();
++    bufferExtraData->WriteToParcel(data);
++    data.WriteInt64(timestamp);
++    data.WriteBool(isRaw);
++
++    int error = Remote()->SendRequest(
++        static_cast<uint32_t>(StreamCapturePhotoCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_PHOTO_AVAILABLE),
++        data,
++        reply,
++        option);
++    if (error != ERR_NONE) {
++        MEDIA_ERR_LOG("HStreamCapturePhotoCallbackProxy OnPhotoAvailable failed, error: %{public}d", error);
++    }
++    return error;
++}
++}  // namespace CameraStandard
++}  // namespace OHOS
+\ No newline at end of file
+diff --git a/services/camera_service/binder/client/src/hstream_capture_thumbnail_callback_proxy.cpp b/services/camera_service/binder/client/src/hstream_capture_thumbnail_callback_proxy.cpp
+new file mode 100644
+index 000000000..cf3646ca6
+--- /dev/null
++++ b/services/camera_service/binder/client/src/hstream_capture_thumbnail_callback_proxy.cpp
+@@ -0,0 +1,54 @@
++/*
++ * Copyright (c) 2025 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#include "hstream_capture_thumbnail_callback_proxy.h"
++#include "camera_log.h"
++
++namespace OHOS {
++namespace CameraStandard {
++
++HStreamCaptureThumbnailCallbackProxy::HStreamCaptureThumbnailCallbackProxy(const sptr<IRemoteObject> &impl)
++    : IRemoteProxy<IStreamCaptureThumbnailCallback>(impl)
++{
++    MEDIA_INFO_LOG("HStreamCapturePhotoAssetCallbackProxy new E");
++}
++
++int32_t HStreamCaptureThumbnailCallbackProxy::OnThumbnailAvailable(sptr<SurfaceBuffer> surfaceBuffer, int64_t timestamp)
++{
++    MEDIA_INFO_LOG("HStreamCaptureThumbnailCallbackProxy::OnThumbnailAvailable is called!");
++    MessageParcel data;
++    MessageParcel reply;
++    MessageOption option;
++    option.SetFlags(option.TF_ASYNC);
++
++    data.WriteInterfaceToken(GetDescriptor());
++    surfaceBuffer->WriteToMessageParcel(data);
++    sptr<BufferExtraData> bufferExtraData = surfaceBuffer->GetExtraData();
++    bufferExtraData->WriteToParcel(data);
++    data.WriteInt64(timestamp);
++
++    int error = Remote()->SendRequest(
++        static_cast<uint32_t>(
++            StreamCaptureThumbnailCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_THUMBNAIL_AVAILABLE),
++        data,
++        reply,
++        option);
++    if (error != ERR_NONE) {
++        MEDIA_ERR_LOG("HStreamCaptureThumbnailCallbackProxy OnThumbnailAvailable failed, error: %{public}d", error);
++    }
++    return error;
++}
++}  // namespace CameraStandard
++}  // namespace OHOS
+\ No newline at end of file
+diff --git a/services/camera_service/binder/server/include/hstream_capture_photo_callback_stub.h b/services/camera_service/binder/server/include/hstream_capture_photo_callback_stub.h
+new file mode 100644
+index 000000000..b7d4ef862
+--- /dev/null
++++ b/services/camera_service/binder/server/include/hstream_capture_photo_callback_stub.h
+@@ -0,0 +1,35 @@
++/*
++ * Copyright (c) 2025 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#ifndef OHOS_CAMERA_HSTREAM_CAPTURE_PHOTO_CALLBACK_STUB_H
++#define OHOS_CAMERA_HSTREAM_CAPTURE_PHOTO_CALLBACK_STUB_H
++
++#include "iremote_stub.h"
++#include "istream_capture_photo_callback.h"
++
++namespace OHOS {
++namespace CameraStandard {
++
++class HStreamCapturePhotoCallbackStub : public IRemoteStub<IStreamCapturePhotoCallback> {
++public:
++    virtual int OnRemoteRequest(uint32_t code, MessageParcel &data,
++                                MessageParcel &reply, MessageOption &option) override;
++
++private:
++    int HandleOnPhotoAvailable(MessageParcel& data);
++};
++} // namespace CameraStandard
++} // namespace OHOS
++#endif // OHOS_CAMERA_HSTREAM_CAPTURE_PHOTO_CALLBACK_STUB_H
+diff --git a/services/camera_service/binder/server/include/hstream_capture_thumbnail_callback_stub.h b/services/camera_service/binder/server/include/hstream_capture_thumbnail_callback_stub.h
+new file mode 100644
+index 000000000..5ad910196
+--- /dev/null
++++ b/services/camera_service/binder/server/include/hstream_capture_thumbnail_callback_stub.h
+@@ -0,0 +1,35 @@
++/*
++ * Copyright (c) 2025 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#ifndef OHOS_CAMERA_HSTREAM_CAPTURE_THUMBNAIL_CALLBACK_STUB_H
++#define OHOS_CAMERA_HSTREAM_CAPTURE_THUMBNAIL_CALLBACK_STUB_H
++
++#include "iremote_stub.h"
++#include "istream_capture_thumbnail_callback.h"
++
++namespace OHOS {
++namespace CameraStandard {
++
++class HStreamCaptureThumbnailCallbackStub : public IRemoteStub<IStreamCaptureThumbnailCallback> {
++public:
++    virtual int OnRemoteRequest(uint32_t code, MessageParcel &data,
++                                MessageParcel &reply, MessageOption &option) override;
++
++private:
++    int HandleOnThumbnailAvailable(MessageParcel& data);
++};
++} // namespace CameraStandard
++} // namespace OHOS
++#endif // OHOS_CAMERA_HSTREAM_CAPTURE_THUMBNAIL_CALLBACK_STUB_H
+diff --git a/services/camera_service/binder/server/src/hstream_capture_photo_callback_stub.cpp b/services/camera_service/binder/server/src/hstream_capture_photo_callback_stub.cpp
+new file mode 100644
+index 000000000..21abf8b2c
+--- /dev/null
++++ b/services/camera_service/binder/server/src/hstream_capture_photo_callback_stub.cpp
+@@ -0,0 +1,53 @@
++/*
++ * Copyright (c) 2025 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#include "hstream_capture_photo_callback_stub.h"
++#include "camera_log.h"
++
++namespace OHOS {
++namespace CameraStandard {
++// LCOV_EXCL_START
++int HStreamCapturePhotoCallbackStub::OnRemoteRequest(
++    uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option)
++{
++    int errCode = -1;
++    CHECK_ERROR_RETURN_RET(data.ReadInterfaceToken() != GetDescriptor(), errCode);
++    switch (code) {
++        case static_cast<uint32_t>(StreamCapturePhotoCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_PHOTO_AVAILABLE):
++            errCode = HandleOnPhotoAvailable(data);
++            break;
++        default:
++            MEDIA_ERR_LOG("HStreamCaptureCallbackStub request code %{public}u not handled", code);
++            errCode = IPCObjectStub::OnRemoteRequest(code, data, reply, option);
++            break;
++    }
++    return errCode;
++}
++ 
++int HStreamCapturePhotoCallbackStub::HandleOnPhotoAvailable(MessageParcel& data)
++{
++    MEDIA_INFO_LOG("HStreamCapturePhotoCallbackStub::OnPhotoAvailable is called!");
++    sptr<SurfaceBuffer> surfaceBuffer = SurfaceBuffer::Create();
++    surfaceBuffer->ReadFromMessageParcel(data);
++    sptr<BufferExtraData> bufferExtraData = surfaceBuffer->GetExtraData();
++    bufferExtraData->ReadFromParcel(data);
++    surfaceBuffer->SetExtraData(bufferExtraData);
++    int64_t timestamp = data.ReadInt64();
++    bool isRaw = data.ReadBool();
++    return OnPhotoAvailable(surfaceBuffer, timestamp, isRaw);
++}
++// LCOV_EXCL_STOP
++}  // namespace CameraStandard
++}  // namespace OHOS
+\ No newline at end of file
+diff --git a/services/camera_service/binder/server/src/hstream_capture_thumbnail_callback_stub.cpp b/services/camera_service/binder/server/src/hstream_capture_thumbnail_callback_stub.cpp
+new file mode 100644
+index 000000000..9ff3175c9
+--- /dev/null
++++ b/services/camera_service/binder/server/src/hstream_capture_thumbnail_callback_stub.cpp
+@@ -0,0 +1,53 @@
++/*
++ * Copyright (c) 2025 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#include "hstream_capture_thumbnail_callback_stub.h"
++#include "camera_log.h"
++
++namespace OHOS {
++namespace CameraStandard {
++// LCOV_EXCL_START
++int HStreamCaptureThumbnailCallbackStub::OnRemoteRequest(
++    uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option)
++{
++    int errCode = -1;
++    CHECK_ERROR_RETURN_RET(data.ReadInterfaceToken() != GetDescriptor(), errCode);
++    switch (code) {
++        case static_cast<uint32_t>(
++            StreamCaptureThumbnailCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_THUMBNAIL_AVAILABLE):
++            errCode = HandleOnThumbnailAvailable(data);
++            break;
++        default:
++            MEDIA_ERR_LOG("HStreamCaptureThumbnailCallbackStub request code %{public}u not handled", code);
++            errCode = IPCObjectStub::OnRemoteRequest(code, data, reply, option);
++            break;
++    }
++    return errCode;
++}
++
++int HStreamCaptureThumbnailCallbackStub::HandleOnThumbnailAvailable(MessageParcel &data)
++{
++    MEDIA_INFO_LOG("HStreamCaptureThumbnailCallbackStub::OnThumbnailAvailable is called!");
++    sptr<SurfaceBuffer> surfaceBuffer = SurfaceBuffer::Create();
++    surfaceBuffer->ReadFromMessageParcel(data);
++    sptr<BufferExtraData> bufferExtraData = surfaceBuffer->GetExtraData();
++    bufferExtraData->ReadFromParcel(data);
++    surfaceBuffer->SetExtraData(bufferExtraData);
++    int64_t timestamp = data.ReadInt64();
++    return OnThumbnailAvailable(surfaceBuffer, timestamp);
++}
++// LCOV_EXCL_STOP
++}  // namespace CameraStandard
++}  // namespace OHOS
+diff --git a/services/camera_service/idls/BUILD.gn b/services/camera_service/idls/BUILD.gn
+index e83886f2a..f6bdff23f 100644
+--- a/services/camera_service/idls/BUILD.gn
++++ b/services/camera_service/idls/BUILD.gn
+@@ -39,6 +39,7 @@ idl_gen_interface("camera_service_idl_interface") {
+     "ICameraMuteServiceCallback.idl",
+     "IPressureStatusCallback.idl",
+     "IMechSessionCallback.idl",
++    "IStreamCapturePhotoAssetCallback.idl",
+   ]
  
-     /**
-@@ -150,6 +151,7 @@ public:
+   sources_common = [ "CameraTypes.idl" ]
+diff --git a/services/camera_service/idls/ICameraService.idl b/services/camera_service/idls/ICameraService.idl
+index 6609dacd9..6a52fa6c8 100644
+--- a/services/camera_service/idls/ICameraService.idl
++++ b/services/camera_service/idls/ICameraService.idl
+@@ -84,6 +84,7 @@ interface ICameraService{
+   [ipccode 43] void CreateMechSession([in] int userId, [out] IMechSession session);
+   [ipccode 44] void IsMechSupported([out] boolean isMechSupported);
+   [ipccode 45] void GetCameraStorageSize([out] long size);
++  [ipccode 46] void CreatePhotoOutput([in] int format, [in] int width, [in] int height, [out] IStreamCapture photoOutput);
+   [ipccode 101] void AllowOpenByOHSide([in] String cameraId, [in] int state, [inout] boolean canOpenCamera);
+   [ipccode 102, oneway] void NotifyCameraState([in] String cameraId, [in] int state);
+   [ipccode 104] void SetPeerCallback([in] ICameraBroker callbackFunc);
+diff --git a/services/camera_service/idls/IStreamCapture.idl b/services/camera_service/idls/IStreamCapture.idl
+index c38b5c34c..83b64cc01 100644
+--- a/services/camera_service/idls/IStreamCapture.idl
++++ b/services/camera_service/idls/IStreamCapture.idl
+@@ -16,21 +16,24 @@
+ package OHOS.CameraStandard;
+ import CameraTypes;
+ import IStreamCaptureCallback;
++import IStreamCapturePhotoAssetCallback;
  
- protected:
-     virtual sptr<IBufferProducer> GetBufferProducer() final;
-+    virtual std::string GetPhotoSurfaceId() final;
+ interface IStreamCommon;
+ interface OHOS.IBufferProducer;
++interface OHOS.CameraStandard.IStreamCapturePhotoCallback;
++interface OHOS.CameraStandard.IStreamCaptureThumbnailCallback;
++
+ sequenceable CameraMetadataInfo..OHOS.Camera.CameraMetadata;
+ sequenceable CameraPhotoProxy..OHOS.CameraStandard.CameraPhotoProxy;
+ sequenceable PictureInterface..OHOS.CameraStandard.PictureIntf;
+ option_stub_hooks on;
+-option_parcel_hooks on;
  
- private:
-     void OnCameraServerDied(pid_t pid);
-@@ -165,6 +167,7 @@ private:
-     wptr<CaptureSession> session_;
-     std::mutex sessionMutex_;
-     std::mutex streamMutex_;
-+    std::string surfaceId_;
- 
-     // Multithread add same output,set profile may cause problems, let's add mutex guard.
-     std::mutex photoProfileMutex_;
-diff --git a/interfaces/inner_api/native/camera/include/output/photo_output.h b/interfaces/inner_api/native/camera/include/output/photo_output.h
-index 7f2abeba0..53a1c71c8 100644
---- a/interfaces/inner_api/native/camera/include/output/photo_output.h
-+++ b/interfaces/inner_api/native/camera/include/output/photo_output.h
-@@ -33,6 +33,9 @@ namespace DeferredProcessing {
-     class TaskManager;
+ interface IStreamCapture extends IStreamCommon {
+   [ipccode 0] void Capture([in] sharedptr<CameraMetadata> captureSettings);
+   [ipccode 1] void CancelCapture();
+   [ipccode 2] void SetCallback([in] IStreamCaptureCallback callbackFunc);
+   [ipccode 3] void Release();
+-  [ipccode 4] void SetThumbnail([in] boolean isEnabled, [in] IBufferProducer producer);
++  [ipccode 4] void SetThumbnail([in] boolean isEnabled);
+   [ipccode 5] void ConfirmCapture();
+   [ipccode 6] void DeferImageDeliveryFor([in] int type);
+   [ipccode 7] void IsDeferredPhotoEnabled();
+@@ -40,10 +43,9 @@ interface IStreamCapture extends IStreamCommon {
+   [ipccode 11] void EnableRawDelivery([in] boolean enabled);
+   [ipccode 12] void SetCameraPhotoRotation([in] boolean isEnable);
+   [ipccode 13] void EnableMovingPhoto([in] boolean enabled);
+-  [ipccode 14] void AcquireBufferToPrepareProxy([in] int captureId);
+-  [ipccode 15] void UpdateMediaLibraryPhotoAssetProxy([in] sptr<CameraPhotoProxy> photoProxy);
+   [ipccode 16] void UnSetCallback();
+   [ipccode 17] void EnableOfflinePhoto([in] boolean isEnable);
+-  [ipccode 18] void CreateMediaLibrary([in] sptr<CameraPhotoProxy> photoProxy, [out] String uri, [out] int cameraShotType, [out] String burstKey, [in] long timestamp);
+-  [ipccode 19] void CreateMediaLibrary([in] sharedptr<PictureIntf> pictureExt, [in] sptr<CameraPhotoProxy> photoProxy, [out] String uri, [out] int cameraShotType, [out] String burstKey, [in] long timestamp);
++  [ipccode 18] void SetPhotoAvailableCallback([in] IStreamCapturePhotoCallback callbackFunc);
++  [ipccode 19] void SetPhotoAssetAvailableCallback([in] IStreamCapturePhotoAssetCallback callbackFunc);
++  [ipccode 20] void SetThumbnailCallback([in] IStreamCaptureThumbnailCallback callbackFunc);
  }
- class PictureIntf;
-+class PhotoAvailableCallback;
-+class PhotoAssetAvailableCallback;
-+class ThumbnailCallback;
- class PhotoStateCallback {
+\ No newline at end of file
+diff --git a/services/camera_service/idls/IStreamCapturePhotoAssetCallback.idl b/services/camera_service/idls/IStreamCapturePhotoAssetCallback.idl
+new file mode 100644
+index 000000000..df44efd13
+--- /dev/null
++++ b/services/camera_service/idls/IStreamCapturePhotoAssetCallback.idl
+@@ -0,0 +1,20 @@
++/*
++ * Copyright (c) 2025 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++package OHOS.CameraStandard;
++
++interface IStreamCapturePhotoAssetCallback {
++  [ipccode 0, oneway] void OnPhotoAssetAvailable([in] int captureId, [in] String uri, [in] int cameraShotType, [in] String burstKey);
++}
+\ No newline at end of file
+diff --git a/services/camera_service/include/avcodec/camera_server_photo_proxy.h b/services/camera_service/include/avcodec/camera_server_photo_proxy.h
+index ef3790358..79c8a3200 100644
+--- a/services/camera_service/include/avcodec/camera_server_photo_proxy.h
++++ b/services/camera_service/include/avcodec/camera_server_photo_proxy.h
+@@ -24,18 +24,20 @@
+ namespace OHOS {
+ namespace CameraStandard {
+ using namespace Media;
+-constexpr const char* prefix = "IMG_";
+-constexpr const char* suffixJpeg = "jpg";
+-constexpr const char* suffixHeif = "heic";
+-constexpr const char* suffixDng = "dng";
+-constexpr const char* connector = "_";
+-constexpr const char* burstTag = "BURST";
+-constexpr const char* coverTag = "_COVER";
+-constexpr const char placeholder = '0';
+-constexpr const int8_t yearWidth = 4;
+-constexpr const int8_t otherWidth = 2;
+-constexpr const int8_t burstWidth = 3;
+-constexpr const int16_t startYear = 1900;
++static const std::string prefix = "IMG_";
++static const std::string videoPrefix = "VID_";
++static const std::string suffixJpeg = "jpg";
++static const std::string suffixHeif = "heic";
++static const std::string suffixDng = "dng";
++static const std::string suffixMp4 = "mp4";
++static const std::string connector = "_";
++static const std::string burstTag = "BURST";
++static const std::string coverTag = "_COVER";
++static const char placeholder = '0';
++static const int yearWidth = 4;
++static const int otherWidth = 2;
++static const int burstWidth = 3;
++static const int startYear = 1900;
+ 
+ static const std::map<int32_t, int32_t> modeMap = {
+     { 3, 23},
+@@ -57,11 +59,13 @@ static const std::map<int32_t, PhotoFormat> formatMap = {
+     {4, PhotoFormat::DNG},
+ };
+ 
+-std::string CreateDisplayName();
++std::string CreateDisplayName(const std::string& suffix);
++std::string CreateVideoDisplayName();
+ class CameraServerPhotoProxy : public PhotoProxy {
  public:
-     PhotoStateCallback() = default;
-@@ -275,6 +278,7 @@ constexpr int32_t ROTATION_45_DEGREES = 45;
- constexpr int32_t ROTATION_90_DEGREES = 90;
- class PhotoOutput : public CaptureOutput {
- public:
-+    explicit PhotoOutput();
-     explicit PhotoOutput(sptr<IBufferProducer> bufferProducer);
-     explicit PhotoOutput(sptr<IBufferProducer> bufferProducer, sptr<Surface> photoSurface);
-     virtual ~PhotoOutput();
-@@ -286,12 +290,14 @@ public:
-      */
-     void SetCallback(std::shared_ptr<PhotoStateCallback> callback);
+     CameraServerPhotoProxy();
+     virtual ~CameraServerPhotoProxy();
++    void GetServerPhotoProxyInfo(sptr<SurfaceBuffer>& surfaceBuffer);
+     void ReadFromParcel(MessageParcel &parcel);
+     std::string GetTitle() override;
+     std::string GetExtension() override;
+@@ -87,6 +91,11 @@ public:
+     uint32_t GetCloudImageEnhanceFlag() override;
+     void SetStageVideoTaskStatus(uint8_t status);
+     int32_t GetStageVideoTaskStatus() override;
++    void SetFormat(int32_t format);
++    void SetImageFormat(int32_t imageFormat);
++    void SetIsVideo(bool isVideo);
++    void SetLatitude(double latitude);
++    void SetLongitude(double longitude);
  
--    /**
--     * @brief Set the thumbnail callback.
--     *
--     * @param listener set IBufferConsumerListener when on interface is called.
--     */
--    void SetThumbnailListener(sptr<IBufferConsumerListener>& listener);
-+    void SetPhotoAvailableCallback(std::shared_ptr<PhotoAvailableCallback> callback);
-+    void UnSetPhotoAvailableCallback();
+ private:
+     uint32_t cloudImageEnhanceFlag_;
+@@ -113,6 +122,7 @@ private:
+     bool isCoverPhoto_;
+     int32_t imageFormat_;
+     uint8_t stageVideoTaskStatus_;
++    bool isVideo_ = false;
+     int32_t CameraFreeBufferHandle(BufferHandle *handle);
+ };
+ } // namespace CameraStandard
+diff --git a/services/camera_service/include/camera_buffer_manager/camera_surface_buffer_util.h b/services/camera_service/include/camera_buffer_manager/camera_surface_buffer_util.h
+new file mode 100644
+index 000000000..4aa454868
+--- /dev/null
++++ b/services/camera_service/include/camera_buffer_manager/camera_surface_buffer_util.h
+@@ -0,0 +1,282 @@
++/*
++ * Copyright (c) 2025 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
 +
-+    void SetPhotoAssetAvailableCallback(std::shared_ptr<PhotoAssetAvailableCallback> callback);
-+    void UnSetPhotoAssetAvailableCallback();
++#ifndef OHOS_CAMERA_SURFACE_BUFFER_UTIL_H
++#define OHOS_CAMERA_SURFACE_BUFFER_UTIL_H
 +
-+    void SetThumbnailCallback(std::shared_ptr<ThumbnailCallback> callback);
-+    void UnSetThumbnailAvailableCallback();
- 
-     /**
-      * @brief Get the photo rotation.
-@@ -314,13 +320,6 @@ public:
-      */
-     int32_t EnableRawDelivery(bool enabled);
- 
--    /**
--     * @brief Set the Thumbnail profile.
--     *
--     * @param isEnabled quickThumbnail is enabled.
--     */
--    int32_t SetRawPhotoInfo(sptr<Surface>& surface);
--
-     /**
-      * @brief Set the photo callback.
-      *
-@@ -365,6 +364,12 @@ public:
-      */
-     std::shared_ptr<PhotoStateCallback> GetApplicationCallback();
- 
-+    std::shared_ptr<PhotoAvailableCallback> GetAppPhotoCallback();
++#include "surface.h"
++#include "video_key_info.h"
++#include "metadata_helper.h"
 +
-+    std::shared_ptr<PhotoAssetAvailableCallback> GetAppPhotoAssetCallback();
++namespace OHOS {
++namespace CameraStandard {
 +
-+    std::shared_ptr<ThumbnailCallback> GetAppThumbnailCallback();
++class CameraSurfaceBufferUtil {
++static constexpr uint8_t PIXEL_SIZE_HDR_YUV = 3;
++static constexpr uint8_t HDR_PIXEL_SIZE = 2;
 +
-     /**
-      * @brief To check the photo capture is mirrored or not.
-      *
-@@ -479,7 +484,6 @@ public:
-     int32_t EnableDepthDataDelivery(bool enabled);
- 
-     int32_t EnableMovingPhoto(bool enabled);
--    bool UpdateMediaLibraryPhotoAssetProxy(sptr<CameraPhotoProxy> photoProxy);
- 
-     /**
-      * Confirm if auto aigc photo supported.
-@@ -536,8 +540,6 @@ public:
-     void SetAuxiliaryPhotoHandle(uint32_t handle);
-     uint32_t GetAuxiliaryPhotoHandle();
- 
--    void AcquireBufferToPrepareProxy(int32_t captureId);
--
-     uint32_t watchDogHandle_ = 0;
-     std::mutex watchDogHandleMutex_;
-     std::map<int32_t, int32_t> captureIdAuxiliaryCountMap_;
-@@ -563,7 +565,13 @@ private:
-     bool isNativeSurface_ = false;
-     DeferredDeliveryImageType deferredType_ = DeferredDeliveryImageType::DELIVERY_NONE;
-     std::shared_ptr<PhotoStateCallback> appCallback_;
-+    std::shared_ptr<PhotoAvailableCallback> appPhotoCallback_;
-+    std::shared_ptr<PhotoAssetAvailableCallback> appPhotoAssetCallback_;
-+    std::shared_ptr<ThumbnailCallback> appThumbnailCallback_;
-     sptr<IStreamCaptureCallback> cameraSvcCallback_;
-+    sptr<IStreamCapturePhotoCallback> svcPhotoCallback_;
-+    sptr<IStreamCapturePhotoAssetCallback> svcPhotoAssetCallback_;
-+    sptr<IStreamCaptureThumbnailCallback> svcThumbnailCallback_;
-     std::shared_ptr<PhotoCaptureSetting> defaultCaptureSetting_;
-     void CameraServerDied(pid_t pid) override;
-     bool mIsHasEnableOfflinePhoto_ = false;
++public:
++    static sptr<SurfaceBuffer> DeepCopyBuffer(sptr<SurfaceBuffer> surfaceBuffer)
++    {
++        CAMERA_SYNC_TRACE;
++        CHECK_ERROR_RETURN_RET_LOG(surfaceBuffer == nullptr, nullptr, "DeepCopyBuffer surfaceBuffer is null");
++        uint32_t bufferSeqNum = surfaceBuffer->GetSeqNum();
++        MEDIA_DEBUG_LOG("DeepCopyBuffer E bufferSeqNum:%{public}u", bufferSeqNum);
++        DumpSurfaceBuffer(surfaceBuffer);
++        int32_t dataStride = GetDataStride(surfaceBuffer) == -1 ? 0x8 : GetDataStride(surfaceBuffer);
++        MEDIA_DEBUG_LOG("DeepCopyBuffer dataStride:%{public}d", dataStride);
++        // deep copy buffer
++        BufferRequestConfig requestConfig = {
++                .width = surfaceBuffer->GetWidth(),
++                .height = surfaceBuffer->GetHeight(),
++                .strideAlignment = 0x8,  // default stride is 8 Bytes.
++                .format = surfaceBuffer->GetFormat(),
++                .usage = surfaceBuffer->GetUsage(),
++                .timeout = 0,
++                .colorGamut = surfaceBuffer->GetSurfaceBufferColorGamut(),
++                .transform = surfaceBuffer->GetSurfaceBufferTransform(),
++        };
++        sptr<SurfaceBuffer> newSurfaceBuffer = SurfaceBuffer::Create();
++        auto allocErrorCode = newSurfaceBuffer->Alloc(requestConfig);
++        MEDIA_DEBUG_LOG("DeepCopyBuffer alloc ret: %{public}d", allocErrorCode);
++        if (memcpy_s(newSurfaceBuffer->GetVirAddr(), newSurfaceBuffer->GetSize(),
++            surfaceBuffer->GetVirAddr(), surfaceBuffer->GetSize()) != EOK) {
++            MEDIA_ERR_LOG("DeepCopyBuffer memcpy_s failed");
++        }
++
++        // deep copy buffer extData
++        MessageParcel extParcl;
++        sptr<BufferExtraData> bufferExtraData = surfaceBuffer->GetExtraData();
++        GSError gsErr = bufferExtraData->WriteToParcel(extParcl);
++        MEDIA_DEBUG_LOG("DeepCopyBuffer WriteToParcel gsErr=%{public}d", gsErr);
++        sptr<BufferExtraData> newBufferExtraData = newSurfaceBuffer->GetExtraData();
++        gsErr = newBufferExtraData->ReadFromParcel(extParcl);
++        MEDIA_DEBUG_LOG("DeepCopyBuffer ReadFromParcel gsErr=%{public}d", gsErr);
++
++        // deep metaData
++        CopyMetaData(surfaceBuffer, newSurfaceBuffer);
++        DumpSurfaceBuffer(newSurfaceBuffer);
++        MEDIA_DEBUG_LOG("DeepCopyBuffer X bufferSeqNum:%{public}u", bufferSeqNum);
++        return newSurfaceBuffer;
++    }
++
++    static sptr<SurfaceBuffer> DeepCopyThumbnailBuffer(sptr<SurfaceBuffer> surfaceBuffer)
++    {
++        CAMERA_SYNC_TRACE;
++        CHECK_ERROR_RETURN_RET_LOG(surfaceBuffer == nullptr, nullptr, "DeepCopyThumbnailBuffer surfaceBuffer is null");
++        uint32_t bufferSeqNum = surfaceBuffer->GetSeqNum();
++        MEDIA_DEBUG_LOG("DeepCopyThumbnailBuffer E bufferSeqNum:%{public}u", bufferSeqNum);
++        DumpSurfaceBuffer(surfaceBuffer);
++        int32_t thumbnailStride = GetDataStride(surfaceBuffer);
++        int32_t thumbnailHeight = GetDataHeight(surfaceBuffer);
++        MEDIA_DEBUG_LOG("DeepCopyThumbnailBuffer thumbnailStride:%{public}d", thumbnailStride);
++        // deep copy buffer
++        BufferRequestConfig requestConfig = {
++                .width = thumbnailStride,
++                .height = thumbnailHeight,
++                .strideAlignment = thumbnailStride,
++                .format = surfaceBuffer->GetFormat(),
++                .usage =
++                    BUFFER_USAGE_CPU_READ | BUFFER_USAGE_CPU_WRITE | BUFFER_USAGE_MEM_DMA | BUFFER_USAGE_MEM_MMZ_CACHE,
++                .timeout = 0,
++            };
++        sptr<SurfaceBuffer> newSurfaceBuffer = SurfaceBuffer::Create();
++        auto allocRet = newSurfaceBuffer->Alloc(requestConfig);
++        if (allocRet != 0) {
++            MEDIA_ERR_LOG("DeepCopyThumbnailBuffer alloc ret: %{public}d", allocRet);
++            return newSurfaceBuffer;
++        }
++        int32_t colorLength = thumbnailStride * thumbnailHeight * PIXEL_SIZE_HDR_YUV;
++        HDI::Display::Graphic::Common::V1_0::CM_ColorSpaceType colorSpaceType;
++        GSError gsErr = MetadataHelper::GetColorSpaceType(surfaceBuffer, colorSpaceType);
++        bool isHdr = colorSpaceType ==  HDI::Display::Graphic::Common::V1_0::CM_ColorSpaceType::CM_BT2020_HLG_FULL;
++        MEDIA_ERR_LOG("DeepCopyThumbnailBuffer colorSpaceType:%{public}d isHdr:%{public}d", colorSpaceType, isHdr);
++        colorLength = isHdr ? colorLength : colorLength / HDR_PIXEL_SIZE;
++        if (memcpy_s(newSurfaceBuffer->GetVirAddr(), newSurfaceBuffer->GetSize(),
++            surfaceBuffer->GetVirAddr(), colorLength) != EOK) {
++            MEDIA_ERR_LOG("DeepCopyThumbnailBuffer memcpy_s failed");
++            return newSurfaceBuffer;
++        }
++
++        // deep copy buffer extData
++        MessageParcel extParcl;
++        sptr<BufferExtraData> bufferExtraData = surfaceBuffer->GetExtraData();
++        gsErr = bufferExtraData->WriteToParcel(extParcl);
++        MEDIA_DEBUG_LOG("DeepCopyBuffer WriteToParcel gsErr=%{public}d", gsErr);
++        sptr<BufferExtraData> newBufferExtraData = newSurfaceBuffer->GetExtraData();
++        gsErr = newBufferExtraData->ReadFromParcel(extParcl);
++        MEDIA_DEBUG_LOG("DeepCopyBuffer ReadFromParcel gsErr=%{public}d", gsErr);
++
++        // deep metaData
++        CopyMetaData(surfaceBuffer, newSurfaceBuffer);
++        DumpSurfaceBuffer(newSurfaceBuffer);
++        MEDIA_DEBUG_LOG("DeepCopyBuffer X bufferSeqNum:%{public}u", bufferSeqNum);
++        return newSurfaceBuffer;
++    }
++
++    static int32_t GetDataSize(sptr<SurfaceBuffer> surfaceBuffer)
++    {
++        int32_t dataSize = 0;
++        surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::dataSize, dataSize);
++        MEDIA_DEBUG_LOG("GetDataSize:%{public}d", dataSize);
++        return dataSize;
++    }
++
++    static int32_t GetCaptureId(sptr<SurfaceBuffer> surfaceBuffer)
++    {
++        int32_t captureId = 0;
++        surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::captureId, captureId);
++        MEDIA_DEBUG_LOG("GetCaptureId:%{public}d", captureId);
++        return captureId;
++    }
++
++    static int32_t GetMaskCaptureId(sptr<SurfaceBuffer> surfaceBuffer)
++    {
++        int32_t captureId;
++        int32_t burstSeqId = -1;
++        int32_t maskBurstSeqId = 0;
++        int32_t invalidSeqenceId = -1;
++        int32_t captureIdMask = 0x0000FFFF;
++        int32_t captureIdShit = 16;
++        surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::burstSequenceId, burstSeqId);
++        surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::captureId, captureId);
++        if (burstSeqId != invalidSeqenceId && captureId >= 0) {
++            maskBurstSeqId = ((captureId & captureIdMask) << captureIdShit) | burstSeqId;
++            MEDIA_DEBUG_LOG("GetMaskCaptureId captureId:%{public}d, burstSeqId:%{public}d, maskBurstSeqId = %{public}d",
++                captureId, burstSeqId, maskBurstSeqId);
++            return maskBurstSeqId;
++        }
++        MEDIA_DEBUG_LOG("GetMaskCaptureId captureId:%{public}d, burstSeqId:%{public}d", captureId, burstSeqId);
++        return captureId;
++    }
++
++    static int32_t GetBurstSequenceId(sptr<SurfaceBuffer> surfaceBuffer)
++    {
++        int32_t burstSequenceId = 0;
++        surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::burstSequenceId, burstSequenceId);
++        MEDIA_DEBUG_LOG("GetBurstSequenceId:%{public}d", burstSequenceId);
++        return burstSequenceId;
++    }
++
++    static int32_t GetImageCount(sptr<SurfaceBuffer> surfaceBuffer)
++    {
++        int32_t imageCount = 0;
++        surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::imageCount, imageCount);
++        MEDIA_DEBUG_LOG("GetImageCount:%{public}d", imageCount);
++        return imageCount;
++    }
++
++    static int64_t GetImageId(sptr<SurfaceBuffer> surfaceBuffer)
++    {
++        int64_t imageId = 0;
++        surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::imageId, imageId);
++        MEDIA_DEBUG_LOG("GetImageId:%{public}s", std::to_string(imageId).c_str());
++        return imageId;
++    }
++
++    static int32_t GetIsDegradedImage(sptr<SurfaceBuffer> surfaceBuffer)
++    {
++        int32_t isDegradedImage;
++        surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::isDegradedImage, isDegradedImage);
++        MEDIA_DEBUG_LOG("GetIsDegradedImage:%{public}d", isDegradedImage);
++        return isDegradedImage;
++    }
++
++    static int32_t GetDeferredProcessingType(sptr<SurfaceBuffer> surfaceBuffer)
++    {
++        int32_t deferredProcessingType;
++        surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::deferredProcessingType, deferredProcessingType);
++        MEDIA_DEBUG_LOG("GetDeferredProcessingType:%{public}d", deferredProcessingType);
++        return deferredProcessingType;
++    }
++
++    static int32_t GetDataWidth(sptr<SurfaceBuffer> surfaceBuffer)
++    {
++        int32_t dataWidth = 0;
++        surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::dataWidth, dataWidth);
++        MEDIA_DEBUG_LOG("GetDataWidth:%{public}d", dataWidth);
++        return dataWidth;
++    }
++
++    static int32_t GetDataHeight(sptr<SurfaceBuffer> surfaceBuffer)
++    {
++        int32_t dataHeight = 0;
++        surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::dataHeight, dataHeight);
++        MEDIA_DEBUG_LOG("GetDataHeight:%{public}d", dataHeight);
++        return dataHeight;
++    }
++
++    static int32_t GetDeferredImageFormat(sptr<SurfaceBuffer> surfaceBuffer)
++    {
++        int32_t deferredImageFormat = 0;
++        surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::deferredImageFormat, deferredImageFormat);
++        MEDIA_DEBUG_LOG("GetDeferredImageFormat:%{public}d", deferredImageFormat);
++        return deferredImageFormat;
++    }
++
++    static int32_t GetDataStride(sptr<SurfaceBuffer> surfaceBuffer)
++    {
++        int32_t dataStride = -1;
++        surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::dataStride, dataStride);
++        MEDIA_DEBUG_LOG("GetDataStride:%{public}d", dataStride);
++        return dataStride;
++    }
++
++    static int32_t GetCloudImageEnhanceFlag(sptr<SurfaceBuffer> surfaceBuffer)
++    {
++        int32_t cloudImageEnhanceFlag = 0;
++        surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::cloudImageEnhanceFlag, cloudImageEnhanceFlag);
++        MEDIA_DEBUG_LOG("GetCloudImageEnhanceFlag:%{public}d", cloudImageEnhanceFlag);
++        return cloudImageEnhanceFlag;
++    }
++
++    static void DumpSurfaceBuffer(sptr<SurfaceBuffer> surfaceBuffer)
++    {
++        GetCaptureId(surfaceBuffer);
++        GetDataWidth(surfaceBuffer);
++        GetDataHeight(surfaceBuffer);
++        GetDeferredImageFormat(surfaceBuffer);
++        GetIsDegradedImage(surfaceBuffer);
++        GetImageId(surfaceBuffer);
++        GetImageCount(surfaceBuffer);
++        GetDeferredProcessingType(surfaceBuffer);
++        GetBurstSequenceId(surfaceBuffer);
++    }
++
++private:
++    static void CopyMetaData(sptr<SurfaceBuffer> &inBuffer, sptr<SurfaceBuffer> &outBuffer)
++    {
++        std::vector<uint32_t> keys = {};
++        CHECK_ERROR_RETURN_LOG(inBuffer == nullptr, "CopyMetaData: inBuffer is nullptr");
++        auto ret = inBuffer->ListMetadataKeys(keys);
++        CHECK_ERROR_RETURN_LOG(ret != GSError::GSERROR_OK, "CopyMetaData: ListMetadataKeys fail! res=%{public}d", ret);
++        for (uint32_t key : keys) {
++            std::vector<uint8_t> values;
++            ret = inBuffer->GetMetadata(key, values);
++            if (ret != 0) {
++                MEDIA_INFO_LOG("GetMetadata fail! key = %{public}d res = %{public}d", key, ret);
++                continue;
++            }
++            ret = outBuffer->SetMetadata(key, values);
++            if (ret != 0) {
++                MEDIA_INFO_LOG("SetMetadata fail! key = %{public}d res = %{public}d", key, ret);
++                continue;
++            }
++        }
++    }
++};
++}  // namespace CameraStandard
++}  // namespace OHOS
++#endif
+\ No newline at end of file
+diff --git a/services/camera_service/include/camera_buffer_manager/photo_asset_auxiliary_consumer.h b/services/camera_service/include/camera_buffer_manager/photo_asset_auxiliary_consumer.h
+new file mode 100644
+index 000000000..418dc4060
+--- /dev/null
++++ b/services/camera_service/include/camera_buffer_manager/photo_asset_auxiliary_consumer.h
+@@ -0,0 +1,47 @@
++/*
++ * Copyright (c) 2025 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#ifndef OHOS_CAMERA_AUXILIARY_BUFFER_CONSUMER_H
++#define OHOS_CAMERA_AUXILIARY_BUFFER_CONSUMER_H
++
++#include "ibuffer_consumer_listener.h"
++#include <mutex>
++
++namespace OHOS {
++namespace CameraStandard {
++class HStreamCapture;
++namespace DeferredProcessing {
++class TaskManager;
++}
++static const std::string S_GAINMAP = "gainmap";
++static const std::string S_DEEP = "deep";
++static const std::string S_EXIF = "exif";
++static const std::string S_DEBUG = "debug";
++
++class AuxiliaryBufferConsumer : public IBufferConsumerListener {
++public:
++    AuxiliaryBufferConsumer(const std::string surfaceName, wptr<HStreamCapture> streamCapture);
++    ~AuxiliaryBufferConsumer() override;
++
++    void OnBufferAvailable() override;
++private:
++    void ExecuteOnBufferAvailable();
++
++    std::string surfaceName_;
++    wptr<HStreamCapture> streamCapture_ = nullptr;
++};
++}  // namespace CameraStandard
++}  // namespace OHOS
++#endif
+\ No newline at end of file
+diff --git a/services/camera_service/include/camera_buffer_manager/photo_asset_buffer_consumer.h b/services/camera_service/include/camera_buffer_manager/photo_asset_buffer_consumer.h
+new file mode 100644
+index 000000000..15f09f5de
+--- /dev/null
++++ b/services/camera_service/include/camera_buffer_manager/photo_asset_buffer_consumer.h
+@@ -0,0 +1,49 @@
++/*
++ * Copyright (c) 2025 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#ifndef OHOS_CAMERA_PHOTO_ASSET_BUFFER_CONSUMER_H
++#define OHOS_CAMERA_PHOTO_ASSET_BUFFER_CONSUMER_H
++
++#include "ibuffer_consumer_listener.h"
++#include "surface.h"
++#include <mutex>
++
++namespace OHOS {
++namespace CameraStandard {
++class HStreamCapture;
++namespace DeferredProcessing {
++class TaskManager;
++}
++class PhotoAssetBufferConsumer : public IBufferConsumerListener {
++public:
++    explicit PhotoAssetBufferConsumer(wptr<HStreamCapture> streamCapture);
++    ~PhotoAssetBufferConsumer() override;
++    void OnBufferAvailable() override;
++
++private:
++    void ExecuteOnBufferAvailable();
++    void StartWaitAuxiliaryTask(
++        const int32_t captureId, const int32_t auxiliaryCount, int64_t timestamp, sptr<SurfaceBuffer> &surfaceBuffer);
++    void AssembleDeferredPicture(int64_t timestamp, int32_t captureId);
++    void CleanAfterTransPicture(int32_t captureId);
++
++    wptr<HStreamCapture> streamCapture_ = nullptr;
++    std::mutex taskManagerMutex_;
++    std::shared_ptr<DeferredProcessing::TaskManager> taskManager_ = nullptr;
++};
++
++}  // namespace CameraStandard
++}  // namespace OHOS
++#endif
+\ No newline at end of file
