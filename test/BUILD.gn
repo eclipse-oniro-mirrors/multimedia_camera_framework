@@ -55,6 +55,7 @@ group("camera_fuzz_test") {
       "fuzztest/commandserver_fuzzer:fuzztest",
       "fuzztest/commandserverimpl_fuzzer:fuzztest",
       "fuzztest/deferredvideocontroller_fuzzer:fuzztest",
+      "fuzztest/deferredprocessingserviceeventmonitor_fuzzer:fuzztest",
       "fuzztest/deferredvideoprocessor_fuzzer:fuzztest",
       "fuzztest/dpsvideoreport_fuzzer:fuzztest",
       "fuzztest/hcameradevicemanager_fuzzer:fuzztest",
