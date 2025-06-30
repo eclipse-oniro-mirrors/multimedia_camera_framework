@@ -46,6 +46,14 @@ public:
     {
         return 0;
     }
+    int32_t OnFramePaused() override
+    {
+        return 0;
+    }
+    int32_t OnFrameResumed() override
+    {
+        return 0;
+    }
 };
 
 class IStreamOperatorMock : public IStreamOperator {
