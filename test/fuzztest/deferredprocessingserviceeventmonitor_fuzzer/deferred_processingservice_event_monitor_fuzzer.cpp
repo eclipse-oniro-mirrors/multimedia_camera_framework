@@ -33,15 +33,6 @@ namespace CameraStandard {
 namespace DeferredProcessing {
  
 static constexpr int32_t MIN_SIZE_NUM = 4;
-// static std::shared_ptr<CameraStrategy> camerastrategyfuzz_ = nullptr;
-// static std::shared_ptr<BatteryLevelStrategy> batterylevelstrategyfuzz_ = nullptr;
-// static std::shared_ptr<BatteryStrategy> batterystrategyfuzz_ = nullptr;
-// static std::shared_ptr<ChargingStrategy> chargingstrategyfuzz_ = nullptr;
-// static std::shared_ptr<ScreenStrategy> screenstrategyfuzz_ = nullptr;
-// static std::shared_ptr<ThermalStrategy> thermalstrategyfuzz_ = nullptr;
-// static std::shared_ptr<EventStatusChangeCommand> eventstatuschangecommandfuzz_ = nullptr;
-// static std::shared_ptr<EventsInfo> eventsinfofuzz_ = nullptr;
-// static std::shared_ptr<EventsMonitor> eventsmonitorfuzz_ = nullptr;
  
 std::shared_ptr<CameraStrategy> EventMonitorFuzzer::camerastrategyfuzz_ = nullptr;
 std::shared_ptr<BatteryLevelStrategy> EventMonitorFuzzer::batterylevelstrategyfuzz_ = nullptr;
