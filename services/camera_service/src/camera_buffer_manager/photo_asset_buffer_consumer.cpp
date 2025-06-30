@@ -227,10 +227,7 @@ void PhotoAssetBufferConsumer::AssembleDeferredPicture(int64_t timestamp, int32_
         picture->SetMaintenanceData(buffer);
         streamCapture->captureIdDebugMap_[captureId] = nullptr;
     }
-    if (!picture) {
-        MEDIA_ERR_LOG("CreateMediaLibrary picture is nullptr");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(!picture, "CreateMediaLibrary picture is nullptr");
     std::string uri;
     int32_t cameraShotType;
     std::string burstKey = "";
@@ -245,4 +242,4 @@ void PhotoAssetBufferConsumer::AssembleDeferredPicture(int64_t timestamp, int32_
 }
 }  // namespace CameraStandard
 }  // namespace OHOS
-// LCOV_EXCL_STOP
+// LCOV_EXCL_STOP

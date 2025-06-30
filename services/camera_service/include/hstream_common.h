@@ -44,7 +44,7 @@ class HStreamCommon : virtual public RefBase {
 public:
     explicit HStreamCommon(
         StreamType streamType, sptr<OHOS::IBufferProducer> producer, int32_t format, int32_t width, int32_t height);
-    explicit HStreamCommon( StreamType streamType, int32_t format, int32_t width, int32_t height);
+    explicit HStreamCommon(StreamType streamType, int32_t format, int32_t width, int32_t height);
     virtual ~HStreamCommon();
     virtual int32_t LinkInput(wptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator,
         std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility);
