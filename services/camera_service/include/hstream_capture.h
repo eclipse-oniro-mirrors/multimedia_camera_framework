@@ -39,33 +39,38 @@ class PhotoAssetIntf;
 class PictureIntf;
 class CameraServerPhotoProxy;
 class HStreamOperator;
+class PictureAssembler;
+namespace DeferredProcessing {
+class TaskManager;
+}
 class ConcurrentMap {
 public:
     void Insert(const int32_t& key, const std::shared_ptr<PhotoAssetIntf>& value);
     std::shared_ptr<PhotoAssetIntf> Get(const int32_t& key);
     void Release();
     void Erase(const int32_t& key);
-    std::mutex& GetMutex(const int32_t& key);
-    std::condition_variable& GetCv(const int32_t& key);
     bool ReadyToUnlock(const int32_t& key, const int32_t& step, const int32_t& mode);
+    bool WaitForUnlock(const int32_t& key, const int32_t& step, const int32_t& mode,
+                    const std::chrono::seconds& timeout);
     void IncreaseCaptureStep(const int32_t& key);
 private:
     std::map<int32_t, std::shared_ptr<PhotoAssetIntf>> map_;
-    std::map<int32_t, std::mutex> mutexes_;
+    std::map<int32_t, std::shared_ptr<std::mutex>> mutexes_;
     std::map<int32_t, int32_t> step_;
-    std::map<int32_t, std::condition_variable> cv_;
+    std::map<int32_t, std::shared_ptr<std::condition_variable>> cv_;
     std::mutex map_mutex_;
 };
 constexpr const char* BURST_UUID_UNSET = "";
 class EXPORT_API HStreamCapture : public StreamCaptureStub, public HStreamCommon, public ICameraIpcChecker {
 public:
     HStreamCapture(sptr<OHOS::IBufferProducer> producer, int32_t format, int32_t width, int32_t height);
+    HStreamCapture(int32_t format, int32_t width, int32_t height);
     ~HStreamCapture();
 
     int32_t LinkInput(wptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator,
         std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility) override;
     void SetStreamInfo(StreamInfo_V1_1 &streamInfo) override;
-    int32_t SetThumbnail(bool isEnabled, const sptr<OHOS::IBufferProducer> &producer) override;
+    int32_t SetThumbnail(bool isEnabled) override;
     int32_t EnableRawDelivery(bool enabled) override;
     int32_t EnableMovingPhoto(bool enabled) override;
     int32_t SetBufferProducerInfo(const std::string& bufName, const sptr<OHOS::IBufferProducer> &producer) override;
@@ -76,6 +81,9 @@ public:
     int32_t ReleaseStream(bool isDelay) override;
     int32_t Release() override;
     int32_t SetCallback(const sptr<IStreamCaptureCallback> &callback) override;
+    int32_t SetPhotoAvailableCallback(const sptr<IStreamCapturePhotoCallback> &callback) override;
+    int32_t SetPhotoAssetAvailableCallback(const sptr<IStreamCapturePhotoAssetCallback> &callback) override;
+    int32_t SetThumbnailCallback(const sptr<IStreamCaptureThumbnailCallback> &callback) override;
     int32_t UnSetCallback() override;
     int32_t OnCaptureStarted(int32_t captureId);
     int32_t OnCaptureStarted(int32_t captureId, uint32_t exposureTime);
@@ -85,6 +93,10 @@ public:
     int32_t OnFrameShutterEnd(int32_t captureId, uint64_t timestamp);
     int32_t OnCaptureReady(int32_t captureId, uint64_t timestamp);
     int32_t OnOfflineDeliveryFinished(int32_t captureId);
+    int32_t OnPhotoAvailable(sptr<SurfaceBuffer> surfaceBuffer, const int64_t timestamp, bool isRaw);
+    int32_t OnPhotoAssetAvailable(
+        const int32_t captureId, const std::string &uri, int32_t cameraShotType, const std::string &burstKey);
+    int32_t OnThumbnailAvailable(sptr<SurfaceBuffer> surfaceBuffer, const int64_t timestamp);
     void DumpStreamInfo(CameraInfoDumper& infoDumper) override;
     void SetRotation(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureMetadataSetting_, int32_t captureId);
     void SetMode(int32_t modeName);
@@ -105,25 +117,48 @@ public:
     void CheckResetBurstKey(int32_t captureId);
     int32_t SetCameraPhotoRotation(bool isEnable) override;
     int32_t CreateMediaLibraryPhotoAssetProxy(int32_t captureId);
-    int32_t UpdateMediaLibraryPhotoAssetProxy(const sptr<CameraPhotoProxy>& photoProxy) override;
+    int32_t UpdateMediaLibraryPhotoAssetProxy(sptr<CameraServerPhotoProxy> photoProxy);
     std::shared_ptr<PhotoAssetIntf> GetPhotoAssetInstance(int32_t captureId);
     bool GetAddPhotoProxyEnabled();
-    int32_t AcquireBufferToPrepareProxy(int32_t captureId) override;
+    int32_t AcquireBufferToPrepareProxy(int32_t captureId);
     int32_t EnableOfflinePhoto(bool isEnable) override;
     bool IsHasEnableOfflinePhoto();
     void SwitchToOffline();
     bool IsHasSwitchToOffline();
     void SetStreamOperator(wptr<HStreamOperator> hStreamOperator);
-    int32_t CreateMediaLibrary(const sptr<CameraPhotoProxy>& photoProxy, std::string& uri, int32_t& cameraShotType,
-        std::string& burstKey, int64_t timestamp) override;
-    int32_t CreateMediaLibrary(const std::shared_ptr<PictureIntf>& picture, const sptr<CameraPhotoProxy> &photoProxy,
-        std::string &uri, int32_t &cameraShotType, std::string& burstKey, int64_t timestamp) override;
+    int32_t CreateMediaLibrary(sptr<CameraServerPhotoProxy>& photoProxy, std::string& uri, int32_t& cameraShotType,
+        std::string& burstKey, int64_t timestamp);
+    int32_t CreateMediaLibrary(std::shared_ptr<PictureIntf> picture, sptr<CameraServerPhotoProxy> &photoProxy,
+        std::string &uri, int32_t &cameraShotType, std::string& burstKey, int64_t timestamp);
+    int32_t RequireMemorySize(int32_t memSize);
 
-    int32_t CallbackParcel(
-        [[maybe_unused]] uint32_t code,
-        [[maybe_unused]] MessageParcel& data,
-        [[maybe_unused]] MessageParcel& reply,
-        [[maybe_unused]] MessageOption& option) override;
+    bool isYuvCapture_ = false;
+    sptr<Surface> gainmapSurface_;
+    sptr<Surface> deepSurface_;
+    sptr<Surface> exifSurface_;
+    sptr<Surface> debugSurface_;
+    sptr<Surface> rawSurface_;
+    sptr<Surface> thumbnailSurface_;
+    sptr<IBufferConsumerListener> gainmapListener_ = nullptr;
+    sptr<IBufferConsumerListener> deepListener_ = nullptr;
+    sptr<IBufferConsumerListener> exifListener_ = nullptr;
+    sptr<IBufferConsumerListener> debugListener_ = nullptr;
+    sptr<PictureAssembler> pictureAssembler_;
+    std::map<int32_t, std::shared_ptr<PictureIntf>> captureIdPictureMap_;
+    std::shared_ptr<DeferredProcessing::TaskManager> photoTask_ = nullptr;
+    std::shared_ptr<DeferredProcessing::TaskManager> photoSubTask_ = nullptr;
+
+    std::mutex g_photoImageMutex;
+    std::mutex g_assembleImageMutex;
+    std::map<int32_t, int32_t> captureIdAuxiliaryCountMap_;
+    std::map<int32_t, int32_t> captureIdCountMap_;
+    std::map<int32_t, uint32_t> captureIdHandleMap_;
+
+    std::map<int32_t, sptr<CameraServerPhotoProxy>> photoProxyMap_;
+    std::map<int32_t, sptr<SurfaceBuffer>> captureIdGainmapMap_;
+    SafeMap<int32_t, sptr<SurfaceBuffer>> captureIdDepthMap_ = {};
+    std::map<int32_t, sptr<SurfaceBuffer>> captureIdExifMap_;
+    std::map<int32_t, sptr<SurfaceBuffer>> captureIdDebugMap_;
 
 private:
     int32_t CheckBurstCapture(const std::shared_ptr<OHOS::Camera::CameraMetadata>& captureSettings,
@@ -136,10 +171,19 @@ private:
         const std::shared_ptr<OHOS::Camera::CameraMetadata>& captureSettings, int32_t captureId);
     void SetCameraPhotoProxyInfo(sptr<CameraServerPhotoProxy> cameraPhotoProxy);
     sptr<IStreamCaptureCallback> streamCaptureCallback_;
+    sptr<IStreamCapturePhotoCallback> photoAvaiableCallback_;
+    sptr<IStreamCapturePhotoAssetCallback> photoAssetAvaiableCallback_;
+    sptr<IStreamCaptureThumbnailCallback> thumbnailAvaiableCallback_;
     void FillingPictureExtendStreamInfos(StreamInfo_V1_1 &streamInfo, int32_t format);
     void FillingRawAndThumbnailStreamInfo(StreamInfo_V1_1 &streamInfo);
     void UpdateJpegBasicInfo(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureMetadataSetting,
         int32_t& rotation);
+    void RegisterAuxiliaryConsumers();
+    void CreateCaptureSurface();
+    void CreateAuxiliarySurfaces();
+    void InitCaptureThread();
+    void SetRawCallback();
+    void GetLocation(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureMetadataSetting);
     std::mutex callbackLock_;
     int32_t thumbnailSwitch_;
     int32_t rawDeliverySwitch_;
@@ -172,6 +216,15 @@ private:
     int32_t mlastCaptureId = 0;
     wptr<HStreamOperator> hStreamOperator_;
     std::map<int32_t, std::unique_ptr<std::mutex>> mutexMap;
+    std::mutex photoCallbackLock_;
+    std::mutex assetCallbackLock_;
+    std::mutex thumbnailCallbackLock_;
+    sptr<IBufferConsumerListener> photoListener_ = nullptr;
+    sptr<IBufferConsumerListener> photoAssetListener_ = nullptr;
+    sptr<IBufferConsumerListener> thumbnailListener_ = nullptr;
+    double latitude_ = 0.0;
+    double longitude_ = 0.0;
+    double altitude_ = 0.0;
 };
 } // namespace CameraStandard
 } // namespace OHOS

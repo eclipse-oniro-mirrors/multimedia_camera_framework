@@ -27,8 +27,8 @@ public:
 
     Camera_ErrorCode GetMainImage(OH_ImageNative** mainImage);
 
-    void SetMainImage(std::shared_ptr<OHOS::Media::NativeImage> &mainImage);
-    void SetRawImage(std::shared_ptr<OHOS::Media::NativeImage> &rawImage);
+    void SetMainImage(const std::shared_ptr<OHOS::Media::NativeImage> &mainImage);
+    void SetRawImage(const std::shared_ptr<OHOS::Media::NativeImage> &rawImage);
 
 private:
     std::shared_ptr<OHOS::Media::NativeImage> mainImage_ = nullptr;

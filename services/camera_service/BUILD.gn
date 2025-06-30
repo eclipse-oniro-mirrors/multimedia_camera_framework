@@ -40,6 +40,11 @@ ohos_shared_library("camera_service") {
     "src/avcodec/moving_photo_video_cache.cpp",
     "src/avcodec/sample_callback.cpp",
     "src/avcodec/video_encoder.cpp",
+    "src/camera_buffer_manager/photo_asset_auxiliary_consumer.cpp",
+    "src/camera_buffer_manager/photo_asset_buffer_consumer.cpp",
+    "src/camera_buffer_manager/photo_buffer_consumer.cpp",
+    "src/camera_buffer_manager/picture_assembler.cpp",
+    "src/camera_buffer_manager/thumbnail_buffer_consumer.cpp",
     "src/camera_common_event_manager.cpp",
     "src/camera_datashare_helper.cpp",
     "src/camera_fwk_metadata_utils.cpp",
@@ -83,10 +88,14 @@ ohos_shared_library("camera_service") {
     "-Wall",
     "-Os",
     "-fstack-protector-strong",
+    "-fno-merge-all-constants",
+    "-flto",
+    "-ffunction-sections"
   ]
 
   ldflags = [
     "-Wl,-z,relro,-z,now",
+    "-Wl,--gc-sections",
     "-fPIE",
   ]
 
@@ -114,6 +123,7 @@ ohos_shared_library("camera_service") {
     "${multimedia_camera_framework_path}/services/camera_service/binder/server/include/window_manager_service_callback_stub",
     "${multimedia_camera_framework_path}/services/camera_service/include/adapter",
     "${multimedia_camera_framework_path}/services/camera_service/include/app_manager_utils",
+    "${multimedia_camera_framework_path}/services/camera_service/include/camera_buffer_manager",
     "${multimedia_camera_framework_path}/services/camera_service/include/dfx",
     "${multimedia_camera_framework_path}/services/camera_service/include/smooth_zoom",
     "${multimedia_camera_framework_path}/services/camera_service/include/avcodec",

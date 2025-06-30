@@ -39,6 +39,7 @@ idl_gen_interface("camera_service_idl_interface") {
     "ICameraMuteServiceCallback.idl",
     "IPressureStatusCallback.idl",
     "IMechSessionCallback.idl",
+    "IStreamCapturePhotoAssetCallback.idl",
   ]
 
   sources_common = [ "CameraTypes.idl" ]

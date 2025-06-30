@@ -1,0 +1,245 @@
+/*
+ * Copyright (c) 2025 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+// LCOV_EXCL_START
+#include "photo_asset_buffer_consumer.h"
+
+#include "camera_log.h"
+#include "video_key_info.h"
+#include "camera_surface_buffer_util.h"
+#include "hstream_capture.h"
+#include "task_manager.h"
+#include "picture_assembler.h"
+#include "dp_utils.h"
+#include "camera_server_photo_proxy.h"
+#include "picture_proxy.h"
+#include "camera_report_dfx_uitls.h"
+
+namespace OHOS {
+namespace CameraStandard {
+
+PhotoAssetBufferConsumer::PhotoAssetBufferConsumer(wptr<HStreamCapture> streamCapture) : streamCapture_(streamCapture)
+{
+    MEDIA_INFO_LOG("PhotoAssetBufferConsumer new E");
+}
+
+PhotoAssetBufferConsumer::~PhotoAssetBufferConsumer()
+{
+    MEDIA_INFO_LOG("PhotoAssetBufferConsumer ~ E");
+}
+
+void PhotoAssetBufferConsumer::OnBufferAvailable()
+{
+    MEDIA_INFO_LOG("OnBufferAvailable E");
+    CAMERA_SYNC_TRACE;
+    sptr<HStreamCapture> streamCapture = streamCapture_.promote();
+    CHECK_ERROR_RETURN_LOG(streamCapture == nullptr, "streamCapture is null");
+    CHECK_ERROR_RETURN_LOG(streamCapture->photoTask_ == nullptr, "photoTask is null");
+    wptr<PhotoAssetBufferConsumer> thisPtr(this);
+    streamCapture->photoTask_->SubmitTask([thisPtr]() {
+        auto listener = thisPtr.promote();
+        CHECK_EXECUTE(listener, listener->ExecuteOnBufferAvailable());
+    });
+
+    MEDIA_INFO_LOG("OnBufferAvailable X");
+}
+
+void PhotoAssetBufferConsumer::ExecuteOnBufferAvailable()
+{
+    MEDIA_INFO_LOG("ExecuteOnBufferAvailable E");
+    CAMERA_SYNC_TRACE;
+    sptr<HStreamCapture> streamCapture = streamCapture_.promote();
+    CHECK_ERROR_RETURN_LOG(streamCapture == nullptr, "streamCapture is null");
+    CHECK_ERROR_RETURN_LOG(streamCapture->surface_ == nullptr, "surface is null");
+    sptr<SurfaceBuffer> surfaceBuffer = nullptr;
+    int32_t fence = -1;
+    int64_t timestamp;
+    OHOS::Rect damage;
+    SurfaceError surfaceRet = streamCapture->surface_->AcquireBuffer(surfaceBuffer, fence, timestamp, damage);
+    CHECK_ERROR_RETURN_LOG(surfaceRet != SURFACE_ERROR_OK, "Failed to acquire surface buffer");
+    CameraSurfaceBufferUtil::DumpSurfaceBuffer(surfaceBuffer);
+    // deep copy surfaceBuffer
+    sptr<SurfaceBuffer> newSurfaceBuffer = CameraSurfaceBufferUtil::DeepCopyBuffer(surfaceBuffer);
+    // release surfaceBuffer to bufferQueue
+    streamCapture->surface_->ReleaseBuffer(surfaceBuffer, -1);
+    CHECK_ERROR_RETURN_LOG(newSurfaceBuffer == nullptr, "DeepCopyBuffer faild");
+    int32_t captureId = CameraSurfaceBufferUtil::GetMaskCaptureId(newSurfaceBuffer);
+    CameraReportDfxUtils::GetInstance()->SetFirstBufferEndInfo(captureId);
+    CameraReportDfxUtils::GetInstance()->SetPrepareProxyStartInfo(captureId);
+    int32_t auxiliaryCount = CameraSurfaceBufferUtil::GetImageCount(newSurfaceBuffer);
+    MEDIA_INFO_LOG("OnBufferAvailable captureId:%{public}d auxiliaryCount:%{public}d", captureId, auxiliaryCount);
+    // create photoProxy
+    sptr<CameraServerPhotoProxy> cameraPhotoProxy = new CameraServerPhotoProxy();
+    cameraPhotoProxy->GetServerPhotoProxyInfo(newSurfaceBuffer);
+
+    std::string uri;
+    int32_t cameraShotType = 0;
+    std::string burstKey;
+    bool isYuv = streamCapture->isYuvCapture_;
+    MEDIA_INFO_LOG("CreateMediaLibrary captureId:%{public}d isYuv::%{public}d", captureId, isYuv);
+    if (isYuv) {
+        StartWaitAuxiliaryTask(captureId, auxiliaryCount, timestamp, newSurfaceBuffer);
+    } else {
+        streamCapture->CreateMediaLibrary(cameraPhotoProxy, uri, cameraShotType, burstKey, timestamp);
+        MEDIA_INFO_LOG("CreateMediaLibrary uri:%{public}s", uri.c_str());
+        streamCapture->OnPhotoAssetAvailable(captureId, uri, cameraShotType, burstKey);
+    }
+
+    MEDIA_INFO_LOG("ExecuteOnBufferAvailable X");
+}
+
+void PhotoAssetBufferConsumer::StartWaitAuxiliaryTask(
+    const int32_t captureId, const int32_t auxiliaryCount, int64_t timestamp, sptr<SurfaceBuffer> &newSurfaceBuffer)
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_INFO_LOG("StartWaitAuxiliaryTask E, captureId:%{public}d", captureId);
+    sptr<HStreamCapture> streamCapture = streamCapture_.promote();
+    CHECK_ERROR_RETURN_LOG(streamCapture == nullptr, "streamCapture is null");
+    {
+        std::lock_guard<std::mutex> lock(streamCapture->g_photoImageMutex);
+        // create and save photoProxy
+        streamCapture->captureIdCountMap_[captureId] = auxiliaryCount;
+        streamCapture->captureIdAuxiliaryCountMap_[captureId]++;
+        MEDIA_INFO_LOG("PhotoAssetBufferConsumer StartWaitAuxiliaryTask 4 captureId = %{public}d", captureId);
+        sptr<CameraServerPhotoProxy> photoProxy = new CameraServerPhotoProxy();
+        photoProxy->GetServerPhotoProxyInfo(newSurfaceBuffer);
+        photoProxy->SetDisplayName(CreateDisplayName(suffixJpeg));
+        streamCapture->photoProxyMap_[captureId] = photoProxy;
+        MEDIA_INFO_LOG("PhotoAssetBufferConsumer StartWaitAuxiliaryTask 5");
+
+        // create and save pictureProxy
+        std::shared_ptr<PictureIntf> pictureProxy = PictureProxy::CreatePictureProxy();
+        CHECK_ERROR_RETURN_LOG(pictureProxy == nullptr, "pictureProxy is nullptr");
+        pictureProxy->Create(newSurfaceBuffer);
+        MEDIA_INFO_LOG(
+            "PhotoAssetBufferConsumer StartWaitAuxiliaryTask MainSurface w=%{public}d, h=%{public}d, f=%{public}d",
+            newSurfaceBuffer->GetWidth(), newSurfaceBuffer->GetHeight(), newSurfaceBuffer->GetFormat());
+        streamCapture->captureIdPictureMap_[captureId] = pictureProxy;
+
+        // all AuxiliaryBuffer ready, do assamble
+        if (streamCapture->captureIdCountMap_[captureId] != 0 &&
+            streamCapture->captureIdAuxiliaryCountMap_[captureId] == streamCapture->captureIdCountMap_[captureId]) {
+            MEDIA_INFO_LOG(
+                "PhotoAssetBufferConsumer StartWaitAuxiliaryTask auxiliaryCount is complete, StopMonitor DoTimeout "
+                "captureId = %{public}d",  captureId);
+            AssembleDeferredPicture(timestamp, captureId);
+        } else {
+            // start timeer to do assamble
+            uint32_t pictureHandle;
+            constexpr uint32_t delayMilli = 1 * 1000;
+            MEDIA_INFO_LOG(
+                "PhotoAssetBufferConsumer StartWaitAuxiliaryTask GetGlobalWatchdog StartMonitor, captureId=%{public}d",
+                captureId);
+            DeferredProcessing::GetGlobalWatchdog().StartMonitor(
+                pictureHandle, delayMilli, [this, captureId, timestamp](uint32_t handle) {
+                    MEDIA_INFO_LOG(
+                        "PhotoAssetBufferConsumer PhotoAssetBufferConsumer-Watchdog executed, handle: %{public}d, "
+                        "captureId=%{public}d", static_cast<int>(handle), captureId);
+                    AssembleDeferredPicture(timestamp, captureId);
+                    auto streamCapture = streamCapture_.promote();
+                    if (streamCapture && streamCapture->captureIdAuxiliaryCountMap_.count(captureId)) {
+                        streamCapture->captureIdAuxiliaryCountMap_[captureId] = -1;
+                        MEDIA_INFO_LOG(
+                            "PhotoAssetBufferConsumer StartWaitAuxiliaryTask captureIdAuxiliaryCountMap_ = -1, "
+                            "captureId=%{public}d", captureId);
+                    }
+                });
+            streamCapture->captureIdHandleMap_[captureId] = pictureHandle;
+            MEDIA_INFO_LOG(
+                "PhotoAssetBufferConsumer StartWaitAuxiliaryTask, pictureHandle: %{public}d, captureId=%{public}d "
+                "captureIdCountMap = %{public}d, captureIdAuxiliaryCountMap = %{public}d",
+                pictureHandle, captureId, streamCapture->captureIdCountMap_[captureId],
+                streamCapture->captureIdAuxiliaryCountMap_[captureId]);
+        }
+    }
+    MEDIA_INFO_LOG("StartWaitAuxiliaryTask X");
+}
+
+inline void LoggingSurfaceBufferInfo(sptr<SurfaceBuffer> buffer, std::string bufName)
+{
+    if (buffer) {
+        MEDIA_INFO_LOG("LoggingSurfaceBufferInfo %{public}s w=%{public}d, h=%{public}d, f=%{public}d",
+            bufName.c_str(), buffer->GetWidth(), buffer->GetHeight(), buffer->GetFormat());
+    }
+};
+
+void PhotoAssetBufferConsumer::CleanAfterTransPicture(int32_t captureId)
+{
+    MEDIA_INFO_LOG("CleanAfterTransPicture E, captureId:%{public}d", captureId);
+    sptr<HStreamCapture> streamCapture = streamCapture_.promote();
+    CHECK_ERROR_RETURN_LOG(streamCapture == nullptr, "streamCapture is null");
+
+    streamCapture->photoProxyMap_.erase(captureId);
+    streamCapture->captureIdPictureMap_.erase(captureId);
+    streamCapture->captureIdGainmapMap_.erase(captureId);
+    streamCapture->captureIdDepthMap_.Erase(captureId);
+    streamCapture->captureIdExifMap_.erase(captureId);
+    streamCapture->captureIdDebugMap_.erase(captureId);
+    streamCapture->captureIdAuxiliaryCountMap_.erase(captureId);
+    streamCapture->captureIdCountMap_.erase(captureId);
+    streamCapture->captureIdHandleMap_.erase(captureId);
+}
+
+void PhotoAssetBufferConsumer::AssembleDeferredPicture(int64_t timestamp, int32_t captureId)
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_INFO_LOG("AssembleDeferredPicture E, captureId:%{public}d", captureId);
+    sptr<HStreamCapture> streamCapture = streamCapture_.promote();
+    CHECK_ERROR_RETURN_LOG(streamCapture == nullptr, "streamCapture is null");
+    std::lock_guard<std::mutex> lock(streamCapture->g_assembleImageMutex);
+    std::shared_ptr<PictureIntf> picture = streamCapture->captureIdPictureMap_[captureId];
+    if (streamCapture->captureIdExifMap_[captureId] && picture) {
+        MEDIA_ERR_LOG("AssembleDeferredPicture exifSurfaceBuffer");
+        auto buffer = streamCapture->captureIdExifMap_[captureId];
+        LoggingSurfaceBufferInfo(buffer, "exifSurfaceBuffer");
+        picture->SetExifMetadata(buffer);
+        streamCapture->captureIdExifMap_[captureId] = nullptr;
+    }
+    if (streamCapture->captureIdGainmapMap_[captureId] && picture) {
+        MEDIA_ERR_LOG("AssembleDeferredPicture exifSurfaceBuffer");
+        LoggingSurfaceBufferInfo(streamCapture->captureIdGainmapMap_[captureId], "gainmapSurfaceBuffer");
+        picture->SetAuxiliaryPicture(
+            streamCapture->captureIdGainmapMap_[captureId], CameraAuxiliaryPictureType::GAINMAP);
+        streamCapture->captureIdGainmapMap_[captureId] = nullptr;
+    }
+    sptr<SurfaceBuffer> depthBuffer = nullptr;
+    streamCapture->captureIdDepthMap_.FindOldAndSetNew(captureId, depthBuffer, nullptr);
+    if (depthBuffer && picture) {
+        MEDIA_ERR_LOG("AssembleDeferredPicture deepSurfaceBuffer");
+        LoggingSurfaceBufferInfo(depthBuffer, "deepSurfaceBuffer");
+        picture->SetAuxiliaryPicture(depthBuffer, CameraAuxiliaryPictureType::DEPTH_MAP);
+    }
+    if (streamCapture->captureIdDebugMap_[captureId] && picture) {
+        MEDIA_ERR_LOG("AssembleDeferredPicture debugSurfaceBuffer");
+        auto buffer = streamCapture->captureIdDebugMap_[captureId];
+        LoggingSurfaceBufferInfo(buffer, "debugSurfaceBuffer");
+        picture->SetMaintenanceData(buffer);
+        streamCapture->captureIdDebugMap_[captureId] = nullptr;
+    }
+    CHECK_ERROR_RETURN_LOG(!picture, "CreateMediaLibrary picture is nullptr");
+    std::string uri;
+    int32_t cameraShotType;
+    std::string burstKey = "";
+    MEDIA_DEBUG_LOG("AssembleDeferredPicture CreateMediaLibrary E");
+    streamCapture->CreateMediaLibrary(
+        picture, streamCapture->photoProxyMap_[captureId], uri, cameraShotType, burstKey, timestamp);
+    MEDIA_DEBUG_LOG("AssembleDeferredPicture CreateMediaLibrary X");
+    MEDIA_INFO_LOG("CreateMediaLibrary result %{public}s, type %{public}d", uri.c_str(), cameraShotType);
+    streamCapture->OnPhotoAssetAvailable(captureId, uri, cameraShotType, burstKey);
+    CleanAfterTransPicture(captureId);
+    MEDIA_INFO_LOG("AssembleDeferredPicture X, captureId:%{public}d", captureId);
+}
+}  // namespace CameraStandard
+}  // namespace OHOS
+// LCOV_EXCL_STOP

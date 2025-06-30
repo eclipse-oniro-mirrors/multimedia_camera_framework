@@ -83,8 +83,6 @@ void PhotoListenerTest::OnBufferAvailable()
         DeepCopyBuffer(newSurfaceBuffer, surfaceBuffer);
         photoSurface_->ReleaseBuffer(surfaceBuffer, -1);
         CHECK_ERROR_RETURN_LOG(newSurfaceBuffer == nullptr, "deep copy buffer failed");
-
-        ExecutePhotoAsset(newSurfaceBuffer, extraData, extraData.isDegradedImage == 0, timestamp);
         MEDIA_DEBUG_LOG("PhotoListenerTest on capture photo asset callback end");
     } else if (extraData.isDegradedImage == 0 && (callbackFlag_ & CAPTURE_PHOTO) != 0) {
         MEDIA_DEBUG_LOG("PhotoListenerTest on capture photo callback");

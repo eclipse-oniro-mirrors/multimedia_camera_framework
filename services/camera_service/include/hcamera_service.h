@@ -115,6 +115,8 @@ public:
     int32_t IsMechSupported(bool &isMechSupported) override;
     int32_t CreatePhotoOutput(const sptr<OHOS::IBufferProducer>& producer, int32_t format, int32_t width,
         int32_t height, sptr<IStreamCapture>& photoOutput) override;
+    int32_t CreatePhotoOutput(
+        int32_t format, int32_t width, int32_t height, sptr<IStreamCapture> &photoOutput) override;
     int32_t CreateDeferredPreviewOutput(
         int32_t format, int32_t width, int32_t height, sptr<IStreamRepeat>& previewOutput) override;
     int32_t CreatePreviewOutput(const sptr<OHOS::IBufferProducer>& producer, int32_t format, int32_t width,

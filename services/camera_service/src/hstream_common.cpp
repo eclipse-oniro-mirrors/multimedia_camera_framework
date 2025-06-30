@@ -23,34 +23,36 @@
 
 #include "camera_log.h"
 #include "camera_util.h"
-#include "display/graphic/common/v1_0/cm_color_space.h"
+#include "display/graphic/common/v2_1/cm_color_space.h"
 #include "display/composer/v1_1/display_composer_type.h"
 #include "ipc_skeleton.h"
 #include "camera_report_uitls.h"
 #include "rotate_plugin/camera_rotate_plugin.h"
 #include "camera_util.h"
+#include "image_receiver.h"
 
 namespace OHOS {
 namespace CameraStandard {
 using namespace OHOS::HDI::Camera::V1_0;
-using namespace OHOS::HDI::Display::Graphic::Common::V1_0;
+using namespace OHOS::HDI::Display::Graphic::Common::V2_1;
 using namespace OHOS::HDI::Display::Composer::V1_1;
-static const std::map<ColorSpace, CM_ColorSpaceType> g_fwkToMetaColorSpaceMap_ = {
-    {DISPLAY_P3, CM_P3_FULL},
-    {COLOR_SPACE_UNKNOWN, CM_COLORSPACE_NONE},
-    {SRGB, CM_SRGB_FULL},
-    {BT709, CM_BT709_FULL},
-    {BT2020_HLG, CM_BT2020_HLG_FULL},
-    {BT2020_PQ, CM_BT2020_PQ_FULL},
-    {P3_HLG, CM_P3_HLG_FULL},
-    {P3_PQ, CM_P3_PQ_FULL},
-    {DISPLAY_P3_LIMIT, CM_P3_LIMIT},
-    {SRGB_LIMIT, CM_SRGB_LIMIT},
-    {BT709_LIMIT, CM_BT709_LIMIT},
-    {BT2020_HLG_LIMIT, CM_BT2020_HLG_LIMIT},
-    {BT2020_PQ_LIMIT, CM_BT2020_PQ_LIMIT},
-    {P3_HLG_LIMIT, CM_P3_HLG_LIMIT},
-    {P3_PQ_LIMIT, CM_P3_PQ_LIMIT}
+using CM_ColorSpaceType_V2_1 = OHOS::HDI::Display::Graphic::Common::V2_1::CM_ColorSpaceType;
+static const std::map<ColorSpace, CM_ColorSpaceType_V2_1> g_fwkToMetaColorSpaceMap_ = {
+    {COLOR_SPACE_UNKNOWN, CM_ColorSpaceType_V2_1::CM_COLORSPACE_NONE},
+    {DISPLAY_P3, CM_ColorSpaceType_V2_1::CM_P3_FULL},
+    {SRGB, CM_ColorSpaceType_V2_1::CM_SRGB_FULL},
+    {BT709, CM_ColorSpaceType_V2_1::CM_BT709_FULL},
+    {BT2020_HLG, CM_ColorSpaceType_V2_1::CM_BT2020_HLG_FULL},
+    {BT2020_PQ, CM_ColorSpaceType_V2_1::CM_BT2020_PQ_FULL},
+    {P3_HLG, CM_ColorSpaceType_V2_1::CM_P3_HLG_FULL},
+    {P3_PQ, CM_ColorSpaceType_V2_1::CM_P3_PQ_FULL},
+    {DISPLAY_P3_LIMIT, CM_ColorSpaceType_V2_1::CM_P3_LIMIT},
+    {SRGB_LIMIT, CM_ColorSpaceType_V2_1::CM_SRGB_LIMIT},
+    {BT709_LIMIT, CM_ColorSpaceType_V2_1::CM_BT709_LIMIT},
+    {BT2020_HLG_LIMIT, CM_ColorSpaceType_V2_1::CM_BT2020_HLG_LIMIT},
+    {BT2020_PQ_LIMIT, CM_ColorSpaceType_V2_1::CM_BT2020_PQ_LIMIT},
+    {P3_HLG_LIMIT, CM_ColorSpaceType_V2_1::CM_P3_HLG_LIMIT},
+    {P3_PQ_LIMIT, CM_ColorSpaceType_V2_1::CM_P3_PQ_LIMIT},
 };
 namespace {
 static const int32_t STREAMID_BEGIN = 1;
@@ -93,6 +95,19 @@ HStreamCommon::HStreamCommon(
         fwkStreamId_, streamType_,  width_, height_, format_);
 }
 
+HStreamCommon::HStreamCommon(
+    StreamType streamType, int32_t format, int32_t width, int32_t height)
+    : format_(format), width_(width), height_(height), streamType_(streamType)
+{
+    MEDIA_DEBUG_LOG("Enter Into HStreamCommon::HStreamCommon");
+    callerToken_ = IPCSkeleton::GetCallingTokenID();
+    const int32_t metaStreamId = -1;
+    fwkStreamId_ = streamType == StreamType::METADATA ? metaStreamId : GenerateStreamId();
+    MEDIA_DEBUG_LOG("HStreamCommon Create streamId:%{public}d type:%{public}d width:%{public}d height:%{public}d"
+                    " format:%{public}d surfaceId:%{public}s",
+        fwkStreamId_, streamType_,  width_, height_, format_, surfaceId_.c_str());
+}
+
 HStreamCommon::~HStreamCommon()
 {
     MEDIA_DEBUG_LOG("Enter Into HStreamCommon::~HStreamCommon streamId is:%{public}d, streamType is:%{public}d",
@@ -105,9 +120,24 @@ void HStreamCommon::SetColorSpace(ColorSpace colorSpace)
     auto itr = g_fwkToMetaColorSpaceMap_.find(colorSpace);
     if (itr != g_fwkToMetaColorSpaceMap_.end()) {
         dataSpace_ = itr->second;
+        MEDIA_INFO_LOG("HStreamCommon::SetColorSpace fwk colorSpace:%{public}d, HDI colorSpace: %{public}d", colorSpace,
+                       dataSpace_);
     } else {
         MEDIA_ERR_LOG("HStreamCommon::SetColorSpace, %{public}d failed", static_cast<int32_t>(colorSpace));
     }
+}
+
+ColorSpace HStreamCommon::GetColorSpace()
+{
+    ColorSpace colorSpace = COLOR_SPACE_UNKNOWN;
+    for (const auto& iter: g_fwkToMetaColorSpaceMap_) {
+        if (iter.second == dataSpace_) {
+            colorSpace = iter.first;
+            break;
+        }
+    }
+    MEDIA_INFO_LOG("HStreamCommon::GetColorSpace fwk colorSpace:%{public}d", colorSpace);
+    return colorSpace;
 }
 
 int32_t HStreamCommon::LinkInput(wptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator,
@@ -192,6 +222,9 @@ void HStreamCommon::SetStreamInfo(StreamInfo_V1_1 &streamInfo)
         if (producer_ != nullptr) {
             MEDIA_DEBUG_LOG("HStreamCommon:producer is not null");
             streamInfo.v1_0.bufferQueue_ = new BufferProducerSequenceable(producer_);
+        } else if (surface_!= nullptr && surface_->GetProducer() != nullptr) {
+            MEDIA_DEBUG_LOG("HStreamCommon:surface & producer is not null");
+            streamInfo.v1_0.bufferQueue_ = new BufferProducerSequenceable(surface_->GetProducer());
         } else {
             streamInfo.v1_0.bufferQueue_ = nullptr;
         }

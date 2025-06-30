@@ -84,6 +84,7 @@ interface ICameraService{
   [ipccode 43] void CreateMechSession([in] int userId, [out] IMechSession session);
   [ipccode 44] void IsMechSupported([out] boolean isMechSupported);
   [ipccode 45] void GetCameraStorageSize([out] long size);
+  [ipccode 46] void CreatePhotoOutput([in] int format, [in] int width, [in] int height, [out] IStreamCapture photoOutput);
   [ipccode 101] void AllowOpenByOHSide([in] String cameraId, [in] int state, [inout] boolean canOpenCamera);
   [ipccode 102, oneway] void NotifyCameraState([in] String cameraId, [in] int state);
   [ipccode 104] void SetPeerCallback([in] ICameraBroker callbackFunc);

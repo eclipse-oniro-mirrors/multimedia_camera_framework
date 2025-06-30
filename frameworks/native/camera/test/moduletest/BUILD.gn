@@ -50,6 +50,7 @@ ohos_moduletest("camera_base_function_moduletest") {
     "hilog:libhilog",
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
+    "image_framework:image_native",
     "ipc:ipc_core",
     "samgr:samgr_proxy",
     "selinux_adapter:librestorecon",

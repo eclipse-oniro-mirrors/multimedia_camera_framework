@@ -60,7 +60,7 @@ void HStreamCaptureFuzzer::HStreamCaptureFuzzTest1(FuzzedDataProvider& fdp)
     StreamInfo_V1_1 streamInfo;
     fuzz_->SetStreamInfo(streamInfo);
     fuzz_->FillingPictureExtendStreamInfos(streamInfo, fdp.ConsumeIntegral<int32_t>());
-    fuzz_->SetThumbnail(isEnabled, producer);
+    fuzz_->SetThumbnail(isEnabled);
     fuzz_->EnableRawDelivery(enabled);
     std::vector<std::string> bufferNames = {"rawImage",
         "gainmapImage", "deepImage", "exifImage", "debugImage"};

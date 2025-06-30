@@ -44,6 +44,7 @@ class HStreamCommon : virtual public RefBase {
 public:
     explicit HStreamCommon(
         StreamType streamType, sptr<OHOS::IBufferProducer> producer, int32_t format, int32_t width, int32_t height);
+    explicit HStreamCommon(StreamType streamType, int32_t format, int32_t width, int32_t height);
     virtual ~HStreamCommon();
     virtual int32_t LinkInput(wptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator,
         std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility);
@@ -53,6 +54,7 @@ public:
     virtual void DumpStreamInfo(CameraInfoDumper& infoDumper) = 0;
 
     virtual void SetColorSpace(ColorSpace colorSpace) final;
+    virtual ColorSpace GetColorSpace() final;
     virtual int32_t StopStream() final;
 
     virtual int32_t GetPreparedCaptureId() final;
@@ -98,7 +100,8 @@ public:
     int32_t dataSpace_ = 0;
     std::map<int32_t, std::string> param;
     sptr<OHOS::IBufferProducer> producer_;
-
+    std::string surfaceId_ = "";
+    sptr<Surface> surface_;
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility_ = nullptr;
 
 protected:

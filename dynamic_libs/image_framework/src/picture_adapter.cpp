@@ -166,11 +166,12 @@ void PictureAdapter::UnmarshallingPicture(Parcel &data)
 
 int32_t PictureAdapter::SetExifMetadata(sptr<SurfaceBuffer> &surfaceBuffer)
 {
-    MEDIA_INFO_LOG("PictureAdapter::SetExifMetadata enter");
+    MEDIA_DEBUG_LOG("PictureAdapter::SetExifMetadata enter");
     int32_t retCode = -1;
     std::shared_ptr<Media::Picture> picture = GetPicture();
     CHECK_ERROR_RETURN_RET_LOG(!picture, retCode, "PictureAdapter::SetExifMetadata picture is nullptr");
     retCode = static_cast<int32_t>(picture->SetExifMetadata(surfaceBuffer));
+    MEDIA_INFO_LOG("PictureAdapter::SetExifMetadata retCode:%{public}d", retCode);
     return retCode;
 }
 

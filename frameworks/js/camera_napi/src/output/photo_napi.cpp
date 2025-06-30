@@ -100,7 +100,7 @@ napi_value PhotoNapi::Init(napi_env env, napi_value exports)
     return nullptr;
 }
 
-napi_value PhotoNapi::CreatePhoto(napi_env env, napi_value mainImage)
+napi_value PhotoNapi::CreatePhoto(napi_env env, napi_value mainImage, bool isRaw)
 {
     MEDIA_DEBUG_LOG("CreatePhoto is called");
     CAMERA_SYNC_TRACE;
@@ -111,8 +111,14 @@ napi_value PhotoNapi::CreatePhoto(napi_env env, napi_value mainImage)
 
     status = napi_get_reference_value(env, sConstructor_, &constructor);
     if (status == napi_ok) {
-        sMainImage_ = mainImage;
+        if (isRaw) {
+            sRawImage_ = mainImage;
+            MEDIA_DEBUG_LOG("raw image");
+        } else {
+            sMainImage_ = mainImage;
+        }
         status = napi_new_instance(env, constructor, 0, nullptr, &result);
+        sRawImage_ = nullptr;
         sMainImage_ = nullptr;
         if (status == napi_ok && result != nullptr) {
             return result;

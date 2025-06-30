@@ -18,6 +18,7 @@
 #include <mutex>
 #include <securec.h>
 
+#include "photo_output_callback.h"
 #include "camera_error_code.h"
 #include "camera_log.h"
 #include "camera_manager.h"
@@ -27,10 +28,11 @@
 #include "input/camera_device.h"
 #include "session/capture_session.h"
 #include "session/night_session.h"
-#include "picture_interface.h"
 #include "task_manager.h"
 #include "dp_utils.h"
-
+#include "display/graphic/common/v1_0/cm_color_space.h"
+#include "display/graphic/common/v2_1/cm_color_space.h"
+#include <pixel_map.h>
 using namespace std;
 
 namespace OHOS {
@@ -322,11 +324,16 @@ PhotoOutput::PhotoOutput(sptr<IBufferProducer> bufferProducer, sptr<Surface> pho
     photoSurface_ = photoSurface;
 }
 
+PhotoOutput::PhotoOutput()
+    : CaptureOutput(CAPTURE_OUTPUT_TYPE_PHOTO, StreamType::CAPTURE, nullptr)
+{
+    MEDIA_INFO_LOG("new PhotoOutput");
+}
+
 PhotoOutput::~PhotoOutput()
 {
     MEDIA_DEBUG_LOG("Enter Into PhotoOutput::~PhotoOutput()");
     defaultCaptureSetting_ = nullptr;
-    ClearTaskManager();
 }
 
 void PhotoOutput::SetNativeSurface(bool isNativeSurface)
@@ -466,15 +473,103 @@ void PhotoOutput::SetCallback(std::shared_ptr<PhotoStateCallback> callback)
     }
 }
 
-void PhotoOutput::SetThumbnailListener(sptr<IBufferConsumerListener>& listener)
+void PhotoOutput::SetPhotoAvailableCallback(std::shared_ptr<PhotoAvailableCallback> callback)
 {
-    if (thumbnailSurface_) {
-        SurfaceError ret = thumbnailSurface_->RegisterConsumerListener(listener);
-        CHECK_ERROR_PRINT_LOG(ret != SURFACE_ERROR_OK,
-            "PhotoOutput::SetThumbnailListener Surface consumer listener registration failed");
+    MEDIA_DEBUG_LOG("SetPhotoAvailableCallback E");
+    CHECK_ERROR_RETURN_LOG(callback == nullptr, "photo callback nullptr");
+    std::lock_guard<std::mutex> lock(outputCallbackMutex_);
+    appPhotoCallback_ = nullptr;
+    svcPhotoCallback_ = nullptr;
+    appPhotoCallback_ = callback;
+    svcPhotoCallback_ = new (std::nothrow) HStreamCapturePhotoCallbackImpl(this);
+    CHECK_ERROR_RETURN_LOG(svcPhotoCallback_ == nullptr, "new photo svc callback err");
+    auto itemStream = CastStream<IStreamCapture>(GetStream());
+    int32_t errorCode = CAMERA_OK;
+    if (itemStream) {
+        errorCode = itemStream->SetPhotoAvailableCallback(svcPhotoCallback_);
     } else {
-        MEDIA_ERR_LOG("PhotoOutput SetThumbnailListener surface is null");
+        MEDIA_ERR_LOG("SetPhotoAvailableCallback itemStream is nullptr");
     }
+    if (errorCode != CAMERA_OK) {
+        MEDIA_ERR_LOG("SetPhotoAvailableCallback Failed to register callback, errorCode: %{public}d", errorCode);
+        svcPhotoCallback_ = nullptr;
+        appPhotoCallback_ = nullptr;
+    }
+    MEDIA_DEBUG_LOG("SetPhotoAvailableCallback X");
+}
+
+void PhotoOutput::UnSetPhotoAvailableCallback()
+{
+    MEDIA_DEBUG_LOG("UnSetPhotoAvailableCallback E");
+    std::lock_guard<std::mutex> lock(outputCallbackMutex_);
+    appPhotoCallback_ = nullptr;
+    svcPhotoCallback_ = nullptr;
+}
+
+void PhotoOutput::SetPhotoAssetAvailableCallback(std::shared_ptr<PhotoAssetAvailableCallback> callback)
+{
+    MEDIA_DEBUG_LOG("SetPhotoAssetAvailableCallback E");
+    CHECK_ERROR_RETURN_LOG(callback == nullptr, "photoAsset callback nullptr");
+    std::lock_guard<std::mutex> lock(outputCallbackMutex_);
+    appPhotoAssetCallback_ = nullptr;
+    svcPhotoAssetCallback_ = nullptr;
+    appPhotoAssetCallback_ = callback;
+    svcPhotoAssetCallback_ = new (std::nothrow) HStreamCapturePhotoAssetCallbackImpl(this);
+    CHECK_ERROR_RETURN_LOG(svcPhotoAssetCallback_ == nullptr, "new photoAsset svc callback err");
+    auto itemStream = CastStream<IStreamCapture>(GetStream());
+    int32_t errorCode = CAMERA_OK;
+    if (itemStream) {
+        errorCode = itemStream->SetPhotoAssetAvailableCallback(svcPhotoAssetCallback_);
+    } else {
+        MEDIA_ERR_LOG("SetPhotoAssetAvailableCallback itemStream is nullptr");
+    }
+    if (errorCode != CAMERA_OK) {
+        MEDIA_ERR_LOG("SetPhotoAssetAvailableCallback Failed to register callback, errorCode: %{public}d", errorCode);
+        svcPhotoAssetCallback_ = nullptr;
+        appPhotoAssetCallback_ = nullptr;
+    }
+    MEDIA_DEBUG_LOG("SetPhotoAssetAvailableCallback X");
+}
+
+void PhotoOutput::UnSetPhotoAssetAvailableCallback()
+{
+    MEDIA_DEBUG_LOG("UnSetPhotoAssetAvailableCallback E");
+    std::lock_guard<std::mutex> lock(outputCallbackMutex_);
+    appPhotoAssetCallback_ = nullptr;
+    svcPhotoAssetCallback_ = nullptr;
+}
+
+void PhotoOutput::SetThumbnailCallback(std::shared_ptr<ThumbnailCallback> callback)
+{
+    MEDIA_DEBUG_LOG("SetThumbnailCallback E");
+    CHECK_ERROR_RETURN_LOG(callback == nullptr, "photoAsset callback nullptr");
+    std::lock_guard<std::mutex> lock(outputCallbackMutex_);
+    appThumbnailCallback_ = nullptr;
+    svcThumbnailCallback_ = nullptr;
+    appThumbnailCallback_ = callback;
+    svcThumbnailCallback_ = new (std::nothrow) HStreamCaptureThumbnailCallbackImpl(this);
+    CHECK_ERROR_RETURN_LOG(svcThumbnailCallback_ == nullptr, "new photoAsset svc callback err");
+    auto itemStream = CastStream<IStreamCapture>(GetStream());
+    int32_t errorCode = CAMERA_OK;
+    if (itemStream) {
+        errorCode = itemStream->SetThumbnailCallback(svcThumbnailCallback_);
+    } else {
+        MEDIA_ERR_LOG("SetThumbnailCallback itemStream is nullptr");
+    }
+    if (errorCode != CAMERA_OK) {
+        MEDIA_ERR_LOG("SetThumbnailCallback Failed to register callback, errorCode: %{public}d", errorCode);
+        svcThumbnailCallback_ = nullptr;
+        appThumbnailCallback_ = nullptr;
+    }
+    MEDIA_DEBUG_LOG("SetThumbnailCallback X");
+}
+
+void PhotoOutput::UnSetThumbnailAvailableCallback()
+{
+    MEDIA_DEBUG_LOG("UnSetThumbnailAvailableCallback E");
+    std::lock_guard<std::mutex> lock(outputCallbackMutex_);
+    appThumbnailCallback_ = nullptr;
+    svcThumbnailCallback_ = nullptr;
 }
 
 int32_t PhotoOutput::SetThumbnail(bool isEnabled)
@@ -490,12 +585,9 @@ int32_t PhotoOutput::SetThumbnail(bool isEnabled)
     cameraObj = inputDevice->GetCameraDeviceInfo();
     CHECK_ERROR_RETURN_RET_LOG(cameraObj == nullptr, SESSION_NOT_RUNNING,
         "PhotoOutput SetThumbnail error!, cameraObj is nullptr");
-    !thumbnailSurface_ && (thumbnailSurface_ = Surface::CreateSurfaceAsConsumer("quickThumbnail"));
-    CHECK_ERROR_RETURN_RET_LOG(thumbnailSurface_ == nullptr, SERVICE_FATL_ERROR,
-        "PhotoOutput SetThumbnail Failed to create surface");
     auto streamCapturePtr = CastStream<IStreamCapture>(GetStream());
     CHECK_ERROR_RETURN_RET(streamCapturePtr == nullptr, SERVICE_FATL_ERROR);
-    return streamCapturePtr->SetThumbnail(isEnabled, thumbnailSurface_->GetProducer());
+    return streamCapturePtr->SetThumbnail(isEnabled);
 }
 
 int32_t PhotoOutput::EnableRawDelivery(bool enabled)
@@ -509,13 +601,6 @@ int32_t PhotoOutput::EnableRawDelivery(bool enabled)
     CHECK_ERROR_RETURN_RET_LOG(streamCapturePtr == nullptr, SERVICE_FATL_ERROR,
         "PhotoOutput::EnableRawDelivery Failed to GetStream");
     int32_t ret = CAMERA_OK;
-    if (rawPhotoSurface_ == nullptr) {
-        std::string bufferName = "rawImage";
-        rawPhotoSurface_ = Surface::CreateSurfaceAsConsumer(bufferName);
-        ret = streamCapturePtr->SetBufferProducerInfo(bufferName, rawPhotoSurface_->GetProducer());
-        CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, SERVICE_FATL_ERROR,
-            "PhotoOutput::EnableRawDelivery Failed to SetBufferProducerInfo");
-    }
     if (session->EnableRawDelivery(enabled) == CameraErrorCode::SUCCESS) {
         ret = streamCapturePtr->EnableRawDelivery(enabled);
         CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, SERVICE_FATL_ERROR,
@@ -539,15 +624,6 @@ int32_t PhotoOutput::EnableMovingPhoto(bool enabled)
         "PhotoOutput::EnableMovingPhoto Failed");
     return ret;
 }
-int32_t PhotoOutput::SetRawPhotoInfo(sptr<Surface> &surface)
-{
-    CAMERA_SYNC_TRACE;
-    auto streamCapturePtr = CastStream<IStreamCapture>(GetStream());
-    CHECK_ERROR_RETURN_RET_LOG(streamCapturePtr == nullptr, SERVICE_FATL_ERROR,
-        "PhotoOutput::SetRawPhotoInfo Failed to create surface");
-    rawPhotoSurface_ = surface;
-    return streamCapturePtr->SetBufferProducerInfo("rawImage", rawPhotoSurface_->GetProducer());
-}
 
 std::shared_ptr<PhotoStateCallback> PhotoOutput::GetApplicationCallback()
 {
@@ -555,14 +631,22 @@ std::shared_ptr<PhotoStateCallback> PhotoOutput::GetApplicationCallback()
     return appCallback_;
 }
 
-void PhotoOutput::AcquireBufferToPrepareProxy(int32_t captureId)
+std::shared_ptr<ThumbnailCallback> PhotoOutput::GetAppThumbnailCallback()
 {
-    auto stream = GetStream();
-    sptr<IStreamCapture> itemStream = static_cast<IStreamCapture*>(stream.GetRefPtr());
-    CHECK_ERROR_PRINT_LOG(itemStream == nullptr, "PhotoOutput::AcquireBufferToPrepareProxy() itemStream is nullptr");
-    if (itemStream) {
-        itemStream->AcquireBufferToPrepareProxy(captureId);
-    }
+    std::lock_guard<std::mutex> lock(outputCallbackMutex_);
+    return appThumbnailCallback_;
+}
+
+std::shared_ptr<PhotoAvailableCallback> PhotoOutput::GetAppPhotoCallback()
+{
+    std::lock_guard<std::mutex> lock(outputCallbackMutex_);
+    return appPhotoCallback_;
+}
+
+std::shared_ptr<PhotoAssetAvailableCallback> PhotoOutput::GetAppPhotoAssetCallback()
+{
+    std::lock_guard<std::mutex> lock(outputCallbackMutex_);
+    return appPhotoAssetCallback_;
 }
 
 void PhotoOutput::ClearTaskManager()
@@ -675,15 +759,13 @@ int32_t PhotoOutput::CreateStream()
     auto stream = GetStream();
     CHECK_ERROR_RETURN_RET_LOG(stream != nullptr, CameraErrorCode::OPERATION_NOT_ALLOWED,
         "PhotoOutput::CreateStream stream is not null");
-    auto producer = GetBufferProducer();
-    CHECK_ERROR_RETURN_RET_LOG(producer == nullptr, CameraErrorCode::OPERATION_NOT_ALLOWED,
-        "PhotoOutput::CreateStream producer is null");
+    std::string surfaceId = GetPhotoSurfaceId();
     sptr<IStreamCapture> streamPtr = nullptr;
     auto photoProfile = GetPhotoProfile();
     CHECK_ERROR_RETURN_RET_LOG(photoProfile == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "PhotoOutput::CreateStream photoProfile is null");
 
-    int32_t res = CameraManager::GetInstance()->CreatePhotoOutputStream(streamPtr, *photoProfile, GetBufferProducer());
+    int32_t res = CameraManager::GetInstance()->CreatePhotoOutputStream(streamPtr, *photoProfile, surfaceId);
     CHECK_ERROR_PRINT_LOG(res != CameraErrorCode::SUCCESS,
         "PhotoOutput::CreateStream fail! error code :%{public}d", res);
     SetStream(streamPtr);
@@ -711,7 +793,6 @@ int32_t PhotoOutput::Release()
     CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "PhotoOutput Failed to release!, errCode: %{public}d", errCode);
     defaultCaptureSetting_ = nullptr;
     CaptureOutput::Release();
-    ClearTaskManager();
     return ServiceToCameraError(errCode);
 }
 
@@ -952,21 +1033,6 @@ int32_t PhotoOutput::SetMovingPhotoVideoCodecType(int32_t videoCodecType)
     CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "PhotoOutput Failed to SetMovingPhotoVideoCodecType!, "
         "errCode: %{public}d", errCode);
     return ServiceToCameraError(errCode);
-}
-
-bool PhotoOutput::UpdateMediaLibraryPhotoAssetProxy(sptr<CameraPhotoProxy> photoProxy)
-{
-    int32_t errCode = CAMERA_UNKNOWN_ERROR;
-    auto streamCapturePtr = CastStream<IStreamCapture>(GetStream());
-    CHECK_ERROR_RETURN_RET_LOG(!streamCapturePtr, false,
-        "PhotoOutput:UpdateMediaLibraryPhotoAssetProxy() itemStream is nullptr");
-    photoProxy->photoWidth_ = 0;
-    photoProxy->photoHeight_ = 0;
-    photoProxy->fileSize_ = 0;
-    errCode = streamCapturePtr->UpdateMediaLibraryPhotoAssetProxy(photoProxy);
-    CHECK_ERROR_RETURN_RET_LOG(errCode != CAMERA_OK, false,
-        "Failed to UpdateMediaLibraryPhotoAssetProxy! errCode: %{public}d", errCode);
-    return true;
 }
 
 void PhotoOutput::CameraServerDied(pid_t pid)
@@ -1254,40 +1320,6 @@ void PhotoOutput::NotifyOfflinePhotoOutput(int32_t captureId)
             }
             callback->OnOfflineDeliveryFinished(captureId);
         }
-    }
-}
-
-void PhotoOutput::CreateMediaLibrary(sptr<CameraPhotoProxy> photoProxy, std::string &uri, int32_t &cameraShotType,
-    std::string &burstKey, int64_t timestamp)
-{
-    MEDIA_INFO_LOG("PhotoOutput::CreateMediaLibrary E");
-    CAMERA_SYNC_TRACE;
-    int32_t errorCode = CAMERA_OK;
-    auto streamCapturePtr = CastStream<IStreamCapture>(GetStream());
-    if (streamCapturePtr) {
-        errorCode = streamCapturePtr->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
-        CHECK_ERROR_PRINT_LOG(errorCode != CAMERA_OK, "Failed to create media library, errorCode: %{public}d",
-                              errorCode);
-    } else {
-        MEDIA_ERR_LOG("PhotoOutput::CreateMediaLibrary streamCapturePtr is nullptr");
-    }
-    MEDIA_INFO_LOG("PhotoOutput::CreateMediaLibrary X");
-}
-
-void PhotoOutput::CreateMediaLibrary(std::shared_ptr<PictureIntf> picture, sptr<CameraPhotoProxy> photoProxy,
-    std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp)
-{
-    MEDIA_INFO_LOG("PhotoOutput::CreateMediaLibrary E");
-    CAMERA_SYNC_TRACE;
-    int32_t errorCode = CAMERA_OK;
-    auto streamCapturePtr = CastStream<IStreamCapture>(GetStream());
-    if (streamCapturePtr) {
-        errorCode = streamCapturePtr->CreateMediaLibrary(picture, photoProxy, uri, cameraShotType,
-                                                         burstKey, timestamp);
-        CHECK_ERROR_PRINT_LOG(errorCode != CAMERA_OK, "Failed to create media library, errorCode: %{public}d",
-                              errorCode);
-    } else {
-        MEDIA_ERR_LOG("PhotoOutput::CreateMediaLibrary streamCapturePtr is nullptr");
     }
 }
 } // namespace CameraStandard

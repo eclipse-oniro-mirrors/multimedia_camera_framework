@@ -533,6 +533,19 @@ int CameraManager::CreatePhotoOutputWithoutProfile(sptr<IBufferProducer> surface
     return CameraErrorCode::SUCCESS;
 }
 
+int CameraManager::CreatePhotoOutputWithoutProfile(std::string surfaceId, sptr<PhotoOutput>* pPhotoOutput)
+{
+    CAMERA_SYNC_TRACE;
+    auto serviceProxy = GetServiceProxy();
+    CHECK_ERROR_RETURN_RET_LOG((serviceProxy == nullptr), CameraErrorCode::INVALID_ARGUMENT,
+        "CreatePhotoOutputWithoutProfile serviceProxy is null");
+    sptr<PhotoOutput> photoOutput = new (std::nothrow) PhotoOutput();
+    CHECK_ERROR_RETURN_RET(photoOutput == nullptr, CameraErrorCode::SERVICE_FATL_ERROR);
+    photoOutput->AddTag(CaptureOutput::DYNAMIC_PROFILE);
+    *pPhotoOutput = photoOutput;
+    return CameraErrorCode::SUCCESS;
+}
+
 int CameraManager::CreatePhotoOutput(Profile &profile, sptr<IBufferProducer> &surface, sptr<PhotoOutput> *pPhotoOutput)
     __attribute__((no_sanitize("cfi")))
 {
@@ -579,6 +592,31 @@ int CameraManager::CreatePhotoOutput(Profile &profile, sptr<IBufferProducer> &su
     CHECK_ERROR_RETURN_RET_LOG(retCode != CAMERA_OK, ServiceToCameraError(retCode),
         "Failed to get stream capture object from hcamera service!, %{public}d", retCode);
     sptr<PhotoOutput> photoOutput = new(std::nothrow) PhotoOutput(surfaceProducer, photoSurface);
+    CHECK_ERROR_RETURN_RET(photoOutput == nullptr, CameraErrorCode::SERVICE_FATL_ERROR);
+    photoOutput->SetStream(streamCapture);
+    photoOutput->SetPhotoProfile(profile);
+    *pPhotoOutput = photoOutput;
+    return CameraErrorCode::SUCCESS;
+}
+
+int CameraManager::CreatePhotoOutput(Profile& profile, sptr<PhotoOutput>* pPhotoOutput)
+{
+    CAMERA_SYNC_TRACE;
+    auto serviceProxy = GetServiceProxy();
+    CHECK_ERROR_RETURN_RET_LOG(serviceProxy == nullptr, CameraErrorCode::INVALID_ARGUMENT,
+        "CreatePhotoOutput serviceProxy is null or PhotoOutputSurface/profile is null");
+    CHECK_ERROR_RETURN_RET_LOG((profile.GetCameraFormat() == CAMERA_FORMAT_INVALID) || (profile.GetSize().width == 0)
+        || (profile.GetSize().height == 0), CameraErrorCode::INVALID_ARGUMENT,
+        "CreatePhotoOutput invalid fomrat or width or height is zero");
+    // to adapter yuv photo
+    CameraFormat yuvFormat = profile.GetCameraFormat();
+    camera_format_t metaFormat = GetCameraMetadataFormat(yuvFormat);
+    sptr<IStreamCapture> streamCapture = nullptr;
+    int32_t retCode =
+        serviceProxy->CreatePhotoOutput(metaFormat, profile.GetSize().width, profile.GetSize().height, streamCapture);
+    CHECK_ERROR_RETURN_RET_LOG(retCode != CAMERA_OK, ServiceToCameraError(retCode),
+        "Failed to get stream capture object from hcamera service!, %{public}d", retCode);
+    sptr<PhotoOutput> photoOutput = new(std::nothrow) PhotoOutput();
     CHECK_ERROR_RETURN_RET(photoOutput == nullptr, CameraErrorCode::SERVICE_FATL_ERROR);
     photoOutput->SetStream(streamCapture);
     photoOutput->SetPhotoProfile(profile);
@@ -669,6 +707,22 @@ int32_t CameraManager::CreatePhotoOutputStream(
     auto metaFormat = GetCameraMetadataFormat(yuvFormat);
     auto retCode = serviceProxy->CreatePhotoOutput(
         producer, metaFormat, profile.GetSize().width, profile.GetSize().height, streamPtr);
+    CHECK_ERROR_RETURN_RET_LOG(retCode != CAMERA_OK, ServiceToCameraError(retCode),
+        "CameraManager::CreatePhotoOutputStream Failed to get stream capture object from hcamera service! "
+        "%{public}d", retCode);
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t CameraManager::CreatePhotoOutputStream(
+    sptr<IStreamCapture>& streamPtr, Profile& profile, std::string surfaceId)
+{
+    auto serviceProxy = GetServiceProxy();
+    CHECK_ERROR_RETURN_RET_LOG(serviceProxy == nullptr, CameraErrorCode::INVALID_ARGUMENT,
+                               "CameraManager::CreatePhotoOutputStream serviceProxy is null or producer is null");
+    CameraFormat yuvFormat = profile.GetCameraFormat();
+    auto metaFormat = GetCameraMetadataFormat(yuvFormat);
+    auto retCode =
+        serviceProxy->CreatePhotoOutput(metaFormat, profile.GetSize().width, profile.GetSize().height, streamPtr);
     CHECK_ERROR_RETURN_RET_LOG(retCode != CAMERA_OK, ServiceToCameraError(retCode),
         "CameraManager::CreatePhotoOutputStream Failed to get stream capture object from hcamera service! "
         "%{public}d", retCode);

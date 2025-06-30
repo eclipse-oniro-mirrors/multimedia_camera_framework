@@ -1495,7 +1495,7 @@ void HCaptureSession::SetCameraDevice(sptr<HCameraDevice> device)
     }
 }
 
-std::string HCaptureSession::CreateDisplayName()
+std::string HCaptureSession::CreateDisplayName(const std::string& suffix)
 {
     struct tm currentTime;
     std::string formattedTime = "";

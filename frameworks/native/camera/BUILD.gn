@@ -54,6 +54,8 @@ ohos_shared_library("camera_framework") {
     "${multimedia_camera_framework_path}/dynamic_libs/image_framework/src/picture_adapter.cpp",
     "${multimedia_camera_framework_path}/services/camera_service/binder/base/src/icamera_util.cpp",
     "${multimedia_camera_framework_path}/services/camera_service/binder/client/src/hcamera_broker_proxy.cpp",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/server/src/hstream_capture_photo_callback_stub.cpp",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/server/src/hstream_capture_thumbnail_callback_stub.cpp",
     "${multimedia_camera_framework_path}/services/camera_service/binder/server/src/hcamera_listener_stub.cpp",
     "src/ability/camera_ability.cpp",
     "src/ability/camera_ability_builder.cpp",
@@ -69,10 +71,10 @@ ohos_shared_library("camera_framework") {
     "src/output/camera_output_capability.cpp",
     "src/output/camera_photo_proxy.cpp",
     "src/output/capture_output.cpp",
-    "src/output/deferred_photo_proxy.cpp",
     "src/output/depth_data_output.cpp",
     "src/output/metadata_output.cpp",
     "src/output/photo_output.cpp",
+    "src/output/photo_output_callback.cpp",
     "src/output/preview_output.cpp",
     "src/output/sketch_wrapper.cpp",
     "src/output/video_output.cpp",
@@ -109,8 +111,18 @@ ohos_shared_library("camera_framework") {
     "-fPIC",
     "-Wall",
     "-DSUPPORT_CAMERA_AUTH",
+    "-DIMAGE_COLORSPACE_FLAG",
     "-Os",
+    "-fno-merge-all-constants",
+    "-flto",
+    "-ffunction-sections"
   ]
+
+  ldflags = [
+    "-Wl,--gc-sections",
+    "-fPIE",
+  ]
+  
   if (target_cpu == "arm") {
     cflags += [ "-DBINDER_IPC_32BIT" ]
   }
@@ -151,6 +163,7 @@ ohos_shared_library("camera_framework") {
     "drivers_interface_camera:libcamera_proxy_1.3",
     "drivers_interface_camera:libmap_data_sequenceable_1.0",
     "drivers_interface_display:libdisplay_commontype_proxy_1.0",
+    "graphic_2d:color_manager",
     "graphic_2d:librender_service_client",
     "graphic_surface:buffer_handle",
     "graphic_surface:surface",

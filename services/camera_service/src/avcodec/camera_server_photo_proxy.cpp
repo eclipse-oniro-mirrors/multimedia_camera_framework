@@ -21,6 +21,8 @@
 #include "camera_log.h"
 #include "datetime_ex.h"
 #include "camera_server_photo_proxy.h"
+#include "camera_surface_buffer_util.h"
+#include "format.h"
 #include "photo_proxy.h"
 
 namespace OHOS {
@@ -42,8 +44,8 @@ CameraServerPhotoProxy::CameraServerPhotoProxy()
     isDeferredPhoto_ = 0;
     isHighQuality_ = false;
     mode_ = 0;
-    longitude_ = -1.0;
-    latitude_ = -1.0;
+    longitude_ = 0.0;
+    latitude_ = 0.0;
     captureId_ = 0;
     burstSeqId_ = -1;
     burstKey_ = "";
@@ -57,15 +59,13 @@ CameraServerPhotoProxy::~CameraServerPhotoProxy()
 {
     std::lock_guard<std::mutex> lock(mutex_);
     MEDIA_INFO_LOG("~CameraServerPhotoProxy");
-    CameraFreeBufferHandle(const_cast<BufferHandle*>(bufferHandle_));
     fileDataAddr_ = nullptr;
     fileSize_ = 0;
 }
 
 int32_t CameraServerPhotoProxy::CameraFreeBufferHandle(BufferHandle *handle)
 {
-    CHECK_ERROR_RETURN_RET_LOG(handle == nullptr, 0,
-        "CameraServerPhotoProxy::CameraFreeBufferHandle with nullptr handle");
+    CHECK_ERROR_RETURN_RET_LOG(handle == nullptr, 0, "CameraFreeBufferHandle with nullptr handle");
     if (handle->fd >= 0) {
         close(handle->fd);
         handle->fd = -1;
@@ -81,7 +81,7 @@ int32_t CameraServerPhotoProxy::CameraFreeBufferHandle(BufferHandle *handle)
     return 0;
 }
 
-std::string CreateDisplayName()
+std::string CreateDisplayName(const std::string& suffix)
 {
     struct tm currentTime;
     std::string formattedTime = "";
@@ -109,6 +109,34 @@ std::string CreateDisplayName()
     return formattedTime;
 }
 
+std::string CreateVideoDisplayName()
+{
+    struct tm currentTime;
+    std::string formattedTime = "";
+    if (GetSystemCurrentTime(&currentTime)) {
+        std::stringstream ss;
+        ss << videoPrefix << std::setw(yearWidth) << std::setfill(placeholder) << currentTime.tm_year + startYear
+           << std::setw(otherWidth) << std::setfill(placeholder) << (currentTime.tm_mon + 1)
+           << std::setw(otherWidth) << std::setfill(placeholder) << currentTime.tm_mday
+           << connector << std::setw(otherWidth) << std::setfill(placeholder) << currentTime.tm_hour
+           << std::setw(otherWidth) << std::setfill(placeholder) << currentTime.tm_min
+           << std::setw(otherWidth) << std::setfill(placeholder) << currentTime.tm_sec;
+        formattedTime = ss.str();
+    } else {
+        MEDIA_ERR_LOG("Failed to get current time.");
+    }
+    if (g_lastDisplayName == formattedTime) {
+        g_saveIndex++;
+        formattedTime = formattedTime + connector + std::to_string(g_saveIndex);
+        MEDIA_INFO_LOG("CreateVideoDisplayName is %{private}s", formattedTime.c_str());
+        return formattedTime;
+    }
+    g_lastDisplayName = formattedTime;
+    g_saveIndex = 0;
+    MEDIA_INFO_LOG("CreateVideoDisplayName is %{private}s", formattedTime.c_str());
+    return formattedTime;
+}
+
 void CameraServerPhotoProxy::SetDisplayName(std::string displayName)
 {
     displayName_ = displayName;
@@ -133,6 +161,48 @@ void CameraServerPhotoProxy::ReadFromParcel(MessageParcel &parcel)
     cloudImageEnhanceFlag_ = parcel.ReadUint32();
     bufferHandle_ = ReadBufferHandle(parcel);
     MEDIA_INFO_LOG("CameraServerPhotoProxy::ReadFromParcel");
+}
+
+void CameraServerPhotoProxy::GetServerPhotoProxyInfo(sptr<SurfaceBuffer>& surfaceBuffer)
+{
+    MEDIA_INFO_LOG("GetServerPhotoProxyInfo E");
+    CHECK_ERROR_RETURN_LOG(surfaceBuffer == nullptr, "surfaceBuffer is null");
+    std::lock_guard<std::mutex> lock(mutex_);
+    captureId_ = CameraSurfaceBufferUtil::GetCaptureId(surfaceBuffer);
+    BufferHandle *bufferHandle = surfaceBuffer->GetBufferHandle();
+    bufferHandle_ = bufferHandle;
+    CHECK_ERROR_PRINT_LOG(bufferHandle == nullptr, "invalid bufferHandle");
+    format_ = bufferHandle->format;
+    std::string imageIdStr = std::to_string(CameraSurfaceBufferUtil::GetImageId(surfaceBuffer));
+    photoId_ = imageIdStr;
+    photoWidth_ = CameraSurfaceBufferUtil::GetDataWidth(surfaceBuffer);
+    photoHeight_ = CameraSurfaceBufferUtil::GetDataHeight(surfaceBuffer);
+    deferredProcType_ = CameraSurfaceBufferUtil::GetDeferredProcessingType(surfaceBuffer);
+    isDeferredPhoto_ = 1;
+    bool isHighQuality = (CameraSurfaceBufferUtil::GetIsDegradedImage(surfaceBuffer) == 0);
+    isHighQuality_ = isHighQuality;
+    if (isHighQuality) { // get cloudImageEnhanceFlag for 100 picture
+        cloudImageEnhanceFlag_ = CameraSurfaceBufferUtil::GetCloudImageEnhanceFlag(surfaceBuffer);
+    }
+    uint64_t size = static_cast<uint64_t>(surfaceBuffer->GetSize());
+    int32_t extraDataSize = CameraSurfaceBufferUtil::GetDataSize(surfaceBuffer);
+    if (extraDataSize <= 0) {
+        MEDIA_INFO_LOG("ExtraGet dataSize Ok, but size <= 0");
+    } else if (static_cast<uint64_t>(extraDataSize) > size) {
+        MEDIA_INFO_LOG("ExtraGet dataSize Ok,but dataSize %{public}d is bigger than bufferSize %{public}" PRIu64,
+            extraDataSize, size);
+    } else {
+        MEDIA_INFO_LOG("ExtraGet dataSize %{public}d", extraDataSize);
+        size = static_cast<uint64_t>(extraDataSize);
+    }
+    fileSize_ = size;
+    burstSeqId_ = CameraSurfaceBufferUtil::GetBurstSequenceId(surfaceBuffer);
+    imageFormat_ = CameraSurfaceBufferUtil::GetDeferredImageFormat(surfaceBuffer);
+    latitude_ = 0.0;
+    longitude_ = 0.0;
+    MEDIA_INFO_LOG("GetServerPhotoProxyInfo X,cId:%{public}d pId:%{public}s w:%{public}d h:%{public}d f:%{public}d "
+                   "s:%{public}zu dT:%{public}d iH:%{public}d",
+        captureId_, photoId_.c_str(), photoWidth_, photoHeight_, format_, fileSize_, deferredProcType_, isHighQuality_);
 }
 
 int32_t CameraServerPhotoProxy::GetCaptureId()
@@ -205,8 +275,7 @@ int32_t CameraServerPhotoProxy::GetHeight()
 PhotoFormat CameraServerPhotoProxy::GetFormat()
 {
     auto iter = formatMap.find(imageFormat_);
-    CHECK_ERROR_RETURN_RET(iter != formatMap.end(), iter->second);
-    return Media::PhotoFormat::RGBA;
+    return iter != formatMap.end() ? iter->second : Media::PhotoFormat::RGBA;
 }
 
 PhotoQuality CameraServerPhotoProxy::GetPhotoQuality()
@@ -217,10 +286,11 @@ PhotoQuality CameraServerPhotoProxy::GetPhotoQuality()
 void CameraServerPhotoProxy::Release()
 {
     MEDIA_INFO_LOG("CameraServerPhotoProxy release enter");
-    if (isMmaped_ && bufferHandle_ != nullptr) {
+    bool isMmappedAndBufferValid = isMmaped_ && bufferHandle_ != nullptr;
+    if (isMmappedAndBufferValid) {
         munmap(fileDataAddr_, bufferHandle_->size);
     } else {
-        MEDIA_ERR_LOG("~CameraServerPhotoProxy munmap failed");
+        MEDIA_ERR_LOG("CameraServerPhotoProxy munmap failed");
     }
 }
 
@@ -232,6 +302,10 @@ std::string CameraServerPhotoProxy::GetTitle()
 std::string CameraServerPhotoProxy::GetExtension()
 {
     std::string suffix = suffixJpeg;
+    if (isVideo_) {
+        suffix = suffixMp4;
+        return suffix;
+    }
     switch (GetFormat()) {
         case PhotoFormat::HEIF : {
             suffix = suffixHeif;
@@ -249,6 +323,15 @@ std::string CameraServerPhotoProxy::GetExtension()
     return suffix;
 }
 
+void CameraServerPhotoProxy::SetLatitude(double latitude)
+{
+    latitude_ = latitude;
+}
+void CameraServerPhotoProxy::SetLongitude(double longitude)
+{
+    longitude_ = longitude;
+}
+
 double CameraServerPhotoProxy::GetLatitude()
 {
     return latitude_;
@@ -260,8 +343,7 @@ double CameraServerPhotoProxy::GetLongitude()
 int32_t CameraServerPhotoProxy::GetShootingMode()
 {
     auto iter = modeMap.find(mode_);
-    CHECK_ERROR_RETURN_RET(iter != modeMap.end(), iter->second);
-    return 0;
+    return iter != modeMap.end() ? iter->second : 0;
 }
 void CameraServerPhotoProxy::SetShootingMode(int32_t mode)
 {
@@ -294,6 +376,11 @@ uint32_t CameraServerPhotoProxy::GetCloudImageEnhanceFlag()
     return cloudImageEnhanceFlag_;
 }
 
+void CameraServerPhotoProxy::SetIsVideo(bool isVideo)
+{
+    isVideo_ = isVideo;
+}
+
 void CameraServerPhotoProxy::SetStageVideoTaskStatus(uint8_t status)
 {
     stageVideoTaskStatus_ = static_cast<int32_t>(status);
@@ -302,8 +389,18 @@ void CameraServerPhotoProxy::SetStageVideoTaskStatus(uint8_t status)
 
 int32_t CameraServerPhotoProxy::GetStageVideoTaskStatus()
 {
-    MEDIA_DEBUG_LOG("%{public}s get value: %{public}u", __FUNCTION__, stageVideoTaskStatus_);
+    MEDIA_DEBUG_LOG("%{public}s get value: %{public}d", __FUNCTION__, stageVideoTaskStatus_);
     return stageVideoTaskStatus_;
+}
+
+void CameraServerPhotoProxy::SetFormat(int32_t format)
+{
+    format_ = format;
+}
+
+void CameraServerPhotoProxy::SetImageFormat(int32_t imageFormat)
+{
+    imageFormat_ = imageFormat;
 }
 } // namespace CameraStandard
 } // namespace OHOS

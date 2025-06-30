@@ -112,6 +112,7 @@ public:
     };
     explicit CaptureOutput(CaptureOutputType outputType, StreamType streamType, sptr<IBufferProducer> bufferProducer,
         sptr<IStreamCommon> stream);
+    explicit CaptureOutput(CaptureOutputType outputType, StreamType streamType, sptr<IStreamCommon> stream);
     virtual ~CaptureOutput();
 
     /**
@@ -150,6 +151,7 @@ public:
 
 protected:
     virtual sptr<IBufferProducer> GetBufferProducer() final;
+    virtual std::string GetPhotoSurfaceId() final;
 
 private:
     void OnCameraServerDied(pid_t pid);
@@ -165,6 +167,7 @@ private:
     wptr<CaptureSession> session_;
     std::mutex sessionMutex_;
     std::mutex streamMutex_;
+    std::string surfaceId_;
 
     // Multithread add same output,set profile may cause problems, let's add mutex guard.
     std::mutex photoProfileMutex_;

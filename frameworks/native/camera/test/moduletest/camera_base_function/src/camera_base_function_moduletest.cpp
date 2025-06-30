@@ -102,6 +102,12 @@ void TestMetadataStateCallback::OnError(int32_t errorCode) const
     MEDIA_INFO_LOG("TestMetadataStateCallback::OnError called %{public}d", errorCode);
 }
 
+void TestThumbnailCallback::OnThumbnailAvailable(
+    const int32_t captureId, const int64_t timestamp, unique_ptr<Media::PixelMap> pixelMap) const
+{
+    MEDIA_DEBUG_LOG("TestThumbnailCallback::OnThumbnailAvailable is called!");
+}
+
 void WAIT(uint32_t duration)
 {
     std::this_thread::sleep_for(std::chrono::milliseconds(duration));
@@ -2430,13 +2436,8 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_017, Test
     WAIT(DURATION_AFTER_SESSION_START);
     std::shared_ptr<PhotoCaptureSetting> photoSetting = std::make_shared<PhotoCaptureSetting>();
     if (photoOutput->IsQuickThumbnailSupported()) {
-        sptr<IConsumerSurface> previewSurface = IConsumerSurface::Create();
-        sptr<SurfaceListener> surfaceListener = new SurfaceListener("Preview", SurfaceType::PREVIEW,
-            previewFd_, previewSurface);
-        sptr<IBufferConsumerListener> listener = (sptr<IBufferConsumerListener>&)surfaceListener;
-        ASSERT_NE(listener, nullptr);
-        photoOutput->SetThumbnailListener(listener);
-
+        std::shared_ptr<TestThumbnailCallback> callback = std::make_shared<TestThumbnailCallback>();
+        photoOutput->SetThumbnailCallback(callback);
         EXPECT_EQ(photoOutput->SetThumbnail(true), SUCCESS);
     }
     EXPECT_EQ(photoOutput->Capture(photoSetting), SUCCESS);

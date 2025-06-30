@@ -814,14 +814,10 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_007, TestSize.L
     EXPECT_EQ(intResult, 200);
 
     bool isEnabled = false;
-    sptr<OHOS::IBufferProducer> producer = nullptr;
-    intResult = capture->SetThumbnail(isEnabled, producer);
+    intResult = capture->SetThumbnail(isEnabled);
     EXPECT_EQ(intResult, 200);
 
-    sptr<IConsumerSurface> previewSurface = IConsumerSurface::Create();
-    producer = previewSurface->GetProducer();
-
-    intResult = capture->SetThumbnail(isEnabled, producer);
+    intResult = capture->SetThumbnail(isEnabled);
     EXPECT_EQ(intResult, -1);
 
     std::shared_ptr<OHOS::Camera::CameraMetadata> captureSettings = nullptr;
