@@ -39,14 +39,14 @@ public:
         MEDIA_DEBUG_LOG("DeepCopyBuffer dataStride:%{public}d", dataStride);
         // deep copy buffer
         BufferRequestConfig requestConfig = {
-                .width = surfaceBuffer->GetWidth(),
-                .height = surfaceBuffer->GetHeight(),
-                .strideAlignment = 0x8,  // default stride is 8 Bytes.
-                .format = surfaceBuffer->GetFormat(),
-                .usage = surfaceBuffer->GetUsage(),
-                .timeout = 0,
-                .colorGamut = surfaceBuffer->GetSurfaceBufferColorGamut(),
-                .transform = surfaceBuffer->GetSurfaceBufferTransform(),
+            .width = surfaceBuffer->GetWidth(),
+            .height = surfaceBuffer->GetHeight(),
+            .strideAlignment = 0x8, // default stride is 8 Bytes.
+            .format = surfaceBuffer->GetFormat(),
+            .usage = surfaceBuffer->GetUsage(),
+            .timeout = 0,
+            .colorGamut = surfaceBuffer->GetSurfaceBufferColorGamut(),
+            .transform = surfaceBuffer->GetSurfaceBufferTransform(),
         };
         sptr<SurfaceBuffer> newSurfaceBuffer = SurfaceBuffer::Create();
         auto allocErrorCode = newSurfaceBuffer->Alloc(requestConfig);
@@ -84,14 +84,14 @@ public:
         MEDIA_DEBUG_LOG("DeepCopyThumbnailBuffer thumbnailStride:%{public}d", thumbnailStride);
         // deep copy buffer
         BufferRequestConfig requestConfig = {
-                .width = thumbnailStride,
-                .height = thumbnailHeight,
-                .strideAlignment = thumbnailStride,
-                .format = surfaceBuffer->GetFormat(),
-                .usage =
-                    BUFFER_USAGE_CPU_READ | BUFFER_USAGE_CPU_WRITE | BUFFER_USAGE_MEM_DMA | BUFFER_USAGE_MEM_MMZ_CACHE,
-                .timeout = 0,
-            };
+            .width = thumbnailStride,
+            .height = thumbnailHeight,
+            .strideAlignment = thumbnailStride,
+            .format = surfaceBuffer->GetFormat(),
+            .usage =
+                BUFFER_USAGE_CPU_READ | BUFFER_USAGE_CPU_WRITE | BUFFER_USAGE_MEM_DMA | BUFFER_USAGE_MEM_MMZ_CACHE,
+            .timeout = 0,
+        };
         sptr<SurfaceBuffer> newSurfaceBuffer = SurfaceBuffer::Create();
         auto allocRet = newSurfaceBuffer->Alloc(requestConfig);
         if (allocRet != 0) {
@@ -279,4 +279,4 @@ private:
 };
 }  // namespace CameraStandard
 }  // namespace OHOS
-#endif
+#endif

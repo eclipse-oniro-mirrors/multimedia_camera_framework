@@ -71,7 +71,7 @@ void ThumbnailBufferConsumer::ExecuteOnBufferAvailable()
         return;
     }
     sptr<SurfaceBuffer> newSurfaceBuffer = CameraSurfaceBufferUtil::DeepCopyThumbnailBuffer(surfaceBuffer);
-    MEDIA_DEBUG_LOG("ThumbnailListener ReleaseBuffer begin");   
+    MEDIA_DEBUG_LOG("ThumbnailListener ReleaseBuffer begin");
     streamCapture->thumbnailSurface_->ReleaseBuffer(surfaceBuffer, -1);
     CHECK_ERROR_RETURN_LOG(newSurfaceBuffer == nullptr, "newSurfaceBuffer is null");
     MEDIA_DEBUG_LOG("ThumbnailListener ReleaseBuffer end");
@@ -87,4 +87,4 @@ void ThumbnailBufferConsumer::ExecuteOnBufferAvailable()
     MEDIA_INFO_LOG("ExecuteOnBufferAvailable X");
 }
 }  // namespace CameraStandard
-}  // namespace OHOS
+}  // namespace OHOS

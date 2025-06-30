@@ -831,10 +831,9 @@ napi_value PhotoOutputNapi::CreatePhotoOutput(napi_env env, std::string surfaceI
             sptr<IBufferProducer> producer = photoSurface->GetProducer();
             CHECK_ERROR_RETURN_RET_LOG(producer == nullptr, result, "failed to create GetProducer");
             MEDIA_INFO_LOG("surface width: %{public}d, height: %{public}d",
-                photoSurface->GetDefaultWidth(),
-                photoSurface->GetDefaultHeight());
+                           photoSurface->GetDefaultWidth(), photoSurface->GetDefaultHeight());
             retCode = CameraManager::GetInstance()->CreatePhotoOutputWithoutProfile(
-            producer, &sPhotoOutput_, photoSurface);
+                producer, &sPhotoOutput_, photoSurface);
         }
         CHECK_ERROR_RETURN_RET_LOG(!CameraNapiUtils::CheckError(env, retCode) || sPhotoOutput_ == nullptr,
             result, "failed to create CreatePhotoOutput");

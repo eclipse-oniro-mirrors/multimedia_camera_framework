@@ -319,7 +319,6 @@ public:
 
     OHOS::sptr<OHOS::CameraStandard::PhotoOutput> GetInnerPhotoOutput();
 
-
     OH_PhotoNative* CreateCameraPhotoNative(std::shared_ptr<OHOS::Media::NativeImage> &image, bool isMain);
 
     Camera_ErrorCode IsMovingPhotoSupported(bool* isSupported);

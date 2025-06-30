@@ -150,7 +150,6 @@ public:
         const std::string &burstKey) const override;
     void OnThumbnailAvailable(
         const int32_t captureId, const int64_t timestamp, unique_ptr<Media::PixelMap> pixelMap) const override;
- 
 
 private:
     void UpdateJSCallback(PhotoOutputEventType eventType, const CallbackInfo& info) const;

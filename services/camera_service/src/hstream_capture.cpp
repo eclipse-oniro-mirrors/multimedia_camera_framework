@@ -1400,8 +1400,8 @@ int32_t HStreamCapture::UpdateMediaLibraryPhotoAssetProxy(sptr<CameraServerPhoto
         isBursting_ || (GetMode() == static_cast<int32_t>(HDI::Camera::V1_3::OperationMode::PROFESSIONAL_PHOTO)),
         CAMERA_UNSUPPORTED);
     const int32_t updateMediaLibraryStep = 1;
-    if (!photoAssetProxy_.WaitForUnlock(
-            cameraPhotoProxy->GetCaptureId(), updateMediaLibraryStep, GetMode(), std::chrono::seconds(1))) {
+    if (!photoAssetProxy_.WaitForUnlock(cameraPhotoProxy->GetCaptureId(), updateMediaLibraryStep, GetMode(),
+                                        std::chrono::seconds(1))) {
         return CAMERA_UNKNOWN_ERROR;
     }
     std::shared_ptr<PhotoAssetIntf> photoAssetProxy = photoAssetProxy_.Get(cameraPhotoProxy->GetCaptureId());
@@ -1454,4 +1454,4 @@ int32_t HStreamCapture::CreateMediaLibrary(sptr<CameraServerPhotoProxy> &cameraP
 }
 // LCOV_EXCL_STOP
 } // namespace CameraStandard
-} // namespace OHOS
+} // namespace OHOS

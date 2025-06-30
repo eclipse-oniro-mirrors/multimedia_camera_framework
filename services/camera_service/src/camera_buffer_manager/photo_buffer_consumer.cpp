@@ -51,7 +51,6 @@ void PhotoBufferConsumer::OnBufferAvailable()
 
 void PhotoBufferConsumer::ExecuteOnBufferAvailable()
 {
-
     MEDIA_INFO_LOG("PhotoBufferConsumer ExecuteOnBufferAvailable E");
     CAMERA_SYNC_TRACE;
     sptr<HStreamCapture> streamCapture = streamCapture_.promote();
@@ -84,4 +83,4 @@ void PhotoBufferConsumer::ExecuteOnBufferAvailable()
     MEDIA_INFO_LOG("PhotoBufferConsumer ExecuteOnBufferAvailable X");
 }
 }  // namespace CameraStandard
-}  // namespace OHOS
+}  // namespace OHOS

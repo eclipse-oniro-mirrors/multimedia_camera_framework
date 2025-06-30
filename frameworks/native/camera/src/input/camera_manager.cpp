@@ -717,9 +717,8 @@ int32_t CameraManager::CreatePhotoOutputStream(
     sptr<IStreamCapture>& streamPtr, Profile& profile, std::string surfaceId)
 {
     auto serviceProxy = GetServiceProxy();
-    CHECK_ERROR_RETURN_RET_LOG(serviceProxy == nullptr , CameraErrorCode::INVALID_ARGUMENT,
-        "CameraManager::CreatePhotoOutputStream serviceProxy is null or producer is null");
-
+    CHECK_ERROR_RETURN_RET_LOG(serviceProxy == nullptr, CameraErrorCode::INVALID_ARGUMENT,
+                               "CameraManager::CreatePhotoOutputStream serviceProxy is null or producer is null");
     CameraFormat yuvFormat = profile.GetCameraFormat();
     auto metaFormat = GetCameraMetadataFormat(yuvFormat);
     auto retCode =
