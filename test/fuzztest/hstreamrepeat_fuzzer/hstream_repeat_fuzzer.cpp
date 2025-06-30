@@ -35,6 +35,8 @@ namespace OHOS {
 namespace CameraStandard {
 using namespace OHOS::HDI::Camera::V1_0;
 static constexpr int32_t MIN_SIZE_NUM = 256;
+const std::u16string INTERFACE_TOKEN = u"OHOS.CameraStandard.IStreamRepeatCallback";
+const size_t MAX_LENGTH = 64;
 const int32_t ITEMCOUNT = 10;
 const int32_t DATASIZE = 100;
 const int32_t PHOTO_WIDTH = 1280;
@@ -43,7 +45,7 @@ const int32_t PHOTO_FORMAT = 2000;
 
 std::shared_ptr<HStreamRepeat> HStreamRepeatFuzzer::fuzz_{nullptr};
 
-void HStreamRepeatFuzzer::HStreamRepeatFuzzTest1(FuzzedDataProvider& fdp)
+void HStreamRepeatFuzzer::HStreamRepeatFuzzTest1(FuzzedDataProvider &fdp)
 {
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility;
     sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator;
@@ -73,7 +75,7 @@ void HStreamRepeatFuzzer::HStreamRepeatFuzzTest1(FuzzedDataProvider& fdp)
     fuzz_->ReleaseStream(fdp.ConsumeBool());
 }
 
-void HStreamRepeatFuzzer::HStreamRepeatFuzzTest2(FuzzedDataProvider& fdp)
+void HStreamRepeatFuzzer::HStreamRepeatFuzzTest2(FuzzedDataProvider &fdp)
 {
     sptr<Surface> photoSurface = Surface::CreateSurfaceAsConsumer("hstreamrepeat");
     CHECK_ERROR_RETURN_LOG(!photoSurface, "CreateSurfaceAsConsumer Error");
@@ -112,7 +114,7 @@ void HStreamRepeatFuzzer::HStreamRepeatFuzzTest2(FuzzedDataProvider& fdp)
     fuzz_->ProcessCameraSetRotation(sensorOrientation1, cameraPosition1);
 }
 
-void HStreamRepeatFuzzer::HStreamRepeatFuzzTest3(FuzzedDataProvider& fdp)
+void HStreamRepeatFuzzer::HStreamRepeatFuzzTest3(FuzzedDataProvider &fdp)
 {
     sptr<Surface> photoSurface = Surface::CreateSurfaceAsConsumer("hstreamrepeat");
     CHECK_ERROR_RETURN_LOG(!photoSurface, "CreateSurfaceAsConsumer Error");
@@ -133,9 +135,24 @@ void HStreamRepeatFuzzer::HStreamRepeatFuzzTest3(FuzzedDataProvider& fdp)
 #endif
     sptr<IStreamCapture> photoOutput = nullptr;
     fuzz_->AttachMetaSurface(producer, fdp.ConsumeIntegral<int32_t>());
+    std::shared_ptr<StreamRepeatCallbackStub> callback = std::make_shared<HStreamRepeatCallbackStubDemo>();
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    data.WriteInterfaceToken(INTERFACE_TOKEN);
+    data.WriteInt32(fdp.ConsumeIntegral<int32_t>());
+    data.WriteInt32(fdp.ConsumeIntegral<int32_t>());
+    data.WriteInt32(fdp.ConsumeBool());
+    data.WriteString16(Str8ToStr16(fdp.ConsumeRandomLengthString(MAX_LENGTH)));
+    data.WriteUint32(fdp.ConsumeIntegral<uint32_t>());
+    callback->OnRemoteRequest(
+        static_cast<uint32_t>(IStreamRepeatCallbackIpcCode::COMMAND_ON_DEFERRED_VIDEO_ENHANCEMENT_INFO),
+        data,
+        reply,
+        option);
 }
 
-void Test(uint8_t* data, size_t size)
+void Test(uint8_t *data, size_t size)
 {
     FuzzedDataProvider fdp(data, size);
     if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
@@ -146,19 +163,19 @@ void Test(uint8_t* data, size_t size)
         MEDIA_INFO_LOG("hstreamRepeat is null");
         return;
     }
-    HStreamRepeatFuzzer::fuzz_ = std::make_shared<HStreamRepeat>(nullptr,
-        PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT, RepeatStreamType::PREVIEW);
+    HStreamRepeatFuzzer::fuzz_ =
+        std::make_shared<HStreamRepeat>(nullptr, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT, RepeatStreamType::PREVIEW);
     CHECK_ERROR_RETURN_LOG(!HStreamRepeatFuzzer::fuzz_, "Create fuzz_ Error");
     hstreamRepeat->HStreamRepeatFuzzTest1(fdp);
     hstreamRepeat->HStreamRepeatFuzzTest2(fdp);
     hstreamRepeat->HStreamRepeatFuzzTest3(fdp);
 }
 
-} // namespace CameraStandard
-} // namespace OHOS
+}  // namespace CameraStandard
+}  // namespace OHOS
 
 /* Fuzzer entry point */
-extern "C" int LLVMFuzzerTestOneInput(uint8_t* data, size_t size)
+extern "C" int LLVMFuzzerTestOneInput(uint8_t *data, size_t size)
 {
     OHOS::CameraStandard::Test(data, size);
     return 0;
