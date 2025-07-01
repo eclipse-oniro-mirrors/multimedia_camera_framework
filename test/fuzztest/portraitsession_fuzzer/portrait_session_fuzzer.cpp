@@ -33,11 +33,11 @@
 #include "os_account_manager.h"
 #include <fuzzer/FuzzedDataProvider.h>
 #include "test_token.h"
+#include "test_token.h"
 
-namespace OHOS {
-namespace CameraStandard {
+using namespace OHOS;
+using namespace OHOS::CameraStandard;
 static constexpr int32_t MIN_SIZE_NUM = 4;
-static constexpr int32_t PORTRAIT_SIZE = 6;
 sptr<CameraManager> cameraManager_ = nullptr;
 std::vector<Profile> previewProfile_ = {};
 std::vector<Profile> photoProfile_ = {};
@@ -119,7 +119,7 @@ sptr<CaptureOutput> CreatePhotoOutput()
     return nullptr;
 }
 
-void PortraitSessionFuzzer::PortraitSessionFuzzTest(FuzzedDataProvider& fdp)
+void PortraitSessionFuzzTest(FuzzedDataProvider& fdp)
 {
     cameraManager_ = CameraManager::GetInstance();
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
@@ -146,8 +146,8 @@ void PortraitSessionFuzzer::PortraitSessionFuzzTest(FuzzedDataProvider& fdp)
     portraitSession->LockForControl();
     auto portraitEffect = portraitSession->GetSupportedPortraitEffects();
     portraitSession->GetPortraitEffect();
-    uint8_t portraitEnum = fdp.ConsumeIntegral<uint8_t>() % PORTRAIT_SIZE;
     if (!portraitEffect.empty()) {
+        uint8_t portraitEnum = fdp.ConsumeIntegralInRange(0, 5);
         portraitSession->SetPortraitEffect(portraitEffect[portraitEnum]);
     }
     portraitSession->CanAddOutput(photo);
@@ -161,19 +161,12 @@ void Test(uint8_t* data, size_t size)
         return;
     }
     CHECK_ERROR_RETURN_LOG(!TestToken::GetAllCameraPermission(), "GetPermission error");
-    auto portraitSession = std::make_unique<PortraitSessionFuzzer>();
-    if (portraitSession == nullptr) {
-        MEDIA_INFO_LOG("portraitSession is null");
-        return;
-    }
-    portraitSession->PortraitSessionFuzzTest(fdp);
+    PortraitSessionFuzzTest(fdp);
 }
-} // namespace CameraStandard
-} // namespace OHOS
 
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(uint8_t* data, size_t size)
 {
-    OHOS::CameraStandard::Test(data, size);
+    Test(data, size);
     return 0;
 }
