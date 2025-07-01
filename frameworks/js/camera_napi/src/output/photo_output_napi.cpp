@@ -1422,6 +1422,11 @@ void PhotoOutputNapi::RegisterQuickThumbnailCallbackListener(
 {
     CHECK_ERROR_RETURN_LOG(!CameraNapiSecurity::CheckSystemApp(env), "SystemApi!");
     MEDIA_INFO_LOG("PhotoOutputNapi RegisterQuickThumbnailCallbackListener!");
+    if (!isQuickThumbnailEnabled_) {
+        MEDIA_ERR_LOG("quickThumbnail is not enabled!");
+        napi_throw_error(env, std::to_string(SESSION_NOT_RUNNING).c_str(), "");
+        return;
+    }
     CHECK_ERROR_RETURN_LOG(photoOutput_ == nullptr, "PhotoOutput is null!");
     if (photoOutputCallback_ == nullptr) {
         photoOutputCallback_ = std::make_shared<PhotoOutputCallback>(env);
