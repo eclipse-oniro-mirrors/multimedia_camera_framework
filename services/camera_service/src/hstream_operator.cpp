@@ -864,6 +864,10 @@ int32_t HStreamOperator::UpdateSettingForFocusTrackingMech(bool isEnableMech)
             continue;
         }
         auto curStreamRepeat = CastStream<HStreamMetadata>(item);
+        if (curStreamRepeat == nullptr) {
+            MEDIA_ERR_LOG("UpdateSettingForFocusTrackingMech curStreamRepeat is nullptr");
+            continue;
+        }
         std::vector<int32_t> metadataTypes;
         metadataTypes.push_back(static_cast<int32_t>(MetadataObjectType::HUMAN_HEAD));
         isEnableMech ? curStreamRepeat->EnableMetadataType(metadataTypes) :
