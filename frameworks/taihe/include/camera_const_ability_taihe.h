@@ -34,9 +34,9 @@ using namespace taihe;
 using namespace ohos::multimedia::camera;
 using namespace OHOS;
 
-constexpr char CLASS_NAME_BUSINESSERROR[] = "L@ohos/base/BusinessError;";
-constexpr char CLASS_NAME_BOOLEAN[] = "Lstd/core/Boolean;";
-constexpr char ENUM_NAME_COLORSPACE[] = "L@ohos/graphics/colorSpaceManager/colorSpaceManager/ColorSpace;";
+constexpr char CLASS_NAME_BUSINESSERROR[] = "@ohos.base.BusinessError";
+constexpr char CLASS_NAME_BOOLEAN[] = "std.core.Boolean";
+constexpr char ENUM_NAME_COLORSPACE[] = "@ohos.graphics.colorSpaceManager.colorSpaceManager.ColorSpace";
 
 const std::unordered_map<OHOS::CameraStandard::SceneMode, SceneMode> g_nativeToAniSupportedMode = {
     {OHOS::CameraStandard::SceneMode::CAPTURE, SceneMode::key_t::NORMAL_PHOTO},
