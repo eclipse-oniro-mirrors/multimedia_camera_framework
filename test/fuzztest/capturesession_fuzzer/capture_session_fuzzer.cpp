@@ -28,6 +28,7 @@
 #include "input/camera_manager.h"
 #include "ipc_skeleton.h"
 #include "iservice_registry.h"
+#include "input/camera_manager_for_sys.h"
 #include "message_parcel.h"
 #include "nativetoken_kit.h"
 #include "os_account_manager.h"
@@ -82,7 +83,8 @@ void Test(uint8_t* data, size_t size)
     CHECK_ERROR_RETURN(size < LIMITSIZE);
     CHECK_ERROR_RETURN_LOG(!TestToken::GetAllCameraPermission(), "GetPermission error");
     manager_ = CameraManager::GetInstance();
-    sptr<CaptureSession> session = manager_->CreateCaptureSession(SceneMode::CAPTURE);
+    sptr<CaptureSessionForSys> session =
+        CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(SceneMode::CAPTURE);
     std::vector<sptr<CameraDevice>> cameras = manager_->GetCameraDeviceListFromServer();
     CHECK_ERROR_RETURN_LOG(cameras.empty(), "GetCameraDeviceListFromServer Error");
     sptr<CaptureInput> input = manager_->CreateCameraInput(cameras[0]);
@@ -144,7 +146,7 @@ sptr<PhotoOutput> GetCaptureOutput(FuzzedDataProvider& fdp)
     return manager->CreatePhotoOutput(profile, surface);
 }
 
-void TestExposure(sptr<CaptureSession> session, FuzzedDataProvider& fdp)
+void TestExposure(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
 {
     MEDIA_INFO_LOG("CaptureSessionFuzzer: ENTER");
     session->GetSupportedExposureModes();
@@ -178,7 +180,7 @@ void TestExposure(sptr<CaptureSession> session, FuzzedDataProvider& fdp)
     session->UnlockForControl();
 }
 
-void TestFocus(sptr<CaptureSession> session, FuzzedDataProvider& fdp)
+void TestFocus(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
 {
     MEDIA_INFO_LOG("CaptureSessionFuzzer: ENTER");
     session->GetSupportedFocusModes();
@@ -205,7 +207,7 @@ void TestFocus(sptr<CaptureSession> session, FuzzedDataProvider& fdp)
     session->UnlockForControl();
 }
 
-void TestZoom(sptr<CaptureSession> session, FuzzedDataProvider& fdp)
+void TestZoom(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
 {
     MEDIA_INFO_LOG("CaptureSessionFuzzer: ENTER");
     session->GetZoomRatioRange();
@@ -226,7 +228,7 @@ void TestZoom(sptr<CaptureSession> session, FuzzedDataProvider& fdp)
     session->UnlockForControl();
 }
 
-void TestCallback(sptr<CaptureSession> session, FuzzedDataProvider& fdp)
+void TestCallback(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
 {
     MEDIA_INFO_LOG("CaptureSessionFuzzer: ENTER");
     session->SetCallback(make_shared<SessionCallbackMock>());
@@ -250,7 +252,7 @@ void TestCallback(sptr<CaptureSession> session, FuzzedDataProvider& fdp)
     session->GetARCallback();
 }
 
-void TestStabilization(sptr<CaptureSession> session, FuzzedDataProvider& fdp)
+void TestStabilization(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
 {
     MEDIA_INFO_LOG("CaptureSessionFuzzer: ENTER");
     session->GetSupportedStabilizationMode();
@@ -266,7 +268,7 @@ void TestStabilization(sptr<CaptureSession> session, FuzzedDataProvider& fdp)
     session->SetVideoStabilizationMode(stabilizationMode);
 }
 
-void TestFlash(sptr<CaptureSession> session, FuzzedDataProvider& fdp)
+void TestFlash(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
 {
     MEDIA_INFO_LOG("CaptureSessionFuzzer: ENTER");
     session->GetSupportedFlashModes();
@@ -284,7 +286,7 @@ void TestFlash(sptr<CaptureSession> session, FuzzedDataProvider& fdp)
     session->SetFlashMode(flashMode);
 }
 
-void TestProcess(sptr<CaptureSession> session, FuzzedDataProvider& fdp)
+void TestProcess(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
 {
     MEDIA_INFO_LOG("CaptureSessionFuzzer: ENTER");
     static const size_t ITEM_CAP = 10;
@@ -309,7 +311,7 @@ void TestProcess(sptr<CaptureSession> session, FuzzedDataProvider& fdp)
     session->ProcessEffectSuggestionTypeUpdates(result);
 }
 
-void TestAperture(sptr<CaptureSession> session, FuzzedDataProvider& fdp)
+void TestAperture(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
 {
     MEDIA_INFO_LOG("CaptureSessionFuzzer: ENTER");
     uint32_t moduleType;
@@ -336,7 +338,7 @@ void TestAperture(sptr<CaptureSession> session, FuzzedDataProvider& fdp)
     session->UnlockForControl();
 }
 
-void TestBeauty(sptr<CaptureSession> session, FuzzedDataProvider& fdp)
+void TestBeauty(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
 {
     MEDIA_INFO_LOG("CaptureSessionFuzzer: ENTER");
     session->GetSupportedFilters();
@@ -366,7 +368,7 @@ void TestBeauty(sptr<CaptureSession> session, FuzzedDataProvider& fdp)
     session->UnlockForControl();
 }
 
-void TestOther(sptr<CaptureSession> session, FuzzedDataProvider& fdp)
+void TestOther(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
 {
     MEDIA_INFO_LOG("CaptureSessionFuzzer: ENTER");
     session->IsMacroSupported();
@@ -411,7 +413,7 @@ void TestOther(sptr<CaptureSession> session, FuzzedDataProvider& fdp)
     session->IsVideoDeferred();
 }
 
-void TestOther2(sptr<CaptureSession> session, FuzzedDataProvider& fdp)
+void TestOther2(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
 {
     MEDIA_INFO_LOG("CaptureSessionFuzzer: ENTER");
     camera_face_detect_mode_t t = static_cast<camera_face_detect_mode_t>(
@@ -441,7 +443,7 @@ void TestOther2(sptr<CaptureSession> session, FuzzedDataProvider& fdp)
     session->UnlockForControl();
 }
 
-void TestSession(sptr<CaptureSession> session, FuzzedDataProvider& fdp)
+void TestSession(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
 {
     MEDIA_INFO_LOG("CaptureSessionFuzzer: ENTER");
     sptr<CaptureInput> input = GetCameraInput(fdp);
@@ -478,7 +480,7 @@ void TestSession(sptr<CaptureSession> session, FuzzedDataProvider& fdp)
     session->ConfigurePhotoOutput(output);
 }
 
-void TestAdd(sptr<CaptureSession> session, FuzzedDataProvider& fdp)
+void TestAdd(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
 {
     std::vector<PortraitThemeType> supportedPortraitThemeTypes = {
         PortraitThemeType::NATURAL,
@@ -514,7 +516,7 @@ void TestAdd(sptr<CaptureSession> session, FuzzedDataProvider& fdp)
     session->CreateCameraAbilityContainer();
 }
 
-void TestOther3(sptr<CaptureSession> session, FuzzedDataProvider& fdp)
+void TestOther3(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
 {
     MEDIA_INFO_LOG("CaptureSessionFuzzer: ENTER");
     QualityPrioritization qualityPrioritization = static_cast<QualityPrioritization>(

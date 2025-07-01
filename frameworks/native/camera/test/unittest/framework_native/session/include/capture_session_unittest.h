@@ -19,6 +19,7 @@
 #include "gtest/gtest.h"
 #include "capture_session.h"
 #include "camera_manager.h"
+#include "camera_manager_for_sys.h"
 #include "camera_log.h"
 #include "icapture_session_callback.h"
 
@@ -77,6 +78,7 @@ public:
     int32_t uid_ = 0;
     int32_t userId_ = 0;
     sptr<CameraManager> cameraManager_ = nullptr;
+    sptr<CameraManagerForSys> cameraManagerForSys_ = nullptr;
     std::vector<sptr<CameraDevice>> cameras_;
 
     /* SetUpTestCase:The preset action of the test suite is executed before the first TestCase */

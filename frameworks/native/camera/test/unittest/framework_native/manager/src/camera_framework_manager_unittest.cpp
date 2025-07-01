@@ -36,6 +36,7 @@
 #include "token_setproc.h"
 #include "os_account_manager.h"
 #include "camera_types.h"
+#include "output/depth_data_output.h"
 
 using namespace testing::ext;
 
@@ -68,11 +69,14 @@ void CameraFrameWorkManagerUnit::SetUp()
 {
     cameraManager_ = CameraManager::GetInstance();
     ASSERT_NE(cameraManager_, nullptr);
+    cameraManagerForSys_ = CameraManagerForSys::GetInstance();
+    ASSERT_NE(cameraManagerForSys_, nullptr);
 }
 
 void CameraFrameWorkManagerUnit::TearDown()
 {
     cameraManager_ = nullptr;
+    cameraManagerForSys_ = nullptr;
 }
 
 bool CameraManagerTest::ConvertMetaToFwkMode(const HDI::Camera::V1_3::OperationMode opMode, SceneMode &scMode)
@@ -392,7 +396,9 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_013, Test
     DepthProfile depthProfile;
     sptr<IBufferProducer> surface = nullptr;
     EXPECT_NE(cameraManager_->GetServiceProxy(), nullptr);
-    EXPECT_EQ(cameraManager_->CreateDepthDataOutput(depthProfile, surface), nullptr);
+    sptr<DepthDataOutput> depthDataOutput = nullptr;
+    cameraManagerForSys_->CreateDepthDataOutput(depthProfile, surface, &depthDataOutput);
+    EXPECT_EQ(depthDataOutput, nullptr);
 }
 
 /*
@@ -413,15 +419,15 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_014, Test
     EXPECT_NE(surfaceProducer, nullptr);
     EXPECT_NE(cameraManager_->GetServiceProxy(), nullptr);
     sptr<DepthDataOutput> depthDataOutput = nullptr;
-    EXPECT_EQ(cameraManager_->CreateDepthDataOutput(depthProfile, surfaceProducer, &depthDataOutput),
+    EXPECT_EQ(cameraManagerForSys_->CreateDepthDataOutput(depthProfile, surfaceProducer, &depthDataOutput),
         CameraErrorCode::INVALID_ARGUMENT);
 
     cameraManager_->serviceProxyPrivate_ = nullptr;
-    EXPECT_EQ(cameraManager_->CreateDepthDataOutput(depthProfile, surfaceProducer, &depthDataOutput),
+    EXPECT_EQ(cameraManagerForSys_->CreateDepthDataOutput(depthProfile, surfaceProducer, &depthDataOutput),
         CameraErrorCode::INVALID_ARGUMENT);
 
     surfaceProducer = nullptr;
-    EXPECT_EQ(cameraManager_->CreateDepthDataOutput(depthProfile, surfaceProducer, &depthDataOutput),
+    EXPECT_EQ(cameraManagerForSys_->CreateDepthDataOutput(depthProfile, surfaceProducer, &depthDataOutput),
         CameraErrorCode::INVALID_ARGUMENT);
 }
 
@@ -447,23 +453,23 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_015, Test
     DepthDataAccuracy dataAccuracy = DEPTH_DATA_ACCURACY_INVALID;
     Size size = { 0, 0 };
     DepthProfile depthProfileRet1(format, dataAccuracy, size);
-    EXPECT_EQ(cameraManager_->CreateDepthDataOutput(depthProfileRet1, surfaceProducer, &depthDataOutput),
+    EXPECT_EQ(cameraManagerForSys_->CreateDepthDataOutput(depthProfileRet1, surfaceProducer, &depthDataOutput),
         CameraErrorCode::INVALID_ARGUMENT);
 
     format = CAMERA_FORMAT_YCBCR_420_888;
     DepthProfile depthProfileRet2(format, dataAccuracy, size);
-    EXPECT_EQ(cameraManager_->CreateDepthDataOutput(depthProfileRet2, surfaceProducer, &depthDataOutput),
+    EXPECT_EQ(cameraManagerForSys_->CreateDepthDataOutput(depthProfileRet2, surfaceProducer, &depthDataOutput),
         CameraErrorCode::INVALID_ARGUMENT);
 
     format = CAMERA_FORMAT_INVALID;
     size = { 1, 1 };
     DepthProfile depthProfileRet3(format, dataAccuracy, size);
-    EXPECT_EQ(cameraManager_->CreateDepthDataOutput(depthProfileRet3, surfaceProducer, &depthDataOutput),
+    EXPECT_EQ(cameraManagerForSys_->CreateDepthDataOutput(depthProfileRet3, surfaceProducer, &depthDataOutput),
         CameraErrorCode::INVALID_ARGUMENT);
 
     format = CAMERA_FORMAT_YCBCR_420_888;
     DepthProfile depthProfileRet4(format, dataAccuracy, size);
-    EXPECT_EQ(cameraManager_->CreateDepthDataOutput(depthProfileRet4, surfaceProducer, &depthDataOutput),
+    EXPECT_EQ(cameraManagerForSys_->CreateDepthDataOutput(depthProfileRet4, surfaceProducer, &depthDataOutput),
         CameraErrorCode::SUCCESS);
 }
 
@@ -1778,7 +1784,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_074, Test
 
     CameraFormat format = CAMERA_FORMAT_YCBCR_420_888;
     DepthProfile depthProfileRet(format, dataAccuracy, size);
-    EXPECT_EQ(cameraManager_->CreateDepthDataOutput(depthProfileRet, surfaceProducer, &depthDataOutput),
+    EXPECT_EQ(cameraManagerForSys_->CreateDepthDataOutput(depthProfileRet, surfaceProducer, &depthDataOutput),
         CameraErrorCode::SUCCESS);
 }
 

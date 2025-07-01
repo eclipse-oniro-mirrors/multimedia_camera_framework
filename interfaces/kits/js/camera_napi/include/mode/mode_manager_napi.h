@@ -20,15 +20,12 @@
 #include "input/camera_device.h"
 #include "input/camera_input_napi.h"
 #include "input/camera_manager.h"
-#include "night_session_napi.h"
 #include "output/camera_output_capability.h"
 #include "output/capture_output.h"
 #include "output/photo_output_napi.h"
 #include "output/preview_output_napi.h"
 #include "output/video_output_napi.h"
-#include "panorama_session_napi.h"
 #include "photo_session_napi.h"
-#include "portrait_session_napi.h"
 #include "secure_camera_session_napi.h"
 #include "session/camera_session_napi.h"
 #include "video_session_napi.h"
@@ -49,6 +46,7 @@ public:
     static napi_value GetSupportedOutputCapability(napi_env env, napi_callback_info info);
     static napi_value GetSupportedModes(napi_env env, napi_callback_info info);
     static napi_value CreateCameraSessionInstance(napi_env env, napi_callback_info info);
+    static napi_value CreateSessionForSys(napi_env env, int32_t jsModeName);
 
     static napi_value On(napi_env env, napi_callback_info info);
 

@@ -24,6 +24,7 @@ using namespace std;
 
 const std::string MEDIA_LIB_SO = "libcamera_dynamic_medialibrary.z.so";
 const std::string PICTURE_SO = "libcamera_dynamic_picture.z.so";
+const std::string NAPI_EXT_SO = "libcamera_napi_ex.z.so";
 
 constexpr uint32_t LIB_DELAYED_UNLOAD_TIME = 30000; // 30 second
 

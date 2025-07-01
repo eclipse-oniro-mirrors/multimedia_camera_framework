@@ -18,7 +18,9 @@
 
 #include "gtest/gtest.h"
 #include "video_session.h"
+#include "video_session_for_sys.h"
 #include "camera_manager.h"
+#include "camera_manager_for_sys.h"
 #include "camera_log.h"
 
 namespace OHOS {
@@ -39,16 +41,17 @@ public:
     void SetUp(void);
     /* TearDown:Execute after each test case */
     void TearDown(void);
-
-    void TestVideoSessionCallback();
-
+    void TestVideoSessionForSysCallback();
+    void TestVideoSessionForSysPreconfig(sptr<CaptureInput>& input,
+        PreconfigType preconfigType, ProfileSizeRatio profileSizeRatio);
     void TestVideoSessionPreconfig(sptr<CaptureInput>& input,
-               PreconfigType preconfigType, ProfileSizeRatio profileSizeRatio);
+        PreconfigType preconfigType, ProfileSizeRatio profileSizeRatio);
 private:
     uint64_t tokenId_ = 0;
     int32_t uid_ = 0;
     int32_t userId_ = 0;
     sptr<CameraManager> cameraManager_ = nullptr;
+    sptr<CameraManagerForSys> cameraManagerForSys_ = nullptr;
 };
 
 class TestLightStatusCallback : public LightStatusCallback {

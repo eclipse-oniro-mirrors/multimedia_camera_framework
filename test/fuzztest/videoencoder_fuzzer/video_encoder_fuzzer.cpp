@@ -23,6 +23,29 @@ namespace CameraStandard {
 static constexpr int32_t MIN_SIZE_NUM = 220;
 
 std::shared_ptr<VideoEncoder> VideoEncoderFuzzer::fuzz_{nullptr};
+static const uint8_t* RAW_DATA __attribute__((used)) = nullptr;
+static size_t g_dataSize __attribute__((used)) = 0;
+static size_t g_pos __attribute__((used));
+
+/*
+* describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
+* tips: only support basic type
+*/
+template<class T>
+T GetData()
+{
+    T object {};
+    size_t objectSize = sizeof(object);
+    if (RAW_DATA == nullptr || objectSize > g_dataSize - g_pos) {
+        return object;
+    }
+    errno_t ret = memcpy_s(&object, objectSize, RAW_DATA + g_pos, objectSize);
+    if (ret != EOK) {
+        return {};
+    }
+    g_pos += objectSize;
+    return object;
+}
 
 void VideoEncoderFuzzer::VideoEncoderFuzzTest(FuzzedDataProvider& fdp)
 {

@@ -57,11 +57,15 @@ void DepthDataOutputUnit::TearDownTestCase(void) {}
 void DepthDataOutputUnit::SetUp()
 {
     cameraManager_ = CameraManager::GetInstance();
+    ASSERT_NE(cameraManager_, nullptr);
+    cameraManagerForSys_ = CameraManagerForSys::GetInstance();
+    ASSERT_NE(cameraManagerForSys_, nullptr);
 }
 
 void DepthDataOutputUnit::TearDown()
 {
     cameraManager_ = nullptr;
+    cameraManagerForSys_ = nullptr;
 }
 
 /*
@@ -87,7 +91,8 @@ HWTEST_F(DepthDataOutputUnit, depth_data_output_unittest_001, TestSize.Level1)
     CameraFormat format = CAMERA_FORMAT_DEPTH_32;
     DepthDataAccuracy dataAccuracy = DEPTH_DATA_ACCURACY_RELATIVE;
     DepthProfile depthProfile = DepthProfile(format, dataAccuracy, size);
-    sptr<DepthDataOutput> depthDataOutput = cameraManager_->CreateDepthDataOutput(depthProfile, surfaceProducer);
+    sptr<DepthDataOutput> depthDataOutput = nullptr;
+    cameraManagerForSys_->CreateDepthDataOutput(depthProfile, surfaceProducer, &depthDataOutput);
     ASSERT_NE(depthDataOutput, nullptr);
 
     sptr<CaptureOutput> output = depthDataOutput;
@@ -136,7 +141,8 @@ HWTEST_F(DepthDataOutputUnit, depth_data_output_unittest_002, TestSize.Level1)
     CameraFormat format = CAMERA_FORMAT_DEPTH_32;
     DepthDataAccuracy dataAccuracy = DEPTH_DATA_ACCURACY_RELATIVE;
     DepthProfile depthProfile = DepthProfile(format, dataAccuracy, size);
-    sptr<DepthDataOutput> depthDataOutput = cameraManager_->CreateDepthDataOutput(depthProfile, surfaceProducer);
+    sptr<DepthDataOutput> depthDataOutput = nullptr;
+    cameraManagerForSys_->CreateDepthDataOutput(depthProfile, surfaceProducer, &depthDataOutput);
     ASSERT_NE(depthDataOutput, nullptr);
 
     sptr<CaptureOutput> output = depthDataOutput;
@@ -187,7 +193,8 @@ HWTEST_F(DepthDataOutputUnit, depth_data_output_unittest_003, TestSize.Level1)
     CameraFormat format = CAMERA_FORMAT_DEPTH_32;
     DepthDataAccuracy dataAccuracy = DEPTH_DATA_ACCURACY_RELATIVE;
     DepthProfile depthProfile = DepthProfile(format, dataAccuracy, size);
-    sptr<DepthDataOutput> depthDataOutput = cameraManager_->CreateDepthDataOutput(depthProfile, surfaceProducer);
+    sptr<DepthDataOutput> depthDataOutput = nullptr;
+    cameraManagerForSys_->CreateDepthDataOutput(depthProfile, surfaceProducer, &depthDataOutput);
     ASSERT_NE(depthDataOutput, nullptr);
 
     sptr<CaptureOutput> output = depthDataOutput;
@@ -236,7 +243,8 @@ HWTEST_F(DepthDataOutputUnit, depth_data_output_unittest_004, TestSize.Level1)
     CameraFormat format = CAMERA_FORMAT_DEPTH_32;
     DepthDataAccuracy dataAccuracy = DEPTH_DATA_ACCURACY_RELATIVE;
     DepthProfile depthProfile = DepthProfile(format, dataAccuracy, size);
-    sptr<DepthDataOutput> depthDataOutput = cameraManager_->CreateDepthDataOutput(depthProfile, surfaceProducer);
+    sptr<DepthDataOutput> depthDataOutput = nullptr;
+    cameraManagerForSys_->CreateDepthDataOutput(depthProfile, surfaceProducer, &depthDataOutput);
     ASSERT_NE(depthDataOutput, nullptr);
 
     sptr<CaptureOutput> output = depthDataOutput;
@@ -292,7 +300,8 @@ HWTEST_F(DepthDataOutputUnit, depth_data_output_unittest_005, TestSize.Level1)
     CameraFormat format = CAMERA_FORMAT_DEPTH_32;
     DepthDataAccuracy dataAccuracy = DEPTH_DATA_ACCURACY_RELATIVE;
     DepthProfile depthProfile = DepthProfile(format, dataAccuracy, size);
-    sptr<DepthDataOutput> depthDataOutput = cameraManager_->CreateDepthDataOutput(depthProfile, surfaceProducer);
+    sptr<DepthDataOutput> depthDataOutput = nullptr;
+    cameraManagerForSys_->CreateDepthDataOutput(depthProfile, surfaceProducer, &depthDataOutput);
     ASSERT_NE(depthDataOutput, nullptr);
 
     sptr<CaptureOutput> output = depthDataOutput;
@@ -344,7 +353,8 @@ HWTEST_F(DepthDataOutputUnit, depth_data_output_unittest_006, TestSize.Level1)
     CameraFormat format = CAMERA_FORMAT_DEPTH_32;
     DepthDataAccuracy dataAccuracy = DEPTH_DATA_ACCURACY_RELATIVE;
     DepthProfile depthProfile = DepthProfile(format, dataAccuracy, size);
-    sptr<DepthDataOutput> depthDataOutput = cameraManager_->CreateDepthDataOutput(depthProfile, surfaceProducer);
+    sptr<DepthDataOutput> depthDataOutput = nullptr;
+    cameraManagerForSys_->CreateDepthDataOutput(depthProfile, surfaceProducer, &depthDataOutput);
     ASSERT_NE(depthDataOutput, nullptr);
 
     sptr<CaptureOutput> output = depthDataOutput;
@@ -400,7 +410,8 @@ HWTEST_F(DepthDataOutputUnit, depth_data_output_unittest_007, TestSize.Level1)
     CameraFormat format = CAMERA_FORMAT_DEPTH_32;
     DepthDataAccuracy dataAccuracy = DEPTH_DATA_ACCURACY_RELATIVE;
     DepthProfile depthProfile = DepthProfile(format, dataAccuracy, size);
-    sptr<DepthDataOutput> depthDataOutput = cameraManager_->CreateDepthDataOutput(depthProfile, surfaceProducer);
+    sptr<DepthDataOutput> depthDataOutput = nullptr;
+    cameraManagerForSys_->CreateDepthDataOutput(depthProfile, surfaceProducer, &depthDataOutput);
     ASSERT_NE(depthDataOutput, nullptr);
 
     std::shared_ptr<DepthDataStateCallback> appCallback = std::make_shared<DepthDataStateCallbackTest>();

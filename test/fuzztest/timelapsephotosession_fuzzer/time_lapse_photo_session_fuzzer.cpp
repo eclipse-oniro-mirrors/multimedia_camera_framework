@@ -19,6 +19,7 @@
 #include "camera_log.h"
 #include "camera_output_capability.h"
 #include "input/camera_manager.h"
+#include "input/camera_manager_for_sys.h"
 #include "message_parcel.h"
 #include "nativetoken_kit.h"
 #include "test_token.h"
@@ -272,8 +273,9 @@ void TestGetMetadata2()
 {
     sptr<ICaptureSession> iCaptureSession;
     {
-        sptr<CaptureSession> captureSession = manager->CreateCaptureSession(sceneMode);
-        iCaptureSession = captureSession->GetCaptureSession();
+        sptr<CaptureSessionForSys> captureSessionForSys =
+            CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(sceneMode);
+        iCaptureSession = captureSessionForSys->GetCaptureSession();
     }
     vector<sptr<CameraDevice>> devices{};
     sptr<TimeLapsePhotoSession> tlpSession = new TimeLapsePhotoSession(iCaptureSession, devices);
@@ -332,7 +334,7 @@ void Test2()
     s->Release();
 }
 
-void Test31(sptr<CaptureSession> s)
+void Test31(sptr<CaptureSessionForSys> s)
 {
     s->UnlockForControl();
     bool supported = true;
@@ -387,14 +389,16 @@ void Test3()
 {
     sptr<CaptureInput> input = manager->CreateCameraInput(camera);
     input->Open();
-    auto s = manager->CreateCaptureSession(SceneMode::SECURE);
+    auto s = CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(SceneMode::SECURE);
     s->BeginConfig();
     auto cap = manager->GetSupportedOutputCapability(camera, SceneMode::CAPTURE);
     if (!cap->GetDepthProfiles().empty()) {
         DepthProfile dp = cap->GetDepthProfiles()[0];
         sptr<IConsumerSurface> cs = IConsumerSurface::Create();
         sptr<IBufferProducer> bp = cs->GetProducer();
-        sptr<CaptureOutput> output = manager->CreateDepthDataOutput(dp, bp);
+        sptr<DepthDataOutput> depthDataOutput = nullptr;
+        CameraManagerForSys::GetInstance()->CreateDepthDataOutput(dp, bp, &depthDataOutput);
+        sptr<CaptureOutput> output = depthDataOutput;
         s->AddSecureOutput(output);
     }
     sptr<CaptureOutput> output = manager->CreateMetadataOutput();
@@ -470,8 +474,9 @@ void Test(uint8_t *rawData, size_t size)
     }
     CHECK_ERROR_RETURN_LOG(!TestToken::GetAllCameraPermission(), "GetPermission error");
     manager = CameraManager::GetInstance();
-    sptr<CaptureSession> captureSession = manager->CreateCaptureSession(sceneMode);
-    session = reinterpret_cast<TimeLapsePhotoSession*>(captureSession.GetRefPtr());
+    sptr<CaptureSessionForSys> captureSessionForSys =
+        CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(sceneMode);
+    session = reinterpret_cast<TimeLapsePhotoSession*>(captureSessionForSys.GetRefPtr());
     session->BeginConfig();
     auto cameras = manager->GetSupportedCameras();
     CHECK_ERROR_RETURN_LOG(cameras.size() < NUM_TWO, "TimeLapsePhotoSessionFuzzer: GetSupportedCameras Error");

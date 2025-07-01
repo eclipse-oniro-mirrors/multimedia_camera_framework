@@ -159,8 +159,9 @@ void Test()
     }
     CHECK_ERROR_RETURN_LOG(!TestToken::GetAllCameraPermission(), "GetPermission error");
     manager_ = CameraManager::GetInstance();
-    sptr<CaptureSession> captureSession = manager_->CreateCaptureSession(SceneMode::PROFESSIONAL_VIDEO);
-    ProfessionSessionFuzzer::fuzz_ = static_cast<ProfessionSession*>(captureSession.GetRefPtr());
+    sptr<CaptureSessionForSys> captureSessionForSys =
+        CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(SceneMode::PROFESSIONAL_VIDEO);
+    ProfessionSessionFuzzer::fuzz_ = static_cast<ProfessionSession*>(captureSessionForSys.GetRefPtr());
     CHECK_ERROR_RETURN_LOG(!ProfessionSessionFuzzer::fuzz_, "Create fuzz_ Error");
     SceneMode sceneMode = SceneMode::PROFESSIONAL_VIDEO;
     std::vector<sptr<CameraDevice>> cameras;
@@ -170,8 +171,8 @@ void Test()
     CHECK_ERROR_RETURN_LOG(!input, "CreateCameraInput Error");
     sptr<CameraOutputCapability> modeAbility =
         manager_->GetSupportedOutputCapability(cameras[0], sceneMode);
-    captureSession->BeginConfig();
-    captureSession->AddInput(input);
+    captureSessionForSys->BeginConfig();
+    captureSessionForSys->AddInput(input);
     input->Open();
     Profile previewProfile;
     VideoProfile videoProfile;
@@ -187,10 +188,10 @@ void Test()
         }
     }
     sptr<CaptureOutput> previewOutput = CreatePreviewOutput(previewProfile);
-    captureSession->AddOutput(previewOutput);
+    captureSessionForSys->AddOutput(previewOutput);
     sptr<CaptureOutput> videoOutput = CreateVideoOutput(videoProfile);
-    captureSession->AddOutput(videoOutput);
-    captureSession->CommitConfig();
+    captureSessionForSys->AddOutput(videoOutput);
+    captureSessionForSys->CommitConfig();
     professionSession->ProfessionSessionFuzzTest1();
     professionSession->ProfessionSessionFuzzTest2();
 }

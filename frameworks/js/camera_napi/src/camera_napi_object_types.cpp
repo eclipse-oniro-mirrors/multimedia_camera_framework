@@ -164,14 +164,5 @@ CameraNapiObject& CameraNapiObjCameraOutputCapability::GetCameraNapiObject()
         { "depthProfiles", depthProfiles },
         { "supportedMetadataObjectTypes", supportedMetadataObjectTypes } });
 }
-
-CameraNapiObject& CameraNapiFocusTrackingInfo::GetCameraNapiObject()
-{
-    auto trackingMode = Hold<int32_t>(focusTrackingInfo_.GetMode());
-    auto trackingRegion = Hold<CameraNapiBoundingBox>(*Hold<Rect>(focusTrackingInfo_.GetRegion()));
-    return *Hold<CameraNapiObject>(CameraNapiObject::CameraNapiObjFieldMap {
-        { "trackingMode", trackingMode },
-        { "trackingRegion", &trackingRegion->GetCameraNapiObject() } });
-}
 } // namespace CameraStandard
 } // namespace OHOS

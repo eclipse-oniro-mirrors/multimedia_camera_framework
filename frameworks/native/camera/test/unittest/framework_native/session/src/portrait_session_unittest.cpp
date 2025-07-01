@@ -18,6 +18,7 @@
 
 #include "access_token.h"
 #include "accesstoken_kit.h"
+#include "camera_manager_for_sys.h"
 #include "camera_util.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -286,7 +287,7 @@ HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_001, TestSize.
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
-    sptr<CaptureSession> captureSession = cameraManager_->CreateCaptureSession(mode);
+    sptr<CaptureSession> captureSession = CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(mode);
     ASSERT_NE(captureSession, nullptr);
     sptr<PortraitSession> portraitSession = nullptr;
     portraitSession = static_cast<PortraitSession *> (captureSession.GetRefPtr());
@@ -376,7 +377,7 @@ HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_002, TestSize.
     ASSERT_NE(photo, nullptr);
 
 
-    sptr<CaptureSession> captureSession = cameraManager_->CreateCaptureSession(mode);
+    sptr<CaptureSession> captureSession = CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(mode);
     ASSERT_NE(captureSession, nullptr);
     sptr<PortraitSession> portraitSession = nullptr;
     portraitSession = static_cast<PortraitSession *> (captureSession.GetRefPtr());
@@ -448,7 +449,7 @@ HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_003, TestSize.
     }
     ASSERT_NE(photo, nullptr);
 
-    sptr<CaptureSession> captureSession = cameraManager_->CreateCaptureSession(mode);
+    sptr<CaptureSession> captureSession = CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(mode);
     ASSERT_NE(captureSession, nullptr);
     sptr<PortraitSession> portraitSession = nullptr;
     portraitSession = static_cast<PortraitSession *> (captureSession.GetRefPtr());
@@ -521,7 +522,7 @@ HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_004, TestSize.
     }
     ASSERT_NE(photo, nullptr);
 
-    sptr<CaptureSession> captureSession = cameraManager_->CreateCaptureSession(mode);
+    sptr<CaptureSession> captureSession = CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(mode);
     ASSERT_NE(captureSession, nullptr);
     sptr<PortraitSession> portraitSession = nullptr;
     portraitSession = static_cast<PortraitSession *> (captureSession.GetRefPtr());
@@ -595,7 +596,7 @@ HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_005, TestSize.
     }
     ASSERT_NE(photo, nullptr);
 
-    sptr<CaptureSession> captureSession = cameraManager_->CreateCaptureSession(mode);
+    sptr<CaptureSession> captureSession = CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(mode);
     ASSERT_NE(captureSession, nullptr);
     sptr<PortraitSession> portraitSession = nullptr;
     portraitSession = static_cast<PortraitSession *> (captureSession.GetRefPtr());
@@ -665,7 +666,7 @@ HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_006, TestSize.
         GTEST_SKIP();
     }
     ASSERT_NE(photo, nullptr);
-    sptr<CaptureSession> captureSession = cameraManager_->CreateCaptureSession(mode);
+    sptr<CaptureSession> captureSession = CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(mode);
     ASSERT_NE(captureSession, nullptr);
     sptr<PortraitSession> portraitSession = nullptr;
     portraitSession = static_cast<PortraitSession *> (captureSession.GetRefPtr());
@@ -744,7 +745,7 @@ HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_007, TestSize.
         GTEST_SKIP();
     }
     ASSERT_NE(photo, nullptr);
-    sptr<CaptureSession> captureSession = cameraManager_->CreateCaptureSession(mode);
+    sptr<CaptureSession> captureSession = CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(mode);
     ASSERT_NE(captureSession, nullptr);
     sptr<PortraitSession> portraitSession = nullptr;
     portraitSession = static_cast<PortraitSession *> (captureSession.GetRefPtr());
@@ -821,7 +822,7 @@ HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_008, TestSize.
         GTEST_SKIP();
     }
     ASSERT_NE(photo, nullptr);
-    sptr<CaptureSession> captureSession = cameraManager_->CreateCaptureSession(mode);
+    sptr<CaptureSession> captureSession = CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(mode);
     ASSERT_NE(captureSession, nullptr);
     sptr<PortraitSession> portraitSession = nullptr;
     portraitSession = static_cast<PortraitSession *> (captureSession.GetRefPtr());

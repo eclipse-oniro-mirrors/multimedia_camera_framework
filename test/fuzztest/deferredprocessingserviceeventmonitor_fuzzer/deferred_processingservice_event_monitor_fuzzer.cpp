@@ -25,7 +25,7 @@
 #include "ipc_skeleton.h"
 #include "token_setproc.h"
 #include "camera_util.h"
- 
+
 #include <utility>
  
 namespace OHOS {
@@ -81,7 +81,7 @@ void EventMonitorFuzzer::EventMonitorCameraStrategyFuzzTest(FuzzedDataProvider& 
     eventsinfofuzz_->GetChargingState();
     eventsinfofuzz_->GetBatteryLevel();
     eventsinfofuzz_->GetThermalLevel();
-    eventsinfofuzz_->GetCameraState();
+    eventsinfofuzz_->GetCameraStatus();
     enumval = fdp.ConsumeIntegralInRange<int32_t>(0, 3);
     CameraSessionStatus camerasessionstatus = static_cast<CameraSessionStatus>(enumval);
     eventsinfofuzz_->SetCameraState(camerasessionstatus);

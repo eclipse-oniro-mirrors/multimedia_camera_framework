@@ -45,7 +45,6 @@
 #include "istream_common.h"
 #include "istream_repeat.h"
 #include "output/camera_output_capability.h"
-#include "output/depth_data_output.h"
 #include "output/metadata_output.h"
 #include "output/photo_output.h"
 #include "output/preview_output.h"
@@ -229,6 +228,13 @@ public:
     * @return Returns pointer to capture session.
     */
     sptr<CaptureSession> CreateCaptureSession(SceneMode mode);
+
+    /**
+    * @brief Create capture session from hcamera service.
+    *
+    * @return Returns error code.
+    */
+    int32_t CreateCaptureSessionFromService(sptr<ICaptureSession>& session, SceneMode mode);
 
     /**
      * @brief Create capture session.
@@ -532,24 +538,15 @@ public:
     int CreateMetadataOutput(sptr<MetadataOutput>& pMetadataOutput);
 
     /**
-     * @brief Create depth output instance.
+     * @brief Get stream depth data from service.
      *
      * @param depthProfile depth profile.
      * @param surface depth data buffer surface.
-     * @return pointer to depth data output instance.
-     */
-    sptr<DepthDataOutput> CreateDepthDataOutput(DepthProfile& depthProfile, sptr<IBufferProducer> &surface);
-
-    /**
-     * @brief Create depth output instance.
-     *
-     * @param depthProfile depth profile.
-     * @param surface depth data buffer surface.
-     * @param pDepthDataOutput pointer to depth data output instance.
+     * @param streamDepthData pointer to depth data stream.
      * @return Returns error code.
      */
-    int CreateDepthDataOutput(DepthProfile& depthProfile, sptr<IBufferProducer> &surface,
-                              sptr<DepthDataOutput>* pDepthDataOutput);
+    int GetStreamDepthDataFromService(DepthProfile& depthProfile, sptr<IBufferProducer> &surface,
+        sptr<IStreamDepthData>& streamDepthData);
 
     /**
      * @brief Create metadata output instance.
@@ -888,6 +885,14 @@ public:
     void SaveOldMeta(std::string cameraId, std::shared_ptr<OHOS::Camera::CameraMetadata> metadata);
     std::shared_ptr<OHOS::Camera::CameraMetadata> GetOldMeta(std::string cameraId);
     void SetOldMetatoInput(sptr<CameraDevice>& cameraObj, std::shared_ptr<OHOS::Camera::CameraMetadata> metadata);
+    inline std::vector<sptr<CameraDevice>> GetCameraDeviceList()
+    {
+        std::lock_guard<std::mutex> lock(cameraDeviceListMutex_);
+        if (cameraDeviceList_.empty()) {
+            cameraDeviceList_ = GetCameraDeviceListFromServer();
+        }
+        return cameraDeviceList_;
+    }
     std::string GetBundleName();
 protected:
     // Only for UT
@@ -972,15 +977,6 @@ private:
     {
         std::lock_guard<std::mutex> lock(serviceProxyMutex_);
         serviceProxyPrivate_ = proxy;
-    }
-
-    inline std::vector<sptr<CameraDevice>> GetCameraDeviceList()
-    {
-        std::lock_guard<std::mutex> lock(cameraDeviceListMutex_);
-        if (cameraDeviceList_.empty()) {
-            cameraDeviceList_ = GetCameraDeviceListFromServer();
-        }
-        return cameraDeviceList_;
     }
 
     inline bool IsCameraDeviceListCached()

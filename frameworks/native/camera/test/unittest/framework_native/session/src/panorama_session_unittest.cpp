@@ -18,6 +18,7 @@
 
 #include "access_token.h"
 #include "accesstoken_kit.h"
+#include "camera_manager_for_sys.h"
 #include "camera_util.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -83,7 +84,8 @@ HWTEST_F(CameraPanoramaSessionUnit, camera_panorama_unittest_001, TestSize.Level
             camInput->SetCameraSettings(cameraSettings);
             camInput->GetCameraDevice()->Open();
 
-            sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::PANORAMA_PHOTO);
+            sptr<CaptureSession> session =
+                CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(SceneMode::PANORAMA_PHOTO);
             sptr<PanoramaSession> panoramaSession = static_cast<PanoramaSession *> (session.GetRefPtr());
             ASSERT_NE(panoramaSession, nullptr);
 
@@ -137,7 +139,8 @@ HWTEST_F(CameraPanoramaSessionUnit, camera_panorama_unittest_002, TestSize.Level
             camInput->SetCameraSettings(cameraSettings);
             camInput->GetCameraDevice()->Open();
 
-            sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::PANORAMA_PHOTO);
+            sptr<CaptureSession> session =
+                CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(SceneMode::PANORAMA_PHOTO);
             sptr<PanoramaSession> panoramaSession = static_cast<PanoramaSession *> (session.GetRefPtr());
             ASSERT_NE(panoramaSession, nullptr);
 

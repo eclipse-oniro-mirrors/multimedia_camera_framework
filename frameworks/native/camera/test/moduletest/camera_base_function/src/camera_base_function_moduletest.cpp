@@ -131,15 +131,14 @@ void CameraBaseFunctionModuleTest::SetUp()
     MEDIA_INFO_LOG("SetUp start.");
     cameraManager_ = CameraManager::GetInstance();
     ASSERT_NE(cameraManager_, nullptr);
+    cameraManagerForSys_ = CameraManagerForSys::GetInstance();
+    ASSERT_NE(cameraManagerForSys_, nullptr);
     cameraDevices_ = cameraManager_->GetSupportedCameras();
     ASSERT_TRUE(!cameraDevices_.empty());
     cameraInput_ = cameraManager_->CreateCameraInput(cameraDevices_[deviceBackIndex]);
     ASSERT_NE(cameraInput_, nullptr);
-    captureSession_ = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(captureSession_, nullptr);
 
     EXPECT_EQ(cameraInput_->Open(), SUCCESS);
-    UpdateCameraOutputCapability(deviceBackIndex);
 
     MEDIA_INFO_LOG("SetUp end.");
 }
@@ -163,8 +162,26 @@ void CameraBaseFunctionModuleTest::TearDown()
         EXPECT_EQ(captureSession_->Release(), SUCCESS);
         captureSession_ = nullptr;
     }
+    if (captureSessionForSys_) {
+        EXPECT_EQ(captureSessionForSys_->Release(), SUCCESS);
+        captureSessionForSys_ = nullptr;
+    }
 
     MEDIA_INFO_LOG("TearDown end.");
+}
+
+void CameraBaseFunctionModuleTest::CreateNormalSession()
+{
+    captureSession_ = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(captureSession_, nullptr);
+    UpdateCameraOutputCapability(deviceBackIndex);
+}
+
+void CameraBaseFunctionModuleTest::CreateSystemSession()
+{
+    captureSessionForSys_ = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::VIDEO);
+    ASSERT_NE(captureSessionForSys_, nullptr);
+    UpdateCameraOutputCapabilityForSys(deviceBackIndex, SceneMode::VIDEO);
 }
 
 void CameraBaseFunctionModuleTest::UpdateCameraOutputCapability(int32_t index, int32_t modeName)
@@ -195,6 +212,38 @@ void CameraBaseFunctionModuleTest::UpdateCameraOutputCapability(int32_t index, i
             photoProfile.GetCameraFormat(), photoProfile.GetSize().width, photoProfile.GetSize().height);
     }
     for (auto videoProfile : videoProfiles_) {
+        MEDIA_DEBUG_LOG("module test video profile format:%{public}d, w:%{public}d , h:%{public}d",
+            videoProfile.GetCameraFormat(), videoProfile.GetSize().width, videoProfile.GetSize().height);
+    }
+}
+
+
+void CameraBaseFunctionModuleTest::UpdateCameraOutputCapabilityForSys(int32_t index, int32_t modeName)
+{
+    ASSERT_NE(cameraManager_, nullptr);
+    ASSERT_TRUE(!cameraDevices_.empty());
+
+    sptr<CameraOutputCapability> outputCapabilityForsys = cameraManager_->GetSupportedOutputCapability(
+        cameraDevices_[index], SceneMode::VIDEO);
+    ASSERT_NE(outputCapabilityForsys, nullptr);
+
+    previewProfilesForSys_ = outputCapabilityForsys->GetPreviewProfiles();
+    ASSERT_TRUE(!previewProfilesForSys_.empty());
+    FilterPreviewProfiles(previewProfilesForSys_);
+    photoProfilesForSys_ = outputCapabilityForsys->GetPhotoProfiles();
+    ASSERT_TRUE(!photoProfilesForSys_.empty());
+    videoProfilesForSys_ = outputCapabilityForsys->GetVideoProfiles();
+    ASSERT_TRUE(!videoProfilesForSys_.empty());
+
+    for (auto previewProfile : previewProfilesForSys_) {
+        MEDIA_DEBUG_LOG("module test preview profile format:%{public}d, w:%{public}d , h:%{public}d",
+            previewProfile.GetCameraFormat(), previewProfile.GetSize().width, previewProfile.GetSize().height);
+    }
+    for (auto photoProfile : photoProfilesForSys_) {
+        MEDIA_DEBUG_LOG("module test photo profile format:%{public}d, w:%{public}d , h:%{public}d",
+            photoProfile.GetCameraFormat(), photoProfile.GetSize().width, photoProfile.GetSize().height);
+    }
+    for (auto videoProfile : videoProfilesForSys_) {
         MEDIA_DEBUG_LOG("module test video profile format:%{public}d, w:%{public}d , h:%{public}d",
             videoProfile.GetCameraFormat(), videoProfile.GetSize().width, videoProfile.GetSize().height);
     }
@@ -285,6 +334,26 @@ void CameraBaseFunctionModuleTest::CreateAndConfigureDefaultCaptureOutput(sptr<P
     EXPECT_EQ(captureSession_->CommitConfig(), SUCCESS);
 }
 
+void CameraBaseFunctionModuleTest::CreateAndConfigureDefaultCaptureOutputForSys(sptr<PhotoOutput> &photoOutput,
+    sptr<VideoOutput> &videoOutput)
+{
+    ASSERT_NE(captureSessionForSys_, nullptr);
+
+    sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfilesForSys_[0]);
+    ASSERT_NE(previewOutput, nullptr);
+    photoOutput = CreatePhotoOutput(photoProfilesForSys_[0]);
+    ASSERT_NE(photoOutput, nullptr);
+    videoOutput = CreateVideoOutput(videoProfilesForSys_[0]);
+    ASSERT_NE(videoOutput, nullptr);
+
+    EXPECT_EQ(captureSessionForSys_->BeginConfig(), SUCCESS);
+    EXPECT_EQ(captureSessionForSys_->AddInput((sptr<CaptureInput>&)cameraInput_), SUCCESS);
+    EXPECT_EQ(captureSessionForSys_->AddOutput((sptr<CaptureOutput>&)previewOutput), SUCCESS);
+    EXPECT_EQ(captureSessionForSys_->AddOutput((sptr<CaptureOutput>&)photoOutput), SUCCESS);
+    EXPECT_EQ(captureSessionForSys_->AddOutput((sptr<CaptureOutput>&)videoOutput), SUCCESS);
+    EXPECT_EQ(captureSessionForSys_->CommitConfig(), SUCCESS);
+}
+
 void CameraBaseFunctionModuleTest::CreateAndConfigureDefaultCaptureOutput(sptr<PhotoOutput> &photoOutput)
 {
     ASSERT_NE(captureSession_, nullptr);
@@ -319,6 +388,24 @@ void CameraBaseFunctionModuleTest::StartDefaultCaptureOutput(sptr<PhotoOutput> p
     EXPECT_EQ(captureSession_->Stop(), SUCCESS);
 }
 
+void CameraBaseFunctionModuleTest::StartDefaultCaptureOutputForSys(sptr<PhotoOutput> photoOutput,
+    sptr<VideoOutput> videoOutput)
+{
+    ASSERT_NE(captureSessionForSys_, nullptr);
+    ASSERT_NE(photoOutput, nullptr);
+    ASSERT_NE(videoOutput, nullptr);
+
+    EXPECT_EQ(captureSessionForSys_->Start(), SUCCESS);
+    WAIT(DURATION_AFTER_SESSION_START);
+    EXPECT_EQ(photoOutput->Capture(), SUCCESS);
+    WAIT(DURATION_AFTER_CAPTURE);
+    EXPECT_EQ(videoOutput->Start(), SUCCESS);
+    WAIT(DURATION_DURING_RECORDING);
+    EXPECT_EQ(videoOutput->Stop(), SUCCESS);
+    WAIT(DURATION_AFTER_RECORDING);
+    EXPECT_EQ(captureSessionForSys_->Stop(), SUCCESS);
+}
+
 void CameraBaseFunctionModuleTest::StartDefaultCaptureOutput(sptr<PhotoOutput> photoOutput)
 {
     ASSERT_NE(captureSession_, nullptr);
@@ -342,6 +429,7 @@ void CameraBaseFunctionModuleTest::StartDefaultCaptureOutput(sptr<PhotoOutput> p
  */
 HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_001, TestSize.Level0)
 {
+    CreateNormalSession();
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
     sptr<PhotoOutput> photoOutput = CreatePhotoOutput(photoProfiles_[0]);
@@ -374,6 +462,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_001, Test
  */
 HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_002, TestSize.Level0)
 {
+    CreateNormalSession();
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
     sptr<VideoOutput> videoOutput = CreateVideoOutput(videoProfiles_[0]);
@@ -415,6 +504,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_002, Test
  */
 HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_003, TestSize.Level0)
 {
+    CreateNormalSession();
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
     sptr<PhotoOutput> photoOutput = CreatePhotoOutput(photoProfiles_[0]);
@@ -479,6 +569,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_003, Test
  */
  HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_004, TestSize.Level0)
 {
+    CreateNormalSession();
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
     sptr<VideoOutput> videoOutput = CreateVideoOutput(videoProfiles_[0]);
@@ -548,6 +639,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_003, Test
  */
  HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_005, TestSize.Level0)
 {
+    CreateNormalSession();
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
     sptr<PhotoOutput> photoOutput = CreatePhotoOutput(photoProfiles_[0]);
@@ -591,6 +683,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_003, Test
  */
  HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_006, TestSize.Level1)
 {
+    CreateNormalSession();
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
     sptr<PhotoOutput> photoOutput = CreatePhotoOutput(photoProfiles_[0]);
@@ -633,6 +726,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_003, Test
  */
  HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_007, TestSize.Level1)
 {
+    CreateNormalSession();
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
 
@@ -663,6 +757,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_003, Test
  */
  HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_008, TestSize.Level1)
 {
+    CreateNormalSession();
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
 
@@ -690,6 +785,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_003, Test
  */
  HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_009, TestSize.Level1)
 {
+    CreateNormalSession();
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
 
@@ -716,6 +812,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_003, Test
  */
  HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_010, TestSize.Level1)
 {
+    CreateNormalSession();
     sptr<PreviewOutput> previewOutput1 = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput1, nullptr);
     sptr<PreviewOutput> previewOutput2 = CreatePreviewOutput(previewProfiles_[0]);
@@ -747,6 +844,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_003, Test
  */
  HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_011, TestSize.Level1)
 {
+    CreateNormalSession();
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
     sptr<PhotoOutput> photoOutput1 = CreatePhotoOutput(photoProfiles_[0]);
@@ -781,6 +879,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_003, Test
  */
  HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_012, TestSize.Level1)
 {
+    CreateNormalSession();
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
     sptr<VideoOutput> videoOutput1 = CreateVideoOutput(videoProfiles_[0]);
@@ -817,6 +916,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_003, Test
  */
  HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_013, TestSize.Level0)
 {
+    CreateNormalSession();
     std::set<camera_face_detect_mode_t> metadataObjectTypes;
     captureSession_->SetCaptureMetadataObjectTypes(metadataObjectTypes);
 
@@ -853,6 +953,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_003, Test
  */
  HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_014, TestSize.Level0)
 {
+    CreateNormalSession();
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
     sptr<PhotoOutput> photoOutput = CreatePhotoOutput(photoProfiles_[0]);
@@ -1057,6 +1158,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_017, Test
  */
  HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_020, TestSize.Level0)
 {
+    CreateNormalSession();
     sptr<PhotoOutput> photoOutput;
     sptr<VideoOutput> videoOutput;
     CreateAndConfigureDefaultCaptureOutput(photoOutput, videoOutput);
@@ -1081,6 +1183,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_017, Test
  */
  HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_021, TestSize.Level0)
 {
+    CreateNormalSession();
     ExposureMode exposureMode = EXPOSURE_MODE_UNSUPPORTED;
     EXPECT_EQ(captureSession_->GetExposureMode(), EXPOSURE_MODE_UNSUPPORTED);
     EXPECT_EQ(captureSession_->GetExposureMode(exposureMode), SESSION_NOT_CONFIG);
@@ -1128,6 +1231,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_017, Test
  */
  HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_022, TestSize.Level1)
 {
+    CreateNormalSession();
     Point point = captureSession_->GetMeteringPoint();
     EXPECT_EQ(point.x, 0);
     EXPECT_EQ(point.y, 0);
@@ -1173,42 +1277,43 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_017, Test
  */
  HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_023, TestSize.Level0)
 {
+    CreateSystemSession();
     float exposureValue = 0.0;
-    EXPECT_EQ(captureSession_->GetExposureValue(), 0);
-    EXPECT_EQ(captureSession_->GetExposureValue(exposureValue), SESSION_NOT_CONFIG);
-    EXPECT_EQ(captureSession_->SetExposureBias(exposureValue), SESSION_NOT_CONFIG);
+    EXPECT_EQ(captureSessionForSys_->GetExposureValue(), 0);
+    EXPECT_EQ(captureSessionForSys_->GetExposureValue(exposureValue), SESSION_NOT_CONFIG);
+    EXPECT_EQ(captureSessionForSys_->SetExposureBias(exposureValue), SESSION_NOT_CONFIG);
 
     std::vector<float> ranges;
-    EXPECT_EQ(captureSession_->GetExposureBiasRange().empty(), true);
-    EXPECT_EQ(captureSession_->GetExposureBiasRange(ranges), SESSION_NOT_CONFIG);
+    EXPECT_EQ(captureSessionForSys_->GetExposureBiasRange().empty(), true);
+    EXPECT_EQ(captureSessionForSys_->GetExposureBiasRange(ranges), SESSION_NOT_CONFIG);
 
     sptr<PhotoOutput> photoOutput;
     sptr<VideoOutput> videoOutput;
-    CreateAndConfigureDefaultCaptureOutput(photoOutput, videoOutput);
+    CreateAndConfigureDefaultCaptureOutputForSys(photoOutput, videoOutput);
 
-    EXPECT_EQ(captureSession_->GetExposureBiasRange(ranges), SUCCESS);
+    EXPECT_EQ(captureSessionForSys_->GetExposureBiasRange(ranges), SUCCESS);
 
-    captureSession_->LockForControl();
-    EXPECT_EQ(captureSession_->SetExposureBias(ranges[0]), SUCCESS);
-    captureSession_->UnlockForControl();
-    EXPECT_EQ(captureSession_->GetExposureValue(), ranges[0]);
+    captureSessionForSys_->LockForControl();
+    EXPECT_EQ(captureSessionForSys_->SetExposureBias(ranges[0]), SUCCESS);
+    captureSessionForSys_->UnlockForControl();
+    EXPECT_EQ(captureSessionForSys_->GetExposureValue(), ranges[0]);
 
-    captureSession_->LockForControl();
-    EXPECT_EQ(captureSession_->SetExposureBias(ranges[1]), SUCCESS);
-    captureSession_->UnlockForControl();
-    EXPECT_EQ(captureSession_->GetExposureValue(), ranges[1]);
+    captureSessionForSys_->LockForControl();
+    EXPECT_EQ(captureSessionForSys_->SetExposureBias(ranges[1]), SUCCESS);
+    captureSessionForSys_->UnlockForControl();
+    EXPECT_EQ(captureSessionForSys_->GetExposureValue(), ranges[1]);
 
-    StartDefaultCaptureOutput(photoOutput, videoOutput);
+    StartDefaultCaptureOutputForSys(photoOutput, videoOutput);
     EXPECT_EQ(cameraInput_->Release(), SUCCESS);
     cameraInput_ = nullptr;
 
-    EXPECT_EQ(captureSession_->GetExposureBiasRange().empty(), true);
-    EXPECT_EQ(captureSession_->GetExposureBiasRange(ranges), SUCCESS);
-    EXPECT_EQ(captureSession_->GetExposureValue(), 0);
-    EXPECT_EQ(captureSession_->GetExposureValue(exposureValue), SUCCESS);
-    captureSession_->LockForControl();
-    EXPECT_EQ(captureSession_->SetExposureBias(exposureValue), OPERATION_NOT_ALLOWED);
-    captureSession_->UnlockForControl();
+    EXPECT_EQ(captureSessionForSys_->GetExposureBiasRange().empty(), true);
+    EXPECT_EQ(captureSessionForSys_->GetExposureBiasRange(ranges), SUCCESS);
+    EXPECT_EQ(captureSessionForSys_->GetExposureValue(), 0);
+    EXPECT_EQ(captureSessionForSys_->GetExposureValue(exposureValue), SUCCESS);
+    captureSessionForSys_->LockForControl();
+    EXPECT_EQ(captureSessionForSys_->SetExposureBias(exposureValue), OPERATION_NOT_ALLOWED);
+    captureSessionForSys_->UnlockForControl();
 }
 
 /*
@@ -1223,6 +1328,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_017, Test
  */
  HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_024, TestSize.Level0)
 {
+    CreateNormalSession();
     FocusMode focusMode = FOCUS_MODE_MANUAL;
     EXPECT_EQ(captureSession_->GetFocusMode(), FOCUS_MODE_MANUAL);
     EXPECT_EQ(captureSession_->GetFocusMode(focusMode), SESSION_NOT_CONFIG);
@@ -1281,6 +1387,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_017, Test
  */
  HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_025, TestSize.Level1)
 {
+    CreateNormalSession();
     Point point = captureSession_->GetFocusPoint();
     EXPECT_EQ(point.x, 0);
     EXPECT_EQ(point.y, 0);
@@ -1331,6 +1438,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_017, Test
  */
  HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_026, TestSize.Level1)
 {
+    CreateNormalSession();
     bool hasFlash = false;
     EXPECT_EQ(captureSession_->HasFlash(), false);
     EXPECT_EQ(captureSession_->HasFlash(hasFlash), SESSION_NOT_CONFIG);
@@ -1391,60 +1499,61 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_017, Test
  */
  HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_027, TestSize.Level0)
 {
+    CreateSystemSession();
     float zoomRatio;
-    EXPECT_EQ(captureSession_->GetZoomRatio(), 0);
+    EXPECT_EQ(captureSessionForSys_->GetZoomRatio(), 0);
 
     std::vector<float> ranges;
-    EXPECT_EQ(captureSession_->GetZoomRatioRange().empty(), true);
-    EXPECT_EQ(captureSession_->GetZoomRatioRange(ranges), SESSION_NOT_CONFIG);
-    EXPECT_EQ(captureSession_->GetZoomRatio(zoomRatio), SESSION_NOT_CONFIG);
-    EXPECT_EQ(captureSession_->SetZoomRatio(zoomRatio), SESSION_NOT_CONFIG);
+    EXPECT_EQ(captureSessionForSys_->GetZoomRatioRange().empty(), true);
+    EXPECT_EQ(captureSessionForSys_->GetZoomRatioRange(ranges), SESSION_NOT_CONFIG);
+    EXPECT_EQ(captureSessionForSys_->GetZoomRatio(zoomRatio), SESSION_NOT_CONFIG);
+    EXPECT_EQ(captureSessionForSys_->SetZoomRatio(zoomRatio), SESSION_NOT_CONFIG);
 
     sptr<PhotoOutput> photoOutput;
     sptr<VideoOutput> videoOutput;
-    CreateAndConfigureDefaultCaptureOutput(photoOutput, videoOutput);
+    CreateAndConfigureDefaultCaptureOutputForSys(photoOutput, videoOutput);
 
-    EXPECT_EQ(captureSession_->GetZoomRatioRange(ranges), SUCCESS);
+    EXPECT_EQ(captureSessionForSys_->GetZoomRatioRange(ranges), SUCCESS);
     if (ranges.empty()) {
         MEDIA_ERR_LOG("moduletest get zoom ratio ranage is empty");
         GTEST_SKIP();
     }
 
-    EXPECT_EQ(captureSession_->PrepareZoom(), SUCCESS);
+    EXPECT_EQ(captureSessionForSys_->PrepareZoom(), SUCCESS);
 
-    captureSession_->LockForControl();
-    EXPECT_EQ(captureSession_->SetZoomRatio(ranges[0]), SUCCESS);
-    captureSession_->UnlockForControl();
-    float zoomRatioMin = captureSession_->GetZoomRatio();
-    EXPECT_EQ(captureSession_->GetZoomRatio(zoomRatioMin), SUCCESS);
+    captureSessionForSys_->LockForControl();
+    EXPECT_EQ(captureSessionForSys_->SetZoomRatio(ranges[0]), SUCCESS);
+    captureSessionForSys_->UnlockForControl();
+    float zoomRatioMin = captureSessionForSys_->GetZoomRatio();
+    EXPECT_EQ(captureSessionForSys_->GetZoomRatio(zoomRatioMin), SUCCESS);
 
     std::shared_ptr<TestSmoothZoomCallback> callback = std::make_shared<TestSmoothZoomCallback>();
     ASSERT_NE(callback, nullptr);
-    captureSession_->SetSmoothZoomCallback(callback);
-    ASSERT_NE(captureSession_->GetSmoothZoomCallback(), nullptr);
+    captureSessionForSys_->SetSmoothZoomCallback(callback);
+    ASSERT_NE(captureSessionForSys_->GetSmoothZoomCallback(), nullptr);
 
     uint32_t smoothZoomType = 0;
-    captureSession_->LockForControl();
-    EXPECT_EQ(captureSession_->SetSmoothZoom(ranges[1], smoothZoomType), SUCCESS);
-    captureSession_->UnlockForControl();
-    float zoomRatioMax = captureSession_->GetZoomRatio();
-    EXPECT_EQ(captureSession_->GetZoomRatio(zoomRatioMax), SUCCESS);
+    captureSessionForSys_->LockForControl();
+    EXPECT_EQ(captureSessionForSys_->SetSmoothZoom(ranges[1], smoothZoomType), SUCCESS);
+    captureSessionForSys_->UnlockForControl();
+    float zoomRatioMax = captureSessionForSys_->GetZoomRatio();
+    EXPECT_EQ(captureSessionForSys_->GetZoomRatio(zoomRatioMax), SUCCESS);
     std::vector<ZoomPointInfo> zoomPointInfoList;
-    EXPECT_EQ(captureSession_->GetZoomPointInfos(zoomPointInfoList), SUCCESS);
+    EXPECT_EQ(captureSessionForSys_->GetZoomPointInfos(zoomPointInfoList), SUCCESS);
 
-    EXPECT_EQ(captureSession_->UnPrepareZoom(), SUCCESS);
+    EXPECT_EQ(captureSessionForSys_->UnPrepareZoom(), SUCCESS);
 
-    StartDefaultCaptureOutput(photoOutput, videoOutput);
+    StartDefaultCaptureOutputForSys(photoOutput, videoOutput);
     EXPECT_EQ(cameraInput_->Release(), SUCCESS);
     cameraInput_ = nullptr;
 
-    EXPECT_EQ(captureSession_->GetZoomRatioRange().empty(), true);
-    EXPECT_EQ(captureSession_->GetZoomRatioRange(ranges), SUCCESS);
-    EXPECT_EQ(captureSession_->GetZoomRatio(), 0);
-    EXPECT_EQ(captureSession_->GetZoomRatio(zoomRatio), SUCCESS);
-    captureSession_->LockForControl();
-    EXPECT_EQ(captureSession_->SetZoomRatio(zoomRatio), SUCCESS);
-    captureSession_->UnlockForControl();
+    EXPECT_EQ(captureSessionForSys_->GetZoomRatioRange().empty(), true);
+    EXPECT_EQ(captureSessionForSys_->GetZoomRatioRange(ranges), SUCCESS);
+    EXPECT_EQ(captureSessionForSys_->GetZoomRatio(), 0);
+    EXPECT_EQ(captureSessionForSys_->GetZoomRatio(zoomRatio), SUCCESS);
+    captureSessionForSys_->LockForControl();
+    EXPECT_EQ(captureSessionForSys_->SetZoomRatio(zoomRatio), SUCCESS);
+    captureSessionForSys_->UnlockForControl();
 }
 
 /*
@@ -1459,6 +1568,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_017, Test
  */
  HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_028, TestSize.Level1)
 {
+    CreateNormalSession();
     sptr<PhotoOutput> photoOutput;
     sptr<VideoOutput> videoOutput;
     CreateAndConfigureDefaultCaptureOutput(photoOutput, videoOutput);
@@ -1494,33 +1604,34 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_017, Test
  */
  HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_029, TestSize.Level1)
 {
+    CreateSystemSession();
     sptr<PhotoOutput> photoOutput;
     sptr<VideoOutput> videoOutput;
-    CreateAndConfigureDefaultCaptureOutput(photoOutput, videoOutput);
+    CreateAndConfigureDefaultCaptureOutputForSys(photoOutput, videoOutput);
 
-    std::vector<BeautyType> beautyTypes = captureSession_->GetSupportedBeautyTypes();
+    std::vector<BeautyType> beautyTypes = captureSessionForSys_->GetSupportedBeautyTypes();
     if (beautyTypes.empty()) {
         MEDIA_ERR_LOG("moduletest get supported beauty types is empty");
         GTEST_SKIP();
     }
 
-    std::vector<int32_t> ranges = captureSession_->GetSupportedBeautyRange(BeautyType::FACE_SLENDER);
+    std::vector<int32_t> ranges = captureSessionForSys_->GetSupportedBeautyRange(BeautyType::FACE_SLENDER);
     if (ranges.empty()) {
         MEDIA_ERR_LOG("moduletest get supported beauty range is empty");
         GTEST_SKIP();
     }
 
-    captureSession_->LockForControl();
-    captureSession_->SetBeauty(BeautyType::FACE_SLENDER, ranges[0]);
-    captureSession_->UnlockForControl();
-    EXPECT_EQ(captureSession_->GetBeauty(BeautyType::FACE_SLENDER), ranges[0]);
+    captureSessionForSys_->LockForControl();
+    captureSessionForSys_->SetBeauty(BeautyType::FACE_SLENDER, ranges[0]);
+    captureSessionForSys_->UnlockForControl();
+    EXPECT_EQ(captureSessionForSys_->GetBeauty(BeautyType::FACE_SLENDER), ranges[0]);
 
-    captureSession_->LockForControl();
-    captureSession_->SetBeauty(BeautyType::FACE_SLENDER, ranges[1]);
-    captureSession_->UnlockForControl();
-    EXPECT_EQ(captureSession_->GetBeauty(BeautyType::FACE_SLENDER), ranges[1]);
+    captureSessionForSys_->LockForControl();
+    captureSessionForSys_->SetBeauty(BeautyType::FACE_SLENDER, ranges[1]);
+    captureSessionForSys_->UnlockForControl();
+    EXPECT_EQ(captureSessionForSys_->GetBeauty(BeautyType::FACE_SLENDER), ranges[1]);
 
-    StartDefaultCaptureOutput(photoOutput, videoOutput);
+    StartDefaultCaptureOutputForSys(photoOutput, videoOutput);
 }
 
 /*
@@ -1535,6 +1646,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_017, Test
  */
  HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_030, TestSize.Level0)
 {
+    CreateNormalSession();
     sptr<PhotoOutput> photoOutput;
     sptr<VideoOutput> videoOutput;
     CreateAndConfigureDefaultCaptureOutput(photoOutput, videoOutput);
@@ -1578,27 +1690,28 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_017, Test
  */
  HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_031, TestSize.Level0)
 {
+    CreateSystemSession();
     sptr<PhotoOutput> photoOutput;
     sptr<VideoOutput> videoOutput;
-    CreateAndConfigureDefaultCaptureOutput(photoOutput, videoOutput);
+    CreateAndConfigureDefaultCaptureOutputForSys(photoOutput, videoOutput);
 
-    std::vector<ColorEffect> colorEffects = captureSession_->GetSupportedColorEffects();
+    std::vector<ColorEffect> colorEffects = captureSessionForSys_->GetSupportedColorEffects();
     if (colorEffects.empty()) {
         MEDIA_ERR_LOG("moduletest get supported color effects is empty");
         GTEST_SKIP();
     }
 
-    captureSession_->LockForControl();
-    captureSession_->SetColorEffect(ColorEffect::COLOR_EFFECT_NORMAL);
-    captureSession_->UnlockForControl();
-    EXPECT_EQ(captureSession_->GetColorEffect(), ColorEffect::COLOR_EFFECT_NORMAL);
+    captureSessionForSys_->LockForControl();
+    captureSessionForSys_->SetColorEffect(ColorEffect::COLOR_EFFECT_NORMAL);
+    captureSessionForSys_->UnlockForControl();
+    EXPECT_EQ(captureSessionForSys_->GetColorEffect(), ColorEffect::COLOR_EFFECT_NORMAL);
 
-    captureSession_->LockForControl();
-    captureSession_->SetColorEffect(ColorEffect::COLOR_EFFECT_BRIGHT);
-    captureSession_->UnlockForControl();
-    EXPECT_EQ(captureSession_->GetColorEffect(), ColorEffect::COLOR_EFFECT_BRIGHT);
+    captureSessionForSys_->LockForControl();
+    captureSessionForSys_->SetColorEffect(ColorEffect::COLOR_EFFECT_BRIGHT);
+    captureSessionForSys_->UnlockForControl();
+    EXPECT_EQ(captureSessionForSys_->GetColorEffect(), ColorEffect::COLOR_EFFECT_BRIGHT);
 
-    StartDefaultCaptureOutput(photoOutput, videoOutput);
+    StartDefaultCaptureOutputForSys(photoOutput, videoOutput);
 }
 
 /*
@@ -1613,38 +1726,39 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_017, Test
  */
  HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_032, TestSize.Level1)
 {
+    CreateSystemSession();
     sptr<PhotoOutput> photoOutput;
     sptr<VideoOutput> videoOutput;
-    CreateAndConfigureDefaultCaptureOutput(photoOutput, videoOutput);
+    CreateAndConfigureDefaultCaptureOutputForSys(photoOutput, videoOutput);
 
-    float minFocusDistance = captureSession_->GetMinimumFocusDistance();
+    float minFocusDistance = captureSessionForSys_->GetMinimumFocusDistance();
     MEDIA_INFO_LOG("moduletest get min focus distance: %{public}f", minFocusDistance);
 
     float focusDistance1 = -1.0;
-    captureSession_->LockForControl();
-    EXPECT_EQ(captureSession_->SetFocusDistance(focusDistance1), SUCCESS);
-    captureSession_->UnlockForControl();
+    captureSessionForSys_->LockForControl();
+    EXPECT_EQ(captureSessionForSys_->SetFocusDistance(focusDistance1), SUCCESS);
+    captureSessionForSys_->UnlockForControl();
     float getFocusDistance1 = 0.0;
-    EXPECT_EQ(captureSession_->GetFocusDistance(getFocusDistance1), SUCCESS);
+    EXPECT_EQ(captureSessionForSys_->GetFocusDistance(getFocusDistance1), SUCCESS);
     MEDIA_INFO_LOG("moduletest get focus distance: %{public}f", getFocusDistance1);
 
     float focusDistance2 = 0.0;
-    captureSession_->LockForControl();
-    EXPECT_EQ(captureSession_->SetFocusDistance(focusDistance2), SUCCESS);
-    captureSession_->UnlockForControl();
+    captureSessionForSys_->LockForControl();
+    EXPECT_EQ(captureSessionForSys_->SetFocusDistance(focusDistance2), SUCCESS);
+    captureSessionForSys_->UnlockForControl();
     float getFocusDistance2 = 0.0;
-    EXPECT_EQ(captureSession_->GetFocusDistance(getFocusDistance2), SUCCESS);
+    EXPECT_EQ(captureSessionForSys_->GetFocusDistance(getFocusDistance2), SUCCESS);
     MEDIA_INFO_LOG("moduletest get focus distance: %{public}f", getFocusDistance2);
 
     float focusDistance3 = 1.0;
-    captureSession_->LockForControl();
-    EXPECT_EQ(captureSession_->SetFocusDistance(focusDistance3), SUCCESS);
-    captureSession_->UnlockForControl();
+    captureSessionForSys_->LockForControl();
+    EXPECT_EQ(captureSessionForSys_->SetFocusDistance(focusDistance3), SUCCESS);
+    captureSessionForSys_->UnlockForControl();
     float getFocusDistance3 = 0.0;
-    EXPECT_EQ(captureSession_->GetFocusDistance(getFocusDistance3), SUCCESS);
+    EXPECT_EQ(captureSessionForSys_->GetFocusDistance(getFocusDistance3), SUCCESS);
     MEDIA_INFO_LOG("moduletest get focus distance: %{public}f", getFocusDistance3);
 
-    StartDefaultCaptureOutput(photoOutput, videoOutput);
+    StartDefaultCaptureOutputForSys(photoOutput, videoOutput);
 }
 
 /*
@@ -1659,25 +1773,26 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_017, Test
  */
  HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_033, TestSize.Level1)
 {
+    CreateSystemSession();
     sptr<PhotoOutput> photoOutput;
     sptr<VideoOutput> videoOutput;
-    CreateAndConfigureDefaultCaptureOutput(photoOutput, videoOutput);
+    CreateAndConfigureDefaultCaptureOutputForSys(photoOutput, videoOutput);
 
-    if (!captureSession_->IsMacroSupported()) {
+    if (!captureSessionForSys_->IsMacroSupported()) {
         MEDIA_ERR_LOG("moduletest macro is not supported");
         GTEST_SKIP();
     }
 
     std::shared_ptr<TestMacroStatusCallback>callback = std::make_shared<TestMacroStatusCallback>();
     ASSERT_NE(callback, nullptr);
-    captureSession_->SetMacroStatusCallback(callback);
-    EXPECT_NE(captureSession_->GetMacroStatusCallback(), nullptr);
+    captureSessionForSys_->SetMacroStatusCallback(callback);
+    EXPECT_NE(captureSessionForSys_->GetMacroStatusCallback(), nullptr);
 
-    captureSession_->LockForControl();
-    EXPECT_EQ(captureSession_->EnableMacro(!(captureSession_->IsSetEnableMacro())), SUCCESS);
-    captureSession_->UnlockForControl();
+    captureSessionForSys_->LockForControl();
+    EXPECT_EQ(captureSessionForSys_->EnableMacro(!(captureSessionForSys_->IsSetEnableMacro())), SUCCESS);
+    captureSessionForSys_->UnlockForControl();
 
-    StartDefaultCaptureOutput(photoOutput, videoOutput);
+    StartDefaultCaptureOutputForSys(photoOutput, videoOutput);
 }
 
 /*
@@ -1692,24 +1807,25 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_017, Test
  */
  HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_034, TestSize.Level1)
 {
+    CreateSystemSession();
     sptr<PhotoOutput> photoOutput;
     sptr<VideoOutput> videoOutput;
-    CreateAndConfigureDefaultCaptureOutput(photoOutput, videoOutput);
+    CreateAndConfigureDefaultCaptureOutputForSys(photoOutput, videoOutput);
 
-    if (!captureSession_->IsDepthFusionSupported()) {
+    if (!captureSessionForSys_->IsDepthFusionSupported()) {
         MEDIA_ERR_LOG("moduletest depth fusion is not supported");
         GTEST_SKIP();
     }
 
-    std::vector<float> thresholds = captureSession_->GetDepthFusionThreshold();
+    std::vector<float> thresholds = captureSessionForSys_->GetDepthFusionThreshold();
     ASSERT_TRUE(!thresholds.empty());
     MEDIA_INFO_LOG("moduletest depth fusion threshold min %{public}f max %{public}f", thresholds[0], thresholds[1]);
 
-    captureSession_->LockForControl();
-    EXPECT_EQ(captureSession_->EnableDepthFusion(!(captureSession_->IsDepthFusionEnabled())), SUCCESS);
-    captureSession_->UnlockForControl();
+    captureSessionForSys_->LockForControl();
+    EXPECT_EQ(captureSessionForSys_->EnableDepthFusion(!(captureSessionForSys_->IsDepthFusionEnabled())), SUCCESS);
+    captureSessionForSys_->UnlockForControl();
 
-    StartDefaultCaptureOutput(photoOutput, videoOutput);
+    StartDefaultCaptureOutputForSys(photoOutput, videoOutput);
 }
 
 /*
@@ -1724,6 +1840,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_017, Test
  */
  HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_035, TestSize.Level1)
 {
+    CreateNormalSession();
     sptr<PhotoOutput> photoOutput;
     sptr<VideoOutput> videoOutput;
     CreateAndConfigureDefaultCaptureOutput(photoOutput, videoOutput);
@@ -1757,6 +1874,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_017, Test
  */
  HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_036, TestSize.Level1)
 {
+    CreateNormalSession();
     sptr<PhotoOutput> photoOutput;
     sptr<VideoOutput> videoOutput;
     CreateAndConfigureDefaultCaptureOutput(photoOutput, videoOutput);
@@ -1786,28 +1904,29 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_017, Test
  */
  HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_037, TestSize.Level1)
 {
+    CreateSystemSession();
     sptr<PhotoOutput> photoOutput;
     sptr<VideoOutput> videoOutput;
-    CreateAndConfigureDefaultCaptureOutput(photoOutput, videoOutput);
+    CreateAndConfigureDefaultCaptureOutputForSys(photoOutput, videoOutput);
 
     auto callback = std::make_shared<TestFeatureDetectionStatusCallback>();
     ASSERT_NE(callback, nullptr);
-    captureSession_->SetFeatureDetectionStatusCallback(callback);
-    EXPECT_NE(captureSession_->GetFeatureDetectionStatusCallback(), nullptr);
+    captureSessionForSys_->SetFeatureDetectionStatusCallback(callback);
+    EXPECT_NE(captureSessionForSys_->GetFeatureDetectionStatusCallback(), nullptr);
 
-    if (captureSession_->IsFeatureSupported(SceneFeature::FEATURE_MOON_CAPTURE_BOOST)) {
-        EXPECT_EQ(captureSession_->EnableFeature(SceneFeature::FEATURE_MOON_CAPTURE_BOOST, true), SUCCESS);
+    if (captureSessionForSys_->IsFeatureSupported(SceneFeature::FEATURE_MOON_CAPTURE_BOOST)) {
+        EXPECT_EQ(captureSessionForSys_->EnableFeature(SceneFeature::FEATURE_MOON_CAPTURE_BOOST, true), SUCCESS);
     }
-    if (captureSession_->IsFeatureSupported(SceneFeature::FEATURE_TRIPOD_DETECTION)) {
-        EXPECT_EQ(captureSession_->EnableFeature(SceneFeature::FEATURE_TRIPOD_DETECTION, true), SUCCESS);
+    if (captureSessionForSys_->IsFeatureSupported(SceneFeature::FEATURE_TRIPOD_DETECTION)) {
+        EXPECT_EQ(captureSessionForSys_->EnableFeature(SceneFeature::FEATURE_TRIPOD_DETECTION, true), SUCCESS);
     }
-    if (captureSession_->IsFeatureSupported(SceneFeature::FEATURE_LOW_LIGHT_BOOST)) {
-        EXPECT_EQ(captureSession_->EnableFeature(SceneFeature::FEATURE_LOW_LIGHT_BOOST, true), SUCCESS);
+    if (captureSessionForSys_->IsFeatureSupported(SceneFeature::FEATURE_LOW_LIGHT_BOOST)) {
+        EXPECT_EQ(captureSessionForSys_->EnableFeature(SceneFeature::FEATURE_LOW_LIGHT_BOOST, true), SUCCESS);
     }
-    if (captureSession_->IsFeatureSupported(SceneFeature::FEATURE_MACRO)) {
-        EXPECT_EQ(captureSession_->EnableFeature(SceneFeature::FEATURE_MACRO, true), SUCCESS);
+    if (captureSessionForSys_->IsFeatureSupported(SceneFeature::FEATURE_MACRO)) {
+        EXPECT_EQ(captureSessionForSys_->EnableFeature(SceneFeature::FEATURE_MACRO, true), SUCCESS);
     }
-    StartDefaultCaptureOutput(photoOutput, videoOutput);
+    StartDefaultCaptureOutputForSys(photoOutput, videoOutput);
 }
 
 /*
@@ -1821,6 +1940,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_017, Test
  */
  HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_038, TestSize.Level1)
 {
+    CreateNormalSession();
     sptr<PhotoOutput> photoOutput;
     sptr<VideoOutput> videoOutput;
     CreateAndConfigureDefaultCaptureOutput(photoOutput, videoOutput);
@@ -1870,38 +1990,39 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_017, Test
  */
  HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_039, TestSize.Level1)
 {
+    CreateSystemSession();
     sptr<PhotoOutput> photoOutput;
     sptr<VideoOutput> videoOutput;
-    CreateAndConfigureDefaultCaptureOutput(photoOutput, videoOutput);
+    CreateAndConfigureDefaultCaptureOutputForSys(photoOutput, videoOutput);
 
-    if (!captureSession_->IsEffectSuggestionSupported()) {
+    if (!captureSessionForSys_->IsEffectSuggestionSupported()) {
         MEDIA_ERR_LOG("mooduletest effect suggestion is not supported");
         GTEST_SKIP();
     }
 
-    std::vector<EffectSuggestionType> supportedTypeList = captureSession_->GetSupportedEffectSuggestionType();
+    std::vector<EffectSuggestionType> supportedTypeList = captureSessionForSys_->GetSupportedEffectSuggestionType();
     ASSERT_TRUE(!supportedTypeList.empty());
 
     auto callback = std::make_shared<TestEffectSuggestionCallback>();
     ASSERT_NE(callback, nullptr);
-    captureSession_->SetEffectSuggestionCallback(callback);
+    captureSessionForSys_->SetEffectSuggestionCallback(callback);
 
-    captureSession_->LockForControl();
-    EXPECT_EQ(captureSession_->EnableEffectSuggestion(true), SUCCESS);
+    captureSessionForSys_->LockForControl();
+    EXPECT_EQ(captureSessionForSys_->EnableEffectSuggestion(true), SUCCESS);
 
-    std::vector<EffectSuggestionType> effectSuggestionTypes = captureSession_->GetSupportedEffectSuggestionType();
+    std::vector<EffectSuggestionType> effectSuggestionTypes = captureSessionForSys_->GetSupportedEffectSuggestionType();
     if (!effectSuggestionTypes.empty()) {
         std::vector<EffectSuggestionStatus> effectSuggestionStatusList;
         for (auto type : effectSuggestionTypes) {
             effectSuggestionStatusList.push_back({type, false});
         }
-        EXPECT_EQ(captureSession_->SetEffectSuggestionStatus(effectSuggestionStatusList), SUCCESS);
-        EXPECT_EQ(captureSession_->UpdateEffectSuggestion(EffectSuggestionType::EFFECT_SUGGESTION_PORTRAIT,
+        EXPECT_EQ(captureSessionForSys_->SetEffectSuggestionStatus(effectSuggestionStatusList), SUCCESS);
+        EXPECT_EQ(captureSessionForSys_->UpdateEffectSuggestion(EffectSuggestionType::EFFECT_SUGGESTION_PORTRAIT,
             true), SUCCESS);
     }
-    captureSession_->UnlockForControl();
+    captureSessionForSys_->UnlockForControl();
 
-    StartDefaultCaptureOutput(photoOutput, videoOutput);
+    StartDefaultCaptureOutputForSys(photoOutput, videoOutput);
 }
 
 /*
@@ -1915,23 +2036,24 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_017, Test
  */
  HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_040, TestSize.Level1)
 {
+    CreateSystemSession();
     sptr<PhotoOutput> photoOutput;
     sptr<VideoOutput> videoOutput;
-    CreateAndConfigureDefaultCaptureOutput(photoOutput, videoOutput);
+    CreateAndConfigureDefaultCaptureOutputForSys(photoOutput, videoOutput);
 
     std::vector<float> apertures;
-    EXPECT_EQ(captureSession_->GetSupportedVirtualApertures(apertures), SUCCESS);
+    EXPECT_EQ(captureSessionForSys_->GetSupportedVirtualApertures(apertures), SUCCESS);
     if (!apertures.empty()) {
-        captureSession_->LockForControl();
-        EXPECT_EQ(captureSession_->SetVirtualAperture(apertures[0]), SUCCESS);
-        captureSession_->UnlockForControl();
+        captureSessionForSys_->LockForControl();
+        EXPECT_EQ(captureSessionForSys_->SetVirtualAperture(apertures[0]), SUCCESS);
+        captureSessionForSys_->UnlockForControl();
 
         float aperture = 0.0;
-        EXPECT_EQ(captureSession_->GetVirtualAperture(aperture), SUCCESS);
+        EXPECT_EQ(captureSessionForSys_->GetVirtualAperture(aperture), SUCCESS);
         EXPECT_EQ(aperture, apertures[0]);
     }
 
-    StartDefaultCaptureOutput(photoOutput, videoOutput);
+    StartDefaultCaptureOutputForSys(photoOutput, videoOutput);
 }
 
 /*
@@ -1945,24 +2067,25 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_017, Test
  */
  HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_041, TestSize.Level1)
 {
+    CreateSystemSession();
     sptr<PhotoOutput> photoOutput;
     sptr<VideoOutput> videoOutput;
-    CreateAndConfigureDefaultCaptureOutput(photoOutput, videoOutput);
+    CreateAndConfigureDefaultCaptureOutputForSys(photoOutput, videoOutput);
 
     std::vector<std::vector<float>> vecAperture;
-    EXPECT_EQ(captureSession_->GetSupportedPhysicalApertures(vecAperture), SUCCESS);
+    EXPECT_EQ(captureSessionForSys_->GetSupportedPhysicalApertures(vecAperture), SUCCESS);
     if (!vecAperture.empty()) {
         std::vector<float> apertures = vecAperture[0];
-        captureSession_->LockForControl();
-        EXPECT_EQ(captureSession_->SetPhysicalAperture(apertures[0]), SUCCESS);
-        captureSession_->UnlockForControl();
+        captureSessionForSys_->LockForControl();
+        EXPECT_EQ(captureSessionForSys_->SetPhysicalAperture(apertures[0]), SUCCESS);
+        captureSessionForSys_->UnlockForControl();
 
         float aperture = 0.0;
-        EXPECT_EQ(captureSession_->GetPhysicalAperture(aperture), SUCCESS);
+        EXPECT_EQ(captureSessionForSys_->GetPhysicalAperture(aperture), SUCCESS);
         EXPECT_EQ(aperture, apertures[0]);
     }
 
-    StartDefaultCaptureOutput(photoOutput, videoOutput);
+    StartDefaultCaptureOutputForSys(photoOutput, videoOutput);
 }
 
 /*
@@ -1978,6 +2101,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_017, Test
  */
  HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_042, TestSize.Level1)
 {
+    CreateNormalSession();
     sptr<PhotoOutput> photoOutput;
     sptr<VideoOutput> videoOutput;
     CreateAndConfigureDefaultCaptureOutput(photoOutput, videoOutput);
@@ -2033,26 +2157,27 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_017, Test
  */
  HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_043, TestSize.Level1)
 {
+    CreateSystemSession();
     sptr<PhotoOutput> photoOutput;
     sptr<VideoOutput> videoOutput;
-    CreateAndConfigureDefaultCaptureOutput(photoOutput, videoOutput);
+    CreateAndConfigureDefaultCaptureOutputForSys(photoOutput, videoOutput);
 
-    if (captureSession_->IsLcdFlashSupported()) {
+    if (captureSessionForSys_->IsLcdFlashSupported()) {
         auto callback = std::make_shared<TestLcdFlashStatusCallback>();
         EXPECT_NE(callback, nullptr);
-        captureSession_->SetLcdFlashStatusCallback(callback);
-        EXPECT_NE(captureSession_->GetLcdFlashStatusCallback(), nullptr);
+        captureSessionForSys_->SetLcdFlashStatusCallback(callback);
+        EXPECT_NE(captureSessionForSys_->GetLcdFlashStatusCallback(), nullptr);
 
-        captureSession_->LockForControl();
-        EXPECT_EQ(captureSession_->EnableLcdFlash(true), SUCCESS);
-        EXPECT_EQ(captureSession_->EnableLcdFlashDetection(true), SUCCESS);
+        captureSessionForSys_->LockForControl();
+        EXPECT_EQ(captureSessionForSys_->EnableLcdFlash(true), SUCCESS);
+        EXPECT_EQ(captureSessionForSys_->EnableLcdFlashDetection(true), SUCCESS);
 
-        EXPECT_EQ(captureSession_->EnableLcdFlash(false), SUCCESS);
-        EXPECT_EQ(captureSession_->EnableLcdFlashDetection(false), SUCCESS);
-        captureSession_->UnlockForControl();
+        EXPECT_EQ(captureSessionForSys_->EnableLcdFlash(false), SUCCESS);
+        EXPECT_EQ(captureSessionForSys_->EnableLcdFlashDetection(false), SUCCESS);
+        captureSessionForSys_->UnlockForControl();
     }
 
-    StartDefaultCaptureOutput(photoOutput, videoOutput);
+    StartDefaultCaptureOutputForSys(photoOutput, videoOutput);
 }
 
 /*
@@ -2067,18 +2192,19 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_017, Test
  */
  HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_044, TestSize.Level1)
 {
+    CreateSystemSession();
     sptr<PhotoOutput> photoOutput;
     sptr<VideoOutput> videoOutput;
-    CreateAndConfigureDefaultCaptureOutput(photoOutput, videoOutput);
+    CreateAndConfigureDefaultCaptureOutputForSys(photoOutput, videoOutput);
 
-    if (captureSession_->IsTripodDetectionSupported()) {
-        captureSession_->LockForControl();
-        EXPECT_EQ(captureSession_->EnableTripodStabilization(true), SUCCESS);
-        EXPECT_EQ(captureSession_->EnableTripodDetection(true), SUCCESS);
-        captureSession_->UnlockForControl();
+    if (captureSessionForSys_->IsTripodDetectionSupported()) {
+        captureSessionForSys_->LockForControl();
+        EXPECT_EQ(captureSessionForSys_->EnableTripodStabilization(true), SUCCESS);
+        EXPECT_EQ(captureSessionForSys_->EnableTripodDetection(true), SUCCESS);
+        captureSessionForSys_->UnlockForControl();
     }
 
-    StartDefaultCaptureOutput(photoOutput, videoOutput);
+    StartDefaultCaptureOutputForSys(photoOutput, videoOutput);
 }
 
 /*
@@ -2093,6 +2219,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_017, Test
  */
  HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_045, TestSize.Level0)
 {
+    CreateNormalSession();
     sptr<PhotoOutput> photoOutput;
     sptr<VideoOutput> videoOutput;
     CreateAndConfigureDefaultCaptureOutput(photoOutput, videoOutput);
@@ -2126,6 +2253,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_017, Test
  */
  HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_046, TestSize.Level1)
 {
+    CreateNormalSession();
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
     std::shared_ptr<TestPreviewOutputCallback> callback = std::make_shared<TestPreviewOutputCallback>("");
@@ -2154,6 +2282,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_017, Test
  */
  HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_047, TestSize.Level1)
 {
+    CreateNormalSession();
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
 
@@ -2181,6 +2310,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_017, Test
  */
  HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_048, TestSize.Level1)
 {
+    CreateNormalSession();
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
 
@@ -2210,6 +2340,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_017, Test
  */
  HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_049, TestSize.Level1)
 {
+    CreateNormalSession();
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
     sptr<PhotoOutput> photoOutput = CreatePhotoOutput(photoProfiles_[0]);
@@ -2243,6 +2374,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_017, Test
  */
  HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_050, TestSize.Level0)
 {
+    CreateNormalSession();
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
     sptr<PhotoOutput> photoOutput = CreatePhotoOutput(photoProfiles_[0]);
@@ -2290,6 +2422,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_017, Test
  */
  HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_051, TestSize.Level1)
 {
+    CreateNormalSession();
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
     sptr<PhotoOutput> photoOutput = CreatePhotoOutput(photoProfiles_[0]);
@@ -2321,6 +2454,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_017, Test
  */
  HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_052, TestSize.Level1)
 {
+    CreateNormalSession();
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
     sptr<PhotoOutput> photoOutput = CreatePhotoOutput(photoProfiles_[0]);
@@ -2357,6 +2491,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_017, Test
  */
  HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_053, TestSize.Level1)
 {
+    CreateNormalSession();
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
     sptr<PhotoOutput> photoOutput = CreatePhotoOutput(photoProfiles_[0]);
@@ -2388,6 +2523,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_017, Test
  */
  HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_054, TestSize.Level1)
 {
+    CreateNormalSession();
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
     sptr<PhotoOutput> photoOutput = CreatePhotoOutput(photoProfiles_[0]);
@@ -2421,6 +2557,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_017, Test
  */
  HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_055, TestSize.Level0)
 {
+    CreateNormalSession();
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
     sptr<PhotoOutput> photoOutput = CreatePhotoOutput(photoProfiles_[0]);
@@ -2456,6 +2593,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_017, Test
  */
  HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_056, TestSize.Level1)
 {
+    CreateNormalSession();
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
     sptr<PhotoOutput> photoOutput = CreatePhotoOutput(photoProfiles_[0]);
@@ -2491,6 +2629,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_017, Test
  */
  HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_057, TestSize.Level1)
 {
+    CreateNormalSession();
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
     sptr<PhotoOutput> photoOutput = CreatePhotoOutput(photoProfiles_[0]);
@@ -2525,6 +2664,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_017, Test
  */
  HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_058, TestSize.Level1)
 {
+    CreateNormalSession();
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
     sptr<PhotoOutput> photoOutput = CreatePhotoOutput(photoProfiles_[0]);
@@ -2558,6 +2698,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_017, Test
  */
  HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_059, TestSize.Level1)
 {
+    CreateNormalSession();
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
     sptr<VideoOutput> videoOutput = CreateVideoOutput(videoProfiles_[0]);
@@ -2592,6 +2733,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_017, Test
  */
  HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_060, TestSize.Level1)
 {
+    CreateNormalSession();
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
     sptr<VideoOutput> videoOutput = CreateVideoOutput(videoProfiles_[0]);
@@ -2625,6 +2767,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_017, Test
  */
  HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_061, TestSize.Level1)
 {
+    CreateNormalSession();
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
     sptr<VideoOutput> videoOutput = CreateVideoOutput(videoProfiles_[0]);
@@ -2787,6 +2930,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_065, Test
  */
 HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_066, TestSize.Level0)
 {
+    CreateNormalSession();
     sptr<ICameraDeviceService> device= cameraInput_->GetCameraDevice();
     ASSERT_NE(device, nullptr);
 
@@ -2823,6 +2967,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_066, Test
  */
 HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_067, TestSize.Level1)
 {
+    CreateNormalSession();
     EXPECT_EQ(captureSession_->Release(), SUCCESS);
     EXPECT_EQ(captureSession_->UnlockForControl(), SERVICE_FATL_ERROR);
     captureSession_ = nullptr;
@@ -2838,6 +2983,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_067, Test
  */
 HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_068, TestSize.Level1)
 {
+    CreateNormalSession();
     cameraInput_->Close();
     cameraInput_->SetMetadataResultProcessor(captureSession_->GetMetadataResultProcessor());
 
@@ -2862,6 +3008,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_068, Test
  */
 HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_069, TestSize.Level1)
 {
+    CreateNormalSession();
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
 
@@ -2883,6 +3030,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_069, Test
  */
 HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_070, TestSize.Level1)
 {
+    CreateNormalSession();
     sptr<CaptureInput> input = nullptr;
     EXPECT_EQ(captureSession_->AddInput(input), OPERATION_NOT_ALLOWED);
     sptr<CaptureOutput> output = nullptr;
@@ -2904,6 +3052,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_070, Test
  */
 HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_071, TestSize.Level1)
 {
+    CreateNormalSession();
     sptr<CaptureInput> input = nullptr;
     EXPECT_EQ(captureSession_->RemoveInput(input), OPERATION_NOT_ALLOWED);
     sptr<CaptureOutput> output = nullptr;
@@ -2928,6 +3077,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_071, Test
  */
 HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_072, TestSize.Level1)
 {
+    CreateNormalSession();
     sptr<PreviewOutput> previewOutput1 = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput1, nullptr);
     sptr<PreviewOutput> previewOutput2 = CreatePreviewOutput(previewProfiles_[0]);
@@ -2966,6 +3116,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_072, Test
  */
 HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_073, TestSize.Level1)
 {
+    CreateNormalSession();
     sptr<IConsumerSurface> previewSurface = IConsumerSurface::Create();
     sptr<IBufferProducer> previewProducer = previewSurface->GetProducer();
     sptr<Surface> pSurface = Surface::CreateSurfaceAsProducer(previewProducer);
@@ -3031,6 +3182,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_073, Test
  */
 HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_074, TestSize.Level1)
 {
+    CreateNormalSession();
     sptr<IConsumerSurface> photosurface = IConsumerSurface::Create();
     sptr<IBufferProducer> surfaceProducer_1 = photosurface->GetProducer();
 
@@ -3076,6 +3228,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_074, Test
  */
 HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_075, TestSize.Level1)
 {
+    CreateNormalSession();
     sptr<IConsumerSurface> videoSurface = IConsumerSurface::Create();
     sptr<IBufferProducer> videoProducer = videoSurface->GetProducer();
     sptr<Surface> pSurface_1 = Surface::CreateSurfaceAsProducer(videoProducer);
@@ -3126,6 +3279,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_075, Test
  */
 HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_076, TestSize.Level1)
 {
+    CreateNormalSession();
     VideoStabilizationMode stabilizationMode = OFF;
     EXPECT_EQ(captureSession_->GetActiveVideoStabilizationMode(), OFF);
     EXPECT_EQ(captureSession_->SetVideoStabilizationMode(stabilizationMode), SESSION_NOT_CONFIG);
@@ -3171,6 +3325,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_076, Test
  */
 HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_077, TestSize.Level1)
 {
+    CreateNormalSession();
     sptr<PhotoOutput> photoOutput;
     sptr<VideoOutput> videoOutput;
     CreateAndConfigureDefaultCaptureOutput(photoOutput, videoOutput);
@@ -3221,6 +3376,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_077, Test
  */
 HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_078, TestSize.Level1)
 {
+    CreateNormalSession();
     sptr<PhotoOutput> photoOutput;
     sptr<VideoOutput> videoOutput;
     CreateAndConfigureDefaultCaptureOutput(photoOutput, videoOutput);
@@ -3272,6 +3428,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_078, Test
  */
 HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_079, TestSize.Level1)
 {
+    CreateNormalSession();
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
     sptr<PhotoOutput> photoOutput = CreatePhotoOutput(photoProfiles_[0]);
@@ -3314,6 +3471,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_079, Test
  */
 HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_080, TestSize.Level1)
 {
+    CreateNormalSession();
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
     sptr<MetadataOutput> metadataOutput = cameraManager_->CreateMetadataOutput();
@@ -3341,6 +3499,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_080, Test
  */
 HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_081, TestSize.Level1)
 {
+    CreateNormalSession();
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
     sptr<PhotoOutput> photoOutput = CreatePhotoOutput(photoProfiles_[0]);
@@ -3371,6 +3530,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_081, Test
  */
 HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_082, TestSize.Level1)
 {
+    CreateNormalSession();
     std::shared_ptr<PhotoCaptureSetting> photoSetting = std::make_shared<PhotoCaptureSetting>();
     auto previewOutputCallback = std::make_shared<TestPreviewOutputCallback>("");
     auto photoOutputCallback = std::make_shared<TestPhotoOutputCallback>("");
@@ -3426,6 +3586,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_082, Test
  */
 HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_083, TestSize.Level1)
 {
+    CreateNormalSession();
     EXPECT_EQ(captureSession_->Start(), SESSION_NOT_CONFIG);
 
     VideoStabilizationMode mode;
@@ -3475,6 +3636,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_083, Test
  */
 HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_084, TestSize.Level1)
 {
+    CreateNormalSession();
     float exposureValue;
     EXPECT_EQ(captureSession_->GetExposureValue(), 0);
     EXPECT_EQ(captureSession_->GetExposureValue(exposureValue), SESSION_NOT_CONFIG);
@@ -3535,26 +3697,27 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_084, Test
  */
 HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_085, TestSize.Level0)
 {
-    EXPECT_EQ((captureSession_->GetSupportedColorEffects()).empty(), true);
-    EXPECT_EQ(captureSession_->BeginConfig(), SUCCESS);
-    EXPECT_EQ(captureSession_->AddInput((sptr<CaptureInput>&)cameraInput_), SUCCESS);
-    sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
+    CreateSystemSession();
+    EXPECT_EQ((captureSessionForSys_->GetSupportedColorEffects()).empty(), true);
+    EXPECT_EQ(captureSessionForSys_->BeginConfig(), SUCCESS);
+    EXPECT_EQ(captureSessionForSys_->AddInput((sptr<CaptureInput>&)cameraInput_), SUCCESS);
+    sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfilesForSys_[0]);
     ASSERT_NE(previewOutput, nullptr);
-    EXPECT_EQ(captureSession_->AddOutput((sptr<CaptureOutput>&)previewOutput), SUCCESS);
-    EXPECT_EQ(captureSession_->GetFilter(), FilterType::NONE);
-    EXPECT_EQ(captureSession_->GetSupportedFilters().empty(), true);
-    EXPECT_EQ(captureSession_->GetSupportedBeautyTypes().empty(), true);
-    captureSession_->SetBeauty(AUTO_TYPE, 0);
-    EXPECT_EQ(captureSession_->GetBeauty(AUTO_TYPE), -1);
-    captureSession_->SetFilter(NONE);
-    captureSession_->SetColorSpace(COLOR_SPACE_UNKNOWN);
-    EXPECT_EQ(ServiceToCameraError(captureSession_->VerifyAbility(0)), SERVICE_FATL_ERROR);
+    EXPECT_EQ(captureSessionForSys_->AddOutput((sptr<CaptureOutput>&)previewOutput), SUCCESS);
+    EXPECT_EQ(captureSessionForSys_->GetFilter(), FilterType::NONE);
+    EXPECT_EQ(captureSessionForSys_->GetSupportedFilters().empty(), true);
+    EXPECT_EQ(captureSessionForSys_->GetSupportedBeautyTypes().empty(), true);
+    captureSessionForSys_->SetBeauty(AUTO_TYPE, 0);
+    EXPECT_EQ(captureSessionForSys_->GetBeauty(AUTO_TYPE), -1);
+    captureSessionForSys_->SetFilter(NONE);
+    captureSessionForSys_->SetColorSpace(COLOR_SPACE_UNKNOWN);
+    EXPECT_EQ(ServiceToCameraError(captureSessionForSys_->VerifyAbility(0)), SERVICE_FATL_ERROR);
 
-    EXPECT_EQ(captureSession_->CommitConfig(), SUCCESS);
-    captureSession_->SetBeauty(AUTO_TYPE, 0);
-    EXPECT_EQ(captureSession_->GetBeauty(AUTO_TYPE), -1);
-    captureSession_->SetFilter(NONE);
-    captureSession_->SetColorSpace(COLOR_SPACE_UNKNOWN);
+    EXPECT_EQ(captureSessionForSys_->CommitConfig(), SUCCESS);
+    captureSessionForSys_->SetBeauty(AUTO_TYPE, 0);
+    EXPECT_EQ(captureSessionForSys_->GetBeauty(AUTO_TYPE), -1);
+    captureSessionForSys_->SetFilter(NONE);
+    captureSessionForSys_->SetColorSpace(COLOR_SPACE_UNKNOWN);
 }
 
 /*
@@ -3567,25 +3730,26 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_085, Test
  */
 HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_086, TestSize.Level0)
 {
-    EXPECT_EQ(captureSession_->BeginConfig(), SUCCESS);
-    EXPECT_EQ(captureSession_->AddInput((sptr<CaptureInput>&)cameraInput_), SUCCESS);
+    CreateSystemSession();
+    EXPECT_EQ(captureSessionForSys_->BeginConfig(), SUCCESS);
+    EXPECT_EQ(captureSessionForSys_->AddInput((sptr<CaptureInput>&)cameraInput_), SUCCESS);
 
-    sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
+    sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfilesForSys_[0]);
     ASSERT_NE(previewOutput, nullptr);
-    EXPECT_EQ(captureSession_->AddOutput((sptr<CaptureOutput>&)previewOutput), SUCCESS);
-    EXPECT_EQ(captureSession_->CommitConfig(), 0);
+    EXPECT_EQ(captureSessionForSys_->AddOutput((sptr<CaptureOutput>&)previewOutput), SUCCESS);
+    EXPECT_EQ(captureSessionForSys_->CommitConfig(), 0);
 
-    captureSession_->innerInputDevice_ = nullptr;
+    captureSessionForSys_->innerInputDevice_ = nullptr;
 
-    EXPECT_EQ(captureSession_->GetSupportedFilters().empty(), true);
-    EXPECT_EQ(captureSession_->GetFilter(), FilterType::NONE);
-    EXPECT_EQ(captureSession_->GetSupportedBeautyTypes().empty(), true);
+    EXPECT_EQ(captureSessionForSys_->GetSupportedFilters().empty(), true);
+    EXPECT_EQ(captureSessionForSys_->GetFilter(), FilterType::NONE);
+    EXPECT_EQ(captureSessionForSys_->GetSupportedBeautyTypes().empty(), true);
 
     BeautyType beautyType = AUTO_TYPE;
-    EXPECT_EQ(captureSession_->GetSupportedBeautyRange(beautyType).empty(), true);
-    EXPECT_EQ(captureSession_->GetBeauty(beautyType), -1);
-    EXPECT_EQ(captureSession_->GetColorEffect(), ColorEffect::COLOR_EFFECT_NORMAL);
-    EXPECT_EQ(captureSession_->GetSupportedColorEffects().empty(), true);
+    EXPECT_EQ(captureSessionForSys_->GetSupportedBeautyRange(beautyType).empty(), true);
+    EXPECT_EQ(captureSessionForSys_->GetBeauty(beautyType), -1);
+    EXPECT_EQ(captureSessionForSys_->GetColorEffect(), ColorEffect::COLOR_EFFECT_NORMAL);
+    EXPECT_EQ(captureSessionForSys_->GetSupportedColorEffects().empty(), true);
 }
 
 /*
@@ -3598,6 +3762,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_086, Test
  */
 HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_087, TestSize.Level1)
 {
+    CreateNormalSession();
     EXPECT_EQ(captureSession_->GetSupportedFilters().empty(), true);
     EXPECT_EQ(captureSession_->GetFilter(), FilterType::NONE);
     EXPECT_EQ(captureSession_->GetSupportedBeautyTypes().empty(), true);
@@ -3628,25 +3793,26 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_087, Test
  */
 HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_088, TestSize.Level1)
 {
+    CreateSystemSession();
     ColorSpace colorSpace = COLOR_SPACE_UNKNOWN;
-    EXPECT_EQ(captureSession_->GetSupportedFilters().empty(), true);
-    EXPECT_EQ(captureSession_->GetFilter(), FilterType::NONE);
-    EXPECT_EQ(captureSession_->GetSupportedBeautyTypes().empty(), true);
+    EXPECT_EQ(captureSessionForSys_->GetSupportedFilters().empty(), true);
+    EXPECT_EQ(captureSessionForSys_->GetFilter(), FilterType::NONE);
+    EXPECT_EQ(captureSessionForSys_->GetSupportedBeautyTypes().empty(), true);
     BeautyType beautyType = AUTO_TYPE;
-    EXPECT_EQ(captureSession_->GetSupportedBeautyRange(beautyType).empty(), true);
-    EXPECT_EQ(captureSession_->GetBeauty(AUTO_TYPE), CameraErrorCode::SESSION_NOT_CONFIG);
-    EXPECT_EQ(captureSession_->GetColorEffect(), ColorEffect::COLOR_EFFECT_NORMAL);
-    EXPECT_EQ(captureSession_->GetSupportedColorEffects().empty(), true);
-    captureSession_->SetFilter(NONE);
-    captureSession_->SetBeauty(beautyType, 0);
-    EXPECT_EQ(captureSession_->GetSupportedColorSpaces().empty(), true);
-    EXPECT_EQ(captureSession_->SetColorSpace(COLOR_SPACE_UNKNOWN), CameraErrorCode::SESSION_NOT_CONFIG);
-    captureSession_->SetMode(SceneMode::NORMAL);
-    EXPECT_EQ(ServiceToCameraError(captureSession_->VerifyAbility(0)), SERVICE_FATL_ERROR);
-    EXPECT_EQ(captureSession_->GetActiveColorSpace(colorSpace), CameraErrorCode::SESSION_NOT_CONFIG);
-    captureSession_->SetColorEffect(COLOR_EFFECT_NORMAL);
-    captureSession_->Release();
-    captureSession_ = nullptr;
+    EXPECT_EQ(captureSessionForSys_->GetSupportedBeautyRange(beautyType).empty(), true);
+    EXPECT_EQ(captureSessionForSys_->GetBeauty(AUTO_TYPE), CameraErrorCode::SESSION_NOT_CONFIG);
+    EXPECT_EQ(captureSessionForSys_->GetColorEffect(), ColorEffect::COLOR_EFFECT_NORMAL);
+    EXPECT_EQ(captureSessionForSys_->GetSupportedColorEffects().empty(), true);
+    captureSessionForSys_->SetFilter(NONE);
+    captureSessionForSys_->SetBeauty(beautyType, 0);
+    EXPECT_EQ(captureSessionForSys_->GetSupportedColorSpaces().empty(), true);
+    EXPECT_EQ(captureSessionForSys_->SetColorSpace(COLOR_SPACE_UNKNOWN), CameraErrorCode::SESSION_NOT_CONFIG);
+    captureSessionForSys_->SetMode(SceneMode::NORMAL);
+    EXPECT_EQ(ServiceToCameraError(captureSessionForSys_->VerifyAbility(0)), SERVICE_FATL_ERROR);
+    EXPECT_EQ(captureSessionForSys_->GetActiveColorSpace(colorSpace), CameraErrorCode::SESSION_NOT_CONFIG);
+    captureSessionForSys_->SetColorEffect(COLOR_EFFECT_NORMAL);
+    captureSessionForSys_->Release();
+    captureSessionForSys_ = nullptr;
 }
 
 /*
@@ -3659,26 +3825,27 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_088, Test
  */
 HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_089, TestSize.Level1)
 {
+    CreateSystemSession();
     ColorSpace colorSpace = COLOR_SPACE_UNKNOWN;
-    EXPECT_EQ(captureSession_->BeginConfig(), SUCCESS);
-    EXPECT_EQ(captureSession_->AddInput((sptr<CaptureInput>&)cameraInput_), SUCCESS);
-    sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
+    EXPECT_EQ(captureSessionForSys_->BeginConfig(), SUCCESS);
+    EXPECT_EQ(captureSessionForSys_->AddInput((sptr<CaptureInput>&)cameraInput_), SUCCESS);
+    sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfilesForSys_[0]);
     ASSERT_NE(previewOutput, nullptr);
-    EXPECT_EQ(captureSession_->AddOutput((sptr<CaptureOutput>&)previewOutput), SUCCESS);
-    captureSession_->SetMode(SceneMode::PORTRAIT);
-    EXPECT_EQ(ServiceToCameraError(captureSession_->VerifyAbility(0)), SERVICE_FATL_ERROR);
-    EXPECT_EQ(captureSession_->GetActiveColorSpace(colorSpace), SUCCESS);
-    captureSession_->SetColorEffect(COLOR_EFFECT_NORMAL);
-    EXPECT_EQ(captureSession_->CommitConfig(), SUCCESS);
-    if (captureSession_->IsMacroSupported()) {
-        captureSession_->LockForControl();
-        EXPECT_EQ(captureSession_->EnableMacro(false), SUCCESS);
-        captureSession_->UnlockForControl();
+    EXPECT_EQ(captureSessionForSys_->AddOutput((sptr<CaptureOutput>&)previewOutput), SUCCESS);
+    captureSessionForSys_->SetMode(SceneMode::PORTRAIT);
+    EXPECT_EQ(ServiceToCameraError(captureSessionForSys_->VerifyAbility(0)), SERVICE_FATL_ERROR);
+    EXPECT_EQ(captureSessionForSys_->GetActiveColorSpace(colorSpace), SUCCESS);
+    captureSessionForSys_->SetColorEffect(COLOR_EFFECT_NORMAL);
+    EXPECT_EQ(captureSessionForSys_->CommitConfig(), SUCCESS);
+    if (captureSessionForSys_->IsMacroSupported()) {
+        captureSessionForSys_->LockForControl();
+        EXPECT_EQ(captureSessionForSys_->EnableMacro(false), SUCCESS);
+        captureSessionForSys_->UnlockForControl();
     }
-    EXPECT_EQ(captureSession_->GetActiveColorSpace(colorSpace), SUCCESS);
-    captureSession_->SetColorEffect(COLOR_EFFECT_NORMAL);
-    captureSession_->innerInputDevice_ = nullptr;
-    EXPECT_EQ(ServiceToCameraError(captureSession_->VerifyAbility(0)), SERVICE_FATL_ERROR);
+    EXPECT_EQ(captureSessionForSys_->GetActiveColorSpace(colorSpace), SUCCESS);
+    captureSessionForSys_->SetColorEffect(COLOR_EFFECT_NORMAL);
+    captureSessionForSys_->innerInputDevice_ = nullptr;
+    EXPECT_EQ(ServiceToCameraError(captureSessionForSys_->VerifyAbility(0)), SERVICE_FATL_ERROR);
 }
 
 /*
@@ -3691,36 +3858,37 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_089, Test
  */
 HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_090, TestSize.Level1)
 {
+    CreateSystemSession();
     BeautyType beautyType = AUTO_TYPE;
-    EXPECT_EQ(captureSession_->GetSupportedBeautyRange(beautyType).empty(), true);
-    EXPECT_EQ(captureSession_->GetBeauty(beautyType), CameraErrorCode::SESSION_NOT_CONFIG);
-    EXPECT_EQ(captureSession_->GetColorEffect(), ColorEffect::COLOR_EFFECT_NORMAL);
-    EXPECT_EQ(captureSession_->GetSupportedColorEffects().empty(), true);
-    EXPECT_EQ(captureSession_->GetSupportedColorSpaces().empty(), true);
-    captureSession_->SetBeauty(beautyType, 0);
-    captureSession_->SetFilter(NONE);
-    EXPECT_EQ(captureSession_->SetColorSpace(COLOR_SPACE_UNKNOWN), SESSION_NOT_CONFIG);
-    EXPECT_EQ(captureSession_->BeginConfig(), SUCCESS);
-    EXPECT_EQ(captureSession_->AddInput((sptr<CaptureInput>&)cameraInput_), SUCCESS);
-    sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
+    EXPECT_EQ(captureSessionForSys_->GetSupportedBeautyRange(beautyType).empty(), true);
+    EXPECT_EQ(captureSessionForSys_->GetBeauty(beautyType), CameraErrorCode::SESSION_NOT_CONFIG);
+    EXPECT_EQ(captureSessionForSys_->GetColorEffect(), ColorEffect::COLOR_EFFECT_NORMAL);
+    EXPECT_EQ(captureSessionForSys_->GetSupportedColorEffects().empty(), true);
+    EXPECT_EQ(captureSessionForSys_->GetSupportedColorSpaces().empty(), true);
+    captureSessionForSys_->SetBeauty(beautyType, 0);
+    captureSessionForSys_->SetFilter(NONE);
+    EXPECT_EQ(captureSessionForSys_->SetColorSpace(COLOR_SPACE_UNKNOWN), SESSION_NOT_CONFIG);
+    EXPECT_EQ(captureSessionForSys_->BeginConfig(), SUCCESS);
+    EXPECT_EQ(captureSessionForSys_->AddInput((sptr<CaptureInput>&)cameraInput_), SUCCESS);
+    sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfilesForSys_[0]);
     ASSERT_NE(previewOutput, nullptr);
-    EXPECT_EQ(captureSession_->AddOutput((sptr<CaptureOutput>&)previewOutput), SUCCESS);
-    captureSession_->GetSupportedBeautyRange(beautyType);
-    captureSession_->GetBeauty(beautyType);
-    captureSession_->GetColorEffect();
-    captureSession_->SetBeauty(beautyType, 0);
-    captureSession_->SetFilter(NONE);
-    captureSession_->SetColorSpace(COLOR_SPACE_UNKNOWN);
-    EXPECT_EQ(captureSession_->CommitConfig(), SUCCESS);
-    captureSession_->innerInputDevice_ = nullptr;
-    captureSession_->GetSupportedBeautyRange(beautyType).empty();
-    captureSession_->GetBeauty(beautyType);
-    captureSession_->GetColorEffect();
-    captureSession_->GetSupportedColorEffects().empty();
-    captureSession_->GetSupportedColorSpaces().empty();
-    captureSession_->SetBeauty(beautyType, 0);
-    captureSession_->SetFilter(NONE);
-    captureSession_->SetColorSpace(COLOR_SPACE_UNKNOWN);
+    EXPECT_EQ(captureSessionForSys_->AddOutput((sptr<CaptureOutput>&)previewOutput), SUCCESS);
+    captureSessionForSys_->GetSupportedBeautyRange(beautyType);
+    captureSessionForSys_->GetBeauty(beautyType);
+    captureSessionForSys_->GetColorEffect();
+    captureSessionForSys_->SetBeauty(beautyType, 0);
+    captureSessionForSys_->SetFilter(NONE);
+    captureSessionForSys_->SetColorSpace(COLOR_SPACE_UNKNOWN);
+    EXPECT_EQ(captureSessionForSys_->CommitConfig(), SUCCESS);
+    captureSessionForSys_->innerInputDevice_ = nullptr;
+    captureSessionForSys_->GetSupportedBeautyRange(beautyType).empty();
+    captureSessionForSys_->GetBeauty(beautyType);
+    captureSessionForSys_->GetColorEffect();
+    captureSessionForSys_->GetSupportedColorEffects().empty();
+    captureSessionForSys_->GetSupportedColorSpaces().empty();
+    captureSessionForSys_->SetBeauty(beautyType, 0);
+    captureSessionForSys_->SetFilter(NONE);
+    captureSessionForSys_->SetColorSpace(COLOR_SPACE_UNKNOWN);
 }
 
 /*
@@ -3733,6 +3901,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_090, Test
  */
 HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_091, TestSize.Level0)
 {
+    CreateNormalSession();
     sptr<PhotoOutput> photoOutput1 = CreatePhotoOutput(photoProfiles_[0]);
     ASSERT_NE(photoOutput1, nullptr);
     auto photoOutput = static_cast<PhotoOutput*>(photoOutput1.GetRefPtr());
@@ -3836,6 +4005,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_093, Test
  */
 HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_094, TestSize.Level1)
 {
+    CreateNormalSession();
     EXPECT_EQ(captureSession_->BeginConfig(), 0);
     EXPECT_EQ(captureSession_->AddInput((sptr<CaptureInput>&)cameraInput_), SUCCESS);
 
@@ -3876,6 +4046,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_094, Test
  */
 HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_095, TestSize.Level1)
 {
+    CreateNormalSession();
     EXPECT_EQ(captureSession_->BeginConfig(), SUCCESS);
     EXPECT_EQ(captureSession_->AddInput((sptr<CaptureInput>&)cameraInput_), SUCCESS);
 
@@ -3907,6 +4078,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_095, Test
  */
 HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_096, TestSize.Level1)
 {
+    CreateNormalSession();
     EXPECT_EQ(captureSession_->EnableAutoHighQualityPhoto(false), SUCCESS);
 
     sptr<PhotoOutput> photoOutput;
@@ -3935,6 +4107,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_096, Test
  */
 HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_097, TestSize.Level0)
 {
+    CreateNormalSession();
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
     sptr<PhotoOutput> photoOutput = CreatePhotoOutput(photoProfiles_[0]);
@@ -3978,6 +4151,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_097, Test
  */
 HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_098, TestSize.Level1)
 {
+    CreateNormalSession();
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
     sptr<PhotoOutput> photoOutput = CreatePhotoOutput(photoProfiles_[0]);
@@ -4012,6 +4186,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_098, Test
  */
 HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_099, TestSize.Level1)
 {
+    CreateNormalSession();
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
     sptr<PhotoOutput> photoOutput = CreatePhotoOutput(photoProfiles_[0]);
@@ -4054,6 +4229,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_099, Test
  */
 HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_100, TestSize.Level0)
 {
+    CreateNormalSession();
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
     sptr<PhotoOutput> photoOutput = CreatePhotoOutput(photoProfiles_[0]);
@@ -4140,6 +4316,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_100, Test
 */
 HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_101, TestSize.Level1)
 {
+    CreateNormalSession();
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
 
@@ -4253,6 +4430,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_102, Test
  */
 HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_103, TestSize.Level1)
 {
+    CreateNormalSession();
     sptr<CaptureSessionCallback> capSessionCallback = new (std::nothrow) CaptureSessionCallback();
     ASSERT_NE(capSessionCallback, nullptr);
     EXPECT_EQ(capSessionCallback->OnError(CAMERA_DEVICE_PREEMPTED), CAMERA_OK);
@@ -4283,6 +4461,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_103, Test
  */
 HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_104, TestSize.Level1)
 {
+    CreateNormalSession();
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
     EXPECT_EQ(captureSession_->BeginConfig(), SUCCESS);
@@ -4306,6 +4485,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_104, Test
  */
 HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_105, TestSize.Level1)
 {
+    CreateNormalSession();
     auto captureCallback = std::make_shared<HStreamCaptureCallbackImpl>(nullptr);
 
     int32_t captureId = 2001;
@@ -4352,6 +4532,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_105, Test
  */
 HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_106, TestSize.Level1)
 {
+    CreateNormalSession();
     auto repeatCallback = std::make_shared<VideoOutputCallbackImpl>();
 
     EXPECT_EQ(repeatCallback->OnFrameStarted(), CAMERA_OK);
@@ -4395,31 +4576,32 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_106, Test
  */
 HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_107, TestSize.Level1)
 {
+    CreateSystemSession();
     float recnum = 0.0f;
-    EXPECT_EQ(captureSession_->GetFocusDistance(recnum), 7400103);
+    EXPECT_EQ(captureSessionForSys_->GetFocusDistance(recnum), 7400103);
     EXPECT_EQ(recnum, 0.0f);
 
-    captureSession_->LockForControl();
+    captureSessionForSys_->LockForControl();
     float num = 1.0f;
-    EXPECT_EQ(captureSession_->SetFocusDistance(num), 7400103);
-    captureSession_->UnlockForControl();
+    EXPECT_EQ(captureSessionForSys_->SetFocusDistance(num), 7400103);
+    captureSessionForSys_->UnlockForControl();
 
     sptr<PhotoOutput> photoOutput;
     sptr<VideoOutput> videoOutput;
-    CreateAndConfigureDefaultCaptureOutput(photoOutput, videoOutput);
+    CreateAndConfigureDefaultCaptureOutputForSys(photoOutput, videoOutput);
 
-    captureSession_->GetFocusDistance(recnum);
+    captureSessionForSys_->GetFocusDistance(recnum);
     EXPECT_EQ(recnum, 0.0f);
-    captureSession_->LockForControl();
-    EXPECT_EQ(captureSession_->SetFocusDistance(num), 0);
-    captureSession_->UnlockForControl();
-    captureSession_->GetFocusDistance(recnum);
+    captureSessionForSys_->LockForControl();
+    EXPECT_EQ(captureSessionForSys_->SetFocusDistance(num), 0);
+    captureSessionForSys_->UnlockForControl();
+    captureSessionForSys_->GetFocusDistance(recnum);
     EXPECT_EQ(recnum, 1.0f);
 
     EXPECT_EQ(cameraInput_->Release(), SUCCESS);
     cameraInput_ = nullptr;
 
-    EXPECT_EQ(captureSession_->GetFocusDistance(recnum), 0);
+    EXPECT_EQ(captureSessionForSys_->GetFocusDistance(recnum), 0);
 }
 
 /*
@@ -4432,20 +4614,21 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_107, Test
  */
 HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_108, TestSize.Level1)
 {
+    CreateSystemSession();
     std::vector<ZoomPointInfo> zoomPointInfolist = {};
-    EXPECT_EQ(captureSession_->GetZoomPointInfos(zoomPointInfolist), 7400103);
+    EXPECT_EQ(captureSessionForSys_->GetZoomPointInfos(zoomPointInfolist), 7400103);
     EXPECT_EQ(zoomPointInfolist.empty(), true);
 
     sptr<PhotoOutput> photoOutput;
     sptr<VideoOutput> videoOutput;
-    CreateAndConfigureDefaultCaptureOutput(photoOutput, videoOutput);
+    CreateAndConfigureDefaultCaptureOutputForSys(photoOutput, videoOutput);
 
-    EXPECT_EQ(captureSession_->GetZoomPointInfos(zoomPointInfolist), 0);
+    EXPECT_EQ(captureSessionForSys_->GetZoomPointInfos(zoomPointInfolist), 0);
 
     EXPECT_EQ(cameraInput_->Release(), SUCCESS);
     cameraInput_ = nullptr;
 
-    EXPECT_EQ(captureSession_->GetZoomPointInfos(zoomPointInfolist), 0);
+    EXPECT_EQ(captureSessionForSys_->GetZoomPointInfos(zoomPointInfolist), 0);
 }
 
 /*
@@ -4458,6 +4641,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_108, Test
  */
 HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_109, TestSize.Level1)
 {
+    CreateNormalSession();
     std::vector<uint32_t> exposureTimeRange = {};
     EXPECT_EQ(captureSession_->GetSensorExposureTimeRange(exposureTimeRange), 7400103);
     EXPECT_EQ(exposureTimeRange.empty(), true);
@@ -4505,6 +4689,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_109, Test
  */
 HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_110, TestSize.Level1)
 {
+    CreateNormalSession();
     std::vector<WhiteBalanceMode> supportedWhiteBalanceModes = {};
     int32_t intResult = captureSession_->GetSupportedWhiteBalanceModes(supportedWhiteBalanceModes);
     EXPECT_EQ(intResult, 7400103);
@@ -4568,6 +4753,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_110, Test
  */
 HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_111, TestSize.Level1)
 {
+    CreateNormalSession();
     std::vector<int32_t> manualWhiteBalanceRange = {};
     int32_t intResult = captureSession_->GetManualWhiteBalanceRange(manualWhiteBalanceRange);
     EXPECT_EQ(intResult, 7400103);
@@ -4628,44 +4814,45 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_111, Test
  */
 HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_112, TestSize.Level1)
 {
+    CreateSystemSession();
     std::vector<std::vector<float>> supportedPhysicalApertures;
-    int32_t intResult = captureSession_->GetSupportedPhysicalApertures(supportedPhysicalApertures);
+    int32_t intResult = captureSessionForSys_->GetSupportedPhysicalApertures(supportedPhysicalApertures);
     EXPECT_EQ(intResult, 7400103);
     EXPECT_EQ(supportedPhysicalApertures.empty(), true);
 
     float getAperture = 0.0f;
-    intResult = captureSession_->GetPhysicalAperture(getAperture);
+    intResult = captureSessionForSys_->GetPhysicalAperture(getAperture);
     EXPECT_EQ(intResult, 7400103);
     EXPECT_EQ(getAperture, 0.0f);
 
-    captureSession_->LockForControl();
+    captureSessionForSys_->LockForControl();
     float setAperture = 1.0f;
-    intResult = captureSession_->SetPhysicalAperture(setAperture);
+    intResult = captureSessionForSys_->SetPhysicalAperture(setAperture);
     EXPECT_EQ(intResult, 7400103);
-    captureSession_->UnlockForControl();
+    captureSessionForSys_->UnlockForControl();
 
     sptr<PhotoOutput> photoOutput;
     sptr<VideoOutput> videoOutput;
-    CreateAndConfigureDefaultCaptureOutput(photoOutput, videoOutput);
+    CreateAndConfigureDefaultCaptureOutputForSys(photoOutput, videoOutput);
 
-    intResult = captureSession_->GetSupportedPhysicalApertures(supportedPhysicalApertures);
+    intResult = captureSessionForSys_->GetSupportedPhysicalApertures(supportedPhysicalApertures);
     EXPECT_EQ(intResult, 0);
-    intResult = captureSession_->GetPhysicalAperture(getAperture);
+    intResult = captureSessionForSys_->GetPhysicalAperture(getAperture);
     EXPECT_EQ(intResult, 0);
 
-    captureSession_->LockForControl();
-    intResult = captureSession_->SetPhysicalAperture(setAperture);
+    captureSessionForSys_->LockForControl();
+    intResult = captureSessionForSys_->SetPhysicalAperture(setAperture);
     EXPECT_EQ(intResult, 0);
-    captureSession_->UnlockForControl();
-    intResult = captureSession_->GetPhysicalAperture(getAperture);
+    captureSessionForSys_->UnlockForControl();
+    intResult = captureSessionForSys_->GetPhysicalAperture(getAperture);
     EXPECT_EQ(intResult, 0);
 
     EXPECT_EQ(cameraInput_->Release(), SUCCESS);
     cameraInput_ = nullptr;
 
-    intResult = captureSession_->GetSupportedPhysicalApertures(supportedPhysicalApertures);
+    intResult = captureSessionForSys_->GetSupportedPhysicalApertures(supportedPhysicalApertures);
     EXPECT_EQ(intResult, 0);
-    intResult = captureSession_->GetPhysicalAperture(getAperture);
+    intResult = captureSessionForSys_->GetPhysicalAperture(getAperture);
     EXPECT_EQ(intResult, 0);
 }
 
@@ -4679,6 +4866,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_112, Test
  */
 HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_113, TestSize.Level1)
 {
+    CreateNormalSession();
     bool isEnabled = false;
     bool isAutoAigcPhotoSupported = false;
     EXPECT_EQ(captureSession_->EnableAutoAigcPhoto(isEnabled), SUCCESS);

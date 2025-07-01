@@ -20,8 +20,10 @@
 
 #include "gtest/gtest.h"
 #include "input/camera_manager.h"
-#include "session/capture_session.h"
+#include "input/camera_manager_for_sys.h"
 #include "photo_output_callback.h"
+#include "session/capture_session.h"
+#include "session/capture_session_for_sys.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -174,6 +176,7 @@ public:
     void TearDown();
 
     void UpdateCameraOutputCapability(int32_t index = 0, int32_t modeName = 0);
+    void UpdateCameraOutputCapabilityForSys(int32_t index = 0, int32_t modeName = 0);
     void FilterPreviewProfiles(std::vector<Profile>& previewProfiles);
 
     sptr<PreviewOutput> CreatePreviewOutput(Profile &previewProfile);
@@ -181,9 +184,14 @@ public:
     sptr<VideoOutput> CreateVideoOutput(VideoProfile &videoProfile);
 
     void CreateAndConfigureDefaultCaptureOutput(sptr<PhotoOutput> &photoOutput, sptr<VideoOutput> &videoOutput);
+    void CreateAndConfigureDefaultCaptureOutputForSys(sptr<PhotoOutput> &photoOutput, sptr<VideoOutput> &videoOutput);
     void CreateAndConfigureDefaultCaptureOutput(sptr<PhotoOutput> &photoOutput);
     void StartDefaultCaptureOutput(sptr<PhotoOutput> photoOutput, sptr<VideoOutput> videoOutput);
+    void StartDefaultCaptureOutputForSys(sptr<PhotoOutput> photoOutput, sptr<VideoOutput> videoOutput);
     void StartDefaultCaptureOutput(sptr<PhotoOutput> photoOutput);
+
+    void CreateNormalSession();
+    void CreateSystemSession();
 
 protected:
     int32_t previewFd_ = -1;
@@ -192,12 +200,17 @@ protected:
 
     sptr<CameraInput> cameraInput_ = nullptr;
     sptr<CameraManager> cameraManager_ = nullptr;
+    sptr<CameraManagerForSys> cameraManagerForSys_ = nullptr;
     sptr<CaptureSession> captureSession_ = nullptr;
+    sptr<CaptureSessionForSys> captureSessionForSys_ = nullptr;
     std::vector<sptr<CameraDevice>> cameraDevices_ = {};
 
     std::vector<Profile> photoProfiles_ = {};
     std::vector<Profile> previewProfiles_ = {};
     std::vector<VideoProfile> videoProfiles_ = {};
+    std::vector<Profile> photoProfilesForSys_ = {};
+    std::vector<Profile> previewProfilesForSys_ = {};
+    std::vector<VideoProfile> videoProfilesForSys_ = {};
     std::vector<DepthProfile> depthProfiles_ = {};
     std::vector<MetadataObjectType> metadataObjectTypes_ = {};
 };

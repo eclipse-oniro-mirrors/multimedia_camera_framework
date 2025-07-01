@@ -46,11 +46,11 @@ public:
     {
         return 0;
     }
-    int32_t OnFramePaused() override
+    int32_t OnFramePaused()
     {
         return 0;
     }
-    int32_t OnFrameResumed() override
+    int32_t OnFrameResumed()
     {
         return 0;
     }

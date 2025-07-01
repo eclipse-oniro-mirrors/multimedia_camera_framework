@@ -16,6 +16,7 @@
 #include "mode/mode_manager_napi.h"
 
 #include "camera_napi_object_types.h"
+#include "dynamic_loader/camera_napi_ex_manager.h"
 #include "input/camera_manager_napi.h"
 #include "input/camera_napi.h"
 #include "napi/native_common.h"
@@ -45,6 +46,7 @@ ModeManagerNapi::ModeManagerNapi() : env_(nullptr)
 ModeManagerNapi::~ModeManagerNapi()
 {
     MEDIA_DEBUG_LOG("~ModeManagerNapi is called");
+    CameraNapiExManager::FreeCameraNapiExProxy(CameraNapiExProxyUserType::MODE_MANAGER_NAPI);
 }
 
 // Constructor callback
@@ -133,6 +135,23 @@ napi_value ModeManagerNapi::CreateModeManager(napi_env env)
     return result;
 }
 
+napi_value ModeManagerNapi::CreateSessionForSys(napi_env env, int32_t jsModeName)
+{
+    MEDIA_DEBUG_LOG("ModeManagerNapi::CreateSessionForSys is called");
+    napi_value result = nullptr;
+
+    napi_get_undefined(env, &result);
+    auto cameraNapiExProxy =
+        CameraNapiExManager::GetCameraNapiExProxy(CameraNapiExProxyUserType::MODE_MANAGER_NAPI);
+    CHECK_ERROR_RETURN_RET_LOG(cameraNapiExProxy == nullptr, result, "cameraNapiExProxy is nullptr");
+    result = cameraNapiExProxy->CreateSessionForSys(env, jsModeName);
+    if (result == nullptr) {
+        MEDIA_ERR_LOG("ModeManagerNapi::CreateSessionForSys failed");
+        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "Invalid js mode");
+    }
+    return result;
+}
+
 napi_value ModeManagerNapi::CreateCameraSessionInstance(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("CreateCameraSessionInstance is called");
@@ -161,16 +180,16 @@ napi_value ModeManagerNapi::CreateCameraSessionInstance(napi_env env, napi_callb
             result = VideoSessionNapi::CreateCameraSession(env);
             break;
         case JsSceneMode::JS_PORTRAIT:
-            result = PortraitSessionNapi::CreateCameraSession(env);
+            result = CreateSessionForSys(env, jsModeName);
             break;
         case JsSceneMode::JS_NIGHT:
-            result = NightSessionNapi::CreateCameraSession(env);
+            result = CreateSessionForSys(env, jsModeName);
             break;
         case JS_SECURE_CAMERA:
             result = SecureCameraSessionNapi::CreateCameraSession(env);
             break;
         case JsSceneMode::JS_PANORAMA_PHOTO:
-            result = PanoramaSessionNapi::CreateCameraSession(env);
+            result = CreateSessionForSys(env, jsModeName);
             break;
         default:
             MEDIA_ERR_LOG("ModeManagerNapi::CreateCameraSessionInstance mode = %{public}d not supported", jsModeName);

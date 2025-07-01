@@ -18,6 +18,7 @@
 
 #include "session/profession_session.h"
 #include "input/camera_manager.h"
+#include "input/camera_manager_for_sys.h"
 namespace OHOS {
 namespace CameraStandard {
 

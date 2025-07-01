@@ -39,7 +39,8 @@ ohos_fuzztest("SlowMotionSessionFuzzTest") {
   sources = [ "slow_motion_session_fuzzer.cpp" ]
 
   deps = [
-    "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
+    "${multimedia_camera_framework_path}/frameworks/native/camera/base:camera_framework",
+    "${multimedia_camera_framework_path}/frameworks/native/camera/extension:camera_framework_ex",
     "${multimedia_camera_framework_path}/test/test_common:test_common",
    ]
 

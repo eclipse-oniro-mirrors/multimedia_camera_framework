@@ -19,7 +19,8 @@
 #include "gtest/gtest.h"
 #include "hcamera_service.h"
 #include "input/camera_manager.h"
-#include "depth_data_output.h"
+#include "input/camera_manager_for_sys.h"
+#include "output/depth_data_output.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -42,6 +43,7 @@ public:
     int32_t uid_ = 0;
     int32_t userId_ = 0;
     sptr<CameraManager> cameraManager_ = nullptr;
+    sptr<CameraManagerForSys> cameraManagerForSys_ = nullptr;
 
     /* SetUpTestCase:The preset action of the test suite is executed before the first TestCase */
     static void SetUpTestCase(void);

@@ -1,0 +1,188 @@
+# Copyright (c) 2021-2024 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("./../../../../multimedia_camera_framework.gni")
+
+config("camera_framework_public_config") {
+  include_dirs = [
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include/input",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include/output",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include/session",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include/deferred_proc_session",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include/utils",
+    "../interfaces/inner_api/native/camera/include/mode",
+    "../../../interfaces/inner_api/native/camera/include/utils",
+  ]
+}
+
+config("camera_framework_local_config") {
+  include_dirs = [
+    "${multimedia_camera_framework_path}/dynamic_libs/image_framework/include",
+    "${multimedia_camera_framework_path}/services/camera_service/include",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/base/include",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/client/include",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/server/include",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include",
+    "${multimedia_camera_framework_path}/common/utils",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/utils",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/base/include",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/client/include",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/server/include",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session/photo_session",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session/video_session",
+  ]
+}
+
+ohos_shared_library("camera_framework") {
+  branch_protector_ret = "pac_ret"
+  install_enable = true
+  sources = [
+    "${multimedia_camera_framework_path}/dynamic_libs/image_framework/src/picture_adapter.cpp",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/base/src/icamera_util.cpp",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/client/src/hcamera_broker_proxy.cpp",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/server/src/hstream_capture_photo_callback_stub.cpp",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/server/src/hstream_capture_thumbnail_callback_stub.cpp",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/server/src/hcamera_listener_stub.cpp",
+    "src/ability/camera_ability.cpp",
+    "src/ability/camera_ability_builder.cpp",
+    "src/ability/camera_ability_const.cpp",
+    "src/ability/camera_ability_parse_util.cpp",
+    "src/deferred_proc_session/deferred_photo_proc_session.cpp",
+    "src/deferred_proc_session/deferred_video_proc_session.cpp",
+    "src/input/camera_device.cpp",
+    "src/input/camera_input.cpp",
+    "src/input/camera_manager.cpp",
+    "src/input/camera_service_system_ability_listener.cpp",
+    "src/input/prelaunch_config.cpp",
+    "src/output/camera_output_capability.cpp",
+    "src/output/camera_photo_proxy.cpp",
+    "src/output/capture_output.cpp",
+    "src/output/metadata_output.cpp",
+    "src/output/photo_output.cpp",
+    "src/output/photo_output_callback.cpp",
+    "src/output/preview_output.cpp",
+    "src/output/sketch_wrapper.cpp",
+    "src/output/video_output.cpp",
+    "src/session/capture_session.cpp",
+    "src/session/features/moon_capture_boost_feature.cpp",
+    "src/session/mech_session.cpp",
+    "src/session/photo_session.cpp",
+    "src/session/scan_session.cpp",
+    "src/session/secure_camera_session.cpp",
+    "src/session/video_session.cpp",
+    "src/utils/camera_buffer_handle_utils.cpp",
+    "src/utils/camera_rotation_api_utils.cpp",
+    "src/utils/camera_security_utils.cpp",
+    "src/utils/camera_thread_utils.cpp",
+    "src/utils/camera_timer.cpp",
+    "src/utils/dps_metadata_info.cpp",
+    "src/utils/metadata_common_utils.cpp",
+  ]
+
+  cflags = [
+    "-fPIC",
+    "-Wall",
+    "-DSUPPORT_CAMERA_AUTH",
+    "-DIMAGE_COLORSPACE_FLAG",
+    "-Os",
+    "-fno-merge-all-constants",
+    "-flto",
+    "-ffunction-sections"
+  ]
+
+  ldflags = [
+    "-Wl,--gc-sections",
+    "-fPIE",
+  ]
+
+  if (target_cpu == "arm") {
+    cflags += [ "-DBINDER_IPC_32BIT" ]
+  }
+  if (build_variant == "user") {
+    cflags += [ "-DIS_RELEASE_VERSION" ]
+  }
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+
+  public_configs = [
+    ":camera_framework_public_config",
+    ":camera_framework_local_config",
+    "${multimedia_camera_framework_path}/services/camera_service/idls:camera_sa_idl_config",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/idls:deferred_processing_service_idl_config",
+  ]
+
+  public_external_deps = [ "drivers_interface_camera:metadata" ]
+
+  deps = [ "${multimedia_camera_framework_path}/common:camera_utils",
+    "${multimedia_camera_framework_path}/services/camera_service/idls:camera_idl_sa_proxy",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/idls:camera_deferred_idl_sa_proxy",
+  ]
+
+  external_deps = [
+    "access_token:libtokenid_sdk",
+    "bundle_framework:appexecfwk_base",
+    "bundle_framework:appexecfwk_core",
+    "c_utils:utils",
+    "data_share:datashare_common",
+    "data_share:datashare_consumer",
+    "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
+    "drivers_interface_camera:libcamera_proxy_1.0",
+    "drivers_interface_camera:libcamera_proxy_1.1",
+    "drivers_interface_camera:libcamera_proxy_1.2",
+    "drivers_interface_camera:libcamera_proxy_1.3",
+    "drivers_interface_camera:libmap_data_sequenceable_1.0",
+    "drivers_interface_display:libdisplay_commontype_proxy_1.0",
+    "graphic_2d:color_manager",
+    "graphic_2d:librender_service_client",
+    "graphic_surface:buffer_handle",
+    "graphic_surface:surface",
+    "hicollie:libhicollie",
+    "hilog:libhilog",
+    "hisysevent:libhisysevent",
+    "hitrace:hitrace_meter",
+    "image_framework:image",
+    "image_framework:image_native",
+    "init:libbegetutil",
+    "ipc:ipc_core",
+    "media_library:media_library",
+    "media_library:media_library_manager",
+    "napi:ace_napi",
+    "os_account:libaccountkits",
+    "os_account:os_account_innerkits",
+    "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
+    "window_manager:libdm",
+  ]
+
+  defines = []
+  if (use_sensor) {
+    external_deps += [ "sensor:sensor_interface_native" ]
+    defines += [ "CAMERA_USE_SENSOR" ]
+  }
+
+  if (is_emulator) {
+    defines += [ "CAMERA_EMULATOR" ]
+  }
+
+  cflags_cc = cflags
+  innerapi_tags = [ "platformsdk" ]
+  part_name = "camera_framework"
+  subsystem_name = "multimedia"
+}

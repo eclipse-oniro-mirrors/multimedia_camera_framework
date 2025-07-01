@@ -40,7 +40,10 @@ ohos_fuzztest("LightScanSessionFuzzTest") {
 
   sources = [ "light_scan_session_fuzzer.cpp" ]
 
-  deps = [ "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework" ]
+  deps = [
+    "${multimedia_camera_framework_path}/frameworks/native/camera/base:camera_framework",
+    "${multimedia_camera_framework_path}/frameworks/native/camera/extension:camera_framework_ex",
+  ]
   external_deps = [
     "ability_base:want",
     "access_token:libaccesstoken_sdk",

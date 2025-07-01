@@ -18,6 +18,7 @@
 
 #include "access_token.h"
 #include "accesstoken_kit.h"
+#include "camera_manager_for_sys.h"
 #include "camera_util.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -166,7 +167,7 @@ HWTEST_F(CameraNightSessionUnit, night_session_unittest_001, TestSize.Level1)
     }
     ASSERT_NE(preview, nullptr);
     ASSERT_NE(photo, nullptr);
-    sptr<CaptureSession> captureSession = cameraManager_->CreateCaptureSession(mode);
+    sptr<CaptureSession> captureSession = CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(mode);
     ASSERT_NE(captureSession, nullptr);
     sptr<NightSession> nightSession = static_cast<NightSession*>(captureSession.GetRefPtr());
     ASSERT_NE(nightSession, nullptr);
@@ -231,7 +232,7 @@ HWTEST_F(CameraNightSessionUnit, night_session_unittest_002, TestSize.Level1)
         GTEST_SKIP();
     }
     ASSERT_NE(photo, nullptr);
-    sptr<CaptureSession> captureSession = cameraManager_->CreateCaptureSession(mode);
+    sptr<CaptureSession> captureSession = CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(mode);
     ASSERT_NE(captureSession, nullptr);
     sptr<NightSession> nightSession = static_cast<NightSession*>(captureSession.GetRefPtr());
     ASSERT_NE(nightSession, nullptr);
@@ -291,7 +292,7 @@ HWTEST_F(CameraNightSessionUnit, night_session_unittest_003, TestSize.Level1)
     }
     ASSERT_NE(preview, nullptr);
     ASSERT_NE(photo, nullptr);
-    sptr<CaptureSession> captureSession = cameraManager_->CreateCaptureSession(mode);
+    sptr<CaptureSession> captureSession = CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(mode);
     ASSERT_NE(captureSession, nullptr);
     sptr<NightSession> nightSession = static_cast<NightSession*>(captureSession.GetRefPtr());
     ASSERT_NE(nightSession, nullptr);
@@ -354,7 +355,7 @@ HWTEST_F(CameraNightSessionUnit, night_session_unittest_004, TestSize.Level0)
         GTEST_SKIP();
     }
     ASSERT_NE(photo, nullptr);
-    sptr<CaptureSession> captureSession = cameraManager_->CreateCaptureSession(mode);
+    sptr<CaptureSession> captureSession = CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(mode);
     ASSERT_NE(captureSession, nullptr);
     sptr<NightSession> nightSession = static_cast<NightSession*>(captureSession.GetRefPtr());
     ASSERT_NE(nightSession, nullptr);

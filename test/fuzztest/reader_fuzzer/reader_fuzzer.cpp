@@ -27,6 +27,29 @@ using namespace DeferredProcessing;
 static constexpr int32_t MIN_SIZE_NUM = 10;
 
 std::shared_ptr<Reader> ReaderFuzzer::fuzz_{nullptr};
+static const uint8_t* RAW_DATA = nullptr;
+static size_t g_dataSize = 0;
+static size_t g_pos;
+
+/*
+* describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
+* tips: only support basic type
+*/
+template<class T>
+T GetData()
+{
+    T object {};
+    size_t objectSize = sizeof(object);
+    if (RAW_DATA == nullptr || objectSize > g_dataSize - g_pos) {
+        return object;
+    }
+    errno_t ret = memcpy_s(&object, objectSize, RAW_DATA + g_pos, objectSize);
+    if (ret != EOK) {
+        return {};
+    }
+    g_pos += objectSize;
+    return object;
+}
 
 void ReaderFuzzer::ReaderFuzzTest(FuzzedDataProvider& fdp)
 {

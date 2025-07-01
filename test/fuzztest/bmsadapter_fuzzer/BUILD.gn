@@ -40,7 +40,7 @@ ohos_fuzztest("BmsAdapterFuzzTest") {
   sources = [ "bms_adapter_fuzzer.cpp" ]
 
   deps = [
-    "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
+    "${multimedia_camera_framework_path}/frameworks/native/camera/base:camera_framework",
     "${multimedia_camera_framework_path}/services/camera_service:camera_service",
   ]
 

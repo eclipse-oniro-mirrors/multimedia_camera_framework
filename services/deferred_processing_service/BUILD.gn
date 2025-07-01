@@ -15,7 +15,7 @@ import("//build/ohos.gni")
 import("./../../multimedia_camera_framework.gni")
 
 _common_sources = [
-  "${multimedia_camera_framework_path}/frameworks/native/camera/src/utils/dps_metadata_info.cpp",
+  "${multimedia_camera_framework_path}/frameworks/native/camera/base/src/utils/dps_metadata_info.cpp",
   "src/base/basic_definitions.cpp",
   "src/base/buffer_manager/shared_buffer.cpp",
   "src/base/command_server/command.cpp",

@@ -23,10 +23,10 @@ namespace CameraStandard {
 
 static constexpr int32_t MAX_CODE_LEN = 512;
 static constexpr int32_t MIN_SIZE_NUM = 4;
-static const uint8_t* RAW_DATA = nullptr;
+static const uint8_t* RAW_DATA __attribute__((used)) = nullptr;
 const size_t THRESHOLD = 10;
-static size_t g_dataSize = 0;
-static size_t g_pos;
+static size_t g_dataSize __attribute__((used)) = 0;
+static size_t g_pos __attribute__((used));
 
 /*
 * describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)

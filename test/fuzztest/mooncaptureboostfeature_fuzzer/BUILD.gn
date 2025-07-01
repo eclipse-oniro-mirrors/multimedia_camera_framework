@@ -39,7 +39,7 @@ ohos_fuzztest("MoonCaptureBoostFeatureFuzzTest") {
 
   sources = [ "moon_capture_boost_feature_fuzzer.cpp" ]
 
-  deps = [ "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework" ]
+  deps = [ "${multimedia_camera_framework_path}/frameworks/native/camera/base:camera_framework" ]
   external_deps = [
     "ability_base:want",
     "access_token:libaccesstoken_sdk",

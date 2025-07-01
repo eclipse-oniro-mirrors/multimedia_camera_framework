@@ -23,7 +23,6 @@
 #include "listener_base.h"
 #include "output/camera_output_capability.h"
 #include "output/capture_output.h"
-#include "output/depth_data_output_napi.h"
 #include "output/photo_output_napi.h"
 #include "output/preview_output_napi.h"
 #include "output/video_output_napi.h"

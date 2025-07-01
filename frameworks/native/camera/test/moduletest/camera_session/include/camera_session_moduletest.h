@@ -21,6 +21,7 @@
 #include "input/camera_device.h"
 #include "input/camera_input.h"
 #include "input/camera_manager.h"
+#include "input/camera_manager_for_sys.h"
 #include "output/camera_output_capability.h"
 #include "session/aperture_video_session.h"
 #include "session/capture_scene_const.h"
@@ -344,7 +345,9 @@ public:
     int32_t videoWidth_;
     int32_t videoHeight_;
     sptr<CameraManager> manager_;
+    sptr<CameraManagerForSys> managerForSys_;
     sptr<CaptureSession> session_;
+    sptr<CaptureSessionForSys> sessionForSys_;
     sptr<CaptureSession> scanSession_;
     sptr<SlowMotionSession> slowMotionSession_;
     sptr<CaptureSession> videoSession_;
