@@ -153,7 +153,7 @@ bool CameraPrivacy::StartUsingPermissionCallback()
         std::lock_guard<std::mutex> lock(cameraUseCbMutex_);
         CHECK_ERROR_RETURN_RET_LOG(cameraUseCallbackPtr_, true, "has StartUsingPermissionCallback!");
         cameraUseCallbackPtr_ = std::make_shared<CameraUseStateChangeCb>();
-        res = PrivacyKit::StartUsingPermission(callerToken_, OHOS_PERMISSION_CAMERA, cameraUseCallbackPtr_, pid_);
+        res = PrivacyKit::StartUsingPermission(callerToken_, OHOS_PERMISSION_CAMERA, cameraUseCallbackPtr_);
     }
     MEDIA_INFO_LOG("CameraPrivacy::StartUsingPermissionCallback res:%{public}d", res);
     bool ret = (res == CAMERA_OK || res == Security::AccessToken::ERR_EDM_POLICY_CHECK_FAILED ||
@@ -167,7 +167,7 @@ void CameraPrivacy::StopUsingPermissionCallback()
     MEDIA_INFO_LOG("CameraPrivacy::StopUsingPermissionCallback is called, pid_: %{public}d", pid_);
     {
         std::lock_guard<std::mutex> lock(cameraUseCbMutex_);
-        int32_t res = PrivacyKit::StopUsingPermission(callerToken_, OHOS_PERMISSION_CAMERA, pid_);
+        int32_t res = PrivacyKit::StopUsingPermission(callerToken_, OHOS_PERMISSION_CAMERA);
         MEDIA_INFO_LOG("CameraPrivacy::StopUsingPermissionCallback res:%{public}d", res);
         CHECK_ERROR_PRINT_LOG(res != CAMERA_OK, "StopUsingPermissionCallback failed.");
         cameraUseCallbackPtr_ = nullptr;
