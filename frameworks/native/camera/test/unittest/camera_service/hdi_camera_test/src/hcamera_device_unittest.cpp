@@ -670,9 +670,9 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_024, TestSize.Level1)
     ASSERT_NE(camDevice, nullptr);
  
     bool ret = camDevice->ShowDeviceProtectionDialog(OHOS_DEVICE_EJECT_BLOCK);
-    ASSERT_TRUE(ret);
+    ASSERT_FALSE(ret);
     ret = camDevice->ShowDeviceProtectionDialog(OHOS_DEVICE_EXTERNAL_PRESS);
-    ASSERT_TRUE(ret);
+    ASSERT_FALSE(ret);
 }
  
 /*

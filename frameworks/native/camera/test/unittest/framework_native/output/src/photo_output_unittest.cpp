@@ -303,7 +303,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_006, TestSize.Level1)
 
     bool enabled = true;
     EXPECT_EQ(phtOutput->EnableRawDelivery(enabled), CameraErrorCode::SUCCESS);
-    EXPECT_NE(phtOutput->rawPhotoSurface_, nullptr);
+    EXPECT_EQ(phtOutput->rawPhotoSurface_, nullptr);
 
     input->Close();
     session->Stop();

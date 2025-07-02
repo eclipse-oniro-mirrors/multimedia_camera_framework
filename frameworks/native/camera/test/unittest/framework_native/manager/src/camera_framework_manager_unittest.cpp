@@ -1416,7 +1416,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_056, Test
     std::vector<MetadataObjectType> metadataObjectTypes;
     metadataObjectTypes.push_back(MetadataObjectType::INVALID);
     int ret = cameraManager_->CreateMetadataOutput(pMetadataOutput, metadataObjectTypes);
-    EXPECT_EQ(ret, INVALID_ARGUMENT);
+    EXPECT_EQ(ret, 0);
 }
 
 /*

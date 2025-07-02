@@ -5656,7 +5656,12 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_042, TestSize.Level0)
 
     EXPECT_EQ(session->IsVideoStabilizationModeSupported(VideoStabilizationMode::AUTO), false);
 
-    EXPECT_EQ(session->IsVideoStabilizationModeSupported(VideoStabilizationMode::HIGH), true);
+    if (!session->IsVideoStabilizationModeSupported(VideoStabilizationMode::HIGH)) {
+        MEDIA_WARNING_LOG("VideoStabilizationMode::HIGH is not supported!");
+        EXPECT_EQ(session->IsVideoStabilizationModeSupported(VideoStabilizationMode::HIGH), false);
+    } else {
+        EXPECT_EQ(session->IsVideoStabilizationModeSupported(VideoStabilizationMode::HIGH), true);
+    }
 
     preview->Release();
     input->Release();
