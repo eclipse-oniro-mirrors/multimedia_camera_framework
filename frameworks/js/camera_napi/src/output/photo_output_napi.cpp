@@ -546,7 +546,12 @@ void PhotoOutputCallback::ExecutePhotoAvailableCb(const CallbackInfo& info) cons
         MEDIA_ERR_LOG("ImageNapi Create failed");
         napi_get_undefined(env_, &mainImage);
     }
-    result[PARAM1] = PhotoNapi::CreatePhoto(env_, mainImage, info.isRaw);
+    sptr<SurfaceBuffer> imageBuffer;
+    if (info.nativeImage) {
+        // bind imageBuffer life cycle with photoNapiObj
+        imageBuffer = info.nativeImage->GetBuffer();
+    }
+    result[PARAM1] = PhotoNapi::CreatePhoto(env_, mainImage, info.isRaw, imageBuffer);
     ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
     ExecuteCallback(CONST_CAPTURE_PHOTO_AVAILABLE, callbackNapiPara);
 }
