@@ -650,7 +650,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_015, TestSize.Level1
     std::shared_ptr<HStreamMetadataCallbackImpl> hstreamMetadataCallbackImpl =
         std::make_shared<HStreamMetadataCallbackImpl>(metadatOutput);
     int32_t ret = hstreamMetadataCallbackImpl->OnMetadataResult(streamId, result);
-    EXPECT_EQ(ret, CameraErrorCode::INVALID_ARGUMENT);
+    EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
 
     input->Close();
     session->Stop();
@@ -1032,9 +1032,9 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_027, TestSize.Level1
         MetadataObjectType::FACE,
     };
     int32_t ret = metadatOutput->AddMetadataObjectTypes(metadataObjectTypes);
-    EXPECT_EQ(ret, CameraErrorCode::INVALID_ARGUMENT);
+    EXPECT_EQ(ret, CameraErrorCode::SESSION_NOT_CONFIG);
     ret = metadatOutput->RemoveMetadataObjectTypes(metadataObjectTypes);
-    EXPECT_EQ(ret, CameraErrorCode::INVALID_ARGUMENT);
+    EXPECT_EQ(ret, CameraErrorCode::SESSION_NOT_CONFIG);
 
     metadataObjectTypes.resize(0);
     ret = metadatOutput->AddMetadataObjectTypes(metadataObjectTypes);

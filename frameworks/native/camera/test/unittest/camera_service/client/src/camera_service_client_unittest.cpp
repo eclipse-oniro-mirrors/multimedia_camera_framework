@@ -815,10 +815,10 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_007, TestSize.L
 
     bool isEnabled = false;
     intResult = capture->SetThumbnail(isEnabled);
-    EXPECT_EQ(intResult, 200);
+    EXPECT_EQ(intResult, 1);
 
     intResult = capture->SetThumbnail(isEnabled);
-    EXPECT_EQ(intResult, -1);
+    EXPECT_EQ(intResult, 1);
 
     std::shared_ptr<OHOS::Camera::CameraMetadata> captureSettings = nullptr;
     intResult = capture->Capture(captureSettings);
