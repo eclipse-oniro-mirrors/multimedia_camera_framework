@@ -3524,12 +3524,10 @@ ColorSpaceInfo CaptureSession::GetSupportedColorSpaceInfo()
     return colorSpaceInfo;
 }
 
-bool CheckColorSpaceForSystemApp(ColorSpace colorSpace)
+bool CheckColorSpaceForSystemApp(ColorSpace colorSpace, SceneMode sceneMode)
 {
-    if (!CameraSecurity::CheckSystemApp() && colorSpace == ColorSpace::BT2020_HLG) {
-        return false;
-    }
-    return true;
+    return CameraSecurity::CheckSystemApp() ||
+        !(colorSpace == ColorSpace::BT2020_HLG && sceneMode == SceneMode::CAPTURE);
 }
 
 std::vector<ColorSpace> CaptureSession::GetSupportedColorSpaces()
@@ -3548,7 +3546,7 @@ std::vector<ColorSpace> CaptureSession::GetSupportedColorSpaces()
         supportedColorSpaces.reserve(colorSpaces.size());
         for (uint32_t j = 0; j < colorSpaces.size(); j++) {
             auto itr = g_metaColorSpaceMap_.find(static_cast<CM_ColorSpaceType>(colorSpaces[j]));
-            CHECK_EXECUTE(itr != g_metaColorSpaceMap_.end() && CheckColorSpaceForSystemApp(itr->second),
+            CHECK_EXECUTE(itr != g_metaColorSpaceMap_.end() && CheckColorSpaceForSystemApp(itr->second, GetMode()),
                 supportedColorSpaces.emplace_back(itr->second));
         }
         return supportedColorSpaces;
