@@ -17,6 +17,7 @@
 #define PHOTO_NAPI_H_
 
 #include "camera_napi_utils.h"
+#include "surface_buffer.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -25,7 +26,8 @@ static const char PHOTO_NAPI_CLASS_NAME[] = "Photo";
 class PhotoNapi {
 public:
     static napi_value Init(napi_env env, napi_value exports);
-    static napi_value CreatePhoto(napi_env env, napi_value mainImage, bool isRaw = false);
+    static napi_value CreatePhoto(
+        napi_env env, napi_value mainImage, bool isRaw = false, sptr<SurfaceBuffer> imageBuffer = nullptr);
     static napi_value CreateRawPhoto(napi_env env, napi_value mainImage);
     PhotoNapi();
     ~PhotoNapi();
@@ -42,6 +44,7 @@ private:
     static thread_local napi_value sMainImage_;
     static thread_local napi_value sRawImage_;
     static thread_local uint32_t photoTaskId;
+    static sptr<SurfaceBuffer> imageBuffer_;
 
     napi_env env_;
     napi_value mainImage_;

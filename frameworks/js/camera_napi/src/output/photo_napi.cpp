@@ -25,6 +25,7 @@ namespace CameraStandard {
 thread_local napi_ref PhotoNapi::sConstructor_ = nullptr;
 thread_local napi_value PhotoNapi::sMainImage_ = nullptr;
 thread_local napi_value PhotoNapi::sRawImage_ = nullptr;
+sptr<SurfaceBuffer> PhotoNapi::imageBuffer_ = nullptr;
 thread_local uint32_t PhotoNapi::photoTaskId = PHOTO_TASKID;
 
 PhotoNapi::PhotoNapi() : env_(nullptr), mainImage_(nullptr), rawImage_(nullptr) {}
@@ -100,7 +101,7 @@ napi_value PhotoNapi::Init(napi_env env, napi_value exports)
     return nullptr;
 }
 
-napi_value PhotoNapi::CreatePhoto(napi_env env, napi_value mainImage, bool isRaw)
+napi_value PhotoNapi::CreatePhoto(napi_env env, napi_value mainImage, bool isRaw, sptr<SurfaceBuffer> imageBuffer)
 {
     MEDIA_DEBUG_LOG("CreatePhoto is called");
     CAMERA_SYNC_TRACE;
@@ -109,6 +110,7 @@ napi_value PhotoNapi::CreatePhoto(napi_env env, napi_value mainImage, bool isRaw
     napi_value constructor;
     napi_get_undefined(env, &result);
 
+    imageBuffer_ = imageBuffer;
     status = napi_get_reference_value(env, sConstructor_, &constructor);
     if (status == napi_ok) {
         if (isRaw) {
@@ -217,7 +219,7 @@ napi_value PhotoNapi::Release(napi_env env, napi_callback_info info)
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-
+    imageBuffer_ = nullptr;
     napi_get_undefined(env, &result);
     std::unique_ptr<PhotoAsyncContext> asyncContext = std::make_unique<PhotoAsyncContext>();
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
