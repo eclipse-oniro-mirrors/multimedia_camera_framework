@@ -1,0 +1,86 @@
+diff --git a/frameworks/js/camera_napi/src/output/photo_napi.cpp b/frameworks/js/camera_napi/src/output/photo_napi.cpp
+index 85c98c9e2..8e5fd87c3 100644
+--- a/frameworks/js/camera_napi/src/output/photo_napi.cpp
++++ b/frameworks/js/camera_napi/src/output/photo_napi.cpp
+@@ -25,6 +25,7 @@ namespace CameraStandard {
+ thread_local napi_ref PhotoNapi::sConstructor_ = nullptr;
+ thread_local napi_value PhotoNapi::sMainImage_ = nullptr;
+ thread_local napi_value PhotoNapi::sRawImage_ = nullptr;
++sptr<SurfaceBuffer> PhotoNapi::imageBuffer_ = nullptr;
+ thread_local uint32_t PhotoNapi::photoTaskId = PHOTO_TASKID;
+ 
+ PhotoNapi::PhotoNapi() : env_(nullptr), mainImage_(nullptr), rawImage_(nullptr) {}
+@@ -102,7 +103,7 @@ napi_value PhotoNapi::Init(napi_env env, napi_value exports)
+     return nullptr;
+ }
+ 
+-napi_value PhotoNapi::CreatePhoto(napi_env env, napi_value mainImage, bool isRaw)
++napi_value PhotoNapi::CreatePhoto(napi_env env, napi_value mainImage, bool isRaw, sptr<SurfaceBuffer> imageBuffer)
+ {
+     MEDIA_DEBUG_LOG("CreatePhoto is called");
+     CAMERA_SYNC_TRACE;
+@@ -111,6 +112,7 @@ napi_value PhotoNapi::CreatePhoto(napi_env env, napi_value mainImage, bool isRaw
+     napi_value constructor;
+     napi_get_undefined(env, &result);
+ 
++    imageBuffer_ = imageBuffer;
+     status = napi_get_reference_value(env, sConstructor_, &constructor);
+     if (status == napi_ok) {
+         if (isRaw) {
+@@ -217,7 +219,7 @@ napi_value PhotoNapi::Release(napi_env env, napi_callback_info info)
+     napi_value thisVar = nullptr;
+ 
+     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+-
++    imageBuffer_ = nullptr;
+     napi_get_undefined(env, &result);
+     std::unique_ptr<PhotoAsyncContext> asyncContext = std::make_unique<PhotoAsyncContext>();
+     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
+diff --git a/frameworks/js/camera_napi/src/output/photo_output_napi.cpp b/frameworks/js/camera_napi/src/output/photo_output_napi.cpp
+index 8b066d9bd..6fdafa8d3 100644
+--- a/frameworks/js/camera_napi/src/output/photo_output_napi.cpp
++++ b/frameworks/js/camera_napi/src/output/photo_output_napi.cpp
+@@ -556,7 +556,12 @@ void PhotoOutputCallback::ExecutePhotoAvailableCb(const CallbackInfo& info) cons
+         MEDIA_ERR_LOG("ImageNapi Create failed");
+         napi_get_undefined(env_, &mainImage);
+     }
+-    result[PARAM1] = PhotoNapi::CreatePhoto(env_, mainImage, info.isRaw);
++    sptr<SurfaceBuffer> imageBuffer;
++    if (info.nativeImage) {
++        // bind imageBuffer life cycle with photoNapiObj
++        imageBuffer = info.nativeImage->GetBuffer();
++    }
++    result[PARAM1] = PhotoNapi::CreatePhoto(env_, mainImage, info.isRaw, imageBuffer);
+     ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
+     ExecuteCallback(CONST_CAPTURE_PHOTO_AVAILABLE, callbackNapiPara);
+ }
+diff --git a/interfaces/kits/js/camera_napi/include/output/photo_napi.h b/interfaces/kits/js/camera_napi/include/output/photo_napi.h
+index 24ee4b1be..ee2d69bcd 100644
+--- a/interfaces/kits/js/camera_napi/include/output/photo_napi.h
++++ b/interfaces/kits/js/camera_napi/include/output/photo_napi.h
+@@ -17,6 +17,7 @@
+ #define PHOTO_NAPI_H_
+ 
+ #include "camera_napi_utils.h"
++#include "surface_buffer.h"
+ 
+ namespace OHOS {
+ namespace CameraStandard {
+@@ -25,7 +26,8 @@ static const char PHOTO_NAPI_CLASS_NAME[] = "Photo";
+ class PhotoNapi {
+ public:
+     static napi_value Init(napi_env env, napi_value exports);
+-    static napi_value CreatePhoto(napi_env env, napi_value mainImage, bool isRaw = false);
++    static napi_value CreatePhoto(
++        napi_env env, napi_value mainImage, bool isRaw = false, sptr<SurfaceBuffer> imageBuffer = nullptr);
+     static napi_value CreateRawPhoto(napi_env env, napi_value mainImage);
+     PhotoNapi();
+     ~PhotoNapi();
+@@ -42,6 +44,7 @@ private:
+     static thread_local napi_value sMainImage_;
+     static thread_local napi_value sRawImage_;
+     static thread_local uint32_t photoTaskId;
++    static sptr<SurfaceBuffer> imageBuffer_;
+ 
+     napi_env env_;
+     napi_value mainImage_;
