@@ -1,4 +1,4 @@
-# Copyright (c) 2024 Huawei Device Co., Ltd.
+# Copyright (c) 2024-2025 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -61,7 +61,7 @@ ohos_unittest("camera_service_unittest") {
     "media_library/src/photo_asset_adapter_unittest.cpp",
   ]
 
-  if (use_clang_coverage) {
+  if (use_libfuzzer || use_clang_coverage || !using_hb_new) {
     sources += [
       "avcodec/src/audio_capturer_session_unittest.cpp",
       "avcodec/src/audio_encoder_unittest.cpp",
