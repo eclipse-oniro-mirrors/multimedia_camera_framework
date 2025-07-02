@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023 Huawei Device Co., Ltd.
+# Copyright (c) 2021-2025 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -38,8 +38,16 @@ group("camera_fuzz_test") {
     "fuzztest/timelapsephotosession_fuzzer:fuzztest",
     "fuzztest/timercore_fuzzer:fuzztest",
     "fuzztest/videooutput_fuzzer:fuzztest",
+    "fuzztest/deferredprocessingserviceeventmonitor_fuzzer:fuzztest",
+    "fuzztest/deferredvideocontroller_fuzzer:fuzztest",
+    "fuzztest/deferredvideoprocessor_fuzzer:fuzztest",
+    "fuzztest/videojobqueue_fuzzer:fuzztest",
+    "fuzztest/videojobrepository_fuzzer:fuzztest",
+    "fuzztest/videopostprocessor_fuzzer:fuzztest",
+    "fuzztest/videoprocesscommand_fuzzer:fuzztest",
+    "fuzztest/videostrategycenter_fuzzer:fuzztest",
   ]
-  if (use_libfuzzer) {
+  if (use_libfuzzer || use_clang_coverage || !using_hb_new) {
     deps += [
       "fuzztest/audiocapturersession_fuzzer:fuzztest",
       "fuzztest/audiodeferredprocess_fuzzer:fuzztest",
@@ -54,9 +62,6 @@ group("camera_fuzz_test") {
       "fuzztest/camerawindowmanagerclient_fuzzer:fuzztest",
       "fuzztest/commandserver_fuzzer:fuzztest",
       "fuzztest/commandserverimpl_fuzzer:fuzztest",
-      "fuzztest/deferredprocessingserviceeventmonitor_fuzzer:fuzztest",
-      "fuzztest/deferredvideocontroller_fuzzer:fuzztest",
-      "fuzztest/deferredvideoprocessor_fuzzer:fuzztest",
       "fuzztest/dpsvideoreport_fuzzer:fuzztest",
       "fuzztest/hcameradevicemanager_fuzzer:fuzztest",
       "fuzztest/hcamerahostmanager_fuzzer:fuzztest",
@@ -78,11 +83,6 @@ group("camera_fuzz_test") {
       "fuzztest/sessioncoordinator_fuzzer:fuzztest",
       "fuzztest/streamcapture_fuzzer:fuzztest",
       "fuzztest/videoencoder_fuzzer:fuzztest",
-      "fuzztest/videojobqueue_fuzzer:fuzztest",
-      "fuzztest/videojobrepository_fuzzer:fuzztest",
-      "fuzztest/videopostprocessor_fuzzer:fuzztest",
-      "fuzztest/videoprocesscommand_fuzzer:fuzztest",
-      "fuzztest/videostrategycenter_fuzzer:fuzztest",
     ]
   }
 }
