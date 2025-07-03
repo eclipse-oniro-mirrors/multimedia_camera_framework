@@ -58,6 +58,7 @@ using CM_ColorSpaceType_V2_1 = OHOS::HDI::Display::Graphic::Common::V2_1::CM_Col
 static const int32_t CAPTURE_ROTATE_360 = 360;
 static const std::string BURST_UUID_BEGIN = "";
 static std::string g_currentBurstUuid = BURST_UUID_BEGIN;
+static const uint32_t TASKMANAGER_NUMBER = 2;
 
 static std::string GenerateBurstUuid()
 {
@@ -1117,7 +1118,7 @@ void HStreamCapture::InitCaptureThread()
         photoTask_ = std::make_shared<DeferredProcessing::TaskManager>("photoTask", 1, false);
     }
     if (isYuvCapture_ && photoSubTask_ == nullptr) {
-        photoSubTask_ = std::make_shared<DeferredProcessing::TaskManager>("photoSubTask", 1, false);
+        photoSubTask_ = std::make_shared<DeferredProcessing::TaskManager>("photoSubTask", TASKMANAGER_NUMBER, false);
     }
 }
 
