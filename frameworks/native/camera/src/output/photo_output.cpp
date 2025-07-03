@@ -504,6 +504,10 @@ void PhotoOutput::UnSetPhotoAvailableCallback()
     std::lock_guard<std::mutex> lock(outputCallbackMutex_);
     appPhotoCallback_ = nullptr;
     svcPhotoCallback_ = nullptr;
+    auto itemStream = CastStream<IStreamCapture>(GetStream());
+    if (itemStream) {
+        itemStream->UnSetPhotoAvailableCallback();
+    }
 }
 
 void PhotoOutput::SetPhotoAssetAvailableCallback(std::shared_ptr<PhotoAssetAvailableCallback> callback)
@@ -537,6 +541,10 @@ void PhotoOutput::UnSetPhotoAssetAvailableCallback()
     std::lock_guard<std::mutex> lock(outputCallbackMutex_);
     appPhotoAssetCallback_ = nullptr;
     svcPhotoAssetCallback_ = nullptr;
+    auto itemStream = CastStream<IStreamCapture>(GetStream());
+    if (itemStream) {
+        itemStream->UnSetPhotoAssetAvailableCallback();
+    }
 }
 
 void PhotoOutput::SetThumbnailCallback(std::shared_ptr<ThumbnailCallback> callback)
@@ -570,6 +578,10 @@ void PhotoOutput::UnSetThumbnailAvailableCallback()
     std::lock_guard<std::mutex> lock(outputCallbackMutex_);
     appThumbnailCallback_ = nullptr;
     svcThumbnailCallback_ = nullptr;
+    auto itemStream = CastStream<IStreamCapture>(GetStream());
+    if (itemStream) {
+        itemStream->UnSetThumbnailCallback();
+    }
 }
 
 int32_t PhotoOutput::SetThumbnail(bool isEnabled)

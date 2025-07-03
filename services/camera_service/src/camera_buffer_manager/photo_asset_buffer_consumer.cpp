@@ -57,7 +57,7 @@ void PhotoAssetBufferConsumer::OnBufferAvailable()
 
 void PhotoAssetBufferConsumer::ExecuteOnBufferAvailable()
 {
-    MEDIA_INFO_LOG("ExecuteOnBufferAvailable E");
+    MEDIA_INFO_LOG("PA_ExecuteOnBufferAvailable E");
     CAMERA_SYNC_TRACE;
     sptr<HStreamCapture> streamCapture = streamCapture_.promote();
     CHECK_ERROR_RETURN_LOG(streamCapture == nullptr, "streamCapture is null");
@@ -96,7 +96,7 @@ void PhotoAssetBufferConsumer::ExecuteOnBufferAvailable()
         streamCapture->OnPhotoAssetAvailable(captureId, uri, cameraShotType, burstKey);
     }
 
-    MEDIA_INFO_LOG("ExecuteOnBufferAvailable X");
+    MEDIA_INFO_LOG("PA_ExecuteOnBufferAvailable X");
 }
 
 void PhotoAssetBufferConsumer::StartWaitAuxiliaryTask(

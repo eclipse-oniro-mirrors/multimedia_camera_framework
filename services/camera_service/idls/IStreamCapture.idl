@@ -48,4 +48,7 @@ interface IStreamCapture extends IStreamCommon {
   [ipccode 18] void SetPhotoAvailableCallback([in] IStreamCapturePhotoCallback callbackFunc);
   [ipccode 19] void SetPhotoAssetAvailableCallback([in] IStreamCapturePhotoAssetCallback callbackFunc);
   [ipccode 20] void SetThumbnailCallback([in] IStreamCaptureThumbnailCallback callbackFunc);
+  [ipccode 21] void UnSetPhotoAvailableCallback();
+  [ipccode 22] void UnSetPhotoAssetAvailableCallback();
+  [ipccode 23] void UnSetThumbnailCallback();
 }
