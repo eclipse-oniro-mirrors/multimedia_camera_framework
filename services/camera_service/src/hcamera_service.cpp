@@ -1300,15 +1300,13 @@ int32_t HCameraService::UpdateMuteSetting(sptr<HCameraDevice> cameraDevice, bool
     constexpr int32_t DEFAULT_DATA_LENGTH = 1;
     shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata =
         make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
-    bool status = false;
-    int32_t ret;
     int32_t count = 1;
     uint8_t mode = muteMode ? OHOS_CAMERA_MUTE_MODE_SOLID_COLOR_BLACK : OHOS_CAMERA_MUTE_MODE_OFF;
 
     MEDIA_DEBUG_LOG("UpdateMuteSetting muteMode: %{public}d", muteMode);
 
-    AddOrUpdateMetadata(changedMetadata, OHOS_CONTROL_MUTE_MODE, &mode, count);
-    ret = cameraDevice->UpdateSetting(changedMetadata);
+    bool status = AddOrUpdateMetadata(changedMetadata, OHOS_CONTROL_MUTE_MODE, &mode, count);
+    int32_t ret = cameraDevice->UpdateSetting(changedMetadata);
     CHECK_ERROR_RETURN_RET_LOG(!status || ret != CAMERA_OK, CAMERA_UNKNOWN_ERROR, "UpdateMuteSetting muteMode Failed");
     return CAMERA_OK;
 }
