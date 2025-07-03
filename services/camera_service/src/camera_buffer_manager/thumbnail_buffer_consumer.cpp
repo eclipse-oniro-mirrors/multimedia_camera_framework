@@ -50,7 +50,7 @@ void ThumbnailBufferConsumer::OnBufferAvailable()
 
 void ThumbnailBufferConsumer::ExecuteOnBufferAvailable()
 {
-    MEDIA_INFO_LOG("ExecuteOnBufferAvailable E");
+    MEDIA_INFO_LOG("T_ExecuteOnBufferAvailable E");
     CAMERA_SYNC_TRACE;
     sptr<HStreamCapture> streamCapture = streamCapture_.promote();
     CHECK_ERROR_RETURN_LOG(streamCapture == nullptr, "streamCapture is null");
@@ -67,7 +67,7 @@ void ThumbnailBufferConsumer::ExecuteOnBufferAvailable()
     int32_t burstSeqId = CameraSurfaceBufferUtil::GetBurstSequenceId(surfaceBuffer);
     if (burstSeqId != -1) {
         streamCapture->thumbnailSurface_->ReleaseBuffer(surfaceBuffer, -1);
-        MEDIA_INFO_LOG("ExecuteOnBufferAvailable X, burstCapture skip thumbnail");
+        MEDIA_INFO_LOG("T_ExecuteOnBufferAvailable X, burstCapture skip thumbnail");
         return;
     }
     sptr<SurfaceBuffer> newSurfaceBuffer = CameraSurfaceBufferUtil::DeepCopyThumbnailBuffer(surfaceBuffer);
@@ -84,7 +84,7 @@ void ThumbnailBufferConsumer::ExecuteOnBufferAvailable()
         cameraPhotoProxy->SetImageFormat(yuvFormat);
         streamCapture->UpdateMediaLibraryPhotoAssetProxy(cameraPhotoProxy);
     }
-    MEDIA_INFO_LOG("ExecuteOnBufferAvailable X");
+    MEDIA_INFO_LOG("T_ExecuteOnBufferAvailable X");
 }
 }  // namespace CameraStandard
 }  // namespace OHOS

@@ -989,11 +989,11 @@ int32_t HStreamCapture::SetCallback(const sptr<IStreamCaptureCallback> &callback
 
 int32_t HStreamCapture::SetPhotoAvailableCallback(const sptr<IStreamCapturePhotoCallback> &callback)
 {
-    MEDIA_ERR_LOG("HStreamCapture::SetPhotoAvailableCallback E");
+    MEDIA_INFO_LOG("HSetPhotoAvailableCallback E");
     CHECK_ERROR_RETURN_RET_LOG(
-        surface_ == nullptr, CAMERA_INVALID_ARG, "HStreamCapture::SetPhotoAvailableCallback surface is null");
+        surface_ == nullptr, CAMERA_INVALID_ARG, "HSetPhotoAvailableCallback surface is null");
     CHECK_ERROR_RETURN_RET_LOG(
-        callback == nullptr, CAMERA_INVALID_ARG, "HStreamCapture::SetPhotoAvailableCallback callback is null");
+        callback == nullptr, CAMERA_INVALID_ARG, "HSetPhotoAvailableCallback callback is null");
     std::lock_guard<std::mutex> lock(photoCallbackLock_);
     photoAvaiableCallback_ = callback;
     CHECK_ERROR_RETURN_RET_LOG(photoAssetListener_ != nullptr, CAMERA_OK, "wait to set raw callback");
@@ -1007,9 +1007,18 @@ int32_t HStreamCapture::SetPhotoAvailableCallback(const sptr<IStreamCapturePhoto
     return CAMERA_OK;
 }
 
+int32_t HStreamCapture::UnSetPhotoAvailableCallback()
+{
+    MEDIA_INFO_LOG("HUnSetPhotoAvailableCallback E");
+    std::lock_guard<std::mutex> lock(photoCallbackLock_);
+    photoAvaiableCallback_ = nullptr;
+    photoListener_ = nullptr;
+    return CAMERA_OK;
+}
+
 void HStreamCapture::SetRawCallback()
 {
-    MEDIA_ERR_LOG("HStreamCapture::SetRawCallback E");
+    MEDIA_INFO_LOG("HStreamCapture::SetRawCallback E");
     CHECK_ERROR_RETURN_LOG(photoAvaiableCallback_ == nullptr, "SetRawCallback callback is null");
     CHECK_ERROR_RETURN_LOG(rawSurface_ == nullptr, "HStreamCapture::SetRawCallback callback is null");
     photoListener_ = nullptr;
@@ -1023,12 +1032,12 @@ void HStreamCapture::SetRawCallback()
 
 int32_t HStreamCapture::SetPhotoAssetAvailableCallback(const sptr<IStreamCapturePhotoAssetCallback> &callback)
 {
-    MEDIA_ERR_LOG("HStreamCapture::SetPhotoAssetAvailableCallback E, isYuv:%{public}d", isYuvCapture_);
+    MEDIA_INFO_LOG("HSetPhotoAssetAvailableCallback E, isYuv:%{public}d", isYuvCapture_);
     CHECK_ERROR_RETURN_RET_LOG(
         surface_ == nullptr, CAMERA_INVALID_ARG, "HStreamCapture::SetPhotoAssetAvailableCallback surface is null");
     CHECK_ERROR_RETURN_RET_LOG(
         callback == nullptr, CAMERA_INVALID_ARG, "HStreamCapture::SetPhotoAssetAvailableCallback callback is null");
-    std::lock_guard<std::mutex> lock(assetCallbackLock_);
+    std::lock_guard<std::mutex> lock(photoCallbackLock_);
     photoAssetAvaiableCallback_ = callback;
     // register photoAsset surface buffer consumer
     if (photoAssetListener_ == nullptr) {
@@ -1040,6 +1049,15 @@ int32_t HStreamCapture::SetPhotoAssetAvailableCallback(const sptr<IStreamCapture
     CHECK_ERROR_PRINT_LOG(ret != SURFACE_ERROR_OK, "registerConsumerListener failed:%{public}d", ret);
     // register auxiliary buffer consumer
     CHECK_EXECUTE(isYuvCapture_, RegisterAuxiliaryConsumers());
+    return CAMERA_OK;
+}
+
+int32_t HStreamCapture::UnSetPhotoAssetAvailableCallback()
+{
+    MEDIA_INFO_LOG("HUnSetPhotoAssetAvailableCallback E");
+    std::lock_guard<std::mutex> lock(photoCallbackLock_);
+    photoAssetAvaiableCallback_ = nullptr;
+    photoAssetListener_ = nullptr;
     return CAMERA_OK;
 }
 
@@ -1061,11 +1079,11 @@ int32_t HStreamCapture::RequireMemorySize(int32_t requiredMemSizeKB)
 
 int32_t HStreamCapture::SetThumbnailCallback(const sptr<IStreamCaptureThumbnailCallback> &callback)
 {
-    MEDIA_INFO_LOG("HStreamCapture::SetThumbnailCallback E");
+    MEDIA_INFO_LOG("HSetThumbnailCallback E");
     CHECK_ERROR_RETURN_RET_LOG(
         thumbnailSurface_ == nullptr, CAMERA_INVALID_ARG, "HStreamCapture::SetThumbnailCallback surface is null");
     CHECK_ERROR_RETURN_RET_LOG(
-        thumbnailSurface_ == nullptr, CAMERA_INVALID_ARG, "HStreamCapture::SetThumbnailCallback input is null");
+        callback == nullptr, CAMERA_INVALID_ARG, "HStreamCapture::SetThumbnailCallback callback is null");
     std::lock_guard<std::mutex> lock(thumbnailCallbackLock_);
     thumbnailAvaiableCallback_ = callback;
     // register thumbnail buffer consumer
@@ -1080,9 +1098,21 @@ int32_t HStreamCapture::SetThumbnailCallback(const sptr<IStreamCaptureThumbnailC
     return CAMERA_OK;
 }
 
+int32_t HStreamCapture::UnSetThumbnailCallback()
+{
+    MEDIA_INFO_LOG("HUnSetThumbnailCallback E");
+    std::lock_guard<std::mutex> lock(thumbnailCallbackLock_);
+    thumbnailAvaiableCallback_ = nullptr;
+    thumbnailListener_ = nullptr;
+    if (thumbnailSurface_) {
+        thumbnailSurface_->UnregisterConsumerListener();
+    }
+    return CAMERA_OK;
+}
+
 void HStreamCapture::InitCaptureThread()
 {
-    MEDIA_ERR_LOG("HStreamCapture::InitCaptureThread E");
+    MEDIA_INFO_LOG("HStreamCapture::InitCaptureThread E");
     if (photoTask_ == nullptr) {
         photoTask_ = std::make_shared<DeferredProcessing::TaskManager>("photoTask", 1, false);
     }
@@ -1226,7 +1256,7 @@ int32_t HStreamCapture::OnPhotoAssetAvailable(
 {
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("HStreamCapture::OnPhotoAssetAvailable is called!");
-    std::lock_guard<std::mutex> lock(assetCallbackLock_);
+    std::lock_guard<std::mutex> lock(photoCallbackLock_);
     if (photoAssetAvaiableCallback_ != nullptr) {
         photoAssetAvaiableCallback_->OnPhotoAssetAvailable(captureId, uri, cameraShotType, burstKey);
     }

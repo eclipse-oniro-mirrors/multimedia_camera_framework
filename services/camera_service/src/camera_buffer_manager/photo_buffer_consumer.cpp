@@ -51,7 +51,7 @@ void PhotoBufferConsumer::OnBufferAvailable()
 
 void PhotoBufferConsumer::ExecuteOnBufferAvailable()
 {
-    MEDIA_INFO_LOG("PhotoBufferConsumer ExecuteOnBufferAvailable E");
+    MEDIA_INFO_LOG("P_ExecuteOnBufferAvailable E");
     CAMERA_SYNC_TRACE;
     sptr<HStreamCapture> streamCapture = streamCapture_.promote();
     CHECK_ERROR_RETURN_LOG(streamCapture == nullptr, "streamCapture is null");
@@ -80,7 +80,7 @@ void PhotoBufferConsumer::ExecuteOnBufferAvailable()
     CameraReportDfxUtils::GetInstance()->SetFirstBufferEndInfo(captureId);
     CameraReportDfxUtils::GetInstance()->SetPrepareProxyStartInfo(captureId);
     streamCapture->OnPhotoAvailable(newSurfaceBuffer, timestamp, isRaw_);
-    MEDIA_INFO_LOG("PhotoBufferConsumer ExecuteOnBufferAvailable X");
+    MEDIA_INFO_LOG("P_ExecuteOnBufferAvailable X");
 }
 }  // namespace CameraStandard
 }  // namespace OHOS

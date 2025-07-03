@@ -85,6 +85,9 @@ public:
     int32_t SetPhotoAssetAvailableCallback(const sptr<IStreamCapturePhotoAssetCallback> &callback) override;
     int32_t SetThumbnailCallback(const sptr<IStreamCaptureThumbnailCallback> &callback) override;
     int32_t UnSetCallback() override;
+    int32_t UnSetPhotoAvailableCallback() override;
+    int32_t UnSetPhotoAssetAvailableCallback() override;
+    int32_t UnSetThumbnailCallback() override;
     int32_t OnCaptureStarted(int32_t captureId);
     int32_t OnCaptureStarted(int32_t captureId, uint32_t exposureTime);
     int32_t OnCaptureEnded(int32_t captureId, int32_t frameCount);
@@ -217,7 +220,6 @@ private:
     wptr<HStreamOperator> hStreamOperator_;
     std::map<int32_t, std::unique_ptr<std::mutex>> mutexMap;
     std::mutex photoCallbackLock_;
-    std::mutex assetCallbackLock_;
     std::mutex thumbnailCallbackLock_;
     sptr<IBufferConsumerListener> photoListener_ = nullptr;
     sptr<IBufferConsumerListener> photoAssetListener_ = nullptr;

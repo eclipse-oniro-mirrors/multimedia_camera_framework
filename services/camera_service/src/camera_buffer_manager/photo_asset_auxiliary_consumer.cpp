@@ -53,7 +53,7 @@ void AuxiliaryBufferConsumer::OnBufferAvailable()
 
 void AuxiliaryBufferConsumer::ExecuteOnBufferAvailable()
 {
-    MEDIA_INFO_LOG("ExecuteOnBufferAvailable E, surfaceName:%{public}s", surfaceName_.c_str());
+    MEDIA_INFO_LOG("A_ExecuteOnBufferAvailable E, surfaceName:%{public}s", surfaceName_.c_str());
     CAMERA_SYNC_TRACE;
     sptr<HStreamCapture> streamCapture = streamCapture_.promote();
     CHECK_ERROR_RETURN_LOG(streamCapture == nullptr, "streamCapture is null");
@@ -132,7 +132,7 @@ void AuxiliaryBufferConsumer::ExecuteOnBufferAvailable()
             MEDIA_INFO_LOG("AuxiliaryBufferConsumer captureIdAuxiliaryCountMap_ = -1");
         }
     }
-    MEDIA_INFO_LOG("ExecuteOnBufferAvailable X");
+    MEDIA_INFO_LOG("A_ExecuteOnBufferAvailable X");
 }
 }  // namespace CameraStandard
 }  // namespace OHOS
