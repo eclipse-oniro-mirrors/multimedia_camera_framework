@@ -191,8 +191,8 @@ FFI_EXPORT bool FfiCameraAutoExposureIsExposureModeSupported(int64_t id, int32_t
 FFI_EXPORT CArrFloat32 FfiCameraAutoExposureGetExposureBiasRange(int64_t id, int32_t *errCode);
 FFI_EXPORT int32_t FfiCameraAutoExposureGetExposureMode(int64_t id, int32_t *errCode);
 FFI_EXPORT void FfiCameraAutoExposureSetExposureMode(int64_t id, int32_t aeMode, int32_t *errCode);
-FFI_EXPORT Point FfiCameraAutoExposureGetMeteringPoint(int64_t id, int32_t *errCode);
-FFI_EXPORT void FfiCameraAutoExposureSetMeteringPoint(int64_t id, Point point, int32_t *errCode);
+FFI_EXPORT CameraPoint FfiCameraAutoExposureGetMeteringPoint(int64_t id, int32_t *errCode);
+FFI_EXPORT void FfiCameraAutoExposureSetMeteringPoint(int64_t id, CameraPoint point, int32_t *errCode);
 FFI_EXPORT void FfiCameraAutoExposureSetExposureBias(int64_t id, float exposureBias, int32_t *errCode);
 FFI_EXPORT float FfiCameraAutoExposureGetExposureValue(int64_t id, int32_t *errCode);
 
@@ -211,8 +211,8 @@ FFI_EXPORT void FfiCameraFlashSetFlashMode(int64_t id, int32_t flashMode, int32_
 FFI_EXPORT bool FfiCameraFocusIsFocusModeSupported(int64_t id, int32_t afMode, int32_t *errCode);
 FFI_EXPORT void FfiCameraFocusSetFocusMode(int64_t id, int32_t afMode, int32_t *errCode);
 FFI_EXPORT int32_t FfiCameraFocusGetFocusMode(int64_t id, int32_t *errCode);
-FFI_EXPORT void FfiCameraFocusSetFocusPoint(int64_t id, Point point, int32_t *errCode);
-FFI_EXPORT Point FfiCameraFocusGetFocusPoint(int64_t id, int32_t *errCode);
+FFI_EXPORT void FfiCameraFocusSetFocusPoint(int64_t id, CameraPoint point, int32_t *errCode);
+FFI_EXPORT CameraPoint FfiCameraFocusGetFocusPoint(int64_t id, int32_t *errCode);
 FFI_EXPORT float FfiCameraFocusGetFocalLength(int64_t id, int32_t *errCode);
 
 // stabilization
