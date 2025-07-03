@@ -82,6 +82,7 @@ group("camera_fuzz_test") {
       "fuzztest/reader_fuzzer:fuzztest",
       "fuzztest/sessioncoordinator_fuzzer:fuzztest",
       "fuzztest/streamcapture_fuzzer:fuzztest",
+      "fuzztest/streamcaptureproxy_fuzzer:fuzztest",
       "fuzztest/videoencoder_fuzzer:fuzztest",
     ]
   }
