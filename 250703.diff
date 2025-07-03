@@ -1,0 +1,285 @@
+diff --git a/frameworks/native/camera/src/output/photo_output.cpp b/frameworks/native/camera/src/output/photo_output.cpp
+index cbe2a0049..b20a8e179 100644
+--- a/frameworks/native/camera/src/output/photo_output.cpp
++++ b/frameworks/native/camera/src/output/photo_output.cpp
+@@ -516,6 +516,10 @@ void PhotoOutput::UnSetPhotoAvailableCallback()
+     std::lock_guard<std::mutex> lock(outputCallbackMutex_);
+     appPhotoCallback_ = nullptr;
+     svcPhotoCallback_ = nullptr;
++    auto itemStream = CastStream<IStreamCapture>(GetStream());
++    if (itemStream) {
++        itemStream->UnSetPhotoAvailableCallback();
++    }
+ }
+ 
+ void PhotoOutput::SetPhotoAssetAvailableCallback(std::shared_ptr<PhotoAssetAvailableCallback> callback)
+@@ -549,6 +553,10 @@ void PhotoOutput::UnSetPhotoAssetAvailableCallback()
+     std::lock_guard<std::mutex> lock(outputCallbackMutex_);
+     appPhotoAssetCallback_ = nullptr;
+     svcPhotoAssetCallback_ = nullptr;
++    auto itemStream = CastStream<IStreamCapture>(GetStream());
++    if (itemStream) {
++        itemStream->UnSetPhotoAssetAvailableCallback();
++    }
+ }
+ 
+ void PhotoOutput::SetThumbnailCallback(std::shared_ptr<ThumbnailCallback> callback)
+@@ -582,6 +590,10 @@ void PhotoOutput::UnSetThumbnailAvailableCallback()
+     std::lock_guard<std::mutex> lock(outputCallbackMutex_);
+     appThumbnailCallback_ = nullptr;
+     svcThumbnailCallback_ = nullptr;
++    auto itemStream = CastStream<IStreamCapture>(GetStream());
++    if (itemStream) {
++        itemStream->UnSetThumbnailCallback();
++    }
+ }
+ 
+ int32_t PhotoOutput::SetThumbnail(bool isEnabled)
+diff --git a/services/camera_service/idls/IStreamCapture.idl b/services/camera_service/idls/IStreamCapture.idl
+index 83b64cc01..9a04b698f 100644
+--- a/services/camera_service/idls/IStreamCapture.idl
++++ b/services/camera_service/idls/IStreamCapture.idl
+@@ -48,4 +48,7 @@ interface IStreamCapture extends IStreamCommon {
+   [ipccode 18] void SetPhotoAvailableCallback([in] IStreamCapturePhotoCallback callbackFunc);
+   [ipccode 19] void SetPhotoAssetAvailableCallback([in] IStreamCapturePhotoAssetCallback callbackFunc);
+   [ipccode 20] void SetThumbnailCallback([in] IStreamCaptureThumbnailCallback callbackFunc);
++  [ipccode 21] void UnSetPhotoAvailableCallback();
++  [ipccode 22] void UnSetPhotoAssetAvailableCallback();
++  [ipccode 23] void UnSetThumbnailCallback();
+ }
+\ No newline at end of file
+diff --git a/services/camera_service/include/hstream_capture.h b/services/camera_service/include/hstream_capture.h
+index 377e18073..1e3f9e40b 100644
+--- a/services/camera_service/include/hstream_capture.h
++++ b/services/camera_service/include/hstream_capture.h
+@@ -88,6 +88,9 @@ public:
+     int32_t SetPhotoAssetAvailableCallback(const sptr<IStreamCapturePhotoAssetCallback> &callback) override;
+     int32_t SetThumbnailCallback(const sptr<IStreamCaptureThumbnailCallback> &callback) override;
+     int32_t UnSetCallback() override;
++    int32_t UnSetPhotoAvailableCallback() override;
++    int32_t UnSetPhotoAssetAvailableCallback() override;
++    int32_t UnSetThumbnailCallback() override;
+     int32_t OnCaptureStarted(int32_t captureId);
+     int32_t OnCaptureStarted(int32_t captureId, uint32_t exposureTime);
+     int32_t OnCaptureEnded(int32_t captureId, int32_t frameCount);
+@@ -219,7 +222,6 @@ private:
+     int32_t mlastCaptureId = 0;
+     wptr<HStreamOperator> hStreamOperator_;
+     std::mutex photoCallbackLock_;
+-    std::mutex assetCallbackLock_;
+     std::mutex thumbnailCallbackLock_;
+     sptr<IBufferConsumerListener> photoListener_ = nullptr;
+     sptr<IBufferConsumerListener> photoAssetListener_ = nullptr;
+diff --git a/services/camera_service/src/camera_buffer_manager/photo_asset_auxiliary_consumer.cpp b/services/camera_service/src/camera_buffer_manager/photo_asset_auxiliary_consumer.cpp
+index a262ad444..d7246cbff 100644
+--- a/services/camera_service/src/camera_buffer_manager/photo_asset_auxiliary_consumer.cpp
++++ b/services/camera_service/src/camera_buffer_manager/photo_asset_auxiliary_consumer.cpp
+@@ -53,7 +53,7 @@ void AuxiliaryBufferConsumer::OnBufferAvailable()
+ 
+ void AuxiliaryBufferConsumer::ExecuteOnBufferAvailable()
+ {
+-    MEDIA_INFO_LOG("ExecuteOnBufferAvailable E, surfaceName:%{public}s", surfaceName_.c_str());
++    MEDIA_INFO_LOG("A_ExecuteOnBufferAvailable E, surfaceName:%{public}s", surfaceName_.c_str());
+     CAMERA_SYNC_TRACE;
+     sptr<HStreamCapture> streamCapture = streamCapture_.promote();
+     CHECK_ERROR_RETURN_LOG(streamCapture == nullptr, "streamCapture is null");
+@@ -133,7 +133,7 @@ void AuxiliaryBufferConsumer::ExecuteOnBufferAvailable()
+             MEDIA_INFO_LOG("AuxiliaryBufferConsumer captureIdAuxiliaryCountMap_ = -1");
+         }
+     }
+-    MEDIA_INFO_LOG("ExecuteOnBufferAvailable X");
++    MEDIA_INFO_LOG("A_ExecuteOnBufferAvailable X");
+ }
+ }  // namespace CameraStandard
+ }  // namespace OHOS
+diff --git a/services/camera_service/src/camera_buffer_manager/photo_asset_buffer_consumer.cpp b/services/camera_service/src/camera_buffer_manager/photo_asset_buffer_consumer.cpp
+index 3d13774cc..8c88f8928 100644
+--- a/services/camera_service/src/camera_buffer_manager/photo_asset_buffer_consumer.cpp
++++ b/services/camera_service/src/camera_buffer_manager/photo_asset_buffer_consumer.cpp
+@@ -57,7 +57,7 @@ void PhotoAssetBufferConsumer::OnBufferAvailable()
+ 
+ void PhotoAssetBufferConsumer::ExecuteOnBufferAvailable()
+ {
+-    MEDIA_INFO_LOG("ExecuteOnBufferAvailable E");
++    MEDIA_INFO_LOG("PA_ExecuteOnBufferAvailable E");
+     CAMERA_SYNC_TRACE;
+     sptr<HStreamCapture> streamCapture = streamCapture_.promote();
+     CHECK_ERROR_RETURN_LOG(streamCapture == nullptr, "streamCapture is null");
+@@ -96,7 +96,7 @@ void PhotoAssetBufferConsumer::ExecuteOnBufferAvailable()
+         streamCapture->OnPhotoAssetAvailable(captureId, uri, cameraShotType, burstKey);
+     }
+ 
+-    MEDIA_INFO_LOG("ExecuteOnBufferAvailable X");
++    MEDIA_INFO_LOG("PA_ExecuteOnBufferAvailable X");
+ }
+ 
+ void PhotoAssetBufferConsumer::StartWaitAuxiliaryTask(
+diff --git a/services/camera_service/src/camera_buffer_manager/photo_buffer_consumer.cpp b/services/camera_service/src/camera_buffer_manager/photo_buffer_consumer.cpp
+index dc9a360a4..4f55ad954 100644
+--- a/services/camera_service/src/camera_buffer_manager/photo_buffer_consumer.cpp
++++ b/services/camera_service/src/camera_buffer_manager/photo_buffer_consumer.cpp
+@@ -52,7 +52,7 @@ void PhotoBufferConsumer::OnBufferAvailable()
+ void PhotoBufferConsumer::ExecuteOnBufferAvailable()
+ {
+ 
+-    MEDIA_INFO_LOG("PhotoBufferConsumer ExecuteOnBufferAvailable E");
++    MEDIA_INFO_LOG("P_ExecuteOnBufferAvailable E");
+     CAMERA_SYNC_TRACE;
+     sptr<HStreamCapture> streamCapture = streamCapture_.promote();
+     CHECK_ERROR_RETURN_LOG(streamCapture == nullptr, "streamCapture is null");
+@@ -81,7 +81,7 @@ void PhotoBufferConsumer::ExecuteOnBufferAvailable()
+     CameraReportDfxUtils::GetInstance()->SetFirstBufferEndInfo(captureId);
+     CameraReportDfxUtils::GetInstance()->SetPrepareProxyStartInfo(captureId);
+     streamCapture->OnPhotoAvailable(newSurfaceBuffer, timestamp, isRaw_);
+-    MEDIA_INFO_LOG("PhotoBufferConsumer ExecuteOnBufferAvailable X");
++    MEDIA_INFO_LOG("P_ExecuteOnBufferAvailable X");
+ }
+ }  // namespace CameraStandard
+ }  // namespace OHOS
+diff --git a/services/camera_service/src/camera_buffer_manager/thumbnail_buffer_consumer.cpp b/services/camera_service/src/camera_buffer_manager/thumbnail_buffer_consumer.cpp
+index 71a1c6f35..e00faa602 100644
+--- a/services/camera_service/src/camera_buffer_manager/thumbnail_buffer_consumer.cpp
++++ b/services/camera_service/src/camera_buffer_manager/thumbnail_buffer_consumer.cpp
+@@ -50,7 +50,7 @@ void ThumbnailBufferConsumer::OnBufferAvailable()
+ 
+ void ThumbnailBufferConsumer::ExecuteOnBufferAvailable()
+ {
+-    MEDIA_INFO_LOG("ExecuteOnBufferAvailable E");
++    MEDIA_INFO_LOG("T_ExecuteOnBufferAvailable E");
+     CAMERA_SYNC_TRACE;
+     sptr<HStreamCapture> streamCapture = streamCapture_.promote();
+     CHECK_ERROR_RETURN_LOG(streamCapture == nullptr, "streamCapture is null");
+@@ -67,7 +67,7 @@ void ThumbnailBufferConsumer::ExecuteOnBufferAvailable()
+     int32_t burstSeqId = CameraSurfaceBufferUtil::GetBurstSequenceId(surfaceBuffer);
+     if (burstSeqId != -1) {
+         streamCapture->thumbnailSurface_->ReleaseBuffer(surfaceBuffer, -1);
+-        MEDIA_INFO_LOG("ExecuteOnBufferAvailable X, burstCapture skip thumbnail");
++        MEDIA_INFO_LOG("T_ExecuteOnBufferAvailable X, burstCapture skip thumbnail");
+         return;
+     }
+     sptr<SurfaceBuffer> newSurfaceBuffer = CameraSurfaceBufferUtil::DeepCopyThumbnailBuffer(surfaceBuffer);
+@@ -84,7 +84,7 @@ void ThumbnailBufferConsumer::ExecuteOnBufferAvailable()
+         cameraPhotoProxy->SetImageFormat(yuvFormat);
+         streamCapture->UpdateMediaLibraryPhotoAssetProxy(cameraPhotoProxy);
+     }
+-    MEDIA_INFO_LOG("ExecuteOnBufferAvailable X");
++    MEDIA_INFO_LOG("T_ExecuteOnBufferAvailable X");
+ }
+ }  // namespace CameraStandard
+ }  // namespace OHOS
+diff --git a/services/camera_service/src/hstream_capture.cpp b/services/camera_service/src/hstream_capture.cpp
+index 538016cce..eac051f29 100644
+--- a/services/camera_service/src/hstream_capture.cpp
++++ b/services/camera_service/src/hstream_capture.cpp
+@@ -1016,11 +1016,11 @@ int32_t HStreamCapture::SetCallback(const sptr<IStreamCaptureCallback> &callback
+ 
+ int32_t HStreamCapture::SetPhotoAvailableCallback(const sptr<IStreamCapturePhotoCallback> &callback)
+ {
+-    MEDIA_ERR_LOG("HStreamCapture::SetPhotoAvailableCallback E");
++    MEDIA_INFO_LOG("HSetPhotoAvailableCallback E");
+     CHECK_ERROR_RETURN_RET_LOG(
+-        surface_ == nullptr, CAMERA_INVALID_ARG, "HStreamCapture::SetPhotoAvailableCallback surface is null");
++        surface_ == nullptr, CAMERA_INVALID_ARG, "HSetPhotoAvailableCallback surface is null");
+     CHECK_ERROR_RETURN_RET_LOG(
+-        callback == nullptr, CAMERA_INVALID_ARG, "HStreamCapture::SetPhotoAvailableCallback callback is null");
++    callback == nullptr, CAMERA_INVALID_ARG, "HSetPhotoAvailableCallback callback is null");
+     std::lock_guard<std::mutex> lock(photoCallbackLock_);
+     photoAvaiableCallback_ = callback;
+     CHECK_ERROR_RETURN_RET_LOG(photoAssetListener_ != nullptr, CAMERA_OK, "wait to set raw callback");
+@@ -1034,9 +1034,18 @@ int32_t HStreamCapture::SetPhotoAvailableCallback(const sptr<IStreamCapturePhoto
+     return CAMERA_OK;
+ }
+ 
++int32_t HStreamCapture::UnSetPhotoAvailableCallback()
++{
++    MEDIA_INFO_LOG("HUnSetPhotoAvailableCallback E");
++    std::lock_guard<std::mutex> lock(photoCallbackLock_);
++    photoAvaiableCallback_ = nullptr;
++    photoListener_ = nullptr;
++    return CAMERA_OK;
++}
++
+ void HStreamCapture::SetRawCallback()
+ {
+-    MEDIA_ERR_LOG("HStreamCapture::SetRawCallback E");
++    MEDIA_INFO_LOG("HStreamCapture::SetRawCallback E");
+     CHECK_ERROR_RETURN_LOG(photoAvaiableCallback_ == nullptr, "SetRawCallback callback is null");
+     CHECK_ERROR_RETURN_LOG(rawSurface_ == nullptr, "HStreamCapture::SetRawCallback callback is null");
+     photoListener_ = nullptr;
+@@ -1050,12 +1059,12 @@ void HStreamCapture::SetRawCallback()
+ 
+ int32_t HStreamCapture::SetPhotoAssetAvailableCallback(const sptr<IStreamCapturePhotoAssetCallback> &callback)
+ {
+-    MEDIA_ERR_LOG("HStreamCapture::SetPhotoAssetAvailableCallback E, isYuv:%{public}d", isYuvCapture_);
++    MEDIA_INFO_LOG("HSetPhotoAssetAvailableCallback E, isYuv:%{public}d", isYuvCapture_);
+     CHECK_ERROR_RETURN_RET_LOG(
+         surface_ == nullptr, CAMERA_INVALID_ARG, "HStreamCapture::SetPhotoAssetAvailableCallback surface is null");
+     CHECK_ERROR_RETURN_RET_LOG(
+         callback == nullptr, CAMERA_INVALID_ARG, "HStreamCapture::SetPhotoAssetAvailableCallback callback is null");
+-    std::lock_guard<std::mutex> lock(assetCallbackLock_);
++    std::lock_guard<std::mutex> lock(photoCallbackLock_);
+     photoAssetAvaiableCallback_ = callback;
+     // register photoAsset surface buffer consumer
+     if (photoAssetListener_ == nullptr) {
+@@ -1070,6 +1079,15 @@ int32_t HStreamCapture::SetPhotoAssetAvailableCallback(const sptr<IStreamCapture
+     return CAMERA_OK;
+ }
+ 
++int32_t HStreamCapture::UnSetPhotoAssetAvailableCallback()
++{
++    MEDIA_INFO_LOG("HUnSetPhotoAssetAvailableCallback E");
++    std::lock_guard<std::mutex> lock(photoCallbackLock_);
++    photoAssetAvaiableCallback_ = nullptr;
++    photoAssetListener_ = nullptr;
++    return CAMERA_OK;
++}
++
+ int32_t HStreamCapture::RequireMemorySize(int32_t requiredMemSizeKB)
+ {
+     #ifdef MEMMGR_OVERRID
+@@ -1088,11 +1106,11 @@ int32_t HStreamCapture::RequireMemorySize(int32_t requiredMemSizeKB)
+ 
+ int32_t HStreamCapture::SetThumbnailCallback(const sptr<IStreamCaptureThumbnailCallback> &callback)
+ {
+-    MEDIA_INFO_LOG("HStreamCapture::SetThumbnailCallback E");
++    MEDIA_INFO_LOG("HSetThumbnailCallback E");
+     CHECK_ERROR_RETURN_RET_LOG(
+         thumbnailSurface_ == nullptr, CAMERA_INVALID_ARG, "HStreamCapture::SetThumbnailCallback surface is null");
+     CHECK_ERROR_RETURN_RET_LOG(
+-        thumbnailSurface_ == nullptr, CAMERA_INVALID_ARG, "HStreamCapture::SetThumbnailCallback input is null");
++        callback == nullptr, CAMERA_INVALID_ARG, "HStreamCapture::SetThumbnailCallback callback is null");
+     std::lock_guard<std::mutex> lock(thumbnailCallbackLock_);
+     thumbnailAvaiableCallback_ = callback;
+     // register thumbnail buffer consumer
+@@ -1107,9 +1125,21 @@ int32_t HStreamCapture::SetThumbnailCallback(const sptr<IStreamCaptureThumbnailC
+     return CAMERA_OK;
+ }
+ 
++int32_t HStreamCapture::UnSetThumbnailCallback()
++{
++    MEDIA_INFO_LOG("HUnSetThumbnailCallback E");
++    std::lock_guard<std::mutex> lock(thumbnailCallbackLock_);
++    thumbnailAvaiableCallback_ = nullptr;
++    thumbnailListener_ = nullptr;
++    if (thumbnailSurface_) {
++        thumbnailSurface_->UnregisterConsumerListener();
++    }
++    return CAMERA_OK;
++}
++
+ void HStreamCapture::InitCaptureThread()
+ {
+-    MEDIA_ERR_LOG("HStreamCapture::InitCaptureThread E");
++    MEDIA_INFO_LOG("HStreamCapture::InitCaptureThread E");
+     if (photoTask_ == nullptr) {
+         photoTask_ = std::make_shared<DeferredProcessing::TaskManager>("photoTask", 1, false);
+     }
+@@ -1261,7 +1291,7 @@ int32_t HStreamCapture::OnPhotoAssetAvailable(
+ {
+     CAMERA_SYNC_TRACE;
+     MEDIA_INFO_LOG("HStreamCapture::OnPhotoAssetAvailable is called!");
+-    std::lock_guard<std::mutex> lock(assetCallbackLock_);
++    std::lock_guard<std::mutex> lock(photoCallbackLock_);
+     if (photoAssetAvaiableCallback_ != nullptr) {
+         photoAssetAvaiableCallback_->OnPhotoAssetAvailable(captureId, uri, cameraShotType, burstKey);
+     }
