@@ -993,7 +993,7 @@ int32_t HStreamCapture::SetPhotoAvailableCallback(const sptr<IStreamCapturePhoto
     CHECK_ERROR_RETURN_RET_LOG(
         surface_ == nullptr, CAMERA_INVALID_ARG, "HSetPhotoAvailableCallback surface is null");
     CHECK_ERROR_RETURN_RET_LOG(
-    callback == nullptr, CAMERA_INVALID_ARG, "HSetPhotoAvailableCallback callback is null");
+        callback == nullptr, CAMERA_INVALID_ARG, "HSetPhotoAvailableCallback callback is null");
     std::lock_guard<std::mutex> lock(photoCallbackLock_);
     photoAvaiableCallback_ = callback;
     CHECK_ERROR_RETURN_RET_LOG(photoAssetListener_ != nullptr, CAMERA_OK, "wait to set raw callback");
