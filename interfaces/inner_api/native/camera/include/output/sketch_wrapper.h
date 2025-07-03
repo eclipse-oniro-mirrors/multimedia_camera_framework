@@ -25,6 +25,7 @@
 #include "image_receiver.h"
 #include "preview_output.h"
 #include "refbase.h"
+#include "camera_common_struct.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -70,7 +71,9 @@ private:
 
     volatile float sketchEnableRatio_ = -1.0f;
     volatile float currentZoomRatio_ = 1.0f;
-    SketchStatusData currentSketchStatusData_ = { .status = SketchStatus::STOPED, .sketchRatio = -1.0f };
+    SketchStatusData currentSketchStatusData_ = {
+        .status = SketchStatus::STOPED, .sketchRatio = -1.0f, .offsetx = 0.0f, .offsety = 0.0f };
+    CameraPoint offset_ = { .x = 0.0f, .y = 0.0f};
 
     static SceneFeaturesMode GetSceneFeaturesModeFromModeData(float floatModeData);
     static void InsertSketchReferenceFovRatioMapValue(
@@ -90,7 +93,8 @@ private:
         const camera_metadata_item_t& metadataItem);
     int32_t OnMetadataChangedMoonCaptureBoost(const SceneFeaturesMode& sceneFeaturesMode,
         const camera_device_metadata_tag_t tag, const camera_metadata_item_t& metadataItem);
-    int32_t OnMetadataChangedSketchDynamicNotify(const camera_metadata_item_t& metadataItem);
+    int32_t OnMetadataChangedSketchDynamicNotify(const camera_metadata_item_t& metadataItem,
+        const SceneFeaturesMode& sceneFeaturesMode);
 
     void AutoStream();
 };

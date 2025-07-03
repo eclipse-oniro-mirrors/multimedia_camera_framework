@@ -49,9 +49,13 @@
 #include "ability/camera_ability_parse_util.h"
 #include "fold_service_callback_stub.h"
 #include "pressure_status_callback_stub.h"
+#include "camera_common_struct.h"
 
 namespace OHOS {
 namespace CameraStandard {
+
+using Point = CameraPoint;
+
 enum FocusState {
     FOCUS_STATE_SCAN = 0,
     FOCUS_STATE_FOCUSED,
@@ -158,11 +162,6 @@ enum LightPaintingType {
     WATER,
     LIGHT
 };
-
-typedef struct {
-    float x;
-    float y;
-} Point;
 
 enum class FwkTripodStatus {
     INVALID = 0,

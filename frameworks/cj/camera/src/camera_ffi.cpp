@@ -1471,20 +1471,20 @@ FFI_EXPORT void FfiCameraAutoExposureSetExposureMode(int64_t id, int32_t aeMode,
     *errCode = instance->SetExposureMode(static_cast<ExposureMode>(aeMode));
 }
 
-FFI_EXPORT Point FfiCameraAutoExposureGetMeteringPoint(int64_t id, int32_t *errCode)
+FFI_EXPORT CameraPoint FfiCameraAutoExposureGetMeteringPoint(int64_t id, int32_t *errCode)
 {
     auto instance = FFIData::GetData<CJSession>(id);
     if (instance == nullptr) {
         *errCode = CameraError::CAMERA_SERVICE_ERROR;
-        return Point{0, 0};
+        return CameraPoint{0, 0};
     }
 
-    Point point;
+    CameraPoint point;
     *errCode = instance->GetMeteringPoint(point);
     return point;
 }
 
-FFI_EXPORT void FfiCameraAutoExposureSetMeteringPoint(int64_t id, Point point, int32_t *errCode)
+FFI_EXPORT void FfiCameraAutoExposureSetMeteringPoint(int64_t id, CameraPoint point, int32_t *errCode)
 {
     auto instance = FFIData::GetData<CJSession>(id);
     if (instance == nullptr) {
@@ -1644,7 +1644,7 @@ FFI_EXPORT int32_t FfiCameraFocusGetFocusMode(int64_t id, int32_t *errCode)
     return static_cast<int32_t>(afMode);
 }
 
-FFI_EXPORT void FfiCameraFocusSetFocusPoint(int64_t id, Point point, int32_t *errCode)
+FFI_EXPORT void FfiCameraFocusSetFocusPoint(int64_t id, CameraPoint point, int32_t *errCode)
 {
     auto instance = FFIData::GetData<CJSession>(id);
     if (instance == nullptr) {
@@ -1655,15 +1655,15 @@ FFI_EXPORT void FfiCameraFocusSetFocusPoint(int64_t id, Point point, int32_t *er
     *errCode = instance->SetFocusPoint(point);
 }
 
-FFI_EXPORT Point FfiCameraFocusGetFocusPoint(int64_t id, int32_t *errCode)
+FFI_EXPORT CameraPoint FfiCameraFocusGetFocusPoint(int64_t id, int32_t *errCode)
 {
     auto instance = FFIData::GetData<CJSession>(id);
     if (instance == nullptr) {
         *errCode = CameraError::CAMERA_SERVICE_ERROR;
-        return Point{0, 0};
+        return CameraPoint{0, 0};
     }
 
-    Point point;
+    CameraPoint point;
     *errCode = instance->GetFocusPoint(point);
     return point;
 }

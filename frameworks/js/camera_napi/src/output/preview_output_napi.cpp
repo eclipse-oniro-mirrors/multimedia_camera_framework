@@ -153,9 +153,16 @@ void PreviewOutputCallback::OnSketchStatusDataChangedCall(SketchStatusData sketc
     ExecuteCallbackScopeSafe(CONST_SKETCH_STATUS_CHANGED, [&]() {
         napi_value errCode = CameraNapiUtils::GetUndefinedValue(env_);
         napi_value callbackObj;
+
+        CameraNapiObject sketchOffset {{
+            { "x", &sketchStatusData.offsetx },
+            { "y", &sketchStatusData.offsety },
+        }};
+
         CameraNapiObject sketchObj {{
             { "status", reinterpret_cast<int32_t*>(&sketchStatusData.status) },
-            { "sketchRatio", &sketchStatusData.sketchRatio }
+            { "sketchRatio", &sketchStatusData.sketchRatio },
+            { "centerPointOffset", &sketchOffset }
         }};
         callbackObj = sketchObj.CreateNapiObjFromMap(env_);
         return ExecuteCallbackData(env_, errCode, callbackObj);

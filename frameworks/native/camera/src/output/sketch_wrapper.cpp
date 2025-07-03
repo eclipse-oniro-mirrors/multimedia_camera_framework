@@ -142,13 +142,19 @@ void SketchWrapper::OnSketchStatusChanged(const SceneFeaturesMode& sceneFeatures
         sketchReferenceRatio = GetSketchReferenceFovRatio(sceneFeaturesMode, currentZoomRatio_);
     }
     std::lock_guard<std::mutex> lock(sketchStatusChangeMutex_);
-    if (currentSketchStatusData_.sketchRatio != sketchReferenceRatio) {
+    if (currentSketchStatusData_.sketchRatio != sketchReferenceRatio ||
+        currentSketchStatusData_.offsetx != offset_.x ||
+        currentSketchStatusData_.offsety != offset_.y) {
         SketchStatusData statusData;
         statusData.status = currentSketchStatusData_.status;
         statusData.sketchRatio = sketchReferenceRatio;
-        MEDIA_DEBUG_LOG("SketchWrapper::OnSketchStatusDataChanged-:%{public}d->%{public}d,%{public}f->%{public}f",
+        statusData.offsetx = offset_.x;
+        statusData.offsety = offset_.y;
+        MEDIA_DEBUG_LOG("SketchWrapper::OnSketchStatusDataChanged-:%{public}d->%{public}d,%{public}f->%{public}f"
+                        ", %{public}f->%{public}f, %{public}f->%{public}f",
             currentSketchStatusData_.status, statusData.status, currentSketchStatusData_.sketchRatio,
-            statusData.sketchRatio);
+            statusData.sketchRatio, currentSketchStatusData_.offsetx, statusData.offsetx,
+            currentSketchStatusData_.offsety, statusData.offsety);
         currentSketchStatusData_ = statusData;
         manager->TriggerListener([&](PreviewStateCallback* previewStateCallback) {
             previewStateCallback->OnSketchStatusDataChanged(currentSketchStatusData_);
@@ -443,7 +449,7 @@ int32_t SketchWrapper::OnMetadataDispatch(const SceneFeaturesMode& sceneFeatures
     if (isDynamicNotify_) {
         if (tag == OHOS_STATUS_SKETCH_STREAM_INFO) {
             MEDIA_DEBUG_LOG("SketchWrapper::OnMetadataDispatch get tag:OHOS_STATUS_SKETCH_STREAM_INFO");
-            return OnMetadataChangedSketchDynamicNotify(metadataItem);
+            return OnMetadataChangedSketchDynamicNotify(metadataItem, sceneFeaturesMode);
         } else {
             MEDIA_DEBUG_LOG("SketchWrapper::OnMetadataDispatch isDynamicNotify_ get unhandled tag:%{public}d",
                 static_cast<int32_t>(tag));
@@ -467,22 +473,27 @@ int32_t SketchWrapper::OnMetadataDispatch(const SceneFeaturesMode& sceneFeatures
     return CAM_META_SUCCESS;
 }
 
-int32_t SketchWrapper::OnMetadataChangedSketchDynamicNotify(const camera_metadata_item_t& metadataItem)
+int32_t SketchWrapper::OnMetadataChangedSketchDynamicNotify(
+    const camera_metadata_item_t& metadataItem, const SceneFeaturesMode& sceneFeaturesMode)
 {
     uint32_t dataLen = metadataItem.count;
-    if (dataLen != 2) { // data size is 2 ==> [isNeedStartSketch, sketchZoomRatio]
+    if (dataLen != 4) { // data size is 4 ==> [isNeedStartSketch, sketchZoomRatio, sketchPoint_x, sketchPoint_y]
         MEDIA_INFO_LOG("SketchWrapper::OnMetadataChangedSketchDynamicNotify recv error data, size:%{public}d", dataLen);
         return CAM_META_SUCCESS;
     }
     auto infoStatus = static_cast<SketchStreamInfoStatus>(metadataItem.data.f[0]);
     sketchDynamicReferenceRatio_ = metadataItem.data.f[1];
-    MEDIA_DEBUG_LOG("SketchWrapper::OnMetadataChangedSketchDynamicNotify infoStatus:%{public}d ratio:%{public}f",
-        infoStatus, sketchDynamicReferenceRatio_);
+    offset_.x = metadataItem.data.f[2]; // 2 ==> sketchPoint_x
+    offset_.y = metadataItem.data.f[3]; // 3 ==> sketchPoint_y
+    MEDIA_DEBUG_LOG("SketchWrapper::OnMetadataChangedSketchDynamicNotify infoStatus:%{public}d ratio:%{public}f"
+                    "offsetx:%{public}f offsety:%{public}f",
+        infoStatus, sketchDynamicReferenceRatio_, offset_.x, offset_.y);
     if (infoStatus == OHOS_CAMERA_SKETCH_STREAM_SUPPORT) {
         StartSketchStream();
     } else if (infoStatus == OHOS_CAMERA_SKETCH_STREAM_UNSUPPORT) {
         StopSketchStream();
     }
+    OnSketchStatusChanged(sceneFeaturesMode);
     return CAM_META_SUCCESS;
 }
 
