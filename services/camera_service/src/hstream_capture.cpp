@@ -1399,10 +1399,6 @@ void HStreamCapture::GetLocation(const std::shared_ptr<OHOS::Camera::CameraMetad
         latitude_ = item.data.d[latIndex];
         longitude_ = item.data.d[lonIndex];
         altitude_ = item.data.d[altIndex];
-        MEDIA_INFO_LOG("GetLocation lat:%{public}s lon:%{public}s alt:%{public}s",
-            std::to_string(item.data.d[latIndex]).c_str(),
-            std::to_string(item.data.d[lonIndex]).c_str(),
-            std::to_string(item.data.d[altIndex]).c_str());
     }
 }
 
