@@ -65,7 +65,7 @@ ohos_unittest("camera_deferred_unittest") {
   ]
 
   sources = [
-    "${multimedia_camera_framework_path}/frameworks/native/camera/src/utils/dps_metadata_info.cpp",
+    "${multimedia_camera_framework_path}/frameworks/native/camera/base/src/utils/dps_metadata_info.cpp",
     "camera_deferred_proc_test/src/camera_deferred_proc_unittest.cpp",
     "camera_deferred_base_test/src/camera_deferred_base_unittest.cpp",
     "camera_deferred_dfx_test/src/dps_event_report_unittest.cpp",
@@ -85,7 +85,7 @@ ohos_unittest("camera_deferred_unittest") {
 
   deps = [
     "${multimedia_camera_framework_path}/common:camera_utils",
-    "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
+    "${multimedia_camera_framework_path}/frameworks/native/camera/base:camera_framework",
     "${multimedia_camera_framework_path}/services/camera_service:camera_service",
     "${multimedia_camera_framework_path}/services/deferred_processing_service:deferred_processing_service_test_only",
     "${multimedia_camera_framework_path}/test/test_common:test_common",

@@ -50,7 +50,7 @@ ohos_shared_library("cj_camera_ffi") {
   if (!ohos_indep_compiler_enable && !build_ohos_sdk &&
       product_name != "qemu-arm-linux-min" &&
       product_name != "rk3568_mini_system") {
-    deps = [ "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework" ]
+    deps = [ "${multimedia_camera_framework_path}/frameworks/native/camera/base:camera_framework" ]
     external_deps = [
       "ability_base:base",
       "ability_base:configuration",  # configuration.h
@@ -134,7 +134,7 @@ ohos_shared_library("cj_camera_picker_ffi") {
       product_name != "rk3568_mini_system") {
     deps = [
       ":cj_camera_ffi",
-      "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
+      "${multimedia_camera_framework_path}/frameworks/native/camera/base:camera_framework",
     ]
     external_deps = [
       "ability_base:base",

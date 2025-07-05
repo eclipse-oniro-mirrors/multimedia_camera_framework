@@ -40,7 +40,7 @@ ohos_executable("camera_video") {
 
   configs = [ ":camera_config" ]
 
-  deps = [ "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework" ]
+  deps = [ "${multimedia_camera_framework_path}/frameworks/native/camera/base:camera_framework" ]
 
   external_deps = [
     "access_token:libaccesstoken_sdk",
@@ -82,7 +82,7 @@ ohos_executable("camera_capture") {
 
   configs = [ ":camera_config" ]
 
-  deps = [ "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework" ]
+  deps = [ "${multimedia_camera_framework_path}/frameworks/native/camera/base:camera_framework" ]
 
   external_deps = [
     "access_token:libaccesstoken_sdk",
@@ -121,7 +121,7 @@ ohos_executable("camera_capture_video") {
 
   configs = [ ":camera_config" ]
 
-  deps = [ "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework" ]
+  deps = [ "${multimedia_camera_framework_path}/frameworks/native/camera/base:camera_framework" ]
 
   external_deps = [
     "access_token:libaccesstoken_sdk",
@@ -160,7 +160,7 @@ ohos_executable("camera_capture_mode") {
 
   configs = [ ":camera_config" ]
 
-  deps = [ "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework" ]
+  deps = [ "${multimedia_camera_framework_path}/frameworks/native/camera/base:camera_framework" ]
 
   external_deps = [
     "access_token:libaccesstoken_sdk",

@@ -33,9 +33,10 @@ public:
     void SetUp(void);
     /* TearDown:Execute after each test case */
     void TearDown(void);
-
+    void TestPhotoSessionForSysPreconfig(sptr<CaptureInput>& input,
+        PreconfigType preconfigType, ProfileSizeRatio profileSizeRatio);
     void TestPhotoSessionPreconfig(sptr<CaptureInput>& input,
-            PreconfigType preconfigType, ProfileSizeRatio profileSizeRatio);
+        PreconfigType preconfigType, ProfileSizeRatio profileSizeRatio);
 private:
     uint64_t tokenId_ = 0;
     int32_t uid_ = 0;

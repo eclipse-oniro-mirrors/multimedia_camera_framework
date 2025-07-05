@@ -18,6 +18,7 @@
 #include "camera_output_capability.h"
 #include "input/camera_manager.h"
 #include "ipc_skeleton.h"
+#include "input/camera_manager_for_sys.h"
 #include "message_parcel.h"
 #include "nativetoken_kit.h"
 #include "os_account_manager.h"
@@ -69,7 +70,8 @@ sptr<CaptureOutput> CreateVideoOutput()
 void SlowMotionSessionFuzzer::SlowMotionSessionFuzzTest(FuzzedDataProvider& fdp)
 {
     manager = CameraManager::GetInstance();
-    sptr<CaptureSession> captureSession = manager->CreateCaptureSession(SceneMode::SLOW_MOTION);
+    sptr<CaptureSessionForSys> captureSessionForSys =
+        CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(SceneMode::SLOW_MOTION);
     std::vector<sptr<CameraDevice>> cameras;
     cameras = manager->GetCameraDeviceListFromServer();
     CHECK_ERROR_RETURN_LOG(cameras.empty(), "SlowMotionSessionFuzzer: GetCameraDeviceListFromServer Error");
@@ -78,16 +80,16 @@ void SlowMotionSessionFuzzer::SlowMotionSessionFuzzTest(FuzzedDataProvider& fdp)
     input->Open();
     sptr<CaptureOutput> videoOutput = CreateVideoOutput();
     sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
-    captureSession->BeginConfig();
-    captureSession->AddInput(input);
-    sptr<CameraDevice> info = captureSession->innerInputDevice_->GetCameraDeviceInfo();
+    captureSessionForSys->BeginConfig();
+    captureSessionForSys->AddInput(input);
+    sptr<CameraDevice> info = captureSessionForSys->innerInputDevice_->GetCameraDeviceInfo();
     info->modePreviewProfiles_.emplace(static_cast<int32_t>(SceneMode::SLOW_MOTION), previewProfile_);
     info->modeVideoProfiles_.emplace(static_cast<int32_t>(SceneMode::SLOW_MOTION), videoProfile_);
-    captureSession->AddOutput(previewOutput);
-    captureSession->AddOutput(videoOutput);
-    captureSession->CommitConfig();
+    captureSessionForSys->AddOutput(previewOutput);
+    captureSessionForSys->AddOutput(videoOutput);
+    captureSessionForSys->CommitConfig();
     input->Release();
-    sptr<SlowMotionSession> fuzz_ = static_cast<SlowMotionSession*>(captureSession.GetRefPtr());
+    sptr<SlowMotionSession> fuzz_ = static_cast<SlowMotionSession*>(captureSessionForSys.GetRefPtr());
     if (fuzz_ == nullptr) {
         return;
     }

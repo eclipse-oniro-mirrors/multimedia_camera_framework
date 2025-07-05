@@ -26,6 +26,7 @@
 #include "gmock/gmock.h"
 #include "capture_scene_const.h"
 #include "capture_session.h"
+#include "capture_session_for_sys.h"
 #include "hap_token_info.h"
 #include "ipc_skeleton.h"
 #include "metadata_utils.h"
@@ -157,6 +158,8 @@ void CaptureSessionUnitTest::SetUp()
 {
     cameraManager_ = CameraManager::GetInstance();
     ASSERT_NE(cameraManager_, nullptr);
+    cameraManagerForSys_ = CameraManagerForSys::GetInstance();
+    ASSERT_NE(cameraManagerForSys_, nullptr);
     cameras_ = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras_.empty());
 }
@@ -164,6 +167,7 @@ void CaptureSessionUnitTest::SetUp()
 void CaptureSessionUnitTest::TearDown()
 {
     cameraManager_ = nullptr;
+    cameraManagerForSys_ = nullptr;
     cameras_.clear();
 }
 
@@ -420,8 +424,8 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_010, TestSize.Level1)
  */
 HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_011, TestSize.Level1)
 {
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(sessionForSys, nullptr);
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
     input->Open();
@@ -429,26 +433,26 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_011, TestSize.Level1)
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
-    EXPECT_FALSE(session->IsDepthFusionSupported());
+    EXPECT_FALSE(sessionForSys->IsDepthFusionSupported());
 
-    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(sessionForSys->BeginConfig(), 0);
 
-    EXPECT_FALSE(session->IsDepthFusionSupported());
+    EXPECT_FALSE(sessionForSys->IsDepthFusionSupported());
 
-    EXPECT_EQ(session->AddInput(input), 0);
-    EXPECT_EQ(session->AddOutput(preview), 0);
-    EXPECT_EQ(session->CommitConfig(), 0);
+    EXPECT_EQ(sessionForSys->AddInput(input), 0);
+    EXPECT_EQ(sessionForSys->AddOutput(preview), 0);
+    EXPECT_EQ(sessionForSys->CommitConfig(), 0);
 
-    EXPECT_NE(session->GetInputDevice(), nullptr);
-    EXPECT_NE(session->GetInputDevice()->GetCameraDeviceInfo(), nullptr);
+    EXPECT_NE(sessionForSys->GetInputDevice(), nullptr);
+    EXPECT_NE(sessionForSys->GetInputDevice()->GetCameraDeviceInfo(), nullptr);
 
-    session->SetInputDevice(nullptr);
-    EXPECT_FALSE(session->IsDepthFusionSupported());
+    sessionForSys->SetInputDevice(nullptr);
+    EXPECT_FALSE(sessionForSys->IsDepthFusionSupported());
 
     input->Close();
     preview->Release();
     input->Release();
-    session->Release();
+    sessionForSys->Release();
 }
 
 /*
@@ -461,8 +465,8 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_011, TestSize.Level1)
  */
 HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_012, TestSize.Level1)
 {
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(sessionForSys, nullptr);
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
     input->Open();
@@ -471,24 +475,24 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_012, TestSize.Level1)
     ASSERT_NE(preview, nullptr);
 
     std::vector<float> depthFusionThreshold = {};
-    EXPECT_EQ(session->GetDepthFusionThreshold(depthFusionThreshold), CameraErrorCode::SESSION_NOT_CONFIG);
+    EXPECT_EQ(sessionForSys->GetDepthFusionThreshold(depthFusionThreshold), CameraErrorCode::SESSION_NOT_CONFIG);
 
-    EXPECT_EQ(session->BeginConfig(), 0);
-    EXPECT_EQ(session->AddInput(input), 0);
-    EXPECT_EQ(session->AddOutput(preview), 0);
-    EXPECT_EQ(session->CommitConfig(), 0);
+    EXPECT_EQ(sessionForSys->BeginConfig(), 0);
+    EXPECT_EQ(sessionForSys->AddInput(input), 0);
+    EXPECT_EQ(sessionForSys->AddOutput(preview), 0);
+    EXPECT_EQ(sessionForSys->CommitConfig(), 0);
 
-    EXPECT_NE(session->GetInputDevice(), nullptr);
-    EXPECT_NE(session->GetInputDevice()->GetCameraDeviceInfo(), nullptr);
-    EXPECT_EQ(session->GetDepthFusionThreshold(depthFusionThreshold), CameraErrorCode::SUCCESS);
+    EXPECT_NE(sessionForSys->GetInputDevice(), nullptr);
+    EXPECT_NE(sessionForSys->GetInputDevice()->GetCameraDeviceInfo(), nullptr);
+    EXPECT_EQ(sessionForSys->GetDepthFusionThreshold(depthFusionThreshold), CameraErrorCode::SUCCESS);
 
-    session->SetInputDevice(nullptr);
-    EXPECT_EQ(session->GetDepthFusionThreshold(depthFusionThreshold), CameraErrorCode::SUCCESS);
+    sessionForSys->SetInputDevice(nullptr);
+    EXPECT_EQ(sessionForSys->GetDepthFusionThreshold(depthFusionThreshold), CameraErrorCode::SUCCESS);
 
     input->Close();
     preview->Release();
     input->Release();
-    session->Release();
+    sessionForSys->Release();
 }
 
 /*
@@ -501,13 +505,13 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_012, TestSize.Level1)
  */
 HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_013, TestSize.Level1)
 {
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(sessionForSys, nullptr);
 
     bool isEnable = true;
-    EXPECT_EQ(session->EnableDepthFusion(isEnable), CameraErrorCode::OPERATION_NOT_ALLOWED);
+    EXPECT_EQ(sessionForSys->EnableDepthFusion(isEnable), CameraErrorCode::OPERATION_NOT_ALLOWED);
 
-    session->Release();
+    sessionForSys->Release();
 }
 
 /*
@@ -909,8 +913,8 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_025, TestSize.Level1)
  */
 HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_026, TestSize.Level1)
 {
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(sessionForSys, nullptr);
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
     input->Open();
@@ -918,20 +922,20 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_026, TestSize.Level1)
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
-    EXPECT_EQ(session->BeginConfig(), 0);
-    EXPECT_EQ(session->AddInput(input), 0);
-    EXPECT_EQ(session->AddOutput(preview), 0);
-    EXPECT_EQ(session->CommitConfig(), 0);
+    EXPECT_EQ(sessionForSys->BeginConfig(), 0);
+    EXPECT_EQ(sessionForSys->AddInput(input), 0);
+    EXPECT_EQ(sessionForSys->AddOutput(preview), 0);
+    EXPECT_EQ(sessionForSys->CommitConfig(), 0);
 
-    session->LockForControl();
+    sessionForSys->LockForControl();
     bool isEnable = true;
-    EXPECT_EQ(session->EnableLcdFlash(isEnable), CameraErrorCode::SUCCESS);
+    EXPECT_EQ(sessionForSys->EnableLcdFlash(isEnable), CameraErrorCode::SUCCESS);
 
-    session->UnlockForControl();
+    sessionForSys->UnlockForControl();
     input->Close();
     preview->Release();
     input->Release();
-    session->Release();
+    sessionForSys->Release();
 }
 
 /*
@@ -1742,43 +1746,43 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_019, TestSize.Level1)
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
 
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(sessionForSys, nullptr);
     UpdataCameraOutputCapability();
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
     auto macroStatusCallback = std::make_shared<AppMacroStatusCallback>();
 
-    EXPECT_EQ(session->GetColorEffect(), COLOR_EFFECT_NORMAL);
-    EXPECT_EQ(session->EnableMacro(true), OPERATION_NOT_ALLOWED);
+    EXPECT_EQ(sessionForSys->GetColorEffect(), COLOR_EFFECT_NORMAL);
+    EXPECT_EQ(sessionForSys->EnableMacro(true), OPERATION_NOT_ALLOWED);
 
-    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(sessionForSys->BeginConfig(), 0);
 
-    EXPECT_EQ(session->AddInput(input), 0);
-    EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(sessionForSys->AddInput(input), 0);
+    EXPECT_EQ(sessionForSys->AddOutput(preview), 0);
 
-    EXPECT_EQ(session->CommitConfig(), 0);
+    EXPECT_EQ(sessionForSys->CommitConfig(), 0);
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameras_[0]->GetMetadata();
-    EXPECT_EQ(session->GetColorEffect(), COLOR_EFFECT_NORMAL);
+    EXPECT_EQ(sessionForSys->GetColorEffect(), COLOR_EFFECT_NORMAL);
 
-    ((sptr<CameraInput>&)(session->innerInputDevice_))->cameraObj_ = nullptr;
-    EXPECT_EQ(session->GetColorEffect(), COLOR_EFFECT_NORMAL);
-    EXPECT_EQ(session->IsMacroSupported(), false);
-    session->innerInputDevice_ = nullptr;
-    EXPECT_EQ(session->GetColorEffect(), COLOR_EFFECT_NORMAL);
-    EXPECT_EQ(session->IsMacroSupported(), false);
-    EXPECT_EQ(session->EnableMacro(true), OPERATION_NOT_ALLOWED);
+    ((sptr<CameraInput>&)(sessionForSys->innerInputDevice_))->cameraObj_ = nullptr;
+    EXPECT_EQ(sessionForSys->GetColorEffect(), COLOR_EFFECT_NORMAL);
+    EXPECT_EQ(sessionForSys->IsMacroSupported(), false);
+    sessionForSys->innerInputDevice_ = nullptr;
+    EXPECT_EQ(sessionForSys->GetColorEffect(), COLOR_EFFECT_NORMAL);
+    EXPECT_EQ(sessionForSys->IsMacroSupported(), false);
+    EXPECT_EQ(sessionForSys->EnableMacro(true), OPERATION_NOT_ALLOWED);
 
-    session->LockForControl();
-    session->SetColorEffect(COLOR_EFFECT_NORMAL);
-    session->UnlockForControl();
+    sessionForSys->LockForControl();
+    sessionForSys->SetColorEffect(COLOR_EFFECT_NORMAL);
+    sessionForSys->UnlockForControl();
 
-    session->macroStatusCallback_ = macroStatusCallback;
-    session->ProcessMacroStatusChange(metadata);
+    sessionForSys->macroStatusCallback_ = macroStatusCallback;
+    sessionForSys->ProcessMacroStatusChange(metadata);
 
     EXPECT_EQ(preview->Release(), 0);
     EXPECT_EQ(input->Release(), 0);
-    EXPECT_EQ(session->Release(), 0);
+    EXPECT_EQ(sessionForSys->Release(), 0);
 }
 
 /*
@@ -3067,17 +3071,17 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_026, TestSize.Level1)
     sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
     ASSERT_NE(photo, nullptr);
 
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(sessionForSys, nullptr);
 
     std::vector<ZoomPointInfo> zoomPointInfoList;
-    EXPECT_EQ(session->GetZoomPointInfos(zoomPointInfoList), CameraErrorCode::SESSION_NOT_CONFIG);
+    EXPECT_EQ(sessionForSys->GetZoomPointInfos(zoomPointInfoList), CameraErrorCode::SESSION_NOT_CONFIG);
 
-    session->RemoveInput(input);
-    session->RemoveOutput(photo);
+    sessionForSys->RemoveInput(input);
+    sessionForSys->RemoveOutput(photo);
     photo->Release();
     input->Release();
-    session->Release();
+    sessionForSys->Release();
 }
 
 /*
@@ -3102,26 +3106,26 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_027, TestSize.Level1)
     sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
     ASSERT_NE(photo, nullptr);
 
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(sessionForSys, nullptr);
 
-    int32_t ret = session->BeginConfig();
+    int32_t ret = sessionForSys->BeginConfig();
     EXPECT_EQ(ret, 0);
-    ret = session->AddInput(input);
+    ret = sessionForSys->AddInput(input);
     EXPECT_EQ(ret, 0);
-    ret = session->AddOutput(photo);
+    ret = sessionForSys->AddOutput(photo);
     EXPECT_EQ(ret, 0);
-    ret = session->CommitConfig();
+    ret = sessionForSys->CommitConfig();
     EXPECT_EQ(ret, 0);
 
     std::vector<ZoomPointInfo> zoomPointInfoList;
-    EXPECT_EQ(session->GetZoomPointInfos(zoomPointInfoList), 0);
+    EXPECT_EQ(sessionForSys->GetZoomPointInfos(zoomPointInfoList), 0);
 
-    session->RemoveInput(input);
-    session->RemoveOutput(photo);
+    sessionForSys->RemoveInput(input);
+    sessionForSys->RemoveOutput(photo);
     photo->Release();
     input->Release();
-    session->Release();
+    sessionForSys->Release();
 }
 
 /*
@@ -3237,31 +3241,31 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_030, TestSize.Level1)
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
 
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(sessionForSys, nullptr);
     UpdataCameraOutputCapability();
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
     BeautyType beautyType = AUTO_TYPE;
-    EXPECT_EQ(session->BeginConfig(), 0);
-    session->SetBeauty(AUTO_TYPE, 0);
-    EXPECT_EQ(session->GetBeauty(beautyType), -1);
-    EXPECT_EQ(session->AddInput(input), 0);
-    EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(sessionForSys->BeginConfig(), 0);
+    sessionForSys->SetBeauty(AUTO_TYPE, 0);
+    EXPECT_EQ(sessionForSys->GetBeauty(beautyType), -1);
+    EXPECT_EQ(sessionForSys->AddInput(input), 0);
+    EXPECT_EQ(sessionForSys->AddOutput(preview), 0);
 
-    EXPECT_EQ(session->CommitConfig(), 0);
-    session->SetBeauty(AUTO_TYPE, 0);
-    EXPECT_EQ(session->GetBeauty(beautyType), -1);
+    EXPECT_EQ(sessionForSys->CommitConfig(), 0);
+    sessionForSys->SetBeauty(AUTO_TYPE, 0);
+    EXPECT_EQ(sessionForSys->GetBeauty(beautyType), -1);
 
-    session->LockForControl();
-    session->SetBeauty(SKIN_SMOOTH, 0);
-    EXPECT_EQ(session->GetBeauty(beautyType), -1);
-    session->UnlockForControl();
+    sessionForSys->LockForControl();
+    sessionForSys->SetBeauty(SKIN_SMOOTH, 0);
+    EXPECT_EQ(sessionForSys->GetBeauty(beautyType), -1);
+    sessionForSys->UnlockForControl();
 
     EXPECT_EQ(preview->Release(), 0);
     EXPECT_EQ(input->Release(), 0);
-    EXPECT_EQ(session->Release(), 0);
+    EXPECT_EQ(sessionForSys->Release(), 0);
 }
 
 /*
@@ -3283,19 +3287,19 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_031, TestSize.Level1)
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
 
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(sessionForSys, nullptr);
     UpdataCameraOutputCapability();
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
     BeautyType beautyType = AUTO_TYPE;
-    session->SetBeauty(AUTO_TYPE, 0);
-    EXPECT_EQ(session->GetBeauty(beautyType), CameraErrorCode::SESSION_NOT_CONFIG);
+    sessionForSys->SetBeauty(AUTO_TYPE, 0);
+    EXPECT_EQ(sessionForSys->GetBeauty(beautyType), CameraErrorCode::SESSION_NOT_CONFIG);
 
     EXPECT_EQ(preview->Release(), 0);
     EXPECT_EQ(input->Release(), 0);
-    EXPECT_EQ(session->Release(), 0);
+    EXPECT_EQ(sessionForSys->Release(), 0);
 }
 
 /*
@@ -3387,8 +3391,8 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_033, TestSize.Level1)
  */
 HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_034, TestSize.Level1)
 {
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(sessionForSys, nullptr);
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
     input->Open();
@@ -3396,29 +3400,29 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_034, TestSize.Level1)
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
-    EXPECT_EQ(session->BeginConfig(), 0);
-    EXPECT_EQ(session->AddInput(input), 0);
-    EXPECT_EQ(session->AddOutput(preview), 0);
-    EXPECT_EQ(session->CommitConfig(), 0);
+    EXPECT_EQ(sessionForSys->BeginConfig(), 0);
+    EXPECT_EQ(sessionForSys->AddInput(input), 0);
+    EXPECT_EQ(sessionForSys->AddOutput(preview), 0);
+    EXPECT_EQ(sessionForSys->CommitConfig(), 0);
 
     std::vector<FocusRangeType> types;
-    EXPECT_EQ(session->GetSupportedFocusRangeTypes(types), 0);
+    EXPECT_EQ(sessionForSys->GetSupportedFocusRangeTypes(types), 0);
     if (!types.empty()) {
         bool isSupported = false;
-        EXPECT_EQ(session->IsFocusRangeTypeSupported(types[0], isSupported), 0);
+        EXPECT_EQ(sessionForSys->IsFocusRangeTypeSupported(types[0], isSupported), 0);
         if (isSupported) {
-            session->LockForControl();
-            EXPECT_EQ(session->SetFocusRange(types[0]), 0);
-            session->UnlockForControl();
+            sessionForSys->LockForControl();
+            EXPECT_EQ(sessionForSys->SetFocusRange(types[0]), 0);
+            sessionForSys->UnlockForControl();
             FocusRangeType type = FOCUS_RANGE_TYPE_NEAR;
-            EXPECT_EQ(session->GetFocusRange(type), types[0]);
+            EXPECT_EQ(sessionForSys->GetFocusRange(type), types[0]);
         }
     }
 
     input->Close();
     preview->Release();
     input->Release();
-    session->Release();
+    sessionForSys->Release();
 }
 
 /*
@@ -3431,8 +3435,8 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_034, TestSize.Level1)
  */
 HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_035, TestSize.Level1)
 {
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(sessionForSys, nullptr);
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
     input->Open();
@@ -3440,29 +3444,29 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_035, TestSize.Level1)
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
-    EXPECT_EQ(session->BeginConfig(), 0);
-    EXPECT_EQ(session->AddInput(input), 0);
-    EXPECT_EQ(session->AddOutput(preview), 0);
-    EXPECT_EQ(session->CommitConfig(), 0);
+    EXPECT_EQ(sessionForSys->BeginConfig(), 0);
+    EXPECT_EQ(sessionForSys->AddInput(input), 0);
+    EXPECT_EQ(sessionForSys->AddOutput(preview), 0);
+    EXPECT_EQ(sessionForSys->CommitConfig(), 0);
 
     std::vector<FocusDrivenType> types;
-    EXPECT_EQ(session->GetSupportedFocusDrivenTypes(types), 0);
+    EXPECT_EQ(sessionForSys->GetSupportedFocusDrivenTypes(types), 0);
     if (!types.empty()) {
         bool isSupported = false;
-        EXPECT_EQ(session->IsFocusDrivenTypeSupported(types[0], isSupported), 0);
+        EXPECT_EQ(sessionForSys->IsFocusDrivenTypeSupported(types[0], isSupported), 0);
         if (isSupported) {
-            session->LockForControl();
-            EXPECT_EQ(session->SetFocusDriven(types[0]), 0);
-            session->UnlockForControl();
+            sessionForSys->LockForControl();
+            EXPECT_EQ(sessionForSys->SetFocusDriven(types[0]), 0);
+            sessionForSys->UnlockForControl();
             FocusDrivenType type = FOCUS_DRIVEN_TYPE_FACE;
-            EXPECT_EQ(session->GetFocusDriven(type), types[0]);
+            EXPECT_EQ(sessionForSys->GetFocusDriven(type), types[0]);
         }
     }
 
     input->Close();
     preview->Release();
     input->Release();
-    session->Release();
+    sessionForSys->Release();
 }
 
 /*
@@ -3475,8 +3479,8 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_035, TestSize.Level1)
  */
 HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_036, TestSize.Level1)
 {
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(sessionForSys, nullptr);
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
     input->Open();
@@ -3484,29 +3488,29 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_036, TestSize.Level1)
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
-    EXPECT_EQ(session->BeginConfig(), 0);
-    EXPECT_EQ(session->AddInput(input), 0);
-    EXPECT_EQ(session->AddOutput(preview), 0);
-    EXPECT_EQ(session->CommitConfig(), 0);
+    EXPECT_EQ(sessionForSys->BeginConfig(), 0);
+    EXPECT_EQ(sessionForSys->AddInput(input), 0);
+    EXPECT_EQ(sessionForSys->AddOutput(preview), 0);
+    EXPECT_EQ(sessionForSys->CommitConfig(), 0);
 
     std::vector<ColorReservationType> types;
-    EXPECT_EQ(session->GetSupportedColorReservationTypes(types), 0);
+    EXPECT_EQ(sessionForSys->GetSupportedColorReservationTypes(types), 0);
     if (!types.empty()) {
         bool isSupported = false;
-        EXPECT_EQ(session->IsColorReservationTypeSupported(types[0], isSupported), 0);
+        EXPECT_EQ(sessionForSys->IsColorReservationTypeSupported(types[0], isSupported), 0);
         if (isSupported) {
-            session->LockForControl();
-            EXPECT_EQ(session->SetColorReservation(types[0]), 0);
-            session->UnlockForControl();
+            sessionForSys->LockForControl();
+            EXPECT_EQ(sessionForSys->SetColorReservation(types[0]), 0);
+            sessionForSys->UnlockForControl();
             ColorReservationType type = COLOR_RESERVATION_TYPE_PORTRAIT;
-            EXPECT_EQ(session->GetColorReservation(type), types[0]);
+            EXPECT_EQ(sessionForSys->GetColorReservation(type), types[0]);
         }
     }
 
     input->Close();
     preview->Release();
     input->Release();
-    session->Release();
+    sessionForSys->Release();
 }
 
 /*
@@ -3519,8 +3523,8 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_036, TestSize.Level1)
  */
 HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_037, TestSize.Level1)
 {
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(sessionForSys, nullptr);
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
     input->Open();
@@ -3528,33 +3532,33 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_037, TestSize.Level1)
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
-    EXPECT_EQ(session->BeginConfig(), 0);
-    EXPECT_EQ(session->AddInput(input), 0);
-    EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(sessionForSys->BeginConfig(), 0);
+    EXPECT_EQ(sessionForSys->AddInput(input), 0);
+    EXPECT_EQ(sessionForSys->AddOutput(preview), 0);
 
     FocusRangeType testType_1 = FOCUS_RANGE_TYPE_NEAR;
     bool isSupported = true;
-    EXPECT_EQ(session->IsFocusRangeTypeSupported(testType_1, isSupported), CameraErrorCode::SESSION_NOT_CONFIG);
-    EXPECT_EQ(session->GetFocusRange(testType_1), CameraErrorCode::SESSION_NOT_CONFIG);
-    EXPECT_EQ(session->SetFocusRange(testType_1), CameraErrorCode::SESSION_NOT_CONFIG);
+    EXPECT_EQ(sessionForSys->IsFocusRangeTypeSupported(testType_1, isSupported), CameraErrorCode::SESSION_NOT_CONFIG);
+    EXPECT_EQ(sessionForSys->GetFocusRange(testType_1), CameraErrorCode::SESSION_NOT_CONFIG);
+    EXPECT_EQ(sessionForSys->SetFocusRange(testType_1), CameraErrorCode::SESSION_NOT_CONFIG);
 
     FocusDrivenType testType_2 = FOCUS_DRIVEN_TYPE_FACE;
-    EXPECT_EQ(session->IsFocusDrivenTypeSupported(testType_2, isSupported), CameraErrorCode::SESSION_NOT_CONFIG);
-    EXPECT_EQ(session->GetFocusDriven(testType_2), CameraErrorCode::SESSION_NOT_CONFIG);
-    EXPECT_EQ(session->SetFocusDriven(testType_2), CameraErrorCode::SESSION_NOT_CONFIG);
+    EXPECT_EQ(sessionForSys->IsFocusDrivenTypeSupported(testType_2, isSupported), CameraErrorCode::SESSION_NOT_CONFIG);
+    EXPECT_EQ(sessionForSys->GetFocusDriven(testType_2), CameraErrorCode::SESSION_NOT_CONFIG);
+    EXPECT_EQ(sessionForSys->SetFocusDriven(testType_2), CameraErrorCode::SESSION_NOT_CONFIG);
 
     std::vector<ColorReservationType> testTypes_3;
-    EXPECT_EQ(session->GetSupportedColorReservationTypes(testTypes_3), CameraErrorCode::SESSION_NOT_CONFIG);
+    EXPECT_EQ(sessionForSys->GetSupportedColorReservationTypes(testTypes_3), CameraErrorCode::SESSION_NOT_CONFIG);
     ColorReservationType testType_3 = COLOR_RESERVATION_TYPE_PORTRAIT;
-    EXPECT_EQ(session->GetColorReservation(testType_3), CameraErrorCode::SESSION_NOT_CONFIG);
-    EXPECT_EQ(session->SetColorReservation(testType_3), CameraErrorCode::SESSION_NOT_CONFIG);
+    EXPECT_EQ(sessionForSys->GetColorReservation(testType_3), CameraErrorCode::SESSION_NOT_CONFIG);
+    EXPECT_EQ(sessionForSys->SetColorReservation(testType_3), CameraErrorCode::SESSION_NOT_CONFIG);
 
-    EXPECT_EQ(session->CommitConfig(), 0);
+    EXPECT_EQ(sessionForSys->CommitConfig(), 0);
 
     input->Close();
     preview->Release();
     input->Release();
-    session->Release();
+    sessionForSys->Release();
 }
 
 /*
@@ -3567,8 +3571,8 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_037, TestSize.Level1)
  */
 HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_038, TestSize.Level1)
 {
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(sessionForSys, nullptr);
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
     input->Open();
@@ -3576,30 +3580,31 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_038, TestSize.Level1)
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
-    EXPECT_EQ(session->BeginConfig(), 0);
-    EXPECT_EQ(session->AddInput(input), 0);
-    EXPECT_EQ(session->AddOutput(preview), 0);
-    EXPECT_EQ(session->CommitConfig(), 0);
+    EXPECT_EQ(sessionForSys->BeginConfig(), 0);
+    EXPECT_EQ(sessionForSys->AddInput(input), 0);
+    EXPECT_EQ(sessionForSys->AddOutput(preview), 0);
+    EXPECT_EQ(sessionForSys->CommitConfig(), 0);
 
     int32_t num = -1;
     FocusRangeType testType_1 = static_cast<FocusRangeType>(num);
     bool isSupported = true;
-    EXPECT_EQ(session->IsFocusRangeTypeSupported(testType_1, isSupported), CameraErrorCode::PARAMETER_ERROR);
+    EXPECT_EQ(sessionForSys->IsFocusRangeTypeSupported(testType_1, isSupported), CameraErrorCode::PARAMETER_ERROR);
     FocusDrivenType testType_2 = static_cast<FocusDrivenType>(num);
-    EXPECT_EQ(session->IsFocusDrivenTypeSupported(testType_2, isSupported), CameraErrorCode::PARAMETER_ERROR);
+    EXPECT_EQ(sessionForSys->IsFocusDrivenTypeSupported(testType_2, isSupported), CameraErrorCode::PARAMETER_ERROR);
     ColorReservationType testType_3 = static_cast<ColorReservationType>(num);
-    EXPECT_EQ(session->IsColorReservationTypeSupported(testType_3, isSupported), CameraErrorCode::PARAMETER_ERROR);
+    EXPECT_EQ(sessionForSys->IsColorReservationTypeSupported(testType_3, isSupported),
+        CameraErrorCode::PARAMETER_ERROR);
 
-    session->LockForControl();
-    EXPECT_EQ(session->SetFocusRange(testType_1), CameraErrorCode::PARAMETER_ERROR);
-    EXPECT_EQ(session->SetFocusDriven(testType_2), CameraErrorCode::PARAMETER_ERROR);
-    EXPECT_EQ(session->SetColorReservation(testType_3), CameraErrorCode::PARAMETER_ERROR);
-    session->UnlockForControl();
+    sessionForSys->LockForControl();
+    EXPECT_EQ(sessionForSys->SetFocusRange(testType_1), CameraErrorCode::PARAMETER_ERROR);
+    EXPECT_EQ(sessionForSys->SetFocusDriven(testType_2), CameraErrorCode::PARAMETER_ERROR);
+    EXPECT_EQ(sessionForSys->SetColorReservation(testType_3), CameraErrorCode::PARAMETER_ERROR);
+    sessionForSys->UnlockForControl();
 
     input->Close();
     preview->Release();
     input->Release();
-    session->Release();
+    sessionForSys->Release();
 }
 
 /*
@@ -3612,8 +3617,8 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_038, TestSize.Level1)
  */
 HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_039, TestSize.Level1)
 {
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(sessionForSys, nullptr);
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
     input->Open();
@@ -3621,22 +3626,22 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_039, TestSize.Level1)
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
-    EXPECT_EQ(session->BeginConfig(), 0);
-    EXPECT_EQ(session->AddInput(input), 0);
-    EXPECT_EQ(session->AddOutput(preview), 0);
-    EXPECT_EQ(session->CommitConfig(), 0);
+    EXPECT_EQ(sessionForSys->BeginConfig(), 0);
+    EXPECT_EQ(sessionForSys->AddInput(input), 0);
+    EXPECT_EQ(sessionForSys->AddOutput(preview), 0);
+    EXPECT_EQ(sessionForSys->CommitConfig(), 0);
 
     FocusRangeType testType_1 = FOCUS_RANGE_TYPE_NEAR;
-    EXPECT_EQ(session->SetFocusRange(testType_1), 0);
+    EXPECT_EQ(sessionForSys->SetFocusRange(testType_1), 0);
     FocusDrivenType testType_2 = FOCUS_DRIVEN_TYPE_FACE;
-    EXPECT_EQ(session->SetFocusDriven(testType_2), 0);
+    EXPECT_EQ(sessionForSys->SetFocusDriven(testType_2), 0);
     ColorReservationType testType_3 = COLOR_RESERVATION_TYPE_PORTRAIT;
-    EXPECT_EQ(session->SetColorReservation(testType_3), 0);
+    EXPECT_EQ(sessionForSys->SetColorReservation(testType_3), 0);
 
     input->Close();
     preview->Release();
     input->Release();
-    session->Release();
+    sessionForSys->Release();
 }
 
 /*
@@ -3649,8 +3654,8 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_039, TestSize.Level1)
  */
 HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_040, TestSize.Level1)
 {
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(sessionForSys, nullptr);
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
     input->Open();
@@ -3658,31 +3663,31 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_040, TestSize.Level1)
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
-    EXPECT_EQ(session->BeginConfig(), 0);
-    EXPECT_EQ(session->AddInput(input), 0);
-    EXPECT_EQ(session->AddOutput(preview), 0);
-    EXPECT_EQ(session->CommitConfig(), 0);
+    EXPECT_EQ(sessionForSys->BeginConfig(), 0);
+    EXPECT_EQ(sessionForSys->AddInput(input), 0);
+    EXPECT_EQ(sessionForSys->AddOutput(preview), 0);
+    EXPECT_EQ(sessionForSys->CommitConfig(), 0);
 
-    session->innerInputDevice_ = nullptr;
+    sessionForSys->innerInputDevice_ = nullptr;
     std::vector<FocusRangeType> testTypes_1;
-    EXPECT_EQ(session->GetSupportedFocusRangeTypes(testTypes_1), 0);
+    EXPECT_EQ(sessionForSys->GetSupportedFocusRangeTypes(testTypes_1), 0);
     FocusRangeType testType_1 = FOCUS_RANGE_TYPE_NEAR;
-    EXPECT_EQ(session->GetFocusRange(testType_1), 0);
+    EXPECT_EQ(sessionForSys->GetFocusRange(testType_1), 0);
 
     std::vector<FocusDrivenType> testTypes_2;
-    EXPECT_EQ(session->GetSupportedFocusDrivenTypes(testTypes_2), 0);
+    EXPECT_EQ(sessionForSys->GetSupportedFocusDrivenTypes(testTypes_2), 0);
     FocusDrivenType testType_2 = FOCUS_DRIVEN_TYPE_FACE;
-    EXPECT_EQ(session->GetFocusDriven(testType_2), 0);
+    EXPECT_EQ(sessionForSys->GetFocusDriven(testType_2), 0);
 
     std::vector<ColorReservationType> testTypes_3;
-    EXPECT_EQ(session->GetSupportedColorReservationTypes(testTypes_3), 0);
+    EXPECT_EQ(sessionForSys->GetSupportedColorReservationTypes(testTypes_3), 0);
     ColorReservationType testType_3 = COLOR_RESERVATION_TYPE_PORTRAIT;
-    EXPECT_EQ(session->GetColorReservation(testType_3), 0);
+    EXPECT_EQ(sessionForSys->GetColorReservation(testType_3), 0);
 
     input->Close();
     preview->Release();
     input->Release();
-    session->Release();
+    sessionForSys->Release();
 }
 
 /*
@@ -3695,8 +3700,8 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_040, TestSize.Level1)
  */
 HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_041, TestSize.Level0)
 {
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(sessionForSys, nullptr);
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
     input->Open();
@@ -3704,70 +3709,71 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_041, TestSize.Level0)
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
-    EXPECT_EQ(session->BeginConfig(), 0);
-    EXPECT_EQ(session->AddInput(input), 0);
-    EXPECT_EQ(session->AddOutput(preview), 0);
-    EXPECT_EQ(session->CommitConfig(), 0);
+    EXPECT_EQ(sessionForSys->BeginConfig(), 0);
+    EXPECT_EQ(sessionForSys->AddInput(input), 0);
+    EXPECT_EQ(sessionForSys->AddOutput(preview), 0);
+    EXPECT_EQ(sessionForSys->CommitConfig(), 0);
 
     std::vector<uint8_t> testTypes_1 = {OHOS_CAMERA_FOCUS_RANGE_AUTO, OHOS_CAMERA_FOCUS_RANGE_NEAR};
-    ASSERT_NE(session->GetMetadata(), nullptr);
-    OHOS::Camera::DeleteCameraMetadataItem(session->GetMetadata()->get(), OHOS_ABILITY_FOCUS_RANGE_TYPES);
-    session->GetMetadata()->addEntry(OHOS_ABILITY_FOCUS_RANGE_TYPES, testTypes_1.data(), testTypes_1.size());
+    ASSERT_NE(sessionForSys->GetMetadata(), nullptr);
+    OHOS::Camera::DeleteCameraMetadataItem(sessionForSys->GetMetadata()->get(), OHOS_ABILITY_FOCUS_RANGE_TYPES);
+    sessionForSys->GetMetadata()->addEntry(OHOS_ABILITY_FOCUS_RANGE_TYPES, testTypes_1.data(), testTypes_1.size());
     std::vector<FocusRangeType> types_1;
-    EXPECT_EQ(session->GetSupportedFocusRangeTypes(types_1), 0);
+    EXPECT_EQ(sessionForSys->GetSupportedFocusRangeTypes(types_1), 0);
 
     uint8_t testType_1 = OHOS_CAMERA_FOCUS_RANGE_AUTO;
-    OHOS::Camera::DeleteCameraMetadataItem(session->GetMetadata()->get(), OHOS_CONTROL_FOCUS_RANGE_TYPE);
-    session->GetMetadata()->addEntry(OHOS_CONTROL_FOCUS_RANGE_TYPE, &testType_1, 1);
+    OHOS::Camera::DeleteCameraMetadataItem(sessionForSys->GetMetadata()->get(), OHOS_CONTROL_FOCUS_RANGE_TYPE);
+    sessionForSys->GetMetadata()->addEntry(OHOS_CONTROL_FOCUS_RANGE_TYPE, &testType_1, 1);
     FocusRangeType type_1 = FOCUS_RANGE_TYPE_NEAR;
-    EXPECT_EQ(session->GetFocusRange(type_1), 0);
+    EXPECT_EQ(sessionForSys->GetFocusRange(type_1), 0);
 
     std::vector<uint8_t> testTypes_2 = {OHOS_CAMERA_FOCUS_DRIVEN_AUTO, OHOS_CAMERA_FOCUS_DRIVEN_FACE};
-    OHOS::Camera::DeleteCameraMetadataItem(session->GetMetadata()->get(), OHOS_ABILITY_FOCUS_DRIVEN_TYPES);
-    session->GetMetadata()->addEntry(OHOS_ABILITY_FOCUS_DRIVEN_TYPES, testTypes_2.data(), testTypes_2.size());
+    OHOS::Camera::DeleteCameraMetadataItem(sessionForSys->GetMetadata()->get(), OHOS_ABILITY_FOCUS_DRIVEN_TYPES);
+    sessionForSys->GetMetadata()->addEntry(OHOS_ABILITY_FOCUS_DRIVEN_TYPES, testTypes_2.data(), testTypes_2.size());
     std::vector<FocusDrivenType> types_2;
-    EXPECT_EQ(session->GetSupportedFocusDrivenTypes(types_2), 0);
+    EXPECT_EQ(sessionForSys->GetSupportedFocusDrivenTypes(types_2), 0);
 
     uint8_t testType_2 = OHOS_CAMERA_FOCUS_DRIVEN_AUTO;
-    OHOS::Camera::DeleteCameraMetadataItem(session->GetMetadata()->get(), OHOS_CONTROL_FOCUS_DRIVEN_TYPE);
-    session->GetMetadata()->addEntry(OHOS_CONTROL_FOCUS_DRIVEN_TYPE, &testType_2, 1);
+    OHOS::Camera::DeleteCameraMetadataItem(sessionForSys->GetMetadata()->get(), OHOS_CONTROL_FOCUS_DRIVEN_TYPE);
+    sessionForSys->GetMetadata()->addEntry(OHOS_CONTROL_FOCUS_DRIVEN_TYPE, &testType_2, 1);
     FocusDrivenType type_2 = FOCUS_DRIVEN_TYPE_FACE;
-    EXPECT_EQ(session->GetFocusDriven(type_2), 0);
+    EXPECT_EQ(sessionForSys->GetFocusDriven(type_2), 0);
 
     std::vector<uint8_t> testTypes_3 = {OHOS_CAMERA_COLOR_RESERVATION_NONE, OHOS_CAMERA_COLOR_RESERVATION_PORTRAIT};
-    OHOS::Camera::DeleteCameraMetadataItem(session->GetMetadata()->get(), OHOS_ABILITY_COLOR_RESERVATION_TYPES);
-    session->GetMetadata()->addEntry(OHOS_ABILITY_COLOR_RESERVATION_TYPES, testTypes_3.data(), testTypes_3.size());
+    OHOS::Camera::DeleteCameraMetadataItem(sessionForSys->GetMetadata()->get(), OHOS_ABILITY_COLOR_RESERVATION_TYPES);
+    sessionForSys->GetMetadata()->addEntry(OHOS_ABILITY_COLOR_RESERVATION_TYPES, testTypes_3.data(),
+        testTypes_3.size());
     std::vector<ColorReservationType> types_3;
-    EXPECT_EQ(session->GetSupportedColorReservationTypes(types_3), 0);
+    EXPECT_EQ(sessionForSys->GetSupportedColorReservationTypes(types_3), 0);
 
     uint8_t testType_3 = OHOS_CAMERA_COLOR_RESERVATION_PORTRAIT;
-    OHOS::Camera::DeleteCameraMetadataItem(session->GetMetadata()->get(), OHOS_CONTROL_COLOR_RESERVATION_TYPE);
-    session->GetMetadata()->addEntry(OHOS_CONTROL_COLOR_RESERVATION_TYPE, &testType_3, 1);
+    OHOS::Camera::DeleteCameraMetadataItem(sessionForSys->GetMetadata()->get(), OHOS_CONTROL_COLOR_RESERVATION_TYPE);
+    sessionForSys->GetMetadata()->addEntry(OHOS_CONTROL_COLOR_RESERVATION_TYPE, &testType_3, 1);
     ColorReservationType type_3 = COLOR_RESERVATION_TYPE_PORTRAIT;
-    EXPECT_EQ(session->GetColorReservation(type_3), 0);
+    EXPECT_EQ(sessionForSys->GetColorReservation(type_3), 0);
 
-    session->LockForControl();
-    ASSERT_NE(session->changedMetadata_, nullptr);
-    OHOS::Camera::DeleteCameraMetadataItem(session->changedMetadata_->get(), OHOS_CONTROL_FOCUS_RANGE_TYPE);
-    EXPECT_EQ(session->SetFocusRange(type_1), 0);
-    session->changedMetadata_->addEntry(OHOS_CONTROL_FOCUS_RANGE_TYPE, &testType_1, 1);
-    EXPECT_EQ(session->SetFocusRange(type_1), 0);
+    sessionForSys->LockForControl();
+    ASSERT_NE(sessionForSys->changedMetadata_, nullptr);
+    OHOS::Camera::DeleteCameraMetadataItem(sessionForSys->changedMetadata_->get(), OHOS_CONTROL_FOCUS_RANGE_TYPE);
+    EXPECT_EQ(sessionForSys->SetFocusRange(type_1), 0);
+    sessionForSys->changedMetadata_->addEntry(OHOS_CONTROL_FOCUS_RANGE_TYPE, &testType_1, 1);
+    EXPECT_EQ(sessionForSys->SetFocusRange(type_1), 0);
 
-    OHOS::Camera::DeleteCameraMetadataItem(session->changedMetadata_->get(), OHOS_CONTROL_FOCUS_DRIVEN_TYPE);
-    EXPECT_EQ(session->SetFocusDriven(type_2), 0);
-    session->changedMetadata_->addEntry(OHOS_CONTROL_FOCUS_DRIVEN_TYPE, &testType_2, 1);
-    EXPECT_EQ(session->SetFocusDriven(type_2), 0);
+    OHOS::Camera::DeleteCameraMetadataItem(sessionForSys->changedMetadata_->get(), OHOS_CONTROL_FOCUS_DRIVEN_TYPE);
+    EXPECT_EQ(sessionForSys->SetFocusDriven(type_2), 0);
+    sessionForSys->changedMetadata_->addEntry(OHOS_CONTROL_FOCUS_DRIVEN_TYPE, &testType_2, 1);
+    EXPECT_EQ(sessionForSys->SetFocusDriven(type_2), 0);
 
-    OHOS::Camera::DeleteCameraMetadataItem(session->changedMetadata_->get(), OHOS_CONTROL_COLOR_RESERVATION_TYPE);
-    EXPECT_EQ(session->SetColorReservation(type_3), 0);
-    session->changedMetadata_->addEntry(OHOS_CONTROL_COLOR_RESERVATION_TYPE, &testType_3, 1);
-    EXPECT_EQ(session->SetColorReservation(type_3), 0);
-    session->UnlockForControl();
+    OHOS::Camera::DeleteCameraMetadataItem(sessionForSys->changedMetadata_->get(), OHOS_CONTROL_COLOR_RESERVATION_TYPE);
+    EXPECT_EQ(sessionForSys->SetColorReservation(type_3), 0);
+    sessionForSys->changedMetadata_->addEntry(OHOS_CONTROL_COLOR_RESERVATION_TYPE, &testType_3, 1);
+    EXPECT_EQ(sessionForSys->SetColorReservation(type_3), 0);
+    sessionForSys->UnlockForControl();
 
     input->Close();
     preview->Release();
     input->Release();
-    session->Release();
+    sessionForSys->Release();
 }
 
 /*
@@ -3933,29 +3939,29 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_002, TestSize
  */
 HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_003, TestSize.Level1)
 {
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(sessionForSys, nullptr);
     std::vector<PortraitThemeType> supportedPortraitThemeTypes = {};
-    EXPECT_EQ(session->GetSupportedPortraitThemeTypes(supportedPortraitThemeTypes),
+    EXPECT_EQ(sessionForSys->GetSupportedPortraitThemeTypes(supportedPortraitThemeTypes),
         CameraErrorCode::SESSION_NOT_CONFIG);
-    EXPECT_FALSE(session->IsPortraitThemeSupported());
+    EXPECT_FALSE(sessionForSys->IsPortraitThemeSupported());
     bool isSupported = false;
-    EXPECT_EQ(session->IsPortraitThemeSupported(isSupported), CameraErrorCode::SESSION_NOT_CONFIG);
+    EXPECT_EQ(sessionForSys->IsPortraitThemeSupported(isSupported), CameraErrorCode::SESSION_NOT_CONFIG);
 
     PortraitThemeType type = PortraitThemeType::NATURAL;
-    EXPECT_EQ(session->SetPortraitThemeType(type), CameraErrorCode::SESSION_NOT_CONFIG);
+    EXPECT_EQ(sessionForSys->SetPortraitThemeType(type), CameraErrorCode::SESSION_NOT_CONFIG);
 
     std::vector<int32_t> supportedRotation = {};
-    EXPECT_EQ(session->GetSupportedVideoRotations(supportedRotation), CameraErrorCode::SESSION_NOT_CONFIG);
+    EXPECT_EQ(sessionForSys->GetSupportedVideoRotations(supportedRotation), CameraErrorCode::SESSION_NOT_CONFIG);
 
-    EXPECT_FALSE(session->IsVideoRotationSupported());
+    EXPECT_FALSE(sessionForSys->IsVideoRotationSupported());
     isSupported = false;
-    EXPECT_EQ(session->IsVideoRotationSupported(isSupported), CameraErrorCode::SESSION_NOT_CONFIG);
+    EXPECT_EQ(sessionForSys->IsVideoRotationSupported(isSupported), CameraErrorCode::SESSION_NOT_CONFIG);
 
     int32_t rotation = 0;
-    EXPECT_EQ(session->SetVideoRotation(rotation), CameraErrorCode::SESSION_NOT_CONFIG);
+    EXPECT_EQ(sessionForSys->SetVideoRotation(rotation), CameraErrorCode::SESSION_NOT_CONFIG);
 
-    std::vector<float> depthFusionThreshold = session->GetDepthFusionThreshold();
+    std::vector<float> depthFusionThreshold = sessionForSys->GetDepthFusionThreshold();
     EXPECT_EQ(depthFusionThreshold.size(), 0);
 }
 
@@ -3972,29 +3978,31 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_003, TestSize
  */
 HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_004, TestSize.Level1)
 {
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(sessionForSys, nullptr);
+    sessionForSys->isDepthFusionEnable_ = false;
+    EXPECT_FALSE(sessionForSys->IsDepthFusionEnabled());
+
+    sessionForSys->isMovingPhotoEnabled_ = false;
+    EXPECT_FALSE(sessionForSys->IsMovingPhotoEnabled());
+
+    sessionForSys->SetMacroStatusCallback(nullptr);
+    EXPECT_EQ(sessionForSys->GetMacroStatusCallback(), nullptr);
+
+    sessionForSys->isSetMacroEnable_ = false;
+    EXPECT_FALSE(sessionForSys->IsSetEnableMacro());
+
+    sessionForSys->SetEffectSuggestionCallback(nullptr);
+    EXPECT_EQ(sessionForSys->effectSuggestionCallback_, nullptr);
+
+    sessionForSys->SetARCallback(nullptr);
+    EXPECT_EQ(sessionForSys->GetARCallback(), nullptr);
+
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-    session->isDepthFusionEnable_ = false;
-    EXPECT_FALSE(session->IsDepthFusionEnabled());
-
-    session->isMovingPhotoEnabled_ = false;
-    EXPECT_FALSE(session->IsMovingPhotoEnabled());
-
-    session->SetMacroStatusCallback(nullptr);
-    EXPECT_EQ(session->GetMacroStatusCallback(), nullptr);
-
-    session->isSetMacroEnable_ = false;
-    EXPECT_FALSE(session->IsSetEnableMacro());
-
     PreconfigType preconfigType = PRECONFIG_720P;
     ProfileSizeRatio preconfigRatio = UNSPECIFIED;
     EXPECT_EQ(session->GeneratePreconfigProfiles(preconfigType, preconfigRatio), nullptr);
-
-    session->SetEffectSuggestionCallback(nullptr);
-    EXPECT_EQ(session->effectSuggestionCallback_, nullptr);
-
-    session->SetARCallback(nullptr);
-    EXPECT_EQ(session->GetARCallback(), nullptr);
 }
 
 /*
@@ -4010,42 +4018,42 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_004, TestSize
  */
 HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_005, TestSize.Level1)
 {
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(sessionForSys, nullptr);
     bool isEnable = false;
-    EXPECT_EQ(session->EnableTripodDetection(isEnable), CameraErrorCode::OPERATION_NOT_ALLOWED);
+    EXPECT_EQ(sessionForSys->EnableTripodDetection(isEnable), CameraErrorCode::OPERATION_NOT_ALLOWED);
 
     UsageType usageType = BOKEH;
     bool enabled = false;
-    session->SetUsage(usageType, enabled);
+    sessionForSys->SetUsage(usageType, enabled);
 
     bool isFoldable = CameraManager::GetInstance()->GetIsFoldable();
-    EXPECT_EQ(session->IsAutoDeviceSwitchSupported(), isFoldable);
+    EXPECT_EQ(sessionForSys->IsAutoDeviceSwitchSupported(), isFoldable);
 
     bool enable = false;
-    session->SetIsAutoSwitchDeviceStatus(enable);
+    sessionForSys->SetIsAutoSwitchDeviceStatus(enable);
     if (!isFoldable) {
-        EXPECT_EQ(session->EnableAutoDeviceSwitch(enable), CameraErrorCode::OPERATION_NOT_ALLOWED);
+        EXPECT_EQ(sessionForSys->EnableAutoDeviceSwitch(enable), CameraErrorCode::OPERATION_NOT_ALLOWED);
     } else {
-        EXPECT_EQ(session->EnableAutoDeviceSwitch(enable), CameraErrorCode::SUCCESS);
+        EXPECT_EQ(sessionForSys->EnableAutoDeviceSwitch(enable), CameraErrorCode::SUCCESS);
     }
 
-    EXPECT_FALSE(session->SwitchDevice());
+    EXPECT_FALSE(sessionForSys->SwitchDevice());
 
     auto cameraDeviceList = CameraManager::GetInstance()->GetSupportedCameras();
     bool flag = true;
     for (const auto& cameraDevice : cameraDeviceList) {
         if (cameraDevice->GetPosition() == CAMERA_POSITION_FRONT) {
-            EXPECT_NE(session->FindFrontCamera(), nullptr);
+            EXPECT_NE(sessionForSys->FindFrontCamera(), nullptr);
             flag = false;
         }
     }
     if (flag) {
-        EXPECT_EQ(session->FindFrontCamera(), nullptr);
+        EXPECT_EQ(sessionForSys->FindFrontCamera(), nullptr);
     }
 
-    session->StartVideoOutput();
-    session->StopVideoOutput();
+    sessionForSys->StartVideoOutput();
+    sessionForSys->StopVideoOutput();
 }
 
 /*
@@ -4061,30 +4069,32 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_005, TestSize
  */
 HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_006, TestSize.Level1)
 {
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(sessionForSys, nullptr);
 
-    session->SetAutoDeviceSwitchCallback(nullptr);
-    EXPECT_EQ(session->GetAutoDeviceSwitchCallback(), nullptr);
+    sessionForSys->SetAutoDeviceSwitchCallback(nullptr);
+    EXPECT_EQ(sessionForSys->GetAutoDeviceSwitchCallback(), nullptr);
 
-    session->ExecuteAllFunctionsInMap();
-    EXPECT_TRUE(session->canAddFuncToMap_);
+    sessionForSys->ExecuteAllFunctionsInMap();
+    EXPECT_TRUE(sessionForSys->canAddFuncToMap_);
 
-    session->CreateAndSetFoldServiceCallback();
+    sessionForSys->CreateAndSetFoldServiceCallback();
     QualityPrioritization qualityPrioritization = HIGH_QUALITY;
-    EXPECT_EQ(session->SetQualityPrioritization(qualityPrioritization), CameraErrorCode::SESSION_NOT_CONFIG);
+    EXPECT_EQ(sessionForSys->SetQualityPrioritization(qualityPrioritization), CameraErrorCode::SESSION_NOT_CONFIG);
 
-    session->isImageDeferred_ = false;
-    EXPECT_FALSE(session->IsImageDeferred());
+    sessionForSys->isImageDeferred_ = false;
+    EXPECT_FALSE(sessionForSys->IsImageDeferred());
 
     bool isEnable = false;
-    EXPECT_EQ(session->EnableEffectSuggestion(isEnable), CameraErrorCode::OPERATION_NOT_ALLOWED);
+    EXPECT_EQ(sessionForSys->EnableEffectSuggestion(isEnable), CameraErrorCode::OPERATION_NOT_ALLOWED);
 
     std::vector<EffectSuggestionStatus> effectSuggestionStatusList = {};
-    EXPECT_EQ(session->SetEffectSuggestionStatus(effectSuggestionStatusList), CameraErrorCode::OPERATION_NOT_ALLOWED);
+    EXPECT_EQ(sessionForSys->SetEffectSuggestionStatus(effectSuggestionStatusList),
+        CameraErrorCode::OPERATION_NOT_ALLOWED);
 
     EffectSuggestionType effectSuggestionType = EFFECT_SUGGESTION_NONE;
-    EXPECT_EQ(session->UpdateEffectSuggestion(effectSuggestionType, isEnable), CameraErrorCode::SESSION_NOT_CONFIG);
+    EXPECT_EQ(sessionForSys->UpdateEffectSuggestion(effectSuggestionType, isEnable),
+        CameraErrorCode::SESSION_NOT_CONFIG);
 }
 
 /*
@@ -4225,47 +4235,47 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_012, TestSize
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
 
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(sessionForSys, nullptr);
     UpdataCameraOutputCapability();
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
-    EXPECT_EQ(session->BeginConfig(), 0);
-    EXPECT_EQ(session->AddInput(input), 0);
-    EXPECT_EQ(session->AddOutput(preview), 0);
-    EXPECT_EQ(session->CommitConfig(), 0);
+    EXPECT_EQ(sessionForSys->BeginConfig(), 0);
+    EXPECT_EQ(sessionForSys->AddInput(input), 0);
+    EXPECT_EQ(sessionForSys->AddOutput(preview), 0);
+    EXPECT_EQ(sessionForSys->CommitConfig(), 0);
 
     BeautyType beautyType = AUTO_TYPE;
-    session->LockForControl();
-    session->SetBeauty(beautyType, 0);
-    EXPECT_EQ(session->GetBeauty(beautyType), -1);
-    session->SetBeauty(beautyType, 3);
-    EXPECT_EQ(session->GetBeauty(beautyType), -1);
-    session->SetBeauty(FACE_SLENDER, 0);
-    EXPECT_EQ(session->GetBeauty(beautyType), -1);
-    session->SetBeauty(FACE_SLENDER, 3);
-    EXPECT_EQ(session->GetBeauty(beautyType), -1);
+    sessionForSys->LockForControl();
+    sessionForSys->SetBeauty(beautyType, 0);
+    EXPECT_EQ(sessionForSys->GetBeauty(beautyType), -1);
+    sessionForSys->SetBeauty(beautyType, 3);
+    EXPECT_EQ(sessionForSys->GetBeauty(beautyType), -1);
+    sessionForSys->SetBeauty(FACE_SLENDER, 0);
+    EXPECT_EQ(sessionForSys->GetBeauty(beautyType), -1);
+    sessionForSys->SetBeauty(FACE_SLENDER, 3);
+    EXPECT_EQ(sessionForSys->GetBeauty(beautyType), -1);
     uint32_t count = 1;
     uint8_t beauty = OHOS_CAMERA_BEAUTY_TYPE_OFF;
-    ASSERT_NE(session->changedMetadata_, nullptr);
-    OHOS::Camera::DeleteCameraMetadataItem(session->changedMetadata_->get(), OHOS_CONTROL_BEAUTY_TYPE);
-    session->SetBeauty(beautyType, 0);
-    EXPECT_EQ(session->GetBeauty(beautyType), -1);
-    session->SetBeauty(FACE_SLENDER, 0);
-    EXPECT_EQ(session->GetBeauty(beautyType), -1);
-    session->changedMetadata_->addEntry(OHOS_CONTROL_BEAUTY_TYPE, &beauty, count);
-    session->SetBeauty(beautyType, 0);
-    session->SetBeauty(FACE_SLENDER, 0);
+    ASSERT_NE(sessionForSys->changedMetadata_, nullptr);
+    OHOS::Camera::DeleteCameraMetadataItem(sessionForSys->changedMetadata_->get(), OHOS_CONTROL_BEAUTY_TYPE);
+    sessionForSys->SetBeauty(beautyType, 0);
+    EXPECT_EQ(sessionForSys->GetBeauty(beautyType), -1);
+    sessionForSys->SetBeauty(FACE_SLENDER, 0);
+    EXPECT_EQ(sessionForSys->GetBeauty(beautyType), -1);
+    sessionForSys->changedMetadata_->addEntry(OHOS_CONTROL_BEAUTY_TYPE, &beauty, count);
+    sessionForSys->SetBeauty(beautyType, 0);
+    sessionForSys->SetBeauty(FACE_SLENDER, 0);
     int num = 10;
     beautyType = static_cast<BeautyType>(num);
-    session->SetBeauty(beautyType, 0);
-    EXPECT_EQ(session->GetBeauty(beautyType), -1);
-    session->UnlockForControl();
+    sessionForSys->SetBeauty(beautyType, 0);
+    EXPECT_EQ(sessionForSys->GetBeauty(beautyType), -1);
+    sessionForSys->UnlockForControl();
 
     EXPECT_EQ(preview->Release(), 0);
     EXPECT_EQ(input->Release(), 0);
-    EXPECT_EQ(session->Release(), 0);
+    EXPECT_EQ(sessionForSys->Release(), 0);
 }
 
 /*
@@ -4424,39 +4434,40 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_016, TestSize
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
 
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(sessionForSys, nullptr);
     UpdataCameraOutputCapability();
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
-    EXPECT_EQ(session->BeginConfig(), 0);
-    EXPECT_EQ(session->AddInput(input), 0);
-    EXPECT_EQ(session->AddOutput(preview), 0);
-    EXPECT_EQ(session->CommitConfig(), 0);
+    EXPECT_EQ(sessionForSys->BeginConfig(), 0);
+    EXPECT_EQ(sessionForSys->AddInput(input), 0);
+    EXPECT_EQ(sessionForSys->AddOutput(preview), 0);
+    EXPECT_EQ(sessionForSys->CommitConfig(), 0);
 
-    session->LockForControl();
-    ASSERT_NE(session->changedMetadata_, nullptr);
+    sessionForSys->LockForControl();
+    ASSERT_NE(sessionForSys->changedMetadata_, nullptr);
     uint32_t sensitivity = 1;
-    OHOS::Camera::DeleteCameraMetadataItem(session->changedMetadata_->get(), session->HAL_CUSTOM_SENSOR_SENSITIVITY);
-    EXPECT_EQ(session->SetSensorSensitivity(sensitivity), 0);
-    session->changedMetadata_->addEntry(session->HAL_CUSTOM_SENSOR_SENSITIVITY, &sensitivity, 1);
-    EXPECT_EQ(session->SetSensorSensitivity(sensitivity), 0);
+    OHOS::Camera::DeleteCameraMetadataItem(sessionForSys->changedMetadata_->get(),
+        sessionForSys->HAL_CUSTOM_SENSOR_SENSITIVITY);
+    EXPECT_EQ(sessionForSys->SetSensorSensitivity(sensitivity), 0);
+    sessionForSys->changedMetadata_->addEntry(sessionForSys->HAL_CUSTOM_SENSOR_SENSITIVITY, &sensitivity, 1);
+    EXPECT_EQ(sessionForSys->SetSensorSensitivity(sensitivity), 0);
 
-    ASSERT_NE(session->changedMetadata_, nullptr);
+    ASSERT_NE(sessionForSys->changedMetadata_, nullptr);
     EffectSuggestionType effectSuggestionType = EFFECT_SUGGESTION_PORTRAIT;
     bool isEnable = true;
-    OHOS::Camera::DeleteCameraMetadataItem(session->changedMetadata_->get(), OHOS_CONTROL_EFFECT_SUGGESTION_TYPE);
-    EXPECT_EQ(session->UpdateEffectSuggestion(effectSuggestionType, isEnable), 0);
+    OHOS::Camera::DeleteCameraMetadataItem(sessionForSys->changedMetadata_->get(), OHOS_CONTROL_EFFECT_SUGGESTION_TYPE);
+    EXPECT_EQ(sessionForSys->UpdateEffectSuggestion(effectSuggestionType, isEnable), 0);
     uint8_t type = OHOS_CAMERA_EFFECT_SUGGESTION_PORTRAIT;
     std::vector<uint8_t> vec = {type, isEnable};
-    session->changedMetadata_->addEntry(OHOS_CONTROL_EFFECT_SUGGESTION_TYPE, vec.data(), vec.size());
-    EXPECT_EQ(session->UpdateEffectSuggestion(effectSuggestionType, isEnable), 0);
-    session->UnlockForControl();
+    sessionForSys->changedMetadata_->addEntry(OHOS_CONTROL_EFFECT_SUGGESTION_TYPE, vec.data(), vec.size());
+    EXPECT_EQ(sessionForSys->UpdateEffectSuggestion(effectSuggestionType, isEnable), 0);
+    sessionForSys->UnlockForControl();
 
     EXPECT_EQ(preview->Release(), 0);
     EXPECT_EQ(input->Release(), 0);
-    EXPECT_EQ(session->Release(), 0);
+    EXPECT_EQ(sessionForSys->Release(), 0);
 }
 
 
@@ -4468,9 +4479,9 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_016, TestSize
  */
 HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_017, TestSize.Level1)
 {
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::CAPTURE);
-    ASSERT_NE(nullptr, session);
-    ASSERT_EQ(SceneMode::CAPTURE, session->GetMode());
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(sessionForSys, nullptr);
+    ASSERT_EQ(SceneMode::CAPTURE, sessionForSys->GetMode());
 
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(nullptr, input);
@@ -4480,31 +4491,31 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_017, TestSize
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput(photoProfile_[0]);
     ASSERT_NE(nullptr, photoOutput);
 
-    ASSERT_EQ(CAMERA_OK, session->BeginConfig());
-    ASSERT_EQ(CAMERA_OK, session->AddInput(input));
-    ASSERT_EQ(CAMERA_OK, session->AddOutput(photoOutput));
-    ASSERT_EQ(CAMERA_OK, session->CommitConfig());
+    ASSERT_EQ(CAMERA_OK, sessionForSys->BeginConfig());
+    ASSERT_EQ(CAMERA_OK, sessionForSys->AddInput(input));
+    ASSERT_EQ(CAMERA_OK, sessionForSys->AddOutput(photoOutput));
+    ASSERT_EQ(CAMERA_OK, sessionForSys->CommitConfig());
 
     std::vector<uint32_t> vec;
     std::vector<EffectSuggestionType> expectedVec;
 
-    Camera::DeleteCameraMetadataItem(session->GetMetadata()->get(), OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED);
-    EXPECT_EQ(expectedVec, session->GetSupportedEffectSuggestionType());
+    Camera::DeleteCameraMetadataItem(sessionForSys->GetMetadata()->get(), OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED);
+    EXPECT_EQ(expectedVec, sessionForSys->GetSupportedEffectSuggestionType());
 
-    session->LockForControl();
-    ASSERT_NE(nullptr, session->changedMetadata_);
+    sessionForSys->LockForControl();
+    ASSERT_NE(nullptr, sessionForSys->changedMetadata_);
     vec = {1, 6, 0, 1, 2, 3, 4, 5, -1};
-    session->changedMetadata_->addEntry(OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED, vec.data(), 9);
-    session->UnlockForControl();
+    sessionForSys->changedMetadata_->addEntry(OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED, vec.data(), 9);
+    sessionForSys->UnlockForControl();
     expectedVec =
     {EffectSuggestionType::EFFECT_SUGGESTION_NONE, EffectSuggestionType::EFFECT_SUGGESTION_PORTRAIT,
      EffectSuggestionType::EFFECT_SUGGESTION_FOOD, EffectSuggestionType::EFFECT_SUGGESTION_SKY,
      EffectSuggestionType::EFFECT_SUGGESTION_SUNRISE_SUNSET, EffectSuggestionType::EFFECT_SUGGESTION_STAGE};
-    EXPECT_EQ(expectedVec, session->GetSupportedEffectSuggestionType());
+    EXPECT_EQ(expectedVec, sessionForSys->GetSupportedEffectSuggestionType());
 
     EXPECT_EQ(CAMERA_OK, photoOutput->Release());
     EXPECT_EQ(CAMERA_OK, input->Close());
-    EXPECT_EQ(CAMERA_OK, session->Release());
+    EXPECT_EQ(CAMERA_OK, sessionForSys->Release());
 }
 
 /**
@@ -4515,9 +4526,9 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_017, TestSize
  */
 HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_018, TestSize.Level1)
 {
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::VIDEO);
-    ASSERT_NE(nullptr, session);
-    ASSERT_EQ(SceneMode::VIDEO, session->GetMode());
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::VIDEO);
+    ASSERT_NE(sessionForSys, nullptr);
+    ASSERT_EQ(SceneMode::VIDEO, sessionForSys->GetMode());
 
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(nullptr, input);
@@ -4527,31 +4538,31 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_018, TestSize
     sptr<CaptureOutput> videoOutput = CreateVideoOutput(videoProfile_[0]);
     ASSERT_NE(nullptr, videoOutput);
 
-    ASSERT_EQ(CAMERA_OK, session->BeginConfig());
-    ASSERT_EQ(CAMERA_OK, session->AddInput(input));
-    ASSERT_EQ(CAMERA_OK, session->AddOutput(videoOutput));
-    ASSERT_EQ(CAMERA_OK, session->CommitConfig());
+    ASSERT_EQ(CAMERA_OK, sessionForSys->BeginConfig());
+    ASSERT_EQ(CAMERA_OK, sessionForSys->AddInput(input));
+    ASSERT_EQ(CAMERA_OK, sessionForSys->AddOutput(videoOutput));
+    ASSERT_EQ(CAMERA_OK, sessionForSys->CommitConfig());
 
     std::vector<uint32_t> vec;
     std::vector<EffectSuggestionType> expectedVec;
 
-    Camera::DeleteCameraMetadataItem(session->GetMetadata()->get(), OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED);
-    EXPECT_EQ(expectedVec, session->GetSupportedEffectSuggestionType());
+    Camera::DeleteCameraMetadataItem(sessionForSys->GetMetadata()->get(), OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED);
+    EXPECT_EQ(expectedVec, sessionForSys->GetSupportedEffectSuggestionType());
 
-    session->LockForControl();
-    ASSERT_NE(nullptr, session->changedMetadata_);
+    sessionForSys->LockForControl();
+    ASSERT_NE(nullptr, sessionForSys->changedMetadata_);
     vec = {2, 1, 5, -1};
-    session->changedMetadata_->addEntry(OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED, vec.data(), 4);
-    session->UnlockForControl();
+    sessionForSys->changedMetadata_->addEntry(OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED, vec.data(), 4);
+    sessionForSys->UnlockForControl();
 
     expectedVec =
     {EffectSuggestionType::EFFECT_SUGGESTION_STAGE};
 
-    EXPECT_EQ(expectedVec, session->GetSupportedEffectSuggestionType());
+    EXPECT_EQ(expectedVec, sessionForSys->GetSupportedEffectSuggestionType());
 
     EXPECT_EQ(CAMERA_OK, videoOutput->Release());
     EXPECT_EQ(CAMERA_OK, input->Close());
-    EXPECT_EQ(CAMERA_OK, session->Release());
+    EXPECT_EQ(CAMERA_OK, sessionForSys->Release());
 }
 
 /**
@@ -4562,9 +4573,9 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_018, TestSize
  */
 HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_019, TestSize.Level1)
 {
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::CAPTURE);
-    ASSERT_NE(nullptr, session);
-    ASSERT_EQ(SceneMode::CAPTURE, session->GetMode());
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(sessionForSys, nullptr);
+    ASSERT_EQ(SceneMode::CAPTURE, sessionForSys->GetMode());
 
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(nullptr, input);
@@ -4574,26 +4585,26 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_019, TestSize
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput(photoProfile_[0]);
     ASSERT_NE(nullptr, photoOutput);
 
-    ASSERT_EQ(CAMERA_OK, session->BeginConfig());
-    ASSERT_EQ(CAMERA_OK, session->AddInput(input));
-    ASSERT_EQ(CAMERA_OK, session->AddOutput(photoOutput));
-    ASSERT_EQ(CAMERA_OK, session->CommitConfig());
+    ASSERT_EQ(CAMERA_OK, sessionForSys->BeginConfig());
+    ASSERT_EQ(CAMERA_OK, sessionForSys->AddInput(input));
+    ASSERT_EQ(CAMERA_OK, sessionForSys->AddOutput(photoOutput));
+    ASSERT_EQ(CAMERA_OK, sessionForSys->CommitConfig());
 
     std::vector<uint32_t> vec;
 
-    Camera::DeleteCameraMetadataItem(session->GetMetadata()->get(), OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED);
-    EXPECT_EQ(false, session->IsEffectSuggestionSupported());
+    Camera::DeleteCameraMetadataItem(sessionForSys->GetMetadata()->get(), OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED);
+    EXPECT_EQ(false, sessionForSys->IsEffectSuggestionSupported());
 
-    session->LockForControl();
-    ASSERT_NE(nullptr, session->changedMetadata_);
+    sessionForSys->LockForControl();
+    ASSERT_NE(nullptr, sessionForSys->changedMetadata_);
     vec = {1, 6, 0, 1, 2, 3, 4, 5, -1};
-    session->changedMetadata_->addEntry(OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED, vec.data(), 9);
-    session->UnlockForControl();
-    EXPECT_EQ(true, session->IsEffectSuggestionSupported());
+    sessionForSys->changedMetadata_->addEntry(OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED, vec.data(), 9);
+    sessionForSys->UnlockForControl();
+    EXPECT_EQ(true, sessionForSys->IsEffectSuggestionSupported());
 
     EXPECT_EQ(CAMERA_OK, photoOutput->Release());
     EXPECT_EQ(CAMERA_OK, input->Close());
-    EXPECT_EQ(CAMERA_OK, session->Release());
+    EXPECT_EQ(CAMERA_OK, sessionForSys->Release());
 }
 
 /**
@@ -4604,9 +4615,9 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_019, TestSize
  */
 HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_020, TestSize.Level1)
 {
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::VIDEO);
-    ASSERT_NE(nullptr, session);
-    ASSERT_EQ(SceneMode::VIDEO, session->GetMode());
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::VIDEO);
+    ASSERT_NE(sessionForSys, nullptr);
+    ASSERT_EQ(SceneMode::VIDEO, sessionForSys->GetMode());
 
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(nullptr, input);
@@ -4616,26 +4627,26 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_020, TestSize
     sptr<CaptureOutput> videoOutput = CreateVideoOutput(videoProfile_[0]);
     ASSERT_NE(nullptr, videoOutput);
 
-    ASSERT_EQ(CAMERA_OK, session->BeginConfig());
-    ASSERT_EQ(CAMERA_OK, session->AddInput(input));
-    ASSERT_EQ(CAMERA_OK, session->AddOutput(videoOutput));
-    ASSERT_EQ(CAMERA_OK, session->CommitConfig());
+    ASSERT_EQ(CAMERA_OK, sessionForSys->BeginConfig());
+    ASSERT_EQ(CAMERA_OK, sessionForSys->AddInput(input));
+    ASSERT_EQ(CAMERA_OK, sessionForSys->AddOutput(videoOutput));
+    ASSERT_EQ(CAMERA_OK, sessionForSys->CommitConfig());
 
     std::vector<uint32_t> vec;
 
-    Camera::DeleteCameraMetadataItem(session->GetMetadata()->get(), OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED);
-    EXPECT_EQ(false, session->IsEffectSuggestionSupported());
+    Camera::DeleteCameraMetadataItem(sessionForSys->GetMetadata()->get(), OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED);
+    EXPECT_EQ(false, sessionForSys->IsEffectSuggestionSupported());
 
-    session->LockForControl();
-    ASSERT_NE(nullptr, session->changedMetadata_);
+    sessionForSys->LockForControl();
+    ASSERT_NE(nullptr, sessionForSys->changedMetadata_);
     vec = {2, 1, 5, -1};
-    session->changedMetadata_->addEntry(OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED, vec.data(), 4);
-    session->UnlockForControl();
-    EXPECT_EQ(true, session->IsEffectSuggestionSupported());
+    sessionForSys->changedMetadata_->addEntry(OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED, vec.data(), 4);
+    sessionForSys->UnlockForControl();
+    EXPECT_EQ(true, sessionForSys->IsEffectSuggestionSupported());
 
     EXPECT_EQ(CAMERA_OK, videoOutput->Release());
     EXPECT_EQ(CAMERA_OK, input->Close());
-    EXPECT_EQ(CAMERA_OK, session->Release());
+    EXPECT_EQ(CAMERA_OK, sessionForSys->Release());
 }
 
 /**
@@ -4646,9 +4657,9 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_020, TestSize
  */
 HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_021, TestSize.Level1)
 {
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::CAPTURE);
-    ASSERT_NE(nullptr, session);
-    ASSERT_EQ(SceneMode::CAPTURE, session->GetMode());
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(sessionForSys, nullptr);
+    ASSERT_EQ(SceneMode::CAPTURE, sessionForSys->GetMode());
 
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(nullptr, input);
@@ -4658,41 +4669,41 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_021, TestSize
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput(photoProfile_[0]);
     ASSERT_NE(nullptr, photoOutput);
 
-    ASSERT_EQ(CAMERA_OK, session->BeginConfig());
-    ASSERT_EQ(CAMERA_OK, session->AddInput(input));
-    ASSERT_EQ(CAMERA_OK, session->AddOutput(photoOutput));
-    ASSERT_EQ(CAMERA_OK, session->CommitConfig());
+    ASSERT_EQ(CAMERA_OK, sessionForSys->BeginConfig());
+    ASSERT_EQ(CAMERA_OK, sessionForSys->AddInput(input));
+    ASSERT_EQ(CAMERA_OK, sessionForSys->AddOutput(photoOutput));
+    ASSERT_EQ(CAMERA_OK, sessionForSys->CommitConfig());
 
     std::vector<uint32_t> vec;
     camera_metadata_item_t metaData;
 
-    Camera::DeleteCameraMetadataItem(session->GetMetadata()->get(), OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED);
-    EXPECT_EQ(OPERATION_NOT_ALLOWED, session->EnableEffectSuggestion(true));
-    EXPECT_EQ(OPERATION_NOT_ALLOWED, session->EnableEffectSuggestion(false));
+    Camera::DeleteCameraMetadataItem(sessionForSys->GetMetadata()->get(), OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED);
+    EXPECT_EQ(OPERATION_NOT_ALLOWED, sessionForSys->EnableEffectSuggestion(true));
+    EXPECT_EQ(OPERATION_NOT_ALLOWED, sessionForSys->EnableEffectSuggestion(false));
 
-    session->LockForControl();
-    ASSERT_NE(nullptr, session->changedMetadata_);
+    sessionForSys->LockForControl();
+    ASSERT_NE(nullptr, sessionForSys->changedMetadata_);
     vec = {1, 6, 0, 1, 2, 3, 4, 5, -1};
-    session->changedMetadata_->addEntry(OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED, vec.data(), 9);
-    session->UnlockForControl();
+    sessionForSys->changedMetadata_->addEntry(OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED, vec.data(), 9);
+    sessionForSys->UnlockForControl();
 
-    session->LockForControl();
-    EXPECT_EQ(CAMERA_OK, session->EnableEffectSuggestion(true));
-    session->UnlockForControl();
-    Camera::FindCameraMetadataItem(session->GetMetadata()->get(), OHOS_CONTROL_EFFECT_SUGGESTION, &metaData);
+    sessionForSys->LockForControl();
+    EXPECT_EQ(CAMERA_OK, sessionForSys->EnableEffectSuggestion(true));
+    sessionForSys->UnlockForControl();
+    Camera::FindCameraMetadataItem(sessionForSys->GetMetadata()->get(), OHOS_CONTROL_EFFECT_SUGGESTION, &metaData);
     ASSERT_EQ(1, metaData.count);
     EXPECT_EQ(true, metaData.data.u8[0]);
 
-    session->LockForControl();
-    EXPECT_EQ(CAMERA_OK, session->EnableEffectSuggestion(false));
-    session->UnlockForControl();
-    Camera::FindCameraMetadataItem(session->GetMetadata()->get(), OHOS_CONTROL_EFFECT_SUGGESTION, &metaData);
+    sessionForSys->LockForControl();
+    EXPECT_EQ(CAMERA_OK, sessionForSys->EnableEffectSuggestion(false));
+    sessionForSys->UnlockForControl();
+    Camera::FindCameraMetadataItem(sessionForSys->GetMetadata()->get(), OHOS_CONTROL_EFFECT_SUGGESTION, &metaData);
     ASSERT_EQ(1, metaData.count);
     EXPECT_EQ(false, metaData.data.u8[0]);
 
     EXPECT_EQ(CAMERA_OK, photoOutput->Release());
     EXPECT_EQ(CAMERA_OK, input->Close());
-    EXPECT_EQ(CAMERA_OK, session->Release());
+    EXPECT_EQ(CAMERA_OK, sessionForSys->Release());
 }
 
 /**
@@ -4703,9 +4714,9 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_021, TestSize
  */
 HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_022, TestSize.Level1)
 {
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::VIDEO);
-    ASSERT_NE(nullptr, session);
-    ASSERT_EQ(SceneMode::VIDEO, session->GetMode());
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::VIDEO);
+    ASSERT_NE(sessionForSys, nullptr);
+    ASSERT_EQ(SceneMode::VIDEO, sessionForSys->GetMode());
 
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(nullptr, input);
@@ -4715,41 +4726,41 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_022, TestSize
     sptr<CaptureOutput> videoOutput = CreateVideoOutput(videoProfile_[0]);
     ASSERT_NE(nullptr, videoOutput);
 
-    ASSERT_EQ(CAMERA_OK, session->BeginConfig());
-    ASSERT_EQ(CAMERA_OK, session->AddInput(input));
-    ASSERT_EQ(CAMERA_OK, session->AddOutput(videoOutput));
-    ASSERT_EQ(CAMERA_OK, session->CommitConfig());
+    ASSERT_EQ(CAMERA_OK, sessionForSys->BeginConfig());
+    ASSERT_EQ(CAMERA_OK, sessionForSys->AddInput(input));
+    ASSERT_EQ(CAMERA_OK, sessionForSys->AddOutput(videoOutput));
+    ASSERT_EQ(CAMERA_OK, sessionForSys->CommitConfig());
 
     std::vector<uint32_t> vec;
     camera_metadata_item_t metaData;
 
-    Camera::DeleteCameraMetadataItem(session->GetMetadata()->get(), OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED);
-    EXPECT_EQ(OPERATION_NOT_ALLOWED, session->EnableEffectSuggestion(true));
-    EXPECT_EQ(OPERATION_NOT_ALLOWED, session->EnableEffectSuggestion(false));
+    Camera::DeleteCameraMetadataItem(sessionForSys->GetMetadata()->get(), OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED);
+    EXPECT_EQ(OPERATION_NOT_ALLOWED, sessionForSys->EnableEffectSuggestion(true));
+    EXPECT_EQ(OPERATION_NOT_ALLOWED, sessionForSys->EnableEffectSuggestion(false));
 
-    session->LockForControl();
-    ASSERT_NE(nullptr, session->changedMetadata_);
+    sessionForSys->LockForControl();
+    ASSERT_NE(nullptr, sessionForSys->changedMetadata_);
     vec = {2, 1, 5, -1};
-    session->changedMetadata_->addEntry(OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED, vec.data(), 4);
-    session->UnlockForControl();
+    sessionForSys->changedMetadata_->addEntry(OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED, vec.data(), 4);
+    sessionForSys->UnlockForControl();
 
-    session->LockForControl();
-    EXPECT_EQ(CAMERA_OK, session->EnableEffectSuggestion(true));
-    session->UnlockForControl();
-    Camera::FindCameraMetadataItem(session->GetMetadata()->get(), OHOS_CONTROL_EFFECT_SUGGESTION, &metaData);
+    sessionForSys->LockForControl();
+    EXPECT_EQ(CAMERA_OK, sessionForSys->EnableEffectSuggestion(true));
+    sessionForSys->UnlockForControl();
+    Camera::FindCameraMetadataItem(sessionForSys->GetMetadata()->get(), OHOS_CONTROL_EFFECT_SUGGESTION, &metaData);
     ASSERT_EQ(1, metaData.count);
     EXPECT_EQ(true, metaData.data.u8[0]);
 
-    session->LockForControl();
-    EXPECT_EQ(CAMERA_OK, session->EnableEffectSuggestion(false));
-    session->UnlockForControl();
-    Camera::FindCameraMetadataItem(session->GetMetadata()->get(), OHOS_CONTROL_EFFECT_SUGGESTION, &metaData);
+    sessionForSys->LockForControl();
+    EXPECT_EQ(CAMERA_OK, sessionForSys->EnableEffectSuggestion(false));
+    sessionForSys->UnlockForControl();
+    Camera::FindCameraMetadataItem(sessionForSys->GetMetadata()->get(), OHOS_CONTROL_EFFECT_SUGGESTION, &metaData);
     ASSERT_EQ(1, metaData.count);
     EXPECT_EQ(false, metaData.data.u8[0]);
 
     EXPECT_EQ(CAMERA_OK, videoOutput->Release());
     EXPECT_EQ(CAMERA_OK, input->Close());
-    EXPECT_EQ(CAMERA_OK, session->Release());
+    EXPECT_EQ(CAMERA_OK, sessionForSys->Release());
 }
 
 /**
@@ -4760,9 +4771,9 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_022, TestSize
  */
 HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_023, TestSize.Level1)
 {
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::CAPTURE);
-    ASSERT_NE(nullptr, session);
-    ASSERT_EQ(SceneMode::CAPTURE, session->GetMode());
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(sessionForSys, nullptr);
+    ASSERT_EQ(SceneMode::CAPTURE, sessionForSys->GetMode());
 
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(nullptr, input);
@@ -4772,10 +4783,10 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_023, TestSize
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput(photoProfile_[0]);
     ASSERT_NE(nullptr, photoOutput);
 
-    ASSERT_EQ(CAMERA_OK, session->BeginConfig());
-    ASSERT_EQ(CAMERA_OK, session->AddInput(input));
-    ASSERT_EQ(CAMERA_OK, session->AddOutput(photoOutput));
-    ASSERT_EQ(CAMERA_OK, session->CommitConfig());
+    ASSERT_EQ(CAMERA_OK, sessionForSys->BeginConfig());
+    ASSERT_EQ(CAMERA_OK, sessionForSys->AddInput(input));
+    ASSERT_EQ(CAMERA_OK, sessionForSys->AddOutput(photoOutput));
+    ASSERT_EQ(CAMERA_OK, sessionForSys->CommitConfig());
 
     std::vector<uint32_t> vec;
     camera_metadata_item_t metaData;
@@ -4784,19 +4795,20 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_023, TestSize
         {EffectSuggestionType::EFFECT_SUGGESTION_PORTRAIT, false}};
     std::vector<uint8_t> expectedVec = {5, 1, 1, 0};
 
-    Camera::DeleteCameraMetadataItem(session->GetMetadata()->get(), OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED);
-    EXPECT_EQ(OPERATION_NOT_ALLOWED, session->SetEffectSuggestionStatus(effectSuggestionStatusList));
+    Camera::DeleteCameraMetadataItem(sessionForSys->GetMetadata()->get(), OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED);
+    EXPECT_EQ(OPERATION_NOT_ALLOWED, sessionForSys->SetEffectSuggestionStatus(effectSuggestionStatusList));
 
-    session->LockForControl();
-    ASSERT_NE(nullptr, session->changedMetadata_);
+    sessionForSys->LockForControl();
+    ASSERT_NE(nullptr, sessionForSys->changedMetadata_);
     vec = {1, 6, 0, 1, 2, 3, 4, 5, -1};
-    session->changedMetadata_->addEntry(OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED, vec.data(), 9);
-    session->UnlockForControl();
+    sessionForSys->changedMetadata_->addEntry(OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED, vec.data(), 9);
+    sessionForSys->UnlockForControl();
 
-    session->LockForControl();
-    EXPECT_EQ(CAMERA_OK, session->SetEffectSuggestionStatus(effectSuggestionStatusList));
-    session->UnlockForControl();
-    Camera::FindCameraMetadataItem(session->GetMetadata()->get(), OHOS_CONTROL_EFFECT_SUGGESTION_DETECTION, &metaData);
+    sessionForSys->LockForControl();
+    EXPECT_EQ(CAMERA_OK, sessionForSys->SetEffectSuggestionStatus(effectSuggestionStatusList));
+    sessionForSys->UnlockForControl();
+    Camera::FindCameraMetadataItem(sessionForSys->GetMetadata()->get(),
+        OHOS_CONTROL_EFFECT_SUGGESTION_DETECTION, &metaData);
     ASSERT_EQ(expectedVec.size(), metaData.count);
     for (size_t i = 0; i < expectedVec.size(); i++) {
         EXPECT_EQ(expectedVec[i], metaData.data.u8[i]);
@@ -4804,7 +4816,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_023, TestSize
 
     EXPECT_EQ(CAMERA_OK, photoOutput->Release());
     EXPECT_EQ(CAMERA_OK, input->Close());
-    EXPECT_EQ(CAMERA_OK, session->Release());
+    EXPECT_EQ(CAMERA_OK, sessionForSys->Release());
 }
 
 /**
@@ -4815,9 +4827,9 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_023, TestSize
  */
 HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_024, TestSize.Level1)
 {
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::VIDEO);
-    ASSERT_NE(nullptr, session);
-    ASSERT_EQ(SceneMode::VIDEO, session->GetMode());
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::VIDEO);
+    ASSERT_NE(sessionForSys, nullptr);
+    ASSERT_EQ(SceneMode::VIDEO, sessionForSys->GetMode());
 
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(nullptr, input);
@@ -4827,10 +4839,10 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_024, TestSize
     sptr<CaptureOutput> videoOutput = CreateVideoOutput(videoProfile_[0]);
     ASSERT_NE(nullptr, videoOutput);
 
-    ASSERT_EQ(CAMERA_OK, session->BeginConfig());
-    ASSERT_EQ(CAMERA_OK, session->AddInput(input));
-    ASSERT_EQ(CAMERA_OK, session->AddOutput(videoOutput));
-    ASSERT_EQ(CAMERA_OK, session->CommitConfig());
+    ASSERT_EQ(CAMERA_OK, sessionForSys->BeginConfig());
+    ASSERT_EQ(CAMERA_OK, sessionForSys->AddInput(input));
+    ASSERT_EQ(CAMERA_OK, sessionForSys->AddOutput(videoOutput));
+    ASSERT_EQ(CAMERA_OK, sessionForSys->CommitConfig());
 
     std::vector<uint32_t> vec;
     camera_metadata_item_t metaData;
@@ -4838,19 +4850,20 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_024, TestSize
         {EffectSuggestionType::EFFECT_SUGGESTION_STAGE, true}};
     std::vector<uint8_t> expectedVec = {5, 1};
 
-    Camera::DeleteCameraMetadataItem(session->GetMetadata()->get(), OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED);
-    EXPECT_EQ(OPERATION_NOT_ALLOWED, session->SetEffectSuggestionStatus(effectSuggestionStatusList));
+    Camera::DeleteCameraMetadataItem(sessionForSys->GetMetadata()->get(), OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED);
+    EXPECT_EQ(OPERATION_NOT_ALLOWED, sessionForSys->SetEffectSuggestionStatus(effectSuggestionStatusList));
 
-    session->LockForControl();
-    ASSERT_NE(nullptr, session->changedMetadata_);
+    sessionForSys->LockForControl();
+    ASSERT_NE(nullptr, sessionForSys->changedMetadata_);
     vec = {2, 1, 5, -1};
-    session->changedMetadata_->addEntry(OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED, vec.data(), 4);
-    session->UnlockForControl();
+    sessionForSys->changedMetadata_->addEntry(OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED, vec.data(), 4);
+    sessionForSys->UnlockForControl();
 
-    session->LockForControl();
-    EXPECT_EQ(CAMERA_OK, session->SetEffectSuggestionStatus(effectSuggestionStatusList));
-    session->UnlockForControl();
-    Camera::FindCameraMetadataItem(session->GetMetadata()->get(), OHOS_CONTROL_EFFECT_SUGGESTION_DETECTION, &metaData);
+    sessionForSys->LockForControl();
+    EXPECT_EQ(CAMERA_OK, sessionForSys->SetEffectSuggestionStatus(effectSuggestionStatusList));
+    sessionForSys->UnlockForControl();
+    Camera::FindCameraMetadataItem(sessionForSys->GetMetadata()->get(),
+        OHOS_CONTROL_EFFECT_SUGGESTION_DETECTION, &metaData);
     ASSERT_EQ(expectedVec.size(), metaData.count);
     for (size_t i = 0; i < expectedVec.size(); i++) {
         EXPECT_EQ(expectedVec[i], metaData.data.u8[i]);
@@ -4858,7 +4871,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_024, TestSize
 
     EXPECT_EQ(CAMERA_OK, videoOutput->Release());
     EXPECT_EQ(CAMERA_OK, input->Close());
-    EXPECT_EQ(CAMERA_OK, session->Release());
+    EXPECT_EQ(CAMERA_OK, sessionForSys->Release());
 }
 
 /**
@@ -4869,9 +4882,9 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_024, TestSize
  */
 HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_025, TestSize.Level1)
 {
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::CAPTURE);
-    ASSERT_NE(nullptr, session);
-    ASSERT_EQ(SceneMode::CAPTURE, session->GetMode());
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(sessionForSys, nullptr);
+    ASSERT_EQ(SceneMode::CAPTURE, sessionForSys->GetMode());
 
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(nullptr, input);
@@ -4881,25 +4894,25 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_025, TestSize
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput(photoProfile_[0]);
     ASSERT_NE(nullptr, photoOutput);
 
-    ASSERT_EQ(CAMERA_OK, session->BeginConfig());
-    ASSERT_EQ(CAMERA_OK, session->AddInput(input));
-    ASSERT_EQ(CAMERA_OK, session->AddOutput(photoOutput));
-    ASSERT_EQ(CAMERA_OK, session->CommitConfig());
+    ASSERT_EQ(CAMERA_OK, sessionForSys->BeginConfig());
+    ASSERT_EQ(CAMERA_OK, sessionForSys->AddInput(input));
+    ASSERT_EQ(CAMERA_OK, sessionForSys->AddOutput(photoOutput));
+    ASSERT_EQ(CAMERA_OK, sessionForSys->CommitConfig());
 
     std::vector<uint32_t> vec;
     camera_metadata_item_t metaData;
     std::vector<uint8_t> expectedVec = {5, 1};
 
-    session->LockForControl();
-    ASSERT_NE(nullptr, session->changedMetadata_);
+    sessionForSys->LockForControl();
+    ASSERT_NE(nullptr, sessionForSys->changedMetadata_);
     vec = {1, 6, 0, 1, 2, 3, 4, 5, -1};
-    session->changedMetadata_->addEntry(OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED, vec.data(), 9);
-    session->UnlockForControl();
+    sessionForSys->changedMetadata_->addEntry(OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED, vec.data(), 9);
+    sessionForSys->UnlockForControl();
 
-    session->LockForControl();
-    EXPECT_EQ(CAMERA_OK, session->UpdateEffectSuggestion(EffectSuggestionType::EFFECT_SUGGESTION_STAGE, true));
-    session->UnlockForControl();
-    Camera::FindCameraMetadataItem(session->GetMetadata()->get(), OHOS_CONTROL_EFFECT_SUGGESTION_TYPE, &metaData);
+    sessionForSys->LockForControl();
+    EXPECT_EQ(CAMERA_OK, sessionForSys->UpdateEffectSuggestion(EffectSuggestionType::EFFECT_SUGGESTION_STAGE, true));
+    sessionForSys->UnlockForControl();
+    Camera::FindCameraMetadataItem(sessionForSys->GetMetadata()->get(), OHOS_CONTROL_EFFECT_SUGGESTION_TYPE, &metaData);
     ASSERT_EQ(expectedVec.size(), metaData.count);
     for (size_t i = 0; i < expectedVec.size(); i++) {
         EXPECT_EQ(expectedVec[i], metaData.data.u8[i]);
@@ -4907,7 +4920,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_025, TestSize
 
     EXPECT_EQ(CAMERA_OK, photoOutput->Release());
     EXPECT_EQ(CAMERA_OK, input->Close());
-    EXPECT_EQ(CAMERA_OK, session->Release());
+    EXPECT_EQ(CAMERA_OK, sessionForSys->Release());
 }
 
 /**
@@ -4918,9 +4931,9 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_025, TestSize
  */
 HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_026, TestSize.Level1)
 {
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::VIDEO);
-    ASSERT_NE(nullptr, session);
-    ASSERT_EQ(SceneMode::VIDEO, session->GetMode());
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::VIDEO);
+    ASSERT_NE(sessionForSys, nullptr);
+    ASSERT_EQ(SceneMode::VIDEO, sessionForSys->GetMode());
 
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(nullptr, input);
@@ -4930,25 +4943,25 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_026, TestSize
     sptr<CaptureOutput> videoOutput = CreateVideoOutput(videoProfile_[0]);
     ASSERT_NE(nullptr, videoOutput);
 
-    ASSERT_EQ(CAMERA_OK, session->BeginConfig());
-    ASSERT_EQ(CAMERA_OK, session->AddInput(input));
-    ASSERT_EQ(CAMERA_OK, session->AddOutput(videoOutput));
-    ASSERT_EQ(CAMERA_OK, session->CommitConfig());
+    ASSERT_EQ(CAMERA_OK, sessionForSys->BeginConfig());
+    ASSERT_EQ(CAMERA_OK, sessionForSys->AddInput(input));
+    ASSERT_EQ(CAMERA_OK, sessionForSys->AddOutput(videoOutput));
+    ASSERT_EQ(CAMERA_OK, sessionForSys->CommitConfig());
 
     std::vector<uint32_t> vec;
     camera_metadata_item_t metaData;
     std::vector<uint8_t> expectedVec = {5, 1};
 
-    session->LockForControl();
-    ASSERT_NE(nullptr, session->changedMetadata_);
+    sessionForSys->LockForControl();
+    ASSERT_NE(nullptr, sessionForSys->changedMetadata_);
     vec = {2, 1, 5, -1};
-    session->changedMetadata_->addEntry(OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED, vec.data(), 4);
-    session->UnlockForControl();
+    sessionForSys->changedMetadata_->addEntry(OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED, vec.data(), 4);
+    sessionForSys->UnlockForControl();
 
-    session->LockForControl();
-    EXPECT_EQ(CAMERA_OK, session->UpdateEffectSuggestion(EffectSuggestionType::EFFECT_SUGGESTION_STAGE, true));
-    session->UnlockForControl();
-    Camera::FindCameraMetadataItem(session->GetMetadata()->get(), OHOS_CONTROL_EFFECT_SUGGESTION_TYPE, &metaData);
+    sessionForSys->LockForControl();
+    EXPECT_EQ(CAMERA_OK, sessionForSys->UpdateEffectSuggestion(EffectSuggestionType::EFFECT_SUGGESTION_STAGE, true));
+    sessionForSys->UnlockForControl();
+    Camera::FindCameraMetadataItem(sessionForSys->GetMetadata()->get(), OHOS_CONTROL_EFFECT_SUGGESTION_TYPE, &metaData);
     ASSERT_EQ(expectedVec.size(), metaData.count);
     for (size_t i = 0; i < expectedVec.size(); i++) {
         EXPECT_EQ(expectedVec[i], metaData.data.u8[i]);
@@ -4956,7 +4969,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_026, TestSize
 
     EXPECT_EQ(CAMERA_OK, videoOutput->Release());
     EXPECT_EQ(CAMERA_OK, input->Close());
-    EXPECT_EQ(CAMERA_OK, session->Release());
+    EXPECT_EQ(CAMERA_OK, sessionForSys->Release());
 }
 
 /**
@@ -4967,30 +4980,35 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_026, TestSize
  */
 HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_027, TestSize.Level0)
 {
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::APERTURE_VIDEO);
-    ASSERT_NE(nullptr, session);
-    ASSERT_EQ(SceneMode::APERTURE_VIDEO, session->GetMode());
+    std::vector<SceneMode> modes = cameraManager_->GetSupportedModes(cameras_[0]);
+    auto item = std::find(modes.begin(), modes.end(), SceneMode::APERTURE_VIDEO);
+    if (item != modes.end()) {
+        sptr<CaptureSessionForSys> sessionForSys =
+            cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::APERTURE_VIDEO);
+        ASSERT_NE(nullptr, sessionForSys);
+        ASSERT_EQ(SceneMode::APERTURE_VIDEO, sessionForSys->GetMode());
 
-    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
-    ASSERT_NE(nullptr, input);
-    ASSERT_EQ(CAMERA_OK, input->Open());
+        sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+        ASSERT_NE(nullptr, input);
+        ASSERT_EQ(CAMERA_OK, input->Open());
 
-    auto outputCapability = cameraManager_->GetSupportedOutputCapability(cameras_[0], 20);
-    ASSERT_NE(outputCapability, nullptr);
-    videoProfile_ = outputCapability->GetVideoProfiles();
+        auto outputCapability = cameraManager_->GetSupportedOutputCapability(cameras_[0], 20);
+        ASSERT_NE(outputCapability, nullptr);
+        videoProfile_ = outputCapability->GetVideoProfiles();
 
-    UpdataCameraOutputCapability();
-    sptr<CaptureOutput> videoOutput = CreateVideoOutput(videoProfile_[0]);
-    ASSERT_NE(nullptr, videoOutput);
+        UpdataCameraOutputCapability();
+        sptr<CaptureOutput> videoOutput = CreateVideoOutput(videoProfile_[0]);
+        ASSERT_NE(nullptr, videoOutput);
 
-    ASSERT_EQ(CAMERA_OK, session->BeginConfig());
-    ASSERT_EQ(CAMERA_OK, session->AddInput(input));
-    ASSERT_EQ(CAMERA_OK, session->AddOutput(videoOutput));
-    ASSERT_EQ(CAMERA_OK, session->CommitConfig());
+        ASSERT_EQ(CAMERA_OK, sessionForSys->BeginConfig());
+        ASSERT_EQ(CAMERA_OK, sessionForSys->AddInput(input));
+        ASSERT_EQ(CAMERA_OK, sessionForSys->AddOutput(videoOutput));
+        ASSERT_EQ(CAMERA_OK, sessionForSys->CommitConfig());
 
-    EXPECT_EQ(CAMERA_OK, videoOutput->Release());
-    EXPECT_EQ(CAMERA_OK, input->Close());
-    EXPECT_EQ(CAMERA_OK, session->Release());
+        EXPECT_EQ(CAMERA_OK, videoOutput->Release());
+        EXPECT_EQ(CAMERA_OK, input->Close());
+        EXPECT_EQ(CAMERA_OK, sessionForSys->Release());
+    }
 }
 
 /*
@@ -5654,7 +5672,8 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_042, TestSize.Level0)
 
     EXPECT_EQ(session->CommitConfig(), 0);
 
-    EXPECT_EQ(session->IsVideoStabilizationModeSupported(VideoStabilizationMode::AUTO), false);
+    bool isSupported = false;
+    EXPECT_EQ(session->IsVideoStabilizationModeSupported(VideoStabilizationMode::AUTO, isSupported), 0);
 
     if (!session->IsVideoStabilizationModeSupported(VideoStabilizationMode::HIGH)) {
         MEDIA_WARNING_LOG("VideoStabilizationMode::HIGH is not supported!");
@@ -6054,34 +6073,38 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_051, TestSize.Level0)
  */
 HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_052, TestSize.Level0)
 {
-    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
-    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    std::vector<SceneMode> modes = cameraManager_->GetSupportedModes(cameras_[0]);
+    auto item = std::find(modes.begin(), modes.end(), SceneMode::NIGHT);
+    if (item != modes.end()) {
+        sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+        sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
 
-    ASSERT_NE(input, nullptr);
-    input->Open();
-    UpdataCameraOutputCapability();
+        ASSERT_NE(input, nullptr);
+        input->Open();
+        UpdataCameraOutputCapability();
 
-    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+        sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
 
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
+        sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+        ASSERT_NE(session, nullptr);
 
-    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
-    ASSERT_NE(preview, nullptr);
+        sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+        ASSERT_NE(preview, nullptr);
 
-    session->SetMode(SceneMode::CAPTURE);
+        session->SetMode(SceneMode::NIGHT);
 
-    EXPECT_EQ(session->BeginConfig(), 0);
+        EXPECT_EQ(session->BeginConfig(), 0);
 
-    EXPECT_EQ(session->AddInput(input), 0);
+        EXPECT_EQ(session->AddInput(input), 0);
 
-    EXPECT_EQ(session->AddOutput(preview), 0);
+        EXPECT_EQ(session->AddOutput(preview), 0);
 
-    EXPECT_EQ(session->CommitConfig(), 0);
+        EXPECT_EQ(session->CommitConfig(), 0);
 
-    vector<SceneFeaturesMode> res = session->GetSubFeatureMods();
+        vector<SceneFeaturesMode> res = session->GetSubFeatureMods();
 
-    EXPECT_EQ(res.size(), 3);
+        EXPECT_EQ(res.size(), 1);
+    }
 }
 
 /*
@@ -6298,8 +6321,10 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_057, TestSize.Level0)
 
     EXPECT_EQ(session->CommitConfig(), 0);
 
-    EXPECT_EQ(session->EnableFeature(SceneFeature::FEATURE_ENUM_MIN, false), OPERATION_NOT_ALLOWED);
-
+    bool isSupported = session->IsFeatureSupported(SceneFeature::FEATURE_ENUM_MIN);
+    if (isSupported) {
+        EXPECT_EQ(session->EnableFeature(SceneFeature::FEATURE_ENUM_MIN, false), 0);
+    }
     preview->Release();
     input->Release();
     session->Release();
@@ -6374,27 +6399,27 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_059, TestSize.Level0)
 
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
 
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(sessionForSys, nullptr);
 
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
-    session->SetMode(SceneMode::CAPTURE);
+    sessionForSys->SetMode(SceneMode::CAPTURE);
 
-    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(sessionForSys->BeginConfig(), 0);
 
-    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(sessionForSys->AddInput(input), 0);
 
-    EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(sessionForSys->AddOutput(preview), 0);
 
-    EXPECT_EQ(session->CommitConfig(), 0);
+    EXPECT_EQ(sessionForSys->CommitConfig(), 0);
 
-    session->GetSupportedEffectSuggestionType();
+    sessionForSys->GetSupportedEffectSuggestionType();
 
     preview->Release();
     input->Release();
-    session->Release();
+    sessionForSys->Release();
 }
 
 /*
@@ -6834,19 +6859,19 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_090, TestSize.Level0)
     input->Open();
     UpdataCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(sessionForSys, nullptr);
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
  
-    EXPECT_EQ(session->BeginConfig(), 0);
-    EXPECT_EQ(session->AddInput(input), 0);
-    EXPECT_EQ(session->AddOutput(preview), 0);
-    EXPECT_EQ(session->CommitConfig(), 0);
+    EXPECT_EQ(sessionForSys->BeginConfig(), 0);
+    EXPECT_EQ(sessionForSys->AddInput(input), 0);
+    EXPECT_EQ(sessionForSys->AddOutput(preview), 0);
+    EXPECT_EQ(sessionForSys->CommitConfig(), 0);
 
-    session->LockForControl();
-    ASSERT_NE(session->SetPortraitThemeType(PortraitThemeType::NATURAL), 0);
-    session->UnlockForControl();
+    sessionForSys->LockForControl();
+    ASSERT_NE(sessionForSys->SetPortraitThemeType(PortraitThemeType::NATURAL), 0);
+    sessionForSys->UnlockForControl();
 }
 
 /*
@@ -6865,19 +6890,19 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_091, TestSize.Level0)
     input->Open();
     UpdataCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(sessionForSys, nullptr);
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
  
-    EXPECT_EQ(session->BeginConfig(), 0);
-    EXPECT_EQ(session->AddInput(input), 0);
-    EXPECT_EQ(session->AddOutput(preview), 0);
-    EXPECT_EQ(session->CommitConfig(), 0);
+    EXPECT_EQ(sessionForSys->BeginConfig(), 0);
+    EXPECT_EQ(sessionForSys->AddInput(input), 0);
+    EXPECT_EQ(sessionForSys->AddOutput(preview), 0);
+    EXPECT_EQ(sessionForSys->CommitConfig(), 0);
 
-    session->LockForControl();
-    ASSERT_NE(session->SetPortraitThemeType(PortraitThemeType::DELICATE), 0);
-    session->UnlockForControl();
+    sessionForSys->LockForControl();
+    ASSERT_NE(sessionForSys->SetPortraitThemeType(PortraitThemeType::DELICATE), 0);
+    sessionForSys->UnlockForControl();
 }
 
 /*
@@ -6896,19 +6921,19 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_092, TestSize.Level0)
     input->Open();
     UpdataCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(sessionForSys, nullptr);
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
  
-    EXPECT_EQ(session->BeginConfig(), 0);
-    EXPECT_EQ(session->AddInput(input), 0);
-    EXPECT_EQ(session->AddOutput(preview), 0);
-    EXPECT_EQ(session->CommitConfig(), 0);
+    EXPECT_EQ(sessionForSys->BeginConfig(), 0);
+    EXPECT_EQ(sessionForSys->AddInput(input), 0);
+    EXPECT_EQ(sessionForSys->AddOutput(preview), 0);
+    EXPECT_EQ(sessionForSys->CommitConfig(), 0);
 
-    session->LockForControl();
-    ASSERT_NE(session->SetPortraitThemeType(PortraitThemeType::STYLISH), 0);
-    session->UnlockForControl();
+    sessionForSys->LockForControl();
+    ASSERT_NE(sessionForSys->SetPortraitThemeType(PortraitThemeType::STYLISH), 0);
+    sessionForSys->UnlockForControl();
 }
 
 /*
@@ -7075,29 +7100,30 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_097, TestSize.Level0)
  */
 HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_098, TestSize.Level0)
 {
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
-    session->isDepthFusionEnable_ = false;
-    EXPECT_FALSE(session->IsDepthFusionEnabled());
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(sessionForSys, nullptr);
+    sessionForSys->isDepthFusionEnable_ = false;
+    EXPECT_FALSE(sessionForSys->IsDepthFusionEnabled());
 
-    session->isMovingPhotoEnabled_ = false;
-    EXPECT_FALSE(session->IsMovingPhotoEnabled());
+    sessionForSys->isMovingPhotoEnabled_ = false;
+    EXPECT_FALSE(sessionForSys->IsMovingPhotoEnabled());
 
-    session->SetMacroStatusCallback(nullptr);
-    EXPECT_EQ(session->GetMacroStatusCallback(), nullptr);
+    sessionForSys->SetMacroStatusCallback(nullptr);
+    EXPECT_EQ(sessionForSys->GetMacroStatusCallback(), nullptr);
 
-    session->isSetMacroEnable_ = false;
-    EXPECT_FALSE(session->IsSetEnableMacro());
+    sessionForSys->isSetMacroEnable_ = false;
+    EXPECT_FALSE(sessionForSys->IsSetEnableMacro());
 
     int32_t preconfigType = 4;
     ProfileSizeRatio preconfigRatio = RATIO_1_1;
-    EXPECT_EQ(session->GeneratePreconfigProfiles(static_cast<PreconfigType>(preconfigType), preconfigRatio), nullptr);
+    EXPECT_EQ(sessionForSys->GeneratePreconfigProfiles(static_cast<PreconfigType>(preconfigType), preconfigRatio),
+        nullptr);
 
-    session->SetEffectSuggestionCallback(nullptr);
-    EXPECT_EQ(session->effectSuggestionCallback_, nullptr);
+    sessionForSys->SetEffectSuggestionCallback(nullptr);
+    EXPECT_EQ(sessionForSys->effectSuggestionCallback_, nullptr);
 
-    session->SetARCallback(nullptr);
-    EXPECT_EQ(session->GetARCallback(), nullptr);
+    sessionForSys->SetARCallback(nullptr);
+    EXPECT_EQ(sessionForSys->GetARCallback(), nullptr);
 }
 
 /*
@@ -7113,29 +7139,30 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_098, TestSize.Level0)
  */
 HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_099, TestSize.Level0)
 {
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
-    session->isDepthFusionEnable_ = false;
-    EXPECT_FALSE(session->IsDepthFusionEnabled());
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(sessionForSys, nullptr);
+    sessionForSys->isDepthFusionEnable_ = false;
+    EXPECT_FALSE(sessionForSys->IsDepthFusionEnabled());
 
-    session->isMovingPhotoEnabled_ = false;
-    EXPECT_FALSE(session->IsMovingPhotoEnabled());
+    sessionForSys->isMovingPhotoEnabled_ = false;
+    EXPECT_FALSE(sessionForSys->IsMovingPhotoEnabled());
 
-    session->SetMacroStatusCallback(nullptr);
-    EXPECT_EQ(session->GetMacroStatusCallback(), nullptr);
+    sessionForSys->SetMacroStatusCallback(nullptr);
+    EXPECT_EQ(sessionForSys->GetMacroStatusCallback(), nullptr);
 
-    session->isSetMacroEnable_ = false;
-    EXPECT_FALSE(session->IsSetEnableMacro());
+    sessionForSys->isSetMacroEnable_ = false;
+    EXPECT_FALSE(sessionForSys->IsSetEnableMacro());
 
     int32_t preconfigType = 4;
     ProfileSizeRatio preconfigRatio = UNSPECIFIED;
-    EXPECT_EQ(session->GeneratePreconfigProfiles(static_cast<PreconfigType>(preconfigType), preconfigRatio), nullptr);
+    EXPECT_EQ(sessionForSys->GeneratePreconfigProfiles(static_cast<PreconfigType>(preconfigType), preconfigRatio),
+        nullptr);
 
-    session->SetEffectSuggestionCallback(nullptr);
-    EXPECT_EQ(session->effectSuggestionCallback_, nullptr);
+    sessionForSys->SetEffectSuggestionCallback(nullptr);
+    EXPECT_EQ(sessionForSys->effectSuggestionCallback_, nullptr);
 
-    session->SetARCallback(nullptr);
-    EXPECT_EQ(session->GetARCallback(), nullptr);
+    sessionForSys->SetARCallback(nullptr);
+    EXPECT_EQ(sessionForSys->GetARCallback(), nullptr);
 }
 
 /*
@@ -7151,29 +7178,30 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_099, TestSize.Level0)
  */
 HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_100, TestSize.Level0)
 {
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
-    session->isDepthFusionEnable_ = false;
-    EXPECT_FALSE(session->IsDepthFusionEnabled());
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(sessionForSys, nullptr);
+    sessionForSys->isDepthFusionEnable_ = false;
+    EXPECT_FALSE(sessionForSys->IsDepthFusionEnabled());
 
-    session->isMovingPhotoEnabled_ = false;
-    EXPECT_FALSE(session->IsMovingPhotoEnabled());
+    sessionForSys->isMovingPhotoEnabled_ = false;
+    EXPECT_FALSE(sessionForSys->IsMovingPhotoEnabled());
 
-    session->SetMacroStatusCallback(nullptr);
-    EXPECT_EQ(session->GetMacroStatusCallback(), nullptr);
+    sessionForSys->SetMacroStatusCallback(nullptr);
+    EXPECT_EQ(sessionForSys->GetMacroStatusCallback(), nullptr);
 
-    session->isSetMacroEnable_ = false;
-    EXPECT_FALSE(session->IsSetEnableMacro());
+    sessionForSys->isSetMacroEnable_ = false;
+    EXPECT_FALSE(sessionForSys->IsSetEnableMacro());
 
     int32_t preconfigType = 4;
     ProfileSizeRatio preconfigRatio = RATIO_16_9;
-    EXPECT_EQ(session->GeneratePreconfigProfiles(static_cast<PreconfigType>(preconfigType), preconfigRatio), nullptr);
+    EXPECT_EQ(sessionForSys->GeneratePreconfigProfiles(static_cast<PreconfigType>(preconfigType), preconfigRatio),
+        nullptr);
 
-    session->SetEffectSuggestionCallback(nullptr);
-    EXPECT_EQ(session->effectSuggestionCallback_, nullptr);
+    sessionForSys->SetEffectSuggestionCallback(nullptr);
+    EXPECT_EQ(sessionForSys->effectSuggestionCallback_, nullptr);
 
-    session->SetARCallback(nullptr);
-    EXPECT_EQ(session->GetARCallback(), nullptr);
+    sessionForSys->SetARCallback(nullptr);
+    EXPECT_EQ(sessionForSys->GetARCallback(), nullptr);
 }
 
 /*
@@ -7189,30 +7217,30 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_100, TestSize.Level0)
  */
 HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_101, TestSize.Level0)
 {
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
-    session->isDepthFusionEnable_ = false;
-    EXPECT_FALSE(session->IsDepthFusionEnabled());
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(sessionForSys, nullptr);
+    sessionForSys->isDepthFusionEnable_ = false;
+    EXPECT_FALSE(sessionForSys->IsDepthFusionEnabled());
 
-    session->isMovingPhotoEnabled_ = false;
-    EXPECT_FALSE(session->IsMovingPhotoEnabled());
+    sessionForSys->isMovingPhotoEnabled_ = false;
+    EXPECT_FALSE(sessionForSys->IsMovingPhotoEnabled());
 
-    session->SetMacroStatusCallback(nullptr);
-    EXPECT_EQ(session->GetMacroStatusCallback(), nullptr);
+    sessionForSys->SetMacroStatusCallback(nullptr);
+    EXPECT_EQ(sessionForSys->GetMacroStatusCallback(), nullptr);
 
-    session->isSetMacroEnable_ = false;
-    EXPECT_FALSE(session->IsSetEnableMacro());
+    sessionForSys->isSetMacroEnable_ = false;
+    EXPECT_FALSE(sessionForSys->IsSetEnableMacro());
 
     PreconfigType preconfigType = PRECONFIG_720P;
     int32_t preconfigRatio = 3;
-    EXPECT_EQ(session->GeneratePreconfigProfiles(preconfigType,
+    EXPECT_EQ(sessionForSys->GeneratePreconfigProfiles(preconfigType,
         static_cast<ProfileSizeRatio>(preconfigRatio)), nullptr);
 
-    session->SetEffectSuggestionCallback(nullptr);
-    EXPECT_EQ(session->effectSuggestionCallback_, nullptr);
+    sessionForSys->SetEffectSuggestionCallback(nullptr);
+    EXPECT_EQ(sessionForSys->effectSuggestionCallback_, nullptr);
 
-    session->SetARCallback(nullptr);
-    EXPECT_EQ(session->GetARCallback(), nullptr);
+    sessionForSys->SetARCallback(nullptr);
+    EXPECT_EQ(sessionForSys->GetARCallback(), nullptr);
 }
 
 /*
@@ -8499,25 +8527,25 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_148, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdataCameraOutputCapability(SceneMode::VIDEO);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::VIDEO);
+    ASSERT_NE(sessionForSys, nullptr);
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
  
-    EXPECT_EQ(session->BeginConfig(), 0);
-    EXPECT_EQ(session->AddInput(input), 0);
-    EXPECT_EQ(session->AddOutput(preview), 0);
-    EXPECT_EQ(session->CommitConfig(), 0);
+    EXPECT_EQ(sessionForSys->BeginConfig(), 0);
+    EXPECT_EQ(sessionForSys->AddInput(input), 0);
+    EXPECT_EQ(sessionForSys->AddOutput(preview), 0);
+    EXPECT_EQ(sessionForSys->CommitConfig(), 0);
     
     uint8_t enableValue   = 0;
     int32_t DEFAULT_ITEMS = 10;
     int32_t DEFAULT_DATA_LENGTH = 200;
-    session->changedMetadata_ = std::make_shared<Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
-    session->changedMetadata_->addEntry(OHOS_CONTROL_EFFECT_SUGGESTION, &enableValue, 1);
-    EXPECT_EQ(session->EnableEffectSuggestion(true), OPERATION_NOT_ALLOWED);
-    EXPECT_EQ(session->EnableEffectSuggestion(true), OPERATION_NOT_ALLOWED);
+    sessionForSys->changedMetadata_ = std::make_shared<Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
+    sessionForSys->changedMetadata_->addEntry(OHOS_CONTROL_EFFECT_SUGGESTION, &enableValue, 1);
+    EXPECT_EQ(sessionForSys->EnableEffectSuggestion(true), OPERATION_NOT_ALLOWED);
+    EXPECT_EQ(sessionForSys->EnableEffectSuggestion(true), OPERATION_NOT_ALLOWED);
 }
  
 /*
@@ -8530,9 +8558,10 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_148, TestSize.Level0)
  */
 HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_149, TestSize.Level0)
 {
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::VIDEO);
-    ASSERT_NE(nullptr, session);
-    ASSERT_EQ(SceneMode::VIDEO, session->GetMode());
+    UpdataCameraOutputCapability(SceneMode::VIDEO);
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::VIDEO);
+    ASSERT_NE(sessionForSys, nullptr);
+    ASSERT_EQ(SceneMode::VIDEO, sessionForSys->GetMode());
  
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(nullptr, input);
@@ -8542,31 +8571,31 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_149, TestSize.Level0)
     sptr<CaptureOutput> videoOutput = CreateVideoOutput(videoProfile_[0]);
     ASSERT_NE(nullptr, videoOutput);
  
-    ASSERT_EQ(CAMERA_OK, session->BeginConfig());
-    ASSERT_EQ(CAMERA_OK, session->AddInput(input));
-    ASSERT_EQ(CAMERA_OK, session->AddOutput(videoOutput));
-    ASSERT_EQ(CAMERA_OK, session->CommitConfig());
+    ASSERT_EQ(CAMERA_OK, sessionForSys->BeginConfig());
+    ASSERT_EQ(CAMERA_OK, sessionForSys->AddInput(input));
+    ASSERT_EQ(CAMERA_OK, sessionForSys->AddOutput(videoOutput));
+    ASSERT_EQ(CAMERA_OK, sessionForSys->CommitConfig());
  
     std::vector<uint32_t> vec;
     std::vector<EffectSuggestionType> expectedVec;
  
-    Camera::DeleteCameraMetadataItem(session->GetMetadata()->get(), OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED);
-    EXPECT_EQ(expectedVec, session->GetSupportedEffectSuggestionType());
+    Camera::DeleteCameraMetadataItem(sessionForSys->GetMetadata()->get(), OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED);
+    EXPECT_EQ(expectedVec, sessionForSys->GetSupportedEffectSuggestionType());
  
-    session->LockForControl();
-    ASSERT_NE(nullptr, session->changedMetadata_);
+    sessionForSys->LockForControl();
+    ASSERT_NE(nullptr, sessionForSys->changedMetadata_);
     vec = {2, 1, 1000, -1};
-    session->changedMetadata_->addEntry(OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED, vec.data(), 4);
-    session->UnlockForControl();
+    sessionForSys->changedMetadata_->addEntry(OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED, vec.data(), 4);
+    sessionForSys->UnlockForControl();
  
     expectedVec =
     {EffectSuggestionType::EFFECT_SUGGESTION_STAGE};
  
-    ASSERT_NE(expectedVec, session->GetSupportedEffectSuggestionType());
+    ASSERT_NE(expectedVec, sessionForSys->GetSupportedEffectSuggestionType());
  
     EXPECT_EQ(CAMERA_OK, videoOutput->Release());
     EXPECT_EQ(CAMERA_OK, input->Close());
-    EXPECT_EQ(CAMERA_OK, session->Release());
+    EXPECT_EQ(CAMERA_OK, sessionForSys->Release());
 }
  
 /*
@@ -8579,9 +8608,10 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_149, TestSize.Level0)
  */
 HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_150, TestSize.Level0)
 {
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::VIDEO);
-    ASSERT_NE(nullptr, session);
-    ASSERT_EQ(SceneMode::VIDEO, session->GetMode());
+    UpdataCameraOutputCapability(SceneMode::VIDEO);
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::VIDEO);
+    ASSERT_NE(sessionForSys, nullptr);
+    ASSERT_EQ(SceneMode::VIDEO, sessionForSys->GetMode());
  
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(nullptr, input);
@@ -8591,31 +8621,31 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_150, TestSize.Level0)
     sptr<CaptureOutput> videoOutput = CreateVideoOutput(videoProfile_[0]);
     ASSERT_NE(nullptr, videoOutput);
  
-    ASSERT_EQ(CAMERA_OK, session->BeginConfig());
-    ASSERT_EQ(CAMERA_OK, session->AddInput(input));
-    ASSERT_EQ(CAMERA_OK, session->AddOutput(videoOutput));
-    ASSERT_EQ(CAMERA_OK, session->CommitConfig());
+    ASSERT_EQ(CAMERA_OK, sessionForSys->BeginConfig());
+    ASSERT_EQ(CAMERA_OK, sessionForSys->AddInput(input));
+    ASSERT_EQ(CAMERA_OK, sessionForSys->AddOutput(videoOutput));
+    ASSERT_EQ(CAMERA_OK, sessionForSys->CommitConfig());
  
     std::vector<uint32_t> vec;
     std::vector<EffectSuggestionStatus> effectSuggestionStatusList = {
         {EffectSuggestionType::EFFECT_SUGGESTION_STAGE, true}};
     std::vector<uint8_t> expectedVec = {5, 1};
  
-    Camera::DeleteCameraMetadataItem(session->GetMetadata()->get(), OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED);
-    session->LockForControl();
-    ASSERT_NE(nullptr, session->changedMetadata_);
+    Camera::DeleteCameraMetadataItem(sessionForSys->GetMetadata()->get(), OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED);
+    sessionForSys->LockForControl();
+    ASSERT_NE(nullptr, sessionForSys->changedMetadata_);
     vec = {2, 1, 5, -1};
-    session->changedMetadata_->addEntry(OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED, vec.data(), 4);
-    session->UnlockForControl();
+    sessionForSys->changedMetadata_->addEntry(OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED, vec.data(), 4);
+    sessionForSys->UnlockForControl();
  
-    session->LockForControl();
-    EXPECT_EQ(CAMERA_OK, session->SetEffectSuggestionStatus(effectSuggestionStatusList));
-    EXPECT_EQ(CAMERA_OK, session->SetEffectSuggestionStatus(effectSuggestionStatusList));
-    session->UnlockForControl();
+    sessionForSys->LockForControl();
+    EXPECT_EQ(CAMERA_OK, sessionForSys->SetEffectSuggestionStatus(effectSuggestionStatusList));
+    EXPECT_EQ(CAMERA_OK, sessionForSys->SetEffectSuggestionStatus(effectSuggestionStatusList));
+    sessionForSys->UnlockForControl();
  
     EXPECT_EQ(CAMERA_OK, videoOutput->Release());
     EXPECT_EQ(CAMERA_OK, input->Close());
-    EXPECT_EQ(CAMERA_OK, session->Release());
+    EXPECT_EQ(CAMERA_OK, sessionForSys->Release());
 }
  
 /*

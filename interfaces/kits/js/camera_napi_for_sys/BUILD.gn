@@ -1,0 +1,95 @@
+# Copyright (c) 2025 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("//build/ohos/ace/ace.gni")
+import("./../../../../multimedia_camera_framework.gni")
+
+ohos_shared_library("camera_napi_ex") {
+  branch_protector_ret = "pac_ret"
+
+  include_dirs = [
+    "${multimedia_camera_framework_path}/interfaces/kits/js/camera_napi_for_sys/include",
+  ]
+  sources = [
+    "${multimedia_camera_framework_path}/frameworks/js/camera_napi_for_sys/src/ability/camera_ability_napi.cpp",
+    "${multimedia_camera_framework_path}/frameworks/js/camera_napi_for_sys/src/camera_napi_sys_object_types.cpp",
+    "${multimedia_camera_framework_path}/frameworks/js/camera_napi_for_sys/src/mode/aperture_video_session_napi.cpp",
+    "${multimedia_camera_framework_path}/frameworks/js/camera_napi_for_sys/src/mode/fluorescence_photo_session_napi.cpp",
+    "${multimedia_camera_framework_path}/frameworks/js/camera_napi_for_sys/src/mode/high_res_photo_session_napi.cpp",
+    "${multimedia_camera_framework_path}/frameworks/js/camera_napi_for_sys/src/mode/light_painting_session_napi.cpp",
+    "${multimedia_camera_framework_path}/frameworks/js/camera_napi_for_sys/src/mode/macro_photo_session_napi.cpp",
+    "${multimedia_camera_framework_path}/frameworks/js/camera_napi_for_sys/src/mode/macro_video_session_napi.cpp",
+    "${multimedia_camera_framework_path}/frameworks/js/camera_napi_for_sys/src/mode/night_session_napi.cpp",
+    "${multimedia_camera_framework_path}/frameworks/js/camera_napi_for_sys/src/mode/panorama_session_napi.cpp",
+    "${multimedia_camera_framework_path}/frameworks/js/camera_napi_for_sys/src/mode/photo_session_for_sys_napi.cpp",
+    "${multimedia_camera_framework_path}/frameworks/js/camera_napi_for_sys/src/mode/portrait_session_napi.cpp",
+    "${multimedia_camera_framework_path}/frameworks/js/camera_napi_for_sys/src/mode/profession_session_napi.cpp",
+    "${multimedia_camera_framework_path}/frameworks/js/camera_napi_for_sys/src/mode/quick_shot_photo_session_napi.cpp",
+    "${multimedia_camera_framework_path}/frameworks/js/camera_napi_for_sys/src/mode/secure_session_for_sys_napi.cpp",
+    "${multimedia_camera_framework_path}/frameworks/js/camera_napi_for_sys/src/mode/slow_motion_session_napi.cpp",
+    "${multimedia_camera_framework_path}/frameworks/js/camera_napi_for_sys/src/mode/time_lapse_photo_session_napi.cpp",
+    "${multimedia_camera_framework_path}/frameworks/js/camera_napi_for_sys/src/mode/video_session_for_sys_napi.cpp",
+    "${multimedia_camera_framework_path}/frameworks/js/camera_napi_for_sys/src/output/depth_data_napi.cpp",
+    "${multimedia_camera_framework_path}/frameworks/js/camera_napi_for_sys/src/output/depth_data_output_napi.cpp",
+    "${multimedia_camera_framework_path}/frameworks/js/camera_napi_for_sys/src/session/camera_session_for_sys_napi.cpp",
+  ]
+
+  deps = [
+    "${multimedia_camera_framework_path}/common:camera_utils",
+    "${multimedia_camera_framework_path}/frameworks/native/camera/base:camera_framework",
+    "${multimedia_camera_framework_path}/frameworks/native/camera/extension:camera_framework_ex",
+    "${multimedia_camera_framework_path}/interfaces/kits/js/camera_napi:camera_napi_base",
+  ]
+  external_deps = [
+    "c_utils:utils",
+    "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
+    "drivers_interface_camera:libcamera_proxy_1.0",
+    "drivers_interface_camera:libmap_data_sequenceable_1.0",
+    "graphic_surface:surface",
+    "hilog:libhilog",
+    "hisysevent:libhisysevent",
+    "hitrace:hitrace_meter",
+    "image_framework:image",
+    "image_framework:image_native",
+    "ipc:ipc_core",
+    "napi:ace_napi",
+  ]
+
+  defines = []
+
+  if (hicollie_enable) {
+    external_deps += [ "hicollie:libhicollie" ]
+    defines += [ "HICOLLIE_ENABLE" ]
+  }
+
+  version_script = "libcamera_napi_ex.map"
+
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+  cflags = [
+    "-fPIC",
+    "-DIMAGE_COLORSPACE_FLAG",
+    "-Os",
+  ]
+
+  if (build_variant == "user") {
+    cflags += [ "-DIS_RELEASE_VERSION" ]
+  }
+  cflags_cc = cflags
+  part_name = "camera_framework"
+  subsystem_name = "multimedia"
+}

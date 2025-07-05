@@ -18,33 +18,14 @@
 #include "input/camera_input_napi.h"
 #include "input/camera_manager_napi.h"
 #include "input/camera_napi.h"
-#include "mode/aperture_video_session_napi.h"
-#include "mode/fluorescence_photo_session_napi.h"
-#include "mode/high_res_photo_session_napi.h"
-#include "mode/light_painting_session_napi.h"
-#include "mode/macro_photo_session_napi.h"
-#include "mode/macro_video_session_napi.h"
 #include "mode/mode_manager_napi.h"
-#include "mode/night_session_napi.h"
-#include "mode/panorama_session_napi.h"
-#include "mode/photo_session_for_sys_napi.h"
 #include "mode/photo_session_napi.h"
-#include "mode/portrait_session_napi.h"
-#include "mode/profession_session_napi.h"
-#include "mode/quick_shot_photo_session_napi.h"
 #include "mode/secure_camera_session_napi.h"
-#include "mode/slow_motion_session_napi.h"
-#include "mode/time_lapse_photo_session_napi.h"
-#include "mode/video_session_for_sys_napi.h"
 #include "mode/video_session_napi.h"
-#include "output/depth_data_napi.h"
-#include "output/depth_data_output_napi.h"
 #include "output/photo_napi.h"
 #include "output/photo_output_napi.h"
 #include "output/preview_output_napi.h"
 #include "output/video_output_napi.h"
-#include "session/camera_session_napi.h"
-#include "ability/camera_ability_napi.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -58,39 +39,14 @@ static napi_value Export(napi_env env, napi_value exports)
     PreviewOutputNapi::Init(env, exports);
     PhotoOutputNapi::Init(env, exports);
     VideoOutputNapi::Init(env, exports);
-    DepthDataOutputNapi::Init(env, exports);
-    DepthDataNapi::Init(env, exports);
-    CameraSessionNapi::Init(env, exports);
     CameraManagerNapi::Init(env, exports);
     CameraNapi::Init(env, exports);
     MetadataOutputNapi::Init(env, exports);
-    HighResPhotoSessionNapi::Init(env, exports);
-    PanoramaSessionNapi::Init(env, exports);
-    PortraitSessionNapi::Init(env, exports);
-    ProfessionSessionNapi::Init(env, exports);
-    NightSessionNapi::Init(env, exports);
     PhotoSessionNapi::Init(env, exports);
-    PhotoSessionForSysNapi::Init(env, exports);
     VideoSessionNapi::Init(env, exports);
-    VideoSessionForSysNapi::Init(env, exports);
-    CameraFunctionsNapi::Init(env, exports, FunctionsType::PHOTO_FUNCTIONS);
-    CameraFunctionsNapi::Init(env, exports, FunctionsType::VIDEO_FUNCTIONS);
-    CameraFunctionsNapi::Init(env, exports, FunctionsType::PORTRAIT_PHOTO_FUNCTIONS);
-    CameraFunctionsNapi::Init(env, exports, FunctionsType::PHOTO_CONFLICT_FUNCTIONS);
-    CameraFunctionsNapi::Init(env, exports, FunctionsType::VIDEO_CONFLICT_FUNCTIONS);
-    CameraFunctionsNapi::Init(env, exports, FunctionsType::PORTRAIT_PHOTO_CONFLICT_FUNCTIONS);
-    SlowMotionSessionNapi::Init(env, exports);
-    MacroPhotoSessionNapi::Init(env, exports);
-    MacroVideoSessionNapi::Init(env, exports);
     ModeManagerNapi::Init(env, exports);
     PhotoNapi::Init(env, exports);
     SecureCameraSessionNapi::Init(env, exports);
-    QuickShotPhotoSessionNapi::Init(env, exports);
-    ApertureVideoSessionNapi::Init(env, exports);
-    FluorescencePhotoSessionNapi::Init(env, exports);
-    LightPaintingSessionNapi::Init(env, exports);
-    TimeLapsePhotoSessionNapi::Init(env, exports);
-    TryAEInfoNapi::Init(env, exports);
     MEDIA_DEBUG_LOG("Export is end");
     return exports;
 }
@@ -109,9 +65,9 @@ static napi_module g_module = { .nm_version = 1,
 /*
  * module register
  */
-extern "C" __attribute__((constructor)) void RegisterModule(void)
+extern "C" __attribute__((constructor)) void RegisterCameraModule(void)
 {
-    MEDIA_DEBUG_LOG("RegisterModule is called");
+    MEDIA_DEBUG_LOG("RegisterCameraModule is called");
     napi_module_register(&g_module);
 }
 } // namespace CameraStandard

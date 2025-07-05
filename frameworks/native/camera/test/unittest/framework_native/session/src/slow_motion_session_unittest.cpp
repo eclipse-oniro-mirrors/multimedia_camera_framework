@@ -18,6 +18,7 @@
 
 #include "access_token.h"
 #include "accesstoken_kit.h"
+#include "camera_manager_for_sys.h"
 #include "camera_util.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -168,7 +169,8 @@ sptr<CaptureOutput> CameraSlowMotionSessionUnitTest::CreateVideoOutput()
 */
 HWTEST_F(CameraSlowMotionSessionUnitTest, slow_motion_session_unittest_001, TestSize.Level1)
 {
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::SLOW_MOTION);
+    sptr<CaptureSession> session =
+        CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(SceneMode::SLOW_MOTION);
     ASSERT_NE(session, nullptr);
     sptr<SlowMotionSession> slowSession = static_cast<SlowMotionSession *> (session.GetRefPtr());
     bool result = slowSession->IsSlowMotionDetectionSupported();
@@ -188,7 +190,8 @@ HWTEST_F(CameraSlowMotionSessionUnitTest, IsSlowMotionDetectionSupported_002, Te
     ASSERT_NE(input, nullptr);
     ASSERT_EQ(input->Open(), SUCCESS);
 
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::SLOW_MOTION);
+    sptr<CaptureSession> session =
+        CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(SceneMode::SLOW_MOTION);
     ASSERT_NE(session, nullptr);
 
     sptr<CaptureOutput> videoOutput = CreateVideoOutput();
@@ -252,7 +255,8 @@ HWTEST_F(CameraSlowMotionSessionUnitTest, slow_motion_session_unittest_003, Test
     camInput->SetCameraSettings(cameraSettings);
     EXPECT_EQ(camInput->GetCameraDevice()->Open(), 0);
 
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::SLOW_MOTION);
+    sptr<CaptureSession> session =
+        CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(SceneMode::SLOW_MOTION);
     ASSERT_NE(session, nullptr);
 
     sptr<CaptureOutput> videoOutput = CreateVideoOutput();
@@ -327,7 +331,8 @@ HWTEST_F(CameraSlowMotionSessionUnitTest, slow_motion_session_unittest_003, Test
  */
 HWTEST_F(CameraSlowMotionSessionUnitTest, slow_motion_session_function_unittest_001, TestSize.Level1)
 {
-    sptr<CaptureSession> captureSession = cameraManager_->CreateCaptureSession(SceneMode::SLOW_MOTION);
+    sptr<CaptureSession> captureSession =
+        CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(SceneMode::SLOW_MOTION);
     ASSERT_NE(captureSession, nullptr);
     sptr<SlowMotionSession> slowMotionSession =
         static_cast<SlowMotionSession*>(captureSession.GetRefPtr());
@@ -358,7 +363,8 @@ HWTEST_F(CameraSlowMotionSessionUnitTest, slow_motion_session_function_unittest_
  */
 HWTEST_F(CameraSlowMotionSessionUnitTest, slow_motion_session_function_unittest_002, TestSize.Level0)
 {
-    sptr<CaptureSession> captureSession = cameraManager_->CreateCaptureSession(SceneMode::SLOW_MOTION);
+    sptr<CaptureSessionForSys> captureSession =
+        CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(SceneMode::SLOW_MOTION);
     ASSERT_NE(captureSession, nullptr);
     sptr<SlowMotionSession> slowMotionSession =
         static_cast<SlowMotionSession*>(captureSession.GetRefPtr());
@@ -387,7 +393,8 @@ HWTEST_F(CameraSlowMotionSessionUnitTest, slow_motion_session_function_unittest_
  */
 HWTEST_F(CameraSlowMotionSessionUnitTest, slow_motion_session_function_unittest_003, TestSize.Level0)
 {
-    sptr<CaptureSession> captureSession = cameraManager_->CreateCaptureSession(SceneMode::SLOW_MOTION);
+    sptr<CaptureSessionForSys> captureSession =
+        CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(SceneMode::SLOW_MOTION);
     ASSERT_NE(captureSession, nullptr);
     sptr<SlowMotionSession> slowMotionSession =
         static_cast<SlowMotionSession*>(captureSession.GetRefPtr());
@@ -425,7 +432,8 @@ HWTEST_F(CameraSlowMotionSessionUnitTest, slow_motion_session_function_unittest_
     ASSERT_NE(input, nullptr);
     input->Open();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    sptr<CaptureSession> captureSession = cameraManager_->CreateCaptureSession(SceneMode::SLOW_MOTION);
+    sptr<CaptureSessionForSys> captureSession =
+        CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(SceneMode::SLOW_MOTION);
     sptr<SlowMotionSession> slowMotionSession =
         static_cast<SlowMotionSession*>(captureSession.GetRefPtr());
     ASSERT_NE(slowMotionSession, nullptr);

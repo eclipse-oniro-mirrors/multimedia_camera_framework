@@ -40,7 +40,7 @@ ohos_fuzztest("MovingPhotoSurfaceWrapperFuzzTest") {
   sources = [ "moving_photo_surface_wrapper_fuzzer.cpp" ]
 
   deps = [
-    "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
+    "${multimedia_camera_framework_path}/frameworks/native/camera/base:camera_framework",
     "${multimedia_camera_framework_path}/services/camera_service:camera_service",
   ]
   external_deps = [

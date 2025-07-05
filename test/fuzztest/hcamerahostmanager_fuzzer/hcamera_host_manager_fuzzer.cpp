@@ -20,7 +20,6 @@
 #include "token_setproc.h"
 #include "nativetoken_kit.h"
 #include "securec.h"
-#include "portrait_session.h"
 #include "os_account_manager.h"
 #include "output/sketch_wrapper.h"
 #include "hcamera_service.h"

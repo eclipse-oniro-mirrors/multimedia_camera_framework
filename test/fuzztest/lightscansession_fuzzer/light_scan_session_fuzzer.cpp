@@ -19,6 +19,7 @@
 #include <memory>
 #include "timer/camera_deferred_timer.h"
 #include "input/camera_manager.h"
+#include "input/camera_manager_for_sys.h"
 #include "system_ability_definition.h"
 #include "iservice_registry.h"
 
@@ -35,8 +36,9 @@ void LightScanSessionFuzzer::LightPaintingSessionFuzzTest(FuzzedDataProvider& fd
         return;
     }
     sptr<CameraManager> cameraManager = CameraManager::GetInstance();
-    sptr<CaptureSession> captureSession = cameraManager->CreateCaptureSession(SceneMode::SLOW_MOTION);
-    auto lightPaintingSession = static_cast<LightPaintingSession*>(captureSession.GetRefPtr());
+    sptr<CaptureSessionForSys> captureSessionForSys =
+        CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(SceneMode::SLOW_MOTION);
+    auto lightPaintingSession = static_cast<LightPaintingSession*>(captureSessionForSys.GetRefPtr());
     fuzzLight_ = lightPaintingSession;
     CHECK_ERROR_RETURN_LOG(!fuzzLight_, "Create fuzzLight_ Error");
 
@@ -50,7 +52,7 @@ void LightScanSessionFuzzer::LightPaintingSessionFuzzTest(FuzzedDataProvider& fd
 void LightScanSessionFuzzer::ScanSessionFuzzTest(FuzzedDataProvider& fdp)
 {
     sptr<CameraManager> cameraManager = CameraManager::GetInstance();
-    sptr<CaptureSession> captureSession = cameraManager->CreateCaptureSession(SceneMode::SLOW_MOTION);
+    sptr<CaptureSession> captureSession = cameraManager->CreateCaptureSession(SceneMode::SCAN);
     sptr<ScanSession> scanSession = static_cast<ScanSession*>(captureSession.GetRefPtr());
     fuzzScan_ = scanSession;
     CHECK_ERROR_RETURN_LOG(!fuzzScan_, "Create fuzzScan_ Error");

@@ -17,6 +17,7 @@
 
 #include <fcntl.h>
 
+#include "camera_log.h"
 #include "dp_log.h"
 #include "message_parcel.h"
 #include "ipc_file_descriptor.h"

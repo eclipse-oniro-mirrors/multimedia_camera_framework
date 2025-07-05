@@ -18,6 +18,7 @@
 
 #include "access_token.h"
 #include "accesstoken_kit.h"
+#include "camera_manager_for_sys.h"
 #include "camera_util.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -69,7 +70,8 @@ void TimeLapsePhotoSessionUnitTest::TearDown()
  */
 HWTEST_F(TimeLapsePhotoSessionUnitTest, time_lapse_photo_function_unittest_001, TestSize.Level1)
 {
-    sptr<CaptureSession> captureSession = cameraManager_->CreateCaptureSession(SceneMode::TIMELAPSE_PHOTO);
+    sptr<CaptureSession> captureSession =
+        CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(SceneMode::TIMELAPSE_PHOTO);
     ASSERT_NE(captureSession, nullptr);
     sptr<TimeLapsePhotoSession> timeLapsePhotoSession =
         static_cast<TimeLapsePhotoSession*>(captureSession.GetRefPtr());

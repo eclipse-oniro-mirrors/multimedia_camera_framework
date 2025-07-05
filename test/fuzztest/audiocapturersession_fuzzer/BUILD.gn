@@ -76,7 +76,7 @@ ohos_fuzztest("AudioCapturerSessionFuzzTest") {
   sources = [ "audio_capturer_session_fuzzer.cpp" ]
 
   deps = [
-    "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
+    "${multimedia_camera_framework_path}/frameworks/native/camera/base:camera_framework",
     "${multimedia_camera_framework_path}/services/camera_service:camera_service",
   ]
 

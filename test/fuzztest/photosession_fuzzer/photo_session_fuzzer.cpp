@@ -18,7 +18,6 @@
 #include "camera_output_capability.h"
 #include "input/camera_manager.h"
 #include "message_parcel.h"
-#include "time_lapse_photo_session.h"
 #include "token_setproc.h"
 #include "nativetoken_kit.h"
 #include "accesstoken_kit.h"

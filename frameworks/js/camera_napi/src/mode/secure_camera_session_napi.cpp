@@ -15,6 +15,8 @@
 
 #include "mode/secure_camera_session_napi.h"
 
+#include "input/camera_manager.h"
+
 namespace OHOS {
 namespace CameraStandard {
 using namespace std;
@@ -39,12 +41,13 @@ napi_value SecureCameraSessionNapi::Init(napi_env env, napi_value exports)
     MEDIA_DEBUG_LOG("Init is called");
     napi_status status;
     napi_value ctorObj;
-    std::vector<napi_property_descriptor> manual_exposure_props = {
+    std::vector<napi_property_descriptor> add_secure_output_props = {
             DECLARE_NAPI_FUNCTION("addSecureOutput", SecureCameraSessionNapi::AddSecureOutput)
     };
-    std::vector<std::vector<napi_property_descriptor>> descriptors = {camera_process_props, stabilization_props,
-        flash_props, auto_exposure_props, focus_props, zoom_props, filter_props, beauty_props,
-        color_effect_props, macro_props, color_management_props, manual_exposure_props, white_balance_props};
+    std::vector<std::vector<napi_property_descriptor>> descriptors = { camera_process_props, camera_process_sys_props,
+        stabilization_props, flash_props, flash_sys_props, auto_exposure_props, focus_props, focus_sys_props,
+        zoom_props, zoom_sys_props, filter_props, macro_props, color_management_props, add_secure_output_props,
+        white_balance_props };
     std::vector<napi_property_descriptor> secure_camera_session_props =
         CameraNapiUtils::GetPropertyDescriptor(descriptors);
     status = napi_define_class(env, SECURE_CAMERA_SESSION_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
@@ -111,6 +114,7 @@ napi_value SecureCameraSessionNapi::AddSecureOutput(napi_env env, napi_callback_
         sptr<CaptureOutput> cameraOutput = nullptr;
         MEDIA_INFO_LOG("AddSecureOutput GetJSArgsForCameraOutput is called");
         result = GetJSArgsForCameraOutput(env, argc, argv, cameraOutput);
+        CHECK_EXECUTE(cameraOutput == nullptr, NAPI_ASSERT(env, false, "type mismatch"));
         int32_t ret = secureCameraSessionNapi->secureCameraSession_->AddSecureOutput(cameraOutput);
         CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, ret), nullptr);
     } else {

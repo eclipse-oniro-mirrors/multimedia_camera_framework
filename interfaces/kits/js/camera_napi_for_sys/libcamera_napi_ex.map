@@ -1,0 +1,11 @@
+{
+ global:
+ extern "C" {
+  createSessionInstanceForSys;
+  createDeprecatedSessionInstanceForSys;
+  createDepthDataOutputInstance;
+  checkAndGetOutput;
+ };
+ local:
+   *;
+};

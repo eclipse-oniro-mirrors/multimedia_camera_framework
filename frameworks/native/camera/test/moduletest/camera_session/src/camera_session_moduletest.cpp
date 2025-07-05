@@ -509,7 +509,7 @@ void CameraSessionModuleTest::ConfigSlowMotionSession(sptr<CaptureOutput> &previ
         MEDIA_INFO_LOG("old session exist, need release");
         session_->Release();
     }
-    sptr<CaptureSession> captureSession = manager_->CreateCaptureSession(SceneMode::SLOW_MOTION);
+    sptr<CaptureSession> captureSession = managerForSys_->CreateCaptureSessionForSys(SceneMode::SLOW_MOTION);
     slowMotionSession_ = static_cast<SlowMotionSession*>(captureSession.GetRefPtr());
     slowMotionSession_->SetCallback(std::make_shared<AppCallback>());
     ASSERT_NE(slowMotionSession_, nullptr);
@@ -764,6 +764,8 @@ void CameraSessionModuleTest::SetUp()
     manager_ = CameraManager::GetInstance();
     ASSERT_NE(manager_, nullptr);
     manager_->SetCallback(std::make_shared<AppCallback>());
+    managerForSys_ = CameraManagerForSys::GetInstance();
+    ASSERT_NE(managerForSys_, nullptr);
 
     cameras_ = manager_->GetSupportedCameras();
     ASSERT_TRUE(cameras_.size() != 0);
@@ -815,6 +817,9 @@ void CameraSessionModuleTest::TearDown()
     MEDIA_INFO_LOG("TearDown start");
     if (session_) {
         session_->Release();
+    }
+    if (sessionForSys_) {
+        sessionForSys_->Release();
     }
     if (scanSession_) {
         scanSession_->Release();
@@ -904,6 +909,8 @@ void CameraSessionModuleTest::ProcessSize()
     camInput->Open();
     session_ = manager_->CreateCaptureSession();
     ASSERT_NE(session_, nullptr);
+    sessionForSys_ = managerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(sessionForSys_, nullptr);
 }
 
 /*
@@ -931,7 +938,7 @@ HWTEST_F(CameraSessionModuleTest, aperture_video_session_moduletest_001, TestSiz
     auto photoProfilesBase = outputCapabilityBase->GetPhotoProfiles();
     ASSERT_FALSE(photoProfilesBase.empty());
 
-    auto captureSession = manager_->CreateCaptureSession(SceneMode::APERTURE_VIDEO);
+    auto captureSession = managerForSys_->CreateCaptureSessionForSys(SceneMode::APERTURE_VIDEO);
     auto apertureVideoSession = static_cast<ApertureVideoSession*>(captureSession.GetRefPtr());
     ASSERT_NE(apertureVideoSession, nullptr);
     int32_t res = apertureVideoSession->BeginConfig();
@@ -979,7 +986,7 @@ HWTEST_F(CameraSessionModuleTest, aperture_video_session_moduletest_002, TestSiz
     videoProfile.size_.height = 1080;
     ASSERT_FALSE(videoProfiles.empty());
 
-    auto captureSession = manager_->CreateCaptureSession(SceneMode::APERTURE_VIDEO);
+    auto captureSession = managerForSys_->CreateCaptureSessionForSys(SceneMode::APERTURE_VIDEO);
     auto apertureVideoSession = static_cast<ApertureVideoSession*>(captureSession.GetRefPtr());
     ASSERT_NE(apertureVideoSession, nullptr);
     int32_t res = apertureVideoSession->BeginConfig();
@@ -1038,7 +1045,7 @@ HWTEST_F(CameraSessionModuleTest, fluorescence_photo_session_moduletest_001, Tes
     auto photoProfiles = outputCapability->GetPhotoProfiles();
     ASSERT_FALSE(photoProfiles.empty());
 
-    auto captureSession = manager_->CreateCaptureSession(SceneMode::FLUORESCENCE_PHOTO);
+    auto captureSession = managerForSys_->CreateCaptureSessionForSys(SceneMode::FLUORESCENCE_PHOTO);
     auto fluorescencePhotoSession = static_cast<FluorescencePhotoSession*>(captureSession.GetRefPtr());
     ASSERT_NE(fluorescencePhotoSession, nullptr);
     int32_t res = fluorescencePhotoSession->BeginConfig();
@@ -1095,7 +1102,7 @@ HWTEST_F(CameraSessionModuleTest, fluorescence_photo_session_moduletest_002, Tes
     auto videoProfiles = outputCapability->GetVideoProfiles();
     ASSERT_FALSE(videoProfiles.empty());
 
-    auto captureSession = manager_->CreateCaptureSession(SceneMode::FLUORESCENCE_PHOTO);
+    auto captureSession = managerForSys_->CreateCaptureSessionForSys(SceneMode::FLUORESCENCE_PHOTO);
     auto fluorescencePhotoSession = static_cast<FluorescencePhotoSession*>(captureSession.GetRefPtr());
     ASSERT_NE(fluorescencePhotoSession, nullptr);
     int32_t res = fluorescencePhotoSession->BeginConfig();
@@ -1137,7 +1144,7 @@ HWTEST_F(CameraSessionModuleTest, high_res_photo_session_moduletest_001, TestSiz
     auto photoProfiles = outputCapability->GetPhotoProfiles();
     ASSERT_FALSE(photoProfiles.empty());
 
-    auto captureSession = manager_->CreateCaptureSession(SceneMode::HIGH_RES_PHOTO);
+    auto captureSession = managerForSys_->CreateCaptureSessionForSys(SceneMode::HIGH_RES_PHOTO);
     auto highResPhotoSession = static_cast<HighResPhotoSession*>(captureSession.GetRefPtr());
     ASSERT_NE(highResPhotoSession, nullptr);
     int32_t res = highResPhotoSession->BeginConfig();
@@ -1198,7 +1205,7 @@ HWTEST_F(CameraSessionModuleTest, high_res_photo_session_moduletest_002, TestSiz
     auto videoProfilesBase = outputCapabilityBase->GetVideoProfiles();
     ASSERT_FALSE(videoProfilesBase.empty());
 
-    auto captureSession = manager_->CreateCaptureSession(SceneMode::HIGH_RES_PHOTO);
+    auto captureSession = managerForSys_->CreateCaptureSessionForSys(SceneMode::HIGH_RES_PHOTO);
     auto highResPhotoSession = static_cast<HighResPhotoSession*>(captureSession.GetRefPtr());
     ASSERT_NE(highResPhotoSession, nullptr);
     int32_t res = highResPhotoSession->BeginConfig();
@@ -1240,7 +1247,7 @@ HWTEST_F(CameraSessionModuleTest, light_painting_session_moduletest_001, TestSiz
     auto photoProfiles = outputCapability->GetPhotoProfiles();
     ASSERT_FALSE(photoProfiles.empty());
 
-    auto captureSession = manager_->CreateCaptureSession(SceneMode::LIGHT_PAINTING);
+    auto captureSession = managerForSys_->CreateCaptureSessionForSys(SceneMode::LIGHT_PAINTING);
     auto lightPaintingSession = static_cast<LightPaintingSession*>(captureSession.GetRefPtr());
     ASSERT_NE(lightPaintingSession, nullptr);
     int32_t res = lightPaintingSession->BeginConfig();
@@ -1301,7 +1308,7 @@ HWTEST_F(CameraSessionModuleTest, light_painting_session_moduletest_002, TestSiz
     auto videoProfilesBase = outputCapabilityBase->GetVideoProfiles();
     ASSERT_FALSE(videoProfilesBase.empty());
 
-    auto captureSession = manager_->CreateCaptureSession(SceneMode::LIGHT_PAINTING);
+    auto captureSession = managerForSys_->CreateCaptureSessionForSys(SceneMode::LIGHT_PAINTING);
     auto lightPaintingSession = static_cast<LightPaintingSession*>(captureSession.GetRefPtr());
     ASSERT_NE(lightPaintingSession, nullptr);
     int32_t res = lightPaintingSession->BeginConfig();
@@ -1343,7 +1350,7 @@ HWTEST_F(CameraSessionModuleTest, light_painting_session_moduletest_003, TestSiz
     auto photoProfiles = outputCapability->GetPhotoProfiles();
     ASSERT_FALSE(photoProfiles.empty());
 
-    auto captureSession = manager_->CreateCaptureSession(SceneMode::LIGHT_PAINTING);
+    auto captureSession = managerForSys_->CreateCaptureSessionForSys(SceneMode::LIGHT_PAINTING);
     auto lightPaintingSession = static_cast<LightPaintingSession*>(captureSession.GetRefPtr());
     ASSERT_NE(lightPaintingSession, nullptr);
     int32_t res = lightPaintingSession->BeginConfig();
@@ -1410,7 +1417,7 @@ HWTEST_F(CameraSessionModuleTest, light_painting_session_moduletest_004, TestSiz
     auto photoProfiles = outputCapability->GetPhotoProfiles();
     ASSERT_FALSE(photoProfiles.empty());
 
-    auto captureSession = manager_->CreateCaptureSession(SceneMode::LIGHT_PAINTING);
+    auto captureSession = managerForSys_->CreateCaptureSessionForSys(SceneMode::LIGHT_PAINTING);
     auto lightPaintingSession = static_cast<LightPaintingSession*>(captureSession.GetRefPtr());
     ASSERT_NE(lightPaintingSession, nullptr);
     int32_t res = lightPaintingSession->BeginConfig();
@@ -1499,7 +1506,7 @@ HWTEST_F(CameraSessionModuleTest, macro_photo_session_moduletest_001, TestSize.L
     auto photoProfiles = outputCapability->GetPhotoProfiles();
     ASSERT_FALSE(photoProfiles.empty());
 
-    auto captureSession = manager_->CreateCaptureSession(SceneMode::CAPTURE_MACRO);
+    auto captureSession = managerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE_MACRO);
     auto macroPhotoSession = static_cast<MacroPhotoSession*>(captureSession.GetRefPtr());
     ASSERT_NE(macroPhotoSession, nullptr);
     int32_t res = macroPhotoSession->BeginConfig();
@@ -1576,7 +1583,7 @@ HWTEST_F(CameraSessionModuleTest, macro_photo_session_moduletest_002, TestSize.L
     selectProfiles.video.format_ = CAMERA_FORMAT_YUV_420_SP;
     selectProfiles.video.framerates_ = {MAX_FRAME_RATE, MAX_FRAME_RATE};
 
-    auto captureSession = manager_->CreateCaptureSession(SceneMode::CAPTURE_MACRO);
+    auto captureSession = managerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE_MACRO);
     auto macroPhotoSession = static_cast<MacroPhotoSession*>(captureSession.GetRefPtr());
     ASSERT_NE(macroPhotoSession, nullptr);
     int32_t res = macroPhotoSession->BeginConfig();
@@ -1599,11 +1606,11 @@ HWTEST_F(CameraSessionModuleTest, macro_photo_session_moduletest_002, TestSize.L
 
 /*
  * Feature: Framework
- * Function: Test macro photo session with CreateCaptureSession
+ * Function: Test macro photo session with CreateCaptureSessionForSys
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test macro photo session with CreateCaptureSession
+ * CaseDescription: Test macro photo session with CreateCaptureSessionForSys
  */
 HWTEST_F(CameraSessionModuleTest, macro_photo_session_moduletest_003, TestSize.Level1)
 {
@@ -1611,7 +1618,7 @@ HWTEST_F(CameraSessionModuleTest, macro_photo_session_moduletest_003, TestSize.L
     sptr<CameraManager> modeManagerObj = CameraManager::GetInstance();
     ASSERT_NE(modeManagerObj, nullptr);
 
-    sptr<CaptureSession> captureSession = modeManagerObj->CreateCaptureSession(mode);
+    sptr<CaptureSessionForSys> captureSession = managerForSys_->CreateCaptureSessionForSys(mode);
     ASSERT_NE(captureSession, nullptr);
 }
 
@@ -1647,7 +1654,7 @@ HWTEST_F(CameraSessionModuleTest, macro_video_session_moduletest_001, TestSize.L
     auto photoProfiles = outputCapability->GetPhotoProfiles();
     ASSERT_FALSE(photoProfiles.empty());
 
-    auto captureSession = manager_->CreateCaptureSession(SceneMode::VIDEO_MACRO);
+    auto captureSession = managerForSys_->CreateCaptureSessionForSys(SceneMode::VIDEO_MACRO);
     auto macroVideoSession = static_cast<MacroVideoSession*>(captureSession.GetRefPtr());
     ASSERT_NE(macroVideoSession, nullptr);
     int32_t res = macroVideoSession->BeginConfig();
@@ -1724,7 +1731,7 @@ HWTEST_F(CameraSessionModuleTest, macro_video_session_moduletest_002, TestSize.L
     selectProfiles.video.format_ = CAMERA_FORMAT_YUV_420_SP;
     selectProfiles.video.framerates_ = {MAX_FRAME_RATE, MAX_FRAME_RATE};
 
-    auto captureSession = manager_->CreateCaptureSession(SceneMode::VIDEO_MACRO);
+    auto captureSession = managerForSys_->CreateCaptureSessionForSys(SceneMode::VIDEO_MACRO);
     auto macroVideoSession = static_cast<MacroVideoSession*>(captureSession.GetRefPtr());
     ASSERT_NE(macroVideoSession, nullptr);
     int32_t res = macroVideoSession->BeginConfig();
@@ -1777,11 +1784,11 @@ HWTEST_F(CameraSessionModuleTest, macro_video_session_moduletest_002, TestSize.L
 
 /*
  * Feature: Framework
- * Function: Test macro video session with CreateCaptureSession
+ * Function: Test macro video session with CreateCaptureSessionForSys
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test macro video session with CreateCaptureSession
+ * CaseDescription: Test macro video session with CreateCaptureSessionForSys
  */
 HWTEST_F(CameraSessionModuleTest, macro_video_session_moduletest_003, TestSize.Level1)
 {
@@ -1789,7 +1796,7 @@ HWTEST_F(CameraSessionModuleTest, macro_video_session_moduletest_003, TestSize.L
     sptr<CameraManager> modeManagerObj = CameraManager::GetInstance();
     ASSERT_NE(modeManagerObj, nullptr);
 
-    sptr<CaptureSession> captureSession = modeManagerObj->CreateCaptureSession(mode);
+    sptr<CaptureSessionForSys> captureSession = managerForSys_->CreateCaptureSessionForSys(mode);
     ASSERT_NE(captureSession, nullptr);
 }
 
@@ -1818,7 +1825,7 @@ HWTEST_F(CameraSessionModuleTest, panorama_session_moduletest_001, TestSize.Leve
     auto photoProfilesBase = outputCapabilityBase->GetPhotoProfiles();
     ASSERT_FALSE(photoProfilesBase.empty());
 
-    auto captureSession = manager_->CreateCaptureSession(SceneMode::PANORAMA_PHOTO);
+    auto captureSession = managerForSys_->CreateCaptureSessionForSys(SceneMode::PANORAMA_PHOTO);
     auto panoramaSession = static_cast<PanoramaSession*>(captureSession.GetRefPtr());
     ASSERT_NE(panoramaSession, nullptr);
     int32_t res = panoramaSession->BeginConfig();
@@ -1864,7 +1871,7 @@ HWTEST_F(CameraSessionModuleTest, panorama_session_moduletest_002, TestSize.Leve
     auto videoProfilesBase = outputCapabilityBase->GetVideoProfiles();
     ASSERT_FALSE(videoProfilesBase.empty());
 
-    auto captureSession = manager_->CreateCaptureSession(SceneMode::PANORAMA_PHOTO);
+    auto captureSession = managerForSys_->CreateCaptureSessionForSys(SceneMode::PANORAMA_PHOTO);
     auto panoramaSession = static_cast<PanoramaSession*>(captureSession.GetRefPtr());
     ASSERT_NE(panoramaSession, nullptr);
     int32_t res = panoramaSession->BeginConfig();
@@ -1904,7 +1911,7 @@ HWTEST_F(CameraSessionModuleTest, panorama_session_moduletest_003, TestSize.Leve
     auto previewProfiles = outputCapability->GetPreviewProfiles();
     ASSERT_FALSE(previewProfiles.empty());
 
-    auto captureSession = manager_->CreateCaptureSession(SceneMode::PANORAMA_PHOTO);
+    auto captureSession = managerForSys_->CreateCaptureSessionForSys(SceneMode::PANORAMA_PHOTO);
     auto panoramaSession = static_cast<PanoramaSession*>(captureSession.GetRefPtr());
     ASSERT_NE(panoramaSession, nullptr);
     int32_t res = panoramaSession->BeginConfig();
@@ -1953,7 +1960,7 @@ HWTEST_F(CameraSessionModuleTest, portrait_session_moduletest_001, TestSize.Leve
     auto photoProfiles = outputCapability->GetPhotoProfiles();
     ASSERT_FALSE(photoProfiles.empty());
 
-    auto captureSession = manager_->CreateCaptureSession(SceneMode::PORTRAIT);
+    auto captureSession = managerForSys_->CreateCaptureSessionForSys(SceneMode::PORTRAIT);
     auto portraitSession = static_cast<PortraitSession*>(captureSession.GetRefPtr());
     ASSERT_NE(portraitSession, nullptr);
     int32_t res = portraitSession->BeginConfig();
@@ -2014,7 +2021,7 @@ HWTEST_F(CameraSessionModuleTest, portrait_session_moduletest_002, TestSize.Leve
     auto videoProfilesBase = outputCapabilityBase->GetVideoProfiles();
     ASSERT_FALSE(videoProfilesBase.empty());
 
-    auto captureSession = manager_->CreateCaptureSession(SceneMode::PORTRAIT);
+    auto captureSession = managerForSys_->CreateCaptureSessionForSys(SceneMode::PORTRAIT);
     auto portraitSession = static_cast<PortraitSession*>(captureSession.GetRefPtr());
     ASSERT_NE(portraitSession, nullptr);
     int32_t res = portraitSession->BeginConfig();
@@ -2056,7 +2063,7 @@ HWTEST_F(CameraSessionModuleTest, portrait_session_moduletest_003, TestSize.Leve
     auto photoProfiles = outputCapability->GetPhotoProfiles();
     ASSERT_FALSE(photoProfiles.empty());
 
-    auto captureSession = manager_->CreateCaptureSession(SceneMode::PORTRAIT);
+    auto captureSession = managerForSys_->CreateCaptureSessionForSys(SceneMode::PORTRAIT);
     auto portraitSession = static_cast<PortraitSession*>(captureSession.GetRefPtr());
     ASSERT_NE(portraitSession, nullptr);
     int32_t res = portraitSession->BeginConfig();
@@ -2119,7 +2126,7 @@ HWTEST_F(CameraSessionModuleTest, portrait_session_moduletest_004, TestSize.Leve
     auto photoProfiles = outputCapability->GetPhotoProfiles();
     ASSERT_FALSE(photoProfiles.empty());
 
-    auto captureSession = manager_->CreateCaptureSession(SceneMode::PORTRAIT);
+    auto captureSession = managerForSys_->CreateCaptureSessionForSys(SceneMode::PORTRAIT);
     auto portraitSession = static_cast<PortraitSession*>(captureSession.GetRefPtr());
     ASSERT_NE(portraitSession, nullptr);
     int32_t res = portraitSession->BeginConfig();
@@ -2185,7 +2192,7 @@ HWTEST_F(CameraSessionModuleTest, portrait_session_moduletest_005, TestSize.Leve
     auto photoProfiles = outputCapability->GetPhotoProfiles();
     ASSERT_FALSE(photoProfiles.empty());
 
-    auto captureSession = manager_->CreateCaptureSession(SceneMode::PORTRAIT);
+    auto captureSession = managerForSys_->CreateCaptureSessionForSys(SceneMode::PORTRAIT);
     auto portraitSession = static_cast<PortraitSession*>(captureSession.GetRefPtr());
     ASSERT_NE(portraitSession, nullptr);
     int32_t res = portraitSession->BeginConfig();
@@ -2248,7 +2255,7 @@ HWTEST_F(CameraSessionModuleTest, portrait_session_moduletest_006, TestSize.Leve
     auto photoProfiles = outputCapability->GetPhotoProfiles();
     ASSERT_FALSE(photoProfiles.empty());
 
-    auto captureSession = manager_->CreateCaptureSession(SceneMode::PORTRAIT);
+    auto captureSession = managerForSys_->CreateCaptureSessionForSys(SceneMode::PORTRAIT);
     auto portraitSession = static_cast<PortraitSession*>(captureSession.GetRefPtr());
     ASSERT_NE(portraitSession, nullptr);
     int32_t res = portraitSession->BeginConfig();
@@ -2314,7 +2321,7 @@ HWTEST_F(CameraSessionModuleTest, portrait_session_moduletest_007, TestSize.Leve
     sptr<CameraOutputCapability> capability = cameraMgr->GetSupportedOutputCapability(cameras_[0], portraitMode);
     ASSERT_NE(capability, nullptr);
 
-    sptr<CaptureSession> captureSession = cameraMgr->CreateCaptureSession(portraitMode);
+    sptr<CaptureSession> captureSession = managerForSys_->CreateCaptureSessionForSys(portraitMode);
     ASSERT_NE(captureSession, nullptr);
 
     sptr<PortraitSession> portraitSession = static_cast<PortraitSession *>(captureSession.GetRefPtr());
@@ -2365,31 +2372,31 @@ HWTEST_F(CameraSessionModuleTest, portrait_session_moduletest_007, TestSize.Leve
 HWTEST_F(CameraSessionModuleTest, portrait_session_moduletest_008, TestSize.Level1)
 {
     ColorSpace colorSpace = COLOR_SPACE_UNKNOWN;
-    int32_t intResult = session_->BeginConfig();
+    int32_t intResult = sessionForSys_->BeginConfig();
     EXPECT_EQ(intResult, 0);
-    intResult = session_->AddInput(input_);
+    intResult = sessionForSys_->AddInput(input_);
     EXPECT_EQ(intResult, 0);
     sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
     ASSERT_NE(previewOutput, nullptr);
-    intResult = session_->AddOutput(previewOutput);
+    intResult = sessionForSys_->AddOutput(previewOutput);
     EXPECT_EQ(intResult, 0);
-    session_->SetMode(SceneMode::PORTRAIT);
-    EXPECT_EQ(session_->VerifyAbility(0), CAMERA_INVALID_ARG);
-    EXPECT_EQ(session_->GetActiveColorSpace(colorSpace), CAMERA_OK);
-    session_->SetColorEffect(COLOR_EFFECT_NORMAL);
-    intResult = session_->CommitConfig();
+    sessionForSys_->SetMode(SceneMode::PORTRAIT);
+    EXPECT_EQ(sessionForSys_->VerifyAbility(0), CAMERA_INVALID_ARG);
+    EXPECT_EQ(sessionForSys_->GetActiveColorSpace(colorSpace), CAMERA_OK);
+    sessionForSys_->SetColorEffect(COLOR_EFFECT_NORMAL);
+    intResult = sessionForSys_->CommitConfig();
     EXPECT_EQ(intResult, 0);
-    if (session_->IsMacroSupported()) {
-        session_->LockForControl();
-        intResult = session_->EnableMacro(false);
-        session_->UnlockForControl();
+    if (sessionForSys_->IsMacroSupported()) {
+        sessionForSys_->LockForControl();
+        intResult = sessionForSys_->EnableMacro(false);
+        sessionForSys_->UnlockForControl();
         EXPECT_EQ(intResult, 0);
     }
-    EXPECT_EQ(session_->GetActiveColorSpace(colorSpace), CAMERA_OK);
-    session_->SetColorEffect(COLOR_EFFECT_NORMAL);
-    session_->innerInputDevice_ = nullptr;
-    EXPECT_EQ(session_->VerifyAbility(0), CAMERA_INVALID_ARG);
-    EXPECT_EQ(session_->Release(), 0);
+    EXPECT_EQ(sessionForSys_->GetActiveColorSpace(colorSpace), CAMERA_OK);
+    sessionForSys_->SetColorEffect(COLOR_EFFECT_NORMAL);
+    sessionForSys_->innerInputDevice_ = nullptr;
+    EXPECT_EQ(sessionForSys_->VerifyAbility(0), CAMERA_INVALID_ARG);
+    EXPECT_EQ(sessionForSys_->Release(), 0);
 }
 
 /*
@@ -2403,7 +2410,7 @@ HWTEST_F(CameraSessionModuleTest, portrait_session_moduletest_008, TestSize.Leve
 HWTEST_F(CameraSessionModuleTest, portrait_session_moduletest_009, TestSize.Level1)
 {
     SceneMode portraitMode = SceneMode::PORTRAIT;
-    sptr<CaptureSession> captureSession = manager_->CreateCaptureSession(portraitMode);
+    sptr<CaptureSessionForSys> captureSession = managerForSys_->CreateCaptureSessionForSys(portraitMode);
     auto portraitSession = static_cast<PortraitSession*>(captureSession.GetRefPtr());
     ASSERT_NE(portraitSession, nullptr);
     EXPECT_EQ(portraitSession->GetSupportedPortraitEffects().empty(), true);
@@ -2428,7 +2435,7 @@ HWTEST_F(CameraSessionModuleTest, portrait_session_moduletest_009, TestSize.Leve
 HWTEST_F(CameraSessionModuleTest, portrait_session_moduletest_010, TestSize.Level1)
 {
     SceneMode portraitMode = SceneMode::PORTRAIT;
-    sptr<CaptureSession> captureSession = manager_->CreateCaptureSession(portraitMode);
+    sptr<CaptureSession> captureSession = managerForSys_->CreateCaptureSessionForSys(portraitMode);
     auto portraitSession = static_cast<PortraitSession*>(captureSession.GetRefPtr());
     ASSERT_NE(portraitSession, nullptr);
     EXPECT_EQ(portraitSession->GetSupportedPortraitEffects().empty(), true);
@@ -2464,7 +2471,7 @@ HWTEST_F(CameraSessionModuleTest, quick_shot_photo_session_moduletest_001, TestS
     photoProfile.size_.height = 3072;
     ASSERT_FALSE(photoProfiles.empty());
 
-    auto captureSession = manager_->CreateCaptureSession(SceneMode::QUICK_SHOT_PHOTO);
+    auto captureSession = managerForSys_->CreateCaptureSessionForSys(SceneMode::QUICK_SHOT_PHOTO);
     auto quickShotPhotoSession = static_cast<QuickShotPhotoSession*>(captureSession.GetRefPtr());
     ASSERT_NE(quickShotPhotoSession, nullptr);
     int32_t res = quickShotPhotoSession->BeginConfig();
@@ -2525,7 +2532,7 @@ HWTEST_F(CameraSessionModuleTest, quick_shot_photo_session_moduletest_002, TestS
     auto videoProfilesBase = outputCapabilityBase->GetVideoProfiles();
     ASSERT_FALSE(videoProfilesBase.empty());
 
-    auto captureSession = manager_->CreateCaptureSession(SceneMode::QUICK_SHOT_PHOTO);
+    auto captureSession = managerForSys_->CreateCaptureSessionForSys(SceneMode::QUICK_SHOT_PHOTO);
     auto quickShotPhotoSession = static_cast<QuickShotPhotoSession*>(captureSession.GetRefPtr());
     ASSERT_NE(quickShotPhotoSession, nullptr);
     int32_t res = quickShotPhotoSession->BeginConfig();
@@ -3033,7 +3040,7 @@ HWTEST_F(CameraSessionModuleTest, slow_motion_session_moduletest_001, TestSize.L
     auto photoProfilesBase = outputCapabilityBase->GetPhotoProfiles();
     ASSERT_FALSE(photoProfilesBase.empty());
 
-    auto captureSession = manager_->CreateCaptureSession(SceneMode::SLOW_MOTION);
+    auto captureSession = managerForSys_->CreateCaptureSessionForSys(SceneMode::SLOW_MOTION);
     auto slowMotionSession = static_cast<SlowMotionSession*>(captureSession.GetRefPtr());
     ASSERT_NE(slowMotionSession, nullptr);
     int32_t res = slowMotionSession->BeginConfig();
@@ -3081,7 +3088,7 @@ HWTEST_F(CameraSessionModuleTest, slow_motion_session_moduletest_002, TestSize.L
     videoProfile.size_.height = 1080;
     ASSERT_FALSE(videoProfiles.empty());
 
-    auto captureSession = manager_->CreateCaptureSession(SceneMode::SLOW_MOTION);
+    auto captureSession = managerForSys_->CreateCaptureSessionForSys(SceneMode::SLOW_MOTION);
     auto slowMotionSession = static_cast<SlowMotionSession*>(captureSession.GetRefPtr());
     ASSERT_NE(slowMotionSession, nullptr);
     int32_t res = slowMotionSession->BeginConfig();
@@ -3146,7 +3153,7 @@ HWTEST_F(CameraSessionModuleTest, slow_motion_session_moduletest_003, TestSize.L
     videoProfile.size_.height = 1080;
     ASSERT_FALSE(videoProfiles.empty());
 
-    auto captureSession = manager_->CreateCaptureSession(SceneMode::SLOW_MOTION);
+    auto captureSession = managerForSys_->CreateCaptureSessionForSys(SceneMode::SLOW_MOTION);
     auto slowMotionSession = static_cast<SlowMotionSession*>(captureSession.GetRefPtr());
     ASSERT_NE(slowMotionSession, nullptr);
     int32_t res = slowMotionSession->BeginConfig();
@@ -3239,7 +3246,7 @@ HWTEST_F(CameraSessionModuleTest, night_session_moduletest_001, TestSize.Level1)
     auto photoProfiles = outputCapability->GetPhotoProfiles();
     ASSERT_FALSE(photoProfiles.empty());
 
-    auto captureSession = manager_->CreateCaptureSession(SceneMode::NIGHT);
+    auto captureSession = managerForSys_->CreateCaptureSessionForSys(SceneMode::NIGHT);
     auto nightSession = static_cast<NightSession*>(captureSession.GetRefPtr());
     ASSERT_NE(nightSession, nullptr);
     int32_t res = nightSession->BeginConfig();
@@ -3300,7 +3307,7 @@ HWTEST_F(CameraSessionModuleTest, night_session_moduletest_002, TestSize.Level1)
     auto videoProfilesBase = outputCapabilityBase->GetVideoProfiles();
     ASSERT_FALSE(videoProfilesBase.empty());
 
-    auto captureSession = manager_->CreateCaptureSession(SceneMode::NIGHT);
+    auto captureSession = managerForSys_->CreateCaptureSessionForSys(SceneMode::NIGHT);
     auto nightSession = static_cast<NightSession*>(captureSession.GetRefPtr());
     ASSERT_NE(nightSession, nullptr);
     int32_t res = nightSession->BeginConfig();
@@ -3342,7 +3349,7 @@ HWTEST_F(CameraSessionModuleTest, night_session_moduletest_003, TestSize.Level0)
     auto photoProfiles = outputCapability->GetPhotoProfiles();
     ASSERT_FALSE(photoProfiles.empty());
 
-    auto captureSession = manager_->CreateCaptureSession(SceneMode::NIGHT);
+    auto captureSession = managerForSys_->CreateCaptureSessionForSys(SceneMode::NIGHT);
     auto nightSession = static_cast<NightSession*>(captureSession.GetRefPtr());
     ASSERT_NE(nightSession, nullptr);
     int32_t res = nightSession->BeginConfig();
@@ -3404,7 +3411,7 @@ HWTEST_F(CameraSessionModuleTest, night_session_moduletest_003, TestSize.Level0)
 HWTEST_F(CameraSessionModuleTest, night_session_moduletest_004, TestSize.Level1)
 {
     SceneMode nightMode = SceneMode::NIGHT;
-    sptr<CaptureSession> captureSession = manager_->CreateCaptureSession(nightMode);
+    sptr<CaptureSession> captureSession = managerForSys_->CreateCaptureSessionForSys(nightMode);
     auto nightSession = static_cast<NightSession*>(captureSession.GetRefPtr());
     ASSERT_NE(nightSession, nullptr);
     int32_t intResult = nightSession->BeginConfig();
@@ -3431,7 +3438,7 @@ HWTEST_F(CameraSessionModuleTest, night_session_moduletest_005, TestSize.Level1)
     sptr<CaptureSession> camSession = manager_->CreateCaptureSession();
     ASSERT_NE(camSession, nullptr);
     SceneMode nightMode = SceneMode::NIGHT;
-    sptr<CaptureSession> captureSession = manager_->CreateCaptureSession(nightMode);
+    sptr<CaptureSession> captureSession = managerForSys_->CreateCaptureSessionForSys(nightMode);
     auto nightSession = static_cast<NightSession*>(captureSession.GetRefPtr());
     uint32_t exposureValue = 0;
     std::vector<uint32_t> exposureRange;
@@ -3461,7 +3468,7 @@ HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_001, TestSize.Le
     auto photoProfiles = outputCapability->GetPhotoProfiles();
     ASSERT_FALSE(photoProfiles.empty());
 
-    auto captureSession = manager_->CreateCaptureSession(SceneMode::PROFESSIONAL);
+    auto captureSession = managerForSys_->CreateCaptureSessionForSys(SceneMode::PROFESSIONAL);
     auto professionSession = static_cast<ProfessionSession*>(captureSession.GetRefPtr());
     ASSERT_NE(professionSession, nullptr);
     int32_t res = professionSession->BeginConfig();
@@ -3518,7 +3525,7 @@ HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_002, TestSize.Le
     auto videoProfiles = outputCapability->GetVideoProfiles();
     ASSERT_FALSE(videoProfiles.empty());
 
-    auto captureSession = manager_->CreateCaptureSession(SceneMode::PROFESSIONAL);
+    auto captureSession = managerForSys_->CreateCaptureSessionForSys(SceneMode::PROFESSIONAL);
     auto professionSession = static_cast<ProfessionSession*>(captureSession.GetRefPtr());
     ASSERT_NE(professionSession, nullptr);
     int32_t res = professionSession->BeginConfig();
@@ -3577,7 +3584,7 @@ HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_003, TestSize.Le
     auto videoProfiles = outputCapability->GetVideoProfiles();
     ASSERT_FALSE(videoProfiles.empty());
 
-    auto captureSession = manager_->CreateCaptureSession(SceneMode::PROFESSIONAL);
+    auto captureSession = managerForSys_->CreateCaptureSessionForSys(SceneMode::PROFESSIONAL);
     auto professionSession = static_cast<ProfessionSession*>(captureSession.GetRefPtr());
     ASSERT_NE(professionSession, nullptr);
     int32_t res = professionSession->BeginConfig();
@@ -3656,7 +3663,7 @@ HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_004, TestSize.Le
     auto videoProfiles = outputCapability->GetVideoProfiles();
     ASSERT_FALSE(videoProfiles.empty());
 
-    auto captureSession = manager_->CreateCaptureSession(SceneMode::PROFESSIONAL);
+    auto captureSession = managerForSys_->CreateCaptureSessionForSys(SceneMode::PROFESSIONAL);
     auto professionSession = static_cast<ProfessionSession*>(captureSession.GetRefPtr());
     ASSERT_NE(professionSession, nullptr);
     int32_t res = professionSession->BeginConfig();
@@ -3733,7 +3740,7 @@ HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_005, TestSize.Le
     auto videoProfiles = outputCapability->GetVideoProfiles();
     ASSERT_FALSE(videoProfiles.empty());
 
-    auto captureSession = manager_->CreateCaptureSession(SceneMode::PROFESSIONAL);
+    auto captureSession = managerForSys_->CreateCaptureSessionForSys(SceneMode::PROFESSIONAL);
     auto professionSession = static_cast<ProfessionSession*>(captureSession.GetRefPtr());
     ASSERT_NE(professionSession, nullptr);
     int32_t res = professionSession->BeginConfig();
@@ -3813,7 +3820,7 @@ HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_006, TestSize.Le
     auto videoProfiles = outputCapability->GetVideoProfiles();
     ASSERT_FALSE(videoProfiles.empty());
 
-    auto captureSession = manager_->CreateCaptureSession(SceneMode::PROFESSIONAL);
+    auto captureSession = managerForSys_->CreateCaptureSessionForSys(SceneMode::PROFESSIONAL);
     auto professionSession = static_cast<ProfessionSession*>(captureSession.GetRefPtr());
     ASSERT_NE(professionSession, nullptr);
     int32_t res = professionSession->BeginConfig();
@@ -3888,7 +3895,7 @@ HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_007, TestSize.Le
     auto videoProfiles = outputCapability->GetVideoProfiles();
     ASSERT_FALSE(videoProfiles.empty());
 
-    auto captureSession = manager_->CreateCaptureSession(SceneMode::PROFESSIONAL);
+    auto captureSession = managerForSys_->CreateCaptureSessionForSys(SceneMode::PROFESSIONAL);
     auto professionSession = static_cast<ProfessionSession*>(captureSession.GetRefPtr());
     ASSERT_NE(professionSession, nullptr);
     int32_t res = professionSession->BeginConfig();
@@ -3968,7 +3975,7 @@ HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_008, TestSize.Le
     auto videoProfiles = outputCapability->GetVideoProfiles();
     ASSERT_FALSE(videoProfiles.empty());
 
-    auto captureSession = manager_->CreateCaptureSession(SceneMode::PROFESSIONAL);
+    auto captureSession = managerForSys_->CreateCaptureSessionForSys(SceneMode::PROFESSIONAL);
     auto professionSession = static_cast<ProfessionSession*>(captureSession.GetRefPtr());
     ASSERT_NE(professionSession, nullptr);
     int32_t res = professionSession->BeginConfig();
@@ -4053,8 +4060,8 @@ HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_009, TestSize.Le
     auto videoProfiles = outputCapability->GetVideoProfiles();
     ASSERT_FALSE(videoProfiles.empty());
 
-    auto captureSession = manager_->CreateCaptureSession(SceneMode::PROFESSIONAL);
-    auto professionSession = static_cast<ProfessionSession*>(captureSession.GetRefPtr());
+    auto captureSessionForSys = managerForSys_->CreateCaptureSessionForSys(SceneMode::PROFESSIONAL);
+    auto professionSession = static_cast<ProfessionSession*>(captureSessionForSys.GetRefPtr());
     ASSERT_NE(professionSession, nullptr);
     int32_t res = professionSession->BeginConfig();
     EXPECT_EQ(res, 0);
@@ -4128,7 +4135,7 @@ HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_010, TestSize.Le
     auto videoProfiles = outputCapability->GetVideoProfiles();
     ASSERT_FALSE(videoProfiles.empty());
 
-    auto captureSession = manager_->CreateCaptureSession(SceneMode::PROFESSIONAL);
+    auto captureSession = managerForSys_->CreateCaptureSessionForSys(SceneMode::PROFESSIONAL);
     auto professionSession = static_cast<ProfessionSession*>(captureSession.GetRefPtr());
     ASSERT_NE(professionSession, nullptr);
     int32_t res = professionSession->BeginConfig();
@@ -4220,7 +4227,7 @@ HWTEST_F(CameraSessionModuleTest, profession_video_session_moduletest_001, TestS
     wanted.video.format_ = CAMERA_FORMAT_YUV_420_SP;
     wanted.video.framerates_ = {30, 30};
 
-    sptr<CaptureSession> captureSession = cameraManagerObj->CreateCaptureSession(sceneMode);
+    sptr<CaptureSessionForSys> captureSession = managerForSys_->CreateCaptureSessionForSys(sceneMode);
     ASSERT_NE(captureSession, nullptr);
     sptr<ProfessionSession> session = static_cast<ProfessionSession*>(captureSession.GetRefPtr());
     ASSERT_NE(session, nullptr);
@@ -4291,7 +4298,7 @@ HWTEST_F(CameraSessionModuleTest, profession_video_session_moduletest_002, TestS
     wanted.video.format_ = CAMERA_FORMAT_YUV_420_SP;
     wanted.video.framerates_ = {30, 30};
 
-    sptr<CaptureSession> captureSession = cameraManagerObj->CreateCaptureSession(sceneMode);
+    sptr<CaptureSessionForSys> captureSession = managerForSys_->CreateCaptureSessionForSys(sceneMode);
     ASSERT_NE(captureSession, nullptr);
     sptr<ProfessionSession> session = static_cast<ProfessionSession*>(captureSession.GetRefPtr());
     ASSERT_NE(session, nullptr);
@@ -4380,7 +4387,7 @@ HWTEST_F(CameraSessionModuleTest, profession_video_session_moduletest_003, TestS
     wanted.video.format_ = CAMERA_FORMAT_YUV_420_SP;
     wanted.video.framerates_ = {30, 30};
 
-    sptr<CaptureSession> captureSession = cameraManagerObj->CreateCaptureSession(sceneMode);
+    sptr<CaptureSessionForSys> captureSession = managerForSys_->CreateCaptureSessionForSys(sceneMode);
     ASSERT_NE(captureSession, nullptr);
     sptr<ProfessionSession> session = static_cast<ProfessionSession*>(captureSession.GetRefPtr());
     ASSERT_NE(session, nullptr);
@@ -4469,7 +4476,7 @@ HWTEST_F(CameraSessionModuleTest, profession_video_session_moduletest_004, TestS
     wanted.video.format_ = CAMERA_FORMAT_YUV_420_SP;
     wanted.video.framerates_ = {30, 30};
 
-    sptr<CaptureSession> captureSession = cameraManagerObj->CreateCaptureSession(sceneMode);
+    sptr<CaptureSessionForSys> captureSession = managerForSys_->CreateCaptureSessionForSys(sceneMode);
     ASSERT_NE(captureSession, nullptr);
     sptr<ProfessionSession> session = static_cast<ProfessionSession*>(captureSession.GetRefPtr());
     ASSERT_NE(session, nullptr);
@@ -4554,7 +4561,7 @@ HWTEST_F(CameraSessionModuleTest, profession_video_session_moduletest_005, TestS
     wanted.video.format_ = CAMERA_FORMAT_YUV_420_SP;
     wanted.video.framerates_ = {30, 30};
 
-    sptr<CaptureSession> captureSession = modeManagerObj->CreateCaptureSession(sceneMode);
+    sptr<CaptureSessionForSys> captureSession = managerForSys_->CreateCaptureSessionForSys(sceneMode);
     ASSERT_NE(captureSession, nullptr);
 
     sptr<ProfessionSession> session = static_cast<ProfessionSession*>(captureSession.GetRefPtr());
@@ -4671,7 +4678,7 @@ HWTEST_F(CameraSessionModuleTest, profession_video_session_moduletest_006, TestS
     wanted.video.format_ = CAMERA_FORMAT_YUV_420_SP;
     wanted.video.framerates_ = {30, 30};
 
-    sptr<CaptureSession> captureSession = cameraManagerObj->CreateCaptureSession(sceneMode);
+    sptr<CaptureSessionForSys> captureSession = managerForSys_->CreateCaptureSessionForSys(sceneMode);
     ASSERT_NE(captureSession, nullptr);
     sptr<ProfessionSession> session = static_cast<ProfessionSession*>(captureSession.GetRefPtr());
     ASSERT_NE(session, nullptr);
@@ -4760,7 +4767,7 @@ HWTEST_F(CameraSessionModuleTest, profession_video_session_moduletest_007, TestS
     wanted.video.format_ = CAMERA_FORMAT_YUV_420_SP;
     wanted.video.framerates_ = {30, 30};
 
-    sptr<CaptureSession> captureSession = cameraManagerObj->CreateCaptureSession(sceneMode);
+    sptr<CaptureSessionForSys> captureSession = managerForSys_->CreateCaptureSessionForSys(sceneMode);
     ASSERT_NE(captureSession, nullptr);
     sptr<ProfessionSession> session = static_cast<ProfessionSession*>(captureSession.GetRefPtr());
     ASSERT_NE(session, nullptr);
@@ -4843,7 +4850,7 @@ HWTEST_F(CameraSessionModuleTest, profession_video_session_moduletest_008, TestS
     wanted.video.format_ = CAMERA_FORMAT_YUV_420_SP;
     wanted.video.framerates_ = {30, 30};
 
-    sptr<CaptureSession> captureSession = cameraManagerObj->CreateCaptureSession(sceneMode);
+    sptr<CaptureSessionForSys> captureSession = managerForSys_->CreateCaptureSessionForSys(sceneMode);
     ASSERT_NE(captureSession, nullptr);
     sptr<ProfessionSession> session = static_cast<ProfessionSession*>(captureSession.GetRefPtr());
     ASSERT_NE(session, nullptr);
@@ -4916,7 +4923,7 @@ HWTEST_F(CameraSessionModuleTest, time_lapse_photo_session_moduletest_001, TestS
     auto photoProfiles = outputCapability->GetPhotoProfiles();
     ASSERT_FALSE(photoProfiles.empty());
 
-    auto captureSession = manager_->CreateCaptureSession(SceneMode::TIMELAPSE_PHOTO);
+    auto captureSession = managerForSys_->CreateCaptureSessionForSys(SceneMode::TIMELAPSE_PHOTO);
     auto timeLapsePhotoSession = static_cast<TimeLapsePhotoSession*>(captureSession.GetRefPtr());
     ASSERT_NE(timeLapsePhotoSession, nullptr);
     int32_t res = timeLapsePhotoSession->BeginConfig();
@@ -4977,7 +4984,7 @@ HWTEST_F(CameraSessionModuleTest, time_lapse_photo_session_moduletest_002, TestS
     auto videoProfilesBase = outputCapabilityBase->GetVideoProfiles();
     ASSERT_FALSE(videoProfilesBase.empty());
 
-    auto captureSession = manager_->CreateCaptureSession(SceneMode::TIMELAPSE_PHOTO);
+    auto captureSession = managerForSys_->CreateCaptureSessionForSys(SceneMode::TIMELAPSE_PHOTO);
     auto timeLapsePhotoSession = static_cast<TimeLapsePhotoSession*>(captureSession.GetRefPtr());
     ASSERT_NE(timeLapsePhotoSession, nullptr);
     int32_t res = timeLapsePhotoSession->BeginConfig();
@@ -5032,7 +5039,7 @@ HWTEST_F(CameraSessionModuleTest, time_lapse_photo_session_moduletest_003, TestS
     wanted.video.size_ = {640, 480};
     wanted.video.format_ = CAMERA_FORMAT_YUV_420_SP;
     wanted.video.framerates_ = {30, 30};
-    sptr<CaptureSession> captureSession = cameraManager->CreateCaptureSession(sceneMode);
+    sptr<CaptureSessionForSys> captureSession = managerForSys_->CreateCaptureSessionForSys(sceneMode);
     ASSERT_NE(captureSession, nullptr);
     sptr<TimeLapsePhotoSession> session = reinterpret_cast<TimeLapsePhotoSession*>(captureSession.GetRefPtr());
     ASSERT_NE(session, nullptr);
@@ -5165,7 +5172,7 @@ HWTEST_F(CameraSessionModuleTest, time_lapse_photo_session_moduletest_004, TestS
     wanted.video.size_ = {640, 480};
     wanted.video.format_ = CAMERA_FORMAT_YUV_420_SP;
     wanted.video.framerates_ = {30, 30};
-    sptr<CaptureSession> captureSession = cameraManager->CreateCaptureSession(sceneMode);
+    sptr<CaptureSessionForSys> captureSession = managerForSys_->CreateCaptureSessionForSys(sceneMode);
     ASSERT_NE(captureSession, nullptr);
     sptr<TimeLapsePhotoSession> session = reinterpret_cast<TimeLapsePhotoSession*>(captureSession.GetRefPtr());
     ASSERT_NE(session, nullptr);
@@ -5298,7 +5305,7 @@ HWTEST_F(CameraSessionModuleTest, time_lapse_photo_session_moduletest_005, TestS
     wanted.video.size_ = {640, 480};
     wanted.video.format_ = CAMERA_FORMAT_YUV_420_SP;
     wanted.video.framerates_ = {30, 30};
-    sptr<CaptureSession> captureSession = cameraManager->CreateCaptureSession(sceneMode);
+    sptr<CaptureSessionForSys> captureSession = managerForSys_->CreateCaptureSessionForSys(sceneMode);
     ASSERT_NE(captureSession, nullptr);
     sptr<TimeLapsePhotoSession> session = reinterpret_cast<TimeLapsePhotoSession*>(captureSession.GetRefPtr());
     ASSERT_NE(session, nullptr);
@@ -5444,7 +5451,7 @@ HWTEST_F(CameraSessionModuleTest, time_lapse_photo_session_moduletest_006, TestS
     wanted.video.size_ = {640, 480};
     wanted.video.format_ = CAMERA_FORMAT_YUV_420_SP;
     wanted.video.framerates_ = {30, 30};
-    sptr<CaptureSession> captureSession = cameraManager->CreateCaptureSession(sceneMode);
+    sptr<CaptureSessionForSys> captureSession = managerForSys_->CreateCaptureSessionForSys(sceneMode);
     ASSERT_NE(captureSession, nullptr);
     sptr<TimeLapsePhotoSession> session = reinterpret_cast<TimeLapsePhotoSession*>(captureSession.GetRefPtr());
     ASSERT_NE(session, nullptr);
@@ -5601,7 +5608,7 @@ HWTEST_F(CameraSessionModuleTest, time_lapse_photo_session_moduletest_007, TestS
     wanted.video.size_ = {640, 480};
     wanted.video.format_ = CAMERA_FORMAT_YUV_420_SP;
     wanted.video.framerates_ = {30, 30};
-    sptr<CaptureSession> captureSession = cameraManager->CreateCaptureSession(sceneMode);
+    sptr<CaptureSessionForSys> captureSession = managerForSys_->CreateCaptureSessionForSys(sceneMode);
     ASSERT_NE(captureSession, nullptr);
     sptr<TimeLapsePhotoSession> session = reinterpret_cast<TimeLapsePhotoSession*>(captureSession.GetRefPtr());
     ASSERT_NE(session, nullptr);
@@ -5752,7 +5759,7 @@ HWTEST_F(CameraSessionModuleTest, time_lapse_photo_session_moduletest_008, TestS
     wanted.video.size_ = {640, 480};
     wanted.video.format_ = CAMERA_FORMAT_YUV_420_SP;
     wanted.video.framerates_ = {30, 30};
-    sptr<CaptureSession> captureSession = cameraManager->CreateCaptureSession(sceneMode);
+    sptr<CaptureSessionForSys> captureSession = managerForSys_->CreateCaptureSessionForSys(sceneMode);
     ASSERT_NE(captureSession, nullptr);
     sptr<TimeLapsePhotoSession> session = reinterpret_cast<TimeLapsePhotoSession*>(captureSession.GetRefPtr());
     ASSERT_NE(session, nullptr);
@@ -5903,7 +5910,7 @@ HWTEST_F(CameraSessionModuleTest, time_lapse_photo_session_moduletest_009, TestS
     wanted.video.size_ = {640, 480};
     wanted.video.format_ = CAMERA_FORMAT_YUV_420_SP;
     wanted.video.framerates_ = {30, 30};
-    sptr<CaptureSession> captureSession = cameraManager->CreateCaptureSession(sceneMode);
+    sptr<CaptureSessionForSys> captureSession = managerForSys_->CreateCaptureSessionForSys(sceneMode);
     ASSERT_NE(captureSession, nullptr);
     sptr<TimeLapsePhotoSession> session = reinterpret_cast<TimeLapsePhotoSession*>(captureSession.GetRefPtr());
     ASSERT_NE(session, nullptr);
@@ -7297,13 +7304,13 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_022, TestSize.Level1)
     if (!IsSupportNow()) {
         GTEST_SKIP();
     }
-    sptr<CaptureSession> captureSession = manager_->CreateCaptureSession(SceneMode::CAPTURE);
-    ASSERT_NE(captureSession, nullptr);
+    sptr<CaptureSessionForSys> captureSessionForSys = managerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(captureSessionForSys, nullptr);
     std::vector<float> virtualApertures = {};
     float aperture;
-    EXPECT_EQ(captureSession->GetSupportedVirtualApertures(virtualApertures), SESSION_NOT_CONFIG);
-    EXPECT_EQ(captureSession->GetVirtualAperture(aperture), SESSION_NOT_CONFIG);
-    EXPECT_EQ(captureSession->SetVirtualAperture(aperture), SESSION_NOT_CONFIG);
+    EXPECT_EQ(captureSessionForSys->GetSupportedVirtualApertures(virtualApertures), SESSION_NOT_CONFIG);
+    EXPECT_EQ(captureSessionForSys->GetVirtualAperture(aperture), SESSION_NOT_CONFIG);
+    EXPECT_EQ(captureSessionForSys->SetVirtualAperture(aperture), SESSION_NOT_CONFIG);
 }
 
 /*
@@ -7335,13 +7342,13 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_023, TestSize.Level0)
         modeManagerObj->GetSupportedOutputCapability(cameras_[0], captureMode);
     ASSERT_NE(modeAbility, nullptr);
 
-    sptr<CaptureSession> captureSession = modeManagerObj->CreateCaptureSession(captureMode);
-    ASSERT_NE(captureSession, nullptr);
+    sptr<CaptureSessionForSys> captureSessionForSys = managerForSys_->CreateCaptureSessionForSys(captureMode);
+    ASSERT_NE(captureSessionForSys, nullptr);
 
-    int32_t intResult = captureSession->BeginConfig();
+    int32_t intResult = captureSessionForSys->BeginConfig();
     EXPECT_EQ(intResult, 0);
 
-    intResult = captureSession->AddInput(input_);
+    intResult = captureSessionForSys->AddInput(input_);
     EXPECT_EQ(intResult, 0);
 
     camera_rational_t ratio = {
@@ -7355,7 +7362,7 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_023, TestSize.Level0)
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput(profile);
     ASSERT_NE(photoOutput, nullptr);
 
-    intResult = captureSession->AddOutput(photoOutput);
+    intResult = captureSessionForSys->AddOutput(photoOutput);
     EXPECT_EQ(intResult, 0);
 
     profile = SelectProfileByRatioAndFormat(modeAbility, ratio, previewFormat_);
@@ -7364,24 +7371,24 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_023, TestSize.Level0)
     sptr<CaptureOutput> previewOutput = CreatePreviewOutput(profile);
     ASSERT_NE(previewOutput, nullptr);
 
-    intResult = captureSession->AddOutput(previewOutput);
+    intResult = captureSessionForSys->AddOutput(previewOutput);
     EXPECT_EQ(intResult, 0);
 
-    intResult = captureSession->CommitConfig();
+    intResult = captureSessionForSys->CommitConfig();
     EXPECT_EQ(intResult, 0);
 
-    captureSession->LockForControl();
+    captureSessionForSys->LockForControl();
 
     std::vector<float> virtualApertures = {};
-    EXPECT_EQ(captureSession->GetSupportedVirtualApertures(virtualApertures), 0);
-    EXPECT_EQ(captureSession->SetVirtualAperture(virtualApertures[0]), 0);
+    EXPECT_EQ(captureSessionForSys->GetSupportedVirtualApertures(virtualApertures), 0);
+    EXPECT_EQ(captureSessionForSys->SetVirtualAperture(virtualApertures[0]), 0);
 
-    captureSession->UnlockForControl();
+    captureSessionForSys->UnlockForControl();
     float aperture;
-    EXPECT_EQ(captureSession->GetVirtualAperture(aperture), 0);
+    EXPECT_EQ(captureSessionForSys->GetVirtualAperture(aperture), 0);
     EXPECT_EQ(aperture, virtualApertures[0]);
 
-    intResult = captureSession->Start();
+    intResult = captureSessionForSys->Start();
     EXPECT_EQ(intResult, 0);
     sleep(WAIT_TIME_AFTER_START);
 
@@ -7389,7 +7396,7 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_023, TestSize.Level0)
     EXPECT_EQ(intResult, 0);
     sleep(WAIT_TIME_AFTER_CAPTURE);
 
-    captureSession->Stop();
+    captureSessionForSys->Stop();
 }
 
 /*
@@ -7405,6 +7412,12 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_024, TestSize.Level1)
     sptr<CameraInput> camInput = (sptr<CameraInput>&)input_;
     camInput->Open();
 
+    if (session_) {
+        MEDIA_INFO_LOG("old session exist, need release");
+        session_->Release();
+    }
+    session_ = manager_->CreateCaptureSession();
+    ASSERT_NE(session_, nullptr);
     session_->SetMode(SceneMode::CAPTURE);
     int32_t intResult = session_->BeginConfig();
 
@@ -7463,6 +7476,12 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_025, TestSize.Level1)
     sptr<CameraInput> camInput = (sptr<CameraInput>&)input_;
     camInput->Open();
 
+    if (session_) {
+        MEDIA_INFO_LOG("old session exist, need release");
+        session_->Release();
+    }
+    session_ = manager_->CreateCaptureSession();
+    ASSERT_NE(session_, nullptr);
     session_->SetMode(SceneMode::CAPTURE);
     int32_t intResult = session_->BeginConfig();
 
@@ -7512,6 +7531,12 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_026, TestSize.Level1)
     sptr<CameraInput> camInput = (sptr<CameraInput>&)input_;
     camInput->Open();
 
+    if (session_) {
+        MEDIA_INFO_LOG("old session exist, need release");
+        session_->Release();
+    }
+    session_ = manager_->CreateCaptureSession();
+    ASSERT_NE(session_, nullptr);
     session_->SetMode(SceneMode::CAPTURE);
     int32_t intResult = session_->BeginConfig();
 
@@ -7562,6 +7587,12 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_027, TestSize.Level1)
     sptr<CameraInput> camInput = (sptr<CameraInput>&)input_;
     camInput->Open();
 
+    if (session_) {
+        MEDIA_INFO_LOG("old session exist, need release");
+        session_->Release();
+    }
+    session_ = manager_->CreateCaptureSession();
+    ASSERT_NE(session_, nullptr);
     session_->SetMode(SceneMode::CAPTURE);
     int32_t intResult = session_->BeginConfig();
 
@@ -7608,45 +7639,45 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_027, TestSize.Level1)
  */
 HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_028, TestSize.Level1)
 {
-    session_->SetMode(SceneMode::CAPTURE);
-    int32_t intResult = session_->BeginConfig();
+    sessionForSys_->SetMode(SceneMode::CAPTURE);
+    int32_t intResult = sessionForSys_->BeginConfig();
 
     EXPECT_EQ(intResult, 0);
 
-    intResult = session_->AddInput(input_);
+    intResult = sessionForSys_->AddInput(input_);
     EXPECT_EQ(intResult, 0);
 
     sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
     ASSERT_NE(previewOutput, nullptr);
 
-    intResult = session_->AddOutput(previewOutput);
+    intResult = sessionForSys_->AddOutput(previewOutput);
     EXPECT_EQ(intResult, 0);
 
-    bool isLowLightBoostSupported = session_->IsFeatureSupported(FEATURE_LOW_LIGHT_BOOST);
+    bool isLowLightBoostSupported = sessionForSys_->IsFeatureSupported(FEATURE_LOW_LIGHT_BOOST);
 
     if (isLowLightBoostSupported) {
-        intResult = session_->EnableFeature(FEATURE_LOW_LIGHT_BOOST, true);
+        intResult = sessionForSys_->EnableFeature(FEATURE_LOW_LIGHT_BOOST, true);
         EXPECT_EQ(intResult, SESSION_NOT_CONFIG);
     }
 
-    intResult = session_->CommitConfig();
+    intResult = sessionForSys_->CommitConfig();
     EXPECT_EQ(intResult, 0);
 
-    isLowLightBoostSupported = session_->IsFeatureSupported(FEATURE_LOW_LIGHT_BOOST);
+    isLowLightBoostSupported = sessionForSys_->IsFeatureSupported(FEATURE_LOW_LIGHT_BOOST);
     if (isLowLightBoostSupported) {
-        session_->SetFeatureDetectionStatusCallback(std::make_shared<AppCallback>());
-        session_->LockForControl();
-        intResult = session_->EnableLowLightDetection(true);
-        session_->UnlockForControl();
+        sessionForSys_->SetFeatureDetectionStatusCallback(std::make_shared<AppCallback>());
+        sessionForSys_->LockForControl();
+        intResult = sessionForSys_->EnableLowLightDetection(true);
+        sessionForSys_->UnlockForControl();
         EXPECT_EQ(intResult, 0);
     }
 
-    intResult = session_->Start();
+    intResult = sessionForSys_->Start();
     EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
 
-    intResult = session_->Stop();
+    intResult = sessionForSys_->Stop();
     EXPECT_EQ(intResult, 0);
 }
 
@@ -8050,46 +8081,46 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_034, TestSize.Level1)
     sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)output;
     ASSERT_NE(output, nullptr);
 
-    session_->SetMode(SceneMode::CAPTURE);
-    int32_t intResult = session_->BeginConfig();
+    sessionForSys_->SetMode(SceneMode::CAPTURE);
+    int32_t intResult = sessionForSys_->BeginConfig();
 
     EXPECT_EQ(intResult, 0);
 
-    intResult = session_->AddInput(input_);
+    intResult = sessionForSys_->AddInput(input_);
     EXPECT_EQ(intResult, 0);
 
-    intResult = session_->AddOutput(output);
+    intResult = sessionForSys_->AddOutput(output);
     EXPECT_EQ(intResult, 0);
 
-    intResult = session_->CommitConfig();
+    intResult = sessionForSys_->CommitConfig();
     EXPECT_EQ(intResult, 0);
 
-    session_->SetFeatureDetectionStatusCallback(std::make_shared<AppCallback>());
+    sessionForSys_->SetFeatureDetectionStatusCallback(std::make_shared<AppCallback>());
 
     g_moonCaptureBoostEvents.reset();
-    intResult = session_->Start();
+    intResult = sessionForSys_->Start();
     EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
 
-    bool isMoonCaptureBoostSupported = session_->IsFeatureSupported(FEATURE_MOON_CAPTURE_BOOST);
+    bool isMoonCaptureBoostSupported = sessionForSys_->IsFeatureSupported(FEATURE_MOON_CAPTURE_BOOST);
     if (isMoonCaptureBoostSupported) {
         EXPECT_EQ(g_moonCaptureBoostEvents.count(), 1);
         if (g_moonCaptureBoostEvents[static_cast<int>(
                 CAM_MOON_CAPTURE_BOOST_EVENTS::CAM_MOON_CAPTURE_BOOST_EVENT_ACTIVE)] == 1) {
-            intResult = session_->EnableFeature(FEATURE_MOON_CAPTURE_BOOST, true);
+            intResult = sessionForSys_->EnableFeature(FEATURE_MOON_CAPTURE_BOOST, true);
             EXPECT_EQ(intResult, 0);
         }
         if (g_moonCaptureBoostEvents[static_cast<int>(
                 CAM_MOON_CAPTURE_BOOST_EVENTS::CAM_MOON_CAPTURE_BOOST_EVENT_IDLE)] == 1) {
-            intResult = session_->EnableFeature(FEATURE_MOON_CAPTURE_BOOST, false);
+            intResult = sessionForSys_->EnableFeature(FEATURE_MOON_CAPTURE_BOOST, false);
             EXPECT_EQ(intResult, 0);
         }
     }
 
     sleep(WAIT_TIME_AFTER_START);
 
-    intResult = session_->Stop();
+    intResult = sessionForSys_->Stop();
     EXPECT_EQ(intResult, 0);
 }
 
@@ -8103,15 +8134,15 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_034, TestSize.Level1)
  */
 HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_035, TestSize.Level1)
 {
-    if (session_) {
-        session_->Release();
-        session_ = nullptr;
+    if (sessionForSys_) {
+        sessionForSys_->Release();
+        sessionForSys_ = nullptr;
         input_->Close();
     }
-    session_ = manager_->CreateCaptureSession(SceneMode::CAPTURE);
-    ASSERT_NE(session_, nullptr);
+    sessionForSys_ = managerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(sessionForSys_, nullptr);
 
-    int32_t intResult = session_->BeginConfig();
+    int32_t intResult = sessionForSys_->BeginConfig();
     EXPECT_EQ(intResult, 0);
 
     if (cameras_.size() > 1) {
@@ -8119,35 +8150,35 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_035, TestSize.Level1)
         ASSERT_NE(input_, nullptr);
         EXPECT_EQ(input_->Open(), 0);
 
-        intResult = session_->AddInput(input_);
+        intResult = sessionForSys_->AddInput(input_);
         EXPECT_EQ(intResult, 0);
 
         sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
         ASSERT_NE(previewOutput, nullptr);
 
-        intResult = session_->AddOutput(previewOutput);
+        intResult = sessionForSys_->AddOutput(previewOutput);
         EXPECT_EQ(intResult, 0);
 
-        intResult = session_->CommitConfig();
+        intResult = sessionForSys_->CommitConfig();
         EXPECT_EQ(intResult, 0);
 
-        bool isSupported = session_->IsLcdFlashSupported();
+        bool isSupported = sessionForSys_->IsLcdFlashSupported();
         EXPECT_EQ(isSupported, true);
 
         if (isSupported) {
-            session_->SetLcdFlashStatusCallback(std::make_shared<AppCallback>());
-            session_->LockForControl();
-            intResult = session_->EnableLcdFlashDetection(true);
-            session_->UnlockForControl();
+            sessionForSys_->SetLcdFlashStatusCallback(std::make_shared<AppCallback>());
+            sessionForSys_->LockForControl();
+            intResult = sessionForSys_->EnableLcdFlashDetection(true);
+            sessionForSys_->UnlockForControl();
             EXPECT_EQ(intResult, 0);
         }
 
-        intResult = session_->Start();
+        intResult = sessionForSys_->Start();
         EXPECT_EQ(intResult, 0);
 
         sleep(WAIT_TIME_AFTER_START);
 
-        intResult = session_->Stop();
+        intResult = sessionForSys_->Stop();
         EXPECT_EQ(intResult, 0);
     }
 }
@@ -8200,36 +8231,36 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_036, TestSize.Level1)
  */
 HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_037, TestSize.Level1)
 {
-    session_ = manager_->CreateCaptureSession(SceneMode::CAPTURE);
-    ASSERT_NE(session_, nullptr);
+    sessionForSys_ = managerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(sessionForSys_, nullptr);
 
-    int32_t intResult = session_->BeginConfig();
+    int32_t intResult = sessionForSys_->BeginConfig();
     EXPECT_EQ(intResult, 0);
 
-    intResult = session_->AddInput(input_);
+    intResult = sessionForSys_->AddInput(input_);
     EXPECT_EQ(intResult, 0);
 
     sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
     ASSERT_NE(previewOutput, nullptr);
 
-    intResult = session_->AddOutput(previewOutput);
+    intResult = sessionForSys_->AddOutput(previewOutput);
     EXPECT_EQ(intResult, 0);
 
-    intResult = session_->CommitConfig();
+    intResult = sessionForSys_->CommitConfig();
     EXPECT_EQ(intResult, 0);
 
-    if (session_->IsTripodDetectionSupported()) {
-        session_->SetFeatureDetectionStatusCallback(std::make_shared<AppCallback>());
-        session_->EnableFeature(FEATURE_TRIPOD_DETECTION, true);
+    if (sessionForSys_->IsTripodDetectionSupported()) {
+        sessionForSys_->SetFeatureDetectionStatusCallback(std::make_shared<AppCallback>());
+        sessionForSys_->EnableFeature(FEATURE_TRIPOD_DETECTION, true);
         EXPECT_EQ(intResult, 0);
     }
 
-    intResult = session_->Start();
+    intResult = sessionForSys_->Start();
     EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
 
-    intResult = session_->Stop();
+    intResult = sessionForSys_->Stop();
     EXPECT_EQ(intResult, 0);
 }
 
@@ -9799,49 +9830,49 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_023, TestSize.Level1)
     sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)output;
     ASSERT_NE(output, nullptr);
 
-    session_->SetMode(SceneMode::VIDEO);
-    int32_t intResult = session_->BeginConfig();
+    sessionForSys_->SetMode(SceneMode::VIDEO);
+    int32_t intResult = sessionForSys_->BeginConfig();
 
     EXPECT_EQ(intResult, 0);
 
-    intResult = session_->AddInput(input_);
+    intResult = sessionForSys_->AddInput(input_);
     EXPECT_EQ(intResult, 0);
 
-    intResult = session_->AddOutput(output);
+    intResult = sessionForSys_->AddOutput(output);
     EXPECT_EQ(intResult, 0);
 
-    bool isMoonCaptureBoostSupported = session_->IsFeatureSupported(FEATURE_MOON_CAPTURE_BOOST);
+    bool isMoonCaptureBoostSupported = sessionForSys_->IsFeatureSupported(FEATURE_MOON_CAPTURE_BOOST);
     EXPECT_FALSE(isMoonCaptureBoostSupported);
 
-    intResult = session_->EnableFeature(FEATURE_MOON_CAPTURE_BOOST, true);
+    intResult = sessionForSys_->EnableFeature(FEATURE_MOON_CAPTURE_BOOST, true);
     EXPECT_EQ(intResult, OPERATION_NOT_ALLOWED);
 
-    intResult = session_->EnableFeature(FEATURE_MOON_CAPTURE_BOOST, false);
+    intResult = sessionForSys_->EnableFeature(FEATURE_MOON_CAPTURE_BOOST, false);
     EXPECT_EQ(intResult, OPERATION_NOT_ALLOWED);
 
-    session_->SetMode(SceneMode::CAPTURE);
-    isMoonCaptureBoostSupported = session_->IsFeatureSupported(FEATURE_MOON_CAPTURE_BOOST);
+    sessionForSys_->SetMode(SceneMode::CAPTURE);
+    isMoonCaptureBoostSupported = sessionForSys_->IsFeatureSupported(FEATURE_MOON_CAPTURE_BOOST);
     if (isMoonCaptureBoostSupported) {
-        intResult = session_->EnableFeature(FEATURE_MOON_CAPTURE_BOOST, true);
+        intResult = sessionForSys_->EnableFeature(FEATURE_MOON_CAPTURE_BOOST, true);
         EXPECT_EQ(intResult, SESSION_NOT_CONFIG);
     }
 
-    intResult = session_->CommitConfig();
+    intResult = sessionForSys_->CommitConfig();
     EXPECT_EQ(intResult, 0);
 
-    isMoonCaptureBoostSupported = session_->IsFeatureSupported(FEATURE_MOON_CAPTURE_BOOST);
+    isMoonCaptureBoostSupported = sessionForSys_->IsFeatureSupported(FEATURE_MOON_CAPTURE_BOOST);
     if (!isMoonCaptureBoostSupported) {
-        intResult = session_->EnableFeature(FEATURE_MOON_CAPTURE_BOOST, true);
+        intResult = sessionForSys_->EnableFeature(FEATURE_MOON_CAPTURE_BOOST, true);
         EXPECT_EQ(intResult, OPERATION_NOT_ALLOWED);
     }
-    session_->SetFeatureDetectionStatusCallback(std::make_shared<AppCallback>());
+    sessionForSys_->SetFeatureDetectionStatusCallback(std::make_shared<AppCallback>());
 
-    intResult = session_->Start();
+    intResult = sessionForSys_->Start();
     EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
 
-    intResult = session_->Stop();
+    intResult = sessionForSys_->Stop();
     EXPECT_EQ(intResult, 0);
 }
 

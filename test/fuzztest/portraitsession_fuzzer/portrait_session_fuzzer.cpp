@@ -18,6 +18,7 @@
 #include "camera_log.h"
 #include "camera_output_capability.h"
 #include "input/camera_manager.h"
+#include "input/camera_manager_for_sys.h"
 #include "message_parcel.h"
 #include "token_setproc.h"
 #include "nativetoken_kit.h"
@@ -39,6 +40,7 @@ using namespace OHOS;
 using namespace OHOS::CameraStandard;
 static constexpr int32_t MIN_SIZE_NUM = 4;
 sptr<CameraManager> cameraManager_ = nullptr;
+sptr<CameraManagerForSys> cameraManagerForSys_ = nullptr;
 std::vector<Profile> previewProfile_ = {};
 std::vector<Profile> photoProfile_ = {};
 bool g_preIsSupportedPortraitmode = false;
@@ -122,6 +124,7 @@ sptr<CaptureOutput> CreatePhotoOutput()
 void PortraitSessionFuzzTest(FuzzedDataProvider& fdp)
 {
     cameraManager_ = CameraManager::GetInstance();
+    cameraManagerForSys_ = CameraManagerForSys::GetInstance();
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     CHECK_ERROR_RETURN_LOG(cameras.empty(), "PortraitSessionFuzzer: GetCameraDeviceListFromServer Error");
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
@@ -132,12 +135,12 @@ void PortraitSessionFuzzTest(FuzzedDataProvider& fdp)
     camInput->GetCameraDevice()->Open();
     sptr<CaptureOutput> preview = CreatePreviewOutput();
     sptr<CaptureOutput> photo = CreatePhotoOutput();
-    sptr<CaptureSession> captureSession = cameraManager_->CreateCaptureSession(SceneMode::PORTRAIT);
+    sptr<CaptureSession> captureSessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::PORTRAIT);
     sptr<PortraitSession> portraitSession = nullptr;
-    portraitSession = static_cast<PortraitSession *> (captureSession.GetRefPtr());
+    portraitSession = static_cast<PortraitSession *> (captureSessionForSys.GetRefPtr());
     portraitSession->BeginConfig();
     portraitSession->AddInput(input);
-    sptr<CameraDevice> info = captureSession->innerInputDevice_->GetCameraDeviceInfo();
+    sptr<CameraDevice> info = captureSessionForSys->innerInputDevice_->GetCameraDeviceInfo();
     info->modePreviewProfiles_.emplace(static_cast<int32_t>(PORTRAIT), previewProfile_);
     info->modePhotoProfiles_.emplace(static_cast<int32_t>(PORTRAIT), photoProfile_);
     portraitSession->AddOutput(preview);

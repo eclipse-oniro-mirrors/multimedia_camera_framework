@@ -15,6 +15,7 @@
 
 #include "camera_manager_fuzzer.h"
 #include "camera_manager.h"
+#include "camera_manager_for_sys.h"
 #include "camera_log.h"
 #include "input/camera_device.h"
 #include "message_parcel.h"
@@ -73,8 +74,9 @@ void CameraManagerFuzzer::CameraManagerFuzzTest1(FuzzedDataProvider& fdp)
     std::vector<MetadataObjectType> metadataObjectTypes;
     manager->CreateMetadataOutput(metadataOutput, metadataObjectTypes);
     DepthProfile depthProfile;
-    auto depthDataOutput = manager->CreateDepthDataOutput(depthProfile, bufferProducer);
-    manager->CreateDepthDataOutput(depthProfile, bufferProducer, &depthDataOutput);
+    sptr<CameraManagerForSys> managerForSys = CameraManagerForSys::GetInstance();
+    sptr<DepthDataOutput> depthDataOutput = nullptr;
+    managerForSys->CreateDepthDataOutput(depthProfile, bufferProducer, &depthDataOutput);
     manager->CreateVideoOutput(surface);
     manager->CreateVideoOutputStream(streamPtr, profile, bufferProducer);
     sptr<VideoOutput> videoOutput;

@@ -17,12 +17,14 @@
 #include "accesstoken_kit.h"
 #include "camera_error_code.h"
 #include "camera_log.h"
+#include "camera_manager_for_sys.h"
 #include "gtest/gtest.h"
 #include "hap_token_info.h"
 #include "ipc_skeleton.h"
 #include "nativetoken_kit.h"
 #include "os_account_manager.h"
 #include "profession_session_unittest.h"
+#include "session/capture_session_for_sys.h"
 #include "test_common.h"
 #include "test_token.h"
 #include "token_setproc.h"
@@ -76,7 +78,8 @@ void ProfessionSessionUnitTest::SetUp()
     if (!IsSupportMode(sceneMode_)) {
         return;
     }
-    sptr<CaptureSession> captureSession = manager_->CreateCaptureSession(sceneMode_);
+    sptr<CaptureSessionForSys> captureSession =
+        CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(sceneMode_);
     ASSERT_NE(captureSession, nullptr);
     session_ = static_cast<ProfessionSession*>(captureSession.GetRefPtr());
     ASSERT_NE(session_, nullptr);
@@ -287,7 +290,8 @@ HWTEST_F(ProfessionSessionUnitTest, camera_profession_session_unittest_002, Test
  */
 HWTEST_F(ProfessionSessionUnitTest, profession_session_function_unittest_001, TestSize.Level1)
 {
-    sptr<CaptureSession> session = manager_->CreateCaptureSession(SceneMode::PROFESSIONAL_VIDEO);
+    sptr<CaptureSessionForSys> session =
+        CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(SceneMode::PROFESSIONAL_VIDEO);
     ASSERT_NE(session, nullptr);
     sptr<ProfessionSession> professionSession = static_cast<ProfessionSession*>(session.GetRefPtr());
     ASSERT_NE(professionSession, nullptr);
@@ -335,7 +339,8 @@ HWTEST_F(ProfessionSessionUnitTest, profession_session_function_unittest_002, Te
 
 HWTEST_F(ProfessionSessionUnitTest, profession_session_function_unittest_003, TestSize.Level0)
 {
-    sptr<CaptureSession> session = manager_->CreateCaptureSession(SceneMode::PROFESSIONAL_VIDEO);
+    sptr<CaptureSessionForSys> session =
+        CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(SceneMode::PROFESSIONAL_VIDEO);
     ASSERT_NE(session, nullptr);
     sptr<ProfessionSession> professionSession = static_cast<ProfessionSession*>(session.GetRefPtr());
     ASSERT_NE(professionSession, nullptr);
@@ -356,7 +361,8 @@ HWTEST_F(ProfessionSessionUnitTest, profession_session_function_unittest_003, Te
 
 HWTEST_F(ProfessionSessionUnitTest, profession_session_function_unittest_004, TestSize.Level0)
 {
-    sptr<CaptureSession> session = manager_->CreateCaptureSession(SceneMode::PROFESSIONAL_VIDEO);
+    sptr<CaptureSessionForSys> session =
+        CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(SceneMode::PROFESSIONAL_VIDEO);
     ASSERT_NE(session, nullptr);
     sptr<ProfessionSession> professionSession = static_cast<ProfessionSession*>(session.GetRefPtr());
     ASSERT_NE(professionSession, nullptr);
@@ -379,7 +385,8 @@ HWTEST_F(ProfessionSessionUnitTest, profession_session_function_unittest_004, Te
 
 HWTEST_F(ProfessionSessionUnitTest, profession_session_function_unittest_005, TestSize.Level0)
 {
-    sptr<CaptureSession> session = manager_->CreateCaptureSession(SceneMode::PROFESSIONAL_VIDEO);
+    sptr<CaptureSessionForSys> session =
+        CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(SceneMode::PROFESSIONAL_VIDEO);
     ASSERT_NE(session, nullptr);
     sptr<ProfessionSession> professionSession = static_cast<ProfessionSession*>(session.GetRefPtr());
     ASSERT_NE(professionSession, nullptr);
@@ -402,7 +409,8 @@ HWTEST_F(ProfessionSessionUnitTest, profession_session_function_unittest_005, Te
 
 HWTEST_F(ProfessionSessionUnitTest, profession_session_function_unittest_006, TestSize.Level0)
 {
-    sptr<CaptureSession> session = manager_->CreateCaptureSession(SceneMode::PROFESSIONAL_VIDEO);
+    sptr<CaptureSessionForSys> session =
+        CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(SceneMode::PROFESSIONAL_VIDEO);
     ASSERT_NE(session, nullptr);
     sptr<ProfessionSession> professionSession = static_cast<ProfessionSession*>(session.GetRefPtr());
     ASSERT_NE(professionSession, nullptr);
@@ -425,7 +433,8 @@ HWTEST_F(ProfessionSessionUnitTest, profession_session_function_unittest_006, Te
 
 HWTEST_F(ProfessionSessionUnitTest, profession_session_function_unittest_007, TestSize.Level0)
 {
-    sptr<CaptureSession> session = manager_->CreateCaptureSession(SceneMode::PROFESSIONAL_VIDEO);
+    sptr<CaptureSessionForSys> session =
+        CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(SceneMode::PROFESSIONAL_VIDEO);
     ASSERT_NE(session, nullptr);
     sptr<ProfessionSession> professionSession = static_cast<ProfessionSession*>(session.GetRefPtr());
     ASSERT_NE(professionSession, nullptr);
