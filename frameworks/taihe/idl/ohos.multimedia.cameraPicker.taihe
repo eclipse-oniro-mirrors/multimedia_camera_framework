@@ -50,15 +50,15 @@ function GetPickerResult(asyncContext: CameraPickerJsAsyncContext): PickerResult
 @!sts_inject("""
 function pick(context: Context, mediaTypes: Array<PickerMediaType>, pickerProfile: PickerProfile): Promise<PickerResult> {
   return new Promise<PickerResult>((resolve, reject): void => {
-    let src = PickStart_inner(context, mediaTypes, pickerProfile);
+    let src = pickStart(context, mediaTypes, pickerProfile);
     const worker = new EAWorker();
     try {
-      let func = (src: CameraPickerJsAsyncContext) => { PickAsync_inner(src); };
+      let func = (src: CameraPickerJsAsyncContext) => { pickAsync(src); };
       let funcAsync = async (src: CameraPickerJsAsyncContext) => {
         const job = worker.run<void>(func, src);
         job.Await();
         worker.join();
-        let res = GetPickerResult_inner(src);
+        let res = getPickerResult(src);
         resolve(res as PickerResult);
       };
       funcAsync(src);
