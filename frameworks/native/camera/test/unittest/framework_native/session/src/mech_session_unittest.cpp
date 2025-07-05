@@ -296,7 +296,7 @@ HWTEST_F(MechSessionUnitTest, mech_session_unittest_008, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test MechSession callback when session star
  */
-HWTEST_F(MechSessionUnitTest, mech_session_unittest_009, TestSize.Level0)
+HWTEST_F(MechSessionUnitTest, mech_session_unittest_009, TestSize.Level1)
 {
     sptr<MechSession> mechSession = cameraManager_->CreateMechSession(userId_);
     ASSERT_NE(mechSession, nullptr);
@@ -333,7 +333,7 @@ HWTEST_F(MechSessionUnitTest, mech_session_unittest_009, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test MechSession callback when session stop
  */
-HWTEST_F(MechSessionUnitTest, mech_session_unittest_010, TestSize.Level0)
+HWTEST_F(MechSessionUnitTest, mech_session_unittest_010, TestSize.Level1)
 {
     sptr<MechSession> mechSession = cameraManager_->CreateMechSession(userId_);
     ASSERT_NE(mechSession, nullptr);

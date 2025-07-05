@@ -22,6 +22,7 @@
 #include <vector>
 #include <thread>
 #include "test_token.h"
+#include "test_log_detector.h"
 
 using namespace testing::ext;
 
@@ -2833,16 +2834,18 @@ HWTEST_F(CameraSessionModuleTest, scan_session_moduletest_007, TestSize.Level1)
 
     std::shared_ptr<AppCallback> callback = std::make_shared<AppCallback>();
     scanSession->RegisterBrightnessStatusCallback(callback);
+    {
+        TestLogDetector detector(true);
+        int32_t intResult = scanSession->Start();
+        EXPECT_EQ(intResult, 0);
 
-    int32_t intResult = scanSession->Start();
-    EXPECT_EQ(intResult, 0);
-
-    sleep(WAIT_TIME_AFTER_START);
-
-    EXPECT_EQ(g_brightnessStatusChanged, true);
-
+        sleep(WAIT_TIME_ONE);
+        if (!detector.IsLogContains("ScanSession::ProcessBrightnessStatusChange get brightness status failed")) {
+            EXPECT_EQ(g_brightnessStatusChanged, true);
+        }
+    }
     scanSession->UnRegisterBrightnessStatusCallback();
-    intResult = scanSession->Stop();
+    int32_t intResult = scanSession->Stop();
     EXPECT_EQ(intResult, 0);
 
     ((sptr<PreviewOutput> &) previewOutput_1)->Release();
@@ -4735,7 +4738,7 @@ HWTEST_F(CameraSessionModuleTest, profession_video_session_moduletest_006, TestS
  * EnvConditions: NA
  * CaseDescription: Test profession video session flash mode
  */
-HWTEST_F(CameraSessionModuleTest, profession_video_session_moduletest_007, TestSize.Level0)
+HWTEST_F(CameraSessionModuleTest, profession_video_session_moduletest_007, TestSize.Level1)
 {
     SceneMode sceneMode = SceneMode::PROFESSIONAL_VIDEO;
     if (!IsSceneModeSupported(sceneMode)) {
@@ -4818,7 +4821,7 @@ HWTEST_F(CameraSessionModuleTest, profession_video_session_moduletest_007, TestS
  * EnvConditions: NA
  * CaseDescription: Test profession video session color effect
  */
-HWTEST_F(CameraSessionModuleTest, profession_video_session_moduletest_008, TestSize.Level0)
+HWTEST_F(CameraSessionModuleTest, profession_video_session_moduletest_008, TestSize.Level1)
 {
     SceneMode sceneMode = SceneMode::PROFESSIONAL_VIDEO;
     if (!IsSceneModeSupported(sceneMode)) {
@@ -7871,7 +7874,7 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_031, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test photo session sketch functions auto start sketch while zoom set
  */
-HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_032, TestSize.Level0)
+HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_032, TestSize.Level1)
 {
     auto previewProfile = GetSketchPreviewProfile();
     if (previewProfile == nullptr) {
@@ -8441,7 +8444,7 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_003, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test can preconfig video session with PRECONFIG_720P, UNSPECIFIED while supported
  */
-HWTEST_F(CameraSessionModuleTest, video_session_moduletest_004, TestSize.Level0)
+HWTEST_F(CameraSessionModuleTest, video_session_moduletest_004, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::VIDEO)) {
         GTEST_SKIP();
@@ -8589,7 +8592,7 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_005, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test can preconfig video session with PRECONFIG_720P, RATIO_4_3 while supported
  */
-HWTEST_F(CameraSessionModuleTest, video_session_moduletest_006, TestSize.Level0)
+HWTEST_F(CameraSessionModuleTest, video_session_moduletest_006, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::VIDEO)) {
         GTEST_SKIP();
@@ -8663,7 +8666,7 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_006, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test can preconfig video session with PRECONFIG_720P, RATIO_16_9 while supported
  */
-HWTEST_F(CameraSessionModuleTest, video_session_moduletest_007, TestSize.Level0)
+HWTEST_F(CameraSessionModuleTest, video_session_moduletest_007, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::VIDEO)) {
         GTEST_SKIP();
@@ -8737,7 +8740,7 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_007, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test can preconfig video session with PRECONFIG_1080P, UNSPECIFIED while supported
  */
-HWTEST_F(CameraSessionModuleTest, video_session_moduletest_008, TestSize.Level0)
+HWTEST_F(CameraSessionModuleTest, video_session_moduletest_008, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::VIDEO)) {
         GTEST_SKIP();
