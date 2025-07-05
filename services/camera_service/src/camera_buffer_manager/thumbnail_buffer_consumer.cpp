@@ -19,7 +19,7 @@
 #include "camera_surface_buffer_util.h"
 #include "hstream_capture.h"
 #include "task_manager.h"
-#include "camera_server_photo_proxy.h"
+#include "moving_photo_proxy.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -77,12 +77,14 @@ void ThumbnailBufferConsumer::ExecuteOnBufferAvailable()
     MEDIA_DEBUG_LOG("ThumbnailListener ReleaseBuffer end");
     streamCapture->OnThumbnailAvailable(newSurfaceBuffer, timestamp);
     if (streamCapture->isYuvCapture_) {
-        sptr<CameraServerPhotoProxy> cameraPhotoProxy = new CameraServerPhotoProxy();
-        cameraPhotoProxy->GetServerPhotoProxyInfo(newSurfaceBuffer);
+        sptr<MovingPhotoIntf> movingPhotoProxy = MovingPhotoProxy::CreateMovingPhotoProxy();
+        CHECK_ERROR_RETURN_LOG(movingPhotoProxy == nullptr, "movingPhotoProxy is null");
+        movingPhotoProxy->CreateCameraServerProxy();
+        movingPhotoProxy->GetServerPhotoProxyInfo(newSurfaceBuffer);
         constexpr int32_t yuvFormat = 3;
-        cameraPhotoProxy->SetFormat(yuvFormat);
-        cameraPhotoProxy->SetImageFormat(yuvFormat);
-        streamCapture->UpdateMediaLibraryPhotoAssetProxy(cameraPhotoProxy);
+        movingPhotoProxy->SetFormat(yuvFormat);
+        movingPhotoProxy->SetImageFormat(yuvFormat);
+        streamCapture->UpdateMediaLibraryPhotoAssetProxy(movingPhotoProxy);
     }
     MEDIA_INFO_LOG("T_ExecuteOnBufferAvailable X");
 }

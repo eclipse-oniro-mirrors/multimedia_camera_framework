@@ -18,11 +18,12 @@
 #include <memory>
 #include <mutex>
 #include <uuid.h>
+#include <iomanip>
 
 #include "camera_log.h"
-#include "camera_server_photo_proxy.h"
 #include "camera_util.h"
 #include "camera/v1_4/types.h"
+#include "datetime_ex.h"
 #include "hstream_common.h"
 #include "ipc_skeleton.h"
 #include "metadata_utils.h"
@@ -36,6 +37,7 @@
 #include "hstream_operator.h"
 #include "display/graphic/common/v2_1/cm_color_space.h"
 #include "picture_proxy.h"
+#include "task_manager.h"
 #ifdef HOOK_CAMERA_OPERATOR
 #include "camera_rotate_plugin.h"
 #endif
@@ -1403,46 +1405,48 @@ void HStreamCapture::GetLocation(const std::shared_ptr<OHOS::Camera::CameraMetad
     }
 }
 
-void HStreamCapture::SetCameraPhotoProxyInfo(sptr<CameraServerPhotoProxy> cameraPhotoProxy)
+void HStreamCapture::SetCameraPhotoProxyInfo(sptr<MovingPhotoIntf> movingPhotoProxy)
 {
     MEDIA_INFO_LOG("SetCameraPhotoProxyInfo get captureStream");
-    cameraPhotoProxy->SetDisplayName(CreateDisplayName(format_ == OHOS_CAMERA_FORMAT_HEIC ? suffixHeif : suffixJpeg));
-    cameraPhotoProxy->SetShootingMode(GetMode());
+    movingPhotoProxy->SetDisplayName(CreateDisplayName(format_ == OHOS_CAMERA_FORMAT_HEIC ? suffixHeif : suffixJpeg));
+    movingPhotoProxy->SetShootingMode(GetMode());
     MEDIA_INFO_LOG("SetCameraPhotoProxyInfo quality:%{public}d, format:%{public}d",
-        cameraPhotoProxy->GetPhotoQuality(), cameraPhotoProxy->GetFormat());
+        movingPhotoProxy->GetPhotoQuality(), movingPhotoProxy->GetFormat());
     auto hStreamOperatorSptr_ = hStreamOperator_.promote();
     CHECK_ERROR_RETURN(hStreamOperatorSptr_ == nullptr);
 
     camera_metadata_item_t item;
     if (hStreamOperatorSptr_->GetDeviceAbilityByMeta(OHOS_ABILITY_MOVING_PHOTO_MICRO_VIDEO_ENHANCE, &item)) {
         uint8_t status = item.data.u8[0];
-        cameraPhotoProxy->SetStageVideoTaskStatus(status);
+        movingPhotoProxy->SetStageVideoTaskStatus(status);
     }
 }
 
-int32_t HStreamCapture::UpdateMediaLibraryPhotoAssetProxy(sptr<CameraServerPhotoProxy> cameraPhotoProxy)
+int32_t HStreamCapture::UpdateMediaLibraryPhotoAssetProxy(sptr<MovingPhotoIntf> movingPhotoProxy)
 {
     CAMERA_SYNC_TRACE;
+    CHECK_ERROR_RETURN_RET_LOG(movingPhotoProxy == nullptr, CAMERA_INVALID_ARG,
+        "HStreamCapture UpdateMediaLibraryPhotoAssetProxy input is null");
     CHECK_ERROR_RETURN_RET(
         isBursting_ || (GetMode() == static_cast<int32_t>(HDI::Camera::V1_3::OperationMode::PROFESSIONAL_PHOTO)),
         CAMERA_UNSUPPORTED);
     const int32_t updateMediaLibraryStep = 1;
-    if (!photoAssetProxy_.WaitForUnlock(cameraPhotoProxy->GetCaptureId(), updateMediaLibraryStep, GetMode(),
+    if (!photoAssetProxy_.WaitForUnlock(movingPhotoProxy->GetCaptureId(), updateMediaLibraryStep, GetMode(),
                                         std::chrono::seconds(1))) {
         return CAMERA_UNKNOWN_ERROR;
     }
-    std::shared_ptr<PhotoAssetIntf> photoAssetProxy = photoAssetProxy_.Get(cameraPhotoProxy->GetCaptureId());
+    std::shared_ptr<PhotoAssetIntf> photoAssetProxy = photoAssetProxy_.Get(movingPhotoProxy->GetCaptureId());
     CHECK_ERROR_RETURN_RET_LOG(
         photoAssetProxy == nullptr, CAMERA_UNKNOWN_ERROR, "HStreamCapture UpdateMediaLibraryPhotoAssetProxy failed");
     MEDIA_DEBUG_LOG(
-        "HStreamCapture UpdateMediaLibraryPhotoAssetProxy E captureId(%{public}d)", cameraPhotoProxy->GetCaptureId());
-    SetCameraPhotoProxyInfo(cameraPhotoProxy);
+        "HStreamCapture UpdateMediaLibraryPhotoAssetProxy E captureId(%{public}d)", movingPhotoProxy->GetCaptureId());
+    SetCameraPhotoProxyInfo(movingPhotoProxy);
     MEDIA_DEBUG_LOG("HStreamCapture AddPhotoProxy E");
-    photoAssetProxy->AddPhotoProxy(cameraPhotoProxy);
+    photoAssetProxy->AddPhotoProxy(movingPhotoProxy->GetCameraServerPhotoProxy());
     MEDIA_DEBUG_LOG("HStreamCapture AddPhotoProxy X");
-    photoAssetProxy_.IncreaseCaptureStep(cameraPhotoProxy->GetCaptureId());
+    photoAssetProxy_.IncreaseCaptureStep(movingPhotoProxy->GetCaptureId());
     MEDIA_DEBUG_LOG(
-        "HStreamCapture UpdateMediaLibraryPhotoAssetProxy X captureId(%{public}d)", cameraPhotoProxy->GetCaptureId());
+        "HStreamCapture UpdateMediaLibraryPhotoAssetProxy X captureId(%{public}d)", movingPhotoProxy->GetCaptureId());
     return CAMERA_OK;
 }
 
@@ -1452,30 +1456,30 @@ void HStreamCapture::SetStreamOperator(wptr<HStreamOperator> hStreamOperator)
 }
 
 int32_t HStreamCapture::CreateMediaLibrary(std::shared_ptr<PictureIntf> picture,
-    sptr<CameraServerPhotoProxy> &cameraPhotoProxy, std::string &uri, int32_t &cameraShotType, std::string &burstKey,
+    sptr<MovingPhotoIntf> &movingPhotoProxy, std::string &uri, int32_t &cameraShotType, std::string &burstKey,
     int64_t timestamp)
 {
     auto hStreamOperatorSptr_ = hStreamOperator_.promote();
     if (hStreamOperatorSptr_) {
         CHECK_ERROR_RETURN_RET_LOG(
-            cameraPhotoProxy == nullptr, CAMERA_UNKNOWN_ERROR, "CreateMediaLibrary with null PhotoProxy");
-        cameraPhotoProxy->SetLatitude(latitude_);
-        cameraPhotoProxy->SetLongitude(longitude_);
-        hStreamOperatorSptr_->CreateMediaLibrary(picture, cameraPhotoProxy, uri, cameraShotType, burstKey, timestamp);
+            movingPhotoProxy == nullptr, CAMERA_UNKNOWN_ERROR, "CreateMediaLibrary with null PhotoProxy");
+        movingPhotoProxy->SetLatitude(latitude_);
+        movingPhotoProxy->SetLongitude(longitude_);
+        hStreamOperatorSptr_->CreateMediaLibrary(picture, movingPhotoProxy, uri, cameraShotType, burstKey, timestamp);
     }
     return CAMERA_OK;
 }
 
-int32_t HStreamCapture::CreateMediaLibrary(sptr<CameraServerPhotoProxy> &cameraPhotoProxy, std::string &uri,
+int32_t HStreamCapture::CreateMediaLibrary(sptr<MovingPhotoIntf> &movingPhotoProxy, std::string &uri,
     int32_t &cameraShotType, std::string &burstKey, int64_t timestamp)
 {
     auto hStreamOperatorSptr_ = hStreamOperator_.promote();
     if (hStreamOperatorSptr_) {
         CHECK_ERROR_RETURN_RET_LOG(
-            cameraPhotoProxy == nullptr, CAMERA_UNKNOWN_ERROR, "CreateMediaLibrary with null PhotoProxy");
-        cameraPhotoProxy->SetLatitude(latitude_);
-        cameraPhotoProxy->SetLongitude(longitude_);
-        hStreamOperatorSptr_->CreateMediaLibrary(cameraPhotoProxy, uri, cameraShotType, burstKey, timestamp);
+            movingPhotoProxy == nullptr, CAMERA_UNKNOWN_ERROR, "CreateMediaLibrary with null PhotoProxy");
+        movingPhotoProxy->SetLatitude(latitude_);
+        movingPhotoProxy->SetLongitude(longitude_);
+        hStreamOperatorSptr_->CreateMediaLibrary(movingPhotoProxy, uri, cameraShotType, burstKey, timestamp);
     }
     return CAMERA_OK;
 }

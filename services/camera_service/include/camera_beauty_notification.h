@@ -71,7 +71,7 @@ private:
     std::mutex notificationMutex_;
     std::atomic<int32_t> beautyTimes_ = 0;
     std::atomic<int32_t> beautyStatus_ = 0;
-    std::shared_ptr<OHOS::Media::PixelMap> iconPixelMap_ = nullptr;
+    std::shared_ptr<Media::PixelMap> iconPixelMap_ = nullptr;
     std::shared_ptr<CameraDataShareHelper> cameraDataShareHelper_ = nullptr;
     Global::Resource::ResourceManager *resourceManager_ = nullptr;
     Global::Resource::ResConfig *resConfig_ = nullptr;
@@ -80,4 +80,4 @@ private:
 
 } // namespace CameraStandard
 } // namespace OHOS
-#endif // CAMERA_BEAUTY_NOTIFICATION_H
+#endif // CAMERA_BEAUTY_NOTIFICATION_H

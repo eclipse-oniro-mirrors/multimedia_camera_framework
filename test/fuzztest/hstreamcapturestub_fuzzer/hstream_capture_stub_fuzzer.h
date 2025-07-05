@@ -107,6 +107,18 @@ public:
     {
         return 0;
     }
+    int32_t UnSetPhotoAvailableCallback() override
+    {
+        return 0;
+    }
+    int32_t UnSetPhotoAssetAvailableCallback() override
+    {
+        return 0;
+    }
+    int32_t UnSetThumbnailCallback() override
+    {
+        return 0;
+    }
 };
 class HStreamCaptureStubFuzzer {
 public:

@@ -14,7 +14,7 @@
  */
 
 #include "camera_log.h"
-#include "camera_server_photo_proxy.h"
+#include "moving_photo_proxy.h"
 #include "camera_util.h"
 #include "gmock/gmock.h"
 #include "hstream_capture.h"
@@ -472,15 +472,16 @@ HWTEST_F(HStreamOperatorUnitTest, StartMovingPhotoEncode_002, TestSize.Level1)
  */
 HWTEST_F(HStreamOperatorUnitTest, SetCameraPhotoProxyInfo_001, TestSize.Level1)
 {
-    sptr<CameraServerPhotoProxy> proxy = new CameraServerPhotoProxy();
+    sptr<MovingPhotoIntf> movingPhotoProxy = MovingPhotoProxy::CreateMovingPhotoProxy();
+    movingPhotoProxy->CreateCameraServerProxy();
     int32_t cameraShotType;
     bool isBursting;
     std::string burstKey;
 
     auto capStream = GenStreamCapture();
-    capStream->burstkeyMap_[proxy->GetCaptureId()] = "key";
+    capStream->burstkeyMap_[movingPhotoProxy->GetCaptureId()] = "key";
     streamOp_->streamContainer_.AddStream(capStream);
-    streamOp_->SetCameraPhotoProxyInfo(proxy, cameraShotType, isBursting, burstKey);
+    streamOp_->SetCameraPhotoProxyInfo(movingPhotoProxy, cameraShotType, isBursting, burstKey);
     EXPECT_EQ(burstKey, "key");
 }
 

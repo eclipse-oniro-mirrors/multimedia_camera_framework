@@ -37,15 +37,15 @@ void CameraDemuxerFuzzer::CameraDemuxerFuzzTest(FuzzedDataProvider& fdp)
     fuzz_->Create(source, tracks);
 
     std::vector<uint8_t> memoryFlags = {
-        static_cast<uint8_t>(MemoryFlag::MEMORY_READ_ONLY),
-        static_cast<uint8_t>(MemoryFlag::MEMORY_WRITE_ONLY),
-        static_cast<uint8_t>(MemoryFlag::MEMORY_READ_WRITE)
+        static_cast<uint8_t>(Media::MemoryFlag::MEMORY_READ_ONLY),
+        static_cast<uint8_t>(Media::MemoryFlag::MEMORY_WRITE_ONLY),
+        static_cast<uint8_t>(Media::MemoryFlag::MEMORY_READ_WRITE)
     };
 
     uint8_t randomIndex = fdp.ConsumeIntegral<uint8_t>() % memoryFlags.size();
-    MemoryFlag selectedFlag = static_cast<MemoryFlag>(memoryFlags[randomIndex]);
+    Media::MemoryFlag selectedFlag = static_cast<Media::MemoryFlag>(memoryFlags[randomIndex]);
     std::shared_ptr<AVAllocator> avAllocator =
-        AVAllocatorFactory::CreateSharedAllocator(selectedFlag);
+        Media::AVAllocatorFactory::CreateSharedAllocator(selectedFlag);
     int32_t capacity = fdp.ConsumeIntegral<int32_t>();
     if (capacity <= 0) {
         MEDIA_INFO_LOG("Invalid capacity: %d", capacity);
@@ -76,7 +76,7 @@ void Test(uint8_t* data, size_t size)
         return;
     }
     FuzzedDataProvider fdp(data, size);
-    
+
     cameraDemuxer->CameraDemuxerFuzzTest(fdp);
 }
 } // namespace CameraStandard

@@ -12,8 +12,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
- 
+
+
 #include "accesstoken_kit.h"
 #include "access_token.h"
 #include "camera_log.h"
@@ -43,7 +43,7 @@ std::shared_ptr<ThermalStrategy> EventMonitorFuzzer::thermalstrategyfuzz_ = null
 std::shared_ptr<EventStatusChangeCommand> EventMonitorFuzzer::eventstatuschangecommandfuzz_ = nullptr;
 std::shared_ptr<EventsInfo> EventMonitorFuzzer::eventsinfofuzz_ = nullptr;
 std::shared_ptr<EventsMonitor> EventMonitorFuzzer::eventsmonitorfuzz_ = nullptr;
- 
+
 void EventMonitorFuzzer::EventMonitorCameraStrategyFuzzTest(FuzzedDataProvider& fdp)
 {
     camerastrategyfuzz_ = std::make_shared<CameraStrategy>();
@@ -123,7 +123,7 @@ void EventMonitorFuzzer::EventMonitorCameraStrategyFuzzTest(FuzzedDataProvider& 
     eventsmonitorfuzz_->SubscribeSystemAbility();
     eventsmonitorfuzz_->UnSubscribeSystemAbility();
 }
- 
+
 void Test(uint8_t* data, size_t size)
 {
     auto eventMonitor = std::make_unique<EventMonitorFuzzer>();
@@ -140,7 +140,7 @@ void Test(uint8_t* data, size_t size)
 }
 } // namespace CameraStandard
 } // namespace OHOS
- 
+
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(uint8_t *data, size_t size)
 {

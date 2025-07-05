@@ -14,7 +14,6 @@
  */
 
 #include "photo_process_result.h"
-
 #include "buffer_extra_data_impl.h"
 #include "dp_log.h"
 #include "dps.h"
@@ -22,6 +21,7 @@
 #include "events_monitor.h"
 #include "photo_process_command.h"
 #include "picture_proxy.h"
+#include "securec.h"
 #include "service_died_command.h"
 #include <optional>
 

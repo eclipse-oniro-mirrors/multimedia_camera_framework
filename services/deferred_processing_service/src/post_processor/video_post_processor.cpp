@@ -26,7 +26,6 @@
 #include "hdf_device_class.h"
 #include "iproxy_broker.h"
 #include "iservmgr_hdi.h"
-#include "mpeg_manager_factory.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -256,8 +255,8 @@ void VideoPostProcessor::ProcessRequest(const DeferredVideoWorkPtr& work)
         DP_CHECK_EXECUTE(processResult_, processResult_->OnError(videoId, error));
         return;
     }
-
-    auto startTime = mpegManager_->GetProcessTimeStamp();
+    DP_CHECK_ERROR_RETURN_LOG(mediaManagerProxy_ == nullptr, "MediaManager is nullptr.");
+    auto startTime = mediaManagerProxy_->MpegGetProcessTimeStamp();
     auto ret = session->ProcessVideo(videoId, startTime);
     DP_INFO_LOG("DPS_VIDEO: ProcessVideo to ive, videoId: %{public}s, startTime: %{public}" PRIu64 ", ret: %{public}d",
         videoId.c_str(), startTime, ret);
@@ -318,13 +317,14 @@ DpsError VideoPostProcessor::PrepareStreams(const std::string& videoId, const in
 // LCOV_EXCL_START
 bool VideoPostProcessor::ProcessStream(const StreamDescription& stream)
 {
+    DP_CHECK_ERROR_RETURN_RET_LOG(mediaManagerProxy_ == nullptr, false, "MediaManager is nullptr.");
     DP_INFO_LOG("DPS_VIDEO: streamId: %{public}d, stream type: %{public}d", stream.streamId, stream.type);
     sptr<Surface> surface = nullptr;
     if (stream.type == HDI::Camera::V1_3::MEDIA_STREAM_TYPE_VIDEO) {
-        surface = mpegManager_->GetSurface();
+        surface = mediaManagerProxy_->MpegGetSurface();
     } else if (stream.type == HDI::Camera::V1_3::MEDIA_STREAM_TYPE_MAKER) {
-        surface = mpegManager_->GetMakerSurface();
-        DP_CHECK_EXECUTE(mpegManager_, mpegManager_->SetMarkSize(stream.width * stream.height));
+        surface = mediaManagerProxy_->MpegGetMakerSurface();
+        DP_CHECK_EXECUTE(mediaManagerProxy_, mediaManagerProxy_->MpegSetMarkSize(stream.width * stream.height));
     }
     DP_CHECK_ERROR_RETURN_RET_LOG(surface == nullptr, false, "Surface is nullptr.");
 
@@ -381,25 +381,25 @@ HDI::Camera::V1_0::StreamIntent VideoPostProcessor::GetIntent(HDI::Camera::V1_3:
 
 bool VideoPostProcessor::StartMpeg(const std::string& videoId, const sptr<IPCFileDescriptor>& inputFd)
 {
-    mpegManager_ = MpegManagerFactory::GetInstance().Acquire(videoId, inputFd);
-    DP_CHECK_ERROR_RETURN_RET_LOG(mpegManager_ == nullptr, false, "mpeg manager is nullptr.");
+    mediaManagerProxy_ = MediaManagerProxy::CreateMediaManagerProxy();
+    DP_CHECK_ERROR_RETURN_RET_LOG(mediaManagerProxy_ == nullptr, false, "MediaManagerProxy is nullptr.");
+    mediaManagerProxy_->MpegAcquire(videoId, inputFd);
     DP_DEBUG_LOG("DPS_VIDEO: Acquire MpegManager.");
     return true;
 }
 
 bool VideoPostProcessor::StopMpeg(const MediaResult result, const DeferredVideoWorkPtr& work)
 {
-    DP_CHECK_ERROR_RETURN_RET_LOG(mpegManager_ == nullptr, false, "mpegManager is nullptr");
+    DP_CHECK_ERROR_RETURN_RET_LOG(mediaManagerProxy_ == nullptr, false, "mpegManager is nullptr");
     // LCOV_EXCL_START
-    mpegManager_->UnInit(result);
-
+    mediaManagerProxy_->MpegUnInit(static_cast<int32_t>(result));
     if (result != MediaResult::SUCCESS) {
         ReleaseMpeg();
         return true;
     }
 
     auto videoId = work->GetDeferredVideoJob()->GetVideoId();
-    auto resultFd = mpegManager_->GetResultFd();
+    auto resultFd = mediaManagerProxy_->MpegGetResultFd();
     DP_CHECK_ERROR_RETURN_RET_LOG(resultFd == nullptr, false,
         "Get video fd failed, videoId: %{public}s", videoId.c_str());
 
@@ -419,8 +419,9 @@ bool VideoPostProcessor::StopMpeg(const MediaResult result, const DeferredVideoW
 // LCOV_EXCL_START
 void VideoPostProcessor::ReleaseMpeg()
 {
-    MpegManagerFactory::GetInstance().Release(mpegManager_);
-    mpegManager_.reset();
+    DP_CHECK_ERROR_RETURN_LOG(mediaManagerProxy_ == nullptr, "mpegManager is nullptr");
+    mediaManagerProxy_->MpegRelease();
+    MediaManagerProxy::Release();
     DP_INFO_LOG("DPS_VIDEO: Release MpegManager.");
 }
 // LCOV_EXCL_STOP
@@ -472,7 +473,7 @@ void VideoPostProcessor::OnProcessDone(const std::string& videoId, std::unique_p
     DP_CHECK_ERROR_RETURN_LOG(work == nullptr, "video work is nullptr.");
     // LCOV_EXCL_START
     if (userInfo) {
-        mpegManager_->AddUserMeta(std::move(userInfo));
+        DP_CHECK_EXECUTE(mediaManagerProxy_, mediaManagerProxy_->MpegAddUserMeta(std::move(userInfo)));
     }
     auto ret = StopMpeg(MediaResult::SUCCESS, work);
     if (!ret) {

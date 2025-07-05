@@ -17,6 +17,15 @@ import("../multimedia_camera_framework.gni")
 config("camera_utils_config") {
   include_dirs = [
     "utils",
+    "utils/av_codec/include",
+    "utils/image_framework/include",
+    "utils/media_manager/include",
+    "utils/moving_photo/include",
+    "utils/moving_photo/include/avcodec",
+    "utils/moving_photo/include/common",
+    "${multimedia_camera_framework_path}/common",
+    "${multimedia_camera_framework_path}/dynamic_libs/moving_photo/include/common",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include",
     "${multimedia_camera_framework_path}/services/camera_service/include",
     "${multimedia_camera_framework_path}/services/camera_service/binder/base/include",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base",
@@ -54,15 +63,26 @@ ohos_shared_library("camera_utils") {
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/timer/time_broker.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/timer/camera_deferred_timer.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/utils/dp_utils.cpp",
+    "utils/av_codec/src/av_codec_proxy.cpp",
     "utils/camera_dynamic_loader.cpp",
     "utils/camera_metadata.cpp",
     "utils/camera_simple_timer.cpp",
+    "utils/camera_timer.cpp",
     "utils/camera_xcollie.cpp",
+    "utils/image_framework/src/image_source_proxy.cpp",
+    "utils/media_manager/src/media_manager_proxy.cpp",
+    "utils/moving_photo/src/moving_photo_proxy.cpp",
     "utils/photo_asset_proxy.cpp",
     "utils/picture_proxy.cpp",
   ]
 
   external_deps = [
+    "audio_framework:audio_capturer",
+    "audio_framework:audio_client",
+    "audio_framework:offline_audio_effect",
+    "av_codec:av_codec_client",
+    "av_codec:native_media_acodec",
+    "av_codec:native_media_codecbase",
     "bundle_framework:appexecfwk_base",
     "bundle_framework:appexecfwk_core",
     "c_utils:utils",
@@ -73,7 +93,10 @@ ohos_shared_library("camera_utils") {
     "hilog:libhilog",
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
+    "image_framework:image_native",
     "ipc:ipc_core",
+    "media_foundation:media_foundation",
+    "media_foundation:native_media_core",
     "media_library:media_library",
     "samgr:samgr_proxy",
   ]
@@ -90,7 +113,11 @@ ohos_shared_library("camera_utils") {
     defines += [ "CAMERA_USE_POWER" ]
   }
 
-  public_configs = [ ":camera_utils_config" ]
+  public_configs = [
+    ":camera_utils_config",
+    "../services/camera_service/idls:camera_sa_idl_config",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/idls:deferred_processing_service_idl_config",
+  ]
   part_name = "camera_framework"
   subsystem_name = "multimedia"
 }

@@ -22,7 +22,7 @@
 #include "task_manager.h"
 #include "picture_assembler.h"
 #include "dp_utils.h"
-#include "camera_server_photo_proxy.h"
+#include "moving_photo_proxy.h"
 #include "picture_proxy.h"
 #include "camera_report_dfx_uitls.h"
 
@@ -80,8 +80,10 @@ void PhotoAssetBufferConsumer::ExecuteOnBufferAvailable()
     int32_t auxiliaryCount = CameraSurfaceBufferUtil::GetImageCount(newSurfaceBuffer);
     MEDIA_INFO_LOG("OnBufferAvailable captureId:%{public}d auxiliaryCount:%{public}d", captureId, auxiliaryCount);
     // create photoProxy
-    sptr<CameraServerPhotoProxy> cameraPhotoProxy = new CameraServerPhotoProxy();
-    cameraPhotoProxy->GetServerPhotoProxyInfo(newSurfaceBuffer);
+    sptr<MovingPhotoIntf> movingPhotoProxy = MovingPhotoProxy::CreateMovingPhotoProxy();
+    CHECK_ERROR_RETURN_LOG(movingPhotoProxy == nullptr, "Create MovingPhotoProxy failed");
+    movingPhotoProxy->CreateCameraServerProxy();
+    movingPhotoProxy->GetServerPhotoProxyInfo(newSurfaceBuffer);
 
     std::string uri;
     int32_t cameraShotType = 0;
@@ -91,7 +93,7 @@ void PhotoAssetBufferConsumer::ExecuteOnBufferAvailable()
     if (isYuv) {
         StartWaitAuxiliaryTask(captureId, auxiliaryCount, timestamp, newSurfaceBuffer);
     } else {
-        streamCapture->CreateMediaLibrary(cameraPhotoProxy, uri, cameraShotType, burstKey, timestamp);
+        streamCapture->CreateMediaLibrary(movingPhotoProxy, uri, cameraShotType, burstKey, timestamp);
         MEDIA_INFO_LOG("CreateMediaLibrary uri:%{public}s", uri.c_str());
         streamCapture->OnPhotoAssetAvailable(captureId, uri, cameraShotType, burstKey);
     }
@@ -112,10 +114,12 @@ void PhotoAssetBufferConsumer::StartWaitAuxiliaryTask(
         streamCapture->captureIdCountMap_[captureId] = auxiliaryCount;
         streamCapture->captureIdAuxiliaryCountMap_[captureId]++;
         MEDIA_INFO_LOG("PhotoAssetBufferConsumer StartWaitAuxiliaryTask 4 captureId = %{public}d", captureId);
-        sptr<CameraServerPhotoProxy> photoProxy = new CameraServerPhotoProxy();
-        photoProxy->GetServerPhotoProxyInfo(newSurfaceBuffer);
-        photoProxy->SetDisplayName(CreateDisplayName(suffixJpeg));
-        streamCapture->photoProxyMap_[captureId] = photoProxy;
+        sptr<MovingPhotoIntf> movingPhotoProxy = MovingPhotoProxy::CreateMovingPhotoProxy();
+        CHECK_ERROR_RETURN_LOG(movingPhotoProxy == nullptr, "Create MovingPhotoProxy failed");
+        movingPhotoProxy->CreateCameraServerProxy();
+        movingPhotoProxy->GetServerPhotoProxyInfo(newSurfaceBuffer);
+        movingPhotoProxy->SetDisplayName(CreateDisplayName(suffixJpeg));
+        streamCapture->photoProxyMap_[captureId] = movingPhotoProxy;
         MEDIA_INFO_LOG("PhotoAssetBufferConsumer StartWaitAuxiliaryTask 5");
 
         // create and save pictureProxy
