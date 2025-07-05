@@ -23,7 +23,6 @@
 
 namespace OHOS {
 namespace CameraStandard {
-constexpr int32_t FRAMERATE_120 = 120;
 VideoOutput::VideoOutput(sptr<IBufferProducer> bufferProducer)
     : CaptureOutput(CAPTURE_OUTPUT_TYPE_VIDEO, StreamType::REPEAT, bufferProducer, nullptr)
 {
@@ -127,7 +126,7 @@ int32_t VideoOutput::Start()
         CameraErrorCode::SESSION_NOT_CONFIG, "VideoOutput Failed to Start, session not commited");
     CHECK_ERROR_RETURN_RET_LOG(GetStream() == nullptr,
         CameraErrorCode::SERVICE_FATL_ERROR, "VideoOutput Failed to Start!, GetStream is nullptr");
-    if (!GetFrameRateRange().empty() && GetFrameRateRange()[0] >= FRAMERATE_120) {
+    if (GetIsSlowMotionOrHighFrameRateMode()) {
         MEDIA_INFO_LOG("EnableFaceDetection is call");
         session->EnableFaceDetection(false);
     }
@@ -159,7 +158,7 @@ int32_t VideoOutput::Stop()
         CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "VideoOutput Failed to Stop!, errCode: %{public}d", errCode);
         isVideoStarted_ = false;
     }
-    if (!GetFrameRateRange().empty() && GetFrameRateRange()[0] >= FRAMERATE_120) {
+    if (GetIsSlowMotionOrHighFrameRateMode()) {
         auto session = GetSession();
         CHECK_ERROR_RETURN_RET_LOG(session == nullptr || !session->IsSessionCommited(),
             CameraErrorCode::SESSION_NOT_CONFIG, "VideoOutput Failed to Start, session not commited");
@@ -658,6 +657,16 @@ int32_t VideoOutput::EnableAutoVideoFrameRate(bool enable)
     session->EnableAutoFrameRate(enable);
     session->UnlockForControl();
     return CameraErrorCode::SUCCESS;
+}
+
+bool VideoOutput::GetIsSlowMotionOrHighFrameRateMode()
+{
+    return isSlowMotionOrHighFrameRateMode_;
+}
+
+void VideoOutput::SetIsSlowMotionOrHighFrameRateMode(bool isSlowMotionOrHighFrameRateMode)
+{
+    isSlowMotionOrHighFrameRateMode_ = isSlowMotionOrHighFrameRateMode;
 }
 } // namespace CameraStandard
 } // namespace OHOS
