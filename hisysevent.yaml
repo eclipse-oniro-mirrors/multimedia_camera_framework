@@ -81,6 +81,7 @@ PERFORMANCE_START:
   CUR_CAMERA_ID: {type: STRING, desc: curent camera id}
   START_TYPE: {type: STRING, desc: start camera type}
   CUR_MODE: {type: INT32, desc: curent mode}
+  MSG: {type: STRING, desc: message}
 
 PERFORMANCE_SWITCH_CAMERA:
   __BASE: {type: STATISTIC, level: MINOR, desc: Report camera switch camera performance Start from camera service preSwitchCamera End with preview on first frame, preserve: true}

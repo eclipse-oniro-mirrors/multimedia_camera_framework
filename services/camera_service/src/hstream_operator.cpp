@@ -294,7 +294,7 @@ int32_t HStreamOperator::AddOutput(StreamType streamType, sptr<IStreamCommon> st
     } else if (streamType == StreamType::DEPTH) {
         errorCode = AddOutputStream(static_cast<HStreamDepthData*>(stream.GetRefPtr()));
     }
-    MEDIA_INFO_LOG("CaptureSession::AddOutput with with %{public}d, rc = %{public}d", streamType, errorCode);
+    MEDIA_INFO_LOG("HStreamOperator::AddOutput with with %{public}d, rc = %{public}d", streamType, errorCode);
     return errorCode;
 }
 
@@ -1504,6 +1504,7 @@ int32_t HStreamOperator::OnCaptureStarted(int32_t captureId, const std::vector<i
             return CAMERA_INVALID_ARG;
         } else if (curStream->GetStreamType() == StreamType::REPEAT) {
             CastStream<HStreamRepeat>(curStream)->OnFrameStarted();
+            CameraReportUtils::GetInstance().SetStreamInfo(streamContainer_.GetAllStreams());
             CameraReportUtils::GetInstance().SetOpenCamPerfEndInfo();
             CameraReportUtils::GetInstance().SetModeChangePerfEndInfo();
             CameraReportUtils::GetInstance().SetSwitchCamPerfEndInfo();
