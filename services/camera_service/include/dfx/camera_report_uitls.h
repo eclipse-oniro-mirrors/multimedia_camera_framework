@@ -19,6 +19,7 @@
 #include <map>
 #include <mutex>
 #include <string>
+#include "hstream_repeat.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -81,6 +82,7 @@ public:
                                    CallerInfo callerInfo);
     void ReportUserBehaviorAddDevice(std::string behaviorName, std::string value, CallerInfo callerInfo);
 
+    void SetStreamInfo(const std::list<sptr<HStreamCommon>>& allStreams);
     void SetOpenCamPerfPreInfo(const std::string& cameraId, CallerInfo caller);
     void SetOpenCamPerfStartInfo(const std::string& cameraId, CallerInfo caller);
     void SetOpenCamPerfEndInfo();
@@ -109,6 +111,7 @@ private:
     int32_t curMode_;
 
     std::string profile_;
+    std::string streamInfo_{""};
 
     uint64_t openCamPerfStartTime_;
     uint64_t openCamPerfEndTime_;

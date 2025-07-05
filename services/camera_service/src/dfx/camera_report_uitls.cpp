@@ -93,6 +93,33 @@ void CameraReportUtils::SetOpenCamPerfStartInfo(const string& cameraId, CallerIn
     }
 }
 
+void CameraReportUtils::SetStreamInfo(const std::list<sptr<HStreamCommon>>& allStreams)
+{
+    unique_lock<mutex> lock(mutex_);
+    stringstream ss;
+    bool isFirst = true;
+    for (auto& curStream : allStreams) {
+        CHECK_EXECUTE(!isFirst, ss << ",");
+        isFirst = false;
+        if (curStream->GetStreamType() == StreamType::REPEAT) {
+            ss << "\'RepeatStreamType:" <<
+                static_cast<int32_t>(CastStream<HStreamRepeat>(curStream)->GetRepeatStreamType()) <<
+                ",format:" << curStream->format_ << ",width:" << curStream->width_ << ",height:" <<
+                curStream->height_ << "\'";
+        } else if (curStream->GetStreamType() == StreamType::METADATA) {
+            ss << "\'MetadataStream, format:" << curStream->format_ << ",width:" << curStream->width_ <<
+                ",height:" << curStream->height_ << "\'";
+        } else if (curStream->GetStreamType() == StreamType::CAPTURE) {
+            ss << "\'CaptureStream, format:" << curStream->format_ << ",width:" << curStream->width_ <<
+                ",height:" << curStream->height_ << "\'";
+        } else if (curStream->GetStreamType() == StreamType::DEPTH) {
+            ss << "\'DepthStream, format:" << curStream->format_ << ",width:" << curStream->width_ <<
+                ",height:" << curStream->height_ << "\'";
+        }
+    }
+    streamInfo_ = ss.str();
+}
+
 void CameraReportUtils::SetOpenCamPerfEndInfo()
 {
     MEDIA_DEBUG_LOG("SetOpenCamPerfEndInfo");
@@ -130,7 +157,8 @@ void CameraReportUtils::ReportOpenCameraPerf(uint64_t costTime, const string& st
         "COST_TIME", costTime,
         "CUR_CAMERA_ID", cameraId_,
         "START_TYPE", startType,
-        "CUR_MODE", curMode_);
+        "CUR_MODE", curMode_,
+        "MSG", streamInfo_);
 }
 
 void CameraReportUtils::SetModeChangePerfStartInfo(int32_t preMode, CallerInfo caller)
