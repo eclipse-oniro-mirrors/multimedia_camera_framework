@@ -119,7 +119,7 @@ void AvcodecTaskManager::SetVideoFd(
     int64_t timestamp, std::shared_ptr<PhotoAssetIntf> photoAssetProxy, int32_t captureId)
 {
     lock_guard<mutex> lock(videoFdMutex_);
-    MEDIA_INFO_LOG("Set timestamp: %{public}" PRId64 ", captureId: %{public}d", timestamp, captureId);
+    MEDIA_INFO_LOG("Set timestamp: %{public}" PRIu64 ", captureId: %{public}d", timestamp, captureId);
     videoFdMap_.insert(std::make_pair(captureId, std::make_pair(timestamp, photoAssetProxy)));
     MEDIA_INFO_LOG("video map size:%{public}zu", videoFdMap_.size());
     cvEmpty_.notify_all();
@@ -273,16 +273,16 @@ size_t AvcodecTaskManager::FindIdrFrameIndex(vector<sptr<FrameRecord>> frameReco
     int64_t clearVideoStartTime = shutterTime - preBufferDuration_;
     if (mPStartTimeMap_.count(captureId) && mPStartTimeMap_[captureId] <= shutterTime
         && mPStartTimeMap_[captureId] > clearVideoStartTime) {
-        MEDIA_INFO_LOG("set deblur start time is %{public}" PRId64, mPStartTimeMap_[captureId]);
+        MEDIA_INFO_LOG("set deblur start time is %{public}" PRIu64, mPStartTimeMap_[captureId]);
         clearVideoStartTime = mPStartTimeMap_[captureId];
-        MEDIA_INFO_LOG("clearVideoEndTime is %{public}" PRId64, NanosecToMicrosec(clearVideoEndTime));
+        MEDIA_INFO_LOG("clearVideoEndTime is %{public}" PRIu64, NanosecToMicrosec(clearVideoEndTime));
         int64_t absoluteValue = abs(clearVideoEndTime - clearVideoStartTime);
         int64_t deblurThreshold = 264000000L;
         isDeblurStartTime = absoluteValue < deblurThreshold;
     }
     mPStartTimeMap_.erase(captureId);
     startTimeLock.unlock();
-    MEDIA_INFO_LOG("FindIdrFrameIndex captureId : %{public}d, clearVideoStartTime : %{public}" PRId64,
+    MEDIA_INFO_LOG("FindIdrFrameIndex captureId : %{public}d, clearVideoStartTime : %{public}" PRIu64,
         captureId, clearVideoStartTime);
     size_t idrIndex = frameRecords.size();
     if (isDeblurStartTime) {
@@ -333,13 +333,13 @@ void AvcodecTaskManager::ChooseVideoBuffer(vector<sptr<FrameRecord>> frameRecord
     int64_t clearVideoEndTime = shutterTime + postBufferDuration_;
     if (mPEndTimeMap_.count(captureId) && mPEndTimeMap_[captureId] >= shutterTime
         && mPEndTimeMap_[captureId] < clearVideoEndTime) {
-        MEDIA_INFO_LOG("set deblur end time is %{public}" PRId64, mPEndTimeMap_[captureId]);
+        MEDIA_INFO_LOG("set deblur end time is %{public}" PRIu64, mPEndTimeMap_[captureId]);
         clearVideoEndTime = mPEndTimeMap_[captureId];
     }
     mPEndTimeMap_.erase(captureId);
     endTimeLock.unlock();
-    MEDIA_INFO_LOG("ChooseVideoBuffer captureId : %{public}d, shutterTime : %{public}" PRId64 ", "
-        "clearVideoEndTime : %{public}" PRId64, captureId, shutterTime, clearVideoEndTime);
+    MEDIA_INFO_LOG("ChooseVideoBuffer captureId : %{public}d, shutterTime : %{public}" PRIu64 ", "
+        "clearVideoEndTime : %{public}" PRIu64, captureId, shutterTime, clearVideoEndTime);
     size_t idrIndex = FindIdrFrameIndex(frameRecords, clearVideoEndTime, shutterTime, captureId);
     size_t frameCount = 0;
     for (size_t index = idrIndex; index < frameRecords.size(); ++index) {
