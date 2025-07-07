@@ -15,7 +15,7 @@
 
 #include "camera_log.h"
 #include "frame_record_unittest.h"
-#include "common/frame_record.h"
+#include "avcodec/common/frame_record.h"
 #include "hcamera_service.h"
 #include "surface_buffer.h"
 

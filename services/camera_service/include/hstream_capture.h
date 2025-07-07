@@ -37,7 +37,7 @@ using OHOS::HDI::Camera::V1_0::BufferProducerSequenceable;
 using namespace OHOS::HDI::Camera::V1_0;
 class PhotoAssetIntf;
 class PictureIntf;
-class MovingPhotoIntf;
+class CameraServerPhotoProxy;
 class HStreamOperator;
 class PictureAssembler;
 namespace DeferredProcessing {
@@ -120,7 +120,7 @@ public:
     void CheckResetBurstKey(int32_t captureId);
     int32_t SetCameraPhotoRotation(bool isEnable) override;
     int32_t CreateMediaLibraryPhotoAssetProxy(int32_t captureId);
-    int32_t UpdateMediaLibraryPhotoAssetProxy(sptr<MovingPhotoIntf> movingPhotoProxy);
+    int32_t UpdateMediaLibraryPhotoAssetProxy(sptr<CameraServerPhotoProxy> photoProxy);
     std::shared_ptr<PhotoAssetIntf> GetPhotoAssetInstance(int32_t captureId);
     bool GetAddPhotoProxyEnabled();
     int32_t AcquireBufferToPrepareProxy(int32_t captureId);
@@ -129,9 +129,9 @@ public:
     void SwitchToOffline();
     bool IsHasSwitchToOffline();
     void SetStreamOperator(wptr<HStreamOperator> hStreamOperator);
-    int32_t CreateMediaLibrary(sptr<MovingPhotoIntf>& movingPhotoProxy, std::string& uri, int32_t& cameraShotType,
+    int32_t CreateMediaLibrary(sptr<CameraServerPhotoProxy>& photoProxy, std::string& uri, int32_t& cameraShotType,
         std::string& burstKey, int64_t timestamp);
-    int32_t CreateMediaLibrary(std::shared_ptr<PictureIntf> picture, sptr<MovingPhotoIntf> &movingPhotoProxy,
+    int32_t CreateMediaLibrary(std::shared_ptr<PictureIntf> picture, sptr<CameraServerPhotoProxy> &photoProxy,
         std::string &uri, int32_t &cameraShotType, std::string& burstKey, int64_t timestamp);
     int32_t RequireMemorySize(int32_t memSize);
 
@@ -157,7 +157,7 @@ public:
     std::map<int32_t, int32_t> captureIdCountMap_;
     std::map<int32_t, uint32_t> captureIdHandleMap_;
 
-    std::map<int32_t, sptr<MovingPhotoIntf>> photoProxyMap_;
+    std::map<int32_t, sptr<CameraServerPhotoProxy>> photoProxyMap_;
     std::map<int32_t, sptr<SurfaceBuffer>> captureIdGainmapMap_;
     SafeMap<int32_t, sptr<SurfaceBuffer>> captureIdDepthMap_ = {};
     std::map<int32_t, sptr<SurfaceBuffer>> captureIdExifMap_;
@@ -172,7 +172,7 @@ private:
     void EndBurstCapture(const std::shared_ptr<OHOS::Camera::CameraMetadata>& captureMetadataSetting_);
     void ProcessCaptureInfoPhoto(CaptureInfo& captureInfoPhoto,
         const std::shared_ptr<OHOS::Camera::CameraMetadata>& captureSettings, int32_t captureId);
-    void SetCameraPhotoProxyInfo(sptr<MovingPhotoIntf> movingPhotoProxy);
+    void SetCameraPhotoProxyInfo(sptr<CameraServerPhotoProxy> cameraPhotoProxy);
     sptr<IStreamCaptureCallback> streamCaptureCallback_;
     sptr<IStreamCapturePhotoCallback> photoAvaiableCallback_;
     sptr<IStreamCapturePhotoAssetCallback> photoAssetAvaiableCallback_;

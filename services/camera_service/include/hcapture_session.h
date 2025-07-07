@@ -37,10 +37,15 @@
 #include "hstream_operator.h"
 #include "icapture_session.h"
 #include "istream_common.h"
+#include "camera_photo_proxy.h"
 #include "iconsumer_surface.h"
 #include "blocking_queue.h"
+#include "audio_capturer.h"
+#include "audio_info.h"
+#include "avcodec_task_manager.h"
+#include "moving_photo_video_cache.h"
 #include "drain_manager.h"
-#include "moving_photo_proxy.h"
+#include "audio_capturer_session.h"
 #include "safe_map.h"
 #ifdef CAMERA_USE_SENSOR
 #include "sensor_agent.h"
@@ -154,7 +159,7 @@ public:
     int32_t EnableMovingPhotoMirror(bool isMirror, bool isConfig) override;
     std::shared_ptr<PhotoAssetIntf> ProcessPhotoProxy(int32_t captureId,
         std::shared_ptr<PictureIntf> picturePtr, bool isBursting,
-        sptr<MovingPhotoIntf> movingPhotoProxy, std::string &uri);
+        sptr<CameraServerPhotoProxy> cameraPhotoProxy, std::string &uri);
     int32_t SetFeatureMode(int32_t featureMode) override;
     void GetOutputStatus(int32_t &status);
     int32_t SetPreviewRotation(const std::string &deviceClass) override;

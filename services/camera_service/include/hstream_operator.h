@@ -36,7 +36,8 @@
 #include "hstream_repeat.h"
 #include "icapture_session.h"
 #include "istream_common.h"
-#include "moving_photo_surface_wrapper.h"
+#include "camera_photo_proxy.h"
+#include "moving_photo/moving_photo_surface_wrapper.h"
 #include "surface.h"
 #include "v1_0/istream_operator.h"
 #include "v1_1/istream_operator.h"
@@ -45,8 +46,12 @@
 #include "hcamera_restore_param.h"
 #include "iconsumer_surface.h"
 #include "blocking_queue.h"
+#include "audio_capturer.h"
+#include "audio_info.h"
+#include "avcodec_task_manager.h"
+#include "moving_photo_video_cache.h"
 #include "drain_manager.h"
-#include "moving_photo_proxy.h"
+#include "audio_capturer_session.h"
 #include "safe_map.h"
 #include "display_manager.h"
 #ifdef CAMERA_USE_SENSOR
@@ -57,13 +62,14 @@ namespace OHOS {
 namespace CameraStandard {
 using OHOS::HDI::Camera::V1_0::CaptureEndedInfo;
 using OHOS::HDI::Camera::V1_0::CaptureErrorInfo;
+using namespace AudioStandard;
 using namespace std::chrono;
 using namespace DeferredProcessing;
 using namespace Media;
 constexpr uint32_t OPERATOR_DEFAULT_ENCODER_THREAD_NUMBER = 1;
 class PermissionStatusChangeCb;
 class CameraUseStateChangeCb;
-class MovingPhotoIntf;
+class CameraServerPhotoProxy;
 
 class StreamContainer {
 public:
@@ -126,7 +132,7 @@ class SessionDrainImageCallback : public DrainImageCallback {
 public:
     explicit SessionDrainImageCallback(std::vector<sptr<FrameRecord>>& frameCacheList,
                                        wptr<MovingPhotoListener> listener,
-                                       wptr<MovingPhotoIntf> movingPhotoIntf,
+                                       wptr<MovingPhotoVideoCache> cache,
                                        uint64_t timestamp,
                                        int32_t rotation,
                                        int32_t captureId);
@@ -138,7 +144,7 @@ private:
     std::mutex mutex_;
     std::vector<sptr<FrameRecord>> frameCacheList_;
     wptr<MovingPhotoListener> listener_;
-    wptr<MovingPhotoIntf> movingPhotoIntf_;
+    wptr<MovingPhotoVideoCache> videoCache_;
     uint64_t timestamp_;
     int32_t rotation_;
     int32_t captureId_;
@@ -160,11 +166,11 @@ public:
     int32_t GetCurrentStreamInfos(std::vector<StreamInfo_V1_1>& streamInfos);
     std::list<sptr<HStreamCommon>> GetAllStreams();
     int32_t EnableMovingPhotoMirror(bool isMirror, bool isConfig);
-    int32_t CreateMediaLibrary(const sptr<MovingPhotoIntf>& movingPhotoProxy, std::string &uri,
+    int32_t CreateMediaLibrary(const sptr<CameraServerPhotoProxy> &photoProxy, std::string &uri,
                                int32_t &cameraShotType, std::string &burstKey, int64_t timestamp);
-    int32_t CreateMediaLibrary(std::shared_ptr<PictureIntf> picture, const sptr<MovingPhotoIntf> &movingPhotoProxy,
+    int32_t CreateMediaLibrary(std::shared_ptr<PictureIntf> picture, const sptr<CameraServerPhotoProxy> &photoProxy,
         std::string &uri, int32_t &cameraShotType, std::string& burstKey, int64_t timestamp);
-    void SetCameraPhotoProxyInfo(sptr<MovingPhotoIntf> movingPhotoProxy, int32_t &cameraShotType,
+    void SetCameraPhotoProxyInfo(sptr<CameraServerPhotoProxy> cameraPhotoProxy, int32_t &cameraShotType,
         bool &isBursting, std::string &burstKey);
     int32_t LinkInputAndOutputs(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings, int32_t opMode);
     const sptr<HStreamCommon> GetStreamByStreamID(int32_t streamId);
@@ -256,7 +262,7 @@ public:
 
     uint32_t preCacheFrameCount_ = CACHE_FRAME_COUNT;
     uint32_t postCacheFrameCount_ = CACHE_FRAME_COUNT;
-    sptr<MovingPhotoIntf> movingPhotoProxy_;
+    sptr<AvcodecTaskManager> taskManager_;
     std::vector<int32_t> GetFrameRateRange();
 
     class DisplayRotationListener : public OHOS::Rosen::DisplayManager::IDisplayListener {
@@ -323,7 +329,7 @@ private:
     void ConfigPayload(uint32_t pid, uint32_t tid, const char *bundleName, int32_t qosLevel,
         std::unordered_map<std::string, std::string> &mapPayload);
     std::shared_ptr<PhotoAssetIntf> ProcessPhotoProxy(int32_t captureId, std::shared_ptr<PictureIntf> picturePtr,
-        bool isBursting, sptr<MovingPhotoIntf> movingPhotoProxy, std::string& uri);
+        bool isBursting, sptr<CameraServerPhotoProxy> cameraPhotoProxy, std::string& uri);
     void InitDefaultColortSpace(SceneMode opMode);
 
 #ifdef CAMERA_USE_SENSOR
@@ -358,7 +364,9 @@ private:
     std::mutex streamOperatorLock_;
     sptr<MovingPhotoListener> livephotoListener_;
     sptr<MovingPhotoMetaListener> livephotoMetaListener_;
+    sptr<AudioCapturerSession> audioCapturerSession_;
     sptr<Surface> metaSurface_ = nullptr;
+    sptr<MovingPhotoVideoCache> videoCache_;
     std::mutex displayListenerLock_;
     sptr<DisplayRotationListener> displayListener_;
     sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator_ = nullptr;

@@ -49,7 +49,7 @@ ohos_fuzztest("HStreamCaptureFuzzTest") {
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/utils",
     "${multimedia_camera_framework_path}/services/camera_service/src",
     "${multimedia_camera_framework_path}/services/camera_service/binder",
-    "${multimedia_camera_framework_path}/dynamic_libs/moving_photo/include/avcodec",
+    "${multimedia_camera_framework_path}/services/camera_service/include/avcodec",
   ]
 
   cflags = [

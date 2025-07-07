@@ -116,6 +116,7 @@ HWTEST_F(VideoEncoderUnitTest, video_encoder_unittest_002, TestSize.Level1)
     EXPECT_EQ(encoder->keyFrameInterval_, 5);
 
     std::string imageId = "testImageId";
+    encoder->encoder_ = VideoEncoderFactory::CreateByMime(imageId);
     EXPECT_EQ(encoder->Release(), 0);
 }
 
@@ -132,6 +133,7 @@ HWTEST_F(VideoEncoderUnitTest, video_encoder_unittest_003, TestSize.Level1)
     VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
     ColorSpace colorSpace = ColorSpace::DISPLAY_P3;
     std::shared_ptr<VideoEncoder> encoder = make_unique<VideoEncoder>(type, colorSpace);
+    encoder->encoder_ = nullptr;
     EXPECT_EQ(encoder->Release(), 0);
 }
 
@@ -219,8 +221,9 @@ HWTEST_F(VideoEncoderUnitTest, video_encoder_unittest_007, TestSize.Level1)
     ColorSpace colorSpace = ColorSpace::DISPLAY_P3;
     std::shared_ptr<VideoEncoder> encoder = std::make_shared<VideoEncoder>(type, colorSpace);
 
+    encoder->encoder_ = nullptr;
     int32_t ret = encoder->Config();
-    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(ret, 1);
 }
 
 /*
@@ -237,8 +240,9 @@ HWTEST_F(VideoEncoderUnitTest, video_encoder_unittest_008, TestSize.Level1)
     ColorSpace colorSpace = ColorSpace::DISPLAY_P3;
     std::shared_ptr<VideoEncoder> encoder = std::make_shared<VideoEncoder>(type, colorSpace);
 
+    encoder->encoder_ = nullptr;
     int32_t ret = encoder->Start();
-    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(ret, 1);
 }
 
 /*
@@ -255,8 +259,9 @@ HWTEST_F(VideoEncoderUnitTest, video_encoder_unittest_009, TestSize.Level1)
     ColorSpace colorSpace = ColorSpace::DISPLAY_P3;
     std::shared_ptr<VideoEncoder> encoder = std::make_shared<VideoEncoder>(type, colorSpace);
 
+    encoder->encoder_ = nullptr;
     int32_t ret = encoder->Stop();
-    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(ret, 1);
 }
 
 /*
@@ -345,8 +350,9 @@ HWTEST_F(VideoEncoderUnitTest, video_encoder_unittest_013, TestSize.Level1)
     ColorSpace colorSpace = ColorSpace::DISPLAY_P3;
     std::shared_ptr<VideoEncoder> encoder = std::make_shared<VideoEncoder>(type, colorSpace);
 
+    encoder->encoder_ = nullptr;
     int32_t ret = encoder->NotifyEndOfStream();
-    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(ret, 1);
 }
 
 /*

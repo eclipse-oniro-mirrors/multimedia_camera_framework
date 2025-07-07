@@ -31,7 +31,7 @@
 #include "test_common.h"
 #include "test_token.h"
 #include "token_setproc.h"
-#include "moving_photo_proxy.h"
+#include "camera_server_photo_proxy.h"
 
 using namespace testing::ext;
 using ::testing::Return;
@@ -681,14 +681,12 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_013, TestSize.Level
     ASSERT_NE(session, nullptr);
     ASSERT_NE(hStreamOperator, nullptr);
 
-    sptr<MovingPhotoIntf> movingPhotoProxy = MovingPhotoProxy::CreateMovingPhotoProxy();
-    ASSERT_NE(movingPhotoProxy, nullptr);
-    movingPhotoProxy->CreateCameraServerProxy();
+    sptr<CameraServerPhotoProxy> photoProxy{new CameraServerPhotoProxy()};
     std::string uri;
     int32_t cameraShotType;
     string burstKey = "";
     int64_t timestamp = 0000;
-    hStreamOperator->CreateMediaLibrary(movingPhotoProxy, uri, cameraShotType, burstKey, timestamp);
+    hStreamOperator->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
 
     EXPECT_EQ(session->Release(), CAMERA_OK);
 }
@@ -712,16 +710,14 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_014, TestSize.Level
     ASSERT_NE(hStreamOperator, nullptr);
 
     sptr<SurfaceBuffer> surfaceBuffer = SurfaceBuffer::Create();
-    sptr<MovingPhotoIntf> movingPhotoProxy = MovingPhotoProxy::CreateMovingPhotoProxy();
-    ASSERT_NE(movingPhotoProxy, nullptr);
-    movingPhotoProxy->CreateCameraServerProxy();
+    sptr<CameraServerPhotoProxy> photoProxy{new CameraServerPhotoProxy()};
     std::string uri;
     int32_t cameraShotType;
     string burstKey = "";
     int64_t timestamp = 0000;
     auto picture = GetPictureIntfInstance();
     picture->Create(surfaceBuffer);
-    hStreamOperator->CreateMediaLibrary(picture, movingPhotoProxy, uri, cameraShotType,
+    hStreamOperator->CreateMediaLibrary(picture, photoProxy, uri, cameraShotType,
         burstKey, timestamp);
 
     EXPECT_EQ(session->Release(), CAMERA_OK);
@@ -1851,6 +1847,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_043, TestSize.Level
     data.RewindRead(0);
     MessageParcel reply;
     MessageOption option;
+    
     uint32_t code = CAMERA_CAPTURE_SESSION_ON_DEFAULT;
     int errCode = stub.OnRemoteRequest(code, data, reply, option);
     EXPECT_EQ(errCode, IPC_STUB_UNKNOW_TRANS_ERR);
