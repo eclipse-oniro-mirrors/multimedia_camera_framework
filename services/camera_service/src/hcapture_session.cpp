@@ -32,14 +32,12 @@
 #include <utility>
 #include <vector>
 
-#include "avcodec_task_manager.h"
 #include "base_types.h"
 #include "blocking_queue.h"
 #include "camera_info_dumper.h"
 #include "camera_log.h"
 #include "camera_report_dfx_uitls.h"
 #include "camera_report_uitls.h"
-#include "camera_server_photo_proxy.h"
 #include "camera_util.h"
 #include "datetime_ex.h"
 #include "deferred_processing_service.h"
@@ -64,8 +62,7 @@
 #include "photo_asset_interface.h"
 #include "photo_asset_proxy.h"
 #include "picture_interface.h"
-#include "moving_photo/moving_photo_surface_wrapper.h"
-#include "moving_photo_video_cache.h"
+#include "moving_photo_proxy.h"
 #include "parameters.h"
 #include "refbase.h"
 #include "res_sched_client.h"

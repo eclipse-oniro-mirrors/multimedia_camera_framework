@@ -26,7 +26,6 @@
 #include "iservice_registry.h"
 #include "ipc_skeleton.h"
 #include "buffer_extra_data_impl.h"
-#include "camera_server_photo_proxy.h"
 #include "camera_photo_proxy.h"
 
 namespace OHOS {

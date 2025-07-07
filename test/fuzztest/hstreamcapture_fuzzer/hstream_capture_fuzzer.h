@@ -19,7 +19,6 @@
 #include "stream_capture_stub.h"
 #include "hstream_capture.h"
 #include "hcamera_device.h"
-#include "camera_server_photo_proxy.h"
 #include <fuzzer/FuzzedDataProvider.h>
 
 namespace OHOS {

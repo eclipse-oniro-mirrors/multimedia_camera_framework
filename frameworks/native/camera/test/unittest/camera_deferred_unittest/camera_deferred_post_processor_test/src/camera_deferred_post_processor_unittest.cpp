@@ -28,6 +28,7 @@
 #include "dp_utils.h"
 #include "v1_3/iimage_process_callback.h"
 #include "dps.h"
+#include "media_manager_proxy.h"
 
 using namespace testing::ext;
 using namespace OHOS::CameraStandard::DeferredProcessing;
@@ -145,8 +146,8 @@ HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_004, Te
     auto postProcessor = CreateShared<VideoPostProcessor>(userId_);
     ASSERT_NE(postProcessor, nullptr);
     StreamDescription steamInfo;
-    postProcessor->mpegManager_ = std::make_shared<MpegManager>();
-    ASSERT_NE(postProcessor->mpegManager_, nullptr);
+    postProcessor->mediaManagerProxy_ = MediaManagerProxy::CreateMediaManagerProxy();
+    ASSERT_NE(postProcessor->mediaManagerProxy_, nullptr);
     steamInfo.type = HDI::Camera::V1_3::MEDIA_STREAM_TYPE_VIDEO;
     bool result = postProcessor->ProcessStream(steamInfo);
     steamInfo.type = HDI::Camera::V1_3::MEDIA_STREAM_TYPE_MAKER;

@@ -19,7 +19,7 @@
 #include <refbase.h>
 #include <set>
 #include <mutex>
-#include "avcodec_task_manager.h"
+#include "moving_photo_proxy.h"
 #include "safe_map.h"
 namespace OHOS {
 namespace CameraStandard {
@@ -39,7 +39,7 @@ public:
 
     int32_t GetOfflineOutputSize();
 
-    void AddTaskManager(int32_t& hStreamOperatorId, sptr<AvcodecTaskManager> taskManager);
+    void AddTaskManager(int32_t& hStreamOperatorId, sptr<MovingPhotoIntf> movingPhotoProxy);
 
     void RemoveTaskManager(int32_t& hStreamOperatorId);
 
@@ -50,7 +50,7 @@ private:
     std::mutex mapMutex_;
     static sptr<HStreamOperatorManager> streamOperatorManager_;
     std::map<int32_t, sptr<HStreamOperator>> streamOperatorManagerMap_;
-    SafeMap<int32_t, sptr<AvcodecTaskManager>> taskManagerMap_;
+    SafeMap<int32_t, sptr<MovingPhotoIntf>> MovingPhotoMap_;
     static std::mutex instanceMutex_;
     std::atomic<int32_t> streamOperatorIdGenerator_ = -1;
 

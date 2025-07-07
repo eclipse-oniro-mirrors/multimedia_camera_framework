@@ -88,12 +88,12 @@ HWTEST_F(CameraPrivacyUnitTest, camera_privacy_unittest_005, TestSize.Level1)
 {
     uint32_t callingTokenId = IPCSkeleton::GetCallingTokenID();
     sptr<CameraPrivacy> cameraPrivacy = new CameraPrivacy(callingTokenId, IPCSkeleton::GetCallingPid());
-    
+
     bool ret = cameraPrivacy->RegisterPermissionCallback();
     EXPECT_FALSE(ret);
-    
+
     cameraPrivacy->UnregisterPermissionCallback();
-    
+
     cameraPrivacy->UnregisterPermissionCallback();
 }
 
@@ -109,7 +109,7 @@ HWTEST_F(CameraPrivacyUnitTest, camera_privacy_unittest_006, TestSize.Level1)
 {
     uint32_t callingTokenId = IPCSkeleton::GetCallingTokenID();
     sptr<CameraPrivacy> cameraPrivacy = new CameraPrivacy(callingTokenId, IPCSkeleton::GetCallingPid());
-    
+
     bool ret = cameraPrivacy->AddCameraPermissionUsedRecord();
     EXPECT_FALSE(ret);
 }
@@ -126,8 +126,8 @@ HWTEST_F(CameraPrivacyUnitTest, camera_privacy_unittest_007, TestSize.Level1)
 {
     uint32_t callingTokenId = IPCSkeleton::GetCallingTokenID();
     sptr<CameraPrivacy> cameraPrivacy = new CameraPrivacy(callingTokenId, IPCSkeleton::GetCallingPid());
-    
-    std::cv_status status = cameraPrivacy->WaitFor();
+
+    std::cv_status status = cameraPrivacy->WaitFor(true);
     EXPECT_EQ(status, std::cv_status::timeout);
 
     cameraPrivacy->Notify();
@@ -146,7 +146,7 @@ HWTEST_F(CameraPrivacyUnitTest, camera_privacy_unittest_008, TestSize.Level1)
     Security::AccessToken::PermStateChangeScope scopeInfo;
     scopeInfo.permList = {OHOS_PERMISSION_CAMERA};
     scopeInfo.tokenIDs = {IPCSkeleton::GetCallingTokenID()};
-    
+
     auto callback = std::make_shared<PermissionStatusChangeCb>(scopeInfo);
     Security::AccessToken::PermStateChangeInfo result;
     result.permStateChangeType = 0;
