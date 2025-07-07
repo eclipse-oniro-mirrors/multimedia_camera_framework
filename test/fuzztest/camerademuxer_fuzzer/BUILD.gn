@@ -42,7 +42,7 @@ ohos_fuzztest("CameraDemuxerFuzzTest") {
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/event_monitor/base",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/event_monitor/command",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/event_monitor/impl",
-    "${multimedia_camera_framework_path}/dynamic_libs/media_manager/include/media_manager",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/media_manager",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/post_processor",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/post_processor/command",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule",
@@ -77,7 +77,6 @@ ohos_fuzztest("CameraDemuxerFuzzTest") {
     "${multimedia_camera_framework_path}/common:camera_utils",
     "${multimedia_camera_framework_path}/services/camera_service:camera_service",
     "${multimedia_camera_framework_path}/services/deferred_processing_service:deferred_processing_service_test_only",
-    "${multimedia_camera_framework_path}/dynamic_libs:camera_dynamic_media_manager"
   ]
 
   external_deps = [

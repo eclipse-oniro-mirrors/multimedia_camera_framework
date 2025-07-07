@@ -20,7 +20,7 @@
 #include "deferred_video_job.h"
 #include "iservstat_listener_hdi.h"
 #include "ivideo_process_callbacks.h"
-#include "media_manager_proxy.h"
+#include "mpeg_manager.h"
 #include "v1_4/ivideo_process_service.h"
 #include "v1_4/ivideo_process_callback.h"
 #include "video_process_result.h"
@@ -90,7 +90,7 @@ private:
     std::mutex sessionMutex_;
     const int32_t userId_;
     sptr<IVideoProcessSession> session_ {nullptr};
-    std::shared_ptr<MediaManagerProxy> mediaManagerProxy_ {nullptr};
+    std::shared_ptr<MpegManager> mpegManager_ {nullptr};
     std::shared_ptr<VideoProcessResult> processResult_ {nullptr};
     sptr<VideoServiceListener> serviceListener_;
     sptr<SessionDeathRecipient> sessionDeathRecipient_;

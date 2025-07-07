@@ -15,9 +15,9 @@
 
 #include "hstream_operator_manager.h"
 #include "hstream_operator.h"
+#include "avcodec_task_manager.h"
 #include "camera_dynamic_loader.h"
 #include "camera_log.h"
-#include "moving_photo_proxy.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -37,7 +37,6 @@ HStreamOperatorManager::~HStreamOperatorManager()
     }
     MEDIA_INFO_LOG("~HStreamOperatorManager free dynamic lib");
     CameraDynamicLoader::FreeDynamicLibDelayed(MEDIA_LIB_SO, LIB_DELAYED_UNLOAD_TIME);
-    MovingPhotoProxy::Release();
 }
 
 sptr<HStreamOperatorManager> &HStreamOperatorManager::GetInstance()
@@ -74,37 +73,31 @@ void HStreamOperatorManager::RemoveStreamOperator(int32_t& hStreamOperatorId)
     streamOperatorManagerMap_.erase(hStreamOperatorId);
     if (streamOperatorManagerMap_.size() == 0) {
         CameraDynamicLoader::FreeDynamicLibDelayed(MEDIA_LIB_SO, LIB_DELAYED_UNLOAD_TIME);
-        MovingPhotoProxy::Release();
     }
     MEDIA_INFO_LOG("HStreamOperatorManager::RemoveStreamOperator end");
     return;
 }
 
-void HStreamOperatorManager::AddTaskManager(int32_t& hStreamOperatorId, sptr<MovingPhotoIntf> movingPhotoProxy)
+void HStreamOperatorManager::AddTaskManager(int32_t& hStreamOperatorId, sptr<AvcodecTaskManager> taskManager)
 {
-    CHECK_ERROR_RETURN_LOG(movingPhotoProxy != nullptr,
-        "HStreamOperatorManager::AddTaskManager movingPhotoProxy is null");
     MEDIA_INFO_LOG("HStreamOperatorManager::AddTaskManager hStreamOperatorId is %{public}d", hStreamOperatorId);
-    MovingPhotoMap_.EnsureInsert(hStreamOperatorId, movingPhotoProxy);
+    taskManagerMap_.EnsureInsert(hStreamOperatorId, taskManager);
 }
 
 void HStreamOperatorManager::RemoveTaskManager(int32_t& hStreamOperatorId)
 {
     MEDIA_INFO_LOG("HStreamOperatorManager::RemoveTaskManager hStreamOperatorId is %{public}d", hStreamOperatorId);
-    sptr<MovingPhotoIntf> movingPhotoProxy = nullptr;
-    MovingPhotoMap_.Find(hStreamOperatorId, movingPhotoProxy);
-    CHECK_ERROR_RETURN_LOG(!movingPhotoProxy, "not found hStreamOperatorId: %{public}d", hStreamOperatorId);
-    CHECK_ERROR_RETURN_LOG(!movingPhotoProxy->IsTaskManagerExist(),
-        "HStreamOperatorManager::RemoveTaskManager task manager not exist");
-    thread asyncThread = thread([hStreamOperatorId, movingPhotoProxy]() {
+    sptr<AvcodecTaskManager> taskManager = nullptr;
+    taskManagerMap_.Find(hStreamOperatorId, taskManager);
+    CHECK_ERROR_RETURN_LOG(!taskManager, "not found hStreamOperatorId: %{public}d", hStreamOperatorId);
+    thread asyncThread = thread([hStreamOperatorId, taskManager]() {
         CAMERA_SYNC_TRACE;
         MEDIA_INFO_LOG(
             "HStreamOperatorManager::RemoveTaskManager thread hStreamOperatorId: %{public}d", hStreamOperatorId);
-        int32_t delayTime = (movingPhotoProxy == nullptr) ||
-            (movingPhotoProxy && movingPhotoProxy->isEmptyVideoFdMap()) ? 0 : 30;
+        int32_t delayTime = taskManager == nullptr || (taskManager && taskManager->isEmptyVideoFdMap()) ? 0 : 30;
         std::this_thread::sleep_for(std::chrono::seconds(delayTime));
     });
-    MovingPhotoMap_.Erase(hStreamOperatorId);
+    taskManagerMap_.Erase(hStreamOperatorId);
     asyncThread.detach();
 }
 

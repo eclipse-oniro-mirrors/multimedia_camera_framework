@@ -54,9 +54,8 @@ ohos_fuzztest("HCameraHostManagerFuzzTest") {
     "${multimedia_camera_framework_path}/services/camera_service/binder/server/include/window_manager_service_callback_stub",
     "${multimedia_camera_framework_path}/services/camera_service/binder/base/include/window_manager_service_utils",
     "${multimedia_camera_framework_path}/services/camera_service/binder/client/include/window_manager_service_proxy",
-    "${multimedia_camera_framework_path}/dynamic_libs/moving_photo/include",
-    "${multimedia_camera_framework_path}/dynamic_libs/moving_photo/include/avcodec",
-    "${multimedia_camera_framework_path}/dynamic_libs/moving_photo/include/common",
+    "${multimedia_camera_framework_path}/services/camera_service/include/avcodec/common",
+    "${multimedia_camera_framework_path}/services/camera_service/include/avcodec",
   ]
 
   cflags = [

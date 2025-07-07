@@ -2483,7 +2483,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_061, TestSize.Level0)
     auto &sessionManager = HCameraSessionManager::GetInstance();
     std::list<sptr<HCaptureSession>> sessionList = sessionManager.GetTotalSession();
     EXPECT_NE(sessionList.size(), 0);
-
+    
     device->Release();
     device->Close();
 }
@@ -2525,7 +2525,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_062, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test ResetRssPriority when preCameraId_ is null or is not null
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_063, TestSize.Level0)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_068, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);

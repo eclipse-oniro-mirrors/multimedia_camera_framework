@@ -33,8 +33,6 @@ public:
 
     /* TearDown:Execute after each test case */
     void TearDown();
-
-    uint64_t tokenId_;
 };
 }
 }
