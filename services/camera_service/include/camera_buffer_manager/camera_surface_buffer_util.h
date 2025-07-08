@@ -153,7 +153,8 @@ public:
         surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::burstSequenceId, burstSeqId);
         surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::captureId, captureId);
         if (burstSeqId != invalidSeqenceId && captureId >= 0) {
-            maskBurstSeqId = ((captureId & captureIdMask) << captureIdShit) | burstSeqId;
+            maskBurstSeqId = ((static_cast<uint32_t>(captureId) & static_cast<uint32_t>(captureIdMask)) <<
+                static_cast<uint32_t>(captureIdShit)) | static_cast<uint32_t>(burstSeqId);
             MEDIA_DEBUG_LOG("GetMaskCaptureId captureId:%{public}d, burstSeqId:%{public}d, maskBurstSeqId = %{public}d",
                 captureId, burstSeqId, maskBurstSeqId);
             return maskBurstSeqId;
@@ -205,7 +206,10 @@ public:
     static int32_t GetDataWidth(sptr<SurfaceBuffer> surfaceBuffer)
     {
         int32_t dataWidth = 0;
-        surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::dataWidth, dataWidth);
+        CHECK_ERROR_RETURN_RET_LOG(surfaceBuffer == nullptr, dataWidth, "GetDataWidth: surfaceBuffer is nullptr");
+        sptr<BufferExtraData> extraData = surfaceBuffer->GetExtraData();
+        CHECK_ERROR_RETURN_RET_LOG(extraData  == nullptr, dataWidth, "GetDataWidth: extraData is nullptr");
+        extraData->ExtraGet(OHOS::Camera::dataWidth, dataWidth);
         MEDIA_DEBUG_LOG("GetDataWidth:%{public}d", dataWidth);
         return dataWidth;
     }

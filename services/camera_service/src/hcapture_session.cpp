@@ -1778,7 +1778,7 @@ bool HCaptureSession::GetCameraAppInfo(CameraAppInfo& appInfo)
         appInfo.zoomValue = cameraDevice_->GetZoomRatio();
         appInfo.position = cameraDevice_->GetCameraPosition();
     }
-    appInfo.tokenId = callerToken_;
+    appInfo.tokenId = static_cast<int32_t>(callerToken_);
     appInfo.opmode = opMode_;
     appInfo.equivalentFocus = GetEquivalentFocus();
     auto hStreamOperatorSptr = GetStreamOperator();
@@ -1831,7 +1831,7 @@ uint32_t HCaptureSession::GetEquivalentFocus()
         "HCaptureSession::GetEquivalentFocus get equivalentFocus failed");
     for (uint32_t i = 0; i < item.count; i++) {
         if ((i & 1) == 0) {
-            equivalentFocus = item.data.i32[i + 1];
+            equivalentFocus = static_cast<uint32_t>(item.data.i32[i + 1]);
         }
     }
     MEDIA_DEBUG_LOG("HCaptureSession::GetEquivalentFocus equivalentFocus "
