@@ -182,6 +182,7 @@
             "//foundation/multimedia/camera_framework/frameworks/native/camera/test/moduletest:camera_deferred_photo_moduletest",
             "//foundation/multimedia/camera_framework/frameworks/native/camera/test/moduletest:camera_deferred_video_moduletest",
             "//foundation/multimedia/camera_framework/frameworks/native/camera/test/moduletest:camera_format_YUV_moduletest",
+            "//foundation/multimedia/camera_framework/frameworks/native/camera/test/moduletest:camera_photo_moduletest",
             "//foundation/multimedia/camera_framework/frameworks/native/camera/test/moduletest:camera_moving_photo_moduletest",
             "//foundation/multimedia/camera_framework/frameworks/native/camera/test/moduletest:camera_session_moduletest",
             "//foundation/multimedia/camera_framework/frameworks/native/camera/test/unittest/camera_deferred_unittest:camera_deferred_unittest",
