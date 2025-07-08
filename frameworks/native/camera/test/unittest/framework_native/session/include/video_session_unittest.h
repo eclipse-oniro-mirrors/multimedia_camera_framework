@@ -46,12 +46,23 @@ public:
         PreconfigType preconfigType, ProfileSizeRatio profileSizeRatio);
     void TestVideoSessionPreconfig(sptr<CaptureInput>& input,
         PreconfigType preconfigType, ProfileSizeRatio profileSizeRatio);
+    bool IsAspecctRatioEqual(float videoAspecctRatio, float previewAspecctRatio);
+    bool AreVectorEqual(const vector<int32_t>& vec1, const vector<int32_t>& vec2);
+    vector<vector<int32_t>> FindCommonSubVectors(const vector<vector<int32_t>>& a,
+        const vector<vector<int32_t>>& b);
+    sptr<CaptureOutput> CreatePreviewOutput(Profile previewProfile);
+    sptr<CaptureOutput> CreatePhotoOutput(Profile photoProfile);
+    sptr<CaptureOutput> CreateVideoOutput(VideoProfile videoProfile);
+    void UpdataCameraOutputCapability(int32_t modeName, std::vector<sptr<CameraDevice>> cameras);
 private:
     uint64_t tokenId_ = 0;
     int32_t uid_ = 0;
     int32_t userId_ = 0;
     sptr<CameraManager> cameraManager_ = nullptr;
     sptr<CameraManagerForSys> cameraManagerForSys_ = nullptr;
+    std::vector<Profile> previewProfiles_ = {};
+    std::vector<Profile> photoProfiles_ = {};
+    std::vector<VideoProfile> videoProfiles_ = {};
 };
 
 class TestLightStatusCallback : public LightStatusCallback {

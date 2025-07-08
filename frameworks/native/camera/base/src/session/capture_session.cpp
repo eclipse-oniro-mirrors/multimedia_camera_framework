@@ -641,9 +641,13 @@ bool CaptureSession::CheckFrameRateRangeWithCurrentFps(int32_t curMinFps, int32_
 {
     CHECK_ERROR_RETURN_RET_LOG(minFps == 0 || curMinFps == 0, false,
         "CaptureSession::CheckFrameRateRangeWithCurrentFps can not set zero!");
+    // If the current frame rate is fixed [curMinFps, curMaxFps],
+    // then the new frame rate [minFps, maxFps] must also be a fixed frame rate,
+    // and minFps divided by curMinFps is divisible or minFps is divisible by curMinFps.
     if (curMinFps == curMaxFps && minFps == maxFps &&
         (minFps % curMinFps == 0 || curMinFps % minFps == 0)) {
         return true;
+    // The set frame rate matches the current frame rate.
     } else if (curMinFps != curMaxFps && curMinFps == minFps && curMaxFps == maxFps) {
         return true;
     }
@@ -794,8 +798,8 @@ int32_t CaptureSession::ConfigureVideoOutput(sptr<CaptureOutput>& output)
     CHECK_EXECUTE(frameRateRange.size() >= minFpsRangeSize, SetFrameRateRange(frameRateRange));
     if (output != nullptr) {
         sptr<VideoOutput> videoOutput = static_cast<VideoOutput*>(output.GetRefPtr());
-        CHECK_EXECUTE(videoOutput && (frameRateRange.size() >= minFpsRangeSize),
-            videoOutput->SetFrameRateRange(frameRateRange[0], frameRateRange[1]));
+        CHECK_EXECUTE(videoOutput && (frameRateRange.size() >= minFpsRangeSize) && frameRateRange[0] >= FRAMERATE_120,
+            videoOutput->SetIsSlowMotionOrHighFrameRateMode(true));
     }
     SetGuessMode(SceneMode::VIDEO);
     return CameraErrorCode::SUCCESS;

@@ -246,7 +246,8 @@ public:
     * @param boolean true/false to set/unset automatic frame rat respectively.
     */
     int32_t EnableAutoVideoFrameRate(bool enable);
-
+    bool GetIsSlowMotionOrHighFrameRateMode();
+    void SetIsSlowMotionOrHighFrameRateMode(bool isSlowMotionOrHighFrameRateMode);
 private:
     int32_t videoFormat_;
     Size videoSize_;
@@ -256,6 +257,7 @@ private:
     std::atomic_bool isVideoStarted_ = false;
     void CameraServerDied(pid_t pid) override;
     int32_t canSetFrameRateRange(int32_t minFrameRate, int32_t maxFrameRate);
+    std::atomic_bool isSlowMotionOrHighFrameRateMode_ = false;
 };
 
 class VideoOutputCallbackImpl : public StreamRepeatCallbackStub {
