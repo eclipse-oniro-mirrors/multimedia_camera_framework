@@ -343,7 +343,7 @@ void PhotoListenerModuleTest::WaitForPhotoCallbackAndSetTimeOut()
  * CaseDescription: Verify the deferred photo is enabled by default in normal conditions after registering photo asset
  *                  available listener.
  */
-HWTEST_F(CameraDeferredPhotoModuleTest, camera_deferred_photo_moduletest_001, TestSize.Level0)
+HWTEST_F(CameraDeferredPhotoModuleTest, camera_deferred_photo_moduletest_001, TestSize.Level1)
 {
     CHECK_ERROR_RETURN(!isInitSuccess_);
     photoOutput_ = CreatePhotoOutputWithoutSurfaceId(photoProfiles_[0]);
@@ -639,7 +639,7 @@ HWTEST_F(CameraDeferredPhotoModuleTest, camera_deferred_photo_moduletest_006, Te
  * EnvConditions: NA
  * CaseDescription: Verify the deferred photo is enabled in normal conditions.
  */
-HWTEST_F(CameraDeferredPhotoModuleTest, camera_deferred_photo_moduletest_007, TestSize.Level0)
+HWTEST_F(CameraDeferredPhotoModuleTest, camera_deferred_photo_moduletest_007, TestSize.Level1)
 {
     CHECK_ERROR_RETURN(!isInitSuccess_);
     photoOutput_ = CreatePhotoOutputWithoutSurfaceId(photoProfiles_[0]);
