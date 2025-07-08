@@ -18,6 +18,7 @@ group("cameraframeworktest") {
     "moduletest:camera_deferred_photo_moduletest",
     "moduletest:camera_deferred_video_moduletest",
     "moduletest:camera_format_YUV_moduletest",
+    "moduletest:camera_photo_moduletest",
     "moduletest:camera_moving_photo_moduletest",
     "moduletest:camera_session_moduletest",
     "unittest/camera_common_utils_test",
