@@ -219,7 +219,6 @@ int32_t CameraInput::CameraDevicePhysicOpen(sptr<ICameraDeviceService> cameraDev
     return CAMERA_OK;
 }
 
-// LCOV_EXCL_START
 int CameraInput::Open(int32_t cameraConcurrentType)
 {
     std::lock_guard<std::mutex> lock(interfaceMutex_);
@@ -229,7 +228,7 @@ int CameraInput::Open(int32_t cameraConcurrentType)
     auto cameraObject = GetCameraDeviceInfo();
     CHECK_ERROR_RETURN_RET_LOG(cameraObject == nullptr,
         CAMERA_DEVICE_ERROR, "CameraInput::GetCameraId cameraObject is null");
-
+    // LCOV_EXCL_START
     CameraPosition cameraPosition = cameraObject->GetPosition();
     auto cameraServiceOnly = CameraManager::GetInstance()->GetServiceProxy();
     CHECK_ERROR_RETURN_RET_LOG(cameraServiceOnly == nullptr,
@@ -275,8 +274,8 @@ int CameraInput::Open(int32_t cameraConcurrentType)
 
     retCode = CameraDevicePhysicOpen(cameraDevicePhysic, cameraConcurrentType);
     return ServiceToCameraError(retCode);
+    // LCOV_EXCL_STOP
 }
-// LCOV_EXCL_STOP
 
 int CameraInput::Open(bool isEnableSecureCamera, uint64_t* secureSeqId)
 {
@@ -456,10 +455,11 @@ void CameraInput::SetInputUsedAsPosition(CameraPosition usedAsPosition)
     // LCOV_EXCL_STOP
 }
 
-// LCOV_EXCL_START
+
 void CameraInput::ControlAuxiliary(AuxiliaryType type, AuxiliaryStatus status)
 {
     MEDIA_INFO_LOG("CameraInput::ControlAuxiliary type: %{public}u, status:%{public}u", type, status);
+    // LCOV_EXCL_START
     if (type == AuxiliaryType::CONTRACTLENS && status == AuxiliaryStatus::AUXILIARY_ON) {
         uint8_t value = 1;
         uint32_t count = 1;
@@ -473,8 +473,9 @@ void CameraInput::ControlAuxiliary(AuxiliaryType type, AuxiliaryStatus status)
         deviceObj->UpdateSetting(metadata);
         deviceObj->SetDeviceRetryTime();
     }
+    // LCOV_EXCL_STOP
 }
-// LCOV_EXCL_STOP
+
 
 void CameraInput::SetOcclusionDetectCallback(
     std::shared_ptr<CameraOcclusionDetectCallback> cameraOcclusionDetectCallback)

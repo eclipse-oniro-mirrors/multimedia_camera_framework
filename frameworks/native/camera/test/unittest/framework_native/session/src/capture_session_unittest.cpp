@@ -5024,6 +5024,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_028, TestSize
 {
     std::shared_ptr<PressureStatusCallback> pressureStatusCallback = std::make_shared<PressureStatusCallback>();
     EXPECT_EQ(pressureStatusCallback->captureSession_, nullptr);
+    pressureStatusCallback->OnPressureStatusChanged(PressureStatus::SYSTEM_PRESSURE_NORMAL);
     std::shared_ptr<PressureStatusCallback> pressureStatusCallback2 =
         std::make_shared<PressureStatusCallback>(nullptr);
     EXPECT_EQ(pressureStatusCallback2->captureSession_, nullptr);
@@ -8834,6 +8835,122 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_157, TestSize.Level0)
  
     session->innerCaptureSession_ = nullptr;
     ASSERT_NE(session->Start(), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test EnableOfflinePhoto
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test EnableOfflinePhoto
+ */
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_158, TestSize.Level0)
+{
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdataCameraOutputCapability();
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+    auto photoOutput = ((sptr<PhotoOutput> &)session->photoOutput_);
+    photoOutput->SetSwitchOfflinePhotoOutput(true);
+    EXPECT_EQ(session->CommitConfig(), 0);
+    photoOutput->SetSwitchOfflinePhotoOutput(false);
+}
+/*
+ * Feature: Framework
+ * Function: Test EnableAutoFrameRate
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test EnableAutoFrameRate
+ */
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_159, TestSize.Level0)
+{
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdataCameraOutputCapability();
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    session->EnableAutoFrameRate(false);
+    ASSERT_NE(session, nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CanSetFrameRateRange
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CanSetFrameRateRange
+ */
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_160, TestSize.Level0)
+{
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdataCameraOutputCapability();
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+    EXPECT_EQ(session->CanSetFrameRateRange(10, 60, preview), false);
+}
+/*
+ * Feature: Framework
+ * Function: Test EnableLowLightBoost
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test EnableLowLightBoost
+ */
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_161, TestSize.Level0)
+{
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdataCameraOutputCapability();
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+    EXPECT_EQ(session->EnableLowLightBoost(false), OPERATION_NOT_ALLOWED);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetPressureCallback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetPressureCallback
+ */
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_162, TestSize.Level0)
+{
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdataCameraOutputCapability();
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    ASSERT_NE(session->GetPressureCallback(), nullptr);
 }
 }
 }

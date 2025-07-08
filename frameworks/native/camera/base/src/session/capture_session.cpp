@@ -3276,14 +3276,15 @@ int32_t CaptureSession::SetFrameRateRange(const std::vector<int32_t>& frameRateR
     return CameraErrorCode::SUCCESS;
 }
 
-// LCOV_EXCL_START
+
 bool CaptureSession::CanSetFrameRateRange(int32_t minFps, int32_t maxFps, CaptureOutput* curOutput)
 {
+    // LCOV_EXCL_START
     MEDIA_WARNING_LOG("CaptureSession::CanSetFrameRateRange can not set frame rate range for %{public}d mode",
                       GetMode());
     return false;
+    // LCOV_EXCL_STOP
 }
-// LCOV_EXCL_STOP
 
 bool CaptureSession::CanSetFrameRateRangeForOutput(int32_t minFps, int32_t maxFps, CaptureOutput* curOutput)
 {
@@ -3752,13 +3753,14 @@ bool CaptureSession::IsLowLightBoostSupported()
     return false;
 }
 
-// LCOV_EXCL_START
+
 int32_t CaptureSession::EnableLowLightBoost(bool isEnable)
 {
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("Enter EnableLowLightBoost, isEnable:%{public}d", isEnable);
     CHECK_ERROR_RETURN_RET_LOG(
         !IsLowLightBoostSupported(), CameraErrorCode::OPERATION_NOT_ALLOWED, "Not support LowLightBoost");
+    // LCOV_EXCL_START    
     CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG, "Session is not Commited!");
     uint8_t enableValue = static_cast<uint8_t>(isEnable ? 1 : 0);
     if (!AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_LOW_LIGHT_BOOST, &enableValue, 1)) {
@@ -3767,8 +3769,8 @@ int32_t CaptureSession::EnableLowLightBoost(bool isEnable)
         isSetLowLightBoostEnable_ = isEnable;
     }
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
-// LCOV_EXCL_STOP
 
 int32_t CaptureSession::EnableLowLightDetection(bool isEnable)
 {
@@ -4172,11 +4174,12 @@ void CaptureSession::SetUserId()
     CHECK_ERROR_PRINT_LOG(errCode != CameraErrorCode::SUCCESS, "CaptureSession::SetUserId Failed");
 }
 
-// LCOV_EXCL_START
+
 void CaptureSession::EnableOfflinePhoto()
 {
     MEDIA_INFO_LOG("CaptureSession::EnableOfflinePhoto");
     CHECK_ERROR_RETURN_LOG(IsSessionCommited(), "CaptureSession::EnableOfflinePhoto session has committed!");
+    // LCOV_EXCL_START
     if (photoOutput_ && ((sptr<PhotoOutput> &)photoOutput_)->IsHasSwitchOfflinePhoto()) {
         this->LockForControl();
         uint8_t enableOffline = 1;
@@ -4187,8 +4190,8 @@ void CaptureSession::EnableOfflinePhoto()
             "CaptureSession::CommitConfig Failed to add/update offline stream operator");
         this->UnlockForControl();
     }
+    // LCOV_EXCL_STOP
 }
-// LCOV_EXCL_STOP
 
 int32_t CaptureSession::EnableAutoHighQualityPhoto(bool enabled)
 {
