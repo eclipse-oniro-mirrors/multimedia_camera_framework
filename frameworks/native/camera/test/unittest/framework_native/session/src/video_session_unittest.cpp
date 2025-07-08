@@ -41,23 +41,15 @@ namespace OHOS {
 namespace CameraStandard {
 using namespace OHOS::HDI::Camera::V1_1;
 
-bool CameraVideoSessionUnitTest::IsAspecctRatioEqual(float videoAspecctRatio, float previewAspecctRatio)
+bool CameraVideoSessionUnitTest::IsAspectRatioEqual(float videoAspectRatio, float previewAspectRatio)
 {
     float epsilon = 1e-6f;
-    return fabsf(videoAspecctRatio - previewAspecctRatio) <= epsilon;
+    return fabsf(videoAspectRatio - previewAspectRatio) <= epsilon;
 }
 
 bool CameraVideoSessionUnitTest::AreVectorEqual(const vector<int32_t>& vec1, const vector<int32_t>& vec2)
 {
-    if (vec1.size() != vec2.size()) {
-        return false;
-    }
-    for (size_t i = 0; i < vec1.size(); ++i) {
-        if (vec1[i] != vec2[i]) {
-            return false;
-        }
-    }
-    return true;
+    return vec1 == vec2;
 }
 
 vector<vector<int32_t>> CameraVideoSessionUnitTest::FindCommonSubVectors(const vector<vector<int32_t>>& a,
@@ -93,7 +85,7 @@ sptr<CaptureOutput> CameraVideoSessionUnitTest::CreateVideoOutput(VideoProfile v
     return cameraManager_->CreateVideoOutput(videoProfile, surface);
 }
 
-void CameraVideoSessionUnitTest::UpdataCameraOutputCapability(int32_t modeName, std::vector<sptr<CameraDevice>> cameras)
+void CameraVideoSessionUnitTest::UpdateCameraOutputCapability(int32_t modeName, std::vector<sptr<CameraDevice>> cameras)
 {
     if (!cameraManager_ || cameras.empty()) {
         return;
@@ -644,15 +636,18 @@ HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_011, TestSize.Level0
     ASSERT_NE(session, nullptr);
     sptr<VideoSession> videoSession = static_cast<VideoSession*>(session.GetRefPtr());
     ASSERT_NE(videoSession, nullptr);
-    UpdataCameraOutputCapability(2, cameras);
+    UpdateCameraOutputCapability(2, cameras);
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(preview, nullptr);
     sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&) preview;
     VideoProfile videoProfile;
     for (size_t index = 0; index < videoProfiles_.size(); index++) {
-        bool isEqual = IsAspecctRatioEqual(
+        if (videoProfiles_[index].GetSize().height == 0 && previewProfiles_[0].GetSize().height == 0) {
+            continue;
+        }
+        bool isEqual = IsAspectRatioEqual(
             (float)videoProfiles_[index].GetSize().width / videoProfiles_[index].GetSize().height,
-            (float)previewProfiles_[index].GetSize().width / previewProfiles_[index].GetSize().height);
+            (float)previewProfiles_[0].GetSize().width / previewProfiles_[0].GetSize().height);
         if (isEqual && videoProfiles_[index].GetCameraFormat() == CAMERA_FORMAT_YUV_420_SP) {
             videoProfile = videoProfiles_[index];
             break;
@@ -670,6 +665,7 @@ HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_011, TestSize.Level0
     vector<vector<int32_t>> videoSupportedFrameRateList = videoOutput->GetSupportedFrameRates();
     vector<vector<int32_t>> common = FindCommonSubVectors(previewSupportedFrameRateList, videoSupportedFrameRateList);
     if (common.empty()) {
+        camInput->Close();
         GTEST_SKIP();
     }
     EXPECT_EQ(previewOutput->SetFrameRate(common[0][0], common[0][1]), 0);
@@ -699,15 +695,18 @@ HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_012, TestSize.Level0
     ASSERT_NE(session, nullptr);
     sptr<VideoSession> videoSession = static_cast<VideoSession*>(session.GetRefPtr());
     ASSERT_NE(videoSession, nullptr);
-    UpdataCameraOutputCapability(2, cameras);
+    UpdateCameraOutputCapability(2, cameras);
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(preview, nullptr);
     sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&) preview;
     VideoProfile videoProfile;
     for (size_t index = 0; index < videoProfiles_.size(); index++) {
-        bool isEqual = IsAspecctRatioEqual(
+        if (videoProfiles_[index].GetSize().height == 0 && previewProfiles_[0].GetSize().height == 0) {
+            continue;
+        }
+        bool isEqual = IsAspectRatioEqual(
             (float)videoProfiles_[index].GetSize().width / videoProfiles_[index].GetSize().height,
-            (float)previewProfiles_[index].GetSize().width / previewProfiles_[index].GetSize().height);
+            (float)previewProfiles_[0].GetSize().width / previewProfiles_[0].GetSize().height);
         if (isEqual && videoProfiles_[index].GetCameraFormat() == CAMERA_FORMAT_YUV_420_SP) {
             videoProfile = videoProfiles_[index];
             break;
@@ -725,6 +724,7 @@ HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_012, TestSize.Level0
     vector<vector<int32_t>> videoSupportedFrameRateList = videoOutput->GetSupportedFrameRates();
     vector<vector<int32_t>> common = FindCommonSubVectors(previewSupportedFrameRateList, videoSupportedFrameRateList);
     if (common.empty()) {
+        camInput->Close();
         GTEST_SKIP();
     }
     EXPECT_EQ(videoOutput->SetFrameRate(common[0][0], common[0][1]), 0);
