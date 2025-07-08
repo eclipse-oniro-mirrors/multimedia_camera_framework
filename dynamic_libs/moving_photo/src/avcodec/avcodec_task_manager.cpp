@@ -154,6 +154,7 @@ sptr<AudioVideoMuxer> AvcodecTaskManager::CreateAVMuxer(vector<sptr<FrameRecord>
             muxer->SetCoverTime(MovingPhotoNanosecToMillisec(std::min(timestamp,
                 choosedBuffer.back()->GetTimeStamp()) - choosedBuffer.front()->GetTimeStamp()));
             muxer->SetStartTime(MovingPhotoNanosecToMillisec(choosedBuffer.front()->GetTimeStamp()));
+            CHECK_EXECUTE(videoEncoder_ != nullptr, muxer->SetSqr(videoEncoder_->GetEncoderBitrate()));
         }
     );
     auto formatVideo = make_shared<Format>();
