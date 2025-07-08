@@ -362,7 +362,7 @@ ohos_moduletest("camera_photo_moduletest") {
   sources = [ "camera_photo/src/camera_photo_moduletest.cpp" ]
 
   deps = [
-    "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
+    "${multimedia_camera_framework_path}/frameworks/native/camera/base:camera_framework",
     "${multimedia_camera_framework_path}/test/test_common:test_common",
   ]
 
