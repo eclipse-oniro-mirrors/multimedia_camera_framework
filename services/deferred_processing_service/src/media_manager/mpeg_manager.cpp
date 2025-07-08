@@ -18,6 +18,7 @@
 #include <fcntl.h>
 
 #include "dp_log.h"
+#include "dps_event_report.h"
 #include "sync_fence.h"
 #include "media_format.h"
 
@@ -106,6 +107,7 @@ MpegManager::~MpegManager()
     if (outputFd_) {
         fdsan_close_with_tag(outputFd_->GetFd(), LOG_DOMAIN);
     }
+    DPSEventReport::GetInstance().ReportPartitionUsage();
     DP_CHECK_RETURN(!tempFd_);
     fdsan_close_with_tag(tempFd_->GetFd(), LOG_DOMAIN);
 }
