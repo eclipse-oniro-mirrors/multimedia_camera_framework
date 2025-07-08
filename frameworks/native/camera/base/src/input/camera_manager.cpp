@@ -1658,7 +1658,7 @@ bool CameraManager::GetConcurrentType(std::vector<sptr<CameraDevice>> cameraDevi
     int32_t retCode;
     for (auto cameraDev : cameraDeviceArrray) {
         CameraPosition cameraPosition = cameraDev->GetPosition();
-        CHECK_ERROR_RETURN_RET_LOG(cameraPosition == CameraPosition::CAMERA_POSITION_FLOD_INNER,
+        CHECK_ERROR_RETURN_RET_LOG(cameraPosition == CameraPosition::CAMERA_POSITION_FOLD_INNER,
             false, "CameraManager::GetConcurrentType this device camera position is 3!");
         string idofthis;
         auto iter = fwToMetaCameraPosition_.find(cameraPosition);
