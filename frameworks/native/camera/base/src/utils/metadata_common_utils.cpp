@@ -77,10 +77,10 @@ void FillSizeListFromStreamInfo(
 std::shared_ptr<vector<Size>> GetSupportedPreviewSizeRangeFromProfileLevel(
     const int32_t modeName, camera_format_t targetFormat, const std::shared_ptr<OHOS::Camera::CameraMetadata> metadata)
 {
-    CHECK_ERROR_RETURN_RET(metadata == nullptr, nullptr);
+    CHECK_RETURN_RET(metadata == nullptr, nullptr);
     camera_metadata_item_t item;
     int32_t retCode = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_AVAILABLE_PROFILE_LEVEL, &item);
-    CHECK_ERROR_RETURN_RET(retCode != CAM_META_SUCCESS || item.count == 0, nullptr);
+    CHECK_RETURN_RET(retCode != CAM_META_SUCCESS || item.count == 0, nullptr);
     std::shared_ptr<vector<Size>> sizeList = std::make_shared<vector<Size>>();
     std::vector<SpecInfo> specInfos;
     ProfileLevelInfo modeInfo = {};
@@ -101,7 +101,7 @@ std::shared_ptr<vector<Size>> GetSupportedPreviewSizeRangeFromExtendConfig(
     const int32_t modeName, camera_format_t targetFormat, const std::shared_ptr<OHOS::Camera::CameraMetadata> metadata)
 {
     auto item = MetadataCommonUtils::GetCapabilityEntry(metadata, OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS);
-    CHECK_ERROR_RETURN_RET(item == nullptr, nullptr);
+    CHECK_RETURN_RET(item == nullptr, nullptr);
     std::shared_ptr<vector<Size>> sizeList = std::make_shared<vector<Size>>();
 
     ExtendInfo extendInfo = {};
@@ -135,7 +135,7 @@ std::shared_ptr<vector<Size>> GetSupportedPreviewSizeRangeFromBasicConfig(
     camera_format_t targetFormat, const std::shared_ptr<OHOS::Camera::CameraMetadata> metadata)
 {
     auto item = MetadataCommonUtils::GetCapabilityEntry(metadata, OHOS_ABILITY_STREAM_AVAILABLE_BASIC_CONFIGURATIONS);
-    CHECK_ERROR_RETURN_RET(item == nullptr, nullptr);
+    CHECK_RETURN_RET(item == nullptr, nullptr);
     std::shared_ptr<vector<Size>> sizeList = std::make_shared<vector<Size>>();
 
     const uint32_t widthOffset = 1;
@@ -161,10 +161,10 @@ std::shared_ptr<vector<Size>> GetSupportedPreviewSizeRangeFromBasicConfig(
 std::shared_ptr<camera_metadata_item_t> MetadataCommonUtils::GetCapabilityEntry(
     const std::shared_ptr<Camera::CameraMetadata> metadata, uint32_t metadataTag)
 {
-    CHECK_ERROR_RETURN_RET(metadata == nullptr, nullptr);
+    CHECK_RETURN_RET(metadata == nullptr, nullptr);
     std::shared_ptr<camera_metadata_item_t> item = std::make_shared<camera_metadata_item_t>();
     int32_t retCode = Camera::FindCameraMetadataItem(metadata->get(), metadataTag, item.get());
-    CHECK_ERROR_RETURN_RET(retCode != CAM_META_SUCCESS || item->count == 0, nullptr);
+    CHECK_RETURN_RET(retCode != CAM_META_SUCCESS || item->count == 0, nullptr);
     return item;
 }
 
@@ -220,7 +220,7 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> MetadataCommonUtils::CopyMetadata(
 bool MetadataCommonUtils::ProcessFocusTrackingModeInfo(const std::shared_ptr<OHOS::Camera::CameraMetadata>& metadata,
     FocusTrackingMode& mode)
 {
-    CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, false, "metadata is nullptr");
+    CHECK_RETURN_RET_ELOG(metadata == nullptr, false, "metadata is nullptr");
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_FOCUS_TRACKING_MODE, &item);
     if (ret != CAM_META_SUCCESS || item.count == 0) {
@@ -235,7 +235,7 @@ bool MetadataCommonUtils::ProcessMetaObjects(const int32_t streamId,
     const std::shared_ptr<OHOS::Camera::CameraMetadata>& result,
     std::vector<sptr<MetadataObject>> &metaObjects, bool isNeedMirror, bool isNeedFlip)
 {
-    CHECK_ERROR_RETURN_RET(result == nullptr, false);
+    CHECK_RETURN_RET(result == nullptr, false);
     // camera_metadata_item_t metadataItem;
     common_metadata_header_t *metadata = result->get();
     std::vector<camera_metadata_item_t> metadataResults;
@@ -247,7 +247,7 @@ bool MetadataCommonUtils::ProcessMetaObjects(const int32_t streamId,
         return false;
     }
     int32_t ret = ProcessMetaObjects(streamId, metaObjects, metadataResults, metadataTypes, isNeedMirror, isNeedFlip);
-    CHECK_ERROR_RETURN_RET_LOG(ret != CameraErrorCode::SUCCESS, false,
+    CHECK_RETURN_RET_ELOG(ret != CameraErrorCode::SUCCESS, false,
         "MetadataCommonUtils::ProcessFaceRectangles() is failed.");
     return true;
 }
@@ -485,7 +485,7 @@ std::vector<float> ParsePhysicalApertureRangeByMode(const camera_metadata_item_t
         [currentMode](auto value) -> bool {
             return currentMode == value[0];
         });
-    CHECK_ERROR_RETURN_RET_LOG(it == modeRanges.end(), {},
+    CHECK_RETURN_RET_ELOG(it == modeRanges.end(), {},
         "ParsePhysicalApertureRangeByMode Failed meta not support mode:%{public}d", modeName);
 
     return *it;

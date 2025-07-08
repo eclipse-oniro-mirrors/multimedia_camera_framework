@@ -57,7 +57,7 @@ sptr<Surface> GetSurfaceFromSurfaceId(napi_env env, std::string& surfaceId)
 void AsyncCompleteCallback(napi_env env, napi_status status, void* data)
 {
     auto previewOutputAsyncContext = static_cast<PreviewOutputAsyncContext*>(data);
-    CHECK_ERROR_RETURN_LOG(previewOutputAsyncContext == nullptr,
+    CHECK_RETURN_ELOG(previewOutputAsyncContext == nullptr,
         "PreviewOutputNapi AsyncCompleteCallback context is null");
     MEDIA_INFO_LOG("PreviewOutputNapi AsyncCompleteCallback %{public}s, status = %{public}d",
         previewOutputAsyncContext->funcName.c_str(), previewOutputAsyncContext->status);
@@ -248,7 +248,7 @@ napi_value PreviewOutputNapi::Init(napi_env env, napi_value exports)
         status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
         if (status == napi_ok) {
             status = napi_set_named_property(env, exports, CAMERA_PREVIEW_OUTPUT_NAPI_CLASS_NAME, ctorObj);
-            CHECK_ERROR_RETURN_RET(status == napi_ok, exports);
+            CHECK_RETURN_RET(status == napi_ok, exports);
         }
     }
     MEDIA_ERR_LOG("Init call Failed!");
@@ -296,7 +296,7 @@ napi_value PreviewOutputNapi::CreateDeferredPreviewOutput(napi_env env, Profile&
     status = napi_get_reference_value(env, sConstructor_, &constructor);
     if (status == napi_ok) {
         sPreviewOutput_ = CameraManager::GetInstance()->CreateDeferredPreviewOutput(profile);
-        CHECK_ERROR_RETURN_RET_LOG(sPreviewOutput_ == nullptr, result, "failed to create previewOutput");
+        CHECK_RETURN_RET_ELOG(sPreviewOutput_ == nullptr, result, "failed to create previewOutput");
         status = napi_new_instance(env, constructor, 0, nullptr, &result);
         sPreviewOutput_ = nullptr;
 
@@ -328,13 +328,13 @@ napi_value PreviewOutputNapi::CreatePreviewOutput(napi_env env, Profile& profile
         if (!surface) {
             surface = Media::ImageReceiver::getSurfaceById(surfaceId);
         }
-        CHECK_ERROR_RETURN_RET_LOG(surface == nullptr, result,
+        CHECK_RETURN_RET_ELOG(surface == nullptr, result,
             "PreviewOutputNapi::CreatePreviewOutput failed to get surface");
 
         surface->SetUserData(CameraManager::surfaceFormat, std::to_string(profile.GetCameraFormat()));
         int retCode = CameraManager::GetInstance()->CreatePreviewOutput(profile, surface, &sPreviewOutput_);
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
-        CHECK_ERROR_RETURN_RET_LOG(sPreviewOutput_ == nullptr, result,
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET_ELOG(sPreviewOutput_ == nullptr, result,
             "PreviewOutputNapi::CreatePreviewOutput failed to create previewOutput");
         status = napi_new_instance(env, constructor, 0, nullptr, &result);
         sPreviewOutput_ = nullptr;
@@ -367,10 +367,10 @@ napi_value PreviewOutputNapi::CreatePreviewOutput(napi_env env, std::string surf
         if (!surface) {
             surface = Media::ImageReceiver::getSurfaceById(surfaceId);
         }
-        CHECK_ERROR_RETURN_RET_LOG(surface == nullptr, result, "failed to get surface");
+        CHECK_RETURN_RET_ELOG(surface == nullptr, result, "failed to get surface");
         int retCode = CameraManager::GetInstance()->CreatePreviewOutputWithoutProfile(surface, &sPreviewOutput_);
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
-        CHECK_ERROR_RETURN_RET_LOG(sPreviewOutput_ == nullptr, result,
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET_ELOG(sPreviewOutput_ == nullptr, result,
             "failed to create previewOutput with only surfaceId");
         status = napi_new_instance(env, constructor, 0, nullptr, &result);
         sPreviewOutput_ = nullptr;
@@ -414,10 +414,10 @@ napi_value PreviewOutputNapi::GetActiveProfile(napi_env env, napi_callback_info 
     MEDIA_DEBUG_LOG("PreviewOutputNapi::GetActiveProfile is called");
     PreviewOutputNapi* previewOutputNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, previewOutputNapi);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"),
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"),
         nullptr, "PreviewOutputNapi::GetActiveProfile parse parameter occur error");
     auto profile = previewOutputNapi->previewOutput_->GetPreviewProfile();
-    CHECK_ERROR_RETURN_RET(profile == nullptr, CameraNapiUtils::GetUndefinedValue(env));
+    CHECK_RETURN_RET(profile == nullptr, CameraNapiUtils::GetUndefinedValue(env));
     return CameraNapiObjProfile(*profile).GenerateNapiValue(env);
 }
 
@@ -429,7 +429,7 @@ napi_value PreviewOutputNapi::Release(napi_env env, napi_callback_info info)
     auto asyncFunction =
         std::make_shared<CameraNapiAsyncFunction>(env, "Release", asyncContext->callbackRef, asyncContext->deferred);
     CameraNapiParamParser jsParamParser(env, info, asyncContext->objectInfo, asyncFunction);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument"),
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument"),
         nullptr, "PreviewOutputNapi::Release invalid argument");
     asyncContext->HoldNapiValue(env, jsParamParser.GetThisVar());
     napi_status status = napi_create_async_work(
@@ -437,7 +437,7 @@ napi_value PreviewOutputNapi::Release(napi_env env, napi_callback_info info)
         [](napi_env env, void* data) {
             MEDIA_INFO_LOG("PreviewOutputNapi::Release running on worker");
             auto context = static_cast<PreviewOutputAsyncContext*>(data);
-            CHECK_ERROR_RETURN_LOG(context->objectInfo == nullptr, "PreviewOutputNapi::Release async info is nullptr");
+            CHECK_RETURN_ELOG(context->objectInfo == nullptr, "PreviewOutputNapi::Release async info is nullptr");
             CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
             CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(context->queueTask, [&context]() {
                 context->errorCode = context->objectInfo->previewOutput_->Release();
@@ -454,7 +454,7 @@ napi_value PreviewOutputNapi::Release(napi_env env, napi_callback_info info)
         napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
         asyncContext.release();
     }
-    CHECK_ERROR_RETURN_RET(asyncFunction->GetAsyncFunctionType() == ASYNC_FUN_TYPE_PROMISE,
+    CHECK_RETURN_RET(asyncFunction->GetAsyncFunctionType() == ASYNC_FUN_TYPE_PROMISE,
         asyncFunction->GetPromise());
     return CameraNapiUtils::GetUndefinedValue(env);
 }
@@ -462,13 +462,13 @@ napi_value PreviewOutputNapi::Release(napi_env env, napi_callback_info info)
 napi_value PreviewOutputNapi::AddDeferredSurface(napi_env env, napi_callback_info info)
 {
     MEDIA_DEBUG_LOG("AddDeferredSurface is called");
-    CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
+    CHECK_RETURN_RET_ELOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
         "SystemApi AddDeferredSurface is called!");
 
     PreviewOutputNapi* previewOutputNapi;
     std::string surfaceId;
     CameraNapiParamParser jsParamParser(env, info, previewOutputNapi, surfaceId);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument"), nullptr,
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument"), nullptr,
         "CameraInputNapi::AddDeferredSurface invalid argument");
 
     uint64_t iSurfaceId;
@@ -498,7 +498,7 @@ napi_value PreviewOutputNapi::Start(napi_env env, napi_callback_info info)
     auto asyncFunction =
         std::make_shared<CameraNapiAsyncFunction>(env, "Start", asyncContext->callbackRef, asyncContext->deferred);
     CameraNapiParamParser jsParamParser(env, info, asyncContext->objectInfo, asyncFunction);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument"),
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument"),
         nullptr, "PreviewOutputNapi::Start invalid argument");
     asyncContext->HoldNapiValue(env, jsParamParser.GetThisVar());
     napi_status status = napi_create_async_work(
@@ -506,7 +506,7 @@ napi_value PreviewOutputNapi::Start(napi_env env, napi_callback_info info)
         [](napi_env env, void* data) {
             MEDIA_INFO_LOG("PreviewOutputNapi::Start running on worker");
             auto context = static_cast<PreviewOutputAsyncContext*>(data);
-            CHECK_ERROR_RETURN_LOG(context->objectInfo == nullptr, "PreviewOutputNapi::Start async info is nullptr");
+            CHECK_RETURN_ELOG(context->objectInfo == nullptr, "PreviewOutputNapi::Start async info is nullptr");
             CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
             CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(context->queueTask, [&context]() {
                 context->errorCode = context->objectInfo->previewOutput_->Start();
@@ -524,7 +524,7 @@ napi_value PreviewOutputNapi::Start(napi_env env, napi_callback_info info)
         napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
         asyncContext.release();
     }
-    CHECK_ERROR_RETURN_RET(asyncFunction->GetAsyncFunctionType() == ASYNC_FUN_TYPE_PROMISE,
+    CHECK_RETURN_RET(asyncFunction->GetAsyncFunctionType() == ASYNC_FUN_TYPE_PROMISE,
         asyncFunction->GetPromise());
     return CameraNapiUtils::GetUndefinedValue(env);
 }
@@ -537,7 +537,7 @@ napi_value PreviewOutputNapi::Stop(napi_env env, napi_callback_info info)
     auto asyncFunction =
         std::make_shared<CameraNapiAsyncFunction>(env, "Stop", asyncContext->callbackRef, asyncContext->deferred);
     CameraNapiParamParser jsParamParser(env, info, asyncContext->objectInfo, asyncFunction);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument"), nullptr,
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument"), nullptr,
         "PreviewOutputNapi::Stop invalid argument");
     asyncContext->HoldNapiValue(env, jsParamParser.GetThisVar());
     napi_status status = napi_create_async_work(
@@ -545,7 +545,7 @@ napi_value PreviewOutputNapi::Stop(napi_env env, napi_callback_info info)
         [](napi_env env, void* data) {
             MEDIA_INFO_LOG("PreviewOutputNapi::Stop running on worker");
             auto context = static_cast<PreviewOutputAsyncContext*>(data);
-            CHECK_ERROR_RETURN_LOG(context->objectInfo == nullptr, "PreviewOutputNapi::Stop async info is nullptr");
+            CHECK_RETURN_ELOG(context->objectInfo == nullptr, "PreviewOutputNapi::Stop async info is nullptr");
             CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
             CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(context->queueTask, [&context]() {
                 context->errorCode = context->objectInfo->previewOutput_->Stop();
@@ -563,7 +563,7 @@ napi_value PreviewOutputNapi::Stop(napi_env env, napi_callback_info info)
         napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
         asyncContext.release();
     }
-    CHECK_ERROR_RETURN_RET(asyncFunction->GetAsyncFunctionType() == ASYNC_FUN_TYPE_PROMISE,
+    CHECK_RETURN_RET(asyncFunction->GetAsyncFunctionType() == ASYNC_FUN_TYPE_PROMISE,
         asyncFunction->GetPromise());
     return CameraNapiUtils::GetUndefinedValue(env);
 }
@@ -572,7 +572,7 @@ void PreviewOutputNapi::RegisterFrameStartCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
     auto listener = RegisterCallbackListener(eventName, env, callback, args, isOnce);
-    CHECK_ERROR_RETURN_LOG(
+    CHECK_RETURN_ELOG(
         listener == nullptr, "PreviewOutputNapi::RegisterFrameStartCallbackListener listener is null");
     previewOutput_->SetCallback(listener);
 }
@@ -581,7 +581,7 @@ void PreviewOutputNapi::RegisterFrameEndCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
     auto listener = RegisterCallbackListener(eventName, env, callback, args, isOnce);
-    CHECK_ERROR_RETURN_LOG(listener == nullptr, "PreviewOutputNapi::RegisterFrameEndCallbackListener listener is null");
+    CHECK_RETURN_ELOG(listener == nullptr, "PreviewOutputNapi::RegisterFrameEndCallbackListener listener is null");
     previewOutput_->SetCallback(listener);
 }
 
@@ -589,7 +589,7 @@ void PreviewOutputNapi::RegisterErrorCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
     auto listener = RegisterCallbackListener(eventName, env, callback, args, isOnce);
-    CHECK_ERROR_RETURN_LOG(listener == nullptr, "PreviewOutputNapi::RegisterErrorCallbackListener listener is null");
+    CHECK_RETURN_ELOG(listener == nullptr, "PreviewOutputNapi::RegisterErrorCallbackListener listener is null");
     previewOutput_->SetCallback(listener);
 }
 
@@ -597,7 +597,7 @@ void PreviewOutputNapi::UnregisterCommonCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
     auto listener = UnregisterCallbackListener(eventName, env, callback, args);
-    CHECK_ERROR_RETURN_LOG(listener == nullptr,
+    CHECK_RETURN_ELOG(listener == nullptr,
         "PreviewOutputNapi::UnregisterCommonCallbackListener %{public}s listener is null", eventName.c_str());
     if (listener->IsEmpty(eventName)) {
         previewOutput_->RemoveCallback(listener);
@@ -607,9 +607,9 @@ void PreviewOutputNapi::UnregisterCommonCallbackListener(
 void PreviewOutputNapi::RegisterSketchStatusChangedCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
-    CHECK_ERROR_RETURN_LOG(!CameraNapiSecurity::CheckSystemApp(env), "SystemApi On sketchStatusChanged is called!");
+    CHECK_RETURN_ELOG(!CameraNapiSecurity::CheckSystemApp(env), "SystemApi On sketchStatusChanged is called!");
     auto listener = RegisterCallbackListener(eventName, env, callback, args, isOnce);
-    CHECK_ERROR_RETURN_LOG(
+    CHECK_RETURN_ELOG(
         listener == nullptr, "PreviewOutputNapi::RegisterSketchStatusChangedCallbackListener listener is null");
     previewOutput_->SetCallback(listener);
     previewOutput_->OnNativeRegisterCallback(eventName);
@@ -624,7 +624,7 @@ void PreviewOutputNapi::UnregisterSketchStatusChangedCallbackListener(
     }
 
     auto listener = UnregisterCallbackListener(eventName, env, callback, args);
-    CHECK_ERROR_RETURN_LOG(
+    CHECK_RETURN_ELOG(
         listener == nullptr, "PreviewOutputNapi::UnregisterSketchStatusChangedCallbackListener listener is null");
     previewOutput_->OnNativeUnregisterCallback(eventName);
     if (listener->IsEmpty(eventName)) {
@@ -652,12 +652,12 @@ const PreviewOutputNapi::EmitterFunctions& PreviewOutputNapi::GetEmitterFunction
 
 napi_value PreviewOutputNapi::IsSketchSupported(napi_env env, napi_callback_info info)
 {
-    CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
+    CHECK_RETURN_RET_ELOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
         "SystemApi IsSketchSupported is called!");
     MEDIA_INFO_LOG("PreviewOutputNapi::IsSketchSupported is called");
     PreviewOutputNapi* previewOutputNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, previewOutputNapi);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"),
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"),
         nullptr, "PreviewOutputNapi::IsSketchSupported parse parameter occur error");
 
     bool isSupported = previewOutputNapi->previewOutput_->IsSketchSupported();
@@ -666,12 +666,12 @@ napi_value PreviewOutputNapi::IsSketchSupported(napi_env env, napi_callback_info
 
 napi_value PreviewOutputNapi::GetSketchRatio(napi_env env, napi_callback_info info)
 {
-    CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env),
+    CHECK_RETURN_RET_ELOG(!CameraNapiSecurity::CheckSystemApp(env),
         nullptr, "SystemApi GetSketchRatio is called!");
     MEDIA_INFO_LOG("PreviewOutputNapi::GetSketchRatio is called");
     PreviewOutputNapi* previewOutputNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, previewOutputNapi);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"),
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"),
         nullptr, "PreviewOutputNapi::GetSketchRatio parse parameter occur error");
     auto result = CameraNapiUtils::GetUndefinedValue(env);
     float ratio = previewOutputNapi->previewOutput_->GetSketchRatio();
@@ -682,16 +682,16 @@ napi_value PreviewOutputNapi::GetSketchRatio(napi_env env, napi_callback_info in
 napi_value PreviewOutputNapi::EnableSketch(napi_env env, napi_callback_info info)
 {
     MEDIA_DEBUG_LOG("PreviewOutputNapi::EnableSketch enter");
-    CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr, "SystemApi EnableSketch is called!");
+    CHECK_RETURN_RET_ELOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr, "SystemApi EnableSketch is called!");
 
     bool isEnableSketch;
     PreviewOutputNapi* previewOutputNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, previewOutputNapi, isEnableSketch);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
         "PreviewOutputNapi::EnableSketch parse parameter occur error");
 
     int32_t retCode = previewOutputNapi->previewOutput_->EnableSketch(isEnableSketch);
-    CHECK_ERROR_RETURN_RET_LOG(!CameraNapiUtils::CheckError(env, retCode), nullptr,
+    CHECK_RETURN_RET_ELOG(!CameraNapiUtils::CheckError(env, retCode), nullptr,
         "PreviewOutputNapi::EnableSketch fail! %{public}d", retCode);
     MEDIA_DEBUG_LOG("PreviewOutputNapi::EnableSketch success");
     return CameraNapiUtils::GetUndefinedValue(env);
@@ -752,7 +752,7 @@ napi_value PreviewOutputNapi::SetPreviewRotation(napi_env env, napi_callback_inf
         jsParamParser = CameraNapiParamParser(env, info, previewOutputNapi, imageRotation);
         isDisplayLocked = false;
     }
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument"), nullptr,
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument"), nullptr,
         "PreviewOutputNapi::SetPreviewRotation invalid argument");
     if (previewOutputNapi->previewOutput_ == nullptr || imageRotation < 0 ||
         imageRotation > ROTATION_270 || (imageRotation % ROTATION_90 != 0)) {
@@ -761,7 +761,7 @@ napi_value PreviewOutputNapi::SetPreviewRotation(napi_env env, napi_callback_inf
         return nullptr;
     }
     retCode = previewOutputNapi->previewOutput_->SetPreviewRotation(imageRotation, isDisplayLocked);
-    CHECK_ERROR_RETURN_RET_LOG(!CameraNapiUtils::CheckError(env, retCode), nullptr,
+    CHECK_RETURN_RET_ELOG(!CameraNapiUtils::CheckError(env, retCode), nullptr,
         "PreviewOutputNapi::SetPreviewRotation! %{public}d", retCode);
     MEDIA_DEBUG_LOG("PreviewOutputNapi::SetPreviewRotation success");
     return CameraNapiUtils::GetUndefinedValue(env);
@@ -770,13 +770,13 @@ napi_value PreviewOutputNapi::SetPreviewRotation(napi_env env, napi_callback_inf
 napi_value PreviewOutputNapi::AttachSketchSurface(napi_env env, napi_callback_info info)
 {
     MEDIA_DEBUG_LOG("PreviewOutputNapi::AttachSketchSurface enter");
-    CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
+    CHECK_RETURN_RET_ELOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
         "SystemApi AttachSketchSurface is called!");
 
     std::string surfaceId;
     PreviewOutputNapi* previewOutputNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, previewOutputNapi, surfaceId);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
         "PreviewOutputNapi::AttachSketchSurface parse parameter occur error");
 
     sptr<Surface> surface = GetSurfaceFromSurfaceId(env, surfaceId);
@@ -787,7 +787,7 @@ napi_value PreviewOutputNapi::AttachSketchSurface(napi_env env, napi_callback_in
     }
 
     int32_t retCode = previewOutputNapi->previewOutput_->AttachSketchSurface(surface);
-    CHECK_ERROR_RETURN_RET_LOG(!CameraNapiUtils::CheckError(env, retCode), nullptr,
+    CHECK_RETURN_RET_ELOG(!CameraNapiUtils::CheckError(env, retCode), nullptr,
         "PreviewOutputNapi::AttachSketchSurface! %{public}d", retCode);
     MEDIA_DEBUG_LOG("PreviewOutputNapi::AttachSketchSurface success");
     return CameraNapiUtils::GetUndefinedValue(env);
@@ -814,7 +814,7 @@ napi_value PreviewOutputNapi::SetFrameRate(napi_env env, napi_callback_info info
         int32_t maxFrameRate;
         napi_get_value_int32(env, argv[PARAM1], &maxFrameRate);
         int32_t retCode = previewOutputNapi->previewOutput_->SetFrameRate(minFrameRate, maxFrameRate);
-        CHECK_ERROR_RETURN_RET_LOG(!CameraNapiUtils::CheckError(env, retCode), result,
+        CHECK_RETURN_RET_ELOG(!CameraNapiUtils::CheckError(env, retCode), result,
             "PreviewOutputNapi::SetFrameRate! %{public}d", retCode);
     } else {
         MEDIA_ERR_LOG("SetFrameRate call Failed!");

@@ -31,7 +31,7 @@ namespace CameraStandard {
 std::shared_ptr<PictureIntf> GetPictureIntfInstance()
 {
     auto pictureProxy = PictureProxy::CreatePictureProxy();
-    CHECK_ERROR_PRINT_LOG(pictureProxy == nullptr || pictureProxy.use_count() != 1,
+    CHECK_PRINT_ELOG(pictureProxy == nullptr || pictureProxy.use_count() != 1,
         "pictureProxy use count is not 1");
     return pictureProxy;
 }
@@ -64,24 +64,24 @@ int32_t TestUtils::SaveYUV(const char* buffer, int32_t size, SurfaceType type)
     char path[PATH_MAX] = {0};
     int32_t retVal;
 
-    CHECK_ERROR_RETURN_RET_LOG((buffer == nullptr) || (size == 0), -1, "buffer is null or size is 0");
+    CHECK_RETURN_RET_ELOG((buffer == nullptr) || (size == 0), -1, "buffer is null or size is 0");
 
     MEDIA_DEBUG_LOG("TestUtils::SaveYUV(), type: %{public}d", type);
     if (type == SurfaceType::PREVIEW) {
         (void)system("mkdir -p /data/media/preview");
         retVal = sprintf_s(path, sizeof(path) / sizeof(path[0]), "/data/media/preview/%s_%lld.yuv", "preview",
                            GetCurrentLocalTimeStamp());
-        CHECK_ERROR_RETURN_RET_LOG(retVal < 0, -1, "Path Assignment failed");
+        CHECK_RETURN_RET_ELOG(retVal < 0, -1, "Path Assignment failed");
     } else if (type == SurfaceType::PHOTO) {
         (void)system("mkdir -p /data/media/photo");
         retVal = sprintf_s(path, sizeof(path) / sizeof(path[0]), "/data/media/photo/%s_%lld.jpg", "photo",
                            GetCurrentLocalTimeStamp());
-        CHECK_ERROR_RETURN_RET_LOG(retVal < 0, -1, "Path Assignment failed");
+        CHECK_RETURN_RET_ELOG(retVal < 0, -1, "Path Assignment failed");
     } else if (type == SurfaceType::SECOND_PREVIEW) {
         (void)system("mkdir -p /data/media/preview2");
         retVal = sprintf_s(path, sizeof(path) / sizeof(path[0]), "/data/media/preview2/%s_%lld.yuv", "preview2",
                            GetCurrentLocalTimeStamp());
-        CHECK_ERROR_RETURN_RET_LOG(retVal < 0, -1, "Path Assignment failed");
+        CHECK_RETURN_RET_ELOG(retVal < 0, -1, "Path Assignment failed");
     } else {
         MEDIA_ERR_LOG("Unexpected flow!");
         return -1;
@@ -89,7 +89,7 @@ int32_t TestUtils::SaveYUV(const char* buffer, int32_t size, SurfaceType type)
 
     MEDIA_DEBUG_LOG("%s, saving file to %{private}s", __FUNCTION__, path);
     int imgFd = open(path, O_RDWR | O_CREAT, FILE_PERMISSIONS_FLAG);
-    CHECK_ERROR_RETURN_RET_LOG(imgFd == -1, -1,
+    CHECK_RETURN_RET_ELOG(imgFd == -1, -1,
         "%s, open file failed, errno = %{public}s.", __FUNCTION__, strerror(errno));
     fdsan_exchange_owner_tag(imgFd, 0, LOG_DOMAIN);
     int ret = write(imgFd, buffer, size);
@@ -105,7 +105,7 @@ int32_t TestUtils::SaveYUV(const char* buffer, int32_t size, SurfaceType type)
 bool TestUtils::IsNumber(const char number[])
 {
     for (int i = 0; number[i] != 0; i++) {
-        CHECK_ERROR_RETURN_RET(!std::isdigit(number[i]), false);
+        CHECK_RETURN_RET(!std::isdigit(number[i]), false);
     }
     return true;
 }
@@ -120,7 +120,7 @@ int32_t TestUtils::SaveVideoFile(const char* buffer, int32_t size, VideoSaveMode
         (void)system("mkdir -p /data/media/video");
         retVal = sprintf_s(path, sizeof(path) / sizeof(path[0]),
                            "/data/media/video/%s_%lld.h264", "video", GetCurrentLocalTimeStamp());
-        CHECK_ERROR_RETURN_RET_LOG(retVal < 0, -1, "Failed to create video file name");
+        CHECK_RETURN_RET_ELOG(retVal < 0, -1, "Failed to create video file name");
         MEDIA_DEBUG_LOG("%{public}s, save video to file %{private}s", __FUNCTION__, path);
         fd = open(path, O_RDWR | O_CREAT, FILE_PERMISSIONS_FLAG);
         if (fd == -1) {
@@ -362,7 +362,7 @@ void SurfaceListener::OnBufferAvailable()
     MEDIA_DEBUG_LOG("SurfaceListener::OnBufferAvailable(), testName_: %{public}s, surfaceType_: %{public}d",
                     testName_, surfaceType_);
     OHOS::sptr<OHOS::SurfaceBuffer> buffer = nullptr;
-    CHECK_ERROR_RETURN_LOG(surface_ == nullptr, "OnBufferAvailable:surface_ is null");
+    CHECK_RETURN_ELOG(surface_ == nullptr, "OnBufferAvailable:surface_ is null");
     surface_->AcquireBuffer(buffer, flushFence, timestamp, damage);
     if (buffer != nullptr) {
         char* addr = static_cast<char *>(buffer->GetVirAddr());
@@ -388,14 +388,14 @@ void SurfaceListener::OnBufferAvailable()
                 break;
 
             case SurfaceType::PHOTO:
-                CHECK_ERROR_PRINT_LOG(TestUtils::SaveYUV(addr, size, surfaceType_) != CAMERA_OK,
+                CHECK_PRINT_ELOG(TestUtils::SaveYUV(addr, size, surfaceType_) != CAMERA_OK,
                     "Failed to save buffer");
                 break;
 
             case SurfaceType::VIDEO:
-                CHECK_ERROR_PRINT_LOG(fd_ == -1 && (TestUtils::SaveVideoFile(nullptr, 0, VideoSaveMode::CREATE, fd_) !=
+                CHECK_PRINT_ELOG(fd_ == -1 && (TestUtils::SaveVideoFile(nullptr, 0, VideoSaveMode::CREATE, fd_) !=
                     CAMERA_OK), "Failed to Create video file");
-                CHECK_ERROR_PRINT_LOG(TestUtils::SaveVideoFile(addr, size, VideoSaveMode::APPEND, fd_) != CAMERA_OK,
+                CHECK_PRINT_ELOG(TestUtils::SaveVideoFile(addr, size, VideoSaveMode::APPEND, fd_) != CAMERA_OK,
                     "Failed to save buffer");
                 break;
 

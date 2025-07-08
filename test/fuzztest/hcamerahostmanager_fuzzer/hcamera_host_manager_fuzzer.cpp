@@ -42,7 +42,7 @@ void HCameraHostManagerFuzzer::HCameraHostManagerFuzzTest1(FuzzedDataProvider& f
     }
     std::shared_ptr<HCameraHostManager::StatusCallback> statusCallback = std::make_shared<StatusCallbackDemo>();
     fuzz_ = std::make_shared<HCameraHostManager>(statusCallback);
-    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
+    CHECK_RETURN_ELOG(!fuzz_, "Create fuzz_ Error");
     std::string cameraId(fdp.ConsumeRandomLengthString(MAX_LENGTH_STRING));
     bool isEnable = fdp.ConsumeBool();
     std::shared_ptr<OHOS::Camera::CameraMetadata> ability;

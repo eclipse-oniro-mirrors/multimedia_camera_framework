@@ -205,14 +205,14 @@ bool CameraRotatePlugin::HookCaptureStreamStart(ParameterMap basicInfoMap, int32
 
 void* CameraRotatePlugin::GetFunction(const std::string& functionName)
 {
-    CHECK_DEBUG_RETURN_RET_LOG(
+    CHECK_RETURN_RET_DLOG(
         handle_ == nullptr, nullptr, "CameraRotatePlugin::GetFunction fail not loaded");
     void* funcInstance = nullptr;
     if (functionMap_.Find(functionName, funcInstance)) {
         return funcInstance;
     }
     void* handleFunc = dlsym(handle_, functionName.c_str());
-    CHECK_DEBUG_RETURN_RET_LOG(
+    CHECK_RETURN_RET_DLOG(
         handleFunc == nullptr, nullptr, "CameraRotatePlugin::GetFunction fail function:%{public}s not find",
         functionName.c_str());
     MEDIA_INFO_LOG("CameraRotatePlugin::GetFunction %{public}s success", functionName.c_str());
@@ -224,10 +224,10 @@ bool CameraRotatePlugin::GetParameterResult(ParameterMap basicInfoMap, const std
     ParameterMap& parameterMap)
 {
     UpdateParameterFunc updateParameterFunc = (UpdateParameterFunc)GetFunction(functionName);
-    CHECK_DEBUG_RETURN_RET_LOG(updateParameterFunc == nullptr, false,
+    CHECK_RETURN_RET_DLOG(updateParameterFunc == nullptr, false,
         "function %{public}s is failed", functionName.c_str());
     bool result = updateParameterFunc(basicInfoMap, parameterMap);
-    CHECK_DEBUG_RETURN_RET_LOG(!result, false, "function %{public}s is failed", functionName.c_str());
+    CHECK_RETURN_RET_DLOG(!result, false, "function %{public}s is failed", functionName.c_str());
     return true;
 }
 
@@ -275,13 +275,13 @@ bool CameraRotatePlugin::GetCameraAbility(ParameterMap basicInfoMap,
 {
     ParameterMap updateParameter;
     bool result = GetParameterResult(basicInfoMap, "GetCameraAbility", updateParameter);
-    CHECK_ERROR_RETURN_RET_LOG((updateParameter.size() < 1 || !result), false, "GetCameraAbility is failed");
+    CHECK_RETURN_RET_ELOG((updateParameter.size() < 1 || !result), false, "GetCameraAbility is failed");
     result = (updateParameter.find(PLUGIN_CAMERA_POSITION) != updateParameter.end()) &&
         (updateParameter.find(PLUGIN_SENSOR_ORIENTATION) != updateParameter.end());
-    CHECK_ERROR_RETURN_RET_LOG(!result, false, "updateParameter result not include needed parameter");
+    CHECK_RETURN_RET_ELOG(!result, false, "updateParameter result not include needed parameter");
     result = isIntegerRegex(updateParameter[PLUGIN_CAMERA_POSITION]) &&
         isIntegerRegex(updateParameter[PLUGIN_SENSOR_ORIENTATION]);
-    CHECK_ERROR_RETURN_RET_LOG(!result, false, "updateParameter result not valid number");
+    CHECK_RETURN_RET_ELOG(!result, false, "updateParameter result not valid number");
     cameraPosition = std::stoi(updateParameter[PLUGIN_CAMERA_POSITION]);
     sensorOrientation = std::stoi(updateParameter[PLUGIN_SENSOR_ORIENTATION]);
     return result;
@@ -292,7 +292,7 @@ int32_t CameraRotatePlugin::OnParameterChange(ParameterMap ParameterMap)
     wptr<HCaptureSession> hcaptureSessionWptr;
     captureSessionMap_.Find(ParameterMap[PLUGIN_BUNDLE_NAME], hcaptureSessionWptr);
     sptr<HCaptureSession> hcaptureSessionSptr = hcaptureSessionWptr.promote();
-    CHECK_ERROR_RETURN_RET_LOG((hcaptureSessionSptr == nullptr || ParameterMap.size() < 1), CAMERA_INVALID_ARG,
+    CHECK_RETURN_RET_ELOG((hcaptureSessionSptr == nullptr || ParameterMap.size() < 1), CAMERA_INVALID_ARG,
         "hcaptureSession is null");
     hcaptureSessionSptr->UpdateHookBasicInfo(ParameterMap);
     return 0;
@@ -302,12 +302,12 @@ using OpenCameraDeviceFunc = bool(*)(ParameterMap&, UpdateSettingsCallback, Para
 bool CameraRotatePlugin::SubscribeUpdateSettingCallback(ParameterMap basicInfoMap)
 {
     OpenCameraDeviceFunc openCameraDeviceFunc = (OpenCameraDeviceFunc)GetFunction("SubscribeUpdateSettingCallback");
-    CHECK_ERROR_RETURN_RET_LOG(openCameraDeviceFunc == nullptr, false, "SubscribeUpdateSettingCallback is failed");
+    CHECK_RETURN_RET_ELOG(openCameraDeviceFunc == nullptr, false, "SubscribeUpdateSettingCallback is failed");
     // 定义接口
     UpdateSettingsCallback callback = std::bind(&CameraRotatePlugin::OnParameterChange, this, std::placeholders::_1);
     ParameterMap updateParameter;
     bool result = openCameraDeviceFunc(basicInfoMap, callback, updateParameter);
-    CHECK_ERROR_RETURN_RET_LOG(!result, false, "SubscribeUpdateSettingCallback is failed");
+    CHECK_RETURN_RET_ELOG(!result, false, "SubscribeUpdateSettingCallback is failed");
     return true;
 }
 
@@ -315,7 +315,7 @@ bool CameraRotatePlugin::UnSubscribeUpdateSettingCallback(ParameterMap basicInfo
 {
     ParameterMap updateParameter;
     bool result = GetParameterResult(basicInfoMap, "UnSubscribeUpdateSettingCallback", updateParameter);
-    CHECK_ERROR_RETURN_RET_LOG(!result, false, "UnSubscribeUpdateSettingCallback is failed");
+    CHECK_RETURN_RET_ELOG(!result, false, "UnSubscribeUpdateSettingCallback is failed");
     captureSessionMap_.Erase(basicInfoMap[PLUGIN_BUNDLE_NAME]);
     return result;
 }
@@ -324,10 +324,10 @@ bool CameraRotatePlugin::CreatePreviewOutput(ParameterMap basicInfoMap, int32_t&
 {
     ParameterMap updateParameter;
     bool result = GetParameterResult(basicInfoMap, "CreatePreviewOutput", updateParameter);
-    CHECK_ERROR_RETURN_RET_LOG((updateParameter.size() < 1 || !result), false, "CreatePreviewOutput is failed");
+    CHECK_RETURN_RET_ELOG((updateParameter.size() < 1 || !result), false, "CreatePreviewOutput is failed");
     result = updateParameter.find(PLUGIN_PREVIEW_FORMAT) != updateParameter.end() &&
         isIntegerRegex(updateParameter[PLUGIN_PREVIEW_FORMAT]);
-    CHECK_ERROR_RETURN_RET_LOG(!result, false, "CreatePreviewOutput updateParameter result not valid number");
+    CHECK_RETURN_RET_ELOG(!result, false, "CreatePreviewOutput updateParameter result not valid number");
     format = std::stoi(updateParameter[PLUGIN_PREVIEW_FORMAT]);
     return true;
 }
@@ -337,9 +337,9 @@ bool CameraRotatePlugin::PreviewStreamStart(ParameterMap basicInfoMap, int32_t& 
 {
     ParameterMap updateParameter;
     bool result = GetParameterResult(basicInfoMap, "PreviewStreamStart", updateParameter);
-    CHECK_ERROR_RETURN_RET_LOG((updateParameter.size() < 1 || !result), false, "PreviewStreamStart is failed");
+    CHECK_RETURN_RET_ELOG((updateParameter.size() < 1 || !result), false, "PreviewStreamStart is failed");
     result = updateParameter.find(PLUGIN_CAMERA_HAL_ROTATE_ANGLE) != updateParameter.end();
-    CHECK_ERROR_RETURN_RET_LOG(!result, false, "PreviewStreamStart result not include needed parameter");
+    CHECK_RETURN_RET_ELOG(!result, false, "PreviewStreamStart result not include needed parameter");
     CHECK_EXECUTE(updateParameter.find(PLUGIN_SURFACE_FRAME_GRAVITY) != updateParameter.end() &&
         isIntegerRegex(updateParameter[PLUGIN_SURFACE_FIXED_ROTATION]),
         frameGravity = std::stoi(updateParameter[PLUGIN_SURFACE_FRAME_GRAVITY]));
@@ -355,12 +355,12 @@ bool CameraRotatePlugin::PreviewTransform(ParameterMap basicInfoMap, int32_t& fr
 {
     ParameterMap updateParameter;
     bool result = GetParameterResult(basicInfoMap, "PreviewTransform", updateParameter);
-    CHECK_ERROR_RETURN_RET_LOG((updateParameter.size() < 1 || !result), false, "PreviewTransform is failed");
+    CHECK_RETURN_RET_ELOG((updateParameter.size() < 1 || !result), false, "PreviewTransform is failed");
     result = (updateParameter.find(PLUGIN_SURFACE_FRAME_GRAVITY) != updateParameter.end()) &&
         (updateParameter.find(PLUGIN_SURFACE_FIXED_ROTATION) != updateParameter.end()) &&
         (updateParameter.find(PLUGIN_CAMERA_POSITION) != updateParameter.end()) &&
         (updateParameter.find(PLUGIN_SENSOR_ORIENTATION) != updateParameter.end());
-    CHECK_ERROR_RETURN_RET_LOG(!result, false, "PreviewTransform result not include needed parameter");
+    CHECK_RETURN_RET_ELOG(!result, false, "PreviewTransform result not include needed parameter");
     result = isIntegerRegex(updateParameter[PLUGIN_SURFACE_FRAME_GRAVITY]) &&
         isIntegerRegex(updateParameter[PLUGIN_SURFACE_FIXED_ROTATION]) &&
         isIntegerRegex(updateParameter[PLUGIN_CAMERA_POSITION]) &&
@@ -378,16 +378,16 @@ bool CameraRotatePlugin::CaptureStreamStart(ParameterMap basicInfoMap, int32_t& 
     basicInfoMap[PLUGIN_JPEG_ORIENTATION] = to_string(jpegOrientation);
     basicInfoMap[PLUGIN_CAPTURE_MIRROR] = to_string(mirror);
     bool result = GetParameterResult(basicInfoMap, "CaptureStreamStart", updateParameter);
-    CHECK_ERROR_RETURN_RET_LOG((updateParameter.size() < 1 || !result), false, "CaptureStreamStart is failed");
+    CHECK_RETURN_RET_ELOG((updateParameter.size() < 1 || !result), false, "CaptureStreamStart is failed");
     result = (updateParameter.find(PLUGIN_CAPTURE_MIRROR) != updateParameter.end()) &&
         (updateParameter.find(PLUGIN_JPEG_ORIENTATION) != updateParameter.end());
-    CHECK_ERROR_RETURN_RET_LOG(!result, false, "CaptureStreamStart result not include needed parameter");
+    CHECK_RETURN_RET_ELOG(!result, false, "CaptureStreamStart result not include needed parameter");
     result = isIntegerRegex(updateParameter[PLUGIN_JPEG_ORIENTATION]) &&
         isIntegerRegex(updateParameter[PLUGIN_CAPTURE_MIRROR]);
-    CHECK_ERROR_RETURN_RET_LOG(!result, false, "CaptureStreamStart result not valid parameter");
+    CHECK_RETURN_RET_ELOG(!result, false, "CaptureStreamStart result not valid parameter");
     result = (std::stoi(updateParameter[PLUGIN_CAPTURE_MIRROR]) == 0 ||
         std::stoi(updateParameter[PLUGIN_CAPTURE_MIRROR]) == 1);
-    CHECK_ERROR_RETURN_RET_LOG(!result, false, "CaptureStreamStart result not valid bool parameter");
+    CHECK_RETURN_RET_ELOG(!result, false, "CaptureStreamStart result not valid bool parameter");
     jpegOrientation = std::stoi(updateParameter[PLUGIN_JPEG_ORIENTATION]);
     mirror = std::stoi(updateParameter[PLUGIN_CAPTURE_MIRROR]);
     return true;
@@ -399,12 +399,12 @@ bool CameraRotatePlugin::CreateVideoOutput(ParameterMap basicInfoMap, std::strin
     ParameterMap updateParameter;
     basicInfoMap[PLUGIN_VIDEO_SURFACE_TRANSFORM] = to_string(transform);
     bool result = GetParameterResult(basicInfoMap, "CreateVideoOutput", updateParameter);
-    CHECK_ERROR_RETURN_RET_LOG((updateParameter.size() < 1 || !result), false, "CreateVideoOutput is failed");
+    CHECK_RETURN_RET_ELOG((updateParameter.size() < 1 || !result), false, "CreateVideoOutput is failed");
     result = (updateParameter.find(PLUGIN_SURFACE_APP_FWK_TYPE) != updateParameter.end()) &&
         (updateParameter.find(PLUGIN_VIDEO_SURFACE_TRANSFORM) != updateParameter.end());
-    CHECK_ERROR_RETURN_RET_LOG(!result, false, "CreateVideoOutput result not include needed parameter");
+    CHECK_RETURN_RET_ELOG(!result, false, "CreateVideoOutput result not include needed parameter");
     result = isIntegerRegex(updateParameter[PLUGIN_VIDEO_SURFACE_TRANSFORM]);
-    CHECK_ERROR_RETURN_RET_LOG(!result, false, "CreateVideoOutput result not valid parameter");
+    CHECK_RETURN_RET_ELOG(!result, false, "CreateVideoOutput result not valid parameter");
     surfaceAppFwkType = updateParameter[PLUGIN_SURFACE_APP_FWK_TYPE];
     transform = static_cast<uint32_t>(std::stoi(updateParameter[PLUGIN_VIDEO_SURFACE_TRANSFORM]));
     return true;
@@ -416,14 +416,14 @@ bool CameraRotatePlugin::VideoStreamStart(ParameterMap basicInfoMap, std::string
     ParameterMap updateParameter;
     basicInfoMap[PLUGIN_VIDEO_SURFACE_TRANSFORM] = to_string(transform);
     bool result = GetParameterResult(basicInfoMap, "VideoStreamStart", updateParameter);
-    CHECK_ERROR_RETURN_RET_LOG((updateParameter.size() < 1 || !result), false, "VideoStreamStart is failed");
+    CHECK_RETURN_RET_ELOG((updateParameter.size() < 1 || !result), false, "VideoStreamStart is failed");
     result = (updateParameter.find(PLUGIN_SURFACE_APP_FWK_TYPE) != updateParameter.end()) &&
         (updateParameter.find(PLUGIN_VIDEO_SURFACE_TRANSFORM) != updateParameter.end()) &&
         (updateParameter.find(PLUGIN_VIDEO_MIRROR) != updateParameter.end());
-    CHECK_ERROR_RETURN_RET_LOG(!result, false, "VideoStreamStart result not include needed parameter");
+    CHECK_RETURN_RET_ELOG(!result, false, "VideoStreamStart result not include needed parameter");
     result = isIntegerRegex(updateParameter[PLUGIN_VIDEO_SURFACE_TRANSFORM]) &&
         isIntegerRegex(updateParameter[PLUGIN_VIDEO_MIRROR]);
-    CHECK_ERROR_RETURN_RET_LOG(!result, false, "VideoStreamStart result not valid parameter");
+    CHECK_RETURN_RET_ELOG(!result, false, "VideoStreamStart result not valid parameter");
     surfaceAppFwkType = updateParameter[PLUGIN_SURFACE_APP_FWK_TYPE];
     transform = static_cast<uint32_t>(std::stoi(updateParameter[PLUGIN_VIDEO_SURFACE_TRANSFORM]));
     mirror = std::stoi(updateParameter[PLUGIN_VIDEO_MIRROR]);

@@ -121,7 +121,7 @@ int32_t CameraPhotoProxy::CameraFreeBufferHandle()
 {
     MEDIA_ERR_LOG("CameraFreeBufferHandle start");
     std::lock_guard<std::mutex> lock(mutex_);
-    CHECK_ERROR_RETURN_RET_LOG(bufferHandle_ == nullptr, 0, "CameraFreeBufferHandle with nullptr handle");
+    CHECK_RETURN_RET_ELOG(bufferHandle_ == nullptr, 0, "CameraFreeBufferHandle with nullptr handle");
     if (bufferHandle_->fd >= 0) {
         close(bufferHandle_->fd);
         bufferHandle_->fd = -1;
@@ -175,7 +175,7 @@ bool CameraPhotoProxy::Marshalling(Parcel &parcel) const
 CameraPhotoProxy* CameraPhotoProxy::Unmarshalling(Parcel &parcel)
 {
     CameraPhotoProxy* cameraPhotoProxy = new (std::nothrow) CameraPhotoProxy();
-    CHECK_ERROR_RETURN_RET_LOG(cameraPhotoProxy == nullptr, nullptr, "create CameraPhotoProxy fail");
+    CHECK_RETURN_RET_ELOG(cameraPhotoProxy == nullptr, nullptr, "create CameraPhotoProxy fail");
     cameraPhotoProxy->ReadFromParcel(static_cast<MessageParcel&>(parcel));
     return cameraPhotoProxy;
 }

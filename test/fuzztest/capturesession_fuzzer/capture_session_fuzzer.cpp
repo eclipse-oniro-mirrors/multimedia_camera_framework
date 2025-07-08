@@ -63,9 +63,9 @@ sptr<CaptureInput> GetCameraInput(FuzzedDataProvider& fdp)
     MEDIA_INFO_LOG("CaptureSessionFuzzer: ENTER");
     auto manager = CameraManager::GetInstance();
     auto cameras = manager->GetSupportedCameras();
-    CHECK_ERROR_RETURN_RET_LOG(cameras.size() < NUM_TWO, nullptr, "CaptureSessionFuzzer: GetSupportedCameras Error");
+    CHECK_RETURN_RET_ELOG(cameras.size() < NUM_TWO, nullptr, "CaptureSessionFuzzer: GetSupportedCameras Error");
     camera = cameras[fdp.ConsumeIntegral<uint32_t>() % cameras.size()];
-    CHECK_ERROR_RETURN_RET_LOG(!camera, nullptr, "CaptureSessionFuzzer: Camera is null Error");
+    CHECK_RETURN_RET_ELOG(!camera, nullptr, "CaptureSessionFuzzer: Camera is null Error");
     return manager->CreateCameraInput(camera);
 }
 
@@ -80,20 +80,20 @@ sptr<CaptureOutput> CreatePreviewOutput(Profile previewProfile)
 
 void Test(uint8_t* data, size_t size)
 {
-    CHECK_ERROR_RETURN(size < LIMITSIZE);
-    CHECK_ERROR_RETURN_LOG(!TestToken::GetAllCameraPermission(), "GetPermission error");
+    CHECK_RETURN(size < LIMITSIZE);
+    CHECK_RETURN_ELOG(!TestToken::GetAllCameraPermission(), "GetPermission error");
     manager_ = CameraManager::GetInstance();
     sptr<CaptureSessionForSys> session =
         CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(SceneMode::CAPTURE);
     std::vector<sptr<CameraDevice>> cameras = manager_->GetCameraDeviceListFromServer();
-    CHECK_ERROR_RETURN_LOG(cameras.empty(), "GetCameraDeviceListFromServer Error");
+    CHECK_RETURN_ELOG(cameras.empty(), "GetCameraDeviceListFromServer Error");
     sptr<CaptureInput> input = manager_->CreateCameraInput(cameras[0]);
-    CHECK_ERROR_RETURN_LOG(!input, "CreateCameraInput Error");
+    CHECK_RETURN_ELOG(!input, "CreateCameraInput Error");
     input->Open();
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras[0], 0);
-    CHECK_ERROR_RETURN_LOG(!outputCapability, "GetSupportedOutputCapability Error");
+    CHECK_RETURN_ELOG(!outputCapability, "GetSupportedOutputCapability Error");
     previewProfile_ = outputCapability->GetPreviewProfiles();
-    CHECK_ERROR_RETURN_LOG(previewProfile_.empty(), "GetPreviewProfiles Error");
+    CHECK_RETURN_ELOG(previewProfile_.empty(), "GetPreviewProfiles Error");
     outputCapability->GetVideoProfiles();
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     session->BeginConfig();
@@ -132,17 +132,17 @@ sptr<PhotoOutput> GetCaptureOutput(FuzzedDataProvider& fdp)
 {
     MEDIA_INFO_LOG("CaptureSessionFuzzer: ENTER");
     auto manager = CameraManager::GetInstance();
-    CHECK_ERROR_RETURN_RET_LOG(!manager, nullptr, "CaptureSessionFuzzer: CameraManager::GetInstance Error");
-    CHECK_ERROR_RETURN_RET_LOG(!camera, nullptr, "CaptureSessionFuzzer: Camera is null Error");
+    CHECK_RETURN_RET_ELOG(!manager, nullptr, "CaptureSessionFuzzer: CameraManager::GetInstance Error");
+    CHECK_RETURN_RET_ELOG(!camera, nullptr, "CaptureSessionFuzzer: Camera is null Error");
     auto capability = manager->GetSupportedOutputCapability(camera, g_sceneMode);
-    CHECK_ERROR_RETURN_RET_LOG(!capability, nullptr, "CaptureSessionFuzzer: GetSupportedOutputCapability Error");
+    CHECK_RETURN_RET_ELOG(!capability, nullptr, "CaptureSessionFuzzer: GetSupportedOutputCapability Error");
     auto profiles = capability->GetPhotoProfiles();
-    CHECK_ERROR_RETURN_RET_LOG(profiles.empty(), nullptr, "CaptureSessionFuzzer: GetPhotoProfiles empty");
+    CHECK_RETURN_RET_ELOG(profiles.empty(), nullptr, "CaptureSessionFuzzer: GetPhotoProfiles empty");
     profile = profiles[fdp.ConsumeIntegral<uint32_t>() % profiles.size()];
     sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
-    CHECK_ERROR_RETURN_RET_LOG(!photoSurface, nullptr, "CaptureSessionFuzzer: create photoSurface Error");
+    CHECK_RETURN_RET_ELOG(!photoSurface, nullptr, "CaptureSessionFuzzer: create photoSurface Error");
     surface = photoSurface->GetProducer();
-    CHECK_ERROR_RETURN_RET_LOG(!surface, nullptr, "CaptureSessionFuzzer: surface GetProducer Error");
+    CHECK_RETURN_RET_ELOG(!surface, nullptr, "CaptureSessionFuzzer: surface GetProducer Error");
     return manager->CreatePhotoOutput(profile, surface);
 }
 
@@ -448,7 +448,7 @@ void TestSession(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
     MEDIA_INFO_LOG("CaptureSessionFuzzer: ENTER");
     sptr<CaptureInput> input = GetCameraInput(fdp);
     sptr<CaptureOutput> output = GetCaptureOutput(fdp);
-    CHECK_ERROR_RETURN_LOG(!input || !output || !session, "CaptureSessionFuzzer: input/output/session is null");
+    CHECK_RETURN_ELOG(!input || !output || !session, "CaptureSessionFuzzer: input/output/session is null");
     session->SetMode(g_sceneMode);
     session->GetMode();
     PreconfigType preconfigType = static_cast<PreconfigType>(

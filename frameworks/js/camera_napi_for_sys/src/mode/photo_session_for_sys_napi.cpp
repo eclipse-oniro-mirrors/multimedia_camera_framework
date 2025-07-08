@@ -59,10 +59,10 @@ void PhotoSessionForSysNapi::Init(napi_env env)
                                PhotoSessionForSysNapiConstructor, nullptr,
                                photo_session_props.size(),
                                photo_session_props.data(), &ctorObj);
-    CHECK_ERROR_RETURN_LOG(status != napi_ok, "PhotoSessionForSysNapi defined class failed");
+    CHECK_RETURN_ELOG(status != napi_ok, "PhotoSessionForSysNapi defined class failed");
     int32_t refCount = 1;
     status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
-    CHECK_ERROR_RETURN_LOG(status != napi_ok, "PhotoSessionForSysNapi Init failed");
+    CHECK_RETURN_ELOG(status != napi_ok, "PhotoSessionForSysNapi Init failed");
     MEDIA_DEBUG_LOG("PhotoSessionForSysNapi Init success");
 }
 
@@ -75,7 +75,7 @@ napi_value PhotoSessionForSysNapi::CreateCameraSession(napi_env env)
     napi_value constructor;
     if (sConstructor_ == nullptr) {
         PhotoSessionForSysNapi::Init(env);
-        CHECK_ERROR_RETURN_RET_LOG(sConstructor_ == nullptr, result, "sConstructor_ is null");
+        CHECK_RETURN_RET_ELOG(sConstructor_ == nullptr, result, "sConstructor_ is null");
     }
     status = napi_get_reference_value(env, sConstructor_, &constructor);
     if (status == napi_ok) {
@@ -113,11 +113,11 @@ napi_value PhotoSessionForSysNapi::PhotoSessionForSysNapiConstructor(napi_env en
     if (status == napi_ok && thisVar != nullptr) {
         std::unique_ptr<PhotoSessionForSysNapi> photoSessionSysObj = std::make_unique<PhotoSessionForSysNapi>();
         photoSessionSysObj->env_ = env;
-        CHECK_ERROR_RETURN_RET_LOG(sCameraSessionForSys_ == nullptr, result, "sCameraSessionForSys_ is null");
+        CHECK_RETURN_RET_ELOG(sCameraSessionForSys_ == nullptr, result, "sCameraSessionForSys_ is null");
         photoSessionSysObj->photoSessionForSys_ = static_cast<PhotoSessionForSys*>(sCameraSessionForSys_.GetRefPtr());
         photoSessionSysObj->cameraSessionForSys_ = photoSessionSysObj->photoSessionForSys_;
         photoSessionSysObj->cameraSession_ = photoSessionSysObj->photoSessionForSys_;
-        CHECK_ERROR_RETURN_RET_LOG(photoSessionSysObj->photoSessionForSys_ == nullptr, result,
+        CHECK_RETURN_RET_ELOG(photoSessionSysObj->photoSessionForSys_ == nullptr, result,
             "photoSessionForSys_ is null");
         status = napi_wrap(env, thisVar, reinterpret_cast<void*>(photoSessionSysObj.get()),
             PhotoSessionForSysNapi::PhotoSessionForSysNapiDestructor, nullptr, nullptr);

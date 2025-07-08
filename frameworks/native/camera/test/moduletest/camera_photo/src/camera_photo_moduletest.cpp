@@ -108,7 +108,7 @@ int32_t CameraPhotoModuleTest::CreatePhotoOutputWithoutSurface(Profile &profile,
     sptr<PhotoOutput> &photoOutput)
 {
     int32_t retCode = manager_->CreatePhotoOutput(profile, &photoOutput_);
-    CHECK_ERROR_RETURN_RET_LOG((retCode != CameraErrorCode::SUCCESS || photoOutput_ == nullptr),
+    CHECK_RETURN_RET_ELOG((retCode != CameraErrorCode::SUCCESS || photoOutput_ == nullptr),
         SERVICE_FATL_ERROR, "Create photo output failed");
 
     photoOutput_->SetNativeSurface(true);

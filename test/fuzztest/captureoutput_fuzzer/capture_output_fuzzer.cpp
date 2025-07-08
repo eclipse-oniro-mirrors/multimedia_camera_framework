@@ -45,14 +45,14 @@ void CaptureOutputFuzzer::CaptureOutputFuzzTest(FuzzedDataProvider& fdp)
 {
     int32_t randomInt = fdp.ConsumeIntegral<int32_t>();
     sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
-    CHECK_ERROR_RETURN_LOG(photoSurface, "PhotoOutputFuzzer: create photoSurface Error");
+    CHECK_RETURN_ELOG(photoSurface, "PhotoOutputFuzzer: create photoSurface Error");
     sptr<IBufferProducer> bufferProducer = photoSurface->GetProducer();
-    CHECK_ERROR_RETURN_LOG(bufferProducer, "GetProducer Error");
+    CHECK_RETURN_ELOG(bufferProducer, "GetProducer Error");
     sptr<IStreamCommon> stream;
     CaptureOutputType randomOutputType = static_cast<CaptureOutputType>(
     (randomInt % static_cast<int32_t>(CAPTURE_OUTPUT_TYPE_MAX)));
     fuzz_ = std::make_shared<CaptureOutputTest>(randomOutputType, StreamType::CAPTURE, bufferProducer, stream);
-    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
+    CHECK_RETURN_ELOG(!fuzz_, "Create fuzz_ Error");
     fuzz_->GetBufferProducer();
     int32_t pid = fdp.ConsumeIntegral<int32_t>();
     fuzz_->OnCameraServerDied(pid);

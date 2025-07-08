@@ -78,10 +78,10 @@ std::vector<int32_t> CameraAbilityBuilder::GetData(
     }
 
     auto itc = cacheTagDataMap_.find(tagId);
-    CHECK_ERROR_RETURN_RET(itc == cacheTagDataMap_.end(), {});
+    CHECK_RETURN_RET(itc == cacheTagDataMap_.end(), {});
     auto& dataMap = itc->second;
     auto itd = dataMap.find(specId);
-    CHECK_ERROR_RETURN_RET(itd == dataMap.end(), {});
+    CHECK_RETURN_RET(itd == dataMap.end(), {});
     return itd->second;
 }
 
@@ -89,7 +89,7 @@ std::vector<float> CameraAbilityBuilder::GetValidZoomRatioRange(const std::vecto
 {
     constexpr float factor = 100.0;
     size_t validSize = 2;
-    CHECK_ERROR_RETURN_RET(data.size() != validSize, {});
+    CHECK_RETURN_RET(data.size() != validSize, {});
     float minZoom = data[0] / factor;
     float maxZoom = data[1] / factor;
     return { minZoom, maxZoom };
@@ -97,7 +97,7 @@ std::vector<float> CameraAbilityBuilder::GetValidZoomRatioRange(const std::vecto
 
 bool CameraAbilityBuilder::IsSupportMacro(const std::vector<int32_t>& data)
 {
-    CHECK_ERROR_RETURN_RET(data.size() != 1, false);
+    CHECK_RETURN_RET(data.size() != 1, false);
     return static_cast<camera_macro_supported_type_t>(data[0]) == OHOS_CAMERA_MACRO_SUPPORTED;
 }
 
@@ -121,10 +121,10 @@ void CameraAbilityBuilder::SetModeSpecTagField(
 
 void CameraAbilityBuilder::SetOtherTag(sptr<CameraAbility> ability, int32_t modeName, sptr<CaptureSession> session)
 {
-    CHECK_ERROR_RETURN(session == nullptr);
+    CHECK_RETURN(session == nullptr);
     // LCOV_EXCL_START
     auto metadata = session->GetMetadata();
-    CHECK_ERROR_RETURN(metadata == nullptr);
+    CHECK_RETURN(metadata == nullptr);
     camera_metadata_item_t item;
     CHECK_EXECUTE(Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_FLASH_MODES, &item) == CAM_META_SUCCESS,
         g_transformValidData(item, g_metaFlashModeMap_, ability->supportedFlashModes_));

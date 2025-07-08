@@ -31,16 +31,16 @@ PhotoAssetAdapter::PhotoAssetAdapter(int32_t cameraShotType, int32_t uid)
     MEDIA_INFO_LOG("PhotoAssetAdapter ctor");
     if (g_mediaLibraryManager == nullptr) {
         g_mediaLibraryManager = Media::MediaLibraryManager::GetMediaLibraryManager();
-        CHECK_ERROR_RETURN_LOG(g_mediaLibraryManager == nullptr, "GetMediaLibraryManager failed!");
+        CHECK_RETURN_ELOG(g_mediaLibraryManager == nullptr, "GetMediaLibraryManager failed!");
         auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-        CHECK_ERROR_RETURN_LOG(samgr == nullptr, "Failed to get System ability manager!");
+        CHECK_RETURN_ELOG(samgr == nullptr, "Failed to get System ability manager!");
         sptr<IRemoteObject> object = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
-        CHECK_ERROR_RETURN_LOG(object == nullptr, "object is null!");
+        CHECK_RETURN_ELOG(object == nullptr, "object is null!");
         g_mediaLibraryManager->InitMediaLibraryManager(object);
     }
     const static int32_t INVALID_UID = -1;
     const static int32_t BASE_USER_RANGE = 200000;
-    CHECK_ERROR_PRINT_LOG(uid <= INVALID_UID, "Get INVALID_UID UID %{public}d", uid);
+    CHECK_PRINT_ELOG(uid <= INVALID_UID, "Get INVALID_UID UID %{public}d", uid);
     userId_ = uid / BASE_USER_RANGE;
     MEDIA_DEBUG_LOG("get uid:%{public}d, userId:%{public}d.", uid, userId_);
     photoAssetProxy_ = g_mediaLibraryManager->CreatePhotoAssetProxy(
@@ -57,13 +57,13 @@ void PhotoAssetAdapter::AddPhotoProxy(sptr<Media::PhotoProxy> photoProxy)
 
 std::string PhotoAssetAdapter::GetPhotoAssetUri()
 {
-    CHECK_ERROR_RETURN_RET(photoAssetProxy_, photoAssetProxy_->GetPhotoAssetUri());
+    CHECK_RETURN_RET(photoAssetProxy_, photoAssetProxy_->GetPhotoAssetUri());
     return "";
 }
 
 int32_t PhotoAssetAdapter::GetVideoFd()
 {
-    CHECK_ERROR_RETURN_RET(photoAssetProxy_, photoAssetProxy_->GetVideoFd());
+    CHECK_RETURN_RET(photoAssetProxy_, photoAssetProxy_->GetVideoFd());
     return -1;
 }
 

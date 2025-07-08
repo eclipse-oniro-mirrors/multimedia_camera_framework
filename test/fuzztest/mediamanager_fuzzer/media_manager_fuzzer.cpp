@@ -27,7 +27,7 @@ std::shared_ptr<MediaManager> MediaManagerFuzzer::fuzz_{nullptr};
 void MediaManagerFuzzer::MediaManagerFuzzTest(FuzzedDataProvider& fdp)
 {
     fuzz_ = std::make_shared<MediaManager>();
-    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
+    CHECK_RETURN_ELOG(!fuzz_, "Create fuzz_ Error");
     std::vector<uint8_t> memoryFlags = {
         static_cast<uint8_t>(MemoryFlag::MEMORY_READ_ONLY),
         static_cast<uint8_t>(MemoryFlag::MEMORY_WRITE_ONLY),
@@ -69,7 +69,7 @@ void MediaManagerFuzzer::ReaderFuzzTest(FuzzedDataProvider& fdp)
 {
     std::shared_ptr<Reader> inputReader {nullptr};
     inputReader = std::make_shared<Reader>();
-    CHECK_ERROR_RETURN_LOG(!inputReader, "Create inputReader Error");
+    CHECK_RETURN_ELOG(!inputReader, "Create inputReader Error");
     inputReader->GetSourceFormat();
 }
 
@@ -77,7 +77,7 @@ void MediaManagerFuzzer::TrackFuzzTest(FuzzedDataProvider& fdp)
 {
     std::shared_ptr<Track> track {nullptr};
     track = std::make_shared<Track>();
-    CHECK_ERROR_RETURN_LOG(!track, "Create track Error");
+    CHECK_RETURN_ELOG(!track, "Create track Error");
     TrackFormat formatOfIndex;
     Format trackFormat;
     int32_t trackType = fdp.ConsumeIntegral<int32_t>();
@@ -106,7 +106,7 @@ void MediaManagerFuzzer::WriterFuzzTest(FuzzedDataProvider& fdp)
 {
     std::shared_ptr<Writer> writer {nullptr};
     writer = std::make_shared<Writer>();
-    CHECK_ERROR_RETURN_LOG(!writer, "Create writer Error");
+    CHECK_RETURN_ELOG(!writer, "Create writer Error");
     auto outputFd = fdp.ConsumeIntegral<int32_t>();
     std::shared_ptr<AVSourceFuzz> source = std::make_shared<AVSourceFuzz>();
     std::map<Media::Plugins::MediaType, std::shared_ptr<Track>> tracks;
@@ -131,7 +131,7 @@ void MediaManagerFuzzer::MuxerFuzzTest(FuzzedDataProvider& fdp)
 {
     std::shared_ptr<Muxer> muxer {nullptr};
     muxer = std::make_shared<Muxer>();
-    CHECK_ERROR_RETURN_LOG(!muxer, "Create muxer Error");
+    CHECK_RETURN_ELOG(!muxer, "Create muxer Error");
     std::map<Media::Plugins::MediaType, std::shared_ptr<Track>> tracks;
     muxer->AddTracks(tracks);
 }

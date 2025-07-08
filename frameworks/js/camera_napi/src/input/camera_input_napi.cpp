@@ -38,7 +38,7 @@ namespace {
 void AsyncCompleteCallback(napi_env env, napi_status status, void* data)
 {
     auto cameraInputAsyncContext = static_cast<CameraInputAsyncContext*>(data);
-    CHECK_ERROR_RETURN_LOG(cameraInputAsyncContext == nullptr,
+    CHECK_RETURN_ELOG(cameraInputAsyncContext == nullptr,
         "CameraInputNapi AsyncCompleteCallback context is null");
     MEDIA_INFO_LOG("CameraInputNapi AsyncCompleteCallback %{public}s, status = %{public}d",
         cameraInputAsyncContext->funcName.c_str(), cameraInputAsyncContext->status);
@@ -214,7 +214,7 @@ napi_value CameraInputNapi::Init(napi_env env, napi_value exports)
         status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
         if (status == napi_ok) {
             status = napi_set_named_property(env, exports, CAMERA_INPUT_NAPI_CLASS_NAME, ctorObj);
-            CHECK_ERROR_RETURN_RET(status == napi_ok, exports);
+            CHECK_RETURN_RET(status == napi_ok, exports);
         }
     }
     MEDIA_ERR_LOG("Init call Failed!");
@@ -256,7 +256,7 @@ napi_value CameraInputNapi::CreateCameraInput(napi_env env, sptr<CameraInput> ca
     napi_status status;
     napi_value result = nullptr;
     napi_value constructor;
-    CHECK_ERROR_RETURN_RET(cameraInput == nullptr, result);
+    CHECK_RETURN_RET(cameraInput == nullptr, result);
     status = napi_get_reference_value(env, sConstructor_, &constructor);
     if (status == napi_ok) {
         sCameraInput_ = cameraInput;
@@ -298,20 +298,20 @@ void ConsumeWorkerQueueTask(CameraInputAsyncContext* context)
 
 void CameraInputNapi::OpenCameraAsync(uv_work_t* work)
 {
-    CHECK_ERROR_RETURN_LOG(work == nullptr, "OpenCameraAsync null work");
+    CHECK_RETURN_ELOG(work == nullptr, "OpenCameraAsync null work");
     MEDIA_INFO_LOG("OpenCameraAsync running on worker");
     auto context = static_cast<CameraInputAsyncContext*>(work->data);
-    CHECK_ERROR_RETURN_LOG(context == nullptr, "OpenCameraAsync context is null");
-    CHECK_ERROR_RETURN_LOG(context->objectInfo == nullptr, "OpenCameraAsync async info is nullptr");
+    CHECK_RETURN_ELOG(context == nullptr, "OpenCameraAsync context is null");
+    CHECK_RETURN_ELOG(context->objectInfo == nullptr, "OpenCameraAsync async info is nullptr");
     CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
     ConsumeWorkerQueueTask(context);
 }
 
 void CameraInputNapi::UvWorkAsyncCompleted(uv_work_t* work, int status)
 {
-    CHECK_ERROR_RETURN_LOG(work == nullptr, "UvWorkAsyncCompleted null work");
+    CHECK_RETURN_ELOG(work == nullptr, "UvWorkAsyncCompleted null work");
     auto context = static_cast<CameraInputAsyncContext*>(work->data);
-    CHECK_ERROR_RETURN_LOG(context == nullptr, "UvWorkAsyncCompleted context is null");
+    CHECK_RETURN_ELOG(context == nullptr, "UvWorkAsyncCompleted context is null");
     MEDIA_INFO_LOG("UvWorkAsyncCompleted %{public}s, status = %{public}d", context->funcName.c_str(),
         context->status);
     std::unique_ptr<JSAsyncContextOutput> jsContext = std::make_unique<JSAsyncContextOutput>();
@@ -363,7 +363,7 @@ napi_value CameraInputNapi::Open(napi_env env, napi_callback_info info)
             jsParamParser = CameraNapiParamParser(env, info, asyncContext->objectInfo, asyncFunction);
         }
     }
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument"),
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument"),
         nullptr, "CameraInputNapi::Open invalid argument");
     asyncContext->HoldNapiValue(env, jsParamParser.GetThisVar());
     asyncContext->env = env;
@@ -394,7 +394,7 @@ napi_value CameraInputNapi::Open(napi_env env, napi_callback_info info)
     } else {
         asyncContext.release();
     }
-    CHECK_ERROR_RETURN_RET(asyncFunction->GetAsyncFunctionType() == ASYNC_FUN_TYPE_PROMISE,
+    CHECK_RETURN_RET(asyncFunction->GetAsyncFunctionType() == ASYNC_FUN_TYPE_PROMISE,
         asyncFunction->GetPromise());
     return CameraNapiUtils::GetUndefinedValue(env);
 }
@@ -407,7 +407,7 @@ napi_value CameraInputNapi::Close(napi_env env, napi_callback_info info)
     auto asyncFunction =
         std::make_shared<CameraNapiAsyncFunction>(env, "Close", asyncContext->callbackRef, asyncContext->deferred);
     CameraNapiParamParser jsParamParser(env, info, asyncContext->objectInfo, asyncFunction);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument"),
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument"),
         nullptr, "CameraInputNapi::Close invalid argument");
     asyncContext->HoldNapiValue(env, jsParamParser.GetThisVar());
     napi_status status = napi_create_async_work(
@@ -415,7 +415,7 @@ napi_value CameraInputNapi::Close(napi_env env, napi_callback_info info)
         [](napi_env env, void* data) {
             MEDIA_INFO_LOG("CameraInputNapi::Close running on worker");
             auto context = static_cast<CameraInputAsyncContext*>(data);
-            CHECK_ERROR_RETURN_LOG(context->objectInfo == nullptr, "CameraInputNapi::Close async info is nullptr");
+            CHECK_RETURN_ELOG(context->objectInfo == nullptr, "CameraInputNapi::Close async info is nullptr");
             CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
             CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(context->queueTask, [&context]() {
                 context->errorCode = context->objectInfo->GetCameraInput()->Close();
@@ -433,7 +433,7 @@ napi_value CameraInputNapi::Close(napi_env env, napi_callback_info info)
         napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
         asyncContext.release();
     }
-    CHECK_ERROR_RETURN_RET(asyncFunction->GetAsyncFunctionType() == ASYNC_FUN_TYPE_PROMISE,
+    CHECK_RETURN_RET(asyncFunction->GetAsyncFunctionType() == ASYNC_FUN_TYPE_PROMISE,
         asyncFunction->GetPromise());
     return CameraNapiUtils::GetUndefinedValue(env);
 }
@@ -462,7 +462,7 @@ napi_value CameraInputNapi::closeDelayed(napi_env env, napi_callback_info info)
         [](napi_env env, void* date) {
             MEDIA_INFO_LOG("CameraInputNapi::closeDelayed running on worker");
             auto context = static_cast<CameraInputAsyncContext*>(date);
-            CHECK_ERROR_RETURN_LOG(context->objectInfo == nullptr,
+            CHECK_RETURN_ELOG(context->objectInfo == nullptr,
                 "CameraInputNapi::closeDelayed async info is nullptr");
             CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
             CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(context->queueTask, [&context]() {
@@ -480,7 +480,7 @@ napi_value CameraInputNapi::closeDelayed(napi_env env, napi_callback_info info)
         napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
         asyncContext.release();
     }
-    CHECK_ERROR_RETURN_RET(asyncFunction->GetAsyncFunctionType() == ASYNC_FUN_TYPE_PROMISE,
+    CHECK_RETURN_RET(asyncFunction->GetAsyncFunctionType() == ASYNC_FUN_TYPE_PROMISE,
         asyncFunction->GetPromise());
     return CameraNapiUtils::GetUndefinedValue(env);
 }
@@ -493,7 +493,7 @@ napi_value CameraInputNapi::Release(napi_env env, napi_callback_info info)
     auto asyncFunction =
         std::make_shared<CameraNapiAsyncFunction>(env, "Release", asyncContext->callbackRef, asyncContext->deferred);
     CameraNapiParamParser jsParamParser(env, info, asyncContext->objectInfo, asyncFunction);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument"),
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument"),
         nullptr, "CameraInputNapi::Release invalid argument");
     asyncContext->HoldNapiValue(env, jsParamParser.GetThisVar());
     napi_status status = napi_create_async_work(
@@ -501,7 +501,7 @@ napi_value CameraInputNapi::Release(napi_env env, napi_callback_info info)
         [](napi_env env, void* data) {
             MEDIA_INFO_LOG("CameraInputNapi::Release running on worker");
             auto context = static_cast<CameraInputAsyncContext*>(data);
-            CHECK_ERROR_RETURN_LOG(context->objectInfo == nullptr, "CameraInputNapi::Release async info is nullptr");
+            CHECK_RETURN_ELOG(context->objectInfo == nullptr, "CameraInputNapi::Release async info is nullptr");
             CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
             CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(context->queueTask, [&context]() {
                 context->errorCode = context->objectInfo->GetCameraInput()->Release();
@@ -530,7 +530,7 @@ void CameraInputNapi::RegisterErrorCallbackListener(
     MEDIA_INFO_LOG("CameraInputNapi::RegisterErrorCallbackListener arg size is %{public}zu", args.size());
     CameraNapiObject emptyDevice { {} };
     CameraNapiParamParser jsParamParser(env, args, emptyDevice);
-    CHECK_ERROR_RETURN_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT,
+    CHECK_RETURN_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT,
         "Could not able to read cameraDevice argument!"),
         "CameraInputNapi::RegisterErrorCallbackListener Could not able to read cameraDevice argument!");
 
@@ -549,11 +549,11 @@ void CameraInputNapi::UnregisterErrorCallbackListener(
     MEDIA_INFO_LOG("CameraInputNapi::UnregisterErrorCallbackListener arg size is %{public}zu", args.size());
     CameraNapiObject emptyDevice { {} };
     CameraNapiParamParser jsParamParser(env, args, emptyDevice);
-    CHECK_ERROR_RETURN_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT,
+    CHECK_RETURN_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT,
         "Could not able to read cameraDevice argument!"),
         "CameraInputNapi::UnregisterErrorCallbackListener Could not able to read cameraDevice argument!");
 
-    CHECK_ERROR_RETURN_LOG(errorCallback_ == nullptr, "errorCallback is null");
+    CHECK_RETURN_ELOG(errorCallback_ == nullptr, "errorCallback is null");
     errorCallback_->RemoveCallbackRef(eventName, callback);
     MEDIA_INFO_LOG("CameraInputNapi::UnregisterErrorCallbackListener success");
 }
@@ -561,7 +561,7 @@ void CameraInputNapi::UnregisterErrorCallbackListener(
 void CameraInputNapi::RegisterOcclusionDetectCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
-    CHECK_ERROR_RETURN_LOG(!CameraNapiSecurity::CheckSystemApp(env),
+    CHECK_RETURN_ELOG(!CameraNapiSecurity::CheckSystemApp(env),
         "SystemApi RegisterOcclusionDetectCallbackListener is called!");
     if (occlusionDetectCallback_ == nullptr) {
         occlusionDetectCallback_ = make_shared<OcclusionDetectCallbackListener>(env);
@@ -574,9 +574,9 @@ void CameraInputNapi::RegisterOcclusionDetectCallbackListener(
 void CameraInputNapi::UnregisterOcclusionDetectCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
-    CHECK_ERROR_RETURN_LOG(!CameraNapiSecurity::CheckSystemApp(env),
+    CHECK_RETURN_ELOG(!CameraNapiSecurity::CheckSystemApp(env),
         "SystemApi UnregisterOcclusionDetectCallbackListener is called!");
-    CHECK_ERROR_RETURN_LOG(occlusionDetectCallback_ == nullptr, "occlusionDetectCallback is null");
+    CHECK_RETURN_ELOG(occlusionDetectCallback_ == nullptr, "occlusionDetectCallback is null");
     occlusionDetectCallback_->RemoveCallbackRef(eventName, callback);
     MEDIA_INFO_LOG("CameraInputNapi::RegisterOcclusionDetectCallbackListener success");
 }
@@ -614,12 +614,12 @@ napi_value CameraInputNapi::Off(napi_env env, napi_callback_info info)
 napi_value CameraInputNapi::UsedAsPosition(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("CameraInputNapi::UsedAsPosition is called");
-    CHECK_ERROR_RETURN_RET_LOG(
+    CHECK_RETURN_RET_ELOG(
         !CameraNapiSecurity::CheckSystemApp(env), nullptr, "CameraInputNapi::UsedAsPosition:SystemApi is called");
     CameraInputNapi* cameraInputNapi = nullptr;
     int32_t cameraPosition;
     CameraNapiParamParser jsParamParser(env, info, cameraInputNapi, cameraPosition);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT,
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT,
         "input usedAsPosition with invalid arguments!"), nullptr, "CameraInputNapi::UsedAsPosition invalid arguments!");
     MEDIA_INFO_LOG("CameraInputNapi::UsedAsPosition params: %{public}d", cameraPosition);
     cameraInputNapi->cameraInput_->SetInputUsedAsPosition(static_cast<const CameraPosition>(cameraPosition));

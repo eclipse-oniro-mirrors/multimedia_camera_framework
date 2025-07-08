@@ -74,7 +74,7 @@ void HStreamCaptureStubFuzzer::HStreamCaptureStubFuzzTest1(FuzzedDataProvider &f
     MessageParcel reply;
     MessageOption option;
     sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
-    CHECK_ERROR_RETURN(photoSurface == nullptr);
+    CHECK_RETURN(photoSurface == nullptr);
     sptr<IBufferProducer> producer = photoSurface->GetProducer();
     data.WriteInterfaceToken(g_interfaceToken);
     data.WriteString16(Str8ToStr16(fdp.ConsumeRandomLengthString(max_length)));
@@ -89,7 +89,7 @@ void HStreamCaptureStubFuzzer::HStreamCaptureStubFuzzTest2(FuzzedDataProvider &f
     MessageParcel reply;
     MessageOption option;
     sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
-    CHECK_ERROR_RETURN(photoSurface == nullptr);
+    CHECK_RETURN(photoSurface == nullptr);
     sptr<IBufferProducer> producer = photoSurface->GetProducer();
     auto value = fdp.ConsumeBool();
     data.WriteInterfaceToken(g_interfaceToken);

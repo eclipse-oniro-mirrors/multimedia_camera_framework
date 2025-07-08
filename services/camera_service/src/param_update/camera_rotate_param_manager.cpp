@@ -62,11 +62,11 @@ void CameraRoateParamManager::InitParam()
     if (paramReader != nullptr) {
         std::string cloudVersion = paramReader->GetPathVersion(); // 云推版本号
         std::vector<std::string> cloudVersionNum;
-        CHECK_ERROR_RETURN_LOG(!paramReader->VersionStrToNumber(cloudVersion, cloudVersionNum),
+        CHECK_RETURN_ELOG(!paramReader->VersionStrToNumber(cloudVersion, cloudVersionNum),
             "VersionStrToNumber error , pathVersion is invalid");
         std::string localVersion = LoadVersion(); // 本地参数版本号/system/etc/camera/version.txt
         std::vector<std::string> localVersionNum;
-        CHECK_ERROR_RETURN_LOG(!paramReader->VersionStrToNumber(localVersion, localVersionNum),
+        CHECK_RETURN_ELOG(!paramReader->VersionStrToNumber(localVersion, localVersionNum),
             "VersionStrToNumber error , currentVersion is invalid");
         MEDIA_INFO_LOG(
             "currentVersion: %{public}s pathVersion :%{public}s", localVersion.c_str(), cloudVersion.c_str());
@@ -80,7 +80,7 @@ void CameraRoateParamManager::InitParam()
 void CameraRoateParamManager::ReloadParam()
 {
     MEDIA_DEBUG_LOG("called");
-    CHECK_ERROR_RETURN_LOG(paramReader == nullptr, "paramReader is nullptr");
+    CHECK_RETURN_ELOG(paramReader == nullptr, "paramReader is nullptr");
     std::string path = paramReader->GetConfigFilePath();
     MEDIA_INFO_LOG("GetConfigFilePath, path: %{public}s ", path.c_str());
     // 判断是路径是否在下载路径, 下载路径需要增加安全校验
@@ -91,19 +91,19 @@ void CameraRoateParamManager::ReloadParam()
 
 void CameraRoateParamManager::VerifyCloudFile(const std::string& prePath)
 {
-    CHECK_ERROR_RETURN_LOG(paramReader == nullptr, "paramReader is nullptr");
+    CHECK_RETURN_ELOG(paramReader == nullptr, "paramReader is nullptr");
     // 校验参数签名是否合法
     std::string certFile = prePath + "/CERT.ENC"; // 获取签名文件
     std::string verifyFile = prePath + "/CERT.SF"; // 获取待验证的文件
     std::string manifestFile = prePath + "/MANIFEST.MF"; // 文件列表文件
     std::lock_guard<std::mutex> lock(mutxVerify);
-    CHECK_ERROR_RETURN_LOG(!paramReader->VerifyCertSfFile(certFile, verifyFile, manifestFile),
+    CHECK_RETURN_ELOG(!paramReader->VerifyCertSfFile(certFile, verifyFile, manifestFile),
         " VerifyCertSfFile  error , param is invalid");
     std::string cfgDir = PARAM_SERVICE_INSTALL_PATH + CAMERA_ROTATE_CFG_DIR;
     // 校验参数文件是否合法
-    CHECK_ERROR_RETURN_LOG(
+    CHECK_RETURN_ELOG(
         !paramReader->VerifyParamFile(cfgDir, VERSION_FILE_NAME), "verify version file error , param is invalid");
-    CHECK_ERROR_RETURN_LOG(
+    CHECK_RETURN_ELOG(
         !paramReader->VerifyParamFile(cfgDir, CONFIG_FILE_NAME), "verify param file error , param is invalid");
     // 拷贝参数到本地
     CopyFileToLocal();
@@ -126,10 +126,10 @@ void CameraRoateParamManager::CopyFileToLocal()
 
 bool CameraRoateParamManager::DoCopy(const std::string& src, const std::string& des)
 {
-    CHECK_ERROR_RETURN_RET_LOG(!CheckPathExist(src.c_str()), false, "srcPath is invalid");
+    CHECK_RETURN_RET_ELOG(!CheckPathExist(src.c_str()), false, "srcPath is invalid");
     if (CheckPathExist(des.c_str())) {
         MEDIA_INFO_LOG("des has file");
-        CHECK_ERROR_RETURN_RET_LOG(!RemoveFile(des), false, "rm des file error");
+        CHECK_RETURN_RET_ELOG(!RemoveFile(des), false, "rm des file error");
     }
     std::filesystem::path sPath(src);
     std::filesystem::path dPath(des);
@@ -139,14 +139,14 @@ bool CameraRoateParamManager::DoCopy(const std::string& src, const std::string& 
         std::filesystem::copy_options::skip_symlinks;
     std::filesystem::copy(sPath, dPath, copyOptions, errNo);
     // if has some error in copy, record errno
-    CHECK_ERROR_RETURN_RET_LOG(errNo.value(), false, "copy failed errno:%{public}d", errNo.value());
+    CHECK_RETURN_RET_ELOG(errNo.value(), false, "copy failed errno:%{public}d", errNo.value());
     MEDIA_INFO_LOG("copy success");
     return true;
 }
 
 std::string CameraRoateParamManager::LoadVersion()
 {
-    CHECK_ERROR_RETURN_RET_LOG(paramReader == nullptr, "", "paramReader is nullptr");
+    CHECK_RETURN_RET_ELOG(paramReader == nullptr, "", "paramReader is nullptr");
     std::string filePath = CAMERA_SERVICE_ABS_PATH + VERSION_FILE_NAME; // 优先沙箱找
     std::ifstream file(filePath);
     if (!file.good()) {
@@ -170,13 +170,13 @@ bool CameraRoateParamManager::LoadConfiguration(const std::string &filepath)
 {
     curNode_ = CameraXmlNode::Create();
     int32_t ret = curNode_->Config(filepath.c_str(), nullptr, 0);
-    CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, false, "Not found camera_rotate_strategy.xml!");
+    CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, false, "Not found camera_rotate_strategy.xml!");
     {
         std::lock_guard<std::mutex> lock(strategyInfosMutex_);
         cameraRotateStrategyInfos_.clear();
     }
     bool result = ParseInternal(curNode_->GetCopyNode());
-    CHECK_ERROR_RETURN_RET_LOG(!result, false, "Camera rotate strategy xml parse failed.");
+    CHECK_RETURN_RET_ELOG(!result, false, "Camera rotate strategy xml parse failed.");
     Destroy();
     return true;
 }
@@ -269,7 +269,7 @@ void CameraRoateParamManager::SubscriberEvent()
         MEDIA_INFO_LOG("Add event: %{public}s", it->first.c_str());
         eventHandles_.emplace(it->first, std::bind(it->second, this, std::placeholders::_1));
     }
-    CHECK_ERROR_RETURN_LOG(subscriber_, "Common Event is already subscribered!");
+    CHECK_RETURN_ELOG(subscriber_, "Common Event is already subscribered!");
     EventFwk::MatchingSkills matchingSkills;
     for (auto &event : handleEventFunc_) {
         MEDIA_INFO_LOG("Add event: %{public}s", event.first.c_str());

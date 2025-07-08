@@ -30,37 +30,37 @@ OH_AVBuffer* CodecAVBufferInfo::GetCopyAVBuffer()
 {
     MEDIA_INFO_LOG("CodecBufferInfo OH_AVBuffer_Create with size: %{public}d", attr.size);
     OH_AVBuffer* destBuffer = OH_AVBuffer_Create(attr.size);
-    CHECK_ERROR_RETURN_RET_LOG(destBuffer == nullptr, nullptr, "destBuffer is null");
+    CHECK_RETURN_RET_ELOG(destBuffer == nullptr, nullptr, "destBuffer is null");
     auto sourceAddr = OH_AVBuffer_GetAddr(buffer);
     auto destAddr = OH_AVBuffer_GetAddr(destBuffer);
     errno_t cpyRet = memcpy_s(reinterpret_cast<void *>(destAddr), attr.size,
         reinterpret_cast<void *>(sourceAddr), attr.size);
-    CHECK_ERROR_PRINT_LOG(cpyRet != 0, "CodecBufferInfo memcpy_s failed. %{public}d", cpyRet);
+    CHECK_PRINT_ELOG(cpyRet != 0, "CodecBufferInfo memcpy_s failed. %{public}d", cpyRet);
 
     OH_AVErrCode errorCode = OH_AVBuffer_SetBufferAttr(destBuffer, &attr);
-    CHECK_ERROR_PRINT_LOG(errorCode != 0, "CodecBufferInfo OH_AVBuffer_SetBufferAttr failed. %{public}d", errorCode);
+    CHECK_PRINT_ELOG(errorCode != 0, "CodecBufferInfo OH_AVBuffer_SetBufferAttr failed. %{public}d", errorCode);
     return destBuffer;
 }
 
 OH_AVBuffer* CodecAVBufferInfo::AddCopyAVBuffer(OH_AVBuffer* IDRBuffer)
 {
-    CHECK_ERROR_RETURN_RET_LOG(nullptr == IDRBuffer, IDRBuffer, "AddCopyAVBuffer without IDRBuffer!");
+    CHECK_RETURN_RET_ELOG(nullptr == IDRBuffer, IDRBuffer, "AddCopyAVBuffer without IDRBuffer!");
     OH_AVCodecBufferAttr IDRAttr = {0, 0, 0, AVCODEC_BUFFER_FLAGS_NONE};
     OH_AVCodecBufferAttr destAttr = {0, 0, 0, AVCODEC_BUFFER_FLAGS_NONE};
     OH_AVBuffer_GetBufferAttr(IDRBuffer, &IDRAttr);
     int32_t destBufferSize = IDRAttr.size + attr.size;
     OH_AVBuffer* destBuffer = OH_AVBuffer_Create(destBufferSize);
-    CHECK_ERROR_RETURN_RET_LOG(destBuffer == nullptr, nullptr, "destBuffer is null");
+    CHECK_RETURN_RET_ELOG(destBuffer == nullptr, nullptr, "destBuffer is null");
     auto destAddr = OH_AVBuffer_GetAddr(destBuffer);
     auto sourceIDRAddr = OH_AVBuffer_GetAddr(IDRBuffer);
 
     errno_t cpyRet = memcpy_s(reinterpret_cast<void *>(destAddr), destBufferSize,
         reinterpret_cast<void *>(sourceIDRAddr), IDRAttr.size);
-    CHECK_ERROR_PRINT_LOG(0 != cpyRet, "CodecBufferInfo memcpy_s IDR frame failed. %{public}d", cpyRet);
+    CHECK_PRINT_ELOG(0 != cpyRet, "CodecBufferInfo memcpy_s IDR frame failed. %{public}d", cpyRet);
     destAddr = destAddr + IDRAttr.size;
     auto sourceAddr = OH_AVBuffer_GetAddr(buffer);
     cpyRet = memcpy_s(reinterpret_cast<void *>(destAddr), attr.size, reinterpret_cast<void *>(sourceAddr), attr.size);
-    CHECK_ERROR_PRINT_LOG(0 != cpyRet, "CodecBufferInfo memcpy_s I frame failed. %{public}d", cpyRet);
+    CHECK_PRINT_ELOG(0 != cpyRet, "CodecBufferInfo memcpy_s I frame failed. %{public}d", cpyRet);
     OH_AVBuffer_Destroy(IDRBuffer);
     destAttr.size = destBufferSize;
     destAttr.flags = IDRAttr.flags | attr.flags;
@@ -100,15 +100,15 @@ std::shared_ptr<OHOS::Media::AVBuffer> VideoCodecAVBufferInfo::GetCopyAVBuffer()
 {
     MEDIA_INFO_LOG("CodecBufferInfo OH_AVBuffer_Create with size: %{public}d", buffer->memory_->GetSize());
     auto allocator = Media::AVAllocatorFactory::CreateSharedAllocator(Media::MemoryFlag::MEMORY_READ_WRITE);
-    CHECK_ERROR_RETURN_RET_LOG(allocator == nullptr, nullptr, "create allocator failed");
+    CHECK_RETURN_RET_ELOG(allocator == nullptr, nullptr, "create allocator failed");
     std::shared_ptr<Media::AVBuffer> destBuffer = Media::AVBuffer::CreateAVBuffer(allocator,
         buffer->memory_->GetCapacity());
-    CHECK_ERROR_RETURN_RET_LOG(destBuffer == nullptr, nullptr, "destBuffer is null");
+    CHECK_RETURN_RET_ELOG(destBuffer == nullptr, nullptr, "destBuffer is null");
     auto sourceAddr = buffer->memory_->GetAddr();
     auto destAddr = destBuffer->memory_->GetAddr();
     errno_t cpyRet = memcpy_s(reinterpret_cast<void *>(destAddr), buffer->memory_->GetSize(),
         reinterpret_cast<void *>(sourceAddr), buffer->memory_->GetSize());
-    CHECK_ERROR_PRINT_LOG(0 != cpyRet, "CodecBufferInfo memcpy_s failed. %{public}d", cpyRet);
+    CHECK_PRINT_ELOG(0 != cpyRet, "CodecBufferInfo memcpy_s failed. %{public}d", cpyRet);
     destBuffer->pts_ = buffer->pts_;
     destBuffer->flag_ = buffer->flag_;
     destBuffer->memory_->SetSize(buffer->memory_->GetSize());
@@ -118,22 +118,22 @@ std::shared_ptr<OHOS::Media::AVBuffer> VideoCodecAVBufferInfo::GetCopyAVBuffer()
 std::shared_ptr<OHOS::Media::AVBuffer> VideoCodecAVBufferInfo::AddCopyAVBuffer(
     std::shared_ptr<OHOS::Media::AVBuffer> IDRBuffer)
 {
-    CHECK_ERROR_RETURN_RET_LOG(nullptr == IDRBuffer, IDRBuffer, "AddCopyAVBuffer without IDRBuffer!");
+    CHECK_RETURN_RET_ELOG(nullptr == IDRBuffer, IDRBuffer, "AddCopyAVBuffer without IDRBuffer!");
     int32_t destBufferSize = IDRBuffer->memory_->GetSize() + buffer->memory_->GetSize();
     auto allocator = Media::AVAllocatorFactory::CreateSharedAllocator(Media::MemoryFlag::MEMORY_READ_WRITE);
-    CHECK_ERROR_RETURN_RET_LOG(allocator == nullptr, nullptr, "create allocator failed");
+    CHECK_RETURN_RET_ELOG(allocator == nullptr, nullptr, "create allocator failed");
     std::shared_ptr<Media::AVBuffer> destBuffer = Media::AVBuffer::CreateAVBuffer(allocator, destBufferSize);
-    CHECK_ERROR_RETURN_RET_LOG(destBuffer == nullptr, nullptr, "destBuffer is null");
+    CHECK_RETURN_RET_ELOG(destBuffer == nullptr, nullptr, "destBuffer is null");
     auto destAddr = destBuffer->memory_->GetAddr();
     auto sourceIDRAddr = IDRBuffer->memory_->GetAddr();
     errno_t cpyRet = memcpy_s(reinterpret_cast<void *>(destAddr), destBufferSize,
         reinterpret_cast<void *>(sourceIDRAddr), IDRBuffer->memory_->GetSize());
-    CHECK_ERROR_PRINT_LOG(0 != cpyRet, "CodecBufferInfo memcpy_s IDR frame failed. %{public}d", cpyRet);
+    CHECK_PRINT_ELOG(0 != cpyRet, "CodecBufferInfo memcpy_s IDR frame failed. %{public}d", cpyRet);
     destAddr = destAddr + IDRBuffer->memory_->GetSize();
     auto sourceAddr = buffer->memory_->GetAddr();
     cpyRet = memcpy_s(reinterpret_cast<void *>(destAddr), buffer->memory_->GetSize(),
         reinterpret_cast<void *>(sourceAddr), buffer->memory_->GetSize());
-    CHECK_ERROR_PRINT_LOG(0 != cpyRet, "CodecBufferInfo memcpy_s I frame failed. %{public}d", cpyRet);
+    CHECK_PRINT_ELOG(0 != cpyRet, "CodecBufferInfo memcpy_s I frame failed. %{public}d", cpyRet);
     destBuffer->memory_->SetSize(destBufferSize);
     destBuffer->flag_ = IDRBuffer->flag_ | buffer->flag_;
     MEDIA_INFO_LOG("CodecBufferInfo copy with size: %{public}d, %{public}d", destBufferSize, destBuffer->flag_);
@@ -162,4 +162,4 @@ VideoCodecUserData::~VideoCodecUserData()
 }
 
 } // CameraStandard
-} // OHOS
+} // OHOS

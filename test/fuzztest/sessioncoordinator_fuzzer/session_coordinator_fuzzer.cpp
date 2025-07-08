@@ -37,7 +37,7 @@ std::shared_ptr<DeferredProcessing::SessionCoordinator> SessionCoordinatorFuzzer
 void SessionCoordinatorFuzzer::SessionCoordinatorFuzzTest(FuzzedDataProvider& fdp)
 {
     fuzz_ = std::make_shared<DeferredProcessing::SessionCoordinator>();
-    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
+    CHECK_RETURN_ELOG(!fuzz_, "Create fuzz_ Error");
     fuzz_->Initialize();
     int32_t userId = fdp.ConsumeIntegral<int32_t>();
     uint8_t randomNum = fdp.ConsumeIntegral<int32_t>();

@@ -42,18 +42,18 @@ SceneMode sceneMode = SceneMode::TIMELAPSE_PHOTO;
 auto AddOutput()
 {
     sptr<CameraOutputCapability> capability = manager->GetSupportedOutputCapability(camera, sceneMode);
-    CHECK_ERROR_RETURN_LOG(!capability, "TimeLapsePhotoSessionFuzzer: capability Error");
+    CHECK_RETURN_ELOG(!capability, "TimeLapsePhotoSessionFuzzer: capability Error");
     Profile preview(CameraFormat::CAMERA_FORMAT_YUV_420_SP, {640, 480});
     sptr<CaptureOutput> previewOutput = manager->CreatePreviewOutput(preview, Surface::CreateSurfaceAsConsumer());
-    CHECK_ERROR_RETURN_LOG(!previewOutput, "TimeLapsePhotoSessionFuzzer: previewOutput Error");
+    CHECK_RETURN_ELOG(!previewOutput, "TimeLapsePhotoSessionFuzzer: previewOutput Error");
     session->AddOutput(previewOutput);
     Profile photo(CameraFormat::CAMERA_FORMAT_JPEG, {640, 480});
     sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
-    CHECK_ERROR_RETURN_LOG(!photoSurface, "TimeLapsePhotoSessionFuzzer: photoSurface Error");
+    CHECK_RETURN_ELOG(!photoSurface, "TimeLapsePhotoSessionFuzzer: photoSurface Error");
     sptr<IBufferProducer> surface = photoSurface->GetProducer();
-    CHECK_ERROR_RETURN_LOG(!surface, "TimeLapsePhotoSessionFuzzer: surface Error");
+    CHECK_RETURN_ELOG(!surface, "TimeLapsePhotoSessionFuzzer: surface Error");
     sptr<CaptureOutput> photoOutput = manager->CreatePhotoOutput(photo, surface);
-    CHECK_ERROR_RETURN_LOG(!photoOutput, "TimeLapsePhotoSessionFuzzer: photoOutput Error");
+    CHECK_RETURN_ELOG(!photoOutput, "TimeLapsePhotoSessionFuzzer: photoOutput Error");
     session->AddOutput(photoOutput);
 }
 
@@ -256,7 +256,7 @@ void TestGetMetadata()
             phyCam = item;
         }
     }
-    CHECK_ERROR_RETURN_LOG(cameras.empty(), "TimeLapsePhotoSessionFuzzer: No Wide Angle Camera");
+    CHECK_RETURN_ELOG(cameras.empty(), "TimeLapsePhotoSessionFuzzer: No Wide Angle Camera");
     string cameraId = phyCam->GetID();
     MEDIA_INFO_LOG("TimeLapsePhotoSessionFuzzer: Wide Angle Camera Id = %{public}s", cameraId.c_str());
     auto meta = make_shared<OHOS::Camera::CameraMetadata>(10, 100);
@@ -472,18 +472,18 @@ void Test(uint8_t *rawData, size_t size)
     if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
          return;
     }
-    CHECK_ERROR_RETURN_LOG(!TestToken::GetAllCameraPermission(), "GetPermission error");
+    CHECK_RETURN_ELOG(!TestToken::GetAllCameraPermission(), "GetPermission error");
     manager = CameraManager::GetInstance();
     sptr<CaptureSessionForSys> captureSessionForSys =
         CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(sceneMode);
     session = reinterpret_cast<TimeLapsePhotoSession*>(captureSessionForSys.GetRefPtr());
     session->BeginConfig();
     auto cameras = manager->GetSupportedCameras();
-    CHECK_ERROR_RETURN_LOG(cameras.size() < NUM_TWO, "TimeLapsePhotoSessionFuzzer: GetSupportedCameras Error");
+    CHECK_RETURN_ELOG(cameras.size() < NUM_TWO, "TimeLapsePhotoSessionFuzzer: GetSupportedCameras Error");
     camera = cameras[0];
-    CHECK_ERROR_RETURN_LOG(!camera, "TimeLapsePhotoSessionFuzzer: Camera is null");
+    CHECK_RETURN_ELOG(!camera, "TimeLapsePhotoSessionFuzzer: Camera is null");
     sptr<CaptureInput> input = manager->CreateCameraInput(camera);
-    CHECK_ERROR_RETURN_LOG(!input, "TimeLapsePhotoSessionFuzzer: CreateCameraInput Error");
+    CHECK_RETURN_ELOG(!input, "TimeLapsePhotoSessionFuzzer: CreateCameraInput Error");
     input->Open();
     session->AddInput(input);
     AddOutput();

@@ -37,7 +37,7 @@ void PictureAssembler::RegisterAuxiliaryConsumers()
 {
     MEDIA_INFO_LOG("RegisterAuxiliaryConsumers E");
     sptr<HStreamCapture> streamCapture = streamCapture_.promote();
-    CHECK_ERROR_RETURN_LOG(streamCapture == nullptr, "streamCapture is null");
+    CHECK_RETURN_ELOG(streamCapture == nullptr, "streamCapture is null");
     SurfaceError ret;
     std::string retStr = "";
     if (streamCapture->gainmapSurface_ != nullptr) {
@@ -78,4 +78,4 @@ void PictureAssembler::RegisterAuxiliaryConsumers()
     MEDIA_INFO_LOG("RegisterAuxiliaryConsumers X");
 }
 }  // namespace CameraStandard
-}  // namespace OHOS
+}  // namespace OHOS

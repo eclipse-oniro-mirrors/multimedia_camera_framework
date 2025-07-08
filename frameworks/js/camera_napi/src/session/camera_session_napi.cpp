@@ -55,7 +55,7 @@ namespace {
 void AsyncCompleteCallback(napi_env env, napi_status status, void* data)
 {
     auto context = static_cast<CameraSessionAsyncContext*>(data);
-    CHECK_ERROR_RETURN_LOG(context == nullptr, "CameraSessionNapi AsyncCompleteCallback context is null");
+    CHECK_RETURN_ELOG(context == nullptr, "CameraSessionNapi AsyncCompleteCallback context is null");
     MEDIA_INFO_LOG("CameraSessionNapi AsyncCompleteCallback %{public}s, status = %{public}d", context->funcName.c_str(),
         context->status);
     std::unique_ptr<JSAsyncContextOutput> jsContext = std::make_unique<JSAsyncContextOutput>();
@@ -585,10 +585,10 @@ void CameraSessionNapi::Init(napi_env env)
                                CameraSessionNapiConstructor, nullptr,
                                camera_session_props.size(),
                                camera_session_props.data(), &ctorObj);
-    CHECK_ERROR_RETURN_LOG(status != napi_ok, "CameraSessionNapi defined class failed");
+    CHECK_RETURN_ELOG(status != napi_ok, "CameraSessionNapi defined class failed");
     int32_t refCount = 1;
     status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
-    CHECK_ERROR_RETURN_LOG(status != napi_ok, "CameraSessionNapi Init failed");
+    CHECK_RETURN_ELOG(status != napi_ok, "CameraSessionNapi Init failed");
     MEDIA_DEBUG_LOG("CameraSessionNapi Init success");
 }
 
@@ -607,7 +607,7 @@ napi_value CameraSessionNapi::CameraSessionNapiConstructor(napi_env env, napi_ca
         std::unique_ptr<CameraSessionNapi> obj = std::make_unique<CameraSessionNapi>();
         if (obj != nullptr) {
             obj->env_ = env;
-            CHECK_ERROR_RETURN_RET_LOG(sCameraSession_ == nullptr, result, "sCameraSession_ is null");
+            CHECK_RETURN_RET_ELOG(sCameraSession_ == nullptr, result, "sCameraSession_ is null");
             obj->cameraSession_ = sCameraSession_;
             status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
                                CameraSessionNapi::CameraSessionNapiDestructor, nullptr, nullptr);
@@ -686,12 +686,12 @@ napi_value CameraSessionNapi::CreateCameraSession(napi_env env)
 
     if (sConstructor_ == nullptr) {
         CameraSessionNapi::Init(env);
-        CHECK_ERROR_RETURN_RET_LOG(sConstructor_ == nullptr, result, "sConstructor_ is null");
+        CHECK_RETURN_RET_ELOG(sConstructor_ == nullptr, result, "sConstructor_ is null");
     }
     status = napi_get_reference_value(env, sConstructor_, &constructor);
     if (status == napi_ok) {
         int retCode = CameraManager::GetInstance()->CreateCaptureSession(sCameraSession_, SceneMode::NORMAL);
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         if (sCameraSession_ == nullptr) {
             MEDIA_ERR_LOG("Failed to create Camera session instance");
             napi_get_undefined(env, &result);
@@ -726,7 +726,7 @@ napi_value CameraSessionNapi::BeginConfig(napi_env env, napi_callback_info info)
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
         int32_t ret = cameraSessionNapi->cameraSession_->BeginConfig();
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, ret), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, ret), nullptr);
     } else {
         MEDIA_ERR_LOG("BeginConfig call Failed!");
     }
@@ -735,11 +735,11 @@ napi_value CameraSessionNapi::BeginConfig(napi_env env, napi_callback_info info)
 
 void CameraSessionNapi::CommitConfigAsync(uv_work_t* work)
 {
-    CHECK_ERROR_RETURN_LOG(work == nullptr, "CommitConfigAsync null work");
+    CHECK_RETURN_ELOG(work == nullptr, "CommitConfigAsync null work");
     MEDIA_INFO_LOG("CommitConfigAsync running on worker");
     auto context = static_cast<CameraSessionAsyncContext*>(work->data);
-    CHECK_ERROR_RETURN_LOG(context == nullptr, "CommitConfigAsync context is null");
-    CHECK_ERROR_RETURN_LOG(
+    CHECK_RETURN_ELOG(context == nullptr, "CommitConfigAsync context is null");
+    CHECK_RETURN_ELOG(
         context->objectInfo == nullptr, "CommitConfigAsync async info is nullptr");
     CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
     CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(context->queueTask, [&context]() {
@@ -751,9 +751,9 @@ void CameraSessionNapi::CommitConfigAsync(uv_work_t* work)
 
 void CameraSessionNapi::UvWorkAsyncCompleted(uv_work_t* work, int status)
 {
-    CHECK_ERROR_RETURN_LOG(work == nullptr, "UvWorkAsyncCompleted null work");
+    CHECK_RETURN_ELOG(work == nullptr, "UvWorkAsyncCompleted null work");
     auto context = static_cast<CameraSessionAsyncContext*>(work->data);
-    CHECK_ERROR_RETURN_LOG(context == nullptr, "UvWorkAsyncCompleted context is null");
+    CHECK_RETURN_ELOG(context == nullptr, "UvWorkAsyncCompleted context is null");
     MEDIA_INFO_LOG("UvWorkAsyncCompleted %{public}s, status = %{public}d", context->funcName.c_str(),
         context->status);
     std::unique_ptr<JSAsyncContextOutput> jsContext = std::make_unique<JSAsyncContextOutput>();
@@ -786,7 +786,7 @@ napi_value CameraSessionNapi::CommitConfig(napi_env env, napi_callback_info info
     auto asyncFunction = std::make_shared<CameraNapiAsyncFunction>(
         env, "CommitConfig", asyncContext->callbackRef, asyncContext->deferred);
     CameraNapiParamParser jsParamParser(env, info, asyncContext->objectInfo, asyncFunction);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument"), nullptr,
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument"), nullptr,
         "CameraSessionNapi::CommitConfig invalid argument");
     asyncContext->HoldNapiValue(env, jsParamParser.GetThisVar());
     asyncContext->env = env;
@@ -817,7 +817,7 @@ napi_value CameraSessionNapi::CommitConfig(napi_env env, napi_callback_info info
     } else {
         asyncContext.release();
     }
-    CHECK_ERROR_RETURN_RET(asyncFunction->GetAsyncFunctionType() == ASYNC_FUN_TYPE_PROMISE,
+    CHECK_RETURN_RET(asyncFunction->GetAsyncFunctionType() == ASYNC_FUN_TYPE_PROMISE,
         asyncFunction->GetPromise());
     return CameraNapiUtils::GetUndefinedValue(env);
 }
@@ -903,7 +903,7 @@ napi_value CameraSessionNapi::AddInput(napi_env env, napi_callback_info info)
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckInvalidArgument(env, argc, ARGS_ONE, argv, ADD_INPUT), result);
+    CHECK_RETURN_RET(!CameraNapiUtils::CheckInvalidArgument(env, argc, ARGS_ONE, argv, ADD_INPUT), result);
 
     napi_get_undefined(env, &result);
     CameraSessionNapi* cameraSessionNapi = nullptr;
@@ -912,7 +912,7 @@ napi_value CameraSessionNapi::AddInput(napi_env env, napi_callback_info info)
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
         int32_t ret = cameraSessionNapi->cameraSession_->AddInput(cameraInput);
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, ret), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, ret), nullptr);
     } else {
         MEDIA_ERR_LOG("AddInput call Failed!");
     }
@@ -954,7 +954,7 @@ napi_value CameraSessionNapi::RemoveInput(napi_env env, napi_callback_info info)
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckInvalidArgument(env, argc, ARGS_ONE, argv, REMOVE_INPUT), result);
+    CHECK_RETURN_RET(!CameraNapiUtils::CheckInvalidArgument(env, argc, ARGS_ONE, argv, REMOVE_INPUT), result);
 
     napi_get_undefined(env, &result);
     CameraSessionNapi* cameraSessionNapi = nullptr;
@@ -963,7 +963,7 @@ napi_value CameraSessionNapi::RemoveInput(napi_env env, napi_callback_info info)
         sptr<CaptureInput> cameraInput = nullptr;
         GetJSArgsForCameraInput(env, argc, argv, cameraInput);
         int32_t ret = cameraSessionNapi->cameraSession_->RemoveInput(cameraInput);
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, ret), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, ret), nullptr);
         return result;
     } else {
         MEDIA_ERR_LOG("RemoveInput call Failed!");
@@ -976,7 +976,7 @@ void CheckExtensionCameraOutput(napi_env env, napi_value obj, sptr<CaptureOutput
     MEDIA_DEBUG_LOG("CheckExtensionCameraOutput is called");
     output = nullptr;
     auto cameraNapiExProxy = CameraNapiExManager::GetCameraNapiExProxy();
-    CHECK_ERROR_RETURN_LOG(cameraNapiExProxy == nullptr, "cameraNapiExProxy is nullptr");
+    CHECK_RETURN_ELOG(cameraNapiExProxy == nullptr, "cameraNapiExProxy is nullptr");
     if (cameraNapiExProxy->CheckAndGetOutput(env, obj, output)) {
         MEDIA_DEBUG_LOG("system output adding..");
     } else {
@@ -1042,7 +1042,7 @@ napi_value CameraSessionNapi::AddOutput(napi_env env, napi_callback_info info)
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckInvalidArgument(env, argc, ARGS_ONE, argv, ADD_OUTPUT), result);
+    CHECK_RETURN_RET(!CameraNapiUtils::CheckInvalidArgument(env, argc, ARGS_ONE, argv, ADD_OUTPUT), result);
 
     napi_get_undefined(env, &result);
     CameraSessionNapi* cameraSessionNapi = nullptr;
@@ -1051,7 +1051,7 @@ napi_value CameraSessionNapi::AddOutput(napi_env env, napi_callback_info info)
         sptr<CaptureOutput> cameraOutput = nullptr;
         result = GetJSArgsForCameraOutput(env, argc, argv, cameraOutput);
         int32_t ret = cameraSessionNapi->cameraSession_->AddOutput(cameraOutput);
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, ret), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, ret), nullptr);
     } else {
         MEDIA_ERR_LOG("AddOutput call Failed!");
     }
@@ -1094,7 +1094,7 @@ napi_value CameraSessionNapi::RemoveOutput(napi_env env, napi_callback_info info
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckInvalidArgument(env, argc, ARGS_ONE, argv, REMOVE_OUTPUT), result);
+    CHECK_RETURN_RET(!CameraNapiUtils::CheckInvalidArgument(env, argc, ARGS_ONE, argv, REMOVE_OUTPUT), result);
 
     napi_get_undefined(env, &result);
     CameraSessionNapi* cameraSessionNapi = nullptr;
@@ -1103,7 +1103,7 @@ napi_value CameraSessionNapi::RemoveOutput(napi_env env, napi_callback_info info
         sptr<CaptureOutput> cameraOutput = nullptr;
         result = GetJSArgsForCameraOutput(env, argc, argv, cameraOutput);
         int32_t ret = cameraSessionNapi->cameraSession_->RemoveOutput(cameraOutput);
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, ret), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, ret), nullptr);
     } else {
         MEDIA_ERR_LOG("RemoveOutput call Failed!");
     }
@@ -1112,11 +1112,11 @@ napi_value CameraSessionNapi::RemoveOutput(napi_env env, napi_callback_info info
 
 void CameraSessionNapi::StartAsync(uv_work_t* work)
 {
-    CHECK_ERROR_RETURN_LOG(work == nullptr, "StartAsync null work");
+    CHECK_RETURN_ELOG(work == nullptr, "StartAsync null work");
     MEDIA_INFO_LOG("StartAsync running on worker");
     auto context = static_cast<CameraSessionAsyncContext*>(work->data);
-    CHECK_ERROR_RETURN_LOG(context == nullptr, "StartAsync context is null");
-    CHECK_ERROR_RETURN_LOG(context->objectInfo == nullptr, "StartAsync async info is nullptr");
+    CHECK_RETURN_ELOG(context == nullptr, "StartAsync context is null");
+    CHECK_RETURN_ELOG(context->objectInfo == nullptr, "StartAsync async info is nullptr");
     CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
     CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(context->queueTask, [&context]() {
         context->errorCode = context->objectInfo->cameraSession_->Start();
@@ -1133,7 +1133,7 @@ napi_value CameraSessionNapi::Start(napi_env env, napi_callback_info info)
     auto asyncFunction =
         std::make_shared<CameraNapiAsyncFunction>(env, "Start", asyncContext->callbackRef, asyncContext->deferred);
     CameraNapiParamParser jsParamParser(env, info, asyncContext->objectInfo, asyncFunction);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument"),
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument"),
         nullptr, "CameraSessionNapi::Start invalid argument");
     asyncContext->HoldNapiValue(env, jsParamParser.GetThisVar());
     asyncContext->env = env;
@@ -1164,7 +1164,7 @@ napi_value CameraSessionNapi::Start(napi_env env, napi_callback_info info)
     } else {
         asyncContext.release();
     }
-    CHECK_ERROR_RETURN_RET(asyncFunction->GetAsyncFunctionType() == ASYNC_FUN_TYPE_PROMISE,
+    CHECK_RETURN_RET(asyncFunction->GetAsyncFunctionType() == ASYNC_FUN_TYPE_PROMISE,
         asyncFunction->GetPromise());
     return CameraNapiUtils::GetUndefinedValue(env);
 }
@@ -1177,7 +1177,7 @@ napi_value CameraSessionNapi::Stop(napi_env env, napi_callback_info info)
     auto asyncFunction =
         std::make_shared<CameraNapiAsyncFunction>(env, "Stop", asyncContext->callbackRef, asyncContext->deferred);
     CameraNapiParamParser jsParamParser(env, info, asyncContext->objectInfo, asyncFunction);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument"), nullptr,
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument"), nullptr,
         "CameraSessionNapi::Stop invalid argument");
     asyncContext->HoldNapiValue(env, jsParamParser.GetThisVar());
     napi_status status = napi_create_async_work(
@@ -1185,7 +1185,7 @@ napi_value CameraSessionNapi::Stop(napi_env env, napi_callback_info info)
         [](napi_env env, void* data) {
             MEDIA_INFO_LOG("CameraSessionNapi::Stop running on worker");
             auto context = static_cast<CameraSessionAsyncContext*>(data);
-            CHECK_ERROR_RETURN_LOG(context->objectInfo == nullptr, "CameraSessionNapi::Stop async info is nullptr");
+            CHECK_RETURN_ELOG(context->objectInfo == nullptr, "CameraSessionNapi::Stop async info is nullptr");
             CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
             CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(context->queueTask, [&context]() {
                 context->errorCode = context->objectInfo->cameraSession_->Stop();
@@ -1203,7 +1203,7 @@ napi_value CameraSessionNapi::Stop(napi_env env, napi_callback_info info)
         napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
         asyncContext.release();
     }
-    CHECK_ERROR_RETURN_RET(asyncFunction->GetAsyncFunctionType() == ASYNC_FUN_TYPE_PROMISE,
+    CHECK_RETURN_RET(asyncFunction->GetAsyncFunctionType() == ASYNC_FUN_TYPE_PROMISE,
         asyncFunction->GetPromise());
     return CameraNapiUtils::GetUndefinedValue(env);
 }
@@ -1216,7 +1216,7 @@ napi_value CameraSessionNapi::Release(napi_env env, napi_callback_info info)
     auto asyncFunction =
         std::make_shared<CameraNapiAsyncFunction>(env, "Release", asyncContext->callbackRef, asyncContext->deferred);
     CameraNapiParamParser jsParamParser(env, info, asyncContext->objectInfo, asyncFunction);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument"), nullptr,
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument"), nullptr,
         "CameraSessionNapi::Release invalid argument");
     asyncContext->HoldNapiValue(env, jsParamParser.GetThisVar());
     napi_status status = napi_create_async_work(
@@ -1224,7 +1224,7 @@ napi_value CameraSessionNapi::Release(napi_env env, napi_callback_info info)
         [](napi_env env, void* data) {
             MEDIA_INFO_LOG("CameraSessionNapi::Release running on worker");
             auto context = static_cast<CameraSessionAsyncContext*>(data);
-            CHECK_ERROR_RETURN_LOG(context->objectInfo == nullptr, "CameraSessionNapi::Release async info is nullptr");
+            CHECK_RETURN_ELOG(context->objectInfo == nullptr, "CameraSessionNapi::Release async info is nullptr");
             CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
             CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(context->queueTask, [&context]() {
                 context->errorCode = context->objectInfo->cameraSession_->Release();
@@ -1242,7 +1242,7 @@ napi_value CameraSessionNapi::Release(napi_env env, napi_callback_info info)
         napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
         asyncContext.release();
     }
-    CHECK_ERROR_RETURN_RET(asyncFunction->GetAsyncFunctionType() == ASYNC_FUN_TYPE_PROMISE,
+    CHECK_RETURN_RET(asyncFunction->GetAsyncFunctionType() == ASYNC_FUN_TYPE_PROMISE,
         asyncFunction->GetPromise());
     return CameraNapiUtils::GetUndefinedValue(env);
 }
@@ -1268,7 +1268,7 @@ napi_value CameraSessionNapi::IsVideoStabilizationModeSupported(napi_env env, na
         bool isSupported;
         int32_t retCode = cameraSessionNapi->cameraSession_->
                           IsVideoStabilizationModeSupported(videoStabilizationMode, isSupported);
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         napi_get_boolean(env, isSupported, &result);
     } else {
         MEDIA_ERR_LOG("IsVideoStabilizationModeSupported call Failed!");
@@ -1294,7 +1294,7 @@ napi_value CameraSessionNapi::GetActiveVideoStabilizationMode(napi_env env, napi
         VideoStabilizationMode videoStabilizationMode;
         int32_t retCode = cameraSessionNapi->cameraSession_->
                           GetActiveVideoStabilizationMode(videoStabilizationMode);
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         napi_create_int32(env, videoStabilizationMode, &result);
     } else {
         MEDIA_ERR_LOG("GetActiveVideoStabilizationMode call Failed!");
@@ -1321,7 +1321,7 @@ napi_value CameraSessionNapi::SetVideoStabilizationMode(napi_env env, napi_callb
         napi_get_value_int32(env, argv[PARAM0], &value);
         VideoStabilizationMode videoStabilizationMode = (VideoStabilizationMode)value;
         int retCode = cameraSessionNapi->cameraSession_->SetVideoStabilizationMode(videoStabilizationMode);
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
     } else {
         MEDIA_ERR_LOG("SetVideoStabilizationMode call Failed!");
     }
@@ -1345,7 +1345,7 @@ napi_value CameraSessionNapi::HasFlash(napi_env env, napi_callback_info info)
     if (status == napi_ok && cameraSessionNapi != nullptr) {
         bool isSupported = false;
         int retCode = cameraSessionNapi->cameraSession_->HasFlash(isSupported);
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         napi_get_boolean(env, isSupported, &result);
     } else {
         MEDIA_ERR_LOG("HasFlash call Failed!");
@@ -1373,7 +1373,7 @@ napi_value CameraSessionNapi::IsFlashModeSupported(napi_env env, napi_callback_i
         FlashMode flashMode = (FlashMode)value;
         bool isSupported;
         int32_t retCode = cameraSessionNapi->cameraSession_->IsFlashModeSupported(flashMode, isSupported);
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         napi_get_boolean(env, isSupported, &result);
     } else {
         MEDIA_ERR_LOG("IsFlashModeSupported call Failed!");
@@ -1404,7 +1404,7 @@ napi_value CameraSessionNapi::SetFlashMode(napi_env env, napi_callback_info info
         cameraSessionNapi->cameraSession_->LockForControl();
         int retCode = cameraSessionNapi->cameraSession_->SetFlashMode(flashMode);
         cameraSessionNapi->cameraSession_->UnlockForControl();
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
     } else {
         MEDIA_ERR_LOG("SetFlashMode call Failed!");
     }
@@ -1427,7 +1427,7 @@ napi_value CameraSessionNapi::GetFlashMode(napi_env env, napi_callback_info info
     if (status == napi_ok && cameraSessionNapi != nullptr) {
         FlashMode flashMode;
         int32_t retCode = cameraSessionNapi->cameraSession_->GetFlashMode(flashMode);
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         napi_create_int32(env, flashMode, &result);
     } else {
         MEDIA_ERR_LOG("GetFlashMode call Failed!");
@@ -1472,7 +1472,7 @@ napi_value CameraSessionNapi::IsExposureModeSupported(napi_env env, napi_callbac
         bool isSupported;
         int32_t retCode = cameraSessionNapi->cameraSession_->
                     IsExposureModeSupported(static_cast<ExposureMode>(exposureMode), isSupported);
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         napi_get_boolean(env, isSupported, &result);
     } else {
         MEDIA_ERR_LOG("IsExposureModeSupported call Failed!");
@@ -1497,7 +1497,7 @@ napi_value CameraSessionNapi::GetExposureMode(napi_env env, napi_callback_info i
     if (status == napi_ok && cameraSessionNapi != nullptr) {
         ExposureMode exposureMode;
         int32_t retCode = cameraSessionNapi->cameraSession_->GetExposureMode(exposureMode);
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         napi_create_int32(env, exposureMode, &result);
     } else {
         MEDIA_ERR_LOG("GetExposureMode call Failed!");
@@ -1527,7 +1527,7 @@ napi_value CameraSessionNapi::SetExposureMode(napi_env env, napi_callback_info i
         cameraSessionNapi->cameraSession_->LockForControl();
         int retCode = cameraSessionNapi->cameraSession_->SetExposureMode(exposureMode);
         cameraSessionNapi->cameraSession_->UnlockForControl();
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
     } else {
         MEDIA_ERR_LOG("SetExposureMode call Failed!");
     }
@@ -1555,7 +1555,7 @@ napi_value CameraSessionNapi::SetMeteringPoint(napi_env env, napi_callback_info 
             cameraSessionNapi->cameraSession_->LockForControl();
             int32_t retCode = cameraSessionNapi->cameraSession_->SetMeteringPoint(exposurePoint);
             cameraSessionNapi->cameraSession_->UnlockForControl();
-            CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+            CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         } else {
             MEDIA_ERR_LOG("get point failed");
         }
@@ -1581,7 +1581,7 @@ napi_value CameraSessionNapi::GetMeteringPoint(napi_env env, napi_callback_info 
     if (status == napi_ok && cameraSessionNapi != nullptr) {
         Point exposurePoint;
         int32_t retCode = cameraSessionNapi->cameraSession_->GetMeteringPoint(exposurePoint);
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         return GetPointNapiValue(env, exposurePoint);
     } else {
         MEDIA_ERR_LOG("GetMeteringPoint call Failed!");
@@ -1606,8 +1606,8 @@ napi_value CameraSessionNapi::GetExposureBiasRange(napi_env env, napi_callback_i
     if (status == napi_ok && cameraSessionNapi != nullptr) {
         std::vector<float> vecExposureBiasList;
         int32_t retCode = cameraSessionNapi->cameraSession_->GetExposureBiasRange(vecExposureBiasList);
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
-        CHECK_ERROR_RETURN_RET(vecExposureBiasList.empty() || napi_create_array(env, &result) != napi_ok, result);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET(vecExposureBiasList.empty() || napi_create_array(env, &result) != napi_ok, result);
         size_t len = vecExposureBiasList.size();
         for (size_t i = 0; i < len; i++) {
             float exposureBias = vecExposureBiasList[i];
@@ -1640,7 +1640,7 @@ napi_value CameraSessionNapi::GetExposureValue(napi_env env, napi_callback_info 
     if (status == napi_ok && cameraSessionNapi!= nullptr) {
         float exposureValue;
         int32_t retCode = cameraSessionNapi->cameraSession_->GetExposureValue(exposureValue);
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         napi_create_double(env, CameraNapiUtils::FloatToDouble(exposureValue), &result);
     } else {
         MEDIA_ERR_LOG("GetExposureValue call Failed!");
@@ -1669,7 +1669,7 @@ napi_value CameraSessionNapi::SetExposureBias(napi_env env, napi_callback_info i
         cameraSessionNapi->cameraSession_->LockForControl();
         int32_t retCode = cameraSessionNapi->cameraSession_->SetExposureBias((float)exposureValue);
         cameraSessionNapi->cameraSession_->UnlockForControl();
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
     } else {
         MEDIA_ERR_LOG("SetExposureBias call Failed!");
     }
@@ -1697,7 +1697,7 @@ napi_value CameraSessionNapi::IsFocusModeSupported(napi_env env, napi_callback_i
         bool isSupported;
         int32_t retCode = cameraSessionNapi->cameraSession_->IsFocusModeSupported(focusMode,
                                                                                   isSupported);
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         napi_get_boolean(env, isSupported, &result);
     } else {
         MEDIA_ERR_LOG("IsFocusModeSupported call Failed!");
@@ -1722,7 +1722,7 @@ napi_value CameraSessionNapi::GetFocalLength(napi_env env, napi_callback_info in
     if (status == napi_ok && cameraSessionNapi != nullptr) {
         float focalLength;
         int32_t retCode = cameraSessionNapi->cameraSession_->GetFocalLength(focalLength);
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         napi_create_double(env, CameraNapiUtils::FloatToDouble(focalLength), &result);
     } else {
         MEDIA_ERR_LOG("GetFocalLength call Failed!");
@@ -1751,7 +1751,7 @@ napi_value CameraSessionNapi::SetFocusPoint(napi_env env, napi_callback_info inf
             cameraSessionNapi->cameraSession_->LockForControl();
             int32_t retCode = cameraSessionNapi->cameraSession_->SetFocusPoint(focusPoint);
             cameraSessionNapi->cameraSession_->UnlockForControl();
-            CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+            CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         } else {
             MEDIA_ERR_LOG("get point failed");
         }
@@ -1778,7 +1778,7 @@ napi_value CameraSessionNapi::GetFocusPoint(napi_env env, napi_callback_info inf
     if (status == napi_ok && cameraSessionNapi != nullptr) {
         Point focusPoint;
         int32_t retCode = cameraSessionNapi->cameraSession_->GetFocusPoint(focusPoint);
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         return GetPointNapiValue(env, focusPoint);
     } else {
         MEDIA_ERR_LOG("GetFocusPoint call Failed!");
@@ -1803,7 +1803,7 @@ napi_value CameraSessionNapi::GetFocusMode(napi_env env, napi_callback_info info
     if (status == napi_ok && cameraSessionNapi != nullptr) {
         FocusMode focusMode;
         int32_t retCode = cameraSessionNapi->cameraSession_->GetFocusMode(focusMode);
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         napi_create_int32(env, focusMode, &result);
     } else {
         MEDIA_ERR_LOG("GetFocusMode call Failed!");
@@ -1834,7 +1834,7 @@ napi_value CameraSessionNapi::SetFocusMode(napi_env env, napi_callback_info info
         int retCode = cameraSessionNapi->cameraSession_->
                 SetFocusMode(static_cast<FocusMode>(focusMode));
         cameraSessionNapi->cameraSession_->UnlockForControl();
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
     } else {
         MEDIA_ERR_LOG("SetFocusMode call Failed!");
     }
@@ -1912,7 +1912,7 @@ napi_value CameraSessionNapi::SetQualityPrioritization(napi_env env, napi_callba
         int retCode = cameraSessionNapi->cameraSession_->SetQualityPrioritization(
             static_cast<QualityPrioritization>(qualityPrioritization));
         cameraSessionNapi->cameraSession_->UnlockForControl();
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
     } else {
         MEDIA_ERR_LOG("SetQualityPrioritization call Failed!");
     }
@@ -1937,7 +1937,7 @@ napi_value CameraSessionNapi::GetZoomRatioRange(napi_env env, napi_callback_info
     if (status == napi_ok && cameraSessionNapi != nullptr) {
         std::vector<float> vecZoomRatioList;
         int32_t retCode = cameraSessionNapi->cameraSession_->GetZoomRatioRange(vecZoomRatioList);
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         MEDIA_INFO_LOG("CameraSessionNapi::GetZoomRatioRange len = %{public}zu",
             vecZoomRatioList.size());
 
@@ -1974,7 +1974,7 @@ napi_value CameraSessionNapi::GetZoomRatio(napi_env env, napi_callback_info info
     if (status == napi_ok && cameraSessionNapi != nullptr) {
         float zoomRatio;
         int32_t retCode = cameraSessionNapi->cameraSession_->GetZoomRatio(zoomRatio);
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         napi_create_double(env, CameraNapiUtils::FloatToDouble(zoomRatio), &result);
     } else {
         MEDIA_ERR_LOG("GetZoomRatio call Failed!");
@@ -2004,7 +2004,7 @@ napi_value CameraSessionNapi::SetZoomRatio(napi_env env, napi_callback_info info
         cameraSessionNapi->cameraSession_->LockForControl();
         int32_t retCode = cameraSessionNapi->cameraSession_->SetZoomRatio((float)zoomRatio);
         cameraSessionNapi->cameraSession_->UnlockForControl();
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
     } else {
         MEDIA_ERR_LOG("SetZoomRatio call Failed!");
     }
@@ -2064,12 +2064,12 @@ napi_value CameraSessionNapi::GetZoomPointInfos(napi_env env, napi_callback_info
 
 napi_value CameraSessionNapi::IsZoomCenterPointSupported(napi_env env, napi_callback_info info)
 {
-    CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
+    CHECK_RETURN_RET_ELOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
         "SystemApi IsZoomCenterPointSupported is called!");
     MEDIA_DEBUG_LOG("CameraSessionNapi::IsZoomCenterPointSupported is called");
     CameraSessionNapi* cameraSessionNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
         "CameraSessionNapi::IsZoomCenterPointSupported parse parameter occur error");
 
     auto result = CameraNapiUtils::GetUndefinedValue(env);
@@ -2086,12 +2086,12 @@ napi_value CameraSessionNapi::IsZoomCenterPointSupported(napi_env env, napi_call
 
 napi_value CameraSessionNapi::GetZoomCenterPoint(napi_env env, napi_callback_info info)
 {
-    CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
+    CHECK_RETURN_RET_ELOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
         "SystemApi GetZoomCenterPoint is called!");
     MEDIA_DEBUG_LOG("GetZoomCenterPoint is called");
     CameraSessionNapi* cameraSessionNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
         "CameraSessionNapi::GetZoomCenterPoint parse parameter occur error");
 
     napi_value result = nullptr;
@@ -2101,7 +2101,7 @@ napi_value CameraSessionNapi::GetZoomCenterPoint(napi_env env, napi_callback_inf
 
 napi_value CameraSessionNapi::SetZoomCenterPoint(napi_env env, napi_callback_info info)
 {
-    CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
+    CHECK_RETURN_RET_ELOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
         "SystemApi SetZoomCenterPoint is called!");
     MEDIA_DEBUG_LOG("CameraSessionNapi::SetZoomCenterPoint is called");
     double pointX = -1.0;
@@ -2109,7 +2109,7 @@ napi_value CameraSessionNapi::SetZoomCenterPoint(napi_env env, napi_callback_inf
     CameraNapiObject zoomCenterPoint = {{{ "x", &pointX }, { "y", &pointY }}};
     CameraSessionNapi* cameraSessionNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, zoomCenterPoint);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
         "CameraSessionNapi::SetZoomCenterPoint parse parameter occur error");
 
     if (cameraSessionNapi->cameraSession_ == nullptr) {
@@ -2133,7 +2133,7 @@ napi_value CameraSessionNapi::GetSupportedFilters(napi_env env, napi_callback_in
 
     napi_get_undefined(env, &result);
     status = napi_create_array(env, &result);
-    CHECK_ERROR_RETURN_RET_LOG(status != napi_ok, result, "napi_create_array call Failed!");
+    CHECK_RETURN_RET_ELOG(status != napi_ok, result, "napi_create_array call Failed!");
     CameraSessionNapi* cameraSessionNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
@@ -2218,7 +2218,7 @@ napi_value CameraSessionNapi::GetSupportedColorSpaces(napi_env env, napi_callbac
 
     napi_get_undefined(env, &result);
     status = napi_create_array(env, &result);
-    CHECK_ERROR_RETURN_RET_LOG(status != napi_ok, result, "napi_create_array call Failed!");
+    CHECK_RETURN_RET_ELOG(status != napi_ok, result, "napi_create_array call Failed!");
     CameraSessionNapi* cameraSessionNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
@@ -2254,7 +2254,7 @@ napi_value CameraSessionNapi::GetActiveColorSpace(napi_env env, napi_callback_in
     if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
         ColorSpace colorSpace;
         int32_t retCode = cameraSessionNapi->cameraSession_->GetActiveColorSpace(colorSpace);
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), result);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), result);
         napi_create_int32(env, colorSpace, &result);
     } else {
         MEDIA_ERR_LOG("GetActiveColorSpace call Failed!");
@@ -2282,7 +2282,7 @@ napi_value CameraSessionNapi::SetColorSpace(napi_env env, napi_callback_info inf
         napi_get_value_int32(env, argv[PARAM0], &colorSpaceNumber);
         ColorSpace colorSpace = (ColorSpace)colorSpaceNumber;
         int32_t retCode = cameraSessionNapi->cameraSession_->SetColorSpace(colorSpace);
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), result);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), result);
     } else {
         MEDIA_ERR_LOG("SetColorSpace call Failed!");
     }
@@ -2294,7 +2294,7 @@ napi_value CameraSessionNapi::IsMacroSupported(napi_env env, napi_callback_info 
     MEDIA_DEBUG_LOG("CameraSessionNapi::IsMacroSupported is called");
     CameraSessionNapi* cameraSessionNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
         "CameraSessionNapi::IsMacroSupported parse parameter occur error");
     auto result = CameraNapiUtils::GetUndefinedValue(env);
     if (cameraSessionNapi->cameraSession_ != nullptr) {
@@ -2314,7 +2314,7 @@ napi_value CameraSessionNapi::EnableMacro(napi_env env, napi_callback_info info)
     bool isEnableMacro;
     CameraSessionNapi* cameraSessionNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, isEnableMacro);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
         "CameraSessionNapi::EnableMacro parse parameter occur error");
 
     if (cameraSessionNapi->cameraSession_ != nullptr) {
@@ -2322,7 +2322,7 @@ napi_value CameraSessionNapi::EnableMacro(napi_env env, napi_callback_info info)
         cameraSessionNapi->cameraSession_->LockForControl();
         int32_t retCode = cameraSessionNapi->cameraSession_->EnableMacro(isEnableMacro);
         cameraSessionNapi->cameraSession_->UnlockForControl();
-        CHECK_ERROR_RETURN_RET_LOG(!CameraNapiUtils::CheckError(env, retCode), nullptr,
+        CHECK_RETURN_RET_ELOG(!CameraNapiUtils::CheckError(env, retCode), nullptr,
             "CameraSessionNapi::EnableMacro fail %{public}d", retCode);
     } else {
         MEDIA_ERR_LOG("CameraSessionNapi::EnableMacro get native object fail");
@@ -2366,7 +2366,7 @@ napi_value CameraSessionNapi::SetBeauty(napi_env env, napi_callback_info info)
 
 napi_value CameraSessionNapi::IsMoonCaptureBoostSupported(napi_env env, napi_callback_info info)
 {
-    CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
+    CHECK_RETURN_RET_ELOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
         "SystemApi IsMoonCaptureBoostSupported is called!");
     MEDIA_DEBUG_LOG("IsMoonCaptureBoostSupported is called");
     napi_status status;
@@ -2391,7 +2391,7 @@ napi_value CameraSessionNapi::IsMoonCaptureBoostSupported(napi_env env, napi_cal
 
 napi_value CameraSessionNapi::EnableMoonCaptureBoost(napi_env env, napi_callback_info info)
 {
-    CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
+    CHECK_RETURN_RET_ELOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
         "SystemApi EnableMoonCaptureBoost is called!");
     MEDIA_DEBUG_LOG("EnableMoonCaptureBoost is called");
     napi_status status;
@@ -2403,7 +2403,7 @@ napi_value CameraSessionNapi::EnableMoonCaptureBoost(napi_env env, napi_callback
     NAPI_ASSERT(env, argc == ARGS_ONE, "requires one parameter");
     napi_valuetype valueType = napi_undefined;
     napi_typeof(env, argv[0], &valueType);
-    CHECK_ERROR_RETURN_RET(valueType != napi_boolean && !CameraNapiUtils::CheckError(env, INVALID_ARGUMENT), result);
+    CHECK_RETURN_RET(valueType != napi_boolean && !CameraNapiUtils::CheckError(env, INVALID_ARGUMENT), result);
     napi_get_undefined(env, &result);
     CameraSessionNapi* cameraSessionNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
@@ -2414,7 +2414,7 @@ napi_value CameraSessionNapi::EnableMoonCaptureBoost(napi_env env, napi_callback
         cameraSessionNapi->cameraSession_->LockForControl();
         int32_t retCode = cameraSessionNapi->cameraSession_->EnableMoonCaptureBoost(isEnableMoonCaptureBoost);
         cameraSessionNapi->cameraSession_->UnlockForControl();
-        CHECK_ERROR_RETURN_RET(retCode != 0 && !CameraNapiUtils::CheckError(env, retCode), result);
+        CHECK_RETURN_RET(retCode != 0 && !CameraNapiUtils::CheckError(env, retCode), result);
     }
     return result;
 }
@@ -2428,11 +2428,11 @@ napi_value CameraSessionNapi::CanPreconfig(napi_env env, napi_callback_info info
     CameraSessionNapi* cameraSessionNapi = nullptr;
     if (argSize == ARGS_ONE) {
         CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, configType);
-        CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"),
+        CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"),
             nullptr, "CameraSessionNapi::CanPreconfig parse parameter occur error");
     } else {
         CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, configType, profileSizeRatio);
-        CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"),
+        CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"),
             nullptr, "CameraSessionNapi::CanPreconfig parse 2 parameter occur error");
     }
 
@@ -2451,16 +2451,16 @@ napi_value CameraSessionNapi::Preconfig(napi_env env, napi_callback_info info)
     CameraSessionNapi* cameraSessionNapi = nullptr;
     if (argSize == ARGS_ONE) {
         CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, configType);
-        CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"),
+        CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"),
             nullptr, "CameraSessionNapi::Preconfig parse parameter occur error");
     } else {
         CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, configType, profileSizeRatio);
-        CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"),
+        CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"),
             nullptr, "CameraSessionNapi::Preconfig parse 2 parameter occur error");
     }
     int32_t retCode = cameraSessionNapi->cameraSession_->Preconfig(
         static_cast<PreconfigType>(configType), static_cast<ProfileSizeRatio>(profileSizeRatio));
-    CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+    CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
     return CameraNapiUtils::GetUndefinedValue(env);
 }
 
@@ -2499,14 +2499,14 @@ napi_value CameraSessionNapi::GetSupportedWhiteBalanceModes(napi_env env, napi_c
 
     napi_get_undefined(env, &result);
     status = napi_create_array(env, &result);
-    CHECK_ERROR_RETURN_RET_LOG(status != napi_ok, result,
+    CHECK_RETURN_RET_ELOG(status != napi_ok, result,
         "CameraSessionNapi::GetSupportedWhiteBalanceModes napi_create_array call Failed!");
     CameraSessionNapi* cameraSessionNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
         std::vector<WhiteBalanceMode> whiteBalanceModes;
         int32_t retCode = cameraSessionNapi->cameraSession_->GetSupportedWhiteBalanceModes(whiteBalanceModes);
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
 
         MEDIA_INFO_LOG("CameraSessionNapi::GetSupportedWhiteBalanceModes len = %{public}zu",
             whiteBalanceModes.size());
@@ -2544,7 +2544,7 @@ napi_value CameraSessionNapi::IsWhiteBalanceModeSupported(napi_env env, napi_cal
         WhiteBalanceMode mode = (WhiteBalanceMode)value;
         bool isSupported;
         int32_t retCode = cameraSessionNapi->cameraSession_->IsWhiteBalanceModeSupported(mode, isSupported);
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         napi_get_boolean(env, isSupported, &result);
     } else {
         MEDIA_ERR_LOG("IsWhiteBalanceModeSupported call Failed!");
@@ -2569,7 +2569,7 @@ napi_value CameraSessionNapi::GetWhiteBalanceMode(napi_env env, napi_callback_in
     if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
         WhiteBalanceMode whiteBalanceMode;
         int32_t retCode = cameraSessionNapi->cameraSession_->GetWhiteBalanceMode(whiteBalanceMode);
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         napi_create_int32(env, whiteBalanceMode, &whiteBalanceResult);
     } else {
         MEDIA_ERR_LOG("GetWhiteBalanceMode call Failed!");
@@ -2625,7 +2625,7 @@ napi_value CameraSessionNapi::GetWhiteBalanceRange(napi_env env, napi_callback_i
     if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
         std::vector<int32_t> whiteBalanceRange = {};
         int32_t retCode = cameraSessionNapi->cameraSession_->GetManualWhiteBalanceRange(whiteBalanceRange);
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         MEDIA_INFO_LOG("CameraSessionNapi::GetWhiteBalanceRange len = %{public}zu", whiteBalanceRange.size());
 
         if (!whiteBalanceRange.empty() && napi_create_array(env, &whiteBalanceRangeResult) == napi_ok) {
@@ -2646,7 +2646,7 @@ napi_value CameraSessionNapi::GetWhiteBalanceRange(napi_env env, napi_callback_i
 
 napi_value CameraSessionNapi::IsManualWhiteBalanceSupported(napi_env env, napi_callback_info info)
 {
-    CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
+    CHECK_RETURN_RET_ELOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
         "SystemApi IsManualWhiteBalanceSupported is called!");
     MEDIA_DEBUG_LOG("IsManualWhiteBalanceSupported is called");
     napi_status status;
@@ -2663,7 +2663,7 @@ napi_value CameraSessionNapi::IsManualWhiteBalanceSupported(napi_env env, napi_c
     if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
         bool isSupported;
         int32_t retCode = cameraSessionNapi->cameraSession_->IsManualWhiteBalanceSupported(isSupported);
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         napi_get_boolean(env, isSupported, &manualWhiteBalanceSupportedResult);
     } else {
         MEDIA_ERR_LOG("IsManualIsoSupported call Failed!");
@@ -2688,7 +2688,7 @@ napi_value CameraSessionNapi::GetWhiteBalance(napi_env env, napi_callback_info i
     if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
         int32_t wbValue;
         int32_t retCode = cameraSessionNapi->cameraSession_->GetManualWhiteBalance(wbValue);
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         napi_create_int32(env, wbValue, &result);
     } else {
         MEDIA_ERR_LOG("GetWhiteBalance call Failed!");
@@ -2744,7 +2744,7 @@ void CameraSessionNapi::RegisterExposureCallbackListener(
 void CameraSessionNapi::UnregisterExposureCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
-    CHECK_ERROR_RETURN_LOG(exposureCallback_ == nullptr, "exposureCallback is null");
+    CHECK_RETURN_ELOG(exposureCallback_ == nullptr, "exposureCallback is null");
     exposureCallback_->RemoveCallbackRef(eventName, callback);
 }
 
@@ -2761,7 +2761,7 @@ void CameraSessionNapi::RegisterFocusCallbackListener(
 void CameraSessionNapi::UnregisterFocusCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
-    CHECK_ERROR_RETURN_LOG(focusCallback_ == nullptr, "focusCallback is null");
+    CHECK_RETURN_ELOG(focusCallback_ == nullptr, "focusCallback is null");
     focusCallback_->RemoveCallbackRef(eventName, callback);
 }
 
@@ -2782,7 +2782,7 @@ void CameraSessionNapi::UnregisterMacroStatusCallbackListener(
 void CameraSessionNapi::RegisterMoonCaptureBoostCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
-    CHECK_ERROR_RETURN_LOG(!CameraNapiSecurity::CheckSystemApp(env), "SystemApi on moonCaptureBoostStatus is called!");
+    CHECK_RETURN_ELOG(!CameraNapiSecurity::CheckSystemApp(env), "SystemApi on moonCaptureBoostStatus is called!");
     if (moonCaptureBoostCallback_ == nullptr) {
         moonCaptureBoostCallback_ = std::make_shared<MoonCaptureBoostCallbackListener>(env);
         cameraSession_->SetMoonCaptureBoostStatusCallback(moonCaptureBoostCallback_);
@@ -2793,8 +2793,8 @@ void CameraSessionNapi::RegisterMoonCaptureBoostCallbackListener(
 void CameraSessionNapi::UnregisterMoonCaptureBoostCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
-    CHECK_ERROR_RETURN_LOG(!CameraNapiSecurity::CheckSystemApp(env), "SystemApi off moonCaptureBoostStatus is called!");
-    CHECK_ERROR_RETURN_LOG(moonCaptureBoostCallback_ == nullptr, "macroStatusCallback is null");
+    CHECK_RETURN_ELOG(!CameraNapiSecurity::CheckSystemApp(env), "SystemApi off moonCaptureBoostStatus is called!");
+    CHECK_RETURN_ELOG(moonCaptureBoostCallback_ == nullptr, "macroStatusCallback is null");
     moonCaptureBoostCallback_->RemoveCallbackRef(eventName, callback);
 }
 
@@ -2880,7 +2880,7 @@ void CameraSessionNapi::RegisterSmoothZoomCallbackListener(
 void CameraSessionNapi::UnregisterSmoothZoomCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
-    CHECK_ERROR_RETURN_LOG(smoothZoomCallback_ == nullptr, "smoothZoomCallback is null");
+    CHECK_RETURN_ELOG(smoothZoomCallback_ == nullptr, "smoothZoomCallback is null");
     smoothZoomCallback_->RemoveCallbackRef(eventName, callback);
 }
 
@@ -3003,7 +3003,7 @@ napi_value CameraSessionNapi::IsAutoDeviceSwitchSupported(napi_env env, napi_cal
     MEDIA_INFO_LOG("IsAutoDeviceSwitchSupported is called");
     CameraSessionNapi* cameraSessionNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
         "CameraSessionNapi::IsAutoDeviceSwitchSupported parse parameter occur error");
     auto result = CameraNapiUtils::GetUndefinedValue(env);
     if (cameraSessionNapi->cameraSession_ != nullptr) {
@@ -3023,7 +3023,7 @@ napi_value CameraSessionNapi::EnableAutoDeviceSwitch(napi_env env, napi_callback
     bool isEnable;
     CameraSessionNapi* cameraSessionNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, isEnable);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
         "CameraSessionNapi::EnableAutoDeviceSwitch parse parameter occur error");
 
     if (cameraSessionNapi->cameraSession_ != nullptr) {
@@ -3031,7 +3031,7 @@ napi_value CameraSessionNapi::EnableAutoDeviceSwitch(napi_env env, napi_callback
         cameraSessionNapi->cameraSession_->LockForControl();
         int32_t retCode = cameraSessionNapi->cameraSession_->EnableAutoDeviceSwitch(isEnable);
         cameraSessionNapi->cameraSession_->UnlockForControl();
-        CHECK_ERROR_RETURN_RET_LOG(!CameraNapiUtils::CheckError(env, retCode), nullptr,
+        CHECK_RETURN_RET_ELOG(!CameraNapiUtils::CheckError(env, retCode), nullptr,
             "CameraSessionNapi::EnableAutoSwitchDevice fail %{public}d", retCode);
     } else {
         MEDIA_ERR_LOG("CameraSessionNapi::EnableAutoDeviceSwitch get native object fail");
@@ -3044,7 +3044,7 @@ napi_value CameraSessionNapi::EnableAutoDeviceSwitch(napi_env env, napi_callback
 void CameraSessionNapi::RegisterAutoDeviceSwitchCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
-    CHECK_ERROR_RETURN_LOG(cameraSession_ == nullptr, "cameraSession is null!");
+    CHECK_RETURN_ELOG(cameraSession_ == nullptr, "cameraSession is null!");
     if (autoDeviceSwitchCallback_ == nullptr) {
         autoDeviceSwitchCallback_ = std::make_shared<AutoDeviceSwitchCallbackListener>(env);
         cameraSession_->SetAutoDeviceSwitchCallback(autoDeviceSwitchCallback_);
@@ -3055,7 +3055,7 @@ void CameraSessionNapi::RegisterAutoDeviceSwitchCallbackListener(
 void CameraSessionNapi::UnregisterAutoDeviceSwitchCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
-    CHECK_ERROR_RETURN_LOG(autoDeviceSwitchCallback_ == nullptr, "autoDeviceSwitchCallback is nullptr.");
+    CHECK_RETURN_ELOG(autoDeviceSwitchCallback_ == nullptr, "autoDeviceSwitchCallback is nullptr.");
     autoDeviceSwitchCallback_->RemoveCallbackRef(eventName, callback);
 }
 

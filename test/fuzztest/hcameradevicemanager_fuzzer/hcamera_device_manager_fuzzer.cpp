@@ -41,12 +41,12 @@ void InitCameraDevice()
     sptr<HCameraHostManager> cameraHostManager = new HCameraHostManager(nullptr);
     std::vector<std::string> cameraIds;
     cameraHostManager->GetCameras(cameraIds);
-    CHECK_ERROR_RETURN_LOG(cameraIds.empty(), "Fuzz:PrepareHCameraDevice: GetCameras returns empty");
+    CHECK_RETURN_ELOG(cameraIds.empty(), "Fuzz:PrepareHCameraDevice: GetCameras returns empty");
     g_cameraID = cameraIds[0];
     auto callingTokenId = IPCSkeleton::GetCallingTokenID();
     std::string permissionName = OHOS_PERMISSION_CAMERA;
     int32_t ret = CheckPermission(permissionName, callingTokenId);
-    CHECK_ERROR_RETURN_LOG(ret != CAMERA_OK, "Fuzz:PrepareHCameraDevice: CheckPermission Failed");
+    CHECK_RETURN_ELOG(ret != CAMERA_OK, "Fuzz:PrepareHCameraDevice: CheckPermission Failed");
     g_HCameraDevice = new HCameraDevice(cameraHostManager, g_cameraID, callingTokenId);
 }
 

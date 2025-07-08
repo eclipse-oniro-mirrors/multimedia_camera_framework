@@ -129,16 +129,16 @@ std::shared_ptr<MetadataStateCallback> MetadataOutput::GetAppStateCallback()
 std::vector<MetadataObjectType> MetadataOutput::GetSupportedMetadataObjectTypes()
 {
     auto session = GetSession();
-    CHECK_ERROR_RETURN_RET(session == nullptr, {});
+    CHECK_RETURN_RET(session == nullptr, {});
     auto inputDevice = session->GetInputDevice();
-    CHECK_ERROR_RETURN_RET(inputDevice == nullptr, {});
+    CHECK_RETURN_RET(inputDevice == nullptr, {});
     sptr<CameraDevice> cameraObj = inputDevice->GetCameraDeviceInfo();
-    CHECK_ERROR_RETURN_RET(cameraObj == nullptr, {});
+    CHECK_RETURN_RET(cameraObj == nullptr, {});
     std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetCachedMetadata();
-    CHECK_ERROR_RETURN_RET(metadata == nullptr, {});
+    CHECK_RETURN_RET(metadata == nullptr, {});
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_STATISTICS_FACE_DETECT_MODE, &item);
-    CHECK_ERROR_RETURN_RET(ret, {});
+    CHECK_RETURN_RET(ret, {});
     std::vector<MetadataObjectType> objectTypes;
     for (size_t index = 0; index < item.count; index++) {
         CHECK_EXECUTE(item.data.u8[index] == OHOS_CAMERA_FACE_DETECT_MODE_SIMPLE,
@@ -150,7 +150,7 @@ std::vector<MetadataObjectType> MetadataOutput::GetSupportedMetadataObjectTypes(
 void MetadataOutput::SetCapturingMetadataObjectTypes(std::vector<MetadataObjectType> metadataObjectTypes)
 {
     auto session = GetSession();
-    CHECK_ERROR_RETURN((session == nullptr) || (session->GetInputDevice() == nullptr));
+    CHECK_RETURN((session == nullptr) || (session->GetInputDevice() == nullptr));
     std::set<camera_face_detect_mode_t> objectTypes;
     for (const auto& type : metadataObjectTypes) {
         CHECK_EXECUTE(type == MetadataObjectType::FACE, objectTypes.insert(OHOS_CAMERA_FACE_DETECT_MODE_SIMPLE));
@@ -172,35 +172,34 @@ int32_t MetadataOutput::AddMetadataObjectTypes(std::vector<MetadataObjectType> m
         }
     }
     auto session = GetSession();
-    CHECK_ERROR_RETURN_RET_LOG(session == nullptr || !session->IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
-                               "MetadataOutput Failed to AddMetadataObjectTypes!, session not commited");
+    CHECK_RETURN_RET_ELOG(session == nullptr || !session->IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+        "MetadataOutput Failed to AddMetadataObjectTypes!, session not commited");
 
     auto inputDevice = session->GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(inputDevice == nullptr, CameraErrorCode::SESSION_NOT_CONFIG,
-                               "MetadataOutput Failed to AddMetadataObjectTypes!, inputDevice is null");
+    CHECK_RETURN_RET_ELOG(inputDevice == nullptr, CameraErrorCode::SESSION_NOT_CONFIG,
+        "MetadataOutput Failed to AddMetadataObjectTypes!, inputDevice is null");
 
     sptr<CameraDevice> cameraObj = inputDevice->GetCameraDeviceInfo();
-    CHECK_ERROR_RETURN_RET_LOG(cameraObj == nullptr, CameraErrorCode::SESSION_NOT_CONFIG,
-                               "MetadataOutput Failed to AddMetadataObjectTypes!, cameraObj is null");
+    CHECK_RETURN_RET_ELOG(cameraObj == nullptr, CameraErrorCode::SESSION_NOT_CONFIG,
+        "MetadataOutput Failed to AddMetadataObjectTypes!, cameraObj is null");
 
     auto outoputCapability = CameraManager::GetInstance()->GetSupportedOutputCapability(cameraObj, session->GetMode());
-    CHECK_ERROR_RETURN_RET_LOG(outoputCapability == nullptr, CameraErrorCode::SESSION_NOT_CONFIG,
-                               "MetadataOutput Failed to AddMetadataObjectTypes!, outoputCapability is null");
+    CHECK_RETURN_RET_ELOG(outoputCapability == nullptr, CameraErrorCode::SESSION_NOT_CONFIG,
+        "MetadataOutput Failed to AddMetadataObjectTypes!, outoputCapability is null");
 
     std::vector<MetadataObjectType> supportMetadataType = outoputCapability->GetSupportedMetadataObjectType();
     for (const auto &type : supportMetadataType) {
         MEDIA_DEBUG_LOG("MetadataOutput::AddMetadataObjectTypes, support type: %{public}d", type);
     }
-    CHECK_ERROR_RETURN_RET_LOG(!checkValidType(metadataObjectTypes, supportMetadataType),
-                               CameraErrorCode::INVALID_ARGUMENT,
-                               "MetadataOutput::AddMetadataObjectTypes, unsupported type!");
+    CHECK_RETURN_RET_ELOG(!checkValidType(metadataObjectTypes, supportMetadataType), CameraErrorCode::INVALID_ARGUMENT,
+        "MetadataOutput::AddMetadataObjectTypes, unsupported type!");
 
     auto stream = GetStream();
-    CHECK_ERROR_RETURN_RET_LOG(stream == nullptr, CameraErrorCode::SESSION_NOT_CONFIG,
-                               "MetadataOutput Failed to AddMetadataObjectTypes!, GetStream is nullptr");
+    CHECK_RETURN_RET_ELOG(stream == nullptr, CameraErrorCode::SESSION_NOT_CONFIG,
+        "MetadataOutput Failed to AddMetadataObjectTypes!, GetStream is nullptr");
     std::vector<int32_t> numberOfTypes = convert(metadataObjectTypes);
     int32_t errCode = static_cast<IStreamMetadata *>(stream.GetRefPtr())->EnableMetadataType(numberOfTypes);
-    CHECK_ERROR_RETURN_RET_LOG(
+    CHECK_RETURN_RET_ELOG(
         errCode != CAMERA_OK, CameraErrorCode::SERVICE_FATL_ERROR,
         "MetadataOutput Failed to AddMetadataObjectTypes!, EnableMetadataType failed ret: %{public}d", errCode);
     return CameraErrorCode::SUCCESS;
@@ -218,16 +217,16 @@ int32_t MetadataOutput::RemoveMetadataObjectTypes(std::vector<MetadataObjectType
         }
     }
     auto session = GetSession();
-    CHECK_ERROR_RETURN_RET_LOG(session == nullptr || !session->IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
-                               "MetadataOutput Failed to RemoveMetadataObjectTypes!, session not commited");
+    CHECK_RETURN_RET_ELOG(session == nullptr || !session->IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+        "MetadataOutput Failed to RemoveMetadataObjectTypes!, session not commited");
 
     auto stream = GetStream();
-    CHECK_ERROR_RETURN_RET_LOG(stream == nullptr, CameraErrorCode::SESSION_NOT_CONFIG,
-                               "MetadataOutput Failed to AddMetadataObjectTypes!, GetStream is nullptr");
+    CHECK_RETURN_RET_ELOG(stream == nullptr, CameraErrorCode::SESSION_NOT_CONFIG,
+        "MetadataOutput Failed to AddMetadataObjectTypes!, GetStream is nullptr");
 
     std::vector<int32_t> numberOfTypes = convert(metadataObjectTypes);
     int32_t errCode = static_cast<IStreamMetadata *>(stream.GetRefPtr())->DisableMetadataType(numberOfTypes);
-    CHECK_ERROR_RETURN_RET_LOG(
+    CHECK_RETURN_RET_ELOG(
         errCode != CAMERA_OK, CameraErrorCode::SERVICE_FATL_ERROR,
         "MetadataOutput Failed to AddMetadataObjectTypes!, EnableMetadataType failed ret: %{public}d", errCode);
     return CameraErrorCode::SUCCESS;
@@ -266,7 +265,7 @@ void MetadataOutput::SetCallback(std::shared_ptr<MetadataObjectCallback> metadat
     } else {
         MEDIA_ERR_LOG("MetadataOutput::SetCallback() itemStream is nullptr");
     }
-    CHECK_ERROR_RETURN(errorCode == CAMERA_OK);
+    CHECK_RETURN(errorCode == CAMERA_OK);
     MEDIA_ERR_LOG("MetadataOutput::SetCallback(): Failed to register callback, errorCode: %{public}d", errorCode);
     cameraMetadataCallback_ = nullptr;
     appObjectCallback_ = nullptr;
@@ -287,13 +286,13 @@ int32_t MetadataOutput::Start()
 {
     MEDIA_DEBUG_LOG("MetadataOutput::Start is called");
     auto session = GetSession();
-    CHECK_ERROR_RETURN_RET_LOG(session == nullptr || !session->IsSessionCommited(), CameraErrorCode::SUCCESS,
-                               "MetadataOutput Failed to Start!, session not commited");
+    CHECK_RETURN_RET_ELOG(session == nullptr || !session->IsSessionCommited(), CameraErrorCode::SUCCESS,
+        "MetadataOutput Failed to Start!, session not commited");
     auto stream = GetStream();
-    CHECK_ERROR_RETURN_RET_LOG(stream == nullptr, CameraErrorCode::SUCCESS,
-                               "MetadataOutput Failed to Start!, GetStream is nullptr");
+    CHECK_RETURN_RET_ELOG(
+        stream == nullptr, CameraErrorCode::SUCCESS, "MetadataOutput Failed to Start!, GetStream is nullptr");
     int32_t errCode = static_cast<IStreamMetadata *>(stream.GetRefPtr())->Start();
-    CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "Failed to Start MetadataOutput!, errCode: %{public}d", errCode);
+    CHECK_PRINT_ELOG(errCode != CAMERA_OK, "Failed to Start MetadataOutput!, errCode: %{public}d", errCode);
     return CameraErrorCode::SUCCESS;
 }
 
@@ -312,10 +311,10 @@ int32_t MetadataOutput::Stop()
 {
     MEDIA_DEBUG_LOG("MetadataOutput::Stop");
     auto stream = GetStream();
-    CHECK_ERROR_RETURN_RET_LOG(stream == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_ELOG(stream == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "MetadataOutput Failed to Stop!, GetStream is nullptr");
     int32_t errCode = static_cast<IStreamMetadata*>(stream.GetRefPtr())->Stop();
-    CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "Failed to Stop MetadataOutput!, errCode: %{public}d", errCode);
+    CHECK_PRINT_ELOG(errCode != CAMERA_OK, "Failed to Stop MetadataOutput!, errCode: %{public}d", errCode);
     return ServiceToCameraError(errCode);
 }
 
@@ -328,10 +327,10 @@ int32_t MetadataOutput::Release()
         cameraMetadataCallback_ = nullptr;
     }
     auto stream = GetStream();
-    CHECK_ERROR_RETURN_RET_LOG(stream == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_ELOG(stream == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "MetadataOutput Failed to Release!, GetStream is nullptr");
     int32_t errCode = static_cast<IStreamMetadata *>(stream.GetRefPtr())->Release();
-    CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "Failed to Release MetadataOutput!, errCode: %{public}d", errCode);
+    CHECK_PRINT_ELOG(errCode != CAMERA_OK, "Failed to Release MetadataOutput!, errCode: %{public}d", errCode);
     ReleaseSurface();
     CaptureOutput::Release();
     return ServiceToCameraError(errCode);
@@ -342,7 +341,7 @@ void MetadataOutput::ReleaseSurface()
     std::lock_guard<std::mutex> lock(surfaceMutex_);
     if (surface_ != nullptr) {
         SurfaceError ret = surface_->UnregisterConsumerListener();
-        CHECK_ERROR_PRINT_LOG(ret != SURFACE_ERROR_OK, "Failed to unregister surface consumer listener");
+        CHECK_PRINT_ELOG(ret != SURFACE_ERROR_OK, "Failed to unregister surface consumer listener");
         surface_ = nullptr;
     }
 }
@@ -383,17 +382,17 @@ void MetadataObjectListener::OnBufferAvailable()
     MEDIA_INFO_LOG("MetadataOutput::OnBufferAvailable() is Called");
     // metaoutput adapte later
     bool adapterLater = true;
-    CHECK_ERROR_RETURN(adapterLater);
+    CHECK_RETURN(adapterLater);
     auto metadataOutput = metadata_.promote();
-    CHECK_ERROR_RETURN_LOG(metadataOutput == nullptr, "OnBufferAvailable metadataOutput is null");
+    CHECK_RETURN_ELOG(metadataOutput == nullptr, "OnBufferAvailable metadataOutput is null");
     auto surface = metadataOutput->GetSurface();
-    CHECK_ERROR_RETURN_LOG(surface == nullptr, "OnBufferAvailable Metadata surface is null");
+    CHECK_RETURN_ELOG(surface == nullptr, "OnBufferAvailable Metadata surface is null");
     int32_t fence = -1;
     int64_t timestamp;
     OHOS::Rect damage;
     sptr<SurfaceBuffer> buffer = nullptr;
     SurfaceError surfaceRet = surface->AcquireBuffer(buffer, fence, timestamp, damage);
-    CHECK_ERROR_RETURN_LOG(surfaceRet != SURFACE_ERROR_OK, "OnBufferAvailable Failed to acquire surface buffer");
+    CHECK_RETURN_ELOG(surfaceRet != SURFACE_ERROR_OK, "OnBufferAvailable Failed to acquire surface buffer");
     int32_t ret = ProcessMetadataBuffer(buffer->GetVirAddr(), timestamp);
     if (ret) {
         std::shared_ptr<MetadataStateCallback> appStateCallback = metadataOutput->GetAppStateCallback();
@@ -406,11 +405,11 @@ int32_t HStreamMetadataCallbackImpl::OnMetadataResult(const int32_t streamId,
                                                       const std::shared_ptr<OHOS::Camera::CameraMetadata> &result)
 {
     auto metadataOutput = GetMetadataOutput();
-    CHECK_ERROR_RETURN_RET_LOG(metadataOutput == nullptr, CAMERA_OK,
-                               "HStreamMetadataCallbackImpl::OnMetadataResult metadataOutput is nullptr");
+    CHECK_RETURN_RET_ELOG(metadataOutput == nullptr, CAMERA_OK,
+        "HStreamMetadataCallbackImpl::OnMetadataResult metadataOutput is nullptr");
     auto session = metadataOutput->GetSession();
-    CHECK_ERROR_RETURN_RET_LOG(session == nullptr, SESSION_NOT_RUNNING,
-                               "HStreamMetadataCallbackImpl OnMetadataResult error!, session is nullptr");
+    CHECK_RETURN_RET_ELOG(session == nullptr, SESSION_NOT_RUNNING,
+        "HStreamMetadataCallbackImpl OnMetadataResult error!, session is nullptr");
     auto inputDevice = session->GetInputDevice();
     bool isNeedMirror = false;
     bool isNeedFlip = false;
@@ -423,7 +422,7 @@ int32_t HStreamMetadataCallbackImpl::OnMetadataResult(const int32_t streamId,
     std::vector<sptr<MetadataObject>> metaObjects;
     metadataOutput->ProcessMetadata(streamId, result, metaObjects, isNeedMirror, isNeedFlip);
     auto objectCallback = metadataOutput->GetAppObjectCallback();
-    CHECK_ERROR_RETURN_RET(objectCallback == nullptr, INVALID_ARGUMENT);
+    CHECK_RETURN_RET(objectCallback == nullptr, INVALID_ARGUMENT);
     CHECK_EXECUTE((metadataOutput->reportFaceResults_ || metadataOutput->reportLastFaceResults_) && objectCallback,
         objectCallback->OnMetadataObjectsAvailable(metaObjects));
     return SUCCESS;

@@ -164,7 +164,7 @@ napi_value CameraSessionForSysNapi::SetUsage(napi_env env, napi_callback_info in
     bool enabled;
     CameraSessionForSysNapi* cameraSessionForSysNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, cameraSessionForSysNapi, usageType, enabled);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
         "CameraSessionForSysNapi::SetUsage parse parameter occur error");
  
     cameraSessionForSysNapi->cameraSessionForSys_->LockForControl();
@@ -191,7 +191,7 @@ napi_value CameraSessionForSysNapi::GetCameraOutputCapabilities(napi_env env, na
     CameraSessionForSysNapi* cameraSessionForSysNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, cameraSessionForSysNapi, cameraInfoObj);
 
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "Create cameraInput invalid argument!"),
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "Create cameraInput invalid argument!"),
         nullptr, "CameraSessionForSysNapi::GetCameraOutputCapabilities invalid argument");
 
     sptr<CameraDevice> cameraInfo = CameraManager::GetInstance()->GetCameraDeviceFromId(cameraId);
@@ -203,11 +203,11 @@ napi_value CameraSessionForSysNapi::GetCameraOutputCapabilities(napi_env env, na
 
     std::vector<sptr<CameraOutputCapability>> caplist =
         cameraSessionForSysNapi->cameraSessionForSys_->GetCameraOutputCapabilities(cameraInfo);
-    CHECK_ERROR_RETURN_RET_LOG(caplist.empty(), nullptr, "caplist is empty");
+    CHECK_RETURN_RET_ELOG(caplist.empty(), nullptr, "caplist is empty");
 
     napi_value capArray;
     napi_status status = napi_create_array(env, &capArray);
-    CHECK_ERROR_RETURN_RET_LOG(status != napi_ok, nullptr, "Failed to create napi array");
+    CHECK_RETURN_RET_ELOG(status != napi_ok, nullptr, "Failed to create napi array");
 
     for (size_t i = 0; i < caplist.size(); i++) {
         if (caplist[i] == nullptr) {
@@ -215,7 +215,7 @@ napi_value CameraSessionForSysNapi::GetCameraOutputCapabilities(napi_env env, na
         }
         caplist[i]->RemoveDuplicatesProfiles();
         napi_value cap = CameraNapiObjCameraOutputCapability(*caplist[i]).GenerateNapiValue(env);
-        CHECK_ERROR_RETURN_RET_LOG(cap == nullptr || napi_set_element(env, capArray, i, cap) != napi_ok, nullptr,
+        CHECK_RETURN_RET_ELOG(cap == nullptr || napi_set_element(env, capArray, i, cap) != napi_ok, nullptr,
             "Failed to create camera napi wrapper object");
     }
 
@@ -335,7 +335,7 @@ napi_value CameraSessionForSysNapi::GetSessionFunctions(napi_env env, napi_callb
     ParseCameraOutputCapability(env, argv[PARAM0], previewProfiles, photoProfiles, videoProfiles);
     CameraSessionForSysNapi* cameraSessionForSysNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionForSysNapi));
-    CHECK_ERROR_RETURN_RET_LOG(status != napi_ok || cameraSessionForSysNapi == nullptr, nullptr,
+    CHECK_RETURN_RET_ELOG(status != napi_ok || cameraSessionForSysNapi == nullptr, nullptr,
         "napi_unwrap failure!");
 
     auto session = cameraSessionForSysNapi->cameraSessionForSys_;
@@ -365,7 +365,7 @@ napi_value CameraSessionForSysNapi::GetSessionConflictFunctions(napi_env env, na
 
     CameraSessionForSysNapi* cameraSessionForSysNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionForSysNapi));
-    CHECK_ERROR_RETURN_RET_LOG(status != napi_ok || cameraSessionForSysNapi == nullptr, nullptr,
+    CHECK_RETURN_RET_ELOG(status != napi_ok || cameraSessionForSysNapi == nullptr, nullptr,
         "napi_unwrap failure!");
 
     auto session = cameraSessionForSysNapi->cameraSessionForSys_;
@@ -388,15 +388,15 @@ napi_value CameraSessionForSysNapi::CreateFunctionsJSArray(
     napi_value functions = nullptr;
     napi_status status;
 
-    CHECK_ERROR_PRINT_LOG(functionsList.empty(), "functionsList is empty");
+    CHECK_PRINT_ELOG(functionsList.empty(), "functionsList is empty");
 
     status = napi_create_array(env, &functionsArray);
-    CHECK_ERROR_RETURN_RET_LOG(status != napi_ok, functionsArray, "napi_create_array failed");
+    CHECK_RETURN_RET_ELOG(status != napi_ok, functionsArray, "napi_create_array failed");
 
     size_t j = 0;
     for (size_t i = 0; i < functionsList.size(); i++) {
         functions = CameraFunctionsNapi::CreateCameraFunctions(env, functionsList[i], type);
-        CHECK_ERROR_RETURN_RET_LOG((functions == nullptr) ||
+        CHECK_RETURN_RET_ELOG((functions == nullptr) ||
             napi_set_element(env, functionsArray, j++, functions) != napi_ok, nullptr,
             "failed to create functions object napi wrapper object");
     }
@@ -411,7 +411,7 @@ napi_value CameraSessionForSysNapi::IsLcdFlashSupported(napi_env env, napi_callb
     napi_value result = CameraNapiUtils::GetUndefinedValue(env);
     CameraSessionForSysNapi* cameraSessionForSysNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, cameraSessionForSysNapi);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"),
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"),
         result, "IsLcdFlashSupported parse parameter occur error");
     if (cameraSessionForSysNapi != nullptr && cameraSessionForSysNapi->cameraSessionForSys_ != nullptr) {
         bool isSupported = cameraSessionForSysNapi->cameraSessionForSys_->IsLcdFlashSupported();
@@ -429,7 +429,7 @@ napi_value CameraSessionForSysNapi::EnableLcdFlash(napi_env env, napi_callback_i
     bool isEnable;
     CameraSessionForSysNapi* cameraSessionForSysNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, cameraSessionForSysNapi, isEnable);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), result,
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), result,
         "EnableLcdFlash parse parameter occur error");
 
     if (cameraSessionForSysNapi->cameraSessionForSys_ != nullptr) {
@@ -437,7 +437,7 @@ napi_value CameraSessionForSysNapi::EnableLcdFlash(napi_env env, napi_callback_i
         cameraSessionForSysNapi->cameraSessionForSys_->LockForControl();
         int32_t retCode = cameraSessionForSysNapi->cameraSessionForSys_->EnableLcdFlash(isEnable);
         cameraSessionForSysNapi->cameraSessionForSys_->UnlockForControl();
-        CHECK_ERROR_RETURN_RET_LOG(!CameraNapiUtils::CheckError(env, retCode), result,
+        CHECK_RETURN_RET_ELOG(!CameraNapiUtils::CheckError(env, retCode), result,
             "EnableLcdFlash fail %{public}d", retCode);
     } else {
         MEDIA_ERR_LOG("EnableLcdFlash get native object fail");
@@ -453,7 +453,7 @@ napi_value CameraSessionForSysNapi::IsFocusRangeTypeSupported(napi_env env, napi
     int32_t focusRangeType = 0;
     CameraSessionForSysNapi* cameraSessionForSysNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, cameraSessionForSysNapi, focusRangeType);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error"), nullptr,
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error"), nullptr,
         "CameraSessionForSysNapi::IsFocusRangeTypeSupported parse parameter occur error");
 
     auto result = CameraNapiUtils::GetUndefinedValue(env);
@@ -461,7 +461,7 @@ napi_value CameraSessionForSysNapi::IsFocusRangeTypeSupported(napi_env env, napi
         bool isSupported = false;
         int32_t retCode = cameraSessionForSysNapi->cameraSessionForSys_->IsFocusRangeTypeSupported(
             static_cast<FocusRangeType>(focusRangeType), isSupported);
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         napi_get_boolean(env, isSupported, &result);
     } else {
         MEDIA_ERR_LOG("IsFocusRangeTypeSupported get native object fail");
@@ -476,14 +476,14 @@ napi_value CameraSessionForSysNapi::GetFocusRange(napi_env env, napi_callback_in
     MEDIA_DEBUG_LOG("GetFocusRange is called");
     CameraSessionForSysNapi* cameraSessionForSysNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, cameraSessionForSysNapi);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error"), nullptr,
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error"), nullptr,
         "CameraSessionForSysNapi::GetFocusRange parse parameter occur error");
 
     auto result = CameraNapiUtils::GetUndefinedValue(env);
     if (cameraSessionForSysNapi != nullptr && cameraSessionForSysNapi->cameraSessionForSys_ != nullptr) {
         FocusRangeType focusRangeType = FocusRangeType::FOCUS_RANGE_TYPE_AUTO;
         int32_t retCode = cameraSessionForSysNapi->cameraSessionForSys_->GetFocusRange(focusRangeType);
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         napi_create_int32(env, focusRangeType, &result);
     } else {
         MEDIA_ERR_LOG("GetFocusRange get native object fail");
@@ -499,14 +499,14 @@ napi_value CameraSessionForSysNapi::SetFocusRange(napi_env env, napi_callback_in
     int32_t focusRangeType = 0;
     CameraSessionForSysNapi* cameraSessionForSysNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, cameraSessionForSysNapi, focusRangeType);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error"), nullptr,
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error"), nullptr,
         "CameraSessionForSysNapi::SetFocusRange parse parameter occur error");
     if (cameraSessionForSysNapi != nullptr && cameraSessionForSysNapi->cameraSessionForSys_ != nullptr) {
         cameraSessionForSysNapi->cameraSessionForSys_->LockForControl();
         int retCode =
             cameraSessionForSysNapi->cameraSessionForSys_->SetFocusRange(static_cast<FocusRangeType>(focusRangeType));
         cameraSessionForSysNapi->cameraSessionForSys_->UnlockForControl();
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
     } else {
         MEDIA_ERR_LOG("SetFocusRange get native object fail");
         CameraNapiUtils::ThrowError(env, PARAMETER_ERROR, "get native object fail");
@@ -521,7 +521,7 @@ napi_value CameraSessionForSysNapi::IsFocusDrivenTypeSupported(napi_env env, nap
     int32_t focusDrivenType = 0;
     CameraSessionForSysNapi* cameraSessionForSysNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, cameraSessionForSysNapi, focusDrivenType);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error"), nullptr,
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error"), nullptr,
         "CameraSessionForSysNapi::IsFocusDrivenTypeSupported parse parameter occur error");
 
     auto result = CameraNapiUtils::GetUndefinedValue(env);
@@ -529,7 +529,7 @@ napi_value CameraSessionForSysNapi::IsFocusDrivenTypeSupported(napi_env env, nap
         bool isSupported = false;
         int32_t retCode = cameraSessionForSysNapi->cameraSessionForSys_->IsFocusDrivenTypeSupported(
             static_cast<FocusDrivenType>(focusDrivenType), isSupported);
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         napi_get_boolean(env, isSupported, &result);
     } else {
         MEDIA_ERR_LOG("IsFocusDrivenTypeSupported get native object fail");
@@ -544,14 +544,14 @@ napi_value CameraSessionForSysNapi::GetFocusDriven(napi_env env, napi_callback_i
     MEDIA_DEBUG_LOG("GetFocusDriven is called");
     CameraSessionForSysNapi* cameraSessionForSysNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, cameraSessionForSysNapi);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error"), nullptr,
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error"), nullptr,
         "CameraSessionForSysNapi::GetFocusDriven parse parameter occur error");
 
     auto result = CameraNapiUtils::GetUndefinedValue(env);
     if (cameraSessionForSysNapi != nullptr && cameraSessionForSysNapi->cameraSessionForSys_ != nullptr) {
         FocusDrivenType focusDrivenType = FocusDrivenType::FOCUS_DRIVEN_TYPE_AUTO;
         int32_t retCode = cameraSessionForSysNapi->cameraSessionForSys_->GetFocusDriven(focusDrivenType);
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         napi_create_int32(env, focusDrivenType, &result);
     } else {
         MEDIA_ERR_LOG("GetFocusDriven get native object fail");
@@ -567,7 +567,7 @@ napi_value CameraSessionForSysNapi::SetFocusDriven(napi_env env, napi_callback_i
     int32_t focusDrivenType = 0;
     CameraSessionForSysNapi* cameraSessionForSysNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, cameraSessionForSysNapi, focusDrivenType);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error"), nullptr,
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error"), nullptr,
         "CameraSessionForSysNapi::SetFocusDriven parse parameter occur error");
     if (cameraSessionForSysNapi != nullptr && cameraSessionForSysNapi->cameraSessionForSys_ != nullptr) {
         cameraSessionForSysNapi->cameraSessionForSys_->LockForControl();
@@ -575,7 +575,7 @@ napi_value CameraSessionForSysNapi::SetFocusDriven(napi_env env, napi_callback_i
             cameraSessionForSysNapi->cameraSessionForSys_->
             SetFocusDriven(static_cast<FocusDrivenType>(focusDrivenType));
         cameraSessionForSysNapi->cameraSessionForSys_->UnlockForControl();
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
     } else {
         MEDIA_ERR_LOG("SetFocusDriven get native object fail");
         CameraNapiUtils::ThrowError(env, PARAMETER_ERROR, "get native object fail");
@@ -603,7 +603,7 @@ napi_value CameraSessionForSysNapi::GetFocusDistance(napi_env env, napi_callback
         cameraSessionForSysNapi->cameraSessionForSys_ != nullptr) {
         float distance;
         int32_t retCode = cameraSessionForSysNapi->cameraSessionForSys_->GetFocusDistance(distance);
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         napi_create_double(env, distance, &result);
     } else {
         MEDIA_ERR_LOG("GetFocusDistance call Failed!");
@@ -662,7 +662,7 @@ napi_value CameraSessionForSysNapi::PrepareZoom(napi_env env, napi_callback_info
         cameraSessionForSysNapi->cameraSessionForSys_->LockForControl();
         int32_t retCode = cameraSessionForSysNapi->cameraSessionForSys_->PrepareZoom();
         cameraSessionForSysNapi->cameraSessionForSys_->UnlockForControl();
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
     } else {
         MEDIA_ERR_LOG("PrepareZoom call Failed!");
     }
@@ -690,7 +690,7 @@ napi_value CameraSessionForSysNapi::UnPrepareZoom(napi_env env, napi_callback_in
         cameraSessionForSysNapi->cameraSessionForSys_->LockForControl();
         int32_t retCode = cameraSessionForSysNapi->cameraSessionForSys_->UnPrepareZoom();
         cameraSessionForSysNapi->cameraSessionForSys_->UnlockForControl();
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
     } else {
         MEDIA_ERR_LOG("PrepareZoom call Failed!");
     }
@@ -715,7 +715,7 @@ napi_value CameraSessionForSysNapi::GetZoomPointInfos(napi_env env, napi_callbac
     if (status == napi_ok && cameraSessionForSysNapi != nullptr) {
         std::vector<ZoomPointInfo> vecZoomPointInfoList;
         int32_t retCode = cameraSessionForSysNapi->cameraSessionForSys_->GetZoomPointInfos(vecZoomPointInfoList);
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         MEDIA_INFO_LOG("CameraSessionForSysNapi::GetZoomPointInfos len = %{public}zu",
             vecZoomPointInfoList.size());
 
@@ -755,7 +755,7 @@ napi_value CameraSessionForSysNapi::GetSupportedBeautyTypes(napi_env env, napi_c
 
     napi_get_undefined(env, &result);
     status = napi_create_array(env, &result);
-    CHECK_ERROR_RETURN_RET_LOG(status != napi_ok, result, "napi_create_array call Failed!");
+    CHECK_RETURN_RET_ELOG(status != napi_ok, result, "napi_create_array call Failed!");
     CameraSessionForSysNapi* cameraSessionForSysNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionForSysNapi));
     if (status == napi_ok && cameraSessionForSysNapi != nullptr &&
@@ -790,7 +790,7 @@ napi_value CameraSessionForSysNapi::GetSupportedBeautyRange(napi_env env, napi_c
 
     napi_get_undefined(env, &result);
     status = napi_create_array(env, &result);
-    CHECK_ERROR_RETURN_RET_LOG(status != napi_ok, result, "napi_create_array call Failed!");
+    CHECK_RETURN_RET_ELOG(status != napi_ok, result, "napi_create_array call Failed!");
     CameraSessionForSysNapi* cameraSessionForSysNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionForSysNapi));
     if (status == napi_ok && cameraSessionForSysNapi != nullptr &&
@@ -877,18 +877,18 @@ napi_value CameraSessionForSysNapi::GetSupportedPortraitThemeTypes(napi_env env,
     MEDIA_DEBUG_LOG("GetSupportedPortraitThemeTypes is called");
     CameraSessionForSysNapi* cameraSessionForSysNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, cameraSessionForSysNapi);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
         "CameraSessionForSysNapi::GetSupportedPortraitThemeTypes parse parameter occur error");
 
     napi_status status;
     napi_value result = nullptr;
     status = napi_create_array(env, &result);
-    CHECK_ERROR_RETURN_RET_LOG(status != napi_ok, nullptr, "napi_create_array call Failed!");
+    CHECK_RETURN_RET_ELOG(status != napi_ok, nullptr, "napi_create_array call Failed!");
 
     if (cameraSessionForSysNapi->cameraSessionForSys_ != nullptr) {
         std::vector<PortraitThemeType> themeTypes;
         int32_t retCode = cameraSessionForSysNapi->cameraSessionForSys_->GetSupportedPortraitThemeTypes(themeTypes);
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         MEDIA_INFO_LOG("CameraSessionForSysNapi::GetSupportedPortraitThemeTypes len = %{public}zu", themeTypes.size());
         if (!themeTypes.empty()) {
             for (size_t i = 0; i < themeTypes.size(); i++) {
@@ -909,7 +909,7 @@ napi_value CameraSessionForSysNapi::SetPortraitThemeType(napi_env env, napi_call
     int32_t type = 0;
     CameraSessionForSysNapi* cameraSessionForSysNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, cameraSessionForSysNapi, type);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
         "CameraSessionForSysNapi::SetPortraitThemeType parse parameter occur error");
 
     if (cameraSessionForSysNapi->cameraSessionForSys_ != nullptr) {
@@ -918,7 +918,7 @@ napi_value CameraSessionForSysNapi::SetPortraitThemeType(napi_env env, napi_call
         cameraSessionForSysNapi->cameraSessionForSys_->LockForControl();
         int32_t retCode = cameraSessionForSysNapi->cameraSessionForSys_->SetPortraitThemeType(portraitThemeType);
         cameraSessionForSysNapi->cameraSessionForSys_->UnlockForControl();
-        CHECK_ERROR_RETURN_RET_LOG(!CameraNapiUtils::CheckError(env, retCode), nullptr,
+        CHECK_RETURN_RET_ELOG(!CameraNapiUtils::CheckError(env, retCode), nullptr,
             "CameraSessionForSysNapi::SetPortraitThemeType fail %{public}d", retCode);
     } else {
         MEDIA_ERR_LOG("CameraSessionForSysNapi::SetPortraitThemeType get native object fail");
@@ -933,13 +933,13 @@ napi_value CameraSessionForSysNapi::IsPortraitThemeSupported(napi_env env, napi_
     MEDIA_DEBUG_LOG("CameraSessionForSysNapi::IsPortraitThemeSupported is called");
     CameraSessionForSysNapi* cameraSessionForSysNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, cameraSessionForSysNapi);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
         "CameraSessionForSysNapi::IsPortraitThemeSupported parse parameter occur error");
     auto result = CameraNapiUtils::GetUndefinedValue(env);
     if (cameraSessionForSysNapi->cameraSessionForSys_ != nullptr) {
         bool isSupported;
         int32_t retCode = cameraSessionForSysNapi->cameraSessionForSys_->IsPortraitThemeSupported(isSupported);
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         napi_get_boolean(env, isSupported, &result);
     } else {
         MEDIA_ERR_LOG("CameraSessionForSysNapi::IsPortraitThemeSupported get native object fail");
@@ -963,7 +963,7 @@ napi_value CameraSessionForSysNapi::GetSupportedColorEffects(napi_env env, napi_
 
     napi_get_undefined(env, &result);
     status = napi_create_array(env, &result);
-    CHECK_ERROR_RETURN_RET_LOG(status != napi_ok, result, "napi_create_array call Failed!");
+    CHECK_RETURN_RET_ELOG(status != napi_ok, result, "napi_create_array call Failed!");
     CameraSessionForSysNapi* cameraSessionForSysNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionForSysNapi));
     if (status == napi_ok && cameraSessionForSysNapi != nullptr &&
@@ -1042,7 +1042,7 @@ napi_value CameraSessionForSysNapi::IsDepthFusionSupported(napi_env env, napi_ca
     MEDIA_DEBUG_LOG("CameraSessionForSysNapi::IsDepthFusionSupported is called");
     CameraSessionForSysNapi* cameraSessionForSysNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, cameraSessionForSysNapi);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
         "CameraSessionForSysNapi::IsDepthFusionSupported parse parameter occur error");
     auto result = CameraNapiUtils::GetUndefinedValue(env);
     if (cameraSessionForSysNapi->cameraSessionForSys_ != nullptr) {
@@ -1062,14 +1062,14 @@ napi_value CameraSessionForSysNapi::GetDepthFusionThreshold(napi_env env, napi_c
     MEDIA_DEBUG_LOG("CameraSessionForSysNapi::GetDepthFusionThreshold is called");
     CameraSessionForSysNapi* cameraSessionForSysNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, cameraSessionForSysNapi);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
         "CameraSessionForSysNapi::IsDepthFusionSupported parse parameter occur error");
     napi_value result = nullptr;
     if (cameraSessionForSysNapi->cameraSessionForSys_ != nullptr) {
         std::vector<float> vecDepthFusionThreshold;
         int32_t retCode =
             cameraSessionForSysNapi->cameraSessionForSys_->GetDepthFusionThreshold(vecDepthFusionThreshold);
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         MEDIA_INFO_LOG("CameraSessionForSysNapi::GetDepthFusionThreshold len = %{public}zu",
             vecDepthFusionThreshold.size());
 
@@ -1095,7 +1095,7 @@ napi_value CameraSessionForSysNapi::IsDepthFusionEnabled(napi_env env, napi_call
     MEDIA_DEBUG_LOG("CameraSessionForSysNapi::IsDepthFusionEnabled is called");
     CameraSessionForSysNapi* cameraSessionForSysNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, cameraSessionForSysNapi);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
         "CameraSessionForSysNapi::IsDepthFusionEnabled parse parameter occur error");
     auto result = CameraNapiUtils::GetUndefinedValue(env);
     if (cameraSessionForSysNapi->cameraSessionForSys_ != nullptr) {
@@ -1116,7 +1116,7 @@ napi_value CameraSessionForSysNapi::EnableDepthFusion(napi_env env, napi_callbac
     bool isEnabledDepthFusion;
     CameraSessionForSysNapi* cameraSessionForSysNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, cameraSessionForSysNapi, isEnabledDepthFusion);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
         "CameraSessionForSysNapi::EnabledDepthFusion parse parameter occur error");
     
     if (cameraSessionForSysNapi->cameraSessionForSys_ != nullptr) {
@@ -1124,7 +1124,7 @@ napi_value CameraSessionForSysNapi::EnableDepthFusion(napi_env env, napi_callbac
         cameraSessionForSysNapi->cameraSessionForSys_->LockForControl();
         int32_t retCode = cameraSessionForSysNapi->cameraSessionForSys_->EnableDepthFusion(isEnabledDepthFusion);
         cameraSessionForSysNapi->cameraSessionForSys_->UnlockForControl();
-        CHECK_ERROR_RETURN_RET_LOG(!CameraNapiUtils::CheckError(env, retCode), nullptr,
+        CHECK_RETURN_RET_ELOG(!CameraNapiUtils::CheckError(env, retCode), nullptr,
             "CameraSessionForSysNapi::EnableDepthFusion fail %{public}d", retCode);
         MEDIA_INFO_LOG("CameraSessionForSysNapi::EnableDepthFusion success");
     } else {
@@ -1141,7 +1141,7 @@ napi_value CameraSessionForSysNapi::IsFeatureSupported(napi_env env, napi_callba
     int32_t sceneFeature;
     CameraSessionForSysNapi* cameraSessionForSysNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, cameraSessionForSysNapi, sceneFeature);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
         "CameraSessionForSysNapi::IsFeatureSupported parse parameter occur error");
 
     napi_value result = nullptr;
@@ -1158,13 +1158,13 @@ napi_value CameraSessionForSysNapi::EnableFeature(napi_env env, napi_callback_in
     bool isEnable;
     CameraSessionForSysNapi* cameraSessionForSysNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, cameraSessionForSysNapi, sceneFeature, isEnable);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
         "CameraSessionForSysNapi::EnableFeature parse parameter occur error");
 
     MEDIA_INFO_LOG("CameraSessionForSysNapi::EnableFeature:%{public}d", isEnable);
     int32_t retCode =
         cameraSessionForSysNapi->cameraSessionForSys_->EnableFeature(static_cast<SceneFeature>(sceneFeature), isEnable);
-    CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+    CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
 
     return CameraNapiUtils::GetUndefinedValue(env);
 }
@@ -1205,7 +1205,7 @@ napi_value CameraSessionForSysNapi::EnableEffectSuggestion(napi_env env, napi_ca
     NAPI_ASSERT(env, argc == ARGS_ONE, "requires one parameter");
     napi_valuetype valueType = napi_undefined;
     napi_typeof(env, argv[0], &valueType);
-    CHECK_ERROR_RETURN_RET(valueType != napi_boolean && !CameraNapiUtils::CheckError(env, INVALID_ARGUMENT), result);
+    CHECK_RETURN_RET(valueType != napi_boolean && !CameraNapiUtils::CheckError(env, INVALID_ARGUMENT), result);
     napi_get_undefined(env, &result);
     CameraSessionForSysNapi* cameraSessionForSysNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionForSysNapi));
@@ -1217,7 +1217,7 @@ napi_value CameraSessionForSysNapi::EnableEffectSuggestion(napi_env env, napi_ca
         cameraSessionForSysNapi->cameraSessionForSys_->LockForControl();
         int32_t retCode = cameraSessionForSysNapi->cameraSessionForSys_->EnableEffectSuggestion(enabled);
         cameraSessionForSysNapi->cameraSessionForSys_->UnlockForControl();
-        CHECK_ERROR_RETURN_RET(retCode != 0 && !CameraNapiUtils::CheckError(env, retCode), result);
+        CHECK_RETURN_RET(retCode != 0 && !CameraNapiUtils::CheckError(env, retCode), result);
     }
     return result;
 }
@@ -1236,7 +1236,7 @@ napi_value CameraSessionForSysNapi::GetSupportedEffectSuggestionType(napi_env en
 
     napi_get_undefined(env, &result);
     status = napi_create_array(env, &result);
-    CHECK_ERROR_RETURN_RET_LOG(status != napi_ok, result, "napi_create_array call Failed!");
+    CHECK_RETURN_RET_ELOG(status != napi_ok, result, "napi_create_array call Failed!");
     CameraSessionForSysNapi* cameraSessionForSysNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionForSysNapi));
     if (status == napi_ok && cameraSessionForSysNapi != nullptr &&
@@ -1305,7 +1305,7 @@ napi_value CameraSessionForSysNapi::SetEffectSuggestionStatus(napi_env env, napi
         int32_t retCode =
             cameraSessionForSysNapi->cameraSessionForSys_->SetEffectSuggestionStatus(effectSuggestionStatusList);
         cameraSessionForSysNapi->cameraSessionForSys_->UnlockForControl();
-        CHECK_ERROR_RETURN_RET(retCode != 0 && !CameraNapiUtils::CheckError(env, retCode), result);
+        CHECK_RETURN_RET(retCode != 0 && !CameraNapiUtils::CheckError(env, retCode), result);
     }
     return result;
 }
@@ -1322,9 +1322,9 @@ napi_value CameraSessionForSysNapi::UpdateEffectSuggestion(napi_env env, napi_ca
     NAPI_ASSERT(env, argc == ARGS_TWO, "requires two parameter");
     napi_valuetype valueType = napi_undefined;
     napi_typeof(env, argv[PARAM0], &valueType);
-    CHECK_ERROR_RETURN_RET(valueType != napi_number && !CameraNapiUtils::CheckError(env, INVALID_ARGUMENT), result);
+    CHECK_RETURN_RET(valueType != napi_number && !CameraNapiUtils::CheckError(env, INVALID_ARGUMENT), result);
     napi_typeof(env, argv[PARAM1], &valueType);
-    CHECK_ERROR_RETURN_RET(valueType != napi_boolean && !CameraNapiUtils::CheckError(env, INVALID_ARGUMENT), result);
+    CHECK_RETURN_RET(valueType != napi_boolean && !CameraNapiUtils::CheckError(env, INVALID_ARGUMENT), result);
 
     napi_get_undefined(env, &result);
     CameraSessionForSysNapi* cameraSessionForSysNapi = nullptr;
@@ -1342,7 +1342,7 @@ napi_value CameraSessionForSysNapi::UpdateEffectSuggestion(napi_env env, napi_ca
         int32_t retCode =
             cameraSessionForSysNapi->cameraSessionForSys_->UpdateEffectSuggestion(effectSuggestionType, enabled);
         cameraSessionForSysNapi->cameraSessionForSys_->UnlockForControl();
-        CHECK_ERROR_RETURN_RET(retCode != 0 && !CameraNapiUtils::CheckError(env, retCode), result);
+        CHECK_RETURN_RET(retCode != 0 && !CameraNapiUtils::CheckError(env, retCode), result);
     }
     return result;
 }
@@ -1352,19 +1352,19 @@ napi_value CameraSessionForSysNapi::GetSupportedVirtualApertures(napi_env env, n
     MEDIA_DEBUG_LOG("GetSupportedVirtualApertures is called");
     CameraSessionForSysNapi* cameraSessionForSysNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, cameraSessionForSysNapi);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
         "CameraSessionForSysNapi::GetSupportedVirtualApertures parse parameter occur error");
 
     napi_status status;
     napi_value result = nullptr;
     status = napi_create_array(env, &result);
-    CHECK_ERROR_RETURN_RET_LOG(status != napi_ok, nullptr, "napi_create_array call Failed!");
+    CHECK_RETURN_RET_ELOG(status != napi_ok, nullptr, "napi_create_array call Failed!");
 
     if (cameraSessionForSysNapi->cameraSessionForSys_ != nullptr) {
         std::vector<float> virtualApertures = {};
         int32_t retCode = cameraSessionForSysNapi->cameraSessionForSys_->GetSupportedVirtualApertures(virtualApertures);
         MEDIA_INFO_LOG("GetSupportedVirtualApertures virtualApertures len = %{public}zu", virtualApertures.size());
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         if (!virtualApertures.empty()) {
             for (size_t i = 0; i < virtualApertures.size(); i++) {
                 float virtualAperture = virtualApertures[i];
@@ -1384,12 +1384,12 @@ napi_value CameraSessionForSysNapi::GetVirtualAperture(napi_env env, napi_callba
     MEDIA_DEBUG_LOG("GetVirtualAperture is called");
     CameraSessionForSysNapi* cameraSessionForSysNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, cameraSessionForSysNapi);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
         "CameraSessionForSysNapi::GetVirtualAperture parse parameter occur error");
     if (cameraSessionForSysNapi->cameraSessionForSys_ != nullptr) {
         float virtualAperture;
         int32_t retCode = cameraSessionForSysNapi->cameraSessionForSys_->GetVirtualAperture(virtualAperture);
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         napi_value result;
         napi_create_double(env, CameraNapiUtils::FloatToDouble(virtualAperture), &result);
         return result;
@@ -1405,14 +1405,14 @@ napi_value CameraSessionForSysNapi::SetVirtualAperture(napi_env env, napi_callba
     double virtualAperture;
     CameraSessionForSysNapi* cameraSessionForSysNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, cameraSessionForSysNapi, virtualAperture);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
         "CameraSessionForSysNapi::SetVirtualAperture parse parameter occur error");
     if (cameraSessionForSysNapi->cameraSessionForSys_ != nullptr) {
         cameraSessionForSysNapi->cameraSessionForSys_->LockForControl();
         int32_t retCode = cameraSessionForSysNapi->cameraSessionForSys_->SetVirtualAperture((float)virtualAperture);
         MEDIA_INFO_LOG("SetVirtualAperture set virtualAperture %{public}f!", virtualAperture);
         cameraSessionForSysNapi->cameraSessionForSys_->UnlockForControl();
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
     } else {
         MEDIA_ERR_LOG("SetVirtualAperture call Failed!");
     }
@@ -1424,20 +1424,20 @@ napi_value CameraSessionForSysNapi::GetSupportedPhysicalApertures(napi_env env, 
     MEDIA_DEBUG_LOG("GetSupportedPhysicalApertures is called");
     CameraSessionForSysNapi* cameraSessionForSysNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, cameraSessionForSysNapi);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
         "CameraSessionForSysNapi::GetSupportedPhysicalApertures parse parameter occur error");
 
     napi_status status;
     napi_value result = nullptr;
     status = napi_create_array(env, &result);
-    CHECK_ERROR_RETURN_RET_LOG(status != napi_ok, nullptr, "napi_create_array call Failed!");
+    CHECK_RETURN_RET_ELOG(status != napi_ok, nullptr, "napi_create_array call Failed!");
 
     if (status == napi_ok && cameraSessionForSysNapi->cameraSessionForSys_ != nullptr) {
         std::vector<std::vector<float>> physicalApertures = {};
         int32_t retCode =
             cameraSessionForSysNapi->cameraSessionForSys_->GetSupportedPhysicalApertures(physicalApertures);
         MEDIA_INFO_LOG("GetSupportedPhysicalApertures len = %{public}zu", physicalApertures.size());
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         if (!physicalApertures.empty()) {
             result = CameraNapiUtils::ProcessingPhysicalApertures(env, physicalApertures);
         }
@@ -1452,13 +1452,13 @@ napi_value CameraSessionForSysNapi::GetPhysicalAperture(napi_env env, napi_callb
     MEDIA_DEBUG_LOG("GetPhysicalAperture is called");
     CameraSessionForSysNapi* cameraSessionForSysNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, cameraSessionForSysNapi);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
         "CameraSessionForSysNapi::GetPhysicalAperture parse parameter occur error");
 
     if (cameraSessionForSysNapi->cameraSessionForSys_ != nullptr) {
         float physicalAperture = 0.0;
         int32_t retCode = cameraSessionForSysNapi->cameraSessionForSys_->GetPhysicalAperture(physicalAperture);
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         napi_value result = nullptr;
         napi_create_double(env, CameraNapiUtils::FloatToDouble(physicalAperture), &result);
         return result;
@@ -1474,7 +1474,7 @@ napi_value CameraSessionForSysNapi::SetPhysicalAperture(napi_env env, napi_callb
     double physicalAperture;
     CameraSessionForSysNapi* cameraSessionForSysNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, cameraSessionForSysNapi, physicalAperture);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
         "CameraSessionForSysNapi::SetPhysicalAperture parse parameter occur error");
 
     if (cameraSessionForSysNapi->cameraSessionForSys_ != nullptr) {
@@ -1482,7 +1482,7 @@ napi_value CameraSessionForSysNapi::SetPhysicalAperture(napi_env env, napi_callb
         int32_t retCode = cameraSessionForSysNapi->cameraSessionForSys_->SetPhysicalAperture((float)physicalAperture);
         MEDIA_INFO_LOG("SetPhysicalAperture set physicalAperture %{public}f!", ConfusingNumber(physicalAperture));
         cameraSessionForSysNapi->cameraSessionForSys_->UnlockForControl();
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
     } else {
         MEDIA_ERR_LOG("SetPhysicalAperture call Failed!");
     }
@@ -1494,7 +1494,7 @@ napi_value CameraSessionForSysNapi::GetSupportedColorReservationTypes(napi_env e
     MEDIA_DEBUG_LOG("GetSupportedColorReservationTypes is called");
     CameraSessionForSysNapi* cameraSessionForSysNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, cameraSessionForSysNapi);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error"), nullptr,
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error"), nullptr,
         "CameraSessionForSysNapi::GetSupportedColorReservationTypes parse parameter occur error");
 
     napi_value result = nullptr;
@@ -1508,7 +1508,7 @@ napi_value CameraSessionForSysNapi::GetSupportedColorReservationTypes(napi_env e
         std::vector<ColorReservationType> colorReservationTypes;
         int32_t retCode =
             cameraSessionForSysNapi->cameraSessionForSys_->GetSupportedColorReservationTypes(colorReservationTypes);
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
 
         MEDIA_INFO_LOG("CameraSessionForSysNapi::GetSupportedColorReservationTypes len = %{public}zu",
             colorReservationTypes.size());
@@ -1533,14 +1533,14 @@ napi_value CameraSessionForSysNapi::GetColorReservation(napi_env env, napi_callb
     MEDIA_DEBUG_LOG("GetColorReservation is called");
     CameraSessionForSysNapi* cameraSessionForSysNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, cameraSessionForSysNapi);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error"), nullptr,
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error"), nullptr,
         "CameraSessionForSysNapi::GetColorReservation parse parameter occur error");
 
     auto result = CameraNapiUtils::GetUndefinedValue(env);
     if (cameraSessionForSysNapi != nullptr && cameraSessionForSysNapi->cameraSessionForSys_ != nullptr) {
         ColorReservationType colorReservationType = ColorReservationType::COLOR_RESERVATION_TYPE_NONE;
         int32_t retCode = cameraSessionForSysNapi->cameraSessionForSys_->GetColorReservation(colorReservationType);
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         napi_create_int32(env, colorReservationType, &result);
     } else {
         MEDIA_ERR_LOG("GetColorReservation get native object fail");
@@ -1556,14 +1556,14 @@ napi_value CameraSessionForSysNapi::SetColorReservation(napi_env env, napi_callb
     int32_t colorReservationType = 0;
     CameraSessionForSysNapi* cameraSessionForSysNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, cameraSessionForSysNapi, colorReservationType);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error"), nullptr,
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error"), nullptr,
         "CameraSessionForSysNapi::SetColorReservation parse parameter occur error");
     if (cameraSessionForSysNapi != nullptr && cameraSessionForSysNapi->cameraSessionForSys_ != nullptr) {
         cameraSessionForSysNapi->cameraSessionForSys_->LockForControl();
         int retCode = cameraSessionForSysNapi->cameraSessionForSys_->SetColorReservation(
             static_cast<ColorReservationType>(colorReservationType));
         cameraSessionForSysNapi->cameraSessionForSys_->UnlockForControl();
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
     } else {
         MEDIA_ERR_LOG("SetColorReservation get native object fail");
         CameraNapiUtils::ThrowError(env, PARAMETER_ERROR, "get native object fail");
@@ -1687,7 +1687,7 @@ void CameraSessionForSysNapi::UnregisterFocusTrackingInfoCallbackListener(const 
 void CameraSessionForSysNapi::RegisterLcdFlashStatusCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
-    CHECK_ERROR_RETURN_LOG(cameraSessionForSys_ == nullptr, "cameraSession is null!");
+    CHECK_RETURN_ELOG(cameraSessionForSys_ == nullptr, "cameraSession is null!");
     if (lcdFlashStatusCallback_ == nullptr) {
         lcdFlashStatusCallback_ = std::make_shared<LcdFlashStatusCallbackListener>(env);
         cameraSessionForSys_->SetLcdFlashStatusCallback(lcdFlashStatusCallback_);
@@ -1701,7 +1701,7 @@ void CameraSessionForSysNapi::RegisterLcdFlashStatusCallbackListener(
 void CameraSessionForSysNapi::UnregisterLcdFlashStatusCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
-    CHECK_ERROR_RETURN_LOG(lcdFlashStatusCallback_ == nullptr, "lcdFlashStatusCallback is null");
+    CHECK_RETURN_ELOG(lcdFlashStatusCallback_ == nullptr, "lcdFlashStatusCallback is null");
     lcdFlashStatusCallback_->RemoveCallbackRef(eventName, callback);
     if (lcdFlashStatusCallback_->IsEmpty("lcdFlashStatus")) {
         cameraSessionForSys_->LockForControl();
@@ -1744,7 +1744,7 @@ void CameraSessionForSysNapi::RegisterMacroStatusCallbackListener(
 void CameraSessionForSysNapi::UnregisterMacroStatusCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
-    CHECK_ERROR_RETURN_LOG(macroStatusCallback_ == nullptr, "macroStatusCallback is null");
+    CHECK_RETURN_ELOG(macroStatusCallback_ == nullptr, "macroStatusCallback is null");
     macroStatusCallback_->RemoveCallbackRef(eventName, callback);
 }
 
@@ -1753,7 +1753,7 @@ void CameraSessionForSysNapi::RegisterFeatureDetectionStatusListener(
 {
     int32_t featureType = SceneFeature::FEATURE_ENUM_MAX;
     CameraNapiParamParser jsParamParser(env, args, featureType);
-    CHECK_ERROR_RETURN_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "Invalid feature type"),
+    CHECK_RETURN_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "Invalid feature type"),
         "CameraSessionForSysNapi::RegisterFeatureDetectionStatusListener Invalid feature type");
     if (featureType < SceneFeature::FEATURE_ENUM_MIN || featureType >= SceneFeature::FEATURE_ENUM_MAX) {
         CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "scene feature invalid");
@@ -1782,10 +1782,10 @@ void CameraSessionForSysNapi::RegisterFeatureDetectionStatusListener(
 void CameraSessionForSysNapi::UnregisterFeatureDetectionStatusListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
-    CHECK_ERROR_RETURN_LOG(featureDetectionStatusCallback_ == nullptr, "featureDetectionStatusCallback_ is null");
+    CHECK_RETURN_ELOG(featureDetectionStatusCallback_ == nullptr, "featureDetectionStatusCallback_ is null");
     int32_t featureType = SceneFeature::FEATURE_ENUM_MAX;
     CameraNapiParamParser jsParamParser(env, args, featureType);
-    CHECK_ERROR_RETURN_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "Invalid feature type"),
+    CHECK_RETURN_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "Invalid feature type"),
         "CameraSessionForSysNapi::RegisterFeatureDetectionStatusListener Invalid feature type");
     if (featureType < SceneFeature::FEATURE_ENUM_MIN || featureType >= SceneFeature::FEATURE_ENUM_MAX) {
         CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "scene feature invalid");
@@ -2012,7 +2012,7 @@ napi_value CameraSessionForSysNapi::CameraSessionNapiForSysConstructor(napi_env 
         std::unique_ptr<CameraSessionForSysNapi> obj = std::make_unique<CameraSessionForSysNapi>();
         if (obj != nullptr) {
             obj->env_ = env;
-            CHECK_ERROR_RETURN_RET_LOG(sCameraSessionForSys_ == nullptr, result, "sCameraSessionForSys_ is null");
+            CHECK_RETURN_RET_ELOG(sCameraSessionForSys_ == nullptr, result, "sCameraSessionForSys_ is null");
             obj->cameraSession_ = sCameraSessionForSys_;
             obj->cameraSessionForSys_ = sCameraSessionForSys_;
             status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
@@ -2050,10 +2050,10 @@ void CameraSessionForSysNapi::Init(napi_env env)
                                CameraSessionNapiForSysConstructor, nullptr,
                                camera_session_props.size(),
                                camera_session_props.data(), &ctorObj);
-    CHECK_ERROR_RETURN_LOG(status != napi_ok, "CameraSessionForSysNapi defined class failed");
+    CHECK_RETURN_ELOG(status != napi_ok, "CameraSessionForSysNapi defined class failed");
     int32_t refCount = 1;
     status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
-    CHECK_ERROR_RETURN_LOG(status != napi_ok, "CameraSessionForSysNapi Init failed");
+    CHECK_RETURN_ELOG(status != napi_ok, "CameraSessionForSysNapi Init failed");
     MEDIA_DEBUG_LOG("CameraSessionForSysNapi Init success");
 }
 
@@ -2066,13 +2066,13 @@ napi_value CameraSessionForSysNapi::CreateCameraSession(napi_env env)
     napi_value constructor;
     if (sConstructor_ == nullptr) {
         CameraSessionForSysNapi::Init(env);
-        CHECK_ERROR_RETURN_RET_LOG(sConstructor_ == nullptr, result, "sConstructor_ is null");
+        CHECK_RETURN_RET_ELOG(sConstructor_ == nullptr, result, "sConstructor_ is null");
     }
     status = napi_get_reference_value(env, sConstructor_, &constructor);
     if (status == napi_ok) {
         int retCode =
             CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(sCameraSessionForSys_, SceneMode::NORMAL);
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         if (sCameraSessionForSys_ == nullptr) {
             MEDIA_ERR_LOG("Failed to create Camera session instance");
             napi_get_undefined(env, &result);
@@ -2144,7 +2144,7 @@ extern "C" napi_value createDeprecatedSessionInstanceForSys(napi_env env)
     MEDIA_DEBUG_LOG("createDeprecatedSessionInstanceForSys is called");
     napi_value result = nullptr;
     result = CameraSessionForSysNapi::CreateCameraSession(env);
-    CHECK_ERROR_RETURN_RET_LOG(result == nullptr, result, "createDeprecatedSessionInstanceForSys failed");
+    CHECK_RETURN_RET_ELOG(result == nullptr, result, "createDeprecatedSessionInstanceForSys failed");
     return result;
 }
 } // namespace CameraStandard

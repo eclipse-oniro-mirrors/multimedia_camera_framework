@@ -29,7 +29,7 @@ bool CheckSystemApp(napi_env env, bool enableThrowError)
     if (!isSystemApp) {
         if (enableThrowError) {
             std::string errorMessage = "System api can be invoked only by system applications";
-            CHECK_ERROR_PRINT_LOG(napi_throw_error(env, std::to_string(errorCode).c_str(), errorMessage.c_str()) !=
+            CHECK_PRINT_ELOG(napi_throw_error(env, std::to_string(errorCode).c_str(), errorMessage.c_str()) !=
                 napi_ok, "failed to throw err, code=%{public}d, msg=%{public}s.", errorCode, errorMessage.c_str());
         }
         return false;

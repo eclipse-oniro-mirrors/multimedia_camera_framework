@@ -72,7 +72,7 @@ void HStreamDepthDataFuzzer::HStreamDepthDataFuzzTest()
     sptr<IBufferProducer> producer = photoSurface->GetProducer();
 
     fuzz_ = std::make_shared<HStreamDepthData>(producer, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT);
-    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
+    CHECK_RETURN_ELOG(!fuzz_, "Create fuzz_ Error");
     fuzz_->Start();
     fuzz_->Stop();
     fuzz_->Release();

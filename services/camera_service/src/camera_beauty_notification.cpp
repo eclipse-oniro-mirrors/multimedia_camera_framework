@@ -47,9 +47,9 @@ CameraBeautyNotification::~CameraBeautyNotification()
 
 sptr<CameraBeautyNotification> CameraBeautyNotification::GetInstance()
 {
-    CHECK_ERROR_RETURN_RET(instance_ != nullptr, instance_);
+    CHECK_RETURN_RET(instance_ != nullptr, instance_);
     std::lock_guard<std::mutex> lock(instanceMutex_);
-    CHECK_ERROR_RETURN_RET(instance_ != nullptr, instance_);
+    CHECK_RETURN_RET(instance_ != nullptr, instance_);
     instance_ = new (std::nothrow) CameraBeautyNotification();
     return instance_;
 }
@@ -163,7 +163,7 @@ int32_t CameraBeautyNotification::SetBeautyStatusFromDataShareHelper(int32_t bea
         cameraDataShareHelper_ = std::make_shared<CameraDataShareHelper>();
     }
     auto ret = cameraDataShareHelper_->UpdateOnce(PREDICATES_CAMERA_BEAUTY_STATUS, std::to_string(beautyStatus));
-    CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, CAMERA_ALLOC_ERROR,
+    CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, CAMERA_ALLOC_ERROR,
         "SetBeautyStatusFromDataShareHelper UpdateOnce fail.");
     return CAMERA_OK;
 }
@@ -189,7 +189,7 @@ int32_t CameraBeautyNotification::SetBeautyTimesFromDataShareHelper(int32_t time
         cameraDataShareHelper_ = std::make_shared<CameraDataShareHelper>();
     }
     auto ret = cameraDataShareHelper_->UpdateOnce(PREDICATES_CAMERA_BEAUTY_TIMES, std::to_string(times));
-    CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, CAMERA_ALLOC_ERROR,
+    CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, CAMERA_ALLOC_ERROR,
         "SetBeautyTimesFromDataShareHelper UpdateOnce fail.");
     return CAMERA_OK;
 }
@@ -210,7 +210,7 @@ std::shared_ptr<Notification::NotificationNormalContent> CameraBeautyNotificatio
 {
     std::shared_ptr<Notification::NotificationNormalContent> normalContent =
         std::make_shared<Notification::NotificationNormalContent>();
-    CHECK_ERROR_RETURN_RET_LOG(normalContent == nullptr, nullptr, "Create normalContent failed");
+    CHECK_RETURN_RET_ELOG(normalContent == nullptr, nullptr, "Create normalContent failed");
     normalContent->SetTitle(GetSystemStringByName(BEAUTY_NOTIFICATION_TITLE));
     normalContent->SetText(beautyStatus == BEAUTY_STATUS_OFF ? GetSystemStringByName(BEAUTY_NOTIFICATION_CONTENT_ON) :
         GetSystemStringByName(BEAUTY_NOTIFICATION_CONTENT_OFF));

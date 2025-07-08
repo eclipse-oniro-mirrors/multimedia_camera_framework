@@ -25,7 +25,7 @@ PanoramaSession::~PanoramaSession()
 bool PanoramaSession::CanAddOutput(sptr<CaptureOutput> &output)
 {
     MEDIA_DEBUG_LOG("Enter Into PanoramaSession::CanAddOutput");
-    CHECK_ERROR_RETURN_RET_LOG(!IsSessionConfiged() || output == nullptr, false,
+    CHECK_RETURN_RET_ELOG(!IsSessionConfiged() || output == nullptr, false,
         "PanoramaSession::CanAddOutput operation is Not allowed!");
     return output->GetOutputType() != CAPTURE_OUTPUT_TYPE_VIDEO &&
         CaptureSession::CanAddOutput(output);

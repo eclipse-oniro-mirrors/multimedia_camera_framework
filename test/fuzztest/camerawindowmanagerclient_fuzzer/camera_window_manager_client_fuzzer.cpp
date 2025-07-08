@@ -37,7 +37,7 @@ void CameraWindowManagerClientFuzzer::CameraWindowManagerClientFuzzTest(FuzzedDa
     }
 
     fuzz_ = CameraWindowManagerClient::GetInstance();
-    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
+    CHECK_RETURN_ELOG(!fuzz_, "Create fuzz_ Error");
     pid_t pid;
     int32_t systemAbilityId = fdp.ConsumeIntegral<int32_t>();
     uint8_t randomNum = fdp.ConsumeIntegral<uint8_t>();

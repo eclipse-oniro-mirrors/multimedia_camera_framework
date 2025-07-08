@@ -29,20 +29,20 @@ LightPaintingSession::~LightPaintingSession()
  
 int32_t LightPaintingSession::GetSupportedLightPaintings(std::vector<LightPaintingType>& lightPaintings)
 {
-    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "LightPaintingSession::GetSupportedLightPaintings Session is not Commited");
     auto inputDevice = GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(!inputDevice,
+    CHECK_RETURN_RET_ELOG(!inputDevice,
         CameraErrorCode::SESSION_NOT_CONFIG,
         "LightPaintingSession::GetSupportedLightPaintings camera device is null");
     auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
-    CHECK_ERROR_RETURN_RET_LOG(!inputDeviceInfo, CameraErrorCode::SESSION_NOT_CONFIG,
+    CHECK_RETURN_RET_ELOG(!inputDeviceInfo, CameraErrorCode::SESSION_NOT_CONFIG,
         "LightPaintingSession::GetSupportedLightPaintings camera deviceInfo is null");
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = inputDeviceInfo->GetCachedMetadata();
-    CHECK_ERROR_RETURN_RET(metadata == nullptr, CameraErrorCode::OPERATION_NOT_ALLOWED);
+    CHECK_RETURN_RET(metadata == nullptr, CameraErrorCode::OPERATION_NOT_ALLOWED);
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_LIGHT_PAINTING_TYPE, &item);
-    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS || item.count == 0, CameraErrorCode::OPERATION_NOT_ALLOWED,
+    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS || item.count == 0, CameraErrorCode::OPERATION_NOT_ALLOWED,
         "LightPaintingSession::GetSupportedLightPaintings Failed with return code %{public}d.", ret);
     lightPaintings.clear();
     for (uint32_t i = 0; i < item.count; i++) {
@@ -54,7 +54,7 @@ int32_t LightPaintingSession::GetSupportedLightPaintings(std::vector<LightPainti
  
 int32_t LightPaintingSession::GetLightPainting(LightPaintingType& lightPaintingType)
 {
-    CHECK_ERROR_RETURN_RET_LOG(!(IsSessionCommited() || IsSessionConfiged()), CameraErrorCode::SESSION_NOT_CONFIG,
+    CHECK_RETURN_RET_ELOG(!(IsSessionCommited() || IsSessionConfiged()), CameraErrorCode::SESSION_NOT_CONFIG,
         "LightPaintingSession::GetLightPainting Session is not Commited.");
     auto itr = fwkLightPaintingTypeMap_.find(currentLightPaintingType_);
     if (itr != fwkLightPaintingTypeMap_.end()) {
@@ -66,18 +66,18 @@ int32_t LightPaintingSession::GetLightPainting(LightPaintingType& lightPaintingT
 int32_t LightPaintingSession::SetLightPainting(const LightPaintingType type)
 {
     MEDIA_INFO_LOG("SetLightPainting native is called");
-    CHECK_ERROR_RETURN_RET_LOG(!(IsSessionCommited() || IsSessionConfiged()), CameraErrorCode::SESSION_NOT_CONFIG,
+    CHECK_RETURN_RET_ELOG(!(IsSessionCommited() || IsSessionConfiged()), CameraErrorCode::SESSION_NOT_CONFIG,
         "LightPaintingSession::SetLightPainting Session is not Commited.");
-    CHECK_ERROR_RETURN_RET_LOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
+    CHECK_RETURN_RET_ELOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
         "LightPaintingSession::SetLightPainting Need to call LockForControl() before setting camera properties.");
     uint8_t lightPainting = LightPaintingType::CAR;
     auto itr = fwkLightPaintingTypeMap_.find(type);
-    CHECK_ERROR_RETURN_RET_LOG(itr == fwkLightPaintingTypeMap_.end(), CameraErrorCode::INVALID_ARGUMENT,
+    CHECK_RETURN_RET_ELOG(itr == fwkLightPaintingTypeMap_.end(), CameraErrorCode::INVALID_ARGUMENT,
         "LightPaintingSession::SetLightPainting unknown type of LightPainting.");
     lightPainting = itr->second;
     MEDIA_DEBUG_LOG("LightPaintingSession::SetLightPainting: %{public}d", type);
     bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_LIGHT_PAINTING_TYPE, &lightPainting, 1);
-    CHECK_ERROR_RETURN_RET_LOG(!status, CameraErrorCode::SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_ELOG(!status, CameraErrorCode::SERVICE_FATL_ERROR,
         "LightPaintingSession::SetLightPainting Failed to set LightPainting type");
         currentLightPaintingType_ = type;
     return CameraErrorCode::SUCCESS;
@@ -86,15 +86,15 @@ int32_t LightPaintingSession::SetLightPainting(const LightPaintingType type)
 int32_t LightPaintingSession::TriggerLighting()
 {
     MEDIA_INFO_LOG("TriggerLighting native is called");
-    CHECK_ERROR_RETURN_RET_LOG(!(IsSessionCommited() || IsSessionConfiged()), CameraErrorCode::SESSION_NOT_CONFIG,
+    CHECK_RETURN_RET_ELOG(!(IsSessionCommited() || IsSessionConfiged()), CameraErrorCode::SESSION_NOT_CONFIG,
         "LightPaintingSession::TriggerLighting Session is not Commited.");
-    CHECK_ERROR_RETURN_RET_LOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
+    CHECK_RETURN_RET_ELOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
         "LightPaintingSession::TriggerLighting Need to call LockForControl() before setting camera properties.");
-    CHECK_ERROR_RETURN_RET(currentLightPaintingType_ != LightPaintingType::LIGHT, CameraErrorCode::INVALID_ARGUMENT);
+    CHECK_RETURN_RET(currentLightPaintingType_ != LightPaintingType::LIGHT, CameraErrorCode::INVALID_ARGUMENT);
     uint8_t enableTrigger = 1;
     MEDIA_DEBUG_LOG("LightPaintingSession::TriggerLighting once.");
     bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_LIGHT_PAINTING_FLASH, &enableTrigger, 1);
-    CHECK_ERROR_RETURN_RET_LOG(!status, CameraErrorCode::SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_ELOG(!status, CameraErrorCode::SERVICE_FATL_ERROR,
         "LightPaintingSession::TriggerLighting Failed to trigger lighting");
     return CameraErrorCode::SUCCESS;
 }

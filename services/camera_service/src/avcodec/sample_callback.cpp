@@ -29,7 +29,7 @@ void SampleCallback::OnCodecError(OH_AVCodec *codec, int32_t errorCode, void *us
 
 void SampleCallback::OnCodecFormatChange(OH_AVCodec *codec, OH_AVFormat *format, void *userData)
 {
-    CHECK_ERROR_RETURN(userData == nullptr);
+    CHECK_RETURN(userData == nullptr);
     (void)codec;
     MEDIA_ERR_LOG("OnCodecFormatChange");
 }
@@ -38,7 +38,7 @@ void SampleCallback::OnCodecFormatChange(OH_AVCodec *codec, OH_AVFormat *format,
 void SampleCallback::OnNeedInputBuffer(OH_AVCodec *codec, uint32_t index, OH_AVBuffer *buffer, void *userData)
 {
     MEDIA_DEBUG_LOG("OnNeedInputBuffer");
-    CHECK_ERROR_RETURN(userData == nullptr);
+    CHECK_RETURN(userData == nullptr);
     (void)codec;
     CodecUserData *codecUserData = static_cast<CodecUserData *>(userData);
     std::unique_lock<std::mutex> lock(codecUserData->inputMutex_);
@@ -50,7 +50,7 @@ void SampleCallback::OnNewOutputBuffer(OH_AVCodec *codec, uint32_t index, OH_AVB
 {
     MEDIA_DEBUG_LOG("OnNewOutputBuffer");
     (void)codec;
-    CHECK_ERROR_RETURN(userData == nullptr);
+    CHECK_RETURN(userData == nullptr);
     CodecUserData *codecUserData = static_cast<CodecUserData *>(userData);
     std::unique_lock<std::mutex> lock(codecUserData->outputMutex_);
     codecUserData->outputBufferInfoQueue_.emplace(new CodecAVBufferInfo(index, buffer));
@@ -69,7 +69,7 @@ void SampleCallback::OnInputBufferAvailable(OH_AVCodec *codec, uint32_t index, O
 {
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("OnInputBufferAvailable %{public}d", index);
-    CHECK_ERROR_RETURN(userData == nullptr);
+    CHECK_RETURN(userData == nullptr);
     (void)codec;
     sptr<CodecUserData> codecAudioData = static_cast<CodecUserData *>(userData);
     std::unique_lock<std::mutex> lock(codecAudioData->inputMutex_);
@@ -82,7 +82,7 @@ void SampleCallback::OnOutputBufferAvailable(OH_AVCodec *codec, uint32_t index, 
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("OnOutputBufferAvailable");
     (void)codec;
-    CHECK_ERROR_RETURN(userData == nullptr);
+    CHECK_RETURN(userData == nullptr);
     sptr<CodecUserData> codecAudioData = static_cast<CodecUserData *>(userData);
     std::unique_lock<std::mutex> lock(codecAudioData->outputMutex_);
     codecAudioData->outputBufferInfoQueue_.emplace(new CodecAVBufferInfo(index, buffer));

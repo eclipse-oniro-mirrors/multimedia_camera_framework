@@ -32,7 +32,7 @@ uv_qos_t QosUtils::GetUvWorkQos()
     QOS::QosLevel level;
     GetThreadQos(level);
     auto it = qosLevelToUvQosMap.find(level);
-    CHECK_ERROR_RETURN_RET(it != qosLevelToUvQosMap.end(), it->second);
+    CHECK_RETURN_RET(it != qosLevelToUvQosMap.end(), it->second);
     return uv_qos_t::uv_qos_user_initiated;
 }
 } // namespace CameraStandard

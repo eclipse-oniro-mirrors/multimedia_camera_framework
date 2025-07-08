@@ -100,10 +100,10 @@ void SlowMotionSessionNapi::Init(napi_env env)
                                SlowMotionSessionNapiConstructor, nullptr,
                                slow_motion_session_props.size(),
                                slow_motion_session_props.data(), &ctorObj);
-    CHECK_ERROR_RETURN_LOG(status != napi_ok, "SlowMotionSessionNapi defined class failed");
+    CHECK_RETURN_ELOG(status != napi_ok, "SlowMotionSessionNapi defined class failed");
     int32_t refCount = 1;
     status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
-    CHECK_ERROR_RETURN_LOG(status != napi_ok, "SlowMotionSessionNapi Init failed");
+    CHECK_RETURN_ELOG(status != napi_ok, "SlowMotionSessionNapi Init failed");
     MEDIA_DEBUG_LOG("SlowMotionSessionNapi Init success");
 }
 
@@ -116,7 +116,7 @@ napi_value SlowMotionSessionNapi::CreateCameraSession(napi_env env)
     napi_value constructor;
     if (sConstructor_ == nullptr) {
         SlowMotionSessionNapi::Init(env);
-        CHECK_ERROR_RETURN_RET_LOG(sConstructor_ == nullptr, result, "sConstructor_ is null");
+        CHECK_RETURN_RET_ELOG(sConstructor_ == nullptr, result, "sConstructor_ is null");
     }
     status = napi_get_reference_value(env, sConstructor_, &constructor);
     if (status == napi_ok) {
@@ -154,11 +154,11 @@ napi_value SlowMotionSessionNapi::SlowMotionSessionNapiConstructor(napi_env env,
     if (status == napi_ok && thisVar != nullptr) {
         std::unique_ptr<SlowMotionSessionNapi> obj = std::make_unique<SlowMotionSessionNapi>();
         obj->env_ = env;
-        CHECK_ERROR_RETURN_RET_LOG(sCameraSessionForSys_ == nullptr, result, "sCameraSessionForSys_ is null");
+        CHECK_RETURN_RET_ELOG(sCameraSessionForSys_ == nullptr, result, "sCameraSessionForSys_ is null");
         obj->slowMotionSession_ = static_cast<SlowMotionSession*>(sCameraSessionForSys_.GetRefPtr());
         obj->cameraSessionForSys_ = obj->slowMotionSession_;
         obj->cameraSession_ = obj->slowMotionSession_;
-        CHECK_ERROR_RETURN_RET_LOG(obj->slowMotionSession_ == nullptr, result, "slowMotionSession is null");
+        CHECK_RETURN_RET_ELOG(obj->slowMotionSession_ == nullptr, result, "slowMotionSession is null");
         status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
             SlowMotionSessionNapi::SlowMotionSessionNapiDestructor, nullptr, nullptr);
         if (status == napi_ok) {
@@ -178,7 +178,7 @@ napi_value SlowMotionSessionNapi::IsSlowMotionDetectionSupported(napi_env env, n
     napi_value result = CameraNapiUtils::GetUndefinedValue(env);
     SlowMotionSessionNapi* slowMotionSessionNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, slowMotionSessionNapi);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"),
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"),
         result, "IsSlowMotionDetectionSupported parse parameter occur error");
     if (slowMotionSessionNapi != nullptr && slowMotionSessionNapi->slowMotionSession_ != nullptr) {
         bool isSupported = slowMotionSessionNapi->slowMotionSession_->IsSlowMotionDetectionSupported();
@@ -195,9 +195,9 @@ napi_value SlowMotionSessionNapi::GetDoubleProperty(napi_env env, napi_value par
     napi_status status;
     napi_value property;
     status = napi_get_named_property(env, param, propertyName.c_str(), &property);
-    CHECK_ERROR_RETURN_RET(status != napi_ok, nullptr);
+    CHECK_RETURN_RET(status != napi_ok, nullptr);
     status = napi_get_value_double(env, property, &propertyValue);
-    CHECK_ERROR_RETURN_RET(status != napi_ok, nullptr);
+    CHECK_RETURN_RET(status != napi_ok, nullptr);
     return property;
 }
 

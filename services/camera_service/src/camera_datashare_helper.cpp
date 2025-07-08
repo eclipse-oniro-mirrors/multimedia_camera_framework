@@ -26,16 +26,16 @@ namespace CameraStandard {
 std::shared_ptr<DataShare::DataShareHelper> CameraDataShareHelper::CreateCameraDataShareHelper()
 {
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    CHECK_ERROR_RETURN_RET_LOG(samgr == nullptr, nullptr, "CameraDataShareHelper GetSystemAbilityManager failed.");
+    CHECK_RETURN_RET_ELOG(samgr == nullptr, nullptr, "CameraDataShareHelper GetSystemAbilityManager failed.");
     sptr<IRemoteObject> remoteObj = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
-    CHECK_ERROR_RETURN_RET_LOG(remoteObj == nullptr, nullptr, "CameraDataShareHelper GetSystemAbility Service Failed.");
+    CHECK_RETURN_RET_ELOG(remoteObj == nullptr, nullptr, "CameraDataShareHelper GetSystemAbility Service Failed.");
     return DataShare::DataShareHelper::Creator(remoteObj, SETTINGS_DATA_BASE_URI, SETTINGS_DATA_EXT_URI);
 }
 
 int32_t CameraDataShareHelper::QueryOnce(const std::string key, std::string &value)
 {
     auto dataShareHelper = CreateCameraDataShareHelper();
-    CHECK_ERROR_RETURN_RET_LOG(dataShareHelper == nullptr, CAMERA_INVALID_ARG, "dataShareHelper_ is nullptr");
+    CHECK_RETURN_RET_ELOG(dataShareHelper == nullptr, CAMERA_INVALID_ARG, "dataShareHelper_ is nullptr");
     Uri uri(SETTINGS_DATA_BASE_URI);
     DataShare::DataSharePredicates predicates;
     predicates.EqualTo(SETTINGS_DATA_FIELD_KEYWORD, key);
@@ -43,11 +43,11 @@ int32_t CameraDataShareHelper::QueryOnce(const std::string key, std::string &val
     columns.emplace_back(SETTINGS_DATA_FIELD_VALUE);
 
     auto resultSet = dataShareHelper->Query(uri, predicates, columns);
-    CHECK_ERROR_RETURN_RET_LOG(resultSet == nullptr, CAMERA_INVALID_ARG, "CameraDataShareHelper query fail");
+    CHECK_RETURN_RET_ELOG(resultSet == nullptr, CAMERA_INVALID_ARG, "CameraDataShareHelper query fail");
 
     int32_t numRows = 0;
     resultSet->GetRowCount(numRows);
-    CHECK_ERROR_RETURN_RET_LOG(numRows == 0, CAMERA_INVALID_ARG, "CameraDataShareHelper query failed, row is zero.");
+    CHECK_RETURN_RET_ELOG(numRows == 0, CAMERA_INVALID_ARG, "CameraDataShareHelper query failed, row is zero.");
 
     if (resultSet->GoToFirstRow() != DataShare::E_OK) {
         MEDIA_INFO_LOG("CameraDataShareHelper Query failed,go to first row error");
@@ -68,7 +68,7 @@ int32_t CameraDataShareHelper::QueryOnce(const std::string key, std::string &val
 int32_t CameraDataShareHelper::UpdateOnce(const std::string key, std::string value)
 {
     auto dataShareHelper = CreateCameraDataShareHelper();
-    CHECK_ERROR_RETURN_RET_LOG(dataShareHelper == nullptr, CAMERA_INVALID_ARG, "dataShareHelper_ is nullptr");
+    CHECK_RETURN_RET_ELOG(dataShareHelper == nullptr, CAMERA_INVALID_ARG, "dataShareHelper_ is nullptr");
     Uri uri(SETTINGS_DATA_BASE_URI);
     DataShare::DataSharePredicates predicates;
     predicates.EqualTo(SETTINGS_DATA_FIELD_KEYWORD, key);
@@ -96,9 +96,9 @@ bool CameraDataShareHelper::IsDataShareReady()
         return true;
     }
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    CHECK_ERROR_RETURN_RET_LOG(samgr == nullptr, false, "CameraDataShareHelper GetSystemAbilityManager failed.");
+    CHECK_RETURN_RET_ELOG(samgr == nullptr, false, "CameraDataShareHelper GetSystemAbilityManager failed.");
     sptr<IRemoteObject> remoteObj = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
-    CHECK_ERROR_RETURN_RET_LOG(remoteObj == nullptr, false, "CameraDataShareHelper GetSystemAbility Service Failed.");
+    CHECK_RETURN_RET_ELOG(remoteObj == nullptr, false, "CameraDataShareHelper GetSystemAbility Service Failed.");
     std::pair<int, std::shared_ptr<DataShare::DataShareHelper>> ret =
         DataShare::DataShareHelper::Create(remoteObj, SETTINGS_DATA_BASE_URI, SETTINGS_DATA_EXT_URI);
     MEDIA_INFO_LOG("create dataShareHelper ret=%{public}d", ret.first);
@@ -117,4 +117,5 @@ bool CameraDataShareHelper::IsDataShareReady()
     return true;
 }
 } // namespace CameraStandard
-} // namespace OHOS
+} // namespace OHOS
+

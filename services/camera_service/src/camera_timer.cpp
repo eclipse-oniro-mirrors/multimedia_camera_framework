@@ -35,7 +35,7 @@ CameraTimer::~CameraTimer()
 
 uint32_t CameraTimer::Register(const TimerCallback& callback, uint32_t interval, bool once)
 {
-    CHECK_ERROR_RETURN_RET_LOG(timer_ == nullptr, 0, "timer is nullptr");
+    CHECK_RETURN_RET_ELOG(timer_ == nullptr, 0, "timer is nullptr");
 
     uint32_t timerId = timer_->Register(callback, interval, once);
     MEDIA_DEBUG_LOG("timerId: %{public}u", timerId);
@@ -45,7 +45,7 @@ uint32_t CameraTimer::Register(const TimerCallback& callback, uint32_t interval,
 void CameraTimer::Unregister(uint32_t timerId)
 {
     MEDIA_DEBUG_LOG("timerId: %{public}d", timerId);
-    CHECK_ERROR_RETURN_LOG(timer_ == nullptr, "timer is nullptr");
+    CHECK_RETURN_ELOG(timer_ == nullptr, "timer is nullptr");
 
     timer_->Unregister(timerId);
 }

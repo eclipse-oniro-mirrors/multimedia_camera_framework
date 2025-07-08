@@ -181,7 +181,7 @@ VideoSessionForSys::~VideoSessionForSys()
 bool VideoSessionForSys::CanAddOutput(sptr<CaptureOutput>& output)
 {
     MEDIA_DEBUG_LOG("Enter Into VideoSessionForSys::CanAddOutput");
-    CHECK_ERROR_RETURN_RET_LOG(
+    CHECK_RETURN_RET_ELOG(
         !IsSessionConfiged() || output == nullptr, false, "VideoSessionForSys::CanAddOutput operation is Not allowed!");
     return CaptureSession::CanAddOutput(output);
 }
@@ -217,21 +217,21 @@ bool VideoSessionForSys::IsPreconfigProfilesLegal(std::shared_ptr<PreconfigProfi
         }
         // Check photo
         bool isPhotoCanPreconfig = IsPhotoProfileLegal(device, configs->photoProfile);
-        CHECK_ERROR_RETURN_RET_LOG(!isPhotoCanPreconfig, false,
+        CHECK_RETURN_RET_ELOG(!isPhotoCanPreconfig, false,
             "VideoSessionForSys::IsPreconfigProfilesLegal check photo profile fail, "
             "no matched photo profiles:%{public}d %{public}dx%{public}d",
             configs->photoProfile.format_, configs->photoProfile.size_.width, configs->photoProfile.size_.height);
 
         // Check preview
         bool isPreviewCanPreconfig = IsPreviewProfileLegal(device, configs->previewProfile);
-        CHECK_ERROR_RETURN_RET_LOG(!isPreviewCanPreconfig, false,
+        CHECK_RETURN_RET_ELOG(!isPreviewCanPreconfig, false,
             "VideoSessionForSys::IsPreconfigProfilesLegal check preview profile fail, "
             "no matched preview profiles:%{public}d %{public}dx%{public}d",
             configs->previewProfile.format_, configs->previewProfile.size_.width, configs->previewProfile.size_.height);
 
         // Check video
         auto isVideoCanPreconfig = IsVideoProfileLegal(device, configs->videoProfile);
-        CHECK_ERROR_RETURN_RET_LOG(!isVideoCanPreconfig, false,
+        CHECK_RETURN_RET_ELOG(!isVideoCanPreconfig, false,
             "VideoSessionForSys::IsPreconfigProfilesLegal check video profile fail, "
             "no matched video profiles:%{public}d %{public}dx%{public}d",
             configs->videoProfile.format_, configs->videoProfile.size_.width, configs->videoProfile.size_.height);
@@ -245,11 +245,11 @@ bool VideoSessionForSys::IsPreconfigProfilesLegal(std::shared_ptr<PreconfigProfi
 bool VideoSessionForSys::IsPhotoProfileLegal(sptr<CameraDevice>& device, Profile& photoProfile)
 {
     auto photoProfilesIt = device->modePhotoProfiles_.find(SceneMode::VIDEO);
-    CHECK_ERROR_RETURN_RET_LOG(photoProfilesIt == device->modePhotoProfiles_.end(), false,
+    CHECK_RETURN_RET_ELOG(photoProfilesIt == device->modePhotoProfiles_.end(), false,
         "VideoSessionForSys::CanPreconfig check photo profile fail, empty photo profiles");
     auto photoProfiles = photoProfilesIt->second;
     return std::any_of(photoProfiles.begin(), photoProfiles.end(), [&photoProfile](auto& profile) {
-        CHECK_ERROR_RETURN_RET(!photoProfile.sizeFollowSensorMax_, profile == photoProfile);
+        CHECK_RETURN_RET(!photoProfile.sizeFollowSensorMax_, profile == photoProfile);
         return IsProfileSameRatio(profile, photoProfile.sizeRatio_, RATIO_VALUE_16_9);
     });
 }
@@ -257,7 +257,7 @@ bool VideoSessionForSys::IsPhotoProfileLegal(sptr<CameraDevice>& device, Profile
 bool VideoSessionForSys::IsPreviewProfileLegal(sptr<CameraDevice>& device, Profile& previewProfile)
 {
     auto previewProfilesIt = device->modePreviewProfiles_.find(SceneMode::VIDEO);
-    CHECK_ERROR_RETURN_RET_LOG(previewProfilesIt == device->modePreviewProfiles_.end(), false,
+    CHECK_RETURN_RET_ELOG(previewProfilesIt == device->modePreviewProfiles_.end(), false,
         "VideoSessionForSys::CanPreconfig check preview profile fail, empty preview profiles");
     auto previewProfiles = previewProfilesIt->second;
     return std::any_of(previewProfiles.begin(), previewProfiles.end(),
@@ -267,7 +267,7 @@ bool VideoSessionForSys::IsPreviewProfileLegal(sptr<CameraDevice>& device, Profi
 bool VideoSessionForSys::IsVideoProfileLegal(sptr<CameraDevice>& device, VideoProfile& videoProfile)
 {
     auto videoProfilesIt = device->modeVideoProfiles_.find(SceneMode::VIDEO);
-    CHECK_ERROR_RETURN_RET_LOG(videoProfilesIt == device->modeVideoProfiles_.end(), false,
+    CHECK_RETURN_RET_ELOG(videoProfilesIt == device->modeVideoProfiles_.end(), false,
         "VideoSessionForSys::CanPreconfig check video profile fail, empty video profiles");
     auto videoProfiles = videoProfilesIt->second;
     return std::any_of(videoProfiles.begin(), videoProfiles.end(),
@@ -279,7 +279,7 @@ bool VideoSessionForSys::CanPreconfig(PreconfigType preconfigType, ProfileSizeRa
     MEDIA_INFO_LOG("VideoSessionForSys::CanPreconfig check type:%{public}d, check ratio:%{public}d",
         preconfigType, preconfigRatio);
     std::shared_ptr<PreconfigProfiles> configs = GeneratePreconfigProfiles(preconfigType, preconfigRatio);
-    CHECK_ERROR_RETURN_RET_LOG(configs == nullptr, false, "VideoSessionForSys::CanPreconfig get configs fail.");
+    CHECK_RETURN_RET_ELOG(configs == nullptr, false, "VideoSessionForSys::CanPreconfig get configs fail.");
     return IsPreconfigProfilesLegal(configs);
 }
 
@@ -287,10 +287,10 @@ int32_t VideoSessionForSys::Preconfig(PreconfigType preconfigType, ProfileSizeRa
 {
     MEDIA_INFO_LOG("VideoSessionForSys::Preconfig type:%{public}d ratio:%{public}d", preconfigType, preconfigRatio);
     std::shared_ptr<PreconfigProfiles> configs = GeneratePreconfigProfiles(preconfigType, preconfigRatio);
-    CHECK_ERROR_RETURN_RET_LOG(configs == nullptr, SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_ELOG(configs == nullptr, SERVICE_FATL_ERROR,
         "VideoSessionForSys::Preconfig not support this type:%{public}d ratio:%{public}d",
         preconfigType, preconfigRatio);
-    CHECK_ERROR_RETURN_RET_LOG(!IsPreconfigProfilesLegal(configs), SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_ELOG(!IsPreconfigProfilesLegal(configs), SERVICE_FATL_ERROR,
         "VideoSessionForSys::Preconfig preconfigProfile is illegal.");
     SetPreconfigProfiles(configs);
     MEDIA_INFO_LOG("VideoSessionForSys::Preconfig %s", configs->ToString().c_str());
@@ -342,7 +342,7 @@ void VideoSessionForSys::ProcessFocusTrackingInfo(const std::shared_ptr<OHOS::Ca
 bool VideoSessionForSys::ProcessFocusTrackingModeInfo(const std::shared_ptr<OHOS::Camera::CameraMetadata>& metadata,
     FocusTrackingMode& mode)
 {
-    CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, false, "metadata is nullptr");
+    CHECK_RETURN_RET_ELOG(metadata == nullptr, false, "metadata is nullptr");
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_FOCUS_TRACKING_MODE, &item);
     if (ret != CAM_META_SUCCESS || item.count == 0) {
@@ -350,7 +350,7 @@ bool VideoSessionForSys::ProcessFocusTrackingModeInfo(const std::shared_ptr<OHOS
         return false;
     }
     auto itr = metaToFwFocusTrackingMode_.find(static_cast<camera_focus_tracking_mode_t>(item.data.u8[0]));
-    CHECK_ERROR_RETURN_RET_LOG(itr == metaToFwFocusTrackingMode_.end(), false,
+    CHECK_RETURN_RET_ELOG(itr == metaToFwFocusTrackingMode_.end(), false,
         "%{public}s trackingMode data error", __FUNCTION__);
     mode = itr->second;
     return true;
@@ -364,7 +364,7 @@ bool VideoSessionForSys::ProcessRectInfo(const std::shared_ptr<OHOS::Camera::Cam
     constexpr int32_t offsetTwo = 2;
     constexpr int32_t offsetThree = 3;
 
-    CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, false, "metadata is nullptr");
+    CHECK_RETURN_RET_ELOG(metadata == nullptr, false, "metadata is nullptr");
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_FOCUS_TRACKING_REGION, &item);
     if (ret != CAM_META_SUCCESS || item.count < FOCUS_TRACKING_REGION_DATA_CNT) {
@@ -436,7 +436,7 @@ void VideoSessionForSys::VideoSessionMetadataResultProcessor::ProcessCallbacks(c
 {
     MEDIA_DEBUG_LOG("%{public}s is called", __FUNCTION__);
     auto session = session_.promote();
-    CHECK_ERROR_RETURN_LOG(session == nullptr, "%{public}s session is null", __FUNCTION__);
+    CHECK_RETURN_ELOG(session == nullptr, "%{public}s session is null", __FUNCTION__);
 
     (void)timestamp;
     session->ProcessAutoFocusUpdates(result);

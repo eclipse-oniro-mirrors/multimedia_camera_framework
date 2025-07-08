@@ -60,7 +60,7 @@ void DepthDataListener::OnBufferAvailable()
     std::lock_guard<std::mutex> lock(g_depthDataMutex);
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("DepthDataListener::OnBufferAvailable is called");
-    CHECK_ERROR_RETURN_LOG(!depthDataSurface_, "DepthDataListener napi depthDataSurface_ is null");
+    CHECK_RETURN_ELOG(!depthDataSurface_, "DepthDataListener napi depthDataSurface_ is null");
     UpdateJSCallbackAsync(depthDataSurface_);
 }
 
@@ -82,7 +82,7 @@ void DepthDataListener::ExecuteDepthData(sptr<SurfaceBuffer> surfaceBuffer) cons
     const int32_t formatSize = 4;
     auto pixelMap = Media::PixelMap::Create(static_cast<const uint32_t*>(surfaceBuffer->GetVirAddr()),
         depthDataWidth * depthDataHeight * formatSize, 0, depthDataWidth, opts, true);
-    CHECK_ERROR_PRINT_LOG(pixelMap == nullptr, "create pixelMap failed, pixelMap is null");
+    CHECK_PRINT_ELOG(pixelMap == nullptr, "create pixelMap failed, pixelMap is null");
     napi_value depthMap;
     napi_get_undefined(env_, &depthMap);
     depthMap = Media::PixelMapNapi::CreatePixelMap(env_, std::move(pixelMap));
@@ -121,7 +121,7 @@ void DepthDataListener::UpdateJSCallback(sptr<Surface> depthSurface) const
     OHOS::Rect damage;
 
     SurfaceError surfaceRet = depthSurface->AcquireBuffer(surfaceBuffer, fence, timestamp, damage);
-    CHECK_ERROR_RETURN_LOG(surfaceRet != SURFACE_ERROR_OK, "DepthDataListener Failed to acquire surface buffer");
+    CHECK_RETURN_ELOG(surfaceRet != SURFACE_ERROR_OK, "DepthDataListener Failed to acquire surface buffer");
 
     ExecuteDepthData(surfaceBuffer);
 }
@@ -131,9 +131,9 @@ void DepthDataListener::UpdateJSCallbackAsync(sptr<Surface> depthSurface) const
     MEDIA_DEBUG_LOG("DepthDataListener UpdateJSCallbackAsync enter");
     uv_loop_s* loop = nullptr;
     napi_get_uv_event_loop(env_, &loop);
-    CHECK_ERROR_RETURN_LOG(!loop, "DepthDataListener:UpdateJSCallbackAsync() failed to get event loop");
+    CHECK_RETURN_ELOG(!loop, "DepthDataListener:UpdateJSCallbackAsync() failed to get event loop");
     uv_work_t* work = new (std::nothrow) uv_work_t;
-    CHECK_ERROR_RETURN_LOG(!work, "DepthDataListener:UpdateJSCallbackAsync() failed to allocate work");
+    CHECK_RETURN_ELOG(!work, "DepthDataListener:UpdateJSCallbackAsync() failed to allocate work");
     std::unique_ptr<DepthDataListenerInfo> callbackInfo =
         std::make_unique<DepthDataListenerInfo>(depthSurface, shared_from_this());
     work->data = callbackInfo.get();
@@ -266,10 +266,10 @@ void DepthDataOutputNapi::Init(napi_env env)
                                DepthDataOutputNapiConstructor, nullptr,
                                sizeof(depth_data_output_props) / sizeof(depth_data_output_props[PARAM0]),
                                depth_data_output_props, &ctorObj);
-    CHECK_ERROR_RETURN_LOG(status != napi_ok, "DepthDataOutputNapi defined class failed");
+    CHECK_RETURN_ELOG(status != napi_ok, "DepthDataOutputNapi defined class failed");
     int32_t refCount = 1;
     status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
-    CHECK_ERROR_RETURN_LOG(status != napi_ok, "DepthDataOutputNapi Init failed");
+    CHECK_RETURN_ELOG(status != napi_ok, "DepthDataOutputNapi Init failed");
     MEDIA_DEBUG_LOG("DepthDataOutputNapi Init success");
 }
 
@@ -308,7 +308,7 @@ static void CommonCompleteCallback(napi_env env, napi_status status, void* data)
 {
     MEDIA_DEBUG_LOG("CommonCompleteCallback is called");
     auto depthDataOutputAsyncContext = static_cast<DepthDataOutputAsyncContext*>(data);
-    CHECK_ERROR_RETURN_LOG(depthDataOutputAsyncContext == nullptr, "Async context is null");
+    CHECK_RETURN_ELOG(depthDataOutputAsyncContext == nullptr, "Async context is null");
     std::unique_ptr<JSAsyncContextOutput> jsContext = std::make_unique<JSAsyncContextOutput>();
     if (!depthDataOutputAsyncContext->status) {
         CameraNapiUtils::CreateNapiErrorObject(env, depthDataOutputAsyncContext->errorCode,
@@ -343,7 +343,7 @@ napi_value DepthDataOutputNapi::CreateDepthDataOutput(napi_env env, DepthProfile
     napi_get_undefined(env, &result);
     if (sConstructor_ == nullptr) {
         DepthDataOutputNapi::Init(env);
-        CHECK_ERROR_RETURN_RET_LOG(sConstructor_ == nullptr, result, "sConstructor_ is null");
+        CHECK_RETURN_RET_ELOG(sConstructor_ == nullptr, result, "sConstructor_ is null");
     }
     status = napi_get_reference_value(env, sConstructor_, &constructor);
     if (status == napi_ok) {
@@ -351,7 +351,7 @@ napi_value DepthDataOutputNapi::CreateDepthDataOutput(napi_env env, DepthProfile
         MEDIA_INFO_LOG("create surface as consumer");
         depthDataSurface = Surface::CreateSurfaceAsConsumer("depthDataOutput");
         sDepthDataSurface_ = depthDataSurface;
-        CHECK_ERROR_RETURN_RET_LOG(depthDataSurface == nullptr, result, "failed to get surface");
+        CHECK_RETURN_RET_ELOG(depthDataSurface == nullptr, result, "failed to get surface");
 
         sptr<IBufferProducer> surfaceProducer = depthDataSurface->GetProducer();
         MEDIA_INFO_LOG("depthProfile width: %{public}d, height: %{public}d, format = %{public}d, "
@@ -360,7 +360,7 @@ napi_value DepthDataOutputNapi::CreateDepthDataOutput(napi_env env, DepthProfile
                        depthDataSurface->GetDefaultWidth(), depthDataSurface->GetDefaultHeight());
         int retCode = CameraManagerForSys::GetInstance()->CreateDepthDataOutput(depthProfile, surfaceProducer,
             &sDepthDataOutput_);
-        CHECK_ERROR_RETURN_RET_LOG(!CameraNapiUtils::CheckError(env, retCode) || sDepthDataOutput_ == nullptr,
+        CHECK_RETURN_RET_ELOG(!CameraNapiUtils::CheckError(env, retCode) || sDepthDataOutput_ == nullptr,
             result, "failed to create CreateDepthDataOutput");
         status = napi_new_instance(env, constructor, 0, nullptr, &result);
         sDepthDataOutput_ = nullptr;
@@ -560,14 +560,14 @@ napi_value DepthDataOutputNapi::Stop(napi_env env, napi_callback_info info)
 void DepthDataOutputNapi::RegisterDepthDataAvailableCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
-    CHECK_ERROR_RETURN_LOG(sDepthDataSurface_ == nullptr, "sDepthDataSurface_ is null!");
+    CHECK_RETURN_ELOG(sDepthDataSurface_ == nullptr, "sDepthDataSurface_ is null!");
     if (depthDataListener_ == nullptr) {
         MEDIA_INFO_LOG("new depthDataListener_ and register surface consumer listener");
         sptr<DepthDataListener> depthDataListener = new (std::nothrow) DepthDataListener(env, sDepthDataSurface_,
             depthDataOutput_);
         SurfaceError ret = sDepthDataSurface_->RegisterConsumerListener((
             sptr<IBufferConsumerListener>&)depthDataListener);
-        CHECK_ERROR_PRINT_LOG(ret != SURFACE_ERROR_OK, "register surface consumer listener failed!");
+        CHECK_PRINT_ELOG(ret != SURFACE_ERROR_OK, "register surface consumer listener failed!");
         depthDataListener_ = depthDataListener;
     }
     if (depthDataListener_ == nullptr) {
@@ -598,7 +598,7 @@ void DepthDataOutputNapi::RegisterErrorCallbackListener(
 void DepthDataOutputNapi::UnregisterErrorCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
-    CHECK_ERROR_RETURN_LOG(depthDataCallback_ == nullptr, "depthDataCallback is null");
+    CHECK_RETURN_ELOG(depthDataCallback_ == nullptr, "depthDataCallback is null");
     depthDataCallback_->RemoveCallbackRef(CONST_DEPTH_DATA_ERROR, callback);
 }
 
@@ -641,7 +641,7 @@ extern "C" bool checkAndGetOutput(napi_env env, napi_value obj, sptr<CaptureOutp
         MEDIA_DEBUG_LOG("depth data output adding..");
         DepthDataOutputNapi* depthDataOutputNapiObj = nullptr;
         napi_unwrap(env, obj, reinterpret_cast<void**>(&depthDataOutputNapiObj));
-        CHECK_ERROR_RETURN_RET_LOG(depthDataOutputNapiObj == nullptr, false, "depthDataOutputNapiObj unwrap failed!");
+        CHECK_RETURN_RET_ELOG(depthDataOutputNapiObj == nullptr, false, "depthDataOutputNapiObj unwrap failed!");
         output = depthDataOutputNapiObj->GetDepthDataOutput();
     } else {
         return false;

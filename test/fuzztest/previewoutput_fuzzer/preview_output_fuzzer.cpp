@@ -48,9 +48,9 @@ void TestOutput(sptr<PreviewOutput> output, FuzzedDataProvider& fdp)
         return;
     }
     sptr<IConsumerSurface> previewSurface = IConsumerSurface::Create();
-    CHECK_ERROR_RETURN_LOG(!previewSurface, "previewOutputFuzzer: Create previewSurface Error");
+    CHECK_RETURN_ELOG(!previewSurface, "previewOutputFuzzer: Create previewSurface Error");
     sptr<IBufferProducer> producer = previewSurface->GetProducer();
-    CHECK_ERROR_RETURN_LOG(!producer, "previewOutputFuzzer: GetProducer Error");
+    CHECK_RETURN_ELOG(!producer, "previewOutputFuzzer: GetProducer Error");
     sptr<Surface> sf = Surface::CreateSurfaceAsProducer(producer);
     output->AddDeferredSurface(sf);
     output->Start();
@@ -85,31 +85,31 @@ void Test(uint8_t *data, size_t size)
     if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
         return;
     }
-    CHECK_ERROR_RETURN_LOG(!TestToken::GetAllCameraPermission(), "GetPermission error");
+    CHECK_RETURN_ELOG(!TestToken::GetAllCameraPermission(), "GetPermission error");
     auto manager = CameraManager::GetInstance();
-    CHECK_ERROR_RETURN_LOG(!manager, "previewOutputFuzzer: Get CameraManager instance Error");
+    CHECK_RETURN_ELOG(!manager, "previewOutputFuzzer: Get CameraManager instance Error");
     auto cameras = manager->GetSupportedCameras();
-    CHECK_ERROR_RETURN_LOG(cameras.size() < NUM_TWO, "previewOutputFuzzer: GetSupportedCameras Error");
+    CHECK_RETURN_ELOG(cameras.size() < NUM_TWO, "previewOutputFuzzer: GetSupportedCameras Error");
     MessageParcel dataMessageParcel;
     size_t bufferSize = fdp.ConsumeIntegralInRange(0, MAX_CODE_LEN);
     std::vector<uint8_t> buffer = fdp.ConsumeBytes<uint8_t>(bufferSize);
     dataMessageParcel.WriteRawData(buffer.data(), buffer.size());
     auto camera = cameras[dataMessageParcel.ReadUint32() % cameras.size()];
-    CHECK_ERROR_RETURN_LOG(!camera, "previewOutputFuzzer: camera is null");
+    CHECK_RETURN_ELOG(!camera, "previewOutputFuzzer: camera is null");
     int32_t mode = dataMessageParcel.ReadInt32() % (SceneMode::NORMAL + NUM_TWO);
     auto capability = manager->GetSupportedOutputCapability(camera, mode);
-    CHECK_ERROR_RETURN_LOG(!capability, "previewOutputFuzzer: GetSupportedOutputCapability Error");
+    CHECK_RETURN_ELOG(!capability, "previewOutputFuzzer: GetSupportedOutputCapability Error");
     auto profiles = capability->GetPreviewProfiles();
-    CHECK_ERROR_RETURN_LOG(profiles.empty(), "previewOutputFuzzer: GetPreviewProfiles empty");
+    CHECK_RETURN_ELOG(profiles.empty(), "previewOutputFuzzer: GetPreviewProfiles empty");
     Profile profile = profiles[dataMessageParcel.ReadUint32() % profiles.size()];
     sptr<IConsumerSurface> previewSurface = IConsumerSurface::Create();
-    CHECK_ERROR_RETURN_LOG(!previewSurface, "previewOutputFuzzer: create previewSurface Error");
+    CHECK_RETURN_ELOG(!previewSurface, "previewOutputFuzzer: create previewSurface Error");
     sptr<IBufferProducer> producer = previewSurface->GetProducer();
-    CHECK_ERROR_RETURN_LOG(!producer, "previewOutputFuzzer: GetProducer Error");
+    CHECK_RETURN_ELOG(!producer, "previewOutputFuzzer: GetProducer Error");
     sptr<Surface> pSurface = Surface::CreateSurfaceAsProducer(producer);
-    CHECK_ERROR_RETURN_LOG(!pSurface, "previewOutputFuzzer: GetProducer Error");
+    CHECK_RETURN_ELOG(!pSurface, "previewOutputFuzzer: GetProducer Error");
     auto output = manager->CreatePreviewOutput(profile, pSurface);
-    CHECK_ERROR_RETURN_LOG(!output, "previewOutputFuzzer: CreatePhotoOutput Error");
+    CHECK_RETURN_ELOG(!output, "previewOutputFuzzer: CreatePhotoOutput Error");
     TestOutput(output, fdp);
 }
 

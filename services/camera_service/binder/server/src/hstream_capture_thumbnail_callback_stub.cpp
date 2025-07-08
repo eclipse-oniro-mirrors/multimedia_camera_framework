@@ -23,7 +23,7 @@ int HStreamCaptureThumbnailCallbackStub::OnRemoteRequest(
     uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option)
 {
     int errCode = -1;
-    CHECK_ERROR_RETURN_RET(data.ReadInterfaceToken() != GetDescriptor(), errCode);
+    CHECK_RETURN_RET(data.ReadInterfaceToken() != GetDescriptor(), errCode);
     switch (code) {
         case static_cast<uint32_t>(
             StreamCaptureThumbnailCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_THUMBNAIL_AVAILABLE):

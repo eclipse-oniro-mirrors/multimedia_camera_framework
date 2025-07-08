@@ -157,18 +157,18 @@ void Test()
         MEDIA_INFO_LOG("professionSession is null");
         return;
     }
-    CHECK_ERROR_RETURN_LOG(!TestToken::GetAllCameraPermission(), "GetPermission error");
+    CHECK_RETURN_ELOG(!TestToken::GetAllCameraPermission(), "GetPermission error");
     manager_ = CameraManager::GetInstance();
     sptr<CaptureSessionForSys> captureSessionForSys =
         CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(SceneMode::PROFESSIONAL_VIDEO);
     ProfessionSessionFuzzer::fuzz_ = static_cast<ProfessionSession*>(captureSessionForSys.GetRefPtr());
-    CHECK_ERROR_RETURN_LOG(!ProfessionSessionFuzzer::fuzz_, "Create fuzz_ Error");
+    CHECK_RETURN_ELOG(!ProfessionSessionFuzzer::fuzz_, "Create fuzz_ Error");
     SceneMode sceneMode = SceneMode::PROFESSIONAL_VIDEO;
     std::vector<sptr<CameraDevice>> cameras;
     cameras = manager_->GetSupportedCameras();
-    CHECK_ERROR_RETURN_LOG(cameras.empty(), "GetCameraDeviceListFromServer Error");
+    CHECK_RETURN_ELOG(cameras.empty(), "GetCameraDeviceListFromServer Error");
     sptr<CaptureInput> input = manager_->CreateCameraInput(cameras[0]);
-    CHECK_ERROR_RETURN_LOG(!input, "CreateCameraInput Error");
+    CHECK_RETURN_ELOG(!input, "CreateCameraInput Error");
     sptr<CameraOutputCapability> modeAbility =
         manager_->GetSupportedOutputCapability(cameras[0], sceneMode);
     captureSessionForSys->BeginConfig();

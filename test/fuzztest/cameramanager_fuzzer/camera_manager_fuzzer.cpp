@@ -47,7 +47,7 @@ std::shared_ptr<TorchListenerFuzz> torchListenerCallback_ = std::make_shared<Tor
 void CameraManagerFuzzer::CameraManagerFuzzTest1(FuzzedDataProvider& fdp)
 {
     manager = CameraManager::GetInstance();
-    CHECK_ERROR_RETURN_LOG(!manager, "GetInstance Error");
+    CHECK_RETURN_ELOG(!manager, "GetInstance Error");
     auto session = manager->CreateCaptureSession();
     manager->CreateCaptureSession(&session);
     int userId = fdp.ConsumeIntegral<int>();
@@ -92,7 +92,7 @@ void CameraManagerFuzzer::CameraManagerFuzzTest1(FuzzedDataProvider& fdp)
 void CameraManagerFuzzer::CameraManagerFuzzTest2(FuzzedDataProvider& fdp)
 {
     manager = CameraManager::GetInstance();
-    CHECK_ERROR_RETURN_LOG(!manager, "GetInstance Error");
+    CHECK_RETURN_ELOG(!manager, "GetInstance Error");
     std::string cameraId;
     manager->GetCameraDeviceFromId(cameraId);
     manager->GetCameras();
@@ -126,7 +126,7 @@ void CameraManagerFuzzer::CameraManagerFuzzTest2(FuzzedDataProvider& fdp)
 void CameraManagerFuzzer::CameraManagerFuzzTest3(FuzzedDataProvider& fdp)
 {
     manager = CameraManager::GetInstance();
-    CHECK_ERROR_RETURN_LOG(!manager, "GetInstance Error");
+    CHECK_RETURN_ELOG(!manager, "GetInstance Error");
     ITorchServiceCallbackFuzz torchServiceCallback;
     TorchStatus torchStatus = TorchStatus::TORCH_STATUS_ON;
     torchServiceCallback.OnTorchStatusChange(torchStatus);

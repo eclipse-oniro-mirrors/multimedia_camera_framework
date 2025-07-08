@@ -42,7 +42,7 @@ void HStreamOperatorFuzzer::HStreamOperatorFuzzTest(FuzzedDataProvider& fdp)
         return;
     }
     fuzz_ = HStreamOperator::NewInstance(0, 0);
-    CHECK_ERROR_RETURN_LOG(!fuzz_, "NewInstance Error");
+    CHECK_RETURN_ELOG(!fuzz_, "NewInstance Error");
     int32_t streamId = fdp.ConsumeIntegral<int32_t>();
     fuzz_->GetStreamByStreamID(streamId);
     int32_t rotation = fdp.ConsumeIntegral<int32_t>();

@@ -39,8 +39,8 @@ void PhotoBufferConsumer::OnBufferAvailable()
 {
     MEDIA_INFO_LOG("PhotoBufferConsumer OnBufferAvailable E");
     sptr<HStreamCapture> streamCapture = streamCapture_.promote();
-    CHECK_ERROR_RETURN_LOG(streamCapture == nullptr, "streamCapture is null");
-    CHECK_ERROR_RETURN_LOG(streamCapture->photoTask_ == nullptr, "photoTask is null");
+    CHECK_RETURN_ELOG(streamCapture == nullptr, "streamCapture is null");
+    CHECK_RETURN_ELOG(streamCapture->photoTask_ == nullptr, "photoTask is null");
     wptr<PhotoBufferConsumer> thisPtr(this);
     streamCapture->photoTask_->SubmitTask([thisPtr]() {
         auto listener = thisPtr.promote();
@@ -54,20 +54,20 @@ void PhotoBufferConsumer::ExecuteOnBufferAvailable()
     MEDIA_INFO_LOG("P_ExecuteOnBufferAvailable E");
     CAMERA_SYNC_TRACE;
     sptr<HStreamCapture> streamCapture = streamCapture_.promote();
-    CHECK_ERROR_RETURN_LOG(streamCapture == nullptr, "streamCapture is null");
+    CHECK_RETURN_ELOG(streamCapture == nullptr, "streamCapture is null");
     sptr<Surface> surface;
     if (isRaw_) {
         surface = streamCapture->rawSurface_;
     } else {
         surface = streamCapture->surface_;
     }
-    CHECK_ERROR_RETURN_LOG(surface == nullptr, "surface is null");
+    CHECK_RETURN_ELOG(surface == nullptr, "surface is null");
     sptr<SurfaceBuffer> surfaceBuffer = nullptr;
     int32_t fence = -1;
     int64_t timestamp;
     OHOS::Rect damage;
     SurfaceError surfaceRet = surface->AcquireBuffer(surfaceBuffer, fence, timestamp, damage);
-    CHECK_ERROR_RETURN_LOG(surfaceRet != SURFACE_ERROR_OK, "PhotoBufferConsumer Failed to acquire surface buffer");
+    CHECK_RETURN_ELOG(surfaceRet != SURFACE_ERROR_OK, "PhotoBufferConsumer Failed to acquire surface buffer");
     int32_t isDegradedImage = CameraSurfaceBufferUtil::GetIsDegradedImage(surfaceBuffer);
     MEDIA_INFO_LOG("PhotoBufferConsumer ts isDegradedImage:%{public}d", isDegradedImage);
     MEDIA_INFO_LOG("PhotoBufferConsumer ts is:%{public}" PRId64, timestamp);
@@ -75,7 +75,7 @@ void PhotoBufferConsumer::ExecuteOnBufferAvailable()
     sptr<SurfaceBuffer> newSurfaceBuffer = CameraSurfaceBufferUtil::DeepCopyBuffer(surfaceBuffer);
     // release surfaceBuffer to bufferQueue
     surface->ReleaseBuffer(surfaceBuffer, -1);
-    CHECK_ERROR_RETURN_LOG(newSurfaceBuffer == nullptr, "newSurfaceBuffer is null");
+    CHECK_RETURN_ELOG(newSurfaceBuffer == nullptr, "newSurfaceBuffer is null");
     int32_t captureId = CameraSurfaceBufferUtil::GetCaptureId(newSurfaceBuffer);
     CameraReportDfxUtils::GetInstance()->SetFirstBufferEndInfo(captureId);
     CameraReportDfxUtils::GetInstance()->SetPrepareProxyStartInfo(captureId);

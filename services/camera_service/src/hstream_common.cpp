@@ -143,7 +143,7 @@ ColorSpace HStreamCommon::GetColorSpace()
 int32_t HStreamCommon::LinkInput(wptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator,
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility)
 {
-    CHECK_ERROR_RETURN_RET_LOG(streamOperator == nullptr || cameraAbility == nullptr, CAMERA_INVALID_ARG,
+    CHECK_RETURN_RET_ELOG(streamOperator == nullptr || cameraAbility == nullptr, CAMERA_INVALID_ARG,
         "HStreamCommon::LinkInput streamOperator is null");
     SetStreamOperator(streamOperator);
     std::lock_guard<std::mutex> lock(cameraAbilityLock_);
@@ -174,7 +174,7 @@ int32_t HStreamCommon::StopStream()
 
     if (curCaptureID_ != CAPTURE_ID_UNSET) {
         CamRetCode rc = (CamRetCode)(streamOperator->CancelCapture(curCaptureID_));
-        CHECK_ERROR_PRINT_LOG(rc != CamRetCode::NO_ERROR,
+        CHECK_PRINT_ELOG(rc != CamRetCode::NO_ERROR,
             "HStreamCommon::StopStream streamOperator->CancelCapture get error code:%{public}d", rc);
         ResetCaptureId();
         return HdiToServiceError(rc);
@@ -300,7 +300,7 @@ void HStreamCommon::DumpStreamInfo(CameraInfoDumper& infoDumper)
 
 void HStreamCommon::PrintCaptureDebugLog(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureMetadataSetting_)
 {
-    CHECK_ERROR_RETURN_LOG(captureMetadataSetting_ == nullptr,
+    CHECK_RETURN_ELOG(captureMetadataSetting_ == nullptr,
         "HStreamCapture::PrintCaptureDebugLog captureMetadataSetting_ is nullptr");
     camera_metadata_item_t item;
     int result = OHOS::Camera::FindCameraMetadataItem(captureMetadataSetting_->get(), OHOS_JPEG_QUALITY, &item);

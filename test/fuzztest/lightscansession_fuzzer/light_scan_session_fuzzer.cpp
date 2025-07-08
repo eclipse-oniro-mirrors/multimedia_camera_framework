@@ -40,7 +40,7 @@ void LightScanSessionFuzzer::LightPaintingSessionFuzzTest(FuzzedDataProvider& fd
         CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(SceneMode::SLOW_MOTION);
     auto lightPaintingSession = static_cast<LightPaintingSession*>(captureSessionForSys.GetRefPtr());
     fuzzLight_ = lightPaintingSession;
-    CHECK_ERROR_RETURN_LOG(!fuzzLight_, "Create fuzzLight_ Error");
+    CHECK_RETURN_ELOG(!fuzzLight_, "Create fuzzLight_ Error");
 
     std::vector<LightPaintingType> supportedType;
     fuzzLight_->GetSupportedLightPaintings(supportedType);
@@ -55,7 +55,7 @@ void LightScanSessionFuzzer::ScanSessionFuzzTest(FuzzedDataProvider& fdp)
     sptr<CaptureSession> captureSession = cameraManager->CreateCaptureSession(SceneMode::SCAN);
     sptr<ScanSession> scanSession = static_cast<ScanSession*>(captureSession.GetRefPtr());
     fuzzScan_ = scanSession;
-    CHECK_ERROR_RETURN_LOG(!fuzzScan_, "Create fuzzScan_ Error");
+    CHECK_RETURN_ELOG(!fuzzScan_, "Create fuzzScan_ Error");
     fuzzScan_->BeginConfig();
     sptr<CaptureOutput> preview = nullptr;
     fuzzScan_->AddOutput(preview);

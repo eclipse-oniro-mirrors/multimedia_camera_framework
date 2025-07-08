@@ -53,10 +53,10 @@ void ApertureVideoSessionNapi::Init(napi_env env)
     std::vector<napi_property_descriptor> session_props = CameraNapiUtils::GetPropertyDescriptor(descriptors);
     status = napi_define_class(env, APERTURE_VIDEO_SESSION_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
         ApertureVideoSessionNapiConstructor, nullptr, session_props.size(), session_props.data(), &ctorObj);
-    CHECK_ERROR_RETURN_LOG(status != napi_ok, "ApertureVideoSessionNapi defined class failed");
+    CHECK_RETURN_ELOG(status != napi_ok, "ApertureVideoSessionNapi defined class failed");
     int32_t refCount = 1;
     status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
-    CHECK_ERROR_RETURN_LOG(status != napi_ok, "ApertureVideoSessionNapi Init failed");
+    CHECK_RETURN_ELOG(status != napi_ok, "ApertureVideoSessionNapi Init failed");
     MEDIA_DEBUG_LOG("ApertureVideoSessionNapi Init success");
 }
 
@@ -69,7 +69,7 @@ napi_value ApertureVideoSessionNapi::CreateCameraSession(napi_env env)
     napi_value constructor;
     if (sConstructor_ == nullptr) {
         ApertureVideoSessionNapi::Init(env);
-        CHECK_ERROR_RETURN_RET_LOG(sConstructor_ == nullptr, result, "sConstructor_ is null");
+        CHECK_RETURN_RET_ELOG(sConstructor_ == nullptr, result, "sConstructor_ is null");
     }
     status = napi_get_reference_value(env, sConstructor_, &constructor);
     if (status == napi_ok) {
@@ -107,11 +107,11 @@ napi_value ApertureVideoSessionNapi::ApertureVideoSessionNapiConstructor(napi_en
     if (status == napi_ok && thisVar != nullptr) {
         std::unique_ptr<ApertureVideoSessionNapi> obj = std::make_unique<ApertureVideoSessionNapi>();
         obj->env_ = env;
-        CHECK_ERROR_RETURN_RET_LOG(sCameraSessionForSys_ == nullptr, result, "sCameraSessionForSys_ is null");
+        CHECK_RETURN_RET_ELOG(sCameraSessionForSys_ == nullptr, result, "sCameraSessionForSys_ is null");
         obj->apertureVideoSession_ = static_cast<ApertureVideoSession*>(sCameraSessionForSys_.GetRefPtr());
         obj->cameraSessionForSys_ = obj->apertureVideoSession_;
         obj->cameraSession_ = obj->apertureVideoSession_;
-        CHECK_ERROR_RETURN_RET_LOG(obj->apertureVideoSession_ == nullptr, result, "apertureVideoSession_ is null");
+        CHECK_RETURN_RET_ELOG(obj->apertureVideoSession_ == nullptr, result, "apertureVideoSession_ is null");
         status = napi_wrap(
             env, thisVar, reinterpret_cast<void*>(obj.get()), ApertureVideoSessionNapiDestructor, nullptr, nullptr);
         if (status == napi_ok) {

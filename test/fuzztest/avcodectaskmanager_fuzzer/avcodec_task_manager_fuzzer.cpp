@@ -38,7 +38,7 @@ void AvcodecTaskManagerFuzzer::AvcodecTaskManagerFuzzTest(FuzzedDataProvider& fd
     ColorSpace color = static_cast<ColorSpace>(fdp.ConsumeIntegral<uint8_t>()
         % (ColorSpace::DISPLAY_P3 + CONST_2));
     fuzz_ = std::make_shared<AvcodecTaskManager>(session, mode, color);
-    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
+    CHECK_RETURN_ELOG(!fuzz_, "Create fuzz_ Error");
     fuzz_->GetTaskManager();
     fuzz_->GetEncoderManager();
     int64_t timestamp = fdp.ConsumeIntegral<int64_t>();

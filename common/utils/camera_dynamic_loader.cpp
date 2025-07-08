@@ -50,7 +50,7 @@ Dynamiclib::Dynamiclib(const string& libName) : libName_(libName)
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("Dynamiclib::Dynamiclib dlopen %{public}s", libName_.c_str());
     libHandle_ = dlopen(libName_.c_str(), RTLD_NOW);
-    CHECK_ERROR_RETURN_LOG(
+    CHECK_RETURN_ELOG(
         libHandle_ == nullptr, "Dynamiclib::Dynamiclib dlopen name:%{public}s return null", libName_.c_str());
     MEDIA_INFO_LOG("Dynamiclib::Dynamiclib dlopen %{public}s success handle:%{public}u", libName_.c_str(),
         static_cast<uint32_t>(HANDLE_MASK & reinterpret_cast<uintptr_t>(libHandle_)));
@@ -59,7 +59,7 @@ Dynamiclib::Dynamiclib(const string& libName) : libName_(libName)
 Dynamiclib::~Dynamiclib()
 {
     CAMERA_SYNC_TRACE;
-    CHECK_ERROR_RETURN(libHandle_ == nullptr);
+    CHECK_RETURN(libHandle_ == nullptr);
     int ret = dlclose(libHandle_);
     MEDIA_INFO_LOG("Dynamiclib::~Dynamiclib dlclose name:%{public}s handle:%{public}u result:%{public}d",
         libName_.c_str(), static_cast<uint32_t>(HANDLE_MASK & reinterpret_cast<uintptr_t>(libHandle_)), ret);
@@ -74,11 +74,11 @@ bool Dynamiclib::IsLoaded()
 void* Dynamiclib::GetFunction(const string& functionName)
 {
     CAMERA_SYNC_TRACE;
-    CHECK_ERROR_RETURN_RET_LOG(
+    CHECK_RETURN_RET_ELOG(
         !IsLoaded(), nullptr, "Dynamiclib::GetFunction fail libname:%{public}s not loaded", libName_.c_str());
 
     void* handle = dlsym(libHandle_, functionName.c_str());
-    CHECK_ERROR_RETURN_RET_LOG(
+    CHECK_RETURN_RET_ELOG(
         handle == nullptr, nullptr, "Dynamiclib::GetFunction fail function:%{public}s not find", functionName.c_str());
     MEDIA_INFO_LOG("Dynamiclib::GetFunction %{public}s success", functionName.c_str());
     return handle;
@@ -101,7 +101,7 @@ shared_ptr<Dynamiclib> CameraDynamicLoader::GetDynamiclibNoLock(const string& li
     } else {
         dynamiclib = make_shared<Dynamiclib>(libName);
     }
-    CHECK_ERROR_RETURN_RET_LOG(
+    CHECK_RETURN_RET_ELOG(
         !dynamiclib->IsLoaded(), nullptr, "CameraDynamicLoader::GetDynamiclib name:%{public}s fail", libName.c_str());
     g_dynamiclibMap.emplace(pair<const string, shared_ptr<Dynamiclib>>(libName, dynamiclib));
     MEDIA_INFO_LOG("Dynamiclib::GetDynamiclib %{public}s load first", libName.c_str());
@@ -148,7 +148,7 @@ void CameraDynamicLoader::FreeDynamiclibNoLock(const string& libName)
 {
     CAMERA_SYNC_TRACE;
     auto loadedIterator = g_dynamiclibMap.find(libName);
-    CHECK_ERROR_RETURN(loadedIterator == g_dynamiclibMap.end());
+    CHECK_RETURN(loadedIterator == g_dynamiclibMap.end());
     MEDIA_INFO_LOG("Dynamiclib::FreeDynamiclib %{public}s lib use count is:%{public}d", libName.c_str(),
         static_cast<int32_t>(loadedIterator->second.use_count()));
 

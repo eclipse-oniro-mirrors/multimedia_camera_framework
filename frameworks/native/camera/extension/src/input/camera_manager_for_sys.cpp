@@ -120,10 +120,10 @@ int32_t CameraManagerForSys::CreateCaptureSessionForSys(sptr<CaptureSessionForSy
     sptr<CaptureSessionForSys> captureSessionForSys = nullptr;
     int32_t retCode = CameraErrorCode::SUCCESS;
     retCode = CameraManager::GetInstance()->CreateCaptureSessionFromService(session, mode);
-    CHECK_ERROR_RETURN_RET_LOG(retCode != CameraErrorCode::SUCCESS, retCode,
+    CHECK_RETURN_RET_ELOG(retCode != CameraErrorCode::SUCCESS, retCode,
         "CreateCaptureSessionForSys failed to CreateCaptureSessionFromService with retCode is %{public}d", retCode);
     captureSessionForSys = CreateCaptureSessionForSysImpl(mode, session);
-    CHECK_ERROR_RETURN_RET_LOG(captureSessionForSys == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_ELOG(captureSessionForSys == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "CreateCaptureSessionForSys failed to new captureSessionForSys!");
     captureSessionForSys->SetMode(mode);
     pCaptureSession = captureSessionForSys;
@@ -140,7 +140,7 @@ int CameraManagerForSys::CreateDepthDataOutput(DepthProfile& depthProfile, sptr<
     retCode = CameraManager::GetInstance()->GetStreamDepthDataFromService(depthProfile, surface, streamDepthData);
     if (retCode == CameraErrorCode::SUCCESS) {
         depthDataOutput = new(std::nothrow) DepthDataOutput(surface);
-        CHECK_ERROR_RETURN_RET(depthDataOutput == nullptr, CameraErrorCode::SERVICE_FATL_ERROR);
+        CHECK_RETURN_RET(depthDataOutput == nullptr, CameraErrorCode::SERVICE_FATL_ERROR);
         depthDataOutput->SetStream(streamDepthData);
     } else {
         MEDIA_ERR_LOG("GetStreamDepthDataFromService failed! retCode = %{public}d", retCode);

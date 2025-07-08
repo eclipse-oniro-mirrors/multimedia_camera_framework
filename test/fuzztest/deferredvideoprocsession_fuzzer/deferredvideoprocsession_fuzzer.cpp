@@ -45,18 +45,18 @@ auto createSession(int userId,
     sptr<DeferredProcessing::IDeferredVideoProcessingSession>& session)
 {
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    CHECK_ERROR_RETURN_RET_LOG(samgr == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_ELOG(samgr == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "CreateDeferredVideoProcessingSession Failed to get System ability manager");
     sptr<IRemoteObject> object = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
-    CHECK_ERROR_RETURN_RET_LOG(object == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_ELOG(object == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "CreateDeferredVideoProcessingSession object is null");
     sptr<ICameraService> serviceProxy = iface_cast<ICameraService>(object);
-    CHECK_ERROR_RETURN_RET_LOG(serviceProxy == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "CreateDeferredVideoProcessingSession serviceProxy is null");
 
     sptr<DeferredProcessing::IDeferredVideoProcessingSessionCallback> remoteCallback =
         new(std::nothrow) DeferredVideoProcessingSessionCallback();
-    CHECK_ERROR_RETURN_RET_LOG(remoteCallback == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_ELOG(remoteCallback == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "CreateDeferredVideoProcessingSession failed to new remoteCallback!");
     serviceProxy->CreateDeferredVideoProcessingSession(userId, remoteCallback, session);
     return CameraErrorCode::SUCCESS;
@@ -67,7 +67,7 @@ void DeferredVideoProcSessionFuzzer::DeferredVideoProcSessionFuzzTest(FuzzedData
     if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
         return;
     }
-    CHECK_ERROR_RETURN_LOG(!TestToken::GetAllCameraPermission(), "GetPermission error");
+    CHECK_RETURN_ELOG(!TestToken::GetAllCameraPermission(), "GetPermission error");
     std::string videoId(fdp.ConsumeRandomLengthString(MAX_LENGTH_STRING));
     sptr<IPCFileDescriptor> ipcFileDescriptor = nullptr;
     callback_->OnProcessVideoDone(videoId, ipcFileDescriptor);
@@ -85,7 +85,7 @@ void DeferredVideoProcSessionFuzzer::DeferredVideoProcSessionFuzzTest(FuzzedData
     deferredVideoProcSession_->RestoreVideo(videoId);
     sptr<DeferredProcessing::IDeferredVideoProcessingSession> session = nullptr;
     createSession(g_userId, sessionCallback_, session);
-    CHECK_ERROR_RETURN_LOG(session == nullptr, "session is null!");
+    CHECK_RETURN_ELOG(session == nullptr, "session is null!");
     deferredVideoProcSession_->SetDeferredVideoSession(session);
     int32_t pid = fdp.ConsumeIntegral<int32_t>();
     deferredVideoProcSession_->ReconnectDeferredProcessingSession();

@@ -160,7 +160,7 @@ std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles16_9(PreconfigType p
 bool PhotoSessionForSys::CanAddOutput(sptr<CaptureOutput>& output)
 {
     MEDIA_DEBUG_LOG("Enter Into PhotoSessionForSys::CanAddOutput");
-    CHECK_ERROR_RETURN_RET(output == nullptr, false);
+    CHECK_RETURN_RET(output == nullptr, false);
     return output->GetOutputType() != CAPTURE_OUTPUT_TYPE_VIDEO && CaptureSession::CanAddOutput(output);
 }
 
@@ -195,14 +195,14 @@ bool PhotoSessionForSys::IsPreconfigProfilesLegal(std::shared_ptr<PreconfigProfi
         }
         // Check photo
         bool isPhotoCanPreconfig = IsPhotoProfileLegal(device, configs->photoProfile);
-        CHECK_ERROR_RETURN_RET_LOG(!isPhotoCanPreconfig, false,
+        CHECK_RETURN_RET_ELOG(!isPhotoCanPreconfig, false,
             "PhotoSessionForSys::IsPreconfigProfilesLegal check photo profile fail, "
             "no matched photo profiles:%{public}d %{public}dx%{public}d",
             configs->photoProfile.format_, configs->photoProfile.size_.width, configs->photoProfile.size_.height);
 
         // Check preview
         bool isPreviewCanPreconfig = IsPreviewProfileLegal(device, configs->previewProfile);
-        CHECK_ERROR_RETURN_RET_LOG(!isPreviewCanPreconfig, false,
+        CHECK_RETURN_RET_ELOG(!isPreviewCanPreconfig, false,
             "PhotoSessionForSys::IsPreconfigProfilesLegal check preview profile fail, "
             "no matched preview profiles:%{public}d %{public}dx%{public}d",
             configs->previewProfile.format_, configs->previewProfile.size_.width, configs->previewProfile.size_.height);
@@ -216,11 +216,11 @@ bool PhotoSessionForSys::IsPreconfigProfilesLegal(std::shared_ptr<PreconfigProfi
 bool PhotoSessionForSys::IsPhotoProfileLegal(sptr<CameraDevice>& device, Profile& photoProfile)
 {
     auto photoProfilesIt = device->modePhotoProfiles_.find(SceneMode::CAPTURE);
-    CHECK_ERROR_RETURN_RET_LOG(photoProfilesIt == device->modePhotoProfiles_.end(), false,
+    CHECK_RETURN_RET_ELOG(photoProfilesIt == device->modePhotoProfiles_.end(), false,
         "PhotoSessionForSys::CanPreconfig check photo profile fail, empty photo profiles");
     auto photoProfiles = photoProfilesIt->second;
     return std::any_of(photoProfiles.begin(), photoProfiles.end(), [&photoProfile](auto& profile) {
-        CHECK_ERROR_RETURN_RET(!photoProfile.sizeFollowSensorMax_, profile == photoProfile);
+        CHECK_RETURN_RET(!photoProfile.sizeFollowSensorMax_, profile == photoProfile);
         return IsProfileSameRatio(profile, photoProfile.sizeRatio_, RATIO_VALUE_4_3);
     });
 }
@@ -228,7 +228,7 @@ bool PhotoSessionForSys::IsPhotoProfileLegal(sptr<CameraDevice>& device, Profile
 bool PhotoSessionForSys::IsPreviewProfileLegal(sptr<CameraDevice>& device, Profile& previewProfile)
 {
     auto previewProfilesIt = device->modePreviewProfiles_.find(SceneMode::CAPTURE);
-    CHECK_ERROR_RETURN_RET_LOG(previewProfilesIt == device->modePreviewProfiles_.end(), false,
+    CHECK_RETURN_RET_ELOG(previewProfilesIt == device->modePreviewProfiles_.end(), false,
         "PhotoSessionForSys::CanPreconfig check preview profile fail, empty preview profiles");
     auto previewProfiles = previewProfilesIt->second;
     return std::any_of(previewProfiles.begin(), previewProfiles.end(),
@@ -240,7 +240,7 @@ bool PhotoSessionForSys::CanPreconfig(PreconfigType preconfigType, ProfileSizeRa
     MEDIA_INFO_LOG("PhotoSessionForSys::CanPreconfig check type:%{public}d, check ratio:%{public}d",
         preconfigType, preconfigRatio);
     std::shared_ptr<PreconfigProfiles> configs = GeneratePreconfigProfiles(preconfigType, preconfigRatio);
-    CHECK_ERROR_RETURN_RET_LOG(configs == nullptr, false, "PhotoSessionForSys::CanPreconfig get configs fail.");
+    CHECK_RETURN_RET_ELOG(configs == nullptr, false, "PhotoSessionForSys::CanPreconfig get configs fail.");
     return IsPreconfigProfilesLegal(configs);
 }
 
@@ -248,10 +248,10 @@ int32_t PhotoSessionForSys::Preconfig(PreconfigType preconfigType, ProfileSizeRa
 {
     MEDIA_INFO_LOG("PhotoSessionForSys::Preconfig type:%{public}d ratio:%{public}d", preconfigType, preconfigRatio);
     std::shared_ptr<PreconfigProfiles> configs = GeneratePreconfigProfiles(preconfigType, preconfigRatio);
-    CHECK_ERROR_RETURN_RET_LOG(configs == nullptr, SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_ELOG(configs == nullptr, SERVICE_FATL_ERROR,
         "PhotoSessionForSys::Preconfig not support this type:%{public}d ratio:%{public}d", preconfigType,
         preconfigRatio);
-    CHECK_ERROR_RETURN_RET_LOG(!IsPreconfigProfilesLegal(configs), SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_ELOG(!IsPreconfigProfilesLegal(configs), SERVICE_FATL_ERROR,
         "PhotoSessionForSys::Preconfig preconfigProfile is illegal.");
     SetPreconfigProfiles(configs);
     MEDIA_INFO_LOG("PhotoSessionForSys::Preconfig %s", configs->ToString().c_str());

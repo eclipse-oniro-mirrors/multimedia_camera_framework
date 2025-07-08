@@ -169,10 +169,10 @@ private:
 
 bool IsCurrentModeInList(OHOS::sptr<CaptureSession> innerCaptureSession, const std::vector<SceneMode> modes)
 {
-    CHECK_ERROR_RETURN_RET(innerCaptureSession == nullptr, false);
+    CHECK_RETURN_RET(innerCaptureSession == nullptr, false);
     SceneMode currentMode = innerCaptureSession->GetMode();
     for (auto& mode : modes) {
-        CHECK_ERROR_RETURN_RET(currentMode == mode, true);
+        CHECK_RETURN_RET(currentMode == mode, true);
     }
     MEDIA_ERR_LOG("IsCurrentModeInList check fail, current mode is:%{public}d", currentMode);
     return false;
@@ -188,7 +188,7 @@ Camera_CaptureSession::Camera_CaptureSession(sptr<CaptureSession> &innerCaptureS
 Camera_CaptureSession::~Camera_CaptureSession()
 {
     MEDIA_DEBUG_LOG("~Camera_CaptureSession is called");
-    CHECK_ERROR_RETURN(!innerCaptureSession_);
+    CHECK_RETURN(!innerCaptureSession_);
     innerCaptureSession_ = nullptr;
 }
 
@@ -196,7 +196,7 @@ Camera_ErrorCode Camera_CaptureSession::RegisterCallback(CaptureSession_Callback
 {
     shared_ptr<InnerCaptureSessionCallback> innerCallback =
         make_shared<InnerCaptureSessionCallback>(this, callback);
-    CHECK_ERROR_RETURN_RET_LOG(innerCallback == nullptr, CAMERA_SERVICE_FATAL_ERROR,
+    CHECK_RETURN_RET_ELOG(innerCallback == nullptr, CAMERA_SERVICE_FATAL_ERROR,
         "create innerCallback failed!");
     CHECK_EXECUTE(callback->onError != nullptr, innerCaptureSession_->SetCallback(innerCallback));
     CHECK_EXECUTE(callback->onFocusStateChange != nullptr, innerCaptureSession_->SetFocusCallback(innerCallback));
@@ -215,7 +215,7 @@ Camera_ErrorCode Camera_CaptureSession::RegisterSmoothZoomInfoCallback(
 {
     shared_ptr<InnerCaptureSessionSmoothZoomInfoCallback> innerSmoothZoomInfoCallback =
         make_shared<InnerCaptureSessionSmoothZoomInfoCallback>(this, smoothZoomInfoCallback);
-    CHECK_ERROR_RETURN_RET_LOG(innerSmoothZoomInfoCallback == nullptr, CAMERA_SERVICE_FATAL_ERROR,
+    CHECK_RETURN_RET_ELOG(innerSmoothZoomInfoCallback == nullptr, CAMERA_SERVICE_FATAL_ERROR,
         "create innerCallback failed!");
     innerCaptureSession_->SetSmoothZoomCallback(innerSmoothZoomInfoCallback);
     return CAMERA_OK;
@@ -230,10 +230,10 @@ Camera_ErrorCode Camera_CaptureSession::UnregisterSmoothZoomInfoCallback(
 
 Camera_ErrorCode Camera_CaptureSession::SetSessionMode(Camera_SceneMode sceneMode)
 {
-    CHECK_ERROR_RETURN_RET_LOG(innerCaptureSession_->IsSessionConfiged() || innerCaptureSession_->IsSessionCommited(),
+    CHECK_RETURN_RET_ELOG(innerCaptureSession_->IsSessionConfiged() || innerCaptureSession_->IsSessionCommited(),
         CAMERA_OPERATION_NOT_ALLOWED, "Camera_Manager::SetSessionMode can not set sceneMode after BeginConfig!");
     auto itr = g_ndkToFwMode_.find(static_cast<Camera_SceneMode>(sceneMode));
-    CHECK_ERROR_RETURN_RET_LOG(itr == g_ndkToFwMode_.end(), CAMERA_INVALID_ARGUMENT,
+    CHECK_RETURN_RET_ELOG(itr == g_ndkToFwMode_.end(), CAMERA_INVALID_ARGUMENT,
         "Camera_CaptureSession::SetSessionMode sceneMode not found!");
     SceneMode innerSceneMode = static_cast<SceneMode>(itr->second);
     switch (innerSceneMode) {
@@ -329,7 +329,7 @@ Camera_ErrorCode Camera_CaptureSession::RemoveMetaDataOutput(Camera_MetadataOutp
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::RemoveMetaDataOutput is called");
     sptr<CaptureOutput> innerMetaDataOutput = metadataOutput->GetInnerMetadataOutput();
-    CHECK_ERROR_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_SERVICE_FATAL_ERROR);
+    CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_SERVICE_FATAL_ERROR);
     int32_t ret = innerCaptureSession_->AddOutput(innerMetaDataOutput);
     return FrameworkToNdkCameraError(ret);
 }
@@ -388,7 +388,7 @@ Camera_ErrorCode Camera_CaptureSession::SetZoomRatio(float zoom)
     int32_t ret = innerCaptureSession_->SetZoomRatio(zoom);
     innerCaptureSession_->UnlockForControl();
 
-    CHECK_ERROR_RETURN_RET(ret != CameraErrorCode::SUCCESS, CAMERA_SERVICE_FATAL_ERROR);
+    CHECK_RETURN_RET(ret != CameraErrorCode::SUCCESS, CAMERA_SERVICE_FATAL_ERROR);
     return FrameworkToNdkCameraError(ret);
 }
 
@@ -397,7 +397,7 @@ Camera_ErrorCode Camera_CaptureSession::IsFocusModeSupported(Camera_FocusMode fo
     MEDIA_DEBUG_LOG("Camera_CaptureSession::IsFocusModeSupported is called");
     FocusMode innerFocusMode = static_cast<FocusMode>(focusMode);
     int32_t ret = innerCaptureSession_->IsFocusModeSupported(innerFocusMode, *isSupported);
-    CHECK_ERROR_RETURN_RET(ret != CameraErrorCode::SUCCESS, CAMERA_SERVICE_FATAL_ERROR);
+    CHECK_RETURN_RET(ret != CameraErrorCode::SUCCESS, CAMERA_SERVICE_FATAL_ERROR);
     return FrameworkToNdkCameraError(ret);
 }
 
@@ -418,7 +418,7 @@ Camera_ErrorCode Camera_CaptureSession::SetFocusMode(Camera_FocusMode focusMode)
     int32_t ret = innerCaptureSession_->SetFocusMode(innerFocusMode);
     innerCaptureSession_->UnlockForControl();
 
-    CHECK_ERROR_RETURN_RET(ret != CameraErrorCode::SUCCESS, CAMERA_SERVICE_FATAL_ERROR);
+    CHECK_RETURN_RET(ret != CameraErrorCode::SUCCESS, CAMERA_SERVICE_FATAL_ERROR);
     return FrameworkToNdkCameraError(ret);
 }
 
@@ -434,7 +434,7 @@ Camera_ErrorCode Camera_CaptureSession::SetFocusPoint(Camera_Point focusPoint)
     int32_t ret = innerCaptureSession_->SetFocusPoint(innerFocusPoint);
     innerCaptureSession_->UnlockForControl();
 
-    CHECK_ERROR_RETURN_RET(ret != CameraErrorCode::SUCCESS, CAMERA_SERVICE_FATAL_ERROR);
+    CHECK_RETURN_RET(ret != CameraErrorCode::SUCCESS, CAMERA_SERVICE_FATAL_ERROR);
     return FrameworkToNdkCameraError(ret);
 }
 
@@ -484,7 +484,7 @@ Camera_ErrorCode Camera_CaptureSession::SetFlashMode(Camera_FlashMode flashMode)
     int32_t ret = innerCaptureSession_->SetFlashMode(innerFlashMode);
     innerCaptureSession_->UnlockForControl();
 
-    CHECK_ERROR_RETURN_RET(ret != CameraErrorCode::SUCCESS, CAMERA_SERVICE_FATAL_ERROR);
+    CHECK_RETURN_RET(ret != CameraErrorCode::SUCCESS, CAMERA_SERVICE_FATAL_ERROR);
     return FrameworkToNdkCameraError(ret);
 }
 
@@ -493,7 +493,7 @@ Camera_ErrorCode Camera_CaptureSession::IsExposureModeSupported(Camera_ExposureM
     MEDIA_DEBUG_LOG("Camera_CaptureSession::IsExposureModeSupported is called");
     ExposureMode innerExposureMode = static_cast<ExposureMode>(exposureMode);
     int32_t ret = innerCaptureSession_->IsExposureModeSupported(innerExposureMode, *isSupported);
-    CHECK_ERROR_RETURN_RET(ret != CameraErrorCode::SUCCESS, CAMERA_SERVICE_FATAL_ERROR);
+    CHECK_RETURN_RET(ret != CameraErrorCode::SUCCESS, CAMERA_SERVICE_FATAL_ERROR);
     return FrameworkToNdkCameraError(ret);
 }
 
@@ -514,7 +514,7 @@ Camera_ErrorCode Camera_CaptureSession::SetExposureMode(Camera_ExposureMode expo
     int32_t ret = innerCaptureSession_->SetExposureMode(innerExposureMode);
     innerCaptureSession_->UnlockForControl();
 
-    CHECK_ERROR_RETURN_RET(ret != CameraErrorCode::SUCCESS, CAMERA_SERVICE_FATAL_ERROR);
+    CHECK_RETURN_RET(ret != CameraErrorCode::SUCCESS, CAMERA_SERVICE_FATAL_ERROR);
     return FrameworkToNdkCameraError(ret);
 }
 
@@ -539,7 +539,7 @@ Camera_ErrorCode Camera_CaptureSession::SetMeteringPoint(Camera_Point point)
     int32_t ret = innerCaptureSession_->SetMeteringPoint(innerExposurePoint);
     innerCaptureSession_->UnlockForControl();
 
-    CHECK_ERROR_RETURN_RET(ret != CameraErrorCode::SUCCESS, CAMERA_SERVICE_FATAL_ERROR);
+    CHECK_RETURN_RET(ret != CameraErrorCode::SUCCESS, CAMERA_SERVICE_FATAL_ERROR);
     return FrameworkToNdkCameraError(ret);
 }
 
@@ -567,7 +567,7 @@ Camera_ErrorCode Camera_CaptureSession::SetExposureBias(float exposureBias)
     int32_t ret = innerCaptureSession_->SetExposureBias(exposureBias);
     innerCaptureSession_->UnlockForControl();
 
-    CHECK_ERROR_RETURN_RET(ret != CameraErrorCode::SUCCESS, CAMERA_SERVICE_FATAL_ERROR);
+    CHECK_RETURN_RET(ret != CameraErrorCode::SUCCESS, CAMERA_SERVICE_FATAL_ERROR);
     return FrameworkToNdkCameraError(ret);
 }
 
@@ -672,7 +672,7 @@ Camera_ErrorCode Camera_CaptureSession::CanPreconfigWithRatio(Camera_PreconfigTy
 Camera_ErrorCode Camera_CaptureSession::Preconfig(Camera_PreconfigType preconfigType)
 {
     auto itr = g_ndkToFwPreconfig.find(preconfigType);
-    CHECK_ERROR_RETURN_RET_LOG(itr == g_ndkToFwPreconfig.end(), CAMERA_INVALID_ARGUMENT,
+    CHECK_RETURN_RET_ELOG(itr == g_ndkToFwPreconfig.end(), CAMERA_INVALID_ARGUMENT,
         "Camera_CaptureSession::Preconfig preconfigType: [%{public}d] is invalid!", preconfigType);
 
     int32_t ret = innerCaptureSession_->Preconfig(itr->second, ProfileSizeRatio::UNSPECIFIED);
@@ -684,9 +684,9 @@ Camera_ErrorCode Camera_CaptureSession::PreconfigWithRatio(Camera_PreconfigType 
 {
     auto type = g_ndkToFwPreconfig.find(preconfigType);
     auto ratio = g_ndkToFwPreconfigRatio.find(preconfigRatio);
-    CHECK_ERROR_RETURN_RET_LOG(type == g_ndkToFwPreconfig.end(), CAMERA_INVALID_ARGUMENT,
+    CHECK_RETURN_RET_ELOG(type == g_ndkToFwPreconfig.end(), CAMERA_INVALID_ARGUMENT,
         "Camera_CaptureSession::PreconfigWithRatio preconfigType: [%{public}d] is invalid!", preconfigType);
-    CHECK_ERROR_RETURN_RET_LOG(ratio == g_ndkToFwPreconfigRatio.end(), CAMERA_INVALID_ARGUMENT,
+    CHECK_RETURN_RET_ELOG(ratio == g_ndkToFwPreconfigRatio.end(), CAMERA_INVALID_ARGUMENT,
         "Camera_CaptureSession::PreconfigWithRatio preconfigRatio: [%{public}d] is invalid!", preconfigRatio);
 
     int32_t ret = innerCaptureSession_->Preconfig(type->second, ratio->second);
@@ -742,7 +742,7 @@ Camera_ErrorCode Camera_CaptureSession::GetSupportedColorSpaces(OH_NativeBuffer_
     }
 
     OH_NativeBuffer_ColorSpace* newColorSpace = new OH_NativeBuffer_ColorSpace[cameraColorSpace.size()];
-    CHECK_ERROR_RETURN_RET_LOG(newColorSpace == nullptr, CAMERA_SERVICE_FATAL_ERROR,
+    CHECK_RETURN_RET_ELOG(newColorSpace == nullptr, CAMERA_SERVICE_FATAL_ERROR,
         "Failed to allocate memory for color space!");
     for (size_t index = 0; index < cameraColorSpace.size(); index++) {
         newColorSpace[index] = cameraColorSpace[index];
@@ -769,9 +769,9 @@ Camera_ErrorCode Camera_CaptureSession::GetActiveColorSpace(OH_NativeBuffer_Colo
 
     ColorSpace innerColorSpace;
     int32_t ret = innerCaptureSession_->GetActiveColorSpace(innerColorSpace);
-    CHECK_ERROR_RETURN_RET(ret != SUCCESS, FrameworkToNdkCameraError(ret));
+    CHECK_RETURN_RET(ret != SUCCESS, FrameworkToNdkCameraError(ret));
     auto itr = g_fwToNdkColorSpace_.find(innerColorSpace);
-    CHECK_ERROR_RETURN_RET_LOG(itr == g_fwToNdkColorSpace_.end(),
+    CHECK_RETURN_RET_ELOG(itr == g_fwToNdkColorSpace_.end(),
         CAMERA_SERVICE_FATAL_ERROR, "colorSpace[%{public}d] is invalid", innerColorSpace);
     *colorSpace = itr->second;
     return CAMERA_OK;
@@ -782,7 +782,7 @@ Camera_ErrorCode Camera_CaptureSession::SetActiveColorSpace(OH_NativeBuffer_Colo
     MEDIA_DEBUG_LOG("Camera_CaptureSession::SetActiveColorSpace is called");
 
     auto itr = g_ndkToFwColorSpace_.find(colorSpace);
-    CHECK_ERROR_RETURN_RET_LOG(itr == g_ndkToFwColorSpace_.end(), CAMERA_INVALID_ARGUMENT,
+    CHECK_RETURN_RET_ELOG(itr == g_ndkToFwColorSpace_.end(), CAMERA_INVALID_ARGUMENT,
         "colorSpace[%{public}d] is invalid", colorSpace);
     int32_t ret = innerCaptureSession_->SetColorSpace(itr->second);
     return FrameworkToNdkCameraError(ret);
@@ -793,7 +793,7 @@ Camera_ErrorCode Camera_CaptureSession::RegisterAutoDeviceSwitchStatusCallback(
 {
     shared_ptr<InnerCaptureSessionAutoDeviceSwitchStatusCallback> innerDeviceSwitchStatusCallback =
         make_shared<InnerCaptureSessionAutoDeviceSwitchStatusCallback>(this, autoDeviceSwitchStatusChange);
-    CHECK_ERROR_RETURN_RET_LOG(innerDeviceSwitchStatusCallback == nullptr, CAMERA_SERVICE_FATAL_ERROR,
+    CHECK_RETURN_RET_ELOG(innerDeviceSwitchStatusCallback == nullptr, CAMERA_SERVICE_FATAL_ERROR,
         "create innerCallback failed!");
     innerCaptureSession_->SetAutoDeviceSwitchCallback(innerDeviceSwitchStatusCallback);
     return CAMERA_OK;
@@ -812,7 +812,7 @@ Camera_ErrorCode Camera_CaptureSession::RegisterSystemPressureLevelCallback(
     MEDIA_INFO_LOG("Camera_CaptureSession::RegisterSystemPressureLevelCallback");
     shared_ptr<InnerPressureStatusCallback> innerPressureStatusCallback =
         make_shared<InnerPressureStatusCallback>(this, systemPressureLevel);
-    CHECK_ERROR_RETURN_RET_LOG(innerPressureStatusCallback == nullptr, CAMERA_SERVICE_FATAL_ERROR,
+    CHECK_RETURN_RET_ELOG(innerPressureStatusCallback == nullptr, CAMERA_SERVICE_FATAL_ERROR,
         "create innerCallback failed!");
     SceneMode currentMode = innerCaptureSession_->GetMode();
     if (currentMode != SceneMode::CAPTURE && currentMode != SceneMode::VIDEO) {
@@ -860,10 +860,10 @@ Camera_ErrorCode Camera_CaptureSession::IsMacroSupported(bool* isSupported)
     *isSupported = false;
     MEDIA_DEBUG_LOG("Camera_CaptureSession::IsMacroSupported is called");
 
-    CHECK_ERROR_RETURN_RET_LOG(!IsCurrentModeInList(innerCaptureSession_, { SceneMode::CAPTURE, SceneMode::VIDEO }),
+    CHECK_RETURN_RET_ELOG(!IsCurrentModeInList(innerCaptureSession_, { SceneMode::CAPTURE, SceneMode::VIDEO }),
         CAMERA_INVALID_ARGUMENT, "Camera_CaptureSession::IsMacroSupported Session is not supported");
 
-    CHECK_ERROR_RETURN_RET_LOG(
+    CHECK_RETURN_RET_ELOG(
         !(innerCaptureSession_->IsSessionCommited() || innerCaptureSession_->IsSessionConfiged()),
         CAMERA_SESSION_NOT_CONFIG, "Camera_CaptureSession::IsMacroSupported Session is not config");
     *isSupported = innerCaptureSession_->IsMacroSupported();
@@ -873,7 +873,7 @@ Camera_ErrorCode Camera_CaptureSession::IsMacroSupported(bool* isSupported)
 Camera_ErrorCode Camera_CaptureSession::EnableMacro(bool enabled)
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::EnableMacro is called %{public}d", enabled);
-    CHECK_ERROR_RETURN_RET_LOG(!IsCurrentModeInList(innerCaptureSession_, { SceneMode::CAPTURE, SceneMode::VIDEO }),
+    CHECK_RETURN_RET_ELOG(!IsCurrentModeInList(innerCaptureSession_, { SceneMode::CAPTURE, SceneMode::VIDEO }),
         CAMERA_INVALID_ARGUMENT, "Camera_CaptureSession::IsMacroSupported Session is not supported");
     innerCaptureSession_->LockForControl();
     int32_t ret = innerCaptureSession_->EnableMacro(enabled);
@@ -885,7 +885,7 @@ Camera_ErrorCode Camera_CaptureSession::IsWhiteBalanceModeSupported(Camera_White
     bool* isSupported)
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::IsWhiteBalanceModeSupported is called");
-    CHECK_ERROR_RETURN_RET_LOG(
+    CHECK_RETURN_RET_ELOG(
         innerCaptureSession_->IsWhiteBalanceModeSupported(
             static_cast<WhiteBalanceMode>(whiteBalanceMode), *isSupported) != CameraErrorCode::SUCCESS,
         CAMERA_SESSION_NOT_CONFIG,
@@ -898,10 +898,10 @@ Camera_ErrorCode Camera_CaptureSession::GetWhiteBalanceMode(Camera_WhiteBalanceM
     MEDIA_DEBUG_LOG("Camera_CaptureSession::GetWhiteBalanceMode is called");
     WhiteBalanceMode mode;
     int32_t ret = innerCaptureSession_->GetWhiteBalanceMode(mode);
-    CHECK_ERROR_RETURN_RET_LOG(ret == CameraErrorCode::SESSION_NOT_CONFIG,
+    CHECK_RETURN_RET_ELOG(ret == CameraErrorCode::SESSION_NOT_CONFIG,
         CAMERA_SESSION_NOT_CONFIG,
         "Camera_CaptureSession::GetWhiteBalanceMode session is not config");
-    CHECK_ERROR_RETURN_RET_LOG(ret == CameraErrorCode::INVALID_ARGUMENT,
+    CHECK_RETURN_RET_ELOG(ret == CameraErrorCode::INVALID_ARGUMENT,
         CAMERA_INVALID_ARGUMENT,
         "Camera_CaptureSession::GetWhiteBalanceMode invalid argument");
     *whiteBalanceMode = static_cast<Camera_WhiteBalanceMode>(mode);
@@ -912,14 +912,14 @@ Camera_ErrorCode Camera_CaptureSession::GetWhiteBalanceRange(int32_t *minColorTe
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::GetWhiteBalanceRange is called");
     std::vector<int32_t> whiteBalanceRange;
-    CHECK_ERROR_RETURN_RET_LOG(
+    CHECK_RETURN_RET_ELOG(
         innerCaptureSession_->GetManualWhiteBalanceRange(whiteBalanceRange) != CameraErrorCode::SUCCESS,
         CAMERA_SESSION_NOT_CONFIG,
         "Camera_CaptureSession::GetWhiteBalanceRange session is not config");
     *minColorTemperature = 0;
     *maxColorTemperature = 0;
     size_t minLength = 2;
-    CHECK_ERROR_RETURN_RET_LOG(whiteBalanceRange.size() < minLength,
+    CHECK_RETURN_RET_ELOG(whiteBalanceRange.size() < minLength,
         CAMERA_SERVICE_FATAL_ERROR,
         "The length of whiteBalanceRange is less than 2.");
     *minColorTemperature = whiteBalanceRange.front();
@@ -931,7 +931,7 @@ Camera_ErrorCode Camera_CaptureSession::GetWhiteBalance(int32_t *colorTemperatur
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::GetWhiteBalance is called");
     int32_t wbValue = 0;
-    CHECK_ERROR_RETURN_RET_LOG(innerCaptureSession_->GetManualWhiteBalance(wbValue) != CameraErrorCode::SUCCESS,
+    CHECK_RETURN_RET_ELOG(innerCaptureSession_->GetManualWhiteBalance(wbValue) != CameraErrorCode::SUCCESS,
         CAMERA_SESSION_NOT_CONFIG,
         "Camera_CaptureSession::GetWhiteBalance session is not config");
     *colorTemperature = wbValue;

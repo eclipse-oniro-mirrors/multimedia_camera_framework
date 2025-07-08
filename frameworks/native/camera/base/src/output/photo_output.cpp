@@ -52,7 +52,7 @@ PhotoCaptureSetting::QualityLevel PhotoCaptureSetting::GetQuality()
     camera_metadata_item_t item;
 
     int ret = Camera::FindCameraMetadataItem(captureMetadataSetting_->get(), OHOS_JPEG_QUALITY, &item);
-    CHECK_ERROR_RETURN_RET(ret != CAM_META_SUCCESS, QUALITY_LEVEL_MEDIUM);
+    CHECK_RETURN_RET(ret != CAM_META_SUCCESS, QUALITY_LEVEL_MEDIUM);
     if (item.data.u8[0] == OHOS_CAMERA_JPEG_LEVEL_HIGH) {
         quality = QUALITY_LEVEL_HIGH;
     } else if (item.data.u8[0] == OHOS_CAMERA_JPEG_LEVEL_MIDDLE) {
@@ -70,7 +70,7 @@ void PhotoCaptureSetting::SetQuality(PhotoCaptureSetting::QualityLevel qualityLe
         quality = OHOS_CAMERA_JPEG_LEVEL_MIDDLE;
     }
     bool status = AddOrUpdateMetadata(captureMetadataSetting_, OHOS_JPEG_QUALITY, &quality, 1);
-    CHECK_ERROR_PRINT_LOG(!status, "PhotoCaptureSetting::SetQuality Failed to set Quality");
+    CHECK_PRINT_ELOG(!status, "PhotoCaptureSetting::SetQuality Failed to set Quality");
 }
 
 PhotoCaptureSetting::RotationConfig PhotoCaptureSetting::GetRotation()
@@ -90,7 +90,7 @@ void PhotoCaptureSetting::SetRotation(PhotoCaptureSetting::RotationConfig rotati
 {
     int32_t rotation = rotationValue;
     bool status = AddOrUpdateMetadata(captureMetadataSetting_, OHOS_JPEG_ORIENTATION, &rotation, 1);
-    CHECK_ERROR_PRINT_LOG(!status, "PhotoCaptureSetting::SetRotation Failed to set Rotation");
+    CHECK_PRINT_ELOG(!status, "PhotoCaptureSetting::SetRotation Failed to set Rotation");
     return;
 }
 
@@ -105,7 +105,7 @@ void PhotoCaptureSetting::SetGpsLocation(double latitude, double longitude)
 
 void PhotoCaptureSetting::SetLocation(std::shared_ptr<Location>& location)
 {
-    CHECK_ERROR_RETURN(location == nullptr);
+    CHECK_RETURN(location == nullptr);
     std::lock_guard<std::mutex> lock(locationMutex_);
     location_ = location;
     std::vector<double> gpsCoordinates = {location->latitude, location->longitude, location->altitude};
@@ -113,7 +113,7 @@ void PhotoCaptureSetting::SetLocation(std::shared_ptr<Location>& location)
         location_->latitude, location_->longitude, location_->altitude);
     bool status = AddOrUpdateMetadata(
         captureMetadataSetting_, OHOS_JPEG_GPS_COORDINATES, gpsCoordinates.data(), gpsCoordinates.size());
-    CHECK_ERROR_PRINT_LOG(!status, "PhotoCaptureSetting::SetLocation Failed to set GPS co-ordinates");
+    CHECK_PRINT_ELOG(!status, "PhotoCaptureSetting::SetLocation Failed to set GPS co-ordinates");
 }
 
 void PhotoCaptureSetting::GetLocation(std::shared_ptr<Location>& location)
@@ -130,7 +130,7 @@ void PhotoCaptureSetting::SetMirror(bool enable)
     uint8_t mirror = enable;
     MEDIA_DEBUG_LOG("PhotoCaptureSetting::SetMirror value=%{public}d", enable);
     bool status = AddOrUpdateMetadata(captureMetadataSetting_, OHOS_CONTROL_CAPTURE_MIRROR, &mirror, 1);
-    CHECK_ERROR_PRINT_LOG(!status, "PhotoCaptureSetting::SetMirror Failed to set mirroring in photo capture setting");
+    CHECK_PRINT_ELOG(!status, "PhotoCaptureSetting::SetMirror Failed to set mirroring in photo capture setting");
     return;
 }
 
@@ -156,7 +156,7 @@ void PhotoCaptureSetting::SetBurstCaptureState(uint8_t burstState)
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("SetBurstCaptureState");
     bool status = AddOrUpdateMetadata(captureMetadataSetting_, OHOS_CONTROL_BURST_CAPTURE, &burstState, 1);
-    CHECK_ERROR_PRINT_LOG(!status, "PhotoCaptureSetting::SetBurstCaptureState Failed");
+    CHECK_PRINT_ELOG(!status, "PhotoCaptureSetting::SetBurstCaptureState Failed");
     return;
 }
 
@@ -164,25 +164,25 @@ int32_t HStreamCaptureCallbackImpl::OnCaptureStarted(const int32_t captureId)
 {
     CAMERA_SYNC_TRACE;
     auto photoOutput = GetPhotoOutput();
-    CHECK_ERROR_RETURN_RET_LOG(photoOutput == nullptr, CAMERA_OK,
+    CHECK_RETURN_RET_ELOG(photoOutput == nullptr, CAMERA_OK,
         "HStreamCaptureCallbackImpl::OnCaptureStarted photoOutput is nullptr");
     auto callback = photoOutput->GetApplicationCallback();
-    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_OK,
+    CHECK_RETURN_RET_ELOG(callback == nullptr, CAMERA_OK,
         "HStreamCaptureCallbackImpl::OnCaptureStarted callback is nullptr");
 
     sptr<CaptureSession> session = photoOutput->GetSession();
-    CHECK_ERROR_RETURN_RET_LOG(session == nullptr, CAMERA_OK,
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_OK,
         "HStreamCaptureCallbackImpl::OnCaptureStarted session is nullptr");
     switch (session->GetMode()) {
         case SceneMode::HIGH_RES_PHOTO: {
             auto inputDevice = session->GetInputDevice();
-            CHECK_ERROR_RETURN_RET_LOG(inputDevice == nullptr, CAMERA_OK,
+            CHECK_RETURN_RET_ELOG(inputDevice == nullptr, CAMERA_OK,
                 "HStreamCaptureCallbackImpl::OnCaptureStarted inputDevice is nullptr");
             sptr<CameraDevice> cameraObj = inputDevice->GetCameraDeviceInfo();
-            CHECK_ERROR_RETURN_RET_LOG(cameraObj == nullptr, CAMERA_OK,
+            CHECK_RETURN_RET_ELOG(cameraObj == nullptr, CAMERA_OK,
                 "HStreamCaptureCallbackImpl::OnCaptureStarted cameraObj is nullptr");
             std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetCachedMetadata();
-            CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, CAMERA_OK,
+            CHECK_RETURN_RET_ELOG(metadata == nullptr, CAMERA_OK,
                 "HStreamCaptureCallbackImpl::OnCaptureStarted metadata is nullptr");
             camera_metadata_item_t meta;
             int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_CAPTURE_EXPECT_TIME, &meta);
@@ -204,10 +204,10 @@ int32_t HStreamCaptureCallbackImpl::OnCaptureStarted(const int32_t captureId, ui
 {
     CAMERA_SYNC_TRACE;
     auto photoOutput = GetPhotoOutput();
-    CHECK_ERROR_RETURN_RET_LOG(photoOutput == nullptr, CAMERA_OK,
+    CHECK_RETURN_RET_ELOG(photoOutput == nullptr, CAMERA_OK,
         "HStreamCaptureCallbackImpl::OnCaptureStarted photoOutput is nullptr");
     auto callback = photoOutput->GetApplicationCallback();
-    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_OK,
+    CHECK_RETURN_RET_ELOG(callback == nullptr, CAMERA_OK,
         "HStreamCaptureCallbackImpl::OnCaptureStarted callback is nullptr");
     photoOutput->GetApplicationCallback()->OnCaptureStarted(captureId, exposureTime);
     return CAMERA_OK;
@@ -217,10 +217,10 @@ int32_t HStreamCaptureCallbackImpl::OnCaptureEnded(const int32_t captureId, cons
 {
     CAMERA_SYNC_TRACE;
     auto photoOutput = GetPhotoOutput();
-    CHECK_ERROR_RETURN_RET_LOG(photoOutput == nullptr, CAMERA_OK,
+    CHECK_RETURN_RET_ELOG(photoOutput == nullptr, CAMERA_OK,
         "HStreamCaptureCallbackImpl::OnCaptureEnded photoOutput is nullptr");
     auto callback = photoOutput->GetApplicationCallback();
-    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_OK,
+    CHECK_RETURN_RET_ELOG(callback == nullptr, CAMERA_OK,
         "HStreamCaptureCallbackImpl::OnCaptureEnded callback is nullptr");
     callback->OnCaptureEnded(captureId, frameCount);
     auto timeStartIter = photoOutput->captureIdToCaptureInfoMap_.find(captureId);
@@ -233,10 +233,10 @@ int32_t HStreamCaptureCallbackImpl::OnCaptureEnded(const int32_t captureId, cons
 int32_t HStreamCaptureCallbackImpl::OnCaptureError(const int32_t captureId, const int32_t errorCode)
 {
     auto photoOutput = GetPhotoOutput();
-    CHECK_ERROR_RETURN_RET_LOG(photoOutput == nullptr, CAMERA_OK,
+    CHECK_RETURN_RET_ELOG(photoOutput == nullptr, CAMERA_OK,
         "HStreamCaptureCallbackImpl::OnCaptureError photoOutput is nullptr");
     auto callback = photoOutput->GetApplicationCallback();
-    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_OK,
+    CHECK_RETURN_RET_ELOG(callback == nullptr, CAMERA_OK,
         "HStreamCaptureCallbackImpl::OnCaptureError callback is nullptr");
     callback->OnCaptureError(captureId, errorCode);
     return CAMERA_OK;
@@ -246,10 +246,10 @@ int32_t HStreamCaptureCallbackImpl::OnFrameShutter(const int32_t captureId, cons
 {
     CAMERA_SYNC_TRACE;
     auto photoOutput = GetPhotoOutput();
-    CHECK_ERROR_RETURN_RET_LOG(photoOutput == nullptr, CAMERA_OK,
+    CHECK_RETURN_RET_ELOG(photoOutput == nullptr, CAMERA_OK,
         "HStreamCaptureCallbackImpl::OnFrameShutter photoOutput is nullptr");
     auto callback = photoOutput->GetApplicationCallback();
-    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_OK,
+    CHECK_RETURN_RET_ELOG(callback == nullptr, CAMERA_OK,
         "HStreamCaptureCallbackImpl::OnFrameShutter callback is nullptr");
     callback->OnFrameShutter(captureId, timestamp);
     return CAMERA_OK;
@@ -259,13 +259,13 @@ int32_t HStreamCaptureCallbackImpl::OnFrameShutterEnd(const int32_t captureId, c
 {
     CAMERA_SYNC_TRACE;
     auto photoOutput = GetPhotoOutput();
-    CHECK_ERROR_RETURN_RET_LOG(photoOutput == nullptr, CAMERA_OK,
+    CHECK_RETURN_RET_ELOG(photoOutput == nullptr, CAMERA_OK,
         "HStreamCaptureCallbackImpl::OnFrameShutterEnd photoOutput is nullptr");
     auto callback = photoOutput->GetApplicationCallback();
-    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_OK,
+    CHECK_RETURN_RET_ELOG(callback == nullptr, CAMERA_OK,
         "HStreamCaptureCallbackImpl::OnFrameShutterEnd callback is nullptr");
     callback->OnFrameShutterEnd(captureId, timestamp);
-    CHECK_ERROR_RETURN_RET(!photoOutput->IsHasEnableOfflinePhoto(), CAMERA_OK);
+    CHECK_RETURN_RET(!photoOutput->IsHasEnableOfflinePhoto(), CAMERA_OK);
     uint32_t startCaptureHandle;
     constexpr uint32_t delayMilli = 10 * 1000; // 10S 1000 is ms
     MEDIA_INFO_LOG("offline GetGlobalWatchdog StartMonitor, captureId=%{public}d", captureId);
@@ -273,7 +273,7 @@ int32_t HStreamCaptureCallbackImpl::OnFrameShutterEnd(const int32_t captureId, c
         startCaptureHandle, delayMilli, [captureId, photoOutput](uint32_t handle) {
             MEDIA_INFO_LOG("offline Watchdog executed, handle: %{public}d, captureId= %{public}d",
                 static_cast<int>(handle), captureId);
-            CHECK_ERROR_RETURN_LOG(photoOutput == nullptr, "photoOutput is release");
+            CHECK_RETURN_ELOG(photoOutput == nullptr, "photoOutput is release");
             bool canRelease =
                 photoOutput->IsHasSwitchOfflinePhoto() && (photoOutput->captureIdToCaptureInfoMap_).size() == 0;
             CHECK_EXECUTE(canRelease, photoOutput->Release());
@@ -287,10 +287,10 @@ int32_t HStreamCaptureCallbackImpl::OnCaptureReady(const int32_t captureId, cons
 {
     CAMERA_SYNC_TRACE;
     auto photoOutput = GetPhotoOutput();
-    CHECK_ERROR_RETURN_RET_LOG(photoOutput == nullptr, CAMERA_OK,
+    CHECK_RETURN_RET_ELOG(photoOutput == nullptr, CAMERA_OK,
         "HStreamCaptureCallbackImpl::OnCaptureReady photoOutput is nullptr");
     auto callback = photoOutput->GetApplicationCallback();
-    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_OK,
+    CHECK_RETURN_RET_ELOG(callback == nullptr, CAMERA_OK,
         "HStreamCaptureCallbackImpl::OnCaptureReady callback is nullptr");
     callback->OnCaptureReady(captureId, timestamp);
     return CAMERA_OK;
@@ -300,10 +300,10 @@ int32_t HStreamCaptureCallbackImpl::OnOfflineDeliveryFinished(const int32_t capt
 {
     CAMERA_SYNC_TRACE;
     auto photoOutput = GetPhotoOutput();
-    CHECK_ERROR_RETURN_RET_LOG(photoOutput == nullptr, CAMERA_OK,
+    CHECK_RETURN_RET_ELOG(photoOutput == nullptr, CAMERA_OK,
         "HStreamCaptureCallbackImpl::OnOfflineDeliveryFinished photoOutput is nullptr");
     auto callback = photoOutput->GetApplicationCallback();
-    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_OK,
+    CHECK_RETURN_RET_ELOG(callback == nullptr, CAMERA_OK,
         "HStreamCaptureCallbackImpl::OnOfflineDeliveryFinished callback is nullptr");
     callback->OnOfflineDeliveryFinished(captureId);
     return CAMERA_OK;
@@ -345,7 +345,7 @@ void PhotoOutput::SetNativeSurface(bool isNativeSurface)
 void PhotoOutput::SetCallbackFlag(uint8_t callbackFlag)
 {
     std::lock_guard<std::mutex> lock(callbackMutex_);
-    CHECK_ERROR_RETURN_LOG(!isNativeSurface_, "SetCallbackFlag when register imageReciver");
+    CHECK_RETURN_ELOG(!isNativeSurface_, "SetCallbackFlag when register imageReciver");
     bool beforeStatus = IsEnableDeferred();
     callbackFlag_ = callbackFlag;
     bool afterStatus = IsEnableDeferred();
@@ -377,7 +377,7 @@ void PhotoOutput::SetCallbackFlag(uint8_t callbackFlag)
 
 bool PhotoOutput::IsYuvOrHeifPhoto()
 {
-    CHECK_ERROR_RETURN_RET(!GetPhotoProfile(), false);
+    CHECK_RETURN_RET(!GetPhotoProfile(), false);
     bool ret = GetPhotoProfile()->GetCameraFormat() == CAMERA_FORMAT_YUV_420_SP;
     MEDIA_INFO_LOG("IsYuvOrHeifPhoto res = %{public}d", ret);
     return ret;
@@ -399,7 +399,7 @@ uint32_t PhotoOutput::GetAuxiliaryPhotoHandle()
 template<typename T>
 sptr<T> CastStream(sptr<IStreamCommon> streamCommon)
 {
-    CHECK_ERROR_RETURN_RET(streamCommon == nullptr, nullptr);
+    CHECK_RETURN_RET(streamCommon == nullptr, nullptr);
     return static_cast<T*>(streamCommon.GetRefPtr());
 }
 
@@ -407,7 +407,7 @@ void PhotoOutput::CreateMultiChannel()
 {
     CAMERA_SYNC_TRACE;
     auto streamCapturePtr = CastStream<IStreamCapture>(GetStream());
-    CHECK_ERROR_RETURN_LOG(
+    CHECK_RETURN_ELOG(
         streamCapturePtr == nullptr, "PhotoOutput::CreateMultiChannel Failed!streamCapturePtr is nullptr");
     std::string retStr = "";
     int32_t ret = 0;
@@ -440,7 +440,7 @@ void PhotoOutput::CreateMultiChannel()
 
 bool PhotoOutput::IsEnableDeferred()
 {
-    CHECK_ERROR_RETURN_RET(!isNativeSurface_, false);
+    CHECK_RETURN_RET(!isNativeSurface_, false);
     bool isEnabled = (callbackFlag_ & CAPTURE_PHOTO_ASSET) != 0 || (callbackFlag_ & CAPTURE_PHOTO) == 0;
     MEDIA_INFO_LOG("Enter Into PhotoOutput::IsEnableDeferred %{public}d", isEnabled);
     return isEnabled;
@@ -466,7 +466,7 @@ void PhotoOutput::SetCallback(std::shared_ptr<PhotoStateCallback> callback)
         } else {
             MEDIA_ERR_LOG("PhotoOutput::SetCallback() itemStream is nullptr");
         }
-        CHECK_ERROR_RETURN(errorCode == CAMERA_OK);
+        CHECK_RETURN(errorCode == CAMERA_OK);
         MEDIA_ERR_LOG("PhotoOutput::SetCallback: Failed to register callback, errorCode: %{public}d", errorCode);
         cameraSvcCallback_ = nullptr;
         appCallback_ = nullptr;
@@ -476,13 +476,13 @@ void PhotoOutput::SetCallback(std::shared_ptr<PhotoStateCallback> callback)
 void PhotoOutput::SetPhotoAvailableCallback(std::shared_ptr<PhotoAvailableCallback> callback)
 {
     MEDIA_DEBUG_LOG("SetPhotoAvailableCallback E");
-    CHECK_ERROR_RETURN_LOG(callback == nullptr, "photo callback nullptr");
+    CHECK_RETURN_ELOG(callback == nullptr, "photo callback nullptr");
     std::lock_guard<std::mutex> lock(outputCallbackMutex_);
     appPhotoCallback_ = nullptr;
     svcPhotoCallback_ = nullptr;
     appPhotoCallback_ = callback;
     svcPhotoCallback_ = new (std::nothrow) HStreamCapturePhotoCallbackImpl(this);
-    CHECK_ERROR_RETURN_LOG(svcPhotoCallback_ == nullptr, "new photo svc callback err");
+    CHECK_RETURN_ELOG(svcPhotoCallback_ == nullptr, "new photo svc callback err");
     auto itemStream = CastStream<IStreamCapture>(GetStream());
     int32_t errorCode = CAMERA_OK;
     if (itemStream) {
@@ -513,13 +513,13 @@ void PhotoOutput::UnSetPhotoAvailableCallback()
 void PhotoOutput::SetPhotoAssetAvailableCallback(std::shared_ptr<PhotoAssetAvailableCallback> callback)
 {
     MEDIA_DEBUG_LOG("SetPhotoAssetAvailableCallback E");
-    CHECK_ERROR_RETURN_LOG(callback == nullptr, "photoAsset callback nullptr");
+    CHECK_RETURN_ELOG(callback == nullptr, "photoAsset callback nullptr");
     std::lock_guard<std::mutex> lock(outputCallbackMutex_);
     appPhotoAssetCallback_ = nullptr;
     svcPhotoAssetCallback_ = nullptr;
     appPhotoAssetCallback_ = callback;
     svcPhotoAssetCallback_ = new (std::nothrow) HStreamCapturePhotoAssetCallbackImpl(this);
-    CHECK_ERROR_RETURN_LOG(svcPhotoAssetCallback_ == nullptr, "new photoAsset svc callback err");
+    CHECK_RETURN_ELOG(svcPhotoAssetCallback_ == nullptr, "new photoAsset svc callback err");
     auto itemStream = CastStream<IStreamCapture>(GetStream());
     int32_t errorCode = CAMERA_OK;
     if (itemStream) {
@@ -550,13 +550,13 @@ void PhotoOutput::UnSetPhotoAssetAvailableCallback()
 void PhotoOutput::SetThumbnailCallback(std::shared_ptr<ThumbnailCallback> callback)
 {
     MEDIA_DEBUG_LOG("SetThumbnailCallback E");
-    CHECK_ERROR_RETURN_LOG(callback == nullptr, "photoAsset callback nullptr");
+    CHECK_RETURN_ELOG(callback == nullptr, "photoAsset callback nullptr");
     std::lock_guard<std::mutex> lock(outputCallbackMutex_);
     appThumbnailCallback_ = nullptr;
     svcThumbnailCallback_ = nullptr;
     appThumbnailCallback_ = callback;
     svcThumbnailCallback_ = new (std::nothrow) HStreamCaptureThumbnailCallbackImpl(this);
-    CHECK_ERROR_RETURN_LOG(svcThumbnailCallback_ == nullptr, "new photoAsset svc callback err");
+    CHECK_RETURN_ELOG(svcThumbnailCallback_ == nullptr, "new photoAsset svc callback err");
     auto itemStream = CastStream<IStreamCapture>(GetStream());
     int32_t errorCode = CAMERA_OK;
     if (itemStream) {
@@ -589,16 +589,16 @@ int32_t PhotoOutput::SetThumbnail(bool isEnabled)
     CAMERA_SYNC_TRACE;
     sptr<CameraDevice> cameraObj;
     auto session = GetSession();
-    CHECK_ERROR_RETURN_RET_LOG(session == nullptr, SESSION_NOT_RUNNING,
+    CHECK_RETURN_RET_ELOG(session == nullptr, SESSION_NOT_RUNNING,
         "PhotoOutput SetThumbnail error!, session is nullptr");
     auto inputDevice = session->GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(inputDevice == nullptr, SESSION_NOT_RUNNING,
+    CHECK_RETURN_RET_ELOG(inputDevice == nullptr, SESSION_NOT_RUNNING,
         "PhotoOutput SetThumbnail error!, inputDevice is nullptr");
     cameraObj = inputDevice->GetCameraDeviceInfo();
-    CHECK_ERROR_RETURN_RET_LOG(cameraObj == nullptr, SESSION_NOT_RUNNING,
+    CHECK_RETURN_RET_ELOG(cameraObj == nullptr, SESSION_NOT_RUNNING,
         "PhotoOutput SetThumbnail error!, cameraObj is nullptr");
     auto streamCapturePtr = CastStream<IStreamCapture>(GetStream());
-    CHECK_ERROR_RETURN_RET(streamCapturePtr == nullptr, SERVICE_FATL_ERROR);
+    CHECK_RETURN_RET(streamCapturePtr == nullptr, SERVICE_FATL_ERROR);
     return streamCapturePtr->SetThumbnail(isEnabled);
 }
 
@@ -607,15 +607,15 @@ int32_t PhotoOutput::EnableRawDelivery(bool enabled)
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("enter into EnableRawDelivery");
     auto session = GetSession();
-    CHECK_ERROR_RETURN_RET_LOG(session == nullptr, SESSION_NOT_RUNNING,
+    CHECK_RETURN_RET_ELOG(session == nullptr, SESSION_NOT_RUNNING,
         "PhotoOutput EnableRawDelivery error!, session is nullptr");
     auto streamCapturePtr = CastStream<IStreamCapture>(GetStream());
-    CHECK_ERROR_RETURN_RET_LOG(streamCapturePtr == nullptr, SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_ELOG(streamCapturePtr == nullptr, SERVICE_FATL_ERROR,
         "PhotoOutput::EnableRawDelivery Failed to GetStream");
     int32_t ret = CAMERA_OK;
     if (session->EnableRawDelivery(enabled) == CameraErrorCode::SUCCESS) {
         ret = streamCapturePtr->EnableRawDelivery(enabled);
-        CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, SERVICE_FATL_ERROR,
+        CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, SERVICE_FATL_ERROR,
             "PhotoOutput::EnableRawDelivery session EnableRawDelivery Failed");
     }
     isRawImageDelivery_ = enabled;
@@ -629,10 +629,10 @@ int32_t PhotoOutput::EnableMovingPhoto(bool enabled)
     MEDIA_DEBUG_LOG("enter into EnableMovingPhoto");
 
     auto streamCapturePtr = CastStream<IStreamCapture>(GetStream());
-    CHECK_ERROR_RETURN_RET_LOG(streamCapturePtr == nullptr, SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_ELOG(streamCapturePtr == nullptr, SERVICE_FATL_ERROR,
         "PhotoOutput::EnableMovingPhoto Failed!streamCapturePtr is nullptr");
     ret = streamCapturePtr->EnableMovingPhoto(enabled);
-    CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, SERVICE_FATL_ERROR,
         "PhotoOutput::EnableMovingPhoto Failed");
     return ret;
 }
@@ -686,21 +686,21 @@ int32_t PhotoOutput::Capture(std::shared_ptr<PhotoCaptureSetting> photoCaptureSe
 {
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
     auto session = GetSession();
-    CHECK_ERROR_RETURN_RET_LOG(session == nullptr || !session->IsSessionCommited(),
+    CHECK_RETURN_RET_ELOG(session == nullptr || !session->IsSessionCommited(),
         CameraErrorCode::SESSION_NOT_RUNNING, "PhotoOutput Failed to Capture with setting, session not commited");
-    CHECK_ERROR_RETURN_RET_LOG(GetStream() == nullptr,
+    CHECK_RETURN_RET_ELOG(GetStream() == nullptr,
         CameraErrorCode::SERVICE_FATL_ERROR, "PhotoOutput Failed to Capture with setting, GetStream is nullptr");
     defaultCaptureSetting_ = photoCaptureSettings;
     auto itemStream = CastStream<IStreamCapture>(GetStream());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
-    CHECK_ERROR_PRINT_LOG(itemStream == nullptr, "PhotoOutput::Capture() itemStream is nullptr");
+    CHECK_PRINT_ELOG(itemStream == nullptr, "PhotoOutput::Capture() itemStream is nullptr");
     if (itemStream) {
         MEDIA_INFO_LOG("Capture start");
         session->EnableMovingPhotoMirror(photoCaptureSettings->GetMirror(), true);
         errCode = itemStream->Capture(photoCaptureSettings->GetCaptureMetadataSetting());
         MEDIA_INFO_LOG("Capture End");
     }
-    CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "PhotoOutput Failed to Capture!, errCode: %{public}d", errCode);
+    CHECK_PRINT_ELOG(errCode != CAMERA_OK, "PhotoOutput Failed to Capture!, errCode: %{public}d", errCode);
     return ServiceToCameraError(errCode);
 }
 
@@ -708,9 +708,9 @@ int32_t PhotoOutput::Capture()
 {
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
     auto session = GetSession();
-    CHECK_ERROR_RETURN_RET_LOG(session == nullptr || !session->IsSessionCommited(),
+    CHECK_RETURN_RET_ELOG(session == nullptr || !session->IsSessionCommited(),
         CameraErrorCode::SESSION_NOT_RUNNING, "PhotoOutput Failed to Capture, session not commited");
-    CHECK_ERROR_RETURN_RET_LOG(GetStream() == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_ELOG(GetStream() == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "PhotoOutput Failed to Capture, GetStream is nullptr");
     int32_t items = 0;
     int32_t dataLength = 0;
@@ -718,14 +718,14 @@ int32_t PhotoOutput::Capture()
         std::make_shared<Camera::CameraMetadata>(items, dataLength);
     auto itemStream = CastStream<IStreamCapture>(GetStream());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
-    CHECK_ERROR_PRINT_LOG(itemStream == nullptr, "PhotoOutput::Capture() itemStream is nullptr");
+    CHECK_PRINT_ELOG(itemStream == nullptr, "PhotoOutput::Capture() itemStream is nullptr");
     if (itemStream) {
         MEDIA_DEBUG_LOG("Capture start");
         session->EnableMovingPhotoMirror(false, true);
         errCode = itemStream->Capture(captureMetadataSetting);
         MEDIA_DEBUG_LOG("Capture end");
     }
-    CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "PhotoOutput Failed to Capture!, errCode: %{public}d", errCode);
+    CHECK_PRINT_ELOG(errCode != CAMERA_OK, "PhotoOutput Failed to Capture!, errCode: %{public}d", errCode);
     return ServiceToCameraError(errCode);
 }
 
@@ -733,17 +733,17 @@ int32_t PhotoOutput::CancelCapture()
 {
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
     auto session = GetSession();
-    CHECK_ERROR_RETURN_RET_LOG(session == nullptr || !session->IsSessionCommited(),
+    CHECK_RETURN_RET_ELOG(session == nullptr || !session->IsSessionCommited(),
         CameraErrorCode::SESSION_NOT_RUNNING, "PhotoOutput Failed to CancelCapture, session not commited");
-    CHECK_ERROR_RETURN_RET_LOG(GetStream() == nullptr,
+    CHECK_RETURN_RET_ELOG(GetStream() == nullptr,
         CameraErrorCode::SERVICE_FATL_ERROR, "PhotoOutput Failed to CancelCapture, GetStream is nullptr");
     auto itemStream = CastStream<IStreamCapture>(GetStream());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
-    CHECK_ERROR_PRINT_LOG(itemStream == nullptr, "PhotoOutput::CancelCapture() itemStream is nullptr");
+    CHECK_PRINT_ELOG(itemStream == nullptr, "PhotoOutput::CancelCapture() itemStream is nullptr");
     if (itemStream) {
         errCode = itemStream->CancelCapture();
     }
-    CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "PhotoOutput Failed to CancelCapture, errCode: %{public}d", errCode);
+    CHECK_PRINT_ELOG(errCode != CAMERA_OK, "PhotoOutput Failed to CancelCapture, errCode: %{public}d", errCode);
     return ServiceToCameraError(errCode);
 }
 
@@ -751,9 +751,9 @@ int32_t PhotoOutput::ConfirmCapture()
 {
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
     auto session = GetSession();
-    CHECK_ERROR_RETURN_RET_LOG(session == nullptr || !session->IsSessionCommited(),
+    CHECK_RETURN_RET_ELOG(session == nullptr || !session->IsSessionCommited(),
         CameraErrorCode::SESSION_NOT_RUNNING, "PhotoOutput Failed to ConfirmCapture, session not commited");
-    CHECK_ERROR_RETURN_RET_LOG(GetStream() == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_ELOG(GetStream() == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "PhotoOutput Failed to ConfirmCapture, GetStream is nullptr");
     auto itemStream = CastStream<IStreamCapture>(GetStream());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
@@ -762,23 +762,23 @@ int32_t PhotoOutput::ConfirmCapture()
     } else {
         MEDIA_ERR_LOG("PhotoOutput::ConfirmCapture() itemStream is nullptr");
     }
-    CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "PhotoOutput Failed to ConfirmCapture, errCode: %{public}d", errCode);
+    CHECK_PRINT_ELOG(errCode != CAMERA_OK, "PhotoOutput Failed to ConfirmCapture, errCode: %{public}d", errCode);
     return ServiceToCameraError(errCode);
 }
 
 int32_t PhotoOutput::CreateStream()
 {
     auto stream = GetStream();
-    CHECK_ERROR_RETURN_RET_LOG(stream != nullptr, CameraErrorCode::OPERATION_NOT_ALLOWED,
+    CHECK_RETURN_RET_ELOG(stream != nullptr, CameraErrorCode::OPERATION_NOT_ALLOWED,
         "PhotoOutput::CreateStream stream is not null");
     std::string surfaceId = GetPhotoSurfaceId();
     sptr<IStreamCapture> streamPtr = nullptr;
     auto photoProfile = GetPhotoProfile();
-    CHECK_ERROR_RETURN_RET_LOG(photoProfile == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_ELOG(photoProfile == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "PhotoOutput::CreateStream photoProfile is null");
 
     int32_t res = CameraManager::GetInstance()->CreatePhotoOutputStream(streamPtr, *photoProfile, surfaceId);
-    CHECK_ERROR_PRINT_LOG(res != CameraErrorCode::SUCCESS,
+    CHECK_PRINT_ELOG(res != CameraErrorCode::SUCCESS,
         "PhotoOutput::CreateStream fail! error code :%{public}d", res);
     SetStream(streamPtr);
     return res;
@@ -793,7 +793,7 @@ int32_t PhotoOutput::Release()
     }
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
     MEDIA_DEBUG_LOG("Enter Into PhotoOutput::Release");
-    CHECK_ERROR_RETURN_RET_LOG(GetStream() == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_ELOG(GetStream() == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "PhotoOutput Failed to Release!, GetStream is nullptr");
     auto itemStream = CastStream<IStreamCapture>(GetStream());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
@@ -802,7 +802,7 @@ int32_t PhotoOutput::Release()
     } else {
         MEDIA_ERR_LOG("PhotoOutput::Release() itemStream is nullptr");
     }
-    CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "PhotoOutput Failed to release!, errCode: %{public}d", errCode);
+    CHECK_PRINT_ELOG(errCode != CAMERA_OK, "PhotoOutput Failed to release!, errCode: %{public}d", errCode);
     defaultCaptureSetting_ = nullptr;
     CaptureOutput::Release();
     return ServiceToCameraError(errCode);
@@ -811,20 +811,20 @@ int32_t PhotoOutput::Release()
 bool PhotoOutput::IsMirrorSupported()
 {
     auto session = GetSession();
-    CHECK_ERROR_RETURN_RET_LOG(session == nullptr, false,
+    CHECK_RETURN_RET_ELOG(session == nullptr, false,
         "PhotoOutput IsMirrorSupported error!, session is nullptr");
     auto inputDevice = session->GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(inputDevice == nullptr, false,
+    CHECK_RETURN_RET_ELOG(inputDevice == nullptr, false,
         "PhotoOutput IsMirrorSupported error!, inputDevice is nullptr");
     sptr<CameraDevice> cameraObj = inputDevice->GetCameraDeviceInfo();
-    CHECK_ERROR_RETURN_RET_LOG(cameraObj == nullptr, false,
+    CHECK_RETURN_RET_ELOG(cameraObj == nullptr, false,
         "PhotoOutput IsMirrorSupported error!, cameraObj is nullptr");
     std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetCachedMetadata();
-    CHECK_ERROR_RETURN_RET(metadata == nullptr, false);
+    CHECK_RETURN_RET(metadata == nullptr, false);
 
     camera_metadata_item_t item;
     int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_CAPTURE_MIRROR_SUPPORTED, &item);
-    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, false,
+    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS, false,
         "PhotoOutput Can not find OHOS_CONTROL_CAPTURE_MIRROR_SUPPORTED");
     int step = 2;
     const int32_t canMirrorVideoAndPhoto = 2;
@@ -848,15 +848,15 @@ int32_t PhotoOutput::EnableMirror(bool isEnable)
 {
     MEDIA_INFO_LOG("PhotoOutput::EnableMirror enter, isEnable: %{public}d", isEnable);
     auto session = GetSession();
-    CHECK_ERROR_RETURN_RET_LOG(session == nullptr, CameraErrorCode::SESSION_NOT_RUNNING,
+    CHECK_RETURN_RET_ELOG(session == nullptr, CameraErrorCode::SESSION_NOT_RUNNING,
         "PhotoOutput EnableMirror error!, session is nullptr");
 
     int32_t ret = CAMERA_UNKNOWN_ERROR;
-    CHECK_ERROR_RETURN_RET_LOG(!(IsMirrorSupported()), ret,
+    CHECK_RETURN_RET_ELOG(!(IsMirrorSupported()), ret,
         "PhotoOutput EnableMirror error!, mirror is not supported");
     auto isSessionConfiged = session->IsSessionCommited() || session->IsSessionStarted();
     ret = session->EnableMovingPhotoMirror(isEnable, isSessionConfiged);
-    CHECK_ERROR_RETURN_RET_LOG(ret != CameraErrorCode::SUCCESS, ret,
+    CHECK_RETURN_RET_ELOG(ret != CameraErrorCode::SUCCESS, ret,
         "PhotoOutput EnableMirror error!, ret is not success");
     return ret;
 }
@@ -865,16 +865,16 @@ int32_t PhotoOutput::IsQuickThumbnailSupported()
 {
     int32_t isQuickThumbnailEnabled = -1;
     auto session = GetSession();
-    CHECK_ERROR_RETURN_RET_LOG(session == nullptr, SESSION_NOT_RUNNING,
+    CHECK_RETURN_RET_ELOG(session == nullptr, SESSION_NOT_RUNNING,
         "PhotoOutput IsQuickThumbnailSupported error!, session is nullptr");
     auto inputDevice = session->GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(inputDevice == nullptr, SESSION_NOT_RUNNING,
+    CHECK_RETURN_RET_ELOG(inputDevice == nullptr, SESSION_NOT_RUNNING,
         "PhotoOutput IsQuickThumbnailSupported error!, inputDevice is nullptr");
     sptr<CameraDevice> cameraObj = inputDevice->GetCameraDeviceInfo();
-    CHECK_ERROR_RETURN_RET_LOG(cameraObj == nullptr, SESSION_NOT_RUNNING,
+    CHECK_RETURN_RET_ELOG(cameraObj == nullptr, SESSION_NOT_RUNNING,
         "PhotoOutput IsQuickThumbnailSupported error!, cameraObj is nullptr");
     std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetCachedMetadata();
-    CHECK_ERROR_RETURN_RET(metadata == nullptr, SESSION_NOT_RUNNING);
+    CHECK_RETURN_RET(metadata == nullptr, SESSION_NOT_RUNNING);
     camera_metadata_item_t item;
     int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_STREAM_QUICK_THUMBNAIL_AVAILABLE, &item);
     if (ret == CAM_META_SUCCESS) {
@@ -893,7 +893,7 @@ int32_t PhotoOutput::IsRawDeliverySupported(bool &isRawDeliveryEnabled)
     MEDIA_DEBUG_LOG("enter into IsRawDeliverySupported");
     isRawDeliveryEnabled = false;
     auto session = GetSession();
-    CHECK_ERROR_RETURN_RET_LOG(session == nullptr, SESSION_NOT_RUNNING,
+    CHECK_RETURN_RET_ELOG(session == nullptr, SESSION_NOT_RUNNING,
         "PhotoOutput IsRawDeliverySupported error!, session is nullptr");
     const int32_t professionalPhotoMode = 11;
     if ((session->GetMode() == professionalPhotoMode)) {
@@ -908,13 +908,13 @@ int32_t PhotoOutput::DeferImageDeliveryFor(DeferredDeliveryImageType type)
     CAMERA_SYNC_TRACE;
     sptr<CameraDevice> cameraObj;
     auto session = GetSession();
-    CHECK_ERROR_RETURN_RET_LOG(session == nullptr, SESSION_NOT_RUNNING,
+    CHECK_RETURN_RET_ELOG(session == nullptr, SESSION_NOT_RUNNING,
         "PhotoOutput DeferImageDeliveryFor error!, session is nullptr");
     auto inputDevice = session->GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(inputDevice == nullptr, SESSION_NOT_RUNNING,
+    CHECK_RETURN_RET_ELOG(inputDevice == nullptr, SESSION_NOT_RUNNING,
         "PhotoOutput DeferImageDeliveryFor error!, inputDevice is nullptr");
     cameraObj = inputDevice->GetCameraDeviceInfo();
-    CHECK_ERROR_RETURN_RET_LOG(cameraObj == nullptr, SESSION_NOT_RUNNING,
+    CHECK_RETURN_RET_ELOG(cameraObj == nullptr, SESSION_NOT_RUNNING,
         "PhotoOutput DeferImageDeliveryFor error!, cameraObj is nullptr");
     session->EnableDeferredType(type, true);
     session->SetUserId();
@@ -925,16 +925,16 @@ int32_t PhotoOutput::IsDeferredImageDeliverySupported(DeferredDeliveryImageType 
 {
     MEDIA_INFO_LOG("IsDeferredImageDeliverySupported type:%{public}d!", type);
     int32_t isSupported = -1;
-    CHECK_ERROR_RETURN_RET(type == DELIVERY_NONE, isSupported);
+    CHECK_RETURN_RET(type == DELIVERY_NONE, isSupported);
     sptr<CameraDevice> cameraObj;
     auto session = GetSession();
-    CHECK_ERROR_RETURN_RET_LOG(session == nullptr, SESSION_NOT_RUNNING,
+    CHECK_RETURN_RET_ELOG(session == nullptr, SESSION_NOT_RUNNING,
         "PhotoOutput IsDeferredImageDeliverySupported error!, session is nullptr");
     auto inputDevice = session->GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(inputDevice == nullptr, SESSION_NOT_RUNNING,
+    CHECK_RETURN_RET_ELOG(inputDevice == nullptr, SESSION_NOT_RUNNING,
         "PhotoOutput IsDeferredImageDeliverySupported error!, inputDevice is nullptr");
     cameraObj = inputDevice->GetCameraDeviceInfo();
-    CHECK_ERROR_RETURN_RET_LOG(cameraObj == nullptr, SESSION_NOT_RUNNING,
+    CHECK_RETURN_RET_ELOG(cameraObj == nullptr, SESSION_NOT_RUNNING,
         "PhotoOutput IsDeferredImageDeliverySupported error!, cameraObj is nullptr");
     int32_t curMode = session->GetMode();
     int32_t modeSupportType = cameraObj->modeDeferredType_[curMode];
@@ -951,13 +951,13 @@ int32_t PhotoOutput::IsDeferredImageDeliveryEnabled(DeferredDeliveryImageType ty
     MEDIA_INFO_LOG("PhotoOutput IsDeferredImageDeliveryEnabled type:%{public}d!", type);
     int32_t isEnabled = -1;
     auto session = GetSession();
-    CHECK_ERROR_RETURN_RET_LOG(session == nullptr, SESSION_NOT_RUNNING,
+    CHECK_RETURN_RET_ELOG(session == nullptr, SESSION_NOT_RUNNING,
         "PhotoOutput IsDeferredImageDeliveryEnabled error!, session is nullptr");
     auto inputDevice = session->GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(inputDevice == nullptr, SESSION_NOT_RUNNING,
+    CHECK_RETURN_RET_ELOG(inputDevice == nullptr, SESSION_NOT_RUNNING,
         "PhotoOutput IsDeferredImageDeliveryEnabled error!, inputDevice is nullptr");
     sptr<CameraDevice> cameraObj = inputDevice->GetCameraDeviceInfo();
-    CHECK_ERROR_RETURN_RET_LOG(cameraObj == nullptr, SESSION_NOT_RUNNING,
+    CHECK_RETURN_RET_ELOG(cameraObj == nullptr, SESSION_NOT_RUNNING,
         "PhotoOutput IsDeferredImageDeliveryEnabled error!, cameraObj is nullptr");
     isEnabled = session->IsImageDeferred() ? 0 : -1;
     return isEnabled;
@@ -970,16 +970,16 @@ int32_t PhotoOutput::IsAutoHighQualityPhotoSupported(int32_t &isAutoHighQualityP
     camera_metadata_item_t item;
     sptr<CameraDevice> cameraObj;
     auto session = GetSession();
-    CHECK_ERROR_RETURN_RET_LOG(session == nullptr, SESSION_NOT_RUNNING,
+    CHECK_RETURN_RET_ELOG(session == nullptr, SESSION_NOT_RUNNING,
         "PhotoOutput IsAutoHighQualityPhotoSupported error!, session is nullptr");
     auto inputDevice = session->GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(inputDevice == nullptr, SESSION_NOT_RUNNING,
+    CHECK_RETURN_RET_ELOG(inputDevice == nullptr, SESSION_NOT_RUNNING,
         "PhotoOutput IsAutoHighQualityPhotoSupported error!, inputDevice is nullptr");
     cameraObj = inputDevice->GetCameraDeviceInfo();
-    CHECK_ERROR_RETURN_RET_LOG(cameraObj == nullptr, SESSION_NOT_RUNNING,
+    CHECK_RETURN_RET_ELOG(cameraObj == nullptr, SESSION_NOT_RUNNING,
         "PhotoOutput IsAutoHighQualityPhotoSupported error!, cameraObj is nullptr");
     std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetCachedMetadata();
-    CHECK_ERROR_RETURN_RET(metadata == nullptr, SESSION_NOT_RUNNING);
+    CHECK_RETURN_RET(metadata == nullptr, SESSION_NOT_RUNNING);
     int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_HIGH_QUALITY_SUPPORT, &item);
     if (ret == CAM_META_SUCCESS) {
         isAutoHighQualityPhotoSupported = (item.data.u8[1] == 1) ? 0 : -1; // default mode
@@ -1001,16 +1001,16 @@ int32_t PhotoOutput::EnableAutoHighQualityPhoto(bool enabled)
 {
     MEDIA_DEBUG_LOG("PhotoOutput EnableAutoHighQualityPhoto");
     auto session = GetSession();
-    CHECK_ERROR_RETURN_RET_LOG(session == nullptr, SESSION_NOT_RUNNING,
+    CHECK_RETURN_RET_ELOG(session == nullptr, SESSION_NOT_RUNNING,
         "PhotoOutput EnableAutoHighQualityPhoto error!, session is nullptr");
     auto inputDevice = session->GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(inputDevice == nullptr, SESSION_NOT_RUNNING,
+    CHECK_RETURN_RET_ELOG(inputDevice == nullptr, SESSION_NOT_RUNNING,
         "PhotoOutput EnableAutoHighQualityPhoto error!, inputDevice is nullptr");
     int32_t isAutoHighQualityPhotoSupported;
     int32_t ret = IsAutoHighQualityPhotoSupported(isAutoHighQualityPhotoSupported);
-    CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, OPERATION_NOT_ALLOWED,
+    CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, OPERATION_NOT_ALLOWED,
         "PhotoOutput EnableAutoHighQualityPhoto error");
-    CHECK_ERROR_RETURN_RET_LOG(isAutoHighQualityPhotoSupported == -1, INVALID_ARGUMENT,
+    CHECK_RETURN_RET_ELOG(isAutoHighQualityPhotoSupported == -1, INVALID_ARGUMENT,
         "PhotoOutput EnableAutoHighQualityPhoto not supported");
     int32_t res = session->EnableAutoHighQualityPhoto(enabled);
     return res;
@@ -1034,15 +1034,15 @@ int32_t PhotoOutput::SetMovingPhotoVideoCodecType(int32_t videoCodecType)
 {
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
     MEDIA_DEBUG_LOG("Enter Into PhotoOutput::SetMovingPhotoVideoCodecType");
-    CHECK_ERROR_RETURN_RET_LOG(GetStream() == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_ELOG(GetStream() == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "PhotoOutput Failed to SetMovingPhotoVideoCodecType!, GetStream is nullptr");
     auto itemStream = CastStream<IStreamCapture>(GetStream());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
-    CHECK_ERROR_PRINT_LOG(itemStream == nullptr, "PhotoOutput::SetMovingPhotoVideoCodecType() itemStream is nullptr");
+    CHECK_PRINT_ELOG(itemStream == nullptr, "PhotoOutput::SetMovingPhotoVideoCodecType() itemStream is nullptr");
     if (itemStream) {
         errCode = itemStream->SetMovingPhotoVideoCodecType(videoCodecType);
     }
-    CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "PhotoOutput Failed to SetMovingPhotoVideoCodecType!, "
+    CHECK_PRINT_ELOG(errCode != CAMERA_OK, "PhotoOutput Failed to SetMovingPhotoVideoCodecType!, "
         "errCode: %{public}d", errCode);
     return ServiceToCameraError(errCode);
 }
@@ -1063,16 +1063,16 @@ int32_t PhotoOutput::IsAutoCloudImageEnhancementSupported(bool &isAutoCloudImage
 {
     MEDIA_DEBUG_LOG("PhotoOutput IsAutoCloudImageEnhancementSupported is called");
     auto session = GetSession();
-    CHECK_ERROR_RETURN_RET_LOG(session == nullptr, SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_ELOG(session == nullptr, SERVICE_FATL_ERROR,
         "PhotoOutput IsAutoCloudImageEnhancementSupported error!, session is nullptr");
     auto inputDevice = session->GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(inputDevice == nullptr, SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_ELOG(inputDevice == nullptr, SERVICE_FATL_ERROR,
         "PhotoOutput IsAutoCloudImageEnhancementSupported error!, inputDevice is nullptr");
     sptr<CameraDevice> cameraObj = inputDevice->GetCameraDeviceInfo();
-    CHECK_ERROR_RETURN_RET_LOG(cameraObj == nullptr, SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_ELOG(cameraObj == nullptr, SERVICE_FATL_ERROR,
         "PhotoOutput IsAutoCloudImageEnhancementSupported error!, cameraObj is nullptr");
     std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetCachedMetadata();
-    CHECK_ERROR_RETURN_RET(metadata == nullptr, SERVICE_FATL_ERROR);
+    CHECK_RETURN_RET(metadata == nullptr, SERVICE_FATL_ERROR);
     camera_metadata_item_t item;
     int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_AUTO_CLOUD_IMAGE_ENHANCE, &item);
     if (ret == CAM_META_SUCCESS) {
@@ -1097,16 +1097,16 @@ int32_t PhotoOutput::EnableAutoCloudImageEnhancement(bool enabled)
 {
     MEDIA_DEBUG_LOG("PhotoOutput EnableAutoCloudImageEnhancement is called");
     auto session = GetSession();
-    CHECK_ERROR_RETURN_RET_LOG(session == nullptr, SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_ELOG(session == nullptr, SERVICE_FATL_ERROR,
         "PhotoOutput EnableAutoCloudImageEnhancement error!, session is nullptr");
     auto inputDevice = session->GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(inputDevice == nullptr, SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_ELOG(inputDevice == nullptr, SERVICE_FATL_ERROR,
         "PhotoOutput EnableAutoCloudImageEnhancement error!, inputDevice is nullptr");
     bool isAutoCloudImageEnhancementSupported = false;
     int32_t ret = IsAutoCloudImageEnhancementSupported(isAutoCloudImageEnhancementSupported);
-    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS, SERVICE_FATL_ERROR,
         "PhotoOutput EnableAutoCloudImageEnhancement error");
-    CHECK_ERROR_RETURN_RET_LOG(isAutoCloudImageEnhancementSupported == false, SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_ELOG(isAutoCloudImageEnhancementSupported == false, SERVICE_FATL_ERROR,
         "PhotoOutput EnableAutoCloudImageEnhancement not supported");
     int32_t res = session->EnableAutoCloudImageEnhancement(enabled);
     return res;
@@ -1134,16 +1134,16 @@ int32_t PhotoOutput::GetPhotoRotation(int32_t imageRotation)
     ImageRotation result = ImageRotation::ROTATION_0;
     sptr<CameraDevice> cameraObj;
     auto session = GetSession();
-    CHECK_ERROR_RETURN_RET_LOG(session == nullptr, SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_ELOG(session == nullptr, SERVICE_FATL_ERROR,
         "PhotoOutput GetPhotoRotation error!, session is nullptr");
     auto inputDevice = session->GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(inputDevice == nullptr, SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_ELOG(inputDevice == nullptr, SERVICE_FATL_ERROR,
         "PhotoOutput GetPhotoRotation error!, inputDevice is nullptr");
     cameraObj = inputDevice->GetCameraDeviceInfo();
-    CHECK_ERROR_RETURN_RET_LOG(cameraObj == nullptr, SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_ELOG(cameraObj == nullptr, SERVICE_FATL_ERROR,
         "PhotoOutput GetPhotoRotation error!, cameraObj is nullptr");
     cameraPosition = cameraObj->GetPosition();
-    CHECK_ERROR_RETURN_RET_LOG(cameraPosition == CAMERA_POSITION_UNSPECIFIED, SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_ELOG(cameraPosition == CAMERA_POSITION_UNSPECIFIED, SERVICE_FATL_ERROR,
         "PhotoOutput GetPhotoRotation error!, cameraPosition is unspecified");
     sensorOrientation = static_cast<int32_t>(cameraObj->GetCameraOrientation());
     imageRotation = (imageRotation + ROTATION_45_DEGREES) / ROTATION_90_DEGREES * ROTATION_90_DEGREES;
@@ -1154,11 +1154,11 @@ int32_t PhotoOutput::GetPhotoRotation(int32_t imageRotation)
     }
     auto streamCapturePtr = CastStream<IStreamCapture>(GetStream());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
-    CHECK_ERROR_RETURN_RET_LOG(streamCapturePtr == nullptr, CameraErrorCode::SERVICE_FATL_ERROR;,
+    CHECK_RETURN_RET_ELOG(streamCapturePtr == nullptr, CameraErrorCode::SERVICE_FATL_ERROR;,
         "PhotoOutput::SetCameraPhotoRotation() streamCapturePtr is nullptr");
     if (streamCapturePtr) {
         errCode = streamCapturePtr->SetCameraPhotoRotation(true);
-        CHECK_ERROR_RETURN_RET_LOG(errCode != CAMERA_OK, SERVICE_FATL_ERROR,
+        CHECK_RETURN_RET_ELOG(errCode != CAMERA_OK, SERVICE_FATL_ERROR,
             "Failed to SetCameraPhotoRotation!, errCode: %{public}d", errCode);
     }
     MEDIA_INFO_LOG("PhotoOutput GetPhotoRotation :result %{public}d, sensorOrientation:%{public}d",
@@ -1170,19 +1170,19 @@ int32_t PhotoOutput::IsAutoAigcPhotoSupported(bool& isAutoAigcPhotoSupported)
 {
     MEDIA_INFO_LOG("PhotoOutput::IsAutoAigcPhotoSupported enter");
     auto session = GetSession();
-    CHECK_ERROR_RETURN_RET_LOG(session == nullptr, SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_ELOG(session == nullptr, SERVICE_FATL_ERROR,
         "PhotoOutput::IsAutoAigcPhotoSupportederror, captureSession is nullptr");
 
     auto inputDevice = session->GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(inputDevice == nullptr, SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_ELOG(inputDevice == nullptr, SERVICE_FATL_ERROR,
         "PhotoOutput::IsAutoAigcPhotoSupported, inputDevice is nullptr");
 
     sptr<CameraDevice> cameraObj = inputDevice->GetCameraDeviceInfo();
-    CHECK_ERROR_RETURN_RET_LOG(
+    CHECK_RETURN_RET_ELOG(
         cameraObj == nullptr, SERVICE_FATL_ERROR, "PhotoOutput::IsAutoAigcPhotoSupported error, cameraObj is nullptr");
 
     std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetMetadata();
-    CHECK_ERROR_RETURN_RET_LOG(
+    CHECK_RETURN_RET_ELOG(
         metadata == nullptr, SERVICE_FATL_ERROR, "PhotoOutput::IsAutoAigcPhotoSupported error, metadata is nullptr");
 
     camera_metadata_item_t item;
@@ -1213,17 +1213,17 @@ int32_t PhotoOutput::EnableAutoAigcPhoto(bool enabled)
 {
     MEDIA_INFO_LOG("PhotoOutput::EnableAutoAigcPhoto enter, enabled: %{public}d", enabled);
     auto captureSession = GetSession();
-    CHECK_ERROR_RETURN_RET_LOG(captureSession == nullptr, SESSION_NOT_RUNNING,
+    CHECK_RETURN_RET_ELOG(captureSession == nullptr, SESSION_NOT_RUNNING,
         "PhotoOutput::EnableAutoAigcPhoto error, captureSession is nullptr");
 
     auto inputDevice = captureSession->GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(inputDevice == nullptr, SESSION_NOT_RUNNING,
+    CHECK_RETURN_RET_ELOG(inputDevice == nullptr, SESSION_NOT_RUNNING,
         "PhotoOutput::EnableAutoAigcPhoto error, inputDevice is nullptr");
 
     bool isAutoAigcPhotoSupported = false;
     int32_t ret = IsAutoAigcPhotoSupported(isAutoAigcPhotoSupported);
-    CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, SERVICE_FATL_ERROR, "PhotoOutput::EnableAutoAigcPhoto error");
-    CHECK_ERROR_RETURN_RET_LOG(
+    CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, SERVICE_FATL_ERROR, "PhotoOutput::EnableAutoAigcPhoto error");
+    CHECK_RETURN_RET_ELOG(
         !isAutoAigcPhotoSupported, PARAMETER_ERROR, "PhotoOutput::EnableAutoAigcPhoto not supported");
     int32_t res = captureSession->EnableAutoAigcPhoto(enabled);
     MEDIA_INFO_LOG("PhotoOutput::EnableAutoAigcPhoto result: %{public}d", res);
@@ -1241,17 +1241,17 @@ bool PhotoOutput::IsOfflineSupported()
     MEDIA_INFO_LOG("Enter IsOfflineSupported");
     bool isOfflineSupported = false;
     auto session = GetSession();
-    CHECK_ERROR_RETURN_RET_LOG(session == nullptr, isOfflineSupported,
-                               "PhotoOutput IsOfflineSupported error!, session is nullptr");
+    CHECK_RETURN_RET_ELOG(
+        session == nullptr, isOfflineSupported, "PhotoOutput IsOfflineSupported error!, session is nullptr");
     auto inputDevice = session->GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(inputDevice == nullptr, isOfflineSupported,
-                               "PhotoOutput IsOfflineSupported error!, inputDevice is nullptr");
+    CHECK_RETURN_RET_ELOG(
+        inputDevice == nullptr, isOfflineSupported, "PhotoOutput IsOfflineSupported error!, inputDevice is nullptr");
     sptr<CameraDevice> cameraObj = inputDevice->GetCameraDeviceInfo();
-    CHECK_ERROR_RETURN_RET_LOG(cameraObj == nullptr, isOfflineSupported,
-                               "PhotoOutput IsOfflineSupported error!, cameraObj is nullptr");
+    CHECK_RETURN_RET_ELOG(
+        cameraObj == nullptr, isOfflineSupported, "PhotoOutput IsOfflineSupported error!, cameraObj is nullptr");
     std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetMetadata();
-    CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, isOfflineSupported,
-                               "PhotoOutput IsOfflineSupported error!, metadata is nullptr");
+    CHECK_RETURN_RET_ELOG(
+        metadata == nullptr, isOfflineSupported, "PhotoOutput IsOfflineSupported error!, metadata is nullptr");
     camera_metadata_item_t item;
     int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_CHANGETO_OFFLINE_STREAM_OPEATOR, &item);
     if (ret == CAM_META_SUCCESS && item.count > 0) {
@@ -1267,24 +1267,24 @@ int32_t PhotoOutput::EnableOfflinePhoto()
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("PhotoOutput EnableOfflinePhoto");
     auto session = GetSession();
-    CHECK_ERROR_RETURN_RET_LOG(session == nullptr, SESSION_NOT_RUNNING,
-                               "PhotoOutput EnableOfflinePhoto error!, session is nullptr");
+    CHECK_RETURN_RET_ELOG(
+        session == nullptr, SESSION_NOT_RUNNING, "PhotoOutput EnableOfflinePhoto error!, session is nullptr");
     auto inputDevice = session->GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(inputDevice == nullptr, SESSION_NOT_RUNNING,
-                               "PhotoOutput EnableOfflinePhoto error!, inputDevice is nullptr");
+    CHECK_RETURN_RET_ELOG(
+        inputDevice == nullptr, SESSION_NOT_RUNNING, "PhotoOutput EnableOfflinePhoto error!, inputDevice is nullptr");
     bool isOfflineSupported = IsOfflineSupported();
-    CHECK_ERROR_RETURN_RET_LOG(isOfflineSupported == false, OPERATION_NOT_ALLOWED,
-                               "PhotoOutput EnableOfflinePhoto error, isOfflineSupported is false");
+    CHECK_RETURN_RET_ELOG(isOfflineSupported == false, OPERATION_NOT_ALLOWED,
+        "PhotoOutput EnableOfflinePhoto error, isOfflineSupported is false");
     auto isSessionConfiged = session->IsSessionCommited();
-    CHECK_ERROR_RETURN_RET_LOG(isSessionConfiged == false, OPERATION_NOT_ALLOWED,
-                               "PhotoOutput EnableOfflinePhoto error, isSessionConfiged is false");
+    CHECK_RETURN_RET_ELOG(isSessionConfiged == false, OPERATION_NOT_ALLOWED,
+        "PhotoOutput EnableOfflinePhoto error, isSessionConfiged is false");
     mIsHasEnableOfflinePhoto_ = true; // 管理offlinephotooutput
     auto streamCapturePtr = CastStream<IStreamCapture>(GetStream());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (streamCapturePtr) {
         errCode = streamCapturePtr->EnableOfflinePhoto(true);
-        CHECK_ERROR_RETURN_RET_LOG(errCode != CAMERA_OK, SERVICE_FATL_ERROR,
-                                   "Failed to EnableOfflinePhoto! , errCode: %{public}d", errCode);
+        CHECK_RETURN_RET_ELOG(
+            errCode != CAMERA_OK, SERVICE_FATL_ERROR, "Failed to EnableOfflinePhoto! , errCode: %{public}d", errCode);
     } else {
         MEDIA_ERR_LOG("PhotoOutput::EnableOfflinePhoto() itemStream is nullptr");
         return CameraErrorCode::SERVICE_FATL_ERROR;

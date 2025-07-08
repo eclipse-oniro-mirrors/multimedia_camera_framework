@@ -68,7 +68,7 @@ void MoonCaptureBoostFeatureFuzzer::MoonCaptureBoostFeatureFuzzTest()
     SceneMode relatedMode = SceneMode::CAPTURE;
     auto deviceAbility = std::make_shared<OHOS::Camera::CameraMetadata>(1, 1);
     fuzz_ = std::make_shared<MoonCaptureBoostFeature>(relatedMode, deviceAbility);
-    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
+    CHECK_RETURN_ELOG(!fuzz_, "Create fuzz_ Error");
     fuzz_->GetSketchEnableRatio();
     auto inputZoomRatio = GetData<float>();
     fuzz_->GetSketchReferenceFovRatio(inputZoomRatio);

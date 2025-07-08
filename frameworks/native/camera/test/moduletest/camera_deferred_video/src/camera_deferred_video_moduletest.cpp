@@ -48,17 +48,17 @@ void CameraDeferredVideoModuleTest::SetUp()
     ASSERT_NE(cameraManager_, nullptr);
 
     cameras_ = cameraManager_->GetSupportedCameras();
-    CHECK_ERROR_RETURN_LOG(cameras_.empty(), "GetSupportedCameras empty");
+    CHECK_RETURN_ELOG(cameras_.empty(), "GetSupportedCameras empty");
 
     std::vector<SceneMode> sceneModes = GetSupportedSceneModes(cameras_[0]);
     auto it = std::find(sceneModes.begin(), sceneModes.end(), SceneMode::VIDEO);
-    CHECK_ERROR_RETURN_LOG(it == sceneModes.end(), "SceneMode::VIDEO not supported");
+    CHECK_RETURN_ELOG(it == sceneModes.end(), "SceneMode::VIDEO not supported");
 
     outputCapability_ = cameraManager_->GetSupportedOutputCapability(cameras_[0], SceneMode::VIDEO);
     ASSERT_NE(outputCapability_, nullptr);
     previewProfiles_ = outputCapability_->GetPreviewProfiles();
     videoProfiles_ = outputCapability_->GetVideoProfiles();
-    CHECK_ERROR_RETURN_LOG(previewProfiles_.empty() || videoProfiles_.empty(),
+    CHECK_RETURN_ELOG(previewProfiles_.empty() || videoProfiles_.empty(),
         "GetPreviewProfiles or GetVideoProfiles empty");
 
     FilterPreviewProfiles(previewProfiles_);
@@ -206,7 +206,7 @@ HWTEST_F(CameraDeferredVideoModuleTest, camera_deferred_video_moduletest_001, Te
     sptr<CaptureOutput> videoOutput = static_cast<CaptureOutput*>(videoOutput_.GetRefPtr());
     EXPECT_EQ(captureSession_->AddOutput(videoOutput), CameraErrorCode::SUCCESS);
 
-    CHECK_ERROR_RETURN_LOG(videoOutput_->IsAutoDeferredVideoEnhancementSupported() == 0,
+    CHECK_RETURN_ELOG(videoOutput_->IsAutoDeferredVideoEnhancementSupported() == 0,
         "deferred video not supported");
     EXPECT_EQ(videoOutput_->IsAutoDeferredVideoEnhancementEnabled(), DEFERRED_VIDEO_NOT_ENABLED);
     EXPECT_EQ(videoOutput_->EnableAutoDeferredVideoEnhancement(true), CameraErrorCode::SUCCESS);
@@ -243,7 +243,7 @@ HWTEST_F(CameraDeferredVideoModuleTest, camera_deferred_video_moduletest_002, Te
     sptr<CaptureOutput> videoOutput = static_cast<CaptureOutput*>(videoOutput_.GetRefPtr());
     EXPECT_EQ(captureSession_->AddOutput(videoOutput), CameraErrorCode::SUCCESS);
 
-    CHECK_ERROR_RETURN_LOG(videoOutput_->IsAutoDeferredVideoEnhancementSupported() == 0,
+    CHECK_RETURN_ELOG(videoOutput_->IsAutoDeferredVideoEnhancementSupported() == 0,
         "deferred video not supported");
     EXPECT_EQ(videoOutput_->IsAutoDeferredVideoEnhancementEnabled(), DEFERRED_VIDEO_NOT_ENABLED);
     EXPECT_EQ(videoOutput_->EnableAutoDeferredVideoEnhancement(true), CameraErrorCode::SUCCESS);

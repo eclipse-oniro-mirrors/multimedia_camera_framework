@@ -22,7 +22,7 @@ void DeviceProtectionAbilityConnection::OnAbilityConnectDone(const AppExecFwk::E
     const sptr<IRemoteObject> &remoteObject, int32_t resultCode)
 {
     MEDIA_INFO_LOG("OnAbilityConnectDone, resultCode = %{public}d", resultCode);
-    CHECK_ERROR_RETURN_LOG(remoteObject == nullptr, "remote object is nullptr");
+    CHECK_RETURN_ELOG(remoteObject == nullptr, "remote object is nullptr");
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
@@ -42,4 +42,4 @@ void DeviceProtectionAbilityConnection::OnAbilityDisconnectDone(const AppExecFwk
 }
 
 } // namespace CameraStandard
-} // namespace OHOS
+} // namespace OHOS

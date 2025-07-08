@@ -58,7 +58,7 @@ int32_t CameraWindowManagerClient::RegisterWindowManagerAgent()
     } else {
         MEDIA_ERR_LOG("sceneSessionManagerProxy_ is null");
     }
-    CHECK_ERROR_PRINT_LOG(ret != CAMERA_OK, "failed to UnregisterWindowManagerAgent error code: %{public}d", ret);
+    CHECK_PRINT_ELOG(ret != CAMERA_OK, "failed to UnregisterWindowManagerAgent error code: %{public}d", ret);
     MEDIA_DEBUG_LOG("RegisterWindowManagerAgent end");
     return ret;
 }
@@ -73,7 +73,7 @@ int32_t CameraWindowManagerClient::UnregisterWindowManagerAgent()
     } else {
         MEDIA_ERR_LOG("sceneSessionManagerProxy_ is null");
     }
-    CHECK_ERROR_PRINT_LOG(ret != CAMERA_OK, "failed to UnregisterWindowManagerAgent error code: %{public}d", ret);
+    CHECK_PRINT_ELOG(ret != CAMERA_OK, "failed to UnregisterWindowManagerAgent error code: %{public}d", ret);
     MEDIA_DEBUG_LOG("UnregisterWindowManagerAgent end");
     return ret;
 }
@@ -97,25 +97,25 @@ void CameraWindowManagerClient::InitWindowProxy()
     MEDIA_DEBUG_LOG("InitWindowProxy begin");
     sptr<ISystemAbilityManager> systemAbilityManager =
         SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    CHECK_ERROR_RETURN_LOG(!systemAbilityManager, "Failed to get system ability manager");
+    CHECK_RETURN_ELOG(!systemAbilityManager, "Failed to get system ability manager");
  
     sptr<IRemoteObject> remoteObject = systemAbilityManager->GetSystemAbility(WINDOW_MANAGER_SERVICE_ID);
-    CHECK_ERROR_RETURN_LOG(!remoteObject, "remoteObjectWmMgrService is null");
+    CHECK_RETURN_ELOG(!remoteObject, "remoteObjectWmMgrService is null");
  
     mockSessionManagerServiceProxy_ = iface_cast<IMockSessionManagerInterface>(remoteObject);
-    CHECK_ERROR_RETURN_LOG(!mockSessionManagerServiceProxy_, "Failed to get mockSessionManagerServiceProxy_");
+    CHECK_RETURN_ELOG(!mockSessionManagerServiceProxy_, "Failed to get mockSessionManagerServiceProxy_");
  
     sptr<IRemoteObject> remoteObjectMgrService = mockSessionManagerServiceProxy_->GetSessionManagerService();
-    CHECK_ERROR_RETURN_LOG(!remoteObjectMgrService, "remoteObjectMgrService is null");
+    CHECK_RETURN_ELOG(!remoteObjectMgrService, "remoteObjectMgrService is null");
  
     sessionManagerServiceProxy_ = iface_cast<ISessionManagerService>(remoteObjectMgrService);
-    CHECK_ERROR_RETURN_LOG(!sessionManagerServiceProxy_, "Failed to get sessionManagerServiceProxy_");
+    CHECK_RETURN_ELOG(!sessionManagerServiceProxy_, "Failed to get sessionManagerServiceProxy_");
  
     sptr<IRemoteObject> remoteObjectMgr = sessionManagerServiceProxy_->GetSceneSessionManager();
-    CHECK_ERROR_RETURN_LOG(!remoteObjectMgr, "remoteObjectMgr is null");
+    CHECK_RETURN_ELOG(!remoteObjectMgr, "remoteObjectMgr is null");
  
     sceneSessionManagerProxy_ = iface_cast<ISceneSessionManager>(remoteObjectMgr);
-    CHECK_ERROR_RETURN_LOG(!sceneSessionManagerProxy_, "Failed to get sceneSessionManagerProxy_");
+    CHECK_RETURN_ELOG(!sceneSessionManagerProxy_, "Failed to get sceneSessionManagerProxy_");
  
     MEDIA_DEBUG_LOG("InitWindowProxy end");
 }
@@ -124,9 +124,9 @@ void CameraWindowManagerClient::InitWindowManagerAgent()
 {
     MEDIA_DEBUG_LOG("InitWindowManagerAgent start");
     windowManagerAgent_ = new CameraWindowManagerAgent();
-    CHECK_ERROR_PRINT_LOG(windowManagerAgent_ == nullptr, "Failed to init windowManagerAgent_");
+    CHECK_PRINT_ELOG(windowManagerAgent_ == nullptr, "Failed to init windowManagerAgent_");
     int32_t windowRet = CameraWindowManagerClient::GetInstance()->RegisterWindowManagerAgent();
-    CHECK_ERROR_PRINT_LOG(windowRet != 0, "RegisterWindowManagerAgent faild");
+    CHECK_PRINT_ELOG(windowRet != 0, "RegisterWindowManagerAgent faild");
     MEDIA_DEBUG_LOG("InitWindowManagerAgent end");
 }
  
@@ -139,9 +139,9 @@ int32_t CameraWindowManagerClient::SubscribeSystemAbility()
 {
     MEDIA_DEBUG_LOG("SubscribeSystemAbility start");
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    CHECK_ERROR_RETURN_RET_LOG(samgr == nullptr, CAMERA_UNKNOWN_ERROR, "Failed to get system ability manager");
+    CHECK_RETURN_RET_ELOG(samgr == nullptr, CAMERA_UNKNOWN_ERROR, "Failed to get system ability manager");
     saStatusChangeCallback_ = new CameraWindowManagerClient::WMSSaStatusChangeCallback();
-    CHECK_ERROR_RETURN_RET_LOG(saStatusChangeCallback_ == nullptr, CAMERA_UNKNOWN_ERROR,
+    CHECK_RETURN_RET_ELOG(saStatusChangeCallback_ == nullptr, CAMERA_UNKNOWN_ERROR,
         "saStatusChangeCallback_ init error");
     int32_t ret = samgr->SubscribeSystemAbility(WINDOW_MANAGER_SERVICE_ID, saStatusChangeCallback_);
     MEDIA_DEBUG_LOG("SubscribeSystemAbility ret = %{public}d", ret);
@@ -151,8 +151,8 @@ int32_t CameraWindowManagerClient::SubscribeSystemAbility()
 int32_t CameraWindowManagerClient::UnSubscribeSystemAbility()
 {
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    CHECK_ERROR_RETURN_RET_LOG(samgr == nullptr, CAMERA_UNKNOWN_ERROR, "Failed to get system ability manager");
-    CHECK_ERROR_RETURN_RET(saStatusChangeCallback_ == nullptr, CAMERA_OK);
+    CHECK_RETURN_RET_ELOG(samgr == nullptr, CAMERA_UNKNOWN_ERROR, "Failed to get system ability manager");
+    CHECK_RETURN_RET(saStatusChangeCallback_ == nullptr, CAMERA_OK);
     int32_t ret = samgr->UnSubscribeSystemAbility(WINDOW_MANAGER_SERVICE_ID, saStatusChangeCallback_);
     MEDIA_DEBUG_LOG("SubscribeSystemAbility ret = %{public}d", ret);
     return ret == 0? CAMERA_OK : CAMERA_UNKNOWN_ERROR;

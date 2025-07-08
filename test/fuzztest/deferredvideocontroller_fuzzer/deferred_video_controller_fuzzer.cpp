@@ -70,7 +70,7 @@ void DeferredVideoControllerFuzzer::DeferredVideoControllerFuzzTest()
     std::vector<std::string> testStrings = {"test1", "test2"};
     std::string videoId(testStrings[randomNum % testStrings.size()]);
     repository = std::make_shared<VideoJobRepository>(userId);
-    CHECK_ERROR_RETURN_LOG(!repository, "Create repository Error");
+    CHECK_RETURN_ELOG(!repository, "Create repository Error");
     repository->SetJobPending(videoId);
     repository->SetJobRunning(videoId);
     repository->SetJobCompleted(videoId);
@@ -78,7 +78,7 @@ void DeferredVideoControllerFuzzer::DeferredVideoControllerFuzzTest()
     repository->SetJobPause(videoId);
     repository->SetJobError(videoId);
     center_ = std::make_shared<DeferredProcessing::VideoStrategyCenter>(repository);
-    CHECK_ERROR_RETURN_LOG(!center_, "Create center_ Error");
+    CHECK_RETURN_ELOG(!center_, "Create center_ Error");
     const std::shared_ptr<VideoPostProcessor> postProcessor =
         std::make_shared<VideoPostProcessor>(userId);
     const std::shared_ptr<IVideoProcessCallbacksFuzz> callback =
@@ -86,7 +86,7 @@ void DeferredVideoControllerFuzzer::DeferredVideoControllerFuzzTest()
     std::shared_ptr<DeferredVideoProcessor> processor =
         std::make_shared<DeferredVideoProcessor>(repository, postProcessor, callback);
     fuzz_ = std::make_shared<DeferredVideoController>(userId, repository, processor);
-    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
+    CHECK_RETURN_ELOG(!fuzz_, "Create fuzz_ Error");
     sptr<IPCFileDescriptor> srcFd = sptr<IPCFileDescriptor>::MakeSptr(GetData<int>());
     sptr<IPCFileDescriptor> dstFd = sptr<IPCFileDescriptor>::MakeSptr(GetData<int>());
     std::shared_ptr<DeferredVideoJob> jobPtr =

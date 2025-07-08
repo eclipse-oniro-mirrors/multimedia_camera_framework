@@ -44,15 +44,15 @@ void Test(uint8_t* data, size_t size)
     if (fdp.remaining_bytes() < LIMITSIZE) {
         return;
     }
-    CHECK_ERROR_RETURN_LOG(!TestToken::GetAllCameraPermission(), "GetPermission error");
+    CHECK_RETURN_ELOG(!TestToken::GetAllCameraPermission(), "GetPermission error");
     auto manager = CameraManager::GetInstance();
-    CHECK_ERROR_RETURN_LOG(!manager, "CameraInputFuzzer: Get CameraManager instance Error");
+    CHECK_RETURN_ELOG(!manager, "CameraInputFuzzer: Get CameraManager instance Error");
     auto cameras = manager->GetSupportedCameras();
-    CHECK_ERROR_RETURN_LOG(cameras.size() < CAM_NUM, "CameraInputFuzzer: GetSupportedCameras Error");
+    CHECK_RETURN_ELOG(cameras.size() < CAM_NUM, "CameraInputFuzzer: GetSupportedCameras Error");
     auto camera = cameras[fdp.ConsumeIntegral<uint32_t>() % cameras.size()];
-    CHECK_ERROR_RETURN_LOG(!camera, "CameraInputFuzzer: Camera is null Error");
+    CHECK_RETURN_ELOG(!camera, "CameraInputFuzzer: Camera is null Error");
     auto input = manager->CreateCameraInput(camera);
-    CHECK_ERROR_RETURN_LOG(!input, "CameraInputFuzzer: CreateCameraInput Error");
+    CHECK_RETURN_ELOG(!input, "CameraInputFuzzer: CreateCameraInput Error");
     std::shared_ptr<CameraOcclusionDetectCallback> cameraOcclusionDetectCallback
         = std::make_shared<CameraOcclusionDetectCallbackTest>();
     input->SetOcclusionDetectCallback(cameraOcclusionDetectCallback);

@@ -91,12 +91,12 @@ void HCameraDeviceManager::RemoveDevice(const std::string &cameraId)
 {
     MEDIA_INFO_LOG("HCameraDeviceManager::RemoveDevice cameraId=%{public}s start", cameraId.c_str());
     std::lock_guard<std::mutex> lock(mapMutex_);
-    CHECK_ERROR_RETURN(activeCameras_.empty());
+    CHECK_RETURN(activeCameras_.empty());
     auto it = std::find_if(activeCameras_.begin(), activeCameras_.end(), [&](const sptr<HCameraDeviceHolder> &x) {
         const std::string &curCameraId = x->GetDevice()->GetCameraId();
         return cameraId == curCameraId;
     });
-    CHECK_ERROR_RETURN_LOG(it == activeCameras_.end(), "HCameraDeviceManager::RemoveDevice error");
+    CHECK_RETURN_ELOG(it == activeCameras_.end(), "HCameraDeviceManager::RemoveDevice error");
     int32_t pidNumber = (*it)->GetPid();
     auto itPid = pidToCameras_.find(pidNumber);
     if (itPid != pidToCameras_.end()) {
@@ -187,7 +187,7 @@ SafeMap<std::string, int32_t> &HCameraDeviceManager::GetCameraStateOfASide()
 
 void HCameraDeviceManager::SetPeerCallback(const sptr<ICameraBroker>& callback)
 {
-    CHECK_ERROR_RETURN_LOG(callback == nullptr, "HCameraDeviceManager::SetPeerCallback failed to set peer callback");
+    CHECK_RETURN_ELOG(callback == nullptr, "HCameraDeviceManager::SetPeerCallback failed to set peer callback");
     std::lock_guard<std::mutex> lock(peerCbMutex_);
     peerCallback_ = callback;
 }
@@ -223,7 +223,7 @@ static void GetInfoFromCameraDeviceHolder(sptr<HCameraDeviceHolder> requestCamer
 
     HapTokenInfoExt hapTokenInfo = {};
     int32_t getHapInfoRet = AccessTokenKit::GetHapTokenInfoExtension(firstTokenId, hapTokenInfo);
-    CHECK_ERROR_RETURN_LOG(getHapInfoRet != 0, "get hap info fail");
+    CHECK_RETURN_ELOG(getHapInfoRet != 0, "get hap info fail");
 
     std::vector<AppExecFwk::AppStateData> appDataList;
     CameraAppManagerUtils::GetForegroundApplications(appDataList);
@@ -287,13 +287,13 @@ bool HCameraDeviceManager::GetConflictDevices(std::vector<sptr<HCameraDevice>>& 
     }
     // Protecting for mysterious call
     if (stateOfRgmCamera_.Size() != 0) {
-        CHECK_ERROR_RETURN_RET_LOG(pidOfActiveClients.size() != 0, false,
+        CHECK_RETURN_RET_ELOG(pidOfActiveClients.size() != 0, false,
             "HCameraDeviceManager::GetConflictDevices Exceptional error occurred before");
         return IsAllowOpen(pidOfOpenRequest);
     } else {
         MEDIA_INFO_LOG("HCameraDeviceManager::GetConflictDevices no rgm camera active");
     }
-    CHECK_ERROR_RETURN_RET(pidOfActiveClients.size() == 0, true);
+    CHECK_RETURN_RET(pidOfActiveClients.size() == 0, true);
     // Protecting for mysterious call end.
 
     sptr<HCameraDeviceHolder> requestHolder =
@@ -485,10 +485,10 @@ std::string HCameraDeviceManager::GetACameraId()
 bool HCameraDeviceManager::IsAllowOpen(pid_t pidOfOpenRequest)
 {
     MEDIA_INFO_LOG("HCameraDeviceManager::isAllowOpen has a client open in A proxy");
-    CHECK_ERROR_RETURN_RET_LOG(pidOfOpenRequest == -1, false,
+    CHECK_RETURN_RET_ELOG(pidOfOpenRequest == -1, false,
         "HCameraDeviceManager::GetConflictDevices wrong pid of the process whitch is goning to turn on");
         std::string cameraId = GetACameraId();
-    CHECK_ERROR_RETURN_RET_LOG(peerCallback_ == nullptr, false,
+    CHECK_RETURN_RET_ELOG(peerCallback_ == nullptr, false,
         "HCameraDeviceManager::isAllowOpen falied to close peer device");
             peerCallback_->NotifyCloseCamera(cameraId);
             MEDIA_ERR_LOG("HCameraDeviceManager::isAllowOpen success to close peer device");
@@ -560,20 +560,20 @@ bool HCameraDeviceManager::IsProcessHasConcurrentDevice(pid_t pid)
 {
     std::lock_guard<std::mutex> lock(mapMutex_);
     auto mapIt = pidToCameras_.find(pid);
-    CHECK_ERROR_RETURN_RET(mapIt == pidToCameras_.end(), false);
+    CHECK_RETURN_RET(mapIt == pidToCameras_.end(), false);
     for (auto& holder : mapIt->second) {
         auto device = holder->GetDevice();
         if (device == nullptr) {
             continue;
         }
-        CHECK_ERROR_RETURN_RET(device->IsDeviceOpenedByConcurrent(), true);
+        CHECK_RETURN_RET(device->IsDeviceOpenedByConcurrent(), true);
     }
     return false;
 }
 
 void CameraConcurrentSelector::SetRequestCameraId(sptr<HCameraDeviceHolder> requestCameraHolder)
 {
-    CHECK_ERROR_RETURN_LOG(
+    CHECK_RETURN_ELOG(
         requestCameraHolder == nullptr, "requestCameraHolder is null");
     requestCameraHolder_ = requestCameraHolder;
     concurrentCameraTable_ = requestCameraHolder->GetDevice()->GetConcurrentDevicesTable();
@@ -605,7 +605,7 @@ bool CameraConcurrentSelector::CanOpenCameraconcurrently(std::vector<sptr<HCamer
         MEDIA_DEBUG_LOG("CameraConcurrentSelector::canOpenCameraconcurrently "
             "concurrentCameraTable_ current group: %{public}s", ss.str().c_str());
     }
-    CHECK_ERROR_RETURN_RET(reservedCameras.size() == 0, true);
+    CHECK_RETURN_RET(reservedCameras.size() == 0, true);
     std::vector<int32_t> cameraIds;
     for (const auto& camera : reservedCameras) {
         cameraIds.push_back(GetCameraIdNumber(camera->GetDevice()->GetCameraId()));

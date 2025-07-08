@@ -109,21 +109,21 @@ CameraXmlNodeInner::~CameraXmlNodeInner()
 int32_t CameraXmlNodeInner::Config(const char *fileName, const char *encoding, int32_t options)
 {
     doc_ = xmlReadFile(fileName, encoding, options);
-    CHECK_ERROR_RETURN_RET_LOG(doc_ == nullptr, FAIL, "xmlReadFile failed! fileName :%{public}s", fileName);
+    CHECK_RETURN_RET_ELOG(doc_ == nullptr, FAIL, "xmlReadFile failed! fileName :%{public}s", fileName);
     curNode_ = xmlDocGetRootElement(doc_);
-    CHECK_ERROR_RETURN_RET_LOG(curNode_ == nullptr, FAIL, "xmlDocGetRootElement failed!");
+    CHECK_RETURN_RET_ELOG(curNode_ == nullptr, FAIL, "xmlDocGetRootElement failed!");
     return SUCCESS;
 }
 
 void CameraXmlNodeInner::MoveToNext()
 {
-    CHECK_ERROR_RETURN_LOG(curNode_ == nullptr, "curNode_ is nullptr! Cannot MoveToNext!");
+    CHECK_RETURN_ELOG(curNode_ == nullptr, "curNode_ is nullptr! Cannot MoveToNext!");
     curNode_ = curNode_->next;
 }
 
 void CameraXmlNodeInner::MoveToChildren()
 {
-    CHECK_ERROR_RETURN_LOG(curNode_ == nullptr, "curNode_ is nullptr! Cannot MoveToChildren!");
+    CHECK_RETURN_ELOG(curNode_ == nullptr, "curNode_ is nullptr! Cannot MoveToChildren!");
     curNode_ = curNode_->children;
 }
 
@@ -143,7 +143,7 @@ int32_t CameraXmlNodeInner::GetProp(const char *propName, std::string &result)
 {
     result = "";
     xmlChar *tempValue = xmlGetProp(curNode_, reinterpret_cast<const xmlChar*>(propName));
-    CHECK_ERROR_RETURN_RET_LOG(tempValue == nullptr, FAIL, "GetProp Fail! curNode has no prop: %{public}s", propName);
+    CHECK_RETURN_RET_ELOG(tempValue == nullptr, FAIL, "GetProp Fail! curNode has no prop: %{public}s", propName);
     result = reinterpret_cast<char*>(tempValue);
     return SUCCESS;
 }
@@ -151,14 +151,14 @@ int32_t CameraXmlNodeInner::GetProp(const char *propName, std::string &result)
 int32_t CameraXmlNodeInner::GetContent(std::string &result)
 {
     xmlChar *tempContent = xmlNodeGetContent(curNode_);
-    CHECK_ERROR_RETURN_RET_LOG(tempContent == nullptr, FAIL, "GetContent Fail!");
+    CHECK_RETURN_RET_ELOG(tempContent == nullptr, FAIL, "GetContent Fail!");
     result = reinterpret_cast<char*>(tempContent);
     return SUCCESS;
 }
 
 std::string CameraXmlNodeInner::GetName()
 {
-    CHECK_ERROR_RETURN_RET_LOG(curNode_ == nullptr, "", "curNode_ is nullptr! Cannot GetName!");
+    CHECK_RETURN_RET_ELOG(curNode_ == nullptr, "", "curNode_ is nullptr! Cannot GetName!");
     return reinterpret_cast<char*>(const_cast<xmlChar*>(curNode_->name));
 }
 
@@ -187,14 +187,14 @@ int32_t CameraXmlNodeInner::StrcmpXml(const xmlChar *propName1, const xmlChar *p
 
 bool CameraXmlNodeInner::CompareName(const char *propName)
 {
-    CHECK_ERROR_RETURN_RET_LOG(curNode_ == nullptr, false, "curNode_ is nullptr! Cannot CompareName!");
+    CHECK_RETURN_RET_ELOG(curNode_ == nullptr, false, "curNode_ is nullptr! Cannot CompareName!");
     return curNode_->type == XML_ELEMENT_NODE &&
         (StrcmpXml(curNode_->name, reinterpret_cast<const xmlChar*>(propName)) == 0);
 }
 
 bool CameraXmlNodeInner::IsElementNode()
 {
-    CHECK_ERROR_RETURN_RET_LOG(curNode_ == nullptr, false, "curNode_ is nullptr! Cannot CompareElementNode!");
+    CHECK_RETURN_RET_ELOG(curNode_ == nullptr, false, "curNode_ is nullptr! Cannot CompareElementNode!");
     return curNode_->type == XML_ELEMENT_NODE;
 }
 

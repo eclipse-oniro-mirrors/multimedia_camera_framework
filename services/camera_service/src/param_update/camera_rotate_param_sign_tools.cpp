@@ -41,7 +41,7 @@ bool CameraRoateParamSignTool::VerifyFileSign(const std::string &pubKeyPath, con
 
     RSA *pubKey = RSA_new();
 
-    CHECK_ERROR_RETURN_RET_LOG(
+    CHECK_RETURN_RET_ELOG(
         PEM_read_bio_RSA_PUBKEY(bio, &pubKey, NULL, NULL) == NULL, false, "get pubKey is failed");
 
     bool verify = false;
@@ -60,8 +60,8 @@ bool CameraRoateParamSignTool::VerifyRsa(RSA *pubKey, const std::string &digest,
     EVP_PKEY *evpKey = NULL;
     EVP_MD_CTX *ctx = NULL;
     evpKey = EVP_PKEY_new();
-    CHECK_ERROR_RETURN_RET_LOG(evpKey == nullptr, false, "evpKey == nullptr");
-    CHECK_ERROR_RETURN_RET_LOG(EVP_PKEY_set1_RSA(evpKey, pubKey) != 1, false, "EVP_PKEY_set1_RSA(evpKey, pubKey) != 1");
+    CHECK_RETURN_RET_ELOG(evpKey == nullptr, false, "evpKey == nullptr");
+    CHECK_RETURN_RET_ELOG(EVP_PKEY_set1_RSA(evpKey, pubKey) != 1, false, "EVP_PKEY_set1_RSA(evpKey, pubKey) != 1");
     ctx = EVP_MD_CTX_new();
     EVP_MD_CTX_init(ctx);
     if (ctx == nullptr) {
@@ -112,7 +112,7 @@ std::tuple<int, std::string> CameraRoateParamSignTool::CalcFileSha256Digest(cons
 int CameraRoateParamSignTool::ForEachFileSegment(const std::string &fpath, std::function<void(char *, size_t)> executor)
 {
     char canonicalPath[PATH_MAX + 1] = {0x00};
-    CHECK_ERROR_RETURN_RET_LOG(
+    CHECK_RETURN_RET_ELOG(
         realpath(fpath.c_str(), canonicalPath) == nullptr, errno, "ForEachFileSegment filepath is irregular");
     std::unique_ptr<FILE, decltype(&fclose)> filp = { fopen(canonicalPath, "r"), fclose };
     if (!filp) {
@@ -136,7 +136,7 @@ void CameraRoateParamSignTool::CalcBase64(uint8_t *input, uint32_t inputLen, std
     size_t expectedLength = 4 * ((inputLen + 2) / 3); // 4 3 is Fixed algorithm
     encodedStr.resize(expectedLength);
     int lengthTemp = EVP_EncodeBlock(reinterpret_cast<uint8_t *>(&encodedStr[0]), input, inputLen);
-    CHECK_ERROR_RETURN(lengthTemp < 0);
+    CHECK_RETURN(lengthTemp < 0);
     size_t actualLength = static_cast<size_t>(lengthTemp);
     encodedStr.resize(actualLength);
     MEDIA_INFO_LOG("expectedLength = %{public}zu, actualLength = %{public}zu", expectedLength, actualLength);

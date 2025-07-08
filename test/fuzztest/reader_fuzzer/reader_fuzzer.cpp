@@ -54,7 +54,7 @@ T GetData()
 void ReaderFuzzer::ReaderFuzzTest(FuzzedDataProvider& fdp)
 {
     fuzz_ = std::make_shared<Reader>();
-    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
+    CHECK_RETURN_ELOG(!fuzz_, "Create fuzz_ Error");
     fuzz_->GetSourceFormat();
     Format sourceFormat;
     fuzz_->sourceFormat_ = std::make_shared<Format>(sourceFormat);

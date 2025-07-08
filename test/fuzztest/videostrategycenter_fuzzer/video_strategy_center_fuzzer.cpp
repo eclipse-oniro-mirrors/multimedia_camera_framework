@@ -30,7 +30,7 @@ void VideoStrategyCenterFuzzer::VideoStrategyCenterFuzzTest(FuzzedDataProvider& 
 {
     auto userId = fdp.ConsumeIntegral<int32_t>();
     auto repository = std::make_shared<VideoJobRepository>(userId);
-    CHECK_ERROR_RETURN_LOG(!repository, "Create repository Error");
+    CHECK_RETURN_ELOG(!repository, "Create repository Error");
     std::string videoId(fdp.ConsumeRandomLengthString(MAX_LENGTH_STRING));
     repository->SetJobPending(videoId);
     repository->SetJobRunning(videoId);
@@ -40,7 +40,7 @@ void VideoStrategyCenterFuzzer::VideoStrategyCenterFuzzTest(FuzzedDataProvider& 
     repository->SetJobError(videoId);
 
     fuzz_ = std::make_shared<DeferredProcessing::VideoStrategyCenter>(repository);
-    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
+    CHECK_RETURN_ELOG(!fuzz_, "Create fuzz_ Error");
     fuzz_->GetWork();
     fuzz_->GetJob();
     fuzz_->GetExecutionMode();

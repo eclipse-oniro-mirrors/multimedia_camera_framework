@@ -37,7 +37,7 @@ void AudioVideoMuxerFuzzer::AudioVideoMuxerFuzzTest(FuzzedDataProvider& fdp)
         return;
     }
     fuzz_ = std::make_shared<AudioVideoMuxer>();
-    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
+    CHECK_RETURN_ELOG(!fuzz_, "Create fuzz_ Error");
     uint8_t randomNum = fdp.ConsumeIntegral<uint8_t>();
     fuzz_->Create(static_cast<OH_AVOutputFormat>(randomNum), nullptr);
     std::shared_ptr<OHOS::Media::AVBuffer> sample = std::make_shared<OHOS::Media::AVBuffer>();

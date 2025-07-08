@@ -58,9 +58,9 @@ void MetadataOutputFuzzer::MetadataOutputFuzzTest(FuzzedDataProvider& fdp)
     }
     cameraManager_ = CameraManager::GetInstance();
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
-    CHECK_ERROR_RETURN_LOG(cameras.empty(), "MetadataOutputFuzzer: GetCameraDeviceListFromServer Error");
+    CHECK_RETURN_ELOG(cameras.empty(), "MetadataOutputFuzzer: GetCameraDeviceListFromServer Error");
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
-    CHECK_ERROR_RETURN_LOG(!input, "CreateCameraInput Error");
+    CHECK_RETURN_ELOG(!input, "CreateCameraInput Error");
     sptr<CaptureOutput> metadata = cameraManager_->CreateMetadataOutput();
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     session->BeginConfig();
@@ -142,7 +142,7 @@ void Test(uint8_t* data, size_t size)
     sptr<IStreamMetadata> streamMetadata = iface_cast<IStreamMetadata>(object);
     sptr<IConsumerSurface> surface = IConsumerSurface::Create();
     MetadataOutputFuzzer::fuzz_ = std::make_shared<MetadataOutput>(surface, streamMetadata);
-    CHECK_ERROR_RETURN_LOG(!MetadataOutputFuzzer::fuzz_, "Create fuzz_ Error");
+    CHECK_RETURN_ELOG(!MetadataOutputFuzzer::fuzz_, "Create fuzz_ Error");
     metadataOutput->MetadataOutputFuzzTest(fdp);
     metadataOutput->MetadataOutputFuzzTest1(fdp);
 }

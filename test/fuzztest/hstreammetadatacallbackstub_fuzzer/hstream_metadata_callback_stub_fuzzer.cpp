@@ -71,7 +71,7 @@ void HStreamMetadataCallbackStubFuzzer::OnRemoteRequest(int32_t code)
         return;
     }
     fuzz_ = std::make_shared<HStreamMetadataCallbackStubFuzz>();
-    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
+    CHECK_RETURN_ELOG(!fuzz_, "Create fuzz_ Error");
     MessageParcel reply;
     MessageOption option;
     MessageParcel dataMessageParcel;

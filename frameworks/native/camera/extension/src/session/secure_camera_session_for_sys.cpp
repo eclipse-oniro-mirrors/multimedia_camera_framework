@@ -27,7 +27,7 @@ int32_t SecureCameraSessionForSys::AddSecureOutput(sptr<CaptureOutput> &output)
 {
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("Enter Into SecureCameraSessionForSys::AddSecureOutput");
-    CHECK_ERROR_RETURN_RET_LOG(!IsSessionConfiged() || output == nullptr || isSetSecureOutput_,
+    CHECK_RETURN_RET_ELOG(!IsSessionConfiged() || output == nullptr || isSetSecureOutput_,
         CAMERA_OPERATION_NOT_ALLOWED, "SecureCameraSessionForSys::CanAddOutput operation is not allowed!");
     sptr<IStreamCommon> stream = output->GetStream();
     IStreamRepeat* repeatStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());

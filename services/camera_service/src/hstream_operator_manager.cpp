@@ -29,7 +29,7 @@ HStreamOperatorManager::HStreamOperatorManager() {}
 HStreamOperatorManager::~HStreamOperatorManager()
 {
     MEDIA_INFO_LOG("~HStreamOperatorManager");
-    CHECK_ERROR_RETURN(streamOperatorManagerMap_.empty());
+    CHECK_RETURN(streamOperatorManagerMap_.empty());
     MEDIA_INFO_LOG("~HStreamOperatorManager clear maps");
     // avoid double free
     {
@@ -66,9 +66,9 @@ void HStreamOperatorManager::RemoveStreamOperator(int32_t& hStreamOperatorId)
 {
     MEDIA_INFO_LOG("HStreamOperatorManager::RemoveStreamOperator hStreamOperatorId is %{public}d", hStreamOperatorId);
     std::lock_guard<std::mutex> lock(mapMutex_);
-    CHECK_ERROR_RETURN(hStreamOperatorId < 0);
+    CHECK_RETURN(hStreamOperatorId < 0);
     auto streamOperator = streamOperatorManagerMap_.find(hStreamOperatorId);
-    CHECK_ERROR_RETURN_LOG(streamOperator == streamOperatorManagerMap_.end(), "not found hStreamOperatorId: %{public}d",
+    CHECK_RETURN_ELOG(streamOperator == streamOperatorManagerMap_.end(), "not found hStreamOperatorId: %{public}d",
         hStreamOperatorId);
     streamOperatorManagerMap_.erase(hStreamOperatorId);
     if (streamOperatorManagerMap_.size() == 0) {
@@ -89,7 +89,7 @@ void HStreamOperatorManager::RemoveTaskManager(int32_t& hStreamOperatorId)
     MEDIA_INFO_LOG("HStreamOperatorManager::RemoveTaskManager hStreamOperatorId is %{public}d", hStreamOperatorId);
     sptr<AvcodecTaskManager> taskManager = nullptr;
     taskManagerMap_.Find(hStreamOperatorId, taskManager);
-    CHECK_ERROR_RETURN_LOG(!taskManager, "not found hStreamOperatorId: %{public}d", hStreamOperatorId);
+    CHECK_RETURN_ELOG(!taskManager, "not found hStreamOperatorId: %{public}d", hStreamOperatorId);
     thread asyncThread = thread([hStreamOperatorId, taskManager]() {
         CAMERA_SYNC_TRACE;
         MEDIA_INFO_LOG(
@@ -106,7 +106,7 @@ void HStreamOperatorManager::UpdateStreamOperator(int32_t& hStreamOperatorId)
     std::lock_guard<std::mutex> lock(mapMutex_);
     MEDIA_INFO_LOG("HStreamOperatorManager::UpdateStreamOperator hStreamOperatorId is %{public}d", hStreamOperatorId);
     auto StreamOperator = streamOperatorManagerMap_.find(hStreamOperatorId);
-    CHECK_ERROR_RETURN(StreamOperator == streamOperatorManagerMap_.end());
+    CHECK_RETURN(StreamOperator == streamOperatorManagerMap_.end());
 }
 
 int32_t HStreamOperatorManager::GetOfflineOutputSize()

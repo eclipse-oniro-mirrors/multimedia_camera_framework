@@ -39,9 +39,9 @@ std::shared_ptr<CameraAbility> CameraAbilityFuzzer::fuzz_{nullptr};
 
 void CameraAbilityFuzzer::CameraAbilityFuzzTest(FuzzedDataProvider& fdp)
 {
-    CHECK_ERROR_RETURN_LOG(!TestToken::GetAllCameraPermission(), "GetPermission error");
+    CHECK_RETURN_ELOG(!TestToken::GetAllCameraPermission(), "GetPermission error");
     fuzz_ = std::make_shared<CameraAbility>();
-    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
+    CHECK_RETURN_ELOG(!fuzz_, "Create fuzz_ Error");
     fuzz_->HasFlash();
     {
         int32_t getData = fdp.ConsumeIntegral<int32_t>();

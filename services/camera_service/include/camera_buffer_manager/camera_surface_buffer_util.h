@@ -31,7 +31,7 @@ public:
     static sptr<SurfaceBuffer> DeepCopyBuffer(sptr<SurfaceBuffer> surfaceBuffer)
     {
         CAMERA_SYNC_TRACE;
-        CHECK_ERROR_RETURN_RET_LOG(surfaceBuffer == nullptr, nullptr, "DeepCopyBuffer surfaceBuffer is null");
+        CHECK_RETURN_RET_ELOG(surfaceBuffer == nullptr, nullptr, "DeepCopyBuffer surfaceBuffer is null");
         uint32_t bufferSeqNum = surfaceBuffer->GetSeqNum();
         MEDIA_DEBUG_LOG("DeepCopyBuffer E bufferSeqNum:%{public}u", bufferSeqNum);
         DumpSurfaceBuffer(surfaceBuffer);
@@ -75,7 +75,7 @@ public:
     static sptr<SurfaceBuffer> DeepCopyThumbnailBuffer(sptr<SurfaceBuffer> surfaceBuffer)
     {
         CAMERA_SYNC_TRACE;
-        CHECK_ERROR_RETURN_RET_LOG(surfaceBuffer == nullptr, nullptr, "DeepCopyThumbnailBuffer surfaceBuffer is null");
+        CHECK_RETURN_RET_ELOG(surfaceBuffer == nullptr, nullptr, "DeepCopyThumbnailBuffer surfaceBuffer is null");
         uint32_t bufferSeqNum = surfaceBuffer->GetSeqNum();
         MEDIA_DEBUG_LOG("DeepCopyThumbnailBuffer E bufferSeqNum:%{public}u", bufferSeqNum);
         DumpSurfaceBuffer(surfaceBuffer);
@@ -259,9 +259,9 @@ private:
     static void CopyMetaData(sptr<SurfaceBuffer> &inBuffer, sptr<SurfaceBuffer> &outBuffer)
     {
         std::vector<uint32_t> keys = {};
-        CHECK_ERROR_RETURN_LOG(inBuffer == nullptr, "CopyMetaData: inBuffer is nullptr");
+        CHECK_RETURN_ELOG(inBuffer == nullptr, "CopyMetaData: inBuffer is nullptr");
         auto ret = inBuffer->ListMetadataKeys(keys);
-        CHECK_ERROR_RETURN_LOG(ret != GSError::GSERROR_OK, "CopyMetaData: ListMetadataKeys fail! res=%{public}d", ret);
+        CHECK_RETURN_ELOG(ret != GSError::GSERROR_OK, "CopyMetaData: ListMetadataKeys fail! res=%{public}d", ret);
         for (uint32_t key : keys) {
             std::vector<uint8_t> values;
             ret = inBuffer->GetMetadata(key, values);

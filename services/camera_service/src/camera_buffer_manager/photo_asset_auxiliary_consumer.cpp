@@ -40,8 +40,8 @@ void AuxiliaryBufferConsumer::OnBufferAvailable()
 {
     MEDIA_INFO_LOG("OnBufferAvailable E, surfaceName:%{public}s", surfaceName_.c_str());
     sptr<HStreamCapture> streamCapture = streamCapture_.promote();
-    CHECK_ERROR_RETURN_LOG(streamCapture == nullptr, "streamCapture is null");
-    CHECK_ERROR_RETURN_LOG(streamCapture->photoSubTask_ == nullptr, "photoSubTask is null");
+    CHECK_RETURN_ELOG(streamCapture == nullptr, "streamCapture is null");
+    CHECK_RETURN_ELOG(streamCapture->photoSubTask_ == nullptr, "photoSubTask is null");
     wptr<AuxiliaryBufferConsumer> thisPtr(this);
     streamCapture->photoSubTask_->SubmitTask([thisPtr]() {
         auto listener = thisPtr.promote();
@@ -56,7 +56,7 @@ void AuxiliaryBufferConsumer::ExecuteOnBufferAvailable()
     MEDIA_INFO_LOG("A_ExecuteOnBufferAvailable E, surfaceName:%{public}s", surfaceName_.c_str());
     CAMERA_SYNC_TRACE;
     sptr<HStreamCapture> streamCapture = streamCapture_.promote();
-    CHECK_ERROR_RETURN_LOG(streamCapture == nullptr, "streamCapture is null");
+    CHECK_RETURN_ELOG(streamCapture == nullptr, "streamCapture is null");
     sptr<Surface> surface;
     if (surfaceName_ == S_GAINMAP) {
         surface = streamCapture->gainmapSurface_;
@@ -79,7 +79,7 @@ void AuxiliaryBufferConsumer::ExecuteOnBufferAvailable()
     }
     sptr<SurfaceBuffer> newSurfaceBuffer = CameraSurfaceBufferUtil::DeepCopyBuffer(surfaceBuffer);
     surface->ReleaseBuffer(surfaceBuffer, -1);
-    CHECK_ERROR_RETURN_LOG(newSurfaceBuffer == nullptr, "newSurfaceBuffer is null");
+    CHECK_RETURN_ELOG(newSurfaceBuffer == nullptr, "newSurfaceBuffer is null");
     if (surfaceName_ == S_EXIF) {
         int32_t dataSize = CameraSurfaceBufferUtil::GetDataSize(newSurfaceBuffer);
         sptr<BufferExtraData> extraData = newSurfaceBuffer->GetExtraData();
@@ -136,4 +136,4 @@ void AuxiliaryBufferConsumer::ExecuteOnBufferAvailable()
 }
 }  // namespace CameraStandard
 }  // namespace OHOS
-// LCOV_EXCL_STOP
+// LCOV_EXCL_STOP

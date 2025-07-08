@@ -29,9 +29,9 @@ CameraCommonEventManager::~CameraCommonEventManager()
 
 sptr<CameraCommonEventManager> CameraCommonEventManager::GetInstance()
 {
-    CHECK_ERROR_RETURN_RET(instance_ != nullptr, instance_);
+    CHECK_RETURN_RET(instance_ != nullptr, instance_);
     std::lock_guard<std::mutex> lock(instanceMutex_);
-    CHECK_ERROR_RETURN_RET(instance_ != nullptr, instance_);
+    CHECK_RETURN_RET(instance_ != nullptr, instance_);
     instance_ = new (std::nothrow) CameraCommonEventManager();
     return instance_;
 }

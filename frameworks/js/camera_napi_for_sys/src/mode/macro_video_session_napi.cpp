@@ -57,10 +57,10 @@ void MacroVideoSessionNapi::Init(napi_env env)
     status =
         napi_define_class(env, MACRO_VIDEO_SESSION_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH, MacroVideoSessionNapiConstructor,
             nullptr, macro_video_session_props.size(), macro_video_session_props.data(), &ctorObj);
-    CHECK_ERROR_RETURN_LOG(status != napi_ok, "MacroVideoSessionNapi defined class failed");
+    CHECK_RETURN_ELOG(status != napi_ok, "MacroVideoSessionNapi defined class failed");
     int32_t refCount = 1;
     status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
-    CHECK_ERROR_RETURN_LOG(status != napi_ok, "MacroVideoSessionNapi Init failed");
+    CHECK_RETURN_ELOG(status != napi_ok, "MacroVideoSessionNapi Init failed");
     MEDIA_DEBUG_LOG("MacroVideoSessionNapi Init success");
 }
 
@@ -73,7 +73,7 @@ napi_value MacroVideoSessionNapi::CreateCameraSession(napi_env env)
     napi_value constructor;
     if (sConstructor_ == nullptr) {
         MacroVideoSessionNapi::Init(env);
-        CHECK_ERROR_RETURN_RET_LOG(sConstructor_ == nullptr, result, "sConstructor_ is null");
+        CHECK_RETURN_RET_ELOG(sConstructor_ == nullptr, result, "sConstructor_ is null");
     }
     status = napi_get_reference_value(env, sConstructor_, &constructor);
     if (status == napi_ok) {
@@ -111,11 +111,11 @@ napi_value MacroVideoSessionNapi::MacroVideoSessionNapiConstructor(napi_env env,
     if (status == napi_ok && thisVar != nullptr) {
         std::unique_ptr<MacroVideoSessionNapi> obj = std::make_unique<MacroVideoSessionNapi>();
         obj->env_ = env;
-        CHECK_ERROR_RETURN_RET_LOG(sCameraSessionForSys_ == nullptr, result, "sCameraSessionForSys_ is null");
+        CHECK_RETURN_RET_ELOG(sCameraSessionForSys_ == nullptr, result, "sCameraSessionForSys_ is null");
         obj->macroVideoSession_ = static_cast<MacroVideoSession*>(sCameraSessionForSys_.GetRefPtr());
         obj->cameraSessionForSys_ = obj->macroVideoSession_;
         obj->cameraSession_ = obj->macroVideoSession_;
-        CHECK_ERROR_RETURN_RET_LOG(obj->macroVideoSession_ == nullptr, result, "macroVideoSession_ is null");
+        CHECK_RETURN_RET_ELOG(obj->macroVideoSession_ == nullptr, result, "macroVideoSession_ is null");
         status = napi_wrap(
             env, thisVar, reinterpret_cast<void*>(obj.get()), MacroVideoSessionNapiDestructor, nullptr, nullptr);
         if (status == napi_ok) {

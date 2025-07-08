@@ -24,8 +24,8 @@ PictureProxy::PictureProxy(
     std::shared_ptr<Dynamiclib> pictureLib, std::shared_ptr<PictureIntf> pictureIntf)
     : pictureLib_(pictureLib), pictureIntf_(pictureIntf)
 {
-    CHECK_ERROR_RETURN_LOG(pictureLib_ == nullptr, "PictureProxy construct pictureLib is null");
-    CHECK_ERROR_RETURN_LOG(pictureIntf_ == nullptr, "PictureProxy construct pictureIntf is null");
+    CHECK_RETURN_ELOG(pictureLib_ == nullptr, "PictureProxy construct pictureLib is null");
+    CHECK_RETURN_ELOG(pictureIntf_ == nullptr, "PictureProxy construct pictureIntf is null");
 }
 
 PictureProxy::~PictureProxy()
@@ -37,7 +37,7 @@ void PictureProxy::Create(sptr<SurfaceBuffer> &surfaceBuffer)
 {
     MEDIA_INFO_LOG("PictureProxy ctor");
     std::shared_ptr<PictureIntf> pictureIntf = GetPictureIntf();
-    CHECK_ERROR_RETURN_LOG(!pictureIntf, "PictureProxy::Create pictureIntf_ is nullptr");
+    CHECK_RETURN_ELOG(!pictureIntf, "PictureProxy::Create pictureIntf_ is nullptr");
     pictureIntf->Create(surfaceBuffer);
 }
 
@@ -45,13 +45,13 @@ typedef PictureIntf* (*CreatePictureIntf)();
 std::shared_ptr<PictureProxy> PictureProxy::CreatePictureProxy()
 {
     auto dynamiclib = CameraDynamicLoader::GetDynamiclib(PICTURE_SO);
-    CHECK_ERROR_RETURN_RET_LOG(
+    CHECK_RETURN_RET_ELOG(
         dynamiclib == nullptr, nullptr, "PictureProxy::CreatePictureProxy get dynamiclib fail");
     CreatePictureIntf createPictureIntf = (CreatePictureIntf)dynamiclib->GetFunction("createPictureAdapterIntf");
-    CHECK_ERROR_RETURN_RET_LOG(
+    CHECK_RETURN_RET_ELOG(
         createPictureIntf == nullptr, nullptr, "PictureProxy::CreatePictureProxy get createPictureIntf fail");
     PictureIntf* pictureIntf = createPictureIntf();
-    CHECK_ERROR_RETURN_RET_LOG(
+    CHECK_RETURN_RET_ELOG(
         pictureIntf == nullptr, nullptr, "PictureProxy::CreatePictureProxy get pictureIntf fail");
     std::shared_ptr<PictureProxy> pictureProxy =
         std::make_shared<PictureProxy>(dynamiclib, std::shared_ptr<PictureIntf>(pictureIntf));
@@ -66,7 +66,7 @@ void PictureProxy::SetAuxiliaryPicture(sptr<SurfaceBuffer> &surfaceBuffer, Camer
 {
     MEDIA_INFO_LOG("PictureProxy::SetAuxiliaryPicture enter");
     std::shared_ptr<PictureIntf> pictureIntf = GetPictureIntf();
-    CHECK_ERROR_RETURN_LOG(!pictureIntf, "PictureProxy::SetAuxiliaryPicture pictureIntf_ is nullptr");
+    CHECK_RETURN_ELOG(!pictureIntf, "PictureProxy::SetAuxiliaryPicture pictureIntf_ is nullptr");
     pictureIntf->SetAuxiliaryPicture(surfaceBuffer, type);
 }
 
@@ -85,7 +85,7 @@ bool PictureProxy::Marshalling(Parcel &data) const
 {
     MEDIA_INFO_LOG("PictureProxy::Marshalling enter");
     std::shared_ptr<PictureIntf> pictureIntf = GetPictureIntf();
-    CHECK_ERROR_RETURN_RET_LOG(pictureIntf == nullptr, false, "PictureProxy::Marshalling pictureIntf_ is nullptr");
+    CHECK_RETURN_RET_ELOG(pictureIntf == nullptr, false, "PictureProxy::Marshalling pictureIntf_ is nullptr");
     return pictureIntf->Marshalling(data);
 }
 
@@ -93,7 +93,7 @@ void PictureProxy::UnmarshallingPicture(Parcel &data)
 {
     MEDIA_INFO_LOG("PictureProxy::Unmarshalling enter");
     std::shared_ptr<PictureIntf> pictureIntf = GetPictureIntf();
-    CHECK_ERROR_RETURN_LOG(!pictureIntf, "PictureProxy::Unmarshalling failed! pictureIntf is nullptr");
+    CHECK_RETURN_ELOG(!pictureIntf, "PictureProxy::Unmarshalling failed! pictureIntf is nullptr");
     pictureIntf->UnmarshallingPicture(data);
 }
 
@@ -102,7 +102,7 @@ int32_t PictureProxy::SetExifMetadata(sptr<SurfaceBuffer> &surfaceBuffer)
     MEDIA_INFO_LOG("PictureProxy::SetExifMetadata enter");
     int32_t retCode = -1;
     std::shared_ptr<PictureIntf> pictureIntf = GetPictureIntf();
-    CHECK_ERROR_RETURN_RET_LOG(!pictureIntf, retCode, "PictureProxy::SetExifMetadata pictureIntf is nullptr");
+    CHECK_RETURN_RET_ELOG(!pictureIntf, retCode, "PictureProxy::SetExifMetadata pictureIntf is nullptr");
     retCode = pictureIntf->SetExifMetadata(surfaceBuffer);
     return retCode;
 }
@@ -111,7 +111,7 @@ bool PictureProxy::SetMaintenanceData(sptr<SurfaceBuffer> &surfaceBuffer)
 {
     bool retCode = false;
     std::shared_ptr<PictureIntf> pictureIntf = GetPictureIntf();
-    CHECK_ERROR_RETURN_RET_LOG(!pictureIntf, retCode, "PictureProxy::SetMaintenanceData pictureIntf is nullptr");
+    CHECK_RETURN_RET_ELOG(!pictureIntf, retCode, "PictureProxy::SetMaintenanceData pictureIntf is nullptr");
     retCode = pictureIntf->SetMaintenanceData(surfaceBuffer);
     return retCode;
 }
@@ -119,7 +119,7 @@ bool PictureProxy::SetMaintenanceData(sptr<SurfaceBuffer> &surfaceBuffer)
 void PictureProxy::RotatePicture()
 {
     std::shared_ptr<PictureIntf> pictureIntf = GetPictureIntf();
-    CHECK_ERROR_RETURN_LOG(!pictureIntf, "PictureProxy::RotatePicture pictureIntf is nullptr");
+    CHECK_RETURN_ELOG(!pictureIntf, "PictureProxy::RotatePicture pictureIntf is nullptr");
     pictureIntf->RotatePicture();
 }
 // LCOV_EXCL_STOP

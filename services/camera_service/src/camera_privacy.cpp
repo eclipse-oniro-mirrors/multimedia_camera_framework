@@ -31,9 +31,9 @@ using OHOS::Security::AccessToken::AccessTokenKit;
 
 sptr<HStreamOperator> CastToSession(wptr<IStreamOperatorCallback> streamOpCb)
 {
-    CHECK_ERROR_RETURN_RET_LOG(streamOpCb == nullptr, nullptr, "streamOpCb is nullptr");
+    CHECK_RETURN_RET_ELOG(streamOpCb == nullptr, nullptr, "streamOpCb is nullptr");
     auto streamOpCbSptr = streamOpCb.promote();
-    CHECK_ERROR_RETURN_RET_LOG(streamOpCbSptr == nullptr, nullptr, "streamOpCbWptr is nullptr");
+    CHECK_RETURN_RET_ELOG(streamOpCbSptr == nullptr, nullptr, "streamOpCbWptr is nullptr");
 
     return static_cast<HStreamOperator*>(streamOpCbSptr.GetRefPtr());
 }
@@ -71,9 +71,9 @@ void CameraUseStateChangeCb::StateChangeNotify(Security::AccessToken::AccessToke
             continue;
         }
         auto device = holder->GetDevice();
-        CHECK_ERROR_RETURN_LOG((isShowing == true) || (device == nullptr), "abnormal callback from privacy.");
+        CHECK_RETURN_ELOG((isShowing == true) || (device == nullptr), "abnormal callback from privacy.");
         auto cameraPrivacy = device->GetCameraPrivacy();
-        CHECK_ERROR_RETURN_LOG(cameraPrivacy == nullptr, "cameraPrivacy is nullptr.");
+        CHECK_RETURN_ELOG(cameraPrivacy == nullptr, "cameraPrivacy is nullptr.");
         bool isSystemCamera = (cameraPrivacy->GetClientName().find(CAMERA_TAG) != std::string::npos)
             && CheckSystemApp();
         MEDIA_INFO_LOG("CameraUseStateChangeCb::StateChangeNotify ClientName: %{public}s, isSystemCamera: %{public}d",
@@ -121,18 +121,18 @@ bool CameraPrivacy::RegisterPermissionCallback()
         res = AccessTokenKit::RegisterPermStateChangeCallback(permissionCallbackPtr_);
     }
     MEDIA_INFO_LOG("CameraPrivacy::RegisterPermissionCallback res:%{public}d", res);
-    CHECK_ERROR_PRINT_LOG(res != CAMERA_OK, "RegisterPermissionCallback failed.");
+    CHECK_PRINT_ELOG(res != CAMERA_OK, "RegisterPermissionCallback failed.");
     return res == CAMERA_OK;
 }
 
 void CameraPrivacy::UnregisterPermissionCallback()
 {
     std::lock_guard<std::mutex> lock(permissionCbMutex_);
-    CHECK_ERROR_RETURN_LOG(permissionCallbackPtr_ == nullptr, "permissionCallbackPtr_ is null.");
+    CHECK_RETURN_ELOG(permissionCallbackPtr_ == nullptr, "permissionCallbackPtr_ is null.");
     MEDIA_DEBUG_LOG("UnregisterPermissionCallback unregister");
     int32_t res = AccessTokenKit::UnRegisterPermStateChangeCallback(permissionCallbackPtr_);
     MEDIA_INFO_LOG("CameraPrivacy::UnregisterPermissionCallback res:%{public}d", res);
-    CHECK_ERROR_PRINT_LOG(res != CAMERA_OK, "UnregisterPermissionCallback failed.");
+    CHECK_PRINT_ELOG(res != CAMERA_OK, "UnregisterPermissionCallback failed.");
     permissionCallbackPtr_ = nullptr;
 }
 
@@ -142,7 +142,7 @@ bool CameraPrivacy::AddCameraPermissionUsedRecord()
     int32_t failCount = 0;
     int32_t res = PrivacyKit::AddPermissionUsedRecord(callerToken_, OHOS_PERMISSION_CAMERA, successCout, failCount);
     MEDIA_INFO_LOG("CameraPrivacy::AddCameraPermissionUsedRecord res:%{public}d", res);
-    CHECK_ERROR_PRINT_LOG(res != CAMERA_OK, "AddCameraPermissionUsedRecord failed.");
+    CHECK_PRINT_ELOG(res != CAMERA_OK, "AddCameraPermissionUsedRecord failed.");
     return res == CAMERA_OK;
 }
 
@@ -151,14 +151,14 @@ bool CameraPrivacy::StartUsingPermissionCallback()
     int32_t res;
     {
         std::lock_guard<std::mutex> lock(cameraUseCbMutex_);
-        CHECK_ERROR_RETURN_RET_LOG(cameraUseCallbackPtr_, true, "has StartUsingPermissionCallback!");
+        CHECK_RETURN_RET_ELOG(cameraUseCallbackPtr_, true, "has StartUsingPermissionCallback!");
         cameraUseCallbackPtr_ = std::make_shared<CameraUseStateChangeCb>();
         res = PrivacyKit::StartUsingPermission(callerToken_, OHOS_PERMISSION_CAMERA, cameraUseCallbackPtr_);
     }
     MEDIA_INFO_LOG("CameraPrivacy::StartUsingPermissionCallback res:%{public}d", res);
     bool ret = (res == CAMERA_OK || res == Security::AccessToken::ERR_EDM_POLICY_CHECK_FAILED ||
         res == Security::AccessToken::ERR_PRIVACY_POLICY_CHECK_FAILED);
-    CHECK_ERROR_PRINT_LOG(!ret, "StartUsingPermissionCallback failed.");
+    CHECK_PRINT_ELOG(!ret, "StartUsingPermissionCallback failed.");
     return ret;
 }
 
@@ -169,7 +169,7 @@ void CameraPrivacy::StopUsingPermissionCallback()
         std::lock_guard<std::mutex> lock(cameraUseCbMutex_);
         int32_t res = PrivacyKit::StopUsingPermission(callerToken_, OHOS_PERMISSION_CAMERA);
         MEDIA_INFO_LOG("CameraPrivacy::StopUsingPermissionCallback res:%{public}d", res);
-        CHECK_ERROR_PRINT_LOG(res != CAMERA_OK, "StopUsingPermissionCallback failed.");
+        CHECK_PRINT_ELOG(res != CAMERA_OK, "StopUsingPermissionCallback failed.");
         cameraUseCallbackPtr_ = nullptr;
     }
     Notify();

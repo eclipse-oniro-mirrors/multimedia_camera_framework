@@ -280,16 +280,16 @@ bool IsValidMode(int32_t opMode, std::shared_ptr<OHOS::Camera::CameraMetadata> c
 
 void DumpMetadata(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraSettings)
 {
-    CHECK_ERROR_RETURN(cameraSettings == nullptr);
+    CHECK_RETURN(cameraSettings == nullptr);
     auto srcHeader = cameraSettings->get();
-    CHECK_ERROR_RETURN(srcHeader == nullptr);
+    CHECK_RETURN(srcHeader == nullptr);
     auto srcItemCount = srcHeader->item_count;
     camera_metadata_item_t item;
     for (uint32_t index = 0; index < srcItemCount; index++) {
         int ret = OHOS::Camera::GetCameraMetadataItem(srcHeader, index, &item);
-        CHECK_ERROR_RETURN_LOG(ret != CAM_META_SUCCESS, "Failed to get metadata item at index: %{public}d", index);
+        CHECK_RETURN_ELOG(ret != CAM_META_SUCCESS, "Failed to get metadata item at index: %{public}d", index);
         const char *name = OHOS::Camera::GetCameraMetadataItemName(item.item);
-        CHECK_ERROR_RETURN_LOG(name == nullptr, "U8ItemToString: get u8 item name fail!");
+        CHECK_RETURN_ELOG(name == nullptr, "U8ItemToString: get u8 item name fail!");
         if (item.data_type == META_TYPE_BYTE) {
             for (size_t k = 0; k < item.count; k++) {
                 MEDIA_DEBUG_LOG("tag index:%d, name:%s, value:%d", item.index, name, (uint8_t)(item.data.u8[k]));
@@ -324,13 +324,13 @@ std::string GetClientBundle(int uid)
 {
     std::string bundleName = "";
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    CHECK_ERROR_RETURN_RET_LOG(samgr == nullptr, bundleName, "GetClientBundle Get ability manager failed");
+    CHECK_RETURN_RET_ELOG(samgr == nullptr, bundleName, "GetClientBundle Get ability manager failed");
 
     sptr<IRemoteObject> object = samgr->GetSystemAbility(BUNDLE_MGR_SERVICE_SYS_ABILITY_ID);
-    CHECK_ERROR_RETURN_RET_LOG(object == nullptr, bundleName, "GetClientBundle object is NULL.");
+    CHECK_RETURN_RET_ELOG(object == nullptr, bundleName, "GetClientBundle object is NULL.");
 
     sptr<OHOS::AppExecFwk::IBundleMgr> bms = iface_cast<OHOS::AppExecFwk::IBundleMgr>(object);
-    CHECK_ERROR_RETURN_RET_LOG(bms == nullptr, bundleName, "GetClientBundle bundle manager service is NULL.");
+    CHECK_RETURN_RET_ELOG(bms == nullptr, bundleName, "GetClientBundle bundle manager service is NULL.");
 
     auto result = bms->GetNameForUid(uid, bundleName);
     if (result != ERR_OK) {
@@ -350,12 +350,12 @@ std::string GetClientNameByToken(int tokenIdNum)
     if (tokenType == TOKEN_HAP) {
         HapTokenInfoExt hapTokenInfo = {};
         int ret = AccessTokenKit::GetHapTokenInfoExtension(tokenId, hapTokenInfo);
-        CHECK_ERROR_RETURN_RET_LOG(ret != 0, "unknown", "GetHapTokenInfoExtension fail, ret %{public}d", ret);
+        CHECK_RETURN_RET_ELOG(ret != 0, "unknown", "GetHapTokenInfoExtension fail, ret %{public}d", ret);
         return hapTokenInfo.baseInfo.bundleName;
     } else if (tokenType == TOKEN_NATIVE) {
         NativeTokenInfo nativeTokenInfo = {};
         int ret = AccessTokenKit::GetNativeTokenInfo(tokenId, nativeTokenInfo);
-        CHECK_ERROR_RETURN_RET_LOG(ret != 0, "unknown", "GetNativeTokenInfo fail, ret %{public}d", ret);
+        CHECK_RETURN_RET_ELOG(ret != 0, "unknown", "GetNativeTokenInfo fail, ret %{public}d", ret);
         return nativeTokenInfo.processName;
     } else {
         MEDIA_ERR_LOG("unexpected token type %{public}d", tokenType);
@@ -447,7 +447,7 @@ bool IsVerticalDevice()
     bool isVerticalDevice = true;
     auto display = OHOS::Rosen::DisplayManager::GetInstance().GetDefaultDisplay();
 
-    CHECK_ERROR_RETURN_RET_LOG(display == nullptr, isVerticalDevice, "IsVerticalDevice GetDefaultDisplay failed");
+    CHECK_RETURN_RET_ELOG(display == nullptr, isVerticalDevice, "IsVerticalDevice GetDefaultDisplay failed");
     MEDIA_DEBUG_LOG("GetDefaultDisplay:W(%{public}d),H(%{public}d),Orientation(%{public}d),Rotation(%{public}d)",
         display->GetWidth(), display->GetHeight(), display->GetOrientation(), display->GetRotation());
     bool isScreenVertical = display->GetRotation() == OHOS::Rosen::Rotation::ROTATION_0 ||
@@ -523,7 +523,7 @@ int64_t GetTimestamp()
 std::string GetFileStream(const std::string &filepath)
 {
     char *canonicalPath = realpath(filepath.c_str(), nullptr);
-    CHECK_ERROR_RETURN_RET(canonicalPath == nullptr, NULL);
+    CHECK_RETURN_RET(canonicalPath == nullptr, NULL);
     std::ifstream file(canonicalPath, std::ios::in | std::ios::binary);
     free(canonicalPath);
     // 文件流的异常处理，不能用try catch的形式
@@ -563,7 +563,7 @@ void TrimString(std::string &inputStr)
 bool RemoveFile(const std::string& path)
 {
     char *canonicalPath = realpath(path.c_str(), nullptr);
-    CHECK_ERROR_RETURN_RET(canonicalPath == nullptr, false);
+    CHECK_RETURN_RET(canonicalPath == nullptr, false);
     if (remove(canonicalPath) == 0) {
         free(canonicalPath);
         MEDIA_INFO_LOG("File removed successfully.");
@@ -576,7 +576,7 @@ bool RemoveFile(const std::string& path)
 bool CheckPathExist(const char *path)
 {
     char *canonicalPath = realpath(path, nullptr);
-    CHECK_ERROR_RETURN_RET_LOG(canonicalPath == nullptr, false, "CheckPathExist path is nullptr");
+    CHECK_RETURN_RET_ELOG(canonicalPath == nullptr, false, "CheckPathExist path is nullptr");
     std::ifstream profileStream(canonicalPath);
     free(canonicalPath);
     return profileStream.good();
