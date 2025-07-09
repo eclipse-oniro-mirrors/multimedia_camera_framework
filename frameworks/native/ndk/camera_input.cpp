@@ -24,11 +24,11 @@ extern "C" {
 
 Camera_ErrorCode OH_CameraInput_RegisterCallback(Camera_Input* cameraInput, CameraInput_Callbacks* callback)
 {
-    CHECK_ERROR_RETURN_RET_LOG(cameraInput == nullptr, CAMERA_INVALID_ARGUMENT,
+    CHECK_RETURN_RET_ELOG(cameraInput == nullptr, CAMERA_INVALID_ARGUMENT,
         "Invalid argument, cameraInput is null!");
-    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_INVALID_ARGUMENT,
+    CHECK_RETURN_RET_ELOG(callback == nullptr, CAMERA_INVALID_ARGUMENT,
         "Invalid argument, callback is null!");
-    CHECK_ERROR_RETURN_RET_LOG(callback->onError == nullptr, CAMERA_INVALID_ARGUMENT,
+    CHECK_RETURN_RET_ELOG(callback->onError == nullptr, CAMERA_INVALID_ARGUMENT,
         "Invalid argument, callback onError is null!");
     cameraInput->RegisterCallback(callback);
     return CAMERA_OK;
@@ -36,11 +36,11 @@ Camera_ErrorCode OH_CameraInput_RegisterCallback(Camera_Input* cameraInput, Came
 
 Camera_ErrorCode OH_CameraInput_UnregisterCallback(Camera_Input* cameraInput, CameraInput_Callbacks* callback)
 {
-    CHECK_ERROR_RETURN_RET_LOG(cameraInput == nullptr, CAMERA_INVALID_ARGUMENT,
+    CHECK_RETURN_RET_ELOG(cameraInput == nullptr, CAMERA_INVALID_ARGUMENT,
         "Invalid argument, cameraInput is null!");
-    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_INVALID_ARGUMENT,
+    CHECK_RETURN_RET_ELOG(callback == nullptr, CAMERA_INVALID_ARGUMENT,
         "Invalid argument, callback is null!");
-    CHECK_ERROR_RETURN_RET_LOG(callback->onError == nullptr, CAMERA_INVALID_ARGUMENT,
+    CHECK_RETURN_RET_ELOG(callback->onError == nullptr, CAMERA_INVALID_ARGUMENT,
         "Invalid argument, callback onError is null!");
     cameraInput->UnregisterCallback(callback);
     return CAMERA_OK;
@@ -48,7 +48,7 @@ Camera_ErrorCode OH_CameraInput_UnregisterCallback(Camera_Input* cameraInput, Ca
 
 Camera_ErrorCode OH_CameraInput_Open(Camera_Input* cameraInput)
 {
-    CHECK_ERROR_RETURN_RET_LOG(cameraInput == nullptr, CAMERA_INVALID_ARGUMENT,
+    CHECK_RETURN_RET_ELOG(cameraInput == nullptr, CAMERA_INVALID_ARGUMENT,
         "Invalid argument, cameraInput is null!");
 
     return cameraInput->Open();
@@ -56,9 +56,9 @@ Camera_ErrorCode OH_CameraInput_Open(Camera_Input* cameraInput)
 
 Camera_ErrorCode OH_CameraInput_OpenSecureCamera(Camera_Input* cameraInput, uint64_t* secureSeqId)
 {
-    CHECK_ERROR_RETURN_RET_LOG(cameraInput == nullptr, CAMERA_INVALID_ARGUMENT,
+    CHECK_RETURN_RET_ELOG(cameraInput == nullptr, CAMERA_INVALID_ARGUMENT,
         "Invalid argument, cameraInput is null!");
-    CHECK_ERROR_RETURN_RET_LOG(secureSeqId == nullptr, CAMERA_INVALID_ARGUMENT,
+    CHECK_RETURN_RET_ELOG(secureSeqId == nullptr, CAMERA_INVALID_ARGUMENT,
         "Invalid argument, secureSeqId is null!");
     Camera_ErrorCode errorCode = cameraInput->OpenSecureCamera(secureSeqId);
     MEDIA_INFO_LOG("Camera_Input::OpenSecureCamera secureSeqId = %{public}" PRIu64 "", *secureSeqId);
@@ -67,7 +67,7 @@ Camera_ErrorCode OH_CameraInput_OpenSecureCamera(Camera_Input* cameraInput, uint
 
 Camera_ErrorCode OH_CameraInput_OpenConcurrentCameras(Camera_Input* cameraInput, Camera_ConcurrentType type)
 {
-    CHECK_ERROR_RETURN_RET_LOG(cameraInput == nullptr, CAMERA_INVALID_ARGUMENT,
+    CHECK_RETURN_RET_ELOG(cameraInput == nullptr, CAMERA_INVALID_ARGUMENT,
         "Invalid argument, cameraInput is null!");
     Camera_ErrorCode errorCode = cameraInput->OpenConcurrentCameras(type);
     MEDIA_INFO_LOG("Camera_Input::OpenConcurrentCameras concurrentType = %{public}" PRIu32 "", type);
@@ -76,7 +76,7 @@ Camera_ErrorCode OH_CameraInput_OpenConcurrentCameras(Camera_Input* cameraInput,
 
 Camera_ErrorCode OH_CameraInput_Close(Camera_Input* cameraInput)
 {
-    CHECK_ERROR_RETURN_RET_LOG(cameraInput == nullptr, CAMERA_INVALID_ARGUMENT,
+    CHECK_RETURN_RET_ELOG(cameraInput == nullptr, CAMERA_INVALID_ARGUMENT,
         "Invalid argument, cameraInput is null!");
 
     return cameraInput->Close();
@@ -84,7 +84,7 @@ Camera_ErrorCode OH_CameraInput_Close(Camera_Input* cameraInput)
 
 Camera_ErrorCode OH_CameraInput_Release(Camera_Input* cameraInput)
 {
-    CHECK_ERROR_RETURN_RET_LOG(cameraInput == nullptr, CAMERA_INVALID_ARGUMENT,
+    CHECK_RETURN_RET_ELOG(cameraInput == nullptr, CAMERA_INVALID_ARGUMENT,
         "Invalid argument, cameraInput is null!");
 
     cameraInput->Release();

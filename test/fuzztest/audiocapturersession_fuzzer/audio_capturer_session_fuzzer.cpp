@@ -66,7 +66,7 @@ void AudioCapturerSessionFuzzer::AudioCapturerSessionFuzzerTest()
         return;
     }
     audioCapturerSession_ = std::make_shared<AudioCapturerSession>();
-    CHECK_ERROR_RETURN_LOG(!audioCapturerSession_, "Create audioCapturerSession_ Error");
+    CHECK_RETURN_ELOG(!audioCapturerSession_, "Create audioCapturerSession_ Error");
     audioCapturerSession_->ProcessAudioBuffer();
 
     int64_t startTime = GetData<int64_t>();

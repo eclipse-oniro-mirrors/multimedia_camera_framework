@@ -29,9 +29,8 @@ std::shared_ptr<TimerCore> TimerCoreFuzzer::fuzz_{nullptr};
 
 void TimerCoreFuzzer::TimerCoreFuzzTest(FuzzedDataProvider& fdp)
 {
-
     fuzz_ = std::make_shared<TimerCore>();
-    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
+    CHECK_RETURN_ELOG(!fuzz_, "Create fuzz_ Error");
     fuzz_->Initialize();
     uint64_t timestampMs = fdp.ConsumeIntegralInRange<uint64_t>(0, 1000);
     std::function<void()> timerCallback;

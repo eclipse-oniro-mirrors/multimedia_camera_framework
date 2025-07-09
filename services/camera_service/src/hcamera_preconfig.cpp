@@ -57,7 +57,7 @@ struct CameraInfo {
 template<typename T>
 std::shared_ptr<T> GetMaxSizeDetailInfo(std::vector<T>& detailInfos, float targetRatioValue, camera_format_t format)
 {
-    CHECK_ERROR_RETURN_RET(targetRatioValue <= 0, nullptr);
+    CHECK_RETURN_RET(targetRatioValue <= 0, nullptr);
     std::shared_ptr<T> maxSizeProfile = nullptr;
     for (auto& detailInfo : detailInfos) {
         if (detailInfo.width == 0 || detailInfo.height == 0 || detailInfo.format != format) {
@@ -117,7 +117,7 @@ struct PreconfigProfile {
         camera_metadata_item_t item;
         int ret = OHOS::Camera::CameraMetadata::FindCameraMetadataItem(
             cameraInfo.ability->get(), OHOS_ABILITY_AVAILABLE_PROFILE_LEVEL, &item);
-        CHECK_ERROR_RETURN_RET(ret != CAM_META_SUCCESS || item.count == 0, nullptr);
+        CHECK_RETURN_RET(ret != CAM_META_SUCCESS || item.count == 0, nullptr);
         std::vector<SpecInfo> specInfos;
         ProfileLevelInfo modeInfo = {};
         CameraAbilityParseUtil::GetModeInfo(modeName, item, modeInfo);
@@ -140,7 +140,7 @@ struct PreconfigProfile {
         camera_metadata_item_t item;
         int ret = OHOS::Camera::CameraMetadata::FindCameraMetadataItem(
             cameraInfo.ability->get(), OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS, &item);
-        CHECK_ERROR_RETURN_RET(ret != CAM_META_SUCCESS || item.count == 0, nullptr);
+        CHECK_RETURN_RET(ret != CAM_META_SUCCESS || item.count == 0, nullptr);
         ExtendInfo extendInfo = {};
         std::shared_ptr<CameraStreamInfoParse> modeStreamParse = std::make_shared<CameraStreamInfoParse>();
         modeStreamParse->getModeInfo(item.data.i32, item.count, extendInfo); // 解析tag中带的数据信息意义
@@ -161,13 +161,13 @@ struct PreconfigProfile {
 
     std::string toString(std::vector<CameraInfo>& cameraInfos, HDI::Camera::V1_3::OperationMode modeName)
     {
-        CHECK_ERROR_RETURN_RET(!followSensorMax, toString());
+        CHECK_RETURN_RET(!followSensorMax, toString());
         std::string maxSizeInfo = "";
         for (auto& cameraInfo : cameraInfos) {
             camera_metadata_item_t item;
             int ret = OHOS::Camera::CameraMetadata::FindCameraMetadataItem(
                 cameraInfo.ability->get(), OHOS_ABILITY_CAMERA_TYPE, &item);
-            CHECK_ERROR_RETURN_RET(ret != CAM_META_SUCCESS || item.count == 0, "device camera type info error");
+            CHECK_RETURN_RET(ret != CAM_META_SUCCESS || item.count == 0, "device camera type info error");
             camera_type_enum_t cameraType = static_cast<camera_type_enum_t>(item.data.u8[0]);
             if (cameraType != OHOS_CAMERA_TYPE_UNSPECIFIED) {
                 continue;

@@ -40,12 +40,12 @@ void CameraRestoreParamFuzzer::Test(uint8_t* data, size_t size)
     if (fdp.remaining_bytes() < LIMITSIZE) {
         return;
     }
-    CHECK_ERROR_RETURN_LOG(!TestToken::GetAllCameraPermission(), "GetPermission error");
+    CHECK_RETURN_ELOG(!TestToken::GetAllCameraPermission(), "GetPermission error");
 
     std::string clientName;
     std::string cameraId;
     fuzz_ = std::make_shared<HCameraRestoreParam>(clientName, cameraId);
-    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
+    CHECK_RETURN_ELOG(!fuzz_, "Create fuzz_ Error");
 
     int32_t opMode = fdp.ConsumeIntegral<int32_t>();
     fuzz_->SetCameraOpMode(opMode);

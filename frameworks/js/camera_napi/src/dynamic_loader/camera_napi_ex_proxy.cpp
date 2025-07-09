@@ -23,7 +23,7 @@ namespace CameraStandard {
 std::shared_ptr<CameraNapiExProxy> CameraNapiExProxy::GetCameraNapiExProxy()
 {
     auto dynamiclib = CameraDynamicLoader::GetDynamiclib(NAPI_EXT_SO);
-    CHECK_ERROR_RETURN_RET_LOG(
+    CHECK_RETURN_RET_ELOG(
         dynamiclib == nullptr, nullptr, "get extension lib fail");
     std::shared_ptr<CameraNapiExProxy> sessionForSysProxy = std::make_shared<CameraNapiExProxy>(dynamiclib);
     return sessionForSysProxy;
@@ -32,7 +32,7 @@ CameraNapiExProxy::CameraNapiExProxy(std::shared_ptr<Dynamiclib> napiExLib) : na
     napiExLib)
 {
     MEDIA_DEBUG_LOG("CameraNapiExProxy construct");
-    CHECK_ERROR_RETURN_LOG(napiExLib_ == nullptr, "napiExLib is null");
+    CHECK_RETURN_ELOG(napiExLib_ == nullptr, "napiExLib is null");
 }
 
 CameraNapiExProxy::~CameraNapiExProxy()
@@ -47,13 +47,13 @@ napi_value CameraNapiExProxy::CreateSessionForSys(napi_env env, int32_t jsModeNa
 {
     MEDIA_DEBUG_LOG("CameraNapiExManager::CreateSessionForSys is called");
     napi_value result = nullptr;
-    CHECK_ERROR_RETURN_RET_LOG(napiExLib_ == nullptr, result, "napiExLib_ is null");
+    CHECK_RETURN_RET_ELOG(napiExLib_ == nullptr, result, "napiExLib_ is null");
     CreateSessionInstanceForSys createSessionInstanceForSys =
         (CreateSessionInstanceForSys)napiExLib_->GetFunction("createSessionInstanceForSys");
-    CHECK_ERROR_RETURN_RET_LOG(
+    CHECK_RETURN_RET_ELOG(
         createSessionInstanceForSys == nullptr, result, "get function createSessionInstanceForSys fail");
     result = createSessionInstanceForSys(env, jsModeName);
-    CHECK_ERROR_RETURN_RET_LOG(
+    CHECK_RETURN_RET_ELOG(
         result == nullptr, result, "createSessionInstanceForSys fail");
     return result;
 }
@@ -62,13 +62,13 @@ typedef napi_value (*CreateDeprecatedSessionInstanceForSys)(napi_env);
 napi_value CameraNapiExProxy::CreateDeprecatedSessionForSys(napi_env env)
 {
     napi_value result = nullptr;
-    CHECK_ERROR_RETURN_RET_LOG(napiExLib_ == nullptr, result, "napiExLib_ is null");
+    CHECK_RETURN_RET_ELOG(napiExLib_ == nullptr, result, "napiExLib_ is null");
     CreateDeprecatedSessionInstanceForSys createDeprecatedSessionInstanceForSys =
         (CreateDeprecatedSessionInstanceForSys)napiExLib_->GetFunction("createDeprecatedSessionInstanceForSys");
-    CHECK_ERROR_RETURN_RET_LOG(createDeprecatedSessionInstanceForSys == nullptr, result,
+    CHECK_RETURN_RET_ELOG(createDeprecatedSessionInstanceForSys == nullptr, result,
         "get function createDeprecatedSessionInstanceForSys fail");
     result = createDeprecatedSessionInstanceForSys(env);
-    CHECK_ERROR_RETURN_RET_LOG(
+    CHECK_RETURN_RET_ELOG(
         result == nullptr, result, "createDeprecatedSessionInstanceForSys fail");
     return result;
 }
@@ -78,13 +78,13 @@ napi_value CameraNapiExProxy::CreateDepthDataOutput(napi_env env, DepthProfile& 
 {
     MEDIA_DEBUG_LOG("CameraNapiExManager::CreateDepthDataOutput is called");
     napi_value result = nullptr;
-    CHECK_ERROR_RETURN_RET_LOG(napiExLib_ == nullptr, result, "napiExLib_ is null");
+    CHECK_RETURN_RET_ELOG(napiExLib_ == nullptr, result, "napiExLib_ is null");
     CreateDepthDataOutputInstance createDepthDataOutputInstance =
         (CreateDepthDataOutputInstance)napiExLib_->GetFunction("createDepthDataOutputInstance");
-    CHECK_ERROR_RETURN_RET_LOG(
+    CHECK_RETURN_RET_ELOG(
         createDepthDataOutputInstance == nullptr, result, "get function createDepthDataOutputInstance fail");
     result = createDepthDataOutputInstance(env, depthProfile);
-    CHECK_ERROR_RETURN_RET_LOG(
+    CHECK_RETURN_RET_ELOG(
         result == nullptr, result, "createDepthDataOutputInstance fail");
     return result;
 }
@@ -94,10 +94,10 @@ bool CameraNapiExProxy::CheckAndGetOutput(napi_env env, napi_value obj, sptr<Cap
 {
     MEDIA_DEBUG_LOG("CameraNapiExManager::CheckAndGetOutput is called");
     bool result = false;
-    CHECK_ERROR_RETURN_RET_LOG(napiExLib_ == nullptr, result, "napiExLib_ is null");
+    CHECK_RETURN_RET_ELOG(napiExLib_ == nullptr, result, "napiExLib_ is null");
     CheckAndGetSysOutput checkAndGetOutput =
         (CheckAndGetSysOutput)napiExLib_->GetFunction("checkAndGetOutput");
-    CHECK_ERROR_RETURN_RET_LOG(
+    CHECK_RETURN_RET_ELOG(
         checkAndGetOutput == nullptr, result, "get function checkAndGetOutput fail");
     result = checkAndGetOutput(env, obj, output);
     return result;

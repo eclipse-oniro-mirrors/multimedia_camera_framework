@@ -41,7 +41,7 @@ sptr<CaptureOutput> CreatePreviewOutput()
 {
     previewProfile_ = {};
     std::vector<sptr<CameraDevice>> cameras = manager->GetCameraDeviceListFromServer();
-    CHECK_ERROR_RETURN_RET(cameras.empty(), nullptr);
+    CHECK_RETURN_RET(cameras.empty(), nullptr);
     auto outputCapability = manager->GetSupportedOutputCapability(cameras[0],
         static_cast<int32_t>(SceneMode::SLOW_MOTION));
     previewProfile_ = outputCapability->GetPreviewProfiles();
@@ -56,7 +56,7 @@ sptr<CaptureOutput> CreateVideoOutput()
 {
     videoProfile_ = {};
     std::vector<sptr<CameraDevice>> cameras = manager->GetCameraDeviceListFromServer();
-    CHECK_ERROR_RETURN_RET(cameras.empty(), nullptr);
+    CHECK_RETURN_RET(cameras.empty(), nullptr);
     auto outputCapability = manager->GetSupportedOutputCapability(cameras[0],
         static_cast<int32_t>(SceneMode::SLOW_MOTION));
     videoProfile_ = outputCapability->GetVideoProfiles();
@@ -74,9 +74,9 @@ void SlowMotionSessionFuzzer::SlowMotionSessionFuzzTest(FuzzedDataProvider& fdp)
         CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(SceneMode::SLOW_MOTION);
     std::vector<sptr<CameraDevice>> cameras;
     cameras = manager->GetCameraDeviceListFromServer();
-    CHECK_ERROR_RETURN_LOG(cameras.empty(), "SlowMotionSessionFuzzer: GetCameraDeviceListFromServer Error");
+    CHECK_RETURN_ELOG(cameras.empty(), "SlowMotionSessionFuzzer: GetCameraDeviceListFromServer Error");
     sptr<CaptureInput> input = manager->CreateCameraInput(cameras[0]);
-    CHECK_ERROR_RETURN_LOG(!input, "CreateCameraInput Error");
+    CHECK_RETURN_ELOG(!input, "CreateCameraInput Error");
     input->Open();
     sptr<CaptureOutput> videoOutput = CreateVideoOutput();
     sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
@@ -119,7 +119,7 @@ void Test(uint8_t* data, size_t size)
     if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
         return;
     }
-    CHECK_ERROR_RETURN_LOG(!TestToken::GetAllCameraPermission(), "GetPermission error");
+    CHECK_RETURN_ELOG(!TestToken::GetAllCameraPermission(), "GetPermission error");
     auto slowMotionSession = std::make_unique<SlowMotionSessionFuzzer>();
     if (slowMotionSession == nullptr) {
         MEDIA_INFO_LOG("slowMotionSession is null");

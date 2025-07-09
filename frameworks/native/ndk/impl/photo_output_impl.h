@@ -231,10 +231,10 @@ public:
     void OnPhotoAvailable(const std::shared_ptr<OHOS::Media::NativeImage> nativeImage, bool isRaw) const override
     {
         MEDIA_DEBUG_LOG("OnPhotoAvailable E");
-        CHECK_ERROR_RETURN_LOG(photoOutput_ == nullptr, "photoOutput is null");
-        CHECK_ERROR_RETURN_LOG(photoAvailableCallback_ == nullptr, "callback is null");
+        CHECK_RETURN_ELOG(photoOutput_ == nullptr, "photoOutput is null");
+        CHECK_RETURN_ELOG(photoAvailableCallback_ == nullptr, "callback is null");
         OH_PhotoNative *photoNative = new (std::nothrow) OH_PhotoNative;
-        CHECK_ERROR_RETURN_LOG(photoNative == nullptr, "Create photo native failed");
+        CHECK_RETURN_ELOG(photoNative == nullptr, "Create photo native failed");
         if (!isRaw) {
             photoNative->SetMainImage(nativeImage);
         } else {
@@ -248,12 +248,12 @@ public:
         const std::string &burstKey) const override
     {
         MEDIA_DEBUG_LOG("OnPhotoAssetAvailable E");
-        CHECK_ERROR_RETURN_LOG(photoOutput_ == nullptr, "photoOutput is null");
-        CHECK_ERROR_RETURN_LOG(photoAssetAvailableCallback_ == nullptr, "callback is null");
+        CHECK_RETURN_ELOG(photoOutput_ == nullptr, "photoOutput is null");
+        CHECK_RETURN_ELOG(photoAssetAvailableCallback_ == nullptr, "callback is null");
         auto mediaAssetHelper = OHOS::Media::MediaAssetHelperFactory::CreateMediaAssetHelper();
-        CHECK_ERROR_RETURN_LOG(mediaAssetHelper == nullptr, "create media asset helper failed");
+        CHECK_RETURN_ELOG(mediaAssetHelper == nullptr, "create media asset helper failed");
         auto mediaAsset = mediaAssetHelper->GetMediaAsset(uri, cameraShotType, burstKey);
-        CHECK_ERROR_RETURN_LOG(mediaAsset == nullptr, "Create photo asset failed");
+        CHECK_RETURN_ELOG(mediaAsset == nullptr, "Create photo asset failed");
         photoAssetAvailableCallback_(photoOutput_, mediaAsset);
         MEDIA_DEBUG_LOG("OnPhotoAssetAvailable X");
     }

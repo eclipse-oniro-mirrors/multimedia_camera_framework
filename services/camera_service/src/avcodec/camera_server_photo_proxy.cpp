@@ -65,7 +65,7 @@ CameraServerPhotoProxy::~CameraServerPhotoProxy()
 
 int32_t CameraServerPhotoProxy::CameraFreeBufferHandle(BufferHandle *handle)
 {
-    CHECK_ERROR_RETURN_RET_LOG(handle == nullptr, 0, "CameraFreeBufferHandle with nullptr handle");
+    CHECK_RETURN_RET_ELOG(handle == nullptr, 0, "CameraFreeBufferHandle with nullptr handle");
     if (handle->fd >= 0) {
         close(handle->fd);
         handle->fd = -1;
@@ -166,12 +166,12 @@ void CameraServerPhotoProxy::ReadFromParcel(MessageParcel &parcel)
 void CameraServerPhotoProxy::GetServerPhotoProxyInfo(sptr<SurfaceBuffer>& surfaceBuffer)
 {
     MEDIA_INFO_LOG("GetServerPhotoProxyInfo E");
-    CHECK_ERROR_RETURN_LOG(surfaceBuffer == nullptr, "surfaceBuffer is null");
+    CHECK_RETURN_ELOG(surfaceBuffer == nullptr, "surfaceBuffer is null");
     std::lock_guard<std::mutex> lock(mutex_);
     captureId_ = CameraSurfaceBufferUtil::GetCaptureId(surfaceBuffer);
     BufferHandle *bufferHandle = surfaceBuffer->GetBufferHandle();
     bufferHandle_ = bufferHandle;
-    CHECK_ERROR_PRINT_LOG(bufferHandle == nullptr, "invalid bufferHandle");
+    CHECK_PRINT_ELOG(bufferHandle == nullptr, "invalid bufferHandle");
     format_ = bufferHandle->format;
     std::string imageIdStr = std::to_string(CameraSurfaceBufferUtil::GetImageId(surfaceBuffer));
     photoId_ = imageIdStr;
@@ -241,12 +241,12 @@ void* CameraServerPhotoProxy::GetFileDataAddr()
 {
     MEDIA_INFO_LOG("CameraServerPhotoProxy::GetFileDataAddr");
     std::lock_guard<std::mutex> lock(mutex_);
-    CHECK_ERROR_RETURN_RET_LOG(
+    CHECK_RETURN_RET_ELOG(
         bufferHandle_ == nullptr, fileDataAddr_, "CameraServerPhotoProxy::GetFileDataAddr bufferHandle_ is nullptr");
     if (!isMmaped_) {
         MEDIA_INFO_LOG("CameraServerPhotoProxy::GetFileDataAddr mmap");
         fileDataAddr_ = mmap(nullptr, bufferHandle_->size, PROT_READ, MAP_SHARED, bufferHandle_->fd, 0);
-        CHECK_ERROR_RETURN_RET_LOG(
+        CHECK_RETURN_RET_ELOG(
             fileDataAddr_ == MAP_FAILED, fileDataAddr_, "CameraServerPhotoProxy::GetFileDataAddr mmap failed");
         isMmaped_ = true;
     } else {

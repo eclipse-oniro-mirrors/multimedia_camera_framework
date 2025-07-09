@@ -56,13 +56,13 @@ sptr<BmsAdapter> BmsAdapter::GetInstance()
 sptr<OHOS::AppExecFwk::IBundleMgr> BmsAdapter::GetBms()
 {
     std::lock_guard<std::mutex> lock(bmslock_);
-    CHECK_ERROR_RETURN_RET(bms_, bms_);
+    CHECK_RETURN_RET(bms_, bms_);
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    CHECK_ERROR_RETURN_RET_LOG(samgr == nullptr, nullptr, "GetBms failed, samgr is null");
+    CHECK_RETURN_RET_ELOG(samgr == nullptr, nullptr, "GetBms failed, samgr is null");
     sptr<IRemoteObject> object = samgr->GetSystemAbility(BUNDLE_MGR_SERVICE_SYS_ABILITY_ID);
-    CHECK_ERROR_RETURN_RET_LOG(object == nullptr, nullptr, "GetBms failed, object is null");
+    CHECK_RETURN_RET_ELOG(object == nullptr, nullptr, "GetBms failed, object is null");
     bms_ = iface_cast<OHOS::AppExecFwk::IBundleMgr>(object);
-    CHECK_ERROR_RETURN_RET_LOG(bms_ == nullptr, nullptr, "GetBms failed, bms is null");
+    CHECK_RETURN_RET_ELOG(bms_ == nullptr, nullptr, "GetBms failed, bms is null");
     RegisterListener();
     return bms_;
 }
@@ -81,7 +81,7 @@ std::string BmsAdapter::GetBundleName(int uid)
         return bundleName;
     }
     auto bms = GetBms();
-    CHECK_ERROR_RETURN_RET_LOG(bms == nullptr, "", "bms is null");
+    CHECK_RETURN_RET_ELOG(bms == nullptr, "", "bms is null");
     auto result = bms->GetNameForUid(uid, bundleName);
     if (result != ERR_OK) {
         MEDIA_DEBUG_LOG("GetNameForUid fail, ret: %{public}d", result);
@@ -96,30 +96,30 @@ std::string BmsAdapter::GetBundleName(int uid)
 bool BmsAdapter::RegisterListener()
 {
     MEDIA_INFO_LOG("Enter Into BmsAdapter::RegisterListener");
-    CHECK_ERROR_RETURN_RET_LOG(bmsSaListener_ != nullptr, false, "has register listener");
+    CHECK_RETURN_RET_ELOG(bmsSaListener_ != nullptr, false, "has register listener");
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    CHECK_ERROR_RETURN_RET_LOG(samgr == nullptr, false, "samgr is null");
+    CHECK_RETURN_RET_ELOG(samgr == nullptr, false, "samgr is null");
     auto bmsAdapterWptr = wptr<BmsAdapter>(this);
     auto removeCallback = [bmsAdapterWptr]() {
         auto adapter = bmsAdapterWptr.promote();
         CHECK_EXECUTE(adapter, adapter->SetBms(nullptr));
     };
     bmsSaListener_ = new BmsSaListener(removeCallback);
-    CHECK_ERROR_RETURN_RET_LOG(bmsSaListener_ == nullptr, false, "bmsSaListener_ alloc failed");
+    CHECK_RETURN_RET_ELOG(bmsSaListener_ == nullptr, false, "bmsSaListener_ alloc failed");
     int32_t ret = samgr->SubscribeSystemAbility(BUNDLE_MGR_SERVICE_SYS_ABILITY_ID, bmsSaListener_);
-    CHECK_ERROR_RETURN_RET_LOG(ret != 0, false, "SubscribeSystemAbility ret = %{public}d", ret);
+    CHECK_RETURN_RET_ELOG(ret != 0, false, "SubscribeSystemAbility ret = %{public}d", ret);
     return true;
 }
 
 bool BmsAdapter::UnregisterListener()
 {
     MEDIA_INFO_LOG("Enter Into BmsAdapter::UnregisterListener");
-    CHECK_ERROR_RETURN_RET_LOG(bmsSaListener_ == nullptr, false, "bmsSaListener_ is null not need unregister");
+    CHECK_RETURN_RET_ELOG(bmsSaListener_ == nullptr, false, "bmsSaListener_ is null not need unregister");
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    CHECK_ERROR_RETURN_RET_LOG(samgr == nullptr, false, "samgr is null");
-    CHECK_ERROR_RETURN_RET_LOG(bmsSaListener_ == nullptr, false, "bmsSaListener_ is null");
+    CHECK_RETURN_RET_ELOG(samgr == nullptr, false, "samgr is null");
+    CHECK_RETURN_RET_ELOG(bmsSaListener_ == nullptr, false, "bmsSaListener_ is null");
     int32_t ret = samgr->UnSubscribeSystemAbility(BUNDLE_MGR_SERVICE_SYS_ABILITY_ID, bmsSaListener_);
-    CHECK_ERROR_RETURN_RET_LOG(ret != 0, false, "UnSubscribeSystemAbility ret = %{public}d", ret);
+    CHECK_RETURN_RET_ELOG(ret != 0, false, "UnSubscribeSystemAbility ret = %{public}d", ret);
     bmsSaListener_ = nullptr;
     return true;
 }

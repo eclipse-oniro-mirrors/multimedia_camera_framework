@@ -66,17 +66,17 @@ int32_t DepthDataOutput::Start()
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
     MEDIA_DEBUG_LOG("Enter Into DepthDataOutput::Start");
     auto captureSession = GetSession();
-    CHECK_ERROR_RETURN_RET_LOG(captureSession == nullptr || !captureSession->IsSessionCommited(),
+    CHECK_RETURN_RET_ELOG(captureSession == nullptr || !captureSession->IsSessionCommited(),
         CameraErrorCode::SESSION_NOT_CONFIG, "DepthDataOutput Failed to Start!, session not config");
-    CHECK_ERROR_RETURN_RET_LOG(GetStream() == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_ELOG(GetStream() == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "DepthDataOutput Failed to Start!, GetStream is nullptr");
     auto stream = GetStream();
     sptr<IStreamDepthData> itemStream = static_cast<IStreamDepthData*>(stream.GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
-    CHECK_ERROR_PRINT_LOG(itemStream == nullptr, "DepthDataOutput::Start itemStream is nullptr");
+    CHECK_PRINT_ELOG(itemStream == nullptr, "DepthDataOutput::Start itemStream is nullptr");
     if (itemStream) {
         errCode = itemStream->Start();
-        CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "DepthDataOutput Failed to Start!, errCode: %{public}d", errCode);
+        CHECK_PRINT_ELOG(errCode != CAMERA_OK, "DepthDataOutput Failed to Start!, errCode: %{public}d", errCode);
     }
     return ServiceToCameraError(errCode);
 }
@@ -85,15 +85,15 @@ int32_t DepthDataOutput::Stop()
 {
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
     MEDIA_DEBUG_LOG("Enter Into DepthDataOutput::Stop");
-    CHECK_ERROR_RETURN_RET_LOG(GetStream() == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_ELOG(GetStream() == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "DepthDataOutput Failed to Stop!, GetStream is nullptr");
     auto stream = GetStream();
     sptr<IStreamDepthData> itemStream = static_cast<IStreamDepthData*>(stream.GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
-    CHECK_ERROR_PRINT_LOG(itemStream == nullptr, "DepthDataOutput::Stop itemStream is nullptr");
+    CHECK_PRINT_ELOG(itemStream == nullptr, "DepthDataOutput::Stop itemStream is nullptr");
     if (itemStream) {
         errCode = itemStream->Stop();
-        CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "DepthDataOutput Failed to Stop!, errCode: %{public}d", errCode);
+        CHECK_PRINT_ELOG(errCode != CAMERA_OK, "DepthDataOutput Failed to Stop!, errCode: %{public}d", errCode);
     }
     return ServiceToCameraError(errCode);
 }
@@ -103,14 +103,14 @@ int32_t DepthDataOutput::SetDataAccuracy(int32_t dataAccuracy)
     CAMERA_SYNC_TRACE;
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
     MEDIA_DEBUG_LOG("Enter Into DepthDataOutput::SetDataAccuracy");
-    CHECK_ERROR_RETURN_RET_LOG(GetStream() == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_ELOG(GetStream() == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "DepthDataOutput Failed to SetDataAccuracy!, GetStream is nullptr");
     auto stream = GetStream();
     sptr<IStreamDepthData> itemStream = static_cast<IStreamDepthData*>(stream.GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {
         errCode = itemStream->SetDataAccuracy(dataAccuracy);
-        CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK,
+        CHECK_PRINT_ELOG(errCode != CAMERA_OK,
             "DepthDataOutput Failed to SetDataAccuracy!, errCode: %{public}d", errCode);
     } else {
         MEDIA_ERR_LOG("DepthDataOutput::SetDataAccuracy itemStream is nullptr");
@@ -133,14 +133,14 @@ int32_t DepthDataOutput::Release()
     }
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
     MEDIA_DEBUG_LOG("Enter Into DepthDataOutput::Release");
-    CHECK_ERROR_RETURN_RET_LOG(GetStream() == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_ELOG(GetStream() == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "DepthDataOutput Failed to Release!, GetStream is nullptr");
     auto stream = GetStream();
     sptr<IStreamDepthData> itemStream = static_cast<IStreamDepthData*>(stream.GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {
         errCode = itemStream->Release();
-        CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "Failed to release DepthDataOutput!, errCode: %{public}d", errCode);
+        CHECK_PRINT_ELOG(errCode != CAMERA_OK, "Failed to release DepthDataOutput!, errCode: %{public}d", errCode);
     } else {
         MEDIA_ERR_LOG("DepthDataOutput::Release() itemStream is nullptr");
     }
@@ -161,7 +161,7 @@ void DepthDataOutput::SetCallback(std::shared_ptr<DepthDataStateCallback> callba
                 return;
             }
         }
-        CHECK_ERROR_RETURN_LOG(GetStream() == nullptr, "DepthDataOutput Failed to SetCallback!, GetStream is nullptr");
+        CHECK_RETURN_ELOG(GetStream() == nullptr, "DepthDataOutput Failed to SetCallback!, GetStream is nullptr");
         auto stream = GetStream();
         sptr<IStreamDepthData> itemStream = static_cast<IStreamDepthData*>(stream.GetRefPtr());
         int32_t errorCode = CAMERA_OK;

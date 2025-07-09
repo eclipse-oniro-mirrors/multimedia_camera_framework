@@ -97,7 +97,7 @@ std::vector<BeautyType> CameraAbility::GetSupportedBeautyTypes()
 std::vector<int32_t> CameraAbility::GetSupportedBeautyRange(BeautyType beautyType)
 {
     auto it = supportedBeautyRangeMap_.find(beautyType);
-    CHECK_ERROR_RETURN_RET(it != supportedBeautyRangeMap_.end(), it->second);
+    CHECK_RETURN_RET(it != supportedBeautyRangeMap_.end(), it->second);
     return {};
 }
 
@@ -235,7 +235,7 @@ CameraAbilityContainer::~CameraAbilityContainer()
 void CameraAbilityContainer::OnAbilityChange()
 {
     auto session = session_.promote();
-    CHECK_ERROR_RETURN(session == nullptr);
+    CHECK_RETURN(session == nullptr);
     MEDIA_DEBUG_LOG("CameraAbilityContainer OnAbilityChange");
     session->ExecuteAbilityChangeCallback();
 }

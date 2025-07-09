@@ -24,16 +24,16 @@ extern "C" {
 
 Camera_ErrorCode OH_PhotoNative_GetMainImage(OH_PhotoNative* photo, OH_ImageNative** mainImage)
 {
-    CHECK_ERROR_RETURN_RET_LOG(photo == nullptr, CAMERA_INVALID_ARGUMENT,
+    CHECK_RETURN_RET_ELOG(photo == nullptr, CAMERA_INVALID_ARGUMENT,
         "Invalid argument, photo is null!");
-    CHECK_ERROR_RETURN_RET_LOG(mainImage == nullptr, CAMERA_INVALID_ARGUMENT,
+    CHECK_RETURN_RET_ELOG(mainImage == nullptr, CAMERA_INVALID_ARGUMENT,
         "Invalid argument, main is null!");
     return photo->GetMainImage(mainImage);
 }
 
 Camera_ErrorCode OH_PhotoNative_Release(OH_PhotoNative* photo)
 {
-    CHECK_ERROR_RETURN_RET_LOG(photo == nullptr, CAMERA_INVALID_ARGUMENT,
+    CHECK_RETURN_RET_ELOG(photo == nullptr, CAMERA_INVALID_ARGUMENT,
         "Invalid argument, photo is null!");
     delete photo;
     photo = nullptr;

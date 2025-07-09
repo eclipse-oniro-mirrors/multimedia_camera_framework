@@ -43,9 +43,9 @@ void CameraNapiWorkerQueueKeeper::WorkerQueueTasksResetCreateTimeNoLock(NapiWork
 
 std::shared_ptr<CameraNapiWorkerQueueKeeper> CameraNapiWorkerQueueKeeper::GetInstance()
 {
-    CHECK_ERROR_RETURN_RET(g_WorkerQueueKeeper != nullptr, g_WorkerQueueKeeper);
+    CHECK_RETURN_RET(g_WorkerQueueKeeper != nullptr, g_WorkerQueueKeeper);
     std::lock_guard<std::mutex> lock(g_WorkerQueueKeeperMutex);
-    CHECK_ERROR_RETURN_RET(g_WorkerQueueKeeper != nullptr, g_WorkerQueueKeeper);
+    CHECK_RETURN_RET(g_WorkerQueueKeeper != nullptr, g_WorkerQueueKeeper);
 
     g_WorkerQueueKeeper = std::make_shared<CameraNapiWorkerQueueKeeper>();
     return g_WorkerQueueKeeper;
@@ -69,11 +69,11 @@ bool CameraNapiWorkerQueueKeeper::WorkerLockCondition(std::shared_ptr<NapiWorker
         return true;
     }
     auto firstTask = workerQueueTasks_.front();
-    CHECK_ERROR_RETURN_RET(firstTask == queueTask, true);
-    CHECK_ERROR_RETURN_RET(firstTask->queueStatus == RUNNING, false);
+    CHECK_RETURN_RET(firstTask == queueTask, true);
+    CHECK_RETURN_RET(firstTask->queueStatus == RUNNING, false);
     auto now = std::chrono::steady_clock::now();
     auto diffTime = std::chrono::duration_cast<std::chrono::milliseconds>(now - firstTask->createTimePoint);
-    CHECK_ERROR_RETURN_RET(diffTime < std::chrono::milliseconds(WORKER_TIMEOUT), false);
+    CHECK_RETURN_RET(diffTime < std::chrono::milliseconds(WORKER_TIMEOUT), false);
     if (queueTask->waitCount < WORKER_TASK_WAIT_COUNT_MAX) {
         queueTask->waitCount++;
         return false;
@@ -83,7 +83,7 @@ bool CameraNapiWorkerQueueKeeper::WorkerLockCondition(std::shared_ptr<NapiWorker
         queueTask->taskName.c_str(), firstTask->taskName.c_str(), diffTime.count());
     workerQueueTasks_.pop_front();
     auto frontTask = workerQueueTasks_.front();
-    CHECK_ERROR_RETURN_RET(frontTask == queueTask, true);
+    CHECK_RETURN_RET(frontTask == queueTask, true);
     MEDIA_INFO_LOG("CameraNapiWorkerQueueKeeper::WorkerLockCondition current task not equal front task,%{public}s "
                    "vs %{public}s, continue wait.",
         queueTask->taskName.c_str(), frontTask->taskName.c_str());
@@ -95,12 +95,12 @@ bool CameraNapiWorkerQueueKeeper::WorkerLockCondition(std::shared_ptr<NapiWorker
 bool CameraNapiWorkerQueueKeeper::ConsumeWorkerQueueTask(
     std::shared_ptr<NapiWorkerQueueTask> queueTask, std::function<void(void)> func)
 {
-    CHECK_ERROR_RETURN_RET(queueTask == nullptr, false);
+    CHECK_RETURN_RET(queueTask == nullptr, false);
     std::unique_lock<std::mutex> lock(workerQueueMutex_);
     {
         std::lock_guard<std::mutex> lock(workerQueueTaskMutex_);
-        CHECK_ERROR_RETURN_RET(workerQueueTasks_.empty(), false);
-        CHECK_ERROR_RETURN_RET(
+        CHECK_RETURN_RET(workerQueueTasks_.empty(), false);
+        CHECK_RETURN_RET(
             std::find(workerQueueTasks_.begin(), workerQueueTasks_.end(), queueTask) == workerQueueTasks_.end(), false);
     }
     bool isMatchCondition = false;
@@ -131,10 +131,10 @@ bool CameraNapiWorkerQueueKeeper::ConsumeWorkerQueueTask(
 
 void CameraNapiWorkerQueueKeeper::RemoveWorkerTask(std::shared_ptr<NapiWorkerQueueTask> task)
 {
-    CHECK_ERROR_RETURN_LOG(task == nullptr, "RemoveWorkerTask task is null");
+    CHECK_RETURN_ELOG(task == nullptr, "RemoveWorkerTask task is null");
     std::lock_guard<std::mutex> lock(workerQueueTaskMutex_);
     auto it = std::find(workerQueueTasks_.begin(), workerQueueTasks_.end(), task);
-    CHECK_ERROR_RETURN_LOG(it == workerQueueTasks_.end(), "RemoveWorkerTask not found task");
+    CHECK_RETURN_ELOG(it == workerQueueTasks_.end(), "RemoveWorkerTask not found task");
     workerQueueTasks_.erase(it);
     workerCond_.notify_all();
 }

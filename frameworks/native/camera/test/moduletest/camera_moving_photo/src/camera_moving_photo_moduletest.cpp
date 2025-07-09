@@ -66,14 +66,14 @@ void PhotoListenerTest::OnBufferAvailable()
     std::lock_guard<std::mutex> lock(g_mutex);
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("PhotoListenerTest::OnBufferAvailable is called");
-    CHECK_ERROR_RETURN_LOG(photoSurface_ == nullptr, "photoSurface_ is null");
+    CHECK_RETURN_ELOG(photoSurface_ == nullptr, "photoSurface_ is null");
 
     int64_t timestamp;
     OHOS::Rect damage;
     sptr<SurfaceBuffer> surfaceBuffer = nullptr;
     int32_t fence = -1;
     SurfaceError surfaceRet = photoSurface_->AcquireBuffer(surfaceBuffer, fence, timestamp, damage);
-    CHECK_ERROR_RETURN_LOG(surfaceRet != SURFACE_ERROR_OK, "Failed to acquire surface buffer");
+    CHECK_RETURN_ELOG(surfaceRet != SURFACE_ERROR_OK, "Failed to acquire surface buffer");
 
     CameraBufferExtraData extraData = GetCameraBufferExtraData(surfaceBuffer);
 
@@ -82,7 +82,7 @@ void PhotoListenerTest::OnBufferAvailable()
         sptr<SurfaceBuffer> newSurfaceBuffer = SurfaceBuffer::Create();
         DeepCopyBuffer(newSurfaceBuffer, surfaceBuffer);
         photoSurface_->ReleaseBuffer(surfaceBuffer, -1);
-        CHECK_ERROR_RETURN_LOG(newSurfaceBuffer == nullptr, "deep copy buffer failed");
+        CHECK_RETURN_ELOG(newSurfaceBuffer == nullptr, "deep copy buffer failed");
         MEDIA_DEBUG_LOG("PhotoListenerTest on capture photo asset callback end");
     } else if (extraData.isDegradedImage == 0 && (callbackFlag_ & CAPTURE_PHOTO) != 0) {
         MEDIA_DEBUG_LOG("PhotoListenerTest on capture photo callback");
@@ -121,7 +121,7 @@ void PhotoListenerTest::ExecutePhotoAsset(sptr<SurfaceBuffer> surfaceBuffer, Cam
 {
     CAMERA_SYNC_TRACE;
     BufferHandle* bufferHandle = surfaceBuffer->GetBufferHandle();
-    CHECK_ERROR_RETURN_LOG(bufferHandle == nullptr, "invalid bufferHandle");
+    CHECK_RETURN_ELOG(bufferHandle == nullptr, "invalid bufferHandle");
 
     surfaceBuffer->Map();
     std::string uri = "";
@@ -129,13 +129,13 @@ void PhotoListenerTest::ExecutePhotoAsset(sptr<SurfaceBuffer> surfaceBuffer, Cam
     std::string burstKey = "";
     CreateMediaLibrary(surfaceBuffer, bufferHandle, extraData, isHighQuality,
         uri, cameraShotType, burstKey, timestamp);
-    CHECK_ERROR_RETURN_LOG(uri.empty(), "uri is empty");
+    CHECK_RETURN_ELOG(uri.empty(), "uri is empty");
 
     auto mediaAssetHelper = Media::MediaAssetHelperFactory::CreateMediaAssetHelper();
-    CHECK_ERROR_RETURN_LOG(mediaAssetHelper == nullptr, "create media asset helper failed");
+    CHECK_RETURN_ELOG(mediaAssetHelper == nullptr, "create media asset helper failed");
 
     auto mediaAsset = mediaAssetHelper->GetMediaAsset(uri, cameraShotType, burstKey);
-    CHECK_ERROR_RETURN_LOG(mediaAsset == nullptr, "Create photo asset failed");
+    CHECK_RETURN_ELOG(mediaAsset == nullptr, "Create photo asset failed");
 
     if (photoAssetCallback_ != nullptr && photoOutput_ != nullptr) {
         photoAssetCallback_(photoOutput_, mediaAsset);
@@ -168,14 +168,14 @@ void PhotoListenerTest::CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, Bu
     int32_t &cameraShotType, std::string &burstKey, int64_t timestamp)
 {
     CAMERA_SYNC_TRACE;
-    CHECK_ERROR_RETURN_LOG(bufferHandle == nullptr, "bufferHandle is nullptr");
+    CHECK_RETURN_ELOG(bufferHandle == nullptr, "bufferHandle is nullptr");
 
     int32_t format = bufferHandle->format;
     sptr<CameraPhotoProxy> photoProxy;
     std::string imageIdStr = std::to_string(extraData.imageId);
     photoProxy = new(std::nothrow) CameraPhotoProxy(bufferHandle, format, extraData.photoWidth, extraData.photoHeight,
         isHighQuality, extraData.captureId);
-    CHECK_ERROR_RETURN_LOG(photoProxy == nullptr, "Failed to new photoProxy");
+    CHECK_RETURN_ELOG(photoProxy == nullptr, "Failed to new photoProxy");
 
     photoProxy->SetDeferredAttrs(imageIdStr, extraData.deferredProcessingType, extraData.size,
         extraData.deferredImageFormat);
@@ -311,15 +311,15 @@ void CameraMovingPhotoModuleTest::UpdataCameraOutputCapability(int32_t modeName)
 int32_t CameraMovingPhotoModuleTest::RegisterPhotoAssetAvailableCallback(
     PhotoOutputTest_PhotoAssetAvailable callback)
 {
-    CHECK_ERROR_RETURN_RET_LOG(photoSurface_ == nullptr, INVALID_ARGUMENT,
+    CHECK_RETURN_RET_ELOG(photoSurface_ == nullptr, INVALID_ARGUMENT,
         "Photo surface is invalid");
     if (photoListener_ == nullptr) {
         photoListener_ = new (std::nothrow) PhotoListenerTest(photoOutput_, photoSurface_);
-        CHECK_ERROR_RETURN_RET_LOG(photoListener_ == nullptr, SERVICE_FATL_ERROR,
+        CHECK_RETURN_RET_ELOG(photoListener_ == nullptr, SERVICE_FATL_ERROR,
             "Create photo listener failed");
 
         SurfaceError ret = photoSurface_->RegisterConsumerListener((sptr<IBufferConsumerListener>&)photoListener_);
-        CHECK_ERROR_RETURN_RET_LOG(ret != SURFACE_ERROR_OK, SERVICE_FATL_ERROR,
+        CHECK_RETURN_RET_ELOG(ret != SURFACE_ERROR_OK, SERVICE_FATL_ERROR,
             "Register surface consumer listener failed");
     }
     photoListener_->SetPhotoAssetAvailableCallback(callback);
@@ -361,16 +361,16 @@ int32_t CameraMovingPhotoModuleTest::CreatePhotoOutputWithoutSurface(Profile &pr
     sptr<PhotoOutput> &photoOutput)
 {
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer(DEFAULT_SURFACEID);
-    CHECK_ERROR_RETURN_RET_LOG(surface == nullptr, INVALID_ARGUMENT,
+    CHECK_RETURN_RET_ELOG(surface == nullptr, INVALID_ARGUMENT,
         "Failed to get photoOutput surface");
 
     photoSurface_ = surface;
     surface->SetUserData(CameraManager::surfaceFormat, std::to_string(profile.GetCameraFormat()));
     sptr<IBufferProducer> surfaceProducer = surface->GetProducer();
-    CHECK_ERROR_RETURN_RET_LOG(surfaceProducer == nullptr, SERVICE_FATL_ERROR, "Get producer failed");
+    CHECK_RETURN_RET_ELOG(surfaceProducer == nullptr, SERVICE_FATL_ERROR, "Get producer failed");
 
     int32_t retCode = manager_->CreatePhotoOutput(profile, surfaceProducer, &photoOutput_);
-    CHECK_ERROR_RETURN_RET_LOG((retCode != CameraErrorCode::SUCCESS || photoOutput_ == nullptr),
+    CHECK_RETURN_RET_ELOG((retCode != CameraErrorCode::SUCCESS || photoOutput_ == nullptr),
         SERVICE_FATL_ERROR, "Create photo output failed");
 
     photoOutput_->SetNativeSurface(true);
@@ -432,7 +432,7 @@ int32_t CameraMovingPhotoModuleTest::MediaAssetManagerRequestMovingPhoto(
     OH_MediaLibrary_OnMovingPhotoDataPrepared callback)
 {
     mediaAssetManager_ = OH_MediaAssetManager_Create();
-    CHECK_ERROR_RETURN_RET_LOG(mediaAssetManager_ == nullptr, SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_ELOG(mediaAssetManager_ == nullptr, SERVICE_FATL_ERROR,
         "Create media asset manager failed");
 
     MediaLibrary_RequestId requestId;
@@ -440,7 +440,7 @@ int32_t CameraMovingPhotoModuleTest::MediaAssetManagerRequestMovingPhoto(
     requestOptions.deliveryMode = MEDIA_LIBRARY_HIGH_QUALITY_MODE;
     int32_t result = OH_MediaAssetManager_RequestMovingPhoto(mediaAssetManager_, mediaAsset_, requestOptions,
         &requestId, callback);
-    CHECK_ERROR_RETURN_RET_LOG(result != MEDIA_LIBRARY_OK, SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_ELOG(result != MEDIA_LIBRARY_OK, SERVICE_FATL_ERROR,
         "media asset manager request moving photo failed");
     return SUCCESS;
 }

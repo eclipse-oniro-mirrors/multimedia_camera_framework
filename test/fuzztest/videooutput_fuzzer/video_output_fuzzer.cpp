@@ -39,13 +39,13 @@ void VideoOutputFuzzer::VideoOutputFuzzTest(FuzzedDataProvider& fdp)
 {
     auto manager = CameraManager::GetInstance();
     auto cameras = manager->GetSupportedCameras();
-    CHECK_ERROR_RETURN_LOG(cameras.empty(), "GetSupportedCameras Error");
+    CHECK_RETURN_ELOG(cameras.empty(), "GetSupportedCameras Error");
     auto s = manager->CreateCaptureSession(SceneMode::VIDEO);
     s->BeginConfig();
     auto cap = s->GetCameraOutputCapabilities(cameras[0]);
-    CHECK_ERROR_RETURN_LOG(cap.empty(), "GetCameraOutputCapabilities Error");
+    CHECK_RETURN_ELOG(cap.empty(), "GetCameraOutputCapabilities Error");
     auto vp = cap[0]->GetVideoProfiles();
-    CHECK_ERROR_RETURN_LOG(vp.empty(), "GetVideoProfiles Error");
+    CHECK_RETURN_ELOG(vp.empty(), "GetVideoProfiles Error");
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     auto output = manager->CreateVideoOutput(vp[0], surface);
     output->Start();

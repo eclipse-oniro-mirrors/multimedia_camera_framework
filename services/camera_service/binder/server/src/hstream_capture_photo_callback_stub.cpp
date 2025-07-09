@@ -23,7 +23,7 @@ int HStreamCapturePhotoCallbackStub::OnRemoteRequest(
     uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option)
 {
     int errCode = -1;
-    CHECK_ERROR_RETURN_RET(data.ReadInterfaceToken() != GetDescriptor(), errCode);
+    CHECK_RETURN_RET(data.ReadInterfaceToken() != GetDescriptor(), errCode);
     switch (code) {
         case static_cast<uint32_t>(StreamCapturePhotoCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_PHOTO_AVAILABLE):
             errCode = HandleOnPhotoAvailable(data);
@@ -50,4 +50,4 @@ int HStreamCapturePhotoCallbackStub::HandleOnPhotoAvailable(MessageParcel& data)
 }
 // LCOV_EXCL_STOP
 }  // namespace CameraStandard
-}  // namespace OHOS
+}  // namespace OHOS

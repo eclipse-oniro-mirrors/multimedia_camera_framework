@@ -78,7 +78,7 @@ void DeferredVideoWorkFuzzer::Initialization()
     auto isAutoSuspend = GetData<bool>();
     fuzz_ = std::make_shared<DeferredProcessing::
         DeferredVideoWork>(jobPtr, ExecutionMode::HIGH_PERFORMANCE, isAutoSuspend);
-    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
+    CHECK_RETURN_ELOG(!fuzz_, "Create fuzz_ Error");
 }
 
 void VideoJobQueueFuzzer::VideoJobQueueFuzzTest()

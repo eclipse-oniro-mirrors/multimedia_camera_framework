@@ -108,10 +108,10 @@ void DepthDataNapi::Init(napi_env env)
                                DepthDataNapiConstructor, nullptr,
                                sizeof(depth_data_properties) / sizeof(depth_data_properties[PARAM0]),
                                depth_data_properties, &ctorObj);
-    CHECK_ERROR_RETURN_LOG(status != napi_ok, "DepthDataNapi defined class failed");
+    CHECK_RETURN_ELOG(status != napi_ok, "DepthDataNapi defined class failed");
     int32_t refCount = 1;
     status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
-    CHECK_ERROR_RETURN_LOG(status != napi_ok, "DepthDataNapi Init failed");
+    CHECK_RETURN_ELOG(status != napi_ok, "DepthDataNapi Init failed");
     MEDIA_DEBUG_LOG("DepthDataNapi Init success");
 }
 
@@ -127,7 +127,7 @@ napi_value DepthDataNapi::CreateDepthData(napi_env env, napi_value format, napi_
 
     if (sConstructor_ == nullptr) {
         DepthDataNapi::Init(env);
-        CHECK_ERROR_RETURN_RET_LOG(sConstructor_ == nullptr, result, "sConstructor_ is null");
+        CHECK_RETURN_RET_ELOG(sConstructor_ == nullptr, result, "sConstructor_ is null");
     }
     status = napi_get_reference_value(env, sConstructor_, &constructor);
     if (status == napi_ok) {

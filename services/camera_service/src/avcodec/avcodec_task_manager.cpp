@@ -85,11 +85,11 @@ void AvcodecTaskManager::EncodeVideoBuffer(sptr<FrameRecord> frameRecord, CacheC
 {
     auto thisPtr = sptr<AvcodecTaskManager>(this);
     auto encodeManager = GetEncoderManager();
-    CHECK_ERROR_RETURN(!encodeManager);
+    CHECK_RETURN(!encodeManager);
     encodeManager->SubmitTask([thisPtr, frameRecord, cacheCallback]() {
         CAMERA_SYNC_TRACE;
         bool isEncodeSuccess = false;
-        CHECK_ERROR_RETURN(!thisPtr->videoEncoder_ && !frameRecord);
+        CHECK_RETURN(!thisPtr->videoEncoder_ && !frameRecord);
         isEncodeSuccess = thisPtr->videoEncoder_->EncodeSurfaceBuffer(frameRecord);
         if (isEncodeSuccess) {
             thisPtr->videoEncoder_->ReleaseSurfaceBuffer(frameRecord);
@@ -140,7 +140,7 @@ sptr<AudioVideoMuxer> AvcodecTaskManager::CreateAVMuxer(vector<sptr<FrameRecord>
         bool waitResult = false;
         waitResult = cvEmpty_.wait_for(lock, std::chrono::milliseconds(GET_FD_EXPIREATION_TIME),
             [thisPtr, captureId] { return thisPtr->videoFdMap_.find(captureId) != thisPtr->videoFdMap_.end(); });
-        CHECK_ERROR_RETURN_RET(!waitResult || videoFdMap_.find(captureId) == videoFdMap_.end(), nullptr);
+        CHECK_RETURN_RET(!waitResult || videoFdMap_.find(captureId) == videoFdMap_.end(), nullptr);
     }
     sptr<AudioVideoMuxer> muxer = new AudioVideoMuxer();
     OH_AVOutputFormat format = AV_OUTPUT_FORMAT_MPEG_4;
@@ -193,12 +193,12 @@ void AvcodecTaskManager::FinishMuxer(sptr<AudioVideoMuxer> muxer, int32_t captur
 {
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("doMxuer video is finished");
-    CHECK_ERROR_RETURN(!muxer);
+    CHECK_RETURN(!muxer);
     muxer->Stop();
     muxer->Release();
     std::shared_ptr<PhotoAssetIntf> proxy = muxer->GetPhotoAssetProxy();
     MEDIA_INFO_LOG("PhotoAssetProxy notify enter");
-    CHECK_ERROR_RETURN(!proxy);
+    CHECK_RETURN(!proxy);
     proxy->NotifyVideoSaveFinished();
     lock_guard<mutex> lock(videoFdMutex_);
     videoFdMap_.erase(captureId);
@@ -215,16 +215,16 @@ void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, ui
     int32_t captureRotation, int32_t captureId) __attribute__((no_sanitize("cfi")))
 {
     CAMERA_SYNC_TRACE;
-    CHECK_ERROR_RETURN_LOG(frameRecords.empty(), "DoMuxerVideo error of empty encoded frame");
+    CHECK_RETURN_ELOG(frameRecords.empty(), "DoMuxerVideo error of empty encoded frame");
     auto thisPtr = sptr<AvcodecTaskManager>(this);
     auto taskManager = GetTaskManager();
-    CHECK_ERROR_RETURN_LOG(taskManager == nullptr, "GetTaskManager is null");
+    CHECK_RETURN_ELOG(taskManager == nullptr, "GetTaskManager is null");
     GetTaskManager()->SubmitTask([thisPtr, frameRecords, captureRotation, captureId]() {
         CAMERA_SYNC_TRACE;
         MEDIA_INFO_LOG("CreateAVMuxer with %{public}zu", frameRecords.size());
         vector<sptr<FrameRecord>> choosedBuffer;
         sptr<AudioVideoMuxer> muxer = thisPtr->CreateAVMuxer(frameRecords, captureRotation, choosedBuffer, captureId);
-        CHECK_ERROR_RETURN_LOG(muxer == nullptr, "CreateAVMuxer failed");
+        CHECK_RETURN_ELOG(muxer == nullptr, "CreateAVMuxer failed");
         if (choosedBuffer.empty()) {
             lock_guard<mutex> lock(thisPtr->videoFdMutex_);
             thisPtr->videoFdMap_.erase(captureId);
@@ -238,7 +238,7 @@ void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, ui
             {
                 std::lock_guard<std::mutex> lock(choosedBuffer[index]->bufferMutex_);
                 OH_AVCodecBufferAttr attr = {0, 0, 0, AVCODEC_BUFFER_FLAGS_NONE};
-                CHECK_WARNING_CONTINUE_LOG(buffer == nullptr, "video encodedBuffer is null");
+                CHECK_CONTINUE_WLOG(buffer == nullptr, "video encodedBuffer is null");
                 buffer->pts_ = NanosecToMicrosec(choosedBuffer[index]->GetTimeStamp() - videoStartTime);
                 MEDIA_DEBUG_LOG("choosed buffer pts:%{public}" PRIu64, attr.pts);
                 muxer->WriteSampleBuffer(buffer, VIDEO_TRACK);
@@ -314,7 +314,7 @@ void AvcodecTaskManager::IgnoreDeblur(vector<sptr<FrameRecord>> frameRecords,
 {
     MEDIA_INFO_LOG("IgnoreDeblur enter");
     choosedBuffer.clear();
-    CHECK_ERROR_RETURN(frameRecords.empty());
+    CHECK_RETURN(frameRecords.empty());
     auto it = find_if(
         frameRecords.begin(), frameRecords.end(), [](const sptr<FrameRecord>& frame) { return frame->IsIDRFrame(); });
     while (it != frameRecords.end()) {
@@ -326,7 +326,7 @@ void AvcodecTaskManager::IgnoreDeblur(vector<sptr<FrameRecord>> frameRecords,
 void AvcodecTaskManager::ChooseVideoBuffer(vector<sptr<FrameRecord>> frameRecords,
     vector<sptr<FrameRecord>> &choosedBuffer, int64_t shutterTime, int32_t captureId)
 {
-    CHECK_ERROR_RETURN_LOG(frameRecords.empty(), "frameRecords is empty!");
+    CHECK_RETURN_ELOG(frameRecords.empty(), "frameRecords is empty!");
     choosedBuffer.clear();
     std::unique_lock<mutex> endTimeLock(endTimeMutex_);
     int64_t clearVideoEndTime = shutterTime + postBufferDuration_;
@@ -370,13 +370,13 @@ void AvcodecTaskManager::PrepareAudioBuffer(vector<sptr<FrameRecord>>& choosedBu
         std::lock_guard<mutex> lock(deferredProcessMutex_);
         if (audioDeferredProcess_ == nullptr) {
             audioDeferredProcess_ = std::make_shared<AudioDeferredProcess>();
-            CHECK_ERROR_RETURN(!audioDeferredProcess_);
+            CHECK_RETURN(!audioDeferredProcess_);
             audioDeferredProcess_->StoreOptions(audioCapturerSession_->deferredInputOptions_,
                 audioCapturerSession_->deferredOutputOptions_);
-            CHECK_ERROR_RETURN(audioDeferredProcess_->GetOfflineEffectChain() != 0);
-            CHECK_ERROR_RETURN(audioDeferredProcess_->ConfigOfflineAudioEffectChain() != 0);
-            CHECK_ERROR_RETURN(audioDeferredProcess_->PrepareOfflineAudioEffectChain() != 0);
-            CHECK_ERROR_RETURN(audioDeferredProcess_->GetMaxBufferSize(audioCapturerSession_->deferredInputOptions_,
+            CHECK_RETURN(audioDeferredProcess_->GetOfflineEffectChain() != 0);
+            CHECK_RETURN(audioDeferredProcess_->ConfigOfflineAudioEffectChain() != 0);
+            CHECK_RETURN(audioDeferredProcess_->PrepareOfflineAudioEffectChain() != 0);
+            CHECK_RETURN(audioDeferredProcess_->GetMaxBufferSize(audioCapturerSession_->deferredInputOptions_,
                 audioCapturerSession_->deferredOutputOptions_) != 0);
         }
         audioDeferredProcess_->Process(audioRecords, processedAudioRecords);
@@ -388,10 +388,10 @@ void AvcodecTaskManager::PrepareAudioBuffer(vector<sptr<FrameRecord>>& choosedBu
         auto curObject = audioDeferredProcess_;
         timerId_ = CameraTimer::GetInstance().Register([weakThis, curObject]()-> void {
             auto sharedThis = weakThis.promote();
-            CHECK_ERROR_RETURN(sharedThis == nullptr);
+            CHECK_RETURN(sharedThis == nullptr);
             std::unique_lock<mutex> lock(sharedThis->deferredProcessMutex_, std::try_to_lock);
-            CHECK_ERROR_RETURN(curObject != sharedThis->audioDeferredProcess_);
-            CHECK_ERROR_RETURN(!lock.owns_lock());
+            CHECK_RETURN(curObject != sharedThis->audioDeferredProcess_);
+            CHECK_RETURN(!lock.owns_lock());
             sharedThis->audioDeferredProcess_ = nullptr;
             sharedThis->timerId_ = 0;
         }, RELEASE_WAIT_TIME, true);
@@ -403,7 +403,7 @@ void AvcodecTaskManager::CollectAudioBuffer(vector<sptr<AudioRecord>> audioRecor
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("CollectAudioBuffer start with size %{public}zu", audioRecordVec.size());
     bool isEncodeSuccess = false;
-    CHECK_ERROR_RETURN_LOG(!audioEncoder_ || audioRecordVec.empty() || !muxer,
+    CHECK_RETURN_ELOG(!audioEncoder_ || audioRecordVec.empty() || !muxer,
         "CollectAudioBuffer cannot find useful data");
     isEncodeSuccess = audioEncoder_->EncodeAudioBuffer(audioRecordVec);
     MEDIA_DEBUG_LOG("encode audio buffer result %{public}d", isEncodeSuccess);
@@ -411,7 +411,7 @@ void AvcodecTaskManager::CollectAudioBuffer(vector<sptr<AudioRecord>> audioRecor
     for (size_t index = 0; index < maxFrameCount; index++) {
         OH_AVCodecBufferAttr attr = { 0, 0, 0, AVCODEC_BUFFER_FLAGS_NONE };
         OH_AVBuffer* buffer = audioRecordVec[index]->encodedBuffer;
-        CHECK_WARNING_CONTINUE_LOG(buffer == nullptr, "audio encodedBuffer is null");
+        CHECK_CONTINUE_WLOG(buffer == nullptr, "audio encodedBuffer is null");
         OH_AVBuffer_GetBufferAttr(buffer, &attr);
         attr.pts = static_cast<int64_t>(index * AUDIO_FRAME_INTERVAL);
         if (audioRecordVec.size() > 0) {

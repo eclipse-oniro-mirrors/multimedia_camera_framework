@@ -44,8 +44,8 @@ void PhotoAssetBufferConsumer::OnBufferAvailable()
     MEDIA_INFO_LOG("OnBufferAvailable E");
     CAMERA_SYNC_TRACE;
     sptr<HStreamCapture> streamCapture = streamCapture_.promote();
-    CHECK_ERROR_RETURN_LOG(streamCapture == nullptr, "streamCapture is null");
-    CHECK_ERROR_RETURN_LOG(streamCapture->photoTask_ == nullptr, "photoTask is null");
+    CHECK_RETURN_ELOG(streamCapture == nullptr, "streamCapture is null");
+    CHECK_RETURN_ELOG(streamCapture->photoTask_ == nullptr, "photoTask is null");
     wptr<PhotoAssetBufferConsumer> thisPtr(this);
     streamCapture->photoTask_->SubmitTask([thisPtr]() {
         auto listener = thisPtr.promote();
@@ -60,20 +60,20 @@ void PhotoAssetBufferConsumer::ExecuteOnBufferAvailable()
     MEDIA_INFO_LOG("PA_ExecuteOnBufferAvailable E");
     CAMERA_SYNC_TRACE;
     sptr<HStreamCapture> streamCapture = streamCapture_.promote();
-    CHECK_ERROR_RETURN_LOG(streamCapture == nullptr, "streamCapture is null");
-    CHECK_ERROR_RETURN_LOG(streamCapture->surface_ == nullptr, "surface is null");
+    CHECK_RETURN_ELOG(streamCapture == nullptr, "streamCapture is null");
+    CHECK_RETURN_ELOG(streamCapture->surface_ == nullptr, "surface is null");
     sptr<SurfaceBuffer> surfaceBuffer = nullptr;
     int32_t fence = -1;
     int64_t timestamp;
     OHOS::Rect damage;
     SurfaceError surfaceRet = streamCapture->surface_->AcquireBuffer(surfaceBuffer, fence, timestamp, damage);
-    CHECK_ERROR_RETURN_LOG(surfaceRet != SURFACE_ERROR_OK, "Failed to acquire surface buffer");
+    CHECK_RETURN_ELOG(surfaceRet != SURFACE_ERROR_OK, "Failed to acquire surface buffer");
     CameraSurfaceBufferUtil::DumpSurfaceBuffer(surfaceBuffer);
     // deep copy surfaceBuffer
     sptr<SurfaceBuffer> newSurfaceBuffer = CameraSurfaceBufferUtil::DeepCopyBuffer(surfaceBuffer);
     // release surfaceBuffer to bufferQueue
     streamCapture->surface_->ReleaseBuffer(surfaceBuffer, -1);
-    CHECK_ERROR_RETURN_LOG(newSurfaceBuffer == nullptr, "DeepCopyBuffer faild");
+    CHECK_RETURN_ELOG(newSurfaceBuffer == nullptr, "DeepCopyBuffer faild");
     int32_t captureId = CameraSurfaceBufferUtil::GetMaskCaptureId(newSurfaceBuffer);
     CameraReportDfxUtils::GetInstance()->SetFirstBufferEndInfo(captureId);
     CameraReportDfxUtils::GetInstance()->SetPrepareProxyStartInfo(captureId);
@@ -105,7 +105,7 @@ void PhotoAssetBufferConsumer::StartWaitAuxiliaryTask(
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("StartWaitAuxiliaryTask E, captureId:%{public}d", captureId);
     sptr<HStreamCapture> streamCapture = streamCapture_.promote();
-    CHECK_ERROR_RETURN_LOG(streamCapture == nullptr, "streamCapture is null");
+    CHECK_RETURN_ELOG(streamCapture == nullptr, "streamCapture is null");
     {
         std::lock_guard<std::mutex> lock(streamCapture->g_photoImageMutex);
         // create and save photoProxy
@@ -120,7 +120,7 @@ void PhotoAssetBufferConsumer::StartWaitAuxiliaryTask(
 
         // create and save pictureProxy
         std::shared_ptr<PictureIntf> pictureProxy = PictureProxy::CreatePictureProxy();
-        CHECK_ERROR_RETURN_LOG(pictureProxy == nullptr, "pictureProxy is nullptr");
+        CHECK_RETURN_ELOG(pictureProxy == nullptr, "pictureProxy is nullptr");
         pictureProxy->Create(newSurfaceBuffer);
         MEDIA_INFO_LOG(
             "PhotoAssetBufferConsumer StartWaitAuxiliaryTask MainSurface w=%{public}d, h=%{public}d, f=%{public}d",
@@ -178,7 +178,7 @@ void PhotoAssetBufferConsumer::CleanAfterTransPicture(int32_t captureId)
 {
     MEDIA_INFO_LOG("CleanAfterTransPicture E, captureId:%{public}d", captureId);
     sptr<HStreamCapture> streamCapture = streamCapture_.promote();
-    CHECK_ERROR_RETURN_LOG(streamCapture == nullptr, "streamCapture is null");
+    CHECK_RETURN_ELOG(streamCapture == nullptr, "streamCapture is null");
 
     streamCapture->photoProxyMap_.erase(captureId);
     streamCapture->captureIdPictureMap_.erase(captureId);
@@ -196,7 +196,7 @@ void PhotoAssetBufferConsumer::AssembleDeferredPicture(int64_t timestamp, int32_
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("AssembleDeferredPicture E, captureId:%{public}d", captureId);
     sptr<HStreamCapture> streamCapture = streamCapture_.promote();
-    CHECK_ERROR_RETURN_LOG(streamCapture == nullptr, "streamCapture is null");
+    CHECK_RETURN_ELOG(streamCapture == nullptr, "streamCapture is null");
     std::lock_guard<std::mutex> lock(streamCapture->g_assembleImageMutex);
     std::shared_ptr<PictureIntf> picture = streamCapture->captureIdPictureMap_[captureId];
     if (streamCapture->captureIdExifMap_[captureId] && picture) {
@@ -227,7 +227,7 @@ void PhotoAssetBufferConsumer::AssembleDeferredPicture(int64_t timestamp, int32_
         picture->SetMaintenanceData(buffer);
         streamCapture->captureIdDebugMap_[captureId] = nullptr;
     }
-    CHECK_ERROR_RETURN_LOG(!picture, "CreateMediaLibrary picture is nullptr");
+    CHECK_RETURN_ELOG(!picture, "CreateMediaLibrary picture is nullptr");
     std::string uri;
     int32_t cameraShotType;
     std::string burstKey = "";

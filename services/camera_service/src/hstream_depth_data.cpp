@@ -51,7 +51,7 @@ int32_t HStreamDepthData::LinkInput(wptr<OHOS::HDI::Camera::V1_0::IStreamOperato
 {
     MEDIA_INFO_LOG("HStreamDepthData::LinkInput streamId:%{public}d", GetFwkStreamId());
     int32_t ret = HStreamCommon::LinkInput(streamOperator, cameraAbility);
-    CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, ret,
+    CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, ret,
         "HStreamDepthData::LinkInput err, streamId:%{public}d ,err:%{public}d", GetFwkStreamId(), ret);
     return CAMERA_OK;
 }
@@ -78,7 +78,7 @@ int32_t HStreamDepthData::SetDataAccuracy(int32_t accuracy)
             dynamicSetting = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
         }
         camera_metadata_item_t item;
-        CHECK_ERROR_RETURN_RET_LOG(dynamicSetting == nullptr, CAMERA_INVALID_ARG,
+        CHECK_RETURN_RET_ELOG(dynamicSetting == nullptr, CAMERA_INVALID_ARG,
             "HStreamDepthData::SetDataAccuracy dynamicSetting is nullptr.");
         int ret = OHOS::Camera::FindCameraMetadataItem(dynamicSetting->get(), OHOS_CONTROL_DEPTH_DATA_ACCURACY, &item);
         bool status = false;
@@ -91,7 +91,7 @@ int32_t HStreamDepthData::SetDataAccuracy(int32_t accuracy)
             status = dynamicSetting->updateEntry(
                 OHOS_CONTROL_DEPTH_DATA_ACCURACY, streamDepthDataAccuracy_.data(), streamDepthDataAccuracy_.size());
         }
-        CHECK_ERROR_PRINT_LOG(!status, "HStreamDepthData::SetDataAccuracy Failed to set data accuracy");
+        CHECK_PRINT_ELOG(!status, "HStreamDepthData::SetDataAccuracy Failed to set data accuracy");
         OHOS::Camera::MetadataUtils::ConvertMetadataToVec(dynamicSetting, depthSettings);
     }
 
@@ -108,7 +108,7 @@ int32_t HStreamDepthData::SetDataAccuracy(int32_t accuracy)
         MEDIA_INFO_LOG("HStreamDepthData::SetDataAccuracy stream:%{public}d, with settingCapture ID:%{public}d",
             GetFwkStreamId(), currentCaptureId);
         rc = (CamRetCode)(streamOperator->Capture(currentCaptureId, captureInfo, true));
-        CHECK_ERROR_PRINT_LOG(rc != HDI::Camera::V1_0::NO_ERROR,
+        CHECK_PRINT_ELOG(rc != HDI::Camera::V1_0::NO_ERROR,
             "HStreamDepthData::SetDataAccuracy Failed with error Code:%{public}d", rc);
     }
     return rc;
@@ -118,15 +118,15 @@ int32_t HStreamDepthData::Start()
 {
     CAMERA_SYNC_TRACE;
     auto streamOperator = GetStreamOperator();
-    CHECK_ERROR_RETURN_RET(streamOperator == nullptr, CAMERA_INVALID_STATE);
+    CHECK_RETURN_RET(streamOperator == nullptr, CAMERA_INVALID_STATE);
 
     auto preparedCaptureId = GetPreparedCaptureId();
-    CHECK_ERROR_RETURN_RET_LOG(preparedCaptureId != CAPTURE_ID_UNSET, CAMERA_INVALID_STATE,
+    CHECK_RETURN_RET_ELOG(preparedCaptureId != CAPTURE_ID_UNSET, CAMERA_INVALID_STATE,
         "HStreamDepthData::Start, Already started with captureID: %{public}d", preparedCaptureId);
 
     int32_t ret = PrepareCaptureId();
     preparedCaptureId = GetPreparedCaptureId();
-    CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK || preparedCaptureId == CAPTURE_ID_UNSET, ret,
+    CHECK_RETURN_RET_ELOG(ret != CAMERA_OK || preparedCaptureId == CAPTURE_ID_UNSET, ret,
         "HStreamDepthData::Start Failed to allocate a captureId");
 
     std::vector<uint8_t> ability;
@@ -169,7 +169,7 @@ int32_t HStreamDepthData::Stop()
     auto preparedCaptureId = GetPreparedCaptureId();
     MEDIA_INFO_LOG("HStreamDepthData::Start streamId:%{public}d hdiStreamId:%{public}d With capture ID: %{public}d",
         GetFwkStreamId(), GetHdiStreamId(), preparedCaptureId);
-    CHECK_ERROR_RETURN_RET_LOG(preparedCaptureId == CAPTURE_ID_UNSET, CAMERA_INVALID_STATE,
+    CHECK_RETURN_RET_ELOG(preparedCaptureId == CAPTURE_ID_UNSET, CAMERA_INVALID_STATE,
         "HStreamDepthData::Stop, Stream not started yet");
     int32_t ret = CAMERA_OK;
     {
@@ -201,7 +201,7 @@ int32_t HStreamDepthData::ReleaseStream(bool isDelay)
 
 int32_t HStreamDepthData::SetCallback(const sptr<IStreamDepthDataCallback>& callback)
 {
-    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_INVALID_ARG,
+    CHECK_RETURN_RET_ELOG(callback == nullptr, CAMERA_INVALID_ARG,
         "HStreamDepthData::SetCallback callback is null");
     std::lock_guard<std::mutex> lock(callbackLock_);
     streamDepthDataCallback_ = callback;
@@ -242,7 +242,7 @@ int32_t HStreamDepthData::OperatePermissionCheck(uint32_t interfaceCode)
     switch (static_cast<IStreamDepthDataIpcCode>(interfaceCode)) {
         case IStreamDepthDataIpcCode::COMMAND_START: {
             auto callerToken = IPCSkeleton::GetCallingTokenID();
-            CHECK_ERROR_RETURN_RET_LOG(callerToken_ != callerToken, CAMERA_OPERATION_NOT_ALLOWED,
+            CHECK_RETURN_RET_ELOG(callerToken_ != callerToken, CAMERA_OPERATION_NOT_ALLOWED,
                 "HStreamDepthData::OperatePermissionCheck fail, callerToken invalid!");
             break;
         }

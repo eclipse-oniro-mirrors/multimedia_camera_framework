@@ -94,7 +94,7 @@ void SketchWrapperFuzzer::SketchWrapperFuzzTest1()
     sketchSize.width = PREVIEW_WIDTH_2;
     sketchSize.height = PREVIEW_HEIGHT_2;
     fuzz_ = std::make_shared<SketchWrapper>(previewOutput->GetStream(), sketchSize);
-    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
+    CHECK_RETURN_ELOG(!fuzz_, "Create fuzz_ Error");
     std::shared_ptr<OHOS::Camera::CameraMetadata> deviceMetadata =
         std::make_shared<OHOS::Camera::CameraMetadata>(METADATA_ITEM_SIZE, METADATA_DATA_SIZE);
     sptr<CaptureSession> session = CameraManager::GetInstance()->CreateCaptureSession();
@@ -135,7 +135,7 @@ void SketchWrapperFuzzer::SketchWrapperFuzzTest2()
     sketchSize.width = PREVIEW_WIDTH_2;
     sketchSize.height = PREVIEW_HEIGHT_2;
     fuzz_ = std::make_shared<SketchWrapper>(previewOutput->GetStream(), sketchSize);
-    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
+    CHECK_RETURN_ELOG(!fuzz_, "Create fuzz_ Error");
     std::shared_ptr<OHOS::Camera::CameraMetadata> deviceMetadata =
         std::make_shared<OHOS::Camera::CameraMetadata>(METADATA_ITEM_SIZE, METADATA_DATA_SIZE);
     sptr<CaptureSession> session = CameraManager::GetInstance()->CreateCaptureSession();

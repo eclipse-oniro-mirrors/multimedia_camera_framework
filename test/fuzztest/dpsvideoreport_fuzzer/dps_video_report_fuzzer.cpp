@@ -32,7 +32,7 @@ void DfxVideoReportFuzzer::DfxVideoReportFuzzTest(FuzzedDataProvider& fdp)
         return;
     }
     fuzz_ = std::make_shared<DfxVideoReport>();
-    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
+    CHECK_RETURN_ELOG(!fuzz_, "Create fuzz_ Error");
     DpsCallerInfo callerInfo;
     std::string videoId(fdp.ConsumeRandomLengthString(MAX_LENGTH_STRING));
     callerInfo.bundleName = (fdp.ConsumeRandomLengthString(MAX_LENGTH_STRING));

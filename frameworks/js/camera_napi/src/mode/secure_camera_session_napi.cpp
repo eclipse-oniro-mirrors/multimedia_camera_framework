@@ -59,7 +59,7 @@ napi_value SecureCameraSessionNapi::Init(napi_env env, napi_value exports)
         status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
         if (status == napi_ok) {
             status = napi_set_named_property(env, exports, SECURE_CAMERA_SESSION_NAPI_CLASS_NAME, ctorObj);
-            CHECK_ERROR_RETURN_RET(status == napi_ok, exports);
+            CHECK_RETURN_RET(status == napi_ok, exports);
         }
     }
     MEDIA_ERR_LOG("Init call Failed!");
@@ -105,7 +105,7 @@ napi_value SecureCameraSessionNapi::AddSecureOutput(napi_env env, napi_callback_
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckInvalidArgument(env, argc, ARGS_ONE, argv, ADD_OUTPUT), result);
+    CHECK_RETURN_RET(!CameraNapiUtils::CheckInvalidArgument(env, argc, ARGS_ONE, argv, ADD_OUTPUT), result);
 
     napi_get_undefined(env, &result);
     SecureCameraSessionNapi* secureCameraSessionNapi = nullptr;
@@ -116,7 +116,7 @@ napi_value SecureCameraSessionNapi::AddSecureOutput(napi_env env, napi_callback_
         result = GetJSArgsForCameraOutput(env, argc, argv, cameraOutput);
         CHECK_EXECUTE(cameraOutput == nullptr, NAPI_ASSERT(env, false, "type mismatch"));
         int32_t ret = secureCameraSessionNapi->secureCameraSession_->AddSecureOutput(cameraOutput);
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, ret), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, ret), nullptr);
     } else {
         MEDIA_ERR_LOG("AddOutput call Failed!");
     }
@@ -136,10 +136,10 @@ napi_value SecureCameraSessionNapi::SecureCameraSessionNapiConstructor(napi_env 
     if (status == napi_ok && thisVar != nullptr) {
         std::unique_ptr<SecureCameraSessionNapi> obj = std::make_unique<SecureCameraSessionNapi>();
         obj->env_ = env;
-        CHECK_ERROR_RETURN_RET_LOG(sCameraSession_ == nullptr, result, "sCameraSession_ is null");
+        CHECK_RETURN_RET_ELOG(sCameraSession_ == nullptr, result, "sCameraSession_ is null");
         obj->secureCameraSession_ = static_cast<SecureCameraSession*>(sCameraSession_.GetRefPtr());
         obj->cameraSession_ = obj->secureCameraSession_;
-        CHECK_ERROR_RETURN_RET_LOG(obj->secureCameraSession_ == nullptr, result, "secureCameraSession_ is null");
+        CHECK_RETURN_RET_ELOG(obj->secureCameraSession_ == nullptr, result, "secureCameraSession_ is null");
         status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
                            SecureCameraSessionNapi::SecureCameraSessionNapiDestructor, nullptr, nullptr);
         if (status == napi_ok) {

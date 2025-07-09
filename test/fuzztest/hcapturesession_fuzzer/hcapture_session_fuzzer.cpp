@@ -53,7 +53,7 @@ void HCaptureSessionFuzzer::HCaptureSessionFuzzTest1(FuzzedDataProvider& fdp)
     fuzz_->NewInstance(0, 0, session);
     hStreamOperator = HStreamOperator::NewInstance(0, 0);
     fuzz_->SetStreamOperator(hStreamOperator);
-    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
+    CHECK_RETURN_ELOG(!fuzz_, "Create fuzz_ Error");
     fuzz_->BeginConfig();
     fuzz_->CommitConfig();
     int32_t featureMode = fdp.ConsumeIntegral<int32_t>();
@@ -86,7 +86,7 @@ void HCaptureSessionFuzzer::HCaptureSessionFuzzTest2(FuzzedDataProvider& fdp)
     sptr<HCaptureSession> session;
     fuzz_ = std::make_shared<HCaptureSession>(callerToken, opMode);
     fuzz_->NewInstance(0, 0, session);
-    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
+    CHECK_RETURN_ELOG(!fuzz_, "Create fuzz_ Error");
     fuzz_->GetPid();
     StreamType streamType = StreamType::CAPTURE;
     fuzz_->AddOutput(streamType, nullptr);
@@ -120,7 +120,7 @@ void HCaptureSessionFuzzer::HCaptureSessionFuzzTest3(FuzzedDataProvider& fdp)
     sptr<HCaptureSession> session;
     fuzz_ = std::make_shared<HCaptureSession>(callerToken, opMode);
     fuzz_->NewInstance(0, 0, session);
-    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
+    CHECK_RETURN_ELOG(!fuzz_, "Create fuzz_ Error");
     int32_t targetRangeId = TELE_CAMERA_ZOOM_RANGE;
     int32_t currentRangeId = WIDE_CAMERA_ZOOM_RANGE;
     int32_t waitCount = 4;
@@ -164,7 +164,7 @@ void HCaptureSessionFuzzer::HCaptureSessionFuzzTest4(FuzzedDataProvider& fdp)
     sptr<HCaptureSession> session;
     fuzz_ = std::make_shared<HCaptureSession>(callerToken, opMode);
     fuzz_->NewInstance(0, 0, session);
-    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
+    CHECK_RETURN_ELOG(!fuzz_, "Create fuzz_ Error");
     pid_t pid = 0;
     fuzz_->DestroyStubObjectForPid(pid);
     sptr<ICaptureSessionCallback> callback;

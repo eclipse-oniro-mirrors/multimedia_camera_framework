@@ -67,10 +67,10 @@ void LightPaintingSessionNapi::Init(napi_env env)
                                LightPaintingSessionNapiConstructor, nullptr,
                                light_painting_session_props.size(),
                                light_painting_session_props.data(), &ctorObj);
-    CHECK_ERROR_RETURN_LOG(status != napi_ok, "LightPaintingSessionNapi defined class failed");
+    CHECK_RETURN_ELOG(status != napi_ok, "LightPaintingSessionNapi defined class failed");
     int32_t refCount = 1;
     status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
-    CHECK_ERROR_RETURN_LOG(status != napi_ok, "LightPaintingSessionNapi Init failed");
+    CHECK_RETURN_ELOG(status != napi_ok, "LightPaintingSessionNapi Init failed");
     MEDIA_DEBUG_LOG("LightPaintingSessionNapi Init success");
 }
  
@@ -83,7 +83,7 @@ napi_value LightPaintingSessionNapi::CreateCameraSession(napi_env env)
     napi_value constructor;
     if (sConstructor_ == nullptr) {
         LightPaintingSessionNapi::Init(env);
-        CHECK_ERROR_RETURN_RET_LOG(sConstructor_ == nullptr, result, "sConstructor_ is null");
+        CHECK_RETURN_RET_ELOG(sConstructor_ == nullptr, result, "sConstructor_ is null");
     }
     status = napi_get_reference_value(env, sConstructor_, &constructor);
     if (status == napi_ok) {
@@ -123,11 +123,11 @@ napi_value LightPaintingSessionNapi::LightPaintingSessionNapiConstructor(napi_en
     if (status == napi_ok && thisVar != nullptr) {
         std::unique_ptr<LightPaintingSessionNapi> obj = std::make_unique<LightPaintingSessionNapi>();
         obj->env_ = env;
-        CHECK_ERROR_RETURN_RET_LOG(sCameraSessionForSys_ == nullptr, result, "sCameraSessionForSys_ is null");
+        CHECK_RETURN_RET_ELOG(sCameraSessionForSys_ == nullptr, result, "sCameraSessionForSys_ is null");
         obj->lightPaintingSession_ = static_cast<LightPaintingSession*>(sCameraSessionForSys_.GetRefPtr());
         obj->cameraSessionForSys_ = obj->lightPaintingSession_;
         obj->cameraSession_ = obj->lightPaintingSession_;
-        CHECK_ERROR_RETURN_RET_LOG(obj->lightPaintingSession_ == nullptr, result, "lightPaintingSession_ is null");
+        CHECK_RETURN_RET_ELOG(obj->lightPaintingSession_ == nullptr, result, "lightPaintingSession_ is null");
         status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
             LightPaintingSessionNapi::LightPaintingSessionNapiDestructor, nullptr, nullptr);
         if (status == napi_ok) {
@@ -157,7 +157,7 @@ napi_value LightPaintingSessionNapi::GetSupportedLightPaintings(napi_env env, na
     status = napi_create_array(env, &result);
     std::vector<LightPaintingType> lightPaintingTypes;
     int32_t retCode = lightPaintingSessionNapi->lightPaintingSession_->GetSupportedLightPaintings(lightPaintingTypes);
-    CHECK_ERROR_RETURN_RET_LOG(!CameraNapiUtils::CheckError(env, retCode), nullptr,
+    CHECK_RETURN_RET_ELOG(!CameraNapiUtils::CheckError(env, retCode), nullptr,
         "GetSupportedLightPaintings fail %{public}d", retCode);
     if (!lightPaintingTypes.empty() && status == napi_ok) {
         for (size_t i = 0; i < lightPaintingTypes.size(); i++) {
@@ -185,9 +185,9 @@ napi_value LightPaintingSessionNapi::GetLightPainting(napi_env env, napi_callbac
     }
     LightPaintingType lightPainting;
     int32_t retCode = lightPaintingSessionNapi->lightPaintingSession_->GetLightPainting(lightPainting);
-    CHECK_ERROR_PRINT_LOG(!CameraNapiUtils::CheckError(env, retCode), "GetLightPainting fail %{public}d", retCode);
+    CHECK_PRINT_ELOG(!CameraNapiUtils::CheckError(env, retCode), "GetLightPainting fail %{public}d", retCode);
     status = napi_create_int32(env, lightPainting, &result);
-    CHECK_ERROR_PRINT_LOG(status != napi_ok, "Failed to get GetLightPainting!, errorCode : %{public}d", status);
+    CHECK_PRINT_ELOG(status != napi_ok, "Failed to get GetLightPainting!, errorCode : %{public}d", status);
     return result;
 }
  
@@ -199,7 +199,7 @@ napi_value LightPaintingSessionNapi::SetLightPainting(napi_env env, napi_callbac
     LightPaintingSessionNapi* lightPaintingSessionNapi = nullptr;
     int32_t lightPaintingType;
     CameraNapiParamParser jsParamParser(env, info, lightPaintingSessionNapi, lightPaintingType);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"),
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"),
         result, "SetLightPainting parse parameter occur error");
     if (lightPaintingSessionNapi->lightPaintingSession_ == nullptr) {
         MEDIA_ERR_LOG("SetLightPainting get native object fail");
@@ -211,7 +211,7 @@ napi_value LightPaintingSessionNapi::SetLightPainting(napi_env env, napi_callbac
     int32_t retCode = lightPaintingSessionNapi->
         lightPaintingSession_->SetLightPainting(static_cast<LightPaintingType>(lightPaintingType));
     lightPaintingSessionNapi->lightPaintingSession_->UnlockForControl();
-    CHECK_ERROR_PRINT_LOG(!CameraNapiUtils::CheckError(env, retCode), "SetLightPainting fail %{public}d", retCode);
+    CHECK_PRINT_ELOG(!CameraNapiUtils::CheckError(env, retCode), "SetLightPainting fail %{public}d", retCode);
     return result;
 }
  
@@ -222,7 +222,7 @@ napi_value LightPaintingSessionNapi::TriggerLighting(napi_env env, napi_callback
  
     LightPaintingSessionNapi* lightPaintingSessionNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, lightPaintingSessionNapi);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"),
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"),
         result, "TriggerLighting parse parameter occur error");
     if (lightPaintingSessionNapi->lightPaintingSession_ == nullptr) {
         MEDIA_ERR_LOG("TriggerLighting get native object fail");
@@ -232,7 +232,7 @@ napi_value LightPaintingSessionNapi::TriggerLighting(napi_env env, napi_callback
     lightPaintingSessionNapi->lightPaintingSession_->LockForControl();
     int32_t retCode = lightPaintingSessionNapi->lightPaintingSession_->TriggerLighting();
     lightPaintingSessionNapi->lightPaintingSession_->UnlockForControl();
-    CHECK_ERROR_PRINT_LOG(!CameraNapiUtils::CheckError(env, retCode), "TriggerLighting fail %{public}d", retCode);
+    CHECK_PRINT_ELOG(!CameraNapiUtils::CheckError(env, retCode), "TriggerLighting fail %{public}d", retCode);
     return result;
 }
 } // namespace CameraStandard

@@ -51,10 +51,10 @@ int32_t CameraDeviceServiceCallback::OnError(const int32_t errorType, const int3
 int32_t CameraDeviceServiceCallback::OnResult(const uint64_t timestamp,
                                               const std::shared_ptr<OHOS::Camera::CameraMetadata> &result)
 {
-    CHECK_ERROR_RETURN_RET_LOG(result == nullptr, CAMERA_INVALID_ARG, "OnResult get null meta from server");
+    CHECK_RETURN_RET_ELOG(result == nullptr, CAMERA_INVALID_ARG, "OnResult get null meta from server");
     std::lock_guard<std::mutex> lock(deviceCallbackMutex_);
     auto camInputSptr = camInput_.promote();
-    CHECK_ERROR_RETURN_RET_LOG(camInputSptr == nullptr, CAMERA_OK,
+    CHECK_RETURN_RET_ELOG(camInputSptr == nullptr, CAMERA_OK,
         "CameraDeviceServiceCallback::OnResult() camInput_ is null!");
     auto cameraObject = camInputSptr->GetCameraDeviceInfo();
     if (cameraObject == nullptr) {
@@ -101,13 +101,13 @@ CameraInput::CameraInput(sptr<ICameraDeviceService> &deviceObj,
 
 void CameraInput::GetMetadataFromService(sptr<CameraDevice> &device)
 {
-    CHECK_ERROR_RETURN_LOG(device == nullptr, "CameraInput::GetMetadataFromService device is nullptr");
+    CHECK_RETURN_ELOG(device == nullptr, "CameraInput::GetMetadataFromService device is nullptr");
     auto cameraId = device->GetID();
     auto serviceProxy = CameraManager::GetInstance()->GetServiceProxy();
-    CHECK_ERROR_RETURN_LOG(serviceProxy == nullptr, "CameraInput::GetMetadataFromService serviceProxy is null");
+    CHECK_RETURN_ELOG(serviceProxy == nullptr, "CameraInput::GetMetadataFromService serviceProxy is null");
     std::shared_ptr<OHOS::Camera::CameraMetadata> metaData;
     serviceProxy->GetCameraAbility(cameraId, metaData);
-    CHECK_ERROR_RETURN_LOG(metaData == nullptr,
+    CHECK_RETURN_ELOG(metaData == nullptr,
         "CameraInput::GetMetadataFromService GetDeviceMetadata failed");
     device->AddMetadata(metaData);
 }
@@ -120,21 +120,21 @@ void CameraInput::InitCameraInput()
         GetMetadataFromService(cameraObj);
     }
     CameraDeviceSvcCallback_ = new(std::nothrow) CameraDeviceServiceCallback(this);
-    CHECK_ERROR_RETURN_LOG(CameraDeviceSvcCallback_ == nullptr, "Failed to new CameraDeviceSvcCallback_!");
-    CHECK_ERROR_RETURN_LOG(!deviceObj, "CameraInput::InitCameraInput() deviceObj is nullptr");
+    CHECK_RETURN_ELOG(CameraDeviceSvcCallback_ == nullptr, "Failed to new CameraDeviceSvcCallback_!");
+    CHECK_RETURN_ELOG(!deviceObj, "CameraInput::InitCameraInput() deviceObj is nullptr");
     deviceObj->SetCallback(CameraDeviceSvcCallback_);
     sptr<IRemoteObject> object = deviceObj->AsObject();
-    CHECK_ERROR_RETURN(object == nullptr);
+    CHECK_RETURN(object == nullptr);
     pid_t pid = 0;
     deathRecipient_ = new(std::nothrow) CameraDeathRecipient(pid);
-    CHECK_ERROR_RETURN_LOG(deathRecipient_ == nullptr, "failed to new CameraDeathRecipient.");
+    CHECK_RETURN_ELOG(deathRecipient_ == nullptr, "failed to new CameraDeathRecipient.");
     auto thisPtr = wptr<CameraInput>(this);
     deathRecipient_->SetNotifyCb([thisPtr](pid_t pid) {
         auto ptr = thisPtr.promote();
         CHECK_EXECUTE(ptr != nullptr, ptr->CameraServerDied(pid));
     });
     bool result = object->AddDeathRecipient(deathRecipient_);
-    CHECK_ERROR_RETURN_LOG(!result, "CameraInput::InitCameraInput failed to add deathRecipient");
+    CHECK_RETURN_ELOG(!result, "CameraInput::InitCameraInput failed to add deathRecipient");
     CameraTimer::GetInstance()->IncreaseUserCount();
 }
 
@@ -192,7 +192,7 @@ int CameraInput::Open()
     auto deviceObj = GetCameraDevice();
     if (deviceObj) {
         retCode = deviceObj->Open();
-        CHECK_ERROR_PRINT_LOG(retCode != CAMERA_OK, "Failed to open Camera Input, retCode: %{public}d", retCode);
+        CHECK_PRINT_ELOG(retCode != CAMERA_OK, "Failed to open Camera Input, retCode: %{public}d", retCode);
     } else {
         MEDIA_ERR_LOG("CameraInput::Open() deviceObj is nullptr");
     }
@@ -211,7 +211,7 @@ int32_t CameraInput::CameraDevicePhysicOpen(sptr<ICameraDeviceService> cameraDev
     MEDIA_INFO_LOG("CameraInput::cameraDevicePhysicOpen enter.");
     if (cameraDevicePhysic) {
         int32_t retCode = cameraDevicePhysic->Open(cameraConcurrentType);
-        CHECK_ERROR_RETURN_RET_LOG(retCode != CAMERA_OK, retCode,
+        CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, retCode,
             "Failed to open Camera Input, retCode: %{public}d", retCode);
     } else {
         MEDIA_ERR_LOG("CameraInput::Open()with CameraConcurrentType deviceObj is nullptr");
@@ -226,17 +226,17 @@ int CameraInput::Open(int32_t cameraConcurrentType)
         " CameraConcurrentType = %{public}d", cameraConcurrentType);
     auto deviceObj = GetCameraDevice();
     auto cameraObject = GetCameraDeviceInfo();
-    CHECK_ERROR_RETURN_RET_LOG(cameraObject == nullptr,
+    CHECK_RETURN_RET_ELOG(cameraObject == nullptr,
         CAMERA_DEVICE_ERROR, "CameraInput::GetCameraId cameraObject is null");
     // LCOV_EXCL_START
     CameraPosition cameraPosition = cameraObject->GetPosition();
     auto cameraServiceOnly = CameraManager::GetInstance()->GetServiceProxy();
-    CHECK_ERROR_RETURN_RET_LOG(cameraServiceOnly == nullptr,
+    CHECK_RETURN_RET_ELOG(cameraServiceOnly == nullptr,
         CAMERA_UNKNOWN_ERROR, "GetMetadata Failed to get cameraProxy");
 
     string idOfThis;
     auto iter = fwToMetaCameraPosition_.find(cameraPosition);
-    CHECK_ERROR_RETURN_RET_LOG(iter == fwToMetaCameraPosition_.end(), CAMERA_UNKNOWN_ERROR,
+    CHECK_RETURN_RET_ELOG(iter == fwToMetaCameraPosition_.end(), CAMERA_UNKNOWN_ERROR,
         "CameraInput::Open can not find cameraPosition in fwToMetaCameraPosition_");
 
     cameraServiceOnly->GetIdforCameraConcurrentType(iter->second, idOfThis);
@@ -255,15 +255,15 @@ int CameraInput::Open(int32_t cameraConcurrentType)
 
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility;
     int32_t retCode = cameraServiceOnly->GetConcurrentCameraAbility(idOfThis, cameraAbility);
-    CHECK_ERROR_RETURN_RET_LOG(retCode != CAMERA_OK, retCode,
+    CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, retCode,
         "CameraInput::Open camera id: %{public}s get concurrent camera ability failed", idOfThis.c_str());
 
     sptr<CameraDevice> cameraObjnow = new (std::nothrow) CameraDevice(idOfThis, cameraAbility);
-    CHECK_ERROR_RETURN_RET_LOG(cameraObjnow == nullptr, CAMERA_UNKNOWN_ERROR, "CameraInput::Open cameraObjnow is null");
+    CHECK_RETURN_RET_ELOG(cameraObjnow == nullptr, CAMERA_UNKNOWN_ERROR, "CameraInput::Open cameraObjnow is null");
     if (cameraConcurrentType == 0) {
         cameraObjnow->isConcurrentLimted_ = 1;
         auto itr = CameraManager::GetInstance()->cameraConLimCapMap_.find(cameraObjnow->GetID());
-        CHECK_ERROR_RETURN_RET_LOG(itr == CameraManager::GetInstance()->cameraConLimCapMap_.end(), CAMERA_DEVICE_ERROR,
+        CHECK_RETURN_RET_ELOG(itr == CameraManager::GetInstance()->cameraConLimCapMap_.end(), CAMERA_DEVICE_ERROR,
             "CameraInput::Open can not find CameraDevice in ConcurrentCameraMap");
         cameraObjnow->limtedCapabilitySave_ = itr->second;
     }
@@ -288,7 +288,7 @@ int CameraInput::Open(bool isEnableSecureCamera, uint64_t* secureSeqId)
     if (isEnableSecureCamera && cameraObject) {
         // LCOV_EXCL_START
         std::vector<SceneMode> supportedModes = cameraObject->GetSupportedModes();
-        CHECK_ERROR_RETURN_RET_LOG(supportedModes.empty(), retCode, "CameraInput::GetSupportedModes Failed");
+        CHECK_RETURN_RET_ELOG(supportedModes.empty(), retCode, "CameraInput::GetSupportedModes Failed");
         for (uint32_t i = 0; i < supportedModes.size(); i++) {
             if (supportedModes[i] == SECURE) {
                 isSupportSecCamera = true;
@@ -300,7 +300,7 @@ int CameraInput::Open(bool isEnableSecureCamera, uint64_t* secureSeqId)
     auto deviceObj = GetCameraDevice();
     if (deviceObj) {
         retCode = isSupportSecCamera ? (deviceObj->OpenSecureCamera(*secureSeqId)) : (deviceObj->Open());
-        CHECK_ERROR_PRINT_LOG(retCode != CAMERA_OK,
+        CHECK_PRINT_ELOG(retCode != CAMERA_OK,
             "Failed to open Camera Input, retCode: %{public}d, isSupportSecCamera is %{public}d",
                 retCode, isSupportSecCamera);
     } else {
@@ -320,7 +320,7 @@ int CameraInput::Close()
     if (deviceObj) {
         deviceObj->UnSetCallback();
         retCode = deviceObj->Close();
-        CHECK_ERROR_PRINT_LOG(retCode != CAMERA_OK, "Failed to close Camera Input, retCode: %{public}d", retCode);
+        CHECK_PRINT_ELOG(retCode != CAMERA_OK, "Failed to close Camera Input, retCode: %{public}d", retCode);
     } else {
         MEDIA_ERR_LOG("CameraInput::Close() deviceObj is nullptr");
     }
@@ -348,7 +348,7 @@ int CameraInput::closeDelayed(int32_t delayTime)
         deviceObj->UnSetCallback();
         MEDIA_INFO_LOG("CameraInput::closeDelayed() deviceObj is true");
         retCode = deviceObj->closeDelayed();
-        CHECK_ERROR_PRINT_LOG(retCode != CAMERA_OK, "Failed to close closeDelayed Input, retCode: %{public}d", retCode);
+        CHECK_PRINT_ELOG(retCode != CAMERA_OK, "Failed to close closeDelayed Input, retCode: %{public}d", retCode);
     } else {
         MEDIA_ERR_LOG("CameraInput::closeDelayed() deviceObj is nullptr");
     }
@@ -388,7 +388,7 @@ int CameraInput::Release()
     if (deviceObj) {
         deviceObj->UnSetCallback();
         retCode = deviceObj->Release();
-        CHECK_ERROR_PRINT_LOG(retCode != CAMERA_OK, "Failed to release Camera Input, retCode: %{public}d", retCode);
+        CHECK_PRINT_ELOG(retCode != CAMERA_OK, "Failed to release Camera Input, retCode: %{public}d", retCode);
     } else {
         MEDIA_ERR_LOG("CameraInput::Release() deviceObj is nullptr");
     }
@@ -400,7 +400,7 @@ int CameraInput::Release()
 
 void CameraInput::SetErrorCallback(std::shared_ptr<ErrorCallback> errorCallback)
 {
-    CHECK_ERROR_PRINT_LOG(errorCallback == nullptr, "SetErrorCallback: Unregistering error callback");
+    CHECK_PRINT_ELOG(errorCallback == nullptr, "SetErrorCallback: Unregistering error callback");
     std::lock_guard<std::mutex> lock(errorCallbackMutex_);
     errorCallback_ = errorCallback;
     return;
@@ -408,7 +408,7 @@ void CameraInput::SetErrorCallback(std::shared_ptr<ErrorCallback> errorCallback)
 
 void CameraInput::SetResultCallback(std::shared_ptr<ResultCallback> resultCallback)
 {
-    CHECK_ERROR_PRINT_LOG(resultCallback == nullptr, "SetResultCallback: Unregistering error resultCallback");
+    CHECK_PRINT_ELOG(resultCallback == nullptr, "SetResultCallback: Unregistering error resultCallback");
     MEDIA_DEBUG_LOG("CameraInput::setresult callback");
     std::lock_guard<std::mutex> lock(resultCallbackMutex_);
     resultCallback_ = resultCallback;
@@ -443,14 +443,14 @@ void CameraInput::SetInputUsedAsPosition(CameraPosition usedAsPosition)
 
     auto metadata = std::make_shared<Camera::CameraMetadata>(1, 1);
     MEDIA_INFO_LOG("CameraInput::SetInputUsedAsPosition fr: %{public}u, to: %{public}u", usedAsPosition, translatePos);
-    CHECK_ERROR_PRINT_LOG(!AddOrUpdateMetadata(metadata, OHOS_CONTROL_CAMERA_USED_AS_POSITION, &translatePos, 1),
+    CHECK_PRINT_ELOG(!AddOrUpdateMetadata(metadata, OHOS_CONTROL_CAMERA_USED_AS_POSITION, &translatePos, 1),
         "CameraInput::SetInputUsedAsPosition Failed to set metadata");
     auto deviceObj = GetCameraDevice();
-    CHECK_ERROR_RETURN_LOG(deviceObj == nullptr, "deviceObj is nullptr");
+    CHECK_RETURN_ELOG(deviceObj == nullptr, "deviceObj is nullptr");
     // LCOV_EXCL_START
     deviceObj->SetUsedAsPosition(translatePos);
     deviceObj->UpdateSetting(metadata);
-    CHECK_ERROR_RETURN_LOG(cameraObj_ == nullptr, "cameraObj_ is nullptr");
+    CHECK_RETURN_ELOG(cameraObj_ == nullptr, "cameraObj_ is nullptr");
     cameraObj_->SetCameraDeviceUsedAsPosition(usedAsPosition);
     // LCOV_EXCL_STOP
 }
@@ -466,10 +466,10 @@ void CameraInput::ControlAuxiliary(AuxiliaryType type, AuxiliaryStatus status)
         constexpr int32_t DEFAULT_ITEMS = 1;
         constexpr int32_t DEFAULT_DATA_LENGTH = 1;
         auto metadata = std::make_shared<Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
-        CHECK_ERROR_RETURN_LOG(!AddOrUpdateMetadata(metadata, OHOS_CONTROL_EJECT_RETRY, &value, count),
+        CHECK_RETURN_ELOG(!AddOrUpdateMetadata(metadata, OHOS_CONTROL_EJECT_RETRY, &value, count),
             "CameraInput::ControlAuxiliary Failed to set metadata");
         auto deviceObj = GetCameraDevice();
-        CHECK_ERROR_RETURN_LOG(deviceObj == nullptr, "deviceObj is nullptr");
+        CHECK_RETURN_ELOG(deviceObj == nullptr, "deviceObj is nullptr");
         deviceObj->UpdateSetting(metadata);
         deviceObj->SetDeviceRetryTime();
     }
@@ -480,7 +480,7 @@ void CameraInput::ControlAuxiliary(AuxiliaryType type, AuxiliaryStatus status)
 void CameraInput::SetOcclusionDetectCallback(
     std::shared_ptr<CameraOcclusionDetectCallback> cameraOcclusionDetectCallback)
 {
-    CHECK_ERROR_PRINT_LOG(cameraOcclusionDetectCallback == nullptr,
+    CHECK_PRINT_ELOG(cameraOcclusionDetectCallback == nullptr,
         "SetOcclusionDetectCallback: SetOcclusionDetectCallback error cameraOcclusionDetectCallback");
     MEDIA_DEBUG_LOG("CameraInput::SetOcclusionDetectCallback callback");
     std::lock_guard<std::mutex> lock(occlusionCallbackMutex_);
@@ -491,7 +491,7 @@ void CameraInput::SetOcclusionDetectCallback(
 std::string CameraInput::GetCameraId()
 {
     auto cameraObject = GetCameraDeviceInfo();
-    CHECK_ERROR_RETURN_RET_LOG(cameraObject == nullptr, "", "CameraInput::GetCameraId cameraObject is null");
+    CHECK_RETURN_RET_ELOG(cameraObject == nullptr, "", "CameraInput::GetCameraId cameraObject is null");
     return cameraObject->GetID();
 }
 
@@ -537,31 +537,31 @@ void CameraInput::ProcessCallbackUpdates(
     const uint64_t timestamp, const std::shared_ptr<OHOS::Camera::CameraMetadata>& result)
 {
     auto metadataResultProcessor = GetMetadataResultProcessor();
-    CHECK_ERROR_RETURN(metadataResultProcessor == nullptr);
+    CHECK_RETURN(metadataResultProcessor == nullptr);
     metadataResultProcessor->ProcessCallbacks(timestamp, result);
 }
 
 int32_t CameraInput::UpdateSetting(std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata)
 {
     CAMERA_SYNC_TRACE;
-    CHECK_ERROR_RETURN_RET(changedMetadata == nullptr, CAMERA_INVALID_ARG);
-    CHECK_ERROR_RETURN_RET_LOG(!OHOS::Camera::GetCameraMetadataItemCount(changedMetadata->get()), CAMERA_OK,
+    CHECK_RETURN_RET(changedMetadata == nullptr, CAMERA_INVALID_ARG);
+    CHECK_RETURN_RET_ELOG(!OHOS::Camera::GetCameraMetadataItemCount(changedMetadata->get()), CAMERA_OK,
         "CameraInput::UpdateSetting No configuration to update");
 
     std::lock_guard<std::mutex> lock(interfaceMutex_);
     auto deviceObj = GetCameraDevice();
-    CHECK_ERROR_RETURN_RET_LOG(!deviceObj, ServiceToCameraError(CAMERA_INVALID_ARG),
+    CHECK_RETURN_RET_ELOG(!deviceObj, ServiceToCameraError(CAMERA_INVALID_ARG),
         "CameraInput::UpdateSetting() deviceObj is nullptr");
     int32_t ret = deviceObj->UpdateSetting(changedMetadata);
-    CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, ret, "CameraInput::UpdateSetting Failed to update settings");
+    CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, ret, "CameraInput::UpdateSetting Failed to update settings");
 
     auto cameraObject = GetCameraDeviceInfo();
-    CHECK_ERROR_RETURN_RET_LOG(cameraObject == nullptr, CAMERA_INVALID_ARG,
+    CHECK_RETURN_RET_ELOG(cameraObject == nullptr, CAMERA_INVALID_ARG,
         "CameraInput::UpdateSetting cameraObject is null");
 
     std::shared_ptr<OHOS::Camera::CameraMetadata> baseMetadata = cameraObject->GetCachedMetadata();
     bool mergeResult = MergeMetadata(changedMetadata, baseMetadata);
-    CHECK_ERROR_RETURN_RET_LOG(!mergeResult, CAMERA_INVALID_ARG,
+    CHECK_RETURN_RET_ELOG(!mergeResult, CAMERA_INVALID_ARG,
         "CameraInput::UpdateSetting() baseMetadata or itemEntry is nullptr");
     return CAMERA_OK;
 }
@@ -569,17 +569,17 @@ int32_t CameraInput::UpdateSetting(std::shared_ptr<OHOS::Camera::CameraMetadata>
 bool CameraInput::MergeMetadata(const std::shared_ptr<OHOS::Camera::CameraMetadata> srcMetadata,
     std::shared_ptr<OHOS::Camera::CameraMetadata> dstMetadata)
 {
-    CHECK_ERROR_RETURN_RET(srcMetadata == nullptr || dstMetadata == nullptr, false);
+    CHECK_RETURN_RET(srcMetadata == nullptr || dstMetadata == nullptr, false);
     auto srcHeader = srcMetadata->get();
-    CHECK_ERROR_RETURN_RET(srcHeader == nullptr, false);
+    CHECK_RETURN_RET(srcHeader == nullptr, false);
     auto dstHeader = dstMetadata->get();
-    CHECK_ERROR_RETURN_RET(dstHeader == nullptr, false);
+    CHECK_RETURN_RET(dstHeader == nullptr, false);
 
     auto srcItemCount = srcHeader->item_count;
     camera_metadata_item_t srcItem;
     for (uint32_t index = 0; index < srcItemCount; index++) {
         int ret = OHOS::Camera::GetCameraMetadataItem(srcHeader, index, &srcItem);
-        CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, false,
+        CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS, false,
             "Failed to get metadata item at index: %{public}d", index);
         bool status = false;
         uint32_t currentIndex;
@@ -589,7 +589,7 @@ bool CameraInput::MergeMetadata(const std::shared_ptr<OHOS::Camera::CameraMetada
         } else if (ret == CAM_META_SUCCESS) {
             status = dstMetadata->updateEntry(srcItem.item, srcItem.data.u8, srcItem.count);
         }
-        CHECK_ERROR_RETURN_RET_LOG(!status, false, "Failed to update metadata item: %{public}d", srcItem.item);
+        CHECK_RETURN_RET_ELOG(!status, false, "Failed to update metadata item: %{public}d", srcItem.item);
     }
     return true;
 }
@@ -597,14 +597,14 @@ bool CameraInput::MergeMetadata(const std::shared_ptr<OHOS::Camera::CameraMetada
 std::string CameraInput::GetCameraSettings()
 {
     auto cameraObject = GetCameraDeviceInfo();
-    CHECK_ERROR_RETURN_RET_LOG(cameraObject == nullptr, nullptr, "GetCameraSettings cameraObject is null");
+    CHECK_RETURN_RET_ELOG(cameraObject == nullptr, nullptr, "GetCameraSettings cameraObject is null");
     return OHOS::Camera::MetadataUtils::EncodeToString(cameraObject->GetCachedMetadata());
 }
 
 int32_t CameraInput::SetCameraSettings(std::string setting)
 {
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = OHOS::Camera::MetadataUtils::DecodeFromString(setting);
-    CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, CAMERA_INVALID_ARG,
+    CHECK_RETURN_RET_ELOG(metadata == nullptr, CAMERA_INVALID_ARG,
         "CameraInput::SetCameraSettings Failed to decode metadata setting from string");
     return UpdateSetting(metadata);
 }
@@ -612,13 +612,13 @@ int32_t CameraInput::SetCameraSettings(std::string setting)
 std::shared_ptr<camera_metadata_item_t> CameraInput::GetMetaSetting(uint32_t metaTag)
 {
     auto cameraObject = GetCameraDeviceInfo();
-    CHECK_ERROR_RETURN_RET_LOG(cameraObject == nullptr, nullptr,
+    CHECK_RETURN_RET_ELOG(cameraObject == nullptr, nullptr,
         "CameraInput::GetMetaSetting cameraObj has release!");
     std::shared_ptr<OHOS::Camera::CameraMetadata> baseMetadata = cameraObject->GetCachedMetadata();
-    CHECK_ERROR_RETURN_RET_LOG(baseMetadata == nullptr, nullptr,
+    CHECK_RETURN_RET_ELOG(baseMetadata == nullptr, nullptr,
         "CameraInput::GetMetaSetting Failed to find baseMetadata");
     std::shared_ptr<camera_metadata_item_t> item = MetadataCommonUtils::GetCapabilityEntry(baseMetadata, metaTag);
-    CHECK_ERROR_RETURN_RET_LOG(item == nullptr || item->count == 0, nullptr,
+    CHECK_RETURN_RET_ELOG(item == nullptr || item->count == 0, nullptr,
         "CameraInput::GetMetaSetting  Failed to find meta item: metaTag = %{public}u", metaTag);
     return item;
 }
@@ -628,7 +628,7 @@ int32_t CameraInput::GetCameraAllVendorTags(std::vector<vendorTag_t> &infos) __a
     infos.clear();
     MEDIA_INFO_LOG("CameraInput::GetCameraAllVendorTags called!");
     int32_t ret = OHOS::Camera::GetAllVendorTags(infos);
-    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CAMERA_UNKNOWN_ERROR,
+    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS, CAMERA_UNKNOWN_ERROR,
         "CameraInput::GetCameraAllVendorTags failed! because of hdi error, ret = %{public}d", ret);
     MEDIA_INFO_LOG("CameraInput::GetCameraAllVendorTags success! vendors size = %{public}zu!", infos.size());
     MEDIA_INFO_LOG("CameraInput::GetCameraAllVendorTags end!");
@@ -645,7 +645,7 @@ void CameraInput::SwitchCameraDevice(sptr<ICameraDeviceService> &deviceObj, sptr
 void CameraInput::RecoveryOldDevice()
 {
     auto cameraObject = GetCameraDeviceInfo();
-    CHECK_ERROR_RETURN_LOG(cameraObject == nullptr, "GetCameraSettings cameraObject is null");
+    CHECK_RETURN_ELOG(cameraObject == nullptr, "GetCameraSettings cameraObject is null");
     if (cameraObject->isConcurrentLimted_ == 1) {
         std::string virtualcameraID = CameraManager::GetInstance()->GetOldCameraIdfromReal(cameraObject->GetID());
         if (virtualcameraID == "") {
@@ -658,7 +658,7 @@ void CameraInput::RecoveryOldDevice()
         std::shared_ptr<OHOS::Camera::CameraMetadata> result_meta = nullptr;
         result_meta = CameraManager::GetInstance()->GetOldMeta(virtualcameraID);
         sptr<CameraDevice> cameraObjnow = new (std::nothrow) CameraDevice(virtualcameraID, result_meta);
-        CHECK_ERROR_RETURN_LOG(cameraObjnow == nullptr, "RecoveryOldDevice cameraObjnow is nullptr");
+        CHECK_RETURN_ELOG(cameraObjnow == nullptr, "RecoveryOldDevice cameraObjnow is nullptr");
         if (result_meta == nullptr) {
             MEDIA_ERR_LOG("CameraInput::SetOldDevice can not GetOldMeta");
             return;

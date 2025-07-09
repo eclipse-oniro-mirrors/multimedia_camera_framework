@@ -60,10 +60,10 @@ void PanoramaSessionNapi::Init(napi_env env)
     status =
         napi_define_class(env, PANORAMA_SESSION_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH, PanoramaSessionNapiConstructor,
             nullptr, panorama_session_props.size(), panorama_session_props.data(), &ctorObj);
-    CHECK_ERROR_RETURN_LOG(status != napi_ok, "PanoramaSessionNapi defined class failed");
+    CHECK_RETURN_ELOG(status != napi_ok, "PanoramaSessionNapi defined class failed");
     int32_t refCount = 1;
     status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
-    CHECK_ERROR_RETURN_LOG(status != napi_ok, "PanoramaSessionNapi Init failed");
+    CHECK_RETURN_ELOG(status != napi_ok, "PanoramaSessionNapi Init failed");
     MEDIA_DEBUG_LOG("PanoramaSessionNapi Init success");
 }
 
@@ -76,7 +76,7 @@ napi_value PanoramaSessionNapi::CreateCameraSession(napi_env env)
     napi_value constructor;
     if (sConstructor_ == nullptr) {
         PanoramaSessionNapi::Init(env);
-        CHECK_ERROR_RETURN_RET_LOG(sConstructor_ == nullptr, result, "sConstructor_ is null");
+        CHECK_RETURN_RET_ELOG(sConstructor_ == nullptr, result, "sConstructor_ is null");
     }
     status = napi_get_reference_value(env, sConstructor_, &constructor);
     if (status == napi_ok) {
@@ -114,11 +114,11 @@ napi_value PanoramaSessionNapi::PanoramaSessionNapiConstructor(napi_env env, nap
     if (status == napi_ok && thisVar != nullptr) {
         std::unique_ptr<PanoramaSessionNapi> obj = std::make_unique<PanoramaSessionNapi>();
         obj->env_ = env;
-        CHECK_ERROR_RETURN_RET_LOG(sCameraSessionForSys_ == nullptr, result, "sCameraSessionForSys_ is null");
+        CHECK_RETURN_RET_ELOG(sCameraSessionForSys_ == nullptr, result, "sCameraSessionForSys_ is null");
         obj->panoramaSession_ = static_cast<PanoramaSession*>(sCameraSessionForSys_.GetRefPtr());
         obj->cameraSessionForSys_ = obj->panoramaSession_;
         obj->cameraSession_ = obj->panoramaSession_;
-        CHECK_ERROR_RETURN_RET_LOG(obj->panoramaSession_ == nullptr, result, "panoramaSession_ is null");
+        CHECK_RETURN_RET_ELOG(obj->panoramaSession_ == nullptr, result, "panoramaSession_ is null");
         status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
             PanoramaSessionNapi::PanoramaSessionNapiDestructor, nullptr, nullptr);
         if (status == napi_ok) {

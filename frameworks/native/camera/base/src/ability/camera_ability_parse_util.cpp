@@ -23,7 +23,7 @@ void CameraAbilityParseUtil::GetModeInfo(
 {
     int32_t* originInfo = item.data.i32;
     uint32_t count = item.count;
-    CHECK_ERROR_RETURN(count == 0 || originInfo == nullptr);
+    CHECK_RETURN(count == 0 || originInfo == nullptr);
     uint32_t i = 0;
     uint32_t j = i + STEP_THREE;
     auto isEnd = [](int32_t *originInfo, uint32_t j) {
@@ -54,10 +54,10 @@ void CameraAbilityParseUtil::GetAvailableConfiguration(
 {
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_AVAILABLE_CONFIGURATIONS, &item);
-    CHECK_ERROR_RETURN_LOG(ret != CAM_META_SUCCESS, "GetAvailableConfiguration failed due to can't find related tag");
+    CHECK_RETURN_ELOG(ret != CAM_META_SUCCESS, "GetAvailableConfiguration failed due to can't find related tag");
     int32_t* originInfo = item.data.i32;
     uint32_t count = item.count;
-    CHECK_ERROR_RETURN(count == 0 || originInfo == nullptr);
+    CHECK_RETURN(count == 0 || originInfo == nullptr);
     uint32_t i = 0;
     uint32_t j = i + STEP_ONE;
     while (j < count) {
@@ -84,10 +84,10 @@ void CameraAbilityParseUtil::GetConflictConfiguration(
 {
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CONFLICT_CONFIGURATIONS, &item);
-    CHECK_ERROR_RETURN_LOG(ret != CAM_META_SUCCESS, "GetConflictConfiguration failed due to can't find related tag");
+    CHECK_RETURN_ELOG(ret != CAM_META_SUCCESS, "GetConflictConfiguration failed due to can't find related tag");
     int32_t* originInfo = item.data.i32;
     uint32_t count = item.count;
-    CHECK_ERROR_RETURN(count == 0 || originInfo == nullptr);
+    CHECK_RETURN(count == 0 || originInfo == nullptr);
     uint32_t i = 0;
     uint32_t j = i + STEP_ONE;
     while (j < count) {
@@ -115,11 +115,11 @@ void CameraAbilityParseUtil::GetAbilityInfo(const int32_t modeName, common_metad
     infoMap = {};
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata, tagId, &item);
-    CHECK_ERROR_RETURN_LOG(ret != CAM_META_SUCCESS,
+    CHECK_RETURN_ELOG(ret != CAM_META_SUCCESS,
         "GetAbilityInfo failed due to can't find related tag %{public}u", tagId);
     int32_t* originInfo = item.data.i32;
     uint32_t count = item.count;
-    CHECK_ERROR_RETURN(count == 0 || originInfo == nullptr);
+    CHECK_RETURN(count == 0 || originInfo == nullptr);
     uint32_t i = 0;
     uint32_t j = i + STEP_ONE;
     while (j < count) {

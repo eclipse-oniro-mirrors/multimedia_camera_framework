@@ -91,7 +91,7 @@ void PhotoSessionFuzzer::PhotoSessionFuzzTest(FuzzedDataProvider& fdp)
     fuzz_->CanPreconfig(preconfigType, profileSizeRatio);
     fuzz_->Preconfig(preconfigType, profileSizeRatio);
     auto cameras = cameraManager_->GetSupportedCameras();
-    CHECK_ERROR_RETURN_LOG(cameras.empty(), "PhotoSessionFuzzer: GetSupportedCameras Error");
+    CHECK_RETURN_ELOG(cameras.empty(), "PhotoSessionFuzzer: GetSupportedCameras Error");
     Profile photo(format, {640, 480});
     fuzz_->IsPhotoProfileLegal(cameras[0], photo);
     Profile preview(format, {640, 480});

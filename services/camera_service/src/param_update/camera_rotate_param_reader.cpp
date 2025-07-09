@@ -78,7 +78,7 @@ bool CameraRoateParamReader::VerifyCertSfFile(
     const std::string &certFile, const std::string &verifyFile, const std::string &manifestFile)
 {
     char *canonicalPath = realpath(verifyFile.c_str(), nullptr);
-    CHECK_ERROR_RETURN_RET(canonicalPath == nullptr, false);
+    CHECK_RETURN_RET(canonicalPath == nullptr, false);
     // 验证CERT.SF文件是否合法
     if (!CameraRoateParamSignTool::VerifyFileSign(PUBKEY_PATH, certFile, canonicalPath)) {
         MEDIA_ERR_LOG("signToolManager verify failed %{public}s,%{public}s, %{public}s", PUBKEY_PATH.c_str(),
@@ -109,22 +109,22 @@ bool CameraRoateParamReader::VerifyCertSfFile(
 bool CameraRoateParamReader::VerifyParamFile(const std::string& cfgDirPath, const std::string &filePathStr)
 {
     char canonicalPath[PATH_MAX + 1] = {0x00};
-    CHECK_ERROR_RETURN_RET_LOG(realpath((cfgDirPath + filePathStr).c_str(), canonicalPath) == nullptr, false,
+    CHECK_RETURN_RET_ELOG(realpath((cfgDirPath + filePathStr).c_str(), canonicalPath) == nullptr, false,
         "VerifyParamFile filePathStr is irregular");
     MEDIA_INFO_LOG("VerifyParamFile ,filePathStr:%{public}s", filePathStr.c_str());
     std::string absFilePath = std::string(canonicalPath);
     std::string manifestFile = cfgDirPath + "/MANIFEST.MF";
     char *canonicalPathManifest = realpath(manifestFile.c_str(), nullptr);
-    CHECK_ERROR_RETURN_RET(canonicalPathManifest == nullptr, false);
+    CHECK_RETURN_RET(canonicalPathManifest == nullptr, false);
     std::ifstream file(canonicalPathManifest);
     free(canonicalPathManifest);
     std::string line;
     std::string sha256Digest;
 
-    CHECK_ERROR_RETURN_RET_LOG(
+    CHECK_RETURN_RET_ELOG(
         !file.good(), false, "manifestFile is not good,manifestFile:%{public}s", manifestFile.c_str());
     std::ifstream paramFile(absFilePath);
-    CHECK_ERROR_RETURN_RET_LOG(
+    CHECK_RETURN_RET_ELOG(
         !paramFile.good(), false, "paramFile is not good,paramFile:%{public}s", absFilePath.c_str());
 
     while (std::getline(file, line)) {
@@ -136,9 +136,9 @@ bool CameraRoateParamReader::VerifyParamFile(const std::string& cfgDirPath, cons
             break;
         }
     }
-    CHECK_ERROR_RETURN_RET_LOG(sha256Digest.empty(), false, "VerifyParamFile failed ,sha256Digest is empty");
+    CHECK_RETURN_RET_ELOG(sha256Digest.empty(), false, "VerifyParamFile failed ,sha256Digest is empty");
     std::tuple<int, std::string> ret = CameraRoateParamSignTool::CalcFileSha256Digest(absFilePath);
-    CHECK_ERROR_RETURN_RET_LOG(
+    CHECK_RETURN_RET_ELOG(
         std::get<0>(ret) != 0, false, "CalcFileSha256Digest failed,error : %{public}d ", std::get<0>(ret));
     if (sha256Digest == std::get<1>(ret)) {
         return true;
@@ -150,10 +150,10 @@ bool CameraRoateParamReader::VerifyParamFile(const std::string& cfgDirPath, cons
 std::string CameraRoateParamReader::GetVersionInfoStr(const std::string &filePathStr)
 {
     char canonicalPath[PATH_MAX + 1] = {0x00};
-    CHECK_ERROR_RETURN_RET_LOG(realpath(filePathStr.c_str(), canonicalPath) == nullptr, DEFAULT_VERSION,
+    CHECK_RETURN_RET_ELOG(realpath(filePathStr.c_str(), canonicalPath) == nullptr, DEFAULT_VERSION,
         "GetVersionInfoStr filepath is irregular");
     std::ifstream file(canonicalPath);
-    CHECK_ERROR_RETURN_RET_LOG(
+    CHECK_RETURN_RET_ELOG(
         !file.good(), DEFAULT_VERSION, "VersionFilePath is not good,FilePath:%{public}s", filePathStr.c_str());
     std::string line;
     std::getline(file, line);
@@ -172,7 +172,7 @@ bool CameraRoateParamReader::VersionStrToNumber(const std::string &versionStr, s
 bool CameraRoateParamReader::CompareVersion(
     const std::vector<std::string> &localVersion, const std::vector<std::string> &pathVersion)
 {
-    CHECK_ERROR_RETURN_RET_LOG(
+    CHECK_RETURN_RET_ELOG(
         localVersion.size() != VERSION_LEN || pathVersion.size() != VERSION_LEN, false, "Version num not valid");
     for (int i = 0; i < VERSION_LEN; i++) {
         if (localVersion[i] != pathVersion[i]) {

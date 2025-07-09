@@ -26,7 +26,7 @@ std::shared_ptr<CameraNapiExProxy> CameraNapiExManager::GetCameraNapiExProxy(Cam
 {
     if (cameraNapiExProxy_ == nullptr) {
         cameraNapiExProxy_ = CameraNapiExProxy::GetCameraNapiExProxy();
-        CHECK_ERROR_RETURN_RET_LOG(cameraNapiExProxy_ == nullptr, nullptr,
+        CHECK_RETURN_RET_ELOG(cameraNapiExProxy_ == nullptr, nullptr,
             "get cameraNapiExProxy failed");
     }
     auto item = std::find(userList_.begin(), userList_.end(), type);

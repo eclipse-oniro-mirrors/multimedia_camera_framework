@@ -64,7 +64,7 @@ void AudioDeferredProcessFuzzer::AudioDeferredProcessFuzzerTest()
         return;
     }
     audioDeferredProcess_ = std::make_shared<AudioDeferredProcess>();
-    CHECK_ERROR_RETURN_LOG(!audioDeferredProcess_, "Create audioDeferredProcess_ Error");
+    CHECK_RETURN_ELOG(!audioDeferredProcess_, "Create audioDeferredProcess_ Error");
 
     AudioStreamInfo inputOptions;
     AudioStreamInfo outputOptions;

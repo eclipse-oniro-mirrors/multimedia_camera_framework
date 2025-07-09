@@ -46,7 +46,7 @@ void MovingPhotoSurfaceWrapperFuzzer::MovingPhotoSurfaceWrapperFuzzTest(FuzzedDa
         return;
     }
     fuzz_ = std::make_shared<MovingPhotoSurfaceWrapper>();
-    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
+    CHECK_RETURN_ELOG(!fuzz_, "Create fuzz_ Error");
     fuzz_->GetProducer();
     int32_t width = fdp.ConsumeIntegral<int32_t>();
     int32_t height = fdp.ConsumeIntegral<int32_t>();

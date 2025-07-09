@@ -90,7 +90,7 @@ bool AudioCapturerSession::CreateAudioCapturer()
     capturerOptions.capturerInfo.sourceType = SourceType::SOURCE_TYPE_UNPROCESSED;
     capturerOptions.capturerInfo.capturerFlags = 0;
     audioCapturer_ = AudioCapturer::Create(capturerOptions);
-    CHECK_ERROR_RETURN_RET_LOG(audioCapturer_ == nullptr, false, "AudioCapturerSession::Create AudioCapturer failed");
+    CHECK_RETURN_RET_ELOG(audioCapturer_ == nullptr, false, "AudioCapturerSession::Create AudioCapturer failed");
     AudioSessionStrategy sessionStrategy;
     sessionStrategy.concurrencyMode = AudioConcurrencyMode::MIX_WITH_OTHERS;
     AudioSessionManager::GetInstance()->ActivateAudioSession(sessionStrategy);
@@ -108,7 +108,7 @@ AudioCapturerSession::~AudioCapturerSession()
 bool AudioCapturerSession::StartAudioCapture()
 {
     MEDIA_INFO_LOG("Starting moving photo audio stream");
-    CHECK_ERROR_RETURN_RET_LOG(startAudioCapture_, true, "AudioCapture is already started.");
+    CHECK_RETURN_RET_ELOG(startAudioCapture_, true, "AudioCapture is already started.");
     if (audioCapturer_ == nullptr && !CreateAudioCapturer()) {
         MEDIA_INFO_LOG("audioCapturer is not create");
         return false;
@@ -127,7 +127,7 @@ bool AudioCapturerSession::StartAudioCapture()
     }
     startAudioCapture_ = true;
     audioThread_ = std::make_unique<std::thread>([this]() { this->ProcessAudioBuffer(); });
-    CHECK_ERROR_RETURN_RET_LOG(audioThread_ == nullptr, false, "Create auido thread failed");
+    CHECK_RETURN_RET_ELOG(audioThread_ == nullptr, false, "Create auido thread failed");
     return true;
 }
 
@@ -142,17 +142,17 @@ void AudioCapturerSession::GetAudioRecords(int64_t startTime, int64_t endTime, v
 
 void AudioCapturerSession::ProcessAudioBuffer()
 {
-    CHECK_ERROR_RETURN_LOG(audioCapturer_ == nullptr, "AudioCapturer_ is not init");
+    CHECK_RETURN_ELOG(audioCapturer_ == nullptr, "AudioCapturer_ is not init");
     size_t bufferLen = static_cast<size_t>(deferredInputOptions_.samplingRate / AudioDeferredProcess::ONE_THOUSAND *
         deferredInputOptions_.channels * AudioDeferredProcess::DURATION_EACH_AUDIO_FRAME * sizeof(short));
     while (true) {
-        CHECK_WARNING_BREAK_LOG(!startAudioCapture_, "Audio capture work done, thread out");
+        CHECK_BREAK_WLOG(!startAudioCapture_, "Audio capture work done, thread out");
         auto buffer = std::make_unique<uint8_t[]>(bufferLen);
-        CHECK_ERROR_RETURN_LOG(buffer == nullptr, "Failed to allocate buffer");
+        CHECK_RETURN_ELOG(buffer == nullptr, "Failed to allocate buffer");
         size_t bytesRead = 0;
         while (bytesRead < bufferLen) {
             MEDIA_DEBUG_LOG("ProcessAudioBuffer loop");
-            CHECK_WARNING_BREAK_LOG(!startAudioCapture_, "ProcessAudioBuffer loop, break out");
+            CHECK_BREAK_WLOG(!startAudioCapture_, "ProcessAudioBuffer loop, break out");
             int32_t len = audioCapturer_->Read(*(buffer.get() + bytesRead), bufferLen - bytesRead, false);
             if (len >= 0) {
                 bytesRead += static_cast<size_t>(len);

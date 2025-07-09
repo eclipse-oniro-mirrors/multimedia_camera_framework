@@ -66,7 +66,7 @@ void CommandServerFuzzer::CommandServerFuzzTest()
     }
 
     fuzz_ = std::make_shared<CommandServer>();
-    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
+    CHECK_RETURN_ELOG(!fuzz_, "Create fuzz_ Error");
     int32_t threadPriority = GetData<int32_t>();
     fuzz_->SetThreadPriority(threadPriority);
     fuzz_->GetThreadPriority();

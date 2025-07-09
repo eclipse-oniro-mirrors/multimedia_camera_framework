@@ -38,17 +38,17 @@ ListenerBase::ExecuteCallbackData::ExecuteCallbackData(napi_env env, napi_value 
 
 void ListenerBase::SaveCallbackReference(const std::string eventName, napi_value callback, bool isOnce)
 {
-    CHECK_ERROR_RETURN_LOG(callback == nullptr,
+    CHECK_RETURN_ELOG(callback == nullptr,
         "SaveCallbackReference:%s js callback is nullptr, save nothing", eventName.c_str());
     napi_valuetype valueType = napi_undefined;
     napi_typeof(env_, callback, &valueType);
-    CHECK_ERROR_RETURN_LOG(valueType != napi_function,
+    CHECK_RETURN_ELOG(valueType != napi_function,
         "SaveCallbackReference:%s js callback valueType is not function", eventName.c_str());
     auto& callbackList = GetCallbackList(eventName);
     std::lock_guard<std::mutex> lock(callbackList.listMutex);
     for (auto it = callbackList.refList.begin(); it != callbackList.refList.end(); ++it) {
         bool isSameCallback = CameraNapiUtils::IsSameNapiValue(env_, callback, it->GetCallbackFunction());
-        CHECK_ERROR_RETURN_LOG(isSameCallback, "SaveCallbackReference: has same callback, nothing to do");
+        CHECK_RETURN_ELOG(isSameCallback, "SaveCallbackReference: has same callback, nothing to do");
     }
     callbackList.refList.emplace_back(AutoRef(env_, callback, isOnce));
     MEDIA_DEBUG_LOG("Save callback reference success, %s callback list size [%{public}zu]", eventName.c_str(),

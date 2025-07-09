@@ -29,9 +29,9 @@ int32_t MechSessionCallbackImpl::OnFocusTrackingInfo(int32_t streamId, bool isNe
     MEDIA_DEBUG_LOG("%{public}s is called!", __FUNCTION__);
     int32_t ret = CAMERA_OK;
     auto mechSession = mechSession_.promote();
-    CHECK_ERROR_RETURN_RET(!mechSession, ret);
+    CHECK_RETURN_RET(!mechSession, ret);
     auto appCallback = mechSession->GetCallback();
-    CHECK_ERROR_RETURN_RET(!appCallback, ret);
+    CHECK_RETURN_RET(!appCallback, ret);
 
     FocusTrackingMetaInfo info;
     FocusTrackingMode mode = FOCUS_TRACKING_MODE_AUTO;
@@ -61,9 +61,9 @@ int32_t MechSessionCallbackImpl::OnCameraAppInfo(const std::vector<CameraAppInfo
     MEDIA_DEBUG_LOG("%{public}s is called!", __FUNCTION__);
     int32_t ret = CAMERA_OK;
     auto mechSession = mechSession_.promote();
-    CHECK_ERROR_RETURN_RET(!mechSession, ret);
+    CHECK_RETURN_RET(!mechSession, ret);
     auto appCallback = mechSession->GetCallback();
-    CHECK_ERROR_RETURN_RET(!appCallback, ret);
+    CHECK_RETURN_RET(!appCallback, ret);
 
     appCallback->OnCameraAppInfo(cameraAppInfos);
     return CAMERA_OK;
@@ -77,7 +77,7 @@ bool MechSessionCallbackImpl::ProcessRectInfo(const std::shared_ptr<OHOS::Camera
     constexpr int32_t offsetTwo = 2;
     constexpr int32_t offsetThree = 3;
  
-    CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, false, "metadata is nullptr");
+    CHECK_RETURN_RET_ELOG(metadata == nullptr, false, "metadata is nullptr");
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_FOCUS_TRACKING_REGION, &item);
     if (ret != CAM_META_SUCCESS || item.count < FOCUS_TRACKING_REGION_DATA_CNT) {
@@ -104,7 +104,7 @@ MechSession::MechSession(sptr<IMechSession> session) : remoteSession_(session)
     sptr<IRemoteObject> object = remoteSession_->AsObject();
     pid_t pid = 0;
     deathRecipient_ = new (std::nothrow) CameraDeathRecipient(pid);
-    CHECK_ERROR_RETURN_LOG(deathRecipient_ == nullptr, "failed to new CameraDeathRecipient.");
+    CHECK_RETURN_ELOG(deathRecipient_ == nullptr, "failed to new CameraDeathRecipient.");
 
     deathRecipient_->SetNotifyCb([this](pid_t pid) { CameraServerDied(pid); });
     bool result = object->AddDeathRecipient(deathRecipient_);
@@ -124,11 +124,11 @@ int32_t MechSession::EnableMechDelivery(bool isEnableMech)
 {
     MEDIA_INFO_LOG("%{public}s is called, isEnableMech:%{public}d", __FUNCTION__, isEnableMech);
     auto remoteSession = GetRemoteSession();
-    CHECK_ERROR_RETURN_RET_LOG(remoteSession == nullptr, CameraErrorCode::INVALID_ARGUMENT,
+    CHECK_RETURN_RET_ELOG(remoteSession == nullptr, CameraErrorCode::INVALID_ARGUMENT,
         "MechSession::EnableMechDelivery mechSession is nullptr");
 
     int32_t retCode = remoteSession->EnableMechDelivery(isEnableMech);
-    CHECK_ERROR_RETURN_RET_LOG(retCode != CAMERA_OK, retCode,
+    CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, retCode,
         "Failed to EnableMechDelivery!, %{public}d", retCode);
     return CameraErrorCode::SUCCESS;
 }
@@ -138,10 +138,10 @@ void MechSession::SetCallback(std::shared_ptr<MechSessionCallback> callback)
     MEDIA_DEBUG_LOG("%{public}s is called!", __FUNCTION__);
     std::lock_guard<std::mutex> lock(callbackMutex_);
     auto remoteSession = GetRemoteSession();
-    CHECK_ERROR_RETURN_LOG(remoteSession == nullptr,
+    CHECK_RETURN_ELOG(remoteSession == nullptr,
         "MechSession::SetCallback mechSession is null");
     sptr<IMechSessionCallback> remoteCallback = new(std::nothrow) MechSessionCallbackImpl(this);
-    CHECK_ERROR_RETURN_LOG(remoteCallback == nullptr,
+    CHECK_RETURN_ELOG(remoteCallback == nullptr,
         "MechSession::SetCallback failed to new MechSessionCallbackImpl!");
     remoteSession->SetCallback(remoteCallback);
 
@@ -158,10 +158,10 @@ int32_t MechSession::Release()
 {
     MEDIA_DEBUG_LOG("%{public}s is called!", __FUNCTION__);
     auto remoteSession = GetRemoteSession();
-    CHECK_ERROR_RETURN_RET_LOG(remoteSession == nullptr, CameraErrorCode::INVALID_ARGUMENT,
+    CHECK_RETURN_RET_ELOG(remoteSession == nullptr, CameraErrorCode::INVALID_ARGUMENT,
         "MechSession::Release remoteSession is nullptr");
     int32_t retCode = remoteSession->Release();
-    CHECK_ERROR_RETURN_RET_LOG(retCode != CAMERA_OK, retCode,
+    CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, retCode,
         "Failed to Release!, %{public}d", retCode);
     return CameraErrorCode::SUCCESS;
 }
@@ -197,4 +197,5 @@ void MechSession::CameraServerDied(pid_t pid)
     RemoveDeathRecipient();
 }
 } // namespace CameraStandard
-} // namespace OHOS
+} // namespace OHOS
+

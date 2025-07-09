@@ -30,13 +30,13 @@ static std::mutex g_apiCompatibleVersionMutex;
 uint32_t GetApiVersion()
 {
     std::lock_guard<std::mutex> lock(g_apiCompatibleVersionMutex);
-    CHECK_ERROR_RETURN_RET(g_apiCompatibleVersion != API_DEFAULT_VERSION, g_apiCompatibleVersion);
+    CHECK_RETURN_RET(g_apiCompatibleVersion != API_DEFAULT_VERSION, g_apiCompatibleVersion);
     OHOS::sptr<OHOS::ISystemAbilityManager> systemAbilityManager =
         OHOS::SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     OHOS::sptr<OHOS::IRemoteObject> remoteObject =
         systemAbilityManager->GetSystemAbility(BUNDLE_MGR_SERVICE_SYS_ABILITY_ID);
     sptr<AppExecFwk::IBundleMgr> iBundleMgr = OHOS::iface_cast<AppExecFwk::IBundleMgr>(remoteObject);
-    CHECK_ERROR_RETURN_RET_LOG(iBundleMgr == nullptr, g_apiCompatibleVersion,
+    CHECK_RETURN_RET_ELOG(iBundleMgr == nullptr, g_apiCompatibleVersion,
         "GetApiCompatibleVersion iBundleMgr is null");
     AppExecFwk::BundleInfo bundleInfo;
     if (iBundleMgr->GetBundleInfoForSelf(0, bundleInfo) == ERR_OK) {

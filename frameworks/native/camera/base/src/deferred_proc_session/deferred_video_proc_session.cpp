@@ -68,7 +68,7 @@ DeferredVideoProcSession::DeferredVideoProcSession(int userId,
 DeferredVideoProcSession::~DeferredVideoProcSession()
 {
     MEDIA_INFO_LOG("DeferredVideoProcSession::DeferredVideoProcSession Destructor!");
-    CHECK_ERROR_RETURN(remoteSession_ == nullptr);
+    CHECK_RETURN(remoteSession_ == nullptr);
     (void)remoteSession_->AsObject()->RemoveDeathRecipient(deathRecipient_);
     remoteSession_ = nullptr;
 }
@@ -80,7 +80,7 @@ void DeferredVideoProcSession::BeginSynchronize()
     } else {
         MEDIA_INFO_LOG("DeferredVideoProcSession:BeginSynchronize() enter.");
         auto ret = remoteSession_->BeginSynchronize();
-        CHECK_ERROR_PRINT_LOG(ret != ERR_OK, "EndSynchronize failed errorCode: %{public}d", ret);
+        CHECK_PRINT_ELOG(ret != ERR_OK, "EndSynchronize failed errorCode: %{public}d", ret);
     }
 }
 
@@ -91,7 +91,7 @@ void DeferredVideoProcSession::EndSynchronize()
     } else {
         MEDIA_INFO_LOG("DeferredVideoProcSession::EndSynchronize() enter.");
         auto ret = remoteSession_->EndSynchronize();
-        CHECK_ERROR_PRINT_LOG(ret != ERR_OK, "EndSynchronize failed errorCode: %{public}d", ret);
+        CHECK_PRINT_ELOG(ret != ERR_OK, "EndSynchronize failed errorCode: %{public}d", ret);
     }
 }
 
@@ -103,7 +103,7 @@ void DeferredVideoProcSession::AddVideo(const std::string& videoId, const sptr<I
     } else {
         MEDIA_INFO_LOG("DeferredVideoProcSession::AddVideo() enter.");
         auto ret = remoteSession_->AddVideo(videoId, srcFd, dstFd);
-        CHECK_ERROR_PRINT_LOG(ret != ERR_OK, "AddVideo failed errorCode: %{public}d", ret);
+        CHECK_PRINT_ELOG(ret != ERR_OK, "AddVideo failed errorCode: %{public}d", ret);
     }
 }
 
@@ -114,7 +114,7 @@ void DeferredVideoProcSession::RemoveVideo(const std::string& videoId, const boo
     } else {
         MEDIA_INFO_LOG("DeferredVideoProcSession RemoveVideo() enter.");
         auto ret = remoteSession_->RemoveVideo(videoId, restorable);
-        CHECK_ERROR_PRINT_LOG(ret != ERR_OK, "RemoveVideo failed errorCode: %{public}d", ret);
+        CHECK_PRINT_ELOG(ret != ERR_OK, "RemoveVideo failed errorCode: %{public}d", ret);
     }
 }
 
@@ -125,7 +125,7 @@ void DeferredVideoProcSession::RestoreVideo(const std::string& videoId)
     } else {
         MEDIA_INFO_LOG("DeferredVideoProcSession RestoreVideo() enter.");
         auto ret = remoteSession_->RestoreVideo(videoId);
-        CHECK_ERROR_PRINT_LOG(ret != ERR_OK, "RestoreVideo failed errorCode: %{public}d", ret);
+        CHECK_PRINT_ELOG(ret != ERR_OK, "RestoreVideo failed errorCode: %{public}d", ret);
     }
 }
 
@@ -136,11 +136,11 @@ int32_t DeferredVideoProcSession::SetDeferredVideoSession(
     sptr<IRemoteObject> object = remoteSession_->AsObject();
     pid_t pid = 0;
     deathRecipient_ = new(std::nothrow) CameraDeathRecipient(pid);
-    CHECK_ERROR_RETURN_RET_LOG(deathRecipient_ == nullptr, CAMERA_ALLOC_ERROR, "failed to new CameraDeathRecipient.");
+    CHECK_RETURN_RET_ELOG(deathRecipient_ == nullptr, CAMERA_ALLOC_ERROR, "failed to new CameraDeathRecipient.");
 
     deathRecipient_->SetNotifyCb(std::bind(&DeferredVideoProcSession::CameraServerDied, this, std::placeholders::_1));
     bool result = object->AddDeathRecipient(deathRecipient_);
-    CHECK_ERROR_RETURN_RET_LOG(!result, -1, "failed to add deathRecipient");
+    CHECK_RETURN_RET_ELOG(!result, -1, "failed to add deathRecipient");
     return ERR_OK;
 }
 
@@ -153,7 +153,7 @@ void DeferredVideoProcSession::CameraServerDied(pid_t pid)
     }
     deathRecipient_ = nullptr;
     ReconnectDeferredProcessingSession();
-    CHECK_ERROR_RETURN(callback_ == nullptr);
+    CHECK_RETURN(callback_ == nullptr);
     MEDIA_INFO_LOG("DeferredVideoProcSession Reconnect session successful, send sync requestion.");
     callback_->OnError("", DpsErrorCode::ERROR_SESSION_SYNC_NEEDED);
 }
@@ -162,7 +162,7 @@ void DeferredVideoProcSession::ReconnectDeferredProcessingSession()
 {
     MEDIA_INFO_LOG("DeferredVideoProcSession::ReconnectDeferredProcessingSession, enter.");
     ConnectDeferredProcessingSession();
-    CHECK_ERROR_RETURN(remoteSession_ != nullptr);
+    CHECK_RETURN(remoteSession_ != nullptr);
     MEDIA_INFO_LOG("Reconnecting deferred processing session failed.");
     ReconnectDeferredProcessingSession();
 }
@@ -170,21 +170,21 @@ void DeferredVideoProcSession::ReconnectDeferredProcessingSession()
 void DeferredVideoProcSession::ConnectDeferredProcessingSession()
 {
     MEDIA_INFO_LOG("DeferredVideoProcSession::ConnectDeferredProcessingSession, enter.");
-    CHECK_ERROR_RETURN_LOG(remoteSession_ != nullptr, "remoteSession_ is not null");
+    CHECK_RETURN_ELOG(remoteSession_ != nullptr, "remoteSession_ is not null");
     sptr<IRemoteObject> object = nullptr;
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    CHECK_ERROR_RETURN_LOG(samgr == nullptr, "Failed to get System ability manager");
+    CHECK_RETURN_ELOG(samgr == nullptr, "Failed to get System ability manager");
     object = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
-    CHECK_ERROR_RETURN_LOG(object == nullptr, "object is null");
+    CHECK_RETURN_ELOG(object == nullptr, "object is null");
     serviceProxy_ = iface_cast<ICameraService>(object);
-    CHECK_ERROR_RETURN_LOG(serviceProxy_ == nullptr, "serviceProxy_ is null");
+    CHECK_RETURN_ELOG(serviceProxy_ == nullptr, "serviceProxy_ is null");
     sptr<DeferredProcessing::IDeferredVideoProcessingSession> session = nullptr;
     sptr<DeferredProcessing::IDeferredVideoProcessingSessionCallback> remoteCallback = nullptr;
     sptr<DeferredVideoProcSession> deferredVideoProcSession = nullptr;
     deferredVideoProcSession = new(std::nothrow) DeferredVideoProcSession(userId_, callback_);
-    CHECK_ERROR_RETURN(deferredVideoProcSession == nullptr);
+    CHECK_RETURN(deferredVideoProcSession == nullptr);
     remoteCallback = new(std::nothrow) DeferredVideoProcessingSessionCallback(deferredVideoProcSession);
-    CHECK_ERROR_RETURN(remoteCallback == nullptr);
+    CHECK_RETURN(remoteCallback == nullptr);
     serviceProxy_->CreateDeferredVideoProcessingSession(userId_, remoteCallback, session);
     CHECK_EXECUTE(session, SetDeferredVideoSession(session));
 }

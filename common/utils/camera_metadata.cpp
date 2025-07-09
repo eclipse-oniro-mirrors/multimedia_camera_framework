@@ -23,23 +23,23 @@ namespace CameraStandard {
 std::shared_ptr<OHOS::Camera::CameraMetadata> CopyMetadata(
     const std::shared_ptr<OHOS::Camera::CameraMetadata> srcMetadata)
 {
-    CHECK_ERROR_RETURN_RET_LOG(srcMetadata == nullptr, nullptr, "CopyMetadata fail,src is null");
+    CHECK_RETURN_RET_ELOG(srcMetadata == nullptr, nullptr, "CopyMetadata fail,src is null");
     auto oldMetadata = srcMetadata->get();
-    CHECK_ERROR_RETURN_RET(oldMetadata == nullptr, nullptr);
+    CHECK_RETURN_RET(oldMetadata == nullptr, nullptr);
     std::shared_ptr<OHOS::Camera::CameraMetadata> result =
         std::make_shared<OHOS::Camera::CameraMetadata>(oldMetadata->item_capacity, oldMetadata->data_capacity);
     auto newMetadata = result->get();
     int32_t ret = OHOS::Camera::CopyCameraMetadataItems(newMetadata, oldMetadata);
-    CHECK_ERROR_PRINT_LOG(ret != CAM_META_SUCCESS, "CopyCameraMetadataItems failed ret:%{public}d", ret);
+    CHECK_PRINT_ELOG(ret != CAM_META_SUCCESS, "CopyCameraMetadataItems failed ret:%{public}d", ret);
     return result;
 }
 
 std::shared_ptr<camera_metadata_item_t> GetMetadataItem(const common_metadata_header_t* src, uint32_t tag)
 {
-    CHECK_ERROR_RETURN_RET(src == nullptr, nullptr);
+    CHECK_RETURN_RET(src == nullptr, nullptr);
     auto item = std::make_shared<camera_metadata_item_t>();
     int32_t ret = OHOS::Camera::CameraMetadata::FindCameraMetadataItem(src, tag, item.get());
-    CHECK_ERROR_RETURN_RET(ret != CAM_META_SUCCESS, nullptr);
+    CHECK_RETURN_RET(ret != CAM_META_SUCCESS, nullptr);
     return item;
 }
 

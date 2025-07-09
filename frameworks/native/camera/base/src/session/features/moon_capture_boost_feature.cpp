@@ -34,7 +34,7 @@ MoonCaptureBoostFeature::MoonCaptureBoostFeature(
     MEDIA_INFO_LOG("MoonCaptureBoostFeature::MoonCaptureBoostFeature SceneMode:%{public}d", relatedMode);
     camera_metadata_item_t item;
     int ret = OHOS::Camera::FindCameraMetadataItem(deviceAbility->get(), OHOS_ABILITY_MOON_CAPTURE_BOOST, &item);
-    CHECK_ERROR_RETURN_LOG(ret != CAM_META_SUCCESS || item.count <= 0,
+    CHECK_RETURN_ELOG(ret != CAM_META_SUCCESS || item.count <= 0,
         "MoonCaptureBoostFeature get OHOS_ABILITY_MOON_CAPTURE_BOOST failed");
 
     uint32_t currentMode = INVALID_MODE;
@@ -91,7 +91,7 @@ float MoonCaptureBoostFeature::GetSketchReferenceFovRatio(float inputZoomRatio)
             return inputZoomRatio - range.zoomMin >= -std::numeric_limits<float>::epsilon() &&
                    inputZoomRatio - range.zoomMax < -std::numeric_limits<float>::epsilon();
         });
-    CHECK_ERROR_RETURN_RET(itRange != sketchFovRangeList_.end(), itRange->referenceValue);
+    CHECK_RETURN_RET(itRange != sketchFovRangeList_.end(), itRange->referenceValue);
     MEDIA_WARNING_LOG("MoonCaptureBoostFeature::GetSketchReferenceFovRatio fail input:%{public}f, "
                       "zoomRange:%{public}f-%{public}f ,return default value.",
         inputZoomRatio, sketchZoomRatioRange_.zoomMin, sketchZoomRatioRange_.zoomMax);

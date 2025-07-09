@@ -166,7 +166,7 @@ void Test(uint8_t* data, size_t size)
     uint32_t callingTokenId = fdp.ConsumeIntegral<uint32_t>();
     HCameraDeviceFuzzer::fuzz_ = new (std::nothrow)
         HCameraDevice(cameraHostManager, cameraId, callingTokenId);
-    CHECK_ERROR_RETURN_LOG(!HCameraDeviceFuzzer::fuzz_, "CreateFuzz Error");
+    CHECK_RETURN_ELOG(!HCameraDeviceFuzzer::fuzz_, "CreateFuzz Error");
     dcameraDevice->HCameraDeviceFuzzTest1(fdp);
     dcameraDevice->HCameraDeviceFuzzTest2(fdp);
     dcameraDevice->HCameraDeviceFuzzTest3(fdp);

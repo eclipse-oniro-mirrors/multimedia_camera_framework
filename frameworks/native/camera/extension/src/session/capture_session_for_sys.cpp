@@ -42,9 +42,9 @@ CaptureSessionForSys::~CaptureSessionForSys()
 
 int32_t CaptureSessionForSys::IsFocusRangeTypeSupported(FocusRangeType focusRangeType, bool& isSupported)
 {
-    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "CaptureSessionForSys::IsFocusRangeTypeSupported Session is not Commited");
-    CHECK_ERROR_RETURN_RET_LOG(g_fwkocusRangeTypeMap_.find(focusRangeType) == g_fwkocusRangeTypeMap_.end(),
+    CHECK_RETURN_RET_ELOG(g_fwkocusRangeTypeMap_.find(focusRangeType) == g_fwkocusRangeTypeMap_.end(),
         CameraErrorCode::PARAMETER_ERROR, "CaptureSessionForSys::IsFocusRangeTypeSupported Unknown focus range type");
     std::vector<FocusRangeType> vecSupportedFocusRangeTypeList = {};
     this->GetSupportedFocusRangeTypes(vecSupportedFocusRangeTypeList);
@@ -60,17 +60,17 @@ int32_t CaptureSessionForSys::IsFocusRangeTypeSupported(FocusRangeType focusRang
 int32_t CaptureSessionForSys::GetFocusRange(FocusRangeType& focusRangeType)
 {
     focusRangeType = FocusRangeType::FOCUS_RANGE_TYPE_AUTO;
-    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "CaptureSessionForSys::GetFocusRange Session is not Commited");
     auto inputDevice = GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), CameraErrorCode::SUCCESS,
+    CHECK_RETURN_RET_ELOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), CameraErrorCode::SUCCESS,
         "CaptureSessionForSys::GetFocusRange camera device is null");
     std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();
-    CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, CameraErrorCode::SUCCESS,
+    CHECK_RETURN_RET_ELOG(metadata == nullptr, CameraErrorCode::SUCCESS,
         "GetFocusRange camera metadata is null");
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_FOCUS_RANGE_TYPE, &item);
-    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
+    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
         "CaptureSessionForSys::GetFocusRange Failed with return code %{public}d", ret);
     // LCOV_EXCL_START
     auto itr = g_metaFocusRangeTypeMap_.find(static_cast<camera_focus_range_type_t>(item.data.u8[0]));
@@ -85,16 +85,16 @@ int32_t CaptureSessionForSys::GetFocusRange(FocusRangeType& focusRangeType)
 int32_t CaptureSessionForSys::SetFocusRange(FocusRangeType focusRangeType)
 {
     CAMERA_SYNC_TRACE;
-    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "CaptureSessionForSys::SetFocusRange Session is not Commited");
-    CHECK_ERROR_RETURN_RET_LOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
+    CHECK_RETURN_RET_ELOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
         "CaptureSessionForSys::SetFocusRange Need to call LockForControl() before setting camera properties");
     // LCOV_EXCL_START
-    CHECK_ERROR_RETURN_RET_LOG(g_fwkocusRangeTypeMap_.find(focusRangeType) == g_fwkocusRangeTypeMap_.end(),
+    CHECK_RETURN_RET_ELOG(g_fwkocusRangeTypeMap_.find(focusRangeType) == g_fwkocusRangeTypeMap_.end(),
         CameraErrorCode::PARAMETER_ERROR, "CaptureSessionForSys::SetFocusRange Unknown focus range type");
     bool isSupported = false;
     IsFocusRangeTypeSupported(focusRangeType, isSupported);
-    CHECK_ERROR_RETURN_RET(!isSupported, CameraErrorCode::OPERATION_NOT_ALLOWED);
+    CHECK_RETURN_RET(!isSupported, CameraErrorCode::OPERATION_NOT_ALLOWED);
     uint8_t metaFocusRangeType = OHOS_CAMERA_FOCUS_RANGE_AUTO;
     auto itr = g_fwkocusRangeTypeMap_.find(focusRangeType);
     if (itr != g_fwkocusRangeTypeMap_.end()) {
@@ -103,16 +103,16 @@ int32_t CaptureSessionForSys::SetFocusRange(FocusRangeType focusRangeType)
 
     MEDIA_DEBUG_LOG("CaptureSessionForSys::SetFocusRange Focus range type: %{public}d", focusRangeType);
     bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_FOCUS_RANGE_TYPE, &metaFocusRangeType, 1);
-    CHECK_ERROR_PRINT_LOG(!status, "CaptureSessionForSys::SetFocusRange Failed to set focus range type");
+    CHECK_PRINT_ELOG(!status, "CaptureSessionForSys::SetFocusRange Failed to set focus range type");
     return CameraErrorCode::SUCCESS;
     // LCOV_EXCL_STOP
 }
 
 int32_t CaptureSessionForSys::IsFocusDrivenTypeSupported(FocusDrivenType focusDrivenType, bool& isSupported)
 {
-    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "CaptureSessionForSys::IsFocusDrivenTypeSupported Session is not Commited");
-    CHECK_ERROR_RETURN_RET_LOG(g_fwkFocusDrivenTypeMap_.find(focusDrivenType) == g_fwkFocusDrivenTypeMap_.end(),
+    CHECK_RETURN_RET_ELOG(g_fwkFocusDrivenTypeMap_.find(focusDrivenType) == g_fwkFocusDrivenTypeMap_.end(),
         CameraErrorCode::PARAMETER_ERROR, "CaptureSessionForSys::IsFocusDrivenTypeSupported Unknown focus driven type");
     std::vector<FocusDrivenType> vecSupportedFocusDrivenTypeList = {};
     this->GetSupportedFocusDrivenTypes(vecSupportedFocusDrivenTypeList);
@@ -128,17 +128,17 @@ int32_t CaptureSessionForSys::IsFocusDrivenTypeSupported(FocusDrivenType focusDr
 int32_t CaptureSessionForSys::GetFocusDriven(FocusDrivenType& focusDrivenType)
 {
     focusDrivenType = FocusDrivenType::FOCUS_DRIVEN_TYPE_AUTO;
-    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "CaptureSessionForSys::GetFocusDriven Session is not Commited");
     auto inputDevice = GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), CameraErrorCode::SUCCESS,
+    CHECK_RETURN_RET_ELOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), CameraErrorCode::SUCCESS,
         "CaptureSessionForSys::GetFocusDriven camera device is null");
     std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();
-    CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, CameraErrorCode::SUCCESS,
+    CHECK_RETURN_RET_ELOG(metadata == nullptr, CameraErrorCode::SUCCESS,
         "GetFocusDriven camera metadata is null");
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_FOCUS_DRIVEN_TYPE, &item);
-    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
+    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
         "CaptureSessionForSys::GetFocusDriven Failed with return code %{public}d", ret);
     // LCOV_EXCL_START
     auto itr = g_metaFocusDrivenTypeMap_.find(static_cast<camera_focus_driven_type_t>(item.data.u8[0]));
@@ -153,16 +153,16 @@ int32_t CaptureSessionForSys::GetFocusDriven(FocusDrivenType& focusDrivenType)
 int32_t CaptureSessionForSys::SetFocusDriven(FocusDrivenType focusDrivenType)
 {
     CAMERA_SYNC_TRACE;
-    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "CaptureSessionForSys::SetFocusDriven Session is not Commited");
-    CHECK_ERROR_RETURN_RET_LOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
+    CHECK_RETURN_RET_ELOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
         "CaptureSessionForSys::SetFocusDriven Need to call LockForControl() before setting camera properties");
     // LCOV_EXCL_START
-    CHECK_ERROR_RETURN_RET_LOG(g_fwkFocusDrivenTypeMap_.find(focusDrivenType) == g_fwkFocusDrivenTypeMap_.end(),
+    CHECK_RETURN_RET_ELOG(g_fwkFocusDrivenTypeMap_.find(focusDrivenType) == g_fwkFocusDrivenTypeMap_.end(),
         CameraErrorCode::PARAMETER_ERROR, "CaptureSessionForSys::SetFocusDriven Unknown focus driven type");
     bool isSupported = false;
     IsFocusDrivenTypeSupported(focusDrivenType, isSupported);
-    CHECK_ERROR_RETURN_RET(!isSupported, CameraErrorCode::OPERATION_NOT_ALLOWED);
+    CHECK_RETURN_RET(!isSupported, CameraErrorCode::OPERATION_NOT_ALLOWED);
     uint8_t metaFocusDrivenType = OHOS_CAMERA_FOCUS_DRIVEN_AUTO;
     auto itr = g_fwkFocusDrivenTypeMap_.find(focusDrivenType);
     if (itr != g_fwkFocusDrivenTypeMap_.end()) {
@@ -171,7 +171,7 @@ int32_t CaptureSessionForSys::SetFocusDriven(FocusDrivenType focusDrivenType)
 
     MEDIA_DEBUG_LOG("CaptureSessionForSys::SetFocusDriven focus driven type: %{public}d", focusDrivenType);
     bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_FOCUS_DRIVEN_TYPE, &metaFocusDrivenType, 1);
-    CHECK_ERROR_PRINT_LOG(!status, "CaptureSessionForSys::SetFocusDriven Failed to set focus driven type");
+    CHECK_PRINT_ELOG(!status, "CaptureSessionForSys::SetFocusDriven Failed to set focus driven type");
     return CameraErrorCode::SUCCESS;
     // LCOV_EXCL_STOP
 }
@@ -179,17 +179,17 @@ int32_t CaptureSessionForSys::SetFocusDriven(FocusDrivenType focusDrivenType)
 int32_t CaptureSessionForSys::GetSupportedColorReservationTypes(std::vector<ColorReservationType>& types)
 {
     types.clear();
-    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "CaptureSessionForSys::GetSupportedColorReservationTypes Session is not Commited");
     auto inputDevice = GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), CameraErrorCode::SUCCESS,
+    CHECK_RETURN_RET_ELOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), CameraErrorCode::SUCCESS,
         "CaptureSessionForSys::GetSupportedColorReservationTypes camera device is null");
     std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();
-    CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, CameraErrorCode::SUCCESS,
+    CHECK_RETURN_RET_ELOG(metadata == nullptr, CameraErrorCode::SUCCESS,
         "GetSupportedColorReservationTypes camera metadata is null");
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_COLOR_RESERVATION_TYPES, &item);
-    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
+    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
         "CaptureSessionForSys::GetSupportedColorReservationTypes Failed with return code %{public}d", ret);
     // LCOV_EXCL_START
     for (uint32_t i = 0; i < item.count; i++) {
@@ -205,7 +205,7 @@ int32_t CaptureSessionForSys::GetSupportedColorReservationTypes(std::vector<Colo
 int32_t CaptureSessionForSys::IsColorReservationTypeSupported(ColorReservationType colorReservationType,
     bool& isSupported)
 {
-    CHECK_ERROR_RETURN_RET_LOG(g_fwkColorReservationTypeMap_.find(colorReservationType) ==
+    CHECK_RETURN_RET_ELOG(g_fwkColorReservationTypeMap_.find(colorReservationType) ==
         g_fwkColorReservationTypeMap_.end(), CameraErrorCode::PARAMETER_ERROR,
         "CaptureSessionForSys::IsColorReservationTypeSupported Unknown color reservation type");
     std::vector<ColorReservationType> vecSupportedColorReservationTypeList = {};
@@ -222,17 +222,17 @@ int32_t CaptureSessionForSys::IsColorReservationTypeSupported(ColorReservationTy
 int32_t CaptureSessionForSys::GetColorReservation(ColorReservationType& colorReservationType)
 {
     colorReservationType = ColorReservationType::COLOR_RESERVATION_TYPE_NONE;
-    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "CaptureSessionForSys::GetColorReservation Session is not Commited");
     auto inputDevice = GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), CameraErrorCode::SUCCESS,
+    CHECK_RETURN_RET_ELOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), CameraErrorCode::SUCCESS,
         "CaptureSessionForSys::GetColorReservation camera device is null");
     std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();
-    CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, CameraErrorCode::SUCCESS,
+    CHECK_RETURN_RET_ELOG(metadata == nullptr, CameraErrorCode::SUCCESS,
         "GetColorReservation camera metadata is null");
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_COLOR_RESERVATION_TYPE, &item);
-    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
+    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
         "CaptureSessionForSys::GetColorReservation Failed with return code %{public}d", ret);
     // LCOV_EXCL_START
     auto itr = g_metaColorReservationTypeMap_.find(static_cast<camera_color_reservation_type_t>(item.data.u8[0]));
@@ -247,16 +247,16 @@ int32_t CaptureSessionForSys::GetColorReservation(ColorReservationType& colorRes
 int32_t CaptureSessionForSys::SetColorReservation(ColorReservationType colorReservationType)
 {
     CAMERA_SYNC_TRACE;
-    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "CaptureSessionForSys::SetColorReservation Session is not Commited");
-    CHECK_ERROR_RETURN_RET_LOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
+    CHECK_RETURN_RET_ELOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
         "CaptureSessionForSys::SetColorReservation Need to call LockForControl() before setting camera properties");
-    CHECK_ERROR_RETURN_RET_LOG(g_fwkColorReservationTypeMap_.find(colorReservationType) ==
+    CHECK_RETURN_RET_ELOG(g_fwkColorReservationTypeMap_.find(colorReservationType) ==
         g_fwkColorReservationTypeMap_.end(),
         CameraErrorCode::PARAMETER_ERROR, "CaptureSessionForSys::SetColorReservation Unknown color reservation type");
     bool isSupported = false;
     IsColorReservationTypeSupported(colorReservationType, isSupported);
-    CHECK_ERROR_RETURN_RET(!isSupported, CameraErrorCode::OPERATION_NOT_ALLOWED);
+    CHECK_RETURN_RET(!isSupported, CameraErrorCode::OPERATION_NOT_ALLOWED);
     // LCOV_EXCL_START
     uint8_t metaColorReservationType = OHOS_CAMERA_COLOR_RESERVATION_NONE;
     auto itr = g_fwkColorReservationTypeMap_.find(colorReservationType);
@@ -268,7 +268,7 @@ int32_t CaptureSessionForSys::SetColorReservation(ColorReservationType colorRese
         colorReservationType);
     bool status = AddOrUpdateMetadata(
         changedMetadata_, OHOS_CONTROL_COLOR_RESERVATION_TYPE, &metaColorReservationType, 1);
-    CHECK_ERROR_PRINT_LOG(!status, "CaptureSessionForSys::SetColorReservation Failed to set color reservation type");
+    CHECK_PRINT_ELOG(!status, "CaptureSessionForSys::SetColorReservation Failed to set color reservation type");
     return CameraErrorCode::SUCCESS;
     // LCOV_EXCL_STOP
 }
@@ -277,20 +277,20 @@ int32_t CaptureSessionForSys::GetZoomPointInfos(std::vector<ZoomPointInfo>& zoom
 {
     MEDIA_INFO_LOG("CaptureSessionForSys::GetZoomPointInfos is Called");
     zoomPointInfoList.clear();
-    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "CaptureSessionForSys::GetZoomPointInfos Session is not Commited");
     auto inputDevice = GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(!inputDevice, CameraErrorCode::SUCCESS,
+    CHECK_RETURN_RET_ELOG(!inputDevice, CameraErrorCode::SUCCESS,
         "CaptureSessionForSys::GetZoomPointInfos camera device is null");
     auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
-    CHECK_ERROR_RETURN_RET_LOG(!inputDeviceInfo, CameraErrorCode::SUCCESS,
+    CHECK_RETURN_RET_ELOG(!inputDeviceInfo, CameraErrorCode::SUCCESS,
         "CaptureSessionForSys::GetZoomPointInfos camera deviceInfo is null");
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetCachedMetadata();
-    CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, CameraErrorCode::SUCCESS,
+    CHECK_RETURN_RET_ELOG(metadata == nullptr, CameraErrorCode::SUCCESS,
         "GetZoomPointInfos camera metadata is null");
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_EQUIVALENT_FOCUS, &item);
-    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS || item.count == 0, CameraErrorCode::SUCCESS,
+    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS || item.count == 0, CameraErrorCode::SUCCESS,
         "GetZoomPointInfos Failed with return code:%{public}d, item.count:%{public}d", ret, item.count);
     SceneMode mode = GetMode();
     int32_t defaultLen = 0;
@@ -318,14 +318,14 @@ int32_t CaptureSessionForSys::GetZoomPointInfos(std::vector<ZoomPointInfo>& zoom
 
 int32_t CaptureSessionForSys::GetBeauty(BeautyType beautyType)
 {
-    CHECK_ERROR_RETURN_RET_LOG(!(IsSessionCommited() || IsSessionConfiged()), CameraErrorCode::SESSION_NOT_CONFIG,
+    CHECK_RETURN_RET_ELOG(!(IsSessionCommited() || IsSessionConfiged()), CameraErrorCode::SESSION_NOT_CONFIG,
         "CaptureSessionForSys::GetBeauty Session is not Commited");
     auto inputDevice = GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), -1,
+    CHECK_RETURN_RET_ELOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), -1,
         "CaptureSessionForSys::GetBeauty camera device is null");
     std::vector<BeautyType> supportedBeautyTypes = GetSupportedBeautyTypes();
     auto itr = std::find(supportedBeautyTypes.begin(), supportedBeautyTypes.end(), beautyType);
-    CHECK_ERROR_RETURN_RET_LOG(itr == supportedBeautyTypes.end(), -1,
+    CHECK_RETURN_RET_ELOG(itr == supportedBeautyTypes.end(), -1,
         "CaptureSessionForSys::GetBeauty beautyType is NULL");
     // LCOV_EXCL_START
     int32_t beautyLevel = 0;
@@ -341,12 +341,12 @@ int32_t CaptureSessionForSys::GetBeauty(BeautyType beautyType)
 int32_t CaptureSessionForSys::SetPortraitThemeType(PortraitThemeType type)
 {
     MEDIA_DEBUG_LOG("Enter CaptureSessionForSys::SetPortraitThemeType");
-    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "CaptureSessionForSys::SetPortraitThemeType Session is not Commited");
-    CHECK_ERROR_RETURN_RET_LOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
+    CHECK_RETURN_RET_ELOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
         "CaptureSessionForSys::SetPortraitThemeType Need to call LockForControl() before setting camera properties");
     // LCOV_EXCL_START
-    CHECK_ERROR_RETURN_RET(!IsPortraitThemeSupported(), CameraErrorCode::OPERATION_NOT_ALLOWED);
+    CHECK_RETURN_RET(!IsPortraitThemeSupported(), CameraErrorCode::OPERATION_NOT_ALLOWED);
     PortraitThemeType portraitThemeTypeTemp = PortraitThemeType::NATURAL;
     uint8_t themeType = g_fwkPortraitThemeTypeMap_.at(portraitThemeTypeTemp);
     auto itr = g_fwkPortraitThemeTypeMap_.find(type);
@@ -356,7 +356,7 @@ int32_t CaptureSessionForSys::SetPortraitThemeType(PortraitThemeType type)
         themeType = itr->second;
     }
     bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_CAMERA_PORTRAIT_THEME_TYPE, &themeType, 1);
-    CHECK_ERROR_PRINT_LOG(!status, "CaptureSessionForSys::SetPortraitThemeType Failed to set flash mode");
+    CHECK_PRINT_ELOG(!status, "CaptureSessionForSys::SetPortraitThemeType Failed to set flash mode");
     return CameraErrorCode::SUCCESS;
     // LCOV_EXCL_STOP
 }
@@ -364,17 +364,17 @@ int32_t CaptureSessionForSys::SetPortraitThemeType(PortraitThemeType type)
 ColorEffect CaptureSessionForSys::GetColorEffect()
 {
     ColorEffect colorEffect = ColorEffect::COLOR_EFFECT_NORMAL;
-    CHECK_ERROR_RETURN_RET_LOG(!(IsSessionCommited() || IsSessionConfiged()), colorEffect,
+    CHECK_RETURN_RET_ELOG(!(IsSessionCommited() || IsSessionConfiged()), colorEffect,
         "CaptureSessionForSys::GetColorEffect Session is not Commited");
     auto inputDevice = GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), colorEffect,
+    CHECK_RETURN_RET_ELOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), colorEffect,
         "CaptureSessionForSys::GetColorEffect camera device is null");
     std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();
-    CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, colorEffect,
+    CHECK_RETURN_RET_ELOG(metadata == nullptr, colorEffect,
         "GetColorEffect camera metadata is null");
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_SUPPORTED_COLOR_MODES, &item);
-    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS || item.count == 0, colorEffect,
+    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS || item.count == 0, colorEffect,
         "CaptureSessionForSys::GetColorEffect Failed with return code %{public}d", ret);
     // LCOV_EXCL_START
     auto itr = g_metaColorEffectMap_.find(static_cast<camera_xmage_color_type_t>(item.data.u8[0]));
@@ -388,13 +388,13 @@ ColorEffect CaptureSessionForSys::GetColorEffect()
 void CaptureSessionForSys::SetColorEffect(ColorEffect colorEffect)
 {
     CAMERA_SYNC_TRACE;
-    CHECK_ERROR_RETURN_LOG(!(IsSessionCommited() || IsSessionConfiged()),
+    CHECK_RETURN_ELOG(!(IsSessionCommited() || IsSessionConfiged()),
         "CaptureSessionForSys::SetColorEffect Session is not Commited");
-    CHECK_ERROR_RETURN_LOG(changedMetadata_ == nullptr,
+    CHECK_RETURN_ELOG(changedMetadata_ == nullptr,
         "CaptureSessionForSys::SetColorEffect Need to call LockForControl() before setting camera properties");
     uint8_t colorEffectTemp = ColorEffect::COLOR_EFFECT_NORMAL;
     auto itr = g_fwkColorEffectMap_.find(colorEffect);
-    CHECK_ERROR_RETURN_LOG(itr == g_fwkColorEffectMap_.end(),
+    CHECK_RETURN_ELOG(itr == g_fwkColorEffectMap_.end(),
         "CaptureSessionForSys::SetColorEffect unknown is color effect");
     colorEffectTemp = itr->second;
     MEDIA_DEBUG_LOG("CaptureSessionForSys::SetColorEffect: %{public}d", colorEffect);
@@ -403,22 +403,22 @@ void CaptureSessionForSys::SetColorEffect(ColorEffect colorEffect)
     CHECK_EXECUTE(status, AddFunctionToMap(std::to_string(OHOS_CONTROL_SUPPORTED_COLOR_MODES),
         [weakThis, colorEffect]() {
             auto sharedThis = weakThis.promote();
-            CHECK_ERROR_RETURN_LOG(!sharedThis, "SetColorEffect session is nullptr");
+            CHECK_RETURN_ELOG(!sharedThis, "SetColorEffect session is nullptr");
             sharedThis->LockForControl();
             sharedThis->SetColorEffect(colorEffect);
             sharedThis->UnlockForControl();
         }));
-    CHECK_ERROR_PRINT_LOG(!status, "CaptureSessionForSys::SetColorEffect Failed to set color effect");
+    CHECK_PRINT_ELOG(!status, "CaptureSessionForSys::SetColorEffect Failed to set color effect");
     return;
 }
 
 int32_t CaptureSessionForSys::GetFocusDistance(float& focusDistance)
 {
     focusDistance = 0.0;
-    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "CaptureSessionForSys::GetFocusDistance Session is not Commited");
     auto inputDevice = GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), CameraErrorCode::SUCCESS,
+    CHECK_RETURN_RET_ELOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), CameraErrorCode::SUCCESS,
         "CaptureSessionForSys::GetFocusDistance camera device is null");
     focusDistance = focusDistance_;
     return CameraErrorCode::SUCCESS;
@@ -428,20 +428,20 @@ bool CaptureSessionForSys::IsDepthFusionSupported()
 {
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("Enter IsDepthFusionSupported");
-    CHECK_ERROR_RETURN_RET_LOG(!(IsSessionCommited() || IsSessionConfiged()), false,
+    CHECK_RETURN_RET_ELOG(!(IsSessionCommited() || IsSessionConfiged()), false,
         "CaptureSessionForSys::IsDepthFusionSupported Session is not Commited");
     auto inputDevice = GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(inputDevice == nullptr, false,
+    CHECK_RETURN_RET_ELOG(inputDevice == nullptr, false,
         "CaptureSessionForSys::IsDepthFusionSupported camera device is null");
     auto deviceInfo = inputDevice->GetCameraDeviceInfo();
-    CHECK_ERROR_RETURN_RET_LOG(deviceInfo == nullptr, false,
+    CHECK_RETURN_RET_ELOG(deviceInfo == nullptr, false,
         "CaptureSessionForSys::IsDepthFusionSupported camera deviceInfo is null");
     std::shared_ptr<Camera::CameraMetadata> metadata = deviceInfo->GetCachedMetadata();
-    CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, false,
+    CHECK_RETURN_RET_ELOG(metadata == nullptr, false,
         "IsDepthFusionSupported camera metadata is null");
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_CAPTURE_MACRO_DEPTH_FUSION_SUPPORTED, &item);
-    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS || item.count <= 0, false,
+    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS || item.count <= 0, false,
         "CaptureSessionForSys::IsDepthFusionSupported Failed with return code %{public}d", ret);
     auto supportResult = static_cast<bool>(item.data.u8[0]);
     return supportResult;
@@ -451,16 +451,16 @@ int32_t CaptureSessionForSys::EnableDepthFusion(bool isEnable)
 {
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("Enter EnableDepthFusion, isEnable:%{public}d", isEnable);
-    CHECK_ERROR_RETURN_RET_LOG(!IsDepthFusionSupported(), CameraErrorCode::OPERATION_NOT_ALLOWED,
+    CHECK_RETURN_RET_ELOG(!IsDepthFusionSupported(), CameraErrorCode::OPERATION_NOT_ALLOWED,
         "EnableDepthFusion IsDepthFusionSupported is false");
     // LCOV_EXCL_START
-    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "CaptureSessionForSys Failed EnableDepthFusion!, session not commited");
-    CHECK_ERROR_RETURN_RET_LOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
+    CHECK_RETURN_RET_ELOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
         "CaptureSessionForSys::EnableDepthFusion Need to call LockForControl() before setting camera properties");
     uint8_t enableValue = static_cast<uint8_t>(isEnable ? 1 : 0);
     bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_CAPTURE_MACRO_DEPTH_FUSION, &enableValue, 1);
-    CHECK_ERROR_PRINT_LOG(!status, "CaptureSessionForSys::EnableDepthFusion Failed to enable depth fusion");
+    CHECK_PRINT_ELOG(!status, "CaptureSessionForSys::EnableDepthFusion Failed to enable depth fusion");
     isDepthFusionEnable_ = isEnable;
     return CameraErrorCode::SUCCESS;
     // LCOV_EXCL_STOP
@@ -479,20 +479,20 @@ int32_t CaptureSessionForSys::GetDepthFusionThreshold(std::vector<float>& depthF
 {
     MEDIA_DEBUG_LOG("Enter GetDepthFusionThreshold");
     depthFusionThreshold.clear();
-    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "CaptureSessionForSys::GetDepthFusionThreshold Session is not Commited");
     auto inputDevice = GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), CameraErrorCode::SUCCESS,
+    CHECK_RETURN_RET_ELOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), CameraErrorCode::SUCCESS,
         "CaptureSessionForSys::GetDepthFusionThreshold camera device is null");
 
     std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();
-    CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, CameraErrorCode::SUCCESS,
+    CHECK_RETURN_RET_ELOG(metadata == nullptr, CameraErrorCode::SUCCESS,
         "GetDepthFusionThreshold camera metadata is null");
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(),
         OHOS_ABILITY_CAPTURE_MACRO_DEPTH_FUSION_ZOOM_RANGE, &item);
     const int32_t zoomRangeLength = 2;
-    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS || item.count < zoomRangeLength, 0,
+    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS || item.count < zoomRangeLength, 0,
         "CaptureSessionForSys::GetDepthFusionThreshold Failed with return code %{public}d, item.count = %{public}d",
         ret, item.count);
     // LCOV_EXCL_START
@@ -545,23 +545,23 @@ bool CaptureSessionForSys::IsEffectSuggestionSupported()
 int32_t CaptureSessionForSys::EnableEffectSuggestion(bool isEnable)
 {
     MEDIA_DEBUG_LOG("Enter EnableEffectSuggestion, isEnable:%{public}d", isEnable);
-    CHECK_ERROR_RETURN_RET_LOG(!IsEffectSuggestionSupported(), CameraErrorCode::OPERATION_NOT_ALLOWED,
+    CHECK_RETURN_RET_ELOG(!IsEffectSuggestionSupported(), CameraErrorCode::OPERATION_NOT_ALLOWED,
         "EnableEffectSuggestion IsEffectSuggestionSupported is false");
-    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "CaptureSessionForSys Failed EnableEffectSuggestion!, session not commited");
     uint8_t enableValue = static_cast<uint8_t>(isEnable);
     MEDIA_DEBUG_LOG("EnableEffectSuggestion enableValue:%{public}d", enableValue);
     bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_EFFECT_SUGGESTION, &enableValue, 1);
-    CHECK_ERROR_PRINT_LOG(!status, "CaptureSessionForSys::EnableEffectSuggestion Failed to enable effectSuggestion");
+    CHECK_PRINT_ELOG(!status, "CaptureSessionForSys::EnableEffectSuggestion Failed to enable effectSuggestion");
     return CameraErrorCode::SUCCESS;
 }
 
 int32_t CaptureSessionForSys::SetEffectSuggestionStatus(std::vector<EffectSuggestionStatus> effectSuggestionStatusList)
 {
     MEDIA_DEBUG_LOG("Enter SetEffectSuggestionStatus");
-    CHECK_ERROR_RETURN_RET_LOG(!IsEffectSuggestionSupported(), CameraErrorCode::OPERATION_NOT_ALLOWED,
+    CHECK_RETURN_RET_ELOG(!IsEffectSuggestionSupported(), CameraErrorCode::OPERATION_NOT_ALLOWED,
         "SetEffectSuggestionStatus IsEffectSuggestionSupported is false");
-    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "CaptureSessionForSys Failed SetEffectSuggestionStatus!, session not commited");
     std::vector<uint8_t> vec = {};
     for (auto effectSuggestionStatus : effectSuggestionStatusList) {
@@ -581,7 +581,7 @@ int32_t CaptureSessionForSys::SetEffectSuggestionStatus(std::vector<EffectSugges
     }
     bool status = AddOrUpdateMetadata(
         changedMetadata_, OHOS_CONTROL_EFFECT_SUGGESTION_DETECTION, vec.data(), vec.size());
-    CHECK_ERROR_PRINT_LOG(!status,
+    CHECK_PRINT_ELOG(!status,
         "CaptureSessionForSys::SetEffectSuggestionStatus Failed to Set effectSuggestionStatus");
     return CameraErrorCode::SUCCESS;
 }
@@ -589,17 +589,17 @@ int32_t CaptureSessionForSys::SetEffectSuggestionStatus(std::vector<EffectSugges
 EffectSuggestionInfo CaptureSessionForSys::GetSupportedEffectSuggestionInfo()
 {
     EffectSuggestionInfo effectSuggestionInfo = {};
-    CHECK_ERROR_RETURN_RET_LOG(!(IsSessionCommited() || IsSessionConfiged()), effectSuggestionInfo,
+    CHECK_RETURN_RET_ELOG(!(IsSessionCommited() || IsSessionConfiged()), effectSuggestionInfo,
         "CaptureSessionForSys::GetSupportedEffectSuggestionInfo Session is not Commited");
     auto inputDevice = GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), effectSuggestionInfo,
+    CHECK_RETURN_RET_ELOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), effectSuggestionInfo,
         "CaptureSessionForSys::GetSupportedEffectSuggestionInfo camera device is null");
     std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();
-    CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, effectSuggestionInfo,
+    CHECK_RETURN_RET_ELOG(metadata == nullptr, effectSuggestionInfo,
         "GetSupportedEffectSuggestionInfo camera metadata is null");
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED, &item);
-    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, effectSuggestionInfo,
+    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS, effectSuggestionInfo,
         "CaptureSessionForSys::GetSupportedEffectSuggestionInfo Failed with return code %{public}d", ret);
 
     std::shared_ptr<EffectSuggestionInfoParse> infoParse = std::make_shared<EffectSuggestionInfoParse>();
@@ -613,7 +613,7 @@ std::vector<EffectSuggestionType> CaptureSessionForSys::GetSupportedEffectSugges
 {
     std::vector<EffectSuggestionType> supportedEffectSuggestionList = {};
     EffectSuggestionInfo effectSuggestionInfo = this->GetSupportedEffectSuggestionInfo();
-    CHECK_ERROR_RETURN_RET_LOG(effectSuggestionInfo.modeCount == 0, supportedEffectSuggestionList,
+    CHECK_RETURN_RET_ELOG(effectSuggestionInfo.modeCount == 0, supportedEffectSuggestionList,
         "CaptureSessionForSys::GetSupportedEffectSuggestionType Failed, effectSuggestionInfo is null");
 
     for (uint32_t i = 0; i < effectSuggestionInfo.modeCount; i++) {
@@ -646,40 +646,40 @@ std::vector<EffectSuggestionType> CaptureSessionForSys::GetSupportedEffectSugges
 int32_t CaptureSessionForSys::UpdateEffectSuggestion(EffectSuggestionType effectSuggestionType, bool isEnable)
 {
     CAMERA_SYNC_TRACE;
-    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "CaptureSessionForSys::UpdateEffectSuggestion Session is not Commited");
-    CHECK_ERROR_RETURN_RET_LOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
+    CHECK_RETURN_RET_ELOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
         "CaptureSessionForSys::UpdateEffectSuggestion Need to call LockForControl() before setting camera properties");
     uint8_t type = fwkEffectSuggestionTypeMap_.at(EffectSuggestionType::EFFECT_SUGGESTION_NONE);
     auto itr = fwkEffectSuggestionTypeMap_.find(effectSuggestionType);
-    CHECK_ERROR_RETURN_RET_LOG(itr == fwkEffectSuggestionTypeMap_.end(), CameraErrorCode::INVALID_ARGUMENT,
+    CHECK_RETURN_RET_ELOG(itr == fwkEffectSuggestionTypeMap_.end(), CameraErrorCode::INVALID_ARGUMENT,
         "CaptureSessionForSys::UpdateEffectSuggestion Unknown effectSuggestionType");
     type = itr->second;
     std::vector<uint8_t> vec = {type, isEnable};
     MEDIA_DEBUG_LOG("CaptureSessionForSys::UpdateEffectSuggestion type:%{public}u,isEnable:%{public}u", type, isEnable);
     bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_EFFECT_SUGGESTION_TYPE, vec.data(), vec.size());
-    CHECK_ERROR_RETURN_RET_LOG(!status, CameraErrorCode::SUCCESS,
+    CHECK_RETURN_RET_ELOG(!status, CameraErrorCode::SUCCESS,
         "CaptureSessionForSys::UpdateEffectSuggestion Failed to set effectSuggestionType");
     return CameraErrorCode::SUCCESS;
 }
 
 int32_t CaptureSessionForSys::GetVirtualAperture(float& aperture)
 {
-    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "GetVirtualAperture Session is not Commited");
     // LCOV_EXCL_START
     auto inputDevice = GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(!inputDevice, CameraErrorCode::SUCCESS, "GetVirtualAperture camera device is null");
+    CHECK_RETURN_RET_ELOG(!inputDevice, CameraErrorCode::SUCCESS, "GetVirtualAperture camera device is null");
     auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
-    CHECK_ERROR_RETURN_RET_LOG(!inputDeviceInfo, CameraErrorCode::SUCCESS,
+    CHECK_RETURN_RET_ELOG(!inputDeviceInfo, CameraErrorCode::SUCCESS,
         "GetVirtualAperture camera deviceInfo is null");
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetCachedMetadata();
-    CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, CameraErrorCode::SUCCESS,
+    CHECK_RETURN_RET_ELOG(metadata == nullptr, CameraErrorCode::SUCCESS,
         "GetVirtualAperture camera metadata is null");
-    CHECK_ERROR_RETURN_RET(metadata == nullptr, CameraErrorCode::SUCCESS);
+    CHECK_RETURN_RET(metadata == nullptr, CameraErrorCode::SUCCESS);
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_CAMERA_VIRTUAL_APERTURE_VALUE, &item);
-    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS || item.count == 0, CameraErrorCode::SUCCESS,
+    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS || item.count == 0, CameraErrorCode::SUCCESS,
         "GetVirtualAperture Failed with return code %{public}d", ret);
     aperture = item.data.f[0];
     return CameraErrorCode::SUCCESS;
@@ -689,21 +689,21 @@ int32_t CaptureSessionForSys::GetVirtualAperture(float& aperture)
 int32_t CaptureSessionForSys::SetVirtualAperture(const float virtualAperture)
 {
     CAMERA_SYNC_TRACE;
-    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "SetVirtualAperture Session is not Commited");
     // LCOV_EXCL_START
-    CHECK_ERROR_RETURN_RET_LOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
+    CHECK_RETURN_RET_ELOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
         "SetVirtualAperture changedMetadata_ is NULL");
     std::vector<float> supportedVirtualApertures {};
     GetSupportedVirtualApertures(supportedVirtualApertures);
     auto res = std::find_if(supportedVirtualApertures.begin(), supportedVirtualApertures.end(),
         [&virtualAperture](const float item) { return FloatIsEqual(virtualAperture, item); });
-    CHECK_ERROR_RETURN_RET_LOG(
+    CHECK_RETURN_RET_ELOG(
         res == supportedVirtualApertures.end(), CameraErrorCode::SUCCESS, "current virtualAperture is not supported");
     MEDIA_DEBUG_LOG("SetVirtualAperture virtualAperture: %{public}f", virtualAperture);
     bool status = AddOrUpdateMetadata(
         changedMetadata_, OHOS_CONTROL_CAMERA_VIRTUAL_APERTURE_VALUE, &virtualAperture, 1);
-    CHECK_ERROR_PRINT_LOG(!status, "SetVirtualAperture Failed to set virtualAperture");
+    CHECK_PRINT_ELOG(!status, "SetVirtualAperture Failed to set virtualAperture");
     return CameraErrorCode::SUCCESS;
     // LCOV_EXCL_STOP
 }
@@ -711,21 +711,21 @@ int32_t CaptureSessionForSys::SetVirtualAperture(const float virtualAperture)
 int32_t CaptureSessionForSys::GetPhysicalAperture(float& physicalAperture)
 {
     physicalAperture = 0.0;
-    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "GetPhysicalAperture Session is not Commited");
     // LCOV_EXCL_START
     auto inputDevice = GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(!inputDevice, CameraErrorCode::SUCCESS,
+    CHECK_RETURN_RET_ELOG(!inputDevice, CameraErrorCode::SUCCESS,
         "GetPhysicalAperture camera device is null");
     auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
-    CHECK_ERROR_RETURN_RET_LOG(!inputDeviceInfo, CameraErrorCode::SUCCESS,
+    CHECK_RETURN_RET_ELOG(!inputDeviceInfo, CameraErrorCode::SUCCESS,
         "GetPhysicalAperture camera deviceInfo is null");
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetCachedMetadata();
-    CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, CameraErrorCode::SUCCESS,
+    CHECK_RETURN_RET_ELOG(metadata == nullptr, CameraErrorCode::SUCCESS,
         "GetPhysicalAperture camera metadata is null");
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_CAMERA_PHYSICAL_APERTURE_VALUE, &item);
-    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS || item.count == 0, CameraErrorCode::SUCCESS,
+    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS || item.count == 0, CameraErrorCode::SUCCESS,
         "GetPhysicalAperture Failed with return code %{public}d", ret);
     physicalAperture = item.data.f[0];
     return CameraErrorCode::SUCCESS;
@@ -735,17 +735,17 @@ int32_t CaptureSessionForSys::GetPhysicalAperture(float& physicalAperture)
 int32_t CaptureSessionForSys::SetPhysicalAperture(float physicalAperture)
 {
     CAMERA_SYNC_TRACE;
-    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "SetPhysicalAperture Session is not Commited");
     // LCOV_EXCL_START
-    CHECK_ERROR_RETURN_RET_LOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
+    CHECK_RETURN_RET_ELOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
         "SetPhysicalAperture changedMetadata_ is NULL");
     MEDIA_DEBUG_LOG(
         "CaptureSessionForSys::SetPhysicalAperture physicalAperture = %{public}f", ConfusingNumber(physicalAperture));
     std::vector<std::vector<float>> physicalApertures;
     GetSupportedPhysicalApertures(physicalApertures);
     // physicalApertures size is one, means not support change
-    CHECK_ERROR_RETURN_RET_LOG(physicalApertures.size() == 1, CameraErrorCode::SUCCESS,
+    CHECK_RETURN_RET_ELOG(physicalApertures.size() == 1, CameraErrorCode::SUCCESS,
         "SetPhysicalAperture not support");
     // accurately currentZoomRatio need smoothing zoom done
     float currentZoomRatio = targetZoomRatio_;
@@ -756,21 +756,21 @@ int32_t CaptureSessionForSys::SetPhysicalAperture(float physicalAperture)
             return (currentZoomRatio - physicalApertureRange[zoomMinIndex]) >= -std::numeric_limits<float>::epsilon();
         });
     float autoAperture = 0.0;
-    CHECK_ERROR_RETURN_RET_LOG(it == physicalApertures.rend(), CameraErrorCode::SUCCESS,
+    CHECK_RETURN_RET_ELOG(it == physicalApertures.rend(), CameraErrorCode::SUCCESS,
         "current zoomRatio not supported in physical apertures zoom ratio");
     int physicalAperturesIndex = 2;
     auto res = std::find_if(std::next((*it).begin(), physicalAperturesIndex), (*it).end(),
         [&physicalAperture](
             const float physicalApertureTemp) { return FloatIsEqual(physicalAperture, physicalApertureTemp); });
-    CHECK_ERROR_RETURN_RET_LOG((physicalAperture != autoAperture) && res == (*it).end(), CameraErrorCode::SUCCESS,
+    CHECK_RETURN_RET_ELOG((physicalAperture != autoAperture) && res == (*it).end(), CameraErrorCode::SUCCESS,
         "current physicalAperture is not supported");
-    CHECK_ERROR_RETURN_RET_LOG(!AddOrUpdateMetadata(
+    CHECK_RETURN_RET_ELOG(!AddOrUpdateMetadata(
         changedMetadata_->get(), OHOS_CONTROL_CAMERA_PHYSICAL_APERTURE_VALUE, &physicalAperture, 1),
         CameraErrorCode::SUCCESS, "SetPhysicalAperture Failed to set physical aperture");
     wptr<CaptureSessionForSys> weakThis(this);
     AddFunctionToMap(std::to_string(OHOS_CONTROL_CAMERA_PHYSICAL_APERTURE_VALUE), [weakThis, physicalAperture]() {
         auto sharedThis = weakThis.promote();
-        CHECK_ERROR_RETURN_LOG(!sharedThis, "SetPhysicalAperture session is nullptr");
+        CHECK_RETURN_ELOG(!sharedThis, "SetPhysicalAperture session is nullptr");
         sharedThis->LockForControl();
         int32_t retCode = sharedThis->SetPhysicalAperture(physicalAperture);
         sharedThis->UnlockForControl();
@@ -786,13 +786,13 @@ int32_t CaptureSessionForSys::EnableLcdFlashDetection(bool isEnable)
 {
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("Enter EnableLcdFlashDetection, isEnable:%{public}d", isEnable);
-    CHECK_ERROR_RETURN_RET_LOG(!IsLcdFlashSupported(), CameraErrorCode::OPERATION_NOT_ALLOWED,
+    CHECK_RETURN_RET_ELOG(!IsLcdFlashSupported(), CameraErrorCode::OPERATION_NOT_ALLOWED,
         "EnableLcdFlashDetection IsLcdFlashSupported is false");
     // LCOV_EXCL_START
-    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "EnableLcdFlashDetection session not commited");
     uint8_t enableValue = static_cast<uint8_t>(isEnable);
-    CHECK_ERROR_PRINT_LOG(!AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_LCD_FLASH_DETECTION, &enableValue, 1),
+    CHECK_PRINT_ELOG(!AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_LCD_FLASH_DETECTION, &enableValue, 1),
         "EnableLcdFlashDetection Failed to enable lcd flash detection");
     return CameraErrorCode::SUCCESS;
     // LCOV_EXCL_STOP
@@ -808,13 +808,13 @@ int32_t CaptureSessionForSys::EnableTripodDetection(bool isEnable)
 {
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("Enter EnableTripodDetection, isEnable:%{public}d", isEnable);
-    CHECK_ERROR_RETURN_RET_LOG(!IsTripodDetectionSupported(), CameraErrorCode::OPERATION_NOT_ALLOWED,
+    CHECK_RETURN_RET_ELOG(!IsTripodDetectionSupported(), CameraErrorCode::OPERATION_NOT_ALLOWED,
         "EnableTripodDetection IsTripodDetectionSupported is false");
-    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "CaptureSessionForSys::EnableTripodDetection Session is not Commited");
     // LCOV_EXCL_START
     uint8_t enableValue = static_cast<uint8_t>(isEnable ? 1 : 0);
-    CHECK_ERROR_PRINT_LOG(!AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_TRIPOD_DETECTION, &enableValue, 1),
+    CHECK_PRINT_ELOG(!AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_TRIPOD_DETECTION, &enableValue, 1),
         "CaptureSessionForSys::EnableTripodDetection failed to enable tripod detection");
     return CameraErrorCode::SUCCESS;
     // LCOV_EXCL_STOP
@@ -822,7 +822,7 @@ int32_t CaptureSessionForSys::EnableTripodDetection(bool isEnable)
 
 void CaptureSessionForSys::SetUsage(UsageType usageType, bool enabled)
 {
-    CHECK_ERROR_RETURN_LOG(changedMetadata_ == nullptr,
+    CHECK_RETURN_ELOG(changedMetadata_ == nullptr,
         "CaptureSessionForSys::SetUsage Need to call LockForControl() before setting camera properties");
     // LCOV_EXCL_START
     std::vector<int32_t> mode;
@@ -833,7 +833,7 @@ void CaptureSessionForSys::SetUsage(UsageType usageType, bool enabled)
 
     bool status = changedMetadata_->addEntry(OHOS_CONTROL_CAMERA_SESSION_USAGE, mode.data(), mode.size());
 
-    CHECK_ERROR_PRINT_LOG(!status, "CaptureSessionForSys::SetUsage Failed to set mode");
+    CHECK_PRINT_ELOG(!status, "CaptureSessionForSys::SetUsage Failed to set mode");
     // LCOV_EXCL_STOP
 }
 
@@ -841,11 +841,11 @@ int32_t CaptureSessionForSys::EnableLcdFlash(bool isEnable)
 {
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("Enter EnableLcdFlash, isEnable:%{public}d", isEnable);
-    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "EnableLcdFlash session not commited");
     // LCOV_EXCL_START
     uint8_t enableValue = static_cast<uint8_t>(isEnable);
-    CHECK_ERROR_PRINT_LOG(!AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_LCD_FLASH, &enableValue, 1),
+    CHECK_PRINT_ELOG(!AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_LCD_FLASH, &enableValue, 1),
         "EnableLcdFlash Failed to enable lcd flash");
     return CameraErrorCode::SUCCESS;
     // LCOV_EXCL_STOP

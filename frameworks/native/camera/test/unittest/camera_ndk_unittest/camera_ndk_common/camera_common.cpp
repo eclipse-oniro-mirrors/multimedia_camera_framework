@@ -68,7 +68,7 @@ void CameraNdkCommon::ObtainAvailableFrameRate(Camera_FrameRateRange activeframe
 {
     minFps = activeframeRateRange.min;
     maxFps = activeframeRateRange.max;
-    CHECK_ERROR_RETURN_LOG(frameRateRange == nullptr, "frameRateRange is nullptr");
+    CHECK_RETURN_ELOG(frameRateRange == nullptr, "frameRateRange is nullptr");
     bool flag = false;
     for (uint32_t i = 0; i < size; i++) {
         if (frameRateRange[i].min != activeframeRateRange.min ||

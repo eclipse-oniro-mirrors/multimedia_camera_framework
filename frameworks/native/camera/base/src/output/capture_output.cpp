@@ -36,18 +36,18 @@ CaptureOutput::CaptureOutput(CaptureOutputType outputType, StreamType streamType
 void CaptureOutput::RegisterStreamBinderDied()
 {
     auto stream = GetStream();
-    CHECK_ERROR_RETURN(stream == nullptr);
+    CHECK_RETURN(stream == nullptr);
     sptr<IRemoteObject> object = stream->AsObject();
-    CHECK_ERROR_RETURN(object == nullptr);
+    CHECK_RETURN(object == nullptr);
     std::lock_guard<std::mutex> lock(deathRecipientMutex_);
     if (deathRecipient_ == nullptr) {
         deathRecipient_ = new (std::nothrow) CameraDeathRecipient(0);
-        CHECK_ERROR_RETURN_LOG(deathRecipient_ == nullptr, "failed to new CameraDeathRecipient.");
+        CHECK_RETURN_ELOG(deathRecipient_ == nullptr, "failed to new CameraDeathRecipient.");
         deathRecipient_->SetNotifyCb([this](pid_t pid) { OnCameraServerDied(pid); });
     }
 
     bool result = object->AddDeathRecipient(deathRecipient_);
-    CHECK_ERROR_RETURN_LOG(!result, "failed to add deathRecipient");
+    CHECK_RETURN_ELOG(!result, "failed to add deathRecipient");
 }
 
 sptr<IBufferProducer> CaptureOutput::GetBufferProducer()
@@ -65,7 +65,7 @@ std::string CaptureOutput::GetPhotoSurfaceId()
 void CaptureOutput::UnregisterStreamBinderDied()
 {
     std::lock_guard<std::mutex> lock(deathRecipientMutex_);
-    CHECK_ERROR_RETURN(deathRecipient_ == nullptr);
+    CHECK_RETURN(deathRecipient_ == nullptr);
     auto stream = GetStream();
     if (stream != nullptr) {
         stream->AsObject()->RemoveDeathRecipient(deathRecipient_);

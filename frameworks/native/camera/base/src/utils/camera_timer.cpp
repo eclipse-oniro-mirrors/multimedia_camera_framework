@@ -34,7 +34,7 @@ CameraTimer::CameraTimer()
 CameraTimer::~CameraTimer()
 {
     MEDIA_INFO_LOG("entered.");
-    CHECK_ERROR_RETURN(!timer_);
+    CHECK_RETURN(!timer_);
     timer_->Shutdown();
     timer_ = nullptr;
 }
@@ -61,7 +61,7 @@ void CameraTimer::DecreaseUserCount()
 
 uint32_t CameraTimer::Register(const TimerCallback& callback, uint32_t interval, bool once)
 {
-    CHECK_ERROR_RETURN_RET_LOG(timer_ == nullptr, 0, "timer is nullptr");
+    CHECK_RETURN_RET_ELOG(timer_ == nullptr, 0, "timer is nullptr");
 
     uint32_t timerId = timer_->Register(callback, interval, once);
     MEDIA_DEBUG_LOG("timerId: %{public}u", timerId);

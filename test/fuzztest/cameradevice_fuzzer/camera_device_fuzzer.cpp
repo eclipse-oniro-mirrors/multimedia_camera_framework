@@ -44,13 +44,13 @@ void PrepareHCameraDevice()
         sptr<HCameraHostManager> cameraHostManager = new HCameraHostManager(nullptr);
         std::vector<std::string> cameraIds;
         cameraHostManager->GetCameras(cameraIds);
-        CHECK_ERROR_RETURN_LOG(cameraIds.empty(), "Fuzz:PrepareHCameraDevice: GetCameras returns empty");
+        CHECK_RETURN_ELOG(cameraIds.empty(), "Fuzz:PrepareHCameraDevice: GetCameras returns empty");
         string cameraID = cameraIds[0];
         auto callingTokenId = IPCSkeleton::GetCallingTokenID();
         MEDIA_INFO_LOG("Fuzz:PrepareHCameraDevice: callingTokenId = %{public}d", callingTokenId);
         string permissionName = OHOS_PERMISSION_CAMERA;
         int32_t ret = CheckPermission(permissionName, callingTokenId);
-        CHECK_ERROR_RETURN_LOG(ret != CAMERA_OK, "Fuzz:PrepareHCameraDevice: CheckPermission Failed");
+        CHECK_RETURN_ELOG(ret != CAMERA_OK, "Fuzz:PrepareHCameraDevice: CheckPermission Failed");
         fuzzCameraDevice = new HCameraDevice(cameraHostManager, cameraID, callingTokenId);
         MEDIA_INFO_LOG("Fuzz:PrepareHCameraDevice: Success");
     }
@@ -102,7 +102,7 @@ void CameraDeviceFuzzTest(FuzzedDataProvider& fdp)
 
     MessageParcel dataParcel;
     dataParcel.WriteInterfaceToken(FORMMGR_INTERFACE_TOKEN);
-    CHECK_ERROR_RETURN_LOG(!(OHOS::Camera::MetadataUtils::EncodeCameraMetadata(ability, dataParcel)),
+    CHECK_RETURN_ELOG(!(OHOS::Camera::MetadataUtils::EncodeCameraMetadata(ability, dataParcel)),
         "CameraDeviceFuzzer: EncodeCameraMetadata Error");
     dataParcel.RewindRead(0);
     MessageParcel reply;
@@ -212,7 +212,7 @@ void Test3(FuzzedDataProvider& fdp)
 {
     auto manager = CameraManager::GetInstance();
     auto cameras = manager->GetSupportedCameras();
-    CHECK_ERROR_RETURN_LOG(cameras.size() < MIN_SIZE_NUM, "PhotoOutputFuzzer: GetSupportedCameras Error");
+    CHECK_RETURN_ELOG(cameras.size() < MIN_SIZE_NUM, "PhotoOutputFuzzer: GetSupportedCameras Error");
     sptr<CameraDevice> camera = cameras[fdp.ConsumeIntegral<uint32_t>() % cameras.size()];
     camera->GetID();
     camera->GetMetadata();
@@ -231,7 +231,7 @@ void Test3(FuzzedDataProvider& fdp)
     camera->GetUsedAsPosition();
     CameraFormat format = static_cast<CameraFormat>(fdp.ConsumeIntegral<int32_t>());
     auto capability = manager->GetSupportedOutputCapability(camera);
-    CHECK_ERROR_RETURN_LOG(!capability, "PhotoOutputFuzzer: GetSupportedOutputCapability Error");
+    CHECK_RETURN_ELOG(!capability, "PhotoOutputFuzzer: GetSupportedOutputCapability Error");
     vector<Profile> profiles = capability->GetPhotoProfiles();
     camera->GetMaxSizeProfile(profiles, fdp.ConsumeFloatingPoint<float>(), format);
     auto profiles2 = capability->GetVideoProfiles();
@@ -280,7 +280,7 @@ void TestDynamicLoader(FuzzedDataProvider& fdp)
 
 void TestCameraDeviceServiceCallback(FuzzedDataProvider& fdp)
 {
-    CHECK_ERROR_RETURN(fdp.remaining_bytes() < MIN_SIZE_NUM);
+    CHECK_RETURN(fdp.remaining_bytes() < MIN_SIZE_NUM);
     auto meta = make_shared<OHOS::Camera::CameraMetadata>(10, 100);
     int val = 1;
     AddOrUpdateMetadata(meta, OHOS_STATUS_CAMERA_OCCLUSION_DETECTION, &val, 1);
@@ -328,7 +328,7 @@ extern "C" int LLVMFuzzerTestOneInput(uint8_t* data, size_t size)
     if (fdp.remaining_bytes() < OHOS::CameraStandard::MIN_SIZE_NUM) {
         return 0;
     }
-    CHECK_ERROR_RETURN_RET_LOG(!OHOS::CameraStandard::TestToken::GetAllCameraPermission(), 0, "GetPermission error");
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::TestToken::GetAllCameraPermission(), 0, "GetPermission error");
     OHOS::CameraStandard::CameraDeviceFuzzTest(fdp);
     OHOS::CameraStandard::CameraDeviceFuzzTestUpdateSetting(fdp);
     OHOS::CameraStandard::CameraDeviceFuzzTest2(fdp);

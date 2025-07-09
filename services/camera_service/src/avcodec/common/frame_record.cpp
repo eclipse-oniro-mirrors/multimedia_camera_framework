@@ -59,10 +59,10 @@ void FrameRecord::ReleaseMetaBuffer(sptr<Surface> surface, bool reuse)
     if (metaBuffer_) {
         if (reuse) {
             SurfaceError surfaceRet = surface->AttachBufferToQueue(metaBuffer_);
-            CHECK_ERROR_RETURN_LOG(surfaceRet != SURFACE_ERROR_OK,
+            CHECK_RETURN_ELOG(surfaceRet != SURFACE_ERROR_OK,
                 "Failed to attach meta buffer %{public}d", surfaceRet);
             surfaceRet = surface->ReleaseBuffer(metaBuffer_, -1);
-            CHECK_ERROR_RETURN_LOG(surfaceRet != SURFACE_ERROR_OK,
+            CHECK_RETURN_ELOG(surfaceRet != SURFACE_ERROR_OK,
                 "Failed to Release meta Buffer %{public}d", surfaceRet);
         }
         metaBuffer_ = buffer;
@@ -90,8 +90,8 @@ void FrameRecord::DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<Surf
         .transform = surfaceBuffer->GetSurfaceBufferTransform(),
     };
     auto allocErrorCode = newSurfaceBuffer->Alloc(requestConfig);
-    CHECK_ERROR_RETURN_LOG(allocErrorCode != GSERROR_OK, "SurfaceBuffer alloc ret: %d", allocErrorCode);
-    CHECK_ERROR_PRINT_LOG(memcpy_s(newSurfaceBuffer->GetVirAddr(), newSurfaceBuffer->GetSize(),
+    CHECK_RETURN_ELOG(allocErrorCode != GSERROR_OK, "SurfaceBuffer alloc ret: %d", allocErrorCode);
+    CHECK_PRINT_ELOG(memcpy_s(newSurfaceBuffer->GetVirAddr(), newSurfaceBuffer->GetSize(),
         surfaceBuffer->GetVirAddr(), surfaceBuffer->GetSize()) != EOK, "SurfaceBuffer memcpy_s failed");
 }
 } // namespace CameraStandard

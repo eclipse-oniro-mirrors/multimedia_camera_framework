@@ -48,10 +48,10 @@ void StreamCaptureProxyFuzzer::StreamCaptureProxyFuzzTest1(FuzzedDataProvider& f
     fuzz_->Capture(ability);
 
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    CHECK_ERROR_RETURN_LOG(!samgr, "samgr nullptr");
+    CHECK_RETURN_ELOG(!samgr, "samgr nullptr");
     remote = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
     fuzz_ = std::make_shared<StreamCaptureProxy>(remote);
-    CHECK_ERROR_RETURN_LOG(!fuzz_, "fuzz_ nullptr");
+    CHECK_RETURN_ELOG(!fuzz_, "fuzz_ nullptr");
     fuzz_->Capture(ability);
 }
 
@@ -62,10 +62,10 @@ void StreamCaptureProxyFuzzer::StreamCaptureProxyFuzzTest2(FuzzedDataProvider& f
     fuzz_->CancelCapture();
 
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    CHECK_ERROR_RETURN_LOG(!samgr, "samgr nullptr");
+    CHECK_RETURN_ELOG(!samgr, "samgr nullptr");
     remote = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
     fuzz_ = std::make_shared<StreamCaptureProxy>(remote);
-    CHECK_ERROR_RETURN_LOG(!fuzz_, "fuzz_ nullptr");
+    CHECK_RETURN_ELOG(!fuzz_, "fuzz_ nullptr");
     fuzz_->CancelCapture();
 }
 
@@ -77,10 +77,10 @@ void StreamCaptureProxyFuzzer::StreamCaptureProxyFuzzTest3(FuzzedDataProvider& f
     fuzz_->SetCallback(callback);
 
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    CHECK_ERROR_RETURN_LOG(!samgr, "samgr nullptr");
+    CHECK_RETURN_ELOG(!samgr, "samgr nullptr");
     remote = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
     fuzz_ = std::make_shared<StreamCaptureProxy>(remote);
-    CHECK_ERROR_RETURN_LOG(!fuzz_, "fuzz_ nullptr");
+    CHECK_RETURN_ELOG(!fuzz_, "fuzz_ nullptr");
     fuzz_->SetCallback(callback);
 }
 
@@ -91,10 +91,10 @@ void StreamCaptureProxyFuzzer::StreamCaptureProxyFuzzTest4(FuzzedDataProvider& f
     fuzz_->Release();
 
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    CHECK_ERROR_RETURN_LOG(!samgr, "samgr nullptr");
+    CHECK_RETURN_ELOG(!samgr, "samgr nullptr");
     remote = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
     fuzz_ = std::make_shared<StreamCaptureProxy>(remote);
-    CHECK_ERROR_RETURN_LOG(!fuzz_, "fuzz_ nullptr");
+    CHECK_RETURN_ELOG(!fuzz_, "fuzz_ nullptr");
     fuzz_->Release();
 }
 
@@ -106,10 +106,10 @@ void StreamCaptureProxyFuzzer::StreamCaptureProxyFuzzTest5(FuzzedDataProvider& f
     fuzz_->SetThumbnail(isEnabled);
 
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    CHECK_ERROR_RETURN_LOG(!samgr, "samgr nullptr");
+    CHECK_RETURN_ELOG(!samgr, "samgr nullptr");
     remote = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
     fuzz_ = std::make_shared<StreamCaptureProxy>(remote);
-    CHECK_ERROR_RETURN_LOG(!fuzz_, "fuzz_ nullptr");
+    CHECK_RETURN_ELOG(!fuzz_, "fuzz_ nullptr");
     fuzz_->SetThumbnail(isEnabled);
 }
 
@@ -120,10 +120,10 @@ void StreamCaptureProxyFuzzer::StreamCaptureProxyFuzzTest6(FuzzedDataProvider& f
     fuzz_->ConfirmCapture();
 
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    CHECK_ERROR_RETURN_LOG(!samgr, "samgr nullptr");
+    CHECK_RETURN_ELOG(!samgr, "samgr nullptr");
     remote = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
     fuzz_ = std::make_shared<StreamCaptureProxy>(remote);
-    CHECK_ERROR_RETURN_LOG(!fuzz_, "fuzz_ nullptr");
+    CHECK_RETURN_ELOG(!fuzz_, "fuzz_ nullptr");
     fuzz_->ConfirmCapture();
 }
 
@@ -135,10 +135,10 @@ void StreamCaptureProxyFuzzer::StreamCaptureProxyFuzzTest7(FuzzedDataProvider& f
     fuzz_->DeferImageDeliveryFor(type);
 
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    CHECK_ERROR_RETURN_LOG(!samgr, "samgr nullptr");
+    CHECK_RETURN_ELOG(!samgr, "samgr nullptr");
     remote = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
     fuzz_ = std::make_shared<StreamCaptureProxy>(remote);
-    CHECK_ERROR_RETURN_LOG(!fuzz_, "fuzz_ nullptr");
+    CHECK_RETURN_ELOG(!fuzz_, "fuzz_ nullptr");
     fuzz_->DeferImageDeliveryFor(type);
 }
 
@@ -149,10 +149,10 @@ void StreamCaptureProxyFuzzer::StreamCaptureProxyFuzzTest8(FuzzedDataProvider& f
     fuzz_->IsDeferredPhotoEnabled();
 
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    CHECK_ERROR_RETURN_LOG(!samgr, "samgr nullptr");
+    CHECK_RETURN_ELOG(!samgr, "samgr nullptr");
     remote = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
     fuzz_ = std::make_shared<StreamCaptureProxy>(remote);
-    CHECK_ERROR_RETURN_LOG(!fuzz_, "fuzz_ nullptr");
+    CHECK_RETURN_ELOG(!fuzz_, "fuzz_ nullptr");
     fuzz_->IsDeferredPhotoEnabled();
 }
 
@@ -163,10 +163,10 @@ void StreamCaptureProxyFuzzer::StreamCaptureProxyFuzzTest9(FuzzedDataProvider& f
     fuzz_->IsDeferredVideoEnabled();
 
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    CHECK_ERROR_RETURN_LOG(!samgr, "samgr nullptr");
+    CHECK_RETURN_ELOG(!samgr, "samgr nullptr");
     remote = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
     fuzz_ = std::make_shared<StreamCaptureProxy>(remote);
-    CHECK_ERROR_RETURN_LOG(!fuzz_, "fuzz_ nullptr");
+    CHECK_RETURN_ELOG(!fuzz_, "fuzz_ nullptr");
     fuzz_->IsDeferredVideoEnabled();
 }
 
@@ -187,10 +187,10 @@ void StreamCaptureProxyFuzzer::StreamCaptureProxyFuzzTest10(FuzzedDataProvider& 
     fuzz_->SetBufferProducerInfo(name, producer);
 
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    CHECK_ERROR_RETURN_LOG(!samgr, "samgr nullptr");
+    CHECK_RETURN_ELOG(!samgr, "samgr nullptr");
     remote = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
     fuzz_ = std::make_shared<StreamCaptureProxy>(remote);
-    CHECK_ERROR_RETURN_LOG(!fuzz_, "fuzz_ nullptr");
+    CHECK_RETURN_ELOG(!fuzz_, "fuzz_ nullptr");
     fuzz_->SetBufferProducerInfo(name, producer);
 }
 
@@ -202,10 +202,10 @@ void StreamCaptureProxyFuzzer::StreamCaptureProxyFuzzTest11(FuzzedDataProvider& 
     fuzz_->SetMovingPhotoVideoCodecType(type);
 
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    CHECK_ERROR_RETURN_LOG(!samgr, "samgr nullptr");
+    CHECK_RETURN_ELOG(!samgr, "samgr nullptr");
     remote = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
     fuzz_ = std::make_shared<StreamCaptureProxy>(remote);
-    CHECK_ERROR_RETURN_LOG(!fuzz_, "fuzz_ nullptr");
+    CHECK_RETURN_ELOG(!fuzz_, "fuzz_ nullptr");
     fuzz_->SetMovingPhotoVideoCodecType(type);
 }
 
@@ -217,10 +217,10 @@ void StreamCaptureProxyFuzzer::StreamCaptureProxyFuzzTest12(FuzzedDataProvider& 
     fuzz_->EnableRawDelivery(isEnabled);
 
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    CHECK_ERROR_RETURN_LOG(!samgr, "samgr nullptr");
+    CHECK_RETURN_ELOG(!samgr, "samgr nullptr");
     remote = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
     fuzz_ = std::make_shared<StreamCaptureProxy>(remote);
-    CHECK_ERROR_RETURN_LOG(!fuzz_, "fuzz_ nullptr");
+    CHECK_RETURN_ELOG(!fuzz_, "fuzz_ nullptr");
     fuzz_->EnableRawDelivery(isEnabled);
 }
 
@@ -232,10 +232,10 @@ void StreamCaptureProxyFuzzer::StreamCaptureProxyFuzzTest13(FuzzedDataProvider& 
     fuzz_->SetCameraPhotoRotation(isEnabled);
 
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    CHECK_ERROR_RETURN_LOG(!samgr, "samgr nullptr");
+    CHECK_RETURN_ELOG(!samgr, "samgr nullptr");
     remote = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
     fuzz_ = std::make_shared<StreamCaptureProxy>(remote);
-    CHECK_ERROR_RETURN_LOG(!fuzz_, "fuzz_ nullptr");
+    CHECK_RETURN_ELOG(!fuzz_, "fuzz_ nullptr");
     fuzz_->SetCameraPhotoRotation(isEnabled);
 }
 
@@ -247,10 +247,10 @@ void StreamCaptureProxyFuzzer::StreamCaptureProxyFuzzTest14(FuzzedDataProvider& 
     fuzz_->EnableMovingPhoto(isEnabled);
 
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    CHECK_ERROR_RETURN_LOG(!samgr, "samgr nullptr");
+    CHECK_RETURN_ELOG(!samgr, "samgr nullptr");
     remote = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
     fuzz_ = std::make_shared<StreamCaptureProxy>(remote);
-    CHECK_ERROR_RETURN_LOG(!fuzz_, "fuzz_ nullptr");
+    CHECK_RETURN_ELOG(!fuzz_, "fuzz_ nullptr");
     fuzz_->EnableMovingPhoto(isEnabled);
 }
 
@@ -261,10 +261,10 @@ void StreamCaptureProxyFuzzer::StreamCaptureProxyFuzzTest15(FuzzedDataProvider& 
     fuzz_->UnSetCallback();
 
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    CHECK_ERROR_RETURN_LOG(!samgr, "samgr nullptr");
+    CHECK_RETURN_ELOG(!samgr, "samgr nullptr");
     remote = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
     fuzz_ = std::make_shared<StreamCaptureProxy>(remote);
-    CHECK_ERROR_RETURN_LOG(!fuzz_, "fuzz_ nullptr");
+    CHECK_RETURN_ELOG(!fuzz_, "fuzz_ nullptr");
     fuzz_->UnSetCallback();
 }
 
@@ -276,10 +276,10 @@ void StreamCaptureProxyFuzzer::StreamCaptureProxyFuzzTest16(FuzzedDataProvider& 
     fuzz_->EnableOfflinePhoto(isEnabled);
 
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    CHECK_ERROR_RETURN_LOG(!samgr, "samgr nullptr");
+    CHECK_RETURN_ELOG(!samgr, "samgr nullptr");
     remote = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
     fuzz_ = std::make_shared<StreamCaptureProxy>(remote);
-    CHECK_ERROR_RETURN_LOG(!fuzz_, "fuzz_ nullptr");
+    CHECK_RETURN_ELOG(!fuzz_, "fuzz_ nullptr");
     fuzz_->EnableOfflinePhoto(isEnabled);
 }
 
@@ -291,10 +291,10 @@ void StreamCaptureProxyFuzzer::StreamCaptureProxyFuzzTest17(FuzzedDataProvider& 
     fuzz_->SetPhotoAvailableCallback(callback);
 
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    CHECK_ERROR_RETURN_LOG(!samgr, "samgr nullptr");
+    CHECK_RETURN_ELOG(!samgr, "samgr nullptr");
     remote = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
     fuzz_ = std::make_shared<StreamCaptureProxy>(remote);
-    CHECK_ERROR_RETURN_LOG(!fuzz_, "fuzz_ nullptr");
+    CHECK_RETURN_ELOG(!fuzz_, "fuzz_ nullptr");
     fuzz_->SetPhotoAvailableCallback(callback);
 }
 
@@ -306,10 +306,10 @@ void StreamCaptureProxyFuzzer::StreamCaptureProxyFuzzTest18(FuzzedDataProvider& 
     fuzz_->SetThumbnailCallback(callback);
 
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    CHECK_ERROR_RETURN_LOG(!samgr, "samgr nullptr");
+    CHECK_RETURN_ELOG(!samgr, "samgr nullptr");
     remote = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
     fuzz_ = std::make_shared<StreamCaptureProxy>(remote);
-    CHECK_ERROR_RETURN_LOG(!fuzz_, "fuzz_ nullptr");
+    CHECK_RETURN_ELOG(!fuzz_, "fuzz_ nullptr");
     fuzz_->SetThumbnailCallback(callback);
 }
 
@@ -321,10 +321,10 @@ void StreamCaptureProxyFuzzer::StreamCaptureProxyFuzzTest19(FuzzedDataProvider& 
     fuzz_->SetPhotoAssetAvailableCallback(callback);
 
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    CHECK_ERROR_RETURN_LOG(!samgr, "samgr nullptr");
+    CHECK_RETURN_ELOG(!samgr, "samgr nullptr");
     remote = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
     fuzz_ = std::make_shared<StreamCaptureProxy>(remote);
-    CHECK_ERROR_RETURN_LOG(!fuzz_, "fuzz_ nullptr");
+    CHECK_RETURN_ELOG(!fuzz_, "fuzz_ nullptr");
     fuzz_->SetPhotoAssetAvailableCallback(callback);
 }
 

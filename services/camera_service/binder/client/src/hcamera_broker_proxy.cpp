@@ -32,7 +32,7 @@ int32_t HCameraProxy::NotifyCloseCamera(std::string cameraId)
     option.SetFlags(option.TF_SYNC);
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceDHInterfaceCode::CAMERA_SERVICE_NOTIFY_CLOSE_CAMERA), data, reply, option);
-    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HCameraServiceProxy notifyCloseCamera failed, error: %{public}d", error);
+    CHECK_PRINT_ELOG(error != ERR_NONE, "HCameraServiceProxy notifyCloseCamera failed, error: %{public}d", error);
     MEDIA_DEBUG_LOG("HCameraServiceProxy notifyCloseCamera");
     return error;
 }
@@ -48,7 +48,7 @@ int32_t HCameraProxy::NotifyMuteCamera(bool muteMode)
     option.SetFlags(option.TF_SYNC);
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceDHInterfaceCode::CAMERA_SERVICE_NOTIFY_MUTE_CAMERA), data, reply, option);
-    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HCameraServiceProxy NotifyMuteCamera failed, error: %{public}d", error);
+    CHECK_PRINT_ELOG(error != ERR_NONE, "HCameraServiceProxy NotifyMuteCamera failed, error: %{public}d", error);
     MEDIA_DEBUG_LOG("HCameraServiceProxy NotifyMuteCamera");
     return error;
 }

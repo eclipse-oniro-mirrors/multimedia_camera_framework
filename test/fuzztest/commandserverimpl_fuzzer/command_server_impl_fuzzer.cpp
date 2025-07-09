@@ -69,7 +69,7 @@ void CommandServerImplFuzzer::CommandServerImplFuzzTest()
     std::vector<std::string> testStrings = {"test1", "test2"};
     std::string cmdServerName(testStrings[randomNum % testStrings.size()]);
     fuzz_ = std::make_shared<CommandServerImpl>(cmdServerName);
-    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
+    CHECK_RETURN_ELOG(!fuzz_, "Create fuzz_ Error");
     int32_t threadPriority = GetData<int32_t>();
     fuzz_->SetThreadPriority(threadPriority);
     fuzz_->GetThreadPriority();

@@ -37,7 +37,7 @@ namespace {
 void AsyncCompleteCallback(napi_env env, napi_status status, void* data)
 {
     auto metadataOutputAsyncContext = static_cast<MetadataOutputAsyncContext*>(data);
-    CHECK_ERROR_RETURN_LOG(metadataOutputAsyncContext == nullptr,
+    CHECK_RETURN_ELOG(metadataOutputAsyncContext == nullptr,
         "MetadataOutputNapi AsyncCompleteCallback context is null");
     MEDIA_INFO_LOG("MetadataOutputNapi AsyncCompleteCallback %{public}s, status = %{public}d",
         metadataOutputAsyncContext->funcName.c_str(), metadataOutputAsyncContext->status);
@@ -95,10 +95,10 @@ napi_value MetadataOutputCallback::CreateMetadataObjJSArray(napi_env env,
     napi_value metadataObj = nullptr;
     napi_status status;
 
-    CHECK_ERROR_PRINT_LOG(metadataObjList.empty(), "CreateMetadataObjJSArray: metadataObjList is empty");
+    CHECK_PRINT_ELOG(metadataObjList.empty(), "CreateMetadataObjJSArray: metadataObjList is empty");
 
     status = napi_create_array(env, &metadataObjArray);
-    CHECK_ERROR_RETURN_RET_LOG(status != napi_ok, metadataObjArray,
+    CHECK_RETURN_RET_ELOG(status != napi_ok, metadataObjArray,
         "CreateMetadataObjJSArray: napi_create_array failed");
 
     size_t j = 0;
@@ -106,7 +106,7 @@ napi_value MetadataOutputCallback::CreateMetadataObjJSArray(napi_env env,
     for (size_t i = 0; i < metadataObjList.size(); i++) {
         metadataObj = CameraNapiObjMetadataObject(*metadataObjList[i]).GenerateNapiValue(env);
         CHECK_EXECUTE(isSystemApp, AddMetadataObjExtending(env, metadataObjList[i], metadataObj));
-        CHECK_ERROR_RETURN_RET_LOG((metadataObj == nullptr) ||
+        CHECK_RETURN_RET_ELOG((metadataObj == nullptr) ||
             napi_set_element(env, metadataObjArray, j++, metadataObj) != napi_ok, nullptr,
             "CreateMetadataObjJSArray: Failed to create metadata face object napi wrapper object");
     }
@@ -116,7 +116,7 @@ napi_value MetadataOutputCallback::CreateMetadataObjJSArray(napi_env env,
 void MetadataOutputCallback::AddMetadataObjExtending(napi_env env, sptr<MetadataObject> metadataObj,
     napi_value &metadataNapiObj) const
 {
-    CHECK_ERROR_RETURN_LOG(metadataObj == nullptr, "AddMetadataObjExtending got null metadataObj");
+    CHECK_RETURN_ELOG(metadataObj == nullptr, "AddMetadataObjExtending got null metadataObj");
     auto type = metadataObj->GetType();
     switch (type) {
         case MetadataObjectType::FACE:
@@ -140,7 +140,7 @@ void MetadataOutputCallback::CreateHumanFaceMetaData(napi_env env, sptr<Metadata
     napi_value numberNapiObj = nullptr;
  
     napi_get_undefined(env, &metadataObjResult);
-    CHECK_ERROR_RETURN(metadataObj == nullptr && metadataNapiObj == nullptr);
+    CHECK_RETURN(metadataObj == nullptr && metadataNapiObj == nullptr);
     MetadataFaceObject* faceObjectPtr = static_cast<MetadataFaceObject*>(metadataObj.GetRefPtr());
     Rect boundingBox = faceObjectPtr->GetLeftEyeBoundingBox();
     metadataObjResult = CameraNapiBoundingBox(boundingBox).GenerateNapiValue(env);
@@ -167,7 +167,7 @@ void MetadataOutputCallback::CreateCatFaceMetaData(napi_env env, sptr<MetadataOb
     napi_value metadataObjResult = nullptr;
  
     napi_get_undefined(env, &metadataObjResult);
-    CHECK_ERROR_RETURN(metadataObj == nullptr && metadataNapiObj == nullptr);
+    CHECK_RETURN(metadataObj == nullptr && metadataNapiObj == nullptr);
     MetadataCatFaceObject* faceObjectPtr = static_cast<MetadataCatFaceObject*>(metadataObj.GetRefPtr());
     Rect boundingBox = faceObjectPtr->GetLeftEyeBoundingBox();
     metadataObjResult = CameraNapiBoundingBox(boundingBox).GenerateNapiValue(env);
@@ -183,7 +183,7 @@ void MetadataOutputCallback::CreateDogFaceMetaData(napi_env env, sptr<MetadataOb
     napi_value metadataObjResult = nullptr;
  
     napi_get_undefined(env, &metadataObjResult);
-    CHECK_ERROR_RETURN(metadataObj == nullptr && metadataNapiObj == nullptr);
+    CHECK_RETURN(metadataObj == nullptr && metadataNapiObj == nullptr);
     MetadataDogFaceObject* faceObjectPtr = static_cast<MetadataDogFaceObject*>(metadataObj.GetRefPtr());
     Rect boundingBox = faceObjectPtr->GetLeftEyeBoundingBox();
     metadataObjResult = CameraNapiBoundingBox(boundingBox).GenerateNapiValue(env);
@@ -204,7 +204,7 @@ void MetadataOutputCallback::OnMetadataObjectsAvailableCallback(
     napi_get_undefined(env_, &result[PARAM1]);
     result[PARAM1] = CreateMetadataObjJSArray(env_, metadataObjList);
     MEDIA_INFO_LOG("OnMetadataObjectsAvailableCallback metadataObjList size = %{public}zu", metadataObjList.size());
-    CHECK_ERROR_RETURN_LOG(result[PARAM1] == nullptr, "invoke CreateMetadataObjJSArray failed");
+    CHECK_RETURN_ELOG(result[PARAM1] == nullptr, "invoke CreateMetadataObjJSArray failed");
 
     ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
     ExecuteCallback("metadataObjectsAvailable", callbackNapiPara);
@@ -295,7 +295,7 @@ napi_value MetadataOutputNapi::Init(napi_env env, napi_value exports)
         status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
         if (status == napi_ok) {
             status = napi_set_named_property(env, exports, CAMERA_METADATA_OUTPUT_NAPI_CLASS_NAME, ctorObj);
-            CHECK_ERROR_RETURN_RET(status == napi_ok, exports);
+            CHECK_RETURN_RET(status == napi_ok, exports);
         }
     }
     MEDIA_ERR_LOG("Init call Failed!");
@@ -363,8 +363,8 @@ napi_value MetadataOutputNapi::CreateMetadataOutput(napi_env env, std::vector<Me
     status = napi_get_reference_value(env, sConstructor_, &constructor);
     if (status == napi_ok) {
         int retCode = CameraManager::GetInstance()->CreateMetadataOutput(sMetadataOutput_, metadataObjectTypes);
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
-        CHECK_ERROR_RETURN_RET_LOG(sMetadataOutput_ == nullptr, result, "failed to create MetadataOutput");
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET_ELOG(sMetadataOutput_ == nullptr, result, "failed to create MetadataOutput");
         status = napi_new_instance(env, constructor, 0, nullptr, &result);
         sMetadataOutput_ = nullptr;
         if (status == napi_ok && result != nullptr) {
@@ -394,11 +394,11 @@ napi_value MetadataOutputNapi::AddMetadataObjectTypes(napi_env env, napi_callbac
     napi_get_undefined(env, &result);
     MetadataOutputNapi* metadataOutputNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&metadataOutputNapi));
-    CHECK_ERROR_RETURN_RET_LOG(status != napi_ok || metadataOutputNapi == nullptr, result, "napi_unwrap failure!");
+    CHECK_RETURN_RET_ELOG(status != napi_ok || metadataOutputNapi == nullptr, result, "napi_unwrap failure!");
     std::vector<MetadataObjectType> metadataObjectType;
     CameraNapiUtils::ParseMetadataObjectTypes(env, argv[PARAM0], metadataObjectType);
     int32_t retCode = metadataOutputNapi->metadataOutput_->AddMetadataObjectTypes(metadataObjectType);
-    CHECK_ERROR_PRINT_LOG(!CameraNapiUtils::CheckError(env, retCode), "AddMetadataObjectTypes failure!");
+    CHECK_PRINT_ELOG(!CameraNapiUtils::CheckError(env, retCode), "AddMetadataObjectTypes failure!");
     return result;
 }
  
@@ -418,11 +418,11 @@ napi_value MetadataOutputNapi::RemoveMetadataObjectTypes(napi_env env, napi_call
     napi_get_undefined(env, &result);
     MetadataOutputNapi* metadataOutputNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&metadataOutputNapi));
-    CHECK_ERROR_RETURN_RET_LOG(status != napi_ok || metadataOutputNapi == nullptr, result, "napi_unwrap failure!");
+    CHECK_RETURN_RET_ELOG(status != napi_ok || metadataOutputNapi == nullptr, result, "napi_unwrap failure!");
     std::vector<MetadataObjectType> metadataObjectType;
     CameraNapiUtils::ParseMetadataObjectTypes(env, argv[PARAM0], metadataObjectType);
     int32_t retCode = metadataOutputNapi->metadataOutput_->RemoveMetadataObjectTypes(metadataObjectType);
-    CHECK_ERROR_PRINT_LOG(!CameraNapiUtils::CheckError(env, retCode), "RemoveMetadataObjectTypes failure!");
+    CHECK_PRINT_ELOG(!CameraNapiUtils::CheckError(env, retCode), "RemoveMetadataObjectTypes failure!");
     return result;
 }
 
@@ -434,7 +434,7 @@ napi_value MetadataOutputNapi::Start(napi_env env, napi_callback_info info)
     auto asyncFunction =
         std::make_shared<CameraNapiAsyncFunction>(env, "Start", asyncContext->callbackRef, asyncContext->deferred);
     CameraNapiParamParser jsParamParser(env, info, asyncContext->objectInfo, asyncFunction);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument"), nullptr,
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument"), nullptr,
         "MetadataOutputNapi::Start invalid argument");
     asyncContext->HoldNapiValue(env, jsParamParser.GetThisVar());
     napi_status status = napi_create_async_work(
@@ -442,7 +442,7 @@ napi_value MetadataOutputNapi::Start(napi_env env, napi_callback_info info)
         [](napi_env env, void* data) {
             MEDIA_INFO_LOG("MetadataOutputNapi::Start running on worker");
             auto context = static_cast<MetadataOutputAsyncContext*>(data);
-            CHECK_ERROR_RETURN_LOG(context->objectInfo == nullptr, "MetadataOutputNapi::Start async info is nullptr");
+            CHECK_RETURN_ELOG(context->objectInfo == nullptr, "MetadataOutputNapi::Start async info is nullptr");
             CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
             CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(context->queueTask, [&context]() {
                 context->errorCode = context->objectInfo->metadataOutput_->Start();
@@ -460,7 +460,7 @@ napi_value MetadataOutputNapi::Start(napi_env env, napi_callback_info info)
         napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
         asyncContext.release();
     }
-    CHECK_ERROR_RETURN_RET(asyncFunction->GetAsyncFunctionType() == ASYNC_FUN_TYPE_PROMISE,
+    CHECK_RETURN_RET(asyncFunction->GetAsyncFunctionType() == ASYNC_FUN_TYPE_PROMISE,
         asyncFunction->GetPromise());
     return CameraNapiUtils::GetUndefinedValue(env);
 }
@@ -473,7 +473,7 @@ napi_value MetadataOutputNapi::Stop(napi_env env, napi_callback_info info)
     auto asyncFunction =
         std::make_shared<CameraNapiAsyncFunction>(env, "Stop", asyncContext->callbackRef, asyncContext->deferred);
     CameraNapiParamParser jsParamParser(env, info, asyncContext->objectInfo, asyncFunction);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument"), nullptr,
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument"), nullptr,
         "MetadataOutputNapi::Stop invalid argument");
     asyncContext->HoldNapiValue(env, jsParamParser.GetThisVar());
     napi_status status = napi_create_async_work(
@@ -481,7 +481,7 @@ napi_value MetadataOutputNapi::Stop(napi_env env, napi_callback_info info)
         [](napi_env env, void* data) {
             MEDIA_INFO_LOG("MetadataOutputNapi::Stop running on worker");
             auto context = static_cast<MetadataOutputAsyncContext*>(data);
-            CHECK_ERROR_RETURN_LOG(context->objectInfo == nullptr, "MetadataOutputNapi::Stop async info is nullptr");
+            CHECK_RETURN_ELOG(context->objectInfo == nullptr, "MetadataOutputNapi::Stop async info is nullptr");
             CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
             CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(context->queueTask, [&context]() {
                 context->errorCode = context->objectInfo->metadataOutput_->Stop();
@@ -500,7 +500,7 @@ napi_value MetadataOutputNapi::Stop(napi_env env, napi_callback_info info)
         napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
         asyncContext.release();
     }
-    CHECK_ERROR_RETURN_RET(asyncFunction->GetAsyncFunctionType() == ASYNC_FUN_TYPE_PROMISE,
+    CHECK_RETURN_RET(asyncFunction->GetAsyncFunctionType() == ASYNC_FUN_TYPE_PROMISE,
         asyncFunction->GetPromise());
     return CameraNapiUtils::GetUndefinedValue(env);
 }
@@ -513,7 +513,7 @@ napi_value MetadataOutputNapi::Release(napi_env env, napi_callback_info info)
     auto asyncFunction =
         std::make_shared<CameraNapiAsyncFunction>(env, "Release", asyncContext->callbackRef, asyncContext->deferred);
     CameraNapiParamParser jsParamParser(env, info, asyncContext->objectInfo, asyncFunction);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument"), nullptr,
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument"), nullptr,
         "MetadataOutputNapi::Release invalid argument");
     asyncContext->HoldNapiValue(env, jsParamParser.GetThisVar());
     napi_status status = napi_create_async_work(
@@ -521,7 +521,7 @@ napi_value MetadataOutputNapi::Release(napi_env env, napi_callback_info info)
         [](napi_env env, void* data) {
             MEDIA_INFO_LOG("MetadataOutputNapi::Release running on worker");
             auto context = static_cast<MetadataOutputAsyncContext*>(data);
-            CHECK_ERROR_RETURN_LOG(context->objectInfo == nullptr, "MetadataOutputNapi::Release async info is nullptr");
+            CHECK_RETURN_ELOG(context->objectInfo == nullptr, "MetadataOutputNapi::Release async info is nullptr");
             CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
             CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(context->queueTask, [&context]() {
                 context->errorCode = context->objectInfo->metadataOutput_->Release();
@@ -538,7 +538,7 @@ napi_value MetadataOutputNapi::Release(napi_env env, napi_callback_info info)
         napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
         asyncContext.release();
     }
-    CHECK_ERROR_RETURN_RET(asyncFunction->GetAsyncFunctionType() == ASYNC_FUN_TYPE_PROMISE,
+    CHECK_RETURN_RET(asyncFunction->GetAsyncFunctionType() == ASYNC_FUN_TYPE_PROMISE,
         asyncFunction->GetPromise());
     return CameraNapiUtils::GetUndefinedValue(env);
 }

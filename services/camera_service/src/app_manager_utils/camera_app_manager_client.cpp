@@ -52,7 +52,7 @@ int32_t CameraAppManagerClient::GetProcessState(int32_t pid)
     AppExecFwk::RunningProcessInfo runningProcessstate;
     int ret = appMgrHolder_->GetRunningProcessInfoByPid(pid, runningProcessstate);
     MEDIA_INFO_LOG("GetProcessStateByPid error code: %{public}d, state: %{public}d", ret, runningProcessstate.state_);
-    CHECK_ERROR_RETURN_RET(ret == CAMERA_OK, static_cast<int32_t>(runningProcessstate.state_));
+    CHECK_RETURN_RET(ret == CAMERA_OK, static_cast<int32_t>(runningProcessstate.state_));
     return -1;
 }
 } // namespace CameraStandard

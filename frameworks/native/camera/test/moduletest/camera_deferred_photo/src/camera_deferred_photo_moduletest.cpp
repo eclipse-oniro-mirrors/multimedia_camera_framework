@@ -58,17 +58,17 @@ void CameraDeferredPhotoModuleTest::SetUp()
     ASSERT_NE(cameraManager_, nullptr);
 
     cameras_ = cameraManager_->GetSupportedCameras();
-    CHECK_ERROR_RETURN(cameras_.empty());
+    CHECK_RETURN(cameras_.empty());
 
     std::vector<SceneMode> sceneModes = GetSupportedSceneModes(cameras_[0]);
     auto it = std::find(sceneModes.begin(), sceneModes.end(), CAPTURE_SCENE_MODE);
-    CHECK_ERROR_RETURN(it == sceneModes.end());
+    CHECK_RETURN(it == sceneModes.end());
 
     outputCapability_ = cameraManager_->GetSupportedOutputCapability(cameras_[0], CAPTURE_SCENE_MODE);
     ASSERT_NE(outputCapability_, nullptr);
     previewProfiles_ = outputCapability_->GetPreviewProfiles();
     photoProfiles_ = outputCapability_->GetPhotoProfiles();
-    CHECK_ERROR_RETURN(previewProfiles_.empty() || photoProfiles_.empty());
+    CHECK_RETURN(previewProfiles_.empty() || photoProfiles_.empty());
 
     previewOutput_ = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput_, nullptr);
@@ -128,7 +128,7 @@ void CameraDeferredPhotoModuleTest::TearDown()
 std::vector<SceneMode> CameraDeferredPhotoModuleTest::GetSupportedSceneModes(sptr<CameraDevice>& camera)
 {
     std::vector<SceneMode> sceneModes = {};
-    CHECK_ERROR_RETURN_RET(cameraManager_ == nullptr, sceneModes);
+    CHECK_RETURN_RET(cameraManager_ == nullptr, sceneModes);
     sceneModes = cameraManager_->GetSupportedModes(cameras_[0]);
     if (sceneModes.empty()) {
         sceneModes.emplace_back(SceneMode::CAPTURE);
@@ -146,18 +146,18 @@ sptr<CaptureOutput> CameraDeferredPhotoModuleTest::CreatePreviewOutput(Profile& 
     if (imageReceiver_ == nullptr) {
         imageReceiver_ = Media::ImageReceiver::CreateImageReceiver(width, height,
             static_cast<int32_t>(Media::ImageFormat::JPEG), DEFAULT_CAPACITY);
-        CHECK_ERROR_RETURN_RET_LOG(imageReceiver_ == nullptr, nullptr,
+        CHECK_RETURN_RET_ELOG(imageReceiver_ == nullptr, nullptr,
             "CameraDeferredPhotoModuleTest::CreatePreviewOutput Failed to create image receiver");
     }
     std::string surfaceId = imageReceiver_->iraContext_->GetReceiverKey();
     previewSurface_ = Media::ImageReceiver::getSurfaceById(surfaceId);
-    CHECK_ERROR_RETURN_RET_LOG(previewSurface_ == nullptr, nullptr,
+    CHECK_RETURN_RET_ELOG(previewSurface_ == nullptr, nullptr,
         "CameraDeferredPhotoModuleTest::CreatePreviewOutput Failed to get surface by id");
     previewSurface_->SetUserData(CameraManager::surfaceFormat, std::to_string(previewProfile.GetCameraFormat()));
 
     sptr<CaptureOutput> previewOutput;
     previewOutput = cameraManager_->CreatePreviewOutput(previewProfile, previewSurface_);
-    CHECK_ERROR_RETURN_RET_LOG(previewOutput == nullptr, nullptr,
+    CHECK_RETURN_RET_ELOG(previewOutput == nullptr, nullptr,
         "CameraDeferredPhotoModuleTest::CreatePreviewOutput Failed to create preview output");
 
     return previewOutput;
@@ -165,11 +165,11 @@ sptr<CaptureOutput> CameraDeferredPhotoModuleTest::CreatePreviewOutput(Profile& 
 
 int32_t CameraDeferredPhotoModuleTest::AddPreviewOutput(sptr<CaptureOutput>& previewOutput)
 {
-    CHECK_ERROR_RETURN_RET(captureSession_ == nullptr, EXECUTE_FAILED);
-    CHECK_ERROR_RETURN_RET_LOG(!captureSession_->CanAddOutput(previewOutput), EXECUTE_FAILED,
+    CHECK_RETURN_RET(captureSession_ == nullptr, EXECUTE_FAILED);
+    CHECK_RETURN_RET_ELOG(!captureSession_->CanAddOutput(previewOutput), EXECUTE_FAILED,
         "Can not add preview output");
     int32_t ret = captureSession_->AddOutput(previewOutput);
-    CHECK_ERROR_RETURN_RET_LOG(ret != EXECUTE_SUCCESS, EXECUTE_FAILED, "AddPreviewOutput failed");
+    CHECK_RETURN_RET_ELOG(ret != EXECUTE_SUCCESS, EXECUTE_FAILED, "AddPreviewOutput failed");
     isPreviewOutputAdded_ = true;
     return EXECUTE_SUCCESS;
 }
@@ -177,20 +177,20 @@ int32_t CameraDeferredPhotoModuleTest::AddPreviewOutput(sptr<CaptureOutput>& pre
 int32_t CameraDeferredPhotoModuleTest::CreateAndOpenCameraInput()
 {
     cameraInput_ = cameraManager_->CreateCameraInput(cameras_[0]);
-    CHECK_ERROR_RETURN_RET_LOG(cameraInput_ == nullptr, EXECUTE_FAILED, "CreateCameraInput failed");
+    CHECK_RETURN_RET_ELOG(cameraInput_ == nullptr, EXECUTE_FAILED, "CreateCameraInput failed");
 
     int ret = cameraInput_->Open();
-    CHECK_ERROR_RETURN_RET_LOG(ret != EXECUTE_SUCCESS, EXECUTE_FAILED, "CameraInput open failed");
+    CHECK_RETURN_RET_ELOG(ret != EXECUTE_SUCCESS, EXECUTE_FAILED, "CameraInput open failed");
     isCameraInputOpened_ = true;
     return EXECUTE_SUCCESS;
 }
 
 int32_t CameraDeferredPhotoModuleTest::AddInput(sptr<CaptureInput>& cameraInput)
 {
-    CHECK_ERROR_RETURN_RET(captureSession_ == nullptr, EXECUTE_FAILED);
-    CHECK_ERROR_RETURN_RET_LOG(!captureSession_->CanAddInput(cameraInput), EXECUTE_FAILED, "Can not add input");
+    CHECK_RETURN_RET(captureSession_ == nullptr, EXECUTE_FAILED);
+    CHECK_RETURN_RET_ELOG(!captureSession_->CanAddInput(cameraInput), EXECUTE_FAILED, "Can not add input");
     int32_t ret = captureSession_->AddInput(cameraInput);
-    CHECK_ERROR_RETURN_RET_LOG(ret != EXECUTE_SUCCESS, EXECUTE_FAILED, "AddInput failed");
+    CHECK_RETURN_RET_ELOG(ret != EXECUTE_SUCCESS, EXECUTE_FAILED, "AddInput failed");
     isCameraInputAdded_ = true;
     return EXECUTE_SUCCESS;
 }
@@ -200,7 +200,7 @@ sptr<PhotoOutput> CameraDeferredPhotoModuleTest::CreatePhotoOutputWithoutSurface
     photoSurface_ = Surface::CreateSurfaceAsConsumer("photoOutput");
     photoSurface_->SetUserData(CameraManager::surfaceFormat, std::to_string(photoProfile.GetCameraFormat()));
     sptr<IBufferProducer> surfaceProducer = photoSurface_->GetProducer();
-    CHECK_ERROR_RETURN_RET_LOG(surfaceProducer == nullptr, nullptr,
+    CHECK_RETURN_RET_ELOG(surfaceProducer == nullptr, nullptr,
         "CameraDeferredPhotoModuleTest::CreatePhotoOutputWithoutSurfaceId Failed to get producer");
 
     sptr<PhotoOutput> photoOutput = nullptr;
@@ -221,16 +221,16 @@ sptr<PhotoOutput> CameraDeferredPhotoModuleTest::CreatePhotoOutputWithSurfaceId(
     if (imageReceiver_ == nullptr) {
         imageReceiver_ = Media::ImageReceiver::CreateImageReceiver(width, height,
             static_cast<int32_t>(Media::ImageFormat::JPEG), DEFAULT_CAPACITY);
-        CHECK_ERROR_RETURN_RET_LOG(imageReceiver_ == nullptr, nullptr,
+        CHECK_RETURN_RET_ELOG(imageReceiver_ == nullptr, nullptr,
             "CameraDeferredPhotoModuleTest::CreatePhotoOutputWithSurfaceId Failed to create image receiver");
     }
     std::string surfaceId = imageReceiver_->iraContext_->GetReceiverKey();
     photoSurface_ = Media::ImageReceiver::getSurfaceById(surfaceId);
-    CHECK_ERROR_RETURN_RET_LOG(photoSurface_ == nullptr, nullptr,
+    CHECK_RETURN_RET_ELOG(photoSurface_ == nullptr, nullptr,
         "CameraDeferredPhotoModuleTest::CreatePhotoOutputWithSurfaceId Failed to get surface by id");
     photoSurface_->SetUserData(CameraManager::surfaceFormat, std::to_string(photoProfile.GetCameraFormat()));
     sptr<IBufferProducer> surfaceProducer = photoSurface_->GetProducer();
-    CHECK_ERROR_RETURN_RET_LOG(surfaceProducer == nullptr, nullptr,
+    CHECK_RETURN_RET_ELOG(surfaceProducer == nullptr, nullptr,
         "CameraDeferredPhotoModuleTest::CreatePhotoOutputWithSurfaceId Failed to get producer");
 
     sptr<PhotoOutput> photoOutput = nullptr;
@@ -241,15 +241,15 @@ sptr<PhotoOutput> CameraDeferredPhotoModuleTest::CreatePhotoOutputWithSurfaceId(
 
 int32_t CameraDeferredPhotoModuleTest::RegisterPhotoAvailableCallback()
 {
-    CHECK_ERROR_RETURN_RET(photoOutput_ == nullptr, EXECUTE_FAILED);
+    CHECK_RETURN_RET(photoOutput_ == nullptr, EXECUTE_FAILED);
     photoListener_ = sptr<PhotoListenerModuleTest>::MakeSptr(photoOutput_);
-    CHECK_ERROR_RETURN_RET_LOG(photoListener_ == nullptr, EXECUTE_FAILED, "photoListener_ is nullptr");
-    CHECK_ERROR_RETURN_RET_LOG(photoSurface_ == nullptr, EXECUTE_FAILED, "photoSurface_ is nullptr");
+    CHECK_RETURN_RET_ELOG(photoListener_ == nullptr, EXECUTE_FAILED, "photoListener_ is nullptr");
+    CHECK_RETURN_RET_ELOG(photoSurface_ == nullptr, EXECUTE_FAILED, "photoSurface_ is nullptr");
     SurfaceError ret = photoSurface_->RegisterConsumerListener((sptr<IBufferConsumerListener>&)photoListener_);
-    CHECK_ERROR_RETURN_RET_LOG(ret != SURFACE_ERROR_OK, EXECUTE_FAILED, "RegisterConsumerListener failed");
+    CHECK_RETURN_RET_ELOG(ret != SURFACE_ERROR_OK, EXECUTE_FAILED, "RegisterConsumerListener failed");
 
     auto photoOutput = photoListener_->wPhotoOutput_.promote();
-    CHECK_ERROR_RETURN_RET_LOG(photoOutput == nullptr, EXECUTE_FAILED, "wPhotoOutput promote failed");
+    CHECK_RETURN_RET_ELOG(photoOutput == nullptr, EXECUTE_FAILED, "wPhotoOutput promote failed");
     photoOutput->callbackFlag_ |= CAPTURE_PHOTO;
     photoOutput->SetCallbackFlag(photoOutput->callbackFlag_);
     return EXECUTE_SUCCESS;
@@ -257,15 +257,15 @@ int32_t CameraDeferredPhotoModuleTest::RegisterPhotoAvailableCallback()
 
 int32_t CameraDeferredPhotoModuleTest::RegisterPhotoAssetAvailableCallback()
 {
-    CHECK_ERROR_RETURN_RET(photoOutput_ == nullptr, EXECUTE_FAILED);
+    CHECK_RETURN_RET(photoOutput_ == nullptr, EXECUTE_FAILED);
     photoListener_ = sptr<PhotoListenerModuleTest>::MakeSptr(photoOutput_);
-    CHECK_ERROR_RETURN_RET_LOG(photoListener_ == nullptr, EXECUTE_FAILED, "photoListener_ is nullptr");
-    CHECK_ERROR_RETURN_RET_LOG(photoSurface_ == nullptr, EXECUTE_FAILED, "photoSurface_ is nullptr");
+    CHECK_RETURN_RET_ELOG(photoListener_ == nullptr, EXECUTE_FAILED, "photoListener_ is nullptr");
+    CHECK_RETURN_RET_ELOG(photoSurface_ == nullptr, EXECUTE_FAILED, "photoSurface_ is nullptr");
     SurfaceError ret = photoSurface_->RegisterConsumerListener((sptr<IBufferConsumerListener>&)photoListener_);
-    CHECK_ERROR_RETURN_RET_LOG(ret != SURFACE_ERROR_OK, EXECUTE_FAILED, "RegisterConsumerListener failed");
+    CHECK_RETURN_RET_ELOG(ret != SURFACE_ERROR_OK, EXECUTE_FAILED, "RegisterConsumerListener failed");
 
     auto photoOutput = photoListener_->wPhotoOutput_.promote();
-    CHECK_ERROR_RETURN_RET_LOG(photoOutput == nullptr, EXECUTE_FAILED, "wPhotoOutput promote failed");
+    CHECK_RETURN_RET_ELOG(photoOutput == nullptr, EXECUTE_FAILED, "wPhotoOutput promote failed");
     photoOutput->callbackFlag_ |= CAPTURE_PHOTO_ASSET;
     photoOutput->SetCallbackFlag(photoOutput->callbackFlag_);
 
@@ -274,34 +274,34 @@ int32_t CameraDeferredPhotoModuleTest::RegisterPhotoAssetAvailableCallback()
 
 int32_t CameraDeferredPhotoModuleTest::AddPhotoOutput(sptr<PhotoOutput>& photoOutput)
 {
-    CHECK_ERROR_RETURN_RET(captureSession_ == nullptr, EXECUTE_FAILED);
+    CHECK_RETURN_RET(captureSession_ == nullptr, EXECUTE_FAILED);
     sptr<CaptureOutput> output = static_cast<CaptureOutput*>(photoOutput.GetRefPtr());
-    CHECK_ERROR_RETURN_RET_LOG(!captureSession_->CanAddOutput(output), EXECUTE_FAILED, "Can not add photo output");
+    CHECK_RETURN_RET_ELOG(!captureSession_->CanAddOutput(output), EXECUTE_FAILED, "Can not add photo output");
     int32_t ret = captureSession_->AddOutput(output);
-    CHECK_ERROR_RETURN_RET_LOG(ret != EXECUTE_SUCCESS, EXECUTE_FAILED, "AddPhotoOutput failed");
+    CHECK_RETURN_RET_ELOG(ret != EXECUTE_SUCCESS, EXECUTE_FAILED, "AddPhotoOutput failed");
     isPhotoOutputAdded_ = true;
     return EXECUTE_SUCCESS;
 }
 
 int32_t CameraDeferredPhotoModuleTest::Start()
 {
-    CHECK_ERROR_RETURN_RET(captureSession_ == nullptr, EXECUTE_FAILED);
+    CHECK_RETURN_RET(captureSession_ == nullptr, EXECUTE_FAILED);
     int32_t ret = captureSession_->Start();
-    CHECK_ERROR_RETURN_RET_LOG(ret != EXECUTE_SUCCESS, EXECUTE_FAILED, "Start capture session failed");
+    CHECK_RETURN_RET_ELOG(ret != EXECUTE_SUCCESS, EXECUTE_FAILED, "Start capture session failed");
     isSessionStarted_ = true;
     return EXECUTE_SUCCESS;
 }
 
 int32_t CameraDeferredPhotoModuleTest::Capture()
 {
-    CHECK_ERROR_RETURN_RET(photoOutput_ == nullptr, EXECUTE_FAILED);
-    CHECK_ERROR_RETURN_RET(!isSessionStarted_, EXECUTE_FAILED);
+    CHECK_RETURN_RET(photoOutput_ == nullptr, EXECUTE_FAILED);
+    CHECK_RETURN_RET(!isSessionStarted_, EXECUTE_FAILED);
     std::shared_ptr<PhotoCaptureSetting> setting = std::make_shared<PhotoCaptureSetting>();
-    CHECK_ERROR_RETURN_RET_LOG(setting == nullptr, EXECUTE_FAILED, "setting is nullptr");
+    CHECK_RETURN_RET_ELOG(setting == nullptr, EXECUTE_FAILED, "setting is nullptr");
     setting->SetQuality(PhotoCaptureSetting::QualityLevel::QUALITY_LEVEL_HIGH);
     setting->SetRotation(PhotoCaptureSetting::RotationConfig::Rotation_0);
     int32_t ret = photoOutput_->Capture(setting);
-    CHECK_ERROR_RETURN_RET_LOG(ret != EXECUTE_SUCCESS, EXECUTE_FAILED, "Capture failed");
+    CHECK_RETURN_RET_ELOG(ret != EXECUTE_SUCCESS, EXECUTE_FAILED, "Capture failed");
     return EXECUTE_SUCCESS;
 }
 
@@ -345,7 +345,7 @@ void PhotoListenerModuleTest::WaitForPhotoCallbackAndSetTimeOut()
  */
 HWTEST_F(CameraDeferredPhotoModuleTest, camera_deferred_photo_moduletest_001, TestSize.Level1)
 {
-    CHECK_ERROR_RETURN(!isInitSuccess_);
+    CHECK_RETURN(!isInitSuccess_);
     photoOutput_ = CreatePhotoOutputWithoutSurfaceId(photoProfiles_[0]);
     ASSERT_NE(photoOutput_, nullptr);
 
@@ -368,7 +368,7 @@ HWTEST_F(CameraDeferredPhotoModuleTest, camera_deferred_photo_moduletest_001, Te
     EXPECT_EQ(ret, EXECUTE_SUCCESS);
 
     ret = photoOutput_->IsDeferredImageDeliverySupported(DELIVERY_PHOTO);
-    CHECK_ERROR_RETURN(ret != 0);
+    CHECK_RETURN(ret != 0);
 
     ret = photoOutput_->IsDeferredImageDeliveryEnabled(DELIVERY_PHOTO);
     EXPECT_EQ(ret, DEFERRED_PHOTO_NOT_ENABLED);
@@ -400,7 +400,7 @@ HWTEST_F(CameraDeferredPhotoModuleTest, camera_deferred_photo_moduletest_001, Te
  */
 HWTEST_F(CameraDeferredPhotoModuleTest, camera_deferred_photo_moduletest_002, TestSize.Level0)
 {
-    CHECK_ERROR_RETURN(!isInitSuccess_);
+    CHECK_RETURN(!isInitSuccess_);
     photoOutput_ = CreatePhotoOutputWithoutSurfaceId(photoProfiles_[0]);
     ASSERT_NE(photoOutput_, nullptr);
 
@@ -420,7 +420,7 @@ HWTEST_F(CameraDeferredPhotoModuleTest, camera_deferred_photo_moduletest_002, Te
     EXPECT_EQ(ret, EXECUTE_SUCCESS);
 
     ret = photoOutput_->IsDeferredImageDeliverySupported(DELIVERY_PHOTO);
-    CHECK_ERROR_RETURN(ret != 0);
+    CHECK_RETURN(ret != 0);
 
     ret = photoOutput_->IsDeferredImageDeliveryEnabled(DELIVERY_PHOTO);
     EXPECT_EQ(ret, DEFERRED_PHOTO_NOT_ENABLED);
@@ -449,7 +449,7 @@ HWTEST_F(CameraDeferredPhotoModuleTest, camera_deferred_photo_moduletest_002, Te
  */
 HWTEST_F(CameraDeferredPhotoModuleTest, camera_deferred_photo_moduletest_003, TestSize.Level0)
 {
-    CHECK_ERROR_RETURN(!isInitSuccess_);
+    CHECK_RETURN(!isInitSuccess_);
     photoOutput_ = CreatePhotoOutputWithoutSurfaceId(photoProfiles_[0]);
     ASSERT_NE(photoOutput_, nullptr);
 
@@ -472,7 +472,7 @@ HWTEST_F(CameraDeferredPhotoModuleTest, camera_deferred_photo_moduletest_003, Te
     EXPECT_EQ(ret, EXECUTE_SUCCESS);
 
     ret = photoOutput_->IsDeferredImageDeliverySupported(DELIVERY_PHOTO);
-    CHECK_ERROR_RETURN(ret != 0);
+    CHECK_RETURN(ret != 0);
 
     ret = captureSession_->CommitConfig();
     EXPECT_EQ(ret, EXECUTE_SUCCESS);
@@ -495,7 +495,7 @@ HWTEST_F(CameraDeferredPhotoModuleTest, camera_deferred_photo_moduletest_003, Te
  */
 HWTEST_F(CameraDeferredPhotoModuleTest, camera_deferred_photo_moduletest_004, TestSize.Level0)
 {
-    CHECK_ERROR_RETURN(!isInitSuccess_);
+    CHECK_RETURN(!isInitSuccess_);
     photoOutput_ = CreatePhotoOutputWithSurfaceId(photoProfiles_[0]);
     ASSERT_NE(photoOutput_, nullptr);
 
@@ -515,7 +515,7 @@ HWTEST_F(CameraDeferredPhotoModuleTest, camera_deferred_photo_moduletest_004, Te
     EXPECT_EQ(ret, EXECUTE_SUCCESS);
 
     ret = photoOutput_->IsDeferredImageDeliverySupported(DELIVERY_PHOTO);
-    CHECK_ERROR_RETURN(ret != 0);
+    CHECK_RETURN(ret != 0);
 
     ret = captureSession_->CommitConfig();
     EXPECT_EQ(ret, EXECUTE_SUCCESS);
@@ -538,7 +538,7 @@ HWTEST_F(CameraDeferredPhotoModuleTest, camera_deferred_photo_moduletest_004, Te
  */
 HWTEST_F(CameraDeferredPhotoModuleTest, camera_deferred_photo_moduletest_005, TestSize.Level0)
 {
-    CHECK_ERROR_RETURN(!isInitSuccess_);
+    CHECK_RETURN(!isInitSuccess_);
     photoOutput_ = CreatePhotoOutputWithoutSurfaceId(photoProfiles_[0]);
     ASSERT_NE(photoOutput_, nullptr);
 
@@ -561,10 +561,10 @@ HWTEST_F(CameraDeferredPhotoModuleTest, camera_deferred_photo_moduletest_005, Te
     EXPECT_EQ(ret, EXECUTE_SUCCESS);
 
     ret = photoOutput_->IsDeferredImageDeliverySupported(DELIVERY_PHOTO);
-    CHECK_ERROR_RETURN(ret != 0);
+    CHECK_RETURN(ret != 0);
 
     ret = photoOutput_->IsDeferredImageDeliverySupported(DELIVERY_NONE);
-    CHECK_ERROR_RETURN(ret != 0);
+    CHECK_RETURN(ret != 0);
 
     ret = photoOutput_->DeferImageDeliveryFor(DELIVERY_NONE);
     EXPECT_EQ(ret, EXECUTE_SUCCESS);
@@ -590,7 +590,7 @@ HWTEST_F(CameraDeferredPhotoModuleTest, camera_deferred_photo_moduletest_005, Te
  */
 HWTEST_F(CameraDeferredPhotoModuleTest, camera_deferred_photo_moduletest_006, TestSize.Level0)
 {
-    CHECK_ERROR_RETURN(!isInitSuccess_);
+    CHECK_RETURN(!isInitSuccess_);
     photoOutput_ = CreatePhotoOutputWithoutSurfaceId(photoProfiles_[0]);
     ASSERT_NE(photoOutput_, nullptr);
 
@@ -613,10 +613,10 @@ HWTEST_F(CameraDeferredPhotoModuleTest, camera_deferred_photo_moduletest_006, Te
     EXPECT_EQ(ret, EXECUTE_SUCCESS);
 
     ret = photoOutput_->IsDeferredImageDeliverySupported(DELIVERY_PHOTO);
-    CHECK_ERROR_RETURN(ret != 0);
+    CHECK_RETURN(ret != 0);
 
     ret = photoOutput_->IsDeferredImageDeliverySupported(DELIVERY_VIDEO);
-    CHECK_ERROR_RETURN(ret != 0);
+    CHECK_RETURN(ret != 0);
 
     ret = photoOutput_->DeferImageDeliveryFor(DELIVERY_VIDEO);
     EXPECT_EQ(ret, EXECUTE_SUCCESS);
@@ -641,7 +641,7 @@ HWTEST_F(CameraDeferredPhotoModuleTest, camera_deferred_photo_moduletest_006, Te
  */
 HWTEST_F(CameraDeferredPhotoModuleTest, camera_deferred_photo_moduletest_007, TestSize.Level1)
 {
-    CHECK_ERROR_RETURN(!isInitSuccess_);
+    CHECK_RETURN(!isInitSuccess_);
     photoOutput_ = CreatePhotoOutputWithoutSurfaceId(photoProfiles_[0]);
     ASSERT_NE(photoOutput_, nullptr);
 
@@ -664,7 +664,7 @@ HWTEST_F(CameraDeferredPhotoModuleTest, camera_deferred_photo_moduletest_007, Te
     EXPECT_EQ(ret, EXECUTE_SUCCESS);
 
     ret = photoOutput_->IsDeferredImageDeliverySupported(DELIVERY_PHOTO);
-    CHECK_ERROR_RETURN(ret != 0);
+    CHECK_RETURN(ret != 0);
 
     ret = photoOutput_->IsDeferredImageDeliveryEnabled(DELIVERY_PHOTO);
     EXPECT_EQ(ret, DEFERRED_PHOTO_NOT_ENABLED);
@@ -698,7 +698,7 @@ HWTEST_F(CameraDeferredPhotoModuleTest, camera_deferred_photo_moduletest_007, Te
  */
 HWTEST_F(CameraDeferredPhotoModuleTest, camera_deferred_photo_moduletest_008, TestSize.Level0)
 {
-    CHECK_ERROR_RETURN(!isInitSuccess_);
+    CHECK_RETURN(!isInitSuccess_);
     photoOutput_ = CreatePhotoOutputWithoutSurfaceId(photoProfiles_[0]);
     ASSERT_NE(photoOutput_, nullptr);
 
@@ -730,7 +730,7 @@ HWTEST_F(CameraDeferredPhotoModuleTest, camera_deferred_photo_moduletest_008, Te
     EXPECT_EQ(ret, EXECUTE_SUCCESS);
 
     ret = photoOutput_->IsDeferredImageDeliverySupported(DELIVERY_PHOTO);
-    CHECK_ERROR_RETURN(ret != 0);
+    CHECK_RETURN(ret != 0);
 
     ret = photoOutput_->IsDeferredImageDeliveryEnabled(DELIVERY_PHOTO);
     EXPECT_EQ(ret, DEFERRED_PHOTO_NOT_ENABLED);
@@ -753,7 +753,7 @@ HWTEST_F(CameraDeferredPhotoModuleTest, camera_deferred_photo_moduletest_008, Te
  */
 HWTEST_F(CameraDeferredPhotoModuleTest, camera_deferred_photo_moduletest_009, TestSize.Level0)
 {
-    CHECK_ERROR_RETURN(!isInitSuccess_);
+    CHECK_RETURN(!isInitSuccess_);
     photoOutput_ = CreatePhotoOutputWithoutSurfaceId(photoProfiles_[0]);
     ASSERT_NE(photoOutput_, nullptr);
 
@@ -785,7 +785,7 @@ HWTEST_F(CameraDeferredPhotoModuleTest, camera_deferred_photo_moduletest_009, Te
     EXPECT_EQ(ret, EXECUTE_SUCCESS);
 
     ret = photoOutput_->IsDeferredImageDeliverySupported(DELIVERY_PHOTO);
-    CHECK_ERROR_RETURN(ret != 0);
+    CHECK_RETURN(ret != 0);
 
     ret = photoOutput_->IsDeferredImageDeliveryEnabled(DELIVERY_PHOTO);
     EXPECT_EQ(ret, DEFERRED_PHOTO_NOT_ENABLED);
@@ -808,7 +808,7 @@ HWTEST_F(CameraDeferredPhotoModuleTest, camera_deferred_photo_moduletest_009, Te
  */
 HWTEST_F(CameraDeferredPhotoModuleTest, camera_deferred_photo_moduletest_010, TestSize.Level0)
 {
-    CHECK_ERROR_RETURN(!isInitSuccess_);
+    CHECK_RETURN(!isInitSuccess_);
     photoOutput_ = CreatePhotoOutputWithoutSurfaceId(photoProfiles_[0]);
     ASSERT_NE(photoOutput_, nullptr);
 
@@ -831,10 +831,10 @@ HWTEST_F(CameraDeferredPhotoModuleTest, camera_deferred_photo_moduletest_010, Te
     EXPECT_EQ(ret, EXECUTE_SUCCESS);
 
     ret = photoOutput_->IsDeferredImageDeliverySupported(DELIVERY_PHOTO);
-    CHECK_ERROR_RETURN(ret != 0);
+    CHECK_RETURN(ret != 0);
 
     ret = photoOutput_->IsDeferredImageDeliverySupported(DELIVERY_NONE);
-    CHECK_ERROR_RETURN(ret != 0);
+    CHECK_RETURN(ret != 0);
 
     ret = photoOutput_->DeferImageDeliveryFor(DELIVERY_NONE);
     EXPECT_EQ(ret, EXECUTE_SUCCESS);

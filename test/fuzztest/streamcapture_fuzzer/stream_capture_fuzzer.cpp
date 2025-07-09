@@ -44,7 +44,7 @@ void StreamCaptureFuzzTest(uint8_t *rawData, size_t size)
     if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
         return;
     }
-    CHECK_ERROR_RETURN_LOG(!TestToken::GetAllCameraPermission(), "GetPermission error");
+    CHECK_RETURN_ELOG(!TestToken::GetAllCameraPermission(), "GetPermission error");
 
     int32_t itemCount = 10;
     int32_t dataSize = 100;
@@ -70,15 +70,15 @@ void StreamCaptureFuzzTest(uint8_t *rawData, size_t size)
 
     MessageParcel data;
     data.WriteInterfaceToken(FORMMGR_INTERFACE_TOKEN);
-    CHECK_ERROR_RETURN_LOG(!(OHOS::Camera::MetadataUtils::EncodeCameraMetadata(ability, data)),
+    CHECK_RETURN_ELOG(!(OHOS::Camera::MetadataUtils::EncodeCameraMetadata(ability, data)),
         "StreamCaptureFuzzer: EncodeCameraMetadata Error");
     data.RewindRead(0);
 
     sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
-    CHECK_ERROR_RETURN_LOG(!photoSurface, "StreamCaptureFuzzer: Create photoSurface Error");
+    CHECK_RETURN_ELOG(!photoSurface, "StreamCaptureFuzzer: Create photoSurface Error");
     sptr<IBufferProducer> producer = photoSurface->GetProducer();
     sptr<HStreamCapture> streamcapture = new HStreamCapture(producer, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT);
-    CHECK_ERROR_RETURN(streamcapture == nullptr);
+    CHECK_RETURN(streamcapture == nullptr);
     streamcapture->Release();
 }
 } // namespace CameraStandard

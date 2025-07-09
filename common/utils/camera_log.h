@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -55,88 +55,206 @@
 #define CAMERA_LIKELY(x) __builtin_expect(!!(x), 1)
 #define CAMERA_UNLIKELY(x) __builtin_expect(!!(x), 0)
 
-#define CHECK_ERROR_RETURN_RET_LOG(cond, ret, fmt, ...)  \
-    do {                                                 \
-        if (CAMERA_UNLIKELY(cond)) {                     \
-            MEDIA_ERR_LOG(fmt, ##__VA_ARGS__);           \
-            return ret;                                  \
-        }                                                \
+#define CHECK_BREAK(cond) \
+    if (1) {              \
+        if (cond) {       \
+            break;        \
+        }                 \
+    } else                \
+        void(0)
+
+#define CHECK_CONTINUE(cond) \
+    if (1) {                 \
+        if (cond) {          \
+            continue;        \
+        }                    \
+    } else                   \
+        void(0)
+
+#define CHECK_RETURN(cond) \
+    do {                   \
+        if (cond) {        \
+            return;        \
+        }                  \
     } while (0)
 
-#define CHECK_DEBUG_RETURN_RET_LOG(cond, ret, fmt, ...)  \
-    do {                                                 \
-        if (CAMERA_UNLIKELY(cond)) {                     \
-            MEDIA_DEBUG_LOG(fmt, ##__VA_ARGS__);         \
-            return ret;                                  \
-        }                                                \
+#define CHECK_EXECUTE(cond, cmd) \
+    do {                         \
+        if (cond) {              \
+            cmd;                 \
+        }                        \
     } while (0)
 
-#define CHECK_DEBUG_RETURN_LOG(cond, fmt, ...)         \
-    do {                                               \
-        if (CAMERA_UNLIKELY(cond)) {                   \
-            MEDIA_DEBUG_LOG(fmt, ##__VA_ARGS__);       \
-            return;                                    \
-        }                                              \
-    } while (0)
- 
-#define CHECK_DEBUG_PRINT_LOG(cond, fmt, ...)            \
-    do {                                                 \
-        if (CAMERA_UNLIKELY(cond)) {                     \
-            MEDIA_DEBUG_LOG(fmt, ##__VA_ARGS__);         \
-        }                                                \
+#define CHECK_RETURN_RET(cond, ret) \
+    do {                            \
+        if (cond) {                 \
+            return ret;             \
+        }                           \
     } while (0)
 
-#define CHECK_ERROR_RETURN(cond)                      \
-    do {                                              \
-        if (CAMERA_UNLIKELY(cond)) {                  \
-            return;                                   \
-        }                                             \
+#define CHECK_PRINT_ELOG(cond, fmt, ...)       \
+    do {                                       \
+        if (CAMERA_UNLIKELY(cond)) {           \
+            MEDIA_ERR_LOG(fmt, ##__VA_ARGS__); \
+        }                                      \
     } while (0)
 
-#define CHECK_ERROR_RETURN_LOG(cond, fmt, ...)         \
-    do {                                               \
-        if (CAMERA_UNLIKELY(cond)) {                   \
-            MEDIA_ERR_LOG(fmt, ##__VA_ARGS__);         \
-            return;                                    \
-        }                                              \
+#define CHECK_PRINT_WLOG(cond, fmt, ...)           \
+    do {                                           \
+        if (CAMERA_UNLIKELY(cond)) {               \
+            MEDIA_WARNING_LOG(fmt, ##__VA_ARGS__); \
+        }                                          \
     } while (0)
 
-#define CHECK_ERROR_PRINT_LOG(cond, fmt, ...)          \
-    do {                                               \
-        if (CAMERA_UNLIKELY(cond)) {                   \
-            MEDIA_ERR_LOG(fmt, ##__VA_ARGS__);         \
-        }                                              \
+#define CHECK_PRINT_ILOG(cond, fmt, ...)        \
+    do {                                        \
+        if (CAMERA_UNLIKELY(cond)) {            \
+            MEDIA_INFO_LOG(fmt, ##__VA_ARGS__); \
+        }                                       \
     } while (0)
 
-#define CHECK_ERROR_RETURN_RET(cond, ret)              \
-    do {                                               \
-        if (CAMERA_UNLIKELY(cond)) {                   \
-            return ret;                                \
-        }                                              \
+#define CHECK_PRINT_DLOG(cond, fmt, ...)         \
+    do {                                         \
+        if (CAMERA_UNLIKELY(cond)) {             \
+            MEDIA_DEBUG_LOG(fmt, ##__VA_ARGS__); \
+        }                                        \
     } while (0)
 
-#define CHECK_WARNING_BREAK_LOG(cond, fmt, ...)                             \
-    if (1) {                                                                \
-        if (cond) {                                                         \
-            MEDIA_WARNING_LOG(fmt, ##__VA_ARGS__);                          \
-            break;                                                          \
-        }                                                                   \
-    } else void (0)
-
-#define CHECK_WARNING_CONTINUE_LOG(cond, fmt, ...)                          \
-    if (1) {                                                                \
-        if (cond) {                                                         \
-            MEDIA_WARNING_LOG(fmt, ##__VA_ARGS__);                          \
-            continue;                                                       \
-        }                                                                   \
-    } else void (0)
-
-#define CHECK_EXECUTE(cond, cmd)                                            \
-    do {                                                                    \
-        if (cond) {                                                         \
-            cmd;                                                            \
-        }                                                                   \
+#define CHECK_RETURN_ELOG(cond, fmt, ...)      \
+    do {                                       \
+        if (CAMERA_UNLIKELY(cond)) {           \
+            MEDIA_ERR_LOG(fmt, ##__VA_ARGS__); \
+            return;                            \
+        }                                      \
     } while (0)
+
+#define CHECK_RETURN_WLOG(cond, fmt, ...)          \
+    do {                                           \
+        if (CAMERA_UNLIKELY(cond)) {               \
+            MEDIA_WARNING_LOG(fmt, ##__VA_ARGS__); \
+            return;                                \
+        }                                          \
+    } while (0)
+
+#define CHECK_RETURN_ILOG(cond, fmt, ...)       \
+    do {                                        \
+        if (CAMERA_UNLIKELY(cond)) {            \
+            MEDIA_INFO_LOG(fmt, ##__VA_ARGS__); \
+            return;                             \
+        }                                       \
+    } while (0)
+
+#define CHECK_RETURN_DLOG(cond, fmt, ...)        \
+    do {                                         \
+        if (CAMERA_UNLIKELY(cond)) {             \
+            MEDIA_DEBUG_LOG(fmt, ##__VA_ARGS__); \
+            return;                              \
+        }                                        \
+    } while (0)
+
+#define CHECK_RETURN_RET_ELOG(cond, ret, fmt, ...) \
+    do {                                           \
+        if (CAMERA_UNLIKELY(cond)) {               \
+            MEDIA_ERR_LOG(fmt, ##__VA_ARGS__);     \
+            return ret;                            \
+        }                                          \
+    } while (0)
+
+#define CHECK_RETURN_RET_WLOG(cond, ret, fmt, ...) \
+    do {                                           \
+        if (CAMERA_UNLIKELY(cond)) {               \
+            MEDIA_WARNING_LOG(fmt, ##__VA_ARGS__); \
+            return ret;                            \
+        }                                          \
+    } while (0)
+
+#define CHECK_RETURN_RET_ILOG(cond, ret, fmt, ...) \
+    do {                                           \
+        if (CAMERA_UNLIKELY(cond)) {               \
+            MEDIA_INFO_LOG(fmt, ##__VA_ARGS__);    \
+            return ret;                            \
+        }                                          \
+    } while (0)
+
+#define CHECK_RETURN_RET_DLOG(cond, ret, fmt, ...) \
+    do {                                           \
+        if (CAMERA_UNLIKELY(cond)) {               \
+            MEDIA_INFO_LOG(fmt, ##__VA_ARGS__);    \
+            return ret;                            \
+        }                                          \
+    } while (0)
+
+#define CHECK_BREAK_ELOG(cond, fmt, ...)       \
+    if (1) {                                   \
+        if (CAMERA_UNLIKELY(cond)) {           \
+            MEDIA_ERR_LOG(fmt, ##__VA_ARGS__); \
+            break;                             \
+        }                                      \
+    } else                                     \
+        void(0)
+
+#define CHECK_BREAK_WLOG(cond, fmt, ...)           \
+    if (1) {                                       \
+        if (CAMERA_UNLIKELY(cond)) {               \
+            MEDIA_WARNING_LOG(fmt, ##__VA_ARGS__); \
+            break;                                 \
+        }                                          \
+    } else                                         \
+        void(0)
+
+#define CHECK_BREAK_ILOG(cond, fmt, ...)        \
+    if (1) {                                    \
+        if (CAMERA_UNLIKELY(cond)) {            \
+            MEDIA_INFO_LOG(fmt, ##__VA_ARGS__); \
+            break;                              \
+        }                                       \
+    } else                                      \
+        void(0)
+
+#define CHECK_BREAK_DLOG(cond, fmt, ...)        \
+    if (1) {                                    \
+        if (CAMERA_UNLIKELY(cond)) {            \
+            MEDIA_INFO_LOG(fmt, ##__VA_ARGS__); \
+            break;                              \
+        }                                       \
+    } else                                      \
+        void(0)
+
+#define CHECK_CONTINUE_ELOG(cond, fmt, ...)    \
+    if (1) {                                   \
+        if (CAMERA_UNLIKELY(cond)) {           \
+            MEDIA_ERR_LOG(fmt, ##__VA_ARGS__); \
+            continue;                          \
+        }                                      \
+    } else                                     \
+        void(0)
+
+#define CHECK_CONTINUE_WLOG(cond, fmt, ...)        \
+    if (1) {                                       \
+        if (CAMERA_UNLIKELY(cond)) {               \
+            MEDIA_WARNING_LOG(fmt, ##__VA_ARGS__); \
+            continue;                              \
+        }                                          \
+    } else                                         \
+        void(0)
+
+#define CHECK_CONTINUE_ILOG(cond, fmt, ...)     \
+    if (1) {                                    \
+        if (CAMERA_UNLIKELY(cond)) {            \
+            MEDIA_INFO_LOG(fmt, ##__VA_ARGS__); \
+            continue;                           \
+        }                                       \
+    } else                                      \
+        void(0)
+
+#define CHECK_CONTINUE_DLOG(cond, fmt, ...)     \
+    if (1) {                                    \
+        if (CAMERA_UNLIKELY(cond)) {            \
+            MEDIA_INFO_LOG(fmt, ##__VA_ARGS__); \
+            continue;                           \
+        }                                       \
+    } else                                      \
+        void(0)
 
 #define POINTER_MASK 0x00FFFFFF
 

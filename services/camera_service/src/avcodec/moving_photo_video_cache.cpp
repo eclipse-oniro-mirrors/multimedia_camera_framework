@@ -67,7 +67,7 @@ void MovingPhotoVideoCache::DoMuxerVideo(std::vector<sptr<FrameRecord>> frameRec
         return a->GetTimeStamp() < b->GetTimeStamp();
     });
     std::lock_guard<std::mutex> lock(taskManagerLock_);
-    CHECK_ERROR_RETURN(!taskManager_);
+    CHECK_RETURN(!taskManager_);
     taskManager_->DoMuxerVideo(frameRecords, taskName, rotation, captureId);
     auto thisPtr = sptr<MovingPhotoVideoCache>(this);
     taskManager_->SubmitTask([thisPtr]() { thisPtr->ClearCallbackHandler(); });
@@ -157,7 +157,7 @@ void CachedFrameCallbackHandle::OnCacheFrameFinish(sptr<FrameRecord> frameRecord
             errorCacheRecords_.push_back(frameRecord);
         }
         // Still waiting for more cache encoded buffer
-        CHECK_ERROR_RETURN(!cacheRecords_.empty());
+        CHECK_RETURN(!cacheRecords_.empty());
         MEDIA_INFO_LOG("encodedEndCbFunc_ is called success count: %{public}zu", successCacheRecords_.size());
         // All buffer have been encoded
         if (encodedEndCbFunc_ != nullptr) {
@@ -173,7 +173,7 @@ void CachedFrameCallbackHandle::AbortCapture()
     std::lock_guard<std::mutex> lock(cacheFrameMutex_);
     isAbort_ = true;
     cacheRecords_.clear();
-    CHECK_ERROR_RETURN(encodedEndCbFunc_ == nullptr);
+    CHECK_RETURN(encodedEndCbFunc_ == nullptr);
     encodedEndCbFunc_(successCacheRecords_, taskName_, rotation_, captureId_);
     encodedEndCbFunc_ = nullptr;
 }

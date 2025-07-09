@@ -38,8 +38,8 @@ void ThumbnailBufferConsumer::OnBufferAvailable()
 {
     MEDIA_INFO_LOG("ThumbnailBufferConsumer OnBufferAvailable E");
     sptr<HStreamCapture> streamCapture = streamCapture_.promote();
-    CHECK_ERROR_RETURN_LOG(streamCapture == nullptr, "streamCapture is null");
-    CHECK_ERROR_RETURN_LOG(streamCapture->photoTask_ == nullptr, "photoTask is null");
+    CHECK_RETURN_ELOG(streamCapture == nullptr, "streamCapture is null");
+    CHECK_RETURN_ELOG(streamCapture->photoTask_ == nullptr, "photoTask is null");
     wptr<ThumbnailBufferConsumer> thisPtr(this);
     streamCapture->photoTask_->SubmitTask([thisPtr]() {
         auto listener = thisPtr.promote();
@@ -53,16 +53,16 @@ void ThumbnailBufferConsumer::ExecuteOnBufferAvailable()
     MEDIA_INFO_LOG("T_ExecuteOnBufferAvailable E");
     CAMERA_SYNC_TRACE;
     sptr<HStreamCapture> streamCapture = streamCapture_.promote();
-    CHECK_ERROR_RETURN_LOG(streamCapture == nullptr, "streamCapture is null");
+    CHECK_RETURN_ELOG(streamCapture == nullptr, "streamCapture is null");
     constexpr int32_t memSize = 20 * 1024;
     streamCapture->RequireMemorySize(memSize);
-    CHECK_ERROR_RETURN_LOG(streamCapture->thumbnailSurface_ == nullptr, "surface is null");
+    CHECK_RETURN_ELOG(streamCapture->thumbnailSurface_ == nullptr, "surface is null");
     sptr<SurfaceBuffer> surfaceBuffer = nullptr;
     int32_t fence = -1;
     int64_t timestamp;
     OHOS::Rect damage;
     SurfaceError surfaceRet = streamCapture->thumbnailSurface_->AcquireBuffer(surfaceBuffer, fence, timestamp, damage);
-    CHECK_ERROR_RETURN_LOG(surfaceRet != SURFACE_ERROR_OK, "ThumbnailBufferConsumer Failed to acquire surface buffer");
+    CHECK_RETURN_ELOG(surfaceRet != SURFACE_ERROR_OK, "ThumbnailBufferConsumer Failed to acquire surface buffer");
     // burst captreu skip thumbnail
     int32_t burstSeqId = CameraSurfaceBufferUtil::GetBurstSequenceId(surfaceBuffer);
     if (burstSeqId != -1) {
@@ -73,7 +73,7 @@ void ThumbnailBufferConsumer::ExecuteOnBufferAvailable()
     sptr<SurfaceBuffer> newSurfaceBuffer = CameraSurfaceBufferUtil::DeepCopyThumbnailBuffer(surfaceBuffer);
     MEDIA_DEBUG_LOG("ThumbnailListener ReleaseBuffer begin");
     streamCapture->thumbnailSurface_->ReleaseBuffer(surfaceBuffer, -1);
-    CHECK_ERROR_RETURN_LOG(newSurfaceBuffer == nullptr, "newSurfaceBuffer is null");
+    CHECK_RETURN_ELOG(newSurfaceBuffer == nullptr, "newSurfaceBuffer is null");
     MEDIA_DEBUG_LOG("ThumbnailListener ReleaseBuffer end");
     streamCapture->OnThumbnailAvailable(newSurfaceBuffer, timestamp);
     if (streamCapture->isYuvCapture_) {

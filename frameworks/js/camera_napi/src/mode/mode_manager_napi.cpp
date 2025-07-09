@@ -31,7 +31,7 @@ namespace {
 sptr<CameraDevice> GetCameraDeviceFromNapiCameraInfoObj(napi_env env, napi_value napiCameraInfoObj)
 {
     napi_value napiCameraId = nullptr;
-    CHECK_ERROR_RETURN_RET(napi_get_named_property(env, napiCameraInfoObj, "cameraId", &napiCameraId) != napi_ok,
+    CHECK_RETURN_RET(napi_get_named_property(env, napiCameraInfoObj, "cameraId", &napiCameraId) != napi_ok,
         nullptr);
     std::string cameraId = CameraNapiUtils::GetStringArgument(env, napiCameraId);
     return CameraManager::GetInstance()->GetCameraDeviceFromId(cameraId);
@@ -64,7 +64,7 @@ napi_value ModeManagerNapi::ModeManagerNapiConstructor(napi_env env, napi_callba
         std::unique_ptr<ModeManagerNapi> obj = std::make_unique<ModeManagerNapi>();
         obj->env_ = env;
         obj->modeManager_ = CameraManager::GetInstance();
-        CHECK_ERROR_RETURN_RET_LOG(obj->modeManager_ == nullptr, result,
+        CHECK_RETURN_RET_ELOG(obj->modeManager_ == nullptr, result,
             "Failure wrapping js to native napi, obj->modeManager_ null");
         status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
                            ModeManagerNapi::ModeManagerNapiDestructor, nullptr, nullptr);
@@ -107,7 +107,7 @@ napi_value ModeManagerNapi::Init(napi_env env, napi_value exports)
         int32_t refCount = 1;
         if (napi_create_reference(env, ctorObj, refCount, &sConstructor_) == napi_ok) {
             status = napi_set_named_property(env, exports, MODE_MANAGER_NAPI_CLASS_NAME, ctorObj);
-            CHECK_ERROR_RETURN_RET(status == napi_ok, exports);
+            CHECK_RETURN_RET(status == napi_ok, exports);
         }
     }
     MEDIA_ERR_LOG("Init call Failed!");
@@ -143,7 +143,7 @@ napi_value ModeManagerNapi::CreateSessionForSys(napi_env env, int32_t jsModeName
     napi_get_undefined(env, &result);
     auto cameraNapiExProxy =
         CameraNapiExManager::GetCameraNapiExProxy(CameraNapiExProxyUserType::MODE_MANAGER_NAPI);
-    CHECK_ERROR_RETURN_RET_LOG(cameraNapiExProxy == nullptr, result, "cameraNapiExProxy is nullptr");
+    CHECK_RETURN_RET_ELOG(cameraNapiExProxy == nullptr, result, "cameraNapiExProxy is nullptr");
     result = cameraNapiExProxy->CreateSessionForSys(env, jsModeName);
     if (result == nullptr) {
         MEDIA_ERR_LOG("ModeManagerNapi::CreateSessionForSys failed");
@@ -167,7 +167,7 @@ napi_value ModeManagerNapi::CreateCameraSessionInstance(napi_env env, napi_callb
 
     ModeManagerNapi* modeManagerNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&modeManagerNapi));
-    CHECK_ERROR_RETURN_RET_LOG(status != napi_ok || modeManagerNapi == nullptr, nullptr, "napi_unwrap failure!");
+    CHECK_RETURN_RET_ELOG(status != napi_ok || modeManagerNapi == nullptr, nullptr, "napi_unwrap failure!");
 
     int32_t jsModeName;
     napi_get_value_int32(env, argv[PARAM0], &jsModeName);
@@ -205,13 +205,13 @@ static napi_value CreateSceneModeJSArray(napi_env env, napi_status status,
     napi_value jsArray = nullptr;
     napi_value item = nullptr;
 
-    CHECK_ERROR_PRINT_LOG(nativeArray.empty(), "nativeArray is empty");
+    CHECK_PRINT_ELOG(nativeArray.empty(), "nativeArray is empty");
 
     status = napi_create_array(env, &jsArray);
     if (status == napi_ok) {
         for (size_t i = 0; i < nativeArray.size(); i++) {
             napi_create_int32(env, nativeArray[i], &item);
-            CHECK_ERROR_RETURN_RET_LOG(napi_set_element(env, jsArray, i, item) != napi_ok, nullptr,
+            CHECK_RETURN_RET_ELOG(napi_set_element(env, jsArray, i, item) != napi_ok, nullptr,
                 "CreateSceneModeJSArray Failed to create profile napi wrapper object");
         }
     }
@@ -232,7 +232,7 @@ napi_value ModeManagerNapi::GetSupportedModes(napi_env env, napi_callback_info i
 
     napi_get_undefined(env, &result);
     sptr<CameraDevice> cameraInfo = GetCameraDeviceFromNapiCameraInfoObj(env, argv[PARAM0]);
-    CHECK_ERROR_RETURN_RET_LOG(cameraInfo == nullptr, result, "Could not able to read cameraId argument!");
+    CHECK_RETURN_RET_ELOG(cameraInfo == nullptr, result, "Could not able to read cameraId argument!");
 
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&modeManagerNapi));
     if (status == napi_ok && modeManagerNapi != nullptr) {
@@ -265,10 +265,10 @@ napi_value ModeManagerNapi::GetSupportedOutputCapability(napi_env env, napi_call
 
     napi_get_undefined(env, &result);
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&modeManagerNapi));
-    CHECK_ERROR_RETURN_RET_LOG(status != napi_ok || modeManagerNapi == nullptr, result, "napi_unwrap() failure!");
+    CHECK_RETURN_RET_ELOG(status != napi_ok || modeManagerNapi == nullptr, result, "napi_unwrap() failure!");
 
     sptr<CameraDevice> cameraInfo = GetCameraDeviceFromNapiCameraInfoObj(env, argv[PARAM0]);
-    CHECK_ERROR_RETURN_RET_LOG(cameraInfo == nullptr, result, "Could not able to read cameraId argument!");
+    CHECK_RETURN_RET_ELOG(cameraInfo == nullptr, result, "Could not able to read cameraId argument!");
 
     int32_t sceneMode;
     napi_get_value_int32(env, argv[PARAM1], &sceneMode);

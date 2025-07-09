@@ -56,7 +56,7 @@ namespace {
 void AsyncCompleteCallback(napi_env env, napi_status status, void* data)
 {
     auto photoOutputAsyncContext = static_cast<PhotoOutputAsyncContext*>(data);
-    CHECK_ERROR_RETURN_LOG(photoOutputAsyncContext == nullptr,
+    CHECK_RETURN_ELOG(photoOutputAsyncContext == nullptr,
         "CameraInputNapi AsyncCompleteCallback context is null");
     MEDIA_INFO_LOG("CameraInputNapi AsyncCompleteCallback %{public}s, status = %{public}d",
         photoOutputAsyncContext->funcName.c_str(), photoOutputAsyncContext->status);
@@ -199,7 +199,7 @@ int32_t GetBurstSeqId(int32_t captureId)
 
 void CleanAfterTransPicture(sptr<PhotoOutput> photoOutput, int32_t captureId)
 {
-    CHECK_ERROR_RETURN_LOG(!photoOutput, "CleanAfterTransPicture photoOutput is nullptr");
+    CHECK_RETURN_ELOG(!photoOutput, "CleanAfterTransPicture photoOutput is nullptr");
     photoOutput->photoProxyMap_[captureId] = nullptr;
     photoOutput->photoProxyMap_.erase(captureId);
     photoOutput->captureIdPictureMap_.erase(captureId);
@@ -705,7 +705,7 @@ napi_value PhotoOutputNapi::Init(napi_env env, napi_value exports)
         status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
         if (status == napi_ok) {
             status = napi_set_named_property(env, exports, CAMERA_PHOTO_OUTPUT_NAPI_CLASS_NAME, ctorObj);
-            CHECK_ERROR_RETURN_RET(status == napi_ok, exports);
+            CHECK_RETURN_RET(status == napi_ok, exports);
         }
     }
     MEDIA_ERR_LOG("Init call Failed!");
@@ -786,10 +786,10 @@ napi_value PhotoOutputNapi::CreatePhotoOutput(napi_env env, Profile& profile, st
             MEDIA_INFO_LOG("get surface by surfaceId");
             sptr<Surface> photoSurface;
             photoSurface = Media::ImageReceiver::getSurfaceById(surfaceId);
-            CHECK_ERROR_RETURN_RET_LOG(photoSurface == nullptr, result, "failed to get photoSurface");
+            CHECK_RETURN_RET_ELOG(photoSurface == nullptr, result, "failed to get photoSurface");
             photoSurface->SetUserData(CameraManager::surfaceFormat, std::to_string(profile.GetCameraFormat()));
             sptr<IBufferProducer> producer = photoSurface->GetProducer();
-            CHECK_ERROR_RETURN_RET_LOG(producer == nullptr, result, "failed to create GetProducer");
+            CHECK_RETURN_RET_ELOG(producer == nullptr, result, "failed to create GetProducer");
             MEDIA_INFO_LOG("profile width: %{public}d, height: %{public}d, format = %{public}d, "
                            "surface width: %{public}d, height: %{public}d",
                 profile.GetSize().width,
@@ -800,7 +800,7 @@ napi_value PhotoOutputNapi::CreatePhotoOutput(napi_env env, Profile& profile, st
             retCode =
                 CameraManager::GetInstance()->CreatePhotoOutput(profile, producer, &sPhotoOutput_, photoSurface);
         }
-        CHECK_ERROR_RETURN_RET_LOG(!CameraNapiUtils::CheckError(env, retCode) || sPhotoOutput_ == nullptr,
+        CHECK_RETURN_RET_ELOG(!CameraNapiUtils::CheckError(env, retCode) || sPhotoOutput_ == nullptr,
             result, "failed to create CreatePhotoOutput");
         CHECK_EXECUTE(surfaceId == "", sPhotoOutput_->SetNativeSurface(true));
         status = napi_new_instance(env, constructor, 0, nullptr, &result);
@@ -832,15 +832,15 @@ napi_value PhotoOutputNapi::CreatePhotoOutput(napi_env env, std::string surfaceI
         } else {
             MEDIA_INFO_LOG("get surface by surfaceId");
             sptr<Surface> photoSurface = Media::ImageReceiver::getSurfaceById(surfaceId);
-            CHECK_ERROR_RETURN_RET_LOG(photoSurface == nullptr, result, "failed to get photoSurface");
+            CHECK_RETURN_RET_ELOG(photoSurface == nullptr, result, "failed to get photoSurface");
             sptr<IBufferProducer> producer = photoSurface->GetProducer();
-            CHECK_ERROR_RETURN_RET_LOG(producer == nullptr, result, "failed to create GetProducer");
+            CHECK_RETURN_RET_ELOG(producer == nullptr, result, "failed to create GetProducer");
             MEDIA_INFO_LOG("surface width: %{public}d, height: %{public}d",
                            photoSurface->GetDefaultWidth(), photoSurface->GetDefaultHeight());
             retCode = CameraManager::GetInstance()->CreatePhotoOutputWithoutProfile(
                 producer, &sPhotoOutput_, photoSurface);
         }
-        CHECK_ERROR_RETURN_RET_LOG(!CameraNapiUtils::CheckError(env, retCode) || sPhotoOutput_ == nullptr,
+        CHECK_RETURN_RET_ELOG(!CameraNapiUtils::CheckError(env, retCode) || sPhotoOutput_ == nullptr,
             result, "failed to create CreatePhotoOutput");
         CHECK_EXECUTE(surfaceId == "", sPhotoOutput_->SetNativeSurface(true));
         status = napi_new_instance(env, constructor, 0, nullptr, &result);
@@ -899,7 +899,7 @@ bool ParseCaptureSettings(napi_env env, napi_callback_info info, PhotoOutputAsyn
     } else {
         // Do nothing.
     }
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument"), false,
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument"), false,
         "ParseCaptureSettings invalid argument");
     asyncContext->HoldNapiValue(env, jsParamParser.GetThisVar());
     return true;
@@ -911,14 +911,14 @@ napi_value PhotoOutputNapi::Capture(napi_env env, napi_callback_info info)
     std::unique_ptr<PhotoOutputAsyncContext> asyncContext = std::make_unique<PhotoOutputAsyncContext>(
         "PhotoOutputNapi::Capture", CameraNapiUtils::IncrementAndGet(photoOutputTaskId));
     std::shared_ptr<CameraNapiAsyncFunction> asyncFunction;
-    CHECK_ERROR_RETURN_RET_LOG(!ParseCaptureSettings(env, info, asyncContext.get(), asyncFunction, true), nullptr,
+    CHECK_RETURN_RET_ELOG(!ParseCaptureSettings(env, info, asyncContext.get(), asyncFunction, true), nullptr,
         "PhotoOutputNapi::Capture parse parameters fail.");
     napi_status status = napi_create_async_work(
         env, nullptr, asyncFunction->GetResourceName(),
         [](napi_env env, void* data) {
             MEDIA_INFO_LOG("PhotoOutputNapi::Capture running on worker");
             auto context = static_cast<PhotoOutputAsyncContext*>(data);
-            CHECK_ERROR_RETURN_LOG(context->objectInfo == nullptr, "PhotoOutputNapi::Capture async info is nullptr");
+            CHECK_RETURN_ELOG(context->objectInfo == nullptr, "PhotoOutputNapi::Capture async info is nullptr");
             CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
             CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(
                 context->queueTask, [&context]() { ProcessCapture(context, false); });
@@ -933,7 +933,7 @@ napi_value PhotoOutputNapi::Capture(napi_env env, napi_callback_info info)
         napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
         asyncContext.release();
     }
-    CHECK_ERROR_RETURN_RET(asyncFunction->GetAsyncFunctionType() == ASYNC_FUN_TYPE_PROMISE,
+    CHECK_RETURN_RET(asyncFunction->GetAsyncFunctionType() == ASYNC_FUN_TYPE_PROMISE,
         asyncFunction->GetPromise());
     return CameraNapiUtils::GetUndefinedValue(env);
 }
@@ -941,19 +941,19 @@ napi_value PhotoOutputNapi::Capture(napi_env env, napi_callback_info info)
 napi_value PhotoOutputNapi::BurstCapture(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("BurstCapture is called");
-    CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
+    CHECK_RETURN_RET_ELOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
         "SystemApi EnableAutoHighQualityPhoto is called!");
     std::unique_ptr<PhotoOutputAsyncContext> asyncContext = std::make_unique<PhotoOutputAsyncContext>(
         "PhotoOutputNapi::BurstCapture", CameraNapiUtils::IncrementAndGet(photoOutputTaskId));
     std::shared_ptr<CameraNapiAsyncFunction> asyncFunction;
-    CHECK_ERROR_RETURN_RET_LOG(!ParseCaptureSettings(env, info, asyncContext.get(), asyncFunction, false),
+    CHECK_RETURN_RET_ELOG(!ParseCaptureSettings(env, info, asyncContext.get(), asyncFunction, false),
         nullptr, "PhotoOutputNapi::BurstCapture parse parameters fail.");
     napi_status status = napi_create_async_work(
         env, nullptr, asyncFunction->GetResourceName(),
         [](napi_env env, void* data) {
             MEDIA_INFO_LOG("PhotoOutputNapi::BurstCapture running on worker");
             auto context = static_cast<PhotoOutputAsyncContext*>(data);
-            CHECK_ERROR_RETURN_LOG(
+            CHECK_RETURN_ELOG(
                 context->objectInfo == nullptr, "PhotoOutputNapi::BurstCapture async info is nullptr");
             CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
             CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(
@@ -969,7 +969,7 @@ napi_value PhotoOutputNapi::BurstCapture(napi_env env, napi_callback_info info)
         napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
         asyncContext.release();
     }
-    CHECK_ERROR_RETURN_RET(asyncFunction->GetAsyncFunctionType() == ASYNC_FUN_TYPE_PROMISE,
+    CHECK_RETURN_RET(asyncFunction->GetAsyncFunctionType() == ASYNC_FUN_TYPE_PROMISE,
         asyncFunction->GetPromise());
     return CameraNapiUtils::GetUndefinedValue(env);
 }
@@ -990,7 +990,7 @@ napi_value PhotoOutputNapi::ConfirmCapture(napi_env env, napi_callback_info info
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&photoOutputNapi));
     if (status == napi_ok && photoOutputNapi != nullptr) {
         int32_t retCode = photoOutputNapi->photoOutput_->ConfirmCapture();
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), result);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), result);
     }
     return result;
 }
@@ -1003,7 +1003,7 @@ napi_value PhotoOutputNapi::Release(napi_env env, napi_callback_info info)
     auto asyncFunc =
         std::make_shared<CameraNapiAsyncFunction>(env, "Release", asyncContext->callbackRef, asyncContext->deferred);
     CameraNapiParamParser jsParamParser(env, info, asyncContext->objectInfo, asyncFunc);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument"), nullptr,
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument"), nullptr,
         "PhotoOutputNapi::Release invalid argument");
     asyncContext->HoldNapiValue(env, jsParamParser.GetThisVar());
     napi_status status = napi_create_async_work(
@@ -1011,7 +1011,7 @@ napi_value PhotoOutputNapi::Release(napi_env env, napi_callback_info info)
         [](napi_env env, void* data) {
             MEDIA_INFO_LOG("PhotoOutputNapi::Release running on worker");
             auto context = static_cast<PhotoOutputAsyncContext*>(data);
-            CHECK_ERROR_RETURN_LOG(context->objectInfo == nullptr, "PhotoOutputNapi::Release async info is nullptr");
+            CHECK_RETURN_ELOG(context->objectInfo == nullptr, "PhotoOutputNapi::Release async info is nullptr");
             CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
             CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(context->queueTask, [&context]() {
                 context->errorCode = context->objectInfo->photoOutput_->Release();
@@ -1028,7 +1028,7 @@ napi_value PhotoOutputNapi::Release(napi_env env, napi_callback_info info)
         napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
         asyncContext.release();
     }
-    CHECK_ERROR_RETURN_RET(asyncFunc->GetAsyncFunctionType() == ASYNC_FUN_TYPE_PROMISE,
+    CHECK_RETURN_RET(asyncFunc->GetAsyncFunctionType() == ASYNC_FUN_TYPE_PROMISE,
         asyncFunc->GetPromise());
     return CameraNapiUtils::GetUndefinedValue(env);
 }
@@ -1099,7 +1099,7 @@ napi_value PhotoOutputNapi::IsQuickThumbnailSupported(napi_env env, napi_callbac
     if (status == napi_ok && photoOutputNapi != nullptr) {
         int32_t retCode = photoOutputNapi->photoOutput_->IsQuickThumbnailSupported();
         bool isSupported = (retCode == 0);
-        CHECK_ERROR_RETURN_RET(retCode > 0 && !CameraNapiUtils::CheckError(env, retCode), result);
+        CHECK_RETURN_RET(retCode > 0 && !CameraNapiUtils::CheckError(env, retCode), result);
         napi_get_boolean(env, isSupported, &result);
     }
     return result;
@@ -1107,7 +1107,7 @@ napi_value PhotoOutputNapi::IsQuickThumbnailSupported(napi_env env, napi_callbac
 
 napi_value PhotoOutputNapi::DeferImageDeliveryFor(napi_env env, napi_callback_info info)
 {
-    CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
+    CHECK_RETURN_RET_ELOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
         "SystemApi DeferImageDeliveryFor is called!");
     napi_status status;
     napi_value result = nullptr;
@@ -1131,7 +1131,7 @@ napi_value PhotoOutputNapi::DeferImageDeliveryFor(napi_env env, napi_callback_in
 
 napi_value PhotoOutputNapi::IsDeferredImageDeliverySupported(napi_env env, napi_callback_info info)
 {
-    CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
+    CHECK_RETURN_RET_ELOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
         "SystemApi IsDeferredImageDeliverySupported is called!");
     napi_status status;
     napi_value result = nullptr;
@@ -1150,7 +1150,7 @@ napi_value PhotoOutputNapi::IsDeferredImageDeliverySupported(napi_env env, napi_
         int32_t retCode = photoOutputNapi->photoOutput_->IsDeferredImageDeliverySupported(
             static_cast<DeferredDeliveryImageType>(deliveryType));
         bool isSupported = (retCode == 0);
-        CHECK_ERROR_RETURN_RET(retCode > 0 && !CameraNapiUtils::CheckError(env, retCode), result);
+        CHECK_RETURN_RET(retCode > 0 && !CameraNapiUtils::CheckError(env, retCode), result);
         napi_get_boolean(env, isSupported, &result);
     }
     return result;
@@ -1158,7 +1158,7 @@ napi_value PhotoOutputNapi::IsDeferredImageDeliverySupported(napi_env env, napi_
 
 napi_value PhotoOutputNapi::IsDeferredImageDeliveryEnabled(napi_env env, napi_callback_info info)
 {
-    CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
+    CHECK_RETURN_RET_ELOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
         "SystemApi IsDeferredImageDeliveryEnabled is called!");
     napi_status status;
     napi_value result = nullptr;
@@ -1176,7 +1176,7 @@ napi_value PhotoOutputNapi::IsDeferredImageDeliveryEnabled(napi_env env, napi_ca
         int32_t retCode = photoOutputNapi->photoOutput_->IsDeferredImageDeliveryEnabled(
             static_cast<DeferredDeliveryImageType>(deliveryType));
         bool isSupported = (retCode == 0);
-        CHECK_ERROR_RETURN_RET(retCode > 0 && !CameraNapiUtils::CheckError(env, retCode), result);
+        CHECK_RETURN_RET(retCode > 0 && !CameraNapiUtils::CheckError(env, retCode), result);
         napi_get_boolean(env, isSupported, &result);
     }
     return result;
@@ -1231,7 +1231,7 @@ napi_value PhotoOutputNapi::IsMovingPhotoSupported(napi_env env, napi_callback_i
     napi_get_undefined(env, &result);
     PhotoOutputNapi* photoOutputNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&photoOutputNapi));
-    CHECK_ERROR_RETURN_RET_LOG(status != napi_ok || photoOutputNapi == nullptr, result,
+    CHECK_RETURN_RET_ELOG(status != napi_ok || photoOutputNapi == nullptr, result,
         "PhotoOutputNapi::IsMovingPhotoSupported photoOutputNapi is null!");
     auto session = photoOutputNapi->GetPhotoOutput()->GetSession();
     if (session != nullptr) {
@@ -1256,11 +1256,11 @@ napi_value PhotoOutputNapi::EnableMovingPhoto(napi_env env, napi_callback_info i
     NAPI_ASSERT(env, argc == ARGS_ONE, "requires one parameter");
     napi_valuetype valueType = napi_undefined;
     napi_typeof(env, argv[0], &valueType);
-    CHECK_ERROR_RETURN_RET(valueType != napi_boolean && !CameraNapiUtils::CheckError(env, INVALID_ARGUMENT), result);
+    CHECK_RETURN_RET(valueType != napi_boolean && !CameraNapiUtils::CheckError(env, INVALID_ARGUMENT), result);
     napi_get_undefined(env, &result);
     PhotoOutputNapi* photoOutputNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&photoOutputNapi));
-    CHECK_ERROR_RETURN_RET_LOG(status != napi_ok || photoOutputNapi == nullptr, result,
+    CHECK_RETURN_RET_ELOG(status != napi_ok || photoOutputNapi == nullptr, result,
         "PhotoOutputNapi::EnableMovingPhoto photoOutputNapi is null!");
     auto session = photoOutputNapi->GetPhotoOutput()->GetSession();
     if (session != nullptr) {
@@ -1272,7 +1272,7 @@ napi_value PhotoOutputNapi::EnableMovingPhoto(napi_env env, napi_callback_info i
         session->LockForControl();
         int32_t retCode = session->EnableMovingPhoto(isEnableMovingPhoto);
         session->UnlockForControl();
-        CHECK_ERROR_RETURN_RET(retCode != 0 && !CameraNapiUtils::CheckError(env, retCode), result);
+        CHECK_RETURN_RET(retCode != 0 && !CameraNapiUtils::CheckError(env, retCode), result);
     }
     return result;
 }
@@ -1296,7 +1296,7 @@ napi_value PhotoOutputNapi::GetSupportedMovingPhotoVideoCodecTypes(napi_env env,
     napi_get_undefined(env, &result);
     PhotoOutputNapi* photoOutputNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&photoOutputNapi));
-    CHECK_ERROR_RETURN_RET_LOG(status != napi_ok || photoOutputNapi == nullptr, result,
+    CHECK_RETURN_RET_ELOG(status != napi_ok || photoOutputNapi == nullptr, result,
         "PhotoOutputNapi::GetSupportedMovingPhotoVideoCodecTypes photoOutputNapi is null!");
     vector<int32_t> videoCodecTypes = {VideoCodecType::VIDEO_ENCODE_TYPE_AVC, VideoCodecType::VIDEO_ENCODE_TYPE_HEVC};
     result = CameraNapiUtils::CreateJSArray(env, status, videoCodecTypes);
@@ -1318,24 +1318,24 @@ napi_value PhotoOutputNapi::SetMovingPhotoVideoCodecType(napi_env env, napi_call
     NAPI_ASSERT(env, argc == ARGS_ONE, "requires one parameter");
     napi_valuetype valueType = napi_undefined;
     napi_typeof(env, argv[0], &valueType);
-    CHECK_ERROR_RETURN_RET(valueType != napi_number && !CameraNapiUtils::CheckError(env, INVALID_ARGUMENT), result);
+    CHECK_RETURN_RET(valueType != napi_number && !CameraNapiUtils::CheckError(env, INVALID_ARGUMENT), result);
     napi_get_undefined(env, &result);
     PhotoOutputNapi* photoOutputNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&photoOutputNapi));
-    CHECK_ERROR_RETURN_RET_LOG(status != napi_ok || photoOutputNapi == nullptr, result,
+    CHECK_RETURN_RET_ELOG(status != napi_ok || photoOutputNapi == nullptr, result,
         "PhotoOutputNapi::SetMovingPhotoVideoCodecType photoOutputNapi is null!");
     if (photoOutputNapi->GetPhotoOutput() != nullptr) {
         int32_t codecType;
         napi_get_value_int32(env, argv[PARAM0], &codecType);
         int32_t retCode = photoOutputNapi->GetPhotoOutput()->SetMovingPhotoVideoCodecType(codecType);
-        CHECK_ERROR_RETURN_RET(retCode != 0 && !CameraNapiUtils::CheckError(env, retCode), result);
+        CHECK_RETURN_RET(retCode != 0 && !CameraNapiUtils::CheckError(env, retCode), result);
     }
     return result;
 }
 
 napi_value PhotoOutputNapi::EnableQuickThumbnail(napi_env env, napi_callback_info info)
 {
-    CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
+    CHECK_RETURN_RET_ELOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
         "SystemApi PhotoOutputNapi::EnableQuickThumbnail is called!");
     napi_status status;
     napi_value result = nullptr;
@@ -1346,7 +1346,7 @@ napi_value PhotoOutputNapi::EnableQuickThumbnail(napi_env env, napi_callback_inf
     NAPI_ASSERT(env, argc == ARGS_ONE, "requires one parameter");
     napi_valuetype valueType = napi_undefined;
     napi_typeof(env, argv[0], &valueType);
-    CHECK_ERROR_RETURN_RET(valueType != napi_boolean && !CameraNapiUtils::CheckError(env, INVALID_ARGUMENT), result);
+    CHECK_RETURN_RET(valueType != napi_boolean && !CameraNapiUtils::CheckError(env, INVALID_ARGUMENT), result);
     napi_get_undefined(env, &result);
     PhotoOutputNapi* photoOutputNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&photoOutputNapi));
@@ -1355,14 +1355,14 @@ napi_value PhotoOutputNapi::EnableQuickThumbnail(napi_env env, napi_callback_inf
         napi_get_value_bool(env, argv[PARAM0], &thumbnailSwitch);
         photoOutputNapi->isQuickThumbnailEnabled_ = thumbnailSwitch;
         int32_t retCode = photoOutputNapi->photoOutput_->SetThumbnail(thumbnailSwitch);
-        CHECK_ERROR_RETURN_RET(retCode != 0 && !CameraNapiUtils::CheckError(env, retCode), result);
+        CHECK_RETURN_RET(retCode != 0 && !CameraNapiUtils::CheckError(env, retCode), result);
     }
     return result;
 }
 
 napi_value PhotoOutputNapi::IsRawDeliverySupported(napi_env env, napi_callback_info info)
 {
-    CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
+    CHECK_RETURN_RET_ELOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
         "SystemApi IsRawDeliverySupported is called!");
     napi_status status;
     napi_value result = nullptr;
@@ -1378,7 +1378,7 @@ napi_value PhotoOutputNapi::IsRawDeliverySupported(napi_env env, napi_callback_i
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&photoOutputNapi));
     if (status == napi_ok && photoOutputNapi != nullptr) {
         int32_t retCode = photoOutputNapi->photoOutput_->IsRawDeliverySupported(isSupported);
-        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
     }
     napi_get_boolean(env, isSupported, &result);
     return result;
@@ -1386,7 +1386,7 @@ napi_value PhotoOutputNapi::IsRawDeliverySupported(napi_env env, napi_callback_i
 
 napi_value PhotoOutputNapi::EnableRawDelivery(napi_env env, napi_callback_info info)
 {
-    CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
+    CHECK_RETURN_RET_ELOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
         "SystemApi PhotoOutputNapi::EnableRawDelivery is called!");
     napi_status status;
     napi_value result = nullptr;
@@ -1397,7 +1397,7 @@ napi_value PhotoOutputNapi::EnableRawDelivery(napi_env env, napi_callback_info i
     NAPI_ASSERT(env, argc == ARGS_ONE, "requires one parameter");
     napi_valuetype valueType = napi_undefined;
     napi_typeof(env, argv[0], &valueType);
-    CHECK_ERROR_RETURN_RET(valueType != napi_boolean && !CameraNapiUtils::CheckError(env, INVALID_ARGUMENT), result);
+    CHECK_RETURN_RET(valueType != napi_boolean && !CameraNapiUtils::CheckError(env, INVALID_ARGUMENT), result);
     napi_get_undefined(env, &result);
     PhotoOutputNapi* photoOutputNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&photoOutputNapi));
@@ -1405,7 +1405,7 @@ napi_value PhotoOutputNapi::EnableRawDelivery(napi_env env, napi_callback_info i
     if (status == napi_ok && photoOutputNapi != nullptr) {
         napi_get_value_bool(env, argv[PARAM0], &rawDeliverySwitch);
         int32_t retCode = photoOutputNapi->photoOutput_->EnableRawDelivery(rawDeliverySwitch);
-        CHECK_ERROR_RETURN_RET(retCode != 0 && !CameraNapiUtils::CheckError(env, retCode), result);
+        CHECK_RETURN_RET(retCode != 0 && !CameraNapiUtils::CheckError(env, retCode), result);
     }
     return result;
 }
@@ -1415,24 +1415,24 @@ napi_value PhotoOutputNapi::GetActiveProfile(napi_env env, napi_callback_info in
     MEDIA_DEBUG_LOG("PhotoOutputNapi::GetActiveProfile is called");
     PhotoOutputNapi* photoOutputNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, photoOutputNapi);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"),
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"),
         nullptr, "PhotoOutputNapi::GetActiveProfile parse parameter occur error");
     auto profile = photoOutputNapi->photoOutput_->GetPhotoProfile();
-    CHECK_ERROR_RETURN_RET(profile == nullptr, CameraNapiUtils::GetUndefinedValue(env));
+    CHECK_RETURN_RET(profile == nullptr, CameraNapiUtils::GetUndefinedValue(env));
     return CameraNapiObjProfile(*profile).GenerateNapiValue(env);
 }
 
 void PhotoOutputNapi::RegisterQuickThumbnailCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
-    CHECK_ERROR_RETURN_LOG(!CameraNapiSecurity::CheckSystemApp(env), "SystemApi!");
+    CHECK_RETURN_ELOG(!CameraNapiSecurity::CheckSystemApp(env), "SystemApi!");
     MEDIA_INFO_LOG("PhotoOutputNapi RegisterQuickThumbnailCallbackListener!");
     if (!isQuickThumbnailEnabled_) {
         MEDIA_ERR_LOG("quickThumbnail is not enabled!");
         napi_throw_error(env, std::to_string(SESSION_NOT_RUNNING).c_str(), "");
         return;
     }
-    CHECK_ERROR_RETURN_LOG(photoOutput_ == nullptr, "PhotoOutput is null!");
+    CHECK_RETURN_ELOG(photoOutput_ == nullptr, "PhotoOutput is null!");
     if (photoOutputCallback_ == nullptr) {
         photoOutputCallback_ = std::make_shared<PhotoOutputCallback>(env);
         photoOutput_->SetCallback(photoOutputCallback_);
@@ -1444,15 +1444,15 @@ void PhotoOutputNapi::RegisterQuickThumbnailCallbackListener(
 void PhotoOutputNapi::UnregisterQuickThumbnailCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
-    CHECK_ERROR_RETURN_LOG(!CameraNapiSecurity::CheckSystemApp(env), "SystemApi!");
+    CHECK_RETURN_ELOG(!CameraNapiSecurity::CheckSystemApp(env), "SystemApi!");
     if (!isQuickThumbnailEnabled_) {
         MEDIA_ERR_LOG("quickThumbnail is not enabled!");
         napi_throw_error(env, std::to_string(SESSION_NOT_RUNNING).c_str(), "");
         return;
     }
 
-    CHECK_ERROR_RETURN_LOG(photoOutput_ == nullptr, "PhotoOutput is null!");
-    CHECK_ERROR_RETURN_LOG(photoOutputCallback_ == nullptr, "photoOutputCallback is null!");
+    CHECK_RETURN_ELOG(photoOutput_ == nullptr, "PhotoOutput is null!");
+    CHECK_RETURN_ELOG(photoOutputCallback_ == nullptr, "photoOutputCallback is null!");
     photoOutput_->UnSetThumbnailAvailableCallback();
     photoOutputCallback_->RemoveCallbackRef(CONST_CAPTURE_QUICK_THUMBNAIL, callback);
 }
@@ -1461,7 +1461,7 @@ void PhotoOutputNapi::RegisterPhotoAvailableCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
     MEDIA_INFO_LOG("PhotoOutputNapi RegisterPhotoAvailableCallbackListener!");
-    CHECK_ERROR_RETURN_LOG(photoOutput_ == nullptr, "PhotoOutput is null!");
+    CHECK_RETURN_ELOG(photoOutput_ == nullptr, "PhotoOutput is null!");
     if (photoOutputCallback_ == nullptr) {
         photoOutputCallback_ = std::make_shared<PhotoOutputCallback>(env);
         photoOutput_->SetCallback(photoOutputCallback_);
@@ -1475,8 +1475,8 @@ void PhotoOutputNapi::RegisterPhotoAvailableCallbackListener(
 void PhotoOutputNapi::UnregisterPhotoAvailableCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
-    CHECK_ERROR_RETURN_LOG(photoOutput_ == nullptr, "PhotoOutput is null!");
-    CHECK_ERROR_RETURN_LOG(photoOutputCallback_ == nullptr, "photoOutputCallback is null!");
+    CHECK_RETURN_ELOG(photoOutput_ == nullptr, "PhotoOutput is null!");
+    CHECK_RETURN_ELOG(photoOutputCallback_ == nullptr, "photoOutputCallback is null!");
     photoOutput_->UnSetPhotoAvailableCallback();
     callbackFlag_ &= ~CAPTURE_PHOTO;
     photoOutput_->SetCallbackFlag(callbackFlag_);
@@ -1487,7 +1487,7 @@ void PhotoOutputNapi::RegisterDeferredPhotoProxyAvailableCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
     MEDIA_INFO_LOG("PhotoOutputNapi RegisterDeferredPhotoProxyAvailableCallbackListener!");
-    CHECK_ERROR_RETURN_LOG(photoOutput_ == nullptr, "PhotoOutput is null!");
+    CHECK_RETURN_ELOG(photoOutput_ == nullptr, "PhotoOutput is null!");
 }
 
 void PhotoOutputNapi::UnregisterDeferredPhotoProxyAvailableCallbackListener(
@@ -1500,7 +1500,7 @@ void PhotoOutputNapi::RegisterPhotoAssetAvailableCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
     MEDIA_INFO_LOG("PhotoOutputNapi RegisterPhotoAssetAvailableCallbackListener!");
-    CHECK_ERROR_RETURN_LOG(photoOutput_ == nullptr, "PhotoOutput is null!");
+    CHECK_RETURN_ELOG(photoOutput_ == nullptr, "PhotoOutput is null!");
     if (photoOutputCallback_ == nullptr) {
         photoOutputCallback_ = std::make_shared<PhotoOutputCallback>(env);
         photoOutput_->SetCallback(photoOutputCallback_);
@@ -1514,8 +1514,8 @@ void PhotoOutputNapi::RegisterPhotoAssetAvailableCallbackListener(
 void PhotoOutputNapi::UnregisterPhotoAssetAvailableCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
-    CHECK_ERROR_RETURN_LOG(photoOutput_ == nullptr, "PhotoOutput is null!");
-    CHECK_ERROR_RETURN_LOG(photoOutputCallback_ == nullptr, "photoOutputCallback is null!");
+    CHECK_RETURN_ELOG(photoOutput_ == nullptr, "PhotoOutput is null!");
+    CHECK_RETURN_ELOG(photoOutputCallback_ == nullptr, "photoOutputCallback is null!");
     photoOutput_->UnSetPhotoAssetAvailableCallback();
     callbackFlag_ &= ~CAPTURE_PHOTO_ASSET;
     photoOutput_->SetCallbackFlag(callbackFlag_);
@@ -1536,7 +1536,7 @@ void PhotoOutputNapi::RegisterCaptureStartCallbackListener(
 void PhotoOutputNapi::UnregisterCaptureStartCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
-    CHECK_ERROR_RETURN_LOG(photoOutputCallback_ == nullptr, "photoOutputCallback is null");
+    CHECK_RETURN_ELOG(photoOutputCallback_ == nullptr, "photoOutputCallback is null");
     photoOutputCallback_->RemoveCallbackRef(CONST_CAPTURE_START, callback);
 }
 
@@ -1553,7 +1553,7 @@ void PhotoOutputNapi::RegisterCaptureStartWithInfoCallbackListener(
 void PhotoOutputNapi::UnregisterCaptureStartWithInfoCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
-    CHECK_ERROR_RETURN_LOG(photoOutputCallback_ == nullptr, "photoOutputCallback is null");
+    CHECK_RETURN_ELOG(photoOutputCallback_ == nullptr, "photoOutputCallback is null");
     photoOutputCallback_->RemoveCallbackRef(CONST_CAPTURE_START_WITH_INFO, callback);
 }
 
@@ -1570,7 +1570,7 @@ void PhotoOutputNapi::RegisterCaptureEndCallbackListener(
 void PhotoOutputNapi::UnregisterCaptureEndCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
-    CHECK_ERROR_RETURN_LOG(photoOutputCallback_ == nullptr, "photoOutputCallback is null");
+    CHECK_RETURN_ELOG(photoOutputCallback_ == nullptr, "photoOutputCallback is null");
     photoOutputCallback_->RemoveCallbackRef(CONST_CAPTURE_END, callback);
 }
 
@@ -1587,7 +1587,7 @@ void PhotoOutputNapi::RegisterFrameShutterCallbackListener(
 void PhotoOutputNapi::UnregisterFrameShutterCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
-    CHECK_ERROR_RETURN_LOG(photoOutputCallback_ == nullptr, "photoOutputCallback is null");
+    CHECK_RETURN_ELOG(photoOutputCallback_ == nullptr, "photoOutputCallback is null");
     photoOutputCallback_->RemoveCallbackRef(CONST_CAPTURE_FRAME_SHUTTER, callback);
 }
 
@@ -1604,7 +1604,7 @@ void PhotoOutputNapi::RegisterErrorCallbackListener(
 void PhotoOutputNapi::UnregisterErrorCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
-    CHECK_ERROR_RETURN_LOG(photoOutputCallback_ == nullptr, "photoOutputCallback is null");
+    CHECK_RETURN_ELOG(photoOutputCallback_ == nullptr, "photoOutputCallback is null");
     photoOutputCallback_->RemoveCallbackRef(CONST_CAPTURE_ERROR, callback);
 }
 
@@ -1621,7 +1621,7 @@ void PhotoOutputNapi::RegisterFrameShutterEndCallbackListener(
 void PhotoOutputNapi::UnregisterFrameShutterEndCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
-    CHECK_ERROR_RETURN_LOG(photoOutputCallback_ == nullptr, "photoOutputCallback is null");
+    CHECK_RETURN_ELOG(photoOutputCallback_ == nullptr, "photoOutputCallback is null");
     photoOutputCallback_->RemoveCallbackRef(CONST_CAPTURE_FRAME_SHUTTER_END, callback);
 }
 
@@ -1638,7 +1638,7 @@ void PhotoOutputNapi::RegisterReadyCallbackListener(
 void PhotoOutputNapi::UnregisterReadyCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
-    CHECK_ERROR_RETURN_LOG(photoOutputCallback_ == nullptr, "photoOutputCallback is null");
+    CHECK_RETURN_ELOG(photoOutputCallback_ == nullptr, "photoOutputCallback is null");
     photoOutputCallback_->RemoveCallbackRef(CONST_CAPTURE_READY, callback);
 }
 
@@ -1655,7 +1655,7 @@ void PhotoOutputNapi::RegisterEstimatedCaptureDurationCallbackListener(
 void PhotoOutputNapi::UnregisterEstimatedCaptureDurationCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
-    CHECK_ERROR_RETURN_LOG(photoOutputCallback_ == nullptr, "photoOutputCallback is null");
+    CHECK_RETURN_ELOG(photoOutputCallback_ == nullptr, "photoOutputCallback is null");
     photoOutputCallback_->RemoveCallbackRef(CONST_CAPTURE_ESTIMATED_CAPTURE_DURATION, callback);
 }
 
@@ -1722,12 +1722,12 @@ napi_value PhotoOutputNapi::Off(napi_env env, napi_callback_info info)
 napi_value PhotoOutputNapi::IsAutoHighQualityPhotoSupported(napi_env env, napi_callback_info info)
 {
     auto result = CameraNapiUtils::GetUndefinedValue(env);
-    CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), result,
+    CHECK_RETURN_RET_ELOG(!CameraNapiSecurity::CheckSystemApp(env), result,
         "SystemApi IsAutoHighQualityPhotoSupported is called!");
     MEDIA_DEBUG_LOG("PhotoOutputNapi::IsAutoHighQualityPhotoSupported is called");
     PhotoOutputNapi* photoOutputNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, photoOutputNapi);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"),
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"),
         result, "PhotoOutputNapi::IsAutoHighQualityPhotoSupported parse parameter occur error");
     if (photoOutputNapi->photoOutput_ == nullptr) {
         MEDIA_ERR_LOG("PhotoOutputNapi::IsAutoHighQualityPhotoSupported get native object fail");
@@ -1749,13 +1749,13 @@ napi_value PhotoOutputNapi::IsAutoHighQualityPhotoSupported(napi_env env, napi_c
 napi_value PhotoOutputNapi::EnableAutoHighQualityPhoto(napi_env env, napi_callback_info info)
 {
     auto result = CameraNapiUtils::GetUndefinedValue(env);
-    CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), result,
+    CHECK_RETURN_RET_ELOG(!CameraNapiSecurity::CheckSystemApp(env), result,
         "SystemApi EnableAutoHighQualityPhoto is called!");
     MEDIA_DEBUG_LOG("PhotoOutputNapi::EnableAutoHighQualityPhoto is called");
     PhotoOutputNapi* photoOutputNapi = nullptr;
     bool isEnable;
     CameraNapiParamParser jsParamParser(env, info, photoOutputNapi, isEnable);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"),
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"),
         result, "PhotoOutputNapi::EnableAutoHighQualityPhoto parse parameter occur error");
     if (photoOutputNapi->photoOutput_ == nullptr) {
         MEDIA_ERR_LOG("PhotoOutputNapi::EnableAutoHighQualityPhoto get native object fail");
@@ -1764,7 +1764,7 @@ napi_value PhotoOutputNapi::EnableAutoHighQualityPhoto(napi_env env, napi_callba
     }
 
     int32_t retCode = photoOutputNapi->photoOutput_->EnableAutoHighQualityPhoto(isEnable);
-    CHECK_ERROR_PRINT_LOG(!CameraNapiUtils::CheckError(env, retCode),
+    CHECK_PRINT_ELOG(!CameraNapiUtils::CheckError(env, retCode),
         "PhotoOutputNapi::EnableAutoHighQualityPhoto fail %{public}d", retCode);
     return result;
 }
@@ -1772,12 +1772,12 @@ napi_value PhotoOutputNapi::EnableAutoHighQualityPhoto(napi_env env, napi_callba
 napi_value PhotoOutputNapi::IsAutoCloudImageEnhancementSupported(napi_env env, napi_callback_info info)
 {
     auto result = CameraNapiUtils::GetUndefinedValue(env);
-    CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), result,
+    CHECK_RETURN_RET_ELOG(!CameraNapiSecurity::CheckSystemApp(env), result,
         "SystemApi IsAutoCloudImageEnhancementSupported is called!");
     MEDIA_DEBUG_LOG("PhotoOutputNapi::IsAutoCloudImageEnhancementSupported is called");
     PhotoOutputNapi* photoOutputNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, photoOutputNapi);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"),
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"),
         result, "PhotoOutputNapi::IsAutoCloudImageEnhancementSupported parse parameter occur error");
     if (photoOutputNapi->photoOutput_ == nullptr) {
         MEDIA_ERR_LOG("PhotoOutputNapi::IsAutoCloudImageEnhancementSupported get native object fail");
@@ -1789,7 +1789,7 @@ napi_value PhotoOutputNapi::IsAutoCloudImageEnhancementSupported(napi_env env, n
     int32_t retCode =
         photoOutputNapi->photoOutput_->IsAutoCloudImageEnhancementSupported(
             isAutoCloudImageEnhancementSupported);
-    CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+    CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
     napi_get_boolean(env, isAutoCloudImageEnhancementSupported, &result);
     MEDIA_DEBUG_LOG("PhotoOutputNapi::IsAutoCloudImageEnhancementSupported is %{public}d",
         isAutoCloudImageEnhancementSupported);
@@ -1799,13 +1799,13 @@ napi_value PhotoOutputNapi::IsAutoCloudImageEnhancementSupported(napi_env env, n
 napi_value PhotoOutputNapi::EnableAutoCloudImageEnhancement(napi_env env, napi_callback_info info)
 {
     auto result = CameraNapiUtils::GetUndefinedValue(env);
-    CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), result,
+    CHECK_RETURN_RET_ELOG(!CameraNapiSecurity::CheckSystemApp(env), result,
         "SystemApi EnableAutoCloudImageEnhancement is called!");
     MEDIA_DEBUG_LOG("PhotoOutputNapi::EnableAutoCloudImageEnhancement is called");
     PhotoOutputNapi* photoOutputNapi = nullptr;
     bool isEnable;
     CameraNapiParamParser jsParamParser(env, info, photoOutputNapi, isEnable);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"),
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"),
         result, "PhotoOutputNapi::EnableAutoCloudImageEnhancement parse parameter occur error");
     if (photoOutputNapi->photoOutput_ == nullptr) {
         MEDIA_ERR_LOG("PhotoOutputNapi::EnableAutoCloudImageEnhancement get native object fail");
@@ -1814,7 +1814,7 @@ napi_value PhotoOutputNapi::EnableAutoCloudImageEnhancement(napi_env env, napi_c
     }
 
     int32_t retCode = photoOutputNapi->photoOutput_->EnableAutoCloudImageEnhancement(isEnable);
-    CHECK_ERROR_RETURN_RET_LOG(!CameraNapiUtils::CheckError(env, retCode), result,
+    CHECK_RETURN_RET_ELOG(!CameraNapiUtils::CheckError(env, retCode), result,
         "PhotoOutputNapi::EnableAutoCloudImageEnhancement fail %{public}d", retCode);
     MEDIA_DEBUG_LOG("PhotoOutputNapi::EnableAutoCloudImageEnhancement success");
     return result;
@@ -1822,12 +1822,12 @@ napi_value PhotoOutputNapi::EnableAutoCloudImageEnhancement(napi_env env, napi_c
 
 napi_value PhotoOutputNapi::IsDepthDataDeliverySupported(napi_env env, napi_callback_info info)
 {
-    CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
+    CHECK_RETURN_RET_ELOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
         "SystemApi IsDepthDataDeliverySupported is called!");
     MEDIA_DEBUG_LOG("PhotoOutputNapi::IsDepthDataDeliverySupported is called");
     PhotoOutputNapi* photoOutputNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, photoOutputNapi);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"),
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"),
         nullptr, "PhotoOutputNapi::IsDepthDataDeliverySupported parse parameter occur error");
     if (photoOutputNapi->photoOutput_ == nullptr) {
         MEDIA_ERR_LOG("PhotoOutputNapi::IsDepthDataDeliverySupported get native object fail");
@@ -1847,13 +1847,13 @@ napi_value PhotoOutputNapi::IsDepthDataDeliverySupported(napi_env env, napi_call
 
 napi_value PhotoOutputNapi::EnableDepthDataDelivery(napi_env env, napi_callback_info info)
 {
-    CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
+    CHECK_RETURN_RET_ELOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
         "SystemApi EnableDepthDataDelivery is called!");
     MEDIA_DEBUG_LOG("PhotoOutputNapi::EnableDepthDataDelivery is called");
     PhotoOutputNapi* photoOutputNapi = nullptr;
     bool isEnable;
     CameraNapiParamParser jsParamParser(env, info, photoOutputNapi, isEnable);
-    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
         "PhotoOutputNapi::EnableDepthDataDelivery parse parameter occur error");
     if (photoOutputNapi->photoOutput_ == nullptr) {
         MEDIA_ERR_LOG("PhotoOutputNapi::EnableDepthDataDelivery get native object fail");
@@ -1862,7 +1862,7 @@ napi_value PhotoOutputNapi::EnableDepthDataDelivery(napi_env env, napi_callback_
     }
 
     int32_t retCode = photoOutputNapi->photoOutput_->EnableDepthDataDelivery(isEnable);
-    CHECK_ERROR_PRINT_LOG(!CameraNapiUtils::CheckError(env, retCode),
+    CHECK_PRINT_ELOG(!CameraNapiUtils::CheckError(env, retCode),
         "PhotoOutputNapi::EnableDepthDataDelivery fail %{public}d", retCode);
     return CameraNapiUtils::GetUndefinedValue(env);
 }
@@ -1932,7 +1932,7 @@ napi_value PhotoOutputNapi::EnableAutoAigcPhoto(napi_env env, napi_callback_info
 void PhotoOutputNapi::RegisterOfflineDeliveryFinishedCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
-    CHECK_ERROR_RETURN_LOG(!CameraNapiSecurity::CheckSystemApp(env),
+    CHECK_RETURN_ELOG(!CameraNapiSecurity::CheckSystemApp(env),
         "PhotoOutputNapi::RegisterOfflineDeliveryFinishedCallbackListener:SystemApi is called");
     if (photoOutputCallback_ == nullptr) {
         photoOutputCallback_ = std::make_shared<PhotoOutputCallback>(env);
@@ -1944,7 +1944,7 @@ void PhotoOutputNapi::RegisterOfflineDeliveryFinishedCallbackListener(
 void PhotoOutputNapi::UnregisterOfflineDeliveryFinishedCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
-    CHECK_ERROR_RETURN_LOG(!CameraNapiSecurity::CheckSystemApp(env),
+    CHECK_RETURN_ELOG(!CameraNapiSecurity::CheckSystemApp(env),
         "PhotoOutputNapi::UnregisterOfflineDeliveryFinishedCallbackListener:SystemApi is called");
     if (photoOutputCallback_ == nullptr) {
         MEDIA_ERR_LOG("photoOutputCallback is null");

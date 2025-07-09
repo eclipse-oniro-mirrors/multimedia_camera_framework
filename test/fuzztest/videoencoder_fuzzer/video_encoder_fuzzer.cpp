@@ -50,7 +50,7 @@ T GetData()
 void VideoEncoderFuzzer::VideoEncoderFuzzTest(FuzzedDataProvider& fdp)
 {
     fuzz_ = std::make_shared<VideoEncoder>();
-    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
+    CHECK_RETURN_ELOG(!fuzz_, "Create fuzz_ Error");
     uint8_t randomNum = fdp.ConsumeIntegral<uint8_t>();
     std::vector<std::string> testStrings = {fdp.ConsumeRandomLengthString(100), fdp.ConsumeRandomLengthString(100)};
     std::string codecMime(testStrings[randomNum % testStrings.size()]);

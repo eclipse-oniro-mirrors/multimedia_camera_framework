@@ -49,9 +49,9 @@ public:
 
     void OnMetadataObjectsAvailable(std::vector<sptr<MetadataObject>> metaObjects) const override
     {
-        CHECK_ERROR_PRINT_LOG(metaObjects.empty(), "OnMetadataObjectsAvailable: metaObjects is empty");
+        CHECK_PRINT_ELOG(metaObjects.empty(), "OnMetadataObjectsAvailable: metaObjects is empty");
         size_t size = metaObjects.size();
-        CHECK_ERROR_PRINT_LOG(size <= 0, "Invalid metadata objects size.");
+        CHECK_PRINT_ELOG(size <= 0, "Invalid metadata objects size.");
         Camera_MetadataObject* object = new Camera_MetadataObject[size];
         Camera_Rect boundingBox;
         if (metadataOutput_ != nullptr && callback_.onMetadataObjectAvailable != nullptr) {
@@ -86,7 +86,7 @@ Camera_MetadataOutput::Camera_MetadataOutput(sptr<MetadataOutput> &innerMetadata
 Camera_MetadataOutput::~Camera_MetadataOutput()
 {
     MEDIA_DEBUG_LOG("~Camera_MetadataOutput is called");
-    CHECK_ERROR_RETURN(!innerMetadataOutput_);
+    CHECK_RETURN(!innerMetadataOutput_);
     innerMetadataOutput_ = nullptr;
 }
 

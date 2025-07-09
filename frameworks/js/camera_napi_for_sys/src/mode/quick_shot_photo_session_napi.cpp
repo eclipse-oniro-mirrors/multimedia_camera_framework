@@ -57,10 +57,10 @@ void QuickShotPhotoSessionNapi::Init(napi_env env)
     status = napi_define_class(env, QUICK_SHOT_PHOTO_SESSION_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
         QuickShotPhotoSessionNapiConstructor, nullptr, quick_shot_photo_session_props.size(),
         quick_shot_photo_session_props.data(), &ctorObj);
-    CHECK_ERROR_RETURN_LOG(status != napi_ok, "QuickShotPhotoSessionNapi defined class failed");
+    CHECK_RETURN_ELOG(status != napi_ok, "QuickShotPhotoSessionNapi defined class failed");
     int32_t refCount = 1;
     status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
-    CHECK_ERROR_RETURN_LOG(status != napi_ok, "QuickShotPhotoSessionNapi Init failed");
+    CHECK_RETURN_ELOG(status != napi_ok, "QuickShotPhotoSessionNapi Init failed");
     MEDIA_DEBUG_LOG("QuickShotPhotoSessionNapi Init success");
 }
 
@@ -73,7 +73,7 @@ napi_value QuickShotPhotoSessionNapi::CreateCameraSession(napi_env env)
     napi_value constructor;
     if (sConstructor_ == nullptr) {
         QuickShotPhotoSessionNapi::Init(env);
-        CHECK_ERROR_RETURN_RET_LOG(sConstructor_ == nullptr, result, "sConstructor_ is null");
+        CHECK_RETURN_RET_ELOG(sConstructor_ == nullptr, result, "sConstructor_ is null");
     }
     status = napi_get_reference_value(env, sConstructor_, &constructor);
     if (status == napi_ok) {
@@ -111,11 +111,11 @@ napi_value QuickShotPhotoSessionNapi::QuickShotPhotoSessionNapiConstructor(napi_
     if (status == napi_ok && thisVar != nullptr) {
         std::unique_ptr<QuickShotPhotoSessionNapi> obj = std::make_unique<QuickShotPhotoSessionNapi>();
         obj->env_ = env;
-        CHECK_ERROR_RETURN_RET_LOG(sCameraSessionForSys_ == nullptr, result, "sCameraSessionForSys_ is null");
+        CHECK_RETURN_RET_ELOG(sCameraSessionForSys_ == nullptr, result, "sCameraSessionForSys_ is null");
         obj->quickShotPhotoSession_ = static_cast<QuickShotPhotoSession*>(sCameraSessionForSys_.GetRefPtr());
         obj->cameraSessionForSys_ = obj->quickShotPhotoSession_;
         obj->cameraSession_ = obj->quickShotPhotoSession_;
-        CHECK_ERROR_RETURN_RET_LOG(obj->quickShotPhotoSession_ == nullptr, result, "quickShotPhotoSession_ is null");
+        CHECK_RETURN_RET_ELOG(obj->quickShotPhotoSession_ == nullptr, result, "quickShotPhotoSession_ is null");
         status = napi_wrap(
             env, thisVar, reinterpret_cast<void*>(obj.get()), QuickShotPhotoSessionNapiDestructor, nullptr, nullptr);
         if (status == napi_ok) {

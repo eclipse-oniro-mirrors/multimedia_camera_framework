@@ -56,7 +56,7 @@ napi_value PhotoSessionNapi::Init(napi_env env, napi_value exports)
         status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
         if (status == napi_ok) {
             status = napi_set_named_property(env, exports, PHOTO_SESSION_NAPI_CLASS_NAME, ctorObj);
-            CHECK_ERROR_RETURN_RET(status == napi_ok, exports);
+            CHECK_RETURN_RET(status == napi_ok, exports);
         }
     }
     MEDIA_ERR_LOG("Init call Failed!");
@@ -105,10 +105,10 @@ napi_value PhotoSessionNapi::PhotoSessionNapiConstructor(napi_env env, napi_call
     if (status == napi_ok && thisVar != nullptr) {
         std::unique_ptr<PhotoSessionNapi> photoSessionObj = std::make_unique<PhotoSessionNapi>();
         photoSessionObj->env_ = env;
-        CHECK_ERROR_RETURN_RET_LOG(sCameraSession_ == nullptr, result, "sCameraSession_ is null");
+        CHECK_RETURN_RET_ELOG(sCameraSession_ == nullptr, result, "sCameraSession_ is null");
         photoSessionObj->photoSession_ = static_cast<PhotoSession*>(sCameraSession_.GetRefPtr());
         photoSessionObj->cameraSession_ = photoSessionObj->photoSession_;
-        CHECK_ERROR_RETURN_RET_LOG(photoSessionObj->photoSession_ == nullptr, result, "photoSession_ is null");
+        CHECK_RETURN_RET_ELOG(photoSessionObj->photoSession_ == nullptr, result, "photoSession_ is null");
         status = napi_wrap(env, thisVar, reinterpret_cast<void*>(photoSessionObj.get()),
             PhotoSessionNapi::PhotoSessionNapiDestructor, nullptr, nullptr);
         if (status == napi_ok) {

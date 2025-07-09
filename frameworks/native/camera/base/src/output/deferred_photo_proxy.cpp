@@ -146,13 +146,13 @@ void* DeferredPhotoProxy::GetFileDataAddr()
 {
     MEDIA_INFO_LOG("DeferredPhotoProxy::GetFileDataAddr");
     std::lock_guard<std::mutex> lock(mutex_);
-    CHECK_ERROR_RETURN_RET_LOG(buffer_ != nullptr, buffer_, "DeferredPhotoProxy::GetFileDataAddr get addr temp!");
+    CHECK_RETURN_RET_ELOG(buffer_ != nullptr, buffer_, "DeferredPhotoProxy::GetFileDataAddr get addr temp!");
 
-    CHECK_ERROR_RETURN_RET_LOG(isMmaped_ == true, fileDataAddr_, "DeferredPhotoProxy::GetFileDataAddr mmap failed");
+    CHECK_RETURN_RET_ELOG(isMmaped_ == true, fileDataAddr_, "DeferredPhotoProxy::GetFileDataAddr mmap failed");
     if (!isMmaped_) {
         MEDIA_INFO_LOG("DeferredPhotoProxy::GetFileDataAddr mmap");
         fileDataAddr_ = mmap(nullptr, bufferHandle_->size, PROT_READ | PROT_WRITE, MAP_SHARED, bufferHandle_->fd, 0);
-        CHECK_ERROR_RETURN_RET_LOG(
+        CHECK_RETURN_RET_ELOG(
             fileDataAddr_ == MAP_FAILED, fileDataAddr_, "DeferredPhotoProxy::GetFileDataAddr mmap failed");
         isMmaped_ = true;
     }
@@ -173,7 +173,7 @@ size_t DeferredPhotoProxy::GetFileSize()
 {
     MEDIA_INFO_LOG("DeferredPhotoProxy::GetFileSize");
     std::lock_guard<std::mutex> lock(mutex_);
-    CHECK_ERROR_RETURN_RET_LOG(buffer_ != nullptr, fileSize_,
+    CHECK_RETURN_RET_ELOG(buffer_ != nullptr, fileSize_,
         "DeferredPhotoProxy::GetFileSize temp!");
     fileSize_ = bufferHandle_->size;
     return fileSize_;

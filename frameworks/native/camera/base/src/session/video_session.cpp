@@ -163,7 +163,7 @@ VideoSession::~VideoSession()
 bool VideoSession::CanAddOutput(sptr<CaptureOutput>& output)
 {
     MEDIA_DEBUG_LOG("Enter Into VideoSession::CanAddOutput");
-    CHECK_ERROR_RETURN_RET_LOG(
+    CHECK_RETURN_RET_ELOG(
         !IsSessionConfiged() || output == nullptr, false, "VideoSession::CanAddOutput operation is Not allowed!");
     return CaptureSession::CanAddOutput(output);
 }
@@ -199,21 +199,21 @@ bool VideoSession::IsPreconfigProfilesLegal(std::shared_ptr<PreconfigProfiles> c
         }
         // Check photo
         bool isPhotoCanPreconfig = IsPhotoProfileLegal(device, configs->photoProfile);
-        CHECK_ERROR_RETURN_RET_LOG(!isPhotoCanPreconfig, false,
+        CHECK_RETURN_RET_ELOG(!isPhotoCanPreconfig, false,
             "VideoSession::IsPreconfigProfilesLegal check photo profile fail, no matched photo profiles:%{public}d "
             "%{public}dx%{public}d",
             configs->photoProfile.format_, configs->photoProfile.size_.width, configs->photoProfile.size_.height);
 
         // Check preview
         bool isPreviewCanPreconfig = IsPreviewProfileLegal(device, configs->previewProfile);
-        CHECK_ERROR_RETURN_RET_LOG(!isPreviewCanPreconfig, false,
+        CHECK_RETURN_RET_ELOG(!isPreviewCanPreconfig, false,
             "VideoSession::IsPreconfigProfilesLegal check preview profile fail, no matched preview profiles:%{public}d "
             "%{public}dx%{public}d",
             configs->previewProfile.format_, configs->previewProfile.size_.width, configs->previewProfile.size_.height);
 
         // Check video
         auto isVideoCanPreconfig = IsVideoProfileLegal(device, configs->videoProfile);
-        CHECK_ERROR_RETURN_RET_LOG(!isVideoCanPreconfig, false,
+        CHECK_RETURN_RET_ELOG(!isVideoCanPreconfig, false,
             "VideoSession::IsPreconfigProfilesLegal check video profile fail, no matched video profiles:%{public}d "
             "%{public}dx%{public}d",
             configs->videoProfile.format_, configs->videoProfile.size_.width, configs->videoProfile.size_.height);
@@ -227,11 +227,11 @@ bool VideoSession::IsPreconfigProfilesLegal(std::shared_ptr<PreconfigProfiles> c
 bool VideoSession::IsPhotoProfileLegal(sptr<CameraDevice>& device, Profile& photoProfile)
 {
     auto photoProfilesIt = device->modePhotoProfiles_.find(SceneMode::VIDEO);
-    CHECK_ERROR_RETURN_RET_LOG(photoProfilesIt == device->modePhotoProfiles_.end(), false,
+    CHECK_RETURN_RET_ELOG(photoProfilesIt == device->modePhotoProfiles_.end(), false,
         "VideoSession::CanPreconfig check photo profile fail, empty photo profiles");
     auto photoProfiles = photoProfilesIt->second;
     return std::any_of(photoProfiles.begin(), photoProfiles.end(), [&photoProfile](auto& profile) {
-        CHECK_ERROR_RETURN_RET(!photoProfile.sizeFollowSensorMax_, profile == photoProfile);
+        CHECK_RETURN_RET(!photoProfile.sizeFollowSensorMax_, profile == photoProfile);
         return IsProfileSameRatio(profile, photoProfile.sizeRatio_, RATIO_VALUE_16_9);
     });
 }
@@ -239,7 +239,7 @@ bool VideoSession::IsPhotoProfileLegal(sptr<CameraDevice>& device, Profile& phot
 bool VideoSession::IsPreviewProfileLegal(sptr<CameraDevice>& device, Profile& previewProfile)
 {
     auto previewProfilesIt = device->modePreviewProfiles_.find(SceneMode::VIDEO);
-    CHECK_ERROR_RETURN_RET_LOG(previewProfilesIt == device->modePreviewProfiles_.end(), false,
+    CHECK_RETURN_RET_ELOG(previewProfilesIt == device->modePreviewProfiles_.end(), false,
         "VideoSession::CanPreconfig check preview profile fail, empty preview profiles");
     auto previewProfiles = previewProfilesIt->second;
     return std::any_of(previewProfiles.begin(), previewProfiles.end(),
@@ -249,7 +249,7 @@ bool VideoSession::IsPreviewProfileLegal(sptr<CameraDevice>& device, Profile& pr
 bool VideoSession::IsVideoProfileLegal(sptr<CameraDevice>& device, VideoProfile& videoProfile)
 {
     auto videoProfilesIt = device->modeVideoProfiles_.find(SceneMode::VIDEO);
-    CHECK_ERROR_RETURN_RET_LOG(videoProfilesIt == device->modeVideoProfiles_.end(), false,
+    CHECK_RETURN_RET_ELOG(videoProfilesIt == device->modeVideoProfiles_.end(), false,
         "VideoSession::CanPreconfig check video profile fail, empty video profiles");
     auto videoProfiles = videoProfilesIt->second;
     return std::any_of(videoProfiles.begin(), videoProfiles.end(),
@@ -261,7 +261,7 @@ bool VideoSession::CanPreconfig(PreconfigType preconfigType, ProfileSizeRatio pr
     MEDIA_INFO_LOG(
         "VideoSession::CanPreconfig check type:%{public}d, check ratio:%{public}d", preconfigType, preconfigRatio);
     std::shared_ptr<PreconfigProfiles> configs = GeneratePreconfigProfiles(preconfigType, preconfigRatio);
-    CHECK_ERROR_RETURN_RET_LOG(configs == nullptr, false, "VideoSession::CanPreconfig get configs fail.");
+    CHECK_RETURN_RET_ELOG(configs == nullptr, false, "VideoSession::CanPreconfig get configs fail.");
     return IsPreconfigProfilesLegal(configs);
 }
 
@@ -269,9 +269,9 @@ int32_t VideoSession::Preconfig(PreconfigType preconfigType, ProfileSizeRatio pr
 {
     MEDIA_INFO_LOG("VideoSession::Preconfig type:%{public}d ratio:%{public}d", preconfigType, preconfigRatio);
     std::shared_ptr<PreconfigProfiles> configs = GeneratePreconfigProfiles(preconfigType, preconfigRatio);
-    CHECK_ERROR_RETURN_RET_LOG(configs == nullptr, SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_ELOG(configs == nullptr, SERVICE_FATL_ERROR,
         "VideoSession::Preconfig not support this type:%{public}d ratio:%{public}d", preconfigType, preconfigRatio);
-    CHECK_ERROR_RETURN_RET_LOG(
+    CHECK_RETURN_RET_ELOG(
         !IsPreconfigProfilesLegal(configs), SERVICE_FATL_ERROR, "VideoSession::Preconfig preconfigProfile is illegal.");
     SetPreconfigProfiles(configs);
     MEDIA_INFO_LOG("VideoSession::Preconfig %s", configs->ToString().c_str());
@@ -288,7 +288,7 @@ void VideoSession::VideoSessionMetadataResultProcessor::ProcessCallbacks(const u
 {
     MEDIA_DEBUG_LOG("%{public}s is called", __FUNCTION__);
     auto session = session_.promote();
-    CHECK_ERROR_RETURN_LOG(session == nullptr, "%{public}s session is null", __FUNCTION__);
+    CHECK_RETURN_ELOG(session == nullptr, "%{public}s session is null", __FUNCTION__);
 
     (void)timestamp;
     session->ProcessAutoFocusUpdates(result);

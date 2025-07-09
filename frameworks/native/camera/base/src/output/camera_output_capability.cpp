@@ -37,10 +37,10 @@ float GetTargetRatio(ProfileSizeRatio sizeRatio, float unspecifiedValue)
 
 bool IsProfileSameRatio(Profile& srcProfile, ProfileSizeRatio sizeRatio, float unspecifiedValue)
 {
-    CHECK_ERROR_RETURN_RET(srcProfile.size_.height == 0 || srcProfile.size_.width == 0, false);
+    CHECK_RETURN_RET(srcProfile.size_.height == 0 || srcProfile.size_.width == 0, false);
     float srcRatio = ((float)srcProfile.size_.width) / srcProfile.size_.height;
     float targetRatio = GetTargetRatio(sizeRatio, unspecifiedValue);
-    CHECK_ERROR_RETURN_RET(targetRatio <= 0, false);
+    CHECK_RETURN_RET(targetRatio <= 0, false);
     return abs(srcRatio - targetRatio) / targetRatio <= 0.05f; // 0.05f is 5% tolerance
 }
 
@@ -106,9 +106,9 @@ bool VideoProfile::IsContains(const VideoProfile& videoProfile)
 {
     bool isFormatSizeEqual = format_ == videoProfile.format_ && size_.width == videoProfile.size_.width &&
                              size_.height == videoProfile.size_.height;
-    CHECK_ERROR_RETURN_RET(!isFormatSizeEqual, false);
-    CHECK_ERROR_RETURN_RET(framerates_.empty(), false);
-    CHECK_ERROR_RETURN_RET(videoProfile.framerates_.empty(), true);
+    CHECK_RETURN_RET(!isFormatSizeEqual, false);
+    CHECK_RETURN_RET(framerates_.empty(), false);
+    CHECK_RETURN_RET(videoProfile.framerates_.empty(), true);
     return *framerates_.begin() <= *videoProfile.framerates_.begin() &&
            *(framerates_.end() - 1) >= *(videoProfile.framerates_.end() - 1);
 }
@@ -129,8 +129,8 @@ DepthDataAccuracy DepthProfile::GetDataAccuracy()
 
 bool CameraOutputCapability::IsMatchPreviewProfiles(std::vector<Profile>& previewProfiles)
 {
-    CHECK_ERROR_RETURN_RET(previewProfiles.empty(), true);
-    CHECK_ERROR_RETURN_RET_LOG(previewProfiles_.empty(), false, "previewProfiles_ is empty, cant match");
+    CHECK_RETURN_RET(previewProfiles.empty(), true);
+    CHECK_RETURN_RET_ELOG(previewProfiles_.empty(), false, "previewProfiles_ is empty, cant match");
     for (auto& profile : previewProfiles) {
         auto it = std::find(previewProfiles_.begin(), previewProfiles_.end(), profile);
         if (it == previewProfiles_.end()) {
@@ -146,8 +146,8 @@ bool CameraOutputCapability::IsMatchPreviewProfiles(std::vector<Profile>& previe
 
 bool CameraOutputCapability::IsMatchPhotoProfiles(std::vector<Profile>& photoProfiles)
 {
-    CHECK_ERROR_RETURN_RET(photoProfiles.empty(), true);
-    CHECK_ERROR_RETURN_RET_LOG(photoProfiles_.empty(), false, "photoProfiles_ is empty, cant match");
+    CHECK_RETURN_RET(photoProfiles.empty(), true);
+    CHECK_RETURN_RET_ELOG(photoProfiles_.empty(), false, "photoProfiles_ is empty, cant match");
     for (auto& profile : photoProfiles) {
         auto it = std::find(photoProfiles_.begin(), photoProfiles_.end(), profile);
         if (it == photoProfiles_.end()) {
@@ -163,8 +163,8 @@ bool CameraOutputCapability::IsMatchPhotoProfiles(std::vector<Profile>& photoPro
 
 bool CameraOutputCapability::IsMatchVideoProfiles(std::vector<VideoProfile>& videoProfiles)
 {
-    CHECK_ERROR_RETURN_RET(videoProfiles.empty(), true);
-    CHECK_ERROR_RETURN_RET_LOG(videoProfiles_.empty(), false, "videoProfiles_ is empty, cant match");
+    CHECK_RETURN_RET(videoProfiles.empty(), true);
+    CHECK_RETURN_RET_ELOG(videoProfiles_.empty(), false, "videoProfiles_ is empty, cant match");
     for (auto& profile : videoProfiles) {
         auto it = std::find_if(videoProfiles_.begin(), videoProfiles_.end(), [&profile](VideoProfile& profile_) {
             return profile_.GetCameraFormat() == profile.GetCameraFormat() &&

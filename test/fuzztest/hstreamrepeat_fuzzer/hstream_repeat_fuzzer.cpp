@@ -78,7 +78,7 @@ void HStreamRepeatFuzzer::HStreamRepeatFuzzTest1(FuzzedDataProvider &fdp)
 void HStreamRepeatFuzzer::HStreamRepeatFuzzTest2(FuzzedDataProvider &fdp)
 {
     sptr<Surface> photoSurface = Surface::CreateSurfaceAsConsumer("hstreamrepeat");
-    CHECK_ERROR_RETURN_LOG(!photoSurface, "CreateSurfaceAsConsumer Error");
+    CHECK_RETURN_ELOG(!photoSurface, "CreateSurfaceAsConsumer Error");
     sptr<IBufferProducer> producer = photoSurface->GetProducer();
     fuzz_->AddDeferredSurface(producer);
     fuzz_->SetFrameRate(fdp.ConsumeIntegral<int32_t>(), fdp.ConsumeIntegral<int32_t>());
@@ -117,7 +117,7 @@ void HStreamRepeatFuzzer::HStreamRepeatFuzzTest2(FuzzedDataProvider &fdp)
 void HStreamRepeatFuzzer::HStreamRepeatFuzzTest3(FuzzedDataProvider &fdp)
 {
     sptr<Surface> photoSurface = Surface::CreateSurfaceAsConsumer("hstreamrepeat");
-    CHECK_ERROR_RETURN_LOG(!photoSurface, "CreateSurfaceAsConsumer Error");
+    CHECK_RETURN_ELOG(!photoSurface, "CreateSurfaceAsConsumer Error");
     sptr<IBufferProducer> producer = photoSurface->GetProducer();
     std::shared_ptr<OHOS::Camera::CameraMetadata> settings;
     settings = std::make_shared<OHOS::Camera::CameraMetadata>(ITEMCOUNT, DATASIZE);
@@ -165,7 +165,7 @@ void Test(uint8_t *data, size_t size)
     }
     HStreamRepeatFuzzer::fuzz_ =
         std::make_shared<HStreamRepeat>(nullptr, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT, RepeatStreamType::PREVIEW);
-    CHECK_ERROR_RETURN_LOG(!HStreamRepeatFuzzer::fuzz_, "Create fuzz_ Error");
+    CHECK_RETURN_ELOG(!HStreamRepeatFuzzer::fuzz_, "Create fuzz_ Error");
     hstreamRepeat->HStreamRepeatFuzzTest1(fdp);
     hstreamRepeat->HStreamRepeatFuzzTest2(fdp);
     hstreamRepeat->HStreamRepeatFuzzTest3(fdp);

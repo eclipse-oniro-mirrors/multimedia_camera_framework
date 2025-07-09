@@ -56,9 +56,9 @@ sptr<HStreamCapture> HStreamOperatorUnitTest::GenStreamCapture(int32_t w, int32_
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     sptr<IConsumerSurface> surface = IConsumerSurface::Create();
-    CHECK_ERROR_RETURN_RET_LOG(!surface, nullptr, "surface is nullptr");
+    CHECK_RETURN_RET_ELOG(!surface, nullptr, "surface is nullptr");
     sptr<IBufferProducer> producer = surface->GetProducer();
-    CHECK_ERROR_RETURN_RET_LOG(!producer, nullptr, "producer is nullptr");
+    CHECK_RETURN_RET_ELOG(!producer, nullptr, "producer is nullptr");
     sptr<HStreamCapture> stream = new (std::nothrow) HStreamCapture(producer, format, w, h);
     return stream;
 }
@@ -67,9 +67,9 @@ sptr<HStreamMetadata> HStreamOperatorUnitTest::GenSteamMetadata(std::vector<int3
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     sptr<IConsumerSurface> surface = IConsumerSurface::Create();
-    CHECK_ERROR_RETURN_RET_LOG(!surface, nullptr, "surface is nullptr");
+    CHECK_RETURN_RET_ELOG(!surface, nullptr, "surface is nullptr");
     sptr<IBufferProducer> producer = surface->GetProducer();
-    CHECK_ERROR_RETURN_RET_LOG(!producer, nullptr, "producer is nullptr");
+    CHECK_RETURN_RET_ELOG(!producer, nullptr, "producer is nullptr");
     sptr<HStreamMetadata> stream = new (std::nothrow) HStreamMetadata(producer, format, {});
     return stream;
 }
@@ -78,9 +78,9 @@ sptr<HStreamRepeat> HStreamOperatorUnitTest::GenSteamRepeat(RepeatStreamType typ
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     sptr<IConsumerSurface> surface = IConsumerSurface::Create();
-    CHECK_ERROR_RETURN_RET_LOG(!surface, nullptr, "surface is nullptr");
+    CHECK_RETURN_RET_ELOG(!surface, nullptr, "surface is nullptr");
     sptr<IBufferProducer> producer = surface->GetProducer();
-    CHECK_ERROR_RETURN_RET_LOG(!producer, nullptr, "producer is nullptr");
+    CHECK_RETURN_RET_ELOG(!producer, nullptr, "producer is nullptr");
     sptr<HStreamRepeat> stream = new (std::nothrow) HStreamRepeat(producer, format, w, h, type);
     return stream;
 }
@@ -89,9 +89,9 @@ sptr<HStreamDepthData> HStreamOperatorUnitTest::GenSteamDepthData(int32_t w, int
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     sptr<IConsumerSurface> surface = IConsumerSurface::Create();
-    CHECK_ERROR_RETURN_RET_LOG(!surface, nullptr, "surface is nullptr");
+    CHECK_RETURN_RET_ELOG(!surface, nullptr, "surface is nullptr");
     sptr<IBufferProducer> producer = surface->GetProducer();
-    CHECK_ERROR_RETURN_RET_LOG(!producer, nullptr, "producer is nullptr");
+    CHECK_RETURN_RET_ELOG(!producer, nullptr, "producer is nullptr");
     sptr<HStreamDepthData> stream = new (std::nothrow) HStreamDepthData(producer, format, w, h);
     return stream;
 }

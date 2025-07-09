@@ -30,7 +30,7 @@ int32_t DeferredPhotoProcessingSessionCallback::OnProcessImageDone(const std::st
 {
     MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnProcessImageDone() is called!"
         "cloudImageEnhanceFlag: %{public}u", cloudImageEnhanceFlag);
-    CHECK_ERROR_RETURN_RET(ipcFileDescriptor == nullptr, CAMERA_INVALID_ARG);
+    CHECK_RETURN_RET(ipcFileDescriptor == nullptr, CAMERA_INVALID_ARG);
     int fd = ipcFileDescriptor->GetFd();
     void* addr = mmap(nullptr, bytes, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     if (deferredPhotoProcSession_ != nullptr && deferredPhotoProcSession_->GetCallback() != nullptr) {
@@ -112,7 +112,7 @@ int32_t DeferredPhotoProcessingSessionCallback::CallbackParcel([[maybe_unused]] 
         COMMAND_ON_PROCESS_IMAGE_DONE_IN_STRING_IN_SHARED_PTR_PICTUREINTF_IN_UNSIGNED_INT)) {
         return ERR_NONE;
     }
-    CHECK_ERROR_RETURN_RET(data.ReadInterfaceToken() != GetDescriptor(), ERR_TRANSACTION_FAILED);
+    CHECK_RETURN_RET(data.ReadInterfaceToken() != GetDescriptor(), ERR_TRANSACTION_FAILED);
 
     switch (static_cast<DeferredProcessing::IDeferredPhotoProcessingSessionCallbackIpcCode>(code)) {
         case DeferredProcessing::IDeferredPhotoProcessingSessionCallbackIpcCode::
@@ -120,15 +120,15 @@ int32_t DeferredPhotoProcessingSessionCallback::CallbackParcel([[maybe_unused]] 
             MEDIA_INFO_LOG("HandleProcessLowQualityImage enter");
             std::string imageId = Str16ToStr8(data.ReadString16());
             int32_t size = data.ReadInt32();
-            CHECK_ERROR_RETURN_RET_LOG(size == 0, ERR_INVALID_DATA, "Not an parcelable oject");
+            CHECK_RETURN_RET_ELOG(size == 0, ERR_INVALID_DATA, "Not an parcelable oject");
             std::shared_ptr<PictureProxy> picturePtr = PictureProxy::CreatePictureProxy();
-            CHECK_ERROR_RETURN_RET_LOG(picturePtr == nullptr, ERR_INVALID_DATA, "picturePtr is nullptr");
+            CHECK_RETURN_RET_ELOG(picturePtr == nullptr, ERR_INVALID_DATA, "picturePtr is nullptr");
             MEDIA_DEBUG_LOG("HandleProcessLowQualityImage Picture::Unmarshalling E");
             picturePtr->UnmarshallingPicture(data);
             MEDIA_DEBUG_LOG("HandleProcessLowQualityImage Picture::Unmarshalling X");
             ErrCode errCode = OnDeliveryLowQualityImage(imageId, picturePtr->GetPictureIntf());
             MEDIA_INFO_LOG("HandleProcessLowQualityImage result: %{public}d", errCode);
-            CHECK_ERROR_RETURN_RET_LOG(!reply.WriteInt32(errCode), ERR_INVALID_VALUE,
+            CHECK_RETURN_RET_ELOG(!reply.WriteInt32(errCode), ERR_INVALID_VALUE,
                 "OnDeliveryLowQualityImage faild");
             break;
         }
@@ -137,9 +137,9 @@ int32_t DeferredPhotoProcessingSessionCallback::CallbackParcel([[maybe_unused]] 
             MEDIA_INFO_LOG("HandleOnProcessPictureDone enter");
             std::string imageId = Str16ToStr8(data.ReadString16());
             int32_t size = data.ReadInt32();
-            CHECK_ERROR_RETURN_RET_LOG(size == 0, ERR_INVALID_DATA, "Not an parcelable oject");
+            CHECK_RETURN_RET_ELOG(size == 0, ERR_INVALID_DATA, "Not an parcelable oject");
             std::shared_ptr<PictureProxy> picturePtr = PictureProxy::CreatePictureProxy();
-            CHECK_ERROR_RETURN_RET_LOG(picturePtr == nullptr, IPC_STUB_INVALID_DATA_ERR, "picturePtr is nullptr");
+            CHECK_RETURN_RET_ELOG(picturePtr == nullptr, IPC_STUB_INVALID_DATA_ERR, "picturePtr is nullptr");
             MEDIA_DEBUG_LOG("HandleOnProcessPictureDone Picture::Unmarshalling E");
             picturePtr->UnmarshallingPicture(data);
             MEDIA_DEBUG_LOG("HandleOnProcessPictureDone Picture::Unmarshalling X");
@@ -147,7 +147,7 @@ int32_t DeferredPhotoProcessingSessionCallback::CallbackParcel([[maybe_unused]] 
             ErrCode errCode = OnProcessImageDone(imageId, picturePtr->GetPictureIntf(), cloudImageEnhanceFlag);
             MEDIA_INFO_LOG("HandleOnProcessPictureDone result: %{public}d, cloudImageEnhanceFlag: %{public}u",
                 errCode, cloudImageEnhanceFlag);
-            CHECK_ERROR_RETURN_RET_LOG(!reply.WriteInt32(errCode), ERR_INVALID_VALUE, "OnProcessImageDone faild");
+            CHECK_RETURN_RET_ELOG(!reply.WriteInt32(errCode), ERR_INVALID_VALUE, "OnProcessImageDone faild");
             break;
         }
         default:
@@ -167,14 +167,14 @@ DeferredPhotoProcSession::DeferredPhotoProcSession(int userId,
 DeferredPhotoProcSession::~DeferredPhotoProcSession()
 {
     MEDIA_INFO_LOG("DeferredPhotoProcSession::DeferredPhotoProcSession Destructor!");
-    CHECK_ERROR_RETURN(remoteSession_ == nullptr);
+    CHECK_RETURN(remoteSession_ == nullptr);
     (void)remoteSession_->AsObject()->RemoveDeathRecipient(deathRecipient_);
     remoteSession_ = nullptr;
 }
 
 void DeferredPhotoProcSession::BeginSynchronize()
 {
-    CHECK_ERROR_RETURN_LOG(
+    CHECK_RETURN_ELOG(
         remoteSession_ == nullptr, "DeferredPhotoProcSession::BeginSynchronize failed due to binder died.");
 
     MEDIA_INFO_LOG("DeferredPhotoProcSession:BeginSynchronize() enter.");
@@ -183,7 +183,7 @@ void DeferredPhotoProcSession::BeginSynchronize()
 
 void DeferredPhotoProcSession::EndSynchronize()
 {
-    CHECK_ERROR_RETURN_LOG(
+    CHECK_RETURN_ELOG(
         remoteSession_ == nullptr, "DeferredPhotoProcSession::EndSynchronize failed due to binder died.");
     MEDIA_INFO_LOG("DeferredPhotoProcSession::EndSynchronize() enter.");
     remoteSession_->EndSynchronize();
@@ -191,14 +191,14 @@ void DeferredPhotoProcSession::EndSynchronize()
 
 void DeferredPhotoProcSession::AddImage(const std::string& imageId, DpsMetadata& metadata, const bool discardable)
 {
-    CHECK_ERROR_RETURN_LOG(remoteSession_ == nullptr, "DeferredPhotoProcSession::AddImage failed due to binder died.");
+    CHECK_RETURN_ELOG(remoteSession_ == nullptr, "DeferredPhotoProcSession::AddImage failed due to binder died.");
     MEDIA_INFO_LOG("DeferredPhotoProcSession::AddImage() enter.");
     remoteSession_->AddImage(imageId, metadata, discardable);
 }
 
 void DeferredPhotoProcSession::RemoveImage(const std::string& imageId, const bool restorable)
 {
-    CHECK_ERROR_RETURN_LOG(
+    CHECK_RETURN_ELOG(
         remoteSession_ == nullptr, "DeferredPhotoProcSession::RemoveImage failed due to binder died.");
     MEDIA_INFO_LOG("DeferredPhotoProcSession RemoveImage() enter.");
     remoteSession_->RemoveImage(imageId, restorable);
@@ -206,7 +206,7 @@ void DeferredPhotoProcSession::RemoveImage(const std::string& imageId, const boo
 
 void DeferredPhotoProcSession::RestoreImage(const std::string& imageId)
 {
-    CHECK_ERROR_RETURN_LOG(
+    CHECK_RETURN_ELOG(
         remoteSession_ == nullptr, "DeferredPhotoProcSession::RestoreImage failed due to binder died.");
     MEDIA_INFO_LOG("DeferredPhotoProcSession RestoreImage() enter.");
     remoteSession_->RestoreImage(imageId);
@@ -214,7 +214,7 @@ void DeferredPhotoProcSession::RestoreImage(const std::string& imageId)
 
 void DeferredPhotoProcSession::ProcessImage(const std::string& appName, const std::string& imageId)
 {
-    CHECK_ERROR_RETURN_LOG(
+    CHECK_RETURN_ELOG(
         remoteSession_ == nullptr, "DeferredPhotoProcSession::ProcessImage failed due to binder died.");
     MEDIA_INFO_LOG("DeferredPhotoProcSession::ProcessImage() enter.");
     remoteSession_->ProcessImage(appName, imageId);
@@ -222,7 +222,7 @@ void DeferredPhotoProcSession::ProcessImage(const std::string& appName, const st
 
 bool DeferredPhotoProcSession::CancelProcessImage(const std::string& imageId)
 {
-    CHECK_ERROR_RETURN_RET_LOG(
+    CHECK_RETURN_RET_ELOG(
         remoteSession_ == nullptr, false, "DeferredPhotoProcSession::CancelProcessImage failed due to binder died.");
     MEDIA_INFO_LOG("DeferredPhotoProcSession:CancelProcessImage() enter.");
     remoteSession_->CancelProcessImage(imageId);
@@ -236,11 +236,11 @@ int32_t DeferredPhotoProcSession::SetDeferredPhotoSession(
     sptr<IRemoteObject> object = remoteSession_->AsObject();
     pid_t pid = 0;
     deathRecipient_ = new(std::nothrow) CameraDeathRecipient(pid);
-    CHECK_ERROR_RETURN_RET_LOG(deathRecipient_ == nullptr, CAMERA_ALLOC_ERROR, "failed to new CameraDeathRecipient.");
+    CHECK_RETURN_RET_ELOG(deathRecipient_ == nullptr, CAMERA_ALLOC_ERROR, "failed to new CameraDeathRecipient.");
 
     deathRecipient_->SetNotifyCb([this](pid_t pid) { CameraServerDied(pid); });
     bool result = object->AddDeathRecipient(deathRecipient_);
-    CHECK_ERROR_RETURN_RET_LOG(!result, -1, "failed to add deathRecipient");
+    CHECK_RETURN_RET_ELOG(!result, -1, "failed to add deathRecipient");
     return 0;
 }
 
@@ -274,21 +274,21 @@ void DeferredPhotoProcSession::ReconnectDeferredProcessingSession()
 void DeferredPhotoProcSession::ConnectDeferredProcessingSession()
 {
     MEDIA_INFO_LOG("DeferredPhotoProcSession::ConnectDeferredProcessingSession, enter.");
-    CHECK_ERROR_RETURN_LOG(remoteSession_ != nullptr, "remoteSession_ is not null");
+    CHECK_RETURN_ELOG(remoteSession_ != nullptr, "remoteSession_ is not null");
     sptr<IRemoteObject> object = nullptr;
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    CHECK_ERROR_RETURN_LOG(samgr == nullptr, "Failed to get System ability manager");
+    CHECK_RETURN_ELOG(samgr == nullptr, "Failed to get System ability manager");
     object = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
-    CHECK_ERROR_RETURN_LOG(object == nullptr, "object is null");
+    CHECK_RETURN_ELOG(object == nullptr, "object is null");
     serviceProxy_ = iface_cast<ICameraService>(object);
-    CHECK_ERROR_RETURN_LOG(serviceProxy_ == nullptr, "serviceProxy_ is null");
+    CHECK_RETURN_ELOG(serviceProxy_ == nullptr, "serviceProxy_ is null");
     sptr<DeferredProcessing::IDeferredPhotoProcessingSession> session = nullptr;
     sptr<DeferredProcessing::IDeferredPhotoProcessingSessionCallback> remoteCallback = nullptr;
     sptr<DeferredPhotoProcSession> deferredPhotoProcSession = nullptr;
     deferredPhotoProcSession = new(std::nothrow) DeferredPhotoProcSession(userId_, callback_);
-    CHECK_ERROR_RETURN(deferredPhotoProcSession == nullptr);
+    CHECK_RETURN(deferredPhotoProcSession == nullptr);
     remoteCallback = new(std::nothrow) DeferredPhotoProcessingSessionCallback(deferredPhotoProcSession);
-    CHECK_ERROR_RETURN(remoteCallback == nullptr);
+    CHECK_RETURN(remoteCallback == nullptr);
     serviceProxy_->CreateDeferredPhotoProcessingSession(userId_, remoteCallback, session);
     CHECK_EXECUTE(session, SetDeferredPhotoSession(session));
     return;

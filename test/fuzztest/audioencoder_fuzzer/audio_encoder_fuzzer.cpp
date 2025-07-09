@@ -64,7 +64,7 @@ void AudioEncoderFuzzer::AudioEncoderFuzzTest()
         return;
     }
     fuzz_ = std::make_shared<AudioEncoder>();
-    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
+    CHECK_RETURN_ELOG(!fuzz_, "Create fuzz_ Error");
     uint8_t randomNum = GetData<uint8_t>();
     std::vector<std::string> testStrings = {"test1", "test2"};
     std::string codecMime(testStrings[randomNum % testStrings.size()]);

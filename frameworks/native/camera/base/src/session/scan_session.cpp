@@ -33,22 +33,22 @@ ScanSession::~ScanSession()
  
 int32_t ScanSession::AddOutput(sptr<CaptureOutput> &output)
 {
-    CHECK_ERROR_RETURN_RET_LOG(output == nullptr, CameraErrorCode::INVALID_ARGUMENT,
+    CHECK_RETURN_RET_ELOG(output == nullptr, CameraErrorCode::INVALID_ARGUMENT,
         "ScanSession::AddOutput output is nullptr");
     int32_t result = CAMERA_UNKNOWN_ERROR;
     auto inputDevice = GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(inputDevice == nullptr, CameraErrorCode::SESSION_NOT_CONFIG,
+    CHECK_RETURN_RET_ELOG(inputDevice == nullptr, CameraErrorCode::SESSION_NOT_CONFIG,
         "ScanSession::AddOutput get nullptr to inputDevice");
 
     sptr<CameraDevice> device = inputDevice->GetCameraDeviceInfo();
     sptr<CameraManager> cameraManager = CameraManager::GetInstance();
     sptr<CameraOutputCapability> outputCapability = nullptr;
 
-    CHECK_ERROR_RETURN_RET_LOG(device == nullptr || cameraManager == nullptr, CameraErrorCode::DEVICE_DISABLED,
+    CHECK_RETURN_RET_ELOG(device == nullptr || cameraManager == nullptr, CameraErrorCode::DEVICE_DISABLED,
         "ScanSession::AddOutput get nullptr to device or cameraManager");
     outputCapability = cameraManager->GetSupportedOutputCapability(device, SceneMode::SCAN);
 
-    CHECK_ERROR_RETURN_RET_LOG((outputCapability == nullptr || outputCapability->GetPreviewProfiles().size() == 0 ||
+    CHECK_RETURN_RET_ELOG((outputCapability == nullptr || outputCapability->GetPreviewProfiles().size() == 0 ||
         output->GetOutputType() != CAPTURE_OUTPUT_TYPE_PREVIEW), CameraErrorCode::SESSION_NOT_CONFIG,
         "ScanSession::AddOutput can not add current type of output");
     result = CaptureSession::AddOutput(output);
@@ -58,20 +58,20 @@ int32_t ScanSession::AddOutput(sptr<CaptureOutput> &output)
 bool ScanSession::CanAddOutput(sptr<CaptureOutput> &output)
 {
     MEDIA_DEBUG_LOG("Enter Into ScanSession::CanAddOutput");
-    CHECK_ERROR_RETURN_RET_LOG(!IsSessionConfiged() || output == nullptr, false,
+    CHECK_RETURN_RET_ELOG(!IsSessionConfiged() || output == nullptr, false,
         "ScanSession::CanAddOutput operation is Not allowed!");
     return output->GetOutputType() != CAPTURE_OUTPUT_TYPE_VIDEO && CaptureSession::CanAddOutput(output);
 }
 
 bool ScanSession::IsBrightnessStatusSupported()
 {
-    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), false,
+    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), false,
         "ScanSession::IsBrightnessStatusSupported Session is not Commited");
     auto inputDevice = GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(!inputDevice, false,
+    CHECK_RETURN_RET_ELOG(!inputDevice, false,
         "ScanSession::IsBrightnessStatusSupported camera device is null");
     auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
-    CHECK_ERROR_RETURN_RET_LOG(!inputDeviceInfo, false,
+    CHECK_RETURN_RET_ELOG(!inputDeviceInfo, false,
         "ScanSession::IsBrightnessStatusSupported camera deviceInfo is null");
     sptr<CameraDevice> device = inputDeviceInfo;
     std::shared_ptr<Camera::CameraMetadata> metadata = device->GetCachedMetadata();
@@ -79,7 +79,7 @@ bool ScanSession::IsBrightnessStatusSupported()
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_FLASH_SUGGESTION_SUPPORTED, &item);
     if (ret == CAM_META_SUCCESS) {
         camera_supported_enum_t status = static_cast<camera_supported_enum_t>(item.data.ui32[0]);
-        CHECK_ERROR_RETURN_RET(status == camera_supported_enum_t::OHOS_CAMERA_SUPPORTED, true);
+        CHECK_RETURN_RET(status == camera_supported_enum_t::OHOS_CAMERA_SUPPORTED, true);
     }
     return false;
 }
@@ -89,13 +89,13 @@ void ScanSession::SetBrightnessStatusReport(uint8_t state)
     this->LockForControl();
     MEDIA_DEBUG_LOG("ScanSession::SetBrightnessStatusReport set brightness status report");
     bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_FLASH_SUGGESTION_SWITCH, &state, 1);
-    CHECK_ERROR_PRINT_LOG(!status, "ScanSession::SetBrightnessStatusReport Failed to set brightness status report!");
+    CHECK_PRINT_ELOG(!status, "ScanSession::SetBrightnessStatusReport Failed to set brightness status report!");
     this->UnlockForControl();
 }
 
 void ScanSession::RegisterBrightnessStatusCallback(std::shared_ptr<BrightnessStatusCallback> brightnessStatusCallback)
 {
-    CHECK_ERROR_RETURN_LOG(!IsSessionCommited(),
+    CHECK_RETURN_ELOG(!IsSessionCommited(),
         "ScanSession::RegisterBrightnessStatusCallback Session is not Commited");
     SetBrightnessStatusCallback(brightnessStatusCallback);
     SetBrightnessStatusReport(SWTCH_ON);
@@ -103,7 +103,7 @@ void ScanSession::RegisterBrightnessStatusCallback(std::shared_ptr<BrightnessSta
  
 void ScanSession::UnRegisterBrightnessStatusCallback()
 {
-    CHECK_ERROR_RETURN_LOG(!IsSessionCommited(),
+    CHECK_RETURN_ELOG(!IsSessionCommited(),
         "ScanSession::UnRegisterBrightnessStatusCallback Session is not Commited");
     SetBrightnessStatusCallback(nullptr);
     SetBrightnessStatusReport(SWTCH_OFF);
@@ -111,14 +111,14 @@ void ScanSession::UnRegisterBrightnessStatusCallback()
 
 void ScanSession::ProcessBrightnessStatusChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result)
 {
-    CHECK_ERROR_RETURN_LOG(result == nullptr, "ScanSession::ProcessBrightnessStatusChange result is null.");
+    CHECK_RETURN_ELOG(result == nullptr, "ScanSession::ProcessBrightnessStatusChange result is null.");
     MEDIA_DEBUG_LOG("Entry ProcessBrightnessStatusChange");
     auto callback = GetBrightnessStatusCallback();
     if (callback != nullptr) {
         camera_metadata_item_t item;
         common_metadata_header_t* metadata = result->get();
         int ret = Camera::FindCameraMetadataItem(metadata, OHOS_STATUS_FLASH_SUGGESTION, &item);
-        CHECK_ERROR_RETURN_LOG(ret != CAM_META_SUCCESS,
+        CHECK_RETURN_ELOG(ret != CAM_META_SUCCESS,
             "ScanSession::ProcessBrightnessStatusChange get brightness status failed");
         bool state = true;
         uint32_t brightnessStatus = item.data.ui32[0];
@@ -142,11 +142,11 @@ void ScanSession::ProcessBrightnessStatusChange(const std::shared_ptr<OHOS::Came
 void ScanSession::ScanSessionMetadataResultProcessor::ProcessCallbacks(
     const uint64_t timestamp, const std::shared_ptr<OHOS::Camera::CameraMetadata>& result)
 {
-    CHECK_ERROR_RETURN_LOG(result == nullptr,
+    CHECK_RETURN_ELOG(result == nullptr,
         "ScanSession::ScanSessionMetadataResultProcessor ProcessCallbacks result is null.");
     MEDIA_DEBUG_LOG("ScanSession::ScanSessionMetadataResultProcessor ProcessCallbacks");
     auto session = session_.promote();
-    CHECK_ERROR_RETURN_LOG(session == nullptr,
+    CHECK_RETURN_ELOG(session == nullptr,
         "ScanSession::ScanSessionMetadataResultProcessor ProcessCallbacks but session is null");
     session->ProcessAutoFocusUpdates(result);
     session->ProcessBrightnessStatusChange(result);

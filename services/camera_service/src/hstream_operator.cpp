@@ -107,7 +107,7 @@ constexpr int32_t BURST_SHOT_TYPE = 3;
 sptr<HStreamOperator> HStreamOperator::NewInstance(const uint32_t callerToken, int32_t opMode)
 {
     sptr<HStreamOperator> hStreamOperator = new HStreamOperator();
-    CHECK_ERROR_RETURN_RET(hStreamOperator->Initialize(callerToken, opMode) == CAMERA_OK, hStreamOperator);
+    CHECK_RETURN_RET(hStreamOperator->Initialize(callerToken, opMode) == CAMERA_OK, hStreamOperator);
     return nullptr;
 }
 
@@ -193,15 +193,15 @@ int32_t HStreamOperator::GetCurrentStreamInfos(std::vector<StreamInfo_V1_1>& str
 int32_t HStreamOperator::AddOutputStream(sptr<HStreamCommon> stream)
 {
     CAMERA_SYNC_TRACE;
-    CHECK_ERROR_RETURN_RET_LOG(stream == nullptr, CAMERA_INVALID_ARG,
+    CHECK_RETURN_RET_ELOG(stream == nullptr, CAMERA_INVALID_ARG,
         "HStreamOperator::AddOutputStream stream is null");
     MEDIA_INFO_LOG("HStreamOperator::AddOutputStream streamId:%{public}d streamType:%{public}d",
         stream->GetFwkStreamId(), stream->GetStreamType());
-    CHECK_ERROR_RETURN_RET_LOG(
+    CHECK_RETURN_RET_ELOG(
         stream->GetFwkStreamId() == STREAM_ID_UNSET && stream->GetStreamType() != StreamType::METADATA,
         CAMERA_INVALID_ARG, "HStreamOperator::AddOutputStream stream is released!");
     bool isAddSuccess = streamContainer_.AddStream(stream);
-    CHECK_ERROR_RETURN_RET_LOG(!isAddSuccess, CAMERA_INVALID_SESSION_CFG,
+    CHECK_RETURN_RET_ELOG(!isAddSuccess, CAMERA_INVALID_SESSION_CFG,
         "HStreamOperator::AddOutputStream add stream fail");
     if (stream->GetStreamType() == StreamType::CAPTURE) {
         auto captureStream = CastStream<HStreamCapture>(stream);
@@ -219,16 +219,16 @@ void HStreamOperator::StartMovingPhotoStream(const std::shared_ptr<OHOS::Camera:
     bool isPreviewStarted = std::any_of(repeatStreams.begin(), repeatStreams.end(), [](auto& stream) {
         auto curStreamRepeat = CastStream<HStreamRepeat>(stream);
         auto repeatType = curStreamRepeat->GetRepeatStreamType();
-        CHECK_ERROR_RETURN_RET(repeatType != RepeatStreamType::PREVIEW, false);
+        CHECK_RETURN_RET(repeatType != RepeatStreamType::PREVIEW, false);
         return curStreamRepeat->GetPreparedCaptureId() != CAPTURE_ID_UNSET && curStreamRepeat->producer_ != nullptr;
     });
-    CHECK_ERROR_RETURN_LOG(!isPreviewStarted, "EnableMovingPhoto, preview is not streaming");
+    CHECK_RETURN_ELOG(!isPreviewStarted, "EnableMovingPhoto, preview is not streaming");
     auto itLivePhotoStream = std::find_if(repeatStreams.begin(), repeatStreams.end(), [](auto& stream) {
         auto curStreamRepeat = CastStream<HStreamRepeat>(stream);
         auto repeatType = curStreamRepeat->GetRepeatStreamType();
         return repeatType == RepeatStreamType::LIVEPHOTO;
     });
-    CHECK_ERROR_RETURN_LOG(
+    CHECK_RETURN_ELOG(
         itLivePhotoStream == repeatStreams.end(), "EnableMovingPhoto, not found LIVEPHOTO repeat stream");
     auto livePhotoStream = CastStream<HStreamRepeat>(*itLivePhotoStream);
     if (isSetMotionPhoto_) {
@@ -325,12 +325,12 @@ int32_t HStreamOperator::RemoveOutput(StreamType streamType, sptr<IStreamCommon>
 int32_t HStreamOperator::RemoveOutputStream(sptr<HStreamCommon> stream)
 {
     CAMERA_SYNC_TRACE;
-    CHECK_ERROR_RETURN_RET_LOG(stream == nullptr, CAMERA_INVALID_ARG,
+    CHECK_RETURN_RET_ELOG(stream == nullptr, CAMERA_INVALID_ARG,
         "HStreamOperator::RemoveOutputStream stream is null");
     MEDIA_INFO_LOG("HStreamOperator::RemoveOutputStream,streamType:%{public}d, streamId:%{public}d",
         stream->GetStreamType(), stream->GetFwkStreamId());
     bool isRemoveSuccess = streamContainer_.RemoveStream(stream);
-    CHECK_ERROR_RETURN_RET_LOG(!isRemoveSuccess, CAMERA_INVALID_SESSION_CFG,
+    CHECK_RETURN_RET_ELOG(!isRemoveSuccess, CAMERA_INVALID_SESSION_CFG,
         "HStreamOperator::RemoveOutputStream Invalid output");
     if (stream->GetStreamType() != StreamType::CAPTURE) {
         return CAMERA_OK;
@@ -348,7 +348,7 @@ int32_t HStreamOperator::RemoveOutputStream(sptr<HStreamCommon> stream)
             }
         }
         captureSteam->SwitchToOffline();
-        CHECK_ERROR_RETURN_RET_LOG(!isAddSuccess, CAMERA_INVALID_SESSION_CFG,
+        CHECK_RETURN_RET_ELOG(!isAddSuccess, CAMERA_INVALID_SESSION_CFG,
             "HStreamOperator::AddOutputStream add stream fail");
     }
     return CAMERA_OK;
@@ -371,7 +371,7 @@ void HStreamOperator::GetStreamOperator()
         return;
     }
     std::lock_guard<std::mutex> lock(streamOperatorLock_);
-    CHECK_ERROR_RETURN(streamOperator_ != nullptr);
+    CHECK_RETURN(streamOperator_ != nullptr);
     cameraDevice_->GetStreamOperator(this, streamOperator_);
 }
 
@@ -381,18 +381,18 @@ bool HStreamOperator::IsOfflineCapture()
     std::list<sptr<HStreamCommon>> allOfflineStreams = streamContainerOffline_.GetAllStreams();
     allStream.insert(allStream.end(), allOfflineStreams.begin(), allOfflineStreams.end());
     return std::any_of(allStream.begin(), allStream.end(), [](auto& stream) {
-        CHECK_ERROR_RETURN_RET(stream->GetStreamType() != StreamType::CAPTURE, false);
+        CHECK_RETURN_RET(stream->GetStreamType() != StreamType::CAPTURE, false);
         return static_cast<HStreamCapture*>(stream.GetRefPtr())->IsHasSwitchToOffline();
     });
 }
 
 bool HStreamOperator::GetDeviceAbilityByMeta(uint32_t item, camera_metadata_item_t* metadataItem)
 {
-    CHECK_ERROR_RETURN_RET_LOG(cameraDevice_ == nullptr, false, "cameraDevice is nullptr.");
+    CHECK_RETURN_RET_ELOG(cameraDevice_ == nullptr, false, "cameraDevice is nullptr.");
     auto ability = cameraDevice_->GetDeviceAbility();
-    CHECK_ERROR_RETURN_RET(ability == nullptr, false);
+    CHECK_RETURN_RET(ability == nullptr, false);
     int ret = OHOS::Camera::FindCameraMetadataItem(ability->get(), item, metadataItem);
-    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, false, "get ability failed.");
+    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS, false, "get ability failed.");
     return true;
 }
 
@@ -405,7 +405,7 @@ int32_t HStreamOperator::LinkInputAndOutputs(const std::shared_ptr<OHOS::Camera:
     for (auto& stream : allStream) {
         SetBasicInfo(stream);
         rc = stream->LinkInput(streamOperator_, settings);
-        CHECK_ERROR_RETURN_RET_LOG(rc != CAMERA_OK, rc, "HStreamOperator::LinkInputAndOutputs IsValidMode false");
+        CHECK_RETURN_RET_ELOG(rc != CAMERA_OK, rc, "HStreamOperator::LinkInputAndOutputs IsValidMode false");
         if (stream->GetHdiStreamId() == STREAM_ID_UNSET) {
             stream->SetHdiStreamId(GenerateHdiStreamId());
         }
@@ -471,12 +471,12 @@ void HStreamOperator::ExpandSketchRepeatStream()
     std::set<sptr<HStreamCommon>> sketchStreams;
     auto repeatStreams = streamContainer_.GetStreams(StreamType::REPEAT);
     std::for_each(repeatStreams.begin(), repeatStreams.end(), [&](auto& stream) {
-        CHECK_ERROR_RETURN(!stream);
+        CHECK_RETURN(!stream);
         auto streamRepeat = CastStream<HStreamRepeat>(stream);
         // skip SKETCH stream
-        CHECK_ERROR_RETURN(streamRepeat->GetRepeatStreamType() == RepeatStreamType::SKETCH);
+        CHECK_RETURN(streamRepeat->GetRepeatStreamType() == RepeatStreamType::SKETCH);
         sptr<HStreamRepeat> sketchStream = streamRepeat->GetSketchStream();
-        CHECK_ERROR_RETURN(!sketchStream);
+        CHECK_RETURN(!sketchStream);
         sketchStreams.insert(sketchStream);
     });
 
@@ -493,7 +493,7 @@ void HStreamOperator::ExpandMovingPhotoRepeatStream()
     MEDIA_DEBUG_LOG("ExpandMovingPhotoRepeatStream enter");
     auto repeatStreams = streamContainer_.GetStreams(StreamType::REPEAT);
     for (auto& stream : repeatStreams) {
-        CHECK_WARNING_CONTINUE_LOG(stream == nullptr, "stream is nullptr");
+        CHECK_CONTINUE_WLOG(stream == nullptr, "stream is nullptr");
         auto streamRepeat = CastStream<HStreamRepeat>(stream);
         if (streamRepeat && streamRepeat->GetRepeatStreamType() == RepeatStreamType::PREVIEW) {
             std::lock_guard<std::mutex> lock(movingPhotoStatusLock_);
@@ -506,13 +506,13 @@ void HStreamOperator::ExpandMovingPhotoRepeatStream()
             auto producer = movingPhotoSurfaceWrapper->GetProducer();
             metaSurface_ = Surface::CreateSurfaceAsConsumer("movingPhotoMeta");
             auto metaCache = make_shared<FixedSizeList<pair<int64_t, sptr<SurfaceBuffer>>>>(8);
-            CHECK_WARNING_CONTINUE_LOG(producer == nullptr, "get producer fail.");
+            CHECK_CONTINUE_WLOG(producer == nullptr, "get producer fail.");
             livephotoListener_ = new (std::nothrow) MovingPhotoListener(movingPhotoSurfaceWrapper,
                 metaSurface_, metaCache, preCacheFrameCount_, postCacheFrameCount_);
-            CHECK_WARNING_CONTINUE_LOG(livephotoListener_ == nullptr, "failed to new livephotoListener_!");
+            CHECK_CONTINUE_WLOG(livephotoListener_ == nullptr, "failed to new livephotoListener_!");
             movingPhotoSurfaceWrapper->SetSurfaceBufferListener(livephotoListener_);
             livephotoMetaListener_ = new(std::nothrow) MovingPhotoMetaListener(metaSurface_, metaCache);
-            CHECK_WARNING_CONTINUE_LOG(livephotoMetaListener_ == nullptr, "failed to new livephotoMetaListener_!");
+            CHECK_CONTINUE_WLOG(livephotoMetaListener_ == nullptr, "failed to new livephotoMetaListener_!");
             metaSurface_->RegisterConsumerListener((sptr<IBufferConsumerListener> &)livephotoMetaListener_);
             CreateMovingPhotoStreamRepeat(streamRepeat->format_, streamRepeat->width_, streamRepeat->height_, producer);
             std::lock_guard<std::mutex> streamLock(livePhotoStreamLock_);
@@ -540,14 +540,14 @@ int32_t HStreamOperator::CreateMovingPhotoStreamRepeat(
 {
     CAMERA_SYNC_TRACE;
     std::lock_guard<std::mutex> lock(livePhotoStreamLock_);
-    CHECK_ERROR_RETURN_RET_LOG(
+    CHECK_RETURN_RET_ELOG(
         width <= 0 || height <= 0, CAMERA_INVALID_ARG, "HCameraService::CreateLivePhotoStreamRepeat args is illegal");
     CHECK_EXECUTE(livePhotoStreamRepeat_ != nullptr, livePhotoStreamRepeat_->Release());
     auto streamRepeat = new (std::nothrow) HStreamRepeat(producer, format, width, height, RepeatStreamType::LIVEPHOTO);
-    CHECK_ERROR_RETURN_RET_LOG(streamRepeat == nullptr, CAMERA_ALLOC_ERROR, "HStreamRepeat allocation failed");
+    CHECK_RETURN_RET_ELOG(streamRepeat == nullptr, CAMERA_ALLOC_ERROR, "HStreamRepeat allocation failed");
     MEDIA_DEBUG_LOG("para is:%{public}dx%{public}d,%{public}d", width, height, format);
     livePhotoStreamRepeat_ = streamRepeat;
-    CHECK_ERROR_RETURN_RET_LOG(metaSurface_ == nullptr, CAMERA_INVALID_STATE, "metaSurface_ is nullptr");
+    CHECK_RETURN_RET_ELOG(metaSurface_ == nullptr, CAMERA_INVALID_STATE, "metaSurface_ is nullptr");
     streamRepeat->SetMetaProducer(metaSurface_->GetProducer());
     streamRepeat->SetMirror(isMovingPhotoMirror_);
     MEDIA_INFO_LOG("HCameraService::CreateLivePhotoStreamRepeat end");
@@ -559,7 +559,7 @@ const sptr<HStreamCommon> HStreamOperator::GetStreamByStreamID(int32_t streamId)
     auto stream = streamContainer_.GetStream(streamId) != nullptr ? streamContainer_.GetStream(streamId) :
         streamContainerOffline_.GetStream(streamId);
 
-    CHECK_ERROR_PRINT_LOG(stream == nullptr,
+    CHECK_PRINT_ELOG(stream == nullptr,
         "HStreamOperator::GetStreamByStreamID get stream fail, streamId is:%{public}d", streamId);
     return stream;
 }
@@ -581,9 +581,9 @@ void HStreamOperator::ClearSketchRepeatStream()
     // Already added session lock in BeginConfig()
     auto repeatStreams = streamContainer_.GetStreams(StreamType::REPEAT);
     std::for_each(repeatStreams.begin(), repeatStreams.end(), [this](auto& repeatStream) {
-        CHECK_ERROR_RETURN(!repeatStream);
+        CHECK_RETURN(!repeatStream);
         auto sketchStream = CastStream<HStreamRepeat>(repeatStream);
-        CHECK_ERROR_RETURN(sketchStream->GetRepeatStreamType() != RepeatStreamType::SKETCH);
+        CHECK_RETURN(sketchStream->GetRepeatStreamType() != RepeatStreamType::SKETCH);
         MEDIA_DEBUG_LOG(
             "HStreamOperator::ClearSketchRepeatStream() stream id is:%{public}d", sketchStream->GetFwkStreamId());
         RemoveOutputStream(repeatStream);
@@ -598,9 +598,9 @@ void HStreamOperator::ClearMovingPhotoRepeatStream()
     // Already added session lock in BeginConfig()
     auto repeatStreams = streamContainer_.GetStreams(StreamType::REPEAT);
     std::for_each(repeatStreams.begin(), repeatStreams.end(), [this](auto& repeatStream) {
-        CHECK_ERROR_RETURN(!repeatStream);
+        CHECK_RETURN(!repeatStream);
         auto movingPhotoStream = CastStream<HStreamRepeat>(repeatStream);
-        CHECK_ERROR_RETURN(movingPhotoStream->GetRepeatStreamType() != RepeatStreamType::LIVEPHOTO);
+        CHECK_RETURN(movingPhotoStream->GetRepeatStreamType() != RepeatStreamType::LIVEPHOTO);
         StopMovingPhoto();
         std::lock_guard<std::mutex> lock(movingPhotoStatusLock_);
         livephotoListener_ = nullptr;
@@ -633,14 +633,14 @@ int32_t HStreamOperator::GetActiveColorSpace(ColorSpace& colorSpace)
 int32_t HStreamOperator::SetColorSpace(ColorSpace colorSpace, bool isNeedUpdate)
 {
     int32_t result = CAMERA_OK;
-    CHECK_ERROR_RETURN_RET_LOG(colorSpace == currColorSpace_, result,
+    CHECK_RETURN_RET_ELOG(colorSpace == currColorSpace_, result,
         "HStreamOperator::SetColorSpace() colorSpace no need to update.");
     currColorSpace_ = colorSpace;
     MEDIA_INFO_LOG("HStreamOperator::SetColorSpace() old ColorSpace : %{public}d, old ColorSpace : %{public}d",
         currColorSpace_, colorSpace);
     result = CheckIfColorSpaceMatchesFormat(colorSpace);
     if (result != CAMERA_OK) {
-        CHECK_ERROR_RETURN_RET_LOG(opMode_ != static_cast<int32_t>(SceneMode::VIDEO) || isNeedUpdate, result,
+        CHECK_RETURN_RET_ELOG(opMode_ != static_cast<int32_t>(SceneMode::VIDEO) || isNeedUpdate, result,
             "HStreamOperator::SetColorSpace() Failed, format and colorSpace not match.");
 
         MEDIA_ERR_LOG("HStreamOperator::SetColorSpace() %{public}d, format and colorSpace: %{public}d not match.",
@@ -667,7 +667,7 @@ void HStreamOperator::CancelStreamsAndGetStreamInfos(std::vector<StreamInfo_V1_1
     MEDIA_INFO_LOG("HStreamOperator::CancelStreamsAndGetStreamInfos enter.");
     auto streams = streamContainer_.GetAllStreams();
     std::for_each(streams.begin(), streams.end(), [this, &streamInfos](auto &stream) {
-        CHECK_ERROR_RETURN(stream->GetStreamType() == StreamType::METADATA);
+        CHECK_RETURN(stream->GetStreamType() == StreamType::METADATA);
         if (stream->GetStreamType() == StreamType::CAPTURE && isSessionStarted_) {
             static_cast<HStreamCapture *>(stream.GetRefPtr())->CancelCapture();
         } else if (stream->GetStreamType() == StreamType::REPEAT && isSessionStarted_) {
@@ -685,7 +685,7 @@ void HStreamOperator::RestartStreams(const std::shared_ptr<OHOS::Camera::CameraM
     auto repStreams = streamContainer_.GetStreams(StreamType::REPEAT);
     std::for_each(repStreams.begin(), repStreams.end(), [&settings](auto &stream) {
         auto repStream = CastStream<HStreamRepeat>(stream);
-        CHECK_ERROR_RETURN(repStream->GetRepeatStreamType() != RepeatStreamType::PREVIEW);
+        CHECK_RETURN(repStream->GetRepeatStreamType() != RepeatStreamType::PREVIEW);
         repStream->Start(settings);
     });
 }
@@ -713,7 +713,7 @@ int32_t HStreamOperator::CheckIfColorSpaceMatchesFormat(ColorSpace colorSpace)
     // 选择BT2020，需要匹配10bit的format；若不匹配，返回error
     auto capStreams = streamContainer_.GetStreams(StreamType::CAPTURE);
     for (auto& capStream : capStreams) {
-        CHECK_ERROR_RETURN_RET_LOG(
+        CHECK_RETURN_RET_ELOG(
             !(capStream->format_ == OHOS_CAMERA_FORMAT_JPEG || capStream->format_ == OHOS_CAMERA_FORMAT_YCRCB_420_SP ||
                 capStream->format_ == OHOS_CAMERA_FORMAT_HEIC),
             CAMERA_OPERATION_NOT_ALLOWED, "HStreamOperator::CheckFormat, streamType:%{public}d format not match",
@@ -722,7 +722,7 @@ int32_t HStreamOperator::CheckIfColorSpaceMatchesFormat(ColorSpace colorSpace)
 
     auto repStreams = streamContainer_.GetStreams(StreamType::REPEAT);
     for (auto& repStream : repStreams) {
-        CHECK_ERROR_RETURN_RET_LOG(!(repStream->format_ == OHOS_CAMERA_FORMAT_YCBCR_P010 ||
+        CHECK_RETURN_RET_ELOG(!(repStream->format_ == OHOS_CAMERA_FORMAT_YCBCR_P010 ||
                                        repStream->format_ == OHOS_CAMERA_FORMAT_YCRCB_P010),
             CAMERA_OPERATION_NOT_ALLOWED, "HStreamOperator::CheckFormat, streamType:%{public}d format not match",
             repStream->GetStreamType());
@@ -739,7 +739,7 @@ int32_t HStreamOperator::GetMovingPhotoBufferDuration()
     constexpr int32_t MILLSEC_MULTIPLE = 1000;
     camera_metadata_item_t item;
     bool ret = GetDeviceAbilityByMeta(OHOS_MOVING_PHOTO_BUFFER_DURATION, &item);
-    CHECK_ERROR_RETURN_RET_LOG(!ret, 0, "HStreamOperator::GetMovingPhotoBufferDuration get buffer duration failed");
+    CHECK_RETURN_RET_ELOG(!ret, 0, "HStreamOperator::GetMovingPhotoBufferDuration get buffer duration failed");
     preBufferDuration = item.data.ui32[0];
     postBufferDuration = item.data.ui32[1];
     preCacheFrameCount_ = preBufferDuration == 0
@@ -758,13 +758,13 @@ int32_t HStreamOperator::GetMovingPhotoBufferDuration()
 
 void HStreamOperator::GetMovingPhotoStartAndEndTime()
 {
-    CHECK_ERROR_RETURN_LOG(cameraDevice_ == nullptr, "HCaptureSession::GetMovingPhotoStartAndEndTime device is null");
+    CHECK_RETURN_ELOG(cameraDevice_ == nullptr, "HCaptureSession::GetMovingPhotoStartAndEndTime device is null");
     cameraDevice_->SetMovingPhotoStartTimeCallback([this](int32_t captureId, int64_t startTimeStamp) {
         MEDIA_INFO_LOG("SetMovingPhotoStartTimeCallback function enter");
         std::lock_guard<mutex> statusLock(this->movingPhotoStatusLock_);
-        CHECK_ERROR_RETURN_LOG(this->taskManager_ == nullptr, "Set start time callback taskManager_ is null");
+        CHECK_RETURN_ELOG(this->taskManager_ == nullptr, "Set start time callback taskManager_ is null");
         std::lock_guard<mutex> lock(this->taskManager_->startTimeMutex_);
-        CHECK_ERROR_RETURN(this->taskManager_->mPStartTimeMap_.count(captureId) != 0);
+        CHECK_RETURN(this->taskManager_->mPStartTimeMap_.count(captureId) != 0);
         MEDIA_INFO_LOG("Save moving photo start info, captureId : %{public}d, start timestamp : %{public}" PRIu64,
             captureId, startTimeStamp);
         this->taskManager_->mPStartTimeMap_.insert(make_pair(captureId, startTimeStamp));
@@ -772,9 +772,9 @@ void HStreamOperator::GetMovingPhotoStartAndEndTime()
 
     cameraDevice_->SetMovingPhotoEndTimeCallback([this](int32_t captureId, int64_t endTimeStamp) {
         std::lock_guard<mutex> statusLock(this->movingPhotoStatusLock_);
-        CHECK_ERROR_RETURN_LOG(this->taskManager_ == nullptr, "Set end time callback taskManager_ is null");
+        CHECK_RETURN_ELOG(this->taskManager_ == nullptr, "Set end time callback taskManager_ is null");
         std::lock_guard<mutex> lock(this->taskManager_->endTimeMutex_);
-        CHECK_ERROR_RETURN(this->taskManager_->mPStartTimeMap_.count(captureId) != 0);
+        CHECK_RETURN(this->taskManager_->mPStartTimeMap_.count(captureId) != 0);
         MEDIA_INFO_LOG("Save moving photo end info, captureId : %{public}d, end timestamp : %{public}" PRIu64,
             captureId, endTimeStamp);
         this->taskManager_->mPEndTimeMap_.insert(make_pair(captureId, endTimeStamp));
@@ -800,7 +800,7 @@ void HStreamOperator::StartMovingPhoto(const std::shared_ptr<OHOS::Camera::Camer
     auto thisPtr = wptr<HStreamOperator>(this);
     curStreamRepeat->SetMovingPhotoStartCallback([thisPtr, settings]() {
         auto sessionPtr = thisPtr.promote();
-        CHECK_ERROR_RETURN(!sessionPtr);
+        CHECK_RETURN(!sessionPtr);
         MEDIA_INFO_LOG("StartMovingPhotoStream when addDeferedSurface");
         sessionPtr->StartMovingPhotoStream(settings);
     });
@@ -907,7 +907,7 @@ int32_t HStreamOperator::Stop()
             MEDIA_ERR_LOG("HStreamOperator::Stop(), get unknow stream, streamType: %{public}d, streamId:%{public}d",
                 item->GetStreamType(), item->GetFwkStreamId());
         }
-        CHECK_ERROR_PRINT_LOG(errorCode != CAMERA_OK,
+        CHECK_PRINT_ELOG(errorCode != CAMERA_OK,
             "HStreamOperator::Stop(), Failed to stop stream, rc: %{public}d, streamId:%{public}d", errorCode,
             item->GetFwkStreamId());
     }
@@ -941,7 +941,7 @@ void HStreamOperator::ReleaseStreams()
         "hdiStreamIds:%{public}s,",
         fwkStreamIds.size(), Container2String(fwkStreamIds.begin(), fwkStreamIds.end()).c_str(),
         Container2String(hdiStreamIds.begin(), hdiStreamIds.end()).c_str());
-    CHECK_ERROR_RETURN(hdiStreamIds.empty());
+    CHECK_RETURN(hdiStreamIds.empty());
     ReleaseStreams(hdiStreamIds);
 }
 
@@ -965,7 +965,7 @@ int32_t HStreamOperator::ReleaseStreams(std::vector<int32_t>& releaseStreamIds)
 {
     CAMERA_SYNC_TRACE;
     auto streamOperator = GetHDIStreamOperator();
-    CHECK_ERROR_RETURN_RET(streamOperator == nullptr || releaseStreamIds.empty(), CAMERA_OK);
+    CHECK_RETURN_RET(streamOperator == nullptr || releaseStreamIds.empty(), CAMERA_OK);
     MEDIA_INFO_LOG("HStreamOperator::ReleaseStreams %{public}s",
         Container2String(releaseStreamIds.begin(), releaseStreamIds.end()).c_str());
     int32_t rc = streamOperator->ReleaseStreams(releaseStreamIds);
@@ -1010,7 +1010,7 @@ int32_t HStreamOperator::CreateAndCommitStreams(std::vector<HDI::Camera::V1_1::S
     const std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceSettings, int32_t operationMode)
 {
     int retCode = CreateStreams(streamInfos);
-    CHECK_ERROR_RETURN_RET(retCode != CAMERA_OK, retCode);
+    CHECK_RETURN_RET(retCode != CAMERA_OK, retCode);
     return CommitStreams(deviceSettings, operationMode);
 }
 
@@ -1024,7 +1024,7 @@ int32_t HStreamOperator::CommitStreams(
     sptr<OHOS::HDI::Camera::V1_1::IStreamOperator> streamOperatorV1_1;
     std::lock_guard<std::mutex> lock(opMutex_);
     streamOperator = GetHDIStreamOperator();
-    CHECK_ERROR_RETURN_RET_LOG(streamOperator == nullptr, CAMERA_UNKNOWN_ERROR,
+    CHECK_RETURN_RET_ELOG(streamOperator == nullptr, CAMERA_UNKNOWN_ERROR,
         "HStreamOperator::CommitStreams GetStreamOperator is null!");
     // get higher streamOperator version
     streamOperator->GetVersion(major, minor);
@@ -1081,7 +1081,7 @@ int32_t HStreamOperator::EnableMovingPhotoMirror(bool isMirror, bool isConfig)
                 isMovingPhotoMirror_ = isMirror;
                 // set clear cache flag
                 std::lock_guard<std::mutex> lock(movingPhotoStatusLock_);
-                CHECK_ERROR_RETURN_RET_LOG(livephotoListener_ == nullptr, CAMERA_OK, "livephotoListener_ is null");
+                CHECK_RETURN_RET_ELOG(livephotoListener_ == nullptr, CAMERA_OK, "livephotoListener_ is null");
                 livephotoListener_->SetClearFlag();
             }
             break;
@@ -1148,9 +1148,9 @@ void HStreamOperator::UnRegisterSensorCallback()
 void HStreamOperator::GravityDataCallbackImpl(SensorEvent* event)
 {
     MEDIA_DEBUG_LOG("GravityDataCallbackImpl prepare execute");
-    CHECK_ERROR_RETURN_LOG(event == nullptr, "SensorEvent is nullptr.");
-    CHECK_ERROR_RETURN_LOG(event[0].data == nullptr, "SensorEvent[0].data is nullptr.");
-    CHECK_ERROR_RETURN_LOG(event->sensorTypeId != SENSOR_TYPE_ID_GRAVITY, "SensorCallback error type.");
+    CHECK_RETURN_ELOG(event == nullptr, "SensorEvent is nullptr.");
+    CHECK_RETURN_ELOG(event[0].data == nullptr, "SensorEvent[0].data is nullptr.");
+    CHECK_RETURN_ELOG(event->sensorTypeId != SENSOR_TYPE_ID_GRAVITY, "SensorCallback error type.");
     // this data will be delete when callback execute finish
     GravityData* nowGravityData = reinterpret_cast<GravityData*>(event->data);
     gravityData = { nowGravityData->x, nowGravityData->y, nowGravityData->z };
@@ -1203,7 +1203,7 @@ void HStreamOperator::SetSensorRotation(int32_t rotationValue, int32_t sensorOri
 
 void HStreamOperator::StartMovingPhotoEncode(int32_t rotation, uint64_t timestamp, int32_t format, int32_t captureId)
 {
-    CHECK_ERROR_RETURN(!isSetMotionPhoto_);
+    CHECK_RETURN(!isSetMotionPhoto_);
     {
         std::lock_guard<std::mutex> lock(motionPhotoStatusLock_);
         curMotionPhotoStatus_[captureId] = isSetMotionPhoto_;
@@ -1223,14 +1223,14 @@ void HStreamOperator::StartMovingPhotoEncode(int32_t rotation, uint64_t timestam
 void HStreamOperator::UpdateOrientationBaseGravity(int32_t rotationValue, int32_t sensorOrientation,
     int32_t cameraPosition, int32_t& rotation)
 {
-    CHECK_ERROR_RETURN_LOG(cameraDevice_ == nullptr, "cameraDevice is nullptr.");
+    CHECK_RETURN_ELOG(cameraDevice_ == nullptr, "cameraDevice is nullptr.");
     CameraRotateStrategyInfo strategyInfo;
-    CHECK_ERROR_RETURN_LOG(!(cameraDevice_->GetSigleStrategyInfo(strategyInfo)), "Update roteta angle not supported");
+    CHECK_RETURN_ELOG(!(cameraDevice_->GetSigleStrategyInfo(strategyInfo)), "Update roteta angle not supported");
     OHOS::Rosen::FoldStatus foldstatus = OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus();
     OHOS::Rosen::FoldDisplayMode displayMode = OHOS::Rosen::DisplayManager::GetInstance().GetFoldDisplayMode();
     bool isValidDisplayStatus = (foldstatus == OHOS::Rosen::FoldStatus::FOLD_STATE_EXPAND_WITH_SECOND_EXPAND) &&
         (displayMode == OHOS::Rosen::FoldDisplayMode::GLOBAL_FULL);
-    CHECK_ERROR_RETURN(!isValidDisplayStatus);
+    CHECK_RETURN(!isValidDisplayStatus);
     int32_t imageRotation = (sensorRotation + ROTATION_45_DEGREES) / ROTATION_90_DEGREES * ROTATION_90_DEGREES;
     if (cameraPosition == OHOS_CAMERA_POSITION_BACK) {
         rotation = (imageRotation + sensorOrientation) % ROTATION_360_DEGREES;
@@ -1276,7 +1276,7 @@ std::string HStreamOperator::CreateBurstDisplayName(int32_t imageSeqId, int32_t 
     std::stringstream ss;
     // a group of burst capture use the same prefix
     if (imageSeqId == 1) { // LCOV_EXCL_LINE
-        CHECK_ERROR_RETURN_RET_LOG(!GetSystemCurrentTime(&currentTime), formattedTime, "Failed to get current time.");
+        CHECK_RETURN_RET_ELOG(!GetSystemCurrentTime(&currentTime), formattedTime, "Failed to get current time.");
         ss << prefix << std::setw(yearWidth) << std::setfill(placeholder) << currentTime.tm_year + startYear
            << std::setw(otherWidth) << std::setfill(placeholder) << (currentTime.tm_mon + 1) << std::setw(otherWidth)
            << std::setfill(placeholder) << currentTime.tm_mday << connector << std::setw(otherWidth)
@@ -1311,7 +1311,7 @@ void HStreamOperator::SetCameraPhotoProxyInfo(sptr<CameraServerPhotoProxy> camer
     std::list<sptr<HStreamCommon>> captureStreamsOffline = streamContainerOffline_.GetStreams(StreamType::CAPTURE);
     captureStreams.insert(captureStreams.end(), captureStreamsOffline.begin(), captureStreamsOffline.end());
     for (auto& stream : captureStreams) {
-        CHECK_WARNING_CONTINUE_LOG(stream == nullptr, "stream is null");
+        CHECK_CONTINUE_WLOG(stream == nullptr, "stream is null");
         MEDIA_INFO_LOG("CreateMediaLibrary get captureStream");
         auto streamCapture = CastStream<HStreamCapture>(stream);
         isBursting = streamCapture->IsBurstCapture(captureId);
@@ -1361,7 +1361,7 @@ int32_t HStreamOperator::CreateMediaLibrary(const sptr<CameraServerPhotoProxy>& 
     SetCameraPhotoProxyInfo(cameraPhotoProxy, cameraShotType, isBursting, burstKey);
     std::shared_ptr<PhotoAssetProxy> photoAssetProxy =
         PhotoAssetProxy::GetPhotoAssetProxy(cameraShotType, uid_);
-    CHECK_ERROR_RETURN_RET_LOG(
+    CHECK_RETURN_RET_ELOG(
         photoAssetProxy == nullptr, CAMERA_ALLOC_ERROR, "HStreamOperator::CreateMediaLibrary get photoAssetProxy fail");
     photoAssetProxy->AddPhotoProxy((sptr<PhotoProxy>&)cameraPhotoProxy);
     uri = photoAssetProxy->GetPhotoAssetUri();
@@ -1386,7 +1386,7 @@ void RotatePicture(std::weak_ptr<PictureIntf> picture)
 {
     CAMERA_SYNC_TRACE;
     auto ptr = picture.lock();
-    CHECK_ERROR_RETURN(!ptr);
+    CHECK_RETURN(!ptr);
     ptr->RotatePicture();
 }
 
@@ -1408,7 +1408,7 @@ std::shared_ptr<PhotoAssetIntf> HStreamOperator::ProcessPhotoProxy(int32_t captu
 {
     MEDIA_INFO_LOG("enter ProcessPhotoProxy");
     CAMERA_SYNC_TRACE;
-    CHECK_ERROR_RETURN_RET_LOG(picturePtr == nullptr, nullptr, "picturePtr is null");
+    CHECK_RETURN_RET_ELOG(picturePtr == nullptr, nullptr, "picturePtr is null");
     sptr<HStreamCapture> captureStream = nullptr;
     std::list<sptr<HStreamCommon>> captureStreams = streamContainer_.GetStreams(StreamType::CAPTURE);
     std::list<sptr<HStreamCommon>> captureStreamsOffline = streamContainerOffline_.GetStreams(StreamType::CAPTURE);
@@ -1419,7 +1419,7 @@ std::shared_ptr<PhotoAssetIntf> HStreamOperator::ProcessPhotoProxy(int32_t captu
             break;
         }
     }
-    CHECK_ERROR_RETURN_RET_LOG(captureStream == nullptr, nullptr, "stream is null");
+    CHECK_RETURN_RET_ELOG(captureStream == nullptr, nullptr, "stream is null");
     std::shared_ptr<PhotoAssetIntf> photoAssetProxy = nullptr;
     std::thread taskThread;
     if (isBursting) {
@@ -1428,7 +1428,7 @@ std::shared_ptr<PhotoAssetIntf> HStreamOperator::ProcessPhotoProxy(int32_t captu
     } else {
         photoAssetProxy = captureStream->GetPhotoAssetInstance(captureId);
     }
-    CHECK_ERROR_RETURN_RET_LOG(photoAssetProxy == nullptr, nullptr, "photoAssetProxy is null");
+    CHECK_RETURN_RET_ELOG(photoAssetProxy == nullptr, nullptr, "photoAssetProxy is null");
     if (!isBursting && picturePtr) {
         MEDIA_DEBUG_LOG("CreateMediaLibrary RotatePicture E");
         if (!IsIpsRotateSupported()) {
@@ -1472,7 +1472,7 @@ int32_t HStreamOperator::CreateMediaLibrary(
     SetCameraPhotoProxyInfo(photoProxy, cameraShotType, isBursting, burstKey);
     std::shared_ptr<PhotoAssetIntf> photoAssetProxy =
         ProcessPhotoProxy(captureId, picture, isBursting, photoProxy, uri);
-    CHECK_ERROR_RETURN_RET_LOG(photoAssetProxy == nullptr, CAMERA_INVALID_ARG, "photoAssetProxy is null");
+    CHECK_RETURN_RET_ELOG(photoAssetProxy == nullptr, CAMERA_INVALID_ARG, "photoAssetProxy is null");
     {
         std::lock_guard<std::mutex> lock(motionPhotoStatusLock_);
         bool isSetMotionPhoto = curMotionPhotoStatus_.find(captureId) != curMotionPhotoStatus_.end()
@@ -1518,8 +1518,8 @@ int32_t HStreamOperator::OnCaptureStarted(int32_t captureId, const std::vector<i
 
 void HStreamOperator::StartRecord(uint64_t timestamp, int32_t rotation, int32_t captureId)
 {
-    CHECK_ERROR_RETURN(!isSetMotionPhoto_);
-    CHECK_ERROR_RETURN_LOG(!taskManager_, "taskManager_ is nullptr");
+    CHECK_RETURN(!isSetMotionPhoto_);
+    CHECK_RETURN_ELOG(!taskManager_, "taskManager_ is nullptr");
     taskManager_->SubmitTask(
         [this, timestamp, rotation, captureId]() { this->StartOnceRecord(timestamp, rotation, captureId); });
 }
@@ -1584,7 +1584,7 @@ void HStreamOperator::StartOnceRecord(uint64_t timestamp, int32_t rotation, int3
     MEDIA_INFO_LOG("StartOnceRecord enter");
     // frameCacheList only used by now thread
     std::lock_guard<std::mutex> lock(movingPhotoStatusLock_);
-    CHECK_ERROR_RETURN_LOG(!livephotoListener_, "HCaptureSession::StartOnceRecord livephotoListener_ is null");
+    CHECK_RETURN_ELOG(!livephotoListener_, "HCaptureSession::StartOnceRecord livephotoListener_ is null");
     std::vector<sptr<FrameRecord>> frameCacheList;
     sptr<SessionDrainImageCallback> imageCallback = new SessionDrainImageCallback(frameCacheList,
         livephotoListener_, videoCache_, timestamp, rotation, captureId);
@@ -1596,10 +1596,10 @@ void HStreamOperator::StartOnceRecord(uint64_t timestamp, int32_t rotation, int3
 int32_t HStreamOperator::CreateStreams(std::vector<HDI::Camera::V1_1::StreamInfo_V1_1>& streamInfos)
 {
     CamRetCode hdiRc = HDI::Camera::V1_0::NO_ERROR;
-    CHECK_ERROR_RETURN_RET_LOG(streamInfos.empty(), CAMERA_OK, "HStreamOperator::CreateStreams streamInfos is empty!");
+    CHECK_RETURN_RET_ELOG(streamInfos.empty(), CAMERA_OK, "HStreamOperator::CreateStreams streamInfos is empty!");
     std::lock_guard<std::mutex> lock(opMutex_);
     sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator = GetHDIStreamOperator();
-    CHECK_ERROR_RETURN_RET_LOG(streamOperator == nullptr, CAMERA_UNKNOWN_ERROR,
+    CHECK_RETURN_RET_ELOG(streamOperator == nullptr, CAMERA_UNKNOWN_ERROR,
         "HStreamOperator::CreateStreams GetStreamOperator is null!");
     // get higher streamOperator version
     auto streamOperatorV1_1 = GetStreamOperatorV1_1(streamOperator);
@@ -1631,7 +1631,7 @@ int32_t HStreamOperator::CreateStreams(std::vector<HDI::Camera::V1_1::StreamInfo
         for (auto& streamInfo : streamInfos) {
             streamIds.emplace_back(streamInfo.v1_0.streamId_);
         }
-        CHECK_ERROR_PRINT_LOG(!streamIds.empty() &&
+        CHECK_PRINT_ELOG(!streamIds.empty() &&
             streamOperator->ReleaseStreams(streamIds) != HDI::Camera::V1_0::NO_ERROR,
             "HStreamOperator::CreateStreams(), Failed to release streams");
     }
@@ -1664,7 +1664,7 @@ int32_t HStreamOperator::UpdateStreams(std::vector<StreamInfo_V1_1>& streamInfos
 {
     sptr<OHOS::HDI::Camera::V1_2::IStreamOperator> streamOperatorV1_2;
     auto streamOperator = GetHDIStreamOperator();
-    CHECK_ERROR_RETURN_RET_LOG(streamOperator == nullptr, CAMERA_UNKNOWN_ERROR,
+    CHECK_RETURN_RET_ELOG(streamOperator == nullptr, CAMERA_UNKNOWN_ERROR,
         "HStreamOperator::UpdateStreams GetStreamOperator is null!");
     uint32_t major;
     uint32_t minor;
@@ -1863,7 +1863,7 @@ std::vector<int32_t> HStreamOperator::GetFrameRateRange()
     for (auto& item : repeatStreams) {
         auto curStreamRepeat = CastStream<HStreamRepeat>(item);
         auto repeatType = curStreamRepeat->GetRepeatStreamType();
-        CHECK_ERROR_RETURN_RET(repeatType == RepeatStreamType::PREVIEW, curStreamRepeat->GetFrameRateRange());
+        CHECK_RETURN_RET(repeatType == RepeatStreamType::PREVIEW, curStreamRepeat->GetFrameRateRange());
     }
     return {};
 }
@@ -1885,7 +1885,7 @@ bool StreamContainer::RemoveStream(sptr<HStreamCommon> stream)
     std::lock_guard<std::mutex> lock(streamsLock_);
     auto& list = streams_[stream->GetStreamType()];
     auto it = std::find_if(list.begin(), list.end(), [stream](auto item) { return item == stream; });
-    CHECK_ERROR_RETURN_RET(it == list.end(), false);
+    CHECK_RETURN_RET(it == list.end(), false);
     list.erase(it);
     return true;
 }
@@ -1899,7 +1899,7 @@ sptr<HStreamCommon> StreamContainer::GetStream(int32_t streamId)
                 MEDIA_WARNING_LOG("stream is nullptr!, skip");
                 continue;
             }
-            CHECK_ERROR_RETURN_RET(stream->GetFwkStreamId() == streamId, stream);
+            CHECK_RETURN_RET(stream->GetFwkStreamId() == streamId, stream);
         }
     }
     return nullptr;
@@ -1910,7 +1910,7 @@ sptr<HStreamCommon> StreamContainer::GetHdiStream(int32_t streamId)
     std::lock_guard<std::mutex> lock(streamsLock_);
     for (auto& pair : streams_) {
         for (auto& stream : pair.second) {
-            CHECK_ERROR_RETURN_RET(stream->GetHdiStreamId() == streamId, stream);
+            CHECK_RETURN_RET(stream->GetHdiStreamId() == streamId, stream);
         }
     }
     return nullptr;
@@ -1991,7 +1991,7 @@ void MovingPhotoListener::RemoveDrainImageManager(sptr<SessionDrainImageCallback
 
 void MovingPhotoListener::ClearCache(uint64_t timestamp)
 {
-    CHECK_ERROR_RETURN(!isNeededClear_.load());
+    CHECK_RETURN(!isNeededClear_.load());
     MEDIA_INFO_LOG("ClearCache enter");
     shutterTime_ = static_cast<int64_t>(timestamp);
     while (!recorderBufferQueue_.Empty()) {
@@ -2042,7 +2042,7 @@ void MovingPhotoListener::OnBufferArrival(sptr<SurfaceBuffer> buffer, int64_t ti
     MEDIA_DEBUG_LOG("surface_ push buffer %{public}d x %{public}d, stride is %{public}d",
                     buffer->GetSurfaceBufferWidth(), buffer->GetSurfaceBufferHeight(), buffer->GetStride());
     sptr<FrameRecord> frameRecord = new (std::nothrow) FrameRecord(buffer, timestamp, transform);
-    CHECK_ERROR_RETURN_LOG(frameRecord == nullptr, "MovingPhotoListener::OnBufferAvailable create FrameRecord fail!");
+    CHECK_RETURN_ELOG(frameRecord == nullptr, "MovingPhotoListener::OnBufferAvailable create FrameRecord fail!");
     if (isNeededClear_ && isNeededPop_) {
         if (timestamp < shutterTime_) {
             frameRecord->ReleaseSurfaceBuffer(movingPhotoSurfaceWrapper_);
@@ -2096,16 +2096,16 @@ void MovingPhotoListener::DrainOutImage(sptr<SessionDrainImageCallback> drainIma
 void MovingPhotoMetaListener::OnBufferAvailable()
 {
     sptr<Surface> metaSurface = surface_.promote();
-    CHECK_ERROR_RETURN_LOG(!metaSurface, "streamRepeat surface is null");
+    CHECK_RETURN_ELOG(!metaSurface, "streamRepeat surface is null");
     MEDIA_DEBUG_LOG("metaSurface_ OnBufferAvailable %{public}u", metaSurface->GetQueueSize());
     int64_t timestamp;
     OHOS::Rect damage;
     sptr<SurfaceBuffer> buffer;
     sptr<SyncFence> syncFence = SyncFence::INVALID_FENCE;
     SurfaceError surfaceRet = metaSurface->AcquireBuffer(buffer, syncFence, timestamp, damage);
-    CHECK_ERROR_RETURN_LOG(surfaceRet != SURFACE_ERROR_OK, "Failed to acquire meta surface buffer");
+    CHECK_RETURN_ELOG(surfaceRet != SURFACE_ERROR_OK, "Failed to acquire meta surface buffer");
     surfaceRet = metaSurface->DetachBufferFromQueue(buffer);
-    CHECK_ERROR_RETURN_LOG(surfaceRet != SURFACE_ERROR_OK, "Failed to detach meta buffer. %{public}d", surfaceRet);
+    CHECK_RETURN_ELOG(surfaceRet != SURFACE_ERROR_OK, "Failed to detach meta buffer. %{public}d", surfaceRet);
     metaCache_->add({timestamp, buffer});
 }
 
@@ -2126,7 +2126,7 @@ void HStreamOperator::DisplayRotationListener::OnChange(OHOS::Rosen::DisplayId d
     if (display == nullptr) { // LCOV_EXCL_LINE
         MEDIA_INFO_LOG("Get display info failed, display:%{public}" PRIu64 "", displayId);
         display = Rosen::DisplayManager::GetInstance().GetDisplayById(0);
-        CHECK_ERROR_RETURN_LOG(display == nullptr, "Get display info failed, display is nullptr");
+        CHECK_RETURN_ELOG(display == nullptr, "Get display info failed, display is nullptr");
     }
     {
         Rosen::Rotation currentRotation = display->GetRotation();
@@ -2140,14 +2140,14 @@ void HStreamOperator::DisplayRotationListener::OnChange(OHOS::Rosen::DisplayId d
 void HStreamOperator::DisplayRotationListener::AddHstreamRepeatForListener(sptr<HStreamRepeat> repeatStream)
 {
     std::lock_guard<std::mutex> lock(mStreamManagerLock_);
-    CHECK_ERROR_RETURN(!repeatStream);
+    CHECK_RETURN(!repeatStream);
     repeatStreamList_.push_back(repeatStream);
 }
 
 void HStreamOperator::DisplayRotationListener::RemoveHstreamRepeatForListener(sptr<HStreamRepeat> repeatStream)
 {
     std::lock_guard<std::mutex> lock(mStreamManagerLock_);
-    CHECK_ERROR_RETURN(!repeatStream);
+    CHECK_RETURN(!repeatStream);
     repeatStreamList_.erase(
         std::remove(repeatStreamList_.begin(), repeatStreamList_.end(), repeatStream), repeatStreamList_.end());
 }

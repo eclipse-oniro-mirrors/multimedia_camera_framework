@@ -22,13 +22,13 @@ std::shared_ptr<PhotoAssetProxy> PhotoAssetProxy::GetPhotoAssetProxy(int32_t sho
 {
     MEDIA_DEBUG_LOG("GetPhotoAssetProxy E callingUid:%{public}d", callingUid);
     auto dynamiclib = CameraDynamicLoader::GetDynamiclib(MEDIA_LIB_SO);
-    CHECK_ERROR_RETURN_RET_LOG(
+    CHECK_RETURN_RET_ELOG(
         dynamiclib == nullptr, nullptr, "PhotoAssetProxy::GetPhotoAssetProxy get dynamiclib fail");
     CreatePhotoAssetIntf createPhotoAssetIntf = (CreatePhotoAssetIntf)dynamiclib->GetFunction("createPhotoAssetIntf");
-    CHECK_ERROR_RETURN_RET_LOG(
+    CHECK_RETURN_RET_ELOG(
         createPhotoAssetIntf == nullptr, nullptr, "PhotoAssetProxy::GetPhotoAssetProxy get createPhotoAssetIntf fail");
     PhotoAssetIntf* photoAssetIntf = createPhotoAssetIntf(shootType, callingUid);
-    CHECK_ERROR_RETURN_RET_LOG(
+    CHECK_RETURN_RET_ELOG(
         photoAssetIntf == nullptr, nullptr, "PhotoAssetProxy::GetPhotoAssetProxy get photoAssetIntf fail");
     std::shared_ptr<PhotoAssetProxy> photoAssetProxy =
         std::make_shared<PhotoAssetProxy>(dynamiclib, std::shared_ptr<PhotoAssetIntf>(photoAssetIntf));
@@ -39,40 +39,40 @@ PhotoAssetProxy::PhotoAssetProxy(
     std::shared_ptr<Dynamiclib> mediaLibraryLib, std::shared_ptr<PhotoAssetIntf> photoAssetIntf)
     : mediaLibraryLib_(mediaLibraryLib), photoAssetIntf_(photoAssetIntf)
 {
-    CHECK_ERROR_RETURN_LOG(mediaLibraryLib_ == nullptr, "PhotoAssetProxy construct mediaLibraryLib is null");
-    CHECK_ERROR_RETURN_LOG(photoAssetIntf_ == nullptr, "PhotoAssetProxy construct photoAssetIntf is null");
+    CHECK_RETURN_ELOG(mediaLibraryLib_ == nullptr, "PhotoAssetProxy construct mediaLibraryLib is null");
+    CHECK_RETURN_ELOG(photoAssetIntf_ == nullptr, "PhotoAssetProxy construct photoAssetIntf is null");
 }
 
 // LCOV_EXCL_START
 void PhotoAssetProxy::AddPhotoProxy(sptr<Media::PhotoProxy> photoProxy)
 {
-    CHECK_ERROR_RETURN_LOG(photoAssetIntf_ == nullptr, "PhotoAssetProxy::AddPhotoProxy photoAssetIntf_ is null");
+    CHECK_RETURN_ELOG(photoAssetIntf_ == nullptr, "PhotoAssetProxy::AddPhotoProxy photoAssetIntf_ is null");
     photoAssetIntf_->AddPhotoProxy(photoProxy);
 }
 
 std::string PhotoAssetProxy::GetPhotoAssetUri()
 {
-    CHECK_ERROR_RETURN_RET_LOG(
+    CHECK_RETURN_RET_ELOG(
         photoAssetIntf_ == nullptr, "", "PhotoAssetProxy::GetPhotoAssetUri photoAssetIntf_ is null");
     return photoAssetIntf_->GetPhotoAssetUri();
 }
 
 int32_t PhotoAssetProxy::GetVideoFd()
 {
-    CHECK_ERROR_RETURN_RET_LOG(photoAssetIntf_ == nullptr, -1, "PhotoAssetProxy::GetVideoFd photoAssetIntf_ is null");
+    CHECK_RETURN_RET_ELOG(photoAssetIntf_ == nullptr, -1, "PhotoAssetProxy::GetVideoFd photoAssetIntf_ is null");
     return photoAssetIntf_->GetVideoFd();
 }
 
 void PhotoAssetProxy::NotifyVideoSaveFinished()
 {
-    CHECK_ERROR_RETURN_LOG(
+    CHECK_RETURN_ELOG(
         photoAssetIntf_ == nullptr, "PhotoAssetProxy::NotifyVideoSaveFinished photoAssetIntf_ is null");
     photoAssetIntf_->NotifyVideoSaveFinished();
 }
 
 int32_t PhotoAssetProxy::GetUserId()
 {
-    CHECK_ERROR_RETURN_RET_LOG(photoAssetIntf_ == nullptr, -1, "PhotoAssetProxy::GetUserId photoAssetIntf_ is null");
+    CHECK_RETURN_RET_ELOG(photoAssetIntf_ == nullptr, -1, "PhotoAssetProxy::GetUserId photoAssetIntf_ is null");
     return photoAssetIntf_->GetUserId();
 }
 // LCOV_EXCL_STOP

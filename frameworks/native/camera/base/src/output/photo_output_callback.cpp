@@ -79,10 +79,10 @@ int32_t HStreamCapturePhotoCallbackImpl::OnPhotoAvailable(
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("HStreamCapturePhotoCallbackImpl OnPhotoAvailable E");
     auto photoOutput = GetPhotoOutput();
-    CHECK_ERROR_RETURN_RET_LOG(
+    CHECK_RETURN_RET_ELOG(
         photoOutput == nullptr, CAMERA_OK, "HStreamCapturePhotoCallbackImpl::OnPhotoAvailable photoOutput is nullptr");
     auto callback = photoOutput->GetAppPhotoCallback();
-    CHECK_ERROR_RETURN_RET_LOG(
+    CHECK_RETURN_RET_ELOG(
         callback == nullptr, CAMERA_OK, "HStreamCapturePhotoCallbackImpl::OnPhotoAvailable callback is nullptr");
     std::shared_ptr<CameraBufferProcessor> bufferProcessor;
     std::shared_ptr<Media::NativeImage> image =
@@ -98,11 +98,11 @@ int32_t HStreamCapturePhotoAssetCallbackImpl::OnPhotoAssetAvailable(
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("HStreamCapturePhotoAssetCallbackImpl OnPhotoAssetAvailable");
     auto photoOutput = GetPhotoOutput();
-    CHECK_ERROR_RETURN_RET_LOG(photoOutput == nullptr,
+    CHECK_RETURN_RET_ELOG(photoOutput == nullptr,
         CAMERA_OK,
         "HStreamCapturePhotoAssetCallbackImpl::OnPhotoAssetAvailable photoOutput is nullptr");
     auto callback = photoOutput->GetAppPhotoAssetCallback();
-    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr,
+    CHECK_RETURN_RET_ELOG(callback == nullptr,
         CAMERA_OK,
         "HStreamCapturePhotoAssetCallbackImpl::OnPhotoAssetAvailable callback is nullptr");
     callback->OnPhotoAssetAvailable(captureId, uri, cameraShotType, burstKey);
@@ -152,10 +152,10 @@ int32_t HStreamCaptureThumbnailCallbackImpl::OnThumbnailAvailable(sptr<SurfaceBu
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("CamThumbnail::OnThumbnailAvailable");
     auto photoOutput = GetPhotoOutput();
-    CHECK_ERROR_RETURN_RET_LOG(photoOutput == nullptr, CAMERA_OK,
+    CHECK_RETURN_RET_ELOG(photoOutput == nullptr, CAMERA_OK,
         "CamThumbnail::OnThumbnailAvailable photoOutput is nullptr");
     auto callback = photoOutput->GetAppThumbnailCallback();
-    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_OK,
+    CHECK_RETURN_RET_ELOG(callback == nullptr, CAMERA_OK,
         "CamThumbnail::OnThumbnailAvailable callback is nullptr");
 
     // produce thumbnail
@@ -170,13 +170,13 @@ int32_t HStreamCaptureThumbnailCallbackImpl::OnThumbnailAvailable(sptr<SurfaceBu
     MEDIA_INFO_LOG("OnThumbnailAvailable width:%{public}d, height: %{public}d, captureId: %{public}d,"
         "burstSeqId: %{public}d", thumbnailWidth, thumbnailHeight, captureId, burstSeqId);
     OHOS::ColorManager::ColorSpaceName colorSpace = GetColorSpace(surfaceBuffer);
-    CHECK_ERROR_RETURN_RET_LOG(colorSpace == OHOS::ColorManager::ColorSpaceName::NONE, CAMERA_OK,
+    CHECK_RETURN_RET_ELOG(colorSpace == OHOS::ColorManager::ColorSpaceName::NONE, CAMERA_OK,
         "Thumbnail GetcolorSpace failed!");
     bool isHdr = colorSpace == OHOS::ColorManager::ColorSpaceName::BT2020_HLG;
     // create pixelMap
     std::unique_ptr<Media::PixelMap> pixelMap = CreatePixelMapFromSurfaceBuffer(surfaceBuffer,
         thumbnailWidth, thumbnailHeight, isHdr);
-    CHECK_ERROR_PRINT_LOG(pixelMap == nullptr, "ThumbnailListener create pixelMap is nullptr");
+    CHECK_PRINT_ELOG(pixelMap == nullptr, "ThumbnailListener create pixelMap is nullptr");
     ThumbnailSetColorSpaceAndRotate(pixelMap, surfaceBuffer, colorSpace);
         
     callback->OnThumbnailAvailable(captureId, timestamp, std::move(pixelMap));
@@ -186,7 +186,7 @@ int32_t HStreamCaptureThumbnailCallbackImpl::OnThumbnailAvailable(sptr<SurfaceBu
 std::unique_ptr<Media::PixelMap> HStreamCaptureThumbnailCallbackImpl::CreatePixelMapFromSurfaceBuffer(
     sptr<SurfaceBuffer> &surfaceBuffer, int32_t width, int32_t height, bool isHdr)
 {
-    CHECK_ERROR_RETURN_RET_LOG(surfaceBuffer == nullptr, nullptr,
+    CHECK_RETURN_RET_ELOG(surfaceBuffer == nullptr, nullptr,
         "CamThumbnail::CreatePixelMapFromSurfaceBuffer surfaceBuffer is nullptr");
     MEDIA_INFO_LOG("CamThumbnail Width:%{public}d, height:%{public}d, isHdr:%{public}d, format:%{public}d",
         width, height, isHdr, surfaceBuffer->GetFormat());
@@ -199,7 +199,7 @@ std::unique_ptr<Media::PixelMap> HStreamCaptureThumbnailCallbackImpl::CreatePixe
     int32_t colorLength = width * height * PIXEL_SIZE_HDR_YUV;
     colorLength = isHdr ? colorLength : colorLength / HDR_PIXEL_SIZE;
     std::unique_ptr<Media::PixelMap> pixelMap = Media::PixelMap::Create(options);
-    CHECK_ERROR_RETURN_RET_LOG(pixelMap == nullptr, nullptr,
+    CHECK_RETURN_RET_ELOG(pixelMap == nullptr, nullptr,
         "CamThumbnail::CreatePixelMapFromSurfaceBuffer pixelMap is nullptr");
     void* nativeBuffer = surfaceBuffer.GetRefPtr();
     RefBase *ref = reinterpret_cast<RefBase *>(nativeBuffer);

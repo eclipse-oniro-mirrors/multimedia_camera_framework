@@ -142,7 +142,7 @@ void Test(uint8_t* data, size_t size)
     producer = photoSurface->GetProducer();
     HStreamCaptureFuzzer::fuzz_ = std::make_shared
         <HStreamCapture>(producer, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT);
-    CHECK_ERROR_RETURN_LOG(!HStreamCaptureFuzzer::fuzz_, "Create fuzz_ Error");
+    CHECK_RETURN_ELOG(!HStreamCaptureFuzzer::fuzz_, "Create fuzz_ Error");
     sptr<HDI::Camera::V1_0::IStreamOperator> streamOperator;
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility =
         std::make_shared<OHOS::Camera::CameraMetadata>(NUM_1, NUM_1024);

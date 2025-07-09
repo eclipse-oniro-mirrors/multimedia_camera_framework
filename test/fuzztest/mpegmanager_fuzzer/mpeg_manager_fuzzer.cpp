@@ -32,7 +32,7 @@ void MpegManagerFuzzer::MpegManagerFuzzTest(FuzzedDataProvider& fdp)
         return;
     }
     fuzz_ = std::make_shared<MpegManager>();
-    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
+    CHECK_RETURN_ELOG(!fuzz_, "Create fuzz_ Error");
     MediaResult result1 = MediaResult::FAIL;
     MediaResult result2 = MediaResult::PAUSE;
     fuzz_->UnInit(result1);

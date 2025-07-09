@@ -32,7 +32,7 @@ OH_PhotoNative::~OH_PhotoNative()
         mainImage_ = nullptr;
     }
 
-    CHECK_ERROR_RETURN(!rawImage_);
+    CHECK_RETURN(!rawImage_);
     rawImage_->release();
     rawImage_ = nullptr;
 }

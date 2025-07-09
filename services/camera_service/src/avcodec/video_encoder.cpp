@@ -59,22 +59,22 @@ int32_t VideoEncoder::Create(const std::string &codecMime)
 {
     std::lock_guard<std::mutex> lock(encoderMutex_);
     encoder_ = VideoEncoderFactory::CreateByMime(codecMime);
-    CHECK_ERROR_RETURN_RET_LOG(encoder_ == nullptr, 1, "Create failed");
+    CHECK_RETURN_RET_ELOG(encoder_ == nullptr, 1, "Create failed");
     return 0;
 }
 
 int32_t VideoEncoder::Config()
 {
     std::lock_guard<std::mutex> lock(encoderMutex_);
-    CHECK_ERROR_RETURN_RET_LOG(encoder_ == nullptr, 1, "Encoder is null");
+    CHECK_RETURN_RET_ELOG(encoder_ == nullptr, 1, "Encoder is null");
     std::unique_lock<std::mutex> contextLock(contextMutex_);
     context_ = new VideoCodecUserData;
     // Configure video encoder
     int32_t ret = Configure();
-    CHECK_ERROR_RETURN_RET_LOG(ret != AV_ERR_OK, 1, "Configure failed");
+    CHECK_RETURN_RET_ELOG(ret != AV_ERR_OK, 1, "Configure failed");
     // SetCallback for video encoder
     ret = SetCallback();
-    CHECK_ERROR_RETURN_RET_LOG(ret != AV_ERR_OK, 1, "Set callback failed");
+    CHECK_RETURN_RET_ELOG(ret != AV_ERR_OK, 1, "Set callback failed");
     contextLock.unlock();
     return 0;
 }
@@ -82,13 +82,13 @@ int32_t VideoEncoder::Config()
 int32_t VideoEncoder::Start()
 {
     std::lock_guard<std::mutex> lock(encoderMutex_);
-    CHECK_ERROR_RETURN_RET_LOG(encoder_ == nullptr, 1, "Encoder is null");
+    CHECK_RETURN_RET_ELOG(encoder_ == nullptr, 1, "Encoder is null");
      // Prepare video encoder
     int ret = encoder_->Prepare();
-    CHECK_ERROR_RETURN_RET_LOG(ret != AV_ERR_OK, 1, "Prepare failed, ret: %{public}d", ret);
+    CHECK_RETURN_RET_ELOG(ret != AV_ERR_OK, 1, "Prepare failed, ret: %{public}d", ret);
     // Start video encoder
     ret = encoder_->Start();
-    CHECK_ERROR_RETURN_RET_LOG(ret != AV_ERR_OK, 1, "Start failed, ret: %{public}d", ret);
+    CHECK_RETURN_RET_ELOG(ret != AV_ERR_OK, 1, "Start failed, ret: %{public}d", ret);
     isStarted_ = true;
     return 0;
 }
@@ -96,21 +96,21 @@ int32_t VideoEncoder::Start()
 int32_t VideoEncoder::GetSurface()
 {
     std::lock_guard<std::mutex> lock(encoderMutex_);
-    CHECK_ERROR_RETURN_RET_LOG(encoder_ == nullptr, 1, "Encoder is null");
+    CHECK_RETURN_RET_ELOG(encoder_ == nullptr, 1, "Encoder is null");
     std::lock_guard<std::mutex> surfaceLock(surfaceMutex_);
     codecSurface_ = encoder_->CreateInputSurface();
-    CHECK_ERROR_RETURN_RET_LOG(codecSurface_ == nullptr, 1, "Surface is null");
+    CHECK_RETURN_RET_ELOG(codecSurface_ == nullptr, 1, "Surface is null");
     return 0;
 }
 
 int32_t VideoEncoder::ReleaseSurfaceBuffer(sptr<FrameRecord> frameRecord)
 {
     CAMERA_SYNC_TRACE;
-    CHECK_ERROR_RETURN_RET_LOG(frameRecord->GetSurfaceBuffer() == nullptr, 1,
+    CHECK_RETURN_RET_ELOG(frameRecord->GetSurfaceBuffer() == nullptr, 1,
         "SurfaceBuffer is released %{public}s", frameRecord->GetFrameId().c_str());
     sptr<SurfaceBuffer> releaseBuffer;
     int32_t ret = DetachCodecBuffer(releaseBuffer, frameRecord);
-    CHECK_ERROR_RETURN_RET_LOG(ret != SURFACE_ERROR_OK, ret, " %{public}s ReleaseSurfaceBuffer failed",
+    CHECK_RETURN_RET_ELOG(ret != SURFACE_ERROR_OK, ret, " %{public}s ReleaseSurfaceBuffer failed",
         frameRecord->GetFrameId().c_str());
     frameRecord->SetSurfaceBuffer(releaseBuffer);
     // after request surfaceBuffer
@@ -121,9 +121,9 @@ int32_t VideoEncoder::ReleaseSurfaceBuffer(sptr<FrameRecord> frameRecord)
 
 int32_t VideoEncoder::DetachCodecBuffer(sptr<SurfaceBuffer> &surfaceBuffer, sptr<FrameRecord> frameRecord)
 {
-    CHECK_ERROR_RETURN_RET_LOG(frameRecord == nullptr, 1, "frameRecord is null");
+    CHECK_RETURN_RET_ELOG(frameRecord == nullptr, 1, "frameRecord is null");
     std::lock_guard<std::mutex> lock(surfaceMutex_);
-    CHECK_ERROR_RETURN_RET_LOG(codecSurface_ == nullptr, 1, "codecSurface_ is null");
+    CHECK_RETURN_RET_ELOG(codecSurface_ == nullptr, 1, "codecSurface_ is null");
     sptr<SyncFence> syncFence = SyncFence::INVALID_FENCE;
     BufferRequestConfig requestConfig = {
         .width = frameRecord->GetFrameSize()->width,
@@ -134,33 +134,33 @@ int32_t VideoEncoder::DetachCodecBuffer(sptr<SurfaceBuffer> &surfaceBuffer, sptr
         .timeout = 0,
     };
     SurfaceError ret = codecSurface_->RequestBuffer(surfaceBuffer, syncFence, requestConfig);
-    CHECK_ERROR_RETURN_RET_LOG(ret != SURFACE_ERROR_OK, ret, "RequestBuffer failed. %{public}d", ret);
+    CHECK_RETURN_RET_ELOG(ret != SURFACE_ERROR_OK, ret, "RequestBuffer failed. %{public}d", ret);
     constexpr uint32_t waitForEver = -1;
     (void)syncFence->Wait(waitForEver);
-    CHECK_ERROR_RETURN_RET_LOG(surfaceBuffer == nullptr, ret, "Failed to request codec Buffer");
+    CHECK_RETURN_RET_ELOG(surfaceBuffer == nullptr, ret, "Failed to request codec Buffer");
     ret = codecSurface_->DetachBufferFromQueue(surfaceBuffer);
-    CHECK_ERROR_RETURN_RET_LOG(ret != SURFACE_ERROR_OK, ret, "Failed to detach buffer %{public}d", ret);
+    CHECK_RETURN_RET_ELOG(ret != SURFACE_ERROR_OK, ret, "Failed to detach buffer %{public}d", ret);
     return ret;
 }
 
 int32_t VideoEncoder::PushInputData(sptr<CodecAVBufferInfo> info)
 {
     std::lock_guard<std::mutex> lock(encoderMutex_);
-    CHECK_ERROR_RETURN_RET_LOG(encoder_ == nullptr, 1, "Decoder is null");
+    CHECK_RETURN_RET_ELOG(encoder_ == nullptr, 1, "Decoder is null");
     int32_t ret = AV_ERR_OK;
     ret = OH_AVBuffer_SetBufferAttr(info->buffer, &info->attr);
-    CHECK_ERROR_RETURN_RET_LOG(ret != AV_ERR_OK, 1, "Set avbuffer attr failed, ret: %{public}d", ret);
+    CHECK_RETURN_RET_ELOG(ret != AV_ERR_OK, 1, "Set avbuffer attr failed, ret: %{public}d", ret);
     ret = encoder_->QueueInputBuffer(info->bufferIndex);
-    CHECK_ERROR_RETURN_RET_LOG(ret != AV_ERR_OK, 1, "Push input data failed, ret: %{public}d", ret);
+    CHECK_RETURN_RET_ELOG(ret != AV_ERR_OK, 1, "Push input data failed, ret: %{public}d", ret);
     return 0;
 }
 
 int32_t VideoEncoder::NotifyEndOfStream()
 {
     std::lock_guard<std::mutex> lock(encoderMutex_);
-    CHECK_ERROR_RETURN_RET_LOG(encoder_ == nullptr, 1, "Encoder is null");
+    CHECK_RETURN_RET_ELOG(encoder_ == nullptr, 1, "Encoder is null");
     int32_t ret = encoder_->NotifyEos();
-    CHECK_ERROR_RETURN_RET_LOG(ret != AV_ERR_OK, 1,
+    CHECK_RETURN_RET_ELOG(ret != AV_ERR_OK, 1,
         "Notify end of stream failed, ret: %{public}d", ret);
     return 0;
 }
@@ -168,7 +168,7 @@ int32_t VideoEncoder::NotifyEndOfStream()
 int32_t VideoEncoder::FreeOutputData(uint32_t bufferIndex)
 {
     int32_t ret = encoder_->ReleaseOutputBuffer(bufferIndex);
-    CHECK_ERROR_RETURN_RET_LOG(ret != AV_ERR_OK, 1,
+    CHECK_RETURN_RET_ELOG(ret != AV_ERR_OK, 1,
         "Free output data failed, ret: %{public}d", ret);
     return 0;
 }
@@ -177,9 +177,9 @@ int32_t VideoEncoder::Stop()
 {
     CAMERA_SYNC_TRACE;
     std::lock_guard<std::mutex> lock(encoderMutex_);
-    CHECK_ERROR_RETURN_RET_LOG(encoder_ == nullptr, 1, "Encoder is null");
+    CHECK_RETURN_RET_ELOG(encoder_ == nullptr, 1, "Encoder is null");
     int ret = encoder_->Stop();
-    CHECK_ERROR_RETURN_RET_LOG(ret != AV_ERR_OK, 1, "Stop failed, ret: %{public}d", ret);
+    CHECK_RETURN_RET_ELOG(ret != AV_ERR_OK, 1, "Stop failed, ret: %{public}d", ret);
     isStarted_ = false;
     return 0;
 }
@@ -208,13 +208,13 @@ bool VideoEncoder::EnqueueBuffer(sptr<FrameRecord> frameRecord, int32_t keyFrame
         std::lock_guard<std::mutex> lock(encoderMutex_);
         MediaAVCodec::Format format = MediaAVCodec::Format();
         format.PutIntValue(MediaDescriptionKey::MD_KEY_REQUEST_I_FRAME, true);
-        CHECK_ERROR_RETURN_RET_LOG(!encoder_, false, "encoder_is_nullptr.");
+        CHECK_RETURN_RET_ELOG(!encoder_, false, "encoder_is_nullptr.");
         encoder_->SetParameter(format);
     }
     sptr<SurfaceBuffer> buffer = frameRecord->GetSurfaceBuffer();
-    CHECK_ERROR_RETURN_RET_LOG(buffer == nullptr, false, "Enqueue video buffer is empty");
+    CHECK_RETURN_RET_ELOG(buffer == nullptr, false, "Enqueue video buffer is empty");
     std::lock_guard<std::mutex> lock(surfaceMutex_);
-    CHECK_ERROR_RETURN_RET_LOG(codecSurface_ == nullptr, false, "codecSurface_ is null");
+    CHECK_RETURN_RET_ELOG(codecSurface_ == nullptr, false, "codecSurface_ is null");
     SurfaceError surfaceRet = codecSurface_->AttachBufferToQueue(buffer);
     if (surfaceRet != SURFACE_ERROR_OK) {
         MEDIA_ERR_LOG("Failed to attach buffer, surfaceRet: %{public}d", surfaceRet);
@@ -231,7 +231,7 @@ bool VideoEncoder::EnqueueBuffer(sptr<FrameRecord> frameRecord, int32_t keyFrame
         .timestamp = frameRecord->GetTimeStamp(),
     };
     surfaceRet = codecSurface_->FlushBuffer(buffer, invalidFence, flushConfig);
-    CHECK_ERROR_RETURN_RET_LOG(surfaceRet != 0, false, "FlushBuffer failed");
+    CHECK_RETURN_RET_ELOG(surfaceRet != 0, false, "FlushBuffer failed");
     MEDIA_DEBUG_LOG("Success frame id is : %{public}s", frameRecord->GetFrameId().c_str());
     return true;
 }
@@ -274,17 +274,17 @@ bool VideoEncoder::EncodeSurfaceBuffer(sptr<FrameRecord> frameRecord)
         keyFrameInterval_ = (keyFrameInterval_ == 0 ? KEY_FRAME_INTERVAL : keyFrameInterval_);
     }
     preFrameTimestamp_ = frameRecord->GetTimeStamp();
-    CHECK_ERROR_RETURN_RET(!EnqueueBuffer(frameRecord, keyFrameInterval_), false);
+    CHECK_RETURN_RET(!EnqueueBuffer(frameRecord, keyFrameInterval_), false);
     keyFrameInterval_--;
     int32_t retryCount = 5;
     while (retryCount > 0) {
         retryCount--;
         std::unique_lock<std::mutex> contextLock(contextMutex_);
-        CHECK_ERROR_RETURN_RET_LOG(context_ == nullptr, false, "VideoEncoder has been released");
+        CHECK_RETURN_RET_ELOG(context_ == nullptr, false, "VideoEncoder has been released");
         std::unique_lock<std::mutex> lock(context_->outputMutex_);
         bool condRet = context_->outputCond_.wait_for(lock, std::chrono::milliseconds(BUFFER_ENCODE_EXPIREATION_TIME),
             [this]() { return !isStarted_ || !context_->outputBufferInfoQueue_.empty(); });
-        CHECK_WARNING_CONTINUE_LOG(context_->outputBufferInfoQueue_.empty(),
+        CHECK_CONTINUE_WLOG(context_->outputBufferInfoQueue_.empty(),
             "Buffer queue is empty, continue, cond ret: %{public}d", condRet);
         sptr<VideoCodecAVBufferInfo> bufferInfo = context_->outputBufferInfoQueue_.front();
         MEDIA_INFO_LOG("Out buffer count: %{public}u, size: %{public}d, flag: %{public}u, pts:%{public}" PRIu64 ", "
@@ -295,16 +295,16 @@ bool VideoEncoder::EncodeSurfaceBuffer(sptr<FrameRecord> frameRecord)
         lock.unlock();
         contextLock.unlock();
         std::lock_guard<std::mutex> encodeLock(encoderMutex_);
-        CHECK_ERROR_RETURN_RET_LOG(!isStarted_ || encoder_ == nullptr, false, "EncodeSurfaceBuffer when encoder stop!");
+        CHECK_RETURN_RET_ELOG(!isStarted_ || encoder_ == nullptr, false, "EncodeSurfaceBuffer when encoder stop!");
         condRet = ProcessFrameRecord(bufferInfo, frameRecord);
         if (condRet == false) {
             MEDIA_ERR_LOG("Flag is not acceptted number: %{public}u", bufferInfo->buffer->flag_);
             int32_t ret = FreeOutputData(bufferInfo->bufferIndex);
-            CHECK_WARNING_BREAK_LOG(ret != 0, "FreeOutputData failed");
+            CHECK_BREAK_WLOG(ret != 0, "FreeOutputData failed");
             continue;
         }
         int32_t ret = FreeOutputData(bufferInfo->bufferIndex);
-        CHECK_WARNING_BREAK_LOG(ret != 0, "FreeOutputData failed");
+        CHECK_BREAK_WLOG(ret != 0, "FreeOutputData failed");
         if (successFrame_) {
             MEDIA_DEBUG_LOG("Success frame id is : %{public}s, refCount: %{public}d",
                 frameRecord->GetFrameId().c_str(), frameRecord->GetSptrRefCount());
@@ -348,8 +348,8 @@ void VideoEncoder::CallBack::OnOutputBufferAvailable(uint32_t index, std::shared
 {
     MEDIA_DEBUG_LOG("OnOutputBufferAvailable");
     auto encoder = videoEncoder_.lock();
-    CHECK_ERROR_RETURN_LOG(encoder == nullptr, "encoder is nullptr");
-    CHECK_ERROR_RETURN_LOG(encoder->context_ == nullptr, "encoder context is nullptr");
+    CHECK_RETURN_ELOG(encoder == nullptr, "encoder is nullptr");
+    CHECK_RETURN_ELOG(encoder->context_ == nullptr, "encoder context is nullptr");
     std::unique_lock<std::mutex> lock(encoder->context_->outputMutex_);
     encoder->context_->outputBufferInfoQueue_.emplace(new VideoCodecAVBufferInfo(index, buffer));
     encoder->context_->outputCond_.notify_all();
@@ -360,7 +360,7 @@ int32_t VideoEncoder::SetCallback()
     int32_t ret = AV_ERR_OK;
     auto callback = make_shared<CallBack>(weak_from_this());
     ret = encoder_->SetCallback(callback);
-    CHECK_ERROR_RETURN_RET_LOG(ret != AV_ERR_OK, 1, "Set callback failed, ret: %{public}d", ret);
+    CHECK_RETURN_RET_ELOG(ret != AV_ERR_OK, 1, "Set callback failed, ret: %{public}d", ret);
     return 0;
 }
 
@@ -385,7 +385,7 @@ int32_t VideoEncoder::Configure()
         format.PutIntValue(MediaDescriptionKey::MD_KEY_PROFILE, HEVC_PROFILE_MAIN_10);
     }
     int ret = encoder_->Configure(format);
-    CHECK_ERROR_RETURN_RET_LOG(ret != AV_ERR_OK, 1, "Config failed, ret: %{public}d", ret);
+    CHECK_RETURN_RET_ELOG(ret != AV_ERR_OK, 1, "Config failed, ret: %{public}d", ret);
     return 0;
 }
 } // CameraStandard
