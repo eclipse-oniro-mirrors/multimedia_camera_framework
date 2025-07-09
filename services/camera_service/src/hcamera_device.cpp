@@ -20,6 +20,8 @@
 #include <mutex>
 #include <nlohmann/json.hpp>
 #include <vector>
+#include <parameters.h>
+#include <parameter.h>
 
 #include "camera_common_event_manager.h"
 #include "camera_device_ability_items.h"
@@ -54,6 +56,7 @@
 #ifdef HOOK_CAMERA_OPERATOR
 #include "camera_rotate_plugin.h"
 #endif
+#include "camera_dialog_manager.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -124,9 +127,19 @@ public:
     {
         FoldStatusRosen currentFoldStatus = foldStatus;
         CHECK_EXECUTE(currentFoldStatus == FoldStatusRosen::HALF_FOLD, currentFoldStatus = FoldStatusRosen::EXPAND);
-        CHECK_RETURN_DLOG((cameraHostManager_ == nullptr || mLastFoldStatus == currentFoldStatus),
+        CHECK_RETURN_DLOG(
+            (cameraHostManager_ == nullptr || mLastFoldStatus == currentFoldStatus || cameraDevice_ == nullptr),
             "no need set fold status");
         OHOS::Rosen::FoldDisplayMode displayMode = OHOS::Rosen::DisplayManager::GetInstance().GetFoldDisplayMode();
+        auto foldScreenType = system::GetParameter("const.window.foldscreen.type", "");
+        int32_t position = cameraDevice_->GetCameraPosition();
+        MEDIA_INFO_LOG("OnFoldStatusChanged %{public}s, %{public}d, %{public}d, %{public}d,",
+            foldScreenType.c_str(), position, mLastFoldStatus, currentFoldStatus);
+        if (foldScreenType[0] == '6' && position == OHOS_CAMERA_POSITION_FRONT &&
+            currentFoldStatus == FoldStatusRosen::EXPAND) {
+            MEDIA_DEBUG_LOG("HCameraDevice::OnFoldStatusChanged dialog start");
+            NoFrontCameraDialog::GetInstance()->ShowCameraDialog();
+        }
         bool exeUpdate = foldStatus == FoldStatusRosen::FOLD_STATE_EXPAND_WITH_SECOND_EXPAND ||
             mLastFoldStatus == FoldStatusRosen::FOLD_STATE_EXPAND_WITH_SECOND_EXPAND;
         if (exeUpdate) {
@@ -200,7 +213,7 @@ int32_t HCameraDevice::GetCameraConnectType()
     camera_metadata_item_t item;
     int32_t ret = OHOS::Camera::FindCameraMetadataItem(ability->get(), OHOS_ABILITY_CAMERA_CONNECTION_TYPE, &item);
     uint32_t connectionType = 0;
-    if (ret == CAM_META_SUCCESS) {
+    if (ret == CAM_META_SUCCESS && item.count > 0) {
         connectionType = static_cast<uint32_t>(item.data.u8[0]);
     }
     return connectionType;
@@ -214,20 +227,24 @@ std::string HCameraDevice::GetClientName()
 int32_t HCameraDevice::GetCameraPosition()
 {
     camera_metadata_item_t item;
-    CHECK_RETURN_RET_ELOG(deviceAbility_ == nullptr, 0,
+    auto ability = GetDeviceAbility();
+    CHECK_RETURN_RET_ELOG(ability == nullptr, 0,
         "HCameraDevice::GetCameraPosition deviceAbility_ is nullptr");
-    int ret = OHOS::Camera::FindCameraMetadataItem(deviceAbility_->get(), OHOS_ABILITY_CAMERA_POSITION, &item);
-    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS, 0, "HCameraDevice::GetCameraPosition failed");
+    int ret = OHOS::Camera::FindCameraMetadataItem(ability->get(), OHOS_ABILITY_CAMERA_POSITION, &item);
+    CHECK_RETURN_RET_ELOG(
+        ret != CAM_META_SUCCESS || item.count <= 0, 0, "HCameraDevice::GetCameraPosition failed");
     return static_cast<int32_t>(item.data.u8[0]);
 }
 
 int32_t HCameraDevice::GetSensorOrientation()
 {
     camera_metadata_item_t item;
-    CHECK_RETURN_RET_ELOG(deviceAbility_ == nullptr, 0,
+    auto ability = GetDeviceAbility();
+    CHECK_RETURN_RET_ELOG(ability == nullptr, 0,
         "HCameraDevice::GetSensorOrientation deviceAbility_ is nullptr");
     int ret = OHOS::Camera::FindCameraMetadataItem(deviceAbility_->get(), OHOS_SENSOR_ORIENTATION, &item);
-    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS, 0, "HCameraDevice::GetSensorOrientation failed");
+    CHECK_RETURN_RET_ELOG(
+        ret != CAM_META_SUCCESS || item.count <= 0, 0, "HCameraDevice::GetSensorOrientation failed");
     return item.data.i32[0];
 }
 
@@ -370,6 +387,15 @@ int32_t HCameraDevice::Open()
         "HCameraDevice::Open IsAllowedUsingPermission failed");
     MEDIA_INFO_LOG("HCameraDevice::Open Camera:[%{public}s]", cameraID_.c_str());
     int32_t result = OpenDevice();
+    int32_t position = GetCameraPosition();
+    auto foldStatus = OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus();
+    auto foldScreenType = system::GetParameter("const.window.foldscreen.type", "");
+    MEDIA_INFO_LOG("HCameraDevice::Open %{public}d, %{public}d", position, foldStatus);
+    if (foldScreenType[0] == '6' && position == OHOS_CAMERA_POSITION_FRONT &&
+        foldStatus == OHOS::Rosen::FoldStatus::EXPAND) {
+        MEDIA_DEBUG_LOG("HCameraDevice::Open dialog start");
+        NoFrontCameraDialog::GetInstance()->ShowCameraDialog();
+    }
     return result;
 }
 
@@ -870,7 +896,7 @@ void HCameraDevice::CheckZoomChange(const std::shared_ptr<OHOS::Camera::CameraMe
     int32_t ret;
     camera_metadata_item_t item;
     ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_PREPARE_ZOOM, &item);
-    if (ret == CAM_META_SUCCESS) {
+    if (ret == CAM_META_SUCCESS && item.count > 0) {
         if (item.data.u8[0] == OHOS_CAMERA_ZOOMSMOOTH_PREPARE_ENABLE) {
             MEDIA_ERR_LOG("OHOS_CAMERA_ZOOMSMOOTH_PREPARE_ENABLE");
             inPrepareZoom_ = true;
@@ -1146,7 +1172,7 @@ void HCameraDevice::DebugLogForSmoothZoom(const std::shared_ptr<OHOS::Camera::Ca
     // debug log for smooth zoom
     camera_metadata_item_t item;
     int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), tag, &item);
-    if (ret != CAM_META_SUCCESS) {
+    if (ret != CAM_META_SUCCESS || item.count <= 0) {
         MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_SMOOTH_ZOOM_RATIOS tag");
     } else {
         MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_SMOOTH_ZOOM_RATIOS count = %{public}d", item.count);
@@ -1165,7 +1191,7 @@ void HCameraDevice::DebugLogForAfRegions(const std::shared_ptr<OHOS::Camera::Cam
     // debug log for af regions
     camera_metadata_item_t item;
     int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), tag, &item);
-    if (ret != CAM_META_SUCCESS) {
+    if (ret != CAM_META_SUCCESS || item.count <= 0) {
         MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_AF_REGIONS tag");
     } else {
         std::stringstream ss;
@@ -1181,7 +1207,7 @@ void HCameraDevice::DebugLogForAeRegions(const std::shared_ptr<OHOS::Camera::Cam
     // debug log for ae regions
     camera_metadata_item_t item;
     int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), tag, &item);
-    if (ret != CAM_META_SUCCESS) {
+    if (ret != CAM_META_SUCCESS || item.count <= 0) {
         MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_AE_REGIONS tag");
     } else {
         std::stringstream ss;
@@ -1286,7 +1312,7 @@ void HCameraDevice::UpdateDeviceOpenLifeCycleSettings(std::shared_ptr<OHOS::Came
     for (auto itemTag : DEVICE_OPEN_LIFECYCLE_TAGS) {
         camera_metadata_item_t item;
         int32_t result = OHOS::Camera::FindCameraMetadataItem(changedSettings->get(), itemTag, &item);
-        if (result != CAM_META_SUCCESS) {
+        if (result != CAM_META_SUCCESS || item.count <= 0) {
             continue;
         }
         bool updateSuccess = CameraFwkMetadataUtils::UpdateMetadataTag(item, deviceOpenLifeCycleSettings_);
@@ -1397,27 +1423,28 @@ void HCameraDevice::CheckOnResultData(std::shared_ptr<OHOS::Camera::CameraMetada
     camera_metadata_item_t item;
     common_metadata_header_t* metadata = cameraResult->get();
     int ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_FLASH_MODE, &item);
-    if (ret == 0) {
+    if (ret == 0 && item.count > 0) {
         MEDIA_DEBUG_LOG("Flash mode: %{public}d", item.data.u8[0]);
     }
     ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_FLASH_STATE, &item);
-    if (ret == 0) {
+    if (ret == 0 && item.count > 0) {
         MEDIA_DEBUG_LOG("Flash state: %{public}d", item.data.u8[0]);
     }
     ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_FOCUS_MODE, &item);
-    if (ret == CAM_META_SUCCESS) {
+    if (ret == CAM_META_SUCCESS && item.count > 0) {
         MEDIA_DEBUG_LOG("Focus mode: %{public}d", item.data.u8[0]);
     }
     ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_QUALITY_PRIORITIZATION, &item);
-    if (ret == CAM_META_SUCCESS) {
+    if (ret == CAM_META_SUCCESS && item.count > 0) {
         MEDIA_DEBUG_LOG("quality prioritization: %{public}d", item.data.u8[0]);
     }
     ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_FOCUS_STATE, &item);
-    if (ret == CAM_META_SUCCESS) {
+    if (ret == CAM_META_SUCCESS && item.count > 0) {
         MEDIA_DEBUG_LOG("Focus state: %{public}d", item.data.u8[0]);
     }
     ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_STATISTICS_FACE_RECTANGLES, &item);
-    CHECK_PRINT_ELOG(ret != CAM_META_SUCCESS, "cannot find OHOS_STATISTICS_FACE_RECTANGLES: %{public}d", ret);
+    CHECK_PRINT_ELOG(
+        ret != CAM_META_SUCCESS || item.count <= 0, "cannot find OHOS_STATISTICS_FACE_RECTANGLES: %{public}d", ret);
     MEDIA_DEBUG_LOG("ProcessFaceRectangles: %{public}d count: %{public}d", item.item, item.count);
     constexpr int32_t rectangleUnitLen = 4;
 
@@ -1706,7 +1733,7 @@ std::vector<std::vector<std::int32_t>> HCameraDevice::GetConcurrentDevicesTable(
     int32_t ret;
     camera_metadata_item_t item;
     ret = OHOS::Camera::FindCameraMetadataItem(ability->get(), OHOS_ABILITY_CONCURRENT_SUPPORTED_CAMERAS, &item);
-    if (ret == CAM_META_SUCCESS) {
+    if (ret == CAM_META_SUCCESS && item.count > 0) {
         for (uint32_t index = 0; index < item.count; index++) {
             int32_t cameraId = item.data.i32[index];
             if (cameraId == -1) {
