@@ -206,9 +206,9 @@ public:
     static int32_t GetDataWidth(sptr<SurfaceBuffer> surfaceBuffer)
     {
         int32_t dataWidth = 0;
-        CHECK_ERROR_RETURN_RET_LOG(surfaceBuffer == nullptr, dataWidth, "GetDataWidth: surfaceBuffer is nullptr");
+        CHECK_RETURN_RET_ELOG(surfaceBuffer == nullptr, dataWidth, "GetDataWidth: surfaceBuffer is nullptr");
         sptr<BufferExtraData> extraData = surfaceBuffer->GetExtraData();
-        CHECK_ERROR_RETURN_RET_LOG(extraData  == nullptr, dataWidth, "GetDataWidth: extraData is nullptr");
+        CHECK_RETURN_RET_ELOG(extraData  == nullptr, dataWidth, "GetDataWidth: extraData is nullptr");
         extraData->ExtraGet(OHOS::Camera::dataWidth, dataWidth);
         MEDIA_DEBUG_LOG("GetDataWidth:%{public}d", dataWidth);
         return dataWidth;
