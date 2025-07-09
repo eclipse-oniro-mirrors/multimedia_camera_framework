@@ -1423,6 +1423,8 @@ int32_t HCameraService::PrelaunchCamera(int32_t flag)
 {
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("HCameraService::PrelaunchCamera");
+    CHECK_RETURN_RET_ELOG(torchStatus_ == TorchStatus::TORCH_STATUS_ON,
+        CAMERA_DEVICE_CONFLICT, "HCameraService::PrelaunchCamera torch is running, abort!");
     #ifdef MEMMGR_OVERRID
         PrelaunchRequireMemory(flag);
     #endif
