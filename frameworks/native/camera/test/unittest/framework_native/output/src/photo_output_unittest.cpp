@@ -1147,6 +1147,75 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_028, TestSize.Level1)
 
 /*
  * Feature: Framework
+ * Function: Test SetThumbnailCallback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetThumbnailCallback
+ */
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_029, TestSize.Level1)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+    phtOutput->SetThumbnailCallback(nullptr);
+}
+/*
+ * Feature: Framework
+ * Function: Test UnSetThumbnailAvailableCallback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test UnSetThumbnailAvailableCallback
+ */
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_030, TestSize.Level1)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+    phtOutput->UnSetThumbnailAvailableCallback();
+}
+/*
+ * Feature: Framework
+ * Function: Test GetAppPhotoCallback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetAppPhotoCallback
+ */
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_031, TestSize.Level1)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+    phtOutput->GetAppPhotoCallback();
+}
+/*
+ * Feature: Framework
+ * Function: Test GetAppThumbnailCallback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetAppThumbnailCallback
+ */
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_032, TestSize.Level1)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+    phtOutput->GetAppThumbnailCallback();
+}
+
+/*
+ * Feature: Framework
  * Function: IsOfflineSupported_ShouldReturnFalse_WhenSessionIsNull
  * SubFunction: NA
  * FunctionPoints: NA
