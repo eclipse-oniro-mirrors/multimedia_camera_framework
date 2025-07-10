@@ -1018,10 +1018,9 @@ napi_value CameraSessionNapi::GetJSArgsForCameraOutput(napi_env env, size_t argc
                 napi_unwrap(env, argv[i], reinterpret_cast<void**>(&metadataOutputNapiObj));
                 cameraOutput = metadataOutputNapiObj->GetMetadataOutput();
             }
-            if (!CameraNapiSecurity::CheckSystemApp(env, false) || cameraOutput != nullptr) {
-                continue;
+            if (CameraNapiSecurity::CheckSystemApp(env, false) && cameraOutput == nullptr) {
+                CheckExtensionCameraOutput(env, argv[i], cameraOutput);
             }
-            CheckExtensionCameraOutput(env, argv[i], cameraOutput);
             CHECK_EXECUTE(cameraOutput == nullptr, NAPI_ASSERT(env, false, "type mismatch"));
         } else {
             NAPI_ASSERT(env, false, "type mismatch");

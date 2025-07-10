@@ -18,7 +18,6 @@
 #include "input/camera_input_napi.h"
 #include "input/camera_manager_napi.h"
 #include "input/camera_napi.h"
-#include "mode/mode_manager_napi.h"
 #include "mode/photo_session_napi.h"
 #include "mode/secure_camera_session_napi.h"
 #include "mode/video_session_napi.h"
@@ -44,7 +43,6 @@ static napi_value Export(napi_env env, napi_value exports)
     MetadataOutputNapi::Init(env, exports);
     PhotoSessionNapi::Init(env, exports);
     VideoSessionNapi::Init(env, exports);
-    ModeManagerNapi::Init(env, exports);
     PhotoNapi::Init(env, exports);
     SecureCameraSessionNapi::Init(env, exports);
     MEDIA_DEBUG_LOG("Export is end");

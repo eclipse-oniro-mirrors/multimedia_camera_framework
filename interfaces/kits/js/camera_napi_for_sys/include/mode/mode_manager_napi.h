@@ -17,18 +17,7 @@
 #define MODE_MANAGER_NAPI_H_
 
 #include "camera_napi_utils.h"
-#include "input/camera_device.h"
-#include "input/camera_input_napi.h"
 #include "input/camera_manager.h"
-#include "output/camera_output_capability.h"
-#include "output/capture_output.h"
-#include "output/photo_output_napi.h"
-#include "output/preview_output_napi.h"
-#include "output/video_output_napi.h"
-#include "photo_session_napi.h"
-#include "secure_camera_session_napi.h"
-#include "session/camera_session_napi.h"
-#include "video_session_napi.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -40,7 +29,7 @@ enum ModeManagerAsyncCallbackModes {
 
 class ModeManagerNapi {
 public:
-    static napi_value Init(napi_env env, napi_value exports);
+    static void Init(napi_env env);
 
     static napi_value CreateModeManager(napi_env env);
     static napi_value GetSupportedOutputCapability(napi_env env, napi_callback_info info);

@@ -635,7 +635,7 @@ extern "C" napi_value createDepthDataOutputInstance(napi_env env, DepthProfile& 
     return DepthDataOutputNapi::CreateDepthDataOutput(env, depthProfile);
 }
 
-extern "C" bool checkAndGetOutput(napi_env env, napi_value obj, sptr<CaptureOutput> output)
+extern "C" bool checkAndGetOutput(napi_env env, napi_value obj, sptr<CaptureOutput> &output)
 {
     if (DepthDataOutputNapi::IsDepthDataOutput(env, obj)) {
         MEDIA_DEBUG_LOG("depth data output adding..");

@@ -16,6 +16,8 @@
 #ifndef CAMERA_NAPI_EX_MANAGER_H_
 #define CAMERA_NAPI_EX_MANAGER_H_
 
+#include <mutex>
+
 #include "camera_dynamic_loader.h"
 #include "dynamic_loader/camera_napi_ex_proxy.h"
 #include "napi/native_node_api.h"
@@ -35,6 +37,7 @@ public:
 private:
     static std::shared_ptr<CameraNapiExProxy> cameraNapiExProxy_;
     static std::vector<CameraNapiExProxyUserType> userList_;
+    static std::mutex mutex_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

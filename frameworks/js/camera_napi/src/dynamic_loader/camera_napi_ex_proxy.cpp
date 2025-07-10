@@ -45,7 +45,7 @@ CameraNapiExProxy::~CameraNapiExProxy()
 typedef napi_value (*CreateSessionInstanceForSys)(napi_env, int32_t);
 napi_value CameraNapiExProxy::CreateSessionForSys(napi_env env, int32_t jsModeName)
 {
-    MEDIA_DEBUG_LOG("CameraNapiExManager::CreateSessionForSys is called");
+    MEDIA_DEBUG_LOG("CameraNapiExProxy::CreateSessionForSys is called");
     napi_value result = nullptr;
     CHECK_RETURN_RET_ELOG(napiExLib_ == nullptr, result, "napiExLib_ is null");
     CreateSessionInstanceForSys createSessionInstanceForSys =
@@ -61,6 +61,7 @@ napi_value CameraNapiExProxy::CreateSessionForSys(napi_env env, int32_t jsModeNa
 typedef napi_value (*CreateDeprecatedSessionInstanceForSys)(napi_env);
 napi_value CameraNapiExProxy::CreateDeprecatedSessionForSys(napi_env env)
 {
+    MEDIA_DEBUG_LOG("CameraNapiExProxy::CreateDeprecatedSessionForSys is called");
     napi_value result = nullptr;
     CHECK_RETURN_RET_ELOG(napiExLib_ == nullptr, result, "napiExLib_ is null");
     CreateDeprecatedSessionInstanceForSys createDeprecatedSessionInstanceForSys =
@@ -73,10 +74,26 @@ napi_value CameraNapiExProxy::CreateDeprecatedSessionForSys(napi_env env)
     return result;
 }
 
+typedef napi_value (*CreateModeManagerInstance)(napi_env);
+napi_value CameraNapiExProxy::CreateModeManager(napi_env env)
+{
+    MEDIA_DEBUG_LOG("CameraNapiExProxy::CreateModeManager is called");
+    napi_value result = nullptr;
+    CHECK_RETURN_RET_ELOG(napiExLib_ == nullptr, result, "napiExLib_ is null");
+    CreateModeManagerInstance createModeManagerInstance =
+        (CreateModeManagerInstance)napiExLib_->GetFunction("createModeManagerInstance");
+    CHECK_RETURN_RET_ELOG(createModeManagerInstance == nullptr, result,
+        "get function createModeManagerInstance fail");
+    result = createModeManagerInstance(env);
+    CHECK_RETURN_RET_ELOG(
+        result == nullptr, result, "createModeManagerInstance fail");
+    return result;
+}
+
 typedef napi_value (*CreateDepthDataOutputInstance)(napi_env, DepthProfile&);
 napi_value CameraNapiExProxy::CreateDepthDataOutput(napi_env env, DepthProfile& depthProfile)
 {
-    MEDIA_DEBUG_LOG("CameraNapiExManager::CreateDepthDataOutput is called");
+    MEDIA_DEBUG_LOG("CameraNapiExProxy::CreateDepthDataOutput is called");
     napi_value result = nullptr;
     CHECK_RETURN_RET_ELOG(napiExLib_ == nullptr, result, "napiExLib_ is null");
     CreateDepthDataOutputInstance createDepthDataOutputInstance =
@@ -92,7 +109,7 @@ napi_value CameraNapiExProxy::CreateDepthDataOutput(napi_env env, DepthProfile& 
 typedef bool (*CheckAndGetSysOutput)(napi_env, napi_value, sptr<CaptureOutput>&);
 bool CameraNapiExProxy::CheckAndGetOutput(napi_env env, napi_value obj, sptr<CaptureOutput> &output)
 {
-    MEDIA_DEBUG_LOG("CameraNapiExManager::CheckAndGetOutput is called");
+    MEDIA_DEBUG_LOG("CameraNapiExProxy::CheckAndGetOutput is called");
     bool result = false;
     CHECK_RETURN_RET_ELOG(napiExLib_ == nullptr, result, "napiExLib_ is null");
     CheckAndGetSysOutput checkAndGetOutput =
