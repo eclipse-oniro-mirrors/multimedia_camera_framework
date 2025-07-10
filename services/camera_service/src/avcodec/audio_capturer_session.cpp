@@ -91,6 +91,7 @@ bool AudioCapturerSession::CreateAudioCapturer()
     capturerOptions.capturerInfo.capturerFlags = 0;
     audioCapturer_ = AudioCapturer::Create(capturerOptions);
     CHECK_RETURN_RET_ELOG(audioCapturer_ == nullptr, false, "AudioCapturerSession::Create AudioCapturer failed");
+    audioCapturer_->SetInputDevice(AudioStandard::DeviceType::DEVICE_TYPE_MIC);
     AudioSessionStrategy sessionStrategy;
     sessionStrategy.concurrencyMode = AudioConcurrencyMode::MIX_WITH_OTHERS;
     AudioSessionManager::GetInstance()->ActivateAudioSession(sessionStrategy);
