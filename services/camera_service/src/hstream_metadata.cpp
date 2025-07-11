@@ -45,7 +45,7 @@ using namespace OHOS::HDI::Camera::V1_0;
 HStreamMetadata::HStreamMetadata(sptr<OHOS::IBufferProducer> producer,
     int32_t format, std::vector<int32_t> metadataTypes)
     : HStreamCommon(StreamType::METADATA, producer, format, producer->GetDefaultWidth(), producer->GetDefaultHeight()),
-    metadataObjectTypes_(metadataTypes)
+    metadataObjectTypes_(metadataTypes), userId_(0)
 {}
 
 HStreamMetadata::~HStreamMetadata()
