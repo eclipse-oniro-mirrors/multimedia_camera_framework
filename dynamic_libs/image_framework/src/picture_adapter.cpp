@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 
+#include "dfx_report.h"
 #include "picture_adapter.h"
 #include "camera_log.h"
 #include "image_format.h"
@@ -83,6 +84,9 @@ void PictureAdapter::Create(sptr<SurfaceBuffer> &surfaceBuffer)
 {
     MEDIA_INFO_LOG("PictureAdapter ctor");
     picture_ = Media::Picture::Create(surfaceBuffer);
+    CHECK_EXECUTE(!picture_,
+        CameraReportUtils::GetInstance().ReportCameraCreateNullptr(
+            "PictureAdapter::Create", "Media::Picture::Create"));
 }
 
 void PictureAdapter::SetAuxiliaryPicture(sptr<SurfaceBuffer> &surfaceBuffer, CameraAuxiliaryPictureType type)
@@ -155,7 +159,10 @@ bool PictureAdapter::Marshalling(Parcel &data) const
     MEDIA_INFO_LOG("PictureAdapter::Marshalling enter");
     std::shared_ptr<Media::Picture> picture = GetPicture();
     CHECK_RETURN_RET_ELOG(!picture, false, "PictureAdapter::Marshalling picture is nullptr");
-    return picture->Marshalling(data);
+    bool isMarshalling = picture->Marshalling(data);
+    CHECK_EXECUTE(isMarshalling == false, CameraReportUtils::GetInstance().ReportCameraFalse(
+        "PictureAdapter::Marshalling", "Media::Picture::Marshalling"));
+    return isMarshalling;
 }
 
 void PictureAdapter::UnmarshallingPicture(Parcel &data)
@@ -171,6 +178,8 @@ int32_t PictureAdapter::SetExifMetadata(sptr<SurfaceBuffer> &surfaceBuffer)
     std::shared_ptr<Media::Picture> picture = GetPicture();
     CHECK_RETURN_RET_ELOG(!picture, retCode, "PictureAdapter::SetExifMetadata picture is nullptr");
     retCode = static_cast<int32_t>(picture->SetExifMetadata(surfaceBuffer));
+    CHECK_EXECUTE(retCode != 0, CameraReportUtils::GetInstance().ReportCameraError<int32_t>(
+        "PictureAdapter::SetExifMetadata", "Media::Picture::SetExifMetadata", retCode));
     MEDIA_INFO_LOG("PictureAdapter::SetExifMetadata retCode:%{public}d", retCode);
     return retCode;
 }
@@ -181,6 +190,8 @@ bool PictureAdapter::SetMaintenanceData(sptr<SurfaceBuffer> &surfaceBuffer)
     std::shared_ptr<Media::Picture> picture = GetPicture();
     CHECK_RETURN_RET_ELOG(!picture, retCode, "PictureAdapter::SetMaintenanceData picture is nullptr");
     retCode = picture->SetMaintenanceData(surfaceBuffer);
+    CHECK_EXECUTE(retCode == false, CameraReportUtils::GetInstance().ReportCameraFalse(
+        "PictureAdapter::SetMaintenanceData", "Media::Picture::SetMaintenanceData"));
     return retCode;
 }
 
