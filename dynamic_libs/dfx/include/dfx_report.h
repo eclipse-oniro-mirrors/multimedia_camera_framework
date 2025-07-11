@@ -25,16 +25,6 @@
 namespace OHOS {
 namespace CameraStandard {
  
-static const std::string DFX_PICTUREADAPTRE_CREATE = "PictureAdapter::Create";
-static const std::string DFX_PICTUREADAPTRE_MARSHALLING = "PictureAdapter::Marshalling";
-static const std::string DFX_PICTUREADAPTRE_SETEXIFMETADATA = "PictureAdapter::SetExifMetadata";
-static const std::string DFX_PICTUREADAPTRE_SETMAINTENANCEDATA = "PictureAdapter::SetExifMetadata";
-static const std::string DFX_PICTUREADAPTRE_SETXTSTYLEMETADATABLOB = "PictureAdapter::SetXtStyleMetadataBlob";
-static const std::string DFX_PHOTOASSETADAPTER_PHOTOASSETADAPTER = "PhotoAssetAdapter::PhotoAssetAdapter";
-static const std::string DFX_PHOTOASSETADAPTER_GETPHOTOASSETURI = "PhotoAssetAdapter::GetPhotoAssetUri";
-static const std::string DFX_PHOTOASSETADAPTER_GETVIDEOFD = "PhotoAssetAdapter::GetVideoFd";
-static const std::string DFX_PHOTOASSETADAPTER_OPENASSERT = "PhotoAssetAdapter::OpenAsset";
- 
 class CameraReportUtils {
 public:
     static CameraReportUtils &GetInstance()
