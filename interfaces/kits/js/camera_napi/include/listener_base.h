@@ -67,6 +67,10 @@ private:
         std::list<AutoRef> refList;
     };
 
+    static void CleanUp(void* data);
+
+    void CleanUpImpl();
+
     inline CallbackList& GetCallbackList(const std::string eventName) const
     {
         std::lock_guard<std::mutex> lock(namedCallbackMapMutex_);
@@ -77,6 +81,12 @@ private:
             return *callbackList;
         }
         return *it->second;
+    }
+
+    inline void ClearNamedCallbackMap()
+    {
+        std::lock_guard<std::mutex> lock(namedCallbackMapMutex_);
+        namedCallbackMap_.clear();
     }
 
     mutable std::mutex namedCallbackMapMutex_;

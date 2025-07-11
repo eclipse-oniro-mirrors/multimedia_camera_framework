@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -26,11 +26,19 @@ namespace CameraStandard {
 ListenerBase::ListenerBase(napi_env env) : env_(env)
 {
     MEDIA_DEBUG_LOG("ListenerBase is called.");
+    auto ret = napi_add_env_cleanup_hook(env_, ListenerBase::CleanUp, this);
+    if (ret != napi_status::napi_ok) {
+        MEDIA_ERR_LOG("add env hook error: %{public}d", ret);
+    }
 }
 
 ListenerBase::~ListenerBase()
 {
     MEDIA_DEBUG_LOG("~ListenerBase is called.");
+    auto ret = napi_remove_env_cleanup_hook(env_, ListenerBase::CleanUp, this);
+    if (ret != napi_status::napi_ok) {
+        MEDIA_ERR_LOG("remove env hook error: %{public}d", ret);
+    }
 }
 
 ListenerBase::ExecuteCallbackData::ExecuteCallbackData(napi_env env, napi_value errCode, napi_value returnData)
@@ -84,7 +92,8 @@ void ListenerBase::ExecuteCallback(const std::string eventName, const ExecuteCal
         napi_call_function(env_, callbackPara.recv, it->GetCallbackFunction(), callbackPara.argc, callbackPara.argv,
             callbackPara.result);
         if (it->isOnce_) {
-            callbackList.refList.erase(it);
+            MEDIA_DEBUG_LOG("ListenerBase::ExecuteCallback, once to del %s", eventName.c_str());
+            it = callbackList.refList.erase(it);
         } else {
             it++;
         }
@@ -97,16 +106,20 @@ void ListenerBase::ExecuteCallbackScopeSafe(
     const std::string eventName, const std::function<ExecuteCallbackData()> fun) const
 {
     napi_handle_scope scope_ = nullptr;
+    if (!env_) {
+        MEDIA_ERR_LOG("ListenerBase::ExecuteCallbackScopeSafe env is nullptr");
+        return;
+    }
     napi_open_handle_scope(env_, &scope_);
 
-    MEDIA_DEBUG_LOG("ListenerBase::ExecuteCallback %{public}s is called", eventName.c_str());
+    MEDIA_DEBUG_LOG("ListenerBase::ExecuteCallbackScopeSafe %{public}s is called", eventName.c_str());
     auto& callbackList = GetCallbackList(eventName);
     std::lock_guard<std::mutex> lock(callbackList.listMutex);
     for (auto it = callbackList.refList.begin(); it != callbackList.refList.end();) {
         // Do not move this call out of loop.
         ExecuteCallbackData callbackData = fun();
         if (callbackData.env_ == nullptr) {
-            MEDIA_ERR_LOG("ExecuteCallback %{public}s env is null ", eventName.c_str());
+            MEDIA_ERR_LOG("ExecuteCallbackScopeSafe %{public}s env is null ", eventName.c_str());
             continue;
         }
 
@@ -117,12 +130,12 @@ void ListenerBase::ExecuteCallbackScopeSafe(
 
         napi_call_function(callbackData.env_, nullptr, it->GetCallbackFunction(), ARGS_TWO, result, &retVal);
         if (it->isOnce_) {
-            callbackList.refList.erase(it);
+            it = callbackList.refList.erase(it);
         } else {
             it++;
         }
     }
-    MEDIA_DEBUG_LOG("ListenerBase::ExecuteCallback, %s callback list size [%{public}zu]", eventName.c_str(),
+    MEDIA_DEBUG_LOG("ListenerBase::ExecuteCallbackScopeSafe, %s callback list size [%{public}zu]", eventName.c_str(),
         callbackList.refList.size());
 
     napi_close_handle_scope(env_, scope_);
@@ -142,5 +155,23 @@ bool ListenerBase::IsEmpty(const std::string eventName) const
     std::lock_guard<std::mutex> lock(callbackList.listMutex);
     return callbackList.refList.empty();
 }
+
+void ListenerBase::CleanUp(void* data)
+{
+    MEDIA_INFO_LOG("ListenerBase::CleanUp enter");
+    ListenerBase* listener = reinterpret_cast<ListenerBase*>(data);
+    if (!listener) {
+        return;
+    }
+    listener->CleanUpImpl();
+}
+
+void ListenerBase::CleanUpImpl()
+{
+    MEDIA_INFO_LOG("ListenerBase::CleanUpImpl enter");
+    ClearNamedCallbackMap();
+    env_ = nullptr;
+}
+
 } // namespace CameraStandard
 } // namespace OHOS
