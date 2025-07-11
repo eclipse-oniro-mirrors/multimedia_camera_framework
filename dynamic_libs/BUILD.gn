@@ -17,11 +17,15 @@ import("./../multimedia_camera_framework.gni")
 config("camera_dynamic_medialibrary_public_config") {
   include_dirs = [
     "${multimedia_camera_framework_path}/dynamic_libs/media_library/include",
+    "${multimedia_camera_framework_path}/dynamic_libs/dfx/include"
   ]
 }
 ohos_shared_library("camera_dynamic_medialibrary") {
   install_enable = true
-  sources = [ "${multimedia_camera_framework_path}/dynamic_libs/media_library/src/photo_asset_adapter.cpp" ]
+  sources = [
+    "${multimedia_camera_framework_path}/dynamic_libs/dfx/src/dfx_report.cpp", 
+    "${multimedia_camera_framework_path}/dynamic_libs/media_library/src/photo_asset_adapter.cpp" 
+  ]
   cflags = [
     "-fPIC",
     "-Wall",
@@ -32,7 +36,10 @@ ohos_shared_library("camera_dynamic_medialibrary") {
     cfi_cross_dso = true
     debug = false
   }
-  include_dirs = [ "${multimedia_camera_framework_path}/common/utils" ]
+  include_dirs = [ 
+    "${multimedia_camera_framework_path}/common/utils" ,
+    "${multimedia_camera_framework_path}/dynamic_libs/dfx/include",
+  ]
   public_configs = [ ":camera_dynamic_medialibrary_public_config" ]
   if (target_cpu == "arm") {
     cflags += [ "-DBINDER_IPC_32BIT" ]
@@ -61,12 +68,16 @@ ohos_shared_library("camera_dynamic_medialibrary") {
 config("camera_dynamic_picture_public_config") {
   include_dirs = [
     "${multimedia_camera_framework_path}/dynamic_libs/image_framework/include",
+    "${multimedia_camera_framework_path}/dynamic_libs/dfx/include"
   ]
 }
 
 ohos_shared_library("camera_dynamic_picture") {
   install_enable = true
-  sources = [ "${multimedia_camera_framework_path}/dynamic_libs/image_framework/src/picture_adapter.cpp" ]
+  sources = [ 
+    "${multimedia_camera_framework_path}/dynamic_libs/dfx/src/dfx_report.cpp",
+    "${multimedia_camera_framework_path}/dynamic_libs/image_framework/src/picture_adapter.cpp" 
+  ]
   cflags = [
     "-fPIC",
     "-Wall",
@@ -77,7 +88,10 @@ ohos_shared_library("camera_dynamic_picture") {
     cfi_cross_dso = true
     debug = false
   }
-  include_dirs = [ "${multimedia_camera_framework_path}/common/utils" ]
+  include_dirs = [ 
+    "${multimedia_camera_framework_path}/common/utils" ,
+    "${multimedia_camera_framework_path}/dynamic_libs/dfx/include",
+  ]
   public_configs = [ ":camera_dynamic_picture_public_config" ]
   if (target_cpu == "arm") {
     cflags += [ "-DBINDER_IPC_32BIT" ]

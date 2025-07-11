@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 
+#include "dfx_report.h"
 #include "photo_asset_adapter.h"
 #include "photo_proxy.h"
 #include "camera_log.h"
@@ -31,6 +32,8 @@ PhotoAssetAdapter::PhotoAssetAdapter(int32_t cameraShotType, int32_t uid)
     MEDIA_INFO_LOG("PhotoAssetAdapter ctor");
     if (g_mediaLibraryManager == nullptr) {
         g_mediaLibraryManager = Media::MediaLibraryManager::GetMediaLibraryManager();
+        CHECK_EXECUTE(g_mediaLibraryManager == nullptr, CameraReportUtils::GetInstance().ReportCameraCreateNullptr(
+            "PhotoAssetAdapter::PhotoAssetAdapter", "Media::MediaLibraryManager::GetMediaLibraryManager"));
         CHECK_RETURN_ELOG(g_mediaLibraryManager == nullptr, "GetMediaLibraryManager failed!");
         auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
         CHECK_RETURN_ELOG(samgr == nullptr, "Failed to get System ability manager!");
@@ -45,6 +48,8 @@ PhotoAssetAdapter::PhotoAssetAdapter(int32_t cameraShotType, int32_t uid)
     MEDIA_DEBUG_LOG("get uid:%{public}d, userId:%{public}d.", uid, userId_);
     photoAssetProxy_ = g_mediaLibraryManager->CreatePhotoAssetProxy(
         static_cast<Media::CameraShotType>(cameraShotType), uid, userId_);
+    CHECK_EXECUTE(!photoAssetProxy_, CameraReportUtils::GetInstance().ReportCameraCreateNullptr(
+        "PhotoAssetAdapter::PhotoAssetAdapter", "Media::MediaLibraryManager::CreatePhotoAssetProxy"));
 }
 // LCOV_EXCL_START
 void PhotoAssetAdapter::AddPhotoProxy(sptr<Media::PhotoProxy> photoProxy)
@@ -57,14 +62,22 @@ void PhotoAssetAdapter::AddPhotoProxy(sptr<Media::PhotoProxy> photoProxy)
 
 std::string PhotoAssetAdapter::GetPhotoAssetUri()
 {
-    CHECK_RETURN_RET(photoAssetProxy_, photoAssetProxy_->GetPhotoAssetUri());
-    return "";
+    string res = "";
+    CHECK_RETURN_RET(!photoAssetProxy_, res);
+    res = photoAssetProxy_->GetPhotoAssetUri();
+    CHECK_EXECUTE(res == "", CameraReportUtils::GetInstance().ReportCameraGetNullStr(
+        "PhotoAssetAdapter::GetPhotoAssetUri", "Media::PhotoAssetProxy::GetPhotoAssetUri"));
+    return res;
 }
 
 int32_t PhotoAssetAdapter::GetVideoFd()
 {
-    CHECK_RETURN_RET(photoAssetProxy_, photoAssetProxy_->GetVideoFd());
-    return -1;
+    int32_t res = -1;
+    CHECK_RETURN_RET(!photoAssetProxy_, res);
+    res = photoAssetProxy_->GetVideoFd();
+    CHECK_EXECUTE(res == -1, CameraReportUtils::GetInstance().ReportCameraFail(
+        "PhotoAssetAdapter::GetVideoFd", "Media::PhotoAssetProxy::GetVideoFd"));
+    return res;
 }
 
 int32_t PhotoAssetAdapter::GetUserId()
