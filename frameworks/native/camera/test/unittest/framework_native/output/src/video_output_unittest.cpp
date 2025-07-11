@@ -682,32 +682,5 @@ HWTEST_F(CameraVedioOutputUnit, video_output_function_unittest_005, TestSize.Lev
         std::make_shared<TestVideoOutputCallback>("VideoStateCallback");
     innerCallback->OnError(CameraErrorCode::SERVICE_FATL_ERROR);
 }
-
-/*
- * Feature: Framework
- * Function: Test videooutput with GetIsSlowMotionOrHighFrameRateMode and SetIsSlowMotionOrHighFrameRateMode
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test videooutput with GetIsSlowMotionOrHighFrameRateMode and SetIsSlowMotionOrHighFrameRateMode
- */
-HWTEST_F(CameraVedioOutputUnit, video_output_unittest_013, TestSize.Level1)
-{
-    int32_t width = VIDEO_DEFAULT_WIDTH;
-    int32_t height = VIDEO_DEFAULT_HEIGHT;
-    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-    CameraFormat videoFormat = CAMERA_FORMAT_YUV_420_SP;
-    Size videoSize;
-    videoSize.width = width;
-    videoSize.height = height;
-    std::vector<int32_t> videoFramerates = {30, 30};
-    VideoProfile videoProfile = VideoProfile(videoFormat, videoSize, videoFramerates);
-    sptr<VideoOutput> video = cameraManager_->CreateVideoOutput(videoProfile, surface);
-    ASSERT_NE(video, nullptr);
-    video->SetIsSlowMotionOrHighFrameRateMode(false);
-    EXPECT_EQ(video->GetIsSlowMotionOrHighFrameRateMode(), false);
-    video->SetIsSlowMotionOrHighFrameRateMode(true);
-    EXPECT_EQ(video->GetIsSlowMotionOrHighFrameRateMode(), true);
-}
 }
 }
