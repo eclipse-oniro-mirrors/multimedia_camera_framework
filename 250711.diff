@@ -1,0 +1,54 @@
+From 9ed8e61e73ab392eace484482face6174408dfa4 Mon Sep 17 00:00:00 2001
+From: z30014341 <z30014341@notesmail.huawei.com/>
+Date: Fri, 11 Jul 2025 10:35:14 +0800
+Subject: [PATCH] TicketNo: DTS2025071021477 Description: fix NDK capture
+ Team:OTHERS Feature or Bugfix:Bugfix Binary Source: NA PrivateCode(Yes/No):No
+
+Change-Id: I12c389f2d72f0c03235ac72eaece1cbd1070b321
+---
+ .../native/ndk/impl/camera_manager_impl.cpp   | 21 ++++++++++++++++---
+ 1 file changed, 18 insertions(+), 3 deletions(-)
+
+diff --git a/frameworks/native/ndk/impl/camera_manager_impl.cpp b/frameworks/native/ndk/impl/camera_manager_impl.cpp
+index 9794ea674b..b5f0aacea7 100644
+--- a/frameworks/native/ndk/impl/camera_manager_impl.cpp
++++ b/frameworks/native/ndk/impl/camera_manager_impl.cpp
+@@ -577,8 +577,12 @@ Camera_ErrorCode Camera_Manager::CreatePhotoOutput(const Camera_Profile* profile
+     size.width = profile->size.width;
+     size.height = profile->size.height;
+     Profile innerProfile(static_cast<CameraFormat>(profile->format), size);
++    sptr<Surface> surface = Media::ImageReceiver::getSurfaceById(surfaceId);
++    CHECK_ERROR_RETURN_RET_LOG(surface == nullptr, CAMERA_INVALID_ARGUMENT, "Failed to get photoOutput surface");
++    surface->SetUserData(CameraManager::surfaceFormat, std::to_string(innerProfile.GetCameraFormat()));
++    sptr<IBufferProducer> surfaceProducer = surface->GetProducer();
+     int32_t retCode =
+-        CameraManager::GetInstance()->CreatePhotoOutput(innerProfile, &innerPhotoOutput);
++        CameraManager::GetInstance()->CreatePhotoOutput(innerProfile, surfaceProducer, &innerPhotoOutput, surface);
+     CHECK_ERROR_RETURN_RET(retCode != CameraErrorCode::SUCCESS, CAMERA_SERVICE_FATAL_ERROR);
+     Camera_PhotoOutput* out = new Camera_PhotoOutput(innerPhotoOutput);
+     *photoOutput = out;
+@@ -589,8 +593,19 @@ Camera_ErrorCode Camera_Manager::CreatePhotoOutputUsedInPreconfig(const char* su
+     Camera_PhotoOutput** photoOutput)
+ {
+     sptr<PhotoOutput> innerPhotoOutput = nullptr;
+-    int32_t retCode =
+-        CameraManager::GetInstance()->CreatePhotoOutputWithoutProfile(surfaceId, &innerPhotoOutput);
++    int32_t retCode = CAMERA_OK;
++    if (strcmp(surfaceId, "")) {
++        sptr<Surface> surface = Media::ImageReceiver::getSurfaceById(surfaceId);
++        CHECK_ERROR_RETURN_RET_LOG(surface == nullptr, CAMERA_INVALID_ARGUMENT,
++            "Camera_Manager::CreatePhotoOutputUsedInPreconfig get photoOutput surface fail!");
++        sptr<IBufferProducer> surfaceProducer = surface->GetProducer();
++        CHECK_ERROR_RETURN_RET_LOG(surfaceProducer == nullptr, CAMERA_INVALID_ARGUMENT,
++            "Camera_Manager::CreatePhotoOutputUsedInPreconfig get surfaceProducer fail!");
++        retCode =
++            CameraManager::GetInstance()->CreatePhotoOutputWithoutProfile(surfaceProducer, &innerPhotoOutput);
++    } else {
++        retCode = CameraManager::GetInstance()->CreatePhotoOutputWithoutProfile(surfaceId, &innerPhotoOutput);
++    }
+     CHECK_ERROR_RETURN_RET_LOG(retCode != CameraErrorCode::SUCCESS, CAMERA_SERVICE_FATAL_ERROR,
+         "Camera_Manager::CreatePhotoOutputUsedInPreconfig create innerPhotoOutput fail!");
+     CHECK_ERROR_RETURN_RET_LOG(innerPhotoOutput == nullptr, CAMERA_SERVICE_FATAL_ERROR,
+-- 
+2.45.2.huawei.10
+
