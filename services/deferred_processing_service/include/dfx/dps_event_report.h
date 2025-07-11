@@ -43,6 +43,13 @@ const std::string EVENT_KEY_CHANGEREASON = "CHANGEREASON";
 const std::string EVENT_KEY_EXCEPTIONSOURCE = "EXCEPTIONSOURCE";
 const std::string EVENT_KEY_EXCEPTIONCAUSE = "EXCEPTIONCAUSE";
 const std::string EVENT_KEY_EXECUTIONMODE = "EXECUTIONMODE";
+const std::string EVENT_KEY_COMPONENT_NAME = "COMPONENT_NAME";
+const std::string EVENT_KEY_PARTITION_NAME = "PARTITION_NAME";
+const std::string EVENT_KEY_REMAIN_PARTITION_SIZE = "REMAIN_PARTITION_SIZE";
+const std::string EVENT_KEY_FILE_OR_FOLDER_PAT = "FILE_OR_FOLDER_PATH";
+const std::string EVENT_KEY_FILE_OR_FOLDER_SIZE = "FILE_OR_FOLDER_SIZE";
+const std::string COMPONENT_NAME = "camera_framework";
+const std::string PARTITION_NAME = "/data";
 
 struct DPSEventInfo {
     std::string imageId;
@@ -86,6 +93,7 @@ public:
     void ReportImageProcessResult(const std::string& imageId, int32_t userId, uint64_t endTime = 0);
     void ReportImageModeChange(ExecutionMode executionMode);
     void ReportImageException(const std::string& imageId, int32_t userId);
+    void ReportPartitionUsage();
     void SetEventInfo(const std::string& imageId, int32_t userId);
     void SetEventInfo(DPSEventInfo& dpsEventInfo);
     void RemoveEventInfo(const std::string& imageId, int32_t userId);
@@ -109,6 +117,8 @@ private:
     void UpdateTrailingTime(DPSEventInfo& dpsEventInfo, DPSEventInfo& dpsEventInfoSrc);
     void UpdateExecutionMode(DPSEventInfo& dpsEventInfo, DPSEventInfo& dpsEventInfoSrc);
     int GetTotalTime (uint64_t beginTime, uint64_t endTime);
+    bool GetDeviceValidSize(const std::string& path, double& size);
+    uint64_t GetFolderSize(const std::string& path);
     std::recursive_mutex mutex_;
     std::map<int32_t, std::map<std::string, DPSEventInfo>> userIdToImageIdEventInfo; //userid--imageid--eventinfo
     ExecutionMode executionMode_;

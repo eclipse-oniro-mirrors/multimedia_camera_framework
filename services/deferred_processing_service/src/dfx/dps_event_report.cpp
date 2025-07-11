@@ -13,6 +13,11 @@
  * limitations under the License.
  */
 
+#include <filesystem>
+#include <sys/statfs.h>
+#include <dirent.h>
+#include <sys/stat.h>
+
 #include "dps_event_report.h"
 #include "hisysevent.h"
 #include "dp_log.h"
@@ -23,6 +28,7 @@ namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
 static constexpr char CAMERA_FWK_UE[] = "CAMERA_FWK_UE";
+static constexpr double INVALID_QUOTA = -2.00;
 void DPSEventReport::ReportOperateImage(const std::string& imageId, int32_t userId, DPSEventInfo& dpsEventInfo)
 {
     DP_DEBUG_LOG("ReportOperateImage enter.");
@@ -101,6 +107,31 @@ void DPSEventReport::ReportImageException(const std::string& imageId, int32_t us
         EVENT_KEY_EXCEPTIONSOURCE, static_cast<int32_t>(dpsEventInfo.exceptionSource),
         EVENT_KEY_EXCEPTIONCAUSE, static_cast<int32_t>(dpsEventInfo.exceptionCause),
         EVENT_KEY_TEMPERATURELEVEL, temperatureLevel_);
+}
+
+void DPSEventReport::ReportPartitionUsage()
+{
+    DP_DEBUG_LOG("ReportPartitionUsage enter");
+    std::vector<std::string> filePath = { PATH };
+    uint64_t size = GetFolderSize(PATH);
+    std::vector<uint64_t> fileSize = { size };
+    double remainPartitionSize = 0.0;
+    GetDeviceValidSize(PATH, remainPartitionSize);
+
+    HiSysEventWrite(
+        HiviewDFX::HiSysEvent::Domain::FILEMANAGEMENT,
+        "USER_DATA_SIZE",
+        HiviewDFX::HiSysEvent::EventType::STATISTIC,
+        EVENT_KEY_COMPONENT_NAME,
+        COMPONENT_NAME,
+        EVENT_KEY_PARTITION_NAME,
+        PARTITION_NAME,
+        EVENT_KEY_REMAIN_PARTITION_SIZE,
+        remainPartitionSize,
+        EVENT_KEY_FILE_OR_FOLDER_PAT,
+        filePath,
+        EVENT_KEY_FILE_OR_FOLDER_SIZE,
+        fileSize);
 }
 
 void DPSEventReport::SetEventInfo(const std::string& imageId, int32_t userId)
@@ -339,6 +370,49 @@ void DPSEventReport::UpdateExecutionMode(DPSEventInfo& dpsEventInfo, DPSEventInf
         && dpsEventInfoSrc.executionMode < ExecutionMode::DUMMY) {
         dpsEventInfo.executionMode = dpsEventInfoSrc.executionMode;
     }
+}
+
+bool DPSEventReport::GetDeviceValidSize(const std::string& path, double& size)
+{
+    struct statfs stat;
+    if (statfs(path.c_str(), &stat) != 0) {
+        size = INVALID_QUOTA;
+        return false;
+    }
+    /* change Byte size to M */
+    constexpr double units = 1024.0;
+    size = (static_cast<double>(stat.f_bfree) / units) * (static_cast<double>(stat.f_bsize) / units);
+    return true;
+}
+
+uint64_t DPSEventReport::GetFolderSize(const std::string& path)
+{
+    uint64_t totalSize = 0;
+    struct stat st;
+    if (stat(path.c_str(), &st) != 0) {
+        return totalSize;
+    }
+    if (S_ISDIR(st.st_mode)) {
+        DIR* dir = opendir(path.c_str());
+        DP_DEBUG_LOG("GetFolderSize path:%{public}s, ERROR:%{public}d", path.c_str(), errno);
+        if (!dir) {
+            return totalSize;
+        }
+        struct dirent* entry;
+        while ((entry = readdir(dir)) != nullptr) {
+            std::string filePath = path + "/" + entry->d_name;
+            if ((entry->d_type == DT_DIR) &&
+                (std::string(entry->d_name) != "." && std::string(entry->d_name) != "..")) {
+                totalSize += GetFolderSize(filePath);
+            } else if (stat(filePath.c_str(), &st) == 0) {
+                totalSize += st.st_size;
+            }
+        }
+        closedir(dir);
+    } else {
+        totalSize = st.st_size;
+    }
+    return totalSize;
 }
 
 } // namsespace DeferredProcessingService
