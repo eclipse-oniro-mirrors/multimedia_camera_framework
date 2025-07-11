@@ -1971,7 +1971,9 @@ std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCameras()
     uint32_t apiCompatibleVersion = CameraApiVersion::GetApiVersion();
     for (const auto& deviceInfo : cameraDeviceList) {
         // The usb camera is added to the list and is not processed.
-        if (deviceInfo->GetConnectionType() == CAMERA_CONNECTION_USB_PLUGIN) {
+        if (deviceInfo->GetConnectionType() == CAMERA_CONNECTION_USB_PLUGIN ||
+            (deviceInfo->GetConnectionType() == CAMERA_CONNECTION_REMOTE &&
+            deviceInfo->GetSupportedFoldStatus() == OHOS_CAMERA_FOLD_STATUS_NONFOLDABLE)) {
             supportedCameraDeviceList.emplace_back(deviceInfo);
             continue;
         }
