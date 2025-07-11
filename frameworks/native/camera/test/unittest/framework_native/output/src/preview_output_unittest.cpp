@@ -863,5 +863,54 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_020, TestSize.Level0)
         callback = nullptr;
     }
 }
+
+/*
+ * Feature: Framework
+ * Function: Test SetSurfaceId
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test the invocation of the SetSurfaceId method in a single-threaded environment
+ *                  to verify whether surfaceId_ is correctly set.
+ */
+HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_021, TestSize.Level0)
+{
+    sptr<CaptureOutput> preview = CreatePreviewOutput();
+    ASSERT_NE(preview, nullptr);
+    sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&) preview;
+    std::string expectedSurfaceId = "testSurfaceId";
+    previewOutput->SetSurfaceId(expectedSurfaceId);
+    std::string actualSurfaceId = previewOutput->GetSurfaceId();
+    EXPECT_EQ(expectedSurfaceId, actualSurfaceId);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test SetSurfaceId
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test the invocation of the SetSurfaceId method in a single-threaded environment
+ *                  to verify whether surfaceId_ is correctly set.
+ */
+HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_022, TestSize.Level0)
+{
+    sptr<CaptureOutput> preview = CreatePreviewOutput();
+    ASSERT_NE(preview, nullptr);
+    sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&) preview;
+    std::string expectedSurfaceId = "testSurfaceId";
+    const int threadCount = 10;
+    std::vector<std::thread> threads;
+    for (int i = 0; i< threadCount; ++i) {
+        threads.emplace_back([&]() {
+            previewOutput->SetSurfaceId(expectedSurfaceId);
+        });
+    }
+    for (auto& thread : threads) {
+        thread.join();
+    }
+    std::string actualSurfaceId = previewOutput->GetSurfaceId();
+    EXPECT_EQ(expectedSurfaceId, actualSurfaceId);
+}
 }
 }

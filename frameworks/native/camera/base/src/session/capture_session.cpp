@@ -339,6 +339,8 @@ int32_t CaptureSession::CommitConfig()
         EnableOfflinePhoto();
     }
     if (captureSession) {
+        std::string foldScreenType = CameraManager::GetInstance()->GetFoldScreenType();
+        CHECK_EXECUTE(!foldScreenType.empty() && foldScreenType[0] == '6', AdjustRenderFit());
         errCode = captureSession->SetCommitConfigFlag(isHasSwitchedOffline);
         errCode = captureSession->CommitConfig();
         MEDIA_INFO_LOG("CaptureSession::CommitConfig commit mode = %{public}d", GetMode());
@@ -5106,6 +5108,17 @@ void CaptureSession::EnableAutoFrameRate(bool isEnable)
     CHECK_PRINT_ELOG(!AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_AUTO_VIDEO_FRAME_RATE, &enableValue, 1),
         "EnableAutoFrameRate Failed to enable OHOS_CONTROL_AUTO_VIDEO_FRAME_RATE");
     // LCOV_EXCL_STOP
+}
+
+void CaptureSession::AdjustRenderFit()
+{
+    std::lock_guard<std::mutex> lock(captureOutputSetsMutex_);
+    for (const auto& output : captureOutputSets_) {
+        auto item = output.promote();
+        CHECK_CONTINUE(item && item->GetOutputType() != CAPTURE_OUTPUT_TYPE_PREVIEW);
+        sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)item;
+        previewOutput->AdjustRenderFit();
+    }
 }
 } // namespace CameraStandard
 } // namespace OHOS

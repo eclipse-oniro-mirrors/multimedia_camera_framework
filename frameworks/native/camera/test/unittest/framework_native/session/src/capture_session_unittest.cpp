@@ -96,7 +96,7 @@ void CaptureSessionUnitTest::SessionControlParams(sptr<CaptureSession> session)
     }
 }
 
-void CaptureSessionUnitTest::UpdataCameraOutputCapability(int32_t modeName)
+void CaptureSessionUnitTest::UpdateCameraOutputCapability(int32_t modeName)
 {
     if (!cameraManager_ || cameras_.empty()) {
         return;
@@ -246,7 +246,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_004, TestSize.Level1)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
@@ -285,7 +285,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_006, TestSize.Level1)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
@@ -342,7 +342,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_008, TestSize.Level1)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
@@ -395,7 +395,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_010, TestSize.Level1)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
@@ -429,7 +429,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_011, TestSize.Level1)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
@@ -470,7 +470,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_012, TestSize.Level1)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
@@ -529,7 +529,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_014, TestSize.Level1)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
@@ -585,7 +585,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_016, TestSize.Level1)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
@@ -628,7 +628,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_017, TestSize.Level1)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
@@ -666,7 +666,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_018, TestSize.Level1)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
@@ -766,7 +766,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_022, TestSize.Level1)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
@@ -805,7 +805,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_023, TestSize.Level1)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
@@ -843,7 +843,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_024, TestSize.Level1)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
@@ -881,7 +881,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_025, TestSize.Level1)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
@@ -918,7 +918,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_026, TestSize.Level1)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
@@ -953,7 +953,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_027, TestSize.Level1)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
@@ -986,7 +986,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_001, TestSize.Level1)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
     ASSERT_NE(photo, nullptr);
 
@@ -1072,7 +1072,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_004, TestSize.Level1)
 
     int32_t ret = session->BeginConfig();
     EXPECT_EQ(ret, 0);
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
@@ -1132,7 +1132,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_006, TestSize.Level1)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
     ASSERT_NE(photo, nullptr);
 
@@ -1195,7 +1195,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_007, TestSize.Level1)
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
 
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
     ASSERT_NE(photo, nullptr);
 
@@ -1242,7 +1242,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_008, TestSize.Level1)
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
 
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
@@ -1308,7 +1308,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_009, TestSize.Level1)
         session->UnlockForControl();
     }
 
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
@@ -1352,7 +1352,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_010, TestSize.Level1)
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
 
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
 
     sptr<CaptureOutput> video = CreateVideoOutput(videoProfile_[0]);
     ASSERT_NE(video, nullptr);
@@ -1414,7 +1414,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_012, TestSize.Level1)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
 
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> video = CreateVideoOutput(videoProfile_[0]);
     ASSERT_NE(video, nullptr);
 
@@ -1507,7 +1507,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_015, TestSize.Level1)
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
 
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
     ASSERT_NE(photo, nullptr);
 
@@ -1577,7 +1577,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_016, TestSize.Level1)
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
 
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
     ASSERT_NE(photo, nullptr);
 
@@ -1633,7 +1633,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_017, TestSize.Level1)
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
 
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
     ASSERT_NE(photo, nullptr);
 
@@ -1705,7 +1705,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_018, TestSize.Level1)
 
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
     auto appCallback = std::make_shared<AppSessionCallback>();
@@ -1748,7 +1748,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_019, TestSize.Level1)
 
     sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
     ASSERT_NE(sessionForSys, nullptr);
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
     auto macroStatusCallback = std::make_shared<AppMacroStatusCallback>();
@@ -1807,7 +1807,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_020, TestSize.Level1)
 
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
@@ -1851,7 +1851,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_021, TestSize.Level1)
 
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     sptr<CaptureOutput> output = nullptr;
     ASSERT_NE(preview, nullptr);
@@ -1886,7 +1886,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_022, TestSize.Level1)
 
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
@@ -1922,7 +1922,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_023, TestSize.Level1)
 
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
@@ -2004,7 +2004,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_001, TestSize.Level1)
 
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
@@ -2044,7 +2044,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_002, TestSize.Level1)
 
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
@@ -2083,7 +2083,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_003, TestSize.Level1)
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
 
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
     ASSERT_NE(photo, nullptr);
 
@@ -2145,7 +2145,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_004, TestSize.Level1)
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
 
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
     ASSERT_NE(photo, nullptr);
 
@@ -2186,7 +2186,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_005, TestSize.Level1)
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
 
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
     ASSERT_NE(photo, nullptr);
 
@@ -2234,7 +2234,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_006, TestSize.Level1)
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
 
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
     ASSERT_NE(photo, nullptr);
 
@@ -2272,7 +2272,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_007, TestSize.Level1)
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
 
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
     ASSERT_NE(photo, nullptr);
 
@@ -2312,7 +2312,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_008, TestSize.Level1)
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
 
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
     ASSERT_NE(photo, nullptr);
 
@@ -2361,7 +2361,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_009, TestSize.Level1)
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
 
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
     ASSERT_NE(photo, nullptr);
 
@@ -2410,7 +2410,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_010, TestSize.Level1)
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
 
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
     ASSERT_NE(photo, nullptr);
     SceneMode mode = CAPTURE;
@@ -2454,7 +2454,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_011, TestSize.Level1)
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
 
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
     ASSERT_NE(photo, nullptr);
 
@@ -2490,7 +2490,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_012, TestSize.Level1)
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
 
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
     ASSERT_NE(photo, nullptr);
 
@@ -2535,7 +2535,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_013, TestSize.Level1)
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
 
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
     ASSERT_NE(photo, nullptr);
 
@@ -2570,7 +2570,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_014, TestSize.Level1)
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
 
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
     ASSERT_NE(photo, nullptr);
 
@@ -2614,7 +2614,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_015, TestSize.Level1)
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
 
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
     ASSERT_NE(photo, nullptr);
 
@@ -2654,7 +2654,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_016, TestSize.Level1)
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
 
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
     ASSERT_NE(photo, nullptr);
 
@@ -2703,7 +2703,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_017, TestSize.Level1)
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
 
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
     ASSERT_NE(photo, nullptr);
 
@@ -2739,7 +2739,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_018, TestSize.Level1)
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
 
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
     ASSERT_NE(photo, nullptr);
 
@@ -2787,7 +2787,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_019, TestSize.Level1)
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
 
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
     ASSERT_NE(photo, nullptr);
 
@@ -2823,7 +2823,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_020, TestSize.Level1)
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
 
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
     ASSERT_NE(photo, nullptr);
 
@@ -2869,7 +2869,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_021, TestSize.Level1)
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
 
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
     ASSERT_NE(photo, nullptr);
 
@@ -2906,7 +2906,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_022, TestSize.Level1)
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
 
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
     ASSERT_NE(photo, nullptr);
 
@@ -2988,7 +2988,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_024, TestSize.Level1)
 
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
@@ -3037,7 +3037,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_025, TestSize.Level1)
 
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
@@ -3067,7 +3067,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_026, TestSize.Level1)
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
 
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
     ASSERT_NE(photo, nullptr);
 
@@ -3102,7 +3102,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_027, TestSize.Level1)
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
 
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
     ASSERT_NE(photo, nullptr);
 
@@ -3146,7 +3146,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_028, TestSize.Level1)
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
 
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
     ASSERT_NE(photo, nullptr);
 
@@ -3184,7 +3184,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_029, TestSize.Level1)
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
 
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
     ASSERT_NE(photo, nullptr);
 
@@ -3243,7 +3243,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_030, TestSize.Level1)
 
     sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
     ASSERT_NE(sessionForSys, nullptr);
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
@@ -3289,7 +3289,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_031, TestSize.Level1)
 
     sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
     ASSERT_NE(sessionForSys, nullptr);
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
@@ -3323,7 +3323,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_032, TestSize.Level1)
 
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
@@ -3368,7 +3368,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_033, TestSize.Level1)
 
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
@@ -3396,7 +3396,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_034, TestSize.Level1)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
@@ -3440,7 +3440,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_035, TestSize.Level1)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
@@ -3484,7 +3484,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_036, TestSize.Level1)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
@@ -3528,7 +3528,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_037, TestSize.Level1)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
@@ -3576,7 +3576,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_038, TestSize.Level1)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
@@ -3622,7 +3622,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_039, TestSize.Level1)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
@@ -3659,7 +3659,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_040, TestSize.Level1)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
@@ -3705,7 +3705,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_041, TestSize.Level0)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
@@ -3797,7 +3797,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_043, TestSize.Level1)
 
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> preview = nullptr;
     for (const auto& preProfile : previewProfile_) {
         if (preProfile.format_ == CAMERA_FORMAT_YCRCB_P010) {
@@ -3849,7 +3849,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_044, TestSize.Level1)
 
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> preview = nullptr;
     for (const auto& preProfile : previewProfile_) {
         if (preProfile.format_ == CAMERA_FORMAT_YCRCB_P010) {
@@ -4199,7 +4199,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_011, TestSize
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
@@ -4237,7 +4237,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_012, TestSize
 
     sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
     ASSERT_NE(sessionForSys, nullptr);
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
@@ -4299,7 +4299,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_013, TestSize
 
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
@@ -4332,7 +4332,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_014, TestSize
 
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
@@ -4391,7 +4391,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_015, TestSize
 
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
@@ -4436,7 +4436,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_016, TestSize
 
     sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
     ASSERT_NE(sessionForSys, nullptr);
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
@@ -4487,7 +4487,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_017, TestSize
     ASSERT_NE(nullptr, input);
     ASSERT_EQ(CAMERA_OK, input->Open());
 
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput(photoProfile_[0]);
     ASSERT_NE(nullptr, photoOutput);
 
@@ -4534,7 +4534,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_018, TestSize
     ASSERT_NE(nullptr, input);
     ASSERT_EQ(CAMERA_OK, input->Open());
 
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> videoOutput = CreateVideoOutput(videoProfile_[0]);
     ASSERT_NE(nullptr, videoOutput);
 
@@ -4581,7 +4581,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_019, TestSize
     ASSERT_NE(nullptr, input);
     ASSERT_EQ(CAMERA_OK, input->Open());
 
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput(photoProfile_[0]);
     ASSERT_NE(nullptr, photoOutput);
 
@@ -4623,7 +4623,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_020, TestSize
     ASSERT_NE(nullptr, input);
     ASSERT_EQ(CAMERA_OK, input->Open());
 
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> videoOutput = CreateVideoOutput(videoProfile_[0]);
     ASSERT_NE(nullptr, videoOutput);
 
@@ -4665,7 +4665,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_021, TestSize
     ASSERT_NE(nullptr, input);
     ASSERT_EQ(CAMERA_OK, input->Open());
 
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput(photoProfile_[0]);
     ASSERT_NE(nullptr, photoOutput);
 
@@ -4722,7 +4722,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_022, TestSize
     ASSERT_NE(nullptr, input);
     ASSERT_EQ(CAMERA_OK, input->Open());
 
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> videoOutput = CreateVideoOutput(videoProfile_[0]);
     ASSERT_NE(nullptr, videoOutput);
 
@@ -4779,7 +4779,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_023, TestSize
     ASSERT_NE(nullptr, input);
     ASSERT_EQ(CAMERA_OK, input->Open());
 
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput(photoProfile_[0]);
     ASSERT_NE(nullptr, photoOutput);
 
@@ -4835,7 +4835,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_024, TestSize
     ASSERT_NE(nullptr, input);
     ASSERT_EQ(CAMERA_OK, input->Open());
 
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> videoOutput = CreateVideoOutput(videoProfile_[0]);
     ASSERT_NE(nullptr, videoOutput);
 
@@ -4890,7 +4890,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_025, TestSize
     ASSERT_NE(nullptr, input);
     ASSERT_EQ(CAMERA_OK, input->Open());
 
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput(photoProfile_[0]);
     ASSERT_NE(nullptr, photoOutput);
 
@@ -4939,7 +4939,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_026, TestSize
     ASSERT_NE(nullptr, input);
     ASSERT_EQ(CAMERA_OK, input->Open());
 
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> videoOutput = CreateVideoOutput(videoProfile_[0]);
     ASSERT_NE(nullptr, videoOutput);
 
@@ -4996,7 +4996,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_027, TestSize
         ASSERT_NE(outputCapability, nullptr);
         videoProfile_ = outputCapability->GetVideoProfiles();
 
-        UpdataCameraOutputCapability();
+        UpdateCameraOutputCapability();
         sptr<CaptureOutput> videoOutput = CreateVideoOutput(videoProfile_[0]);
         ASSERT_NE(nullptr, videoOutput);
 
@@ -5051,7 +5051,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_027, TestSize.Level0)
 
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     auto appCallback = nullptr;
     EXPECT_EQ(appCallback, nullptr);
 
@@ -5081,7 +5081,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_028, TestSize.Level0)
     ASSERT_NE(input, nullptr);
 
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
     ASSERT_NE(photo, nullptr);
 
@@ -5132,7 +5132,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_042, TestSize.Level0)
     ASSERT_NE(input, nullptr);
 
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
 
     std::vector<Profile> previewProfiles = {};
@@ -5221,7 +5221,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_030, TestSize.Level0)
 
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
 
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
 
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
@@ -5256,7 +5256,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_032, TestSize.Level0)
     ASSERT_NE(input, nullptr);
 
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
 
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -5289,7 +5289,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_033, TestSize.Level0)
     ASSERT_NE(input, nullptr);
 
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
 
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -5346,7 +5346,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_034, TestSize.Level0)
     ASSERT_NE(input, nullptr);
 
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> output =
         new MockCaptureOutput(CaptureOutputType::CAPTURE_OUTPUT_TYPE_MAX, StreamType::CAPTURE, nullptr, nullptr);
     ASSERT_NE(output, nullptr);
@@ -5382,7 +5382,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_035, TestSize.Level0)
 
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
 
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
 
@@ -5422,7 +5422,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_037, TestSize.Level0)
 
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
 
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
 
@@ -5470,7 +5470,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_038, TestSize.Level0)
 
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
 
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
 
@@ -5516,7 +5516,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_039, TestSize.Level0)
 
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
 
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
 
@@ -5564,7 +5564,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_040, TestSize.Level0)
 
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
 
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
 
@@ -5615,7 +5615,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_041, TestSize.Level0)
 
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
 
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
 
@@ -5655,7 +5655,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_042, TestSize.Level0)
 
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
 
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
 
@@ -5704,7 +5704,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_043, TestSize.Level0)
 
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
 
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
 
@@ -5768,7 +5768,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_045, TestSize.Level0)
 
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
 
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
 
@@ -5814,7 +5814,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_046, TestSize.Level0)
 
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
 
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
 
@@ -5860,7 +5860,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_047, TestSize.Level0)
 
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
 
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
 
@@ -5906,7 +5906,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_048, TestSize.Level0)
 
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
 
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
 
@@ -5948,7 +5948,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_049, TestSize.Level0)
 
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
 
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
 
@@ -5990,7 +5990,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_050, TestSize.Level0)
 
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
 
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
 
@@ -6035,7 +6035,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_051, TestSize.Level0)
 
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
 
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
 
@@ -6082,7 +6082,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_052, TestSize.Level0)
 
         ASSERT_NE(input, nullptr);
         input->Open();
-        UpdataCameraOutputCapability();
+        UpdateCameraOutputCapability();
 
         sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
 
@@ -6123,7 +6123,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_053, TestSize.Level0)
 
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
 
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
 
@@ -6174,7 +6174,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_054, TestSize.Level0)
 
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
 
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
 
@@ -6221,7 +6221,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_055, TestSize.Level0)
 
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
 
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
 
@@ -6264,7 +6264,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_056, TestSize.Level0)
 
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
 
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
 
@@ -6304,7 +6304,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_057, TestSize.Level0)
 
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
 
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
 
@@ -6346,7 +6346,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_058, TestSize.Level0)
 
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
 
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
 
@@ -6396,7 +6396,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_059, TestSize.Level0)
 
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
 
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
 
@@ -6438,7 +6438,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_060, TestSize.Level0)
 
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
 
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
 
@@ -6480,7 +6480,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_061, TestSize.Level0)
 
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
 
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
 
@@ -6520,7 +6520,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_062, TestSize.Level0)
 
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
 
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
 
@@ -6560,7 +6560,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_063, TestSize.Level0)
 
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
 
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
 
@@ -6602,7 +6602,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_064, TestSize.Level0)
 
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
 
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
 
@@ -6647,7 +6647,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_065, TestSize.Level0)
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
 
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
 
     sptr<CaptureOutput> video = CreateVideoOutput(videoProfile_[0]);
     ASSERT_NE(video, nullptr);
@@ -6685,7 +6685,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_066, TestSize.Level0)
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
 
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
 
     sptr<CaptureOutput> video = CreateVideoOutput(videoProfile_[0]);
     ASSERT_NE(video, nullptr);
@@ -6725,7 +6725,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_069, TestSize.Level0)
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> video = CreateVideoOutput(videoProfile_[0]);
     ASSERT_NE(video, nullptr);
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
@@ -6752,7 +6752,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_070, TestSize.Level0)
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> video = CreateVideoOutput(videoProfile_[0]);
     ASSERT_NE(video, nullptr);
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
@@ -6778,7 +6778,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_071, TestSize.Level0)
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> video = CreateVideoOutput(videoProfile_[0]);
     ASSERT_NE(video, nullptr);
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
@@ -6805,7 +6805,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_072, TestSize.Level0)
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> video = CreateVideoOutput(videoProfile_[0]);
     ASSERT_NE(video, nullptr);
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
@@ -6828,7 +6828,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_074, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -6858,7 +6858,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_090, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
     ASSERT_NE(sessionForSys, nullptr);
@@ -6889,7 +6889,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_091, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
     ASSERT_NE(sessionForSys, nullptr);
@@ -6920,7 +6920,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_092, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
     ASSERT_NE(sessionForSys, nullptr);
@@ -6951,7 +6951,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_093, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -6981,7 +6981,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_094, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -7011,7 +7011,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_095, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -7035,7 +7035,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_096, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -7072,7 +7072,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_097, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -7268,7 +7268,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_102, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -7295,7 +7295,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_103, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -7325,7 +7325,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_104, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -7349,7 +7349,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_105, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -7374,7 +7374,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_106, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -7407,7 +7407,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_107, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -7445,7 +7445,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_108, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -7483,7 +7483,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_109, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -7523,7 +7523,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_110, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -7555,7 +7555,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_111, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -7592,7 +7592,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_112, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -7624,7 +7624,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_113, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -7657,7 +7657,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_114, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -7690,7 +7690,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_115, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -7721,7 +7721,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_116, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -7760,7 +7760,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_117, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -7792,7 +7792,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_118, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -7823,7 +7823,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_119, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -7860,7 +7860,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_120, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -7892,7 +7892,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_121, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -7923,7 +7923,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_122, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -7952,7 +7952,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_123, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -7982,7 +7982,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_124, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -8013,7 +8013,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_125, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -8043,7 +8043,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_126, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -8074,7 +8074,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_127, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -8107,7 +8107,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_128, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -8140,7 +8140,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_129, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -8173,7 +8173,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_130, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -8203,7 +8203,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_131, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -8233,7 +8233,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_133, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -8256,7 +8256,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_134, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -8293,7 +8293,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_135, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -8325,7 +8325,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_136, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -8357,7 +8357,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_137, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -8389,7 +8389,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_144, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -8424,7 +8424,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_145, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -8459,7 +8459,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_146, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -8493,7 +8493,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_147, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -8528,7 +8528,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_148, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability(SceneMode::VIDEO);
+    UpdateCameraOutputCapability(SceneMode::VIDEO);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::VIDEO);
     ASSERT_NE(sessionForSys, nullptr);
@@ -8559,7 +8559,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_148, TestSize.Level0)
  */
 HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_149, TestSize.Level0)
 {
-    UpdataCameraOutputCapability(SceneMode::VIDEO);
+    UpdateCameraOutputCapability(SceneMode::VIDEO);
     sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::VIDEO);
     ASSERT_NE(sessionForSys, nullptr);
     ASSERT_EQ(SceneMode::VIDEO, sessionForSys->GetMode());
@@ -8568,7 +8568,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_149, TestSize.Level0)
     ASSERT_NE(nullptr, input);
     ASSERT_EQ(CAMERA_OK, input->Open());
  
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> videoOutput = CreateVideoOutput(videoProfile_[0]);
     ASSERT_NE(nullptr, videoOutput);
  
@@ -8609,7 +8609,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_149, TestSize.Level0)
  */
 HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_150, TestSize.Level0)
 {
-    UpdataCameraOutputCapability(SceneMode::VIDEO);
+    UpdateCameraOutputCapability(SceneMode::VIDEO);
     sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::VIDEO);
     ASSERT_NE(sessionForSys, nullptr);
     ASSERT_EQ(SceneMode::VIDEO, sessionForSys->GetMode());
@@ -8618,7 +8618,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_150, TestSize.Level0)
     ASSERT_NE(nullptr, input);
     ASSERT_EQ(CAMERA_OK, input->Open());
  
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CaptureOutput> videoOutput = CreateVideoOutput(videoProfile_[0]);
     ASSERT_NE(nullptr, videoOutput);
  
@@ -8663,7 +8663,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_151, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -8695,7 +8695,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_152, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -8726,7 +8726,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_153, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -8759,7 +8759,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_154, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -8791,7 +8791,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_156, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -8821,7 +8821,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_157, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -8851,7 +8851,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_158, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -8880,7 +8880,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_159, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -8907,7 +8907,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_160, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -8929,7 +8929,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_161, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -8952,11 +8952,107 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_162, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
     EXPECT_EQ(session->GetPressureCallback(), nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetCameraDeviceRotationAngle
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test the normal process of the GetCameraDeviceRotationAngle interface.
+ */
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_163, TestSize.Level0)
+{
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+    sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&) preview;
+    uint32_t cameraRotation = 0;
+    EXPECT_EQ(previewOutput->GetCameraDeviceRotationAngle(cameraRotation), 0);
+    input->Close();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetCameraDeviceRotationAngle
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test the abnormal process of the GetCameraDeviceRotationAngle interface.
+ */
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_164, TestSize.Level0)
+{
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+    sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&) preview;
+    uint32_t cameraRotation = 0;
+    EXPECT_EQ(previewOutput->GetCameraDeviceRotationAngle(cameraRotation), SERVICE_FATL_ERROR);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test IsXcomponentSwap
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test the IsXcomponentSwap interface to return true.
+ */
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_165, TestSize.Level0)
+{
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+    sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&) preview;
+    EXPECT_EQ(previewOutput->IsXcomponentSwap(), true);
+    input->Close();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test IsXcomponentSwap
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test the IsXcomponentSwap interface to return false.
+ */
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_166, TestSize.Level0)
+{
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+    sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&) preview;
+    EXPECT_EQ(previewOutput->IsXcomponentSwap(), false);
 }
 }
 }

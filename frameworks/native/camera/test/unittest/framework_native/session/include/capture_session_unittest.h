@@ -92,7 +92,7 @@ public:
 
     void SessionControlParams(sptr<CaptureSession> session);
     void SessionCommit(sptr<CaptureSession> session);
-    void UpdataCameraOutputCapability(int32_t modeName = 0);
+    void UpdateCameraOutputCapability(int32_t modeName = 0);
     sptr<CaptureOutput> CreatePreviewOutput(Profile previewProfile);
     sptr<CaptureOutput> CreatePhotoOutput(Profile photoProfile);
     sptr<CaptureOutput> CreateVideoOutput(VideoProfile videoProfile);

@@ -1871,6 +1871,7 @@ private:
     bool StopVideoOutput();
     void CreateAndSetFoldServiceCallback();
     int32_t DoSpecSearch(std::vector<float>& zoomRatioRange);
+    void AdjustRenderFit();
 };
 } // namespace CameraStandard
 } // namespace OHOS

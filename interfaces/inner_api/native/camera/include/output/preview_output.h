@@ -244,9 +244,16 @@ public:
 
     void OnNativeRegisterCallback(const std::string& eventString);
     void OnNativeUnregisterCallback(const std::string& eventString);
+    void AdjustRenderFit();
+    bool IsXcomponentSwap();
+    int32_t GetCameraDeviceRotationAngle(uint32_t &cameraRotation);
+    void SetSurfaceId(const std::string& surfaceId);
+    std::string GetSurfaceId();
 private:
     int32_t PreviewFormat_;
-    Size PreviewSize_;
+    std::mutex surfaceIdMutex_;
+    std::string surfaceId_ = "";
+    Size PreviewSize_ = {0, 0};
     sptr<PreviewOutputListenerManager> previewOutputListenerManager_ = sptr<PreviewOutputListenerManager>::MakeSptr();
 
     std::shared_ptr<SketchWrapper> sketchWrapper_;
