@@ -583,7 +583,7 @@ Camera_ErrorCode Camera_Manager::CreatePhotoOutput(const Camera_Profile* profile
     size.height = profile->size.height;
     Profile innerProfile(static_cast<CameraFormat>(profile->format), size);
     sptr<Surface> surface = Media::ImageReceiver::getSurfaceById(surfaceId);
-    CHECK_ERROR_RETURN_RET_LOG(surface == nullptr, CAMERA_INVALID_ARGUMENT, "Failed to get photoOutput surface");
+    CHECK_RETURN_RET_ELOG(surface == nullptr, CAMERA_INVALID_ARGUMENT, "Failed to get photoOutput surface");
     surface->SetUserData(CameraManager::surfaceFormat, std::to_string(innerProfile.GetCameraFormat()));
     sptr<IBufferProducer> surfaceProducer = surface->GetProducer();
     int32_t retCode =
@@ -620,10 +620,10 @@ Camera_ErrorCode Camera_Manager::CreatePhotoOutputUsedInPreconfig(const char* su
     int32_t retCode = CAMERA_OK;
     if (strcmp(surfaceId, "")) {
         sptr<Surface> surface = Media::ImageReceiver::getSurfaceById(surfaceId);
-        CHECK_ERROR_RETURN_RET_LOG(surface == nullptr, CAMERA_INVALID_ARGUMENT,
+        CHECK_RETURN_RET_ELOG(surface == nullptr, CAMERA_INVALID_ARGUMENT,
             "Camera_Manager::CreatePhotoOutputUsedInPreconfig get photoOutput surface fail!");
         sptr<IBufferProducer> surfaceProducer = surface->GetProducer();
-        CHECK_ERROR_RETURN_RET_LOG(surfaceProducer == nullptr, CAMERA_INVALID_ARGUMENT,
+        CHECK_RETURN_RET_ELOG(surfaceProducer == nullptr, CAMERA_INVALID_ARGUMENT,
             "Camera_Manager::CreatePhotoOutputUsedInPreconfig get surfaceProducer fail!");
         retCode =
             CameraManager::GetInstance()->CreatePhotoOutputWithoutProfile(surfaceProducer, &innerPhotoOutput);
