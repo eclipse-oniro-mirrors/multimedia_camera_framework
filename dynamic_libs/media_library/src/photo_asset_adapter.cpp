@@ -62,7 +62,7 @@ void PhotoAssetAdapter::AddPhotoProxy(sptr<Media::PhotoProxy> photoProxy)
 
 std::string PhotoAssetAdapter::GetPhotoAssetUri()
 {
-    string res = "";
+    std::string res = "";
     CHECK_RETURN_RET(!photoAssetProxy_, res);
     res = photoAssetProxy_->GetPhotoAssetUri();
     CHECK_EXECUTE(res == "", CameraReportUtils::GetInstance().ReportCameraGetNullStr(

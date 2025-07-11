@@ -86,7 +86,7 @@ void PictureAdapter::Create(sptr<SurfaceBuffer> &surfaceBuffer)
     picture_ = Media::Picture::Create(surfaceBuffer);
     CHECK_EXECUTE(!picture_,
         CameraReportUtils::GetInstance().ReportCameraCreateNullptr(
-        "PictureAdapter::Create", "Media::Picture::Create"));
+            "PictureAdapter::Create", "Media::Picture::Create"));
 }
 
 void PictureAdapter::SetAuxiliaryPicture(sptr<SurfaceBuffer> &surfaceBuffer, CameraAuxiliaryPictureType type)
