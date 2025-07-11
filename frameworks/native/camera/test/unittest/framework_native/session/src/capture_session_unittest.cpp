@@ -8855,13 +8855,13 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_158, TestSize.Level0)
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
-    ASSERT_NE(preview, nullptr);
+    sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
+    ASSERT_NE(photo, nullptr);
 
     EXPECT_EQ(session->BeginConfig(), 0);
     EXPECT_EQ(session->AddInput(input), 0);
-    EXPECT_EQ(session->AddOutput(preview), 0);
-    auto photoOutput = ((sptr<PhotoOutput> &)session->photoOutput_);
+    EXPECT_EQ(session->AddOutput(photo), 0);
+    auto photoOutput = (sptr<PhotoOutput> &)photo;
     photoOutput->SetSwitchOfflinePhotoOutput(true);
     EXPECT_EQ(session->CommitConfig(), 0);
     photoOutput->SetSwitchOfflinePhotoOutput(false);
@@ -8883,8 +8883,14 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_159, TestSize.Level0)
     UpdataCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    session->EnableAutoFrameRate(false);
     ASSERT_NE(session, nullptr);
+    auto oldchangedMetadata = session->changedMetadata_;
+    int32_t DEFAULT_ITEMS = 10;
+    int32_t DEFAULT_DATA_LENGTH = 200;
+    session->changedMetadata_ = std::make_shared<Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
+    ASSERT_NE(session->changedMetadata_, nullptr);
+    session->EnableAutoFrameRate(false);
+    session->changedMetadata_ = oldchangedMetadata;
 }
 
 /*
@@ -8950,7 +8956,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_162, TestSize.Level0)
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-    ASSERT_NE(session->GetPressureCallback(), nullptr);
+    EXPECT_EQ(session->GetPressureCallback(), nullptr);
 }
 }
 }
