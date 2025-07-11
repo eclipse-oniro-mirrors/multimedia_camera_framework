@@ -32,10 +32,11 @@ using namespace std;
 namespace OHOS {
 namespace CameraStandard {
 const std::u16string FORMMGR_INTERFACE_TOKEN = u"ICameraDeviceService";
-const int32_t MIN_SIZE_NUM = 408;
+const int32_t MIN_SIZE_NUM = 256;
 const int32_t NUM_10 = 10;
 const int32_t NUM_100 = 100;
 const int32_t MAX_BUFFER_SIZE = 16;
+const int32_t MAX_STRING_LEN = 4;
 sptr<HCameraDevice> fuzzCameraDevice = nullptr;
 
 void PrepareHCameraDevice()
@@ -61,10 +62,9 @@ void CameraDeviceFuzzTest(FuzzedDataProvider& fdp)
     int32_t itemCount = NUM_10;
     int32_t dataSize = NUM_100;
     uint8_t streamSize = fdp.ConsumeIntegralInRange<uint8_t>(0, MAX_BUFFER_SIZE);
-    std::vector<uint8_t> intData = fdp.ConsumeBytes<uint8_t>(streamSize);
     std::vector<int32_t> streamData ;
-    for (uint8_t byte : intData) {
-        streamData.push_back(static_cast<int32_t>(byte));
+    for (int i = 0; i < streamSize; ++i) {
+        streamData.push_back(fdp.ConsumeIntegral<int32_t>());
     }
     std::shared_ptr<OHOS::Camera::CameraMetadata> ability;
     ability = std::make_shared<OHOS::Camera::CameraMetadata>(itemCount, dataSize);
@@ -252,7 +252,7 @@ void Test3(FuzzedDataProvider& fdp)
 
 void TestXCollie(FuzzedDataProvider& fdp)
 {
-    string tag = fdp.ConsumeRandomLengthString();
+    string tag = fdp.ConsumeRandomLengthString(MAX_STRING_LEN);
     uint32_t flag = fdp.ConsumeIntegral<int32_t>();
     uint32_t timeoutSeconds = fdp.ConsumeIntegral<uint32_t>();
     auto func = [](void*) {};
@@ -272,7 +272,7 @@ void TestXCollie(FuzzedDataProvider& fdp)
 
 void TestDynamicLoader(FuzzedDataProvider& fdp)
 {
-    string libName = fdp.ConsumeRandomLengthString();
+    string libName = fdp.ConsumeRandomLengthString(MAX_STRING_LEN);
     CameraDynamicLoader::GetDynamiclib(libName);
     CameraDynamicLoader::LoadDynamiclibAsync(libName);
     CameraDynamicLoader::FreeDynamicLibDelayed(libName);
@@ -280,7 +280,6 @@ void TestDynamicLoader(FuzzedDataProvider& fdp)
 
 void TestCameraDeviceServiceCallback(FuzzedDataProvider& fdp)
 {
-    CHECK_RETURN(fdp.remaining_bytes() < MIN_SIZE_NUM);
     auto meta = make_shared<OHOS::Camera::CameraMetadata>(10, 100);
     int val = 1;
     AddOrUpdateMetadata(meta, OHOS_STATUS_CAMERA_OCCLUSION_DETECTION, &val, 1);
