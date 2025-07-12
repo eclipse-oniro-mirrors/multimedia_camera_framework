@@ -19,6 +19,7 @@ import ICameraDeviceService;
 import ICaptureSessionCallback;
 import IStreamCommon;
 import IPressureStatusCallback;
+import IControlCenterEffectStatusCallback;
 sequenceable OHOS.IRemoteObject;
 option_stub_hooks on;
 
@@ -47,4 +48,13 @@ interface ICaptureSession{
   [ipccode 21] void UnSetPressureCallback();
   [ipccode 22] void SetCommitConfigFlag([in] boolean isNeedCommitting);
   [ipccode 23] void SetHasFitedRotation([in] boolean isHasFitedRotation);
+  [ipccode 25] void GetVirtualApertureMetadate([out] List<float> virtualApertureMetadata);
+  [ipccode 26] void GetVirtualApertureValue([out] float value);
+  [ipccode 27] void SetVirtualApertureValue([in] float value, [in] boolean needPersist);
+  [ipccode 28] void GetBeautyMetadata([out] List<int> beautyApertureMetadata);
+  [ipccode 29] void GetBeautyRange([out] List<int> range, [in] int type);
+  [ipccode 30] void GetBeautyValue([in] int type, [out] int value);
+  [ipccode 31] void SetBeautyValue([in] int type, [in] int value, [in] boolean needPersist);
+  [ipccode 32] void SetControlCenterEffectStatusCallback([in] IControlCenterEffectStatusCallback callbackFunc);
+  [ipccode 33] void UnSetControlCenterEffectStatusCallback();
 }

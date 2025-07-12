@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -47,7 +47,7 @@ napi_value VideoSessionNapi::Init(napi_env env, napi_value exports)
     std::vector<std::vector<napi_property_descriptor>> descriptors = { camera_process_props, camera_process_sys_props,
         flash_props, flash_sys_props, auto_exposure_props, focus_props, focus_sys_props, zoom_props, zoom_sys_props,
         filter_props, stabilization_props, preconfig_props, color_management_props, auto_switch_props,
-        quality_prioritization_props, macro_props, white_balance_props };
+        quality_prioritization_props, macro_props, white_balance_props, control_center_props };
     std::vector<napi_property_descriptor> video_session_props = CameraNapiUtils::GetPropertyDescriptor(descriptors);
     status = napi_define_class(env, VIDEO_SESSION_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
                                VideoSessionNapiConstructor, nullptr,
@@ -144,6 +144,28 @@ void VideoSessionNapi::UnregisterPressureStatusCallbackListener(
         return;
     }
     pressureCallback_->RemoveCallbackRef(eventName, callback);
+}
+
+void VideoSessionNapi::RegisterControlCenterEffectStatusCallbackListener(
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+{
+    MEDIA_INFO_LOG("VideoSessionNapi::RegisterControlCenterEffectStatusCallbackListener");
+    if (controlCenterEffectStatusCallback_ == nullptr) {
+        controlCenterEffectStatusCallback_ = std::make_shared<ControlCenterEffectStatusCallbackListener>(env);
+        cameraSession_->SetControlCenterEffectStatusCallback(controlCenterEffectStatusCallback_);
+    }
+    controlCenterEffectStatusCallback_->SaveCallbackReference(eventName, callback, isOnce);
+}
+ 
+void VideoSessionNapi::UnregisterControlCenterEffectStatusCallbackListener(
+    const std::string &eventName, napi_env env, napi_value callback, const std::vector<napi_value> &args)
+{
+    MEDIA_INFO_LOG("VideoSessionNapi::UnregisterControlCenterEffectStatusCallbackListener");
+    if (controlCenterEffectStatusCallback_ == nullptr) {
+        MEDIA_INFO_LOG("controlCenterEffectStatusCallback_ is null");
+        return;
+    }
+    controlCenterEffectStatusCallback_->RemoveCallbackRef(eventName, callback);
 }
 
 } // namespace CameraStandard

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -71,6 +71,28 @@ private:
     void OnCameraMuteCallbackAsync(bool muteMode) const;
 };
 
+class ControlCenterStatusListenerNapi : public ControlCenterStatusListener, public ListenerBase,
+    public std::enable_shared_from_this<ControlCenterStatusListenerNapi> {
+public:
+    explicit ControlCenterStatusListenerNapi(napi_env env);
+    virtual ~ControlCenterStatusListenerNapi();
+    void OnControlCenterStatusChanged(bool status) const override;
+private:
+    void OnControlCenterStatusCallback(bool status) const;
+    void OnControlCenterStatusCallbackAsync(bool status) const;
+};
+
+struct ControlCenterStatusCallbackInfo {
+    bool controlCenterStatus_;
+    weak_ptr<const ControlCenterStatusListenerNapi> listener_;
+    ControlCenterStatusCallbackInfo(bool status, shared_ptr<const ControlCenterStatusListenerNapi> listener)
+        : controlCenterStatus_(status), listener_(listener) {}
+    ~ControlCenterStatusCallbackInfo()
+    {
+        listener_.reset();
+    }
+};
+
 struct CameraMuteCallbackInfo {
     bool muteMode_;
     weak_ptr<const CameraMuteListenerNapi> listener_;
@@ -130,6 +152,7 @@ class CameraManagerNapi : public CameraNapiEventEmitter<CameraManagerNapi>,
                           public CameraNapiEventListener<TorchListenerNapi>,
                           public CameraNapiEventListener<CameraManagerCallbackNapi>,
                           public CameraNapiEventListener<CameraMuteListenerNapi>,
+                          public CameraNapiEventListener<ControlCenterStatusListenerNapi>,
                           public CameraNapiEventListener<FoldListenerNapi> {
 public:
     static napi_value Init(napi_env env, napi_value exports);
@@ -146,6 +169,8 @@ public:
     static napi_value PreSwitchCamera(napi_env env, napi_callback_info info);
     static napi_value SetPrelaunchConfig(napi_env env, napi_callback_info info);
     static napi_value IsPrelaunchSupported(napi_env env, napi_callback_info info);
+    static napi_value IsControlCenterActive(napi_env env, napi_callback_info info);
+    static napi_value CreateControlCenterSession(napi_env env, napi_callback_info info);
     static napi_value CreateCameraInputInstance(napi_env env, napi_callback_info info);
     static napi_value CreateCameraSessionInstance(napi_env env, napi_callback_info info);
     static napi_value CreateSessionInstance(napi_env env, napi_callback_info info);
@@ -205,6 +230,10 @@ private:
     void RegisterFoldStatusCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
         const std::vector<napi_value>& args, bool isOnce);
     void UnregisterFoldStatusCallbackListener(
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterControlCenterStatusCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterControlCenterStatusCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
 
     static thread_local napi_ref sConstructor_;

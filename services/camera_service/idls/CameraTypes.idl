@@ -120,3 +120,13 @@ struct CameraAppInfo {
     boolean videoStatus;
     int position;
 };
+
+enum ControlCenterEffectType {
+    BEAUTY = 0,
+    PORTRAIT
+};
+
+struct ControlCenterStatusInfo {
+    ControlCenterEffectType effectType;
+    boolean isActive;
+};

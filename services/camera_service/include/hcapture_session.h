@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,6 +15,7 @@
 
 #ifndef OHOS_CAMERA_H_CAPTURE_SESSION_H
 #define OHOS_CAMERA_H_CAPTURE_SESSION_H
+#include "camera_datashare_helper.h"
 #include "icapture_session_callback.h"
 #include <stdint.h>
 #define EXPORT_API __attribute__((visibility("default")))
@@ -128,6 +129,9 @@ public:
     int32_t SetPressureCallback(const sptr<IPressureStatusCallback>& callback) override;
     int32_t UnSetPressureCallback() override;
     void SetPressureStatus(PressureStatus status);
+    int32_t SetControlCenterEffectStatusCallback(const sptr<IControlCenterEffectStatusCallback>& callback) override;
+    int32_t UnSetControlCenterEffectStatusCallback() override;
+    void SetControlCenterEffectCallbackStatus(ControlCenterStatusInfo statusInfo);
 
     int32_t GetSessionState(CaptureSessionState& sessionState) override;
     int32_t GetActiveColorSpace(int32_t& curColorSpace) override;
@@ -170,6 +174,20 @@ public:
     static void DumpCameraSessionSummary(CameraInfoDumper& infoDumper);
     void ReleaseStreams();
     bool isEqual(float zoomPointA, float zoomPointB);
+    int32_t GetVirtualApertureMetadate(std::vector<float>& virtualApertureMetadata) override;
+    int32_t GetVirtualApertureValue(float& value) override;
+    int32_t SetVirtualApertureValue(float value, bool needPersist) override;
+
+    int32_t GetBeautyMetadata(std::vector<int32_t>& beautyApertureMetadata) override;
+    int32_t GetBeautyRange(std::vector<int32_t>& range, int32_t type) override;
+    int32_t GetBeautyValue(int32_t type, int32_t& value) override;
+    int32_t SetBeautyValue(int32_t type, int32_t value, bool needPersist) override;
+
+    void SetControlCenterPrecondition(bool precondition);
+    void SetDeviceControlCenterAbility(bool ability);
+
+    std::string GetBundleForControlCenter();
+    void SetBundleForControlCenter(std::string bundleName);
     inline void SetStreamOperator(wptr<HStreamOperator> hStreamOperator)
     {
         std::lock_guard<std::mutex> lock(streamOperatorLock_);
@@ -223,6 +241,7 @@ private:
     string lastBurstPrefix_ = "";
     int32_t saveIndex = 0;
     bool isNeedCommitting_ = false;
+    std::shared_ptr<CameraDataShareHelper> cameraDataShareHelper_;
     void SetCameraDevice(sptr<HCameraDevice> device);
     inline const sptr<HCameraDevice> GetCameraDevice()
     {
@@ -242,6 +261,12 @@ private:
     void ExpandSketchRepeatStream();
     void ExpandMovingPhotoRepeatStream();
 
+    int32_t SetVirtualApertureToDataShareHelper(float value);
+    int32_t GetVirtualApertureFromDataShareHelper(float &value);
+
+    int32_t SetBeautyToDataShareHelper(int32_t value);
+    int32_t GetBeautyFromDataShareHelper(int32_t &value);
+
     void ProcessMetaZoomArray(std::vector<uint32_t>& zoomAndTimeArray, sptr<HCameraDevice>& cameraDevice);
     void UpdateMuteSetting(bool muteMode, std::shared_ptr<OHOS::Camera::CameraMetadata> &settings);
     void StartMovingPhoto(sptr<HStreamRepeat>& curStreamRepeat);
@@ -259,6 +284,15 @@ private:
     void ClearMovingPhotoRepeatStream();
     StateMachine stateMachine_;
     sptr<IPressureStatusCallback> innerPressureCallback_;
+    sptr<IControlCenterEffectStatusCallback> innerControlCenterEffectCallback_;
+    std::mutex innerControlCenterEffectCallbackLock_;
+    bool isBeautyActive = false;
+    bool isApertureActive = false;
+    float biggestAperture = 0;
+    bool controlCenterPrecondition = true;
+    bool deviceControlCenterAbility = false;
+
+    std::string bundleForControlCenter_;
 
     #ifdef CAMERA_USE_SENSOR
         std::mutex sensorLock_;

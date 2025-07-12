@@ -1004,6 +1004,23 @@ Camera_ErrorCode OH_CaptureSession_SetWhiteBalance(Camera_CaptureSession* sessio
 Camera_ErrorCode OH_CaptureSession_SetWhiteBalanceMode(Camera_CaptureSession* session,
      Camera_WhiteBalanceMode whiteBalanceMode);
 
+Camera_ErrorCode OH_CaptureSession_IsControlCenterSupported(Camera_CaptureSession* session, bool* isSupported);
+
+Camera_ErrorCode OH_CaptureSession_GetSupportedEffectTypes(
+    Camera_CaptureSession* session, Camera_ControlCenterEffectType** types, uint32_t* size);
+
+Camera_ErrorCode OH_CaptureSession_DeleteSupportedEffectTypes(Camera_CaptureSession* session,
+    Camera_ControlCenterEffectType* types, uint32_t size);
+
+typedef void (*OH_CaptureSession_OnControlCenterEffectStatusChange)(Camera_CaptureSession* session,
+    Camera_ControlCenterStatusInfo* controlCenterStatusInfo);
+
+Camera_ErrorCode OH_CaptureSession_RegisterControlCenterEffectStatusChangeCallback(Camera_CaptureSession* session,
+    OH_CaptureSession_OnControlCenterEffectStatusChange controlCenterEffectStatusChange);
+
+Camera_ErrorCode OH_CaptureSession_UnregisterControlCenterEffectStatusChangeCallback(Camera_CaptureSession* session,
+    OH_CaptureSession_OnControlCenterEffectStatusChange controlCenterEffectStatusChange);
+
 #ifdef __cplusplus
 }
 #endif

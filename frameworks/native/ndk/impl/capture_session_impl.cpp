@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -14,6 +14,7 @@
  */
 
 #include "capture_session_impl.h"
+#include <cstdint>
 #include <vector>
 #include "camera_log.h"
 #include "camera_util.h"
@@ -75,6 +76,8 @@ const std::unordered_map<OH_NativeBuffer_ColorSpace, ColorSpace> g_ndkToFwColorS
     {OH_NativeBuffer_ColorSpace::OH_COLORSPACE_P3_HLG_LIMIT, ColorSpace::P3_HLG_LIMIT},
     {OH_NativeBuffer_ColorSpace::OH_COLORSPACE_P3_PQ_LIMIT, ColorSpace::P3_PQ_LIMIT}
 };
+
+const int32_t MAX_EFFECT_TYPES_SIZE = 2;
 
 class InnerCaptureSessionCallback : public SessionCallback, public FocusCallback {
 public:
@@ -165,6 +168,27 @@ public:
 private:
     Camera_CaptureSession* captureSession_;
     OH_CaptureSession_OnSystemPressureLevel systemPressureLevel_ = nullptr;
+};
+
+class InnerControlCenterEffectStatusCallback : public ControlCenterEffectCallback {
+public:
+    InnerControlCenterEffectStatusCallback(Camera_CaptureSession* captureSession,
+        OH_CaptureSession_OnControlCenterEffectStatusChange controlCenterEffectStatusChange)
+        : captureSession_(captureSession), controlCenterEffectStatusChange_(*controlCenterEffectStatusChange) {};
+    ~InnerControlCenterEffectStatusCallback() = default;
+
+    void OnControlCenterEffectStatusChanged(ControlCenterStatusInfo status) override
+    {
+        MEDIA_INFO_LOG("OnControlCenterEffectStatusChanged is called!");
+        CHECK_RETURN(captureSession_ == nullptr || controlCenterEffectStatusChange_ == nullptr);
+        Camera_ControlCenterStatusInfo statusInfo;
+        statusInfo.effectType = static_cast<Camera_ControlCenterEffectType>(status.effectType);
+        statusInfo.isActive = status.isActive;
+        controlCenterEffectStatusChange_(captureSession_, &statusInfo);
+    }
+private:
+    Camera_CaptureSession* captureSession_;
+    OH_CaptureSession_OnControlCenterEffectStatusChange controlCenterEffectStatusChange_ = nullptr;
 };
 
 bool IsCurrentModeInList(OHOS::sptr<CaptureSession> innerCaptureSession, const std::vector<SceneMode> modes)
@@ -763,6 +787,36 @@ Camera_ErrorCode Camera_CaptureSession::DeleteColorSpaces(OH_NativeBuffer_ColorS
     return CAMERA_OK;
 }
 
+Camera_ErrorCode Camera_CaptureSession::GetSupportedEffectTypes(Camera_ControlCenterEffectType** types, uint32_t* size)
+{
+    MEDIA_DEBUG_LOG("Camera_CaptureSession::GetSupportedEffectTypes is called");
+    std::vector<ControlCenterEffectType> effectTypes = innerCaptureSession_->GetSupportedEffectTypes();
+    uint32_t effectTypesSize = effectTypes.size();
+    CHECK_RETURN_RET_ELOG(effectTypesSize == 0, CAMERA_INVALID_ARGUMENT, "Invalid effect types size.");
+    if (effectTypesSize > 0 && effectTypesSize <= MAX_EFFECT_TYPES_SIZE) {
+        Camera_ControlCenterEffectType* newEffectType = new Camera_ControlCenterEffectType[effectTypesSize];
+        CHECK_RETURN_RET_ELOG(newEffectType == nullptr, CAMERA_SERVICE_FATAL_ERROR,
+            "Failed to allocate memory for color space!");
+        for (size_t index = 0; index < effectTypesSize; index++) {
+            newEffectType[index] = static_cast<Camera_ControlCenterEffectType>(effectTypes[index]);
+        }
+        *size = effectTypesSize;
+        *types = newEffectType;
+    } else {
+        CHECK_RETURN_RET_ELOG(true, CAMERA_INVALID_ARGUMENT, "Effect types size out of valid range.");
+    }
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_CaptureSession::DeleteEffectTypes(Camera_ControlCenterEffectType* types)
+{
+    CHECK_RETURN_RET(types == nullptr, CAMERA_OK);
+    delete[] types;
+    types = nullptr;
+
+    return CAMERA_OK;
+}
+
 Camera_ErrorCode Camera_CaptureSession::GetActiveColorSpace(OH_NativeBuffer_ColorSpace* colorSpace)
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::GetActiveColorSpace is called");
@@ -831,10 +885,42 @@ Camera_ErrorCode Camera_CaptureSession::UnRegisterSystemPressureLevelCallback(
     return CAMERA_OK;
 }
 
+Camera_ErrorCode Camera_CaptureSession::RegisterControlCenterEffectStatusChangeCallback(
+    OH_CaptureSession_OnControlCenterEffectStatusChange controlCenterEffectStatusChange)
+{
+    MEDIA_INFO_LOG("Camera_CaptureSession::RegisterControlCenterEffectStatusChangeCallback");
+    CHECK_PRINT_ELOG(controlCenterEffectStatusChange == nullptr,
+        "RegisterControlCenterEffectStatusChangeCallback controlCenterEffectStatusChange is null.");
+    shared_ptr<InnerControlCenterEffectStatusCallback> innerControlCenterEffectCallback =
+        make_shared<InnerControlCenterEffectStatusCallback>(this, controlCenterEffectStatusChange);
+    CHECK_RETURN_RET_ELOG(innerControlCenterEffectCallback == nullptr, CAMERA_SERVICE_FATAL_ERROR,
+        "create innerCallback failed!");
+    SceneMode currentMode = innerCaptureSession_->GetMode();
+    bool ret = currentMode != SceneMode::NORMAL && currentMode != SceneMode::VIDEO;
+    CHECK_RETURN_RET_ELOG(ret, CAMERA_INVALID_ARGUMENT,
+        "ControlCenterEffectStatusChangeCallback do not support current session: %{public}d", currentMode);
+    innerCaptureSession_->SetControlCenterEffectStatusCallback(innerControlCenterEffectCallback);
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_CaptureSession::UnregisterControlCenterEffectStatusChangeCallback(
+    OH_CaptureSession_OnControlCenterEffectStatusChange controlCenterStatusChange)
+{
+    MEDIA_INFO_LOG("Camera_CaptureSession::UnregisterControlCenterEffectStatusChangeCallback");
+    innerCaptureSession_->UnSetControlCenterEffectStatusCallback();
+    return CAMERA_OK;
+}
 Camera_ErrorCode Camera_CaptureSession::IsAutoDeviceSwitchSupported(bool* isSupported)
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::IsAutoDeviceSwitchSupported is called");
     *isSupported = innerCaptureSession_->IsAutoDeviceSwitchSupported();
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_CaptureSession::IsControlCenterSupported(bool* isSupported)
+{
+    MEDIA_DEBUG_LOG("Camera_CaptureSession::IsControlCenterSupported is called");
+    *isSupported = innerCaptureSession_->IsControlCenterSupported();
     return CAMERA_OK;
 }
 

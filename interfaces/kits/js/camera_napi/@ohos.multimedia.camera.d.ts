@@ -309,6 +309,35 @@ function getCameraManager(context: Context): CameraManager;
   }
 
   /**
+   * Control center status info.
+   *
+   * @typedef ControlCenterStatusInfo
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @since 20
+   */
+    interface ControlCenterStatusInfo {
+      /**
+       * Control center effect type.
+       *
+       * @type { ControlCenterEffectType }
+       * @readonly
+       * @syscap SystemCapability.Multimedia.Camera.Core
+       * @since 20
+       */
+      readonly effectType: ControlCenterEffectType;
+   
+      /**
+       * If effect type is active.
+       *
+       * @type { boolean }
+       * @readonly
+       * @syscap SystemCapability.Multimedia.Camera.Core
+       * @since 20
+       */
+      readonly isActive: boolean;
+    }
+
+  /**
    * Enum for camera error code.
    *
    * @enum { number }
@@ -943,6 +972,48 @@ function getCameraManager(context: Context): CameraManager;
      * @since 13
      */
     off(type: 'cameraMute', callback?: AsyncCallback<boolean>): void;
+
+    /**
+     * Subscribes control center status change event callback.
+     *
+     * @param { 'controlCenterStatusChange' } type - Event type.
+     * @param { AsyncCallback<boolean> } callback - Callback used to get the control center status change.
+     * @throws { BusinessError } 202 - Permission verification failed. A non-system application calls a system API.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 20
+     */
+    on(type: 'controlCenterStatusChange', callback: AsyncCallback<boolean>): void;
+ 
+    /**
+     * Unsubscribes control center status change event callback.
+     *
+     * @param { 'controlCenterStatusChange' } type - Event type.
+     * @param { AsyncCallback<boolean> } callback - Callback used to get the control center status change.
+     * @throws { BusinessError } 202 - Permission verification failed. A non-system application calls a system API.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 20
+     */
+    off(type: 'controlCenterStatusChange', callback?: AsyncCallback<boolean>): void;
+ 
+    /**
+     * Check if the control center active.
+     *
+     * @returns { boolean } this value that specifies whether the control center active.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 20
+     */
+    isControlCenterActive(): boolean;
+ 
+    /**
+     * Create a ControlCenterSession instance.
+     * 
+     * @returns { ControlCenterSession } the ControlCenterSession instance.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 20
+     */
+    createControlCenterSession(): ControlCenterSession;
 
     /**
      * Determines whether the camera device supports prelaunch.
@@ -3452,6 +3523,30 @@ function getCameraManager(context: Context): CameraManager;
   }
 
   /**
+   * Enumerates the control center effect types.
+   *
+   * @enum { number }
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @since 20
+   */
+  enum ControlCenterEffectType {
+    /**
+     * Beauty type.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 20
+     */
+    BEAUTY = 0,
+    /**
+     * Portrait type.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 20
+     */
+    PORTRAIT
+  }
+
+  /**
    * Enum for policy type
    *
    * @enum { number }
@@ -3586,6 +3681,57 @@ function getCameraManager(context: Context): CameraManager;
      * @since 12
      */
     setColorSpace(colorSpace: colorSpaceManager.ColorSpace): void;
+  }
+
+  /**
+   * Control Center Query object.
+   *
+   * @interface ControlCenterQuery
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @since 20
+   */
+  interface ControlCenterQuery {
+ 
+    /**
+     * Checks whether control center is supported.
+     *
+     * @returns { boolean } Is control center supported.
+     * @throws { BusinessError } 7400103 - Session not config.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 20
+     */
+    isControlCenterSupported(): boolean;
+ 
+    /**
+     * Gets the supported effect types.
+     *
+     * @returns { Array<ControlCenterEffectType> } The array of the supported control center type for the session.
+     * @throws { BusinessError } 7400103 - Session not config, only throw in session usage.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 20
+     */
+    getSupportedEffectTypes(): Array<ControlCenterEffectType>;
+  }
+ 
+  /**
+   * Control center object.
+   *
+   * @interface ControlCenter
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @since 20
+   */
+  interface ControlCenter extends ControlCenterQuery {
+    /**
+     * Enable control center for session.
+     *
+     * @param { boolean } enabled enable control center for session if TRUE..
+     * @throws { BusinessError } 7400101 - Parameter missing or parameter type incorrect.
+     * @throws { BusinessError } 7400103 - Session not config.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 20
+     */
+    enableControlCenter(enabled: boolean): void;
   }
 
   /**
@@ -5166,7 +5312,7 @@ function getCameraManager(context: Context): CameraManager;
    * @syscap SystemCapability.Multimedia.Camera.Core
    * @since 13
    */
-  interface VideoSession extends Session, Flash, AutoExposure, Focus, Zoom, Stabilization, ColorManagement, AutoDeviceSwitch {
+  interface VideoSession extends Session, Flash, AutoExposure, Focus, Zoom, Stabilization, ColorManagement, ControlCenter, AutoDeviceSwitch {
     /**
      * Gets whether the choosed preconfig type can be used to configure video session.
      * Must choose preconfig type from {@link PreconfigType}.
@@ -5299,6 +5445,26 @@ function getCameraManager(context: Context): CameraManager;
     off(type: 'systemPressureLevel', callback?: AsyncCallback<SystemPressureLevel>): void;   
 
     /**
+     * Subscribes to system pressure level callback.
+     *
+     * @param { 'controlCenterEffectStatusChange' } type - Event type.
+     * @param { AsyncCallback<ControlCenterStatusInfo> } callback - Callback used to return the result.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 20
+     */
+     on(type: 'controlCenterEffectStatusChange', callback: AsyncCallback<ControlCenterStatusInfo>): void;
+ 
+     /**
+      * Unsubscribes to system pressure level callback.
+      *
+      * @param { 'controlCenterEffectStatusChange' } type - Event type.
+      * @param { AsyncCallback<ControlCenterStatusInfo> } callback - Callback used to return the result.
+      * @syscap SystemCapability.Multimedia.Camera.Core
+      * @since 20
+      */
+     off(type: 'controlCenterEffectStatusChange', callback?: AsyncCallback<ControlCenterStatusInfo>): void;
+
+    /**
      * Subscribes to lcd flash status.
      *
      * @param { 'lcdFlashStatus' } type - Event type.
@@ -5389,6 +5555,10 @@ function getCameraManager(context: Context): CameraManager;
      * @since 13
      */
     getSessionConflictFunctions(): Array<VideoConflictFunctions>;
+  }
+
+  interface ControlCenterSession extends Beauty, Aperture {
+    release(): void;
   }
 
   /**

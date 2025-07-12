@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -119,6 +119,18 @@ private:
     void OnPressureCallbackAsync(PressureStatus status) const;
 };
 
+class ControlCenterEffectStatusCallbackListener : public ControlCenterEffectCallback, public ListenerBase,
+    public std::enable_shared_from_this<ControlCenterEffectStatusCallbackListener> {
+public:
+    ControlCenterEffectStatusCallbackListener(napi_env env) : ListenerBase(env) {}
+    ~ControlCenterEffectStatusCallbackListener() = default;
+    void OnControlCenterEffectStatusChanged(ControlCenterStatusInfo controlCenterStatusInfo) override;
+ 
+private:
+    void OnControlCenterEffectStatusCallback(ControlCenterStatusInfo controlCenterStatusInfo) const;
+    void OnControlCenterEffectStatusCallbackAsync(ControlCenterStatusInfo controlCenterStatusInfo) const;
+};
+
 struct SessionCallbackInfo {
     int32_t errorCode_;
     weak_ptr<const SessionCallbackListener> listener_;
@@ -131,6 +143,14 @@ struct PressureCallbackInfo {
     weak_ptr<const PressureCallbackListener> listener_;
     PressureCallbackInfo(PressureStatus status, shared_ptr<const PressureCallbackListener> listener)
         : status_(status), listener_(listener) {}
+};
+
+struct ControlCenterEffectCallbackInfo {
+    ControlCenterStatusInfo statusInfo_;
+    weak_ptr<const ControlCenterEffectStatusCallbackListener> listener_;
+    ControlCenterEffectCallbackInfo(ControlCenterStatusInfo statusInfo,
+        shared_ptr<const ControlCenterEffectStatusCallbackListener> listener)
+        : statusInfo_(statusInfo), listener_(listener) {}
 };
 
 class SmoothZoomCallbackListener : public SmoothZoomCallback, public ListenerBase,
@@ -247,6 +267,9 @@ public:
     static napi_value GetBeauty(napi_env env, napi_callback_info info);
     static napi_value SetBeauty(napi_env env, napi_callback_info info);
     static napi_value GetSupportedColorSpaces(napi_env env, napi_callback_info info);
+    static napi_value IsControlCenterSupported(napi_env env, napi_callback_info info);
+    static napi_value GetSupportedEffectTypes(napi_env env, napi_callback_info info);
+    static napi_value EnableControlCenter(napi_env env, napi_callback_info info);
     static napi_value GetActiveColorSpace(napi_env env, napi_callback_info info);
     static napi_value SetColorSpace(napi_env env, napi_callback_info info);
     static napi_value IsMacroSupported(napi_env env, napi_callback_info info);
@@ -306,6 +329,7 @@ public:
     std::shared_ptr<FocusCallbackListener> focusCallback_;
     std::shared_ptr<SessionCallbackListener> sessionCallback_;
     std::shared_ptr<PressureCallbackListener> pressureCallback_;
+    std::shared_ptr<ControlCenterEffectStatusCallbackListener> controlCenterEffectStatusCallback_;
     std::shared_ptr<ExposureCallbackListener> exposureCallback_;
     std::shared_ptr<MoonCaptureBoostCallbackListener> moonCaptureBoostCallback_;
     std::shared_ptr<SmoothZoomCallbackListener> smoothZoomCallback_;
@@ -332,6 +356,7 @@ public:
     static const std::vector<napi_property_descriptor> macro_props;
     static const std::vector<napi_property_descriptor> moon_capture_boost_props;
     static const std::vector<napi_property_descriptor> color_management_props;
+    static const std::vector<napi_property_descriptor> control_center_props;
     static const std::vector<napi_property_descriptor> preconfig_props;
     static const std::vector<napi_property_descriptor> white_balance_props;
     static const std::vector<napi_property_descriptor> auto_switch_props;
@@ -397,6 +422,10 @@ protected:
         napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
     virtual void UnregisterPressureStatusCallbackListener(const std::string& eventName,
         napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    virtual void RegisterControlCenterEffectStatusCallbackListener(const std::string& eventName, napi_env env,
+        napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    virtual void UnregisterControlCenterEffectStatusCallbackListener(const std::string& eventName, napi_env env,
+        napi_value callback, const std::vector<napi_value>& args);
 
     virtual void RegisterSlowMotionStateCb(const std::string& eventName, napi_env env, napi_value callback,
         const std::vector<napi_value>& args, bool isOnce) {}

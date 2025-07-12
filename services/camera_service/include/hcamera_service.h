@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,10 +15,12 @@
 
 #ifndef OHOS_CAMERA_H_CAMERA_SERVICE_H
 #define OHOS_CAMERA_H_CAMERA_SERVICE_H
+#include <atomic>
 #include <cstdint>
 #include <mutex>
 #include <stdint.h>
 #include "camera_metadata_info.h"
+#include "icontrol_center_status_callback.h"
 #include "task_manager.h"
 #define EXPORT_API __attribute__((visibility("default")))
 
@@ -105,6 +107,7 @@ public:
         std::shared_ptr<OHOS::Camera::CameraMetadata>& cameraAbility) override;
     int32_t CreateCameraDevice(const string& cameraId, sptr<ICameraDeviceService>& device) override;
     int32_t CreateCaptureSession(sptr<ICaptureSession>& session, int32_t opMode) override;
+    int32_t GetVideoSessionForControlCenter(sptr<ICaptureSession>& session) override;
     int32_t CreateDeferredPhotoProcessingSession(int32_t userId,
         const sptr<DeferredProcessing::IDeferredPhotoProcessingSessionCallback>& callback,
         sptr<DeferredProcessing::IDeferredPhotoProcessingSession>& session) override;
@@ -138,6 +141,12 @@ public:
     int32_t SetFoldStatusCallback(const sptr<IFoldServiceCallback>& callback, bool isInnerCallback) override;
     int32_t UnSetFoldStatusCallback() override;
     int32_t MuteCamera(bool muteMode) override;
+    int32_t SetControlCenterCallback(const sptr<IControlCenterStatusCallback>& callback) override;
+    int32_t UnSetControlCenterStatusCallback() override;
+    int32_t EnableControlCenter(bool status) override;
+    int32_t SetControlCenterPrecondition(bool condition) override;
+    int32_t SetDeviceControlCenterAbility(bool ability) override;
+    int32_t GetControlCenterStatus(bool& status) override;
     int32_t MuteCameraPersist(PolicyType policyType, bool isMute) override;
     int32_t PrelaunchCamera(int32_t flag) override;
     int32_t ResetRssPriority() override;
@@ -175,6 +184,7 @@ public:
     bool ShouldSkipStatusUpdates(pid_t pid);
     void OnFoldStatusChanged(OHOS::Rosen::FoldStatus foldStatus) override;
     int32_t UnSetFoldStatusCallback(pid_t pid);
+    int32_t UnSetControlCenterStatusCallback(pid_t pid);
     void RegisterFoldStatusListener();
     void UnregisterFoldStatusListener();
     int32_t RequireMemorySize(int32_t memSize) override;
@@ -196,12 +206,17 @@ private:
     void OnReceiveEvent(const EventFwk::CommonEventData &data);
     int32_t SetMuteModeByDataShareHelper(bool muteMode);
     int32_t MuteCameraFunc(bool muteMode);
+    int32_t GetControlCenterStatusFromDataShareHelper(bool &status);
+    int32_t UpdateDataShareAndTag(bool status);
+    int32_t CreateControlCenterDataShare(std::map<std::string,
+        std::array<float, CONTROL_CENTER_DATA_SIZE>> controlCenterMap, std::string bundleName, bool status);
     int8_t ChooseFisrtBootFoldCamIdx(
         FoldStatus curFoldStatus, std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList);
     PressureStatus TransferTemperToPressure(int32_t temperLevel);
     void ClearCameraListenerByPid(pid_t pid);
     int DestroyStubForPid(pid_t pid);
     void ClientDied(pid_t pid);
+    sptr<HCaptureSession> videoSessionForControlCenter_;
 #ifdef NOTIFICATION_ENABLE
     int32_t SetBeauty(int32_t beautyStatus);
 #endif
@@ -292,6 +307,7 @@ private:
     mutex cameraCbMutex_;
     mutex muteCbMutex_;
     mutex serviceStatusMutex_;
+    mutex controlCenterStatusMutex_;
     recursive_mutex torchCbMutex_;
     recursive_mutex foldCbMutex_;
     TorchStatus torchStatus_ = TorchStatus::TORCH_STATUS_UNAVAILABLE;
@@ -302,6 +318,7 @@ private:
     map<uint32_t, sptr<IFoldServiceCallback>> foldServiceCallbacks_;
     map<uint32_t, sptr<ICameraMuteServiceCallback>> cameraMuteServiceCallbacks_;
     map<uint32_t, sptr<ICameraServiceCallback>> cameraServiceCallbacks_;
+    map<uint32_t, sptr<IControlCenterStatusCallback>> controlcenterCallbacks_;
     SafeMap<pid_t, sptr<IStandardCameraListener>> cameraListenerMap_;
 
     void CacheCameraStatus(const string& cameraId, std::shared_ptr<CameraStatusCallbacksInfo> info);
@@ -317,6 +334,9 @@ private:
     bool muteModeStored_;
     bool isFoldable = false;
     bool isFoldableInit = false;
+    bool isControlCenterEnabled_ = false;
+    bool controlCenterPrecondition = true;
+    bool deviceControlCenterAbility = false;
     string preCameraId_;
     string preCameraClient_;
     std::shared_ptr<CameraDataShareHelper> cameraDataShareHelper_;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -30,21 +30,28 @@
 
 #include "ability/camera_ability_parse_util.h"
 #include "bundle_mgr_interface.h"
+#include "camera_device.h"
 #include "camera_device_ability_items.h"
 #include "camera_error_code.h"
+#include "camera_input.h"
 #include "camera_log.h"
 #include "camera_rotation_api_utils.h"
 #include "camera_security_utils.h"
 #include "camera_service_system_ability_listener.h"
 #include "camera_util.h"
+#include "capture_input.h"
 #include "capture_scene_const.h"
+#include "control_center_session.h"
 #include "deferred_photo_proc_session.h"
 #include "display_manager.h"
 #include "icamera_service_callback.h"
 #include "icamera_util.h"
+#include "icapture_session.h"
+#include "icontrol_center_status_callback.h"
 #include "ipc_skeleton.h"
 #include "iservice_registry.h"
 #include "istream_capture.h"
+#include "refbase.h"
 #include "session/capture_session.h"
 #include "session/photo_session.h"
 #include "session/scan_session.h"
@@ -58,6 +65,9 @@ namespace CameraStandard {
 using OHOS::HDI::Camera::V1_3::OperationMode;
 sptr<CameraManager> CameraManager::g_cameraManager = nullptr;
 std::mutex CameraManager::g_instanceMutex;
+
+constexpr int32_t CONTROL_CENTER_RESOLUTION_WIDTH_MAX = 1920;
+constexpr int32_t CONTROL_CENTER_RESOLUTION_HEIGHT_MAX = 1080;
 
 const std::string CameraManager::surfaceFormat = "CAMERA_SURFACE_FORMAT";
 
@@ -149,6 +159,7 @@ CameraManager::CameraManager()
     torchServiceListenerManager_->SetCameraManager(this);
     cameraMuteListenerManager_->SetCameraManager(this);
     foldStatusListenerManager_->SetCameraManager(this);
+    controlCenterStatusListenerManager_->SetCameraManager(this);
 }
 
 CameraManager::~CameraManager()
@@ -650,6 +661,9 @@ int CameraManager::CreatePreviewOutput(Profile &profile, sptr<Surface> surface, 
     previewOutput->SetSize(profile.GetSize());
     previewOutput->SetPreviewProfile(profile);
     *pPreviewOutput = previewOutput;
+    bool resolutionCondition = profile.GetSize().height <= CONTROL_CENTER_RESOLUTION_HEIGHT_MAX
+        && profile.GetSize().width <= CONTROL_CENTER_RESOLUTION_WIDTH_MAX;
+    SetControlCenterResolutionCondition(resolutionCondition);
     return CameraErrorCode::SUCCESS;
 }
 
@@ -749,6 +763,9 @@ int CameraManager::CreateDeferredPreviewOutput(Profile &profile, sptr<PreviewOut
     previewOutput->SetStream(streamRepeat);
     previewOutput->SetPreviewProfile(profile);
     *pPreviewOutput = previewOutput;
+    bool resolutionCondition = profile.GetSize().height <= CONTROL_CENTER_RESOLUTION_HEIGHT_MAX
+        && profile.GetSize().width <= CONTROL_CENTER_RESOLUTION_WIDTH_MAX;
+    SetControlCenterResolutionCondition(resolutionCondition);
     return CameraErrorCode::SUCCESS;
 }
 
@@ -1241,6 +1258,32 @@ void CameraManager::UnregisterFoldListener(shared_ptr<FoldListener> listener)
 sptr<FoldStatusListenerManager> CameraManager::GetFoldStatusListenerManager()
 {
     return foldStatusListenerManager_;
+}
+
+void CameraManager::RegisterControlCenterStatusListener(std::shared_ptr<ControlCenterStatusListener> listener)
+{
+    CHECK_RETURN(listener == nullptr);
+    bool isSuccess = controlCenterStatusListenerManager_->AddListener(listener);
+    CHECK_RETURN(!isSuccess);
+    if (controlCenterStatusListenerManager_->GetListenerCount() == 1) {
+        sptr<IControlCenterStatusCallback> callback = controlCenterStatusListenerManager_;
+        int32_t errCode = SetControlCenterStatusCallback(callback);
+        CHECK_RETURN(errCode != CAMERA_OK);
+    }
+}
+
+void CameraManager::UnregisterControlCenterStatusListener(std::shared_ptr<ControlCenterStatusListener> listener)
+{
+    CHECK_RETURN(listener == nullptr);
+    controlCenterStatusListenerManager_->RemoveListener(listener);
+    if (controlCenterStatusListenerManager_->GetListenerCount() == 0) {
+        UnSetControlCenterStatusCallback();
+    }
+}
+
+sptr<ControlCenterStatusListenerManager> CameraManager::GetControlCenterStatusListenerManager()
+{
+    return controlCenterStatusListenerManager_;
 }
 
 sptr<CameraDevice> CameraManager::GetCameraDeviceFromId(std::string cameraId)
@@ -2665,6 +2708,17 @@ int32_t FoldStatusListenerManager::OnFoldStatusChanged(const FoldStatus status)
     return CAMERA_OK;
 }
 
+int32_t ControlCenterStatusListenerManager::OnControlCenterStatusChanged(bool status)
+{
+    MEDIA_INFO_LOG("OnControlCenterStatusChanged");
+    auto cameraManager = GetCameraManager();
+    CHECK_RETURN_RET_ELOG(cameraManager == nullptr, CAMERA_OK, "CameraManager is nullptr.");
+    auto listenerManager = cameraManager->GetControlCenterStatusListenerManager();
+    MEDIA_INFO_LOG("ControlCenterStatusListener size %{public}zu", listenerManager->GetListenerCount());
+    listenerManager->TriggerListener([&](auto listener) { listener->OnControlCenterStatusChanged(status); });
+    return CAMERA_OK;
+}
+
 int32_t CameraManager::SetCameraServiceCallback(sptr<ICameraServiceCallback>& callback)
 {
     auto serviceProxy = GetServiceProxy();
@@ -2752,6 +2806,112 @@ int32_t CameraManager::UnSetFoldServiceCallback()
     CHECK_RETURN_RET_ELOG(
         retCode != CAMERA_OK, retCode, "UnSetFoldServiceCallback failed, retCode: %{public}d", retCode);
     return CAMERA_OK;
+}
+
+int32_t CameraManager::SetControlCenterStatusCallback(sptr<IControlCenterStatusCallback>& callback)
+{
+    auto serviceProxy = GetServiceProxy();
+    CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, CAMERA_UNKNOWN_ERROR,
+        "CameraManager::SetControlCenterStatusCallback serviceProxy is null");
+    int32_t retCode = serviceProxy->SetControlCenterCallback(callback);
+    CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, retCode,
+        "SetControlCenterStatusCallback Set Callback failed, retCode: %{public}d", retCode);
+    return CAMERA_OK;
+}
+
+int32_t CameraManager::UnSetControlCenterStatusCallback()
+{
+    auto serviceProxy = GetServiceProxy();
+    CHECK_RETURN_RET_ELOG(
+        serviceProxy == nullptr, CAMERA_UNKNOWN_ERROR,
+            "CameraManager::UnSetControlCenterStatusCallback serviceProxy is null");
+    int32_t retCode = serviceProxy->UnSetControlCenterStatusCallback();
+    CHECK_RETURN_RET_ELOG(
+        retCode != CAMERA_OK, retCode, "UnSetControlCenterStatusCallback failed, retCode: %{public}d", retCode);
+    return CAMERA_OK;
+}
+
+bool CameraManager::IsControlCenterActive()
+{
+    bool status = false;
+    auto serviceProxy = GetServiceProxy();
+    CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, CAMERA_UNKNOWN_ERROR,
+        "CameraManager::IsControlCenterActive serviceProxy is null");
+    
+    int32_t retCode = serviceProxy->GetControlCenterStatus(status);
+    CHECK_RETURN_RET_ELOG(retCode!=CAMERA_OK, false, "CameraManager::IsControlCenterActive failed");
+    MEDIA_INFO_LOG("CameraManager::IsControlCenterActive status: %{public}d", status);
+    return status;
+}
+ 
+int32_t CameraManager::CreateControlCenterSession(sptr<ControlCenterSession>& pControlCenterSession)
+{
+    pControlCenterSession = new (std::nothrow) ControlCenterSession();
+    MEDIA_INFO_LOG("CameraManager::CreateControlCenterSession");
+    return CAMERA_OK;
+}
+    
+void CameraManager::SetControlCenterFrameCondition(bool frameCondition)
+{
+    MEDIA_INFO_LOG("SetControlCenterFrameCondition: %{public}d", frameCondition);
+    controlCenterFrameCondition_ = frameCondition;
+    UpdateControlCenterPrecondition();
+}
+    
+void CameraManager::SetControlCenterResolutionCondition(bool resolutionCondition)
+{
+    MEDIA_INFO_LOG("SetControlCenterResolutionCondition: %{public}d", resolutionCondition);
+    controlCenterResolutionCondition_ = resolutionCondition;
+    UpdateControlCenterPrecondition();
+}
+    
+void CameraManager::SetControlCenterPositionCondition(bool positionCondition)
+{
+    MEDIA_INFO_LOG("SetControlCenterPositionCondition: %{public}d", positionCondition);
+    controlCenterPositionCondition_ = positionCondition;
+    UpdateControlCenterPrecondition();
+}
+
+void CameraManager::UpdateControlCenterPrecondition()
+{
+    MEDIA_INFO_LOG("UpdateControlCenterPrecondition:  %{public}d,%{public}d,%{public}d,%{public}d",
+        controlCenterPrecondition_, controlCenterFrameCondition_,
+        controlCenterResolutionCondition_, controlCenterPositionCondition_);
+    auto serviceProxy = GetServiceProxy();
+    CHECK_RETURN_ELOG(serviceProxy == nullptr, "UpdateControlCenterPrecondition serviceProxy is null");
+    if (controlCenterPrecondition_
+        && (!controlCenterFrameCondition_ || !controlCenterResolutionCondition_ || !controlCenterPositionCondition_)) {
+        controlCenterPrecondition_ = false;
+        serviceProxy->SetControlCenterPrecondition(false);
+        return;
+    }
+    if (!controlCenterPrecondition_
+        && (controlCenterFrameCondition_ && controlCenterResolutionCondition_ && controlCenterPositionCondition_)) {
+        controlCenterPrecondition_ = true;
+    }
+    serviceProxy->SetControlCenterPrecondition(controlCenterPrecondition_);
+    return;
+}
+
+bool CameraManager::GetControlCenterPrecondition()
+{
+    return controlCenterPrecondition_;
+}
+
+void CameraManager::SetIsControlCenterSupported(bool isSupported)
+{
+    MEDIA_DEBUG_LOG("CameraManager::SetIsControlCenterSupported, isSupported: %{public}d", isSupported);
+    isControlCenterSupported_ = isSupported;
+
+    auto serviceProxy = GetServiceProxy();
+    CHECK_RETURN_ELOG(serviceProxy == nullptr, "SetIsControlCenterSupported serviceProxy is null");
+    int32_t retCode = serviceProxy->SetDeviceControlCenterAbility(isSupported);
+    CHECK_RETURN_ELOG(retCode != CAMERA_OK, "IsControlCenterSupported call failed, retCode: %{public}d", retCode);
+}
+
+bool CameraManager::GetIsControlCenterSupported()
+{
+    return isControlCenterSupported_;
 }
 
 int32_t CameraMuteListenerManager::OnCameraMute(bool muteMode)

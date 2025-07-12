@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -28,12 +28,15 @@
 #include <unordered_map>
 
 #include "camera_stream_info_parse.h"
+#include "control_center_session.h"
 #include "deferred_proc_session/deferred_photo_proc_session.h"
 #include "deferred_proc_session/deferred_video_proc_session.h"
 #include "hcamera_listener_stub.h"
 #include "camera_service_callback_stub.h"
 #include "camera_mute_service_callback_stub.h"
+#include "control_center_status_callback_stub.h"
 #include "fold_service_callback_stub.h"
+#include "icontrol_center_status_callback.h"
 #include "torch_service_callback_stub.h"
 #include "camera_service_proxy.h"
 #include "icamera_device_service.h"
@@ -115,6 +118,13 @@ public:
     virtual void OnCameraMute(bool muteMode) const = 0;
 };
 
+class ControlCenterStatusListener {
+public:
+    ControlCenterStatusListener() = default;
+    virtual ~ControlCenterStatusListener() = default;
+    virtual void OnControlCenterStatusChanged(bool status) const = 0;
+};
+
 class TorchListener {
 public:
     TorchListener() = default;
@@ -132,6 +142,7 @@ public:
 class TorchServiceListenerManager;
 class CameraStatusListenerManager;
 class CameraMuteListenerManager;
+class ControlCenterStatusListenerManager;
 class FoldStatusListenerManager;
 class CameraManager : public RefBase {
 public:
@@ -594,6 +605,20 @@ public:
     sptr<CameraDevice> GetCameraDeviceFromId(std::string cameraId);
 
     /**
+     * @brief check if control center active
+     *
+     * @return Returns true is active, false is not active.
+     */
+    bool IsControlCenterActive();
+ 
+    /**
+     * @brief create the ControlCenterSession instance.
+     *
+     * @return Returns the instance of ControlCenterSession.
+     */
+    int32_t CreateControlCenterSession(sptr<ControlCenterSession>& pControlCenterSession);
+
+    /**
      * @brief Get cameraInfo of specific camera id.
      *
      * @param std::string camera id.
@@ -646,6 +671,82 @@ public:
      * @return.
      */
     void UnregisterCameraMuteListener(std::shared_ptr<CameraMuteListener> listener);
+
+    /**
+     * @brief Register control center status listener
+     *
+     * @param listener The control center status listener object.
+     *
+     */
+    void RegisterControlCenterStatusListener(std::shared_ptr<ControlCenterStatusListener> listener);
+
+    /**
+     * @brief Unregister control center status listener
+     *
+     * @param listener The control center status object.
+     * @return.
+     */
+    void UnregisterControlCenterStatusListener(std::shared_ptr<ControlCenterStatusListener> listener);
+
+    /**
+     * @brief Get the ControlCenterStatusListenerManager.
+     *
+     * @return ControlCenterStatusListenerManager.
+     */
+    sptr<ControlCenterStatusListenerManager> GetControlCenterStatusListenerManager();
+    
+    /**
+     * @brief Set control center frame condition.
+     *
+     * @param frameCondition The control center frame condition.
+     * @return.
+     */
+    void SetControlCenterFrameCondition(bool frameCondition);
+    
+    /**
+     * @brief Set control center resolution condition.
+     *
+     * @param resolutionCondition The control center resolution condition.
+     * @return.
+     */
+    void SetControlCenterResolutionCondition(bool resolutionCondition);
+    
+    /**
+     * @brief Set control center position condition.
+     *
+     * @param positionCondition The control center position condition.
+     * @return.
+     */
+    void SetControlCenterPositionCondition(bool positionCondition);
+
+    /**
+     * @brief Update control center precondition.
+     *
+     * @return.
+     */
+    void UpdateControlCenterPrecondition();
+
+    /**
+     * @brief Get control center precondition.
+     *
+     * @return Returns control center precondition.
+     */
+    bool GetControlCenterPrecondition();
+
+    /**
+     * @brief Set if control center supported.
+     *
+     * @param isSupported The control center isSupported.
+     * @return.
+     */
+    void SetIsControlCenterSupported(bool isSupported);
+
+    /**
+     * @brief Get if control center supported.
+     *
+     * @return Returns if control center supported.
+     */
+    bool GetIsControlCenterSupported();
 
     /**
      * @brief Get the camera mute listener manager.
@@ -924,6 +1025,9 @@ private:
     int32_t SetFoldServiceCallback(sptr<IFoldServiceCallback>& callback);
     int32_t UnSetFoldServiceCallback();
 
+    int32_t SetControlCenterStatusCallback(sptr<IControlCenterStatusCallback>& callback);
+    int32_t UnSetControlCenterStatusCallback();
+
     int32_t CreateMetadataOutputInternal(sptr<MetadataOutput>& pMetadataOutput,
         const std::vector<MetadataObjectType>& metadataObjectTypes = {});
 
@@ -1032,6 +1136,8 @@ private:
     static std::mutex g_instanceMutex;
 
     sptr<CameraMuteListenerManager> cameraMuteListenerManager_ = sptr<CameraMuteListenerManager>::MakeSptr();
+    sptr<ControlCenterStatusListenerManager> controlCenterStatusListenerManager_ =
+        sptr<ControlCenterStatusListenerManager>::MakeSptr();
     sptr<TorchServiceListenerManager> torchServiceListenerManager_ = sptr<TorchServiceListenerManager>::MakeSptr();
     sptr<CameraStatusListenerManager> cameraStatusListenerManager_ = sptr<CameraStatusListenerManager>::MakeSptr();
     sptr<FoldStatusListenerManager> foldStatusListenerManager_ = sptr<FoldStatusListenerManager>::MakeSptr();
@@ -1056,6 +1162,11 @@ private:
     FoldStatus preFoldStatus = FoldStatus::UNKNOWN_FOLD;
     std::unordered_map<std::string, std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraOldCamera_;
     std::unordered_map<std::string, std::string>realtoVirtual_;
+    bool controlCenterFrameCondition_ = true;
+    bool controlCenterResolutionCondition_ = true;
+    bool controlCenterPositionCondition_ = true;
+    bool controlCenterPrecondition_ = true;
+    bool isControlCenterSupported_ = true;
 };
 
 class CameraManagerGetter {
@@ -1137,6 +1248,13 @@ class CameraMuteListenerManager : public CameraManagerGetter,
                                   public CameraListenerManager<CameraMuteListener> {
 public:
     int32_t OnCameraMute(bool muteMode) override;
+};
+
+class ControlCenterStatusListenerManager : public CameraManagerGetter,
+                                          public ControlCenterStatusCallbackStub,
+                                          public CameraListenerManager<ControlCenterStatusListener> {
+public:
+    int32_t OnControlCenterStatusChanged(bool status) override;
 };
 
 class FoldStatusListenerManager : public CameraManagerGetter,

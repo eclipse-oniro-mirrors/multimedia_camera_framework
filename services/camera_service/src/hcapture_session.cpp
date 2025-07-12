@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -32,6 +32,10 @@
 #include <utility>
 #include <vector>
 
+#include "ability/camera_ability_const.h"
+#include "camera_datashare_helper.h"
+#include "camera_types.h"
+#include "float_wrapper.h"
 #include "avcodec_task_manager.h"
 #include "base_types.h"
 #include "blocking_queue.h"
@@ -76,6 +80,7 @@
 #include "v1_0/types.h"
 #include "hstream_operator_manager.h"
 #include "camera_xcollie.h"
+#include "camera_metadata.h"
 #ifdef HOOK_CAMERA_OPERATOR
 #include "camera_rotate_plugin.h"
 #endif
@@ -103,6 +108,8 @@ static const int32_t SESSIONID_BEGIN = 1;
 static const int32_t SESSIONID_MAX = INT32_MAX - 1000;
 static std::atomic<int32_t> g_currentSessionId = SESSIONID_BEGIN;
 
+mutex g_dataShareHelperMutex;
+
 static int32_t GenerateSessionId()
 {
     int newId = g_currentSessionId++;
@@ -118,6 +125,13 @@ static const std::map<CaptureSessionState, std::string> SESSION_STATE_STRING_MAP
     { CaptureSessionState::SESSION_CONFIG_INPROGRESS, "Config_In-progress" },
     { CaptureSessionState::SESSION_CONFIG_COMMITTED, "Committed" },
     { CaptureSessionState::SESSION_RELEASED, "Released" }, { CaptureSessionState::SESSION_STARTED, "Started" }
+};
+
+std::map<camera_beauty_type_t, BeautyType> h_metaBeautyTypeMap_ = {
+    {OHOS_CAMERA_BEAUTY_TYPE_AUTO, AUTO_TYPE},
+    {OHOS_CAMERA_BEAUTY_TYPE_SKIN_SMOOTH, SKIN_SMOOTH},
+    {OHOS_CAMERA_BEAUTY_TYPE_FACE_SLENDER, FACE_SLENDER},
+    {OHOS_CAMERA_BEAUTY_TYPE_SKIN_TONE, SKIN_TONE}
 };
 
 CamServiceError HCaptureSession::NewInstance(
@@ -166,6 +180,7 @@ HCaptureSession::HCaptureSession(const uint32_t callingTokenId, int32_t opMode)
     callerToken_ = callingTokenId;
     opMode_ = opMode;
     InitialHStreamOperator();
+    cameraDataShareHelper_ = std::make_shared<CameraDataShareHelper>();
 }
 
 HCaptureSession::~HCaptureSession()
@@ -625,6 +640,321 @@ int32_t HCaptureSession::LinkInputAndOutputs()
     rc = hStreamOperatorSptr->LinkInputAndOutputs(settings, GetopMode());
     MEDIA_INFO_LOG("HCaptureSession::LinkInputAndOutputs execute success");
     return rc;
+}
+
+int32_t HCaptureSession::GetVirtualApertureMetadate(std::vector<float>& virtualApertureMetadata)
+{
+    CHECK_RETURN_RET_ELOG(!controlCenterPrecondition, CAMERA_INVALID_STATE,
+        "HCaptureSession::GetVirtualApertureMetadate controlCenterPrecondition false");
+    MEDIA_INFO_LOG("HCaptureSession::GetVirtualApertureMetadate");
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    int32_t errCode = CheckPermission(OHOS_PERMISSION_CAMERA, callerToken);
+    CHECK_RETURN_RET_ELOG(errCode != CAMERA_OK, errCode,
+        "HCaptureSession::GetVirtualApertureMetadate check permission failed.");
+
+    std::vector<float> supportedVirtualAperture = {};
+    auto device = GetCameraDevice();
+    auto settings = device->GetDeviceAbility();
+    camera_metadata_item_t item;
+    int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(),
+        OHOS_ABILITY_CAMERA_VIRTUAL_APERTURE_RANGE, &item);
+    CHECK_RETURN_RET_ELOG(
+        ret != CAMERA_OK, ret, "CaptureSession::GetSupportedBeautyTypes abilityId is NULL");
+    for (uint32_t i = 0; i < item.count; i++) {
+        supportedVirtualAperture.emplace_back(item.data.f[i]);
+    }
+    virtualApertureMetadata = supportedVirtualAperture;
+    biggestAperture = supportedVirtualAperture.back();
+    return CAMERA_OK;
+}
+
+int32_t HCaptureSession::GetVirtualApertureValue(float& value)
+{
+    CHECK_RETURN_RET_ELOG(!controlCenterPrecondition, CAMERA_INVALID_STATE,
+        "HCaptureSession::GetVirtualApertureValue controlCenterPrecondition false");
+    MEDIA_INFO_LOG("HCaptureSession::GetVirtualApertureValue");
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    int32_t errCode = CheckPermission(OHOS_PERMISSION_CAMERA, callerToken);
+    CHECK_RETURN_RET_ELOG(errCode != CAMERA_OK, errCode,
+        "HCaptureSession::GetVirtualApertureValue check permission failed.");
+    return GetVirtualApertureFromDataShareHelper(value);
+}
+
+int32_t HCaptureSession::SetVirtualApertureValue(float value, bool needPersist)
+{
+    CHECK_RETURN_RET_ELOG(!controlCenterPrecondition, CAMERA_INVALID_STATE,
+        "HCaptureSession::SetVirtualApertureValue controlCenterPrecondition false");
+    MEDIA_INFO_LOG("HCaptureSession::SetVirtualApertureValue");
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    int32_t errCode = CheckPermission(OHOS_PERMISSION_CAMERA, callerToken);
+    CHECK_RETURN_RET_ELOG(errCode != CAMERA_OK, errCode,
+        "HCaptureSession::SetVirtualApertureValue check permission failed.");
+
+    auto device = GetCameraDevice();
+    int32_t ret;
+    constexpr int32_t DEFAULT_ITEMS = 1;
+    constexpr int32_t DEFAULT_DATA_LENGTH = 1;
+    shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata =
+        make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
+    AddOrUpdateMetadata(changedMetadata,
+        OHOS_CONTROL_CAMERA_VIRTUAL_APERTURE_VALUE, &value, 1);
+    ret = device->UpdateSetting(changedMetadata);
+    CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, CAMERA_UNKNOWN_ERROR, "UpdateMuteSetting muteMode Failed");
+    if (needPersist) {
+        SetVirtualApertureToDataShareHelper(value);
+    }
+    if (isApertureActive == false && value > 0) {
+        ControlCenterStatusInfo statusInfo = {ControlCenterEffectType::PORTRAIT, true};
+        SetControlCenterEffectCallbackStatus(statusInfo);
+        isApertureActive = true;
+    }
+    if (isApertureActive == true && isEqual(value, biggestAperture)) {
+        ControlCenterStatusInfo statusInfo = {ControlCenterEffectType::PORTRAIT, false};
+        SetControlCenterEffectCallbackStatus(statusInfo);
+        isApertureActive = false;
+    }
+    return 0;
+}
+
+int32_t HCaptureSession::GetBeautyMetadata(std::vector<int32_t>& beautyApertureMetadata)
+{
+    CHECK_RETURN_RET_ELOG(!controlCenterPrecondition, CAMERA_INVALID_STATE,
+        "HCaptureSession::GetBeautyMetadata controlCenterPrecondition false");
+    MEDIA_INFO_LOG("HCaptureSession::GetBeautyMetadata");
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    int32_t errCode = CheckPermission(OHOS_PERMISSION_CAMERA, callerToken);
+    CHECK_RETURN_RET_ELOG(errCode != CAMERA_OK, errCode,
+        "HCaptureSession::GetBeautyMetadata check permission failed.");
+
+    std::vector<int32_t> supportedBeautyTypes = {};
+    auto device = GetCameraDevice();
+    auto settings = device->GetDeviceAbility();
+    camera_metadata_item_t item;
+    int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_ABILITY_SCENE_BEAUTY_TYPES, &item);
+    CHECK_RETURN_RET_ELOG(
+        ret != CAMERA_OK, -1, "CaptureSession::GetSupportedBeautyTypes abilityId is NULL");
+    for (uint32_t i = 0; i < item.count; i++) {
+        auto itr = h_metaBeautyTypeMap_.find(static_cast<camera_beauty_type_t>(item.data.u8[i]));
+        if (itr != h_metaBeautyTypeMap_.end()) {
+            supportedBeautyTypes.emplace_back(itr->second);
+        }
+    }
+    beautyApertureMetadata = supportedBeautyTypes;
+    return CAMERA_OK;
+}
+
+int32_t HCaptureSession::GetBeautyRange(std::vector<int32_t>& range, int32_t type)
+{
+    CHECK_RETURN_RET_ELOG(!controlCenterPrecondition, CAMERA_INVALID_STATE,
+        "HCaptureSession::GetBeautyRange controlCenterPrecondition false");
+    MEDIA_INFO_LOG("HCaptureSession::GetBeautyRange");
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    int32_t errCode = CheckPermission(OHOS_PERMISSION_CAMERA, callerToken);
+    CHECK_RETURN_RET_ELOG(errCode != CAMERA_OK, errCode,
+        "HCaptureSession::GetBeautyRange check permission failed.");
+
+    std::vector<int32_t> beautyRange = {};
+    auto device = GetCameraDevice();
+    auto settings = device->GetDeviceAbility();
+    camera_metadata_item_t item;
+    int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_ABILITY_BEAUTY_AUTO_VALUES, &item);
+    CHECK_RETURN_RET_ELOG(
+        ret != CAMERA_OK, -1, "CaptureSession::GetSupportedBeautyTypes abilityId is NULL");
+    for (uint32_t i = 0; i < item.count; i++) {
+        beautyRange.emplace_back(item.data.u8[i]);
+    }
+    range = beautyRange;
+    return CAMERA_OK;
+}
+
+int32_t HCaptureSession::GetBeautyValue(int32_t type, int32_t& value)
+{
+    CHECK_RETURN_RET_ELOG(!controlCenterPrecondition, CAMERA_INVALID_STATE,
+        "HCaptureSession::GetBeautyValue controlCenterPrecondition false");
+    MEDIA_INFO_LOG("HCaptureSession::GetBeautyValue");
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    int32_t errCode = CheckPermission(OHOS_PERMISSION_CAMERA, callerToken);
+    CHECK_RETURN_RET_ELOG(errCode != CAMERA_OK, errCode,
+        "HCaptureSession::GetBeautyValue check permission failed.");
+    return GetBeautyFromDataShareHelper(value);
+}
+
+int32_t HCaptureSession::SetBeautyValue(int32_t type, int32_t value, bool needPersist)
+{
+    MEDIA_ERR_LOG("HCaptureSession::SetBeautyValue");
+    CHECK_RETURN_RET_ELOG(!controlCenterPrecondition, CAMERA_INVALID_STATE,
+        "HCaptureSession::SetBeautyValue controlCenterPrecondition false");
+    MEDIA_INFO_LOG("HCaptureSession::SetBeautyValue");
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    int32_t errCode = CheckPermission(OHOS_PERMISSION_CAMERA, callerToken);
+    CHECK_RETURN_RET_ELOG(errCode != CAMERA_OK, errCode,
+        "HCaptureSession::SetBeautyValue check permission failed.");
+
+    auto device = GetCameraDevice();
+    int32_t ret;
+    int32_t count = 1;
+    constexpr int32_t DEFAULT_ITEMS = 1;
+    constexpr int32_t DEFAULT_DATA_LENGTH = 1;
+    uint8_t beautyType = OHOS_CAMERA_BEAUTY_TYPE_AUTO;
+    shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata =
+        make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
+    AddOrUpdateMetadata(changedMetadata, OHOS_CONTROL_BEAUTY_TYPE, &beautyType, count);
+    AddOrUpdateMetadata(changedMetadata, OHOS_CONTROL_BEAUTY_AUTO_VALUE, &value, count);
+    ret = device->UpdateSetting(changedMetadata);
+    CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, CAMERA_UNKNOWN_ERROR, "SetBeautyValue Failed");
+    if (needPersist) {
+        SetBeautyToDataShareHelper(value);
+    }
+    if (isBeautyActive == false && value > 0) {
+        ControlCenterStatusInfo statusInfo = {ControlCenterEffectType::BEAUTY, true};
+        SetControlCenterEffectCallbackStatus(statusInfo);
+        isBeautyActive = true;
+    }
+    if (isBeautyActive == true && value == 0) {
+        ControlCenterStatusInfo statusInfo = {ControlCenterEffectType::BEAUTY, false};
+        SetControlCenterEffectCallbackStatus(statusInfo);
+        isBeautyActive = false;
+    }
+    return CAMERA_OK;
+}
+
+int32_t HCaptureSession::SetVirtualApertureToDataShareHelper(float value)
+{
+    MEDIA_INFO_LOG("HCaptureSession::SetVirtualApertureToDataShareHelper value: %{public}f", value);
+    lock_guard<mutex> lock(g_dataShareHelperMutex);
+    CHECK_RETURN_RET_ELOG(cameraDataShareHelper_ == nullptr, CAMERA_ALLOC_ERROR,
+        "GetMuteModeFromDataShareHelper NULL");
+
+    std::string dataString = "";
+    auto ret = cameraDataShareHelper_->QueryOnce(CONTROL_CENTER_DATA, dataString);
+    MEDIA_INFO_LOG("SetVirtualApertureToDataShareHelper Query ret = %{public}d, value = %{public}s",
+        ret, dataString.c_str());
+    CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, ret, "SetVirtualApertureToDataShareHelper failed.");
+    std::map<std::string, std::array<float, CONTROL_CENTER_DATA_SIZE>> controlCenterMap
+        = StringToControlCenterMap(dataString);
+    std::string bundleName = GetBundleForControlCenter();
+    if (controlCenterMap.find(bundleName) != controlCenterMap.end()) {
+        CHECK_RETURN_RET_ELOG(controlCenterMap[bundleName].size() < CONTROL_CENTER_DATA_SIZE, CAMERA_INVALID_ARG,
+            "Parse string failed.");
+        controlCenterMap[bundleName][CONTROL_CENTER_APERTURE_INDEX] = value;
+        std::string controlCenterString = ControlCenterMapToString(controlCenterMap);
+        ret = cameraDataShareHelper_->UpdateOnce(CONTROL_CENTER_DATA, controlCenterString);
+        CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, ret, "SetVirtualApertureToDataShareHelper failed.");
+    } else {
+        MEDIA_ERR_LOG("SetVirtualApertureToDataShareHelper failed, no bundle.");
+        return CAMERA_INVALID_STATE;
+    }
+    return CAMERA_OK;
+}
+
+
+int32_t HCaptureSession::GetVirtualApertureFromDataShareHelper(float &value)
+{
+    MEDIA_INFO_LOG("HCaptureSession::GetBeautyFromDataShareHelper");
+    lock_guard<mutex> lock(g_dataShareHelperMutex);
+    CHECK_RETURN_RET_ELOG(cameraDataShareHelper_ == nullptr, CAMERA_INVALID_ARG,
+        "GetBeautyFromDataShareHelper NULL");
+    
+    std::string dataString = "";
+    auto ret = cameraDataShareHelper_->QueryOnce(CONTROL_CENTER_DATA, dataString);
+    MEDIA_INFO_LOG("GetVirtualApertureFromDataShareHelper Query ret = %{public}d, value = %{public}s",
+        ret, dataString.c_str());
+    if (ret != CAMERA_OK) {
+        value = 0;
+        return ret;
+    }
+    std::map<std::string, std::array<float, CONTROL_CENTER_DATA_SIZE>> controlCenterMap
+        = StringToControlCenterMap(dataString);
+    std::string bundleName = GetBundleForControlCenter();
+    if (controlCenterMap.find(bundleName) != controlCenterMap.end()) {
+        CHECK_RETURN_RET_ELOG(controlCenterMap[bundleName].size() < CONTROL_CENTER_DATA_SIZE, CAMERA_INVALID_ARG,
+            "Parse string failed.");
+        value = controlCenterMap[bundleName][CONTROL_CENTER_APERTURE_INDEX];
+        MEDIA_INFO_LOG("GetVirtualApertureFromDataShareHelper success, value:  %{public}f", value);
+    } else {
+        MEDIA_ERR_LOG("GetVirtualApertureFromDataShareHelper failed, no bundle.");
+        return CAMERA_INVALID_STATE;
+    }
+    return CAMERA_OK;
+}
+
+int32_t HCaptureSession::SetBeautyToDataShareHelper(int32_t value)
+{
+    MEDIA_INFO_LOG("HCaptureSession::SetBeautyToDataShareHelper value: %{public}d", value);
+    lock_guard<mutex> lock(g_dataShareHelperMutex);
+    CHECK_RETURN_RET_ELOG(cameraDataShareHelper_ == nullptr, CAMERA_ALLOC_ERROR,
+        "GetMuteModeFromDataShareHelper NULL");
+
+    std::string dataString = "";
+    auto ret = cameraDataShareHelper_->QueryOnce(CONTROL_CENTER_DATA, dataString);
+    MEDIA_INFO_LOG("SetBeautyToDataShareHelper Query ret = %{public}d, value = %{public}s", ret, dataString.c_str());
+    CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, ret, "SetBeautyToDataShareHelper failed.");
+    std::map<std::string, std::array<float, CONTROL_CENTER_DATA_SIZE>> controlCenterMap
+        = StringToControlCenterMap(dataString);
+    std::string bundleName = GetBundleForControlCenter();
+    if (controlCenterMap.find(bundleName) != controlCenterMap.end()) {
+        CHECK_RETURN_RET_ELOG(controlCenterMap[bundleName].size() < CONTROL_CENTER_DATA_SIZE, CAMERA_INVALID_ARG,
+            "Parse string failed.");
+        controlCenterMap[bundleName][CONTROL_CENTER_BEAUTY_INDEX] = value;
+        std::string controlCenterString = ControlCenterMapToString(controlCenterMap);
+        ret = cameraDataShareHelper_->UpdateOnce(CONTROL_CENTER_DATA, controlCenterString);
+        CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, ret, "SetBeautyToDataShareHelper failed.");
+    } else {
+        MEDIA_ERR_LOG("SetBeautyToDataShareHelper failed, no bundle.");
+        return CAMERA_INVALID_STATE;
+    }
+    return CAMERA_OK;
+}
+
+
+int32_t HCaptureSession::GetBeautyFromDataShareHelper(int32_t &value)
+{
+    MEDIA_INFO_LOG("HCaptureSession::GetBeautyFromDataShareHelper");
+    lock_guard<mutex> lock(g_dataShareHelperMutex);
+    CHECK_RETURN_RET_ELOG(cameraDataShareHelper_ == nullptr, CAMERA_INVALID_ARG,
+        "GetBeautyFromDataShareHelper NULL");
+    
+    std::string dataString = "";
+    auto ret = cameraDataShareHelper_->QueryOnce(CONTROL_CENTER_DATA, dataString);
+    MEDIA_INFO_LOG("GetBeautyFromDataShareHelper Query ret = %{public}d, value = %{public}s", ret, dataString.c_str());
+    if (ret != CAMERA_OK) {
+        value = 0;
+        return ret;
+    }
+    std::map<std::string, std::array<float, CONTROL_CENTER_DATA_SIZE>> controlCenterMap
+        = StringToControlCenterMap(dataString);
+    std::string bundleName = GetBundleForControlCenter();
+    if (controlCenterMap.find(bundleName) != controlCenterMap.end()) {
+        CHECK_RETURN_RET_ELOG(controlCenterMap[bundleName].size() < CONTROL_CENTER_DATA_SIZE, CAMERA_INVALID_ARG,
+            "Parse string failed.");
+        value = controlCenterMap[bundleName][CONTROL_CENTER_BEAUTY_INDEX];
+        MEDIA_INFO_LOG("GetBeautyFromDataShareHelper success, value:  %{public}d", value);
+    } else {
+        MEDIA_ERR_LOG("GetBeautyFromDataShareHelper failed, no bundle.");
+        return CAMERA_INVALID_STATE;
+    }
+    return CAMERA_OK;
+}
+
+void HCaptureSession::SetControlCenterPrecondition(bool precondition)
+{
+    controlCenterPrecondition = precondition;
+}
+
+void HCaptureSession::SetDeviceControlCenterAbility(bool ability)
+{
+    deviceControlCenterAbility = ability;
+}
+
+std::string HCaptureSession::GetBundleForControlCenter()
+{
+    return bundleForControlCenter_;
+}
+
+void HCaptureSession::SetBundleForControlCenter(std::string bundleName)
+{
+    MEDIA_ERR_LOG("HCaptureSession::SetBundleForControlCenter:  %{public}s, ", bundleName.c_str());
+    bundleForControlCenter_ = bundleName;
 }
 
 int32_t HCaptureSession::UnlinkInputAndOutputs()
@@ -1312,6 +1642,7 @@ int32_t HCaptureSession::Release(CaptureSessionReleaseType type)
         SetCallback(emptyCallback);
         sptr<IPressureStatusCallback> emptyPressureCallback = nullptr;
         SetPressureCallback(emptyPressureCallback);
+        UnSetControlCenterEffectStatusCallback();
         stateMachine_.Transfer(CaptureSessionState::SESSION_RELEASED);
         isSessionStarted_ = false;
     });
@@ -1424,6 +1755,34 @@ void HCaptureSession::SetPressureStatus(PressureStatus status)
     MEDIA_INFO_LOG("HCaptureSession::SetPressureStatus(), status: %{public}d", status);
     CHECK_RETURN_ELOG(innerPressureCallback_ == nullptr, "innerPressureCallback is null.");
     innerPressureCallback_->OnPressureStatusChanged(status);
+}
+
+int32_t HCaptureSession::SetControlCenterEffectStatusCallback(const sptr<IControlCenterEffectStatusCallback>& callback)
+{
+    if (callback == nullptr) {
+        MEDIA_WARNING_LOG("HCaptureSession::SetControlCenterEffectStatusCallback callback is null, we "
+                          "should clear the callback, sessionID: %{public}d", GetSessionId());
+    }
+    std::lock_guard<std::mutex> lock(innerControlCenterEffectCallbackLock_);
+    innerControlCenterEffectCallback_ = callback;
+
+    return CAMERA_OK;
+}
+
+int32_t HCaptureSession::UnSetControlCenterEffectStatusCallback()
+{
+    MEDIA_INFO_LOG("HCaptureSession::UnSetControlCenterEffectStatusCallback");
+    std::lock_guard<std::mutex> lock(innerControlCenterEffectCallbackLock_);
+    innerControlCenterEffectCallback_ = nullptr;
+    return CAMERA_OK;
+}
+
+void HCaptureSession::SetControlCenterEffectCallbackStatus(ControlCenterStatusInfo statusInfo)
+{
+    MEDIA_INFO_LOG("HCaptureSession::SetControlCenterEffectCallbackStatus(), status: %{public}d", statusInfo.isActive);
+    std::lock_guard<std::mutex> lock(innerControlCenterEffectCallbackLock_);
+    CHECK_RETURN_ELOG(innerControlCenterEffectCallback_ == nullptr, "innerControlCenterEffectCallback_ is null.");
+    innerControlCenterEffectCallback_->OnControlCenterEffectStatusChanged(statusInfo);
 }
 
 std::string HCaptureSession::GetSessionState()

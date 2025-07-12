@@ -26,6 +26,7 @@ static const std::string SETTINGS_DATA_EXT_URI = "datashare:///com.ohos.settings
 static const std::string SETTINGS_DATA_FIELD_KEYWORD = "KEYWORD";
 static const std::string SETTINGS_DATA_FIELD_VALUE = "VALUE";
 static const std::string PREDICATES_STRING = "settings.camera.mute_persist";
+static const std::string CONTROL_CENTER_DATA = "settings.camera.control_center";
 #ifdef NOTIFICATION_ENABLE
 static const std::string PREDICATES_CAMERA_BEAUTY_STATUS = "settings.camera.beauty_status";
 static const std::string PREDICATES_CAMERA_BEAUTY_TIMES = "settings.camera.beauty_times";
@@ -43,4 +44,4 @@ private:
 };
 } // namespace CameraStandard
 } // namespace OHOS
-#endif // CAMERA_DATASHARE_HELPER_H
+#endif // CAMERA_DATASHARE_HELPER_H

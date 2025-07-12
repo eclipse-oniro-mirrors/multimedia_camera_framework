@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -25,6 +25,7 @@
 #include "camera_error_code.h"
 #include "camera_log.h"
 #include "camera_napi_const.h"
+#include "camera_napi_object.h"
 #include "camera_napi_object_types.h"
 #include "camera_napi_param_parser.h"
 #include "camera_napi_security_utils.h"
@@ -204,6 +205,12 @@ const std::vector<napi_property_descriptor> CameraSessionNapi::color_management_
     DECLARE_NAPI_FUNCTION("getSupportedColorSpaces", CameraSessionNapi::GetSupportedColorSpaces),
     DECLARE_NAPI_FUNCTION("getActiveColorSpace", CameraSessionNapi::GetActiveColorSpace),
     DECLARE_NAPI_FUNCTION("setColorSpace", CameraSessionNapi::SetColorSpace)
+};
+
+const std::vector<napi_property_descriptor> CameraSessionNapi::control_center_props = {
+    DECLARE_NAPI_FUNCTION("isControlCenterSupported", CameraSessionNapi::IsControlCenterSupported),
+    DECLARE_NAPI_FUNCTION("getSupportedEffectTypes", CameraSessionNapi::GetSupportedEffectTypes),
+    DECLARE_NAPI_FUNCTION("enableControlCenter", CameraSessionNapi::EnableControlCenter)
 };
 
 const std::vector<napi_property_descriptor> CameraSessionNapi::preconfig_props = {
@@ -428,6 +435,54 @@ void PressureCallbackListener::OnPressureStatusChanged(PressureStatus status)
 {
     MEDIA_INFO_LOG("OnPressureStatusChanged is called, status: %{public}d", status);
     OnPressureCallbackAsync(status);
+}
+
+void ControlCenterEffectStatusCallbackListener::OnControlCenterEffectStatusCallbackAsync(
+    ControlCenterStatusInfo controlCenterStatusInfo) const
+{
+    MEDIA_INFO_LOG("OnControlCenterEffectStatusCallbackAsync is called");
+    std::unique_ptr<ControlCenterEffectCallbackInfo> callbackInfo =
+        std::make_unique<ControlCenterEffectCallbackInfo>(controlCenterStatusInfo, shared_from_this());
+    ControlCenterEffectCallbackInfo *event = callbackInfo.get();
+    auto task = [event]() {
+        ControlCenterEffectCallbackInfo* callbackInfo = reinterpret_cast<ControlCenterEffectCallbackInfo *>(event);
+        if (callbackInfo) {
+            auto listener = callbackInfo->listener_.lock();
+            if (listener != nullptr) {
+                listener->OnControlCenterEffectStatusCallback(callbackInfo->statusInfo_);
+            }
+            delete callbackInfo;
+        }
+    };
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
+        MEDIA_ERR_LOG("failed to execute work");
+    } else {
+        callbackInfo.release();
+    }
+}
+
+void ControlCenterEffectStatusCallbackListener::OnControlCenterEffectStatusCallback(
+    ControlCenterStatusInfo controlCenterStatusInfo) const
+{
+    MEDIA_INFO_LOG("OnControlCenterEffectStatusCallback is called");
+    ExecuteCallbackScopeSafe("controlCenterEffectStatusChange", [&]() {
+        napi_value errCode = CameraNapiUtils::GetUndefinedValue(env_);
+        napi_value callbackObj;
+        ControlCenterStatusInfo info = controlCenterStatusInfo;
+        CameraNapiObject controlCenterStatusObj {{
+            { "effectType", reinterpret_cast<int32_t*>(&info.effectType)},
+            { "isActive", &info.isActive }
+        }};
+        callbackObj = controlCenterStatusObj.CreateNapiObjFromMap(env_);
+        return ExecuteCallbackData(env_, errCode, callbackObj);
+    });
+}
+
+void ControlCenterEffectStatusCallbackListener::OnControlCenterEffectStatusChanged(
+    ControlCenterStatusInfo controlCenterStatusInfo)
+{
+    MEDIA_INFO_LOG("ControlCenterEffectStatusCallbackListener::OnControlCenterEffectStatusChanged");
+    OnControlCenterEffectStatusCallbackAsync(controlCenterStatusInfo);
 }
 
 void SmoothZoomCallbackListener::OnSmoothZoomCallbackAsync(int32_t duration) const
@@ -2237,6 +2292,83 @@ napi_value CameraSessionNapi::GetSupportedColorSpaces(napi_env env, napi_callbac
     return result;
 }
 
+napi_value CameraSessionNapi::IsControlCenterSupported(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("CameraSessionNapi::IsControlCenterSupported is called.");
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("CameraSessionNapi::IsControlCenterSupported parse parameter occur error");
+        return nullptr;
+    }
+    auto result = CameraNapiUtils::GetUndefinedValue(env);
+    if (cameraSessionNapi->cameraSession_ != nullptr) {
+        bool isSupported = cameraSessionNapi->cameraSession_->IsControlCenterSupported();
+        napi_get_boolean(env, isSupported, &result);
+    } else {
+        MEDIA_ERR_LOG("CameraSessionNapi::IsControlCenterSupported get native object fail");
+        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
+        return nullptr;
+    }
+    return result;
+}
+ 
+napi_value CameraSessionNapi::GetSupportedEffectTypes(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("CameraSessionNapi::GetSupportedEffectTypes is called.");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+ 
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+    napi_get_undefined(env, &result);
+    status = napi_create_array(env, &result);
+    CHECK_RETURN_RET_ELOG(status != napi_ok, result, "napi_create_array call Failed!");
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+        std::vector<ControlCenterEffectType> effectTypes
+            = cameraSessionNapi->cameraSession_->GetSupportedEffectTypes();
+        if (!effectTypes.empty()) {
+            for (size_t i = 0; i < effectTypes.size(); i++) {
+                ControlCenterEffectType effectType = effectTypes[i];
+                napi_value value;
+                napi_create_int32(env, static_cast<int32_t>(effectType), &value);
+                napi_set_element(env, result, i, value);
+            }
+        }
+    } else {
+        MEDIA_ERR_LOG("GetSupportedEffectTypes call Failed!");
+    }
+    return result;
+}
+ 
+napi_value CameraSessionNapi::EnableControlCenter(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("CameraSessionNapi::EnableControlCenter");
+    napi_value result = CameraNapiUtils::GetUndefinedValue(env);
+    bool isEnableControlCenter;
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, isEnableControlCenter);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("CameraSessionNapi::EnableControlCenter parse parameter occur error");
+        return result;
+    }
+    if (cameraSessionNapi->cameraSession_ != nullptr) {
+        MEDIA_INFO_LOG("CameraSessionNapi::EnableMacro:%{public}d", isEnableControlCenter);
+        cameraSessionNapi->cameraSession_->LockForControl();
+        cameraSessionNapi->cameraSession_->EnableControlCenter(isEnableControlCenter);
+        cameraSessionNapi->cameraSession_->UnlockForControl();
+    } else {
+        MEDIA_ERR_LOG("CameraSessionNapi::EnableControlCenter get native object fail");
+        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
+        return result;
+    }
+    return result;
+}
+
 napi_value CameraSessionNapi::GetActiveColorSpace(napi_env env, napi_callback_info info)
 {
     MEDIA_DEBUG_LOG("GetActiveColorSpace is called");
@@ -2911,6 +3043,9 @@ const CameraSessionNapi::EmitterFunctions CameraSessionNapi::fun_map_ = {
     { "systemPressureLevel", {
         &CameraSessionNapi::RegisterPressureStatusCallbackListener,
         &CameraSessionNapi::UnregisterPressureStatusCallbackListener } },
+    { "controlCenterEffectStatusChange", {
+        &CameraSessionNapi::RegisterControlCenterEffectStatusCallbackListener,
+        &CameraSessionNapi::UnregisterControlCenterEffectStatusCallbackListener } },
     { "moonCaptureBoostStatus", {
         &CameraSessionNapi::RegisterMoonCaptureBoostCallbackListener,
         &CameraSessionNapi::UnregisterMoonCaptureBoostCallbackListener } },
@@ -3071,6 +3206,20 @@ void CameraSessionNapi::UnregisterPressureStatusCallbackListener(
 {
     CameraNapiUtils::ThrowError(env, CameraErrorCode::OPERATION_NOT_ALLOWED,
         "this type callback can not be registered in current session!");
+}
+
+void CameraSessionNapi::RegisterControlCenterEffectStatusCallbackListener(
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+{
+    CameraNapiUtils::ThrowError(env, CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "this type callback can not be registered in current session!");
+}
+ 
+void CameraSessionNapi::UnregisterControlCenterEffectStatusCallbackListener(
+    const std::string &eventName, napi_env env, napi_value callback, const std::vector<napi_value> &args)
+{
+    CameraNapiUtils::ThrowError(env, CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "this type callback can not be unregistered in current session!");
 }
 
 } // namespace CameraStandard

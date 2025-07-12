@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -127,6 +127,10 @@ public:
 
     Camera_ErrorCode DeleteColorSpaces(OH_NativeBuffer_ColorSpace* colorSpace);
 
+    Camera_ErrorCode GetSupportedEffectTypes(Camera_ControlCenterEffectType** types, uint32_t* size);
+
+    Camera_ErrorCode DeleteEffectTypes(Camera_ControlCenterEffectType* types);
+
     Camera_ErrorCode SetActiveColorSpace(OH_NativeBuffer_ColorSpace colorSpace);
 
     Camera_ErrorCode Start();
@@ -164,7 +168,15 @@ public:
     Camera_ErrorCode UnRegisterSystemPressureLevelCallback(
         OH_CaptureSession_OnSystemPressureLevel systemPressureLevel);
 
+    Camera_ErrorCode RegisterControlCenterEffectStatusChangeCallback(
+        OH_CaptureSession_OnControlCenterEffectStatusChange controlCenterStatusChange);
+    
+    Camera_ErrorCode UnregisterControlCenterEffectStatusChangeCallback(
+        OH_CaptureSession_OnControlCenterEffectStatusChange controlCenterStatusChange);
+
     Camera_ErrorCode IsAutoDeviceSwitchSupported(bool* isSupported);
+
+    Camera_ErrorCode IsControlCenterSupported(bool* isSupported);
 
     Camera_ErrorCode EnableAutoDeviceSwitch(bool enabled);
 
