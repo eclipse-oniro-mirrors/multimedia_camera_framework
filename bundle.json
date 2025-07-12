@@ -38,6 +38,7 @@
               "drivers_interface_camera",
               "drivers_interface_display",
               "drivers_peripheral_display",
+              "eventhandler",
               "graphic_2d",
               "graphic_surface",
               "hdf_core",
@@ -53,6 +54,7 @@
               "media_library",
               "resource_management",
               "resource_schedule_service",
+              "runtime_core",
               "napi",
               "os_account",
               "qos_manager",
@@ -88,7 +90,8 @@
               "//foundation/multimedia/camera_framework/frameworks/cj:cj_camera_ffi",
               "//foundation/multimedia/camera_framework/frameworks/cj:cj_camera_picker_ffi",
               "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi:camera_js",
-              "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi:camerapicker_js"
+              "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi:camerapicker_js",
+              "//foundation/multimedia/camera_framework/frameworks/taihe:camera_framework_taihe"
             ],
             "service_group": [
               "//foundation/multimedia/camera_framework/sa_profile:camera_service_sa_profile",
@@ -172,6 +175,9 @@
                   "camera_picker_napi.h"
                 ]
               }
+            },
+            {
+              "name": "//foundation/multimedia/camera_framework/frameworks/taihe:copy_camera_taihe"
             }
           ],
           "test": [
