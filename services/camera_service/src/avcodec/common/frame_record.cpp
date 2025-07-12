@@ -89,6 +89,7 @@ void FrameRecord::DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<Surf
         .colorGamut = surfaceBuffer->GetSurfaceBufferColorGamut(),
         .transform = surfaceBuffer->GetSurfaceBufferTransform(),
     };
+    CHECK_ERROR_RETURN_LOG(newSurfaceBuffer == nullptr, "DeepCopyBuffer::DeepCopyBuffer newSurfaceBuffer is null");
     auto allocErrorCode = newSurfaceBuffer->Alloc(requestConfig);
     CHECK_ERROR_RETURN_LOG(allocErrorCode != GSERROR_OK, "SurfaceBuffer alloc ret: %d", allocErrorCode);
     CHECK_ERROR_PRINT_LOG(memcpy_s(newSurfaceBuffer->GetVirAddr(), newSurfaceBuffer->GetSize(),
