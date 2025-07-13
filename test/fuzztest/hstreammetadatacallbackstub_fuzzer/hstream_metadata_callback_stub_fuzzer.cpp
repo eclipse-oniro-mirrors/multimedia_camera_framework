@@ -54,9 +54,9 @@ void HStreamMetadataCallbackStubFuzzer::HStreamMetadataCallbackStubFuzzerTest(Fu
 void Test(uint8_t* data, size_t size)
 {
     auto hstreamMetadataCallbackStub = std::make_unique<HStreamMetadataCallbackStubFuzzer>();
-    CHECK_ERROR_RETURN_LOG(hstreamMetadataCallbackStub == nullptr, "hstreamMetadataCallbackStub is null");
+    CHECK_RETURN_ELOG(hstreamMetadataCallbackStub == nullptr, "hstreamMetadataCallbackStub is null");
     FuzzedDataProvider fdp(data, size);
-    CHECK_ERROR_RETURN(fdp.remaining_bytes()  < MIN_SIZE_NUM);
+    CHECK_RETURN(fdp.remaining_bytes()  < MIN_SIZE_NUM);
     hstreamMetadataCallbackStub->HStreamMetadataCallbackStubFuzzerTest(fdp);
 }
 

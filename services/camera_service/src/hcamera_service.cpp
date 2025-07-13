@@ -24,10 +24,13 @@
 #include <stdint.h>
 #include <string>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
+#include "ability/camera_ability_const.h"
 #include "access_token.h"
 #include "icapture_session_callback.h"
+#include "session/capture_scene_const.h"
 #ifdef NOTIFICATION_ENABLE
 #include "camera_beauty_notification.h"
 #endif
@@ -311,6 +314,102 @@ int32_t HCameraService::SetMuteModeByDataShareHelper(bool muteMode)
     return CAMERA_OK;
 }
 
+int32_t HCameraService::GetControlCenterStatusFromDataShareHelper(bool &status)
+{
+    MEDIA_INFO_LOG("HCameraService::GetControlCenterStatusFromDataShareHelper");
+    lock_guard<mutex> lock(g_dataShareHelperMutex);
+    CHECK_RETURN_RET_ELOG(cameraDataShareHelper_ == nullptr, CAMERA_INVALID_ARG,
+        "GetControlCenterStatusFromDataShareHelper NULL");
+    
+    std::string value = "";
+    auto ret = cameraDataShareHelper_->QueryOnce(CONTROL_CENTER_DATA, value);
+    MEDIA_INFO_LOG("GetControlCenterStatusFromDataShareHelper Query ret = %{public}d, value = %{public}s",
+        ret, value.c_str());
+    if (ret != CAMERA_OK) {
+        status = false;
+        isControlCenterEnabled_ = false;
+        return CAMERA_OK;
+    }
+
+    std::string bundleName = videoSessionForControlCenter_->GetBundleForControlCenter();
+    std::map<std::string, std::array<float, CONTROL_CENTER_DATA_SIZE>> controlCenterMap
+        = StringToControlCenterMap(value);
+    if (controlCenterMap.find(bundleName) != controlCenterMap.end()) {
+        if (controlCenterMap[bundleName].size() >= CONTROL_CENTER_DATA_SIZE) {
+            int32_t statusVal = static_cast<int32_t>(controlCenterMap[bundleName][CONTROL_CENTER_STATUS_INDEX]);
+            MEDIA_INFO_LOG("GetControlCenterStatusFromDataShareHelper success value: %{public}d", statusVal);
+            status = (statusVal == 1) ? true: false;
+        }
+    } else {
+        MEDIA_ERR_LOG("GetControlCenterStatusFromDataShareHelper failed, no bundle.");
+        status = false;
+        return CAMERA_OK;
+    }
+    isControlCenterEnabled_ = status;
+    return CAMERA_OK;
+}
+
+int32_t HCameraService::UpdateDataShareAndTag(bool status)
+{
+    MEDIA_INFO_LOG("HCameraService::UpdateDataShareAndTag");
+    lock_guard<mutex> lock(g_dataShareHelperMutex);
+    CHECK_RETURN_RET_ELOG(cameraDataShareHelper_ == nullptr, CAMERA_ALLOC_ERROR,
+        "GetMuteModeFromDataShareHelper NULL");
+
+    std::string bundleName = videoSessionForControlCenter_->GetBundleForControlCenter();
+    std::map<std::string, std::array<float, CONTROL_CENTER_DATA_SIZE>> controlCenterMap;
+    std::string value = "";
+    auto ret = cameraDataShareHelper_->QueryOnce(CONTROL_CENTER_DATA, value);
+    MEDIA_INFO_LOG("UpdateDataShareAndTag Query ret = %{public}d, value = %{public}s", ret, value.c_str());
+    if (ret != CAMERA_OK) {
+        CreateControlCenterDataShare(controlCenterMap, bundleName, status);
+        return ret;
+    }
+    controlCenterMap = StringToControlCenterMap(value);
+    if (controlCenterMap.find(bundleName) != controlCenterMap.end()) {
+        CHECK_RETURN_RET_ELOG(controlCenterMap[bundleName].size() < CONTROL_CENTER_DATA_SIZE, CAMERA_INVALID_ARG,
+            "Parse string failed.");
+        controlCenterMap[bundleName][CONTROL_CENTER_STATUS_INDEX] = status;
+        std::string controlCenterString = ControlCenterMapToString(controlCenterMap);
+        ret = cameraDataShareHelper_->UpdateOnce(CONTROL_CENTER_DATA, controlCenterString);
+        MEDIA_INFO_LOG("UpdateDataShareAndTag ret:  %{public}d", ret);
+        if (status) {
+            videoSessionForControlCenter_->SetBeautyValue(
+                BeautyType::AUTO_TYPE, controlCenterMap[bundleName][CONTROL_CENTER_BEAUTY_INDEX], false);
+            videoSessionForControlCenter_->SetVirtualApertureValue(
+                controlCenterMap[bundleName][CONTROL_CENTER_APERTURE_INDEX], false);
+        } else {
+            videoSessionForControlCenter_->SetBeautyValue(BeautyType::AUTO_TYPE, 0, false);
+            videoSessionForControlCenter_->SetVirtualApertureValue(0, false);
+        }
+    } else {
+        MEDIA_INFO_LOG("UpdateDataShareAndTag no bundle, create info for new bundle.");
+        CreateControlCenterDataShare(controlCenterMap, bundleName, status);
+    }
+    return ret;
+}
+
+int32_t HCameraService::CreateControlCenterDataShare(std::map<std::string,
+    std::array<float, CONTROL_CENTER_DATA_SIZE>> controlCenterMap, std::string bundleName, bool status)
+{
+    std::vector<float> virtualMetadata = {};
+    videoSessionForControlCenter_->GetVirtualApertureMetadate(virtualMetadata);
+    float biggestAperture = virtualMetadata.back();
+
+    controlCenterMap[bundleName] = {status, 0, biggestAperture};
+    std::string controlCenterString = ControlCenterMapToString(controlCenterMap);
+    auto ret = cameraDataShareHelper_->UpdateOnce(CONTROL_CENTER_DATA, controlCenterString);
+    CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, ret, "CreateControlCenterDataShare failed.");
+
+    videoSessionForControlCenter_->SetBeautyValue(BeautyType::AUTO_TYPE, 0, false);
+    if (status) {
+        videoSessionForControlCenter_->SetVirtualApertureValue(biggestAperture, false);
+    } else {
+        videoSessionForControlCenter_->SetVirtualApertureValue(0, false);
+    }
+    return ret;
+}
+
 void HCameraService::OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId)
 {
     MEDIA_INFO_LOG("OnAddSystemAbility systemAbilityId:%{public}d", systemAbilityId);
@@ -577,6 +676,15 @@ int32_t HCameraService::CreateCaptureSession(sptr<ICaptureSession>& session, int
         return rc;
     }
     session = captureSession;
+    if (opMode == SceneMode::VIDEO) {
+        videoSessionForControlCenter_ = captureSession;
+        std::string bundleName = GetClientBundle(IPCSkeleton::GetCallingUid());
+        videoSessionForControlCenter_->SetBundleForControlCenter(bundleName);
+        MEDIA_INFO_LOG("Save videoSession for controlCenter");
+    } else {
+        videoSessionForControlCenter_ = nullptr;
+        MEDIA_INFO_LOG("Clear videoSession of controlCenter");
+    }
 
 #ifdef HOOK_CAMERA_OPERATOR
     std::string clientName = GetClientBundle(IPCSkeleton::GetCallingUid());
@@ -594,6 +702,17 @@ int32_t HCameraService::CreateCaptureSession(sptr<ICaptureSession>& session, int
         captureSession->SetMechDeliveryState(MechDeliveryState::NEED_ENABLE);
     }
     return rc;
+}
+
+int32_t HCameraService::GetVideoSessionForControlCenter(sptr<ICaptureSession>& session)
+{
+    MEDIA_INFO_LOG("HCameraService::GetVideoSessionForControlCenter");
+    if (videoSessionForControlCenter_ == nullptr) {
+        MEDIA_ERR_LOG("GetVideoSessionForControlCenter failed, session == nullptr.");
+        return CAMERA_INVALID_ARG;
+    }
+    session = videoSessionForControlCenter_;
+    return CAMERA_OK;
 }
 
 int32_t HCameraService::CreateDeferredPhotoProcessingSession(int32_t userId,
@@ -1126,6 +1245,50 @@ int32_t HCameraService::UnSetMuteCallback()
     return UnSetMuteCallback(pid);
 }
 
+int32_t HCameraService::SetControlCenterCallback(const sptr<IControlCenterStatusCallback>& callback)
+{
+    lock_guard<recursive_mutex> lock(torchCbMutex_);
+    pid_t pid = IPCSkeleton::GetCallingPid();
+    MEDIA_INFO_LOG("HCameraService::SetControlCenterCallback pid = %{public}d", pid);
+    CHECK_RETURN_RET_ELOG(callback == nullptr, CAMERA_INVALID_ARG,
+        "HCameraService::SetControlCenterCallback callback is null");
+    controlcenterCallbacks_.insert(make_pair(pid, callback));
+    return CAMERA_OK;
+}
+
+int32_t HCameraService::UnSetControlCenterStatusCallback()
+{
+    pid_t pid = IPCSkeleton::GetCallingPid();
+    return UnSetControlCenterStatusCallback(pid);
+}
+
+int32_t HCameraService::UnSetControlCenterStatusCallback(pid_t pid)
+{
+    lock_guard<mutex> lock(controlCenterStatusMutex_);
+    MEDIA_INFO_LOG("HCameraService::UnSetControlCenterStatusCallback pid = %{public}d, size = %{public}zu",
+        pid, controlcenterCallbacks_.size());
+    if (!controlcenterCallbacks_.empty()) {
+        MEDIA_INFO_LOG("UnSetControlCenterStatusCallback controlcenterCallbacks_ is not empty, reset it");
+        auto it = controlcenterCallbacks_.find(pid);
+        bool isErasePid = (it != controlcenterCallbacks_.end()) && (it->second);
+        if (isErasePid) {
+            it->second = nullptr;
+            controlcenterCallbacks_.erase(it);
+        }
+    }
+    MEDIA_INFO_LOG("HCameraService::UnSetControlCenterStatusCallback after erase pid = %{public}d, size = %{public}zu",
+        pid, controlcenterCallbacks_.size());
+    return CAMERA_OK;
+}
+
+int32_t HCameraService::GetControlCenterStatus(bool& status)
+{
+    MEDIA_INFO_LOG("HCameraService::GetControlCenterStatus");
+    CHECK_RETURN_RET_DLOG(!controlCenterPrecondition, CAMERA_OK,
+        "HCameraService::GetControlCenterStatus precondition false.");
+    return GetControlCenterStatusFromDataShareHelper(status);
+}
+
 int32_t HCameraService::SetTorchCallback(const sptr<ITorchServiceCallback>& callback)
 {
     lock_guard<recursive_mutex> lock(torchCbMutex_);
@@ -1354,6 +1517,69 @@ int32_t HCameraService::MuteCameraFunc(bool muteMode)
         muteModeStored_ = muteMode;
     }
     return ret;
+}
+
+int32_t HCameraService::EnableControlCenter(bool status)
+{
+    MEDIA_INFO_LOG("HCameraService::EnableControlCenter");
+    CHECK_RETURN_RET_ELOG(!controlCenterPrecondition, CAMERA_INVALID_STATE, "ControlCenterPrecondition false.");
+    lock_guard<mutex> lock(controlCenterStatusMutex_);
+
+    auto ret = UpdateDataShareAndTag(status);
+    CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, ret, "UpdateDataShareAndTag failed.");
+
+    MEDIA_INFO_LOG("EnableControlCenter success.");
+    isControlCenterEnabled_ = status;
+    CHECK_RETURN_RET_ELOG(controlcenterCallbacks_.empty(), ret, "IControlCenterStatusCallback is empty.");
+    for (auto it : controlcenterCallbacks_) {
+        if (it.second == nullptr) {
+            MEDIA_ERR_LOG("OnControlCenterStatusChanged pid:%{public}d Callbacks is null", it.first);
+            continue;
+        }
+        uint32_t pid = it.first;
+        if (ShouldSkipStatusUpdates(pid)) {
+            continue;
+        }
+        it.second->OnControlCenterStatusChanged(status);
+    }
+    return ret;
+}
+
+int32_t HCameraService::SetControlCenterPrecondition(bool condition)
+{
+    MEDIA_INFO_LOG("HCameraService::SetControlCenterPrecondition %{public}d", condition);
+    controlCenterPrecondition = condition;
+    if (videoSessionForControlCenter_ != nullptr) {
+        videoSessionForControlCenter_->SetControlCenterPrecondition(controlCenterPrecondition);
+    } else {
+        MEDIA_WARNING_LOG("");
+    }
+    CHECK_RETURN_RET_DLOG(controlCenterPrecondition || !isControlCenterEnabled_, CAMERA_OK,
+        "SetControlCenterPrecondition success.");
+    auto ret = EnableControlCenter(false);
+    CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, ret, "EnableControlCenter failed.");
+    isControlCenterEnabled_ = false;
+    for (auto it : controlcenterCallbacks_) {
+        if (it.second == nullptr) {
+            MEDIA_ERR_LOG("OnControlCenterStatusChanged pid:%{public}d Callbacks is null", it.first);
+            continue;
+        }
+        uint32_t pid = it.first;
+        if (ShouldSkipStatusUpdates(pid)) {
+            continue;
+        }
+        it.second->OnControlCenterStatusChanged(false);
+    }
+    return CAMERA_OK;
+}
+
+int32_t HCameraService::SetDeviceControlCenterAbility(bool ability)
+{
+    deviceControlCenterAbility = ability;
+    if (videoSessionForControlCenter_ != nullptr) {
+        videoSessionForControlCenter_->SetDeviceControlCenterAbility(ability);
+    }
+    return CAMERA_OK;
 }
 
 void HCameraService::CacheCameraStatus(const string& cameraId, std::shared_ptr<CameraStatusCallbacksInfo> info)

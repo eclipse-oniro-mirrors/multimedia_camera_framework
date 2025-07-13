@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -40,6 +40,7 @@
 #include "dynamic_loader/camera_napi_ex_manager.h"
 #include "input/camera_napi.h"
 #include "input/prelaunch_config.h"
+#include "ipc_skeleton.h"
 #include "js_native_api.h"
 #include "js_native_api_types.h"
 #include "mode/photo_session_napi.h"
@@ -48,6 +49,7 @@
 #include "napi/native_common.h"
 #include "refbase.h"
 #include "napi/native_node_api.h"
+#include "session/control_center_session_napi.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -312,6 +314,56 @@ void CameraMuteListenerNapi::OnCameraMute(bool muteMode) const
     OnCameraMuteCallbackAsync(muteMode);
 }
 
+ControlCenterStatusListenerNapi::ControlCenterStatusListenerNapi(napi_env env): ListenerBase(env)
+{
+    MEDIA_DEBUG_LOG("ControlCenterStatusListenerNapi is called.");
+}
+ 
+ControlCenterStatusListenerNapi::~ControlCenterStatusListenerNapi()
+{
+    MEDIA_DEBUG_LOG("~ControlCenterStatusListenerNapi is called.");
+}
+ 
+void ControlCenterStatusListenerNapi::OnControlCenterStatusCallbackAsync(bool status) const
+{
+    MEDIA_INFO_LOG("OnControlCenterStatusCallbackAsync is called, status: %{public}d", status);
+    std::unique_ptr<ControlCenterStatusCallbackInfo> callbackInfo =
+        std::make_unique<ControlCenterStatusCallbackInfo>(status, shared_from_this());
+    ControlCenterStatusCallbackInfo *event = callbackInfo.get();
+    auto task = [event]() {
+        ControlCenterStatusCallbackInfo* callbackInfo = reinterpret_cast<ControlCenterStatusCallbackInfo *>(event);
+        if (callbackInfo) {
+            auto listener = callbackInfo->listener_.lock();
+            if (listener != nullptr) {
+                listener->OnControlCenterStatusCallback(callbackInfo->controlCenterStatus_);
+            }
+            delete callbackInfo;
+        }
+    };
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
+        MEDIA_ERR_LOG("Failed to execute work");
+    } else {
+        callbackInfo.release();
+    }
+}
+ 
+void ControlCenterStatusListenerNapi::OnControlCenterStatusCallback(bool status) const
+{
+    MEDIA_INFO_LOG("OnControlCenterStatusCallback is called, status: %{public}d", status);
+    ExecuteCallbackScopeSafe("controlCenterStatusChange", [&]() {
+        napi_value errCode = CameraNapiUtils::GetUndefinedValue(env_);
+        napi_value result;
+        napi_create_int32(env_, static_cast<int32_t>(status), &result);
+        return ExecuteCallbackData(env_, errCode, result);
+    });
+}
+ 
+void ControlCenterStatusListenerNapi::OnControlCenterStatusChanged(bool status) const
+{
+    MEDIA_INFO_LOG("OnControlCenterStatusChanged is called, status: %{public}d", status);
+    OnControlCenterStatusCallbackAsync(status);
+}
+
 TorchListenerNapi::TorchListenerNapi(napi_env env): ListenerBase(env)
 {
     MEDIA_INFO_LOG("TorchListenerNapi is called.");
@@ -556,6 +608,8 @@ napi_value CameraManagerNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("prelaunch", PrelaunchCamera),
         DECLARE_NAPI_FUNCTION("resetRssPriority", ResetRssPriority),
         DECLARE_NAPI_FUNCTION("preSwitchCamera", PreSwitchCamera),
+        DECLARE_NAPI_FUNCTION("isControlCenterActive", IsControlCenterActive),
+        DECLARE_NAPI_FUNCTION("createControlCenterSession", CreateControlCenterSession),
         DECLARE_NAPI_FUNCTION("isPrelaunchSupported", IsPrelaunchSupported),
         DECLARE_NAPI_FUNCTION("setPrelaunchConfig", SetPrelaunchConfig),
         DECLARE_NAPI_FUNCTION("createCameraInput", CreateCameraInputInstance),
@@ -1536,6 +1590,37 @@ void CameraManagerNapi::UnregisterFoldStatusCallbackListener(
     }
 }
 
+void CameraManagerNapi::RegisterControlCenterStatusCallbackListener(
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+{
+    MEDIA_INFO_LOG("CameraManagerNapi::RegisterControlCenterStatusCallbackListener is called.");
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi On controlCenterStatus is called!");
+        return;
+    }
+    auto listener = CameraNapiEventListener<ControlCenterStatusListenerNapi>::RegisterCallbackListener(
+        eventName, env, callback, args, isOnce);
+    CHECK_RETURN_ELOG(
+        listener == nullptr, "CameraManagerNapi::RegisterControlCenterStatusCallbackListener listener is null");
+    cameraManager_->RegisterControlCenterStatusListener(listener);
+}
+ 
+void CameraManagerNapi::UnregisterControlCenterStatusCallbackListener(
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
+{
+    MEDIA_INFO_LOG("CameraManagerNapi::UnregisterControlCenterStatusCallbackListener is called.");
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi On controlCenterStatus is called!");
+        return;
+    }
+    auto listener = CameraNapiEventListener<ControlCenterStatusListenerNapi>::UnregisterCallbackListener(
+        eventName, env, callback, args);
+    CHECK_RETURN(listener == nullptr);
+    if (listener->IsEmpty(eventName)) {
+        cameraManager_->UnregisterControlCenterStatusListener(listener);
+    }
+}
+
 const CameraManagerNapi::EmitterFunctions& CameraManagerNapi::GetEmitterFunctions()
 {
     static const EmitterFunctions funMap = {
@@ -1550,8 +1635,63 @@ const CameraManagerNapi::EmitterFunctions& CameraManagerNapi::GetEmitterFunction
             &CameraManagerNapi::UnregisterTorchStatusCallbackListener } },
         { "foldStatusChange", {
             &CameraManagerNapi::RegisterFoldStatusCallbackListener,
-            &CameraManagerNapi::UnregisterFoldStatusCallbackListener } } };
+            &CameraManagerNapi::UnregisterFoldStatusCallbackListener } },
+        { "controlCenterStatusChange", {
+            &CameraManagerNapi::RegisterControlCenterStatusCallbackListener,
+            &CameraManagerNapi::UnregisterControlCenterStatusCallbackListener } } };
     return funMap;
+}
+
+napi_value CameraManagerNapi::IsControlCenterActive(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("IsControlCenterActive is called.");
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi IsControlCenterActive is called!");
+        return nullptr;
+    }
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+    napi_get_undefined(env, &result);
+    CameraManagerNapi* cameraManagerNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraManagerNapi));
+    if (status == napi_ok && cameraManagerNapi != nullptr) {
+        bool isControlCenterActive = CameraManager::GetInstance()->IsControlCenterActive();
+        MEDIA_DEBUG_LOG("isControlCenterActive : %{public}d", isControlCenterActive);
+        napi_get_boolean(env, isControlCenterActive, &result);
+    } else {
+        MEDIA_ERR_LOG("isControlCenterActive call Failed!");
+    }
+    return result;
+}
+ 
+napi_value CameraManagerNapi::CreateControlCenterSession(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("CameraManagerNapi::CreateControlCenterSession is called");
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi CreateControlCenterSession is called!");
+        return nullptr;
+    }
+    MEDIA_INFO_LOG("CreateControlCenterSession is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+    napi_get_undefined(env, &result);
+    CameraManagerNapi* cameraManagerNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraManagerNapi));
+    if (status != napi_ok || cameraManagerNapi == nullptr) {
+        MEDIA_ERR_LOG("napi_unwrap failure!");
+        return nullptr;
+    }
+    result = ControlCenterSessionNapi::CreateControlCenterSession(env);
+    return result;
 }
 
 napi_value CameraManagerNapi::IsPrelaunchSupported(napi_env env, napi_callback_info info)

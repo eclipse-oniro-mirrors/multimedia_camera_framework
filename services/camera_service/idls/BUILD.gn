@@ -37,6 +37,8 @@ idl_gen_interface("camera_service_idl_interface") {
     "ITorchServiceCallback.idl",
     "IFoldServiceCallback.idl",
     "ICameraMuteServiceCallback.idl",
+    "IControlCenterStatusCallback",
+    "IControlCenterEffectStatusCallback",
     "IPressureStatusCallback.idl",
     "IMechSessionCallback.idl",
     "IStreamCapturePhotoAssetCallback.idl",

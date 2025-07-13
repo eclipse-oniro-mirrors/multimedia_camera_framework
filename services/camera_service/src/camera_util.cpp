@@ -609,5 +609,54 @@ std::string GetValidCameraId(std::string& cameraId)
     cameraIdTemp = cameraId.substr(pos + 1);
     return cameraIdTemp;
 }
+
+std::string ControlCenterMapToString(const std::map<std::string, std::array<float, CONTROL_CENTER_DATA_SIZE>> &data)
+{
+    std::ostringstream oss;
+    bool firstEntry = true;
+    for (const auto& [key, arr] : data) {
+        if (!firstEntry) oss << ';';
+        firstEntry = false;
+        oss << key << ':'
+            << std::setprecision(CONTROL_CENTER_DATA_PRECISION) << arr[CONTROL_CENTER_STATUS_INDEX] << ','
+            << std::setprecision(CONTROL_CENTER_DATA_PRECISION) << arr[CONTROL_CENTER_BEAUTY_INDEX] << ','
+            << std::setprecision(CONTROL_CENTER_DATA_PRECISION) << arr[CONTROL_CENTER_APERTURE_INDEX];
+    }
+    return oss.str();
+}
+
+std::map<std::string, std::array<float, CONTROL_CENTER_DATA_SIZE>> StringToControlCenterMap(const std::string& str)
+{
+    std::map<std::string, std::array<float, CONTROL_CENTER_DATA_SIZE>> result;
+    std::istringstream iss(str);
+    std::string entry;
+    
+    while (std::getline(iss, entry, ';')) {
+        if (entry.empty()) {
+            continue;
+        }
+        size_t colonPos = entry.find(':');
+        if (colonPos == std::string::npos) {
+            continue;
+        }
+        std::string key = entry.substr(0, colonPos);
+        std::string valuesStr = entry.substr(colonPos + 1);
+        
+        std::istringstream vss(valuesStr);
+        std::array<float, CONTROL_CENTER_DATA_SIZE> arr;
+        std::string numStr;
+        int index = 0;
+        bool valid = true;
+        
+        while (std::getline(vss, numStr, ',') && index < CONTROL_CENTER_DATA_SIZE) {
+            arr[index++] = std::stof(numStr);
+        }
+        
+        if (valid && index == CONTROL_CENTER_DATA_SIZE && vss.eof()) {
+            result[key] = arr;
+        }
+    }
+    return result;
+}
 } // namespace CameraStandard
 } // namespace OHOS

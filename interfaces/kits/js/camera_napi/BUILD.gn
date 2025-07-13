@@ -212,6 +212,7 @@ ohos_shared_library("camera_napi_base") {
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/output/preview_output_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/output/video_output_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/session/camera_session_napi.cpp",
+    "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/session/control_center_session_napi.cpp",
   ]
 
   deps = [

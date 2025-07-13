@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -830,6 +830,62 @@ Camera_ErrorCode OH_CaptureSession_SetWhiteBalanceMode(Camera_CaptureSession* se
     MEDIA_DEBUG_LOG("OH_CaptureSession_SetWhiteBalanceMode is called");
     CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
     return session->SetWhiteBalanceMode(whiteBalanceMode);
+}
+
+Camera_ErrorCode OH_CaptureSession_IsControlCenterSupported(Camera_CaptureSession* session, bool* isSupported)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_IsControlCenterSupported is called");
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, session is null!");
+    return session->IsControlCenterSupported(isSupported);
+}
+
+Camera_ErrorCode OH_CaptureSession_GetSupportedEffectTypes(
+    Camera_CaptureSession* session, Camera_ControlCenterEffectType** types, uint32_t* size)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_GetSupportedEffectTypes is called");
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, session is null!");
+    CHECK_RETURN_RET_ELOG(types == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, types is null!");
+    CHECK_RETURN_RET_ELOG(size == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, size is null!");
+
+    return session->GetSupportedEffectTypes(types, size);
+}
+
+Camera_ErrorCode OH_CaptureSession_DeleteSupportedEffectTypes(Camera_CaptureSession* session,
+    Camera_ControlCenterEffectType* types, uint32_t size)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_DeleteSupportedEffectTypes is called");
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, session is null!");
+    CHECK_RETURN_RET_ELOG(types == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, colorSpace is null!");
+
+    return session->DeleteEffectTypes(types);
+}
+
+Camera_ErrorCode OH_CaptureSession_RegisterControlCenterEffectStatusChangeCallback(
+    Camera_CaptureSession* session,
+    OH_CaptureSession_OnControlCenterEffectStatusChange controlCenterEffectStatusChange)
+{
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    CHECK_RETURN_RET_ELOG(controlCenterEffectStatusChange == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, callback is null!");
+    session->RegisterControlCenterEffectStatusChangeCallback(controlCenterEffectStatusChange);
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode OH_CaptureSession_UnregisterControlCenterEffectStatusChangeCallback(
+    Camera_CaptureSession* session,
+    OH_CaptureSession_OnControlCenterEffectStatusChange controlCenterEffectStatusChange)
+{
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    CHECK_RETURN_RET_ELOG(controlCenterEffectStatusChange == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, callback is null!");
+    session->UnregisterControlCenterEffectStatusChangeCallback(controlCenterEffectStatusChange);
+    return CAMERA_OK;
 }
 
 #ifdef __cplusplus

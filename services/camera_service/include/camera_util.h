@@ -17,6 +17,8 @@
 #define OHOS_CAMERA_UTIL_H
 #define EXPORT_API __attribute__((visibility("default")))
 
+#include <array>
+#include <map>
 #include <cstdint>
 #include <iostream>
 #include <iterator>
@@ -72,6 +74,12 @@ static const int32_t BEAUTY_STATUS_OFF = 0;
 static const int32_t BEAUTY_STATUS_ON = 1;
 static const int32_t BEAUTY_LEVEL = 100;
 #endif
+// camera control center
+static const int32_t CONTROL_CENTER_DATA_SIZE = 3;
+static const int32_t CONTROL_CENTER_STATUS_INDEX = 0;
+static const int32_t CONTROL_CENTER_BEAUTY_INDEX = 1;
+static const int32_t CONTROL_CENTER_APERTURE_INDEX = 2;
+static const int32_t CONTROL_CENTER_DATA_PRECISION = 9;
 
 enum CamType {
     SYSTEM = 0,
@@ -250,6 +258,8 @@ bool CheckPathExist(const char *path);
 
 bool isIntegerRegex(const std::string& input);
 std::string GetValidCameraId(std::string& cameraId);
+std::string ControlCenterMapToString(const std::map<std::string, std::array<float, CONTROL_CENTER_DATA_SIZE>> &data);
+std::map<std::string, std::array<float, CONTROL_CENTER_DATA_SIZE>> StringToControlCenterMap(const std::string& str);
 } // namespace CameraStandard
 } // namespace OHOS
 #endif // OHOS_CAMERA_UTIL_H

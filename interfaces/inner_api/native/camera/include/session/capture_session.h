@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -32,6 +32,7 @@
 #include "camera_photo_proxy.h"
 #include "capture_scene_const.h"
 #include "color_space_info_parse.h"
+#include "control_center_effect_status_callback_stub.h"
 #include "features/moon_capture_boost_feature.h"
 #include "capture_session_callback_stub.h"
 #include "camera_service_callback_stub.h"
@@ -208,6 +209,18 @@ public:
     virtual void OnPressureStatusChanged(PressureStatus status) = 0;
 };
 
+class ControlCenterEffectCallback {
+public:
+    ControlCenterEffectCallback() = default;
+    virtual ~ControlCenterEffectCallback() = default;
+    /**
+     * @brief Called when control center effect status changed during capture session callback.
+     *
+     * @param status Indicates the control center effect status.
+     */
+    virtual void OnControlCenterEffectStatusChanged(ControlCenterStatusInfo status) = 0;
+};
+
 class ExposureCallback {
 public:
     enum ExposureState {
@@ -316,6 +329,17 @@ public:
     }
 
     int32_t OnPressureStatusChanged(PressureStatus status) override;
+};
+
+class ControlCenterEffectStatusCallback : public ControlCenterEffectStatusCallbackStub {
+public:
+    wptr<CaptureSession> captureSession_;
+    ControlCenterEffectStatusCallback() : captureSession_() {}
+
+    explicit ControlCenterEffectStatusCallback(wptr<CaptureSession> captureSession)
+        : captureSession_(captureSession) {}
+
+    int32_t OnControlCenterEffectStatusChanged(const ControlCenterStatusInfo& statusInfo) override;
 };
 
 class SmoothZoomCallback {
@@ -507,6 +531,18 @@ public:
     void SetPressureCallback(std::shared_ptr<PressureCallback>);
 
     /**
+     * @brief Set the control center effect status callback for the capture session.
+     *
+     * @param ControlCenterEffectStatusCallback pointer to be triggered.
+     */
+    void SetControlCenterEffectStatusCallback(std::shared_ptr<ControlCenterEffectCallback> callback);
+
+    /**
+     * @brief Unset the control center effect status callback for the capture session.
+     */
+    void UnSetControlCenterEffectStatusCallback();
+
+    /**
      * @brief Get the application callback information.
      *
      * @return Returns the pointer to SessionCallback set by application.
@@ -519,6 +555,13 @@ public:
      * @return Returns the pointer to PressureCallback set by application.
      */
     std::shared_ptr<PressureCallback> GetPressureCallback();
+
+    /**
+     * @brief Get the control center effect callback information.
+     *
+     * @return Returns the pointer to ControlCenterEffectCallback set by application.
+     */
+    std::shared_ptr<ControlCenterEffectCallback> GetControlCenterEffectCallback();
 
     /**
      * @brief Get the ExposureCallback.
@@ -1134,6 +1177,25 @@ public:
      * @return Returns supported color effects.
      */
     std::vector<ColorEffect> GetSupportedColorEffects();
+
+    /**
+     * @brief Checks whether control center is supported.
+     *
+     * @return Is control center supported.
+     */
+    bool IsControlCenterSupported();
+ 
+    /**
+     * @brief Get the supported effect types.
+     *
+     * @return Returns supported efftect types.
+     */
+    std::vector<ControlCenterEffectType> GetSupportedEffectTypes();
+ 
+    /**
+     * @brief Enable control center.
+     */
+    void EnableControlCenter(bool isEnable);
 
     /**
      * @brief Set Focus istance.
@@ -1769,8 +1831,10 @@ private:
     sptr<ICaptureSession> innerCaptureSession_ = nullptr;
     std::shared_ptr<SessionCallback> appCallback_;
     std::shared_ptr<PressureCallback> appPressureCallback_;
+    std::shared_ptr<ControlCenterEffectCallback> appControlCenterEffectStatusCallback_;
     sptr<ICaptureSessionCallback> captureSessionCallback_;
     sptr<IPressureStatusCallback> pressureStatusCallback_;
+    sptr<IControlCenterEffectStatusCallback> controlCenterEffectStatusCallback_;
     std::shared_ptr<ExposureCallback> exposureCallback_;
     std::shared_ptr<FocusCallback> focusCallback_;
     std::shared_ptr<MoonCaptureBoostStatusCallback> moonCaptureBoostStatusCallback_;
@@ -1808,6 +1872,7 @@ private:
     atomic<bool> isAutoSwitchDevice_ = false;
     atomic<bool> isDeviceCapabilityChanged_ = false;
     atomic<bool> canAddFuncToMap_ = true;
+    bool isControlCenterEnabled_ = false;
 
     // Only for the SceneMode::CAPTURE and SceneMode::VIDEO mode
     map<std::string, std::function<void()>> functionMap;

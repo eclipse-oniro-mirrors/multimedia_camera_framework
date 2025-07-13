@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -25,6 +25,7 @@
 #include "camera_device_ability_items.h"
 #include "camera_error_code.h"
 #include "camera_log.h"
+#include "camera_metadata_info.h"
 #include "camera_metadata_operator.h"
 #include "camera_output_capability.h"
 #include "camera_util.h"
@@ -57,6 +58,7 @@ constexpr int32_t DEFAULT_DATA_LENGTH = 100;
 constexpr int32_t DEFERRED_MODE_DATA_SIZE = 2;
 constexpr int32_t FRAMERATE_120 = 120;
 constexpr int32_t FRAMERATE_240 = 240;
+constexpr int32_t CONTROL_CENTER_FPS_MAX = 30;
 } // namespace
 
 static const std::map<ColorSpace, CM_ColorSpaceType> g_fwkColorSpaceMap_ = {
@@ -208,6 +210,27 @@ int32_t PressureStatusCallback::OnPressureStatusChanged(PressureStatus status)
         }
     } else {
         MEDIA_INFO_LOG("PressureStatusCallback captureSession not set!, Discarding callback");
+    }
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t ControlCenterEffectStatusCallback::OnControlCenterEffectStatusChanged(
+    const ControlCenterStatusInfo& controlCenterStatusInfo)
+{
+    MEDIA_INFO_LOG("OnControlCenterEffectStatusChanged is called, status: %{public}d",
+        controlCenterStatusInfo.isActive);
+    auto session = captureSession_.promote();
+    if (session != nullptr) {
+        auto callback = session->GetControlCenterEffectCallback();
+        if (callback) {
+            callback->OnControlCenterEffectStatusChanged(controlCenterStatusInfo);
+        } else {
+            MEDIA_INFO_LOG(
+                "ControlCenterEffectStatusCallback::OnControlCenterEffectStatusChanged not set!, Discarding callback");
+        }
+    } else {
+        MEDIA_INFO_LOG(
+            "ControlCenterEffectStatusCallback::OnControlCenterEffectStatusChanged not set!, Discarding callback");
     }
     return CameraErrorCode::SUCCESS;
 }
@@ -559,6 +582,10 @@ int32_t CaptureSession::AddInput(sptr<CaptureInput>& input)
     if (!cameraInput->timeQueue_.empty()) {
         cameraInput->UnregisterTime();
     }
+    CameraPosition position = cameraInput->GetCameraDeviceInfo()->GetPosition();
+    bool positionCondition = position == CameraPosition::CAMERA_POSITION_FRONT
+        || position == CameraPosition::CAMERA_POSITION_FOLD_INNER;
+    CameraManager::GetInstance()->SetControlCenterPositionCondition(positionCondition);
     errCode = captureSession->AddInput(((sptr<CameraInput>&)input)->GetCameraDevice());
     CHECK_RETURN_RET_ELOG(
         errCode != CAMERA_OK, ServiceToCameraError(errCode), "Failed to AddInput!, %{public}d", errCode);
@@ -1175,6 +1202,43 @@ void CaptureSession::SetPressureCallback(std::shared_ptr<PressureCallback> callb
     return;
 }
 
+void CaptureSession::SetControlCenterEffectStatusCallback(std::shared_ptr<ControlCenterEffectCallback> callback)
+{
+    CHECK_PRINT_ELOG(callback == nullptr,
+        "CaptureSession::SetControlCenterEffectStatusCallback callback is null.");
+    int32_t errorCode = CAMERA_OK;
+    std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
+    appControlCenterEffectStatusCallback_ = callback;
+    auto captureSession = GetCaptureSession();
+    if (appControlCenterEffectStatusCallback_ != nullptr && captureSession != nullptr) {
+        if (controlCenterEffectStatusCallback_ == nullptr) {
+            controlCenterEffectStatusCallback_ = new (std::nothrow) ControlCenterEffectStatusCallback(this);
+            CHECK_RETURN_ELOG(controlCenterEffectStatusCallback_ == nullptr,
+                "failed to new controlCenterEffectStatusCallback_!");
+        }
+        errorCode = captureSession->SetControlCenterEffectStatusCallback(controlCenterEffectStatusCallback_);
+        if (errorCode != CAMERA_OK) {
+            MEDIA_ERR_LOG(
+                "SetControlCenterEffectStatusCallback: Failed to register callback, errorCode: %{public}d",
+                errorCode);
+            controlCenterEffectStatusCallback_ = nullptr;
+            appControlCenterEffectStatusCallback_ = nullptr;
+        }
+    }
+    return;
+}
+
+void CaptureSession::UnSetControlCenterEffectStatusCallback()
+{
+    MEDIA_INFO_LOG("CaptureSession::UnSetControlCenterEffectStatusCallback");
+    std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
+    appControlCenterEffectStatusCallback_ = nullptr;
+    auto captureSession = GetCaptureSession();
+    CHECK_PRINT_ELOG(captureSession == nullptr,
+        "CaptureSession::UnSetControlCenterEffectStatusCallback captureSession is nullptr");
+    captureSession->UnSetControlCenterEffectStatusCallback();
+}
+
 int32_t CaptureSession::SetPreviewRotation(std::string &deviceClass)
 {
     int32_t errorCode = CAMERA_OK;
@@ -1198,6 +1262,12 @@ std::shared_ptr<PressureCallback> CaptureSession::GetPressureCallback()
 {
     std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
     return appPressureCallback_;
+}
+
+std::shared_ptr<ControlCenterEffectCallback> CaptureSession::GetControlCenterEffectCallback()
+{
+    std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
+    return appControlCenterEffectStatusCallback_;
 }
 
 std::shared_ptr<ExposureCallback> CaptureSession::GetExposureCallback()
@@ -3268,9 +3338,14 @@ int32_t CaptureSession::SetFrameRateRange(const std::vector<int32_t>& frameRateR
             int32_t retCode = sharedThis->SetFrameRateRange(frameRateRange);
             CHECK_EXECUTE(retCode != CameraErrorCode::SUCCESS, sharedThis->SetDeviceCapabilityChangeStatus(true));
         }));
+    bool frameCondition = true;
     for (size_t i = 0; i < frameRateRange.size(); i++) {
         MEDIA_DEBUG_LOG("CaptureSession::SetFrameRateRange:index:%{public}zu->%{public}d", i, frameRateRange[i]);
+        if (frameRateRange[i] > CONTROL_CENTER_FPS_MAX) {
+            frameCondition = false;
+        }
     }
+    CameraManager::GetInstance()->SetControlCenterFrameCondition(frameCondition);
     this->UnlockForControl();
     CHECK_RETURN_RET_ELOG(!isSuccess, CameraErrorCode::SERVICE_FATL_ERROR, "Failed to SetFrameRateRange ");
     return CameraErrorCode::SUCCESS;
@@ -3465,6 +3540,58 @@ int32_t CaptureSession::GetActiveColorSpace(ColorSpace& colorSpace)
         MEDIA_INFO_LOG("CaptureSession::GetActiveColorSpace %{public}d", colorSpace);
     }
     return ServiceToCameraError(errCode);
+}
+
+bool CaptureSession::IsControlCenterSupported()
+{
+    bool isSupported = false;
+    MEDIA_INFO_LOG("CaptureSession::IsControlCenterSupported");
+
+    bool controlCenterPrecondition = CameraManager::GetInstance()->GetControlCenterPrecondition();
+    CHECK_RETURN_RET_ELOG(!controlCenterPrecondition, false,
+        "CaptureSession::IsControlCenterSupported controlCenterPrecondition false");
+
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = GetMetadata();
+    CHECK_RETURN_RET_ELOG(metadata == nullptr, isSupported, "metadata is null");
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_CONTROL_CENTER_SUPPORTED, &item);
+    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS || item.count <= 0, isSupported,
+        "CaptureSession::IsControlCenterSupported Failed with return code %{public}d", ret);
+    isSupported = static_cast<bool>(item.data.u8[0]);
+    CameraManager::GetInstance()->SetIsControlCenterSupported(isSupported);
+    return isSupported;
+}
+ 
+std::vector<ControlCenterEffectType> CaptureSession::GetSupportedEffectTypes()
+{
+    std::vector<ControlCenterEffectType> supportedEffectType = {};
+    bool isSupported = CameraManager::GetInstance()->GetIsControlCenterSupported();
+    CHECK_RETURN_RET_ELOG(!isSupported, {}, "Current status does not support control center.");
+    MEDIA_INFO_LOG("CaptureSession::IsControlCenterSupported");
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = GetMetadata();
+    CHECK_RETURN_RET_ELOG(metadata == nullptr, supportedEffectType, "metadata is null");
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_CONTROL_CENTER_EFFECT_TYPE, &item);
+    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS || item.count <= 0, supportedEffectType,
+        "CaptureSession::IsControlCenterSupported Failed with return code %{public}d", ret);
+    for (uint32_t i = 0; i < item.count; i++) {
+        supportedEffectType.emplace_back(static_cast<ControlCenterEffectType>(item.data.u8[i]));
+    }
+    return supportedEffectType;
+}
+ 
+void CaptureSession::EnableControlCenter(bool isEnable)
+{
+    MEDIA_INFO_LOG("CaptureSession::EnableControlCenter: %{public}d", isEnable);
+    bool isSupported = CameraManager::GetInstance()->GetIsControlCenterSupported();
+    CHECK_RETURN_ELOG(!isSupported, "Current status does not support control center.");
+    auto serviceProxy = CameraManager::GetInstance()->GetServiceProxy();
+    CHECK_RETURN_ELOG(serviceProxy == nullptr,
+        "CaptureSession::EnableControlCenter serviceProxy is null");
+    auto ret = serviceProxy->EnableControlCenter(isEnable);
+    CHECK_RETURN_ELOG(ret != CAMERA_OK,
+        "CaptureSession::EnableControlCenter failed.");
+    isControlCenterEnabled_ = isEnable;
 }
 
 int32_t CaptureSession::SetColorSpace(ColorSpace colorSpace)

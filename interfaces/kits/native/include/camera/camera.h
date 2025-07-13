@@ -1185,6 +1185,36 @@ typedef enum Camera_SystemPressureLevel {
     SYSTEM_PRESSURE_SHUTDOWN = 4
 } Camera_SystemPressureLevel;
 
+typedef enum Camera_ControlCenterEffectType {
+    /**
+     * Control center beauty effect type.
+     */
+    CONTROL_CENTER_EFFECT_TYPE_BEAUTY = 0,
+
+    /**
+     * Control center portrait effect type.
+     */
+    CONTROL_CENTER_EFFECT_TYPE_PORTRAIT = 1
+} Camera_ControlCenterEffectType;
+
+/**
+ * @brief Control center status info.
+ *
+ * @since 20
+ * @version 1.0
+ */
+typedef struct Camera_ControlCenterStatusInfo {
+    /**
+     * Control center effect type.
+     */
+    Camera_ControlCenterEffectType effectType;
+
+    /**
+     * IsActive
+     */
+    bool isActive;
+} Camera_ControlCenterStatusInfo;
+
 typedef enum Camera_WhiteBalanceMode {
     /**
      * Auto white balance mode.
