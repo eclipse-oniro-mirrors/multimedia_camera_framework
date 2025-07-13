@@ -2334,6 +2334,8 @@ sptr<CameraOutputCapability> CameraManager::ParseSupportedOutputCapability(sptr<
         ParseCapability(profilesWrapper, camera, fallbackMode, item, cameraAbility);
     }
     FillSupportPhotoFormats(profilesWrapper.photoProfiles);
+    CHECK_EXECUTE(!IsSystemApp() && modeName == static_cast<int32_t>(SceneMode::CAPTURE),
+        FillSupportPreviewFormats(profilesWrapper.previewProfiles));
     cameraOutputCapability->SetPhotoProfiles(profilesWrapper.photoProfiles);
     cameraOutputCapability->SetPreviewProfiles(profilesWrapper.previewProfiles);
     if (!isPhotoMode_.count(modeName)) {
@@ -2763,6 +2765,18 @@ void CameraManager::SetCameraManagerNull()
 {
     MEDIA_INFO_LOG("CameraManager::SetCameraManagerNull() called");
     g_cameraManager = nullptr;
+}
+
+void CameraManager::FillSupportPreviewFormats(std::vector<Profile>& previewProfiles)
+{
+    std::vector<Profile> extendProfiles = {};
+    for (const auto& profile : previewProfiles) {
+        if (profile.format_ == CAMERA_FORMAT_YCBCR_P010 || profile.format_ == CAMERA_FORMAT_YCRCB_P010) {
+            continue;
+        }
+        extendProfiles.push_back(profile);
+    }
+    previewProfiles = extendProfiles;
 }
 
 void CameraManager::FillSupportPhotoFormats(std::vector<Profile>& photoProfiles)
