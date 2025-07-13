@@ -164,6 +164,10 @@ HStreamOperator::HStreamOperator(const uint32_t callingTokenId, int32_t opMode)
 HStreamOperator::~HStreamOperator()
 {
     CAMERA_SYNC_TRACE;
+    {
+        std::lock_guard<std::mutex> lock(motionPhotoStatusLock_);
+        curMotionPhotoStatus_.clear();
+    }
     Release();
 }
 
@@ -1247,8 +1251,12 @@ void HStreamOperator::SetSensorRotation(int32_t rotationValue, int32_t sensorOri
 
 void HStreamOperator::StartMovingPhotoEncode(int32_t rotation, uint64_t timestamp, int32_t format, int32_t captureId)
 {
-    if (!isSetMotionPhoto_) {
-        return;
+    CHECK_ERROR_RETURN(!isSetMotionPhoto_);
+    {
+        std::lock_guard<std::mutex> lock(motionPhotoStatusLock_);
+        curMotionPhotoStatus_[captureId] = isSetMotionPhoto_;
+        MEDIA_DEBUG_LOG("HStreamOperator::StartMovingPhotoEncode cptureId : %{public}d, isSetMotionPhto : %{public}d",
+            captureId, isSetMotionPhoto_);
     }
     int32_t addMirrorRotation = 0;
     MEDIA_INFO_LOG("sensorRotation is %{public}d", sensorRotation_);
@@ -1391,11 +1399,17 @@ int32_t HStreamOperator::CreateMediaLibrary(sptr<CameraPhotoProxy>& photoProxy, 
         photoAssetProxy == nullptr, CAMERA_ALLOC_ERROR, "HCaptureSession::CreateMediaLibrary get photoAssetProxy fail");
     photoAssetProxy->AddPhotoProxy((sptr<PhotoProxy>&)cameraPhotoProxy);
     uri = photoAssetProxy->GetPhotoAssetUri();
-    if (!isBursting && isSetMotionPhoto_ && taskManager_) {
-        MEDIA_INFO_LOG("taskManager setVideoFd start");
-        taskManager_->SetVideoFd(timestamp, photoAssetProxy, captureId);
-    } else {
-        photoAssetProxy.reset();
+    {
+        std::lock_guard<std::mutex> lock(motionPhotoStatusLock_);
+        bool isSetMotionPhoto = curMotionPhotoStatus_.find(captureId) != curMotionPhotoStatus_.end()
+            &&  curMotionPhotoStatus_[captureId];
+        if (!isBursting && isSetMotionPhoto && taskManager_) {
+            MEDIA_INFO_LOG("taskManager setVideoFd start");
+            taskManager_->SetVideoFd(timestamp, photoAssetProxy, captureId);
+            curMotionPhotoStatus_.erase(captureId);
+        } else {
+            photoAssetProxy.reset();
+        }
     }
     CameraReportDfxUtils::GetInstance()->SetAddProxyEndInfo(captureId);
     return CAMERA_OK;
@@ -1489,13 +1503,19 @@ int32_t HStreamOperator::CreateMediaLibrary(std::shared_ptr<PictureIntf> picture
     std::shared_ptr<PhotoAssetIntf> photoAssetProxy =
         ProcessPhotoProxy(captureId, picture, isBursting, cameraPhotoProxy, uri);
     CHECK_ERROR_RETURN_RET_LOG(photoAssetProxy == nullptr, CAMERA_INVALID_ARG, "photoAssetProxy is null");
-    if (!isBursting && isSetMotionPhoto_ && taskManager_) {
-        MEDIA_INFO_LOG("CreateMediaLibrary captureId :%{public}d", captureId);
-        if (taskManager_) {
-            taskManager_->SetVideoFd(timestamp, photoAssetProxy, captureId);
+    {
+        std::lock_guard<std::mutex> lock(motionPhotoStatusLock_);
+        bool isSetMotionPhoto = curMotionPhotoStatus_.find(captureId) != curMotionPhotoStatus_.end()
+            &&  curMotionPhotoStatus_[captureId];
+        if (!isBursting && isSetMotionPhoto && taskManager_) {
+            MEDIA_INFO_LOG("CreateMediaLibrary captureId :%{public}d", captureId);
+            if (taskManager_) {
+                taskManager_->SetVideoFd(timestamp, photoAssetProxy, captureId);
+                curMotionPhotoStatus_.erase(captureId);
+            }
+        } else {
+            photoAssetProxy.reset();
         }
-    } else {
-        photoAssetProxy.reset();
     }
     CameraReportDfxUtils::GetInstance()->SetAddProxyEndInfo(captureId);
     return CAMERA_OK;
