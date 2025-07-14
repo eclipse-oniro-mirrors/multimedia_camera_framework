@@ -26,7 +26,8 @@ namespace OHOS {
 namespace CameraStandard {
 class PhotoAssetProxy : public PhotoAssetIntf {
 public:
-    static std::shared_ptr<PhotoAssetProxy> GetPhotoAssetProxy(int32_t shotType, int32_t callingUid);
+    static std::shared_ptr<PhotoAssetProxy> GetPhotoAssetProxy(
+        int32_t shotType, int32_t callingUid, uint32_t callingTokenID);
     explicit PhotoAssetProxy(
         std::shared_ptr<Dynamiclib> mediaLibraryLib, std::shared_ptr<PhotoAssetIntf> photoAssetIntf);
     ~PhotoAssetProxy() override = default;

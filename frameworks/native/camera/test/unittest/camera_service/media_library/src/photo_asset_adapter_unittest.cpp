@@ -18,6 +18,7 @@
 #include "camera_log.h"
 #include "surface.h"
 #include "media_photo_asset_proxy.h"
+#include "ipc_skeleton.h"
 
 using namespace testing::ext;
 namespace OHOS {
@@ -48,7 +49,8 @@ HWTEST_F(PhotoAssetAdapterUnit, photo_asset_adapter_unittest_001, TestSize.Level
 {
     int32_t cameraShotType = 0;
     int32_t uid = 1;
-    std::unique_ptr<PhotoAssetAdapter> photoAssetAdapterTest = std::make_unique<PhotoAssetAdapter>(cameraShotType, uid);
+    std::unique_ptr<PhotoAssetAdapter> photoAssetAdapterTest =
+        std::make_unique<PhotoAssetAdapter>(cameraShotType, uid, IPCSkeleton::GetCallingTokenID());
     sptr<Media::PhotoProxy> photoProxy;
     photoAssetAdapterTest->photoAssetProxy_ = nullptr;
     photoAssetAdapterTest->AddPhotoProxy(photoProxy);
@@ -81,12 +83,12 @@ HWTEST_F(PhotoAssetAdapterUnit, photo_asset_adapter_unittest_002, TestSize.Level
     int32_t cameraShotType = 0;
     int32_t uid = 1;
     std::unique_ptr<PhotoAssetAdapter> photoAssetAdapterTest =
-        std::make_unique<PhotoAssetAdapter>(cameraShotType, uid);
+        std::make_unique<PhotoAssetAdapter>(cameraShotType, uid, IPCSkeleton::GetCallingTokenID());
     EXPECT_NE(photoAssetAdapterTest, nullptr);
 
     std::shared_ptr<DataShare::DataShareHelper> dataShareHelper;
-    std::shared_ptr<Media::PhotoAssetProxy> photoAssetProxy =
-        std::make_shared <Media::PhotoAssetProxy>(dataShareHelper, Media::CameraShotType::IMAGE, 1, 1024);
+    std::shared_ptr<Media::PhotoAssetProxy> photoAssetProxy = std::make_shared <Media::PhotoAssetProxy>(
+            dataShareHelper, Media::CameraShotType::IMAGE, 1, 1024, IPCSkeleton::GetCallingTokenID());
     sptr<Media::PhotoProxy> photoProxy;
     photoAssetAdapterTest->photoAssetProxy_ = photoAssetProxy;
     EXPECT_NE(photoAssetAdapterTest->photoAssetProxy_, nullptr);
