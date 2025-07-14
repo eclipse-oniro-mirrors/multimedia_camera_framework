@@ -32,6 +32,7 @@
 #include "camera_output_capability.h"
 #include "camera_rotation_api_utils.h"
 #include "camera_util.h"
+#include "display_manager.h"
 #include "stream_repeat_callback_stub.h"
 #include "image_format.h"
 #include "istream_repeat.h"
@@ -40,6 +41,9 @@
 #include "parameters.h"
 #include "session/capture_session.h"
 #include "sketch_wrapper.h"
+#include "xcomponent_controller.h"
+#include "surface.h"
+#include "surface_utils.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -69,6 +73,9 @@ camera_format_t GetHdiFormatFromCameraFormat(CameraFormat cameraFormat)
 } // namespace
 
 static constexpr int32_t SKETCH_MIN_WIDTH = 480;
+static constexpr int32_t RENDER_FIL_FILL = 9;
+static constexpr int32_t RENDER_FIL_COVER = 13;
+static constexpr float TARGET_MIN_RATIO = 0.01;
 PreviewOutput::PreviewOutput(sptr<IBufferProducer> bufferProducer)
     : CaptureOutput(CAPTURE_OUTPUT_TYPE_PREVIEW, StreamType::REPEAT, bufferProducer, nullptr)
 {
@@ -756,6 +763,105 @@ int32_t PreviewOutput::SetPreviewRotation(int32_t imageRotation, bool isDisplayL
     }
     MEDIA_ERR_LOG("PreviewOutput SetPreviewRotation sucess");
     return CameraErrorCode::SUCCESS;
+}
+
+bool PreviewOutput::IsXcomponentSwap()
+{
+    sptr<OHOS::Rosen::Display> display = OHOS::Rosen::DisplayManager::GetInstance().GetDefaultDisplay();
+    if (display == nullptr) {
+        MEDIA_ERR_LOG("Get display info failed");
+        display = OHOS::Rosen::DisplayManager::GetInstance().GetDisplayById(0);
+        CHECK_RETURN_RET_ELOG(display == nullptr, true, "Get display info failed, display is nullptr");
+    }
+    uint32_t currentRotation = static_cast<uint32_t>(display->GetRotation()) * 90;
+    std::string deviceType = OHOS::system::GetDeviceType();
+    uint32_t apiCpmpatibleVersion = CameraApiVersion::GetApiVersion();
+    MEDIA_INFO_LOG("deviceType=%{public}s, apiCpmpatibleVersion=%{public}d", deviceType.c_str(),
+        apiCpmpatibleVersion);
+    // The tablet has incompatible changes in API14; use version isolation for compilation.
+    CHECK_EXECUTE(apiCpmpatibleVersion < CameraApiVersion::APIVersion::API_FOURTEEN && deviceType == "talet",
+        currentRotation = (currentRotation + STREAM_ROTATE_270) % (STREAM_ROTATE_270 + STREAM_ROTATE_90));
+    uint32_t cameraRotation = 0;
+    CHECK_RETURN_RET_ELOG(GetCameraDeviceRotationAngle(cameraRotation) != CAMERA_OK,
+        false, "Get camera rotation failed");
+    MEDIA_INFO_LOG("display rotation: %{public}d, camera rotation: %{public}d", currentRotation, cameraRotation);
+    uint32_t rotationAngle = (currentRotation + cameraRotation) % (STREAM_ROTATE_270 + STREAM_ROTATE_90);
+    CHECK_RETURN_RET(rotationAngle == STREAM_ROTATE_90 || rotationAngle == STREAM_ROTATE_270, true);
+    return false;
+}
+
+int32_t PreviewOutput::GetCameraDeviceRotationAngle(uint32_t &cameraRotation)
+{
+    auto session = GetSession();
+    CHECK_RETURN_RET_ELOG(session == nullptr, SERVICE_FATL_ERROR,
+        "GetCameraDeviceRotationAngle sesion is null");
+    auto inputDevice = session->GetInputDevice();
+    CHECK_RETURN_RET_ELOG(inputDevice == nullptr, SERVICE_FATL_ERROR,
+        "GetCameraDeviceRotationAngle inputDevice is null");
+    auto deviceInfo = inputDevice->GetCameraDeviceInfo();
+    CHECK_RETURN_RET_ELOG(deviceInfo == nullptr, SERVICE_FATL_ERROR,
+        "GetCameraDeviceRotationAngle deviceInfo is null");
+    cameraRotation = deviceInfo->GetCameraOrientation();
+    return CAMERA_OK;
+}
+
+// LCOV_EXCL_START
+void PreviewOutput::AdjustRenderFit()
+{
+    int32_t renderFitNumber = 0;
+    bool isRenderFitNewVersionEnabled = false;
+    auto surfaceId = GetSurfaceId();
+    int32_t ret = OHOS::Ace::XComponentController::GetRenderFitBySurfaceId(
+        surfaceId, renderFitNumber, isRenderFitNewVersionEnabled);
+    MEDIA_INFO_LOG("GetRenderFitBySurfaceId ret: %{public}d, renderFitNumber: %{public}d,"
+        "isRenderFitNewVersionEnabled: %{public}d",
+        ret, renderFitNumber, isRenderFitNewVersionEnabled);
+    CHECK_RETURN_ELOG(ret != 0 || renderFitNumber != RENDER_FIL_FILL, "Conditions not met");
+    uint64_t outputSurfaceId;
+    std::stringstream iss(surfaceId);
+    iss >> outputSurfaceId;
+    OHNativeWindow *outputNativeWindow = nullptr;
+    ret = OH_NativeWindow_CreateNativeWindowFromSurfaceId(outputSurfaceId, &outputNativeWindow);
+    CHECK_RETURN_ELOG(ret != 0,
+        "The AdjustRenderFit call failed due to a failure in the CreateNativeWindowFromSurfaceId interface call,"
+        "ret: %{public}d", ret);
+    int code = GET_BUFFER_GEOMETRY;
+    int xComponentWidth = 0;
+    int xComponentHeight = 0;
+    // Get the width and height of XComponent
+    ret = OH_NativeWindow_NativeWindowHandleOpt(outputNativeWindow, code, &xComponentHeight, &xComponentWidth);
+    MEDIA_INFO_LOG("The width of the XComponent is %{public}d, and the height is %{public}d",
+        xComponentWidth, xComponentHeight);
+    OH_NativeWindow_DestroyNativeWindow(outputNativeWindow);
+    CHECK_RETURN_ELOG(ret != 0 || xComponentHeight * xComponentWidth == 0,
+        "The AdjustRenderFit call failed because the xComponentWidth x xComponentHeight equals 0."
+        "ret: %{public}d", ret);
+    if (IsXcomponentSwap()) {
+        MEDIA_INFO_LOG("XComponent width and height need to swap");
+        int temp = xComponentWidth;
+        xComponentWidth = xComponentHeight;
+        xComponentHeight = temp;
+    }
+    CHECK_RETURN_ELOG(PreviewSize_.width * PreviewSize_.height == 0,
+        "The AdjustRenderFit call failed because the previewWidth x previewHeight equals 0");
+    float cameraRatio = (float)PreviewSize_.width / (float)PreviewSize_.height;
+    float XComponentRatio = (float)xComponentWidth / (float)xComponentHeight;
+    CHECK_RETURN_ELOG(abs(cameraRatio - XComponentRatio) < TARGET_MIN_RATIO,
+        "XComponent ratio matched camera ratio, no need adjust renderFit");
+    ret = OHOS::Ace::XComponentController::SetRenderFitBySurfaceId(surfaceId, RENDER_FIL_COVER, true);
+    CHECK_RETURN_ELOG(ret != 0, "SetRenderFitBySurfaceId ret: %{public}d", ret);
+} // LCOV_EXCL_STOP
+
+void PreviewOutput::SetSurfaceId(const std::string& surfaceId)
+{
+    std::lock_guard<std::mutex> lock(surfaceIdMutex_);
+    surfaceId_ = surfaceId;
+}
+
+std::string PreviewOutput::GetSurfaceId()
+{
+    std::lock_guard<std::mutex> lock(surfaceIdMutex_);
+    return surfaceId_;
 }
 } // namespace CameraStandard
 } // namespace OHOS

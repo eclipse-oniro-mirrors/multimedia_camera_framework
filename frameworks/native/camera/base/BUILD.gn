@@ -140,6 +140,7 @@ ohos_shared_library("camera_framework") {
 
   external_deps = [
     "access_token:libtokenid_sdk",
+    "ace_engine:ace_xcomponent_controller",
     "bundle_framework:appexecfwk_base",
     "bundle_framework:appexecfwk_core",
     "c_utils:utils",
