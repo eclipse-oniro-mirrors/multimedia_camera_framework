@@ -584,6 +584,8 @@ int32_t CaptureSession::AddInput(sptr<CaptureInput>& input)
     if (!cameraInput->timeQueue_.empty()) {
         cameraInput->UnregisterTime();
     }
+    CHECK_RETURN_RET_ELOG(!cameraInput->GetCameraDeviceInfo(), ServiceToCameraError(CAMERA_DEVICE_CLOSED),
+        "CaptureSession::AddInput GetCameraDeviceInfo is nullptr");
     CameraPosition position = cameraInput->GetCameraDeviceInfo()->GetPosition();
     bool positionCondition = position == CameraPosition::CAMERA_POSITION_FRONT
         || position == CameraPosition::CAMERA_POSITION_FOLD_INNER;

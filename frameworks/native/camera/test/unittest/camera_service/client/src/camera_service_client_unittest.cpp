@@ -599,46 +599,46 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_003, TestSize.L
     sptr<ICameraServiceCallback> callback = manager_->GetCameraStatusListenerManager();
     ASSERT_NE(callback, nullptr);
     int32_t intResult = serviceProxy->SetCameraCallback(callback);
-    EXPECT_EQ(intResult, -1);
+    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
 
     sptr<ICameraMuteServiceCallback> callback_2 = manager_->GetCameraMuteListenerManager();
     ASSERT_NE(callback_2, nullptr);
     serviceProxy->SetMuteCallback(callback_2);
-    EXPECT_EQ(intResult, -1);
+    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
 
     intResult = serviceProxy->GetCameras(cameraIds, cameraAbilityList);
-    EXPECT_EQ(intResult, -1);
+    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
 
     sptr<ICaptureSession> session = nullptr;
     intResult = serviceProxy->CreateCaptureSession(session, 0);
-    EXPECT_EQ(intResult, -1);
+    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
 
     sptr<IStreamCapture> output = nullptr;
     intResult = serviceProxy->CreatePhotoOutput(producer, format, width, height, output);
-    EXPECT_EQ(intResult, -1);
+    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
 
     width = PREVIEW_DEFAULT_WIDTH;
     height = PREVIEW_DEFAULT_HEIGHT;
     sptr<IStreamRepeat> output_2 = nullptr;
     intResult = serviceProxy->CreatePreviewOutput(producer, format, width, height, output_2);
-    EXPECT_EQ(intResult, -1);
+    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
 
     intResult = serviceProxy->CreateDeferredPreviewOutput(format, width, height, output_2);
-    EXPECT_EQ(intResult, -1);
+    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
 
     sptr<IStreamMetadata> output_3 = nullptr;
     intResult = serviceProxy->CreateMetadataOutput(producer, format, {1}, output_3);
-    EXPECT_EQ(intResult, -1);
+    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
 
     intResult = serviceProxy->CreateVideoOutput(producer, format, width, height, output_2);
-    EXPECT_EQ(intResult, -1);
+    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
 
     intResult = serviceProxy->SetListenerObject(object);
-    EXPECT_EQ(intResult, 200);
+    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
 
     bool muteMode = true;
     intResult = serviceProxy->IsCameraMuted(muteMode);
-    EXPECT_EQ(intResult, -1);
+    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
 }
 
 /*
@@ -664,30 +664,30 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_004, TestSize.L
     ASSERT_NE(deviceObj, nullptr);
 
     int32_t intResult = deviceObj->Open();
-    EXPECT_EQ(intResult, -1);
+    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
 
     intResult = deviceObj->Close();
-    EXPECT_EQ(intResult, -1);
+    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
 
     intResult = deviceObj->Release();
-    EXPECT_EQ(intResult, -1);
+    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
 
     sptr<CameraInput> input = (sptr<CameraInput>&)input_;
     sptr<ICameraDeviceServiceCallback> callback = new (std::nothrow) CameraDeviceServiceCallback(input);
     ASSERT_NE(callback, nullptr);
 
     intResult = deviceObj->SetCallback(callback);
-    EXPECT_EQ(intResult, -1);
+    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
 
     std::shared_ptr<OHOS::Camera::CameraMetadata> settings = cameras_[0]->GetMetadata();
     ASSERT_NE(settings, nullptr);
 
     intResult = deviceObj->UpdateSetting(settings);
-    EXPECT_EQ(intResult, -1);
+    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
 
     std::vector<int32_t> results = {};
     intResult = deviceObj->GetEnabledResults(results);
-    EXPECT_EQ(intResult, 200);
+    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
 }
 
 /*
@@ -754,37 +754,37 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_006, TestSize.L
     ASSERT_NE(captureSession, nullptr);
 
     int32_t intResult = captureSession->BeginConfig();
-    EXPECT_EQ(intResult, -1);
+    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
 
     sptr<CameraInput> input_1 = (sptr<CameraInput>&)input_;
     sptr<ICameraDeviceService> deviceObj = input_1->GetCameraDevice();
     ASSERT_NE(deviceObj, nullptr);
 
     intResult = captureSession->AddInput(deviceObj);
-    EXPECT_EQ(intResult, -1);
+    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
 
     sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
     ASSERT_NE(previewOutput, nullptr);
 	
     ASSERT_NE(previewOutput->GetStream(), nullptr);
     intResult = captureSession->AddOutput(previewOutput->GetStreamType(), previewOutput->GetStream()->AsObject());
-    EXPECT_EQ(intResult, -1);
+    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
 
     intResult = captureSession->Start();
-    EXPECT_EQ(intResult, -1);
+    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
 
     intResult = captureSession->Release();
-    EXPECT_EQ(intResult, -1);
+    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
 
     sptr<ICaptureSessionCallback> callback = new (std::nothrow) CaptureSessionCallback(session_);
     ASSERT_NE(callback, nullptr);
 
     intResult = captureSession->SetCallback(callback);
-    EXPECT_EQ(intResult, -1);
+    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
 
     CaptureSessionState currentState = CaptureSessionState::SESSION_CONFIG_INPROGRESS;
     intResult = captureSession->GetSessionState(currentState);
-    EXPECT_EQ(intResult, -1);
+    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
 }
 
 /*
@@ -849,13 +849,13 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_008, TestSize.L
 
     std::shared_ptr<OHOS::Camera::CameraMetadata> captureSettings = cameras_[0]->GetMetadata();
     int32_t intResult = capture->Capture(captureSettings);
-    EXPECT_EQ(intResult, -1);
+    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
 
     intResult = capture->CancelCapture();
-    EXPECT_EQ(intResult, -1);
+    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
 
     intResult = capture->Release();
-    EXPECT_EQ(intResult, -1);
+    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
 
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
     ASSERT_NE(photoOutput, nullptr);
@@ -865,7 +865,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_008, TestSize.L
     ASSERT_NE(callback, nullptr);
 
     intResult = capture->SetCallback(callback);
-    EXPECT_EQ(intResult, -1);
+    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
 }
 
 /*
@@ -891,10 +891,10 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_009, TestSize.L
     ASSERT_NE(metadata, nullptr);
 
     int32_t intResult = metadata->Start();
-    EXPECT_EQ(intResult, -1);
+    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
 
     intResult = metadata->Release();
-    EXPECT_EQ(intResult, -1);
+    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
 }
 
 /*
@@ -940,13 +940,13 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_010, TestSize.L
     ASSERT_NE(callback, nullptr);
 
     intResult = repeat->SetCallback(callback);
-    EXPECT_EQ(intResult, -1);
+    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
 
     sptr<IConsumerSurface> previewSurface = IConsumerSurface::Create();
     producer = previewSurface->GetProducer();
 
     intResult = repeat->AddDeferredSurface(producer);
-    EXPECT_EQ(intResult, -1);
+    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
 }
 
 /*
@@ -1138,7 +1138,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_015, TestSize.L
     sptr<ICameraDeviceService> device = nullptr;
     sptr<ITorchServiceCallback> torchSvcCallback = nullptr;
     bool canOpenCamera = true;
-    EXPECT_EQ(hCameraServiceProxy->CreateCameraDevice(cameras_[0]->GetID(), device), -1);
+    EXPECT_EQ(hCameraServiceProxy->CreateCameraDevice(cameras_[0]->GetID(), device), ERR_TRANSACTION_FAILED);
     hCameraServiceProxy->SetTorchCallback(torchSvcCallback);
     sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
     torchSvcCallback =  camManagerObj->GetTorchServiceListenerManager();

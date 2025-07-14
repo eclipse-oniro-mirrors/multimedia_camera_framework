@@ -35,7 +35,7 @@ constexpr int32_t EXECUTE_FAILED = -1;
 constexpr int32_t DEFERRED_PHOTO_NOT_ENABLED = -1;
 constexpr int32_t DEFERRED_PHOTO_ENABLED = 0;
 constexpr int32_t PHOTO_CALLBCAK_CNT = 1;
-constexpr int32_t WAIT_FOR_PHOTO_CB = 2;
+constexpr int32_t WAIT_FOR_PHOTO_CB = 8;
 
 void CameraDeferredPhotoModuleTest::SetUpTestCase(void)
 {
