@@ -285,6 +285,11 @@ public:
     void UpdateOrientationBaseGravity(int32_t rotationValue, int32_t sensorOrientation,
         int32_t cameraPosition, int32_t& rotation);
 
+    void SetMechCallback(std::function<void(int32_t,
+        const std::shared_ptr<OHOS::Camera::CameraMetadata>&)> callback);
+    std::mutex mechCallbackLock_;
+    std::function<void(int32_t, const std::shared_ptr<OHOS::Camera::CameraMetadata>&)> mechCallback_;
+
 private:
     int32_t Initialize(const uint32_t callerToken, int32_t opMode);
     void RegisterDisplayListener(sptr<HStreamRepeat> repeat);

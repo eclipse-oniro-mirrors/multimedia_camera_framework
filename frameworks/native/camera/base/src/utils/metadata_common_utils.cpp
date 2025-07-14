@@ -25,7 +25,7 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace {
-const std::unordered_map<uint32_t, MetadataObjectType> g_HALResultToFwCameraMetaDetect_copy = {
+const std::unordered_map<uint32_t, MetadataObjectType> g_HALResultToFwCameraMetaDetect_ = {
     {OHOS_STATISTICS_DETECT_HUMAN_FACE_INFOS, MetadataObjectType::FACE},
     {OHOS_STATISTICS_DETECT_HUMAN_BODY_INFOS, MetadataObjectType::HUMAN_BODY},
     {OHOS_STATISTICS_DETECT_CAT_FACE_INFOS, MetadataObjectType::CAT_FACE},
@@ -37,7 +37,7 @@ const std::unordered_map<uint32_t, MetadataObjectType> g_HALResultToFwCameraMeta
     {OHOS_STATISTICS_DETECT_BASE_FACE_INFO, MetadataObjectType::BASE_FACE_DETECTION},
 };
 
-std::vector<uint32_t> typesOfMetadata_copy = {
+std::vector<uint32_t> g_typesOfMetadata = {
     OHOS_STATISTICS_DETECT_HUMAN_FACE_INFOS,
     OHOS_STATISTICS_DETECT_HUMAN_BODY_INFOS,
     OHOS_STATISTICS_DETECT_CAT_FACE_INFOS,
@@ -255,7 +255,7 @@ bool MetadataCommonUtils::ProcessMetaObjects(const int32_t streamId,
 void MetadataCommonUtils::GetMetadataResults(const common_metadata_header_t *metadata,
     std::vector<camera_metadata_item_t>& metadataResults, std::vector<uint32_t>& metadataTypes)
 {
-    for (auto itr : typesOfMetadata_copy) {
+    for (auto itr : g_typesOfMetadata) {
         camera_metadata_item_t item;
         int ret = Camera::FindCameraMetadataItem(metadata, itr, &item);
         if (ret == CAM_META_SUCCESS) {
@@ -271,8 +271,8 @@ int32_t MetadataCommonUtils::ProcessMetaObjects(const int32_t streamId, std::vec
     bool isNeedMirror, bool isNeedFlip)
 {
     for (size_t i = 0; i < metadataItem.size(); ++i) {
-        auto itr = g_HALResultToFwCameraMetaDetect_copy.find(metadataTypes[i]);
-        if (itr != g_HALResultToFwCameraMetaDetect_copy.end()) {
+        auto itr = g_HALResultToFwCameraMetaDetect_.find(metadataTypes[i]);
+        if (itr != g_HALResultToFwCameraMetaDetect_.end()) {
             GenerateObjects(metadataItem[i], itr->second, metaObjects, isNeedMirror, isNeedFlip);
         } else {
             MEDIA_ERR_LOG("MetadataOutput::ProcessMetaObjects() unsupported type: %{public}d", metadataTypes[i]);

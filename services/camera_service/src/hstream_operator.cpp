@@ -861,21 +861,35 @@ int32_t HStreamOperator::StartPreviewStream(const std::shared_ptr<OHOS::Camera::
 
 int32_t HStreamOperator::UpdateSettingForFocusTrackingMech(bool isEnableMech)
 {
-    auto allStreams = streamContainer_.GetAllStreams();
-    for (auto& item : allStreams) {
-        auto repeatType = item->GetStreamType();
-        if (repeatType != StreamType::METADATA) {
-            continue;
-        }
-        auto curStreamRepeat = CastStream<HStreamMetadata>(item);
-        if (curStreamRepeat == nullptr) {
-            MEDIA_ERR_LOG("UpdateSettingForFocusTrackingMech curStreamRepeat is nullptr");
-            continue;
-        }
-        std::vector<int32_t> metadataTypes;
-        metadataTypes.push_back(static_cast<int32_t>(MetadataObjectType::HUMAN_HEAD));
-        isEnableMech ? curStreamRepeat->EnableMetadataType(metadataTypes) :
-            curStreamRepeat->DisableMetadataType(metadataTypes);
+    CHECK_RETURN_RET_ELOG(streamOperator_ == nullptr, CAMERA_INVALID_STATE,
+        "HStreamMetadata::EnableMetadataType streamOperator is nullptr");
+    uint32_t majorVer = 0;
+    uint32_t minorVer = 0;
+    streamOperator_->GetVersion(majorVer, minorVer);
+    if (majorVer < HDI_VERSION_1 || minorVer < HDI_VERSION_3) {
+        MEDIA_DEBUG_LOG("UpdateSettingForFocusTrackingMech version: %{public}d.%{public}d", majorVer, minorVer);
+        return CAMERA_OK;
+    }
+    sptr<OHOS::HDI::Camera::V1_3::IStreamOperator> streamOperatorV1_3 =
+        OHOS::HDI::Camera::V1_3::IStreamOperator::CastFrom(streamOperator_);
+    CHECK_RETURN_RET_ELOG(streamOperatorV1_3 == nullptr, CAMERA_UNKNOWN_ERROR,
+        "HStreamMetadata::EnableMetadataType streamOperatorV1_3 castFrom failed!");
+    const int32_t DEFAULT_ITEMS = 1;
+    const int32_t DEFAULT_DATA_LENGTH = 10;
+    const uint32_t count = 1;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata4Types =
+        std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
+    uint8_t data = static_cast<uint8_t>(MetadataObjectType::BASE_TRACKING_REGION);
+    bool status = metadata4Types->addEntry(OHOS_CONTROL_STATISTICS_DETECT_SETTING, &data, count);
+    CHECK_RETURN_RET_ELOG(!status, CAMERA_UNKNOWN_ERROR, "set_camera_metadata failed!");
+    std::vector<uint8_t> settings;
+    OHOS::Camera::MetadataUtils::ConvertMetadataToVec(metadata4Types, settings);
+    if (isEnableMech) {
+        MEDIA_DEBUG_LOG("EnableResult start");
+        streamOperatorV1_3->EnableResult(-1, settings);
+    } else {
+        MEDIA_DEBUG_LOG("DisableResult start");
+        streamOperatorV1_3->DisableResult(-1, settings);
     }
     return CAMERA_OK;
 }
@@ -1841,6 +1855,12 @@ int32_t HStreamOperator::OnCaptureReady(
 int32_t HStreamOperator::OnResult(int32_t streamId, const std::vector<uint8_t>& result)
 {
     MEDIA_DEBUG_LOG("HStreamOperator::OnResult");
+    {
+        std::lock_guard<std::mutex> mechLock(mechCallbackLock_);
+        std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult = nullptr;
+        OHOS::Camera::MetadataUtils::ConvertVecToMetadata(result, cameraResult);
+        CHECK_EXECUTE(mechCallback_ != nullptr && cameraResult!= nullptr, mechCallback_(streamId, cameraResult));
+    }
     sptr<HStreamCommon> curStream;
     const int32_t metaStreamId = -1;
     if (streamId == metaStreamId) {
@@ -2152,5 +2172,11 @@ void HStreamOperator::DisplayRotationListener::RemoveHstreamRepeatForListener(sp
         std::remove(repeatStreamList_.begin(), repeatStreamList_.end(), repeatStream), repeatStreamList_.end());
 }
 
+void HStreamOperator::SetMechCallback(std::function<void(int32_t,
+    const std::shared_ptr<OHOS::Camera::CameraMetadata>&)> callback)
+{
+    std::lock_guard<std::mutex> lock(mechCallbackLock_);
+    mechCallback_ = callback;
+}
 } // namespace CameraStandard
 } // namespace OHOS

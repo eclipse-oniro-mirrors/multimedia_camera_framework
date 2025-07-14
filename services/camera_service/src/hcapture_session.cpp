@@ -427,11 +427,31 @@ int32_t HCaptureSession::SetPreviewRotation(const std::string &deviceClass)
 void HCaptureSession::InitialHStreamOperator()
 {
     auto hStreamOperatorTemp = GetStreamOperator();
-    if (hStreamOperatorTemp == nullptr) {
-        sptr<HStreamOperator> hStreamOperator = HStreamOperator::NewInstance(callerToken_, opMode_);
-        SetStreamOperator(hStreamOperator);
-        HStreamOperatorManager::GetInstance()->AddStreamOperator(hStreamOperator); // 鍗曚緥绠＄悊streamoperator 寰呮壘鍞竴key
+    CHECK_RETURN(hStreamOperatorTemp != nullptr);
+    sptr<HStreamOperator> hStreamOperator = HStreamOperator::NewInstance(callerToken_, opMode_);
+    if (hStreamOperator != nullptr) {
+        auto thisPtr = wptr<HCaptureSession>(this);
+        hStreamOperator->SetMechCallback([thisPtr](int32_t streamId,
+            const std::shared_ptr<OHOS::Camera::CameraMetadata> &result) {
+            auto sessionPtr = thisPtr.promote();
+            CHECK_RETURN(!sessionPtr);
+            auto &sessionManager = HCameraSessionManager::GetInstance();
+            auto mechSession = sessionManager.GetMechSession(sessionPtr->userId_);
+            CHECK_RETURN(!mechSession);
+            bool isNeedMirror = false;
+            bool isNeedFlip = false;
+            auto currentDevice = thisPtr->GetCameraDevice();
+            if (currentDevice != nullptr) {
+                int32_t position = currentDevice->GetCameraPosition();
+                isNeedMirror = (position == static_cast<int32_t>(OHOS_CAMERA_POSITION_FRONT));
+                int32_t usedAsPosition = currentDevice->GetUsedAsPosition();
+                isNeedFlip = (usedAsPosition == static_cast<int32_t>(OHOS_CAMERA_POSITION_FRONT));
+            }
+            mechSession->OnFocusTrackingInfo(streamId, isNeedMirror, isNeedFlip, result);
+        });
     }
+    SetStreamOperator(hStreamOperator);
+    HStreamOperatorManager::GetInstance()->AddStreamOperator(hStreamOperator); // 单例管理streamoperator 待找唯一key
 }
 
 int32_t HCaptureSession::AddOutput(StreamType streamType, const sptr<IRemoteObject>& remoteObj)

@@ -947,33 +947,6 @@ int32_t HCameraService::CreateMetadataOutput(const sptr<OHOS::IBufferProducer>& 
     CHECK_RETURN_RET_ELOG(streamMetadata == nullptr, CAMERA_ALLOC_ERROR,
         "HCameraService::CreateMetadataOutput HStreamMetadata allocation failed");
 
-    int32_t uid = IPCSkeleton::GetCallingUid();
-    int32_t userId;
-    AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(uid, userId);
-    MEDIA_DEBUG_LOG("HCameraService::CreateMetadataOutput userId= %{public}d", userId);
-    streamMetadata->SetUserId(userId);
-    streamMetadata->SetMechCallback([](int32_t streamId, const std::shared_ptr<OHOS::Camera::CameraMetadata> &result,
-        int32_t userId) {
-        auto &sessionManager = HCameraSessionManager::GetInstance();
-        auto mechSession = sessionManager.GetMechSession(userId);
-        if (mechSession == nullptr) {
-            return;
-        }
-        bool isNeedMirror = false;
-        bool isNeedFlip = false;
-        sptr<HCameraDeviceManager> deviceManager = HCameraDeviceManager::GetInstance();
-        std::vector<sptr<HCameraDeviceHolder>> deviceHolderVector = deviceManager->GetActiveCameraHolders();
-        for (sptr<HCameraDeviceHolder> activeDeviceHolder : deviceHolderVector) {
-            sptr<HCameraDevice> activeDevice = activeDeviceHolder->GetDevice();
-            if (activeDevice != nullptr && activeDevice->IsOpenedCameraDevice()) {
-                int32_t position = activeDevice->GetCameraPosition();
-                isNeedMirror = (position == static_cast<int32_t>(OHOS_CAMERA_POSITION_FRONT));
-                int32_t usedAsPosition = activeDevice->GetUsedAsPosition();
-                isNeedFlip = (usedAsPosition == static_cast<int32_t>(OHOS_CAMERA_POSITION_FRONT));
-            }
-        }
-        mechSession->OnFocusTrackingInfo(streamId, isNeedMirror, isNeedFlip, result);
-    });
     metadataOutput = streamMetadata;
     MEDIA_INFO_LOG("HCameraService::CreateMetadataOutput execute success");
     return CAMERA_OK;
