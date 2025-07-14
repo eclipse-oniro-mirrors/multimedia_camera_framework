@@ -245,7 +245,7 @@ public:
     void OnNativeRegisterCallback(const std::string& eventString);
     void OnNativeUnregisterCallback(const std::string& eventString);
     void AdjustRenderFit();
-    bool IsXcomponentSwap();
+    bool IsXComponentSwap();
     int32_t GetCameraDeviceRotationAngle(uint32_t &cameraRotation);
     void SetSurfaceId(const std::string& surfaceId);
     std::string GetSurfaceId();

@@ -765,7 +765,7 @@ int32_t PreviewOutput::SetPreviewRotation(int32_t imageRotation, bool isDisplayL
     return CameraErrorCode::SUCCESS;
 }
 
-bool PreviewOutput::IsXcomponentSwap()
+bool PreviewOutput::IsXComponentSwap()
 {
     sptr<OHOS::Rosen::Display> display = OHOS::Rosen::DisplayManager::GetInstance().GetDefaultDisplay();
     if (display == nullptr) {
@@ -775,11 +775,11 @@ bool PreviewOutput::IsXcomponentSwap()
     }
     uint32_t currentRotation = static_cast<uint32_t>(display->GetRotation()) * 90;
     std::string deviceType = OHOS::system::GetDeviceType();
-    uint32_t apiCpmpatibleVersion = CameraApiVersion::GetApiVersion();
-    MEDIA_INFO_LOG("deviceType=%{public}s, apiCpmpatibleVersion=%{public}d", deviceType.c_str(),
-        apiCpmpatibleVersion);
+    uint32_t apiCompatibleVersion = CameraApiVersion::GetApiVersion();
+    MEDIA_INFO_LOG("deviceType=%{public}s, apiCompatibleVersion=%{public}d", deviceType.c_str(),
+        apiCompatibleVersion);
     // The tablet has incompatible changes in API14; use version isolation for compilation.
-    CHECK_EXECUTE(apiCpmpatibleVersion < CameraApiVersion::APIVersion::API_FOURTEEN && deviceType == "talet",
+    CHECK_EXECUTE(apiCompatibleVersion < CameraApiVersion::APIVersion::API_FOURTEEN && deviceType == "tablet",
         currentRotation = (currentRotation + STREAM_ROTATE_270) % (STREAM_ROTATE_270 + STREAM_ROTATE_90));
     uint32_t cameraRotation = 0;
     CHECK_RETURN_RET_ELOG(GetCameraDeviceRotationAngle(cameraRotation) != CAMERA_OK,
@@ -836,7 +836,7 @@ void PreviewOutput::AdjustRenderFit()
     CHECK_RETURN_ELOG(ret != 0 || xComponentHeight * xComponentWidth == 0,
         "The AdjustRenderFit call failed because the xComponentWidth x xComponentHeight equals 0."
         "ret: %{public}d", ret);
-    if (IsXcomponentSwap()) {
+    if (IsXComponentSwap()) {
         MEDIA_INFO_LOG("XComponent width and height need to swap");
         int temp = xComponentWidth;
         xComponentWidth = xComponentHeight;
