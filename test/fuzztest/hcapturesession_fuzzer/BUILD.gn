@@ -28,11 +28,10 @@ ohos_fuzztest("HCaptureSessionFuzzTest") {
     "${multimedia_camera_framework_path}/services/camera_service/binder/server/include",
     "${multimedia_camera_framework_path}/services/camera_service/include/adapter",
     "${multimedia_camera_framework_path}/services/camera_service/include/app_manager_utils",
-    "${multimedia_camera_framework_path}/services/camera_service/include/avcodec",
-    "${multimedia_camera_framework_path}/services/camera_service/include/avcodec/common",
+    "${multimedia_camera_framework_path}/dynamic_libs/moving_photo/include/avcodec",
+    "${multimedia_camera_framework_path}/dynamic_libs/moving_photo/include/common",
     "${multimedia_camera_framework_path}/services/camera_service/include/dfx",
     "${multimedia_camera_framework_path}/services/camera_service/include/media_library",
-    "${multimedia_camera_framework_path}/services/camera_service/include/moving_photo",
     "${multimedia_camera_framework_path}/services/camera_service/include/smooth_zoom",
     "${multimedia_camera_framework_path}/services/camera_service/include/window_manager_utils",
     "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include",
@@ -76,6 +75,7 @@ ohos_fuzztest("HCaptureSessionFuzzTest") {
     "${multimedia_camera_framework_path}/common:camera_utils",
     "${multimedia_camera_framework_path}/frameworks/native/camera/base:camera_framework",
     "${multimedia_camera_framework_path}/services/camera_service:camera_service",
+    "${multimedia_camera_framework_path}/dynamic_libs:camera_dynamic_moving_photo",
   ]
 
   external_deps = [

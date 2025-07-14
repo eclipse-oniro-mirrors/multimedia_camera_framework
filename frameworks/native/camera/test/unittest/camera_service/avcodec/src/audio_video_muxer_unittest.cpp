@@ -68,8 +68,10 @@ HWTEST_F(AudioVideoMuxerUnitTest, audio_video_muxer_unittest_001, TestSize.Level
 
     std::shared_ptr<OHOS::Media::AVBuffer> sample = make_shared<OHOS::Media::AVBuffer>();
     TrackType type = AUDIO_TRACK;
-    std::shared_ptr<AVMuxerImpl> impl = std::make_shared<AVMuxerImpl>();
-    muxer->muxer_ = impl;
+    auto avCodecProxy = AVCodecProxy::CreateAVCodecProxy();
+    ASSERT_NE(avCodecProxy, nullptr);
+    avCodecProxy->CreateAVMuxer(1, static_cast<Plugins::OutputFormat>(0));
+    muxer->avCodecProxy_ = avCodecProxy;
     ret = muxer->WriteSampleBuffer(sample, type);
     EXPECT_EQ(ret, 1);
 
@@ -96,8 +98,10 @@ HWTEST_F(AudioVideoMuxerUnitTest, audio_video_muxer_unittest_002, TestSize.Level
     int trackId = -1;
     std::shared_ptr<Format> format = make_shared<Format>();
     TrackType type = AUDIO_TRACK;
-    std::shared_ptr<AVMuxerImpl> impl = std::make_shared<AVMuxerImpl>();
-    muxer->muxer_ = impl;
+    auto avCodecProxy = AVCodecProxy::CreateAVCodecProxy();
+    ASSERT_NE(avCodecProxy, nullptr);
+    avCodecProxy->CreateAVMuxer(1, static_cast<Plugins::OutputFormat>(0));
+    muxer->avCodecProxy_ = avCodecProxy;
     int32_t ret = muxer->AddTrack(trackId, format, type);
     EXPECT_EQ(ret, 0);
 
@@ -127,8 +131,10 @@ HWTEST_F(AudioVideoMuxerUnitTest, audio_video_muxer_unittest_003, TestSize.Level
 
     std::shared_ptr<OHOS::Media::AVBuffer> sample = make_shared<OHOS::Media::AVBuffer>();
     TrackType type = AUDIO_TRACK;
-    std::shared_ptr<AVMuxerImpl> impl = std::make_shared<AVMuxerImpl>();
-    muxer->muxer_ = impl;
+    auto avCodecProxy = AVCodecProxy::CreateAVCodecProxy();
+    ASSERT_NE(avCodecProxy, nullptr);
+    avCodecProxy->CreateAVMuxer(1, static_cast<Plugins::OutputFormat>(0));
+    muxer->avCodecProxy_ = avCodecProxy;
     ret = muxer->WriteSampleBuffer(sample, type);
     EXPECT_EQ(ret, 1);
 
@@ -153,10 +159,9 @@ HWTEST_F(AudioVideoMuxerUnitTest, audio_video_muxer_unittest_004, TestSize.Level
 {
     sptr<AudioVideoMuxer> muxer = new AudioVideoMuxer();
     OH_AVOutputFormat format = AV_OUTPUT_FORMAT_MPEG_4;
-    
+
     int32_t ret = muxer->Create(format, nullptr);
     EXPECT_EQ(ret, 1);
-    muxer->muxer_ = nullptr;
 }
 
 /*
@@ -175,8 +180,10 @@ HWTEST_F(AudioVideoMuxerUnitTest, audio_video_muxer_unittest_005, TestSize.Level
     EXPECT_EQ(ret, 1);
 
     std::shared_ptr<OHOS::Media::AVBuffer> sample = make_shared<OHOS::Media::AVBuffer>();
-    std::shared_ptr<AVMuxerImpl> impl = std::make_shared<AVMuxerImpl>();
-    muxer->muxer_ = impl;
+    auto avCodecProxy = AVCodecProxy::CreateAVCodecProxy();
+    ASSERT_NE(avCodecProxy, nullptr);
+    avCodecProxy->CreateAVMuxer(1, static_cast<Plugins::OutputFormat>(0));
+    muxer->avCodecProxy_ = avCodecProxy;
     int num = 10;
     TrackType type = static_cast<TrackType>(num);
     ret = muxer->WriteSampleBuffer(sample, type);
@@ -198,8 +205,10 @@ HWTEST_F(AudioVideoMuxerUnitTest, audio_video_muxer_unittest_006, TestSize.Level
     std::shared_ptr<Format> format = make_shared<Format>();
     int num = 10;
     TrackType type = static_cast<TrackType>(num);
-    std::shared_ptr<AVMuxerImpl> impl = std::make_shared<AVMuxerImpl>();
-    muxer->muxer_ = impl;
+    auto avCodecProxy = AVCodecProxy::CreateAVCodecProxy();
+    ASSERT_NE(avCodecProxy, nullptr);
+    avCodecProxy->CreateAVMuxer(1, static_cast<Plugins::OutputFormat>(0));
+    muxer->avCodecProxy_ = avCodecProxy;
     int32_t ret = muxer->AddTrack(trackId, format, type);
     EXPECT_EQ(ret, 0);
 
@@ -223,8 +232,10 @@ HWTEST_F(AudioVideoMuxerUnitTest, audio_video_muxer_unittest_006, TestSize.Level
 HWTEST_F(AudioVideoMuxerUnitTest, audio_video_muxer_unittest_007, TestSize.Level1)
 {
     sptr<AudioVideoMuxer> muxer = new AudioVideoMuxer();
-    std::shared_ptr<AVMuxerImpl> impl = std::make_shared<AVMuxerImpl>();
-    muxer->muxer_ = impl;
+    auto avCodecProxy = AVCodecProxy::CreateAVCodecProxy();
+    ASSERT_NE(avCodecProxy, nullptr);
+    avCodecProxy->CreateAVMuxer(1, static_cast<Plugins::OutputFormat>(0));
+    muxer->avCodecProxy_ = avCodecProxy;
     int32_t ret = muxer->Release();
     EXPECT_EQ(ret, 0);
 

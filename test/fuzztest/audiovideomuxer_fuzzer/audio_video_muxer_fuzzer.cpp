@@ -44,8 +44,6 @@ void AudioVideoMuxerFuzzer::AudioVideoMuxerFuzzTest(FuzzedDataProvider& fdp)
 
     constexpr int32_t executionModeCount = static_cast<int32_t>(TrackType::META_TRACK) + NUM_1;
     TrackType type = static_cast<TrackType>(fdp.ConsumeIntegral<uint8_t>() % executionModeCount);
-    std::shared_ptr<AVMuxerImpl> impl = std::make_shared<AVMuxerImpl>();
-    fuzz_->muxer_ = impl;
     int32_t trackId = fdp.ConsumeIntegral<int32_t>();
     fuzz_->WriteSampleBuffer(sample, type);
     std::shared_ptr<Format> format = std::make_shared<Format>();

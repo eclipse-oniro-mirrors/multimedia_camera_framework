@@ -18,11 +18,13 @@
 #include <memory>
 #include <mutex>
 #include <uuid.h>
+#include <iomanip>
 
 #include "camera_log.h"
 #include "camera_server_photo_proxy.h"
 #include "camera_util.h"
 #include "camera/v1_4/types.h"
+#include "datetime_ex.h"
 #include "hstream_common.h"
 #include "ipc_skeleton.h"
 #include "metadata_utils.h"
@@ -36,6 +38,7 @@
 #include "hstream_operator.h"
 #include "display/graphic/common/v2_1/cm_color_space.h"
 #include "picture_proxy.h"
+#include "task_manager.h"
 #ifdef HOOK_CAMERA_OPERATOR
 #include "camera_rotate_plugin.h"
 #endif

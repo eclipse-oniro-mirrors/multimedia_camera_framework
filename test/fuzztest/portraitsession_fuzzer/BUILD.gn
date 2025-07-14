@@ -26,8 +26,9 @@ ohos_fuzztest("PortraitSessionFuzzTest") {
     "${multimedia_camera_framework_path}/services/camera_service/binder/server/include",
     "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include",
     "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include/output/",
-    "${multimedia_camera_framework_path}/services/camera_service/include/avcodec/common",
-    "${multimedia_camera_framework_path}/services/camera_service/include/avcodec",
+    "${multimedia_camera_framework_path}/dynamic_libs/moving_photo/include",
+    "${multimedia_camera_framework_path}/dynamic_libs/moving_photo/include/avcodec",
+    "${multimedia_camera_framework_path}/dynamic_libs/moving_photo/include/common",
   ]
 
   cflags = [
