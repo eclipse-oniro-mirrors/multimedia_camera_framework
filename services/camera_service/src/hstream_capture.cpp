@@ -626,7 +626,8 @@ int32_t HStreamCapture::CreateMediaLibraryPhotoAssetProxy(int32_t captureId)
     } else if (isBursting_) {
         cameraShotType = burstShotType;
     }
-    auto photoAssetProxy = PhotoAssetProxy::GetPhotoAssetProxy(cameraShotType, IPCSkeleton::GetCallingUid());
+    auto photoAssetProxy = PhotoAssetProxy::GetPhotoAssetProxy(
+        cameraShotType, IPCSkeleton::GetCallingUid(), IPCSkeleton::GetCallingTokenID());
     CHECK_RETURN_RET_ELOG(photoAssetProxy == nullptr, CAMERA_ALLOC_ERROR,
         "HStreamCapture::CreateMediaLibraryPhotoAssetProxy get photoAssetProxy fail");
     photoAssetProxy_.Insert(captureId, photoAssetProxy);

@@ -20,8 +20,9 @@
 
 namespace OHOS {
 namespace CameraStandard {
-typedef PhotoAssetIntf* (*CreatePhotoAssetIntf)(int32_t, int32_t);
-std::shared_ptr<PhotoAssetProxy> PhotoAssetProxy::GetPhotoAssetProxy(int32_t shootType, int32_t callingUid)
+typedef PhotoAssetIntf* (*CreatePhotoAssetIntf)(int32_t, int32_t, uint32_t, uint32_t);
+std::shared_ptr<PhotoAssetProxy> PhotoAssetProxy::GetPhotoAssetProxy(
+    int32_t shootType, int32_t callingUid, uint32_t callingTokenID)
 {
     auto dynamiclib = CameraDynamicLoader::GetDynamiclib(MEDIA_LIB_SO);
     CHECK_RETURN_RET_ELOG(
@@ -29,7 +30,7 @@ std::shared_ptr<PhotoAssetProxy> PhotoAssetProxy::GetPhotoAssetProxy(int32_t sho
     CreatePhotoAssetIntf createPhotoAssetIntf = (CreatePhotoAssetIntf)dynamiclib->GetFunction("createPhotoAssetIntf");
     CHECK_RETURN_RET_ELOG(
         createPhotoAssetIntf == nullptr, nullptr, "PhotoAssetProxy::CreateMediaLibrary get createPhotoAssetIntf fail");
-    PhotoAssetIntf* photoAssetIntf = createPhotoAssetIntf(shootType, callingUid);
+    PhotoAssetIntf* photoAssetIntf = createPhotoAssetIntf(shootType, callingUid, callingTokenID);
     CHECK_RETURN_RET_ELOG(
         photoAssetIntf == nullptr, nullptr, "PhotoAssetProxy::CreateMediaLibrary get photoAssetIntf fail");
     std::shared_ptr<PhotoAssetProxy> photoAssetProxy =

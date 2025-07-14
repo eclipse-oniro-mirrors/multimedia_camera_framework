@@ -26,7 +26,7 @@ namespace OHOS {
 namespace CameraStandard {
 
 Media::MediaLibraryManager *g_mediaLibraryManager = nullptr;
-PhotoAssetAdapter::PhotoAssetAdapter(int32_t cameraShotType, int32_t uid)
+PhotoAssetAdapter::PhotoAssetAdapter(int32_t cameraShotType, int32_t uid, uint32_t callingTokenID)
 {
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("PhotoAssetAdapter ctor");
@@ -47,7 +47,7 @@ PhotoAssetAdapter::PhotoAssetAdapter(int32_t cameraShotType, int32_t uid)
     userId_ = uid / BASE_USER_RANGE;
     MEDIA_DEBUG_LOG("get uid:%{public}d, userId:%{public}d.", uid, userId_);
     photoAssetProxy_ = g_mediaLibraryManager->CreatePhotoAssetProxy(
-        static_cast<Media::CameraShotType>(cameraShotType), uid, userId_);
+        static_cast<Media::CameraShotType>(cameraShotType), uid, userId_, callingTokenID);
     CHECK_EXECUTE(!photoAssetProxy_, CameraReportUtils::GetInstance().ReportCameraCreateNullptr(
         "PhotoAssetAdapter::PhotoAssetAdapter", "Media::MediaLibraryManager::CreatePhotoAssetProxy"));
 }
@@ -90,9 +90,9 @@ void PhotoAssetAdapter::NotifyVideoSaveFinished()
     CHECK_EXECUTE(photoAssetProxy_, photoAssetProxy_->NotifyVideoSaveFinished());
 }
 // LCOV_EXCL_STOP
-extern "C" PhotoAssetIntf *createPhotoAssetIntf(int32_t cameraShotType, int32_t uid)
+extern "C" PhotoAssetIntf *createPhotoAssetIntf(int32_t cameraShotType, int32_t uid, uint32_t callingTokenID)
 {
-    return new PhotoAssetAdapter(cameraShotType, uid);
+    return new PhotoAssetAdapter(cameraShotType, uid, callingTokenID);
 }
 
 }  // namespace AVSession
