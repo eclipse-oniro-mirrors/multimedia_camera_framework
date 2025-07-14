@@ -52,7 +52,7 @@ enum MetadataObjectType {
     SALIENT_DETECTION = 6,
     BAR_CODE_DETECTION = 7,
     BASE_FACE_DETECTION = 8,
-    HUMAN_HEAD = 9,
+    BASE_TRACKING_REGION = 9,
 };
 
 enum SketchStatus {

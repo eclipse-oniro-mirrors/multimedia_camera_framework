@@ -455,16 +455,6 @@ private:
     std::shared_ptr<MetadataObjectCallback> appObjectCallback_;
     std::shared_ptr<MetadataStateCallback> appStateCallback_;
     sptr<IStreamMetadataCallback> cameraMetadataCallback_;
-    std::vector<uint32_t> typesOfMetadata_ = {
-        OHOS_STATISTICS_DETECT_HUMAN_FACE_INFOS,
-        OHOS_STATISTICS_DETECT_HUMAN_BODY_INFOS,
-        OHOS_STATISTICS_DETECT_CAT_FACE_INFOS,
-        OHOS_STATISTICS_DETECT_CAT_BODY_INFOS,
-        OHOS_STATISTICS_DETECT_DOG_FACE_INFOS,
-        OHOS_STATISTICS_DETECT_DOG_BODY_INFOS,
-        OHOS_STATISTICS_DETECT_SALIENT_INFOS,
-        OHOS_STATISTICS_DETECT_BAR_CODE_INFOS,
-        OHOS_STATISTICS_DETECT_BASE_FACE_INFO};
 };
 
 class MetadataObjectListener : public IBufferConsumerListener {
