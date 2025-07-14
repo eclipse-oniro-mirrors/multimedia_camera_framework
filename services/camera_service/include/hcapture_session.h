@@ -41,12 +41,8 @@
 #include "camera_photo_proxy.h"
 #include "iconsumer_surface.h"
 #include "blocking_queue.h"
-#include "audio_capturer.h"
-#include "audio_info.h"
-#include "avcodec_task_manager.h"
-#include "moving_photo_video_cache.h"
 #include "drain_manager.h"
-#include "audio_capturer_session.h"
+#include "moving_photo_proxy.h"
 #include "safe_map.h"
 #ifdef CAMERA_USE_SENSOR
 #include "sensor_agent.h"

@@ -336,7 +336,6 @@ HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_011, TestSize
     sptr<AvcodecTaskManager> taskManager = new AvcodecTaskManager(session, type, colorSpace);
 
     taskManager->videoEncoder_ = make_shared<VideoEncoder>(type, colorSpace);
-    taskManager->videoEncoder_->encoder_ = nullptr;
     taskManager->videoEncoder_->isStarted_ = true;
     taskManager->audioEncoder_ = nullptr;
     taskManager->audioDeferredProcess_ = nullptr;

@@ -191,7 +191,7 @@ HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_007, TestSize
     ASSERT_NE(mediaManager, nullptr);
     EXPECT_NE(mediaManager->Create(0, 0, -1), MediaManagerError::OK);
 }
- 
+
 /*
  * Feature: Framework
  * Function: Test WriteSample
@@ -222,7 +222,7 @@ HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_008, TestSize
     mediaManager->started_ = false;
     EXPECT_EQ(mediaManager->WriteSample(type1, sample), ERROR_FAIL);
 }
- 
+
 /*
  * Feature: Framework
  * Function: Test InitWriter
@@ -244,7 +244,7 @@ HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_009, TestSize
     mediaManager->mediaInfo_ = std::make_shared<DeferredProcessing::MediaInfo>();
     EXPECT_EQ(mediaManager->InitWriter(), MediaManagerError::ERROR_FAIL);
 }
- 
+
 /*
  * Feature: Framework
  * Function: Test MpegManagerFactory with Acquire

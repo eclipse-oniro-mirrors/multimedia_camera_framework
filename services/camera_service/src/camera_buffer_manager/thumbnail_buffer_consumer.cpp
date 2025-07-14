@@ -20,7 +20,6 @@
 #include "hstream_capture.h"
 #include "task_manager.h"
 #include "camera_server_photo_proxy.h"
-
 namespace OHOS {
 namespace CameraStandard {
 

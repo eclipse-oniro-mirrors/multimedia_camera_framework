@@ -14,6 +14,7 @@
  */
 
 #include "camera_beauty_notification.h"
+#include "image_source_proxy.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -276,23 +277,19 @@ void CameraBeautyNotification::GetPixelMap()
 
     OHOS::Media::SourceOptions opts;
     uint32_t errorCode = 0;
-    std::unique_ptr<OHOS::Media::ImageSource> imageSource =
-        OHOS::Media::ImageSource::CreateImageSource(data.get(), len, opts, errorCode);
+    std::shared_ptr<ImageSourceProxy> imageSourceProxy = ImageSourceProxy::CreateImageSourceProxy();
+    CHECK_RETURN_ELOG(imageSourceProxy == nullptr, "CreateImageSourceProxy failed");
+    auto ret = imageSourceProxy->CreateImageSource(data.get(), len, opts, errorCode);
+    CHECK_RETURN_ELOG(ret != 0, "CreateImageSource failed");
     MEDIA_INFO_LOG("CreateImageSource errorCode: %{public}d", static_cast<int32_t>(errorCode));
-    if (imageSource == nullptr) {
-        MEDIA_ERR_LOG("imageSource is nullptr");
-        return;
-    }
     OHOS::Media::DecodeOptions decodeOpts;
     decodeOpts.desiredSize = {ICON_WIDTH, ICON_HEIGHT};
     decodeOpts.desiredPixelFormat = OHOS::Media::PixelFormat::BGRA_8888;
-    std::unique_ptr<OHOS::Media::PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
-    MEDIA_INFO_LOG("CreatePixelMap errorCode: %{public}d", static_cast<int32_t>(errorCode));
-    if (pixelMap == nullptr) {
-        MEDIA_ERR_LOG("pixelMap is nullptr");
-        return;
-    }
+    std::unique_ptr<Media::PixelMap> pixelMap = imageSourceProxy->CreatePixelMap(decodeOpts, errorCode);
+    MEDIA_INFO_LOG("CreateImageSource errorCode: %{public}d", static_cast<int32_t>(errorCode));
+    CHECK_RETURN_ELOG(pixelMap == nullptr, "Create icon pixel map failed,pixelMap is nullptr");
     iconPixelMap_ = std::move(pixelMap);
+    ImageSourceProxy::Release();
 }
 
 Global::Resource::RState CameraBeautyNotification::GetMediaDataByName(std::string name, size_t& len,

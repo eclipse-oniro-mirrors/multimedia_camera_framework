@@ -19,7 +19,7 @@
 #include "basic_definitions.h"
 #include "dp_log.h"
 #include "map_data_sequenceable.h"
-#include "media_format.h"
+#include "media_format_info.h"
 
 namespace OHOS {
 namespace CameraStandard {
