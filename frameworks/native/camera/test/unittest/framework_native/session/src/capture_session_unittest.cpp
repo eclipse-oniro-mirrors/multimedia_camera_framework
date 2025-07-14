@@ -9010,11 +9010,11 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_164, TestSize.Level0)
 
 /*
  * Feature: Framework
- * Function: Test IsXcomponentSwap
+ * Function: Test IsXComponentSwap
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test the IsXcomponentSwap interface to return true.
+ * CaseDescription: Test the IsXComponentSwap interface to return true.
  */
 HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_165, TestSize.Level0)
 {
@@ -9033,17 +9033,17 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_165, TestSize.Level0)
     EXPECT_EQ(session->AddOutput(preview), 0);
     EXPECT_EQ(session->CommitConfig(), 0);
     sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&) preview;
-    EXPECT_EQ(previewOutput->IsXcomponentSwap(), true);
+    EXPECT_EQ(previewOutput->IsXComponentSwap(), true);
     input->Close();
 }
 
 /*
  * Feature: Framework
- * Function: Test IsXcomponentSwap
+ * Function: Test IsXComponentSwap
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test the IsXcomponentSwap interface to return false.
+ * CaseDescription: Test the IsXComponentSwap interface to return false.
  */
 HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_166, TestSize.Level0)
 {
@@ -9052,7 +9052,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_166, TestSize.Level0)
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
     sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&) preview;
-    EXPECT_EQ(previewOutput->IsXcomponentSwap(), false);
+    EXPECT_EQ(previewOutput->IsXComponentSwap(), false);
 }
 }
 }
