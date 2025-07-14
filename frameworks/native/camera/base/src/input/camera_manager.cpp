@@ -1332,9 +1332,9 @@ std::vector<dmDeviceInfo> CameraManager::GetDmDeviceInfo()
     std::vector<dmDeviceInfo> distributedCamInfo(size);
     for (int i = 0; i < size; i++) {
         std::string deviceInfoStr = deviceInfos[i];
-        MEDIA_INFO_LOG("CameraManager::GetDmDeviceInfo deviceInfo: %{public}s", deviceInfoStr.c_str());
+        MEDIA_INFO_LOG("CameraManager::GetDmDeviceInfo deviceInfo: %{private}s", deviceInfoStr.c_str());
         if (!nlohmann::json::accept(deviceInfoStr)) {
-            MEDIA_ERR_LOG("Failed to verify the deviceInfo format, deviceInfo is: %{public}s", deviceInfoStr.c_str());
+            MEDIA_ERR_LOG("Failed to verify the deviceInfo format, deviceInfo is: %{private}s", deviceInfoStr.c_str());
         } else {
             nlohmann::json deviceInfoJson = nlohmann::json::parse(deviceInfoStr);
             if ((deviceInfoJson.contains("deviceName") && deviceInfoJson.contains("deviceTypeId") &&

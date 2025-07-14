@@ -72,7 +72,7 @@ CameraDevice::CameraDevice(
     dmDeviceInfo_.deviceName = deviceInfo.deviceName;
     dmDeviceInfo_.deviceTypeId = deviceInfo.deviceTypeId;
     dmDeviceInfo_.networkId = deviceInfo.networkId;
-    MEDIA_INFO_LOG("camera cameraid = %{public}s, devicename: = %{public}s", cameraID_.c_str(),
+    MEDIA_INFO_LOG("camera cameraid = %{public}s, devicename: = %{private}s", cameraID_.c_str(),
         dmDeviceInfo_.deviceName.c_str());
     CHECK_RETURN(metadata == nullptr);
     init(metadata->get());
@@ -85,7 +85,7 @@ CameraDevice::CameraDevice(
     dmDeviceInfo_.deviceName = deviceInfo.deviceName;
     dmDeviceInfo_.deviceTypeId = deviceInfo.deviceTypeId;
     dmDeviceInfo_.networkId = deviceInfo.networkId;
-    MEDIA_INFO_LOG("cameraDevice cameraid = %{public}s, devicename: = %{public}s", cameraID_.c_str(),
+    MEDIA_INFO_LOG("cameraDevice cameraid = %{public}s, devicename: = %{private}s", cameraID_.c_str(),
         dmDeviceInfo_.deviceName.c_str());
     CHECK_EXECUTE(metadata != nullptr, init(metadata->get()));
 }
