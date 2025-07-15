@@ -43,6 +43,7 @@ enum PluginParameter {
     PLUGIN_SURFACE_APP_FWK_TYPE, //video
     PLUGIN_VIDEO_SURFACE_TRANSFORM, // video
     PLUGIN_VIDEO_MIRROR, // video
+    PLUGIN_PREVIEW_TRANSFORM, // preview
 };
 class HCaptureSession;
 

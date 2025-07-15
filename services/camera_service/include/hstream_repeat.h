@@ -102,7 +102,7 @@ private:
     void ApplyTransformBasedOnRotation(int32_t streamRotation,
         const sptr<OHOS::IBufferProducer>& producer, bool isFrontCamera);
     void ProcessFixedTransform(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition);
-    void ProcessFixedDiffDeviceTransform(camera_position_enum_t& cameraPosition);
+    void ProcessFixedDiffDeviceTransform(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition);
     void ProcessCameraPosition(int32_t& streamRotation, camera_position_enum_t& cameraPosition);
     void ProcessCameraSetRotation(int32_t& streamRotation, camera_position_enum_t& cameraPosition);
     void UpdateVideoSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> settings, uint8_t mirror = 0);
