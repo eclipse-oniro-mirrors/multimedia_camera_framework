@@ -222,34 +222,22 @@ void CameraManagerCallbackNapi::OnCameraStatusCallbackAsync(const CameraStatusIn
 void CameraManagerCallbackNapi::OnCameraStatusCallback(const CameraStatusInfo& cameraStatusInfo) const
 {
     MEDIA_DEBUG_LOG("OnCameraStatusCallback is called");
-    napi_value result[ARGS_TWO];
-    napi_value retVal;
-    napi_value propValue;
-    napi_value undefinedResult;
-
-    napi_get_undefined(env_, &result[PARAM0]);
-    napi_get_undefined(env_, &result[PARAM1]);
-    napi_get_undefined(env_, &undefinedResult);
     CAMERA_NAPI_CHECK_NULL_PTR_RETURN_VOID(cameraStatusInfo.cameraDevice, "callback cameraDevice is null");
-    napi_create_object(env_, &result[PARAM1]);
-
-    if (cameraStatusInfo.cameraDevice != nullptr) {
+    ExecuteCallbackScopeSafe("cameraStatus", [&]() {
+        napi_value callbackObj;
+        napi_create_object(env_, &callbackObj);
         napi_value cameraDeviceNapi = CameraNapiObjCameraDevice(*cameraStatusInfo.cameraDevice).GenerateNapiValue(env_);
-        napi_set_named_property(env_, result[PARAM1], "camera", cameraDeviceNapi);
-    } else {
-        MEDIA_ERR_LOG("Camera info is null");
-        napi_set_named_property(env_, result[PARAM1], "camera", undefinedResult);
-    }
-
-    int32_t jsCameraStatus = -1;
-    jsCameraStatus = cameraStatusInfo.cameraStatus;
-    napi_create_int64(env_, jsCameraStatus, &propValue);
-    napi_set_named_property(env_, result[PARAM1], "status", propValue);
-    MEDIA_INFO_LOG("CameraId: %{public}s, CameraStatus: %{public}d", cameraStatusInfo.cameraDevice->GetID().c_str(),
-        cameraStatusInfo.cameraStatus);
-
-    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
-    ExecuteCallback("cameraStatus", callbackNapiPara);
+        napi_set_named_property(env_, callbackObj, "camera", cameraDeviceNapi);
+        int32_t jsCameraStatus = cameraStatusInfo.cameraStatus;
+        napi_value propValue;
+        napi_create_int64(env_, jsCameraStatus, &propValue);
+        napi_set_named_property(env_, callbackObj, "status", propValue);
+        MEDIA_INFO_LOG("CameraId: %{public}s, CameraStatus: %{public}d",
+            cameraStatusInfo.cameraDevice->GetID().c_str(),
+            cameraStatusInfo.cameraStatus);
+        napi_value errCode = CameraNapiUtils::GetUndefinedValue(env_);
+        return ExecuteCallbackData(env_, errCode, callbackObj);
+    });
 }
 
 void CameraManagerCallbackNapi::OnCameraStatusChanged(const CameraStatusInfo &cameraStatusInfo) const
