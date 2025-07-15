@@ -1089,7 +1089,7 @@ napi_value CameraManagerNapi::GetCameraConcurrentInfos(napi_env env, napi_callba
         "CameraManagerNapi::GetCameraConcurrentInfos ParseGetCameraConcurrentInfos cameraid size is null");
     vector<sptr<CameraDevice>> cameraDeviceArrray = {};
     for (auto cameraidonly : cameraIdv) {
-        CHECK_RETURN_RET_ELOG(cameraidonly == nullptr,
+        CHECK_RETURN_RET_ELOG(cameraidonly.empty(),
             CreateCameraConcurrentResult(env, cameraReturnNull, cameraConcurrentType, modes, outputCapabilities),
             "CameraManagerNapi::GetCameraConcurrentInfos ParseGetCameraConcurrentInfos cameraid is null");
         auto getCameraDev = cameraManagerNapi->cameraManager_->GetCameraDeviceFromId(cameraidonly);
