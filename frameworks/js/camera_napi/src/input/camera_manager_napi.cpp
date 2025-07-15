@@ -1082,14 +1082,24 @@ napi_value CameraManagerNapi::GetCameraConcurrentInfos(napi_env env, napi_callba
     }
 
     std::vector<string>cameraIdv = {};
+    vector<sptr<CameraDevice>> cameraReturnNull = {};
     cameraManagerNapi->ParseGetCameraConcurrentInfos(env, argv[PARAM0], cameraIdv);
+    CHECK_RETURN_RET_ELOG(cameraIdv.size() == 0,
+        CreateCameraConcurrentResult(env, cameraReturnNull, cameraConcurrentType, modes, outputCapabilities),
+        "CameraManagerNapi::GetCameraConcurrentInfos ParseGetCameraConcurrentInfos cameraid size is null");
     vector<sptr<CameraDevice>> cameraDeviceArrray = {};
     for (auto cameraidonly : cameraIdv) {
-        cameraDeviceArrray.push_back(cameraManagerNapi->cameraManager_->GetCameraDeviceFromId(cameraidonly));
+        CHECK_RETURN_RET_ELOG(cameraidonly.empty(),
+            CreateCameraConcurrentResult(env, cameraReturnNull, cameraConcurrentType, modes, outputCapabilities),
+            "CameraManagerNapi::GetCameraConcurrentInfos ParseGetCameraConcurrentInfos cameraid is null");
+        auto getCameraDev = cameraManagerNapi->cameraManager_->GetCameraDeviceFromId(cameraidonly);
+        CHECK_RETURN_RET_ELOG(getCameraDev == nullptr,
+            CreateCameraConcurrentResult(env, cameraReturnNull, cameraConcurrentType, modes, outputCapabilities),
+            "CameraManagerNapi::GetCameraConcurrentInfos GetCameraDeviceFromId get cameraid is null");
+        cameraDeviceArrray.push_back(getCameraDev);
     }
    
     bool issupported = cameraManagerNapi->cameraManager_->GetConcurrentType(cameraDeviceArrray, cameraConcurrentType);
-    vector<sptr<CameraDevice>> cameraReturnNull = {};
     if (issupported == false) {
         MEDIA_ERR_LOG("CameraManagerNapi::Camera is not support ConcurrentType");
         return CreateCameraConcurrentResult(env, cameraReturnNull, cameraConcurrentType, modes, outputCapabilities);
