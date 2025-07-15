@@ -29,6 +29,8 @@ using namespace testing::ext;
 namespace OHOS {
 namespace CameraStandard {
 
+static const int32_t WAIT_CAMERA_RECOVERY = 6;
+
 std::bitset<static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_MAX_EVENT)> g_photoEvents;
 std::bitset<static_cast<unsigned int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_MAX_EVENT)> g_previewEvents;
 std::bitset<static_cast<unsigned int>(CAM_VIDEO_EVENTS::CAM_VIDEO_MAX_EVENT)> g_videoEvents;
@@ -8383,6 +8385,7 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_002, TestSize.Level1)
     EXPECT_EQ(res, 0);
     res = videoSession->Release();
     EXPECT_EQ(res, 0);
+    sleep(WAIT_CAMERA_RECOVERY);
 }
 
 /*
@@ -8465,6 +8468,7 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_003, TestSize.Level0)
     EXPECT_EQ(res, 0);
     res = videoSession->Release();
     EXPECT_EQ(res, 0);
+    sleep(WAIT_CAMERA_RECOVERY);
 }
 
 /*
@@ -9057,6 +9061,7 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_011, TestSize.Level0)
         EXPECT_EQ(res, 0);
     }
     EXPECT_EQ(videoSession->Release(), 0);
+    sleep(WAIT_CAMERA_RECOVERY);
 }
 
 /*
@@ -9131,6 +9136,7 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_012, TestSize.Level0)
         EXPECT_EQ(res, 0);
     }
     EXPECT_EQ(videoSession->Release(), 0);
+    sleep(WAIT_CAMERA_RECOVERY);
 }
 
 /*
