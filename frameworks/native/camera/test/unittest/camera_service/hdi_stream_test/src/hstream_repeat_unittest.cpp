@@ -1808,8 +1808,9 @@ HWTEST_F(HStreamRepeatUnit, ProcessFixedDiffDeviceTransform_001, TestSize.Level0
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
+    int32_t sensorOrientation = STREAM_ROTATE_0;
     camera_position_enum_t cameraPosition = camera_position_enum_t::OHOS_CAMERA_POSITION_FRONT;
-    streamRepeat->ProcessFixedDiffDeviceTransform(cameraPosition);
+    streamRepeat->ProcessFixedDiffDeviceTransform(sensorOrientation, cameraPosition);
 }
 
 /**
@@ -1821,8 +1822,9 @@ HWTEST_F(HStreamRepeatUnit, ProcessFixedDiffDeviceTransform_002, TestSize.Level0
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
+    int32_t sensorOrientation = STREAM_ROTATE_0;
     camera_position_enum_t cameraPosition = camera_position_enum_t::OHOS_CAMERA_POSITION_BACK;
-    streamRepeat->ProcessFixedDiffDeviceTransform(cameraPosition);
+    streamRepeat->ProcessFixedDiffDeviceTransform(sensorOrientation, cameraPosition);
 }
 }
 }

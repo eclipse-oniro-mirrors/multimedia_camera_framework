@@ -174,6 +174,9 @@ bool CameraRotatePlugin::HookPreviewTransform(ParameterMap basicInfoMap,
     int32_t frameGravity = -1;
     int32_t fixedRotation = -1;
     if (PreviewTransform(basicInfoMap, frameGravity, fixedRotation, sensorOrientation, cameraPosition)) {
+        MEDIA_DEBUG_LOG("CameraRotatePlugin::HookPreviewTransform frameGravity: %{public}d, fixedRotation: %{public}d, "
+            "sensorOrientation: %{public}d, cameraPosition: %{public}d",
+            frameGravity, fixedRotation, sensorOrientation, cameraPosition);
         producer->SetFrameGravity(frameGravity);
         producer->SetFixedRotation(fixedRotation);
         return true;

@@ -1996,6 +1996,10 @@ void HCaptureSession::UpdateHookBasicInfo(ParameterMap parameterMap)
         auto curStreamRepeat = CastStream<HStreamRepeat>(stream);
         if (curStreamRepeat->GetRepeatStreamType() == RepeatStreamType::PREVIEW) {
             previewProducer = curStreamRepeat->GetStreamProducer();
+            if (parameterMap.find(PLUGIN_PREVIEW_TRANSFORM) != parameterMap.end()) {
+                MEDIA_INFO_LOG("HCaptureSession::UpdateHookBasicInfo PLUGIN_PREVIEW_TRANSFORM");
+                curStreamRepeat->SetStreamTransform();
+            }
         }
         if (curStreamRepeat->GetRepeatStreamType() == RepeatStreamType::VIDEO) {
             videoProducer = curStreamRepeat->GetStreamProducer();

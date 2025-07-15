@@ -747,7 +747,7 @@ void HStreamRepeat::ProcessFixedTransform(int32_t& sensorOrientation, camera_pos
     bool isTableFlag = system::GetBoolParameter("const.multimedia.enable_camera_rotation_compensation", 0);
     bool isNeedChangeRotation = system::GetBoolParameter("const.multimedia.enable_camera_rotation_change", 0);
     if (isTableFlag) { // LCOV_EXCL_LINE
-        ProcessFixedDiffDeviceTransform(cameraPosition);
+        ProcessFixedDiffDeviceTransform(sensorOrientation, cameraPosition);
         return;
     }
     if (isNeedChangeRotation) { // LCOV_EXCL_LINE
@@ -757,13 +757,21 @@ void HStreamRepeat::ProcessFixedTransform(int32_t& sensorOrientation, camera_pos
     if (IsVerticalDevice()) { // LCOV_EXCL_LINE
         ProcessVerticalCameraPosition(sensorOrientation, cameraPosition);
     } else {
-        ProcessFixedDiffDeviceTransform(cameraPosition);
+        ProcessFixedDiffDeviceTransform(sensorOrientation, cameraPosition);
     }
 }
 
-void HStreamRepeat::ProcessFixedDiffDeviceTransform(camera_position_enum_t& cameraPosition)
+void HStreamRepeat::ProcessFixedDiffDeviceTransform(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition)
 {
     int ret = SurfaceError::SURFACE_ERROR_OK;
+#ifdef HOOK_CAMERA_OPERATOR
+    int32_t cameraPositionTemp = static_cast<int32_t>(cameraPosition);
+    if (!CameraRotatePlugin::GetInstance()->HookPreviewTransform(GetBasicInfo(), producer_,
+        sensorOrientation, cameraPositionTemp)) {
+        MEDIA_ERR_LOG("HStreamRepeat::ProcessFixedDiffDeviceTransform HookPreviewTransform is failed");
+    }
+    cameraPosition = static_cast<camera_position_enum_t>(cameraPositionTemp);
+#endif
     if (cameraPosition == OHOS_CAMERA_POSITION_FRONT) {
         ret = producer_->SetTransform(GRAPHIC_FLIP_H);
         MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform filp for wide side devices");
