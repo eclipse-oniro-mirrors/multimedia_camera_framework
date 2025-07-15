@@ -373,6 +373,7 @@ napi_value PreviewOutputNapi::CreatePreviewOutput(napi_env env, std::string surf
         CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         CHECK_RETURN_RET_ELOG(sPreviewOutput_ == nullptr, result,
             "failed to create previewOutput with only surfaceId");
+        sPreviewOutput_->SetSurfaceId(surfaceId);
         status = napi_new_instance(env, constructor, 0, nullptr, &result);
         sPreviewOutput_ = nullptr;
 
