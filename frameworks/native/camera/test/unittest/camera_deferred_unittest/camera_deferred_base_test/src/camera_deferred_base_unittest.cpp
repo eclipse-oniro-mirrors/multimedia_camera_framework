@@ -97,10 +97,10 @@ HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_002, TestSize.Level
     }
     taskManager->IsEmpty();
     taskManager->taskRegistry_ = nullptr;
-    EXPECT_FALSE(taskManager->DeregisterTaskGroup("defaultTaskGroup", taskManager->defaultTaskHandle_));
+    EXPECT_FALSE(taskManager->DeregisterTaskGroup("defaultTaskGroup", *(taskManager->defaultTaskHandle_)));
 
     std::any param1 = 1;
-    EXPECT_FALSE(taskManager->SubmitTask(taskManager->defaultTaskHandle_, param1));
+    EXPECT_FALSE(taskManager->SubmitTask(*(taskManager->defaultTaskHandle_), param1));
     taskManager->CancelAllTasks();
     EXPECT_TRUE(taskManager->IsEmpty());
 }
