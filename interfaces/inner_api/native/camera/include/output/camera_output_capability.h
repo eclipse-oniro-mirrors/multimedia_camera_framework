@@ -57,6 +57,7 @@ enum CameraFormat : int32_t {
     CAMERA_FORMAT_HEIC = 2003,
     CAMERA_FORMAT_DEPTH_16 = 3000,
     CAMERA_FORMAT_DEPTH_32 = 3001,
+    CAMERA_FORMAT_MJPEG = 3002,
 };
 
 enum DepthDataAccuracy {

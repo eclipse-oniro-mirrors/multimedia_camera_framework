@@ -84,7 +84,8 @@ const std::unordered_map<camera_format_t, CameraFormat> CameraManager::metaToFwC
     {OHOS_CAMERA_FORMAT_DNG_XDRAW, CAMERA_FORMAT_DNG_XDRAW},
     {OHOS_CAMERA_FORMAT_HEIC, CAMERA_FORMAT_HEIC},
     {OHOS_CAMERA_FORMAT_DEPTH_16, CAMERA_FORMAT_DEPTH_16},
-    {OHOS_CAMERA_FORMAT_DEPTH_32, CAMERA_FORMAT_DEPTH_32}
+    {OHOS_CAMERA_FORMAT_DEPTH_32, CAMERA_FORMAT_DEPTH_32},
+    {OHOS_CAMERA_FORMAT_MJPEG, CAMERA_FORMAT_MJPEG}
 };
 
 const std::unordered_map<DepthDataAccuracyType, DepthDataAccuracy> CameraManager::metaToFwDepthDataAccuracy_ = {
@@ -105,7 +106,8 @@ const std::unordered_map<CameraFormat, camera_format_t> CameraManager::fwToMetaC
     {CAMERA_FORMAT_DNG_XDRAW, OHOS_CAMERA_FORMAT_DNG_XDRAW},
     {CAMERA_FORMAT_HEIC, OHOS_CAMERA_FORMAT_HEIC},
     {CAMERA_FORMAT_DEPTH_16, OHOS_CAMERA_FORMAT_DEPTH_16},
-    {CAMERA_FORMAT_DEPTH_32, OHOS_CAMERA_FORMAT_DEPTH_32}
+    {CAMERA_FORMAT_DEPTH_32, OHOS_CAMERA_FORMAT_DEPTH_32},
+    {CAMERA_FORMAT_MJPEG, OHOS_CAMERA_FORMAT_MJPEG}
 };
 
 const std::unordered_map<CameraFoldStatus, FoldStatus> g_metaToFwCameraFoldStatus_ = {
