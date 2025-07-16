@@ -1670,6 +1670,7 @@ int32_t HCaptureSession::Release(CaptureSessionReleaseType type)
 
 int32_t HCaptureSession::Release()
 {
+    CameraXCollie cameraXCollie("hcaptureSessionStub::Release");
     MEDIA_INFO_LOG("HCaptureSession::Release(), sessionID: %{public}d", GetSessionId());
     CameraReportUtils::GetInstance().SetModeChangePerfStartInfo(opMode_, CameraReportUtils::GetCallerInfo());
     return Release(CaptureSessionReleaseType::RELEASE_TYPE_CLIENT);
@@ -1700,19 +1701,6 @@ int32_t HCaptureSession::CallbackEnter([[maybe_unused]] uint32_t code)
     DisableJeMalloc();
     int32_t errCode = OperatePermissionCheck(code);
     CHECK_RETURN_RET_ELOG(errCode != CAMERA_OK, errCode, "HCaptureSession::OperatePermissionCheck fail");
-
-    switch (static_cast<ICaptureSessionIpcCode>(code)) {
-        case ICaptureSessionIpcCode::COMMAND_SET_FEATURE_MODE: {
-            CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION, "HCaptureSession::CheckSystemApp fail");
-            break;
-        }
-        case ICaptureSessionIpcCode::COMMAND_RELEASE: {
-            CameraXCollie cameraXCollie("hcaptureSessionStub::Release");
-            break;
-        }
-        default:
-            break;
-    }
     return CAMERA_OK;
 }
 int32_t HCaptureSession::CallbackExit([[maybe_unused]] uint32_t code, [[maybe_unused]] int32_t result)
@@ -1932,6 +1920,7 @@ std::string HCaptureSession::CreateBurstDisplayName(int32_t imageSeqId, int32_t 
 
 int32_t HCaptureSession::SetFeatureMode(int32_t featureMode)
 {
+    CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION, "HCaptureSession::CheckSystemApp fail");
     MEDIA_INFO_LOG("SetFeatureMode is called!sessionID: %{public}d", GetSessionId());
     featureMode_ = featureMode;
     return CAMERA_OK;

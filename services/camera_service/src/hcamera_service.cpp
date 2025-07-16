@@ -720,6 +720,8 @@ int32_t HCameraService::CreateDeferredPhotoProcessingSession(int32_t userId,
     sptr<DeferredProcessing::IDeferredPhotoProcessingSession>& session)
 {
     CAMERA_SYNC_TRACE;
+    CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION, "HCameraService::CheckSystemApp fail");
+    CameraXCollie cameraXCollie = CameraXCollie("HCameraService::CreateDeferredPhotoProcessingSession");
     MEDIA_INFO_LOG("HCameraService::CreateDeferredPhotoProcessingSession enter.");
     sptr<DeferredProcessing::IDeferredPhotoProcessingSession> photoSession;
     int32_t uid = IPCSkeleton::GetCallingUid();
@@ -835,6 +837,8 @@ int32_t HCameraService::CreatePhotoOutput(
     int32_t format, int32_t width, int32_t height, sptr<IStreamCapture> &photoOutput)
 {
     CAMERA_SYNC_TRACE;
+    CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION, "HCameraService::CheckSystemApp fail");
+    CameraXCollie cameraXCollie = CameraXCollie("HCameraService::CreateDeferredPreviewOutput");
     int32_t rc = CAMERA_OK;
     MEDIA_INFO_LOG("HCameraService::CreatePhotoOutput prepare execute");
     sptr<HStreamCapture> streamCapture = new (nothrow) HStreamCapture(format, width, height);
@@ -1199,6 +1203,8 @@ int32_t HCameraService::UnSetCameraCallback()
 
 int32_t HCameraService::SetMuteCallback(const sptr<ICameraMuteServiceCallback>& callback)
 {
+    CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION, "HCameraService::CheckSystemApp fail");
+    CameraXCollie cameraXCollie = CameraXCollie("HCameraService::SetMuteCallback");
     lock_guard<mutex> lock(muteCbMutex_);
     pid_t pid = IPCSkeleton::GetCallingPid();
     MEDIA_INFO_LOG("HCameraService::SetMuteCallback pid = %{public}d, muteMode:%{public}d", pid, muteModeStored_);
@@ -1588,6 +1594,8 @@ static std::map<PolicyType, Security::AccessToken::PolicyType> g_policyTypeMap_ 
 
 int32_t HCameraService::MuteCamera(bool muteMode)
 {
+    CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION, "HCameraService::CheckSystemApp fail");
+    CameraXCollie cameraXCollie = CameraXCollie("HCameraService::MuteCamera");
     int32_t ret = CheckPermission(OHOS_PERMISSION_MANAGE_CAMERA_CONFIG, IPCSkeleton::GetCallingTokenID());
     CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, ret, "CheckPermission argumentis failed!");
     CameraReportUtils::GetInstance().ReportUserBehavior(DFX_UB_MUTE_CAMERA,
@@ -1597,6 +1605,8 @@ int32_t HCameraService::MuteCamera(bool muteMode)
 
 int32_t HCameraService::MuteCameraPersist(PolicyType policyType, bool isMute)
 {
+    CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION, "HCameraService::CheckSystemApp fail");
+    CameraXCollie cameraXCollie = CameraXCollie("HCameraService::MuteCameraPersist");
     OHOS::Security::AccessToken::AccessTokenID callerToken = IPCSkeleton::GetCallingTokenID();
     int32_t ret = CheckPermission(OHOS_PERMISSION_CAMERA_CONTROL, callerToken);
     CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, ret, "CheckPermission arguments failed!");
@@ -1621,6 +1631,8 @@ int32_t HCameraService::MuteCameraPersist(PolicyType policyType, bool isMute)
 int32_t HCameraService::PrelaunchCamera(int32_t flag)
 {
     CAMERA_SYNC_TRACE;
+    CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION, "HCameraService::CheckSystemApp fail");
+    CameraXCollie cameraXCollie = CameraXCollie("HCameraService::PrelaunchCamera");
     MEDIA_INFO_LOG("HCameraService::PrelaunchCamera");
     CHECK_RETURN_RET_ELOG(torchStatus_ == TorchStatus::TORCH_STATUS_ON,
         CAMERA_DEVICE_CONFLICT, "HCameraService::PrelaunchCamera torch is running, abort!");
@@ -1667,6 +1679,8 @@ int32_t HCameraService::PrelaunchCamera(int32_t flag)
 
 int32_t HCameraService::ResetRssPriority()
 {
+    CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION, "HCameraService::CheckSystemApp fail");
+    CameraXCollie cameraXCollie = CameraXCollie("HCameraService::ResetRssPriority");
     MEDIA_INFO_LOG("HCameraService::ResetRssPriority");
     std::unordered_map<std::string, std::string> payload;
     OHOS::ResourceSchedule::ResSchedClient::GetInstance()
@@ -1745,6 +1759,8 @@ int8_t HCameraService::ChooseFisrtBootFoldCamIdx(
 int32_t HCameraService::PreSwitchCamera(const std::string& cameraId)
 {
     CAMERA_SYNC_TRACE;
+    CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION, "HCameraService::CheckSystemApp fail");
+    CameraXCollie cameraXCollie = CameraXCollie("HCameraService::PreSwitchCamera");
     MEDIA_INFO_LOG("HCameraService::PreSwitchCamera");
     CHECK_RETURN_RET(cameraId.empty() || cameraId.length() > PATH_MAX, CAMERA_INVALID_ARG);
     std::vector<std::string> cameraIds_;
@@ -1763,6 +1779,8 @@ int32_t HCameraService::SetPrelaunchConfig(const string& cameraId, RestoreParamT
     int activeTime, const EffectParam& effectParam)
 {
     CAMERA_SYNC_TRACE;
+    CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION, "HCameraService::CheckSystemApp fail");
+    CameraXCollie cameraXCollie = CameraXCollie("HCameraService::SetPrelaunchConfig");
     OHOS::Security::AccessToken::AccessTokenID callerToken = IPCSkeleton::GetCallingTokenID();
     string permissionName = OHOS_PERMISSION_CAMERA;
     int32_t ret = CheckPermission(permissionName, callerToken);
@@ -2640,6 +2658,8 @@ int32_t HCameraService::GetCameraOutputStatus(int32_t pid, int32_t &status)
 int32_t HCameraService::RequireMemorySize(int32_t requiredMemSizeKB)
 {
     #ifdef MEMMGR_OVERRID
+    CameraXCollie cameraXCollie = CameraXCollie("HCameraService::RequireMemorySize");
+    CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION, "HCameraService::CheckSystemApp fail");
     int32_t pid = getpid();
     const std::string reason = "HW_CAMERA_TO_PHOTO";
     std::string clientName = SYSTEM_CAMERA;
@@ -2705,26 +2725,6 @@ int32_t HCameraService::CallbackEnter([[maybe_unused]] uint32_t code)
 {
     MEDIA_DEBUG_LOG("start, code:%{public}u", code);
     DisableJeMalloc();
-    CameraXCollie cameraXCollie = CameraXCollie("CameraServiceStub " + std::to_string(code));
-    switch (static_cast<ICameraServiceIpcCode>(code)) {
-        case ICameraServiceIpcCode::COMMAND_CREATE_DEFERRED_PHOTO_PROCESSING_SESSION:
-        case ICameraServiceIpcCode::COMMAND_CREATE_DEFERRED_PREVIEW_OUTPUT:
-        case ICameraServiceIpcCode::COMMAND_SET_MUTE_CALLBACK:
-        case ICameraServiceIpcCode::COMMAND_MUTE_CAMERA:
-        case ICameraServiceIpcCode::COMMAND_MUTE_CAMERA_PERSIST:
-        case ICameraServiceIpcCode::COMMAND_PRELAUNCH_CAMERA:
-        case ICameraServiceIpcCode::COMMAND_PRE_SWITCH_CAMERA:
-        case ICameraServiceIpcCode::COMMAND_SET_PRELAUNCH_CONFIG:
-        case ICameraServiceIpcCode::COMMAND_REQUIRE_MEMORY_SIZE: {
-            CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION, "HCameraService::CheckSystemApp fail");
-            break;
-        }
-        case ICameraServiceIpcCode::COMMAND_IS_CAMERA_MUTED : {
-            cameraXCollie.CancelCameraXCollie();
-        }
-        default:
-            break;
-    }
     return CAMERA_OK;
 }
 int32_t HCameraService::CallbackExit([[maybe_unused]] uint32_t code, [[maybe_unused]] int32_t result)
