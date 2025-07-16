@@ -839,6 +839,7 @@ int32_t HStreamRepeat::HandleCameraTransform(int32_t& sensorOrientation, bool is
             break;
         }
         default: {
+            ret = producer_->SetTransform(isFrontCamera ? GRAPHIC_FLIP_H : GRAPHIC_ROTATE_NONE);
             break;
         }
     }
@@ -889,6 +890,7 @@ void HStreamRepeat::ApplyTransformBasedOnRotation(int32_t streamRotation, const 
             break;
         }
         default: {
+            producer_->SetTransform(isFrontCamera ? GRAPHIC_FLIP_H : GRAPHIC_ROTATE_NONE);
             break;
         }
     }
