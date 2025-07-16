@@ -2044,7 +2044,9 @@ void CameraSessionForSysNapi::Init(napi_env env)
         CameraSessionForSysNapi::flash_sys_props, auto_exposure_props, focus_props,
         CameraSessionForSysNapi::focus_sys_props, zoom_props, CameraSessionForSysNapi::zoom_sys_props,
         filter_props, macro_props,  moon_capture_boost_props, color_management_props, preconfig_props,
-        CameraSessionForSysNapi::camera_output_capability_sys_props, CameraSessionForSysNapi::beauty_sys_props };
+        CameraSessionForSysNapi::camera_output_capability_sys_props, CameraSessionForSysNapi::beauty_sys_props,
+        CameraSessionForSysNapi::color_effect_sys_props, CameraSessionForSysNapi::manual_focus_sys_props,
+        CameraSessionForSysNapi::depth_fusion_sys_props, CameraSessionForSysNapi::scene_detection_sys_props };
     std::vector<napi_property_descriptor> camera_session_props = CameraNapiUtils::GetPropertyDescriptor(descriptors);
     status = napi_define_class(env, CAMERA_SESSION_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
                                CameraSessionNapiForSysConstructor, nullptr,
