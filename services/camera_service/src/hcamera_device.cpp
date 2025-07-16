@@ -381,6 +381,7 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> HCameraDevice::GetDeviceAbility()
 int32_t HCameraDevice::Open()
 {
     CAMERA_SYNC_TRACE;
+    CameraXCollie cameraXCollie("HandleOpenSecureCameraResults");
     std::lock_guard<std::mutex> lock(g_deviceOpenCloseMutex_);
     CHECK_PRINT_ELOG(isOpenedCameraDevice_.load(), "HCameraDevice::Open failed, camera is busy");
     CHECK_RETURN_RET_ELOG(!IsInForeGround(callerToken_), CAMERA_ALLOC_ERROR,
@@ -402,6 +403,7 @@ int32_t HCameraDevice::Open()
 int32_t HCameraDevice::OpenSecureCamera(uint64_t& secureSeqId)
 {
     CAMERA_SYNC_TRACE;
+    CameraXCollie cameraXCollie("HandleOpenSecureCameraResults");
     CHECK_PRINT_ELOG(isOpenedCameraDevice_.load(), "HCameraDevice::Open failed, camera is busy");
     CHECK_RETURN_RET_ELOG(!IsInForeGround(callerToken_), CAMERA_ALLOC_ERROR,
         "HCameraDevice::Open IsAllowedUsingPermission failed");
@@ -447,6 +449,7 @@ int64_t HCameraDevice::GetSecureCameraSeq(uint64_t* secureSeqId)
 int32_t HCameraDevice::Close()
 {
     CAMERA_SYNC_TRACE;
+    CameraXCollie cameraXCollie("HCameraDeviceStub::Close");
     std::lock_guard<std::mutex> lock(g_deviceOpenCloseMutex_);
     MEDIA_INFO_LOG("HCameraDevice::Close Closing camera device: %{public}s", cameraID_.c_str());
     int32_t result = CloseDevice();
@@ -456,6 +459,7 @@ int32_t HCameraDevice::Close()
 int32_t HCameraDevice::closeDelayed()
 {
     CAMERA_SYNC_TRACE;
+    CameraXCollie cameraXCollie("HCameraDeviceStub::delayedClose");
     CHECK_RETURN_RET_ELOG(
         !CheckSystemApp(), CAMERA_NO_PERMISSION, "HCameraDevice::closeDelayed:SystemApi is called");
     std::lock_guard<std::mutex> lock(g_deviceOpenCloseMutex_);
@@ -876,6 +880,7 @@ int32_t HCameraDevice::closeDelayedDevice()
 
 int32_t HCameraDevice::Release()
 {
+    CameraXCollie cameraXCollie("HCameraDeviceStub::Release");
     Close();
     return CAMERA_OK;
 }
@@ -1633,31 +1638,6 @@ int32_t HCameraDevice::CallbackEnter([[maybe_unused]] uint32_t code)
     DisableJeMalloc();
     int32_t errCode = OperatePermissionCheck(code);
     CHECK_RETURN_RET_ELOG(errCode != CAMERA_OK, errCode, "HCameraDevice::OperatePermissionCheck fail");
-    switch (static_cast<ICameraDeviceServiceIpcCode>(code)) {
-        case ICameraDeviceServiceIpcCode::COMMAND_CLOSE: {
-            CameraXCollie cameraXCollie("HCameraDeviceStub::Close");
-            break;
-        }
-        case ICameraDeviceServiceIpcCode::COMMAND_RELEASE: {
-            CameraXCollie cameraXCollie("HCameraDeviceStub::Release");
-            break;
-        }
-        case ICameraDeviceServiceIpcCode::COMMAND_CLOSE_DELAYED: {
-            CameraXCollie cameraXCollie("HCameraDeviceStub::delayedClose");
-            break;
-        }
-        case ICameraDeviceServiceIpcCode::COMMAND_OPEN:
-        case ICameraDeviceServiceIpcCode::COMMAND_OPEN_SECURE_CAMERA: {
-            CameraXCollie cameraXCollie("HandleOpenSecureCameraResults");
-            break;
-        }
-        case ICameraDeviceServiceIpcCode::COMMAND_OPEN_IN_INT: {
-            CameraXCollie cameraXCollie("HandleOpenConcurrent");
-            break;
-        }
-        default:
-            break;
-    }
     return CAMERA_OK;
 }
 int32_t HCameraDevice::CallbackExit([[maybe_unused]] uint32_t code, [[maybe_unused]] int32_t result)
@@ -1712,6 +1692,7 @@ void HCameraDevice::NotifyCameraStatus(int32_t state, int32_t msg)
 int32_t HCameraDevice::Open(int32_t concurrentType)
 {
     CAMERA_SYNC_TRACE;
+    CameraXCollie cameraXCollie("HandleOpenConcurrent");
     std::lock_guard<std::mutex> lock(g_deviceOpenCloseMutex_);
     CHECK_PRINT_ELOG(isOpenedCameraDevice_.load(), "HCameraDevice::Open failed, camera is busy");
     CHECK_RETURN_RET_ELOG(!IsInForeGround(callerToken_), CAMERA_ALLOC_ERROR,
