@@ -572,7 +572,7 @@ bool ConcurrentMap::ReadyToUnlock(const int32_t& key, const int32_t& step, const
     if (mode == static_cast<int32_t>(HDI::Camera::V1_3::OperationMode::CAPTURE) ||
       mode == static_cast<int32_t>(HDI::Camera::V1_3::OperationMode::QUICK_SHOT_PHOTO) ||
       mode == static_cast<int32_t>(HDI::Camera::V1_3::OperationMode::PORTRAIT) ||
-      mode == static_cast<int32_t>(HDI::Camera::V1_3::OperationMode::CAPTURE_MACRO) {
+      mode == static_cast<int32_t>(HDI::Camera::V1_3::OperationMode::CAPTURE_MACRO)) {
         return step_.count(key) > 0 && step_[key] == step;
     } else {
         return map_.count(key) > 0;
