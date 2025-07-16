@@ -53,7 +53,8 @@ private:
     bool serial_ = true;
     std::unique_ptr<ThreadPool> pool_;
     std::unique_ptr<TaskRegistry> taskRegistry_;
-    TaskGroupHandle defaultTaskHandle_;
+    std::shared_ptr<TaskGroupHandle> defaultTaskHandle_ =
+        std::make_shared<TaskGroupHandle>(INVALID_TASK_GROUP_HANDLE);
     TaskGroupHandle delayedTaskHandle_;
 };
 } //namespace DeferredProcessing
