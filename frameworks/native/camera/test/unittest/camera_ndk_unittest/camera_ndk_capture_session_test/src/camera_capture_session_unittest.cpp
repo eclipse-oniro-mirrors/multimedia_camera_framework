@@ -3558,10 +3558,10 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_085, Test
     Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
     EXPECT_EQ(ret, CAMERA_OK);
     ASSERT_NE(captureSession, nullptr);
-    ret = OH_CaptureSession_RegisterSystemPressureLevelCallback(captureSession,
+    ret = OH_CaptureSession_RegisterSystemPressureLevelChangeCallback(captureSession,
         CameraCaptureSessionSystemPressureLevelCb);
     EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CaptureSession_UnregisterSystemPressureLevelCallback(captureSession,
+    ret = OH_CaptureSession_UnregisterSystemPressureLevelChangeCallback(captureSession,
         CameraCaptureSessionSystemPressureLevelCb);
     EXPECT_EQ(ret, CAMERA_OK);
 

@@ -111,7 +111,7 @@ typedef void (*OH_CaptureSession_OnAutoDeviceSwitchStatusChange)(Camera_CaptureS
  * @param systemPressureLevel the {@link Camera_SystemPressureLevel} which delivered by the callback.
  * @since 20
  */
-typedef void (*OH_CaptureSession_OnSystemPressureLevel)(Camera_CaptureSession* session,
+typedef void (*OH_CaptureSession_OnSystemPressureLevelChange)(Camera_CaptureSession* session,
     Camera_SystemPressureLevel* systemPressureLevel);
 
 /**
@@ -940,28 +940,28 @@ Camera_ErrorCode OH_CaptureSession_SetQualityPrioritization(
     Camera_CaptureSession* session, Camera_QualityPrioritization qualityPrioritization);
 
 /**
- * @brief Register system pressure level callback.
+ * @brief Subscribes to system pressure level changes.
  *
- * @param session the {@link Camera_CaptureSession} instance.
- * @param systemPressureLevel the {@link OH_CaptureSession_OnSystemPressureLevel} to be registered.
- * @return {@link #CAMERA_OK} if the method call succeeds.
- *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ * @param session Pointer to a <b>CaptureSession</b> instance.
+ * @param systemPressureLevelChange Callback used for subscription.
+ * @return Execution result of the function. <b>CAMERA_OK</b> is returned if the execution is successful;
+ * <b>CAMERA_INVALID_ARGUMENT</b> is returned if a parameter is missing or incorrect.
  * @since 20
  */
-Camera_ErrorCode OH_CaptureSession_RegisterSystemPressureLevelCallback(Camera_CaptureSession* session,
-    OH_CaptureSession_OnSystemPressureLevel systemPressureLevel);
+Camera_ErrorCode OH_CaptureSession_RegisterSystemPressureLevelChangeCallback(Camera_CaptureSession* session,
+    OH_CaptureSession_OnSystemPressureLevelChange systemPressureLevel);
 
 /**
- * @brief Unregister system pressure level callback.
+ * @brief Unsubscribes from system pressure level changes.
  *
- * @param session the {@link Camera_CaptureSession} instance.
- * @param systemPressureLevel the {@link OH_CaptureSession_OnSystemPressureLevel} to be unregistered.
- * @return {@link #CAMERA_OK} if the method call succeeds.
- *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ * @param session Pointer to a <b>CaptureSession</b> instance.
+ * @param systemPressureLevelChange Callback used for unsubscription.
+ * @return Execution result of the function. <b>CAMERA_OK</b> is returned if the execution is successful;
+ * <b>CAMERA_INVALID_ARGUMENT</b> is returned if a parameter is missing or incorrect.
  * @since 20
  */
-Camera_ErrorCode OH_CaptureSession_UnregisterSystemPressureLevelCallback(Camera_CaptureSession* session,
-    OH_CaptureSession_OnSystemPressureLevel systemPressureLevel);
+Camera_ErrorCode OH_CaptureSession_UnregisterSystemPressureLevelChangeCallback(Camera_CaptureSession* session,
+    OH_CaptureSession_OnSystemPressureLevelChange systemPressureLevel);
 
 /**
  * @brief Check whether macro ability is supported.

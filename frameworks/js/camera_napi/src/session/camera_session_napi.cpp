@@ -428,7 +428,7 @@ void PressureCallbackListener::OnPressureCallback(PressureStatus status) const
     napi_get_undefined(env_, &result[PARAM0]);
     napi_create_int32(env_, static_cast<int32_t>(status), &result[PARAM1]);
     ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
-    ExecuteCallback("systemPressureLevel", callbackNapiPara);
+    ExecuteCallback("systemPressureLevelChange", callbackNapiPara);
 }
 
 void PressureCallbackListener::OnPressureStatusChanged(PressureStatus status)
@@ -3040,7 +3040,7 @@ const CameraSessionNapi::EmitterFunctions CameraSessionNapi::fun_map_ = {
     { "macroStatusChanged", {
         &CameraSessionNapi::RegisterMacroStatusCallbackListener,
         &CameraSessionNapi::UnregisterMacroStatusCallbackListener } },
-    { "systemPressureLevel", {
+    { "systemPressureLevelChange", {
         &CameraSessionNapi::RegisterPressureStatusCallbackListener,
         &CameraSessionNapi::UnregisterPressureStatusCallbackListener } },
     { "controlCenterEffectStatusChange", {

@@ -5151,22 +5151,22 @@ function getCameraManager(context: Context): CameraManager;
     /**
      * Subscribes to system pressure level callback.
      *
-     * @param { 'systemPressureLevel' } type - Event type.
+     * @param { 'systemPressureLevelChange' } type - Event type.
      * @param { AsyncCallback<SystemPressureLevel> } callback - Callback used to return the result.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @since 20
      */
-    on(type: 'systemPressureLevel', callback: AsyncCallback<SystemPressureLevel>): void;
+    on(type: 'systemPressureLevelChange', callback: AsyncCallback<SystemPressureLevel>): void;
  
     /**
      * Unsubscribes to system pressure level callback.
      *
-     * @param { 'systemPressureLevel' } type - Event type.
+     * @param { 'systemPressureLevelChange' } type - Event type.
      * @param { AsyncCallback<SystemPressureLevel> } callback - Callback used to return the result.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @since 20
      */
-    off(type: 'systemPressureLevel', callback?: AsyncCallback<SystemPressureLevel>): void;
+    off(type: 'systemPressureLevelChange', callback?: AsyncCallback<SystemPressureLevel>): void;
 
     /**
      * Subscribes to feature detection results.
@@ -5427,22 +5427,22 @@ function getCameraManager(context: Context): CameraManager;
     /**
      * Subscribes to system pressure level callback.
      *
-     * @param { 'systemPressureLevel' } type - Event type.
+     * @param { 'systemPressureLevelChange' } type - Event type.
      * @param { AsyncCallback<SystemPressureLevel> } callback - Callback used to return the result.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @since 20
      */
-    on(type: 'systemPressureLevel', callback: AsyncCallback<SystemPressureLevel>): void;
+    on(type: 'systemPressureLevelChange', callback: AsyncCallback<SystemPressureLevel>): void;
  
     /**
      * Unsubscribes to system pressure level callback.
      *
-     * @param { 'systemPressureLevel' } type - Event type.
+     * @param { 'systemPressureLevelChange' } type - Event type.
      * @param { AsyncCallback<SystemPressureLevel> } callback - Callback used to return the result.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @since 20
      */
-    off(type: 'systemPressureLevel', callback?: AsyncCallback<SystemPressureLevel>): void;   
+    off(type: 'systemPressureLevelChange', callback?: AsyncCallback<SystemPressureLevel>): void;   
 
     /**
      * Subscribes to system pressure level callback.
