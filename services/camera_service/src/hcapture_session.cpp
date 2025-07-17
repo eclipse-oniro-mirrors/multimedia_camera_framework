@@ -1552,8 +1552,10 @@ void HCaptureSession::UpdateSettingForSpecialBundle()
     auto hStreamOperatorSptr = GetStreamOperator();
     bool isValidDisplayStatus = (foldstatus == OHOS::Rosen::FoldStatus::FOLD_STATE_EXPAND_WITH_SECOND_EXPAND) &&
         (displayMode == OHOS::Rosen::FoldDisplayMode::GLOBAL_FULL);
+    bool isSpecialFoldType = foldstatus == OHOS::Rosen::FoldStatus::FOLDED &&
+        system::GetParameter("const.window.foldscreen.type", "")[0] == '4'; 
     bool isExeUpdate = hStreamOperatorSptr != nullptr &&
-        (foldstatus == OHOS::Rosen::FoldStatus::FOLDED || isValidDisplayStatus) && !isHasFitedRotation_;
+        (isSpecialFoldType || isValidDisplayStatus) && !isHasFitedRotation_;
     if (isExeUpdate) {
         auto frameRateRange = hStreamOperatorSptr->GetFrameRateRange();
         auto cameraDevice = GetCameraDevice();
