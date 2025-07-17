@@ -1416,6 +1416,10 @@ std::vector<sptr<CameraDevice>> CameraManager::GetCameraDeviceListFromServer()
         }
     }
     AlignVideoFpsProfile(deviceInfoList);
+    std::sort(deviceInfoList.begin(), deviceInfoList.end(),
+        [](const sptr<CameraDevice>& a, const sptr<CameraDevice>& b) {
+            return static_cast<int>(a->GetConnectionType()) < static_cast<int>(b->GetConnectionType());
+    });
     return deviceInfoList;
 }
 
