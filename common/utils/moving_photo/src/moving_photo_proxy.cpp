@@ -15,216 +15,243 @@
 #include <iomanip>
 #include "moving_photo_proxy.h"
 #include "utils/camera_log.h"
-#include "datetime_ex.h"
 
 namespace OHOS {
 namespace CameraStandard {
-typedef MovingPhotoIntf* (*CreateMovingPhotoIntf)();
+typedef AvcodecTaskManagerIntf* (*CreateAVCodecTaskManagerIntf)();
+typedef AudioCapturerSessionIntf* (*CreateAudioCapturerSessionIntf)();
+typedef MovingPhotoVideoCacheIntf* (*CreateMovingPhotoVideoCacheIntf)();
 
-MovingPhotoProxy::MovingPhotoProxy(
-    std::shared_ptr<Dynamiclib> movingPhotoLib, sptr<MovingPhotoIntf> movingPhotoIntf)
-    : movingPhotoLib_(movingPhotoLib), movingPhotoIntf_(movingPhotoIntf)
+AvcodecTaskManagerProxy::AvcodecTaskManagerProxy(
+    std::shared_ptr<Dynamiclib> avcodecTaskManagerLib, sptr<AvcodecTaskManagerIntf> avcodecTaskManagerIntf)
+    : avcodecTaskManagerLib_(avcodecTaskManagerLib), avcodecTaskManagerIntf_(avcodecTaskManagerIntf)
 {
-    MEDIA_DEBUG_LOG("MovingPhotoProxy constructor");
-    CHECK_RETURN_ELOG(movingPhotoLib_ == nullptr, "movingPhotoLib_ is nullptr");
-    CHECK_RETURN_ELOG(movingPhotoIntf_ == nullptr, "movingPhotoIntf_ is nullptr");
+    MEDIA_DEBUG_LOG("AvcodecTaskManagerProxy constructor");
+    CHECK_RETURN_ELOG(avcodecTaskManagerLib_ == nullptr, "avcodecTaskManagerLib_ is nullptr");
+    CHECK_RETURN_ELOG(avcodecTaskManagerIntf_ == nullptr, "avcodecTaskManagerIntf_ is nullptr");
 }
 
-MovingPhotoProxy::~MovingPhotoProxy()
+AvcodecTaskManagerProxy::~AvcodecTaskManagerProxy()
 {
-    MEDIA_DEBUG_LOG("MovingPhotoProxy destructor");
+    MEDIA_DEBUG_LOG("AvcodecTaskManagerProxy destructor");
 }
 
-void MovingPhotoProxy::Release()
-{
-    CameraDynamicLoader::FreeDynamicLibDelayed(MOVING_PHOTO_SO, LIB_DELAYED_UNLOAD_TIME);
-}
-
-sptr<MovingPhotoProxy> MovingPhotoProxy::CreateMovingPhotoProxy()
+sptr<AvcodecTaskManagerProxy> AvcodecTaskManagerProxy::CreateAvcodecTaskManagerProxy()
 {
     std::shared_ptr<Dynamiclib> dynamiclib = CameraDynamicLoader::GetDynamiclib(MOVING_PHOTO_SO);
     CHECK_RETURN_RET_ELOG(dynamiclib == nullptr, nullptr, "Failed to load moving photo library");
-
-    CreateMovingPhotoIntf createMovingPhotoIntf =
-        (CreateMovingPhotoIntf)dynamiclib->GetFunction("createMovingPhotoIntf");
+    CreateAVCodecTaskManagerIntf createAVCodecTaskManagerIntf =
+        (CreateAVCodecTaskManagerIntf)dynamiclib->GetFunction("createAVCodecTaskManagerIntf");
     CHECK_RETURN_RET_ELOG(
-        createMovingPhotoIntf == nullptr, nullptr, "Failed to get createMovingPhotoIntf function");
-
-    MovingPhotoIntf* movingPhotoIntf = createMovingPhotoIntf();
+        createAVCodecTaskManagerIntf == nullptr, nullptr, "Failed to get createAVCodecTaskManagerIntf function");
+    AvcodecTaskManagerIntf* avcodecTaskManagerIntf = createAVCodecTaskManagerIntf();
     CHECK_RETURN_RET_ELOG(
-        movingPhotoIntf == nullptr, nullptr, "Failed to create MovingPhotoIntf instance");
-
-    sptr<MovingPhotoProxy> movingPhotoProxy =
-        new MovingPhotoProxy(dynamiclib, sptr<MovingPhotoIntf>(movingPhotoIntf));
-    return movingPhotoProxy;
+        avcodecTaskManagerIntf == nullptr, nullptr, "Failed to create AvcodecTaskManagerIntf instance");
+    sptr<AvcodecTaskManagerProxy> aVCodecTaskManagerProxy =
+        new AvcodecTaskManagerProxy(dynamiclib, sptr<AvcodecTaskManagerIntf>(avcodecTaskManagerIntf));
+    return aVCodecTaskManagerProxy;
 }
 
-void MovingPhotoProxy::CreateAvcodecTaskManager(VideoCodecType type, int32_t colorSpace)
+int32_t AvcodecTaskManagerProxy::CreateAvcodecTaskManager(sptr<AudioCapturerSessionIntf> audioCapturerSessionIntf,
+    VideoCodecType type, int32_t colorSpace)
 {
     MEDIA_DEBUG_LOG("CreateAvcodecTaskManager start, type: %{public}d, colorSpace: %{public}d",
         static_cast<int32_t>(type), colorSpace);
-    CHECK_RETURN_ELOG(movingPhotoIntf_ == nullptr, "movingPhotoIntf_ is nullptr");
-    movingPhotoIntf_->CreateAvcodecTaskManager(type, colorSpace);
-    MEDIA_DEBUG_LOG("CreateAvcodecTaskManager success");
+    CHECK_RETURN_RET_ELOG(audioCapturerSessionIntf == nullptr, -1, "audioCapturerSessionIntf is nullptr");
+    CHECK_RETURN_RET_ELOG(avcodecTaskManagerIntf_ == nullptr, -1, "avcodecTaskManagerIntf_ is nullptr");
+    sptr<AudioCapturerSessionProxy> audioCapturerSessionProxy =
+        static_cast<AudioCapturerSessionProxy*>(audioCapturerSessionIntf.GetRefPtr());
+    CHECK_RETURN_RET_ELOG(audioCapturerSessionProxy == nullptr, -1, "audioCapturerSessionProxy is nullptr");
+    return avcodecTaskManagerIntf_->CreateAvcodecTaskManager(
+        audioCapturerSessionProxy->GetAudioCapturerSessionAdapter(), type, colorSpace);
 }
 
-bool MovingPhotoProxy::IsTaskManagerExist()
-{
-    MEDIA_DEBUG_LOG("IsTaskManagerExist start");
-    CHECK_RETURN_RET_ELOG(movingPhotoIntf_ == nullptr, false, "movingPhotoIntf_ is nullptr");
-    return movingPhotoIntf_->IsTaskManagerExist();
-}
-
-void MovingPhotoProxy::ReleaseTaskManager()
-{
-    MEDIA_DEBUG_LOG("ReleaseTaskManager start");
-    CHECK_RETURN_ELOG(movingPhotoIntf_ == nullptr, "movingPhotoIntf_ is nullptr");
-    movingPhotoIntf_->ReleaseTaskManager();
-}
-
-void MovingPhotoProxy::SetVideoBufferDuration(uint32_t preBufferCount, uint32_t postBufferCount)
+void AvcodecTaskManagerProxy::SetVideoBufferDuration(uint32_t preBufferCount, uint32_t postBufferCount)
 {
     MEDIA_DEBUG_LOG("SetVideoBufferDuration start, preBufferCount: %{public}u, postBufferCount: %{public}u",
         preBufferCount, postBufferCount);
-    CHECK_RETURN_ELOG(movingPhotoIntf_ == nullptr, "movingPhotoIntf_ is nullptr");
-    movingPhotoIntf_->SetVideoBufferDuration(preBufferCount, postBufferCount);
-    MEDIA_DEBUG_LOG("SetVideoBufferDuration success");
+    CHECK_RETURN_ELOG(avcodecTaskManagerIntf_ == nullptr, "avcodecTaskManagerIntf_ is nullptr");
+    avcodecTaskManagerIntf_->SetVideoBufferDuration(preBufferCount, postBufferCount);
 }
 
-void MovingPhotoProxy::SetVideoFd(int64_t timestamp, std::shared_ptr<PhotoAssetIntf> photoAssetProxy,
+void AvcodecTaskManagerProxy::SetVideoFd(int64_t timestamp, std::shared_ptr<PhotoAssetIntf> photoAssetProxy,
     int32_t captureId)
 {
     MEDIA_DEBUG_LOG("SetVideoFd start, timestamp: %{public}" PRIu64 ", captureId: %{public}d",
         timestamp, captureId);
-    CHECK_RETURN_ELOG(movingPhotoIntf_ == nullptr, "movingPhotoIntf_ is nullptr");
-    movingPhotoIntf_->SetVideoFd(timestamp, photoAssetProxy, captureId);
-    MEDIA_DEBUG_LOG("SetVideoFd success");
+    CHECK_RETURN_ELOG(avcodecTaskManagerIntf_ == nullptr, "avcodecTaskManagerIntf_ is nullptr");
+    avcodecTaskManagerIntf_->SetVideoFd(timestamp, photoAssetProxy, captureId);
 }
 
-void MovingPhotoProxy::SubmitTask(std::function<void()> task)
+void AvcodecTaskManagerProxy::SubmitTask(std::function<void()> task)
 {
     MEDIA_DEBUG_LOG("SubmitTask start");
-    CHECK_RETURN_ELOG(movingPhotoIntf_ == nullptr, "movingPhotoIntf_ is nullptr");
-    movingPhotoIntf_->SubmitTask(task);
-    MEDIA_DEBUG_LOG("SubmitTask success");
+    CHECK_RETURN_ELOG(avcodecTaskManagerIntf_ == nullptr, "avcodecTaskManagerIntf_ is nullptr");
+    avcodecTaskManagerIntf_->SubmitTask(task);
 }
 
-void MovingPhotoProxy::EncodeVideoBuffer(sptr<FrameRecord> frameRecord, CacheCbFunc cacheCallback)
+void AvcodecTaskManagerProxy::EncodeVideoBuffer(sptr<FrameRecord> frameRecord, CacheCbFunc cacheCallback)
 {
     MEDIA_DEBUG_LOG("EncodeVideoBuffer start");
-    CHECK_RETURN_ELOG(movingPhotoIntf_ == nullptr, "movingPhotoIntf_ is nullptr");
-    movingPhotoIntf_->EncodeVideoBuffer(frameRecord, cacheCallback);
-    MEDIA_DEBUG_LOG("EncodeVideoBuffer success");
+    CHECK_RETURN_ELOG(avcodecTaskManagerIntf_ == nullptr, "avcodecTaskManagerIntf_ is nullptr");
+    avcodecTaskManagerIntf_->EncodeVideoBuffer(frameRecord, cacheCallback);
 }
 
-void MovingPhotoProxy::DoMuxerVideo(std::vector<sptr<FrameRecord>> frameRecords, uint64_t taskName, int32_t rotation,
-    int32_t captureId)
+void AvcodecTaskManagerProxy::DoMuxerVideo(std::vector<sptr<FrameRecord>> frameRecords, uint64_t taskName,
+    int32_t rotation, int32_t captureId)
 {
     MEDIA_DEBUG_LOG("DoMuxerVideo start, taskName: %{public}" PRIu64 ", rotation: %{public}d, captureId: %{public}d",
         taskName, rotation, captureId);
-    CHECK_RETURN_ELOG(movingPhotoIntf_ == nullptr, "movingPhotoIntf_ is nullptr");
-    movingPhotoIntf_->DoMuxerVideo(frameRecords, taskName, rotation, captureId);
-    MEDIA_DEBUG_LOG("DoMuxerVideo success");
+    CHECK_RETURN_ELOG(avcodecTaskManagerIntf_ == nullptr, "avcodecTaskManagerIntf_ is nullptr");
+    avcodecTaskManagerIntf_->DoMuxerVideo(frameRecords, taskName, rotation, captureId);
 }
 
-bool MovingPhotoProxy::isEmptyVideoFdMap()
+bool AvcodecTaskManagerProxy::isEmptyVideoFdMap()
 {
     MEDIA_DEBUG_LOG("isEmptyVideoFdMap start");
-    CHECK_RETURN_RET_ELOG(movingPhotoIntf_ == nullptr, true, "movingPhotoIntf_ is nullptr");
-    bool result = movingPhotoIntf_->isEmptyVideoFdMap();
+    CHECK_RETURN_RET_ELOG(avcodecTaskManagerIntf_ == nullptr, true, "avcodecTaskManagerIntf_ is nullptr");
+    bool result = avcodecTaskManagerIntf_->isEmptyVideoFdMap();
     MEDIA_DEBUG_LOG("isEmptyVideoFdMap success, result: %{public}d", result);
     return result;
 }
 
-void MovingPhotoProxy::TaskManagerInsertStartTime(int32_t captureId, int64_t startTimeStamp)
+bool AvcodecTaskManagerProxy::TaskManagerInsertStartTime(int32_t captureId, int64_t startTimeStamp)
 {
     MEDIA_DEBUG_LOG("TaskManagerInsertStartTime start, captureId: %{public}d, startTimeStamp: %{public}" PRIu64,
         captureId, startTimeStamp);
-    CHECK_RETURN_ELOG(movingPhotoIntf_ == nullptr, "movingPhotoIntf_ is nullptr");
-    movingPhotoIntf_->TaskManagerInsertStartTime(captureId, startTimeStamp);
-    MEDIA_DEBUG_LOG("TaskManagerInsertStartTime success");
-    return;
+    CHECK_RETURN_RET_ELOG(avcodecTaskManagerIntf_ == nullptr, false, "avcodecTaskManagerIntf_ is nullptr");
+    return avcodecTaskManagerIntf_->TaskManagerInsertStartTime(captureId, startTimeStamp);
 }
 
-void MovingPhotoProxy::TaskManagerInsertEndTime(int32_t captureId, int64_t endTimeStamp)
+bool AvcodecTaskManagerProxy::TaskManagerInsertEndTime(int32_t captureId, int64_t endTimeStamp)
 {
     MEDIA_DEBUG_LOG("TaskManagerInsertEndTime start, captureId: %{public}d, endTimeStamp: %{public}" PRIu64,
         captureId, endTimeStamp);
-    CHECK_RETURN_ELOG(movingPhotoIntf_ == nullptr, "movingPhotoIntf_ is nullptr");
-    movingPhotoIntf_->TaskManagerInsertEndTime(captureId, endTimeStamp);
-    MEDIA_DEBUG_LOG("TaskManagerInsertEndTime success");
-    return;
+    CHECK_RETURN_RET_ELOG(avcodecTaskManagerIntf_ == nullptr, false, "avcodecTaskManagerIntf_ is nullptr");
+    return avcodecTaskManagerIntf_->TaskManagerInsertEndTime(captureId, endTimeStamp);
 }
 
-void MovingPhotoProxy::CreateAudioSession()
+sptr<AvcodecTaskManagerIntf> AvcodecTaskManagerProxy::GetTaskManagerAdapter() const
+{
+    return avcodecTaskManagerIntf_;
+}
+
+AudioCapturerSessionProxy::AudioCapturerSessionProxy(
+    std::shared_ptr<Dynamiclib> audioCapturerSessionLib, sptr<AudioCapturerSessionIntf> audioCapturerSessionIntf)
+    : audioCapturerSessionLib_(audioCapturerSessionLib), audioCapturerSessionIntf_(audioCapturerSessionIntf)
+{
+    MEDIA_DEBUG_LOG("AudioCapturerSessionProxy constructor");
+    CHECK_RETURN_ELOG(audioCapturerSessionLib_ == nullptr, "audioCapturerSessionLib_ is nullptr");
+    CHECK_RETURN_ELOG(audioCapturerSessionIntf_ == nullptr, "audioCapturerSessionIntf_ is nullptr");
+}
+
+AudioCapturerSessionProxy::~AudioCapturerSessionProxy()
+{
+    MEDIA_DEBUG_LOG("AudioCapturerSessionProxy destructor");
+}
+
+sptr<AudioCapturerSessionProxy> AudioCapturerSessionProxy::CreateAudioCapturerSessionProxy()
+{
+    std::shared_ptr<Dynamiclib> dynamiclib = CameraDynamicLoader::GetDynamiclib(MOVING_PHOTO_SO);
+    CHECK_RETURN_RET_ELOG(dynamiclib == nullptr, nullptr, "Failed to load moving photo library");
+
+    CreateAudioCapturerSessionIntf createAudioCapturerSessionIntf =
+        (CreateAudioCapturerSessionIntf)dynamiclib->GetFunction("createAudioCapturerSessionIntf");
+    CHECK_RETURN_RET_ELOG(
+        createAudioCapturerSessionIntf == nullptr, nullptr, "Failed to get createAudioCapturerSessionIntf function");
+
+    AudioCapturerSessionIntf* audioCapturerSessionIntf = createAudioCapturerSessionIntf();
+    CHECK_RETURN_RET_ELOG(
+        audioCapturerSessionIntf == nullptr, nullptr, "Failed to create AudioCapturerSessionIntf instance");
+
+    sptr<AudioCapturerSessionProxy> audioCapturerSessionProxy =
+        new AudioCapturerSessionProxy(dynamiclib, sptr<AudioCapturerSessionIntf>(audioCapturerSessionIntf));
+    return audioCapturerSessionProxy;
+}
+
+int32_t AudioCapturerSessionProxy::CreateAudioSession()
 {
     MEDIA_DEBUG_LOG("CreateAudioSession start");
-    CHECK_RETURN_ELOG(movingPhotoIntf_ == nullptr, "movingPhotoIntf_ is nullptr");
-    movingPhotoIntf_->CreateAudioSession();
-    MEDIA_DEBUG_LOG("CreateAudioSession success");
+    CHECK_RETURN_RET_ELOG(audioCapturerSessionIntf_ == nullptr, -1, "audioCapturerSessionIntf_ is nullptr");
+    return audioCapturerSessionIntf_->CreateAudioSession();
 }
 
-bool MovingPhotoProxy::IsAudioSessionExist()
-{
-    MEDIA_DEBUG_LOG("IsAudioSessionExist start");
-    CHECK_RETURN_RET_ELOG(movingPhotoIntf_ == nullptr, false, "movingPhotoIntf_ is nullptr");
-    return movingPhotoIntf_->IsAudioSessionExist();
-}
-
-bool MovingPhotoProxy::StartAudioCapture()
+bool AudioCapturerSessionProxy::StartAudioCapture()
 {
     MEDIA_DEBUG_LOG("StartAudioCapture start");
-    CHECK_RETURN_RET_ELOG(movingPhotoIntf_ == nullptr, false, "movingPhotoIntf_ is nullptr");
-    bool result = movingPhotoIntf_->StartAudioCapture();
+    CHECK_RETURN_RET_ELOG(audioCapturerSessionIntf_ == nullptr, false, "audioCapturerSessionIntf_ is nullptr");
+    bool result = audioCapturerSessionIntf_->StartAudioCapture();
     MEDIA_DEBUG_LOG("StartAudioCapture success, result: %{public}d", result);
     return result;
 }
 
-void MovingPhotoProxy::StopAudioCapture()
+void AudioCapturerSessionProxy::StopAudioCapture()
 {
     MEDIA_DEBUG_LOG("StopAudioCapture start");
-    CHECK_RETURN_ELOG(movingPhotoIntf_ == nullptr, "movingPhotoIntf_ is nullptr");
-    movingPhotoIntf_->StopAudioCapture();
-    MEDIA_DEBUG_LOG("StopAudioCapture success");
+    CHECK_RETURN_ELOG(audioCapturerSessionIntf_ == nullptr, "audioCapturerSessionIntf_ is nullptr");
+    audioCapturerSessionIntf_->StopAudioCapture();
 }
 
-void MovingPhotoProxy::CreateMovingPhotoVideoCache()
+sptr<AudioCapturerSessionIntf> AudioCapturerSessionProxy::GetAudioCapturerSessionAdapter() const
+{
+    return audioCapturerSessionIntf_;
+}
+
+MovingPhotoVideoCacheProxy::MovingPhotoVideoCacheProxy(
+    std::shared_ptr<Dynamiclib> movingPhotoVideoCacheLib, sptr<MovingPhotoVideoCacheIntf> movingPhotoVideoCacheIntf)
+    : movingPhotoVideoCacheLib_(movingPhotoVideoCacheLib), movingPhotoVideoCacheIntf_(movingPhotoVideoCacheIntf)
+{
+    MEDIA_DEBUG_LOG("MovingPhotoVideoCacheProxy constructor");
+    CHECK_RETURN_ELOG(movingPhotoVideoCacheLib_ == nullptr, "movingPhotoVideoCacheLib_ is nullptr");
+    CHECK_RETURN_ELOG(movingPhotoVideoCacheIntf_ == nullptr, "movingPhotoVideoCacheIntf_ is nullptr");
+}
+
+MovingPhotoVideoCacheProxy::~MovingPhotoVideoCacheProxy()
+{
+    MEDIA_DEBUG_LOG("MovingPhotoVideoCacheProxy destructor");
+}
+
+sptr<MovingPhotoVideoCacheProxy> MovingPhotoVideoCacheProxy::CreateMovingPhotoVideoCacheProxy()
+{
+    std::shared_ptr<Dynamiclib> dynamiclib = CameraDynamicLoader::GetDynamiclib(MOVING_PHOTO_SO);
+    CHECK_RETURN_RET_ELOG(dynamiclib == nullptr, nullptr, "Failed to load moving photo library");
+
+    CreateMovingPhotoVideoCacheIntf createMovingPhotoVideoCacheIntf =
+        (CreateMovingPhotoVideoCacheIntf)dynamiclib->GetFunction("createMovingPhotoVideoCacheIntf");
+    CHECK_RETURN_RET_ELOG(createMovingPhotoVideoCacheIntf == nullptr, nullptr,
+        "Failed to get createMovingPhotoVideoCacheIntf function");
+    MovingPhotoVideoCacheIntf* movingPhotoVideoCacheIntf = createMovingPhotoVideoCacheIntf();
+    CHECK_RETURN_RET_ELOG(
+        movingPhotoVideoCacheIntf == nullptr, nullptr, "Failed to create MovingPhotoVideoCacheIntf instance");
+    sptr<MovingPhotoVideoCacheProxy> movingPhotoVideoCacheProxy =
+        new MovingPhotoVideoCacheProxy(dynamiclib, sptr<MovingPhotoVideoCacheIntf>(movingPhotoVideoCacheIntf));
+    return movingPhotoVideoCacheProxy;
+}
+
+int32_t MovingPhotoVideoCacheProxy::CreateMovingPhotoVideoCache(sptr<AvcodecTaskManagerIntf> avcodecTaskManagerIntf)
 {
     MEDIA_DEBUG_LOG("CreateMovingPhotoVideoCache start");
-    CHECK_RETURN_ELOG(movingPhotoIntf_ == nullptr, "movingPhotoIntf_ is nullptr");
-    movingPhotoIntf_->CreateMovingPhotoVideoCache();
-    MEDIA_DEBUG_LOG("CreateMovingPhotoVideoCache success");
+    CHECK_RETURN_RET_ELOG(avcodecTaskManagerIntf == nullptr, -1, "avcodecTaskManagerIntf is nullptr");
+    CHECK_RETURN_RET_ELOG(movingPhotoVideoCacheIntf_ == nullptr, -1, "movingPhotoVideoCacheIntf_ is nullptr");
+    sptr<AvcodecTaskManagerProxy> avcodecTaskManagerProxy =
+        static_cast<AvcodecTaskManagerProxy*>(avcodecTaskManagerIntf.GetRefPtr());
+    CHECK_RETURN_RET_ELOG(avcodecTaskManagerProxy == nullptr, -1, "avcodecTaskManagerProxy is nullptr");
+    return movingPhotoVideoCacheIntf_->CreateMovingPhotoVideoCache(avcodecTaskManagerProxy->GetTaskManagerAdapter());
 }
 
-bool MovingPhotoProxy::IsVideoCacheExist()
-{
-    MEDIA_DEBUG_LOG("IsVideoCacheExist start");
-    CHECK_RETURN_RET_ELOG(movingPhotoIntf_ == nullptr, false, "movingPhotoIntf_ is nullptr");
-    return movingPhotoIntf_->IsVideoCacheExist();
-}
-
-void MovingPhotoProxy::ReleaseVideoCache()
-{
-    MEDIA_DEBUG_LOG("ReleaseVideoCache start");
-    CHECK_RETURN_ELOG(movingPhotoIntf_ == nullptr, "movingPhotoIntf_ is nullptr");
-    movingPhotoIntf_->ReleaseVideoCache();
-}
-
-void MovingPhotoProxy::OnDrainFrameRecord(sptr<FrameRecord> frame)
+void MovingPhotoVideoCacheProxy::OnDrainFrameRecord(sptr<FrameRecord> frame)
 {
     MEDIA_DEBUG_LOG("OnDrainFrameRecord start");
-    CHECK_RETURN_ELOG(movingPhotoIntf_ == nullptr, "movingPhotoIntf_ is nullptr");
-    movingPhotoIntf_->OnDrainFrameRecord(frame);
-    MEDIA_DEBUG_LOG("OnDrainFrameRecord success");
+    CHECK_RETURN_ELOG(movingPhotoVideoCacheIntf_ == nullptr, "movingPhotoVideoCacheIntf_ is nullptr");
+    movingPhotoVideoCacheIntf_->OnDrainFrameRecord(frame);
 }
 
-void MovingPhotoProxy::GetFrameCachedResult(std::vector<sptr<FrameRecord>> frameRecords,
+void MovingPhotoVideoCacheProxy::GetFrameCachedResult(std::vector<sptr<FrameRecord>> frameRecords,
     uint64_t taskName, int32_t rotation, int32_t captureId)
 {
     MEDIA_DEBUG_LOG("GetFrameCachedResult start");
-    CHECK_RETURN_ELOG(movingPhotoIntf_ == nullptr, "movingPhotoIntf_ is nullptr");
-    movingPhotoIntf_->GetFrameCachedResult(frameRecords, taskName, rotation, captureId);
-    MEDIA_DEBUG_LOG("GetFrameCachedResult success");
+    CHECK_RETURN_ELOG(movingPhotoVideoCacheIntf_ == nullptr, "movingPhotoVideoCacheIntf_ is nullptr");
+    movingPhotoVideoCacheIntf_->GetFrameCachedResult(frameRecords, taskName, rotation, captureId);
 }
 } // namespace CameraStandard
 } // namespace OHOS

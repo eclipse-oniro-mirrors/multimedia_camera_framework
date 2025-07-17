@@ -289,7 +289,7 @@ void CameraBeautyNotification::GetPixelMap()
     MEDIA_INFO_LOG("CreateImageSource errorCode: %{public}d", static_cast<int32_t>(errorCode));
     CHECK_RETURN_ELOG(pixelMap == nullptr, "Create icon pixel map failed,pixelMap is nullptr");
     iconPixelMap_ = std::move(pixelMap);
-    ImageSourceProxy::Release();
+    CameraDynamicLoader::FreeDynamicLibDelayed(PICTURE_SO, LIB_DELAYED_UNLOAD_TIME);
 }
 
 Global::Resource::RState CameraBeautyNotification::GetMediaDataByName(std::string name, size_t& len,

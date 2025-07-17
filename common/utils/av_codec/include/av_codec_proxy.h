@@ -24,7 +24,7 @@ public:
     explicit AVCodecProxy(
         std::shared_ptr<Dynamiclib> avcodecLib, std::shared_ptr<AVCodecIntf> avcodecIntf);
     static std::shared_ptr<AVCodecProxy> CreateAVCodecProxy();
-    ~AVCodecProxy();
+    ~AVCodecProxy() override;
     static void Release();
     int32_t CreateAVMuxer(int32_t fd, OutputFormat format) override;
     int32_t CreateAVCodecVideoEncoder(const std::string& codecMime) override;

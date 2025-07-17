@@ -63,5 +63,24 @@ HWTEST_F(AudioCapturerSessionUnitTest, audio_capturer_session_unittest_001, Test
     session->GetAudioRecords(startTime, endTime, audioRecords);
     EXPECT_TRUE(audioRecords.empty());
 }
+
+/*
+ * Feature: Framework
+ * Function: Test CreateAudioCapturer
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CreateAudioCapturer normal branches.
+ */
+HWTEST_F(AudioCapturerSessionUnitTest, audio_capturer_session_unittest_002, TestSize.Level1)
+{
+    sptr<AudioCapturerSession> session = new AudioCapturerSession();
+    bool ret = session->CreateAudioCapturer();
+    ASSERT_NE(session->audioCapturer_, nullptr);
+    EXPECT_TRUE(ret);
+    session->ProcessAudioBuffer();
+    session->Stop();
+}
+
 } // CameraStandard
 } // OHOS

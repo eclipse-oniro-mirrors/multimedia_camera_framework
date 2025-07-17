@@ -20,35 +20,47 @@
 
 namespace OHOS {
 namespace CameraStandard {
-class MovingPhotoAdapter : public MovingPhotoIntf {
+class AvcodecTaskManagerAdapter : public AvcodecTaskManagerIntf {
 public:
-    MovingPhotoAdapter();
-    ~MovingPhotoAdapter() override;
-    void CreateAvcodecTaskManager(VideoCodecType type, int32_t colorSpace) override;
-    bool IsTaskManagerExist() override;
-    void ReleaseTaskManager() override;
+    AvcodecTaskManagerAdapter();
+    ~AvcodecTaskManagerAdapter() override;
+    int32_t CreateAvcodecTaskManager(sptr<AudioCapturerSessionIntf> audioCapturerSessionIntf,
+        VideoCodecType type, int32_t colorSpace) override;
     void SetVideoBufferDuration(uint32_t preBufferCount, uint32_t postBufferCount) override;
     void SetVideoFd(int64_t timestamp, std::shared_ptr<PhotoAssetIntf> photoAssetProxy, int32_t captureId) override;
     void SubmitTask(std::function<void()> task) override;
     void EncodeVideoBuffer(sptr<FrameRecord> frameRecord, CacheCbFunc cacheCallback) override;
-    void DoMuxerVideo(std::vector<sptr<FrameRecord>> frameRecords,
-        uint64_t taskName, int32_t rotation, int32_t captureId) override;
+    void DoMuxerVideo(std::vector<sptr<FrameRecord>> frameRecords, uint64_t taskName, int32_t rotation,
+        int32_t captureId) override;
     bool isEmptyVideoFdMap() override;
-    void TaskManagerInsertStartTime(int32_t captureId, int64_t startTimeStamp) override;
-    void TaskManagerInsertEndTime(int32_t captureId, int64_t endTimeStamp) override;
-    void CreateAudioSession() override;
-    bool IsAudioSessionExist() override;
+    bool TaskManagerInsertStartTime(int32_t captureId, int64_t startTimeStamp) override;
+    bool TaskManagerInsertEndTime(int32_t captureId, int64_t endTimeStamp) override;
+    sptr<AvcodecTaskManager> GetTaskManager() const;
+private:
+    sptr<AvcodecTaskManager> avcodecTaskManager_ = nullptr;
+};
+
+class AudioCapturerSessionAdapter : public AudioCapturerSessionIntf {
+public:
+    AudioCapturerSessionAdapter();
+    ~AudioCapturerSessionAdapter() override;
+    int32_t CreateAudioSession() override;
     bool StartAudioCapture() override;
     void StopAudioCapture() override;
-    void CreateMovingPhotoVideoCache() override;
-    bool IsVideoCacheExist() override;
-    void ReleaseVideoCache() override;
+    sptr<AudioCapturerSession> GetCapturerSession() const;
+private:
+    sptr<AudioCapturerSession> audioCapturerSession_ = nullptr;
+};
+
+class MovingPhotoVideoCacheAdapter : public MovingPhotoVideoCacheIntf {
+public:
+    MovingPhotoVideoCacheAdapter();
+    ~MovingPhotoVideoCacheAdapter() override;
+    int32_t CreateMovingPhotoVideoCache(sptr<AvcodecTaskManagerIntf> avcodecTaskManagerIntf) override;
     void OnDrainFrameRecord(sptr<FrameRecord> frame) override;
     void GetFrameCachedResult(std::vector<sptr<FrameRecord>> frameRecords,
         uint64_t taskName, int32_t rotation, int32_t captureId) override;
 private:
-    sptr<AvcodecTaskManager> avcodecTaskManager_ = nullptr;
-    sptr<AudioCapturerSession> audioCapturerSession_ = nullptr;
     sptr<MovingPhotoVideoCache> movingPhotoVideoCache_ = nullptr;
     wptr<MovingPhotoVideoCache> videoCache_ = nullptr;
 };

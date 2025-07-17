@@ -177,7 +177,7 @@ int32_t AudioVideoMuxer::Release()
 {
     MEDIA_INFO_LOG("AudioVideoMuxer::Release enter");
     CHECK_RETURN_RET_ELOG(avCodecProxy_ == nullptr, 0, "avCodecProxy_ is nullptr!");
-    AVCodecProxy::Release();
+    CameraDynamicLoader::FreeDynamicLibDelayed(AV_CODEC_SO, LIB_DELAYED_UNLOAD_TIME);
     avCodecProxy_ = nullptr;
     close(fd_);
     return 0;

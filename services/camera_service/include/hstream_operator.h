@@ -65,7 +65,9 @@ constexpr uint32_t OPERATOR_DEFAULT_ENCODER_THREAD_NUMBER = 1;
 class PermissionStatusChangeCb;
 class CameraUseStateChangeCb;
 class CameraServerPhotoProxy;
-class MovingPhotoIntf;
+class AvcodecTaskManagerIntf;
+class AudioCapturerSessionIntf;
+class MovingPhotoVideoCacheIntf;
 
 class StreamContainer {
 public:
@@ -128,7 +130,7 @@ class SessionDrainImageCallback : public DrainImageCallback {
 public:
     explicit SessionDrainImageCallback(std::vector<sptr<FrameRecord>>& frameCacheList,
                                        wptr<MovingPhotoListener> listener,
-                                       wptr<MovingPhotoIntf> movingPhotoIntf,
+                                       wptr<MovingPhotoVideoCacheIntf> movingPhotoVideoCacheIntf,
                                        uint64_t timestamp,
                                        int32_t rotation,
                                        int32_t captureId);
@@ -140,7 +142,7 @@ private:
     std::mutex mutex_;
     std::vector<sptr<FrameRecord>> frameCacheList_;
     wptr<MovingPhotoListener> listener_;
-    wptr<MovingPhotoIntf> movingPhotoIntf_;
+    wptr<MovingPhotoVideoCacheIntf> movingPhotoVideoCacheIntf_;
     uint64_t timestamp_;
     int32_t rotation_;
     int32_t captureId_;
@@ -258,7 +260,9 @@ public:
 
     uint32_t preCacheFrameCount_ = CACHE_FRAME_COUNT;
     uint32_t postCacheFrameCount_ = CACHE_FRAME_COUNT;
-    sptr<MovingPhotoIntf> movingPhotoProxy_;
+    sptr<AvcodecTaskManagerIntf> avcodecTaskManagerProxy_;
+    sptr<AudioCapturerSessionIntf> audioCapturerSessionProxy_;
+    sptr<MovingPhotoVideoCacheIntf> movingPhotoVideoCacheProxy_;
     std::vector<int32_t> GetFrameRateRange();
 
     class DisplayRotationListener : public OHOS::Rosen::DisplayManager::IDisplayListener {

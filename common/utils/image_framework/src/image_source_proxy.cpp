@@ -32,11 +32,6 @@ ImageSourceProxy::~ImageSourceProxy()
     MEDIA_DEBUG_LOG("ImageSourceProxy destructor");
 }
 
-void ImageSourceProxy::Release()
-{
-    CameraDynamicLoader::FreeDynamicLibDelayed(PICTURE_SO, LIB_DELAYED_UNLOAD_TIME);
-}
-
 typedef ImageSourceIntf* (*CreateImageSourceIntf)();
 std::shared_ptr<ImageSourceProxy> ImageSourceProxy::CreateImageSourceProxy()
 {

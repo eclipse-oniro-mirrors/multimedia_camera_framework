@@ -32,13 +32,6 @@ AVCodecProxy::~AVCodecProxy()
     MEDIA_DEBUG_LOG("AVCodecProxy destructor");
 }
 
-void AVCodecProxy::Release()
-{
-    MEDIA_DEBUG_LOG("AVCodecProxy Release");
-    CameraDynamicLoader::FreeDynamicLibDelayed(AV_CODEC_SO, LIB_DELAYED_UNLOAD_TIME);
-    MEDIA_DEBUG_LOG("AVCodecProxy Release end");
-}
-
 std::shared_ptr<AVCodecProxy> AVCodecProxy::CreateAVCodecProxy()
 {
     std::shared_ptr<Dynamiclib> dynamiclib = CameraDynamicLoader::GetDynamiclib(AV_CODEC_SO);
