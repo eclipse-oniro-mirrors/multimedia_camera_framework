@@ -837,8 +837,6 @@ int32_t HCameraService::CreatePhotoOutput(
     int32_t format, int32_t width, int32_t height, sptr<IStreamCapture> &photoOutput)
 {
     CAMERA_SYNC_TRACE;
-    CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION, "HCameraService::CheckSystemApp fail");
-    CameraXCollie cameraXCollie = CameraXCollie("HCameraService::CreateDeferredPreviewOutput");
     int32_t rc = CAMERA_OK;
     MEDIA_INFO_LOG("HCameraService::CreatePhotoOutput prepare execute");
     sptr<HStreamCapture> streamCapture = new (nothrow) HStreamCapture(format, width, height);
@@ -862,6 +860,8 @@ int32_t HCameraService::CreateDeferredPreviewOutput(
     int32_t format, int32_t width, int32_t height, sptr<IStreamRepeat>& previewOutput)
 {
     CAMERA_SYNC_TRACE;
+    CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION, "HCameraService::CheckSystemApp fail");
+    CameraXCollie cameraXCollie = CameraXCollie("HCameraService::CreateDeferredPreviewOutput");
     sptr<HStreamRepeat> streamDeferredPreview;
     MEDIA_INFO_LOG("HCameraService::CreateDeferredPreviewOutput prepare execute");
     CHECK_RETURN_RET_ELOG((width == 0) || (height == 0), CAMERA_INVALID_ARG,
