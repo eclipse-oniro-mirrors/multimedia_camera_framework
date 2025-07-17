@@ -164,7 +164,6 @@ void CameraDynamicLoader::CancelFreeDynamicLibDelayedNoLock(const std::string& l
         return;
     }
     auto timer = it->second;
-    // Cancel old task
     bool isCancelSuccess = timer->CancelTask();
     MEDIA_INFO_LOG("CameraDynamicLoader::CancelFreeDynamicLibDelayedNoLock %{public}s CancelTask success :%{public}d",
         libName.c_str(), isCancelSuccess);
