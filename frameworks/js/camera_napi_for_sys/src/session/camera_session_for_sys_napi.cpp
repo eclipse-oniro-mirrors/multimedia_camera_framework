@@ -128,6 +128,8 @@ const std::vector<napi_property_descriptor> CameraSessionForSysNapi::scene_detec
 const std::vector<napi_property_descriptor> CameraSessionForSysNapi::effect_suggestion_sys_props = {
     DECLARE_NAPI_FUNCTION("isEffectSuggestionSupported", CameraSessionForSysNapi::IsEffectSuggestionSupported),
     DECLARE_NAPI_FUNCTION("enableEffectSuggestion", CameraSessionForSysNapi::EnableEffectSuggestion),
+    DECLARE_NAPI_FUNCTION("getSupportedEffectSuggestionType",
+        CameraSessionForSysNapi::GetSupportedEffectSuggestionType),
     DECLARE_NAPI_FUNCTION("getSupportedEffectSuggestionTypes",
         CameraSessionForSysNapi::GetSupportedEffectSuggestionType),
     DECLARE_NAPI_FUNCTION("setEffectSuggestionStatus", CameraSessionForSysNapi::SetEffectSuggestionStatus),
