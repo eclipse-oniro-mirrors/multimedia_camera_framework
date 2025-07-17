@@ -545,6 +545,8 @@ napi_value CameraInputNapi::Off(napi_env env, napi_callback_info info)
 napi_value CameraInputNapi::UsedAsPosition(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("CameraInputNapi::UsedAsPosition is called");
+    CHECK_ERROR_RETURN_RET_LOG(
+        !CameraNapiSecurity::CheckSystemApp(env), nullptr, "CameraInputNapi::UsedAsPosition:SystemApi is called");
     CameraInputNapi* cameraInputNapi = nullptr;
     int32_t cameraPosition;
     CameraNapiParamParser jsParamParser(env, info, cameraInputNapi, cameraPosition);
