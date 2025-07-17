@@ -152,7 +152,7 @@ private:
 class InnerPressureStatusCallback : public PressureCallback {
 public:
     InnerPressureStatusCallback(Camera_CaptureSession* captureSession,
-    OH_CaptureSession_OnSystemPressureLevel systemPressureLevel)
+    OH_CaptureSession_OnSystemPressureLevelChange systemPressureLevel)
     : captureSession_(captureSession), systemPressureLevel_(*systemPressureLevel) {};
     ~InnerPressureStatusCallback() = default;
 
@@ -167,7 +167,7 @@ public:
 
 private:
     Camera_CaptureSession* captureSession_;
-    OH_CaptureSession_OnSystemPressureLevel systemPressureLevel_ = nullptr;
+    OH_CaptureSession_OnSystemPressureLevelChange systemPressureLevel_ = nullptr;
 };
 
 class InnerControlCenterEffectStatusCallback : public ControlCenterEffectCallback {
@@ -861,7 +861,7 @@ Camera_ErrorCode Camera_CaptureSession::UnregisterAutoDeviceSwitchStatusCallback
 }
 
 Camera_ErrorCode Camera_CaptureSession::RegisterSystemPressureLevelCallback(
-    OH_CaptureSession_OnSystemPressureLevel systemPressureLevel)
+    OH_CaptureSession_OnSystemPressureLevelChange systemPressureLevel)
 {
     MEDIA_INFO_LOG("Camera_CaptureSession::RegisterSystemPressureLevelCallback");
     shared_ptr<InnerPressureStatusCallback> innerPressureStatusCallback =
@@ -878,7 +878,7 @@ Camera_ErrorCode Camera_CaptureSession::RegisterSystemPressureLevelCallback(
 }
 
 Camera_ErrorCode Camera_CaptureSession::UnRegisterSystemPressureLevelCallback(
-    OH_CaptureSession_OnSystemPressureLevel systemPressureLevel)
+    OH_CaptureSession_OnSystemPressureLevelChange systemPressureLevel)
 {
     MEDIA_INFO_LOG("Camera_CaptureSession::UnregisterSystemPressureLevelCallback");
     innerCaptureSession_->SetPressureCallback(nullptr);

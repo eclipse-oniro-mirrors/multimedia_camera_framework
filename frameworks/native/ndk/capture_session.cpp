@@ -70,8 +70,8 @@ Camera_ErrorCode OH_CaptureSession_UnregisterSmoothZoomInfoCallback(Camera_Captu
  * @since 20
  * @version 1.0
  */
-Camera_ErrorCode OH_CaptureSession_RegisterSystemPressureLevelCallback(Camera_CaptureSession* session,
-    OH_CaptureSession_OnSystemPressureLevel systemPressureLevel)
+Camera_ErrorCode OH_CaptureSession_RegisterSystemPressureLevelChangeCallback(Camera_CaptureSession* session,
+    OH_CaptureSession_OnSystemPressureLevelChange systemPressureLevel)
 {
     CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
     CHECK_RETURN_RET_ELOG(systemPressureLevel == nullptr, CAMERA_INVALID_ARGUMENT,
@@ -84,8 +84,8 @@ Camera_ErrorCode OH_CaptureSession_RegisterSystemPressureLevelCallback(Camera_Ca
  * @since 20
  * @version 1.0
  */
-Camera_ErrorCode OH_CaptureSession_UnregisterSystemPressureLevelCallback(Camera_CaptureSession* session,
-    OH_CaptureSession_OnSystemPressureLevel systemPressureLevel)
+Camera_ErrorCode OH_CaptureSession_UnregisterSystemPressureLevelChangeCallback(Camera_CaptureSession* session,
+    OH_CaptureSession_OnSystemPressureLevelChange systemPressureLevel)
 {
     CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
     CHECK_RETURN_RET_ELOG(systemPressureLevel == nullptr, CAMERA_INVALID_ARGUMENT,

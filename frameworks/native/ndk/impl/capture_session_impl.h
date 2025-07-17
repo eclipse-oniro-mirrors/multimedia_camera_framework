@@ -163,10 +163,10 @@ public:
         OH_CaptureSession_OnAutoDeviceSwitchStatusChange autoDeviceSwitchStatusChange);
 
     Camera_ErrorCode RegisterSystemPressureLevelCallback(
-        OH_CaptureSession_OnSystemPressureLevel systemPressureLevel);
+        OH_CaptureSession_OnSystemPressureLevelChange systemPressureLevel);
     
     Camera_ErrorCode UnRegisterSystemPressureLevelCallback(
-        OH_CaptureSession_OnSystemPressureLevel systemPressureLevel);
+        OH_CaptureSession_OnSystemPressureLevelChange systemPressureLevel);
 
     Camera_ErrorCode RegisterControlCenterEffectStatusChangeCallback(
         OH_CaptureSession_OnControlCenterEffectStatusChange controlCenterStatusChange);
