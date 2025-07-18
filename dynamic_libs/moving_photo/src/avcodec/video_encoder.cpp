@@ -384,7 +384,7 @@ int32_t VideoEncoder::Configure()
     format.PutIntValue(MediaDescriptionKey::MD_KEY_HEIGHT, size_->height);
     format.PutIntValue(MediaDescriptionKey::MD_KEY_ROTATION_ANGLE, rotation_);
     format.PutDoubleValue(MediaDescriptionKey::MD_KEY_FRAME_RATE, VIDEO_FRAME_RATE);
-    format.PutIntValue(MediaDescriptionKey::MD_KEY_VIDEO_ENCODE_BITRATE_MODE, MediaAVCodec::VBR);
+    format.PutIntValue(MediaDescriptionKey::MD_KEY_VIDEO_ENCODE_BITRATE_MODE, MediaAVCodec::SQR);
     format.PutLongValue(MediaDescriptionKey::MD_KEY_BITRATE, bitrate_);
     format.PutIntValue(MediaDescriptionKey::MD_KEY_PIXEL_FORMAT, VIDOE_PIXEL_FORMAT);
     format.PutIntValue(MediaDescriptionKey::MD_KEY_I_FRAME_INTERVAL, INT_MAX);
@@ -395,6 +395,11 @@ int32_t VideoEncoder::Configure()
     int ret = avCodecProxy_->AVCodecVideoEncoderConfigure(format);
     CHECK_RETURN_RET_ELOG(ret != AV_ERR_OK, 1, "Config failed, ret: %{public}d", ret);
     return 0;
+}
+
+int32_t VideoEncoder::GetEncoderBitrate()
+{
+    return bitrate_;
 }
 } // CameraStandard
 } // OHOS

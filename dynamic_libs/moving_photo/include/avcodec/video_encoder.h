@@ -59,6 +59,7 @@ public:
         std::weak_ptr<VideoEncoder> videoEncoder_;
     };
     bool IsHdr(ColorSpace colorSpace);
+    int32_t GetEncoderBitrate();
 
 private:
     int32_t SetCallback();

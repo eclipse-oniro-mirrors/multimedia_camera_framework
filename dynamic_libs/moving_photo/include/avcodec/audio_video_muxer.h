@@ -31,6 +31,8 @@
 
 namespace OHOS {
 namespace CameraStandard {
+const std::string STAGE_VIDEO_ENCODER_PARAM_VALUE = "video_encode_bitrate_mode=SQR:bitrate=";
+const std::string STAGE_ENCODER_PARAM_KEY = "com.openharmony.encParam";
 enum TrackType {
     AUDIO_TRACK = 0,
     VIDEO_TRACK,
@@ -55,6 +57,7 @@ public:
     int32_t GetVideoFd();
     std::shared_ptr<PhotoAssetIntf> GetPhotoAssetProxy();
     std::atomic<int32_t> releaseSignal_ = 2;
+    int32_t SetSqr(int32_t bitrate);
 
 private:
     std::shared_ptr<AVCodecIntf> avCodecProxy_ = nullptr;
