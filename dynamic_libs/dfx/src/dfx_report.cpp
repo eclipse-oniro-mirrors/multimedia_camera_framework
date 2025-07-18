@@ -13,7 +13,7 @@
  * limitations under the License.
  */
  
-#include "../include/dfx_report.h"
+#include "dfx_report.h"
  
 namespace OHOS {
 namespace CameraStandard {
