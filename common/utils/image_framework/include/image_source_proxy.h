@@ -27,7 +27,6 @@ public:
         std::shared_ptr<Dynamiclib> imageLib, std::shared_ptr<ImageSourceIntf> imageSourceIntf);
 
     ~ImageSourceProxy() override;
-    static void Release();
     static std::shared_ptr<ImageSourceProxy> CreateImageSourceProxy();
     int32_t CreateImageSource(const uint8_t *data, uint32_t size, const Media::SourceOptions& opts,
         uint32_t& errorCode) override;

@@ -13,51 +13,44 @@
  * limitations under the License.
  */
 #include "moving_photo_adapter.h"
-#include "audio_capturer_session.h"
 #include "frame_record.h"
 #include "camera_log.h"
 #include "fixed_size_list.h"
 #include "audio_capturer_session.h"
 #include "avcodec_task_manager.h"
-#include "camera_server_photo_proxy.h"
 #include "moving_photo_video_cache.h"
 #include "camera_util.h"
 #include "icapture_session.h"
 
 namespace OHOS {
 namespace CameraStandard {
-MovingPhotoAdapter::MovingPhotoAdapter()
+AvcodecTaskManagerAdapter::AvcodecTaskManagerAdapter()
 {
-    MEDIA_DEBUG_LOG("MovingPhotoAdapter constructor");
+    MEDIA_DEBUG_LOG("AvcodecTaskManagerAdapter constructor");
 }
 
-MovingPhotoAdapter::~MovingPhotoAdapter()
+AvcodecTaskManagerAdapter::~AvcodecTaskManagerAdapter()
 {
-    MEDIA_DEBUG_LOG("MovingPhotoAdapter destructor");
+    MEDIA_DEBUG_LOG("AvcodecTaskManagerAdapter destructor");
 }
 
-void MovingPhotoAdapter::CreateAvcodecTaskManager(VideoCodecType type, int32_t colorSpace)
+int32_t AvcodecTaskManagerAdapter::CreateAvcodecTaskManager(sptr<AudioCapturerSessionIntf> audioCapturerSessionIntf,
+    VideoCodecType type, int32_t colorSpace)
 {
     MEDIA_DEBUG_LOG("CreateAvcodecTaskManager start, type: %{public}d, colorSpace: %{public}d",
         static_cast<int32_t>(type), colorSpace);
-    avcodecTaskManager_ = new AvcodecTaskManager(audioCapturerSession_, type, static_cast<ColorSpace> (colorSpace));
-    CHECK_RETURN_ELOG(avcodecTaskManager_ == nullptr, "CreateAvcodecTaskManager failed");
-    MEDIA_DEBUG_LOG("CreateAvcodecTaskManager success");
+    CHECK_RETURN_RET_ELOG(audioCapturerSessionIntf == nullptr, -1, "AudioCapturerSessionIntf is null");
+    sptr<AudioCapturerSessionAdapter> capturerSessionAdapter =
+        static_cast<AudioCapturerSessionAdapter*>(audioCapturerSessionIntf.GetRefPtr());
+    CHECK_RETURN_RET_ELOG(capturerSessionAdapter == nullptr, -1, "AudioCapturerSessionAdapter is null");
+    sptr<AudioCapturerSession> audioCapturerSession = capturerSessionAdapter->GetCapturerSession();
+    CHECK_RETURN_RET_ELOG(audioCapturerSession == nullptr, -1, "AudioCapturerSession is null");
+    avcodecTaskManager_ = new AvcodecTaskManager(audioCapturerSession, type, static_cast<ColorSpace> (colorSpace));
+    CHECK_RETURN_RET_ELOG(avcodecTaskManager_ == nullptr, -1, "CreateAvcodecTaskManager failed");
+    return 0;
 }
 
-bool MovingPhotoAdapter::IsTaskManagerExist()
-{
-    MEDIA_DEBUG_LOG("IsTaskManagerExist start");
-    CHECK_RETURN_RET_ELOG(avcodecTaskManager_ == nullptr, false, "avcodecTaskManager_ is nullptr");
-    return true;
-}
-
-void MovingPhotoAdapter::ReleaseTaskManager()
-{
-    avcodecTaskManager_ = nullptr;
-}
-
-void MovingPhotoAdapter::SetVideoBufferDuration(uint32_t preBufferCount, uint32_t postBufferCount)
+void AvcodecTaskManagerAdapter::SetVideoBufferDuration(uint32_t preBufferCount, uint32_t postBufferCount)
 {
     MEDIA_DEBUG_LOG("SetVideoBufferDuration start, preBufferCount: %{public}u, postBufferCount: %{public}u",
         preBufferCount, postBufferCount);
@@ -66,44 +59,40 @@ void MovingPhotoAdapter::SetVideoBufferDuration(uint32_t preBufferCount, uint32_
     MEDIA_DEBUG_LOG("SetVideoBufferDuration success");
 }
 
-void MovingPhotoAdapter::SetVideoFd(
+void AvcodecTaskManagerAdapter::SetVideoFd(
     int64_t timestamp, std::shared_ptr<PhotoAssetIntf> photoAssetProxy, int32_t captureId)
 {
     MEDIA_DEBUG_LOG("SetVideoFd start, timestamp: %{public}" PRIu64 ", captureId: %{public}d",
         timestamp, captureId);
     CHECK_RETURN_ELOG(avcodecTaskManager_ == nullptr, "AvcodecTaskManager not created");
     avcodecTaskManager_->SetVideoFd(timestamp, photoAssetProxy, captureId);
-    MEDIA_DEBUG_LOG("SetVideoFd success");
 }
 
-void MovingPhotoAdapter::SubmitTask(std::function<void()> task)
+void AvcodecTaskManagerAdapter::SubmitTask(std::function<void()> task)
 {
     MEDIA_DEBUG_LOG("SubmitTask start");
     CHECK_RETURN_ELOG(avcodecTaskManager_ == nullptr, "AvcodecTaskManager not created");
     avcodecTaskManager_->SubmitTask(task);
-    MEDIA_DEBUG_LOG("SubmitTask success");
 }
 
-void MovingPhotoAdapter::EncodeVideoBuffer(sptr<FrameRecord> frameRecord, CacheCbFunc cacheCallback)
+void AvcodecTaskManagerAdapter::EncodeVideoBuffer(sptr<FrameRecord> frameRecord, CacheCbFunc cacheCallback)
 {
     MEDIA_DEBUG_LOG("EncodeVideoBuffer start, frameId: %{public}s",
         frameRecord->GetFrameId().c_str());
     CHECK_RETURN_ELOG(avcodecTaskManager_ == nullptr, "AvcodecTaskManager not created");
     avcodecTaskManager_->EncodeVideoBuffer(frameRecord, cacheCallback);
-    MEDIA_DEBUG_LOG("EncodeVideoBuffer success");
 }
 
-void MovingPhotoAdapter::DoMuxerVideo(std::vector<sptr<FrameRecord>> frameRecords, uint64_t taskName, int32_t rotation,
-    int32_t captureId)
+void AvcodecTaskManagerAdapter::DoMuxerVideo(std::vector<sptr<FrameRecord>> frameRecords, uint64_t taskName,
+    int32_t rotation, int32_t captureId)
 {
     MEDIA_DEBUG_LOG("DoMuxerVideo start, taskName: %{public}" PRIu64 ", rotation: %{public}d, captureId: %{public}d",
         taskName, rotation, captureId);
     CHECK_RETURN_ELOG(avcodecTaskManager_ == nullptr, "AvcodecTaskManager not created");
     avcodecTaskManager_->DoMuxerVideo(frameRecords, taskName, rotation, captureId);
-    MEDIA_DEBUG_LOG("DoMuxerVideo success");
 }
 
-bool MovingPhotoAdapter::isEmptyVideoFdMap()
+bool AvcodecTaskManagerAdapter::isEmptyVideoFdMap()
 {
     MEDIA_DEBUG_LOG("isEmptyVideoFdMap start");
     CHECK_RETURN_RET_ELOG(avcodecTaskManager_ == nullptr, true, "AvcodecTaskManager not created");
@@ -112,48 +101,58 @@ bool MovingPhotoAdapter::isEmptyVideoFdMap()
     return isEmpty;
 }
 
-void MovingPhotoAdapter::TaskManagerInsertStartTime(int32_t captureId, int64_t startTimeStamp)
+bool AvcodecTaskManagerAdapter::TaskManagerInsertStartTime(int32_t captureId, int64_t startTimeStamp)
 {
     MEDIA_DEBUG_LOG("TaskManagerInsertStartTime start, captureId: %{public}d, startTimeStamp: %{public}" PRIu64,
         captureId, startTimeStamp);
-    CHECK_RETURN_ELOG(
-        avcodecTaskManager_ == nullptr, "Set start time callback taskManager_ is null");
+    CHECK_RETURN_RET_ELOG(avcodecTaskManager_ == nullptr, false, "Set start time callback taskManager_ is null");
     std::lock_guard<mutex> lock(avcodecTaskManager_->startTimeMutex_);
-    CHECK_RETURN(avcodecTaskManager_->mPStartTimeMap_.count(captureId) != 0);
-    MEDIA_INFO_LOG("Save moving photo start info, captureId : %{public}d, start timestamp : %{public}" PRIu64,
-        captureId, startTimeStamp);
-    avcodecTaskManager_->mPStartTimeMap_.insert(make_pair(captureId, startTimeStamp));
-}
-
-void MovingPhotoAdapter::TaskManagerInsertEndTime(int32_t captureId, int64_t endTimeStamp)
-{
-    MEDIA_DEBUG_LOG("TaskManagerInsertEndTime start, captureId: %{public}d, endTimeStamp: %{public}" PRIu64,
-        captureId, endTimeStamp);
-    CHECK_RETURN_ELOG(
-        avcodecTaskManager_ == nullptr, "Set end time callback taskManager_ is null");
-    std::lock_guard<mutex> lock(avcodecTaskManager_->endTimeMutex_);
-    CHECK_RETURN(avcodecTaskManager_->mPEndTimeMap_.count(captureId) != 0);
-    MEDIA_INFO_LOG("Save moving photo end info, captureId : %{public}d, end timestamp : %{public}" PRIu64,
-        captureId, endTimeStamp);
-    avcodecTaskManager_->mPEndTimeMap_.insert(make_pair(captureId, endTimeStamp));
-}
-
-void MovingPhotoAdapter::CreateAudioSession()
-{
-    MEDIA_DEBUG_LOG("CreateAudioSession start");
-    audioCapturerSession_ = new AudioCapturerSession();
-    CHECK_RETURN_ELOG(audioCapturerSession_ == nullptr, "CreateAudioSession failed");
-    MEDIA_DEBUG_LOG("CreateAudioSession success");
-}
-
-bool MovingPhotoAdapter::IsAudioSessionExist()
-{
-    MEDIA_DEBUG_LOG("IsAudioSessionExist start");
-    CHECK_RETURN_RET_ELOG(audioCapturerSession_ == nullptr, false, "audioCapturerSession_ is nullptr");
+    if (avcodecTaskManager_->mPStartTimeMap_.count(captureId) == 0) {
+        MEDIA_INFO_LOG("Save moving photo start info, captureId : %{public}d, start timestamp : %{public}" PRIu64,
+            captureId, startTimeStamp);
+        avcodecTaskManager_->mPStartTimeMap_.insert(make_pair(captureId, startTimeStamp));
+    }
     return true;
 }
 
-bool MovingPhotoAdapter::StartAudioCapture()
+bool AvcodecTaskManagerAdapter::TaskManagerInsertEndTime(int32_t captureId, int64_t endTimeStamp)
+{
+    MEDIA_DEBUG_LOG("TaskManagerInsertEndTime start, captureId: %{public}d, endTimeStamp: %{public}" PRIu64,
+        captureId, endTimeStamp);
+    CHECK_RETURN_RET_ELOG(avcodecTaskManager_ == nullptr, false, "Set end time callback taskManager_ is null");
+    std::lock_guard<mutex> lock(avcodecTaskManager_->endTimeMutex_);
+    if (avcodecTaskManager_->mPEndTimeMap_.count(captureId) != 0) {
+        MEDIA_INFO_LOG("Save moving photo end info, captureId : %{public}d, end timestamp : %{public}" PRIu64,
+            captureId, endTimeStamp);
+        avcodecTaskManager_->mPEndTimeMap_.insert(make_pair(captureId, endTimeStamp));
+    }
+    return true;
+}
+
+sptr<AvcodecTaskManager> AvcodecTaskManagerAdapter::GetTaskManager() const
+{
+    return avcodecTaskManager_;
+}
+
+AudioCapturerSessionAdapter::AudioCapturerSessionAdapter()
+{
+    MEDIA_DEBUG_LOG("AudioCapturerSessionAdapter constructor");
+}
+
+AudioCapturerSessionAdapter::~AudioCapturerSessionAdapter()
+{
+    MEDIA_DEBUG_LOG("AudioCapturerSessionAdapter destructor");
+}
+
+int32_t AudioCapturerSessionAdapter::CreateAudioSession()
+{
+    MEDIA_DEBUG_LOG("CreateAudioSession start");
+    audioCapturerSession_ = new AudioCapturerSession();
+    CHECK_RETURN_RET_ELOG(audioCapturerSession_ == nullptr, -1, "CreateAudioSession failed");
+    return 0;
+}
+
+bool AudioCapturerSessionAdapter::StartAudioCapture()
 {
     MEDIA_DEBUG_LOG("StartAudioCapture start");
     CHECK_RETURN_RET_ELOG(audioCapturerSession_ == nullptr, false, "AudioCapturerSession not created");
@@ -162,36 +161,42 @@ bool MovingPhotoAdapter::StartAudioCapture()
     return result;
 }
 
-void MovingPhotoAdapter::StopAudioCapture()
+void AudioCapturerSessionAdapter::StopAudioCapture()
 {
     MEDIA_DEBUG_LOG("StopAudioCapture start");
     CHECK_RETURN_ELOG(audioCapturerSession_ == nullptr, "AudioCapturerSession not created");
     audioCapturerSession_->Stop();
-    MEDIA_DEBUG_LOG("StopAudioCapture success");
 }
 
-void MovingPhotoAdapter::CreateMovingPhotoVideoCache()
+sptr<AudioCapturerSession> AudioCapturerSessionAdapter::GetCapturerSession() const
+{
+    return audioCapturerSession_;
+}
+
+MovingPhotoVideoCacheAdapter::MovingPhotoVideoCacheAdapter()
+{
+    MEDIA_DEBUG_LOG("MovingPhotoVideoCacheAdapter constructor");
+}
+
+MovingPhotoVideoCacheAdapter::~MovingPhotoVideoCacheAdapter()
+{
+    MEDIA_DEBUG_LOG("MovingPhotoVideoCacheAdapter destructor");
+}
+
+int32_t MovingPhotoVideoCacheAdapter::CreateMovingPhotoVideoCache(sptr<AvcodecTaskManagerIntf> avcodecTaskManagerIntf)
 {
     MEDIA_DEBUG_LOG("CreateMovingPhotoVideoCache start");
-    movingPhotoVideoCache_ = new MovingPhotoVideoCache(avcodecTaskManager_);
-    CHECK_RETURN_ELOG(movingPhotoVideoCache_ == nullptr, "CreateMovingPhotoVideoCache failed");
+    CHECK_RETURN_RET_ELOG(avcodecTaskManagerIntf == nullptr, -1, "AvcodecTaskManagerIntf is null");
+    sptr<AvcodecTaskManagerAdapter> avcodecTaskManagerAdapter =
+        static_cast<AvcodecTaskManagerAdapter*>(avcodecTaskManagerIntf.GetRefPtr());
+    CHECK_RETURN_RET_ELOG(avcodecTaskManagerAdapter == nullptr, -1, "AvcodecTaskManagerAdapter is null");
+    movingPhotoVideoCache_ = new MovingPhotoVideoCache(avcodecTaskManagerAdapter->GetTaskManager());
+    CHECK_RETURN_RET_ELOG(movingPhotoVideoCache_ == nullptr, -1, "CreateMovingPhotoVideoCache failed");
     videoCache_ = movingPhotoVideoCache_;
-    MEDIA_DEBUG_LOG("CreateMovingPhotoVideoCache success");
+    return 0;
 }
 
-bool MovingPhotoAdapter::IsVideoCacheExist()
-{
-    MEDIA_DEBUG_LOG("IsVideoCacheExist start");
-    CHECK_RETURN_RET_ELOG(movingPhotoVideoCache_ == nullptr, false, "movingPhotoVideoCache_ is nullptr");
-    return true;
-}
-
-void MovingPhotoAdapter::ReleaseVideoCache()
-{
-    movingPhotoVideoCache_ = nullptr;
-}
-
-void MovingPhotoAdapter::OnDrainFrameRecord(sptr<FrameRecord> frame)
+void MovingPhotoVideoCacheAdapter::OnDrainFrameRecord(sptr<FrameRecord> frame)
 {
     MEDIA_DEBUG_LOG("OnDrainFrameRecord start");
     CHECK_RETURN_ELOG(frame == nullptr, "FrameRecord is null");
@@ -208,7 +213,7 @@ void MovingPhotoAdapter::OnDrainFrameRecord(sptr<FrameRecord> frame)
     }
 }
 
-void MovingPhotoAdapter::GetFrameCachedResult(std::vector<sptr<FrameRecord>> frameRecords,
+void MovingPhotoVideoCacheAdapter::GetFrameCachedResult(std::vector<sptr<FrameRecord>> frameRecords,
     uint64_t taskName, int32_t rotation, int32_t captureId)
 {
     MEDIA_DEBUG_LOG("GetFrameCachedResult start");
@@ -227,10 +232,19 @@ void MovingPhotoAdapter::GetFrameCachedResult(std::vector<sptr<FrameRecord>> fra
     }
 }
 
-extern "C" MovingPhotoIntf *createMovingPhotoIntf()
+extern "C" AvcodecTaskManagerIntf *createAVCodecTaskManagerIntf()
 {
-    return new MovingPhotoAdapter();
+    return new AvcodecTaskManagerAdapter();
 }
 
+extern "C" AudioCapturerSessionIntf *createAudioCapturerSessionIntf()
+{
+    return new AudioCapturerSessionAdapter();
+}
+
+extern "C" MovingPhotoVideoCacheIntf *createMovingPhotoVideoCacheIntf()
+{
+    return new MovingPhotoVideoCacheAdapter();
+}
 } // namespace CameraStandard
 } // namespace OHOS

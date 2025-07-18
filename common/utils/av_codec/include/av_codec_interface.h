@@ -76,4 +76,4 @@ public:
     virtual int32_t AVDemuxerSelectTrackByID(uint32_t trackIndex) = 0;
 };
 }  // namespace OHOS::CameraStandard
-#endif
+#endif //AV_CODEC_INTERFACE_H

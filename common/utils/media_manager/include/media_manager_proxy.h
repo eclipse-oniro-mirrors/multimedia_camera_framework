@@ -26,7 +26,6 @@ public:
         std::shared_ptr<Dynamiclib> mediaManagerLib, std::shared_ptr<MediaManagerIntf> mediaManagerIntf);
     static std::shared_ptr<MediaManagerProxy> CreateMediaManagerProxy();
     ~MediaManagerProxy() override;
-    static void Release();
     int32_t MpegAcquire(const std::string& requestId, const sptr<IPCFileDescriptor>& inputFd) override;
     int32_t MpegUnInit(const int32_t result) override;
     sptr<IPCFileDescriptor> MpegGetResultFd() override;

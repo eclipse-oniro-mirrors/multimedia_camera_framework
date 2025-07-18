@@ -16,7 +16,6 @@
 #ifndef MOVING_PHOTO_INTERFACE_H
 #define MOVING_PHOTO_INTERFACE_H
 
-#include "photo_proxy.h"
 #include "surface.h"
 #include "refbase.h"
 #include "frame_record.h"
@@ -33,19 +32,17 @@ class AudioCapturerSession;
 class AvcodecTaskManager;
 class PhotoAssetIntf;
 class MovingPhotoVideoCache;
-class FrameRecord;
+class AudioCapturerSessionIntf;
 enum VideoCodecType : int32_t;
 
 using MetaElementType = std::pair<int64_t, sptr<OHOS::SurfaceBuffer>>;
 using CacheCbFunc = std::function<void(sptr<FrameRecord>, bool)>;
-using PhotoProxy = OHOS::Media::PhotoProxy;
 using EncodedEndCbFunc = std::function<void(vector<sptr<FrameRecord>>, uint64_t, int32_t, int32_t)>;
-class MovingPhotoIntf : public RefBase {
+class AvcodecTaskManagerIntf : public RefBase {
 public:
-    virtual ~MovingPhotoIntf() = default;
-    virtual void CreateAvcodecTaskManager(VideoCodecType type, int32_t colorSpace) = 0;
-    virtual bool IsTaskManagerExist() = 0;
-    virtual void ReleaseTaskManager() = 0;
+    virtual ~AvcodecTaskManagerIntf() = default;
+    virtual int32_t CreateAvcodecTaskManager(sptr<AudioCapturerSessionIntf> audioCapturerSessionIntf,
+        VideoCodecType type, int32_t colorSpace) = 0;
     virtual void SetVideoBufferDuration(uint32_t preBufferCount, uint32_t postBufferCount) = 0;
     virtual void SetVideoFd(int64_t timestamp, std::shared_ptr<PhotoAssetIntf> photoAssetProxy,
         int32_t captureId) = 0;
@@ -54,19 +51,26 @@ public:
     virtual void DoMuxerVideo(std::vector<sptr<FrameRecord>> frameRecords,
         uint64_t taskName, int32_t rotation, int32_t captureId) = 0;
     virtual bool isEmptyVideoFdMap() = 0;
-    virtual void TaskManagerInsertStartTime(int32_t captureId, int64_t startTimeStamp) = 0;
-    virtual void TaskManagerInsertEndTime(int32_t captureId, int64_t endTimeStamp) = 0;
-    virtual void CreateAudioSession() = 0;
-    virtual bool IsAudioSessionExist() = 0;
+    virtual bool TaskManagerInsertStartTime(int32_t captureId, int64_t startTimeStamp) = 0;
+    virtual bool TaskManagerInsertEndTime(int32_t captureId, int64_t endTimeStamp) = 0;
+};
+
+class AudioCapturerSessionIntf : public RefBase {
+public:
+    virtual ~AudioCapturerSessionIntf() = default;
+    virtual int32_t CreateAudioSession() = 0;
     virtual bool StartAudioCapture() = 0;
     virtual void StopAudioCapture() = 0;
-    virtual void CreateMovingPhotoVideoCache() = 0;
-    virtual bool IsVideoCacheExist() = 0;
-    virtual void ReleaseVideoCache() = 0;
+};
+
+class MovingPhotoVideoCacheIntf : public RefBase {
+public:
+    virtual ~MovingPhotoVideoCacheIntf() = default;
+    virtual int32_t CreateMovingPhotoVideoCache(sptr<AvcodecTaskManagerIntf> avcodecTaskManagerIntf) = 0;
     virtual void OnDrainFrameRecord(sptr<FrameRecord> frame) = 0;
     virtual void GetFrameCachedResult(std::vector<sptr<FrameRecord>> frameRecords,
         uint64_t taskName, int32_t rotation, int32_t captureId) = 0;
 };
 } // namespace CameraStandard
 } // namespace OHOS
-#endif
+#endif // MOVING_PHOTO_INTERFACE_H

@@ -49,11 +49,6 @@ MediaManagerProxy::~MediaManagerProxy()
     DP_DEBUG_LOG("MediaManagerProxy destructor");
 }
 
-void MediaManagerProxy::Release()
-{
-    CameraDynamicLoader::FreeDynamicLibDelayed(MEDIA_MANAGER_SO, LIB_DELAYED_UNLOAD_TIME);
-}
-
 int32_t MediaManagerProxy::MpegAcquire(const std::string& requestId, const sptr<IPCFileDescriptor>& inputFd)
 {
     DP_DEBUG_LOG("MpegAcquire requestId: %{public}s", requestId.c_str());
