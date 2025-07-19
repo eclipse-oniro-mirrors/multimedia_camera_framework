@@ -27,6 +27,7 @@
 #include <utility>
 #include <vector>
 
+#include "anonymization.h"
 #include "ability/camera_ability_const.h"
 #include "access_token.h"
 #include "icapture_session_callback.h"
@@ -2634,7 +2635,8 @@ int32_t HCameraService::GetDmDeviceInfo(std::vector<std::string> &deviceInfos)
             deviceInfo["deviceTypeId"] = deviceInfoList[i].deviceTypeId;
             deviceInfo["networkId"] = deviceInfoList[i].networkId;
             std::string deviceInfoStr = deviceInfo.dump();
-            MEDIA_INFO_LOG("HCameraService::GetDmDeviceInfo deviceInfo:%{private}s", deviceInfoStr.c_str());
+            MEDIA_INFO_LOG("HCameraService::GetDmDeviceInfo deviceInfo:%{public}s",
+                OHOS::CameraStandard::Anonymization::AnonymizeString(deviceInfoStr).c_str());
             deviceInfos.emplace_back(deviceInfoStr);
         }
     }

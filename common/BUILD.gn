@@ -63,6 +63,7 @@ ohos_shared_library("camera_utils") {
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/timer/time_broker.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/timer/camera_deferred_timer.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/utils/dp_utils.cpp",
+    "utils/anonymization.cpp",
     "utils/av_codec/src/av_codec_proxy.cpp",
     "utils/camera_dynamic_loader.cpp",
     "utils/camera_metadata.cpp",
