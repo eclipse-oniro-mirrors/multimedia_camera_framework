@@ -223,7 +223,7 @@ HWTEST_F(HCameraDeviceManagerUnitTest, hcamera_device_manager_unittest_012, Test
     HCameraDeviceManager::GetInstance()->AddDevice(pidRequest, camDevice);
     std::vector<sptr<HCameraDeviceHolder>> res = HCameraDeviceManager::GetInstance()->GetCameraHolderByPid(pidRequest);
     if (res.size() == 0) {
-        return;
+        GTEST_SKIP();
     }
     HCameraDeviceManager::GetInstance()->RefreshCameraDeviceHolderState(res[0]);
 }

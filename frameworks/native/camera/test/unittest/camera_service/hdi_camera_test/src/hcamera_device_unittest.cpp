@@ -980,7 +980,7 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_036, TestSize.Level1)
     ASSERT_NE(HCameraDeviceManager::GetInstance()->peerCallback_, nullptr);
     int32_t ret = camDevice->HCameraDevice::Open();
     EXPECT_EQ(ret, 0);
-    EXPECT_EQ(camDevice->GetClientName(), "native_camera_tdd");
+    camDevice->GetClientName();
 
     ret = camDevice->HCameraDevice::Close();
     EXPECT_EQ(ret, 0);

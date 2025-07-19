@@ -189,11 +189,11 @@ HWTEST_F(CameraformatYUVModuleTest, camera_format_YUV_moduletest_002, TestSize.L
     EXPECT_EQ(session_->BeginConfig(), 0);
     EXPECT_EQ(session_->AddInput(input_), 0);
     if (!session_->CanAddOutput(preview_)) {
-        return;
+        GTEST_SKIP();
     }
     EXPECT_EQ(session_->AddOutput(preview_), 0);
     if (!session_->CanAddOutput(photoOutput)) {
-        return;
+        GTEST_SKIP();
     }
     EXPECT_EQ(session_->AddOutput(photoOutput), 0);
     EXPECT_EQ(session_->CommitConfig(), 0);

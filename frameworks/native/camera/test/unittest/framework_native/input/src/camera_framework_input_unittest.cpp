@@ -1341,7 +1341,7 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_054, TestSize
     ASSERT_FALSE(cameras.empty());
  
     if (cameras.size() < 2) {
-        return;
+        GTEST_SKIP();
     }
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[1]);
     ASSERT_NE(input, nullptr);

@@ -5053,7 +5053,6 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_027, TestSize.Level0)
     ASSERT_NE(session, nullptr);
     UpdateCameraOutputCapability();
     auto appCallback = nullptr;
-    EXPECT_EQ(appCallback, nullptr);
 
     EXPECT_EQ(session->BeginConfig(), 0);
     session->CameraServerDied(0);
@@ -5807,7 +5806,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_045, TestSize.Level0)
 HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_046, TestSize.Level0)
 {
     if (cameras_.size()<2) {
-        return;
+        GTEST_SKIP();
     }
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[1]);
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
