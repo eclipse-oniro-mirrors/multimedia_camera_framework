@@ -141,13 +141,16 @@ void PhotoAssetBufferConsumer::StartWaitAuxiliaryTask(
             MEDIA_INFO_LOG(
                 "PhotoAssetBufferConsumer StartWaitAuxiliaryTask GetGlobalWatchdog StartMonitor, captureId=%{public}d",
                 captureId);
+            auto thisPtr = wptr<PhotoAssetBufferConsumer>(this);
             DeferredProcessing::GetGlobalWatchdog().StartMonitor(
-                pictureHandle, delayMilli, [this, captureId, timestamp](uint32_t handle) {
+                pictureHandle, delayMilli, [thisPtr, captureId, timestamp](uint32_t handle) {
                     MEDIA_INFO_LOG(
                         "PhotoAssetBufferConsumer PhotoAssetBufferConsumer-Watchdog executed, handle: %{public}d, "
                         "captureId=%{public}d", static_cast<int>(handle), captureId);
-                    AssembleDeferredPicture(timestamp, captureId);
-                    auto streamCapture = streamCapture_.promote();
+                    auto ptr = thisPtr.promote();
+                    CHECK_RETURN(ptr == nullptr);
+                    ptr->AssembleDeferredPicture(timestamp, captureId);
+                    auto streamCapture = ptr->streamCapture_.promote();
                     if (streamCapture && streamCapture->captureIdAuxiliaryCountMap_.count(captureId)) {
                         streamCapture->captureIdAuxiliaryCountMap_[captureId] = -1;
                         MEDIA_INFO_LOG(
