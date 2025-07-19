@@ -25,6 +25,7 @@
 #include <atomic>
 #include <mutex>
 #include <set>
+#include <shared_mutex>
 
 #include "camera_privacy.h"
 #include "camera_sensor_plugin.h"
@@ -154,7 +155,7 @@ public:
 
     void SetMovingPhotoEndTimeCallback(std::function<void(int64_t, int64_t)> callback);
 
-    void SetZoomInfoCallback(std::function<void()> callback);
+    void SetMechCallback(std::function<void(float, bool)> callback);
 
     inline void SetCameraConcurrentType(int32_t cameraConcurrentTypenum)
     {
@@ -251,6 +252,7 @@ private:
     bool CanOpenCamera();
     void ResetZoomTimer();
     void CheckZoomChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
+    void CheckFocusChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
     void UnPrepareZoom();
     int32_t OpenDevice(bool isEnableSecCam = false);
     void ConfigQosParam(const char *bundleName, int32_t qosLevel,
@@ -295,8 +297,8 @@ private:
     std::mutex cameraRotateStrategyInfosLock_;
     std::vector<CameraRotateStrategyInfo> cameraRotateStrategyInfos_;
     std::string bundleName_ = "";
-    std::mutex zoomInfoCallbackLock_;
-    std::function<void()> zoomInfoCallback_;
+    std::shared_mutex mechCallbackLock_;
+    std::function<void(float, bool)> mechCallback_;
     float zoomRatio_ = 1.0f;
 };
 } // namespace CameraStandard

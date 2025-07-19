@@ -222,6 +222,7 @@ public:
     void SetMechDeliveryState(MechDeliveryState state);
     bool GetCameraAppInfo(CameraAppInfo& appInfo);
     uint32_t GetEquivalentFocus();
+    void OnCameraAppInfo(const CameraAppInfo& appInfo);
     void OnCameraAppInfo();
 
 private:

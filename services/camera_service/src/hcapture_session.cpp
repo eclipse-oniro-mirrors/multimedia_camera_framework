@@ -341,11 +341,14 @@ int32_t HCaptureSession::AddInput(const sptr<ICameraDeviceService>& cameraDevice
         SetCameraDevice(hCameraDevice);
         hCameraDevice->DispatchDefaultSettingToHdi();
         auto thisPtr = wptr<HCaptureSession>(this);
-        hCameraDevice->SetZoomInfoCallback([thisPtr]() {
+        hCameraDevice->SetMechCallback([thisPtr](float zoomRatio, bool focusStatus) {
             auto ptr = thisPtr.promote();
-            if (ptr != nullptr) {
-                ptr->OnCameraAppInfo();
-            }
+            CHECK_RETURN(!ptr);
+            CameraAppInfo appInfo;
+            CHECK_RETURN_ILOG(!ptr->GetCameraAppInfo(appInfo), "GetCameraAppInfo failed");
+            appInfo.focusStatus = focusStatus;
+            appInfo.zoomValue = zoomRatio;
+            ptr->OnCameraAppInfo(appInfo);
         });
     });
     if (errorCode == CAMERA_OK) {
@@ -2145,6 +2148,7 @@ bool HCaptureSession::GetCameraAppInfo(CameraAppInfo& appInfo)
     appInfo.position = -1;
     appInfo.width = 0;
     appInfo.height = 0;
+    appInfo.focusStatus = false;
     if (cameraDevice_ != nullptr) {
         appInfo.cameraId = cameraDevice_->GetCameraId();
         appInfo.zoomValue = cameraDevice_->GetZoomRatio();
@@ -2169,21 +2173,21 @@ bool HCaptureSession::GetCameraAppInfo(CameraAppInfo& appInfo)
     return true;
 }
 
-void HCaptureSession::OnCameraAppInfo()
+void HCaptureSession::OnCameraAppInfo(const CameraAppInfo& appInfo)
 {
     auto &sessionManager = HCameraSessionManager::GetInstance();
     auto mechSession = sessionManager.GetMechSession(userId_);
-    if (mechSession == nullptr) {
-        return;
-    }
-    CameraAppInfo appInfo;
-    if (!GetCameraAppInfo(appInfo)) {
-        MEDIA_INFO_LOG("HCaptureSession::OnCameraAppInfo GetCameraAppInfo failed");
-        return;
-    }
+    CHECK_RETURN(mechSession == nullptr);
     std::vector<CameraAppInfo> cameraAppInfos = {};
     cameraAppInfos.emplace_back(appInfo);
     mechSession->OnCameraAppInfo(cameraAppInfos);
+}
+
+void HCaptureSession::OnCameraAppInfo()
+{
+    CameraAppInfo appInfo;
+    CHECK_RETURN_ILOG(!GetCameraAppInfo(appInfo), "HCaptureSession::OnCameraAppInfo GetCameraAppInfo failed");
+    OnCameraAppInfo(appInfo);
 }
 
 uint32_t HCaptureSession::GetEquivalentFocus()

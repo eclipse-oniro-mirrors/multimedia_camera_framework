@@ -28,6 +28,18 @@
 
 namespace OHOS {
 namespace CameraStandard {
+static const std::unordered_map<MetadataObjectType, uint8_t> g_FwkToHALResultCameraMetaDetect_ = {
+    {MetadataObjectType::FACE, 0},
+    {MetadataObjectType::HUMAN_BODY, 1},
+    {MetadataObjectType::CAT_FACE, 2},
+    {MetadataObjectType::CAT_BODY, 3},
+    {MetadataObjectType::DOG_FACE, 4},
+    {MetadataObjectType::DOG_BODY, 5},
+    {MetadataObjectType::SALIENT_DETECTION, 6},
+    {MetadataObjectType::BAR_CODE_DETECTION, 7},
+    {MetadataObjectType::BASE_FACE_DETECTION, 8},
+    {MetadataObjectType::BASE_TRACKING_REGION, 9}
+};
 class EXPORT_API HStreamMetadata : public StreamMetadataStub, public HStreamCommon, public ICameraIpcChecker {
 public:
     HStreamMetadata(sptr<OHOS::IBufferProducer> producer, int32_t format, std::vector<int32_t> metadataTypes);

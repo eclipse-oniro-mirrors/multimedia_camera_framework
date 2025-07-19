@@ -921,6 +921,18 @@ void HCameraDevice::CheckZoomChange(const std::shared_ptr<OHOS::Camera::CameraMe
     return;
 }
 
+void HCameraDevice::CheckFocusChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings)
+{
+    std::shared_lock<std::shared_mutex> lock(mechCallbackLock_);
+    CHECK_RETURN(!mechCallback_);
+    int32_t ret;
+    camera_metadata_item_t item;
+    ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_AF_REGIONS, &item);
+    if (ret == CAM_META_SUCCESS) {
+        mechCallback_(zoomRatio_, true);
+    }
+}
+
 bool HCameraDevice::CheckMovingPhotoSupported(int32_t mode)
 {
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility;
@@ -1025,6 +1037,7 @@ int32_t HCameraDevice::UpdateSetting(const std::shared_ptr<OHOS::Camera::CameraM
     CHECK_RETURN_RET_ELOG(settings == nullptr, CAMERA_INVALID_ARG,
         "HCameraDevice::UpdateSetting settings is null");
     CheckZoomChange(settings);
+    CheckFocusChange(settings);
 
     uint32_t count = OHOS::Camera::GetCameraMetadataItemCount(settings->get());
     CHECK_RETURN_RET_ELOG(!count, CAMERA_OK, "HCameraDevice::UpdateSetting Nothing to update");
@@ -1527,29 +1540,25 @@ void HCameraDevice::SetMovingPhotoEndTimeCallback(std::function<void(int64_t, in
 
 void HCameraDevice::ReportZoomInfos(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult)
 {
-    std::lock_guard<std::mutex> lock(zoomInfoCallbackLock_);
-    if (!zoomInfoCallback_) {
-        return;
-    }
+    std::shared_lock<std::shared_mutex> lock(mechCallbackLock_);
+    CHECK_RETURN(!mechCallback_);
     float zoomRatio = 1.0;
     camera_metadata_item_t item;
     int ret = OHOS::Camera::FindCameraMetadataItem(cameraResult->get(), OHOS_CONTROL_ZOOM_RATIO, &item);
-    if (ret != CAM_META_SUCCESS || item.count == 0) {
-        return;
-    }
+    CHECK_RETURN(ret != CAM_META_SUCCESS || item.count == 0);
     zoomRatio = item.data.f[0];
     MEDIA_DEBUG_LOG("ReportZoomInfos zoomRatio: %{public}f", zoomRatio);
     if (zoomRatio != zoomRatio_) {
         zoomRatio_ = zoomRatio;
-        zoomInfoCallback_();
+        mechCallback_(zoomRatio_, false);
     }
 }
 
-void HCameraDevice::SetZoomInfoCallback(std::function<void()> callback)
+void HCameraDevice::SetMechCallback(std::function<void(float, bool)> callback)
 {
-    MEDIA_DEBUG_LOG("HCameraDevice::SetZoomInfoCallback enter.");
-    std::lock_guard<std::mutex> lock(zoomInfoCallbackLock_);
-    zoomInfoCallback_ = callback;
+    MEDIA_DEBUG_LOG("HCameraDevice::SetMechCallback enter.");
+    std::unique_lock<std::shared_mutex> lock(mechCallbackLock_);
+    mechCallback_ = callback;
 }
 
 int32_t HCameraDevice::GetCallerToken()

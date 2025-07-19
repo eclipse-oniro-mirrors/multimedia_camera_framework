@@ -44,7 +44,8 @@ int32_t MechSessionCallbackImpl::OnFocusTrackingInfo(int32_t streamId, bool isNe
     ProcessRectInfo(result, region);
     info.SetTrackingRegion(region);
 
-    MetadataCommonUtils::ProcessMetaObjects(streamId, result, metaObjects, isNeedMirror, isNeedFlip);
+    MetadataCommonUtils::ProcessMetaObjects(streamId, result, metaObjects, isNeedMirror, isNeedFlip,
+        RectBoxType::RECT_MECH);
     info.SetDetectedObjects(metaObjects);
 
     camera_metadata_item_t item;
