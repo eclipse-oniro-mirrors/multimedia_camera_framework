@@ -1304,7 +1304,7 @@ HWTEST_F(CameraManagerUnitTest, camera_manager_getcameraconcurrentinfos_002, Tes
     uint32_t deviceSize = 2;
     if (sizeofCameras < deviceSize) {
         MEDIA_INFO_LOG("The device does not support two camera");
-        return;
+        GTEST_SKIP();
     }
     uint32_t infoSize = 0;
     Camera_ConcurrentInfo* cameraConcurrentInfo;
@@ -1312,18 +1312,18 @@ HWTEST_F(CameraManagerUnitTest, camera_manager_getcameraconcurrentinfos_002, Tes
         Camera_Position::CAMERA_POSITION_BACK, Camera_Type::CAMERA_TYPE_DEFAULT, &cameraArray[0]);
     if (ret != CAMERA_OK) {
         MEDIA_INFO_LOG("The device does not support CAMERA_POSITION_BACK");
-        return;
+        GTEST_SKIP();
     }
     ret = cameraManager->GetCameraDevice(
         Camera_Position::CAMERA_POSITION_FRONT, Camera_Type::CAMERA_TYPE_DEFAULT, &cameraArray[1]);
     if (ret != CAMERA_OK) {
         MEDIA_INFO_LOG("The device does not support CAMERA_POSITION_FRONT");
-        return;
+        GTEST_SKIP();
     }
     ret = cameraManager->GetCameraConcurrentInfos(cameraArray, deviceSize, &cameraConcurrentInfo, &infoSize);
     if (ret != CAMERA_OK) {
         MEDIA_INFO_LOG("The device does not support CameraConcurrent");
-        return;
+        GTEST_SKIP();
     }
     EXPECT_EQ(ret, CAMERA_OK);
 }
