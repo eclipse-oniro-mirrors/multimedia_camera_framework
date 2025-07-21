@@ -179,7 +179,7 @@
 #define CHECK_RETURN_RET_DLOG(cond, ret, fmt, ...) \
     do {                                           \
         if (CAMERA_UNLIKELY(cond)) {               \
-            MEDIA_INFO_LOG(fmt, ##__VA_ARGS__);    \
+            MEDIA_DEBUG_LOG(fmt, ##__VA_ARGS__);    \
             return ret;                            \
         }                                          \
     } while (0)
@@ -214,7 +214,7 @@
 #define CHECK_BREAK_DLOG(cond, fmt, ...)        \
     if (1) {                                    \
         if (CAMERA_UNLIKELY(cond)) {            \
-            MEDIA_INFO_LOG(fmt, ##__VA_ARGS__); \
+            MEDIA_DEBUG_LOG(fmt, ##__VA_ARGS__); \
             break;                              \
         }                                       \
     } else                                      \
@@ -250,7 +250,7 @@
 #define CHECK_CONTINUE_DLOG(cond, fmt, ...)     \
     if (1) {                                    \
         if (CAMERA_UNLIKELY(cond)) {            \
-            MEDIA_INFO_LOG(fmt, ##__VA_ARGS__); \
+            MEDIA_DEBUG_LOG(fmt, ##__VA_ARGS__); \
             continue;                           \
         }                                       \
     } else                                      \
