@@ -110,17 +110,6 @@ int32_t AudioVideoMuxer::SetSqr(int32_t bitrate)
     return 0;
 }
 
-int32_t AudioVideoMuxer::SetSqr(int32_t bitrate)
-{
-    CHECK_ERROR_RETURN_RET_LOG(muxer_ == nullptr || bitrate <= 0, 1, "AudioVideoMuxer::SetSqr failed");
-    std::string bitrateStr = STAGE_VIDEO_ENCODER_PARAM_VALUE + std::to_string(bitrate);
-    std::shared_ptr<Meta> userMeta = std::make_shared<Meta>();
-    userMeta->SetData(STAGE_ENCODER_PARAM_KEY, bitrateStr);
-    int32_t ret = muxer_->SetUserMeta(userMeta);
-    CHECK_ERROR_RETURN_RET_LOG(ret != AV_ERR_OK, 1, "SetSqr failed, ret: %{public}d", ret);
-    return 0;
-}
-
 int32_t AudioVideoMuxer::SetTimedMetadata()
 {
     CHECK_RETURN_RET_ELOG(avCodecProxy_ == nullptr, 1, "avCodecProxy_ is nullptr!");

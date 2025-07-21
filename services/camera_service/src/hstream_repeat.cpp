@@ -33,13 +33,16 @@
 #include "metadata_utils.h"
 #include "camera_report_uitls.h"
 #include "parameters.h"
+#include "session/capture_scene_const.h"
 #ifdef HOOK_CAMERA_OPERATOR
 #include "camera_rotate_plugin.h"
 #endif
+#include "display/graphic/common/v2_1/cm_color_space.h"
 
 namespace OHOS {
 namespace CameraStandard {
 using namespace OHOS::HDI::Camera::V1_0;
+using CM_ColorSpaceType_V2_1 = OHOS::HDI::Display::Graphic::Common::V2_1::CM_ColorSpaceType;
 HStreamRepeat::HStreamRepeat(
     sptr<OHOS::IBufferProducer> producer, int32_t format, int32_t width, int32_t height, RepeatStreamType type)
     : HStreamCommon(StreamType::REPEAT, producer, format, width, height), repeatStreamType_(type)
@@ -86,6 +89,9 @@ void HStreamRepeat::SetVideoStreamInfo(StreamInfo_V1_1& streamInfo)
 {
     streamInfo.v1_0.intent_ = StreamIntent::VIDEO;
     streamInfo.v1_0.encodeType_ = ENCODE_TYPE_H264;
+    CHECK_EXECUTE(CheckSystemApp() && currentMode_ == static_cast<int32_t>(SceneMode::VIDEO),
+        streamInfo.v1_0.dataspace_ = (streamInfo.v1_0.dataspace_ == CM_ColorSpaceType_V2_1::CM_BT2020_HLG_LIMIT)
+        ? CM_ColorSpaceType_V2_1::CM_BT2020_HLG_FULL : streamInfo.v1_0.dataspace_);
     MEDIA_INFO_LOG("HStreamRepeat::SetVideoStreamInfo Enter");
     HDI::Camera::V1_1::ExtendedStreamInfo extendedStreamInfo {
         .type = static_cast<HDI::Camera::V1_1::ExtendedStreamInfoType>(
@@ -131,6 +137,9 @@ void HStreamRepeat::SetStreamInfo(StreamInfo_V1_1& streamInfo)
         case RepeatStreamType::SKETCH:
             streamInfo.v1_0.intent_ = StreamIntent::PREVIEW;
             streamInfo.v1_0.encodeType_ = ENCODE_TYPE_NULL;
+            CHECK_EXECUTE(CheckSystemApp() && currentMode_ == static_cast<int32_t>(SceneMode::VIDEO),
+                streamInfo.v1_0.dataspace_ = (streamInfo.v1_0.dataspace_ == CM_ColorSpaceType_V2_1::CM_BT2020_HLG_LIMIT)
+                ? CM_ColorSpaceType_V2_1::CM_BT2020_HLG_FULL : streamInfo.v1_0.dataspace_);
             HDI::Camera::V1_1::ExtendedStreamInfo extendedStreamInfo {
                 .type = static_cast<HDI::Camera::V1_1::ExtendedStreamInfoType>(
                     HDI::Camera::V1_2::EXTENDED_STREAM_INFO_SKETCH),
@@ -139,6 +148,13 @@ void HStreamRepeat::SetStreamInfo(StreamInfo_V1_1& streamInfo)
             streamInfo.extendedStreamInfos = { extendedStreamInfo };
             break;
     }
+}
+
+int32_t HStreamRepeat::SetCurrentMode(int32_t mode)
+{
+    MEDIA_DEBUG_LOG("HStreamRepeat::SetCurentMode current mode:%{public}d", mode);
+    currentMode_ = mode;
+    return 0;
 }
 
 void HStreamRepeat::SetMetaProducer(sptr<OHOS::IBufferProducer> metaProducer)

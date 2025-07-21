@@ -78,6 +78,7 @@
 #include "res_type.h"
 #include "res_sched_client.h"
 #include "camera_device_ability_items.h"
+#include "session/capture_scene_const.h"
 #ifdef HOOK_CAMERA_OPERATOR
 #include "camera_rotate_plugin.h"
 #endif
@@ -411,6 +412,11 @@ int32_t HStreamOperator::LinkInputAndOutputs(const std::shared_ptr<OHOS::Camera:
             "HStreamOperator::LinkInputAndOutputs streamType:%{public}d, streamId:%{public}d ,hdiStreamId:%{public}d",
             stream->GetStreamType(), stream->GetFwkStreamId(), stream->GetHdiStreamId());
         StreamInfo_V1_1 curStreamInfo;
+        HStreamRepeat* repeatStream = nullptr;
+        if (stream->GetStreamType() == StreamType::REPEAT) {
+            repeatStream = static_cast<HStreamRepeat*>(stream.GetRefPtr());
+            CHECK_EXECUTE(opMode == static_cast<SceneMode>(opMode), repeatStream->SetCurrentMode(opMode));
+        }
         stream->SetStreamInfo(curStreamInfo);
         CHECK_EXECUTE(stream->GetStreamType() != StreamType::METADATA,
             allStreamInfos.push_back(curStreamInfo));

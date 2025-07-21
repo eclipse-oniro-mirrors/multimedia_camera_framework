@@ -92,6 +92,7 @@ public:
     int32_t SetCameraRotation(bool isEnable, int32_t rotation) override;
     int32_t SetCameraApi(uint32_t apiCompatibleVersion) override;
     std::vector<int32_t> GetFrameRateRange();
+    int32_t SetCurrentMode(int32_t mode);
 
 private:
     void OpenVideoDfxSwitch(std::shared_ptr<OHOS::Camera::CameraMetadata> settings);
@@ -142,6 +143,7 @@ private:
     std::vector<int32_t> streamFrameRateRange_ = {};
     sptr<BufferProducerSequenceable> metaSurfaceBufferQueue_;
     camera_position_enum_t cameraUsedAsPosition_ = OHOS_CAMERA_POSITION_OTHER;
+    int32_t currentMode_ = 0;
 };
 } // namespace CameraStandard
 } // namespace OHOS

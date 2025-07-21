@@ -1141,10 +1141,9 @@ int32_t HCaptureSession::SetColorSpace(int32_t curColorSpace, bool isNeedUpdate)
             auto hStreamOperatorSptr = GetStreamOperator();
             CHECK_RETURN_ELOG(hStreamOperatorSptr == nullptr, "hStreamOperator is nullptr");
             result = hStreamOperatorSptr->SetColorSpace(colorSpace, isNeedUpdate);
-            if (isNeedUpdate &&  result != CAMERA_OK) {
-                return;
-            }
-            if (isNeedUpdate) {
+            int32_t tempColorSpace;
+            GetActiveColorSpace(tempColorSpace);
+            if (result == CAMERA_OK && static_cast<ColorSpace>(tempColorSpace) != colorSpace && isNeedUpdate) {
                 auto device = GetCameraDevice();
                 CHECK_RETURN_ELOG(device == nullptr, "HCaptureSession::SetColorSpace device is null");
                 std::shared_ptr<OHOS::Camera::CameraMetadata> settings = device->CloneCachedSettings();
