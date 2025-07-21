@@ -857,7 +857,7 @@ int32_t HStreamOperator::StartPreviewStream(const std::shared_ptr<OHOS::Camera::
 int32_t HStreamOperator::UpdateSettingForFocusTrackingMech(bool isEnableMech)
 {
     CHECK_RETURN_RET_ELOG(streamOperator_ == nullptr, CAMERA_INVALID_STATE,
-        "HStreamMetadata::EnableMetadataType streamOperator is nullptr");
+        "HStreamOperator::UpdateSettingForFocusTrackingMech streamOperator is nullptr");
     uint32_t majorVer = 0;
     uint32_t minorVer = 0;
     streamOperator_->GetVersion(majorVer, minorVer);
@@ -871,11 +871,23 @@ int32_t HStreamOperator::UpdateSettingForFocusTrackingMech(bool isEnableMech)
         "HStreamMetadata::EnableMetadataType streamOperatorV1_3 castFrom failed!");
     const int32_t DEFAULT_ITEMS = 1;
     const int32_t DEFAULT_DATA_LENGTH = 10;
-    const uint32_t count = 1;
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata4Types =
         std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
-    uint8_t data = static_cast<uint8_t>(MetadataObjectType::BASE_TRACKING_REGION);
-    bool status = metadata4Types->addEntry(OHOS_CONTROL_STATISTICS_DETECT_SETTING, &data, count);
+    bool status = false;
+    uint32_t count = 1;
+    if (CheckSystemApp()) {
+        uint8_t data = static_cast<uint8_t>(MetadataObjectType::BASE_TRACKING_REGION);
+        status = metadata4Types->addEntry(OHOS_CONTROL_STATISTICS_DETECT_SETTING, &data, count);
+    } else {
+        std::vector<uint8_t> typeTagToHal;
+        for (auto& itr : g_FwkToHALResultCameraMetaDetect_) {
+            typeTagToHal.emplace_back(itr.second);
+            MEDIA_DEBUG_LOG("EnableOrDisableMetadataType type: %{public}d", itr.second);
+        }
+        count = typeTagToHal.size();
+        uint8_t* typesToEnable = typeTagToHal.data();
+        status = metadata4Types->addEntry(OHOS_CONTROL_STATISTICS_DETECT_SETTING, typesToEnable, count);
+    }
     CHECK_RETURN_RET_ELOG(!status, CAMERA_UNKNOWN_ERROR, "set_camera_metadata failed!");
     std::vector<uint8_t> settings;
     OHOS::Camera::MetadataUtils::ConvertMetadataToVec(metadata4Types, settings);

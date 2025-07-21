@@ -344,7 +344,8 @@ void MetadataOutput::ProcessMetadata(const int32_t streamId,
                                      const std::shared_ptr<OHOS::Camera::CameraMetadata> &result,
                                      std::vector<sptr<MetadataObject>> &metaObjects, bool isNeedMirror, bool isNeedFlip)
 {
-    bool ret = MetadataCommonUtils::ProcessMetaObjects(streamId, result, metaObjects, isNeedMirror, isNeedFlip);
+    bool ret = MetadataCommonUtils::ProcessMetaObjects(streamId, result, metaObjects, isNeedMirror,
+        isNeedFlip, RectBoxType::RECT_CAMERA);
     if (ret) {
         reportFaceResults_ = true;
         return;

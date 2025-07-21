@@ -119,6 +119,7 @@ struct CameraAppInfo {
     int height;
     boolean videoStatus;
     int position;
+    boolean focusStatus;
 };
 
 enum ControlCenterEffectType {
