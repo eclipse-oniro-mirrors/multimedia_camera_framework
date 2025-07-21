@@ -447,11 +447,11 @@ napi_value CameraNapiUtils::ParseMetadataObjectTypes(napi_env env, napi_value ar
         napi_get_element(env, arrayParam, i, &value);
         napi_typeof(env, value, &type);
         CHECK_RETURN_RET(type != napi_number, nullptr);
+        napi_get_value_int32(env, value, &metadataType);
         if (metadataType < static_cast<int32_t>(MetadataObjectType::INVALID) &&
-            metadataType > static_cast<int32_t>(MetadataObjectType::BAR_CODE_DETECTION)) {
+            metadataType > static_cast<int32_t>(MetadataObjectType::BASE_TRACKING_REGION)) {
             metadataType = invalidType;
         }
-        napi_get_value_int32(env, value, &metadataType);
         metadataObjectTypes.push_back(static_cast<MetadataObjectType>(metadataType));
     }
     napi_get_boolean(env, true, &result);
