@@ -32,8 +32,9 @@
 namespace OHOS {
 namespace CameraStandard {
 using namespace std;
-
+namespace {
 enum AsyncLoadingState : int32_t { NONE, PREPARE, LOADING };
+enum DynamiclibState : int32_t { UNLOAD, LOADED };
 
 static const uint32_t HANDLE_MASK = 0xff0000ff;
 static mutex g_libMutex;
@@ -41,19 +42,52 @@ static map<const string, shared_ptr<Dynamiclib>> g_dynamiclibMap = {};
 static map<const string, weak_ptr<Dynamiclib>> g_weakDynamiclibMap = {};
 static map<const string, shared_ptr<SimpleTimer>> g_delayedCloseTimerMap = {};
 
+static mutex g_libStateMutex;
+static condition_variable g_libStateCondition;
+static map<const string, DynamiclibState> g_dynamiclibStateMap = {};
+
 static mutex g_asyncLoadingMutex;
 static condition_variable g_asyncLiblockCondition;
 static AsyncLoadingState g_isAsyncLoading = AsyncLoadingState::NONE;
 
+void UpdateDynamiclibState(const string& libName, DynamiclibState state)
+{
+    lock_guard<mutex> lock(g_libStateMutex);
+    auto it = g_dynamiclibStateMap.find(libName);
+    if (it == g_dynamiclibStateMap.end()) {
+        g_dynamiclibStateMap.insert({ libName, state });
+    } else {
+        it->second = state;
+    }
+    g_libStateCondition.notify_all();
+}
+
+void WaitDynamiclibState(const string& libName, DynamiclibState targetState)
+{
+    static const int32_t WAIT_TIME_OUT = 5000;
+    unique_lock<mutex> lock(g_libStateMutex);
+    auto it = g_dynamiclibStateMap.find(libName);
+    if (it == g_dynamiclibStateMap.end()) {
+        return;
+    }
+    g_libStateCondition.wait_for(lock, chrono::milliseconds(WAIT_TIME_OUT), [&libName, targetState]() {
+        auto it = g_dynamiclibStateMap.find(libName);
+        return it == g_dynamiclibStateMap.end() || it->second == targetState;
+    });
+}
+} // namespace
+
 Dynamiclib::Dynamiclib(const string& libName) : libName_(libName)
 {
     CAMERA_SYNC_TRACE;
+    WaitDynamiclibState(libName, UNLOAD);
     MEDIA_INFO_LOG("Dynamiclib::Dynamiclib dlopen %{public}s", libName_.c_str());
     libHandle_ = dlopen(libName_.c_str(), RTLD_NOW);
     CHECK_RETURN_ELOG(
         libHandle_ == nullptr, "Dynamiclib::Dynamiclib dlopen name:%{public}s return null", libName_.c_str());
     MEDIA_INFO_LOG("Dynamiclib::Dynamiclib dlopen %{public}s success handle:%{public}u", libName_.c_str(),
         static_cast<uint32_t>(HANDLE_MASK & reinterpret_cast<uintptr_t>(libHandle_)));
+    UpdateDynamiclibState(libName, LOADED);
 }
 
 Dynamiclib::~Dynamiclib()
@@ -64,6 +98,7 @@ Dynamiclib::~Dynamiclib()
     MEDIA_INFO_LOG("Dynamiclib::~Dynamiclib dlclose name:%{public}s handle:%{public}u result:%{public}d",
         libName_.c_str(), static_cast<uint32_t>(HANDLE_MASK & reinterpret_cast<uintptr_t>(libHandle_)), ret);
     libHandle_ = nullptr;
+    UpdateDynamiclibState(libName_, UNLOAD);
 }
 
 bool Dynamiclib::IsLoaded()
