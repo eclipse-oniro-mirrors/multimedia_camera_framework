@@ -13,25 +13,25 @@
  * limitations under the License.
  */
 
-#include "camera_timer.h"
+#include "camera_counting_timer.h"
 #include "camera_log.h"
 
 namespace OHOS {
 namespace CameraStandard {
-CameraTimer *CameraTimer::GetInstance()
+CameraCountingTimer& CameraCountingTimer::GetInstance()
 {
-    static CameraTimer instance;
-    return &instance;
+    static CameraCountingTimer instance;
+    return instance;
 }
 
-CameraTimer::CameraTimer()
+CameraCountingTimer::CameraCountingTimer()
     : userCount_(0),
       timer_(nullptr)
 {
     MEDIA_INFO_LOG("entered.");
 };
 
-CameraTimer::~CameraTimer()
+CameraCountingTimer::~CameraCountingTimer()
 {
     MEDIA_INFO_LOG("entered.");
     CHECK_RETURN(!timer_);
@@ -39,7 +39,7 @@ CameraTimer::~CameraTimer()
     timer_ = nullptr;
 }
 
-void CameraTimer::IncreaseUserCount()
+void CameraCountingTimer::IncreaseUserCount()
 {
     MEDIA_INFO_LOG("entered, num of user: %d + 1", static_cast<int>(userCount_.load()));
     if (timer_ == nullptr) {
@@ -50,7 +50,7 @@ void CameraTimer::IncreaseUserCount()
     ++userCount_;
 }
 
-void CameraTimer::DecreaseUserCount()
+void CameraCountingTimer::DecreaseUserCount()
 {
     MEDIA_INFO_LOG("entered, num of user: %u - 1", userCount_.load());
     --userCount_;
@@ -59,7 +59,7 @@ void CameraTimer::DecreaseUserCount()
     }
 }
 
-uint32_t CameraTimer::Register(const TimerCallback& callback, uint32_t interval, bool once)
+uint32_t CameraCountingTimer::Register(const TimerCallback& callback, uint32_t interval, bool once)
 {
     CHECK_RETURN_RET_ELOG(timer_ == nullptr, 0, "timer is nullptr");
 
@@ -68,14 +68,12 @@ uint32_t CameraTimer::Register(const TimerCallback& callback, uint32_t interval,
     return timerId;
 }
 
-void CameraTimer::Unregister(uint32_t timerId)
+void CameraCountingTimer::Unregister(uint32_t timerId)
 {
     MEDIA_DEBUG_LOG("timerId: %{public}d", timerId);
-    if (timer_) {
-        MEDIA_DEBUG_LOG("timerId: %{public}d", timerId);
-        timer_->Unregister(timerId);
-        return;
-    }
+    CHECK_RETURN(!timer_);
+    MEDIA_DEBUG_LOG("timerId: %{public}d", timerId);
+    timer_->Unregister(timerId);
 }
 } // namespace CameraStandard
 } // namespace OHOS

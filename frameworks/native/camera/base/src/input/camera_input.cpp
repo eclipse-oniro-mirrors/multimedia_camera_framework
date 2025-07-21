@@ -29,6 +29,7 @@
 #include "metadata_common_utils.h"
 #include "timer/camera_deferred_timer.h"
 #include "timer/time_broker.h"
+#include "camera_counting_timer.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -135,7 +136,7 @@ void CameraInput::InitCameraInput()
     });
     bool result = object->AddDeathRecipient(deathRecipient_);
     CHECK_RETURN_ELOG(!result, "CameraInput::InitCameraInput failed to add deathRecipient");
-    CameraTimer::GetInstance()->IncreaseUserCount();
+    CameraCountingTimer::GetInstance().IncreaseUserCount();
 }
 
 void CameraInput::CameraServerDied(pid_t pid)
@@ -174,7 +175,7 @@ CameraInput::~CameraInput()
         deviceObj->UnSetCallback();
     }
     UnregisterTime();
-    CameraTimer::GetInstance()->DecreaseUserCount();
+    CameraCountingTimer::GetInstance().DecreaseUserCount();
     std::lock_guard<std::mutex> lock(interfaceMutex_);
     if (cameraObj_) {
         MEDIA_INFO_LOG("CameraInput::CameraInput Destructor Camera: %{public}s", cameraObj_->GetID().c_str());
@@ -356,14 +357,15 @@ int CameraInput::closeDelayed(int32_t delayTime)
     auto thiswptr = wptr<CameraInput>(this);
     const int delayTaskTime = delayTime * 1000;
     UnregisterTime();
-    uint32_t timeIdFirst = CameraTimer::GetInstance()->Register(
+    uint32_t timeIdFirst = CameraCountingTimer::GetInstance().Register(
         [thiswptr] {
             auto input = thiswptr.promote();
             if (input) {
                 MEDIA_INFO_LOG("Enter Into CameraInput::closeDelayed obj->close");
                 input->Close();
             }
-        }, delayTaskTime, true);
+        },
+        delayTaskTime, true);
 
     timeQueue_.push(timeIdFirst);
     return ServiceToCameraError(retCode);
@@ -375,7 +377,7 @@ void CameraInput::UnregisterTime()
     while (!timeQueue_.empty()) {
         uint32_t timeIdFirst = timeQueue_.front();
         timeQueue_.pop();
-        CameraTimer::GetInstance()->Unregister(timeIdFirst);
+        CameraCountingTimer::GetInstance().Unregister(timeIdFirst);
     }
 }
 
