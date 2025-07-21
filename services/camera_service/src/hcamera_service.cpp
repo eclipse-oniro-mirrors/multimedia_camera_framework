@@ -1269,6 +1269,14 @@ int32_t HCameraService::GetControlCenterStatus(bool& status)
     return GetControlCenterStatusFromDataShareHelper(status);
 }
 
+int32_t HCameraService::CheckControlCenterPermission()
+{
+    MEDIA_INFO_LOG("HCameraService::CheckControlCenterPermission");
+    int32_t ret = CheckPermission(OHOS_PERMISSION_CAMERA_CONTROL, IPCSkeleton::GetCallingTokenID());
+    CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, ret, "CheckPermission argumentis failed!");
+    return CAMERA_OK;
+}
+
 int32_t HCameraService::SetTorchCallback(const sptr<ITorchServiceCallback>& callback)
 {
     lock_guard<recursive_mutex> lock(torchCbMutex_);

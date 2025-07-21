@@ -46,6 +46,12 @@ public:
     virtual ~TestFoldListener() = default;
     void OnFoldStatusChanged(const FoldStatusInfo &foldStatusInfo) const override;
 };
+class TestControlCenterStatusListener : public ControlCenterStatusListener {
+public:
+    TestControlCenterStatusListener() = default;
+    virtual ~TestControlCenterStatusListener() = default;
+    void OnControlCenterStatusChanged(bool status) const override;
+};
 // capture session
 class TestSessionCallback : public SessionCallback {
 public:

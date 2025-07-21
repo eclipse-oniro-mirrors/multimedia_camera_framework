@@ -18,11 +18,14 @@
 
 #include "gtest/gtest.h"
 #include "hcamera_service.h"
+#include "icontrol_center_status_callback.h"
 #include "input/camera_manager.h"
+#include "iremote_object.h"
 #include "output/sketch_wrapper.h"
 #include "portrait_session.h"
 #include "hcamera_device_manager.h"
 #include "hcamera_host_manager.h"
+#include "refbase.h"
 #include "system_ability_definition.h"
 
 namespace OHOS {
@@ -56,6 +59,20 @@ public:
     };
 
     DECLARE_INTERFACE_DESCRIPTOR(u"IFoldServiceCallback");
+};
+
+class IControlCenterStatusCallbackTest : public IControlCenterStatusCallback {
+public:
+    virtual int32_t OnControlCenterStatusChanged(bool status)
+    {
+        return 0;
+    };
+    virtual sptr<IRemoteObject> AsObject()
+    {
+        return nullptr;
+    };
+
+    DECLARE_INTERFACE_DESCRIPTOR(u"IControlCenterStatusCallback");
 };
 
 class ICameraMuteServiceCallbackTest : public ICameraMuteServiceCallback {

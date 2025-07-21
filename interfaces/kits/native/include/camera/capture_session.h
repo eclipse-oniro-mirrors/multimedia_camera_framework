@@ -1012,6 +1012,8 @@ Camera_ErrorCode OH_CaptureSession_GetSupportedEffectTypes(
 Camera_ErrorCode OH_CaptureSession_DeleteSupportedEffectTypes(Camera_CaptureSession* session,
     Camera_ControlCenterEffectType* types, uint32_t size);
 
+Camera_ErrorCode OH_CaptureSession_EnableControlCenter(Camera_CaptureSession* session, bool enabled);
+
 typedef void (*OH_CaptureSession_OnControlCenterEffectStatusChange)(Camera_CaptureSession* session,
     Camera_ControlCenterStatusInfo* controlCenterStatusInfo);
 

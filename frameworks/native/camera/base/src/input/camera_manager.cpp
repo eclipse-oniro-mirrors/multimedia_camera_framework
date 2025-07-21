@@ -2859,6 +2859,12 @@ int32_t CameraManager::CreateControlCenterSession(sptr<ControlCenterSession>& pC
 {
     pControlCenterSession = new (std::nothrow) ControlCenterSession();
     MEDIA_INFO_LOG("CameraManager::CreateControlCenterSession");
+    auto serviceProxy = GetServiceProxy();
+    CHECK_RETURN_RET_ELOG(
+        serviceProxy == nullptr, CAMERA_UNKNOWN_ERROR,
+        "CameraManager::CreateControlCenterSession serviceProxy is null");
+    int32_t retCode = serviceProxy->CheckControlCenterPermission();
+    CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, false, "CameraManager::CreateControlCenterSession failed");
     return CAMERA_OK;
 }
     

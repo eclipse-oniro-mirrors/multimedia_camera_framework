@@ -45,6 +45,10 @@ void TestFoldListener::OnFoldStatusChanged(const FoldStatusInfo &foldStatusInfo)
 {
     MEDIA_INFO_LOG("TestFoldListener::OnFoldStatusChanged called %{public}d", foldStatusInfo.foldStatus);
 }
+void TestControlCenterStatusListener::OnControlCenterStatusChanged(bool status) const
+{
+    MEDIA_INFO_LOG("TestControlCenterStatusListener::OnControlCenterStatusChanged called %{public}d", status);
+}
 void TestSessionCallback::OnError(int32_t errorCode)
 {
     MEDIA_INFO_LOG("TestSessionCallback::OnError called %{public}d", errorCode);
