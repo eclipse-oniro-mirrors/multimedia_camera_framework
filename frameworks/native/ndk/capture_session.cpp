@@ -866,6 +866,14 @@ Camera_ErrorCode OH_CaptureSession_DeleteSupportedEffectTypes(Camera_CaptureSess
     return session->DeleteEffectTypes(types);
 }
 
+Camera_ErrorCode OH_CaptureSession_EnableControlCenter(Camera_CaptureSession* session, bool enabled)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_EnableControlCenter is called");
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, session is null!");
+    return session->EnableControlCenter(enabled);
+}
+
 Camera_ErrorCode OH_CaptureSession_RegisterControlCenterEffectStatusChangeCallback(
     Camera_CaptureSession* session,
     OH_CaptureSession_OnControlCenterEffectStatusChange controlCenterEffectStatusChange)

@@ -147,6 +147,7 @@ public:
     int32_t SetControlCenterPrecondition(bool condition) override;
     int32_t SetDeviceControlCenterAbility(bool ability) override;
     int32_t GetControlCenterStatus(bool& status) override;
+    int32_t CheckControlCenterPermission() override;
     int32_t MuteCameraPersist(PolicyType policyType, bool isMute) override;
     int32_t PrelaunchCamera(int32_t flag) override;
     int32_t ResetRssPriority() override;

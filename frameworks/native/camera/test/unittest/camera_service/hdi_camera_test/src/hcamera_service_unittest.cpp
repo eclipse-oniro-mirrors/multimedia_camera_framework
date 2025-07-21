@@ -24,6 +24,7 @@
 #include "camera_manager.h"
 #include "camera_util.h"
 #include "gmock/gmock.h"
+#include "control_center_status_callback_stub.h"
 #include "input/camera_input.h"
 #include "ipc_skeleton.h"
 #include "nativetoken_kit.h"
@@ -92,6 +93,12 @@ class MockHFoldServiceCallbackStub : public FoldServiceCallbackStub {
 public:
     MOCK_METHOD1(OnFoldStatusChanged, int32_t(const FoldStatus status));
     ~MockHFoldServiceCallbackStub() {}
+};
+
+class MockHControlCenterStatusCallbackStub : public ControlCenterStatusCallbackStub {
+public:
+    MOCK_METHOD1(OnContolCenterStatusChanged, int32_t(bool status));
+    ~MockHControlCenterStatusCallbackStub() {}
 };
 
 class MockHCameraMuteServiceCallbackStub : public CameraMuteServiceCallbackStub {

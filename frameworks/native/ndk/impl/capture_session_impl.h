@@ -131,6 +131,8 @@ public:
 
     Camera_ErrorCode DeleteEffectTypes(Camera_ControlCenterEffectType* types);
 
+    Camera_ErrorCode EnableControlCenter(bool enabled);
+    
     Camera_ErrorCode SetActiveColorSpace(OH_NativeBuffer_ColorSpace colorSpace);
 
     Camera_ErrorCode Start();

@@ -817,6 +817,13 @@ Camera_ErrorCode Camera_CaptureSession::DeleteEffectTypes(Camera_ControlCenterEf
     return CAMERA_OK;
 }
 
+Camera_ErrorCode Camera_CaptureSession::EnableControlCenter(bool enabled)
+{
+    MEDIA_DEBUG_LOG("Camera_CaptureSession::EnableControlCenter");
+    innerCaptureSession_->EnableControlCenter(enabled);
+    return CAMERA_OK;
+}
+
 Camera_ErrorCode Camera_CaptureSession::GetActiveColorSpace(OH_NativeBuffer_ColorSpace* colorSpace)
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::GetActiveColorSpace is called");

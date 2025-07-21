@@ -93,6 +93,7 @@ interface ICameraService{
   [ipccode 51] void SetControlCenterPrecondition([in] boolean condition);
   [ipccode 52] void SetDeviceControlCenterAbility([in] boolean ability);
   [ipccode 53] void GetControlCenterStatus([out] boolean status);
+  [ipccode 54] void CheckControlCenterPermission();
   [ipccode 101] void AllowOpenByOHSide([in] String cameraId, [in] int state, [inout] boolean canOpenCamera);
   [ipccode 102, oneway] void NotifyCameraState([in] String cameraId, [in] int state);
   [ipccode 104] void SetPeerCallback([in] ICameraBroker callbackFunc);
