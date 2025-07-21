@@ -30,6 +30,7 @@
 
 #include "ability/camera_ability_parse_util.h"
 #include "bundle_mgr_interface.h"
+#include "camera_counting_timer.h"
 #include "camera_device.h"
 #include "camera_device_ability_items.h"
 #include "camera_error_code.h"

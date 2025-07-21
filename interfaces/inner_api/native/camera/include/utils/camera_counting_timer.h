@@ -12,8 +12,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef CAMERA_TIMER_H
-#define CAMERA_TIMER_H
+#ifndef CAMERA_COUNTING_TIMER_H
+#define CAMERA_COUNTING_TIMER_H
 
 #include <memory>
 #include <atomic>
@@ -23,12 +23,12 @@ namespace OHOS {
 namespace CameraStandard {
 using TimerCallback = std::function<void()>;
 
-class CameraTimer {
+class CameraCountingTimer {
 public:
-    CameraTimer();
-    ~CameraTimer();
+    CameraCountingTimer();
+    ~CameraCountingTimer();
 
-    static CameraTimer *GetInstance();
+    static CameraCountingTimer& GetInstance();
     void IncreaseUserCount();
     void DecreaseUserCount();
     uint32_t Register(const TimerCallback& callback, uint32_t interval, bool once);
@@ -40,4 +40,4 @@ private:
 };
 } // namespace CameraStandard
 } // namespace OHOS
-#endif // CAMERA_TIMER_H
+#endif // CAMERA_COUNTING_TIMER_H
