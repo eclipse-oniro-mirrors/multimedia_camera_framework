@@ -83,7 +83,6 @@ void DeferredPhotoProcessor::ProcessImage(const std::string& appName, const std:
         return;
     }
     result_->RecordHigh(imageId);
-    DP_CHECK_EXECUTE(repository_->IsNeedInterrupt(), postProcessor_->Interrupt());
 }
 
 void DeferredPhotoProcessor::CancelProcessImage(const std::string& imageId)
