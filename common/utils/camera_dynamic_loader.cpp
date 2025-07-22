@@ -37,14 +37,15 @@ enum AsyncLoadingState : int32_t { NONE, PREPARE, LOADING };
 enum DynamiclibState : int32_t { UNLOAD, LOADED };
 
 static const uint32_t HANDLE_MASK = 0xff0000ff;
-static mutex g_libMutex;
-static map<const string, shared_ptr<Dynamiclib>> g_dynamiclibMap = {};
-static map<const string, weak_ptr<Dynamiclib>> g_weakDynamiclibMap = {};
-static map<const string, shared_ptr<SimpleTimer>> g_delayedCloseTimerMap = {};
 
 static mutex g_libStateMutex;
 static condition_variable g_libStateCondition;
 static map<const string, DynamiclibState> g_dynamiclibStateMap = {};
+
+static mutex g_libMutex;
+static map<const string, shared_ptr<Dynamiclib>> g_dynamiclibMap = {};
+static map<const string, weak_ptr<Dynamiclib>> g_weakDynamiclibMap = {};
+static map<const string, shared_ptr<SimpleTimer>> g_delayedCloseTimerMap = {};
 
 static mutex g_asyncLoadingMutex;
 static condition_variable g_asyncLiblockCondition;
