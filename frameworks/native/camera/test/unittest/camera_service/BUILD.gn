@@ -63,7 +63,7 @@ ohos_unittest("camera_service_unittest") {
     "media_library/src/photo_asset_adapter_unittest.cpp",
   ]
 
-  if (use_libfuzzer || use_clang_coverage || !using_hb_new) {
+  if (fwk_no_hidden || use_libfuzzer || use_clang_coverage || !using_hb_new) {
     sources += [
       "avcodec/src/audio_encoder_unittest.cpp",
       "avcodec/src/audio_video_muxer_unittest.cpp",
