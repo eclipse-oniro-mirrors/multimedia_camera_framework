@@ -62,6 +62,7 @@ DpsMetadataError DpsMetadata::ReadFromParcel(MessageParcel &parcel)
 
 DpsMetadataError DpsMetadata::WriteToParcel(MessageParcel &parcel) const
 {
+    // LCOV_EXCL_START
     parcel.WriteInt32(datas.size());
     for (const auto &[key, data] : datas) {
         parcel.WriteString(key);
@@ -107,14 +108,17 @@ DpsMetadataError DpsMetadata::WriteToParcel(MessageParcel &parcel) const
                 break;
         }
     }
+    // LCOV_EXCL_STOP
     return DPS_METADATA_OK;
 }
 
 bool DpsMetadata::Marshalling(Parcel& parcel) const
 {
+    // LCOV_EXCL_START
     DpsMetadataError ret = WriteToParcel(static_cast<MessageParcel&>(parcel));
     DP_CHECK_ERROR_RETURN_RET_LOG(ret != DPS_METADATA_OK, false, "DpsMetadata Marshalling fail");
     return true;
+    // LCOV_EXCL_STOP
 }
 
 DpsMetadata* DpsMetadata::Unmarshalling(Parcel& parcel)

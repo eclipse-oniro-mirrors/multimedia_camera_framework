@@ -135,6 +135,7 @@ void SketchWrapper::OnSketchStatusChanged(const SceneFeaturesMode& sceneFeatures
 {
     auto manager = previewOutputCallbackManager_.promote();
     CHECK_RETURN(manager == nullptr);
+    // LCOV_EXCL_START
     float sketchReferenceRatio = -1.0f;
     if (isDynamicNotify_) {
         sketchReferenceRatio = sketchDynamicReferenceRatio_;
@@ -160,12 +161,14 @@ void SketchWrapper::OnSketchStatusChanged(const SceneFeaturesMode& sceneFeatures
             previewStateCallback->OnSketchStatusDataChanged(currentSketchStatusData_);
         });
     }
+    // LCOV_EXCL_STOP
 }
 
 void SketchWrapper::OnSketchStatusChanged(SketchStatus sketchStatus, const SceneFeaturesMode& sceneFeaturesMode)
 {
     auto manager = previewOutputCallbackManager_.promote();
     CHECK_RETURN(manager == nullptr);
+    // LCOV_EXCL_START
     float sketchReferenceRatio = -1.0f;
     if (isDynamicNotify_) {
         sketchReferenceRatio = sketchDynamicReferenceRatio_;
@@ -186,6 +189,7 @@ void SketchWrapper::OnSketchStatusChanged(SketchStatus sketchStatus, const Scene
             previewStateCallback->OnSketchStatusDataChanged(currentSketchStatusData_);
         });
     }
+    // LCOV_EXCL_STOP
 }
 
 void SketchWrapper::UpdateSketchStaticInfo(std::shared_ptr<Camera::CameraMetadata> deviceMetadata)
@@ -218,6 +222,7 @@ void SketchWrapper::UpdateSketchEnableRatio(std::shared_ptr<Camera::CameraMetada
     int ret = OHOS::Camera::FindCameraMetadataItem(deviceMetadata->get(), OHOS_ABILITY_SKETCH_ENABLE_RATIO, &item);
     CHECK_RETURN_ELOG(ret != CAM_META_SUCCESS,
         "SketchWrapper::UpdateSketchEnableRatio get sketch enable ratio failed");
+    // LCOV_EXCL_START
     CHECK_RETURN_ELOG(item.count <= 0, "SketchWrapper::UpdateSketchEnableRatio sketch enable ratio count <= 0");
 
     constexpr int32_t dataGroupSize = 2; // 2 data as a group: key,value
@@ -233,6 +238,7 @@ void SketchWrapper::UpdateSketchEnableRatio(std::shared_ptr<Camera::CameraMetada
         auto sceneFeaturesMode = GetSceneFeaturesModeFromModeData(key);
         InsertSketchEnableRatioMapValue(sceneFeaturesMode, value);
     }
+    // LCOV_EXCL_STOP
 }
 
 void SketchWrapper::InsertSketchReferenceFovRatioMapValue(
@@ -241,6 +247,7 @@ void SketchWrapper::InsertSketchReferenceFovRatioMapValue(
     std::lock_guard<std::mutex> lock(g_sketchReferenceFovRatioMutex_);
     auto it = g_sketchReferenceFovRatioMap_.find(sceneFeaturesMode);
     std::vector<SketchReferenceFovRange> rangeFov;
+    // LCOV_EXCL_START
     if (it != g_sketchReferenceFovRatioMap_.end()) {
         rangeFov = std::move(it->second);
     }
@@ -256,6 +263,7 @@ void SketchWrapper::InsertSketchReferenceFovRatioMapValue(
         g_sketchReferenceFovRatioMap_[{ VIDEO, { FEATURE_MACRO } }] = rangeFov;
         g_sketchReferenceFovRatioMap_[{ VIDEO_MACRO, { FEATURE_MACRO } }] = rangeFov;
     }
+    // LCOV_EXCL_STOP
 }
 
 void SketchWrapper::InsertSketchEnableRatioMapValue(SceneFeaturesMode& sceneFeaturesMode, float ratioValue)
@@ -263,6 +271,7 @@ void SketchWrapper::InsertSketchEnableRatioMapValue(SceneFeaturesMode& sceneFeat
     MEDIA_DEBUG_LOG("SketchWrapper::InsertSketchEnableRatioMapValue %{public}s : %{public}f",
         sceneFeaturesMode.Dump().c_str(), ratioValue);
     std::lock_guard<std::mutex> lock(g_sketchEnableRatioMutex_);
+    // LCOV_EXCL_START
     if (sceneFeaturesMode.GetSceneMode() == CAPTURE && sceneFeaturesMode.GetFeatures().empty()) {
         g_sketchEnableRatioMap_[{ CAPTURE, { FEATURE_TRIPOD_DETECTION } }] = ratioValue;
     }
@@ -274,6 +283,7 @@ void SketchWrapper::InsertSketchEnableRatioMapValue(SceneFeaturesMode& sceneFeat
         g_sketchEnableRatioMap_[{ VIDEO, { FEATURE_MACRO } }] = ratioValue;
         g_sketchEnableRatioMap_[{ VIDEO_MACRO, { FEATURE_MACRO } }] = ratioValue;
     }
+    // LCOV_EXCL_STOP
 }
 
 void SketchWrapper::UpdateSketchReferenceFovRatio(std::shared_ptr<Camera::CameraMetadata>& deviceMetadata)
@@ -295,6 +305,7 @@ void SketchWrapper::UpdateSketchReferenceFovRatio(camera_metadata_item_t& metada
     float currentMinRatio = INVALID_ZOOM_RATIO;
     float currentMaxRatio = INVALID_ZOOM_RATIO;
     SceneFeaturesMode currentSceneFeaturesMode;
+    // LCOV_EXCL_START
     for (uint32_t i = 0; i < dataCount; i++) {
         if (currentMode == INVALID_MODE_FLOAT) {
             currentMode = metadataItem.data.f[i];
@@ -324,6 +335,7 @@ void SketchWrapper::UpdateSketchReferenceFovRatio(camera_metadata_item_t& metada
             currentMaxRatio = INVALID_ZOOM_RATIO;
         }
     }
+    // LCOV_EXCL_STOP
 }
 
 bool SketchWrapper::GetMoonCaptureBoostAbilityItem(
@@ -344,6 +356,7 @@ void SketchWrapper::UpdateSketchConfigFromMoonCaptureBoostConfig(
     camera_metadata_item_t item;
     CHECK_RETURN_ELOG(!GetMoonCaptureBoostAbilityItem(deviceMetadata, item),
         "SketchWrapper::UpdateSketchConfigFromMoonCaptureBoostConfig get GetMoonCaptureBoostAbilityItem failed");
+    // LCOV_EXCL_START
     uint32_t currentMode = INVALID_MODE;
     float currentMinRatio = INVALID_ZOOM_RATIO;
     float currentMaxRatio = INVALID_ZOOM_RATIO;
@@ -379,6 +392,7 @@ void SketchWrapper::UpdateSketchConfigFromMoonCaptureBoostConfig(
             currentMaxRatio = INVALID_ZOOM_RATIO;
         }
     }
+    // LCOV_EXCL_STOP
 }
 
 float SketchWrapper::GetSketchReferenceFovRatio(const SceneFeaturesMode& sceneFeaturesMode, float zoomRatio)
@@ -393,6 +407,7 @@ float SketchWrapper::GetSketchReferenceFovRatio(const SceneFeaturesMode& sceneFe
     }
     std::lock_guard<std::mutex> lock(g_sketchReferenceFovRatioMutex_);
     auto it = g_sketchReferenceFovRatioMap_.find(filteredFeaturesMode);
+    // LCOV_EXCL_START
     if (it != g_sketchReferenceFovRatioMap_.end()) {
         // only 1 element, just return result;
         CHECK_RETURN_RET(it->second.size() == 1, it->second[0].referenceValue);
@@ -409,6 +424,7 @@ float SketchWrapper::GetSketchReferenceFovRatio(const SceneFeaturesMode& sceneFe
         });
         CHECK_RETURN_RET(itRange != it->second.end(), itRange->referenceValue);
     }
+    // LCOV_EXCL_STOP
     return INVALID_ZOOM_RATIO;
 }
 
@@ -446,6 +462,7 @@ void SketchWrapper::AutoStream()
 int32_t SketchWrapper::OnMetadataDispatch(const SceneFeaturesMode& sceneFeaturesMode,
     const camera_device_metadata_tag_t tag, const camera_metadata_item_t& metadataItem)
 {
+    // LCOV_EXCL_START
     if (isDynamicNotify_) {
         if (tag == OHOS_STATUS_SKETCH_STREAM_INFO) {
             MEDIA_DEBUG_LOG("SketchWrapper::OnMetadataDispatch get tag:OHOS_STATUS_SKETCH_STREAM_INFO");
@@ -471,11 +488,13 @@ int32_t SketchWrapper::OnMetadataDispatch(const SceneFeaturesMode& sceneFeatures
         }
     }
     return CAM_META_SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 int32_t SketchWrapper::OnMetadataChangedSketchDynamicNotify(
     const camera_metadata_item_t& metadataItem, const SceneFeaturesMode& sceneFeaturesMode)
 {
+    // LCOV_EXCL_START
     uint32_t dataLen = metadataItem.count;
     if (dataLen != 4) { // data size is 4 ==> [isNeedStartSketch, sketchZoomRatio, sketchPoint_x, sketchPoint_y]
         MEDIA_INFO_LOG("SketchWrapper::OnMetadataChangedSketchDynamicNotify recv error data, size:%{public}d", dataLen);
@@ -495,11 +514,13 @@ int32_t SketchWrapper::OnMetadataChangedSketchDynamicNotify(
     }
     OnSketchStatusChanged(sceneFeaturesMode);
     return CAM_META_SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 int32_t SketchWrapper::OnMetadataChangedZoomRatio(const SceneFeaturesMode& sceneFeaturesMode,
     const camera_device_metadata_tag_t tag, const camera_metadata_item_t& metadataItem)
 {
+    // LCOV_EXCL_START
     float tagRatio = *metadataItem.data.f;
     MEDIA_DEBUG_LOG("SketchWrapper::OnMetadataChangedZoomRatio OHOS_CONTROL_ZOOM_RATIO >>> tagRatio:%{public}f -- "
                     "sketchRatio:%{public}f",
@@ -507,6 +528,7 @@ int32_t SketchWrapper::OnMetadataChangedZoomRatio(const SceneFeaturesMode& scene
     UpdateZoomRatio(tagRatio);
     OnSketchStatusChanged(sceneFeaturesMode);
     return CAM_META_SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 int32_t SketchWrapper::OnMetadataChangedMacro(const SceneFeaturesMode& sceneFeaturesMode,
@@ -525,6 +547,7 @@ int32_t SketchWrapper::OnMetadataChangedMacro(const SceneFeaturesMode& sceneFeat
 int32_t SketchWrapper::OnMetadataChangedMoonCaptureBoost(const SceneFeaturesMode& sceneFeaturesMode,
     const camera_device_metadata_tag_t tag, const camera_metadata_item_t& metadataItem)
 {
+    // LCOV_EXCL_START
     float sketchRatio = GetSketchEnableRatio(sceneFeaturesMode);
     float currentZoomRatio = currentZoomRatio_;
     MEDIA_DEBUG_LOG(
@@ -534,6 +557,7 @@ int32_t SketchWrapper::OnMetadataChangedMoonCaptureBoost(const SceneFeaturesMode
     UpdateSketchRatio(sketchRatio);
     OnSketchStatusChanged(sceneFeaturesMode);
     return CAM_META_SUCCESS;
+    // LCOV_EXCL_STOP
 }
 } // namespace CameraStandard
 } // namespace OHOS

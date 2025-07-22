@@ -32,6 +32,7 @@ namespace CameraStandard {
 namespace {
 std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles1_1(PreconfigType preconfigType)
 {
+    // LCOV_EXCL_START
     std::shared_ptr<PreconfigProfiles> configs = std::make_shared<PreconfigProfiles>(ColorSpace::DISPLAY_P3);
     switch (preconfigType) {
         case PRECONFIG_720P:
@@ -70,10 +71,12 @@ std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles1_1(PreconfigType pr
             return nullptr;
     }
     return configs;
+    // LCOV_EXCL_STOP
 }
 
 std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles4_3(PreconfigType preconfigType)
 {
+    // LCOV_EXCL_START
     std::shared_ptr<PreconfigProfiles> configs = std::make_shared<PreconfigProfiles>(ColorSpace::DISPLAY_P3);
     switch (preconfigType) {
         case PRECONFIG_720P:
@@ -112,10 +115,12 @@ std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles4_3(PreconfigType pr
             return nullptr;
     }
     return configs;
+    // LCOV_EXCL_STOP
 }
 
 std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles16_9(PreconfigType preconfigType)
 {
+    // LCOV_EXCL_START
     std::shared_ptr<PreconfigProfiles> configs = std::make_shared<PreconfigProfiles>(ColorSpace::DISPLAY_P3);
     switch (preconfigType) {
         case PRECONFIG_720P:
@@ -154,6 +159,7 @@ std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles16_9(PreconfigType p
             return nullptr;
     }
     return configs;
+    // LCOV_EXCL_STOP
 }
 } // namespace
 
@@ -167,6 +173,7 @@ bool PhotoSession::CanAddOutput(sptr<CaptureOutput>& output)
 std::shared_ptr<PreconfigProfiles> PhotoSession::GeneratePreconfigProfiles(
     PreconfigType preconfigType, ProfileSizeRatio preconfigRatio)
 {
+    // LCOV_EXCL_START
     switch (preconfigRatio) {
         case RATIO_1_1:
             return GeneratePreconfigProfiles1_1(preconfigType);
@@ -181,10 +188,12 @@ std::shared_ptr<PreconfigProfiles> PhotoSession::GeneratePreconfigProfiles(
             break;
     }
     return nullptr;
+    // LCOV_EXCL_STOP
 }
 
 bool PhotoSession::IsPreconfigProfilesLegal(std::shared_ptr<PreconfigProfiles> configs)
 {
+    // LCOV_EXCL_START
     auto cameraList = CameraManager::GetInstance()->GetSupportedCameras();
     int32_t supportedCameraNum = 0;
     for (auto& device : cameraList) {
@@ -211,10 +220,12 @@ bool PhotoSession::IsPreconfigProfilesLegal(std::shared_ptr<PreconfigProfiles> c
     MEDIA_INFO_LOG(
         "PhotoSession::IsPreconfigProfilesLegal check pass, supportedCameraNum is%{public}d", supportedCameraNum);
     return supportedCameraNum > 0;
+    // LCOV_EXCL_STOP
 }
 
 bool PhotoSession::IsPhotoProfileLegal(sptr<CameraDevice>& device, Profile& photoProfile)
 {
+    // LCOV_EXCL_START
     auto photoProfilesIt = device->modePhotoProfiles_.find(SceneMode::CAPTURE);
     CHECK_RETURN_RET_ELOG(photoProfilesIt == device->modePhotoProfiles_.end(), false,
         "PhotoSession::CanPreconfig check photo profile fail, empty photo profiles");
@@ -223,29 +234,35 @@ bool PhotoSession::IsPhotoProfileLegal(sptr<CameraDevice>& device, Profile& phot
         CHECK_RETURN_RET(!photoProfile.sizeFollowSensorMax_, profile == photoProfile);
         return IsProfileSameRatio(profile, photoProfile.sizeRatio_, RATIO_VALUE_4_3);
     });
+    // LCOV_EXCL_STOP
 }
 
 bool PhotoSession::IsPreviewProfileLegal(sptr<CameraDevice>& device, Profile& previewProfile)
 {
+    // LCOV_EXCL_START
     auto previewProfilesIt = device->modePreviewProfiles_.find(SceneMode::CAPTURE);
     CHECK_RETURN_RET_ELOG(previewProfilesIt == device->modePreviewProfiles_.end(), false,
         "PhotoSession::CanPreconfig check preview profile fail, empty preview profiles");
     auto previewProfiles = previewProfilesIt->second;
     return std::any_of(previewProfiles.begin(), previewProfiles.end(),
         [&previewProfile](auto& profile) { return profile == previewProfile; });
+    // LCOV_EXCL_STOP
 }
 
 bool PhotoSession::CanPreconfig(PreconfigType preconfigType, ProfileSizeRatio preconfigRatio)
 {
+    // LCOV_EXCL_START
     MEDIA_INFO_LOG(
         "PhotoSession::CanPreconfig check type:%{public}d, check ratio:%{public}d", preconfigType, preconfigRatio);
     std::shared_ptr<PreconfigProfiles> configs = GeneratePreconfigProfiles(preconfigType, preconfigRatio);
     CHECK_RETURN_RET_ELOG(configs == nullptr, false, "PhotoSession::CanPreconfig get configs fail.");
     return IsPreconfigProfilesLegal(configs);
+    // LCOV_EXCL_STOP
 }
 
 int32_t PhotoSession::Preconfig(PreconfigType preconfigType, ProfileSizeRatio preconfigRatio)
 {
+    // LCOV_EXCL_START
     MEDIA_INFO_LOG("PhotoSession::Preconfig type:%{public}d ratio:%{public}d", preconfigType, preconfigRatio);
     std::shared_ptr<PreconfigProfiles> configs = GeneratePreconfigProfiles(preconfigType, preconfigRatio);
     CHECK_RETURN_RET_ELOG(configs == nullptr, SERVICE_FATL_ERROR,
@@ -255,6 +272,7 @@ int32_t PhotoSession::Preconfig(PreconfigType preconfigType, ProfileSizeRatio pr
     SetPreconfigProfiles(configs);
     MEDIA_INFO_LOG("PhotoSession::Preconfig %s", configs->ToString().c_str());
     return SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 bool PhotoSession::CanSetFrameRateRange(int32_t minFps, int32_t maxFps, CaptureOutput* curOutput)

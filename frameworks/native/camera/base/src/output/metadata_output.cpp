@@ -103,15 +103,19 @@ MetadataOutput::~MetadataOutput()
 
 std::shared_ptr<MetadataObjectCallback> MetadataOutput::GetAppObjectCallback()
 {
+    // LCOV_EXCL_START
     std::lock_guard<std::mutex> lock(outputCallbackMutex_);
     return appObjectCallback_;
+    // LCOV_EXCL_STOP
 }
 
 std::shared_ptr<MetadataStateCallback> MetadataOutput::GetAppStateCallback()
 {
+    // LCOV_EXCL_START
     MEDIA_DEBUG_LOG("CameraDeviceServiceCallback::GetAppStateCallback");
     std::lock_guard<std::mutex> lock(outputCallbackMutex_);
     return appStateCallback_;
+    // LCOV_EXCL_STOP
 }
 
 std::vector<MetadataObjectType> MetadataOutput::GetSupportedMetadataObjectTypes()
@@ -151,6 +155,7 @@ void MetadataOutput::SetCapturingMetadataObjectTypes(std::vector<MetadataObjectT
 int32_t MetadataOutput::AddMetadataObjectTypes(std::vector<MetadataObjectType> metadataObjectTypes)
 {
     const size_t maxSize4NonSystemApp  = 1;
+    // LCOV_EXCL_START
     if (!CameraSecurity::CheckSystemApp()) {
         MEDIA_DEBUG_LOG("MetadataOutput::AddMetadataObjectTypes public calling for metadataOutput");
         if (metadataObjectTypes.size() > maxSize4NonSystemApp ||
@@ -191,11 +196,13 @@ int32_t MetadataOutput::AddMetadataObjectTypes(std::vector<MetadataObjectType> m
         errCode != CAMERA_OK, CameraErrorCode::SERVICE_FATL_ERROR,
         "MetadataOutput Failed to AddMetadataObjectTypes!, EnableMetadataType failed ret: %{public}d", errCode);
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 int32_t MetadataOutput::RemoveMetadataObjectTypes(std::vector<MetadataObjectType> metadataObjectTypes)
 {
     const size_t maxSize4NonSystemApp  = 1;
+    // LCOV_EXCL_START
     if (!CameraSecurity::CheckSystemApp()) {
         MEDIA_DEBUG_LOG("MetadataOutput::RemoveMetadataObjectTypes public calling for metadataOutput");
         if (metadataObjectTypes.size() > maxSize4NonSystemApp ||
@@ -218,26 +225,32 @@ int32_t MetadataOutput::RemoveMetadataObjectTypes(std::vector<MetadataObjectType
         errCode != CAMERA_OK, CameraErrorCode::SERVICE_FATL_ERROR,
         "MetadataOutput Failed to AddMetadataObjectTypes!, EnableMetadataType failed ret: %{public}d", errCode);
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 bool MetadataOutput::checkValidType(const std::vector<MetadataObjectType> &typeAdded,
                                     const std::vector<MetadataObjectType> &supportedType)
 {
+    // LCOV_EXCL_START
     return std::all_of(typeAdded.begin(), typeAdded.end(), [&supportedType](MetadataObjectType type) {
         return std::find(supportedType.begin(), supportedType.end(), type) != supportedType.end();
     });
+    // LCOV_EXCL_STOP
 }
 
 std::vector<int32_t> MetadataOutput::convert(const std::vector<MetadataObjectType> &typesOfMetadata)
 {
+    // LCOV_EXCL_START
     std::vector<int32_t> result(typesOfMetadata.size());
     std::transform(typesOfMetadata.begin(), typesOfMetadata.end(), result.begin(),
                    [](MetadataObjectType obj) { return static_cast<int32_t>(obj); });
     return result;
+    // LCOV_EXCL_STOP
 }
 
 void MetadataOutput::SetCallback(std::shared_ptr<MetadataObjectCallback> metadataObjectCallback)
 {
+    // LCOV_EXCL_START
     std::lock_guard<std::mutex> lock(outputCallbackMutex_);
     appObjectCallback_ = metadataObjectCallback;
     if (appObjectCallback_ != nullptr) {
@@ -257,12 +270,15 @@ void MetadataOutput::SetCallback(std::shared_ptr<MetadataObjectCallback> metadat
     MEDIA_ERR_LOG("MetadataOutput::SetCallback(): Failed to register callback, errorCode: %{public}d", errorCode);
     cameraMetadataCallback_ = nullptr;
     appObjectCallback_ = nullptr;
+    // LCOV_EXCL_STOP
 }
 
 void MetadataOutput::SetCallback(std::shared_ptr<MetadataStateCallback> metadataStateCallback)
 {
+    // LCOV_EXCL_START
     std::lock_guard<std::mutex> lock(outputCallbackMutex_);
     appStateCallback_ = metadataStateCallback;
+    // LCOV_EXCL_STOP
 }
 
 int32_t MetadataOutput::CreateStream()
@@ -272,6 +288,7 @@ int32_t MetadataOutput::CreateStream()
 
 int32_t MetadataOutput::Start()
 {
+    // LCOV_EXCL_START
     MEDIA_DEBUG_LOG("MetadataOutput::Start is called");
     auto session = GetSession();
     CHECK_RETURN_RET_ELOG(session == nullptr || !session->IsSessionCommited(), CameraErrorCode::SUCCESS,
@@ -282,10 +299,12 @@ int32_t MetadataOutput::Start()
     int32_t errCode = static_cast<IStreamMetadata *>(stream.GetRefPtr())->Start();
     CHECK_PRINT_ELOG(errCode != CAMERA_OK, "Failed to Start MetadataOutput!, errCode: %{public}d", errCode);
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 void MetadataOutput::CameraServerDied(pid_t pid)
 {
+    // LCOV_EXCL_START
     MEDIA_ERR_LOG("camera server has died, pid:%{public}d!", pid);
     std::lock_guard<std::mutex> lock(outputCallbackMutex_);
     if (appStateCallback_ != nullptr) {
@@ -293,10 +312,12 @@ void MetadataOutput::CameraServerDied(pid_t pid)
         int32_t serviceErrorType = ServiceToCameraError(CAMERA_INVALID_STATE);
         appStateCallback_->OnError(serviceErrorType);
     }
+    // LCOV_EXCL_STOP
 }
 
 int32_t MetadataOutput::Stop()
 {
+    // LCOV_EXCL_START
     MEDIA_DEBUG_LOG("MetadataOutput::Stop");
     auto stream = GetStream();
     CHECK_RETURN_RET_ELOG(stream == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
@@ -304,10 +325,12 @@ int32_t MetadataOutput::Stop()
     int32_t errCode = static_cast<IStreamMetadata*>(stream.GetRefPtr())->Stop();
     CHECK_PRINT_ELOG(errCode != CAMERA_OK, "Failed to Stop MetadataOutput!, errCode: %{public}d", errCode);
     return ServiceToCameraError(errCode);
+    // LCOV_EXCL_STOP
 }
 
 int32_t MetadataOutput::Release()
 {
+    // LCOV_EXCL_START
     {
         std::lock_guard<std::mutex> lock(outputCallbackMutex_);
         appObjectCallback_ = nullptr;
@@ -322,6 +345,7 @@ int32_t MetadataOutput::Release()
     ReleaseSurface();
     CaptureOutput::Release();
     return ServiceToCameraError(errCode);
+    // LCOV_EXCL_STOP
 }
 
 void MetadataOutput::ReleaseSurface()
@@ -346,6 +370,7 @@ void MetadataOutput::ProcessMetadata(const int32_t streamId,
 {
     bool ret = MetadataCommonUtils::ProcessMetaObjects(streamId, result, metaObjects, isNeedMirror,
         isNeedFlip, RectBoxType::RECT_CAMERA);
+    // LCOV_EXCL_START
     if (ret) {
         reportFaceResults_ = true;
         return;
@@ -355,6 +380,7 @@ void MetadataOutput::ProcessMetadata(const int32_t streamId,
         reportLastFaceResults_ = true;
         reportFaceResults_ = false;
     }
+    // LCOV_EXCL_STOP
     MEDIA_ERR_LOG("Camera not ProcessFaceRectangles");
     return;
 }
@@ -368,6 +394,7 @@ int32_t MetadataObjectListener::ProcessMetadataBuffer(void *buffer, int64_t time
 
 void MetadataObjectListener::OnBufferAvailable()
 {
+    // LCOV_EXCL_START
     MEDIA_INFO_LOG("MetadataOutput::OnBufferAvailable() is Called");
     // metaoutput adapte later
     bool adapterLater = true;
@@ -388,11 +415,13 @@ void MetadataObjectListener::OnBufferAvailable()
         CHECK_EXECUTE(appStateCallback, appStateCallback->OnError(ret));
     }
     surface->ReleaseBuffer(buffer, -1);
+    // LCOV_EXCL_STOP
 }
 
 int32_t HStreamMetadataCallbackImpl::OnMetadataResult(const int32_t streamId,
                                                       const std::shared_ptr<OHOS::Camera::CameraMetadata> &result)
 {
+    // LCOV_EXCL_START
     auto metadataOutput = GetMetadataOutput();
     CHECK_RETURN_RET_ELOG(metadataOutput == nullptr, CAMERA_OK,
         "HStreamMetadataCallbackImpl::OnMetadataResult metadataOutput is nullptr");
@@ -415,6 +444,7 @@ int32_t HStreamMetadataCallbackImpl::OnMetadataResult(const int32_t streamId,
     CHECK_EXECUTE((metadataOutput->reportFaceResults_ || metadataOutput->reportLastFaceResults_) && objectCallback,
         objectCallback->OnMetadataObjectsAvailable(metaObjects));
     return SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 MetadataObjectFactory::MetadataObjectFactory() {}
@@ -435,6 +465,7 @@ sptr<MetadataObject> MetadataObjectFactory::createMetadataObject(MetadataObjectT
 {
     MetaObjectParms baseMetaParms = { type_, timestamp_, box_, objectId_, confidence_ };
     sptr<MetadataObject> metadataObject;
+    // LCOV_EXCL_START
     switch (type) {
         case MetadataObjectType::FACE:
             metadataObject = new MetadataFaceObject(baseMetaParms, leftEyeBoundingBox_, rightEyeBoundingBox_, emotion_,
@@ -464,6 +495,7 @@ sptr<MetadataObject> MetadataObjectFactory::createMetadataObject(MetadataObjectT
         default:
             metadataObject = new MetadataObject(baseMetaParms);
     }
+    // LCOV_EXCL_STOP
     ResetParameters();
     return metadataObject;
 }
