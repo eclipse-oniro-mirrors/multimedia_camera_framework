@@ -109,7 +109,7 @@ CameraXmlNodeInner::~CameraXmlNodeInner()
 int32_t CameraXmlNodeInner::Config(const char *fileName, const char *encoding, int32_t options)
 {
     doc_ = xmlReadFile(fileName, encoding, options);
-    CHECK_RETURN_RET_ELOG(doc_ == nullptr, FAIL, "xmlReadFile failed! fileName :%{public}s", fileName);
+    CHECK_RETURN_RET_ELOG(doc_ == nullptr, FAIL, "xmlReadFile failed! fileName :%{private}s", fileName);
     curNode_ = xmlDocGetRootElement(doc_);
     CHECK_RETURN_RET_ELOG(curNode_ == nullptr, FAIL, "xmlDocGetRootElement failed!");
     return SUCCESS;
