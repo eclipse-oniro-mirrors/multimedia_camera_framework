@@ -112,8 +112,6 @@ bool VideoOutputImpl::IsAutoVideoFrameRateSupported()
 {
     CHECK_ERROR_RETURN_RET_LOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), false,
         "SystemApi IsAutoVideoFrameRateSupported is called!");
-    CHECK_ERROR_RETURN_RET_LOG(videoOutput_ == nullptr, false,
-        "EnableAutoVideoFrameRate failed, videoOutput_ is nullptr");
     if (videoOutput_ == nullptr) {
         MEDIA_ERR_LOG("VideoOutputImpl::EnableAutoVideoFrameRate get native object fail");
         CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT, "get native object fail");
@@ -126,7 +124,6 @@ void VideoOutputImpl::EnableAutoVideoFrameRate(bool enabled)
 {
     CHECK_ERROR_RETURN_LOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
         "SystemApi EnableAutoVideoFrameRate is called!");
-    CHECK_ERROR_RETURN_LOG(videoOutput_ == nullptr, "EnableAutoVideoFrameRate failed, videoOutput_ is nullptr");
     if (videoOutput_ == nullptr) {
         MEDIA_ERR_LOG("VideoOutputImpl::EnableAutoVideoFrameRate get native object fail");
         CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT, "get native object fail");
@@ -243,7 +240,7 @@ void VideoOutputImpl::SetRotation(ImageRotation rotation)
     }
     int32_t retCode = videoOutput_->SetRotation(rotation.get_value());
     CHECK_ERROR_PRINT_LOG(!CameraUtilsTaihe::CheckError(retCode),
-        "VideoOutputImpl::EnableAutoVideoFrameRate fail %{public}d", retCode);
+        "VideoOutputImpl::SetRotation fail %{public}d", retCode);
 }
 
 bool VideoOutputImpl::IsRotationSupported()

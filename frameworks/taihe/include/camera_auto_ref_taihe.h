@@ -52,7 +52,7 @@ public:
     std::shared_ptr<uintptr_t> GetCallbackFunction()
     {
         if (env_ == nullptr || callbackRef_ == nullptr) {
-            MEDIA_ERR_LOG("env_ and callbackRef_ is nullptr");
+            MEDIA_ERR_LOG("env_ or callbackRef_ is nullptr");
             return nullptr;
         }
         return callbackRef_;

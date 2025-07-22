@@ -29,7 +29,7 @@ array<PortraitPhotoFunctions> CreateFunctionsPortraitPhotoFunctionsArray(
     MEDIA_DEBUG_LOG("CreateFunctionsJSArray is called");
     CHECK_ERROR_PRINT_LOG(functionsList.empty(), "functionsList is empty");
     std::vector<PortraitPhotoFunctions> functionsArray;
-    for (auto i = 0; i < functionsList.size(); i++) {
+    for (size_t i = 0; i < functionsList.size(); i++) {
         functionsArray.push_back(make_holder<PortraitPhotoFunctionsImpl, PortraitPhotoFunctions>(functionsList[i]));
     }
     return array<PortraitPhotoFunctions>(functionsArray);
@@ -41,7 +41,7 @@ array<PortraitPhotoConflictFunctions> CreateFunctionsPortraitPhotoConflictFuncti
     MEDIA_DEBUG_LOG("CreateFunctionsJSArray is called");
     CHECK_ERROR_PRINT_LOG(conflictFunctionsList.empty(), "conflictFunctionsList is empty");
     std::vector<PortraitPhotoConflictFunctions> functionsArray;
-    for (auto i = 0; i < conflictFunctionsList.size(); i++) {
+    for (size_t i = 0; i < conflictFunctionsList.size(); i++) {
         functionsArray.push_back(
             make_holder<PortraitPhotoConflictFunctionsImpl, PortraitPhotoConflictFunctions>(conflictFunctionsList[i]));
     }

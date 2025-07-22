@@ -228,7 +228,7 @@ array<int32_t> TimeLapsePhotoSessionImpl::GetSupportedTimeLapseIntervalRange()
     CHECK_ERROR_RETURN_RET_LOG(timeLapsePhotoSession_ == nullptr, array<int32_t>(nullptr, 0),
         "GetSupportedTimeLapseIntervalRange failed, timeLapsePhotoSession_ is nullptr!");
     std::vector<int32_t> range;
-    int32_t retCode = timeLapsePhotoSession_->GetIsoRange(range);
+    int32_t retCode = timeLapsePhotoSession_->GetSupportedTimeLapseIntervalRange(range);
     CHECK_ERROR_RETURN_RET(!CameraUtilsTaihe::CheckError(retCode), array<int32_t>(nullptr, 0));
     return array<int32_t>(range);
 }

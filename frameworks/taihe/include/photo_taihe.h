@@ -17,19 +17,36 @@
 
 #include "taihe/runtime.hpp"
 #include "camera_log.h"
+#include "image_taihe.h"
+#include "pixel_map_taihe.h"
+#include "depth_data_taihe.h"
 
 namespace Ani::Camera {
+using namespace taihe;
+using namespace ohos::multimedia::camera;
+namespace ImageTaihe = ohos::multimedia::image::image;
 class PhotoImpl {
 public:
-    PhotoImpl() {
-        // Don't forget to implement the constructor.
-    }
-
-    ~PhotoImpl() {
-        // Don't forget to implement the constructor.
-    }
-
+    PhotoImpl(ImageTaihe::Image mainImage);
+    ~PhotoImpl() = default;
+    void SetMain(ImageTaihe::weak::Image main);
+    ImageTaihe::Image GetMain();
+    void SetRaw(optional_view<ImageTaihe::Image> raw);
+    optional<ImageTaihe::Image> GetRaw();
+    void SetDepthData(optional_view<DepthData> depthData);
+    optional<DepthData> GetDepthData();
+    void SetCaptureId(int32_t captureId);
+    int32_t GetCaptureId();
     void ReleaseSync();
+private:
+    ImageTaihe::Image mainImage_ = make_holder<ANI::Image::ImageImpl, ImageTaihe::Image>(nullptr);
+    int32_t captureId_ = 0;
+    ImageTaihe::Image main_ = taihe::make_holder<ANI::Image::ImageImpl, ImageTaihe::Image>();
+    ImageTaihe::Image raw_ = taihe::make_holder<ANI::Image::ImageImpl, ImageTaihe::Image>();
+    DepthData depthData_ = taihe::make_holder<DepthDataImpl, DepthData>(
+        OHOS::CameraStandard::CameraFormat::CAMERA_FORMAT_YCBCR_420_888,
+            OHOS::CameraStandard::DepthDataAccuracy::DEPTH_DATA_ACCURACY_RELATIVE, 0,
+                make_holder<ANI::Image::PixelMapImpl, ImageTaihe::PixelMap>());
 };
 } // namespace Ani::Camera
 #endif //FRAMEWORKS_TAIHE_INCLUDE_PHOTO_TAIHE_H

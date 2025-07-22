@@ -134,7 +134,7 @@ public:
 private:
     void UpdateJSCallback(sptr<Surface> photoSurface) const;
     void UpdateMainPictureStageOneJSCallback(sptr<SurfaceBuffer> surfaceBuffer, int64_t timestamp) const;
-    void UpdatePictureJSCallback(int32_t captureId, const string uri, int32_t cameraShotType,
+    void UpdatePictureJSCallback(int32_t captureId, const std::string uri, int32_t cameraShotType,
         const std::string burstKey) const;
     void ExecutePhoto(sptr<SurfaceBuffer> surfaceBfuffer, int64_t timestamp) const;
     void ExecuteDeferredPhoto(sptr<SurfaceBuffer> surfaceBuffer) const;
@@ -143,6 +143,8 @@ private:
     void ExecutePhotoAsset(sptr<SurfaceBuffer> surfaceBuffer, bool isHighQuality, int64_t timestamp) const;
     int32_t GetAuxiliaryPhotoCount(sptr<SurfaceBuffer> surfaceBuffer);
     void AssembleAuxiliaryPhoto(int64_t timestamp, int32_t captureId);
+    void CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, BufferHandle* bufferHandle, bool isHighQuality,
+        std::string& uri, int32_t& cameraShotType, std::string &burstKey, int64_t timestamp) const;
     sptr<Surface> photoSurface_ = nullptr;
     wptr<OHOS::CameraStandard::PhotoOutput> photoOutput_ = nullptr;
     std::shared_ptr<PhotoBufferProcessorAni> bufferProcessor_ = nullptr;
@@ -198,7 +200,8 @@ public:
     sptr<AuxiliaryPhotoListener> debugImageListener;
 };
 
-class ThumbnailListener : public IBufferConsumerListener, public ListenerBase {
+class ThumbnailListener : public IBufferConsumerListener, public ListenerBase,
+    public std::enable_shared_from_this<PhotoListenerAni> {
 public:
     explicit ThumbnailListener(ani_env* env, const sptr<OHOS::CameraStandard::PhotoOutput> photoOutput);
     virtual ~ThumbnailListener();
@@ -208,7 +211,6 @@ public:
     std::mutex taskManagerMutex_;
 private:
     wptr<OHOS::CameraStandard::PhotoOutput> photoOutput_;
-    void UpdateJSCallback(int32_t captureId, int64_t timestamp, std::unique_ptr<Media::PixelMap>) const;
     void UpdateJSCallbackAsync(int32_t captureId, int64_t timestamp, std::unique_ptr<Media::PixelMap>);
     void ExecuteDeepCopySurfaceBuffer();
 
@@ -241,7 +243,7 @@ class PhotoOutputImpl : public CameraOutputImpl,
                         public CameraAniEventEmitter<PhotoOutputImpl> {
 public:
     PhotoOutputImpl(OHOS::sptr<OHOS::CameraStandard::CaptureOutput> output);
-    ~PhotoOutputImpl() = default;
+    ~PhotoOutputImpl() {};
 
     void ReleaseSync() override;
 
@@ -267,8 +269,9 @@ public:
     void OffOfflineDeliveryFinished(optional_view<callback<void(uintptr_t, uintptr_t)>> callback);
     void OnPhotoAssetAvailable(callback_view<void(uintptr_t, uintptr_t)> callback);
     void OffPhotoAssetAvailable(optional_view<callback<void(uintptr_t, uintptr_t)>> callback);
-    void OnQuickThumbnail(callback_view<void(uintptr_t, uintptr_t)> callback);
-    void OffQuickThumbnail(optional_view<callback<void(uintptr_t, uintptr_t)>> callback);
+    void OnQuickThumbnail(callback_view<void(uintptr_t, ohos::multimedia::image::image::weak::PixelMap)> callback);
+    void OffQuickThumbnail(
+        optional_view<callback<void(uintptr_t, ohos::multimedia::image::image::weak::PixelMap)>> callback);
     void CaptureSync();
     void CaptureSyncWithSetting(PhotoCaptureSetting const& setting);
     void BurstCaptureSync(PhotoCaptureSetting const& setting);

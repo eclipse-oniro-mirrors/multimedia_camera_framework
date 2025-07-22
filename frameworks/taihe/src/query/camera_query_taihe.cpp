@@ -433,7 +433,7 @@ double FocusImpl::GetFocalLength()
 void FocusImpl::SetFocusMode(FocusMode afMode)
 {
     MEDIA_DEBUG_LOG("SetFocusMode is called");
-    CHECK_ERROR_RETURN_LOG(captureSession_ == nullptr, "FlashImpl::SetFocusMode captureSession_ is null!");
+    CHECK_ERROR_RETURN_LOG(captureSession_ == nullptr, "FocusImpl::SetFocusMode captureSession_ is null!");
     captureSession_->LockForControl();
     int retCode = captureSession_->
             SetFocusMode(static_cast<OHOS::CameraStandard::FocusMode>(afMode.get_value()));
@@ -676,8 +676,8 @@ ExposureMeteringMode AutoExposureImpl::GetExposureMeteringMode()
 {
     CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::OPERATION_NOT_ALLOWED,
         "can not SetExposureMeteringMode in current session!");
-        ExposureMeteringMode meteringMode = static_cast<ExposureMeteringMode::key_t>(-1);
-        return meteringMode;
+    ExposureMeteringMode meteringMode = static_cast<ExposureMeteringMode::key_t>(-1);
+    return meteringMode;
 }
 
 double AutoExposureImpl::GetExposureValue()
@@ -783,16 +783,16 @@ array<uintptr_t> ColorManagementQueryImpl::GetSupportedColorSpaces()
 
 uintptr_t ColorManagementImpl::GetActiveColorSpace()
 {
-    CHECK_ERROR_RETURN_RET_LOG(captureSession_ == nullptr, -1, "GetActiveColorSpace captureSession_ is null");
+    CHECK_ERROR_RETURN_RET_LOG(captureSession_ == nullptr, 0, "GetActiveColorSpace captureSession_ is null");
     OHOS::CameraStandard::ColorSpace colorSpace;
     int32_t retCode = captureSession_->GetActiveColorSpace(colorSpace);
-    CHECK_ERROR_RETURN_RET(!CameraUtilsTaihe::CheckError(retCode), -1);
+    CHECK_ERROR_RETURN_RET(!CameraUtilsTaihe::CheckError(retCode), 0);
     ani_enum aniEnum {};
     ani_enum_item aniEnumItem {};
     ani_env* env = get_env();
-    CHECK_ERROR_RETURN_RET_LOG(env == nullptr, -1, "GetActiveColorSpace env is null");
+    CHECK_ERROR_RETURN_RET_LOG(env == nullptr, 0, "GetActiveColorSpace env is null");
     CHECK_ERROR_RETURN_RET_LOG(ANI_OK != env->Enum_GetEnumItemByIndex(
-        aniEnum, reinterpret_cast<ani_int>(static_cast<int32_t>(colorSpace)), &aniEnumItem), -1, "Find Enum item Fail");
+        aniEnum, reinterpret_cast<ani_int>(static_cast<int32_t>(colorSpace)), &aniEnumItem), 0, "Find Enum item Fail");
     return reinterpret_cast<uintptr_t>(aniEnumItem);
 }
 
