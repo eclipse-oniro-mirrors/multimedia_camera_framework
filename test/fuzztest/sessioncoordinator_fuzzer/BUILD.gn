@@ -118,6 +118,7 @@ ohos_fuzztest("SessionCoordinatorFuzzTest") {
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
     "window_manager:libdm",
+    "drivers_interface_camera:libmap_data_sequenceable_1.0",
   ]
 
   include_dirs += [

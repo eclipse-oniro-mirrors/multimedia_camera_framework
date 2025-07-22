@@ -91,7 +91,7 @@ ohos_shared_library("camera_service") {
     "-fPIE",
   ]
 
-  if (!use_clang_coverage && !use_libfuzzer && using_hb_new) {
+  if (!fwk_no_hidden && !use_clang_coverage && !use_libfuzzer && using_hb_new) {
     cflags += [ "-fvisibility=hidden" ]
   }
 

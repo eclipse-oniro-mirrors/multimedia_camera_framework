@@ -47,7 +47,7 @@ group("camera_fuzz_test") {
     "fuzztest/videoprocesscommand_fuzzer:fuzztest",
     "fuzztest/videostrategycenter_fuzzer:fuzztest",
   ]
-  if (use_libfuzzer || use_clang_coverage || !using_hb_new) {
+  if (fwk_no_hidden || use_libfuzzer || use_clang_coverage || !using_hb_new) {
     deps += [
       "fuzztest/audiocapturersession_fuzzer:fuzztest",
       "fuzztest/audiodeferredprocess_fuzzer:fuzztest",

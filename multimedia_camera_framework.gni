@@ -56,3 +56,6 @@ if (defined(global_parts_info) &&
 
 gen_camera_picker = true
 hicollie_enable = true
+declare_args() {
+  fwk_no_hidden = false
+}
