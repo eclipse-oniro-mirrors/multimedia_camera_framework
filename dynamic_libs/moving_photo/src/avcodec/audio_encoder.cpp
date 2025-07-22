@@ -153,6 +153,8 @@ bool AudioEncoder::EnqueueBuffer(sptr<AudioRecord> audioRecord)
         bufferInfo->attr.flags = AVCODEC_BUFFER_FLAGS_NONE;
         CHECK_RETURN_RET_ELOG(!isStarted_, false, "EnqueueBuffer while encoder is not started");
         auto bufferAddr = OH_AVBuffer_GetAddr(bufferInfo->buffer);
+        CHECK_ERROR_RETURN_RET_LOG(bufferCap <= DEFAULT_MAX_INPUT_SIZE, false,
+            "Destination buffer capacity is insufficient to hold the data.");
         int32_t bufferCap = OH_AVBuffer_GetCapacity(bufferInfo->buffer);
         errno_t cpyRet = memcpy_s(bufferAddr, bufferCap, buffer, DEFAULT_MAX_INPUT_SIZE);
         CHECK_RETURN_RET_ELOG(cpyRet != 0, false, "encoder memcpy_s failed. %{public}d", cpyRet);
