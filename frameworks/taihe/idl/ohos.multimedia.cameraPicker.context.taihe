@@ -15,4 +15,5 @@
 @!namespace("@ohos.multimedia.cameraPicker")
 @!sts_inject("""
 import type Context from 'application.Context';
+import { BusinessError } from '@ohos.base';
 """)
