@@ -132,6 +132,8 @@ int32_t HStreamMetadata::EnableMetadataType(std::vector<int32_t> metadataTypes)
 }
 int32_t HStreamMetadata::DisableMetadataType(std::vector<int32_t> metadataTypes)
 {
+    CHECK_ERROR_RETURN_RET_LOG(
+        !CheckSystemApp(), CAMERA_NO_PERMISSION, "HStreamMetadata::DisableMetadataType:SystemApi is called");
     int32_t rc = EnableOrDisableMetadataType(metadataTypes, false);
     CHECK_ERROR_RETURN_RET_LOG(rc != CAMERA_OK, rc, "HStreamMetadata::DisableMetadataType failed!");
     std::lock_guard<std::mutex> lock(metadataTypeMutex_);

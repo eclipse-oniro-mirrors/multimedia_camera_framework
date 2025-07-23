@@ -675,6 +675,8 @@ int32_t HCameraService::CreateDepthDataOutput(const sptr<OHOS::IBufferProducer>&
     int32_t width, int32_t height, sptr<IStreamDepthData>& depthDataOutput)
 {
     CAMERA_SYNC_TRACE;
+    CHECK_ERROR_RETURN_RET_LOG(
+        !CheckSystemApp(), CAMERA_NO_PERMISSION, "HCameraService::CreateDepthDataOutput:SystemApi is called");
     sptr<HStreamDepthData> streamDepthData;
     int32_t rc = CAMERA_OK;
     MEDIA_INFO_LOG("HCameraService::CreateDepthDataOutput prepare execute");

@@ -98,6 +98,7 @@ int32_t HStreamCaptureStub::HandleConfirmCapture(MessageParcel &data)
 
 int32_t HStreamCaptureStub::HandleSetThumbnail(MessageParcel &data)
 {
+    CHECK_AND_RETURN_RET(CheckSystemApp(), CAMERA_NO_PERMISSION);
     sptr<IRemoteObject> remoteObj = data.ReadRemoteObject();
     CHECK_AND_RETURN_RET_LOG(remoteObj != nullptr, IPC_STUB_INVALID_DATA_ERR,
         "HStreamCaptureStub HandleCreatePhotoOutput BufferProducer is null");
@@ -112,6 +113,7 @@ int32_t HStreamCaptureStub::HandleSetThumbnail(MessageParcel &data)
 
 int32_t HStreamCaptureStub::HandleEnableRawDelivery(MessageParcel &data)
 {
+    CHECK_AND_RETURN_RET(CheckSystemApp(), CAMERA_NO_PERMISSION);
     bool enabled = data.ReadBool();
     int32_t ret = EnableRawDelivery(enabled);
     MEDIA_DEBUG_LOG("HStreamCaptureStub HandleEnableRawDelivery result: %{public}d", ret);

@@ -375,6 +375,8 @@ napi_value VideoOutputNapi::GetSupportedVideoMetaTypes(napi_env env, napi_callba
 napi_value VideoOutputNapi::AttachMetaSurface(napi_env env, napi_callback_info info)
 {
     CAMERA_SYNC_TRACE;
+    CHECK_ERROR_RETURN_RET_LOG(
+        !CameraNapiSecurity::CheckSystemApp(env), nullptr, "VideoOutputNapi::AttachMetaSurface:SystemApi is called");
     napi_status status;
     napi_value result;
     size_t argc = ARGS_TWO;
@@ -842,6 +844,8 @@ void VideoOutputNapi::UnregisterErrorCallbackListener(
 void VideoOutputNapi::RegisterDeferredVideoCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
+    CHECK_ERROR_RETURN_LOG(!CameraNapiSecurity::CheckSystemApp(env),
+        "VideoOutputNapi::RegisterDeferredVideoCallbackListener:SystemApi is called");
     if (videoCallback_ == nullptr) {
         videoCallback_ = make_shared<VideoCallbackListener>(env);
         videoOutput_->SetCallback(videoCallback_);
@@ -852,6 +856,8 @@ void VideoOutputNapi::RegisterDeferredVideoCallbackListener(
 void VideoOutputNapi::UnregisterDeferredVideoCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
+    CHECK_ERROR_RETURN_LOG(!CameraNapiSecurity::CheckSystemApp(env),
+        "VideoOutputNapi::UnregisterDeferredVideoCallbackListener:SystemApi is called");
     if (videoCallback_ == nullptr) {
         MEDIA_ERR_LOG("videoCallback is null");
         return;

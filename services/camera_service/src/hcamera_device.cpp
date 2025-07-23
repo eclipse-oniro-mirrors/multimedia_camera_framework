@@ -794,6 +794,8 @@ int32_t HCameraDevice::UpdateSetting(const std::shared_ptr<OHOS::Camera::CameraM
 int32_t HCameraDevice::SetUsedAsPosition(uint8_t value)
 {
     MEDIA_INFO_LOG("HCameraDevice::SetUsedAsPosition as %{public}d", value);
+    CHECK_ERROR_RETURN_RET_LOG(
+        !CheckSystemApp(), CAMERA_NO_PERMISSION, "HCameraDevice::SetUsedAsPosition:SystemApi is called");
     usedAsPosition_ = value;
     // lockforControl
     return CAMERA_OK;
