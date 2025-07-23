@@ -517,7 +517,7 @@ void HStreamOperator::ExpandMovingPhotoRepeatStream()
             AddOutputStream(livePhotoStreamRepeat_);
             if (!audioCapturerSessionProxy_) {
                 audioCapturerSessionProxy_ = AudioCapturerSessionProxy::CreateAudioCapturerSessionProxy();
-                CHECK_EXECUTE(!audioCapturerSessionProxy_, audioCapturerSessionProxy_->CreateAudioSession());
+                CHECK_EXECUTE(audioCapturerSessionProxy_, audioCapturerSessionProxy_->CreateAudioSession());
             }
             if (!avcodecTaskManagerProxy_&& audioCapturerSessionProxy_) {
                 avcodecTaskManagerProxy_ = AvcodecTaskManagerProxy::CreateAvcodecTaskManagerProxy();

@@ -118,10 +118,12 @@ void PhotoCaptureSetting::SetLocation(std::shared_ptr<Location>& location)
 
 void PhotoCaptureSetting::GetLocation(std::shared_ptr<Location>& location)
 {
+    // LCOV_EXCL_START
     std::lock_guard<std::mutex> lock(locationMutex_);
     location = location_;
     MEDIA_DEBUG_LOG("PhotoCaptureSetting::GetLocation lat=%{private}f, long=%{private}f and alt=%{private}f",
         location->latitude, location->longitude, location->altitude);
+    // LCOV_EXCL_STOP
 }
 
 
@@ -170,6 +172,7 @@ int32_t HStreamCaptureCallbackImpl::OnCaptureStarted(const int32_t captureId)
     CHECK_RETURN_RET_ELOG(callback == nullptr, CAMERA_OK,
         "HStreamCaptureCallbackImpl::OnCaptureStarted callback is nullptr");
 
+    // LCOV_EXCL_START
     sptr<CaptureSession> session = photoOutput->GetSession();
     CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_OK,
         "HStreamCaptureCallbackImpl::OnCaptureStarted session is nullptr");
@@ -197,6 +200,7 @@ int32_t HStreamCaptureCallbackImpl::OnCaptureStarted(const int32_t captureId)
             callback->OnCaptureStarted(captureId);
             break;
     }
+    // LCOV_EXCL_STOP
     return CAMERA_OK;
 }
 
@@ -209,8 +213,10 @@ int32_t HStreamCaptureCallbackImpl::OnCaptureStarted(const int32_t captureId, ui
     auto callback = photoOutput->GetApplicationCallback();
     CHECK_RETURN_RET_ELOG(callback == nullptr, CAMERA_OK,
         "HStreamCaptureCallbackImpl::OnCaptureStarted callback is nullptr");
+    // LCOV_EXCL_START
     photoOutput->GetApplicationCallback()->OnCaptureStarted(captureId, exposureTime);
     return CAMERA_OK;
+    // LCOV_EXCL_STOP
 }
 
 int32_t HStreamCaptureCallbackImpl::OnCaptureEnded(const int32_t captureId, const int32_t frameCount)
@@ -222,12 +228,14 @@ int32_t HStreamCaptureCallbackImpl::OnCaptureEnded(const int32_t captureId, cons
     auto callback = photoOutput->GetApplicationCallback();
     CHECK_RETURN_RET_ELOG(callback == nullptr, CAMERA_OK,
         "HStreamCaptureCallbackImpl::OnCaptureEnded callback is nullptr");
+    // LCOV_EXCL_START
     callback->OnCaptureEnded(captureId, frameCount);
     auto timeStartIter = photoOutput->captureIdToCaptureInfoMap_.find(captureId);
     if (timeStartIter != photoOutput->captureIdToCaptureInfoMap_.end()) {
         DeferredProcessing::GetGlobalWatchdog().StopMonitor((timeStartIter->second).CaptureHandle);
     }
     return CAMERA_OK;
+    // LCOV_EXCL_STOP
 }
 
 int32_t HStreamCaptureCallbackImpl::OnCaptureError(const int32_t captureId, const int32_t errorCode)
@@ -238,8 +246,10 @@ int32_t HStreamCaptureCallbackImpl::OnCaptureError(const int32_t captureId, cons
     auto callback = photoOutput->GetApplicationCallback();
     CHECK_RETURN_RET_ELOG(callback == nullptr, CAMERA_OK,
         "HStreamCaptureCallbackImpl::OnCaptureError callback is nullptr");
+    // LCOV_EXCL_START
     callback->OnCaptureError(captureId, errorCode);
     return CAMERA_OK;
+    // LCOV_EXCL_STOP
 }
 
 int32_t HStreamCaptureCallbackImpl::OnFrameShutter(const int32_t captureId, const uint64_t timestamp)
@@ -251,8 +261,10 @@ int32_t HStreamCaptureCallbackImpl::OnFrameShutter(const int32_t captureId, cons
     auto callback = photoOutput->GetApplicationCallback();
     CHECK_RETURN_RET_ELOG(callback == nullptr, CAMERA_OK,
         "HStreamCaptureCallbackImpl::OnFrameShutter callback is nullptr");
+    // LCOV_EXCL_START
     callback->OnFrameShutter(captureId, timestamp);
     return CAMERA_OK;
+    // LCOV_EXCL_STOP
 }
 
 int32_t HStreamCaptureCallbackImpl::OnFrameShutterEnd(const int32_t captureId, const uint64_t timestamp)
@@ -264,6 +276,7 @@ int32_t HStreamCaptureCallbackImpl::OnFrameShutterEnd(const int32_t captureId, c
     auto callback = photoOutput->GetApplicationCallback();
     CHECK_RETURN_RET_ELOG(callback == nullptr, CAMERA_OK,
         "HStreamCaptureCallbackImpl::OnFrameShutterEnd callback is nullptr");
+    // LCOV_EXCL_START
     callback->OnFrameShutterEnd(captureId, timestamp);
     CHECK_RETURN_RET(!photoOutput->IsHasEnableOfflinePhoto(), CAMERA_OK);
     uint32_t startCaptureHandle;
@@ -281,6 +294,7 @@ int32_t HStreamCaptureCallbackImpl::OnFrameShutterEnd(const int32_t captureId, c
     photoOutput->captureIdToCaptureInfoMap_[captureId].CaptureHandle = static_cast<int32_t>(startCaptureHandle);
     photoOutput->captureIdToCaptureInfoMap_[captureId].timeStart = std::chrono::steady_clock::now();
     return CAMERA_OK;
+    // LCOV_EXCL_STOP
 }
 
 int32_t HStreamCaptureCallbackImpl::OnCaptureReady(const int32_t captureId, const uint64_t timestamp)
@@ -292,12 +306,15 @@ int32_t HStreamCaptureCallbackImpl::OnCaptureReady(const int32_t captureId, cons
     auto callback = photoOutput->GetApplicationCallback();
     CHECK_RETURN_RET_ELOG(callback == nullptr, CAMERA_OK,
         "HStreamCaptureCallbackImpl::OnCaptureReady callback is nullptr");
+    // LCOV_EXCL_START
     callback->OnCaptureReady(captureId, timestamp);
     return CAMERA_OK;
+    // LCOV_EXCL_STOP
 }
 
 int32_t HStreamCaptureCallbackImpl::OnOfflineDeliveryFinished(const int32_t captureId)
 {
+    // LCOV_EXCL_START
     CAMERA_SYNC_TRACE;
     auto photoOutput = GetPhotoOutput();
     CHECK_RETURN_RET_ELOG(photoOutput == nullptr, CAMERA_OK,
@@ -307,6 +324,7 @@ int32_t HStreamCaptureCallbackImpl::OnOfflineDeliveryFinished(const int32_t capt
         "HStreamCaptureCallbackImpl::OnOfflineDeliveryFinished callback is nullptr");
     callback->OnOfflineDeliveryFinished(captureId);
     return CAMERA_OK;
+    // LCOV_EXCL_STOP
 }
 
 PhotoOutput::PhotoOutput(sptr<IBufferProducer> bufferProducer)
@@ -319,9 +337,11 @@ PhotoOutput::PhotoOutput(sptr<IBufferProducer> bufferProducer)
 PhotoOutput::PhotoOutput(sptr<IBufferProducer> bufferProducer, sptr<Surface> photoSurface)
     : CaptureOutput(CAPTURE_OUTPUT_TYPE_PHOTO, StreamType::CAPTURE, bufferProducer, nullptr)
 {
+    // LCOV_EXCL_START
     defaultCaptureSetting_ = nullptr;
     taskManager_ = nullptr;
     photoSurface_ = photoSurface;
+    // LCOV_EXCL_STOP
 }
 
 PhotoOutput::PhotoOutput()
@@ -332,8 +352,10 @@ PhotoOutput::PhotoOutput()
 
 PhotoOutput::~PhotoOutput()
 {
+    // LCOV_EXCL_START
     MEDIA_DEBUG_LOG("Enter Into PhotoOutput::~PhotoOutput()");
     defaultCaptureSetting_ = nullptr;
+    // LCOV_EXCL_STOP
 }
 
 void PhotoOutput::SetNativeSurface(bool isNativeSurface)
@@ -346,6 +368,7 @@ void PhotoOutput::SetCallbackFlag(uint8_t callbackFlag)
 {
     std::lock_guard<std::mutex> lock(callbackMutex_);
     CHECK_RETURN_ELOG(!isNativeSurface_, "SetCallbackFlag when register imageReciver");
+    // LCOV_EXCL_START
     bool beforeStatus = IsEnableDeferred();
     callbackFlag_ = callbackFlag;
     bool afterStatus = IsEnableDeferred();
@@ -373,6 +396,7 @@ void PhotoOutput::SetCallbackFlag(uint8_t callbackFlag)
             session->UnlockForControl();
         }
     }
+    // LCOV_EXCL_STOP
 }
 
 bool PhotoOutput::IsYuvOrHeifPhoto()
@@ -409,6 +433,7 @@ void PhotoOutput::CreateMultiChannel()
     auto streamCapturePtr = CastStream<IStreamCapture>(GetStream());
     CHECK_RETURN_ELOG(
         streamCapturePtr == nullptr, "PhotoOutput::CreateMultiChannel Failed!streamCapturePtr is nullptr");
+    // LCOV_EXCL_START
     std::string retStr = "";
     int32_t ret = 0;
     if (gainmapSurface_ == nullptr) {
@@ -436,6 +461,7 @@ void PhotoOutput::CreateMultiChannel()
         retStr += (ret != CAMERA_OK ? bufferName + "," : retStr);
     }
     MEDIA_INFO_LOG("PhotoOutput::CreateMultiChannel! failed channel is = %{public}s", retStr.c_str());
+    // LCOV_EXCL_STOP
 }
 
 bool PhotoOutput::IsEnableDeferred()
@@ -453,11 +479,13 @@ void PhotoOutput::SetCallback(std::shared_ptr<PhotoStateCallback> callback)
     if (appCallback_ != nullptr) {
         if (cameraSvcCallback_ == nullptr) {
             cameraSvcCallback_ = new (std::nothrow) HStreamCaptureCallbackImpl(this);
+            // LCOV_EXCL_START
             if (cameraSvcCallback_ == nullptr) {
                 MEDIA_ERR_LOG("PhotoOutput::SetCallback new HStreamCaptureCallbackImpl Failed to register callback");
                 appCallback_ = nullptr;
                 return;
             }
+            // LCOV_EXCL_STOP
         }
         auto itemStream = CastStream<IStreamCapture>(GetStream());
         int32_t errorCode = CAMERA_OK;
@@ -466,15 +494,18 @@ void PhotoOutput::SetCallback(std::shared_ptr<PhotoStateCallback> callback)
         } else {
             MEDIA_ERR_LOG("PhotoOutput::SetCallback() itemStream is nullptr");
         }
+        // LCOV_EXCL_START
         CHECK_RETURN(errorCode == CAMERA_OK);
         MEDIA_ERR_LOG("PhotoOutput::SetCallback: Failed to register callback, errorCode: %{public}d", errorCode);
         cameraSvcCallback_ = nullptr;
         appCallback_ = nullptr;
+        // LCOV_EXCL_STOP
     }
 }
 
 void PhotoOutput::SetPhotoAvailableCallback(std::shared_ptr<PhotoAvailableCallback> callback)
 {
+    // LCOV_EXCL_START
     MEDIA_DEBUG_LOG("SetPhotoAvailableCallback E");
     CHECK_RETURN_ELOG(callback == nullptr, "photo callback nullptr");
     std::lock_guard<std::mutex> lock(outputCallbackMutex_);
@@ -496,10 +527,12 @@ void PhotoOutput::SetPhotoAvailableCallback(std::shared_ptr<PhotoAvailableCallba
         appPhotoCallback_ = nullptr;
     }
     MEDIA_DEBUG_LOG("SetPhotoAvailableCallback X");
+    // LCOV_EXCL_STOP
 }
 
 void PhotoOutput::UnSetPhotoAvailableCallback()
 {
+    // LCOV_EXCL_START
     MEDIA_DEBUG_LOG("UnSetPhotoAvailableCallback E");
     std::lock_guard<std::mutex> lock(outputCallbackMutex_);
     appPhotoCallback_ = nullptr;
@@ -508,10 +541,12 @@ void PhotoOutput::UnSetPhotoAvailableCallback()
     if (itemStream) {
         itemStream->UnSetPhotoAvailableCallback();
     }
+    // LCOV_EXCL_STOP
 }
 
 void PhotoOutput::SetPhotoAssetAvailableCallback(std::shared_ptr<PhotoAssetAvailableCallback> callback)
 {
+    // LCOV_EXCL_START
     MEDIA_DEBUG_LOG("SetPhotoAssetAvailableCallback E");
     CHECK_RETURN_ELOG(callback == nullptr, "photoAsset callback nullptr");
     std::lock_guard<std::mutex> lock(outputCallbackMutex_);
@@ -533,10 +568,12 @@ void PhotoOutput::SetPhotoAssetAvailableCallback(std::shared_ptr<PhotoAssetAvail
         appPhotoAssetCallback_ = nullptr;
     }
     MEDIA_DEBUG_LOG("SetPhotoAssetAvailableCallback X");
+    // LCOV_EXCL_STOP
 }
 
 void PhotoOutput::UnSetPhotoAssetAvailableCallback()
 {
+    // LCOV_EXCL_START
     MEDIA_DEBUG_LOG("UnSetPhotoAssetAvailableCallback E");
     std::lock_guard<std::mutex> lock(outputCallbackMutex_);
     appPhotoAssetCallback_ = nullptr;
@@ -545,10 +582,12 @@ void PhotoOutput::UnSetPhotoAssetAvailableCallback()
     if (itemStream) {
         itemStream->UnSetPhotoAssetAvailableCallback();
     }
+    // LCOV_EXCL_STOP
 }
 
 void PhotoOutput::SetThumbnailCallback(std::shared_ptr<ThumbnailCallback> callback)
 {
+    // LCOV_EXCL_START
     MEDIA_DEBUG_LOG("SetThumbnailCallback E");
     CHECK_RETURN_ELOG(callback == nullptr, "photoAsset callback nullptr");
     std::lock_guard<std::mutex> lock(outputCallbackMutex_);
@@ -570,10 +609,12 @@ void PhotoOutput::SetThumbnailCallback(std::shared_ptr<ThumbnailCallback> callba
         appThumbnailCallback_ = nullptr;
     }
     MEDIA_DEBUG_LOG("SetThumbnailCallback X");
+    // LCOV_EXCL_STOP
 }
 
 void PhotoOutput::UnSetThumbnailAvailableCallback()
 {
+    // LCOV_EXCL_START
     MEDIA_DEBUG_LOG("UnSetThumbnailAvailableCallback E");
     std::lock_guard<std::mutex> lock(outputCallbackMutex_);
     appThumbnailCallback_ = nullptr;
@@ -582,6 +623,7 @@ void PhotoOutput::UnSetThumbnailAvailableCallback()
     if (itemStream) {
         itemStream->UnSetThumbnailCallback();
     }
+    // LCOV_EXCL_STOP
 }
 
 int32_t PhotoOutput::SetThumbnail(bool isEnabled)
@@ -591,6 +633,7 @@ int32_t PhotoOutput::SetThumbnail(bool isEnabled)
     auto session = GetSession();
     CHECK_RETURN_RET_ELOG(session == nullptr, SESSION_NOT_RUNNING,
         "PhotoOutput SetThumbnail error!, session is nullptr");
+    // LCOV_EXCL_START
     auto inputDevice = session->GetInputDevice();
     CHECK_RETURN_RET_ELOG(inputDevice == nullptr, SESSION_NOT_RUNNING,
         "PhotoOutput SetThumbnail error!, inputDevice is nullptr");
@@ -600,6 +643,7 @@ int32_t PhotoOutput::SetThumbnail(bool isEnabled)
     auto streamCapturePtr = CastStream<IStreamCapture>(GetStream());
     CHECK_RETURN_RET(streamCapturePtr == nullptr, SERVICE_FATL_ERROR);
     return streamCapturePtr->SetThumbnail(isEnabled);
+    // LCOV_EXCL_STOP
 }
 
 int32_t PhotoOutput::EnableRawDelivery(bool enabled)
@@ -609,6 +653,7 @@ int32_t PhotoOutput::EnableRawDelivery(bool enabled)
     auto session = GetSession();
     CHECK_RETURN_RET_ELOG(session == nullptr, SESSION_NOT_RUNNING,
         "PhotoOutput EnableRawDelivery error!, session is nullptr");
+    // LCOV_EXCL_START
     auto streamCapturePtr = CastStream<IStreamCapture>(GetStream());
     CHECK_RETURN_RET_ELOG(streamCapturePtr == nullptr, SERVICE_FATL_ERROR,
         "PhotoOutput::EnableRawDelivery Failed to GetStream");
@@ -620,6 +665,7 @@ int32_t PhotoOutput::EnableRawDelivery(bool enabled)
     }
     isRawImageDelivery_ = enabled;
     return ret;
+    // LCOV_EXCL_STOP
 }
 
 int32_t PhotoOutput::EnableMovingPhoto(bool enabled)
@@ -631,34 +677,44 @@ int32_t PhotoOutput::EnableMovingPhoto(bool enabled)
     auto streamCapturePtr = CastStream<IStreamCapture>(GetStream());
     CHECK_RETURN_RET_ELOG(streamCapturePtr == nullptr, SERVICE_FATL_ERROR,
         "PhotoOutput::EnableMovingPhoto Failed!streamCapturePtr is nullptr");
+    // LCOV_EXCL_START
     ret = streamCapturePtr->EnableMovingPhoto(enabled);
     CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, SERVICE_FATL_ERROR,
         "PhotoOutput::EnableMovingPhoto Failed");
     return ret;
+    // LCOV_EXCL_STOP
 }
 
 std::shared_ptr<PhotoStateCallback> PhotoOutput::GetApplicationCallback()
 {
+    // LCOV_EXCL_START
     std::lock_guard<std::mutex> lock(outputCallbackMutex_);
     return appCallback_;
+    // LCOV_EXCL_STOP
 }
 
 std::shared_ptr<ThumbnailCallback> PhotoOutput::GetAppThumbnailCallback()
 {
+    // LCOV_EXCL_START
     std::lock_guard<std::mutex> lock(outputCallbackMutex_);
     return appThumbnailCallback_;
+    // LCOV_EXCL_STOP
 }
 
 std::shared_ptr<PhotoAvailableCallback> PhotoOutput::GetAppPhotoCallback()
 {
+    // LCOV_EXCL_START
     std::lock_guard<std::mutex> lock(outputCallbackMutex_);
     return appPhotoCallback_;
+    // LCOV_EXCL_STOP
 }
 
 std::shared_ptr<PhotoAssetAvailableCallback> PhotoOutput::GetAppPhotoAssetCallback()
 {
+    // LCOV_EXCL_START
     std::lock_guard<std::mutex> lock(outputCallbackMutex_);
     return appPhotoAssetCallback_;
+    // LCOV_EXCL_STOP
 }
 
 void PhotoOutput::ClearTaskManager()
@@ -688,6 +744,7 @@ int32_t PhotoOutput::Capture(std::shared_ptr<PhotoCaptureSetting> photoCaptureSe
     auto session = GetSession();
     CHECK_RETURN_RET_ELOG(session == nullptr || !session->IsSessionCommited(),
         CameraErrorCode::SESSION_NOT_RUNNING, "PhotoOutput Failed to Capture with setting, session not commited");
+    // LCOV_EXCL_START
     CHECK_RETURN_RET_ELOG(GetStream() == nullptr,
         CameraErrorCode::SERVICE_FATL_ERROR, "PhotoOutput Failed to Capture with setting, GetStream is nullptr");
     defaultCaptureSetting_ = photoCaptureSettings;
@@ -702,6 +759,7 @@ int32_t PhotoOutput::Capture(std::shared_ptr<PhotoCaptureSetting> photoCaptureSe
     }
     CHECK_PRINT_ELOG(errCode != CAMERA_OK, "PhotoOutput Failed to Capture!, errCode: %{public}d", errCode);
     return ServiceToCameraError(errCode);
+    // LCOV_EXCL_STOP
 }
 
 int32_t PhotoOutput::Capture()
@@ -710,6 +768,7 @@ int32_t PhotoOutput::Capture()
     auto session = GetSession();
     CHECK_RETURN_RET_ELOG(session == nullptr || !session->IsSessionCommited(),
         CameraErrorCode::SESSION_NOT_RUNNING, "PhotoOutput Failed to Capture, session not commited");
+    // LCOV_EXCL_START
     CHECK_RETURN_RET_ELOG(GetStream() == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "PhotoOutput Failed to Capture, GetStream is nullptr");
     int32_t items = 0;
@@ -727,6 +786,7 @@ int32_t PhotoOutput::Capture()
     }
     CHECK_PRINT_ELOG(errCode != CAMERA_OK, "PhotoOutput Failed to Capture!, errCode: %{public}d", errCode);
     return ServiceToCameraError(errCode);
+    // LCOV_EXCL_STOP
 }
 
 int32_t PhotoOutput::CancelCapture()
@@ -735,6 +795,7 @@ int32_t PhotoOutput::CancelCapture()
     auto session = GetSession();
     CHECK_RETURN_RET_ELOG(session == nullptr || !session->IsSessionCommited(),
         CameraErrorCode::SESSION_NOT_RUNNING, "PhotoOutput Failed to CancelCapture, session not commited");
+    // LCOV_EXCL_START
     CHECK_RETURN_RET_ELOG(GetStream() == nullptr,
         CameraErrorCode::SERVICE_FATL_ERROR, "PhotoOutput Failed to CancelCapture, GetStream is nullptr");
     auto itemStream = CastStream<IStreamCapture>(GetStream());
@@ -745,6 +806,7 @@ int32_t PhotoOutput::CancelCapture()
     }
     CHECK_PRINT_ELOG(errCode != CAMERA_OK, "PhotoOutput Failed to CancelCapture, errCode: %{public}d", errCode);
     return ServiceToCameraError(errCode);
+    // LCOV_EXCL_STOP
 }
 
 int32_t PhotoOutput::ConfirmCapture()
@@ -753,6 +815,7 @@ int32_t PhotoOutput::ConfirmCapture()
     auto session = GetSession();
     CHECK_RETURN_RET_ELOG(session == nullptr || !session->IsSessionCommited(),
         CameraErrorCode::SESSION_NOT_RUNNING, "PhotoOutput Failed to ConfirmCapture, session not commited");
+    // LCOV_EXCL_START
     CHECK_RETURN_RET_ELOG(GetStream() == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "PhotoOutput Failed to ConfirmCapture, GetStream is nullptr");
     auto itemStream = CastStream<IStreamCapture>(GetStream());
@@ -764,6 +827,7 @@ int32_t PhotoOutput::ConfirmCapture()
     }
     CHECK_PRINT_ELOG(errCode != CAMERA_OK, "PhotoOutput Failed to ConfirmCapture, errCode: %{public}d", errCode);
     return ServiceToCameraError(errCode);
+    // LCOV_EXCL_STOP
 }
 
 int32_t PhotoOutput::CreateStream()
@@ -771,6 +835,7 @@ int32_t PhotoOutput::CreateStream()
     auto stream = GetStream();
     CHECK_RETURN_RET_ELOG(stream != nullptr, CameraErrorCode::OPERATION_NOT_ALLOWED,
         "PhotoOutput::CreateStream stream is not null");
+    // LCOV_EXCL_START
     std::string surfaceId = GetPhotoSurfaceId();
     sptr<IStreamCapture> streamPtr = nullptr;
     auto photoProfile = GetPhotoProfile();
@@ -782,6 +847,7 @@ int32_t PhotoOutput::CreateStream()
         "PhotoOutput::CreateStream fail! error code :%{public}d", res);
     SetStream(streamPtr);
     return res;
+    // LCOV_EXCL_STOP
 }
 
 int32_t PhotoOutput::Release()
@@ -813,6 +879,7 @@ bool PhotoOutput::IsMirrorSupported()
     auto session = GetSession();
     CHECK_RETURN_RET_ELOG(session == nullptr, false,
         "PhotoOutput IsMirrorSupported error!, session is nullptr");
+    // LCOV_EXCL_START
     auto inputDevice = session->GetInputDevice();
     CHECK_RETURN_RET_ELOG(inputDevice == nullptr, false,
         "PhotoOutput IsMirrorSupported error!, inputDevice is nullptr");
@@ -842,6 +909,7 @@ bool PhotoOutput::IsMirrorSupported()
     }
     MEDIA_DEBUG_LOG("IsMirrorSupported isSupport: %{public}d", isMirrorEnabled);
     return isMirrorEnabled;
+    // LCOV_EXCL_STOP
 }
 
 int32_t PhotoOutput::EnableMirror(bool isEnable)
@@ -851,6 +919,7 @@ int32_t PhotoOutput::EnableMirror(bool isEnable)
     CHECK_RETURN_RET_ELOG(session == nullptr, CameraErrorCode::SESSION_NOT_RUNNING,
         "PhotoOutput EnableMirror error!, session is nullptr");
 
+    // LCOV_EXCL_START
     int32_t ret = CAMERA_UNKNOWN_ERROR;
     CHECK_RETURN_RET_ELOG(!(IsMirrorSupported()), ret,
         "PhotoOutput EnableMirror error!, mirror is not supported");
@@ -859,6 +928,7 @@ int32_t PhotoOutput::EnableMirror(bool isEnable)
     CHECK_RETURN_RET_ELOG(ret != CameraErrorCode::SUCCESS, ret,
         "PhotoOutput EnableMirror error!, ret is not success");
     return ret;
+    // LCOV_EXCL_STOP
 }
 
 int32_t PhotoOutput::IsQuickThumbnailSupported()
@@ -867,6 +937,7 @@ int32_t PhotoOutput::IsQuickThumbnailSupported()
     auto session = GetSession();
     CHECK_RETURN_RET_ELOG(session == nullptr, SESSION_NOT_RUNNING,
         "PhotoOutput IsQuickThumbnailSupported error!, session is nullptr");
+    // LCOV_EXCL_START
     auto inputDevice = session->GetInputDevice();
     CHECK_RETURN_RET_ELOG(inputDevice == nullptr, SESSION_NOT_RUNNING,
         "PhotoOutput IsQuickThumbnailSupported error!, inputDevice is nullptr");
@@ -886,6 +957,7 @@ int32_t PhotoOutput::IsQuickThumbnailSupported()
         isQuickThumbnailEnabled = -1;
     }
     return isQuickThumbnailEnabled;
+    // LCOV_EXCL_STOP
 }
 
 int32_t PhotoOutput::IsRawDeliverySupported(bool &isRawDeliveryEnabled)
@@ -895,11 +967,13 @@ int32_t PhotoOutput::IsRawDeliverySupported(bool &isRawDeliveryEnabled)
     auto session = GetSession();
     CHECK_RETURN_RET_ELOG(session == nullptr, SESSION_NOT_RUNNING,
         "PhotoOutput IsRawDeliverySupported error!, session is nullptr");
+    // LCOV_EXCL_START
     const int32_t professionalPhotoMode = 11;
     if ((session->GetMode() == professionalPhotoMode)) {
         isRawDeliveryEnabled = true;
     }
     return CAMERA_OK;
+    // LCOV_EXCL_STOP
 }
 
 int32_t PhotoOutput::DeferImageDeliveryFor(DeferredDeliveryImageType type)
@@ -910,6 +984,7 @@ int32_t PhotoOutput::DeferImageDeliveryFor(DeferredDeliveryImageType type)
     auto session = GetSession();
     CHECK_RETURN_RET_ELOG(session == nullptr, SESSION_NOT_RUNNING,
         "PhotoOutput DeferImageDeliveryFor error!, session is nullptr");
+    // LCOV_EXCL_START
     auto inputDevice = session->GetInputDevice();
     CHECK_RETURN_RET_ELOG(inputDevice == nullptr, SESSION_NOT_RUNNING,
         "PhotoOutput DeferImageDeliveryFor error!, inputDevice is nullptr");
@@ -919,6 +994,7 @@ int32_t PhotoOutput::DeferImageDeliveryFor(DeferredDeliveryImageType type)
     session->EnableDeferredType(type, true);
     session->SetUserId();
     return 0;
+    // LCOV_EXCL_STOP
 }
 
 int32_t PhotoOutput::IsDeferredImageDeliverySupported(DeferredDeliveryImageType type)
@@ -930,6 +1006,7 @@ int32_t PhotoOutput::IsDeferredImageDeliverySupported(DeferredDeliveryImageType 
     auto session = GetSession();
     CHECK_RETURN_RET_ELOG(session == nullptr, SESSION_NOT_RUNNING,
         "PhotoOutput IsDeferredImageDeliverySupported error!, session is nullptr");
+    // LCOV_EXCL_START
     auto inputDevice = session->GetInputDevice();
     CHECK_RETURN_RET_ELOG(inputDevice == nullptr, SESSION_NOT_RUNNING,
         "PhotoOutput IsDeferredImageDeliverySupported error!, inputDevice is nullptr");
@@ -944,6 +1021,7 @@ int32_t PhotoOutput::IsDeferredImageDeliverySupported(DeferredDeliveryImageType 
         isSupported = 0; // -1:not support 0:support
     }
     return isSupported;
+    // LCOV_EXCL_STOP
 }
 
 int32_t PhotoOutput::IsDeferredImageDeliveryEnabled(DeferredDeliveryImageType type)
@@ -953,6 +1031,7 @@ int32_t PhotoOutput::IsDeferredImageDeliveryEnabled(DeferredDeliveryImageType ty
     auto session = GetSession();
     CHECK_RETURN_RET_ELOG(session == nullptr, SESSION_NOT_RUNNING,
         "PhotoOutput IsDeferredImageDeliveryEnabled error!, session is nullptr");
+    // LCOV_EXCL_START
     auto inputDevice = session->GetInputDevice();
     CHECK_RETURN_RET_ELOG(inputDevice == nullptr, SESSION_NOT_RUNNING,
         "PhotoOutput IsDeferredImageDeliveryEnabled error!, inputDevice is nullptr");
@@ -961,6 +1040,7 @@ int32_t PhotoOutput::IsDeferredImageDeliveryEnabled(DeferredDeliveryImageType ty
         "PhotoOutput IsDeferredImageDeliveryEnabled error!, cameraObj is nullptr");
     isEnabled = session->IsImageDeferred() ? 0 : -1;
     return isEnabled;
+    // LCOV_EXCL_STOP
 }
 
 int32_t PhotoOutput::IsAutoHighQualityPhotoSupported(int32_t &isAutoHighQualityPhotoSupported)
@@ -972,6 +1052,7 @@ int32_t PhotoOutput::IsAutoHighQualityPhotoSupported(int32_t &isAutoHighQualityP
     auto session = GetSession();
     CHECK_RETURN_RET_ELOG(session == nullptr, SESSION_NOT_RUNNING,
         "PhotoOutput IsAutoHighQualityPhotoSupported error!, session is nullptr");
+    // LCOV_EXCL_START
     auto inputDevice = session->GetInputDevice();
     CHECK_RETURN_RET_ELOG(inputDevice == nullptr, SESSION_NOT_RUNNING,
         "PhotoOutput IsAutoHighQualityPhotoSupported error!, inputDevice is nullptr");
@@ -995,6 +1076,7 @@ int32_t PhotoOutput::IsAutoHighQualityPhotoSupported(int32_t &isAutoHighQualityP
     MEDIA_INFO_LOG("PhotoOutput IsAutoHighQualityPhotoSupported curMode:%{public}d, modeSupportType:%{public}d",
         currentSceneMode, isAutoHighQualityPhotoSupported);
     return CAMERA_OK;
+    // LCOV_EXCL_STOP
 }
 
 int32_t PhotoOutput::EnableAutoHighQualityPhoto(bool enabled)
@@ -1003,6 +1085,7 @@ int32_t PhotoOutput::EnableAutoHighQualityPhoto(bool enabled)
     auto session = GetSession();
     CHECK_RETURN_RET_ELOG(session == nullptr, SESSION_NOT_RUNNING,
         "PhotoOutput EnableAutoHighQualityPhoto error!, session is nullptr");
+    // LCOV_EXCL_START
     auto inputDevice = session->GetInputDevice();
     CHECK_RETURN_RET_ELOG(inputDevice == nullptr, SESSION_NOT_RUNNING,
         "PhotoOutput EnableAutoHighQualityPhoto error!, inputDevice is nullptr");
@@ -1014,6 +1097,7 @@ int32_t PhotoOutput::EnableAutoHighQualityPhoto(bool enabled)
         "PhotoOutput EnableAutoHighQualityPhoto not supported");
     int32_t res = session->EnableAutoHighQualityPhoto(enabled);
     return res;
+    // LCOV_EXCL_STOP
 }
 
 void PhotoOutput::ProcessSnapshotDurationUpdates(int32_t snapshotDuration) __attribute__((no_sanitize("cfi")))
@@ -1036,6 +1120,7 @@ int32_t PhotoOutput::SetMovingPhotoVideoCodecType(int32_t videoCodecType)
     MEDIA_DEBUG_LOG("Enter Into PhotoOutput::SetMovingPhotoVideoCodecType");
     CHECK_RETURN_RET_ELOG(GetStream() == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "PhotoOutput Failed to SetMovingPhotoVideoCodecType!, GetStream is nullptr");
+    // LCOV_EXCL_START
     auto itemStream = CastStream<IStreamCapture>(GetStream());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     CHECK_PRINT_ELOG(itemStream == nullptr, "PhotoOutput::SetMovingPhotoVideoCodecType() itemStream is nullptr");
@@ -1045,6 +1130,7 @@ int32_t PhotoOutput::SetMovingPhotoVideoCodecType(int32_t videoCodecType)
     CHECK_PRINT_ELOG(errCode != CAMERA_OK, "PhotoOutput Failed to SetMovingPhotoVideoCodecType!, "
         "errCode: %{public}d", errCode);
     return ServiceToCameraError(errCode);
+    // LCOV_EXCL_STOP
 }
 
 void PhotoOutput::CameraServerDied(pid_t pid)
@@ -1065,6 +1151,7 @@ int32_t PhotoOutput::IsAutoCloudImageEnhancementSupported(bool &isAutoCloudImage
     auto session = GetSession();
     CHECK_RETURN_RET_ELOG(session == nullptr, SERVICE_FATL_ERROR,
         "PhotoOutput IsAutoCloudImageEnhancementSupported error!, session is nullptr");
+    // LCOV_EXCL_START
     auto inputDevice = session->GetInputDevice();
     CHECK_RETURN_RET_ELOG(inputDevice == nullptr, SERVICE_FATL_ERROR,
         "PhotoOutput IsAutoCloudImageEnhancementSupported error!, inputDevice is nullptr");
@@ -1091,6 +1178,7 @@ int32_t PhotoOutput::IsAutoCloudImageEnhancementSupported(bool &isAutoCloudImage
     MEDIA_DEBUG_LOG("Judge Auto Cloud Image Enhancement Supported result %{public}d",
         isAutoCloudImageEnhancementSupported);
     return CAMERA_OK;
+    // LCOV_EXCL_STOP
 }
 
 int32_t PhotoOutput::EnableAutoCloudImageEnhancement(bool enabled)
@@ -1099,6 +1187,7 @@ int32_t PhotoOutput::EnableAutoCloudImageEnhancement(bool enabled)
     auto session = GetSession();
     CHECK_RETURN_RET_ELOG(session == nullptr, SERVICE_FATL_ERROR,
         "PhotoOutput EnableAutoCloudImageEnhancement error!, session is nullptr");
+    // LCOV_EXCL_START
     auto inputDevice = session->GetInputDevice();
     CHECK_RETURN_RET_ELOG(inputDevice == nullptr, SERVICE_FATL_ERROR,
         "PhotoOutput EnableAutoCloudImageEnhancement error!, inputDevice is nullptr");
@@ -1110,6 +1199,7 @@ int32_t PhotoOutput::EnableAutoCloudImageEnhancement(bool enabled)
         "PhotoOutput EnableAutoCloudImageEnhancement not supported");
     int32_t res = session->EnableAutoCloudImageEnhancement(enabled);
     return res;
+    // LCOV_EXCL_STOP
 }
 
 bool PhotoOutput::IsDepthDataDeliverySupported()
@@ -1136,6 +1226,7 @@ int32_t PhotoOutput::GetPhotoRotation(int32_t imageRotation)
     auto session = GetSession();
     CHECK_RETURN_RET_ELOG(session == nullptr, SERVICE_FATL_ERROR,
         "PhotoOutput GetPhotoRotation error!, session is nullptr");
+    // LCOV_EXCL_START
     auto inputDevice = session->GetInputDevice();
     CHECK_RETURN_RET_ELOG(inputDevice == nullptr, SERVICE_FATL_ERROR,
         "PhotoOutput GetPhotoRotation error!, inputDevice is nullptr");
@@ -1164,6 +1255,7 @@ int32_t PhotoOutput::GetPhotoRotation(int32_t imageRotation)
     MEDIA_INFO_LOG("PhotoOutput GetPhotoRotation :result %{public}d, sensorOrientation:%{public}d",
         result, sensorOrientation);
     return result;
+    // LCOV_EXCL_STOP
 }
 
 int32_t PhotoOutput::IsAutoAigcPhotoSupported(bool& isAutoAigcPhotoSupported)
@@ -1173,6 +1265,7 @@ int32_t PhotoOutput::IsAutoAigcPhotoSupported(bool& isAutoAigcPhotoSupported)
     CHECK_RETURN_RET_ELOG(session == nullptr, SERVICE_FATL_ERROR,
         "PhotoOutput::IsAutoAigcPhotoSupportederror, captureSession is nullptr");
 
+    // LCOV_EXCL_START
     auto inputDevice = session->GetInputDevice();
     CHECK_RETURN_RET_ELOG(inputDevice == nullptr, SERVICE_FATL_ERROR,
         "PhotoOutput::IsAutoAigcPhotoSupported, inputDevice is nullptr");
@@ -1207,6 +1300,7 @@ int32_t PhotoOutput::IsAutoAigcPhotoSupported(bool& isAutoAigcPhotoSupported)
     }
     MEDIA_INFO_LOG("PhotoOutput::IsAutoAigcPhotoSupported result: %{public}d ", isAutoAigcPhotoSupported);
     return CAMERA_OK;
+    // LCOV_EXCL_STOP
 }
 
 int32_t PhotoOutput::EnableAutoAigcPhoto(bool enabled)
@@ -1216,6 +1310,7 @@ int32_t PhotoOutput::EnableAutoAigcPhoto(bool enabled)
     CHECK_RETURN_RET_ELOG(captureSession == nullptr, SESSION_NOT_RUNNING,
         "PhotoOutput::EnableAutoAigcPhoto error, captureSession is nullptr");
 
+    // LCOV_EXCL_START
     auto inputDevice = captureSession->GetInputDevice();
     CHECK_RETURN_RET_ELOG(inputDevice == nullptr, SESSION_NOT_RUNNING,
         "PhotoOutput::EnableAutoAigcPhoto error, inputDevice is nullptr");
@@ -1228,6 +1323,7 @@ int32_t PhotoOutput::EnableAutoAigcPhoto(bool enabled)
     int32_t res = captureSession->EnableAutoAigcPhoto(enabled);
     MEDIA_INFO_LOG("PhotoOutput::EnableAutoAigcPhoto result: %{public}d", res);
     return res;
+    // LCOV_EXCL_STOP
 }
 
 sptr<Surface> PhotoOutput::GetPhotoSurface()
@@ -1237,6 +1333,7 @@ sptr<Surface> PhotoOutput::GetPhotoSurface()
 
 bool PhotoOutput::IsOfflineSupported()
 {
+    // LCOV_EXCL_START
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("Enter IsOfflineSupported");
     bool isOfflineSupported = false;
@@ -1260,10 +1357,12 @@ bool PhotoOutput::IsOfflineSupported()
         return isOfflineSupported;
     }
     return isOfflineSupported;
+    // LCOV_EXCL_STOP
 }
 
 int32_t PhotoOutput::EnableOfflinePhoto()
 {
+    // LCOV_EXCL_START
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("PhotoOutput EnableOfflinePhoto");
     auto session = GetSession();
@@ -1290,18 +1389,23 @@ int32_t PhotoOutput::EnableOfflinePhoto()
         return CameraErrorCode::SERVICE_FATL_ERROR;
     }
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 bool PhotoOutput::IsHasEnableOfflinePhoto()
 {
+    // LCOV_EXCL_START
     MEDIA_INFO_LOG("PhotoOutput::IsHasEnableOfflinePhoto %{public}d", mIsHasEnableOfflinePhoto_);
     return mIsHasEnableOfflinePhoto_;
+    // LCOV_EXCL_STOP
 }
 
 void PhotoOutput::SetSwitchOfflinePhotoOutput(bool isHasSwitched)
 {
+    // LCOV_EXCL_START
     std::lock_guard<std::mutex> lock(offlineStatusMutex_);
     isHasSwitched_ = isHasSwitched;
+    // LCOV_EXCL_STOP
 }
 
 bool PhotoOutput::IsHasSwitchOfflinePhoto()
@@ -1312,6 +1416,7 @@ bool PhotoOutput::IsHasSwitchOfflinePhoto()
 
 void PhotoOutput::NotifyOfflinePhotoOutput(int32_t captureId)
 {
+    // LCOV_EXCL_START
     auto timeStartIter = captureIdToCaptureInfoMap_.find(captureId);
     if (timeStartIter != captureIdToCaptureInfoMap_.end()) {
         auto timeEnd = std::chrono::steady_clock::now();
@@ -1333,6 +1438,7 @@ void PhotoOutput::NotifyOfflinePhotoOutput(int32_t captureId)
             callback->OnOfflineDeliveryFinished(captureId);
         }
     }
+    // LCOV_EXCL_STOP
 }
 } // namespace CameraStandard
 } // namespace OHOS

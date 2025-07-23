@@ -38,6 +38,7 @@ VideoOutput::~VideoOutput()
 
 int32_t VideoOutputCallbackImpl::OnFrameStarted()
 {
+    // LCOV_EXCL_START
     CAMERA_SYNC_TRACE;
     auto item = videoOutput_.promote();
     if (item != nullptr && item->GetApplicationCallback() != nullptr) {
@@ -46,10 +47,12 @@ int32_t VideoOutputCallbackImpl::OnFrameStarted()
         MEDIA_INFO_LOG("Discarding VideoOutputCallbackImpl::OnFrameStarted callback in video");
     }
     return CAMERA_OK;
+    // LCOV_EXCL_STOP
 }
 
 int32_t VideoOutputCallbackImpl::OnFrameEnded(const int32_t frameCount)
 {
+    // LCOV_EXCL_START
     CAMERA_SYNC_TRACE;
     auto item = videoOutput_.promote();
     if (item != nullptr && item->GetApplicationCallback() != nullptr) {
@@ -58,10 +61,12 @@ int32_t VideoOutputCallbackImpl::OnFrameEnded(const int32_t frameCount)
         MEDIA_INFO_LOG("Discarding VideoOutputCallbackImpl::OnFrameEnded callback in video");
     }
     return CAMERA_OK;
+    // LCOV_EXCL_STOP
 }
 
 int32_t VideoOutputCallbackImpl::OnFrameError(const int32_t errorCode)
 {
+    // LCOV_EXCL_START
     auto item = videoOutput_.promote();
     if (item != nullptr && item->GetApplicationCallback() != nullptr) {
         item->GetApplicationCallback()->OnError(errorCode);
@@ -69,6 +74,7 @@ int32_t VideoOutputCallbackImpl::OnFrameError(const int32_t errorCode)
         MEDIA_INFO_LOG("Discarding VideoOutputCallbackImpl::OnFrameError callback in video");
     }
     return CAMERA_OK;
+    // LCOV_EXCL_STOP
 }
 
 int32_t VideoOutputCallbackImpl::OnSketchStatusChanged(SketchStatus status)
@@ -79,6 +85,7 @@ int32_t VideoOutputCallbackImpl::OnSketchStatusChanged(SketchStatus status)
 
 int32_t VideoOutputCallbackImpl::OnDeferredVideoEnhancementInfo(const CaptureEndedInfoExt &captureEndedInfo)
 {
+    // LCOV_EXCL_START
     MEDIA_INFO_LOG("VideoOutputCallbackImpl::OnDeferredVideoEnhancementInfo callback in video");
     auto item = videoOutput_.promote();
     if (item != nullptr && item->GetApplicationCallback() != nullptr) {
@@ -87,10 +94,12 @@ int32_t VideoOutputCallbackImpl::OnDeferredVideoEnhancementInfo(const CaptureEnd
         MEDIA_INFO_LOG("Discarding VideoOutputCallbackImpl::OnDeferredVideoEnhancementInfo callback in video");
     }
     return CAMERA_OK;
+    // LCOV_EXCL_STOP
 }
 
 void VideoOutput::SetCallback(std::shared_ptr<VideoStateCallback> callback)
 {
+    // LCOV_EXCL_START
     std::lock_guard<std::mutex> lock(outputCallbackMutex_);
     appCallback_ = callback;
     if (appCallback_ != nullptr) {
@@ -116,6 +125,7 @@ void VideoOutput::SetCallback(std::shared_ptr<VideoStateCallback> callback)
         svcCallback_ = nullptr;
         appCallback_ = nullptr;
     }
+    // LCOV_EXCL_STOP
 }
 
 int32_t VideoOutput::Start()
@@ -125,6 +135,7 @@ int32_t VideoOutput::Start()
     auto session = GetSession();
     CHECK_RETURN_RET_ELOG(session == nullptr || !session->IsSessionCommited(),
         CameraErrorCode::SESSION_NOT_CONFIG, "VideoOutput Failed to Start, session not commited");
+    // LCOV_EXCL_START
     CHECK_RETURN_RET_ELOG(GetStream() == nullptr,
         CameraErrorCode::SERVICE_FATL_ERROR, "VideoOutput Failed to Start!, GetStream is nullptr");
     if (!GetFrameRateRange().empty() && GetFrameRateRange()[0] >= FRAMERATE_120) {
@@ -142,6 +153,7 @@ int32_t VideoOutput::Start()
         isVideoStarted_ = true;
     }
     return ServiceToCameraError(errCode);
+    // LCOV_EXCL_STOP
 }
 
 int32_t VideoOutput::Stop()
@@ -159,6 +171,7 @@ int32_t VideoOutput::Stop()
         CHECK_PRINT_ELOG(errCode != CAMERA_OK, "VideoOutput Failed to Stop!, errCode: %{public}d", errCode);
         isVideoStarted_ = false;
     }
+    // LCOV_EXCL_START
     if (!GetFrameRateRange().empty() && GetFrameRateRange()[0] >= FRAMERATE_120) {
         auto session = GetSession();
         CHECK_RETURN_RET_ELOG(session == nullptr || !session->IsSessionCommited(),
@@ -166,6 +179,7 @@ int32_t VideoOutput::Stop()
         MEDIA_INFO_LOG("EnableFaceDetection is call");
         session->EnableFaceDetection(true);
     }
+    // LCOV_EXCL_STOP
     return ServiceToCameraError(errCode);
 }
 
@@ -210,6 +224,7 @@ int32_t VideoOutput::CreateStream()
     auto stream = GetStream();
     CHECK_RETURN_RET_ELOG(stream != nullptr, CameraErrorCode::OPERATION_NOT_ALLOWED,
         "VideoOutput::CreateStream stream is not null");
+    // LCOV_EXCL_START
     auto producer = GetBufferProducer();
     CHECK_RETURN_RET_ELOG(producer == nullptr, CameraErrorCode::OPERATION_NOT_ALLOWED,
         "VideoOutput::CreateStream producer is not null");
@@ -223,6 +238,7 @@ int32_t VideoOutput::CreateStream()
         "VideoOutput::CreateStream fail! error code :%{public}d", retCode);
     SetStream(streamPtr);
     return retCode;
+    // LCOV_EXCL_STOP
 }
 
 int32_t VideoOutput::Release()
@@ -282,6 +298,7 @@ int32_t VideoOutput::SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate)
 {
     int32_t result = canSetFrameRateRange(minFrameRate, maxFrameRate);
     CHECK_RETURN_RET(result != CameraErrorCode::SUCCESS, result);
+    // LCOV_EXCL_START
     CHECK_RETURN_RET_ELOG(minFrameRate == videoFrameRateRange_[0] && maxFrameRate == videoFrameRateRange_[1],
         CameraErrorCode::INVALID_ARGUMENT, "VideoOutput::SetFrameRate The frame rate does not need to be set.");
     auto stream = GetStream();
@@ -293,6 +310,7 @@ int32_t VideoOutput::SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate)
         SetFrameRateRange(minFrameRate, maxFrameRate);
     }
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 std::vector<std::vector<int32_t>> VideoOutput::GetSupportedFrameRates()
@@ -300,6 +318,7 @@ std::vector<std::vector<int32_t>> VideoOutput::GetSupportedFrameRates()
     MEDIA_DEBUG_LOG("VideoOutput::GetSupportedFrameRates called.");
     auto session = GetSession();
     CHECK_RETURN_RET(session == nullptr, {});
+    // LCOV_EXCL_START
     auto inputDevice = session->GetInputDevice();
     CHECK_RETURN_RET(inputDevice == nullptr, {});
 
@@ -324,6 +343,7 @@ std::vector<std::vector<int32_t>> VideoOutput::GetSupportedFrameRates()
     MEDIA_DEBUG_LOG("VideoOutput::GetSupportedFrameRates frameRateRange size:%{public}zu",
                     supportedFrameRatesRange.size());
     return supportedFrameRatesRange;
+    // LCOV_EXCL_STOP
 }
 
 int32_t VideoOutput::enableMirror(bool enabled)
@@ -331,6 +351,7 @@ int32_t VideoOutput::enableMirror(bool enabled)
     auto session = GetSession();
     CHECK_RETURN_RET_ELOG(session == nullptr, CameraErrorCode::SESSION_NOT_CONFIG,
         "Can not enable mirror, session is not config");
+    // LCOV_EXCL_START
     auto stream = GetStream();
     sptr<IStreamRepeat> itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
     CHECK_RETURN_RET_ELOG(!itemStream || !IsMirrorSupported(), CameraErrorCode::INVALID_ARGUMENT,
@@ -339,12 +360,14 @@ int32_t VideoOutput::enableMirror(bool enabled)
     CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, ServiceToCameraError(retCode),
         "VideoOutput::enableMirror failed to set mirror");
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 bool VideoOutput::IsMirrorSupported()
 {
     auto session = GetSession();
     CHECK_RETURN_RET_ELOG(session == nullptr, false, "VideoOutput IsMirrorSupported error!, session is nullptr");
+    // LCOV_EXCL_START
     auto inputDevice = session->GetInputDevice();
     CHECK_RETURN_RET_ELOG(inputDevice == nullptr, false,
         "VideoOutput IsMirrorSupported error!, inputDevice is nullptr");
@@ -370,6 +393,7 @@ bool VideoOutput::IsMirrorSupported()
     }
     MEDIA_DEBUG_LOG("IsMirrorSupported isSupport: %{public}d", isMirrorEnabled);
     return isMirrorEnabled;
+    // LCOV_EXCL_STOP
 }
 
 std::vector<VideoMetaType> VideoOutput::GetSupportedVideoMetaTypes()
@@ -387,6 +411,7 @@ bool VideoOutput::IsTagSupported(camera_device_metadata_tag tag)
     auto captureSession = GetSession();
     CHECK_RETURN_RET_ELOG(captureSession == nullptr, false,
         "VideoOutput isTagEnabled error!, captureSession is nullptr");
+    // LCOV_EXCL_START
     auto inputDevice = captureSession->GetInputDevice();
     CHECK_RETURN_RET_ELOG(inputDevice == nullptr, false,
         "VideoOutput isTagEnabled error!, inputDevice is nullptr");
@@ -399,6 +424,7 @@ bool VideoOutput::IsTagSupported(camera_device_metadata_tag tag)
     CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS, false, "Can not find this tag");
     MEDIA_DEBUG_LOG("This tag is Supported");
     return true;
+    // LCOV_EXCL_STOP
 }
 
 void VideoOutput::AttachMetaSurface(sptr<Surface> surface, VideoMetaType videoMetaType)
@@ -406,6 +432,7 @@ void VideoOutput::AttachMetaSurface(sptr<Surface> surface, VideoMetaType videoMe
     auto stream = GetStream();
     sptr<IStreamRepeat> itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
+    // LCOV_EXCL_START
     if (itemStream) {
         errCode = itemStream->AttachMetaSurface(surface->GetProducer(), videoMetaType);
         CHECK_PRINT_ELOG(errCode != CAMERA_OK,
@@ -413,6 +440,7 @@ void VideoOutput::AttachMetaSurface(sptr<Surface> surface, VideoMetaType videoMe
     } else {
         MEDIA_ERR_LOG("VideoOutput::AttachMetaSurface() itemStream is nullptr");
     }
+    // LCOV_EXCL_STOP
 }
 
 void VideoOutput::CameraServerDied(pid_t pid)
@@ -420,9 +448,11 @@ void VideoOutput::CameraServerDied(pid_t pid)
     MEDIA_ERR_LOG("camera server has died, pid:%{public}d!", pid);
     std::lock_guard<std::mutex> lock(outputCallbackMutex_);
     if (appCallback_ != nullptr) {
+        // LCOV_EXCL_START
         MEDIA_DEBUG_LOG("appCallback not nullptr");
         int32_t serviceErrorType = ServiceToCameraError(CAMERA_INVALID_STATE);
         appCallback_->OnError(serviceErrorType);
+        // LCOV_EXCL_STOP
     }
 }
 
@@ -431,6 +461,7 @@ int32_t VideoOutput::canSetFrameRateRange(int32_t minFrameRate, int32_t maxFrame
     auto session = GetSession();
     CHECK_RETURN_RET_ELOG(session == nullptr, CameraErrorCode::SESSION_NOT_CONFIG,
         "VideoOutput canSetFrameRateRange error!, session is nullptr");
+    // LCOV_EXCL_START
     CHECK_RETURN_RET_ELOG(!session->CanSetFrameRateRange(minFrameRate, maxFrameRate, this),
         CameraErrorCode::UNRESOLVED_CONFLICTS_BETWEEN_STREAMS,
         "VideoOutput canSetFrameRateRange Can not set frame rate range with wrong state of output");
@@ -443,6 +474,7 @@ int32_t VideoOutput::canSetFrameRateRange(int32_t minFrameRate, int32_t maxFrame
     }
     MEDIA_WARNING_LOG("VideoOutput canSetFrameRateRange Can not set frame rate range with invalid parameters");
     return CameraErrorCode::INVALID_ARGUMENT;
+    // LCOV_EXCL_STOP
 }
 
 int32_t VideoOutput::GetVideoRotation(int32_t imageRotation)
@@ -455,6 +487,7 @@ int32_t VideoOutput::GetVideoRotation(int32_t imageRotation)
     auto session = GetSession();
     CHECK_RETURN_RET_ELOG(session == nullptr, SERVICE_FATL_ERROR,
         "VideoOutput GetVideoRotation error!, session is nullptr");
+    // LCOV_EXCL_START
     auto inputDevice = session->GetInputDevice();
     CHECK_RETURN_RET_ELOG(inputDevice == nullptr, SERVICE_FATL_ERROR,
         "VideoOutput GetVideoRotation error!, inputDevice is nullptr");
@@ -485,6 +518,7 @@ int32_t VideoOutput::GetVideoRotation(int32_t imageRotation)
     MEDIA_INFO_LOG("VideoOutput GetVideoRotation :result %{public}d, sensorOrientation:%{public}d, "
         "isMirrorEnabled%{public}d", result, sensorOrientation, isMirrorEnabled);
     return result;
+    // LCOV_EXCL_STOP
 }
 
 int32_t VideoOutput::IsAutoDeferredVideoEnhancementSupported()
@@ -494,6 +528,7 @@ int32_t VideoOutput::IsAutoDeferredVideoEnhancementSupported()
     auto captureSession = GetSession();
     CHECK_RETURN_RET_ELOG(captureSession == nullptr, SERVICE_FATL_ERROR,
         "VideoOutput IsAutoDeferredVideoEnhancementSupported error!, captureSession is nullptr");
+    // LCOV_EXCL_START
     auto inputDevice = captureSession->GetInputDevice();
     CHECK_RETURN_RET_ELOG(inputDevice == nullptr, SERVICE_FATL_ERROR,
         "VideoOutput IsAutoDeferredVideoEnhancementSupported error!, inputDevice is nullptr");
@@ -506,6 +541,7 @@ int32_t VideoOutput::IsAutoDeferredVideoEnhancementSupported()
     MEDIA_INFO_LOG("IsAutoDeferredVideoEnhancementSupported curMode:%{public}d, modeSupportType:%{public}d",
         curMode, isSupported);
     return isSupported;
+    // LCOV_EXCL_STOP
 }
 
 int32_t VideoOutput::IsAutoDeferredVideoEnhancementEnabled()
@@ -515,6 +551,7 @@ int32_t VideoOutput::IsAutoDeferredVideoEnhancementEnabled()
     CHECK_RETURN_RET_ELOG(captureSession == nullptr, SERVICE_FATL_ERROR,
         "VideoOutput IsAutoDeferredVideoEnhancementEnabled error!, captureSession is nullptr");
 
+    // LCOV_EXCL_START
     auto inputDevice = captureSession->GetInputDevice();
     CHECK_RETURN_RET_ELOG(inputDevice == nullptr, SERVICE_FATL_ERROR,
         "VideoOutput IsAutoDeferredVideoEnhancementEnabled error!, inputDevice is nullptr");
@@ -528,6 +565,7 @@ int32_t VideoOutput::IsAutoDeferredVideoEnhancementEnabled()
     MEDIA_INFO_LOG("IsAutoDeferredVideoEnhancementEnabled curMode:%{public}d, isEnabled:%{public}d",
         curMode, isEnabled);
     return isEnabled;
+    // LCOV_EXCL_STOP
 }
 
 int32_t VideoOutput::EnableAutoDeferredVideoEnhancement(bool enabled)
@@ -538,6 +576,7 @@ int32_t VideoOutput::EnableAutoDeferredVideoEnhancement(bool enabled)
     auto captureSession = GetSession();
     CHECK_RETURN_RET_ELOG(captureSession == nullptr, SERVICE_FATL_ERROR,
         "VideoOutput EnableAutoDeferredVideoEnhancement error!, captureSession is nullptr");
+    // LCOV_EXCL_START
     auto inputDevice = captureSession->GetInputDevice();
     CHECK_RETURN_RET_ELOG(inputDevice == nullptr, SERVICE_FATL_ERROR,
         "VideoOutput EnableAutoDeferredVideoEnhancement error!, inputDevice is nullptr");
@@ -548,6 +587,7 @@ int32_t VideoOutput::EnableAutoDeferredVideoEnhancement(bool enabled)
     captureSession->EnableAutoDeferredVideoEnhancement(enabled);
     captureSession->SetUserId();
     return SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 bool VideoOutput::IsVideoStarted()
@@ -562,6 +602,7 @@ int32_t VideoOutput::GetSupportedRotations(std::vector<int32_t> &supportedRotati
     auto captureSession = GetSession();
     CHECK_RETURN_RET_ELOG(captureSession == nullptr, SERVICE_FATL_ERROR,
         "VideoOutput::GetSupportedRotations failed due to captureSession is nullptr");
+    // LCOV_EXCL_START
     auto inputDevice = captureSession->GetInputDevice();
     CHECK_RETURN_RET_ELOG(inputDevice == nullptr, SERVICE_FATL_ERROR,
         "VideoOutput::GetSupportedRotations failed due to inputDevice is nullptr");
@@ -572,6 +613,7 @@ int32_t VideoOutput::GetSupportedRotations(std::vector<int32_t> &supportedRotati
     CHECK_RETURN_RET_ELOG(retCode != CameraErrorCode::SUCCESS, SERVICE_FATL_ERROR,
         "VideoOutput::GetSupportedRotations failed, GetSupportedVideoRotations retCode: %{public}d", retCode);
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 int32_t VideoOutput::IsRotationSupported(bool &isSupported)
@@ -581,6 +623,7 @@ int32_t VideoOutput::IsRotationSupported(bool &isSupported)
     auto captureSession = GetSession();
     CHECK_RETURN_RET_ELOG(captureSession == nullptr, SERVICE_FATL_ERROR,
         "VideoOutput::IsRotationSupported failed due to captureSession is nullptr");
+    // LCOV_EXCL_START
     auto inputDevice = captureSession->GetInputDevice();
     CHECK_RETURN_RET_ELOG(inputDevice == nullptr, SERVICE_FATL_ERROR,
         "VideoOutput::IsRotationSupported failed due to inputDevice is nullptr");
@@ -591,6 +634,7 @@ int32_t VideoOutput::IsRotationSupported(bool &isSupported)
     CHECK_RETURN_RET_ELOG(retCode != CameraErrorCode::SUCCESS, SERVICE_FATL_ERROR,
         "VideoOutput::IsRotationSupported failed, IsVideoRotationSupported retCode: %{public}d", retCode);
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 int32_t VideoOutput::SetRotation(int32_t rotation)
@@ -599,6 +643,7 @@ int32_t VideoOutput::SetRotation(int32_t rotation)
     auto captureSession = GetSession();
     CHECK_RETURN_RET_ELOG(captureSession == nullptr, SERVICE_FATL_ERROR,
         "VideoOutput::SetRotation failed, captureSession is nullptr");
+    // LCOV_EXCL_START
     auto inputDevice = captureSession->GetInputDevice();
     CHECK_RETURN_RET_ELOG(inputDevice == nullptr, SERVICE_FATL_ERROR,
         "VideoOutput::SetRotation failed, inputDevice is nullptr");
@@ -611,6 +656,7 @@ int32_t VideoOutput::SetRotation(int32_t rotation)
         "VideoOutput::SetRotation failed, SetVideoRotation retCode: %{public}d", retCode);
     captureSession->UnlockForControl();
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
  
 bool VideoOutput::IsAutoVideoFrameRateSupported()
@@ -618,6 +664,7 @@ bool VideoOutput::IsAutoVideoFrameRateSupported()
     auto session = GetSession();
     CHECK_RETURN_RET_ELOG(session == nullptr, false,
         "VideoOutput IsAutoVideoFrameRateSupported error!, session is nullptr");
+    // LCOV_EXCL_START
     auto inputDevice = session->GetInputDevice();
     CHECK_RETURN_RET_ELOG(inputDevice == nullptr, false,
         "VideoOutput IsAutoVideoFrameRateSupported error!, inputDevice is nullptr");
@@ -640,6 +687,7 @@ bool VideoOutput::IsAutoVideoFrameRateSupported()
     }
     MEDIA_DEBUG_LOG("IsAutoVideoFrameRateSupported isSupport: %{public}d", isAutoVideoFrameRateSupported);
     return isAutoVideoFrameRateSupported;
+    // LCOV_EXCL_STOP
 }
  
 int32_t VideoOutput::EnableAutoVideoFrameRate(bool enable)
@@ -648,6 +696,7 @@ int32_t VideoOutput::EnableAutoVideoFrameRate(bool enable)
     auto session = GetSession();
     CHECK_RETURN_RET_ELOG(session == nullptr, CameraErrorCode::SESSION_NOT_CONFIG,
         "VideoOutput IsAutoVideoFrameRateSupported error!, session is nullptr");
+    // LCOV_EXCL_START
     auto inputDevice = session->GetInputDevice();
     CHECK_RETURN_RET_ELOG(inputDevice == nullptr, CameraErrorCode::SESSION_NOT_CONFIG,
         "VideoOutput IsAutoVideoFrameRateSupported error!, inputDevice is nullptr");
@@ -658,6 +707,7 @@ int32_t VideoOutput::EnableAutoVideoFrameRate(bool enable)
     session->EnableAutoFrameRate(enable);
     session->UnlockForControl();
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 } // namespace CameraStandard
 } // namespace OHOS

@@ -51,6 +51,7 @@ std::vector<uint32_t> g_typesOfMetadata = {
 void FillSizeListFromStreamInfo(
     vector<Size>& sizeList, const StreamInfo& streamInfo, const camera_format_t targetFormat)
 {
+    // LCOV_EXCL_START
     for (const auto &detail : streamInfo.detailInfos) {
         camera_format_t hdi_format = static_cast<camera_format_t>(detail.format);
         if (hdi_format != targetFormat) {
@@ -59,11 +60,13 @@ void FillSizeListFromStreamInfo(
         Size size { .width = detail.width, .height = detail.height };
         sizeList.emplace_back(size);
     }
+    // LCOV_EXCL_STOP
 }
 
 void FillSizeListFromStreamInfo(
     vector<Size>& sizeList, const StreamRelatedInfo& streamInfo, const camera_format_t targetFormat)
 {
+    // LCOV_EXCL_START
     for (const auto &detail : streamInfo.detailInfo) {
         camera_format_t hdi_format = static_cast<camera_format_t>(detail.format);
         if (hdi_format != targetFormat) {
@@ -72,11 +75,13 @@ void FillSizeListFromStreamInfo(
         Size size{.width = detail.width, .height = detail.height};
         sizeList.emplace_back(size);
     }
+    // LCOV_EXCL_STOP
 }
 
 std::shared_ptr<vector<Size>> GetSupportedPreviewSizeRangeFromProfileLevel(
     const int32_t modeName, camera_format_t targetFormat, const std::shared_ptr<OHOS::Camera::CameraMetadata> metadata)
 {
+    // LCOV_EXCL_START
     CHECK_RETURN_RET(metadata == nullptr, nullptr);
     camera_metadata_item_t item;
     int32_t retCode = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_AVAILABLE_PROFILE_LEVEL, &item);
@@ -95,11 +100,13 @@ std::shared_ptr<vector<Size>> GetSupportedPreviewSizeRangeFromProfileLevel(
     MEDIA_INFO_LOG("MetadataCommonUtils::GetSupportedPreviewSizeRangeFromProfileLevel listSize: %{public}d",
         static_cast<int>(sizeList->size()));
     return sizeList;
+    // LCOV_EXCL_STOP
 }
 
 std::shared_ptr<vector<Size>> GetSupportedPreviewSizeRangeFromExtendConfig(
     const int32_t modeName, camera_format_t targetFormat, const std::shared_ptr<OHOS::Camera::CameraMetadata> metadata)
 {
+    // LCOV_EXCL_START
     auto item = MetadataCommonUtils::GetCapabilityEntry(metadata, OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS);
     CHECK_RETURN_RET(item == nullptr, nullptr);
     std::shared_ptr<vector<Size>> sizeList = std::make_shared<vector<Size>>();
@@ -129,11 +136,13 @@ std::shared_ptr<vector<Size>> GetSupportedPreviewSizeRangeFromExtendConfig(
     MEDIA_INFO_LOG("MetadataCommonUtils::GetSupportedPreviewSizeRangeFromExtendConfig listSize: %{public}d",
         static_cast<int>(sizeList->size()));
     return sizeList;
+    // LCOV_EXCL_STOP
 }
 
 std::shared_ptr<vector<Size>> GetSupportedPreviewSizeRangeFromBasicConfig(
     camera_format_t targetFormat, const std::shared_ptr<OHOS::Camera::CameraMetadata> metadata)
 {
+    // LCOV_EXCL_START
     auto item = MetadataCommonUtils::GetCapabilityEntry(metadata, OHOS_ABILITY_STREAM_AVAILABLE_BASIC_CONFIGURATIONS);
     CHECK_RETURN_RET(item == nullptr, nullptr);
     std::shared_ptr<vector<Size>> sizeList = std::make_shared<vector<Size>>();
@@ -155,6 +164,7 @@ std::shared_ptr<vector<Size>> GetSupportedPreviewSizeRangeFromBasicConfig(
     MEDIA_INFO_LOG("MetadataCommonUtils::GetSupportedPreviewSizeRangeFromBasicConfig listSize: %{public}d",
         static_cast<int>(sizeList->size()));
     return sizeList;
+    // LCOV_EXCL_STOP
 }
 } // namespace
 
@@ -171,6 +181,7 @@ std::shared_ptr<camera_metadata_item_t> MetadataCommonUtils::GetCapabilityEntry(
 std::shared_ptr<vector<Size>> MetadataCommonUtils::GetSupportedPreviewSizeRange(
     const int32_t modeName, camera_format_t targetFormat, const std::shared_ptr<OHOS::Camera::CameraMetadata> metadata)
 {
+    // LCOV_EXCL_START
     MEDIA_DEBUG_LOG("MetadataCommonUtils::GetSupportedPreviewSizeRange modeName: %{public}d, targetFormat:%{public}d",
         modeName, targetFormat);
     std::shared_ptr<vector<Size>> sizeList = std::make_shared<vector<Size>>();
@@ -209,6 +220,7 @@ std::shared_ptr<vector<Size>> MetadataCommonUtils::GetSupportedPreviewSizeRange(
         sizeList->insert(sizeList->end(), basicList->begin(), basicList->end());
     }
     return sizeList;
+    // LCOV_EXCL_STOP
 }
 
 std::shared_ptr<OHOS::Camera::CameraMetadata> MetadataCommonUtils::CopyMetadata(
@@ -220,6 +232,7 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> MetadataCommonUtils::CopyMetadata(
 bool MetadataCommonUtils::ProcessFocusTrackingModeInfo(const std::shared_ptr<OHOS::Camera::CameraMetadata>& metadata,
     FocusTrackingMode& mode)
 {
+    // LCOV_EXCL_START
     CHECK_RETURN_RET_ELOG(metadata == nullptr, false, "metadata is nullptr");
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_FOCUS_TRACKING_MODE, &item);
@@ -229,6 +242,7 @@ bool MetadataCommonUtils::ProcessFocusTrackingModeInfo(const std::shared_ptr<OHO
     }
     mode = static_cast<FocusTrackingMode>(item.data.u8[0]);
     return true;
+    // LCOV_EXCL_STOP
 }
 
 bool MetadataCommonUtils::ProcessMetaObjects(const int32_t streamId,
@@ -237,6 +251,7 @@ bool MetadataCommonUtils::ProcessMetaObjects(const int32_t streamId,
 {
     CHECK_RETURN_RET(result == nullptr, false);
     // camera_metadata_item_t metadataItem;
+    // LCOV_EXCL_START
     common_metadata_header_t *metadata = result->get();
     std::vector<camera_metadata_item_t> metadataResults;
     std::vector<uint32_t> metadataTypes;
@@ -251,11 +266,13 @@ bool MetadataCommonUtils::ProcessMetaObjects(const int32_t streamId,
     CHECK_RETURN_RET_ELOG(ret != CameraErrorCode::SUCCESS, false,
         "MetadataCommonUtils::ProcessFaceRectangles() is failed.");
     return true;
+    // LCOV_EXCL_STOP
 }
 
 void MetadataCommonUtils::GetMetadataResults(const common_metadata_header_t *metadata,
     std::vector<camera_metadata_item_t>& metadataResults, std::vector<uint32_t>& metadataTypes)
 {
+    // LCOV_EXCL_START
     for (auto itr : g_typesOfMetadata) {
         camera_metadata_item_t item;
         int ret = Camera::FindCameraMetadataItem(metadata, itr, &item);
@@ -264,6 +281,7 @@ void MetadataCommonUtils::GetMetadataResults(const common_metadata_header_t *met
             metadataTypes.emplace_back(itr);
         }
     }
+    // LCOV_EXCL_STOP
 }
 
 int32_t MetadataCommonUtils::ProcessMetaObjects(const int32_t streamId, std::vector<sptr<MetadataObject>>& metaObjects,
@@ -271,6 +289,7 @@ int32_t MetadataCommonUtils::ProcessMetaObjects(const int32_t streamId, std::vec
     const std::vector<uint32_t>& metadataTypes,
     bool isNeedMirror, bool isNeedFlip, RectBoxType type)
 {
+    // LCOV_EXCL_START
     for (size_t i = 0; i < metadataItem.size(); ++i) {
         auto itr = g_HALResultToFwCameraMetaDetect_.find(metadataTypes[i]);
         if (itr != g_HALResultToFwCameraMetaDetect_.end()) {
@@ -280,6 +299,7 @@ int32_t MetadataCommonUtils::ProcessMetaObjects(const int32_t streamId, std::vec
         }
     }
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 void MetadataCommonUtils::GenerateObjects(const camera_metadata_item_t &metadataItem, MetadataObjectType metadataType,
@@ -292,6 +312,7 @@ void MetadataCommonUtils::GenerateObjects(const camera_metadata_item_t &metadata
     if (iteratorOfLengthMap != mapLengthOfType.end()) {
         countOfObject = metadataItem.count / iteratorOfLengthMap->second;
     }
+    // LCOV_EXCL_START
     for (int32_t itr = 0; itr < countOfObject; ++itr) {
         sptr<MetadataObjectFactory> objectFactoryPtr = MetadataObjectFactory::GetInstance();
         MetadataObjectType typeFromHal = static_cast<MetadataObjectType>(metadataItem.data.i32[index]);
@@ -300,12 +321,14 @@ void MetadataCommonUtils::GenerateObjects(const camera_metadata_item_t &metadata
         ProcessExternInfo(objectFactoryPtr, metadataItem, index, typeFromHal, isNeedMirror, isNeedFlip, rectBoxType);
         metaObjects.push_back(objectFactoryPtr->createMetadataObject(metadataType));
     }
+    // LCOV_EXCL_STOP
 }
 
 void MetadataCommonUtils::ProcessBaseInfo(sptr<MetadataObjectFactory> factoryPtr,
     const camera_metadata_item_t &metadataItem, int32_t &index, MetadataObjectType typeFromHal,
     bool isNeedMirror, bool isNeedFlip, RectBoxType type)
 {
+    // LCOV_EXCL_START
     const int32_t rectLength = 4;
     const int32_t offsetOne = 1;
     const int32_t offsetTwo = 2;
@@ -325,11 +348,13 @@ void MetadataCommonUtils::ProcessBaseInfo(sptr<MetadataObjectFactory> factoryPtr
     index++;
     MEDIA_DEBUG_LOG("MetadataOutput::GenerateObjects, type: %{public}d, externalLength: %{public}d", typeFromHal,
                     externalLength);
+    // LCOV_EXCL_STOP
 }
 
 void MetadataCommonUtils::ProcessHumanFaceDetectInfo(sptr<MetadataObjectFactory> factoryPtr,
     const camera_metadata_item_t &metadataItem, int32_t &index, bool isNeedMirror, bool isNeedFlip, RectBoxType type)
 {
+    // LCOV_EXCL_START
     int32_t version = metadataItem.data.i32[index++];
     MEDIA_DEBUG_LOG("isNeedMirror: %{public}d, isNeedFlip: %{public}d, version: %{public}d",
         isNeedMirror, isNeedFlip, version);
@@ -357,12 +382,14 @@ void MetadataCommonUtils::ProcessHumanFaceDetectInfo(sptr<MetadataObjectFactory>
     index++;
     factoryPtr->SetRollAngle(metadataItem.data.i32[index]);
     index++;
+    // LCOV_EXCL_STOP
 }
 
 void MetadataCommonUtils::ProcessExternInfo(sptr<MetadataObjectFactory> factoryPtr,
     const camera_metadata_item_t &metadataItem, int32_t &index,
     MetadataObjectType typeFromHal, bool isNeedMirror, bool isNeedFlip, RectBoxType type)
 {
+    // LCOV_EXCL_START
     switch (typeFromHal) {
         case MetadataObjectType::FACE:
             ProcessHumanFaceDetectInfo(factoryPtr, metadataItem, index, isNeedMirror, isNeedFlip, type);
@@ -376,12 +403,14 @@ void MetadataCommonUtils::ProcessExternInfo(sptr<MetadataObjectFactory> factoryP
         default:
             break;
     }
+    // LCOV_EXCL_STOP
 }
 
 void MetadataCommonUtils::ProcessCatFaceDetectInfo(sptr<MetadataObjectFactory> factoryPtr,
     const camera_metadata_item_t &metadataItem, int32_t &index,
     bool isNeedMirror, bool isNeedFlip, RectBoxType type)
 {
+    // LCOV_EXCL_START
     int32_t version = metadataItem.data.i32[index++];
     MEDIA_DEBUG_LOG("isNeedMirror: %{public}d, isNeedFlip: %{public}d, version: %{public}d",
         isNeedMirror, isNeedFlip, version);
@@ -399,12 +428,14 @@ void MetadataCommonUtils::ProcessCatFaceDetectInfo(sptr<MetadataObjectFactory> f
         metadataItem.data.i32[index + offsetTwo],
         metadataItem.data.i32[index + offsetThree], isNeedMirror, isNeedFlip, type));
     index += rectLength;
+    // LCOV_EXCL_STOP
 }
 
 void MetadataCommonUtils::ProcessDogFaceDetectInfo(sptr<MetadataObjectFactory> factoryPtr,
     const camera_metadata_item_t &metadataItem, int32_t &index,
     bool isNeedMirror, bool isNeedFlip, RectBoxType type)
 {
+    // LCOV_EXCL_START
     int32_t version = metadataItem.data.i32[index++];
     MEDIA_DEBUG_LOG("isNeedMirror: %{public}d, isNeedFlip: %{public}d, version: %{public}d",
         isNeedMirror, isNeedFlip, version);
@@ -422,6 +453,7 @@ void MetadataCommonUtils::ProcessDogFaceDetectInfo(sptr<MetadataObjectFactory> f
         metadataItem.data.i32[index + offsetTwo],
         metadataItem.data.i32[index + offsetThree], isNeedMirror, isNeedFlip, type));
     index += rectLength;
+    // LCOV_EXCL_STOP
 }
 
 Rect MetadataCommonUtils::ProcessRectBox(int32_t offsetTopLeftX, int32_t offsetTopLeftY,

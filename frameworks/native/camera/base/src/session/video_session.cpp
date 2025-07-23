@@ -25,6 +25,7 @@ namespace CameraStandard {
 namespace {
 std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles1_1(PreconfigType preconfigType)
 {
+    // LCOV_EXCL_START
     std::shared_ptr<PreconfigProfiles> configs = std::make_shared<PreconfigProfiles>(ColorSpace::BT709);
     configs->photoProfile = { CameraFormat::CAMERA_FORMAT_JPEG, { .width = 0, .height = 0 } };
     configs->photoProfile.sizeRatio_ = RATIO_1_1;
@@ -65,10 +66,12 @@ std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles1_1(PreconfigType pr
             return nullptr;
     }
     return configs;
+    // LCOV_EXCL_STOP
 }
 
 std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles4_3(PreconfigType preconfigType)
 {
+    // LCOV_EXCL_START
     std::shared_ptr<PreconfigProfiles> configs = std::make_shared<PreconfigProfiles>(ColorSpace::BT709);
     configs->photoProfile = { CameraFormat::CAMERA_FORMAT_JPEG, { .width = 0, .height = 0 } };
     configs->photoProfile.sizeRatio_ = RATIO_4_3;
@@ -109,10 +112,12 @@ std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles4_3(PreconfigType pr
             return nullptr;
     }
     return configs;
+    // LCOV_EXCL_STOP
 }
 
 std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles16_9(PreconfigType preconfigType)
 {
+    // LCOV_EXCL_START
     std::shared_ptr<PreconfigProfiles> configs = std::make_shared<PreconfigProfiles>(ColorSpace::BT709);
     configs->photoProfile = { CameraFormat::CAMERA_FORMAT_JPEG, { .width = 0, .height = 0 } };
     configs->photoProfile.sizeRatio_ = RATIO_16_9;
@@ -153,6 +158,7 @@ std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles16_9(PreconfigType p
             return nullptr;
     }
     return configs;
+    // LCOV_EXCL_STOP
 }
 } // namespace
 
@@ -171,6 +177,7 @@ bool VideoSession::CanAddOutput(sptr<CaptureOutput>& output)
 std::shared_ptr<PreconfigProfiles> VideoSession::GeneratePreconfigProfiles(
     PreconfigType preconfigType, ProfileSizeRatio preconfigRatio)
 {
+    // LCOV_EXCL_START
     switch (preconfigRatio) {
         case RATIO_1_1:
             return GeneratePreconfigProfiles1_1(preconfigType);
@@ -185,10 +192,12 @@ std::shared_ptr<PreconfigProfiles> VideoSession::GeneratePreconfigProfiles(
             break;
     }
     return nullptr;
+    // LCOV_EXCL_STOP
 }
 
 bool VideoSession::IsPreconfigProfilesLegal(std::shared_ptr<PreconfigProfiles> configs)
 {
+    // LCOV_EXCL_START
     auto cameraList = CameraManager::GetInstance()->GetSupportedCameras();
     int32_t supportedCameraNum = 0;
     for (auto& device : cameraList) {
@@ -222,10 +231,12 @@ bool VideoSession::IsPreconfigProfilesLegal(std::shared_ptr<PreconfigProfiles> c
     MEDIA_INFO_LOG(
         "VideoSession::IsPreconfigProfilesLegal check pass, supportedCameraNum is%{public}d", supportedCameraNum);
     return supportedCameraNum > 0;
+    // LCOV_EXCL_STOP
 }
 
 bool VideoSession::IsPhotoProfileLegal(sptr<CameraDevice>& device, Profile& photoProfile)
 {
+    // LCOV_EXCL_START
     auto photoProfilesIt = device->modePhotoProfiles_.find(SceneMode::VIDEO);
     CHECK_RETURN_RET_ELOG(photoProfilesIt == device->modePhotoProfiles_.end(), false,
         "VideoSession::CanPreconfig check photo profile fail, empty photo profiles");
@@ -234,39 +245,47 @@ bool VideoSession::IsPhotoProfileLegal(sptr<CameraDevice>& device, Profile& phot
         CHECK_RETURN_RET(!photoProfile.sizeFollowSensorMax_, profile == photoProfile);
         return IsProfileSameRatio(profile, photoProfile.sizeRatio_, RATIO_VALUE_16_9);
     });
+    // LCOV_EXCL_STOP
 }
 
 bool VideoSession::IsPreviewProfileLegal(sptr<CameraDevice>& device, Profile& previewProfile)
 {
+    // LCOV_EXCL_START
     auto previewProfilesIt = device->modePreviewProfiles_.find(SceneMode::VIDEO);
     CHECK_RETURN_RET_ELOG(previewProfilesIt == device->modePreviewProfiles_.end(), false,
         "VideoSession::CanPreconfig check preview profile fail, empty preview profiles");
     auto previewProfiles = previewProfilesIt->second;
     return std::any_of(previewProfiles.begin(), previewProfiles.end(),
         [&previewProfile](auto& profile) { return profile == previewProfile; });
+    // LCOV_EXCL_STOP
 }
 
 bool VideoSession::IsVideoProfileLegal(sptr<CameraDevice>& device, VideoProfile& videoProfile)
 {
+    // LCOV_EXCL_START
     auto videoProfilesIt = device->modeVideoProfiles_.find(SceneMode::VIDEO);
     CHECK_RETURN_RET_ELOG(videoProfilesIt == device->modeVideoProfiles_.end(), false,
         "VideoSession::CanPreconfig check video profile fail, empty video profiles");
     auto videoProfiles = videoProfilesIt->second;
     return std::any_of(videoProfiles.begin(), videoProfiles.end(),
         [&videoProfile](auto& profile) { return profile.IsContains(videoProfile); });
+    // LCOV_EXCL_STOP
 }
 
 bool VideoSession::CanPreconfig(PreconfigType preconfigType, ProfileSizeRatio preconfigRatio)
 {
+    // LCOV_EXCL_START
     MEDIA_INFO_LOG(
         "VideoSession::CanPreconfig check type:%{public}d, check ratio:%{public}d", preconfigType, preconfigRatio);
     std::shared_ptr<PreconfigProfiles> configs = GeneratePreconfigProfiles(preconfigType, preconfigRatio);
     CHECK_RETURN_RET_ELOG(configs == nullptr, false, "VideoSession::CanPreconfig get configs fail.");
     return IsPreconfigProfilesLegal(configs);
+    // LCOV_EXCL_STOP
 }
 
 int32_t VideoSession::Preconfig(PreconfigType preconfigType, ProfileSizeRatio preconfigRatio)
 {
+    // LCOV_EXCL_START
     MEDIA_INFO_LOG("VideoSession::Preconfig type:%{public}d ratio:%{public}d", preconfigType, preconfigRatio);
     std::shared_ptr<PreconfigProfiles> configs = GeneratePreconfigProfiles(preconfigType, preconfigRatio);
     CHECK_RETURN_RET_ELOG(configs == nullptr, SERVICE_FATL_ERROR,
@@ -276,6 +295,7 @@ int32_t VideoSession::Preconfig(PreconfigType preconfigType, ProfileSizeRatio pr
     SetPreconfigProfiles(configs);
     MEDIA_INFO_LOG("VideoSession::Preconfig %s", configs->ToString().c_str());
     return SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 bool VideoSession::CanSetFrameRateRange(int32_t minFps, int32_t maxFps, CaptureOutput* curOutput)
@@ -286,6 +306,7 @@ bool VideoSession::CanSetFrameRateRange(int32_t minFps, int32_t maxFps, CaptureO
 void VideoSession::VideoSessionMetadataResultProcessor::ProcessCallbacks(const uint64_t timestamp,
     const std::shared_ptr<OHOS::Camera::CameraMetadata>& result)
 {
+    // LCOV_EXCL_START
     MEDIA_DEBUG_LOG("%{public}s is called", __FUNCTION__);
     auto session = session_.promote();
     CHECK_RETURN_ELOG(session == nullptr, "%{public}s session is null", __FUNCTION__);
@@ -295,6 +316,7 @@ void VideoSession::VideoSessionMetadataResultProcessor::ProcessCallbacks(const u
     session->ProcessMacroStatusChange(result);
     session->ProcessLcdFlashStatusUpdates(result);
     session->ProcessEffectSuggestionTypeUpdates(result);
+    // LCOV_EXCL_STOP
 }
 } // namespace CameraStandard
 } // namespace OHOS

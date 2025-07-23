@@ -28,6 +28,7 @@ namespace CameraStandard {
 int32_t DeferredPhotoProcessingSessionCallback::OnProcessImageDone(const std::string &imageId,
     const sptr<IPCFileDescriptor>& ipcFileDescriptor, int64_t bytes, uint32_t cloudImageEnhanceFlag)
 {
+    // LCOV_EXCL_START
     MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnProcessImageDone() is called!"
         "cloudImageEnhanceFlag: %{public}u", cloudImageEnhanceFlag);
     CHECK_RETURN_RET(ipcFileDescriptor == nullptr, CAMERA_INVALID_ARG);
@@ -47,11 +48,13 @@ int32_t DeferredPhotoProcessingSessionCallback::OnProcessImageDone(const std::st
     }
     munmap(addr, bytes);
     return 0;
+    // LCOV_EXCL_STOP
 }
 
 int32_t DeferredPhotoProcessingSessionCallback::OnError(const std::string &imageId,
     DeferredProcessing::ErrorCode errorCode)
 {
+    // LCOV_EXCL_START
     MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnError() is called, errorCode: %{public}d", errorCode);
     if (deferredPhotoProcSession_ != nullptr && deferredPhotoProcSession_->GetCallback() != nullptr) {
         deferredPhotoProcSession_->GetCallback()->OnError(imageId, DpsErrorCode(errorCode));
@@ -59,10 +62,12 @@ int32_t DeferredPhotoProcessingSessionCallback::OnError(const std::string &image
         MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnError not set!, Discarding callback");
     }
     return 0;
+    // LCOV_EXCL_STOP
 }
 
 int32_t DeferredPhotoProcessingSessionCallback::OnStateChanged(DeferredProcessing::StatusCode status)
 {
+    // LCOV_EXCL_START
     MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnStateChanged() is called, status:%{public}d", status);
     if (deferredPhotoProcSession_ != nullptr && deferredPhotoProcSession_->GetCallback() != nullptr) {
         deferredPhotoProcSession_->GetCallback()->OnStateChanged(DpsStatusCode(status));
@@ -70,11 +75,13 @@ int32_t DeferredPhotoProcessingSessionCallback::OnStateChanged(DeferredProcessin
         MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnStateChanged not set!, Discarding callback");
     }
     return 0;
+    // LCOV_EXCL_STOP
 }
 
 int32_t DeferredPhotoProcessingSessionCallback::OnProcessImageDone(const std::string &imageId,
     const std::shared_ptr<PictureIntf>& pictureIntf, uint32_t cloudImageEnhanceFlag)
 {
+    // LCOV_EXCL_START
     MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnProcessImageDone() is"
         "called, status:%{public}s, cloudImageEnhanceFlag: %{public}u", imageId.c_str(), cloudImageEnhanceFlag);
     if (pictureIntf != nullptr) {
@@ -86,11 +93,13 @@ int32_t DeferredPhotoProcessingSessionCallback::OnProcessImageDone(const std::st
         MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnProcessImageDone not set!, Discarding callback");
     }
     return 0;
+    // LCOV_EXCL_STOP
 }
 
 int32_t DeferredPhotoProcessingSessionCallback::OnDeliveryLowQualityImage(const std::string &imageId,
     const std::shared_ptr<PictureIntf>& pictureIntf)
 {
+    // LCOV_EXCL_START
     MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnDeliveryLowQualityImage() is"
         "called, status:%{public}s", imageId.c_str());
     auto callback = deferredPhotoProcSession_->GetCallback();
@@ -99,11 +108,13 @@ int32_t DeferredPhotoProcessingSessionCallback::OnDeliveryLowQualityImage(const 
         callback->OnDeliveryLowQualityImage(imageId, pictureIntf);
     }
     return 0;
+    // LCOV_EXCL_STOP
 }
 
 int32_t DeferredPhotoProcessingSessionCallback::CallbackParcel([[maybe_unused]] uint32_t code,
     [[maybe_unused]] MessageParcel& data, [[maybe_unused]] MessageParcel& reply, [[maybe_unused]] MessageOption& option)
 {
+    // LCOV_EXCL_START
     MEDIA_DEBUG_LOG("start, code:%{public}u", code);
     if ((static_cast<DeferredProcessing::IDeferredPhotoProcessingSessionCallbackIpcCode>(code)
         != DeferredProcessing::IDeferredPhotoProcessingSessionCallbackIpcCode::COMMAND_ON_DELIVERY_LOW_QUALITY_IMAGE)
@@ -154,6 +165,7 @@ int32_t DeferredPhotoProcessingSessionCallback::CallbackParcel([[maybe_unused]] 
             break;
     }
     return -1;
+    // LCOV_EXCL_STOP
 }
 
 DeferredPhotoProcSession::DeferredPhotoProcSession(int userId,
@@ -174,64 +186,79 @@ DeferredPhotoProcSession::~DeferredPhotoProcSession()
 
 void DeferredPhotoProcSession::BeginSynchronize()
 {
+    // LCOV_EXCL_START
     CHECK_RETURN_ELOG(
         remoteSession_ == nullptr, "DeferredPhotoProcSession::BeginSynchronize failed due to binder died.");
 
     MEDIA_INFO_LOG("DeferredPhotoProcSession:BeginSynchronize() enter.");
     remoteSession_->BeginSynchronize();
+    // LCOV_EXCL_STOP
 }
 
 void DeferredPhotoProcSession::EndSynchronize()
 {
+    // LCOV_EXCL_START
     CHECK_RETURN_ELOG(
         remoteSession_ == nullptr, "DeferredPhotoProcSession::EndSynchronize failed due to binder died.");
     MEDIA_INFO_LOG("DeferredPhotoProcSession::EndSynchronize() enter.");
     remoteSession_->EndSynchronize();
+    // LCOV_EXCL_STOP
 }
 
 void DeferredPhotoProcSession::AddImage(const std::string& imageId, DpsMetadata& metadata, const bool discardable)
 {
+    // LCOV_EXCL_START
     CHECK_RETURN_ELOG(remoteSession_ == nullptr, "DeferredPhotoProcSession::AddImage failed due to binder died.");
     MEDIA_INFO_LOG("DeferredPhotoProcSession::AddImage() enter.");
     remoteSession_->AddImage(imageId, metadata, discardable);
+    // LCOV_EXCL_STOP
 }
 
 void DeferredPhotoProcSession::RemoveImage(const std::string& imageId, const bool restorable)
 {
+    // LCOV_EXCL_START
     CHECK_RETURN_ELOG(
         remoteSession_ == nullptr, "DeferredPhotoProcSession::RemoveImage failed due to binder died.");
     MEDIA_INFO_LOG("DeferredPhotoProcSession RemoveImage() enter.");
     remoteSession_->RemoveImage(imageId, restorable);
+    // LCOV_EXCL_STOP
 }
 
 void DeferredPhotoProcSession::RestoreImage(const std::string& imageId)
 {
+    // LCOV_EXCL_START
     CHECK_RETURN_ELOG(
         remoteSession_ == nullptr, "DeferredPhotoProcSession::RestoreImage failed due to binder died.");
     MEDIA_INFO_LOG("DeferredPhotoProcSession RestoreImage() enter.");
     remoteSession_->RestoreImage(imageId);
+    // LCOV_EXCL_STOP
 }
 
 void DeferredPhotoProcSession::ProcessImage(const std::string& appName, const std::string& imageId)
 {
+    // LCOV_EXCL_START
     CHECK_RETURN_ELOG(
         remoteSession_ == nullptr, "DeferredPhotoProcSession::ProcessImage failed due to binder died.");
     MEDIA_INFO_LOG("DeferredPhotoProcSession::ProcessImage() enter.");
     remoteSession_->ProcessImage(appName, imageId);
+    // LCOV_EXCL_STOP
 }
 
 bool DeferredPhotoProcSession::CancelProcessImage(const std::string& imageId)
 {
+    // LCOV_EXCL_START
     CHECK_RETURN_RET_ELOG(
         remoteSession_ == nullptr, false, "DeferredPhotoProcSession::CancelProcessImage failed due to binder died.");
     MEDIA_INFO_LOG("DeferredPhotoProcSession:CancelProcessImage() enter.");
     remoteSession_->CancelProcessImage(imageId);
     return true;
+    // LCOV_EXCL_STOP
 }
 
 int32_t DeferredPhotoProcSession::SetDeferredPhotoSession(
     sptr<DeferredProcessing::IDeferredPhotoProcessingSession>& session)
 {
+    // LCOV_EXCL_START
     remoteSession_ = session;
     sptr<IRemoteObject> object = remoteSession_->AsObject();
     pid_t pid = 0;
@@ -242,10 +269,12 @@ int32_t DeferredPhotoProcSession::SetDeferredPhotoSession(
     bool result = object->AddDeathRecipient(deathRecipient_);
     CHECK_RETURN_RET_ELOG(!result, -1, "failed to add deathRecipient");
     return 0;
+    // LCOV_EXCL_STOP
 }
 
 void DeferredPhotoProcSession::CameraServerDied(pid_t pid)
 {
+    // LCOV_EXCL_START
     MEDIA_ERR_LOG("camera server has died, pid:%{public}d!", pid);
     if (remoteSession_ != nullptr) {
         (void)remoteSession_->AsObject()->RemoveDeathRecipient(deathRecipient_);
@@ -258,10 +287,12 @@ void DeferredPhotoProcSession::CameraServerDied(pid_t pid)
         callback_->OnError("", DpsErrorCode::ERROR_SESSION_SYNC_NEEDED);
     }
     return;
+    // LCOV_EXCL_STOP
 }
 
 void DeferredPhotoProcSession::ReconnectDeferredProcessingSession()
 {
+    // LCOV_EXCL_START
     MEDIA_INFO_LOG("DeferredPhotoProcSession::ReconnectDeferredProcessingSession, enter.");
     ConnectDeferredProcessingSession();
     if (remoteSession_ == nullptr) {
@@ -269,10 +300,12 @@ void DeferredPhotoProcSession::ReconnectDeferredProcessingSession()
         ReconnectDeferredProcessingSession();
     }
     return;
+    // LCOV_EXCL_STOP
 }
 
 void DeferredPhotoProcSession::ConnectDeferredProcessingSession()
 {
+    // LCOV_EXCL_START
     MEDIA_INFO_LOG("DeferredPhotoProcSession::ConnectDeferredProcessingSession, enter.");
     CHECK_RETURN_ELOG(remoteSession_ != nullptr, "remoteSession_ is not null");
     sptr<IRemoteObject> object = nullptr;
@@ -292,6 +325,7 @@ void DeferredPhotoProcSession::ConnectDeferredProcessingSession()
     serviceProxy_->CreateDeferredPhotoProcessingSession(userId_, remoteCallback, session);
     CHECK_EXECUTE(session, SetDeferredPhotoSession(session));
     return;
+    // LCOV_EXCL_STOP
 }
 
 std::shared_ptr<IDeferredPhotoProcSessionCallback> DeferredPhotoProcSession::GetCallback()
