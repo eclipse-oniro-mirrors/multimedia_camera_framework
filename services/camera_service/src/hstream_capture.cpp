@@ -1345,6 +1345,12 @@ int32_t HStreamCapture::CallbackEnter([[maybe_unused]] uint32_t code)
             CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION, "HStreamCapture::CheckSystemApp fail");
             break;
         }
+        case IStreamCaptureIpcCode::COMMAND_ENABLE_MOVING_PHOTO: {
+            uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+            int32_t errCode = CheckPermission(OHOS_PERMISSION_MICROPHONE, callerToken);
+            CHECK_RETURN_RET_ELOG(errCode != CAMERA_OK, CAMERA_NO_PERMISSION, "check microphone permission failed.");
+            break;
+        }
         default:
             break;
     }

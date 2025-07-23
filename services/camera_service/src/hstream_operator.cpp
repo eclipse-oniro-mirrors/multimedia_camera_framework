@@ -868,7 +868,7 @@ int32_t HStreamOperator::UpdateSettingForFocusTrackingMech(bool isEnableMech)
     sptr<OHOS::HDI::Camera::V1_3::IStreamOperator> streamOperatorV1_3 =
         OHOS::HDI::Camera::V1_3::IStreamOperator::CastFrom(streamOperator_);
     CHECK_RETURN_RET_ELOG(streamOperatorV1_3 == nullptr, CAMERA_UNKNOWN_ERROR,
-        "HStreamMetadata::EnableMetadataType streamOperatorV1_3 castFrom failed!");
+        "HStreamOperator::UpdateSettingForFocusTrackingMech streamOperatorV1_3 castFrom failed!");
     const int32_t DEFAULT_ITEMS = 1;
     const int32_t DEFAULT_DATA_LENGTH = 10;
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata4Types =
