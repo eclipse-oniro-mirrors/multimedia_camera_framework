@@ -16,9 +16,11 @@
 #include "camera_fwk_metadata_utils.h"
 
 #include <cstdint>
+#include <unordered_set>
 
 #include "camera_log.h"
 #include "camera_metadata_operator.h"
+#include "camera_util.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -45,9 +47,24 @@ void ForEach(uint32_t iteratorCount, std::function<void(uint32_t)> fun)
     }
 }
 } // namespace
+
+bool CheckSysMeta(uint32_t item)
+{
+    static const std::unordered_set<uint32_t> sysTags = {
+        OHOS_CONTROL_PREPARE_ZOOM,
+        OHOS_CONTROL_BEAUTY_TYPE,
+        OHOS_CONTROL_FOCUS_RANGE_TYPE,
+        OHOS_CONTROL_FOCUS_DRIVEN_TYPE,
+        OHOS_CONTROL_COLOR_RESERVATION_TYPE,
+        OHOS_CONTROL_CAMERA_PORTRAIT_THEME_TYPE,
+    };
+    return sysTags.find(item) != sysTags.end();
+}
+
 bool MergeMetadata(const std::shared_ptr<OHOS::Camera::CameraMetadata> srcMetadata,
     std::shared_ptr<OHOS::Camera::CameraMetadata> dstMetadata)
 {
+    bool isSysCall = CheckSystemApp();
     CHECK_RETURN_RET(srcMetadata == nullptr || dstMetadata == nullptr, false);
     auto srcHeader = srcMetadata->get();
     CHECK_RETURN_RET(srcHeader == nullptr, false);
@@ -61,6 +78,11 @@ bool MergeMetadata(const std::shared_ptr<OHOS::Camera::CameraMetadata> srcMetada
             "Failed to get metadata item at index: %{public}d", index);
         bool status = false;
         uint32_t currentIndex;
+        MEDIA_DEBUG_LOG("MergeMetadata src item:%{public}d", srcItem.item);
+        if (!isSysCall) {
+            CHECK_EXECUTE(CheckSysMeta(srcItem.item), continue);
+        }
+        MEDIA_DEBUG_LOG("MergeMetadata update item:%{public}d", srcItem.item);
         ret = OHOS::Camera::FindCameraMetadataItemIndex(dstMetadata->get(), srcItem.item, &currentIndex);
         if (ret == CAM_META_ITEM_NOT_FOUND) {
             status = dstMetadata->addEntry(srcItem.item, srcItem.data.u8, srcItem.count);

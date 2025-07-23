@@ -99,6 +99,11 @@ int32_t HStreamMetadata::OperatePermissionCheck(uint32_t interfaceCode)
                 "is %{public}d", callerToken_, callerToken);
             break;
         }
+        case IStreamMetadataIpcCode::COMMAND_ENABLE_METADATA_TYPE:
+        case IStreamMetadataIpcCode::COMMAND_DISABLE_METADATA_TYPE: {
+            CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION, "HStreamMetadata::CheckSystemApp fail");
+            break;
+        }
         default:
             break;
     }
@@ -129,8 +134,6 @@ int32_t HStreamMetadata::EnableMetadataType(const std::vector<int32_t>& metadata
 }
 int32_t HStreamMetadata::DisableMetadataType(const std::vector<int32_t>& metadataTypes)
 {
-    CHECK_RETURN_RET_ELOG(
-        !CheckSystemApp(), CAMERA_NO_PERMISSION, "HStreamMetadata::DisableMetadataType:SystemApi is called");
     int32_t rc = EnableOrDisableMetadataType(metadataTypes, false);
     CHECK_RETURN_RET_ELOG(rc != CAMERA_OK, rc, "HStreamMetadata::DisableMetadataType failed!");
     std::lock_guard<std::mutex> lock(metadataTypeMutex_);
@@ -173,7 +176,7 @@ int32_t HStreamMetadata::EnableOrDisableMetadataType(const std::vector<int32_t>&
         enable, metadataTypes.size());
     auto streamOperator = GetStreamOperator();
     CHECK_RETURN_RET_ELOG(streamOperator == nullptr, CAMERA_INVALID_STATE,
-        "HStreamMetadata::EnableMetadataType streamOperator is nullptr");
+        "HStreamMetadata::EnableOrDisableMetadataType streamOperator is nullptr");
     streamOperator->GetVersion(majorVer_, minorVer_);
     if (majorVer_ < HDI_VERSION_1 || minorVer_ < HDI_VERSION_3) {
         MEDIA_DEBUG_LOG("EnableOrDisableMetadataType version: %{public}d.%{public}d", majorVer_, minorVer_);
@@ -181,11 +184,11 @@ int32_t HStreamMetadata::EnableOrDisableMetadataType(const std::vector<int32_t>&
     }
     int32_t ret = PrepareCaptureId();
     CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, ret,
-        "HStreamMetadata::EnableMetadataType Failed to allocate a captureId");
+        "HStreamMetadata::EnableOrDisableMetadataType Failed to allocate a captureId");
     sptr<OHOS::HDI::Camera::V1_3::IStreamOperator> streamOperatorV1_3 =
         OHOS::HDI::Camera::V1_3::IStreamOperator::CastFrom(streamOperator);
     CHECK_RETURN_RET_ELOG(streamOperatorV1_3 == nullptr, CAMERA_UNKNOWN_ERROR,
-        "HStreamMetadata::EnableMetadataType streamOperatorV1_3 castFrom failed!");
+        "HStreamMetadata::EnableOrDisableMetadataType streamOperatorV1_3 castFrom failed!");
     OHOS::HDI::Camera::V1_2::CamRetCode rc;
     std::vector<uint8_t> typeTagToHal;
     for (auto& type : metadataTypes) {
