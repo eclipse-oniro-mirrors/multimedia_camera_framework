@@ -423,7 +423,6 @@ void VideoPostProcessor::ReleaseMpeg()
 {
     DP_CHECK_ERROR_RETURN_LOG(mediaManagerProxy_ == nullptr, "mpegManager is nullptr");
     mediaManagerProxy_->MpegRelease();
-    CameraDynamicLoader::FreeDynamicLibDelayed(MEDIA_MANAGER_SO, LIB_DELAYED_UNLOAD_TIME);
     mediaManagerProxy_.reset();
     DP_INFO_LOG("DPS_VIDEO: Release MpegManager.");
 }
