@@ -53,7 +53,7 @@ void DeferredPhotoProxyUnit::SetUpTestCase(void) {}
 
 void DeferredPhotoProxyUnit::TearDownTestCase(void)
 {
-    ASSERT_TRUE(TestToken::GetAllCameraPermission());
+    ASSERT_TRUE(TestToken().GetAllCameraPermission());
 }
 
 void DeferredPhotoProxyUnit::SetUp() {}

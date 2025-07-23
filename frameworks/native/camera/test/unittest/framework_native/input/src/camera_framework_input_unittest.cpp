@@ -52,7 +52,7 @@ public:
 
 void CameraFrameworkInputUnit::SetUpTestCase(void)
 {
-    ASSERT_TRUE(TestToken::GetAllCameraPermission());
+    ASSERT_TRUE(TestToken().GetAllCameraPermission());
 }
 
 void CameraFrameworkInputUnit::TearDownTestCase(void) {}

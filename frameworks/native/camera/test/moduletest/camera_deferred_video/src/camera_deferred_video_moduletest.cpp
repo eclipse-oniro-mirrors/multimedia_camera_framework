@@ -32,7 +32,7 @@ constexpr int32_t DEFERRED_VIDEO_ENABLED = 1;
 void CameraDeferredVideoModuleTest::SetUpTestCase(void)
 {
     MEDIA_DEBUG_LOG("CameraDeferredVideoModuleTest::SetUpTestCase started!");
-    ASSERT_TRUE(TestToken::GetAllCameraPermission());
+    ASSERT_TRUE(TestToken().GetAllCameraPermission());
 }
 
 void CameraDeferredVideoModuleTest::TearDownTestCase(void)

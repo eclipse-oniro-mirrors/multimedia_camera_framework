@@ -56,7 +56,7 @@ static const std::string TEST_BUNDLE_NAME = "ohos";
 
 void HCaptureSessionUnitTest::SetUpTestCase(void)
 {
-    ASSERT_TRUE(TestToken::GetAllCameraPermission());
+    ASSERT_TRUE(TestToken().GetAllCameraPermission());
 }
 
 void HCaptureSessionUnitTest::TearDownTestCase(void) {}

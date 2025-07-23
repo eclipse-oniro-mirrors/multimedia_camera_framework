@@ -78,7 +78,7 @@ sptr<CaptureOutput> SecureCameraSessionUnitTest::CreatePreviewOutput()
 
 void SecureCameraSessionUnitTest::SetUpTestCase(void)
 {
-    ASSERT_TRUE(TestToken::GetAllCameraPermission());
+    ASSERT_TRUE(TestToken().GetAllCameraPermission());
 }
 
 void SecureCameraSessionUnitTest::TearDownTestCase(void) {}

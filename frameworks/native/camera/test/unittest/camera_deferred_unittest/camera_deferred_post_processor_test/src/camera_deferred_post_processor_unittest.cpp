@@ -41,7 +41,7 @@ constexpr int VIDEO_DESTINATION_FD = 2;
 
 void DeferredPostPorcessorUnitTest::SetUpTestCase(void)
 {
-    ASSERT_TRUE(TestToken::GetAllCameraPermission());
+    ASSERT_TRUE(TestToken().GetAllCameraPermission());
 }
 
 void DeferredPostPorcessorUnitTest::TearDownTestCase(void) {}

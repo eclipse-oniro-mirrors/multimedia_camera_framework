@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Huawei Device Co., Ltd.
+* Copyright (c) 2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -25,19 +25,27 @@
 #include "token_setproc.h"
 
 namespace OHOS {
-namespace CameraStandard {
-using namespace OHOS::Security::AccessToken;
+    namespace CameraStandard {
+        using namespace OHOS::Security::AccessToken;
 
-class TestToken {
-public:
-    static bool GetAllCameraPermission();
+        class TestToken {
+        public:
+            TestToken() : TestToken(true) {}
+            TestToken(bool isSystemApp) : isSystemApp_(isSystemApp) {}
+            bool GetAllCameraPermission();
+            uint64_t GetMockedTokenId();
+            uint64_t GetOriginalTokenId();
+            void AddPermission(const std::string& permission);
 
-private:
-    static uint64_t GetTokenId(const AtmToolsParamInfo &info);
-    static uint64_t GetTokenIdFromProcess(const std::string &process);
-    static bool MockTokenId(const std::string &process);
-};
+        private:
+            static uint64_t GetTokenId(const AtmToolsParamInfo& info);
+            static uint64_t GetTokenIdFromProcess(const std::string& process);
+            static bool MockTokenId(const std::string& process);
+            static uint64_t shellTokenID_;
+            bool isSystemApp_ = true;
+            std::vector<std::string> permissions_;
+        };
 
-} // namespace CameraStandard
+    } // namespace CameraStandard
 } // namespace OHOS
 #endif

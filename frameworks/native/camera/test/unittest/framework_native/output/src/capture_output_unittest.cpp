@@ -51,7 +51,7 @@ void CameraCaptureOutputUnit::SetUpTestCase(void) {}
 
 void CameraCaptureOutputUnit::TearDownTestCase(void)
 {
-    ASSERT_TRUE(TestToken::GetAllCameraPermission());
+    ASSERT_TRUE(TestToken().GetAllCameraPermission());
 }
 
 void CameraCaptureOutputUnit::SetUp()

@@ -116,7 +116,7 @@ sptr<CaptureOutput> CameraNightSessionUnit::CreatePhotoOutput()
 
 void CameraNightSessionUnit::SetUpTestCase(void)
 {
-    ASSERT_TRUE(TestToken::GetAllCameraPermission());
+    ASSERT_TRUE(TestToken().GetAllCameraPermission());
 }
 
 void CameraNightSessionUnit::TearDownTestCase(void) {}

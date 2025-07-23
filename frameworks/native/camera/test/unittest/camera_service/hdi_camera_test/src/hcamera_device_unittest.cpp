@@ -34,7 +34,7 @@ const std::string LOCAL_SERVICE_NAME = "camera_service";
 void HCameraDeviceUnit::SetUpTestCase(void)
 {
     MEDIA_DEBUG_LOG("HCameraDeviceUnit::SetUpTestCase started!");
-    ASSERT_TRUE(TestToken::GetAllCameraPermission());
+    ASSERT_TRUE(TestToken().GetAllCameraPermission());
 }
 
 void HCameraDeviceUnit::TearDownTestCase(void)

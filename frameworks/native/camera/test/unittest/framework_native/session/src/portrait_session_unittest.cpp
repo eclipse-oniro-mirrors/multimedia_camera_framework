@@ -242,7 +242,7 @@ sptr<CaptureOutput> CameraPortraitSessionUnitTest::CreatePhotoOutput()
 
 void CameraPortraitSessionUnitTest::SetUpTestCase(void)
 {
-    ASSERT_TRUE(TestToken::GetAllCameraPermission());
+    ASSERT_TRUE(TestToken().GetAllCameraPermission());
 }
 
 void CameraPortraitSessionUnitTest::TearDownTestCase(void) {}

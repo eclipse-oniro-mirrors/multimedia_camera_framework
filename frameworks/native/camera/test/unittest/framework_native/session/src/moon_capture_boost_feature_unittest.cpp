@@ -39,7 +39,7 @@ namespace OHOS {
 namespace CameraStandard {
 void MoonCaptureBoostUnitTest::SetUpTestCase(void)
 {
-    ASSERT_TRUE(TestToken::GetAllCameraPermission());
+    ASSERT_TRUE(TestToken().GetAllCameraPermission());
 }
 
 void MoonCaptureBoostUnitTest::TearDownTestCase(void) {}

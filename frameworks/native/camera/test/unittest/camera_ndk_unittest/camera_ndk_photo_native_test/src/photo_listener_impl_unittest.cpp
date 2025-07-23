@@ -29,7 +29,7 @@ namespace CameraStandard {
 
 void PhotoListenerImplUnitTest::SetUpTestCase(void)
 {
-    ASSERT_TRUE(TestToken::GetAllCameraPermission());
+    ASSERT_TRUE(TestToken().GetAllCameraPermission());
 }
 
 void PhotoListenerImplUnitTest::TearDownTestCase(void) {}

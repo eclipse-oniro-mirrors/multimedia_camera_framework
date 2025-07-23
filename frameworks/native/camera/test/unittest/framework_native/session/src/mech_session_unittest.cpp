@@ -42,7 +42,7 @@ static const int32_t PREVIEW_WIDTH = 1920;
 static const int32_t PREVIEW_HEIGHT = 1080;
 void MechSessionUnitTest::SetUpTestCase(void)
 {
-    ASSERT_TRUE(TestToken::GetAllCameraPermission());
+    ASSERT_TRUE(TestToken().GetAllCameraPermission());
 }
 
 void MechSessionUnitTest::TearDownTestCase(void) {}

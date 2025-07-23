@@ -51,7 +51,7 @@ using namespace OHOS::HDI::Camera::V1_1;
 
 void CameraSketchWrapperOutputUnit::SetUpTestCase(void)
 {
-    ASSERT_TRUE(TestToken::GetAllCameraPermission());
+    ASSERT_TRUE(TestToken().GetAllCameraPermission());
 }
 
 void CameraSketchWrapperOutputUnit::TearDownTestCase(void) {}

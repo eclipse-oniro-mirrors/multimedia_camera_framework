@@ -85,7 +85,7 @@ void Test(uint8_t *data, size_t size)
     if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
         return;
     }
-    CHECK_RETURN_ELOG(!TestToken::GetAllCameraPermission(), "GetPermission error");
+    CHECK_RETURN_ELOG(!TestToken().GetAllCameraPermission(), "GetPermission error");
     auto manager = CameraManager::GetInstance();
     CHECK_RETURN_ELOG(!manager, "previewOutputFuzzer: Get CameraManager instance Error");
     auto cameras = manager->GetSupportedCameras();

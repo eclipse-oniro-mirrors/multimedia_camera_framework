@@ -116,7 +116,7 @@ void WAIT(uint32_t duration)
 void CameraBaseFunctionModuleTest::SetUpTestCase(void)
 {
     MEDIA_INFO_LOG("SetUpTestCase start.");
-    ASSERT_TRUE(TestToken::GetAllCameraPermission());
+    ASSERT_TRUE(TestToken().GetAllCameraPermission());
     MEDIA_INFO_LOG("SetUpTestCase end.");
 }
 

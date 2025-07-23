@@ -39,7 +39,7 @@ namespace CameraStandard {
 
 void DeferredVideoProcessorStratetyUnittest::SetUpTestCase(void)
 {
-    ASSERT_TRUE(TestToken::GetAllCameraPermission());
+    ASSERT_TRUE(TestToken().GetAllCameraPermission());
 }
 
 void DeferredVideoProcessorStratetyUnittest::TearDownTestCase(void) {}

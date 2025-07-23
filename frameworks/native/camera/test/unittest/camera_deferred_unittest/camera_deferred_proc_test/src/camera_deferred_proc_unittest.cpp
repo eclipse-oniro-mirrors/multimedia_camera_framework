@@ -71,7 +71,7 @@ std::shared_ptr<PictureIntf> GetPictureIntfInstance()
 
 void DeferredProcUnitTest::SetUpTestCase(void)
 {
-    ASSERT_TRUE(TestToken::GetAllCameraPermission());
+    ASSERT_TRUE(TestToken().GetAllCameraPermission());
 }
 
 void DeferredProcUnitTest::TearDownTestCase(void)

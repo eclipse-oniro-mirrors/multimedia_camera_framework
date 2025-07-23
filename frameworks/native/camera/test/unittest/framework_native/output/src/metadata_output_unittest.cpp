@@ -50,7 +50,7 @@ using namespace OHOS::HDI::Camera::V1_1;
 
 void CameraMetadataOutputUnit::SetUpTestCase(void)
 {
-    ASSERT_TRUE(TestToken::GetAllCameraPermission());
+    ASSERT_TRUE(TestToken().GetAllCameraPermission());
 }
 
 void CameraMetadataOutputUnit::TearDownTestCase(void) {}

@@ -27,7 +27,7 @@ static std::mutex g_mutex;
 void CameraPhotoModuleTest::SetUpTestCase(void)
 {
     MEDIA_DEBUG_LOG("CameraPhotoModuleTest::SetUpTestCase started!");
-    ASSERT_TRUE(TestToken::GetAllCameraPermission());
+    ASSERT_TRUE(TestToken().GetAllCameraPermission());
 }
 
 void CameraPhotoModuleTest::TearDownTestCase(void)

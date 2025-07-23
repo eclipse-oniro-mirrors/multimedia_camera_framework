@@ -327,7 +327,7 @@ extern "C" int LLVMFuzzerTestOneInput(uint8_t* data, size_t size)
     if (fdp.remaining_bytes() < OHOS::CameraStandard::MIN_SIZE_NUM) {
         return 0;
     }
-    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::TestToken::GetAllCameraPermission(), 0, "GetPermission error");
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::TestToken().GetAllCameraPermission(), 0, "GetPermission error");
     OHOS::CameraStandard::CameraDeviceFuzzTest(fdp);
     OHOS::CameraStandard::CameraDeviceFuzzTestUpdateSetting(fdp);
     OHOS::CameraStandard::CameraDeviceFuzzTest2(fdp);
