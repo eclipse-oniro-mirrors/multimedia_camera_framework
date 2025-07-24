@@ -144,12 +144,15 @@ CamServiceError HCaptureSession::NewInstance(
                     "session:(%{public}zu), current pid(%{public}d).",
         sessionManager.GetTotalSessionSize(),
         session->pid_);
-    if (sessionManager.AddSession(session) == CAMERA_SESSION_MAX_INSTANCE_NUMBER_REACHED) {
-        MEDIA_WARNING_LOG("HCaptureSession::HCaptureSession maximum session limit reached. ");
+    if (system::GetParameter("const.camera.multicamera.enable", "false") == "true") {
+        sessionManager.AddSessionForPC(session);
+    } else {
+        CHECK_PRINT_WLOG(sessionManager.AddSession(session) == CAMERA_SESSION_MAX_INSTANCE_NUMBER_REACHED,
+            "HCaptureSession::HCaptureSession maximum session limit reached. ");
+        // Avoid multithread leak session, PreemptOverflowSessions need to call after AddSession, ignore
+        // CAMERA_SESSION_MAX_INSTANCE_NUMBER_REACHED.
+        sessionManager.PreemptOverflowSessions(IPCSkeleton::GetCallingPid());
     }
-    // Avoid multithread leak session, PreemptOverflowSessions need to call after AddSession, ignore
-    // CAMERA_SESSION_MAX_INSTANCE_NUMBER_REACHED.
-    sessionManager.PreemptOverflowSessions(IPCSkeleton::GetCallingPid());
     outSession = session;
     MEDIA_INFO_LOG("HCaptureSession::NewInstance end, sessionId: %{public}d, "
                    "total session:(%{public}zu). current opMode_= %{public}d "

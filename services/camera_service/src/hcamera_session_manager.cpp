@@ -128,6 +128,16 @@ CamServiceError HCameraSessionManager::AddSession(sptr<HCaptureSession> session)
     return list.size() > GetGroupSizeLimit(pid) ? CAMERA_SESSION_MAX_INSTANCE_NUMBER_REACHED : CAMERA_OK;
 }
 
+CamServiceError HCameraSessionManager::AddSessionForPC(sptr<HCaptureSession> session)
+{
+    CHECK_RETURN_RET(session == nullptr, CAMERA_INVALID_ARG);
+    auto pid = session->GetPid();
+    std::lock_guard<std::mutex> lock(totalSessionMapMutex_);
+    auto& list = totalSessionMap_[pid];
+    list.emplace_back(session);
+    return CAMERA_OK;
+}
+
 CamServiceError HCameraSessionManager::AddMechSession(int32_t userId,
     sptr<HMechSession> mechSession)
 {
