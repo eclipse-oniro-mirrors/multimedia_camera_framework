@@ -12,7 +12,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// LCOV_EXCL_START
 #include "photo_asset_buffer_consumer.h"
 
 #include "camera_log.h"
@@ -203,14 +202,14 @@ void PhotoAssetBufferConsumer::AssembleDeferredPicture(int64_t timestamp, int32_
     std::lock_guard<std::mutex> lock(streamCapture->g_assembleImageMutex);
     std::shared_ptr<PictureIntf> picture = streamCapture->captureIdPictureMap_[captureId];
     if (streamCapture->captureIdExifMap_[captureId] && picture) {
-        MEDIA_ERR_LOG("AssembleDeferredPicture exifSurfaceBuffer");
+        MEDIA_INFO_LOG("AssembleDeferredPicture exifSurfaceBuffer");
         auto buffer = streamCapture->captureIdExifMap_[captureId];
         LoggingSurfaceBufferInfo(buffer, "exifSurfaceBuffer");
         picture->SetExifMetadata(buffer);
         streamCapture->captureIdExifMap_[captureId] = nullptr;
     }
     if (streamCapture->captureIdGainmapMap_[captureId] && picture) {
-        MEDIA_ERR_LOG("AssembleDeferredPicture exifSurfaceBuffer");
+        MEDIA_INFO_LOG("AssembleDeferredPicture gainmapSurfaceBuffer");
         LoggingSurfaceBufferInfo(streamCapture->captureIdGainmapMap_[captureId], "gainmapSurfaceBuffer");
         picture->SetAuxiliaryPicture(
             streamCapture->captureIdGainmapMap_[captureId], CameraAuxiliaryPictureType::GAINMAP);
@@ -219,12 +218,12 @@ void PhotoAssetBufferConsumer::AssembleDeferredPicture(int64_t timestamp, int32_
     sptr<SurfaceBuffer> depthBuffer = nullptr;
     streamCapture->captureIdDepthMap_.FindOldAndSetNew(captureId, depthBuffer, nullptr);
     if (depthBuffer && picture) {
-        MEDIA_ERR_LOG("AssembleDeferredPicture deepSurfaceBuffer");
+        MEDIA_INFO_LOG("AssembleDeferredPicture deepSurfaceBuffer");
         LoggingSurfaceBufferInfo(depthBuffer, "deepSurfaceBuffer");
         picture->SetAuxiliaryPicture(depthBuffer, CameraAuxiliaryPictureType::DEPTH_MAP);
     }
     if (streamCapture->captureIdDebugMap_[captureId] && picture) {
-        MEDIA_ERR_LOG("AssembleDeferredPicture debugSurfaceBuffer");
+        MEDIA_INFO_LOG("AssembleDeferredPicture debugSurfaceBuffer");
         auto buffer = streamCapture->captureIdDebugMap_[captureId];
         LoggingSurfaceBufferInfo(buffer, "debugSurfaceBuffer");
         picture->SetMaintenanceData(buffer);
@@ -245,4 +244,3 @@ void PhotoAssetBufferConsumer::AssembleDeferredPicture(int64_t timestamp, int32_
 }
 }  // namespace CameraStandard
 }  // namespace OHOS
-// LCOV_EXCL_STOP
