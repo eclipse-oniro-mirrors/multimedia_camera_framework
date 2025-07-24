@@ -1,0 +1,443 @@
+diff --git a/frameworks/native/camera/base/src/output/photo_output.cpp b/frameworks/native/camera/base/src/output/photo_output.cpp
+index b4762178f..08a55b363 100644
+--- a/frameworks/native/camera/base/src/output/photo_output.cpp
++++ b/frameworks/native/camera/base/src/output/photo_output.cpp
+@@ -317,14 +317,12 @@ PhotoOutput::PhotoOutput(sptr<IBufferProducer> bufferProducer)
+     : CaptureOutput(CAPTURE_OUTPUT_TYPE_PHOTO, StreamType::CAPTURE, bufferProducer, nullptr)
+ {
+     defaultCaptureSetting_ = nullptr;
+-    taskManager_ = nullptr;
+ }
+ 
+ PhotoOutput::PhotoOutput(sptr<IBufferProducer> bufferProducer, sptr<Surface> photoSurface)
+     : CaptureOutput(CAPTURE_OUTPUT_TYPE_PHOTO, StreamType::CAPTURE, bufferProducer, nullptr)
+ {
+     defaultCaptureSetting_ = nullptr;
+-    taskManager_ = nullptr;
+     photoSurface_ = photoSurface;
+ }
+ 
+@@ -338,11 +336,6 @@ PhotoOutput::~PhotoOutput()
+ {
+     MEDIA_DEBUG_LOG("Enter Into PhotoOutput::~PhotoOutput()");
+     defaultCaptureSetting_ = nullptr;
+-    if (taskManager_) {
+-        taskManager_->CancelAllTasks();
+-        taskManager_.reset();
+-        taskManager_ = nullptr;
+-    }
+ }
+ 
+ void PhotoOutput::SetNativeSurface(bool isNativeSurface)
+@@ -797,11 +790,6 @@ int32_t PhotoOutput::Release()
+     CHECK_PRINT_ELOG(errCode != CAMERA_OK, "PhotoOutput Failed to release!, errCode: %{public}d", errCode);
+     defaultCaptureSetting_ = nullptr;
+     CaptureOutput::Release();
+-    if (taskManager_) {
+-        taskManager_->CancelAllTasks();
+-        taskManager_.reset();
+-        taskManager_ = nullptr;
+-    }
+     return ServiceToCameraError(errCode);
+ }
+ 
+diff --git a/frameworks/native/camera/test/moduletest/camera_photo/include/camera_photo_moduletest.h b/frameworks/native/camera/test/moduletest/camera_photo/include/camera_photo_moduletest.h
+index c4011e61b..2ae78c4c7 100644
+--- a/frameworks/native/camera/test/moduletest/camera_photo/include/camera_photo_moduletest.h
++++ b/frameworks/native/camera/test/moduletest/camera_photo/include/camera_photo_moduletest.h
+@@ -30,9 +30,11 @@ const int32_t WAIT_TIME_AFTER_START = 1;
+ const int32_t WAIT_TIME_CALLBACK = 2;
+ bool photoFlag_ = false;
+ bool photoAssetFlag_ = false;
++bool thumbnailFlag_ = false;
+ 
+ class TestCaptureCallback : public PhotoAvailableCallback,
+-                            public PhotoAssetAvailableCallback {
++                            public PhotoAssetAvailableCallback,
++                            public ThumbnailCallback {
+ public:
+     TestCaptureCallback() = default;
+     ~TestCaptureCallback() = default;
+@@ -41,6 +43,8 @@ public:
+         const std::shared_ptr<Media::NativeImage> nativeImage, const bool isRaw = false) const override;
+     void OnPhotoAssetAvailable(const int32_t captureId, const std::string &uri, const int32_t cameraShotType,
+         const std::string &burstKey) const override;
++    void OnThumbnailAvailable(
++        int32_t captureId, int64_t timestamp, std::unique_ptr<Media::PixelMap> pixelMap) const override;
+ 
+ private:
+ };
+@@ -63,6 +67,8 @@ protected:
+     void UpdataCameraOutputCapability(int32_t modeName = 0);
+     int32_t CreatePreviewOutput(Profile &profile, sptr<PreviewOutput> &previewOutput);
+     int32_t CreatePhotoOutputWithoutSurface(Profile &profile, sptr<PhotoOutput> &photoOutput);
++    int32_t CreateYuvPhotoOutput();
++    int32_t CreateYuvPreviewOutput();
+ 
+     uint64_t tokenId_ = 0;
+     int32_t uid_ = 0;
+@@ -79,6 +85,19 @@ protected:
+     sptr<PhotoOutput> photoOutput_;
+     std::vector<Profile> previewProfile_ = {};
+     std::vector<Profile> photoProfile_ = {};
++    Profile yuvPhotoProfile_;
++    sptr<IBufferConsumerListener> previewListener_ = nullptr;
++    sptr<Surface> previewSurface_ = nullptr;
++};
++
++class TestPreviewConsumer : public IBufferConsumerListener {
++public:
++    TestPreviewConsumer(wptr<Surface> surface);
++    ~TestPreviewConsumer() override;
++
++    void OnBufferAvailable() override;
++private:
++    wptr<Surface> surface_ = nullptr;
+ };
+ } // namespace CameraStandard
+ } // namespace OHOS
+diff --git a/frameworks/native/camera/test/moduletest/camera_photo/src/camera_photo_moduletest.cpp b/frameworks/native/camera/test/moduletest/camera_photo/src/camera_photo_moduletest.cpp
+index ece8b5000..07fe1f514 100644
+--- a/frameworks/native/camera/test/moduletest/camera_photo/src/camera_photo_moduletest.cpp
++++ b/frameworks/native/camera/test/moduletest/camera_photo/src/camera_photo_moduletest.cpp
+@@ -55,11 +55,7 @@ void CameraPhotoModuleTest::SetUp()
+     input_ = manager_->CreateCameraInput(cameras_[0]);
+     ASSERT_NE(input_, nullptr);
+     EXPECT_EQ(input_->Open(), SUCCESS);
+-
+     UpdataCameraOutputCapability();
+-    EXPECT_EQ(CreatePreviewOutput(previewProfile_[0], previewOutput_), SUCCESS);
+-    EXPECT_EQ(CreatePhotoOutputWithoutSurface(photoProfile_[0], photoOutput_), SUCCESS);
+-
+     MEDIA_INFO_LOG("CameraPhotoModuleTest::SetUp end!");
+ }
+ 
+@@ -77,7 +73,7 @@ void CameraPhotoModuleTest::TearDown()
+     manager_ = nullptr;
+     input_->Release();
+     session_->Release();
+-
++    previewSurface_ = nullptr;
+     MEDIA_INFO_LOG("CameraPhotoModuleTest::TearDown end!");
+ }
+ 
+@@ -98,30 +94,111 @@ void CameraPhotoModuleTest::UpdataCameraOutputCapability(int32_t modeName)
+ 
+ int32_t CameraPhotoModuleTest::CreatePreviewOutput(Profile &profile, sptr<PreviewOutput> &previewOutput)
+ {
+-    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+-    if (surface == nullptr) {
++    previewSurface_ = Surface::CreateSurfaceAsConsumer();
++    if (previewSurface_ == nullptr) {
+         MEDIA_ERR_LOG("Failed to get previewOutput surface");
+         return INVALID_ARGUMENT;
+     }
+-    surface->SetUserData(CameraManager::surfaceFormat, std::to_string(profile.GetCameraFormat()));
+-    int32_t retCode = manager_->CreatePreviewOutput(profile, surface, &previewOutput);
++    previewSurface_->SetUserData(CameraManager::surfaceFormat, std::to_string(profile.GetCameraFormat()));
++    previewListener_ = nullptr;
++    previewListener_ = new (std::nothrow) TestPreviewConsumer(previewSurface_);
++    SurfaceError ret = previewSurface_->RegisterConsumerListener((sptr<IBufferConsumerListener> &)previewListener_);
++    EXPECT_EQ(ret, SURFACE_ERROR_OK);
++    int32_t retCode = manager_->CreatePreviewOutput(profile, previewSurface_, &previewOutput);
+     if (retCode != CameraErrorCode::SUCCESS) {
+         return SERVICE_FATL_ERROR;
+     }
+     return SUCCESS;
+ }
+ 
+-int32_t CameraPhotoModuleTest::CreatePhotoOutputWithoutSurface(Profile &profile,
+-    sptr<PhotoOutput> &photoOutput)
++int32_t CameraPhotoModuleTest::CreatePhotoOutputWithoutSurface(Profile &profile, sptr<PhotoOutput> &photoOutput)
+ {
+-    int32_t retCode = manager_->CreatePhotoOutput(profile, &photoOutput_);
+-    CHECK_RETURN_RET_ELOG((retCode != CameraErrorCode::SUCCESS || photoOutput_ == nullptr), SERVICE_FATL_ERROR,
++    int32_t retCode = manager_->CreatePhotoOutput(profile, &photoOutput);
++    CHECK_RETURN_RET_ELOG((retCode != CameraErrorCode::SUCCESS || photoOutput == nullptr), SERVICE_FATL_ERROR,
+         "Create photo output failed");
+ 
++    photoOutput->SetNativeSurface(true);
++    return SUCCESS;
++}
++
++int32_t CameraPhotoModuleTest::CreateYuvPhotoOutput()
++{
++    for (Profile &profile : photoProfile_) {
++        if (profile.GetCameraFormat() == CAMERA_FORMAT_YUV_420_SP) {
++            yuvPhotoProfile_ = profile;
++            std::cout << "get profle:" << profile.GetCameraFormat() << " width:" << profile.GetSize().width
++                      << "height:" << profile.GetSize().height << std::endl;
++            break;
++        } else {
++            std::cout << "skip profle:" << profile.GetCameraFormat() << " width:" << profile.GetSize().width
++                      << "height:" << profile.GetSize().height << std::endl;
++        }
++    }
++    int32_t retCode = manager_->CreatePhotoOutput(yuvPhotoProfile_, &photoOutput_);
++    CHECK_RETURN_RET_ELOG((retCode != CameraErrorCode::SUCCESS || photoOutput_ == nullptr),
++        SERVICE_FATL_ERROR,
++        "Create photo output failed");
++
++    photoOutput_->SetNativeSurface(true);
++    return SUCCESS;
++}
++
++int32_t CameraPhotoModuleTest::CreateYuvPreviewOutput()
++{
++    Profile yuvProfile;
++    std::cout << "photo yuv profle format:" << yuvPhotoProfile_.GetCameraFormat()
++              << " width:" << yuvPhotoProfile_.GetSize().width << " height:" << yuvPhotoProfile_.GetSize().height
++              << std::endl;
++    for (Profile &profile : previewProfile_) {
++        float ratio1 = static_cast<float>(yuvPhotoProfile_.GetSize().width) / yuvPhotoProfile_.GetSize().height;
++        float ratio2 = static_cast<float>(profile.GetSize().width) / profile.GetSize().height;
++        std::cout << "ratio1:" << ratio1 << " ratio2:" << ratio2 << std::endl;
++        if (profile.GetCameraFormat() == CAMERA_FORMAT_YUV_420_SP && ratio1 == ratio2) {
++            yuvProfile = profile;
++            std::cout << "get profle:" << profile.GetCameraFormat() << " width:" << profile.GetSize().width
++                      << " height:" << profile.GetSize().height << std::endl;
++            break;
++        } else {
++            std::cout << "skip profle:" << profile.GetCameraFormat() << " width:" << profile.GetSize().width
++                      << " height:" << profile.GetSize().height << std::endl;
++        }
++    }
++
++    int32_t retCode = CreatePreviewOutput(yuvProfile, previewOutput_);
++    CHECK_RETURN_RET_ELOG((retCode != CameraErrorCode::SUCCESS || previewOutput_ == nullptr),
++        SERVICE_FATL_ERROR,
++        "Create preview output failed");
++
+     photoOutput_->SetNativeSurface(true);
+     return SUCCESS;
+ }
+ 
++TestPreviewConsumer::TestPreviewConsumer(wptr<Surface> surface) : surface_(surface)
++{
++    MEDIA_INFO_LOG("TestPreviewConsumer new E");
++}
++
++TestPreviewConsumer::~TestPreviewConsumer()
++{
++    MEDIA_INFO_LOG("TestPreviewConsumer ~ E");
++}
++
++void TestPreviewConsumer::OnBufferAvailable()
++{
++    MEDIA_INFO_LOG("TestPreviewConsumer OnBufferAvailable E");
++    CAMERA_SYNC_TRACE;
++    sptr<Surface> surface = surface_.promote();
++    CHECK_RETURN_ELOG(surface == nullptr, "surface is null");
++    sptr<SurfaceBuffer> surfaceBuffer = nullptr;
++    int32_t fence = -1;
++    int64_t timestamp;
++    OHOS::Rect damage;
++    SurfaceError surfaceRet = surface_->AcquireBuffer(surfaceBuffer, fence, timestamp, damage);
++    CHECK_RETURN_ELOG(surfaceRet != SURFACE_ERROR_OK, "Failed to acquire surface buffer");
++    surfaceRet = surface_->ReleaseBuffer(surfaceBuffer, -1);
++    MEDIA_INFO_LOG("TestPreviewConsumer OnBufferAvailable X");
++}
++
+ void TestCaptureCallback::OnPhotoAvailable(const std::shared_ptr<Media::NativeImage> nativeImage, bool isRaw) const
+ {
+     MEDIA_DEBUG_LOG("TestCaptureCallback::OnPhotoAvailable is called!");
+@@ -135,6 +212,13 @@ void TestCaptureCallback::OnPhotoAssetAvailable(
+     photoAssetFlag_ = true;
+ }
+ 
++void TestCaptureCallback::OnThumbnailAvailable(
++    int32_t captureId, int64_t timestamp, std::unique_ptr<Media::PixelMap> pixelMap) const
++{
++    MEDIA_DEBUG_LOG("TestCaptureCallback::OnThumbnailAvailable is called!");
++    thumbnailFlag_ = true;
++}
++
+ /*
+  * Feature: Framework
+  * Function: Test the photo available callback
+@@ -145,19 +229,22 @@ void TestCaptureCallback::OnPhotoAssetAvailable(
+  */
+ HWTEST_F(CameraPhotoModuleTest, camera_photo_moduletest_001, TestSize.Level0)
+ {
++    EXPECT_EQ(CreatePreviewOutput(previewProfile_[0], previewOutput_), SUCCESS);
++    EXPECT_EQ(CreatePhotoOutputWithoutSurface(photoProfile_[0], photoOutput_), SUCCESS);
+     EXPECT_EQ(session_->BeginConfig(), SUCCESS);
+     EXPECT_EQ(session_->AddInput((sptr<CaptureInput>&)input_), SUCCESS);
+     EXPECT_EQ(session_->AddOutput((sptr<CaptureOutput>&)previewOutput_), SUCCESS);
+     EXPECT_EQ(session_->AddOutput((sptr<CaptureOutput>&)photoOutput_), SUCCESS);
+-    EXPECT_EQ(session_->CommitConfig(), SUCCESS);
+-    EXPECT_EQ(session_->Start(), SUCCESS);
+-    sleep(WAIT_TIME_AFTER_START);
+ 
+     std::shared_ptr<TestCaptureCallback> callback = std::make_shared<TestCaptureCallback>();
+     photoOutput_->SetPhotoAvailableCallback(callback);
+     callbackFlag_ |= CAPTURE_PHOTO;
+     photoOutput_->SetCallbackFlag(callbackFlag_);
+ 
++    EXPECT_EQ(session_->CommitConfig(), SUCCESS);
++    EXPECT_EQ(session_->Start(), SUCCESS);
++    sleep(WAIT_TIME_AFTER_START);
++
+     EXPECT_EQ(photoOutput_->Capture(), SUCCESS);
+     sleep(WAIT_TIME_AFTER_CAPTURE);
+ 
+@@ -178,27 +265,72 @@ HWTEST_F(CameraPhotoModuleTest, camera_photo_moduletest_001, TestSize.Level0)
+  */
+ HWTEST_F(CameraPhotoModuleTest, camera_photo_moduletest_002, TestSize.Level0)
+ {
++    EXPECT_EQ(CreatePreviewOutput(previewProfile_[0], previewOutput_), SUCCESS);
++    EXPECT_EQ(CreatePhotoOutputWithoutSurface(photoProfile_[0], photoOutput_), SUCCESS);
+     EXPECT_EQ(session_->BeginConfig(), SUCCESS);
+     EXPECT_EQ(session_->AddInput((sptr<CaptureInput>&)input_), SUCCESS);
+     EXPECT_EQ(session_->AddOutput((sptr<CaptureOutput>&)previewOutput_), SUCCESS);
+     EXPECT_EQ(session_->AddOutput((sptr<CaptureOutput>&)photoOutput_), SUCCESS);
++
++    std::shared_ptr<TestCaptureCallback> callback = std::make_shared<TestCaptureCallback>();
++    photoOutput_->SetPhotoAssetAvailableCallback(callback);
++    callbackFlag_ |= CAPTURE_PHOTO_ASSET;
++    photoOutput_->SetCallbackFlag(callbackFlag_);
++
+     EXPECT_EQ(session_->CommitConfig(), SUCCESS);
+     EXPECT_EQ(session_->Start(), SUCCESS);
+     sleep(WAIT_TIME_AFTER_START);
+ 
++    EXPECT_EQ(photoOutput_->Capture(), SUCCESS);
++    sleep(WAIT_TIME_AFTER_CAPTURE);
++
++    EXPECT_EQ(photoAssetFlag_, true);
++    photoOutput_->UnSetPhotoAssetAvailableCallback();
++    photoAssetFlag_ = false;
++
++    EXPECT_EQ(session_->Stop(), SUCCESS);
++}
++
++/*
++ * Feature: Framework
++ * Function: Test thumbnail callback
++ * SubFunction: NA
++ * FunctionPoints: NA
++ * EnvConditions: NA
++ * CaseDescription: Test thumbnail callback
++ */
++HWTEST_F(CameraPhotoModuleTest, camera_photo_moduletest_003, TestSize.Level0)
++{
++    EXPECT_EQ(CreateYuvPhotoOutput(), SUCCESS);
++    EXPECT_EQ(CreateYuvPreviewOutput(), SUCCESS);
++    EXPECT_EQ(photoOutput_->IsQuickThumbnailSupported(), SESSION_NOT_RUNNING);
++
++    EXPECT_EQ(session_->BeginConfig(), SUCCESS);
++    EXPECT_EQ(session_->AddInput((sptr<CaptureInput> &)input_), SUCCESS);
++    EXPECT_EQ(session_->AddOutput((sptr<CaptureOutput> &)previewOutput_), SUCCESS);
++    EXPECT_EQ(session_->AddOutput((sptr<CaptureOutput> &)photoOutput_), SUCCESS);
++
++    CHECK_RETURN_ELOG(photoOutput_->IsQuickThumbnailSupported() != SUCCESS, "device not support!");
++    EXPECT_EQ(photoOutput_->SetThumbnail(true), SUCCESS);
+     std::shared_ptr<TestCaptureCallback> callback = std::make_shared<TestCaptureCallback>();
++    photoOutput_->SetThumbnailCallback(callback);
+     photoOutput_->SetPhotoAssetAvailableCallback(callback);
+     callbackFlag_ |= CAPTURE_PHOTO_ASSET;
+     photoOutput_->SetCallbackFlag(callbackFlag_);
+ 
++    EXPECT_EQ(session_->CommitConfig(), SUCCESS);
++    EXPECT_EQ(session_->Start(), SUCCESS);
++    sleep(WAIT_TIME_AFTER_START);
++
+     EXPECT_EQ(photoOutput_->Capture(), SUCCESS);
+     sleep(WAIT_TIME_AFTER_CAPTURE);
+ 
+     EXPECT_EQ(photoAssetFlag_, true);
+     photoOutput_->UnSetPhotoAssetAvailableCallback();
+     photoAssetFlag_ = false;
+-
+-    EXPECT_EQ(session_->Stop(), SUCCESS);
++    EXPECT_EQ(thumbnailFlag_, true);
++    photoOutput_->UnSetThumbnailAvailableCallback();
++    thumbnailFlag_ = false;
+ }
+ }  // namespace CameraStandard
+ }  // namespace OHOS
+\ No newline at end of file
+diff --git a/frameworks/native/camera/test/unittest/framework_native/output/src/photo_output_unittest.cpp b/frameworks/native/camera/test/unittest/framework_native/output/src/photo_output_unittest.cpp
+index f875bb4f7..99c6822b8 100644
+--- a/frameworks/native/camera/test/unittest/framework_native/output/src/photo_output_unittest.cpp
++++ b/frameworks/native/camera/test/unittest/framework_native/output/src/photo_output_unittest.cpp
+@@ -922,10 +922,6 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_021, TestSize.Level0)
+     EXPECT_EQ(session->AddOutput(photoOutput), 0);
+     EXPECT_EQ(session->CommitConfig(), 0);
+     EXPECT_EQ(session->Start(), 0);
+-
+-    int32_t numThreads = 1;
+-    phtOutput->taskManager_ = std::make_shared<DeferredProcessing::TaskManager>("PhotoListener",
+-        numThreads, false);
+     EXPECT_EQ(phtOutput->Release(), 0);
+ }
+ 
+diff --git a/interfaces/inner_api/native/camera/include/output/photo_output.h b/interfaces/inner_api/native/camera/include/output/photo_output.h
+index a2f9a463c..9689a39c9 100644
+--- a/interfaces/inner_api/native/camera/include/output/photo_output.h
++++ b/interfaces/inner_api/native/camera/include/output/photo_output.h
+@@ -549,7 +549,6 @@ public:
+     std::map<int32_t, sptr<SurfaceBuffer>> captureIdExifMap_;
+     std::map<int32_t, sptr<SurfaceBuffer>> captureIdDebugMap_;
+     std::atomic<bool> isRawImageDelivery_ = false;
+-    std::shared_ptr<DeferredProcessing::TaskManager> taskManager_;
+     SafeMap<int32_t, captureMonitorInfo> captureIdToCaptureInfoMap_;
+ private:
+     std::mutex callbackMutex_;
+diff --git a/services/camera_service/src/camera_buffer_manager/photo_asset_buffer_consumer.cpp b/services/camera_service/src/camera_buffer_manager/photo_asset_buffer_consumer.cpp
+index 887534c9f..3f1ed5a47 100644
+--- a/services/camera_service/src/camera_buffer_manager/photo_asset_buffer_consumer.cpp
++++ b/services/camera_service/src/camera_buffer_manager/photo_asset_buffer_consumer.cpp
+@@ -200,14 +200,14 @@ void PhotoAssetBufferConsumer::AssembleDeferredPicture(int64_t timestamp, int32_
+     std::lock_guard<std::mutex> lock(streamCapture->g_assembleImageMutex);
+     std::shared_ptr<PictureIntf> picture = streamCapture->captureIdPictureMap_[captureId];
+     if (streamCapture->captureIdExifMap_[captureId] && picture) {
+-        MEDIA_ERR_LOG("AssembleDeferredPicture exifSurfaceBuffer");
++        MEDIA_INFO_LOG("AssembleDeferredPicture exifSurfaceBuffer");
+         auto buffer = streamCapture->captureIdExifMap_[captureId];
+         LoggingSurfaceBufferInfo(buffer, "exifSurfaceBuffer");
+         picture->SetExifMetadata(buffer);
+         streamCapture->captureIdExifMap_[captureId] = nullptr;
+     }
+     if (streamCapture->captureIdGainmapMap_[captureId] && picture) {
+-        MEDIA_ERR_LOG("AssembleDeferredPicture exifSurfaceBuffer");
++        MEDIA_INFO_LOG("AssembleDeferredPicture gainmapSurfaceBuffer");
+         LoggingSurfaceBufferInfo(streamCapture->captureIdGainmapMap_[captureId], "gainmapSurfaceBuffer");
+         picture->SetAuxiliaryPicture(
+             streamCapture->captureIdGainmapMap_[captureId], CameraAuxiliaryPictureType::GAINMAP);
+@@ -216,12 +216,12 @@ void PhotoAssetBufferConsumer::AssembleDeferredPicture(int64_t timestamp, int32_
+     sptr<SurfaceBuffer> depthBuffer = nullptr;
+     streamCapture->captureIdDepthMap_.FindOldAndSetNew(captureId, depthBuffer, nullptr);
+     if (depthBuffer && picture) {
+-        MEDIA_ERR_LOG("AssembleDeferredPicture deepSurfaceBuffer");
++        MEDIA_INFO_LOG("AssembleDeferredPicture deepSurfaceBuffer");
+         LoggingSurfaceBufferInfo(depthBuffer, "deepSurfaceBuffer");
+         picture->SetAuxiliaryPicture(depthBuffer, CameraAuxiliaryPictureType::DEPTH_MAP);
+     }
+     if (streamCapture->captureIdDebugMap_[captureId] && picture) {
+-        MEDIA_ERR_LOG("AssembleDeferredPicture debugSurfaceBuffer");
++        MEDIA_INFO_LOG("AssembleDeferredPicture debugSurfaceBuffer");
+         auto buffer = streamCapture->captureIdDebugMap_[captureId];
+         LoggingSurfaceBufferInfo(buffer, "debugSurfaceBuffer");
+         picture->SetMaintenanceData(buffer);
+diff --git a/services/camera_service/src/camera_buffer_manager/thumbnail_buffer_consumer.cpp b/services/camera_service/src/camera_buffer_manager/thumbnail_buffer_consumer.cpp
+index 55233cdad..31f4823a9 100644
+--- a/services/camera_service/src/camera_buffer_manager/thumbnail_buffer_consumer.cpp
++++ b/services/camera_service/src/camera_buffer_manager/thumbnail_buffer_consumer.cpp
+@@ -12,7 +12,6 @@
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  */
+-// LCOV_EXCL_START
+ #include "thumbnail_buffer_consumer.h"
+ 
+ #include "camera_log.h"
+@@ -87,5 +86,4 @@ void ThumbnailBufferConsumer::ExecuteOnBufferAvailable()
+     MEDIA_INFO_LOG("T_ExecuteOnBufferAvailable X");
+ }
+ }  // namespace CameraStandard
+-}  // namespace OHOS
+-// LCOV_EXCL_STOP
+\ No newline at end of file
++}  // namespace OHOS
+\ No newline at end of file
