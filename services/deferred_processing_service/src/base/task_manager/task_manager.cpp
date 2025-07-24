@@ -77,7 +77,7 @@ void TaskManager::CreateDelayedTaskGroupIfNeed()
     } else {
         std::weak_ptr defaultTaskHandle = defaultTaskHandle_;
         RegisterTaskGroup("delayedTaskGroup",
-            [this, defaultTaskHandle_](std::any param) {
+            [this, defaultTaskHandle](std::any param) {
                 auto taskHandle = defaultTaskHandle.lock();
                 DP_CHECK_RETURN(!taskHandle);
                 if (param.has_value()) {
