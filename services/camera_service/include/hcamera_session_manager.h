@@ -43,6 +43,7 @@ public:
     sptr<HCaptureSession> GetGroupDefaultSession(pid_t pid);
     sptr<HMechSession> GetMechSession(int32_t userId);
     CamServiceError AddSession(sptr<HCaptureSession> session);
+    CamServiceError AddSessionForPC(sptr<HCaptureSession> session);
     CamServiceError AddMechSession(int32_t userId, sptr<HMechSession> mechSession);
     void RemoveSession(sptr<HCaptureSession> session);
     void RemoveMechSession(int32_t userId);
