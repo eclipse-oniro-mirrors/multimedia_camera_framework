@@ -555,9 +555,6 @@ public:
     std::atomic<bool> isRawImageDelivery_ = false;
     std::map<int32_t, captureMonitorInfo> captureIdToCaptureInfoMap_;
 
-    void ClearTaskManager();
-    std::shared_ptr<DeferredProcessing::TaskManager> GetDefaultTaskManager();
-    void SetDefaultTaskManager(std::shared_ptr<DeferredProcessing::TaskManager> taskManager);
 private:
     std::mutex callbackMutex_;
     std::mutex offlineStatusMutex_;
@@ -577,9 +574,6 @@ private:
     bool mIsHasEnableOfflinePhoto_ = false;
     bool isHasSwitched_ = false;
     bool isDepthBufferSupported_ = false;
-
-    std::mutex taskManagerMutex_;
-    std::shared_ptr<DeferredProcessing::TaskManager> taskManager_;
 };
 
 class HStreamCaptureCallbackImpl : public StreamCaptureCallbackStub {

@@ -331,7 +331,6 @@ PhotoOutput::PhotoOutput(sptr<IBufferProducer> bufferProducer)
     : CaptureOutput(CAPTURE_OUTPUT_TYPE_PHOTO, StreamType::CAPTURE, bufferProducer, nullptr)
 {
     defaultCaptureSetting_ = nullptr;
-    taskManager_ = nullptr;
 }
 
 PhotoOutput::PhotoOutput(sptr<IBufferProducer> bufferProducer, sptr<Surface> photoSurface)
@@ -339,7 +338,6 @@ PhotoOutput::PhotoOutput(sptr<IBufferProducer> bufferProducer, sptr<Surface> pho
 {
     // LCOV_EXCL_START
     defaultCaptureSetting_ = nullptr;
-    taskManager_ = nullptr;
     photoSurface_ = photoSurface;
     // LCOV_EXCL_STOP
 }
@@ -715,27 +713,6 @@ std::shared_ptr<PhotoAssetAvailableCallback> PhotoOutput::GetAppPhotoAssetCallba
     std::lock_guard<std::mutex> lock(outputCallbackMutex_);
     return appPhotoAssetCallback_;
     // LCOV_EXCL_STOP
-}
-
-void PhotoOutput::ClearTaskManager()
-{
-    std::lock_guard<std::mutex> lock(taskManagerMutex_);
-    if (taskManager_ != nullptr) {
-        taskManager_->CancelAllTasks();
-        taskManager_ = nullptr;
-    }
-}
-
-std::shared_ptr<DeferredProcessing::TaskManager> PhotoOutput::GetDefaultTaskManager()
-{
-    std::lock_guard<std::mutex> lock(taskManagerMutex_);
-    return taskManager_;
-}
-
-void PhotoOutput::SetDefaultTaskManager(std::shared_ptr<DeferredProcessing::TaskManager> taskManager)
-{
-    std::lock_guard<std::mutex> lock(taskManagerMutex_);
-    taskManager_ = taskManager;
 }
 
 int32_t PhotoOutput::Capture(std::shared_ptr<PhotoCaptureSetting> photoCaptureSettings)

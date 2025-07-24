@@ -923,10 +923,6 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_021, TestSize.Level1)
     EXPECT_EQ(session->AddOutput(photoOutput), 0);
     EXPECT_EQ(session->CommitConfig(), 0);
     EXPECT_EQ(session->Start(), 0);
-
-    int32_t numThreads = 1;
-    phtOutput->taskManager_ = std::make_shared<DeferredProcessing::TaskManager>("PhotoListener",
-        numThreads, false);
     EXPECT_EQ(phtOutput->Release(), 0);
 }
 
