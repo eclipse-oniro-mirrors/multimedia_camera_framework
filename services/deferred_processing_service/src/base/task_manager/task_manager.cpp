@@ -43,7 +43,7 @@ void TaskManager::Initialize()
     auto ret = RegisterTaskGroup("defaultTaskGroup",
         [this, defaultTaskHandle](std::any param) {
             auto taskHandle = defaultTaskHandle.lock();
-            DP_CHECK_RETURN(!taskHandle|| *taskHandle == INVALID_TASK_GROUP_HANDLE);
+            DP_CHECK_RETURN(!taskHandle);
             if (param.has_value()) {
                 DoDefaultWorks(std::move(param));
             } else {
@@ -75,8 +75,11 @@ void TaskManager::CreateDelayedTaskGroupIfNeed()
     if (delayedTaskHandle_ != INVALID_TASK_GROUP_HANDLE) {
         return;
     } else {
+        std::weak_ptr defaultTaskHandle = defaultTaskHandle_;
         RegisterTaskGroup("delayedTaskGroup",
-            [this](std::any param) {
+            [this, defaultTaskHandle](std::any param) {
+                auto taskHandle = defaultTaskHandle.lock();
+                DP_CHECK_RETURN(!taskHandle);
                 if (param.has_value()) {
                     DoDefaultWorks(std::move(param));
                 } else {
