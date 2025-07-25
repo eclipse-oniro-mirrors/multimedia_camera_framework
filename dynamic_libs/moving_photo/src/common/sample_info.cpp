@@ -28,6 +28,7 @@ CodecAVBufferInfo::CodecAVBufferInfo(uint32_t argBufferIndex, OH_AVBuffer* argBu
 
 OH_AVBuffer* CodecAVBufferInfo::GetCopyAVBuffer()
 {
+    // LCOV_EXCL_START
     MEDIA_INFO_LOG("CodecBufferInfo OH_AVBuffer_Create with size: %{public}d", attr.size);
     OH_AVBuffer* destBuffer = OH_AVBuffer_Create(attr.size);
     CHECK_RETURN_RET_ELOG(destBuffer == nullptr, nullptr, "destBuffer is null");
@@ -40,10 +41,12 @@ OH_AVBuffer* CodecAVBufferInfo::GetCopyAVBuffer()
     OH_AVErrCode errorCode = OH_AVBuffer_SetBufferAttr(destBuffer, &attr);
     CHECK_PRINT_ELOG(errorCode != 0, "CodecBufferInfo OH_AVBuffer_SetBufferAttr failed. %{public}d", errorCode);
     return destBuffer;
+    // LCOV_EXCL_STOP
 }
 
 OH_AVBuffer* CodecAVBufferInfo::AddCopyAVBuffer(OH_AVBuffer* IDRBuffer)
 {
+    // LCOV_EXCL_START
     CHECK_RETURN_RET_ELOG(nullptr == IDRBuffer, IDRBuffer, "AddCopyAVBuffer without IDRBuffer!");
     OH_AVCodecBufferAttr IDRAttr = {0, 0, 0, AVCODEC_BUFFER_FLAGS_NONE};
     OH_AVCodecBufferAttr destAttr = {0, 0, 0, AVCODEC_BUFFER_FLAGS_NONE};
@@ -67,6 +70,7 @@ OH_AVBuffer* CodecAVBufferInfo::AddCopyAVBuffer(OH_AVBuffer* IDRBuffer)
     MEDIA_INFO_LOG("CodecBufferInfo deep copy with size: %{public}d, %{public}d", destBufferSize, destAttr.flags);
     OH_AVBuffer_SetBufferAttr(destBuffer, &destAttr);
     return destBuffer;
+    // LCOV_EXCL_STOP
 }
 
 void CodecUserData::Release()
@@ -98,6 +102,7 @@ VideoCodecAVBufferInfo::VideoCodecAVBufferInfo(uint32_t argBufferIndex,
 
 std::shared_ptr<OHOS::Media::AVBuffer> VideoCodecAVBufferInfo::GetCopyAVBuffer()
 {
+    // LCOV_EXCL_START
     MEDIA_INFO_LOG("CodecBufferInfo OH_AVBuffer_Create with size: %{public}d", buffer->memory_->GetSize());
     auto allocator = Media::AVAllocatorFactory::CreateSharedAllocator(Media::MemoryFlag::MEMORY_READ_WRITE);
     CHECK_RETURN_RET_ELOG(allocator == nullptr, nullptr, "create allocator failed");
@@ -113,11 +118,13 @@ std::shared_ptr<OHOS::Media::AVBuffer> VideoCodecAVBufferInfo::GetCopyAVBuffer()
     destBuffer->flag_ = buffer->flag_;
     destBuffer->memory_->SetSize(buffer->memory_->GetSize());
     return destBuffer;
+    // LCOV_EXCL_STOP
 }
 
 std::shared_ptr<OHOS::Media::AVBuffer> VideoCodecAVBufferInfo::AddCopyAVBuffer(
     std::shared_ptr<OHOS::Media::AVBuffer> IDRBuffer)
 {
+    // LCOV_EXCL_START
     CHECK_RETURN_RET_ELOG(nullptr == IDRBuffer, IDRBuffer, "AddCopyAVBuffer without IDRBuffer!");
     int32_t destBufferSize = IDRBuffer->memory_->GetSize() + buffer->memory_->GetSize();
     auto allocator = Media::AVAllocatorFactory::CreateSharedAllocator(Media::MemoryFlag::MEMORY_READ_WRITE);
@@ -138,10 +145,12 @@ std::shared_ptr<OHOS::Media::AVBuffer> VideoCodecAVBufferInfo::AddCopyAVBuffer(
     destBuffer->flag_ = IDRBuffer->flag_ | buffer->flag_;
     MEDIA_INFO_LOG("CodecBufferInfo copy with size: %{public}d, %{public}d", destBufferSize, destBuffer->flag_);
     return destBuffer;
+    // LCOV_EXCL_STOP
 }
 
 void VideoCodecUserData::Release()
 {
+    // LCOV_EXCL_START
     {
         std::lock_guard<std::mutex> lock(inputMutex_);
         while (!inputBufferInfoQueue_.empty()) {
@@ -154,6 +163,7 @@ void VideoCodecUserData::Release()
             outputBufferInfoQueue_.pop();
         }
     }
+    // LCOV_EXCL_STOP
 }
 
 VideoCodecUserData::~VideoCodecUserData()

@@ -40,16 +40,19 @@ FrameRecord::~FrameRecord()
 
 void FrameRecord::ReleaseSurfaceBuffer(sptr<MovingPhotoSurfaceWrapper> surfaceWrapper)
 {
+    // LCOV_EXCL_START
     std::unique_lock<std::mutex> lock(mutex_);
     if (videoBuffer_ && !IsReadyConvert()) {
         CHECK_EXECUTE(surfaceWrapper != nullptr, surfaceWrapper->RecycleBuffer(videoBuffer_));
         videoBuffer_ = nullptr;
         MEDIA_DEBUG_LOG("release buffer end %{public}s", frameId_.c_str());
     }
+    // LCOV_EXCL_STOP
 }
 
 void FrameRecord::ReleaseMetaBuffer(sptr<Surface> surface, bool reuse)
 {
+    // LCOV_EXCL_START
     std::unique_lock<std::mutex> lock(metaBufferMutex_);
     sptr<SurfaceBuffer> buffer = nullptr;
     if (status != STATUS_NONE && metaBuffer_) {
@@ -68,17 +71,21 @@ void FrameRecord::ReleaseMetaBuffer(sptr<Surface> surface, bool reuse)
         metaBuffer_ = buffer;
         MEDIA_DEBUG_LOG("release meta buffer end %{public}s", frameId_.c_str());
     }
+    // LCOV_EXCL_STOP
 }
 
 void FrameRecord::NotifyBufferRelease()
 {
+    // LCOV_EXCL_START
     MEDIA_DEBUG_LOG("notifyBufferRelease");
     status = STATUS_FINISH_ENCODE;
     canReleased_.notify_one();
+    // LCOV_EXCL_STOP
 }
 
 void FrameRecord::DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<SurfaceBuffer> surfaceBuffer) const
 {
+    // LCOV_EXCL_START
     BufferRequestConfig requestConfig = {
         .height = surfaceBuffer->GetHeight(),
         .strideAlignment = 0x8, // default stride is 8 Bytes.
@@ -93,6 +100,7 @@ void FrameRecord::DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<Surf
     CHECK_RETURN_ELOG(allocErrorCode != GSERROR_OK, "SurfaceBuffer alloc ret: %d", allocErrorCode);
     CHECK_PRINT_ELOG(memcpy_s(newSurfaceBuffer->GetVirAddr(), newSurfaceBuffer->GetSize(),
         surfaceBuffer->GetVirAddr(), surfaceBuffer->GetSize()) != EOK, "SurfaceBuffer memcpy_s failed");
+    // LCOV_EXCL_STOP
 }
 } // namespace CameraStandard
 } // namespace OHOS

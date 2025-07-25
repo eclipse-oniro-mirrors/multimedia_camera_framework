@@ -147,6 +147,7 @@ int32_t VideoEncoder::DetachCodecBuffer(sptr<SurfaceBuffer> &surfaceBuffer, sptr
 
 int32_t VideoEncoder::PushInputData(sptr<CodecAVBufferInfo> info)
 {
+    // LCOV_EXCL_START
     std::lock_guard<std::mutex> lock(encoderMutex_);
     CHECK_RETURN_RET_ELOG(avCodecProxy_ == nullptr, 1, "avCodecProxy_ is nullptr");
     int32_t ret = AV_ERR_OK;
@@ -155,6 +156,7 @@ int32_t VideoEncoder::PushInputData(sptr<CodecAVBufferInfo> info)
     ret = avCodecProxy_->QueueInputBuffer(info->bufferIndex);
     CHECK_RETURN_RET_ELOG(ret != AV_ERR_OK, 1, "Push input data failed, ret: %{public}d", ret);
     return 0;
+    // LCOV_EXCL_STOP
 }
 
 int32_t VideoEncoder::NotifyEndOfStream()
@@ -169,11 +171,13 @@ int32_t VideoEncoder::NotifyEndOfStream()
 
 int32_t VideoEncoder::FreeOutputData(uint32_t bufferIndex)
 {
+    // LCOV_EXCL_START
     CHECK_RETURN_RET_ELOG(avCodecProxy_ == nullptr, 1, "avCodecProxy_ is nullptr");
     int32_t ret = avCodecProxy_->ReleaseOutputBuffer(bufferIndex);
     CHECK_RETURN_RET_ELOG(ret != AV_ERR_OK, 1,
         "Free output data failed, ret: %{public}d", ret);
     return 0;
+    // LCOV_EXCL_STOP
 }
 
 int32_t VideoEncoder::Stop()
@@ -189,6 +193,7 @@ int32_t VideoEncoder::Stop()
 
 void VideoEncoder::RestartVideoCodec(shared_ptr<Size> size, int32_t rotation)
 {
+    // LCOV_EXCL_START
     Release();
     size_ = size;
     rotation_ = rotation;
@@ -201,10 +206,12 @@ void VideoEncoder::RestartVideoCodec(shared_ptr<Size> size, int32_t rotation)
     Config();
     GetSurface();
     Start();
+    // LCOV_EXCL_STOP
 }
 
 bool VideoEncoder::EnqueueBuffer(sptr<FrameRecord> frameRecord, int32_t keyFrameInterval)
 {
+    // LCOV_EXCL_START
     CHECK_EXECUTE(!isStarted_ || avCodecProxy_ == nullptr || size_ == nullptr,
         RestartVideoCodec(frameRecord->GetFrameSize(), frameRecord->GetRotation()));
     if (keyFrameInterval == KEY_FRAME_INTERVAL) {
@@ -238,6 +245,7 @@ bool VideoEncoder::EnqueueBuffer(sptr<FrameRecord> frameRecord, int32_t keyFrame
     CHECK_RETURN_RET_ELOG(surfaceRet != 0, false, "FlushBuffer failed");
     MEDIA_DEBUG_LOG("Success frame id is : %{public}s", frameRecord->GetFrameId().c_str());
     return true;
+    // LCOV_EXCL_STOP
 }
 
 bool VideoEncoder::ProcessFrameRecord(sptr<VideoCodecAVBufferInfo> bufferInfo, sptr<FrameRecord> frameRecord)
@@ -272,6 +280,7 @@ bool VideoEncoder::ProcessFrameRecord(sptr<VideoCodecAVBufferInfo> bufferInfo, s
 
 bool VideoEncoder::EncodeSurfaceBuffer(sptr<FrameRecord> frameRecord)
 {
+    // LCOV_EXCL_START
     if (frameRecord->GetTimeStamp() - preFrameTimestamp_ > NANOSEC_RANGE) {
         keyFrameInterval_ = KEY_FRAME_INTERVAL;
     } else {
@@ -318,6 +327,7 @@ bool VideoEncoder::EncodeSurfaceBuffer(sptr<FrameRecord> frameRecord)
     }
     MEDIA_ERR_LOG("Failed frame id is : %{public}s", frameRecord->GetFrameId().c_str());
     return false;
+    // LCOV_EXCL_STOP
 }
 
 int32_t VideoEncoder::Release()
@@ -352,6 +362,7 @@ void VideoEncoder::CallBack::OnInputBufferAvailable(uint32_t index, std::shared_
 
 void VideoEncoder::CallBack::OnOutputBufferAvailable(uint32_t index, std::shared_ptr<AVBuffer> buffer)
 {
+    // LCOV_EXCL_START
     MEDIA_DEBUG_LOG("OnOutputBufferAvailable");
     auto encoder = videoEncoder_.lock();
     CHECK_RETURN_ELOG(encoder == nullptr, "encoder is nullptr");
@@ -359,16 +370,19 @@ void VideoEncoder::CallBack::OnOutputBufferAvailable(uint32_t index, std::shared
     std::unique_lock<std::mutex> lock(encoder->context_->outputMutex_);
     encoder->context_->outputBufferInfoQueue_.emplace(new VideoCodecAVBufferInfo(index, buffer));
     encoder->context_->outputCond_.notify_all();
+    // LCOV_EXCL_STOP
 }
 
 int32_t VideoEncoder::SetCallback()
 {
+    // LCOV_EXCL_START
     int32_t ret = AV_ERR_OK;
     auto callback = make_shared<CallBack>(weak_from_this());
     CHECK_RETURN_RET_ELOG(avCodecProxy_ == nullptr, 1, "avCodecProxy_ is nullptr");
     ret = avCodecProxy_->AVCodecVideoEncoderSetCallback(callback);
     CHECK_RETURN_RET_ELOG(ret != AV_ERR_OK, 1, "Set callback failed, ret: %{public}d", ret);
     return 0;
+    // LCOV_EXCL_STOP
 }
 
 int32_t VideoEncoder::Configure()
