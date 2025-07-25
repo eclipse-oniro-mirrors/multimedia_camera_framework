@@ -53,7 +53,7 @@ sptr<HCameraHostManager> HCameraServiceUnit::cameraHostManager_ = nullptr;
 
 void HCameraServiceUnit::SetUpTestCase(void)
 {
-    ASSERT_TRUE(TestToken::GetAllCameraPermission());
+    ASSERT_TRUE(TestToken().GetAllCameraPermission());
     cameraHostManager_ = new(std::nothrow) HCameraHostManager(nullptr);
 }
 

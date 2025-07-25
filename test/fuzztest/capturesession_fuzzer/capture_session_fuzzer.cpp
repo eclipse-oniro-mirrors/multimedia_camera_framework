@@ -81,7 +81,7 @@ sptr<CaptureOutput> CreatePreviewOutput(Profile previewProfile)
 void Test(uint8_t* data, size_t size)
 {
     CHECK_RETURN(size < LIMITSIZE);
-    CHECK_RETURN_ELOG(!TestToken::GetAllCameraPermission(), "GetPermission error");
+    CHECK_RETURN_ELOG(!TestToken().GetAllCameraPermission(), "GetPermission error");
     manager_ = CameraManager::GetInstance();
     sptr<CaptureSessionForSys> session =
         CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(SceneMode::CAPTURE);

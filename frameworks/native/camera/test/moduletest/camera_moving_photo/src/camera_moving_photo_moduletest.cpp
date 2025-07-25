@@ -238,7 +238,7 @@ CameraBufferExtraData PhotoListenerTest::GetCameraBufferExtraData(const sptr<Sur
 void CameraMovingPhotoModuleTest::SetUpTestCase(void)
 {
     MEDIA_DEBUG_LOG("CameraMovingPhotoModuleTest::SetUpTestCase started!");
-    ASSERT_TRUE(TestToken::GetAllCameraPermission());
+    ASSERT_TRUE(TestToken().GetAllCameraPermission());
 }
 
 void CameraMovingPhotoModuleTest::TearDownTestCase(void)

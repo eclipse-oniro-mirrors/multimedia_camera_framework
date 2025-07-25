@@ -138,7 +138,7 @@ public:
 
 void HStreamRepeatUnit::SetUpTestCase(void)
 {
-    ASSERT_TRUE(TestToken::GetAllCameraPermission());
+    ASSERT_TRUE(TestToken().GetAllCameraPermission());
 }
 
 void HStreamRepeatUnit::TearDownTestCase(void) {}

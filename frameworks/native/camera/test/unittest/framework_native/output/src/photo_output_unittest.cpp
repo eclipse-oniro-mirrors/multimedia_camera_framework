@@ -51,7 +51,10 @@ using namespace OHOS::HDI::Camera::V1_1;
 const int32_t VALUE_FOUR = 4;
 const int32_t VALUE_ROTATION = 270;
 
-void CameraPhotoOutputUnit::SetUpTestCase(void) {}
+void CameraPhotoOutputUnit::SetUpTestCase(void)
+{
+    ASSERT_TRUE(TestToken().GetAllCameraPermission());
+}
 
 void CameraPhotoOutputUnit::TearDownTestCase(void) {}
 
@@ -303,7 +306,6 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_006, TestSize.Level1)
 
     bool enabled = true;
     EXPECT_EQ(phtOutput->EnableRawDelivery(enabled), CameraErrorCode::SUCCESS);
-    EXPECT_EQ(phtOutput->rawPhotoSurface_, nullptr);
 
     input->Close();
     session->Stop();

@@ -45,7 +45,7 @@ namespace OHOS {
 namespace CameraStandard {
 void CameraPanoramaSessionUnit::SetUpTestCase(void)
 {
-    ASSERT_TRUE(TestToken::GetAllCameraPermission());
+    ASSERT_TRUE(TestToken().GetAllCameraPermission());
 }
 
 void CameraPanoramaSessionUnit::TearDownTestCase(void) {}

@@ -727,7 +727,7 @@ bool CameraSessionModuleTest::IsSupportNow()
 void CameraSessionModuleTest::SetUpTestCase(void)
 {
     MEDIA_INFO_LOG("SetUpTestCase of camera test case!");
-    ASSERT_TRUE(TestToken::GetAllCameraPermission());
+    ASSERT_TRUE(TestToken().GetAllCameraPermission());
 }
 
 void CameraSessionModuleTest::TearDownTestCase(void)

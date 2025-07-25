@@ -28,7 +28,7 @@ namespace CameraStandard {
 
 void CameraMetadataOutputUnitTest::SetUpTestCase(void)
 {
-    ASSERT_TRUE(TestToken::GetAllCameraPermission());
+    ASSERT_TRUE(TestToken().GetAllCameraPermission());
 }
 
 void CameraMetadataOutputUnitTest::TearDownTestCase(void) {}

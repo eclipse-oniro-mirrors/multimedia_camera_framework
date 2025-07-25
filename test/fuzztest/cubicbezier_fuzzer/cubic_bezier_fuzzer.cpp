@@ -40,7 +40,7 @@ void CubicBezierFuzzer::Test(uint8_t *rawData, size_t size)
     if (rawData == nullptr || size < LIMITSIZE) {
         return;
     }
-    CHECK_RETURN_ELOG(!TestToken::GetAllCameraPermission(), "GetPermission error");
+    CHECK_RETURN_ELOG(!TestToken().GetAllCameraPermission(), "GetPermission error");
 
     fuzz_ = std::make_shared<CubicBezier>();
     CHECK_RETURN_ELOG(!fuzz_, "Create fuzz_ Error");

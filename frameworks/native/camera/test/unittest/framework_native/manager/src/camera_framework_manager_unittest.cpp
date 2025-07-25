@@ -60,7 +60,7 @@ void TorchListenerImpl::OnTorchStatusChange(const TorchStatusInfo &torchStatusIn
 
 void CameraFrameWorkManagerUnit::SetUpTestCase(void)
 {
-    ASSERT_TRUE(TestToken::GetAllCameraPermission());
+    ASSERT_TRUE(TestToken().GetAllCameraPermission());
 }
 
 void CameraFrameWorkManagerUnit::TearDownTestCase(void) {}
@@ -1421,6 +1421,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_056, Test
     sptr<MetadataOutput> pMetadataOutput = nullptr;
     std::vector<MetadataObjectType> metadataObjectTypes;
     metadataObjectTypes.push_back(MetadataObjectType::INVALID);
+    // system app, return 0
     int ret = cameraManager_->CreateMetadataOutput(pMetadataOutput, metadataObjectTypes);
     EXPECT_EQ(ret, 0);
 }

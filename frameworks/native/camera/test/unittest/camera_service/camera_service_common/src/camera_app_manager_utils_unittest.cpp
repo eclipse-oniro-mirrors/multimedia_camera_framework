@@ -32,7 +32,7 @@ using namespace OHOS::HDI::Camera::V1_1;
 void CameraAppManagerUtilsUnit::SetUpTestCase()
 {
     MEDIA_DEBUG_LOG("CameraPrivacyUnitTest::SetUpTestCase started!");
-    ASSERT_TRUE(TestToken::GetAllCameraPermission());
+    ASSERT_TRUE(TestToken().GetAllCameraPermission());
 }
 
 void CameraAppManagerUtilsUnit::TearDownTestCase()

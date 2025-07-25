@@ -43,7 +43,7 @@ using namespace OHOS::HDI::Camera::V1_1;
 
 void CameraVideoSessionUnitTest::SetUpTestCase(void)
 {
-    ASSERT_TRUE(TestToken::GetAllCameraPermission());
+    ASSERT_TRUE(TestToken().GetAllCameraPermission());
 }
 
 void CameraVideoSessionUnitTest::TearDownTestCase(void) {}

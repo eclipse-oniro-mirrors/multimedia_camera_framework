@@ -32,7 +32,7 @@ using namespace OHOS::HDI::Camera::V1_1;
 void HCameraHostManagerUnit::SetUpTestCase(void)
 {
     MEDIA_DEBUG_LOG("HCameraHostManagerUnit::SetUpTestCase started!");
-    ASSERT_TRUE(TestToken::GetAllCameraPermission());
+    ASSERT_TRUE(TestToken().GetAllCameraPermission());
 }
 
 void HCameraHostManagerUnit::TearDownTestCase(void)

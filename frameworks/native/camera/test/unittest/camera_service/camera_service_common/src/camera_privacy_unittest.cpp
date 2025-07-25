@@ -31,7 +31,7 @@ namespace CameraStandard {
 void CameraPrivacyUnitTest::SetUpTestCase(void)
 {
     MEDIA_DEBUG_LOG("CameraPrivacyUnitTest::SetUpTestCase started!");
-    ASSERT_TRUE(TestToken::GetAllCameraPermission());
+    ASSERT_TRUE(TestToken().GetAllCameraPermission());
 }
 
 void CameraPrivacyUnitTest::TearDownTestCase(void)

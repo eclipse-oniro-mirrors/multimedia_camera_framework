@@ -163,7 +163,7 @@ void Test(uint8_t* data, size_t size)
     if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
         return;
     }
-    CHECK_RETURN_ELOG(!TestToken::GetAllCameraPermission(), "GetPermission error");
+    CHECK_RETURN_ELOG(!TestToken().GetAllCameraPermission(), "GetPermission error");
     PortraitSessionFuzzTest(fdp);
 }
 

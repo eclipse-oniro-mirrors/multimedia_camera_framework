@@ -123,7 +123,7 @@ sptr<CaptureOutput> CameraScanSessionUnitTest::CreatePhotoOutput()
 
 void CameraScanSessionUnitTest::SetUpTestCase(void)
 {
-    ASSERT_TRUE(TestToken::GetAllCameraPermission());
+    ASSERT_TRUE(TestToken().GetAllCameraPermission());
 }
 
 void CameraScanSessionUnitTest::TearDownTestCase(void)

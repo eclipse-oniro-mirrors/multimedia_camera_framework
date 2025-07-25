@@ -58,7 +58,7 @@ public:
 void ProfessionSessionUnitTest::SetUpTestCase(void)
 {
     MEDIA_DEBUG_LOG("DeferredProcUnitTest::SetUpTestCase started!");
-    ASSERT_TRUE(TestToken::GetAllCameraPermission());
+    ASSERT_TRUE(TestToken().GetAllCameraPermission());
 }
 
 void ProfessionSessionUnitTest::TearDownTestCase(void)

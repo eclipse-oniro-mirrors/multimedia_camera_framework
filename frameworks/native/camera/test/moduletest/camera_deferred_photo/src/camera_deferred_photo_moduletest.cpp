@@ -40,7 +40,7 @@ constexpr int32_t WAIT_FOR_PHOTO_CB = 8;
 void CameraDeferredPhotoModuleTest::SetUpTestCase(void)
 {
     MEDIA_INFO_LOG("CameraDeferredPhotoModuleTest::SetUpTestCase is called");
-    ASSERT_TRUE(TestToken::GetAllCameraPermission());
+    ASSERT_TRUE(TestToken().GetAllCameraPermission());
 }
 
 

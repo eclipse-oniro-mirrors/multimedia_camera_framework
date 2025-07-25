@@ -90,7 +90,7 @@ void CameraformatYUVModuleTest::UpdataCameraOutputCapabilitySrc(int32_t modeName
 void CameraformatYUVModuleTest::SetUpTestCase(void)
 {
     MEDIA_DEBUG_LOG("CameraformatYUVModuleTest::SetUpTestCase started!");
-    ASSERT_TRUE(TestToken::GetAllCameraPermission());
+    ASSERT_TRUE(TestToken().GetAllCameraPermission());
 }
 
 void CameraformatYUVModuleTest::TearDownTestCase(void)

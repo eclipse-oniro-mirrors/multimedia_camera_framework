@@ -40,7 +40,7 @@ namespace OHOS {
 namespace CameraStandard {
 void TimeLapsePhotoSessionUnitTest::SetUpTestCase(void)
 {
-    ASSERT_TRUE(TestToken::GetAllCameraPermission());
+    ASSERT_TRUE(TestToken().GetAllCameraPermission());
 }
 
 void TimeLapsePhotoSessionUnitTest::TearDownTestCase(void) {}

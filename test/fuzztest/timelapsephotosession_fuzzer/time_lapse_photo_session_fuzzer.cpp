@@ -472,7 +472,7 @@ void Test(uint8_t *rawData, size_t size)
     if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
          return;
     }
-    CHECK_RETURN_ELOG(!TestToken::GetAllCameraPermission(), "GetPermission error");
+    CHECK_RETURN_ELOG(!TestToken().GetAllCameraPermission(), "GetPermission error");
     manager = CameraManager::GetInstance();
     sptr<CaptureSessionForSys> captureSessionForSys =
         CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(sceneMode);

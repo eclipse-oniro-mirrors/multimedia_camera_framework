@@ -67,7 +67,7 @@ void DeferredVideoProcSessionFuzzer::DeferredVideoProcSessionFuzzTest(FuzzedData
     if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
         return;
     }
-    CHECK_RETURN_ELOG(!TestToken::GetAllCameraPermission(), "GetPermission error");
+    CHECK_RETURN_ELOG(!TestToken().GetAllCameraPermission(), "GetPermission error");
     std::string videoId(fdp.ConsumeRandomLengthString(MAX_LENGTH_STRING));
     sptr<IPCFileDescriptor> ipcFileDescriptor = nullptr;
     callback_->OnProcessVideoDone(videoId, ipcFileDescriptor);

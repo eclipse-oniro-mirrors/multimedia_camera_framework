@@ -35,7 +35,7 @@ namespace CameraStandard {
 void CameraFwkMetadataUtilsFuzzer::Test(uint8_t *rawData, size_t size)
 {
     CHECK_RETURN(rawData == nullptr || size < LIMITSIZE);
-    CHECK_RETURN_ELOG(!TestToken::GetAllCameraPermission(), "GetPermission error");
+    CHECK_RETURN_ELOG(!TestToken().GetAllCameraPermission(), "GetPermission error");
     MessageParcel data;
     data.WriteRawData(rawData, size);
 

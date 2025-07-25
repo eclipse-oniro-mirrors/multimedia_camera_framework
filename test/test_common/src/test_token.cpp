@@ -22,11 +22,23 @@
 
 namespace OHOS {
 namespace CameraStandard {
-std::mutex g_lockSetToken;
 using namespace OHOS::Security::AccessToken;
 
-namespace {
-static uint64_t g_shellTokenID = IPCSkeleton::GetSelfTokenID();
+uint64_t TestToken::shellTokenID_ = IPCSkeleton::GetSelfTokenID();
+
+uint64_t TestToken::GetMockedTokenId()
+{
+    return IPCSkeleton::GetSelfTokenID();
+}
+
+uint64_t TestToken::GetOriginalTokenId()
+{
+    return shellTokenID_;
+}
+
+void TestToken::AddPermission(const std::string& permission)
+{
+    permissions_.emplace_back(permission);
 }
 
 uint64_t TestToken::GetTokenId(const AtmToolsParamInfo& info)
@@ -53,14 +65,14 @@ uint64_t TestToken::GetTokenId(const AtmToolsParamInfo& info)
 uint64_t TestToken::GetTokenIdFromProcess(const std::string& process)
 {
     auto tokenId = IPCSkeleton::GetSelfTokenID();
-    SetSelfTokenID(g_shellTokenID); // only shell can dump tokenid
+    SetSelfTokenID(shellTokenID_); // only shell can dump tokenid
 
     AtmToolsParamInfo info;
     info.processName = process;
-    auto res = GetTokenId(info);
+    auto processId = GetTokenId(info);
 
     SetSelfTokenID(tokenId);
-    return res;
+    return processId;
 }
 
 bool TestToken::MockTokenId(const std::string& process)
@@ -81,7 +93,7 @@ bool TestToken::GetAllCameraPermission()
         return false;
     }
 
-    const std::vector<std::string> ALL_CAMERA_PERMISSION_LIST {
+    std::vector<std::string> cameraPermissions {
         "ohos.permission.CAMERA",
         "ohos.permission.CAMERA_BACKGROUND",
         "ohos.permission.CAMERA_CONTROL",
@@ -94,8 +106,9 @@ bool TestToken::GetAllCameraPermission()
         "ohos.permission.WRITE_IMAGEVIDEO",
         "ohos.permission.WRITE_MEDIA",
     };
+    cameraPermissions.insert(cameraPermissions.end(), permissions_.begin(), permissions_.end());
     std::vector<PermissionStateFull> permissionStates;
-    for (const auto& permission : ALL_CAMERA_PERMISSION_LIST) {
+    for (const auto& permission : cameraPermissions) {
         PermissionStateFull permissionState = { .permissionName = permission,
             .isGeneral = true,
             .resDeviceID = { "local" },
@@ -104,15 +117,15 @@ bool TestToken::GetAllCameraPermission()
         permissionStates.emplace_back(permissionState);
     }
     HapPolicyParams hapPolicyParams = {
-        .apl = APL_NORMAL, .domain = "account_test_setup.domain", .permList = {}, .permStateList = permissionStates
+        .apl = APL_NORMAL, .domain = "camera_test_setup.domain", .permList = {}, .permStateList = permissionStates
     };
 
     HapInfoParams hapInfoParams = { .userID = 100,
-        .bundleName = "account_test_setup",
+        .bundleName = "camera_test_setup",
         .instIndex = 0,
-        .appIDDesc = "account_test_setup",
+        .appIDDesc = "camera_test_setup",
         .apiVersion = 8,
-        .isSystemApp = true };
+        .isSystemApp = isSystemApp_ };
 
     AccessTokenIDEx tokenIdEx = { 0 };
     tokenIdEx = AccessTokenKit::AllocHapToken(hapInfoParams, hapPolicyParams);

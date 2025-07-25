@@ -119,7 +119,7 @@ void Test(uint8_t* data, size_t size)
     if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
         return;
     }
-    CHECK_RETURN_ELOG(!TestToken::GetAllCameraPermission(), "GetPermission error");
+    CHECK_RETURN_ELOG(!TestToken().GetAllCameraPermission(), "GetPermission error");
     auto slowMotionSession = std::make_unique<SlowMotionSessionFuzzer>();
     if (slowMotionSession == nullptr) {
         MEDIA_INFO_LOG("slowMotionSession is null");

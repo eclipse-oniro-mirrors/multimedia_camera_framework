@@ -405,7 +405,7 @@ void CameraServiceClientUnit::SetUpInit()
 void CameraServiceClientUnit::SetUpTestCase(void)
 {
     MEDIA_INFO_LOG("SetUpTestCase of camera test case!");
-    ASSERT_TRUE(TestToken::GetAllCameraPermission());
+    ASSERT_TRUE(TestToken().GetAllCameraPermission());
 }
 
 void CameraServiceClientUnit::TearDownTestCase(void)

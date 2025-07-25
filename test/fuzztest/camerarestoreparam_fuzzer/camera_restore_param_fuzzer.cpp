@@ -40,7 +40,7 @@ void CameraRestoreParamFuzzer::Test(uint8_t* data, size_t size)
     if (fdp.remaining_bytes() < LIMITSIZE) {
         return;
     }
-    CHECK_RETURN_ELOG(!TestToken::GetAllCameraPermission(), "GetPermission error");
+    CHECK_RETURN_ELOG(!TestToken().GetAllCameraPermission(), "GetPermission error");
 
     std::string clientName;
     std::string cameraId;
