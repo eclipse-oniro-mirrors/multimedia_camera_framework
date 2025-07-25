@@ -21,9 +21,12 @@ namespace OHOS {
 namespace CameraStandard {
 std::shared_ptr<CameraNapiExProxy> CameraNapiExManager::cameraNapiExProxy_ = nullptr;
 std::vector<CameraNapiExProxyUserType> CameraNapiExManager::userList_ = {};
+std::mutex CameraNapiExManager::mutex_;
 
 std::shared_ptr<CameraNapiExProxy> CameraNapiExManager::GetCameraNapiExProxy(CameraNapiExProxyUserType type)
 {
+    MEDIA_DEBUG_LOG("CameraNapiExManager::GetCameraNapiExProxy is called");
+    std::lock_guard<std::mutex> lock(mutex_);
     if (cameraNapiExProxy_ == nullptr) {
         cameraNapiExProxy_ = CameraNapiExProxy::GetCameraNapiExProxy();
         CHECK_RETURN_RET_ELOG(cameraNapiExProxy_ == nullptr, nullptr,
@@ -38,6 +41,8 @@ std::shared_ptr<CameraNapiExProxy> CameraNapiExManager::GetCameraNapiExProxy(Cam
 
 void CameraNapiExManager::FreeCameraNapiExProxy(CameraNapiExProxyUserType type)
 {
+    MEDIA_DEBUG_LOG("CameraNapiExManager::FreeCameraNapiExProxy is called");
+    std::lock_guard<std::mutex> lock(mutex_);
     auto item = std::find(userList_.begin(), userList_.end(), type);
     if (item != userList_.end()) {
         userList_.erase(item);

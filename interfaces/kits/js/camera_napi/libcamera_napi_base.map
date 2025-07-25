@@ -10,6 +10,7 @@
    OHOS::CameraStandard::CameraNapiUtils::CreateNapiErrorObject*;
    OHOS::CameraStandard::CameraNapiUtils::InvokeJSAsyncMethod*;
    OHOS::CameraStandard::CameraNapiUtils::CheckInvalidArgument*;
+   OHOS::CameraStandard::CameraNapiUtils::GetStringArgument*;
    OHOS::CameraStandard::CameraNapiObjectTypes*;
    OHOS::CameraStandard::CameraNapiObjCameraOutputCapability*;
    OHOS::CameraStandard::ListenerBase*;

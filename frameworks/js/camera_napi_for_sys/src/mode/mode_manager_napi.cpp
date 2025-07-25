@@ -16,11 +16,15 @@
 #include "mode/mode_manager_napi.h"
 
 #include "camera_napi_object_types.h"
-#include "dynamic_loader/camera_napi_ex_manager.h"
 #include "input/camera_manager_napi.h"
 #include "input/camera_napi.h"
 #include "napi/native_common.h"
-
+#include "mode/night_session_napi.h"
+#include "mode/panorama_session_napi.h"
+#include "mode/photo_session_for_sys_napi.h"
+#include "mode/portrait_session_napi.h"
+#include "mode/secure_session_for_sys_napi.h"
+#include "mode/video_session_for_sys_napi.h"
 namespace OHOS {
 namespace CameraStandard {
 using namespace std;
@@ -46,7 +50,6 @@ ModeManagerNapi::ModeManagerNapi() : env_(nullptr)
 ModeManagerNapi::~ModeManagerNapi()
 {
     MEDIA_DEBUG_LOG("~ModeManagerNapi is called");
-    CameraNapiExManager::FreeCameraNapiExProxy(CameraNapiExProxyUserType::MODE_MANAGER_NAPI);
 }
 
 // Constructor callback
@@ -88,7 +91,7 @@ void ModeManagerNapi::ModeManagerNapiDestructor(napi_env env, void* nativeObject
     }
 }
 
-napi_value ModeManagerNapi::Init(napi_env env, napi_value exports)
+void ModeManagerNapi::Init(napi_env env)
 {
     MEDIA_DEBUG_LOG("Init is called");
     napi_status status;
@@ -103,15 +106,11 @@ napi_value ModeManagerNapi::Init(napi_env env, napi_value exports)
                                ModeManagerNapiConstructor, nullptr,
                                sizeof(mode_mgr_properties) / sizeof(mode_mgr_properties[PARAM0]),
                                mode_mgr_properties, &ctorObj);
-    if (status == napi_ok) {
-        int32_t refCount = 1;
-        if (napi_create_reference(env, ctorObj, refCount, &sConstructor_) == napi_ok) {
-            status = napi_set_named_property(env, exports, MODE_MANAGER_NAPI_CLASS_NAME, ctorObj);
-            CHECK_RETURN_RET(status == napi_ok, exports);
-        }
-    }
-    MEDIA_ERR_LOG("Init call Failed!");
-    return nullptr;
+    CHECK_RETURN_ELOG(status != napi_ok, "ModeManagerNapi defined class failed");
+    int32_t refCount = 1;
+    status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
+    CHECK_RETURN_ELOG(status != napi_ok, "ModeManagerNapi Init failed");
+    MEDIA_DEBUG_LOG("ModeManagerNapi Init success");
 }
 
 napi_value ModeManagerNapi::CreateModeManager(napi_env env)
@@ -121,6 +120,10 @@ napi_value ModeManagerNapi::CreateModeManager(napi_env env)
     napi_value result = nullptr;
     napi_value ctor;
 
+    if (sConstructor_ == nullptr) {
+        ModeManagerNapi::Init(env);
+        CHECK_RETURN_RET_ELOG(sConstructor_ == nullptr, result, "sConstructor_ is null");
+    }
     status = napi_get_reference_value(env, sConstructor_, &ctor);
     if (status == napi_ok) {
         status = napi_new_instance(env, ctor, 0, nullptr, &result);
@@ -132,23 +135,6 @@ napi_value ModeManagerNapi::CreateModeManager(napi_env env)
     }
     napi_get_undefined(env, &result);
     MEDIA_ERR_LOG("CreateModeManager call Failed!");
-    return result;
-}
-
-napi_value ModeManagerNapi::CreateSessionForSys(napi_env env, int32_t jsModeName)
-{
-    MEDIA_DEBUG_LOG("ModeManagerNapi::CreateSessionForSys is called");
-    napi_value result = nullptr;
-
-    napi_get_undefined(env, &result);
-    auto cameraNapiExProxy =
-        CameraNapiExManager::GetCameraNapiExProxy(CameraNapiExProxyUserType::MODE_MANAGER_NAPI);
-    CHECK_RETURN_RET_ELOG(cameraNapiExProxy == nullptr, result, "cameraNapiExProxy is nullptr");
-    result = cameraNapiExProxy->CreateSessionForSys(env, jsModeName);
-    if (result == nullptr) {
-        MEDIA_ERR_LOG("ModeManagerNapi::CreateSessionForSys failed");
-        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "Invalid js mode");
-    }
     return result;
 }
 
@@ -174,22 +160,22 @@ napi_value ModeManagerNapi::CreateCameraSessionInstance(napi_env env, napi_callb
     MEDIA_INFO_LOG("ModeManagerNapi::CreateCameraSessionInstance mode = %{public}d", jsModeName);
     switch (jsModeName) {
         case JsSceneMode::JS_CAPTURE:
-            result = PhotoSessionNapi::CreateCameraSession(env);
+            result = PhotoSessionForSysNapi::CreateCameraSession(env);
             break;
         case JsSceneMode::JS_VIDEO:
-            result = VideoSessionNapi::CreateCameraSession(env);
+            result = VideoSessionForSysNapi::CreateCameraSession(env);
             break;
         case JsSceneMode::JS_PORTRAIT:
-            result = CreateSessionForSys(env, jsModeName);
+            result = PortraitSessionNapi::CreateCameraSession(env);
             break;
         case JsSceneMode::JS_NIGHT:
-            result = CreateSessionForSys(env, jsModeName);
+            result = NightSessionNapi::CreateCameraSession(env);
             break;
         case JS_SECURE_CAMERA:
-            result = SecureCameraSessionNapi::CreateCameraSession(env);
+            result = SecureSessionForSysNapi::CreateCameraSession(env);
             break;
         case JsSceneMode::JS_PANORAMA_PHOTO:
-            result = CreateSessionForSys(env, jsModeName);
+            result = PanoramaSessionNapi::CreateCameraSession(env);
             break;
         default:
             MEDIA_ERR_LOG("ModeManagerNapi::CreateCameraSessionInstance mode = %{public}d not supported", jsModeName);
@@ -299,6 +285,15 @@ napi_value ModeManagerNapi::GetSupportedOutputCapability(napi_env env, napi_call
     if (outputCapability != nullptr) {
         result = CameraNapiObjCameraOutputCapability(*outputCapability).GenerateNapiValue(env);
     }
+    return result;
+}
+
+extern "C" napi_value createModeManagerInstance(napi_env env)
+{
+    MEDIA_DEBUG_LOG("createModeManagerInstance is called");
+    napi_value result = nullptr;
+    result = ModeManagerNapi::CreateModeManager(env);
+    CHECK_RETURN_RET_ELOG(result == nullptr, result, "createModeManagerInstance failed");
     return result;
 }
 } // namespace CameraStandard

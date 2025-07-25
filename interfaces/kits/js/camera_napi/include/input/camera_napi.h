@@ -24,7 +24,6 @@
 #include "input/camera_manager.h"
 #include "input/camera_manager_napi.h"
 #include "input/capture_input.h"
-#include "mode/mode_manager_napi.h"
 #include "output/camera_output_capability.h"
 #include "output/capture_output.h"
 #include "output/metadata_output_napi.h"

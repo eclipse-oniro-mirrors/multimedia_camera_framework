@@ -1,6 +1,7 @@
 {
  global:
  extern "C" {
+  createModeManagerInstance;
   createSessionInstanceForSys;
   createDeprecatedSessionInstanceForSys;
   createDepthDataOutputInstance;

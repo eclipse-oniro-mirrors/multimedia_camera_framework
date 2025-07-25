@@ -13,7 +13,9 @@
  * limitations under the License.
  */
 
+#include "camera_napi_security_utils.h"
 #include "camera_xcollie.h"
+#include "dynamic_loader/camera_napi_ex_manager.h"
 #include "input/camera_napi.h"
 #include "napi/native_common.h"
 
@@ -238,6 +240,8 @@ napi_value CameraNapi::CreateCameraManagerInstance(napi_env env, napi_callback_i
 napi_value CameraNapi::CreateModeManagerInstance(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("CreateModeManagerInstance is called");
+    CHECK_RETURN_RET_ELOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
+        "SystemApi CreateModeManagerInstance is called!");
     napi_value result = nullptr;
     size_t argc = ARGS_ONE;
     napi_value argv[ARGS_ONE] = {0};
@@ -246,7 +250,9 @@ napi_value CameraNapi::CreateModeManagerInstance(napi_env env, napi_callback_inf
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
 
     napi_get_undefined(env, &result);
-    result = ModeManagerNapi::CreateModeManager(env);
+    auto cameraNapiExProxy = CameraNapiExManager::GetCameraNapiExProxy(CameraNapiExProxyUserType::MODE_MANAGER_NAPI);
+    CHECK_RETURN_RET_ELOG(cameraNapiExProxy == nullptr, nullptr, "cameraNapiExProxy is nullptr");
+    result = cameraNapiExProxy->CreateModeManager(env);
     return result;
 }
 
