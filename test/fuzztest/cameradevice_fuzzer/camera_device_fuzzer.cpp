@@ -89,15 +89,13 @@ void CameraDeviceFuzzTest(FuzzedDataProvider& fdp)
     }
 
     {
-        int32_t cameraPosition = fdp.ConsumeIntegral<int32_t>();
+        uint8_t cameraPosition = fdp.ConsumeIntegral<uint8_t>();
         ability->addEntry(OHOS_ABILITY_CAMERA_POSITION, &cameraPosition, 1);
     }
 
     {
-        const camera_rational_t aeCompensationStep[] = {{fdp.ConsumeIntegral<int32_t>(),
-            fdp.ConsumeIntegral<int32_t>()}};
-        ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_STEP, &aeCompensationStep,
-            sizeof(aeCompensationStep) / sizeof(aeCompensationStep[0]));
+        uint64_t aeCompensationStep = fdp.ConsumeIntegral<uint64_t>();
+        ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_STEP, &aeCompensationStep, 1);
     }
 
     MessageParcel dataParcel;
@@ -129,26 +127,20 @@ void CameraDeviceFuzzTestUpdateSetting(FuzzedDataProvider& fdp)
     }
 
     {
-        float focalLength = fdp.ConsumeFloatingPoint<float>();
+        int32_t focalLength = fdp.ConsumeIntegral<int32_t>();
         ability->addEntry(OHOS_SENSOR_ORIENTATION, &focalLength, 1);
     }
 
     {
-        int32_t sensorOrientation = fdp.ConsumeIntegral<int32_t>();
+        uint8_t sensorOrientation = fdp.ConsumeIntegral<uint8_t>();
         ability->addEntry(OHOS_ABILITY_CAMERA_POSITION, &sensorOrientation, 1);
     }
 
     {
-        int32_t cameraPosition = fdp.ConsumeIntegral<int32_t>();
+        uint64_t cameraPosition = fdp.ConsumeIntegral<uint64_t>();
         ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_STEP, &cameraPosition, 1);
     }
 
-    {
-        const camera_rational_t aeCompensationStep[] = {
-            {fdp.ConsumeIntegral<int32_t>(), fdp.ConsumeIntegral<int32_t>()}};
-        ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_STEP, &aeCompensationStep,
-            sizeof(aeCompensationStep) / sizeof(aeCompensationStep[0]));
-    }
     if (fuzzCameraDevice) {
         fuzzCameraDevice->UpdateSettingOnce(ability);
         fuzzCameraDevice->UpdateSetting(ability);
