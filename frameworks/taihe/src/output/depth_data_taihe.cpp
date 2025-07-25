@@ -33,6 +33,9 @@ void DepthDataImpl::ReleaseSync()
     asyncContext->objectInfo = this;
     CAMERA_START_ASYNC_TRACE(asyncContext->funcName, asyncContext->taskId);
     CameraTaiheWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(asyncContext->queueTask, [&asyncContext]() {
+        if (asyncContext->objectInfo != nullptr) {
+            asyncContext->objectInfo->pixelMap_->ReleaseSync();
+        }
         CameraUtilsTaihe::CheckError(asyncContext->errorCode);
     });
     CAMERA_FINISH_ASYNC_TRACE(asyncContext->funcName, asyncContext->taskId);
@@ -49,6 +52,11 @@ DepthDataQualityLevel DepthDataImpl::GetQualityLevel()
 DepthDataAccuracy DepthDataImpl::GetDataAccuracy()
 {
     return CameraUtilsTaihe::ToTaiheDepthDataAccuracy(dataAccuracy_);
+}
+
+ImageTaihe::PixelMap DepthDataImpl::GetDepthMap()
+{
+    return pixelMap_;
 }
 } // namespace Camera
 } // namespace Ani

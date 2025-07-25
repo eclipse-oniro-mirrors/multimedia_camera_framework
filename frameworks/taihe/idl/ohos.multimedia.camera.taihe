@@ -19,6 +19,11 @@
 static { loadLibrary("camera_taihe.z"); }
 """)
 
+from ohos.multimedia.image.image use PixelMap;
+from ohos.multimedia.image.image use Image;
+
+use ohos.multimedia.image as image;
+
 enum CameraFormat : i32 {
   CAMERA_FORMAT_RGBA_8888 = 3,
   CAMERA_FORMAT_DNG = 4,
@@ -409,11 +414,21 @@ struct SketchStatusData {
 
 
 interface DeferredPhotoProxy {
+  @gen_promise("getThumbnail")
+  GetThumbnailSync(): PixelMap;
   @gen_promise("release")
   ReleaseSync(): void;
 }
 
 interface Photo {
+  @set SetMain(main: Image): void;
+  @get GetMain(): Image;
+  @set SetRaw(raw: Optional<Image>): void;
+  @get GetRaw(): Optional<Image>;
+  @set SetDepthData(depthData: Optional<DepthData>): void;
+  @get GetDepthData(): Optional<DepthData>;
+  @set SetCaptureId(captureId: i32): void;
+  @get GetCaptureId(): i32;
   @gen_promise("release")
   ReleaseSync(): void;
 }
@@ -1919,6 +1934,8 @@ interface DepthDataOutput : CameraOutput {
 }
 
 interface DepthData {
+  @get GetDepthMap(): PixelMap;
+
   @get GetFormat(): CameraFormat;
 
   @get GetQualityLevel(): DepthDataQualityLevel;
@@ -2017,8 +2034,12 @@ interface PhotoOutput : CameraOutput {
               this.onDeferredPhotoProxyAvailable(callback as (err: BusinessError<void>, data: DeferredPhotoProxy)=> void);
             } else if (type === "offlineDeliveryFinished") {
               this.onOfflineDeliveryFinished(callback as ((err: BusinessError<void>, data: undefined)=> void));
+            } else if (type === "quickThumbnail") {
+              this.onQuickThumbnail(callback as ((err: BusinessError<void>, data: image.PixelMap)=> void));
             } else if (type === "error") {
               this.onError(callback as (err: BusinessError<void>)=> void);
+            } else if(type === "photoAssetAvailable") {
+              this.onPhotoAssetAvailable(callback as ((err: BusinessError<void>, data: photoAccessHelper.PhotoAsset)=> void));
             } else {
               throw new Error(`Unknown type: ${type}`);
             }
@@ -2045,8 +2066,12 @@ interface PhotoOutput : CameraOutput {
               this.offDeferredPhotoProxyAvailable(callback as (((err: BusinessError<void>, data: DeferredPhotoProxy)=> void) | undefined));
             } else if (type === "offlineDeliveryFinished") {
               this.offOfflineDeliveryFinished(callback as (((err: BusinessError<void>, data: undefined)=> void) | undefined));
+            } else if (type === "quickThumbnail") {
+              this.offQuickThumbnail(callback as (((err: BusinessError<void>, data: image.PixelMap)=> void) | undefined));
             } else if (type === "error") {
               this.offError(callback as (((err: BusinessError<void>)=> void) | undefined));
+            } else if (type === "photoAssetAvailable") {
+              this.offPhotoAssetAvailable(callback as (((err: BusinessError<void>, data: photoAccessHelper.PhotoAsset)=> void) | undefined));
             } else {
               throw new Error(`Unknown type: ${type}`);
             }
@@ -2075,8 +2100,8 @@ interface PhotoOutput : CameraOutput {
   OffOfflineDeliveryFinished(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: @sts_type("undefined") Opaque)=> void>): void;
   OnPhotoAssetAvailable(callback: (err: @sts_type("BusinessError<void>") Opaque, data: @sts_type("photoAccessHelper.PhotoAsset") Opaque)=> void): void;
   OffPhotoAssetAvailable(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: @sts_type("photoAccessHelper.PhotoAsset") Opaque)=> void>): void;
-  OnQuickThumbnail(callback: (err: @sts_type("BusinessError<void>") Opaque, data: @sts_type("image.PixelMap") Opaque)=> void): void;
-  OffQuickThumbnail(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: @sts_type("image.PixelMap") Opaque)=> void>): void;
+  OnQuickThumbnail(callback: (err: @sts_type("BusinessError<void>") Opaque, data: PixelMap)=> void): void;
+  OffQuickThumbnail(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: PixelMap)=> void>): void;
 
   @gen_async("capture")
   @gen_promise("capture")

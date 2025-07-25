@@ -47,7 +47,7 @@ void ErrorCallbackListenerAni::OnErrorCallback(const int32_t errorType, const in
 void OcclusionDetectCallbackListenerAni::OnCameraOcclusionDetected(const uint8_t isCameraOcclusion,
                                                                    const uint8_t isCameraLensDirty) const
 {
-    MEDIA_DEBUG_LOG("OnError is called, isCameraOcclusion: %{public}d, isCameraLensDirty: %{public}d",
+    MEDIA_DEBUG_LOG("OnCameraOcclusionDetected is called, isCameraOcclusion: %{public}d, isCameraLensDirty: %{public}d",
         isCameraOcclusion, isCameraLensDirty);
     OnCameraOcclusionDetectedCallback(isCameraOcclusion, isCameraLensDirty);
 }

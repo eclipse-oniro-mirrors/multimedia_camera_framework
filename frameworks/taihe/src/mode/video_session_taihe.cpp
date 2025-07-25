@@ -59,10 +59,10 @@ bool VideoSessionImpl::CanPreconfig(PreconfigType preconfigType, optional_view<P
 array<VideoFunctions> CreateFunctionsVideoFunctionsArray(
     std::vector<sptr<OHOS::CameraStandard::CameraAbility>> functionsList)
 {
-    MEDIA_DEBUG_LOG("CreateFunctionsJSArray is called");
+    MEDIA_DEBUG_LOG("CreateFunctionsVideoFunctionsArray is called");
     CHECK_ERROR_PRINT_LOG(functionsList.empty(), "functionsList is empty");
     std::vector<VideoFunctions> functionsArray;
-    for (auto i = 0; i < functionsList.size(); i++) {
+    for (size_t i = 0; i < functionsList.size(); i++) {
         functionsArray.push_back(make_holder<VideoFunctionsImpl, VideoFunctions>(functionsList[i]));
     }
     return array<VideoFunctions>(functionsArray);
@@ -71,10 +71,10 @@ array<VideoFunctions> CreateFunctionsVideoFunctionsArray(
 array<VideoConflictFunctions> CreateFunctionsVideoConflictFunctionsArray(
     std::vector<sptr<OHOS::CameraStandard::CameraAbility>> conflictFunctionsList)
 {
-    MEDIA_DEBUG_LOG("CreateFunctionsJSArray is called");
+    MEDIA_DEBUG_LOG("CreateFunctionsVideoConflictFunctionsArray is called");
     CHECK_ERROR_PRINT_LOG(conflictFunctionsList.empty(), "conflictFunctionsList is empty");
     std::vector<VideoConflictFunctions> functionsArray;
-    for (auto i = 0; i < conflictFunctionsList.size(); i++) {
+    for (size_t i = 0; i < conflictFunctionsList.size(); i++) {
         functionsArray.push_back(
             make_holder<VideoConflictFunctionsImpl, VideoConflictFunctions>(conflictFunctionsList[i]));
     }

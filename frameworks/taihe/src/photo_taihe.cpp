@@ -20,8 +20,60 @@ using namespace OHOS;
 
 namespace Ani {
 namespace Camera {
+using namespace taihe;
+using namespace ohos::multimedia::camera;
+using namespace ohos::multimedia::image;
+namespace ImageTaihe = ohos::multimedia::image::image;
+PhotoImpl::PhotoImpl(ImageTaihe::Image mainImage)
+{
+    mainImage_ = mainImage;
+}
+
+void PhotoImpl::SetMain(ImageTaihe::weak::Image main)
+{
+    main_ = main;
+}
+
+ImageTaihe::Image PhotoImpl::GetMain()
+{
+    return main_;
+}
+
+void PhotoImpl::SetRaw(optional_view<ImageTaihe::Image> raw)
+{
+    if (raw.has_value()) {
+        raw_ = raw.value();
+    }
+}
+
+optional<ImageTaihe::Image> PhotoImpl::GetRaw()
+{
+    return optional<ImageTaihe::Image>(std::in_place_t{}, raw_);
+}
+
+void PhotoImpl::SetDepthData(optional_view<DepthData> depthData)
+{
+    if (depthData.has_value()) {
+        depthData_ = depthData.value();
+    }
+}
+
+optional<DepthData> PhotoImpl::GetDepthData()
+{
+    return optional<DepthData>(std::in_place_t{}, depthData_);
+}
+
+void PhotoImpl::SetCaptureId(int32_t captureId)
+{
+    captureId_ = captureId;
+}
+int32_t PhotoImpl::GetCaptureId()
+{
+    return captureId_;
+}
 void PhotoImpl::ReleaseSync()
 {
+    mainImage_->ReleaseSync();
 }
 } // namespace Camera
 } // namespace Ani

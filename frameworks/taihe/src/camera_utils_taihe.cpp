@@ -144,7 +144,7 @@ FocusTrackingMode CameraUtilsTaihe::ToTaiheFocusTrackingMode(OHOS::CameraStandar
 {
     auto itr = g_nativeToAniFocusTrackingMode.find(mode);
     if (itr == g_nativeToAniFocusTrackingMode.end()) {
-        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT, "ToTaiheLightStatus fail");
+        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT, "ToTaiheFocusTrackingMode fail");
         return FocusTrackingMode::key_t::AUTO;
     }
     return itr->second;
@@ -200,9 +200,9 @@ array<PhysicalAperture> CameraUtilsTaihe::ToTaiheArrayPhysicalAperture(
                 continue;
             }
             apertures.push_back(static_cast<double>(physicalApertures[i][y]));
-            res.apertures = array<double>(apertures);
-            apertures.clear();
         }
+        res.apertures = array<double>(apertures);
+        apertures.clear();
         resVec.push_back(res);
     }
     return array<PhysicalAperture>(resVec);
@@ -507,12 +507,11 @@ ani_object CameraUtilsTaihe::ToBusinessError(ani_env *env, int32_t code, const s
 
 int32_t CameraUtilsTaihe::EnumGetValueInt32(ani_env *env, ani_enum_item enumItem)
 {
-    CHECK_ERROR_RETURN_RET_LOG(env != nullptr, -1, "Invalid env");
-    int32_t value = -1;
+    CHECK_ERROR_RETURN_RET_LOG(env == nullptr, -1, "Invalid env");
     ani_int aniInt {};
     CHECK_ERROR_RETURN_RET_LOG(ANI_OK != env->EnumItem_GetValue_Int(enumItem, &aniInt), -1,
         "EnumItem_GetValue_Int failed");
-    return reinterpret_cast<int32_t>(value);
+    return static_cast<int32_t>(aniInt);
 }
 
 bool CameraUtilsTaihe::GetEnableSecureCamera()

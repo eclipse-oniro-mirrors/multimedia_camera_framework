@@ -291,7 +291,7 @@ public:
     double GetPhysicalAperture();
 };
 
-class EffectSuggestionImpl : public SessionBase {
+class EffectSuggestionImpl : virtual public SessionBase {
 public:
     explicit EffectSuggestionImpl() {}
     virtual ~EffectSuggestionImpl() = default;
@@ -316,7 +316,7 @@ public:
     void EnableMacro(bool enabled);
 };
 
-class ManualFocusImpl : public SessionBase {
+class ManualFocusImpl : virtual public SessionBase {
 public:
     explicit ManualFocusImpl() {}
     virtual ~ManualFocusImpl() = default;

@@ -209,7 +209,7 @@ array<SceneMode> CameraManagerImpl::GetSupportedSceneModes(CameraDevice const& c
     sptr<OHOS::CameraStandard::CameraDevice> cameraDevice =
         cameraManager_->GetCameraDeviceFromId(std::string(camera.cameraId));
     if (cameraDevice == nullptr) {
-        MEDIA_ERR_LOG("CameraManagerAni::GetSupportedModes get camera info fail");
+        MEDIA_ERR_LOG("CameraManagerImpl::GetSupportedModes get camera info fail");
         CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT, "Get camera info fail");
         return array<SceneMode>(nullptr, 0);
     }
@@ -309,7 +309,7 @@ CameraOutputCapability CameraManagerImpl::GetSupportedOutputCapability(CameraDev
     MEDIA_INFO_LOG("GetSupportedOutputCapability SceneMode sceneMode = %{public}d ", sceneMode);
 
     if (cameraInfo == nullptr) {
-        MEDIA_ERR_LOG("CameraManagerAni::GetSupportedOutputCapability get camera info fail");
+        MEDIA_ERR_LOG("CameraManagerImpl::GetSupportedOutputCapability get camera info fail");
         CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT, "Get camera info fail");
         return nullImpl;
     }
@@ -447,7 +447,7 @@ void CameraManagerImpl::RegisterCameraMuteCallbackListener(const std::string& ev
     auto listener = CameraAniEventListener<CameraMuteListenerAni>::RegisterCallbackListener(
         eventName, env, callback, isOnce);
     CHECK_ERROR_RETURN_LOG(
-        listener == nullptr, "CameraManagerAni::RegisterCameraMuteCallbackListener listener is null");
+        listener == nullptr, "CameraManagerImpl::RegisterCameraMuteCallbackListener listener is null");
     cameraManager_->RegisterCameraMuteListener(listener);
 }
 
@@ -908,7 +908,7 @@ DepthDataOutput CameraManagerImpl::CreateDepthDataOutput(DepthProfile const& pro
                                       static_cast<uint32_t>(profile.size.height) };
     OHOS::CameraStandard::DepthProfile depthProfile(cameraFormat, depthDataAccuracy, size);
     MEDIA_INFO_LOG(
-        "CameraManagerAni::CreateDepthDataOutputInstance ParseDepthProfile "
+        "CameraManagerImpl::CreateDepthDataOutputInstance ParseDepthProfile "
         "size.width = %{public}d, size.height = %{public}d, format = %{public}d, dataAccuracy = %{public}d,",
         depthProfile.size_.width, depthProfile.size_.height, depthProfile.format_, depthProfile.dataAccuracy_);
     OHOS::sptr<OHOS::Surface> depthDataSurface = nullptr;

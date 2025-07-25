@@ -53,7 +53,7 @@ array<PhotoFunctions> CreateFunctionsPhotoFunctionsArray(
     MEDIA_DEBUG_LOG("CreateFunctionsJSArray is called");
     CHECK_ERROR_PRINT_LOG(functionsList.empty(), "functionsList is empty");
     std::vector<PhotoFunctions> functionsArray;
-    for (auto i = 0; i < functionsList.size(); i++) {
+    for (size_t i = 0; i < functionsList.size(); i++) {
         functionsArray.push_back(make_holder<PhotoFunctionsImpl, PhotoFunctions>(functionsList[i]));
     }
     return array<PhotoFunctions>(functionsArray);
@@ -65,7 +65,7 @@ array<PhotoConflictFunctions> CreateFunctionsPhotoConflictFunctionsArray(
     MEDIA_DEBUG_LOG("CreateFunctionsJSArray is called");
     CHECK_ERROR_PRINT_LOG(conflictFunctionsList.empty(), "conflictFunctionsList is empty");
     std::vector<PhotoConflictFunctions> functionsArray;
-    for (auto i = 0; i < conflictFunctionsList.size(); i++) {
+    for (size_t i = 0; i < conflictFunctionsList.size(); i++) {
         functionsArray.push_back(
             make_holder<PhotoConflictFunctionsImpl, PhotoConflictFunctions>(conflictFunctionsList[i]));
     }

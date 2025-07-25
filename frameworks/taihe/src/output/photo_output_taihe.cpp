@@ -27,9 +27,12 @@
 #include "dp_utils.h"
 #include "deferred_photo_proxy_taihe.h"
 #include "video_key_info.h"
+#include "image_taihe.h"
 #include "image_receiver.h"
 #include "hdr_type.h"
-
+#include "photo_taihe.h"
+#include "pixel_map_taihe.h"
+#include "media_library_comm_ani.h"
 #include "metadata_helper.h"
 #include <drivers/interface/display/graphic/common/v1_0/cm_color_space.h>
 
@@ -622,9 +625,19 @@ void CleanAfterTransPicture(sptr<OHOS::CameraStandard::PhotoOutput> photoOutput,
     photoOutput->captureIdHandleMap_.erase(captureId);
 }
 
-void PhotoListenerAni::UpdatePictureJSCallback(int32_t captureId, const string uri, int32_t cameraShotType,
+void PhotoListenerAni::UpdatePictureJSCallback(int32_t captureId, const std::string uri, int32_t cameraShotType,
     const std::string burstKey) const
 {
+    MEDIA_INFO_LOG("PhotoListener:UpdatePictureJSCallback called");
+    ani_object photoAssetValue =
+        Media::MediaLibraryCommAni::CreatePhotoAssetAni(get_env(), uri, cameraShotType, captureId, burstKey);
+    auto sharePtr = shared_from_this();
+    auto task = [photoAssetValue, sharePtr]() {
+        CHECK_EXECUTE(sharePtr != nullptr, sharePtr->ExecuteAsyncCallback(
+            CONST_CAPTURE_PHOTO_ASSET_AVAILABLE, 0, "success", reinterpret_cast<uintptr_t>(photoAssetValue)));
+        MEDIA_DEBUG_LOG("ExecuteCallback CONST_CAPTURE_PHOTO_ASSET_AVAILABLE X");
+    };
+    mainHandler_->PostTask(task, "UpdatePictureJSCallback", 0, OHOS::AppExecFwk::EventQueue::Priority::IMMEDIATE, {});
 }
 
 void PhotoListenerAni::AssembleAuxiliaryPhoto(int64_t timestamp, int32_t captureId) __attribute__((no_sanitize("cfi")))
@@ -828,6 +841,21 @@ void PhotoListenerAni::UpdateJSCallback(sptr<Surface> photoSurface) const
 
 void PhotoListenerAni::ExecutePhoto(sptr<SurfaceBuffer> surfaceBuffer, int64_t timestamp) const
 {
+    MEDIA_INFO_LOG("ExecutePhoto");
+    int32_t errCode = 0;
+    std::string message = "success";
+    std::shared_ptr<OHOS::Media::NativeImage> image = std::make_shared<OHOS::Media::NativeImage>(surfaceBuffer,
+        bufferProcessor_, timestamp);
+    ohos::multimedia::image::image::Image mainImage = ANI::Image::ImageImpl::Create(image);
+    if (has_error()) {
+        reset_error();
+        errCode = -1;
+        message = "ImageTaihe Create failed";
+    }
+    Photo photoValue = make_holder<Ani::Camera::PhotoImpl, Photo>(mainImage);
+    photoValue->SetCaptureId(GetCaptureId(surfaceBuffer));
+    ExecuteAsyncCallback(CONST_CAPTURE_PHOTO_AVAILABLE, errCode, message, photoValue);
+    photoSurface_->ReleaseBuffer(surfaceBuffer, -1);
 }
 
 void PhotoListenerAni::ExecuteDeferredPhoto(sptr<SurfaceBuffer> surfaceBuffer) const
@@ -883,8 +911,93 @@ void PhotoListenerAni::ExecuteDeferredPhoto(sptr<SurfaceBuffer> surfaceBuffer) c
     photoSurface_->ReleaseBuffer(surfaceBuffer, -1);
 }
 
+void PhotoListenerAni::CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, BufferHandle *bufferHandle,
+    bool isHighQuality, std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp) const
+{
+    CAMERA_SYNC_TRACE;
+    CHECK_ERROR_RETURN_LOG(bufferHandle == nullptr, "bufferHandle is nullptr");
+    // get buffer handle and photo info
+    int32_t captureId;
+    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::captureId, captureId);
+    int32_t burstSeqId = -1;
+    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::burstSequenceId, burstSeqId);
+    int64_t imageId = 0;
+    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::imageId, imageId);
+    int32_t deferredProcessingType;
+    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::deferredProcessingType, deferredProcessingType);
+    MEDIA_INFO_LOG(
+        "PhotoListener ExecutePhotoAsset captureId:%{public}d "
+        "imageId:%{public}" PRId64 ", deferredProcessingType:%{public}d, burstSeqId:%{public}d",
+        captureId, imageId, deferredProcessingType, burstSeqId);
+    int32_t photoWidth;
+    int32_t photoHeight;
+    surfaceBuffer->GetExtraData()->ExtraGet(dataWidth, photoWidth);
+    surfaceBuffer->GetExtraData()->ExtraGet(dataHeight, photoHeight);
+    uint64_t size = static_cast<uint64_t>(surfaceBuffer->GetSize());
+    int32_t extraDataSize = 0;
+    auto res = surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::dataSize, extraDataSize);
+    if (res != 0) {
+        MEDIA_INFO_LOG("ExtraGet dataSize error %{public}d", res);
+    } else if (extraDataSize <= 0) {
+        MEDIA_INFO_LOG("ExtraGet dataSize Ok, but size <= 0");
+    } else if (static_cast<uint64_t>(extraDataSize) > size) {
+        MEDIA_INFO_LOG("ExtraGet dataSize Ok,but dataSize %{public}d is bigger than bufferSize %{public}" PRIu64,
+            extraDataSize, size);
+    } else {
+        MEDIA_INFO_LOG("ExtraGet dataSize %{public}d", extraDataSize);
+        size = static_cast<uint64_t>(extraDataSize);
+    }
+    int32_t deferredImageFormat = 0;
+    res = surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::deferredImageFormat, deferredImageFormat);
+    MEDIA_INFO_LOG("deferredImageFormat:%{public}d, width:%{public}d, height:%{public}d, size:%{public}" PRId64,
+        deferredImageFormat, photoWidth, photoHeight, size);
+    int32_t format = bufferHandle->format;
+    sptr<OHOS::CameraStandard::CameraPhotoProxy> photoProxy;
+    std::string imageIdStr = std::to_string(imageId);
+    photoProxy = new(std::nothrow) OHOS::CameraStandard::CameraPhotoProxy(bufferHandle, format, photoWidth, photoHeight,
+                                                    isHighQuality, captureId, burstSeqId);
+    CHECK_ERROR_RETURN_LOG(photoProxy == nullptr, "failed to new photoProxy");
+    photoProxy->SetDeferredAttrs(imageIdStr, deferredProcessingType, size, deferredImageFormat);
+    auto photoOutput = photoOutput_.promote();
+    if (photoOutput) {
+        auto settings = photoOutput->GetDefaultCaptureSetting();
+        if (settings) {
+            auto location = std::make_shared<OHOS::CameraStandard::Location>();
+            settings->GetLocation(location);
+            photoProxy->SetLocation(location->latitude, location->longitude);
+        }
+        photoOutput->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
+    }
+}
+
 void PhotoListenerAni::ExecutePhotoAsset(sptr<SurfaceBuffer> surfaceBuffer, bool isHighQuality, int64_t timestamp) const
 {
+    CAMERA_SYNC_TRACE;
+    MEDIA_INFO_LOG("ExecutePhotoAsset");
+    int32_t errCode = 0;
+    std::string message = "success";
+    // deep copy buffer
+    sptr<SurfaceBuffer> newSurfaceBuffer = SurfaceBuffer::Create();
+    int32_t captureId = GetCaptureId(surfaceBuffer);
+    DeepCopyBuffer(newSurfaceBuffer, surfaceBuffer, 0);
+    BufferHandle* bufferHandle = newSurfaceBuffer->GetBufferHandle();
+    if (bufferHandle == nullptr) {
+        errCode = OHOS::CameraStandard::CameraErrorCode::INVALID_ARGUMENT;
+        message = "invalid bufferHandle";
+    }
+    newSurfaceBuffer->Map();
+    std::string uri = "";
+    int32_t cameraShotType = 0;
+    std::string burstKey = "";
+    CreateMediaLibrary(surfaceBuffer, bufferHandle, isHighQuality, uri, cameraShotType, burstKey, timestamp);
+    MEDIA_INFO_LOG("CreateMediaLibrary result uri:%{public}s cameraShotType:%{public}d burstKey:%{public}s",
+        uri.c_str(), cameraShotType, burstKey.c_str());
+    ani_object photoAssetValue =
+        Media::MediaLibraryCommAni::CreatePhotoAssetAni(get_env(), uri, cameraShotType, captureId, burstKey);
+    ExecuteAsyncCallback(
+        CONST_CAPTURE_PHOTO_ASSET_AVAILABLE, errCode, message, reinterpret_cast<uintptr_t>(photoAssetValue));
+    // return buffer to buffer queue
+    photoSurface_->ReleaseBuffer(surfaceBuffer, -1);
 }
 
 void PhotoListenerAni::OnBufferAvailable()
@@ -919,6 +1032,10 @@ void PhotoListenerAni::SaveCallback(const std::string eventName, std::shared_ptr
     CHECK_ERROR_RETURN_LOG(photoOutput_ == nullptr, "photoOutput_ is nullptr");
     if (eventName == CONST_CAPTURE_PHOTO_AVAILABLE) {
         callbackFlag_ |= OHOS::CameraStandard::CAPTURE_PHOTO;
+    } else if (eventName == CONST_CAPTURE_PHOTO_ASSET_AVAILABLE) {
+        callbackFlag_ |= OHOS::CameraStandard::CAPTURE_PHOTO_ASSET;
+    } else if (eventName == CONST_CAPTURE_DEFERRED_PHOTO_AVAILABLE) {
+        callbackFlag_ |= OHOS::CameraStandard::CAPTURE_DEFERRED_PHOTO;
     } else {
         MEDIA_ERR_LOG("Incorrect photo callback event type received from JS");
         return;
@@ -960,6 +1077,19 @@ void RawPhotoListenerAni::OnBufferAvailable()
 
 void RawPhotoListenerAni::ExecuteRawPhoto(sptr<SurfaceBuffer> surfaceBuffer) const
 {
+    MEDIA_INFO_LOG("ExecuteRawPhoto");
+    int32_t errCode = 0;
+    std::string message = "success";
+    std::shared_ptr<Media::NativeImage> image = std::make_shared<Media::NativeImage>(surfaceBuffer, bufferProcessor_);
+    ohos::multimedia::image::image::Image mainImage = ANI::Image::ImageImpl::Create(image);
+    if (has_error()) {
+        reset_error();
+        errCode = -1;
+        message = "ImageTaihe Create failed";
+    }
+    Photo photoValue = make_holder<Ani::Camera::PhotoImpl, Photo>(mainImage);
+    ExecuteAsyncCallback(CONST_CAPTURE_PHOTO_AVAILABLE, errCode, message, photoValue);
+    rawPhotoSurface_->ReleaseBuffer(surfaceBuffer, -1);
 }
 
 void RawPhotoListenerAni::UpdateJSCallback(sptr<Surface> rawPhotoSurface) const
@@ -1226,11 +1356,16 @@ std::unique_ptr<Media::PixelMap> ThumbnailListener::SetPixelMapYuvInfo(sptr<Surf
 void ThumbnailListener::UpdateJSCallbackAsync(int32_t captureId, int64_t timestamp,
     std::unique_ptr<Media::PixelMap> pixelMap)
 {
-}
-
-void ThumbnailListener::UpdateJSCallback(int32_t captureId, int64_t timestamp,
-    std::unique_ptr<Media::PixelMap> pixelMap) const
-{
+    ohos::multimedia::image::image::PixelMap pixelMapVal =
+        make_holder<ANI::Image::PixelMapImpl, ohos::multimedia::image::image::PixelMap>(std::move(pixelMap));
+    pixelMapVal->SetCaptureId(captureId);
+    pixelMapVal->SetTimestamp(timestamp);
+    auto sharePtr = shared_from_this();
+    auto task = [pixelMapVal, sharePtr]() {
+        CHECK_EXECUTE(sharePtr != nullptr,
+            sharePtr->ExecuteAsyncCallback(CONST_CAPTURE_START_WITH_INFO, 0, "Callback is OK", pixelMapVal));
+    };
+    mainHandler_->PostTask(task, "UpdateJSCallbackAsync", 0, OHOS::AppExecFwk::EventQueue::Priority::IMMEDIATE, {});
 }
 
 PhotoOutputImpl::PhotoOutputImpl(sptr<OHOS::CameraStandard::CaptureOutput> output) : CameraOutputImpl(output)
@@ -1759,11 +1894,13 @@ void PhotoOutputImpl::OffPhotoAssetAvailable(optional_view<callback<void(uintptr
     ListenerTemplate<PhotoOutputImpl>::Off(this, callback, CONST_CAPTURE_PHOTO_ASSET_AVAILABLE);
 }
 
-void PhotoOutputImpl::OnQuickThumbnail(callback_view<void(uintptr_t, uintptr_t)> callback)
+void PhotoOutputImpl::OnQuickThumbnail(
+    callback_view<void(uintptr_t, ohos::multimedia::image::image::weak::PixelMap)> callback)
 {
     ListenerTemplate<PhotoOutputImpl>::On(this, callback, CONST_CAPTURE_QUICK_THUMBNAIL);
 }
-void PhotoOutputImpl::OffQuickThumbnail(optional_view<callback<void(uintptr_t, uintptr_t)>> callback)
+void PhotoOutputImpl::OffQuickThumbnail(
+    optional_view<callback<void(uintptr_t, ohos::multimedia::image::image::weak::PixelMap)>> callback)
 {
     ListenerTemplate<PhotoOutputImpl>::Off(this, callback, CONST_CAPTURE_QUICK_THUMBNAIL);
 }

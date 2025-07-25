@@ -21,24 +21,26 @@
 #include "taihe/runtime.hpp"
 
 #include "camera_worker_queue_keeper_taihe.h"
-
+#include "pixel_map_taihe.h"
 #include "camera_output_capability.h"
 
 namespace Ani {
 namespace Camera {
 using namespace taihe;
 using namespace ohos::multimedia::camera;
+namespace ImageTaihe = ohos::multimedia::image::image;
 class DepthDataImpl : public std::enable_shared_from_this<DepthDataImpl> {
 public:
     DepthDataImpl(OHOS::CameraStandard::CameraFormat format, OHOS::CameraStandard::DepthDataAccuracy dataAccuracy,
-        int32_t qualityLevel) : format_(format), dataAccuracy_(dataAccuracy), qualityLevel_(qualityLevel) {}
+        int32_t qualityLevel, ImageTaihe::PixelMap pixelMap) : format_(format), dataAccuracy_(dataAccuracy),
+        qualityLevel_(qualityLevel), pixelMap_(pixelMap) {}
     DepthDataImpl() = delete;
 
     ~DepthDataImpl() {}
     CameraFormat GetFormat();
     DepthDataQualityLevel GetQualityLevel();
     DepthDataAccuracy GetDataAccuracy();
-
+    ImageTaihe::PixelMap GetDepthMap();
     void ReleaseSync();
 
     inline int64_t GetSpecificImplPtr()
@@ -52,6 +54,7 @@ private:
     OHOS::CameraStandard::DepthDataAccuracy dataAccuracy_ =
         OHOS::CameraStandard::DepthDataAccuracy::DEPTH_DATA_ACCURACY_INVALID;
     int32_t qualityLevel_ = 0;
+    ImageTaihe::PixelMap pixelMap_ = make_holder<ANI::Image::PixelMapImpl, ImageTaihe::PixelMap>();
 };
 
 struct DepthDataTaiheAsyncContext : public TaiheAsyncContext {

@@ -61,7 +61,7 @@ void SlowMotionVideoSessionImpl::UnregisterSlowMotionStateCb(
     const std::string& eventName, std::shared_ptr<uintptr_t> callback)
 {
     MEDIA_INFO_LOG("UnregisterSlowMotionStateCb is called");
-    CHECK_ERROR_RETURN_LOG(slowMotionState_ == nullptr, "slowMotionStateListener_ is null");
+    CHECK_ERROR_RETURN_LOG(slowMotionState_ == nullptr, "slowMotionState_ is null");
     slowMotionState_->RemoveCallbackRef(eventName, callback);
     MEDIA_INFO_LOG("UnregisterSlowMotionStateCb success");
 }

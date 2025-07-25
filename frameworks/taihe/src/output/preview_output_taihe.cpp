@@ -329,7 +329,7 @@ void PreviewOutputImpl::RegisterErrorCallbackListener(const std::string& eventNa
     auto listener =
         CameraAniEventListener<PreviewOutputCallbackAni>::RegisterCallbackListener(eventName, env, callback, isOnce);
     CHECK_ERROR_RETURN_LOG(
-        listener == nullptr, "CameraManagerAni::RegisterErrorCallbackListener listener is null");
+        listener == nullptr, "PreviewOutputImpl::RegisterErrorCallbackListener listener is null");
     previewOutput_->SetCallback(listener);
 }
 
@@ -342,7 +342,7 @@ void PreviewOutputImpl::RegisterFrameStartCallbackListener(const std::string& ev
     auto listener =
         CameraAniEventListener<PreviewOutputCallbackAni>::RegisterCallbackListener(eventName, env, callback, isOnce);
     CHECK_ERROR_RETURN_LOG(
-        listener == nullptr, "CameraManagerAni::RegisterFrameStartCallbackListener listener is null");
+        listener == nullptr, "PreviewOutputImpl::RegisterFrameStartCallbackListener listener is null");
     previewOutput_->SetCallback(listener);
 }
 
@@ -355,7 +355,7 @@ void PreviewOutputImpl::RegisterFrameEndCallbackListener(const std::string& even
     auto listener =
         CameraAniEventListener<PreviewOutputCallbackAni>::RegisterCallbackListener(eventName, env, callback, isOnce);
     CHECK_ERROR_RETURN_LOG(
-        listener == nullptr, "CameraManagerAni::RegisterFrameEndCallbackListener listener is null");
+        listener == nullptr, "PreviewOutputImpl::RegisterFrameEndCallbackListener listener is null");
     previewOutput_->SetCallback(listener);
 }
 

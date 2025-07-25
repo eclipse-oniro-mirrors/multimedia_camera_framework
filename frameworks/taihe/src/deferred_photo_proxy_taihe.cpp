@@ -20,11 +20,28 @@ using namespace OHOS;
 
 namespace Ani {
 namespace Camera {
-
+namespace ImageTaihe = ohos::multimedia::image::image;
 DeferredPhotoProxyImpl::DeferredPhotoProxyImpl(sptr<OHOS::CameraStandard::DeferredPhotoProxy> deferredPhotoProxy)
 {
     deferredPhotoProxy_ = deferredPhotoProxy;
 }
+
+ImageTaihe::PixelMap DeferredPhotoProxyImpl::GetThumbnailSync()
+{
+    void* fdAddr = deferredPhotoProxy_->GetFileDataAddr();
+    int32_t thumbnailWidth = deferredPhotoProxy_->GetWidth();
+    int32_t thumbnailHeight = deferredPhotoProxy_->GetHeight();
+    Media::InitializationOptions opts;
+    opts.srcPixelFormat = Media::PixelFormat::RGBA_8888;
+    opts.pixelFormat = Media::PixelFormat::RGBA_8888;
+    opts.size = { .width = thumbnailWidth, .height = thumbnailHeight };
+    MEDIA_INFO_LOG("thumbnailWidth:%{public}d, thumbnailheight: %{public}d",
+        thumbnailWidth, thumbnailHeight);
+    auto pixelMap = Media::PixelMap::Create(static_cast<const uint32_t*>(fdAddr),
+        thumbnailWidth * thumbnailHeight * 4, 0, thumbnailWidth, opts, true);
+    return ANI::Image::PixelMapImpl::CreatePixelMap(std::move(pixelMap));
+}
+
 void DeferredPhotoProxyImpl::ReleaseSync()
 {
     if (deferredPhotoProxy_ != nullptr) {
