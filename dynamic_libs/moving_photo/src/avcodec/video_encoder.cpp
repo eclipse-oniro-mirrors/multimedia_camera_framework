@@ -326,7 +326,6 @@ int32_t VideoEncoder::Release()
         std::lock_guard<std::mutex> lock(encoderMutex_);
         CHECK_EXECUTE(avCodecProxy_ && avCodecProxy_->IsVideoEncoderExisted(),
             avCodecProxy_->AVCodecVideoEncoderRelease());
-        CameraDynamicLoader::FreeDynamicLibDelayed(AV_CODEC_SO, LIB_DELAYED_UNLOAD_TIME);
         avCodecProxy_.reset();
     }
     std::unique_lock<std::mutex> contextLock(contextMutex_);
