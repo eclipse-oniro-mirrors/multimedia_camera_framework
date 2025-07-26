@@ -37,7 +37,6 @@ HStreamOperatorManager::~HStreamOperatorManager()
     }
     MEDIA_INFO_LOG("~HStreamOperatorManager free dynamic lib");
     CameraDynamicLoader::FreeDynamicLibDelayed(MEDIA_LIB_SO, LIB_DELAYED_UNLOAD_TIME);
-    CameraDynamicLoader::FreeDynamicLibDelayed(MOVING_PHOTO_SO, LIB_DELAYED_UNLOAD_TIME);
 }
 
 sptr<HStreamOperatorManager> &HStreamOperatorManager::GetInstance()

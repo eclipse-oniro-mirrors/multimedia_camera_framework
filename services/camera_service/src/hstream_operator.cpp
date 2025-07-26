@@ -1026,7 +1026,6 @@ int32_t HStreamOperator::Release()
     CHECK_EXECUTE(movingPhotoVideoCacheProxy_,  movingPhotoVideoCacheProxy_ = nullptr);
     CHECK_EXECUTE(avcodecTaskManagerProxy_,  avcodecTaskManagerProxy_ = nullptr);
     HStreamOperatorManager::GetInstance()->RemoveTaskManager(streamOperatorId_);
-    CameraDynamicLoader::FreeDynamicLibDelayed(MOVING_PHOTO_SO, LIB_DELAYED_UNLOAD_TIME);
 #ifdef CAMERA_USE_SENSOR
     UnRegisterSensorCallback();
 #endif

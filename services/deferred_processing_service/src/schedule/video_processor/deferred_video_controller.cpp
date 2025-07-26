@@ -161,7 +161,6 @@ void DeferredVideoController::TryDoSchedule()
     DP_INFO_LOG("DPS_VIDEO: strategy get work: %{public}d", work != nullptr);
     if (work == nullptr) {
         StopSuspendLock();
-        CameraDynamicLoader::FreeDynamicLibDelayed(MEDIA_MANAGER_SO, LIB_DELAYED_UNLOAD_TIME);
         return;
     }
 
