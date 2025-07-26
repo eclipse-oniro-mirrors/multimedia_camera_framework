@@ -89,7 +89,7 @@ interface ICameraService{
   [ipccode 47] void GetVideoSessionForControlCenter([out] ICaptureSession session);
   [ipccode 48] void SetControlCenterCallback([in] IControlCenterStatusCallback callbackFunc);
   [ipccode 49] void UnSetControlCenterStatusCallback();
-  [ipccode 50] void EnableControlCenter([in] boolean status);
+  [ipccode 50] void EnableControlCenter([in] boolean status, [in] boolean needPersistEnable);
   [ipccode 51] void SetControlCenterPrecondition([in] boolean condition);
   [ipccode 52] void SetDeviceControlCenterAbility([in] boolean ability);
   [ipccode 53] void GetControlCenterStatus([out] boolean status);

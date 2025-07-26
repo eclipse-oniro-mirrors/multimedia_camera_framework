@@ -30,6 +30,7 @@
 #include "anonymization.h"
 #include "ability/camera_ability_const.h"
 #include "access_token.h"
+#include "bms_adapter.h"
 #include "icapture_session_callback.h"
 #include "session/capture_scene_const.h"
 #ifdef NOTIFICATION_ENABLE
@@ -350,7 +351,16 @@ int32_t HCameraService::GetControlCenterStatusFromDataShareHelper(bool &status)
     return CAMERA_OK;
 }
 
-int32_t HCameraService::UpdateDataShareAndTag(bool status)
+void HCameraService::UpdateControlCenterStatus(bool isStart)
+{
+    bool controlCenterStatus = false;
+    CHECK_EXECUTE(isStart, GetControlCenterStatusFromDataShareHelper(controlCenterStatus));
+    MEDIA_INFO_LOG("HCameraService::UpdateControlCenterStatus, isStart: %{public}d, status: %{public}d",
+        isStart, controlCenterStatus);
+    EnableControlCenter(controlCenterStatus, false);
+}
+
+int32_t HCameraService::UpdateDataShareAndTag(bool status, bool needPersistEnable)
 {
     MEDIA_INFO_LOG("HCameraService::UpdateDataShareAndTag");
     lock_guard<mutex> lock(g_dataShareHelperMutex);
@@ -372,14 +382,16 @@ int32_t HCameraService::UpdateDataShareAndTag(bool status)
             "Parse string failed.");
         controlCenterMap[bundleName][CONTROL_CENTER_STATUS_INDEX] = status;
         std::string controlCenterString = ControlCenterMapToString(controlCenterMap);
-        ret = cameraDataShareHelper_->UpdateOnce(CONTROL_CENTER_DATA, controlCenterString);
-        MEDIA_INFO_LOG("UpdateDataShareAndTag ret:  %{public}d", ret);
+        if (needPersistEnable) {
+            ret = cameraDataShareHelper_->UpdateOnce(CONTROL_CENTER_DATA, controlCenterString);
+            MEDIA_INFO_LOG("UpdateDataShareAndTag ret:  %{public}d", ret);
+        }
         if (status) {
             videoSessionForControlCenter_->SetBeautyValue(
                 BeautyType::AUTO_TYPE, controlCenterMap[bundleName][CONTROL_CENTER_BEAUTY_INDEX], false);
             videoSessionForControlCenter_->SetVirtualApertureValue(
                 controlCenterMap[bundleName][CONTROL_CENTER_APERTURE_INDEX], false);
-        } else {
+        } else if (needPersistEnable) {
             videoSessionForControlCenter_->SetBeautyValue(BeautyType::AUTO_TYPE, 0, false);
             videoSessionForControlCenter_->SetVirtualApertureValue(0, false);
         }
@@ -679,7 +691,9 @@ int32_t HCameraService::CreateCaptureSession(sptr<ICaptureSession>& session, int
     session = captureSession;
     if (opMode == SceneMode::VIDEO) {
         videoSessionForControlCenter_ = captureSession;
-        std::string bundleName = GetClientBundle(IPCSkeleton::GetCallingUid());
+        videoSessionForControlCenter_->SetUpdateControlCenterCallback(
+            std::bind(&HCameraService::UpdateControlCenterStatus, this, std::placeholders::_1));
+        std::string bundleName = BmsAdapter::GetInstance()->GetBundleName(IPCSkeleton::GetCallingUid());
         videoSessionForControlCenter_->SetBundleForControlCenter(bundleName);
         MEDIA_INFO_LOG("Save videoSession for controlCenter");
     } else {
@@ -1264,9 +1278,10 @@ int32_t HCameraService::UnSetControlCenterStatusCallback(pid_t pid)
 int32_t HCameraService::GetControlCenterStatus(bool& status)
 {
     MEDIA_INFO_LOG("HCameraService::GetControlCenterStatus");
-    CHECK_RETURN_RET_DLOG(!controlCenterPrecondition, CAMERA_OK,
+    CHECK_RETURN_RET_ELOG(!controlCenterPrecondition, CAMERA_OK,
         "HCameraService::GetControlCenterStatus precondition false.");
-    return GetControlCenterStatusFromDataShareHelper(status);
+    status = isControlCenterEnabled_;
+    return CAMERA_OK;
 }
 
 int32_t HCameraService::CheckControlCenterPermission()
@@ -1507,13 +1522,13 @@ int32_t HCameraService::MuteCameraFunc(bool muteMode)
     return ret;
 }
 
-int32_t HCameraService::EnableControlCenter(bool status)
+int32_t HCameraService::EnableControlCenter(bool status, bool needPersistEnable)
 {
     MEDIA_INFO_LOG("HCameraService::EnableControlCenter");
     CHECK_RETURN_RET_ELOG(!controlCenterPrecondition, CAMERA_INVALID_STATE, "ControlCenterPrecondition false.");
     lock_guard<mutex> lock(controlCenterStatusMutex_);
 
-    auto ret = UpdateDataShareAndTag(status);
+    auto ret = UpdateDataShareAndTag(status, needPersistEnable);
     CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, ret, "UpdateDataShareAndTag failed.");
 
     MEDIA_INFO_LOG("EnableControlCenter success.");
@@ -1544,7 +1559,7 @@ int32_t HCameraService::SetControlCenterPrecondition(bool condition)
     }
     CHECK_RETURN_RET_DLOG(controlCenterPrecondition || !isControlCenterEnabled_, CAMERA_OK,
         "SetControlCenterPrecondition success.");
-    auto ret = EnableControlCenter(false);
+    auto ret = EnableControlCenter(false, true);
     CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, ret, "EnableControlCenter failed.");
     isControlCenterEnabled_ = false;
     for (auto it : controlcenterCallbacks_) {
