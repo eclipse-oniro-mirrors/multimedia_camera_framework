@@ -95,6 +95,7 @@ private:
     CaptureSessionState currentState_ = CaptureSessionState::SESSION_INIT;
 };
 using MetaElementType = std::pair<int64_t, sptr<SurfaceBuffer>>;
+using UpdateControlCenterCallback = std::function<void(bool)>;
 
 class CameraInfoDumper;
 
@@ -224,6 +225,7 @@ public:
     uint32_t GetEquivalentFocus();
     void OnCameraAppInfo(const CameraAppInfo& appInfo);
     void OnCameraAppInfo();
+    void SetUpdateControlCenterCallback(UpdateControlCenterCallback cb);
 
 private:
     int32_t CommitConfigWithValidation();
@@ -266,6 +268,7 @@ private:
 
     void ProcessMetaZoomArray(std::vector<uint32_t>& zoomAndTimeArray, sptr<HCameraDevice>& cameraDevice);
     void UpdateMuteSetting(bool muteMode, std::shared_ptr<OHOS::Camera::CameraMetadata> &settings);
+    void UpdateCameraControl(bool isStart);
     void StartMovingPhoto(sptr<HStreamRepeat>& curStreamRepeat);
     int32_t GetSensorOritation();
     std::string GetSessionState();
@@ -334,6 +337,7 @@ private:
     int32_t userId_ = 0;
     std::mutex mechDeliveryStateLock_;
     MechDeliveryState mechDeliveryState_ = MechDeliveryState::NOT_ENABLED;
+    UpdateControlCenterCallback updateControlCenterCallback_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

@@ -732,7 +732,7 @@ int32_t HCaptureSession::SetVirtualApertureValue(float value, bool needPersist)
         SetControlCenterEffectCallbackStatus(statusInfo);
         isApertureActive = true;
     }
-    if (isApertureActive == true && isEqual(value, biggestAperture)) {
+    if (isApertureActive == true && (isEqual(value, biggestAperture) || isEqual(value, 0))) {
         ControlCenterStatusInfo statusInfo = {ControlCenterEffectType::PORTRAIT, false};
         SetControlCenterEffectCallbackStatus(statusInfo);
         isApertureActive = false;
@@ -805,10 +805,9 @@ int32_t HCaptureSession::GetBeautyValue(int32_t type, int32_t& value)
 
 int32_t HCaptureSession::SetBeautyValue(int32_t type, int32_t value, bool needPersist)
 {
-    MEDIA_ERR_LOG("HCaptureSession::SetBeautyValue");
     CHECK_RETURN_RET_ELOG(!controlCenterPrecondition, CAMERA_INVALID_STATE,
         "HCaptureSession::SetBeautyValue controlCenterPrecondition false");
-    MEDIA_INFO_LOG("HCaptureSession::SetBeautyValue");
+    MEDIA_INFO_LOG("HCaptureSession::SetBeautyValue: %{public}d", value);
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     int32_t errCode = CheckPermission(OHOS_PERMISSION_CAMERA, callerToken);
     CHECK_RETURN_RET_ELOG(errCode != CAMERA_OK, errCode,
@@ -871,7 +870,6 @@ int32_t HCaptureSession::SetVirtualApertureToDataShareHelper(float value)
     return CAMERA_OK;
 }
 
-
 int32_t HCaptureSession::GetVirtualApertureFromDataShareHelper(float &value)
 {
     MEDIA_INFO_LOG("HCaptureSession::GetBeautyFromDataShareHelper");
@@ -929,7 +927,6 @@ int32_t HCaptureSession::SetBeautyToDataShareHelper(int32_t value)
     }
     return CAMERA_OK;
 }
-
 
 int32_t HCaptureSession::GetBeautyFromDataShareHelper(int32_t &value)
 {
@@ -1502,6 +1499,11 @@ std::string HCaptureSession::GetConcurrentCameraIds(pid_t pid)
     return concurrencyString;
 }
 
+void HCaptureSession::SetUpdateControlCenterCallback(UpdateControlCenterCallback cb)
+{
+    updateControlCenterCallback_ = std::move(cb);
+}
+
 int32_t HCaptureSession::Start()
 {
     CAMERA_SYNC_TRACE;
@@ -1527,6 +1529,7 @@ int32_t HCaptureSession::Start()
                            "%{public}d, sessionID: %{public}d", usedAsPositionU8, GetSessionId());
             DumpMetadata(settings);
             UpdateMuteSetting(cameraDevice->GetDeviceMuteMode(), settings);
+            UpdateCameraControl(true);
             UpdateSettingForFocusTrackingMechBeforeStart(settings);
         }
         camera_position_enum_t cameraPosition = static_cast<camera_position_enum_t>(usedAsPositionU8);
@@ -1548,6 +1551,12 @@ int32_t HCaptureSession::Start()
     MEDIA_INFO_LOG("HCaptureSession::Start execute success, sessionID: %{public}d", GetSessionId());
     MEDIA_INFO_LOG("%{public}s", GetConcurrentCameraIds(pid_).c_str());
     return errorCode;
+}
+
+void HCaptureSession::UpdateCameraControl(bool isStart)
+{
+    MEDIA_DEBUG_LOG("HCaptureSession::UpdateCameraControl, isStart: %{public}d", isStart);
+    CHECK_EXECUTE(updateControlCenterCallback_ != nullptr, updateControlCenterCallback_(isStart));
 }
 
 void HCaptureSession::UpdateSettingForSpecialBundle()
@@ -1663,6 +1672,7 @@ int32_t HCaptureSession::Release(CaptureSessionReleaseType type)
         if ((hStreamOperatorSptr->GetAllOutptSize()) == 0) {
             hStreamOperatorSptr->Release();
         }
+        UpdateCameraControl(false);
         sptr<ICaptureSessionCallback> emptyCallback = nullptr;
         SetCallback(emptyCallback);
         sptr<IPressureStatusCallback> emptyPressureCallback = nullptr;
@@ -1778,7 +1788,26 @@ int32_t HCaptureSession::SetControlCenterEffectStatusCallback(const sptr<IContro
     }
     std::lock_guard<std::mutex> lock(innerControlCenterEffectCallbackLock_);
     innerControlCenterEffectCallback_ = callback;
+    CHECK_RETURN_RET_ILOG(innerControlCenterEffectCallback_ == nullptr,
+        CAMERA_OK, "innerControlCenterEffectCallback_ is null");
+    float curVirtualApertureValue;
+    GetVirtualApertureValue(curVirtualApertureValue);
+    ControlCenterStatusInfo statusInfo;
+    if (isEqual(curVirtualApertureValue, biggestAperture) || isEqual(curVirtualApertureValue, 0)) {
+        statusInfo = {ControlCenterEffectType::PORTRAIT, false};
+    } else {
+        statusInfo = {ControlCenterEffectType::PORTRAIT, true};
+    }
+    innerControlCenterEffectCallback_->OnControlCenterEffectStatusChanged(statusInfo);
 
+    int32_t curBeautyValue;
+    GetBeautyValue(OHOS_CAMERA_BEAUTY_TYPE_AUTO, curBeautyValue);
+    if (curBeautyValue == 0) {
+        statusInfo = {ControlCenterEffectType::BEAUTY, false};
+    } else {
+        statusInfo = {ControlCenterEffectType::BEAUTY, true};
+    }
+    innerControlCenterEffectCallback_->OnControlCenterEffectStatusChanged(statusInfo);
     return CAMERA_OK;
 }
 

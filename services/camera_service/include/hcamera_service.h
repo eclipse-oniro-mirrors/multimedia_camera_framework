@@ -143,7 +143,7 @@ public:
     int32_t MuteCamera(bool muteMode) override;
     int32_t SetControlCenterCallback(const sptr<IControlCenterStatusCallback>& callback) override;
     int32_t UnSetControlCenterStatusCallback() override;
-    int32_t EnableControlCenter(bool status) override;
+    int32_t EnableControlCenter(bool status, bool needPersistEnable) override;
     int32_t SetControlCenterPrecondition(bool condition) override;
     int32_t SetDeviceControlCenterAbility(bool ability) override;
     int32_t GetControlCenterStatus(bool& status) override;
@@ -208,7 +208,8 @@ private:
     int32_t SetMuteModeByDataShareHelper(bool muteMode);
     int32_t MuteCameraFunc(bool muteMode);
     int32_t GetControlCenterStatusFromDataShareHelper(bool &status);
-    int32_t UpdateDataShareAndTag(bool status);
+    void UpdateControlCenterStatus(bool isStart);
+    int32_t UpdateDataShareAndTag(bool status, bool needPersistEnable);
     int32_t CreateControlCenterDataShare(std::map<std::string,
         std::array<float, CONTROL_CENTER_DATA_SIZE>> controlCenterMap, std::string bundleName, bool status);
     int8_t ChooseFisrtBootFoldCamIdx(

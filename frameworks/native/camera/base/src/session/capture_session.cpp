@@ -3571,13 +3571,13 @@ std::vector<ControlCenterEffectType> CaptureSession::GetSupportedEffectTypes()
     std::vector<ControlCenterEffectType> supportedEffectType = {};
     bool isSupported = CameraManager::GetInstance()->GetIsControlCenterSupported();
     CHECK_RETURN_RET_ELOG(!isSupported, {}, "Current status does not support control center.");
-    MEDIA_INFO_LOG("CaptureSession::IsControlCenterSupported");
+    MEDIA_INFO_LOG("CaptureSession::GetSupportedEffectTypes");
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = GetMetadata();
     CHECK_RETURN_RET_ELOG(metadata == nullptr, supportedEffectType, "metadata is null");
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_CONTROL_CENTER_EFFECT_TYPE, &item);
     CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS || item.count <= 0, supportedEffectType,
-        "CaptureSession::IsControlCenterSupported Failed with return code %{public}d", ret);
+        "CaptureSession::GetSupportedEffectTypes Failed with return code %{public}d", ret);
     for (uint32_t i = 0; i < item.count; i++) {
         supportedEffectType.emplace_back(static_cast<ControlCenterEffectType>(item.data.u8[i]));
     }
@@ -3592,7 +3592,7 @@ void CaptureSession::EnableControlCenter(bool isEnable)
     auto serviceProxy = CameraManager::GetInstance()->GetServiceProxy();
     CHECK_RETURN_ELOG(serviceProxy == nullptr,
         "CaptureSession::EnableControlCenter serviceProxy is null");
-    auto ret = serviceProxy->EnableControlCenter(isEnable);
+    auto ret = serviceProxy->EnableControlCenter(isEnable, true);
     CHECK_RETURN_ELOG(ret != CAMERA_OK,
         "CaptureSession::EnableControlCenter failed.");
     isControlCenterEnabled_ = isEnable;
