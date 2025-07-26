@@ -26,6 +26,7 @@
 #include "camera_napi_worker_queue_keeper.h"
 #include "camera_output_capability.h"
 #include "listener_base.h"
+#include "native_common_napi.h"
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
 #include "napi/native_common.h"
@@ -204,7 +205,7 @@ napi_value VideoOutputNapi::Init(napi_env env, napi_value exports)
     int32_t refCount = 1;
 
     napi_property_descriptor video_output_props[] = {
-        DECLARE_NAPI_FUNCTION("start", Start),
+        DECLARE_NAPI_FUNCTION_WRITABLE("start", Start),
         DECLARE_NAPI_FUNCTION("stop", Stop),
         DECLARE_NAPI_FUNCTION("setFrameRate", SetFrameRate),
         DECLARE_NAPI_FUNCTION("getActiveFrameRate", GetActiveFrameRate),

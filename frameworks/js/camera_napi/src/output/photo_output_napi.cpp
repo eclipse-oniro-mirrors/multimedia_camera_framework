@@ -45,6 +45,7 @@
 #include "photo_output.h"
 #include "pixel_map_napi.h"
 #include "refbase.h"
+#include "native_common_napi.h"
 #include "camera_dynamic_loader.h"
 #include "napi/native_node_api.h"
 
@@ -666,7 +667,7 @@ napi_value PhotoOutputNapi::Init(napi_env env, napi_value exports)
     napi_property_descriptor photo_output_props[] = {
         DECLARE_NAPI_FUNCTION("isMovingPhotoSupported", IsMovingPhotoSupported),
         DECLARE_NAPI_FUNCTION("enableMovingPhoto", EnableMovingPhoto),
-        DECLARE_NAPI_FUNCTION("capture", Capture),
+        DECLARE_NAPI_FUNCTION_WRITABLE("capture", Capture),
         DECLARE_NAPI_FUNCTION("burstCapture", BurstCapture),
         DECLARE_NAPI_FUNCTION("confirmCapture", ConfirmCapture),
         DECLARE_NAPI_FUNCTION("release", Release),
