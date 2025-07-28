@@ -35,7 +35,7 @@ using namespace testing::ext;
 namespace OHOS {
 namespace CameraStandard {
 
-void CameraformatYUVModuleTest::UpdataCameraOutputCapability(int32_t modeName)
+void CameraformatYUVModuleTest::UpdateCameraOutputCapability(int32_t modeName)
 {
     if (!cameraManager_ || cameras_.empty()) {
         return;
@@ -61,7 +61,7 @@ void CameraformatYUVModuleTest::UpdataCameraOutputCapability(int32_t modeName)
     cameras_[0]->SetProfile(outputCapability);
 }
 
-void CameraformatYUVModuleTest::UpdataCameraOutputCapabilitySrc(int32_t modeName)
+void CameraformatYUVModuleTest::UpdateCameraOutputCapabilitySrc(int32_t modeName)
 {
     if (!cameraManager_ || cameras_.empty()) {
         return;
@@ -132,7 +132,7 @@ void CameraformatYUVModuleTest::TearDown()
  */
 HWTEST_F(CameraformatYUVModuleTest, camera_format_YUV_moduletest_001, TestSize.Level0)
 {
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     preview_ = cameraManager_->CreatePreviewOutput(previewProfile_[0], surface);
     ASSERT_NE(preview_, nullptr);
@@ -176,7 +176,7 @@ HWTEST_F(CameraformatYUVModuleTest, camera_format_YUV_moduletest_001, TestSize.L
  */
 HWTEST_F(CameraformatYUVModuleTest, camera_format_YUV_moduletest_002, TestSize.Level0)
 {
-    UpdataCameraOutputCapabilitySrc();
+    UpdateCameraOutputCapabilitySrc();
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     preview_ = cameraManager_->CreatePreviewOutput(previewProfile_[0], surface);
     ASSERT_NE(preview_, nullptr);
