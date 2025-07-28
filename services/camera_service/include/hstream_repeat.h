@@ -54,6 +54,7 @@ public:
         std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility) override;
     void SetStreamInfo(StreamInfo_V1_1& streamInfo) override;
     void SetVideoStreamInfo(StreamInfo_V1_1& streamInfo);
+    void SetSketchStreamInfo(StreamInfo_V1_1& streamInfo);
     int32_t ReleaseStream(bool isDelay) override;
     int32_t Release() override;
     int32_t Start() override;

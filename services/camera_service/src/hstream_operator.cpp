@@ -1384,9 +1384,18 @@ int32_t HStreamOperator::CreateMediaLibrary(const sptr<CameraServerPhotoProxy>& 
 {
     MEDIA_INFO_LOG("CreateMediaLibrary E");
     CAMERA_SYNC_TRACE;
-    cameraShotType = isSetMotionPhoto_ ? MOVING_PHOTO_SHOT_TYPE : IMAGE_SHOT_TYPE;
-    cameraPhotoProxy->SetDisplayName(CreateDisplayName(suffixJpeg));
     int32_t captureId = cameraPhotoProxy->GetCaptureId();
+    bool isSetMotionPhoto = false;
+    {
+        std::lock_guard<std::mutex> lock(motionPhotoStatusLock_);
+        isSetMotionPhoto = curMotionPhotoStatus_.find(captureId) != curMotionPhotoStatus_.end()
+            && curMotionPhotoStatus_[captureId];
+        curMotionPhotoStatus_.erase(captureId);
+    }
+    MEDIA_DEBUG_LOG("HStreamOperator::CreateMediaLibrary current captureId: %{public}d, isSetMotionPhoto: %{public}d",
+        captureId, isSetMotionPhoto);
+    cameraShotType = isSetMotionPhoto ? MOVING_PHOTO_SHOT_TYPE : IMAGE_SHOT_TYPE;
+    cameraPhotoProxy->SetDisplayName(CreateDisplayName(suffixJpeg));
     bool isBursting = false;
     CameraReportDfxUtils::GetInstance()->SetPrepareProxyEndInfo(captureId);
     CameraReportDfxUtils::GetInstance()->SetAddProxyStartInfo(captureId);
@@ -1397,17 +1406,11 @@ int32_t HStreamOperator::CreateMediaLibrary(const sptr<CameraServerPhotoProxy>& 
         photoAssetProxy == nullptr, CAMERA_ALLOC_ERROR, "HStreamOperator::CreateMediaLibrary get photoAssetProxy fail");
     photoAssetProxy->AddPhotoProxy((sptr<PhotoProxy>&)cameraPhotoProxy);
     uri = photoAssetProxy->GetPhotoAssetUri();
-    {
-        std::lock_guard<std::mutex> lock(motionPhotoStatusLock_);
-        bool isSetMotionPhoto = curMotionPhotoStatus_.find(captureId) != curMotionPhotoStatus_.end()
-            &&  curMotionPhotoStatus_[captureId];
-        if (!isBursting && isSetMotionPhoto && avcodecTaskManagerProxy_) {
-            MEDIA_INFO_LOG("taskManager setVideoFd start");
-            avcodecTaskManagerProxy_->SetVideoFd(timestamp, photoAssetProxy, captureId);
-            curMotionPhotoStatus_.erase(captureId);
-        } else {
-            photoAssetProxy.reset();
-        }
+    if (!isBursting && isSetMotionPhoto && avcodecTaskManagerProxy_) {
+        MEDIA_INFO_LOG("taskManager setVideoFd start");
+        avcodecTaskManagerProxy_->SetVideoFd(timestamp, photoAssetProxy, captureId);
+    } else {
+        photoAssetProxy.reset();
     }
     CameraReportDfxUtils::GetInstance()->SetAddProxyEndInfo(captureId);
     MEDIA_INFO_LOG("CreateMediaLibrary X");
@@ -1494,11 +1497,20 @@ int32_t HStreamOperator::CreateMediaLibrary(
 {
     MEDIA_INFO_LOG("CreateMediaLibrary with picture E");
     CAMERA_SYNC_TRACE;
-    cameraShotType = isSetMotionPhoto_ ? MOVING_PHOTO_SHOT_TYPE : IMAGE_SHOT_TYPE;
+    int32_t captureId = photoProxy->GetCaptureId();
+    bool isSetMotionPhoto = false;
+    {
+        std::lock_guard<std::mutex> lock(motionPhotoStatusLock_);
+        isSetMotionPhoto = curMotionPhotoStatus_.find(captureId) != curMotionPhotoStatus_.end()
+            && curMotionPhotoStatus_[captureId];
+        curMotionPhotoStatus_.erase(captureId);
+    }
+    MEDIA_DEBUG_LOG("HStreamOperator::CreateMediaLibrary current captureId: %{public}d, isSetMotionPhoto: %{public}d",
+        captureId, isSetMotionPhoto);
+    cameraShotType = isSetMotionPhoto ? MOVING_PHOTO_SHOT_TYPE : IMAGE_SHOT_TYPE;
     PhotoFormat photoFormat = photoProxy->GetFormat();
     std::string formatSuffix = photoFormat == PhotoFormat::HEIF ? suffixHeif : suffixJpeg;
     photoProxy->SetDisplayName(CreateDisplayName(formatSuffix));
-    int32_t captureId = photoProxy->GetCaptureId();
     bool isBursting = false;
     CameraReportDfxUtils::GetInstance()->SetPrepareProxyEndInfo(captureId);
     CameraReportDfxUtils::GetInstance()->SetAddProxyStartInfo(captureId);
@@ -1506,17 +1518,11 @@ int32_t HStreamOperator::CreateMediaLibrary(
     std::shared_ptr<PhotoAssetIntf> photoAssetProxy =
         ProcessPhotoProxy(captureId, picture, isBursting, photoProxy, uri);
     CHECK_RETURN_RET_ELOG(photoAssetProxy == nullptr, CAMERA_INVALID_ARG, "photoAssetProxy is null");
-    {
-        std::lock_guard<std::mutex> lock(motionPhotoStatusLock_);
-        bool isSetMotionPhoto = curMotionPhotoStatus_.find(captureId) != curMotionPhotoStatus_.end()
-            &&  curMotionPhotoStatus_[captureId];
-        if (!isBursting && isSetMotionPhoto && avcodecTaskManagerProxy_) {
-            MEDIA_INFO_LOG("CreateMediaLibrary captureId :%{public}d", captureId);
-            avcodecTaskManagerProxy_->SetVideoFd(timestamp, photoAssetProxy, captureId);
-            curMotionPhotoStatus_.erase(captureId);
-        } else {
-            photoAssetProxy.reset();
-        }
+    if (!isBursting && isSetMotionPhoto && avcodecTaskManagerProxy_) {
+        MEDIA_INFO_LOG("CreateMediaLibrary captureId :%{public}d", captureId);
+        avcodecTaskManagerProxy_->SetVideoFd(timestamp, photoAssetProxy, captureId);
+    } else {
+        photoAssetProxy.reset();
     }
     CameraReportDfxUtils::GetInstance()->SetAddProxyEndInfo(captureId);
     MEDIA_INFO_LOG("CreateMediaLibrary with picture X");

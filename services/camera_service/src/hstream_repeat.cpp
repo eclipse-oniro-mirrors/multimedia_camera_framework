@@ -89,9 +89,19 @@ void HStreamRepeat::SetVideoStreamInfo(StreamInfo_V1_1& streamInfo)
 {
     streamInfo.v1_0.intent_ = StreamIntent::VIDEO;
     streamInfo.v1_0.encodeType_ = ENCODE_TYPE_H264;
-    CHECK_EXECUTE(CheckSystemApp() && currentMode_ == static_cast<int32_t>(SceneMode::VIDEO),
-        streamInfo.v1_0.dataspace_ = (streamInfo.v1_0.dataspace_ == CM_ColorSpaceType_V2_1::CM_BT2020_HLG_LIMIT)
-        ? CM_ColorSpaceType_V2_1::CM_BT2020_HLG_FULL : streamInfo.v1_0.dataspace_);
+    // LCOV_EXCL_START
+    CHECK_EXECUTE(CheckSystemApp() && currentMode_ == static_cast<int32_t>(SceneMode::VIDEO), {
+        MEDIA_DEBUG_LOG("HStreamRepeat::SetVideoStreamInfo current colorSpace : %{public}d",
+            streamInfo.v1_0.dataspace_);
+        if (streamInfo.v1_0.dataspace_ == CM_ColorSpaceType_V2_1::CM_BT2020_HLG_LIMIT) {
+            streamInfo.v1_0.dataspace_ = CM_ColorSpaceType_V2_1::CM_BT2020_HLG_FULL;
+        }
+
+        if (streamInfo.v1_0.dataspace_ == CM_ColorSpaceType_V2_1::CM_BT709_LIMIT) {
+            streamInfo.v1_0.dataspace_ = CM_ColorSpaceType_V2_1::CM_BT709_FULL;
+        }
+    });
+    // LCOV_EXCL_STOP
     MEDIA_INFO_LOG("HStreamRepeat::SetVideoStreamInfo Enter");
     HDI::Camera::V1_1::ExtendedStreamInfo extendedStreamInfo {
         .type = static_cast<HDI::Camera::V1_1::ExtendedStreamInfoType>(
@@ -101,6 +111,33 @@ void HStreamRepeat::SetVideoStreamInfo(StreamInfo_V1_1& streamInfo)
     extendedStreamInfo.bufferQueue = metaSurfaceBufferQueue_;
     MEDIA_INFO_LOG("HStreamRepeat::SetVideoStreamInfo end");
     streamInfo.extendedStreamInfos = { extendedStreamInfo };
+}
+
+void HStreamRepeat::SetSketchStreamInfo(StreamInfo_V1_1& streamInfo)
+{
+    MEDIA_DEBUG_LOG("HStreamRepeat::SetSketchStreamInfo enter");
+    streamInfo.v1_0.intent_ = StreamIntent::PREVIEW;
+    streamInfo.v1_0.encodeType_ = ENCODE_TYPE_NULL;
+    // LCOV_EXCL_START
+    CHECK_EXECUTE(CheckSystemApp() && currentMode_ == static_cast<int32_t>(SceneMode::VIDEO), {
+        MEDIA_DEBUG_LOG("HStreamRepeat::SetSketchStreamInfo current colorSpace : %{public}d",
+                        streamInfo.v1_0.dataspace_);
+        if (streamInfo.v1_0.dataspace_ == CM_ColorSpaceType_V2_1::CM_BT2020_HLG_LIMIT) {
+            streamInfo.v1_0.dataspace_ = CM_ColorSpaceType_V2_1::CM_BT2020_HLG_FULL;
+        }
+
+        if (streamInfo.v1_0.dataspace_ == CM_ColorSpaceType_V2_1::CM_BT709_LIMIT) {
+            streamInfo.v1_0.dataspace_ = CM_ColorSpaceType_V2_1::CM_BT709_FULL;
+        }
+    });
+    // LCOV_EXCL_STOP
+    HDI::Camera::V1_1::ExtendedStreamInfo extendedStreamInfo {
+            .type = static_cast<HDI::Camera::V1_1::ExtendedStreamInfoType>(
+                    HDI::Camera::V1_2::EXTENDED_STREAM_INFO_SKETCH),
+            .width = 0, .height = 0, .format = 0, .dataspace = 0, .bufferQueue = nullptr
+    };
+    streamInfo.extendedStreamInfos = { extendedStreamInfo };
+    MEDIA_DEBUG_LOG("HStreamRepeat::SetSketchStreamInfo end");
 }
 
 void HStreamRepeat::SetStreamInfo(StreamInfo_V1_1& streamInfo)
@@ -135,17 +172,7 @@ void HStreamRepeat::SetStreamInfo(StreamInfo_V1_1& streamInfo)
             }
             break;
         case RepeatStreamType::SKETCH:
-            streamInfo.v1_0.intent_ = StreamIntent::PREVIEW;
-            streamInfo.v1_0.encodeType_ = ENCODE_TYPE_NULL;
-            CHECK_EXECUTE(CheckSystemApp() && currentMode_ == static_cast<int32_t>(SceneMode::VIDEO),
-                streamInfo.v1_0.dataspace_ = (streamInfo.v1_0.dataspace_ == CM_ColorSpaceType_V2_1::CM_BT2020_HLG_LIMIT)
-                ? CM_ColorSpaceType_V2_1::CM_BT2020_HLG_FULL : streamInfo.v1_0.dataspace_);
-            HDI::Camera::V1_1::ExtendedStreamInfo extendedStreamInfo {
-                .type = static_cast<HDI::Camera::V1_1::ExtendedStreamInfoType>(
-                    HDI::Camera::V1_2::EXTENDED_STREAM_INFO_SKETCH),
-                .width = 0, .height = 0, .format = 0, .dataspace = 0, .bufferQueue = nullptr
-            };
-            streamInfo.extendedStreamInfos = { extendedStreamInfo };
+            SetSketchStreamInfo(streamInfo);
             break;
     }
 }
