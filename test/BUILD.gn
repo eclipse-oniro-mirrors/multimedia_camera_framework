@@ -16,6 +16,7 @@ import("./../multimedia_camera_framework.gni")
 group("camera_fuzz_test") {
   testonly = true
   deps = [
+    "fuzztest/avcodecproxy_fuzzer:fuzztest",
     "fuzztest/cameraability_fuzzer:fuzztest",
     "fuzztest/cameradevice_fuzzer:fuzztest",
     "fuzztest/camerainput_fuzzer:fuzztest",
@@ -26,8 +27,11 @@ group("camera_fuzz_test") {
     "fuzztest/deferredvideoprocsession_fuzzer:fuzztest",
     "fuzztest/hcameradevice_fuzzer:fuzztest",
     "fuzztest/hstreamcapture_fuzzer:fuzztest",
+    "fuzztest/imagesourceproxy_fuzzer:fuzztest",
     "fuzztest/lightscansession_fuzzer:fuzztest",
+    "fuzztest/mediamanagerproxy_fuzzer:fuzztest",
     "fuzztest/mooncaptureboostfeature_fuzzer:fuzztest",
+    "fuzztest/movingphotoproxy_fuzzer:fuzztest",
     "fuzztest/photooutput_fuzzer:fuzztest",
     "fuzztest/photosession_fuzzer:fuzztest",
     "fuzztest/previewoutput_fuzzer:fuzztest",

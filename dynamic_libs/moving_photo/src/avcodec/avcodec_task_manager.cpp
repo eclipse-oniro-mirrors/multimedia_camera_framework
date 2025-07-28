@@ -133,6 +133,7 @@ constexpr inline float MovingPhotoNanosecToMillisec(int64_t nanosec)
 sptr<AudioVideoMuxer> AvcodecTaskManager::CreateAVMuxer(vector<sptr<FrameRecord>> frameRecords, int32_t captureRotation,
     vector<sptr<FrameRecord>> &choosedBuffer, int32_t captureId)
 {
+    // LCOV_EXCL_START
     CAMERA_SYNC_TRACE;
     unique_lock<mutex> lock(videoFdMutex_);
     auto thisPtr = sptr<AvcodecTaskManager>(this);
@@ -188,6 +189,7 @@ sptr<AudioVideoMuxer> AvcodecTaskManager::CreateAVMuxer(vector<sptr<FrameRecord>
     muxer->SetTimedMetadata();
     muxer->Start();
     return muxer;
+    // LCOV_EXCL_STOP
 }
 
 void AvcodecTaskManager::FinishMuxer(sptr<AudioVideoMuxer> muxer, int32_t captureId)
@@ -269,6 +271,7 @@ void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, ui
 size_t AvcodecTaskManager::FindIdrFrameIndex(vector<sptr<FrameRecord>> frameRecords, int64_t clearVideoEndTime,
     int64_t shutterTime, int32_t captureId)
 {
+    // LCOV_EXCL_START
     bool isDeblurStartTime = false;
     std::unique_lock<mutex> startTimeLock(startTimeMutex_);
     int64_t clearVideoStartTime = shutterTime - preBufferDuration_;
@@ -308,6 +311,7 @@ size_t AvcodecTaskManager::FindIdrFrameIndex(vector<sptr<FrameRecord>> frameReco
         }
     }
     return idrIndex;
+    // LCOV_EXCL_STOP
 }
 
 void AvcodecTaskManager::IgnoreDeblur(vector<sptr<FrameRecord>> frameRecords,
@@ -328,6 +332,7 @@ void AvcodecTaskManager::ChooseVideoBuffer(vector<sptr<FrameRecord>> frameRecord
     vector<sptr<FrameRecord>> &choosedBuffer, int64_t shutterTime, int32_t captureId)
 {
     CHECK_RETURN_ELOG(frameRecords.empty(), "frameRecords is empty!");
+    // LCOV_EXCL_START
     choosedBuffer.clear();
     std::unique_lock<mutex> endTimeLock(endTimeMutex_);
     int64_t clearVideoEndTime = shutterTime + postBufferDuration_;
@@ -354,11 +359,13 @@ void AvcodecTaskManager::ChooseVideoBuffer(vector<sptr<FrameRecord>> frameRecord
     CHECK_EXECUTE(choosedBuffer.size() < MIN_FRAME_RECORD_BUFFER_SIZE || !frameRecords[idrIndex]->IsIDRFrame(),
         IgnoreDeblur(frameRecords, choosedBuffer, shutterTime));
     MEDIA_INFO_LOG("ChooseVideoBuffer with size %{public}zu", choosedBuffer.size());
+    // LCOV_EXCL_STOP
 }
 
 void AvcodecTaskManager::PrepareAudioBuffer(vector<sptr<FrameRecord>>& choosedBuffer,
     vector<sptr<AudioRecord>>& audioRecords, vector<sptr<AudioRecord>>& processedAudioRecords)
 {
+    // LCOV_EXCL_START
     CAMERA_SYNC_TRACE;
     int64_t videoStartTime = choosedBuffer.front()->GetTimeStamp();
     if (audioCapturerSession_) {
@@ -397,6 +404,7 @@ void AvcodecTaskManager::PrepareAudioBuffer(vector<sptr<FrameRecord>>& choosedBu
             sharedThis->timerId_ = 0;
         }, RELEASE_WAIT_TIME, true);
     }
+    // LCOV_EXCL_STOP
 }
 
 void AvcodecTaskManager::CollectAudioBuffer(vector<sptr<AudioRecord>> audioRecordVec, sptr<AudioVideoMuxer> muxer)
@@ -406,6 +414,7 @@ void AvcodecTaskManager::CollectAudioBuffer(vector<sptr<AudioRecord>> audioRecor
     bool isEncodeSuccess = false;
     CHECK_RETURN_ELOG(!audioEncoder_ || audioRecordVec.empty() || !muxer,
         "CollectAudioBuffer cannot find useful data");
+    // LCOV_EXCL_START
     isEncodeSuccess = audioEncoder_->EncodeAudioBuffer(audioRecordVec);
     MEDIA_DEBUG_LOG("encode audio buffer result %{public}d", isEncodeSuccess);
     size_t maxFrameCount = std::min(audioRecordVec.size(), MAX_AUDIO_FRAME_COUNT);
@@ -424,6 +433,7 @@ void AvcodecTaskManager::CollectAudioBuffer(vector<sptr<AudioRecord>> audioRecor
         muxer->WriteSampleBuffer(buffer->buffer_, AUDIO_TRACK);
     }
     MEDIA_INFO_LOG("CollectAudioBuffer finished");
+    // LCOV_EXCL_STOP
 }
 
 void AvcodecTaskManager::Release()

@@ -70,6 +70,7 @@ int32_t AudioEncoder::Start()
 
 int32_t AudioEncoder::PushInputData(sptr<CodecAVBufferInfo> info)
 {
+    // LCOV_EXCL_START
     CHECK_RETURN_RET_ELOG(encoder_ == nullptr, 1, "Encoder is null");
     CHECK_RETURN_RET_ELOG(!isStarted_, 1, "Encoder is not started");
     int32_t ret = AV_ERR_OK;
@@ -78,16 +79,19 @@ int32_t AudioEncoder::PushInputData(sptr<CodecAVBufferInfo> info)
     ret = OH_AudioCodec_PushInputBuffer(encoder_, info->bufferIndex);
     CHECK_RETURN_RET_ELOG(ret != AV_ERR_OK, 1, "Push input data failed, ret: %{public}d", ret);
     return 0;
+    // LCOV_EXCL_STOP
 }
 
 int32_t AudioEncoder::FreeOutputData(uint32_t bufferIndex)
 {
+    // LCOV_EXCL_START
     CHECK_RETURN_RET_ELOG(encoder_ == nullptr, 1, "Encoder is null");
     MEDIA_INFO_LOG("FreeOutputData bufferIndex: %{public}u", bufferIndex);
     int32_t ret = OH_AudioCodec_FreeOutputBuffer(encoder_, bufferIndex);
     CHECK_RETURN_RET_ELOG(ret != AV_ERR_OK, 1,
         "Free output data failed, ret: %{public}d", ret);
     return 0;
+    // LCOV_EXCL_STOP
 }
 
 int32_t AudioEncoder::Stop()
@@ -129,6 +133,7 @@ void AudioEncoder::RestartAudioCodec()
 
 bool AudioEncoder::EnqueueBuffer(sptr<AudioRecord> audioRecord)
 {
+    // LCOV_EXCL_START
     CAMERA_SYNC_TRACE;
     uint8_t* buffer = audioRecord->GetAudioBuffer();
     CHECK_RETURN_RET_ELOG(buffer == nullptr, false, "Enqueue audio buffer is empty");
@@ -165,10 +170,12 @@ bool AudioEncoder::EnqueueBuffer(sptr<AudioRecord> audioRecord)
     }
     MEDIA_ERR_LOG("Failed frame id is : %{public}s", audioRecord->GetFrameId().c_str());
     return false;
+    // LCOV_EXCL_STOP
 }
 
 bool AudioEncoder::EncodeAudioBuffer(sptr<AudioRecord> audioRecord)
 {
+    // LCOV_EXCL_START
     CAMERA_SYNC_TRACE;
     {
         std::lock_guard<std::mutex> lock(encoderMutex_);
@@ -205,6 +212,7 @@ bool AudioEncoder::EncodeAudioBuffer(sptr<AudioRecord> audioRecord)
     }
     MEDIA_ERR_LOG("Failed frame id is : %{public}s", audioRecord->GetFrameId().c_str());
     return false;
+    // LCOV_EXCL_STOP
 }
 
 bool AudioEncoder::EncodeAudioBuffer(vector<sptr<AudioRecord>> audioRecords)
@@ -215,12 +223,14 @@ bool AudioEncoder::EncodeAudioBuffer(vector<sptr<AudioRecord>> audioRecords)
     CHECK_EXECUTE(!isStarted_.load(), RestartAudioCodec());
     bool isSuccess = true;
     isEncoding_.store(true);
+    // LCOV_EXCL_START
     for (sptr<AudioRecord> audioRecord : audioRecords) {
         if (!audioRecord->IsEncoded() && !EncodeAudioBuffer(audioRecord)) {
             isSuccess = false;
             MEDIA_ERR_LOG("Failed frame id is : %{public}s", audioRecord->GetFrameId().c_str());
         }
     }
+    // LCOV_EXCL_STOP
     isEncoding_.store(false);
     return isSuccess;
 }

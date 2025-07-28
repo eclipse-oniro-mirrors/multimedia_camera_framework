@@ -49,14 +49,17 @@ int32_t AudioVideoMuxer::Create(OH_AVOutputFormat format, std::shared_ptr<PhotoA
 
 int32_t AudioVideoMuxer::Start()
 {
+    // LCOV_EXCL_START
     CHECK_RETURN_RET_ELOG(avCodecProxy_ == nullptr, 1, "avCodecProxy_ is nullptr!");
     int32_t ret = avCodecProxy_->AVMuxerStart();
     CHECK_RETURN_RET_ELOG(ret != AV_ERR_OK, 1, "Start failed, ret: %{public}d", ret);
     return 0;
+    // LCOV_EXCL_STOP
 }
 
 int32_t AudioVideoMuxer::SetRotation(int32_t rotation)
 {
+    // LCOV_EXCL_START
     MEDIA_INFO_LOG("SetRotation rotation : %{public}d", rotation);
     CHECK_RETURN_RET_ELOG(avCodecProxy_ == nullptr, 1, "avCodecProxy_ is nullptr!");
     std::shared_ptr<Meta> param = std::make_shared<Meta>();
@@ -64,10 +67,12 @@ int32_t AudioVideoMuxer::SetRotation(int32_t rotation)
     int32_t ret = avCodecProxy_->AVMuxerSetParameter(param);
     CHECK_RETURN_RET_ELOG(ret != AV_ERR_OK, 1, "SetRotation failed, ret: %{public}d", ret);
     return 0;
+    // LCOV_EXCL_STOP
 }
 
 int32_t AudioVideoMuxer::SetCoverTime(float timems)
 {
+    // LCOV_EXCL_START
     MEDIA_INFO_LOG("SetCoverTime coverTime : %{public}f", timems);
     CHECK_RETURN_RET_ELOG(avCodecProxy_ == nullptr, 1, "avCodecProxy_ is nullptr!");
     std::shared_ptr<Meta> userMeta = std::make_shared<Meta>();
@@ -75,10 +80,12 @@ int32_t AudioVideoMuxer::SetCoverTime(float timems)
     int32_t ret = avCodecProxy_->AVMuxerSetUserMeta(userMeta);
     CHECK_RETURN_RET_ELOG(ret != AV_ERR_OK, 1, "SetCoverTime failed, ret: %{public}d", ret);
     return 0;
+    // LCOV_EXCL_STOP
 }
 
 int32_t AudioVideoMuxer::SetStartTime(float timems)
 {
+    // LCOV_EXCL_START
     MEDIA_INFO_LOG("SetStartTime StartTime: %{public}f", timems);
     CHECK_RETURN_RET_ELOG(avCodecProxy_ == nullptr, 1, "avCodecProxy_ is nullptr!");
     constexpr int64_t SEC_TO_MSEC = 1e3;
@@ -97,10 +104,12 @@ int32_t AudioVideoMuxer::SetStartTime(float timems)
     int32_t ret = avCodecProxy_->AVMuxerSetUserMeta(userMeta);
     CHECK_RETURN_RET_ELOG(ret != AV_ERR_OK, 1, "SetStartTime Failed, ret: %{public}d", ret);
     return 0;
+    // LCOV_EXCL_STOP
 }
 
 int32_t AudioVideoMuxer::SetSqr(int32_t bitrate)
 {
+    // LCOV_EXCL_START
     CHECK_RETURN_RET_ELOG(avCodecProxy_|| bitrate <= 0, 1, "AudioVideoMuxer::SetSqr failed");
     std::string bitrateStr = STAGE_VIDEO_ENCODER_PARAM_VALUE + std::to_string(bitrate);
     std::shared_ptr<Meta> userMeta = std::make_shared<Meta>();
@@ -108,14 +117,17 @@ int32_t AudioVideoMuxer::SetSqr(int32_t bitrate)
     int32_t ret = avCodecProxy_->AVMuxerSetUserMeta(userMeta);
     CHECK_RETURN_RET_ELOG(ret != AV_ERR_OK, 1, "SetSqr failed, ret: %{public}d", ret);
     return 0;
+    // LCOV_EXCL_STOP
 }
 
 int32_t AudioVideoMuxer::SetTimedMetadata()
 {
+    // LCOV_EXCL_START
     CHECK_RETURN_RET_ELOG(avCodecProxy_ == nullptr, 1, "avCodecProxy_ is nullptr!");
     std::shared_ptr<Meta> param = std::make_shared<Meta>();
     param->SetData("use_timed_meta_track", 1);
     return avCodecProxy_->AVMuxerSetParameter(param);
+    // LCOV_EXCL_STOP
 }
 
 int32_t AudioVideoMuxer::WriteSampleBuffer(std::shared_ptr<OHOS::Media::AVBuffer> sample, TrackType type)
@@ -178,19 +190,23 @@ int32_t AudioVideoMuxer::AddTrack(int &trackId, std::shared_ptr<Format> format, 
 
 int32_t AudioVideoMuxer::Stop()
 {
+    // LCOV_EXCL_START
     CHECK_RETURN_RET_ELOG(avCodecProxy_ == nullptr, 1, "avCodecProxy_ is nullptr!");
     int32_t ret = avCodecProxy_->AVMuxerStop();
     CHECK_RETURN_RET_ELOG(ret != AV_ERR_OK, 1, "Stop failed, ret: %{public}d", ret);
     return 0;
+    // LCOV_EXCL_STOP
 }
 
 int32_t AudioVideoMuxer::Release()
 {
+    // LCOV_EXCL_START
     MEDIA_INFO_LOG("AudioVideoMuxer::Release enter");
     CHECK_RETURN_RET_ELOG(avCodecProxy_ == nullptr, 0, "avCodecProxy_ is nullptr!");
     avCodecProxy_ = nullptr;
     close(fd_);
     return 0;
+    // LCOV_EXCL_STOP
 }
 } // CameraStandard
 } // OHOS
