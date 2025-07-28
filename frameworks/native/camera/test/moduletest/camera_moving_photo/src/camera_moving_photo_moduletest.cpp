@@ -260,7 +260,7 @@ void CameraMovingPhotoModuleTest::SetUp()
     ASSERT_NE(input_, nullptr);
     EXPECT_EQ(input_->Open(), SUCCESS);
 
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     EXPECT_EQ(CreatePreviewOutput(previewProfile_[0], previewOutput_), SUCCESS);
     EXPECT_EQ(CreatePhotoOutputWithoutSurface(photoProfile_[0], photoOutput_), SUCCESS);
 
@@ -293,7 +293,7 @@ void CameraMovingPhotoModuleTest::TearDown()
     MEDIA_INFO_LOG("CameraMovingPhotoModuleTest::TearDown end!");
 }
 
-void CameraMovingPhotoModuleTest::UpdataCameraOutputCapability(int32_t modeName)
+void CameraMovingPhotoModuleTest::UpdateCameraOutputCapability(int32_t modeName)
 {
     if (!manager_ || cameras_.empty()) {
         return;

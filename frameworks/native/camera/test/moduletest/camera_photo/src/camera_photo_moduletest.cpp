@@ -55,7 +55,7 @@ void CameraPhotoModuleTest::SetUp()
     input_ = manager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input_, nullptr);
     EXPECT_EQ(input_->Open(), SUCCESS);
-    UpdataCameraOutputCapability();
+    UpdateCameraOutputCapability();
     MEDIA_INFO_LOG("CameraPhotoModuleTest::SetUp end!");
 }
 
@@ -77,7 +77,7 @@ void CameraPhotoModuleTest::TearDown()
     MEDIA_INFO_LOG("CameraPhotoModuleTest::TearDown end!");
 }
 
-void CameraPhotoModuleTest::UpdataCameraOutputCapability(int32_t modeName)
+void CameraPhotoModuleTest::UpdateCameraOutputCapability(int32_t modeName)
 {
     if (!manager_ || cameras_.empty()) {
         return;

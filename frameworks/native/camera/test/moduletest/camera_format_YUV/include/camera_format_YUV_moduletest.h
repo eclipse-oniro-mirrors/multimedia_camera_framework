@@ -77,9 +77,9 @@ public:
     /* TearDown:Execute after each test case */
     void TearDown();
 
-    void UpdataCameraOutputCapability(int32_t modeName = 0);
+    void UpdateCameraOutputCapability(int32_t modeName = 0);
 
-    void UpdataCameraOutputCapabilitySrc(int32_t modeName = 0);
+    void UpdateCameraOutputCapabilitySrc(int32_t modeName = 0);
 
 protected:
     std::vector<Profile> previewProfile_ = {};

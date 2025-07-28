@@ -64,7 +64,7 @@ public:
     void TearDown();
 
 protected:
-    void UpdataCameraOutputCapability(int32_t modeName = 0);
+    void UpdateCameraOutputCapability(int32_t modeName = 0);
     int32_t CreatePreviewOutput(Profile &profile, sptr<PreviewOutput> &previewOutput);
     int32_t CreatePhotoOutputWithoutSurface(Profile &profile, sptr<PhotoOutput> &photoOutput);
     int32_t CreateYuvPhotoOutput();
