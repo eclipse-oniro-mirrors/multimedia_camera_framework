@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 #include <iomanip>
+#include <mutex>
 #include "moving_photo_proxy.h"
 #include "utils/camera_log.h"
 
@@ -188,6 +189,7 @@ bool AudioCapturerSessionProxy::StartAudioCapture()
 void AudioCapturerSessionProxy::StopAudioCapture()
 {
     MEDIA_DEBUG_LOG("StopAudioCapture start");
+    std::lock_guard<std::mutex> lock(audioCaptureLock_);
     CHECK_RETURN_ELOG(audioCapturerSessionIntf_ == nullptr, "audioCapturerSessionIntf_ is nullptr");
     audioCapturerSessionIntf_->StopAudioCapture();
 }

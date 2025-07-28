@@ -56,6 +56,7 @@ public:
 private:
     std::shared_ptr<Dynamiclib> audioCapturerSessionLib_ = {nullptr};
     sptr<AudioCapturerSessionIntf> audioCapturerSessionIntf_ = {nullptr};
+    std::mutex audioCaptureLock_;
 };
 
 class MovingPhotoVideoCacheProxy : public MovingPhotoVideoCacheIntf {
