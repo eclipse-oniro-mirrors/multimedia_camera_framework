@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef AV_CODEC_PROXY_FUZZER_H
-#define AV_CODEC_PROXY_FUZZER_H
+#ifndef MEDIA_MANAGER_PROXY_FUZZER_H
+#define MEDIA_MANAGER_PROXY_FUZZER_H
 
 #include "media_manager_proxy.h"
 #include <fuzzer/FuzzedDataProvider.h>
@@ -29,6 +29,6 @@ public:
     static std::shared_ptr<MediaManagerProxy> mediaManagerProxyFuzz_;
 };
 
-} //CameraStandard
-} //OHOS
-#endif //AV_CODEC_PROXY_FUZZER_H
+} // CameraStandard
+} // OHOS
+#endif // MEDIA_MANAGER_PROXY_FUZZER_H

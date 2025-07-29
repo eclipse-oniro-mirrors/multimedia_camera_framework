@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef AV_CODEC_PROXY_FUZZER_H
-#define AV_CODEC_PROXY_FUZZER_H
+#ifndef IMAGE_SOURCE_PROXY_FUZZER_H
+#define IMAGE_SOURCE_PROXY_FUZZER_H
 
 #include "image_source_proxy.h"
 #include <fuzzer/FuzzedDataProvider.h>
@@ -28,6 +28,6 @@ public:
     static std::shared_ptr<ImageSourceProxy> imageSourceProxyFuzz_;
 };
 
-} //CameraStandard
-} //OHOS
-#endif //AV_CODEC_PROXY_FUZZER_H
+} // CameraStandard
+} // OHOS
+#endif // IMAGE_SOURCE_PROXY_FUZZER_H

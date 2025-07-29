@@ -59,6 +59,6 @@ public:
     static std::shared_ptr<AVCodecProxy> avCodecProxyFuzz_;
 };
 
-} //CameraStandard
-} //OHOS
-#endif //AV_CODEC_PROXY_FUZZER_H
+} // CameraStandard
+} // OHOS
+#endif // AV_CODEC_PROXY_FUZZER_H
