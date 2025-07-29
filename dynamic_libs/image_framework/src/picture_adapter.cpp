@@ -25,7 +25,7 @@
 #include "surface_buffer.h"
 #include "securec.h"
 #include <algorithm>
-#include <stdint.h>
+#include <cstdint>
 namespace OHOS {
 namespace CameraStandard {
 std::unordered_map<std::string, float> exifOrientationDegree = {
