@@ -604,7 +604,17 @@ int32_t FfiCameraPhotoOutputCaptureWithSetting(int64_t id, CJPhotoCaptureSetting
     if (photoOutput == nullptr) {
         return CameraError::CAMERA_SERVICE_ERROR;
     }
-    return photoOutput->Capture(setting);
+    return photoOutput->Capture(setting, false);
+}
+
+FFI_EXPORT int32_t FfiCameraPhotoOutputCaptureWithSettingV2(int64_t id, CJPhotoCaptureSetting *setting,
+    bool isLocationNone)
+{
+    auto photoOutput = FFIData::GetData<CJPhotoOutput>(id);
+    if (photoOutput == nullptr) {
+        return CameraError::CAMERA_SERVICE_ERROR;
+    }
+    return photoOutput->Capture(*setting, isLocationNone);
 }
 
 int32_t FfiCameraPhotoOutputOnCaptureStartWithInfo(int64_t id, int64_t callbackId)

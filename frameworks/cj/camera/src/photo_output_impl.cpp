@@ -201,25 +201,30 @@ int32_t CJPhotoOutput::Capture()
     return photoOutput_->Capture();
 }
 
-int32_t CJPhotoOutput::Capture(CJPhotoCaptureSetting setting)
+std::shared_ptr<PhotoCaptureSetting> Convert2PhotoCaptureSetting(CJPhotoCaptureSetting &setting, bool isLocationNone)
+{
+    auto capSettings = make_shared<PhotoCaptureSetting>();
+    capSettings->SetQuality(static_cast<PhotoCaptureSetting::QualityLevel>(setting.quality));
+    capSettings->SetRotation(static_cast<PhotoCaptureSetting::RotationConfig>(setting.rotation));
+    capSettings->SetMirror(setting.mirror);
+    if (!isLocationNone) {
+        auto location = make_shared<Location>();
+        location->latitude = setting.location.latitude;
+        location->longitude = setting.location.longitude;
+        location->altitude = setting.location.altitude;
+        capSettings->SetLocation(location);
+    }
+    return capSettings;
+}
+
+int32_t CJPhotoOutput::Capture(CJPhotoCaptureSetting &setting, bool isLocationNone)
 {
     MEDIA_INFO_LOG("Capture is called");
     if (photoOutput_ == nullptr) {
         MEDIA_ERR_LOG("photooutput is nullptr.");
         return CameraError::CAMERA_SERVICE_ERROR;
     }
-    std::shared_ptr<PhotoCaptureSetting> capSettings = make_shared<PhotoCaptureSetting>();
-    if (capSettings == nullptr) {
-        return CameraError::CAMERA_SERVICE_ERROR;
-    }
-    capSettings->SetQuality(static_cast<PhotoCaptureSetting::QualityLevel>(setting.quality));
-    capSettings->SetRotation(static_cast<PhotoCaptureSetting::RotationConfig>(setting.rotation));
-    capSettings->SetMirror(setting.mirror);
-    auto location = make_shared<Location>();
-    location->latitude = setting.location.latitude;
-    location->longitude = setting.location.longitude;
-    location->altitude = setting.location.altitude;
-    capSettings->SetLocation(location);
+    auto capSettings = Convert2PhotoCaptureSetting(setting, isLocationNone);
     return photoOutput_->Capture(capSettings);
 }
 

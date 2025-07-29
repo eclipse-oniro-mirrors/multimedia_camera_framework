@@ -71,7 +71,7 @@ public:
     static int32_t CreatePhotoOutput();
     static int32_t CreatePhotoOutputWithProfile(Profile &profile);
     int32_t Capture();
-    int32_t Capture(CJPhotoCaptureSetting setting);
+    int32_t Capture(CJPhotoCaptureSetting &setting, bool isLocationNone);
     bool IsMovingPhotoSupported(int32_t *errCode);
     int32_t EnableMovingPhoto(bool enabled);
     bool IsMirrorSupported(int32_t *errCode);
