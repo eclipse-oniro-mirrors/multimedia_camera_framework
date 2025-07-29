@@ -193,6 +193,8 @@ public:
     static napi_value CreateJSArray(napi_env env, napi_status &status, std::vector<int32_t> nativeArray);
     
     static napi_value ProcessingPhysicalApertures(napi_env env, std::vector<std::vector<float>> physicalApertures);
+
+    static std::string GetErrorMessage(int32_t errorCode);
 private:
     explicit CameraNapiUtils() {};
 
