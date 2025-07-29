@@ -24,6 +24,8 @@
 #include "pixel_map.h"
 #include "surface_buffer.h"
 #include "securec.h"
+#include <algorithm>
+#include <cstdint>
 namespace OHOS {
 namespace CameraStandard {
 std::unordered_map<std::string, float> exifOrientationDegree = {
@@ -110,28 +112,19 @@ void CopyMetaData(sptr<SurfaceBuffer> &inBuffer, sptr<SurfaceBuffer> &outBuffer)
     for (uint32_t key : keys) {
         std::vector<uint8_t> values;
         ret = inBuffer->GetMetadata(key, values);
-        if (ret != 0) {
-            MEDIA_INFO_LOG("GetMetadata fail! key = %{public}d res = %{public}d", key, ret);
-            continue;
-        }
+        CHECK_CONTINUE_ILOG(ret != 0, "GetMetadata fail! key = %{public}d res = %{public}d", key, ret);
         ret = outBuffer->SetMetadata(key, values);
-        if (ret != 0) {
-            MEDIA_INFO_LOG("SetMetadata fail! key = %{public}d res = %{public}d", key, ret);
-            continue;
-        }
+        CHECK_CONTINUE_ILOG(ret != 0, "SetMetadata fail! key = %{public}d res = %{public}d", key, ret);
     }
 }
-
+ 
 void PictureAdapter::CreateWithDeepCopySurfaceBuffer(sptr<SurfaceBuffer> &surfaceBuffer)
 {
     MEDIA_INFO_LOG("PictureAdapter CreateWithDeepCopySurfaceBuffer");
-    auto pixelMap = Media::Picture::SurfaceBuffer2PixelMap(surfaceBuffer);
-    CHECK_RETURN_ELOG(!pixelMap, "PictureAdapter::CreateWithDeepCopySurfaceBuffer pixelMap is nullptr");
-    sptr<SurfaceBuffer> oldSurfaceBuffer = reinterpret_cast<SurfaceBuffer*>(pixelMap->GetFd());
     BufferRequestConfig requestConfig = {
         .width = surfaceBuffer->GetWidth(),
         .height = surfaceBuffer->GetHeight(),
-        .strideAlignment = 0x8, // default stride is 8 Bytes.
+        .strideAlignment = surfaceBuffer->GetStride(),
         .format = surfaceBuffer->GetFormat(),
         .usage = surfaceBuffer->GetUsage(),
         .timeout = 0,
@@ -142,15 +135,20 @@ void PictureAdapter::CreateWithDeepCopySurfaceBuffer(sptr<SurfaceBuffer> &surfac
     CHECK_RETURN_ELOG(!newSurfaceBuffer,
         "PictureAdapter::CreateWithDeepCopySurfaceBuffer newSurfaceBuffer is nullptr");
     auto allocErrorCode = newSurfaceBuffer->Alloc(requestConfig);
-    MEDIA_DEBUG_LOG("PictureAdapter::CreateWithDeepCopySurfaceBuffer SurfaceBuffer alloc ret: %{public}d",
+    MEDIA_INFO_LOG("PictureAdapter::CreateWithDeepCopySurfaceBuffer SurfaceBuffer alloc ret: %{public}d",
         allocErrorCode);
-    errno_t errNo = memcpy_s(newSurfaceBuffer->GetVirAddr(), newSurfaceBuffer->GetSize(),
-        oldSurfaceBuffer->GetVirAddr(), oldSurfaceBuffer->GetSize());
-    if (errNo != EOK) {
-        MEDIA_ERR_LOG("PictureAdapter memcpy_s failed, errNo = %{public}d", static_cast<int32_t>(errNo));
-        return;
+    unsigned char* dst = static_cast<unsigned char*>(newSurfaceBuffer->GetVirAddr());
+    unsigned char* src = static_cast<unsigned char*>(surfaceBuffer->GetVirAddr());
+    for (int32_t i = 0; i < surfaceBuffer->GetHeight() * PIXEL_SIZE_HDR_YUV / HDR_PIXEL_SIZE; i++) {
+        errno_t errNo = memcpy_s(dst, surfaceBuffer->GetWidth(), src, surfaceBuffer->GetWidth());
+        if (errNo != EOK) {
+            MEDIA_ERR_LOG("PictureAdapter memcpy_s failed, errNo = %{public}d", static_cast<int32_t>(errNo));
+            return;
+        }
+        dst += surfaceBuffer->GetWidth();
+        src += surfaceBuffer->GetStride();
     }
-    CopyMetaData(oldSurfaceBuffer, newSurfaceBuffer);
+    CopyMetaData(surfaceBuffer, newSurfaceBuffer);
     picture_ = Media::Picture::Create(newSurfaceBuffer);
 }
 

@@ -74,10 +74,7 @@ void PictureProxy::CreateWithDeepCopySurfaceBuffer(sptr<SurfaceBuffer> &surfaceB
 {
     MEDIA_INFO_LOG("PictureProxy::CreateWithDeepCopySurfaceBuffer enter");
     std::shared_ptr<PictureIntf> pictureIntf = GetPictureIntf();
-    if (!pictureIntf) {
-        MEDIA_ERR_LOG("PictureProxy::CreateWithDeepCopySurfaceBuffer pictureIntf_ is nullptr");
-        return;
-    }
+    CHECK_RETURN_ELOG(!pictureIntf, "PictureProxy::CreateWithDeepCopySurfaceBuffer pictureIntf_ is nullptr");
     pictureIntf->CreateWithDeepCopySurfaceBuffer(surfaceBuffer);
 }
 

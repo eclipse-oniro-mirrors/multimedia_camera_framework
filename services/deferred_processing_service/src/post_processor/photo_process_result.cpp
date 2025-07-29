@@ -121,7 +121,7 @@ std::shared_ptr<PictureIntf> PhotoProcessResult::AssemblePicture(const HDI::Came
         buffer.isHighBitDepthLinearImageValid, buffer.isExifValid, buffer.isMakerInfoValid, exifDataSize);
     std::shared_ptr<PictureIntf> picture = PictureProxy::CreatePictureProxy();
     DP_CHECK_ERROR_RETURN_RET_LOG(picture == nullptr, nullptr, "picture is nullptr.");
-    picture->Create(imageBuffer);
+    picture->CreateWithDeepCopySurfaceBuffer(imageBuffer);
 
     if (buffer.isExifValid) {
         auto exifBuffer = TransBufferHandleToSurfaceBuffer(buffer.exifHandle->GetBufferHandle());
