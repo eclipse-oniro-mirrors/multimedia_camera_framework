@@ -40,6 +40,8 @@ public:
 private:
     // Keep the order of members in this class, the bottom member will be destroyed first
     std::shared_ptr<Media::Picture> picture_;
+    static constexpr uint8_t PIXEL_SIZE_HDR_YUV = 3;
+    static constexpr uint8_t HDR_PIXEL_SIZE = 2;
 };
 } // namespace CameraStandard
 } // namespace OHOS
