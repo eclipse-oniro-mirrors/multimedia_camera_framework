@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
+#include <map>
 #include "camera_napi_utils.h"
-
 #include "camera_error_code.h"
 #include "camera_log.h"
 #include "napi/native_api.h"
@@ -22,6 +22,21 @@
 namespace OHOS {
 namespace CameraStandard {
 bool CameraNapiUtils::mEnableSecure = false;
+static const std::map<int32_t, std::string> errorCodeToMessage = {
+    {7400102, "Operation not allowed."},
+    {7400103, "Session not config."},
+    {7400201, "Camera service fatal error."},
+};
+
+std::string CameraNapiUtils::GetErrorMessage(int32_t errorCode)
+{
+    auto it = errorCodeToMessage.find(errorCode);
+    if (it != errorCodeToMessage.end()) {
+        return it->second;
+    } else {
+        return "";
+    }
+}
 
 void CameraNapiUtils::CreateNapiErrorObject(napi_env env, int32_t errorCode, const char* errString,
     std::unique_ptr<JSAsyncContextOutput> &jsContext)
@@ -29,10 +44,13 @@ void CameraNapiUtils::CreateNapiErrorObject(napi_env env, int32_t errorCode, con
     napi_get_undefined(env, &jsContext->data);
     napi_value napiErrorCode = nullptr;
     napi_value napiErrorMsg = nullptr;
-
+    if (errString == nullptr || strlen(errString) == 0) {
+        napi_create_string_utf8(env, GetErrorMessage(errorCode).c_str(), NAPI_AUTO_LENGTH, &napiErrorMsg);
+    } else {
+        napi_create_string_utf8(env, errString, NAPI_AUTO_LENGTH, &napiErrorMsg);
+    }
     std::string errorCodeStr = std::to_string(errorCode);
     napi_create_string_utf8(env, errorCodeStr.c_str(), NAPI_AUTO_LENGTH, &napiErrorCode);
-    napi_create_string_utf8(env, errString, NAPI_AUTO_LENGTH, &napiErrorMsg);
 
     napi_create_object(env, &jsContext->error);
     napi_set_named_property(env, jsContext->error, "code", napiErrorCode);
@@ -226,7 +244,7 @@ bool CameraNapiUtils::CheckInvalidArgument(napi_env env, size_t argc, int32_t le
     }
     if (!isPass) {
         std::string errorCode = std::to_string(CameraErrorCode::INVALID_ARGUMENT);
-        napi_throw_type_error(env, errorCode.c_str(), "");
+        napi_throw_type_error(env, errorCode.c_str(), "Parameter missing or parameter type incorrect.");
     }
     return isPass;
 }
@@ -235,7 +253,7 @@ bool CameraNapiUtils::CheckError(napi_env env, int32_t retCode)
 {
     if ((retCode != 0)) {
         std::string errorCode = std::to_string(retCode);
-        napi_throw_error(env, errorCode.c_str(), "");
+        napi_throw_error(env, errorCode.c_str(), GetErrorMessage(retCode).c_str());
         return false;
     }
     return true;
