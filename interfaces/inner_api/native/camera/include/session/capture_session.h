@@ -1742,6 +1742,14 @@ public:
     void AddFunctionToMap(std::string ctrlTag, std::function<void()> func);
     void ExecuteAllFunctionsInMap();
     void EnableAutoFrameRate(bool isEnable);
+
+    /**
+     * @brief Set the macro status callback.
+     * which will be called when there is macro state change.
+     *
+     * @param The MacroStatusCallback pointer.
+     */
+    void SetMacroStatusCallback(std::shared_ptr<MacroStatusCallback> callback);
 protected:
 
     static const std::unordered_map<camera_awb_mode_t, WhiteBalanceMode> metaWhiteBalanceModeMap_;

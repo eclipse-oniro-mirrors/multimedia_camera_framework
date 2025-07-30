@@ -64,28 +64,6 @@ struct EffectSuggestionCallbackInfo {
         : effectSuggestionType_(effectSuggestionType), listener_(listener) {}
 };
 
-class MacroStatusCallbackListener : public MacroStatusCallback, public ListenerBase,
-    public std::enable_shared_from_this<MacroStatusCallbackListener> {
-public:
-    MacroStatusCallbackListener(napi_env env) : ListenerBase(env) {}
-    ~MacroStatusCallbackListener() = default;
-    void OnMacroStatusChanged(MacroStatus status) override;
-
-private:
-    void OnMacroStatusCallback(MacroStatus status) const;
-    void OnMacroStatusCallbackAsync(MacroStatus status) const;
-};
-
-struct MacroStatusCallbackInfo {
-    MacroStatusCallback::MacroStatus status_;
-    weak_ptr<const MacroStatusCallbackListener> listener_;
-    MacroStatusCallbackInfo(
-        MacroStatusCallback::MacroStatus status,
-            shared_ptr<const MacroStatusCallbackListener> listener)
-        : status_(status), listener_(listener)
-    {}
-};
-
 class FeatureDetectionStatusCallbackListener : public FeatureDetectionStatusCallback, public ListenerBase,
     public std::enable_shared_from_this<FeatureDetectionStatusCallbackListener> {
 public:
@@ -204,7 +182,6 @@ public:
 
     std::shared_ptr<LcdFlashStatusCallbackListener> lcdFlashStatusCallback_ = nullptr;
     std::shared_ptr<EffectSuggestionCallbackListener> effectSuggestionCallback_ = nullptr;
-    std::shared_ptr<MacroStatusCallbackListener> macroStatusCallback_ = nullptr;
     std::shared_ptr<FeatureDetectionStatusCallbackListener> featureDetectionStatusCallback_ = nullptr;
 
 protected:
@@ -219,10 +196,6 @@ protected:
     void RegisterEffectSuggestionCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
         const std::vector<napi_value>& args, bool isOnce) override;
     void UnregisterEffectSuggestionCallbackListener(
-        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
-    void RegisterMacroStatusCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce) override;
-    void UnregisterMacroStatusCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
     void RegisterFeatureDetectionStatusListener(const std::string& eventName, napi_env env, napi_value callback,
         const std::vector<napi_value>& args, bool isOnce) override;

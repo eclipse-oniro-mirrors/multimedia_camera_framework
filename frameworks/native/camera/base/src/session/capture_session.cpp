@@ -5249,5 +5249,14 @@ void CaptureSession::AdjustRenderFit()
         previewOutput->AdjustRenderFit();
     }
 }
+
+void CaptureSession::SetMacroStatusCallback(std::shared_ptr<MacroStatusCallback> callback)
+{
+    MEDIA_DEBUG_LOG("CaptureSession::SetMacroStatusCallback ENTER");
+    std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
+    macroStatusCallback_ = callback;
+    return;
+}
+
 } // namespace CameraStandard
 } // namespace OHOS

@@ -199,6 +199,10 @@ public:
 
     Camera_ErrorCode SetWhiteBalanceMode(Camera_WhiteBalanceMode whiteBalanceMode);
 
+    Camera_ErrorCode RegisterMacroStatusCallback(OH_CaptureSession_OnMacroStatusChange controlMacroStatusChange);
+
+    Camera_ErrorCode UnregisterMacroStatusCallback(OH_CaptureSession_OnMacroStatusChange controlMacroStatusChange);
+
 private:
     OHOS::sptr<OHOS::CameraStandard::CaptureSession> innerCaptureSession_;
 };

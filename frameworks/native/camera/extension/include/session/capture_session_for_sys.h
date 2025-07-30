@@ -161,14 +161,6 @@ public:
     bool IsDepthFusionEnabled();
 
     /**
-     * @brief Set the macro status callback.
-     * which will be called when there is macro state change.
-     *
-     * @param The MacroStatusCallback pointer.
-     */
-    void SetMacroStatusCallback(std::shared_ptr<MacroStatusCallback> callback);
-
-    /**
      * @brief Set the feature detection status callback.
      * which will be called when there is feature detection state change.
      *
