@@ -61,7 +61,7 @@ thread_local napi_ref ControlCenterSessionNapi::sConstructor_ = nullptr;
 thread_local sptr<ControlCenterSession> ControlCenterSessionNapi::sControlCenterSession_ = nullptr;
 thread_local uint32_t ControlCenterSessionNapi::controlCenterSessionTaskId = CONTROL_CENTER_SESSION_TASKID;
 
-ControlCenterSessionNapi::ControlCenterSessionNapi() {}
+ControlCenterSessionNapi::ControlCenterSessionNapi() : env_(nullptr) {}
  
 ControlCenterSessionNapi::~ControlCenterSessionNapi()
 {

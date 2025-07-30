@@ -110,7 +110,7 @@ mutex g_dmDeviceInfoMutex;
 thread_local uint32_t g_dumpDepth = 0;
 
 HCameraService::HCameraService(int32_t systemAbilityId, bool runOnCreate)
-    : SystemAbility(systemAbilityId, runOnCreate), muteModeStored_(false)
+    : SystemAbility(systemAbilityId, runOnCreate), muteModeStored_(false), pressurePid_(0)
 {
     MEDIA_INFO_LOG("HCameraService Construct begin");
     g_cameraServiceHolder = this;
