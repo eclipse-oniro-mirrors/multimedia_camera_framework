@@ -103,6 +103,7 @@ static int32_t sensorRotation = 0;
 constexpr int32_t IMAGE_SHOT_TYPE = 0;
 constexpr int32_t MOVING_PHOTO_SHOT_TYPE = 2;
 constexpr int32_t BURST_SHOT_TYPE = 3;
+static bool g_isNeedFilterMetadata = false;
 
 sptr<HStreamOperator> HStreamOperator::NewInstance(const uint32_t callerToken, int32_t opMode)
 {
@@ -867,38 +868,41 @@ int32_t HStreamOperator::StartPreviewStream(const std::shared_ptr<OHOS::Camera::
 
 int32_t HStreamOperator::UpdateSettingForFocusTrackingMech(bool isEnableMech)
 {
-    CHECK_RETURN_RET_ELOG(streamOperator_ == nullptr, CAMERA_INVALID_STATE,
-        "HStreamOperator::UpdateSettingForFocusTrackingMech streamOperator is nullptr");
+    std::lock_guard<std::mutex> mechLock(mechCallbackLock_);
+    CHECK_RETURN_RET(!streamOperator_, CAMERA_INVALID_STATE);
     uint32_t majorVer = 0;
     uint32_t minorVer = 0;
     streamOperator_->GetVersion(majorVer, minorVer);
-    if (majorVer < HDI_VERSION_1 || minorVer < HDI_VERSION_3) {
-        MEDIA_DEBUG_LOG("UpdateSettingForFocusTrackingMech version: %{public}d.%{public}d", majorVer, minorVer);
-        return CAMERA_OK;
-    }
+    CHECK_RETURN_RET(majorVer < HDI_VERSION_1 || minorVer < HDI_VERSION_3, CAMERA_OK);
     sptr<OHOS::HDI::Camera::V1_3::IStreamOperator> streamOperatorV1_3 =
         OHOS::HDI::Camera::V1_3::IStreamOperator::CastFrom(streamOperator_);
-    CHECK_RETURN_RET_ELOG(streamOperatorV1_3 == nullptr, CAMERA_UNKNOWN_ERROR,
-        "HStreamOperator::UpdateSettingForFocusTrackingMech streamOperatorV1_3 castFrom failed!");
+    CHECK_RETURN_RET(!streamOperatorV1_3, CAMERA_UNKNOWN_ERROR);
     const int32_t DEFAULT_ITEMS = 1;
     const int32_t DEFAULT_DATA_LENGTH = 10;
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata4Types =
         std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
-    bool status = false;
-    uint32_t count = 1;
-    if (CheckSystemApp()) {
-        uint8_t data = static_cast<uint8_t>(MetadataObjectType::BASE_TRACKING_REGION);
-        status = metadata4Types->addEntry(OHOS_CONTROL_STATISTICS_DETECT_SETTING, &data, count);
-    } else {
-        std::vector<uint8_t> typeTagToHal;
-        for (auto& itr : g_FwkToHALResultCameraMetaDetect_) {
-            typeTagToHal.emplace_back(itr.second);
-            MEDIA_DEBUG_LOG("EnableOrDisableMetadataType type: %{public}d", itr.second);
+    bool needAddMetadataType = true;
+    auto allStream = streamContainer_.GetAllStreams();
+    for (auto& stream : allStream) {
+        if (stream->GetStreamType() != StreamType::METADATA) {
+            continue;
         }
-        count = typeTagToHal.size();
-        uint8_t* typesToEnable = typeTagToHal.data();
-        status = metadata4Types->addEntry(OHOS_CONTROL_STATISTICS_DETECT_SETTING, typesToEnable, count);
+        auto streamMetadata = CastStream<HStreamMetadata>(stream);
+        auto types = streamMetadata->GetMetadataObjectTypes();
+        if (std::find(types.begin(), types.end(), static_cast<int32_t>(MetadataObjectType::FACE)) != types.end()) {
+            needAddMetadataType = false;
+            break;
+        }
     }
+    g_isNeedFilterMetadata = needAddMetadataType;
+    std::vector<uint8_t> typeTagToHal;
+    typeTagToHal.emplace_back(static_cast<int32_t>(MetadataObjectType::BASE_TRACKING_REGION));
+    if (needAddMetadataType) {
+        typeTagToHal.emplace_back(static_cast<int32_t>(MetadataObjectType::FACE));
+    }
+    uint32_t count = typeTagToHal.size();
+    uint8_t* typesToEnable = typeTagToHal.data();
+    bool status = metadata4Types->addEntry(OHOS_CONTROL_STATISTICS_DETECT_SETTING, typesToEnable, count);
     CHECK_RETURN_RET_ELOG(!status, CAMERA_UNKNOWN_ERROR, "set_camera_metadata failed!");
     std::vector<uint8_t> settings;
     OHOS::Camera::MetadataUtils::ConvertMetadataToVec(metadata4Types, settings);
@@ -1877,12 +1881,17 @@ int32_t HStreamOperator::OnCaptureReady(
 int32_t HStreamOperator::OnResult(int32_t streamId, const std::vector<uint8_t>& result)
 {
     MEDIA_DEBUG_LOG("HStreamOperator::OnResult");
+    CHECK_RETURN_RET(result.size() == 0, CAMERA_OK);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult = nullptr;
+    OHOS::Camera::MetadataUtils::ConvertVecToMetadata(result, cameraResult);
     {
         std::lock_guard<std::mutex> mechLock(mechCallbackLock_);
-        std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult = nullptr;
-        OHOS::Camera::MetadataUtils::ConvertVecToMetadata(result, cameraResult);
         CHECK_EXECUTE(mechCallback_ != nullptr && cameraResult!= nullptr, mechCallback_(streamId, cameraResult));
+        if (g_isNeedFilterMetadata) {
+            OHOS::Camera::DeleteCameraMetadataItem(cameraResult->get(), OHOS_STATISTICS_DETECT_HUMAN_FACE_INFOS);
+        }
     }
+    
     sptr<HStreamCommon> curStream;
     const int32_t metaStreamId = -1;
     if (streamId == metaStreamId) {
@@ -1891,7 +1900,7 @@ int32_t HStreamOperator::OnResult(int32_t streamId, const std::vector<uint8_t>& 
         curStream = GetHdiStreamByStreamID(streamId);
     }
     if ((curStream != nullptr) && (curStream->GetStreamType() == StreamType::METADATA)) {
-        CastStream<HStreamMetadata>(curStream)->OnMetaResult(streamId, result);
+        CastStream<HStreamMetadata>(curStream)->OnMetaResult(streamId, cameraResult);
     } else {
         MEDIA_ERR_LOG("HStreamOperator::OnResult StreamId: %{public}d is null or not Not adapted", streamId);
         return CAMERA_INVALID_ARG;

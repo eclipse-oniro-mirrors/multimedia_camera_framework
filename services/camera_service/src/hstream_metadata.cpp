@@ -141,17 +141,13 @@ int32_t HStreamMetadata::DisableMetadataType(const std::vector<int32_t>& metadat
     return rc;
 }
 
-int32_t HStreamMetadata::OnMetaResult(int32_t streamId, const std::vector<uint8_t>& result)
+int32_t HStreamMetadata::OnMetaResult(int32_t streamId, std::shared_ptr<OHOS::Camera::CameraMetadata> result)
 {
-    CHECK_RETURN_RET_ELOG(result.size() == 0, CAMERA_INVALID_ARG, "onResult get null meta from HAL");
-    std::lock_guard<std::mutex> lock(callbackLock_);
-    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult = nullptr;
-    OHOS::Camera::MetadataUtils::ConvertVecToMetadata(result, cameraResult);
-    if (cameraResult == nullptr) {
-        cameraResult = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
+    if (result == nullptr) {
+        result = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
     }
     CHECK_EXECUTE(streamMetadataCallback_ != nullptr,
-        streamMetadataCallback_->OnMetadataResult(streamId, cameraResult));
+        streamMetadataCallback_->OnMetadataResult(streamId, result));
     return CAMERA_OK;
 }
 
@@ -225,6 +221,11 @@ void HStreamMetadata::removeMetadataType(const std::vector<int32_t>& metaRes, st
     metaTarget.erase(std::remove_if(metaTarget.begin(), metaTarget.end(),
                                     [&set](const int32_t &element) { return set.find(element) != set.end(); }),
                      metaTarget.end());
+}
+
+std::vector<int32_t> HStreamMetadata::GetMetadataObjectTypes()
+{
+    return metadataObjectTypes_;
 }
 } // namespace Standard
 } // namespace OHOS

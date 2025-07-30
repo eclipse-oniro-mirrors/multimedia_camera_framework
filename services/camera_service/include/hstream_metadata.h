@@ -58,9 +58,10 @@ public:
     int32_t DisableMetadataType(const std::vector<int32_t>& metadataTypes) override;
     void DumpStreamInfo(CameraInfoDumper& infoDumper) override;
     int32_t OperatePermissionCheck(uint32_t interfaceCode) override;
-    int32_t OnMetaResult(int32_t streamId, const std::vector<uint8_t>& result);
+    int32_t OnMetaResult(int32_t streamId, std::shared_ptr<OHOS::Camera::CameraMetadata> result);
     int32_t CallbackEnter([[maybe_unused]] uint32_t code) override;
     int32_t CallbackExit([[maybe_unused]] uint32_t code, [[maybe_unused]] int32_t result) override;
+    std::vector<int32_t> GetMetadataObjectTypes();
 
 private:
     int32_t EnableOrDisableMetadataType(const std::vector<int32_t>& metadataTypes, const bool enable);

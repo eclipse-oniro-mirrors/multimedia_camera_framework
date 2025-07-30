@@ -2123,12 +2123,6 @@ void HCaptureSession::SetMechDeliveryState(MechDeliveryState state)
     mechDeliveryState_ = state;
 }
 
-MechDeliveryState HCaptureSession::GetMechDeliveryState()
-{
-    std::lock_guard<std::mutex> lock(mechDeliveryStateLock_);
-    return mechDeliveryState_;
-}
-
 void HCaptureSession::UpdateSettingForFocusTrackingMechBeforeStart(std::shared_ptr<OHOS::Camera::CameraMetadata>&
     settings)
 {
@@ -2199,8 +2193,7 @@ bool HCaptureSession::GetCameraAppInfo(CameraAppInfo& appInfo)
             }
         }
     }
-    auto currentState = stateMachine_.GetCurrentState();
-    appInfo.videoStatus = (currentState == CaptureSessionState::SESSION_STARTED);
+    appInfo.videoStatus = stateMachine_.IsStateNoLock(CaptureSessionState::SESSION_STARTED);
     return true;
 }
 
