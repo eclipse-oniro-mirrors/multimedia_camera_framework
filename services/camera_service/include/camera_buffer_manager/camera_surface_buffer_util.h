@@ -228,7 +228,8 @@ public:
         CHECK_RETURN_RET_ELOG(surfaceBuffer == nullptr, deferredImageFormat,
             "GetDeferredImageFormat: surfaceBuffer is nullptr");
         sptr<BufferExtraData> extraData = surfaceBuffer->GetExtraData();
-        CHECK_RETURN_RET_ELOG(extraData == nullptr, deferredImageFormat, "GetDeferredImageFormat: extraData is nullptr");
+        CHECK_RETURN_RET_ELOG(extraData == nullptr, deferredImageFormat,
+            "GetDeferredImageFormat:extraData is nullptr");
         extraData->ExtraGet(OHOS::Camera::deferredImageFormat, deferredImageFormat);
         MEDIA_DEBUG_LOG("GetDeferredImageFormat:%{public}d", deferredImageFormat);
         return deferredImageFormat;
