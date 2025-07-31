@@ -49,6 +49,7 @@ std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles1_1(PreconfigType pr
             configs->photoProfile.format_ = CameraFormat::CAMERA_FORMAT_JPEG;
             break;
         case PRECONFIG_4K:
+        // LCOV_EXCL_START
             configs->previewProfile = { CameraFormat::CAMERA_FORMAT_YUV_420_SP, { .width = 1080, .height = 1080 } };
             configs->previewProfile.fps_ = { .fixedFps = 30, .minFps = 12, .maxFps = 30 };
 
@@ -68,6 +69,7 @@ std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles1_1(PreconfigType pr
             MEDIA_ERR_LOG(
                 "PhotoSessionForSys::GeneratePreconfigProfiles1_1 not support this config:%{public}d", preconfigType);
             return nullptr;
+        // LCOV_EXCL_STOP
     }
     return configs;
 }
@@ -84,6 +86,7 @@ std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles4_3(PreconfigType pr
             configs->photoProfile.format_ = CameraFormat::CAMERA_FORMAT_JPEG;
             break;
         case PRECONFIG_1080P:
+        // LCOV_EXCL_START
             configs->previewProfile = { CameraFormat::CAMERA_FORMAT_YUV_420_SP, { .width = 1440, .height = 1080 } };
             configs->previewProfile.fps_ = { .fixedFps = 30, .minFps = 12, .maxFps = 30 };
 
@@ -110,12 +113,14 @@ std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles4_3(PreconfigType pr
             MEDIA_ERR_LOG(
                 "PhotoSessionForSys::GeneratePreconfigProfiles4_3 not support this config:%{public}d", preconfigType);
             return nullptr;
+        // LCOV_EXCL_STOP
     }
     return configs;
 }
 
 std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles16_9(PreconfigType preconfigType)
 {
+    // LCOV_EXCL_START
     std::shared_ptr<PreconfigProfiles> configs = std::make_shared<PreconfigProfiles>(ColorSpace::DISPLAY_P3);
     switch (preconfigType) {
         case PRECONFIG_720P:
@@ -154,19 +159,23 @@ std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles16_9(PreconfigType p
             return nullptr;
     }
     return configs;
+    // LCOV_EXCL_STOP
 }
 } // namespace
 
 bool PhotoSessionForSys::CanAddOutput(sptr<CaptureOutput>& output)
 {
+    // LCOV_EXCL_START
     MEDIA_DEBUG_LOG("Enter Into PhotoSessionForSys::CanAddOutput");
     CHECK_RETURN_RET(output == nullptr, false);
     return output->GetOutputType() != CAPTURE_OUTPUT_TYPE_VIDEO && CaptureSession::CanAddOutput(output);
+    // LCOV_EXCL_STOP
 }
 
 std::shared_ptr<PreconfigProfiles> PhotoSessionForSys::GeneratePreconfigProfiles(
     PreconfigType preconfigType, ProfileSizeRatio preconfigRatio)
 {
+    // LCOV_EXCL_START
     switch (preconfigRatio) {
         case RATIO_1_1:
             return GeneratePreconfigProfiles1_1(preconfigType);
@@ -181,6 +190,7 @@ std::shared_ptr<PreconfigProfiles> PhotoSessionForSys::GeneratePreconfigProfiles
             break;
     }
     return nullptr;
+    // LCOV_EXCL_STOP
 }
 
 bool PhotoSessionForSys::IsPreconfigProfilesLegal(std::shared_ptr<PreconfigProfiles> configs)

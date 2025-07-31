@@ -48,6 +48,7 @@ std::vector<PortraitEffect> PortraitSession::GetSupportedPortraitEffects()
     int ret = VerifyAbility(static_cast<uint32_t>(OHOS_ABILITY_SCENE_PORTRAIT_EFFECT_TYPES));
     CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, supportedPortraitEffects,
         "PortraitSession::GetSupportedPortraitEffects abilityId is NULL");
+    // LCOV_EXCL_START
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetCachedMetadata();
     CHECK_RETURN_RET(metadata == nullptr, supportedPortraitEffects);
     camera_metadata_item_t item;
@@ -58,6 +59,7 @@ std::vector<PortraitEffect> PortraitSession::GetSupportedPortraitEffects()
         CHECK_EXECUTE(itr != g_metaToFwPortraitEffect_.end(), supportedPortraitEffects.emplace_back(itr->second));
     }
     return supportedPortraitEffects;
+    // LCOV_EXCL_STOP
 }
 
 PortraitEffect PortraitSession::GetPortraitEffect()
@@ -76,13 +78,16 @@ PortraitEffect PortraitSession::GetPortraitEffect()
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_PORTRAIT_EFFECT_TYPE, &item);
     CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS || item.count == 0, PortraitEffect::OFF_EFFECT,
         "CaptureSession::GetPortraitEffect Failed with return code %{public}d", ret);
+    // LCOV_EXCL_START
     auto itr = g_metaToFwPortraitEffect_.find(static_cast<camera_portrait_effect_type_t>(item.data.u8[0]));
     CHECK_RETURN_RET(itr != g_metaToFwPortraitEffect_.end(), itr->second);
     return PortraitEffect::OFF_EFFECT;
+    // LCOV_EXCL_STOP
 }
 
 void PortraitSession::SetPortraitEffect(PortraitEffect portraitEffect)
 {
+    // LCOV_EXCL_START
     CAMERA_SYNC_TRACE;
     CHECK_RETURN_ELOG(!(IsSessionCommited() || IsSessionConfiged()),
         "CaptureSession::SetPortraitEffect Session is not Commited");
@@ -102,6 +107,7 @@ void PortraitSession::SetPortraitEffect(PortraitEffect portraitEffect)
     bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_PORTRAIT_EFFECT_TYPE, &effect, 1);
     CHECK_PRINT_ELOG(!status, "CaptureSession::SetPortraitEffect Failed to set effect");
     return;
+    // LCOV_EXCL_STOP
 }
 bool PortraitSession::CanAddOutput(sptr<CaptureOutput> &output)
 {

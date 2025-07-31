@@ -119,18 +119,6 @@ public:
     {
         return 0;
     }
-    int32_t UnSetPhotoAvailableCallback() override
-    {
-        return 0;
-    }
-    int32_t UnSetPhotoAssetAvailableCallback() override
-    {
-        return 0;
-    }
-    int32_t UnSetThumbnailCallback() override
-    {
-        return 0;
-    }
 };
 class HStreamCaptureStubFuzzer {
 public:
@@ -145,6 +133,17 @@ public:
     static void HStreamCaptureStubFuzzTest8(FuzzedDataProvider &fdp);
     static void HStreamCaptureStubFuzzTest9(FuzzedDataProvider &fdp);
     static void HStreamCaptureStubFuzzTest10(FuzzedDataProvider &fdp);
+    static void HStreamCaptureStubFuzzTest11();
+    static void HStreamCaptureStubFuzzTest12();
+    static void HStreamCaptureStubFuzzTest13();
+    static void HStreamCaptureStubFuzzTest14();
+    static void HStreamCaptureStubFuzzTest15();
+    static void HStreamCaptureStubFuzzTest16();
+    static void HStreamCaptureStubFuzzTest17();
+    static void HStreamCaptureStubFuzzTest18();
+    static void HStreamCaptureStubFuzzTest19();
+    static void HStreamCaptureStubFuzzTest20();
+    static void HStreamCaptureStubFuzzTest21();
 };
 }  // namespace CameraStandard
 }  // namespace OHOS

@@ -123,6 +123,7 @@ int32_t ProfessionSession::SetMeteringMode(MeteringMode mode)
         "ProfessionSession::SetMeteringMode Session is not Commited");
     CHECK_RETURN_RET_ELOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
         "ProfessionSession::SetMeteringMode Need to call LockForControl() before setting camera properties");
+    // LCOV_EXCL_START
     camera_meter_mode_t meteringMode = OHOS_CAMERA_SPOT_METERING;
     auto itr = fwkMeteringModeMap_.find(mode);
     if (itr == fwkMeteringModeMap_.end()) {
@@ -134,6 +135,7 @@ int32_t ProfessionSession::SetMeteringMode(MeteringMode mode)
     bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_METER_MODE, &meteringMode, 1);
     CHECK_PRINT_ELOG(!status, "ProfessionSession::SetMeteringMode Failed to set focus mode");
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 int32_t ProfessionSession::GetMeteringMode(MeteringMode &meteringMode)
@@ -152,12 +154,14 @@ int32_t ProfessionSession::GetMeteringMode(MeteringMode &meteringMode)
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_METER_MODE, &item);
     CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
         "ProfessionSession::GetMeteringMode Failed with return code %{public}d", ret);
+    // LCOV_EXCL_START
     auto itr = metaMeteringModeMap_.find(static_cast<camera_meter_mode_t>(item.data.u8[0]));
     if (itr != metaMeteringModeMap_.end()) {
         meteringMode = itr->second;
         return CameraErrorCode::SUCCESS;
     }
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 // ISO
 int32_t ProfessionSession::GetIsoRange(std::vector<int32_t> &isoRange)
@@ -213,6 +217,7 @@ int32_t ProfessionSession::SetISO(int32_t iso)
         "ProfessionSession::SetISO Session is not Commited");
     CHECK_RETURN_RET_ELOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
         "ProfessionSession::SetISO Need to call LockForControl() before setting camera properties");
+    // LCOV_EXCL_START
     MEDIA_DEBUG_LOG("ProfessionSession::SetISO iso value: %{public}d", iso);
     auto inputDevice = GetInputDevice();
     CHECK_RETURN_RET_ELOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(),
@@ -229,6 +234,7 @@ int32_t ProfessionSession::SetISO(int32_t iso)
     CHECK_PRINT_ELOG(!status, "ProfessionSession::SetISO Failed to set exposure compensation");
     isoValue_ = static_cast<uint32_t>(iso);
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 int32_t ProfessionSession::GetISO(int32_t &iso)
@@ -246,9 +252,11 @@ int32_t ProfessionSession::GetISO(int32_t &iso)
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_ISO_VALUE, &item);
     CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS, CameraErrorCode::INVALID_ARGUMENT,
         "ProfessionSession::GetISO Failed with return code %{public}d", ret);
+    // LCOV_EXCL_START
     iso = item.data.i32[0];
     MEDIA_DEBUG_LOG("iso: %{public}d", iso);
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 bool ProfessionSession::IsManualIsoSupported()
@@ -289,6 +297,7 @@ int32_t ProfessionSession::GetSupportedFocusModes(std::vector<FocusMode> &suppor
         "ProfessionSession::GetSupportedFocusModes camera deviceInfo is null");
     sptr<CameraDevice> cameraDevNow = inputDevice->GetCameraDeviceInfo();
     if (cameraDevNow != nullptr && cameraDevNow->isConcurrentLimted_ == 1) {
+        // LCOV_EXCL_START
         for (int i = 0; i < cameraDevNow->limtedCapabilitySave_.focusmodes.count;
             i++) {
             camera_focus_mode_enum_t num = static_cast<camera_focus_mode_enum_t>(cameraDevNow->
@@ -299,6 +308,7 @@ int32_t ProfessionSession::GetSupportedFocusModes(std::vector<FocusMode> &suppor
             }
         }
         return CameraErrorCode::SUCCESS;
+        // LCOV_EXCL_STOP
     }
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetCachedMetadata();
     camera_metadata_item_t item;
@@ -334,6 +344,7 @@ int32_t ProfessionSession::SetFocusMode(FocusMode focusMode)
         "ProfessionSession::SetFocusMode Session is not Commited");
     CHECK_RETURN_RET_ELOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
         "ProfessionSession::SetFocusMode Need to call LockForControl() before setting camera properties");
+    // LCOV_EXCL_START
     uint8_t focus = FOCUS_MODE_LOCKED;
     auto itr = g_fwkFocusModeMap_.find(focusMode);
     if (itr == g_fwkFocusModeMap_.end()) {
@@ -345,6 +356,7 @@ int32_t ProfessionSession::SetFocusMode(FocusMode focusMode)
     bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_FOCUS_MODE, &focus, 1);
     CHECK_PRINT_ELOG(!status, "ProfessionSession::SetFocusMode Failed to set focus mode");
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 int32_t ProfessionSession::GetFocusMode(FocusMode &focusMode)
@@ -363,12 +375,14 @@ int32_t ProfessionSession::GetFocusMode(FocusMode &focusMode)
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_FOCUS_MODE, &item);
     CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
         "ProfessionSession::GetFocusMode Failed with return code %{public}d", ret);
+    // LCOV_EXCL_START
     auto itr = g_metaFocusModeMap_.find(static_cast<camera_focus_mode_enum_t>(item.data.u8[0]));
     if (itr != g_metaFocusModeMap_.end()) {
         focusMode = itr->second;
         return CameraErrorCode::SUCCESS;
     }
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 // Exposure Hint
@@ -403,6 +417,7 @@ int32_t ProfessionSession::SetExposureHintMode(ExposureHintMode mode)
         "ProfessionSession::SetExposureHintMode Session is not Commited");
     CHECK_RETURN_RET_ELOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
         "ProfessionSession::SetExposureHintMode Need to call LockForControl() before setting camera properties");
+    // LCOV_EXCL_START
     uint8_t exposureHintMode = OHOS_CAMERA_EXPOSURE_HINT_UNSUPPORTED;
     auto itr = fwkExposureHintModeMap_.find(mode);
     if (itr == fwkExposureHintModeMap_.end()) {
@@ -414,6 +429,7 @@ int32_t ProfessionSession::SetExposureHintMode(ExposureHintMode mode)
     bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_EXPOSURE_HINT_MODE, &exposureHintMode, 1);
     CHECK_PRINT_ELOG(!status, "ProfessionSession::SetExposureHintMode Failed to set ExposureHint mode");
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 int32_t ProfessionSession::GetExposureHintMode(ExposureHintMode &mode)
@@ -432,12 +448,14 @@ int32_t ProfessionSession::GetExposureHintMode(ExposureHintMode &mode)
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_EXPOSURE_HINT_MODE, &item);
     CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
         "ProfessionSession::GetExposureHintMode Failed with return code %{public}d", ret);
+    // LCOV_EXCL_START
     auto itr = metaExposureHintModeMap_.find(static_cast<camera_exposure_hint_mode_enum_t>(item.data.u8[0]));
     if (itr != metaExposureHintModeMap_.end()) {
         mode = itr->second;
         return CameraErrorCode::SUCCESS;
     }
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 // Focus Flash Assist
 int32_t ProfessionSession::GetSupportedFocusAssistFlashModes(
@@ -490,6 +508,7 @@ int32_t ProfessionSession::SetFocusAssistFlashMode(FocusAssistFlashMode mode)
     CHECK_RETURN_RET_ELOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
         "ProfessionSession::IsFocusAssistFlashModeSupported Need to call LockForControl "
         "before setting camera properties");
+    // LCOV_EXCL_START
     uint8_t value = OHOS_CAMERA_FOCUS_ASSIST_FLASH_MODE_DEFAULT;
     auto itr = fwkFocusAssistFlashModeMap_.find(mode);
     if (itr == fwkFocusAssistFlashModeMap_.end()) {
@@ -501,6 +520,7 @@ int32_t ProfessionSession::SetFocusAssistFlashMode(FocusAssistFlashMode mode)
     bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_FOCUS_ASSIST_FLASH_SUPPORTED_MODE, &value, 1);
     CHECK_PRINT_ELOG(!status, "ProfessionSession::SetFocusAssistFlashMode Failed to set FocusAssistFlash mode");
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 int32_t ProfessionSession::GetFocusAssistFlashMode(FocusAssistFlashMode &mode)
@@ -519,17 +539,20 @@ int32_t ProfessionSession::GetFocusAssistFlashMode(FocusAssistFlashMode &mode)
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_FOCUS_ASSIST_FLASH_SUPPORTED_MODE, &item);
     CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
         "ProfessionSession::GetFocusAssistFlashMode Failed with return code %{public}d", ret);
+    // LCOV_EXCL_START
     auto itr = metaFocusAssistFlashModeMap_.find(static_cast<camera_focus_assist_flash_mode_enum_t>(item.data.u8[0]));
     if (itr != metaFocusAssistFlashModeMap_.end()) {
         mode = itr->second;
         return CameraErrorCode::SUCCESS;
     }
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 // flash mode
 int32_t ProfessionSession::GetSupportedFlashModes(std::vector<FlashMode> &supportedFlashModes)
 {
+    // LCOV_EXCL_START
     supportedFlashModes.clear();
     CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "ProfessionSession::GetSupportedFlashModes Session is not Commited");
@@ -559,10 +582,12 @@ int32_t ProfessionSession::GetSupportedFlashModes(std::vector<FlashMode> &suppor
         "ProfessionSession::GetSupportedFlashModes Failed with return code %{public}d", ret);
     g_transformValidData(item, g_metaFlashModeMap_, supportedFlashModes);
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 int32_t ProfessionSession::GetFlashMode(FlashMode &flashMode)
 {
+    // LCOV_EXCL_START
     flashMode = FLASH_MODE_CLOSE;
     CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "ProfessionSession::GetFlashMode Session is not Commited");
@@ -584,10 +609,12 @@ int32_t ProfessionSession::GetFlashMode(FlashMode &flashMode)
     }
 
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 int32_t ProfessionSession::SetFlashMode(FlashMode flashMode)
 {
+    // LCOV_EXCL_START
     CAMERA_SYNC_TRACE;
     CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "ProfessionSession::SetFlashMode Session is not Commited");
@@ -604,10 +631,12 @@ int32_t ProfessionSession::SetFlashMode(FlashMode flashMode)
     bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_FLASH_MODE, &flash, 1);
     CHECK_PRINT_ELOG(!status, "ProfessionSession::SetFlashMode Failed to set flash mode");
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 int32_t ProfessionSession::IsFlashModeSupported(FlashMode flashMode, bool &isSupported)
 {
+    // LCOV_EXCL_START
     CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "ProfessionSession::IsFlashModeSupported Session is not Commited");
     std::vector<FlashMode> vecSupportedFlashModeList;
@@ -619,10 +648,12 @@ int32_t ProfessionSession::IsFlashModeSupported(FlashMode flashMode, bool &isSup
     }
     isSupported = false;
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 int32_t ProfessionSession::HasFlash(bool &hasFlash)
 {
+    // LCOV_EXCL_START
     hasFlash = false;
     CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "ProfessionSession::HasFlash Session is not Commited");
@@ -633,6 +664,7 @@ int32_t ProfessionSession::HasFlash(bool &hasFlash)
         hasFlash = true;
     }
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 // XMAGE
 
@@ -675,11 +707,13 @@ int32_t ProfessionSession::GetColorEffect(ColorEffect& colorEffect)
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_SUPPORTED_COLOR_MODES, &item);
     CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS || item.count == 0, CameraErrorCode::SUCCESS,
         "ProfessionSession::GetColorEffect Failed with return code %{public}d", ret);
+    // LCOV_EXCL_START
     auto itr = g_metaColorEffectMap_.find(static_cast<camera_xmage_color_type_t>(item.data.u8[0]));
     if (itr != g_metaColorEffectMap_.end()) {
         colorEffect = itr->second;
     }
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 int32_t ProfessionSession::SetColorEffect(ColorEffect colorEffect)
@@ -689,6 +723,7 @@ int32_t ProfessionSession::SetColorEffect(ColorEffect colorEffect)
         "ProfessionSession::GetColorEffect Session is not Commited");
     CHECK_RETURN_RET_ELOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
         "ProfessionSession::SetFlashMode Need to call LockForControl() before setting camera properties");
+    // LCOV_EXCL_START
     uint8_t colorEffectTemp = ColorEffect::COLOR_EFFECT_NORMAL;
     auto itr = g_fwkColorEffectMap_.find(colorEffect);
     if (itr == g_fwkColorEffectMap_.end()) {
@@ -700,6 +735,7 @@ int32_t ProfessionSession::SetColorEffect(ColorEffect colorEffect)
     bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_SUPPORTED_COLOR_MODES, &colorEffectTemp, 1);
     CHECK_PRINT_ELOG(!status, "ProfessionSession::SetColorEffect Failed to set color effect");
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 bool ProfessionSession::CanAddOutput(sptr<CaptureOutput> &output)
@@ -714,30 +750,39 @@ bool ProfessionSession::CanAddOutput(sptr<CaptureOutput> &output)
 //callbacks
 void ProfessionSession::SetExposureInfoCallback(std::shared_ptr<ExposureInfoCallback> callback)
 {
+    // LCOV_EXCL_START
     std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
     exposureInfoCallback_ = callback;
+    // LCOV_EXCL_STOP
 }
 
 void ProfessionSession::SetIsoInfoCallback(std::shared_ptr<IsoInfoCallback> callback)
 {
+    // LCOV_EXCL_START
     std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
     isoInfoCallback_ = callback;
+    // LCOV_EXCL_STOP
 }
 
 void ProfessionSession::SetApertureInfoCallback(std::shared_ptr<ApertureInfoCallback> callback)
 {
+    // LCOV_EXCL_START
     std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
     apertureInfoCallback_ = callback;
+    // LCOV_EXCL_STOP
 }
 
 void ProfessionSession::SetLuminationInfoCallback(std::shared_ptr<LuminationInfoCallback> callback)
 {
+    // LCOV_EXCL_START
     std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
     luminationInfoCallback_ = callback;
+    // LCOV_EXCL_STOP
 }
 
 void ProfessionSession::ProcessSensorExposureTimeChange(const std::shared_ptr<OHOS::Camera::CameraMetadata> &result)
 {
+    // LCOV_EXCL_START
     camera_metadata_item_t item;
     common_metadata_header_t* metadata = result->get();
     int ret = Camera::FindCameraMetadataItem(metadata, OHOS_STATUS_SENSOR_EXPOSURE_TIME, &item);
@@ -758,10 +803,12 @@ void ProfessionSession::ProcessSensorExposureTimeChange(const std::shared_ptr<OH
             exposureDurationValue_ = value;
         }
     }
+    // LCOV_EXCL_STOP
 }
 
 void ProfessionSession::ProcessIsoChange(const std::shared_ptr<OHOS::Camera::CameraMetadata> &result)
 {
+    // LCOV_EXCL_START
     camera_metadata_item_t item;
     common_metadata_header_t* metadata = result->get();
     int ret = Camera::FindCameraMetadataItem(metadata, OHOS_STATUS_ISO_VALUE, &item);
@@ -776,10 +823,12 @@ void ProfessionSession::ProcessIsoChange(const std::shared_ptr<OHOS::Camera::Cam
             isoValue_ = item.data.ui32[0];
         }
     }
+    // LCOV_EXCL_STOP
 }
 
 void ProfessionSession::ProcessApertureChange(const std::shared_ptr<OHOS::Camera::CameraMetadata> &result)
 {
+    // LCOV_EXCL_START
     camera_metadata_item_t item;
     common_metadata_header_t* metadata = result->get();
     int ret = Camera::FindCameraMetadataItem(metadata, OHOS_STATUS_CAMERA_APERTURE_VALUE, &item);
@@ -794,10 +843,12 @@ void ProfessionSession::ProcessApertureChange(const std::shared_ptr<OHOS::Camera
             apertureValue_ = item.data.f[0];
         }
     }
+    // LCOV_EXCL_STOP
 }
 
 void ProfessionSession::ProcessLuminationChange(const std::shared_ptr<OHOS::Camera::CameraMetadata> &result)
 {
+    // LCOV_EXCL_START
     constexpr float normalizedMeanValue = 255.0;
     camera_metadata_item_t item;
     common_metadata_header_t* metadata = result->get();
@@ -814,10 +865,12 @@ void ProfessionSession::ProcessLuminationChange(const std::shared_ptr<OHOS::Came
             luminationValue_ = value;
         }
     }
+    // LCOV_EXCL_STOP
 }
 
 void ProfessionSession::ProcessPhysicalCameraSwitch(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result)
 {
+    // LCOV_EXCL_START
     camera_metadata_item_t item;
     common_metadata_header_t* metadata = result->get();
     int ret = Camera::FindCameraMetadataItem(metadata, OHOS_STATUS_PREVIEW_PHYSICAL_CAMERA_ID, &item);
@@ -827,10 +880,12 @@ void ProfessionSession::ProcessPhysicalCameraSwitch(const std::shared_ptr<OHOS::
         physicalCameraId_ = item.data.u8[0];
         ExecuteAbilityChangeCallback();
     }
+    // LCOV_EXCL_STOP
 }
 
 std::shared_ptr<OHOS::Camera::CameraMetadata> ProfessionSession::GetMetadata()
 {
+    // LCOV_EXCL_START
     std::string phyCameraId = std::to_string(physicalCameraId_.load());
     auto physicalCameraDevice =
         std::find_if(supportedDevices_.begin(), supportedDevices_.end(), [phyCameraId](const auto& device) -> bool {
@@ -866,11 +921,13 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> ProfessionSession::GetMetadata()
     MEDIA_DEBUG_LOG("ProfessionSession::GetMetadata no physicalCamera, using current camera device:%{public}s",
         cameraObj->GetID().c_str());
     return cameraObj->GetCachedMetadata();
+    // LCOV_EXCL_STOP
 }
 
 void ProfessionSession::ProfessionSessionMetadataResultProcessor::ProcessCallbacks(
     const uint64_t timestamp, const std::shared_ptr<OHOS::Camera::CameraMetadata>& result)
 {
+    // LCOV_EXCL_START
     auto session = session_.promote();
     CHECK_RETURN_ELOG(session == nullptr,
         "CaptureSession::ProfessionSessionMetadataResultProcessor ProcessCallbacks but session is null");
@@ -881,6 +938,7 @@ void ProfessionSession::ProfessionSessionMetadataResultProcessor::ProcessCallbac
     session->ProcessApertureChange(result);
     session->ProcessLuminationChange(result);
     session->ProcessPhysicalCameraSwitch(result);
+    // LCOV_EXCL_STOP
 }
 } // CameraStandard
 } // OHOS

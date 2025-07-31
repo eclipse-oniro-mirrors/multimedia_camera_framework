@@ -63,7 +63,9 @@ group("camera_fuzz_test") {
       "fuzztest/camerademuxer_fuzzer:fuzztest",
       "fuzztest/cameraoutputcapability_fuzzer:fuzztest",
       "fuzztest/camerareportdfxutils_fuzzer:fuzztest",
+      "fuzztest/cameradeviceserviceproxy_fuzzer:fuzztest",
       "fuzztest/camerawindowmanagerclient_fuzzer:fuzztest",
+      "fuzztest/capturesessionproxy_fuzzer:fuzztest",
       "fuzztest/commandserver_fuzzer:fuzztest",
       "fuzztest/commandserverimpl_fuzzer:fuzztest",
       "fuzztest/dpsvideoreport_fuzzer:fuzztest",
@@ -77,6 +79,8 @@ group("camera_fuzz_test") {
       "fuzztest/hstreamdepthdata_fuzzer:fuzztest",
       "fuzztest/hstreamoperator_fuzzer:fuzztest",
       "fuzztest/hstreamrepeat_fuzzer:fuzztest",
+      "fuzztest/hstreamrepeatstub_fuzzer:fuzztest",
+      "fuzztest/hstreamrepeatcallbackstub_fuzzer:fuzztest",
       "fuzztest/mediamanager_fuzzer:fuzztest",
       "fuzztest/metadataoutput_fuzzer:fuzztest",
       "fuzztest/movingphotosurfacewrapper_fuzzer:fuzztest",
@@ -87,6 +91,8 @@ group("camera_fuzz_test") {
       "fuzztest/sessioncoordinator_fuzzer:fuzztest",
       "fuzztest/streamcapture_fuzzer:fuzztest",
       "fuzztest/streamcaptureproxy_fuzzer:fuzztest",
+      "fuzztest/streamdepthdataproxy_fuzzer:fuzztest",
+      "fuzztest/streamrepeatproxy_fuzzer:fuzztest",
       "fuzztest/videoencoder_fuzzer:fuzztest",
     ]
   }

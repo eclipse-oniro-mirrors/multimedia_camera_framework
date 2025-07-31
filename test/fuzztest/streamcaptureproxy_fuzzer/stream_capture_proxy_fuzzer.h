@@ -44,6 +44,7 @@ static void StreamCaptureProxyFuzzTest16(FuzzedDataProvider& fdp);
 static void StreamCaptureProxyFuzzTest17(FuzzedDataProvider& fdp);
 static void StreamCaptureProxyFuzzTest18(FuzzedDataProvider& fdp);
 static void StreamCaptureProxyFuzzTest19(FuzzedDataProvider& fdp);
+static void StreamCaptureProxyFuzzTest20();
 };
 
 
