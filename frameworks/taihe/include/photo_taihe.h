@@ -39,10 +39,9 @@ public:
     int32_t GetCaptureId();
     void ReleaseSync();
 private:
-    ImageTaihe::Image mainImage_ = make_holder<ANI::Image::ImageImpl, ImageTaihe::Image>(nullptr);
+    ImageTaihe::Image mainImage_ = make_holder<ANI::Image::ImageImpl, ImageTaihe::Image>();
+    ImageTaihe::Image rawImage_ = make_holder<ANI::Image::ImageImpl, ImageTaihe::Image>();
     int32_t captureId_ = 0;
-    ImageTaihe::Image main_ = taihe::make_holder<ANI::Image::ImageImpl, ImageTaihe::Image>();
-    ImageTaihe::Image raw_ = taihe::make_holder<ANI::Image::ImageImpl, ImageTaihe::Image>();
     DepthData depthData_ = taihe::make_holder<DepthDataImpl, DepthData>(
         OHOS::CameraStandard::CameraFormat::CAMERA_FORMAT_YCBCR_420_888,
             OHOS::CameraStandard::DepthDataAccuracy::DEPTH_DATA_ACCURACY_RELATIVE, 0,

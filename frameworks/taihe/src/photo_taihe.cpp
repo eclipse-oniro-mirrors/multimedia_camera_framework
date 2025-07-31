@@ -31,24 +31,24 @@ PhotoImpl::PhotoImpl(ImageTaihe::Image mainImage)
 
 void PhotoImpl::SetMain(ImageTaihe::weak::Image main)
 {
-    main_ = main;
+    mainImage_ = main;
 }
 
 ImageTaihe::Image PhotoImpl::GetMain()
 {
-    return main_;
+    return mainImage_;
 }
 
 void PhotoImpl::SetRaw(optional_view<ImageTaihe::Image> raw)
 {
     if (raw.has_value()) {
-        raw_ = raw.value();
+        rawImage_ = raw.value();
     }
 }
 
 optional<ImageTaihe::Image> PhotoImpl::GetRaw()
 {
-    return optional<ImageTaihe::Image>(std::in_place_t{}, raw_);
+    return optional<ImageTaihe::Image>(std::in_place_t{}, rawImage_);
 }
 
 void PhotoImpl::SetDepthData(optional_view<DepthData> depthData)
