@@ -29,6 +29,8 @@
 #include "system_ability_definition.h"
 #include "token_setproc.h"
 #include <fuzzer/FuzzedDataProvider.h>
+#include "system_ability_definition.h"
+#include "iservice_registry.h"
 
 using namespace std;
 
@@ -328,6 +330,24 @@ void StreamCaptureProxyFuzzer::StreamCaptureProxyFuzzTest19(FuzzedDataProvider& 
     fuzz_->SetPhotoAssetAvailableCallback(callback);
 }
 
+void StreamCaptureProxyFuzzer::StreamCaptureProxyFuzzTest20()
+{
+    sptr<IRemoteObject> remote = nullptr;
+    fuzz_ = std::make_shared<StreamCaptureProxy>(remote);
+    fuzz_->UnSetPhotoAvailableCallback();
+    fuzz_->UnSetPhotoAssetAvailableCallback();
+    fuzz_->UnSetThumbnailCallback();
+
+    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    CHECK_RETURN_ELOG(!samgr, "samgr nullptr");
+    remote = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
+    fuzz_ = std::make_shared<StreamCaptureProxy>(remote);
+    CHECK_RETURN_ELOG(!fuzz_, "fuzz_ nullptr");
+    fuzz_->UnSetPhotoAvailableCallback();
+    fuzz_->UnSetPhotoAssetAvailableCallback();
+    fuzz_->UnSetThumbnailCallback();
+}
+
 void Test(uint8_t* data, size_t size)
 {
     FuzzedDataProvider fdp(data, size);
@@ -358,6 +378,7 @@ void Test(uint8_t* data, size_t size)
     streamCaptureProxy->StreamCaptureProxyFuzzTest17(fdp);
     streamCaptureProxy->StreamCaptureProxyFuzzTest18(fdp);
     streamCaptureProxy->StreamCaptureProxyFuzzTest19(fdp);
+    streamCaptureProxy->StreamCaptureProxyFuzzTest20();
 }
 } // namespace CameraStandard
 } // namespace OHOS

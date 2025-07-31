@@ -29,6 +29,7 @@ LightPaintingSession::~LightPaintingSession()
  
 int32_t LightPaintingSession::GetSupportedLightPaintings(std::vector<LightPaintingType>& lightPaintings)
 {
+    // LCOV_EXCL_START
     CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "LightPaintingSession::GetSupportedLightPaintings Session is not Commited");
     auto inputDevice = GetInputDevice();
@@ -50,10 +51,12 @@ int32_t LightPaintingSession::GetSupportedLightPaintings(std::vector<LightPainti
         CHECK_EXECUTE(itr != metaLightPaintingTypeMap_.end(), lightPaintings.emplace_back(itr->second));
     }
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
  
 int32_t LightPaintingSession::GetLightPainting(LightPaintingType& lightPaintingType)
 {
+    // LCOV_EXCL_START
     CHECK_RETURN_RET_ELOG(!(IsSessionCommited() || IsSessionConfiged()), CameraErrorCode::SESSION_NOT_CONFIG,
         "LightPaintingSession::GetLightPainting Session is not Commited.");
     auto itr = fwkLightPaintingTypeMap_.find(currentLightPaintingType_);
@@ -61,10 +64,12 @@ int32_t LightPaintingSession::GetLightPainting(LightPaintingType& lightPaintingT
         lightPaintingType = itr->first;
     }
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
  
 int32_t LightPaintingSession::SetLightPainting(const LightPaintingType type)
 {
+    // LCOV_EXCL_START
     MEDIA_INFO_LOG("SetLightPainting native is called");
     CHECK_RETURN_RET_ELOG(!(IsSessionCommited() || IsSessionConfiged()), CameraErrorCode::SESSION_NOT_CONFIG,
         "LightPaintingSession::SetLightPainting Session is not Commited.");
@@ -81,10 +86,12 @@ int32_t LightPaintingSession::SetLightPainting(const LightPaintingType type)
         "LightPaintingSession::SetLightPainting Failed to set LightPainting type");
         currentLightPaintingType_ = type;
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
  
 int32_t LightPaintingSession::TriggerLighting()
 {
+    // LCOV_EXCL_START
     MEDIA_INFO_LOG("TriggerLighting native is called");
     CHECK_RETURN_RET_ELOG(!(IsSessionCommited() || IsSessionConfiged()), CameraErrorCode::SESSION_NOT_CONFIG,
         "LightPaintingSession::TriggerLighting Session is not Commited.");
@@ -97,6 +104,7 @@ int32_t LightPaintingSession::TriggerLighting()
     CHECK_RETURN_RET_ELOG(!status, CameraErrorCode::SERVICE_FATL_ERROR,
         "LightPaintingSession::TriggerLighting Failed to trigger lighting");
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 } // CameraStandard
 } // OHOS

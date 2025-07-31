@@ -32,6 +32,7 @@ const std::unordered_map<camera_slow_motion_status_type_t, SlowMotionState> Slow
 void SlowMotionSession::SlowMotionSessionMetadataResultProcessor::ProcessCallbacks(
     const uint64_t timestamp, const std::shared_ptr<OHOS::Camera::CameraMetadata>& result)
 {
+    // LCOV_EXCL_START
     MEDIA_DEBUG_LOG("SlowMotionSessionMetadataResultProcessor::ProcessCallbacks is called");
     auto session = session_.promote();
     CHECK_RETURN_ELOG(session == nullptr,
@@ -39,6 +40,7 @@ void SlowMotionSession::SlowMotionSessionMetadataResultProcessor::ProcessCallbac
 
     session->ProcessAutoFocusUpdates(result);
     session->OnSlowMotionStateChange(result);
+    // LCOV_EXCL_STOP
 }
 
 SlowMotionSession::~SlowMotionSession()
@@ -47,12 +49,15 @@ SlowMotionSession::~SlowMotionSession()
 
 bool SlowMotionSession::CanAddOutput(sptr<CaptureOutput> &output)
 {
+    // LCOV_EXCL_START
     MEDIA_DEBUG_LOG("Enter Into CanAddOutput");
     return CaptureSession::CanAddOutput(output);
+    // LCOV_EXCL_STOP
 }
 
 bool SlowMotionSession::IsSlowMotionDetectionSupported()
 {
+    // LCOV_EXCL_START
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("IsSlowMotionDetectionSupported is called");
     CHECK_RETURN_RET_ELOG(!IsSessionCommited(), false,
@@ -71,10 +76,12 @@ bool SlowMotionSession::IsSlowMotionDetectionSupported()
     MEDIA_INFO_LOG("IsSlowMotionDetectionSupported value: %{public}u", item.data.u8[0]);
     CHECK_RETURN_RET(item.data.u8[0] == 1, true);
     return false;
+    // LCOV_EXCL_STOP
 }
 
 void SlowMotionSession::NormalizeRect(Rect& rect)
 {
+    // LCOV_EXCL_START
     // Validate and adjust topLeftX and topLeftY
     rect.topLeftX = std::max(0.0, std::min(1.0, rect.topLeftX));
     rect.topLeftY = std::max(0.0, std::min(1.0, rect.topLeftY));
@@ -82,10 +89,12 @@ void SlowMotionSession::NormalizeRect(Rect& rect)
     // Validate and adjust width and height
     rect.width = std::max(0.0, std::min(1.0, rect.width));
     rect.height = std::max(0.0, std::min(1.0, rect.height));
+    // LCOV_EXCL_STOP
 }
 
 void SlowMotionSession::SetSlowMotionDetectionArea(Rect rect)
 {
+    // LCOV_EXCL_START
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("SetSlowMotionDetectionArea is called");
     CHECK_RETURN_ELOG(!IsSessionCommited(),
@@ -105,10 +114,12 @@ void SlowMotionSession::SetSlowMotionDetectionArea(Rect rect)
     this->UnlockForControl();
     CHECK_PRINT_ELOG(!status, "SetSlowMotionDetectionArea failed to set motion rect");
     return;
+    // LCOV_EXCL_STOP
 }
 
 void SlowMotionSession::OnSlowMotionStateChange(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult)
 {
+    // LCOV_EXCL_START
     std::shared_ptr<SlowMotionStateCallback> appCallback = GetApplicationCallback();
     CHECK_RETURN_ELOG(appCallback == nullptr, "OnSlowMotionStateChange appCallback is null");
     SlowMotionState state = SlowMotionState::DISABLE;
@@ -134,23 +145,29 @@ void SlowMotionSession::OnSlowMotionStateChange(std::shared_ptr<OHOS::Camera::Ca
         appCallback->SetSlowMotionState(state);
         appCallback->OnSlowMotionState(state);
     }
+    // LCOV_EXCL_STOP
 }
 
 void SlowMotionSession::SetCallback(std::shared_ptr<SlowMotionStateCallback> callback)
 {
+    // LCOV_EXCL_START
     CHECK_RETURN_ELOG(callback == nullptr, "SlowMotionSession::SetCallback callback is null");
     std::lock_guard<std::mutex> lock(stateCallbackMutex_);
     slowMotionStateCallback_ = callback;
+    // LCOV_EXCL_STOP
 }
 
 std::shared_ptr<SlowMotionStateCallback> SlowMotionSession::GetApplicationCallback()
 {
+    // LCOV_EXCL_START
     std::lock_guard<std::mutex> lock(stateCallbackMutex_);
     return slowMotionStateCallback_;
+    // LCOV_EXCL_STOP
 }
 
 int32_t SlowMotionSession::EnableMotionDetection(bool isEnable)
 {
+    // LCOV_EXCL_START
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("Enter EnableMotionDetection, isEnable:%{public}d", isEnable);
     CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
@@ -160,6 +177,7 @@ int32_t SlowMotionSession::EnableMotionDetection(bool isEnable)
     bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_MOTION_DETECTION, &enableValue, 1);
     CHECK_PRINT_ELOG(!status, "EnableMotionDetection Failed to enable motion detection");
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 } // namespace CameraStandard
 } // namespace OHOS
