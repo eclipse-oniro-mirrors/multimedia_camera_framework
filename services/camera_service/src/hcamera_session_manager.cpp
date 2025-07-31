@@ -31,6 +31,8 @@ namespace OHOS {
 namespace CameraStandard {
 static const int32_t GROUP_SIZE_MIN_LIMIT = 1; // Default session min size is 1
 static const int32_t GROUP_SIZE_MAX_LIMIT = 10; // Default session max size is 10
+static const int32_t MAX_SUPER_USER_ID = 100;
+static int32_t g_mechLastUserid = 0;
 
 static size_t GetGroupSizeLimit(pid_t pid)
 {
@@ -111,9 +113,10 @@ sptr<HMechSession> HCameraSessionManager::GetMechSession(int32_t userId)
 {
     std::lock_guard<std::mutex> lock(mechMapMutex_);
     auto mapIt = mechSessionMap_.find(userId);
-    if (mapIt == mechSessionMap_.end()) {
-        return nullptr;
+    if (mapIt == mechSessionMap_.end() && userId < MAX_SUPER_USER_ID) {
+        mapIt = mechSessionMap_.find(g_mechLastUserid);
     }
+    CHECK_RETURN_RET(mapIt == mechSessionMap_.end(), nullptr);
     return mapIt->second;
 }
 
@@ -146,6 +149,7 @@ CamServiceError HCameraSessionManager::AddMechSession(int32_t userId,
     }
     std::lock_guard<std::mutex> lock(mechMapMutex_);
     mechSessionMap_.insert(std::make_pair(userId, mechSession));
+    g_mechLastUserid = userId;
     return CAMERA_OK;
 }
 

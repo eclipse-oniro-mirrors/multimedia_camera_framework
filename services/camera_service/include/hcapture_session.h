@@ -278,7 +278,6 @@ private:
     int32_t SetHasFitedRotation(bool isHasFitedRotation) override;
     void InitialHStreamOperator();
     void UpdateSettingForSpecialBundle();
-    MechDeliveryState GetMechDeliveryState();
     int32_t UpdateSettingForFocusTrackingMech(bool isEnableMech);
     void UpdateSettingForFocusTrackingMechBeforeStart(std::shared_ptr<OHOS::Camera::CameraMetadata> &settings);
     void ClearMovingPhotoRepeatStream();
