@@ -210,6 +210,28 @@ struct AutoDeviceSwitchCallbackListenerInfo {
         listener_(listener) {}
 };
 
+class MacroStatusCallbackListener : public MacroStatusCallback, public ListenerBase,
+    public std::enable_shared_from_this<MacroStatusCallbackListener> {
+public:
+    MacroStatusCallbackListener(napi_env env) : ListenerBase(env) {}
+    ~MacroStatusCallbackListener() = default;
+    void OnMacroStatusChanged(MacroStatus status) override;
+
+private:
+    void OnMacroStatusCallback(MacroStatus status) const;
+    void OnMacroStatusCallbackAsync(MacroStatus status) const;
+};
+
+struct MacroStatusCallbackInfo {
+    MacroStatusCallback::MacroStatus status_;
+    weak_ptr<const MacroStatusCallbackListener> listener_;
+    MacroStatusCallbackInfo(
+        MacroStatusCallback::MacroStatus status,
+            shared_ptr<const MacroStatusCallbackListener> listener)
+        : status_(status), listener_(listener)
+    {}
+};
+
 class CameraSessionNapi : public CameraNapiEventEmitter<CameraSessionNapi> {
 public:
     static void Init(napi_env env);
@@ -335,6 +357,7 @@ public:
     std::shared_ptr<SmoothZoomCallbackListener> smoothZoomCallback_;
     std::shared_ptr<AbilityCallbackListener> abilityCallback_;
     std::shared_ptr<AutoDeviceSwitchCallbackListener> autoDeviceSwitchCallback_;
+    std::shared_ptr<MacroStatusCallbackListener> macroStatusCallback_ = nullptr;
 
     static thread_local napi_ref sConstructor_;
     static thread_local sptr<CaptureSession> sCameraSession_;

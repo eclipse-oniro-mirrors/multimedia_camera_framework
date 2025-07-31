@@ -512,13 +512,6 @@ bool CaptureSessionForSys::IsDepthFusionEnabled()
     return isDepthFusionEnable_;
 }
 
-void CaptureSessionForSys::SetMacroStatusCallback(std::shared_ptr<MacroStatusCallback> callback)
-{
-    std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
-    macroStatusCallback_ = callback;
-    return;
-}
-
 void CaptureSessionForSys::SetFeatureDetectionStatusCallback(std::shared_ptr<FeatureDetectionStatusCallback> callback)
 {
     std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
