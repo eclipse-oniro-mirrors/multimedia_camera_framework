@@ -225,7 +225,12 @@ public:
     static int32_t GetDeferredImageFormat(sptr<SurfaceBuffer> surfaceBuffer)
     {
         int32_t deferredImageFormat = 0;
-        surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::deferredImageFormat, deferredImageFormat);
+        CHECK_RETURN_RET_ELOG(surfaceBuffer == nullptr, deferredImageFormat,
+            "GetDeferredImageFormat: surfaceBuffer is nullptr");
+        sptr<BufferExtraData> extraData = surfaceBuffer->GetExtraData();
+        CHECK_RETURN_RET_ELOG(extraData == nullptr, deferredImageFormat,
+            "GetDeferredImageFormat:extraData is nullptr");
+        extraData->ExtraGet(OHOS::Camera::deferredImageFormat, deferredImageFormat);
         MEDIA_DEBUG_LOG("GetDeferredImageFormat:%{public}d", deferredImageFormat);
         return deferredImageFormat;
     }

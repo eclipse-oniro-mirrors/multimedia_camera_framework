@@ -1800,7 +1800,7 @@ int32_t HCaptureSession::SetControlCenterEffectStatusCallback(const sptr<IContro
     }
     innerControlCenterEffectCallback_->OnControlCenterEffectStatusChanged(statusInfo);
 
-    int32_t curBeautyValue;
+    int32_t curBeautyValue = 0;
     GetBeautyValue(OHOS_CAMERA_BEAUTY_TYPE_AUTO, curBeautyValue);
     if (curBeautyValue == 0) {
         statusInfo = {ControlCenterEffectType::BEAUTY, false};
