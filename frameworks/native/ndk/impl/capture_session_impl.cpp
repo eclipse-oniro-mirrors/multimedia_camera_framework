@@ -161,7 +161,7 @@ public:
         MEDIA_INFO_LOG("OnPressureStatusChanged is called!");
         if (captureSession_ != nullptr && systemPressureLevel_ != nullptr) {
             Camera_SystemPressureLevel level = (Camera_SystemPressureLevel)status;
-            systemPressureLevel_(captureSession_, &level);
+            systemPressureLevel_(captureSession_, level);
         }
     }
 
