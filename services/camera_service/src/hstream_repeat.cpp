@@ -89,19 +89,6 @@ void HStreamRepeat::SetVideoStreamInfo(StreamInfo_V1_1& streamInfo)
 {
     streamInfo.v1_0.intent_ = StreamIntent::VIDEO;
     streamInfo.v1_0.encodeType_ = ENCODE_TYPE_H264;
-    // LCOV_EXCL_START
-    CHECK_EXECUTE(CheckSystemApp() && currentMode_ == static_cast<int32_t>(SceneMode::VIDEO), {
-        MEDIA_DEBUG_LOG("HStreamRepeat::SetVideoStreamInfo current colorSpace : %{public}d",
-            streamInfo.v1_0.dataspace_);
-        if (streamInfo.v1_0.dataspace_ == CM_ColorSpaceType_V2_1::CM_BT2020_HLG_LIMIT) {
-            streamInfo.v1_0.dataspace_ = CM_ColorSpaceType_V2_1::CM_BT2020_HLG_FULL;
-        }
-
-        if (streamInfo.v1_0.dataspace_ == CM_ColorSpaceType_V2_1::CM_BT709_LIMIT) {
-            streamInfo.v1_0.dataspace_ = CM_ColorSpaceType_V2_1::CM_BT709_FULL;
-        }
-    });
-    // LCOV_EXCL_STOP
     MEDIA_INFO_LOG("HStreamRepeat::SetVideoStreamInfo Enter");
     HDI::Camera::V1_1::ExtendedStreamInfo extendedStreamInfo {
         .type = static_cast<HDI::Camera::V1_1::ExtendedStreamInfoType>(
@@ -160,6 +147,19 @@ void HStreamRepeat::SetStreamInfo(StreamInfo_V1_1& streamInfo)
         case RepeatStreamType::PREVIEW:
             streamInfo.v1_0.intent_ = StreamIntent::PREVIEW;
             streamInfo.v1_0.encodeType_ = ENCODE_TYPE_NULL;
+            // LCOV_EXCL_START
+            CHECK_EXECUTE(CheckSystemApp() && currentMode_ == static_cast<int32_t>(SceneMode::VIDEO), {
+                MEDIA_DEBUG_LOG("HStreamRepeat::SetVideoStreamInfo current colorSpace : %{public}d",
+                    streamInfo.v1_0.dataspace_);
+                if (streamInfo.v1_0.dataspace_ == CM_ColorSpaceType_V2_1::CM_BT2020_HLG_LIMIT) {
+                    streamInfo.v1_0.dataspace_ = CM_ColorSpaceType_V2_1::CM_BT2020_HLG_FULL;
+                }
+
+                if (streamInfo.v1_0.dataspace_ == CM_ColorSpaceType_V2_1::CM_BT709_LIMIT) {
+                    streamInfo.v1_0.dataspace_ = CM_ColorSpaceType_V2_1::CM_BT709_FULL;
+                }
+            });
+            // LCOV_EXCL_STOP
             if (mEnableSecure) {
                 MEDIA_INFO_LOG("HStreamRepeat::SetStreamInfo Enter");
                 HDI::Camera::V1_1::ExtendedStreamInfo extendedStreamInfo {
