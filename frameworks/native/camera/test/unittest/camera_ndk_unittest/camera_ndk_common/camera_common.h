@@ -70,7 +70,7 @@ public:
     static void CameraCaptureSessionAutoDeviceSwitchStatusCb(Camera_CaptureSession* session,
         Camera_AutoDeviceSwitchStatusInfo* smoothZoomInfo);
     static void CameraCaptureSessionSystemPressureLevelCb(Camera_CaptureSession* session,
-        Camera_SystemPressureLevel* pressureLevel);
+        Camera_SystemPressureLevel pressureLevel);
     static void CameraManagerOnCameraStatusCb(Camera_Manager* cameraManager, Camera_StatusInfo* status);
     static void CameraManagerOnCameraTorchStatusCb(Camera_Manager* cameraManager, Camera_TorchStatusInfo* status);
     static void CameraManagerOnCameraFoldStatusCb(Camera_Manager* cameraManager, Camera_FoldStatusInfo* status);

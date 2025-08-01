@@ -154,6 +154,10 @@ napi_value CameraNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_PROPERTY(
             "SceneFeatureType", CreateObjectWithMap(env, "SceneFeatureType", mapSceneFeatureType, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY("FoldStatus", CreateObjectWithMap(env, "FoldStatus", mapFoldStatus, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY("SystemPressureLevel",
+            CreateObjectWithMap(env, "SystemPressureLevel", mapSystemPressureLevel, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY("ControlCenterEffectType",
+            CreateObjectWithMap(env, "ControlCenterEffectType", mapControlCenterEffectType, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY(
             "LightPaintingType", CreateObjectWithMap(env, "LightPaintingType", mapLightPaintingType, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY("TimeLapseRecordState",

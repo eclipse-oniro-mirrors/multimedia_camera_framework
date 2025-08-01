@@ -369,6 +369,19 @@ static const std::unordered_map<std::string, int32_t> mapFoldStatus = {
     {"FOLDED", 2}
 };
 
+static const std::unordered_map<std::string, int32_t> mapSystemPressureLevel = {
+    {"SYSTEM_PRESSURE_NORMAL", 0},
+    {"SYSTEM_PRESSURE_MILD", 1},
+    {"SYSTEM_PRESSURE_SEVERE", 2},
+    {"SYSTEM_PRESSURE_CRITICAL", 3},
+    {"SYSTEM_PRESSURE_SHUTDOWN", 4}
+};
+
+static const std::unordered_map<std::string, int32_t> mapControlCenterEffectType = {
+    {"BEAUTY", 0},
+    {"PORTRAIT", 1}
+};
+
 static const std::unordered_map<std::string, int32_t> mapLightPaintingType = {
     {"TRAFFIC_TRAILS", 0},
     {"STAR_TRAILS", 1},

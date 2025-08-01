@@ -112,7 +112,7 @@ typedef void (*OH_CaptureSession_OnAutoDeviceSwitchStatusChange)(Camera_CaptureS
  * @since 20
  */
 typedef void (*OH_CaptureSession_OnSystemPressureLevelChange)(Camera_CaptureSession* session,
-    Camera_SystemPressureLevel* systemPressureLevel);
+    Camera_SystemPressureLevel systemPressureLevel);
 
 /**
  * @brief A listener for capture session.

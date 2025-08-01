@@ -300,7 +300,7 @@ void CameraNdkCommon::CameraCaptureSessionAutoDeviceSwitchStatusCb(Camera_Captur
 }
 
 void CameraNdkCommon::CameraCaptureSessionSystemPressureLevelCb(Camera_CaptureSession* session,
-    Camera_SystemPressureLevel* pressureLevel)
+    Camera_SystemPressureLevel pressureLevel)
 {
     MEDIA_DEBUG_LOG("fun:%s", __FUNCTION__);
 }
