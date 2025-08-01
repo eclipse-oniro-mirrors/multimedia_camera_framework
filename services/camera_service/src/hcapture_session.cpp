@@ -678,6 +678,7 @@ int32_t HCaptureSession::GetVirtualApertureMetadate(std::vector<float>& virtualA
 
     std::vector<float> supportedVirtualAperture = {};
     auto device = GetCameraDevice();
+    CHECK_RETURN_RET(!device, CAMERA_INVALID_STATE);
     auto settings = device->GetDeviceAbility();
     camera_metadata_item_t item;
     int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(),
@@ -715,6 +716,7 @@ int32_t HCaptureSession::SetVirtualApertureValue(float value, bool needPersist)
         "HCaptureSession::SetVirtualApertureValue check permission failed.");
 
     auto device = GetCameraDevice();
+    CHECK_RETURN_RET(!device, CAMERA_INVALID_STATE);
     int32_t ret;
     constexpr int32_t DEFAULT_ITEMS = 1;
     constexpr int32_t DEFAULT_DATA_LENGTH = 1;
@@ -752,6 +754,7 @@ int32_t HCaptureSession::GetBeautyMetadata(std::vector<int32_t>& beautyApertureM
 
     std::vector<int32_t> supportedBeautyTypes = {};
     auto device = GetCameraDevice();
+    CHECK_RETURN_RET(!device, CAMERA_INVALID_STATE);
     auto settings = device->GetDeviceAbility();
     camera_metadata_item_t item;
     int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_ABILITY_SCENE_BEAUTY_TYPES, &item);
@@ -779,6 +782,7 @@ int32_t HCaptureSession::GetBeautyRange(std::vector<int32_t>& range, int32_t typ
 
     std::vector<int32_t> beautyRange = {};
     auto device = GetCameraDevice();
+    CHECK_RETURN_RET(!device, CAMERA_INVALID_STATE);
     auto settings = device->GetDeviceAbility();
     camera_metadata_item_t item;
     int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_ABILITY_BEAUTY_AUTO_VALUES, &item);
@@ -814,6 +818,7 @@ int32_t HCaptureSession::SetBeautyValue(int32_t type, int32_t value, bool needPe
         "HCaptureSession::SetBeautyValue check permission failed.");
 
     auto device = GetCameraDevice();
+    CHECK_RETURN_RET(!device, CAMERA_INVALID_STATE);
     int32_t ret;
     int32_t count = 1;
     constexpr int32_t DEFAULT_ITEMS = 1;
