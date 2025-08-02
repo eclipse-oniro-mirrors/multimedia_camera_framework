@@ -55,6 +55,7 @@ function pick(context: Context, mediaTypes: Array<PickerMediaType>, pickerProfil
     try {
       let func = (src: CameraPickerJsAsyncContext) => { pickAsync(src); };
       let funcAsync = async (src: CameraPickerJsAsyncContext) => {
+        worker.start();
         const job = worker.run<void>(func, src);
         job.Await();
         worker.join();
