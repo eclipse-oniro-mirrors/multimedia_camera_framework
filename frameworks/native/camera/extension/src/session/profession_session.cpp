@@ -799,7 +799,7 @@ void ProfessionSession::ProcessSensorExposureTimeChange(const std::shared_ptr<OH
         };
         std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
         if (exposureInfoCallback_ != nullptr && (value != exposureDurationValue_)) {
-            CHECK_EXECUTE(exposureDurationValue_ != 0, exposureInfoCallback_->OnExposureInfoChanged(info));
+            exposureInfoCallback_->OnExposureInfoChanged(info);
             exposureDurationValue_ = value;
         }
     }
