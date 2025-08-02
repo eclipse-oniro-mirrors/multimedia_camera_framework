@@ -46,8 +46,6 @@
 namespace OHOS {
 namespace CameraStandard {
 constexpr int32_t HDI_STREAM_ID_INIT = 1;
-using OHOS::HDI::Camera::V1_0::CaptureEndedInfo;
-using OHOS::HDI::Camera::V1_0::CaptureErrorInfo;
 using OHOS::HDI::Camera::V1_0::ICameraDeviceCallback;
 using OHOS::HDI::Camera::V1_3::IStreamOperatorCallback;
 class IHCameraCloseListener : public virtual RefBase {

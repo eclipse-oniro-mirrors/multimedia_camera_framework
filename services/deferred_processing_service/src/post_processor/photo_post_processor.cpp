@@ -33,8 +33,6 @@ namespace CameraStandard {
 namespace DeferredProcessing {
 namespace {
     const std::string PHOTO_SERVICE_NAME = "camera_image_process_service";
-    constexpr int32_t HDI_VERSION_1 = 1;
-    constexpr int32_t HDI_VERSION_3 = 3;
 }
 
 class PhotoPostProcessor::PhotoServiceListener : public HDI::ServiceManager::V1_0::ServStatListenerStub {
@@ -305,7 +303,7 @@ void PhotoPostProcessor::OnServiceChange(const HDI::ServiceManager::V1_0::Servic
     sptr<IImageProcessSession> session;
     sptr<OHOS::HDI::Camera::V1_3::IImageProcessService> proxyV1_3;
     // LCOV_EXCL_START
-    if (versionId >= GetVersionId(HDI_VERSION_1, HDI_VERSION_3)) {
+    if (versionId >= HDI_VERSION_ID_1_3) {
         proxyV1_3 = OHOS::HDI::Camera::V1_3::IImageProcessService::CastFrom(proxyV1_2);
     }
     if (proxyV1_3 != nullptr) {

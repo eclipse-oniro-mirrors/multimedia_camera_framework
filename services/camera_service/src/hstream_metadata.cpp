@@ -174,10 +174,8 @@ int32_t HStreamMetadata::EnableOrDisableMetadataType(const std::vector<int32_t>&
     CHECK_RETURN_RET_ELOG(streamOperator == nullptr, CAMERA_INVALID_STATE,
         "HStreamMetadata::EnableOrDisableMetadataType streamOperator is nullptr");
     streamOperator->GetVersion(majorVer_, minorVer_);
-    if (majorVer_ < HDI_VERSION_1 || minorVer_ < HDI_VERSION_3) {
-        MEDIA_DEBUG_LOG("EnableOrDisableMetadataType version: %{public}d.%{public}d", majorVer_, minorVer_);
-        return CAMERA_OK;
-    }
+    CHECK_RETURN_RET_DLOG(GetVersionId(majorVer_, minorVer_) < HDI_VERSION_ID_1_3, CAMERA_OK,
+        "EnableOrDisableMetadataType version: %{public}d.%{public}d", majorVer_, minorVer_);
     int32_t ret = PrepareCaptureId();
     CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, ret,
         "HStreamMetadata::EnableOrDisableMetadataType Failed to allocate a captureId");

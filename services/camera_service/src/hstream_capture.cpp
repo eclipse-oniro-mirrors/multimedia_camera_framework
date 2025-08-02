@@ -747,7 +747,7 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
     streamOperator->GetVersion(major, minor);
     MEDIA_INFO_LOG("streamOperator GetVersion major:%{public}d, minor:%{public}d", major, minor);
     // intercept when streamOperatorCallback support onCaptureReady
-    if (major >= HDI_VERSION_1 && minor >= HDI_VERSION_2 && !isBursting_) {
+    if (GetVersionId(major, minor) >= HDI_VERSION_ID_1_2 && !isBursting_) {
         MEDIA_INFO_LOG("HStreamCapture::Capture set capture not ready");
         isCaptureReady_ = false;
     }

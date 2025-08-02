@@ -33,8 +33,6 @@ namespace DeferredProcessing {
 namespace {
     const std::string VIDEO_SERVICE_NAME = "camera_video_process_service";
     constexpr uint32_t MAX_PROC_TIME_MS = 20 * 60 * 1000;
-    constexpr int32_t VIDEO_VERSION_1 = 1;
-    constexpr int32_t VIDEO_VERSION_4 = 4;
 }
 
 // LCOV_EXCL_START
@@ -565,7 +563,7 @@ void VideoPostProcessor::OnServiceChange(const HDI::ServiceManager::V1_0::Servic
     sptr<IVideoProcessSession> session = nullptr;
     sptr<HDI::Camera::V1_4::IVideoProcessService> proxyV1_4 = nullptr;
     // LCOV_EXCL_START
-    if (versionId >= GetVersionId(VIDEO_VERSION_1, VIDEO_VERSION_4)) {
+    if (versionId >= HDI_VERSION_ID_1_4) {
         proxyV1_4 = HDI::Camera::V1_4::IVideoProcessService::CastFrom(proxyV1_3);
     }
     if (proxyV1_4 != nullptr) {

@@ -1114,7 +1114,7 @@ int32_t HCameraDevice::GetStatus(const std::shared_ptr<OHOS::Camera::CameraMetad
     CHECK_RETURN_RET_ELOG(!count, CAMERA_OK, "HCameraDevice::GetStatus Nothing to query");
 
     sptr<OHOS::HDI::Camera::V1_2::ICameraDevice> hdiCameraDeviceV1_2;
-    if (cameraHostManager_->GetVersionByCamera(cameraID_) >= GetVersionId(HDI_VERSION_1, HDI_VERSION_2)) {
+    if (cameraHostManager_->GetVersionByCamera(cameraID_) >= HDI_VERSION_ID_1_2) {
         MEDIA_DEBUG_LOG("HCameraDevice::GetStatus ICameraDevice cast to V1_2");
         hdiCameraDeviceV1_2 = OHOS::HDI::Camera::V1_2::ICameraDevice::CastFrom(hdiCameraDevice_);
         if (hdiCameraDeviceV1_2 == nullptr) {
@@ -1362,13 +1362,13 @@ int32_t HCameraDevice::GetStreamOperator(const sptr<IStreamOperatorCallback> &ca
     sptr<OHOS::HDI::Camera::V1_2::ICameraDevice> hdiCameraDeviceV1_2;
     sptr<OHOS::HDI::Camera::V1_3::ICameraDevice> hdiCameraDeviceV1_3;
     int32_t versionRes = cameraHostManager_->GetVersionByCamera(cameraID_);
-    if (versionRes >= GetVersionId(HDI_VERSION_1, HDI_VERSION_3)) {
+    if (versionRes >= HDI_VERSION_ID_1_3) {
         MEDIA_DEBUG_LOG("HCameraDevice::GetStreamOperator ICameraDevice cast to V1_3");
         hdiCameraDeviceV1_3 = OHOS::HDI::Camera::V1_3::ICameraDevice::CastFrom(hdiCameraDevice_);
-    } else if (versionRes >= GetVersionId(HDI_VERSION_1, HDI_VERSION_2)) {
+    } else if (versionRes >= HDI_VERSION_ID_1_2) {
         MEDIA_DEBUG_LOG("HCameraDevice::GetStreamOperator ICameraDevice cast to V1_2");
         hdiCameraDeviceV1_2 = OHOS::HDI::Camera::V1_2::ICameraDevice::CastFrom(hdiCameraDevice_);
-    } else if (versionRes == GetVersionId(HDI_VERSION_1, HDI_VERSION_1)) {
+    } else if (versionRes == HDI_VERSION_ID_1_1) {
         MEDIA_DEBUG_LOG("HCameraDevice::GetStreamOperator ICameraDevice cast to V1_1");
         hdiCameraDeviceV1_1 = OHOS::HDI::Camera::V1_1::ICameraDevice::CastFrom(hdiCameraDevice_);
         if (hdiCameraDeviceV1_1 == nullptr) {
@@ -1377,16 +1377,16 @@ int32_t HCameraDevice::GetStreamOperator(const sptr<IStreamOperatorCallback> &ca
         }
     }
 
-    if (hdiCameraDeviceV1_3 != nullptr && versionRes >= GetVersionId(HDI_VERSION_1, HDI_VERSION_3)) {
+    if (hdiCameraDeviceV1_3 != nullptr && versionRes >= HDI_VERSION_ID_1_3) {
         sptr<OHOS::HDI::Camera::V1_3::IStreamOperator> streamOperator_v1_3;
         rc = (CamRetCode)(hdiCameraDeviceV1_3->GetStreamOperator_V1_3(callbackObj, streamOperator_v1_3));
         streamOperator = streamOperator_v1_3;
-    } else if (hdiCameraDeviceV1_2 != nullptr && versionRes >= GetVersionId(HDI_VERSION_1, HDI_VERSION_2)) {
+    } else if (hdiCameraDeviceV1_2 != nullptr && versionRes >= HDI_VERSION_ID_1_2) {
         MEDIA_DEBUG_LOG("HCameraDevice::GetStreamOperator ICameraDevice V1_2");
         sptr<OHOS::HDI::Camera::V1_2::IStreamOperator> streamOperator_v1_2;
         rc = (CamRetCode)(hdiCameraDeviceV1_2->GetStreamOperator_V1_2(callbackObj, streamOperator_v1_2));
         streamOperator = streamOperator_v1_2;
-    } else if (hdiCameraDeviceV1_1 != nullptr && versionRes == GetVersionId(HDI_VERSION_1, HDI_VERSION_1)) {
+    } else if (hdiCameraDeviceV1_1 != nullptr && versionRes == HDI_VERSION_ID_1_1) {
         MEDIA_DEBUG_LOG("HCameraDevice::GetStreamOperator ICameraDevice V1_1");
         sptr<OHOS::HDI::Camera::V1_1::IStreamOperator> streamOperator_v1_1;
         rc = (CamRetCode)(hdiCameraDeviceV1_1->GetStreamOperator_V1_1(callbackObj, streamOperator_v1_1));

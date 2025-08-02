@@ -31,7 +31,8 @@ ohos_unittest("camera_common_utils_test") {
     "${multimedia_camera_framework_path}/dynamic_libs:camera_dynamic_media_manager_public_config",
   ]
   sources = [
-    "./src/camera_common_utils_unittest.cpp"
+    "./src/camera_common_utils_unittest.cpp",
+    "./src/camera_hdi_const_unittest.cpp"
   ]
 
     deps = [

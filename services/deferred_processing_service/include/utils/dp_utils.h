@@ -19,6 +19,7 @@
 #include <unistd.h>
 
 #include "watch_dog.h"
+#include "camera_hdi_const.h"
 
 namespace OHOS {
 namespace CameraStandard {
