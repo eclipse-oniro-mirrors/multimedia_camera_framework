@@ -813,13 +813,15 @@ int32_t PhotoOutput::CreateStream()
     CHECK_RETURN_RET_ELOG(stream != nullptr, CameraErrorCode::OPERATION_NOT_ALLOWED,
         "PhotoOutput::CreateStream stream is not null");
     // LCOV_EXCL_START
-    std::string surfaceId = GetPhotoSurfaceId();
+    auto producer = GetBufferProducer();
+    CHECK_RETURN_RET_ELOG(producer == nullptr, CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "PhotoOutput::CreateStream producer is null");
     sptr<IStreamCapture> streamPtr = nullptr;
     auto photoProfile = GetPhotoProfile();
     CHECK_RETURN_RET_ELOG(photoProfile == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "PhotoOutput::CreateStream photoProfile is null");
 
-    int32_t res = CameraManager::GetInstance()->CreatePhotoOutputStream(streamPtr, *photoProfile, surfaceId);
+    int32_t res = CameraManager::GetInstance()->CreatePhotoOutputStream(streamPtr, *photoProfile, producer);
     CHECK_PRINT_ELOG(res != CameraErrorCode::SUCCESS,
         "PhotoOutput::CreateStream fail! error code :%{public}d", res);
     SetStream(streamPtr);
