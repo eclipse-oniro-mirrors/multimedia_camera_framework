@@ -922,10 +922,6 @@ Camera_ErrorCode Camera_CaptureSession::RegisterControlCenterEffectStatusChangeC
         make_shared<InnerControlCenterEffectStatusCallback>(this, controlCenterEffectStatusChange);
     CHECK_RETURN_RET_ELOG(innerControlCenterEffectCallback == nullptr, CAMERA_SERVICE_FATAL_ERROR,
         "create innerCallback failed!");
-    SceneMode currentMode = innerCaptureSession_->GetMode();
-    bool ret = currentMode != SceneMode::NORMAL && currentMode != SceneMode::VIDEO;
-    CHECK_RETURN_RET_ELOG(ret, CAMERA_INVALID_ARGUMENT,
-        "ControlCenterEffectStatusChangeCallback do not support current session: %{public}d", currentMode);
     innerCaptureSession_->SetControlCenterEffectStatusCallback(innerControlCenterEffectCallback);
     return CAMERA_OK;
 }
