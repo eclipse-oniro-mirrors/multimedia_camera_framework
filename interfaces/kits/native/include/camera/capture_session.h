@@ -1025,10 +1025,10 @@ Camera_ErrorCode OH_CaptureSession_UnregisterControlCenterEffectStatusChangeCall
 
 typedef void (*OH_CaptureSession_OnMacroStatusChange)(Camera_CaptureSession* session, bool isMacroActive);
 
-Camera_ErrorCode OH_CaptureSession_RegisterMacroStatusCallback(
+Camera_ErrorCode OH_CaptureSession_RegisterMacroStatusChangeCallback(
     Camera_CaptureSession* session, OH_CaptureSession_OnMacroStatusChange macroStatusChange);
 
-Camera_ErrorCode OH_CaptureSession_UnregisterMacroStatusCallback(
+Camera_ErrorCode OH_CaptureSession_UnregisterMacroStatusChangeCallback(
     Camera_CaptureSession* session, OH_CaptureSession_OnMacroStatusChange macroStatusChange);
 
 

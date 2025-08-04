@@ -896,7 +896,7 @@ Camera_ErrorCode OH_CaptureSession_UnregisterControlCenterEffectStatusChangeCall
     return CAMERA_OK;
 }
 
-Camera_ErrorCode OH_CaptureSession_RegisterMacroStatusCallback(
+Camera_ErrorCode OH_CaptureSession_RegisterMacroStatusChangeCallback(
     Camera_CaptureSession* session, OH_CaptureSession_OnMacroStatusChange macroStatusChange)
 {
     CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
@@ -906,7 +906,7 @@ Camera_ErrorCode OH_CaptureSession_RegisterMacroStatusCallback(
     return CAMERA_OK;
 }
 
-Camera_ErrorCode OH_CaptureSession_UnregisterMacroStatusCallback(
+Camera_ErrorCode OH_CaptureSession_UnregisterMacroStatusChangeCallback(
     Camera_CaptureSession* session, OH_CaptureSession_OnMacroStatusChange macroStatusChange)
 {
     CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
