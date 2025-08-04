@@ -193,7 +193,7 @@ public:
         sptr<BufferExtraData> extraData = surfaceBuffer->GetExtraData();
         CHECK_RETURN_RET_ELOG(extraData == nullptr, imageId, "GetImageId: extraData is nullptr");
         extraData->ExtraGet(OHOS::Camera::imageId, imageId);
-        MEDIA_DEBUG_LOG("GetImageId:%{public}ld", imageId);
+        MEDIA_DEBUG_LOG("GetImageId:%{public}s", std::to_string(imageId).c_str());
         return imageId;
     }
 
