@@ -1889,6 +1889,8 @@ int32_t HStreamOperator::OnResult(int32_t streamId, const std::vector<uint8_t>& 
         std::lock_guard<std::mutex> mechLock(mechCallbackLock_);
         CHECK_EXECUTE(mechCallback_ != nullptr && cameraResult!= nullptr, mechCallback_(streamId, cameraResult));
         if (g_isNeedFilterMetadata) {
+            CHECK_RETURN_RET_ELOG(cameraResult == nullptr, CAMERA_INVALID_ARG,
+                "HStreamOperator::OnResult cameraResult is null");
             OHOS::Camera::DeleteCameraMetadataItem(cameraResult->get(), OHOS_STATISTICS_DETECT_HUMAN_FACE_INFOS);
         }
     }

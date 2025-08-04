@@ -166,7 +166,11 @@ public:
     static int32_t GetBurstSequenceId(sptr<SurfaceBuffer> surfaceBuffer)
     {
         int32_t burstSequenceId = 0;
-        surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::burstSequenceId, burstSequenceId);
+        CHECK_RETURN_RET_ELOG(surfaceBuffer == nullptr, burstSequenceId,
+            "GetBurstSequenceId: surfaceBuffer is nullptr");
+        sptr<BufferExtraData> extraData = surfaceBuffer->GetExtraData();
+        CHECK_RETURN_RET_ELOG(extraData == nullptr, burstSequenceId, "GetBurstSequenceId: extraData is nullptr");
+        extraData->ExtraGet(OHOS::Camera::burstSequenceId, burstSequenceId);
         MEDIA_DEBUG_LOG("GetBurstSequenceId:%{public}d", burstSequenceId);
         return burstSequenceId;
     }
@@ -174,7 +178,10 @@ public:
     static int32_t GetImageCount(sptr<SurfaceBuffer> surfaceBuffer)
     {
         int32_t imageCount = 0;
-        surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::imageCount, imageCount);
+        CHECK_RETURN_RET_ELOG(surfaceBuffer == nullptr, imageCount, "GetImageCount: surfaceBuffer is nullptr");
+        sptr<BufferExtraData> extraData = surfaceBuffer->GetExtraData();
+        CHECK_RETURN_RET_ELOG(extraData == nullptr, imageCount, "GetImageCount: extraData is nullptr");
+        extraData->ExtraGet(OHOS::Camera::imageCount, imageCount);
         MEDIA_DEBUG_LOG("GetImageCount:%{public}d", imageCount);
         return imageCount;
     }
@@ -182,23 +189,35 @@ public:
     static int64_t GetImageId(sptr<SurfaceBuffer> surfaceBuffer)
     {
         int64_t imageId = 0;
-        surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::imageId, imageId);
+        CHECK_RETURN_RET_ELOG(surfaceBuffer == nullptr, imageId, "GetImageId: surfaceBuffer is nullptr");
+        sptr<BufferExtraData> extraData = surfaceBuffer->GetExtraData();
+        CHECK_RETURN_RET_ELOG(extraData == nullptr, imageId, "GetImageId: extraData is nullptr");
+        extraData->ExtraGet(OHOS::Camera::imageId, imageId);
         MEDIA_DEBUG_LOG("GetImageId:%{public}s", std::to_string(imageId).c_str());
         return imageId;
     }
 
     static int32_t GetIsDegradedImage(sptr<SurfaceBuffer> surfaceBuffer)
     {
-        int32_t isDegradedImage;
-        surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::isDegradedImage, isDegradedImage);
+        int32_t isDegradedImage = 0;
+        CHECK_RETURN_RET_ELOG(surfaceBuffer == nullptr, isDegradedImage,
+            "GetIsDegradedImage: surfaceBuffer is nullptr");
+        sptr<BufferExtraData> extraData = surfaceBuffer->GetExtraData();
+        CHECK_RETURN_RET_ELOG(extraData == nullptr, isDegradedImage, "GetIsDegradedImage: extraData is nullptr");
+        extraData->ExtraGet(OHOS::Camera::isDegradedImage, isDegradedImage);
         MEDIA_DEBUG_LOG("GetIsDegradedImage:%{public}d", isDegradedImage);
         return isDegradedImage;
     }
 
     static int32_t GetDeferredProcessingType(sptr<SurfaceBuffer> surfaceBuffer)
     {
-        int32_t deferredProcessingType;
-        surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::deferredProcessingType, deferredProcessingType);
+        int32_t deferredProcessingType = 0;
+        CHECK_RETURN_RET_ELOG(surfaceBuffer == nullptr, deferredProcessingType,
+            "GetDeferredProcessingType: surfaceBuffer is nullptr");
+        sptr<BufferExtraData> extraData = surfaceBuffer->GetExtraData();
+        CHECK_RETURN_RET_ELOG(extraData == nullptr, deferredProcessingType,
+            "GetDeferredProcessingType: extraData is nullptr");
+        extraData->ExtraGet(OHOS::Camera::deferredProcessingType, deferredProcessingType);
         MEDIA_DEBUG_LOG("GetDeferredProcessingType:%{public}d", deferredProcessingType);
         return deferredProcessingType;
     }
@@ -238,7 +257,10 @@ public:
     static int32_t GetDataStride(sptr<SurfaceBuffer> surfaceBuffer)
     {
         int32_t dataStride = -1;
-        surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::dataStride, dataStride);
+        CHECK_RETURN_RET_ELOG(surfaceBuffer == nullptr, dataStride, "GetDataStride: surfaceBuffer is nullptr");
+        sptr<BufferExtraData> extraData = surfaceBuffer->GetExtraData();
+        CHECK_RETURN_RET_ELOG(extraData == nullptr, dataStride, "GetDataStride: extraData is nullptr");
+        extraData->ExtraGet(OHOS::Camera::dataStride, dataStride);
         MEDIA_DEBUG_LOG("GetDataStride:%{public}d", dataStride);
         return dataStride;
     }
@@ -246,7 +268,12 @@ public:
     static int32_t GetCloudImageEnhanceFlag(sptr<SurfaceBuffer> surfaceBuffer)
     {
         int32_t cloudImageEnhanceFlag = 0;
-        surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::cloudImageEnhanceFlag, cloudImageEnhanceFlag);
+        CHECK_RETURN_RET_ELOG(surfaceBuffer == nullptr, cloudImageEnhanceFlag,
+            "GetCloudImageEnhanceFlag: surfaceBuffer is nullptr");
+        sptr<BufferExtraData> extraData = surfaceBuffer->GetExtraData();
+        CHECK_RETURN_RET_ELOG(extraData == nullptr, cloudImageEnhanceFlag,
+            "GetCloudImageEnhanceFlag: extraData is nullptr");
+        extraData->ExtraGet(OHOS::Camera::cloudImageEnhanceFlag, cloudImageEnhanceFlag);
         MEDIA_DEBUG_LOG("GetCloudImageEnhanceFlag:%{public}d", cloudImageEnhanceFlag);
         return cloudImageEnhanceFlag;
     }
