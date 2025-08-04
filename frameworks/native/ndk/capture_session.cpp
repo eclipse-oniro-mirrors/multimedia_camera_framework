@@ -76,8 +76,7 @@ Camera_ErrorCode OH_CaptureSession_RegisterSystemPressureLevelChangeCallback(Cam
     CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
     CHECK_RETURN_RET_ELOG(systemPressureLevel == nullptr, CAMERA_INVALID_ARGUMENT,
         "Invalid argument, callback is null!");
-    session->RegisterSystemPressureLevelCallback(systemPressureLevel);
-    return CAMERA_OK;
+    return session->RegisterSystemPressureLevelCallback(systemPressureLevel);
 }
 
 /**
