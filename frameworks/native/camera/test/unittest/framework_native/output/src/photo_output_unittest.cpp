@@ -145,6 +145,27 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_001, TestSize.Level1)
 
 /*
  * Feature: Framework
+ * Function: Test PhotoCaptureSetting with SetGpsLocation
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test PhotoCaptureSetting with SetGpsLocation
+ */
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_029, TestSize.Level0)
+{
+    std::shared_ptr<PhotoCaptureSetting> settings = std::make_shared<PhotoCaptureSetting>();
+    double latitude = 1.0;
+    double longitude = 1.0;
+    std::shared_ptr<Location> location = std::make_shared<Location>();
+    location->latitude = latitude;
+    location->longitude = longitude;
+    settings->SetGpsLocation(latitude, longitude);
+    EXPECT_EQ(settings->location_->latitude, location->latitude);
+    EXPECT_EQ(settings->location_->longitude, location->longitude);
+}
+
+/*
+ * Feature: Framework
  * Function: Test photooutput with SetNativeSurface and SeteCallbackFlag
  * SubFunction: NA
  * FunctionPoints: NA
