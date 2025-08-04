@@ -55,8 +55,7 @@ napi_value SecureCameraSessionNapi::Init(napi_env env, napi_value exports)
         secure_camera_session_props.size(),
         secure_camera_session_props.data(), &ctorObj);
     if (status == napi_ok) {
-        int32_t refCount = 1;
-        status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
+        status = NapiRefManager::CreateMemSafetyRef(env, ctorObj, &sConstructor_);
         if (status == napi_ok) {
             status = napi_set_named_property(env, exports, SECURE_CAMERA_SESSION_NAPI_CLASS_NAME, ctorObj);
             CHECK_RETURN_RET(status == napi_ok, exports);

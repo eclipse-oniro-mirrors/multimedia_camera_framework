@@ -23,7 +23,6 @@
 namespace OHOS {
 namespace CameraStandard {
 using namespace std;
- 
 thread_local napi_ref LightPaintingSessionNapi::sConstructor_ = nullptr;
  
 LightPaintingSessionNapi::LightPaintingSessionNapi() : env_(nullptr), wrapper_(nullptr)
@@ -68,12 +67,11 @@ void LightPaintingSessionNapi::Init(napi_env env)
                                light_painting_session_props.size(),
                                light_painting_session_props.data(), &ctorObj);
     CHECK_RETURN_ELOG(status != napi_ok, "LightPaintingSessionNapi defined class failed");
-    int32_t refCount = 1;
-    status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
+    status = NapiRefManager::CreateMemSafetyRef(env, ctorObj, &sConstructor_);
     CHECK_RETURN_ELOG(status != napi_ok, "LightPaintingSessionNapi Init failed");
     MEDIA_DEBUG_LOG("LightPaintingSessionNapi Init success");
 }
- 
+
 napi_value LightPaintingSessionNapi::CreateCameraSession(napi_env env)
 {
     MEDIA_INFO_LOG("CreateCameraSession is called");

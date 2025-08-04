@@ -19,6 +19,7 @@
 #include "hilog/log.h"
 #include "image_napi.h"
 #include "napi/native_common.h"
+#include "napi_ref_manager.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -78,7 +79,6 @@ napi_value PhotoNapi::Init(napi_env env, napi_value exports)
     MEDIA_DEBUG_LOG("Init is called");
     napi_status status;
     napi_value ctorObj;
-    int32_t refCount = 1;
 
     napi_property_descriptor photo_properties[] = {
         // Photo
@@ -92,7 +92,7 @@ napi_value PhotoNapi::Init(napi_env env, napi_value exports)
                                sizeof(photo_properties) / sizeof(photo_properties[PARAM0]),
                                photo_properties, &ctorObj);
     if (status == napi_ok) {
-        if (napi_create_reference(env, ctorObj, refCount, &sConstructor_) == napi_ok) {
+        if (NapiRefManager::CreateMemSafetyRef(env, ctorObj, &sConstructor_) == napi_ok) {
             status = napi_set_named_property(env, exports, PHOTO_NAPI_CLASS_NAME, ctorObj);
             CHECK_RETURN_RET(status == napi_ok, exports);
         }

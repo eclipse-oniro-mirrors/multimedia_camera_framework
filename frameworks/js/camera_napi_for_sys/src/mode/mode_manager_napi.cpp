@@ -25,6 +25,8 @@
 #include "mode/portrait_session_napi.h"
 #include "mode/secure_session_for_sys_napi.h"
 #include "mode/video_session_for_sys_napi.h"
+#include "napi_ref_manager.h"
+
 namespace OHOS {
 namespace CameraStandard {
 using namespace std;
@@ -107,8 +109,7 @@ void ModeManagerNapi::Init(napi_env env)
                                sizeof(mode_mgr_properties) / sizeof(mode_mgr_properties[PARAM0]),
                                mode_mgr_properties, &ctorObj);
     CHECK_RETURN_ELOG(status != napi_ok, "ModeManagerNapi defined class failed");
-    int32_t refCount = 1;
-    status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
+    status = NapiRefManager::CreateMemSafetyRef(env, ctorObj, &sConstructor_);
     CHECK_RETURN_ELOG(status != napi_ok, "ModeManagerNapi Init failed");
     MEDIA_DEBUG_LOG("ModeManagerNapi Init success");
 }

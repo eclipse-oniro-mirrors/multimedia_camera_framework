@@ -63,8 +63,7 @@ void VideoSessionForSysNapi::Init(napi_env env)
                                video_session_props.size(),
                                video_session_props.data(), &ctorObj);
     CHECK_RETURN_ELOG(status != napi_ok, "VideoSessionForSysNapi defined class failed");
-    int32_t refCount = 1;
-    status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
+    status = NapiRefManager::CreateMemSafetyRef(env, ctorObj, &sConstructor_);
     CHECK_RETURN_ELOG(status != napi_ok, "VideoSessionForSysNapi Init failed");
     MEDIA_DEBUG_LOG("VideoSessionForSysNapi Init success");
 }

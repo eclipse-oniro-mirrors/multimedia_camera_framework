@@ -191,7 +191,6 @@ napi_value CameraInputNapi::Init(napi_env env, napi_value exports)
     MEDIA_DEBUG_LOG("Init is called");
     napi_status status;
     napi_value ctorObj;
-    int32_t refCount = 1;
 
     // todo: Open and Close in native have not implemented
     napi_property_descriptor camera_input_props[] = {
@@ -211,7 +210,7 @@ napi_value CameraInputNapi::Init(napi_env env, napi_value exports)
                                sizeof(camera_input_props) / sizeof(camera_input_props[PARAM0]),
                                camera_input_props, &ctorObj);
     if (status == napi_ok) {
-        status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
+        status = NapiRefManager::CreateMemSafetyRef(env, ctorObj, &sConstructor_);
         if (status == napi_ok) {
             status = napi_set_named_property(env, exports, CAMERA_INPUT_NAPI_CLASS_NAME, ctorObj);
             CHECK_RETURN_RET(status == napi_ok, exports);

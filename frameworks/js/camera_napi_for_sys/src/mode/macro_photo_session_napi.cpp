@@ -57,8 +57,7 @@ void MacroPhotoSessionNapi::Init(napi_env env)
         napi_define_class(env, MACRO_PHOTO_SESSION_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH, MacroPhotoSessionNapiConstructor,
             nullptr, macro_photo_session_props.size(), macro_photo_session_props.data(), &ctorObj);
     CHECK_RETURN_ELOG(status != napi_ok, "MacroPhotoSessionNapi defined class failed");
-    int32_t refCount = 1;
-    status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
+    status = NapiRefManager::CreateMemSafetyRef(env, ctorObj, &sConstructor_);
     CHECK_RETURN_ELOG(status != napi_ok, "MacroPhotoSessionNapi Init failed");
     MEDIA_DEBUG_LOG("MacroPhotoSessionNapi Init success");
 }

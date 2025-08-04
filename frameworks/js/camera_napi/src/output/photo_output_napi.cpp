@@ -662,7 +662,6 @@ napi_value PhotoOutputNapi::Init(napi_env env, napi_value exports)
     MEDIA_DEBUG_LOG("Init is called");
     napi_status status;
     napi_value ctorObj;
-    int32_t refCount = 1;
 
     napi_property_descriptor photo_output_props[] = {
         DECLARE_NAPI_FUNCTION("isMovingPhotoSupported", IsMovingPhotoSupported),
@@ -703,7 +702,7 @@ napi_value PhotoOutputNapi::Init(napi_env env, napi_value exports)
     status = napi_define_class(env, CAMERA_PHOTO_OUTPUT_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH, PhotoOutputNapiConstructor,
         nullptr, sizeof(photo_output_props) / sizeof(photo_output_props[PARAM0]), photo_output_props, &ctorObj);
     if (status == napi_ok) {
-        status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
+        status = NapiRefManager::CreateMemSafetyRef(env, ctorObj, &sConstructor_);
         if (status == napi_ok) {
             status = napi_set_named_property(env, exports, CAMERA_PHOTO_OUTPUT_NAPI_CLASS_NAME, ctorObj);
             CHECK_RETURN_RET(status == napi_ok, exports);

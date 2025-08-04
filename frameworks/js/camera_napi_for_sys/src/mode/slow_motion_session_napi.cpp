@@ -101,8 +101,7 @@ void SlowMotionSessionNapi::Init(napi_env env)
                                slow_motion_session_props.size(),
                                slow_motion_session_props.data(), &ctorObj);
     CHECK_RETURN_ELOG(status != napi_ok, "SlowMotionSessionNapi defined class failed");
-    int32_t refCount = 1;
-    status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
+    status = NapiRefManager::CreateMemSafetyRef(env, ctorObj, &sConstructor_);
     CHECK_RETURN_ELOG(status != napi_ok, "SlowMotionSessionNapi Init failed");
     MEDIA_DEBUG_LOG("SlowMotionSessionNapi Init success");
 }

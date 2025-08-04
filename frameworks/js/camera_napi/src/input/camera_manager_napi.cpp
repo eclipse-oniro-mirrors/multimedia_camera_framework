@@ -582,7 +582,6 @@ napi_value CameraManagerNapi::Init(napi_env env, napi_value exports)
     MEDIA_DEBUG_LOG("Init is called");
     napi_status status;
     napi_value ctorObj;
-    int32_t refCount = 1;
 
     napi_property_descriptor camera_mgr_properties[] = {
         // CameraManager
@@ -626,7 +625,7 @@ napi_value CameraManagerNapi::Init(napi_env env, napi_value exports)
                                sizeof(camera_mgr_properties) / sizeof(camera_mgr_properties[PARAM0]),
                                camera_mgr_properties, &ctorObj);
     if (status == napi_ok) {
-        if (napi_create_reference(env, ctorObj, refCount, &sConstructor_) == napi_ok) {
+        if (NapiRefManager::CreateMemSafetyRef(env, ctorObj, &sConstructor_) == napi_ok) {
             status = napi_set_named_property(env, exports, CAMERA_MANAGER_NAPI_CLASS_NAME, ctorObj);
             CHECK_RETURN_RET(status == napi_ok, exports);
         }

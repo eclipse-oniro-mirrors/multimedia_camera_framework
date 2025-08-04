@@ -267,8 +267,7 @@ void DepthDataOutputNapi::Init(napi_env env)
                                sizeof(depth_data_output_props) / sizeof(depth_data_output_props[PARAM0]),
                                depth_data_output_props, &ctorObj);
     CHECK_RETURN_ELOG(status != napi_ok, "DepthDataOutputNapi defined class failed");
-    int32_t refCount = 1;
-    status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
+    status = NapiRefManager::CreateMemSafetyRef(env, ctorObj, &sConstructor_);
     CHECK_RETURN_ELOG(status != napi_ok, "DepthDataOutputNapi Init failed");
     MEDIA_DEBUG_LOG("DepthDataOutputNapi Init success");
 }

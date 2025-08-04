@@ -54,8 +54,7 @@ void ApertureVideoSessionNapi::Init(napi_env env)
     status = napi_define_class(env, APERTURE_VIDEO_SESSION_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
         ApertureVideoSessionNapiConstructor, nullptr, session_props.size(), session_props.data(), &ctorObj);
     CHECK_RETURN_ELOG(status != napi_ok, "ApertureVideoSessionNapi defined class failed");
-    int32_t refCount = 1;
-    status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
+    status = NapiRefManager::CreateMemSafetyRef(env, ctorObj, &sConstructor_);
     CHECK_RETURN_ELOG(status != napi_ok, "ApertureVideoSessionNapi Init failed");
     MEDIA_DEBUG_LOG("ApertureVideoSessionNapi Init success");
 }

@@ -140,8 +140,7 @@ napi_value ControlCenterSessionNapi::Init(napi_env env, napi_value exports)
         sizeof(control_center_session_props) / sizeof(control_center_session_props[0]),
         control_center_session_props, &ctorObj);
     if (status == napi_ok) {
-        int32_t refCount = 1;
-        status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
+        status = NapiRefManager::CreateMemSafetyRef(env, ctorObj, &sConstructor_);
         if (status == napi_ok) {
             status = napi_set_named_property(env, exports, CONTROL_CENTER_SESSION_NAPI_CLASS_NAME, ctorObj);
             if (status == napi_ok) {
@@ -152,7 +151,7 @@ napi_value ControlCenterSessionNapi::Init(napi_env env, napi_value exports)
     MEDIA_ERR_LOG("ControlCenterSessionNapi::Init Failed!");
     return nullptr;
 }
- 
+
 napi_value ControlCenterSessionNapi::CreateControlCenterSession(napi_env env)
 {
     MEDIA_INFO_LOG("ControlCenterSessionNapi::CreateControlCenterSession is called");

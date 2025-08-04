@@ -18,6 +18,7 @@
 #include "camera_log.h"
 #include "camera_napi_utils.h"
 #include "camera_util.h"
+#include "napi_ref_manager.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -109,8 +110,7 @@ void DepthDataNapi::Init(napi_env env)
                                sizeof(depth_data_properties) / sizeof(depth_data_properties[PARAM0]),
                                depth_data_properties, &ctorObj);
     CHECK_RETURN_ELOG(status != napi_ok, "DepthDataNapi defined class failed");
-    int32_t refCount = 1;
-    status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
+    status = NapiRefManager::CreateMemSafetyRef(env, ctorObj, &sConstructor_);
     CHECK_RETURN_ELOG(status != napi_ok, "DepthDataNapi Init failed");
     MEDIA_DEBUG_LOG("DepthDataNapi Init success");
 }

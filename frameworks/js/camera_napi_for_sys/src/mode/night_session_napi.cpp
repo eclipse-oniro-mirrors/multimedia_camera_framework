@@ -17,6 +17,7 @@
 
 #include "input/camera_manager_for_sys.h"
 #include "napi/native_node_api.h"
+#include "napi_ref_manager.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -61,8 +62,7 @@ void NightSessionNapi::Init(napi_env env)
                                night_session_props.size(),
                                night_session_props.data(), &ctorObj);
     CHECK_RETURN_ELOG(status != napi_ok, "NightSessionNapi defined class failed");
-    int32_t refCount = 1;
-    status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
+    status = NapiRefManager::CreateMemSafetyRef(env, ctorObj, &sConstructor_);
     CHECK_RETURN_ELOG(status != napi_ok, "NightSessionNapi Init failed");
     MEDIA_DEBUG_LOG("NightSessionNapi Init success");
 }

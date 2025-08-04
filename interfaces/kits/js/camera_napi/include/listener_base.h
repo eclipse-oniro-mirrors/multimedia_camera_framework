@@ -24,6 +24,7 @@
 #include "camera_napi_auto_ref.h"
 #include "camera_napi_utils.h"
 #include "js_native_api_types.h"
+#include "napi_ref_manager.h"
 namespace OHOS {
 namespace CameraStandard {
 class ListenerBase {

@@ -30,6 +30,7 @@
    OHOS::CameraStandard::ModeManagerNapi::Init*;
    OHOS::CameraStandard::PhotoNapi::Init*;
    OHOS::CameraStandard::DeferredPhotoProxyNapi::Init*;
+   OHOS::CameraStandard::NapiRefManager::CreateMemSafetyRef*;
  };
  local:
  extern "C++" {

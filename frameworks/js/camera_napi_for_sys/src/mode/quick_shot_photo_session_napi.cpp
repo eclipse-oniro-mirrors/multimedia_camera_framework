@@ -58,8 +58,7 @@ void QuickShotPhotoSessionNapi::Init(napi_env env)
         QuickShotPhotoSessionNapiConstructor, nullptr, quick_shot_photo_session_props.size(),
         quick_shot_photo_session_props.data(), &ctorObj);
     CHECK_RETURN_ELOG(status != napi_ok, "QuickShotPhotoSessionNapi defined class failed");
-    int32_t refCount = 1;
-    status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
+    status = NapiRefManager::CreateMemSafetyRef(env, ctorObj, &sConstructor_);
     CHECK_RETURN_ELOG(status != napi_ok, "QuickShotPhotoSessionNapi Init failed");
     MEDIA_DEBUG_LOG("QuickShotPhotoSessionNapi Init success");
 }

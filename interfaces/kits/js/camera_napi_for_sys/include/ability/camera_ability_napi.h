@@ -124,6 +124,8 @@ public:
 
     static const std::map<FunctionsType, const char*> functionsNameMap_;
     static const std::map<FunctionsType, Descriptor> functionsDescMap_;
+private:
+    static const std::unordered_map<FunctionsType, napi_ref*> refsMap_;
 };
 }
 }
