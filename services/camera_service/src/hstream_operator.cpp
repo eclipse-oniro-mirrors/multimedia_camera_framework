@@ -873,7 +873,8 @@ int32_t HStreamOperator::UpdateSettingForFocusTrackingMech(bool isEnableMech)
     uint32_t majorVer = 0;
     uint32_t minorVer = 0;
     streamOperator_->GetVersion(majorVer, minorVer);
-    CHECK_RETURN_RET(majorVer < HDI_VERSION_1 || minorVer < HDI_VERSION_3, CAMERA_OK);
+    CHECK_RETURN_RET_DLOG(GetVersionId(majorVer, minorVer) < HDI_VERSION_ID_1_3, CAMERA_OK,
+        "UpdateSettingForFocusTrackingMech version: %{public}d.%{public}d", majorVer, minorVer);
     sptr<OHOS::HDI::Camera::V1_3::IStreamOperator> streamOperatorV1_3 =
         OHOS::HDI::Camera::V1_3::IStreamOperator::CastFrom(streamOperator_);
     CHECK_RETURN_RET(!streamOperatorV1_3, CAMERA_UNKNOWN_ERROR);
@@ -1066,7 +1067,7 @@ int32_t HStreamOperator::CommitStreams(
     streamOperator->GetVersion(major, minor);
     MEDIA_INFO_LOG(
         "HStreamOperator::CommitStreams streamOperator GetVersion major:%{public}d, minor:%{public}d", major, minor);
-    if (major >= HDI_VERSION_1 && minor >= HDI_VERSION_1) {
+    if (GetVersionId(major, minor) >= HDI_VERSION_ID_1_1) {
         MEDIA_DEBUG_LOG("HStreamOperator::CommitStreams IStreamOperator cast to V1_1");
         streamOperatorV1_1 = OHOS::HDI::Camera::V1_1::IStreamOperator::CastFrom(streamOperator);
         if (streamOperatorV1_1 == nullptr) {
@@ -1689,7 +1690,7 @@ sptr<OHOS::HDI::Camera::V1_1::IStreamOperator> HStreamOperator::GetStreamOperato
     streamOperator->GetVersion(major, minor);
     MEDIA_INFO_LOG("streamOperator GetVersion major:%{public}d, minor:%{public}d", major, minor);
 
-    if (major >= HDI_VERSION_1 && minor >= HDI_VERSION_1) {
+    if (GetVersionId(major, minor) >= HDI_VERSION_ID_1_1) {
         auto streamOperatorV1_1 = OHOS::HDI::Camera::V1_1::IStreamOperator::CastFrom(streamOperator);
         if (streamOperatorV1_1 == nullptr) {
             MEDIA_ERR_LOG("HStreamOperator::CreateStreams IStreamOperator cast to V1_1 error");
@@ -1710,7 +1711,7 @@ int32_t HStreamOperator::UpdateStreams(std::vector<StreamInfo_V1_1>& streamInfos
     uint32_t minor;
     streamOperator->GetVersion(major, minor);
     MEDIA_INFO_LOG("UpdateStreams::UpdateStreams GetVersion major:%{public}d, minor:%{public}d", major, minor);
-    if (major >= HDI_VERSION_1 && minor >= HDI_VERSION_2) {
+    if (GetVersionId(major, minor) >= HDI_VERSION_ID_1_2) {
         streamOperatorV1_2 = OHOS::HDI::Camera::V1_2::IStreamOperator::CastFrom(streamOperator);
         if (streamOperatorV1_2 == nullptr) {
             MEDIA_ERR_LOG("HStreamOperator::UpdateStreams IStreamOperator cast to V1_2 error");

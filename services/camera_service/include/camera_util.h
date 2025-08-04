@@ -34,13 +34,11 @@
 #include "v1_1/types.h"
 #include "v1_2/types.h"
 #include "v1_3/types.h"
+#include "camera_hdi_const.h"
 
 namespace OHOS {
 namespace CameraStandard {
 class HStreamCommon;
-static constexpr int32_t HDI_VERSION_1 = 1;
-static constexpr int32_t HDI_VERSION_2 = 2;
-static constexpr int32_t HDI_VERSION_3 = 3;
 static const int32_t STREAM_ROTATE_0 = 0;
 static const int32_t STREAM_ROTATE_90 = 90;
 static const int32_t STREAM_ROTATE_180 = 180;
@@ -175,8 +173,6 @@ int32_t HdiToServiceErrorV1_2(HDI::Camera::V1_2::CamRetCode ret);
 EXPORT_API std::string CreateMsg(const char* format, ...);
 
 bool IsHapTokenId(uint32_t tokenId);
-
-int32_t GetVersionId(uint32_t major, uint32_t minor);
 
 bool IsValidMode(int32_t opMode, std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility);
 

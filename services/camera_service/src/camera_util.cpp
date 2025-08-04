@@ -424,12 +424,6 @@ int32_t CheckPermission(const std::string permissionName, uint32_t callerToken)
     return CAMERA_OK;
 }
 
-int32_t GetVersionId(uint32_t major, uint32_t minor)
-{
-    const uint32_t offset = 8;
-    return static_cast<int32_t>((major << offset) | minor);
-}
-
 void AddCameraPermissionUsedRecord(const uint32_t callingTokenId, const std::string permissionName)
 {
     int32_t successCout = 1;
