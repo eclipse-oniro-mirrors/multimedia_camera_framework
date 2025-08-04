@@ -70,6 +70,7 @@ Camera_ErrorCode Camera_PhotoOutput::RegisterPhotoAvailableCallback(OH_PhotoOutp
         innerCallback_ = make_shared<InnerPhotoOutputCallback>(this);
         CHECK_RETURN_RET_ELOG(innerCallback_ == nullptr, CAMERA_SERVICE_FATAL_ERROR,
             "create innerCallback_ failed!");
+        innerPhotoOutput_->SetCallback(innerCallback_);
     }
 
     innerPhotoOutput_->SetPhotoAvailableCallback(innerCallback_);
@@ -88,6 +89,7 @@ Camera_ErrorCode Camera_PhotoOutput::RegisterPhotoAssetAvailableCallback(OH_Phot
         innerCallback_ = make_shared<InnerPhotoOutputCallback>(this);
         CHECK_RETURN_RET_ELOG(innerCallback_ == nullptr, CAMERA_SERVICE_FATAL_ERROR,
             "create innerCallback_ failed!");
+        innerPhotoOutput_->SetCallback(innerCallback_);
     }
 
     innerPhotoOutput_->SetPhotoAssetAvailableCallback(innerCallback_);
