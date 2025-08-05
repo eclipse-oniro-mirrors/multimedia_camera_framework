@@ -154,7 +154,6 @@ void HStreamRepeat::SetStreamInfo(StreamInfo_V1_1& streamInfo)
                 if (streamInfo.v1_0.dataspace_ == CM_ColorSpaceType_V2_1::CM_BT2020_HLG_LIMIT) {
                     streamInfo.v1_0.dataspace_ = CM_ColorSpaceType_V2_1::CM_BT2020_HLG_FULL;
                 }
-
                 if (streamInfo.v1_0.dataspace_ == CM_ColorSpaceType_V2_1::CM_BT709_LIMIT) {
                     streamInfo.v1_0.dataspace_ = CM_ColorSpaceType_V2_1::CM_BT709_FULL;
                 }
