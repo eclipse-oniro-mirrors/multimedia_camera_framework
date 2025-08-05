@@ -50,6 +50,7 @@ private:
     BlockingQueue<sptr<AudioRecord>> audioBufferQueue_;
     std::atomic<bool> startAudioCapture_ { false };
     std::unique_ptr<std::thread> audioThread_ = nullptr;
+    std::mutex audioCapturerMutex_;
 };
 } // CameraStandard
 } // OHOS

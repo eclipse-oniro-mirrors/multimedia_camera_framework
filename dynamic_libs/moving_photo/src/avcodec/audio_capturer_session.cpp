@@ -89,6 +89,7 @@ bool AudioCapturerSession::CreateAudioCapturer()
     capturerOptions.streamInfo = deferredInputOptions_;
     capturerOptions.capturerInfo.sourceType = SourceType::SOURCE_TYPE_UNPROCESSED;
     capturerOptions.capturerInfo.capturerFlags = 0;
+    std::lock_guard<std::mutex> lock(audioCapturerMutex_);
     audioCapturer_ = AudioCapturer::Create(capturerOptions);
     CHECK_RETURN_RET_ELOG(audioCapturer_ == nullptr, false, "AudioCapturerSession::Create AudioCapturer failed");
     audioCapturer_->SetInputDevice(AudioStandard::DeviceType::DEVICE_TYPE_MIC);
@@ -110,15 +111,18 @@ bool AudioCapturerSession::StartAudioCapture()
 {
     MEDIA_INFO_LOG("Starting moving photo audio stream");
     CHECK_RETURN_RET_ELOG(startAudioCapture_, true, "AudioCapture is already started.");
-    if (audioCapturer_ == nullptr && !CreateAudioCapturer()) {
-        MEDIA_INFO_LOG("audioCapturer is not create");
-        return false;
-    }
-    if (!audioCapturer_->Start()) {
-        MEDIA_INFO_LOG("Start stream failed");
-        audioCapturer_->Release();
-        startAudioCapture_ = false;
-        return false;
+    {
+        std::lock_guard<std::mutex> lock(audioCapturerMutex_);
+        if (audioCapturer_ == nullptr && !CreateAudioCapturer()) {
+            MEDIA_INFO_LOG("audioCapturer is not create");
+            return false;
+        }
+        if (!audioCapturer_->Start()) {
+            MEDIA_INFO_LOG("Start stream failed");
+            audioCapturer_->Release();
+            startAudioCapture_ = false;
+            return false;
+        }
     }
     if (audioThread_ && audioThread_->joinable()) {
         MEDIA_INFO_LOG("audioThread_ is already start, reset");
@@ -143,6 +147,7 @@ void AudioCapturerSession::GetAudioRecords(int64_t startTime, int64_t endTime, v
 
 void AudioCapturerSession::ProcessAudioBuffer()
 {
+    std::lock_guard<std::mutex> lock(audioCapturerMutex_);
     CHECK_RETURN_ELOG(audioCapturer_ == nullptr, "AudioCapturer_ is not init");
     size_t bufferLen = static_cast<size_t>(deferredInputOptions_.samplingRate / AudioDeferredProcess::ONE_THOUSAND *
         deferredInputOptions_.channels * AudioDeferredProcess::DURATION_EACH_AUDIO_FRAME * sizeof(short));
@@ -200,6 +205,7 @@ void AudioCapturerSession::Stop()
 void AudioCapturerSession::Release()
 {
     CAMERA_SYNC_TRACE;
+    std::lock_guard<std::mutex> lock(audioCapturerMutex_);
     if (audioCapturer_ != nullptr) {
         MEDIA_INFO_LOG("Audio capture Release enter");
         audioCapturer_->Release();
