@@ -475,7 +475,7 @@ int32_t GetStreamRotation(int32_t& sensorOrientation, camera_position_enum_t& ca
         streamRotation = (sensorOrientation + degrees) % STREAM_ROTATE_360;
         streamRotation = (STREAM_ROTATE_360 - streamRotation) % STREAM_ROTATE_360;
     }
-    MEDIA_DEBUG_LOG("HStreamRepeat::SetStreamTransform filp streamRotation %{public}d, rotate %{public}d",
+    MEDIA_DEBUG_LOG("SetStreamTransform filp streamRotation %{public}d, rotate %{public}d",
         streamRotation, disPlayRotation);
     return streamRotation;
 }
