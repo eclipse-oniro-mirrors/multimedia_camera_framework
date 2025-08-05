@@ -88,14 +88,15 @@ void AvcodecTaskManager::EncodeVideoBuffer(sptr<FrameRecord> frameRecord, CacheC
     CHECK_RETURN(!encodeManager);
     encodeManager->SubmitTask([thisPtr, frameRecord, cacheCallback]() {
         CAMERA_SYNC_TRACE;
-        bool isEncodeSuccess = false;
-        CHECK_RETURN(!thisPtr->videoEncoder_ && !frameRecord);
-        isEncodeSuccess = thisPtr->videoEncoder_->EncodeSurfaceBuffer(frameRecord);
+        CHECK_RETURN(thisPtr == nullptr);
+        auto videoEncoder = thisPtr->videoEncoder_;
+        CHECK_RETURN(videoEncoder == nullptr || frameRecord == nullptr);
+        bool isEncodeSuccess = videoEncoder->EncodeSurfaceBuffer(frameRecord);
         if (isEncodeSuccess) {
-            thisPtr->videoEncoder_->ReleaseSurfaceBuffer(frameRecord);
+            videoEncoder->ReleaseSurfaceBuffer(frameRecord);
         } else {
             sptr<SurfaceBuffer> releaseBuffer;
-            thisPtr->videoEncoder_->DetachCodecBuffer(releaseBuffer, frameRecord);
+            videoEncoder->DetachCodecBuffer(releaseBuffer, frameRecord);
         }
         frameRecord->SetEncodedResult(isEncodeSuccess);
         frameRecord->SetFinishStatus();
