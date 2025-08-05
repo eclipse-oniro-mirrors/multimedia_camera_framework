@@ -78,7 +78,6 @@ napi_value CameraNapi::Init(napi_env env, napi_value exports)
     MEDIA_DEBUG_LOG("Init is called");
     napi_status status;
     napi_value ctorObj;
-    int32_t refCount = 1;
     napi_property_descriptor camera_properties[] = {
         DECLARE_NAPI_FUNCTION("getCameraManagerTest", CreateCameraManagerInstance)
     };
@@ -199,7 +198,7 @@ napi_value CameraNapi::Init(napi_env env, napi_value exports)
                                nullptr, sizeof(camera_properties) / sizeof(camera_properties[PARAM0]),
                                camera_properties, &ctorObj);
     if (status == napi_ok) {
-        if (napi_create_reference(env, ctorObj, refCount, &sConstructor_) == napi_ok) {
+        if (NapiRefManager::CreateMemSafetyRef(env, ctorObj, &sConstructor_) == napi_ok) {
             status = napi_set_named_property(env, exports, CAMERA_LIB_NAPI_CLASS_NAME, ctorObj);
             if (status == napi_ok && napi_define_properties(env, exports,
                 sizeof(camera_static_prop) / sizeof(camera_static_prop[PARAM0]), camera_static_prop) == napi_ok) {
@@ -283,7 +282,7 @@ napi_value CameraNapi::CreateObjectWithMap(napi_env env,
         }
     }
     if (status == napi_ok) {
-        status = napi_create_reference(env, result, 1, &outputRef);
+        status = NapiRefManager::CreateMemSafetyRef(env, result, &outputRef);
         CHECK_RETURN_RET(status == napi_ok, result);
     }
     MEDIA_ERR_LOG("Create %{public}s call Failed!", objectName.c_str());

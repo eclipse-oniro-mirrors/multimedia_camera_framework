@@ -21,6 +21,7 @@
 #include "camera_log.h"
 #include "camera_napi_callback_param_parser.h"
 #include "camera_napi_utils.h"
+#include "napi_ref_manager.h"
 namespace OHOS {
 namespace CameraStandard {
 

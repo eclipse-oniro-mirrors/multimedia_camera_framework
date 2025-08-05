@@ -274,7 +274,6 @@ napi_value MetadataOutputNapi::Init(napi_env env, napi_value exports)
     MEDIA_DEBUG_LOG("Init is called");
     napi_status status;
     napi_value ctorObj;
-    int32_t refCount = 1;
 
     napi_property_descriptor metadata_output_props[] = {
         DECLARE_NAPI_FUNCTION("addMetadataObjectTypes", AddMetadataObjectTypes),
@@ -292,7 +291,7 @@ napi_value MetadataOutputNapi::Init(napi_env env, napi_value exports)
                                sizeof(metadata_output_props) / sizeof(metadata_output_props[PARAM0]),
                                metadata_output_props, &ctorObj);
     if (status == napi_ok) {
-        status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
+        status = NapiRefManager::CreateMemSafetyRef(env, ctorObj, &sConstructor_);
         if (status == napi_ok) {
             status = napi_set_named_property(env, exports, CAMERA_METADATA_OUTPUT_NAPI_CLASS_NAME, ctorObj);
             CHECK_RETURN_RET(status == napi_ok, exports);

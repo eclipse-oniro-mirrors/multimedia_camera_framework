@@ -76,8 +76,7 @@ void TryAEInfoNapi::Init(napi_env env)
                                sizeof(try_ae_info_properties) / sizeof(try_ae_info_properties[PARAM0]),
                                try_ae_info_properties, &ctorObj);
     CHECK_RETURN_ELOG(status != napi_ok, "TryAEInfoNapi defined class failed");
-    int32_t refCount = 1;
-    status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
+    status = NapiRefManager::CreateMemSafetyRef(env, ctorObj, &sConstructor_);
     CHECK_RETURN_ELOG(status != napi_ok, "TryAEInfoNapi Init failed");
     MEDIA_DEBUG_LOG("TryAEInfoNapi Init success");
 }
@@ -253,8 +252,7 @@ void TimeLapsePhotoSessionNapi::Init(napi_env env)
                                properties.size(),
                                properties.data(), &ctorObj);
     CHECK_RETURN_ELOG(status != napi_ok, "TimeLapsePhotoSessionNapi defined class failed");
-    int32_t refCount = 1;
-    status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
+    status = NapiRefManager::CreateMemSafetyRef(env, ctorObj, &sConstructor_);
     CHECK_RETURN_ELOG(status != napi_ok, "TimeLapsePhotoSessionNapi Init failed");
     MEDIA_DEBUG_LOG("TimeLapsePhotoSessionNapi Init success");
 }

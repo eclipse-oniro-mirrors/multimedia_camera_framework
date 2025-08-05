@@ -641,8 +641,7 @@ void CameraSessionNapi::Init(napi_env env)
                                camera_session_props.size(),
                                camera_session_props.data(), &ctorObj);
     CHECK_RETURN_ELOG(status != napi_ok, "CameraSessionNapi defined class failed");
-    int32_t refCount = 1;
-    status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
+    status = NapiRefManager::CreateMemSafetyRef(env, ctorObj, &sConstructor_);
     CHECK_RETURN_ELOG(status != napi_ok, "CameraSessionNapi Init failed");
     MEDIA_DEBUG_LOG("CameraSessionNapi Init success");
 }

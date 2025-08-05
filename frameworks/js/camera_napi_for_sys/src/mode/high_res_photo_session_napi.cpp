@@ -53,13 +53,12 @@ void HighResPhotoSessionNapi::Init(napi_env env)
                                high_res_photo_session_props.size(),
                                high_res_photo_session_props.data(), &ctorObj);
     CHECK_RETURN_ELOG(status != napi_ok, "HighResPhotoSessionNapi defined class failed");
-    int32_t refCount = 1;
-    status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
+    status = NapiRefManager::CreateMemSafetyRef(env, ctorObj, &sConstructor_);
     CHECK_RETURN_ELOG(status != napi_ok, "HighResPhotoSessionNapi Init failed");
     MEDIA_DEBUG_LOG("HighResPhotoSessionNapi Init success");
 }
 
- 
+
 napi_value HighResPhotoSessionNapi::CreateCameraSession(napi_env env)
 {
     MEDIA_DEBUG_LOG("CreateCameraSession is called");

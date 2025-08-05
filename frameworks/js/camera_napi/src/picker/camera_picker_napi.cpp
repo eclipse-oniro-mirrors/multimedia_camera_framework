@@ -325,7 +325,6 @@ napi_value CameraPickerNapi::Init(napi_env env, napi_value exports)
     MEDIA_INFO_LOG("CameraPickerNapi::Init is called");
     napi_status status;
     napi_value ctorObj;
-    int32_t refCount = 1;
 
     napi_property_descriptor camera_picker_props[] = {};
 
@@ -339,7 +338,7 @@ napi_value CameraPickerNapi::Init(napi_env env, napi_value exports)
     status = napi_define_class(env, CAMERA_PICKER_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH, CameraPickerNapiConstructor,
         nullptr, sizeof(camera_picker_props) / sizeof(camera_picker_props[PARAM0]), camera_picker_props, &ctorObj);
     if (status == napi_ok) {
-        if (napi_create_reference(env, ctorObj, refCount, &sConstructor_) == napi_ok) {
+        if (NapiRefManager::CreateMemSafetyRef(env, ctorObj, &sConstructor_) == napi_ok) {
             status = napi_set_named_property(env, exports, CAMERA_PICKER_NAPI_CLASS_NAME, ctorObj);
             if (status == napi_ok &&
                 napi_define_properties(env, exports,
@@ -405,7 +404,7 @@ napi_value CameraPickerNapi::CreatePickerMediaType(napi_env env)
         MEDIA_DEBUG_LOG("CreatePickerMediaType call end!");
         napi_get_undefined(env, &result);
     } else {
-        napi_create_reference(env, result, 1, &mediaTypeRef_);
+        NapiRefManager::CreateMemSafetyRef(env, result, &mediaTypeRef_);
     }
     return result;
 }

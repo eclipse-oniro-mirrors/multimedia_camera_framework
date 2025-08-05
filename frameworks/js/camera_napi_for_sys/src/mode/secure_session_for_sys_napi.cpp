@@ -58,8 +58,7 @@ void SecureSessionForSysNapi::Init(napi_env env)
         secure_camera_session_props.size(),
         secure_camera_session_props.data(), &ctorObj);
     CHECK_RETURN_ELOG(status != napi_ok, "SecureSessionForSysNapi defined class failed");
-    int32_t refCount = 1;
-    status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
+    status = NapiRefManager::CreateMemSafetyRef(env, ctorObj, &sConstructor_);
     CHECK_RETURN_ELOG(status != napi_ok, "SecureSessionForSysNapi Init failed");
     MEDIA_DEBUG_LOG("SecureSessionForSysNapi Init success");
 }

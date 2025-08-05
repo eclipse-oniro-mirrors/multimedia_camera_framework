@@ -26,6 +26,7 @@
 #include "context.h"
 #include "ui_content.h"
 #include "ui_extension_base/ui_extension_context.h"
+#include "napi_ref_manager.h"
 
 namespace OHOS {
 namespace CameraStandard {

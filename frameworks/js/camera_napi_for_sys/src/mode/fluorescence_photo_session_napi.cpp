@@ -57,12 +57,11 @@ void FluorescencePhotoSessionNapi::Init(napi_env env)
                                fluorescence_photo_session_props.size(),
                                fluorescence_photo_session_props.data(), &ctorObj);
     CHECK_RETURN_ELOG(status != napi_ok, "FluorescencePhotoSessionNapi defined class failed");
-    int32_t refCount = 1;
-    status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
+    status = NapiRefManager::CreateMemSafetyRef(env, ctorObj, &sConstructor_);
     CHECK_RETURN_ELOG(status != napi_ok, "FluorescencePhotoSessionNapi Init failed");
     MEDIA_DEBUG_LOG("FluorescencePhotoSessionNapi Init success");
 }
- 
+
 napi_value FluorescencePhotoSessionNapi::CreateCameraSession(napi_env env)
 {
     MEDIA_DEBUG_LOG("CreateCameraSession is called");

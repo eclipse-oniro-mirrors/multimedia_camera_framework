@@ -22,7 +22,6 @@
 namespace OHOS {
 namespace CameraStandard {
 using namespace std;
-
 thread_local napi_ref PortraitSessionNapi::sConstructor_ = nullptr;
 
 PortraitSessionNapi::PortraitSessionNapi() : env_(nullptr)
@@ -63,8 +62,7 @@ void PortraitSessionNapi::Init(napi_env env)
                                portrait_session_props.size(),
                                portrait_session_props.data(), &ctorObj);
     CHECK_RETURN_ELOG(status != napi_ok, "PortraitSessionNapi defined class failed");
-    int32_t refCount = 1;
-    status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
+    status = NapiRefManager::CreateMemSafetyRef(env, ctorObj, &sConstructor_);
     CHECK_RETURN_ELOG(status != napi_ok, "PortraitSessionNapi Init failed");
     MEDIA_DEBUG_LOG("PortraitSessionNapi Init success");
 }

@@ -61,8 +61,7 @@ void PanoramaSessionNapi::Init(napi_env env)
         napi_define_class(env, PANORAMA_SESSION_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH, PanoramaSessionNapiConstructor,
             nullptr, panorama_session_props.size(), panorama_session_props.data(), &ctorObj);
     CHECK_RETURN_ELOG(status != napi_ok, "PanoramaSessionNapi defined class failed");
-    int32_t refCount = 1;
-    status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
+    status = NapiRefManager::CreateMemSafetyRef(env, ctorObj, &sConstructor_);
     CHECK_RETURN_ELOG(status != napi_ok, "PanoramaSessionNapi Init failed");
     MEDIA_DEBUG_LOG("PanoramaSessionNapi Init success");
 }

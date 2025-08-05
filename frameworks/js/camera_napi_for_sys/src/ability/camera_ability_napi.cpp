@@ -18,6 +18,7 @@
 #include "camera_napi_utils.h"
 #include "camera_napi_param_parser.h"
 #include "camera_error_code.h"
+#include "napi_ref_manager.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -29,6 +30,15 @@ thread_local napi_ref CameraFunctionsNapi::sPortraitPhotoConstructor_ = nullptr;
 thread_local napi_ref CameraFunctionsNapi::sPortraitPhotoConflictConstructor_ = nullptr;
 thread_local napi_ref CameraFunctionsNapi::sVideoConstructor_ = nullptr;
 thread_local napi_ref CameraFunctionsNapi::sVideoConflictConstructor_ = nullptr;
+
+const std::unordered_map<FunctionsType, napi_ref*> CameraFunctionsNapi::refsMap_ = {
+    { FunctionsType::PHOTO_FUNCTIONS, &CameraFunctionsNapi::sPhotoConstructor_ },
+    { FunctionsType::PHOTO_CONFLICT_FUNCTIONS, &CameraFunctionsNapi::sPhotoConflictConstructor_ },
+    { FunctionsType::PORTRAIT_PHOTO_FUNCTIONS, &CameraFunctionsNapi::sPortraitPhotoConstructor_ },
+    { FunctionsType::PORTRAIT_PHOTO_CONFLICT_FUNCTIONS, &CameraFunctionsNapi::sPortraitPhotoConflictConstructor_ },
+    { FunctionsType::VIDEO_FUNCTIONS, &CameraFunctionsNapi::sVideoConstructor_ },
+    { FunctionsType::VIDEO_CONFLICT_FUNCTIONS, &CameraFunctionsNapi::sVideoConflictConstructor_ },
+};
 
 const std::map<FunctionsType, const char*> CameraFunctionsNapi::functionsNameMap_ = {
     {FunctionsType::PHOTO_FUNCTIONS, PHOTO_ABILITY_NAPI_CLASS_NAME},
@@ -122,7 +132,6 @@ void CameraFunctionsNapi::Init(napi_env env, FunctionsType type)
     MEDIA_DEBUG_LOG("Init is called");
     napi_status status;
     napi_value ctorObj;
-    int32_t refCount = 1;
     std::vector<std::vector<napi_property_descriptor>> descriptors;
     auto nameIt = functionsNameMap_.find(type);
     CHECK_RETURN_ELOG(nameIt == functionsNameMap_.end(), "Init call Failed, className not find");
@@ -137,21 +146,10 @@ void CameraFunctionsNapi::Init(napi_env env, FunctionsType type)
                                camera_ability_props.size(),
                                camera_ability_props.data(), &ctorObj);
     if (status == napi_ok) {
-        if (type == FunctionsType::PHOTO_FUNCTIONS) {
-            status = napi_create_reference(env, ctorObj, refCount, &sPhotoConstructor_);
-        } else if (type == FunctionsType::PHOTO_CONFLICT_FUNCTIONS) {
-            status = napi_create_reference(env, ctorObj, refCount, &sPhotoConflictConstructor_);
-        } else if (type == FunctionsType::PORTRAIT_PHOTO_FUNCTIONS) {
-            status = napi_create_reference(env, ctorObj, refCount, &sPortraitPhotoConstructor_);
-        } else if (type == FunctionsType::PORTRAIT_PHOTO_CONFLICT_FUNCTIONS) {
-            status = napi_create_reference(env, ctorObj, refCount, &sPortraitPhotoConflictConstructor_);
-        } else if (type == FunctionsType::VIDEO_FUNCTIONS) {
-            status = napi_create_reference(env, ctorObj, refCount, &sVideoConstructor_);
-        } else if (type == FunctionsType::VIDEO_CONFLICT_FUNCTIONS) {
-            status = napi_create_reference(env, ctorObj, refCount, &sVideoConflictConstructor_);
-        } else {
-            return;
-        }
+        auto itRef = refsMap_.find(type);
+        CHECK_RETURN_WLOG(itRef == refsMap_.end(), "type: %{public}d is't in refsMap_", static_cast<int32_t>(type));
+        napi_ref* pCtor = itRef->second;
+        status = NapiRefManager::CreateMemSafetyRef(env, ctorObj, pCtor);
     }
     CHECK_RETURN_ELOG(status != napi_ok, "Init call Failed");
     return;
