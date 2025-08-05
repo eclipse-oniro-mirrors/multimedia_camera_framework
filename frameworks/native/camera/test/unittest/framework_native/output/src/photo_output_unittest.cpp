@@ -151,7 +151,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_001, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test PhotoCaptureSetting with SetGpsLocation
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_029, TestSize.Level0)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_033, TestSize.Level1)
 {
     std::shared_ptr<PhotoCaptureSetting> settings = std::make_shared<PhotoCaptureSetting>();
     double latitude = 1.0;
