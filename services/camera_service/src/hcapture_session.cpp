@@ -1534,7 +1534,6 @@ int32_t HCaptureSession::Start()
                            "%{public}d, sessionID: %{public}d", usedAsPositionU8, GetSessionId());
             DumpMetadata(settings);
             UpdateMuteSetting(cameraDevice->GetDeviceMuteMode(), settings);
-            UpdateCameraControl(true);
             UpdateSettingForFocusTrackingMechBeforeStart(settings);
         }
         camera_position_enum_t cameraPosition = static_cast<camera_position_enum_t>(usedAsPositionU8);
@@ -1677,7 +1676,6 @@ int32_t HCaptureSession::Release(CaptureSessionReleaseType type)
         if ((hStreamOperatorSptr->GetAllOutptSize()) == 0) {
             hStreamOperatorSptr->Release();
         }
-        UpdateCameraControl(false);
         sptr<ICaptureSessionCallback> emptyCallback = nullptr;
         SetCallback(emptyCallback);
         sptr<IPressureStatusCallback> emptyPressureCallback = nullptr;
