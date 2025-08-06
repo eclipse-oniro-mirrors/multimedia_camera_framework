@@ -1826,5 +1826,89 @@ HWTEST_F(HStreamRepeatUnit, ProcessFixedDiffDeviceTransform_002, TestSize.Level0
     camera_position_enum_t cameraPosition = camera_position_enum_t::OHOS_CAMERA_POSITION_BACK;
     streamRepeat->ProcessFixedDiffDeviceTransform(sensorOrientation, cameraPosition);
 }
+
+/**
+ * @tc.name  : Test ProcessFixedDiffDeviceTransform API
+ * @tc.number: ProcessFixedDiffDeviceTransform_003
+ * @tc.desc  : Test ProcessFixedDiffDeviceTransform API, when cameraPosition is OHOS_CAMERA_POSITION_FRONT
+ */
+HWTEST_F(HStreamRepeatUnit, ProcessFixedDiffDeviceTransform_003, TestSize.Level0)
+{
+    auto streamRepeat = CreateHStreamRepeat();
+    ASSERT_NE(streamRepeat, nullptr);
+    int32_t sensorOrientation = STREAM_ROTATE_90;
+    camera_position_enum_t cameraPosition = camera_position_enum_t::OHOS_CAMERA_POSITION_FRONT;
+    streamRepeat->ProcessFixedDiffDeviceTransform(sensorOrientation, cameraPosition);
+}
+
+/**
+ * @tc.name  : Test ProcessFixedDiffDeviceTransform API
+ * @tc.number: ProcessFixedDiffDeviceTransform_004
+ * @tc.desc  : Test ProcessFixedDiffDeviceTransform API, when cameraPosition is't OHOS_CAMERA_POSITION_FRONT
+ */
+HWTEST_F(HStreamRepeatUnit, ProcessFixedDiffDeviceTransform_004, TestSize.Level0)
+{
+    auto streamRepeat = CreateHStreamRepeat();
+    ASSERT_NE(streamRepeat, nullptr);
+    int32_t sensorOrientation = STREAM_ROTATE_90;
+    camera_position_enum_t cameraPosition = camera_position_enum_t::OHOS_CAMERA_POSITION_BACK;
+    streamRepeat->ProcessFixedDiffDeviceTransform(sensorOrientation, cameraPosition);
+}
+
+/**
+ * @tc.name  : Test ProcessFixedDiffDeviceTransform API
+ * @tc.number: ProcessFixedDiffDeviceTransform_005
+ * @tc.desc  : Test ProcessFixedDiffDeviceTransform API, when cameraPosition is OHOS_CAMERA_POSITION_FRONT
+ */
+HWTEST_F(HStreamRepeatUnit, ProcessFixedDiffDeviceTransform_005, TestSize.Level0)
+{
+    auto streamRepeat = CreateHStreamRepeat();
+    ASSERT_NE(streamRepeat, nullptr);
+    int32_t sensorOrientation = STREAM_ROTATE_180;
+    camera_position_enum_t cameraPosition = camera_position_enum_t::OHOS_CAMERA_POSITION_FRONT;
+    streamRepeat->ProcessFixedDiffDeviceTransform(sensorOrientation, cameraPosition);
+}
+
+/**
+ * @tc.name  : Test ProcessFixedDiffDeviceTransform API
+ * @tc.number: ProcessFixedDiffDeviceTransform_006
+ * @tc.desc  : Test ProcessFixedDiffDeviceTransform API, when cameraPosition is't OHOS_CAMERA_POSITION_FRONT
+ */
+HWTEST_F(HStreamRepeatUnit, ProcessFixedDiffDeviceTransform_006, TestSize.Level0)
+{
+    auto streamRepeat = CreateHStreamRepeat();
+    ASSERT_NE(streamRepeat, nullptr);
+    int32_t sensorOrientation = STREAM_ROTATE_180;
+    camera_position_enum_t cameraPosition = camera_position_enum_t::OHOS_CAMERA_POSITION_BACK;
+    streamRepeat->ProcessFixedDiffDeviceTransform(sensorOrientation, cameraPosition);
+}
+
+/**
+ * @tc.name  : Test ProcessFixedDiffDeviceTransform API
+ * @tc.number: ProcessFixedDiffDeviceTransform_007
+ * @tc.desc  : Test ProcessFixedDiffDeviceTransform API, when cameraPosition is OHOS_CAMERA_POSITION_FRONT
+ */
+HWTEST_F(HStreamRepeatUnit, ProcessFixedDiffDeviceTransform_007, TestSize.Level0)
+{
+    auto streamRepeat = CreateHStreamRepeat();
+    ASSERT_NE(streamRepeat, nullptr);
+    int32_t sensorOrientation = STREAM_ROTATE_270;
+    camera_position_enum_t cameraPosition = camera_position_enum_t::OHOS_CAMERA_POSITION_FRONT;
+    streamRepeat->ProcessFixedDiffDeviceTransform(sensorOrientation, cameraPosition);
+}
+
+/**
+ * @tc.name  : Test ProcessFixedDiffDeviceTransform API
+ * @tc.number: ProcessFixedDiffDeviceTransform_008
+ * @tc.desc  : Test ProcessFixedDiffDeviceTransform API, when cameraPosition is't OHOS_CAMERA_POSITION_FRONT
+ */
+HWTEST_F(HStreamRepeatUnit, ProcessFixedDiffDeviceTransform_008, TestSize.Level0)
+{
+    auto streamRepeat = CreateHStreamRepeat();
+    ASSERT_NE(streamRepeat, nullptr);
+    int32_t sensorOrientation = STREAM_ROTATE_270;
+    camera_position_enum_t cameraPosition = camera_position_enum_t::OHOS_CAMERA_POSITION_BACK;
+    streamRepeat->ProcessFixedDiffDeviceTransform(sensorOrientation, cameraPosition);
+}
 }
 }
