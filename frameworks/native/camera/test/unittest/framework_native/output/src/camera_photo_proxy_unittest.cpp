@@ -182,11 +182,12 @@ HWTEST_F(CameraPhotoProxyUnit, camera_photo_proxy_unittest_006, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test CameraPhotoProxy with SetCloudImageEnhanceFlag
  */
-HWTEST_F(CameraPhotoProxyUnit,camera_photo_proxy_unittest_007,TestSize.Level1){
-    std::shared_ptr<CameraPhotoProxy> proxy=std::make_shared<CameraPhotoProxy>(nullptr, 0, 0, 0, false, 0);
-    uint32_t cloudImageEnhanceFlag=1;
+HWTEST_F(CameraPhotoProxyUnit, camera_photo_proxy_unittest_007, TestSize.Level1)
+{
+    std::shared_ptr<CameraPhotoProxy> proxy = std::make_shared<CameraPhotoProxy>(nullptr, 0, 0, 0, false, 0);
+    uint32_t cloudImageEnhanceFlag = 1;
     proxy->SetCloudImageEnhanceFlag(cloudImageEnhanceFlag);
-    EXPECT_EQ(proxy->cloudImageEnhanceFlag_,cloudImageEnhanceFlag);
+    EXPECT_EQ(proxy->cloudImageEnhanceFlag_, cloudImageEnhanceFlag);
 }
 }
 }
