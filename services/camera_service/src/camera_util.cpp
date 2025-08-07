@@ -52,6 +52,7 @@ std::unordered_map<int32_t, int32_t> g_cameraToPixelFormat = {
     {OHOS_CAMERA_FORMAT_DEPTH_16, GRAPHIC_PIXEL_FMT_RGBA16_FLOAT},
     {OHOS_CAMERA_FORMAT_DNG, GRAPHIC_PIXEL_FMT_BLOB},
     {OHOS_CAMERA_FORMAT_DNG_XDRAW, GRAPHIC_PIXEL_FMT_BLOB},
+    {OHOS_CAMERA_FORMAT_MJPEG, GRAPHIC_PIXEL_FMT_BLOB},
 };
 
 std::map<int, std::string> g_cameraPos = {
