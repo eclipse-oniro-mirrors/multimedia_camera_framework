@@ -53,6 +53,7 @@ enum MetadataObjectType {
     BAR_CODE_DETECTION = 7,
     BASE_FACE_DETECTION = 8,
     BASE_TRACKING_REGION = 9,
+    MAX_VALUE = BASE_TRACKING_REGION
 };
 
 enum SketchStatus {

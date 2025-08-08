@@ -467,7 +467,8 @@ napi_value CameraNapiUtils::ParseMetadataObjectTypes(napi_env env, napi_value ar
         CHECK_RETURN_RET(type != napi_number, nullptr);
         napi_get_value_int32(env, value, &metadataType);
         if (metadataType < static_cast<int32_t>(MetadataObjectType::INVALID) &&
-            metadataType > static_cast<int32_t>(MetadataObjectType::BASE_TRACKING_REGION)) {
+            metadataType > static_cast<int32_t>(MetadataObjectType::MAX_VALUE)) {
+            MEDIA_ERR_LOG("ParseMetadataObjectTypes metadataType is out of range!");
             metadataType = invalidType;
         }
         metadataObjectTypes.push_back(static_cast<MetadataObjectType>(metadataType));
