@@ -94,7 +94,7 @@ int32_t RestorePhotoCommand::Executing()
 ProcessPhotoCommand::ProcessPhotoCommand(const int32_t userId, const std::string& photoId, const std::string& appName)
     : PhotoCommand(userId, photoId), appName_(appName)
 {
-    DP_DEBUG_LOG("RemovePhotoCommand, photoId: %{public}s, appName: %{public}s", photoId_.c_str(), appName.c_str());
+    DP_DEBUG_LOG("ProcessPhotoCommand, photoId: %{public}s, appName: %{public}s", photoId_.c_str(), appName.c_str());
 }
 
 int32_t ProcessPhotoCommand::Executing()

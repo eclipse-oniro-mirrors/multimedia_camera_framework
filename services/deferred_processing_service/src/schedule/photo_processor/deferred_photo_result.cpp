@@ -75,7 +75,7 @@ ErrorType DeferredPhotoResult::OnError(const std::string& imageId, DpsError erro
             "High priority job %{public}s already in retry", imageId.c_str());
         return ErrorType::HIGH_FAILED;
     }
-    DP_CHECK_RETURN_RET(error == DpsError::DPS_ERROR_IMAGE_PROC_HIGH_TEMPERATURE, ErrorType::FATAL_NOTIFY);
+    DP_CHECK_RETURN_RET(error == DpsError::DPS_ERROR_IMAGE_PROC_HIGH_TEMPERATURE, ErrorType::FAILED_NOTIFY);
     return ErrorType::NORMAL_FAILED;
 }
 
