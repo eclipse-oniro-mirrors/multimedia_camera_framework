@@ -68,7 +68,7 @@ DeferredVideoProcSession::DeferredVideoProcSession(int userId,
 DeferredVideoProcSession::~DeferredVideoProcSession()
 {
     MEDIA_INFO_LOG("DeferredVideoProcSession::DeferredVideoProcSession Destructor!");
-    CHECK_RETURN(remoteSession_ == nullptr);
+    CHECK_RETURN(remoteSession_ == nullptr || remoteSession_->AsObject() == nullptr);
     (void)remoteSession_->AsObject()->RemoveDeathRecipient(deathRecipient_);
     remoteSession_ = nullptr;
 }

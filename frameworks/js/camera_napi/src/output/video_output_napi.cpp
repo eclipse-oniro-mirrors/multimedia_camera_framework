@@ -382,6 +382,8 @@ napi_value VideoOutputNapi::AttachMetaSurface(napi_env env, napi_callback_info i
         iss >> iSurfaceId;
         sptr<Surface> surface = SurfaceUtils::GetInstance()->GetSurface(iSurfaceId);
         CHECK_PRINT_ELOG(surface == nullptr, "failed to get surface from SurfaceUtils");
+        CHECK_RETURN_RET_ELOG(
+            videoOutputNapi->videoOutput_ == nullptr, nullptr, "videoOutputNapi->videoOutput_ is nullptr");
         videoOutputNapi->videoOutput_->AttachMetaSurface(surface, static_cast<VideoMetaType>(videoMetaType));
     } else {
         MEDIA_ERR_LOG("VideoOutputNapi::AttachMetaSurface failed!");

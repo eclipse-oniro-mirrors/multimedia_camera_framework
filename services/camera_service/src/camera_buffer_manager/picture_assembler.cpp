@@ -44,6 +44,7 @@ void PictureAssembler::RegisterAuxiliaryConsumers()
         MEDIA_INFO_LOG("RegisterAuxiliaryConsumers 1 surfaceId: %{public}" PRIu64,
             streamCapture->gainmapSurface_->GetUniqueId());
         streamCapture->gainmapListener_ = new (std::nothrow) AuxiliaryBufferConsumer(S_GAINMAP, streamCapture);
+        CHECK_RETURN_ELOG(streamCapture->gainmapListener_ == nullptr, "streamCapture->gainmapListener_ is null");
         ret = streamCapture->gainmapSurface_->RegisterConsumerListener(
             (sptr<IBufferConsumerListener> &)streamCapture->gainmapListener_);
         retStr = ret != SURFACE_ERROR_OK ? retStr + "[gainmap]" : retStr;
@@ -52,6 +53,7 @@ void PictureAssembler::RegisterAuxiliaryConsumers()
         MEDIA_INFO_LOG("RegisterAuxiliaryConsumers 2 surfaceId: %{public}" PRIu64,
             streamCapture->deepSurface_->GetUniqueId());
         streamCapture->deepListener_ = new (std::nothrow) AuxiliaryBufferConsumer(S_DEEP, streamCapture);
+        CHECK_RETURN_ELOG(streamCapture->deepListener_ == nullptr, "streamCapture->deepListener_ is null");
         ret = streamCapture->deepSurface_->RegisterConsumerListener(
             (sptr<IBufferConsumerListener> &)streamCapture->deepListener_);
         retStr = ret != SURFACE_ERROR_OK ? retStr + "[deep]" : retStr;
@@ -60,6 +62,7 @@ void PictureAssembler::RegisterAuxiliaryConsumers()
         MEDIA_INFO_LOG("RegisterAuxiliaryConsumers 3 surfaceId: %{public}" PRIu64,
             streamCapture->exifSurface_->GetUniqueId());
         streamCapture->exifListener_ = new (std::nothrow) AuxiliaryBufferConsumer(S_EXIF, streamCapture);
+        CHECK_RETURN_ELOG(streamCapture->exifListener_ == nullptr, "streamCapture->exifListener_ is null");
         ret = streamCapture->exifSurface_->RegisterConsumerListener(
             (sptr<IBufferConsumerListener> &)streamCapture->exifListener_);
         retStr = ret != SURFACE_ERROR_OK ? retStr + "[exif]" : retStr;
@@ -68,6 +71,7 @@ void PictureAssembler::RegisterAuxiliaryConsumers()
         MEDIA_INFO_LOG("RegisterAuxiliaryConsumers 4 surfaceId: %{public}" PRIu64,
             streamCapture->debugSurface_->GetUniqueId());
         streamCapture->debugListener_ = new (std::nothrow) AuxiliaryBufferConsumer(S_DEBUG, streamCapture);
+        CHECK_RETURN_ELOG(streamCapture->debugListener_ == nullptr, "streamCapture->debugListener_ is null");
         ret = streamCapture->debugSurface_->RegisterConsumerListener(
             (sptr<IBufferConsumerListener> &)streamCapture->debugListener_);
         retStr = ret != SURFACE_ERROR_OK ? retStr + "[debug]" : retStr;

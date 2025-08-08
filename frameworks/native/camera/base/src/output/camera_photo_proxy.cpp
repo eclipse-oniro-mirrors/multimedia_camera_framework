@@ -93,7 +93,6 @@ CameraPhotoProxy::~CameraPhotoProxy()
 {
     std::lock_guard<std::mutex> lock(mutex_);
     MEDIA_INFO_LOG("~CameraPhotoProxy");
-    fileSize_ = 0;
 }
 
 void CameraPhotoProxy::ReadFromParcel(MessageParcel &parcel)

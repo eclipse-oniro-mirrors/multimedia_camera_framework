@@ -175,6 +175,8 @@ size_t DeferredPhotoProxy::GetFileSize()
     std::lock_guard<std::mutex> lock(mutex_);
     CHECK_RETURN_RET_ELOG(buffer_ != nullptr, fileSize_,
         "DeferredPhotoProxy::GetFileSize temp!");
+    CHECK_RETURN_RET_ELOG(
+        bufferHandle_ == nullptr, fileSize_, "DeferredPhotoProxy::GetFileSize bufferHandle_ is nullptr!");
     fileSize_ = bufferHandle_->size;
     return fileSize_;
 }

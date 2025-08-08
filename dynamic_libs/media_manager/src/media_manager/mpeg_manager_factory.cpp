@@ -28,7 +28,6 @@ MpegManagerFactory::MpegManagerFactory()
 MpegManagerFactory::~MpegManagerFactory()
 {
     DP_DEBUG_LOG("entered.");
-    mpegManager_ = nullptr;
 }
 
 std::shared_ptr<MpegManager> MpegManagerFactory::Acquire(const std::string& requestId,

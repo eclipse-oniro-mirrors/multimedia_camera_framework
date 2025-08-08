@@ -189,10 +189,14 @@ int32_t HStreamCaptureCallbackImpl::OnCaptureStarted(const int32_t captureId)
                 "HStreamCaptureCallbackImpl::OnCaptureStarted metadata is nullptr");
             camera_metadata_item_t meta;
             int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_CAPTURE_EXPECT_TIME, &meta);
-            if (ret == CAM_META_SUCCESS) {
+            const int32_t CONST_2 = 2;
+            if (ret == CAM_META_SUCCESS && meta.count >= CONST_2) {
                 callback->OnCaptureStarted(captureId, meta.data.ui32[1]);
+            } else if (meta.count) {
+                MEDIA_WARNING_LOG("Discarding OnCaptureStarted callback, mode:%{public}d. exposureTime is not found",
+                    meta.data.ui32[0]);
             } else {
-                MEDIA_WARNING_LOG("Discarding OnCaptureStarted callback, exposureTime is not found");
+                MEDIA_WARNING_LOG("Discarding OnCaptureStarted callback, mode and exposureTime are not found");
             }
             break;
         }
