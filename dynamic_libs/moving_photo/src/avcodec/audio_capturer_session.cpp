@@ -111,18 +111,21 @@ bool AudioCapturerSession::StartAudioCapture()
 {
     MEDIA_INFO_LOG("Starting moving photo audio stream");
     CHECK_RETURN_RET_ELOG(startAudioCapture_, true, "AudioCapture is already started.");
+    std::shared_ptr<AudioCapturer> audioCapturer = nullptr;
     {
         std::lock_guard<std::mutex> lock(audioCapturerMutex_);
-        if (audioCapturer_ == nullptr && !CreateAudioCapturer()) {
-            MEDIA_INFO_LOG("audioCapturer is not create");
-            return false;
-        }
-        if (!audioCapturer_->Start()) {
-            MEDIA_INFO_LOG("Start stream failed");
-            audioCapturer_->Release();
-            startAudioCapture_ = false;
-            return false;
-        }
+        audioCapturer = audioCapturer_;
+    }
+    if (audioCapturer == nullptr && !CreateAudioCapturer()) {
+        MEDIA_INFO_LOG("audioCapturer is not create");
+        return false;
+    }
+    if (!audioCapturer->Start()) {
+        MEDIA_INFO_LOG("Start stream failed");
+        audioCapturer->Release();
+        startAudioCapture_ = false;
+        return false;
+    }
     }
     if (audioThread_ && audioThread_->joinable()) {
         MEDIA_INFO_LOG("audioThread_ is already start, reset");
@@ -147,8 +150,12 @@ void AudioCapturerSession::GetAudioRecords(int64_t startTime, int64_t endTime, v
 
 void AudioCapturerSession::ProcessAudioBuffer()
 {
-    std::lock_guard<std::mutex> lock(audioCapturerMutex_);
-    CHECK_RETURN_ELOG(audioCapturer_ == nullptr, "AudioCapturer_ is not init");
+    std::shared_ptr<AudioCapturer> audioCapturer = nullptr;
+    {
+        std::lock_guard<std::mutex> lock(audioCapturerMutex_);
+        audioCapturer = audioCapturer_;
+    }
+    CHECK_RETURN_ELOG(audioCapturer == nullptr, "AudioCapturer_ is not init");
     size_t bufferLen = static_cast<size_t>(deferredInputOptions_.samplingRate / AudioDeferredProcess::ONE_THOUSAND *
         deferredInputOptions_.channels * AudioDeferredProcess::DURATION_EACH_AUDIO_FRAME * sizeof(short));
     while (true) {
@@ -159,7 +166,7 @@ void AudioCapturerSession::ProcessAudioBuffer()
         while (bytesRead < bufferLen) {
             MEDIA_DEBUG_LOG("ProcessAudioBuffer loop");
             CHECK_BREAK_WLOG(!startAudioCapture_, "ProcessAudioBuffer loop, break out");
-            int32_t len = audioCapturer_->Read(*(buffer.get() + bytesRead), bufferLen - bytesRead, false);
+            int32_t len = audioCapturer->Read(*(buffer.get() + bytesRead), bufferLen - bytesRead, false);
             if (len >= 0) {
                 bytesRead += static_cast<size_t>(len);
             } else {
