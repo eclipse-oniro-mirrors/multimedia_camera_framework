@@ -379,6 +379,32 @@ napi_value PreviewOutputNapi::CreatePreviewOutput(napi_env env, std::string surf
     return result;
 }
 
+napi_value PreviewOutputNapi::CreatePreviewOutputForTransfer(napi_env env, sptr<PreviewOutput> previewOutput)
+{
+    MEDIA_INFO_LOG("CreatePreviewOutputForTransfer is called");
+    CHECK_ERROR_RETURN_RET_LOG(previewOutput == nullptr, nullptr,
+        "CreatePreviewOutputForTransfer previewOutput is nullptr");
+    napi_status status;
+    napi_value result = nullptr;
+    napi_value constructor;
+
+    status = napi_get_reference_value(env, sConstructor_, &constructor);
+    if (status == napi_ok) {
+        sPreviewOutput_ = previewOutput;
+        status = napi_new_instance(env, constructor, 0, nullptr, &result);
+        sPreviewOutput_ = nullptr;
+
+        if (status == napi_ok && result != nullptr) {
+            return result;
+        } else {
+            MEDIA_ERR_LOG("Failed to create preview output instance for transfer");
+        }
+    }
+    MEDIA_ERR_LOG("CreatePreviewOutputForTransfer call Failed!");
+    napi_get_undefined(env, &result);
+    return result;
+}
+
 sptr<PreviewOutput> PreviewOutputNapi::GetPreviewOutput()
 {
     return previewOutput_;
@@ -881,6 +907,23 @@ napi_value PreviewOutputNapi::Once(napi_env env, napi_callback_info info)
 napi_value PreviewOutputNapi::Off(napi_env env, napi_callback_info info)
 {
     return ListenerTemplate<PreviewOutputNapi>::Off(env, info);
+}
+
+extern "C" {
+napi_value GetPreviewOutputNapi(napi_env env, sptr<PreviewOutput> previewOutput)
+{
+    MEDIA_INFO_LOG("%{public}s Called", __func__);
+    return PreviewOutputNapi::CreatePreviewOutputForTransfer(env, previewOutput);
+}
+
+bool GetNativePreviewOutput(void *previewOutputNapiPtr, sptr<PreviewOutput> &nativePreviewOutput)
+{
+    MEDIA_INFO_LOG("%{public}s Called", __func__);
+    CHECK_ERROR_RETURN_RET_LOG(previewOutputNapiPtr == nullptr,
+        false, "%{public}s previewOutputNapiPtr is nullptr", __func__);
+    nativePreviewOutput = reinterpret_cast<PreviewOutputNapi*>(previewOutputNapiPtr)->GetPreviewOutput();
+    return true;
+}
 }
 } // namespace CameraStandard
 } // namespace OHOS

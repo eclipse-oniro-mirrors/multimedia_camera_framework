@@ -421,6 +421,8 @@ interface DeferredPhotoProxy {
 }
 
 interface Photo {
+  GetSpecificImplPtr(): i64;
+
   @set SetMain(main: Image): void;
   @get GetMain(): Image;
   @set SetRaw(raw: Optional<Image>): void;
@@ -751,6 +753,8 @@ interface PhotoSession : Session, Flash, Zoom, AutoExposure, AutoDeviceSwitch, C
 
   GetSessionFunctions(outputCapability: CameraOutputCapability): Array<PhotoFunctions>;
   GetSessionConflictFunctions(): Array<PhotoConflictFunctions>;
+
+  GetSpecificImplPtr(): i64;
 }
 
 interface PhotoConflictFunctions : ZoomQuery, MacroQuery {
@@ -920,6 +924,8 @@ interface VideoSession : Session, Flash, Zoom, Stabilization, ColorManagement, A
   SetQualityPrioritization(quality : QualityPrioritization) : void;
   GetSessionFunctions(outputCapability: CameraOutputCapability): Array<VideoFunctions>;
   GetSessionConflictFunctions(): Array<VideoConflictFunctions>;
+
+  GetSpecificImplPtr(): i64;
 }
 
 interface VideoConflictFunctions : ZoomQuery, MacroQuery {
@@ -1753,6 +1759,8 @@ interface SecureSession : Session, Flash, AutoExposure, Focus, Zoom {
 
   OnFocusStateChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: FocusState)=> void): void;
   OffFocusStateChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: FocusState)=> void>): void;
+
+  GetSpecificImplPtr(): i64;
 }
 
 interface ProfessionalPhotoSession : Session, AutoExposure, ManualExposure, Focus, ManualFocus, WhiteBalance, ManualIso, Flash, Zoom, ColorEffect, Aperture {
@@ -2458,3 +2466,88 @@ struct MetadataCatBodyObject {
 struct MetadataHumanBodyObject {
   @extends base: MetadataObject;
 }
+
+// transfer functions
+function CameraInputTransferStaticImpl(input: @sts_type("ESValue") Opaque): CameraInput;
+function CameraInputTransferDynamicImpl(input: CameraInput): @sts_type("Any") Opaque;
+function PhotoOutputTransferStaticImpl(input: @sts_type("ESValue") Opaque): PhotoOutput;
+function PhotoOutputTransferDynamicImpl(input: PhotoOutput): @sts_type("Any") Opaque;
+function PreviewOutputTransferStaticImpl(input: @sts_type("ESValue") Opaque): PreviewOutput;
+function PreviewOutputTransferDynamicImpl(input: PreviewOutput): @sts_type("Any") Opaque;
+function VideoOutputTransferStaticImpl(input: @sts_type("ESValue") Opaque): VideoOutput;
+function VideoOutputTransferDynamicImpl(input: VideoOutput): @sts_type("Any") Opaque;
+function MetadataOutputTransferStaticImpl(input: @sts_type("ESValue") Opaque): MetadataOutput;
+function MetadataOutputTransferDynamicImpl(input: MetadataOutput): @sts_type("Any") Opaque;
+function VideoSessionTransferStaticImpl(input: @sts_type("ESValue") Opaque): VideoSession;
+function VideoSessionTransferDynamicImpl(input: VideoSession): @sts_type("Any") Opaque;
+function SecureSessionTransferStaticImpl(input: @sts_type("ESValue") Opaque): SecureSession;
+function SecureSessionTransferDynamicImpl(input: SecureSession): @sts_type("Any") Opaque;
+function PhotoSessionTransferStaticImpl(input: @sts_type("ESValue") Opaque): PhotoSession;
+function PhotoSessionTransferDynamicImpl(input: PhotoSession): @sts_type("Any") Opaque;
+function PhotoTransferStaticImpl(input: @sts_type("ESValue") Opaque): Photo;
+function PhotoTransferDynamicImpl(input: Photo): @sts_type("Any") Opaque;
+
+@!sts_inject("""
+export function cameraInputTransferStatic(input: Any): Object {
+  return cameraInputTransferStaticImpl(ESValue.wrap(input));
+}
+export function cameraInputTransferDynamic(input: Object): Any {
+  return cameraInputTransferDynamicImpl(input as CameraInput);
+}
+
+export function photoOutputTransferStatic(input: Any): Object {
+  return photoOutputTransferStaticImpl(ESValue.wrap(input));
+}
+export function photoOutputTransferDynamic(input: Object): Any {
+  return photoOutputTransferDynamicImpl(input as PhotoOutput);
+}
+
+export function previewOutputTransferStatic(input: Any): Object {
+  return previewOutputTransferStaticImpl(ESValue.wrap(input));
+}
+export function previewOutputTransferDynamic(input: Object): Any {
+  return previewOutputTransferDynamicImpl(input as PreviewOutput);
+}
+
+export function videoOutputTransferStatic(input: Any): Object {
+  return videoOutputTransferStaticImpl(ESValue.wrap(input));
+}
+export function videoOutputTransferDynamic(input: Object): Any {
+  return videoOutputTransferDynamicImpl(input as VideoOutput);
+}
+
+export function metadataOutputTransferStatic(input: Any): Object {
+  return metadataOutputTransferStaticImpl(ESValue.wrap(input));
+}
+export function metadataOutputTransferDynamic(input: Object): Any {
+  return metadataOutputTransferDynamicImpl(input as MetadataOutput);
+}
+
+export function videoSessionTransferStatic(input: Any): Object {
+  return videoSessionTransferStaticImpl(ESValue.wrap(input));
+}
+export function videoSessionTransferDynamic(input: Object): Any {
+  return videoSessionTransferDynamicImpl(input as VideoSession);
+}
+
+export function secureSessionTransferStatic(input: Any): Object {
+  return secureSessionTransferStaticImpl(ESValue.wrap(input));
+}
+export function secureSessionTransferDynamic(input: Object): Any {
+  return secureSessionTransferDynamicImpl(input as SecureSession);
+}
+
+export function photoSessionTransferStatic(input: Any): Object {
+  return photoSessionTransferStaticImpl(ESValue.wrap(input));
+}
+export function photoSessionTransferDynamic(input: Object): Any {
+  return photoSessionTransferDynamicImpl(input as PhotoSession);
+}
+
+export function photoTransferStatic(input: Any): Object {
+  return photoTransferStaticImpl(ESValue.wrap(input));
+}
+export function photoTransferDynamic(input: Object): Any {
+  return photoTransferDynamicImpl(input as Photo);
+}
+""")

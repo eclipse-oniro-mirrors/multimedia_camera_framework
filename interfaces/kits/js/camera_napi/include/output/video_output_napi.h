@@ -87,6 +87,7 @@ public:
     static napi_value Init(napi_env env, napi_value exports);
     static napi_value CreateVideoOutput(napi_env env, VideoProfile& profile, std::string surfaceId);
     static napi_value CreateVideoOutput(napi_env env, std::string surfaceId);
+    static napi_value CreateVideoOutputForTransfer(napi_env env, sptr<VideoOutput> videoOutput);
     static bool IsVideoOutput(napi_env env, napi_value obj);
     static napi_value GetActiveProfile(napi_env env, napi_callback_info info);
     static napi_value SetFrameRate(napi_env env, napi_callback_info info);

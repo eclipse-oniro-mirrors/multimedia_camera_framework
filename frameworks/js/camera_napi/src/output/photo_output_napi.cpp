@@ -2185,6 +2185,26 @@ napi_value PhotoOutputNapi::CreatePhotoOutput(napi_env env, std::string surfaceI
     return result;
 }
 
+napi_value PhotoOutputNapi::CreatePhotoOutputForTransfer(napi_env env, sptr<PhotoOutput> photoOutput)
+{
+    MEDIA_INFO_LOG("CreatePhotoOutputForTransfer is called");
+    CHECK_ERROR_RETURN_RET_LOG(photoOutput == nullptr, nullptr, "CreatePhotoOutputForTransfer photoOutput is nullptr");
+    napi_status status;
+    napi_value result = nullptr;
+    napi_value constructor;
+    napi_get_undefined(env, &result);
+    status = napi_get_reference_value(env, sConstructor_, &constructor);
+    if (status == napi_ok) {
+        sPhotoOutput_ = photoOutput;
+        status = napi_new_instance(env, constructor, 0, nullptr, &result);
+        sPhotoOutput_ = nullptr;
+        CHECK_ERROR_RETURN_RET_LOG(status == napi_ok && result != nullptr, result,
+            "Success to create photo output instance for transfer");
+    }
+    MEDIA_ERR_LOG("CreatePhotoOutputForTransfer call Failed!");
+    return result;
+}
+
 bool ParseCaptureSettings(napi_env env, napi_callback_info info, PhotoOutputAsyncContext* asyncContext,
     std::shared_ptr<CameraNapiAsyncFunction>& asyncFunction, bool isSettingOptional)
 {
@@ -3366,6 +3386,23 @@ napi_value PhotoOutputNapi::EnableOfflinePhoto(napi_env env, napi_callback_info 
         photoOutputNapi->GetPhotoOutput()->EnableOfflinePhoto();
     }
     return result;
+}
+
+extern "C" {
+napi_value GetPhotoOutputNapi(napi_env env, sptr<PhotoOutput> photoOutput)
+{
+    MEDIA_INFO_LOG("%{public}s Called", __func__);
+    return PhotoOutputNapi::CreatePhotoOutputForTransfer(env, photoOutput);
+}
+
+bool GetNativePhotoOutput(void *photoOutputNapiPtr, sptr<PhotoOutput> &nativePhotoOutput)
+{
+    MEDIA_INFO_LOG("%{public}s Called", __func__);
+    CHECK_ERROR_RETURN_RET_LOG(photoOutputNapiPtr == nullptr,
+        false, "%{public}s photoOutputNapiPtr is nullptr", __func__);
+    nativePhotoOutput = reinterpret_cast<PhotoOutputNapi*>(photoOutputNapiPtr)->GetPhotoOutput();
+    return true;
+}
 }
 } // namespace CameraStandard
 } // namespace OHOS
