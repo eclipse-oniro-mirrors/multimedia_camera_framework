@@ -233,6 +233,10 @@ Camera_ErrorCode Camera_Manager::GetSupportedCameras(Camera_Device** cameras, ui
         char* dst = new char[dstSize];
         if (!dst) {
             MEDIA_ERR_LOG("Allocate memory for cameraId Failed!");
+            for (size_t i = 0; i < index; ++i) {
+                delete[] outCameras[index].cameraId;
+            }
+            delete[] dst;
             delete[] outCameras;
             return CAMERA_SERVICE_FATAL_ERROR;
         }
@@ -809,10 +813,8 @@ Camera_ErrorCode Camera_Manager::GetSupportedSceneModes(Camera_Device* camera,
 
 Camera_ErrorCode Camera_Manager::DeleteSceneModes(Camera_SceneMode* sceneModes)
 {
-    if (sceneModes != nullptr) {
-        delete[] sceneModes;
-    }
-
+    delete[] sceneModes;
+    sceneModes = nullptr;
     return CAMERA_OK;
 }
 

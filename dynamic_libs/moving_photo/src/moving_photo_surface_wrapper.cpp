@@ -115,7 +115,7 @@ void MovingPhotoSurfaceWrapper::BufferConsumerListener::OnBufferAvailable()
 void MovingPhotoSurfaceWrapper::RecycleBuffer(sptr<SurfaceBuffer> buffer)
 {
     std::lock_guard<std::recursive_mutex> lock(videoSurfaceMutex_);
-
+    CHECK_RETURN_ELOG(videoSurface_ == nullptr, "MovingPhotoSurfaceWrapper::RecycleBuffer videoSurface_ is nullptr");
     GSError err = videoSurface_->AttachBufferToQueue(buffer);
     CHECK_RETURN_ELOG(err != GSERROR_OK, "Failed to attach buffer %{public}d", err);
     err = videoSurface_->ReleaseBuffer(buffer, SyncFence::INVALID_FENCE);

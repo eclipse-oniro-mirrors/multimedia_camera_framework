@@ -20,10 +20,7 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-Writer::~Writer()
-{
-    outputMuxer_ = nullptr;
-}
+Writer::~Writer() {}
 
 MediaManagerError Writer::Create(int32_t outputFd,
     const std::map<Media::Plugins::MediaType, std::shared_ptr<Track>>& trackMap)
@@ -75,6 +72,7 @@ MediaManagerError Writer::Start()
 MediaManagerError Writer::Stop()
 {
     DP_DEBUG_LOG("entered.");
+    DP_CHECK_ERROR_RETURN_RET_LOG(outputMuxer_ == nullptr, ERROR_FAIL, "Stop failed, outputMuxer_ is nullptr");
     auto ret = outputMuxer_->Stop();
     DP_CHECK_ERROR_RETURN_RET_LOG(ret != OK, ERROR_FAIL, "Stop failed, ret: %{public}d", ret);
 

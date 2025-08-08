@@ -577,6 +577,8 @@ int32_t ProfessionSession::GetSupportedFlashModes(std::vector<FlashMode> &suppor
         "ProfessionSession::GetSupportedFlashModes camera deviceInfo is null");
     auto metadata = isRawImageDelivery_ ? GetMetadata() : inputDeviceInfo->GetCachedMetadata();
     camera_metadata_item_t item;
+    CHECK_RETURN_RET_ELOG(
+        !metadata, CameraErrorCode::SUCCESS, "ProfessionSession::GetSupportedFlashModes metadata is nullptr");
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_FLASH_MODES, &item);
     CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
         "ProfessionSession::GetSupportedFlashModes Failed with return code %{public}d", ret);

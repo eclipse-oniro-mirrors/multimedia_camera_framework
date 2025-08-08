@@ -500,7 +500,7 @@ shared_ptr<CameraMetaInfo>HCameraService::GetCameraMetaInfo(std::string &cameraI
     camera_metadata_item_t item;
     common_metadata_header_t* metadata = cameraAbility->get();
     int32_t res = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_POSITION, &item);
-    uint8_t cameraPosition = (res == CAM_META_SUCCESS) ? item.data.u8[0] : OHOS_CAMERA_POSITION_OTHER;
+    uint8_t cameraPosition = (res == CAM_META_SUCCESS && item.count) ? item.data.u8[0] : OHOS_CAMERA_POSITION_OTHER;
     res = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_FOLDSCREEN_TYPE, &item);
     uint8_t foldType = (res == CAM_META_SUCCESS) ? item.data.u8[0] : OHOS_CAMERA_FOLDSCREEN_OTHER;
     if (isFoldable && cameraPosition == OHOS_CAMERA_POSITION_FRONT && foldType == OHOS_CAMERA_FOLDSCREEN_OTHER &&
@@ -511,13 +511,15 @@ shared_ptr<CameraMetaInfo>HCameraService::GetCameraMetaInfo(std::string &cameraI
         cameraPosition = POSITION_FOLD_INNER;
     }
     res = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_TYPE, &item);
-    uint8_t cameraType = (res == CAM_META_SUCCESS) ? item.data.u8[0] : OHOS_CAMERA_TYPE_UNSPECIFIED;
+    uint8_t cameraType = (res == CAM_META_SUCCESS && item.count) ? item.data.u8[0] : OHOS_CAMERA_TYPE_UNSPECIFIED;
     res = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_CONNECTION_TYPE, &item);
-    uint8_t connectionType = (res == CAM_META_SUCCESS) ? item.data.u8[0] : OHOS_CAMERA_CONNECTION_TYPE_BUILTIN;
+    uint8_t connectionType =
+        (res == CAM_META_SUCCESS && item.count) ? item.data.u8[0] : OHOS_CAMERA_CONNECTION_TYPE_BUILTIN;
     res = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_CAPTURE_MIRROR_SUPPORTED, &item);
-    bool isMirrorSupported = (res == CAM_META_SUCCESS) ? (item.count != 0) : false;
+    bool isMirrorSupported = res == CAM_META_SUCCESS && item.count;
     res = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_FOLD_STATUS, &item);
-    uint8_t foldStatus = (res == CAM_META_SUCCESS) ? item.data.u8[0] : OHOS_CAMERA_FOLD_STATUS_NONFOLDABLE;
+    uint8_t foldStatus =
+        (res == CAM_META_SUCCESS && item.count) ? item.data.u8[0] : OHOS_CAMERA_FOLD_STATUS_NONFOLDABLE;
     res = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_MODES, &item);
     std::vector<uint8_t> supportModes = {};
     for (uint32_t i = 0; i < item.count; i++) {

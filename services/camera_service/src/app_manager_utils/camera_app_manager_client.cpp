@@ -29,12 +29,9 @@ CameraAppManagerClient::CameraAppManagerClient()
     MEDIA_DEBUG_LOG("Make shared appMgrHolder_");
     appMgrHolder_ = std::make_shared<AppExecFwk::AppMgrClient>();
 }
- 
-CameraAppManagerClient::~CameraAppManagerClient()
-{
-    appMgrHolder_ = nullptr;
-}
- 
+
+CameraAppManagerClient::~CameraAppManagerClient() {}
+
 sptr<CameraAppManagerClient>& CameraAppManagerClient::GetInstance()
 {
     if (cameraAppManagerClient_ == nullptr) {
