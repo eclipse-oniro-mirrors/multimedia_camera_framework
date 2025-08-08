@@ -407,7 +407,8 @@ int32_t HCameraService::CreateControlCenterDataShare(std::map<std::string,
 {
     std::vector<float> virtualMetadata = {};
     videoSessionForControlCenter_->GetVirtualApertureMetadate(virtualMetadata);
-    float biggestAperture = virtualMetadata.back();
+    float biggestAperture = 0;
+    CHECK_EXECUTE(virtualMetadata.size() > 0, biggestAperture = virtualMetadata.back());
 
     controlCenterMap[bundleName] = {status, 0, biggestAperture};
     std::string controlCenterString = ControlCenterMapToString(controlCenterMap);
@@ -721,6 +722,7 @@ int32_t HCameraService::CreateCaptureSession(sptr<ICaptureSession>& session, int
 
 int32_t HCameraService::GetVideoSessionForControlCenter(sptr<ICaptureSession>& session)
 {
+    std::lock_guard<std::mutex> lock(mutex_);
     MEDIA_INFO_LOG("HCameraService::GetVideoSessionForControlCenter");
     if (videoSessionForControlCenter_ == nullptr) {
         MEDIA_ERR_LOG("GetVideoSessionForControlCenter failed, session == nullptr.");
@@ -1550,6 +1552,7 @@ int32_t HCameraService::EnableControlCenter(bool status, bool needPersistEnable)
 
 int32_t HCameraService::SetControlCenterPrecondition(bool condition)
 {
+    std::lock_guard<std::mutex> lock(mutex_);
     MEDIA_INFO_LOG("HCameraService::SetControlCenterPrecondition %{public}d", condition);
     controlCenterPrecondition = condition;
     if (videoSessionForControlCenter_ != nullptr) {
@@ -1578,6 +1581,7 @@ int32_t HCameraService::SetControlCenterPrecondition(bool condition)
 
 int32_t HCameraService::SetDeviceControlCenterAbility(bool ability)
 {
+    std::lock_guard<std::mutex> lock(mutex_);
     deviceControlCenterAbility = ability;
     if (videoSessionForControlCenter_ != nullptr) {
         videoSessionForControlCenter_->SetDeviceControlCenterAbility(ability);
