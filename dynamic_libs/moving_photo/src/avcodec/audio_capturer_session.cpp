@@ -126,7 +126,6 @@ bool AudioCapturerSession::StartAudioCapture()
         startAudioCapture_ = false;
         return false;
     }
-    }
     if (audioThread_ && audioThread_->joinable()) {
         MEDIA_INFO_LOG("audioThread_ is already start, reset");
         startAudioCapture_ = false;
