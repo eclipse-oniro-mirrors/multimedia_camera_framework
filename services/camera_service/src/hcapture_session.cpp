@@ -689,7 +689,7 @@ int32_t HCaptureSession::GetVirtualApertureMetadate(std::vector<float>& virtualA
         supportedVirtualAperture.emplace_back(item.data.f[i]);
     }
     virtualApertureMetadata = supportedVirtualAperture;
-    biggestAperture = supportedVirtualAperture.back();
+    CHECK_EXECUTE(supportedVirtualAperture.size() > 0, biggestAperture = supportedVirtualAperture.back());
     return CAMERA_OK;
 }
 
