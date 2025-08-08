@@ -46,7 +46,7 @@ public:
 private:
     bool CreateAudioCapturer();
     // Already guard by hcapture_session
-    std::unique_ptr<AudioCapturer> audioCapturer_ = nullptr;
+    std::shared_ptr<AudioCapturer> audioCapturer_ = nullptr;
     BlockingQueue<sptr<AudioRecord>> audioBufferQueue_;
     std::atomic<bool> startAudioCapture_ { false };
     std::unique_ptr<std::thread> audioThread_ = nullptr;
