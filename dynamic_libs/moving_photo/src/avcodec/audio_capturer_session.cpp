@@ -89,7 +89,7 @@ bool AudioCapturerSession::CreateAudioCapturer()
     capturerOptions.streamInfo = deferredInputOptions_;
     capturerOptions.capturerInfo.sourceType = SourceType::SOURCE_TYPE_UNPROCESSED;
     capturerOptions.capturerInfo.capturerFlags = 0;
-    std::lock_guard<std::mutex> lock(audioCapturerMutex_);
+    std::unique_lock<std::recursive_mutex> lock(audioCapturerMutex_);
     audioCapturer_ = AudioCapturer::Create(capturerOptions);
     CHECK_RETURN_RET_ELOG(audioCapturer_ == nullptr, false, "AudioCapturerSession::Create AudioCapturer failed");
     audioCapturer_->SetInputDevice(AudioStandard::DeviceType::DEVICE_TYPE_MIC);
@@ -113,7 +113,7 @@ bool AudioCapturerSession::StartAudioCapture()
     CHECK_RETURN_RET_ELOG(startAudioCapture_, true, "AudioCapture is already started.");
     std::shared_ptr<AudioCapturer> audioCapturer = nullptr;
     {
-        std::lock_guard<std::mutex> lock(audioCapturerMutex_);
+        std::unique_lock<std::recursive_mutex> lock(audioCapturerMutex_);
         audioCapturer = audioCapturer_;
     }
     if (audioCapturer == nullptr && !CreateAudioCapturer()) {
@@ -151,7 +151,7 @@ void AudioCapturerSession::ProcessAudioBuffer()
 {
     std::shared_ptr<AudioCapturer> audioCapturer = nullptr;
     {
-        std::lock_guard<std::mutex> lock(audioCapturerMutex_);
+        std::unique_lock<std::recursive_mutex> lock(audioCapturerMutex_);
         audioCapturer = audioCapturer_;
     }
     CHECK_RETURN_ELOG(audioCapturer == nullptr, "AudioCapturer_ is not init");
@@ -211,7 +211,7 @@ void AudioCapturerSession::Stop()
 void AudioCapturerSession::Release()
 {
     CAMERA_SYNC_TRACE;
-    std::lock_guard<std::mutex> lock(audioCapturerMutex_);
+    std::unique_lock<std::recursive_mutex> lock(audioCapturerMutex_);
     if (audioCapturer_ != nullptr) {
         MEDIA_INFO_LOG("Audio capture Release enter");
         audioCapturer_->Release();
