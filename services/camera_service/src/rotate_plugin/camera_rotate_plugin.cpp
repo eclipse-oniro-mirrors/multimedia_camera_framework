@@ -47,6 +47,9 @@ sptr<CameraRotatePlugin> &CameraRotatePlugin::GetInstance()
             initResult = cameraRotatePlugin_->Init();
         }
     }
+    CHECK_PRINT_ELOG(!initResult, "CameraRotatePlugin::GetInstance init first failed");
+    CHECK_EXECUTE(!initResult, initResult = cameraRotatePlugin_->Init());
+    CHECK_PRINT_ELOG(!initResult, "CameraRotatePlugin::GetInstance init second failed");
     return CameraRotatePlugin::cameraRotatePlugin_;
 }
 
