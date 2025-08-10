@@ -50,6 +50,7 @@
 #include "refbase.h"
 #include "napi/native_node_api.h"
 #include "session/control_center_session_napi.h"
+#include "camera_security_utils.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -530,6 +531,10 @@ std::unordered_map<int32_t, std::function<napi_value(napi_env)>> g_sessionFactor
 CameraManagerNapi::CameraManagerNapi() : env_(nullptr)
 {
     CAMERA_SYNC_TRACE;
+    CHECK_EXECUTE(CameraSecurity::CheckSystemApp(), {
+        thread loadThread = thread([]() {CameraNapiExManager::GetCameraNapiExProxy();});
+        loadThread.detach();
+    });
 }
 
 CameraManagerNapi::~CameraManagerNapi()
@@ -679,6 +684,7 @@ static napi_value CreateCameraJSArray(napi_env env, std::vector<sptr<CameraDevic
 
 napi_value CameraManagerNapi::CreateCameraSessionInstance(napi_env env, napi_callback_info info)
 {
+    CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("CreateCameraSessionInstance is called");
     napi_status status;
     napi_value result = nullptr;
@@ -1366,6 +1372,7 @@ napi_value CameraManagerNapi::GetSupportedOutputCapability(napi_env env, napi_ca
 
 napi_value CameraManagerNapi::IsCameraMuted(napi_env env, napi_callback_info info)
 {
+    CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("IsCameraMuted is called");
     napi_value result = nullptr;
     size_t argc = ARGS_ONE;

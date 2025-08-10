@@ -25,6 +25,7 @@ std::mutex CameraNapiExManager::mutex_;
 
 std::shared_ptr<CameraNapiExProxy> CameraNapiExManager::GetCameraNapiExProxy(CameraNapiExProxyUserType type)
 {
+    CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("CameraNapiExManager::GetCameraNapiExProxy is called");
     std::lock_guard<std::mutex> lock(mutex_);
     if (cameraNapiExProxy_ == nullptr) {

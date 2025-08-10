@@ -45,6 +45,7 @@ CameraNapiExProxy::~CameraNapiExProxy()
 typedef napi_value (*CreateSessionInstanceForSys)(napi_env, int32_t);
 napi_value CameraNapiExProxy::CreateSessionForSys(napi_env env, int32_t jsModeName)
 {
+    CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("CameraNapiExProxy::CreateSessionForSys is called");
     napi_value result = nullptr;
     CHECK_RETURN_RET_ELOG(napiExLib_ == nullptr, result, "napiExLib_ is null");
