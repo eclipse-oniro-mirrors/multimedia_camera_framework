@@ -1971,6 +1971,7 @@ int32_t HCameraService::IsCameraMuteSupported(bool &isCameraMuteSupported)
 
 int32_t HCameraService::IsCameraMuted(bool& muteMode)
 {
+    CAMERA_SYNC_TRACE;
     lock_guard<mutex> lock(g_dataShareHelperMutex);
     CHECK_RETURN_RET(GetServiceStatus() != CameraServiceStatus::SERVICE_READY, CAMERA_INVALID_STATE);
     muteMode = muteModeStored_;
