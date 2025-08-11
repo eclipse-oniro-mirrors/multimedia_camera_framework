@@ -45,11 +45,35 @@ static map<const string, DynamiclibState> g_dynamiclibStateMap = {};
 static mutex g_libMutex;
 static map<const string, shared_ptr<Dynamiclib>> g_dynamiclibMap = {};
 static map<const string, weak_ptr<Dynamiclib>> g_weakDynamiclibMap = {};
+
+static mutex g_delayedCloseTimerMutex;
 static map<const string, shared_ptr<SimpleTimer>> g_delayedCloseTimerMap = {};
 
 static mutex g_asyncLoadingMutex;
 static condition_variable g_asyncLiblockCondition;
 static AsyncLoadingState g_isAsyncLoading = AsyncLoadingState::NONE;
+
+shared_ptr<SimpleTimer> GetDelayedCloseTimer(const string& libName)
+{
+    lock_guard<mutex> lock(g_delayedCloseTimerMutex);
+    auto it = g_delayedCloseTimerMap.find(libName);
+    CHECK_RETURN_RET(it == g_delayedCloseTimerMap.end(), nullptr);
+    return it->second;
+}
+
+void SetDelayedCloseTimer(const string& libName, shared_ptr<SimpleTimer> timer)
+{
+    lock_guard<mutex> lock(g_delayedCloseTimerMutex);
+    g_delayedCloseTimerMap[libName] = timer;
+}
+
+void RemoveDelayedCloseTimer(const string& libName)
+{
+    lock_guard<mutex> lock(g_delayedCloseTimerMutex);
+    auto it = g_delayedCloseTimerMap.find(libName);
+    CHECK_RETURN(it == g_delayedCloseTimerMap.end());
+    g_delayedCloseTimerMap.erase(it);
+}
 
 void UpdateDynamiclibState(const string& libName, DynamiclibState state)
 {
@@ -162,9 +186,9 @@ void CameraDynamicLoader::LoadDynamiclibAsync(const std::string& libName)
     }
     g_isAsyncLoading = AsyncLoadingState::PREPARE;
     thread asyncThread = thread([libName]() {
+        CancelFreeDynamicLibDelayed(libName);
         unique_lock<mutex> lock(g_libMutex);
         {
-            CancelFreeDynamicLibDelayedNoLock(libName);
             unique_lock<mutex> asyncLock(g_asyncLoadingMutex);
             g_isAsyncLoading = AsyncLoadingState::LOADING;
             g_asyncLiblockCondition.notify_all();
@@ -193,43 +217,29 @@ void CameraDynamicLoader::FreeDynamiclibNoLock(const string& libName)
     g_dynamiclibMap.erase(loadedIterator);
 }
 
-void CameraDynamicLoader::CancelFreeDynamicLibDelayedNoLock(const std::string& libName)
+void CameraDynamicLoader::CancelFreeDynamicLibDelayed(const std::string& libName)
 {
-    auto it = g_delayedCloseTimerMap.find(libName);
-    if (it == g_delayedCloseTimerMap.end()) {
-        return;
-    }
-    auto timer = it->second;
-    bool isCancelSuccess = timer->CancelTask();
-    MEDIA_INFO_LOG("CameraDynamicLoader::CancelFreeDynamicLibDelayedNoLock %{public}s CancelTask success :%{public}d",
+    auto closeTimer = GetDelayedCloseTimer(libName);
+    CHECK_RETURN(!closeTimer);
+    // Cancel old task
+    bool isCancelSuccess = closeTimer->CancelTask();
+    MEDIA_INFO_LOG("CameraDynamicLoader::CancelFreeDynamicLibDelayed %{public}s CancelTask success:%{public}d",
         libName.c_str(), isCancelSuccess);
-    g_delayedCloseTimerMap.erase(it);
+    RemoveDelayedCloseTimer(libName);
 }
 
 void CameraDynamicLoader::FreeDynamicLibDelayed(const std::string& libName, uint32_t delayMs)
 {
     MEDIA_INFO_LOG(
         "CameraDynamicLoader::FreeDynamicLibDelayed %{public}s  delayMs:%{public}d", libName.c_str(), delayMs);
-    lock_guard<mutex> lock(g_libMutex);
-    auto it = g_delayedCloseTimerMap.find(libName);
-    if (it != g_delayedCloseTimerMap.end()) {
-        // Cancel old task
-        bool isCancelSuccess = it->second->CancelTask();
-        MEDIA_INFO_LOG("CameraDynamicLoader::FreeDynamicLibDelayed %{public}s CancelTask success:%{public}d",
-            libName.c_str(), isCancelSuccess);
-        g_delayedCloseTimerMap.erase(it);
-    }
+    CancelFreeDynamicLibDelayed(libName);
     shared_ptr<SimpleTimer> closeTimer = make_shared<SimpleTimer>([&, libName]() {
         lock_guard<mutex> lock(g_libMutex);
-        auto it = g_delayedCloseTimerMap.find(libName);
-        if (it == g_delayedCloseTimerMap.end()) {
-            return;
-        }
         FreeDynamiclibNoLock(libName);
     });
     bool isStartSuccess = closeTimer->StartTask(delayMs);
 
-    g_delayedCloseTimerMap[libName] = closeTimer;
+    SetDelayedCloseTimer(libName, closeTimer);
     MEDIA_INFO_LOG("CameraDynamicLoader::FreeDynamicLibDelayed %{public}s StartTask success:%{public}d",
         libName.c_str(), isStartSuccess);
 }
