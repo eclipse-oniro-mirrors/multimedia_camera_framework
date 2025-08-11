@@ -94,7 +94,8 @@ void HStreamCaptureFuzzer::HStreamCaptureFuzzTest2(FuzzedDataProvider& fdp)
     fuzz_->SetBurstImages(captureId, imageId);
     fuzz_->CheckResetBurstKey(captureId);
     std::shared_ptr<OHOS::Camera::CameraMetadata> captureSettings;
-    captureSettings = std::make_shared<OHOS::Camera::CameraMetadata>(ITEMCOUNT, DATASIZE);
+    captureSettings = std::make_shared<OHOS::Camera::CameraMetadata>(
+        fdp.ConsumeIntegralInRange(0, ITEMCOUNT), fdp.ConsumeIntegralInRange(0, DATASIZE));
     fuzz_->CheckBurstCapture(captureSettings, fdp.ConsumeIntegral<int32_t>());
     sptr<HCameraHostManager> cameraHostManager = new HCameraHostManager(nullptr);
     std::string cameraId;
