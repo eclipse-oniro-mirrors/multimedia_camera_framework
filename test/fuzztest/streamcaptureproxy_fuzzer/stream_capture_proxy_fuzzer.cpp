@@ -46,7 +46,8 @@ void StreamCaptureProxyFuzzer::StreamCaptureProxyFuzzTest1(FuzzedDataProvider& f
     sptr<IRemoteObject> remote = nullptr;
     fuzz_ = std::make_shared<StreamCaptureProxy>(remote);
     std::shared_ptr<OHOS::Camera::CameraMetadata> ability;
-    ability = std::make_shared<OHOS::Camera::CameraMetadata>(ITEM_COUNT, DATA_SIZE);
+    ability = std::make_shared<OHOS::Camera::CameraMetadata>(
+        fdp.ConsumeIntegralInRange(0, ITEM_COUNT), fdp.ConsumeIntegralInRange(0, DATA_SIZE));
     fuzz_->Capture(ability);
 
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
