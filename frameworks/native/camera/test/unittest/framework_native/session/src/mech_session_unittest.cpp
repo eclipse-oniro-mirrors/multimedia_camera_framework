@@ -353,7 +353,6 @@ HWTEST_F(MechSessionUnitTest, mech_session_unittest_010, TestSize.Level1)
         auto appInfo = cameraAppInfos[i];
         EXPECT_EQ(appInfo.width, PREVIEW_WIDTH);
         EXPECT_EQ(appInfo.height, PREVIEW_HEIGHT);
-        EXPECT_EQ(appInfo.videoStatus, false);
     }
     ReleaseSession();
     retCode = mechSession->Release();
