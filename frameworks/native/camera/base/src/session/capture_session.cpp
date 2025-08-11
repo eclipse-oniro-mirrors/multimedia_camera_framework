@@ -363,7 +363,8 @@ int32_t CaptureSession::CommitConfig()
     }
     if (captureSession) {
         std::string foldScreenType = CameraManager::GetInstance()->GetFoldScreenType();
-        CHECK_EXECUTE(!foldScreenType.empty() && foldScreenType[0] == '6', AdjustRenderFit());
+        CHECK_EXECUTE(!foldScreenType.empty() && foldScreenType[0] == '6' && !CameraSecurity::CheckSystemApp(),
+            AdjustRenderFit());
         errCode = captureSession->SetCommitConfigFlag(isHasSwitchedOffline);
         errCode = captureSession->CommitConfig();
         MEDIA_INFO_LOG("CaptureSession::CommitConfig commit mode = %{public}d", GetMode());
