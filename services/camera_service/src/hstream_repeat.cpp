@@ -106,9 +106,10 @@ void HStreamRepeat::SetSketchStreamInfo(StreamInfo_V1_1& streamInfo)
     streamInfo.v1_0.intent_ = StreamIntent::PREVIEW;
     streamInfo.v1_0.encodeType_ = ENCODE_TYPE_NULL;
     // LCOV_EXCL_START
-    CHECK_EXECUTE(CheckSystemApp() && currentMode_ == static_cast<int32_t>(SceneMode::VIDEO), {
+    CHECK_EXECUTE(CheckVideoModeForSystemApp(currentMode_), {
         MEDIA_DEBUG_LOG("HStreamRepeat::SetSketchStreamInfo current colorSpace : %{public}d",
                         streamInfo.v1_0.dataspace_);
+        // 系统相机录像相关模式非录像流色域信息LIMIT2FULL
         if (streamInfo.v1_0.dataspace_ == CM_ColorSpaceType_V2_1::CM_BT2020_HLG_LIMIT) {
             streamInfo.v1_0.dataspace_ = CM_ColorSpaceType_V2_1::CM_BT2020_HLG_FULL;
         }
@@ -126,6 +127,7 @@ void HStreamRepeat::SetSketchStreamInfo(StreamInfo_V1_1& streamInfo)
     streamInfo.extendedStreamInfos = { extendedStreamInfo };
     MEDIA_DEBUG_LOG("HStreamRepeat::SetSketchStreamInfo end");
 }
+
 
 void HStreamRepeat::SetStreamInfo(StreamInfo_V1_1& streamInfo)
 {
@@ -148,9 +150,10 @@ void HStreamRepeat::SetStreamInfo(StreamInfo_V1_1& streamInfo)
             streamInfo.v1_0.intent_ = StreamIntent::PREVIEW;
             streamInfo.v1_0.encodeType_ = ENCODE_TYPE_NULL;
             // LCOV_EXCL_START
-            CHECK_EXECUTE(CheckSystemApp() && currentMode_ == static_cast<int32_t>(SceneMode::VIDEO), {
+            CHECK_EXECUTE(CheckVideoModeForSystemApp(currentMode_), {
                 MEDIA_DEBUG_LOG("HStreamRepeat::SetVideoStreamInfo current colorSpace : %{public}d",
                     streamInfo.v1_0.dataspace_);
+                
                 if (streamInfo.v1_0.dataspace_ == CM_ColorSpaceType_V2_1::CM_BT2020_HLG_LIMIT) {
                     streamInfo.v1_0.dataspace_ = CM_ColorSpaceType_V2_1::CM_BT2020_HLG_FULL;
                 }
@@ -181,6 +184,24 @@ int32_t HStreamRepeat::SetCurrentMode(int32_t mode)
     MEDIA_DEBUG_LOG("HStreamRepeat::SetCurentMode current mode:%{public}d", mode);
     currentMode_ = mode;
     return 0;
+}
+
+bool HStreamRepeat::CheckVideoModeForSystemApp(int32_t sceneMode)
+{
+    CHECK_RETURN_RET_ILOG(!CheckSystemApp(), false, "CheckVideoModeForSystemApp is not SystemApp");
+    std::vector<SceneMode> videoModeVec = {
+        SceneMode::VIDEO,
+        SceneMode::SLOW_MOTION,
+        SceneMode::VIDEO_MACRO,
+        SceneMode::PROFESSIONAL_VIDEO,
+        SceneMode::HIGH_FRAME_RATE,
+        SceneMode::TIMELAPSE_PHOTO,
+        SceneMode::APERTURE_VIDEO,
+    };
+    auto iterator = std::find(videoModeVec.begin(), videoModeVec.end(), static_cast<SceneMode>(sceneMode));
+    CHECK_RETURN_RET_ILOG(iterator != videoModeVec.end(), true,
+        "HStreamRepeat::CheckVideoModeForSystemApp current sceneMode: %{public}d", sceneMode);
+    return false;
 }
 
 void HStreamRepeat::SetMetaProducer(sptr<OHOS::IBufferProducer> metaProducer)
