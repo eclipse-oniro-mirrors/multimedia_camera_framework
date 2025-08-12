@@ -201,9 +201,6 @@ public:
     inline sptr<HStreamOperator> GetStreamOperator()
     {
         std::lock_guard<std::mutex> lock(streamOperatorLock_);
-        if (hStreamOperator_ == nullptr) {
-            return nullptr;
-        }
         return hStreamOperator_.promote();
     }
 
