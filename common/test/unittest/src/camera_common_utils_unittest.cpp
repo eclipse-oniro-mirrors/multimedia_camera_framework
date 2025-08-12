@@ -388,7 +388,7 @@ HWTEST_F(CameraCommonUtilsUnitTest, CameraDynamicLoader_TestCancelFreeDynamicLib
     CameraDynamicLoader::FreeDynamicLibDelayed(MEDIA_LIB_SO, 500);
 
     // Cancel delayed free
-    CameraDynamicLoader::CancelFreeDynamicLibDelayedNoLock(MEDIA_LIB_SO);
+    CameraDynamicLoader::CancelFreeDynamicLibDelayed(MEDIA_LIB_SO);
 
     // Verify the dynamic library remains loaded
     auto dynamiclibAfterCancel = CameraDynamicLoader::GetDynamiclib(MEDIA_LIB_SO);

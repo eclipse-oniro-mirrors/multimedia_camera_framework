@@ -55,7 +55,7 @@ private:
     CameraDynamicLoader& operator=(const CameraDynamicLoader&) = delete;
 
     static void FreeDynamiclibNoLock(const std::string& libName);
-    static void CancelFreeDynamicLibDelayedNoLock(const std::string& libName);
+    static void CancelFreeDynamicLibDelayed(const std::string& libName);
     static std::shared_ptr<Dynamiclib> GetDynamiclibNoLock(const std::string& libName);
 };
 
