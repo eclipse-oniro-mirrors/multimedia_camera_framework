@@ -38,9 +38,9 @@ void ThumbnailBufferConsumer::OnBufferAvailable()
     MEDIA_INFO_LOG("ThumbnailBufferConsumer OnBufferAvailable E");
     sptr<HStreamCapture> streamCapture = streamCapture_.promote();
     CHECK_RETURN_ELOG(streamCapture == nullptr, "streamCapture is null");
-    CHECK_RETURN_ELOG(streamCapture->photoTask_ == nullptr, "photoTask is null");
+    CHECK_RETURN_ELOG(streamCapture->thumbnailTask_ == nullptr, "thumbnailTask is null");
     wptr<ThumbnailBufferConsumer> thisPtr(this);
-    streamCapture->photoTask_->SubmitTask([thisPtr]() {
+    streamCapture->thumbnailTask_->SubmitTask([thisPtr]() {
         auto listener = thisPtr.promote();
         CHECK_EXECUTE(listener, listener->ExecuteOnBufferAvailable());
     });
