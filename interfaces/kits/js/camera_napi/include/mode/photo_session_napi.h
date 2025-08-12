@@ -27,6 +27,7 @@ class PhotoSessionNapi : public CameraSessionNapi {
 public:
     static napi_value Init(napi_env env, napi_value exports);
     static napi_value CreateCameraSession(napi_env env);
+    static napi_value CreatePhotoSessionForTransfer(napi_env env, sptr<PhotoSession> photoSession);
     PhotoSessionNapi();
     ~PhotoSessionNapi();
 

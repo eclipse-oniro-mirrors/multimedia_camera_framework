@@ -38,6 +38,11 @@ public:
     void SetCaptureId(int32_t captureId);
     int32_t GetCaptureId();
     void ReleaseSync();
+
+    inline int64_t GetSpecificImplPtr()
+    {
+        return reinterpret_cast<uintptr_t>(this);
+    }
 private:
     ImageTaihe::Image mainImage_ = make_holder<ANI::Image::ImageImpl, ImageTaihe::Image>();
     ImageTaihe::Image rawImage_ = make_holder<ANI::Image::ImageImpl, ImageTaihe::Image>();

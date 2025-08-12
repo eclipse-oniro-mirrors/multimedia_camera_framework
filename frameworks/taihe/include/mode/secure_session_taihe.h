@@ -38,6 +38,15 @@ public:
     }
     ~SecureSessionImpl() = default;
     void AddSecureOutput(weak::PreviewOutput previewOutput) {}
+    inline int64_t GetSpecificImplPtr()
+    {
+        return reinterpret_cast<uintptr_t>(this);
+    }
+
+    sptr<OHOS::CameraStandard::SecureCameraSession> GetSecureCameraSession()
+    {
+        return secureCameraSession_;
+    }
 private:
     sptr<OHOS::CameraStandard::SecureCameraSession> secureCameraSession_ = nullptr;
 };
