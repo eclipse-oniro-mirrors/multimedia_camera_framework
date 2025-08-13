@@ -9080,8 +9080,10 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_045, TestSize.Level0)
     ASSERT_NE(session, nullptr);
 
     FocusTrackingMode focusTrackingMode = FOCUS_TRACKING_MODE_AUTO;
-    EXPECT_EQ(session->SetFocusTrackingMode(focusTrackingMode), CameraErrorCode::SESSION_NOT_CONFIG);
-    EXPECT_EQ(session->GetFocusTrackingMode(focusTrackingMode), CameraErrorCode::SESSION_NOT_CONFIG);
+    EXPECT_EQ(session->SetFocusTrackingMode(focusTrackingMode), 
+        CameraErrorCode::SESSION_NOT_CONFIG);
+    EXPECT_EQ(session->GetFocusTrackingMode(focusTrackingMode), 
+        CameraErrorCode::SESSION_NOT_CONFIG);
 
     input->Close();
     session->Release();
@@ -9155,11 +9157,13 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_047, TestSize.Level0)
     ASSERT_NE(session, nullptr);
 
     std::vector<FocusTrackingMode> getSupportedFocusTrackingModes;
-    EXPECT_EQ(session->GetSupportedFocusTrackingModes(getSupportedFocusTrackingModes), CameraErrorCode::SESSION_NOT_CONFIG);
+    EXPECT_EQ(session->GetSupportedFocusTrackingModes(getSupportedFocusTrackingModes), 
+        CameraErrorCode::SESSION_NOT_CONFIG);
 
     FocusTrackingMode focusTrackingMode = FOCUS_TRACKING_MODE_AUTO;
     bool isSupported;
-    EXPECT_EQ(session->IsFocusTrackingModeSupported(focusTrackingMode, isSupported), CameraErrorCode::SESSION_NOT_CONFIG);
+    EXPECT_EQ(session->IsFocusTrackingModeSupported(focusTrackingMode, isSupported), 
+        CameraErrorCode::SESSION_NOT_CONFIG);
 
     input->Close();
     session->Release();
