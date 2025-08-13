@@ -9053,5 +9053,162 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_166, TestSize.Level0)
     sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&) preview;
     EXPECT_EQ(previewOutput->IsXComponentSwap(), false);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test CaptureSession with SetFocusTrackingMode and GetFocusTrackingMode when not Configed.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CaptureSession with SetFocusTrackingMode and GetFocusTrackingMode when not Configed.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_045, TestSize.Level0)
+{
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(input, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
+    ASSERT_NE(photo, nullptr);
+
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    FocusTrackingMode focusTrackingMode = FOCUS_TRACKING_MODE_AUTO;
+    EXPECT_EQ(session->SetFocusTrackingMode(focusTrackingMode), CameraErrorCode::SESSION_NOT_CONFIG);
+    EXPECT_EQ(session->GetFocusTrackingMode(focusTrackingMode), CameraErrorCode::SESSION_NOT_CONFIG);
+
+    input->Close();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CaptureSession with SetFocusTrackingMode and GetFocusTrackingMode when Configed.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CaptureSession with SetFocusTrackingMode and GetFocusTrackingMode when Configed.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_046, TestSize.Level0)
+{
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(input, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
+    ASSERT_NE(photo, nullptr);
+
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    int32_t ret = session->BeginConfig();
+    EXPECT_EQ(ret, 0);
+    ret = session->AddInput(input);
+    EXPECT_EQ(ret, 0);
+    ret = session->AddOutput(photo);
+    EXPECT_EQ(ret, 0);
+    ret = session->CommitConfig();
+    EXPECT_EQ(ret, 0);
+
+    FocusTrackingMode focusTrackingMode = FOCUS_TRACKING_MODE_AUTO;
+    EXPECT_EQ(session->SetFocusTrackingMode(focusTrackingMode), 0);
+    EXPECT_EQ(session->GetFocusTrackingMode(focusTrackingMode), 0);
+
+    input->Close();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CaptureSession with GetSupportedFocusTrackingModes and IsFocusTrackingModeSupported when not Configed.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CaptureSession with GetSupportedFocusTrackingModes and IsFocusTrackingModeSupported when not Configed.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_047, TestSize.Level0)
+{
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(input, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
+    ASSERT_NE(photo, nullptr);
+
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    std::vector<FocusTrackingMode> getSupportedFocusTrackingModes;
+    EXPECT_EQ(session->GetSupportedFocusTrackingModes(getSupportedFocusTrackingModes), CameraErrorCode::SESSION_NOT_CONFIG);
+
+    FocusTrackingMode focusTrackingMode = FOCUS_TRACKING_MODE_AUTO;
+    bool isSupported;
+    EXPECT_EQ(session->IsFocusTrackingModeSupported(focusTrackingMode, isSupported), CameraErrorCode::SESSION_NOT_CONFIG);
+
+    input->Close();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CaptureSession with GetSupportedFocusTrackingModes and IsFocusTrackingModeSupported when Configed.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CaptureSession with GetSupportedFocusTrackingModes and IsFocusTrackingModeSupported when Configed.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_048, TestSize.Level0)
+{
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(input, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
+    ASSERT_NE(photo, nullptr);
+
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    int32_t ret = session->BeginConfig();
+    EXPECT_EQ(ret, 0);
+    ret = session->AddInput(input);
+    EXPECT_EQ(ret, 0);
+    ret = session->AddOutput(photo);
+    EXPECT_EQ(ret, 0);
+    ret = session->CommitConfig();
+    EXPECT_EQ(ret, 0);
+
+    std::vector<FocusTrackingMode> getSupportedFocusTrackingModes;
+    EXPECT_EQ(session->GetSupportedFocusTrackingModes(getSupportedFocusTrackingModes), 0);
+
+    FocusTrackingMode focusTrackingMode = FOCUS_TRACKING_MODE_AUTO;
+    bool isSupported;
+    EXPECT_EQ(session->IsFocusTrackingModeSupported(focusTrackingMode, isSupported), 0);
+
+    input->Close();
+    session->Release();
+}
+
 }
 }
