@@ -9060,7 +9060,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_166, TestSize.Level0)
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test CaptureSession with SetFocusTrackingMode and GetFocusTrackingMode when not Configed.
+ * CaseDescription: Test SetFocusTrackingMode and GetFocusTrackingMode when not Configed.
  */
 HWTEST_F(CaptureSessionUnitTest, capture_session_unit_045, TestSize.Level0)
 {
@@ -9080,9 +9080,9 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_045, TestSize.Level0)
     ASSERT_NE(session, nullptr);
 
     FocusTrackingMode focusTrackingMode = FOCUS_TRACKING_MODE_AUTO;
-    EXPECT_EQ(session->SetFocusTrackingMode(focusTrackingMode), 
+    EXPECT_EQ(session->SetFocusTrackingMode(focusTrackingMode),
         CameraErrorCode::SESSION_NOT_CONFIG);
-    EXPECT_EQ(session->GetFocusTrackingMode(focusTrackingMode), 
+    EXPECT_EQ(session->GetFocusTrackingMode(focusTrackingMode),
         CameraErrorCode::SESSION_NOT_CONFIG);
 
     input->Close();
@@ -9095,7 +9095,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_045, TestSize.Level0)
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test CaptureSession with SetFocusTrackingMode and GetFocusTrackingMode when Configed.
+ * CaseDescription: Test SetFocusTrackingMode and GetFocusTrackingMode when Configed.
  */
 HWTEST_F(CaptureSessionUnitTest, capture_session_unit_046, TestSize.Level0)
 {
@@ -9137,7 +9137,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_046, TestSize.Level0)
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test CaptureSession with GetSupportedFocusTrackingModes and IsFocusTrackingModeSupported when not Configed.
+ * CaseDescription: Test GetSupportedFocusTrackingModes and IsFocusTrackingModeSupported when not Configed.
  */
 HWTEST_F(CaptureSessionUnitTest, capture_session_unit_047, TestSize.Level0)
 {
@@ -9157,12 +9157,12 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_047, TestSize.Level0)
     ASSERT_NE(session, nullptr);
 
     std::vector<FocusTrackingMode> getSupportedFocusTrackingModes;
-    EXPECT_EQ(session->GetSupportedFocusTrackingModes(getSupportedFocusTrackingModes), 
+    EXPECT_EQ(session->GetSupportedFocusTrackingModes(getSupportedFocusTrackingModes),
         CameraErrorCode::SESSION_NOT_CONFIG);
 
     FocusTrackingMode focusTrackingMode = FOCUS_TRACKING_MODE_AUTO;
     bool isSupported;
-    EXPECT_EQ(session->IsFocusTrackingModeSupported(focusTrackingMode, isSupported), 
+    EXPECT_EQ(session->IsFocusTrackingModeSupported(focusTrackingMode, isSupported),
         CameraErrorCode::SESSION_NOT_CONFIG);
 
     input->Close();
@@ -9175,7 +9175,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_047, TestSize.Level0)
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test CaptureSession with GetSupportedFocusTrackingModes and IsFocusTrackingModeSupported when Configed.
+ * CaseDescription: Test GetSupportedFocusTrackingModes and IsFocusTrackingModeSupported when Configed.
  */
 HWTEST_F(CaptureSessionUnitTest, capture_session_unit_048, TestSize.Level0)
 {
