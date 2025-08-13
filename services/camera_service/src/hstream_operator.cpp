@@ -145,7 +145,7 @@ void HStreamOperator::InitDefaultColortSpace(SceneMode opMode)
         {SceneMode::QUICK_SHOT_PHOTO, ColorSpace::DISPLAY_P3},
         {SceneMode::LIGHT_PAINTING, ColorSpace::DISPLAY_P3},
         {SceneMode::PANORAMA_PHOTO, ColorSpace::DISPLAY_P3},
-        {SceneMode::TIMELAPSE_PHOTO, ColorSpace::DISPLAY_P3},
+        {SceneMode::TIMELAPSE_PHOTO, ColorSpace::BT709_LIMIT},
         {SceneMode::APERTURE_VIDEO, ColorSpace::BT709_LIMIT},
         {SceneMode::FLUORESCENCE_PHOTO, ColorSpace::DISPLAY_P3},
     };

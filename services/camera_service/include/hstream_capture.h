@@ -166,6 +166,7 @@ public:
 private:
     int32_t CheckBurstCapture(const std::shared_ptr<OHOS::Camera::CameraMetadata>& captureSettings,
                               const int32_t &preparedCaptureId);
+    void SetDataSpaceForCapture(StreamInfo_V1_1 &streamInfo);
     int32_t PrepareBurst(int32_t captureId);
     void ResetBurst();
     void ResetBurstKey(int32_t captureId);

@@ -257,11 +257,40 @@ void HStreamCapture::FillingRawAndThumbnailStreamInfo(StreamInfo_V1_1 &streamInf
     }
 }
 
+void HStreamCapture::SetDataSpaceForCapture(StreamInfo_V1_1 &streamInfo)
+{
+    // LCOV_EXCL_START
+    switch (streamInfo.v1_0.dataspace_) {
+        case CM_ColorSpaceType_V2_1::CM_BT2020_HLG_FULL:
+            //  HDR Video Session need P3 for captureStream
+            streamInfo.v1_0.dataspace_ =  CM_ColorSpaceType_V2_1::CM_P3_FULL;
+            break;
+        case CM_ColorSpaceType_V2_1::CM_BT2020_HLG_LIMIT:
+            // HDR Video Session need P3 for captureStream
+            streamInfo.v1_0.dataspace_ =  CM_ColorSpaceType_V2_1::CM_P3_FULL;
+            break;
+        case CM_ColorSpaceType_V2_1::CM_BT709_LIMIT:
+            // SDR Video Session need SRGB for captureStream
+            streamInfo.v1_0.dataspace_ = CM_ColorSpaceType_V2_1::CM_SRGB_FULL;
+            break;
+        default:
+            streamInfo.v1_0.dataspace_ = CM_ColorSpaceType_V2_1::CM_SRGB_FULL;
+            break;
+    }
+    // LCOV_EXCL_STOP
+    MEDIA_DEBUG_LOG("HStreamCapture::SetDataSpaceForCapture current HDI dataSpace: %{public}d",
+        streamInfo.v1_0.dataspace_);
+}
+
 void HStreamCapture::SetStreamInfo(StreamInfo_V1_1 &streamInfo)
 {
     HStreamCommon::SetStreamInfo(streamInfo);
     MEDIA_INFO_LOG("HStreamCapture::SetStreamInfo streamId:%{public}d format:%{public}d", GetFwkStreamId(), format_);
     streamInfo.v1_0.intent_ = STILL_CAPTURE;
+
+    // 录像抓拍场景下添加拍照流的色域信息转换
+    SetDataSpaceForCapture(streamInfo);
+
     if (format_ == OHOS_CAMERA_FORMAT_HEIC) {
         streamInfo.v1_0.encodeType_ =
             static_cast<HDI::Camera::V1_0::EncodeType>(HDI::Camera::V1_3::ENCODE_TYPE_HEIC);
@@ -272,9 +301,6 @@ void HStreamCapture::SetStreamInfo(StreamInfo_V1_1 &streamInfo)
         if (GetMode() != static_cast<int32_t>(HDI::Camera::V1_3::OperationMode::TIMELAPSE_PHOTO)) {
             FillingPictureExtendStreamInfos(streamInfo, GRAPHIC_PIXEL_FMT_YCRCB_420_SP);
         }
-        streamInfo.v1_0.dataspace_ = (dataSpace_ == CM_BT2020_HLG_FULL || dataSpace_ == CM_BT2020_HLG_LIMIT)
-                                         ? CM_P3_FULL /*HDR photo need P3 for captureStream*/
-                                         : CM_SRGB_FULL /*video session need SRGB for captureStream*/;
     } else if (format_ == OHOS_CAMERA_FORMAT_DNG_XDRAW) {
         streamInfo.v1_0.encodeType_ =
             static_cast<HDI::Camera::V1_0::EncodeType>(HDI::Camera::V1_4::ENCODE_TYPE_DNG_XDRAW);
