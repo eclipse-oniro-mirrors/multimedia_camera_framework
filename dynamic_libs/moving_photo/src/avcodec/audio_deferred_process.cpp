@@ -146,7 +146,10 @@ void AudioDeferredProcess::ReturnToRecords(std::array<uint8_t, MAX_PROCESSED_SIZ
         uint8_t* temp = new uint8_t[oneProcessedSize_];
         int32_t ret = memcpy_s(temp, oneProcessedSize_, processedArr.data() + j * oneProcessedSize_, oneProcessedSize_);
         CHECK_PRINT_ELOG(ret != 0, "AudioDeferredProcess::Process returnToRecords memcpy_s err");
-        processedRecords[i + 1 + j - batchSize]->SetAudioBuffer(temp, oneProcessedSize_);
+        int64_t index = i + 1 + j - batchSize;
+        CHECK_RETURN_ELOG(index < 0 || index >= static_cast<int64_t>(processedRecords.size()),
+            "ReturnToRecords unexpected error occured");
+        processedRecords[index]->SetAudioBuffer(temp, oneProcessedSize_);
     }
     // LCOV_EXCL_STOP
 }

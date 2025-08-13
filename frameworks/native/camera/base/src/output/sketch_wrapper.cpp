@@ -306,7 +306,8 @@ void SketchWrapper::UpdateSketchReferenceFovRatio(camera_metadata_item_t& metada
     float currentMaxRatio = INVALID_ZOOM_RATIO;
     SceneFeaturesMode currentSceneFeaturesMode;
     // LCOV_EXCL_START
-    for (uint32_t i = 0; i < dataCount; i++) {
+    const int32_t MAX_OFFSET = 2;
+    for (uint32_t i = 0; i + MAX_OFFSET < dataCount; i++) {
         if (currentMode == INVALID_MODE_FLOAT) {
             currentMode = metadataItem.data.f[i];
             currentSceneFeaturesMode = GetSceneFeaturesModeFromModeData(metadataItem.data.f[i]);
