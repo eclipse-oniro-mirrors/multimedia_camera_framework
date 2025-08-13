@@ -30,9 +30,10 @@ namespace CameraStandard {
 napi_status NapiRefManager::CreateMemSafetyRef(napi_env env, napi_value value, napi_ref* result)
 {
     MEDIA_DEBUG_LOG("NapiRefManager::CreateMemSafetyRef enter");
+    CHECK_RETURN_RET_ELOG(
+        !result || !env, napi_status::napi_invalid_arg, "NapiRefManager::CreateMemSafetyRef env or result is nullptr ");
     napi_status status = napi_create_reference(env, value, 1, result);
-    CHECK_RETURN_RET_WLOG(
-        status != napi_ok || !result || !env, status, "NapiRefManager::CreateMemSafetyRef create ref fail");
+    CHECK_RETURN_RET_ELOG(status != napi_ok, status, "NapiRefManager::CreateMemSafetyRef create ref fail");
     std::lock_guard<std::mutex> lock(mutex_);
     auto& pr = envToRefMap_[env];
     auto& [mpEnv, mpRefSet] = pr;
