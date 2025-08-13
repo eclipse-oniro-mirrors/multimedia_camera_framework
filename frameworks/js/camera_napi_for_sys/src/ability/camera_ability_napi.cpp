@@ -31,7 +31,7 @@ thread_local napi_ref CameraFunctionsNapi::sPortraitPhotoConflictConstructor_ = 
 thread_local napi_ref CameraFunctionsNapi::sVideoConstructor_ = nullptr;
 thread_local napi_ref CameraFunctionsNapi::sVideoConflictConstructor_ = nullptr;
 
-const std::unordered_map<FunctionsType, napi_ref*> CameraFunctionsNapi::refsMap_ = {
+thread_local const std::unordered_map<FunctionsType, napi_ref*> CameraFunctionsNapi::refsMap_ = {
     { FunctionsType::PHOTO_FUNCTIONS, &CameraFunctionsNapi::sPhotoConstructor_ },
     { FunctionsType::PHOTO_CONFLICT_FUNCTIONS, &CameraFunctionsNapi::sPhotoConflictConstructor_ },
     { FunctionsType::PORTRAIT_PHOTO_FUNCTIONS, &CameraFunctionsNapi::sPortraitPhotoConstructor_ },
@@ -161,30 +161,15 @@ napi_value CameraFunctionsNapi::CreateCameraFunctions(napi_env env, sptr<CameraA
     napi_status status;
     napi_value result = nullptr;
     napi_value constructor;
-    if (type == FunctionsType::PHOTO_FUNCTIONS) {
-        CHECK_EXECUTE(sPhotoConstructor_ == nullptr, CameraFunctionsNapi::Init(env, type));
-        status = napi_get_reference_value(env, sPhotoConstructor_, &constructor);
-    } else if (type == FunctionsType::PHOTO_CONFLICT_FUNCTIONS) {
-        CHECK_EXECUTE(sPhotoConflictConstructor_ == nullptr, CameraFunctionsNapi::Init(env, type));
-        status = napi_get_reference_value(env, sPhotoConflictConstructor_, &constructor);
-    } else if (type == FunctionsType::PORTRAIT_PHOTO_FUNCTIONS) {
-        CHECK_EXECUTE(sPortraitPhotoConstructor_ == nullptr, CameraFunctionsNapi::Init(env, type));
-        status = napi_get_reference_value(env, sPortraitPhotoConstructor_, &constructor);
-    } else if (type == FunctionsType::PORTRAIT_PHOTO_CONFLICT_FUNCTIONS) {
-        CHECK_EXECUTE(sPortraitPhotoConflictConstructor_ == nullptr, CameraFunctionsNapi::Init(env, type));
-        status = napi_get_reference_value(env, sPortraitPhotoConflictConstructor_, &constructor);
-    } else if (type == FunctionsType::VIDEO_FUNCTIONS) {
-        CHECK_EXECUTE(sVideoConstructor_ == nullptr, CameraFunctionsNapi::Init(env, type));
-        status = napi_get_reference_value(env, sVideoConstructor_, &constructor);
-    } else if (type == FunctionsType::VIDEO_CONFLICT_FUNCTIONS) {
-        CHECK_EXECUTE(sVideoConflictConstructor_ == nullptr, CameraFunctionsNapi::Init(env, type));
-        status = napi_get_reference_value(env, sVideoConflictConstructor_, &constructor);
-    } else {
+    auto itRef = refsMap_.find(type);
+    if (itRef == refsMap_.end() || !itRef->second) {
         MEDIA_ERR_LOG("CreateCameraFunctions call Failed type not find");
         napi_get_undefined(env, &result);
         return result;
     }
-
+    napi_ref* pCtor = itRef->second;
+    CHECK_EXECUTE(*pCtor == nullptr, CameraFunctionsNapi::Init(env, type));
+    status = napi_get_reference_value(env, *pCtor, &constructor);
     if (status == napi_ok) {
         sCameraAbility_ = functions;
         status = napi_new_instance(env, constructor, 0, nullptr, &result);
