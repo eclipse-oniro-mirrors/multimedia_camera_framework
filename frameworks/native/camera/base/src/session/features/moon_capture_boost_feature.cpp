@@ -40,7 +40,8 @@ MoonCaptureBoostFeature::MoonCaptureBoostFeature(
     uint32_t currentMode = INVALID_MODE;
     float currentMinRatio = INVALID_ZOOM_RATIO;
     float currentMaxRatio = INVALID_ZOOM_RATIO;
-    for (uint32_t i = 0; i < item.count; i++) {
+    const int32_t MAX_OFFSET = 2;
+    for (uint32_t i = 0; i + MAX_OFFSET < item.count; i++) {
         if (currentMode == INVALID_MODE) {
             currentMode = static_cast<SceneMode>(item.data.ui32[i]);
             continue;

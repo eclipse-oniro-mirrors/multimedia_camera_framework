@@ -618,7 +618,7 @@ void CaptureSession::UpdateDeviceDeferredability()
     int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_DEFERRED_IMAGE_DELIVERY, &item);
     MEDIA_INFO_LOG("UpdateDeviceDeferredability get ret: %{public}d", ret);
     MEDIA_DEBUG_LOG("UpdateDeviceDeferredability item: %{public}d count: %{public}d", item.item, item.count);
-    for (uint32_t i = 0; i < item.count; i++) {
+    for (uint32_t i = 0; i + 1 < item.count; i++) {
         if (i % DEFERRED_MODE_DATA_SIZE == 0) {
             MEDIA_DEBUG_LOG("UpdateDeviceDeferredability mode index:%{public}d, deferredType:%{public}d",
                 item.data.u8[i], item.data.u8[i + 1]);

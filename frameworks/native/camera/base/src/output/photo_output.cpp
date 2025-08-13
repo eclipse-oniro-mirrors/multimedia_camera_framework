@@ -1051,7 +1051,7 @@ int32_t PhotoOutput::IsAutoHighQualityPhotoSupported(int32_t &isAutoHighQualityP
 
     int headLenPerMode = 2;
     SceneMode currentSceneMode = session->GetMode();
-    for (int i = 0; i < static_cast<int>(item.count); i += headLenPerMode) {
+    for (int i = 0; i + 1 < static_cast<int>(item.count); i += headLenPerMode) {
         if (currentSceneMode == static_cast<int>(item.data.u8[i])) {
             isAutoHighQualityPhotoSupported = (item.data.u8[i + 1] == 1) ? 0 : -1;
         }
