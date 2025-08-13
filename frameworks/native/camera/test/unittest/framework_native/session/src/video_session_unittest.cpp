@@ -551,5 +551,117 @@ HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_010, TestSize.Level0
     videoSessionForSys->ProcessLightStatusChange(metadata);
     input->Close();
 }
+
+/*
+ * Feature: Framework
+ * Function: Test ControlCenterSession virtualApertures and physicalApertures
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test ControlCenterSession virtualApertures and physicalApertures
+ */
+HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_007, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    EXPECT_EQ(camInput->GetCameraDevice()->Open(), 0);
+
+    sptr<HCameraHostManager> cameraHostManager = new(std::nothrow) HCameraHostManager(nullptr);
+    sptr<HCameraService> cameraService =  new(std::nothrow) HCameraService(cameraHostManager);
+    ASSERT_NE(cameraService, nullptr);
+
+    sptr<ControlCenterSession> mControlCenterSession = nullptr;
+    cameraManager_->CreateControlCenterSession(mControlCenterSession);
+    EXPECT_NE(mControlCenterSession, nullptr);
+
+    std::vector<float> virtualApertures = {};
+    mControlCenterSession->GetSupportedVirtualApertures(virtualApertures);
+    EXPECT_EQ(virtualApertures.size(), 0);
+
+    float virtualAperture = 0;
+    mControlCenterSession->GetVirtualAperture(virtualAperture);
+    EXPECT_EQ(virtualAperture, 0);
+
+    auto setVirtualApertureRet = mControlCenterSession->SetVirtualAperture(0.0);
+    EXPECT_NE(setVirtualApertureRet, CAMERA_OK);
+
+    std::vector<std::vector<float>> physicalApertures = {};
+    mControlCenterSession->GetSupportedPhysicalApertures(physicalApertures);
+    EXPECT_EQ(physicalApertures.size(), 0);
+
+    float physicalAperture = 0;
+    mControlCenterSession->GetPhysicalAperture(physicalAperture);
+    EXPECT_EQ(physicalAperture, 0);
+
+    auto setPhysicalApertureRet = mControlCenterSession->SetPhysicalAperture(0.0);
+    EXPECT_EQ(setPhysicalApertureRet, CameraErrorCode::INVALID_ARGUMENT);
+
+    input->Close();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test ControlCenterSession beauty effect
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test ControlCenterSession beauty effect
+ */
+HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_008, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    EXPECT_EQ(camInput->GetCameraDevice()->Open(), 0);
+
+    sptr<HCameraHostManager> cameraHostManager = new(std::nothrow) HCameraHostManager(nullptr);
+    sptr<HCameraService> cameraService =  new(std::nothrow) HCameraService(cameraHostManager);
+    ASSERT_NE(cameraService, nullptr);
+
+    sptr<ControlCenterSession> mControlCenterSession = nullptr;
+    cameraManager_->CreateControlCenterSession(mControlCenterSession);
+    EXPECT_NE(mControlCenterSession, nullptr);
+
+    std::vector<int32_t> beautyTypes = {};
+    beautyTypes = mControlCenterSession->GetSupportedBeautyTypes();
+    EXPECT_EQ(beautyTypes.size(), 0);
+
+    std::vector<int32_t> beautyRange = {};
+    beautyRange = mControlCenterSession->GetSupportedBeautyRange(BeautyType::AUTO_TYPE);
+    EXPECT_EQ(beautyRange.size(), 0);
+
+    mControlCenterSession->SetBeauty(BeautyType::AUTO_TYPE, 0);
+
+    int32_t beautyValue = mControlCenterSession->GetBeauty(BeautyType::AUTO_TYPE);
+    EXPECT_EQ(beautyValue, 0);
+
+    std::vector<PortraitThemeType> themeTypes = {};
+    auto getThemeTypesRet = mControlCenterSession->GetSupportedPortraitThemeTypes(themeTypes);
+    EXPECT_EQ(getThemeTypesRet, CameraErrorCode::INVALID_ARGUMENT);
+    EXPECT_EQ(themeTypes.size(), 0);
+
+    bool isSupportportraitTheme = false;
+    auto isSupportRet = mControlCenterSession->IsPortraitThemeSupported(isSupportportraitTheme);
+    EXPECT_EQ(isSupportRet, CameraErrorCode::INVALID_ARGUMENT);
+    EXPECT_EQ(isSupportportraitTheme, false);
+    EXPECT_EQ(mControlCenterSession->IsPortraitThemeSupported(), false);
+
+    auto setThemeTypeRet = mControlCenterSession->SetPortraitThemeType(PortraitThemeType::NATURAL);
+    EXPECT_EQ(setThemeTypeRet, CameraErrorCode::INVALID_ARGUMENT);
+
+    auto releaseRet = mControlCenterSession->Release();
+    EXPECT_EQ(releaseRet, 0);
+
+    input->Close();
+}
 }
 }
