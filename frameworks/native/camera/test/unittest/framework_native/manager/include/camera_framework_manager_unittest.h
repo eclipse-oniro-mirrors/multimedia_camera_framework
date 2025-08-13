@@ -51,6 +51,13 @@ public:
     virtual void OnTorchStatusChange(const TorchStatusInfo &torchStatusInfo) const;
 };
 
+class ControlCenterStatusListenerImpl : public ControlCenterStatusListener {
+public:
+    ControlCenterStatusListenerImpl() = default;
+    virtual ~ControlCenterStatusListenerImpl() = default;
+    virtual void OnControlCenterStatusChanged(bool status) const {};
+};
+
 class IDeferredVideoProcSessionCallbackTest : public IDeferredVideoProcSessionCallback {
 public:
     IDeferredVideoProcSessionCallbackTest() = default;

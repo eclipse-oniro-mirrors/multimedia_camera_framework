@@ -2264,5 +2264,65 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_095, Test
     int ret = cameraManager_->GetCameraStorageSize(size);
     EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test cameraManager IsControlCenterActive
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test cameraManager IsControlCenterActive
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_071, TestSize.Level0)
+{
+    bool isControlCenterActive = cameraManager_->IsControlCenterActive();
+    EXPECT_EQ(isControlCenterActive, false);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameraManager GetControlCenterPrecondition
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test cameraManager GetControlCenterPrecondition
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_072, TestSize.Level0)
+{
+    bool precondition = cameraManager_->GetControlCenterPrecondition();
+    EXPECT_EQ(precondition, true);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameraManager ControlCenterStatusListener
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test cameraManager ControlCenterStatusListener
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_073, TestSize.Level0)
+{
+    auto listenerManager = cameraManager_->GetControlCenterStatusListenerManager();
+
+    EXPECT_NE(listenerManager->GetCameraManager(), nullptr);
+    EXPECT_TRUE(listenerManager->GetListenerCount() == 0);
+    auto ret = listenerManager->OnControlCenterStatusChanged(false);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    std::shared_ptr<ControlCenterStatusListenerImpl> listener = std::make_shared<ControlCenterStatusListenerImpl>();
+    cameraManager_->RegisterControlCenterStatusListener(listener);
+    EXPECT_FALSE(listenerManager->GetListenerCount() == 0);
+    ret = listenerManager->OnControlCenterStatusChanged(true);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    cameraManager_->UnregisterControlCenterStatusListener(listener);
+    EXPECT_TRUE(listenerManager->GetListenerCount() == 0);
+
+    cameraManager_->SetIsControlCenterSupported(true);
+    bool isSupported = cameraManager_->GetIsControlCenterSupported();
+    EXPECT_EQ(isSupported, true);
+}
+
 }
 }
