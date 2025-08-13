@@ -360,7 +360,6 @@ void CameraBaseFunctionModuleTest::CreateAndConfigureDefaultCaptureOutputForSys(
             break;
         }
     }
-    videoOutput = CreateVideoOutput(videoProfilesForSys_[0]);
     ASSERT_NE(videoOutput, nullptr);
 
     EXPECT_EQ(captureSessionForSys_->BeginConfig(), SUCCESS);
