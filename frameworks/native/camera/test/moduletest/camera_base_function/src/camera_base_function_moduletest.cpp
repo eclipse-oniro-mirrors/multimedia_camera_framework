@@ -327,7 +327,14 @@ void CameraBaseFunctionModuleTest::CreateAndConfigureDefaultCaptureOutput(sptr<P
     ASSERT_NE(previewOutput, nullptr);
     photoOutput = CreatePhotoOutput(photoProfiles_[0]);
     ASSERT_NE(photoOutput, nullptr);
-    videoOutput = CreateVideoOutput(videoProfiles_[0]);
+    for (auto profile : videoProfiles_) {
+        if (profile.framerates_.size() >= VEDIO_FRAMERATES_SIZE && profile.framerates_[0] != VEDIO_FRAMERATES_120
+        && profile.framerates_[1] != VEDIO_FRAMERATES_120 && profile.framerates_[0] != VEDIO_FRAMERATES_240
+            && profile.framerates_[1] != VEDIO_FRAMERATES_240) {
+            videoOutput = CreateVideoOutput(profile);
+            break;
+        }
+    }
     ASSERT_NE(videoOutput, nullptr);
 
     EXPECT_EQ(captureSession_->BeginConfig(), SUCCESS);
@@ -347,7 +354,14 @@ void CameraBaseFunctionModuleTest::CreateAndConfigureDefaultCaptureOutputForSys(
     ASSERT_NE(previewOutput, nullptr);
     photoOutput = CreatePhotoOutput(photoProfilesForSys_[0]);
     ASSERT_NE(photoOutput, nullptr);
-    videoOutput = CreateVideoOutput(videoProfilesForSys_[0]);
+    for (auto profile : videoProfilesForSys_) {
+        if (profile.framerates_.size() >= VEDIO_FRAMERATES_SIZE && profile.framerates_[0] != VEDIO_FRAMERATES_120
+        && profile.framerates_[1] != VEDIO_FRAMERATES_120 && profile.framerates_[0] != VEDIO_FRAMERATES_240
+            && profile.framerates_[1] != VEDIO_FRAMERATES_240) {
+            videoOutput = CreateVideoOutput(profile);
+            break;
+        }
+    }
     ASSERT_NE(videoOutput, nullptr);
 
     EXPECT_EQ(captureSessionForSys_->BeginConfig(), SUCCESS);

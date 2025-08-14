@@ -163,6 +163,9 @@ static const int32_t PRVIEW_WIDTH_4160 = 4160;
 static const int32_t PRVIEW_HEIGHT_3120 = 3120;
 static const int32_t PRVIEW_WIDTH_8192 = 8192;
 static const int32_t PRVIEW_HEIGHT_6144 = 6144;
+static const int32_t VEDIO_FRAMERATES_120 = 120;
+static const int32_t VEDIO_FRAMERATES_240 = 240;
+static const int32_t VEDIO_FRAMERATES_SIZE = 2;
 
 class CameraBaseFunctionModuleTest : public testing::Test {
 public:
