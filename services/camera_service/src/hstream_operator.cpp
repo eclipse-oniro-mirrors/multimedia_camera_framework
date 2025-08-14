@@ -530,7 +530,9 @@ void HStreamOperator::ExpandMovingPhotoRepeatStream()
             if (!avcodecTaskManagerProxy_&& audioCapturerSessionProxy_) {
                 avcodecTaskManagerProxy_ = AvcodecTaskManagerProxy::CreateAvcodecTaskManagerProxy();
                 CHECK_CONTINUE_WLOG(avcodecTaskManagerProxy_ == nullptr, "Create AvcodecTaskManagerProxy failed.");
-                shared_ptr<Size> size = std::make_shared<Size>(streamRepeat->width_, streamRepeat->height_);
+                shared_ptr<Size> size = std::make_shared<Size>();
+                size->width = streamRepeat->width_;
+                size->height = streamRepeat->height_;
                 avcodecTaskManagerProxy_->CreateAvcodecTaskManager(movingPhotoSurfaceWrapper->videoSurface_, size,
                     audioCapturerSessionProxy_, VideoCodecType::VIDEO_ENCODE_TYPE_HEVC, currColorSpace_);
                 HStreamOperatorManager::GetInstance()->AddTaskManager(streamOperatorId_, avcodecTaskManagerProxy_);
