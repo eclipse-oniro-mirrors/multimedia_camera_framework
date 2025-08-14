@@ -36,6 +36,7 @@
 #include "native_avbuffer_info.h"
 #include "sample_info.h"
 #include "native_mfmagic.h"
+#include "sync_fence.h"
 
 namespace {
 using namespace std::string_literals;
@@ -61,6 +62,32 @@ AvcodecTaskManager::AvcodecTaskManager(sptr<AudioCapturerSession> audioCaptureSe
     #endif
     // Create Task Manager
     videoEncoder_ = make_shared<VideoEncoder>(type, colorSpace);
+}
+
+AvcodecTaskManager::AvcodecTaskManager(wptr<Surface> movingSurface, shared_ptr<Size> size,
+    sptr<AudioCapturerSession> audioCaptureSession, VideoCodecType type, ColorSpace colorSpace)
+    :videoCodecType_(type), colorSpace_(colorSpace), movingSurface_(movingSurface), size_(size)
+{
+    CAMERA_SYNC_TRACE;
+#ifdef MOVING_PHOTO_ADD_AUDIO
+    audioCapturerSession_ = audioCaptureSession;
+    audioEncoder_ = make_unique<AudioEncoder>();
+#endif
+    // Create Task Manager
+    videoEncoder_ = make_shared<VideoEncoder>(type, colorSpace);
+}
+
+void AvcodecTaskManager::AsyncInitVideoCodec()
+{
+    MEDIA_INFO_LOG("AvcodecTaskManager AsyncInitVideoCodec enter");
+    auto thisPtr = sptr<AvcodecTaskManager>(this);
+    std::thread([thisPtr]() {
+        if (thisPtr->videoEncoder_) {
+            thisPtr->videoEncoder_->SetVideoCodec(thisPtr->size_, 0);
+        } else {
+            MEDIA_ERR_LOG("init videoCodec faild");
+        }
+    }).detach();
 }
 
 shared_ptr<TaskManager>& AvcodecTaskManager::GetTaskManager()
@@ -89,15 +116,18 @@ void AvcodecTaskManager::EncodeVideoBuffer(sptr<FrameRecord> frameRecord, CacheC
     encodeManager->SubmitTask([thisPtr, frameRecord, cacheCallback]() {
         CAMERA_SYNC_TRACE;
         CHECK_RETURN(thisPtr == nullptr);
-        auto videoEncoder = thisPtr->videoEncoder_;
-        CHECK_RETURN(videoEncoder == nullptr || frameRecord == nullptr);
-        bool isEncodeSuccess = videoEncoder->EncodeSurfaceBuffer(frameRecord);
-        if (isEncodeSuccess) {
-            videoEncoder->ReleaseSurfaceBuffer(frameRecord);
-        } else {
-            sptr<SurfaceBuffer> releaseBuffer;
-            videoEncoder->DetachCodecBuffer(releaseBuffer, frameRecord);
+        CHECK_RETURN(!thisPtr->videoEncoder_ || !frameRecord);
+        sptr<Surface> movingSurface = thisPtr->movingSurface_.promote();
+        if (movingSurface) {
+            sptr<SurfaceBuffer> codecDetachBuf;
+            thisPtr->videoEncoder_->DetachCodecBuffer(codecDetachBuf, frameRecord);
+            SurfaceError surfaceRet = movingSurface->AttachBufferToQueue(codecDetachBuf);
+            CHECK_PRINT_ELOG(surfaceRet != SURFACE_ERROR_OK, "movingSurface AttachBuffer faild");
+            surfaceRet = movingSurface->ReleaseBuffer(codecDetachBuf, SyncFence::INVALID_FENCE);
+            CHECK_PRINT_ELOG(surfaceRet != SURFACE_ERROR_OK, "movingSurface ReleaseBuffer faild");
         }
+        bool isEncodeSuccess = thisPtr->videoEncoder_->EncodeSurfaceBuffer(frameRecord);
+        CHECK_PRINT_ELOG(!isEncodeSuccess, "EncodeVideoBuffer faild");
         frameRecord->SetEncodedResult(isEncodeSuccess);
         frameRecord->SetFinishStatus();
         if (isEncodeSuccess) {

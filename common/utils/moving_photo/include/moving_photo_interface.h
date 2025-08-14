@@ -43,6 +43,8 @@ public:
     virtual ~AvcodecTaskManagerIntf() = default;
     virtual int32_t CreateAvcodecTaskManager(sptr<AudioCapturerSessionIntf> audioCapturerSessionIntf,
         VideoCodecType type, int32_t colorSpace) = 0;
+    virtual int32_t CreateAvcodecTaskManager(wptr<Surface> movingSurface, shared_ptr<Size> size,
+        sptr<AudioCapturerSessionIntf> audioCapturerSessionIntf, VideoCodecType type, int32_t colorSpace) = 0;
     virtual void SetVideoBufferDuration(uint32_t preBufferCount, uint32_t postBufferCount) = 0;
     virtual void SetVideoFd(int64_t timestamp, std::shared_ptr<PhotoAssetIntf> photoAssetProxy,
         int32_t captureId) = 0;

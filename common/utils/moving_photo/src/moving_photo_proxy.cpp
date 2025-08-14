@@ -67,6 +67,20 @@ int32_t AvcodecTaskManagerProxy::CreateAvcodecTaskManager(sptr<AudioCapturerSess
         audioCapturerSessionProxy->GetAudioCapturerSessionAdapter(), type, colorSpace);
 }
 
+int32_t AvcodecTaskManagerProxy::CreateAvcodecTaskManager(wptr<Surface> movingSurface, shared_ptr<Size> size,
+    sptr<AudioCapturerSessionIntf> audioCapturerSessionIntf, VideoCodecType type, int32_t colorSpace)
+{
+    MEDIA_DEBUG_LOG("CreateAvcodecTaskManager start, type: %{public}d, colorSpace: %{public}d",
+        static_cast<int32_t>(type), colorSpace);
+    CHECK_RETURN_RET_ELOG(audioCapturerSessionIntf == nullptr, -1, "audioCapturerSessionIntf is nullptr");
+    CHECK_RETURN_RET_ELOG(avcodecTaskManagerIntf_ == nullptr, -1, "avcodecTaskManagerIntf_ is nullptr");
+    sptr<AudioCapturerSessionProxy> audioCapturerSessionProxy =
+        static_cast<AudioCapturerSessionProxy*>(audioCapturerSessionIntf.GetRefPtr());
+    CHECK_RETURN_RET_ELOG(audioCapturerSessionProxy == nullptr, -1, "audioCapturerSessionProxy is nullptr");
+    return avcodecTaskManagerIntf_->CreateAvcodecTaskManager(movingSurface, size,
+        audioCapturerSessionProxy->GetAudioCapturerSessionAdapter(), type, colorSpace);
+}
+
 void AvcodecTaskManagerProxy::SetVideoBufferDuration(uint32_t preBufferCount, uint32_t postBufferCount)
 {
     MEDIA_DEBUG_LOG("SetVideoBufferDuration start, preBufferCount: %{public}u, postBufferCount: %{public}u",

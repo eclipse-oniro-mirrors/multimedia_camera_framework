@@ -60,6 +60,7 @@ public:
     };
     bool IsHdr(ColorSpace colorSpace);
     int32_t GetEncoderBitrate();
+    void SetVideoCodec(const std::shared_ptr<Size>& size, int32_t rotation);
 
 private:
     int32_t SetCallback();
@@ -82,6 +83,7 @@ private:
     bool successFrame_ = false;
     int64_t preFrameTimestamp_ = 0;
     bool isHdr_ = false;
+    sptr<SurfaceBuffer> codecDetachBuf_= nullptr;
 };
 } // CameraStandard
 } // OHOS

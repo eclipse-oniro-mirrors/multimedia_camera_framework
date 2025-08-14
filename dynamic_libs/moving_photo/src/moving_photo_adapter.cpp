@@ -40,13 +40,31 @@ int32_t AvcodecTaskManagerAdapter::CreateAvcodecTaskManager(sptr<AudioCapturerSe
     MEDIA_DEBUG_LOG("CreateAvcodecTaskManager start, type: %{public}d, colorSpace: %{public}d",
         static_cast<int32_t>(type), colorSpace);
     CHECK_RETURN_RET_ELOG(audioCapturerSessionIntf == nullptr, -1, "AudioCapturerSessionIntf is null");
-    sptr<AudioCapturerSessionAdapter> capturerSessionAdapter =
+    sptr<AudioCapturerSessionAdapter> captureSessionAdapter =
         static_cast<AudioCapturerSessionAdapter*>(audioCapturerSessionIntf.GetRefPtr());
-    CHECK_RETURN_RET_ELOG(capturerSessionAdapter == nullptr, -1, "AudioCapturerSessionAdapter is null");
-    sptr<AudioCapturerSession> audioCapturerSession = capturerSessionAdapter->GetCapturerSession();
-    CHECK_RETURN_RET_ELOG(audioCapturerSession == nullptr, -1, "AudioCapturerSession is null");
-    avcodecTaskManager_ = new AvcodecTaskManager(audioCapturerSession, type, static_cast<ColorSpace> (colorSpace));
+    CHECK_RETURN_RET_ELOG(captureSessionAdapter == nullptr, -1, "captureSessionAdapter is nullptr");
+    sptr<AudioCapturerSession> audioCaptureSession = captureSessionAdapter->GetCapturerSession();
+    CHECK_RETURN_RET_ELOG(audioCaptureSession == nullptr, -1, "audioCaptureSession is nullptr");
+    avcodecTaskManager_ = new AvcodecTaskManager(audioCaptureSession, type, static_cast<ColorSpace>(colorSpace));
     CHECK_RETURN_RET_ELOG(avcodecTaskManager_ == nullptr, -1, "CreateAvcodecTaskManager failed");
+    return 0;
+}
+
+int32_t AvcodecTaskManagerAdapter::CreateAvcodecTaskManager(wptr<Surface> movingSurface, shared_ptr<Size> size,
+    sptr<AudioCapturerSessionIntf> audioCapturerSessionIntf, VideoCodecType type, int32_t colorSpace)
+{
+    MEDIA_DEBUG_LOG("CreateAvcodecTaskManager start, type: %{public}d, colorSpace: %{public}d",
+        static_cast<int32_t>(type), colorSpace);
+    CHECK_RETURN_RET_ELOG(audioCapturerSessionIntf == nullptr, -1, "audioCapturerSessionIntf is nullptr");
+    sptr<AudioCapturerSessionAdapter> captureSessionAdapter =
+        static_cast<AudioCapturerSessionAdapter*>(audioCapturerSessionIntf.GetRefPtr());
+    CHECK_RETURN_RET_ELOG(captureSessionAdapter == nullptr, -1, "captureSessionAdapter is nullptr");
+    sptr<AudioCapturerSession> audioCaptureSession = captureSessionAdapter->GetCapturerSession();
+    CHECK_RETURN_RET_ELOG(audioCaptureSession == nullptr, -1, "audioCaptureSession is nullptr");
+    avcodecTaskManager_ =
+        new AvcodecTaskManager(movingSurface, size, audioCaptureSession, type, static_cast<ColorSpace>(colorSpace));
+    CHECK_RETURN_RET_ELOG(avcodecTaskManager_ == nullptr, -1, "CreateAvcodecTaskManager failed");
+    avcodecTaskManager_->AsyncInitVideoCodec();
     return 0;
 }
 
