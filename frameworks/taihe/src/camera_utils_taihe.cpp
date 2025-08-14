@@ -251,6 +251,42 @@ array<SceneMode> CameraUtilsTaihe::ToTaiheArraySceneMode(const std::vector<OHOS:
     return array<SceneMode>(vec);
 }
 
+array<CameraConcurrentInfo> CameraUtilsTaihe::ToTaiheCameraConcurrentInfoArray(
+    std::vector<sptr<OHOS::CameraStandard::CameraDevice>> cameraDeviceArrray,
+    std::vector<bool> cameraConcurrentType, std::vector<std::vector<OHOS::CameraStandard::SceneMode>> modes,
+    std::vector<std::vector<sptr<OHOS::CameraStandard::CameraOutputCapability>>> outputCapabilities)
+{
+    std::vector<CameraConcurrentInfo> aniCameraConcurrentInfoArray = {};
+    std::vector<CameraOutputCapability> vec;
+    for (size_t i = 0; i < cameraDeviceArrray.size(); ++i) {
+        for (size_t j = 0; j < outputCapabilities[i].size(); j++) {
+            if (outputCapabilities[i][j] == nullptr) {
+                continue;
+            }
+            vec.push_back(CameraUtilsTaihe::ToTaiheCameraOutputCapability(outputCapabilities[i][j]));
+        }
+        CameraConcurrentInfo aniCameraConcurrentInfo = {
+            .device = ToTaiheCameraDevice(cameraDeviceArrray[i]),
+            .type = ToTaiheCameraConcurrentType(cameraConcurrentType[i]),
+            .modes = ToTaiheArraySceneMode(modes[i]),
+            .outputCapabilities = array<CameraOutputCapability>(vec),
+        };
+        aniCameraConcurrentInfoArray.push_back(aniCameraConcurrentInfo);
+        vec.clear();
+    }
+    return array<CameraConcurrentInfo>(aniCameraConcurrentInfoArray);
+}
+
+::ohos::multimedia::camera::CameraConcurrentType CameraUtilsTaihe::ToTaiheCameraConcurrentType(bool format)
+{
+    auto itr = g_nativeToAniCameraConcurrentType.find(format);
+    if (itr != g_nativeToAniCameraConcurrentType.end()) {
+        return ::ohos::multimedia::camera::CameraConcurrentType(itr->second);
+    }
+    CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT, "ToTaiheCameraConcurrentType fail");
+    return ::ohos::multimedia::camera::CameraConcurrentType::key_t::CAMERA_LIMITED_CAPABILITY;
+}
+
 CameraFormat CameraUtilsTaihe::ToTaiheCameraFormat(OHOS::CameraStandard::CameraFormat format)
 {
     auto itr = g_nativeToAniCameraFormat.find(format);

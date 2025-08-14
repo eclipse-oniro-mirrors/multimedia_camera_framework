@@ -69,6 +69,7 @@ public:
     void ControlAuxiliarySync(AuxiliaryType auxiliaryType, AuxiliaryStatus auxiliaryStatus);
     OHOS::sptr<OHOS::CameraStandard::CameraInput> GetCameraInput();
     void CloseDelayedSync(int32_t time);
+    void UsedAsPosition(CameraPosition position);
     inline int64_t GetSpecificImplPtr()
     {
         return reinterpret_cast<uintptr_t>(this);

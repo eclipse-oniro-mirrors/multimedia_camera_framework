@@ -88,7 +88,11 @@ public:
         std::vector<OHOS::CameraStandard::Profile>& previewProfiles,
         std::vector<OHOS::CameraStandard::Profile>& photoProfiles,
         std::vector<OHOS::CameraStandard::VideoProfile>& videoProfileList);
-
+    static array<CameraConcurrentInfo> ToTaiheCameraConcurrentInfoArray(
+        std::vector<sptr<OHOS::CameraStandard::CameraDevice>> cameraDeviceArrray,
+        std::vector<bool> cameraConcurrentType, std::vector<std::vector<OHOS::CameraStandard::SceneMode>> modes,
+        std::vector<std::vector<sptr<OHOS::CameraStandard::CameraOutputCapability>>> outputCapabilities);
+    static ::ohos::multimedia::camera::CameraConcurrentType ToTaiheCameraConcurrentType(bool format);
     template<typename T, typename E>
     static inline array<T> ToTaiheArrayEnum(std::vector<E> src)
     {
