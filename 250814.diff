@@ -1,0 +1,304 @@
+diff --git a/common/utils/moving_photo/include/moving_photo_interface.h b/common/utils/moving_photo/include/moving_photo_interface.h
+index 0c29af752..1a38e4dab 100644
+--- a/common/utils/moving_photo/include/moving_photo_interface.h
++++ b/common/utils/moving_photo/include/moving_photo_interface.h
+@@ -43,6 +43,8 @@ public:
+     virtual ~AvcodecTaskManagerIntf() = default;
+     virtual int32_t CreateAvcodecTaskManager(sptr<AudioCapturerSessionIntf> audioCapturerSessionIntf,
+         VideoCodecType type, int32_t colorSpace) = 0;
++    virtual int32_t CreateAvcodecTaskManager(wptr<Surface> movingSurface, shared_ptr<Size> size,
++        sptr<AudioCapturerSessionIntf> audioCapturerSessionIntf, VideoCodecType type, int32_t colorSpace) = 0;
+     virtual void SetVideoBufferDuration(uint32_t preBufferCount, uint32_t postBufferCount) = 0;
+     virtual void SetVideoFd(int64_t timestamp, std::shared_ptr<PhotoAssetIntf> photoAssetProxy,
+         int32_t captureId) = 0;
+diff --git a/common/utils/moving_photo/include/moving_photo_proxy.h b/common/utils/moving_photo/include/moving_photo_proxy.h
+index 3e1f16d91..8ffbc07b8 100644
+--- a/common/utils/moving_photo/include/moving_photo_proxy.h
++++ b/common/utils/moving_photo/include/moving_photo_proxy.h
+@@ -28,6 +28,8 @@ public:
+     static sptr<AvcodecTaskManagerProxy> CreateAvcodecTaskManagerProxy();
+     int32_t CreateAvcodecTaskManager(sptr<AudioCapturerSessionIntf> audioCapturerSessionIntf,
+         VideoCodecType type, int32_t colorSpace) override;
++    int32_t CreateAvcodecTaskManager(wptr<Surface> movingSurface, shared_ptr<Size> size,
++        sptr<AudioCapturerSessionIntf> audioCapturerSessionIntf, VideoCodecType type, int32_t colorSpace) override;
+     void SetVideoBufferDuration(uint32_t preBufferCount, uint32_t postBufferCount) override;
+     void SetVideoFd(int64_t timestamp, std::shared_ptr<PhotoAssetIntf> photoAssetProxy, int32_t captureId) override;
+     void SubmitTask(std::function<void()> task) override;
+diff --git a/common/utils/moving_photo/src/moving_photo_proxy.cpp b/common/utils/moving_photo/src/moving_photo_proxy.cpp
+index 35d40b8dc..fe4419c8a 100644
+--- a/common/utils/moving_photo/src/moving_photo_proxy.cpp
++++ b/common/utils/moving_photo/src/moving_photo_proxy.cpp
+@@ -67,6 +67,20 @@ int32_t AvcodecTaskManagerProxy::CreateAvcodecTaskManager(sptr<AudioCapturerSess
+         audioCapturerSessionProxy->GetAudioCapturerSessionAdapter(), type, colorSpace);
+ }
+ 
++int32_t AvcodecTaskManagerProxy::CreateAvcodecTaskManager(wptr<Surface> movingSurface, shared_ptr<Size> size,
++    sptr<AudioCapturerSessionIntf> audioCapturerSessionIntf, VideoCodecType type, int32_t colorSpace)
++{
++    MEDIA_DEBUG_LOG("CreateAvcodecTaskManager start, type: %{public}d, colorSpace: %{public}d",
++        static_cast<int32_t>(type), colorSpace);
++    CHECK_RETURN_RET_ELOG(audioCapturerSessionIntf == nullptr, -1, "audioCapturerSessionIntf is nullptr");
++    CHECK_RETURN_RET_ELOG(avcodecTaskManagerIntf_ == nullptr, -1, "avcodecTaskManagerIntf_ is nullptr");
++    sptr<AudioCapturerSessionProxy> audioCapturerSessionProxy =
++        static_cast<AudioCapturerSessionProxy*>(audioCapturerSessionIntf.GetRefPtr());
++    CHECK_RETURN_RET_ELOG(audioCapturerSessionProxy == nullptr, -1, "audioCapturerSessionProxy is nullptr");
++    return avcodecTaskManagerIntf_->CreateAvcodecTaskManager(movingSurface, size,
++        audioCapturerSessionProxy->GetAudioCapturerSessionAdapter(), type, colorSpace);
++}
++
+ void AvcodecTaskManagerProxy::SetVideoBufferDuration(uint32_t preBufferCount, uint32_t postBufferCount)
+ {
+     MEDIA_DEBUG_LOG("SetVideoBufferDuration start, preBufferCount: %{public}u, postBufferCount: %{public}u",
+diff --git a/dynamic_libs/moving_photo/include/avcodec/avcodec_task_manager.h b/dynamic_libs/moving_photo/include/avcodec/avcodec_task_manager.h
+index bbfcb2cd4..7801758d3 100644
+--- a/dynamic_libs/moving_photo/include/avcodec/avcodec_task_manager.h
++++ b/dynamic_libs/moving_photo/include/avcodec/avcodec_task_manager.h
+@@ -54,6 +54,8 @@ class AvcodecTaskManager : public RefBase, public std::enable_shared_from_this<A
+ public:
+     explicit AvcodecTaskManager(sptr<AudioCapturerSession> audioCapturerSession, VideoCodecType type,
+         ColorSpace colorSpace);
++    AvcodecTaskManager(wptr<Surface> movingSurface, shared_ptr<Size> size,
++        sptr<AudioCapturerSession> audioCapturerSession, VideoCodecType type, ColorSpace colorSpace);
+     ~AvcodecTaskManager();
+     void EncodeVideoBuffer(sptr<FrameRecord> frameRecord, CacheCbFunc cacheCallback);
+     void PrepareAudioBuffer(vector<sptr<FrameRecord>>& choosedBuffer, vector<sptr<AudioRecord>>& audioRecords,
+@@ -71,6 +73,7 @@ public:
+     bool isEmptyVideoFdMap();
+     shared_ptr<TaskManager>& GetTaskManager();
+     shared_ptr<TaskManager>& GetEncoderManager();
++    void AsyncInitVideoCodec();
+     mutex startTimeMutex_;
+     mutex endTimeMutex_;
+     std::map<int32_t, int64_t> mPStartTimeMap_ = {};
+@@ -103,6 +106,8 @@ private:
+     uint32_t timerId_ = 0;
+     shared_ptr<AudioDeferredProcess> audioDeferredProcess_ = nullptr;
+     ColorSpace colorSpace_ = ColorSpace::COLOR_SPACE_UNKNOWN;
++    wptr<Surface> movingSurface_;
++    shared_ptr<Size> size_ = std::make_shared<Size>();
+ };
+ } // CameraStandard
+ } // OHOS
+diff --git a/dynamic_libs/moving_photo/include/avcodec/video_encoder.h b/dynamic_libs/moving_photo/include/avcodec/video_encoder.h
+index 5a6d25a15..898815c16 100644
+--- a/dynamic_libs/moving_photo/include/avcodec/video_encoder.h
++++ b/dynamic_libs/moving_photo/include/avcodec/video_encoder.h
+@@ -60,6 +60,7 @@ public:
+     };
+     bool IsHdr(ColorSpace colorSpace);
+     int32_t GetEncoderBitrate();
++    void SetVideoCodec(const std::shared_ptr<Size>& size, int32_t rotation);
+ 
+ private:
+     int32_t SetCallback();
+@@ -82,6 +83,7 @@ private:
+     bool successFrame_ = false;
+     int64_t preFrameTimestamp_ = 0;
+     bool isHdr_ = false;
++    sptr<SurfaceBuffer> codecDetachBuf_= nullptr;
+ };
+ } // CameraStandard
+ } // OHOS
+diff --git a/dynamic_libs/moving_photo/include/moving_photo_adapter.h b/dynamic_libs/moving_photo/include/moving_photo_adapter.h
+index 7bd4bd8ee..6694f2bf1 100644
+--- a/dynamic_libs/moving_photo/include/moving_photo_adapter.h
++++ b/dynamic_libs/moving_photo/include/moving_photo_adapter.h
+@@ -26,6 +26,8 @@ public:
+     ~AvcodecTaskManagerAdapter() override;
+     int32_t CreateAvcodecTaskManager(sptr<AudioCapturerSessionIntf> audioCapturerSessionIntf,
+         VideoCodecType type, int32_t colorSpace) override;
++    int32_t CreateAvcodecTaskManager(wptr<Surface> movingSurface, shared_ptr<Size> size,
++        sptr<AudioCapturerSessionIntf> audioCapturerSessionIntf, VideoCodecType type, int32_t colorSpace) override;
+     void SetVideoBufferDuration(uint32_t preBufferCount, uint32_t postBufferCount) override;
+     void SetVideoFd(int64_t timestamp, std::shared_ptr<PhotoAssetIntf> photoAssetProxy, int32_t captureId) override;
+     void SubmitTask(std::function<void()> task) override;
+diff --git a/dynamic_libs/moving_photo/include/moving_photo_surface_wrapper.h b/dynamic_libs/moving_photo/include/moving_photo_surface_wrapper.h
+index 5cc7868b0..d84a0e7c7 100644
+--- a/dynamic_libs/moving_photo/include/moving_photo_surface_wrapper.h
++++ b/dynamic_libs/moving_photo/include/moving_photo_surface_wrapper.h
+@@ -50,6 +50,7 @@ public:
+         std::lock_guard<std::mutex> lock(surfaceBufferListenerMutex_);
+         return surfaceBufferListener_.promote();
+     }
++    sptr<Surface> videoSurface_ = nullptr;
+ 
+ private:
+     class BufferConsumerListener : public IBufferConsumerListener {
+@@ -66,7 +67,6 @@ private:
+     bool Init(int32_t width, int32_t height);
+ 
+     mutable std::recursive_mutex videoSurfaceMutex_;
+-    sptr<Surface> videoSurface_ = nullptr;
+ 
+     sptr<IBufferConsumerListener> bufferConsumerListener_ = nullptr;
+ 
+diff --git a/dynamic_libs/moving_photo/src/avcodec/avcodec_task_manager.cpp b/dynamic_libs/moving_photo/src/avcodec/avcodec_task_manager.cpp
+index fac9f0f7e..8a15d9044 100644
+--- a/dynamic_libs/moving_photo/src/avcodec/avcodec_task_manager.cpp
++++ b/dynamic_libs/moving_photo/src/avcodec/avcodec_task_manager.cpp
+@@ -36,6 +36,7 @@
+ #include "native_avbuffer_info.h"
+ #include "sample_info.h"
+ #include "native_mfmagic.h"
++#include "sync_fence.h"
+ 
+ namespace {
+ using namespace std::string_literals;
+@@ -63,6 +64,32 @@ AvcodecTaskManager::AvcodecTaskManager(sptr<AudioCapturerSession> audioCaptureSe
+     videoEncoder_ = make_shared<VideoEncoder>(type, colorSpace);
+ }
+ 
++AvcodecTaskManager::AvcodecTaskManager(wptr<Surface> movingSurface, shared_ptr<Size> size,
++    sptr<AudioCapturerSession> audioCaptureSession, VideoCodecType type, ColorSpace colorSpace)
++    :videoCodecType_(type), colorSpace_(colorSpace), movingSurface_(movingSurface), size_(size)
++{
++    CAMERA_SYNC_TRACE;
++#ifdef MOVING_PHOTO_ADD_AUDIO
++    audioCapturerSession_ = audioCaptureSession;
++    audioEncoder_ = make_unique<AudioEncoder>();
++#endif
++    // Create Task Manager
++    videoEncoder_ = make_shared<VideoEncoder>(type, colorSpace);
++}
++
++void AvcodecTaskManager::AsyncInitVideoCodec()
++{
++    MEDIA_INFO_LOG("AvcodecTaskManager AsyncInitVideoCodec enter");
++    auto thisPtr = sptr<AvcodecTaskManager>(this);
++    std::thread([thisPtr]() {
++        if (thisPtr->videoEncoder_) {
++            thisPtr->videoEncoder_->SetVideoCodec(thisPtr->size_, 0);
++        } else {
++            MEDIA_ERR_LOG("init videoCodec faild");
++        }
++    }).detach();
++}
++
+ shared_ptr<TaskManager>& AvcodecTaskManager::GetTaskManager()
+ {
+     lock_guard<mutex> lock(taskManagerMutex_);
+@@ -89,15 +116,18 @@ void AvcodecTaskManager::EncodeVideoBuffer(sptr<FrameRecord> frameRecord, CacheC
+     encodeManager->SubmitTask([thisPtr, frameRecord, cacheCallback]() {
+         CAMERA_SYNC_TRACE;
+         CHECK_RETURN(thisPtr == nullptr);
+-        auto videoEncoder = thisPtr->videoEncoder_;
+-        CHECK_RETURN(videoEncoder == nullptr || frameRecord == nullptr);
+-        bool isEncodeSuccess = videoEncoder->EncodeSurfaceBuffer(frameRecord);
+-        if (isEncodeSuccess) {
+-            videoEncoder->ReleaseSurfaceBuffer(frameRecord);
+-        } else {
+-            sptr<SurfaceBuffer> releaseBuffer;
+-            videoEncoder->DetachCodecBuffer(releaseBuffer, frameRecord);
++        CHECK_RETURN(!thisPtr->videoEncoder_ || !frameRecord);
++        sptr<Surface> movingSurface = thisPtr->movingSurface_.promote();
++        if (movingSurface) {
++            sptr<SurfaceBuffer> codecDetachBuf;
++            thisPtr->videoEncoder_->DetachCodecBuffer(codecDetachBuf, frameRecord);
++            SurfaceError surfaceRet = movingSurface->AttachBufferToQueue(codecDetachBuf);
++            CHECK_PRINT_ELOG(surfaceRet != SURFACE_ERROR_OK, "movingSurface AttachBuffer faild");
++            surfaceRet = movingSurface->ReleaseBuffer(codecDetachBuf, SyncFence::INVALID_FENCE);
++            CHECK_PRINT_ELOG(surfaceRet != SURFACE_ERROR_OK, "movingSurface ReleaseBuffer faild");
+         }
++        bool isEncodeSuccess = thisPtr->videoEncoder_->EncodeSurfaceBuffer(frameRecord);
++        CHECK_PRINT_ELOG(!isEncodeSuccess, "EncodeVideoBuffer faild");
+         frameRecord->SetEncodedResult(isEncodeSuccess);
+         frameRecord->SetFinishStatus();
+         if (isEncodeSuccess) {
+diff --git a/dynamic_libs/moving_photo/src/avcodec/video_encoder.cpp b/dynamic_libs/moving_photo/src/avcodec/video_encoder.cpp
+index 26854ff82..a030bad44 100644
+--- a/dynamic_libs/moving_photo/src/avcodec/video_encoder.cpp
++++ b/dynamic_libs/moving_photo/src/avcodec/video_encoder.cpp
+@@ -191,6 +191,18 @@ int32_t VideoEncoder::Stop()
+     return 0;
+ }
+ 
++void VideoEncoder::SetVideoCodec(const std::shared_ptr<Size>& size, int32_t rotation)
++{
++    MEDIA_INFO_LOG("VideoEncoder SetVideoCodec E videoCodecType_ = %{public}d", videoCodecType_);
++    size_ = size;
++    rotation_ = rotation;
++    videoCodecType_ = VideoCodecType::VIDEO_ENCODE_TYPE_HEVC;
++    Create(MIME_VIDEO_HEVC.data());
++    Config();
++    GetSurface();
++    MEDIA_INFO_LOG("VideoEncoder SetVideoCodec X");
++}
++
+ void VideoEncoder::RestartVideoCodec(shared_ptr<Size> size, int32_t rotation)
+ {
+     // LCOV_EXCL_START
+diff --git a/dynamic_libs/moving_photo/src/moving_photo_adapter.cpp b/dynamic_libs/moving_photo/src/moving_photo_adapter.cpp
+index 5235bcd4a..d59972b70 100644
+--- a/dynamic_libs/moving_photo/src/moving_photo_adapter.cpp
++++ b/dynamic_libs/moving_photo/src/moving_photo_adapter.cpp
+@@ -40,16 +40,34 @@ int32_t AvcodecTaskManagerAdapter::CreateAvcodecTaskManager(sptr<AudioCapturerSe
+     MEDIA_DEBUG_LOG("CreateAvcodecTaskManager start, type: %{public}d, colorSpace: %{public}d",
+         static_cast<int32_t>(type), colorSpace);
+     CHECK_RETURN_RET_ELOG(audioCapturerSessionIntf == nullptr, -1, "AudioCapturerSessionIntf is null");
+-    sptr<AudioCapturerSessionAdapter> capturerSessionAdapter =
++    sptr<AudioCapturerSessionAdapter> captureSessionAdapter =
+         static_cast<AudioCapturerSessionAdapter*>(audioCapturerSessionIntf.GetRefPtr());
+-    CHECK_RETURN_RET_ELOG(capturerSessionAdapter == nullptr, -1, "AudioCapturerSessionAdapter is null");
+-    sptr<AudioCapturerSession> audioCapturerSession = capturerSessionAdapter->GetCapturerSession();
+-    CHECK_RETURN_RET_ELOG(audioCapturerSession == nullptr, -1, "AudioCapturerSession is null");
+-    avcodecTaskManager_ = new AvcodecTaskManager(audioCapturerSession, type, static_cast<ColorSpace> (colorSpace));
++    CHECK_RETURN_RET_ELOG(captureSessionAdapter == nullptr, -1, "captureSessionAdapter is nullptr");
++    sptr<AudioCapturerSession> audioCaptureSession = captureSessionAdapter->GetCapturerSession();
++    CHECK_RETURN_RET_ELOG(audioCaptureSession == nullptr, -1, "audioCaptureSession is nullptr");
++    avcodecTaskManager_ = new AvcodecTaskManager(audioCaptureSession, type, static_cast<ColorSpace>(colorSpace));
+     CHECK_RETURN_RET_ELOG(avcodecTaskManager_ == nullptr, -1, "CreateAvcodecTaskManager failed");
+     return 0;
+ }
+ 
++int32_t AvcodecTaskManagerAdapter::CreateAvcodecTaskManager(wptr<Surface> movingSurface, shared_ptr<Size> size,
++    sptr<AudioCapturerSessionIntf> audioCapturerSessionIntf, VideoCodecType type, int32_t colorSpace)
++{
++    MEDIA_DEBUG_LOG("CreateAvcodecTaskManager start, type: %{public}d, colorSpace: %{public}d",
++        static_cast<int32_t>(type), colorSpace);
++    CHECK_RETURN_RET_ELOG(audioCapturerSessionIntf == nullptr, -1, "audioCapturerSessionIntf is nullptr");
++    sptr<AudioCapturerSessionAdapter> captureSessionAdapter =
++        static_cast<AudioCapturerSessionAdapter*>(audioCapturerSessionIntf.GetRefPtr());
++    CHECK_RETURN_RET_ELOG(captureSessionAdapter == nullptr, -1, "captureSessionAdapter is nullptr");
++    sptr<AudioCapturerSession> audioCaptureSession = captureSessionAdapter->GetCapturerSession();
++    CHECK_RETURN_RET_ELOG(audioCaptureSession == nullptr, -1, "audioCaptureSession is nullptr");
++    avcodecTaskManager_ =
++        new AvcodecTaskManager(movingSurface, size, audioCaptureSession, type, static_cast<ColorSpace>(colorSpace));
++    CHECK_RETURN_RET_ELOG(avcodecTaskManager_ == nullptr, -1, "CreateAvcodecTaskManager failed");
++    avcodecTaskManager_->AsyncInitVideoCodec();
++    return 0;
++}
++
+ void AvcodecTaskManagerAdapter::SetVideoBufferDuration(uint32_t preBufferCount, uint32_t postBufferCount)
+ {
+     MEDIA_DEBUG_LOG("SetVideoBufferDuration start, preBufferCount: %{public}u, postBufferCount: %{public}u",
+diff --git a/dynamic_libs/moving_photo/src/moving_photo_surface_wrapper.cpp b/dynamic_libs/moving_photo/src/moving_photo_surface_wrapper.cpp
+index 93e9f7b5a..2409b7e82 100644
+--- a/dynamic_libs/moving_photo/src/moving_photo_surface_wrapper.cpp
++++ b/dynamic_libs/moving_photo/src/moving_photo_surface_wrapper.cpp
+@@ -93,7 +93,7 @@ void MovingPhotoSurfaceWrapper::OnBufferArrival()
+         return;
+     }
+ 
+-    err = videoSurface_->DetachBufferFromQueue(buffer);
++    err = videoSurface_->DetachBufferFromQueue(buffer, true);
+     CHECK_RETURN_ELOG(err != GSERROR_OK,
+         "MovingPhotoSurfaceWrapper::OnBufferArrival detach buffer fail. %{public}d", err);
+     MEDIA_DEBUG_LOG("MovingPhotoSurfaceWrapper::OnBufferArrival buffer %{public}d x %{public}d, stride is %{public}d",
+diff --git a/services/camera_service/src/hstream_operator.cpp b/services/camera_service/src/hstream_operator.cpp
+index 9a26e1823..8cafff99c 100644
+--- a/services/camera_service/src/hstream_operator.cpp
++++ b/services/camera_service/src/hstream_operator.cpp
+@@ -530,8 +530,11 @@ void HStreamOperator::ExpandMovingPhotoRepeatStream()
+             if (!avcodecTaskManagerProxy_&& audioCapturerSessionProxy_) {
+                 avcodecTaskManagerProxy_ = AvcodecTaskManagerProxy::CreateAvcodecTaskManagerProxy();
+                 CHECK_CONTINUE_WLOG(avcodecTaskManagerProxy_ == nullptr, "Create AvcodecTaskManagerProxy failed.");
+-                avcodecTaskManagerProxy_->CreateAvcodecTaskManager(audioCapturerSessionProxy_,
+-                    VideoCodecType::VIDEO_ENCODE_TYPE_HEVC, currColorSpace_);
++                shared_ptr<Size> size = std::make_shared<Size>();
++                size->width = streamRepeat->width_;
++                size->height = streamRepeat->height_;
++                avcodecTaskManagerProxy_->CreateAvcodecTaskManager(movingPhotoSurfaceWrapper->videoSurface_, size,
++                    audioCapturerSessionProxy_, VideoCodecType::VIDEO_ENCODE_TYPE_HEVC, currColorSpace_);
+                 HStreamOperatorManager::GetInstance()->AddTaskManager(streamOperatorId_, avcodecTaskManagerProxy_);
+                 avcodecTaskManagerProxy_->SetVideoBufferDuration(preCacheFrameCount_, postCacheFrameCount_);
+             }
