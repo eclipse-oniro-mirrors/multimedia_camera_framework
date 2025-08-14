@@ -17,6 +17,8 @@
 #include <uv.h>
 
 #include "camera_napi_const.h"
+#include "camera_napi_event_emitter.h"
+#include "camera_napi_utils.h"
 #include "input/camera_manager_for_sys.h"
 #include "js_native_api.h"
 #include "camera_napi_template_utils.h"
@@ -857,17 +859,19 @@ void ExposureInfoCallbackListener::OnExposureInfoChangedCallbackAsync(ExposureIn
 void ExposureInfoCallbackListener::OnExposureInfoChangedCallback(ExposureInfo info) const
 {
     MEDIA_DEBUG_LOG("OnExposureInfoChangedCallback is called");
-    napi_value result[ARGS_TWO] = { nullptr, nullptr };
-    napi_value retVal;
 
-    napi_get_undefined(env_, &result[PARAM0]);
-    napi_create_object(env_, &result[PARAM1]);
-    napi_value value;
-    napi_create_uint32(env_, info.exposureDurationValue, &value);
-    napi_set_named_property(env_, result[PARAM1], "exposureTimeValue", value);
+    ExecuteCallbackScopeSafe("exposureInfoChange", [&]() {
+        napi_value callbackObj;
+        napi_value value;
+        napi_value errCode;
 
-    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
-    ExecuteCallback("exposureInfoChange", callbackNapiPara);
+        // Initializing NAPI Parameters
+        napi_create_object(env_, &callbackObj);
+        napi_create_int32(env_, info.exposureDurationValue, &value);
+        napi_set_named_property(env_, callbackObj, "exposureTimeValue", value);
+        errCode = CameraNapiUtils::GetUndefinedValue(env_);
+        return ExecuteCallbackData(env_, errCode, callbackObj);
+    });
 }
 
 void ExposureInfoCallbackListener::OnExposureInfoChanged(ExposureInfo info)
@@ -900,16 +904,18 @@ void IsoInfoCallbackListener::OnIsoInfoChangedCallbackAsync(IsoInfo info) const
 void IsoInfoCallbackListener::OnIsoInfoChangedCallback(IsoInfo info) const
 {
     MEDIA_DEBUG_LOG("OnIsoInfoChangedCallback is called");
-    napi_value result[ARGS_TWO] = { nullptr, nullptr };
-    napi_value retVal;
 
-    napi_get_undefined(env_, &result[PARAM0]);
-    napi_create_object(env_, &result[PARAM1]);
-    napi_value value;
-    napi_create_int32(env_, CameraNapiUtils::FloatToDouble(info.isoValue), &value);
-    napi_set_named_property(env_, result[PARAM1], "iso", value);
-    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
-    ExecuteCallback("isoInfoChange", callbackNapiPara);
+    ExecuteCallbackScopeSafe("isoInfoChange", [&]() {
+        napi_value callbackObj;
+        napi_value value;
+        napi_value errCode;
+
+        napi_create_object(env_, &callbackObj);
+        napi_create_int32(env_, CameraNapiUtils::FloatToDouble(info.isoValue), &value);
+        napi_set_named_property(env_, callbackObj, "iso", value);
+        errCode = CameraNapiUtils::GetUndefinedValue(env_);
+        return ExecuteCallbackData(env_, errCode, callbackObj);
+    });
 }
 
 void IsoInfoCallbackListener::OnIsoInfoChanged(IsoInfo info)
@@ -942,16 +948,18 @@ void ApertureInfoCallbackListener::OnApertureInfoChangedCallbackAsync(ApertureIn
 void ApertureInfoCallbackListener::OnApertureInfoChangedCallback(ApertureInfo info) const
 {
     MEDIA_DEBUG_LOG("OnApertureInfoChangedCallback is called");
-    napi_value result[ARGS_TWO] = { nullptr, nullptr };
-    napi_value retVal;
 
-    napi_get_undefined(env_, &result[PARAM0]);
-    napi_create_object(env_, &result[PARAM1]);
-    napi_value value;
-    napi_create_double(env_, info.apertureValue, &value);
-    napi_set_named_property(env_, result[PARAM1], "aperture", value);
-    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
-    ExecuteCallback("apertureInfoChange", callbackNapiPara);
+    ExecuteCallbackScopeSafe("apertureInfoChange", [&]() {
+        napi_value callbackObj;
+        napi_value value;
+        napi_value errCode;
+
+        napi_create_object(env_, &callbackObj);
+        napi_create_double(env_, info.apertureValue, &value);
+        napi_set_named_property(env_, callbackObj, "aperture", value);
+        errCode = CameraNapiUtils::GetUndefinedValue(env_);
+        return ExecuteCallbackData(env_, errCode, callbackObj);
+    });
 }
 
 void ApertureInfoCallbackListener::OnApertureInfoChanged(ApertureInfo info)
@@ -984,17 +992,18 @@ void LuminationInfoCallbackListener::OnLuminationInfoChangedCallbackAsync(Lumina
 void LuminationInfoCallbackListener::OnLuminationInfoChangedCallback(LuminationInfo info) const
 {
     MEDIA_DEBUG_LOG("OnLuminationInfoChangedCallback is called");
-    napi_value result[ARGS_TWO] = {nullptr, nullptr};
-    napi_value retVal;
 
-    napi_get_undefined(env_, &result[PARAM0]);
-    napi_create_object(env_, &result[PARAM1]);
-    napi_value isoValue;
-    napi_create_double(env_, info.luminationValue, &isoValue);
-    napi_set_named_property(env_, result[PARAM1], "lumination", isoValue);
+    ExecuteCallbackScopeSafe("luminationInfoChange", [&]() {
+        napi_value callbackObj;
+        napi_value isoValue;
+        napi_value errCode;
 
-    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
-    ExecuteCallback("luminationInfoChange", callbackNapiPara);
+        napi_create_object(env_, &callbackObj);
+        napi_create_double(env_, info.luminationValue, &isoValue);
+        napi_set_named_property(env_, callbackObj, "lumination", isoValue);
+        errCode = CameraNapiUtils::GetUndefinedValue(env_);
+        return ExecuteCallbackData(env_, errCode, callbackObj);
+    });
 }
 
 void LuminationInfoCallbackListener::OnLuminationInfoChanged(LuminationInfo info)

@@ -267,13 +267,15 @@ void ExposureCallbackListener::OnExposureStateCallbackAsync(ExposureState state)
 void ExposureCallbackListener::OnExposureStateCallback(ExposureState state) const
 {
     MEDIA_DEBUG_LOG("OnExposureStateCallback is called");
-    napi_value result[ARGS_TWO] = {nullptr, nullptr};
-    napi_value retVal;
 
-    napi_get_undefined(env_, &result[PARAM0]);
-    napi_create_int32(env_, state, &result[PARAM1]);
-    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
-    ExecuteCallback("exposureStateChange", callbackNapiPara);
+    ExecuteCallbackScopeSafe("exposureStateChange", [&]() {
+        napi_value callbackObj;
+        napi_value errCode;
+
+        napi_create_int32(env_, state, &callbackObj);
+        errCode = CameraNapiUtils::GetUndefinedValue(env_);
+        return ExecuteCallbackData(env_, errCode, callbackObj);
+    });
 }
 
 void ExposureCallbackListener::OnExposureState(const ExposureState state)
@@ -305,12 +307,15 @@ void FocusCallbackListener::OnFocusStateCallbackAsync(FocusState state) const
 void FocusCallbackListener::OnFocusStateCallback(FocusState state) const
 {
     MEDIA_DEBUG_LOG("OnFocusStateCallback is called");
-    napi_value result[ARGS_TWO] = {nullptr, nullptr};
-    napi_value retVal;
-    napi_get_undefined(env_, &result[PARAM0]);
-    napi_create_int32(env_, state, &result[PARAM1]);
-    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
-    ExecuteCallback("focusStateChange", callbackNapiPara);
+
+    ExecuteCallbackScopeSafe("focusStateChange", [&]() {
+        napi_value callbackObj;
+        napi_value errCode;
+
+        napi_create_int32(env_, state, &callbackObj);
+        errCode = CameraNapiUtils::GetUndefinedValue(env_);
+        return ExecuteCallbackData(env_, errCode, callbackObj);
+    });
 }
 
 void FocusCallbackListener::OnFocusState(FocusState state)
@@ -342,12 +347,15 @@ void MoonCaptureBoostCallbackListener::OnMoonCaptureBoostStatusCallbackAsync(Moo
 void MoonCaptureBoostCallbackListener::OnMoonCaptureBoostStatusCallback(MoonCaptureBoostStatus status) const
 {
     MEDIA_DEBUG_LOG("OnMoonCaptureBoostStatusCallback is called");
-    napi_value result[ARGS_TWO] = { nullptr, nullptr };
-    napi_value retVal;
-    napi_get_undefined(env_, &result[PARAM0]);
-    napi_get_boolean(env_, status == MoonCaptureBoostStatus::ACTIVE, &result[PARAM1]);
-    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
-    ExecuteCallback("moonCaptureBoostStatus", callbackNapiPara);
+    
+    ExecuteCallbackScopeSafe("moonCaptureBoostStatus", [&]() {
+        napi_value callbackObj;
+        napi_value errCode;
+
+        napi_get_boolean(env_, status == MoonCaptureBoostStatus::ACTIVE, &callbackObj);
+        errCode = CameraNapiUtils::GetUndefinedValue(env_);
+        return ExecuteCallbackData(env_, errCode, callbackObj);
+    });
 }
 
 void MoonCaptureBoostCallbackListener::OnMoonCaptureBoostStatusChanged(MoonCaptureBoostStatus status)
@@ -380,15 +388,18 @@ void SessionCallbackListener::OnErrorCallbackAsync(int32_t errorCode) const
 void SessionCallbackListener::OnErrorCallback(int32_t errorCode) const
 {
     MEDIA_DEBUG_LOG("OnErrorCallback is called");
-    napi_value result[ARGS_ONE] = {nullptr};
-    napi_value retVal;
-    napi_value propValue;
 
-    napi_create_object(env_, &result[PARAM0]);
-    napi_create_int32(env_, errorCode, &propValue);
-    napi_set_named_property(env_, result[PARAM0], "code", propValue);
-    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_ONE, .argv = result, .result = &retVal };
-    ExecuteCallback("error", callbackNapiPara);
+    ExecuteCallbackScopeSafe("error", [&]() {
+        napi_value callbackObj;
+        napi_value propValue;
+        napi_value errCode;
+
+        napi_create_object(env_, &callbackObj);
+        napi_create_int32(env_, errorCode, &propValue);
+        napi_set_named_property(env_, callbackObj, "code", propValue);
+        errCode = CameraNapiUtils::GetUndefinedValue(env_);
+        return ExecuteCallbackData(env_, errCode, callbackObj);
+    });
 }
 
 void SessionCallbackListener::OnError(int32_t errorCode)
@@ -423,12 +434,15 @@ void PressureCallbackListener::OnPressureCallbackAsync(PressureStatus status) co
 void PressureCallbackListener::OnPressureCallback(PressureStatus status) const
 {
     MEDIA_INFO_LOG("OnPressureCallback is called   %{public}d ", status);
-    napi_value result[ARGS_TWO] = {nullptr, nullptr};
-    napi_value retVal;
-    napi_get_undefined(env_, &result[PARAM0]);
-    napi_create_int32(env_, static_cast<int32_t>(status), &result[PARAM1]);
-    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
-    ExecuteCallback("systemPressureLevelChange", callbackNapiPara);
+
+    ExecuteCallbackScopeSafe("systemPressureLevelChange", [&]() {
+        napi_value callbackObj;
+        napi_value errCode;
+
+        napi_create_int32(env_, static_cast<int32_t>(status), &callbackObj);
+        errCode = CameraNapiUtils::GetUndefined(env_);
+        return ExecuteCallbackData(env_, errCode, callbackObj);
+    });
 }
 
 void PressureCallbackListener::OnPressureStatusChanged(PressureStatus status)
@@ -509,17 +523,18 @@ void SmoothZoomCallbackListener::OnSmoothZoomCallbackAsync(int32_t duration) con
 void SmoothZoomCallbackListener::OnSmoothZoomCallback(int32_t duration) const
 {
     MEDIA_DEBUG_LOG("OnSmoothZoomCallback is called");
-    napi_value result[ARGS_TWO];
-    napi_value retVal;
-    napi_value propValue;
 
-    napi_get_undefined(env_, &result[PARAM0]);
-    napi_create_object(env_, &result[PARAM1]);
-    napi_create_int32(env_, duration, &propValue);
-    napi_set_named_property(env_, result[PARAM1], "duration", propValue);
+    ExecuteCallbackScopeSafe("smoothZoomInfoAvailable", [&]() {
+        napi_value callbackObj;
+        napi_value propValue;
+        napi_value errCode;
 
-    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
-    ExecuteCallback("smoothZoomInfoAvailable", callbackNapiPara);
+        napi_create_object(env_, &callbackObj);
+        napi_create_int32(env_, duration, &propValue);
+        napi_set_named_property(env_, callbackObj, "duration", propValue);
+        errCode = CameraNapiUtils::GetUndefinedValue(env_);
+        return ExecuteCallbackData(env_, errCode, callbackObj);
+    });
 }
 
 void SmoothZoomCallbackListener::OnSmoothZoom(int32_t duration)
@@ -551,13 +566,15 @@ void AbilityCallbackListener::OnAbilityChangeCallbackAsync() const
 void AbilityCallbackListener::OnAbilityChangeCallback() const
 {
     MEDIA_DEBUG_LOG("OnAbilityChangeCallback is called");
-    napi_value result[ARGS_TWO];
-    napi_value retVal;
-    napi_get_undefined(env_, &result[PARAM0]);
-    napi_get_undefined(env_, &result[PARAM1]);
 
-    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
-    ExecuteCallback("abilityChange", callbackNapiPara);
+    ExecuteCallbackScopeSafe("abilityChange", [&]() {
+        napi_value callbackObj;
+        napi_value errCode;
+
+        napi_get_undefined(env_, &callbackObj);
+        errCode = CameraNapiUtils::GetUndefinedValue(env_);
+        return ExecuteCallbackData(env_, errCode, callbackObj);
+    });
 }
 
 void AbilityCallbackListener::OnAbilityChange()
@@ -593,17 +610,20 @@ void AutoDeviceSwitchCallbackListener::OnAutoDeviceSwitchCallback(
     bool isDeviceSwitched, bool isDeviceCapabilityChanged) const
 {
     MEDIA_INFO_LOG("OnAutoDeviceSwitchCallback is called");
-    napi_value result[ARGS_TWO] = { nullptr, nullptr };
-    napi_get_undefined(env_, &result[PARAM0]);
-    napi_value retVal;
-    napi_value propValue;
-    napi_create_object(env_, &result[PARAM1]);
-    napi_get_boolean(env_, isDeviceSwitched, &propValue);
-    napi_set_named_property(env_, result[PARAM1], "isDeviceSwitched", propValue);
-    napi_get_boolean(env_, isDeviceCapabilityChanged, &propValue);
-    napi_set_named_property(env_, result[PARAM1], "isDeviceCapabilityChanged", propValue);
-    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
-    ExecuteCallback("autoDeviceSwitchStatusChange", callbackNapiPara);
+
+    ExecuteCallbackScopeSafe("autoDevceSwitchStatusChange", [&]() {
+        napi_value callbackObj;
+        napi_value propValue;
+        napi_value errCode;
+
+        napi_create_object(env_, &callbackObj);
+        napi_get_boolean(env_, isDeviceSwitched, &propValue);
+        napi_set_named_property(env_, callbackObj, "isDeviceSwitched", propValue);
+        napi_get_boolean(env_, isDeviceCapabilityChanged, &propValue);
+        napi_set_named_property(env_, callbackObj, "isDeviceCapabilityChanged", propValue);
+        errCode = CameraNapiUtils::GetUndefinedValue(env_);
+        return ExecuteCallbackData(env_, errCode, callbackObj);
+    });
 }
 
 void AutoDeviceSwitchCallbackListener::OnAutoDeviceSwitchStatusChange(

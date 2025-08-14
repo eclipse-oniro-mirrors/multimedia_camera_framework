@@ -1819,12 +1819,15 @@ void EffectSuggestionCallbackListener::OnEffectSuggestionCallbackAsync(EffectSug
 void EffectSuggestionCallbackListener::OnEffectSuggestionCallback(EffectSuggestionType effectSuggestionType) const
 {
     MEDIA_DEBUG_LOG("OnEffectSuggestionCallback is called");
-    napi_value result[ARGS_TWO] = {nullptr, nullptr};
-    napi_value retVal;
-    napi_get_undefined(env_, &result[PARAM0]);
-    napi_create_int32(env_, effectSuggestionType, &result[PARAM1]);
-    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
-    ExecuteCallback("effectSuggestionChange", callbackNapiPara);
+
+    ExecuteCallbackScopeSafe("effectSuggestionChange", [&]() {
+        napi_value callbackObj;
+        napi_value errCode;
+
+        napi_create_int32(env_, effectSuggestionType, &callbackObj);
+        errCode = CameraNapiUtils::GetUndefinedValue(env_);
+        return ExecuteCallbackData(env_, errCode, callbackObj);
+    });
 }
 
 void EffectSuggestionCallbackListener::OnEffectSuggestionChange(EffectSuggestionType effectSuggestionType)
@@ -1857,17 +1860,20 @@ void LcdFlashStatusCallbackListener::OnLcdFlashStatusCallbackAsync(LcdFlashStatu
 void LcdFlashStatusCallbackListener::OnLcdFlashStatusCallback(LcdFlashStatusInfo lcdFlashStatusInfo) const
 {
     MEDIA_DEBUG_LOG("OnLcdFlashStatusCallback is called");
-    napi_value result[ARGS_TWO] = { nullptr, nullptr };
-    napi_get_undefined(env_, &result[PARAM0]);
-    napi_value retVal;
-    napi_value propValue;
-    napi_create_object(env_, &result[PARAM1]);
-    napi_get_boolean(env_, lcdFlashStatusInfo.isLcdFlashNeeded, &propValue);
-    napi_set_named_property(env_, result[PARAM1], "isLcdFlashNeeded", propValue);
-    napi_create_int32(env_, lcdFlashStatusInfo.lcdCompensation, &propValue);
-    napi_set_named_property(env_, result[PARAM1], "lcdCompensation", propValue);
-    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
-    ExecuteCallback("lcdFlashStatus", callbackNapiPara);
+
+    ExecuteCallbackScopeSafe("lcdFlashStatus", [&]() {
+        napi_value callbackObj;
+        napi_value propValue;
+        napi_value errCode;
+
+        napi_create_object(env_, &callbackObj);
+        napi_get_boolean(env_, lcdFlashStatusInfo.isLcdFlashNeeded, &propValue);
+        napi_set_named_property(env_, callbackObj, "isLcdFlashNeeded", propValue);
+        napi_create_int32(env_, lcdFlashStatusInfo.lcdCompensation, &propValue);
+        napi_set_named_property(env_, callbackObj, "lcdCompensation", propValue);
+        errCode = CameraNapiUtils::GetUndefinedValue(env_);
+        return ExecuteCallbackData(env_, errCode, callbackObj);
+    });
 }
 
 void LcdFlashStatusCallbackListener::OnLcdFlashStatusChanged(LcdFlashStatusInfo lcdFlashStatusInfo)

@@ -50,12 +50,15 @@ void SlowMotionStateListener::OnSlowMotionStateCbAsync(const SlowMotionState sta
 void SlowMotionStateListener::OnSlowMotionStateCb(const SlowMotionState state) const
 {
     MEDIA_DEBUG_LOG("OnSlowMotionStateCb is called, state: %{public}d", state);
-    napi_value result[ARGS_TWO] = {nullptr, nullptr};
-    napi_value retVal;
-    napi_get_undefined(env_, &result[PARAM0]);
-    napi_create_int32(env_, state, &result[PARAM1]);
-    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
-    ExecuteCallback("slowMotionStatus", callbackNapiPara);
+
+    ExecuteCallbackScopeSafe("slowMotionStatus", [&]() {
+        napi_value callbackObj;
+        napi_value errCode;
+
+        napi_create_int32(env_, state, &callbackObj);
+        errCode = CameraNapiUtils::GetUndefinedValue(env_);
+        return ExecuteCallbackData(env_, errCode, callbackObj);
+    });
 }
 
 void SlowMotionStateListener::OnSlowMotionState(SlowMotionState state)
