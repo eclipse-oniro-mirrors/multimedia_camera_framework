@@ -552,6 +552,60 @@ HWTEST_F(CameraVedioOutputUnit, video_output_unittest_012, TestSize.Level1)
 
 /*
  * Feature: Framework
+ * Function: Test videooutput with OnFramePaused
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test videooutput with OnFramePaused
+ */
+HWTEST_F(CameraVedioOutputUnit, video_output_unittest_013, TestSize.Level1)
+{
+    int32_t width = VIDEO_DEFAULT_WIDTH;
+    int32_t height = VIDEO_DEFAULT_HEIGHT;
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    CameraFormat videoFormat = CAMERA_FORMAT_YUV_420_SP;
+    Size videoSize;
+    videoSize.width = width;
+    videoSize.height = height;
+    std::vector<int32_t> videoFramerates = {30, 30};
+    VideoProfile videoProfile = VideoProfile(videoFormat, videoSize, videoFramerates);
+    sptr<VideoOutput> video = cameraManager_->CreateVideoOutput(videoProfile, surface);
+    ASSERT_NE(video, nullptr);
+
+    std::shared_ptr<VideoOutputCallbackImpl> callback = std::make_shared<VideoOutputCallbackImpl>(video);
+    int32_t ret = callback->OnFramePaused();
+    EXPECT_EQ(ret, CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test videooutput with OnFrameResumed
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test videooutput with OnFrameResumed
+ */
+HWTEST_F(CameraVedioOutputUnit, video_output_unittest_014, TestSize.Level1)
+{
+    int32_t width = VIDEO_DEFAULT_WIDTH;
+    int32_t height = VIDEO_DEFAULT_HEIGHT;
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    CameraFormat videoFormat = CAMERA_FORMAT_YUV_420_SP;
+    Size videoSize;
+    videoSize.width = width;
+    videoSize.height = height;
+    std::vector<int32_t> videoFramerates = {30, 30};
+    VideoProfile videoProfile = VideoProfile(videoFormat, videoSize, videoFramerates);
+    sptr<VideoOutput> video = cameraManager_->CreateVideoOutput(videoProfile, surface);
+    ASSERT_NE(video, nullptr);
+
+    std::shared_ptr<VideoOutputCallbackImpl> callback = std::make_shared<VideoOutputCallbackImpl>(video);
+    int32_t ret = callback->OnFrameResumed();
+    EXPECT_EQ(ret, CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
  * Function: Test VideoOutput with IsAutoVideoFrameRateSupported, EnableAutoVideoFrameRate.
  * IsVideoDeferred
  * SubFunction: NA

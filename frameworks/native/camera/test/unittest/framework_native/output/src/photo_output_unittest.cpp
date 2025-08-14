@@ -1235,6 +1235,104 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_032, TestSize.Level1)
 
 /*
  * Feature: Framework
+ * Function: Test photooutput with ProcessConstellationDrawingState
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test photooutput with ProcessConstellationDrawingState
+ */
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_034, TestSize.Level1)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    ASSERT_FALSE(cameras.empty());
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+
+    int32_t drawingState = 1;
+    std::shared_ptr<PhotoStateCallback> setCallback =
+        std::make_shared<TestPhotoOutputCallback>("PhotoStateCallback");
+    phtOutput->SetCallback(setCallback);
+    EXPECT_NE(phtOutput->appCallback_, nullptr);
+    phtOutput->ProcessConstellationDrawingState(drawingState);
+    EXPECT_NE(phtOutput, nullptr);
+
+    pid_t pid = 0;
+    phtOutput->CameraServerDied(pid);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test photooutput with CreateMediaLibrary
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test photooutput with CreateMediaLibrary
+ */
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_035, TestSize.Level1)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    ASSERT_FALSE(cameras.empty());
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+
+    sptr<CameraPhotoProxy> photoProxy{new CameraPhotoProxy()};
+    std::string uri;
+    int32_t cameraShotType;
+    string burstKey = "";
+    int64_t timestamp = 0000;
+    phtOutput->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test HStreamCaptureCallbackImpl
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HStreamCaptureCallbackImpl
+ */
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_036, TestSize.Level1)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(photoOutput), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+    EXPECT_EQ(session->Start(), 0);
+
+    session->currentMode_ = SceneMode::HIGH_RES_PHOTO;
+    phtOutput->appCallback_ = std::make_shared<TestPhotoOutputCallback>("PhotoStateCallback");
+    int32_t captureId = 1;
+    sptr<HStreamCaptureCallbackImpl> callback = new (std::nothrow) HStreamCaptureCallbackImpl(phtOutput);
+    ASSERT_NE(callback, nullptr);
+    EXPECT_EQ(callback->OnOfflineDeliveryFinished(captureId), 0);
+
+    phtOutput->appCallback_ = nullptr;
+    pid_t pid = 0;
+    phtOutput->CameraServerDied(pid);
+
+    if (callback) {
+        callback = nullptr;
+    }
+}
+
+/*
+ * Feature: Framework
  * Function: IsOfflineSupported_ShouldReturnFalse_WhenSessionIsNull
  * SubFunction: NA
  * FunctionPoints: NA
