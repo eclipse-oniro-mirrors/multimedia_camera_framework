@@ -206,6 +206,18 @@ void CameraInputImpl::CloseDelayedSync(int32_t time)
     }
 }
 
+void CameraInputImpl::UsedAsPosition(CameraPosition position)
+{
+    MEDIA_INFO_LOG("CameraInputImpl::UsedAsPosition is called");
+    CHECK_ERROR_RETURN_LOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi usedAsPosition is called!");
+    CHECK_ERROR_RETURN_LOG(cameraInput_ == nullptr, "cameraInput_ is nullptr");
+    int32_t cameraPosition = static_cast<int32_t>(position.get_value());
+    MEDIA_INFO_LOG("CameraInputImpl::UsedAsPosition params: %{public}d", cameraPosition);
+    cameraInput_->SetInputUsedAsPosition(static_cast<const OHOS::CameraStandard::CameraPosition>(cameraPosition));
+    return;
+}
+
 OHOS::sptr<OHOS::CameraStandard::CameraInput> CameraInputImpl::GetCameraInput()
 {
     return cameraInput_;

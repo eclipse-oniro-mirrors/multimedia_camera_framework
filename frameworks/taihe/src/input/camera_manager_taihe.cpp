@@ -982,6 +982,68 @@ bool CameraManagerImpl::IsTorchModeSupported(TorchMode mode)
     return isTorchModeSupported;
 }
 
+array<CameraConcurrentInfo> CameraManagerImpl::GetCameraConcurrentInfos(array_view<CameraDevice> cameras)
+{
+    CHECK_DEBUG_RETURN_RET_LOG(cameraManager_ == nullptr, array<CameraConcurrentInfo>(nullptr, 0),
+        "failed to GetCameraConcurrentInfos, cameraManager is nullptr");
+    std::vector<std::string>cameraIdv = {};
+    std::vector<bool> cameraConcurrentType = {};
+    std::vector<std::vector<OHOS::CameraStandard::SceneMode>> modes = {};
+    std::vector<std::vector<sptr<OHOS::CameraStandard::CameraOutputCapability>>> outputCapabilities = {};
+    for (auto item : cameras) {
+        cameraIdv.push_back(std::string(item.cameraId));
+    }
+
+    std::vector<sptr<OHOS::CameraStandard::CameraDevice>> cameraDeviceArrray = {};
+    for (auto cameraIdOnly : cameraIdv) {
+        cameraDeviceArrray.push_back(cameraManager_->GetCameraDeviceFromId(cameraIdOnly));
+    }
+
+    bool isSupported = cameraManager_->GetConcurrentType(cameraDeviceArrray, cameraConcurrentType);
+    if (isSupported == false) {
+        MEDIA_ERR_LOG("CameraManagerImpl::Camera is not support ConcurrentType");
+        return array<CameraConcurrentInfo>(nullptr, 0);
+    }
+    isSupported = cameraManager_->CheckConcurrentExecution(cameraDeviceArrray);
+    if (isSupported == false) {
+        MEDIA_ERR_LOG("CameraManagerImpl::Camera is not support ConcurrentType");
+        return array<CameraConcurrentInfo>(nullptr, 0);
+    }
+
+    cameraManager_->GetCameraConcurrentInfos(cameraDeviceArrray,
+        cameraConcurrentType, modes, outputCapabilities);
+    return CameraUtilsTaihe::ToTaiheCameraConcurrentInfoArray(
+        cameraDeviceArrray, cameraConcurrentType, modes, outputCapabilities);
+}
+
+CameraDevice CameraManagerImpl::GetCameraDevice(CameraPosition position, CameraType type)
+{
+    MEDIA_INFO_LOG("CameraManagerImpl::GetCameraDevice is called");
+    std::string defaultString = "";
+    CameraDevice cameraTaihe {
+        .cameraId = CameraUtilsTaihe::ToTaiheString(defaultString),
+        .cameraPosition = CameraPosition::key_t::CAMERA_POSITION_UNSPECIFIED,
+        .cameraType = CameraType::key_t::CAMERA_TYPE_DEFAULT,
+        .connectionType = ConnectionType::key_t::CAMERA_CONNECTION_BUILT_IN,
+        .isRetractable = optional<bool>::make(false),
+        .hostDeviceType = HostDeviceType::key_t::UNKNOWN_TYPE,
+        .hostDeviceName = CameraUtilsTaihe::ToTaiheString(defaultString),
+        .cameraOrientation = 0,
+    };
+    CHECK_ERROR_RETURN_RET_LOG(cameraManager_ == nullptr, cameraTaihe, "cameraManager_ is nullptr");
+    int32_t cameraPosition = static_cast<int32_t>(position.get_value());
+    int32_t cameraType = static_cast<int32_t>(type.get_value());
+    OHOS::sptr<OHOS::CameraStandard::CameraDevice> cameraInfo = nullptr;
+    ProcessCameraInfo(cameraManager_, static_cast<const OHOS::CameraStandard::CameraPosition>(cameraPosition),
+        static_cast<const OHOS::CameraStandard::CameraType>(cameraType), cameraInfo);
+    if (cameraInfo == nullptr) {
+        MEDIA_ERR_LOG("cameraInfo is null");
+        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::CameraErrorCode::SERVICE_FATL_ERROR, "cameraInfo is null");
+        return cameraTaihe;
+    }
+    return CameraUtilsTaihe::ToTaiheCameraDevice(cameraInfo);
+}
+
 CameraManager getCameraManager(uintptr_t context)
 {
     return make_holder<Ani::Camera::CameraManagerImpl, CameraManager>();

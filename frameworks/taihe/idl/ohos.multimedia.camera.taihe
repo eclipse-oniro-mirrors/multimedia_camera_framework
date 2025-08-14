@@ -510,6 +510,7 @@ interface CameraInput {
   ControlAuxiliarySync(auxiliaryType: AuxiliaryType, auxiliaryStatus: AuxiliaryStatus): void;
   @gen_promise("closeDelayed")
   CloseDelayedSync(time: i32): void;
+  UsedAsPosition(position: CameraPosition): void;
 
   GetSpecificImplPtr(): i64;
 
@@ -867,6 +868,8 @@ interface VideoSession : Session, Flash, Zoom, Stabilization, ColorManagement, A
               this.onLightStatusChange(callback as ((arg_0: BusinessError<void>, arg_1: LightStatus)=> void));
             } else if (type === "focusTrackingInfoAvailable") {
               this.onFocusTrackingInfoAvailable(callback as ((arg_1: FocusTrackingInfo)=> void));
+            } else if (type === "effectSuggestionChange") {
+              this.onEffectSuggestionChange(callback as ((arg_0: BusinessError<void>, arg_1: EffectSuggestionType)=> void));
             } else {
               throw new Error(`Unknown type: ${type}`);
             }
@@ -891,6 +894,8 @@ interface VideoSession : Session, Flash, Zoom, Stabilization, ColorManagement, A
               this.offLightStatusChange(callback as (((arg_0: BusinessError<void>, arg_1: LightStatus)=> void) | undefined));
             } else if (type === "focusTrackingInfoAvailable") {
               this.offFocusTrackingInfoAvailable(callback as ((arg_1: FocusTrackingInfo)=> void) | undefined);
+            } else if (type === "effectSuggestionChange") {
+              this.offEffectSuggestionChange(callback as (((arg_0: BusinessError<void>, arg_1: EffectSuggestionType)=> void) | undefined));
             } else {
               throw new Error(`Unknown type: ${type}`);
             }
@@ -920,6 +925,9 @@ interface VideoSession : Session, Flash, Zoom, Stabilization, ColorManagement, A
 
   OnFocusTrackingInfoAvailable(callback: (data: FocusTrackingInfo)=> void): void;
   OffFocusTrackingInfoAvailable(callback: Optional<(data: FocusTrackingInfo)=> void>): void;
+
+  OnEffectSuggestionChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: EffectSuggestionType)=> void): void;
+  OffEffectSuggestionChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: EffectSuggestionType)=> void>): void;
 
   SetQualityPrioritization(quality : QualityPrioritization) : void;
   GetSessionFunctions(outputCapability: CameraOutputCapability): Array<VideoFunctions>;
@@ -954,6 +962,8 @@ interface VideoSessionForSys : VideoSession, Beauty, ColorEffect, ColorManagemen
               this.onLightStatusChange(callback as ((arg_0: BusinessError<void>, arg_1: LightStatus)=> void));
             } else if (type === "focusTrackingInfoAvailable") {
               this.onFocusTrackingInfoAvailable(callback as ((arg_1: FocusTrackingInfo)=> void));
+            } else if (type === "effectSuggestionChange") {
+              this.onEffectSuggestionChange(callback as ((arg_0: BusinessError<void>, arg_1: EffectSuggestionType)=> void));
             } else {
               throw new Error(`Unknown type: ${type}`);
             }
@@ -978,6 +988,8 @@ interface VideoSessionForSys : VideoSession, Beauty, ColorEffect, ColorManagemen
               this.offLightStatusChange(callback as (((arg_0: BusinessError<void>, arg_1: LightStatus)=> void) | undefined));
             } else if (type === "focusTrackingInfoAvailable") {
               this.offFocusTrackingInfoAvailable(callback as ((arg_1: FocusTrackingInfo)=> void) | undefined);
+            } else if (type === "effectSuggestionChange") {
+              this.offEffectSuggestionChange(callback as (((arg_0: BusinessError<void>, arg_1: EffectSuggestionType)=> void) | undefined));
             } else {
               throw new Error(`Unknown type: ${type}`);
             }
@@ -1577,6 +1589,7 @@ interface CameraManager {
   CreateDeferredPreviewOutput(profile: Optional<Profile>): PreviewOutput;
   MuteCameraPersistent(mute: bool, type: PolicyType): void;
   SetPrelaunchConfig(prelaunchConfig: PrelaunchConfig): void;
+  GetCameraConcurrentInfos(cameras: Array<CameraDevice>): Array<CameraConcurrentInfo>;
   @overload("createCameraInput")
   CreateCameraInputWithCameraDevice(camera: CameraDevice): CameraInput;
   @overload("createCameraInput")
@@ -1594,6 +1607,7 @@ interface CameraManager {
   @overload("createMetadataOutput")
   CreateMetadataOutput(metadataObjectTypes: Array<MetadataObjectType>): MetadataOutput;
   IsTorchModeSupported(mode: TorchMode): bool;
+  GetCameraDevice(position: CameraPosition, type: CameraType): CameraDevice;
 
   @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>, data: object)=> void): void;")
   @!sts_inject_into_class("""on(type: string, callback: object): void {
@@ -2467,6 +2481,12 @@ struct MetadataHumanBodyObject {
   @extends base: MetadataObject;
 }
 
+struct CameraConcurrentInfo {
+  @readonly device: CameraDevice;
+  @readonly type: CameraConcurrentType;
+  @readonly modes: Array<SceneMode>;
+  @readonly outputCapabilities: Array<CameraOutputCapability>;
+}
 // transfer functions
 function CameraInputTransferStaticImpl(input: @sts_type("ESValue") Opaque): CameraInput;
 function CameraInputTransferDynamicImpl(input: CameraInput): @sts_type("Any") Opaque;

@@ -115,7 +115,9 @@ public:
     CameraInput CreateCameraInputWithPosition(CameraPosition position, CameraType type);
     DepthDataOutput CreateDepthDataOutput(DepthProfile const& profile);
     MetadataOutput CreateMetadataOutput(array_view<MetadataObjectType> metadataObjectTypes);
+    array<CameraConcurrentInfo> GetCameraConcurrentInfos(array_view<CameraDevice> cameras);
     void SetPrelaunchConfig(PrelaunchConfig const& prelaunchConfig);
+    CameraDevice GetCameraDevice(CameraPosition position, CameraType type);
     void RegisterCameraMuteCallbackListener(const std::string& eventName,
         std::shared_ptr<uintptr_t> callback, bool isOnce);
     void UnregisterCameraMuteCallbackListener(const std::string& eventName, std::shared_ptr<uintptr_t> callback);
