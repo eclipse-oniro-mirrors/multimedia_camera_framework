@@ -1043,7 +1043,7 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_026, TestSize.Level0)
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test previewoutput with IsBandwidthCompressionSupported and 
+ * CaseDescription: Test previewoutput with IsBandwidthCompressionSupported and
  *                  EnableBandwidthCompression when session_ is nullptr
  */
 HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_027, TestSize.Level0)
