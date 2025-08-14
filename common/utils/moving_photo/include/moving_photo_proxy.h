@@ -28,6 +28,8 @@ public:
     static sptr<AvcodecTaskManagerProxy> CreateAvcodecTaskManagerProxy();
     int32_t CreateAvcodecTaskManager(sptr<AudioCapturerSessionIntf> audioCapturerSessionIntf,
         VideoCodecType type, int32_t colorSpace) override;
+    int32_t CreateAvcodecTaskManager(wptr<Surface> movingSurface, shared_ptr<Size> size,
+        sptr<AudioCapturerSessionIntf> audioCapturerSessionIntf, VideoCodecType type, int32_t colorSpace) override;
     void SetVideoBufferDuration(uint32_t preBufferCount, uint32_t postBufferCount) override;
     void SetVideoFd(int64_t timestamp, std::shared_ptr<PhotoAssetIntf> photoAssetProxy, int32_t captureId) override;
     void SubmitTask(std::function<void()> task) override;

@@ -191,6 +191,18 @@ int32_t VideoEncoder::Stop()
     return 0;
 }
 
+void VideoEncoder::SetVideoCodec(const std::shared_ptr<Size>& size, int32_t rotation)
+{
+    MEDIA_INFO_LOG("VideoEncoder SetVideoCodec E videoCodecType_ = %{public}d", videoCodecType_);
+    size_ = size;
+    rotation_ = rotation;
+    videoCodecType_ = VideoCodecType::VIDEO_ENCODE_TYPE_HEVC;
+    Create(MIME_VIDEO_HEVC.data());
+    Config();
+    GetSurface();
+    MEDIA_INFO_LOG("VideoEncoder SetVideoCodec X");
+}
+
 void VideoEncoder::RestartVideoCodec(shared_ptr<Size> size, int32_t rotation)
 {
     // LCOV_EXCL_START

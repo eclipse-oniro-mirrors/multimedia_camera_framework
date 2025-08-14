@@ -50,6 +50,7 @@ public:
         std::lock_guard<std::mutex> lock(surfaceBufferListenerMutex_);
         return surfaceBufferListener_.promote();
     }
+    sptr<Surface> videoSurface_ = nullptr;
 
 private:
     class BufferConsumerListener : public IBufferConsumerListener {
@@ -66,7 +67,6 @@ private:
     bool Init(int32_t width, int32_t height);
 
     mutable std::recursive_mutex videoSurfaceMutex_;
-    sptr<Surface> videoSurface_ = nullptr;
 
     sptr<IBufferConsumerListener> bufferConsumerListener_ = nullptr;
 

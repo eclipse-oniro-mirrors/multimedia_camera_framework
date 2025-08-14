@@ -54,6 +54,8 @@ class AvcodecTaskManager : public RefBase, public std::enable_shared_from_this<A
 public:
     explicit AvcodecTaskManager(sptr<AudioCapturerSession> audioCapturerSession, VideoCodecType type,
         ColorSpace colorSpace);
+    AvcodecTaskManager(wptr<Surface> movingSurface, shared_ptr<Size> size,
+        sptr<AudioCapturerSession> audioCapturerSession, VideoCodecType type, ColorSpace colorSpace);
     ~AvcodecTaskManager();
     void EncodeVideoBuffer(sptr<FrameRecord> frameRecord, CacheCbFunc cacheCallback);
     void PrepareAudioBuffer(vector<sptr<FrameRecord>>& choosedBuffer, vector<sptr<AudioRecord>>& audioRecords,
@@ -71,6 +73,7 @@ public:
     bool isEmptyVideoFdMap();
     shared_ptr<TaskManager>& GetTaskManager();
     shared_ptr<TaskManager>& GetEncoderManager();
+    void AsyncInitVideoCodec();
     mutex startTimeMutex_;
     mutex endTimeMutex_;
     std::map<int32_t, int64_t> mPStartTimeMap_ = {};
@@ -103,6 +106,8 @@ private:
     uint32_t timerId_ = 0;
     shared_ptr<AudioDeferredProcess> audioDeferredProcess_ = nullptr;
     ColorSpace colorSpace_ = ColorSpace::COLOR_SPACE_UNKNOWN;
+    wptr<Surface> movingSurface_;
+    shared_ptr<Size> size_ = std::make_shared<Size>();
 };
 } // CameraStandard
 } // OHOS
