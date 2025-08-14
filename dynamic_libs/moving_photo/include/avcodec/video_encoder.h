@@ -83,7 +83,7 @@ private:
     bool successFrame_ = false;
     int64_t preFrameTimestamp_ = 0;
     bool isHdr_ = false;
-    sptr<SurfaceBuffer> codecDetachBuf_= nullptr;
+    sptr<SurfaceBuffer> codecDetachBuf_ = nullptr;
 };
 } // CameraStandard
 } // OHOS
