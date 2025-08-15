@@ -994,26 +994,26 @@ array<CameraConcurrentInfo> CameraManagerImpl::GetCameraConcurrentInfos(array_vi
         cameraIdv.push_back(std::string(item.cameraId));
     }
 
-    std::vector<sptr<OHOS::CameraStandard::CameraDevice>> cameraDeviceArrray = {};
+    std::vector<sptr<OHOS::CameraStandard::CameraDevice>> cameraDeviceArray = {};
     for (auto cameraIdOnly : cameraIdv) {
-        cameraDeviceArrray.push_back(cameraManager_->GetCameraDeviceFromId(cameraIdOnly));
+        cameraDeviceArray.push_back(cameraManager_->GetCameraDeviceFromId(cameraIdOnly));
     }
 
-    bool isSupported = cameraManager_->GetConcurrentType(cameraDeviceArrray, cameraConcurrentType);
+    bool isSupported = cameraManager_->GetConcurrentType(cameraDeviceArray, cameraConcurrentType);
     if (isSupported == false) {
         MEDIA_ERR_LOG("CameraManagerImpl::Camera is not support ConcurrentType");
         return array<CameraConcurrentInfo>(nullptr, 0);
     }
-    isSupported = cameraManager_->CheckConcurrentExecution(cameraDeviceArrray);
+    isSupported = cameraManager_->CheckConcurrentExecution(cameraDeviceArray);
     if (isSupported == false) {
         MEDIA_ERR_LOG("CameraManagerImpl::Camera is not support ConcurrentType");
         return array<CameraConcurrentInfo>(nullptr, 0);
     }
 
-    cameraManager_->GetCameraConcurrentInfos(cameraDeviceArrray,
+    cameraManager_->GetCameraConcurrentInfos(cameraDeviceArray,
         cameraConcurrentType, modes, outputCapabilities);
     return CameraUtilsTaihe::ToTaiheCameraConcurrentInfoArray(
-        cameraDeviceArrray, cameraConcurrentType, modes, outputCapabilities);
+        cameraDeviceArray, cameraConcurrentType, modes, outputCapabilities);
 }
 
 CameraDevice CameraManagerImpl::GetCameraDevice(CameraPosition position, CameraType type)
