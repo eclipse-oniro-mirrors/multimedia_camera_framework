@@ -1130,7 +1130,7 @@ void PhotoOutput::CameraServerDied(pid_t pid)
 
 int32_t PhotoOutput::IsAutoCloudImageEnhancementSupported(bool &isAutoCloudImageEnhancementSupported)
 {
-    MEDIA_DEBUG_LOG("PhotoOutput IsAutoCloudImageEnhancementSupported is called");
+    MEDIA_INFO_LOG("PhotoOutput IsAutoCloudImageEnhancementSupported is called");
     auto session = GetSession();
     CHECK_RETURN_RET_ELOG(session == nullptr, SERVICE_FATL_ERROR,
         "PhotoOutput IsAutoCloudImageEnhancementSupported error!, session is nullptr");
@@ -1158,7 +1158,7 @@ int32_t PhotoOutput::IsAutoCloudImageEnhancementSupported(bool &isAutoCloudImage
             }
         }
     }
-    MEDIA_DEBUG_LOG("Judge Auto Cloud Image Enhancement Supported result %{public}d",
+    MEDIA_INFO_LOG("Judge Auto Cloud Image Enhancement Supported result %{public}d",
         isAutoCloudImageEnhancementSupported);
     return CAMERA_OK;
     // LCOV_EXCL_STOP
