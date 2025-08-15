@@ -26,6 +26,9 @@
 namespace OHOS {
 namespace CameraStandard {
 class PhotoOutput;
+namespace DeferredProcessing {
+class TaskManager;
+}
 class PhotoAvailableCallback {
 public:
     PhotoAvailableCallback() = default;
@@ -133,6 +136,25 @@ private:
         int32_t width, int32_t height, bool isHdr);
     std::unique_ptr<Media::PixelMap> SetPixelMapYuvInfo(sptr<SurfaceBuffer> &surfaceBuffer,
         std::unique_ptr<Media::PixelMap> pixelMap, bool isHdr);
+
+    wptr<PhotoOutput> innerPhotoOutput_ = nullptr;
+};
+
+class PhotoNativeConsumer : public IBufferConsumerListener {
+public:
+    explicit PhotoNativeConsumer(wptr<PhotoOutput> photoOutput);
+    ~PhotoNativeConsumer() override;
+    void OnBufferAvailable() override;
+    void ClearTaskManager();
+    std::shared_ptr<DeferredProcessing::TaskManager> GetDefaultTaskManager();
+
+private:
+    void ExecuteOnBufferAvailable();
+    void ExecutePhotoAvailable(sptr<SurfaceBuffer> surfaceBuffer, int64_t timestamp);
+    void ExecutePhotoAssetAvailable(sptr<SurfaceBuffer> surfaceBuffer, int64_t timestamp);
+
+    std::mutex taskManagerMutex_;
+    std::shared_ptr<DeferredProcessing::TaskManager> taskManager_ = nullptr;
 
     wptr<PhotoOutput> innerPhotoOutput_ = nullptr;
 };

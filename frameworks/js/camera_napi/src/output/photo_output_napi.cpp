@@ -780,7 +780,7 @@ napi_value PhotoOutputNapi::CreatePhotoOutput(napi_env env, Profile& profile, st
         MEDIA_INFO_LOG("CreatePhotoOutput surfaceId: %{public}s", surfaceId.c_str());
         int retCode = SUCCESS;
         if (surfaceId == "") {
-            MEDIA_INFO_LOG("create surface as consumer");
+            MEDIA_INFO_LOG("create surface on camera service");
             retCode = CameraManager::GetInstance()->CreatePhotoOutput(profile, &sPhotoOutput_);
         } else {
             MEDIA_INFO_LOG("get surface by surfaceId");
@@ -827,8 +827,8 @@ napi_value PhotoOutputNapi::CreatePhotoOutput(napi_env env, std::string surfaceI
         MEDIA_INFO_LOG("CreatePhotoOutput surfaceId: %{public}s", surfaceId.c_str());
         int retCode = SUCCESS;
         if (surfaceId == "") {
-            MEDIA_INFO_LOG("create surface as consumer");
-            retCode = CameraManager::GetInstance()->CreatePhotoOutputWithoutProfile(surfaceId, &sPhotoOutput_);
+            MEDIA_INFO_LOG("create surface on camera service");
+            retCode = CameraManager::GetInstance()->CreatePhotoOutputWithoutProfile(&sPhotoOutput_);
         } else {
             MEDIA_INFO_LOG("get surface by surfaceId");
             sptr<Surface> photoSurface = Media::ImageReceiver::getSurfaceById(surfaceId);

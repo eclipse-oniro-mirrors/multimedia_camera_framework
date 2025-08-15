@@ -265,12 +265,12 @@ public:
     int32_t CreateCaptureSession(sptr<CaptureSession>* pCaptureSession);
 
     /**
-     * @brief Create photo output instance using surface.
+     * @brief Create photo output instance using surfaceProducer.
      *
-     * @param The surface to be used for photo output.
+     * @param The surfaceProducer to be used for photo output.
      * @return Returns pointer to photo output instance.
      */
-    sptr<PhotoOutput> CreatePhotoOutput(Profile& profile, sptr<IBufferProducer>& surface);
+    sptr<PhotoOutput> CreatePhotoOutput(Profile& profile, sptr<IBufferProducer>& surfaceProducer);
 
     /**
     * @brief Create deferred photo processing session.
@@ -334,18 +334,19 @@ public:
      * @brief Create photo output instance.
      *
      * @param profile photo profile.
-     * @param surface photo buffer surface.
+     * @param surfaceProducer photo buffer surfaceProducer.
      * @param pPhotoOutput pointer to photo output instance.
      * @return Returns error code.
      */
-    int CreatePhotoOutput(Profile& profile, sptr<IBufferProducer>& surface, sptr<PhotoOutput>* pPhotoOutput);
+    int CreatePhotoOutput(Profile& profile, sptr<IBufferProducer>& surfaceProducer, sptr<PhotoOutput>* pPhotoOutput);
 
     /**
      * @brief Create photo output instance.
      *
      * @param profile photo profile.
-     * @param surface photo buffer surface.
+     * @param surfaceProducer photo buffer surfaceProducer.
      * @param pPhotoOutput pointer to photo output instance.
+     * @param photoSurface photo buffer surface.
      * @return Returns error code.
      */
     int CreatePhotoOutput(Profile &profile, sptr<IBufferProducer> &surfaceProducer, sptr<PhotoOutput> *pPhotoOutput,
@@ -363,38 +364,38 @@ public:
     /**
      * @brief Create photo output instance without profile.
      *
-     * @param surface photo buffer surface.
+     * @param surfaceProducer photo buffer surfaceProducer.
      * @param pPhotoOutput pointer to photo output instance.
      * @return Returns error code.
      */
-    int CreatePhotoOutputWithoutProfile(sptr<IBufferProducer> surface, sptr<PhotoOutput>* pPhotoOutput);
+    int CreatePhotoOutputWithoutProfile(sptr<IBufferProducer> surfaceProducer, sptr<PhotoOutput>* pPhotoOutput);
 
     /**
      * @brief Create photo output instance without profile.
      *
-     * @param surface photo buffer surface.
+     * @param surfaceProducer photo buffer surfaceProducer.
      * @param pPhotoOutput pointer to photo output instance.
+     * @param photoSurface photo buffer surface.
      * @return Returns error code.
      */
-    int CreatePhotoOutputWithoutProfile(sptr<IBufferProducer> surface,
-        sptr<PhotoOutput>* pPhotoOutput, sptr<Surface> photoSurface);
+    int CreatePhotoOutputWithoutProfile(sptr<IBufferProducer> surfaceProducer, sptr<PhotoOutput>* pPhotoOutput,
+                                        sptr<Surface> photoSurface);
 
     /**
      * @brief Create photo output instance without profile.
      *
-     * @param surfaceId photo buffer surface id.
      * @param pPhotoOutput pointer to photo output instance.
      * @return Returns error code.
      */
-    int CreatePhotoOutputWithoutProfile(std::string surfaceId, sptr<PhotoOutput>* pPhotoOutput);
+    int CreatePhotoOutputWithoutProfile(sptr<PhotoOutput>* pPhotoOutput);
 
     /**
-     * @brief Create photo output instance using surface.
+     * @brief Create photo output instance using surfaceProducer.
      *
-     * @param The surface to be used for photo output.
+     * @param The surfaceProducer to be used for photo output.
      * @return Returns pointer to photo output instance.
      */
-    [[deprecated]] sptr<PhotoOutput> CreatePhotoOutput(sptr<IBufferProducer>& surface);
+    [[deprecated]] sptr<PhotoOutput> CreatePhotoOutput(sptr<IBufferProducer>& surfaceProducer);
 
     /**
      * @brief Create photo output instance using IBufferProducer.
@@ -403,7 +404,8 @@ public:
      * @param The format to be used for photo capture.
      * @return Returns pointer to photo output instance.
      */
-    [[deprecated]] sptr<PhotoOutput> CreatePhotoOutput(const sptr<OHOS::IBufferProducer>& producer, int32_t format);
+    [[deprecated]] sptr<PhotoOutput> CreatePhotoOutput(
+        const sptr<OHOS::IBufferProducer> &surfaceProducer, int32_t format);
 
     /**
      * @brief Create video output instance using surface.
@@ -552,11 +554,11 @@ public:
      * @brief Get stream depth data from service.
      *
      * @param depthProfile depth profile.
-     * @param surface depth data buffer surface.
+     * @param surfaceProducer depth data buffer surfaceProducer.
      * @param streamDepthData pointer to depth data stream.
      * @return Returns error code.
      */
-    int GetStreamDepthDataFromService(DepthProfile& depthProfile, sptr<IBufferProducer> &surface,
+    int GetStreamDepthDataFromService(DepthProfile& depthProfile, sptr<IBufferProducer> &surfaceProducer,
         sptr<IStreamDepthData>& streamDepthData);
 
     /**
@@ -895,8 +897,7 @@ public:
     int32_t CreatePhotoOutputStream(
         sptr<IStreamCapture>& streamPtr, Profile& profile, const sptr<OHOS::IBufferProducer>& producer);
 
-    int32_t CreatePhotoOutputStream(
-        sptr<IStreamCapture>& streamPtr, Profile& profile, std::string surfaceId);
+    int32_t CreatePhotoOutputStream(sptr<IStreamCapture>& streamPtr, Profile& profile);
     /**
     * @brief clear remote stub obj.
     *
