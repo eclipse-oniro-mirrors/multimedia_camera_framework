@@ -61,7 +61,8 @@ using CM_ColorSpaceType_V2_1 = OHOS::HDI::Display::Graphic::Common::V2_1::CM_Col
 static const int32_t CAPTURE_ROTATE_360 = 360;
 static const std::string BURST_UUID_BEGIN = "";
 static std::string g_currentBurstUuid = BURST_UUID_BEGIN;
-static const uint32_t TASKMANAGER_NUMBER = 2;
+static const uint32_t TASKMANAGER_ONE = 1;
+static const uint32_t TASKMANAGER_FOUR = 4;
 
 static std::string GenerateBurstUuid()
 {
@@ -174,6 +175,10 @@ HStreamCapture::~HStreamCapture()
     if (photoSubTask_ != nullptr) {
         photoSubTask_->CancelAllTasks();
         photoSubTask_ = nullptr;
+    }
+    if (thumbnailTask_ != nullptr) {
+        thumbnailTask_->CancelAllTasks();
+        thumbnailTask_ = nullptr;
     }
     photoAssetProxy_.Release();
     rotationMap_.Clear();
@@ -1126,6 +1131,7 @@ int32_t HStreamCapture::SetThumbnailCallback(const sptr<IStreamCaptureThumbnailC
     MEDIA_INFO_LOG("SetThumbnailCallback GetUniqueId: %{public}" PRIu64, thumbnailSurface_->GetUniqueId());
     SurfaceError ret = thumbnailSurface_->RegisterConsumerListener(
         (sptr<IBufferConsumerListener> &)thumbnailListener_);
+    CHECK_EXECUTE(thumbnailTask_ == nullptr, InitCaptureThread());
     CHECK_PRINT_ELOG(ret != SURFACE_ERROR_OK, "registerConsumerListener failed:%{public}d", ret);
     return CAMERA_OK;
 }
@@ -1146,10 +1152,13 @@ void HStreamCapture::InitCaptureThread()
 {
     MEDIA_INFO_LOG("HStreamCapture::InitCaptureThread E");
     if (photoTask_ == nullptr) {
-        photoTask_ = std::make_shared<DeferredProcessing::TaskManager>("photoTask", 1, false);
+        photoTask_ = std::make_shared<DeferredProcessing::TaskManager>("photoTask", TASKMANAGER_ONE, false);
     }
     if (isYuvCapture_ && photoSubTask_ == nullptr) {
-        photoSubTask_ = std::make_shared<DeferredProcessing::TaskManager>("photoSubTask", TASKMANAGER_NUMBER, false);
+        photoSubTask_ = std::make_shared<DeferredProcessing::TaskManager>("photoSubTask", TASKMANAGER_FOUR, false);
+    }
+    if (isYuvCapture_ && thumbnailTask_ == nullptr) {
+        thumbnailTask_ = std::make_shared<DeferredProcessing::TaskManager>("thumbnailTask", TASKMANAGER_ONE, false);
     }
 }
 

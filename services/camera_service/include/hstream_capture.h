@@ -152,6 +152,7 @@ public:
     std::map<int32_t, std::shared_ptr<PictureIntf>> captureIdPictureMap_;
     std::shared_ptr<DeferredProcessing::TaskManager> photoTask_ = nullptr;
     std::shared_ptr<DeferredProcessing::TaskManager> photoSubTask_ = nullptr;
+    std::shared_ptr<DeferredProcessing::TaskManager> thumbnailTask_ = nullptr;
 
     std::mutex g_photoImageMutex;
     std::mutex g_assembleImageMutex;
