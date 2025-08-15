@@ -912,5 +912,151 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_022, TestSize.Level0)
     std::string actualSurfaceId = previewOutput->GetSurfaceId();
     EXPECT_EQ(expectedSurfaceId, actualSurfaceId);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test PreviewOutputCallbackImpl
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test PreviewOutputCallbackImpl
+ */
+HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_023, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    ASSERT_FALSE(cameras.empty());
+
+    sptr<CaptureOutput> preview = CreatePreviewOutput();
+    ASSERT_NE(preview, nullptr);
+
+    sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)preview;
+
+    auto callback = previewOutput->GetPreviewOutputListenerManager();
+    ASSERT_NE(callback, nullptr);
+    EXPECT_EQ(callback->OnFramePaused(), CAMERA_OK);
+
+    if (callback) {
+        callback = nullptr;
+    }
+}
+
+/*
+ * Feature: Framework
+ * Function: Test PreviewOutputCallbackImpl
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test PreviewOutputCallbackImpl
+ */
+HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_024, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    ASSERT_FALSE(cameras.empty());
+
+    sptr<CaptureOutput> preview = CreatePreviewOutput();
+    ASSERT_NE(preview, nullptr);
+
+    sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)preview;
+
+    auto callback = previewOutput->GetPreviewOutputListenerManager();
+    ASSERT_NE(callback, nullptr);
+    EXPECT_EQ(callback->OnFrameResumed(), CAMERA_OK);
+
+    if (callback) {
+        callback = nullptr;
+    }
+}
+
+/*
+ * Feature: Framework
+ * Function: Test previewoutput with IsLogAssistanceSupported and EnableLogAssistance
+ *           when session_ is nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test previewoutput with IsLogAssistanceSupported and EnableLogAssistance
+ *                  when session_ is nullptr
+ */
+HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_025, TestSize.Level0)
+{
+    sptr<CaptureOutput> preview = CreatePreviewOutput();
+    ASSERT_NE(preview, nullptr);
+
+    auto previewOutput = (sptr<PreviewOutput>&)preview;
+    previewOutput->stream_ = nullptr;
+    previewOutput->session_ = nullptr;
+
+    EXPECT_EQ(previewOutput->IsLogAssistanceSupported(), false);
+    EXPECT_EQ(previewOutput->EnableLogAssistance(true), CameraErrorCode::OPERATION_NOT_ALLOWED);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test previewoutput with IsLogAssistanceSupported and EnableLogAssistance
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test previewoutput with IsLogAssistanceSupported and EnableLogAssistance
+ */
+HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_026, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    ASSERT_NE(input, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    sptr<CaptureOutput> preview = CreatePreviewOutput();
+    ASSERT_NE(preview, nullptr);
+    sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)preview;
+
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+
+    bool isSupport = previewOutput->IsLogAssistanceSupported();
+    int32_t res = -1;
+    if (isSupport) {
+        res = previewOutput->EnableLogAssistance(true);
+        EXPECT_EQ(res, 0);
+    }
+
+    EXPECT_EQ(session->CommitConfig(), 0);
+    EXPECT_EQ(session->Start(), 0);
+
+    EXPECT_EQ(preview->Release(), 0);
+    EXPECT_EQ(input->Release(), 0);
+    EXPECT_EQ(session->Release(), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test previewoutput with IsBandwidthCompressionSupported and EnableBandwidthCompression
+ *           when session_ is nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test previewoutput with IsBandwidthCompressionSupported and
+ *                  EnableBandwidthCompression when session_ is nullptr
+ */
+HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_027, TestSize.Level0)
+{
+    sptr<CaptureOutput> preview = CreatePreviewOutput();
+    ASSERT_NE(preview, nullptr);
+
+    auto previewOutput = (sptr<PreviewOutput>&)preview;
+    previewOutput->stream_ = nullptr;
+    previewOutput->session_ = nullptr;
+
+    EXPECT_EQ(previewOutput->IsBandwidthCompressionSupported(), false);
+    EXPECT_EQ(previewOutput->EnableBandwidthCompression(true), CameraErrorCode::SERVICE_FATL_ERROR);
+}
 }
 }
