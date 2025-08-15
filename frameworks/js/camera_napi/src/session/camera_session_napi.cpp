@@ -440,7 +440,7 @@ void PressureCallbackListener::OnPressureCallback(PressureStatus status) const
         napi_value errCode;
 
         napi_create_int32(env_, static_cast<int32_t>(status), &callbackObj);
-        errCode = CameraNapiUtils::GetUndefined(env_);
+        errCode = CameraNapiUtils::GetUndefinedValue(env_);
         return ExecuteCallbackData(env_, errCode, callbackObj);
     });
 }
