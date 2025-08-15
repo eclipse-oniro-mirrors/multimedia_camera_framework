@@ -154,6 +154,10 @@ const int32_t MAX_FRAME_RATE = 30;
 const int32_t CAMERA_NUMBER = 2;
 const int32_t ZOOM_RATIO = 100;
 
+static const int32_t VEDIO_FRAMERATES_120 = 120;
+static const int32_t VEDIO_FRAMERATES_240 = 240;
+static const int32_t VEDIO_FRAMERATES_SIZE = 2;
+
 extern std::bitset<static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_MAX_EVENT)> g_photoEvents;
 extern std::bitset<static_cast<unsigned int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_MAX_EVENT)> g_previewEvents;
 extern std::bitset<static_cast<unsigned int>(CAM_VIDEO_EVENTS::CAM_VIDEO_MAX_EVENT)> g_videoEvents;

@@ -8365,7 +8365,15 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_002, TestSize.Level1)
     EXPECT_TRUE(videoSession->CanAddOutput(previewOutput));
     res = videoSession->AddOutput(previewOutput);
     EXPECT_EQ(res, 0);
-    sptr<CaptureOutput> videoOutput = CreateVideoOutput(videoProfiles[0]);
+    sptr<CaptureOutput> videoOutput = nullptr;
+    for (auto profile : videoProfiles) {
+        if (profile.framerates_.size() >= VEDIO_FRAMERATES_SIZE && profile.framerates_[0] != VEDIO_FRAMERATES_120
+        && profile.framerates_[1] != VEDIO_FRAMERATES_120 && profile.framerates_[0] != VEDIO_FRAMERATES_240
+            && profile.framerates_[1] != VEDIO_FRAMERATES_240) {
+            videoOutput = CreateVideoOutput(profile);
+            break;
+        }
+    }
     ASSERT_NE(videoOutput, nullptr);
     EXPECT_TRUE(videoSession->CanAddOutput(videoOutput));
     res = videoSession->AddOutput(videoOutput);
@@ -8434,7 +8442,15 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_003, TestSize.Level0)
     EXPECT_TRUE(videoSession->CanAddOutput(photoOutput));
     res = videoSession->AddOutput(photoOutput);
     EXPECT_EQ(res, 0);
-    sptr<CaptureOutput> videoOutput = CreateVideoOutput(videoProfiles[0]);
+    sptr<CaptureOutput> videoOutput = nullptr;
+    for (auto profile : videoProfiles) {
+        if (profile.framerates_.size() >= VEDIO_FRAMERATES_SIZE && profile.framerates_[0] != VEDIO_FRAMERATES_120
+        && profile.framerates_[1] != VEDIO_FRAMERATES_120 && profile.framerates_[0] != VEDIO_FRAMERATES_240
+            && profile.framerates_[1] != VEDIO_FRAMERATES_240) {
+            videoOutput = CreateVideoOutput(profile);
+            break;
+        }
+    }
     ASSERT_NE(videoOutput, nullptr);
     EXPECT_TRUE(videoSession->CanAddOutput(videoOutput));
     res = videoSession->AddOutput(videoOutput);
