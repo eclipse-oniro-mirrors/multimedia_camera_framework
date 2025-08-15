@@ -129,6 +129,8 @@ public:
     void SwitchToOffline();
     bool IsHasSwitchToOffline();
     void SetStreamOperator(wptr<HStreamOperator> hStreamOperator);
+    int32_t CreateMediaLibrary(const sptr<CameraPhotoProxy>& photoProxy, std::string& uri, int32_t& cameraShotType,
+        std::string& burstKey, int64_t timestamp) override;
     int32_t CreateMediaLibrary(sptr<CameraServerPhotoProxy>& photoProxy, std::string& uri, int32_t& cameraShotType,
         std::string& burstKey, int64_t timestamp);
     int32_t CreateMediaLibrary(std::shared_ptr<PictureIntf> picture, sptr<CameraServerPhotoProxy> &photoProxy,

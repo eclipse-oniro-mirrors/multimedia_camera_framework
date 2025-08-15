@@ -632,7 +632,7 @@ Camera_ErrorCode Camera_Manager::CreatePhotoOutputUsedInPreconfig(const char* su
         retCode =
             CameraManager::GetInstance()->CreatePhotoOutputWithoutProfile(surfaceProducer, &innerPhotoOutput);
     } else {
-        retCode = CameraManager::GetInstance()->CreatePhotoOutputWithoutProfile(surfaceId, &innerPhotoOutput);
+        retCode = CameraManager::GetInstance()->CreatePhotoOutputWithoutProfile(&innerPhotoOutput);
     }
     CHECK_RETURN_RET_ELOG(retCode != CameraErrorCode::SUCCESS, CAMERA_SERVICE_FATAL_ERROR,
         "Camera_Manager::CreatePhotoOutputUsedInPreconfig create innerPhotoOutput fail!");

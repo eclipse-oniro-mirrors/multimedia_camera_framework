@@ -1516,6 +1516,23 @@ int32_t HStreamCapture::CreateMediaLibrary(sptr<CameraServerPhotoProxy> &cameraP
     }
     return CAMERA_OK;
 }
+
+int32_t HStreamCapture::CreateMediaLibrary(const sptr<CameraPhotoProxy> &photoProxy, std::string &uri,
+    int32_t &cameraShotType, std::string &burstKey, int64_t timestamp)
+{
+    MessageParcel data;
+    photoProxy->WriteToParcel(data);
+    photoProxy->CameraFreeBufferHandle();
+    sptr<CameraServerPhotoProxy> cameraPhotoProxy = new CameraServerPhotoProxy();
+    cameraPhotoProxy->ReadFromParcel(data);
+    auto hStreamOperatorSptr_ = hStreamOperator_.promote();
+    CHECK_RETURN_RET_ELOG(!hStreamOperatorSptr_, CAMERA_UNKNOWN_ERROR, "CreateMediaLibrary with null operator");
+    CHECK_RETURN_RET_ELOG(!cameraPhotoProxy, CAMERA_UNKNOWN_ERROR, "CreateMediaLibrary with null photoProxy");
+    cameraPhotoProxy->SetLatitude(latitude_);
+    cameraPhotoProxy->SetLongitude(longitude_);
+    hStreamOperatorSptr_->CreateMediaLibrary(cameraPhotoProxy, uri, cameraShotType, burstKey, timestamp);
+    return CAMERA_OK;
+}
 // LCOV_EXCL_STOP
 } // namespace CameraStandard
 } // namespace OHOS

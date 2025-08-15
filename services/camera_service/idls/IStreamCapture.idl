@@ -51,4 +51,5 @@ interface IStreamCapture extends IStreamCommon {
   [ipccode 21] void UnSetPhotoAvailableCallback();
   [ipccode 22] void UnSetPhotoAssetAvailableCallback();
   [ipccode 23] void UnSetThumbnailCallback();
+  [ipccode 24] void CreateMediaLibrary([in] sptr<CameraPhotoProxy> photoProxy, [out] String uri, [out] int cameraShotType, [out] String burstKey, [in] long timestamp);
 }

@@ -28,6 +28,8 @@
 #include "metadata_helper.h"
 #include <pixel_map.h>
 #include "hdr_type.h"
+#include "camera_surface_buffer_util.h"
+#include "task_manager.h"
 using namespace std;
 
 namespace OHOS {
@@ -247,6 +249,131 @@ std::unique_ptr<Media::PixelMap> HStreamCaptureThumbnailCallbackImpl::SetPixelMa
     pixelMap->SetImageYUVInfo(yuvDataInfo);
     MEDIA_INFO_LOG("CamThumbnail::SetPixelMapYuvInf end");
     return pixelMap;
+}
+
+PhotoNativeConsumer::PhotoNativeConsumer(wptr<PhotoOutput> photoOutput) : innerPhotoOutput_(photoOutput)
+{
+    MEDIA_INFO_LOG("PhotoNativeConsumer new E");
+}
+
+PhotoNativeConsumer::~PhotoNativeConsumer()
+{
+    MEDIA_INFO_LOG("PhotoNativeConsumer ~ E");
+    ClearTaskManager();
+}
+
+void PhotoNativeConsumer::OnBufferAvailable()
+{
+    MEDIA_INFO_LOG("PhotoNativeConsumer OnBufferAvailable E");
+    auto photoOutput = innerPhotoOutput_.promote();
+    CHECK_RETURN_ELOG(!photoOutput, "OnBufferAvailable photoOutput is null");
+    CHECK_RETURN_ELOG(!photoOutput->photoSurface_, "OnBufferAvailable photoNative surface is null");
+    auto taskManager = GetDefaultTaskManager();
+    CHECK_RETURN_ELOG(!taskManager, "PhotoNativeConsumer OnBufferAvailable task is null");
+    wptr<PhotoNativeConsumer> thisPtr(this);
+    taskManager->SubmitTask([thisPtr]() {
+        auto listener = thisPtr.promote();
+        CHECK_EXECUTE(listener, listener->ExecuteOnBufferAvailable());
+    });
+    MEDIA_INFO_LOG("PhotoNativeConsumer OnBufferAvailable X");
+}
+
+void PhotoNativeConsumer::ExecuteOnBufferAvailable()
+{
+    MEDIA_INFO_LOG("PN_ExecuteOnBufferAvailable E");
+    CAMERA_SYNC_TRACE;
+    auto photoOutput = innerPhotoOutput_.promote();
+    CHECK_RETURN_ELOG(!photoOutput, "ExecuteOnBufferAvailable photoOutput is null");
+    CHECK_RETURN_ELOG(!photoOutput->photoSurface_, "ExecuteOnBufferAvailable photoNative surface is null");
+    sptr<SurfaceBuffer> surfaceBuffer = nullptr;
+    int32_t fence = -1;
+    int64_t timestamp;
+    OHOS::Rect damage;
+    SurfaceError surfaceRet = photoOutput->photoSurface_->AcquireBuffer(surfaceBuffer, fence, timestamp, damage);
+    CHECK_RETURN_ELOG(surfaceRet != SURFACE_ERROR_OK, "PhotoNativeConsumer Failed to acquire surface buffer");
+    int32_t isDegradedImage = CameraSurfaceBufferUtil::GetIsDegradedImage(surfaceBuffer);
+    MEDIA_INFO_LOG("PhotoNativeConsumer ts isDegradedImage:%{public}d", isDegradedImage);
+    MEDIA_INFO_LOG("PhotoNativeConsumer ts is:%{public}" PRId64, timestamp);
+    // deep copy surfaceBuffer
+    sptr<SurfaceBuffer> newSurfaceBuffer = CameraSurfaceBufferUtil::DeepCopyBuffer(surfaceBuffer);
+    // release surfaceBuffer to bufferQueue
+    photoOutput->photoSurface_->ReleaseBuffer(surfaceBuffer, -1);
+    CHECK_RETURN_ELOG(newSurfaceBuffer == nullptr, "newSurfaceBuffer is null");
+    if ((photoOutput->callbackFlag_ & CAPTURE_PHOTO_ASSET) != 0) {
+        ExecutePhotoAssetAvailable(newSurfaceBuffer, timestamp);
+    } else if (isDegradedImage == 0 && (photoOutput->callbackFlag_ & CAPTURE_PHOTO) != 0) {
+        ExecutePhotoAvailable(newSurfaceBuffer, timestamp);
+    } else if (isDegradedImage != 0 && (photoOutput->callbackFlag_ & CAPTURE_DEFERRED_PHOTO) != 0) {
+        MEDIA_INFO_LOG("PN_ExecuteOnBufferAvailable on abandon callback");
+    } else {
+        MEDIA_INFO_LOG("PN_ExecuteOnBufferAvailable on error callback");
+    }
+    MEDIA_INFO_LOG("PN_ExecuteOnBufferAvailable X");
+}
+
+void PhotoNativeConsumer::ExecutePhotoAvailable(sptr<SurfaceBuffer> surfaceBuffer, int64_t timestamp)
+{
+    MEDIA_INFO_LOG("PN_ExecutePhotoAvailable E");
+    CAMERA_SYNC_TRACE;
+    CHECK_RETURN_ELOG(surfaceBuffer == nullptr, "ExecutePhotoAvailable surfaceBuffer is null");
+    auto photoOutput = innerPhotoOutput_.promote();
+    CHECK_RETURN_ELOG(!photoOutput, "ExecutePhotoAvailable photoOutput is null");
+    auto callback = photoOutput->GetAppPhotoCallback();
+    CHECK_RETURN_ELOG(callback == nullptr, "ExecutePhotoAvailable callback is nullptr");
+    std::shared_ptr<CameraBufferProcessor> bufferProcessor;
+    std::shared_ptr<Media::NativeImage> image =
+        std::make_shared<Media::NativeImage>(surfaceBuffer, bufferProcessor, timestamp);
+    callback->OnPhotoAvailable(image, false);
+    MEDIA_INFO_LOG("PN_ExecutePhotoAvailable X");
+}
+
+void PhotoNativeConsumer::ExecutePhotoAssetAvailable(sptr<SurfaceBuffer> newSurfaceBuffer, int64_t timestamp)
+{
+    MEDIA_INFO_LOG("PN_ExecutePhotoAssetAvailable E");
+    CAMERA_SYNC_TRACE;
+    CHECK_RETURN_ELOG(newSurfaceBuffer == nullptr, "ExecutePhotoAssetAvailable surfaceBuffer is null");
+    auto photoOutput = innerPhotoOutput_.promote();
+    CHECK_RETURN_ELOG(!photoOutput, "ExecutePhotoAssetAvailable photoOutput is null");
+    auto callback = photoOutput->GetAppPhotoAssetCallback();
+    CHECK_RETURN_ELOG(callback == nullptr, "ExecutePhotoAssetAvailable callback is nullptr");
+    // prepare CameraPhotoProxy
+    BufferHandle* bufferHandle = newSurfaceBuffer->GetBufferHandle();
+    newSurfaceBuffer->Map();
+    int32_t format = bufferHandle->format;
+    int32_t photoWidth = CameraSurfaceBufferUtil::GetDataWidth(newSurfaceBuffer);
+    int32_t photoHeight = CameraSurfaceBufferUtil::GetDataWidth(newSurfaceBuffer);
+    bool isHighQuality = (CameraSurfaceBufferUtil::GetIsDegradedImage(newSurfaceBuffer) == 0);
+    int32_t captureId = CameraSurfaceBufferUtil::GetCaptureId(newSurfaceBuffer);
+    int32_t burstSeqId = -1;
+    sptr<CameraPhotoProxy> photoProxy = new (std::nothrow)
+        CameraPhotoProxy(bufferHandle, format, photoWidth, photoHeight, isHighQuality, captureId, burstSeqId);
+    // ipc CreateMediaLibrary
+    string uri = "";
+    int32_t cameraShotType = 0;
+    std::string burstKey = "";
+    photoOutput->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
+    MEDIA_INFO_LOG("PN_ExecutePhotoAssetAvailable CreateMediaLibrary get uri:%{public}s", uri.c_str());
+    callback->OnPhotoAssetAvailable(captureId, uri, cameraShotType, burstKey);
+    MEDIA_INFO_LOG("PN_ExecutePhotoAssetAvailable X");
+}
+
+void PhotoNativeConsumer::ClearTaskManager()
+{
+    std::lock_guard<std::mutex> lock(taskManagerMutex_);
+    if (taskManager_ != nullptr) {
+        taskManager_->CancelAllTasks();
+        taskManager_ = nullptr;
+    }
+}
+ 
+std::shared_ptr<DeferredProcessing::TaskManager> PhotoNativeConsumer::GetDefaultTaskManager()
+{
+    constexpr int32_t numThreads = 1;
+    std::lock_guard<std::mutex> lock(taskManagerMutex_);
+    if (taskManager_ == nullptr) {
+        taskManager_ = std::make_shared<DeferredProcessing::TaskManager>("PhotoListener", numThreads, false);
+    }
+    return taskManager_;
 }
 } // namespace CameraStandard
 } // namespace OHOS

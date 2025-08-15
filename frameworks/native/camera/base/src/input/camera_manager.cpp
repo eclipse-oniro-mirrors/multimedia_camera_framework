@@ -505,24 +505,25 @@ sptr<PhotoOutput> CameraManager::CreatePhotoOutput(sptr<IBufferProducer> &surfac
     return result;
 }
 
-sptr<PhotoOutput> CameraManager::CreatePhotoOutput(Profile &profile, sptr<IBufferProducer> &surface)
+sptr<PhotoOutput> CameraManager::CreatePhotoOutput(Profile &profile, sptr<IBufferProducer> &surfaceProducer)
 {
     CAMERA_SYNC_TRACE;
     sptr<PhotoOutput> photoOutput = nullptr;
-    int32_t retCode = CreatePhotoOutput(profile, surface, &photoOutput);
+    int32_t retCode = CreatePhotoOutput(profile, surfaceProducer, &photoOutput);
     CHECK_RETURN_RET_ELOG(retCode != CameraErrorCode::SUCCESS, nullptr,
         "Failed to CreatePhotoOutput with error code:%{public}d", retCode);
     return photoOutput;
 }
 
-int CameraManager::CreatePhotoOutputWithoutProfile(sptr<IBufferProducer> surface, sptr<PhotoOutput>* pPhotoOutput)
+int CameraManager::CreatePhotoOutputWithoutProfile(sptr<IBufferProducer> surfaceProducer,
+                                                   sptr<PhotoOutput>* pPhotoOutput)
 {
     CAMERA_SYNC_TRACE;
     auto serviceProxy = GetServiceProxy();
     // LCOV_EXCL_START
-    CHECK_RETURN_RET_ELOG((serviceProxy == nullptr) || (surface == nullptr), CameraErrorCode::INVALID_ARGUMENT,
+    CHECK_RETURN_RET_ELOG((serviceProxy == nullptr) || (surfaceProducer == nullptr), CameraErrorCode::INVALID_ARGUMENT,
         "CreatePhotoOutputWithoutProfile serviceProxy is null or PhotoOutputSurface is null");
-    sptr<PhotoOutput> photoOutput = new (std::nothrow) PhotoOutput(surface);
+    sptr<PhotoOutput> photoOutput = new (std::nothrow) PhotoOutput(surfaceProducer);
     CHECK_RETURN_RET(photoOutput == nullptr, CameraErrorCode::SERVICE_FATL_ERROR);
     photoOutput->AddTag(CaptureOutput::DYNAMIC_PROFILE);
     *pPhotoOutput = photoOutput;
@@ -530,15 +531,15 @@ int CameraManager::CreatePhotoOutputWithoutProfile(sptr<IBufferProducer> surface
     // LCOV_EXCL_STOP
 }
 
-int CameraManager::CreatePhotoOutputWithoutProfile(sptr<IBufferProducer> surface,
-    sptr<PhotoOutput>* pPhotoOutput, sptr<Surface> photoSurface)
+int CameraManager::CreatePhotoOutputWithoutProfile(sptr<IBufferProducer> surfaceProducer,
+                                                   sptr<PhotoOutput>* pPhotoOutput, sptr<Surface> photoSurface)
 {
     // LCOV_EXCL_START
     CAMERA_SYNC_TRACE;
     auto serviceProxy = GetServiceProxy();
-    CHECK_RETURN_RET_ELOG((serviceProxy == nullptr) || (surface == nullptr), CameraErrorCode::INVALID_ARGUMENT,
+    CHECK_RETURN_RET_ELOG((serviceProxy == nullptr) || (surfaceProducer == nullptr), CameraErrorCode::INVALID_ARGUMENT,
         "CreatePhotoOutputWithoutProfile serviceProxy is null or PhotoOutputSurface is null");
-    sptr<PhotoOutput> photoOutput = new (std::nothrow) PhotoOutput(surface, photoSurface);
+    sptr<PhotoOutput> photoOutput = new (std::nothrow) PhotoOutput(surfaceProducer, photoSurface);
     CHECK_RETURN_RET(photoOutput == nullptr, CameraErrorCode::SERVICE_FATL_ERROR);
     photoOutput->AddTag(CaptureOutput::DYNAMIC_PROFILE);
     *pPhotoOutput = photoOutput;
@@ -546,7 +547,7 @@ int CameraManager::CreatePhotoOutputWithoutProfile(sptr<IBufferProducer> surface
     // LCOV_EXCL_STOP
 }
 
-int CameraManager::CreatePhotoOutputWithoutProfile(std::string surfaceId, sptr<PhotoOutput>* pPhotoOutput)
+int CameraManager::CreatePhotoOutputWithoutProfile(sptr<PhotoOutput>* pPhotoOutput)
 {
     // LCOV_EXCL_START
     CAMERA_SYNC_TRACE;
@@ -561,12 +562,12 @@ int CameraManager::CreatePhotoOutputWithoutProfile(std::string surfaceId, sptr<P
     // LCOV_EXCL_STOP
 }
 
-int CameraManager::CreatePhotoOutput(Profile &profile, sptr<IBufferProducer> &surface, sptr<PhotoOutput> *pPhotoOutput)
-    __attribute__((no_sanitize("cfi")))
+int CameraManager::CreatePhotoOutput(Profile &profile, sptr<IBufferProducer> &surfaceProducer,
+                                     sptr<PhotoOutput> *pPhotoOutput) __attribute__((no_sanitize("cfi")))
 {
     CAMERA_SYNC_TRACE;
     auto serviceProxy = GetServiceProxy();
-    CHECK_RETURN_RET_ELOG((serviceProxy == nullptr) || (surface == nullptr), CameraErrorCode::INVALID_ARGUMENT,
+    CHECK_RETURN_RET_ELOG((serviceProxy == nullptr) || (surfaceProducer == nullptr), CameraErrorCode::INVALID_ARGUMENT,
         "CreatePhotoOutput serviceProxy is null or PhotoOutputSurface/profile is null");
     CHECK_RETURN_RET_ELOG((profile.GetCameraFormat() == CAMERA_FORMAT_INVALID) || (profile.GetSize().width == 0)
         || (profile.GetSize().height == 0), CameraErrorCode::INVALID_ARGUMENT,
@@ -576,10 +577,10 @@ int CameraManager::CreatePhotoOutput(Profile &profile, sptr<IBufferProducer> &su
     camera_format_t metaFormat = GetCameraMetadataFormat(yuvFormat);
     sptr<IStreamCapture> streamCapture = nullptr;
     int32_t retCode = serviceProxy->CreatePhotoOutput(
-        surface, metaFormat, profile.GetSize().width, profile.GetSize().height, streamCapture);
+        surfaceProducer, metaFormat, profile.GetSize().width, profile.GetSize().height, streamCapture);
     CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, ServiceToCameraError(retCode),
         "Failed to get stream capture object from hcamera service!, %{public}d", retCode);
-    sptr<PhotoOutput> photoOutput = new(std::nothrow) PhotoOutput(surface);
+    sptr<PhotoOutput> photoOutput = new(std::nothrow) PhotoOutput(surfaceProducer);
     CHECK_RETURN_RET(photoOutput == nullptr, CameraErrorCode::SERVICE_FATL_ERROR);
     photoOutput->SetStream(streamCapture);
     photoOutput->SetPhotoProfile(profile);
@@ -588,7 +589,7 @@ int CameraManager::CreatePhotoOutput(Profile &profile, sptr<IBufferProducer> &su
 }
 
 int CameraManager::CreatePhotoOutput(Profile &profile, sptr<IBufferProducer> &surfaceProducer,
-    sptr<PhotoOutput> *pPhotoOutput, sptr<Surface> photoSurface)
+                                     sptr<PhotoOutput> *pPhotoOutput, sptr<Surface> photoSurface)
 {
     // LCOV_EXCL_START
     CAMERA_SYNC_TRACE;
@@ -742,7 +743,7 @@ int32_t CameraManager::CreatePhotoOutputStream(
 }
 
 int32_t CameraManager::CreatePhotoOutputStream(
-    sptr<IStreamCapture>& streamPtr, Profile& profile, std::string surfaceId)
+    sptr<IStreamCapture>& streamPtr, Profile& profile)
 {
     // LCOV_EXCL_START
     auto serviceProxy = GetServiceProxy();

@@ -36,6 +36,7 @@ class PictureIntf;
 class PhotoAvailableCallback;
 class PhotoAssetAvailableCallback;
 class ThumbnailCallback;
+class PhotoNativeConsumer;
 class PhotoStateCallback {
 public:
     PhotoStateCallback() = default;
@@ -555,11 +556,12 @@ public:
     std::atomic<bool> isRawImageDelivery_ = false;
     std::map<int32_t, captureMonitorInfo> captureIdToCaptureInfoMap_;
 
+    uint8_t callbackFlag_ = CAPTURE_DEFERRED_PHOTO;
 private:
     std::mutex callbackMutex_;
     std::mutex offlineStatusMutex_;
-    uint8_t callbackFlag_ = CAPTURE_DEFERRED_PHOTO;
     bool isNativeSurface_ = false;
+    bool isSurfaceOnService_ = false;
     DeferredDeliveryImageType deferredType_ = DeferredDeliveryImageType::DELIVERY_NONE;
     std::shared_ptr<PhotoStateCallback> appCallback_;
     std::shared_ptr<PhotoAvailableCallback> appPhotoCallback_;
@@ -570,10 +572,17 @@ private:
     sptr<IStreamCapturePhotoAssetCallback> svcPhotoAssetCallback_;
     sptr<IStreamCaptureThumbnailCallback> svcThumbnailCallback_;
     std::shared_ptr<PhotoCaptureSetting> defaultCaptureSetting_;
+    sptr<PhotoNativeConsumer> photoNativeConsumer_;
     void CameraServerDied(pid_t pid) override;
     bool mIsHasEnableOfflinePhoto_ = false;
     bool isHasSwitched_ = false;
     bool isDepthBufferSupported_ = false;
+    enum ReSetFlag { NO_NEED_RESET = 0, RESET_PHOTO, RESET_PHOTO_ASSET };
+    ReSetFlag reSetFlag_ = NO_NEED_RESET;
+    void ReSetSavedCallback();
+    void SetPhotoNativeConsumer();
+    void SetPhotoAvailableInSvc();
+    void SetPhotoAssetAvailableInSvc();
 };
 
 class HStreamCaptureCallbackImpl : public StreamCaptureCallbackStub {
