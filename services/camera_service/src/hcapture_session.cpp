@@ -1143,11 +1143,11 @@ int32_t HCaptureSession::SetColorSpace(int32_t curColorSpace, bool isNeedUpdate)
                 return;
             }
 
+            int32_t tempColorSpace = 0;
+            GetActiveColorSpace(tempColorSpace);
             auto hStreamOperatorSptr = GetStreamOperator();
             CHECK_RETURN_ELOG(hStreamOperatorSptr == nullptr, "hStreamOperator is nullptr");
             result = hStreamOperatorSptr->SetColorSpace(colorSpace, isNeedUpdate);
-            int32_t tempColorSpace;
-            GetActiveColorSpace(tempColorSpace);
             if (result == CAMERA_OK && static_cast<ColorSpace>(tempColorSpace) != colorSpace && isNeedUpdate) {
                 auto device = GetCameraDevice();
                 CHECK_RETURN_ELOG(device == nullptr, "HCaptureSession::SetColorSpace device is null");
