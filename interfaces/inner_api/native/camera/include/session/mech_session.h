@@ -31,7 +31,9 @@ public:
     MechSessionCallback() = default;
     virtual ~MechSessionCallback() = default;
     virtual void OnFocusTrackingInfo(FocusTrackingMetaInfo info) = 0;
-    virtual void OnCameraAppInfo(const std::vector<CameraAppInfo>& cameraAppInfos) = 0;
+    virtual void OnCaptureSessionConfiged(CaptureSessionInfo captureSessionInfo);
+    virtual void OnZoomInfoChange(int sessionid, ZoomInfo zoomInfo);
+    virtual void OnSessionStatusChange(int sessionid, bool status);
 };
 
 class MechSession : public RefBase {
@@ -91,7 +93,9 @@ public:
 
     ErrCode OnFocusTrackingInfo(int32_t streamId, bool isNeedMirror, bool isNeedFlip,
         const std::shared_ptr<OHOS::Camera::CameraMetadata>& result) override;
-    ErrCode OnCameraAppInfo(const std::vector<CameraAppInfo>& cameraAppInfos) override;
+    ErrCode OnCaptureSessionConfiged(const CaptureSessionInfo& captureSessionInfo) override;
+    ErrCode OnZoomInfoChange(int32_t sessionid, const ZoomInfo& zoomInfo) override;
+    ErrCode OnSessionStatusChange(int32_t sessionid, bool status) override;
 
 private:
     bool ProcessRectInfo(const std::shared_ptr<OHOS::Camera::CameraMetadata>& metadata,

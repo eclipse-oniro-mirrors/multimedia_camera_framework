@@ -57,7 +57,7 @@ int32_t MechSessionCallbackImpl::OnFocusTrackingInfo(int32_t streamId, bool isNe
     return ret;
 }
 
-int32_t MechSessionCallbackImpl::OnCameraAppInfo(const std::vector<CameraAppInfo>& cameraAppInfos)
+int32_t MechSessionCallbackImpl::OnCaptureSessionConfiged(const CaptureSessionInfo& captureSessionInfo)
 {
     MEDIA_DEBUG_LOG("%{public}s is called!", __FUNCTION__);
     int32_t ret = CAMERA_OK;
@@ -65,8 +65,31 @@ int32_t MechSessionCallbackImpl::OnCameraAppInfo(const std::vector<CameraAppInfo
     CHECK_RETURN_RET(!mechSession, ret);
     auto appCallback = mechSession->GetCallback();
     CHECK_RETURN_RET(!appCallback, ret);
+    appCallback->OnCaptureSessionConfiged(captureSessionInfo);
+    return CAMERA_OK;
+}
 
-    appCallback->OnCameraAppInfo(cameraAppInfos);
+int32_t MechSessionCallbackImpl::OnZoomInfoChange(int32_t sessionid, const ZoomInfo& zoomInfo)
+{
+    MEDIA_DEBUG_LOG("%{public}s is called!", __FUNCTION__);
+    int32_t ret = CAMERA_OK;
+    auto mechSession = mechSession_.promote();
+    CHECK_RETURN_RET(!mechSession, ret);
+    auto appCallback = mechSession->GetCallback();
+    CHECK_RETURN_RET(!appCallback, ret);
+    appCallback->OnZoomInfoChange(sessionid, zoomInfo);
+    return CAMERA_OK;
+}
+
+int32_t MechSessionCallbackImpl::OnSessionStatusChange(int32_t sessionid, bool status)
+{
+    MEDIA_DEBUG_LOG("%{public}s is called!", __FUNCTION__);
+    int32_t ret = CAMERA_OK;
+    auto mechSession = mechSession_.promote();
+    CHECK_RETURN_RET(!mechSession, ret);
+    auto appCallback = mechSession->GetCallback();
+    CHECK_RETURN_RET(!appCallback, ret);
+    appCallback->OnSessionStatusChange(sessionid, status);
     return CAMERA_OK;
 }
 

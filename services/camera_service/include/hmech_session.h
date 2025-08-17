@@ -16,8 +16,8 @@
 #ifndef OHOS_CAMERA_H_MECH_SESSION_H
 #define OHOS_CAMERA_H_MECH_SESSION_H
 
-#include <mutex>
 #include <refbase.h>
+#include <shared_mutex>
 
 #include "mech_session_callback_stub.h"
 #include "mech_session_stub.h"
@@ -36,17 +36,19 @@ public:
     int32_t CallbackExit([[maybe_unused]] uint32_t code, [[maybe_unused]] int32_t result) override;
     int32_t OnFocusTrackingInfo(int32_t streamId, bool isNeedMirror, bool isNeedFlip,
         const std::shared_ptr<OHOS::Camera::CameraMetadata> &result);
-    int32_t OnCameraAppInfo(const std::vector<CameraAppInfo>& cameraAppInfos);
+    int32_t OnCaptureSessionConfiged(const CaptureSessionInfo& captureSessionInfo);
+    int32_t OnZoomInfoChange(int32_t sessionid, const ZoomInfo& zoomInfo);
+    int32_t OnSessionStatusChange(int32_t sessionid, bool status);
     sptr<IMechSessionCallback> GetCallback();
     bool IsEnableMech();
 
 private:
-    void HandleCameraAppInfo(const sptr<IMechSessionCallback>& callback);
+    void HanldeOnCaptureSessionConfiged(const sptr<IMechSessionCallback>& callback);
     int32_t userId_;
     bool isEnableMech_ = false;
     sptr<IMechSessionCallback> callback_;
     std::mutex enableLock_;
-    std::mutex callbackLock_;
+    std::shared_mutex callbackLock_;
 };
 } // namespace CameraStandard
 } // namespace OHOS
