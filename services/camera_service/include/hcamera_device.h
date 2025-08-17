@@ -105,6 +105,7 @@ public:
     uint8_t GetUsedAsPosition();
     bool GetDeviceMuteMode();
     float GetZoomRatio();
+    int32_t GetFocusMode();
     void EnableMovingPhoto(bool isMovingPhotoEnabled);
     static void DeviceEjectCallBack();
     static void DeviceFaultCallBack();
@@ -153,7 +154,7 @@ public:
 
     void SetMovingPhotoEndTimeCallback(std::function<void(int64_t, int64_t)> callback);
 
-    void SetMechCallback(std::function<void(float, bool)> callback);
+    void SetZoomInfoCallback(std::function<void(float, bool, int32_t)> callback);
 
     inline void SetCameraConcurrentType(int32_t cameraConcurrentTypenum)
     {
@@ -296,8 +297,11 @@ private:
     std::vector<CameraRotateStrategyInfo> cameraRotateStrategyInfos_;
     std::string bundleName_ = "";
     std::shared_mutex mechCallbackLock_;
-    std::function<void(float, bool)> mechCallback_;
+    std::shared_mutex zoomInfoCallbackLock_;
+    std::function<void(float, bool, int32_t)> zoomInfoCallback_;
     float zoomRatio_ = 1.0f;
+    int32_t focusMode_ = -1;
+    bool focusStatus_ = false;
 };
 } // namespace CameraStandard
 } // namespace OHOS
