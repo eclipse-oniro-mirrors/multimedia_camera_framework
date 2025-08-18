@@ -165,11 +165,6 @@ const std::unordered_map<OHOS::CameraStandard::CameraFormat, CameraFormat> g_nat
     {OHOS::CameraStandard::CameraFormat::CAMERA_FORMAT_DEPTH_32, CameraFormat::key_t::CAMERA_FORMAT_DEPTH_32},
 };
 
-const std::unordered_map<bool, ::ohos::multimedia::camera::CameraConcurrentType> g_nativeToAniCameraConcurrentType = {
-    {false, ::ohos::multimedia::camera::CameraConcurrentType::key_t::CAMERA_LIMITED_CAPABILITY},
-    {true, ::ohos::multimedia::camera::CameraConcurrentType::key_t::CAMERA_FULL_CAPABILITY},
-};
-
 const std::unordered_map<OHOS::CameraStandard::FocusCallback::FocusState, FocusState> g_nativeToAniFocusState = {
     {OHOS::CameraStandard::FocusCallback::FocusState::SCAN, FocusState::key_t::FOCUS_STATE_SCAN},
     {OHOS::CameraStandard::FocusCallback::FOCUSED, FocusState::key_t::FOCUS_STATE_FOCUSED},

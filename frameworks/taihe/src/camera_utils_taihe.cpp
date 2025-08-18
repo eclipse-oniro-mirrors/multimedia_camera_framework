@@ -252,13 +252,19 @@ array<SceneMode> CameraUtilsTaihe::ToTaiheArraySceneMode(const std::vector<OHOS:
 }
 
 array<CameraConcurrentInfo> CameraUtilsTaihe::ToTaiheCameraConcurrentInfoArray(
-    std::vector<sptr<OHOS::CameraStandard::CameraDevice>> cameraDeviceArrray,
-    std::vector<bool> cameraConcurrentType, std::vector<std::vector<OHOS::CameraStandard::SceneMode>> modes,
-    std::vector<std::vector<sptr<OHOS::CameraStandard::CameraOutputCapability>>> outputCapabilities)
+    std::vector<sptr<OHOS::CameraStandard::CameraDevice>>& cameraDeviceArray,
+    std::vector<bool>& cameraConcurrentType, std::vector<std::vector<OHOS::CameraStandard::SceneMode>>& modes,
+    std::vector<std::vector<sptr<OHOS::CameraStandard::CameraOutputCapability>>>& outputCapabilities)
 {
     std::vector<CameraConcurrentInfo> aniCameraConcurrentInfoArray = {};
     std::vector<CameraOutputCapability> vec;
-    for (size_t i = 0; i < cameraDeviceArrray.size(); ++i) {
+    size_t cameraDeviceArraySize = cameraDeviceArray.size();
+    CHECK_ERROR_RETURN_RET_LOG(outputCapabilities.size() < cameraDeviceArraySize ||
+                               cameraConcurrentType.size() < cameraDeviceArraySize ||
+                               modes.size() < cameraDeviceArraySize,
+                               array<CameraConcurrentInfo>(aniCameraConcurrentInfoArray),
+                               "ToTaiheCameraConcurrentInfoArray failed, out of range");
+    for (size_t i = 0; i < cameraDeviceArraySize; ++i) {
         for (size_t j = 0; j < outputCapabilities[i].size(); j++) {
             if (outputCapabilities[i][j] == nullptr) {
                 continue;
@@ -266,8 +272,8 @@ array<CameraConcurrentInfo> CameraUtilsTaihe::ToTaiheCameraConcurrentInfoArray(
             vec.push_back(CameraUtilsTaihe::ToTaiheCameraOutputCapability(outputCapabilities[i][j]));
         }
         CameraConcurrentInfo aniCameraConcurrentInfo = {
-            .device = ToTaiheCameraDevice(cameraDeviceArrray[i]),
-            .type = ToTaiheCameraConcurrentType(cameraConcurrentType[i]),
+            .device = ToTaiheCameraDevice(cameraDeviceArray[i]),
+            .type = ToTaiheCameraConcurrentTypeFromBool(cameraConcurrentType[i]),
             .modes = ToTaiheArraySceneMode(modes[i]),
             .outputCapabilities = array<CameraOutputCapability>(vec),
         };
@@ -277,14 +283,11 @@ array<CameraConcurrentInfo> CameraUtilsTaihe::ToTaiheCameraConcurrentInfoArray(
     return array<CameraConcurrentInfo>(aniCameraConcurrentInfoArray);
 }
 
-::ohos::multimedia::camera::CameraConcurrentType CameraUtilsTaihe::ToTaiheCameraConcurrentType(bool format)
+ohos::multimedia::camera::CameraConcurrentType CameraUtilsTaihe::ToTaiheCameraConcurrentTypeFromBool(
+    bool isFullCapability)
 {
-    auto itr = g_nativeToAniCameraConcurrentType.find(format);
-    if (itr != g_nativeToAniCameraConcurrentType.end()) {
-        return ::ohos::multimedia::camera::CameraConcurrentType(itr->second);
-    }
-    CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT, "ToTaiheCameraConcurrentType fail");
-    return ::ohos::multimedia::camera::CameraConcurrentType::key_t::CAMERA_LIMITED_CAPABILITY;
+    return isFullCapability ? ohos::multimedia::camera::CameraConcurrentType::key_t::CAMERA_FULL_CAPABILITY :
+        ohos::multimedia::camera::CameraConcurrentType::key_t::CAMERA_LIMITED_CAPABILITY;
 }
 
 CameraFormat CameraUtilsTaihe::ToTaiheCameraFormat(OHOS::CameraStandard::CameraFormat format)
