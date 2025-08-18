@@ -32,9 +32,10 @@ PhotoCameraState::PhotoCameraState(SchedulerType type, int32_t stateValue)
 SchedulerInfo PhotoCameraState::ReevaluateSchedulerInfo()
 {
     DP_DEBUG_LOG("PhotoCameraState: %{public}d", stateValue_);
-    bool isNeedStop = stateValue_ == CameraSessionStatus::SYSTEM_CAMERA_OPEN;
+    bool isNeedStop = stateValue_ == CameraSessionStatus::SYSTEM_CAMERA_OPEN ||
+        stateValue_ == CameraSessionStatus::NORMAL_CAMERA_OPEN;
     bool isNeedInterrupt = stateValue_ == CameraSessionStatus::SYSTEM_CAMERA_OPEN ||
-        stateValue_ == CameraSessionStatus::NORMAL_CAMERA_CLOSED;
+        stateValue_ == CameraSessionStatus::NORMAL_CAMERA_OPEN;
     return {isNeedStop, isNeedInterrupt};
 }
 } // namespace DeferredProcessing
