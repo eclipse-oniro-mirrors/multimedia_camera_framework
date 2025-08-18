@@ -44,11 +44,11 @@ void StreamRepeatProxyFuzz::StreamRepeatProxyFuzzTest(FuzzedDataProvider &fdp)
     fuzz_->EnableSecure(isEnable);
     fuzz_->SetMirror(isEnable);
     sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
-    CHECK_RETURN_ELOG(photoSurface, "PhotoOutputFuzzer: create photoSurface Error");
-    sptr<IBufferProducer> bufferProducer = photoSurface->GetProducer();
-    CHECK_RETURN_ELOG(bufferProducer, "GetProducer Error");
+    CHECK_RETURN_ELOG(!photoSurface, "photoSurface is nullptr");
+    sptr<IBufferProducer> producer = photoSurface->GetProducer();
+    CHECK_RETURN_ELOG(!producer, "producer is nullptr");
     int32_t videoMetaType = fdp.ConsumeIntegral<int32_t>();
-    fuzz_->AttachMetaSurface(bufferProducer, videoMetaType);
+    fuzz_->AttachMetaSurface(producer, videoMetaType);
     int32_t rotation = fdp.ConsumeIntegral<int32_t>();
     fuzz_->SetCameraRotation(isEnable, rotation);
     fuzz_->GetMirror(isEnable);

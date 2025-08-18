@@ -349,6 +349,29 @@ void StreamCaptureProxyFuzzer::StreamCaptureProxyFuzzTest20()
     fuzz_->UnSetThumbnailCallback();
 }
 
+void StreamCaptureProxyFuzzer::StreamCaptureProxyFuzzTest21(FuzzedDataProvider& fdp)
+{
+    sptr<IRemoteObject> remote = nullptr;
+    fuzz_ = std::make_shared<StreamCaptureProxy>(remote);
+    sptr<CameraPhotoProxy> photoProxy = new(std::nothrow) CameraPhotoProxy();
+    std::vector<std::string> bufferNames1 = {"uri1", "uri2", "uri3", "uri4", "uri5"};
+    size_t ind = fdp.ConsumeIntegral<size_t>() % bufferNames1.size();
+    std::string uri = bufferNames1[ind];
+    int32_t cameraShotType = fdp.ConsumeIntegral<int32_t>();
+    std::vector<std::string> bufferNames2 = {"key1", "key2", "key3", "key4", "key5"};
+    ind = fdp.ConsumeIntegral<size_t>() % bufferNames2.size();
+    std::string burstKey = bufferNames2[ind];
+    int64_t timestamp = fdp.ConsumeIntegral<int64_t>();
+    fuzz_->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
+
+    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    CHECK_RETURN_ELOG(!samgr, "samgr nullptr");
+    remote = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
+    fuzz_ = std::make_shared<StreamCaptureProxy>(remote);
+    CHECK_RETURN_ELOG(!fuzz_, "fuzz_ nullptr");
+    fuzz_->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
+}
+
 void Test(uint8_t* data, size_t size)
 {
     FuzzedDataProvider fdp(data, size);
@@ -380,6 +403,7 @@ void Test(uint8_t* data, size_t size)
     streamCaptureProxy->StreamCaptureProxyFuzzTest18(fdp);
     streamCaptureProxy->StreamCaptureProxyFuzzTest19(fdp);
     streamCaptureProxy->StreamCaptureProxyFuzzTest20();
+    streamCaptureProxy->StreamCaptureProxyFuzzTest21(fdp);
 }
 } // namespace CameraStandard
 } // namespace OHOS

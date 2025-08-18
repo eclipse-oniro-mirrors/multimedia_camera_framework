@@ -1131,7 +1131,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_015, TestSize.L
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     ASSERT_NE(samgr, nullptr);
     object = samgr->GetSystemAbility(AUDIO_POLICY_SERVICE_ID);
-    CameraServiceProxy *hCameraServiceProxy = new (std::nothrow) CameraServiceProxy(object);
+    sptr<CameraServiceProxy> hCameraServiceProxy = new (std::nothrow) CameraServiceProxy(object);
     ASSERT_NE(hCameraServiceProxy, nullptr);
     EffectParam effectParam = {0, 0, 0};
 
@@ -1171,11 +1171,13 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_016, TestSize.L
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     ASSERT_NE(samgr, nullptr);
     object = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
-    CameraServiceCallbackProxy *hCameraServiceCallbackProxy = new (std::nothrow) CameraServiceCallbackProxy(object);
+    sptr<CameraServiceCallbackProxy> hCameraServiceCallbackProxy =
+        new (std::nothrow) CameraServiceCallbackProxy(object);
     ASSERT_NE(hCameraServiceCallbackProxy, nullptr);
-    auto hCameraMuteServiceCallbackProxy = new (std::nothrow) CameraMuteServiceCallbackProxy(object);
+    sptr<CameraMuteServiceCallbackProxy> hCameraMuteServiceCallbackProxy =
+        new (std::nothrow) CameraMuteServiceCallbackProxy(object);
     ASSERT_NE(hCameraMuteServiceCallbackProxy, nullptr);
-    TorchServiceCallbackProxy *hTorchServiceCallbackProxy = new (std::nothrow) TorchServiceCallbackProxy(object);
+    sptr<TorchServiceCallbackProxy> hTorchServiceCallbackProxy = new (std::nothrow) TorchServiceCallbackProxy(object);
     ASSERT_NE(hTorchServiceCallbackProxy, nullptr);
 
     hCameraServiceCallbackProxy->OnFlashlightStatusChanged(cameras_[0]->GetID(),
@@ -1204,7 +1206,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_017, TestSize.L
     object = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
     sptr<IStreamRepeat> repeat = iface_cast<IStreamRepeat>(object);
     ASSERT_NE(repeat, nullptr);
-    StreamRepeatProxy *hStreamRepeatProxy = new (std::nothrow) StreamRepeatProxy(object);
+    sptr<StreamRepeatProxy> hStreamRepeatProxy = new (std::nothrow) StreamRepeatProxy(object);
     ASSERT_NE(hStreamRepeatProxy, nullptr);
 
     hStreamRepeatProxy->ForkSketchStreamRepeat(0, 0, object, 0);
@@ -1235,7 +1237,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_018, TestSize.L
     object = samgr->GetSystemAbility(AUDIO_POLICY_SERVICE_ID);
     sptr<IStreamRepeat> repeat = iface_cast<IStreamRepeat>(object);
     ASSERT_NE(repeat, nullptr);
-    StreamRepeatProxy *hStreamRepeatProxy = new (std::nothrow) StreamRepeatProxy(object);
+    sptr<StreamRepeatProxy> hStreamRepeatProxy = new (std::nothrow) StreamRepeatProxy(object);
     ASSERT_NE(hStreamRepeatProxy, nullptr);
 
     hStreamRepeatProxy->UpdateSketchRatio(0.0f);
@@ -1261,7 +1263,8 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_019, TestSize.L
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     ASSERT_NE(samgr, nullptr);
     object = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
-    StreamCaptureCallbackProxy *hStreamCaptureCallbackProxy = new (std::nothrow) StreamCaptureCallbackProxy(object);
+    sptr<StreamCaptureCallbackProxy> hStreamCaptureCallbackProxy =
+        new (std::nothrow) StreamCaptureCallbackProxy(object);
     ASSERT_NE(hStreamCaptureCallbackProxy, nullptr);
 
     hStreamCaptureCallbackProxy->OnCaptureStarted(0);
@@ -1290,7 +1293,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_020, TestSize.L
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     ASSERT_NE(samgr, nullptr);
     object = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
-    StreamRepeatCallbackProxy *hStreamRepeatCallbackProxy = new (std::nothrow) StreamRepeatCallbackProxy(object);
+    sptr<StreamRepeatCallbackProxy> hStreamRepeatCallbackProxy = new (std::nothrow) StreamRepeatCallbackProxy(object);
     ASSERT_NE(hStreamRepeatCallbackProxy, nullptr);
 
     hStreamRepeatCallbackProxy->OnSketchStatusChanged(SketchStatus::STOPED);
@@ -1316,7 +1319,8 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_021, TestSize.L
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     ASSERT_NE(samgr, nullptr);
     object = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
-    auto hCaptureSessionCallbackProxy = new (std::nothrow) CaptureSessionCallbackProxy(object);
+    sptr<CaptureSessionCallbackProxy> hCaptureSessionCallbackProxy =
+        new (std::nothrow) CaptureSessionCallbackProxy(object);
     ASSERT_NE(hCaptureSessionCallbackProxy, nullptr);
     hCaptureSessionCallbackProxy->OnError(0);
 }
@@ -1338,7 +1342,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_022, TestSize.L
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     ASSERT_NE(samgr, nullptr);
     object = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
-    CameraServiceProxy *hCameraServiceProxy = new (std::nothrow) CameraServiceProxy(object);
+    sptr<CameraServiceProxy> hCameraServiceProxy = new (std::nothrow) CameraServiceProxy(object);
     ASSERT_NE(hCameraServiceProxy, nullptr);
     EffectParam effectParam = {0, 0, 0};
 
@@ -1374,12 +1378,13 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_023, TestSize.L
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     ASSERT_NE(samgr, nullptr);
     object = samgr->GetSystemAbility(AUDIO_POLICY_SERVICE_ID);
-    CameraServiceCallbackProxy *hCameraServiceCallbackProxy = new (std::nothrow) CameraServiceCallbackProxy(object);
+    sptr<CameraServiceCallbackProxy> hCameraServiceCallbackProxy =
+        new (std::nothrow) CameraServiceCallbackProxy(object);
     ASSERT_NE(hCameraServiceCallbackProxy, nullptr);
-    CameraMuteServiceCallbackProxy *hCameraMuteServiceCallbackProxy =
+    sptr<CameraMuteServiceCallbackProxy> hCameraMuteServiceCallbackProxy =
         new (std::nothrow) CameraMuteServiceCallbackProxy(object);
     ASSERT_NE(hCameraMuteServiceCallbackProxy, nullptr);
-    TorchServiceCallbackProxy *hTorchServiceCallbackProxy = new (std::nothrow) TorchServiceCallbackProxy(object);
+    sptr<TorchServiceCallbackProxy> hTorchServiceCallbackProxy = new (std::nothrow) TorchServiceCallbackProxy(object);
     ASSERT_NE(hTorchServiceCallbackProxy, nullptr);
 
     hCameraServiceCallbackProxy->OnFlashlightStatusChanged(cameras_[0]->GetID(),
@@ -1406,7 +1411,8 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_024, TestSize.L
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     ASSERT_NE(samgr, nullptr);
     object = samgr->GetSystemAbility(AUDIO_POLICY_SERVICE_ID);
-    StreamCaptureCallbackProxy *hStreamCaptureCallbackProxy = new (std::nothrow) StreamCaptureCallbackProxy(object);
+    sptr<StreamCaptureCallbackProxy> hStreamCaptureCallbackProxy =
+        new (std::nothrow) StreamCaptureCallbackProxy(object);
     ASSERT_NE(hStreamCaptureCallbackProxy, nullptr);
 
     hStreamCaptureCallbackProxy->OnCaptureStarted(0);
@@ -1435,7 +1441,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_025, TestSize.L
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     ASSERT_NE(samgr, nullptr);
     object = samgr->GetSystemAbility(AUDIO_POLICY_SERVICE_ID);
-    StreamRepeatCallbackProxy *hStreamRepeatCallbackProxy = new (std::nothrow) StreamRepeatCallbackProxy(object);
+    sptr<StreamRepeatCallbackProxy> hStreamRepeatCallbackProxy = new (std::nothrow) StreamRepeatCallbackProxy(object);
     ASSERT_NE(hStreamRepeatCallbackProxy, nullptr);
 
     hStreamRepeatCallbackProxy->OnSketchStatusChanged(SketchStatus::STOPED);
@@ -1461,7 +1467,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_026, TestSize.L
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     ASSERT_NE(samgr, nullptr);
     object = samgr->GetSystemAbility(AUDIO_POLICY_SERVICE_ID);
-    CaptureSessionCallbackProxy *hCaptureSessionCallbackProxy =
+    sptr<CaptureSessionCallbackProxy> hCaptureSessionCallbackProxy =
         new (std::nothrow) CaptureSessionCallbackProxy(object);
     ASSERT_NE(hCaptureSessionCallbackProxy, nullptr);
     hCaptureSessionCallbackProxy->OnError(0);

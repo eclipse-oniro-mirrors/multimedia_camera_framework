@@ -24,27 +24,28 @@ namespace OHOS {
 namespace CameraStandard {
 class StreamCaptureProxyFuzzer {
 public:
-static std::shared_ptr<StreamCaptureProxy> fuzz_;
-static void StreamCaptureProxyFuzzTest1(FuzzedDataProvider& fdp);
-static void StreamCaptureProxyFuzzTest2(FuzzedDataProvider& fdp);
-static void StreamCaptureProxyFuzzTest3(FuzzedDataProvider& fdp);
-static void StreamCaptureProxyFuzzTest4(FuzzedDataProvider& fdp);
-static void StreamCaptureProxyFuzzTest5(FuzzedDataProvider& fdp);
-static void StreamCaptureProxyFuzzTest6(FuzzedDataProvider& fdp);
-static void StreamCaptureProxyFuzzTest7(FuzzedDataProvider& fdp);
-static void StreamCaptureProxyFuzzTest8(FuzzedDataProvider& fdp);
-static void StreamCaptureProxyFuzzTest9(FuzzedDataProvider& fdp);
-static void StreamCaptureProxyFuzzTest10(FuzzedDataProvider& fdp);
-static void StreamCaptureProxyFuzzTest11(FuzzedDataProvider& fdp);
-static void StreamCaptureProxyFuzzTest12(FuzzedDataProvider& fdp);
-static void StreamCaptureProxyFuzzTest13(FuzzedDataProvider& fdp);
-static void StreamCaptureProxyFuzzTest14(FuzzedDataProvider& fdp);
-static void StreamCaptureProxyFuzzTest15(FuzzedDataProvider& fdp);
-static void StreamCaptureProxyFuzzTest16(FuzzedDataProvider& fdp);
-static void StreamCaptureProxyFuzzTest17(FuzzedDataProvider& fdp);
-static void StreamCaptureProxyFuzzTest18(FuzzedDataProvider& fdp);
-static void StreamCaptureProxyFuzzTest19(FuzzedDataProvider& fdp);
-static void StreamCaptureProxyFuzzTest20();
+    static std::shared_ptr<StreamCaptureProxy> fuzz_;
+    static void StreamCaptureProxyFuzzTest1(FuzzedDataProvider& fdp);
+    static void StreamCaptureProxyFuzzTest2(FuzzedDataProvider& fdp);
+    static void StreamCaptureProxyFuzzTest3(FuzzedDataProvider& fdp);
+    static void StreamCaptureProxyFuzzTest4(FuzzedDataProvider& fdp);
+    static void StreamCaptureProxyFuzzTest5(FuzzedDataProvider& fdp);
+    static void StreamCaptureProxyFuzzTest6(FuzzedDataProvider& fdp);
+    static void StreamCaptureProxyFuzzTest7(FuzzedDataProvider& fdp);
+    static void StreamCaptureProxyFuzzTest8(FuzzedDataProvider& fdp);
+    static void StreamCaptureProxyFuzzTest9(FuzzedDataProvider& fdp);
+    static void StreamCaptureProxyFuzzTest10(FuzzedDataProvider& fdp);
+    static void StreamCaptureProxyFuzzTest11(FuzzedDataProvider& fdp);
+    static void StreamCaptureProxyFuzzTest12(FuzzedDataProvider& fdp);
+    static void StreamCaptureProxyFuzzTest13(FuzzedDataProvider& fdp);
+    static void StreamCaptureProxyFuzzTest14(FuzzedDataProvider& fdp);
+    static void StreamCaptureProxyFuzzTest15(FuzzedDataProvider& fdp);
+    static void StreamCaptureProxyFuzzTest16(FuzzedDataProvider& fdp);
+    static void StreamCaptureProxyFuzzTest17(FuzzedDataProvider& fdp);
+    static void StreamCaptureProxyFuzzTest18(FuzzedDataProvider& fdp);
+    static void StreamCaptureProxyFuzzTest19(FuzzedDataProvider& fdp);
+    static void StreamCaptureProxyFuzzTest20();
+    static void StreamCaptureProxyFuzzTest21(FuzzedDataProvider& fdp);
 };
 
 

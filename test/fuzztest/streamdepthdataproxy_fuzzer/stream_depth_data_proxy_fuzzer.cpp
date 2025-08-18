@@ -26,7 +26,7 @@ namespace CameraStandard {
 const size_t THRESHOLD = 10;
 std::shared_ptr<StreamDepthDataProxy> StreamDepthDataProxyFuzz::fuzz_{nullptr};
 
-void StreamDepthDataProxyFuzz::StreamDepthDataProxyTest()
+void StreamDepthDataProxyFuzz::StreamDepthDataProxyTest1()
 {
     auto mgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     CHECK_RETURN_ELOG(!mgr, "samgr nullptr");
@@ -39,6 +39,22 @@ void StreamDepthDataProxyFuzz::StreamDepthDataProxyTest()
     fuzz_->UnSetCallback();
 }
 
+void StreamDepthDataProxyFuzz::StreamDepthDataProxyTest2(FuzzedDataProvider &fdp)
+{
+    auto mgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    CHECK_RETURN_ELOG(!mgr, "samgr nullptr");
+    auto object = mgr->GetSystemAbility(CAMERA_SERVICE_ID);
+    CHECK_RETURN_ELOG(!object, "object nullptr");
+    fuzz_ = std::make_shared<StreamDepthDataProxy>(object);
+    CHECK_RETURN_ELOG(!fuzz_, "fuzz_ nullptr");
+    fuzz_->Start();
+    int32_t dataAccuracy = fdp.ConsumeIntegral<int32_t>();
+    fuzz_->SetDataAccuracy(dataAccuracy);
+    fuzz_->Stop();
+    fuzz_->Release();
+}
+
+
 void FuzzTest(const uint8_t *rawData, size_t size)
 {
     FuzzedDataProvider fdp(rawData, size);
@@ -47,7 +63,8 @@ void FuzzTest(const uint8_t *rawData, size_t size)
         MEDIA_INFO_LOG("streamDepthDataProxy is null");
         return;
     }
-    streamDepthDataProxy->StreamDepthDataProxyTest();
+    streamDepthDataProxy->StreamDepthDataProxyTest1();
+    streamDepthDataProxy->StreamDepthDataProxyTest2(fdp);
 }
 }  // namespace CameraStandard
 }  // namespace OHOS

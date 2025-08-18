@@ -64,6 +64,8 @@ group("camera_fuzz_test") {
       "fuzztest/cameraoutputcapability_fuzzer:fuzztest",
       "fuzztest/camerareportdfxutils_fuzzer:fuzztest",
       "fuzztest/cameradeviceserviceproxy_fuzzer:fuzztest",
+      "fuzztest/cameradeviceservicestub_fuzzer:fuzztest",
+      "fuzztest/cameraserviceproxy_fuzzer:fuzztest",
       "fuzztest/camerawindowmanagerclient_fuzzer:fuzztest",
       "fuzztest/capturesessionproxy_fuzzer:fuzztest",
       "fuzztest/commandserver_fuzzer:fuzztest",

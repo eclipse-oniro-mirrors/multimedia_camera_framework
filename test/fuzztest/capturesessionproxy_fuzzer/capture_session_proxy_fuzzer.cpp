@@ -22,7 +22,6 @@
 #include "system_ability_definition.h"
 #include "icapture_session.h"
 #include "capture_session.h"
-#include "securec.h"
 #include "iservice_registry.h"
 #include "token_setproc.h"
 #include <cstddef>
@@ -38,12 +37,6 @@ std::shared_ptr<CaptureSessionProxy> CaptureSessionProxyFuzz::fuzz_{nullptr};
 
 void CaptureSessionProxyFuzz::CaptureSessionProxyFuzzTest1(FuzzedDataProvider &fdp)
 {
-    auto mgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    CHECK_RETURN_ELOG(!mgr, "samgr nullptr");
-    auto object = mgr->GetSystemAbility(CAMERA_SERVICE_ID);
-    CHECK_RETURN_ELOG(!object, "object nullptr");
-    fuzz_ = std::make_shared<CaptureSessionProxy>(object);
-    CHECK_RETURN_ELOG(!fuzz_, "fuzz_ nullptr");
     uint8_t vectorSize = fdp.ConsumeIntegralInRange<uint8_t>(0, MAX_BUFFER_SIZE);
     std::vector<float> virtualApertureMetadata;
     for (int i = 0; i < vectorSize; ++i) {
@@ -59,12 +52,6 @@ void CaptureSessionProxyFuzz::CaptureSessionProxyFuzzTest1(FuzzedDataProvider &f
 
 void CaptureSessionProxyFuzz::CaptureSessionProxyFuzzTest2(FuzzedDataProvider &fdp)
 {
-    auto mgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    CHECK_RETURN_ELOG(!mgr, "samgr nullptr");
-    auto object = mgr->GetSystemAbility(CAMERA_SERVICE_ID);
-    CHECK_RETURN_ELOG(!object, "object nullptr");
-    fuzz_ = std::make_shared<CaptureSessionProxy>(object);
-    CHECK_RETURN_ELOG(!fuzz_, "fuzz_ nullptr");
     fuzz_->Stop();
     constexpr int32_t executionModeCount = static_cast<int32_t>(ColorSpace::P3_PQ_LIMIT) + NUM_1;
     ColorSpace colorSpace = static_cast<ColorSpace>(fdp.ConsumeIntegral<uint8_t>() % executionModeCount);
@@ -77,13 +64,6 @@ void CaptureSessionProxyFuzz::CaptureSessionProxyFuzzTest2(FuzzedDataProvider &f
 
 void CaptureSessionProxyFuzz::CaptureSessionProxyFuzzTest3(FuzzedDataProvider &fdp)
 {
-    auto mgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    CHECK_RETURN_ELOG(!mgr, "samgr nullptr");
-    auto object = mgr->GetSystemAbility(CAMERA_SERVICE_ID);
-    CHECK_RETURN_ELOG(!object, "object nullptr");
-    fuzz_ = std::make_shared<CaptureSessionProxy>(object);
-    CHECK_RETURN_ELOG(!fuzz_, "fuzz_ nullptr");
-
     int32_t smoothZoomType = fdp.ConsumeIntegral<int32_t>();
     int32_t operationMode = fdp.ConsumeIntegral<int32_t>();
     float targetZoomRatio = fdp.ConsumeFloatingPoint<float>();
@@ -95,12 +75,6 @@ void CaptureSessionProxyFuzz::CaptureSessionProxyFuzzTest3(FuzzedDataProvider &f
 
 void CaptureSessionProxyFuzz::CaptureSessionProxyFuzzTest4(FuzzedDataProvider &fdp)
 {
-    auto mgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    CHECK_RETURN_ELOG(!mgr, "samgr nullptr");
-    auto object = mgr->GetSystemAbility(CAMERA_SERVICE_ID);
-    CHECK_RETURN_ELOG(!object, "object nullptr");
-    fuzz_ = std::make_shared<CaptureSessionProxy>(object);
-    CHECK_RETURN_ELOG(!fuzz_, "fuzz_ nullptr");
     bool ret = fdp.ConsumeIntegral<int32_t>() ? 1 : 0;
     fuzz_->EnableMovingPhoto(ret);
     bool isMirror = fdp.ConsumeIntegral<int32_t>() ? 1 : 0;
@@ -110,12 +84,6 @@ void CaptureSessionProxyFuzz::CaptureSessionProxyFuzzTest4(FuzzedDataProvider &f
 
 void CaptureSessionProxyFuzz::CaptureSessionProxyFuzzTest5(FuzzedDataProvider &fdp)
 {
-    auto mgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    CHECK_RETURN_ELOG(!mgr, "samgr nullptr");
-    auto object = mgr->GetSystemAbility(CAMERA_SERVICE_ID);
-    CHECK_RETURN_ELOG(!object, "object nullptr");
-    fuzz_ = std::make_shared<CaptureSessionProxy>(object);
-    CHECK_RETURN_ELOG(!fuzz_, "fuzz_ nullptr");
     std::vector<std::string> testStrings = {"test1", "test2"};
     int8_t randomNum = fdp.ConsumeIntegral<uint8_t>();
     std::string deviceClass(testStrings[randomNum % testStrings.size()]);
@@ -124,12 +92,6 @@ void CaptureSessionProxyFuzz::CaptureSessionProxyFuzzTest5(FuzzedDataProvider &f
 
 void CaptureSessionProxyFuzz::CaptureSessionProxyFuzzTest6()
 {
-    auto mgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    CHECK_RETURN_ELOG(!mgr, "samgr nullptr");
-    auto object = mgr->GetSystemAbility(CAMERA_SERVICE_ID);
-    CHECK_RETURN_ELOG(!object, "object nullptr");
-    fuzz_ = std::make_shared<CaptureSessionProxy>(object);
-    CHECK_RETURN_ELOG(!fuzz_, "fuzz_ nullptr");
     sptr<ICaptureSessionCallback> captureSessionCallback = new (std::nothrow)CaptureSessionCallback();
     fuzz_->SetCallback(captureSessionCallback);
     sptr<IPressureStatusCallback> pressureStatusCallback = new (std::nothrow)PressureStatusCallback();
@@ -139,16 +101,22 @@ void CaptureSessionProxyFuzz::CaptureSessionProxyFuzzTest6()
     sptr<IControlCenterEffectStatusCallback> callbackFunc = new (std::nothrow)ControlCenterEffectStatusCallback();
     fuzz_->SetControlCenterEffectStatusCallback(callbackFunc);
     fuzz_->UnSetControlCenterEffectStatusCallback();
+    if (captureSessionCallback != nullptr) {
+        delete captureSessionCallback;
+        captureSessionCallback = nullptr;
+    }
+    if (pressureStatusCallback != nullptr) {
+        delete pressureStatusCallback;
+        pressureStatusCallback = nullptr;
+    }
+    if (callbackFunc != nullptr) {
+        delete callbackFunc;
+        callbackFunc = nullptr;
+    }
 }
 
 void CaptureSessionProxyFuzz::CaptureSessionProxyFuzzTest7(FuzzedDataProvider &fdp)
 {
-    auto mgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    CHECK_RETURN_ELOG(!mgr, "samgr nullptr");
-    auto object = mgr->GetSystemAbility(CAMERA_SERVICE_ID);
-    CHECK_RETURN_ELOG(!object, "object nullptr");
-    fuzz_ = std::make_shared<CaptureSessionProxy>(object);
-    CHECK_RETURN_ELOG(!fuzz_, "fuzz_ nullptr");
     std::vector<int32_t> beautyApertureMetadata;
     uint8_t vectorSize = fdp.ConsumeIntegralInRange<uint8_t>(0, MAX_BUFFER_SIZE);
     for (int i = 0; i < vectorSize; ++i) {
@@ -165,6 +133,14 @@ void CaptureSessionProxyFuzz::CaptureSessionProxyFuzzTest7(FuzzedDataProvider &f
     fuzz_->GetBeautyValue(type, beautyValue);
 }
 
+void CaptureSessionProxyFuzz::CaptureSessionProxyFuzzTest8(FuzzedDataProvider &fdp)
+{
+    int32_t type = fdp.ConsumeIntegral<int32_t>();
+    int32_t value = fdp.ConsumeIntegral<int32_t>();
+    bool needPersist = fdp.ConsumeBool();
+    fuzz_->SetBeautyValue(type, value, needPersist);
+}
+
 void FuzzTest(const uint8_t *rawData, size_t size)
 {
     FuzzedDataProvider fdp(rawData, size);
@@ -173,6 +149,12 @@ void FuzzTest(const uint8_t *rawData, size_t size)
         MEDIA_INFO_LOG("captureSessionProxy is null");
         return;
     }
+    auto mgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    CHECK_RETURN_ELOG(!mgr, "samgr is nullptr");
+    auto object = mgr->GetSystemAbility(CAMERA_SERVICE_ID);
+    CHECK_RETURN_ELOG(!object, "object is nullptr");
+    CaptureSessionProxyFuzz::fuzz_ = std::make_shared<CaptureSessionProxy>(object);
+    CHECK_RETURN_ELOG(!CaptureSessionProxyFuzz::fuzz_, "fuzz_ is nullptr");
     captureSessionProxy->CaptureSessionProxyFuzzTest1(fdp);
     captureSessionProxy->CaptureSessionProxyFuzzTest2(fdp);
     captureSessionProxy->CaptureSessionProxyFuzzTest3(fdp);
@@ -180,6 +162,7 @@ void FuzzTest(const uint8_t *rawData, size_t size)
     captureSessionProxy->CaptureSessionProxyFuzzTest5(fdp);
     captureSessionProxy->CaptureSessionProxyFuzzTest6();
     captureSessionProxy->CaptureSessionProxyFuzzTest7(fdp);
+    captureSessionProxy->CaptureSessionProxyFuzzTest8(fdp);
 }
 }  // namespace CameraStandard
 }  // namespace OHOS

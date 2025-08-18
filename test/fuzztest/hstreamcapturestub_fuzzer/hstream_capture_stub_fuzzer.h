@@ -149,6 +149,7 @@ public:
     static void HStreamCaptureStubFuzzTest19();
     static void HStreamCaptureStubFuzzTest20();
     static void HStreamCaptureStubFuzzTest21();
+    static void HStreamCaptureStubFuzzTest22(FuzzedDataProvider &fdp);
 };
 }  // namespace CameraStandard
 }  // namespace OHOS
