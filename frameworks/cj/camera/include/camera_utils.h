@@ -168,7 +168,7 @@ struct CArrCJMetadataObject {
     int64_t size;
 };
 
-enum OutputType { METADATA_OUTPUT = 0, PHOTO_OUTPUT, PREVIEW_OUTPUT, VIDEO_OUTPUT };
+enum CJOutputType { METADATA_OUTPUT = 0, PHOTO_OUTPUT, PREVIEW_OUTPUT, VIDEO_OUTPUT };
 
 CJMetadataObject MetadataObjectToCJMetadataObject(MetadataObject metaObject);
 

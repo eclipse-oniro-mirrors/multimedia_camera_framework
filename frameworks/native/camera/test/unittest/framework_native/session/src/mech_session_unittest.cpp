@@ -49,9 +49,6 @@ void MechSessionUnitTest::TearDownTestCase(void) {}
 
 void MechSessionUnitTest::SetUp()
 {
-    uid_ = IPCSkeleton::GetCallingUid();
-    AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(uid_, userId_);
-    MEDIA_DEBUG_LOG("MechSessionUnitTest::NativeAuthorization uid_:%{public}d, userId_:%{public}d", uid_, userId_);
     cameraManager_ = CameraManager::GetInstance();
     ASSERT_NE(cameraManager_, nullptr);
 }
@@ -110,6 +107,15 @@ void MechSessionUnitTest::StopSession()
 {
     ASSERT_NE(captureSession_, nullptr);
     captureSession_->Stop();
+}
+
+void MechSessionUnitTest::SetFocusPoint(float x, float y)
+{
+    ASSERT_NE(captureSession_, nullptr);
+    Point point;
+    point.x = x;
+    point.y = y;
+    captureSession_->SetFocusPoint(point);
 }
 
 void MechSessionUnitTest::ReleaseSession()
@@ -263,41 +269,14 @@ HWTEST_F(MechSessionUnitTest, mech_session_unittest_007, TestSize.Level0)
 
 /*
  * Feature: Framework
- * Function: Test MechSession SetCallback
+ * Function: Test OnCaptureSessionConfiged when session start
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test MechSession SetCallback
+ * CaseDescription: Test OnCaptureSessionConfiged when session start
  */
 HWTEST_F(MechSessionUnitTest, mech_session_unittest_008, TestSize.Level0)
 {
-    CommitConfig();
-    StartSession();
-
-    sptr<MechSession> mechSession = cameraManager_->CreateMechSession(userId_);
-    ASSERT_NE(mechSession, nullptr);
-    int32_t retCode = mechSession->EnableMechDelivery(true);
-    EXPECT_EQ(retCode, 0);
-    auto mechSessionCallback = std::make_shared<AppMechSessionCallback>();
-    mechSession->SetCallback(mechSessionCallback);
-
-    StopSession();
-    ReleaseSession();
-
-    retCode = mechSession->Release();
-    EXPECT_EQ(retCode, 0);
-}
-
-/*
- * Feature: Framework
- * Function: Test MechSession callback when session start
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test MechSession callback when session star
- */
-HWTEST_F(MechSessionUnitTest, mech_session_unittest_009, TestSize.Level1)
-{
     sptr<MechSession> mechSession = cameraManager_->CreateMechSession(userId_);
     ASSERT_NE(mechSession, nullptr);
     int32_t retCode = mechSession->EnableMechDelivery(true);
@@ -308,16 +287,43 @@ HWTEST_F(MechSessionUnitTest, mech_session_unittest_009, TestSize.Level1)
 
     CommitConfig();
     StartSession();
-
-    std::vector<CameraAppInfo> cameraAppInfos = mechSessionCallback->GetCameraAppInfos();
-    int size = cameraAppInfos.size();
+    CaptureSessionInfo sessionInfo = mechSessionCallback->GetSessionInfo();
+    auto outputInfos = sessionInfo.outputInfos;
+    int size = outputInfos.size();
     EXPECT_NE(size, 0);
     for (int i = 0; i < size; i++) {
-        auto appInfo = cameraAppInfos[i];
-        EXPECT_EQ(appInfo.width, PREVIEW_WIDTH);
-        EXPECT_EQ(appInfo.height, PREVIEW_HEIGHT);
-        EXPECT_EQ(appInfo.videoStatus, true);
+        auto outputInfo = outputInfos[i];
+        EXPECT_EQ(outputInfo.width, PREVIEW_WIDTH);
+        EXPECT_EQ(outputInfo.height, PREVIEW_HEIGHT);
     }
+
+    StopSession();
+    ReleaseSession();
+    retCode = mechSession->Release();
+    EXPECT_EQ(retCode, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test OnSessionStatusChange when session start
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test MechSession OnSessionStatusChange when session start
+ */
+HWTEST_F(MechSessionUnitTest, mech_session_unittest_009, TestSize.Level0)
+{
+    sptr<MechSession> mechSession = cameraManager_->CreateMechSession(userId_);
+    ASSERT_NE(mechSession, nullptr);
+    int32_t retCode = mechSession->EnableMechDelivery(true);
+    EXPECT_EQ(retCode, 0);
+
+    auto mechSessionCallback = std::make_shared<AppMechSessionCallback>();
+    mechSession->SetCallback(mechSessionCallback);
+
+    CommitConfig();
+    StartSession();
+    EXPECT_EQ(mechSessionCallback->GetSessionStatus(), true);
     retCode = mechSession->Release();
     EXPECT_EQ(retCode, 0);
 
@@ -327,69 +333,28 @@ HWTEST_F(MechSessionUnitTest, mech_session_unittest_009, TestSize.Level1)
 
 /*
  * Feature: Framework
- * Function: Test MechSession callback when session stop
+ * Function: Test OnSessionStatusChange when session stop
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test MechSession callback when session stop
+ * CaseDescription: Test MechSession OnSessionStatusChange when session stop
  */
-HWTEST_F(MechSessionUnitTest, mech_session_unittest_010, TestSize.Level1)
+HWTEST_F(MechSessionUnitTest, mech_session_unittest_010, TestSize.Level0)
 {
     sptr<MechSession> mechSession = cameraManager_->CreateMechSession(userId_);
     ASSERT_NE(mechSession, nullptr);
     int32_t retCode = mechSession->EnableMechDelivery(true);
     EXPECT_EQ(retCode, 0);
 
+    auto mechSessionCallback = std::make_shared<AppMechSessionCallback>();
+    mechSession->SetCallback(mechSessionCallback);
+
     CommitConfig();
     StartSession();
 
-    auto mechSessionCallback = std::make_shared<AppMechSessionCallback>();
-    mechSession->SetCallback(mechSessionCallback);
     StopSession();
-    std::vector<CameraAppInfo> cameraAppInfos = mechSessionCallback->GetCameraAppInfos();
-    int size = cameraAppInfos.size();
-    EXPECT_NE(size, 0);
-    for (int i = 0; i < size; i++) {
-        auto appInfo = cameraAppInfos[i];
-        EXPECT_EQ(appInfo.width, PREVIEW_WIDTH);
-        EXPECT_EQ(appInfo.height, PREVIEW_HEIGHT);
-    }
     ReleaseSession();
-    retCode = mechSession->Release();
-    EXPECT_EQ(retCode, 0);
-}
-
-/*
- * Feature: Framework
- * Function: Test MechSession SetCallback when session setZoomRatio
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test MechSession SetCallback when session setZoomRatio
- */
-HWTEST_F(MechSessionUnitTest, mech_session_unittest_011, TestSize.Level0)
-{
-    sptr<MechSession> mechSession = cameraManager_->CreateMechSession(userId_);
-    ASSERT_NE(mechSession, nullptr);
-    int32_t retCode = mechSession->EnableMechDelivery(true);
-    auto mechSessionCallback = std::make_shared<AppMechSessionCallback>();
-    mechSession->SetCallback(mechSessionCallback);
-    EXPECT_EQ(retCode, 0);
-    CommitConfig();
-    StartSession();
-
-    std::vector<float> zoomRatioRange = captureSession_->GetZoomRatioRange();
-    if (!zoomRatioRange.empty()) {
-        for (int i = 0; i < zoomRatioRange.size(); i++) {
-            float zoomRatio = zoomRatioRange[i];
-            captureSession_->LockForControl();
-            captureSession_->SetZoomRatio(zoomRatio);
-            captureSession_->UnlockForControl();
-        }
-    }
-
-    void StopSession();
-    void ReleaseSession();
+    EXPECT_EQ(mechSessionCallback->GetSessionStatus(), false);
 
     retCode = mechSession->Release();
     EXPECT_EQ(retCode, 0);

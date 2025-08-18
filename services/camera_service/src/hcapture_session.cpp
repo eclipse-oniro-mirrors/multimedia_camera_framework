@@ -343,16 +343,7 @@ int32_t HCaptureSession::AddInput(const sptr<ICameraDeviceService>& cameraDevice
         MEDIA_INFO_LOG("HCaptureSession::AddInput device:%{public}s", hCameraDevice->GetCameraId().c_str());
         SetCameraDevice(hCameraDevice);
         hCameraDevice->DispatchDefaultSettingToHdi();
-        auto thisPtr = wptr<HCaptureSession>(this);
-        hCameraDevice->SetMechCallback([thisPtr](float zoomRatio, bool focusStatus) {
-            auto ptr = thisPtr.promote();
-            CHECK_RETURN(!ptr);
-            CameraAppInfo appInfo;
-            CHECK_RETURN_ILOG(!ptr->GetCameraAppInfo(appInfo), "GetCameraAppInfo failed");
-            appInfo.focusStatus = focusStatus;
-            appInfo.zoomValue = zoomRatio;
-            ptr->OnCameraAppInfo(appInfo);
-        });
+        SetDeviceMechCallback();
     });
     if (errorCode == CAMERA_OK) {
         CAMERA_SYSEVENT_STATISTIC(CreateMsg("CaptureSession::AddInput, sessionID: %d", GetSessionId()));
@@ -1550,7 +1541,8 @@ int32_t HCaptureSession::Start()
                 mechDeliveryState_ = MechDeliveryState::ENABLED;
             }
         }
-        OnCameraAppInfo();
+        OnSessionStatusChange(true);
+        OnCaptureSessionConfiged();
     });
     MEDIA_INFO_LOG("HCaptureSession::Start execute success, sessionID: %{public}d", GetSessionId());
     MEDIA_INFO_LOG("%{public}s", GetConcurrentCameraIds(pid_).c_str());
@@ -1626,7 +1618,7 @@ int32_t HCaptureSession::Stop()
             isSessionStarted_ = false;
         }
         stateMachine_.Transfer(CaptureSessionState::SESSION_CONFIG_COMMITTED);
-        OnCameraAppInfo();
+        OnSessionStatusChange(false);
     });
     MEDIA_INFO_LOG("HCaptureSession::Stop execute success, sessionID: %{public}d", GetSessionId());
     return errorCode;
@@ -2169,52 +2161,72 @@ int32_t HCaptureSession::UpdateSettingForFocusTrackingMech(bool isEnableMech)
     return CAMERA_OK;
 }
 
-bool HCaptureSession::GetCameraAppInfo(CameraAppInfo& appInfo)
+void HCaptureSession::SetDeviceMechCallback()
 {
-    appInfo.zoomValue = 1.0f; // default zoom
-    appInfo.cameraId = "";
-    appInfo.position = -1;
-    appInfo.width = 0;
-    appInfo.height = 0;
-    appInfo.focusStatus = false;
+    CHECK_RETURN(!cameraDevice_);
+    auto thisPtr = wptr<HCaptureSession>(this);
+    cameraDevice_->SetZoomInfoCallback([thisPtr](float zoomRatio, bool focusStatus, int32_t focusMode) {
+        auto ptr = thisPtr.promote();
+        CHECK_RETURN(!ptr);
+        ZoomInfo zoomInfo;
+        zoomInfo.zoomValue = zoomRatio;
+        zoomInfo.focusStatus = focusStatus;
+        zoomInfo.focusMode = focusMode;
+        zoomInfo.equivalentFocus = ptr->GetEquivalentFocus();
+        ptr->OnZoomInfoChange(zoomInfo);
+    });
+}
+
+bool HCaptureSession::GetCaptureSessionInfo(CaptureSessionInfo& sessionInfo)
+{
+    sessionInfo.cameraId = "";
+    sessionInfo.position = -1;
+    ZoomInfo zoomInfo;
+    zoomInfo.zoomValue = 1.0f;
+    zoomInfo.equivalentFocus = GetEquivalentFocus();
     if (cameraDevice_ != nullptr) {
-        appInfo.cameraId = cameraDevice_->GetCameraId();
-        appInfo.zoomValue = cameraDevice_->GetZoomRatio();
-        appInfo.position = cameraDevice_->GetCameraPosition();
+        sessionInfo.cameraId = cameraDevice_->GetCameraId();
+        sessionInfo.position = cameraDevice_->GetCameraPosition();
+        zoomInfo.zoomValue = cameraDevice_->GetZoomRatio();
+        zoomInfo.focusMode = cameraDevice_->GetFocusMode();
     }
-    appInfo.tokenId = static_cast<int32_t>(callerToken_);
-    appInfo.opmode = opMode_;
-    appInfo.equivalentFocus = GetEquivalentFocus();
-    auto hStreamOperatorSptr = GetStreamOperator();
-    if (hStreamOperatorSptr != nullptr) {
-        auto streams = hStreamOperatorSptr->GetAllStreams();
-        for (auto& stream : streams) {
-            if (stream->GetStreamType() == StreamType::REPEAT) {
-                auto curStreamRepeat = CastStream<HStreamRepeat>(stream);
-                appInfo.width = curStreamRepeat->width_;
-                appInfo.height = curStreamRepeat->height_;
-            }
-        }
-    }
-    appInfo.videoStatus = stateMachine_.IsStateNoLock(CaptureSessionState::SESSION_STARTED);
+    sessionInfo.zoomInfo = zoomInfo;
+    sessionInfo.callerTokenId = static_cast<int32_t>(callerToken_);
+    sessionInfo.sessionId = GetSessionId();
+    sessionInfo.sessionMode = GetopMode();
+    int32_t curColorSpace = 0;
+    GetActiveColorSpace(curColorSpace);
+    sessionInfo.colorSpace = curColorSpace;
+    std::vector<OutputInfo> outputInfos = GetOutputInfos();
+    sessionInfo.outputInfos = outputInfos;
     return true;
 }
 
-void HCaptureSession::OnCameraAppInfo(const CameraAppInfo& appInfo)
+void HCaptureSession::OnCaptureSessionConfiged()
 {
     auto &sessionManager = HCameraSessionManager::GetInstance();
     auto mechSession = sessionManager.GetMechSession(userId_);
     CHECK_RETURN(mechSession == nullptr);
-    std::vector<CameraAppInfo> cameraAppInfos = {};
-    cameraAppInfos.emplace_back(appInfo);
-    mechSession->OnCameraAppInfo(cameraAppInfos);
+    CaptureSessionInfo sessionInfo;
+    CHECK_RETURN_ILOG(!GetCaptureSessionInfo(sessionInfo),
+        "HCaptureSession::OnCaptureSessionConfiged GetCaptureSessionInfo failed");
+    mechSession->OnCaptureSessionConfiged(sessionInfo);
 }
 
-void HCaptureSession::OnCameraAppInfo()
+void HCaptureSession::OnZoomInfoChange(const ZoomInfo& zoomInfo)
 {
-    CameraAppInfo appInfo;
-    CHECK_RETURN_ILOG(!GetCameraAppInfo(appInfo), "HCaptureSession::OnCameraAppInfo GetCameraAppInfo failed");
-    OnCameraAppInfo(appInfo);
+    auto &sessionManager = HCameraSessionManager::GetInstance();
+    auto mechSession = sessionManager.GetMechSession(userId_);
+    CHECK_RETURN(mechSession == nullptr);
+    mechSession->OnZoomInfoChange(GetSessionId(), zoomInfo);
+}
+
+void HCaptureSession::OnSessionStatusChange(bool status)
+{
+    auto &sessionManager = HCameraSessionManager::GetInstance();
+    auto mechSession = sessionManager.GetMechSession(userId_);
+    CHECK_RETURN(mechSession == nullptr);
+    mechSession->OnSessionStatusChange(GetSessionId(), status);
 }
 
 uint32_t HCaptureSession::GetEquivalentFocus()
@@ -2242,6 +2254,47 @@ uint32_t HCaptureSession::GetEquivalentFocus()
         equivalentFocus,
         GetSessionId());
     return equivalentFocus;
+}
+
+std::vector<OutputInfo> HCaptureSession::GetOutputInfos()
+{
+    std::vector<OutputInfo> outputInfos = {};
+    auto hStreamOperatorSptr = GetStreamOperator();
+    CHECK_RETURN_RET(!hStreamOperatorSptr, outputInfos);
+    auto streams = hStreamOperatorSptr->GetAllStreams();
+    for (auto& stream : streams) {
+        if (stream->GetStreamType() == StreamType::CAPTURE) {
+            OutputInfo info;
+            info.type = OutputType::PHOTO;
+            info.width = stream->width_;
+            info.height = stream->height_;
+            outputInfos.emplace_back(info);
+        } else if (stream->GetStreamType() == StreamType::REPEAT) {
+            auto curStreamRepeat = CastStream<HStreamRepeat>(stream);
+            if (curStreamRepeat == nullptr) {
+                continue;
+            }
+            OutputInfo info;
+            auto streamType = curStreamRepeat->GetRepeatStreamType();
+            if (streamType == RepeatStreamType::PREVIEW) {
+                info.type = OutputType::PREVIEW;
+            } else if (streamType == RepeatStreamType::VIDEO) {
+                info.type = OutputType::VIDEO;
+            } else if (streamType == RepeatStreamType::LIVEPHOTO) {
+                info.type = OutputType::MOVING_PHOTO;
+            }
+            info.width = stream->width_;
+            info.height = stream->height_;
+            std::vector<int32_t> frameRateRange = curStreamRepeat->GetFrameRateRange();
+            constexpr int32_t fpsSize = 2;
+            if (frameRateRange.size() == fpsSize) {
+                info.minfps = frameRateRange[0];
+                info.maxfps = frameRateRange[1];
+            }
+            outputInfos.emplace_back(info);
+        }
+    }
+    return outputInfos;
 }
 
 int32_t HCaptureSession::EnableMechDelivery(bool isEnableMech)

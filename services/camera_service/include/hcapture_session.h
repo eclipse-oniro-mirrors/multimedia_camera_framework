@@ -218,11 +218,8 @@ public:
     int32_t GetUserId();
     int32_t EnableMechDelivery(bool isEnableMech);
     void SetMechDeliveryState(MechDeliveryState state);
-    bool GetCameraAppInfo(CameraAppInfo& appInfo);
-    uint32_t GetEquivalentFocus();
-    void OnCameraAppInfo(const CameraAppInfo& appInfo);
-    void OnCameraAppInfo();
     void SetUpdateControlCenterCallback(UpdateControlCenterCallback cb);
+    bool GetCaptureSessionInfo(CaptureSessionInfo& sessionInfo);
 
 private:
     int32_t CommitConfigWithValidation();
@@ -277,6 +274,7 @@ private:
     void UpdateSettingForSpecialBundle();
     int32_t UpdateSettingForFocusTrackingMech(bool isEnableMech);
     void UpdateSettingForFocusTrackingMechBeforeStart(std::shared_ptr<OHOS::Camera::CameraMetadata> &settings);
+    void SetDeviceMechCallback();
     void ClearMovingPhotoRepeatStream();
     StateMachine stateMachine_;
     sptr<IPressureStatusCallback> innerPressureCallback_;
@@ -303,6 +301,12 @@ private:
     std::string GetConcurrentCameraIds(pid_t pid);
     int32_t AddOutputInner(StreamType streamType, const sptr<IStreamCommon>& stream);
     int32_t RemoveOutputInner(StreamType streamType, const sptr<IStreamCommon>& stream);
+
+    uint32_t GetEquivalentFocus();
+    std::vector<OutputInfo> GetOutputInfos();
+    void OnCaptureSessionConfiged();
+    void OnZoomInfoChange(const ZoomInfo& zoomInfo);
+    void OnSessionStatusChange(bool status);
 
     std::mutex cbMutex_;
 
