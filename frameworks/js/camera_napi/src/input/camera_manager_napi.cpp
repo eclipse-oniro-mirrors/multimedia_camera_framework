@@ -290,7 +290,6 @@ void CameraMuteListenerNapi::OnCameraMuteCallback(bool muteMode) const
 
     ExecuteCallbackScopeSafe("cameraMute", [&]() {
         napi_value callbackObj;
-        napi_get_undefined(env_, &callbackObj);
         napi_get_boolean(env_, muteMode, &callbackObj);
         napi_value errCode = CameraNapiUtils::GetUndefinedValue(env_);
         return ExecuteCallbackData(env_, errCode, callbackObj);
