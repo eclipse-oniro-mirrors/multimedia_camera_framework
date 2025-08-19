@@ -171,7 +171,6 @@ ohos_shared_library("camera_service") {
   ]
 
   external_deps = [
-    "ability_base:base",
     "ability_base:want",
     "ability_base:zuri",
     "ability_runtime:ability_connect_callback_stub",
@@ -213,7 +212,6 @@ ohos_shared_library("camera_service") {
     "hilog:libhilog",
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
-    "i18n:intl_util",
     "init:libbegetutil",
     "ipc:ipc_core",
     "ipc:ipc_single",
@@ -256,7 +254,6 @@ ohos_shared_library("camera_service") {
   if (defined(global_parts_info) &&
       defined(
           global_parts_info.notification_distributed_notification_service)) {
-    external_deps += [ "distributed_notification_service:ans_innerkits" ]
     defines += [ "NOTIFICATION_ENABLE" ]
     sources += [ "src/camera_beauty_notification.cpp" ]
   }

@@ -92,8 +92,8 @@ public:
 private:
     CaptureSessionInfo captureSessionInfo_;
     ZoomInfo zoomInfo_;
-    bool sessionStatus_;
-    bool focusStatus_;
+    bool sessionStatus_ = false;
+    bool focusStatus_ = false;
 };
 }
 }

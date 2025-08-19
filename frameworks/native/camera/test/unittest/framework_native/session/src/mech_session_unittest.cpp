@@ -15,23 +15,15 @@
 
 #include "mech_session_unittest.h"
 #include "gtest/gtest.h"
+#include <chrono>
 #include <cstdint>
+#include <thread>
 #include <vector>
-#include "access_token.h"
-#include "accesstoken_kit.h"
+
 #include "camera_util.h"
-#include "hap_token_info.h"
-#include "ipc_skeleton.h"
-#include "metadata_utils.h"
-#include "nativetoken_kit.h"
 #include "surface.h"
 #include "test_common.h"
-#include "token_setproc.h"
-#include "os_account_manager.h"
-#include "sketch_wrapper.h"
 #include "hcapture_session.h"
-#include "hcamera_service.h"
-#include "session/video_session.h"
 #include "test_token.h"
 
 using namespace testing::ext;
@@ -287,6 +279,7 @@ HWTEST_F(MechSessionUnitTest, mech_session_unittest_008, TestSize.Level0)
 
     CommitConfig();
     StartSession();
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
     CaptureSessionInfo sessionInfo = mechSessionCallback->GetSessionInfo();
     auto outputInfos = sessionInfo.outputInfos;
     int size = outputInfos.size();
@@ -323,6 +316,7 @@ HWTEST_F(MechSessionUnitTest, mech_session_unittest_009, TestSize.Level0)
 
     CommitConfig();
     StartSession();
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
     EXPECT_EQ(mechSessionCallback->GetSessionStatus(), true);
     retCode = mechSession->Release();
     EXPECT_EQ(retCode, 0);
@@ -354,6 +348,7 @@ HWTEST_F(MechSessionUnitTest, mech_session_unittest_010, TestSize.Level0)
 
     StopSession();
     ReleaseSession();
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
     EXPECT_EQ(mechSessionCallback->GetSessionStatus(), false);
 
     retCode = mechSession->Release();

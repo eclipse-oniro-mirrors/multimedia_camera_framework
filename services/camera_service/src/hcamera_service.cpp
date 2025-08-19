@@ -35,6 +35,7 @@
 #include "session/capture_scene_const.h"
 #ifdef NOTIFICATION_ENABLE
 #include "camera_beauty_notification.h"
+#include "camera_notification_interface.h"
 #endif
 #include "camera_info_dumper.h"
 #include "camera_log.h"
@@ -220,10 +221,13 @@ void HCameraService::OnReceiveEvent(const EventFwk::CommonEventData &data)
         int32_t currentFlag = wantParams.GetIntParam(BEAUTY_NOTIFICATION_ACTION_PARAM, -1);
         MEDIA_INFO_LOG("currentFlag: %{public}d", currentFlag);
         int32_t beautyStatus = currentFlag == BEAUTY_STATUS_OFF ? BEAUTY_STATUS_ON : BEAUTY_STATUS_OFF;
-        CameraBeautyNotification::GetInstance()->SetBeautyStatusFromDataShareHelper(beautyStatus);
         SetBeauty(beautyStatus);
-        CameraBeautyNotification::GetInstance()->SetBeautyStatus(beautyStatus);
-        CameraBeautyNotification::GetInstance()->PublishNotification(false);
+        auto notification = CameraBeautyNotification::GetInstance();
+        if (notification != nullptr) {
+            notification->SetBeautyStatusFromDataShareHelper(beautyStatus);
+            notification->SetBeautyStatus(beautyStatus);
+            notification->PublishNotification(false);
+        }
     }
 #endif
     if (action == COMMON_EVENT_SCREEN_LOCKED) {

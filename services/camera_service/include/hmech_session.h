@@ -43,7 +43,7 @@ public:
     bool IsEnableMech();
 
 private:
-    void HanldeOnCaptureSessionConfiged(const sptr<IMechSessionCallback>& callback);
+    void HandleOnCaptureSessionConfiged(const sptr<IMechSessionCallback>& callback);
     int32_t userId_;
     bool isEnableMech_ = false;
     sptr<IMechSessionCallback> callback_;
