@@ -83,7 +83,7 @@ int DPSEventReport::GetTotalTime (uint64_t beginTime, uint64_t endTime)
     return beginTime < endTime ? endTime - beginTime : 0;
 }
 
-void DPSEventReport::ReportImageModeChange(ExecutionMode executionMode)
+void DPSEventReport::ReportImageModeChange(ExecutionMode executionMode, int32_t memorySize)
 {
     DP_DEBUG_LOG("ReportImageModeChange enter.");
     HiSysEventWrite(
@@ -92,7 +92,8 @@ void DPSEventReport::ReportImageModeChange(ExecutionMode executionMode)
         HiviewDFX::HiSysEvent::EventType::BEHAVIOR,
         EVENT_KEY_EXCUTIONMODE, static_cast<int32_t>(executionMode),
         EVENT_KEY_CHANGEREASON, static_cast<int32_t>(eventType_),
-        EVENT_KEY_TEMPERATURELEVEL, temperatureLevel_);
+        EVENT_KEY_TEMPERATURELEVEL, temperatureLevel_,
+        EVENT_KEY_MEMORY_SIZE, memorySize);
 }
 
 void DPSEventReport::ReportImageException(const std::string& imageId, int32_t userId)

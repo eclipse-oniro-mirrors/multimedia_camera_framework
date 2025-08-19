@@ -54,6 +54,12 @@ if (defined(global_parts_info) &&
   config_policy_ext_enable = true
 }
 
+use_memmgr_override = false
+if (defined(global_parts_info) &&
+    defined(global_parts_info.resourceschedule_memmgr_override)) {
+  use_memmgr_override = true
+}
+
 gen_camera_picker = true
 hicollie_enable = true
 declare_args() {

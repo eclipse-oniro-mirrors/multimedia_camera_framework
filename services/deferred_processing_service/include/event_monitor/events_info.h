@@ -34,6 +34,7 @@ public:
     CameraSessionStatus GetCameraStatus();
     void SetCameraState(CameraSessionStatus state);
     bool IsCameraOpen();
+    int32_t GetAvailableMemory();
 
 private:
     std::mutex mutex_;

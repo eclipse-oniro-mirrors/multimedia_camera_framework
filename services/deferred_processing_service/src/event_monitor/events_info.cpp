@@ -27,12 +27,16 @@
 #ifdef CAMERA_USE_POWER
 #include "power_mgr_client.h"
 #endif
+#ifdef MEMMGR_OVERRID
+#include "mem_mgr_client.h"
+#endif
 
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
 namespace {
     constexpr int32_t BATTERY_THRESHOLD = 50;
+    constexpr int32_t DEFAULT_MEMORY_SIZE = 0;
 }
 
 EventsInfo::EventsInfo()
@@ -140,6 +144,15 @@ bool EventsInfo::IsCameraOpen()
     DP_INFO_LOG("IsCameraOpen: %{public}d", cameraState_);
     return cameraState_ == CameraSessionStatus::NORMAL_CAMERA_OPEN
         || cameraState_ == CameraSessionStatus::SYSTEM_CAMERA_OPEN;
+}
+
+int32_t EventsInfo::GetAvailableMemory()
+{
+#ifdef MEMMGR_OVERRID
+    int32_t size = Memory::MemMgrClient::GetInstance().GetAvailableMemory();
+    return size;
+#endif
+    return DEFAULT_MEMORY_SIZE;
 }
 } // namespace DeferredProcessing
 } // namespace CameraStandard
