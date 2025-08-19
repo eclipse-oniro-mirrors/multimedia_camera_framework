@@ -73,6 +73,7 @@ HWTEST_F(CameraBeautyNotificationUnit, camera_beauty_notification_unittest_002, 
     test->SetBeautyStatus(beautyStatus);
     EXPECT_EQ(test->GetBeautyStatus(), beautyStatus);
     test->PublishNotification(isRecordTimes_1);
+
     int32_t beautyTimes_1 = 1;
     test->SetBeautyTimes(beautyTimes_1);
     EXPECT_EQ(test->GetBeautyTimes(), beautyTimes_1);
@@ -80,25 +81,8 @@ HWTEST_F(CameraBeautyNotificationUnit, camera_beauty_notification_unittest_002, 
     test->SetBeautyTimes(beautyTimes_2);
     test->PublishNotification(isRecordTimes_1);
     EXPECT_EQ(test->GetBeautyTimes(), beautyTimes_2);
-    test->iconPixelMap_ = nullptr;
-    test->PublishNotification(isRecordTimes_1);
-    test->iconPixelMap_ = std::make_shared<OHOS::Media::PixelMap>();
-    test->PublishNotification(isRecordTimes_1);
-    bool isRecordTimes_2 = false;
-    test->PublishNotification(isRecordTimes_2);
-    test->SetBeautyTimes(beautyTimes_1);
-    EXPECT_EQ(test->GetBeautyTimes(), beautyTimes_1);
-    test->resourceManager_ = nullptr;
-    test->InitResourceManager();
-    test->resourceManager_ = Global::Resource::GetSystemResourceManagerNoSandBox();
-    test->InitResourceManager();
-    test->resConfig_ = nullptr;
-    test->InitResourceManager();
-    test->resConfig_ = Global::Resource::CreateResConfig();
-    test->InitResourceManager();
-    test->SetBeautyTimes(beautyTimes_2);
-    test->PublishNotification(isRecordTimes_2);
-    EXPECT_EQ(test->GetBeautyTimes(), beautyTimes_2);
+
+    test->CancelNotification();
 }
 
 /*
@@ -123,13 +107,6 @@ HWTEST_F(CameraBeautyNotificationUnit, camera_beauty_notification_unittest_003, 
     EXPECT_EQ(test->SetBeautyTimesFromDataShareHelper(times), 1);
     test->cameraDataShareHelper_ = nullptr;
     EXPECT_EQ(test->GetBeautyTimesFromDataShareHelper(times), 0);
-    std::string buttonName;
-    Notification::NotificationRequest request;
-    test->SetActionButton(buttonName, request, times);
-    test->iconPixelMap_ = nullptr;
-    test->GetPixelMap();
-    test->iconPixelMap_ = std::make_shared<OHOS::Media::PixelMap>();
-    test->GetPixelMap();
     test->cameraDataShareHelper_ = std::make_shared<CameraDataShareHelper>();
     EXPECT_EQ(test->SetBeautyStatusFromDataShareHelper(beautyStatus), 1);
     EXPECT_EQ(test->GetBeautyStatusFromDataShareHelper(beautyStatus), 0);

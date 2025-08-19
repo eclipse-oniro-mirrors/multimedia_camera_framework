@@ -18,6 +18,7 @@ config("camera_utils_config") {
   include_dirs = [
     "utils",
     "utils/av_codec/include",
+    "utils/camera_notification/include",
     "utils/image_framework/include",
     "utils/media_manager/include",
     "utils/moving_photo/include",
@@ -67,6 +68,7 @@ ohos_shared_library("camera_utils") {
     "utils/av_codec/src/av_codec_proxy.cpp",
     "utils/camera_dynamic_loader.cpp",
     "utils/camera_metadata.cpp",
+    "utils/camera_notification/src/camera_notification_proxy.cpp",
     "utils/camera_simple_timer.cpp",
     "utils/camera_timer.cpp",
     "utils/camera_xcollie.cpp",

@@ -52,7 +52,7 @@ int32_t HMechSession::SetCallback(const sptr<IMechSessionCallback>& callback)
     MEDIA_INFO_LOG("HMechSession::SetCallback enter");
     std::unique_lock<std::shared_mutex> lock(callbackLock_);
     callback_ = callback;
-    HanldeOnCaptureSessionConfiged(callback);
+    HandleOnCaptureSessionConfiged(callback);
     return CAMERA_OK;
 }
 
@@ -128,7 +128,7 @@ int32_t HMechSession::OnSessionStatusChange(int32_t sessionid, bool status)
     return CAMERA_OK;
 }
 
-void HMechSession::HanldeOnCaptureSessionConfiged(const sptr<IMechSessionCallback>& callback)
+void HMechSession::HandleOnCaptureSessionConfiged(const sptr<IMechSessionCallback>& callback)
 {
     CHECK_RETURN(callback == nullptr);
     auto &sessionManager = HCameraSessionManager::GetInstance();
