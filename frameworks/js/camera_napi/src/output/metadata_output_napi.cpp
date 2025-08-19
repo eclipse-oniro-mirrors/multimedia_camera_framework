@@ -197,17 +197,16 @@ void MetadataOutputCallback::OnMetadataObjectsAvailableCallback(
     const std::vector<sptr<MetadataObject>> metadataObjList) const
 {
     MEDIA_DEBUG_LOG("OnMetadataObjectsAvailableCallback is called");
-    napi_value result[ARGS_TWO];
-    napi_value retVal;
 
-    napi_get_undefined(env_, &result[PARAM0]);
-    napi_get_undefined(env_, &result[PARAM1]);
-    result[PARAM1] = CreateMetadataObjJSArray(env_, metadataObjList);
-    MEDIA_INFO_LOG("OnMetadataObjectsAvailableCallback metadataObjList size = %{public}zu", metadataObjList.size());
-    CHECK_RETURN_ELOG(result[PARAM1] == nullptr, "invoke CreateMetadataObjJSArray failed");
-
-    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
-    ExecuteCallback("metadataObjectsAvailable", callbackNapiPara);
+    ExecuteCallbackScopeSafe("metadataObjectsAvailable", [&]() {
+        napi_value callbackObj = CreateMetadataObjJSArray(env_, metadataObjList);
+        MEDIA_INFO_LOG("OnMetadataObjectsAvailableCallback metadataObjList size = %{public}zu", metadataObjList.size());
+        if (callbackObj == nullptr) {
+            return ExecuteCallbackData(nullptr, nullptr, nullptr);
+        }
+        napi_value errCode = CameraNapiUtils::GetUndefinedValue(env_);
+        return ExecuteCallbackData(env_, errCode, callbackObj);
+    });
 }
 
 MetadataStateCallbackNapi::MetadataStateCallbackNapi(napi_env env) : ListenerBase(env) {}
@@ -236,15 +235,16 @@ void MetadataStateCallbackNapi::OnErrorCallbackAsync(const int32_t errorType) co
 void MetadataStateCallbackNapi::OnErrorCallback(const int32_t errorType) const
 {
     MEDIA_DEBUG_LOG("OnErrorCallback is called");
-    napi_value result;
-    napi_value retVal;
-    napi_value propValue;
 
-    napi_create_int32(env_, errorType, &propValue);
-    napi_create_object(env_, &result);
-    napi_set_named_property(env_, result, "code", propValue);
-    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_ONE, .argv = &result, .result = &retVal };
-    ExecuteCallback("error", callbackNapiPara);
+    ExecuteCallbackScopeSafe("error", [&]() {
+        napi_value callbackObj;
+        napi_create_object(env_, &callbackObj);
+        napi_value propValue;
+        napi_create_int32(env_, errorType, &propValue);
+        napi_set_named_property(env_, callbackObj, "code", propValue);
+        napi_value errCode = CameraNapiUtils::GetUndefinedValue(env_);
+        return ExecuteCallbackData(env_, errCode, callbackObj);
+    });
 }
 
 void MetadataStateCallbackNapi::OnError(const int32_t errorType) const

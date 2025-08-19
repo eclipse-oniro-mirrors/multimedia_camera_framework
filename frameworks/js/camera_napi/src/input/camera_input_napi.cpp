@@ -97,15 +97,15 @@ void ErrorCallbackListener::OnErrorCallbackAsync(const int32_t errorType, const 
 void ErrorCallbackListener::OnErrorCallback(const int32_t errorType, const int32_t errorMsg) const
 {
     MEDIA_DEBUG_LOG("OnErrorCallback is called");
-    napi_value result;
-    napi_value retVal;
-    napi_value propValue;
-
-    napi_create_int32(env_, errorType, &propValue);
-    napi_create_object(env_, &result);
-    napi_set_named_property(env_, result, "code", propValue);
-    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_ONE, .argv = &result, .result = &retVal };
-    ExecuteCallback("error", callbackNapiPara);
+    ExecuteCallbackScopeSafe("error", [&]() {
+        napi_value callbackObj;
+        napi_create_object(env_, &callbackObj);
+        napi_value propValue;
+        napi_create_int32(env_, errorType, &propValue);
+        napi_set_named_property(env_, callbackObj, "code", propValue);
+        napi_value errCode = CameraNapiUtils::GetUndefinedValue(env_);
+        return ExecuteCallbackData(env_, errCode, callbackObj);
+    });
 }
 
 void ErrorCallbackListener::OnError(const int32_t errorType, const int32_t errorMsg) const
@@ -118,22 +118,26 @@ void OcclusionDetectCallbackListener::OnCameraOcclusionDetectedCallback(const ui
     const uint8_t isCameraLensDirty) const
 {
     MEDIA_DEBUG_LOG("OnCameraOcclusionDetectedCallback is called");
-    napi_value result[ARGS_TWO];
-    napi_value retVal;
-    napi_value propValue;
 
-    napi_get_undefined(env_, &result[PARAM0]);
-    napi_create_object(env_, &result[PARAM1]);
-    napi_get_boolean(env_, isCameraOcclusion == 1 ? true : false, &propValue);
-    napi_set_named_property(env_, result[PARAM1], "isCameraOccluded", propValue);
+    ExecuteCallbackScopeSafe("cameraOcclusionDetect", [&]() {
+        napi_value callbackObj;
+        napi_create_object(env_, &callbackObj);
+        napi_value propValue;
+        napi_get_boolean(env_, isCameraOcclusion == 1 ? true : false, &propValue);
+        napi_set_named_property(env_, callbackObj, "isCameraOccluded", propValue);
+        napi_value errCode = CameraNapiUtils::GetUndefinedValue(env_);
+        return ExecuteCallbackData(env_, errCode, callbackObj);
+    });
 
-    napi_value propValueForLensDirty = nullptr;
-    napi_get_boolean(env_, isCameraLensDirty == 1 ? true : false, &propValueForLensDirty);
-    napi_set_named_property(env_, result[PARAM1], "isCameraLensDirty", propValueForLensDirty);
-
-    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
-    ExecuteCallback("cameraOcclusionDetect", callbackNapiPara);
-    ExecuteCallback("cameraOcclusionDetection", callbackNapiPara);
+    ExecuteCallbackScopeSafe("cameraOcclusionDetection", [&]() {
+        napi_value callbackObj;
+        napi_create_object(env_, &callbackObj);
+        napi_value propValue;
+        napi_get_boolean(env_, isCameraOcclusion == 1 ? true : false, &propValue);
+        napi_set_named_property(env_, callbackObj, "isCameraLemsDirty", propValue);
+        napi_value errCode = CameraNapiUtils::GetUndefinedValue(env_);
+        return ExecuteCallbackData(env_, errCode, callbackObj);
+    });
 }
 
 void OcclusionDetectCallbackListener::OnCameraOcclusionDetectedCallbackAsync(

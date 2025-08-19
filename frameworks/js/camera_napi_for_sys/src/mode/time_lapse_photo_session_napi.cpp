@@ -951,19 +951,21 @@ void TryAEInfoCallbackListener::OnTryAEInfoChanged(TryAEInfo info)
 void TryAEInfoCallbackListener::OnTryAEInfoChangedCallback(TryAEInfo info) const
 {
     MEDIA_DEBUG_LOG("%{public}s: Enter", __FUNCTION__);
-    napi_value result[ARGS_TWO] = { nullptr, nullptr };
-    napi_value retVal;
 
-    napi_get_undefined(env_, &result[PARAM0]);
-    result[PARAM1] = TryAEInfoNapi::NewInstance(env_);
-    TryAEInfoNapi *obj = Unwrap<TryAEInfoNapi>(env_, result[PARAM1]);
-    if (obj) {
-        obj->tryAEInfo_ = make_unique<TryAEInfo>(info);
-    } else {
-        MEDIA_ERR_LOG("%{public}s: Enter, TryAEInfoNapi* is nullptr", __FUNCTION__);
-    }
-    ExecuteCallbackNapiPara callbackPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
-    ExecuteCallback("tryAEInfoChange", callbackPara);
+    ExecuteCallbackScopeSafe("tryAEInfoChange", [&]() {
+        napi_value callbackObj;
+        napi_value errCode;
+
+        callbackObj = TryAEInfoNapi::NewInstance(env_);
+        TryAEInfoNapi *obj = Unwrap<TryAEInfoNapi>(env_, callbackObj);
+        if (obj) {
+            obj->tryAEInfo_ = make_unique<TryAEInfo>(info);
+        } else {
+            MEDIA_ERR_LOG("%{public}s: Enter, TryAEInfoNapi* is nullptr", __FUNCTION__);
+        }
+        errCode = CameraNapiUtils::GetUndefinedValue(env_);
+        return ExecuteCallbackData(env_, errCode, callbackObj);
+    });
 }
 
 void TryAEInfoCallbackListener::OnTryAEInfoChangedCallbackAsync(TryAEInfo info) const

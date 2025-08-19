@@ -188,13 +188,14 @@ void FocusTrackingCallbackListener::OnFocusTrackingInfoCallback(FocusTrackingInf
 {
     MEDIA_DEBUG_LOG("%{public}s is called", __FUNCTION__);
 
-    napi_value result[ARGS_ONE] = { nullptr };
-    napi_value retVal = nullptr;
+    ExecuteCallbackScopeSafe("focusTrackingInfoAvailable", [&]() {
+        napi_value callbackObj;
+        napi_value errCode;
 
-    result[PARAM0] = CameraNapiFocusTrackingInfo(focusTrackingInfo).GenerateNapiValue(env_);
-
-    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_ONE, .argv = result, .result = &retVal };
-    ExecuteCallback("focusTrackingInfoAvailable", callbackNapiPara);
+        callbackObj = CameraNapiFocusTrackingInfo(focusTrackingInfo).GenerateNapiValue(env_);
+        errCode = CameraNapiUtils::GetUndefinedValue(env_);
+        return ExecuteCallbackData(env_, errCode, callbackObj);
+    });
 }
 
 void VideoSessionForSysNapi::RegisterLightStatusCallbackListener(
