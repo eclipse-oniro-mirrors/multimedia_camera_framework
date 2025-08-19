@@ -1157,7 +1157,7 @@ void HStreamCapture::InitCaptureThread()
     if (isYuvCapture_ && photoSubTask_ == nullptr) {
         photoSubTask_ = std::make_shared<DeferredProcessing::TaskManager>("photoSubTask", TASKMANAGER_FOUR, false);
     }
-    if (isYuvCapture_ && thumbnailTask_ == nullptr) {
+    if (thumbnailSurface_ && thumbnailTask_ == nullptr) {
         thumbnailTask_ = std::make_shared<DeferredProcessing::TaskManager>("thumbnailTask", TASKMANAGER_ONE, false);
     }
 }
