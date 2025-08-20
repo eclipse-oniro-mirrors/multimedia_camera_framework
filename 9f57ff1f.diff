@@ -1,0 +1,49 @@
+From 9f57ff1ff66feda0139baa40f46da23b62da7c2c Mon Sep 17 00:00:00 2001
+From: z30014341 <z30014341@notesmail.huawei.com/>
+Date: Tue, 19 Aug 2025 16:26:58 +0800
+Subject: [PATCH] TicketNo:DTS2025081538874 Description: fix default focus mode
+ Team:OTHERS Feature or Bugfix:Bugfix Binary Source: NA PrivateCode(Yes/No):No
+
+Change-Id: Ie1ecc94d32f89eb3f26c7a3139bb87b8a7868aaa
+---
+ frameworks/native/camera/base/src/session/capture_session.cpp | 4 ++--
+ .../camera/extension/src/session/profession_session.cpp       | 2 +-
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/frameworks/native/camera/base/src/session/capture_session.cpp b/frameworks/native/camera/base/src/session/capture_session.cpp
+index 1b7480ee21..fd9a0185ad 100644
+--- a/frameworks/native/camera/base/src/session/capture_session.cpp
++++ b/frameworks/native/camera/base/src/session/capture_session.cpp
+@@ -2126,14 +2126,14 @@ int32_t CaptureSession::SetFocusMode(FocusMode focusMode)
+ 
+ FocusMode CaptureSession::GetFocusMode()
+ {
+-    FocusMode focusMode = FOCUS_MODE_MANUAL;
++    FocusMode focusMode = FOCUS_MODE_CONTINUOUS_AUTO;
+     GetFocusMode(focusMode);
+     return focusMode;
+ }
+ 
+ int32_t CaptureSession::GetFocusMode(FocusMode& focusMode)
+ {
+-    focusMode = FOCUS_MODE_MANUAL;
++    focusMode = FOCUS_MODE_CONTINUOUS_AUTO;
+     CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+         "CaptureSession::GetFocusMode Session is not Commited");
+     auto inputDevice = GetInputDevice();
+diff --git a/frameworks/native/camera/extension/src/session/profession_session.cpp b/frameworks/native/camera/extension/src/session/profession_session.cpp
+index 7ecad7ec43..c43d2e8074 100644
+--- a/frameworks/native/camera/extension/src/session/profession_session.cpp
++++ b/frameworks/native/camera/extension/src/session/profession_session.cpp
+@@ -371,7 +371,7 @@ int32_t ProfessionSession::SetFocusMode(FocusMode focusMode)
+ 
+ int32_t ProfessionSession::GetFocusMode(FocusMode &focusMode)
+ {
+-    focusMode = FOCUS_MODE_MANUAL;
++    focusMode = FOCUS_MODE_CONTINUOUS_AUTO;
+     CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+         "ProfessionSession::GetFocusMode Session is not Commited");
+     auto inputDevice = GetInputDevice();
+-- 
+2.45.2.huawei.10
+
