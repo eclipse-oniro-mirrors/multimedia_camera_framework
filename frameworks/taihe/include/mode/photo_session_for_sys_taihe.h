@@ -28,8 +28,7 @@ namespace Camera {
 using namespace OHOS;
 using namespace ohos::multimedia::camera;
 class PhotoSessionForSysImpl : public PhotoSessionImpl, public SceneDetectionImpl, public ColorEffectImpl,
-                               public BeautyImpl, public EffectSuggestionImpl, public MacroImpl,
-                               public DepthFusionImpl {
+                               public BeautyImpl, public EffectSuggestionImpl, public DepthFusionImpl {
 public:
     explicit PhotoSessionForSysImpl(sptr<OHOS::CameraStandard::CaptureSession> &obj) : PhotoSessionImpl(obj) {}
     ~PhotoSessionForSysImpl() = default;

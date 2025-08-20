@@ -29,7 +29,7 @@ using namespace ohos::multimedia::camera;
 
 class VideoSessionImpl : public SessionImpl, public FlashImpl, public ZoomImpl, public StabilizationImpl,
                          public AutoExposureImpl, public ColorManagementImpl, public AutoDeviceSwitchImpl,
-                         public FocusImpl {
+                         public FocusImpl, public WhiteBalanceImpl, public MacroImpl {
 public:
     explicit VideoSessionImpl(sptr<OHOS::CameraStandard::CaptureSession> &obj) : SessionImpl(obj)
     {
