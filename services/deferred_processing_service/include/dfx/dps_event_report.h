@@ -48,6 +48,7 @@ const std::string EVENT_KEY_PARTITION_NAME = "PARTITION_NAME";
 const std::string EVENT_KEY_REMAIN_PARTITION_SIZE = "REMAIN_PARTITION_SIZE";
 const std::string EVENT_KEY_FILE_OR_FOLDER_PAT = "FILE_OR_FOLDER_PATH";
 const std::string EVENT_KEY_FILE_OR_FOLDER_SIZE = "FILE_OR_FOLDER_SIZE";
+const std::string EVENT_KEY_MEMORY_SIZE = "AVAILABLEMEMORYSIZE";
 const std::string COMPONENT_NAME = "camera_framework";
 const std::string PARTITION_NAME = "/data";
 
@@ -91,7 +92,7 @@ public:
     }
     void ReportOperateImage(const std::string& imageId, int32_t userId, DPSEventInfo& dpsEventInfo);
     void ReportImageProcessResult(const std::string& imageId, int32_t userId, uint64_t endTime = 0);
-    void ReportImageModeChange(ExecutionMode executionMode);
+    void ReportImageModeChange(ExecutionMode executionMode, int32_t memorySize);
     void ReportImageException(const std::string& imageId, int32_t userId);
     void ReportPartitionUsage();
     void SetEventInfo(const std::string& imageId, int32_t userId);

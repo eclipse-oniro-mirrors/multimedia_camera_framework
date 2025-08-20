@@ -22,6 +22,7 @@
 #include "dp_utils.h"
 #include "dps.h"
 #include "dps_event_report.h"
+#include "events_info.h"
 #include "photo_process_command.h"
 
 namespace OHOS {
@@ -102,9 +103,10 @@ void DeferredPhotoProcessor::DoProcess(const DeferredPhotoJobPtr& job)
     job->Start(timerId);
     result_->DeRecordHigh(imageId);
     postProcessor_->SetExecutionMode(executionMode);
-    postProcessor_->ProcessImage(imageId);
     DPSEventReport::GetInstance().UpdateExecutionMode(imageId, userId_, executionMode);
-    DPSEventReport::GetInstance().ReportImageModeChange(executionMode);
+    DPSEventReport::GetInstance().ReportImageModeChange(executionMode,
+        EventsInfo::GetInstance().GetAvailableMemory());
+    postProcessor_->ProcessImage(imageId);
 }
 
 void DeferredPhotoProcessor::OnProcessSuccess(const int32_t userId, const std::string& imageId,

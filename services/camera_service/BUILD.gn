@@ -218,7 +218,6 @@ ohos_shared_library("camera_service") {
     "libxml2:libxml2",
     "media_foundation:native_media_core",
     "media_library:media_library",
-    "memmgr:memmgrclient",
     "openssl:libcrypto_shared",
     "os_account:libaccountkits",
     "os_account:os_account_innerkits",
@@ -241,8 +240,8 @@ ohos_shared_library("camera_service") {
     defines += [ "DEVICE_MANAGER" ]
   }
 
-  if (defined(global_parts_info) &&
-      defined(global_parts_info.resourceschedule_memmgr_override)) {
+  if (use_memmgr_override) {
+    external_deps += [ "memmgr:memmgrclient" ]
     defines += [ "MEMMGR_OVERRID" ]
   }
 

@@ -51,6 +51,12 @@ PhotoSyncCommand::PhotoSyncCommand(const int32_t userId,
     DP_DEBUG_LOG("PhotoSyncCommand, photo job num: %{public}d", static_cast<int32_t>(imageIds_.size()));
 }
 
+PhotoSyncCommand::~PhotoSyncCommand()
+{
+    DP_DEBUG_LOG("entered.");
+    imageIds_.clear();
+}
+
 int32_t PhotoSyncCommand::Executing()
 {
     int32_t ret = Initialize();
@@ -97,6 +103,12 @@ VideoSyncCommand::VideoSyncCommand(const int32_t userId,
     DP_DEBUG_LOG("VideoSyncCommand, video job num: %{public}d", static_cast<int32_t>(videoIds_.size()));
 }
 
+VideoSyncCommand::~VideoSyncCommand()
+{
+    DP_DEBUG_LOG("entered.");
+    videoIds_.clear();
+}
+
 int32_t VideoSyncCommand::Executing()
 {
     int32_t ret = Initialize();
@@ -107,8 +119,8 @@ int32_t VideoSyncCommand::Executing()
     auto processor = schedulerManager_->GetVideoProcessor(userId_);
     DP_CHECK_ERROR_RETURN_RET_LOG(processor == nullptr, DP_NULL_POINTER, "VideoProcessor is nullptr.");
 
-    std::vector<std::string> pendingVidoes;
-    bool isSuccess = processor->GetPendingVideos(pendingVidoes);
+    std::vector<std::string> hdiVideoIds;
+    bool isSuccess = processor->GetPendingVideos(hdiVideoIds);
     if (!isSuccess) {
         for (const auto& it : videoIds_) {
             processor->AddVideo(it.first, it.second->srcFd_, it.second->dstFd_);
@@ -116,15 +128,12 @@ int32_t VideoSyncCommand::Executing()
         return DP_OK;
     }
 
-    std::set<std::string> hdiVideoIds(pendingVidoes.begin(), pendingVidoes.end());
     for (const auto& videoId : hdiVideoIds) {
         // LCOV_EXCL_START
         auto item = videoIds_.find(videoId);
         if (item != videoIds_.end()) {
             processor->AddVideo(videoId, item->second->srcFd_, item->second->dstFd_);
             videoIds_.erase(videoId);
-        } else {
-            processor->RemoveVideo(videoId, false);
         }
         // LCOV_EXCL_STOP
     }
@@ -136,7 +145,6 @@ int32_t VideoSyncCommand::Executing()
             callbacks->OnError(it.first, static_cast<int32_t>(ErrorCode::ERROR_VIDEO_PROC_INVALID_VIDEO_ID));
         }
     }
-    pendingVidoes.clear();
     hdiVideoIds.clear();
     return DP_OK;
 }

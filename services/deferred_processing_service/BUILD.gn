@@ -214,6 +214,11 @@ if (use_power_manager) {
   _common_defines += [ "CAMERA_USE_POWER" ]
 }
 
+if (use_memmgr_override) {
+  _common_external_deps += [ "memmgr:memmgrclient" ]
+  _common_defines += [ "MEMMGR_OVERRID" ]
+}
+
 ohos_shared_library("deferred_processing_service") {
   sources = _common_sources
   include_dirs = _common_include_dirs

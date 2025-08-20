@@ -43,6 +43,7 @@ class PhotoSyncCommand : public SyncCommand {
 public:
     PhotoSyncCommand(const int32_t userId,
         const std::unordered_map<std::string, std::shared_ptr<DeferredPhotoProcessingSession::PhotoInfo>>& imageIds);
+    ~PhotoSyncCommand() override;
 
 protected:
     int32_t Executing() override;
@@ -55,6 +56,7 @@ class VideoSyncCommand : public SyncCommand {
 public:
     VideoSyncCommand(const int32_t userId,
         const std::unordered_map<std::string, std::shared_ptr<DeferredVideoProcessingSession::VideoInfo>>& videoIds);
+    ~VideoSyncCommand() override;
 
 protected:
     int32_t Executing() override;

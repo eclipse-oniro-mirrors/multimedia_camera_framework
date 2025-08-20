@@ -20,7 +20,6 @@
 #include <set>
 #include "hcamera_device.h"
 #include "camera_util.h"
-#include "mem_mgr_client.h"
 #include "safe_map.h"
 
 namespace OHOS {
