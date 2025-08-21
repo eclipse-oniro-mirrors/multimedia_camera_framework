@@ -28,7 +28,7 @@ using namespace OHOS;
 using namespace ohos::multimedia::camera;
 
 class SecureSessionImpl : public SessionImpl, public FlashImpl, public ZoomImpl, public FocusImpl,
-                          public AutoExposureImpl {
+                          public AutoExposureImpl, public WhiteBalanceImpl {
 public:
     explicit SecureSessionImpl(sptr<OHOS::CameraStandard::CaptureSession> &obj) : SessionImpl(obj)
     {

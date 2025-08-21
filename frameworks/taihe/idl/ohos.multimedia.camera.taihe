@@ -656,10 +656,11 @@ enum EffectSuggestionType: i32 {
   EFFECT_SUGGESTION_PORTRAIT = 1,
   EFFECT_SUGGESTION_FOOD = 2,
   EFFECT_SUGGESTION_SKY = 3,
-  EFFECT_SUGGESTION_SUNRISE_SUNSET = 4
+  EFFECT_SUGGESTION_SUNRISE_SUNSET = 4,
+  EFFECT_SUGGESTION_STAGE = 5
 }
 
-interface PhotoSession : Session, Flash, Zoom, AutoExposure, AutoDeviceSwitch, ColorManagement, Focus {
+interface PhotoSession : Session, Flash, Zoom, AutoExposure, AutoDeviceSwitch, ColorManagement, Focus, Macro, WhiteBalance {
   Preconfig(preconfigType: PreconfigType, preconfigRatio: Optional<PreconfigRatio>): void;
   CanPreconfig(preconfigType: PreconfigType, preconfigRatio: Optional<PreconfigRatio>): bool;
   @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>)=> void): void;")
@@ -846,7 +847,7 @@ struct FocusTrackingInfo {
   trackingRegion: Rect;
 }
 
-interface VideoSession : Session, Flash, Zoom, Stabilization, ColorManagement, AutoExposure, AutoDeviceSwitch, Focus {
+interface VideoSession : Session, Flash, Zoom, Stabilization, ColorManagement, AutoExposure, AutoDeviceSwitch, Focus, WhiteBalance, Macro {
   Preconfig(preconfigType: PreconfigType, preconfigRatio: Optional<PreconfigRatio>): void;
   CanPreconfig(preconfigType: PreconfigType, preconfigRatio: Optional<PreconfigRatio>): bool;
   @!sts_inject_into_interface("on(type: string, callback: (data: object)=> void): void;")
@@ -942,7 +943,7 @@ interface VideoConflictFunctions : ZoomQuery, MacroQuery {
 interface VideoFunctions : FlashQuery, AutoExposureQuery, ManualExposureQuery, FocusQuery, ZoomQuery, StabilizationQuery, BeautyQuery, ColorEffectQuery, ColorManagementQuery, MacroQuery, SceneDetectionQuery {
 }
 
-interface VideoSessionForSys : VideoSession, Beauty, ColorEffect, ColorManagement, Macro, Aperture, ColorReservation {
+interface VideoSessionForSys : VideoSession, Beauty, ColorEffect, ColorManagement, Macro, Aperture, ColorReservation, EffectSuggestion {
   @!sts_inject_into_interface("on(type: string, callback: (data: object)=> void): void;")
   @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>, data: object)=> void): void;")
   @!sts_inject_into_class("""on(type: string, callback: object): void {
@@ -1739,7 +1740,7 @@ struct Rect {
   height: f64;
 }
 
-interface SecureSession : Session, Flash, AutoExposure, Focus, Zoom {
+interface SecureSession : Session, Flash, AutoExposure, Focus, Zoom, WhiteBalance {
   AddSecureOutput(previewOutput: PreviewOutput): void;
 
   @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>)=> void);")
