@@ -99,13 +99,15 @@ public:
     int32_t GetZoomPointInfos(std::vector<ZoomPointInfo>& zoomPointInfoList);
 
     /**
-     * @brief according type to get the strength.
+     * @brief Gets the beauty effect in use.
+     * @param type The type of beauty effect.
+     * @return Returns errCode.
      */
     int32_t GetBeauty(BeautyType type);
 
     /**
      * @brief Sets a portrait theme type for a camera device.
-     * @param type PortraitTheme type to be sety.
+     * @param type PortraitTheme type to be set.
      * @return Returns errCode.
      */
     int32_t SetPortraitThemeType(PortraitThemeType type);

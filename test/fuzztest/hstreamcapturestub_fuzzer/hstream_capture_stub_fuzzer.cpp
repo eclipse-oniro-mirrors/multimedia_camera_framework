@@ -81,6 +81,7 @@ void HStreamCaptureStubFuzzer::HStreamCaptureStubFuzzTest1(FuzzedDataProvider &f
     sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
     CHECK_RETURN(photoSurface == nullptr);
     sptr<IBufferProducer> producer = photoSurface->GetProducer();
+    CHECK_RETURN_ELOG(!producer, "producer is nullptr");
     data.WriteInterfaceToken(g_interfaceToken);
     data.WriteString16(Str8ToStr16(fdp.ConsumeRandomLengthString(max_length)));
     data.WriteRemoteObject(producer->AsObject());
@@ -96,6 +97,7 @@ void HStreamCaptureStubFuzzer::HStreamCaptureStubFuzzTest2(FuzzedDataProvider &f
     sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
     CHECK_RETURN(photoSurface == nullptr);
     sptr<IBufferProducer> producer = photoSurface->GetProducer();
+    CHECK_RETURN_ELOG(!producer, "producer is nullptr");
     auto value = fdp.ConsumeBool();
     data.WriteInterfaceToken(g_interfaceToken);
     data.WriteInt32(value);
@@ -202,6 +204,7 @@ void HStreamCaptureStubFuzzer::HStreamCaptureStubFuzzTest11()
     MessageOption option;
     std::shared_ptr<OHOS::Camera::CameraMetadata> captureSettings =
         std::make_shared<OHOS::Camera::CameraMetadata>(NUM_10, NUM_100);
+    CHECK_RETURN_ELOG(!captureSettings, "captureSettings is nullptr");
     data.WriteInterfaceToken(g_interfaceToken);
     data.WriteParcelable(captureSettings.get());
     fuzz_->OnRemoteRequestInner(
@@ -224,8 +227,11 @@ void HStreamCaptureStubFuzzer::HStreamCaptureStubFuzzTest13()
     MessageParcel reply;
     MessageOption option;
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    CHECK_RETURN_ELOG(!samgr, "samgr is nullptr");
     auto object = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
+    CHECK_RETURN_ELOG(!object, "object is nullptr");
     auto proxy = std::make_shared<StreamCaptureCallbackProxy>(object);
+    CHECK_RETURN_ELOG(!proxy, "proxy is nullptr");
     data.WriteInterfaceToken(g_interfaceToken);
     data.WriteRemoteObject(proxy->AsObject());
     fuzz_->OnRemoteRequestInner(
@@ -278,8 +284,11 @@ void HStreamCaptureStubFuzzer::HStreamCaptureStubFuzzTest18()
     MessageParcel reply;
     MessageOption option;
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    CHECK_RETURN_ELOG(!samgr, "samgr is nullptr");
     auto object = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
+    CHECK_RETURN_ELOG(!object, "object is nullptr");
     auto proxy = std::make_shared<StreamCapturePhotoAssetCallbackProxy>(object);
+    CHECK_RETURN_ELOG(!proxy, "proxy is nullptr");
     data.WriteInterfaceToken(g_interfaceToken);
     data.WriteRemoteObject(proxy->AsObject());
     fuzz_->OnRemoteRequestInner(
@@ -317,6 +326,21 @@ void HStreamCaptureStubFuzzer::HStreamCaptureStubFuzzTest21()
         static_cast<uint32_t>(IStreamCaptureIpcCode::COMMAND_UN_SET_THUMBNAIL_CALLBACK), data, reply, option);
 }
 
+void HStreamCaptureStubFuzzer::HStreamCaptureStubFuzzTest22(FuzzedDataProvider &fdp)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    data.WriteInterfaceToken(g_interfaceToken);
+    sptr<CameraPhotoProxy> photoProxy = new(std::nothrow) CameraPhotoProxy();
+    CHECK_RETURN_ELOG(!photoProxy, "photoProxy is nullptr");
+    data.WriteParcelable(photoProxy);
+    int64_t timestamp = fdp.ConsumeIntegral<int64_t>();
+    data.WriteInt64(timestamp);
+    fuzz_->OnRemoteRequestInner(
+        static_cast<uint32_t>(IStreamCaptureIpcCode::COMMAND_CREATE_MEDIA_LIBRARY), data, reply, option);
+}
+
 void FuzzTest(const uint8_t *rawData, size_t size)
 {
     FuzzedDataProvider fdp(rawData, size);
@@ -347,6 +371,7 @@ void FuzzTest(const uint8_t *rawData, size_t size)
     hstreamCaptureStub->HStreamCaptureStubFuzzTest19();
     hstreamCaptureStub->HStreamCaptureStubFuzzTest20();
     hstreamCaptureStub->HStreamCaptureStubFuzzTest21();
+    hstreamCaptureStub->HStreamCaptureStubFuzzTest22(fdp);
 }
 }  // namespace CameraStandard
 }  // namespace OHOS

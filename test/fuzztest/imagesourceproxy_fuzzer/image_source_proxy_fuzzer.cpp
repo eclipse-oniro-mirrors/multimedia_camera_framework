@@ -45,6 +45,10 @@ void ImageSourceProxyFuzzer::ImageSourceProxyFuzzerTest(FuzzedDataProvider& fdp)
 
     Media::DecodeOptions decodeOpts;
     imageSourceProxyFuzz_->CreatePixelMap(decodeOpts, errorCode);
+    if (data != nullptr) {
+        free(data);
+        data = nullptr;
+    }
 }
 
 void Test(uint8_t* data, size_t size)

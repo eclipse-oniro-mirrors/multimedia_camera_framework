@@ -18,7 +18,6 @@
 #include "iconsumer_surface.h"
 #include "securec.h"
 #include "system_ability_definition.h"
-#include "securec.h"
 #include "iservice_registry.h"
 #include "token_setproc.h"
 #include <cstddef>

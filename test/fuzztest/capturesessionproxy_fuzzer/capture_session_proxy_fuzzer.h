@@ -31,6 +31,7 @@ public:
     static void CaptureSessionProxyFuzzTest5(FuzzedDataProvider &fdp);
     static void CaptureSessionProxyFuzzTest6();
     static void CaptureSessionProxyFuzzTest7(FuzzedDataProvider &fdp);
+    static void CaptureSessionProxyFuzzTest8(FuzzedDataProvider &fdp);
 };
 }  // namespace CameraStandard
 }  // namespace OHOS

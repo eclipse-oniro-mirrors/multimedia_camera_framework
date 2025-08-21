@@ -62,8 +62,11 @@ void HStreamRepeatStubFuzzer::HStreamRepeatStubFuzzTest3()
     MessageParcel reply;
     MessageOption option;
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    CHECK_RETURN_ELOG(!samgr, "samgr is nullptr");
     auto object = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
+    CHECK_RETURN_ELOG(!object, "object is nullptr");
     auto proxy = std::make_shared<StreamRepeatCallbackProxy>(object);
+    CHECK_RETURN_ELOG(!proxy, "proxy is nullptr");
     data.WriteInterfaceToken(g_interfaceToken);
     data.WriteRemoteObject(proxy->AsObject());
     fuzz_->OnRemoteRequestInner(
@@ -88,6 +91,7 @@ void HStreamRepeatStubFuzzer::HStreamRepeatStubFuzzTest5()
     sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
     CHECK_RETURN(photoSurface == nullptr);
     sptr<IBufferProducer> producer = photoSurface->GetProducer();
+    CHECK_RETURN_ELOG(!producer, "producer is nullptr");
     data.WriteInterfaceToken(g_interfaceToken);
     data.WriteRemoteObject(producer->AsObject());
     fuzz_->OnRemoteRequestInner(
@@ -179,6 +183,7 @@ void HStreamRepeatStubFuzzer::HStreamRepeatStubFuzzTest12(FuzzedDataProvider &fd
     sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
     CHECK_RETURN(photoSurface == nullptr);
     sptr<IBufferProducer> producer = photoSurface->GetProducer();
+    CHECK_RETURN_ELOG(!producer, "producer is nullptr");
     data.WriteInterfaceToken(g_interfaceToken);
     data.WriteInt32(videoMetaType);
     data.WriteRemoteObject(producer->AsObject());

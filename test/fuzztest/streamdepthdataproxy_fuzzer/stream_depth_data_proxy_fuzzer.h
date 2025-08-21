@@ -24,7 +24,8 @@ namespace CameraStandard {
 class StreamDepthDataProxyFuzz {
 public:
     static std::shared_ptr<StreamDepthDataProxy> fuzz_;
-    static void StreamDepthDataProxyTest();
+    static void StreamDepthDataProxyTest1();
+    static void StreamDepthDataProxyTest2(FuzzedDataProvider &fdp);
 };
 }  // namespace CameraStandard
 }  // namespace OHOS
