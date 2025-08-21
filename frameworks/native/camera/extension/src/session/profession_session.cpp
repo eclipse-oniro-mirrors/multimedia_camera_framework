@@ -821,7 +821,7 @@ void ProfessionSession::ProcessIsoChange(const std::shared_ptr<OHOS::Camera::Cam
         };
         std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
         if (isoInfoCallback_ != nullptr && item.data.ui32[0] != isoValue_) {
-            CHECK_EXECUTE(isoValue_ != 0, isoInfoCallback_->OnIsoInfoChanged(info));
+            isoInfoCallback_->OnIsoInfoChanged(info);
             isoValue_ = item.data.ui32[0];
         }
     }
