@@ -25,6 +25,7 @@
 #include "camera_napi_object.h"
 #include "js_native_api_types.h"
 #include "metadata_output.h"
+#include "camera_security_utils.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -157,6 +158,14 @@ CameraNapiObject& CameraNapiObjCameraOutputCapability::GetCameraNapiObject()
         supportedMetadataObjectTypes->emplace_back(static_cast<int32_t>(type));
     }
 
+    // Non-system applications do not return depthProfiles
+    if (!CameraSecurity::CheckSystemApp()) {
+        return *Hold<CameraNapiObject>(CameraNapiObject::CameraNapiObjFieldMap {
+            { "previewProfiles", previewProfiles },
+            { "photoProfiles", photoProfiles },
+            { "videoProfiles", videoProfiles },
+            { "supportedMetadataObjectTypes", supportedMetadataObjectTypes } });
+    }
     return *Hold<CameraNapiObject>(CameraNapiObject::CameraNapiObjFieldMap {
         { "previewProfiles", previewProfiles },
         { "photoProfiles", photoProfiles },
