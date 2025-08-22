@@ -90,6 +90,21 @@ public:
     int closeDelayed(int32_t delayTime);
 
     /**
+    * @brief Query whether sensor orientation change with fold state.
+    */
+    int IsPhysicalCameraOrientationVariable(bool* isVariable);
+
+    /**
+    * @brief Query sensor orientation of all fold state
+    */
+    int GetPhysicalCameraOrientation(uint32_t* orientation);
+
+    /**
+    * @brief Set UsePhysicalCameraOrientation
+    */
+    int SetUsePhysicalCameraOrientation(bool isUsed);
+
+    /**
     * @brief create new device control setting.
     */
     [[deprecated]] void LockForControl();
@@ -386,7 +401,8 @@ public:
         std::shared_ptr<OHOS::Camera::CameraMetadata> dstMetadata);
     void SwitchCameraDevice(sptr<ICameraDeviceService> &deviceObj, sptr<CameraDevice> &cameraObj);
     void InitCameraInput();
-    void GetMetadataFromService(sptr<CameraDevice> &cameraObj);
+    void GetMetadataFromService(sptr<CameraDevice> &cameraObj,
+        std::shared_ptr<OHOS::Camera::CameraMetadata>& metaData);
     void ControlAuxiliary(AuxiliaryType type, AuxiliaryStatus status);
     void RecoveryOldDevice();
     CameraConcurrentLimtedCapability limtedCapabilitySave_;
@@ -412,6 +428,9 @@ private:
     int32_t CameraDevicePhysicOpen(sptr<ICameraDeviceService> cameraDevicePhysic, int32_t cameraConcurrentType);
     void InputRemoveDeathRecipient();
     std::map<CameraPosition, camera_position_enum> positionMapping;
+    bool isVariable_ = false;
+    uint32_t staticOrientation_;
+    std::map<uint32_t, uint32_t> foldStateSensorOrientationMap_;
 };
 
 class CameraDeviceServiceCallback : public CameraDeviceServiceCallbackStub {

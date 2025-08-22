@@ -41,6 +41,12 @@ public:
 
     OHOS::sptr<OHOS::CameraStandard::CameraInput> GetInnerCameraInput();
 
+    Camera_ErrorCode IsPhysicalCameraOrientationVariable(bool* isVariable);
+
+    Camera_ErrorCode GetPhysicalCameraOrientation(uint32_t* orientation);
+
+    Camera_ErrorCode UsePhysicalCameraOrientation(bool isUsed);
+
 private:
     OHOS::sptr<OHOS::CameraStandard::CameraInput> innerCameraInput_;
 };

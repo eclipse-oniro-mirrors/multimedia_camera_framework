@@ -25,6 +25,7 @@
 #include "input/camera_manager.h"
 #include "metadata_common_utils.h"
 #include "capture_scene_const.h"
+#include "display_manager.h"
 #include "anonymization.h"
 
 using namespace std;
@@ -190,6 +191,7 @@ void CameraDevice::init(common_metadata_header_t* metadata)
     isPrelaunch_ = (cameraDeviceRet == CAM_META_SUCCESS && item.data.u8[0] == 1);
 
     InitLensEquivalentFocalLength(metadata);
+    InitFoldStateSensorOrientationMap(metadata);
 
     MEDIA_INFO_LOG("camera position: %{public}d, camera type: %{public}d, camera connection type: %{public}d, "
                    "camera foldScreen type: %{public}d, camera orientation: %{public}d, isretractable: %{public}d, "
@@ -211,6 +213,23 @@ void CameraDevice::InitLensEquivalentFocalLength(common_metadata_header_t* metad
     MEDIA_INFO_LOG("CameraDevice::InitLensEquivalentFocalLength, lensEquivalentFocalLength size: %{public}zu, "
         "lensEquivalentFocalLength: %{public}s", lensEquivalentFocalLength_.size(),
         Container2String(lensEquivalentFocalLength_.begin(), lensEquivalentFocalLength_.end()).c_str());
+}
+
+void CameraDevice::InitFoldStateSensorOrientationMap(common_metadata_header_t* metadata)
+{
+    camera_metadata_item item;
+    int ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_FOLD_STATE_SENSOR_ORIENTATION_MAP,
+        &item);
+    CHECK_RETURN_ELOG(ret != CAM_META_SUCCESS, "InitFoldStateSensorOrientationMap FindCameraMetadataItem Error");
+    uint32_t count = item.count;
+    CHECK_RETURN_ELOG(count % STEP_TWO, "InitFoldStateSensorOrientationMap FindCameraMetadataItem Count Error");
+    for (uint32_t index = 0; index < count / STEP_TWO; index++) {
+        uint32_t innerFoldState = static_cast<uint32_t>(item.data.i32[STEP_TWO * index]);
+        uint32_t innerOrientation = static_cast<uint32_t>(item.data.i32[STEP_TWO * index + STEP_ONE]);
+        foldStateSensorOrientationMap_[innerFoldState] = innerOrientation;
+        MEDIA_INFO_LOG("CameraDevice::InitFoldStateSensorOrientationMap foldStatus: %{public}d, "
+            "orientation:%{public}d", innerFoldState, innerOrientation);
+    }
 }
 
 std::string CameraDevice::GetID()
@@ -325,6 +344,29 @@ std::string CameraDevice::GetNetWorkId()
 }
 
 uint32_t CameraDevice::GetCameraOrientation()
+{
+    uint32_t cameraOrientation = cameraOrientation_;
+    if (usePhysicalCameraOrientation_) {
+        uint32_t curFoldStatus;
+        OHOS::Rosen::FoldDisplayMode displayMode = OHOS::Rosen::DisplayManager::GetInstance().GetFoldDisplayMode();
+        if (displayMode == OHOS::Rosen::FoldDisplayMode::GLOBAL_FULL) {
+            curFoldStatus = static_cast<uint32_t>(OHOS::Rosen::FoldStatus::FOLD_STATE_EXPAND_WITH_SECOND_EXPAND);
+        } else {
+            curFoldStatus = static_cast<uint32_t>(OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus());
+        }
+        auto itr = foldStateSensorOrientationMap_.find(curFoldStatus);
+        if (itr != foldStateSensorOrientationMap_.end()) {
+            cameraOrientation = itr->second;
+            MEDIA_DEBUG_LOG("CameraDevice::GetCameraOrientation foldStatus: %{public}d, orientation: %{public}d",
+                curFoldStatus, cameraOrientation);
+        } else {
+            MEDIA_ERR_LOG("CameraDevice::GetCameraOrientation foldStateSensorOrientationMap find Error!");
+        }
+    }
+    return cameraOrientation;
+}
+
+uint32_t CameraDevice::GetStaticCameraOrientation()
 {
     return cameraOrientation_;
 }
@@ -462,5 +504,16 @@ void CameraDevice::SetConcurrentDeviceType(bool changeType)
     isConcurrentDevice_ = changeType;
 }
 
+void CameraDevice::SetUsePhysicalCameraOrientation(bool isUsed)
+{
+    std::lock_guard<std::mutex> lock(usePhysicalCameraOrientationMutex_);
+    usePhysicalCameraOrientation_ = isUsed;
+}
+
+bool CameraDevice::GetUsePhysicalCameraOrientation()
+{
+    std::lock_guard<std::mutex> lock(usePhysicalCameraOrientationMutex_);
+    return usePhysicalCameraOrientation_;
+}
 } // namespace CameraStandard
 } // namespace OHOS

@@ -422,6 +422,9 @@ int32_t HStreamOperator::LinkInputAndOutputs(const std::shared_ptr<OHOS::Camera:
         stream->SetStreamInfo(curStreamInfo);
         CHECK_EXECUTE(stream->GetStreamType() != StreamType::METADATA,
             allStreamInfos.push_back(curStreamInfo));
+        CHECK_RETURN_RET_ELOG(cameraDevice_ == nullptr, 0, "HStreamOperator::GetMovingPhotoBufferDuration() "
+                "cameraDevice is null");
+        stream->SetUsePhysicalCameraOrientation(cameraDevice_->GetUsePhysicalCameraOrientation());
     }
 
     rc = CreateAndCommitStreams(allStreamInfos, settings, opMode);

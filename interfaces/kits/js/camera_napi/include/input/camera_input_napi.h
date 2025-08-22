@@ -101,6 +101,9 @@ public:
     static napi_value Once(napi_env env, napi_callback_info info);
     static napi_value UsedAsPosition(napi_env env, napi_callback_info info);
     static napi_value ControlAuxiliary(napi_env env, napi_callback_info info);
+    static napi_value IsPhysicalCameraOrientationVariable(napi_env env, napi_callback_info info);
+    static napi_value GetPhysicalCameraOrientation(napi_env env, napi_callback_info info);
+    static napi_value UsePhysicalCameraOrientation(napi_env env, napi_callback_info info);
 
     const EmitterFunctions& GetEmitterFunctions() override;
 

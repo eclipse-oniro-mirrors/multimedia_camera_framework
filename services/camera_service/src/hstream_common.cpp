@@ -298,6 +298,13 @@ void HStreamCommon::DumpStreamInfo(CameraInfoDumper& infoDumper)
     infoDumper.Pop();
 }
 
+int32_t HStreamCommon::SetUsePhysicalCameraOrientation(bool isUsed)
+{
+    usePhysicalCameraOrientation_ = isUsed;
+    MEDIA_INFO_LOG("HStreamCommon::SetUsePhysicalCameraOrientation isUsed %{public}d", isUsed);
+    return CAMERA_OK;
+}
+
 void HStreamCommon::PrintCaptureDebugLog(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureMetadataSetting_)
 {
     CHECK_RETURN_ELOG(captureMetadataSetting_ == nullptr,

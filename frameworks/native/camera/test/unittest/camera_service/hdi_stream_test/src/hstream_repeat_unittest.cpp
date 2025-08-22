@@ -390,7 +390,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_010, TestSize.Level1)
  * FunctionPoints: NA
  * EnvConditions: NA
  * CaseDescription: Test ProcessCameraSetRotation for front camera with 180-degree sensor orientation.
- *    The expected sensor orientation is 0.
+ *    The expected sensor orientation is 180.
  */
 HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_011, TestSize.Level1)
 {
@@ -398,9 +398,8 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_011, TestSize.Level1)
     ASSERT_NE(streamRepeat, nullptr);
     streamRepeat->setCameraRotation_ = STREAM_ROTATE_180;
     int32_t sensorOrientation = STREAM_ROTATE_180;
-    camera_position_enum_t cameraPosition = OHOS_CAMERA_POSITION_FRONT;
-    streamRepeat->ProcessCameraSetRotation(sensorOrientation, cameraPosition);
-    EXPECT_EQ(sensorOrientation, STREAM_ROTATE_0);
+    streamRepeat->ProcessCameraSetRotation(sensorOrientation);
+    EXPECT_EQ(sensorOrientation, STREAM_ROTATE_180);
 }
 
 /*
@@ -418,8 +417,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_012, TestSize.Level1)
     ASSERT_NE(streamRepeat, nullptr);
     int32_t sensorOrientation = STREAM_ROTATE_90;
     streamRepeat->setCameraRotation_ = STREAM_ROTATE_90;
-    camera_position_enum_t cameraPosition = OHOS_CAMERA_POSITION_BACK;
-    streamRepeat->ProcessCameraSetRotation(sensorOrientation, cameraPosition);
+    streamRepeat->ProcessCameraSetRotation(sensorOrientation);
     EXPECT_EQ(sensorOrientation, STREAM_ROTATE_270);
 }
 

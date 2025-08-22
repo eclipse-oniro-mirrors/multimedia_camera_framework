@@ -196,6 +196,8 @@ public:
     int32_t GetCameraStorageSize(int64_t& size) override;
     int32_t CallbackEnter([[maybe_unused]] uint32_t code) override;
     int32_t CallbackExit([[maybe_unused]] uint32_t code, [[maybe_unused]] int32_t result) override;
+    int32_t SetUsePhysicalCameraOrientation(bool isUsed) override;
+    bool GetUsePhysicalCameraOrientation();
 protected:
     explicit HCameraService(sptr<HCameraHostManager> cameraHostManager);
     void OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId) override;
@@ -310,6 +312,7 @@ private:
     mutex muteCbMutex_;
     mutex serviceStatusMutex_;
     mutex controlCenterStatusMutex_;
+    mutex usePhysicalCameraOrientationMutex_;
     recursive_mutex torchCbMutex_;
     recursive_mutex foldCbMutex_;
     TorchStatus torchStatus_ = TorchStatus::TORCH_STATUS_UNAVAILABLE;
@@ -339,6 +342,7 @@ private:
     bool isControlCenterEnabled_ = false;
     bool controlCenterPrecondition = true;
     bool deviceControlCenterAbility = false;
+    bool usePhysicalCameraOrientation_ = false;
     string preCameraId_;
     string preCameraClient_;
     std::shared_ptr<CameraDataShareHelper> cameraDataShareHelper_;

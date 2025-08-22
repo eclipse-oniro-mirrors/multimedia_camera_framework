@@ -94,6 +94,8 @@ public:
         return hdiStreamId_;
     }
 
+    int32_t SetUsePhysicalCameraOrientation(bool isUsed);
+
     int32_t format_;
     int32_t width_;
     int32_t height_;
@@ -135,6 +137,7 @@ protected:
     sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperatorOffline_ = nullptr;
 
     int32_t captureIdForConfirmCapture_ = CAPTURE_ID_UNSET;
+    bool usePhysicalCameraOrientation_ = false;
 
 private:
     StreamType streamType_;

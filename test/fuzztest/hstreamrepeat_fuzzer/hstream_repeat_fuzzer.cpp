@@ -103,7 +103,7 @@ void HStreamRepeatFuzzer::HStreamRepeatFuzzTest2(FuzzedDataProvider &fdp)
     fuzz_->ProcessCameraPosition(streamRotation, cameraPosition);
     fuzz_->ProcessFixedTransform(sensorOrientation, cameraPosition);
     fuzz_->ProcessFixedDiffDeviceTransform(sensorOrientation, cameraPosition);
-    fuzz_->ProcessCameraSetRotation(sensorOrientation, cameraPosition);
+    fuzz_->ProcessCameraSetRotation(sensorOrientation);
     camera_position_enum_t cameraPosition1 = OHOS_CAMERA_POSITION_BACK;
     int32_t sensorOrientation1 = ((fdp.ConsumeIntegral<int32_t>() % 360) + 360) % 360;
     fuzz_->ProcessVerticalCameraPosition(sensorOrientation1, cameraPosition1);
@@ -111,7 +111,7 @@ void HStreamRepeatFuzzer::HStreamRepeatFuzzTest2(FuzzedDataProvider &fdp)
     fuzz_->ProcessCameraPosition(streamRotation1, cameraPosition1);
     fuzz_->ProcessFixedTransform(sensorOrientation1, cameraPosition1);
     fuzz_->ProcessFixedDiffDeviceTransform(sensorOrientation1, cameraPosition1);
-    fuzz_->ProcessCameraSetRotation(sensorOrientation1, cameraPosition1);
+    fuzz_->ProcessCameraSetRotation(sensorOrientation1);
 }
 
 void HStreamRepeatFuzzer::HStreamRepeatFuzzTest3(FuzzedDataProvider &fdp)

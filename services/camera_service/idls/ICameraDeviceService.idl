@@ -34,4 +34,5 @@ interface ICameraDeviceService {
    [ipccode 12] void Open([in] int concurrentTypeofcamera);
    [ipccode 13] void SetDeviceRetryTime();
    [ipccode 14] void OpenSecureCamera([out] unsigned long secureSeqId);
+   [ipccode 15] void SetUsePhysicalCameraOrientation([in] boolean isUsed);
 }

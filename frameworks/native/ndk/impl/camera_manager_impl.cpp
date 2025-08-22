@@ -717,7 +717,7 @@ Camera_ErrorCode Camera_Manager::GetCameraOrientation(Camera_Device* camera, uin
     }
 
     CHECK_RETURN_RET(cameraDevice == nullptr, CAMERA_SERVICE_FATAL_ERROR);
-    *orientation = cameraDevice->GetCameraOrientation();
+    *orientation = cameraDevice->GetStaticCameraOrientation();
     return CAMERA_OK;
 }
 

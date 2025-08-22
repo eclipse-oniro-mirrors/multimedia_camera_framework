@@ -103,7 +103,7 @@ private:
     void ProcessFixedDiffDeviceTransform(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition);
     void ProcessCameraPosition(int32_t& streamRotation, camera_position_enum_t& cameraPosition);
     int32_t HandleCameraTransform(int32_t& streamRotation, bool isFrontCamera);
-    void ProcessCameraSetRotation(int32_t& streamRotation, camera_position_enum_t& cameraPosition);
+    void ProcessCameraSetRotation(int32_t& streamRotation);
     void UpdateVideoSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> settings, uint8_t mirror = 0);
     void UpdateFrameRateSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> settings);
     void UpdateFrameMuteSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> &settings,

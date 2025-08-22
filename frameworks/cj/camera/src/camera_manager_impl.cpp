@@ -101,7 +101,7 @@ CArrCJCameraDevice CJCameraManager::GetSupportedCameras(int32_t *errCode)
         supportedCameras[i].cameraPosition = static_cast<int32_t>(cameraDevice->GetPosition());
         supportedCameras[i].cameraType = static_cast<int32_t>(cameraDevice->GetCameraType());
         supportedCameras[i].connectionType = static_cast<int32_t>(cameraDevice->GetConnectionType());
-        supportedCameras[i].cameraOrientation = cameraDevice->GetCameraOrientation();
+        supportedCameras[i].cameraOrientation = cameraDevice->GetStaticCameraOrientation();
         i++;
     }
 

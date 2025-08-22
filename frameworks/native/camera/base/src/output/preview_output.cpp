@@ -811,6 +811,11 @@ int32_t PreviewOutput::SetPreviewRotation(int32_t imageRotation, bool isDisplayL
     CHECK_RETURN_RET_ELOG(cameraObj == nullptr, SERVICE_FATL_ERROR,
         "PreviewOutput SetPreviewRotation error!, cameraObj is nullptr");
     sensorOrientation = static_cast<int32_t>(cameraObj->GetCameraOrientation());
+    CameraPosition cameraPosition = cameraObj->GetPosition();
+    if (cameraPosition == CAMERA_POSITION_FRONT) {
+        int32_t displayrotation = (imageRotation - sensorOrientation + CAPTURE_ROTATION_BASE) % CAPTURE_ROTATION_BASE;
+        imageRotation = (sensorOrientation - displayrotation + CAPTURE_ROTATION_BASE) % CAPTURE_ROTATION_BASE;
+    }
     result = isDisplayLocked ? ImageRotation(sensorOrientation) : ImageRotation(imageRotation);
     MEDIA_INFO_LOG("PreviewOutput SetPreviewRotation :result %{public}d, sensorOrientation:%{public}d",
         result, sensorOrientation);
