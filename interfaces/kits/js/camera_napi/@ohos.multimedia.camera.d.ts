@@ -1828,6 +1828,39 @@ function getCameraManager(context: Context): CameraManager;
      * @since 12
      */
     off(type: 'cameraOcclusionDetection', callback?: AsyncCallback<CameraOcclusionDetectionResult>): void;
+
+    /**
+     * Query whether sensor orientation change with fold state.
+     *
+     * @returns { boolean } this value that specifies whether sensor orientation change with fold state.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 20
+     */
+    IsPhysicalCameraOrientationVariable(): boolean;
+
+    /**
+     * Query sensor orientation of all fold state.
+     *
+     * @returns { Array<number> } The sensor orientation map.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 20
+     */
+    getPhysicalCameraOrientation(): number;
+
+    /**
+     * Set usePhysicalCameraOrientation.
+     *
+     * @param { boolean } isUsed - Use Truth Camera Orientation.
+     * @throws { BusinessError } 7400107 - Can not use camera cause of conflict.
+     * @throws { BusinessError } 7400108 - Camera disabled cause of security reason.
+     * @throws { BusinessError } 7400201 - Camera service fatal error.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 20
+     */
+    usePhysicalCameraOrientation(isUsed: boolean): void;
   }
 
   /**

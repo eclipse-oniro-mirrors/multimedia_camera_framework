@@ -39,6 +39,8 @@
 namespace OHOS {
 namespace CameraStandard {
 class HStreamCommon;
+static const int32_t MAP_STEP_ONE = 1;
+static const int32_t MAP_STEP_TWO = 2;
 static const int32_t STREAM_ROTATE_0 = 0;
 static const int32_t STREAM_ROTATE_90 = 90;
 static const int32_t STREAM_ROTATE_180 = 180;
@@ -249,6 +251,10 @@ bool isIntegerRegex(const std::string& input);
 std::string GetValidCameraId(std::string& cameraId);
 std::string ControlCenterMapToString(const std::map<std::string, std::array<float, CONTROL_CENTER_DATA_SIZE>> &data);
 std::map<std::string, std::array<float, CONTROL_CENTER_DATA_SIZE>> StringToControlCenterMap(const std::string& str);
+int32_t GetCorrectedCameraOrientation(bool usePhysicalCameraOrientation,
+    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility, int32_t& sensorOrientation);
+int32_t GetPhysicalCameraOrientation(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility,
+    int32_t& sensorOrientation);
 } // namespace CameraStandard
 } // namespace OHOS
 #endif // OHOS_CAMERA_UTIL_H

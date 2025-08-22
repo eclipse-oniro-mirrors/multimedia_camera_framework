@@ -29,6 +29,7 @@
 #include "metadata_common_utils.h"
 #include "timer/camera_deferred_timer.h"
 #include "timer/time_broker.h"
+#include "display_manager.h"
 #include "camera_counting_timer.h"
 
 namespace OHOS {
@@ -100,13 +101,13 @@ CameraInput::CameraInput(sptr<ICameraDeviceService> &deviceObj,
     InitCameraInput();
 }
 
-void CameraInput::GetMetadataFromService(sptr<CameraDevice> &device)
+void CameraInput::GetMetadataFromService(sptr<CameraDevice> &device,
+    std::shared_ptr<OHOS::Camera::CameraMetadata>& metaData)
 {
     CHECK_RETURN_ELOG(device == nullptr, "CameraInput::GetMetadataFromService device is nullptr");
     auto cameraId = device->GetID();
     auto serviceProxy = CameraManager::GetInstance()->GetServiceProxy();
     CHECK_RETURN_ELOG(serviceProxy == nullptr, "CameraInput::GetMetadataFromService serviceProxy is null");
-    std::shared_ptr<OHOS::Camera::CameraMetadata> metaData;
     serviceProxy->GetCameraAbility(cameraId, metaData);
     CHECK_RETURN_ELOG(metaData == nullptr,
         "CameraInput::GetMetadataFromService GetDeviceMetadata failed");
@@ -116,9 +117,10 @@ void CameraInput::InitCameraInput()
 {
     auto cameraObj = GetCameraDeviceInfo();
     auto deviceObj = GetCameraDevice();
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metaData;
     if (cameraObj) {
         MEDIA_INFO_LOG("CameraInput::InitCameraInput Contructor Camera: %{public}s", cameraObj->GetID().c_str());
-        GetMetadataFromService(cameraObj);
+        GetMetadataFromService(cameraObj, metaData);
     }
     CameraDeviceSvcCallback_ = new(std::nothrow) CameraDeviceServiceCallback(this);
     CHECK_RETURN_ELOG(CameraDeviceSvcCallback_ == nullptr, "Failed to new CameraDeviceSvcCallback_!");
@@ -136,6 +138,26 @@ void CameraInput::InitCameraInput()
     });
     bool result = object->AddDeathRecipient(deathRecipient_);
     CHECK_RETURN_ELOG(!result, "CameraInput::InitCameraInput failed to add deathRecipient");
+
+    camera_metadata_item item;
+    int32_t retCode = OHOS::Camera::FindCameraMetadataItem(metaData->get(), OHOS_SENSOR_ORIENTATION, &item);
+    CHECK_EXECUTE(retCode == CAM_META_SUCCESS, staticOrientation_ = static_cast<uint32_t>(item.data.i32[0]));
+
+    retCode = OHOS::Camera::FindCameraMetadataItem(metaData->get(), OHOS_ABILITY_SENSOR_ORIENTATION_VARIABLE, &item);
+    CHECK_EXECUTE(retCode == CAM_META_SUCCESS, isVariable_ = item.count > 0 && item.data.u8[0]);
+
+    retCode = OHOS::Camera::FindCameraMetadataItem(metaData->get(), OHOS_FOLD_STATE_SENSOR_ORIENTATION_MAP, &item);
+    CHECK_RETURN_ELOG(retCode != CAM_META_SUCCESS, "InitCameraInput OHOS_FOLD_STATE_SENSOR_ORIENTATION_MAP "
+        "FindCameraMetadataItem Error");
+    uint32_t count = item.count;
+    CHECK_RETURN_ELOG(count % STEP_TWO, "InitCameraInput FindCameraMetadataItem Count Error");
+    for (uint32_t index = 0; index < count / STEP_TWO; index++) {
+        uint32_t innerFoldState = static_cast<uint32_t>(item.data.i32[STEP_TWO * index]);
+        uint32_t innerOrientation = static_cast<uint32_t>(item.data.i32[STEP_TWO * index + STEP_ONE]);
+        foldStateSensorOrientationMap_[innerFoldState] = innerOrientation;
+        MEDIA_INFO_LOG("CameraInput::InitCameraInput foldStatus: %{public}d, orientation:%{public}d",
+            innerFoldState, innerOrientation);
+    }
     CameraCountingTimer::GetInstance().IncreaseUserCount();
 }
 
@@ -670,6 +692,57 @@ void CameraInput::RecoveryOldDevice()
         }
         cameraObjnow->isConcurrentLimted_ = 0;
     }
+}
+
+int CameraInput::IsPhysicalCameraOrientationVariable(bool* isVariable)
+{
+    *isVariable = isVariable_ && !foldStateSensorOrientationMap_.empty();
+    MEDIA_INFO_LOG("CameraInput::IsPhysicalCameraOrientationVariable isVariable: %{public}d", *isVariable);
+    return ServiceToCameraError(CAMERA_OK);
+}
+
+int CameraInput::GetPhysicalCameraOrientation(uint32_t* orientation)
+{
+    *orientation = staticOrientation_;
+    if (isVariable_) {
+        uint32_t curFoldStatus;
+        OHOS::Rosen::FoldDisplayMode displayMode = OHOS::Rosen::DisplayManager::GetInstance().GetFoldDisplayMode();
+        if (displayMode == OHOS::Rosen::FoldDisplayMode::GLOBAL_FULL) {
+            curFoldStatus = static_cast<uint32_t>(OHOS::Rosen::FoldStatus::FOLD_STATE_EXPAND_WITH_SECOND_EXPAND);
+        } else {
+            curFoldStatus = static_cast<uint32_t>(OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus());
+        }
+        auto itr = foldStateSensorOrientationMap_.find(curFoldStatus);
+        CHECK_RETURN_RET_ELOG(itr == foldStateSensorOrientationMap_.end(),
+            ServiceToCameraError(CAMERA_OK), "GetPhysicalCameraOrientation Get Orientation From Map Error");
+        *orientation = itr->second;
+    }
+    return ServiceToCameraError(CAMERA_OK);
+}
+
+int CameraInput::SetUsePhysicalCameraOrientation(bool isUsed)
+{
+    MEDIA_INFO_LOG("CameraInput::UsePhysicalCameraOrientation isUsed: %{public}d", isUsed);
+    CHECK_RETURN_RET(!isUsed, ServiceToCameraError(CAMERA_OK));
+    if (!isVariable_) {
+        MEDIA_ERR_LOG("CameraInput::SetUsePhysicalCameraOrientation isVariable is false");
+        return ServiceToCameraError(CAMERA_OPERATION_NOT_ALLOWED);
+    }
+    auto cameraObj = GetCameraDeviceInfo();
+    CHECK_RETURN_RET_ELOG(cameraObj == nullptr, ServiceToCameraError(CAMERA_INVALID_ARG),
+        "SetUsePhysicalCameraOrientation cameraObj is nullptr");
+    cameraObj->SetUsePhysicalCameraOrientation(isUsed);
+    auto deviceObj = GetCameraDevice();
+    if (deviceObj) {
+        int32_t retCode = deviceObj->SetUsePhysicalCameraOrientation(isUsed);
+        CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, ServiceToCameraError(retCode),
+            "SetUsePhysicalCameraOrientation is failed");
+    }
+    auto serviceProxy = CameraManager::GetInstance()->GetServiceProxy();
+    CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, ServiceToCameraError(CAMERA_INVALID_ARG),
+        "SetUsePhysicalCameraOrientation serviceProxy is null");
+    serviceProxy->SetUsePhysicalCameraOrientation(isUsed);
+    return ServiceToCameraError(CAMERA_OK);
 }
 } // namespace CameraStandard
 } // namespace OHOS

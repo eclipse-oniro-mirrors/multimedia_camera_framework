@@ -761,10 +761,9 @@ void HStreamRepeat::SetStreamTransform(int disPlayRotation)
     {
         std::lock_guard<std::mutex> lock(cameraAbilityLock_);
         CHECK_RETURN(cameraAbility_ == nullptr);
-        int ret = OHOS::Camera::FindCameraMetadataItem(cameraAbility_->get(), OHOS_SENSOR_ORIENTATION, &item);
-        CHECK_RETURN_ELOG(ret != CAM_META_SUCCESS,
-            "HStreamRepeat::SetStreamTransform get sensor orientation failed");
-        sensorOrientation = item.data.i32[0];
+        int ret = GetCorrectedCameraOrientation(usePhysicalCameraOrientation_, cameraAbility_, sensorOrientation);
+        CHECK_RETURN_ELOG(ret != CAM_META_SUCCESS, "HStreamRepeat::SetStreamTransform get sensor "
+            "orientation failed");
         MEDIA_DEBUG_LOG("HStreamRepeat::SetStreamTransform sensor orientation %{public}d", sensorOrientation);
 
         ret = OHOS::Camera::FindCameraMetadataItem(cameraAbility_->get(), OHOS_ABILITY_CAMERA_POSITION, &item);
@@ -781,7 +780,7 @@ void HStreamRepeat::SetStreamTransform(int disPlayRotation)
         MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform used camera position: %{public}d", cameraPosition);
     }
     if (enableCameraRotation_ && sensorOrientation != 0) {
-        ProcessCameraSetRotation(sensorOrientation, cameraPosition);
+        ProcessCameraSetRotation(sensorOrientation);
     }
     if (apiCompatibleVersion_ >= CAMERA_API_VERSION_BASE) {
         ProcessVerticalCameraPosition(sensorOrientation, cameraPosition);
@@ -855,13 +854,9 @@ void HStreamRepeat::ProcessFixedDiffDeviceTransform(int32_t& sensorOrientation, 
         "HStreamRepeat::ProcessFixedTransform failed %{public}d", ret);
 }
 
-void HStreamRepeat::ProcessCameraSetRotation(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition)
+void HStreamRepeat::ProcessCameraSetRotation(int32_t& sensorOrientation)
 {
     sensorOrientation = STREAM_ROTATE_360 - setCameraRotation_;
-    if (cameraPosition == OHOS_CAMERA_POSITION_FRONT) {
-        sensorOrientation = (sensorOrientation == STREAM_ROTATE_180) ? STREAM_ROTATE_0 :
-            (sensorOrientation == STREAM_ROTATE_0) ? STREAM_ROTATE_180 : sensorOrientation;
-    }
     if (sensorOrientation == STREAM_ROTATE_0) {
         int ret = producer_->SetTransform(GRAPHIC_ROTATE_NONE);
         MEDIA_ERR_LOG("HStreamRepeat::ProcessCameraSetRotation %{public}d", ret);

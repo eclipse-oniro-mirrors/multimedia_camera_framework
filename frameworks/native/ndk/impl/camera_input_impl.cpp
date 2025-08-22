@@ -101,3 +101,21 @@ sptr<CameraInput> Camera_Input::GetInnerCameraInput()
 {
     return innerCameraInput_;
 }
+
+Camera_ErrorCode Camera_Input::IsPhysicalCameraOrientationVariable(bool* isVariable)
+{
+    int32_t ret = innerCameraInput_->IsPhysicalCameraOrientationVariable(isVariable);
+    return FrameworkToNdkCameraError(ret);
+}
+
+Camera_ErrorCode Camera_Input::GetPhysicalCameraOrientation(uint32_t* orientation)
+{
+    int32_t ret = innerCameraInput_->GetPhysicalCameraOrientation(orientation);
+    return FrameworkToNdkCameraError(ret);
+}
+
+Camera_ErrorCode Camera_Input::UsePhysicalCameraOrientation(bool isUsed)
+{
+    int32_t ret = innerCameraInput_->SetUsePhysicalCameraOrientation(isUsed);
+    return FrameworkToNdkCameraError(ret);
+}

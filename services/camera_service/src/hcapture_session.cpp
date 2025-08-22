@@ -1258,13 +1258,7 @@ int32_t HCaptureSession::GetSensorOritation()
         "HCaptureSession::GetSensorOritation() "
         "cameraDevice is null, sessionID: %{public}d",
         GetSessionId());
-    std::shared_ptr<OHOS::Camera::CameraMetadata> ability = cameraDevice->GetDeviceAbility();
-    CHECK_RETURN_RET(ability == nullptr, sensorOrientation);
-    camera_metadata_item_t item;
-    int ret = OHOS::Camera::FindCameraMetadataItem(ability->get(), OHOS_SENSOR_ORIENTATION, &item);
-    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS, sensorOrientation,
-        "HCaptureSession::GetSensorOritation get sensor orientation failed");
-    sensorOrientation = item.data.i32[0];
+    sensorOrientation = cameraDevice->GetCameraOrientation();
     MEDIA_INFO_LOG("HCaptureSession::GetSensorOritation sensor orientation "
                    "%{public}d, sessionID: %{public}d",
         sensorOrientation,
@@ -1558,14 +1552,10 @@ void HCaptureSession::UpdateCameraControl(bool isStart)
 void HCaptureSession::UpdateSettingForSpecialBundle()
 {
     OHOS::Rosen::FoldStatus foldstatus = OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus();
-    OHOS::Rosen::FoldDisplayMode displayMode = OHOS::Rosen::DisplayManager::GetInstance().GetFoldDisplayMode();
     auto hStreamOperatorSptr = GetStreamOperator();
-    bool isValidDisplayStatus = (foldstatus == OHOS::Rosen::FoldStatus::FOLD_STATE_EXPAND_WITH_SECOND_EXPAND) &&
-        (displayMode == OHOS::Rosen::FoldDisplayMode::GLOBAL_FULL);
     bool isSpecialFoldType = foldstatus == OHOS::Rosen::FoldStatus::FOLDED &&
         system::GetParameter("const.window.foldscreen.type", "")[0] == '4'; 
-    bool isExeUpdate = hStreamOperatorSptr != nullptr &&
-        (isSpecialFoldType || isValidDisplayStatus) && !isHasFitedRotation_;
+    bool isExeUpdate = hStreamOperatorSptr != nullptr && isSpecialFoldType && !isHasFitedRotation_;
     if (isExeUpdate) {
         auto frameRateRange = hStreamOperatorSptr->GetFrameRateRange();
         auto cameraDevice = GetCameraDevice();
@@ -1584,6 +1574,10 @@ void HCaptureSession::UpdateSettingForSpecialBundle()
         MEDIA_INFO_LOG("HCaptureSession::UpdateSettingForSpecialBundle rotateDegree: %{public}d.", rotateDegree);
         settings->addEntry(OHOS_CONTROL_ROTATE_ANGLE, &rotateDegree, 1);
         cameraDevice->UpdateSettingOnce(settings);
+    } else if (hStreamOperatorSptr != nullptr) {
+        auto cameraDevice = GetCameraDevice();
+        CHECK_RETURN(cameraDevice == nullptr);
+        cameraDevice->UpdateCameraRotateAngle();
     }
 }
 

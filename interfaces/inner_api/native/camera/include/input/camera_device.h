@@ -259,6 +259,13 @@ public:
     uint32_t GetCameraOrientation();
 
     /**
+    * @brief Get the camera orientation.
+    *
+    * @return Returns the camera orientation.
+    */
+    uint32_t GetStaticCameraOrientation();
+
+    /**
     * @brief Get the camera isretractable.
     *
     * @return Returns the camera isretractable.
@@ -318,6 +325,10 @@ public:
 
     void SetConcurrentDeviceType(bool changeType);
 
+    void SetUsePhysicalCameraOrientation(bool isUsed);
+
+    bool GetUsePhysicalCameraOrientation();
+
     template<typename T, typename = std::enable_if_t<std::is_same_v<T, Profile> || std::is_same_v<T, VideoProfile>>>
     std::shared_ptr<T> GetMaxSizeProfile(std::vector<T>& profiles, float profileRatioValue, CameraFormat format)
     {
@@ -356,6 +367,7 @@ private:
     std::string cameraID_;
     const std::shared_ptr<OHOS::Camera::CameraMetadata> baseAbility_;
     std::mutex cachedMetadataMutex_;
+    std::mutex usePhysicalCameraOrientationMutex_;
     std::shared_ptr<OHOS::Camera::CameraMetadata> cachedMetadata_;
     CameraPosition cameraPosition_ = CAMERA_POSITION_UNSPECIFIED;
     CameraType cameraType_ = CAMERA_TYPE_DEFAULT;
@@ -364,6 +376,7 @@ private:
     uint32_t cameraOrientation_ = 0;
     bool isRetractable_ = false;
     std::vector<int32_t> lensEquivalentFocalLength_ = {};
+    std::unordered_map<uint32_t, uint32_t> foldStateSensorOrientationMap_ = {};
     uint32_t moduleType_ = 0;
     uint32_t foldStatus_ = 0;
     std::vector<SceneMode> supportedModes_ = {};
@@ -378,8 +391,10 @@ private:
     static const std::unordered_map<camera_foldscreen_enum_t, CameraFoldScreenType> metaToFwCameraFoldScreenType_;
     void init(common_metadata_header_t* metadataHeader);
     void InitLensEquivalentFocalLength(common_metadata_header_t* metadata);
+    void InitFoldStateSensorOrientationMap(common_metadata_header_t* metadata);
     bool isFindModuleTypeTag(uint32_t &tagId);
     bool isConcurrentDevice_ = false;
+    bool usePhysicalCameraOrientation_ = false;
 };
 } // namespace CameraStandard
 } // namespace OHOS

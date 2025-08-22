@@ -126,29 +126,11 @@ public:
     void OnFoldStatusChanged(FoldStatusRosen foldStatus) override
     {
         FoldStatusRosen currentFoldStatus = foldStatus;
-        CHECK_EXECUTE(currentFoldStatus == FoldStatusRosen::HALF_FOLD, currentFoldStatus = FoldStatusRosen::EXPAND);
-        CHECK_RETURN_DLOG(
-            (cameraHostManager_ == nullptr || mLastFoldStatus == currentFoldStatus || cameraDevice_ == nullptr),
-            "no need set fold status");
-        OHOS::Rosen::FoldDisplayMode displayMode = OHOS::Rosen::DisplayManager::GetInstance().GetFoldDisplayMode();
-        auto foldScreenType = system::GetParameter("const.window.foldscreen.type", "");
-        int32_t position = cameraDevice_->GetCameraPosition();
-        MEDIA_INFO_LOG("OnFoldStatusChanged %{public}s, %{public}d, %{public}d, %{public}d,",
-            foldScreenType.c_str(), position, mLastFoldStatus, currentFoldStatus);
-        if (foldScreenType[0] == '6' && position == OHOS_CAMERA_POSITION_FRONT &&
-            currentFoldStatus == FoldStatusRosen::EXPAND) {
-            MEDIA_DEBUG_LOG("HCameraDevice::OnFoldStatusChanged dialog start");
-            NoFrontCameraDialog::GetInstance()->ShowCameraDialog();
-        }
-        bool exeUpdate = foldStatus == FoldStatusRosen::FOLD_STATE_EXPAND_WITH_SECOND_EXPAND ||
-            mLastFoldStatus == FoldStatusRosen::FOLD_STATE_EXPAND_WITH_SECOND_EXPAND;
-        if (exeUpdate) {
-            std::vector<int32_t> fpsRanges;
-            bool isRestDegree = (mLastFoldStatus == FoldStatusRosen::FOLD_STATE_EXPAND_WITH_SECOND_EXPAND);
-            cameraDevice_->UpdateCameraRotateAngleAndZoom(fpsRanges, isRestDegree);
-        }
+        CHECK_RETURN_ELOG((cameraHostManager_ == nullptr || mLastFoldStatus == currentFoldStatus ||
+            cameraDevice_ == nullptr), "no need set fold status");
+        cameraDevice_->UpdateCameraRotateAngle();
         mLastFoldStatus = currentFoldStatus;
-        MEDIA_INFO_LOG("OnFoldStatusChanged, foldStatus: %{public}d displayMode: %{public}d ", foldStatus, displayMode);
+        MEDIA_INFO_LOG("OnFoldStatusChanged, foldStatus: %{public}d", foldStatus);
         cameraHostManager_->NotifyDeviceStateChangeInfo(DeviceType::FOLD_TYPE, (int)currentFoldStatus);
     }
 private:
@@ -435,6 +417,20 @@ int32_t HCameraDevice::OpenSecureCamera(uint64_t& secureSeqId)
     // LCOV_EXCL_STOP
     MEDIA_INFO_LOG("HCameraDevice::OpenSecureCamera secureSeqId = %{public}" PRIu64, secureSeqId);
     return errCode;
+}
+
+int32_t HCameraDevice::SetUsePhysicalCameraOrientation(bool isUsed)
+{
+    lock_guard<mutex> lock(usePhysicalCameraOrientationMutex_);
+    usePhysicalCameraOrientation_ = isUsed;
+    MEDIA_INFO_LOG("HCameraDevice::SetUsePhysicalCameraOrientation isUsed %{public}d", isUsed);
+    return CAMERA_OK;
+}
+
+bool HCameraDevice::GetUsePhysicalCameraOrientation()
+{
+    lock_guard<mutex> lock(usePhysicalCameraOrientationMutex_);
+    return usePhysicalCameraOrientation_;
 }
 
 int64_t HCameraDevice::GetSecureCameraSeq(uint64_t* secureSeqId)
@@ -1046,6 +1042,57 @@ void HCameraDevice::UpdateCameraRotateAngleAndZoom(std::vector<int32_t> &frameRa
     CHECK_EXECUTE(zoom >= 0, settings->addEntry(OHOS_CONTROL_ZOOM_RATIO, &zoom, 1));
     UpdateSettingOnce(settings);
     MEDIA_INFO_LOG("UpdateCameraRotateAngleAndZoom success.");
+}
+
+int32_t HCameraDevice::GetCameraOrientation()
+{
+    int32_t truthCameraOrientation = -1;
+    GetCorrectedCameraOrientation(usePhysicalCameraOrientation_, deviceAbility_, truthCameraOrientation);
+    return truthCameraOrientation;
+}
+
+int32_t HCameraDevice::GetOriginalCameraOrientation()
+{
+    int32_t ret = CAM_META_FAILURE;
+    int32_t sensorOrientation = -1;
+    CHECK_RETURN_RET(deviceAbility_ == nullptr, sensorOrientation);
+    camera_metadata_item item;
+    ret = OHOS::Camera::FindCameraMetadataItem(deviceAbility_->get(), OHOS_SENSOR_ORIENTATION, &item);
+    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS || item.count <= 0, sensorOrientation,
+        "GetOriginalCameraOrientation get sensor orientation failed");
+    sensorOrientation = item.data.i32[0];
+    return sensorOrientation;
+}
+
+bool HCameraDevice::IsPhysicalCameraOrientationVariable()
+{
+    bool isVariableCameraOritation = false;
+    camera_metadata_item_t item;
+    CHECK_RETURN_RET(deviceAbility_ == nullptr, false);
+    int ret = OHOS::Camera::FindCameraMetadataItem(deviceAbility_->get(), OHOS_ABILITY_SENSOR_ORIENTATION_VARIABLE,
+        &item);
+    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS, 0, "HCameraDevice::GetSensorOrientation failed");
+    isVariableCameraOritation =  item.count > 0 && item.data.u8[0];
+    return isVariableCameraOritation;
+}
+
+void HCameraDevice::UpdateCameraRotateAngle()
+{
+    CHECK_RETURN(!IsPhysicalCameraOrientationVariable());
+    bool isFoldable = OHOS::Rosen::DisplayManager::GetInstance().IsFoldable();
+    CHECK_RETURN(!isFoldable || deviceAbility_ == nullptr);
+    int cameraOrientation = GetOriginalCameraOrientation();
+    CHECK_RETURN(cameraOrientation == -1);
+    int32_t truthCameraOrientation = -1;
+    int32_t ret = GetCorrectedCameraOrientation(!usePhysicalCameraOrientation_, deviceAbility_, truthCameraOrientation);
+    CHECK_RETURN(ret != CAM_META_SUCCESS || truthCameraOrientation == -1);
+    int32_t rotateDegree = (truthCameraOrientation - cameraOrientation + BASE_DEGREE) % BASE_DEGREE;
+    MEDIA_DEBUG_LOG("HCameraDevice::UpdateCameraRotateAngle cameraOrientation: %{public}d, truthCameraOrientation: "
+        "%{public}d, rotateDegree: %{public}d.", cameraOrientation, truthCameraOrientation, rotateDegree);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> settings = std::make_shared<OHOS::Camera::CameraMetadata>(1, 1);
+    CHECK_EXECUTE(rotateDegree >= 0, settings->addEntry(OHOS_CONTROL_ROTATE_ANGLE, &rotateDegree, 1));
+    UpdateSettingOnce(settings);
+    MEDIA_INFO_LOG("UpdateCameraRotateAngle success.");
 }
 
 bool HCameraDevice::GetSigleStrategyInfo(CameraRotateStrategyInfo &strategyInfo)

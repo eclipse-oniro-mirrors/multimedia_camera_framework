@@ -206,7 +206,10 @@ napi_value CameraInputNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("once", Once),
         DECLARE_NAPI_FUNCTION("off", Off),
         DECLARE_NAPI_FUNCTION("usedAsPosition", UsedAsPosition),
-        DECLARE_NAPI_FUNCTION("controlAuxiliary", ControlAuxiliary)
+        DECLARE_NAPI_FUNCTION("controlAuxiliary", ControlAuxiliary),
+        DECLARE_NAPI_FUNCTION("isPhysicalCameraOrientationVariable", IsPhysicalCameraOrientationVariable),
+        DECLARE_NAPI_FUNCTION("getPhysicalCameraOrientation", GetPhysicalCameraOrientation),
+        DECLARE_NAPI_FUNCTION("usePhysicalCameraOrientation", UsePhysicalCameraOrientation)
     };
 
     status = napi_define_class(env, CAMERA_INPUT_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
@@ -646,6 +649,59 @@ napi_value CameraInputNapi::ControlAuxiliary(napi_env env, napi_callback_info in
     }
     cameraInputNapi->cameraInput_->ControlAuxiliary(static_cast<const AuxiliaryType>(auxiliaryType),
         static_cast<const AuxiliaryStatus>(auxiliaryStatus));
+    return CameraNapiUtils::GetUndefinedValue(env);
+}
+
+napi_value CameraInputNapi::IsPhysicalCameraOrientationVariable(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("CameraInputNapi::IsPhysicalCameraOrientationVariable is called");
+    bool isVariable = false;
+    napi_value result = nullptr;
+    napi_get_undefined(env, &result);
+    CameraInputNapi* cameraInputNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, cameraInputNapi);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT,
+        "input IsPhysicalCameraOrientationVariable with invalid arguments!")) {
+        MEDIA_ERR_LOG("CameraInputNapi::IsPhysicalCameraOrientationVariable invalid arguments");
+        return nullptr;
+    }
+    cameraInputNapi->cameraInput_->IsPhysicalCameraOrientationVariable(&isVariable);
+    MEDIA_DEBUG_LOG("isVariable: %{public}d", isVariable);
+    napi_get_boolean(env, isVariable, &result);
+    return result;
+}
+
+napi_value CameraInputNapi::GetPhysicalCameraOrientation(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("CameraInputNapi::GetPhysicalCameraOrientation is called");
+    uint32_t orientation;
+    napi_value result = nullptr;
+    napi_get_undefined(env, &result);
+    CameraInputNapi* cameraInputNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, cameraInputNapi);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT,
+        "input GetPhysicalCameraOrientation with invalid arguments!")) {
+        MEDIA_ERR_LOG("CameraInputNapi::GetPhysicalCameraOrientation invalid arguments");
+        return nullptr;
+    }
+    cameraInputNapi->cameraInput_->GetPhysicalCameraOrientation(&orientation);
+    MEDIA_DEBUG_LOG("orientation: %{public}d", orientation);
+    napi_create_int32(env, static_cast<int32_t>(orientation), &result);
+    return result;
+}
+ 
+napi_value CameraInputNapi::UsePhysicalCameraOrientation(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("CameraInputNapi::UsePhysicalCameraOrientation is called");
+    bool isUsed = false;
+    CameraInputNapi* cameraInputNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, cameraInputNapi, isUsed);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT,
+        "input UsePhysicalCameraOrientation with invalid arguments!")) {
+        MEDIA_ERR_LOG("CameraInputNapi::UsePhysicalCameraOrientation invalid arguments");
+        return nullptr;
+    }
+    cameraInputNapi->cameraInput_->SetUsePhysicalCameraOrientation(isUsed);
     return CameraNapiUtils::GetUndefinedValue(env);
 }
 } // namespace CameraStandard

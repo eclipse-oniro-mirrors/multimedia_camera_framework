@@ -171,6 +171,40 @@ Camera_ErrorCode OH_CameraInput_Close(Camera_Input* cameraInput);
  */
 Camera_ErrorCode OH_CameraInput_Release(Camera_Input* cameraInput);
 
+/**
+ * @brief Query whether sensor orientation change with fold state.
+ *
+ * @param cameraInput the {@link Camera_Input} instance.
+ * @param isVariable the result of whether sensor orientation changed with fold state.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ * @since 21
+ */
+Camera_ErrorCode OH_CameraInput_IsPhysicalCameraOrientationVariable(Camera_Input* cameraInput, bool* isVariable);
+
+/**
+ * @brief Query sensor orientation of current fold state
+ *
+ * @param cameraInput the {@link Camera_Input} instance.
+ * @param orientation orientation of current fold state.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ * @since 21
+ */
+Camera_ErrorCode OH_CameraInput_GetPhysicalCameraOrientation(Camera_Input* cameraInput, uint32_t* orientation);
+
+/**
+ * @brief Set UsePhysicalCameraOrientation
+ *
+ * @param cameraInput the {@link Camera_Input} instance.
+ * @param isUsed the flag of enable use truth camera orientation or not.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ *         {@link #CAMERA_OPERATION_NOT_ALLOWED} if operation not allowed.
+ * @since 21
+ */
+Camera_ErrorCode OH_CameraInput_UsePhysicalCameraOrientation(Camera_Input* cameraInput, bool isUsed);
+
 #ifdef __cplusplus
 }
 #endif

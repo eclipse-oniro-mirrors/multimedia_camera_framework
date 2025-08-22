@@ -712,11 +712,11 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_020, TestSize
 
 /*
  * Feature: Framework
- * Function: Test CameraDevice with GetCameraOrientation
+ * Function: Test CameraDevice with GetStaticCameraOrientation
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test CameraDevice with GetCameraOrientation for invoke
+ * CaseDescription: Test CameraDevice with GetStaticCameraOrientation for invoke
  */
 HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_021, TestSize.Level1)
 {
@@ -726,7 +726,7 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_021, TestSize
     uint32_t tempCameraOrientation = cameras[0]->cameraOrientation_;
 
     cameras[0]->cameraOrientation_ = 1;
-    EXPECT_EQ(cameras[0]->GetCameraOrientation(), 1);
+    EXPECT_EQ(cameras[0]->GetStaticCameraOrientation(), 1);
 
     cameras[0]->cameraOrientation_ = tempCameraOrientation;
 }
@@ -1281,7 +1281,8 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_051, TestSize
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
  
     sptr<CameraDevice> device = nullptr;
-    camInput->GetMetadataFromService(device);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metaData;
+    camInput->GetMetadataFromService(device, metaData);
     EXPECT_NE(input, nullptr);
 }
  
@@ -1371,8 +1372,157 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_056, TestSize
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
  
     sptr<CameraDevice> device = camInput->GetCameraDeviceInfo();
-    camInput->GetMetadataFromService(device);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metaData;
+    camInput->GetMetadataFromService(device, metaData);
     EXPECT_NE(input, nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CameraFrameworkInput with IsPhysicalCameraOrientationVariable
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CameraFrameworkInput with IsPhysicalCameraOrientationVariable
+ */
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_059, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    
+    bool isVariable = false;
+    int ret = camInput->IsPhysicalCameraOrientationVariable(&isVariable);
+    EXPECT_EQ(ret, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CameraFrameworkInput with GetPhysicalCameraOrientation
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CameraFrameworkInput with GetPhysicalCameraOrientation
+ */
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_060, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    
+    uint32_t orientation = 0;
+    int ret = camInput->GetPhysicalCameraOrientation(&orientation);
+    EXPECT_EQ(ret, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CameraFrameworkInput with SetUsePhysicalCameraOrientation
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CameraFrameworkInput with SetUsePhysicalCameraOrientation
+ */
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_061, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    
+    int ret = camInput->SetUsePhysicalCameraOrientation(true);
+    EXPECT_EQ(ret, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CameraFrameworkInput with SetUsePhysicalCameraOrientation
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CameraFrameworkInput with SetUsePhysicalCameraOrientation
+ */
++HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_062, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    
+    int ret = camInput->SetUsePhysicalCameraOrientation(false);
+    EXPECT_EQ(ret, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CameraDevice with GetCameraOrientation
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CameraDevice with GetCameraOrientation for invoke
+ */
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_063, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
+
+    uint32_t tempCameraOrientation = cameras[0]->cameraOrientation_;
+    bool isUsed = cameras[0]->GetUsePhysicalCameraOrientation();
+
+    cameras[0]->cameraOrientation_ = 1;
+    cameras[0]->SetUsePhysicalCameraOrientation(false);
+    EXPECT_EQ(cameras[0]->GetCameraOrientation(), 1);
+
+    cameras[0]->cameraOrientation_ = tempCameraOrientation;
+    cameras[0]->SetUsePhysicalCameraOrientation(isUsed);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CameraDevice with SetUsePhysicalCameraOrientation
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CameraDevice with SetUsePhysicalCameraOrientation
+ */
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_064, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
+
+    bool isUsed = cameras[0]->GetUsePhysicalCameraOrientation();
+
+    cameras[0]->SetUsePhysicalCameraOrientation(false);
+    EXPECT_EQ(cameras[0]->GetUsePhysicalCameraOrientation(), false);
+
+    cameras[0]->SetUsePhysicalCameraOrientation(isUsed);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CameraDevice with SetUsePhysicalCameraOrientation
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CameraDevice with SetUsePhysicalCameraOrientation
+ */
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_065, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
+
+    bool isUsed = cameras[0]->GetUsePhysicalCameraOrientation();
+
+    cameras[0]->SetUsePhysicalCameraOrientation(true);
+    EXPECT_EQ(cameras[0]->GetUsePhysicalCameraOrientation(), true);
+
+    cameras[0]->SetUsePhysicalCameraOrientation(isUsed);
 }
 }
 }

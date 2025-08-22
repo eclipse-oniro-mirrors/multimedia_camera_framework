@@ -194,5 +194,69 @@ HWTEST_F(CameraInputUnitTest, camera_input_unittest_004, TestSize.Level0)
     EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
     EXPECT_EQ(OH_PreviewOutput_Release(previewOutput), CAMERA_OK);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test physical camera orientation interface
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test physical camera orientation interface
+ */
+HWTEST_F(CameraInputUnitTest, camera_input_unittest_005, TestSize.Level0)
+{
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_PHOTO);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_Input *cameraInput = nullptr;
+    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(cameraInput, nullptr);
+    bool isVariable = false;
+    ret = OH_CameraInput_IsPhysicalCameraOrientationVariable(cameraInput, &isVariable);
+    EXPECT_EQ(ret, CAMERA_OK);
+    uint32_t orientation = 0;
+    ret = OH_CameraInput_GetPhysicalCameraOrientation(cameraInput, &orientation);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CameraInput_UsePhysicalCameraOrientation(cameraInput, true);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(OH_CameraInput_Close(cameraInput), CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test physical camera orientation interface
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test physical camera orientation interface
+ */
+HWTEST_F(CameraInputUnitTest, camera_input_unittest_006, TestSize.Level0)
+{
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_PHOTO);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_Input *cameraInput = nullptr;
+    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(cameraInput, nullptr);
+    bool isVariable = false;
+    ret = OH_CameraInput_IsPhysicalCameraOrientationVariable(cameraInput, &isVariable);
+    EXPECT_EQ(ret, CAMERA_OK);
+    uint32_t orientation = 0;
+    ret = OH_CameraInput_GetPhysicalCameraOrientation(cameraInput, &orientation);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CameraInput_UsePhysicalCameraOrientation(cameraInput, false);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(OH_CameraInput_Close(cameraInput), CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
+}
 } // CameraStandard
 } // OHOS

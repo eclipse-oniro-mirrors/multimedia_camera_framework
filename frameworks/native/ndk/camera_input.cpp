@@ -94,6 +94,31 @@ Camera_ErrorCode OH_CameraInput_Release(Camera_Input* cameraInput)
     return CAMERA_OK;
 }
 
+Camera_ErrorCode OH_CameraInput_IsPhysicalCameraOrientationVariable(Camera_Input* cameraInput, bool* isVariable)
+{
+    CHECK_RETURN_RET_ELOG(cameraInput == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, cameraInput is null!");
+    CHECK_RETURN_RET_ELOG(isVariable == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, isVariable is null!");
+    return cameraInput->IsPhysicalCameraOrientationVariable(isVariable);
+}
+
+Camera_ErrorCode OH_CameraInput_GetPhysicalCameraOrientation(Camera_Input* cameraInput, uint32_t* orientation)
+{
+    CHECK_RETURN_RET_ELOG(cameraInput == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, cameraInput is null!");
+    CHECK_RETURN_RET_ELOG(orientation == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, orientation is null!");
+    return cameraInput->GetPhysicalCameraOrientation(orientation);
+}
+
+Camera_ErrorCode OH_CameraInput_UsePhysicalCameraOrientation(Camera_Input* cameraInput, bool isUsed)
+{
+    CHECK_RETURN_RET_ELOG(cameraInput == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, cameraInput is null!");
+    return cameraInput->UsePhysicalCameraOrientation(isUsed);
+}
+
 #ifdef __cplusplus
 }
 #endif

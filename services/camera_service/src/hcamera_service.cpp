@@ -206,6 +206,20 @@ bool HCameraService::SetMuteModeFromDataShareHelper()
     return true;
 }
 
+int32_t HCameraService::SetUsePhysicalCameraOrientation(bool isUsed)
+{
+    lock_guard<mutex> lock(usePhysicalCameraOrientationMutex_);
+    usePhysicalCameraOrientation_ = isUsed;
+    MEDIA_INFO_LOG("HCameraService::SetUsePhysicalCameraOrientation isUsed %{public}d", isUsed);
+    return CAMERA_OK;
+}
+
+bool HCameraService::GetUsePhysicalCameraOrientation()
+{
+    lock_guard<mutex> lock(usePhysicalCameraOrientationMutex_);
+    return usePhysicalCameraOrientation_;
+}
+
 void HCameraService::OnReceiveEvent(const EventFwk::CommonEventData &data)
 {
     auto const &want = data.GetWant();

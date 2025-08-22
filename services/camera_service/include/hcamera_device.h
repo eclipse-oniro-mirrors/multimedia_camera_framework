@@ -80,7 +80,6 @@ public:
     int32_t UnSetCallback() override;
     int32_t OnError(OHOS::HDI::Camera::V1_0::ErrorType type, int32_t errorCode) override;
     int32_t OnResult(uint64_t timestamp, const std::vector<uint8_t>& result) override;
-    // int32_t OnResult(int32_t streamId, const std::vector<uint8_t>& result) override;
     std::shared_ptr<OHOS::Camera::CameraMetadata> GetDeviceAbility();
     std::shared_ptr<OHOS::Camera::CameraMetadata> CloneCachedSettings();
     std::string GetCameraId();
@@ -188,8 +187,14 @@ public:
     }
 
     void UpdateCameraRotateAngleAndZoom(std::vector<int32_t> &frameRateRange, bool isResetDegree = false);
+    int32_t GetCameraOrientation();
+    int32_t GetOriginalCameraOrientation();
+    bool IsPhysicalCameraOrientationVariable();
+    void UpdateCameraRotateAngle();
     void SetCameraRotateStrategyInfos(std::vector<CameraRotateStrategyInfo> infos);
     bool GetSigleStrategyInfo(CameraRotateStrategyInfo &strategyInfo);
+    int32_t SetUsePhysicalCameraOrientation(bool isUsed) override;
+    bool GetUsePhysicalCameraOrientation();
 
 private:
     class FoldScreenListener;
@@ -287,6 +292,7 @@ private:
     void ReportZoomInfos(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult);
 
     bool isMovingPhotoEnabled_ = false;
+    std::mutex usePhysicalCameraOrientationMutex_;
     std::mutex movingPhotoStartTimeCallbackLock_;
     std::mutex movingPhotoEndTimeCallbackLock_;
     std::function<void(int32_t, int64_t)> movingPhotoStartTimeCallback_;
@@ -305,6 +311,7 @@ private:
     int32_t focusMode_ = -1;
     bool focusStatus_ = false;
     int32_t videoStabilizationMode_ = 0;
+    bool usePhysicalCameraOrientation_ = false;
 };
 } // namespace CameraStandard
 } // namespace OHOS
