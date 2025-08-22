@@ -273,6 +273,11 @@ int32_t HCameraDevice::GetFocusMode()
     return focusMode_;
 }
 
+int32_t HCameraDevice::GetVideoStabilizationMode()
+{
+    return videoStabilizationMode_;
+}
+
 void HCameraDevice::EnableMovingPhoto(bool isMovingPhotoEnabled)
 {
     isMovingPhotoEnabled_ = isMovingPhotoEnabled;
@@ -937,15 +942,42 @@ void HCameraDevice::CheckFocusChange(const std::shared_ptr<OHOS::Camera::CameraM
 
     int32_t focusMode = focusMode_;
     ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_FOCUS_MODE, &item);
-    if (ret == CAM_META_SUCCESS) {
+    if (ret == CAM_META_SUCCESS &&  item.count != 0) {
         focusMode = static_cast<int32_t>(item.data.u8[0]);
     }
 
-    CHECK_EXECUTE((focusMode_!= focusMode || focusStatus_ != focusStatus),
-        zoomInfoCallback_(zoomRatio_, focusStatus, focusMode));
+    if (focusMode_!= focusMode || focusStatus_ != focusStatus) {
+        ZoomInfo zoomInfo;
+        zoomInfo.zoomValue = zoomRatio_;
+        zoomInfo.focusStatus = focusStatus;
+        zoomInfo.focusMode = focusMode;
+        zoomInfo.videoStabilizationMode = videoStabilizationMode_;
+        zoomInfoCallback_(zoomInfo);
+    }
 
     focusMode_ = focusMode;
     focusStatus_ = focusStatus;
+}
+
+void HCameraDevice::CheckVideoStabilizationChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings)
+{
+    std::shared_lock<std::shared_mutex> lock(zoomInfoCallbackLock_);
+    CHECK_RETURN(!zoomInfoCallback_);
+    camera_metadata_item_t item;
+
+    int32_t ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_VIDEO_STABILIZATION_MODE, &item);
+    CHECK_RETURN(ret != CAM_META_SUCCESS || item.count == 0);
+    int32_t videoStabilizationMode = static_cast<int32_t>(item.data.u8[0]);
+
+    if (videoStabilizationMode_ != videoStabilizationMode) {
+        ZoomInfo zoomInfo;
+        zoomInfo.zoomValue = zoomRatio_;
+        zoomInfo.focusStatus = focusStatus_;
+        zoomInfo.focusMode = focusMode_;
+        zoomInfo.videoStabilizationMode = videoStabilizationMode;
+        zoomInfoCallback_(zoomInfo);
+    }
+    videoStabilizationMode_ = videoStabilizationMode;
 }
 
 bool HCameraDevice::CheckMovingPhotoSupported(int32_t mode)
@@ -1053,6 +1085,7 @@ int32_t HCameraDevice::UpdateSetting(const std::shared_ptr<OHOS::Camera::CameraM
         "HCameraDevice::UpdateSetting settings is null");
     CheckZoomChange(settings);
     CheckFocusChange(settings);
+    CheckVideoStabilizationChange(settings);
 
     uint32_t count = OHOS::Camera::GetCameraMetadataItemCount(settings->get());
     CHECK_RETURN_RET_ELOG(!count, CAMERA_OK, "HCameraDevice::UpdateSetting Nothing to update");
@@ -1564,12 +1597,17 @@ void HCameraDevice::ReportZoomInfos(std::shared_ptr<OHOS::Camera::CameraMetadata
     zoomRatio = item.data.f[0];
     MEDIA_DEBUG_LOG("ReportZoomInfos zoomRatio: %{public}f", zoomRatio);
     if (zoomRatio != zoomRatio_) {
-        zoomRatio_ = zoomRatio;
-        zoomInfoCallback_(zoomRatio_, focusStatus_, focusMode_);
+        ZoomInfo zoomInfo;
+        zoomInfo.zoomValue = zoomRatio;
+        zoomInfo.focusStatus = focusStatus_;
+        zoomInfo.focusMode = focusMode_;
+        zoomInfo.videoStabilizationMode = videoStabilizationMode_;
+        zoomInfoCallback_(zoomInfo);
     }
+    zoomRatio_ = zoomRatio;
 }
 
-void HCameraDevice::SetZoomInfoCallback(std::function<void(float, bool, int32_t)> callback)
+void HCameraDevice::SetZoomInfoCallback(std::function<void(ZoomInfo)> callback)
 {
     MEDIA_DEBUG_LOG("HCameraDevice::SetZoomInfoCallback enter.");
     std::unique_lock<std::shared_mutex> lock(zoomInfoCallbackLock_);

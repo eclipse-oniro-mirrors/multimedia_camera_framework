@@ -83,6 +83,7 @@
               "//foundation/multimedia/camera_framework/dynamic_libs:camera_dynamic_medialibrary",
               "//foundation/multimedia/camera_framework/dynamic_libs:camera_dynamic_media_manager",
               "//foundation/multimedia/camera_framework/dynamic_libs:camera_dynamic_moving_photo",
+	          "//foundation/multimedia/camera_framework/dynamic_libs:camera_dynamic_notification",
               "//foundation/multimedia/camera_framework/dynamic_libs:camera_dynamic_picture",
               "//foundation/multimedia/camera_framework/frameworks/native/camera/base:camera_framework",
               "//foundation/multimedia/camera_framework/frameworks/native/camera/extension:camera_framework_ex",

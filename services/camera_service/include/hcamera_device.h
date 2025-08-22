@@ -106,6 +106,7 @@ public:
     bool GetDeviceMuteMode();
     float GetZoomRatio();
     int32_t GetFocusMode();
+    int32_t GetVideoStabilizationMode();
     void EnableMovingPhoto(bool isMovingPhotoEnabled);
     static void DeviceEjectCallBack();
     static void DeviceFaultCallBack();
@@ -154,7 +155,7 @@ public:
 
     void SetMovingPhotoEndTimeCallback(std::function<void(int64_t, int64_t)> callback);
 
-    void SetZoomInfoCallback(std::function<void(float, bool, int32_t)> callback);
+    void SetZoomInfoCallback(std::function<void(ZoomInfo)> callback);
 
     inline void SetCameraConcurrentType(int32_t cameraConcurrentTypenum)
     {
@@ -252,6 +253,7 @@ private:
     void ResetZoomTimer();
     void CheckZoomChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
     void CheckFocusChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
+    void CheckVideoStabilizationChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
     void UnPrepareZoom();
     int32_t OpenDevice(bool isEnableSecCam = false);
     void ConfigQosParam(const char *bundleName, int32_t qosLevel,
@@ -298,10 +300,11 @@ private:
     std::string bundleName_ = "";
     std::shared_mutex mechCallbackLock_;
     std::shared_mutex zoomInfoCallbackLock_;
-    std::function<void(float, bool, int32_t)> zoomInfoCallback_;
+    std::function<void(ZoomInfo)> zoomInfoCallback_;
     float zoomRatio_ = 1.0f;
     int32_t focusMode_ = -1;
     bool focusStatus_ = false;
+    int32_t videoStabilizationMode_ = 0;
 };
 } // namespace CameraStandard
 } // namespace OHOS
