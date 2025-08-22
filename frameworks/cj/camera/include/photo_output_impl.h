@@ -25,10 +25,12 @@
 #include "ffi_remote_data.h"
 #include "listener_base.h"
 #include "photo_output.h"
+#include "photo_output_callback.h"
+#include "image_impl.h"
 
 namespace OHOS {
 namespace CameraStandard {
-class CJPhotoOutputCallback : public PhotoStateCallback {
+class CJPhotoOutputCallback : public PhotoStateCallback, public PhotoAvailableCallback {
 public:
     CJPhotoOutputCallback() = default;
     ~CJPhotoOutputCallback() = default;
@@ -42,6 +44,8 @@ public:
     void OnCaptureError(const int32_t captureId, const int32_t errorCode) const override;
     void OnEstimatedCaptureDuration(const int32_t duration) const override;
     void OnOfflineDeliveryFinished(const int32_t captureId) const override;
+    void OnPhotoAvailable(
+        const std::shared_ptr<Media::NativeImage> nativeImage, const bool isRaw = false) const override;
 
     mutable std::mutex captureStartedMutex{};
     std::vector<std::shared_ptr<CallbackRef<const int32_t, uint32_t>>> captureStartedCallbackList;
@@ -57,6 +61,8 @@ public:
     std::vector<std::shared_ptr<CallbackRef<const int32_t>>> estimatedCaptureDurationCallbackList;
     mutable std::mutex captureErrorMutex{};
     std::vector<std::shared_ptr<CallbackRef<const int32_t>>> captureErrorCallbackList;
+    mutable std::mutex photoAvailableMutex{};
+    std::vector<std::shared_ptr<CallbackRef<const int64_t>>> photoAvailableCallbackList;
 };
 
 class CJPhotoOutput : public CameraOutput {
@@ -100,12 +106,15 @@ public:
     void OnError(int64_t callbackId);
     void OffError(int64_t callbackId);
     void OffAllError();
+    void OnPhotoAvailable(int64_t callbackId);
+    void OffPhotoAvailable(int64_t callbackId);
+    void OffAllPhotoAvailable();
 
 private:
     sptr<PhotoOutput> photoOutput_;
     static thread_local sptr<PhotoOutput> sPhotoOutput_;
-
     std::shared_ptr<CJPhotoOutputCallback> photoOutputCallback_;
+    uint8_t callbackFlag_ = 0;
 };
 
 } // namespace CameraStandard
