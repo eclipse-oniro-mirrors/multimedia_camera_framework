@@ -34,6 +34,19 @@ public:
     static napi_value GetRaw(napi_env env, napi_callback_info info);
     static napi_value Release(napi_env env, napi_callback_info info);
 
+    napi_value GetMainForTransfer()
+    {
+        return mainImage_;
+    }
+    napi_value GetRawForTransfer()
+    {
+        return rawImage_;
+    }
+    napi_env GetEnv()
+    {
+        return env_;
+    }
+
 private:
     static void PhotoNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
     static napi_value PhotoNapiConstructor(napi_env env, napi_callback_info info);

@@ -73,6 +73,7 @@ class MetadataOutputNapi : public CameraNapiEventEmitter<MetadataOutputNapi> {
 public:
     static napi_value Init(napi_env env, napi_value exports);
     static napi_value CreateMetadataOutput(napi_env env, std::vector<MetadataObjectType> metadataObjectTypes);
+    static napi_value CreateMetadataOutputForTransfer(napi_env env, sptr<MetadataOutput> metadataOutput);
     static napi_value AddMetadataObjectTypes(napi_env env, napi_callback_info info);
     static napi_value RemoveMetadataObjectTypes(napi_env env, napi_callback_info info);
     MetadataOutputNapi();

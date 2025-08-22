@@ -80,6 +80,11 @@ public:
     void OnSketchStatusChanged(callback_view<void(uintptr_t, SketchStatusData const&)> callback);
     void OffSketchStatusChanged(optional_view<callback<void(uintptr_t, SketchStatusData const&)>> callback);
 
+    OHOS::sptr<OHOS::CameraStandard::PreviewOutput> GetPreviewOutput()
+    {
+        return previewOutput_;
+    }
+
     static uint32_t previewOutputTaskId_;
 private:
     void RegisterErrorCallbackListener(const std::string& eventName, std::shared_ptr<uintptr_t> callback, bool isOnce);
