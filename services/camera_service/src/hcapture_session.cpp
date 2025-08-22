@@ -2164,13 +2164,9 @@ void HCaptureSession::SetDeviceMechCallback()
 {
     CHECK_RETURN(!cameraDevice_);
     auto thisPtr = wptr<HCaptureSession>(this);
-    cameraDevice_->SetZoomInfoCallback([thisPtr](float zoomRatio, bool focusStatus, int32_t focusMode) {
+    cameraDevice_->SetZoomInfoCallback([thisPtr](ZoomInfo zoomInfo) {
         auto ptr = thisPtr.promote();
         CHECK_RETURN(!ptr);
-        ZoomInfo zoomInfo;
-        zoomInfo.zoomValue = zoomRatio;
-        zoomInfo.focusStatus = focusStatus;
-        zoomInfo.focusMode = focusMode;
         zoomInfo.equivalentFocus = ptr->GetEquivalentFocus();
         ptr->OnZoomInfoChange(zoomInfo);
     });
@@ -2188,6 +2184,7 @@ bool HCaptureSession::GetCaptureSessionInfo(CaptureSessionInfo& sessionInfo)
         sessionInfo.position = cameraDevice_->GetCameraPosition();
         zoomInfo.zoomValue = cameraDevice_->GetZoomRatio();
         zoomInfo.focusMode = cameraDevice_->GetFocusMode();
+        zoomInfo.videoStabilizationMode = cameraDevice_->GetVideoStabilizationMode();
     }
     sessionInfo.zoomInfo = zoomInfo;
     sessionInfo.callerTokenId = static_cast<int32_t>(callerToken_);

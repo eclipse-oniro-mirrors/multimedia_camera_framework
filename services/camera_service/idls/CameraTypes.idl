@@ -140,6 +140,7 @@ struct ZoomInfo {
     int equivalentFocus;
     boolean focusStatus;
     int focusMode;
+    int videoStabilizationMode;
 };
 
 struct CaptureSessionInfo {
