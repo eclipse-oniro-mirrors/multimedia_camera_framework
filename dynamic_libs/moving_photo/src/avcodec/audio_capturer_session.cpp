@@ -29,9 +29,6 @@
 
 namespace OHOS {
 namespace CameraStandard {
-
-constexpr int32_t READ_AUDIO_WAIT_TIME = 5;
-
 AudioCapturerSession::AudioCapturerSession()
     : audioBufferQueue_("audioBuffer", DEFAULT_AUDIO_CACHE_NUMBER)
 {
@@ -157,7 +154,7 @@ void AudioCapturerSession::ProcessAudioBuffer()
         while (bytesRead < bufferLen) {
             MEDIA_DEBUG_LOG("ProcessAudioBuffer loop");
             CHECK_BREAK_WLOG(!startAudioCapture_, "ProcessAudioBuffer loop, break out");
-            int32_t len = audioCapturer_->Read(*(buffer.get() + bytesRead), bufferLen - bytesRead, false);
+            int32_t len = audioCapturer_->Read(*(buffer.get() + bytesRead), bufferLen - bytesRead, true);
             if (len >= 0) {
                 bytesRead += static_cast<size_t>(len);
             } else {
@@ -165,7 +162,6 @@ void AudioCapturerSession::ProcessAudioBuffer()
                 startAudioCapture_ = false;
                 break;
             }
-            std::this_thread::sleep_for(std::chrono::milliseconds(READ_AUDIO_WAIT_TIME));
         }
         if (!startAudioCapture_) {
             buffer.reset();
