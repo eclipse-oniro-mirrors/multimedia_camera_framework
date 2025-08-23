@@ -346,7 +346,7 @@ std::string CameraDevice::GetNetWorkId()
 uint32_t CameraDevice::GetCameraOrientation()
 {
     uint32_t cameraOrientation = cameraOrientation_;
-    if (usePhysicalCameraOrientation_) {
+    if (GetUsePhysicalCameraOrientation()) {
         uint32_t curFoldStatus;
         OHOS::Rosen::FoldDisplayMode displayMode = OHOS::Rosen::DisplayManager::GetInstance().GetFoldDisplayMode();
         if (displayMode == OHOS::Rosen::FoldDisplayMode::GLOBAL_FULL) {
@@ -508,6 +508,8 @@ void CameraDevice::SetUsePhysicalCameraOrientation(bool isUsed)
 {
     std::lock_guard<std::mutex> lock(usePhysicalCameraOrientationMutex_);
     usePhysicalCameraOrientation_ = isUsed;
+    MEDIA_INFO_LOG("CameraDevice::SetUsePhysicalCameraOrientation usePhysicalCameraOrientation: %{public}d",
+        usePhysicalCameraOrientation_);
 }
 
 bool CameraDevice::GetUsePhysicalCameraOrientation()

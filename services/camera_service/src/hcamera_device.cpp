@@ -421,7 +421,7 @@ int32_t HCameraDevice::OpenSecureCamera(uint64_t& secureSeqId)
 
 int32_t HCameraDevice::SetUsePhysicalCameraOrientation(bool isUsed)
 {
-    lock_guard<mutex> lock(usePhysicalCameraOrientationMutex_);
+    std::lock_guard<std::mutex> lock(usePhysicalCameraOrientationMutex_);
     usePhysicalCameraOrientation_ = isUsed;
     MEDIA_INFO_LOG("HCameraDevice::SetUsePhysicalCameraOrientation isUsed %{public}d", isUsed);
     return CAMERA_OK;
@@ -429,7 +429,7 @@ int32_t HCameraDevice::SetUsePhysicalCameraOrientation(bool isUsed)
 
 bool HCameraDevice::GetUsePhysicalCameraOrientation()
 {
-    lock_guard<mutex> lock(usePhysicalCameraOrientationMutex_);
+    std::lock_guard<std::mutex> lock(usePhysicalCameraOrientationMutex_);
     return usePhysicalCameraOrientation_;
 }
 

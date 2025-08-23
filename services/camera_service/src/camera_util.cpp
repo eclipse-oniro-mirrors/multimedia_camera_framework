@@ -693,8 +693,8 @@ int32_t GetCorrectedCameraOrientation(bool usePhysicalCameraOrientation,
     if (ret != CAM_META_SUCCESS) {
         camera_metadata_item item;
         ret = OHOS::Camera::FindCameraMetadataItem(cameraAbility->get(), OHOS_SENSOR_ORIENTATION, &item);
-        CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS, ret, "CameraUtil::GetCameraOrientation get sensor "
-            "orientation failed");
+        CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS || !item.count, ret, "CameraUtil::GetCameraOrientation get "
+            "sensor orientation failed");
         sensorOrientation = item.data.i32[0];
     }
     return ret;
