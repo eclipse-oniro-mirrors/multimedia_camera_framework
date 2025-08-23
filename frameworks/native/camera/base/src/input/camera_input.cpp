@@ -140,8 +140,10 @@ void CameraInput::InitCameraInput()
     CHECK_RETURN_ELOG(!result, "CameraInput::InitCameraInput failed to add deathRecipient");
 
     camera_metadata_item item;
+    CHECK_RETURN_ELOG(metaData == nullptr, "InitCameraInput Metadata is Nullptr");
     int32_t retCode = OHOS::Camera::FindCameraMetadataItem(metaData->get(), OHOS_SENSOR_ORIENTATION, &item);
-    CHECK_EXECUTE(retCode == CAM_META_SUCCESS, staticOrientation_ = static_cast<uint32_t>(item.data.i32[0]));
+    CHECK_EXECUTE(retCode == CAM_META_SUCCESS && item.count,
+        staticOrientation_ = static_cast<uint32_t>(item.data.i32[0]));
 
     retCode = OHOS::Camera::FindCameraMetadataItem(metaData->get(), OHOS_ABILITY_SENSOR_ORIENTATION_VARIABLE, &item);
     CHECK_EXECUTE(retCode == CAM_META_SUCCESS, isVariable_ = item.count > 0 && item.data.u8[0]);
@@ -723,7 +725,6 @@ int CameraInput::GetPhysicalCameraOrientation(uint32_t* orientation)
 int CameraInput::SetUsePhysicalCameraOrientation(bool isUsed)
 {
     MEDIA_INFO_LOG("CameraInput::UsePhysicalCameraOrientation isUsed: %{public}d", isUsed);
-    CHECK_RETURN_RET(!isUsed, ServiceToCameraError(CAMERA_OK));
     if (!isVariable_) {
         MEDIA_ERR_LOG("CameraInput::SetUsePhysicalCameraOrientation isVariable is false");
         return ServiceToCameraError(CAMERA_OPERATION_NOT_ALLOWED);

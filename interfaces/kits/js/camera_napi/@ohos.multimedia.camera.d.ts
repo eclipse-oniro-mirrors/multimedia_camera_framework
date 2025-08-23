@@ -1830,35 +1830,37 @@ function getCameraManager(context: Context): CameraManager;
     off(type: 'cameraOcclusionDetection', callback?: AsyncCallback<CameraOcclusionDetectionResult>): void;
 
     /**
-     * Query whether sensor orientation change with fold state.
+     * Query whether physical sensor orientation is variable under different fold status.
      *
      * @returns { boolean } this value that specifies whether sensor orientation change with fold state.
      * @syscap SystemCapability.Multimedia.Camera.Core
-     * @systemapi
-     * @since 20
+     * @atomicservice
+     * @since 21
+     * @arkts 1.1&1.2
      */
-    IsPhysicalCameraOrientationVariable(): boolean;
+    isPhysicalCameraOrientationVariable(): boolean;
 
     /**
-     * Query sensor orientation of all fold state.
+     * Get physical camera orientation under current fold status.
      *
-     * @returns { Array<number> } The sensor orientation map.
+     * @returns { int } The sensor orientation map.
      * @syscap SystemCapability.Multimedia.Camera.Core
-     * @systemapi
-     * @since 20
+     * @atomicservice
+     * @since 21
+     * @arkts 1.1&1.2
      */
-    getPhysicalCameraOrientation(): number;
-
+    getPhysicalCameraOrientation(): int;
+  
     /**
-     * Set usePhysicalCameraOrientation.
+     * Choose whether to use the physical camera orientation.
      *
-     * @param { boolean } isUsed - Use Truth Camera Orientation.
-     * @throws { BusinessError } 7400107 - Can not use camera cause of conflict.
-     * @throws { BusinessError } 7400108 - Camera disabled cause of security reason.
+     * @param { boolean } isUsed - Use Physical Camera Orientation.
+     * @throws { BusinessError } 7400102 - Operation not allowed.
      * @throws { BusinessError } 7400201 - Camera service fatal error.
      * @syscap SystemCapability.Multimedia.Camera.Core
-     * @systemapi
-     * @since 20
+     * @atomicservice
+     * @since 21
+     * @arkts 1.1&1.2
      */
     usePhysicalCameraOrientation(isUsed: boolean): void;
   }

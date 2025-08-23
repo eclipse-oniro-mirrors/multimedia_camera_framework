@@ -172,7 +172,7 @@ Camera_ErrorCode OH_CameraInput_Close(Camera_Input* cameraInput);
 Camera_ErrorCode OH_CameraInput_Release(Camera_Input* cameraInput);
 
 /**
- * @brief Query whether sensor orientation change with fold state.
+ * @brief Query whether physical sensor orientation is variable under different fold status.
  *
  * @param cameraInput the {@link Camera_Input} instance.
  * @param isVariable the result of whether sensor orientation changed with fold state.
@@ -183,7 +183,7 @@ Camera_ErrorCode OH_CameraInput_Release(Camera_Input* cameraInput);
 Camera_ErrorCode OH_CameraInput_IsPhysicalCameraOrientationVariable(Camera_Input* cameraInput, bool* isVariable);
 
 /**
- * @brief Query sensor orientation of current fold state
+ * @brief Get physical camera orientation under current fold status.
  *
  * @param cameraInput the {@link Camera_Input} instance.
  * @param orientation orientation of current fold state.
@@ -194,13 +194,14 @@ Camera_ErrorCode OH_CameraInput_IsPhysicalCameraOrientationVariable(Camera_Input
 Camera_ErrorCode OH_CameraInput_GetPhysicalCameraOrientation(Camera_Input* cameraInput, uint32_t* orientation);
 
 /**
- * @brief Set UsePhysicalCameraOrientation
+ * @brief Choose whether to use the physical camera orientation.
  *
  * @param cameraInput the {@link Camera_Input} instance.
  * @param isUsed the flag of enable use truth camera orientation or not.
  * @return {@link #CAMERA_OK} if the method call succeeds.
  *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
  *         {@link #CAMERA_OPERATION_NOT_ALLOWED} if operation not allowed.
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
  * @since 21
  */
 Camera_ErrorCode OH_CameraInput_UsePhysicalCameraOrientation(Camera_Input* cameraInput, bool isUsed);
