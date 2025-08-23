@@ -377,6 +377,48 @@ ohos_shared_library("camera_dynamic_media_manager") {
   subsystem_name = "multimedia"
 }
 
+config("camera_dynamic_xcomponent_controller_public_config") {
+  include_dirs = [
+    "${multimedia_camera_framework_path}/dynamic_libs/xcomponent_controller/include",
+  ]
+}
+ohos_shared_library("camera_dynamic_xcomponent_controller") {
+  install_enable = true
+  sources = [
+    "${multimedia_camera_framework_path}/dynamic_libs/xcomponent_controller/src/xcomponent_controller_adapter.cpp" 
+  ]
+  cflags = [
+    "-fPIC",
+    "-Wall",
+    "-Os",
+  ]
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+  include_dirs = [ 
+    "${multimedia_camera_framework_path}/common/utils" ,
+    "${multimedia_camera_framework_path}/common/utils/xcomponent_controller/include",
+  ]
+  public_configs = [ ":camera_dynamic_xcomponent_controller_public_config" ]
+  if (target_cpu == "arm") {
+    cflags += [ "-DBINDER_IPC_32BIT" ]
+  }
+
+  external_deps = [
+    "ace_engine:ace_xcomponent_controller",
+    "hilog:libhilog",
+    "hisysevent:libhisysevent",
+    "hitrace:hitrace_meter",
+  ]
+
+  cflags_cc = cflags
+
+  part_name = "camera_framework"
+  subsystem_name = "multimedia"
+}
+
 ohos_shared_library("camera_dynamic_notification") {
   install_enable = true
   sources = [

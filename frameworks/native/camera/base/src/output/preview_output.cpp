@@ -41,7 +41,6 @@
 #include "parameters.h"
 #include "session/capture_session.h"
 #include "sketch_wrapper.h"
-#include "xcomponent_controller.h"
 #include "surface.h"
 #include "surface_utils.h"
 
@@ -82,9 +81,9 @@ PreviewOutput::PreviewOutput(sptr<IBufferProducer> bufferProducer)
     : CaptureOutput(CAPTURE_OUTPUT_TYPE_PREVIEW, StreamType::REPEAT, bufferProducer, nullptr)
 {
     MEDIA_INFO_LOG("PreviewOutput::PreviewOutput construct");
-    PreviewFormat_ = 0;
-    PreviewSize_.height = 0;
-    PreviewSize_.width = 0;
+    previewFormat_ = 0;
+    previewSize_.height = 0;
+    previewSize_.width = 0;
     previewOutputListenerManager_->SetPreviewOutput(this);
 }
 
@@ -438,13 +437,13 @@ void PreviewOutput::SetFrameRateRange(int32_t minFrameRate, int32_t maxFrameRate
 void PreviewOutput::SetOutputFormat(int32_t format)
 {
     MEDIA_DEBUG_LOG("PreviewOutput::SetOutputFormat set format %{public}d", format);
-    PreviewFormat_ = format;
+    previewFormat_ = format;
 }
 
 void PreviewOutput::SetSize(Size size)
 {
     MEDIA_DEBUG_LOG("PreviewOutput::SetSize set size %{public}d, %{public}d", size.width, size.height);
-    PreviewSize_ = size;
+    previewSize_ = size;
 }
 
 int32_t PreviewOutput::SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate)
@@ -493,9 +492,9 @@ std::vector<std::vector<int32_t>> PreviewOutput::GetSupportedFrameRates()
     supportedProfiles.erase(std::remove_if(
         supportedProfiles.begin(), supportedProfiles.end(),
         [&](Profile& profile) {
-            return profile.format_ != PreviewFormat_ ||
-                   profile.GetSize().height != PreviewSize_.height ||
-                   profile.GetSize().width != PreviewSize_.width;
+            return profile.format_ != previewFormat_ ||
+                   profile.GetSize().height != previewSize_.height ||
+                   profile.GetSize().width != previewSize_.width;
         }), supportedProfiles.end());
     std::vector<std::vector<int32_t>> supportedFrameRatesRange;
     for (auto item : supportedProfiles) {
@@ -841,18 +840,16 @@ bool PreviewOutput::IsXComponentSwap()
     uint32_t currentRotation = static_cast<uint32_t>(display->GetRotation()) * 90;
     std::string deviceType = OHOS::system::GetDeviceType();
     uint32_t apiCompatibleVersion = CameraApiVersion::GetApiVersion();
-    MEDIA_INFO_LOG("deviceType=%{public}s, apiCompatibleVersion=%{public}d", deviceType.c_str(),
-        apiCompatibleVersion);
+    MEDIA_INFO_LOG("deviceType=%{public}s, apiCompatibleVersion=%{public}d", deviceType.c_str(), apiCompatibleVersion);
     // The tablet has incompatible changes in API14; use version isolation for compilation.
     CHECK_EXECUTE(apiCompatibleVersion < CameraApiVersion::APIVersion::API_FOURTEEN && deviceType == "tablet",
-        currentRotation = (currentRotation + STREAM_ROTATE_270) % (STREAM_ROTATE_270 + STREAM_ROTATE_90));
+        currentRotation = (currentRotation + STREAM_ROTATE_270) % STREAM_ROTATE_360);
     uint32_t cameraRotation = 0;
     CHECK_RETURN_RET_ELOG(GetCameraDeviceRotationAngle(cameraRotation) != CAMERA_OK,
         false, "Get camera rotation failed");
     MEDIA_INFO_LOG("display rotation: %{public}d, camera rotation: %{public}d", currentRotation, cameraRotation);
-    uint32_t rotationAngle = (currentRotation + cameraRotation) % (STREAM_ROTATE_270 + STREAM_ROTATE_90);
-    CHECK_RETURN_RET(rotationAngle == STREAM_ROTATE_90 || rotationAngle == STREAM_ROTATE_270, true);
-    return false;
+    uint32_t rotationAngle = (currentRotation + cameraRotation) % STREAM_ROTATE_360;
+    return rotationAngle == STREAM_ROTATE_90 || rotationAngle == STREAM_ROTATE_270;
     // LCOV_EXCL_STOP
 }
 
@@ -876,14 +873,18 @@ int32_t PreviewOutput::GetCameraDeviceRotationAngle(uint32_t &cameraRotation)
 // LCOV_EXCL_START
 void PreviewOutput::AdjustRenderFit()
 {
+    CAMERA_SYNC_TRACE;
     int32_t renderFitNumber = 0;
     bool isRenderFitNewVersionEnabled = false;
     auto surfaceId = GetSurfaceId();
-    int32_t ret = OHOS::Ace::XComponentController::GetRenderFitBySurfaceId(
+    auto xcomponentControllerProxy = XComponentControllerProxy::CreateXComponentControllerProxy();
+    CHECK_RETURN_ELOG(xcomponentControllerProxy == nullptr, "xcomponentControllerProxy is null");
+    int32_t ret = xcomponentControllerProxy->GetRenderFitBySurfaceId(
         surfaceId, renderFitNumber, isRenderFitNewVersionEnabled);
     MEDIA_INFO_LOG("GetRenderFitBySurfaceId ret: %{public}d, renderFitNumber: %{public}d,"
         "isRenderFitNewVersionEnabled: %{public}d",
         ret, renderFitNumber, isRenderFitNewVersionEnabled);
+    renderFit_.store(renderFitNumber);
     CHECK_RETURN_ELOG(ret != 0 || renderFitNumber != RENDER_FIL_FILL, "Conditions not met");
     uint64_t outputSurfaceId;
     std::stringstream iss(surfaceId);
@@ -900,6 +901,8 @@ void PreviewOutput::AdjustRenderFit()
     ret = OH_NativeWindow_NativeWindowHandleOpt(outputNativeWindow, code, &xComponentHeight, &xComponentWidth);
     MEDIA_INFO_LOG("The width of the XComponent is %{public}d, and the height is %{public}d",
         xComponentWidth, xComponentHeight);
+    xComponentHeight_.store(xComponentHeight);
+    xComponentWidth_.store(xComponentWidth);
     OH_NativeWindow_DestroyNativeWindow(outputNativeWindow);
     CHECK_RETURN_ELOG(ret != 0 || xComponentHeight * xComponentWidth == 0,
         "The AdjustRenderFit call failed because the xComponentWidth x xComponentHeight equals 0."
@@ -910,13 +913,14 @@ void PreviewOutput::AdjustRenderFit()
         xComponentWidth = xComponentHeight;
         xComponentHeight = temp;
     }
-    CHECK_RETURN_ELOG(PreviewSize_.width * PreviewSize_.height == 0,
+    CHECK_RETURN_ELOG(previewSize_.width * previewSize_.height == 0,
         "The AdjustRenderFit call failed because the previewWidth x previewHeight equals 0");
-    float cameraRatio = (float)PreviewSize_.width / (float)PreviewSize_.height;
+    float cameraRatio = (float)previewSize_.width / (float)previewSize_.height;
     float XComponentRatio = (float)xComponentWidth / (float)xComponentHeight;
     CHECK_RETURN_ELOG(abs(cameraRatio - XComponentRatio) < TARGET_MIN_RATIO,
         "XComponent ratio matched camera ratio, no need adjust renderFit");
-    ret = OHOS::Ace::XComponentController::SetRenderFitBySurfaceId(surfaceId, RENDER_FIL_COVER, true);
+    ret = xcomponentControllerProxy->SetRenderFitBySurfaceId(surfaceId, RENDER_FIL_COVER, true);
+    isModified_.store(true);
     CHECK_RETURN_ELOG(ret != 0, "SetRenderFitBySurfaceId ret: %{public}d", ret);
 } // LCOV_EXCL_STOP
 
@@ -934,6 +938,20 @@ std::string PreviewOutput::GetSurfaceId()
     std::lock_guard<std::mutex> lock(surfaceIdMutex_);
     return surfaceId_;
     // LCOV_EXCL_STOP
+}
+
+void PreviewOutput::ReportXComponentInfoEvent()
+{
+    HiSysEventWrite(
+        HiviewDFX::HiSysEvent::Domain::CAMERA,
+        "RECORD_RENDERFIT_INFO",
+        HiviewDFX::HiSysEvent::EventType::STATISTIC,
+        "RENDERFIT", renderFit_.load(),
+        "XCOMPONENT_HEIGHT", xComponentHeight_.load(),
+        "XCOMPONENT_WIDTH", xComponentWidth_.load(),
+        "PREVIEW_HEIGHT", previewSize_.height,
+        "PREVIEW_WIDTH", previewSize_.width,
+        "IS_MODIFIED", isModified_.load());
 }
 } // namespace CameraStandard
 } // namespace OHOS

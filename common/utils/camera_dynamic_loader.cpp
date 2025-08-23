@@ -104,7 +104,7 @@ void WaitDynamiclibState(const string& libName, DynamiclibState targetState)
 
 Dynamiclib::Dynamiclib(const string& libName) : libName_(libName)
 {
-    CAMERA_SYNC_TRACE;
+    CAMERA_SYNC_TRACE_FMT("Dynamiclib::Dynamiclib %s", libName_.c_str());
     WaitDynamiclibState(libName, UNLOAD);
     MEDIA_INFO_LOG("Dynamiclib::Dynamiclib dlopen %{public}s", libName_.c_str());
     libHandle_ = dlopen(libName_.c_str(), RTLD_NOW);
@@ -133,7 +133,7 @@ bool Dynamiclib::IsLoaded()
 
 void* Dynamiclib::GetFunction(const string& functionName)
 {
-    CAMERA_SYNC_TRACE;
+    CAMERA_SYNC_TRACE_FMT("Dynamiclib::GetFunction %s", functionName.c_str());
     CHECK_RETURN_RET_ELOG(
         !IsLoaded(), nullptr, "Dynamiclib::GetFunction fail libname:%{public}s not loaded", libName_.c_str());
 

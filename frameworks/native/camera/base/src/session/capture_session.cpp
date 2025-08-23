@@ -5248,7 +5248,9 @@ void CaptureSession::AdjustRenderFit()
         CHECK_CONTINUE(item && item->GetOutputType() != CAPTURE_OUTPUT_TYPE_PREVIEW);
         sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)item;
         previewOutput->AdjustRenderFit();
+        previewOutput->ReportXComponentInfoEvent();
     }
+    XComponentControllerProxy::FreeXComponentControllerDynamiclib();
 }
 
 void CaptureSession::SetMacroStatusCallback(std::shared_ptr<MacroStatusCallback> callback)

@@ -28,6 +28,7 @@
 #include "input/camera_device.h"
 #include "istream_repeat.h"
 #include "istream_repeat_callback.h"
+#include "xcomponent_controller/include/xcomponent_controller_proxy.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -249,13 +250,17 @@ public:
     int32_t GetCameraDeviceRotationAngle(uint32_t &cameraRotation);
     void SetSurfaceId(const std::string& surfaceId);
     std::string GetSurfaceId();
+    void ReportXComponentInfoEvent();
 private:
-    int32_t PreviewFormat_;
+    int32_t previewFormat_;
     std::mutex surfaceIdMutex_;
     std::string surfaceId_ = "";
-    Size PreviewSize_ = {0, 0};
+    Size previewSize_ = {0, 0};
     sptr<PreviewOutputListenerManager> previewOutputListenerManager_ = sptr<PreviewOutputListenerManager>::MakeSptr();
-
+    std::atomic<int32_t> renderFit_ = 0;
+    std::atomic<uint32_t> xComponentHeight_ = 0;
+    std::atomic<uint32_t> xComponentWidth_ = 0;
+    std::atomic<bool> isModified_ = false;
     std::shared_ptr<SketchWrapper> sketchWrapper_;
     std::shared_ptr<OHOS::Camera::CameraMetadata> GetDeviceMetadata();
     std::shared_ptr<Size> FindSketchSize();
