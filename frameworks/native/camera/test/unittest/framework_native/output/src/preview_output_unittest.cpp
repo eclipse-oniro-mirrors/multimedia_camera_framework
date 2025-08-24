@@ -1058,5 +1058,38 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_027, TestSize.Level0)
     EXPECT_EQ(previewOutput->IsBandwidthCompressionSupported(), false);
     EXPECT_EQ(previewOutput->EnableBandwidthCompression(true), CameraErrorCode::SERVICE_FATL_ERROR);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test LogAssistanceSupported
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test LogAssistanceSupported
+ */
+HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_028, TestSize.Level0)
+{
+    sptr<CaptureOutput> preview = CreatePreviewOutput();
+    ASSERT_NE(preview, nullptr);
+    sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&) preview;
+    EXPECT_EQ(previewOutput->IsLogAssistanceSupported(), false);
+    EXPECT_NE(previewOutput->EnableLogAssistance(true), 0);
+}
+ 
+/*
+ * Feature: Framework
+ * Function: Test EnableBandwidthCompression
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test EnableBandwidthCompression
+ */
+HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_029, TestSize.Level0)
+{
+    sptr<CaptureOutput> preview = CreatePreviewOutput();
+    ASSERT_NE(preview, nullptr);
+    sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&) preview;
+    EXPECT_NE(previewOutput->EnableBandwidthCompression(true), 0);
+}
 }
 }

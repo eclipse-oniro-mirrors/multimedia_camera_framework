@@ -953,32 +953,12 @@ public:
     void GetCameraConcurrentInfos(std::vector<sptr<CameraDevice>> cameraDeviceArrray,
         std::vector<bool> cameraConcurrentType, std::vector<std::vector<SceneMode>> &modes,
         std::vector<std::vector<sptr<CameraOutputCapability>>> &outputCapabilities);
-    void GetMetadataInfos(camera_metadata_item_t item,
-        std::vector<SceneMode> &modeofThis, std::vector<sptr<CameraOutputCapability>> &outputCapabilitiesofThis,
-        shared_ptr<OHOS::Camera::CameraMetadata> &cameraAbility);
-    void SetCameraOutputCapabilityofthis(sptr<CameraOutputCapability> &cameraOutputCapability,
-        ProfilesWrapper &profilesWrapper, int32_t modeName,
-        shared_ptr<OHOS::Camera::CameraMetadata> &cameraAbility);
     bool GetConcurrentType(std::vector<sptr<CameraDevice>> cameraDeviceArrray,
         std::vector<bool> &cameraConcurrentType);
     bool CheckConcurrentExecution(std::vector<sptr<CameraDevice>> cameraDeviceArrray);
-    bool CheckCameraConcurrentId(std::unordered_map<std::string, int32_t> &idmap,
-        std::vector<std::string> &cameraIdv);
-    void ParsingCameraConcurrentLimted(camera_metadata_item_t &item,
-        std::vector<SceneMode> &mode, std::vector<sptr<CameraOutputCapability>> &outputCapabilitiesofThis,
-        shared_ptr<OHOS::Camera::CameraMetadata> &cameraAbility, sptr<CameraDevice>cameraDevNow);
-    void GetMetadataInfosfordouble(camera_metadata_item_t &item, double* originInfo, uint32_t i,
-        std::vector<SceneMode> &modeofThis, std::vector<sptr<CameraOutputCapability>> &outputCapabilitiesofThis,
-        shared_ptr<OHOS::Camera::CameraMetadata> &cameraAbility);
-    void GetSpecInfofordouble(double* originInfo, uint32_t start, uint32_t end, ProfileLevelInfo &modeInfo);
-    void GetStreamInfofordouble(double* originInfo, uint32_t start, uint32_t end, SpecInfo &specInfo);
-    void GetDetailInfofordouble(double* originInfo, uint32_t start, uint32_t end, StreamInfo &streamInfo);
-    void GetAbilityStructofConcurrentLimted(std::vector<int32_t> &vec, double* originInfo, int length);
-    void GetAbilityStructofConcurrentLimtedfloat(std::vector<float> &vec, double* originInfo, int length);
     std::vector<dmDeviceInfo> GetDmDeviceInfo();
     CameraConcurrentLimtedCapability limtedCapabilitySave_;
     std::unordered_map<std::string, CameraConcurrentLimtedCapability> cameraConLimCapMap_;
-    void FindConcurrentLimtedEnd(double* originInfo, int32_t i, int32_t count, int32_t &countl);
     friend int CameraInput::Open(int32_t cameraConcurrentType);
     std::string GetFoldScreenType();
     bool GetIsInWhiteList();
@@ -1119,6 +1099,27 @@ private:
         std::lock_guard<std::mutex> lock(innerCameraMutex_);
         innerCamera_ = cameraDevice;
     }
+
+    void GetMetadataInfos(camera_metadata_item_t item,
+        std::vector<SceneMode> &modeofThis, std::vector<sptr<CameraOutputCapability>> &outputCapabilitiesofThis,
+        shared_ptr<OHOS::Camera::CameraMetadata> &cameraAbility);
+    void SetCameraOutputCapabilityofthis(sptr<CameraOutputCapability> &cameraOutputCapability,
+        ProfilesWrapper &profilesWrapper, int32_t modeName,
+        shared_ptr<OHOS::Camera::CameraMetadata> &cameraAbility);
+    bool CheckCameraConcurrentId(std::unordered_map<std::string, int32_t> &idmap,
+        std::vector<std::string> &cameraIdv);
+    void ParsingCameraConcurrentLimted(camera_metadata_item_t &item,
+        std::vector<SceneMode> &mode, std::vector<sptr<CameraOutputCapability>> &outputCapabilitiesofThis,
+        shared_ptr<OHOS::Camera::CameraMetadata> &cameraAbility, sptr<CameraDevice>cameraDevNow);
+    void GetMetadataInfosfordouble(camera_metadata_item_t &item, double* originInfo, uint32_t i,
+        std::vector<SceneMode> &modeofThis, std::vector<sptr<CameraOutputCapability>> &outputCapabilitiesofThis,
+        shared_ptr<OHOS::Camera::CameraMetadata> &cameraAbility);
+    void GetSpecInfofordouble(double* originInfo, uint32_t start, uint32_t end, ProfileLevelInfo &modeInfo);
+    void GetStreamInfofordouble(double* originInfo, uint32_t start, uint32_t end, SpecInfo &specInfo);
+    void GetDetailInfofordouble(double* originInfo, uint32_t start, uint32_t end, StreamInfo &streamInfo);
+    void GetAbilityStructofConcurrentLimted(std::vector<int32_t> &vec, double* originInfo, int length);
+    void GetAbilityStructofConcurrentLimtedfloat(std::vector<float> &vec, double* originInfo, int length);
+    void FindConcurrentLimtedEnd(double* originInfo, int32_t i, int32_t count, int32_t &countl);
 
     void CheckWhiteList();
     std::mutex cameraDeviceListMutex_;

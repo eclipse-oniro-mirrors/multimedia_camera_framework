@@ -1240,5 +1240,46 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_function_unittest_003, TestSi
     session->Release();
     input->Release();
 }
+
+/*
+ * Feature: Framework
+ * Function: Test SetFocusTrackingMetaInfoCallback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetFocusTrackingMetaInfoCallback
+ */
+HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_030, TestSize.Level0)
+{
+    sptr<CaptureOutput> metadata = cameraManager_->CreateMetadataOutput();
+    ASSERT_NE(metadata, nullptr);
+    sptr<MetadataOutput> metadatOutput = (sptr<MetadataOutput>&)metadata;
+ 
+    std::shared_ptr<OHOS::Camera::CameraMetadata> result = nullptr;
+    FocusTrackingMetaInfo focusTrackingMetaInfo;
+    metadatOutput->ProcessFocusTrackingMetaInfo(result, focusTrackingMetaInfo);
+ 
+    std::shared_ptr<FocusTrackingMetaInfoCallback> callback = nullptr;
+    metadatOutput->SetFocusTrackingMetaInfoCallback(callback);
+    EXPECT_EQ(metadatOutput->focusTrackingMetaInfoCallback_, nullptr);
+}
+ 
+/*
+ * Feature: Framework
+ * Function: Test ProcessFocusTrackingRegion
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test ProcessFocusTrackingRegion
+ */
+HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_031, TestSize.Level0)
+{
+    sptr<CaptureOutput> metadata = cameraManager_->CreateMetadataOutput();
+    ASSERT_NE(metadata, nullptr);
+    sptr<MetadataOutput> metadatOutput = (sptr<MetadataOutput>&)metadata;
+    Rect region;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> result = nullptr;
+    EXPECT_EQ(metadatOutput->ProcessFocusTrackingRegion(result, region), false);
+}
 }
 }

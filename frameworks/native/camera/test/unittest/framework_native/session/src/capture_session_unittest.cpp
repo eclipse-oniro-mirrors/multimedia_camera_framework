@@ -9213,6 +9213,280 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_048, TestSize.Level0)
     input->Close();
     session->Release();
 }
+/*
+ * Feature: Framework
+ * Function: Test PressureStatusCallback.
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test PressureStatusCallback.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_049, TestSize.Level0)
+{
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(input, nullptr);
+ 
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+ 
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
+    ASSERT_NE(photo, nullptr);
+ 
+    std::shared_ptr<PressureStatusCallback> pressureStatusCallback = std::make_shared<PressureStatusCallback>();
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+ 
+    EXPECT_EQ(session->GetPressureCallback(), nullptr);
+    EXPECT_EQ(session->GetControlCenterEffectCallback(), nullptr);
+ 
+    input->Close();
+    session->Release();
+}
+ 
+/*
+ * Feature: Framework
+ * Function: Test GetSupportedFocusRangeTypes.
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetSupportedFocusRangeTypes.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_050, TestSize.Level0)
+{
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(input, nullptr);
+ 
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+ 
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
+    ASSERT_NE(photo, nullptr);
+ 
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+ 
+    std::vector<FocusRangeType>types;
+    std::vector<FocusDrivenType>types2;
+    EXPECT_NE(session->GetSupportedFocusRangeTypes(types), 0);
+    EXPECT_NE(session->GetSupportedFocusDrivenTypes(types2), 0);
+ 
+    input->Close();
+    session->Release();
+}
+ 
+/*
+ * Feature: Framework
+ * Function: Test Process.
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test Process.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_051, TestSize.Level0)
+{
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(input, nullptr);
+ 
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+ 
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
+    ASSERT_NE(photo, nullptr);
+ 
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    std::shared_ptr<OHOS::Camera::CameraMetadata> result = std::make_shared<OHOS::Camera::CameraMetadata>(1, 1);
+    uint64_t timestamp = 0;
+    session->OnResultReceived(result);
+    session->ProcessAutoFocusUpdates(result);
+    session->ProcessMacroStatusChange(result);
+    session->ProcessMoonCaptureBoostStatusChange(result);
+    session->ProcessLowLightBoostStatusChange(result);
+    session->ProcessSnapshotDurationUpdates(timestamp, result);
+    session->ProcessAREngineUpdates(timestamp, result);
+    session->ProcessEffectSuggestionTypeUpdates(result);
+    session->ProcessLcdFlashStatusUpdates(result);
+    session->ProcessTripodStatusChange(result);
+    session->ProcessCompositionPositionCalibration(result);
+    session->ProcessCompositionBegin(result);
+    session->ProcessCompositionEnd(result);
+    session->ProcessCompositionPositionMatch(result);
+    EXPECT_NE(session, nullptr);
+ 
+    input->Close();
+    session->Release();
+}
+ 
 
+ /*
+ * Feature: Framework
+ * Function: Test Enable.
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test Enable.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_052, TestSize.Level0)
+{
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(input, nullptr);
+ 
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+ 
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
+    ASSERT_NE(photo, nullptr);
+ 
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    session->SetHasFitedRotation(false);
+    EXPECT_NE(session->EnableConstellationDrawing(false), 0);
+    session->EnableOfflinePhoto();
+    EXPECT_NE(session->EnableLogAssistance(false), 0);
+    session->EnableAutoFrameRate(false);
+ 
+    input->Close();
+    session->Release();
+}
+ 
+/*
+ * Feature: Framework
+ * Function: Test GetIsAutoSwitchDeviceStatus.
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetIsAutoSwitchDeviceStatus.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_053, TestSize.Level0)
+{
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(input, nullptr);
+ 
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+ 
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
+    ASSERT_NE(photo, nullptr);
+ 
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    session->SetIsAutoSwitchDeviceStatus(false);
+    EXPECT_EQ(session->GetIsAutoSwitchDeviceStatus(), false);
+ 
+    input->Close();
+    session->Release();
+}
+ 
+/*
+ * Feature: Framework
+ * Function: Test SetApertureEffectChangeCallback.
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetApertureEffectChangeCallback.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_054, TestSize.Level0)
+{
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(input, nullptr);
+ 
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+ 
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
+    ASSERT_NE(photo, nullptr);
+ 
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    std::shared_ptr<ApertureEffectChangeCallback> apertureEffectChangeCb = nullptr;
+    session->SetApertureEffectChangeCallback(apertureEffectChangeCb);
+    EXPECT_EQ(session->apertureEffectChangeCallback_, nullptr);
+ 
+    input->Close();
+    session->Release();
+}
+ 
+/*
+ * Feature: Framework
+ * Function: Test SetApertureEffectChangeCallback.
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetApertureEffectChangeCallback.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_055, TestSize.Level0)
+{
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(input, nullptr);
+ 
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+ 
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
+    ASSERT_NE(photo, nullptr);
+ 
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    std::shared_ptr<OHOS::Camera::CameraMetadata> result = std::make_shared<OHOS::Camera::CameraMetadata>(1, 1);
+    session->ProcessApertureEffectChange(result);
+    std::vector<int32_t> supportedVideoCodecTypes;
+    EXPECT_EQ(session->GetSupportedVideoCodecTypes(supportedVideoCodecTypes), 0);
+ 
+    input->Close();
+    session->Release();
+}
+ 
+/*
+ * Feature: Framework
+ * Function: Test GetMinimumFocusDistance.
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetMinimumFocusDistance.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_057, TestSize.Level0)
+{
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(input, nullptr);
+ 
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+ 
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
+    ASSERT_NE(photo, nullptr);
+ 
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    EXPECT_EQ(session->GetMinimumFocusDistance(), 0);
+ 
+    input->Close();
+    session->Release();
+}
 }
 }

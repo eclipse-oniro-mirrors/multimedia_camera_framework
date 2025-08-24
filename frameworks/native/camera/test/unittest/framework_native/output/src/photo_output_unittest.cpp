@@ -1913,5 +1913,21 @@ HWTEST_F(CameraPhotoOutputUnit, NotifyOfflinePhotoOutput_001, TestSize.Level0)
     session->Release();
     input->Release();
 }
+
+/*
+ * Feature: Framework
+ * Function: HStreamCaptureCallbackImpl
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HStreamCaptureCallbackImpl
+ */
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_029, TestSize.Level0)
+{
+    PhotoOutput* photoOutput = nullptr;
+    std::shared_ptr<HStreamCaptureCallbackImpl> callback = std::make_shared<HStreamCaptureCallbackImpl>(photoOutput);
+    int32_t captureId = 1;
+    EXPECT_EQ(callback->OnOfflineDeliveryFinished(captureId), 0);
+}
 }
 }
