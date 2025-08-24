@@ -260,6 +260,8 @@
 
 #define CAMERA_SYNC_TRACE HITRACE_METER_NAME(HITRACE_TAG_ZCAMERA, __PRETTY_FUNCTION__)
 
+#define CAMERA_SYNC_TRACE_FMT(fmt, ...) HITRACE_METER_FMT(HITRACE_TAG_ZCAMERA, fmt, ##__VA_ARGS__)
+
 #define CAMERA_SYSEVENT_STATISTIC(str)                                             \
     do {                                                                           \
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::CAMERA, "CAMERA_STATISTIC", \

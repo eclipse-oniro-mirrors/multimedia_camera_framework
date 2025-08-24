@@ -29,6 +29,7 @@ const std::string MOVING_PHOTO_SO = "libcamera_dynamic_moving_photo.z.so";
 const std::string MEDIA_MANAGER_SO = "libcamera_dynamic_media_manager.z.so";
 const std::string NAPI_EXT_SO = "libcamera_napi_ex.z.so";
 const std::string CAMERA_NOTIFICATION_SO = "libcamera_dynamic_notification.z.so";
+const std::string XCOMPONENT_CONTROLLER_SO = "libcamera_dynamic_xcomponent_controller.z.so";
 
 constexpr uint32_t LIB_DELAYED_UNLOAD_TIME = 30000; // 30 second
 

@@ -237,14 +237,14 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_004, TestSize.Level1)
     EXPECT_EQ(previewOutput->GetFrameRateRange(), previewFrameRateRange);
 
     previewOutput->SetOutputFormat(static_cast<int32_t>(CAMERA_FORMAT_YUV_420_SP));
-    EXPECT_EQ(previewOutput->PreviewFormat_, 1003);
+    EXPECT_EQ(previewOutput->previewFormat_, 1003);
 
     Size previewSize;
     previewSize.width = 640;
     previewSize.height = 480;
     previewOutput->SetSize(previewSize);
-    EXPECT_EQ(previewOutput->PreviewSize_.width, previewSize.width);
-    EXPECT_EQ(previewOutput->PreviewSize_.height, previewSize.height);
+    EXPECT_EQ(previewOutput->previewSize_.width, previewSize.width);
+    EXPECT_EQ(previewOutput->previewSize_.height, previewSize.height);
 
     int32_t ret = previewOutput->SetFrameRate(0, 0);
     EXPECT_EQ(ret, CameraErrorCode::UNRESOLVED_CONFLICTS_BETWEEN_STREAMS);
