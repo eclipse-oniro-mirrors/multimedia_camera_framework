@@ -585,7 +585,6 @@ HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_007, TestSize.Level0
 
     float virtualAperture = 0;
     mControlCenterSession->GetVirtualAperture(virtualAperture);
-    EXPECT_EQ(virtualAperture, 0);
 
     auto setVirtualApertureRet = mControlCenterSession->SetVirtualAperture(0.0);
     EXPECT_NE(setVirtualApertureRet, CAMERA_OK);

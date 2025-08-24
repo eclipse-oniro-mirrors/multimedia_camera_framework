@@ -2324,5 +2324,58 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_073, Test
     EXPECT_EQ(isSupported, true);
 }
 
+/*
+ * Feature: Framework
+ * Function: Test cameraManager GetCameraConcurrentInfos
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test cameraManager GetCameraConcurrentInfos
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_074, TestSize.Level0)
+{
+    vector<sptr<CameraDevice>> cameraDeviceArrray;
+    std::vector<bool> cameraConcurrentType;
+    std::vector<std::vector<SceneMode>> modes;
+    std::vector<std::vector<sptr<CameraOutputCapability>>> outputCapabilities;
+    cameraManager_->GetCameraConcurrentInfos(cameraDeviceArrray, cameraConcurrentType, modes, outputCapabilities);
+    EXPECT_EQ(outputCapabilities.size(), 0);
+    EXPECT_EQ(cameraManager_->CheckConcurrentExecution(cameraDeviceArrray), false);
+}
+ 
+/*
+ * Feature: Framework
+ * Function: Test cameraManager GetIsInWhiteList
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test cameraManager GetIsInWhiteList
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_075, TestSize.Level0)
+{
+    cameraManager_->isInWhiteList_ = false;
+    EXPECT_EQ(cameraManager_->GetIsInWhiteList(), false);
+}
+ 
+/*
+ * Feature: Framework
+ * Function: Test cameraManager SaveOldCameraId
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test cameraManager SaveOldCameraId
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_076, TestSize.Level0)
+{
+    std::string nocamera = "nocamera";
+    cameraManager_->SaveOldCameraId(nocamera, nocamera);
+    std::shared_ptr<OHOS::Camera::CameraMetadata>nometa = nullptr;
+    cameraManager_->SaveOldMeta(nocamera, nometa);
+    sptr<CameraDevice> cameraObj = nullptr;
+    cameraManager_->SetOldMetatoInput(cameraObj, nometa);
+    EXPECT_EQ(cameraManager_->realtoVirtual_[nocamera], nocamera);
+    cameraManager_->realtoVirtual_.clear();
+    cameraManager_->cameraOldCamera_.clear();
+}
 }
 }

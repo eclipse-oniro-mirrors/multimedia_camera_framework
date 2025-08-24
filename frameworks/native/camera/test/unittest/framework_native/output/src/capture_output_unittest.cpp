@@ -204,5 +204,28 @@ HWTEST_F(CameraCaptureOutputUnit, capture_output_unittest_003, TestSize.Level1)
     EXPECT_FALSE(captureOutput->IsTagSetted(tag));
 }
 
+/*
+ * Feature: Framework
+ * Function: Test IsHasEnableOfflinePhoto
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsHasEnableOfflinePhoto
+ */
+HWTEST_F(CameraCaptureOutputUnit, capture_output_unittest_004, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->Open();
+ 
+    sptr<CaptureOutput> captureOutput = CreatePhotoOutput();
+    ASSERT_NE(captureOutput, nullptr);
+ 
+    captureOutput->mIsHasEnableOfflinePhoto_ = false;
+    EXPECT_EQ(captureOutput->IsHasEnableOfflinePhoto(), false);
+}
 }
 }
