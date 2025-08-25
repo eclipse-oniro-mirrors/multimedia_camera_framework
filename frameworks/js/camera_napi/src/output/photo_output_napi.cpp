@@ -411,168 +411,161 @@ void PhotoOutputCallback::OnThumbnailAvailable(
 
 void PhotoOutputCallback::ExecuteCaptureStartCb(const CallbackInfo& info) const
 {
-    napi_value result[ARGS_TWO] = { nullptr, nullptr };
-    napi_value retVal;
-    napi_get_undefined(env_, &result[PARAM0]);
-    if (IsEmpty(CONST_CAPTURE_START_WITH_INFO)) {
-        napi_create_int32(env_, info.captureID, &result[PARAM1]);
-        ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO,
-            .argv = result, .result = &retVal };
-        ExecuteCallback(CONST_CAPTURE_START, callbackNapiPara);
-    } else {
-        napi_value propValue;
-        napi_create_object(env_, &result[PARAM1]);
-        napi_create_int32(env_, info.captureID, &propValue);
-        napi_set_named_property(env_, result[PARAM1], "captureId", propValue);
-        int32_t invalidExposureTime = -1;
-        napi_create_int32(env_, invalidExposureTime, &propValue);
-        napi_set_named_property(env_, result[PARAM1], "time", propValue);
-        ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO,
-            .argv = result, .result = &retVal };
-        ExecuteCallback(CONST_CAPTURE_START_WITH_INFO, callbackNapiPara);
-    }
+    bool isEmpty = IsEmpty(CONST_CAPTURE_START_WITH_INFO);
+    std::string eventName = isEmpty ? CONST_CAPTURE_START : CONST_CAPTURE_START_WITH_INFO;
+    ExecuteCallbackScopeSafe(eventName, [&]() {
+        napi_value errCode = CameraNapiUtils::GetUndefinedValue(env_);
+        napi_value callbackObj = CameraNapiUtils::GetUndefinedValue(env_);
+        if (isEmpty) {
+            napi_create_int32(env_, info.captureID, &callbackObj);
+        } else {
+            napi_value propValue;
+            napi_create_object(env_, &callbackObj);
+            napi_create_int32(env_, info.captureID, &propValue);
+            napi_set_named_property(env_, callbackObj, "captureId", propValue);
+            int32_t invalidExposureTime = -1;
+            napi_create_int32(env_, invalidExposureTime, &propValue);
+            napi_set_named_property(env_, callbackObj, "time", propValue);
+        }
+        return ExecuteCallbackData(env_, errCode, callbackObj);
+    });
 }
 
 void PhotoOutputCallback::ExecuteCaptureStartWithInfoCb(const CallbackInfo& info) const
 {
-    napi_value result[ARGS_TWO] = { nullptr, nullptr };
-    napi_value retVal;
-    napi_value propValue;
-    napi_get_undefined(env_, &result[PARAM0]);
-    napi_create_object(env_, &result[PARAM1]);
-    napi_create_int32(env_, info.captureID, &propValue);
-    napi_set_named_property(env_, result[PARAM1], "captureId", propValue);
-    napi_create_int32(env_, info.timestamp, &propValue);
-    napi_set_named_property(env_, result[PARAM1], "time", propValue);
-    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
-    ExecuteCallback(CONST_CAPTURE_START_WITH_INFO, callbackNapiPara);
+    ExecuteCallbackScopeSafe(CONST_CAPTURE_START_WITH_INFO, [&]() {
+        napi_value errCode = CameraNapiUtils::GetUndefinedValue(env_);
+        napi_value callbackObj;
+        napi_value propValue;
+        napi_create_object(env_, &callbackObj);
+        napi_create_int32(env_, info.captureID, &propValue);
+        napi_set_named_property(env_, callbackObj, "captureId", propValue);
+        napi_create_int32(env_, info.timestamp, &propValue);
+        napi_set_named_property(env_, callbackObj, "time", propValue);
+        return ExecuteCallbackData(env_, errCode, callbackObj);
+    });
 }
 
 void PhotoOutputCallback::ExecuteCaptureEndCb(const CallbackInfo& info) const
 {
-    napi_value result[ARGS_TWO] = { nullptr, nullptr };
-    napi_value retVal;
-    napi_value propValue;
-    napi_get_undefined(env_, &result[PARAM0]);
-    napi_create_object(env_, &result[PARAM1]);
-    napi_create_int32(env_, info.captureID, &propValue);
-    napi_set_named_property(env_, result[PARAM1], "captureId", propValue);
-    napi_create_int32(env_, info.frameCount, &propValue);
-    napi_set_named_property(env_, result[PARAM1], "frameCount", propValue);
-    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
-    ExecuteCallback(CONST_CAPTURE_END, callbackNapiPara);
+    ExecuteCallbackScopeSafe(CONST_CAPTURE_END, [&]() {
+        napi_value errCode = CameraNapiUtils::GetUndefinedValue(env_);
+        napi_value callbackObj;
+        napi_value propValue;
+        napi_create_object(env_, &callbackObj);
+        napi_create_int32(env_, info.captureID, &propValue);
+        napi_set_named_property(env_, callbackObj, "captureId", propValue);
+        napi_create_int32(env_, info.frameCount, &propValue);
+        napi_set_named_property(env_, callbackObj, "frameCount", propValue);
+        return ExecuteCallbackData(env_, errCode, callbackObj);
+    });
 }
 
 void PhotoOutputCallback::ExecuteFrameShutterCb(const CallbackInfo& info) const
 {
-    napi_value result[ARGS_TWO] = { nullptr, nullptr };
-    napi_value retVal;
-    napi_value propValue;
-    napi_get_undefined(env_, &result[PARAM0]);
-    napi_create_object(env_, &result[PARAM1]);
-    napi_create_int32(env_, info.captureID, &propValue);
-    napi_set_named_property(env_, result[PARAM1], "captureId", propValue);
-    napi_create_int64(env_, info.timestamp, &propValue);
-    napi_set_named_property(env_, result[PARAM1], "timestamp", propValue);
-    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
-    ExecuteCallback(CONST_CAPTURE_FRAME_SHUTTER, callbackNapiPara);
+    ExecuteCallbackScopeSafe(CONST_CAPTURE_FRAME_SHUTTER, [&]() {
+        napi_value errCode = CameraNapiUtils::GetUndefinedValue(env_);
+        napi_value callbackObj;
+        napi_value propValue;
+        napi_create_object(env_, &callbackObj);
+        napi_create_int32(env_, info.captureID, &propValue);
+        napi_set_named_property(env_, callbackObj, "captureId", propValue);
+        napi_create_int64(env_, info.timestamp, &propValue);
+        napi_set_named_property(env_, callbackObj, "timestamp", propValue);
+        return ExecuteCallbackData(env_, errCode, callbackObj);
+    });
 }
 
 void PhotoOutputCallback::ExecuteFrameShutterEndCb(const CallbackInfo& info) const
 {
-    napi_value result[ARGS_TWO] = { nullptr, nullptr };
-    napi_value retVal;
-    napi_value propValue;
-    napi_get_undefined(env_, &result[PARAM0]);
-    napi_create_object(env_, &result[PARAM1]);
-    napi_create_int32(env_, info.captureID, &propValue);
-    napi_set_named_property(env_, result[PARAM1], "captureId", propValue);
-    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
-    ExecuteCallback(CONST_CAPTURE_FRAME_SHUTTER_END, callbackNapiPara);
+    ExecuteCallbackScopeSafe(CONST_CAPTURE_FRAME_SHUTTER_END, [&]() {
+        napi_value errCode = CameraNapiUtils::GetUndefinedValue(env_);
+        napi_value callbackObj;
+        napi_value propValue;
+        napi_create_object(env_, &callbackObj);
+        napi_create_int32(env_, info.captureID, &propValue);
+        napi_set_named_property(env_, callbackObj, "captureId", propValue);
+        return ExecuteCallbackData(env_, errCode, callbackObj);
+    });
 }
 
 void PhotoOutputCallback::ExecuteCaptureReadyCb(const CallbackInfo& info) const
 {
-    napi_value result[ARGS_ONE] = { nullptr };
-    napi_value retVal;
-    napi_get_undefined(env_, &result[PARAM0]);
-    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_ONE, .argv = result, .result = &retVal };
-    ExecuteCallback(CONST_CAPTURE_READY, callbackNapiPara);
+    ExecuteCallbackScopeSafe(CONST_CAPTURE_READY, [&]() {
+        napi_value errCode = CameraNapiUtils::GetUndefinedValue(env_);
+        napi_value callbackObj = CameraNapiUtils::GetUndefinedValue(env_);
+        return ExecuteCallbackData(env_, errCode, callbackObj);
+    });
 }
 
 void PhotoOutputCallback::ExecuteCaptureErrorCb(const CallbackInfo& info) const
 {
-    napi_value errJsResult[ARGS_ONE] = { nullptr };
-    napi_value retVal;
-    napi_value propValue;
-
-    napi_create_object(env_, &errJsResult[PARAM0]);
-    napi_create_int32(env_, info.errorCode, &propValue);
-    napi_set_named_property(env_, errJsResult[PARAM0], "code", propValue);
-    ExecuteCallbackNapiPara callbackNapiPara {
-        .recv = nullptr, .argc = ARGS_ONE, .argv = errJsResult, .result = &retVal
-    };
-    ExecuteCallback(CONST_CAPTURE_ERROR, callbackNapiPara);
+    ExecuteCallbackScopeSafe(CONST_CAPTURE_ERROR, [&]() {
+        napi_value errCode;
+        napi_value callbackObj = CameraNapiUtils::GetUndefinedValue(env_);
+        napi_value propValue;
+        napi_create_object(env_, &errCode);
+        napi_create_int32(env_, info.errorCode, &propValue);
+        napi_set_named_property(env_, errCode, "code", propValue);
+        return ExecuteCallbackData(env_, errCode, callbackObj);
+    });
 }
 
 void PhotoOutputCallback::ExecuteEstimatedCaptureDurationCb(const CallbackInfo& info) const
 {
-    napi_value result[ARGS_TWO] = { nullptr, nullptr };
-    napi_value retVal;
-    napi_get_undefined(env_, &result[PARAM0]);
-    napi_create_int32(env_, info.duration, &result[PARAM1]);
-    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
-    ExecuteCallback(CONST_CAPTURE_ESTIMATED_CAPTURE_DURATION, callbackNapiPara);
+    ExecuteCallbackScopeSafe(CONST_CAPTURE_ESTIMATED_CAPTURE_DURATION, [&]() {
+        napi_value errCode = CameraNapiUtils::GetUndefinedValue(env_);
+        napi_value callbackObj;
+        napi_create_int32(env_, info.duration, &callbackObj);
+        return ExecuteCallbackData(env_, errCode, callbackObj);
+    });
 }
 
 void PhotoOutputCallback::ExecuteOfflineDeliveryFinishedCb(const CallbackInfo& info) const
 {
-    napi_value result[ARGS_ONE] = { nullptr };
-    napi_value retVal;
-    napi_get_undefined(env_, &result[PARAM0]);
-    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_ONE, .argv = result, .result = &retVal };
-    ExecuteCallback(CONST_CAPTURE_OFFLINE_DELIVERY_FINISHED, callbackNapiPara);
+    ExecuteCallbackScopeSafe(CONST_CAPTURE_OFFLINE_DELIVERY_FINISHED, [&]() {
+        napi_value errCode = CameraNapiUtils::GetUndefinedValue(env_);
+        napi_value callbackObj = CameraNapiUtils::GetUndefinedValue(env_);
+        return ExecuteCallbackData(env_, errCode, callbackObj);
+    });
 }
 
 void PhotoOutputCallback::ExecutePhotoAvailableCb(const CallbackInfo& info) const
 {
     MEDIA_INFO_LOG("ExecutePhotoAvailableCb");
-    napi_value result[ARGS_TWO] = {nullptr, nullptr};
-    napi_value retVal;
-    napi_value mainImage = nullptr;
-    napi_get_undefined(env_, &result[PARAM0]);
-    napi_get_undefined(env_, &result[PARAM1]);
-    mainImage = Media::ImageNapi::Create(env_, info.nativeImage);
-    if (mainImage == nullptr) {
-        MEDIA_ERR_LOG("ImageNapi Create failed");
-        napi_get_undefined(env_, &mainImage);
-    }
-    sptr<SurfaceBuffer> imageBuffer;
-    if (info.nativeImage) {
-        // bind imageBuffer life cycle with photoNapiObj
-        imageBuffer = info.nativeImage->GetBuffer();
-    }
-    result[PARAM1] = PhotoNapi::CreatePhoto(env_, mainImage, info.isRaw, imageBuffer);
-    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
-    ExecuteCallback(CONST_CAPTURE_PHOTO_AVAILABLE, callbackNapiPara);
+    ExecuteCallbackScopeSafe(CONST_CAPTURE_PHOTO_AVAILABLE, [&]() {
+        napi_value errCode = CameraNapiUtils::GetUndefinedValue(env_);
+        napi_value callbackObj = CameraNapiUtils::GetUndefinedValue(env_);
+        napi_value mainImage = Media::ImageNapi::Create(env_, info.nativeImage);
+        if (mainImage == nullptr) {
+            MEDIA_ERR_LOG("ImageNapi Create failed");
+            napi_get_undefined(env_, &mainImage);
+        }
+        sptr<SurfaceBuffer> imageBuffer;
+        if (info.nativeImage) {
+            // bind imageBuffer life cycle with photoNapiObj
+            imageBuffer = info.nativeImage->GetBuffer();
+        }
+        callbackObj = PhotoNapi::CreatePhoto(env_, mainImage, info.isRaw, imageBuffer);
+        return ExecuteCallbackData(env_, errCode, callbackObj);
+    });
 }
 
 void PhotoOutputCallback::ExecutePhotoAssetAvailableCb(const CallbackInfo& info) const
 {
     MEDIA_INFO_LOG("ExecutePhotoAssetAvailableCb");
-    napi_value result[ARGS_TWO] = {nullptr, nullptr};
-    napi_value retVal;
-    napi_value photoAsset = nullptr;
-    napi_get_undefined(env_, &result[PARAM0]);
-    napi_get_undefined(env_, &result[PARAM1]);
-    photoAsset = Media::MediaLibraryCommNapi::CreatePhotoAssetNapi(env_, info.uri, info.cameraShotType, info.burstKey);
-    if (photoAsset == nullptr) {
-        napi_get_undefined(env_, &photoAsset);
-    }
-    FillNapiObjectWithCaptureId(env_, info.captureID, photoAsset);
-    result[PARAM1] = photoAsset;
-    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
-    ExecuteCallback(CONST_CAPTURE_PHOTO_ASSET_AVAILABLE, callbackNapiPara);
+    ExecuteCallbackScopeSafe(CONST_CAPTURE_PHOTO_ASSET_AVAILABLE, [&]() {
+        napi_value errCode = CameraNapiUtils::GetUndefinedValue(env_);
+        napi_value callbackObj = CameraNapiUtils::GetUndefinedValue(env_);
+        napi_value photoAsset = Media::MediaLibraryCommNapi::CreatePhotoAssetNapi(
+            env_, info.uri, info.cameraShotType, info.burstKey);
+        if (photoAsset == nullptr) {
+            napi_get_undefined(env_, &photoAsset);
+        }
+        FillNapiObjectWithCaptureId(env_, info.captureID, photoAsset);
+        callbackObj = photoAsset;
+        return ExecuteCallbackData(env_, errCode, callbackObj);
+    });
 }
 
 void PhotoOutputCallback::ExecuteThumbnailAvailableCb(const CallbackInfo& info) const
