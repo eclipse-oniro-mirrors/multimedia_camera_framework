@@ -17,6 +17,7 @@
 #include "camera_error.h"
 #include "camera_log.h"
 #include "cj_lambda.h"
+#include "ffi_remote_data.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -121,6 +122,25 @@ void CJPhotoOutputCallback::OnEstimatedCaptureDuration(const int32_t duration) c
 void CJPhotoOutputCallback::OnOfflineDeliveryFinished(const int32_t captureId) const
 {
     return;
+}
+
+void CJPhotoOutputCallback::OnPhotoAvailable(const std::shared_ptr<Media::NativeImage> nativeImage, bool isRaw) const
+{
+    std::lock_guard<std::mutex> lock(photoAvailableMutex);
+    if (photoAvailableCallbackList.size() == 0) {
+        return;
+    }
+    for (size_t i = 0; i < photoAvailableCallbackList.size(); i++) {
+        MEDIA_INFO_LOG("OnPhotoAvailable");
+        auto image = FFI::FFIData::Create<Media::ImageImpl>(nativeImage);
+        if (image == nullptr) {
+            MEDIA_ERR_LOG("Image Create failed");
+            return;
+        }
+        if (photoAvailableCallbackList[i] != nullptr) {
+            photoAvailableCallbackList[i]->ref(image->GetID());
+        }
+    }
 }
 
 CJPhotoOutput::CJPhotoOutput()
@@ -627,6 +647,55 @@ void CJPhotoOutput::OffAllError()
     }
     std::lock_guard<std::mutex> lock(photoOutputCallback_->captureErrorMutex);
     photoOutputCallback_->captureErrorCallbackList.clear();
+}
+
+void CJPhotoOutput::OnPhotoAvailable(int64_t callbackId)
+{
+    if (photoOutputCallback_ == nullptr) {
+        photoOutputCallback_ = std::make_shared<CJPhotoOutputCallback>();
+        if (photoOutput_ == nullptr) {
+            return;
+        }
+        photoOutput_->SetCallback(photoOutputCallback_);
+    }
+    photoOutput_->SetPhotoAvailableCallback(photoOutputCallback_);
+    callbackFlag_ |= CAPTURE_PHOTO;
+    photoOutput_->SetCallbackFlag(callbackFlag_);
+
+    auto cFunc = reinterpret_cast<void (*)(const int64_t id)>(callbackId);
+    auto callback = [lambda = CJLambda::Create(cFunc)](const int64_t id) -> void { lambda(id); };
+    auto callbackRef = std::make_shared<CallbackRef<const int64_t>>(callback, callbackId);
+
+    std::lock_guard<std::mutex> lock(photoOutputCallback_->photoAvailableMutex);
+    photoOutputCallback_->photoAvailableCallbackList.push_back(callbackRef);
+}
+
+void CJPhotoOutput::OffPhotoAvailable(int64_t callbackId)
+{
+    if (photoOutputCallback_ == nullptr) {
+        return;
+    }
+    std::lock_guard<std::mutex> lock(photoOutputCallback_->photoAvailableMutex);
+    for (auto it = photoOutputCallback_->photoAvailableCallbackList.begin();
+        it != photoOutputCallback_->photoAvailableCallbackList.end(); it++) {
+        if ((*it)->id == callbackId) {
+            photoOutputCallback_->photoAvailableCallbackList.erase(it);
+            break;
+        }
+    }
+}
+
+void CJPhotoOutput::OffAllPhotoAvailable()
+{
+    if (photoOutputCallback_ == nullptr) {
+        return;
+    }
+    photoOutput_->UnSetPhotoAvailableCallback();
+    callbackFlag_ &= ~CAPTURE_PHOTO;
+    photoOutput_->SetCallbackFlag(callbackFlag_);
+    
+    std::lock_guard<std::mutex> lock(photoOutputCallback_->photoAvailableMutex);
+    photoOutputCallback_->photoAvailableCallbackList.clear();
 }
 
 } // namespace CameraStandard

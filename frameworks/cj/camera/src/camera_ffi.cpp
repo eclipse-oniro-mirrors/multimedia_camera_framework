@@ -827,6 +827,36 @@ int32_t FfiCameraPhotoOutputOffAllError(int64_t id)
     return CameraError::NO_ERROR;
 }
 
+int32_t FfiCameraPhotoOutputOnPhotoAvailable(int64_t id, int64_t callbackId)
+{
+    auto photoOutput = FFIData::GetData<CJPhotoOutput>(id);
+    if (photoOutput == nullptr) {
+        return CameraError::CAMERA_SERVICE_ERROR;
+    }
+    photoOutput->OnPhotoAvailable(callbackId);
+    return CameraError::NO_ERROR;
+}
+
+int32_t FfiCameraPhotoOutputOffPhotoAvailable(int64_t id, int64_t callbackId)
+{
+    auto photoOutput = FFIData::GetData<CJPhotoOutput>(id);
+    if (photoOutput == nullptr) {
+        return CameraError::CAMERA_SERVICE_ERROR;
+    }
+    photoOutput->OffPhotoAvailable(callbackId);
+    return CameraError::NO_ERROR;
+}
+
+int32_t FfiCameraPhotoOutputOffAllPhotoAvailable(int64_t id)
+{
+    auto photoOutput = FFIData::GetData<CJPhotoOutput>(id);
+    if (photoOutput == nullptr) {
+        return CameraError::CAMERA_SERVICE_ERROR;
+    }
+    photoOutput->OffAllPhotoAvailable();
+    return CameraError::NO_ERROR;
+}
+
 bool FfiCameraPhotoOutputIsMovingPhotoSupported(int64_t id, int32_t *errCode)
 {
     auto photoOutput = FFIData::GetData<CJPhotoOutput>(id);

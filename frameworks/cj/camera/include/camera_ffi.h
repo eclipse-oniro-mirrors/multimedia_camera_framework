@@ -127,6 +127,9 @@ FFI_EXPORT int32_t FfiCameraPhotoOutputOffAllEstimatedCaptureDuration(int64_t id
 FFI_EXPORT int32_t FfiCameraPhotoOutputOnError(int64_t id, int64_t callbackId);
 FFI_EXPORT int32_t FfiCameraPhotoOutputOffError(int64_t id, int64_t callbackId);
 FFI_EXPORT int32_t FfiCameraPhotoOutputOffAllError(int64_t id);
+FFI_EXPORT int32_t FfiCameraPhotoOutputOnPhotoAvailable(int64_t id, int64_t callbackId);
+FFI_EXPORT int32_t FfiCameraPhotoOutputOffPhotoAvailable(int64_t id, int64_t callbackId);
+FFI_EXPORT int32_t FfiCameraPhotoOutputOffAllPhotoAvailable(int64_t id);
 FFI_EXPORT int32_t FfiCameraPhotoOutputRelease(int64_t id);
 
 // videooutput
