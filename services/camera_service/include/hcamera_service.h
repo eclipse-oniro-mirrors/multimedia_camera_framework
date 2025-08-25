@@ -87,6 +87,17 @@ enum class CameraServiceStatus : int32_t {
     SERVICE_NOT_READY,
 };
 
+enum TemperPressure {
+    TEMPER_PRESSURE_COOL = 0,
+    TEMPER_PRESSURE_NORMAL,
+    TEMPER_PRESSURE_WARM,
+    TEMPER_PRESSURE_HOT,
+    TEMPER_PRESSURE_OVERHEATED,
+    TEMPER_PRESSURE_WARNING,
+    TEMPER_PRESSURE_EMERGENCY,
+    TEMPER_PRESSURE_ESCAPE
+};
+
 class CameraInfoDumper;
 
 class EXPORT_API HCameraService
