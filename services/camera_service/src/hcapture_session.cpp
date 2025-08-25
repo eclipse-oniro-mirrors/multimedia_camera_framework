@@ -26,7 +26,6 @@
 #include <mutex>
 #include <new>
 #include <sched.h>
-#include <stdint.h>
 #include <string>
 #include <sync_fence.h>
 #include <utility>

@@ -21,7 +21,7 @@
 #include <parameter.h>
 #include <parameters.h>
 #include <securec.h>
-#include <stdint.h>
+#include <cstdint>
 #include <string>
 #include <unordered_set>
 #include <utility>
