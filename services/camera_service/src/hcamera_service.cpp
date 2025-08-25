@@ -21,7 +21,7 @@
 #include <parameter.h>
 #include <parameters.h>
 #include <securec.h>
-#include <stdint.h>
+#include <cstdint>
 #include <string>
 #include <unordered_set>
 #include <utility>
@@ -270,20 +270,21 @@ void HCameraService::OnReceiveEvent(const EventFwk::CommonEventData &data)
     }
 }
 
-PressureStatus HCameraService::TransferTemperToPressure(int32_t temperLevel) {
+PressureStatus HCameraService::TransferTemperToPressure(int32_t temperLevel)
+{
     switch (temperLevel) {
-        case 0:
-        case 1:
+        case TEMPER_PRESSURE_COOL:
+        case TEMPER_PRESSURE_NORMAL:
             return PressureStatus::SYSTEM_PRESSURE_NORMAL;
-        case 2:
+        case TEMPER_PRESSURE_WARM:
             return PressureStatus::SYSTEM_PRESSURE_MILD;
-        case 3:
-        case 4:
+        case TEMPER_PRESSURE_HOT:
+        case TEMPER_PRESSURE_OVERHEATED:
             return PressureStatus::SYSTEM_PRESSURE_SEVERE;
-        case 5:
-        case 6:
+        case TEMPER_PRESSURE_WARNING:
+        case TEMPER_PRESSURE_EMERGENCY:
             return PressureStatus::SYSTEM_PRESSURE_CRITICAL;
-        case 7:
+        case TEMPER_PRESSURE_ESCAPE:
             return PressureStatus::SYSTEM_PRESSURE_SHUTDOWN;
     }
     return PressureStatus::SYSTEM_PRESSURE_NORMAL;
