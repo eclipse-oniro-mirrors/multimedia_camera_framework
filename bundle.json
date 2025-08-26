@@ -129,6 +129,26 @@
             },
             {
               "type": "so",
+              "name": "//foundation/multimedia/camera_framework/frameworks/native/camera/base:camera_framework_static",
+              "header": {
+                "header_base": "//foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include",
+                "header_files": [
+                  "input/camera_input.h",
+                  "input/camera_manager.h",
+                  "input/capture_input.h",
+                  "output/capture_output.h",
+                  "output/metadata_output.h",
+                  "output/photo_output.h",
+                  "output/preview_output.h",
+                  "output/video_output.h",
+                  "session/capture_session.h",
+                  "deferred_proc_session/deferred_photo_proc_session.h",
+                  "utils/dps_metadata_info.h"
+                ]
+              }
+            },
+            {
+              "type": "so",
               "name": "//foundation/multimedia/camera_framework/frameworks/native/camera/extension:camera_framework_ex",
               "header": {
                 "header_base": "//foundation/multimedia/camera_framework/frameworks/native/camera/extension/include",
