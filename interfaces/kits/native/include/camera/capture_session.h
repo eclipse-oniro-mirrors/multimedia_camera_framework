@@ -995,7 +995,7 @@ Camera_ErrorCode OH_CaptureSession_GetWhiteBalanceMode(Camera_CaptureSession* se
     Camera_WhiteBalanceMode* whiteBalanceMode);
 
 Camera_ErrorCode OH_CaptureSession_GetWhiteBalanceRange(Camera_CaptureSession* session, int32_t *minColorTemperature,
-     int32_t *maxColorTemperature);
+    int32_t *maxColorTemperature);
 
 Camera_ErrorCode OH_CaptureSession_GetWhiteBalance(Camera_CaptureSession* session, int32_t *colorTemperature);
 
