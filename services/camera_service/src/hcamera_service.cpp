@@ -252,7 +252,8 @@ void HCameraService::OnReceiveEvent(const EventFwk::CommonEventData &data)
     }
 }
 
-PressureStatus HCameraService::TransferTemperToPressure(int32_t temperLevel) {
+PressureStatus HCameraService::TransferTemperToPressure(int32_t temperLevel)
+{
     switch (temperLevel) {
         case TEMPER_PRESSURE_COOL:
         case TEMPER_PRESSURE_NORMAL:
