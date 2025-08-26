@@ -81,15 +81,15 @@ public:
         DumpSurfaceBuffer(surfaceBuffer);
         int32_t thumbnailStride = GetDataStride(surfaceBuffer);
         int32_t thumbnailHeight = GetDataHeight(surfaceBuffer);
-        int32_t thumbnailWidth = GetDataWidth(surfaceBuffer);
         MEDIA_DEBUG_LOG("DeepCopyThumbnailBuffer thumbnailStride:%{public}d", thumbnailStride);
         // deep copy buffer
         BufferRequestConfig requestConfig = {
-            .width = thumbnailWidth,
+            .width = thumbnailStride,
             .height = thumbnailHeight,
             .strideAlignment = thumbnailStride,
             .format = surfaceBuffer->GetFormat(),
-            .usage = surfaceBuffer->GetUsage(),
+            .usage =
+                BUFFER_USAGE_CPU_READ | BUFFER_USAGE_CPU_WRITE | BUFFER_USAGE_MEM_DMA | BUFFER_USAGE_MEM_MMZ_CACHE,
             .timeout = 0,
         };
         sptr<SurfaceBuffer> newSurfaceBuffer = SurfaceBuffer::Create();
