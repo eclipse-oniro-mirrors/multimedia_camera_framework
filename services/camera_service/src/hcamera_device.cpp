@@ -1080,11 +1080,14 @@ void HCameraDevice::UpdateCameraRotateAngle()
 {
     CHECK_RETURN(!IsPhysicalCameraOrientationVariable());
     bool isFoldable = OHOS::Rosen::DisplayManager::GetInstance().IsFoldable();
-    CHECK_RETURN(!isFoldable || deviceAbility_ == nullptr);
+    int32_t displayMode = static_cast<int32_t>(OHOS::Rosen::DisplayManager::GetInstance().GetFoldDisplayMode());
+    CHECK_RETURN(!isFoldable || deviceAbility_ == nullptr || displayMode == lastDisplayMode_);
+    lastDisplayMode_ = displayMode;
     int cameraOrientation = GetOriginalCameraOrientation();
     CHECK_RETURN(cameraOrientation == -1);
     int32_t truthCameraOrientation = -1;
-    int32_t ret = GetCorrectedCameraOrientation(!usePhysicalCameraOrientation_, deviceAbility_, truthCameraOrientation);
+    int32_t ret = GetCorrectedCameraOrientation(!usePhysicalCameraOrientation_, deviceAbility_,
+        truthCameraOrientation, displayMode);
     CHECK_RETURN(ret != CAM_META_SUCCESS || truthCameraOrientation == -1);
     int32_t rotateDegree = (truthCameraOrientation - cameraOrientation + BASE_DEGREE) % BASE_DEGREE;
     MEDIA_DEBUG_LOG("HCameraDevice::UpdateCameraRotateAngle cameraOrientation: %{public}d, truthCameraOrientation: "

@@ -404,6 +404,8 @@ int32_t HStreamOperator::LinkInputAndOutputs(const std::shared_ptr<OHOS::Camera:
     std::vector<StreamInfo_V1_1> allStreamInfos;
     auto allStream = streamContainer_.GetAllStreams();
     for (auto& stream : allStream) {
+        CHECK_RETURN_RET_ELOG(cameraDevice_ == nullptr, 0, "HStreamOperator::LinkInputAndOutputs cameraDevice is null");
+        stream->SetUsePhysicalCameraOrientation(cameraDevice_->GetUsePhysicalCameraOrientation());
         SetBasicInfo(stream);
         rc = stream->LinkInput(streamOperator_, settings);
         CHECK_RETURN_RET_ELOG(rc != CAMERA_OK, rc, "HStreamOperator::LinkInputAndOutputs IsValidMode false");
@@ -422,9 +424,6 @@ int32_t HStreamOperator::LinkInputAndOutputs(const std::shared_ptr<OHOS::Camera:
         stream->SetStreamInfo(curStreamInfo);
         CHECK_EXECUTE(stream->GetStreamType() != StreamType::METADATA,
             allStreamInfos.push_back(curStreamInfo));
-        CHECK_RETURN_RET_ELOG(cameraDevice_ == nullptr, 0, "HStreamOperator::GetMovingPhotoBufferDuration() "
-                "cameraDevice is null");
-        stream->SetUsePhysicalCameraOrientation(cameraDevice_->GetUsePhysicalCameraOrientation());
     }
 
     rc = CreateAndCommitStreams(allStreamInfos, settings, opMode);
