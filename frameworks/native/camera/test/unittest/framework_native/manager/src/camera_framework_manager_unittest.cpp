@@ -2396,9 +2396,9 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_077, Test
     videoSize.width = width;
     videoSize.height = height;
     std::vector<int32_t> videoFramerates = {30, 30};
-    VideoProfile videoProfile = VideoProfile(videoFormat, videoSize, videoFramerates);
+    VideoProfile vProfile = VideoProfile(videoFormat, videoSize, videoFramerates);
     sptr<MovieFileOutput> movieFileOutput = new(std::nothrow) MovieFileOutput();
-    int ret = cameraManager_->CreateMovieFileOutput(videoProfile, &movieFileOutput);
+    int ret = cameraManager_->CreateMovieFileOutput(vProfile, &movieFileOutput);
     ASSERT_EQ(ret, CameraErrorCode::SUCCESS);
 }
 

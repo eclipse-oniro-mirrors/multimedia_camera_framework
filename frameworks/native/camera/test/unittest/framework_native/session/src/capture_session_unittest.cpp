@@ -9461,12 +9461,12 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_055, TestSize.Level0)
  
 /*
  * Feature: Framework
- * Function: Test GetMinimumFocusDistance.
+ * Function: Test function GetMinimumFocusDistance.
  * IsVideoDeferred
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test GetMinimumFocusDistance.
+ * CaseDescription: Test function GetMinimumFocusDistance.
  */
 HWTEST_F(CaptureSessionUnitTest, capture_session_unit_057, TestSize.Level0)
 {
@@ -9549,11 +9549,11 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_060, TestSize.Level0)
 
 /*
  * Feature: Framework
- * Function: Test GetSupportedNightSubModeTypes 
+ * Function: Test function GetSupportedNightSubModeTypes 
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test GetSupportedNightSubModeTypes
+ * CaseDescription: Test function GetSupportedNightSubModeTypes
  */
 HWTEST_F(CaptureSessionUnitTest, capture_session_unit_061, TestSize.Level0)
 {
@@ -9667,7 +9667,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_065, TestSize.Level0)
  * Function: Test EnableLogAssistance success
  * SubFunction: NA
  * FunctionPoints: NA
- * EnvConditions: NA 
+ * EnvConditions: NA
  * CaseDescription: Test EnableLogAssistance success
  */
 HWTEST_F(CaptureSessionUnitTest, capture_session_unit_066, TestSize.Level0)
