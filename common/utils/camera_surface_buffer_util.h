@@ -76,38 +76,65 @@ public:
     {
         CAMERA_SYNC_TRACE;
         CHECK_RETURN_RET_ELOG(surfaceBuffer == nullptr, nullptr, "DeepCopyThumbnailBuffer surfaceBuffer is null");
+        MEDIA_DEBUG_LOG(
+            "DeepCopyThumbnailBuffer sb.w: %{public}d, sb.h: %{public}d, sb.s: %{public}d, sb.sz: %{public}d",
+            surfaceBuffer->GetWidth(), surfaceBuffer->GetHeight(), surfaceBuffer->GetStride(),
+            surfaceBuffer->GetSize());
         uint32_t bufferSeqNum = surfaceBuffer->GetSeqNum();
         MEDIA_DEBUG_LOG("DeepCopyThumbnailBuffer E bufferSeqNum:%{public}u", bufferSeqNum);
         DumpSurfaceBuffer(surfaceBuffer);
         int32_t thumbnailStride = GetDataStride(surfaceBuffer);
         int32_t thumbnailHeight = GetDataHeight(surfaceBuffer);
-        MEDIA_DEBUG_LOG("DeepCopyThumbnailBuffer thumbnailStride:%{public}d", thumbnailStride);
+        int32_t thumbnailWidth = GetDataWidth(surfaceBuffer);
+        MEDIA_DEBUG_LOG("DeepCopyThumbnailBuffer extra.s: %{public}d, extra.h: %{public}d, extra.w: %{public}d",
+            thumbnailStride, thumbnailHeight, thumbnailWidth);
+        MEDIA_DEBUG_LOG("DeepCopyThumbnailBuffer format: %{public}d, usage: %{public}" PRIu64,
+            surfaceBuffer->GetFormat(), surfaceBuffer->GetUsage());
         // deep copy buffer
         BufferRequestConfig requestConfig = {
-            .width = thumbnailStride,
+            .width = thumbnailWidth,
             .height = thumbnailHeight,
             .strideAlignment = thumbnailStride,
             .format = surfaceBuffer->GetFormat(),
-            .usage =
-                BUFFER_USAGE_CPU_READ | BUFFER_USAGE_CPU_WRITE | BUFFER_USAGE_MEM_DMA | BUFFER_USAGE_MEM_MMZ_CACHE,
+            .usage = surfaceBuffer->GetUsage(),
             .timeout = 0,
         };
         sptr<SurfaceBuffer> newSurfaceBuffer = SurfaceBuffer::Create();
         auto allocRet = newSurfaceBuffer->Alloc(requestConfig);
         if (allocRet != 0) {
             MEDIA_ERR_LOG("DeepCopyThumbnailBuffer alloc ret: %{public}d", allocRet);
-            return newSurfaceBuffer;
+            return nullptr;
         }
-        int32_t colorLength = thumbnailStride * thumbnailHeight * PIXEL_SIZE_HDR_YUV;
         HDI::Display::Graphic::Common::V1_0::CM_ColorSpaceType colorSpaceType;
         GSError gsErr = MetadataHelper::GetColorSpaceType(surfaceBuffer, colorSpaceType);
         bool isHdr = colorSpaceType ==  HDI::Display::Graphic::Common::V1_0::CM_ColorSpaceType::CM_BT2020_HLG_FULL;
-        MEDIA_ERR_LOG("DeepCopyThumbnailBuffer colorSpaceType:%{public}d isHdr:%{public}d", colorSpaceType, isHdr);
-        colorLength = isHdr ? colorLength : colorLength / HDR_PIXEL_SIZE;
-        if (memcpy_s(newSurfaceBuffer->GetVirAddr(), newSurfaceBuffer->GetSize(),
-            surfaceBuffer->GetVirAddr(), colorLength) != EOK) {
-            MEDIA_ERR_LOG("DeepCopyThumbnailBuffer memcpy_s failed");
-            return newSurfaceBuffer;
+        MEDIA_DEBUG_LOG("DeepCopyThumbnailBuffer colorSpaceType: %{public}d, isHdr: %{public}d", colorSpaceType, isHdr);
+        const float ROW_FACTOR = 1.5;
+        uint32_t bytesPerPixel = isHdr ? 2 : 1;
+        uint32_t newStride = newSurfaceBuffer->GetStride();
+        MEDIA_DEBUG_LOG("DeepCopyThumbnailBuffer newSurfaceBuffer stride: %{public}u, size: %{public}u", newStride,
+            newSurfaceBuffer->GetSize());
+        if (thumbnailStride > newStride) {
+            int32_t srcRowLen = thumbnailStride * bytesPerPixel;
+            int32_t dstRowLen = newStride * bytesPerPixel;
+            uint8_t* srcAddr = static_cast<uint8_t*>(surfaceBuffer->GetVirAddr());
+            uint8_t* dstAddr = static_cast<uint8_t*>(newSurfaceBuffer->GetVirAddr());
+            // copy by line
+            for (int h = 0; h < std::round(thumbnailHeight * ROW_FACTOR); ++h) {
+                if (memcpy_s(dstAddr + h * dstRowLen, dstRowLen, srcAddr + h * srcRowLen, dstRowLen) != EOK) {
+                    MEDIA_ERR_LOG("DeepCopyThumbnailBuffer memcpy_s failed in copy by line");
+                    return nullptr;
+                }
+            }
+        } else {
+            // directly copy
+            uint32_t colorLength = std::round(thumbnailStride * thumbnailHeight * ROW_FACTOR * bytesPerPixel);
+            MEDIA_DEBUG_LOG("DeepCopyThumbnailBuffer colorLength: %{public}u", colorLength);
+            if (memcpy_s(newSurfaceBuffer->GetVirAddr(), newSurfaceBuffer->GetSize(), surfaceBuffer->GetVirAddr(),
+                    colorLength) != EOK) {
+                MEDIA_ERR_LOG("DeepCopyThumbnailBuffer memcpy_s failed");
+                return nullptr;
+            }
         }
 
         // deep copy buffer extData
