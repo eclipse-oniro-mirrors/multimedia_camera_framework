@@ -226,6 +226,9 @@ ohos_shared_library("camera_service") {
     "samgr:samgr_proxy",
     "window_manager:libdm",
     "window_manager:libwm",
+    "audio_framework:audio_capturer",
+    "audio_framework:audio_client",
+    "audio_framework:offline_audio_effect",
   ]
 
   defines = []
