@@ -9510,11 +9510,11 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_058, TestSize.Level0)
 
 /*
  * Feature: Framework
- * Function: Test IsControlCenterSupported
+ * Function: Test function IsControlCenterSupported
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test IsControlCenterSupported
+ * CaseDescription: Test functionIsControlCenterSupported
  */
 HWTEST_F(CaptureSessionUnitTest, capture_session_unit_059, TestSize.Level0)
 {
@@ -9529,11 +9529,11 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_059, TestSize.Level0)
 
 /*
  * Feature: Framework
- * Function: Test GetSupportedEffectTypes
+ * Function: Test function GetSupportedEffectTypes
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test GetSupportedEffectTypes
+ * CaseDescription: Test function GetSupportedEffectTypes
  */
 HWTEST_F(CaptureSessionUnitTest, capture_session_unit_060, TestSize.Level0)
 {
@@ -9569,11 +9569,11 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_061, TestSize.Level0)
 
 /*
  * Feature: Framework
- * Function: Test GetSupportedVideoCodecTypes
+ * Function: Test function GetSupportedVideoCodecTypes
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test GetSupportedVideoCodecTypes
+ * CaseDescription: Test function GetSupportedVideoCodecTypes
  */
 HWTEST_F(CaptureSessionUnitTest, capture_session_unit_062, TestSize.Level0)
 {
@@ -9590,11 +9590,11 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_062, TestSize.Level0)
 
 /*
  * Feature: Framework
- * Function: Test ProcessApertureEffectChange
+ * Function: Test function ProcessApertureEffectChange
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test ProcessApertureEffectChange
+ * CaseDescription: Test function ProcessApertureEffectChange
  */
 HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_063, TestSize.Level0)
 {
@@ -9626,11 +9626,11 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_063, TestSize.Level0)
 
 /*
  * Feature: Framework
- * Function: Test EnableLogAssistance
+ * Function: Test EnableLogAssistance without commit config
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test EnableLogAssistance
+ * CaseDescription: Test EnableLogAssistance without commit config
  */
 HWTEST_F(CaptureSessionUnitTest, capture_session_unit_064, TestSize.Level0)
 {
@@ -9645,11 +9645,11 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_064, TestSize.Level0)
 
 /*
  * Feature: Framework
- * Function: Test EnableImageStabilizationGuide 
+ * Function: Test EnableImageStabilizationGuide without commit config
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test EnableImageStabilizationGuide
+ * CaseDescription: Test function EnableImageStabilizationGuide without commit config
  */
 HWTEST_F(CaptureSessionUnitTest, capture_session_unit_065, TestSize.Level0)
 {
