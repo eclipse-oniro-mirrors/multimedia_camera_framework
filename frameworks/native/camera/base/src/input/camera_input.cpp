@@ -141,7 +141,6 @@ void CameraInput::InitCameraInput()
 
     CHECK_RETURN_ELOG(metaData == nullptr, "CameraInput::InitCameraInput failed get metaData");
     camera_metadata_item item;
-    CHECK_RETURN_ELOG(metaData == nullptr, "InitCameraInput Metadata is Nullptr");
     int32_t retCode = OHOS::Camera::FindCameraMetadataItem(metaData->get(), OHOS_SENSOR_ORIENTATION, &item);
     CHECK_EXECUTE(retCode == CAM_META_SUCCESS && item.count,
         staticOrientation_ = static_cast<uint32_t>(item.data.i32[0]));

@@ -311,6 +311,7 @@ private:
     int32_t focusMode_ = -1;
     bool focusStatus_ = false;
     int32_t videoStabilizationMode_ = 0;
+    int32_t lastDisplayMode_ = -1;
     bool usePhysicalCameraOrientation_ = false;
 };
 } // namespace CameraStandard

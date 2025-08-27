@@ -655,12 +655,13 @@ std::map<std::string, std::array<float, CONTROL_CENTER_DATA_SIZE>> StringToContr
 }
 
 int32_t GetPhysicalCameraOrientation(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility,
-    int32_t& sensorOrientation)
+    int32_t& sensorOrientation, int32_t displayMode)
 {
     int32_t curFoldStatus;
     camera_metadata_item item;
-    OHOS::Rosen::FoldDisplayMode displayMode = OHOS::Rosen::DisplayManager::GetInstance().GetFoldDisplayMode();
-    if (displayMode == OHOS::Rosen::FoldDisplayMode::GLOBAL_FULL) {
+    displayMode = displayMode >= 0 ? displayMode :
+        static_cast<int32_t>(OHOS::Rosen::DisplayManager::GetInstance().GetFoldDisplayMode());
+    if (displayMode == static_cast<int32_t>(OHOS::Rosen::FoldDisplayMode::GLOBAL_FULL)) {
         curFoldStatus = static_cast<int32_t>(OHOS::Rosen::FoldStatus::FOLD_STATE_EXPAND_WITH_SECOND_EXPAND);
     } else {
         curFoldStatus = static_cast<int32_t>(OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus());
@@ -685,11 +686,12 @@ int32_t GetPhysicalCameraOrientation(std::shared_ptr<OHOS::Camera::CameraMetadat
 
 // camera orientation behind simulated bar-type
 int32_t GetCorrectedCameraOrientation(bool usePhysicalCameraOrientation,
-    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility, int32_t& sensorOrientation)
+    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility, int32_t& sensorOrientation, int32_t displayMode)
 {
     int32_t ret = CAM_META_FAILURE;
     CHECK_RETURN_RET(cameraAbility == nullptr, ret);
-    CHECK_EXECUTE(usePhysicalCameraOrientation, ret = GetPhysicalCameraOrientation(cameraAbility, sensorOrientation));
+    CHECK_EXECUTE(usePhysicalCameraOrientation, ret =
+        GetPhysicalCameraOrientation(cameraAbility, sensorOrientation, displayMode));
     if (ret != CAM_META_SUCCESS) {
         camera_metadata_item item;
         ret = OHOS::Camera::FindCameraMetadataItem(cameraAbility->get(), OHOS_SENSOR_ORIENTATION, &item);
