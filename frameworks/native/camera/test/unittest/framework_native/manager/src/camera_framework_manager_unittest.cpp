@@ -2377,5 +2377,20 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_076, Test
     cameraManager_->realtoVirtual_.clear();
     cameraManager_->cameraOldCamera_.clear();
 }
+
+/*
+ * Feature: Framework
+ * Function: Test cameraManager Get Is In White List
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test cameraManager Get Is In White List
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_077, TestSize.Level0)
+{
+    cameraManager_->CheckWhiteList();
+    bool ret = cameraManager_->GetIsInWhiteList();
+    ASSERT_EQ(ret, true);
+}
 }
 }
