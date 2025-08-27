@@ -9549,11 +9549,11 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_060, TestSize.Level0)
 
 /*
  * Feature: Framework
- * Function: Test function GetSupportedNightSubModeTypes 
+ * Function: Test function Get Supported Night SubMode Types 
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test function GetSupportedNightSubModeTypes
+ * CaseDescription: Test function Get Supported Night SubMode Types
  */
 HWTEST_F(CaptureSessionUnitTest, capture_session_unit_061, TestSize.Level0)
 {
