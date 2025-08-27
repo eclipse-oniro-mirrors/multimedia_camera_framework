@@ -101,6 +101,8 @@ CameraPrivacy::~CameraPrivacy()
 
 bool CameraPrivacy::IsAllowUsingCamera()
 {
+    CAMERA_SYNC_TRACE;
+    
     return PrivacyKit::IsAllowedUsingPermission(callerToken_, OHOS_PERMISSION_CAMERA);
 }
 
@@ -138,6 +140,8 @@ void CameraPrivacy::UnregisterPermissionCallback()
 
 bool CameraPrivacy::AddCameraPermissionUsedRecord()
 {
+    CAMERA_SYNC_TRACE;
+
     int32_t successCout = 1;
     int32_t failCount = 0;
     int32_t res = PrivacyKit::AddPermissionUsedRecord(callerToken_, OHOS_PERMISSION_CAMERA, successCout, failCount);
@@ -148,6 +152,8 @@ bool CameraPrivacy::AddCameraPermissionUsedRecord()
 
 bool CameraPrivacy::StartUsingPermissionCallback()
 {
+    CAMERA_SYNC_TRACE;
+
     int32_t res;
     {
         std::lock_guard<std::mutex> lock(cameraUseCbMutex_);
