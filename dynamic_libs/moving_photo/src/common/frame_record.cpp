@@ -42,7 +42,7 @@ void FrameRecord::ReleaseSurfaceBuffer(sptr<MovingPhotoSurfaceWrapper> surfaceWr
 {
     // LCOV_EXCL_START
     std::unique_lock<std::mutex> lock(mutex_);
-    if (videoBuffer_ && !IsReadyConvert()) {
+    if (videoBuffer_ && IsIdle()) {
         CHECK_EXECUTE(surfaceWrapper != nullptr, surfaceWrapper->RecycleBuffer(videoBuffer_));
         videoBuffer_ = nullptr;
         MEDIA_DEBUG_LOG("release buffer end %{public}s", frameId_.c_str());
