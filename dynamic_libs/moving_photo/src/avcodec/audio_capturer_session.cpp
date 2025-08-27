@@ -195,7 +195,6 @@ void AudioCapturerSession::Stop()
         audioThread_->join();
         audioThread_.reset();
     }
-    AudioSessionManager::GetInstance()->DeactivateAudioSession();
     MEDIA_INFO_LOG("Audio capture stop out");
     Release();
 }

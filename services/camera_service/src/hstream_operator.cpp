@@ -80,6 +80,7 @@
 #include "camera_device_ability_items.h"
 #include "session/capture_scene_const.h"
 #include "moving_photo_interface.h"
+#include "audio_session_manager.h"
 #ifdef HOOK_CAMERA_OPERATOR
 #include "camera_rotate_plugin.h"
 #endif
@@ -636,6 +637,7 @@ void HStreamOperator::StopMovingPhoto() __attribute__((no_sanitize("cfi")))
         CHECK_EXECUTE(audioCaptureSessionProxy, audioCaptureSessionProxy->StopAudioCapture());
     });
     asyncAudioReleaseThread.detach();
+    AudioStandard::AudioSessionManager::GetInstance()->DeactivateAudioSession();
 #endif
 }
 
