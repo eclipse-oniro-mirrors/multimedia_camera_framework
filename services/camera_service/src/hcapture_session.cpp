@@ -2120,10 +2120,10 @@ void HCaptureSession::SetMechDeliveryState(MechDeliveryState state)
 void HCaptureSession::UpdateSettingForFocusTrackingMechBeforeStart(std::shared_ptr<OHOS::Camera::CameraMetadata>&
     settings)
 {
-    MEDIA_DEBUG_LOG("HCaptureSession::UpdateSettingForFocusTrackingMechBeforeStart is called");
+    MEDIA_INFO_LOG("%{public}s is called!", __FUNCTION__);
     std::lock_guard<std::mutex> lock(mechDeliveryStateLock_);
     if (mechDeliveryState_ == MechDeliveryState::NEED_ENABLE) {
-        MEDIA_DEBUG_LOG("start EnableMechDelivery");
+        MEDIA_INFO_LOG("%{public}s start EnableMechDelivery", __FUNCTION__);
         int32_t count = 1;
         uint8_t value = OHOS_CAMERA_MECH_MODE_ON;
         settings->addEntry(OHOS_CONTROL_FOCUS_TRACKING_MECH, &value, count);
@@ -2132,8 +2132,7 @@ void HCaptureSession::UpdateSettingForFocusTrackingMechBeforeStart(std::shared_p
 
 int32_t HCaptureSession::UpdateSettingForFocusTrackingMech(bool isEnableMech)
 {
-    MEDIA_DEBUG_LOG("HCaptureSession::UpdateSettingForFocusTrackingMech is called, isEnableMech: %{public}d",
-        isEnableMech);
+    MEDIA_INFO_LOG("%{public}s is called, isEnableMech:%{public}d", __FUNCTION__, isEnableMech);
     auto cameraDevice = GetCameraDevice();
     CHECK_RETURN_RET_ELOG(cameraDevice == nullptr, CAMERA_INVALID_SESSION_CFG,
         "HCaptureSession::UpdateSettingForFocusTrackingMech device is null");
@@ -2195,6 +2194,7 @@ bool HCaptureSession::GetCaptureSessionInfo(CaptureSessionInfo& sessionInfo)
     sessionInfo.colorSpace = curColorSpace;
     std::vector<OutputInfo> outputInfos = GetOutputInfos();
     sessionInfo.outputInfos = outputInfos;
+    sessionInfo.sessionStatus = stateMachine_.IsStateNoLock(CaptureSessionState::SESSION_STARTED);
     return true;
 }
 
@@ -2295,6 +2295,7 @@ std::vector<OutputInfo> HCaptureSession::GetOutputInfos()
 
 int32_t HCaptureSession::EnableMechDelivery(bool isEnableMech)
 {
+    MEDIA_INFO_LOG("%{public}s is called, isEnableMech:%{public}d", __FUNCTION__, isEnableMech);
     std::lock_guard<std::mutex> lock(mechDeliveryStateLock_);
     auto currentState = stateMachine_.GetCurrentState();
     switch (currentState) {

@@ -712,7 +712,7 @@ int32_t HCameraService::CreateCaptureSession(sptr<ICaptureSession>& session, int
     int32_t uid = IPCSkeleton::GetCallingUid();
     int32_t userId;
     AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(uid, userId);
-    MEDIA_DEBUG_LOG("HCameraService::CreateCaptureSession userId= %{public}d", userId);
+    MEDIA_INFO_LOG("HCameraService::CreateCaptureSession userId= %{public}d", userId);
     captureSession->SetUserId(userId);
 
     auto &sessionManager = HCameraSessionManager::GetInstance();

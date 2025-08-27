@@ -152,4 +152,5 @@ struct CaptureSessionInfo {
     OutputInfo[] outputInfos;
     int colorSpace;
     ZoomInfo zoomInfo;
+    boolean sessionStatus;
 };

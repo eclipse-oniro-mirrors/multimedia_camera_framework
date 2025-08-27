@@ -25,17 +25,17 @@ namespace CameraStandard {
 
 HMechSession::HMechSession(int32_t userId) : userId_(userId)
 {
-    MEDIA_INFO_LOG("HMechSession::HMechSession enter, userId:%{public}d", userId);
+    MEDIA_INFO_LOG("%{public}s is called, userId:%{public}d", __FUNCTION__, userId);
 }
 
 HMechSession::~HMechSession()
 {
-    MEDIA_INFO_LOG("HMechSession::~HMechSession enter");
+    MEDIA_INFO_LOG("%{public}s is called", __FUNCTION__);
 }
 
 int32_t HMechSession::EnableMechDelivery(bool isEnableMech)
 {
-    MEDIA_INFO_LOG("HMechSession::EnableMechDelivery enter, isEnableMech:%{public}d", isEnableMech);
+    MEDIA_INFO_LOG("%{public}s is called, isEnableMech:%{public}d", __FUNCTION__, isEnableMech);
     std::lock_guard<std::mutex> lock(enableLock_);
     this->isEnableMech_ = isEnableMech;
     auto &sessionManager = HCameraSessionManager::GetInstance();
@@ -49,7 +49,7 @@ int32_t HMechSession::EnableMechDelivery(bool isEnableMech)
 
 int32_t HMechSession::SetCallback(const sptr<IMechSessionCallback>& callback)
 {
-    MEDIA_INFO_LOG("HMechSession::SetCallback enter");
+    MEDIA_INFO_LOG("%{public}s is called", __FUNCTION__);
     std::unique_lock<std::shared_mutex> lock(callbackLock_);
     callback_ = callback;
     HanldeOnCaptureSessionConfiged(callback);
@@ -70,7 +70,7 @@ int32_t HMechSession::CallbackExit([[maybe_unused]] uint32_t code, [[maybe_unuse
 
 int32_t HMechSession::Release()
 {
-    MEDIA_INFO_LOG("HMechSession::Release enter");
+    MEDIA_INFO_LOG("%{public}s is called", __FUNCTION__);
     sptr<IMechSessionCallback> emptyCallback = nullptr;
     SetCallback(emptyCallback);
     EnableMechDelivery(false);
