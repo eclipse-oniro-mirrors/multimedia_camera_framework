@@ -1078,18 +1078,22 @@ napi_value CameraSessionNapi::GetJSArgsForCameraOutput(napi_env env, size_t argc
             if (PreviewOutputNapi::IsPreviewOutput(env, argv[i])) {
                 MEDIA_DEBUG_LOG("preview output adding..");
                 napi_unwrap(env, argv[i], reinterpret_cast<void**>(&previewOutputNapiObj));
+                NAPI_ASSERT(env, previewOutputNapiObj != nullptr, "type mismatch");
                 cameraOutput = previewOutputNapiObj->GetPreviewOutput();
             } else if (PhotoOutputNapi::IsPhotoOutput(env, argv[i])) {
                 MEDIA_DEBUG_LOG("photo output adding..");
                 napi_unwrap(env, argv[i], reinterpret_cast<void**>(&photoOutputNapiObj));
+                NAPI_ASSERT(env, photoOutputNapiObj != nullptr, "type mismatch");
                 cameraOutput = photoOutputNapiObj->GetPhotoOutput();
             } else if (VideoOutputNapi::IsVideoOutput(env, argv[i])) {
                 MEDIA_DEBUG_LOG("video output adding..");
                 napi_unwrap(env, argv[i], reinterpret_cast<void**>(&videoOutputNapiObj));
+                NAPI_ASSERT(env, videoOutputNapiObj != nullptr, "type mismatch");
                 cameraOutput = videoOutputNapiObj->GetVideoOutput();
             } else if (MetadataOutputNapi::IsMetadataOutput(env, argv[i])) {
                 MEDIA_DEBUG_LOG("metadata output adding..");
                 napi_unwrap(env, argv[i], reinterpret_cast<void**>(&metadataOutputNapiObj));
+                NAPI_ASSERT(env, metadataOutputNapiObj != nullptr, "type mismatch");
                 cameraOutput = metadataOutputNapiObj->GetMetadataOutput();
             }
             if (CameraNapiSecurity::CheckSystemApp(env, false) && cameraOutput == nullptr) {

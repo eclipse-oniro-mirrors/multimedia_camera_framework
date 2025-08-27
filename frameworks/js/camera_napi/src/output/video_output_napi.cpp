@@ -127,22 +127,17 @@ void VideoCallbackListener::OnDeferredVideoEnhancementInfo(const CaptureEndedInf
 
 void VideoCallbackListener::ExecuteOnDeferredVideoCb(const VideoCallbackInfo& info) const
 {
-    MEDIA_INFO_LOG("ExecuteOnDeferredVideoCb");
-    napi_value result[ARGS_TWO] = {nullptr, nullptr};
-    napi_value retVal;
-
-    napi_get_undefined(env_, &result[PARAM0]);
-    napi_get_undefined(env_, &result[PARAM1]);
-
-    napi_value propValue;
-    napi_create_object(env_, &result[PARAM1]);
-    napi_get_boolean(env_, info.isDeferredVideoEnhancementAvailable, &propValue);
-    napi_set_named_property(env_, result[PARAM1], "isDeferredVideoEnhancementAvailable", propValue);
-    napi_create_string_utf8(env_, info.videoId.c_str(), NAPI_AUTO_LENGTH, &propValue);
-    napi_set_named_property(env_, result[PARAM1], "videoId", propValue);
-
-    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
-    ExecuteCallback(CONST_VIDEO_DEFERRED_ENHANCEMENT, callbackNapiPara);
+    ExecuteCallbackScopeSafe(CONST_VIDEO_DEFERRED_ENHANCEMENT, [&]() {
+        napi_value errCode = CameraNapiUtils::GetUndefinedValue(env_);
+        napi_value callbackObj = CameraNapiUtils::GetUndefinedValue(env_);
+        napi_value propValue;
+        napi_create_object(env_, &callbackObj);
+        napi_get_boolean(env_, info.isDeferredVideoEnhancementAvailable, &propValue);
+        napi_set_named_property(env_, callbackObj, "isDeferredVideoEnhancementAvailable", propValue);
+        napi_create_string_utf8(env_, info.videoId.c_str(), NAPI_AUTO_LENGTH, &propValue);
+        napi_set_named_property(env_, callbackObj, "videoId", propValue);
+        return ExecuteCallbackData(env_, errCode, callbackObj);
+    });
 }
 
 void VideoCallbackListener::UpdateJSCallback(VideoOutputEventType eventType, const VideoCallbackInfo& info) const
@@ -161,24 +156,24 @@ void VideoCallbackListener::UpdateJSCallback(VideoOutputEventType eventType, con
             MEDIA_ERR_LOG("Incorrect photo callback event type received from JS");
     }
 
-    napi_value result[ARGS_ONE];
-    napi_value retVal;
-    napi_value propValue;
     std::string eventName = VideoOutputEventTypeHelper.GetKeyString(eventType);
     if (eventName.empty()) {
         MEDIA_WARNING_LOG(
             "VideoCallbackListener::UpdateJSCallback, event type is invalid %d", static_cast<int32_t>(eventType));
         return;
     }
-    if (eventType == VideoOutputEventType::VIDEO_FRAME_ERROR) {
-        napi_create_object(env_, &result[PARAM0]);
-        napi_create_int32(env_, info.errorCode, &propValue);
-        napi_set_named_property(env_, result[PARAM0], "code", propValue);
-    } else {
-        napi_get_undefined(env_, &result[PARAM0]);
-    }
-    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_ONE, .argv = result, .result = &retVal };
-    ExecuteCallback(eventName, callbackNapiPara);
+
+    ExecuteCallbackScopeSafe(eventName, [&]() {
+        napi_value errCode = CameraNapiUtils::GetUndefinedValue(env_);
+        napi_value callbackObj = CameraNapiUtils::GetUndefinedValue(env_);
+        if (eventType == VideoOutputEventType::VIDEO_FRAME_ERROR) {
+            napi_value propValue;
+            napi_create_object(env_, &errCode);
+            napi_create_int32(env_, info.errorCode, &propValue);
+            napi_set_named_property(env_, errCode, "code", propValue);
+        }
+        return ExecuteCallbackData(env_, errCode, callbackObj);
+    });
 }
 
 VideoOutputNapi::VideoOutputNapi() : env_(nullptr) {}
