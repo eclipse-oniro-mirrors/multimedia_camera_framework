@@ -2377,5 +2377,69 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_076, Test
     cameraManager_->realtoVirtual_.clear();
     cameraManager_->cameraOldCamera_.clear();
 }
+
+/*
+ * Feature: Framework
+ * Function: Test create movie file output
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test create movie file output
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_077, TestSize.Level0)
+{
+    int32_t width = VIDEO_DEFAULT_WIDTH;
+    int32_t height = VIDEO_DEFAULT_HEIGHT;
+    CameraFormat videoFormat = CAMERA_FORMAT_YUV_420_SP;
+    sptr<Surface> surface = nullptr;
+    Size videoSize;
+    videoSize.width = width;
+    videoSize.height = height;
+    std::vector<int32_t> videoFramerates = {30, 30};
+    VideoProfile videoProfile = VideoProfile(videoFormat, videoSize, videoFramerates);
+    sptr<MovieFileOutput> movieFileOutput = new(std::nothrow) MovieFileOutput();
+    int ret = cameraManager_->CreateMovieFileOutput(videoProfile, &movieFileOutput);
+    ASSERT_EQ(ret, CameraErrorCode::SUCCESS);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test create movie file output use UnifyMovieFileOutput
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test create movie file output use UnifyMovieFileOutput
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_078, TestSize.Level0)
+{
+    int32_t width = VIDEO_DEFAULT_WIDTH;
+    int32_t height = VIDEO_DEFAULT_HEIGHT;
+    CameraFormat videoFormat = CAMERA_FORMAT_YUV_420_SP;
+    sptr<Surface> surface = nullptr;
+    Size videoSize;
+    videoSize.width = width;
+    videoSize.height = height;
+    std::vector<int32_t> videoFramerates = {30, 30};
+    VideoProfile videoProfile = VideoProfile(videoFormat, videoSize, videoFramerates);
+    sptr<IMovieFileOutput> movieFileOutputProxy = nullptr;
+    sptr<UnifyMovieFileOutput> movieFileOutput = new (std::nothrow) UnifyMovieFileOutput(movieFileOutputProxy);
+    int ret = cameraManager_->CreateMovieFileOutput(videoProfile, &movieFileOutput);
+    ASSERT_EQ(ret, CameraErrorCode::SUCCESS);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameraManager Get Is In White List
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test cameraManager Get Is In White List
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_079, TestSize.Level0)
+{
+    cameraManager_->CheckWhiteList();
+    bool ret = cameraManager_->GetIsInWhiteList();
+    ASSERT_EQ(ret, true);
+}
 }
 }

@@ -9488,5 +9488,250 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_057, TestSize.Level0)
     input->Close();
     session->Release();
 }
+
+/*
+ * Feature: Framework
+ * Function: Test GetPressureCallback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetPressureCallback
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_058, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    auto pressureCallBack = session->GetPressureCallback();
+    EXPECT_EQ(pressureCallBack, nullptr);
+
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test IsControlCenterSupported
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsControlCenterSupported
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_059, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    bool ret = session->IsControlCenterSupported();
+    EXPECT_NE(ret, true);
+
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetSupportedEffectTypes
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetSupportedEffectTypes
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_060, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    std::vector<ControlCenterEffectType> controlCenterEffectType;
+    controlCenterEffectType = session->GetSupportedEffectTypes();
+    EXPECT_EQ(controlCenterEffectType.size(), 0);
+
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetSupportedNightSubModeTypes 
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetSupportedNightSubModeTypes
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_061, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    std::vector<NightSubMode> nightSubMode;
+    nightSubMode = session->GetSupportedNightSubModeTypes();
+    EXPECT_EQ(nightSubMode.size(), 0);
+
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetSupportedVideoCodecTypes
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetSupportedVideoCodecTypes
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_062, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    std::vector<int32_t> supportedVideoCodecTypes;
+    int ret = session->GetSupportedVideoCodecTypes(supportedVideoCodecTypes);
+    EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
+    EXPECT_EQ(supportedVideoCodecTypes.size(), 2);
+
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test ProcessApertureEffectChange
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test ProcessApertureEffectChange
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_063, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+    EXPECT_NE(session->GetInputDevice(), nullptr);
+    EXPECT_NE(session->GetInputDevice()->GetCameraDeviceInfo(), nullptr);
+
+    auto deviceInfo = session->GetInputDevice()->GetCameraDeviceInfo();
+    shared_ptr<OHOS::Camera::CameraMetadata> metadata = deviceInfo->GetMetadata();
+    session->ProcessApertureEffectChange(metadata);
+
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test EnableLogAssistance
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test EnableLogAssistance
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_064, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    int32_t ret = session->EnableLogAssistance(true);
+    EXPECT_EQ(ret, CameraErrorCode::SESSION_NOT_CONFIG);
+
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test EnableImageStabilizationGuide 
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test EnableImageStabilizationGuide
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_065, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    int32_t ret = session->EnableImageStabilizationGuide(true);
+    EXPECT_EQ(ret, CameraErrorCode::SESSION_NOT_CONFIG);
+
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test EnableLogAssistance success
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA 
+ * CaseDescription: Test EnableLogAssistance success
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_066, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    EXPECT_NE(session->currentMode_, SceneMode::CAPTURE);
+    EXPECT_TRUE(session->IsSessionCommited());
+
+    int32_t ret = session->EnableLogAssistance(true);
+    EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
+
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test EnableImageStabilizationGuide success
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test EnableImageStabilizationGuide success
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_067, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    EXPECT_NE(session->currentMode_, SceneMode::CAPTURE);
+    EXPECT_TRUE(session->IsSessionCommited());
+
+    int32_t ret = session->EnableImageStabilizationGuide(true);
+    EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
+
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
 }
 }
