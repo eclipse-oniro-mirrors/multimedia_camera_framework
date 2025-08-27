@@ -100,7 +100,10 @@ public:
 private:
     bool ProcessRectInfo(const std::shared_ptr<OHOS::Camera::CameraMetadata>& metadata,
         Rect& rect);
+    void PrintFocusTrackingInfo(FocusTrackingMetaInfo& info);
+    void PrintCaptureSessionInfo(const CaptureSessionInfo& captureSessionInfo);
     wptr<MechSession> mechSession_;
+    uint32_t logCount_ = 0;
 };
 } // namespace CameraStandard
 } // namespace OHOS

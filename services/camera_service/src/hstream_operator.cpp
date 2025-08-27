@@ -873,6 +873,7 @@ int32_t HStreamOperator::StartPreviewStream(const std::shared_ptr<OHOS::Camera::
 
 int32_t HStreamOperator::UpdateSettingForFocusTrackingMech(bool isEnableMech)
 {
+    MEDIA_INFO_LOG("%{public}s is called!", __FUNCTION__);
     std::lock_guard<std::mutex> mechLock(mechCallbackLock_);
     CHECK_RETURN_RET(!streamOperator_, CAMERA_INVALID_STATE);
     uint32_t majorVer = 0;
@@ -913,10 +914,10 @@ int32_t HStreamOperator::UpdateSettingForFocusTrackingMech(bool isEnableMech)
     std::vector<uint8_t> settings;
     OHOS::Camera::MetadataUtils::ConvertMetadataToVec(metadata4Types, settings);
     if (isEnableMech) {
-        MEDIA_DEBUG_LOG("EnableResult start");
+        MEDIA_INFO_LOG("%{public}s EnableResult start!", __FUNCTION__);
         streamOperatorV1_3->EnableResult(-1, settings);
     } else {
-        MEDIA_DEBUG_LOG("DisableResult start");
+        MEDIA_INFO_LOG("%{public}s DisableResult start!", __FUNCTION__);
         streamOperatorV1_3->DisableResult(-1, settings);
     }
     return CAMERA_OK;
