@@ -2410,14 +2410,14 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_078, Test
     movieFileSize.height = height;
     CameraFormat movieFileFormat = CAMERA_FORMAT_YUV_420_SP;
     std::vector<int32_t> movieFileFramerates = {60, 60};
-    VideoProfile profile = VideoProfile(movieFileFormat, movieFileSize, movieFileFramerates);
+    VideoProfile movieProfile = VideoProfile(movieFileFormat, movieFileSize, movieFileFramerates);
 
     sptr<MovieFileOutput> movieFileOutput = nullptr;
-    int ret = cameraManager_->CreateMovieFileOutput(profile, &movieFileOutput);
+    int ret = cameraManager_->CreateMovieFileOutput(movieProfile, &movieFileOutput);
     ASSERT_NE(movieFileOutput, nullptr);
 
     sptr<UnifyMovieFileOutput> unifyMovieFileOutput = nullptr;
-    ret = cameraManager_->CreateMovieFileOutput(profile, &unifyMovieFileOutput);
+    ret = cameraManager_->CreateMovieFileOutput(movieProfile, &unifyMovieFileOutput);
     ASSERT_NE(unifyMovieFileOutput, nullptr);
 
     EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
