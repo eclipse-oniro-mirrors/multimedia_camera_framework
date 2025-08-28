@@ -4538,6 +4538,8 @@ int32_t CaptureSession::IsWhiteBalanceModeSupported(WhiteBalanceMode mode, bool 
 int32_t CaptureSession::SetWhiteBalanceMode(WhiteBalanceMode mode)
 {
     CAMERA_SYNC_TRACE;
+    CHECK_RETURN_RET_ELOG(mode >= WhiteBalanceMode::AWB_MODE_LOCKED, CameraErrorCode::INVALID_ARGUMENT,
+        "CaptureSession::SetWhiteBalanceMode Mode is not supported");
     CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "CaptureSession::SetWhiteBalanceMode Session is not Commited");
     CHECK_RETURN_RET_ELOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
