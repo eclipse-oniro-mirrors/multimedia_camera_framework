@@ -152,8 +152,8 @@ private:
 class InnerPressureStatusCallback : public PressureCallback {
 public:
     InnerPressureStatusCallback(Camera_CaptureSession* captureSession,
-    OH_CaptureSession_OnSystemPressureLevelChange systemPressureLevel)
-    : captureSession_(captureSession), systemPressureLevel_(*systemPressureLevel) {};
+        OH_CaptureSession_OnSystemPressureLevelChange systemPressureLevel)
+        : captureSession_(captureSession), systemPressureLevel_(*systemPressureLevel) {};
     ~InnerPressureStatusCallback() = default;
 
     void OnPressureStatusChanged(PressureStatus status) override

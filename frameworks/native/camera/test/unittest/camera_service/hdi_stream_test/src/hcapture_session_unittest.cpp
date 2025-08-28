@@ -96,7 +96,7 @@ public:
 
 class MockHPressureStatusCallbackStub : public PressureStatusCallbackStub {
 public:
-    MOCK_METHOD1(OnPressureStatusChanged,int32_t(PressureStatus status));
+    MOCK_METHOD1(OnPressureStatusChanged, int32_t(PressureStatus status));
     ~MockHPressureStatusCallbackStub() {}
 };
 /*
