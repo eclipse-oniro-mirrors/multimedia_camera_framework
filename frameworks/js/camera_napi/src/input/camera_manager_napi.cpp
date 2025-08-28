@@ -1021,8 +1021,8 @@ napi_value CameraManagerNapi::GetCameraDevice(napi_env env, napi_callback_info i
 {
     MEDIA_INFO_LOG("GetCameraDevice is called");
     CameraManagerNapi* cameraManagerNapi;
-    int32_t cameraPosition;
-    int32_t cameraType;
+    int32_t cameraPosition = 0;
+    int32_t cameraType = 0;
     sptr<CameraDevice> cameraInfo = nullptr;
     CameraNapiParamParser jsParamParser(env, info, cameraManagerNapi, cameraPosition, cameraType);
     if (!jsParamParser.AssertStatus(PARAMETER_ERROR, "GetCameraDevice with 2 invalid arguments!")) {
