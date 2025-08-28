@@ -2380,13 +2380,28 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_076, Test
 
 /*
  * Feature: Framework
+ * Function: Test cameraManager Get Is In White List
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test cameraManager Get Is In White List
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_077, TestSize.Level0)
+{
+    cameraManager_->CheckWhiteList();
+    bool ret = cameraManager_->GetIsInWhiteList();
+    ASSERT_EQ(ret, true);
+}
+
+/*
+ * Feature: Framework
  * Function: Test cameraManager with CreateMovieFileOutput
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
  * CaseDescription: Test CreateMovieFileOutput for Normal branches
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_077, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_078, TestSize.Level0)
 {
     int ret = 0;
     int32_t width = MOVIE_DEFAULT_WIDTH;
@@ -2417,7 +2432,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_077, Test
  * EnvConditions: NA
  * CaseDescription: Test CameraManager with CreateControlCenterSession
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_078, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_079, TestSize.Level0)
 {
     sptr<ControlCenterSession> session = nullptr;
     int ret = cameraManager_->CreateControlCenterSession(session);
@@ -2434,7 +2449,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_078, Test
  * EnvConditions: NA
  * CaseDescription: Test cameramanager with GetMetadataInfos
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_079, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_080, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_NE(cameras.size(), 0);
@@ -2466,7 +2481,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_079, Test
  * EnvConditions: NA
  * CaseDescription: Test cameramanager with SetCameraOutputCapabilityofthis
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_080, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_081, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_NE(cameras.size(), 0);
