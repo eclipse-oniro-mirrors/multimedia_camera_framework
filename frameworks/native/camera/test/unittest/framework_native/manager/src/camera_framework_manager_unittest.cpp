@@ -2403,7 +2403,6 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_077, Test
  */
 HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_078, TestSize.Level0)
 {
-    int ret = 0;
     int32_t width = MOVIE_DEFAULT_WIDTH;
     int32_t height = MOVIE_DEFAULT_HEIGHT;
     Size movieFileSize;
@@ -2414,7 +2413,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_078, Test
     VideoProfile profile = VideoProfile(movieFileFormat, movieFileSize, movieFileFramerates);
 
     sptr<MovieFileOutput> movieFileOutput = nullptr;
-    ret = cameraManager_->CreateMovieFileOutput(profile, &movieFileOutput);
+    int ret = cameraManager_->CreateMovieFileOutput(profile, &movieFileOutput);
     ASSERT_NE(movieFileOutput, nullptr);
 
     sptr<UnifyMovieFileOutput> unifyMovieFileOutput = nullptr;
