@@ -361,7 +361,7 @@ int32_t ProfessionSession::SetFocusMode(FocusMode focusMode)
 
 int32_t ProfessionSession::GetFocusMode(FocusMode &focusMode)
 {
-    focusMode = FOCUS_MODE_CONTINUOUS_AUTO;
+    focusMode = FOCUS_MODE_MANUAL;
     CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "ProfessionSession::GetFocusMode Session is not Commited");
     auto inputDevice = GetInputDevice();
