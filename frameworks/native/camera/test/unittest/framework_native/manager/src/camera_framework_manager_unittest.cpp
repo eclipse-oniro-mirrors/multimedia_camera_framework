@@ -2392,5 +2392,122 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_077, Test
     bool ret = cameraManager_->GetIsInWhiteList();
     ASSERT_EQ(ret, true);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test cameraManager with CreateMovieFileOutput
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CreateMovieFileOutput for Normal branches
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_078, TestSize.Level0)
+{
+    int32_t width = MOVIE_DEFAULT_WIDTH;
+    int32_t height = MOVIE_DEFAULT_HEIGHT;
+    Size movieFileSize;
+    movieFileSize.width = width;
+    movieFileSize.height = height;
+    CameraFormat movieFileFormat = CAMERA_FORMAT_YUV_420_SP;
+    std::vector<int32_t> movieFileFramerates = {60, 60};
+    VideoProfile movieProfile = VideoProfile(movieFileFormat, movieFileSize, movieFileFramerates);
+
+    sptr<MovieFileOutput> movieFileOutput = nullptr;
+    int ret = cameraManager_->CreateMovieFileOutput(movieProfile, &movieFileOutput);
+    ASSERT_NE(movieFileOutput, nullptr);
+
+    sptr<UnifyMovieFileOutput> unifyMovieFileOutput = nullptr;
+    ret = cameraManager_->CreateMovieFileOutput(movieProfile, &unifyMovieFileOutput);
+    ASSERT_NE(unifyMovieFileOutput, nullptr);
+
+    EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CameraManager with CreateControlCenterSession
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CameraManager with CreateControlCenterSession
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_079, TestSize.Level0)
+{
+    sptr<ControlCenterSession> session = nullptr;
+    int ret = cameraManager_->CreateControlCenterSession(session);
+    ASSERT_NE(session, nullptr);
+
+    EXPECT_EQ(ret, CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameramanager with GetMetadataInfos
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test cameramanager with GetMetadataInfos
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_080, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+
+    auto cameraProxy = CameraManager::g_cameraManager->GetServiceProxy();
+    ASSERT_NE(cameraProxy, nullptr);
+
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata;
+    std::string cameraId = cameras[0]->GetID();
+    cameraProxy->GetCameraAbility(cameraId, metadata);
+    ASSERT_NE(metadata, nullptr);
+
+    std::vector<SceneMode> supportedModes = cameraManager_->GetSupportedModes(cameras[0]);
+    ASSERT_TRUE(supportedModes.size() != 0);
+
+    camera_metadata_item_t item;
+    OHOS::Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_AVAILABLE_PROFILE_LEVEL, &item);
+
+    std::vector<sptr<CameraOutputCapability>> outputCapabilities;
+    cameraManager_->GetMetadataInfos(item, supportedModes, outputCapabilities, metadata);
+    EXPECT_FALSE(outputCapabilities.empty());
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameramanager with SetCameraOutputCapabilityofthis
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test cameramanager with SetCameraOutputCapabilityofthis
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_081, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+
+    auto cameraProxy = CameraManager::g_cameraManager->GetServiceProxy();
+    ASSERT_NE(cameraProxy, nullptr);
+
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata;
+    std::string cameraId = cameras[0]->GetID();
+    cameraProxy->GetCameraAbility(cameraId, metadata);
+    ASSERT_NE(metadata, nullptr);
+
+    std::vector<SceneMode> supportedModes = cameraManager_->GetSupportedModes(cameras[0]);
+    ASSERT_TRUE(supportedModes.size() != 0);
+
+    camera_metadata_item_t item;
+    CameraManager::ProfilesWrapper profilesWrapper = {};
+    cameraManager_->ParseCapability(profilesWrapper, cameras[0], supportedModes[0], item, metadata);
+    EXPECT_FALSE((profilesWrapper.photoProfiles.empty()) && (profilesWrapper.previewProfiles.empty())
+        && (profilesWrapper.vidProfiles.empty()));
+
+    sptr<CameraOutputCapability> cameraOutputCapability = new CameraOutputCapability();
+    cameraManager_->SetCameraOutputCapabilityofthis(cameraOutputCapability, profilesWrapper, supportedModes[0],
+                                                    metadata);
+    EXPECT_FALSE((cameraOutputCapability->GetPhotoProfiles().empty()) &&
+                 (cameraOutputCapability->GetPreviewProfiles().empty()) &&
+                 (cameraOutputCapability->GetVideoProfiles().empty()));
+}
 }
 }
