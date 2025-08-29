@@ -22,7 +22,7 @@
 #include "camera_log.h"
 #include "hisysevent.h"
 #include "ipc_skeleton.h"
-#include "base/timer/steady_clock.h"
+#include "steady_clock.h"
 
 namespace OHOS {
 namespace CameraStandard {

@@ -16,12 +16,7 @@
 #ifndef OHOS_DEFERRED_PROCESSING_SERVICE_TASK_REGISTRY_H
 #define OHOS_DEFERRED_PROCESSING_SERVICE_TASK_REGISTRY_H
 
-#include <atomic>
-#include <cstdint>
-#include <functional>
 #include <map>
-#include <mutex>
-#include <string>
 
 #include "thread_pool.h"
 #include "itask_group.h"

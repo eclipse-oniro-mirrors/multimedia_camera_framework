@@ -21,7 +21,7 @@
 #include "dps_event_report.h"
 #include "hisysevent.h"
 #include "dp_log.h"
-#include "timer/steady_clock.h"
+#include "dp_utils.h"
 #include "ideferred_photo_processing_session.h"
 
 namespace OHOS {
@@ -269,7 +269,7 @@ void DPSEventReport::UpdateProcessDoneTime(const std::string& imageId, int32_t u
     std::unique_lock<std::recursive_mutex> lock(mutex_);
     auto imageIdToEventInfoTemp = userIdToImageIdEventInfo.find(userId);
     if (imageIdToEventInfoTemp != userIdToImageIdEventInfo.end()) {
-        uint64_t currentTime = SteadyClock::GetTimestampMilli();
+        uint64_t currentTime = GetTimestampMilli();
         (imageIdToEventInfoTemp->second)[imageId].imageDoneTimeBeginTime = currentTime;
         (imageIdToEventInfoTemp->second)[imageId].processTimeEndTime = currentTime;
     }
@@ -330,7 +330,7 @@ void DPSEventReport::UpdateRemoveTime(const std::string& imageId, int32_t userId
     std::unique_lock<std::recursive_mutex> lock(mutex_);
     auto imageIdToEventInfoTemp = userIdToImageIdEventInfo.find(userId);
     if (imageIdToEventInfoTemp != userIdToImageIdEventInfo.end()) {
-        uint64_t currentTime = SteadyClock::GetTimestampMilli();
+        uint64_t currentTime = GetTimestampMilli();
         (imageIdToEventInfoTemp->second)[imageId].removeTimeEndTime = currentTime;
         ReportImageProcessResult(imageId, userId);
     }

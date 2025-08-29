@@ -29,7 +29,7 @@
 #include "session/capture_session.h"
 #include "picture_interface.h"
 #include "task_manager.h"
-#include "dp_utils.h"
+#include "watch_dog.h"
 #include "display/graphic/common/v1_0/cm_color_space.h"
 #include "display/graphic/common/v2_1/cm_color_space.h"
 #include <pixel_map.h>
@@ -236,7 +236,7 @@ int32_t HStreamCaptureCallbackImpl::OnCaptureEnded(const int32_t captureId, cons
     callback->OnCaptureEnded(captureId, frameCount);
     auto timeStartIter = photoOutput->captureIdToCaptureInfoMap_.find(captureId);
     if (timeStartIter != photoOutput->captureIdToCaptureInfoMap_.end()) {
-        DeferredProcessing::GetGlobalWatchdog().StopMonitor((timeStartIter->second).CaptureHandle);
+        DeferredProcessing::Watchdog::GetGlobalWatchdog().StopMonitor((timeStartIter->second).CaptureHandle);
     }
     return CAMERA_OK;
     // LCOV_EXCL_STOP
@@ -286,7 +286,7 @@ int32_t HStreamCaptureCallbackImpl::OnFrameShutterEnd(const int32_t captureId, c
     uint32_t startCaptureHandle;
     constexpr uint32_t delayMilli = 10 * 1000; // 10S 1000 is ms
     MEDIA_INFO_LOG("offline GetGlobalWatchdog StartMonitor, captureId=%{public}d", captureId);
-    DeferredProcessing::GetGlobalWatchdog().StartMonitor(
+    DeferredProcessing::Watchdog::GetGlobalWatchdog().StartMonitor(
         startCaptureHandle, delayMilli, [captureId, photoOutput](uint32_t handle) {
             MEDIA_INFO_LOG("offline Watchdog executed, handle: %{public}d, captureId= %{public}d",
                 static_cast<int>(handle), captureId);

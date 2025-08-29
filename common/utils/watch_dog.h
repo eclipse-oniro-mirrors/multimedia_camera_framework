@@ -16,24 +16,24 @@
 #ifndef OHOS_DEFERRED_PROCESSING_SERVICE_WATCH_DOG_H
 #define OHOS_DEFERRED_PROCESSING_SERVICE_WATCH_DOG_H
 
-#include <cstdint>
-#include <functional>
-#include <map>
-#include <memory>
-#include <mutex>
-#include <string>
 #include "timer/time_broker.h"
-#include "dp_log.h"
+#include "camera_log.h"
 
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
 class Watchdog {
 public:
+    static Watchdog& GetGlobalWatchdog()
+    {
+        static Watchdog instance("GlobalWatchdog");
+        return instance;
+    }
+
     explicit Watchdog(std::string name)
         : name_(std::move(name)), timeBroker_(TimeBroker::Create(name_))
     {
-        DP_INFO_LOG("(%{public}s) entered.", name_.c_str());
+        MEDIA_INFO_LOG("(%{public}s) entered.", name_.c_str());
     }
 
     Watchdog(const Watchdog& other) = delete;
@@ -48,15 +48,16 @@ public:
     {
         std::lock_guard<std::mutex> lock(mutex_);
         if (!timeBroker_) {
-            DP_ERR_LOG("(%{public}s) timerBroker_ nullptr.", name_.c_str());
+            MEDIA_ERR_LOG("(%{public}s) timerBroker_ nullptr.", name_.c_str());
             return;
         }
         bool ret = timeBroker_->RegisterCallback(durationMs,
         [callback = std::move(callback)](uint32_t handle) {callback(handle); }, handle);
         if (ret) {
-            DP_INFO_LOG("(%{public}s) handle = %{public}d", name_.c_str(), handle);
+            MEDIA_INFO_LOG("(%{public}s) handle = %{public}d", name_.c_str(), handle);
         } else {
-            DP_ERR_LOG("(%{public}s) timerBroker_ RegisterCallback failed, status = %{public}d.", name_.c_str(), ret);
+            MEDIA_ERR_LOG("(%{public}s) timerBroker_ RegisterCallback failed, status = %{public}d.",
+                name_.c_str(), ret);
         }
     }
 
@@ -64,10 +65,10 @@ public:
     {
         std::lock_guard<std::mutex> lock(mutex_);
         if (timeBroker_) {
-            DP_INFO_LOG("(%{public}s) handle = %{public}d", name_.c_str(), handle);
+            MEDIA_INFO_LOG("(%{public}s) handle = %{public}d", name_.c_str(), handle);
             timeBroker_->DeregisterCallback(handle);
         } else {
-            DP_ERR_LOG("(%{public}s) failed", name_.c_str());
+            MEDIA_ERR_LOG("(%{public}s) failed", name_.c_str());
         }
     }
 
@@ -76,9 +77,9 @@ public:
         std::lock_guard<std::mutex> lock(mutex_);
         if (timeBroker_) {
             timeBroker_->GetExpiredFunc(handle)(handle);
-            DP_INFO_LOG("(%s) handle = %{public}d", name_.c_str(), handle);
+            MEDIA_INFO_LOG("(%s) handle = %{public}d", name_.c_str(), handle);
         } else {
-            DP_ERR_LOG("(%s) failed", name_.c_str());
+            MEDIA_ERR_LOG("(%s) failed", name_.c_str());
         }
     }
 private:

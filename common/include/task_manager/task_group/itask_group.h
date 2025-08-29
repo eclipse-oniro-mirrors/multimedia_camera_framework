@@ -13,35 +13,31 @@
  * limitations under the License.
  */
 
-#ifndef OHOS_DEFERRED_PROCESSING_SERVICE_DELAYED_TASK_GROUP_H
-#define OHOS_DEFERRED_PROCESSING_SERVICE_DELAYED_TASK_GROUP_H
+#ifndef OHOS_DEFERRED_PROCESSING_SERVICE_I_TASK_GROUP_H
+#define OHOS_DEFERRED_PROCESSING_SERVICE_I_TASK_GROUP_H
 
-#include <map>
-#include <memory>
-#include <mutex>
-#include <string>
-#include "base_task_group.h"
-#include "timer/time_broker.h"
+#include <any>
+#include <functional>
 
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-class DelayedTaskGroup : public BaseTaskGroup {
+using TaskGroupHandle = uint64_t;
+using TaskFunc = std::function<void(std::any param)>;
+using TaskCallback = std::function<void(std::any param)>;
+
+class ITaskGroup {
 public:
-    DelayedTaskGroup(const std::string& name, TaskFunc func, const ThreadPool* threadPool);
-    ~DelayedTaskGroup() override;
-    bool SubmitTask(std::any param) override;
-
-protected:
-    void Initialize() override;
-    void TimerExpired(uint32_t handle);
-
-private:
-    std::mutex mutex_;
-    std::shared_ptr<TimeBroker> timeBroker_;
-    std::map<uint32_t, std::any> paramMap_;
+    ITaskGroup() = default;
+    virtual ~ITaskGroup() = default;
+    virtual const std::string& GetName() = 0;
+    virtual TaskGroupHandle GetHandle() = 0;
+    virtual bool SubmitTask(std::any param) = 0;
+    virtual void CancelAllTasks() = 0;
+    virtual size_t GetTaskCount() = 0;
 };
+constexpr TaskGroupHandle INVALID_TASK_GROUP_HANDLE = 0;
 } //namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS
-#endif // OHOS_DEFERRED_PROCESSING_SERVICE_DELAYED_TASK_GROUP_H
+#endif // OHOS_DEFERRED_PROCESSING_SERVICE_I_TASK_GROUP_H

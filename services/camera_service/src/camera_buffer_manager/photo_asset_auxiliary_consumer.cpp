@@ -18,8 +18,8 @@
 #include "hstream_capture.h"
 #include "task_manager.h"
 #include "camera_surface_buffer_util.h"
-#include "dp_utils.h"
 #include "buffer_extra_data_impl.h"
+#include "watch_dog.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -125,8 +125,8 @@ void AuxiliaryBufferConsumer::ExecuteOnBufferAvailable()
             MEDIA_INFO_LOG("AuxiliaryBufferConsumer StopMonitor, surfaceName=%{public}s, pictureHandle = %{public}d, "
                            "captureId = %{public}d",
                 surfaceName_.c_str(), pictureHandle, captureId);
-            DeferredProcessing::GetGlobalWatchdog().DoTimeout(pictureHandle);
-            DeferredProcessing::GetGlobalWatchdog().StopMonitor(pictureHandle);
+            DeferredProcessing::Watchdog::GetGlobalWatchdog().DoTimeout(pictureHandle);
+            DeferredProcessing::Watchdog::GetGlobalWatchdog().StopMonitor(pictureHandle);
             streamCapture->captureIdAuxiliaryCountMap_[captureId] = -1;
             MEDIA_INFO_LOG("AuxiliaryBufferConsumer captureIdAuxiliaryCountMap_ = -1");
         }

@@ -16,6 +16,11 @@ import("../multimedia_camera_framework.gni")
 
 config("camera_utils_config") {
   include_dirs = [
+    "include",
+    "include/task_manager",
+    "include/task_manager/task_group",
+    "include/timer",
+    "include/timer/core",    
     "utils",
     "utils/av_codec/include",
     "utils/camera_notification/include",
@@ -33,26 +38,22 @@ config("camera_utils_config") {
     "${multimedia_camera_framework_path}/services/camera_service/binder/base/include",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/utils",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager/task_group",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/timer",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/timer/core",
   ]
 }
 
+
 common_sources = [
-  "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/task_manager/task_group/base_task_group.cpp",
-  "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/task_manager/task_group/delayed_task_group.cpp",
-  "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/task_manager/task_group/task_group.cpp",
-  "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/task_manager/task_manager.cpp",
-  "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/task_manager/task_registry.cpp",
-  "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/task_manager/thread_pool.cpp",
-  "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/task_manager/thread_utils.cpp",
-  "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/timer/core/timer_core.cpp",
-  "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/timer/steady_clock.cpp",
-  "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/timer/time_broker.cpp",
-  "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/timer/camera_deferred_timer.cpp",
-  "${multimedia_camera_framework_path}/services/deferred_processing_service/src/utils/dp_utils.cpp",
+  "src/task_manager/task_group/base_task_group.cpp",
+  "src/task_manager/task_group/delayed_task_group.cpp",
+  "src/task_manager/task_group/task_group.cpp",
+  "src/task_manager/task_manager.cpp",
+  "src/task_manager/task_registry.cpp",
+  "src/task_manager/thread_pool.cpp",
+  "src/task_manager/thread_utils.cpp",
+  "src/timer/core/timer_core.cpp",
+  "src/timer/steady_clock.cpp",
+  "src/timer/time_broker.cpp",
+  "src/timer/camera_deferred_timer.cpp",
   "utils/anonymization.cpp",
   "utils/av_codec/src/av_codec_proxy.cpp",
   "utils/camera_dynamic_loader.cpp",

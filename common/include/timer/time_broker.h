@@ -16,14 +16,11 @@
 #ifndef OHOS_DEFERRED_PROCESSING_SERVICE_TIME_BROKER_H
 #define OHOS_DEFERRED_PROCESSING_SERVICE_TIME_BROKER_H
 
-#include <cstdint>
-#include <functional>
+
 #include <map>
-#include <memory>
-#include <mutex>
+
 #include <queue>
-#include <string>
-#include <vector>
+
 #include "timer/camera_deferred_timer.h"
 
 namespace OHOS {

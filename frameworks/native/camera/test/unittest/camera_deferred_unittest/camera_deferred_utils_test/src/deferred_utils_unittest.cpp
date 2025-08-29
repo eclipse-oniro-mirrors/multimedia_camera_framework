@@ -81,7 +81,7 @@ HWTEST_F(DeferredUtilsUnitTest, deferred_utils_unittest_002, TestSize.Level1)
  */
 HWTEST_F(DeferredUtilsUnitTest, deferred_utils_unittest_005, TestSize.Level1)
 {
-    EXPECT_EQ(GetGlobalWatchdog().name_, "DPSGlobalWatchdog");
+    EXPECT_EQ(Watchdog::GetGlobalWatchdog().name_, "DPSGlobalWatchdog");
 }
 
 /*

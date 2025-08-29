@@ -17,13 +17,7 @@
 #define OHOS_DEFERRED_PROCESSING_SERVICE_TASK_MANAGER_H
 #define EXPORT_API __attribute__((visibility("default")))
 
-#include <atomic>
-#include <cstdint>
-#include <functional>
-#include <memory>
-#include <string>
 #include "task_registry.h"
-#include "thread_pool.h"
 
 namespace OHOS {
 namespace CameraStandard {

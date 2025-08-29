@@ -14,10 +14,12 @@
  */
 
 #include "thread_pool.h"
+
 #include <sys/time.h>
 #include <algorithm>
+
+#include "camera_log.h"
 #include "thread_utils.h"
-#include "dp_log.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -38,18 +40,18 @@ ThreadPool::ThreadPool(const std::string& name, uint32_t numThreads)
         numThreads_ = 1;
     }
     numThreads_ = std::min(numThreads_, static_cast<uint32_t>(std::thread::hardware_concurrency()));
-    DP_DEBUG_LOG("name: %s, numThreads, orig: %u, new: %u.", name.c_str(), numThreads, numThreads_);
+    MEDIA_DEBUG_LOG("name: %s, numThreads, orig: %u, new: %u.", name.c_str(), numThreads, numThreads_);
 }
 
 ThreadPool::~ThreadPool()
 {
-    CAMERA_DP_SYNC_TRACE;
-    DP_DEBUG_LOG("name: %s.", name_.c_str());
+    CAMERA_SYNC_TRACE;
+    MEDIA_DEBUG_LOG("name: %s.", name_.c_str());
     isStopped_ = true;
     taskCv_.notify_all();
     for (auto& threadInfo : workers_) {
         if (threadInfo.thread.joinable()) {
-            DP_DEBUG_LOG("joining thread (%s).", threadInfo.name.c_str());
+            MEDIA_DEBUG_LOG("joining thread (%s).", threadInfo.name.c_str());
             threadInfo.thread.join();
         }
     }
@@ -57,7 +59,7 @@ ThreadPool::~ThreadPool()
 
 void ThreadPool::Initialize()
 {
-    DP_DEBUG_LOG("entered.");
+    MEDIA_DEBUG_LOG("entered.");
     workers_.reserve(numThreads_);
     std::string threadNamePrefix = name_ + "_DPS_Worker_";
     for (uint32_t i = 0; i < numThreads_; ++i) {
@@ -70,24 +72,24 @@ void ThreadPool::Initialize()
 
 void ThreadPool::WorkerLoop(const std::string& threadName)
 {
-    DP_DEBUG_LOG("(%s) entered.", threadName.c_str());
+    MEDIA_DEBUG_LOG("(%s) entered.", threadName.c_str());
     while (!isStopped_.load()) {
-        DP_DEBUG_LOG("(%s) task excute start entered.", threadName.c_str());
+        MEDIA_DEBUG_LOG("(%s) task excute start entered.", threadName.c_str());
         auto task = GetTask();
         if (task) {
-            DP_DEBUG_LOG("(%s) task excuting entered.", threadName.c_str());
+            MEDIA_DEBUG_LOG("(%s) task excuting entered.", threadName.c_str());
             task();
-            DP_DEBUG_LOG("(%s) task excuting complete.", threadName.c_str());
+            MEDIA_DEBUG_LOG("(%s) task excuting complete.", threadName.c_str());
         } else {
-            DP_DEBUG_LOG("empty task.");
+            MEDIA_DEBUG_LOG("empty task.");
         }
     }
-    DP_DEBUG_LOG("(%s) exited.", threadName.c_str());
+    MEDIA_DEBUG_LOG("(%s) exited.", threadName.c_str());
 }
 
 void ThreadPool::BeginBackgroundTasks() const
 {
-    DP_DEBUG_LOG("entered.");
+    MEDIA_DEBUG_LOG("entered.");
     for (auto& workerInfo : workers_) {
         SetThreadPriority(workerInfo.thread.native_handle(), PRIORITY_BACKGROUND);
     }
@@ -95,7 +97,7 @@ void ThreadPool::BeginBackgroundTasks() const
 
 void ThreadPool::EndBackgroundTasks() const
 {
-    DP_DEBUG_LOG("entered.");
+    MEDIA_DEBUG_LOG("entered.");
     for (auto& workerInfo : workers_) {
         SetThreadPriority(workerInfo.thread.native_handle(), PRIORITY_NORMAL);
     }
@@ -103,7 +105,7 @@ void ThreadPool::EndBackgroundTasks() const
 
 void ThreadPool::SetThreadPoolPriority(int priority)
 {
-    DP_DEBUG_LOG("entered.");
+    MEDIA_DEBUG_LOG("entered.");
     for (auto& workerInfo : workers_) {
         SetThreadPriority(workerInfo.thread.native_handle(), priority);
     }
@@ -121,10 +123,11 @@ void ThreadPool::PrintThreadInfo()
     for (auto& workerInfo : workers_) {
         int ret = pthread_getschedparam(workerInfo.thread.native_handle(), &policy, &sch);
         if (ret == 0) {
-            DP_DEBUG_LOG("thread (%s) priority: %{public}d, policy = %{public}d(0:OTHER, 1:FIFO, 2:RR)",
+            MEDIA_DEBUG_LOG("thread (%s) priority: %{public}d, policy = %{public}d(0:OTHER, 1:FIFO, 2:RR)",
                 workerInfo.name.c_str(), sch.sched_priority, policy);
         } else {
-            DP_DEBUG_LOG("thread (%s) pthread_getschedparam failed, ret = %{public}d.", workerInfo.name.c_str(), ret);
+            MEDIA_DEBUG_LOG("thread (%s) pthread_getschedparam failed, ret = %{public}d.",
+                workerInfo.name.c_str(), ret);
         }
     }
 }
@@ -149,7 +152,7 @@ bool ThreadPool::HasPendingTasks() const
 
 bool ThreadPool::Submit(Task func, bool isUrgent) const
 {
-    DP_DEBUG_LOG("entered.");
+    MEDIA_DEBUG_LOG("entered.");
     if (!isStopped_.load()) {
         {
             std::unique_lock<std::mutex> lock(mutex_);
@@ -161,7 +164,7 @@ bool ThreadPool::Submit(Task func, bool isUrgent) const
         }
         taskCv_.notify_one();
     } else {
-        DP_ERR_LOG("failed due to thread pool has been stopped.");
+        MEDIA_ERR_LOG("failed due to thread pool has been stopped.");
         return false;
     }
     return true;

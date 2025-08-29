@@ -14,8 +14,10 @@
  */
 
 #include "thread_utils.h"
+
 #include <sys/resource.h>
-#include "dp_log.h"
+
+#include "camera_log.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -27,10 +29,10 @@ void SetThreadName(pthread_t tid, const std::string& name)
     constexpr int threadNameMaxSize = 15;
     auto threadName = name.size() > threadNameMaxSize ? name.substr(0, threadNameMaxSize).c_str() : name;
     if (name.size() > threadNameMaxSize) {
-        DP_DEBUG_LOG("task name %s exceed max size: %{public}d", name.c_str(), threadNameMaxSize);
+        MEDIA_DEBUG_LOG("task name %s exceed max size: %{public}d", name.c_str(), threadNameMaxSize);
     }
     int ret = pthread_setname_np(tid, threadName.c_str());
-    DP_DEBUG_LOG("threadId: %{public}ld, threadName: %s, pthread_setname_np ret = %{public}d.",
+    MEDIA_DEBUG_LOG("threadId: %{public}ld, threadName: %s, pthread_setname_np ret = %{public}d.",
         static_cast<long>(pthread_gettid_np(tid)), threadName.c_str(), ret);
 }
 
@@ -43,9 +45,9 @@ void SetThreadPriority(pthread_t handle, int priority)
     }
     int ret = setpriority(PRIO_PROCESS, tid, priority);
     if (ret == 0) {
-        DP_DEBUG_LOG("succeed for tid (%ld) with priority (%{public}d).", static_cast<long>(tid), priority);
+        MEDIA_DEBUG_LOG("succeed for tid (%ld) with priority (%{public}d).", static_cast<long>(tid), priority);
     } else {
-        DP_DEBUG_LOG("failed for tid (%ld) with priority (%{public}d), ret = %{public}d.",
+        MEDIA_DEBUG_LOG("failed for tid (%ld) with priority (%{public}d), ret = %{public}d.",
             static_cast<long>(tid), priority, ret);
     }
 }
