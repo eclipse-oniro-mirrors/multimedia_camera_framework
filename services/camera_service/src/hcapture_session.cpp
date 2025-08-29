@@ -651,6 +651,7 @@ int32_t HCaptureSession::LinkInputAndOutputs()
         "HCaptureSession::LinkInputAndOutputs deviceAbility is null");
     CHECK_RETURN_RET_ELOG(!IsValidMode(opMode_, settings), CAMERA_INVALID_SESSION_CFG,
         "HCaptureSession::LinkInputAndOutputs IsValidMode false");
+    device->UpdateCameraRotateAngle();
     rc = hStreamOperatorSptr->LinkInputAndOutputs(settings, GetopMode());
     MEDIA_INFO_LOG("HCaptureSession::LinkInputAndOutputs execute success");
     return rc;

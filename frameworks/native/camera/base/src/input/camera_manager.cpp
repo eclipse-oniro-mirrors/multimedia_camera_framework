@@ -2329,6 +2329,7 @@ int CameraManager::CreateCameraInput(sptr<CameraDevice> &camera, sptr<CameraInpu
     }
     // LCOV_EXCL_STOP
     sptr<ICameraDeviceService> deviceObj = nullptr;
+    camera->SetUsePhysicalCameraOrientation(false);
     int32_t retCode = CreateCameraDevice(camera->GetID(), &deviceObj);
     CHECK_RETURN_RET_ELOG(retCode != CameraErrorCode::SUCCESS, retCode,
         "CameraManager::CreateCameraInput Returning null in CreateCameraInput");
@@ -2359,6 +2360,7 @@ int CameraManager::CreateCameraInput(CameraPosition position, CameraType cameraT
             cameraDeviceList[i]->GetPosition(), cameraDeviceList[i]->GetCameraType());
         // LCOV_EXCL_START
         if ((cameraDeviceList[i]->GetPosition() == position) && (cameraDeviceList[i]->GetCameraType() == cameraType)) {
+            cameraDeviceList[i]->SetUsePhysicalCameraOrientation(false);
             cameraInput = CreateCameraInput(cameraDeviceList[i]);
             break;
         }
