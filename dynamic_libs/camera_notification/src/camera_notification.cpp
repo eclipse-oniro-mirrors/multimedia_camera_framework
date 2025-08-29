@@ -134,6 +134,7 @@ std::string CameraNotification::GetSystemStringByName(const std::string& name)
     InitResourceManager();
     std::string result;
     std::string identity = IPCSkeleton::ResetCallingIdentity();
+    CHECK_RETURN_RET_ELOG(!resourceManager_, "", "resourceManager_ is nullptr");
     resourceManager_->GetStringByName(name.c_str(), result);
     IPCSkeleton::SetCallingIdentity(identity);
     MEDIA_DEBUG_LOG("name: %{public}s, result: %{public}s", name.c_str(), result.c_str());

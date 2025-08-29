@@ -43,11 +43,11 @@ int32_t CameraDataShareHelper::QueryOnce(const std::string key, std::string &val
     columns.emplace_back(SETTINGS_DATA_FIELD_VALUE);
 
     auto resultSet = dataShareHelper->Query(uri, predicates, columns);
-    CHECK_RETURN_RET_ELOG(resultSet == nullptr, CAMERA_INVALID_ARG, "CameraDataShareHelper query fail");
-
-    int32_t numRows = 0;
-    resultSet->GetRowCount(numRows);
-    CHECK_RETURN_RET_ELOG(numRows == 0, CAMERA_INVALID_ARG, "CameraDataShareHelper query failed, row is zero.");
+    if (resultSet == nullptr) {
+        MEDIA_INFO_LOG("CameraDataShareHelper query fail");
+        dataShareHelper->Release();
+        return CAMERA_INVALID_ARG;
+    }
 
     if (resultSet->GoToFirstRow() != DataShare::E_OK) {
         MEDIA_INFO_LOG("CameraDataShareHelper Query failed,go to first row error");
