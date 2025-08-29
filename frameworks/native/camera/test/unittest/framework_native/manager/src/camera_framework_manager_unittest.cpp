@@ -2509,5 +2509,24 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_081, Test
                  (cameraOutputCapability->GetPreviewProfiles().empty()) &&
                  (cameraOutputCapability->GetVideoProfiles().empty()));
 }
+
+/*
+ * Feature: Framework
+ * Function: Test cameraManager CreateMovieFileOutput
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test cameraManager CreateMovieFileOutput
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_077, TestSize.Level0)
+{
+    std::vector<int32_t> fps = {120, 120};
+    Size size = {.width = 1920, .height = 1080};
+    VideoProfile videoProfile = VideoProfile(CameraFormat::CAMERA_FORMAT_INVALID, size, fps);
+    sptr<MovieFileOutput> *pMovieFileOutput = nullptr;
+    EXPECT_NE(cameraManager_->CreateMovieFileOutput(videoProfile, pMovieFileOutput), 0);
+    sptr<UnifyMovieFileOutput> *pMovieFileOutput2 = nullptr;
+    EXPECT_NE(cameraManager_->CreateMovieFileOutput(videoProfile, pMovieFileOutput2), 0);
+}
 }
 }

@@ -1091,5 +1091,23 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_029, TestSize.Level0)
     sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&) preview;
     EXPECT_NE(previewOutput->EnableBandwidthCompression(true), 0);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test AdjustRenderFit
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test AdjustRenderFit
+ */
+HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_030, TestSize.Level0)
+{
+    sptr<CaptureOutput> preview = CreatePreviewOutput();
+    ASSERT_NE(preview, nullptr);
+    sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&) preview;
+    previewOutput->AdjustRenderFit();
+    previewOutput->ReportXComponentInfoEvent();
+    EXPECT_NE(previewOutput, nullptr);
+}
 }
 }

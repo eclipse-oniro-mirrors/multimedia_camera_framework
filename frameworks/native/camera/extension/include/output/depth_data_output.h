@@ -84,8 +84,6 @@ public:
      */
     std::shared_ptr<DepthDataStateCallback> GetApplicationCallback();
 
-    void OnNativeRegisterCallback(const std::string& eventString);
-    void OnNativeUnregisterCallback(const std::string& eventString);
 private:
     int32_t DepthDataFormat_;
     Size DepthDataSize_;

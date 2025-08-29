@@ -875,9 +875,9 @@ int32_t PreviewOutput::GetCameraDeviceRotationAngle(uint32_t &cameraRotation)
     // LCOV_EXCL_STOP
 }
 
-// LCOV_EXCL_START
 void PreviewOutput::AdjustRenderFit()
 {
+    // LCOV_EXCL_START
     CAMERA_SYNC_TRACE;
     int32_t renderFitNumber = 0;
     bool isRenderFitNewVersionEnabled = false;
@@ -927,7 +927,8 @@ void PreviewOutput::AdjustRenderFit()
     ret = xcomponentControllerProxy->SetRenderFitBySurfaceId(surfaceId, RENDER_FIL_COVER, true);
     isModified_.store(true);
     CHECK_RETURN_ELOG(ret != 0, "SetRenderFitBySurfaceId ret: %{public}d", ret);
-} // LCOV_EXCL_STOP
+    // LCOV_EXCL_STOP
+}
 
 void PreviewOutput::SetSurfaceId(const std::string& surfaceId)
 {

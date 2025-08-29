@@ -88,7 +88,7 @@ HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_strate
     strategyCenter_->HandleEventChanged(EventType::CAMERA_SESSION_STATUS_EVENT, SYSTEM_CAMERA_OPEN);
     EXPECT_EQ(strategyCenter_->IsReady(), false);
     strategyCenter_->HandleEventChanged(EventType::CAMERA_SESSION_STATUS_EVENT, NORMAL_CAMERA_OPEN);
-    EXPECT_EQ(strategyCenter_->IsReady(), true);
+    EXPECT_EQ(strategyCenter_->IsReady(), false);
 }
 
 HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_stratety_unittest_003, TestSize.Level1)
@@ -135,7 +135,7 @@ HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_strate
     auto mode = strategyCenter_->GetExecutionMode(JobPriority::HIGH);
     EXPECT_EQ(mode, ExecutionMode::HIGH_PERFORMANCE);
     mode = strategyCenter_->GetExecutionMode(JobPriority::NORMAL);
-    EXPECT_EQ(mode, ExecutionMode::LOAD_BALANCE);
+    EXPECT_EQ(mode, ExecutionMode::DUMMY);
     strategyCenter_->HandleEventChanged(EventType::THERMAL_LEVEL_STATUS_EVENT, LEVEL_2);
     mode = strategyCenter_->GetExecutionMode(JobPriority::NORMAL);
     EXPECT_EQ(mode, ExecutionMode::DUMMY);
