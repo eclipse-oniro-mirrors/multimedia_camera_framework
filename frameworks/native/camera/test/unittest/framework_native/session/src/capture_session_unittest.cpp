@@ -9358,6 +9358,8 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_052, TestSize.Level0)
     session->EnableOfflinePhoto();
     EXPECT_NE(session->EnableLogAssistance(false), 0);
     session->EnableAutoFrameRate(false);
+    EXPECT_NE(session->EnableImageStabilizationGuide(false), 0);
+    session->EnableKeyFrameReport(false);
  
     input->Close();
     session->Release();
@@ -9732,6 +9734,100 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_067, TestSize.Level0)
     preview->Release();
     input->Release();
     session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test OnPressureStatusChanged.
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OnPressureStatusChanged.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_058, TestSize.Level0)
+{
+    std::shared_ptr<PressureStatusCallback> callback = std::make_shared<PressureStatusCallback>();
+    EXPECT_EQ(callback->OnPressureStatusChanged(PressureStatus::SYSTEM_PRESSURE_NORMAL), 0);
+}
+ 
+/*
+ * Feature: Framework
+ * Function: Test IsControlCenterSupported.
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsControlCenterSupported.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_059, TestSize.Level0)
+{
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(input, nullptr);
+ 
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+ 
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
+    ASSERT_NE(photo, nullptr);
+ 
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    session->IsControlCenterSupported();
+    std::vector<ControlCenterEffectType>res = session->GetSupportedEffectTypes();
+    session->EnableControlCenter(false);
+    if (session->isControlCenterEnabled_ == false) {
+        EXPECT_EQ(session->isControlCenterEnabled_, false);
+    }
+    input->Close();
+    session->Release();
+}
+ 
+/*
+ * Feature: Framework
+ * Function: Test GetSupportedNightSubModeTypes.
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetSupportedNightSubModeTypes.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_060, TestSize.Level0)
+{
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(input, nullptr);
+ 
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+ 
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
+    ASSERT_NE(photo, nullptr);
+ 
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    std::vector<NightSubMode> res = session->GetSupportedNightSubModeTypes();
+    EXPECT_EQ(res.size(), 0);
+}
+ 
+/*
+ * Feature: Framework
+ * Function: Test AreVectorsEqual.
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test AreVectorsEqual.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_061, TestSize.Level0)
+{
+    std::vector<float> a;
+    std::vector<float> b;
+    bool ret = CalculationHelper::AreVectorsEqual(a, b);
+    EXPECT_EQ(ret, true);
 }
 }
 }

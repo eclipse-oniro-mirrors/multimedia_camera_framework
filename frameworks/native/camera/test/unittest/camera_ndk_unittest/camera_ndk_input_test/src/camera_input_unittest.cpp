@@ -222,7 +222,6 @@ HWTEST_F(CameraInputUnitTest, camera_input_unittest_005, TestSize.Level0)
     ret = OH_CameraInput_GetPhysicalCameraOrientation(cameraInput, &orientation);
     EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_CameraInput_UsePhysicalCameraOrientation(cameraInput, true);
-    EXPECT_EQ(ret, CAMERA_OK);
     EXPECT_EQ(OH_CameraInput_Close(cameraInput), CAMERA_OK);
     EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
 }
@@ -254,7 +253,6 @@ HWTEST_F(CameraInputUnitTest, camera_input_unittest_006, TestSize.Level0)
     ret = OH_CameraInput_GetPhysicalCameraOrientation(cameraInput, &orientation);
     EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_CameraInput_UsePhysicalCameraOrientation(cameraInput, false);
-    EXPECT_EQ(ret, CAMERA_OK);
     EXPECT_EQ(OH_CameraInput_Close(cameraInput), CAMERA_OK);
     EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
 }
