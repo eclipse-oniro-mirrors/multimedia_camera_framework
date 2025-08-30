@@ -13,11 +13,11 @@
  * limitations under the License.
  */
 
+#include "task_manager.h"
+
 #include <tuple>
 
-#include "task_manager.h"
-#include "dp_log.h"
-
+#include "camera_log.h"
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
@@ -29,28 +29,28 @@ TaskManager::TaskManager(const std::string& name, uint32_t  numThreads, bool ser
       taskRegistry_(nullptr),
       delayedTaskHandle_(INVALID_TASK_GROUP_HANDLE)
 {
-    DP_INFO_LOG("name: %s, maxThreads: %{public}d.", name.c_str(), numThreads);
+    MEDIA_INFO_LOG("name: %s, maxThreads: %{public}d.", name.c_str(), numThreads);
     Initialize();
 }
 
 void TaskManager::Initialize()
 {
-    CAMERA_DP_SYNC_TRACE;
-    DP_INFO_LOG("entered.");
+    CAMERA_SYNC_TRACE;
+    MEDIA_INFO_LOG("entered.");
     pool_ = ThreadPool::Create(name_, numThreads_);
     taskRegistry_ = std::make_unique<TaskRegistry>(name_, pool_.get());
     std::weak_ptr defaultTaskHandle = defaultTaskHandle_;
     auto ret = RegisterTaskGroup("defaultTaskGroup",
         [this, defaultTaskHandle](std::any param) {
             auto taskHandle = defaultTaskHandle.lock();
-            DP_CHECK_RETURN(!taskHandle);
+            CHECK_RETURN(!taskHandle);
             if (param.has_value()) {
                 DoDefaultWorks(std::move(param));
             } else {
-                DP_ERR_LOG("register default task group: failed, param has no value");
+                MEDIA_ERR_LOG("register default task group: failed, param has no value");
             }
         }, serial_, false, *defaultTaskHandle_);
-    DP_INFO_LOG("register default task group: %{public}d, handle: %{public}d", ret,
+    MEDIA_INFO_LOG("register default task group: %{public}d, handle: %{public}d", ret,
         static_cast<int>(*defaultTaskHandle_));
     (void)(ret);
     return;
@@ -58,8 +58,8 @@ void TaskManager::Initialize()
 
 TaskManager::~TaskManager()
 {
-    CAMERA_DP_SYNC_TRACE;
-    DP_INFO_LOG("TaskManager name: %{public}s.", name_.c_str());
+    CAMERA_SYNC_TRACE;
+    MEDIA_INFO_LOG("TaskManager name: %{public}s.", name_.c_str());
     DeregisterTaskGroup("defaultTaskGroup", *defaultTaskHandle_);
     *defaultTaskHandle_ = INVALID_TASK_GROUP_HANDLE;
     if (delayedTaskHandle_ != INVALID_TASK_GROUP_HANDLE) {
@@ -79,11 +79,12 @@ void TaskManager::CreateDelayedTaskGroupIfNeed()
         RegisterTaskGroup("delayedTaskGroup",
             [this, defaultTaskHandle](std::any param) {
                 auto taskHandle = defaultTaskHandle.lock();
-                DP_CHECK_RETURN(!taskHandle);
+                CHECK_RETURN(!taskHandle);
                 if (param.has_value()) {
                     DoDefaultWorks(std::move(param));
                 } else {
-                    DP_ERR_LOG("CreateDelayedTaskGroupIfNeed register default task group: failed, param has no value");
+                    MEDIA_ERR_LOG("CreateDelayedTaskGroupIfNeed register default \
+                                   task group: failed, param has no value");
                 }
             }, true, true, delayedTaskHandle_);
     }
@@ -92,12 +93,12 @@ void TaskManager::CreateDelayedTaskGroupIfNeed()
 
 void TaskManager::BeginBackgroundTasks()
 {
-    DP_INFO_LOG("name: %s.", name_.c_str());
+    MEDIA_INFO_LOG("name: %s.", name_.c_str());
 }
 
 void TaskManager::EndBackgroundTasks()
 {
-    DP_INFO_LOG("name: %s.", name_.c_str());
+    MEDIA_INFO_LOG("name: %s.", name_.c_str());
 }
 
 bool TaskManager::RegisterTaskGroup(const std::string& name, TaskFunc func, bool serial, TaskGroupHandle& handle)
@@ -107,13 +108,13 @@ bool TaskManager::RegisterTaskGroup(const std::string& name, TaskFunc func, bool
 
 bool TaskManager::DeregisterTaskGroup(const std::string& name, TaskGroupHandle& handle)
 {
-    CAMERA_DP_SYNC_TRACE;
+    CAMERA_SYNC_TRACE;
     bool ret = false;
     if (taskRegistry_) {
         ret = taskRegistry_->DeregisterTaskGroup(name, handle);
-        DP_INFO_LOG("deregister task group: %s, ret: %{public}d", name.c_str(), ret);
+        MEDIA_INFO_LOG("deregister task group: %s, ret: %{public}d", name.c_str(), ret);
     } else {
-        DP_INFO_LOG("invalid ptr");
+        MEDIA_INFO_LOG("invalid ptr");
     }
     return ret;
 }
@@ -131,9 +132,9 @@ bool TaskManager::SubmitTask(std::function<void()> task, uint32_t delayMilli)
 
 bool TaskManager::SubmitTask(TaskGroupHandle handle, std::any param)
 {
-    DP_INFO_LOG("submit task to handle: %{public}d", static_cast<int>(handle));
+    MEDIA_DEBUG_LOG("submit task to handle: %{public}d", static_cast<int>(handle));
     if (taskRegistry_ == nullptr) {
-        DP_ERR_LOG("invalid ptr");
+        MEDIA_ERR_LOG("invalid ptr");
         return false;
     }
     return taskRegistry_->SubmitTask(handle, std::move(param));
@@ -141,9 +142,9 @@ bool TaskManager::SubmitTask(TaskGroupHandle handle, std::any param)
 
 void TaskManager::CancelAllTasks()
 {
-    DP_INFO_LOG("Cancel all tasks to handle: %{public}d", static_cast<int>(*defaultTaskHandle_));
+    MEDIA_INFO_LOG("Cancel all tasks to handle: %{public}d", static_cast<int>(*defaultTaskHandle_));
     if (taskRegistry_ == nullptr) {
-        DP_ERR_LOG("invalid ptr");
+        MEDIA_ERR_LOG("invalid ptr");
         return;
     }
     taskRegistry_->CancelAllTasks(*defaultTaskHandle_);
@@ -151,7 +152,7 @@ void TaskManager::CancelAllTasks()
 
 bool TaskManager::IsEmpty()
 {
-    DP_INFO_LOG("Get tasks count: %{public}d", static_cast<int>(*defaultTaskHandle_));
+    MEDIA_INFO_LOG("Get tasks count: %{public}d", static_cast<int>(*defaultTaskHandle_));
     if (taskRegistry_ == nullptr) {
         return true;
     }

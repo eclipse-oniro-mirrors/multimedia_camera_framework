@@ -15,14 +15,14 @@
 
 #include "timer/time_broker.h"
 #include "timer/steady_clock.h"
-#include "dp_log.h"
+#include "camera_log.h"
 
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
 std::shared_ptr<TimeBroker> TimeBroker::Create(std::string name)
 {
-    DP_DEBUG_LOG("(%s) created.", name.c_str());
+    MEDIA_DEBUG_LOG("(%s) created.", name.c_str());
     auto timeBroker = std::make_shared<TimeBroker>(std::move(name));
     timeBroker->Initialize();
     return timeBroker;
@@ -31,13 +31,13 @@ std::shared_ptr<TimeBroker> TimeBroker::Create(std::string name)
 TimeBroker::TimeBroker(std::string name)
     : name_(std::move(name)), timer_(nullptr), timerInfos_(), expiringTimers_()
 {
-    DP_DEBUG_LOG("(%s) entered.", name_.c_str());
+    MEDIA_DEBUG_LOG("(%s) entered.", name_.c_str());
 }
 
 TimeBroker::~TimeBroker()
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    DP_DEBUG_LOG("(%s) entered.", name_.c_str());
+    MEDIA_DEBUG_LOG("(%s) entered.", name_.c_str());
     if (timer_) {
         timer_->Stop();
         timer_.reset();
@@ -60,7 +60,8 @@ bool TimeBroker::RegisterCallback(uint32_t delayTimeMs, std::function<void(uint3
     uint32_t& handle)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    DP_DEBUG_LOG("(%s) register callback with delayTimeMs (%{public}d).", name_.c_str(), static_cast<int>(delayTimeMs));
+    MEDIA_DEBUG_LOG("(%s) register callback with delayTimeMs (%{public}d).",
+        name_.c_str(), static_cast<int>(delayTimeMs));
     auto ret = GetNextHandle(handle);
     if (ret) {
         auto timestamp = SteadyClock::GetTimestampMilli() + delayTimeMs;
@@ -78,7 +79,7 @@ void TimeBroker::DeregisterCallback(uint32_t handle)
 {
     std::lock_guard<std::mutex> lock(mutex_);
     if (handle == 0) {
-        DP_DEBUG_LOG("(%s) invalid handle (%{public}d).", name_.c_str(), static_cast<int>(handle));
+        MEDIA_DEBUG_LOG("(%s) invalid handle (%{public}d).", name_.c_str(), static_cast<int>(handle));
         return;
     }
     timerInfos_.erase(handle);
@@ -91,7 +92,7 @@ std::function<void(uint32_t handle)> TimeBroker::GetExpiredFunc(uint32_t handle)
         return timerInfos_[handle]->timerCallback;
     }
     return [](uint32_t handle) {
-        DP_ERR_LOG("GetExpiredFunc invalid ExpiredFunc (%{public}d).", static_cast<int>(handle));
+        MEDIA_ERR_LOG("GetExpiredFunc invalid ExpiredFunc (%{public}d).", static_cast<int>(handle));
     };
 }
 
@@ -121,9 +122,9 @@ void TimeBroker::TimerExpired()
     std::vector<std::shared_ptr<TimerInfo>> timerInfos;
     {
         std::lock_guard<std::mutex> lock(mutex_);
-        DP_DEBUG_LOG("(%s) TimerExpired.", name_.c_str());
+        MEDIA_DEBUG_LOG("(%s) TimerExpired.", name_.c_str());
         if (timeline_.empty()) {
-            DP_DEBUG_LOG("(%s) unexpected TimerExpired", name_.c_str());
+            MEDIA_DEBUG_LOG("(%s) unexpected TimerExpired", name_.c_str());
             return;
         }
         auto timestamp = timeline_.top();
@@ -138,7 +139,7 @@ void TimeBroker::TimerExpired()
         expiringTimers_.erase(timestamp);
         auto ret = RestartTimer(timestamp);
         if (!ret) {
-            DP_DEBUG_LOG("(%s) RestartTimer failed (%{public}d)", name_.c_str(), ret);
+            MEDIA_DEBUG_LOG("(%s) RestartTimer failed (%{public}d)", name_.c_str(), ret);
         }
     }
     for (auto &timerInfo : timerInfos) {
@@ -149,11 +150,11 @@ void TimeBroker::TimerExpired()
 bool TimeBroker::RestartTimer(bool force)
 {
     if (timeline_.empty() || (timer_->IsActive() && force == false)) {
-        DP_DEBUG_LOG("(%s) RestartTimer unnecessary.", name_.c_str());
+        MEDIA_DEBUG_LOG("(%s) RestartTimer unnecessary.", name_.c_str());
         return true;
     }
     auto timestamp = timeline_.top();
-    DP_DEBUG_LOG("(%s) restart timer, expiring timestamp: %{public}d", name_.c_str(), static_cast<int>(timestamp));
+    MEDIA_DEBUG_LOG("(%s) restart timer, expiring timestamp: %{public}d", name_.c_str(), static_cast<int>(timestamp));
     return timer_->StartAt(timestamp);
 }
 } //namespace DeferredProcessing

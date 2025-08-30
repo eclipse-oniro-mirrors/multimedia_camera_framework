@@ -24,12 +24,6 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-Watchdog& GetGlobalWatchdog()
-{
-    static Watchdog instance("DPSGlobalWatchdog");
-    return instance;
-}
-
 std::string GetClientBundle(int uid)
 {
     std::string bundleName = "";

@@ -16,17 +16,11 @@
 #ifndef OHOS_DEFERRED_PROCESSING_SERVICE_TIMER_CORE_H
 #define OHOS_DEFERRED_PROCESSING_SERVICE_TIMER_CORE_H
 
-#include <atomic>
-#include <condition_variable>
-#include <chrono>
-#include <cstdint>
 #include <map>
-#include <memory>
-#include <mutex>
 #include <queue>
 #include <thread>
-#include <vector>
 #include "timer/camera_deferred_timer.h"
+
 
 namespace OHOS {
 namespace CameraStandard {

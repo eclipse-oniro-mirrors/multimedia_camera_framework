@@ -13,32 +13,31 @@
  * limitations under the License.
  */
 
-#ifndef OHOS_CAMERA_DPS_COMMAND_SERVER_IMPL_H
-#define OHOS_CAMERA_DPS_COMMAND_SERVER_IMPL_H
+#ifndef OHOS_DEFERRED_PROCESSING_SERVICE_DELAYED_TASK_GROUP_H
+#define OHOS_DEFERRED_PROCESSING_SERVICE_DELAYED_TASK_GROUP_H
 
-#include "command.h"
-#include "include/task_manager/thread_pool.h"
+#include "base_task_group.h"
+#include "timer/time_broker.h"
 
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-class CommandServerImpl : public std::enable_shared_from_this<CommandServerImpl> {
+class DelayedTaskGroup : public BaseTaskGroup {
 public:
-    explicit CommandServerImpl(const std::string& cmdServerName);
-    ~CommandServerImpl();
+    DelayedTaskGroup(const std::string& name, TaskFunc func, const ThreadPool* threadPool);
+    ~DelayedTaskGroup() override;
+    bool SubmitTask(std::any param) override;
 
-    int32_t AddCommand(const CmdSharedPtr& cmd);
-    int32_t AddUrgentCommand(const CmdSharedPtr& cmd);
-
-    void SetThreadPriority(int priority);
-    int32_t GetThreadPriority() const;
+protected:
+    void Initialize() override;
+    void TimerExpired(uint32_t handle);
 
 private:
-    std::string commandServerName_;
-    std::mutex mutexMsg_;
-    std::unique_ptr<ThreadPool> threadPool_;
+    std::mutex mutex_;
+    std::shared_ptr<TimeBroker> timeBroker_;
+    std::map<uint32_t, std::any> paramMap_;
 };
-} // namespace DeferredProcessing
+} //namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS
-#endif // OHOS_CAMERA_DPS_COMMAND_SERVER_IMPL_H
+#endif // OHOS_DEFERRED_PROCESSING_SERVICE_DELAYED_TASK_GROUP_H

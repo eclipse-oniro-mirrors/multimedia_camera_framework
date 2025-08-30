@@ -16,10 +16,8 @@
 #ifndef OHOS_CAMERA_DPS_UTILS_H
 #define OHOS_CAMERA_DPS_UTILS_H
 
-#include <unistd.h>
-
-#include "watch_dog.h"
 #include "camera_hdi_const.h"
+#include "dp_log.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -155,7 +153,6 @@ inline bool StrToI64(const std::string &str, int64_t &value)
     return isOK && (tmp >= INT64_MIN && tmp <= INT64_MAX);
 }
 
-Watchdog& GetGlobalWatchdog();
 struct DpsCallerInfo {
     int32_t pid;
     int32_t uid;

@@ -16,16 +16,9 @@
 #ifndef OHOS_DEFERRED_PROCESSING_SERVICE_THREAD_POOL_H
 #define OHOS_DEFERRED_PROCESSING_SERVICE_THREAD_POOL_H
 
-#include <pthread.h>
-#include <atomic>
-#include <condition_variable>
-#include <cstdint>
+#include <deque>
 #include <functional>
-#include <mutex>
-#include <queue>
-#include <string>
 #include <thread>
-#include <vector>
 
 namespace OHOS {
 namespace CameraStandard {

@@ -16,12 +16,6 @@
 #ifndef OHOS_DEFERRED_PROCESSING_SERVICE_BASE_TASK_GROUP_H
 #define OHOS_DEFERRED_PROCESSING_SERVICE_BASE_TASK_GROUP_H
 
-#include <any>
-#include <atomic>
-#include <cstdint>
-#include <functional>
-#include <memory>
-#include <mutex>
 #include "itask_group.h"
 #include "blocking_queue.h"
 #include "thread_pool.h"

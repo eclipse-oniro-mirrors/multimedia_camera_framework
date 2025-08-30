@@ -20,10 +20,10 @@
 #include "hstream_capture.h"
 #include "task_manager.h"
 #include "picture_assembler.h"
-#include "dp_utils.h"
 #include "camera_server_photo_proxy.h"
 #include "picture_proxy.h"
 #include "camera_report_dfx_uitls.h"
+#include "watch_dog.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -141,7 +141,7 @@ void PhotoAssetBufferConsumer::StartWaitAuxiliaryTask(
                 "PhotoAssetBufferConsumer StartWaitAuxiliaryTask GetGlobalWatchdog StartMonitor, captureId=%{public}d",
                 captureId);
             auto thisPtr = wptr<PhotoAssetBufferConsumer>(this);
-            DeferredProcessing::GetGlobalWatchdog().StartMonitor(
+            DeferredProcessing::Watchdog::GetGlobalWatchdog().StartMonitor(
                 pictureHandle, delayMilli, [thisPtr, captureId, timestamp](uint32_t handle) {
                     MEDIA_INFO_LOG(
                         "PhotoAssetBufferConsumer PhotoAssetBufferConsumer-Watchdog executed, handle: %{public}d, "

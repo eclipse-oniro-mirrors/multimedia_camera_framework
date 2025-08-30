@@ -13,12 +13,11 @@
  * limitations under the License.
  */
 
-#include <securec.h>
-#include <algorithm>
+
 #include "timer/core/timer_core.h"
 #include "thread_utils.h"
 #include "timer/steady_clock.h"
-#include "dp_log.h"
+#include "camera_log.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -35,12 +34,12 @@ TimerCore& TimerCore::GetInstance()
 
 TimerCore::TimerCore()
 {
-    DP_DEBUG_LOG("entered.");
+    MEDIA_DEBUG_LOG("entered.");
 }
 
 TimerCore::~TimerCore()
 {
-    DP_DEBUG_LOG("entered.");
+    MEDIA_DEBUG_LOG("entered.");
     {
         std::unique_lock<std::mutex> lock(mutex_);
         registeredTimers_.clear();
@@ -50,12 +49,12 @@ TimerCore::~TimerCore()
     if (worker_.joinable()) {
         worker_.join();
     }
-    DP_DEBUG_LOG("exited.");
+    MEDIA_DEBUG_LOG("exited.");
 }
 
 bool TimerCore::Initialize()
 {
-    DP_DEBUG_LOG("entered.");
+    MEDIA_DEBUG_LOG("entered.");
     std::unique_lock<std::mutex> lock(mutex_);
     if (!active_) {
         active_ = true;
@@ -73,7 +72,7 @@ bool TimerCore::RegisterTimer(uint64_t timestampMs, const std::shared_ptr<Timer>
         return false;
     }
     if (timer == nullptr) {
-        DP_DEBUG_LOG("failed due to nullptr.");
+        MEDIA_DEBUG_LOG("failed due to nullptr.");
         return false;
     }
     std::unique_lock<std::mutex> lock(mutex_);
@@ -85,7 +84,7 @@ bool TimerCore::RegisterTimer(uint64_t timestampMs, const std::shared_ptr<Timer>
         }
     }
     registeredTimers_[timestampMs].push_back(timer);
-    DP_DEBUG_LOG("register timer (%s), timestamp: %{public}d, timeline.top: %{public}d", timer->GetName().c_str(),
+    MEDIA_DEBUG_LOG("register timer (%s), timestamp: %{public}d, timeline.top: %{public}d", timer->GetName().c_str(),
         static_cast<int>(timestampMs), static_cast<int>(timeline_.top()));
     return true;
 }
@@ -96,10 +95,10 @@ bool TimerCore::DeregisterTimer(uint64_t timestampMs, const std::shared_ptr<Time
         return true;
     }
     if (timer == nullptr) {
-        DP_ERR_LOG("failed due to nullptr.");
+        MEDIA_ERR_LOG("failed due to nullptr.");
         return false;
     }
-    DP_DEBUG_LOG("(%s, %{public}d) entered.", timer->GetName().c_str(), static_cast<int>(timestampMs));
+    MEDIA_DEBUG_LOG("(%s, %{public}d) entered.", timer->GetName().c_str(), static_cast<int>(timestampMs));
     std::unique_lock<std::mutex> lock(mutex_);
     if (registeredTimers_.count(timestampMs)) {
         auto& timers = registeredTimers_[timestampMs];
@@ -114,7 +113,7 @@ bool TimerCore::DeregisterTimer(uint64_t timestampMs, const std::shared_ptr<Time
 
 void TimerCore::TimerLoop(const std::string& threadName)
 {
-    DP_DEBUG_LOG("(%s) entered.", threadName.c_str());
+    MEDIA_DEBUG_LOG("(%s) entered.", threadName.c_str());
     while (active_.load()) {
         {
             std::unique_lock<std::mutex> lock(mutex_);
@@ -129,7 +128,7 @@ void TimerCore::TimerLoop(const std::string& threadName)
         }
         DoTimeout();
     }
-    DP_DEBUG_LOG("(%s) exited.", threadName.c_str());
+    MEDIA_DEBUG_LOG("(%s) exited.", threadName.c_str());
 }
 
 std::chrono::milliseconds TimerCore::GetNextExpirationTimeUnlocked()
@@ -138,7 +137,7 @@ std::chrono::milliseconds TimerCore::GetNextExpirationTimeUnlocked()
     if (!timeline_.empty()) {
         expirationTime = SteadyClock::GetRemainingTimeMs(timeline_.top());
     }
-    DP_DEBUG_LOG("expiration time: %lld.", expirationTime.count());
+    MEDIA_DEBUG_LOG("expiration time: %lld.", expirationTime.count());
     return expirationTime;
 }
 
@@ -148,16 +147,16 @@ void TimerCore::DoTimeout()
     {
         std::unique_lock<std::mutex> lock(mutex_);
         if (timeline_.empty()) {
-            DP_DEBUG_LOG("no register timer.");
+            MEDIA_DEBUG_LOG("no register timer.");
             return;
         }
         auto timestamp = timeline_.top();
         timeline_.pop();
         if (registeredTimers_.count(timestamp) == 0) {
-            DP_DEBUG_LOG("timer for timestamp %{public}d hasn't been registered.", static_cast<int>(timestamp));
+            MEDIA_DEBUG_LOG("timer for timestamp %{public}d hasn't been registered.", static_cast<int>(timestamp));
             return;
         }
-        DP_DEBUG_LOG("expired timestamp: %{public}d", static_cast<int>(timestamp));
+        MEDIA_DEBUG_LOG("expired timestamp: %{public}d", static_cast<int>(timestamp));
         timers = std::move(registeredTimers_[timestamp]);
         registeredTimers_.erase(timestamp);
     }

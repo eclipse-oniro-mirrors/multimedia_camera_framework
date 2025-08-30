@@ -14,7 +14,7 @@
  */
 
 #include "timer/steady_clock.h"
-#include "dp_log.h"
+#include "camera_log.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -39,7 +39,7 @@ uint64_t SteadyClock::GetElapsedTimeMs(uint64_t startMs)
     if (currTime > startMs) {
         diff = currTime - startMs;
     } else {
-        DP_ERR_LOG("invalid parameter, startMs: %{public}d, currTime: %{public}d", static_cast<int>(startMs),
+        MEDIA_ERR_LOG("invalid parameter, startMs: %{public}d, currTime: %{public}d", static_cast<int>(startMs),
             static_cast<int>(currTime));
     }
     return diff;
@@ -49,26 +49,26 @@ std::chrono::milliseconds SteadyClock::GetRemainingTimeMs(uint64_t expirationTim
 {
     auto currTime = SteadyClock::GetTimestampMilli();
     uint64_t remainingTimeMs = (expirationTimeMs > currTime) ? (expirationTimeMs - currTime) : 0;
-    DP_DEBUG_LOG("expirationTimeMs: %{public}d, currTime: %{public}d, remainingTime: %{public}d",
+    MEDIA_DEBUG_LOG("expirationTimeMs: %{public}d, currTime: %{public}d, remainingTime: %{public}d",
         static_cast<int>(expirationTimeMs), static_cast<int>(currTime), static_cast<int>(remainingTimeMs));
     return std::chrono::milliseconds(remainingTimeMs);
 }
 
 SteadyClock::SteadyClock() : start_(std::chrono::steady_clock::now())
 {
-    DP_DEBUG_LOG("entered.");
+    MEDIA_DEBUG_LOG("entered.");
 }
 
 void SteadyClock::Reset()
 {
-    DP_DEBUG_LOG("entered.");
+    MEDIA_DEBUG_LOG("entered.");
     start_ = std::chrono::steady_clock::now();
     return;
 }
 
 uint64_t SteadyClock::GetElapsedTimeMs()
 {
-    DP_DEBUG_LOG("entered.");
+    MEDIA_DEBUG_LOG("entered.");
     constexpr int timescale = 1000;
     auto end = std::chrono::steady_clock::now();
     return static_cast<uint64_t>(std::chrono::duration<double>(end - start_).count() * timescale);
