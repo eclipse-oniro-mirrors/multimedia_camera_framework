@@ -1083,6 +1083,12 @@ void HCameraDevice::UpdateCameraRotateAngle()
     int32_t displayMode = static_cast<int32_t>(OHOS::Rosen::DisplayManager::GetInstance().GetFoldDisplayMode());
     CHECK_RETURN(!isFoldable || deviceAbility_ == nullptr || displayMode == lastDisplayMode_);
     lastDisplayMode_ = displayMode;
+    if (system::GetParameter("const.system.sensor_correction_enable", "0") != "1") {
+        MEDIA_DEBUG_LOG("HCameraDevice::UpdateCameraRotateAngle variable orientation is closed");
+        std::vector<int32_t> emptyVec;
+        UpdateCameraRotateAngleAndZoom(emptyVec,
+            displayMode == static_cast<int32_t>(OHOS::Rosen::FoldDisplayMode::GLOBAL_FULL));
+    }
     int cameraOrientation = GetOriginalCameraOrientation();
     CHECK_RETURN(cameraOrientation == -1);
     int32_t truthCameraOrientation = -1;
