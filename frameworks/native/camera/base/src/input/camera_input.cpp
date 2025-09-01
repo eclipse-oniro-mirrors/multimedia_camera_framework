@@ -19,6 +19,7 @@
 #include <cstdint>
 #include <mutex>
 #include <securec.h>
+#include <parameters.h>
 #include "camera_device.h"
 #include "camera_device_ability_items.h"
 #include "camera_log.h"
@@ -145,6 +146,8 @@ void CameraInput::InitCameraInput()
     CHECK_EXECUTE(retCode == CAM_META_SUCCESS && item.count,
         staticOrientation_ = static_cast<uint32_t>(item.data.i32[0]));
 
+    CHECK_RETURN_DLOG(system::GetParameter("const.system.sensor_correction_enable", "0") != "1",
+        "CameraInput::InitCameraInput variable orientation is closed");
     retCode = OHOS::Camera::FindCameraMetadataItem(metaData->get(), OHOS_ABILITY_SENSOR_ORIENTATION_VARIABLE, &item);
     CHECK_EXECUTE(retCode == CAM_META_SUCCESS, isVariable_ = item.count > 0 && item.data.u8[0]);
 
