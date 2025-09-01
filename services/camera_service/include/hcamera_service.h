@@ -57,6 +57,7 @@
 #include "ideferred_photo_processing_session_callback.h"
 #include "ideferred_photo_processing_session.h"
 #include "input/i_standard_camera_listener.h"
+#include "suspend_state_observer.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -189,8 +190,12 @@ public:
     void OnFlashlightStatus(const string& cameraId, FlashStatus status) override;
     void OnTorchStatus(TorchStatus status) override;
     // for resource proxy
-    int32_t ProxyForFreeze(const std::set<int32_t>& pidList, bool isProxy) override;
-    int32_t ResetAllFreezeStatus() override;
+    [[deprecated]] int32_t ProxyForFreeze(const std::set<int32_t>& pidList, bool isProxy) override;
+    [[deprecated]] int32_t ResetAllFreezeStatus() override;
+    void InsertFrozenPidList(const std::vector<int32_t>& pidList);
+    void EraseActivePidList(const std::vector<int32_t>& pidList);
+    void ExecuteDelayCallbackTask(const std::vector<int32_t>& pidList);
+
     int32_t GetDmDeviceInfo(std::vector<std::string> &deviceInfos) override;
     int32_t GetCameraOutputStatus(int32_t pid, int32_t &status) override;
     bool ShouldSkipStatusUpdates(pid_t pid);
@@ -215,6 +220,10 @@ protected:
     void OnRemoveSystemAbility(int32_t systemAbilityId, const std::string& deviceId) override;
 
 private:
+    void RegisterSuspendObserver();
+    void UnregisterSuspendObserver();
+    void ClearFreezedPidList();
+
     int32_t GetMuteModeFromDataShareHelper(bool &muteMode);
     bool SetMuteModeFromDataShareHelper();
     void OnReceiveEvent(const EventFwk::CommonEventData &data);
@@ -274,6 +283,7 @@ private:
         wptr<HCameraService> cameraService_;
     };
 
+    void ReportRssCameraStatus(const std::string& cameraId, int32_t status, const std::string& bundleName);
     void FillCameras(vector<shared_ptr<CameraMetaInfo>>& cameraInfos,
         vector<string>& cameraIds, vector<shared_ptr<OHOS::Camera::CameraMetadata>>& cameraAbilityList);
     shared_ptr<CameraMetaInfo>GetCameraMetaInfo(std::string &cameraId,
@@ -370,6 +380,9 @@ private:
     std::set<int32_t> freezedPidList_;
     std::map<uint32_t, std::map<string, std::function<void()>>> delayCbtaskMap_;
     std::map<uint32_t, std::function<void()>> delayFoldStatusCbTaskMap;
+
+    std::mutex observerMutex_;
+    sptr<SuspendStateObserver> suspendStateObserver_ {nullptr};
 };
 } // namespace CameraStandard
 } // namespace OHOS

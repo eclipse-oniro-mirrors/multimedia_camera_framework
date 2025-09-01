@@ -27,6 +27,7 @@ ohos_unittest("camera_framework_native_unittest") {
     "./session/include",
     "./ability/include",
     "${multimedia_camera_framework_path}/services/camera_service/include",
+    "${multimedia_camera_framework_path}/services/camera_service/include/rss",
     "${multimedia_camera_framework_path}/dynamic_libs/moving_photo/include/avcodec",
     "${multimedia_camera_framework_path}/dynamic_libs/moving_photo/include/common",
     "${multimedia_camera_framework_path}/services/camera_service/include/dfx",

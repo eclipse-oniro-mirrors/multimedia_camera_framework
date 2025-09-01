@@ -35,6 +35,7 @@ ohos_unittest("camera_service_unittest") {
     "${multimedia_camera_framework_path}/services/camera_service/include/media_library",
     "${multimedia_camera_framework_path}/services/camera_service/include/param_update",
     "${multimedia_camera_framework_path}/services/camera_service/include/dfx",
+    "${multimedia_camera_framework_path}/services/camera_service/include/rss",
     "${multimedia_camera_framework_path}/services/camera_service/include/smooth_zoom",
     "${multimedia_camera_framework_path}/services/camera_service/binder/base/include",
     "${multimedia_camera_framework_path}/services/camera_service/binder/client/include",

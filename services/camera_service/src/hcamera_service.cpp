@@ -66,6 +66,7 @@
 #include "camera_xcollie.h"
 #include "res_type.h"
 #include "res_sched_client.h"
+#include "suspend_manager_base_client.h"
 #ifdef HOOK_CAMERA_OPERATOR
 #include "camera_rotate_plugin.h"
 #endif
@@ -153,6 +154,7 @@ void HCameraService::OnStart()
 #ifdef NOTIFICATION_ENABLE
     AddSystemAbilityListener(COMMON_EVENT_SERVICE_ID);
 #endif
+    AddSystemAbilityListener(RES_SCHED_SYS_ABILITY_ID);
     if (Publish(this)) {
         MEDIA_INFO_LOG("HCameraService publish OnStart sucess");
     } else {
@@ -161,6 +163,27 @@ void HCameraService::OnStart()
     CameraRoateParamManager::GetInstance().InitParam(); // 先初始化再监听
     CameraRoateParamManager::GetInstance().SubscriberEvent();
     MEDIA_INFO_LOG("HCameraService OnStart end");
+}
+
+void HCameraService::RegisterSuspendObserver()
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_INFO_LOG("HCameraService::RegisterSuspendObserver");
+    std::lock_guard<std::mutex> lock(observerMutex_);
+    if (suspendStateObserver_ == nullptr) {
+        suspendStateObserver_ = sptr<SuspendStateObserver>::MakeSptr(this);
+    }
+    CHECK_RETURN_ELOG(suspendStateObserver_ == nullptr, "suspendStateObserver is null");
+    ResourceSchedule::SuspendManagerBaseClient::GetInstance().RegisterSuspendObserver(suspendStateObserver_);
+}
+
+void HCameraService::UnregisterSuspendObserver()
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_INFO_LOG("HCameraService::UnregisterSuspendObserver");
+    std::lock_guard<std::mutex> lock(observerMutex_);
+    ResourceSchedule::SuspendManagerBaseClient::GetInstance().UnregisterSuspendObserver(suspendStateObserver_);
+    suspendStateObserver_ = nullptr;
 }
 
 void HCameraService::OnDump()
@@ -469,7 +492,10 @@ void HCameraService::OnAddSystemAbility(int32_t systemAbilityId, const std::stri
             CameraCommonEventManager::GetInstance()->SubscribeCommonEvent(COMMON_EVENT_RSS_MULTI_WINDOW_TYPE,
                 std::bind(&HCameraService::OnReceiveEvent, this, std::placeholders::_1));
             break;
-
+        case RES_SCHED_SYS_ABILITY_ID:
+            MEDIA_INFO_LOG("OnAddSystemAbility RES_SCHED_SYS_ABILITY_ID");
+            RegisterSuspendObserver();
+            break;
         default:
             MEDIA_INFO_LOG("OnAddSystemAbility unhandled sysabilityId:%{public}d", systemAbilityId);
             break;
@@ -483,6 +509,11 @@ void HCameraService::OnRemoveSystemAbility(int32_t systemAbilityId, const std::s
     switch (systemAbilityId) {
         case DISTRIBUTED_KV_DATA_SERVICE_ABILITY_ID:
             CameraCommonEventManager::GetInstance()->UnSubscribeCommonEvent(COMMON_EVENT_DATA_SHARE_READY);
+            break;
+        case RES_SCHED_SYS_ABILITY_ID:
+            MEDIA_INFO_LOG("OnRemoveSystemAbility RES_SCHED_SYS_ABILITY_ID");
+            ClearFreezedPidList();
+            UnregisterSuspendObserver();
             break;
         default:
             break;
@@ -1072,6 +1103,20 @@ void HCameraService::OnCameraStatus(const string& cameraId, CameraStatus status,
         CAMERA_SYSEVENT_BEHAVIOR(
             CreateMsg("OnCameraStatusChanged! for cameraId:%s, current Camera Status:%d", cameraId.c_str(), status));
     }
+    ReportRssCameraStatus(cameraId, status, bundleName);
+}
+
+void HCameraService::ReportRssCameraStatus(const std::string& cameraId, int32_t status, const std::string& bundleName)
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_INFO_LOG("HCameraService::ReportRssCameraStatus cameraId = %{public}s, status = %{public}d, "
+        "bundleName = %{public}s", cameraId.c_str(), status, bundleName.c_str());
+    using namespace OHOS::ResourceSchedule;
+    std::unordered_map<std::string, std::string> mapPayload;
+    mapPayload["camId"] = cameraId;
+    mapPayload["cameraStatus"] = std::to_string(status);
+    mapPayload["bundleName"] = bundleName;
+    ResSchedClient::GetInstance().ReportData(ResType::RES_TYPE_CAMERA_STATUS_CHANGED, 0, mapPayload);
 }
 
 void HCameraService::OnFlashlightStatus(const string& cameraId, FlashStatus status)
@@ -2612,54 +2657,26 @@ int32_t HCameraService::UpdateSkinToneSetting(std::shared_ptr<OHOS::Camera::Came
 
 std::string g_toString(std::set<int32_t>& pidList)
 {
-    std::string ret = "[";
-    for (const auto& pid : pidList) {
-        ret += std::to_string(pid) + ",";
+    std::ostringstream oss;
+    oss << '[';
+    for (auto it = pidList.begin(); it != pidList.end(); ++it) {
+        CHECK_EXECUTE(it != pidList.begin(), oss << ',');
+        oss << *it;
     }
-    ret += "]";
-    return ret;
+    oss << ']';
+    return oss.str();
 }
 
 int32_t HCameraService::ProxyForFreeze(const std::set<int32_t>& pidList, bool isProxy)
 {
-    constexpr int32_t maxSaUid = 10000;
-    CHECK_RETURN_RET_ELOG(IPCSkeleton::GetCallingUid() >= maxSaUid, CAMERA_OPERATION_NOT_ALLOWED, "not allow");
-    {
-        std::lock_guard<std::mutex> lock(freezedPidListMutex_);
-        if (isProxy) {
-            freezedPidList_.insert(pidList.begin(), pidList.end());
-            MEDIA_DEBUG_LOG("after freeze freezedPidList_:%{public}s", g_toString(freezedPidList_).c_str());
-            return CAMERA_OK;
-        } else {
-            for (auto pid : pidList) {
-                freezedPidList_.erase(pid);
-            }
-            MEDIA_DEBUG_LOG("after unfreeze freezedPidList_:%{public}s", g_toString(freezedPidList_).c_str());
-        }
-    }
-
-    {
-        std::lock_guard<std::mutex> lock(cameraCbMutex_);
-        std::for_each(pidList.begin(), pidList.end(), [this](auto pid) {
-            auto pidIt = delayCbtaskMap_.find(pid);
-            CHECK_RETURN(pidIt == delayCbtaskMap_.end());
-            for (const auto &[cameraId, taskCallback] : pidIt->second) {
-                CHECK_EXECUTE(taskCallback, taskCallback());
-            }
-            delayCbtaskMap_.erase(pidIt);
-        });
-    }
-    return CAMERA_OK;
+    MEDIA_ERR_LOG("HCameraService::ProxyForFreeze is Deprecated");
+    return CAMERA_OPERATION_NOT_ALLOWED;
 }
 
 int32_t HCameraService::ResetAllFreezeStatus()
 {
-    constexpr int32_t maxSaUid = 10000;
-    CHECK_RETURN_RET_ELOG(IPCSkeleton::GetCallingUid() >= maxSaUid, CAMERA_OPERATION_NOT_ALLOWED, "not allow");
-    std::lock_guard<std::mutex> lock(freezedPidListMutex_);
-    freezedPidList_.clear();
-    MEDIA_INFO_LOG("freezedPidList_ has been clear");
-    return CAMERA_OK;
+    MEDIA_ERR_LOG("HCameraService::ResetAllFreezeStatus is Deprecated");
+    return CAMERA_OPERATION_NOT_ALLOWED;
 }
 
 int32_t HCameraService::GetDmDeviceInfo(std::vector<std::string> &deviceInfos)
@@ -2793,6 +2810,44 @@ int32_t HCameraService::GetCameraStorageSize(int64_t& size)
     AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(uid, userId);
     cameraHostManager_->GetCameraStorageSize(userId, size);
     return CAMERA_OK;
+}
+
+void HCameraService::ClearFreezedPidList()
+{
+    std::lock_guard<std::mutex> lock(freezedPidListMutex_);
+    freezedPidList_.clear();
+    MEDIA_INFO_LOG("freezedPidList_ has been clear");
+}
+
+void HCameraService::InsertFrozenPidList(const std::vector<int32_t>& pidList)
+{
+    std::lock_guard<std::mutex> lock(freezedPidListMutex_);
+    freezedPidList_.insert(pidList.begin(), pidList.end());
+    MEDIA_DEBUG_LOG("after freeze freezedPidList_:%{public}s", g_toString(freezedPidList_).c_str());
+}
+
+void HCameraService::EraseActivePidList(const std::vector<int32_t>& pidList)
+{
+    std::lock_guard<std::mutex> lock(freezedPidListMutex_);
+    for (auto pid : pidList) {
+        freezedPidList_.erase(pid);
+    }
+    MEDIA_DEBUG_LOG("after unfreeze freezedPidList_:%{public}s", g_toString(freezedPidList_).c_str());
+}
+
+void HCameraService::ExecuteDelayCallbackTask(const std::vector<int32_t>& pidList)
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_DEBUG_LOG("HCameraService::ExecuteDelayCallbackTask is called");
+    std::lock_guard<std::mutex> lock(cameraCbMutex_);
+    std::for_each(pidList.begin(), pidList.end(), [this](auto pid) -> void {
+        auto pidIt = delayCbtaskMap_.find(pid);
+        CHECK_RETURN(pidIt == delayCbtaskMap_.end());
+        for (const auto &[cameraId, taskCallback] : pidIt->second) {
+            CHECK_EXECUTE(taskCallback, taskCallback());
+        }
+        delayCbtaskMap_.erase(pidIt);
+    });
 }
 } // namespace CameraStandard
 } // namespace OHOS
