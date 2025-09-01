@@ -50,6 +50,7 @@ ohos_fuzztest("HCameraHostManagerFuzzTest") {
     "${multimedia_camera_framework_path}/services/camera_service/src",
     "${multimedia_camera_framework_path}/services/camera_service/binder",
     "${multimedia_camera_framework_path}/services/camera_service/include/app_manager_utils",
+    "${multimedia_camera_framework_path}/services/camera_service/include/rss",
     "${multimedia_camera_framework_path}/services/camera_service/include/window_manager_utils",
     "${multimedia_camera_framework_path}/services/camera_service/binder/server/include/window_manager_service_callback_stub",
     "${multimedia_camera_framework_path}/services/camera_service/binder/base/include/window_manager_service_utils",

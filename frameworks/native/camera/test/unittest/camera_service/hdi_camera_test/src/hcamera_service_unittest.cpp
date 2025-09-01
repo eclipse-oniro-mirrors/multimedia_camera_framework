@@ -1457,9 +1457,18 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_040, TestSize.Level1)
 
     std::set<int32_t> pidList = {};
     bool isProxy = false;
-    EXPECT_EQ(cameraService_->ProxyForFreeze(pidList, isProxy), CAMERA_OK);
+    EXPECT_EQ(cameraService_->ProxyForFreeze(pidList, isProxy), CAMERA_OPERATION_NOT_ALLOWED);
+    EXPECT_EQ(cameraService_->ResetAllFreezeStatus(), CAMERA_OPERATION_NOT_ALLOWED);
     device->Release();
     device->Close();
+
+    cameraService_->OnAddSystemAbility(RES_SCHED_SYS_ABILITY_ID, "");
+    auto suspendStateObserver = cameraService_->suspendStateObserver_;
+    ASSERT_NE(suspendStateObserver, nullptr);
+    suspendStateObserver->OnActive(std::vector<int32_t>{0, 1, 2, 3, 4}, 0);
+    suspendStateObserver->OnDoze(std::vector<int32_t>{0, 1, 2, 3, 4}, 0);
+    suspendStateObserver->OnFrozen(std::vector<int32_t>{0, 1, 2, 3, 4}, 0);
+    cameraService_->OnRemoveSystemAbility(RES_SCHED_SYS_ABILITY_ID, "");
 }
 
 /*
