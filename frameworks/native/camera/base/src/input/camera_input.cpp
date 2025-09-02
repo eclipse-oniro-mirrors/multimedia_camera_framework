@@ -701,6 +701,8 @@ void CameraInput::RecoveryOldDevice()
 
 int CameraInput::IsPhysicalCameraOrientationVariable(bool* isVariable)
 {
+    CHECK_RETURN_RET_ELOG(isVariable == nullptr, ServiceToCameraError(CAMERA_INVALID_ARG),
+        "CameraInput::IsPhysicalCameraOrientationVariable isVariable is nullptr");
     *isVariable = isVariable_ && !foldStateSensorOrientationMap_.empty();
     MEDIA_INFO_LOG("CameraInput::IsPhysicalCameraOrientationVariable isVariable: %{public}d", *isVariable);
     return ServiceToCameraError(CAMERA_OK);
@@ -708,6 +710,8 @@ int CameraInput::IsPhysicalCameraOrientationVariable(bool* isVariable)
 
 int CameraInput::GetPhysicalCameraOrientation(uint32_t* orientation)
 {
+    CHECK_RETURN_RET_ELOG(orientation == nullptr, ServiceToCameraError(CAMERA_INVALID_ARG),
+        "CameraInput::GetPhysicalCameraOrientation orientation is nullptr");
     *orientation = staticOrientation_;
     if (isVariable_) {
         uint32_t curFoldStatus;
