@@ -33,15 +33,13 @@ public:
     void SetUp(void);
     /* TearDown:Execute after each test case */
     void TearDown(void);
-
-    void NativeAuthorization(void);
 private:
     void CommitConfig();
     void StartSession();
     void StopSession();
+    void SetFocusPoint(float x, float y);
     void ReleaseSession();
 
-    uint64_t tokenId_ = 0;
     int32_t uid_ = 0;
     int32_t userId_ = 0;
     sptr<CameraManager> cameraManager_ = nullptr;
@@ -53,34 +51,48 @@ class AppMechSessionCallback : public MechSessionCallback {
 public:
     void OnFocusTrackingInfo(FocusTrackingMetaInfo info) override
     {
-        MEDIA_INFO_LOG("CallbackListener::OnFocusTrackingInfo ");
         return;
     }
 
-    void OnCameraAppInfo(const std::vector<CameraAppInfo>& cameraAppInfos) override
+    void OnCaptureSessionConfiged(CaptureSessionInfo captureSessionInfo) override
     {
-        cameraAppInfos_ = cameraAppInfos;
-        for (int i = 0; i < cameraAppInfos.size(); i++) {
-            auto appInfo = cameraAppInfos[i];
-            MEDIA_INFO_LOG("AppMechSessionCallback::OnCameraAppInfo tokenId:%{public}d", appInfo.tokenId);
-            MEDIA_INFO_LOG("AppMechSessionCallback::OnCameraAppInfo cameraId:%{public}s", appInfo.cameraId.c_str());
-            MEDIA_INFO_LOG("AppMechSessionCallback::OnCameraAppInfo opmode:%{public}d", appInfo.opmode);
-            MEDIA_INFO_LOG("AppMechSessionCallback::OnCameraAppInfo zoomValue:%{public}f", appInfo.zoomValue);
-            MEDIA_INFO_LOG("AppMechSessionCallback::OnCameraAppInfo equivalentFocus:%{public}d",
-                appInfo.equivalentFocus);
-            MEDIA_INFO_LOG("AppMechSessionCallback::OnCameraAppInfo width:%{public}d", appInfo.width);
-            MEDIA_INFO_LOG("AppMechSessionCallback::OnCameraAppInfo height:%{public}d", appInfo.height);
-            MEDIA_INFO_LOG("AppMechSessionCallback::OnCameraAppInfo videoStatus:%{public}d", appInfo.videoStatus);
-        }
-        return;
+        captureSessionInfo_ = captureSessionInfo;
     }
 
-    std::vector<CameraAppInfo> GetCameraAppInfos()
+    void OnZoomInfoChange(int sessionid, ZoomInfo zoomInfo) override
     {
-        return cameraAppInfos_;
+        zoomInfo_ = zoomInfo;
+    }
+
+    void OnSessionStatusChange(int sessionid, bool status) override
+    {
+        sessionStatus_ = status;
+    }
+
+    CaptureSessionInfo GetSessionInfo()
+    {
+        return captureSessionInfo_;
+    }
+
+    ZoomInfo GetZoomInfo()
+    {
+        return zoomInfo_;
+    }
+
+    bool GetSessionStatus()
+    {
+        return sessionStatus_;
+    }
+
+    bool GetFocusStatus()
+    {
+        return focusStatus_;
     }
 private:
-    std::vector<CameraAppInfo> cameraAppInfos_;
+    CaptureSessionInfo captureSessionInfo_;
+    ZoomInfo zoomInfo_;
+    bool sessionStatus_ = false;
+    bool focusStatus_ = false;
 };
 }
 }
