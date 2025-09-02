@@ -1955,5 +1955,153 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_030, TestSize.Level0)
     phtOutput->ReportCaptureEnhanceEnabled(str, true, 0);
     EXPECT_NE(photoOutput, nullptr);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test photooutput with IsPhotoQualityPrioritizationSupported
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test photooutput with IsPhotoQualityPrioritizationSupported
+ */
+HWTEST_F(CameraPhotoOutputUnit, IsPhotoQualityPrioritizationSupported_001, TestSize.Level0)
+{
+    MEDIA_INFO_LOG("IsPhotoQualityPrioritizationSupported_001: ENTER");
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->Open();
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(photoOutput), 0);
+
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata =
+        session->GetInputDevice()->GetCameraDeviceInfo()->GetCachedMetadata();
+    ASSERT_NE(metadata, nullptr);
+    int32_t quality[15] = {0, 0, 1, -1, -1, 1, 0, 1, -1, -1, 2, 0, 1, -1, -1};
+    bool status = AddOrUpdateMetadata(metadata, OHOS_ABILITY_PHOTO_QUALITY_PRIORITIZATION, &quality,
+        sizeof(quality) / sizeof(quality[0]));
+    ASSERT_TRUE(status);
+    bool isSupported = false;
+    int32_t ret = phtOutput->IsPhotoQualityPrioritizationSupported(
+        static_cast<PhotoOutput::PhotoQualityPrioritization>(1), isSupported);
+    EXPECT_EQ(ret, 0);
+
+    EXPECT_EQ(session->CommitConfig(), 0);
+    EXPECT_EQ(session->Start(), 0);
+
+    input->Close();
+    session->Stop();
+    session->Release();
+    input->Release();
+    MEDIA_INFO_LOG("IsPhotoQualityPrioritizationSupported_001: END");
+}
+
+/*
+ * Feature: Framework
+ * Function: Test photooutput with IsPhotoQualityPrioritizationSupported
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test photooutput with IsPhotoQualityPrioritizationSupported
+ */
+HWTEST_F(CameraPhotoOutputUnit, IsPhotoQualityPrioritizationSupported_002, TestSize.Level0)
+{
+    MEDIA_INFO_LOG("IsPhotoQualityPrioritizationSupported_002: ENTER");
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->Open();
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(photoOutput), 0);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata =
+        session->GetInputDevice()->GetCameraDeviceInfo()->GetCachedMetadata();
+    ASSERT_NE(metadata, nullptr);
+    int32_t quality[9] = {0, 0, 1, -1, -1, 1, 0, -1, -1};
+    bool status = AddOrUpdateMetadata(metadata, OHOS_ABILITY_PHOTO_QUALITY_PRIORITIZATION, &quality,
+        sizeof(quality) / sizeof(quality[0]));
+    ASSERT_TRUE(status);
+    bool isSupported = false;
+    int32_t ret = phtOutput->IsPhotoQualityPrioritizationSupported(
+        static_cast<PhotoOutput::PhotoQualityPrioritization>(1), isSupported);
+    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+    EXPECT_EQ(session->Start(), 0);
+
+    input->Close();
+    session->Stop();
+    session->Release();
+    input->Release();
+    MEDIA_INFO_LOG("IsPhotoQualityPrioritizationSupported_002: END");
+}
+
+/*
+ * Feature: Framework
+ * Function: Test photooutput with SetPhotoQualityPrioritization
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test photooutput with SetPhotoQualityPrioritization
+ */
+HWTEST_F(CameraPhotoOutputUnit, SetPhotoQualityPrioritization_001, TestSize.Level0)
+{
+    MEDIA_INFO_LOG("SetPhotoQualityPrioritization_001: ENTER");
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->Open();
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(photoOutput), 0);
+
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata =
+        session->GetInputDevice()->GetCameraDeviceInfo()->GetCachedMetadata();
+    ASSERT_NE(metadata, nullptr);
+    int32_t quality[15] = {0, 0, 1, -1, -1, 1, 0, 1, -1, -1, 2, 0, 1, -1, -1};
+    bool status = AddOrUpdateMetadata(metadata, OHOS_ABILITY_PHOTO_QUALITY_PRIORITIZATION, &quality,
+        sizeof(quality) / sizeof(quality[0]));
+    ASSERT_TRUE(status);
+    int ret = phtOutput->SetPhotoQualityPrioritization(static_cast<PhotoOutput::PhotoQualityPrioritization>(1));
+
+    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+    EXPECT_EQ(session->Start(), 0);
+
+    camera_metadata_item_t item;
+    int32_t res = OHOS::Camera::FindCameraMetadataItem(metadata->get(),
+        OHOS_CONTROL_PHOTO_QUALITY_PRIORITIZATION, &item);
+    EXPECT_EQ(res, CAM_META_SUCCESS);
+
+    input->Close();
+    session->Stop();
+    session->Release();
+    input->Release();
+    MEDIA_INFO_LOG("SetPhotoQualityPrioritization_001: END");
+}
 }
 }
