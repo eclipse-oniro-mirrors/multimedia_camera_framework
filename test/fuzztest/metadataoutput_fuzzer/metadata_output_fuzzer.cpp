@@ -116,11 +116,14 @@ void MetadataOutputFuzzer::MetadataOutputFuzzTest1(FuzzedDataProvider& fdp)
     fuzz_->ProcessMetadata(streamId, result, metaObjects, isNeedMirror, isNeedFlip);
     camera_metadata_item_t metadataItem;
     fuzz_->reportFaceResults_ = fdp.ConsumeBool();
-    MetadataCommonUtils::GenerateObjects(metadataItem, type, metaObjects, isNeedMirror, isNeedFlip);
+    MetadataCommonUtils::GenerateObjects(metadataItem, type, metaObjects, isNeedMirror, isNeedFlip,
+        RectBoxType::RECT_CAMERA);
     MetadataCommonUtils::ProcessRectBox(fdp.ConsumeIntegral<int32_t>(), fdp.ConsumeIntegral<int32_t>(),
-        fdp.ConsumeIntegral<int32_t>(), fdp.ConsumeIntegral<int32_t>(), isNeedMirror, isNeedFlip);
+        fdp.ConsumeIntegral<int32_t>(), fdp.ConsumeIntegral<int32_t>(), isNeedMirror, isNeedFlip,
+        RectBoxType::RECT_CAMERA);
     int32_t index = fdp.ConsumeIntegral<int32_t>();
-    MetadataCommonUtils::ProcessExternInfo(factoryPtr, metadataItem, index, type, isNeedMirror, isNeedFlip);
+    MetadataCommonUtils::ProcessExternInfo(factoryPtr, metadataItem, index, type, isNeedMirror, isNeedFlip,
+        RectBoxType::RECT_CAMERA);
     fuzz_->GetSurface();
     fuzz_->surface_ = nullptr;
     fuzz_->ReleaseSurface();

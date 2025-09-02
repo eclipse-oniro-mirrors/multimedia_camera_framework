@@ -52,7 +52,7 @@ enum MetadataObjectType {
     SALIENT_DETECTION = 6,
     BAR_CODE_DETECTION = 7,
     BASE_FACE_DETECTION = 8,
-    HUMAN_HEAD = 9,
+    BASE_TRACKING_REGION = 9,
 };
 
 enum SketchStatus {
@@ -109,14 +109,37 @@ enum PressureStatus {
     SYSTEM_PRESSURE_SHUTDOWN
 };
 
-struct CameraAppInfo {
-    int tokenId;
-    String cameraId;
-    int opmode;
-    float zoomValue;
-    int equivalentFocus;
+enum OutputType {
+    PREVIEW = 0,
+    PHOTO = 1,
+    VIDEO = 2,
+    MOVING_PHOTO = 3,
+};
+
+struct OutputInfo {
+    OutputType type;
+    int minfps;
+    int maxfps;
     int width;
     int height;
-    boolean videoStatus;
+};
+
+struct ZoomInfo {
+    float zoomValue;
+    int equivalentFocus;
+    boolean focusStatus;
+    int focusMode;
+    int videoStabilizationMode;
+};
+
+struct CaptureSessionInfo {
+    int sessionId;
+    int callerTokenId;
+    String cameraId;
     int position;
+    int sessionMode;
+    OutputInfo[] outputInfos;
+    int colorSpace;
+    ZoomInfo zoomInfo;
+    boolean sessionStatus;
 };

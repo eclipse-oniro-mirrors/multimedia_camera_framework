@@ -28,24 +28,12 @@ namespace OHOS {
 namespace CameraStandard {
 constexpr int32_t DEFAULT_ITEMS = 1;
 constexpr int32_t DEFAULT_DATA_LENGTH = 10;
-static const std::unordered_map<MetadataObjectType, uint8_t> g_FwkToHALResultCameraMetaDetect_ = {
-    {MetadataObjectType::FACE, 0},
-    {MetadataObjectType::HUMAN_BODY, 1},
-    {MetadataObjectType::CAT_FACE, 2},
-    {MetadataObjectType::CAT_BODY, 3},
-    {MetadataObjectType::DOG_FACE, 4},
-    {MetadataObjectType::DOG_BODY, 5},
-    {MetadataObjectType::SALIENT_DETECTION, 6},
-    {MetadataObjectType::BAR_CODE_DETECTION, 7},
-    {MetadataObjectType::BASE_FACE_DETECTION, 8},
-    {MetadataObjectType::HUMAN_HEAD, 9}
-};
 
 using namespace OHOS::HDI::Camera::V1_0;
 HStreamMetadata::HStreamMetadata(sptr<OHOS::IBufferProducer> producer,
     int32_t format, std::vector<int32_t> metadataTypes)
     : HStreamCommon(StreamType::METADATA, producer, format, producer->GetDefaultWidth(), producer->GetDefaultHeight()),
-    metadataObjectTypes_(metadataTypes), userId_(0)
+    metadataObjectTypes_(metadataTypes)
 {}
 
 HStreamMetadata::~HStreamMetadata()
@@ -150,21 +138,13 @@ int32_t HStreamMetadata::DisableMetadataType(const std::vector<int32_t>& metadat
     return rc;
 }
 
-int32_t HStreamMetadata::OnMetaResult(int32_t streamId, const std::vector<uint8_t>& result)
+int32_t HStreamMetadata::OnMetaResult(int32_t streamId, std::shared_ptr<OHOS::Camera::CameraMetadata> result)
 {
-    CHECK_ERROR_RETURN_RET_LOG(result.size() == 0, CAMERA_INVALID_ARG, "onResult get null meta from HAL");
-    std::lock_guard<std::mutex> lock(callbackLock_);
-    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult = nullptr;
-    OHOS::Camera::MetadataUtils::ConvertVecToMetadata(result, cameraResult);
-    if (cameraResult == nullptr) {
-        cameraResult = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
+    if (result == nullptr) {
+        result = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
     }
     CHECK_EXECUTE(streamMetadataCallback_ != nullptr,
-        streamMetadataCallback_->OnMetadataResult(streamId, cameraResult));
-    {
-        std::lock_guard<std::mutex> mechLock(mechCallbackLock_);
-        CHECK_EXECUTE(mechCallback_ != nullptr, mechCallback_(streamId, cameraResult, userId_));
-    }
+        streamMetadataCallback_->OnMetadataResult(streamId, result));
     return CAMERA_OK;
 }
 
@@ -181,18 +161,6 @@ int32_t HStreamMetadata::UnSetCallback()
     std::lock_guard<std::mutex> lock(callbackLock_);
     streamMetadataCallback_ = nullptr;
     return CAMERA_OK;
-}
-
-void HStreamMetadata::SetUserId(int32_t userId)
-{
-    userId_ = userId;
-}
-
-void HStreamMetadata::SetMechCallback(std::function<void(int32_t, const std::shared_ptr<OHOS::Camera::CameraMetadata>&,
-    uint32_t)> callback)
-{
-    std::lock_guard<std::mutex> lock(mechCallbackLock_);
-    mechCallback_ = callback;
 }
 
 int32_t HStreamMetadata::EnableOrDisableMetadataType(const std::vector<int32_t>& metadataTypes, const bool enable)
@@ -250,6 +218,11 @@ void HStreamMetadata::removeMetadataType(const std::vector<int32_t>& metaRes, st
     metaTarget.erase(std::remove_if(metaTarget.begin(), metaTarget.end(),
                                     [&set](const int32_t &element) { return set.find(element) != set.end(); }),
                      metaTarget.end());
+}
+
+std::vector<int32_t> HStreamMetadata::GetMetadataObjectTypes()
+{
+    return metadataObjectTypes_;
 }
 } // namespace Standard
 } // namespace OHOS

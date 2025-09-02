@@ -33,18 +33,6 @@ namespace CameraStandard {
 sptr<MetadataObjectFactory> MetadataObjectFactory::metaFactoryInstance_;
 std::mutex MetadataObjectFactory::instanceMutex_;
 
-const std::unordered_map<uint32_t, MetadataObjectType> g_HALResultToFwCameraMetaDetect_ = {
-    {OHOS_STATISTICS_DETECT_HUMAN_FACE_INFOS, MetadataObjectType::FACE},
-    {OHOS_STATISTICS_DETECT_HUMAN_BODY_INFOS, MetadataObjectType::HUMAN_BODY},
-    {OHOS_STATISTICS_DETECT_CAT_FACE_INFOS, MetadataObjectType::CAT_FACE},
-    {OHOS_STATISTICS_DETECT_CAT_BODY_INFOS, MetadataObjectType::CAT_BODY},
-    {OHOS_STATISTICS_DETECT_DOG_FACE_INFOS, MetadataObjectType::DOG_FACE},
-    {OHOS_STATISTICS_DETECT_DOG_BODY_INFOS, MetadataObjectType::DOG_BODY},
-    {OHOS_STATISTICS_DETECT_SALIENT_INFOS, MetadataObjectType::SALIENT_DETECTION},
-    {OHOS_STATISTICS_DETECT_BAR_CODE_INFOS, MetadataObjectType::BAR_CODE_DETECTION},
-    {OHOS_STATISTICS_DETECT_BASE_FACE_INFO, MetadataObjectType::BASE_FACE_DETECTION},
-};
-
 MetadataObject::MetadataObject(const MetadataObjectType type, const int32_t timestamp, const Rect rect,
                                const int32_t objectId, const int32_t confidence)
     : type_(type),
@@ -357,7 +345,8 @@ void MetadataOutput::ProcessMetadata(const int32_t streamId,
                                      const std::shared_ptr<OHOS::Camera::CameraMetadata> &result,
                                      std::vector<sptr<MetadataObject>> &metaObjects, bool isNeedMirror, bool isNeedFlip)
 {
-    bool ret = MetadataCommonUtils::ProcessMetaObjects(streamId, result, metaObjects, isNeedMirror, isNeedFlip);
+    bool ret = MetadataCommonUtils::ProcessMetaObjects(streamId, result, metaObjects, isNeedMirror,
+        isNeedFlip, RectBoxType::RECT_CAMERA);
     if (ret) {
         reportFaceResults_ = true;
         return;

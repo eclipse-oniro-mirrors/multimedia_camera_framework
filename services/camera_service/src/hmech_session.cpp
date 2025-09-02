@@ -25,17 +25,17 @@ namespace CameraStandard {
 
 HMechSession::HMechSession(int32_t userId) : userId_(userId)
 {
-    MEDIA_INFO_LOG("HMechSession::HMechSession enter, userId:%{public}d", userId);
+    MEDIA_INFO_LOG("%{public}s is called, userId:%{public}d", __FUNCTION__, userId);
 }
 
 HMechSession::~HMechSession()
 {
-    MEDIA_INFO_LOG("HMechSession::~HMechSession enter");
+    MEDIA_INFO_LOG("%{public}s is called", __FUNCTION__);
 }
 
 int32_t HMechSession::EnableMechDelivery(bool isEnableMech)
 {
-    MEDIA_INFO_LOG("HMechSession::EnableMechDelivery enter, isEnableMech:%{public}d", isEnableMech);
+    MEDIA_INFO_LOG("%{public}s is called, isEnableMech:%{public}d", __FUNCTION__, isEnableMech);
     std::lock_guard<std::mutex> lock(enableLock_);
     this->isEnableMech_ = isEnableMech;
     auto &sessionManager = HCameraSessionManager::GetInstance();
@@ -49,10 +49,10 @@ int32_t HMechSession::EnableMechDelivery(bool isEnableMech)
 
 int32_t HMechSession::SetCallback(const sptr<IMechSessionCallback>& callback)
 {
-    MEDIA_INFO_LOG("HMechSession::SetCallback enter");
-    std::lock_guard<std::mutex> lock(callbackLock_);
+    MEDIA_INFO_LOG("%{public}s is called", __FUNCTION__);
+    std::unique_lock<std::shared_mutex> lock(callbackLock_);
     callback_ = callback;
-    HandleCameraAppInfo(callback);
+    HanldeOnCaptureSessionConfiged(callback);
     return CAMERA_OK;
 }
 
@@ -70,7 +70,7 @@ int32_t HMechSession::CallbackExit([[maybe_unused]] uint32_t code, [[maybe_unuse
 
 int32_t HMechSession::Release()
 {
-    MEDIA_INFO_LOG("HMechSession::Release enter");
+    MEDIA_INFO_LOG("%{public}s is called", __FUNCTION__);
     sptr<IMechSessionCallback> emptyCallback = nullptr;
     SetCallback(emptyCallback);
     EnableMechDelivery(false);
@@ -79,28 +79,9 @@ int32_t HMechSession::Release()
     return CAMERA_OK;
 }
 
-int32_t HMechSession::OnFocusTrackingInfo(int32_t streamId, bool isNeedMirror, bool isNeedFlip,
-    const std::shared_ptr<OHOS::Camera::CameraMetadata> &result)
-{
-    std::lock_guard<std::mutex> lock(callbackLock_);
-    if (callback_ != nullptr) {
-        callback_->OnFocusTrackingInfo(streamId, isNeedMirror, isNeedFlip, result);
-    }
-    return CAMERA_OK;
-}
-
-int32_t HMechSession::OnCameraAppInfo(const std::vector<CameraAppInfo>& cameraAppInfos)
-{
-    std::lock_guard<std::mutex> lock(callbackLock_);
-    if (callback_ != nullptr) {
-        callback_->OnCameraAppInfo(cameraAppInfos);
-    }
-    return CAMERA_OK;
-}
-
 sptr<IMechSessionCallback> HMechSession::GetCallback()
 {
-    std::lock_guard<std::mutex> lock(callbackLock_);
+    std::shared_lock<std::shared_mutex> lock(callbackLock_);
     return callback_;
 }
 
@@ -110,22 +91,55 @@ bool HMechSession::IsEnableMech()
     return isEnableMech_;
 }
 
-void HMechSession::HandleCameraAppInfo(const sptr<IMechSessionCallback>& callback)
+int32_t HMechSession::OnFocusTrackingInfo(int32_t streamId, bool isNeedMirror, bool isNeedFlip,
+    const std::shared_ptr<OHOS::Camera::CameraMetadata> &result)
 {
-    if (callback == nullptr) {
-        return;
+    std::shared_lock<std::shared_mutex> lock(callbackLock_);
+    if (callback_ != nullptr) {
+        callback_->OnFocusTrackingInfo(streamId, isNeedMirror, isNeedFlip, result);
     }
+    return CAMERA_OK;
+}
+
+int32_t HMechSession::OnCaptureSessionConfiged(const CaptureSessionInfo& captureSessionInfo)
+{
+    std::shared_lock<std::shared_mutex> lock(callbackLock_);
+    if (callback_ != nullptr) {
+        callback_->OnCaptureSessionConfiged(captureSessionInfo);
+    }
+    return CAMERA_OK;
+}
+
+int32_t HMechSession::OnZoomInfoChange(int32_t sessionid, const ZoomInfo& zoomInfo)
+{
+    std::shared_lock<std::shared_mutex> lock(callbackLock_);
+    if (callback_ != nullptr) {
+        callback_->OnZoomInfoChange(sessionid, zoomInfo);
+    }
+    return CAMERA_OK;
+}
+
+int32_t HMechSession::OnSessionStatusChange(int32_t sessionid, bool status)
+{
+    std::shared_lock<std::shared_mutex> lock(callbackLock_);
+    if (callback_ != nullptr) {
+        callback_->OnSessionStatusChange(sessionid, status);
+    }
+    return CAMERA_OK;
+}
+
+void HMechSession::HanldeOnCaptureSessionConfiged(const sptr<IMechSessionCallback>& callback)
+{
+    CHECK_RETURN(callback == nullptr);
     auto &sessionManager = HCameraSessionManager::GetInstance();
     std::vector<sptr<HCaptureSession>> userSessions = sessionManager.GetUserSessions(userId_);
-    std::vector<CameraAppInfo> cameraAppInfos = {};
     for (size_t i = 0; i < userSessions.size(); i++) {
         sptr<HCaptureSession> captureSession = userSessions[i];
-        CameraAppInfo appInfo;
-        if (captureSession->GetCameraAppInfo(appInfo)) {
-            cameraAppInfos.emplace_back(appInfo);
+        CaptureSessionInfo sessionInfo;
+        if (captureSession->GetCaptureSessionInfo(sessionInfo)) {
+            callback->OnCaptureSessionConfiged(sessionInfo);
         }
     }
-    callback->OnCameraAppInfo(cameraAppInfos);
 }
 } // namespace CameraStandard
 } // namespace OHOS

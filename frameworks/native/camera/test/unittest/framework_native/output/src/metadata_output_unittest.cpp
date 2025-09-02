@@ -533,10 +533,12 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_013, TestSize.Level1
     bool isNeedMirror = true;
     bool isNeedFlip = false;
     metadatOutput->reportFaceResults_ = true;
-    MetadataCommonUtils::GenerateObjects(metadataItem, type, metaObjects, isNeedMirror, isNeedFlip);
+    MetadataCommonUtils::GenerateObjects(metadataItem, type, metaObjects, isNeedMirror, isNeedFlip,
+        RectBoxType::RECT_CAMERA);
     EXPECT_EQ(metaObjects.size(), 0);
 
-    Rect ret = MetadataCommonUtils::ProcessRectBox(1, 1, 1, 1, isNeedMirror, isNeedFlip);
+    Rect ret = MetadataCommonUtils::ProcessRectBox(1, 1, 1, 1, isNeedMirror, isNeedFlip,
+        RectBoxType::RECT_CAMERA);
     EXPECT_EQ(ret.topLeftX, 0.999999);
     EXPECT_EQ(ret.topLeftY, 0.999999);
     EXPECT_EQ(ret.width, 0);
@@ -544,7 +546,8 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_013, TestSize.Level1
 
     isNeedMirror = false;
     isNeedFlip = true;
-    ret = MetadataCommonUtils::ProcessRectBox(1, 1, 1, 1, isNeedMirror, isNeedFlip);
+    ret = MetadataCommonUtils::ProcessRectBox(1, 1, 1, 1, isNeedMirror, isNeedFlip,
+        RectBoxType::RECT_CAMERA);
     EXPECT_EQ(ret.topLeftX, 0.000001);
     EXPECT_EQ(ret.topLeftY, 0.000001);
     EXPECT_EQ(ret.width, 0);
@@ -595,19 +598,23 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_014, TestSize.Level1
     MetadataObjectType type = MetadataObjectType::FACE;
     bool isNeedMirror = true;
     bool isNeedFlip = false;
-    MetadataCommonUtils::ProcessExternInfo(factoryPtr, metadataItem, index, type, isNeedMirror, isNeedFlip);
+    MetadataCommonUtils::ProcessExternInfo(factoryPtr, metadataItem, index, type, isNeedMirror, isNeedFlip,
+        RectBoxType::RECT_CAMERA);
     EXPECT_NE(factoryPtr, nullptr);
 
     type = MetadataObjectType::CAT_FACE;
-    MetadataCommonUtils::ProcessExternInfo(factoryPtr, metadataItem, index, type, isNeedMirror, isNeedFlip);
+    MetadataCommonUtils::ProcessExternInfo(factoryPtr, metadataItem, index, type, isNeedMirror, isNeedFlip,
+        RectBoxType::RECT_CAMERA);
     EXPECT_NE(factoryPtr, nullptr);
 
     type = MetadataObjectType::DOG_FACE;
-    MetadataCommonUtils::ProcessExternInfo(factoryPtr, metadataItem, index, type, isNeedMirror, isNeedFlip);
+    MetadataCommonUtils::ProcessExternInfo(factoryPtr, metadataItem, index, type, isNeedMirror, isNeedFlip,
+        RectBoxType::RECT_CAMERA);
     EXPECT_NE(factoryPtr, nullptr);
 
     type = static_cast<MetadataObjectType>(64);
-    MetadataCommonUtils::ProcessExternInfo(factoryPtr, metadataItem, index, type, isNeedMirror, isNeedFlip);
+    MetadataCommonUtils::ProcessExternInfo(factoryPtr, metadataItem, index, type, isNeedMirror, isNeedFlip,
+        RectBoxType::RECT_CAMERA);
     EXPECT_NE(factoryPtr, nullptr);
 
     input->Close();

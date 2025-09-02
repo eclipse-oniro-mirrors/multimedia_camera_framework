@@ -19,5 +19,7 @@ sequenceable CameraMetadataInfo..OHOS.Camera.CameraMetadata;
 
 interface IMechSessionCallback{
     [ipccode 0, oneway] void OnFocusTrackingInfo([in] int streamId, [in] boolean isNeedMirror, [in] boolean isNeedFlip, [in] sharedptr<CameraMetadata> results);
-    [ipccode 1, oneway] void OnCameraAppInfo([in] CameraAppInfo[] cameraAppInfos);
+    [ipccode 1, oneway] void OnCaptureSessionConfiged([in] CaptureSessionInfo captureSessionInfo);
+    [ipccode 2, oneway] void OnZoomInfoChange([in] int sessionid, [in] ZoomInfo zoomInfo);
+    [ipccode 3, oneway] void OnSessionStatusChange([in] int sessionid, [in] boolean status);
 }
