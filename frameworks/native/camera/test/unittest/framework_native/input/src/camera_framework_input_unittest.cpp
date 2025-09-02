@@ -1476,15 +1476,9 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_063, TestSize
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_FALSE(cameras.empty());
 
-    uint32_t tempCameraOrientation = cameras[0]->cameraOrientation_;
-    bool isUsed = cameras[0]->GetUsePhysicalCameraOrientation();
-
     cameras[0]->cameraOrientation_ = 1;
     cameras[0]->SetUsePhysicalCameraOrientation(false);
     EXPECT_EQ(cameras[0]->GetCameraOrientation(), 1);
-
-    cameras[0]->cameraOrientation_ = tempCameraOrientation;
-    cameras[0]->SetUsePhysicalCameraOrientation(isUsed);
 }
 
 /*
@@ -1500,12 +1494,8 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_064, TestSize
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_FALSE(cameras.empty());
 
-    bool isUsed = cameras[0]->GetUsePhysicalCameraOrientation();
-
-    cameras[0]->SetUsePhysicalCameraOrientation(false);
-    EXPECT_EQ(cameras[0]->GetUsePhysicalCameraOrientation(), false);
-
-    cameras[0]->SetUsePhysicalCameraOrientation(isUsed);
+    cameras[0]->SetUsePhysicalCameraOrientation(true);
+    EXPECT_EQ(cameras[0]->GetUsePhysicalCameraOrientation(), true);
 }
 
 /*
@@ -1521,12 +1511,8 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_065, TestSize
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_FALSE(cameras.empty());
 
-    bool isUsed = cameras[0]->GetUsePhysicalCameraOrientation();
-
-    cameras[0]->SetUsePhysicalCameraOrientation(true);
-    EXPECT_EQ(cameras[0]->GetUsePhysicalCameraOrientation(), true);
-
-    cameras[0]->SetUsePhysicalCameraOrientation(isUsed);
+    cameras[0]->SetUsePhysicalCameraOrientation(false);
+    EXPECT_EQ(cameras[0]->GetUsePhysicalCameraOrientation(), false);
 }
 
 /*

@@ -1078,16 +1078,17 @@ bool HCameraDevice::IsPhysicalCameraOrientationVariable()
 
 void HCameraDevice::UpdateCameraRotateAngle()
 {
-    CHECK_RETURN(!IsPhysicalCameraOrientationVariable());
     bool isFoldable = OHOS::Rosen::DisplayManager::GetInstance().IsFoldable();
     int32_t displayMode = static_cast<int32_t>(OHOS::Rosen::DisplayManager::GetInstance().GetFoldDisplayMode());
     CHECK_RETURN(!isFoldable || deviceAbility_ == nullptr || displayMode == lastDisplayMode_);
     lastDisplayMode_ = displayMode;
-    if (system::GetParameter("const.system.sensor_correction_enable", "0") != "1") {
+    if (system::GetParameter("const.system.sensor_correction_enable", "0") != "1"
+        || !IsPhysicalCameraOrientationVariable()) {
         MEDIA_DEBUG_LOG("HCameraDevice::UpdateCameraRotateAngle variable orientation is closed");
         std::vector<int32_t> emptyVec;
         UpdateCameraRotateAngleAndZoom(emptyVec,
             displayMode == static_cast<int32_t>(OHOS::Rosen::FoldDisplayMode::GLOBAL_FULL));
+        return;
     }
     int cameraOrientation = GetOriginalCameraOrientation();
     CHECK_RETURN(cameraOrientation == -1);
