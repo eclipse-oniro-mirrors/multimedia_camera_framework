@@ -110,19 +110,6 @@ enum PressureStatus {
     SYSTEM_PRESSURE_SHUTDOWN
 };
 
-struct CameraAppInfo {
-    int tokenId;
-    String cameraId;
-    int opmode;
-    float zoomValue;
-    int equivalentFocus;
-    int width;
-    int height;
-    boolean videoStatus;
-    int position;
-    boolean focusStatus;
-};
-
 enum ControlCenterEffectType {
     BEAUTY = 0,
     PORTRAIT
@@ -131,4 +118,39 @@ enum ControlCenterEffectType {
 struct ControlCenterStatusInfo {
     ControlCenterEffectType effectType;
     boolean isActive;
+};
+
+enum OutputType {
+    PREVIEW = 0,
+    PHOTO = 1,
+    VIDEO = 2,
+    MOVING_PHOTO = 3,
+};
+
+struct OutputInfo {
+    OutputType type;
+    int minfps;
+    int maxfps;
+    int width;
+    int height;
+};
+
+struct ZoomInfo {
+    float zoomValue;
+    int equivalentFocus;
+    boolean focusStatus;
+    int focusMode;
+    int videoStabilizationMode;
+};
+
+struct CaptureSessionInfo {
+    int sessionId;
+    int callerTokenId;
+    String cameraId;
+    int position;
+    int sessionMode;
+    OutputInfo[] outputInfos;
+    int colorSpace;
+    ZoomInfo zoomInfo;
+    boolean sessionStatus;
 };
