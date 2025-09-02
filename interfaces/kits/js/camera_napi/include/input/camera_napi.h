@@ -483,6 +483,11 @@ static const std::unordered_map<std::string, int32_t> mapWhiteBalanceMode = {
     {"LOCKED", 6},
 };
 
+static const std::unordered_map<std::string, int32_t> mapPhotoQualityPrioritization = {
+    {"HIGH_QUALITY", 0},
+    {"SPEED", 1},
+};
+
 enum CreateAsyncCallbackModes {
     CREATE_CAMERA_MANAGER_ASYNC_CALLBACK = 10,
 };

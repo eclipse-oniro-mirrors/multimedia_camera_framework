@@ -1233,6 +1233,23 @@ typedef enum Camera_WhiteBalanceMode {
     CAMERA_WHITE_BALANCE_MODE_LOCKED = 6
 } Camera_WhiteBalanceMode;
 
+/**
+ * @brief Enum for photo quality prioritization.
+ *
+ * @since 21
+ * @version 1.0
+ */
+typedef enum Camera_PhotoQualityPrioritization {
+    /**
+     * High quality photos are the top preference, even at the expense of shot-to-shot time.
+     */
+    CAMERA_PHOTO_QUALITY_PRIORITIZATION_HIGH_QUALITY = 0,
+
+    /**
+     * Prefering speed over quality, even at the expense of quality.
+     */
+    CAMERA_PHOTO_QUALITY_PRIORITIZATION_SPEED = 1,
+} Camera_PhotoQualityPrioritization;
 #ifdef __cplusplus
 }
 #endif

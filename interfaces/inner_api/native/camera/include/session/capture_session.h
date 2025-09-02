@@ -1750,6 +1750,7 @@ public:
      * @param The MacroStatusCallback pointer.
      */
     void SetMacroStatusCallback(std::shared_ptr<MacroStatusCallback> callback);
+    void SetPhotoQualityPrioritization(camera_photo_quality_prioritization_t quality);
 protected:
 
     static const std::unordered_map<camera_awb_mode_t, WhiteBalanceMode> metaWhiteBalanceModeMap_;

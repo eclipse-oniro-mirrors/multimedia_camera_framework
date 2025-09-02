@@ -218,6 +218,8 @@ public:
     static napi_value EnableAutoAigcPhoto(napi_env env, napi_callback_info info);
     static napi_value IsOfflineSupported(napi_env env, napi_callback_info info);
     static napi_value EnableOfflinePhoto(napi_env env, napi_callback_info info);
+    static napi_value IsPhotoQualityPrioritizationSupported(napi_env env, napi_callback_info info);
+    static napi_value SetPhotoQualityPrioritization(napi_env env, napi_callback_info info);
 
     PhotoOutputNapi();
     ~PhotoOutputNapi() override;

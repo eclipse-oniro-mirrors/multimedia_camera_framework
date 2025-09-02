@@ -63,7 +63,7 @@ void AsyncCompleteCallback(napi_env env, napi_status status, void* data)
         photoOutputAsyncContext->funcName.c_str(), photoOutputAsyncContext->status);
     std::unique_ptr<JSAsyncContextOutput> jsContext = std::make_unique<JSAsyncContextOutput>();
     jsContext->status = photoOutputAsyncContext->status;
- 
+
     if (!photoOutputAsyncContext->status) {
         CameraNapiUtils::CreateNapiErrorObject(env, photoOutputAsyncContext->errorCode,
             photoOutputAsyncContext->errorMsg.c_str(), jsContext);
@@ -689,7 +689,9 @@ napi_value PhotoOutputNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("isAutoAigcPhotoSupported", IsAutoAigcPhotoSupported),
         DECLARE_NAPI_FUNCTION("enableAutoAigcPhoto", EnableAutoAigcPhoto),
         DECLARE_NAPI_FUNCTION("isOfflineSupported", IsOfflineSupported),
-        DECLARE_NAPI_FUNCTION("enableOffline", EnableOfflinePhoto)
+        DECLARE_NAPI_FUNCTION("enableOffline", EnableOfflinePhoto),
+        DECLARE_NAPI_FUNCTION("isPhotoQualityPrioritizationSupported", IsPhotoQualityPrioritizationSupported),
+        DECLARE_NAPI_FUNCTION("setPhotoQualityPrioritization", SetPhotoQualityPrioritization)
     };
 
     status = napi_define_class(env, CAMERA_PHOTO_OUTPUT_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH, PhotoOutputNapiConstructor,
@@ -806,7 +808,7 @@ napi_value PhotoOutputNapi::CreatePhotoOutput(napi_env env, Profile& profile, st
     MEDIA_ERR_LOG("CreatePhotoOutput call Failed!");
     return result;
 }
- 
+
 napi_value PhotoOutputNapi::CreatePhotoOutput(napi_env env, std::string surfaceId)
 {
     MEDIA_INFO_LOG("CreatePhotoOutput with only surfaceId is called");
@@ -1996,6 +1998,52 @@ napi_value PhotoOutputNapi::EnableOfflinePhoto(napi_env env, napi_callback_info 
     auto session = photoOutputNapi->GetPhotoOutput()->GetSession();
     if (session != nullptr && photoOutputNapi->GetPhotoOutput()) {
         photoOutputNapi->GetPhotoOutput()->EnableOfflinePhoto();
+    }
+    return result;
+}
+
+napi_value PhotoOutputNapi::IsPhotoQualityPrioritizationSupported(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("PhotoOutputNapi::IsPhotoQualityPrioritizationSupported is called");
+    PhotoOutputNapi* photoOutputNapi = nullptr;
+    int32_t quality = 0;
+    auto result = CameraNapiUtils::GetUndefinedValue(env);
+    CameraNapiParamParser jsParamParser(env, info, photoOutputNapi, quality);
+    if (!jsParamParser.AssertStatus(PARAMETER_ERROR, "parameter occur error")) {
+        MEDIA_ERR_LOG("PhotoOutputNapi::IsPhotoQualityPrioritizationSupported parse parameter occur error");
+        return result;
+    }
+    if (photoOutputNapi != nullptr && photoOutputNapi->photoOutput_ != nullptr) {
+        bool isSupported = false;
+        int32_t ret = photoOutputNapi->photoOutput_->IsPhotoQualityPrioritizationSupported(
+            static_cast<PhotoOutput::PhotoQualityPrioritization>(quality), isSupported);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, ret), result);
+        napi_get_boolean(env, isSupported, &result);
+    } else {
+        MEDIA_ERR_LOG("PhotoOutputNapi::IsPhotoQualityPrioritizationSupported get native object fail");
+        CameraNapiUtils::ThrowError(env, PARAMETER_ERROR, "get native object fail");
+    }
+    return result;
+}
+
+napi_value PhotoOutputNapi::SetPhotoQualityPrioritization(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("PhotoOutputNapi::SetPhotoQualityPrioritization is called");
+    PhotoOutputNapi* photoOutputNapi = nullptr;
+    int32_t quality = 0;
+    auto result = CameraNapiUtils::GetUndefinedValue(env);
+    CameraNapiParamParser jsParamParser(env, info, photoOutputNapi, quality);
+    if (!jsParamParser.AssertStatus(PARAMETER_ERROR, "parameter occur error")) {
+        MEDIA_ERR_LOG("PhotoOutputNapi::SetPhotoQualityPrioritization parse parameter occur error");
+        return result;
+    }
+    if (photoOutputNapi != nullptr && photoOutputNapi->photoOutput_ != nullptr) {
+        int32_t ret = photoOutputNapi->photoOutput_->SetPhotoQualityPrioritization(
+            static_cast<PhotoOutput::PhotoQualityPrioritization>(quality));
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, ret), result);
+    } else {
+        MEDIA_ERR_LOG("PhotoOutputNapi::SetPhotoQualityPrioritization get native object fail");
+        CameraNapiUtils::ThrowError(env, PARAMETER_ERROR, "get native object fail");
     }
     return result;
 }
