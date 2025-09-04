@@ -748,8 +748,9 @@ int32_t PreviewOutput::canSetFrameRateRange(int32_t minFrameRate, int32_t maxFra
 
 int32_t PreviewOutput::GetPreviewRotation(int32_t imageRotation)
 {
-    MEDIA_INFO_LOG("PreviewOutput GetPreviewRotation is called");
-    CHECK_RETURN_RET_ELOG(imageRotation % ROTATION_90_DEGREES != 0, INVALID_ARGUMENT,
+    MEDIA_INFO_LOG("PreviewOutput GetPreviewRotation is called, imageRotation: %{public}d", imageRotation);
+    CHECK_RETURN_RET_ELOG(imageRotation < ROTATION_0 || imageRotation > CAPTURE_ROTATION_BASE ||
+        imageRotation % ROTATION_90_DEGREES != 0, INVALID_ARGUMENT,
         "PreviewOutput GetPreviewRotation error!, invalid argument");
     int32_t sensorOrientation = 0;
     ImageRotation result = ImageRotation::ROTATION_0;
@@ -792,8 +793,10 @@ int32_t PreviewOutput::JudegRotationFunc(int32_t imageRotation)
 
 int32_t PreviewOutput::SetPreviewRotation(int32_t imageRotation, bool isDisplayLocked)
 {
-    MEDIA_INFO_LOG("PreviewOutput SetPreviewRotation is called");
-    CHECK_RETURN_RET_ELOG(imageRotation % ROTATION_90_DEGREES != 0, INVALID_ARGUMENT,
+    MEDIA_INFO_LOG("PreviewOutput SetPreviewRotation is called, imageRotation:%{public}d, isDisplayLocked:%{public}d",
+        imageRotation, isDisplayLocked);
+    CHECK_RETURN_RET_ELOG(imageRotation < ROTATION_0 || imageRotation > CAPTURE_ROTATION_BASE ||
+        imageRotation % ROTATION_90_DEGREES != 0, INVALID_ARGUMENT,
         "PreviewOutput SetPreviewRotation error!, invalid argument");
     int32_t sensorOrientation = 0;
     ImageRotation result = ROTATION_0;

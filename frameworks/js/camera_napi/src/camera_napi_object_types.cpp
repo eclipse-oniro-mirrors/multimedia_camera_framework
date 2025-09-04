@@ -87,7 +87,7 @@ CameraNapiObject& CameraNapiObjCameraDevice::GetCameraNapiObject()
     auto connectionType = Hold<int32_t>(cameraDevice_.GetConnectionType());
     auto hostDeviceName = Hold<std::string>(cameraDevice_.GetHostName());
     auto hostDeviceType = Hold<uint32_t>(cameraDevice_.GetDeviceType());
-    auto cameraOrientation = Hold<int32_t>(cameraDevice_.GetCameraOrientation());
+    auto cameraOrientation = Hold<int32_t>(cameraDevice_.GetStaticCameraOrientation());
     auto isRetractable = Hold<bool>(cameraDevice_.GetisRetractable());
     auto lensEquivalentFocalLength = Hold<std::vector<int32_t>>(cameraDevice_.GetLensEquivalentFocalLength());
     return *Hold<CameraNapiObject>(CameraNapiObject::CameraNapiObjFieldMap {

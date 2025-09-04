@@ -395,6 +395,8 @@ private:
     bool isFindModuleTypeTag(uint32_t &tagId);
     bool isConcurrentDevice_ = false;
     bool usePhysicalCameraOrientation_ = false;
+    bool isVariable_ = false;
+    int32_t isNeedDynamicMeta_ = 0;
 };
 } // namespace CameraStandard
 } // namespace OHOS

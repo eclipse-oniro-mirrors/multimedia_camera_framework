@@ -23,6 +23,7 @@ struct CameraRotateStrategyInfo {
     float wideValue;
     int32_t rotateDegree;
     int16_t fps;
+    int32_t isNeedDynamicMeta;
 };
 class Parser {
 public:

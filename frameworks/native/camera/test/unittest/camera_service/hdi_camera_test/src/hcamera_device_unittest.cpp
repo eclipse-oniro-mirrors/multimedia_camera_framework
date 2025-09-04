@@ -1011,5 +1011,28 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_037, TestSize.Level0)
     SetCameraDebugValue(false);
     EXPECT_EQ(result, CAMERA_INVALID_STATE);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test GetIsNeedDynamicMeta.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetIsNeedDynamicMeta.
+ */
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_038, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+
+    int32_t isNeedDynamicMeta = 0;
+    int32_t ret = camDevice->GetIsNeedDynamicMeta(isNeedDynamicMeta);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(isNeedDynamicMeta, 0);
+}
 }
 }
