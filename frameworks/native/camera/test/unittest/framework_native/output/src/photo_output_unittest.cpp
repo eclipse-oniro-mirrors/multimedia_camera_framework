@@ -1990,10 +1990,9 @@ HWTEST_F(CameraPhotoOutputUnit, IsPhotoQualityPrioritizationSupported_001, TestS
     bool status = AddOrUpdateMetadata(metadata, OHOS_ABILITY_PHOTO_QUALITY_PRIORITIZATION, &quality,
         sizeof(quality) / sizeof(quality[0]));
     ASSERT_TRUE(status);
-    bool isSupported = false;
-    int32_t ret = phtOutput->IsPhotoQualityPrioritizationSupported(
-        static_cast<PhotoOutput::PhotoQualityPrioritization>(1), isSupported);
-    EXPECT_EQ(ret, 0);
+    bool isSupported = phtOutput->IsPhotoQualityPrioritizationSupported(
+        static_cast<PhotoOutput::PhotoQualityPrioritization>(1));
+    EXPECT_TRUE(isSupported);
 
     EXPECT_EQ(session->CommitConfig(), 0);
     EXPECT_EQ(session->Start(), 0);
@@ -2038,10 +2037,9 @@ HWTEST_F(CameraPhotoOutputUnit, IsPhotoQualityPrioritizationSupported_002, TestS
     bool status = AddOrUpdateMetadata(metadata, OHOS_ABILITY_PHOTO_QUALITY_PRIORITIZATION, &quality,
         sizeof(quality) / sizeof(quality[0]));
     ASSERT_TRUE(status);
-    bool isSupported = false;
-    int32_t ret = phtOutput->IsPhotoQualityPrioritizationSupported(
-        static_cast<PhotoOutput::PhotoQualityPrioritization>(1), isSupported);
-    EXPECT_EQ(ret, 0);
+    bool isSupported = phtOutput->IsPhotoQualityPrioritizationSupported(
+        static_cast<PhotoOutput::PhotoQualityPrioritization>(1));
+    EXPECT_FALSE(isSupported);
     EXPECT_EQ(session->CommitConfig(), 0);
     EXPECT_EQ(session->Start(), 0);
 

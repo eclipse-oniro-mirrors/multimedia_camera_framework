@@ -376,9 +376,9 @@ Camera_ErrorCode Camera_PhotoOutput::IsPhotoQualityPrioritizationSupported(
         "Camera_PhotoOutput::IsPhotoQualityPrioritizationSupported failed, isSupported is null");
     CHECK_RETURN_RET_ELOG(innerPhotoOutput_ == nullptr, CAMERA_SERVICE_FATAL_ERROR,
         "Camera_PhotoOutput::IsPhotoQualityPrioritizationSupported failed, innerPhotoOutput_ is null");
-    int32_t ret = innerPhotoOutput_->IsPhotoQualityPrioritizationSupported(
-        static_cast<PhotoOutput::PhotoQualityPrioritization>(qualityPrioritization), *isSupported);
-    return FrameworkToNdkCameraError(ret);
+    *isSupported = innerPhotoOutput_->IsPhotoQualityPrioritizationSupported(
+        static_cast<PhotoOutput::PhotoQualityPrioritization>(qualityPrioritization));
+    return CAMERA_OK;
 }
 
 Camera_ErrorCode Camera_PhotoOutput::SetPhotoQualityPrioritization(

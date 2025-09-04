@@ -519,7 +519,7 @@ public:
     void CreateMediaLibrary(std::shared_ptr<PictureIntf> picture, sptr<CameraPhotoProxy> photoProxy,
         std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp);
 
-    int32_t IsPhotoQualityPrioritizationSupported(PhotoQualityPrioritization quality, bool &isSupported);
+    bool IsPhotoQualityPrioritizationSupported(PhotoQualityPrioritization quality);
 
     int32_t SetPhotoQualityPrioritization(PhotoQualityPrioritization quality);
     /**
