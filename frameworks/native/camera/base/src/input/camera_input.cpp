@@ -163,6 +163,14 @@ void CameraInput::InitCameraInput()
         MEDIA_INFO_LOG("CameraInput::InitCameraInput foldStatus: %{public}d, orientation:%{public}d",
             innerFoldState, innerOrientation);
     }
+
+    int32_t isNeedDynamicMeta = 0;
+    CHECK_EXECUTE(isVariable_ && !foldStateSensorOrientationMap_.empty(),
+        deviceObj->GetIsNeedDynamicMeta(isNeedDynamicMeta));
+    CHECK_RETURN_ELOG(isNeedDynamicMeta == 0, "CameraInput::InitCameraInput do not need dynamic orientation");
+    SetUsePhysicalCameraOrientation(true);
+    MEDIA_INFO_LOG("CameraInput::InitCameraInput need dynamic orientation");
+
     CameraCountingTimer::GetInstance().IncreaseUserCount();
 }
 

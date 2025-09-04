@@ -45,6 +45,7 @@ const char* XML_CAMERA_BUDLE_NAME = "bundleName";
 const char* XML_CAMERA_WIDE_VALUE = "wideValue";
 const char* XML_CAMERA_ROTATE_DEGREE = "rotateDegree";
 const char* XML_CAMERA_FPS = "fps";
+const char* XML_CAMERA_IS_DYNAMIC = "isNeedDynamicMeta";
 }
 // LCOV_EXCL_START
 CameraRoateParamManager& CameraRoateParamManager::GetInstance()
@@ -242,10 +243,24 @@ void CameraRoateParamManager::ParserStrategyInfo(std::shared_ptr<CameraXmlNode> 
             fps = static_cast<int16_t>(result);
         }
         info.fps = fps;
+
+        int32_t isNeedDynamicMeta = 0;
+        curNode->GetProp(XML_CAMERA_IS_DYNAMIC, pValue);
+        endPtr = nullptr;
+        result = strtol(pValue.c_str(), &endPtr, DECIMAL);
+
+        if (*endPtr != '\0' || pValue.empty()) {
+            MEDIA_ERR_LOG("The isNeedDynamicMeta parameter is invalid.");
+            isNeedDynamicMeta = 0;
+        } else {
+            isNeedDynamicMeta = static_cast<int32_t>(result);
+        }
+        info.isNeedDynamicMeta = isNeedDynamicMeta;
+
         cameraRotateStrategyInfos_.push_back(info);
         MEDIA_INFO_LOG("ParserStrategyInfo: bundleName:%{public}s, wideValue:%{public}f, "
-            "rotateDegree:%{public}d, fps:%{public}d",
-            info.bundleName.c_str(), info.wideValue, info.rotateDegree, info.fps);
+            "rotateDegree:%{public}d, fps:%{public}d, isNeedDynamicMeta:%{public}d",
+            info.bundleName.c_str(), info.wideValue, info.rotateDegree, info.fps, info.isNeedDynamicMeta);
     }
 }
 

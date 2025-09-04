@@ -1114,6 +1114,7 @@ bool HCameraDevice::GetSigleStrategyInfo(CameraRotateStrategyInfo &strategyInfo)
     }
     CHECK_EXECUTE(bundleName_ == "", { int uid = IPCSkeleton::GetCallingUid();
         bundleName_ = GetClientBundle(uid);});
+    MEDIA_DEBUG_LOG("HCameraDevice::GetSigleStrategyInfo bundleName: %{public}s", bundleName_.c_str());
     std::string bundleName = bundleName_;
     auto it = std::find_if(infos.begin(), infos.end(), [&bundleName](const auto &info) {
         return info.bundleName == bundleName;
@@ -1121,6 +1122,16 @@ bool HCameraDevice::GetSigleStrategyInfo(CameraRotateStrategyInfo &strategyInfo)
     CHECK_RETURN_RET_ELOG(it == infos.end(), false, "Update roteta angle not supported");
     strategyInfo = *it;
     return true;
+}
+
+int32_t HCameraDevice::GetIsNeedDynamicMeta(int32_t &isNeedDynamicMeta)
+{
+    isNeedDynamicMeta = 0;
+    CameraRotateStrategyInfo strategyInfo;
+    CHECK_RETURN_RET_ELOG(!GetSigleStrategyInfo(strategyInfo), CAMERA_OK, "HCameraDevice::GetIsNeedDynamicMeta failed");
+    isNeedDynamicMeta = strategyInfo.isNeedDynamicMeta;
+    MEDIA_INFO_LOG("HCameraDevice::GetIsNeedDynamicMeta isNeedDynamicMeta: %{public}d", isNeedDynamicMeta);
+    return CAMERA_OK;
 }
 
 void HCameraDevice::SetCameraRotateStrategyInfos(std::vector<CameraRotateStrategyInfo> infos)

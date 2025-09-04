@@ -16,6 +16,7 @@
 #include <mutex>
 #include <malloc.h>
 #include <securec.h>
+#include <parameters.h>
 #include "camera_metadata_info.h"
 #include "camera_log.h"
 #include "camera_util.h"
@@ -191,6 +192,10 @@ void CameraDevice::init(common_metadata_header_t* metadata)
     isPrelaunch_ = (cameraDeviceRet == CAM_META_SUCCESS && item.data.u8[0] == 1);
 
     InitLensEquivalentFocalLength(metadata);
+
+    cameraDeviceRet = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_SENSOR_ORIENTATION_VARIABLE, &item);
+    CHECK_EXECUTE(cameraDeviceRet == CAM_META_SUCCESS, isVariable_ = item.count > 0 && item.data.u8[0]);
+
     InitFoldStateSensorOrientationMap(metadata);
 
     MEDIA_INFO_LOG("camera position: %{public}d, camera type: %{public}d, camera connection type: %{public}d, "
@@ -230,6 +235,7 @@ void CameraDevice::InitFoldStateSensorOrientationMap(common_metadata_header_t* m
         MEDIA_INFO_LOG("CameraDevice::InitFoldStateSensorOrientationMap foldStatus: %{public}d, "
             "orientation:%{public}d", innerFoldState, innerOrientation);
     }
+    CHECK_EXECUTE(foldStateSensorOrientationMap_.empty(), isVariable_ = false);
 }
 
 std::string CameraDevice::GetID()
@@ -346,7 +352,7 @@ std::string CameraDevice::GetNetWorkId()
 uint32_t CameraDevice::GetCameraOrientation()
 {
     uint32_t cameraOrientation = cameraOrientation_;
-    if (GetUsePhysicalCameraOrientation()) {
+    if (GetUsePhysicalCameraOrientation() || isNeedDynamicMeta_ != 0) {
         uint32_t curFoldStatus;
         OHOS::Rosen::FoldDisplayMode displayMode = OHOS::Rosen::DisplayManager::GetInstance().GetFoldDisplayMode();
         if (displayMode == OHOS::Rosen::FoldDisplayMode::GLOBAL_FULL) {
@@ -368,7 +374,19 @@ uint32_t CameraDevice::GetCameraOrientation()
 
 uint32_t CameraDevice::GetStaticCameraOrientation()
 {
-    return cameraOrientation_;
+    uint32_t cameraOrientation = cameraOrientation_;
+    CHECK_RETURN_RET_ILOG(system::GetParameter("const.system.sensor_correction_enable", "0") != "1" || !isVariable_,
+        cameraOrientation, "CameraDevice::GetStaticCameraOrientation variable orientation is closed");
+    sptr<ICameraDeviceService> deviceObj = nullptr;
+    int32_t retCode = CameraManager::GetInstance()->CreateCameraDevice(GetID(), &deviceObj);
+    CHECK_RETURN_RET_ELOG(retCode != CameraErrorCode::SUCCESS, cameraOrientation,
+        "CameraDevice::GetStaticCameraOrientation CreateCameraDevice Failed");
+    int32_t isNeedDynamicMeta = 0;
+    deviceObj->GetIsNeedDynamicMeta(isNeedDynamicMeta);
+    isNeedDynamicMeta_ = isNeedDynamicMeta;
+    CHECK_EXECUTE(isNeedDynamicMeta_ != 0, cameraOrientation = GetCameraOrientation());
+    MEDIA_DEBUG_LOG("CameraDevice::GetStaticCameraOrientation cameraOrientation: %{public}d", cameraOrientation);
+    return cameraOrientation;
 }
 
 bool CameraDevice::GetisRetractable()
