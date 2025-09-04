@@ -47,11 +47,16 @@ public:
     bool IsFatalError(DpsError error) const;
     bool IsNeedReset();
     void OnSuccess(const std::string& imageId);
-    ErrorType OnError(const std::string& imageId, DpsError error, bool isHighJob);
+    ErrorType OnError(const std::string& imageId, DpsError& error, bool isHighJob);
 
     inline void ResetTimeoutCount()
     {
         processTimeoutCount_.store(DEFAULT_COUNT);
+    }
+
+    inline void ResetCrashCount(const std::string& imageId)
+    {
+        imageId2CrashCount_.erase(imageId);
     }
 
 protected:
@@ -62,11 +67,13 @@ private:
     void RecordResult(const std::string& imageId, const std::shared_ptr<ImageInfo>& result);
     void DeRecordResult(const std::string& imageId);
     std::shared_ptr<ImageInfo> GetCacheResult(const std::string& imageId);
+    void CheckCrashCount(const std::string& imageId, DpsError& error);
     
     std::atomic_int32_t processTimeoutCount_ {DEFAULT_COUNT};
     std::set<DpsError> fatalStatusCodes_ {};
     std::set<std::string> highImages_ {};
     std::unordered_map<std::string, std::shared_ptr<ImageInfo>> cacheMap_ {};
+    std::unordered_map<std::string, uint32_t> imageId2CrashCount_ {};
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

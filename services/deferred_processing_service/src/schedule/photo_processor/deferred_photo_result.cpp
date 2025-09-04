@@ -23,6 +23,7 @@ namespace CameraStandard {
 namespace DeferredProcessing {
 namespace {
     constexpr int32_t DEFAULT_TIMEOUT_COUNT = 3;
+    constexpr uint32_t MAX_CONSECUTIVE_CRASH_COUNT = 3;
 }
 DeferredPhotoResult::DeferredPhotoResult()
 {
@@ -33,6 +34,7 @@ DeferredPhotoResult::~DeferredPhotoResult()
 {
     DP_INFO_LOG("entered.");
     fatalStatusCodes_.clear();
+    imageId2CrashCount_.clear();
 }
 
 int32_t DeferredPhotoResult::Initialize()
@@ -62,10 +64,11 @@ void DeferredPhotoResult::OnSuccess(const std::string& imageId)
     ResetTimeoutCount();
 }
 
-ErrorType DeferredPhotoResult::OnError(const std::string& imageId, DpsError error, bool isHighJob)
+ErrorType DeferredPhotoResult::OnError(const std::string& imageId, DpsError& error, bool isHighJob)
 {
     DP_INFO_LOG("entered imageId: %{public}s, error: %{public}d, isHighJob: %{public}d",
         imageId.c_str(), error, isHighJob);
+    DP_CHECK_EXECUTE(error == DpsError::DPS_ERROR_SESSION_NOT_READY_TEMPORARILY, CheckCrashCount(imageId, error));
     DP_CHECK_EXECUTE(error != DpsError::DPS_ERROR_IMAGE_PROC_TIMEOUT, ResetTimeoutCount());
     DP_CHECK_RETURN_RET(IsFatalError(error), ErrorType::FATAL_NOTIFY);
 
@@ -98,6 +101,17 @@ std::shared_ptr<ImageInfo> DeferredPhotoResult::GetCacheResult(const std::string
         return it->second;
     }
     return nullptr;
+}
+
+void DeferredPhotoResult::CheckCrashCount(const std::string& imageId, DpsError& error)
+{
+    auto image = imageId2CrashCount_.find(imageId);
+    if (image == imageId2CrashCount_.end()) {
+        imageId2CrashCount_.emplace(imageId, 1);
+        return;
+    }
+    image->second += 1;
+    DP_CHECK_EXECUTE(image->second >= MAX_CONSECUTIVE_CRASH_COUNT, error = DPS_ERROR_IMAGE_PROC_FAILED);
 }
 
 bool DeferredPhotoResult::IsFatalError(DpsError error) const
