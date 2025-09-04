@@ -2014,10 +2014,8 @@ napi_value PhotoOutputNapi::IsPhotoQualityPrioritizationSupported(napi_env env, 
         return result;
     }
     if (photoOutputNapi != nullptr && photoOutputNapi->photoOutput_ != nullptr) {
-        bool isSupported = false;
-        int32_t ret = photoOutputNapi->photoOutput_->IsPhotoQualityPrioritizationSupported(
-            static_cast<PhotoOutput::PhotoQualityPrioritization>(quality), isSupported);
-        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, ret), result);
+        bool isSupported = photoOutputNapi->photoOutput_->IsPhotoQualityPrioritizationSupported(
+            static_cast<PhotoOutput::PhotoQualityPrioritization>(quality));
         napi_get_boolean(env, isSupported, &result);
     } else {
         MEDIA_ERR_LOG("PhotoOutputNapi::IsPhotoQualityPrioritizationSupported get native object fail");
