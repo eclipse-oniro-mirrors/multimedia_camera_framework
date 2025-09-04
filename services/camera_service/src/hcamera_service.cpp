@@ -437,7 +437,7 @@ int32_t HCameraService::UpdateDataShareAndTag(bool status, bool needPersistEnabl
             videoSessionForControlCenter_->SetBeautyValue(BeautyType::AUTO_TYPE, 0, false);
             videoSessionForControlCenter_->SetVirtualApertureValue(0, false);
         }
-    } else {
+    } else if (needPersistEnable) {
         MEDIA_INFO_LOG("UpdateDataShareAndTag no bundle, create info for new bundle.");
         CreateControlCenterDataShare(controlCenterMap, bundleName, status);
     }
