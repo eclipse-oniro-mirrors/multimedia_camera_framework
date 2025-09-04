@@ -98,6 +98,7 @@ public:
     static napi_value CreateDeferredPreviewOutput(napi_env env, Profile& profile);
     static bool IsPreviewOutput(napi_env env, napi_value obj);
     static napi_value AddDeferredSurface(napi_env env, napi_callback_info info);
+    static napi_value RemoveDeferredSurface(napi_env env, napi_callback_info info);
     static napi_value Start(napi_env env, napi_callback_info info);
     static napi_value Stop(napi_env env, napi_callback_info info);
     static napi_value Release(napi_env env, napi_callback_info info);

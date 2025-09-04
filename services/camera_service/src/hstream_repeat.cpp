@@ -563,6 +563,27 @@ int32_t HStreamRepeat::AddDeferredSurface(const sptr<OHOS::IBufferProducer>& pro
     return CAMERA_OK;
 }
 
+int32_t HStreamRepeat::RemoveDeferredSurface(const sptr<OHOS::IBufferProducer>& producer)
+{
+    MEDIA_INFO_LOG("HStreamRepeat::RemoveDeferredSurface called");
+    {
+        std::lock_guard<std::mutex> lock(producerLock_);
+        CHECK_RETURN_RET_ELOG(
+            producer == nullptr, CAMERA_INVALID_ARG, "HStreamRepeat::RemoveDeferredSurface producer is null");
+        producer_ = producer;
+    }
+    auto streamOperator = GetStreamOperator();
+    CHECK_RETURN_RET_ELOG(streamOperator == nullptr, CAMERA_INVALID_STATE,
+        "HStreamRepeat::RemoveDeferredSurface(), streamOperator_ == null");
+    MEDIA_INFO_LOG("HStreamRepeat::DetachBufferQueue start streamId:%{public}d, hdiStreamId:%{public}d",
+        GetFwkStreamId(), GetHdiStreamId());
+    CamRetCode rc = (CamRetCode)(streamOperator->DetachBufferQueue(GetHdiStreamId()));
+    CHECK_PRINT_ELOG(rc != HDI::Camera::V1_0::NO_ERROR,
+        "HStreamRepeat::DetachBufferQueue(), Failed to DetachBufferQueue %{public}d", rc);
+    MEDIA_INFO_LOG("HStreamRepeat::RemoveDeferredSurface end %{public}d", rc);
+    return CAMERA_OK;
+}
+
 int32_t HStreamRepeat::ForkSketchStreamRepeat(
     int32_t width, int32_t height, sptr<IRemoteObject>& sketchStream, float sketchRatio)
 {

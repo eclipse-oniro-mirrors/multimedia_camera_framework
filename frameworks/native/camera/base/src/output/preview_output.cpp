@@ -207,6 +207,16 @@ void PreviewOutput::AddDeferredSurface(sptr<Surface> surface)
     itemStream->AddDeferredSurface(surface->GetProducer());
 }
 
+void PreviewOutput::RemoveDeferredSurface(sptr<Surface> surface)
+{
+    MEDIA_INFO_LOG("PreviewOutput::RemoveDeferredSurface called");
+    CHECK_RETURN_ELOG(surface == nullptr, "PreviewOutput::RemoveDeferredSurface surface is null");
+    auto stream = GetStream();
+    CHECK_RETURN_ELOG(!stream, "PreviewOutput::RemoveDeferredSurface itemStream is null");
+    sptr<IStreamRepeat> itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
+    itemStream->RemoveDeferredSurface(surface->GetProducer());
+}
+
 int32_t PreviewOutput::Start()
 {
     std::lock_guard<std::mutex> lock(asyncOpMutex_);

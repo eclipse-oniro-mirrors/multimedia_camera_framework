@@ -107,6 +107,13 @@ public:
     void AddDeferredSurface(sptr<Surface> surface);
 
     /**
+     * @brief Remove delayed preview surface.
+     *
+     * @param surface to remove.
+     */
+    void RemoveDeferredSurface(sptr<Surface> surface);
+
+    /**
      * @brief Start preview stream.
      */
     int32_t Start();

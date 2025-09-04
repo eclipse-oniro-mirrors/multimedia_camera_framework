@@ -37,4 +37,5 @@ interface IStreamRepeat extends IStreamCommon {
   [ipccode 13] void SetCameraApi([in] unsigned int apiCompatibleVersion);
   [ipccode 14] void GetMirror([out] boolean isEnable);
   [ipccode 15] void UnSetCallback();
+  [ipccode 20] void RemoveDeferredSurface([in] IBufferProducer producer);
 }
