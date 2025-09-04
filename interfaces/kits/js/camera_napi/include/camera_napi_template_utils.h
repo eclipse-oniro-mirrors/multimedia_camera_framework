@@ -75,7 +75,7 @@ class ListenerTemplate {
 public:
     static napi_value On(napi_env env, napi_callback_info info)
     {
-        MEDIA_INFO_LOG("On is called");
+        MEDIA_DEBUG_LOG("On is called");
         CAMERA_SYNC_TRACE;
 
         T* targetInstance = nullptr;

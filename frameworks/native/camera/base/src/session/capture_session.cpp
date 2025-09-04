@@ -2777,7 +2777,7 @@ void CaptureSession::SetMode(SceneMode modeName)
 
 SceneMode CaptureSession::GetMode()
 {
-    MEDIA_INFO_LOG(
+    MEDIA_DEBUG_LOG(
         "CaptureSession GetMode currentMode_ = %{public}d, guestMode_ = %{public}d", currentMode_, guessMode_);
     CHECK_RETURN_RET(currentMode_ == SceneMode::NORMAL, guessMode_);
     return currentMode_;
@@ -4171,7 +4171,7 @@ bool CaptureSession::IsSetEnableMacro()
 
 bool CaptureSession::ValidateOutputProfile(Profile& outputProfile, CaptureOutputType outputType)
 {
-    MEDIA_INFO_LOG(
+    MEDIA_DEBUG_LOG(
         "CaptureSession::ValidateOutputProfile profile:w(%{public}d),h(%{public}d),f(%{public}d) outputType:%{public}d",
         outputProfile.size_.width, outputProfile.size_.height, outputProfile.format_, outputType);
     auto inputDevice = GetInputDevice();
