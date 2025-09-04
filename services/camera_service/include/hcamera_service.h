@@ -214,6 +214,16 @@ public:
     int32_t CallbackExit([[maybe_unused]] uint32_t code, [[maybe_unused]] int32_t result) override;
     int32_t SetUsePhysicalCameraOrientation(bool isUsed) override;
     bool GetUsePhysicalCameraOrientation();
+    inline void SetSessionForControlCenter(sptr<HCaptureSession> session)
+    {
+        std::lock_guard<std::mutex> lock(videoSessionMutex_);
+        videoSessionForControlCenter_ = session;
+    }
+    inline sptr<HCaptureSession> GetSessionForControlCenter()
+    {
+        std::lock_guard<std::mutex> lock(videoSessionMutex_);
+        return videoSessionForControlCenter_;
+    }
 protected:
     explicit HCameraService(sptr<HCameraHostManager> cameraHostManager);
     void OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId) override;
@@ -333,6 +343,7 @@ private:
     mutex muteCbMutex_;
     mutex serviceStatusMutex_;
     mutex controlCenterStatusMutex_;
+    mutex videoSessionMutex_;
     mutex usePhysicalCameraOrientationMutex_;
     recursive_mutex torchCbMutex_;
     recursive_mutex foldCbMutex_;
@@ -361,7 +372,7 @@ private:
     bool isFoldable = false;
     bool isFoldableInit = false;
     bool isControlCenterEnabled_ = false;
-    bool controlCenterPrecondition = true;
+    std::atomic<bool> controlCenterPrecondition = true;
     bool deviceControlCenterAbility = false;
     bool usePhysicalCameraOrientation_ = false;
     string preCameraId_;
