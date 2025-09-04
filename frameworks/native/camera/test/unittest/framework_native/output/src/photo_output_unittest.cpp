@@ -2103,5 +2103,32 @@ HWTEST_F(CameraPhotoOutputUnit, SetPhotoQualityPrioritization_001, TestSize.Leve
     input->Release();
     MEDIA_INFO_LOG("SetPhotoQualityPrioritization_001: END");
 }
+
+/*
+ * Feature: Framework
+ * Function: ReportCaptureEnhance
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test ReportCaptureEnhance
+ */
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_031, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+
+    EXPECT_NE(phtOutput->CancelCapture(), 0);
+    EXPECT_NE(phtOutput->ConfirmCapture(), 0);
+    bool forEnable = false;
+    EXPECT_NE(phtOutput->EnableAutoCloudImageEnhancement(forEnable), 0);
+}
 }
 }
