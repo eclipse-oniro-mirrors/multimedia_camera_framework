@@ -9829,5 +9829,36 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_061, TestSize.Level0)
     bool ret = CalculationHelper::AreVectorsEqual(a, b);
     EXPECT_EQ(ret, true);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test GetSupportedColorEffects.
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetSupportedColorEffects.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_072, TestSize.Level0)
+{
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(input, nullptr);
+ 
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+ 
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
+    ASSERT_NE(photo, nullptr);
+ 
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    std::vector<int32_t> sensitivityRange;
+    session->GetSupportedColorEffects();
+    EXPECT_NE(session->GetSensorSensitivityRange(sensitivityRange), 0);
+    uint32_t moduleType = 0;
+    EXPECT_NE(session->GetModuleType(moduleType), 0);
+}
 }
 }

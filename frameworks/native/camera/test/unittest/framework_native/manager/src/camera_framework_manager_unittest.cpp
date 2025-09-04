@@ -2528,5 +2528,28 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_077, Test
     sptr<UnifyMovieFileOutput> *pMovieFileOutput2 = nullptr;
     EXPECT_NE(cameraManager_->CreateMovieFileOutput(videoProfile, pMovieFileOutput2), 0);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test create input
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test create input
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_083, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_TRUE(cameras.size() != 0);
+    sptr<CameraInput> input = cameraManager_->CreateCameraInput(
+        CameraPosition::CAMERA_POSITION_BACK, CameraType::CAMERA_TYPE_DEFAULT);
+    EXPECT_NE(input, nullptr);
+    sptr<Surface> surface = nullptr;
+    int32_t width = 0;
+    int32_t height = 0;
+    EXPECT_EQ(cameraManager_->CreateVideoOutput(surface), nullptr);
+    EXPECT_EQ(cameraManager_->CreateCustomPreviewOutput(surface, width, height), nullptr);
+    cameraManager_->IsCameraMuteSupported();
+}
 }
 }

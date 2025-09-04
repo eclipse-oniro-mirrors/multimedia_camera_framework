@@ -1281,5 +1281,22 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_031, TestSize.Level0
     std::shared_ptr<OHOS::Camera::CameraMetadata> result = nullptr;
     EXPECT_EQ(metadatOutput->ProcessFocusTrackingRegion(result, region), false);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test GetSupportedMetadataObjectTypes
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetSupportedMetadataObjectTypes
+ */
+HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_032, TestSize.Level0)
+{
+    sptr<CaptureOutput> metadata = cameraManager_->CreateMetadataOutput();
+    ASSERT_NE(metadata, nullptr);
+    sptr<MetadataOutput> metadatOutput = (sptr<MetadataOutput>&)metadata;
+    vector<MetadataObjectType>res = metadatOutput->GetSupportedMetadataObjectTypes();
+    EXPECT_EQ(res.size(), 0);
+}
 }
 }
