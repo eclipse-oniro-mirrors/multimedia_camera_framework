@@ -2139,6 +2139,7 @@ void MovingPhotoListener::OnBufferArrival(sptr<SurfaceBuffer> buffer, int64_t ti
 
 void MovingPhotoListener::DrainOutImage(sptr<SessionDrainImageCallback> drainImageCallback)
 {
+    // Create drainImageManager to drainimage
     sptr<DrainImageManager> drainImageManager =
         new DrainImageManager(drainImageCallback, recorderBufferQueue_.Size() + postCacheFrameCount_);
     {
