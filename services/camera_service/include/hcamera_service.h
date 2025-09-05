@@ -181,6 +181,7 @@ public:
     int32_t Dump(int fd, const vector<u16string>& args) override;
     int DestroyStubObj() override;
     int SetListenerObject(const sptr<IRemoteObject>& object) override;
+    int UnSetListenerObject() override;
 
     CameraServiceStatus GetServiceStatus();
     void SetServiceStatus(CameraServiceStatus);

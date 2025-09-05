@@ -173,6 +173,15 @@ CameraManager::~CameraManager()
     MEDIA_INFO_LOG("CameraManager::~CameraManager() called");
     RemoveServiceProxyDeathRecipient();
     UnSubscribeSystemAbility();
+    auto serviceProxy = GetServiceProxy();
+    if (serviceProxy) {
+        serviceProxy->UnSetListenerObject();
+        UnSetCameraServiceCallback();
+        UnSetCameraMuteServiceCallback();
+        UnSetTorchServiceCallback();
+        UnSetFoldServiceCallback();
+        UnSetControlCenterStatusCallback();
+    }
 }
 
 int32_t CameraManager::CreateListenerObject()
