@@ -2468,6 +2468,13 @@ int HCameraService::SetListenerObject(const sptr<IRemoteObject>& object)
     return CAMERA_OK;
 }
 
+int HCameraService::UnSetListenerObject()
+{
+    pid_t pid = IPCSkeleton::GetCallingPid();
+    ClearCameraListenerByPid(pid); // Ensure cleanup before starting the listener if this is the second call
+    return CAMERA_OK;
+}
+
 int32_t HCameraService::SaveCurrentParamForRestore(std::string cameraId, RestoreParamTypeOhos restoreParamType,
     int activeTime, EffectParam effectParam, sptr<HCaptureSession> captureSession)
 {
