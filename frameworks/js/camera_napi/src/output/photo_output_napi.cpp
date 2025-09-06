@@ -983,13 +983,10 @@ napi_value PhotoOutputNapi::ConfirmCapture(napi_env env, napi_callback_info info
     napi_get_undefined(env, &result);
     PhotoOutputNapi* photoOutputNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&photoOutputNapi));
-    if (status != napi_ok || photoOutputNapi == nullptr) {
-        MEDIA_ERR_LOG("EnableMovingPhoto photoOutputNapi is null!");
-        return result;
+    if (status == napi_ok && photoOutputNapi != nullptr) {
+        int32_t retCode = photoOutputNapi->photoOutput_->ConfirmCapture();
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), result);
     }
-    CHECK_RETURN_RET_ELOG(photoOutputNapi->GetPhotoOutput() == nullptr, result,
-        "photoOutputNapi->GetPhotoOutput() is nullptr");
-    auto session = photoOutputNapi->GetPhotoOutput()->GetSession();
     return result;
 }
 
@@ -1260,6 +1257,8 @@ napi_value PhotoOutputNapi::EnableMovingPhoto(napi_env env, napi_callback_info i
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&photoOutputNapi));
     CHECK_RETURN_RET_ELOG(status != napi_ok || photoOutputNapi == nullptr, result,
         "PhotoOutputNapi::EnableMovingPhoto photoOutputNapi is null!");
+    CHECK_RETURN_RET_ELOG(photoOutputNapi->GetPhotoOutput() == nullptr, result,
+        "photoOutputNapi->GetPhotoOutput() is nullptr");
     auto session = photoOutputNapi->GetPhotoOutput()->GetSession();
     if (session != nullptr) {
         bool isEnableMovingPhoto;
