@@ -49,8 +49,11 @@ bool g_phoIsSupportedPortraitmode = false;
 sptr<CaptureOutput> CreatePreviewOutput()
 {
     previewProfile_ = {};
+    if (!cameraManager_) {
+        return nullptr;
+    }
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
-    if (!cameraManager_ || cameras.empty()) {
+    if (cameras.empty()) {
         return nullptr;
     }
     g_preIsSupportedPortraitmode = false;
@@ -86,8 +89,11 @@ sptr<CaptureOutput> CreatePreviewOutput()
 sptr<CaptureOutput> CreatePhotoOutput()
 {
     photoProfile_ = {};
+    if (!cameraManager_) {
+        return nullptr;
+    }
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
-    if (!cameraManager_ || cameras.empty()) {
+    if (cameras.empty()) {
         return nullptr;
     }
     g_phoIsSupportedPortraitmode = false;

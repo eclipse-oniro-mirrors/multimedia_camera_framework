@@ -42,8 +42,11 @@ namespace CameraStandard {
 sptr<CaptureOutput> CameraNightSessionUnit::CreatePreviewOutput()
 {
     previewProfile_ = {};
+    if (!cameraManager_) {
+        return nullptr;
+    }
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
-    if (!cameraManager_ || cameras.empty()) {
+    if (cameras.empty()) {
         return nullptr;
     }
     preIsSupportedNighitmode_ = false;
@@ -79,8 +82,11 @@ sptr<CaptureOutput> CameraNightSessionUnit::CreatePreviewOutput()
 sptr<CaptureOutput> CameraNightSessionUnit::CreatePhotoOutput()
 {
     photoProfile_ = {};
+    if (!cameraManager_) {
+        return nullptr;
+    }
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
-    if (!cameraManager_ || cameras.empty()) {
+    if (cameras.empty()) {
         return nullptr;
     }
     phoIsSupportedNighitmode_ = false;

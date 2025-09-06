@@ -72,8 +72,11 @@ void CameraSlowMotionSessionUnitTest::TearDown()
 sptr<CaptureOutput> CameraSlowMotionSessionUnitTest::CreatePreviewOutput()
 {
     previewProfile_ = {};
+    if (!cameraManager_) {
+        return nullptr;
+    }
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
-    if (!cameraManager_ || cameras.empty()) {
+    if (cameras.empty()) {
         return nullptr;
     }
     preIsSupportedSlowmode_ = false;
@@ -118,8 +121,11 @@ sptr<CaptureOutput> CameraSlowMotionSessionUnitTest::CreatePreviewOutput()
 sptr<CaptureOutput> CameraSlowMotionSessionUnitTest::CreateVideoOutput()
 {
     profile_ = {};
+    if (!cameraManager_) {
+        return nullptr;
+    }
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
-    if (!cameraManager_ || cameras.empty()) {
+    if (cameras.empty()) {
         return nullptr;
     }
     vidIsSupportedSlowmode_ = false;

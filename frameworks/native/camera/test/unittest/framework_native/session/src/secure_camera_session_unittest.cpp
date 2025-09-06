@@ -42,8 +42,11 @@ using namespace OHOS::HDI::Camera::V1_1;
 sptr<CaptureOutput> SecureCameraSessionUnitTest::CreatePreviewOutput()
 {
     previewProfile_ = {};
+    if (!cameraManager_) {
+        return nullptr;
+    }
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
-    if (!cameraManager_ || cameras.empty()) {
+    if (cameras.empty()) {
         return nullptr;
     }
     preIsSupportedSecuremode_ = false;
