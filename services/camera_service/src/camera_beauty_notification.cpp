@@ -52,6 +52,7 @@ void CameraBeautyNotification::PublishNotification(bool isRecordTimes)
 
     std::shared_ptr<CameraNotificationProxy> cameraNotificationProxy =
         CameraNotificationProxy::CreateCameraNotificationProxy();
+    CHECK_RETURN_ELOG(cameraNotificationProxy == nullptr, "cameraNotificationProxy is nullptr.");
     int32_t ret = cameraNotificationProxy->PublishBeautyNotification(isRecordTimes, beautyStatus, beautyTimes);
     MEDIA_INFO_LOG("CameraBeautyNotification::PublishNotification result = %{public}d", ret);
     isNotificationSuccess_ = (ret == CAMERA_OK);
@@ -69,6 +70,7 @@ void CameraBeautyNotification::CancelNotification()
 
     std::shared_ptr<CameraNotificationProxy> cameraNotificationProxy =
         CameraNotificationProxy::CreateCameraNotificationProxy();
+    CHECK_RETURN_ELOG(cameraNotificationProxy == nullptr, "cameraNotificationProxy is nullptr");
     int32_t ret = cameraNotificationProxy->CancelBeautyNotification();
     MEDIA_INFO_LOG("CameraBeautyNotification::CancelNotification result = %{public}d", ret);
 }
