@@ -71,8 +71,11 @@ void CameraPhotoOutputUnit::TearDown()
 sptr<CaptureOutput> CameraPhotoOutputUnit::CreatePhotoOutput()
 {
     std::vector<Profile> photoProfile = {};
+    if (!cameraManager_) {
+        return nullptr;
+    }
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
-    if (!cameraManager_ || cameras.empty()) {
+    if (cameras.empty()) {
         return nullptr;
     }
     auto outputCapability = cameraManager_->GetSupportedOutputCapability(cameras[0], 0);

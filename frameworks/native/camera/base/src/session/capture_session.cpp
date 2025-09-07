@@ -805,6 +805,8 @@ int32_t CaptureSession::ConfigurePhotoOutput(sptr<CaptureOutput>& output)
 int32_t CaptureSession::ConfigureVideoOutput(sptr<CaptureOutput>& output)
 {
     MEDIA_INFO_LOG("CaptureSession::ConfigureVideoOutput enter");
+    CHECK_RETURN_RET_ELOG(output == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
+        "CaptureSession::ConfigureVideoOutput output is nullptr");
     auto videoProfile = output->GetVideoProfile();
     if (output->IsTagSetted(CaptureOutput::DYNAMIC_PROFILE)) {
         CHECK_RETURN_RET_ELOG(videoProfile != nullptr, CameraErrorCode::SERVICE_FATL_ERROR,

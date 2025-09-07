@@ -168,8 +168,11 @@ void CameraPortraitSessionUnitTest::PortraitSessionBeautyParams(sptr<PortraitSes
 sptr<CaptureOutput> CameraPortraitSessionUnitTest::CreatePreviewOutput()
 {
     previewProfile_ = {};
+    if (!cameraManager_) {
+        return nullptr;
+    }
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
-    if (!cameraManager_ || cameras.empty()) {
+    if (cameras.empty()) {
         return nullptr;
     }
     preIsSupportedPortraitmode_ = false;
@@ -205,8 +208,11 @@ sptr<CaptureOutput> CameraPortraitSessionUnitTest::CreatePreviewOutput()
 sptr<CaptureOutput> CameraPortraitSessionUnitTest::CreatePhotoOutput()
 {
     photoProfile_ = {};
+    if (!cameraManager_) {
+        return nullptr;
+    }
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
-    if (!cameraManager_ || cameras.empty()) {
+    if (cameras.empty()) {
         return nullptr;
     }
     phoIsSupportedPortraitmode_ = false;

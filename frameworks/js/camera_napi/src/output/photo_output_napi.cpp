@@ -1257,6 +1257,8 @@ napi_value PhotoOutputNapi::EnableMovingPhoto(napi_env env, napi_callback_info i
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&photoOutputNapi));
     CHECK_RETURN_RET_ELOG(status != napi_ok || photoOutputNapi == nullptr, result,
         "PhotoOutputNapi::EnableMovingPhoto photoOutputNapi is null!");
+    CHECK_RETURN_RET_ELOG(photoOutputNapi->GetPhotoOutput() == nullptr, result,
+        "photoOutputNapi->GetPhotoOutput() is nullptr");
     auto session = photoOutputNapi->GetPhotoOutput()->GetSession();
     if (session != nullptr) {
         bool isEnableMovingPhoto;
