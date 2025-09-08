@@ -313,8 +313,9 @@ bool VideoEncoder::EncodeSurfaceBuffer(sptr<FrameRecord> frameRecord)
             "Buffer queue is empty, continue, cond ret: %{public}d", condRet);
         sptr<VideoCodecAVBufferInfo> bufferInfo = context_->outputBufferInfoQueue_.front();
         MEDIA_INFO_LOG("Out buffer count: %{public}u, size: %{public}d, flag: %{public}u, pts:%{public}" PRIu64 ", "
-            "timestamp:%{public}" PRIu64, context_->outputFrameCount_, bufferInfo->buffer->memory_->GetSize(),
-            bufferInfo->buffer->flag_, bufferInfo->buffer->pts_, frameRecord->GetTimeStamp());
+            "timestamp: %{public}" PRIu64 ", seqNum: %{public}d", context_->outputFrameCount_,
+            bufferInfo->buffer->memory_->GetSize(), bufferInfo->buffer->flag_, bufferInfo->buffer->pts_,
+            frameRecord->GetTimeStamp(), frameRecord->GetSurfaceBuffer()->GetSeqNum());
         context_->outputBufferInfoQueue_.pop();
         context_->outputFrameCount_++;
         lock.unlock();
