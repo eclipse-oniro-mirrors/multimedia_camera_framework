@@ -103,6 +103,7 @@ public:
     MOCK_METHOD0(UnSetCallback, int32_t());
     MOCK_METHOD0(Release, int32_t());
     MOCK_METHOD1(AddDeferredSurface, int32_t(const sptr<OHOS::IBufferProducer>& producer));
+    MOCK_METHOD1(RemoveDeferredSurface, int32_t(const sptr<OHOS::IBufferProducer>& producer));
     MOCK_METHOD4(ForkSketchStreamRepeat, int32_t(
         int32_t width, int32_t height, sptr<IRemoteObject>& sketchStream, float sketchRatio));
     MOCK_METHOD1(UpdateSketchRatio, int32_t(float sketchRatio));

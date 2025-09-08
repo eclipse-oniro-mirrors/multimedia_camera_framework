@@ -48,6 +48,11 @@ public:
         return 0;
     }
 
+    int32_t RemoveDeferredSurface(const sptr<IBufferProducer>& producer) override
+    {
+        return 0;
+    }
+
     int32_t ForkSketchStreamRepeat(
         int32_t width,
         int32_t height,
