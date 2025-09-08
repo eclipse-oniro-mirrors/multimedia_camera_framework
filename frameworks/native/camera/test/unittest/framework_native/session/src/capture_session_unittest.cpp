@@ -9860,5 +9860,246 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_072, TestSize.Level0)
     uint32_t moduleType = 0;
     EXPECT_NE(session->GetModuleType(moduleType), 0);
 }
+
+
+/*
+ * Feature: Framework
+ * Function: Test EnableControlCenter 
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test EnableControlCenter 
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_080, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    session->EnableControlCenter(true);
+    EXPECT_EQ(session->isControlCenterEnabled_, false);
+
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
+/*
+ * Feature: Framework
+ * Function: Test EnableKeyFrameReport
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test EnableKeyFrameReport
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_073, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    session->EnableKeyFrameReport(true);
+    session->EnableKeyFrameReport(false);
+
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test SetCameraSwitchRequestCallback with nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetCameraSwitchRequestCallback with nullptr
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_074, TestSize.Level0)
+{
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    std::shared_ptr<CameraSwitchRequestCallback> callback = nullptr;
+    session->SetCameraSwitchRequestCallback(callback);
+    EXPECT_EQ(session->GetCameraSwitchRequestCallback(), callback);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test SetCameraSwitchRequestCallback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetCameraSwitchRequestCallback
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_075, TestSize.Level0)
+{
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    auto callback =
+        std::make_shared<MockCameraSwitchRequestCallback>();
+    session->SetCameraSwitchRequestCallback(callback);
+    ASSERT_NE(session->GetCameraSwitchRequestCallback(), nullptr);
+    EXPECT_EQ(session->GetCameraSwitchRequestCallback(), callback);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test UnSetCameraSwitchRequestCallback after set callback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test UnSetCameraSwitchRequestCallback after set callback
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_076, TestSize.Level0)
+{
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    std::shared_ptr<CameraSwitchRequestCallback> callback =
+        std::make_shared<MockCameraSwitchRequestCallback>();
+    session->SetCameraSwitchRequestCallback(callback);
+    ASSERT_NE(session->GetCameraSwitchRequestCallback(), nullptr);
+    session->UnSetCameraSwitchRequestCallback();
+    EXPECT_EQ(session->GetCameraSwitchRequestCallback(), nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test OnPressureStatusChanged when the session is not nullptr and PressureCallback is nullptr
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OnPressureStatusChanged when the session is not nullptr and PressureCallback is nullptr
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_077, TestSize.Level0)
+{
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    std::shared_ptr<PressureStatusCallback> pressureStatusCallback = std::make_shared<PressureStatusCallback>(session);
+    EXPECT_NE(pressureStatusCallback->captureSession_, nullptr);
+    EXPECT_EQ(session->GetPressureCallback(), nullptr);
+    EXPECT_EQ(pressureStatusCallback->OnPressureStatusChanged(PressureStatus::SYSTEM_PRESSURE_NORMAL), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test OnPressureStatusChanged when the session and PressureCallback are not nullptr
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OnPressureStatusChanged when the session and PressureCallback are not nullptr
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_078, TestSize.Level0)
+{
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    std::shared_ptr<PressureStatusCallback> pressureStatusCallback = std::make_shared<PressureStatusCallback>(session);
+    EXPECT_NE(pressureStatusCallback->captureSession_, nullptr);
+
+    std::shared_ptr<PressureCallback> pressureCallback = std::make_shared<AppPressureStatusCallback>();
+    session->SetPressureCallback(pressureCallback);
+    EXPECT_NE(session->GetPressureCallback(), nullptr);
+
+    EXPECT_EQ(pressureStatusCallback->OnPressureStatusChanged(PressureStatus::SYSTEM_PRESSURE_NORMAL), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test  OnControlCenterEffectStatusChanged when session is nullptr.
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OnControlCenterEffectStatusChanged when session is nullptr.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_079, TestSize.Level0)
+{
+    std::shared_ptr<ControlCenterEffectStatusCallback> callback = std::make_shared<ControlCenterEffectStatusCallback>();
+    ControlCenterStatusInfo info = { ControlCenterEffectType::BEAUTY, true };
+    EXPECT_EQ(callback->OnControlCenterEffectStatusChanged(info), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test FoldCallback with OnFoldStatusChanged
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OnFoldStatusChanged when the session not is nullptr
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_081, TestSize.Level0)
+{
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    auto foldCallback = std::make_shared<FoldCallback>(session);
+    FoldStatus status = FoldStatus::UNKNOWN_FOLD;
+    auto ret = foldCallback->OnFoldStatusChanged(status);
+    EXPECT_EQ(ret, CAMERA_OPERATION_NOT_ALLOWED);
+
+    std::shared_ptr<FoldCallback> foldCallback1 = std::make_shared<FoldCallback>(nullptr);
+    EXPECT_EQ(foldCallback1->captureSession_, nullptr);
+}
 }
 }

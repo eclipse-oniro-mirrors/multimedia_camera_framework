@@ -127,6 +127,10 @@ class MockFeatureDetectionStatusCallback : public OHOS::CameraStandard::FeatureD
         return true;
     }
 };
+
+class MockCameraSwitchRequestCallback : public OHOS::CameraStandard::CameraSwitchRequestCallback {
+    void OnAppCameraSwitch(const std::string &cameraId) override {}
+};
 }
 }
 #endif
