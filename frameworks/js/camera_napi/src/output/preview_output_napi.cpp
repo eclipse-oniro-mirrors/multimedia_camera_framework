@@ -221,6 +221,7 @@ napi_value PreviewOutputNapi::Init(napi_env env, napi_value exports)
 
     napi_property_descriptor preview_output_props[] = {
         DECLARE_NAPI_FUNCTION("addDeferredSurface", AddDeferredSurface),
+        DECLARE_NAPI_FUNCTION("removeDeferredSurface", RemoveDeferredSurface),
         DECLARE_NAPI_FUNCTION("start", Start),
         DECLARE_NAPI_FUNCTION("stop", Stop),
         DECLARE_NAPI_FUNCTION("release", Release),
@@ -488,6 +489,42 @@ napi_value PreviewOutputNapi::AddDeferredSurface(napi_env env, napi_callback_inf
     CHECK_EXECUTE(previewProfile != nullptr,
         surface->SetUserData(CameraManager::surfaceFormat, std::to_string(previewProfile->GetCameraFormat())));
     previewOutputNapi->previewOutput_->AddDeferredSurface(surface);
+    return CameraNapiUtils::GetUndefinedValue(env);
+}
+
+napi_value PreviewOutputNapi::RemoveDeferredSurface(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("RemoveDeferredSurface is called");
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi RemoveDeferredSurface is called!");
+        return nullptr;
+    }
+ 
+    PreviewOutputNapi* previewOutputNapi;
+    std::string surfaceId;
+    CameraNapiParamParser jsParamParser(env, info, previewOutputNapi, surfaceId);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument")) {
+        MEDIA_ERR_LOG("CameraInputNapi::RemoveDeferredSurface invalid argument");
+        return nullptr;
+    }
+    
+    uint64_t iSurfaceId;
+    std::istringstream iss(surfaceId);
+    iss >> iSurfaceId;
+    sptr<Surface> surface = SurfaceUtils::GetInstance()->GetSurface(iSurfaceId);
+    if (!surface) {
+        surface = Media::ImageReceiver::getSurfaceById(surfaceId);
+    }
+    if (surface == nullptr) {
+        MEDIA_ERR_LOG("CameraInputNapi::RemoveDeferredSurface failed to get surface");
+        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "invalid argument surface get fail");
+        return nullptr;
+    }
+    auto previewProfile = previewOutputNapi->previewOutput_->GetPreviewProfile();
+    if (previewProfile != nullptr) {
+        surface->SetUserData(CameraManager::surfaceFormat, std::to_string(previewProfile->GetCameraFormat()));
+    }
+    previewOutputNapi->previewOutput_->RemoveDeferredSurface(surface);
     return CameraNapiUtils::GetUndefinedValue(env);
 }
 

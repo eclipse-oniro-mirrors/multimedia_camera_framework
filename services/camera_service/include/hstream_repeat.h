@@ -68,6 +68,7 @@ public:
     int32_t OnSketchStatusChanged(SketchStatus status);
     int32_t OnDeferredVideoEnhancementInfo(CaptureEndedInfoExt captureEndedInfo);
     int32_t AddDeferredSurface(const sptr<OHOS::IBufferProducer>& producer) override;
+    int32_t RemoveDeferredSurface(const sptr<OHOS::IBufferProducer>& producer) override;
     int32_t ForkSketchStreamRepeat(
         int32_t width, int32_t height, sptr<IRemoteObject>& sketchStream, float sketchRatio) override;
     int32_t RemoveSketchStreamRepeat() override;
