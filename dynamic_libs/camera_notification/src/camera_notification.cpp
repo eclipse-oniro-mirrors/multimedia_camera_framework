@@ -57,6 +57,7 @@ int32_t CameraNotification::PublishBeautyNotification(bool isRecordTimes, int32_
     request.SetSlotType(OHOS::Notification::NotificationConstant::SlotType::SOCIAL_COMMUNICATION);
     request.SetNotificationId(BEAUTY_NOTIFICATION_ID);
     request.SetGroupName(BEAUTY_NOTIFICATION_GROUP_NAME);
+    request.SetUnremovable(true);
     uint32_t baseFlag = BEAUTY_NOTIFICATION_CLOSE_SOUND_FLAG |
         BEAUTY_NOTIFICATION_CLOSE_VIBRATION_FLAG | BEAUTY_NOTIFICATION_LOCKSCREEN_FLAG;
 
