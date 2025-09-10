@@ -2554,11 +2554,19 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_083, Test
 
 /*
  * Feature: Framework
+<<<<<<< HEAD
  * Function: Test two calling methods for Create Camera Switch Session 
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
  * CaseDescription: Test two calling methods for Create Camera Switch Session 
+=======
+ * Function: Test two calling methods for CreateCameraSwitchSession 
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test two calling methods for CreateCameraSwitchSession 
+>>>>>>> b315bd9cb7ea77a874a7eff3c7cd5d8df2a14f56
  */
 HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_084, TestSize.Level0)
 {
