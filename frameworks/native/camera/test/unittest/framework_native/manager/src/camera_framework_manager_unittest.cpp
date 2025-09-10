@@ -2551,5 +2551,24 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_083, Test
     EXPECT_EQ(cameraManager_->CreateCustomPreviewOutput(surface, width, height), nullptr);
     cameraManager_->IsCameraMuteSupported();
 }
+
+/*
+ * Feature: Framework
+ * Function: Test two calling methods for Create Camera Switch Session 
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test two calling methods for Create Camera Switch Session 
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_084, TestSize.Level0)
+{
+    sptr<CameraSwitchSession> session1 = cameraManager_->CreateCameraSwitchSession();
+    ASSERT_NE(session1, nullptr);
+
+    sptr<CameraSwitchSession> session2 = nullptr;
+    int ret = cameraManager_->CreateCameraSwitchSession(&session2);
+    ASSERT_EQ(ret, CameraErrorCode::SUCCESS);
+    ASSERT_NE(session2, nullptr);
+}
 }
 }

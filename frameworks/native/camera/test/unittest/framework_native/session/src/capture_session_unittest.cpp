@@ -9861,7 +9861,6 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_072, TestSize.Level0)
     EXPECT_NE(session->GetModuleType(moduleType), 0);
 }
 
-
 /*
  * Feature: Framework
  * Function: Test EnableControlCenter 
@@ -9869,37 +9868,6 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_072, TestSize.Level0)
  * FunctionPoints: NA
  * EnvConditions: NA
  * CaseDescription: Test EnableControlCenter 
- */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unit_080, TestSize.Level0)
-{
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
-    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
-    ASSERT_NE(input, nullptr);
-    input->Open();
-    UpdateCameraOutputCapability();
-    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
-    ASSERT_NE(preview, nullptr);
-    EXPECT_EQ(session->BeginConfig(), 0);
-    EXPECT_EQ(session->AddInput(input), 0);
-    EXPECT_EQ(session->AddOutput(preview), 0);
-    EXPECT_EQ(session->CommitConfig(), 0);
-
-    session->EnableControlCenter(true);
-    EXPECT_EQ(session->isControlCenterEnabled_, false);
-
-    input->Close();
-    preview->Release();
-    input->Release();
-    session->Release();
-}
-/*
- * Feature: Framework
- * Function: Test EnableKeyFrameReport
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test EnableKeyFrameReport
  */
 HWTEST_F(CaptureSessionUnitTest, capture_session_unit_073, TestSize.Level0)
 {
@@ -9916,6 +9884,8 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_073, TestSize.Level0)
     EXPECT_EQ(session->AddOutput(preview), 0);
     EXPECT_EQ(session->CommitConfig(), 0);
 
+    session->EnableControlCenter(true);
+    EXPECT_EQ(session->isControlCenterEnabled_, false);
     session->EnableKeyFrameReport(true);
     session->EnableKeyFrameReport(false);
 
@@ -10082,7 +10052,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_079, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test OnFoldStatusChanged when the session not is nullptr
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unit_081, TestSize.Level0)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_080, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
@@ -10100,6 +10070,36 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_081, TestSize.Level0)
 
     std::shared_ptr<FoldCallback> foldCallback1 = std::make_shared<FoldCallback>(nullptr);
     EXPECT_EQ(foldCallback1->captureSession_, nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CameraSwitchCallback
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CameraSwitchCallback
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_081, TestSize.Level0)
+{
+    sptr<CameraSwitchSession> session = cameraManager_->CreateCameraSwitchSession();
+    ASSERT_NE(session, nullptr);
+ 
+    auto cameraSwitchCallback = std::make_shared<MockCameraSwitchCallback>();
+    EXPECT_NE(cameraSwitchCallback, nullptr);
+
+    session->SetCallback(cameraSwitchCallback);
+    EXPECT_EQ(session->GetCameraSwitchCallback(), cameraSwitchCallback);
+
+    auto cameraSwitchCallbackImpl = std::make_shared<CameraSwitchCallbackImpl>(session);
+    EXPECT_NE(cameraSwitchCallbackImpl, nullptr);
+
+    std::string cameraID = "";
+    CaptureSessionInfo captureSessionInfo{};
+    EXPECT_EQ(CAMERA_OK,cameraSwitchCallbackImpl->OnCameraActive(cameraID,true,captureSessionInfo));
+    EXPECT_EQ(CAMERA_OK,cameraSwitchCallbackImpl->OnCameraUnactive(cameraID));
+    EXPECT_EQ(CAMERA_OK,cameraSwitchCallbackImpl->OnCameraSwitch(cameraID,cameraID,true));
 }
 }
 }
