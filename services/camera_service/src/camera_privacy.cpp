@@ -167,7 +167,7 @@ void CameraPrivacy::StopUsingPermissionCallback()
     MEDIA_INFO_LOG("CameraPrivacy::StopUsingPermissionCallback is called, pid_: %{public}d", pid_);
     {
         std::lock_guard<std::mutex> lock(cameraUseCbMutex_);
-        int32_t res = PrivacyKit::StopUsingPermission(callerToken_, OHOS_PERMISSION_CAMERA);
+        int32_t res = PrivacyKit::StopUsingPermission(callerToken_, OHOS_PERMISSION_CAMERA, pid_);
         MEDIA_INFO_LOG("CameraPrivacy::StopUsingPermissionCallback res:%{public}d", res);
         CHECK_PRINT_ELOG(res != CAMERA_OK, "StopUsingPermissionCallback failed.");
         cameraUseCallbackPtr_ = nullptr;
