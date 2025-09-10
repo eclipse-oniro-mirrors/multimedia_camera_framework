@@ -131,7 +131,6 @@ public:
             currentFoldStatus = FoldStatusRosen::EXPAND);
         CHECK_RETURN_ELOG((cameraHostManager_ == nullptr || mLastFoldStatus == currentFoldStatus ||
             cameraDevice_ == nullptr), "no need set fold status");
-        cameraDevice_->UpdateCameraRotateAngle();
         if (foldScreenType[0] == '6' &&
             ((currentFoldStatus == FoldStatusRosen::HALF_FOLD && mLastFoldStatus == FoldStatusRosen::FOLDED) ||
                 (currentFoldStatus == FoldStatusRosen::EXPAND &&
@@ -157,6 +156,35 @@ private:
     std::string cameraId_;
     FoldStatusRosen mLastFoldStatus = OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus();
     int32_t position = OHOS_CAMERA_POSITION_BACK;
+};
+
+class HCameraDevice::DisplayModeListener : public OHOS::Rosen::DisplayManager::IDisplayModeListener {
+public:
+    explicit DisplayModeListener(sptr<HCameraDevice> cameraDevice, sptr<HCameraHostManager> &cameraHostManager,
+        const std::string cameraId)
+        : cameraDevice_(cameraDevice), cameraHostManager_(cameraHostManager), cameraId_(cameraId)
+    {
+        MEDIA_DEBUG_LOG("DisplayModeListener enter, cameraID: %{public}s", cameraId_.c_str());
+    }
+
+    virtual ~DisplayModeListener() = default;
+    using DisplayModeRosen = OHOS::Rosen::FoldDisplayMode;
+    // LCOV_EXCL_START
+    void OnDisplayModeChanged(DisplayModeRosen displayMode) override
+    {
+        DisplayModeRosen curDisplayMode = displayMode;
+        CHECK_RETURN_ELOG((cameraHostManager_ == nullptr || mLastDisplayMode == curDisplayMode ||
+            cameraDevice_ == nullptr), "no need set display status");
+        cameraDevice_->UpdateCameraRotateAngle();
+        mLastDisplayMode = curDisplayMode;
+        MEDIA_INFO_LOG("OnDisplayModeChanged, displayMode: %{public}d", displayMode);
+    }
+    // LCOV_EXCL_STOP
+private:
+    sptr<HCameraDevice> cameraDevice_;
+    sptr<HCameraHostManager> cameraHostManager_;
+    std::string cameraId_;
+    DisplayModeRosen mLastDisplayMode = DisplayModeRosen::UNKNOWN;
 };
 
 HCameraDevice::HCameraDevice(
@@ -816,7 +844,9 @@ void HCameraDevice::HandleFoldableDevice()
 {
     bool isFoldable = OHOS::Rosen::DisplayManager::GetInstance().IsFoldable();
     MEDIA_DEBUG_LOG("HCameraDevice::OpenDevice isFoldable is %d", isFoldable);
-    CHECK_EXECUTE(isFoldable, RegisterFoldStatusListener());
+    CHECK_RETURN(!isFoldable);
+    RegisterFoldStatusListener();
+    RegisterDisplayModeListener();
 }
 
 void HCameraDevice::ReleaseSessionBeforeCloseDevice()
@@ -838,6 +868,7 @@ int32_t HCameraDevice::CloseDevice()
     ReleaseSessionBeforeCloseDevice();
     bool isFoldable = OHOS::Rosen::DisplayManager::GetInstance().IsFoldable();
     CHECK_EXECUTE(isFoldable, UnregisterFoldStatusListener());
+    CHECK_EXECUTE(isFoldable, UnregisterDisplayModeListener());
     {
         std::lock_guard<std::mutex> lock(opMutex_);
         CHECK_RETURN_RET_ELOG(!isOpenedCameraDevice_.load(), CAMERA_OK,
@@ -1098,25 +1129,27 @@ bool HCameraDevice::IsPhysicalCameraOrientationVariable()
 void HCameraDevice::UpdateCameraRotateAngle()
 {
     bool isFoldable = OHOS::Rosen::DisplayManager::GetInstance().IsFoldable();
-    int32_t displayMode = static_cast<int32_t>(OHOS::Rosen::DisplayManager::GetInstance().GetFoldDisplayMode());
-    CHECK_RETURN(!isFoldable || deviceAbility_ == nullptr || displayMode == lastDisplayMode_);
-    lastDisplayMode_ = displayMode;
+    int32_t curDisplayMode = static_cast<int32_t>(OHOS::Rosen::DisplayManager::GetInstance().GetFoldDisplayMode());
+    MEDIA_INFO_LOG("HCameraDevice::UpdateCameraRotateAngle lastDisplayMode: %{public}d, curDisplayMode: %{public}d",
+        lastDisplayMode_, curDisplayMode);
+    CHECK_RETURN(!isFoldable || deviceAbility_ == nullptr || lastDisplayMode_ == curDisplayMode);
+    lastDisplayMode_ = curDisplayMode;
     if (system::GetParameter("const.system.sensor_correction_enable", "0") != "1"
         || !IsPhysicalCameraOrientationVariable()) {
         MEDIA_DEBUG_LOG("HCameraDevice::UpdateCameraRotateAngle variable orientation is closed");
         std::vector<int32_t> emptyVec;
         UpdateCameraRotateAngleAndZoom(emptyVec,
-            displayMode == static_cast<int32_t>(OHOS::Rosen::FoldDisplayMode::GLOBAL_FULL));
+            curDisplayMode == static_cast<int32_t>(OHOS::Rosen::FoldDisplayMode::GLOBAL_FULL));
         return;
     }
     int cameraOrientation = GetOriginalCameraOrientation();
     CHECK_RETURN(cameraOrientation == -1);
     int32_t truthCameraOrientation = -1;
     int32_t ret = GetCorrectedCameraOrientation(!usePhysicalCameraOrientation_, deviceAbility_,
-        truthCameraOrientation, displayMode);
+        truthCameraOrientation, curDisplayMode);
     CHECK_RETURN(ret != CAM_META_SUCCESS || truthCameraOrientation == -1);
     int32_t rotateDegree = (truthCameraOrientation - cameraOrientation + BASE_DEGREE) % BASE_DEGREE;
-    MEDIA_DEBUG_LOG("HCameraDevice::UpdateCameraRotateAngle cameraOrientation: %{public}d, truthCameraOrientation: "
+    MEDIA_INFO_LOG("HCameraDevice::UpdateCameraRotateAngle cameraOrientation: %{public}d, truthCameraOrientation: "
         "%{public}d, rotateDegree: %{public}d.", cameraOrientation, truthCameraOrientation, rotateDegree);
     std::shared_ptr<OHOS::Camera::CameraMetadata> settings = std::make_shared<OHOS::Camera::CameraMetadata>(1, 1);
     CHECK_EXECUTE(rotateDegree >= 0, settings->addEntry(OHOS_CONTROL_ROTATE_ANGLE, &rotateDegree, 1));
@@ -1400,6 +1433,28 @@ void HCameraDevice::UnregisterFoldStatusListener()
         MEDIA_DEBUG_LOG("HCameraDevice::UnregisterFoldStatusListener failed");
     }
     listener_ = nullptr;
+}
+
+void HCameraDevice::RegisterDisplayModeListener()
+{
+    std::lock_guard<std::mutex> lock(displayModeListenerMutex_);
+    displayModeListener_ = new DisplayModeListener(this, cameraHostManager_, cameraID_);
+    auto ret = OHOS::Rosen::DisplayManager::GetInstance().RegisterDisplayModeListener(displayModeListener_);
+    if (ret != OHOS::Rosen::DMError::DM_OK) {
+        MEDIA_DEBUG_LOG("HCameraDevice::RegisterDisplayModeListener failed");
+        displayModeListener_ = nullptr;
+    } else {
+        MEDIA_DEBUG_LOG("HCameraDevice::RegisterDisplayModeListener success");
+    }
+}
+
+void HCameraDevice::UnregisterDisplayModeListener()
+{
+    std::lock_guard<std::mutex> lock(displayModeListenerMutex_);
+    CHECK_RETURN_ELOG(displayModeListener_ == nullptr, "HCameraDevice::UnregisterDisplayModeListener listener is null");
+    auto ret = OHOS::Rosen::DisplayManager::GetInstance().UnregisterDisplayModeListener(displayModeListener_);
+    CHECK_PRINT_DLOG(ret != OHOS::Rosen::DMError::DM_OK, "HCameraDevice::UnregisterDisplayModeListener failed");
+    displayModeListener_ = nullptr;
 }
 
 int32_t HCameraDevice::EnableResult(const std::vector<int32_t> &results)
@@ -1799,7 +1854,10 @@ void HCameraDevice::RemoveResourceWhenHostDied()
     MEDIA_DEBUG_LOG("HCameraDevice::RemoveResourceWhenHostDied start");
     CAMERA_SYNC_TRACE;
     bool isFoldable = OHOS::Rosen::DisplayManager::GetInstance().IsFoldable();
-    CHECK_EXECUTE(isFoldable, UnregisterFoldStatusListener());
+    if (isFoldable) {
+        UnregisterFoldStatusListener();
+        UnregisterDisplayModeListener();
+    }
     HCameraDeviceManager::GetInstance()->RemoveDevice(cameraID_);
     if (cameraHostManager_) {
         cameraHostManager_->RemoveCameraDevice(cameraID_);
