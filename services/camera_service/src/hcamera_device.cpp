@@ -126,9 +126,27 @@ public:
     void OnFoldStatusChanged(FoldStatusRosen foldStatus) override
     {
         FoldStatusRosen currentFoldStatus = foldStatus;
+        auto foldScreenType = system::GetParameter("const.window.foldscreen.type", "");
+        CHECK_EXECUTE(currentFoldStatus == FoldStatusRosen::HALF_FOLD && foldScreenType[0] != '6',
+            currentFoldStatus = FoldStatusRosen::EXPAND);
         CHECK_RETURN_ELOG((cameraHostManager_ == nullptr || mLastFoldStatus == currentFoldStatus ||
             cameraDevice_ == nullptr), "no need set fold status");
         cameraDevice_->UpdateCameraRotateAngle();
+        if (foldScreenType[0] == '6' &&
+            ((currentFoldStatus == FoldStatusRosen::HALF_FOLD && mLastFoldStatus == FoldStatusRosen::FOLDED) ||
+                (currentFoldStatus == FoldStatusRosen::EXPAND &&
+                    mLastFoldStatus == FoldStatusRosen::FOLD_STATE_EXPAND_WITH_SECOND_HALF_FOLDED))) {
+            position = cameraDevice_->GetCameraPosition();
+        }
+        MEDIA_INFO_LOG("HCameraDevice::OnFoldStatusChanged %{public}s, %{public}d, %{public}d, %{public}d,",
+            foldScreenType.c_str(), position, mLastFoldStatus, currentFoldStatus);
+        if (foldScreenType[0] == '6' && position == OHOS_CAMERA_POSITION_FRONT &&
+            ((currentFoldStatus == FoldStatusRosen::EXPAND && mLastFoldStatus == FoldStatusRosen::HALF_FOLD) ||
+                (currentFoldStatus == FoldStatusRosen::EXPAND &&
+                    mLastFoldStatus == FoldStatusRosen::FOLD_STATE_EXPAND_WITH_SECOND_HALF_FOLDED))) {
+            MEDIA_DEBUG_LOG("HCameraDevice::OnFoldStatusChanged dialog start");
+            NoFrontCameraDialog::GetInstance()->ShowCameraDialog();
+        }
         mLastFoldStatus = currentFoldStatus;
         MEDIA_INFO_LOG("OnFoldStatusChanged, foldStatus: %{public}d", foldStatus);
         cameraHostManager_->NotifyDeviceStateChangeInfo(DeviceType::FOLD_TYPE, (int)currentFoldStatus);
@@ -137,7 +155,8 @@ private:
     sptr<HCameraDevice> cameraDevice_;
     sptr<HCameraHostManager> cameraHostManager_;
     std::string cameraId_;
-    FoldStatusRosen mLastFoldStatus = FoldStatusRosen::UNKNOWN;
+    FoldStatusRosen mLastFoldStatus = OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus();
+    int32_t position = OHOS_CAMERA_POSITION_BACK;
 };
 
 HCameraDevice::HCameraDevice(
