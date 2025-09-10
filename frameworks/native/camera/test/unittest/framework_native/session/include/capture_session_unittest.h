@@ -133,13 +133,8 @@ class MockCameraSwitchRequestCallback : public OHOS::CameraStandard::CameraSwitc
 };
 
 class MockCameraSwitchCallback : public OHOS::CameraStandard::CameraSwitchCallback {
-<<<<<<< HEAD
     void OnCameraActive(const std::string &cameraId, bool isRegisterCameraSwitchCallback, 
         const CaptureSessionInfo &sessionInfo)  override {};
-=======
-    void OnCameraActive(
-        const std::string &cameraId, bool isRegisterCameraSwitchCallback, const CaptureSessionInfo &sessionInfo)  override {};
->>>>>>> b315bd9cb7ea77a874a7eff3c7cd5d8df2a14f56
     void OnCameraUnactive(const std::string &cameraId) override {};
     void OnCameraSwitch(const std::string &oriCameraId, const std::string &destCameraId, bool status)  override {};
 };
