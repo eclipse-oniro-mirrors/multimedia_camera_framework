@@ -39,6 +39,7 @@ void NoFrontCameraAbilityConnection::OnAbilityConnectDone(const AppExecFwk::Elem
     data.WriteString16(u"parameters");
     nlohmann::json param;
     param["ability.want.params.uiExtensionType"] = "sysDialog/common";
+    param["focusState"] = 0;
     std::string paramStr = param.dump();
     data.WriteString16(Str8ToStr16(paramStr));
     int32_t sendRequestRet = remoteObject->SendRequest(IAbilityConnection::ON_ABILITY_CONNECT_DONE,
