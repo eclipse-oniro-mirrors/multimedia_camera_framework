@@ -22,6 +22,7 @@
 #include "camera_manager_for_sys.h"
 #include "camera_log.h"
 #include "icapture_session_callback.h"
+#include "session/cameraSwitch_session.h"
 
 namespace OHOS {
 namespace CameraStandard {
