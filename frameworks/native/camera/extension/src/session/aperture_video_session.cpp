@@ -44,6 +44,7 @@ int32_t ApertureVideoSession::CommitConfig()
     CHECK_RETURN_RET(ret != CameraErrorCode::SUCCESS, ret);
 
     auto ability = GetMetadata();
+    CHECK_RETURN_RET(!ability, CameraErrorCode::SUCCESS);
     auto item = GetMetadataItem(ability->get(), OHOS_ABILITY_VIDEO_STABILIZATION_MODES);
     // Not support stabilization, return success.
     CHECK_RETURN_RET(item == nullptr || item->count == 0, CameraErrorCode::SUCCESS);

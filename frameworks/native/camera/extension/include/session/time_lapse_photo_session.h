@@ -131,7 +131,7 @@ private:
     mutex cbMtx_;
     float luminationValue_;
     TryAEInfo info_;
-    uint32_t iso_;
+    std::atomic<uint32_t> iso_;
 };
 
 } // namespace CameraStandard
