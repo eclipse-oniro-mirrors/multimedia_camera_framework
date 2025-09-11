@@ -199,7 +199,9 @@ public:
 
 private:
     class FoldScreenListener;
+    class DisplayModeListener;
     sptr<FoldScreenListener> listener_;
+    sptr<DisplayModeListener> displayModeListener_;
     static const std::vector<std::tuple<uint32_t, std::string, DFX_UB_NAME>> reportTagInfos_;
 
     std::mutex opMutex_; // Lock the operations updateSettings_, streamOperator_, and hdiCameraDevice_.
@@ -254,6 +256,8 @@ private:
     void ReportMetadataDebugLog(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
     void RegisterFoldStatusListener();
     void UnregisterFoldStatusListener();
+    void RegisterDisplayModeListener();
+    void UnregisterDisplayModeListener();
     void CheckOnResultData(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult);
     bool CanOpenCamera();
     void ResetZoomTimer();
@@ -301,6 +305,7 @@ private:
     std::mutex sensorLock_;
     std::mutex cameraCloseListenerMutex_;
     std::mutex foldStateListenerMutex_;
+    std::mutex displayModeListenerMutex_;
     std::vector<wptr<IHCameraCloseListener>> cameraCloseListenerVec_;
     std::mutex cameraRotateStrategyInfosLock_;
     std::vector<CameraRotateStrategyInfo> cameraRotateStrategyInfos_;
