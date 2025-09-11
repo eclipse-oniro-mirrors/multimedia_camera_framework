@@ -199,11 +199,11 @@ void AudioCapturerSession::Release()
 {
     CAMERA_SYNC_TRACE;
     std::unique_lock<std::recursive_mutex> lock(audioCapturerMutex_);
+    CHECK_PRINT_ILOG(!audioCapturer_, "current audioCapturer is nullptr");
     if (audioCapturer_ != nullptr) {
         MEDIA_INFO_LOG("Audio capture Release enter");
         audioCapturer_->Release();
     }
-    audioCapturer_ = nullptr;
     MEDIA_INFO_LOG("Audio capture released");
 }
 
