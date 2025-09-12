@@ -69,6 +69,7 @@ bool SlowMotionSession::IsSlowMotionDetectionSupported()
     CHECK_RETURN_RET_ELOG(!inputDeviceInfo, false,
         "IsSlowMotionDetectionSupported camera deviceInfo is null");
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetCachedMetadata();
+    CHECK_RETURN_RET(!metadata, false);
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_MOTION_DETECTION_SUPPORT, &item);
     CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS, false,

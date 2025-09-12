@@ -59,7 +59,7 @@ private:
     std::unique_ptr<OfflineAudioEffectChain> offlineEffectChain_ = nullptr;
     AudioStreamInfo inputOptions_;
     AudioStreamInfo outputOptions_;
-    uint32_t oneUnprocessedSize_ = 0;
+    std::atomic<uint32_t> oneUnprocessedSize_ = 0;
     uint32_t oneProcessedSize_ = 0;
 };
 } // CameraStandard

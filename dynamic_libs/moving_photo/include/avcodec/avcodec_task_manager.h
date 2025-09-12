@@ -101,8 +101,8 @@ private:
     std::atomic<bool> isActive_ { true };
     map<int32_t, std::pair<int64_t, std::shared_ptr<PhotoAssetIntf>>> videoFdMap_;
     VideoCodecType videoCodecType_ = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
-    int64_t preBufferDuration_ = NANOSEC_RANGE;
-    int64_t postBufferDuration_ = NANOSEC_RANGE;
+    std::atomic<int64_t> preBufferDuration_ = NANOSEC_RANGE;
+    std::atomic<int64_t> postBufferDuration_ = NANOSEC_RANGE;
     uint32_t timerId_ = 0;
     shared_ptr<AudioDeferredProcess> audioDeferredProcess_ = nullptr;
     ColorSpace colorSpace_ = ColorSpace::COLOR_SPACE_UNKNOWN;
