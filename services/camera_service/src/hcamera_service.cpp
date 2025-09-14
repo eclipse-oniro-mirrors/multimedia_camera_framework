@@ -783,8 +783,9 @@ int32_t HCameraService::CreateCaptureSession(sptr<ICaptureSession>& session, int
 
 int32_t HCameraService::GetVideoSessionForControlCenter(sptr<ICaptureSession>& session)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
     MEDIA_INFO_LOG("HCameraService::GetVideoSessionForControlCenter");
+    CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION,
+        "GetVideoSessionForControlCenter HCameraService::CheckSystemApp fail");
     sptr<HCaptureSession> sessionForControlCenter = GetSessionForControlCenter();
     if (sessionForControlCenter == nullptr) {
         MEDIA_ERR_LOG("GetVideoSessionForControlCenter failed, session == nullptr.");
@@ -1319,7 +1320,9 @@ int32_t HCameraService::UnSetMuteCallback()
 
 int32_t HCameraService::SetControlCenterCallback(const sptr<IControlCenterStatusCallback>& callback)
 {
-    lock_guard<recursive_mutex> lock(torchCbMutex_);
+    CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION,
+        "SetControlCenterCallback HCameraService::CheckSystemApp fail");
+    lock_guard<mutex> lock(controlCenterStatusMutex_);
     pid_t pid = IPCSkeleton::GetCallingPid();
     MEDIA_INFO_LOG("HCameraService::SetControlCenterCallback pid = %{public}d", pid);
     CHECK_RETURN_RET_ELOG(callback == nullptr, CAMERA_INVALID_ARG,
@@ -1330,12 +1333,16 @@ int32_t HCameraService::SetControlCenterCallback(const sptr<IControlCenterStatus
 
 int32_t HCameraService::UnSetControlCenterStatusCallback()
 {
+    CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION,
+        "UnSetControlCenterStatusCallback HCameraService::CheckSystemApp fail");
     pid_t pid = IPCSkeleton::GetCallingPid();
     return UnSetControlCenterStatusCallback(pid);
 }
 
 int32_t HCameraService::UnSetControlCenterStatusCallback(pid_t pid)
 {
+    CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION,
+        "UnSetControlCenterStatusCallback HCameraService::CheckSystemApp fail");
     lock_guard<mutex> lock(controlCenterStatusMutex_);
     MEDIA_INFO_LOG("HCameraService::UnSetControlCenterStatusCallback pid = %{public}d, size = %{public}zu",
         pid, controlcenterCallbacks_.size());
@@ -1356,6 +1363,8 @@ int32_t HCameraService::UnSetControlCenterStatusCallback(pid_t pid)
 int32_t HCameraService::GetControlCenterStatus(bool& status)
 {
     MEDIA_INFO_LOG("HCameraService::GetControlCenterStatus");
+    CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION,
+        "GetControlCenterStatus HCameraService::CheckSystemApp fail");
     CHECK_RETURN_RET_ELOG(!controlCenterPrecondition, CAMERA_OK,
         "HCameraService::GetControlCenterStatus precondition false.");
     status = isControlCenterEnabled_;
