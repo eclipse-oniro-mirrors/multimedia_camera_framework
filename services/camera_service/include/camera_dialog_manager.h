@@ -23,18 +23,20 @@
 namespace OHOS {
 namespace CameraStandard {
 
-class NoFrontCameraDialog {
+class NoFrontCameraDialog : public std::enable_shared_from_this<NoFrontCameraDialog> {
 public:
     static std::shared_ptr<NoFrontCameraDialog> GetInstance();
 
     void DisconnectAbilityForDialog();
     void SetConnection(sptr<NoFrontCameraAbilityConnection> connection);
     void ShowCameraDialog();
+    void Reset();
 
     static std::mutex mutex_;
     std::mutex connectMutex_;
     static std::shared_ptr<NoFrontCameraDialog> instance_;
     sptr<NoFrontCameraAbilityConnection> connection_;
+    std::atomic<bool> isNeedShowDialog_{true};
 };
 } // namespace CameraStandard
 } // namespace OHOS
