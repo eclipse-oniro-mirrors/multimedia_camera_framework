@@ -207,7 +207,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_002, TestSize.Level1)
     EXPECT_TRUE(session->CheckFrameRateRangeWithCurrentFps(20, 20, 40, 40));
     EXPECT_TRUE(session->CheckFrameRateRangeWithCurrentFps(40, 40, 20, 20));
     EXPECT_TRUE(session->CheckFrameRateRangeWithCurrentFps(30, 30, 60, 60));
-
+    EXPECT_TRUE(session->CheckFrameRateRangeWithCurrentFps(50, 50, 100, 100));
 
 
 }
