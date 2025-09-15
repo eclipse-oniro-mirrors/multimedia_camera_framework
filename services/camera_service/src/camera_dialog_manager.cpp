@@ -17,10 +17,12 @@
 #include "extension_manager_client.h"
 #include "ipc_skeleton.h"
 #include "ipc_types.h"
+#include <thread>
 
 namespace OHOS {
 namespace CameraStandard {
 constexpr int32_t DEFAULT_USER_ID = -1;
+constexpr int32_t DIALOG_DURATION = 3000;
 
 std::shared_ptr<NoFrontCameraDialog> NoFrontCameraDialog::instance_ = nullptr;
 std::mutex NoFrontCameraDialog::mutex_;
@@ -36,9 +38,23 @@ std::shared_ptr<NoFrontCameraDialog> NoFrontCameraDialog::GetInstance()
     return instance_;
 }
 
+void NoFrontCameraDialog::Reset()
+{
+    isNeedShowDialog_.store(true);
+}
+
 void NoFrontCameraDialog::ShowCameraDialog()
 {
     MEDIA_INFO_LOG("HCameraDevice::ShowCameraDialog start");
+    CHECK_RETURN_ELOG(!isNeedShowDialog_.load(), "no need show dialog");
+    isNeedShowDialog_.store(false);
+    std::weak_ptr<NoFrontCameraDialog> weakThis(shared_from_this());
+    std::thread([weakThis]() {
+        std::this_thread::sleep_for(std::chrono::milliseconds(DIALOG_DURATION));
+        auto dialog = weakThis.lock();
+        CHECK_RETURN_ELOG(dialog == nullptr, "dialog is null");
+        dialog->Reset();
+    }).detach();
     AAFwk::Want want;
     std::string bundleName = "com.ohos.sceneboard";
     std::string abilityName = "com.ohos.sceneboard.systemdialog";
