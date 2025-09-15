@@ -659,6 +659,8 @@ int32_t HCaptureSession::LinkInputAndOutputs()
 
 int32_t HCaptureSession::GetVirtualApertureMetadate(std::vector<float>& virtualApertureMetadata)
 {
+    CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION,
+        "GetVirtualApertureMetadate HCameraService::CheckSystemApp fail");
     CHECK_RETURN_RET_ELOG(!controlCenterPrecondition, CAMERA_INVALID_STATE,
         "HCaptureSession::GetVirtualApertureMetadate controlCenterPrecondition false");
     MEDIA_INFO_LOG("HCaptureSession::GetVirtualApertureMetadate");
@@ -686,6 +688,8 @@ int32_t HCaptureSession::GetVirtualApertureMetadate(std::vector<float>& virtualA
 
 int32_t HCaptureSession::GetVirtualApertureValue(float& value)
 {
+    CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION,
+        "GetVirtualApertureValue HCameraService::CheckSystemApp fail");
     CHECK_RETURN_RET_ELOG(!controlCenterPrecondition, CAMERA_INVALID_STATE,
         "HCaptureSession::GetVirtualApertureValue controlCenterPrecondition false");
     MEDIA_INFO_LOG("HCaptureSession::GetVirtualApertureValue");
@@ -735,6 +739,8 @@ int32_t HCaptureSession::SetVirtualApertureValue(float value, bool needPersist)
 
 int32_t HCaptureSession::GetBeautyMetadata(std::vector<int32_t>& beautyApertureMetadata)
 {
+    CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION,
+        "GetBeautyMetadata HCameraService::CheckSystemApp fail");
     CHECK_RETURN_RET_ELOG(!controlCenterPrecondition, CAMERA_INVALID_STATE,
         "HCaptureSession::GetBeautyMetadata controlCenterPrecondition false");
     MEDIA_INFO_LOG("HCaptureSession::GetBeautyMetadata");
@@ -763,6 +769,8 @@ int32_t HCaptureSession::GetBeautyMetadata(std::vector<int32_t>& beautyApertureM
 
 int32_t HCaptureSession::GetBeautyRange(std::vector<int32_t>& range, int32_t type)
 {
+    CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION,
+        "GetBeautyRange HCameraService::CheckSystemApp fail");
     CHECK_RETURN_RET_ELOG(!controlCenterPrecondition, CAMERA_INVALID_STATE,
         "HCaptureSession::GetBeautyRange controlCenterPrecondition false");
     MEDIA_INFO_LOG("HCaptureSession::GetBeautyRange");
@@ -788,6 +796,8 @@ int32_t HCaptureSession::GetBeautyRange(std::vector<int32_t>& range, int32_t typ
 
 int32_t HCaptureSession::GetBeautyValue(int32_t type, int32_t& value)
 {
+    CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION,
+        "GetBeautyValue HCameraService::CheckSystemApp fail");
     CHECK_RETURN_RET_ELOG(!controlCenterPrecondition, CAMERA_INVALID_STATE,
         "HCaptureSession::GetBeautyValue controlCenterPrecondition false");
     MEDIA_INFO_LOG("HCaptureSession::GetBeautyValue");
@@ -839,6 +849,8 @@ int32_t HCaptureSession::SetBeautyValue(int32_t type, int32_t value, bool needPe
 
 int32_t HCaptureSession::SetVirtualApertureToDataShareHelper(float value)
 {
+    CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION,
+        "SetVirtualApertureToDataShareHelper HCameraService::CheckSystemApp fail");
     MEDIA_INFO_LOG("HCaptureSession::SetVirtualApertureToDataShareHelper value: %{public}f", value);
     lock_guard<mutex> lock(g_dataShareHelperMutex);
     CHECK_RETURN_RET_ELOG(cameraDataShareHelper_ == nullptr, CAMERA_ALLOC_ERROR,
@@ -868,6 +880,8 @@ int32_t HCaptureSession::SetVirtualApertureToDataShareHelper(float value)
 
 int32_t HCaptureSession::GetVirtualApertureFromDataShareHelper(float &value)
 {
+    CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION,
+        "GetVirtualApertureFromDataShareHelper HCameraService::CheckSystemApp fail");
     MEDIA_INFO_LOG("HCaptureSession::GetBeautyFromDataShareHelper");
     lock_guard<mutex> lock(g_dataShareHelperMutex);
     CHECK_RETURN_RET_ELOG(cameraDataShareHelper_ == nullptr, CAMERA_INVALID_ARG,
@@ -898,6 +912,8 @@ int32_t HCaptureSession::GetVirtualApertureFromDataShareHelper(float &value)
 
 int32_t HCaptureSession::SetBeautyToDataShareHelper(int32_t value)
 {
+    CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION,
+        "SetBeautyToDataShareHelper HCameraService::CheckSystemApp fail");
     MEDIA_INFO_LOG("HCaptureSession::SetBeautyToDataShareHelper value: %{public}d", value);
     lock_guard<mutex> lock(g_dataShareHelperMutex);
     CHECK_RETURN_RET_ELOG(cameraDataShareHelper_ == nullptr, CAMERA_ALLOC_ERROR,
@@ -926,6 +942,8 @@ int32_t HCaptureSession::SetBeautyToDataShareHelper(int32_t value)
 
 int32_t HCaptureSession::GetBeautyFromDataShareHelper(int32_t &value)
 {
+    CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION,
+        "GetBeautyFromDataShareHelper HCameraService::CheckSystemApp fail");
     MEDIA_INFO_LOG("HCaptureSession::GetBeautyFromDataShareHelper");
     lock_guard<mutex> lock(g_dataShareHelperMutex);
     CHECK_RETURN_RET_ELOG(cameraDataShareHelper_ == nullptr, CAMERA_INVALID_ARG,
