@@ -2675,7 +2675,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_089, Test
  * EnvConditions: NA
  * CaseDescription: Test GetCameraOutputStatus when service proxy is not nullptr
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_089, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_090, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_FALSE(cameras.empty());
