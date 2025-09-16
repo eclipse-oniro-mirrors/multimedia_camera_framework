@@ -110,7 +110,9 @@ void ListenerBase::ExecuteCallbackScopeSafe(
         MEDIA_ERR_LOG("ListenerBase::ExecuteCallbackScopeSafe env is nullptr");
         return;
     }
-    napi_open_handle_scope(env_, &scope_);
+    napi_status status = napi_open_handle_scope(env_, &scope_);
+    CHECK_RETURN_ELOG(
+        status != napi_ok || scope_ == nullptr, "ListenerBase::ExecuteCallbackScopeSafe napi_open_handle_scope fail");
 
     MEDIA_DEBUG_LOG("ListenerBase::ExecuteCallbackScopeSafe %{public}s is called", eventName.c_str());
     auto& callbackList = GetCallbackList(eventName);
@@ -138,7 +140,8 @@ void ListenerBase::ExecuteCallbackScopeSafe(
     MEDIA_DEBUG_LOG("ListenerBase::ExecuteCallbackScopeSafe, %s callback list size [%{public}zu]", eventName.c_str(),
         callbackList.refList.size());
 
-    napi_close_handle_scope(env_, scope_);
+    status = napi_close_handle_scope(env_, scope_);
+    CHECK_RETURN_ELOG(status != napi_ok, "ListenerBase::ExecuteCallbackScopeSafe napi_close_handle_scope fail");
 }
 
 void ListenerBase::RemoveAllCallbacks(const std::string eventName)
