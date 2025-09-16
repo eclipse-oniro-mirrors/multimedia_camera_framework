@@ -23,6 +23,14 @@
 namespace OHOS {
 namespace CameraStandard {
 
+class CameraManagerCallbackTest : public CameraManagerCallback {
+public:
+    CameraManagerCallbackTest() = default;
+    virtual ~CameraManagerCallbackTest() = default;
+    virtual void OnCameraStatusChanged(const CameraStatusInfo &cameraStatusInfo) const {};
+    virtual void OnFlashlightStatusChanged(const std::string &cameraID, const FlashStatus flashStatus) const {};
+};
+
 class CameraMuteListenerTest : public CameraMuteListener {
 public:
     CameraMuteListenerTest() = default;

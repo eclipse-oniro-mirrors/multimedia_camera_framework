@@ -2570,5 +2570,134 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_084, Test
     ASSERT_EQ(ret, CameraErrorCode::SUCCESS);
     ASSERT_NE(session2, nullptr);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test create video output when frames not exist
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test create video output when frames not exist
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_085, TestSize.Level0)
+{
+    int32_t width = VIDEO_DEFAULT_WIDTH;
+    int32_t height = VIDEO_DEFAULT_HEIGHT;
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    CameraFormat videoFormat = CAMERA_FORMAT_YUV_420_SP;
+    Size videoSize;
+    videoSize.width = width;
+    videoSize.height = height;
+    std::vector<int32_t> videoFramerates;
+    VideoProfile videoProfile = VideoProfile(videoFormat, videoSize, videoFramerates);
+    sptr<VideoOutput> video = cameraManager_->CreateVideoOutput(videoProfile, surface);
+    ASSERT_NE(video, nullptr);
+    video->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test UnregisterCameraMuteListener when unregister the last listener
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test UnregisterCameraMuteListener when unregister the last listener
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_086, TestSize.Level0)
+{
+    cameraManager_->GetCameraMuteListenerManager()->ClearListeners();
+    EXPECT_EQ(cameraManager_->GetCameraMuteListenerManager()->GetListenerCount(), 0);
+
+    std::shared_ptr<CameraMuteListener> listener = std::make_shared<CameraMuteListenerTest>();
+    cameraManager_->RegisterCameraMuteListener(listener);
+    EXPECT_EQ(cameraManager_->GetCameraMuteListenerManager()->GetListenerCount(), 1);
+
+    cameraManager_->UnregisterCameraMuteListener(listener);
+    EXPECT_EQ(cameraManager_->GetCameraMuteListenerManager()->GetListenerCount(), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameraManager SaveOldCameraId and GetOldCameraIdfromReal
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test cameraManager SaveOldCameraId and GetOldCameraIdfromReal
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_087, TestSize.Level0)
+{
+    std::string nocamera = "nocamera";
+    cameraManager_->SaveOldCameraId(nocamera, nocamera);
+    EXPECT_EQ(cameraManager_->GetOldCameraIdfromReal(nocamera), nocamera);
+    cameraManager_->realtoVirtual_.clear();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CreateCaptureSession with a single CaptureSession argument
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CreateCaptureSession with a single CaptureSession argument
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_088, TestSize.Level0)
+{
+    sptr<CaptureSession> session;
+    EXPECT_EQ(cameraManager_->CreateCaptureSession(&session), 0);
+    EXPECT_NE(session, nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetCameraOutputStatus when service proxy is not nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetCameraOutputStatus when service proxy is not nullptr
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_089, TestSize.Level0)
+{
+    int32_t status = 0;
+    cameraManager_->RefreshServiceProxy();
+    ASSERT_NE(cameraManager_->GetServiceProxy(), nullptr);
+    cameraManager_->GetCameraOutputStatus(0, status);
+
+    std::vector<sptr<CameraInfo>> getCameras = cameraManager_->GetCameras();
+    EXPECT_TRUE(getCameras.empty());
+}
+
+
+/*
+ * Feature: Framework
+ * Function: Test GetCameraOutputStatus when service proxy is not nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetCameraOutputStatus when service proxy is not nullptr
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_090, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
+
+    std::shared_ptr<CameraManagerCallback> statusCallback = std::make_shared<CameraManagerCallbackTest>();
+    cameraManager_->RegisterCameraStatusCallback(statusCallback);
+    EXPECT_GT(cameraManager_->GetCameraStatusListenerManager()->GetListenerCount(), 0);
+
+    std::shared_ptr<CameraMuteListener> muteListener = std::make_shared<CameraMuteListenerTest>();
+    cameraManager_->RegisterCameraMuteListener(muteListener);
+    EXPECT_GT(cameraManager_->GetCameraMuteListenerManager()->GetListenerCount(), 0);
+
+    std::shared_ptr<TorchListener> torchListener = std::make_shared<TorchListenerTest>();
+    cameraManager_->RegisterTorchListener(torchListener);
+    EXPECT_GT(cameraManager_->GetTorchServiceListenerManager()->GetListenerCount(), 0);
+
+    std::shared_ptr<FoldListener> foldListener = std::make_shared<FoldListenerTest>();
+    cameraManager_->RegisterFoldListener(foldListener);
+    EXPECT_GT(cameraManager_->GetFoldStatusListenerManager()->GetListenerCount(), 0);
+
+    cameraManager_->OnCameraServerAlive();
+    EXPECT_NE(cameraManager_->deathRecipient_, nullptr);
+}
 }
 }

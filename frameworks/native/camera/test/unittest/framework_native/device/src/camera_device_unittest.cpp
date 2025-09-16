@@ -182,5 +182,35 @@ HWTEST_F(CameraDeviceUnit, camera_device_unittest_007, TestSize.Level1)
     cameras[0]->lensEquivalentFocalLength_ = {15, 20};
     EXPECT_EQ(cameras[0]->GetLensEquivalentFocalLength(), cameras[0]->lensEquivalentFocalLength_);
 }
+
+
+/*
+ * Feature: Framework
+ * Function: Test cameradevice with GetZoomRatioRange when zoomRatioRange_ is empty
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetZoomRatioRange when zoomRatioRange_ is empty
+ */
+HWTEST_F(CameraDeviceUnit, camera_device_unittest_008, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    cameras[0]->zoomRatioRange_.clear();
+    EXPECT_EQ(cameras[0]->GetZoomRatioRange(), cameras[0]->zoomRatioRange_);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameradevice with GetisRetractable
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetisRetractable
+ */
+HWTEST_F(CameraDeviceUnit, camera_device_unittest_009, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    EXPECT_EQ(cameras[0]->GetisRetractable(), cameras[0]->isRetractable_);
+}
 }
 }
