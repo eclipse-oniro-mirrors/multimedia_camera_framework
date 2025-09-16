@@ -2698,7 +2698,8 @@ int32_t CaptureSession::SetSmoothZoom(float targetZoomRatio, uint32_t smoothZoom
         } else {
             std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata =
                 std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
-            changedMetadata->addEntry(OHOS_CONTROL_SMOOTH_ZOOM_RATIOS, &targetZoomRatio, 1);
+            bool addSmoothZoomOk = changedMetadata->addEntry(OHOS_CONTROL_SMOOTH_ZOOM_RATIOS, &targetZoomRatio, 1);
+            CHECK_PRINT_ELOG(!addSmoothZoomOk, "CaptureSession::SetSmoothZoom Failed to write smooth zoom ratios");
             OnSettingUpdated(changedMetadata);
             auto abilityContainer = GetCameraAbilityContainer();
             if (abilityContainer && supportSpecSearch_) {

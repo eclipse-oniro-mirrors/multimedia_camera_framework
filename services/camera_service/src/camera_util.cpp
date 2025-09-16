@@ -257,6 +257,7 @@ bool IsValidMode(int32_t opMode, std::shared_ptr<OHOS::Camera::CameraMetadata> c
         return true;
     }
     camera_metadata_item_t item;
+    CHECK_RETURN_RET_ELOG(cameraAbility == nullptr, false, "cameraAbility is nullptr.");
     int ret = Camera::FindCameraMetadataItem(cameraAbility->get(), OHOS_ABILITY_CAMERA_MODES, &item);
     if (ret != CAM_META_SUCCESS || item.count == 0) {
         MEDIA_ERR_LOG("Failed to find stream extend configuration in camera ability with return code %{public}d", ret);
@@ -301,7 +302,7 @@ void DumpMetadata(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraSettings)
             }
         } else if (item.data_type == META_TYPE_UINT32) {
             for (size_t k = 0; k < item.count; k++) {
-                MEDIA_DEBUG_LOG("tag index:%d, name:%s, value:%d", item.index, name, (uint32_t)(item.data.ui32[k]));
+                MEDIA_DEBUG_LOG("tag index:%d, name:%s, value:%u", item.index, name, (uint32_t)(item.data.ui32[k]));
             }
         } else if (item.data_type == META_TYPE_FLOAT) {
             for (size_t k = 0; k < item.count; k++) {

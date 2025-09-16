@@ -158,6 +158,7 @@ void HCameraSessionManager::RemoveSession(sptr<HCaptureSession> session)
     CHECK_RETURN(session == nullptr);
     std::lock_guard<std::mutex> lock(totalSessionMapMutex_);
     auto mapIt = totalSessionMap_.find(session->GetPid());
+    CHECK_RETURN_ELOG(mapIt == totalSessionMap_.end(), "RemoveSession failed: session with PID not found");
     CHECK_RETURN(mapIt == totalSessionMap_.end());
     auto& list = mapIt->second;
     for (auto listIt = list.begin(); listIt != list.end(); listIt++) {

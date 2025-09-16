@@ -99,6 +99,7 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> CopyMetadata(
 {
     CHECK_RETURN_RET_ELOG(srcMetadata == nullptr, nullptr, "CopyMetadata fail, src is null");
     auto metadataHeader = srcMetadata->get();
+    CHECK_RETURN_RET_ELOG(metadataHeader == nullptr, nullptr, "CopyMetadata fail, metadataHeader is null");
     auto newMetadata =
         std::make_shared<OHOS::Camera::CameraMetadata>(metadataHeader->item_capacity, metadataHeader->data_capacity);
     MergeMetadata(srcMetadata, newMetadata);
@@ -124,6 +125,7 @@ void DumpMetadataInfo(const std::shared_ptr<OHOS::Camera::CameraMetadata> srcMet
 {
     CHECK_RETURN_ELOG(srcMetadata == nullptr, "DumpMetadataInfo srcMetadata is null");
     auto metadataHeader = srcMetadata->get();
+    CHECK_RETURN_ELOG(metadataHeader == nullptr, "DumpMetadataInfo metadataHeader is null");
     uint32_t version = metadataHeader->version;
     uint32_t itemCount = metadataHeader->item_count;
     uint32_t dataCount = metadataHeader->data_count;

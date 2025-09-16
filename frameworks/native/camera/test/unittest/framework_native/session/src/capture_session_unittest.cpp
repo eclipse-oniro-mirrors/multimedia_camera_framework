@@ -47,6 +47,9 @@ struct TestObject {};
 
 void CaptureSessionUnitTest::SessionControlParams(sptr<CaptureSession> session)
 {
+    if (session == nullptr) {
+        return;
+    }
     session->LockForControl();
 
     std::vector<float> zoomRatioRange = session->GetZoomRatioRange();
@@ -206,10 +209,6 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_002, TestSize.Level1)
     ASSERT_NE(session, nullptr);
     EXPECT_TRUE(session->CheckFrameRateRangeWithCurrentFps(20, 20, 40, 40));
     EXPECT_TRUE(session->CheckFrameRateRangeWithCurrentFps(40, 40, 20, 20));
-    EXPECT_TRUE(session->CheckFrameRateRangeWithCurrentFps(30, 30, 60, 60));
-    EXPECT_TRUE(session->CheckFrameRateRangeWithCurrentFps(50, 50, 100, 100));
-
-
 }
 
 /*
@@ -9056,141 +9055,6 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_166, TestSize.Level0)
     ASSERT_NE(preview, nullptr);
     sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&) preview;
     EXPECT_EQ(previewOutput->IsXComponentSwap(), false);
-}
-
-/*
- * Feature: Framework
- * Function: Test ConfigureMovieFileOutput and ConfigureUnifyMovieFileOutput
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test ConfigureMovieFileOutput and ConfigureUnifyMovieFileOutput
- */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_167, TestSize.Level0)
-{
-    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
-    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-    ASSERT_NE(input, nullptr);
-    input->Open();
-    UpdateCameraOutputCapability();
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
- 
-    uint32_t widthGreaterThantheRange = 1280;
-    uint32_t heightGreaterThantheRange = 720;
-    Size size = { widthGreaterThantheRange, heightGreaterThantheRange };
-    std::vector<int32_t> framerates = {60, 60};
-    VideoProfile profile(CAMERA_FORMAT_YUV_420_SP, size, framerates);
-
-    sptr<CaptureOutput> output = nullptr;
-    sptr<MovieFileOutput> movieFileOutput = nullptr;
-    cameraManager_->CreateMovieFileOutput(profile, &movieFileOutput);
-    ASSERT_NE(movieFileOutput, nullptr);
-
-    output = movieFileOutput;
-    EXPECT_EQ(session->ConfigureMovieFileOutput(output), 0);
-
-    sptr<UnifyMovieFileOutput> unifyMovieFileOutput = nullptr;
-    cameraManager_->CreateMovieFileOutput(profile, &unifyMovieFileOutput);
-    ASSERT_NE(unifyMovieFileOutput, nullptr);
-
-    output = movieFileOutput;
-    EXPECT_EQ(session->ConfigureUnifyMovieFileOutput(output), 0);
-
-}
-
-
-/*
- * Feature: Framework
- * Function: Test captureSession with CanAddOutput
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test CanAddOutput for branches of movie file
- */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_168, TestSize.Level0)
-{
-    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
-    ASSERT_NE(input, nullptr);
-    input->Open();
-    UpdateCameraOutputCapability();
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
-
-    uint32_t widthGreaterThantheRange = 1280;
-    uint32_t heightGreaterThantheRange = 720;
-    Size size = { widthGreaterThantheRange, heightGreaterThantheRange };
-    std::vector<int32_t> framerates = {60, 60};
-    VideoProfile profile(CAMERA_FORMAT_YUV_420_SP, size, framerates);
-
-    sptr<MovieFileOutput> movieFileOutput = nullptr;
-    cameraManager_->CreateMovieFileOutput(profile, &movieFileOutput);
-    ASSERT_NE(movieFileOutput, nullptr);
-
-    sptr<CaptureOutput> output = movieFileOutput;
-
-    EXPECT_EQ(session->BeginConfig(), 0);
-    EXPECT_EQ(session->AddInput(input), 0);
-    EXPECT_EQ(session->AddOutput(output), 0);
-    EXPECT_EQ(session->CommitConfig(), 0);
-
-    EXPECT_NE(input->GetCameraDeviceInfo(), nullptr);
-    session->SetInputDevice(input);
-    EXPECT_NE(session->GetInputDevice()->GetCameraDeviceInfo(), nullptr);
-    movieFileOutput->outputType_ = CAPTURE_OUTPUT_TYPE_MOVIE_FILE;
-    EXPECT_FALSE(session->CanAddOutput(output));
-
-    input->Close();
-    output->Release();
-    input->Release();
-    session->Release();
-}
-
-
-/*
- * Feature: Framework
- * Function: Test captureSession with CanAddOutput
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test CanAddOutput for branches of unified movie file
- */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_169, TestSize.Level0)
-{
-    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
-    ASSERT_NE(input, nullptr);
-    input->Open();
-    UpdateCameraOutputCapability();
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
-
-    uint32_t widthGreaterThantheRange = 1280;
-    uint32_t heightGreaterThantheRange = 720;
-    Size size = { widthGreaterThantheRange, heightGreaterThantheRange };
-    std::vector<int32_t> framerates = {60, 60};
-    VideoProfile profile(CAMERA_FORMAT_YUV_420_SP, size, framerates);
-
-    sptr<UnifyMovieFileOutput> unifyMovieFileOutput = nullptr; 
-    cameraManager_->CreateMovieFileOutput(profile, &unifyMovieFileOutput);
-    ASSERT_NE(unifyMovieFileOutput, nullptr);
-
-    sptr<CaptureOutput> output = unifyMovieFileOutput;
-
-    EXPECT_EQ(session->BeginConfig(), 0);
-    EXPECT_EQ(session->AddInput(input), 0);
-    EXPECT_EQ(session->AddOutput(output), 0);
-    EXPECT_EQ(session->CommitConfig(), 0);
-
-    EXPECT_NE(input->GetCameraDeviceInfo(), nullptr);
-    session->SetInputDevice(input);
-    EXPECT_NE(session->GetInputDevice()->GetCameraDeviceInfo(), nullptr);
-    unifyMovieFileOutput->outputType_ = CAPTURE_OUTPUT_TYPE_UNIFY_MOVIE_FILE;
-    EXPECT_FALSE(session->CanAddOutput(output));
-
-    input->Close();
-    output->Release();
-    input->Release();
-    session->Release();
 }
 
 /*

@@ -43,8 +43,8 @@ private:
     sptr<CameraManager> cameraManager_ = nullptr;
     std::vector<Profile> previewProfile_;
     std::vector<Profile> photoProfile_;
-    bool preIsSupportedNighitmode_ = false;
-    bool phoIsSupportedNighitmode_ = false;
+    bool preIsSupportedNightmode_ = false;
+    bool phoIsSupportedNightmode_ = false;
 };
 
 }

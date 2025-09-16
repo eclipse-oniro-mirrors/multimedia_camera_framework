@@ -42,6 +42,8 @@ void PermissionStatusChangeCb::PermStateChangeCallback(Security::AccessToken::Pe
 {
     MEDIA_INFO_LOG("enter CameraUseStateChangeNotify permStateChangeType:%{public}d"
         " permissionName:%{public}s", result.permStateChangeType, result.permissionName.c_str());
+    CHECK_RETURN_ELOG(HCameraDeviceManager::GetInstance() == nullptr,
+        "PermissionStatusChangeCb::PermStateChangeCallback GetInstance is null");
     std::vector<sptr<HCameraDeviceHolder>> holders = HCameraDeviceManager::GetInstance()->GetActiveCameraHolders();
     for (auto holder : holders) {
         if (holder->GetAccessTokenId() != result.tokenID) {
@@ -65,6 +67,8 @@ void CameraUseStateChangeCb::StateChangeNotify(Security::AccessToken::AccessToke
 {
     MEDIA_INFO_LOG("CameraUseStateChangeCb::StateChangeNotify is called, isShowing: %{public}d", isShowing);
     std::vector<sptr<HCameraDeviceHolder>> holders = HCameraDeviceManager::GetInstance()->GetActiveCameraHolders();
+    CHECK_RETURN_ELOG(holders.empty(),
+        "CameraUseStateChangeCb::StateChangeNotify holders is null, skip.");
     for (auto holder : holders) {
         if (holder->GetAccessTokenId() != tokenId) {
             MEDIA_INFO_LOG("CameraUseStateChangeCb::StateChangeNotify not current tokenId, checking continue");
@@ -142,9 +146,9 @@ bool CameraPrivacy::AddCameraPermissionUsedRecord()
 {
     CAMERA_SYNC_TRACE;
 
-    int32_t successCout = 1;
+    int32_t successCount = 1;
     int32_t failCount = 0;
-    int32_t res = PrivacyKit::AddPermissionUsedRecord(callerToken_, OHOS_PERMISSION_CAMERA, successCout, failCount);
+    int32_t res = PrivacyKit::AddPermissionUsedRecord(callerToken_, OHOS_PERMISSION_CAMERA, successCount, failCount);
     MEDIA_INFO_LOG("CameraPrivacy::AddCameraPermissionUsedRecord res:%{public}d", res);
     CHECK_PRINT_ELOG(res != CAMERA_OK, "AddCameraPermissionUsedRecord failed.");
     return res == CAMERA_OK;

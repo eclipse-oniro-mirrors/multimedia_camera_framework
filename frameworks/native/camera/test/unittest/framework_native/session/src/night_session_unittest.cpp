@@ -49,14 +49,14 @@ sptr<CaptureOutput> CameraNightSessionUnit::CreatePreviewOutput()
     if (cameras.empty()) {
         return nullptr;
     }
-    preIsSupportedNighitmode_ = false;
+    preIsSupportedNightmode_ = false;
     for (sptr<CameraDevice> camDevice : cameras) {
         std::vector<SceneMode> modes = cameraManager_->GetSupportedModes(camDevice);
         if (find(modes.begin(), modes.end(), SceneMode::NIGHT) != modes.end()) {
-            preIsSupportedNighitmode_ = true;
+            preIsSupportedNightmode_ = true;
         }
 
-        if (!preIsSupportedNighitmode_) {
+        if (!preIsSupportedNightmode_) {
             continue;
         }
 
@@ -89,14 +89,14 @@ sptr<CaptureOutput> CameraNightSessionUnit::CreatePhotoOutput()
     if (cameras.empty()) {
         return nullptr;
     }
-    phoIsSupportedNighitmode_ = false;
+    phoIsSupportedNightmode_ = false;
     for (sptr<CameraDevice> camDevice : cameras) {
         std::vector<SceneMode> modes = cameraManager_->GetSupportedModes(camDevice);
         if (find(modes.begin(), modes.end(), SceneMode::NIGHT) != modes.end()) {
-            phoIsSupportedNighitmode_ = true;
+            phoIsSupportedNightmode_ = true;
         }
 
-        if (!phoIsSupportedNighitmode_) {
+        if (!phoIsSupportedNightmode_) {
             continue;
         }
 
@@ -167,7 +167,7 @@ HWTEST_F(CameraNightSessionUnit, night_session_unittest_001, TestSize.Level1)
     sptr<CaptureOutput> preview = CreatePreviewOutput();
     
     sptr<CaptureOutput> photo = CreatePhotoOutput();
-    if (!preIsSupportedNighitmode_ || !phoIsSupportedNighitmode_) {
+    if (!preIsSupportedNightmode_ || !phoIsSupportedNightmode_) {
         input->Close();
         GTEST_SKIP();
     }
@@ -227,13 +227,13 @@ HWTEST_F(CameraNightSessionUnit, night_session_unittest_002, TestSize.Level1)
     camInput->GetCameraDevice()->Open();
 
     sptr<CaptureOutput> preview = CreatePreviewOutput();
-    if (!preIsSupportedNighitmode_) {
+    if (!preIsSupportedNightmode_) {
         input->Close();
         GTEST_SKIP();
     }
     ASSERT_NE(preview, nullptr);
     sptr<CaptureOutput> photo = CreatePhotoOutput();
-    if (!phoIsSupportedNighitmode_) {
+    if (!phoIsSupportedNightmode_) {
         input->Close();
         GTEST_SKIP();
     }
@@ -292,7 +292,7 @@ HWTEST_F(CameraNightSessionUnit, night_session_unittest_003, TestSize.Level1)
     sptr<CaptureOutput> preview = CreatePreviewOutput();
 
     sptr<CaptureOutput> photo = CreatePhotoOutput();
-    if (!preIsSupportedNighitmode_ || !phoIsSupportedNighitmode_) {
+    if (!preIsSupportedNightmode_ || !phoIsSupportedNightmode_) {
         input->Close();
         GTEST_SKIP();
     }
@@ -350,13 +350,13 @@ HWTEST_F(CameraNightSessionUnit, night_session_unittest_004, TestSize.Level0)
     camInput->GetCameraDevice()->Open();
 
     sptr<CaptureOutput> preview = CreatePreviewOutput();
-    if (!preIsSupportedNighitmode_) {
+    if (!preIsSupportedNightmode_) {
         input->Close();
         GTEST_SKIP();
     }
     ASSERT_NE(preview, nullptr);
     sptr<CaptureOutput> photo = CreatePhotoOutput();
-    if (!phoIsSupportedNighitmode_) {
+    if (!phoIsSupportedNightmode_) {
         input->Close();
         GTEST_SKIP();
     }
