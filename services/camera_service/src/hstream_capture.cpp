@@ -196,39 +196,35 @@ int32_t HStreamCapture::LinkInput(wptr<HDI::Camera::V1_0::IStreamOperator> strea
 
 void HStreamCapture::FillingPictureExtendStreamInfos(StreamInfo_V1_1 &streamInfo, int32_t format)
 {
-    auto gainmapBufferQueue = gainmapBufferQueue_.Get();
     HDI::Camera::V1_1::ExtendedStreamInfo gainmapExtendedStreamInfo = {
         .type = static_cast<HDI::Camera::V1_1::ExtendedStreamInfoType>(HDI::Camera::V1_3::EXTENDED_STREAM_INFO_GAINMAP),
         .width = width_,
         .height = height_,
         .format = format, // HDR:NV21 P3:NV21
         .dataspace = dataSpace_, // HDR:BT2020_HLG_FULL P3:P3_FULL
-        .bufferQueue = gainmapBufferQueue,
+        .bufferQueue = gainmapBufferQueue_,
     };
-    auto deepBufferQueue = deepBufferQueue_.Get();
     HDI::Camera::V1_1::ExtendedStreamInfo deepExtendedStreamInfo = {
         .type = static_cast<HDI::Camera::V1_1::ExtendedStreamInfoType>(HDI::Camera::V1_3::EXTENDED_STREAM_INFO_DEPTH),
         .width = width_,
         .height = height_,
         .format = format,
-        .bufferQueue = deepBufferQueue,
+        .bufferQueue = deepBufferQueue_,
     };
-    auto exifBufferQueue = exifBufferQueue_.Get();
     HDI::Camera::V1_1::ExtendedStreamInfo exifExtendedStreamInfo = {
         .type = static_cast<HDI::Camera::V1_1::ExtendedStreamInfoType>(HDI::Camera::V1_3::EXTENDED_STREAM_INFO_EXIF),
         .width = width_,
         .height = height_,
         .format = format,
-        .bufferQueue = exifBufferQueue,
+        .bufferQueue = exifBufferQueue_,
     };
-    auto debugBufferQueue = debugBufferQueue_.Get();
     HDI::Camera::V1_1::ExtendedStreamInfo debugExtendedStreamInfo = {
         .type =
             static_cast<HDI::Camera::V1_1::ExtendedStreamInfoType>(HDI::Camera::V1_3::EXTENDED_STREAM_INFO_MAKER_INFO),
         .width = width_,
         .height = height_,
         .format = format,
-        .bufferQueue = debugBufferQueue,
+        .bufferQueue = debugBufferQueue_,
     };
     std::vector<HDI::Camera::V1_1::ExtendedStreamInfo> extendedStreams = { gainmapExtendedStreamInfo,
         deepExtendedStreamInfo, exifExtendedStreamInfo, debugExtendedStreamInfo };
@@ -238,7 +234,6 @@ void HStreamCapture::FillingPictureExtendStreamInfos(StreamInfo_V1_1 &streamInfo
 
 void HStreamCapture::FillingRawAndThumbnailStreamInfo(StreamInfo_V1_1 &streamInfo)
 {
-    auto rawBufferQueue = rawBufferQueue_.Get();
     if (rawDeliverySwitch_ && format_ != OHOS_CAMERA_FORMAT_DNG_XDRAW) {
         MEDIA_INFO_LOG("HStreamCapture::SetStreamInfo Set DNG info, streamId:%{public}d", GetFwkStreamId());
         HDI::Camera::V1_1::ExtendedStreamInfo extendedStreamInfo = {
@@ -247,7 +242,7 @@ void HStreamCapture::FillingRawAndThumbnailStreamInfo(StreamInfo_V1_1 &streamInf
             .height = height_,
             .format = streamInfo.v1_0.format_,
             .dataspace = 0,
-            .bufferQueue = rawBufferQueue,
+            .bufferQueue = rawBufferQueue_,
         };
         streamInfo.extendedStreamInfos.push_back(extendedStreamInfo);
     }
@@ -372,41 +367,41 @@ int32_t HStreamCapture::SetBufferProducerInfo(const std::string& bufName, const 
     std::string resStr = "";
     if (bufName == "rawImage") {
         if (producer != nullptr) {
-            rawBufferQueue_.Set(new BufferProducerSequenceable(producer));
+            rawBufferQueue_ = new BufferProducerSequenceable(producer);
         } else {
-            rawBufferQueue_.Set(nullptr);
+            rawBufferQueue_ = nullptr;
             resStr += bufName + ",";
         }
     }
     if (bufName == "gainmapImage") {
         if (producer != nullptr) {
-            gainmapBufferQueue_.Set(new BufferProducerSequenceable(producer));
+            gainmapBufferQueue_ = new BufferProducerSequenceable(producer);
         } else {
-            gainmapBufferQueue_.Set(nullptr);
+            gainmapBufferQueue_ = nullptr;
             resStr += bufName + ",";
         }
     }
     if (bufName == "deepImage") {
         if (producer != nullptr) {
-            deepBufferQueue_.Set(new BufferProducerSequenceable(producer));
+            deepBufferQueue_ = new BufferProducerSequenceable(producer);
         } else {
-            deepBufferQueue_.Set(nullptr);
+            deepBufferQueue_ = nullptr;
             resStr += bufName + ",";
         }
     }
     if (bufName == "exifImage") {
         if (producer != nullptr) {
-            exifBufferQueue_.Set(new BufferProducerSequenceable(producer));
+            exifBufferQueue_ = new BufferProducerSequenceable(producer);
         } else {
-            exifBufferQueue_.Set(nullptr);
+            exifBufferQueue_ = nullptr;
             resStr += bufName + ",";
         }
     }
     if (bufName == "debugImage") {
         if (producer != nullptr) {
-            debugBufferQueue_.Set(new BufferProducerSequenceable(producer));
+            debugBufferQueue_ = new BufferProducerSequenceable(producer);
         } else {
-            debugBufferQueue_.Set(nullptr);
+            debugBufferQueue_ = nullptr;
             resStr += bufName + ",";
         }
     }
