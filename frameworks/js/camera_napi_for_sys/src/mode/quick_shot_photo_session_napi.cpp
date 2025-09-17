@@ -49,7 +49,8 @@ void QuickShotPhotoSessionNapi::Init(napi_env env)
     std::vector<std::vector<napi_property_descriptor>> descriptors = { camera_process_props,
         CameraSessionForSysNapi::camera_process_sys_props, auto_exposure_props, color_effect_sys_props,
         color_management_props, effect_suggestion_sys_props, flash_props, CameraSessionForSysNapi::flash_sys_props,
-        focus_props, CameraSessionForSysNapi::focus_sys_props, zoom_props, CameraSessionForSysNapi::zoom_sys_props };
+        focus_props, CameraSessionForSysNapi::focus_sys_props, zoom_props, CameraSessionForSysNapi::zoom_sys_props,
+            beauty_sys_props };
 
     std::vector<napi_property_descriptor> quick_shot_photo_session_props =
         CameraNapiUtils::GetPropertyDescriptor(descriptors);
