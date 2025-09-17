@@ -57,6 +57,7 @@
 #include "camera_rotate_plugin.h"
 #endif
 #include "camera_dialog_manager.h"
+#include "tokenid_kit.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -115,8 +116,9 @@ const std::unordered_map<DeviceProtectionStatus, DeviceProtectionAbilityCallBack
 class HCameraDevice::FoldScreenListener : public OHOS::Rosen::DisplayManager::IFoldStatusListener {
 public:
     explicit FoldScreenListener(sptr<HCameraDevice> cameraDevice, sptr<HCameraHostManager> &cameraHostManager,
-        const std::string cameraId)
-        : cameraDevice_(cameraDevice), cameraHostManager_(cameraHostManager), cameraId_(cameraId)
+        const std::string cameraId, const bool isSystemApp)
+        : cameraDevice_(cameraDevice), cameraHostManager_(cameraHostManager), cameraId_(cameraId),
+        isSystemApp_(isSystemApp)
     {
         MEDIA_DEBUG_LOG("FoldScreenListener enter, cameraID: %{public}s", cameraId_.c_str());
     }
@@ -138,7 +140,7 @@ public:
             ((currentFoldStatus == FoldStatusRosen::EXPAND &&
             (mLastFoldStatus == FoldStatusRosen::HALF_FOLD || mLastFoldStatus == FoldStatusRosen::FOLDED)) ||
             (currentFoldStatus == FoldStatusRosen::EXPAND &&
-            mLastFoldStatus == FoldStatusRosen::FOLD_STATE_EXPAND_WITH_SECOND_HALF_FOLDED))) {
+            mLastFoldStatus == FoldStatusRosen::FOLD_STATE_EXPAND_WITH_SECOND_HALF_FOLDED)) && !isSystemApp_) {
             MEDIA_DEBUG_LOG("HCameraDevice::OnFoldStatusChanged dialog start");
             NoFrontCameraDialog::GetInstance()->ShowCameraDialog();
         }
@@ -150,6 +152,7 @@ private:
     sptr<HCameraDevice> cameraDevice_;
     sptr<HCameraHostManager> cameraHostManager_;
     std::string cameraId_;
+    bool isSystemApp_ = false;
     FoldStatusRosen mLastFoldStatus = OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus();
     int32_t position = OHOS_CAMERA_POSITION_BACK;
 };
@@ -1403,7 +1406,9 @@ void HCameraDevice::DebugLogForAeRegions(const std::shared_ptr<OHOS::Camera::Cam
 void HCameraDevice::RegisterFoldStatusListener()
 {
     std::lock_guard<std::mutex> lock(foldStateListenerMutex_);
-    listener_ = new FoldScreenListener(this, cameraHostManager_, cameraID_);
+    bool isSystemApp =
+        OHOS::Security::AccessToken::TokenIdKit::IsSystemAppByFullTokenID(IPCSkeleton::GetCallingFullTokenID());
+    listener_ = new FoldScreenListener(this, cameraHostManager_, cameraID_, isSystemApp);
     if (cameraHostManager_) {
         int foldStatus = static_cast<int>(OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus());
         if (foldStatus == static_cast<int>(FoldStatus::HALF_FOLD)) {
