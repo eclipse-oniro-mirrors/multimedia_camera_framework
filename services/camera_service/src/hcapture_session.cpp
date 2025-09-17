@@ -246,8 +246,8 @@ int32_t HCaptureSession::BeginConfig()
     CAMERA_SYNC_TRACE;
     int32_t errCode;
     MEDIA_INFO_LOG("HCaptureSession::BeginConfig prepare execute, sessionID: %{public}d", GetSessionId());
+    InitialHStreamOperator();
     stateMachine_.StateGuard([&errCode, this](const CaptureSessionState state) {
-        InitialHStreamOperator();
         DynamicConfigStream();
         bool isStateValid = stateMachine_.Transfer(CaptureSessionState::SESSION_CONFIG_INPROGRESS);
         if (!isStateValid) {
