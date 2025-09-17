@@ -194,7 +194,7 @@ int32_t HStreamCapture::LinkInput(wptr<HDI::Camera::V1_0::IStreamOperator> strea
     return HStreamCommon::LinkInput(streamOperator, cameraAbility);
 }
 
-void HStreamCapture::FillingPictureExtendStreamInfos(StreamInfo_V1_5 &streamInfo, int32_t format)
+void HStreamCapture::FillingPictureExtendStreamInfos(StreamInfo_V1_1 &streamInfo, int32_t format)
 {
     auto gainmapBufferQueue = gainmapBufferQueue_.Get();
     HDI::Camera::V1_1::ExtendedStreamInfo gainmapExtendedStreamInfo = {
