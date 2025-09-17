@@ -478,9 +478,6 @@ public:
 
     inline sptr<MetadataOutput> GetMetadataOutput()
     {
-        if (innerMetadataOutput == nullptr) {
-            return nullptr;
-        }
         return innerMetadataOutput.promote();
     }
 
