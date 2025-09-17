@@ -131,18 +131,14 @@ public:
             currentFoldStatus = FoldStatusRosen::EXPAND);
         CHECK_RETURN_ELOG((cameraHostManager_ == nullptr || mLastFoldStatus == currentFoldStatus ||
             cameraDevice_ == nullptr), "no need set fold status");
-        if (foldScreenType[0] == '6' &&
-            ((currentFoldStatus == FoldStatusRosen::HALF_FOLD && mLastFoldStatus == FoldStatusRosen::FOLDED) ||
-                (currentFoldStatus == FoldStatusRosen::EXPAND &&
-                    mLastFoldStatus == FoldStatusRosen::FOLD_STATE_EXPAND_WITH_SECOND_HALF_FOLDED))) {
-            position = cameraDevice_->GetCameraPosition();
-        }
+        position = cameraDevice_->GetCameraPosition();
         MEDIA_INFO_LOG("HCameraDevice::OnFoldStatusChanged %{public}s, %{public}d, %{public}d, %{public}d,",
             foldScreenType.c_str(), position, mLastFoldStatus, currentFoldStatus);
         if (foldScreenType[0] == '6' && position == OHOS_CAMERA_POSITION_FRONT &&
-            ((currentFoldStatus == FoldStatusRosen::EXPAND && mLastFoldStatus == FoldStatusRosen::HALF_FOLD) ||
-                (currentFoldStatus == FoldStatusRosen::EXPAND &&
-                    mLastFoldStatus == FoldStatusRosen::FOLD_STATE_EXPAND_WITH_SECOND_HALF_FOLDED))) {
+            ((currentFoldStatus == FoldStatusRosen::EXPAND &&
+            (mLastFoldStatus == FoldStatusRosen::HALF_FOLD || mLastFoldStatus == FoldStatusRosen::FOLDED)) ||
+            (currentFoldStatus == FoldStatusRosen::EXPAND &&
+            mLastFoldStatus == FoldStatusRosen::FOLD_STATE_EXPAND_WITH_SECOND_HALF_FOLDED))) {
             MEDIA_DEBUG_LOG("HCameraDevice::OnFoldStatusChanged dialog start");
             NoFrontCameraDialog::GetInstance()->ShowCameraDialog();
         }
