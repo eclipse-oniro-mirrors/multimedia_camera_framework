@@ -1,0 +1,164 @@
+diff --git a/dynamic_libs/moving_photo/src/moving_photo_adapter.cpp b/dynamic_libs/moving_photo/src/moving_photo_adapter.cpp
+index d59972b70..72a1c5ece 100644
+--- a/dynamic_libs/moving_photo/src/moving_photo_adapter.cpp
++++ b/dynamic_libs/moving_photo/src/moving_photo_adapter.cpp
+@@ -218,8 +218,8 @@ void MovingPhotoVideoCacheAdapter::OnDrainFrameRecord(sptr<FrameRecord> frame)
+ {
+     MEDIA_DEBUG_LOG("OnDrainFrameRecord start");
+     CHECK_RETURN_ELOG(frame == nullptr, "FrameRecord is null");
+-    CHECK_RETURN_ELOG(videoCache_ == nullptr, "CreateMovingPhotoVideoCache failed");
+     auto videoCache = videoCache_.promote();
++    CHECK_RETURN_ELOG(videoCache == nullptr, "OnDrainFrameRecord videoCache is null");
+     if (frame->IsIdle() && videoCache) {
+         videoCache->CacheFrame(frame);
+     } else if (frame->IsFinishCache() && videoCache) {
+@@ -235,19 +235,17 @@ void MovingPhotoVideoCacheAdapter::GetFrameCachedResult(std::vector<sptr<FrameRe
+     uint64_t taskName, int32_t rotation, int32_t captureId)
+ {
+     MEDIA_DEBUG_LOG("GetFrameCachedResult start");
+-    CHECK_RETURN_ELOG(videoCache_ == nullptr, "CreateMovingPhotoVideoCache failed");
+     auto videoCache = videoCache_.promote();
+-    if (videoCache) {
+-        videoCache_->GetFrameCachedResult(
+-            frameRecords,
+-            [videoCache](const std::vector<sptr<FrameRecord>> &lframeRecords, uint64_t ltimestamp, int32_t lrotation,
+-                         int32_t lcaptureId) {
+-                            videoCache->DoMuxerVideo(lframeRecords, ltimestamp, lrotation, lcaptureId);
+-                        },
+-            taskName,
+-            rotation,
+-            captureId);
+-    }
++    CHECK_RETURN_ELOG(videoCache == nullptr, "GetFrameCachedResult videoCache is null");
++    videoCache_->GetFrameCachedResult(
++        frameRecords,
++        [videoCache](const std::vector<sptr<FrameRecord>> &lframeRecords,
++            uint64_t ltimestamp,
++            int32_t lrotation,
++            int32_t lcaptureId) { videoCache->DoMuxerVideo(lframeRecords, ltimestamp, lrotation, lcaptureId); },
++        taskName,
++        rotation,
++        captureId);
+ }
+ 
+ extern "C" AvcodecTaskManagerIntf *createAVCodecTaskManagerIntf()
+diff --git a/interfaces/inner_api/native/camera/include/output/metadata_output.h b/interfaces/inner_api/native/camera/include/output/metadata_output.h
+index 018b89030..d5125ac09 100644
+--- a/interfaces/inner_api/native/camera/include/output/metadata_output.h
++++ b/interfaces/inner_api/native/camera/include/output/metadata_output.h
+@@ -478,9 +478,6 @@ public:
+ 
+     inline sptr<MetadataOutput> GetMetadataOutput()
+     {
+-        if (innerMetadataOutput == nullptr) {
+-            return nullptr;
+-        }
+         return innerMetadataOutput.promote();
+     }
+ 
+diff --git a/interfaces/inner_api/native/camera/include/output/photo_output.h b/interfaces/inner_api/native/camera/include/output/photo_output.h
+index 53759fc97..7503651d8 100644
+--- a/interfaces/inner_api/native/camera/include/output/photo_output.h
++++ b/interfaces/inner_api/native/camera/include/output/photo_output.h
+@@ -665,9 +665,6 @@ public:
+ 
+     inline sptr<PhotoOutput> GetPhotoOutput()
+     {
+-        if (innerPhotoOutput_ == nullptr) {
+-            return nullptr;
+-        }
+         return innerPhotoOutput_.promote();
+     }
+ 
+diff --git a/interfaces/inner_api/native/camera/include/output/photo_output_callback.h b/interfaces/inner_api/native/camera/include/output/photo_output_callback.h
+index 8ba715676..0f44f55c2 100644
+--- a/interfaces/inner_api/native/camera/include/output/photo_output_callback.h
++++ b/interfaces/inner_api/native/camera/include/output/photo_output_callback.h
+@@ -83,9 +83,6 @@ public:
+ 
+     inline sptr<PhotoOutput> GetPhotoOutput()
+     {
+-        if (innerPhotoOutput_ == nullptr) {
+-            return nullptr;
+-        }
+         return innerPhotoOutput_.promote();
+     }
+ 
+@@ -105,9 +102,6 @@ public:
+ 
+     inline sptr<PhotoOutput> GetPhotoOutput()
+     {
+-        if (innerPhotoOutput_ == nullptr) {
+-            return nullptr;
+-        }
+         return innerPhotoOutput_.promote();
+     }
+ 
+@@ -125,9 +119,6 @@ public:
+ 
+     inline sptr<PhotoOutput> GetPhotoOutput()
+     {
+-        if (innerPhotoOutput_ == nullptr) {
+-            return nullptr;
+-        }
+         return innerPhotoOutput_.promote();
+     }
+ 
+diff --git a/services/camera_service/include/hcapture_session.h b/services/camera_service/include/hcapture_session.h
+index 73d977f33..849efdf3a 100644
+--- a/services/camera_service/include/hcapture_session.h
++++ b/services/camera_service/include/hcapture_session.h
+@@ -188,9 +188,6 @@ public:
+     inline void SetStreamOperator(wptr<HStreamOperator> hStreamOperator)
+     {
+         std::lock_guard<std::mutex> lock(streamOperatorLock_);
+-        if (hStreamOperator == nullptr) {
+-            return;
+-        }
+         hStreamOperator_ = hStreamOperator;
+         auto hStreamOperatorSptr = hStreamOperator_.promote();
+         if (hStreamOperatorSptr != nullptr) {
+diff --git a/services/camera_service/src/camera_privacy.cpp b/services/camera_service/src/camera_privacy.cpp
+index f17756260..4ffbc1afb 100644
+--- a/services/camera_service/src/camera_privacy.cpp
++++ b/services/camera_service/src/camera_privacy.cpp
+@@ -31,7 +31,6 @@ using OHOS::Security::AccessToken::AccessTokenKit;
+ 
+ sptr<HStreamOperator> CastToSession(wptr<IStreamOperatorCallback> streamOpCb)
+ {
+-    CHECK_RETURN_RET_ELOG(streamOpCb == nullptr, nullptr, "streamOpCb is nullptr");
+     auto streamOpCbSptr = streamOpCb.promote();
+     CHECK_RETURN_RET_ELOG(streamOpCbSptr == nullptr, nullptr, "streamOpCbWptr is nullptr");
+ 
+diff --git a/services/camera_service/src/hstream_operator.cpp b/services/camera_service/src/hstream_operator.cpp
+index a1a9e87db..77a55587a 100644
+--- a/services/camera_service/src/hstream_operator.cpp
++++ b/services/camera_service/src/hstream_operator.cpp
+@@ -1608,22 +1608,18 @@ void SessionDrainImageCallback::OnDrainImage(sptr<FrameRecord> frame)
+         std::lock_guard<std::mutex> lock(mutex_);
+         frameCacheList_.push_back(frame);
+     }
+-    CHECK_RETURN_ELOG(movingPhotoVideoCacheIntf_ == nullptr, "movingPhotoVideoCacheIntf_ is null");
+     auto movingPhotoVideoCacheIntf = movingPhotoVideoCacheIntf_.promote();
+-    if (movingPhotoVideoCacheIntf) {
+-        movingPhotoVideoCacheIntf->OnDrainFrameRecord(frame);
+-    }
++    CHECK_RETURN_ELOG(movingPhotoVideoCacheIntf == nullptr, "movingPhotoVideoCacheIntf is null");
++    movingPhotoVideoCacheIntf->OnDrainFrameRecord(frame);
+ }
+ 
+ void SessionDrainImageCallback::OnDrainImageFinish(bool isFinished)
+ {
+     MEDIA_INFO_LOG("OnDrainImageFinish enter");
+-    CHECK_RETURN_ELOG(movingPhotoVideoCacheIntf_ == nullptr, "movingPhotoVideoCacheIntf_ is null");
+     auto movingPhotoVideoCacheIntf = movingPhotoVideoCacheIntf_.promote();
+-    if (movingPhotoVideoCacheIntf) {
+-        std::lock_guard<std::mutex> lock(mutex_);
+-        movingPhotoVideoCacheIntf->GetFrameCachedResult(frameCacheList_, timestamp_, rotation_, captureId_);
+-    }
++    CHECK_RETURN_ELOG(movingPhotoVideoCacheIntf == nullptr, "movingPhotoVideoCacheIntf is null");
++    std::lock_guard<std::mutex> lock(mutex_);
++    movingPhotoVideoCacheIntf->GetFrameCachedResult(frameCacheList_, timestamp_, rotation_, captureId_);
+     auto listener = listener_.promote();
+     CHECK_EXECUTE(listener && isFinished, listener->RemoveDrainImageManager(this));
+ }
