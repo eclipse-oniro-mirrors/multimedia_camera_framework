@@ -30,6 +30,7 @@
 #include "v1_2/istream_operator.h"
 #include "safe_map.h"
 #include "icamera_ipc_checker.h"
+#include "sp_holder.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -198,11 +199,11 @@ private:
     std::condition_variable testDelay_;
     std::mutex testDelayMutex_;
     sptr<BufferProducerSequenceable> thumbnailBufferQueue_;
-    sptr<BufferProducerSequenceable> rawBufferQueue_;
-    sptr<BufferProducerSequenceable> gainmapBufferQueue_;
-    sptr<BufferProducerSequenceable> deepBufferQueue_;
-    sptr<BufferProducerSequenceable> exifBufferQueue_;
-    sptr<BufferProducerSequenceable> debugBufferQueue_;
+    SpHolder<sptr<BufferProducerSequenceable>> rawBufferQueue_;
+    SpHolder<sptr<BufferProducerSequenceable>> gainmapBufferQueue_;
+    SpHolder<sptr<BufferProducerSequenceable>> deepBufferQueue_;
+    SpHolder<sptr<BufferProducerSequenceable>> exifBufferQueue_;
+    SpHolder<sptr<BufferProducerSequenceable>> debugBufferQueue_;
     int32_t modeName_;
     int32_t deferredPhotoSwitch_;
     int32_t deferredVideoSwitch_;
