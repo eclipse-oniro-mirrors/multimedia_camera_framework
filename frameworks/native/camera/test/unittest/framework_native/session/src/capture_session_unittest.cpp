@@ -10240,5 +10240,201 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_081, TestSize.Level0)
     EXPECT_EQ(CAMERA_OK,cameraSwitchCallbackImpl->OnCameraUnactive(cameraID));
     EXPECT_EQ(CAMERA_OK,cameraSwitchCallbackImpl->OnCameraSwitch(cameraID,cameraID,true));
 }
+
+/*
+ * Feature: Framework
+ * Function: Test SetFocusDistance when session is not configured
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetFocusDistance when session is not configured
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_082, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    int32_t ret = session->SetFocusDistance(0.5);
+    EXPECT_EQ(CameraErrorCode::SESSION_NOT_CONFIG, ret);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetSupportedFocusTrackingModes when session is not configured
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetSupportedFocusTrackingModes when session is not configured
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_083, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    std::vector<FocusTrackingMode> supportedFocusTrackingModes = {};
+    int32_t ret = session->GetSupportedFocusTrackingModes(supportedFocusTrackingModes);
+    EXPECT_EQ(CameraErrorCode::SESSION_NOT_CONFIG, ret);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test IsFocusTrackingModeSupported when session is not configured
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsFocusTrackingModeSupported when session is not configured
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_084, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    FocusTrackingMode focusTrackingMode = FocusTrackingMode::FOCUS_TRACKING_MODE_AUTO;
+    bool isSupported = true;
+
+    int32_t ret = session->IsFocusTrackingModeSupported(focusTrackingMode, isSupported);
+    EXPECT_EQ(CameraErrorCode::SESSION_NOT_CONFIG, ret);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetFocusTrackingMode when session is not configured
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetFocusTrackingMode when session is not configured
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_085, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    FocusTrackingMode focusTrackingMode;
+
+    int32_t ret = session->GetFocusTrackingMode(focusTrackingMode);
+    EXPECT_EQ(CameraErrorCode::SESSION_NOT_CONFIG, ret);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test SetFocusTrackingMode when session is not configured
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetFocusTrackingMode when session is not configured
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_086, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    FocusTrackingMode focusTrackingMode = FocusTrackingMode::FOCUS_TRACKING_MODE_AUTO;
+
+    int32_t ret = session->SetFocusTrackingMode(focusTrackingMode);
+    EXPECT_EQ(CameraErrorCode::SESSION_NOT_CONFIG, ret);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetFocusDistance when session is not configured
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetFocusDistance when session is not configured
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_087, TestSize.Level0)
+{
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(sessionForSys, nullptr);
+
+    float distance;
+    int32_t ret = sessionForSys->GetFocusDistance(distance);
+    EXPECT_EQ(CameraErrorCode::SESSION_NOT_CONFIG, ret);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test IsStageBoostSupported when session is not configured
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsStageBoostSupported when session is not configured
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_088, TestSize.Level0)
+{
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(sessionForSys, nullptr);
+
+    bool ret = sessionForSys->IsStageBoostSupported();
+    EXPECT_EQ(false, ret);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test EnableStageBoost when session is not configured
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test EnableStageBoost when session is not configured
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_089, TestSize.Level0)
+{
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(sessionForSys, nullptr);
+
+    bool isEnable = true;
+    int32_t ret = sessionForSys->EnableStageBoost(isEnable);
+    EXPECT_EQ(CameraErrorCode::OPERATION_NOT_ALLOWED, ret);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test SetFocusDistance after the session is configured
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetFocusDistance after the session is configured
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_090, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    session->LockForControl();
+    EXPECT_NE(session->changedMetadata_, nullptr);
+
+    int32_t ret = session->SetFocusDistance(0.5);
+    EXPECT_EQ(CameraErrorCode::SUCCESS, ret);
+    EXPECT_EQ(0.5, session->focusDistance_);
+
+    ret = session->SetFocusDistance(2);
+    EXPECT_EQ(CameraErrorCode::SUCCESS, ret);
+    EXPECT_EQ(1, session->focusDistance_);
+
+    ret = session->SetFocusDistance(-1);
+    EXPECT_EQ(CameraErrorCode::SUCCESS, ret);
+    EXPECT_EQ(0, session->focusDistance_);
+}
 }
 }

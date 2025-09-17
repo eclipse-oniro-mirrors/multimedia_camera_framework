@@ -1109,5 +1109,29 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_030, TestSize.Level0)
     previewOutput->ReportXComponentInfoEvent();
     EXPECT_NE(previewOutput, nullptr);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test RemoveDeferredSurface
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test RemoveDeferredSurface
+ */
+HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_031, TestSize.Level0)
+{
+    sptr<CaptureOutput> preview = CreatePreviewOutput();
+    ASSERT_NE(preview, nullptr);
+    sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput> &)preview;
+
+    sptr<Surface> surface = nullptr;
+    previewOutput->RemoveDeferredSurface(surface);
+    EXPECT_EQ(nullptr, surface);
+
+    surface = Surface::CreateSurfaceAsConsumer();
+    previewOutput->RemoveDeferredSurface(surface);
+    EXPECT_NE(nullptr, previewOutput->GetStream());
+    EXPECT_NE(nullptr, previewOutput);
+}
 }
 }
