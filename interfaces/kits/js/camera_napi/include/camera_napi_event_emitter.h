@@ -58,7 +58,7 @@ public:
     virtual napi_value UnregisterCallback(napi_env env, CameraNapiCallbackParamParser& jsCbParser) final
     {
         auto& callbackName = jsCbParser.GetCallbackName();
-        MEDIA_INFO_LOG("CameraNapiEventEmitter::UnregisterCallback functionName:%{public}s", callbackName.c_str());
+        MEDIA_DEBUG_LOG("CameraNapiEventEmitter::UnregisterCallback functionName:%{public}s", callbackName.c_str());
         auto emitterFunctions = GetEmitterFunctions();
         auto it = emitterFunctions.find(callbackName);
         if (it != emitterFunctions.end()) {

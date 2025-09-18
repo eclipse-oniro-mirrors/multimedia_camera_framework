@@ -66,7 +66,7 @@ void ListenerBase::SaveCallbackReference(const std::string eventName, napi_value
 void ListenerBase::RemoveCallbackRef(const std::string eventName, napi_value callback)
 {
     if (callback == nullptr) {
-        MEDIA_INFO_LOG("RemoveCallbackReference: js callback is nullptr, remove all callback reference");
+        MEDIA_DEBUG_LOG("RemoveCallbackReference: js callback is nullptr, remove all callback reference");
         RemoveAllCallbacks(eventName);
         return;
     }
@@ -149,7 +149,7 @@ void ListenerBase::RemoveAllCallbacks(const std::string eventName)
     auto& callbackList = GetCallbackList(eventName);
     std::lock_guard<std::mutex> lock(callbackList.listMutex);
     callbackList.refList.clear();
-    MEDIA_INFO_LOG("RemoveAllCallbacks: remove all js callbacks success");
+    MEDIA_DEBUG_LOG("RemoveAllCallbacks: remove all js callbacks success");
 }
 
 bool ListenerBase::IsEmpty(const std::string eventName) const
