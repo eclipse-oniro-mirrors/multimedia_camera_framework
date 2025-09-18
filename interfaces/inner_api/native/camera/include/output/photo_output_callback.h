@@ -83,9 +83,6 @@ public:
 
     inline sptr<PhotoOutput> GetPhotoOutput()
     {
-        if (innerPhotoOutput_ == nullptr) {
-            return nullptr;
-        }
         return innerPhotoOutput_.promote();
     }
 
@@ -105,9 +102,6 @@ public:
 
     inline sptr<PhotoOutput> GetPhotoOutput()
     {
-        if (innerPhotoOutput_ == nullptr) {
-            return nullptr;
-        }
         return innerPhotoOutput_.promote();
     }
 
@@ -125,9 +119,6 @@ public:
 
     inline sptr<PhotoOutput> GetPhotoOutput()
     {
-        if (innerPhotoOutput_ == nullptr) {
-            return nullptr;
-        }
         return innerPhotoOutput_.promote();
     }
 
