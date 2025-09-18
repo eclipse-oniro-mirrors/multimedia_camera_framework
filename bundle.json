@@ -68,9 +68,7 @@
               "battery_manager",
               "power_manager",
               "window_manager",
-              "memmgr"
-            ],
-            "third_party": [
+              "memmgr",
               "e2fsprogs"
             ]
         },
