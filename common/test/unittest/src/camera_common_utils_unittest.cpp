@@ -68,15 +68,15 @@ class AVSourceTest : public AVSource {
 public:
     AVSourceTest() {}
     ~AVSourceTest() {}
-    int32_t GetSourceFormat(OHOS::Media::Format &format)
+    int32_t GetSourceFormat(OHOS::Media::Format& format)
     {
         return 0;
     }
-    int32_t GetTrackFormat(OHOS::Media::Format &format, uint32_t trackIndex)
+    int32_t GetTrackFormat(OHOS::Media::Format& format, uint32_t trackIndex)
     {
         return 0;
     }
-    int32_t GetUserMeta(OHOS::Media::Format &format)
+    int32_t GetUserMeta(OHOS::Media::Format& format)
     {
         return 0;
     }
@@ -94,8 +94,8 @@ public:
 HWTEST_F(CameraCommonUtilsUnitTest, SimpleTimer_StartTask_Normal, TestSize.Level0)
 {
     SimpleTimer timer([]() {});
-    EXPECT_TRUE(timer.StartTask(1000));   // First start, should return true
-    EXPECT_FALSE(timer.StartTask(1000));  // Already running, should return false
+    EXPECT_TRUE(timer.StartTask(1000));  // First start, should return true
+    EXPECT_FALSE(timer.StartTask(1000)); // Already running, should return false
 }
 
 /*
@@ -109,9 +109,9 @@ HWTEST_F(CameraCommonUtilsUnitTest, SimpleTimer_StartTask_Normal, TestSize.Level
 HWTEST_F(CameraCommonUtilsUnitTest, SimpleTimer_StartTask_CancelAndRestart, TestSize.Level0)
 {
     SimpleTimer timer([]() {});
-    EXPECT_TRUE(timer.StartTask(1000));  // Start the timer
-    EXPECT_TRUE(timer.CancelTask());     // Cancel the timer
-    EXPECT_TRUE(timer.StartTask(1000));  // Restart, should return true
+    EXPECT_TRUE(timer.StartTask(1000)); // Start the timer
+    EXPECT_TRUE(timer.CancelTask());    // Cancel the timer
+    EXPECT_TRUE(timer.StartTask(1000)); // Restart, should return true
 }
 
 /*
@@ -125,8 +125,8 @@ HWTEST_F(CameraCommonUtilsUnitTest, SimpleTimer_StartTask_CancelAndRestart, Test
 HWTEST_F(CameraCommonUtilsUnitTest, SimpleTimer_CancelTask_Normal, TestSize.Level0)
 {
     SimpleTimer timer([]() {});
-    EXPECT_TRUE(timer.StartTask(1000));  // Start the timer
-    EXPECT_TRUE(timer.CancelTask());     // Cancel the timer, should return true
+    EXPECT_TRUE(timer.StartTask(1000)); // Start the timer
+    EXPECT_TRUE(timer.CancelTask());    // Cancel the timer, should return true
 }
 
 /*
@@ -140,7 +140,7 @@ HWTEST_F(CameraCommonUtilsUnitTest, SimpleTimer_CancelTask_Normal, TestSize.Leve
 HWTEST_F(CameraCommonUtilsUnitTest, SimpleTimer_CancelTask_WhenNotRunning, TestSize.Level0)
 {
     SimpleTimer timer([]() {});
-    EXPECT_FALSE(timer.CancelTask());  // Timer is not running, should return false
+    EXPECT_FALSE(timer.CancelTask()); // Timer is not running, should return false
 }
 
 /*
@@ -182,7 +182,7 @@ HWTEST_F(CameraCommonUtilsUnitTest, SimpleTimer_InterruptableSleep_Cancel, TestS
 
     // Start the task
     std::thread taskThread(&SimpleTimer::StartTask, &timer, 1000);
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));  // Wait for the task to enter the waiting state
+    std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Wait for the task to enter the waiting state
 
     // Cancel the task
     EXPECT_TRUE(timer.CancelTask());
@@ -211,7 +211,7 @@ HWTEST_F(CameraCommonUtilsUnitTest, SimpleTimer_Destructor_Normal, TestSize.Leve
         SimpleTimer timer([&]() { flag = true; });
         // Start the task
         EXPECT_TRUE(timer.StartTask(1000));
-    }  // Destructor automatically cleans up
+    } // Destructor automatically cleans up
 
     // Wait for the task to complete or be canceled
     std::this_thread::sleep_for(std::chrono::milliseconds(3000));
@@ -234,8 +234,8 @@ HWTEST_F(CameraCommonUtilsUnitTest, SimpleTimer_Destructor_CancelOnDestruct, Tes
     std::atomic<bool> flag(false);
     {
         SimpleTimer timer([&]() { flag = true; });
-        EXPECT_TRUE(timer.StartTask(1000));  // Start the task
-    }                                        // Destructor automatically cleans up
+        EXPECT_TRUE(timer.StartTask(1000)); // Start the task
+    }                                       // Destructor automatically cleans up
 
     // Wait for the task to complete
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -284,7 +284,7 @@ HWTEST_F(CameraCommonUtilsUnitTest, SimpleTimer_Timeout_Large, TestSize.Level0)
 
     // Start the task
     std::thread taskThread(&SimpleTimer::StartTask, &timer, 10000);
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));  // Wait for the task to enter the waiting state
+    std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Wait for the task to enter the waiting state
 
     // Cancel the task
     EXPECT_TRUE(timer.CancelTask());
@@ -436,7 +436,7 @@ HWTEST_F(CameraCommonUtilsUnitTest, CameraDynamicLoader_TestGetFunction, TestSiz
     EXPECT_TRUE(dynamiclib->IsLoaded());
 
     // Get the function
-    void *function = dynamiclib->GetFunction("createPhotoAssetIntf");
+    void* function = dynamiclib->GetFunction("createPhotoAssetIntf");
     EXPECT_NE(function, nullptr);
 }
 
@@ -458,7 +458,7 @@ HWTEST_F(CameraCommonUtilsUnitTest, CameraDynamicLoader_TestErrorCases, TestSize
     // Test getting a non-existent function
     auto validDynamiclib = CameraDynamicLoader::GetDynamiclib(MEDIA_LIB_SO);
     EXPECT_NE(validDynamiclib, nullptr);
-    void *function = validDynamiclib->GetFunction("__camera_nonexistent_function");
+    void* function = validDynamiclib->GetFunction("__camera_nonexistent_function");
     EXPECT_EQ(function, nullptr);
 }
 
@@ -968,7 +968,6 @@ HWTEST_F(CameraCommonUtilsUnitTest, CameraImageSourceProxy_Test_002, TestSize.Le
     MEDIA_INFO_LOG("CameraImageSourceProxy_Test_002 End");
 }
 
-
 /*
  * Feature: ImageSourceProxy
  * Function: Test ImageSource
@@ -1148,6 +1147,25 @@ HWTEST_F(CameraCommonUtilsUnitTest, CameraMediaManagerProxy_Test_005, TestSize.L
     MEDIA_INFO_LOG("CameraMediaManagerProxy_Test_005 End");
 }
 
+ 
+/*
+ * Feature: MediaManagerProxy
+ * Function: Test MpegGetDuration
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test MpegGetDuration
+ */
+HWTEST_F(CameraCommonUtilsUnitTest, CameraMediaManagerProxy_Test_006, TestSize.Level0)
+{
+    MEDIA_INFO_LOG("CameraMediaManagerProxy_Test_005 Start");
+    auto mediaManagerProxy = DeferredProcessing::MediaManagerProxy::CreateMediaManagerProxy();
+    ASSERT_NE(mediaManagerProxy, nullptr);
+    uint32_t duration = mediaManagerProxy->MpegGetDuration();
+    EXPECT_EQ(duration, 0);
+    MEDIA_INFO_LOG("CameraMediaManagerProxy_Test_006 End");
+}
+
 /*
  * Feature: MovingPhotoVideoCacheProxy
  * Function: Test GetFrameCachedResult
@@ -1174,12 +1192,10 @@ HWTEST_F(CameraCommonUtilsUnitTest, CameraMovingPhotoProxy_Test_001, TestSize.Le
 
     VideoCodecType type = static_cast<VideoCodecType>(0);
     int32_t colorSpace = 0;
-    retCode = aVCodecTaskManagerProxy->CreateAvcodecTaskManager(
-        audioCapturerSessionProxy, type, colorSpace);
+    retCode = aVCodecTaskManagerProxy->CreateAvcodecTaskManager(audioCapturerSessionProxy, type, colorSpace);
     EXPECT_EQ(retCode, 0);
 
-    retCode = movingPhotoVideoCacheProxy->CreateMovingPhotoVideoCache(
-        aVCodecTaskManagerProxy);
+    retCode = movingPhotoVideoCacheProxy->CreateMovingPhotoVideoCache(aVCodecTaskManagerProxy);
     EXPECT_EQ(retCode, 0);
     std::vector<sptr<FrameRecord>> frameRecords;
     uint64_t taskName = 0;
@@ -1221,12 +1237,10 @@ HWTEST_F(CameraCommonUtilsUnitTest, CameraMovingPhotoProxy_Test_002, TestSize.Le
 
     VideoCodecType type = static_cast<VideoCodecType>(0);
     int32_t colorSpace = 0;
-    retCode = aVCodecTaskManagerProxy->CreateAvcodecTaskManager(
-        audioCapturerSessionProxy, type, colorSpace);
+    retCode = aVCodecTaskManagerProxy->CreateAvcodecTaskManager(audioCapturerSessionProxy, type, colorSpace);
     EXPECT_EQ(retCode, 0);
 
-    int32_t ret = movingPhotoVideoCacheProxy->CreateMovingPhotoVideoCache(
-        aVCodecTaskManagerProxy);
+    int32_t ret = movingPhotoVideoCacheProxy->CreateMovingPhotoVideoCache(aVCodecTaskManagerProxy);
     EXPECT_EQ(ret, 0);
     sptr<SurfaceBuffer> videoBuffer = SurfaceBuffer::Create();
     int64_t timestamp = 0;
@@ -1289,8 +1303,7 @@ HWTEST_F(CameraCommonUtilsUnitTest, CameraMovingPhotoProxy_Test_004, TestSize.Le
     int32_t retCode = audioCapturerSessionProxy->CreateAudioSession();
     EXPECT_EQ(retCode, 0);
     int32_t colorSpace = 0;
-    retCode = aVCodecTaskManagerProxy->CreateAvcodecTaskManager(
-        audioCapturerSessionProxy, type, colorSpace);
+    retCode = aVCodecTaskManagerProxy->CreateAvcodecTaskManager(audioCapturerSessionProxy, type, colorSpace);
     EXPECT_EQ(retCode, 0);
     int32_t captureId = 0;
     int64_t startTimeStamp = 0;
@@ -1330,8 +1343,7 @@ HWTEST_F(CameraCommonUtilsUnitTest, CameraMovingPhotoProxy_Test_005, TestSize.Le
     int32_t retCode = audioCapturerSessionProxy->CreateAudioSession();
     EXPECT_EQ(retCode, 0);
     int32_t colorSpace = 0;
-    retCode = aVCodecTaskManagerProxy->CreateAvcodecTaskManager(
-        audioCapturerSessionProxy, type, colorSpace);
+    retCode = aVCodecTaskManagerProxy->CreateAvcodecTaskManager(audioCapturerSessionProxy, type, colorSpace);
     EXPECT_EQ(retCode, 0);
     auto ret = aVCodecTaskManagerProxy->isEmptyVideoFdMap();
     EXPECT_EQ(ret, true);
@@ -1360,8 +1372,7 @@ HWTEST_F(CameraCommonUtilsUnitTest, CameraMovingPhotoProxy_Test_006, TestSize.Le
     EXPECT_EQ(retCode, 0);
     VideoCodecType type = static_cast<VideoCodecType>(0);
     int32_t colorSpace = 0;
-    retCode = aVCodecTaskManagerProxy->CreateAvcodecTaskManager(
-        audioCapturerSessionProxy, type, colorSpace);
+    retCode = aVCodecTaskManagerProxy->CreateAvcodecTaskManager(audioCapturerSessionProxy, type, colorSpace);
     EXPECT_EQ(retCode, 0);
     std::vector<sptr<FrameRecord>> frameRecords;
     uint64_t taskName = 0;
@@ -1372,8 +1383,7 @@ HWTEST_F(CameraCommonUtilsUnitTest, CameraMovingPhotoProxy_Test_006, TestSize.Le
     ASSERT_NE(videoBuffer, nullptr);
     int64_t timestamp = VIDEO_FRAMERATE;
     GraphicTransformType graphicType = GRAPHIC_ROTATE_90;
-    sptr<FrameRecord> frameRecord =
-        new(std::nothrow) FrameRecord(videoBuffer, timestamp, graphicType);
+    sptr<FrameRecord> frameRecord = new (std::nothrow) FrameRecord(videoBuffer, timestamp, graphicType);
     CacheCbFunc cacheCallback;
     aVCodecTaskManagerProxy->EncodeVideoBuffer(frameRecord, cacheCallback);
     uint32_t preBufferCount = 0;
@@ -1408,8 +1418,7 @@ HWTEST_F(CameraCommonUtilsUnitTest, CameraMovingPhotoProxy_Test_007, TestSize.Le
     ASSERT_NE(videoBuffer, nullptr);
     int64_t timestamp = VIDEO_FRAMERATE;
     GraphicTransformType type = GRAPHIC_ROTATE_90;
-    sptr<FrameRecord> frameRecord =
-        new(std::nothrow) FrameRecord(videoBuffer, timestamp, type);
+    sptr<FrameRecord> frameRecord = new (std::nothrow) FrameRecord(videoBuffer, timestamp, type);
     CacheCbFunc cacheCallback;
     aVCodecTaskManagerProxy->EncodeVideoBuffer(frameRecord, cacheCallback);
     std::shared_ptr<PhotoAssetIntf> photoAssetProxy;
@@ -1418,6 +1427,95 @@ HWTEST_F(CameraCommonUtilsUnitTest, CameraMovingPhotoProxy_Test_007, TestSize.Le
     int32_t ret = aVCodecTaskManagerProxy->isEmptyVideoFdMap();
     EXPECT_EQ(ret, true);
     MEDIA_INFO_LOG("CameraMovingPhotoProxy_Test_007 End");
+}
+
+/*
+ * Feature: AvcodecTaskManagerProxy
+ * Function: Test SetVideoId
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetVideoId
+ */
+HWTEST_F(CameraCommonUtilsUnitTest, CameraMovingPhotoProxy_Test_008, TestSize.Level0)
+{
+    MEDIA_INFO_LOG("CameraMovingPhotoProxy_Test_005 Start");
+    auto aVCodecTaskManagerProxy = AvcodecTaskManagerProxy::CreateAvcodecTaskManagerProxy();
+    ASSERT_NE(aVCodecTaskManagerProxy, nullptr);
+    EXPECT_NE(aVCodecTaskManagerProxy->avcodecTaskManagerIntf_, nullptr);
+    auto audioCapturerSessionProxy = AudioCapturerSessionProxy::CreateAudioCapturerSessionProxy();
+    ASSERT_NE(audioCapturerSessionProxy, nullptr);
+    EXPECT_NE(audioCapturerSessionProxy->audioCapturerSessionIntf_, nullptr);
+    VideoCodecType type = static_cast<VideoCodecType>(0);
+    int32_t retCode = audioCapturerSessionProxy->CreateAudioSession();
+    EXPECT_EQ(retCode, 0);
+    int32_t colorSpace = 0;
+    retCode = aVCodecTaskManagerProxy->CreateAvcodecTaskManager(audioCapturerSessionProxy, type, colorSpace);
+    EXPECT_EQ(retCode, 0);
+    int captureId = 1;
+    string videoId = "1";
+    aVCodecTaskManagerProxy->SetVideoId(captureId, videoId);
+    MEDIA_INFO_LOG("CameraMovingPhotoProxy_Test_008 End");
+}
+
+/*
+ * Feature: AvcodecTaskManagerProxy
+ * Function: Test SetDeferredVideoEnhanceFlag and GetDeferredVideoEnhanceFlag
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetDeferredVideoEnhanceFlag and GetDeferredVideoEnhanceFlag
+ */
+HWTEST_F(CameraCommonUtilsUnitTest, CameraMovingPhotoProxy_Test_009, TestSize.Level0)
+{
+    MEDIA_INFO_LOG("CameraMovingPhotoProxy_Test_009 Start");
+    auto aVCodecTaskManagerProxy = AvcodecTaskManagerProxy::CreateAvcodecTaskManagerProxy();
+    ASSERT_NE(aVCodecTaskManagerProxy, nullptr);
+    EXPECT_NE(aVCodecTaskManagerProxy->avcodecTaskManagerIntf_, nullptr);
+    auto audioCapturerSessionProxy = AudioCapturerSessionProxy::CreateAudioCapturerSessionProxy();
+    ASSERT_NE(audioCapturerSessionProxy, nullptr);
+    EXPECT_NE(audioCapturerSessionProxy->audioCapturerSessionIntf_, nullptr);
+    VideoCodecType type = static_cast<VideoCodecType>(0);
+    int32_t retCode = audioCapturerSessionProxy->CreateAudioSession();
+    EXPECT_EQ(retCode, 0);
+    int32_t colorSpace = 0;
+    retCode = aVCodecTaskManagerProxy->CreateAvcodecTaskManager(audioCapturerSessionProxy, type, colorSpace);
+    EXPECT_EQ(retCode, 0);
+    int captureId = 1;
+    uint32_t deferredVideoEnhanceFlag = 2;
+    aVCodecTaskManagerProxy->SetDeferredVideoEnhanceFlag(captureId, deferredVideoEnhanceFlag);
+    uint32_t result = aVCodecTaskManagerProxy->GetDeferredVideoEnhanceFlag(captureId);
+    EXPECT_EQ(result, deferredVideoEnhanceFlag);
+    MEDIA_INFO_LOG("CameraMovingPhotoProxy_Test_009 End");
+}
+
+/*
+ * Feature: AvcodecTaskManagerProxy
+ * Function: Test RecordVideoType
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test RecordVideoType
+ */
+HWTEST_F(CameraCommonUtilsUnitTest, CameraMovingPhotoProxy_Test_010, TestSize.Level0)
+{
+    MEDIA_INFO_LOG("CameraMovingPhotoProxy_Test_010 Start");
+    auto aVCodecTaskManagerProxy = AvcodecTaskManagerProxy::CreateAvcodecTaskManagerProxy();
+    ASSERT_NE(aVCodecTaskManagerProxy, nullptr);
+    EXPECT_NE(aVCodecTaskManagerProxy->avcodecTaskManagerIntf_, nullptr);
+    auto audioCapturerSessionProxy = AudioCapturerSessionProxy::CreateAudioCapturerSessionProxy();
+    ASSERT_NE(audioCapturerSessionProxy, nullptr);
+    EXPECT_NE(audioCapturerSessionProxy->audioCapturerSessionIntf_, nullptr);
+    VideoCodecType type = static_cast<VideoCodecType>(0);
+    int32_t retCode = audioCapturerSessionProxy->CreateAudioSession();
+    EXPECT_EQ(retCode, 0);
+    int32_t colorSpace = 0;
+    retCode = aVCodecTaskManagerProxy->CreateAvcodecTaskManager(audioCapturerSessionProxy, type, colorSpace);
+    EXPECT_EQ(retCode, 0);
+    int captureId = 1;
+    VideoType videoType = static_cast<VideoType>(XT_ORIGIN_VIDEO);
+    aVCodecTaskManagerProxy->RecordVideoType(captureId, videoType);
+    MEDIA_INFO_LOG("CameraMovingPhotoProxy_Test_010 End");
 }
 
 /*
