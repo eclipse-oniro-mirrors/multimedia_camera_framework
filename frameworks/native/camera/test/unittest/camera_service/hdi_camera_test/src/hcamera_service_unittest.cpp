@@ -22,6 +22,7 @@
 #include "camera_common_event_manager.h"
 #include "camera_log.h"
 #include "camera_manager.h"
+#include "camera_notification_interface.h"
 #include "camera_util.h"
 #include "gmock/gmock.h"
 #include "control_center_status_callback_stub.h"
