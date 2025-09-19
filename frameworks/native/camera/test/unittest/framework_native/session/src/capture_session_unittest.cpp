@@ -10436,5 +10436,101 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_090, TestSize.Level0)
     EXPECT_EQ(CameraErrorCode::SUCCESS, ret);
     EXPECT_EQ(0, session->focusDistance_);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test CameraSwitchSessionCallback.
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CameraSwitchSessionCallback.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_091, TestSize.Level0)
+{
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    std::shared_ptr<CameraSwitchSessionCallback> cameraSwitchSessionCallback = std::make_shared<CameraSwitchSessionCallback>();
+    EXPECT_EQ(cameraSwitchSessionCallback->captureSession_, nullptr);
+    EXPECT_EQ(session->GetCameraSwitchRequestCallback(), nullptr);
+
+    string cameraId = cameras_[0]->GetID();
+    CaptureSessionInfo sessionInfo;
+    EXPECT_EQ(cameraSwitchSessionCallback->OnCameraActive(cameraId, false, sessionInfo), 0);
+    EXPECT_EQ(cameraSwitchSessionCallback->OnCameraUnactive(cameraId), 0);
+    EXPECT_EQ(cameraSwitchSessionCallback->OnCameraSwitch(cameraId, cameraId, false), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CameraSwitchSessionCallback when the session is not nullptr and CameraSwitchRequestCallback is nullptr
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CameraSwitchSessionCallback when the session is not nullptr and CameraSwitchRequestCallback is nullptr
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_092, TestSize.Level0)
+{
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    std::shared_ptr<CameraSwitchSessionCallback> cameraSwitchSessionCallback = std::make_shared<CameraSwitchSessionCallback>(session);
+    EXPECT_NE(cameraSwitchSessionCallback->captureSession_, nullptr);
+    EXPECT_EQ(session->GetCameraSwitchRequestCallback(), nullptr);
+
+    string cameraId = cameras_[0]->GetID();
+    CaptureSessionInfo sessionInfo;
+    EXPECT_EQ(cameraSwitchSessionCallback->OnCameraActive(cameraId, false, sessionInfo), 0);
+    EXPECT_EQ(cameraSwitchSessionCallback->OnCameraUnactive(cameraId), 0);
+    EXPECT_EQ(cameraSwitchSessionCallback->OnCameraSwitch(cameraId, cameraId, false), 0);
+     
+    input->Close();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CameraSwitchSessionCallback when the session is not nullptr and CameraSwitchRequestCallback is nullptr
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CameraSwitchSessionCallback when the session is not nullptr and CameraSwitchRequestCallback is nullptr
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_093, TestSize.Level0)
+{
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    std::shared_ptr<CameraSwitchSessionCallback> cameraSwitchSessionCallback = std::make_shared<CameraSwitchSessionCallback>(session);
+    EXPECT_NE(cameraSwitchSessionCallback->captureSession_, nullptr);
+
+    std::shared_ptr<CameraSwitchRequestCallback> cameraSwitchRequestCallback = std::make_shared<MockCameraSwitchRequestCallback>();;
+    session->SetCameraSwitchRequestCallback(cameraSwitchRequestCallback);
+    EXPECT_NE(session->GetCameraSwitchRequestCallback(), nullptr);
+
+    string cameraId = cameras_[0]->GetID();
+    CaptureSessionInfo sessionInfo;
+    EXPECT_EQ(cameraSwitchSessionCallback->OnCameraActive(cameraId, false, sessionInfo), 0);
+    EXPECT_EQ(cameraSwitchSessionCallback->OnCameraUnactive(cameraId), 0);
+    EXPECT_EQ(cameraSwitchSessionCallback->OnCameraSwitch(cameraId, cameraId, false), 0);
+     
+    input->Close();
+    session->Release();
+}
 }
 }
