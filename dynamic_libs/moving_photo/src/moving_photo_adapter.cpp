@@ -219,7 +219,7 @@ void MovingPhotoVideoCacheAdapter::OnDrainFrameRecord(sptr<FrameRecord> frame)
     MEDIA_DEBUG_LOG("OnDrainFrameRecord start");
     CHECK_RETURN_ELOG(frame == nullptr, "FrameRecord is null");
     auto videoCache = videoCache_.promote();
-    CHECK_RETURN_ELOG(videoCache == nullptr, "CreateMovingPhotoVideoCache failed");
+    CHECK_RETURN_ELOG(videoCache == nullptr, "OnDrainFrameRecord videoCache is null");
     if (frame->IsIdle() && videoCache) {
         videoCache->CacheFrame(frame);
     } else if (frame->IsFinishCache() && videoCache) {
@@ -236,18 +236,16 @@ void MovingPhotoVideoCacheAdapter::GetFrameCachedResult(std::vector<sptr<FrameRe
 {
     MEDIA_DEBUG_LOG("GetFrameCachedResult start");
     auto videoCache = videoCache_.promote();
-    CHECK_RETURN_ELOG(videoCache == nullptr, "CreateMovingPhotoVideoCache failed");
-    if (videoCache) {
-        videoCache_->GetFrameCachedResult(
-            frameRecords,
-            [videoCache](const std::vector<sptr<FrameRecord>> &lframeRecords, uint64_t ltimestamp, int32_t lrotation,
-                         int32_t lcaptureId) {
-                            videoCache->DoMuxerVideo(lframeRecords, ltimestamp, lrotation, lcaptureId);
-                        },
-            taskName,
-            rotation,
-            captureId);
-    }
+    CHECK_RETURN_ELOG(videoCache == nullptr, "GetFrameCachedResult videoCache is null");
+    videoCache_->GetFrameCachedResult(
+        frameRecords,
+        [videoCache](const std::vector<sptr<FrameRecord>> &lframeRecords,
+            uint64_t ltimestamp,
+            int32_t lrotation,
+            int32_t lcaptureId) { videoCache->DoMuxerVideo(lframeRecords, ltimestamp, lrotation, lcaptureId); },
+        taskName,
+        rotation,
+        captureId);
 }
 
 extern "C" AvcodecTaskManagerIntf *createAVCodecTaskManagerIntf()

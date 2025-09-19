@@ -26,6 +26,7 @@ using namespace OHOS::CameraStandard::DeferredProcessing;
 class MediaManagerProxyFuzzer {
 public:
     static void MediaManagerProxyFuzzerTest(FuzzedDataProvider& fdp);
+    static void MpegGetDurationFuzzerTest(FuzzedDataProvider& fdp);
     static std::shared_ptr<MediaManagerProxy> mediaManagerProxyFuzz_;
 };
 

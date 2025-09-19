@@ -48,6 +48,19 @@ void MediaManagerProxyFuzzer::MediaManagerProxyFuzzerTest(FuzzedDataProvider& fd
     mediaManagerProxyFuzz_->MpegRelease();
 }
 
+void MediaManagerProxyFuzzer::MpegGetDurationFuzzerTest(FuzzedDataProvider& fdp)
+{
+    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
+        return;
+    }
+    mediaManagerProxyFuzz_ = MediaManagerProxy::CreateMediaManagerProxy();
+    CHECK_RETURN_ELOG(!mediaManagerProxyFuzz_, "CreateMediaManagerProxy Error");
+    mediaManagerProxyFuzz_->MpegGetDuration();
+    int32_t result = fdp.ConsumeIntegral<int32_t>();
+    mediaManagerProxyFuzz_->MpegUnInit(result);
+    mediaManagerProxyFuzz_->MpegRelease();
+}
+
 void Test(uint8_t* data, size_t size)
 {
     FuzzedDataProvider fdp(data, size);

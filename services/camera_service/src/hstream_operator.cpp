@@ -1608,22 +1608,18 @@ void SessionDrainImageCallback::OnDrainImage(sptr<FrameRecord> frame)
         std::lock_guard<std::mutex> lock(mutex_);
         frameCacheList_.push_back(frame);
     }
-    CHECK_RETURN_ELOG(movingPhotoVideoCacheIntf_ == nullptr, "movingPhotoVideoCacheIntf_ is null");
     auto movingPhotoVideoCacheIntf = movingPhotoVideoCacheIntf_.promote();
-    if (movingPhotoVideoCacheIntf) {
-        movingPhotoVideoCacheIntf->OnDrainFrameRecord(frame);
-    }
+    CHECK_RETURN_ELOG(movingPhotoVideoCacheIntf == nullptr, "movingPhotoVideoCacheIntf is null");
+    movingPhotoVideoCacheIntf->OnDrainFrameRecord(frame);
 }
 
 void SessionDrainImageCallback::OnDrainImageFinish(bool isFinished)
 {
     MEDIA_INFO_LOG("OnDrainImageFinish enter");
-    CHECK_RETURN_ELOG(movingPhotoVideoCacheIntf_ == nullptr, "movingPhotoVideoCacheIntf_ is null");
     auto movingPhotoVideoCacheIntf = movingPhotoVideoCacheIntf_.promote();
-    if (movingPhotoVideoCacheIntf) {
-        std::lock_guard<std::mutex> lock(mutex_);
-        movingPhotoVideoCacheIntf->GetFrameCachedResult(frameCacheList_, timestamp_, rotation_, captureId_);
-    }
+    CHECK_RETURN_ELOG(movingPhotoVideoCacheIntf == nullptr, "movingPhotoVideoCacheIntf is null");
+    std::lock_guard<std::mutex> lock(mutex_);
+    movingPhotoVideoCacheIntf->GetFrameCachedResult(frameCacheList_, timestamp_, rotation_, captureId_);
     auto listener = listener_.promote();
     CHECK_EXECUTE(listener && isFinished, listener->RemoveDrainImageManager(this));
 }

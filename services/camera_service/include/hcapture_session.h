@@ -188,9 +188,6 @@ public:
     inline void SetStreamOperator(wptr<HStreamOperator> hStreamOperator)
     {
         std::lock_guard<std::mutex> lock(streamOperatorLock_);
-        if (hStreamOperator == nullptr) {
-            return;
-        }
         hStreamOperator_ = hStreamOperator;
         auto hStreamOperatorSptr = hStreamOperator_.promote();
         if (hStreamOperatorSptr != nullptr) {

@@ -2860,12 +2860,12 @@ void CaptureSession::ProcessProfilesAbilityId(const SceneMode supportModes)
     CHECK_RETURN_ELOG(!inputDeviceInfo, "ProcessProfilesAbilityId inputDeviceInfo is null");
     std::vector<Profile> photoProfiles = inputDeviceInfo->modePhotoProfiles_[supportModes];
     std::vector<Profile> previewProfiles = inputDeviceInfo->modePreviewProfiles_[supportModes];
-    MEDIA_INFO_LOG("photoProfiles size = %{public}zu, photoProfiles size = %{public}zu", photoProfiles.size(),
+    MEDIA_DEBUG_LOG("photoProfiles size = %{public}zu, previewProfiles size = %{public}zu", photoProfiles.size(),
         previewProfiles.size());
     for (auto i : photoProfiles) {
         std::vector<uint32_t> ids = i.GetAbilityId();
         std::string abilityIds = Container2String(ids.begin(), ids.end());
-        MEDIA_INFO_LOG("photoProfiles f(%{public}d), w(%{public}d), h(%{public}d), ability:(%{public}s)",
+        MEDIA_DEBUG_LOG("photoProfiles f(%{public}d), w(%{public}d), h(%{public}d), ability:(%{public}s)",
             i.GetCameraFormat(), i.GetSize().width, i.GetSize().height, abilityIds.c_str());
         if (i.GetCameraFormat() == photoProfile_.GetCameraFormat() &&
             i.GetSize().width == photoProfile_.GetSize().width &&
@@ -2881,7 +2881,7 @@ void CaptureSession::ProcessProfilesAbilityId(const SceneMode supportModes)
     for (auto i : previewProfiles) {
         std::vector<uint32_t> ids = i.GetAbilityId();
         std::string abilityIds = Container2String(ids.begin(), ids.end());
-        MEDIA_INFO_LOG("previewProfiles f(%{public}d), w(%{public}d), h(%{public}d), ability:(%{public}s)",
+        MEDIA_DEBUG_LOG("previewProfiles f(%{public}d), w(%{public}d), h(%{public}d), ability:(%{public}s)",
             i.GetCameraFormat(), i.GetSize().width, i.GetSize().height, abilityIds.c_str());
         if (i.GetCameraFormat() == previewProfile_.GetCameraFormat() &&
             i.GetSize().width == previewProfile_.GetSize().width &&

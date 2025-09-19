@@ -31,7 +31,6 @@ using OHOS::Security::AccessToken::AccessTokenKit;
 
 sptr<HStreamOperator> CastToSession(wptr<IStreamOperatorCallback> streamOpCb)
 {
-    CHECK_RETURN_RET_ELOG(streamOpCb == nullptr, nullptr, "streamOpCb is nullptr");
     auto streamOpCbSptr = streamOpCb.promote();
     CHECK_RETURN_RET_ELOG(streamOpCbSptr == nullptr, nullptr, "streamOpCbWptr is nullptr");
 
