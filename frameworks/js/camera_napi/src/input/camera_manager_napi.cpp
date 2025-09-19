@@ -1462,8 +1462,8 @@ napi_value CameraManagerNapi::CreateCameraInputInstance(napi_env env, napi_callb
             "CameraManagerNapi::CreateCameraInputInstance invalid argument");
         cameraInfo = cameraManagerNapi->cameraManager_->GetCameraDeviceFromId(cameraId);
     } else if (argSize == ARGS_TWO) {
-        int32_t cameraPosition;
-        int32_t cameraType;
+        int32_t cameraPosition = 0;
+        int32_t cameraType = 0;
         CameraNapiParamParser jsParamParser(env, info, cameraManagerNapi, cameraPosition, cameraType);
         CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT,
             "Create cameraInput with 2 invalid arguments!"), nullptr,

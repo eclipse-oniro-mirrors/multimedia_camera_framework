@@ -352,6 +352,8 @@ bool CameraRotatePlugin::PreviewStreamStart(ParameterMap basicInfoMap, int32_t& 
     CHECK_EXECUTE(updateParameter.find(PLUGIN_SURFACE_FIXED_ROTATION) != updateParameter.end() &&
         isIntegerRegex(updateParameter[PLUGIN_SURFACE_FIXED_ROTATION]),
         fixedRotation = std::stoi(updateParameter[PLUGIN_SURFACE_FIXED_ROTATION]));
+    result = isIntegerRegex(updateParameter[PLUGIN_CAMERA_HAL_ROTATE_ANGLE]);
+    CHECK_RETURN_RET_ELOG(!result, false, "PreviewStreamStart stoi is failed");
     rotateAngle = std::stoi(updateParameter[PLUGIN_CAMERA_HAL_ROTATE_ANGLE]);
     return true;
 }
