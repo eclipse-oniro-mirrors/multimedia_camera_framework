@@ -29,9 +29,9 @@ static constexpr int32_t MIN_SIZE_NUM = 64;
 static constexpr int32_t NUM_1 = 1;
 static constexpr int32_t NUM_2 = 2;
 
-sptr<AvcodecTaskManagerIntf> MovingPhotoProxyFuzzer::taskManagerfuzz_{nullptr};
-sptr<AudioCapturerSessionIntf> MovingPhotoProxyFuzzer::capturerSessionfuzz_{nullptr};
-sptr<MovingPhotoVideoCacheIntf> MovingPhotoProxyFuzzer::videoCachefuzz_{nullptr};
+sptr<AvcodecTaskManagerIntf> MovingPhotoProxyFuzzer::taskManagerfuzz_ { nullptr };
+sptr<AudioCapturerSessionIntf> MovingPhotoProxyFuzzer::capturerSessionfuzz_ { nullptr };
+sptr<MovingPhotoVideoCacheIntf> MovingPhotoProxyFuzzer::videoCachefuzz_ { nullptr };
 
 std::vector<GraphicTransformType> graphicType = {
     GRAPHIC_ROTATE_NONE,
@@ -51,20 +51,20 @@ std::vector<GraphicTransformType> graphicType = {
 
 std::vector<ColorSpace> colorSpaceType = {
     COLOR_SPACE_UNKNOWN, // 0
-    DISPLAY_P3, // 3
-    SRGB, // 4
-    BT709, // 6
-    BT2020_HLG, // 9
-    BT2020_PQ, // 10
-    P3_HLG, // 11
-    P3_PQ, // 12
-    DISPLAY_P3_LIMIT, // 14
-    SRGB_LIMIT, // 15
-    BT709_LIMIT, // 16
-    BT2020_HLG_LIMIT, // 19
-    BT2020_PQ_LIMIT, // 20
-    P3_HLG_LIMIT, // 21
-    P3_PQ_LIMIT, // 22
+    DISPLAY_P3,          // 3
+    SRGB,                // 4
+    BT709,               // 6
+    BT2020_HLG,          // 9
+    BT2020_PQ,           // 10
+    P3_HLG,              // 11
+    P3_PQ,               // 12
+    DISPLAY_P3_LIMIT,    // 14
+    SRGB_LIMIT,          // 15
+    BT709_LIMIT,         // 16
+    BT2020_HLG_LIMIT,    // 19
+    BT2020_PQ_LIMIT,     // 20
+    P3_HLG_LIMIT,        // 21
+    P3_PQ_LIMIT,         // 22
 };
 
 void MyFunction()
@@ -77,14 +77,14 @@ void MovingPhotoProxyFuzzer::MovingPhotoProxyFuzzTest(FuzzedDataProvider& fdp)
     if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
         return;
     }
-    CHECK_EXECUTE(taskManagerfuzz_ == nullptr,
-        taskManagerfuzz_ = AvcodecTaskManagerProxy::CreateAvcodecTaskManagerProxy());
+    CHECK_EXECUTE(
+        taskManagerfuzz_ == nullptr, taskManagerfuzz_ = AvcodecTaskManagerProxy::CreateAvcodecTaskManagerProxy());
     CHECK_RETURN_ELOG(!taskManagerfuzz_, "CreateAvcodecTaskManagerProxy Error");
     CHECK_EXECUTE(capturerSessionfuzz_ == nullptr,
         capturerSessionfuzz_ = AudioCapturerSessionProxy::CreateAudioCapturerSessionProxy());
     CHECK_RETURN_ELOG(!capturerSessionfuzz_, "CreateAudioCapturerSessionProxy Error");
-    CHECK_EXECUTE(videoCachefuzz_ == nullptr,
-        videoCachefuzz_ = MovingPhotoVideoCacheProxy::CreateMovingPhotoVideoCacheProxy());
+    CHECK_EXECUTE(
+        videoCachefuzz_ == nullptr, videoCachefuzz_ = MovingPhotoVideoCacheProxy::CreateMovingPhotoVideoCacheProxy());
     CHECK_RETURN_ELOG(!videoCachefuzz_, "CreateMovingPhotoVideoCacheProxy Error");
 
     capturerSessionfuzz_->CreateAudioSession();
@@ -93,8 +93,7 @@ void MovingPhotoProxyFuzzer::MovingPhotoProxyFuzzTest(FuzzedDataProvider& fdp)
 
     int32_t videoCodecTypeCount1 =
         static_cast<int32_t>(OHOS::CameraStandard::VideoCodecType::VIDEO_ENCODE_TYPE_AVC) + NUM_1;
-    VideoCodecType videoCodecType =
-        static_cast<VideoCodecType>(fdp.ConsumeIntegral<uint8_t>() % videoCodecTypeCount1);
+    VideoCodecType videoCodecType = static_cast<VideoCodecType>(fdp.ConsumeIntegral<uint8_t>() % videoCodecTypeCount1);
     int32_t colorSpace = static_cast<int32_t>(colorSpaceType[fdp.ConsumeIntegral<int32_t>() % colorSpaceType.size()]);
     taskManagerfuzz_->CreateAvcodecTaskManager(capturerSessionfuzz_, videoCodecType, colorSpace);
     taskManagerfuzz_->SubmitTask(MyFunction);
@@ -103,14 +102,14 @@ void MovingPhotoProxyFuzzer::MovingPhotoProxyFuzzTest(FuzzedDataProvider& fdp)
     taskManagerfuzz_->SetVideoBufferDuration(preBufferCount, postBufferCount);
     int32_t timestamp = fdp.ConsumeIntegral<int32_t>();
     int32_t captureId = fdp.ConsumeIntegral<int32_t>();
-    std::shared_ptr<PhotoAssetIntf> photoAssetProxy = PhotoAssetProxy::GetPhotoAssetProxy(
-        NUM_2, IPCSkeleton::GetCallingUid(), IPCSkeleton::GetCallingTokenID());;
+    std::shared_ptr<PhotoAssetIntf> photoAssetProxy =
+        PhotoAssetProxy::GetPhotoAssetProxy(NUM_2, IPCSkeleton::GetCallingUid(), IPCSkeleton::GetCallingTokenID());
+    ;
     taskManagerfuzz_->SetVideoFd(timestamp, photoAssetProxy, captureId);
 
     GraphicTransformType type_ = graphicType[fdp.ConsumeIntegral<uint16_t>() % graphicType.size()];
     sptr<SurfaceBuffer> videoBuffer = SurfaceBuffer::Create();
-    sptr<FrameRecord> frameRecord =
-        new(std::nothrow) FrameRecord(videoBuffer, timestamp, type_);
+    sptr<FrameRecord> frameRecord = new (std::nothrow) FrameRecord(videoBuffer, timestamp, type_);
     std::vector<sptr<FrameRecord>> frameRecords;
     frameRecords.push_back(frameRecord);
     int32_t taskName = fdp.ConsumeIntegral<uint64_t>();
@@ -128,6 +127,73 @@ void MovingPhotoProxyFuzzer::MovingPhotoProxyFuzzTest(FuzzedDataProvider& fdp)
     std::this_thread::sleep_for(std::chrono::seconds(1));
 }
 
+void MovingPhotoProxyFuzzer::SetVideoIdFuzzTest(FuzzedDataProvider& fdp)
+{
+    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
+        return;
+    }
+    CHECK_EXECUTE(
+        taskManagerfuzz_ == nullptr, taskManagerfuzz_ = AvcodecTaskManagerProxy::CreateAvcodecTaskManagerProxy());
+    CHECK_RETURN_ELOG(!taskManagerfuzz_, "CreateAvcodecTaskManagerProxy Error");
+    CHECK_EXECUTE(capturerSessionfuzz_ == nullptr,
+        capturerSessionfuzz_ = AudioCapturerSessionProxy::CreateAudioCapturerSessionProxy());
+    CHECK_RETURN_ELOG(!capturerSessionfuzz_, "CreateAudioCapturerSessionProxy Error");
+
+    int32_t videoCodecTypeCount1 =
+        static_cast<int32_t>(OHOS::CameraStandard::VideoCodecType::VIDEO_ENCODE_TYPE_AVC) + NUM_1;
+    VideoCodecType videoCodecType = static_cast<VideoCodecType>(fdp.ConsumeIntegral<uint8_t>() % videoCodecTypeCount1);
+    int32_t colorSpace = static_cast<int32_t>(colorSpaceType[fdp.ConsumeIntegral<int32_t>() % colorSpaceType.size()]);
+    taskManagerfuzz_->CreateAvcodecTaskManager(capturerSessionfuzz_, videoCodecType, colorSpace);
+    int32_t captureId = fdp.ConsumeIntegral<int32_t>();
+    string videoId = fdp.ConsumeRandomLengthString();
+    taskManagerfuzz_->SetVideoId(captureId, videoId);
+}
+
+void MovingPhotoProxyFuzzer::SetDeferredVideoEnhanceFlagFuzzTest(FuzzedDataProvider& fdp)
+{
+    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
+        return;
+    }
+    CHECK_EXECUTE(
+        taskManagerfuzz_ == nullptr, taskManagerfuzz_ = AvcodecTaskManagerProxy::CreateAvcodecTaskManagerProxy());
+    CHECK_RETURN_ELOG(!taskManagerfuzz_, "CreateAvcodecTaskManagerProxy Error");
+    CHECK_EXECUTE(capturerSessionfuzz_ == nullptr,
+        capturerSessionfuzz_ = AudioCapturerSessionProxy::CreateAudioCapturerSessionProxy());
+    CHECK_RETURN_ELOG(!capturerSessionfuzz_, "CreateAudioCapturerSessionProxy Error");
+
+    int32_t videoCodecTypeCount1 =
+        static_cast<int32_t>(OHOS::CameraStandard::VideoCodecType::VIDEO_ENCODE_TYPE_AVC) + NUM_1;
+    VideoCodecType videoCodecType = static_cast<VideoCodecType>(fdp.ConsumeIntegral<uint8_t>() % videoCodecTypeCount1);
+    int32_t colorSpace = static_cast<int32_t>(colorSpaceType[fdp.ConsumeIntegral<int32_t>() % colorSpaceType.size()]);
+    taskManagerfuzz_->CreateAvcodecTaskManager(capturerSessionfuzz_, videoCodecType, colorSpace);
+    int32_t captureId = fdp.ConsumeIntegral<int32_t>();
+    uint32_t deferredVideoEnhanceFlag = fdp.ConsumeIntegral<uint32_t>();
+    taskManagerfuzz_->SetDeferredVideoEnhanceFlag(captureId, deferredVideoEnhanceFlag);
+    taskManagerfuzz_->GetDeferredVideoEnhanceFlag(captureId);
+}
+
+void MovingPhotoProxyFuzzer::RecordVideoTypeFuzzTest(FuzzedDataProvider& fdp)
+{
+    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
+        return;
+    }
+    CHECK_EXECUTE(
+        taskManagerfuzz_ == nullptr, taskManagerfuzz_ = AvcodecTaskManagerProxy::CreateAvcodecTaskManagerProxy());
+    CHECK_RETURN_ELOG(!taskManagerfuzz_, "CreateAvcodecTaskManagerProxy Error");
+    CHECK_EXECUTE(capturerSessionfuzz_ == nullptr,
+        capturerSessionfuzz_ = AudioCapturerSessionProxy::CreateAudioCapturerSessionProxy());
+    CHECK_RETURN_ELOG(!capturerSessionfuzz_, "CreateAudioCapturerSessionProxy Error");
+
+    int32_t videoCodecTypeCount1 =
+        static_cast<int32_t>(OHOS::CameraStandard::VideoCodecType::VIDEO_ENCODE_TYPE_AVC) + NUM_1;
+    VideoCodecType videoCodecType = static_cast<VideoCodecType>(fdp.ConsumeIntegral<uint8_t>() % videoCodecTypeCount1);
+    int32_t colorSpace = static_cast<int32_t>(colorSpaceType[fdp.ConsumeIntegral<int32_t>() % colorSpaceType.size()]);
+    taskManagerfuzz_->CreateAvcodecTaskManager(capturerSessionfuzz_, videoCodecType, colorSpace);
+    int32_t captureId = fdp.ConsumeIntegral<int32_t>();
+    VideoType videoType = static_cast<VideoType>(XT_ORIGIN_VIDEO);
+    taskManagerfuzz_->RecordVideoType(captureId, videoType);
+}
+
 void Test(uint8_t* data, size_t size)
 {
     FuzzedDataProvider fdp(data, size);
@@ -137,6 +203,9 @@ void Test(uint8_t* data, size_t size)
         return;
     }
     MovingPhotoProxy->MovingPhotoProxyFuzzTest(fdp);
+    MovingPhotoProxy->SetVideoIdFuzzTest(fdp);
+    MovingPhotoProxy->SetDeferredVideoEnhanceFlagFuzzTest(fdp);
+    MovingPhotoProxy->RecordVideoTypeFuzzTest(fdp);
 }
 
 } // namespace CameraStandard

@@ -24,12 +24,15 @@ namespace CameraStandard {
 
 class MovingPhotoProxyFuzzer {
 public:
-static sptr<AvcodecTaskManagerIntf> taskManagerfuzz_;
-static sptr<AudioCapturerSessionIntf> capturerSessionfuzz_;
-static sptr<MovingPhotoVideoCacheIntf> videoCachefuzz_;
-static void MovingPhotoProxyFuzzTest(FuzzedDataProvider& fdp);
+    static sptr<AvcodecTaskManagerIntf> taskManagerfuzz_;
+    static sptr<AudioCapturerSessionIntf> capturerSessionfuzz_;
+    static sptr<MovingPhotoVideoCacheIntf> videoCachefuzz_;
+    static void MovingPhotoProxyFuzzTest(FuzzedDataProvider& fdp);
+    static void SetVideoIdFuzzTest(FuzzedDataProvider& fdp);
+    static void SetDeferredVideoEnhanceFlagFuzzTest(FuzzedDataProvider& fdp);
+    static void RecordVideoTypeFuzzTest(FuzzedDataProvider& fdp);
 };
 
-} // CameraStandard
-} // OHOS
+} // namespace CameraStandard
+} // namespace OHOS
 #endif // MOVING_PHOTO_PROXY_FUZZER_H
