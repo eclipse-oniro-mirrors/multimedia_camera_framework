@@ -145,6 +145,7 @@ void HCameraService::DeviceInitCallBack::OnRemoteDied()
 void HCameraService::OnStart()
 {
     MEDIA_INFO_LOG("HCameraService OnStart begin");
+    CHECK_RETURN_ELOG(cameraHostManager_ == nullptr, "HCameraService::OnStart failed cameraHostManager_ is nullptr");
     CHECK_PRINT_ELOG(cameraHostManager_->Init() != CAMERA_OK,
         "HCameraService OnStart failed to init camera host manager.");
     // initialize deferred processing service.
@@ -194,6 +195,7 @@ void HCameraService::OnDump()
 void HCameraService::OnStop()
 {
     MEDIA_INFO_LOG("HCameraService::OnStop called");
+    CHECK_RETURN_ELOG(cameraHostManager_ == nullptr, "HCameraService::OnStop failed to cameraHostManager_ is nullptr");
     cameraHostManager_->DeInit();
     UnregisterFoldStatusListener();
 }

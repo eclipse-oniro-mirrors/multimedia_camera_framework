@@ -97,9 +97,8 @@ int32_t CameraBeautyNotification::GetBeautyTimes()
 
 int32_t CameraBeautyNotification::GetBeautyStatusFromDataShareHelper(int32_t &beautyStatus)
 {
-    if (cameraDataShareHelper_ == nullptr) {
-        cameraDataShareHelper_ = std::make_shared<CameraDataShareHelper>();
-    }
+    CHECK_EXECUTE(cameraDataShareHelper_ == nullptr,
+        cameraDataShareHelper_ = std::make_shared<CameraDataShareHelper>());
     std::string value = "";
     auto ret = cameraDataShareHelper_->QueryOnce(PREDICATES_CAMERA_BEAUTY_STATUS, value);
     if (ret != CAMERA_OK) {
@@ -118,9 +117,8 @@ int32_t CameraBeautyNotification::GetBeautyStatusFromDataShareHelper(int32_t &be
 
 int32_t CameraBeautyNotification::SetBeautyStatusFromDataShareHelper(int32_t beautyStatus)
 {
-    if (cameraDataShareHelper_ == nullptr) {
-        cameraDataShareHelper_ = std::make_shared<CameraDataShareHelper>();
-    }
+    CHECK_EXECUTE(cameraDataShareHelper_ == nullptr,
+        cameraDataShareHelper_ = std::make_shared<CameraDataShareHelper>());
     auto ret = cameraDataShareHelper_->UpdateOnce(PREDICATES_CAMERA_BEAUTY_STATUS, std::to_string(beautyStatus));
     CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, CAMERA_ALLOC_ERROR, "SetBeautyStatusFromDataShareHelper UpdateOnce fail.");
     return CAMERA_OK;
@@ -128,9 +126,8 @@ int32_t CameraBeautyNotification::SetBeautyStatusFromDataShareHelper(int32_t bea
 
 int32_t CameraBeautyNotification::GetBeautyTimesFromDataShareHelper(int32_t &times)
 {
-    if (cameraDataShareHelper_ == nullptr) {
-        cameraDataShareHelper_ = std::make_shared<CameraDataShareHelper>();
-    }
+    CHECK_EXECUTE(cameraDataShareHelper_ == nullptr,
+        cameraDataShareHelper_ = std::make_shared<CameraDataShareHelper>());
     std::string value = "";
     auto ret = cameraDataShareHelper_->QueryOnce(PREDICATES_CAMERA_BEAUTY_TIMES, value);
     if (ret != CAMERA_OK) {
@@ -149,9 +146,8 @@ int32_t CameraBeautyNotification::GetBeautyTimesFromDataShareHelper(int32_t &tim
 
 int32_t CameraBeautyNotification::SetBeautyTimesFromDataShareHelper(int32_t times)
 {
-    if (cameraDataShareHelper_ == nullptr) {
-        cameraDataShareHelper_ = std::make_shared<CameraDataShareHelper>();
-    }
+    CHECK_EXECUTE(cameraDataShareHelper_ == nullptr,
+        cameraDataShareHelper_ = std::make_shared<CameraDataShareHelper>());
     auto ret = cameraDataShareHelper_->UpdateOnce(PREDICATES_CAMERA_BEAUTY_TIMES, std::to_string(times));
     CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, CAMERA_ALLOC_ERROR, "SetBeautyTimesFromDataShareHelper UpdateOnce fail.");
     return CAMERA_OK;

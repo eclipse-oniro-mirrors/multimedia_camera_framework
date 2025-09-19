@@ -482,6 +482,11 @@ int32_t HCameraHostManager::CameraHostInfo::PreCameraSwitch(const std::string& c
 
 void HCameraHostManager::CameraHostInfo::NotifyDeviceStateChangeInfo(int notifyType, int deviceState)
 {
+    if (notifyType < static_cast<int>(DeviceType::FALLING_TYPE) ||
+        notifyType > static_cast<int>(DeviceType::RSS_MULTI_WINDOW_TYPE)) {
+        MEDIA_ERR_LOG("NotifyDeviceStateChangeInfo invalid notifyType: %{public}d", notifyType);
+        return;
+    }
     std::lock_guard<std::mutex> lock(mutex_);
     CHECK_RETURN_ELOG(cameraHostProxy_ == nullptr, "CameraHostInfo::Prelaunch cameraHostProxy_ is null");
     MEDIA_DEBUG_LOG("CameraHostInfo::NotifyDeviceStateChangeInfo notifyType = %{public}d, deviceState = %{public}d",
@@ -1197,6 +1202,7 @@ void HCameraHostManager::RemoveCameraHost(const std::string& svcName)
         return;
     }
     std::vector<std::string> cameraIds;
+    CHECK_RETURN_ELOG((*it) == nullptr, "*it is nullptr.");
     if ((*it)->GetCameras(cameraIds) == CAMERA_OK) {
         for (const auto& cameraId : cameraIds) {
             (*it)->OnCameraStatus(cameraId, UN_AVAILABLE);
@@ -1214,6 +1220,7 @@ sptr<HCameraHostManager::CameraHostInfo> HCameraHostManager::FindCameraHostInfo(
 {
     std::lock_guard<std::mutex> lock(mutex_);
     for (const auto& cameraHostInfo : cameraHostInfos_) {
+        CHECK_CONTINUE_ELOG(cameraHostInfo == nullptr, "FindCameraHostInfo: cameraHostInfo is null, skip");
         CHECK_RETURN_RET(cameraHostInfo->IsCameraSupported(cameraId), cameraHostInfo);
     }
     return nullptr;

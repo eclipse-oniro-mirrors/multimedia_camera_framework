@@ -165,6 +165,7 @@ struct PreconfigProfile {
         std::string maxSizeInfo = "";
         for (auto& cameraInfo : cameraInfos) {
             camera_metadata_item_t item;
+            CHECK_RETURN_RET(cameraInfo.ability == nullptr, "cameraInfo.ability is null");
             int ret = OHOS::Camera::CameraMetadata::FindCameraMetadataItem(
                 cameraInfo.ability->get(), OHOS_ABILITY_CAMERA_TYPE, &item);
             CHECK_RETURN_RET(ret != CAM_META_SUCCESS || item.count == 0, "device camera type info error");
@@ -377,6 +378,7 @@ void DumpPreconfigInfo(CameraInfoDumper& infoDumper, sptr<HCameraHostManager>& h
         { RATIO_16_9, "ratio 16:9" } };
     std::vector<std::string> cameraIds;
     std::vector<CameraInfo> cameraInfos;
+    CHECK_RETURN_ELOG(hostManager == nullptr, "DumpPreconfigInfo hostManager is nullptr.");
     hostManager->GetCameras(cameraIds);
     for (auto& cameraId : cameraIds) {
         CameraInfo cameraInfo { .cameraId = cameraId };

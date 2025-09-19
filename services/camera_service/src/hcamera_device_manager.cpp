@@ -27,11 +27,11 @@ namespace OHOS {
 namespace CameraStandard {
 static const int32_t FOREGROUND_STATE_OF_PROCESS = 0;
 static const int32_t PIP_STATE_OF_PROCESS = 1;
-static const int32_t BCAKGROUND_STATE_OF_PROCESS = 2;
+static const int32_t BACKGROUND_STATE_OF_PROCESS = 2;
 static const int32_t UNKNOW_STATE_OF_PROCESS = 3;
 static const std::unordered_map<int32_t, int32_t> APP_MGR_STATE_TO_CAMERA_STATE = {
     {2,  FOREGROUND_STATE_OF_PROCESS},
-    {4,  BCAKGROUND_STATE_OF_PROCESS}
+    {4,  BACKGROUND_STATE_OF_PROCESS}
 };
 static const int32_t FOCUSED_STATE_OF_PROCESS = 1;
 static const int32_t UNFOCUSED_STATE_OF_PROCESS = 0;
@@ -154,7 +154,7 @@ std::vector<pid_t> HCameraDeviceManager::GetActiveClient()
     std::lock_guard<std::mutex> lock(mapMutex_);
     std::vector<pid_t> activeClientPids;
     if (!pidToCameras_.empty()) {
-        for (auto pair : pidToCameras_) {
+        for (auto& pair : pidToCameras_) {
             activeClientPids.emplace_back(pair.first);
         }
     }
@@ -349,6 +349,8 @@ bool HCameraDeviceManager::HandleCameraEvictions(std::vector<sptr<HCameraDeviceH
     std::vector<pid_t> pidOfActiveClients = GetActiveClient();
     pid_t pidOfOpenRequest = IPCSkeleton::GetCallingPid();
     sptr<CameraAppManagerClient> amsClientInstance = CameraAppManagerClient::GetInstance();
+    CHECK_RETURN_RET_ELOG(cameraRequestOpen == nullptr, false,
+        "HCameraDeviceManager::HandleCameraEvictions cameraRequestOpen is nullptr.");
     const std::string &cameraId = cameraRequestOpen->GetDevice()->GetCameraId();
     int32_t requestState = amsClientInstance->GetProcessState(pidOfOpenRequest);
     for (auto eachClientPid : pidOfActiveClients) {
@@ -518,6 +520,7 @@ void HCameraDeviceManager::GenerateEachProcessCameraState(int32_t& processState,
 void HCameraDeviceManager::PrintClientInfo(sptr<HCameraDeviceHolder> activeCameraHolder,
     sptr<HCameraDeviceHolder> requestCameraHolder)
 {
+    CHECK_RETURN_ELOG(activeCameraHolder->GetPriority() == nullptr, "GetPriority is nullptr");
     MEDIA_INFO_LOG("activeInfo: uid: %{public}d, pid: %{public}d, processState: %{public}d, "
                    "focusState: %{public}d, cameraId: %{public}s "
                    "requestInfo: uid: %{public}d, pid: %{public}d, processState: %{public}d, "
@@ -608,6 +611,7 @@ bool CameraConcurrentSelector::CanOpenCameraconcurrently(std::vector<sptr<HCamer
     CHECK_RETURN_RET(reservedCameras.size() == 0, true);
     std::vector<int32_t> cameraIds;
     for (const auto& camera : reservedCameras) {
+        CHECK_CONTINUE_ELOG(camera->GetDevice() == nullptr, "CanOpenCameraconcurrently camera GetDevice is null.");
         cameraIds.push_back(GetCameraIdNumber(camera->GetDevice()->GetCameraId()));
     }
     for (const auto& group : concurrentCameraTable) {
@@ -699,8 +703,11 @@ bool CameraConcurrentSelector::ConcurrentWithRetainedDevicesOrNot(sptr<HCameraDe
 {
     std::vector<int32_t> tempListToCheck;
     for (auto each : listOfCameraRetainable_) {
+        CHECK_CONTINUE_ELOG(each->GetDevice() == nullptr, "ConcurrentWithRetainedDevicesOrNot GetDevice is nullptr");
         tempListToCheck.emplace_back(GetCameraIdNumber(each->GetDevice()->GetCameraId()));
     }
+    CHECK_RETURN_RET_ELOG(cameraIdNeedConfirm->GetDevice() == nullptr && requestCameraHolder_->GetDevice() == nullptr,
+        false, "ConcurrentWithRetainedDevicesOrNot GetDevice is nullptr.");
     tempListToCheck.emplace_back(GetCameraIdNumber(cameraIdNeedConfirm->GetDevice()->GetCameraId()));
     bool canOpenConcurrent = std::any_of(
         concurrentCameraTable_.begin(), concurrentCameraTable_.end(), [&](const std::vector<int32_t> &innerVec) {

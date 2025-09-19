@@ -47,6 +47,9 @@ struct TestObject {};
 
 void CaptureSessionUnitTest::SessionControlParams(sptr<CaptureSession> session)
 {
+    if (session == nullptr) {
+        return;
+    }
     session->LockForControl();
 
     std::vector<float> zoomRatioRange = session->GetZoomRatioRange();

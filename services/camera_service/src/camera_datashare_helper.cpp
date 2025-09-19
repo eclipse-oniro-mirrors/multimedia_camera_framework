@@ -61,7 +61,7 @@ int32_t CameraDataShareHelper::QueryOnce(const std::string key, std::string &val
     resultSet->GetString(columnIndex, value);
     resultSet->Close();
     dataShareHelper->Release();
-    MEDIA_INFO_LOG("CameraDataShareHelper query success,value=%{public}s", value.c_str());
+    MEDIA_INFO_LOG("CameraDataShareHelper query success,value=%{private}s", value.c_str());
     return CAMERA_OK;
 }
 
