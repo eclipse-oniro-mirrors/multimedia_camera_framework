@@ -2827,7 +2827,8 @@ vector<SceneFeaturesMode> CaptureSession::GetSubFeatureMods()
 int32_t CaptureSession::VerifyAbility(uint32_t ability)
 {
     SceneMode matchMode = SceneMode::NORMAL;
-    std::vector<SceneMode> supportModes = {SceneMode::VIDEO, SceneMode::PORTRAIT, SceneMode::NIGHT};
+    std::vector<SceneMode> supportModes = {SceneMode::VIDEO, SceneMode::PORTRAIT, SceneMode::NIGHT,
+        SceneMode::QUICK_SHOT_PHOTO };
     auto mode = std::find(supportModes.begin(), supportModes.end(), GetMode());
     if (mode != supportModes.end()) {
         matchMode = *mode;
