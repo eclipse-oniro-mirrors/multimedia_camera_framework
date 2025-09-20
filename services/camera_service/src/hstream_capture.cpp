@@ -334,7 +334,7 @@ int32_t HStreamCapture::SetThumbnail(bool isEnabled)
 int32_t HStreamCapture::EnableRawDelivery(bool enabled)
 {
     MEDIA_INFO_LOG("EnableRawDelivery E,enabled:%{public}d", enabled);
-     std::lock_guard<std::mutex> lock(rawSurfaceMutex_);
+    std::lock_guard<std::mutex> lock(rawSurfaceMutex_);
     int32_t ret = CAMERA_OK;
     if (enabled) {
         rawDeliverySwitch_ = 1;
