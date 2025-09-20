@@ -143,6 +143,7 @@ public:
     sptr<Surface> exifSurface_;
     sptr<Surface> debugSurface_;
     sptr<Surface> rawSurface_;
+    std::mutex rawSurfaceMutex_;
     sptr<Surface> thumbnailSurface_;
     sptr<IBufferConsumerListener> gainmapListener_ = nullptr;
     sptr<IBufferConsumerListener> deepListener_ = nullptr;
@@ -189,11 +190,11 @@ private:
     void CreateCaptureSurface();
     void CreateAuxiliarySurfaces();
     void InitCaptureThread();
-    void SetRawCallback();
+    void SetRawCallbackUnLock();
     void GetLocation(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureMetadataSetting);
     std::mutex callbackLock_;
     int32_t thumbnailSwitch_;
-    int32_t rawDeliverySwitch_;
+    std::atomic<int32_t> rawDeliverySwitch_;
     int32_t movingPhotoSwitch_;
     std::condition_variable testDelay_;
     std::mutex testDelayMutex_;

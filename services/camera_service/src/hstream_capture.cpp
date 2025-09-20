@@ -334,6 +334,7 @@ int32_t HStreamCapture::SetThumbnail(bool isEnabled)
 int32_t HStreamCapture::EnableRawDelivery(bool enabled)
 {
     MEDIA_INFO_LOG("EnableRawDelivery E,enabled:%{public}d", enabled);
+     std::lock_guard<std::mutex> lock(rawSurfaceMutex_);
     int32_t ret = CAMERA_OK;
     if (enabled) {
         rawDeliverySwitch_ = 1;
@@ -342,7 +343,7 @@ int32_t HStreamCapture::EnableRawDelivery(bool enabled)
         rawSurface_ = Surface::CreateSurfaceAsConsumer(bufferName);
         CHECK_RETURN_RET_ELOG(rawSurface_ == nullptr, CAMERA_OK, "raw surface create faild");
         ret = SetBufferProducerInfo(bufferName, rawSurface_->GetProducer());
-        SetRawCallback();
+        SetRawCallbackUnLock();
     } else {
         rawDeliverySwitch_ = 0;
         rawSurface_ = nullptr;
@@ -1051,11 +1052,11 @@ int32_t HStreamCapture::UnSetPhotoAvailableCallback()
     return CAMERA_OK;
 }
 
-void HStreamCapture::SetRawCallback()
+void HStreamCapture::SetRawCallbackUnLock()
 {
-    MEDIA_INFO_LOG("HStreamCapture::SetRawCallback E");
-    CHECK_RETURN_ELOG(photoAvaiableCallback_ == nullptr, "SetRawCallback callback is null");
-    CHECK_RETURN_ELOG(rawSurface_ == nullptr, "HStreamCapture::SetRawCallback callback is null");
+    MEDIA_INFO_LOG("HStreamCapture::SetRawCallbackUnLock E");
+    CHECK_RETURN_ELOG(photoAvaiableCallback_ == nullptr, "SetRawCallbackUnLock callback is null");
+    CHECK_RETURN_ELOG(rawSurface_ == nullptr, "HStreamCapture::SetRawCallbackUnLock callback is null");
     photoListener_ = nullptr;
     photoListener_ = new (std::nothrow) PhotoBufferConsumer(this, true);
     rawSurface_->UnregisterConsumerListener();
