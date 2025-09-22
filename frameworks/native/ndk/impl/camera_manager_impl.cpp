@@ -551,6 +551,9 @@ Camera_ErrorCode Camera_Manager::CreatePreviewOutput(const Camera_Profile* profi
     surface->SetUserData(CameraManager::surfaceFormat, std::to_string(innerProfile.GetCameraFormat()));
     int32_t retCode = CameraManager::GetInstance()->CreatePreviewOutput(innerProfile, surface, &innerPreviewOutput);
     CHECK_RETURN_RET(retCode != CameraErrorCode::SUCCESS, CAMERA_SERVICE_FATAL_ERROR);
+    CHECK_RETURN_RET_ELOG(innerPreviewOutput == nullptr, CAMERA_SERVICE_FATAL_ERROR,
+        "Camera_Manager::CreatePreviewOutput create innerPreviewOutput fail!");
+    innerPreviewOutput->SetSurfaceId(surfaceId);
     Camera_PreviewOutput* out = new Camera_PreviewOutput(innerPreviewOutput);
     *previewOutput = out;
     MEDIA_ERR_LOG("Camera_Manager::CreatePreviewOutput");
@@ -573,6 +576,7 @@ Camera_ErrorCode Camera_Manager::CreatePreviewOutputUsedInPreconfig(const char* 
         "Camera_Manager::CreatePreviewOutputUsedInPreconfig create innerPreviewOutput fail!");
     CHECK_RETURN_RET_ELOG(innerPreviewOutput == nullptr, CAMERA_SERVICE_FATAL_ERROR,
         "Camera_Manager::CreatePreviewOutputUsedInPreconfig create innerPreviewOutput fail!");
+    innerPreviewOutput->SetSurfaceId(surfaceId);
     Camera_PreviewOutput* out = new Camera_PreviewOutput(innerPreviewOutput);
     *previewOutput = out;
     return CAMERA_OK;
