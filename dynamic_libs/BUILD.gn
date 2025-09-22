@@ -283,6 +283,14 @@ config("camera_dynamic_media_manager_public_config") {
   ]
 }
 
+config("camera_dynamic_notification_public_config") {
+  include_dirs = [
+    "${multimedia_camera_framework_path}/common/utils",
+    "${multimedia_camera_framework_path}/common/utils/camera_notification/include",
+    "${multimedia_camera_framework_path}/common/utils/image_framework/include",
+  ] 
+}
+
 ohos_shared_library("camera_dynamic_media_manager") {
   install_enable = true
   sources = [
@@ -365,6 +373,51 @@ ohos_shared_library("camera_dynamic_media_manager") {
 
   cflags_cc = cflags
 
+  part_name = "camera_framework"
+  subsystem_name = "multimedia"
+}
+
+ohos_shared_library("camera_dynamic_notification") {
+  install_enable = true
+  sources = [
+    "${multimedia_camera_framework_path}/dynamic_libs/camera_notification/src/camera_notification.cpp",
+  ]
+  cflags = [
+    "-fPIC",
+    "-Wall",
+    "-Os",
+  ]
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+  include_dirs = [
+    "${multimedia_camera_framework_path}/dynamic_libs/camera_notification/include",
+  ]
+ 
+  public_configs = [":camera_dynamic_notification_public_config"]
+  if (target_cpu == "arm") {
+    cflags += [ "-DBINDER_IPC_32BIT" ]
+  }
+ 
+  deps = [
+    "${multimedia_camera_framework_path}/common:camera_utils",
+  ]
+ 
+  external_deps = [
+    "ability_base:base",
+    "ability_base:zuri",
+    "distributed_notification_service:ans_innerkits",
+    "hilog:libhilog",
+    "hisysevent:libhisysevent",
+    "i18n:intl_util",
+    "os_account:libaccountkits",
+    "os_account:os_account_innerkits",
+  ]
+ 
+  cflags_cc = cflags
+ 
   part_name = "camera_framework"
   subsystem_name = "multimedia"
 }

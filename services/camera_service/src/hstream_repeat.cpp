@@ -20,6 +20,7 @@
 
 #ifdef NOTIFICATION_ENABLE
 #include "camera_beauty_notification.h"
+#include "camera_notification_interface.h"
 #endif
 #include "camera_device_ability_items.h"
 #include "camera_log.h"
@@ -321,11 +322,10 @@ int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> setti
     }
 #ifdef NOTIFICATION_ENABLE
     bool isNeedBeautyNotification = IsNeedBeautyNotification();
-    if (isNeedBeautyNotification && CameraBeautyNotification::GetInstance()->GetBeautyStatus() == BEAUTY_STATUS_ON) {
-        UpdateBeautySettings(dynamicSetting);
-    }
+    auto notification = CameraBeautyNotification::GetInstance();
+    CHECK_EXECUTE(isNeedBeautyNotification && notification != nullptr &&
+        notification->GetBeautyStatus() == BEAUTY_STATUS_ON, UpdateBeautySettings(dynamicSetting));
 #endif
-    
     std::vector<uint8_t> captureSetting;
     OHOS::Camera::MetadataUtils::ConvertMetadataToVec(dynamicSetting, captureSetting);
 
@@ -369,7 +369,8 @@ int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> setti
     CHECK_EXECUTE(settings != nullptr, StartSketchStream(settings));
 #ifdef NOTIFICATION_ENABLE
     if (isNeedBeautyNotification) {
-        CameraBeautyNotification::GetInstance()->PublishNotification(true);
+        auto notification = CameraBeautyNotification::GetInstance();
+        CHECK_EXECUTE(notification != nullptr, notification->PublishNotification(true));
     }
 #endif
     return ret;
@@ -1078,7 +1079,9 @@ void HStreamRepeat::UpdateBeautySettings(std::shared_ptr<OHOS::Camera::CameraMet
 
 void HStreamRepeat::CancelNotification()
 {
-    CameraBeautyNotification::GetInstance()->CancelNotification();
+    auto notification = CameraBeautyNotification::GetInstance();
+    CHECK_RETURN_ELOG(notification == nullptr, "Get CameraBeautyNotification instance failed");
+    notification->CancelNotification();
 }
 
 // LCOV_EXCL_START

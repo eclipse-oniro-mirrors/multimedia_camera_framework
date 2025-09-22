@@ -65,14 +65,6 @@ static const std::string COMMON_EVENT_DATA_SHARE_READY = "usual.event.DATA_SHARE
 static const std::string COMMON_EVENT_SCREEN_LOCKED = "usual.event.SCREEN_LOCKED";
 static const std::string COMMON_EVENT_SCREEN_UNLOCKED = "usual.event.SCREEN_UNLOCKED";
 static const std::string COMMON_EVENT_RSS_MULTI_WINDOW_TYPE = "common.event.ressched.window.state";
-#ifdef NOTIFICATION_ENABLE
-// beauty notification
-static const std::string EVENT_CAMERA_BEAUTY_NOTIFICATION = "CAMERA_BEAUTY_NOTIFICATION";
-static const std::string BEAUTY_NOTIFICATION_ACTION_PARAM = "currentFlag";
-static const int32_t BEAUTY_STATUS_OFF = 0;
-static const int32_t BEAUTY_STATUS_ON = 1;
-static const int32_t BEAUTY_LEVEL = 100;
-#endif
 // camera control center
 static const int32_t CONTROL_CENTER_DATA_SIZE = 3;
 static const int32_t CONTROL_CENTER_STATUS_INDEX = 0;
