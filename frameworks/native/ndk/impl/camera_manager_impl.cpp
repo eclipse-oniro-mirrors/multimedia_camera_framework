@@ -61,7 +61,15 @@ const std::unordered_map<Camera_Position, CameraPosition> g_NdkCameraPositionToF
 const std::unordered_map<Camera_TorchMode, TorchMode> g_ndkToFwTorchMode_ = {
     {Camera_TorchMode::OFF, TorchMode::TORCH_MODE_OFF},
     {Camera_TorchMode::ON, TorchMode::TORCH_MODE_ON},
-    {Camera_TorchMode::AUTO, TorchMode::TORCH_MODE_AUTO}
+    {Camera_TorchMode::AUTO, TorchMode::TORCH_MODE_AUTO},
+    {Camera_TorchMode::CAMERA_TORCH_MODE_OFF, TorchMode::TORCH_MODE_OFF},
+    {Camera_TorchMode::CAMERA_TORCH_MODE_ON, TorchMode::TORCH_MODE_ON},
+    {Camera_TorchMode::CAMERA_TORCH_MODE_AUTO, TorchMode::TORCH_MODE_AUTO}
+};
+const std::unordered_map<OHOS::CameraStandard::FoldStatus, Camera_FoldStatus> g_FwkFoldStatusToNdk_ = {
+    {OHOS::CameraStandard::FoldStatus::UNKNOWN_FOLD, Camera_FoldStatus::CAMERA_FOLD_STATUS_NON_FOLDABLE},
+    {OHOS::CameraStandard::FoldStatus::EXPAND, Camera_FoldStatus::CAMERA_FOLD_STATUS_EXPANDED},
+    {OHOS::CameraStandard::FoldStatus::FOLDED, Camera_FoldStatus::CAMERA_FOLD_STATUS_FOLDED},
 };
 
 namespace OHOS::CameraStandard {
@@ -159,7 +167,10 @@ public:
             }
             statusInfo.supportedCameras = supportedCamerasPtr;
             statusInfo.cameraSize = outSize;
-            statusInfo.foldStatus = (Camera_FoldStatus)foldStatusInfo.foldStatus;
+            auto itr = g_FwkFoldStatusToNdk_.find(foldStatusInfo.foldStatus);
+            if (itr != g_FwkFoldStatusToNdk_.end()) {
+                statusInfo.foldStatus = itr->second;
+            }
             foldStatusCallback_(cameraManager_, &statusInfo);
         }
     }

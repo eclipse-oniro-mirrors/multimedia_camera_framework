@@ -507,5 +507,64 @@ HWTEST_F(CameraPreviewOutputUnitTest, camera_preview_output_unittest_011, TestSi
     EXPECT_EQ(OH_PreviewOutput_Release(previewOutput), CAMERA_OK);
 }
 
+/*
+ * Feature: Framework
+ * Function: Test get and set preview rotation
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test get and set preview rotation, get and set successfully when valid parameters are entered
+ */
+HWTEST_F(CameraPreviewOutputUnitTest, camera_preview_output_unittest_012, TestSize.Level0)
+{
+    bool isDisplayLocked = false;
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_PHOTO);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+    Camera_Input *cameraInput = nullptr;
+    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    ASSERT_NE(cameraInput, nullptr);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CameraInput_Open(cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_PreviewOutput* previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+    ret = OH_CaptureSession_BeginConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_AddPreviewOutput(captureSession, previewOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    int displayRotation = 0;
+    Camera_ImageRotation imageRotation = CAMERA_IMAGE_ROTATION_180;
+    ret = OH_PreviewOutput_GetPreviewRotation(previewOutput, displayRotation, &imageRotation);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_PreviewOutput_SetPreviewRotation(previewOutput, CAMERA_IMAGE_ROTATION_180, isDisplayLocked);
+    EXPECT_EQ(ret, CAMERA_OK);
+    imageRotation = CAMERA_IMAGE_ROTATION_0;
+    ret = OH_PreviewOutput_GetPreviewRotation(previewOutput, displayRotation, &imageRotation);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_PreviewOutput_SetPreviewRotation(previewOutput, CAMERA_IMAGE_ROTATION_0, isDisplayLocked);
+    EXPECT_EQ(ret, CAMERA_OK);
+    imageRotation = CAMERA_IMAGE_ROTATION_90;
+    ret = OH_PreviewOutput_GetPreviewRotation(previewOutput, displayRotation, &imageRotation);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_PreviewOutput_SetPreviewRotation(previewOutput, CAMERA_IMAGE_ROTATION_90, isDisplayLocked);
+    EXPECT_EQ(ret, CAMERA_OK);
+    imageRotation = CAMERA_IMAGE_ROTATION_270;
+    ret = OH_PreviewOutput_GetPreviewRotation(previewOutput, displayRotation, &imageRotation);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_PreviewOutput_SetPreviewRotation(previewOutput, CAMERA_IMAGE_ROTATION_270, isDisplayLocked);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_CommitConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    EXPECT_EQ(OH_CameraInput_Release(cameraInput), CAMERA_OK);
+    EXPECT_EQ(OH_PreviewOutput_Release(previewOutput), CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
+}
 } // CameraStandard
 } // OHOS
