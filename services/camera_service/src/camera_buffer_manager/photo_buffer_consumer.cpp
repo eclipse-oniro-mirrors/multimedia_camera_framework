@@ -58,7 +58,7 @@ void PhotoBufferConsumer::ExecuteOnBufferAvailable()
     CHECK_RETURN_ELOG(streamCapture == nullptr, "streamCapture is null");
     sptr<Surface> surface;
     if (isRaw_) {
-        surface = streamCapture->rawSurface_;
+        surface = streamCapture->rawSurface_.Get();
     } else {
         surface = streamCapture->surface_;
     }
