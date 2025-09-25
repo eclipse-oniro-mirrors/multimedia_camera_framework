@@ -152,7 +152,7 @@ public:
     sptr<IBufferConsumerListener> debugListener_ = nullptr;
     sptr<PictureAssembler> pictureAssembler_;
     std::map<int32_t, std::shared_ptr<PictureIntf>> captureIdPictureMap_;
-    SpHolder<std::shared_ptr<DeferredProcessing::TaskManager>> photoTask_ = nullptr;
+    SpHolder<std::shared_ptr<DeferredProcessing::TaskManager>> photoTask_;
     std::shared_ptr<DeferredProcessing::TaskManager> photoSubTask_ = nullptr;
     std::shared_ptr<DeferredProcessing::TaskManager> thumbnailTask_ = nullptr;
 
@@ -227,7 +227,7 @@ private:
     std::map<int32_t, std::unique_ptr<std::mutex>> mutexMap;
     std::mutex photoCallbackLock_;
     std::mutex thumbnailCallbackLock_;
-    SpHolder<sptr<IBufferConsumerListener>> photoListener_ = nullptr;
+    SpHolder<sptr<IBufferConsumerListener>> photoListener_;
     sptr<IBufferConsumerListener> photoAssetListener_ = nullptr;
     sptr<IBufferConsumerListener> thumbnailListener_ = nullptr;
     double latitude_ = 0.0;
