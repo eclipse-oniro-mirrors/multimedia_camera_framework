@@ -1063,7 +1063,7 @@ void HStreamCapture::SetRawCallbackUnLock()
     auto rawSurface = rawSurface_.Get();
     CHECK_RETURN_ELOG(rawSurface == nullptr, "HStreamCapture::SetRawCallbackUnLock callback is null");
     photoListener_.Set(nullptr);
-    photoListener_.Set((std::nothrow) PhotoBufferConsumer(this, true));
+    photoListener_.Set(new (std::nothrow) PhotoBufferConsumer(this, true));
     rawSurface->UnregisterConsumerListener();
     auto photoListener = photoListener_.Get();
     SurfaceError ret = rawSurface->RegisterConsumerListener((sptr<IBufferConsumerListener> &)photoListener);
