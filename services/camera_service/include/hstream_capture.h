@@ -30,6 +30,7 @@
 #include "v1_2/istream_operator.h"
 #include "safe_map.h"
 #include "icamera_ipc_checker.h"
+#include "sp_holder.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -142,7 +143,7 @@ public:
     sptr<Surface> deepSurface_;
     sptr<Surface> exifSurface_;
     sptr<Surface> debugSurface_;
-    sptr<Surface> rawSurface_;
+    SpHolder<sptr<Surface>> rawSurface_;
     std::mutex rawSurfaceMutex_;
     sptr<Surface> thumbnailSurface_;
     sptr<IBufferConsumerListener> gainmapListener_ = nullptr;
@@ -151,7 +152,7 @@ public:
     sptr<IBufferConsumerListener> debugListener_ = nullptr;
     sptr<PictureAssembler> pictureAssembler_;
     std::map<int32_t, std::shared_ptr<PictureIntf>> captureIdPictureMap_;
-    std::shared_ptr<DeferredProcessing::TaskManager> photoTask_ = nullptr;
+    SpHolder<std::shared_ptr<DeferredProcessing::TaskManager>> photoTask_ = nullptr;
     std::shared_ptr<DeferredProcessing::TaskManager> photoSubTask_ = nullptr;
     std::shared_ptr<DeferredProcessing::TaskManager> thumbnailTask_ = nullptr;
 
@@ -179,7 +180,7 @@ private:
         const std::shared_ptr<OHOS::Camera::CameraMetadata>& captureSettings, int32_t captureId);
     void SetCameraPhotoProxyInfo(sptr<CameraServerPhotoProxy> cameraPhotoProxy);
     sptr<IStreamCaptureCallback> streamCaptureCallback_;
-    sptr<IStreamCapturePhotoCallback> photoAvaiableCallback_;
+    SpHolder<sptr<IStreamCapturePhotoCallback>> photoAvaiableCallback_;
     sptr<IStreamCapturePhotoAssetCallback> photoAssetAvaiableCallback_;
     sptr<IStreamCaptureThumbnailCallback> thumbnailAvaiableCallback_;
     void FillingPictureExtendStreamInfos(StreamInfo_V1_1 &streamInfo, int32_t format);
@@ -199,11 +200,11 @@ private:
     std::condition_variable testDelay_;
     std::mutex testDelayMutex_;
     sptr<BufferProducerSequenceable> thumbnailBufferQueue_;
-    sptr<BufferProducerSequenceable> rawBufferQueue_;
-    sptr<BufferProducerSequenceable> gainmapBufferQueue_;
-    sptr<BufferProducerSequenceable> deepBufferQueue_;
-    sptr<BufferProducerSequenceable> exifBufferQueue_;
-    sptr<BufferProducerSequenceable> debugBufferQueue_;
+    SpHolder<sptr<BufferProducerSequenceable>> rawBufferQueue_;
+    SpHolder<sptr<BufferProducerSequenceable>> gainmapBufferQueue_;
+    SpHolder<sptr<BufferProducerSequenceable>> deepBufferQueue_;
+    SpHolder<sptr<BufferProducerSequenceable>> exifBufferQueue_;
+    SpHolder<sptr<BufferProducerSequenceable>> debugBufferQueue_;
     int32_t modeName_;
     int32_t deferredPhotoSwitch_;
     int32_t deferredVideoSwitch_;
@@ -226,7 +227,7 @@ private:
     std::map<int32_t, std::unique_ptr<std::mutex>> mutexMap;
     std::mutex photoCallbackLock_;
     std::mutex thumbnailCallbackLock_;
-    sptr<IBufferConsumerListener> photoListener_ = nullptr;
+    SpHolder<sptr<IBufferConsumerListener>> photoListener_ = nullptr;
     sptr<IBufferConsumerListener> photoAssetListener_ = nullptr;
     sptr<IBufferConsumerListener> thumbnailListener_ = nullptr;
     double latitude_ = 0.0;
