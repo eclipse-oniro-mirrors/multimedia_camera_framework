@@ -34,7 +34,6 @@
 #include "pixel_map_taihe.h"
 
 #include "metadata_helper.h"
-#include <drivers/interface/display/graphic/common/v1_0/cm_color_space.h>
 #include "photo_output_callback.h"
 
 namespace Ani {
@@ -121,7 +120,7 @@ void PhotoOutputCallbackAni::OnCaptureEndedCallback(const int32_t captureId, con
     };
     CHECK_RETURN_ELOG(mainHandler_ == nullptr, "callback failed, mainHandler_ is nullptr!");
     mainHandler_->PostTask(task, "OnCaptureEnd", 0, OHOS::AppExecFwk::EventQueue::Priority::IMMEDIATE, {});
-}
+    }
 
 void PhotoOutputCallbackAni::OnFrameShutterCallback(const int32_t captureId, const uint64_t timestamp) const
 {
