@@ -42,6 +42,14 @@ public:
     bool CanPreconfig(PreconfigType preconfigType, optional_view<PreconfigRatio> preconfigRatio);
     taihe::array<VideoFunctions> GetSessionFunctions(CameraOutputCapability const& outputCapability);
     taihe::array<VideoConflictFunctions> GetSessionConflictFunctions();
+    inline int64_t GetSpecificImplPtr()
+    {
+        return reinterpret_cast<uintptr_t>(this);
+    }
+    sptr<CameraStandard::CaptureSession> GetVideoSession()
+    {
+        return videoSession_;
+    }
 protected:
     sptr<OHOS::CameraStandard::CaptureSession> videoSession_ = nullptr;
 };

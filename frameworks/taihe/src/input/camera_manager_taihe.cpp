@@ -571,22 +571,22 @@ SessionUnion CreateVideoSession(sptr<OHOS::CameraStandard::CaptureSession> &sess
 SessionUnion CreateSecureSession(sptr<OHOS::CameraStandard::CaptureSession> &session)
 {
     if (OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(false)) {
-        return SessionUnion::make_videoSessionForSys(
-            make_holder<Ani::Camera::VideoSessionForSysImpl, VideoSessionForSys>(session));
+        return SessionUnion::make_secureSession(
+            make_holder<Ani::Camera::SecureSessionForSysImpl, SecureSession>(session));
     } else {
-        return SessionUnion::make_videoSession(make_holder<Ani::Camera::VideoSessionImpl,
-            VideoSession>(session));
+        return SessionUnion::make_secureSession(make_holder<Ani::Camera::SecureSessionImpl,
+            SecureSession>(session));
     }
 }
 
 SessionUnion CreatePhotoSession(sptr<OHOS::CameraStandard::CaptureSession> &session)
 {
     if (OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(false)) {
-        return SessionUnion::make_secureSession(make_holder<Ani::Camera::SecureSessionForSysImpl,
-            SecureSession>(session));
+        return SessionUnion::make_photoSessionForSys(make_holder<Ani::Camera::PhotoSessionForSysImpl,
+            PhotoSessionForSys>(session));
     } else {
-        return SessionUnion::make_secureSession(make_holder<Ani::Camera::SecureSessionImpl,
-            SecureSession>(session));
+        return SessionUnion::make_photoSession(make_holder<Ani::Camera::PhotoSessionImpl,
+            PhotoSession>(session));
     }
 }
 

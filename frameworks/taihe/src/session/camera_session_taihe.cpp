@@ -735,8 +735,6 @@ void SessionImpl::OffMacroStatusChanged(optional_view<callback<void(uintptr_t, b
 void SessionImpl::RegisterMacroStatusCallbackListener(
     const std::string& eventName, std::shared_ptr<uintptr_t> callback, bool isOnce)
 {
-    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
-        "SystemApi on macroStatusChanged is called!");
     if (macroStatusCallback_ == nullptr) {
         ani_env *env = get_env();
         macroStatusCallback_ = std::make_shared<MacroStatusCallbackListener>(env);
@@ -748,8 +746,6 @@ void SessionImpl::RegisterMacroStatusCallbackListener(
 void SessionImpl::UnregisterMacroStatusCallbackListener(
     const std::string& eventName, std::shared_ptr<uintptr_t> callback)
 {
-    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
-        "SystemApi off macroStatusChanged is called!");
     CHECK_RETURN_ELOG(macroStatusCallback_ == nullptr, "macroStatusCallback is null");
     macroStatusCallback_->RemoveCallbackRef(eventName, callback);
 }

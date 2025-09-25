@@ -27,6 +27,7 @@ class VideoSessionNapi : public CameraSessionNapi {
 public:
     static napi_value Init(napi_env env, napi_value exports);
     static napi_value CreateCameraSession(napi_env env);
+    static napi_value CreateVideoSessionForTransfer(napi_env env, sptr<VideoSession> videoSession);
     VideoSessionNapi();
     ~VideoSessionNapi();
 

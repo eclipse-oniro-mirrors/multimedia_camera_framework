@@ -1,5 +1,25 @@
 {
  global:
+ extern "C" {
+  GetCameraInputNapi;
+  GetNativeCameraInput;
+  GetPhotoSessionNapi;
+  GetNativePhotoSession;
+  GetSecureCameraSessionNapi;
+  GetNativeSecureCameraSession;
+  GetVideoSessionNapi;
+  GetNativeVideoSession;
+  GetMetadataOutputNapi;
+  GetNativeMetadataOutput;
+  GetPhotoNapi;
+  GetNativeImage;
+  GetPhotoOutputNapi;
+  GetNativePhotoOutput;
+  GetPreviewOutputNapi;
+  GetNativePreviewOutput;
+  GetVideoOutputNapi;
+  GetNativeVideoOutput
+ };
  extern "C++" {
    OHOS::CameraStandard::Export*;
  };

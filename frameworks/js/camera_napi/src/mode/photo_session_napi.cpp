@@ -91,6 +91,31 @@ napi_value PhotoSessionNapi::CreateCameraSession(napi_env env)
     return result;
 }
 
+napi_value PhotoSessionNapi::CreatePhotoSessionForTransfer(napi_env env, sptr<PhotoSession> photoSession)
+{
+    MEDIA_INFO_LOG("CreatePhotoSessionForTransfer is called");
+    CHECK_RETURN_RET_ELOG(photoSession == nullptr, nullptr,
+        "CreatePhotoSessionForTransfer photoSession is nullptr");
+    napi_status status;
+    napi_value result = nullptr;
+    napi_value constructor;
+    status = napi_get_reference_value(env, sConstructor_, &constructor);
+    if (status == napi_ok) {
+        sCameraSession_ = photoSession;
+        status = napi_new_instance(env, constructor, 0, nullptr, &result);
+        sCameraSession_ = nullptr;
+        if (status == napi_ok && result != nullptr) {
+            MEDIA_INFO_LOG("CreatePhotoSessionForTransfer success to create napi instance for transfer");
+            return result;
+        } else {
+            MEDIA_ERR_LOG("CreatePhotoSessionForTransfer Failed to create napi instance for transfer");
+        }
+    }
+    MEDIA_ERR_LOG("CreatePhotoSessionForTransfer Failed");
+    napi_get_undefined(env, &result);
+    return result;
+}
+
 napi_value PhotoSessionNapi::PhotoSessionNapiConstructor(napi_env env, napi_callback_info info)
 {
     MEDIA_DEBUG_LOG("PhotoSessionNapiConstructor is called");
@@ -143,5 +168,20 @@ void PhotoSessionNapi::UnregisterPressureStatusCallbackListener(
     pressureCallback_->RemoveCallbackRef(eventName, callback);
 }
 
+extern "C" {
+napi_value GetPhotoSessionNapi(napi_env env, sptr<PhotoSession> photoSession)
+{
+    MEDIA_INFO_LOG("%{public}s Called", __func__);
+    return PhotoSessionNapi::CreatePhotoSessionForTransfer(env, photoSession);
+}
+bool GetNativePhotoSession(void *photoSessionNapiPtr, sptr<CaptureSession> &nativeSession)
+{
+    MEDIA_INFO_LOG("%{public}s Called", __func__);
+    CHECK_RETURN_RET_ELOG(photoSessionNapiPtr == nullptr,
+        false, "%{public}s photoSessionNapiPtr is nullptr", __func__);
+    nativeSession = reinterpret_cast<PhotoSessionNapi*>(photoSessionNapiPtr)->cameraSession_;
+    return true;
+}
+}
 } // namespace CameraStandard
 } // namespace OHOS

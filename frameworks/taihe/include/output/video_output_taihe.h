@@ -97,6 +97,10 @@ public:
     void OnFrameEnd(callback_view<void(uintptr_t, uintptr_t)> callback);
     void OffFrameEnd(optional_view<callback<void(uintptr_t, uintptr_t)>> callback);
     static uint32_t videoOutputTaskId_;
+    sptr<CameraStandard::VideoOutput> GetVideoOutput()
+    {
+        return videoOutput_;
+    }
 private:
     void RegisterVideoOutputErrorCallbackListener(
         const std::string& eventName, std::shared_ptr<uintptr_t> callback, bool isOnce);

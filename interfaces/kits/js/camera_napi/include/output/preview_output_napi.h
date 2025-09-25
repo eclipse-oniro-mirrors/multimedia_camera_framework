@@ -96,6 +96,7 @@ public:
     static napi_value CreatePreviewOutput(napi_env env, Profile& profile, std::string surfaceId);
     static napi_value CreatePreviewOutput(napi_env env, std::string surfaceId);
     static napi_value CreateDeferredPreviewOutput(napi_env env, Profile& profile);
+    static napi_value CreatePreviewOutputForTransfer(napi_env env, sptr<PreviewOutput> previewOutput);
     static bool IsPreviewOutput(napi_env env, napi_value obj);
     static napi_value AddDeferredSurface(napi_env env, napi_callback_info info);
     static napi_value RemoveDeferredSurface(napi_env env, napi_callback_info info);

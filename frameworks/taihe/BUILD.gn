@@ -52,6 +52,7 @@ taihe_shared_library("camera_taihe") {
     "include/session",
     "include/mode",
     "include/picker",
+    "include/transfer",
     "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include",
     "${multimedia_camera_framework_path}/frameworks/native/camera/extension/include",
   ]
@@ -83,9 +84,11 @@ taihe_shared_library("camera_taihe") {
     "src/mode/video_session_taihe.cpp",
     "src/mode/video_session_for_sys_taihe.cpp",
     "src/mode/secure_session_taihe.cpp",
+    "src/mode/secure_session_taihe_for_sys.cpp",
     "src/mode/night_photo_session_taihe.cpp",
     "src/mode/slow_motion_video_session_taihe.cpp",
     "src/photo_taihe.cpp",
+    "src/transfer/camera_transfer_taihe.cpp",
   ]
 
   deps = [
@@ -110,6 +113,9 @@ taihe_shared_library("camera_taihe") {
     "image_framework:image_taihe",
     "ipc:ipc_core",
     "media_library:media_library",
+    "media_library:medialibrary_ani_utils",
+    "napi:ace_napi",
+    "runtime_core:ani_helpers",
   ]
 
   sanitize = {

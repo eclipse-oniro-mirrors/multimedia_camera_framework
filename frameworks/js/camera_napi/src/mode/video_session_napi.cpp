@@ -93,6 +93,31 @@ napi_value VideoSessionNapi::CreateCameraSession(napi_env env)
     return result;
 }
 
+napi_value VideoSessionNapi::CreateVideoSessionForTransfer(napi_env env, sptr<VideoSession> videoSession)
+{
+    MEDIA_INFO_LOG("CreateVideoSessionForTransfer is called");
+    CHECK_RETURN_RET_ELOG(videoSession == nullptr, nullptr,
+        "CreateVideoSessionForTransfer videoSession is nullptr");
+    napi_status status;
+    napi_value result = nullptr;
+    napi_value constructor;
+    status = napi_get_reference_value(env, sConstructor_, &constructor);
+    if (status == napi_ok) {
+        sCameraSession_ = videoSession;
+        status = napi_new_instance(env, constructor, 0, nullptr, &result);
+        sCameraSession_ = nullptr;
+        if (status == napi_ok && result != nullptr) {
+            MEDIA_INFO_LOG("CreateVideoSessionForTransfer success to create napi instance for transfer");
+            return result;
+        } else {
+            MEDIA_ERR_LOG("CreateVideoSessionForTransfer Failed to create napi instance for transfer");
+        }
+    }
+    MEDIA_ERR_LOG("CreateVideoSessionForTransfer Failed");
+    napi_get_undefined(env, &result);
+    return result;
+}
+
 napi_value VideoSessionNapi::VideoSessionNapiConstructor(napi_env env, napi_callback_info info)
 {
     MEDIA_DEBUG_LOG("VideoSessionNapiConstructor is called");
@@ -167,5 +192,21 @@ void VideoSessionNapi::UnregisterControlCenterEffectStatusCallbackListener(
     controlCenterEffectStatusCallback_->RemoveCallbackRef(eventName, callback);
 }
 
+extern "C" {
+napi_value GetVideoSessionNapi(napi_env env, sptr<VideoSession> videoSession)
+{
+    MEDIA_INFO_LOG("%{public}s Called", __func__);
+    return VideoSessionNapi::CreateVideoSessionForTransfer(env, videoSession);
+}
+
+bool GetNativeVideoSession(void *videoSessionNapiPtr, sptr<CaptureSession> &nativeSession)
+{
+    MEDIA_INFO_LOG("%{public}s Called", __func__);
+    CHECK_RETURN_RET_ELOG(videoSessionNapiPtr == nullptr,
+        false, "%{public}s videoSessionNapiPtr is nullptr", __func__);
+    nativeSession = reinterpret_cast<VideoSessionNapi*>(videoSessionNapiPtr)->cameraSession_;
+    return true;
+}
+}
 } // namespace CameraStandard
 } // namespace OHOS

@@ -28,6 +28,7 @@ class SecureCameraSessionNapi : public CameraSessionNapi {
 public:
     static napi_value Init(napi_env env, napi_value exports);
     static napi_value CreateCameraSession(napi_env env);
+    static napi_value CreateSecureSessionForTransfer(napi_env env, sptr<SecureCameraSession> secureCameraSession);
     SecureCameraSessionNapi();
     ~SecureCameraSessionNapi();
 

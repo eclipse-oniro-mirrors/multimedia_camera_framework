@@ -68,6 +68,10 @@ public:
     void AddMetadataObjectTypes(array_view<MetadataObjectType> types);
     std::shared_ptr<MetadataOutputCallbackListener> metadataOutputCallback_;
     std::shared_ptr<MetadataObjectsAvailableCallbackListener> metadataObjectsAvailableCallback_;
+    sptr<CameraStandard::MetadataOutput> GetMetadataOutput()
+    {
+        return metadataOutput_;
+    }
 private:
     sptr<CameraStandard::MetadataOutput> metadataOutput_ = nullptr;
     static const EmitterFunctions fun_map_;

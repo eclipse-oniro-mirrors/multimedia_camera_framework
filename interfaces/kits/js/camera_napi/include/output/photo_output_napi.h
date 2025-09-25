@@ -184,7 +184,7 @@ public:
     static napi_value Init(napi_env env, napi_value exports);
     static napi_value CreatePhotoOutput(napi_env env, Profile& profile, std::string surfaceId);
     static napi_value CreatePhotoOutput(napi_env env, std::string surfaceId);
-
+    static napi_value CreatePhotoOutputForTransfer(napi_env env, sptr<PhotoOutput> photoOutput);
     static napi_value Capture(napi_env env, napi_callback_info info);
     static napi_value BurstCapture(napi_env env, napi_callback_info info);
     static napi_value ConfirmCapture(napi_env env, napi_callback_info info);

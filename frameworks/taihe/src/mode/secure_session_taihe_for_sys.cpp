@@ -17,17 +17,17 @@
 #include "preview_output_taihe.h"
 #include "camera_utils_taihe.h"
 #include "camera_output_taihe.h"
-#include "secure_session_taihe.h"
+#include "secure_session_for_sys_taihe.h"
 
 namespace Ani {
 namespace Camera {
 using namespace taihe;
 using namespace ohos::multimedia::camera;
 
-void SecureSessionImpl::AddSecureOutput(ohos::multimedia::camera::weak::PreviewOutput previewOutput)
+void SecureSessionForSysImpl::AddSecureOutput(ohos::multimedia::camera::weak::PreviewOutput previewOutput)
 {
     MEDIA_INFO_LOG("AddSecureOutput is called");
-    CHECK_RETURN_DLOG(secureCameraSession_ == nullptr, "secureCameraSession_ is nullptr");
+    CHECK_RETURN_DLOG(secureCameraSessionForSys_ == nullptr, "secureCameraSessionForSys_ is nullptr");
     Ani::Camera::PreviewOutputImpl* outputImpl =
         reinterpret_cast<PreviewOutputImpl*>(CameraOutput(PreviewOutput(previewOutput))->GetSpecificImplPtr());
     CHECK_RETURN_ELOG(outputImpl == nullptr, "AddSecureOutput outputImpl is null");
@@ -35,9 +35,9 @@ void SecureSessionImpl::AddSecureOutput(ohos::multimedia::camera::weak::PreviewO
     CHECK_RETURN_ELOG(previewOutputImpl == nullptr, "AddSecureOutput previewOutputImpl is null");
     sptr<OHOS::CameraStandard::CaptureOutput> captureOutput = previewOutputImpl;
     CHECK_RETURN_ELOG(captureOutput == nullptr, "AddSecureOutput captureOutput is null");
-    int32_t retCode = secureCameraSession_->AddSecureOutput(captureOutput);
+    int32_t retCode = secureCameraSessionForSys_->AddSecureOutput(captureOutput);
     CHECK_RETURN_ELOG(!CameraUtilsTaihe::CheckError(retCode),
-        "SecureSessionImpl::AddSecureOutput fail %{public}d", retCode);
+        "SecureSessionForSysImpl::AddSecureOutput fail %{public}d", retCode);
 }
 } // namespace Camera
 } // namespace Ani

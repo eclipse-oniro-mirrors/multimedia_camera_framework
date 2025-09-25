@@ -704,5 +704,22 @@ napi_value CameraInputNapi::UsePhysicalCameraOrientation(napi_env env, napi_call
     cameraInputNapi->cameraInput_->SetUsePhysicalCameraOrientation(isUsed);
     return CameraNapiUtils::GetUndefinedValue(env);
 }
+
+extern "C" {
+napi_value GetCameraInputNapi(napi_env env, sptr<CameraInput> cameraInput)
+{
+    MEDIA_INFO_LOG("%{public}s Called", __func__);
+    return CameraInputNapi::CreateCameraInput(env, cameraInput);
+}
+
+bool GetNativeCameraInput(void *cameraInputNapiPtr, sptr<CameraInput> &nativeCameraInput)
+{
+    MEDIA_INFO_LOG("%{public}s Called", __func__);
+    CHECK_RETURN_RET_ELOG(cameraInputNapiPtr == nullptr,
+        false, "%{public}s cameraInputNapiPtr is nullptr", __func__);
+    nativeCameraInput = reinterpret_cast<CameraInputNapi*>(cameraInputNapiPtr)->GetCameraInput();
+    return true;
+}
+}
 } // namespace CameraStandard
 } // namespace OHOS
