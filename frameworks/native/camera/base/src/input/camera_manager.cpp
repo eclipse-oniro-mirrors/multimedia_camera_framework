@@ -2600,7 +2600,7 @@ void CameraManager::ParseCapability(ProfilesWrapper& profilesWrapper, sptr<Camer
     if (g_isCapabilitySupported(metadata, item, OHOS_ABILITY_AVAILABLE_PROFILE_LEVEL)) {
         std::vector<SceneMode> supportedModes = GetSupportedModes(camera);
         int32_t mode = (supportedModes.empty() && isTemplateMode_.count(modeName)) ? SceneMode::NORMAL : modeName;
-        MEDIA_INFO_LOG("ParseProfileLevel by device = %{public}s, mode = %{public}d", camera->GetID().c_str(), mode);
+        MEDIA_DEBUG_LOG("ParseProfileLevel by device = %{public}s, mode = %{public}d", camera->GetID().c_str(), mode);
         ParseProfileLevel(profilesWrapper, mode, item);
     } else if (g_isCapabilitySupported(metadata, item, OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS)) {
         std::vector<SceneMode> supportedModes = GetSupportedModes(camera);

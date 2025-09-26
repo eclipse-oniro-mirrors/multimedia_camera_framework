@@ -75,7 +75,7 @@ class ListenerTemplate {
 public:
     static napi_value On(napi_env env, napi_callback_info info)
     {
-        MEDIA_INFO_LOG("On is called");
+        MEDIA_DEBUG_LOG("On is called");
         CAMERA_SYNC_TRACE;
 
         T* targetInstance = nullptr;
@@ -88,7 +88,7 @@ public:
             napi_throw_error(env, std::to_string(INVALID_ARGUMENT).c_str(), "callback invalid argument");
             return nullptr;
         }
-        MEDIA_INFO_LOG("On eventType: %{public}s", jsCallbackParamParser.GetCallbackName().c_str());
+        MEDIA_DEBUG_LOG("On eventType: %{public}s", jsCallbackParamParser.GetCallbackName().c_str());
 
         return targetInstance->RegisterCallback(env, jsCallbackParamParser, false);
     }
@@ -120,7 +120,7 @@ public:
             MEDIA_ERR_LOG("On get invalid argument");
             return nullptr;
         }
-        MEDIA_INFO_LOG("Off eventType: %{public}s", jsCallbackParamParser.GetCallbackName().c_str());
+        MEDIA_DEBUG_LOG("Off eventType: %{public}s", jsCallbackParamParser.GetCallbackName().c_str());
         return targetInstance->UnregisterCallback(env, jsCallbackParamParser);
     }
 };
