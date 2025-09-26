@@ -42,10 +42,10 @@ int32_t MediaManagerAdapter::MpegAcquire(const std::string& requestId, const spt
 
 int32_t MediaManagerAdapter::MpegUnInit(const int32_t result)
 {
-    DP_DEBUG_LOG("MpegUnInit called with result: %{public}d", static_cast<int32_t>(result));
     DP_CHECK_ERROR_RETURN_RET_LOG(mpegManager_ == nullptr, DP_ERR, "mpeg manager is nullptr.");
-    mpegManager_->UnInit(static_cast<MediaResult>(result));
-    return DP_OK; // Success
+    auto ret = mpegManager_->UnInit(static_cast<MediaResult>(result));
+    DP_INFO_LOG("MpegUnInit result: %{public}d, ret: %{public}d", result, ret);
+    return ret == OK ? DP_OK : DP_ERR;
 }
 
 sptr<IPCFileDescriptor> MediaManagerAdapter::MpegGetResultFd()

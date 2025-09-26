@@ -211,6 +211,7 @@ enum SchedulerType : int32_t {
 };
 
 enum MediaManagerError : int32_t {
+    ERROR_TIME_OUT = -3,
     ERROR_DEBUG_INFO = -2,
     ERROR_FAIL = -1,
     OK = 0,

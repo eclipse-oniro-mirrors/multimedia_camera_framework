@@ -27,6 +27,7 @@ namespace DeferredProcessing {
 namespace {
     const std::string VIDEO_MAKER_NAME = "DpsVideoMaker";
     constexpr int64_t DEFAULT_TIME_TAMP = 0;
+    constexpr int32_t WAIT_EOS_REAME_TIME = 1000;
 }
 
 class MpegManager::VideoCodecCallback : public MediaCodecCallback {
@@ -138,6 +139,7 @@ MediaManagerError MpegManager::UnInit(const MediaResult result)
 {
     DP_DEBUG_LOG("entered.");
     DP_CHECK_RETURN_RET(!isRunning_.load(), OK);
+    auto ret = UnInitVideoCodec();
     result_ = result;
     if (result == MediaResult::PAUSE) {
         if (mediaManager_->Pause() == PAUSE_ABNORMAL) {
@@ -146,9 +148,8 @@ MediaManagerError MpegManager::UnInit(const MediaResult result)
     } else {
         mediaManager_->Stop();
     }
-    UnInitVideoCodec();
     isRunning_.store(false);
-    return OK;
+    return ret ? OK : ERROR_TIME_OUT;
 }
 
 sptr<Surface> MpegManager::GetSurface()
@@ -171,6 +172,7 @@ uint64_t MpegManager::GetProcessTimeStamp()
 
 MediaManagerError MpegManager::NotifyEnd()
 {
+    DP_CHECK_RETURN_RET(encoder_ == nullptr, ERROR_FAIL);
     auto ret = encoder_->NotifyEos();
     DP_CHECK_ERROR_RETURN_RET_LOG(ret != static_cast<int32_t>(OK), ERROR_FAIL, "Video codec notify end failde.");
     return OK;
@@ -251,14 +253,21 @@ MediaManagerError MpegManager::InitVideoCodec()
     return OK;
 }
 
-void MpegManager::UnInitVideoCodec()
+bool MpegManager::UnInitVideoCodec()
 {
     DP_DEBUG_LOG("entered.");
+    NotifyEnd();
+    std::unique_lock<std::mutex> lock(eosMutex_);
+    bool ret = eosCondition_.wait_for(lock, std::chrono::milliseconds(WAIT_EOS_REAME_TIME), [this] {
+        return eos_ == true;
+    });
+
+    DP_CHECK_RETURN_RET(encoder_ == nullptr, false);
     if (isRunning_) {
         encoder_->Stop();
     }
-    DP_CHECK_RETURN(encoder_ == nullptr);
     encoder_->Release();
+    return ret;
 }
 
 MediaManagerError MpegManager::InitVideoMakerSurface()
@@ -282,11 +291,20 @@ void MpegManager::UnInitVideoMaker()
 
 void MpegManager::OnBufferAvailable(uint32_t index, const std::shared_ptr<AVBuffer>& buffer)
 {
-    DP_DEBUG_LOG("OnBufferAvailable: pts: %{public}" PRId64 ", duration: %{public}" PRId64,
-        buffer->pts_, buffer->duration_);
+    DP_DEBUG_LOG("OnBufferAvailable: pts: %{public}" PRId64 ", flag: %{public}u",
+        buffer->pts_, buffer->flag_);
+    if (buffer->flag_ & AVCODEC_BUFFER_FLAG_EOS) {
+        {
+            std::lock_guard<std::mutex> lock(eosMutex_);
+            eos_ = true;
+        }
+        eosCondition_.notify_one();
+        DP_INFO_LOG("OnBufferAvailable video count: %{public}d.", videoNum_.load());
+        return;
+    }
     auto ret = mediaManager_->WriteSample(Media::Plugins::MediaType::VIDEO, buffer);
     DP_CHECK_ERROR_PRINT_LOG(ret != OK, "Video codec write failde.");
-
+    videoNum_.fetch_add(1);
     ret = ReleaseBuffer(index);
     DP_CHECK_ERROR_PRINT_LOG(ret != OK, "Video codec release buffer failde.");
 }
