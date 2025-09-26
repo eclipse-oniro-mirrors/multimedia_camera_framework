@@ -79,7 +79,10 @@ ohos_shared_library("camera_utils") {
     "utils/picture_proxy.cpp",
   ]
 
-  deps = [ "${multimedia_camera_framework_path}/services/camera_service/idls:camera_idl_sa_proxy", ]
+  deps = [
+    "${multimedia_camera_framework_path}/services/camera_service/idls:camera_idl_sa_proxy",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/idls:camera_deferred_idl_sa_proxy",
+  ]
 
   external_deps = [
     "audio_framework:audio_capturer",
