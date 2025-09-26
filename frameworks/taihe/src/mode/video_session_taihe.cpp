@@ -104,5 +104,28 @@ array<VideoConflictFunctions> VideoSessionImpl::GetSessionConflictFunctions()
     auto result = CreateFunctionsVideoConflictFunctionsArray(conflictFunctionsList);
     return result;
 }
+
+void VideoSessionImpl::RegisterPressureStatusCallbackListener(
+    const std::string& eventName, std::shared_ptr<uintptr_t> callback, bool isOnce)
+{
+    MEDIA_INFO_LOG("VideoSessionImpl::RegisterPressureStatusCallbackListener");
+    if (pressureCallback_ == nullptr) {
+        ani_env *env = get_env();
+        pressureCallback_ = std::make_shared<PressureCallbackListener>(env);
+        videoSession_->SetPressureCallback(pressureCallback_);
+    }
+    pressureCallback_->SaveCallbackReference(eventName, callback, isOnce);
+}
+
+void VideoSessionImpl::UnregisterPressureStatusCallbackListener(
+    const std::string& eventName, std::shared_ptr<uintptr_t> callback)
+{
+    MEDIA_INFO_LOG("VideoSessionImpl::UnregisterPressureStatusCallbackListener");
+    if (pressureCallback_ == nullptr) {
+        MEDIA_INFO_LOG("pressureCallback is null");
+        return;
+    }
+    pressureCallback_->RemoveCallbackRef(eventName, callback);
+}
 } // namespace Camera
 } // namespace Ani
