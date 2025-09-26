@@ -394,5 +394,235 @@ HWTEST_F(CameraNightSessionUnit, night_session_unittest_004, TestSize.Level0)
     nightSession->Release();
     input->Close();
 }
+
+/*
+ * Feature: Framework
+ * Function: Test NightSession about GetNightSubModeType
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test NightSession about GetNightSubModeType
+ */
+HWTEST_F(CameraNightSessionUnit, night_session_unittest_005, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    SceneMode mode = NIGHT;
+    cameras[0]->supportedModes_.clear();
+    cameras[0]->supportedModes_.push_back(NORMAL);
+    std::vector<SceneMode> modes = cameraManager_->GetSupportedModes(cameras[0]);
+    ASSERT_TRUE(modes.size() != 0);
+    sptr<CameraOutputCapability> ability = cameraManager_->GetSupportedOutputCapability(cameras[0], mode);
+    ASSERT_NE(ability, nullptr);
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureOutput> preview = CreatePreviewOutput();
+    if (!preIsSupportedNighitmode_) {
+        input->Close();
+        GTEST_SKIP();
+    }
+    ASSERT_NE(preview, nullptr);
+    sptr<CaptureOutput> photo = CreatePhotoOutput();
+    if (!phoIsSupportedNighitmode_) {
+        input->Close();
+        GTEST_SKIP();
+    }
+    ASSERT_NE(photo, nullptr);
+    sptr<CaptureSession> captureSession = CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(mode);
+    ASSERT_NE(captureSession, nullptr);
+    sptr<NightSession> nightSession = static_cast<NightSession*>(captureSession.GetRefPtr());
+    ASSERT_NE(nightSession, nullptr);
+
+    EXPECT_EQ(nightSession->BeginConfig(), 0);
+    EXPECT_EQ(nightSession->AddInput(input), 0);
+    sptr<CameraDevice> info = captureSession->innerInputDevice_->GetCameraDeviceInfo();
+    ASSERT_NE(info, nullptr);
+    info->modePreviewProfiles_.emplace(static_cast<int32_t>(NIGHT), previewProfile_);
+    info->modePhotoProfiles_.emplace(static_cast<int32_t>(NIGHT), photoProfile_);
+    EXPECT_EQ(nightSession->AddOutput(preview), 0);
+    EXPECT_EQ(nightSession->AddOutput(photo), 0);
+    EXPECT_EQ(nightSession->CommitConfig(), 0);
+
+    // Test GetNightSubModeType
+    NightSubMode subModeType = NightSubMode::DEFAULT;
+    if (nightSession->GetSupportedNightSubModeTypes().size() == 0) {
+        EXPECT_EQ(nightSession->GetNightSubModeType(subModeType), CameraErrorCode::OPERATION_NOT_ALLOWED);
+    } else {
+        EXPECT_EQ(nightSession->GetNightSubModeType(subModeType), CameraErrorCode::SUCCESS);
+    }
+    subModeType = NightSubMode::SUPER_MOON;
+    if (nightSession->GetSupportedNightSubModeTypes().size() == 0) {
+        EXPECT_EQ(nightSession->GetNightSubModeType(subModeType), CameraErrorCode::OPERATION_NOT_ALLOWED);
+    } else {
+        EXPECT_EQ(nightSession->GetNightSubModeType(subModeType), CameraErrorCode::SUCCESS);
+    }
+    subModeType = NightSubMode::STARRY_SKY;
+    if (nightSession->GetSupportedNightSubModeTypes().size() == 0) {
+        EXPECT_EQ(nightSession->GetNightSubModeType(subModeType), CameraErrorCode::OPERATION_NOT_ALLOWED);
+    } else {
+        EXPECT_EQ(nightSession->GetNightSubModeType(subModeType), CameraErrorCode::SUCCESS);
+    }
+    subModeType = NightSubMode::STARRY_SKY_PORTRAIT;
+    if (nightSession->GetSupportedNightSubModeTypes().size() == 0) {
+        EXPECT_EQ(nightSession->GetNightSubModeType(subModeType), CameraErrorCode::OPERATION_NOT_ALLOWED);
+    } else {
+        EXPECT_EQ(nightSession->GetNightSubModeType(subModeType), CameraErrorCode::SUCCESS);
+    }
+    
+    nightSession->Release();
+    input->Close();
+}
+
+ /*
+ * Feature: Framework
+ * Function: Test NightSession about SetNightSubModeType
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test NightSession about SetNightSubModeType
+ */
+HWTEST_F(CameraNightSessionUnit, night_session_unittest_006, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    SceneMode mode = NIGHT;
+    cameras[0]->supportedModes_.clear();
+    cameras[0]->supportedModes_.push_back(NORMAL);
+    std::vector<SceneMode> modes = cameraManager_->GetSupportedModes(cameras[0]);
+    ASSERT_TRUE(modes.size() != 0);
+    sptr<CameraOutputCapability> ability = cameraManager_->GetSupportedOutputCapability(cameras[0], mode);
+    ASSERT_NE(ability, nullptr);
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureOutput> preview = CreatePreviewOutput();
+    if (!preIsSupportedNighitmode_) {
+        input->Close();
+        GTEST_SKIP();
+    }
+    ASSERT_NE(preview, nullptr);
+    sptr<CaptureOutput> photo = CreatePhotoOutput();
+    if (!phoIsSupportedNighitmode_) {
+        input->Close();
+        GTEST_SKIP();
+    }
+    ASSERT_NE(photo, nullptr);
+    sptr<CaptureSession> captureSession = CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(mode);
+    ASSERT_NE(captureSession, nullptr);
+    sptr<NightSession> nightSession = static_cast<NightSession*>(captureSession.GetRefPtr());
+    ASSERT_NE(nightSession, nullptr);
+
+    EXPECT_EQ(nightSession->BeginConfig(), 0);
+    EXPECT_EQ(nightSession->AddInput(input), 0);
+    sptr<CameraDevice> info = captureSession->innerInputDevice_->GetCameraDeviceInfo();
+    ASSERT_NE(info, nullptr);
+    info->modePreviewProfiles_.emplace(static_cast<int32_t>(NIGHT), previewProfile_);
+    info->modePhotoProfiles_.emplace(static_cast<int32_t>(NIGHT), photoProfile_);
+    EXPECT_EQ(nightSession->AddOutput(preview), 0);
+    EXPECT_EQ(nightSession->AddOutput(photo), 0);
+    EXPECT_EQ(nightSession->CommitConfig(), 0);
+
+    // Test SetNightSubModeType
+    NightSubMode subModeType = NightSubMode::DEFAULT;
+    if (nightSession->GetSupportedNightSubModeTypes().size() == 0 && nightSession->changedMetadata_) {
+        EXPECT_EQ(nightSession->SetNightSubModeType(subModeType), CameraErrorCode::OPERATION_NOT_ALLOWED);
+    } else {
+        EXPECT_EQ(nightSession->SetNightSubModeType(subModeType), CameraErrorCode::SUCCESS);
+    }
+    subModeType = NightSubMode::SUPER_MOON;
+    if (nightSession->GetSupportedNightSubModeTypes().size() == 0 && nightSession->changedMetadata_) {
+        EXPECT_EQ(nightSession->SetNightSubModeType(subModeType), CameraErrorCode::OPERATION_NOT_ALLOWED);
+    } else {
+        EXPECT_EQ(nightSession->SetNightSubModeType(subModeType), CameraErrorCode::SUCCESS);
+    }
+    subModeType = NightSubMode::STARRY_SKY;
+    if (nightSession->GetSupportedNightSubModeTypes().size() == 0 && nightSession->changedMetadata_) {
+        EXPECT_EQ(nightSession->SetNightSubModeType(subModeType), CameraErrorCode::OPERATION_NOT_ALLOWED);
+    } else {
+        EXPECT_EQ(nightSession->SetNightSubModeType(subModeType), CameraErrorCode::SUCCESS);
+    }
+    subModeType = NightSubMode::STARRY_SKY_PORTRAIT;
+    if (nightSession->GetSupportedNightSubModeTypes().size() == 0 && nightSession->changedMetadata_) {
+        EXPECT_EQ(nightSession->SetNightSubModeType(subModeType), CameraErrorCode::OPERATION_NOT_ALLOWED);
+    } else {
+        EXPECT_EQ(nightSession->SetNightSubModeType(subModeType), CameraErrorCode::SUCCESS);
+    }
+    
+    nightSession->Release();
+    input->Close();
+}
+
+ /*
+ * Feature: Framework
+ * Function: Test NightSession about SetLocation
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test NightSession about SetLocation
+ */
+HWTEST_F(CameraNightSessionUnit, night_session_unittest_007, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    SceneMode mode = NIGHT;
+    cameras[0]->supportedModes_.clear();
+    cameras[0]->supportedModes_.push_back(NORMAL);
+    std::vector<SceneMode> modes = cameraManager_->GetSupportedModes(cameras[0]);
+    ASSERT_TRUE(modes.size() != 0);
+    sptr<CameraOutputCapability> ability = cameraManager_->GetSupportedOutputCapability(cameras[0], mode);
+    ASSERT_NE(ability, nullptr);
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureOutput> preview = CreatePreviewOutput();
+    if (!preIsSupportedNighitmode_) {
+        input->Close();
+        GTEST_SKIP();
+    }
+    ASSERT_NE(preview, nullptr);
+    sptr<CaptureOutput> photo = CreatePhotoOutput();
+    if (!phoIsSupportedNighitmode_) {
+        input->Close();
+        GTEST_SKIP();
+    }
+    ASSERT_NE(photo, nullptr);
+    sptr<CaptureSession> captureSession = CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(mode);
+    ASSERT_NE(captureSession, nullptr);
+    sptr<NightSession> nightSession = static_cast<NightSession*>(captureSession.GetRefPtr());
+    ASSERT_NE(nightSession, nullptr);
+
+    EXPECT_EQ(nightSession->BeginConfig(), 0);
+    EXPECT_EQ(nightSession->AddInput(input), 0);
+    sptr<CameraDevice> info = captureSession->innerInputDevice_->GetCameraDeviceInfo();
+    ASSERT_NE(info, nullptr);
+    info->modePreviewProfiles_.emplace(static_cast<int32_t>(NIGHT), previewProfile_);
+    info->modePhotoProfiles_.emplace(static_cast<int32_t>(NIGHT), photoProfile_);
+    EXPECT_EQ(nightSession->AddOutput(preview), 0);
+    EXPECT_EQ(nightSession->AddOutput(photo), 0);
+    EXPECT_EQ(nightSession->CommitConfig(), 0);
+
+    // Test SetLocation
+    Location loc;
+    loc.latitude = 37.7749;
+    loc.longitude = -122.4194;
+    loc.altitude = 10.0;
+    EXPECT_EQ(nightSession->SetLocation(loc), CameraErrorCode::SUCCESS);
+
+    nightSession->Release();
+    input->Close();
+}
 }
 }
