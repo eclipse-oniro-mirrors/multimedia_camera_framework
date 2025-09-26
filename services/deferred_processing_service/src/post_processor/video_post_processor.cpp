@@ -392,7 +392,12 @@ bool VideoPostProcessor::StopMpeg(const MediaResult result, const DeferredVideoW
 {
     DP_CHECK_ERROR_RETURN_RET_LOG(mediaManagerProxy_ == nullptr, false, "mpegManager is nullptr");
     // LCOV_EXCL_START
-    mediaManagerProxy_->MpegUnInit(static_cast<int32_t>(result));
+    auto ret = mediaManagerProxy_->MpegUnInit(static_cast<int32_t>(result));
+    if (ret != DP_OK) {
+        ReleaseMpeg();
+        return false;
+    }
+
     if (result != MediaResult::SUCCESS) {
         ReleaseMpeg();
         return true;

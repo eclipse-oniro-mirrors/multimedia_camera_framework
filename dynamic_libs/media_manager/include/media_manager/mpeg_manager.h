@@ -47,7 +47,7 @@ private:
     class VideoMakerListener;
 
     MediaManagerError InitVideoCodec();
-    void UnInitVideoCodec();
+    bool UnInitVideoCodec();
     MediaManagerError ReleaseBuffer(uint32_t index);
     MediaManagerError InitVideoMakerSurface();
     void UnInitVideoMaker();
@@ -71,6 +71,10 @@ private:
     sptr<IPCFileDescriptor> outputFd_ {nullptr};
     sptr<IPCFileDescriptor> tempFd_ {nullptr};
     MediaResult result_ {FAIL};
+    std::mutex eosMutex_;
+    std::condition_variable eosCondition_;
+    bool eos_ {false};
+    std::atomic_int32_t videoNum_ {0};
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard
