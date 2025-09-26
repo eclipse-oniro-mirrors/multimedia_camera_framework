@@ -263,5 +263,39 @@ napi_value PhotoNapi::Release(napi_env env, napi_callback_info info)
     }
     return result;
 }
+
+extern "C" {
+napi_value GetPhotoNapi(napi_env env, std::shared_ptr<OHOS::Media::NativeImage> nativeImage, bool isRaw)
+{
+    MEDIA_INFO_LOG("%{public}s Called", __func__);
+    napi_value result = nullptr;
+    napi_value image = Media::ImageNapi::Create(env, nativeImage);
+    CHECK_RETURN_RET_ELOG(image == nullptr, nullptr, "%{public}s ImageNapi Create failed", __func__);
+    if (!isRaw) {
+        result = PhotoNapi::CreatePhoto(env, image);
+    } else {
+        result = PhotoNapi::CreateRawPhoto(env, image);
+    }
+    return result;
+}
+
+bool GetNativeImage(void *photoNapiPtr, std::shared_ptr<OHOS::Media::NativeImage> &nativeImage)
+{
+    MEDIA_INFO_LOG("%{public}s Called", __func__);
+    CHECK_RETURN_RET_ELOG(photoNapiPtr == nullptr, false, "%{public}s photoNapiPtr is nullptr", __func__);
+    auto photoNapi = reinterpret_cast<PhotoNapi*>(photoNapiPtr);
+    napi_value mainImageNapi = photoNapi->GetMainForTransfer();
+    napi_value rawImageNapi = photoNapi->GetRawForTransfer();
+    if (mainImageNapi != nullptr) {
+        nativeImage = Media::ImageNapi::GetNativeImage(photoNapi->GetEnv(), mainImageNapi);
+        return true;
+    } else if (rawImageNapi != nullptr) {
+        nativeImage = Media::ImageNapi::GetNativeImage(photoNapi->GetEnv(), rawImageNapi);
+        return true;
+    }
+    MEDIA_ERR_LOG("%{public}s mainImage and rawImage in photoNapi are both nullptr", __func__);
+    return false;
+}
+}
 } // namespace CameraStandard
 } // namespace OHOS

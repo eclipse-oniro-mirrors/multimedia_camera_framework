@@ -32,7 +32,7 @@
 #include "hdr_type.h"
 #include "photo_taihe.h"
 #include "pixel_map_taihe.h"
-
+#include "media_library_comm_ani.h"
 #include "metadata_helper.h"
 #include "photo_output_callback.h"
 
@@ -84,9 +84,20 @@ void PhotoOutputCallbackAni::OnPhotoAvailableCallback(const std::shared_ptr<Medi
     mainHandler_->PostTask(task, "OnPhotoAvailableCallback", 0, OHOS::AppExecFwk::EventQueue::Priority::IMMEDIATE, {});
 }
 
-void PhotoOutputCallbackAni::OnPhotoAssetAvailableCallback(const int32_t captureid, const std::string &uri,
+void PhotoOutputCallbackAni::OnPhotoAssetAvailableCallback(const int32_t captureId, const std::string &uri,
     int32_t cameraShotType, const std::string &burstKey) const
 {
+    MEDIA_INFO_LOG("PhotoOutputCallbackAni::OnPhotoAssetAvailableCallback called");
+    ani_object photoAssetValue =
+        Media::MediaLibraryCommAni::CreatePhotoAssetAni(get_env(), uri, cameraShotType, captureId, burstKey);
+    auto sharePtr = shared_from_this();
+    auto task = [photoAssetValue, sharePtr]() {
+        CHECK_EXECUTE(sharePtr != nullptr, sharePtr->ExecuteAsyncCallback(
+            CONST_CAPTURE_PHOTO_ASSET_AVAILABLE, 0, "success", reinterpret_cast<uintptr_t>(photoAssetValue)));
+        MEDIA_DEBUG_LOG("ExecuteCallback CONST_CAPTURE_PHOTO_ASSET_AVAILABLE X");
+    };
+    mainHandler_->PostTask(task, "OnPhotoAssetAvailableCallback", 0,
+        OHOS::AppExecFwk::EventQueue::Priority::IMMEDIATE, {});
 }
 
 void PhotoOutputCallbackAni::OnThumbnailAvailableCallback(int32_t captureId, int64_t timestamp,

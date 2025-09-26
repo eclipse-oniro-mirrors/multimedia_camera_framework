@@ -377,6 +377,31 @@ napi_value MetadataOutputNapi::CreateMetadataOutput(napi_env env, std::vector<Me
     return result;
 }
 
+napi_value MetadataOutputNapi::CreateMetadataOutputForTransfer(napi_env env, sptr<MetadataOutput> metadataOutput)
+{
+    MEDIA_INFO_LOG("CreateMetadataOutputForTransfer is called");
+    CHECK_RETURN_RET_ELOG(metadataOutput == nullptr, nullptr,
+        "CreateMetadataOutputForTransfer metadataOutput is nullptr");
+    napi_status status;
+    napi_value result = nullptr;
+    napi_value constructor;
+
+    status = napi_get_reference_value(env, sConstructor_, &constructor);
+    if (status == napi_ok) {
+        sMetadataOutput_ = metadataOutput;
+        status = napi_new_instance(env, constructor, 0, nullptr, &result);
+        sMetadataOutput_ = nullptr;
+        if (status == napi_ok && result != nullptr) {
+            return result;
+        } else {
+            MEDIA_ERR_LOG("Failed to create metadata output instance for transfer");
+        }
+    }
+    MEDIA_ERR_LOG("CreateMetadataOutputForTransfer call Failed!");
+    napi_get_undefined(env, &result);
+    return result;
+}
+
 napi_value MetadataOutputNapi::AddMetadataObjectTypes(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("AddMetadataObjectTypes is called");
@@ -607,6 +632,23 @@ napi_value MetadataOutputNapi::Once(napi_env env, napi_callback_info info)
 napi_value MetadataOutputNapi::Off(napi_env env, napi_callback_info info)
 {
     return ListenerTemplate<MetadataOutputNapi>::Off(env, info);
+}
+
+extern "C" {
+napi_value GetMetadataOutputNapi(napi_env env, sptr<MetadataOutput> metadataOutput)
+{
+    MEDIA_INFO_LOG("%{public}s Called", __func__);
+    return MetadataOutputNapi::CreateMetadataOutputForTransfer(env, metadataOutput);
+}
+
+bool GetNativeMetadataOutput(void *metadataOutputNapiPtr, sptr<MetadataOutput> &nativeMetadataOutput)
+{
+    MEDIA_INFO_LOG("%{public}s Called", __func__);
+    CHECK_RETURN_RET_ELOG(metadataOutputNapiPtr == nullptr,
+        false, "%{public}s metadataOutputNapiPtr is nullptr", __func__);
+    nativeMetadataOutput = reinterpret_cast<MetadataOutputNapi*>(metadataOutputNapiPtr)->GetMetadataOutput();
+    return true;
+}
 }
 } // namespace CameraStandard
 } // namespace OHOS

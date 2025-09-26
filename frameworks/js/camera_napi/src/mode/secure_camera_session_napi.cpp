@@ -94,6 +94,32 @@ napi_value SecureCameraSessionNapi::CreateCameraSession(napi_env env)
     return result;
 }
 
+napi_value SecureCameraSessionNapi::CreateSecureSessionForTransfer(napi_env env,
+    sptr<SecureCameraSession> secureCameraSession)
+{
+    MEDIA_INFO_LOG("CreateSecureSessionForTransfer is called");
+    CHECK_RETURN_RET_ELOG(secureCameraSession == nullptr, nullptr,
+        "CreateSecureSessionForTransfer secureCameraSession is nullptr");
+    napi_status status;
+    napi_value result = nullptr;
+    napi_value constructor;
+    status = napi_get_reference_value(env, sConstructor_, &constructor);
+    if (status == napi_ok) {
+        sCameraSession_ = secureCameraSession;
+        status = napi_new_instance(env, constructor, 0, nullptr, &result);
+        sCameraSession_ = nullptr;
+        if (status == napi_ok && result != nullptr) {
+            MEDIA_INFO_LOG("success to create Camera session napi instance for transfer");
+            return result;
+        } else {
+            MEDIA_ERR_LOG("Failed to create Camera session napi instance for transfer");
+        }
+    }
+    MEDIA_ERR_LOG("CreateSecureSessionForTransfer Failed");
+    napi_get_undefined(env, &result);
+    return result;
+}
+
 napi_value SecureCameraSessionNapi::AddSecureOutput(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("AddSecureOutput is called");
@@ -150,6 +176,23 @@ napi_value SecureCameraSessionNapi::SecureCameraSessionNapiConstructor(napi_env 
     }
     MEDIA_ERR_LOG("SecureCameraSessionNapi call Failed!");
     return result;
+}
+
+extern "C" {
+napi_value GetSecureCameraSessionNapi(napi_env env, sptr<SecureCameraSession> secureCameraSession)
+{
+    MEDIA_INFO_LOG("%{public}s Called", __func__);
+    return SecureCameraSessionNapi::CreateSecureSessionForTransfer(env, secureCameraSession);
+}
+
+bool GetNativeSecureCameraSession(void *secureCameraSessionNapiPtr, sptr<CaptureSession> &nativeSession)
+{
+    MEDIA_INFO_LOG("%{public}s Called", __func__);
+    CHECK_RETURN_RET_ELOG(secureCameraSessionNapiPtr == nullptr,
+        false, "%{public}s secureCameraSessionNapiPtr is nullptr", __func__);
+    nativeSession = reinterpret_cast<SecureCameraSessionNapi*>(secureCameraSessionNapiPtr)->cameraSession_;
+    return true;
+}
 }
 } // namespace CameraStandard
 } // namespace OHOS

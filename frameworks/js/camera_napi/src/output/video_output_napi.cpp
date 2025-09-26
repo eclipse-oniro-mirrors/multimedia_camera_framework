@@ -449,6 +449,30 @@ napi_value VideoOutputNapi::CreateVideoOutput(napi_env env, std::string surfaceI
     return result;
 }
 
+napi_value VideoOutputNapi::CreateVideoOutputForTransfer(napi_env env, sptr<VideoOutput> videoOutput)
+{
+    MEDIA_DEBUG_LOG("CreateVideoOutputForTransfer is called");
+    CHECK_RETURN_RET_ELOG(videoOutput == nullptr, nullptr, "CreateVideoOutputForTransfer videoOutput is nullptr");
+    napi_status status;
+    napi_value result = nullptr;
+    napi_value constructor;
+
+    status = napi_get_reference_value(env, sConstructor_, &constructor);
+    if (status == napi_ok) {
+        sVideoOutput_ = videoOutput;
+        status = napi_new_instance(env, constructor, 0, nullptr, &result);
+        sVideoOutput_ = nullptr;
+        if (status == napi_ok && result != nullptr) {
+            return result;
+        } else {
+            MEDIA_ERR_LOG("Failed to create video output instance for transfer");
+        }
+    }
+    napi_get_undefined(env, &result);
+    MEDIA_ERR_LOG("CreateVideoOutputForTransfer call Failed!");
+    return result;
+}
+
 napi_value VideoOutputNapi::Start(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("Start is called");
@@ -1051,6 +1075,23 @@ napi_value VideoOutputNapi::EnableAutoVideoFrameRate(napi_env env, napi_callback
         MEDIA_ERR_LOG("VideoOutputNapi::EnableAutoVideoFrameRate fail %{public}d", retCode);
     }
     return result;
+}
+
+extern "C" {
+napi_value GetVideoOutputNapi(napi_env env, sptr<VideoOutput> videoOutput)
+{
+    MEDIA_INFO_LOG("%{public}s Called", __func__);
+    return VideoOutputNapi::CreateVideoOutputForTransfer(env, videoOutput);
+}
+
+bool GetNativeVideoOutput(void *videoOutputNapiPtr, sptr<VideoOutput> &nativeVideoOutput)
+{
+    MEDIA_INFO_LOG("%{public}s Called", __func__);
+    CHECK_RETURN_RET_ELOG(videoOutputNapiPtr == nullptr,
+        false, "%{public}s videoOutputNapiPtr is nullptr", __func__);
+    nativeVideoOutput = reinterpret_cast<VideoOutputNapi*>(videoOutputNapiPtr)->GetVideoOutput();
+    return true;
+}
 }
 } // namespace CameraStandard
 } // namespace OHOS

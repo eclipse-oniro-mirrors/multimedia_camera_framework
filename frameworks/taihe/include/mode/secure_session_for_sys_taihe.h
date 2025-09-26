@@ -37,7 +37,7 @@ public:
         }
     }
     ~SecureSessionForSysImpl() = default;
-    void AddSecureOutput(weak::PreviewOutput previewOutput) {}
+    void AddSecureOutput(weak::PreviewOutput previewOutput);
     inline int64_t GetSpecificImplPtr()
     {
         return reinterpret_cast<uintptr_t>(this);
