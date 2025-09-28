@@ -354,6 +354,7 @@ int32_t CaptureSession::CommitConfig()
         }
         SetUserId();
     }
+    SetAppHint();
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     auto captureSession = GetCaptureSession();
     bool isHasSwitchedOffline = false;
@@ -375,6 +376,21 @@ int32_t CaptureSession::CommitConfig()
         }
     }
     return ServiceToCameraError(errCode);
+}
+
+void CaptureSession::SetAppHint()
+{
+    CAMERA_SYNC_TRACE;
+    CHECK_RETURN_ELOG(IsSessionCommited(), "CaptureSession::SetAppHint session has committed!");
+    this->LockForControl();
+    CHECK_RETURN_ELOG(changedMetadata_ == nullptr, "CaptureSession::SetAppHint changedMetadata_ is NULL");
+    uint32_t appHint = OHOS_CAMERA_APP_HINT_NONE;
+    CHECK_EXECUTE(CameraSecurity::CheckSystemApp(), appHint |= OHOS_CAMERA_APP_HINT_AGGRESSIVE_RESOURCE);
+    bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_APP_HINT, &appHint, 1);
+    MEDIA_INFO_LOG("CaptureSession::SetAppHint value: %{public}u", appHint);
+    CHECK_PRINT_ELOG(!status, "CaptureSession::SetAppHint Failed to set type!");
+    int32_t errCode = this->UnlockForControl();
+    CHECK_RETURN_DLOG(errCode != CameraErrorCode::SUCCESS, "CaptureSession::SetAppHint Failed");
 }
 
 void CaptureSession::CheckSpecSearch()
