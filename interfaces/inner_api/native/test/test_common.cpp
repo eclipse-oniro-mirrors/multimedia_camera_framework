@@ -301,7 +301,7 @@ void TestMetadataOutputObjectCallback::OnMetadataObjectsAvailable(std::vector<sp
                        metaObjects[i]->GetType(),
                        metaObjects[i]->GetBoundingBox().topLeftX, metaObjects[i]->GetBoundingBox().topLeftY,
                        metaObjects[i]->GetBoundingBox().width, metaObjects[i]->GetBoundingBox().height,
-                       static_cast<int64_t>(metaObjects[i]->GetTimestamp()));
+                       metaObjects[i]->GetTimestamp());
     }
 }
 
