@@ -54,6 +54,11 @@ public:
     }
 protected:
     sptr<OHOS::CameraStandard::VideoSession> videoSession_ = nullptr;
+    std::shared_ptr<PressureCallbackListener> pressureCallback_ = nullptr;
+    void RegisterPressureStatusCallbackListener(const std::string& eventName,
+        std::shared_ptr<uintptr_t> callback, bool isOnce) override;
+    void UnregisterPressureStatusCallbackListener(
+        const std::string& eventName, std::shared_ptr<uintptr_t> callback) override;
 };
 } // namespace Camera
 } // namespace Ani

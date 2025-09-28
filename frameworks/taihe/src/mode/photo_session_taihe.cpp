@@ -94,5 +94,28 @@ taihe::array<PhotoConflictFunctions> PhotoSessionImpl::GetSessionConflictFunctio
     auto result = CreateFunctionsPhotoConflictFunctionsArray(conflictFunctionsList);
     return result;
 }
+
+void PhotoSessionImpl::RegisterPressureStatusCallbackListener(
+    const std::string& eventName, std::shared_ptr<uintptr_t> callback, bool isOnce)
+{
+    MEDIA_INFO_LOG("PhotoSessionImpl::RegisterPressureStatusCallbackListener");
+    if (pressureCallback_ == nullptr) {
+        ani_env *env = get_env();
+        pressureCallback_ = std::make_shared<PressureCallbackListener>(env);
+        photoSession_->SetPressureCallback(pressureCallback_);
+    }
+    pressureCallback_->SaveCallbackReference(eventName, callback, isOnce);
+}
+
+void PhotoSessionImpl::UnregisterPressureStatusCallbackListener(
+    const std::string& eventName, std::shared_ptr<uintptr_t> callback)
+{
+    MEDIA_INFO_LOG("PhotoSessionImpl::UnregisterPressureStatusCallbackListener");
+    if (pressureCallback_ == nullptr) {
+        MEDIA_INFO_LOG("pressureCallback is null");
+        return;
+    }
+    pressureCallback_->RemoveCallbackRef(eventName, callback);
+}
 } // namespace Camera
 } // namespace Ani

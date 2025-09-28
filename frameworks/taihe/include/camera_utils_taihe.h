@@ -65,6 +65,8 @@ public:
     static SlowMotionStatus ToTaiheSlowMotionState(OHOS::CameraStandard::SlowMotionState type);
     static EffectSuggestionType ToTaiheEffectSuggestionType(
         OHOS::CameraStandard::EffectSuggestionType effectSuggestionType);
+    static SystemPressureLevel ToTaiheSystemPressureLevel(
+        OHOS::CameraStandard::PressureStatus systemPressureLevel);
     static LightStatus ToTaiheLightStatus(int32_t status);
     static FocusTrackingMode ToTaiheFocusTrackingMode(OHOS::CameraStandard::FocusTrackingMode mode);
     static array<FrameRateRange> ToTaiheArrayFrameRateRange(std::vector<std::vector<int32_t>> ratesRange);

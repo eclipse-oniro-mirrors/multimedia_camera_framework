@@ -660,6 +660,14 @@ enum EffectSuggestionType: i32 {
   EFFECT_SUGGESTION_STAGE = 5
 }
 
+enum SystemPressureLevel: i32 {
+  SYSTEM_PRESSURE_NORMAL = 0,
+  SYSTEM_PRESSURE_MILD = 1,
+  SYSTEM_PRESSURE_SEVERE = 2,
+  SYSTEM_PRESSURE_CRITICAL = 3,
+  SYSTEM_PRESSURE_SHUTDOWN = 4
+}
+
 interface PhotoSession : Session, Flash, Zoom, AutoExposure, AutoDeviceSwitch, ColorManagement, Focus, Macro, WhiteBalance {
   Preconfig(preconfigType: PreconfigType, preconfigRatio: Optional<PreconfigRatio>): void;
   CanPreconfig(preconfigType: PreconfigType, preconfigRatio: Optional<PreconfigRatio>): bool;
@@ -681,6 +689,8 @@ interface PhotoSession : Session, Flash, Zoom, AutoExposure, AutoDeviceSwitch, C
               this.onMacroStatusChanged(callback as ((err: BusinessError<void>, data: boolean)=> void));
             } else if (type === "effectSuggestionChange") {
               this.onEffectSuggestionChange(callback as ((arg_0: BusinessError<void>, arg_1: EffectSuggestionType)=> void));
+            } else if (type === "systemPressureLevelChange") {
+              this.onSystemPressureLevelChange(callback as ((err: BusinessError<void>, data: SystemPressureLevel)=> void));
             } else {
               throw new Error(`Unknown type: ${type}`);
             }
@@ -714,6 +724,8 @@ interface PhotoSession : Session, Flash, Zoom, AutoExposure, AutoDeviceSwitch, C
               this.offMacroStatusChanged(callback as (((err: BusinessError<void>, data: boolean)=> void) | undefined));
             } else if (type === "effectSuggestionChange") {
               this.offEffectSuggestionChange(callback as (((arg_0: BusinessError<void>, arg_1: EffectSuggestionType)=> void) | undefined));
+            } else if (type === "systemPressureLevelChange") {
+              this.offSystemPressureLevelChange(callback as (((err: BusinessError<void>, data: SystemPressureLevel)=> void) | undefined));
             } else {
               throw new Error(`Unknown type: ${type}`);
             }
@@ -753,6 +765,9 @@ interface PhotoSession : Session, Flash, Zoom, AutoExposure, AutoDeviceSwitch, C
   OnEffectSuggestionChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: EffectSuggestionType)=> void): void;
   OffEffectSuggestionChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: EffectSuggestionType)=> void>): void;
 
+  OnSystemPressureLevelChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: SystemPressureLevel)=> void): void;
+  OffSystemPressureLevelChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: SystemPressureLevel)=> void>): void;
+
   GetSessionFunctions(outputCapability: CameraOutputCapability): Array<PhotoFunctions>;
   GetSessionConflictFunctions(): Array<PhotoConflictFunctions>;
 
@@ -784,6 +799,8 @@ interface PhotoSessionForSys : PhotoSession, Beauty, ColorEffect, ColorManagemen
               this.onMacroStatusChanged(callback as ((err: BusinessError<void>, data: boolean)=> void));
             } else if (type === "effectSuggestionChange") {
               this.onEffectSuggestionChange(callback as ((arg_0: BusinessError<void>, arg_1: EffectSuggestionType)=> void));
+            } else if (type === "systemPressureLevelChange") {
+              this.onSystemPressureLevelChange(callback as ((err: BusinessError<void>, data: SystemPressureLevel)=> void));
             } else {
               throw new Error(`Unknown type: ${type}`);
             }
@@ -817,6 +834,8 @@ interface PhotoSessionForSys : PhotoSession, Beauty, ColorEffect, ColorManagemen
               this.offMacroStatusChanged(callback as (((err: BusinessError<void>, data: boolean)=> void) | undefined));
             } else if (type === "effectSuggestionChange") {
               this.offEffectSuggestionChange(callback as (((arg_0: BusinessError<void>, arg_1: EffectSuggestionType)=> void) | undefined));
+            } else if (type === "systemPressureLevelChange") {
+              this.offSystemPressureLevelChange(callback as (((err: BusinessError<void>, data: SystemPressureLevel)=> void) | undefined));
             } else {
               throw new Error(`Unknown type: ${type}`);
             }
@@ -871,6 +890,8 @@ interface VideoSession : Session, Flash, Zoom, Stabilization, ColorManagement, A
               this.onFocusTrackingInfoAvailable(callback as ((arg_1: FocusTrackingInfo)=> void));
             } else if (type === "effectSuggestionChange") {
               this.onEffectSuggestionChange(callback as ((arg_0: BusinessError<void>, arg_1: EffectSuggestionType)=> void));
+            } else if (type === "systemPressureLevelChange") {
+              this.onSystemPressureLevelChange(callback as ((err: BusinessError<void>, data: SystemPressureLevel)=> void));
             } else {
               throw new Error(`Unknown type: ${type}`);
             }
@@ -897,6 +918,8 @@ interface VideoSession : Session, Flash, Zoom, Stabilization, ColorManagement, A
               this.offFocusTrackingInfoAvailable(callback as ((arg_1: FocusTrackingInfo)=> void) | undefined);
             } else if (type === "effectSuggestionChange") {
               this.offEffectSuggestionChange(callback as (((arg_0: BusinessError<void>, arg_1: EffectSuggestionType)=> void) | undefined));
+            } else if (type === "systemPressureLevelChange") {
+              this.offSystemPressureLevelChange(callback as (((err: BusinessError<void>, data: SystemPressureLevel)=> void) | undefined));
             } else {
               throw new Error(`Unknown type: ${type}`);
             }
@@ -929,6 +952,9 @@ interface VideoSession : Session, Flash, Zoom, Stabilization, ColorManagement, A
 
   OnEffectSuggestionChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: EffectSuggestionType)=> void): void;
   OffEffectSuggestionChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: EffectSuggestionType)=> void>): void;
+
+  OnSystemPressureLevelChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: SystemPressureLevel)=> void): void;
+  OffSystemPressureLevelChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: SystemPressureLevel)=> void>): void;
 
   SetQualityPrioritization(quality : QualityPrioritization) : void;
   GetSessionFunctions(outputCapability: CameraOutputCapability): Array<VideoFunctions>;
@@ -965,6 +991,8 @@ interface VideoSessionForSys : VideoSession, Beauty, ColorEffect, ColorManagemen
               this.onFocusTrackingInfoAvailable(callback as ((arg_1: FocusTrackingInfo)=> void));
             } else if (type === "effectSuggestionChange") {
               this.onEffectSuggestionChange(callback as ((arg_0: BusinessError<void>, arg_1: EffectSuggestionType)=> void));
+            } else if (type === "systemPressureLevelChange") {
+              this.onSystemPressureLevelChange(callback as ((err: BusinessError<void>, data: SystemPressureLevel)=> void));
             } else {
               throw new Error(`Unknown type: ${type}`);
             }
@@ -991,6 +1019,8 @@ interface VideoSessionForSys : VideoSession, Beauty, ColorEffect, ColorManagemen
               this.offFocusTrackingInfoAvailable(callback as ((arg_1: FocusTrackingInfo)=> void) | undefined);
             } else if (type === "effectSuggestionChange") {
               this.offEffectSuggestionChange(callback as (((arg_0: BusinessError<void>, arg_1: EffectSuggestionType)=> void) | undefined));
+            } else if (type === "systemPressureLevelChange") {
+              this.offSystemPressureLevelChange(callback as ((err: BusinessError<void>, data: SystemPressureLevel)=> void));
             } else {
               throw new Error(`Unknown type: ${type}`);
             }

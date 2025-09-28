@@ -290,6 +290,52 @@ void SessionImpl::UnregisterFocusCallbackListener(const std::string& eventName, 
     focusCallback_->RemoveCallbackRef(eventName, callback);
 }
 
+void SessionImpl::RegisterPressureStatusCallbackListener(
+    const std::string& eventName, std::shared_ptr<uintptr_t> callback, bool isOnce)
+{
+    CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "this type callback can not be registered in current session!");
+}
+
+void SessionImpl::UnregisterPressureStatusCallbackListener(
+    const std::string& eventName, std::shared_ptr<uintptr_t> callback)
+{
+    CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "this type callback can not be unregistered in current session!");
+}
+
+void SessionImpl::OnSystemPressureLevelChange(callback_view<void(uintptr_t, SystemPressureLevel)> callback)
+{
+    ListenerTemplate<SessionImpl>::On(this, callback, "systemPressureLevelChange");
+}
+
+void SessionImpl::OffSystemPressureLevelChange(optional_view<callback<void(uintptr_t, SystemPressureLevel)>> callback)
+{
+    ListenerTemplate<SessionImpl>::Off(this, callback, "systemPressureLevelChange");
+}
+
+void PressureCallbackListener::OnPressureStatusChanged(
+    OHOS::CameraStandard::PressureStatus systemPressureLevel)
+{
+    MEDIA_DEBUG_LOG("OnPressureStatusChanged is called, systemPressureLevel: %{public}d", systemPressureLevel);
+    OnSystemPressureLevelCallback(systemPressureLevel);
+}
+
+void PressureCallbackListener::OnSystemPressureLevelCallback(
+    OHOS::CameraStandard::PressureStatus systemPressureLevel) const
+{
+    MEDIA_INFO_LOG("OnSystemPressureLevelCallback is called");
+    auto sharePtr = shared_from_this();
+    auto task = [systemPressureLevel, sharePtr]() {
+        auto aniSystemPressureLevel = CameraUtilsTaihe::ToTaiheSystemPressureLevel(systemPressureLevel);
+        CHECK_EXECUTE(sharePtr != nullptr, sharePtr->ExecuteAsyncCallback(
+            "systemPressureLevelChange", 0, "Callback is OK", aniSystemPressureLevel));
+    };
+    CHECK_ERROR_RETURN_LOG(mainHandler_ == nullptr, "callback failed, mainHandler_ is nullptr!");
+    mainHandler_->PostTask(task, "OnSystemPressureLevelChange",
+        0, OHOS::AppExecFwk::EventQueue::Priority::IMMEDIATE, {});
+}
+
 void FocusCallbackListener::OnFocusState(OHOS::CameraStandard::FocusCallback::FocusState state)
 {
     MEDIA_DEBUG_LOG("OnFocusState is called, state: %{public}d", state);
@@ -935,6 +981,9 @@ const SessionImpl::EmitterFunctions SessionImpl::fun_map_ = {
     { "lightStatusChange", {
         &SessionImpl::RegisterLightStatusCallbackListener,
         &SessionImpl::UnregisterLightStatusCallbackListener } },
+    { "systemPressureLevelChange", {
+        &SessionImpl::RegisterPressureStatusCallbackListener,
+        &SessionImpl::UnregisterPressureStatusCallbackListener } },
 };
 const SessionImpl::EmitterFunctions& SessionImpl::GetEmitterFunctions()
 {
