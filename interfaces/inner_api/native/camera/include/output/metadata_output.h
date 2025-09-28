@@ -36,15 +36,15 @@
 namespace OHOS {
 namespace CameraStandard {
 static const std::map<MetadataObjectType, int32_t> mapLengthOfType = {
-    {MetadataObjectType::FACE, 23},
-    {MetadataObjectType::HUMAN_BODY, 9},
-    {MetadataObjectType::CAT_FACE, 18},
-    {MetadataObjectType::CAT_BODY, 9},
-    {MetadataObjectType::DOG_FACE, 18},
-    {MetadataObjectType::DOG_BODY, 9},
-    {MetadataObjectType::SALIENT_DETECTION, 9},
-    {MetadataObjectType::BAR_CODE_DETECTION, 9},
-    {MetadataObjectType::BASE_FACE_DETECTION, 9},
+    {MetadataObjectType::FACE, 24},
+    {MetadataObjectType::HUMAN_BODY, 10},
+    {MetadataObjectType::CAT_FACE, 19},
+    {MetadataObjectType::CAT_BODY, 10},
+    {MetadataObjectType::DOG_FACE, 19},
+    {MetadataObjectType::DOG_BODY, 10},
+    {MetadataObjectType::SALIENT_DETECTION, 10},
+    {MetadataObjectType::BAR_CODE_DETECTION, 10},
+    {MetadataObjectType::BASE_FACE_DETECTION, 10},
 };
 
 enum MetadataOutputErrorCode : int32_t {
@@ -63,7 +63,7 @@ struct Rect {
 
 struct MetaObjectParms {
     MetadataObjectType type;
-    int32_t timestamp;
+    int64_t timestamp;
     Rect box;
     int32_t objectId;
     int32_t confidence;
@@ -72,7 +72,7 @@ struct MetaObjectParms {
 
 class MetadataObject : public RefBase {
 public:
-    MetadataObject(const MetadataObjectType type, const int32_t timestamp, const Rect rect, const int32_t objectId,
+    MetadataObject(const MetadataObjectType type, const int64_t timestamp, const Rect rect, const int32_t objectId,
                    const int32_t confidence);
     MetadataObject(const MetaObjectParms& parms);
     virtual ~MetadataObject() = default;
@@ -80,7 +80,7 @@ public:
     {
         return type_;
     };
-    inline int32_t GetTimestamp()
+    inline int64_t GetTimestamp()
     {
         return timestamp_;
     };
@@ -99,7 +99,7 @@ public:
 
 private:
     MetadataObjectType type_;
-    int32_t timestamp_;
+    int64_t timestamp_;
     Rect box_;
     int32_t objectId_;
     int32_t confidence_;
@@ -226,7 +226,7 @@ public:
         type_ = type;
         return this;
     }
-    inline sptr<MetadataObjectFactory> SetTimestamp(int32_t timestamp)
+    inline sptr<MetadataObjectFactory> SetTimestamp(int64_t timestamp)
     {
         timestamp_ = timestamp;
         return this;
@@ -290,7 +290,7 @@ private:
     static std::mutex instanceMutex_;
     // Parameters of metadataObject
     MetadataObjectType type_ = MetadataObjectType::INVALID;
-    int32_t timestamp_ = 0;
+    int64_t timestamp_ = 0;
     Rect box_ = {0.0, 0.0, 0.0, 0.0};
     int32_t objectId_ = 0;
     int32_t confidence_ = 0;
