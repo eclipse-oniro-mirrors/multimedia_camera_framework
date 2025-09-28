@@ -1,0 +1,181 @@
+From 5563324f9e8eafc6905eba7b8ead4df637a701dc Mon Sep 17 00:00:00 2001
+From: s00888898 <s00888898@notesmail.huawei.com/>
+Date: Thu, 25 Sep 2025 15:45:05 +0800
+Subject: [PATCH] TicketNo:DTS2025092405990 Description:fix fold screen
+ livePhoto rotation Team:Gitee Feature or Bugfix:Bugfix Binary Source:Sync
+ from Gitee PrivateCode(Yes/No):No
+
+Change-Id: Id5c7bffdfe2e7289d8a227543c610a04d22fbc98
+---
+ .../src/avcodec/avcodec_task_manager.cpp      |  4 +-
+ .../src/hstream_operator_unittest.cpp         | 53 ++++++++++++++++---
+ .../camera_service/include/hstream_operator.h |  4 +-
+ .../camera_service/src/hstream_capture.cpp    |  2 +-
+ .../camera_service/src/hstream_operator.cpp   | 25 ++++-----
+ 5 files changed, 62 insertions(+), 26 deletions(-)
+
+diff --git a/dynamic_libs/moving_photo/src/avcodec/avcodec_task_manager.cpp b/dynamic_libs/moving_photo/src/avcodec/avcodec_task_manager.cpp
+index 9e400365e0..bd9c7e8544 100644
+--- a/dynamic_libs/moving_photo/src/avcodec/avcodec_task_manager.cpp
++++ b/dynamic_libs/moving_photo/src/avcodec/avcodec_task_manager.cpp
+@@ -457,7 +457,9 @@ void AvcodecTaskManager::ChooseVideoBuffer(vector<sptr<FrameRecord>> frameRecord
+     if (choosedBuffer.size() < MIN_FRAME_RECORD_BUFFER_SIZE || !frameRecords[idrIndex]->IsIDRFrame()) {
+         IgnoreDeblur(frameRecords, choosedBuffer, shutterTime);
+     }
+-    MEDIA_INFO_LOG("ChooseVideoBuffer with size %{public}zu", choosedBuffer.size());
++    MEDIA_INFO_LOG("ChooseVideoBuffer with size %{public}zu, frontBuffer timeStamp: %{public}" PRIu64 ", "
++        "backBuffer timeStamp: %{public}" PRIu64 , choosedBuffer.size(), choosedBuffer.front()->GetTimeStamp(),
++        choosedBuffer.back()->GetTimeStamp());
+     // LCOV_EXCL_STOP
+ }
+ 
+diff --git a/frameworks/native/camera/test/unittest/camera_service/hdi_stream_test/src/hstream_operator_unittest.cpp b/frameworks/native/camera/test/unittest/camera_service/hdi_stream_test/src/hstream_operator_unittest.cpp
+index a5575d182a..602ed3e55c 100644
+--- a/frameworks/native/camera/test/unittest/camera_service/hdi_stream_test/src/hstream_operator_unittest.cpp
++++ b/frameworks/native/camera/test/unittest/camera_service/hdi_stream_test/src/hstream_operator_unittest.cpp
+@@ -675,16 +675,55 @@ HWTEST_F(HStreamOperatorUnitTest, CalcRotationDegree_002, TestSize.Level0)
+ }
+ 
+ /**
+- * @tc.name  : Test SetSensorRotation API
+- * @tc.number: SetSensorRotation_001
+- * @tc.desc  : Test SetSensorRotation API, when cameraPosition is invalid
++ * @tc.name  : Test SetLivePhotoRotation API
++ * @tc.number: SetLivePhotoRotation_001
++ * @tc.desc  : Test SetLivePhotoRotation API, when cameraPosition is invalid
+  */
+-HWTEST_F(HStreamOperatorUnitTest, SetSensorRotation_001, TestSize.Level1)
++HWTEST_F(HStreamOperatorUnitTest, SetLivePhotoRotation_001, TestSize.Level1)
+ {
+     int32_t cameraPosition = -1;
+-    streamOp_->sensorRotation_ = -999;
+-    streamOp_->SetSensorRotation(1, 2, cameraPosition);
+-    EXPECT_EQ(streamOp_->sensorRotation_, -999);
++    streamOp_->livePhotoRotation_ = -999;
++    streamOp_->SetLivePhotoRotation(1, cameraPosition);
++    EXPECT_EQ(streamOp_->livePhotoRotation_, 1);
++}
++
++/**
++ * @tc.name  : Test SetLivePhotoRotation API
++ * @tc.number: SetLivePhotoRotation_002
++ * @tc.desc  : Test SetLivePhotoRotation API, when cameraPosition is valid
++ */
++HWTEST_F(HStreamOperatorUnitTest, SetLivePhotoRotation_002, TestSize.Level1)
++{
++    int32_t cameraPosition = 0;
++    streamOp_->livePhotoRotation_ = 0;
++    streamOp_->SetLivePhotoRotation(90, cameraPosition);
++    EXPECT_EQ(streamOp_->livePhotoRotation_, 270);
++}
++
++/**
++ * @tc.name  : Test SetLivePhotoRotation API
++ * @tc.number: SetLivePhotoRotation_003
++ * @tc.desc  : Test SetLivePhotoRotation API, when cameraPosition is valid
++ */
++HWTEST_F(HStreamOperatorUnitTest, SetLivePhotoRotation_003, TestSize.Level1)
++{
++    int32_t cameraPosition = 0;
++    streamOp_->livePhotoRotation_ = 0;
++    streamOp_->SetLivePhotoRotation(180, cameraPosition);
++    EXPECT_EQ(streamOp_->livePhotoRotation_, 180);
++}
++
++/**
++ * @tc.name  : Test SetLivePhotoRotation API
++ * @tc.number: SetLivePhotoRotation_003
++ * @tc.desc  : Test SetLivePhotoRotation API, when cameraPosition is valid
++ */
++HWTEST_F(HStreamOperatorUnitTest, SetLivePhotoRotation_004, TestSize.Level1)
++{
++    int32_t cameraPosition = 1;
++    streamOp_->livePhotoRotation_ = 1;
++    streamOp_->SetLivePhotoRotation(90, cameraPosition);
++    EXPECT_EQ(streamOp_->livePhotoRotation_, 90);
+ }
+ 
+ /**
+diff --git a/services/camera_service/include/hstream_operator.h b/services/camera_service/include/hstream_operator.h
+index d7ef8127b1..086195ac51 100644
+--- a/services/camera_service/include/hstream_operator.h
++++ b/services/camera_service/include/hstream_operator.h
+@@ -225,7 +225,7 @@ public:
+     int32_t LinkInputAndOutputs(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings, int32_t opMode);
+     const sptr<HStreamCommon> GetStreamByStreamID(int32_t streamId);
+     const sptr<HStreamCommon> GetHdiStreamByStreamID(int32_t streamId);
+-    void SetSensorRotation(int32_t rotationValue, int32_t sensorOrientation, int32_t cameraPosition);
++    void SetLivePhotoRotation(int32_t rotationValue, int32_t cameraPosition);
+     void StartMovingPhotoEncode(int32_t rotation, uint64_t timestamp, int32_t format, int32_t captureId);
+     void StartRecord(uint64_t timestamp, int32_t rotation, int32_t captureId);
+     void GetOutputStatus(int32_t &status);
+@@ -497,7 +497,7 @@ private:
+     sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator_ = nullptr;
+     bool isOfflineStreamOperator_ =  false;
+     int32_t mlastCaptureId = 0;
+-    int32_t sensorRotation_ = 0;
++    int32_t livePhotoRotation_ = 0;
+     std::map<int32_t, bool> curMotionPhotoStatus_;
+     std::mutex motionPhotoStatusLock_;
+     std::map<int32_t, std::pair<int32_t, int32_t>> lifecycleMap_;
+diff --git a/services/camera_service/src/hstream_capture.cpp b/services/camera_service/src/hstream_capture.cpp
+index acead5ea42..33bcf65402 100644
+--- a/services/camera_service/src/hstream_capture.cpp
++++ b/services/camera_service/src/hstream_capture.cpp
+@@ -876,7 +876,7 @@ void HStreamCapture::SetRotation(const std::shared_ptr<OHOS::Camera::CameraMetad
+     }
+     auto hStreamOperator = hStreamOperator_.promote();
+     if (hStreamOperator) {
+-        hStreamOperator->SetSensorRotation(rotation, sensorOrientation, cameraPosition);
++        hStreamOperator->SetLivePhotoRotation(rotation, cameraPosition);
+     }
+     {
+         uint8_t connectType = 0;
+diff --git a/services/camera_service/src/hstream_operator.cpp b/services/camera_service/src/hstream_operator.cpp
+index 52116943b5..13b391b4ab 100644
+--- a/services/camera_service/src/hstream_operator.cpp
++++ b/services/camera_service/src/hstream_operator.cpp
+@@ -1514,17 +1514,16 @@ int32_t HStreamOperator::CalcRotationDegree(GravityData data)
+ }
+ #endif
+ 
+-void HStreamOperator::SetSensorRotation(int32_t rotationValue, int32_t sensorOrientation, int32_t cameraPosition)
++void HStreamOperator::SetLivePhotoRotation(int32_t rotationValue, int32_t cameraPosition)
+ {
+     // LCOV_EXCL_START
+-    MEDIA_INFO_LOG("SetSensorRotation rotationValue : %{public}d, sensorOrientation : %{public}d",
+-        rotationValue, sensorOrientation);
+-    // 获取当前重力传感器角度
+-    if (cameraPosition == OHOS_CAMERA_POSITION_BACK) {
+-        sensorRotation_ = rotationValue - sensorOrientation;
+-    } else if (cameraPosition == OHOS_CAMERA_POSITION_FRONT) {
+-        sensorRotation_ = sensorOrientation - rotationValue;
+-    }
++    MEDIA_INFO_LOG("SetLivePhotoRotation rotationValue : %{public}d, cameraPosition: %{public}d",
++        rotationValue, cameraPosition);
++    livePhotoRotation_ = rotationValue;
++    CHECK_RETURN(!(cameraPosition == OHOS_CAMERA_POSITION_FRONT));
++    bool isNeedMirrorOffset = rotationValue % STREAM_ROTATE_180;
++    CHECK_EXECUTE(isNeedMirrorOffset, 
++        livePhotoRotation_ = (livePhotoRotation_ + STREAM_ROTATE_180) % STREAM_ROTATE_360);
+     // LCOV_EXCL_STOP
+ }
+ 
+@@ -1538,12 +1537,8 @@ void HStreamOperator::StartMovingPhotoEncode(int32_t rotation, uint64_t timestam
+         MEDIA_DEBUG_LOG("HStreamOperator::StartMovingPhotoEncode cptureId : %{public}d, isSetMotionPhto : %{public}d",
+             captureId, isSetMotionPhoto_);
+     }
+-    int32_t addMirrorRotation = 0;
+-    MEDIA_INFO_LOG("sensorRotation is : %{public}d", sensorRotation_);
+-    if ((sensorRotation_ == STREAM_ROTATE_0 || sensorRotation_ == STREAM_ROTATE_180) && isMovingPhotoMirror_) {
+-        addMirrorRotation = STREAM_ROTATE_180;
+-    }
+-    int32_t realRotation = rotation + addMirrorRotation;
++    int32_t realRotation = livePhotoRotation_;
++    MEDIA_INFO_LOG("realRotation is : %{public}d", realRotation);
+     realRotation = realRotation % ROTATION_360;
+     #ifdef USE_MOVING_PHOTO_PIPELINE
+     auto recorder = GetRecorder();
+-- 
+2.45.2.huawei.10
+
