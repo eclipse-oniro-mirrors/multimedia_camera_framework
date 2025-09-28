@@ -859,7 +859,7 @@ void HStreamCapture::SetRotation(const std::shared_ptr<OHOS::Camera::CameraMetad
     }
     auto hStreamOperator = hStreamOperator_.promote();
     if (hStreamOperator) {
-        hStreamOperator->SetSensorRotation(rotation, sensorOrientation, cameraPosition);
+        hStreamOperator->SetLivePhotoRotation(rotation, cameraPosition);
     }
     {
         uint8_t connectType = 0;
