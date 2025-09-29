@@ -1934,6 +1934,7 @@ private:
     void OnResultReceived(std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata);
     ColorSpaceInfo GetSupportedColorSpaceInfo();
     void UpdateDeviceDeferredability();
+    void SetAppHint();
     void ProcessProfilesAbilityId(const SceneMode supportModes);
     void ProcessFocusDistanceUpdates(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result);
     void FindTagId();
