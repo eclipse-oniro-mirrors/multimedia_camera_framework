@@ -1234,16 +1234,17 @@ int32_t HStreamOperator::CalcRotationDegree(GravityData data)
 }
 #endif
 
-void HStreamOperator::SetSensorRotation(int32_t rotationValue, int32_t sensorOrientation, int32_t cameraPosition)
+void HStreamOperator::SetLivePhotoRotation(int32_t rotationValue, int32_t cameraPosition)
 {
-    MEDIA_INFO_LOG("SetSensorRotation rotationValue : %{public}d, sensorOrientation : %{public}d",
-        rotationValue, sensorOrientation);
-    // 获取当前重力传感器角度
-    if (cameraPosition == OHOS_CAMERA_POSITION_BACK) {
-        sensorRotation_ = rotationValue - sensorOrientation;
-    } else if (cameraPosition == OHOS_CAMERA_POSITION_FRONT) {
-        sensorRotation_ = sensorOrientation - rotationValue;
-    }
+    // LCOV_EXCL_START
+    MEDIA_INFO_LOG("SetLivePhotoRotation rotationValue : %{public}d, cameraPosition: %{public}d",
+        rotationValue, cameraPosition);
+    livePhotoRotation_ = rotationValue;
+    CHECK_RETURN(!(cameraPosition == OHOS_CAMERA_POSITION_FRONT));
+    bool isNeedMirrorOffset = rotationValue % STREAM_ROTATE_180;
+    CHECK_EXECUTE(isNeedMirrorOffset,
+        livePhotoRotation_ = (livePhotoRotation_ + STREAM_ROTATE_180) % STREAM_ROTATE_360);
+    // LCOV_EXCL_STOP
 }
 
 void HStreamOperator::StartMovingPhotoEncode(int32_t rotation, uint64_t timestamp, int32_t format, int32_t captureId)
@@ -1255,12 +1256,8 @@ void HStreamOperator::StartMovingPhotoEncode(int32_t rotation, uint64_t timestam
         MEDIA_DEBUG_LOG("HStreamOperator::StartMovingPhotoEncode cptureId : %{public}d, isSetMotionPhto : %{public}d",
             captureId, isSetMotionPhoto_);
     }
-    int32_t addMirrorRotation = 0;
-    MEDIA_INFO_LOG("sensorRotation is : %{public}d", sensorRotation_);
-    if ((sensorRotation_ == STREAM_ROTATE_0 || sensorRotation_ == STREAM_ROTATE_180) && isMovingPhotoMirror_) {
-        addMirrorRotation = STREAM_ROTATE_180;
-    }
-    int32_t realRotation = rotation + addMirrorRotation;
+    int32_t realRotation = livePhotoRotation_;
+    MEDIA_INFO_LOG("realRotation is : %{public}d", realRotation);
     realRotation = realRotation % ROTATION_360;
     StartRecord(timestamp, realRotation, captureId);
 }

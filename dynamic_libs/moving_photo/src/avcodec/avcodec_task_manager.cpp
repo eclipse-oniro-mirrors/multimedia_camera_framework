@@ -390,7 +390,9 @@ void AvcodecTaskManager::ChooseVideoBuffer(vector<sptr<FrameRecord>> frameRecord
 
     CHECK_EXECUTE(choosedBuffer.size() < MIN_FRAME_RECORD_BUFFER_SIZE || !frameRecords[idrIndex]->IsIDRFrame(),
         IgnoreDeblur(frameRecords, choosedBuffer, shutterTime));
-    MEDIA_INFO_LOG("ChooseVideoBuffer with size %{public}zu", choosedBuffer.size());
+    MEDIA_INFO_LOG("ChooseVideoBuffer with size %{public}zu, frontBuffer timeStamp: %{public}" PRIu64 ", "
+        "backBuffer timeStamp: %{public}" PRIu64, choosedBuffer.size(), choosedBuffer.front()->GetTimeStamp(),
+        choosedBuffer.back()->GetTimeStamp());
     // LCOV_EXCL_STOP
 }
 
