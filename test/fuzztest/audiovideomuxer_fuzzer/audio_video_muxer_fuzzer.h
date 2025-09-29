@@ -26,6 +26,7 @@ class AudioVideoMuxerFuzzer {
 public:
 static std::shared_ptr<AudioVideoMuxer> fuzz_;
 static void AudioVideoMuxerFuzzTest(FuzzedDataProvider& fdp);
+static void AudioVideoMuxerFuzzTest1(FuzzedDataProvider& fdp);
 };
 } //CameraStandard
 } //OHOS

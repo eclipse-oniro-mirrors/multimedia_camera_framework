@@ -19,11 +19,13 @@
 #include "camera_log.h"
 #include "avmuxer.h"
 #include "avmuxer_impl.h"
-
+#include "ipc_skeleton.h"
+#include "photo_asset_proxy.h"
 namespace OHOS {
 namespace CameraStandard {
 static constexpr int32_t MIN_SIZE_NUM = 6;
 static constexpr int32_t NUM_1 = 1;
+static constexpr int32_t NUM_2 = 2;
 std::shared_ptr<AudioVideoMuxer> AudioVideoMuxerFuzzer::fuzz_{nullptr};
 
 /*
@@ -50,6 +52,27 @@ void AudioVideoMuxerFuzzer::AudioVideoMuxerFuzzTest(FuzzedDataProvider& fdp)
     fuzz_->AddTrack(trackId, format, type);
 }
 
+/*
+* describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
+* tips: only support basic type
+*/
+
+void AudioVideoMuxerFuzzer::AudioVideoMuxerFuzzTest1(FuzzedDataProvider& fdp)
+{
+    if (fdp.remaining_bytes()  < MIN_SIZE_NUM) {
+        return;
+    }
+    fuzz_ = std::make_shared<AudioVideoMuxer>();
+    CHECK_RETURN_ELOG(!fuzz_, "Create fuzz_ Error");
+    uint8_t randomNum = fdp.ConsumeIntegral<uint8_t>();
+    std::shared_ptr<PhotoAssetIntf> photoAssetProxy =
+        PhotoAssetProxy::GetPhotoAssetProxy(NUM_2, IPCSkeleton::GetCallingUid(), IPCSkeleton::GetCallingTokenID());
+    ;
+    fuzz_->Create(static_cast<OH_AVOutputFormat>(randomNum), photoAssetProxy);
+    int32_t bitrate = fdp.ConsumeIntegral<int32_t>();
+    fuzz_->SetSqr(bitrate);
+}
+
 void Test(uint8_t* data, size_t size)
 {
     auto audioVideoMuxer = std::make_unique<AudioVideoMuxerFuzzer>();
@@ -59,6 +82,7 @@ void Test(uint8_t* data, size_t size)
     }
     FuzzedDataProvider fdp(data, size);
     audioVideoMuxer->AudioVideoMuxerFuzzTest(fdp);
+    audioVideoMuxer->AudioVideoMuxerFuzzTest1(fdp);
 }
 
 } // namespace CameraStandard

@@ -47,6 +47,7 @@ static void WriterFuzzTest(FuzzedDataProvider& fdp);
 static void TrackFuzzTest(FuzzedDataProvider& fdp);
 static void ReaderFuzzTest(FuzzedDataProvider& fdp);
 static void MuxerFuzzTest(FuzzedDataProvider& fdp);
+static void SetAuxiliaryTypeTest(FuzzedDataProvider& fdp);
 };
 } //CameraStandard
 } //OHOS

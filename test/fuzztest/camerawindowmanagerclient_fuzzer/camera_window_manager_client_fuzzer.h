@@ -23,9 +23,10 @@ namespace OHOS {
 namespace CameraStandard {
 class CameraWindowManagerClientFuzzer {
 public:
-static sptr<CameraWindowManagerClient> fuzz_;
-static std::shared_ptr<CameraWindowManagerClient::WMSSaStatusChangeCallback> callback_;
-static void CameraWindowManagerClientFuzzTest(FuzzedDataProvider& fdp);
+    static sptr<CameraWindowManagerClient> fuzz_;
+    static std::shared_ptr<CameraWindowManagerClient::WMSSaStatusChangeCallback> callback_;
+    static void CameraWindowManagerClientFuzzTest(FuzzedDataProvider& fdp);
+    static void GetFocusWindowInfoFuzzTest(FuzzedDataProvider& fdp);
 };
 } //CameraStandard
 } //OHOS

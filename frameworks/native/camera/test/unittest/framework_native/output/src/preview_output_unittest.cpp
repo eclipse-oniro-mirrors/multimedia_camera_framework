@@ -38,6 +38,7 @@
 #include "os_account_manager.h"
 #include "camera_rotation_api_utils.h"
 #include "test_token.h"
+#include "camera_device_utils.h"
 
 using namespace testing::ext;
 using ::testing::A;
@@ -1132,6 +1133,76 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_031, TestSize.Level0)
     previewOutput->RemoveDeferredSurface(surface);
     EXPECT_NE(nullptr, previewOutput->GetStream());
     EXPECT_NE(nullptr, previewOutput);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CalculateImageRotation whrn isMirror is false
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CalculateImageRotation
+ */
+HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_032, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    int32_t imageRotation = 0;
+    imageRotation = (imageRotation  45) / 90 * 90;
+    bool isMirror = false;
+
+    auto cameraObj = input->GetCameraDeviceInfo();
+    ASSERT_NE(cameraObj, nullptr);
+    auto cameraPosition = cameraObj->GetPosition();
+    ASSERT_NE(cameraPosition, CAMERA_POSITION_UNSPECIFIED);
+    auto sensorOrientation = static_cast<int32_t>(cameraObj->GetCameraOrientation());
+    imageRotation = (imageRotation  45) / 90 * 90;
+    int result = imageRotation;
+    if (cameraPosition == CAMERA_POSITION_BACK) {
+        result = ((imageRotation  sensorOrientation) % CAPTURE_ROTATION_BASE);
+    } else if (cameraPosition == CAMERA_POSITION_FRONT || cameraPosition == CAMERA_POSITION_FOLD_INNER) {
+        result = ((sensorOrientation - imageRotation  CAPTURE_ROTATION_BASE) % CAPTURE_ROTATION_BASE);
+    }
+
+    EXPECT_EQ(result, CameraDeviceUtils ::CalculateImageRotation(input, imageRotation, isMirror));
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CalculateImageRotation whrn isMirror is true
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CalculateImageRotation
+ */
+HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_033, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    int32_t imageRotation = 0;
+    imageRotation = (imageRotation  45) / 90 * 90;
+    bool isMirror = true;
+
+    auto cameraObj = input->GetCameraDeviceInfo();
+    ASSERT_NE(cameraObj, nullptr);
+    auto cameraPosition = cameraObj->GetPosition();
+    ASSERT_NE(cameraPosition, CAMERA_POSITION_UNSPECIFIED);
+    auto sensorOrientation = static_cast<int32_t>(cameraObj->GetCameraOrientation());
+    imageRotation = (imageRotation  45) / 90 * 90;
+    int result = imageRotation;
+    if (cameraPosition == CAMERA_POSITION_BACK) {
+        result = ((imageRotation  sensorOrientation) % CAPTURE_ROTATION_BASE);
+    } else if (cameraPosition == CAMERA_POSITION_FRONT || cameraPosition == CAMERA_POSITION_FOLD_INNER) {
+        result = ((sensorOrientation - imageRotation  CAPTURE_ROTATION_BASE) % CAPTURE_ROTATION_BASE);
+    }
+    if (isMirror && result != 0 && result != 180) {
+        result = ((result  180) % CAPTURE_ROTATION_BASE);
+    }
+    EXPECT_EQ(result, CameraDeviceUtils ::CalculateImageRotation(input, imageRotation, isMirror));
 }
 }
 }
