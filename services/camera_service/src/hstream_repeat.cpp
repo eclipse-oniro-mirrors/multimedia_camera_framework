@@ -44,6 +44,9 @@ namespace OHOS {
 namespace CameraStandard {
 using namespace OHOS::HDI::Camera::V1_0;
 using CM_ColorSpaceType_V2_1 = OHOS::HDI::Display::Graphic::Common::V2_1::CM_ColorSpaceType;
+constexpr int32_t INT32_ZERO = 0;
+constexpr int32_t INT32_ONE = 1;
+constexpr int32_t INT32_TWO = 2;
 HStreamRepeat::HStreamRepeat(
     sptr<OHOS::IBufferProducer> producer, int32_t format, int32_t width, int32_t height, RepeatStreamType type)
     : HStreamCommon(StreamType::REPEAT, producer, format, width, height), repeatStreamType_(type)
@@ -326,6 +329,8 @@ int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> setti
     CHECK_EXECUTE(isNeedBeautyNotification && notification != nullptr &&
         notification->GetBeautyStatus() == BEAUTY_STATUS_ON, UpdateBeautySettings(dynamicSetting));
 #endif
+    bool isLive = IsLive();
+    CHECK_EXECUTE(isLive, UpdateLiveSettings(dynamicSetting));
     std::vector<uint8_t> captureSetting;
     OHOS::Camera::MetadataUtils::ConvertMetadataToVec(dynamicSetting, captureSetting);
 
@@ -1087,10 +1092,10 @@ void HStreamRepeat::UpdateBeautySettings(std::shared_ptr<OHOS::Camera::CameraMet
     uint8_t beautyLevel = BEAUTY_LEVEL;
 
     status = AddOrUpdateMetadata(settings, OHOS_CONTROL_BEAUTY_TYPE, &beautyType, count);
-    CHECK_PRINT_ELOG(!status, "HStreamRepeat::SetFrameRate Failed to set beauty type");
+    CHECK_PRINT_ELOG(!status, "HStreamRepeat::UpdateBeautySettings Failed to set beauty type");
 
     status = AddOrUpdateMetadata(settings, OHOS_CONTROL_BEAUTY_AUTO_VALUE, &beautyLevel, count);
-    CHECK_PRINT_ELOG(!status, "HStreamRepeat::SetFrameRate Failed to set beauty level");
+    CHECK_PRINT_ELOG(!status, "HStreamRepeat::UpdateBeautySettings Failed to set beauty level");
 }
 
 void HStreamRepeat::CancelNotification()
@@ -1104,20 +1109,14 @@ void HStreamRepeat::CancelNotification()
 bool HStreamRepeat::IsNeedBeautyNotification()
 {
     bool ret = false;
+    CHECK_RETURN_RET(streamFrameRateRange_.size() == 0, ret);
+    std::string notificationInfo = system::GetParameter("const.camera.notification_info", "");
+    CHECK_RETURN_RET(notificationInfo.empty(), ret);
+
     int uid = IPCSkeleton::GetCallingUid();
     std::string bundleName = GetClientBundle(uid);
 
-    if (streamFrameRateRange_.size() == 0) {
-        return ret;
-    }
-    std::string notificationInfo = system::GetParameter("const.camera.notification_info", "");
-    if (notificationInfo.empty()) {
-        return ret;
-    }
     const int32_t CONFIG_SIZE = 3;
-    const int32_t INT32_ZERO = 0;
-    const int32_t INT32_ONE = 1;
-    const int32_t INT32_TWO = 2;
     std::vector<std::string> configInfos = SplitString(notificationInfo, '#');
     for (uint32_t i = 0; i < configInfos.size(); ++i) {
         std::vector<std::string> configInfo = SplitString(configInfos[i], '|');
@@ -1140,6 +1139,47 @@ bool HStreamRepeat::IsNeedBeautyNotification()
 }
 // LCOV_EXCL_STOP
 #endif
+
+bool HStreamRepeat::IsLive()
+{
+    bool ret = false;
+    CHECK_RETURN_RET(streamFrameRateRange_.size() == 0, ret);
+    std::string config = system::GetParameter("const.camera.live_stream_config", "");
+    CHECK_RETURN_RET(config.empty(), ret);
+
+    int uid = IPCSkeleton::GetCallingUid();
+    std::string bundleName = GetClientBundle(uid);
+
+    std::vector<std::string> configInfos = SplitString(config, '#');
+    for (uint32_t i = 0; i < configInfos.size(); ++i) {
+        std::vector<std::string> configInfo = SplitString(configInfos[i], '|');
+        CHECK_CONTINUE(configInfo.size() < INT32_TWO);
+        std::string configBundleName = configInfo[INT32_ZERO];
+        CHECK_CONTINUE(configBundleName != bundleName);
+        for (int j = INT32_ONE; j < configInfo.size(); ++j) {
+            CHECK_CONTINUE(!isIntegerRegex(configInfo[j]));
+            int32_t configFPS = std::atoi(configInfo[j].c_str());
+            if (configFPS == streamFrameRateRange_[INT32_ZERO] && configFPS == streamFrameRateRange_[INT32_ONE]) {
+                ret = true;
+                break;
+            }
+        }
+    }
+    return ret;
+}
+
+void HStreamRepeat::UpdateLiveSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> &settings)
+{
+    CHECK_RETURN_ELOG(settings == nullptr, "HStreamRepeat::UpdateLiveSettings settings is nullptr");
+    int32_t type =  static_cast<int32_t>(GetRepeatStreamType());
+    MEDIA_INFO_LOG("HStreamRepeat::UpdateLiveSettings enter, type:%{public}d", type);
+    bool status = false;
+    int32_t count = 1;
+    uint32_t mode = OHOS_CAMERA_APP_HINT_LIVE_STREAM;
+
+    status = AddOrUpdateMetadata(settings, OHOS_CONTROL_APP_HINT, &mode, count);
+    CHECK_PRINT_ELOG(!status, "HStreamRepeat::UpdateLiveSettings Failed");
+}
 
 int32_t HStreamRepeat::AttachMetaSurface(const sptr<OHOS::IBufferProducer>& producer, int32_t videoMetaType)
 {

@@ -120,6 +120,8 @@ private:
 #endif
     void SetSketchStreamInfo(StreamInfo_V1_1& streamInfo);
     bool CheckVideoModeForSystemApp(int32_t sceneMode);
+    bool IsLive();
+    void UpdateLiveSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> &settings);
 
     RepeatStreamType repeatStreamType_;
     sptr<IStreamRepeatCallback> streamRepeatCallback_;
