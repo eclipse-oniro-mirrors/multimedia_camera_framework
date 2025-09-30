@@ -1150,7 +1150,7 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_032, TestSize.Level0)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     int32_t imageRotation = 0;
-    imageRotation = (imageRotation  45) / 90 * 90;
+    imageRotation = (imageRotation + 45) / 90 * 90;
     bool isMirror = false;
 
     auto cameraObj = input->GetCameraDeviceInfo();
@@ -1158,12 +1158,12 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_032, TestSize.Level0)
     auto cameraPosition = cameraObj->GetPosition();
     ASSERT_NE(cameraPosition, CAMERA_POSITION_UNSPECIFIED);
     auto sensorOrientation = static_cast<int32_t>(cameraObj->GetCameraOrientation());
-    imageRotation = (imageRotation  45) / 90 * 90;
+    imageRotation = (imageRotation + 45) / 90 * 90;
     int result = imageRotation;
     if (cameraPosition == CAMERA_POSITION_BACK) {
-        result = ((imageRotation  sensorOrientation) % CAPTURE_ROTATION_BASE);
+        result = ((imageRotation + sensorOrientation) % CAPTURE_ROTATION_BASE);
     } else if (cameraPosition == CAMERA_POSITION_FRONT || cameraPosition == CAMERA_POSITION_FOLD_INNER) {
-        result = ((sensorOrientation - imageRotation  CAPTURE_ROTATION_BASE) % CAPTURE_ROTATION_BASE);
+        result = ((sensorOrientation - imageRotation + CAPTURE_ROTATION_BASE) % CAPTURE_ROTATION_BASE);
     }
 
     EXPECT_EQ(result, CameraDeviceUtils ::CalculateImageRotation(input, imageRotation, isMirror));
@@ -1184,7 +1184,7 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_033, TestSize.Level0)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     int32_t imageRotation = 0;
-    imageRotation = (imageRotation  45) / 90 * 90;
+    imageRotation = (imageRotation + 45) / 90 * 90;
     bool isMirror = true;
 
     auto cameraObj = input->GetCameraDeviceInfo();
@@ -1192,15 +1192,15 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_033, TestSize.Level0)
     auto cameraPosition = cameraObj->GetPosition();
     ASSERT_NE(cameraPosition, CAMERA_POSITION_UNSPECIFIED);
     auto sensorOrientation = static_cast<int32_t>(cameraObj->GetCameraOrientation());
-    imageRotation = (imageRotation  45) / 90 * 90;
+    imageRotation = (imageRotation + 45) / 90 * 90;
     int result = imageRotation;
     if (cameraPosition == CAMERA_POSITION_BACK) {
-        result = ((imageRotation  sensorOrientation) % CAPTURE_ROTATION_BASE);
+        result = ((imageRotation + sensorOrientation) % CAPTURE_ROTATION_BASE);
     } else if (cameraPosition == CAMERA_POSITION_FRONT || cameraPosition == CAMERA_POSITION_FOLD_INNER) {
-        result = ((sensorOrientation - imageRotation  CAPTURE_ROTATION_BASE) % CAPTURE_ROTATION_BASE);
+        result = ((sensorOrientation - imageRotation + CAPTURE_ROTATION_BASE) % CAPTURE_ROTATION_BASE);
     }
     if (isMirror && result != 0 && result != 180) {
-        result = ((result  180) % CAPTURE_ROTATION_BASE);
+        result = ((result + 180) % CAPTURE_ROTATION_BASE);
     }
     EXPECT_EQ(result, CameraDeviceUtils ::CalculateImageRotation(input, imageRotation, isMirror));
 }
