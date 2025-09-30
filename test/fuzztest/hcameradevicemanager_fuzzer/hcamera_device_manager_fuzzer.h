@@ -25,6 +25,7 @@ namespace CameraStandard {
 class HCameraDeviceManagerFuzzer {
 public:
     static void HCameraDeviceManagerFuzzTest1(FuzzedDataProvider& fdp);
+    static void HCameraDeviceManagerFuzzTest2(FuzzedDataProvider& fdp);
 };
 
 } //CameraStandard

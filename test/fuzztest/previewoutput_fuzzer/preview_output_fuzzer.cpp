@@ -79,6 +79,35 @@ void TestOutput(sptr<PreviewOutput> output, FuzzedDataProvider& fdp)
     output->Stop();
 }
 
+void TestIsBandwidthCompressionSupported(FuzzedDataProvider& fdp)
+{
+    CHECK_RETURN_ELOG(!TestToken().GetAllCameraPermission(), "GetPermission error");
+    auto manager = CameraManager::GetInstance();
+    CHECK_RETURN_ELOG(!manager, "previewOutputFuzzer: Get CameraManager instance Error");
+    auto cameras = manager->GetSupportedCameras();
+    CHECK_RETURN_ELOG(cameras.size() < NUM_TWO, "previewOutputFuzzer: GetSupportedCameras Error");
+    auto camera = cameras[fdp.ConsumeIntegral<uint8_t>() % cameras.size()];
+    CHECK_RETURN_ELOG(!camera, "previewOutputFuzzer: camera is null");
+    int32_t mode = fdp.ConsumeIntegral<uint8_t>() % (SceneMode::NORMAL  NUM_TWO);
+    auto capability = manager->GetSupportedOutputCapability(camera, mode);
+    CHECK_RETURN_ELOG(!capability, "previewOutputFuzzer: GetSupportedOutputCapability Error");
+    auto profiles = capability->GetPreviewProfiles();
+    CHECK_RETURN_ELOG(profiles.empty(), "previewOutputFuzzer: GetPreviewProfiles empty");
+    Profile profile = profiles[fdp.ConsumeIntegral<uint8_t>() % profiles.size()];
+    sptr<IConsumerSurface> previewSurface = IConsumerSurface::Create();
+    CHECK_RETURN_ELOG(!previewSurface, "previewOutputFuzzer: create previewSurface Error");
+    sptr<IBufferProducer> producer = previewSurface->GetProducer();
+    CHECK_RETURN_ELOG(!producer, "previewOutputFuzzer: GetProducer Error");
+    sptr<Surface> pSurface = Surface::CreateSurfaceAsProducer(producer);
+    CHECK_RETURN_ELOG(!pSurface, "previewOutputFuzzer: GetProducer Error");
+    auto output = manager->CreatePreviewOutput(profile, pSurface);
+    CHECK_RETURN_ELOG(!output, "previewOutputFuzzer: CreatePhotoOutput Error");
+    output->IsBandwidthCompressionSupported();
+    bool isEnable = fdp.ConsumeBool();
+    output->EnableBandwidthCompression(isEnable);
+}
+
+
 void Test(uint8_t *data, size_t size)
 {
     FuzzedDataProvider fdp(data, size);
@@ -111,6 +140,7 @@ void Test(uint8_t *data, size_t size)
     auto output = manager->CreatePreviewOutput(profile, pSurface);
     CHECK_RETURN_ELOG(!output, "previewOutputFuzzer: CreatePhotoOutput Error");
     TestOutput(output, fdp);
+    TestIsBandwidthCompressionSupported(fdp);
 }
 
 } // namespace StreamRepeatStubFuzzer

@@ -136,6 +136,33 @@ void MediaManagerFuzzer::MuxerFuzzTest(FuzzedDataProvider& fdp)
     muxer->AddTracks(tracks);
 }
 
+void MediaManagerFuzzer::SetAuxiliaryTypeTest(FuzzedDataProvider& fdp)
+{
+    std::shared_ptr<Track> track {nullptr};
+    int32_t trackType = fdp.ConsumeIntegral<int32_t>();
+    int32_t trackIndex = fdp.ConsumeIntegral<int32_t>();
+
+    std::vector<Media::Plugins::MediaType> mediaTypes = {
+        Media::Plugins::MediaType::UNKNOWN,
+        Media::Plugins::MediaType::AUDIO,
+        Media::Plugins::MediaType::VIDEO,
+        Media::Plugins::MediaType::SUBTITLE,
+        Media::Plugins::MediaType::ATTACHMENT,
+        Media::Plugins::MediaType::DATA,
+        Media::Plugins::MediaType::TIMEDMETA
+    };
+    uint8_t mediaTypeIndex = fdp.ConsumeIntegral<uint8_t>() % mediaTypes.size();
+    Media::Plugins::MediaType selectedMediaType = mediaTypes[mediaTypeIndex];
+
+    auto format = std::make_unique<Format>();
+    format->PutIntValue(Media::Tag::MEDIA_TYPE, trackType);
+    track = std::make_shared<Track>(trackIndex, std::move(format), selectedMediaType);
+    CHECK_RETURN_ELOG(!track, "Create track Error");
+    AuxiliaryType type = static_cast<AuxiliaryType>(fdp.ConsumeIntegral<int32_t>() % 3 - 1);
+    track->SetAuxiliaryType(type);
+    track->GetAuxiliaryType();
+}
+
 void Test(uint8_t* data, size_t size)
 {
     FuzzedDataProvider fdp(data, size);
@@ -152,6 +179,7 @@ void Test(uint8_t* data, size_t size)
     mediaManager->TrackFuzzTest(fdp);
     mediaManager->ReaderFuzzTest(fdp);
     mediaManager->MuxerFuzzTest(fdp);
+    mediaManager->SetAuxiliaryTypeTest(fdp);
 }
 
 } // namespace CameraStandard

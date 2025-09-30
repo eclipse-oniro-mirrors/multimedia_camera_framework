@@ -23,6 +23,7 @@ group("camera_fuzz_test") {
     "fuzztest/cameramanager_fuzzer:fuzztest",
     "fuzztest/captureoutput_fuzzer:fuzztest",
     "fuzztest/capturesession_fuzzer:fuzztest",
+    "fuzztest/capturesessionadd_fuzzer:fuzztest",
     "fuzztest/cloudenhancesession_fuzzer:fuzztest",
     "fuzztest/deferredvideoprocsession_fuzzer:fuzztest",
     "fuzztest/hcameradevice_fuzzer:fuzztest",

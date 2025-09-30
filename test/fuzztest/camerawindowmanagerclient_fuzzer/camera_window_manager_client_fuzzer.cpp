@@ -53,6 +53,25 @@ void CameraWindowManagerClientFuzzer::CameraWindowManagerClientFuzzTest(FuzzedDa
     fuzz_->UnregisterWindowManagerAgent();
 }
 
+/*
+* describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
+* tips: only support basic type
+*/
+void CameraWindowManagerClientFuzzer::GetFocusWindowInfoFuzzTest(FuzzedDataProvider& fdp)
+{
+    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
+        return;
+    }
+
+    fuzz_ = CameraWindowManagerClient::GetInstance();
+    CHECK_RETURN_ELOG(!fuzz_, "Create fuzz_ Error");
+    pid_t pid;
+    uint8_t randomNum = fdp.ConsumeIntegral<uint8_t>();
+    std::vector<std::string> testStrings = { "test1", "test2" };
+    std::string deviceId(testStrings[randomNum % testStrings.size()]);
+    fuzz_->GetFocusWindowInfo(pid);
+}
+
 void Test(uint8_t* data, size_t size)
 {
     auto cameraWindowManagerClient = std::make_unique<CameraWindowManagerClientFuzzer>();
@@ -62,6 +81,7 @@ void Test(uint8_t* data, size_t size)
     }
     FuzzedDataProvider fdp(data, size);
     cameraWindowManagerClient->CameraWindowManagerClientFuzzTest(fdp);
+    cameraWindowManagerClient->GetFocusWindowInfoFuzzTest(fdp);
 }
 } // namespace CameraStandard
 } // namespace OHOS

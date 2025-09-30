@@ -81,6 +81,25 @@ void HCameraDeviceManagerFuzzer::HCameraDeviceManagerFuzzTest1(FuzzedDataProvide
     hCameraDeviceManager->IsMultiCameraActive(pid);
 }
 
+void HCameraDeviceManagerFuzzer::HCameraDeviceManagerFuzzTest2(FuzzedDataProvider& fdp)
+{
+    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
+        return;
+    }
+    auto hCameraDeviceManager = HCameraDeviceManager::GetInstance();
+    if (hCameraDeviceManager == nullptr) {
+        MEDIA_INFO_LOG("hCameraDeviceManager is null");
+        return;
+    };
+    InitCameraDevice();
+    hCameraDeviceManager->GetActiveCamerasCount();
+    string cameraId = fdp.ConsumeRandomLengthString();
+    int32_t state = fdp.ConsumeIntegral<int32_t>();
+    hCameraDeviceManager->SetStateOfACamera(cameraId, state);
+    hCameraDeviceManager->GetACameraId();
+}
+
+
 void Test(uint8_t* data, size_t size)
 {
     FuzzedDataProvider fdp(data, size);
@@ -90,6 +109,7 @@ void Test(uint8_t* data, size_t size)
         return;
     }
     hCameraDeviceManagerFuzzer->HCameraDeviceManagerFuzzTest1(fdp);
+    hCameraDeviceManagerFuzzer->HCameraDeviceManagerFuzzTest2(fdp);
 }
 
 } // namespace CameraStandard

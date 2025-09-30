@@ -266,5 +266,25 @@ HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_011, TestSize
     EXPECT_EQ(mpegManagerFactory->Acquire(requestId, inputFd), nullptr);
     EXPECT_EQ(mpegManagerFactory->refCount_, 0);
 }
+
+
+/*
+ * Feature: Framework
+ * Function: Test SetAuxiliaryType
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetAuxiliaryType
+ */
+HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_012, TestSize.Level0)
+{
+    int32_t trackId = 1;
+    Media::Plugins::MediaType type = Media::Plugins::MediaType::AUDIO;
+    auto format = std::make_unique<Format>();
+    auto track = std::make_shared<Track>(trackId, std::move(format), type);
+    DeferredProcessing::AuxiliaryType type_ = DeferredProcessing::AuxiliaryType::RAW_AUDIO;
+    track->SetAuxiliaryType(type_);
+    EXPECT_EQ(type_, track->GetAuxiliaryType());
+}
 } // CameraStandard
 } // OHOS

@@ -37,6 +37,7 @@
 #include "system_ability_definition.h"
 #include "test_token.h"
 #include "token_setproc.h"
+#include "camera_device_utils.h"
 
 
 namespace OHOS {
@@ -78,6 +79,18 @@ sptr<CaptureOutput> CreatePreviewOutput(Profile previewProfile)
     return manager_->CreatePreviewOutput(previewProfile, surface);
 }
 
+void TestCalculateImageRotation(FuzzedDataProvider& fdp)
+{
+    auto manager = CameraManager::GetInstance();
+    auto cameras = manager->GetSupportedCameras();
+    CHECK_RETURN_ELOG(cameras.size() < NUM_TWO, "CaptureSessionFuzzer: GetSupportedCameras Error");
+    camera = cameras[fdp.ConsumeIntegral<uint32_t>() % cameras.size()];
+    CHECK_RETURN_ELOG(!camera, "CaptureSessionFuzzer: Camera is null Error");
+    sptr<CaptureInput> input = manager->CreateCameraInput(camera);
+    int32_t imageRotation = fdp.ConsumeIntegral<int32_t>();
+    bool isMirror = fdp.ConsumeBool();
+    CameraDeviceUtils ::CalculateImageRotation(input, imageRotation, isMirror);
+}
 void Test(uint8_t* data, size_t size)
 {
     CHECK_RETURN(size < LIMITSIZE);
@@ -110,20 +123,13 @@ void Test(uint8_t* data, size_t size)
     preview->outputType_ = CAPTURE_OUTPUT_TYPE_DEPTH_DATA;
     session->CanAddOutput(preview);
     FuzzedDataProvider fdp(data, size);
+    TestCalculateImageRotation(fdp);
     TestCallback(session, fdp);
     TestExposure(session, fdp);
     TestFocus(session, fdp);
     TestZoom(session, fdp);
     TestStabilization(session, fdp);
     TestProcess(session, fdp);
-    TestAperture(session, fdp);
-    TestBeauty(session, fdp);
-    TestOther(session, fdp);
-    TestOther3(session, fdp);
-    TestFlash(session, fdp);
-    TestAdd(session, fdp);
-    TestSession(session, fdp);
-    TestOther2(session, fdp);
     session->Release();
     session->Stop();
 }
