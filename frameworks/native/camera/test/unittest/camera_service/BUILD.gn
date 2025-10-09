@@ -168,6 +168,10 @@ ohos_unittest("camera_service_unittest") {
     defines += [ "CAMERA_USE_SENSOR" ]
   }
 
+  if (camera_framework_feature_camera_live_scene_recognition) {
+    defines += [ "CAMERA_LIVE_SCENE_RECOGNITION" ]
+  }
+
   if (defined(global_parts_info) &&
       defined(
           global_parts_info.notification_distributed_notification_service)) {

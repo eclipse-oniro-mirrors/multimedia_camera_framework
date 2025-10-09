@@ -267,6 +267,10 @@ ohos_shared_library("camera_service") {
     defines += [ "CONFIG_POLICY_EXT_ENABLE" ]
   }
 
+  if (camera_framework_feature_camera_live_scene_recognition) {
+    defines += [ "CAMERA_LIVE_SCENE_RECOGNITION" ]
+  }
+
   defines += [ "MOVING_PHOTO_ADD_AUDIO" ]
 
   if (use_musl) {

@@ -24,6 +24,7 @@ window_manager_path = "//foundation/window/window_manager"
 system_safwk_path = "//utils/system/safwk"
 declare_args() {
   camera_framework_feature_camera_rotate_plugin = false
+  camera_framework_feature_camera_live_scene_recognition = false
 }
 use_sensor = false
 if (defined(global_parts_info) && defined(global_parts_info.sensors_sensor)) {
