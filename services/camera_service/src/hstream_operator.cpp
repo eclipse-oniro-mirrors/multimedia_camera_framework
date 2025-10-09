@@ -1241,7 +1241,7 @@ void HStreamOperator::SetLivePhotoRotation(int32_t rotationValue, int32_t camera
         rotationValue, cameraPosition);
     livePhotoRotation_ = rotationValue;
     CHECK_RETURN(!(cameraPosition == OHOS_CAMERA_POSITION_FRONT));
-    bool isNeedMirrorOffset = rotationValue % STREAM_ROTATE_180;
+    bool isNeedMirrorOffset = rotationValue % STREAM_ROTATE_180 && isMovingPhotoMirror_;
     CHECK_EXECUTE(isNeedMirrorOffset,
         livePhotoRotation_ = (livePhotoRotation_ + STREAM_ROTATE_180) % STREAM_ROTATE_360);
     // LCOV_EXCL_STOP
