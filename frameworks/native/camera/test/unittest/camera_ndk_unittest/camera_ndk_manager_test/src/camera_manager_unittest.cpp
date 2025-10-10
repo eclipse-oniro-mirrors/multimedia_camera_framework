@@ -1169,6 +1169,167 @@ HWTEST_F(CameraManagerUnitTest, camera_manager_unittest_033, TestSize.Level0)
 
 /*
  * Feature: Framework
+ * Function: Test Torch supported or not and supported or not with torch mode CAMERA_TORCH_MODE_OFF
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test is Torch supported or not and supported or not with torch mode CAMERA_TORCH_MODE_OFF
+ */
+HWTEST_F(CameraManagerUnitTest, camera_manager_unittest_034, TestSize.Level0)
+{
+    Camera_ErrorCode ret = CAMERA_OK;
+    Camera_CaptureSession* captureSession = nullptr;
+    ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_PHOTO);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_BeginConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_Input *cameraInput = nullptr;
+    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(cameraInput, nullptr);
+    EXPECT_EQ(OH_CameraInput_Open(cameraInput), CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_AddInput(captureSession, cameraInput), CAMERA_OK);
+    Camera_PhotoOutput *photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    ret = OH_CaptureSession_AddPhotoOutput(captureSession, photoOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_CommitConfig(captureSession), CAMERA_OK);
+    bool isTorchSupported = false;
+    Camera_TorchMode torchMode = CAMERA_TORCH_MODE_OFF;
+    ret = OH_CameraManager_IsTorchSupported(cameraManager, &isTorchSupported);
+    EXPECT_EQ(ret, CAMERA_OK);
+    if (isTorchSupported == true) {
+        ret = OH_CameraManager_IsTorchSupportedByTorchMode(cameraManager, torchMode, &isTorchSupported);
+        EXPECT_EQ(ret, CAMERA_OK);
+        if (isTorchSupported == true) {
+            ret = OH_CameraManager_SetTorchMode(cameraManager, torchMode);
+            if (cameraDevice[CAMERA_DEVICE_INDEX].cameraPosition == Camera_Position::CAMERA_POSITION_FRONT) {
+                EXPECT_EQ(ret, CAMERA_OK);
+            } else if (cameraDevice[CAMERA_DEVICE_INDEX].cameraPosition == Camera_Position::CAMERA_POSITION_BACK) {
+                EXPECT_EQ(ret, Camera_ErrorCode::CAMERA_OPERATION_NOT_ALLOWED);
+            }
+        } else {
+            MEDIA_INFO_LOG("The device does not support specific torch modes");
+        }
+    } else {
+        MEDIA_INFO_LOG("The device does not support torch");
+    }
+    EXPECT_EQ(OH_PhotoOutput_Release(photoOutput), CAMERA_OK);
+    EXPECT_EQ(OH_CameraInput_Release(cameraInput), CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test Torch supported or not and supported or not with torch mode CAMERA_TORCH_MODE_ON
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test is Torch supported or not and supported or not with torch mode CAMERA_TORCH_MODE_ON
+ */
+HWTEST_F(CameraManagerUnitTest, camera_manager_unittest_035, TestSize.Level0)
+{
+    Camera_ErrorCode ret = CAMERA_OK;
+    Camera_CaptureSession* captureSession = nullptr;
+    ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_PHOTO);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_BeginConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_Input *cameraInput = nullptr;
+    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(cameraInput, nullptr);
+    EXPECT_EQ(OH_CameraInput_Open(cameraInput), CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_AddInput(captureSession, cameraInput), CAMERA_OK);
+    Camera_PhotoOutput *photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    ret = OH_CaptureSession_AddPhotoOutput(captureSession, photoOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_CommitConfig(captureSession), CAMERA_OK);
+    bool isTorchSupported = false;
+    Camera_TorchMode torchMode = CAMERA_TORCH_MODE_ON;
+    ret = OH_CameraManager_IsTorchSupported(cameraManager, &isTorchSupported);
+    EXPECT_EQ(ret, CAMERA_OK);
+    if (isTorchSupported == true) {
+        ret = OH_CameraManager_IsTorchSupportedByTorchMode(cameraManager, torchMode, &isTorchSupported);
+        EXPECT_EQ(ret, CAMERA_OK);
+        if (isTorchSupported == true) {
+            ret = OH_CameraManager_SetTorchMode(cameraManager, torchMode);
+            if (cameraDevice[CAMERA_DEVICE_INDEX].cameraPosition == Camera_Position::CAMERA_POSITION_FRONT) {
+                EXPECT_EQ(ret, CAMERA_OK);
+            } else if (cameraDevice[CAMERA_DEVICE_INDEX].cameraPosition == Camera_Position::CAMERA_POSITION_BACK) {
+                EXPECT_EQ(ret, Camera_ErrorCode::CAMERA_OPERATION_NOT_ALLOWED);
+            }
+        } else {
+            MEDIA_INFO_LOG("The device does not support specific torch modes");
+        }
+    } else {
+        MEDIA_INFO_LOG("The device does not support torch");
+    }
+    EXPECT_EQ(OH_PhotoOutput_Release(photoOutput), CAMERA_OK);
+    EXPECT_EQ(OH_CameraInput_Release(cameraInput), CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test Torch supported or not and supported or not with torch mode CAMERA_TORCH_MODE_AUTO
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test is Torch supported or not and supported or not with torch mode CAMERA_TORCH_MODE_AUTO
+ */
+HWTEST_F(CameraManagerUnitTest, camera_manager_unittest_036, TestSize.Level0)
+{
+    Camera_ErrorCode ret = CAMERA_OK;
+    Camera_CaptureSession* captureSession = nullptr;
+    ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_PHOTO);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_BeginConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_Input *cameraInput = nullptr;
+    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(cameraInput, nullptr);
+    EXPECT_EQ(OH_CameraInput_Open(cameraInput), CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_AddInput(captureSession, cameraInput), CAMERA_OK);
+    Camera_PhotoOutput *photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    ret = OH_CaptureSession_AddPhotoOutput(captureSession, photoOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_CommitConfig(captureSession), CAMERA_OK);
+    bool isTorchSupported = false;
+    Camera_TorchMode torchMode = CAMERA_TORCH_MODE_AUTO;
+    ret = OH_CameraManager_IsTorchSupported(cameraManager, &isTorchSupported);
+    EXPECT_EQ(ret, CAMERA_OK);
+    if (isTorchSupported == true) {
+        ret = OH_CameraManager_IsTorchSupportedByTorchMode(cameraManager, torchMode, &isTorchSupported);
+        EXPECT_EQ(ret, CAMERA_OK);
+        if (isTorchSupported == true) {
+            ret = OH_CameraManager_SetTorchMode(cameraManager, torchMode);
+            EXPECT_EQ(ret, Camera_ErrorCode::CAMERA_OPERATION_NOT_ALLOWED);
+        } else {
+            MEDIA_INFO_LOG("The device does not support specific torch modes");
+        }
+    } else {
+        MEDIA_INFO_LOG("The device does not support torch");
+    }
+    EXPECT_EQ(OH_PhotoOutput_Release(photoOutput), CAMERA_OK);
+    EXPECT_EQ(OH_CameraInput_Release(cameraInput), CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
  * Function: Test cameraManager by registering multiple state callbacks,
  * then unregister the callback, and check for any leaked callback.
  * SubFunction: NA

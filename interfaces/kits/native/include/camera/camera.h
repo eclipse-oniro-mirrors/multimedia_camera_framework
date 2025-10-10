@@ -445,9 +445,21 @@ typedef enum Camera_ImageRotation {
     IAMGE_ROTATION_0 = 0,
 
     /**
+     * The capture image rotates 0 degrees.
+     * @since 21
+     */
+    CAMERA_IMAGE_ROTATION_0 = 0,
+
+    /**
      * The capture image rotates 90 degrees.
      */
     IAMGE_ROTATION_90 = 90,
+
+    /**
+     * The capture image rotates 90 degrees.
+     * @since 21
+     */
+    CAMERA_IMAGE_ROTATION_90 = 90,
 
     /**
      * The capture image rotates 180 degrees.
@@ -455,9 +467,21 @@ typedef enum Camera_ImageRotation {
     IAMGE_ROTATION_180 = 180,
 
     /**
+     * The capture image rotates 180 degrees.
+     * @since 21
+     */
+    CAMERA_IMAGE_ROTATION_180 = 180,
+
+    /**
      * The capture image rotates 270 degrees.
      */
-    IAMGE_ROTATION_270 = 270
+    IAMGE_ROTATION_270 = 270,
+
+    /**
+     * The capture image rotates 270 degrees.
+     * @since 21
+     */
+    CAMERA_IMAGE_ROTATION_270 = 270,
 } Camera_ImageRotation;
 
 /**
@@ -509,15 +533,34 @@ typedef enum Camera_TorchMode {
     OFF = 0,
 
     /**
+     * The device torch is always off.
+     * @since 21
+     */
+    CAMERA_TORCH_MODE_OFF = 0,
+
+    /**
      * The device torch is always on.
      */
     ON = 1,
 
     /**
+     * The device torch is always on.
+     * @since 21
+     */
+    CAMERA_TORCH_MODE_ON = 1,
+
+    /**
      * The device continuously monitors light levels and
      * uses the torch when necessary.
      */
-    AUTO = 2
+    AUTO = 2,
+
+    /**
+     * The device continuously monitors light levels and
+     * uses the torch when necessary.
+     * @since 21
+     */
+    CAMERA_TORCH_MODE_AUTO = 2
 } Camera_TorchMode;
 
 /**
@@ -528,9 +571,15 @@ typedef enum Camera_TorchMode {
  */
 typedef enum Camera_SmoothZoomMode {
     /**
-     * Normal zoom mode.
+     * Normal smooth zoom mode.
      */
-    NORMAL = 0
+    NORMAL = 0,
+
+    /**
+     * Normal smooth zoom mode.
+     * @since 21
+     */
+    CAMERA_SMOOTH_ZOOM_MODE_NORMAL = 0
 } Camera_SmoothZoomMode;
 
 /**
@@ -1014,14 +1063,32 @@ typedef enum Camera_FoldStatus {
     NON_FOLDABLE = 0,
 
     /**
+     * Non_foldable status.
+     * @since 21
+     */
+    CAMERA_FOLD_STATUS_NON_FOLDABLE = 0,
+
+    /**
      * Expanded status.
      */
     EXPANDED = 1,
 
     /**
+     * Expanded status.
+     * @since 21
+     */
+    CAMERA_FOLD_STATUS_EXPANDED = 1,
+
+    /**
      * Folded status.
      */
-    FOLDED = 2
+    FOLDED = 2,
+
+    /**
+     * Folded status.
+     * @since 21
+     */
+    CAMERA_FOLD_STATUS_FOLDED = 2
 } Camera_FoldStatus;
 
 /**

@@ -3633,5 +3633,46 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_088, Test
     EXPECT_EQ(ret, CAMERA_OK);
 }
 
+/*
+ * Feature: Framework
+ * Function: Test OH_CaptureSession_SetSmoothZoom
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OH_CaptureSession_SetSmoothZoom
+ */
+HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_089, TestSize.Level0)
+{
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_PHOTO);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_Input *cameraInput = nullptr;
+    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(cameraInput, nullptr);
+    ret = OH_CameraInput_Open(cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_BeginConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_PhotoOutput* photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    ret = OH_CaptureSession_AddPhotoOutput(captureSession, photoOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_CommitConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    float targetZoom = 0.0f;
+    ret = OH_CaptureSession_SetSmoothZoom(captureSession, targetZoom, CAMERA_SMOOTH_ZOOM_MODE_NORMAL);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    EXPECT_EQ(OH_PhotoOutput_Release(photoOutput), CAMERA_OK);
+    EXPECT_EQ(OH_CameraInput_Release(cameraInput), CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
+}
 } // CameraStandard
 } // OHOS
