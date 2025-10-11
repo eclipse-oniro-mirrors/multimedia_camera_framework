@@ -1540,5 +1540,22 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_066, TestSize
     EXPECT_NE(input->Open(cameraConcurrentType), 0);
     EXPECT_EQ(input->Close(), SERVICE_FATL_ERROR);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test CameraDevice with SetUsePhysicalCameraOrientation
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CameraDevice with SetUsePhysicalCameraOrientation
+ */
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_068, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
+
+    cameras[0]->SetUsePhysicalCameraOrientation(true);
+    EXPECT_NE(cameras[0]->GetUsePhysicalCameraOrientation(), false);
+}
 }
 }
