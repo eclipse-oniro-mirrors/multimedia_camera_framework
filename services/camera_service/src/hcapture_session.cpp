@@ -651,6 +651,7 @@ int32_t HCaptureSession::LinkInputAndOutputs()
         "HCaptureSession::LinkInputAndOutputs deviceAbility is null");
     CHECK_RETURN_RET_ELOG(!IsValidMode(opMode_, settings), CAMERA_INVALID_SESSION_CFG,
         "HCaptureSession::LinkInputAndOutputs IsValidMode false");
+    device->SetFrameRateRange(hStreamOperatorSptr->GetFrameRateRange());
     device->UpdateCameraRotateAngle();
     rc = hStreamOperatorSptr->LinkInputAndOutputs(settings, GetopMode());
     MEDIA_INFO_LOG("HCaptureSession::LinkInputAndOutputs execute success");
@@ -1542,6 +1543,7 @@ int32_t HCaptureSession::Start()
         camera_position_enum_t cameraPosition = static_cast<camera_position_enum_t>(usedAsPositionU8);
         auto hStreamOperatorSptr = GetStreamOperator();
         CHECK_RETURN_ELOG(hStreamOperatorSptr == nullptr, "hStreamOperatorSptr is null");
+        cameraDevice->SetFrameRateRange(hStreamOperatorSptr->GetFrameRateRange());
         UpdateSettingForSpecialBundle();
         errorCode = hStreamOperatorSptr->StartPreviewStream(settings, cameraPosition);
         CHECK_EXECUTE(errorCode == CAMERA_OK, isSessionStarted_ = true);

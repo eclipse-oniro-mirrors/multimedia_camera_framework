@@ -1131,6 +1131,18 @@ void HCameraDevice::UnPrepareZoom()
     UpdateSetting(metadata);
 }
 
+void HCameraDevice::SetFrameRateRange(const std::vector<int32_t>& frameRateRange)
+{
+    std::lock_guard<std::mutex> lock(fpsRangeLock_);
+    frameRateRange_ = frameRateRange;
+}
+
+std::vector<int32_t> HCameraDevice::GetFrameRateRange()
+{
+    std::lock_guard<std::mutex> lock(fpsRangeLock_);
+    return frameRateRange_;
+}
+
 void HCameraDevice::UpdateCameraRotateAngleAndZoom(std::vector<int32_t> &frameRateRange, bool isResetDegree)
 {
     CameraRotateStrategyInfo strategyInfo;
@@ -1196,9 +1208,12 @@ void HCameraDevice::UpdateCameraRotateAngle()
     if (system::GetParameter("const.system.sensor_correction_enable", "0") != "1"
         || !IsPhysicalCameraOrientationVariable()) {
         MEDIA_DEBUG_LOG("HCameraDevice::UpdateCameraRotateAngle variable orientation is closed");
-        std::vector<int32_t> emptyVec;
-        UpdateCameraRotateAngleAndZoom(emptyVec,
-            curDisplayMode == static_cast<int32_t>(OHOS::Rosen::FoldDisplayMode::GLOBAL_FULL));
+        std::vector<int32_t> frameRateRange = GetFrameRateRange();
+        MEDIA_INFO_LOG("HCameraDevice::UpdateCameraRotateAngle, frameRateRange size: %{public}zu, "
+            "frameRateRange: %{public}s", frameRateRange.size(),
+            Container2String(frameRateRange.begin(), frameRateRange.end()).c_str());
+        UpdateCameraRotateAngleAndZoom(frameRateRange,
+            curDisplayMode != static_cast<int32_t>(OHOS::Rosen::FoldDisplayMode::GLOBAL_FULL));
         return;
     }
     int cameraOrientation = GetOriginalCameraOrientation();
@@ -1210,6 +1225,7 @@ void HCameraDevice::UpdateCameraRotateAngle()
     int32_t rotateDegree = (truthCameraOrientation - cameraOrientation + BASE_DEGREE) % BASE_DEGREE;
     MEDIA_INFO_LOG("HCameraDevice::UpdateCameraRotateAngle cameraOrientation: %{public}d, truthCameraOrientation: "
         "%{public}d, rotateDegree: %{public}d.", cameraOrientation, truthCameraOrientation, rotateDegree);
+    CHECK_RETURN_ELOG(usePhysicalCameraOrientation_, "HCameraDevice::UpdateCameraRotateAngle do not need HAL rotate");
     std::shared_ptr<OHOS::Camera::CameraMetadata> settings = std::make_shared<OHOS::Camera::CameraMetadata>(1, 1);
     CHECK_EXECUTE(rotateDegree >= 0, settings->addEntry(OHOS_CONTROL_ROTATE_ANGLE, &rotateDegree, 1));
     UpdateSettingOnce(settings);

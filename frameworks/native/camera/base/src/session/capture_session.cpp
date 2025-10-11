@@ -4976,7 +4976,9 @@ void CaptureSession::ProcessTripodStatusChange(const std::shared_ptr<OHOS::Camer
 bool CaptureSession::IsAutoDeviceSwitchSupported()
 {
     bool isFoldable = CameraManager::GetInstance()->GetIsFoldable();
-    MEDIA_INFO_LOG("IsAutoDeviceSwitchSupported %{public}d.", isFoldable);
+    bool isVariable = CameraManager::GetInstance()->GetIsVariableInfo();
+    MEDIA_INFO_LOG("IsAutoDeviceSwitchSupported: %{public}d, isVariable: %{public}d.", isFoldable, isVariable);
+    CHECK_EXECUTE(isVariable, isFoldable = false);
     return isFoldable;
 }
 

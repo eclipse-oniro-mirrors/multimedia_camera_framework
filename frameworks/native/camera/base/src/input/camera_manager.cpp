@@ -2084,6 +2084,25 @@ bool CameraManager::GetIsFoldable()
     return !foldScreenType_.empty();
 }
 
+bool CameraManager::GetIsVariableInfo()
+{
+    auto cameraDeviceList = GetCameraDeviceList();
+    CHECK_RETURN_RET_ELOG(cameraDeviceList.empty(), false, "CameraManager::GetIsVariableInfo cameraDeviceList"
+        "is empty");
+    std::string cameraId = cameraDeviceList[0]->GetID();
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metaData;
+    auto serviceProxy = GetServiceProxy();
+    CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, false, "CameraManager::GetIsVariableInfo serviceProxy is null");
+    serviceProxy->GetCameraAbility(cameraId, metaData);
+    CHECK_RETURN_RET_ELOG(metaData == nullptr, false, "CameraManager::GetIsVariableInfo GetCameraAbility failed");
+    bool isVariable = false;
+    camera_metadata_item item;
+    int32_t retCode = OHOS::Camera::FindCameraMetadataItem(metaData->get(),
+        OHOS_ABILITY_SENSOR_ORIENTATION_VARIABLE, &item);
+    CHECK_EXECUTE(retCode == CAM_META_SUCCESS, isVariable = item.count > 0 && item.data.u8[0]);
+    return isVariable;
+}
+
 std::string CameraManager::GetFoldScreenType()
 {
     return foldScreenType_;
