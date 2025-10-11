@@ -76,9 +76,6 @@ namespace OHOS {
 namespace CameraStandard {
 REGISTER_SYSTEM_ABILITY_BY_ID(HCameraService, CAMERA_SERVICE_ID, true)
 constexpr uint8_t POSITION_FOLD_INNER = 3;
-constexpr uint32_t ROOT_UID = 0;
-constexpr uint32_t FACE_CLIENT_UID = 1088;
-constexpr uint32_t RSS_UID = 1096;
 #ifdef MEMMGR_OVERRID
 constexpr int32_t OLD_LAUNCH = -1;
 constexpr int32_t TOUCH_DOWN = 0;

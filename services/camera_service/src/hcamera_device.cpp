@@ -1467,7 +1467,8 @@ void HCameraDevice::RegisterFoldStatusListener()
 {
     std::lock_guard<std::mutex> lock(foldStateListenerMutex_);
     bool isSystemApp =
-        OHOS::Security::AccessToken::TokenIdKit::IsSystemAppByFullTokenID(IPCSkeleton::GetCallingFullTokenID());
+        OHOS::Security::AccessToken::TokenIdKit::IsSystemAppByFullTokenID(IPCSkeleton::GetCallingFullTokenID()) ||
+        IPCSkeleton::GetCallingUid() == FACE_CLIENT_UID;
     listener_ = new FoldScreenListener(this, cameraHostManager_, cameraID_, isSystemApp);
     if (cameraHostManager_) {
         int foldStatus = static_cast<int>(OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus());

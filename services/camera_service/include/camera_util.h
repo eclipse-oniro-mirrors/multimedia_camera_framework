@@ -61,6 +61,10 @@ static const std::string CAMERA_STATE = "cameraState";
 static const std::string IS_SYSTEM_CAMERA = "isSystemCamera";
 static const std::string CAMERA_MSG = "cameraMsg";
 static const std::string CLIENT_NAME = "clientName";
+
+static const uint32_t ROOT_UID = 0;
+static const uint32_t FACE_CLIENT_UID = 1088;
+static const uint32_t RSS_UID = 1096;
 // event
 static const std::string COMMON_EVENT_CAMERA_STATUS = "usual.event.CAMERA_STATUS";
 static const std::string COMMON_EVENT_DATA_SHARE_READY = "usual.event.DATA_SHARE_READY";
