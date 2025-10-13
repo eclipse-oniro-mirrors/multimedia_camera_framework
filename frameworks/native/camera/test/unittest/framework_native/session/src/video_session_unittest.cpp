@@ -662,5 +662,124 @@ HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_008, TestSize.Level0
 
     input->Close();
 }
+
+/*
+ * Feature: Framework
+ * Function: Test VideoSessionForSys CanAddOutput
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test VideoSessionForSys CanAddOutput under different conditions.
+ */
+HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_009, TestSize.Level0)
+{
+    // 获取支持的相机设备列表
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    // 打开相机设备
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    EXPECT_EQ(camInput->GetCameraDevice()->Open(), 0);
+
+    // 创建 CaptureSessionForSys 并转换为 VideoSessionForSys
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::VIDEO);
+    ASSERT_NE(sessionForSys, nullptr);
+    sptr<VideoSessionForSys> videoSessionForSys = static_cast<VideoSessionForSys*>(sessionForSys.GetRefPtr());
+    ASSERT_NE(videoSessionForSys, nullptr);
+
+    int32_t Result = videoSessionForSys->AddInput(input);
+    EXPECT_EQ(Result, CameraErrorCode::OPERATION_NOT_ALLOWED);
+
+    // 创建一个输出对象
+    sptr<VideoOutput> videoOutput = nullptr;
+    Result = cameraManager_->CreateVideoOutputWithoutProfile(Surface::CreateSurfaceAsConsumer(), &videoOutput);
+    EXPECT_EQ(Result, 0);
+    ASSERT_NE(videoOutput, nullptr);
+    sptr<CaptureOutput> videoOutputCaptureUpper = videoOutput;
+    sptr<CaptureOutput> nullOutput = nullptr;
+
+    // 会话未配置时
+    EXPECT_FALSE(videoSessionForSys->CanAddOutput(nullOutput));
+    EXPECT_FALSE(videoSessionForSys->CanAddOutput(videoOutputCaptureUpper));
+
+    // 配置会话
+    Result = videoSessionForSys->BeginConfig();
+    EXPECT_EQ(Result, 0);
+    Result = videoSessionForSys->AddInput(input);
+    EXPECT_EQ(Result, 0);
+
+    //配置会话时
+    EXPECT_FALSE(videoSessionForSys->CanAddOutput(nullOutput));
+    EXPECT_FALSE(videoSessionForSys->CanAddOutput(videoOutputCaptureUpper));
+
+    // 关闭相机输入
+    input->Close();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test VideoSessionForSys AddOutput
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test VideoSessionForSys AddOutput under different conditions.
+ */
+HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_010, TestSize.Level0)
+{
+    // 获取支持的相机设备列表
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    // 打开相机设备
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    EXPECT_EQ(camInput->GetCameraDevice()->Open(), 0);
+
+    // 创建 CaptureSessionForSys 并转换为 VideoSessionForSys
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::VIDEO);
+    ASSERT_NE(sessionForSys, nullptr);
+    sptr<VideoSessionForSys> videoSessionForSys = static_cast<VideoSessionForSys*>(sessionForSys.GetRefPtr());
+    ASSERT_NE(videoSessionForSys, nullptr);
+
+
+    int result = videoSessionForSys->AddInput(input);
+    EXPECT_EQ(result, CameraErrorCode::OPERATION_NOT_ALLOWED);
+
+    // 创建一个输出对象
+    sptr<VideoOutput> videoOutput = nullptr;
+    result = cameraManager_->CreateVideoOutputWithoutProfile(Surface::CreateSurfaceAsConsumer(), &videoOutput);
+    EXPECT_EQ(result, 0);
+    ASSERT_NE(videoOutput, nullptr);
+    sptr<CaptureOutput> videoOutputCaptureUpper = videoOutput;
+    sptr<CaptureOutput> nullOutput = nullptr;
+
+    // 会话未配置时
+    result = videoSessionForSys->AddOutput(nullOutput);
+    EXPECT_EQ(result, CameraErrorCode::SERVICE_FATL_ERROR);
+
+    result = videoSessionForSys->AddOutput(videoOutputCaptureUpper);
+    EXPECT_EQ(result, CameraErrorCode::OPERATION_NOT_ALLOWED);
+
+    // 配置会话
+    result = videoSessionForSys->BeginConfig();
+    EXPECT_EQ(result, 0);
+    result = videoSessionForSys->AddInput(input);
+    EXPECT_EQ(result, 0);
+
+    // 会话已配置时
+    result = videoSessionForSys->AddOutput(nullOutput);
+    EXPECT_EQ(result, CameraErrorCode::SERVICE_FATL_ERROR);
+
+    result = videoSessionForSys->AddOutput(videoOutputCaptureUpper);
+    EXPECT_EQ(result, CameraErrorCode::SERVICE_FATL_ERROR);
+
+    // 关闭相机输入
+    input->Close();
+}
 }
 }

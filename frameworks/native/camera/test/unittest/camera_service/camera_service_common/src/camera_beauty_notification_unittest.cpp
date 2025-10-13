@@ -19,6 +19,7 @@
 #include "hcamera_service.h"
 #include "ipc_skeleton.h"
 #include "pixel_map.h"
+#include "camera_notification_interface.h"
 
 using namespace testing::ext;
 namespace OHOS {
@@ -278,6 +279,52 @@ HWTEST_F(CameraBeautyNotificationUnit, camera_beauty_notification_unittest_011, 
     test->SetBeautyStatus(beautyStatus);
     EXPECT_EQ(test->GetBeautyStatus(), beautyStatus);
     test->RefreshResConfig();
+}
+
+/*
+ * Feature: Framework
+ * Function: CameraBeautyNotification
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test InitResourceManager abnormal branches with different beautyStatus and beautyTimes
+ */
+HWTEST_F(CameraBeautyNotificationUnit, camera_beauty_notification_unittest_012, TestSize.Level0)
+{
+    // 获取 CameraBeautyNotification 的单例对象
+    sptr<CameraBeautyNotification> test = CameraBeautyNotification::GetInstance();
+    ASSERT_NE(test, nullptr);
+
+    // 测试多个 beautyStatus 值
+    int32_t beautyStatus_1 = 1;
+    test->SetBeautyStatus(beautyStatus_1);
+    EXPECT_EQ(test->GetBeautyStatus(), beautyStatus_1);
+
+    int32_t beautyStatus_2 = 0;
+    test->SetBeautyStatus(beautyStatus_2);
+    EXPECT_EQ(test->GetBeautyStatus(), beautyStatus_2);
+
+    bool isRecordTimes_1 = true;
+    test->PublishNotification(isRecordTimes_1);
+
+    // 测试多个 beautyTimes 值
+    int32_t beautyTimes_1 = 1;
+    test->SetBeautyTimes(beautyTimes_1);
+    EXPECT_EQ(test->GetBeautyTimes(), beautyTimes_1);
+    test->PublishNotification(isRecordTimes_1);
+
+    int32_t beautyTimes_2 = 10;
+    test->SetBeautyTimes(beautyTimes_2);
+    EXPECT_EQ(test->GetBeautyTimes(), beautyTimes_2);
+    test->PublishNotification(isRecordTimes_1);
+
+    int32_t beautyTimes_3 = CONTROL_FLAG_LIMIT - 1;
+    test->SetBeautyTimes(beautyTimes_3);
+    EXPECT_EQ(test->GetBeautyTimes(), beautyTimes_3);
+    test->PublishNotification(isRecordTimes_1);
+
+    // 取消通知
+    test->CancelNotification();
 }
 }
 }
