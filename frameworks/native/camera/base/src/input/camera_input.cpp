@@ -163,10 +163,10 @@ void CameraInput::InitCameraInput()
         MEDIA_INFO_LOG("CameraInput::InitCameraInput foldStatus: %{public}d, orientation:%{public}d",
             innerFoldState, innerOrientation);
     }
+    CHECK_EXECUTE(foldStateSensorOrientationMap_.empty(), isVariable_ = false);
 
     int32_t isNeedDynamicMeta = 0;
-    CHECK_EXECUTE(isVariable_ && !foldStateSensorOrientationMap_.empty(),
-        deviceObj->GetIsNeedDynamicMeta(isNeedDynamicMeta));
+    CHECK_EXECUTE(isVariable_, deviceObj->GetIsNeedDynamicMeta(isNeedDynamicMeta));
     CHECK_RETURN_ELOG(isNeedDynamicMeta == 0, "CameraInput::InitCameraInput do not need dynamic orientation");
     SetUsePhysicalCameraOrientation(true);
     MEDIA_INFO_LOG("CameraInput::InitCameraInput need dynamic orientation");
@@ -711,7 +711,7 @@ int CameraInput::IsPhysicalCameraOrientationVariable(bool* isVariable)
 {
     CHECK_RETURN_RET_ELOG(isVariable == nullptr, ServiceToCameraError(CAMERA_INVALID_ARG),
         "CameraInput::IsPhysicalCameraOrientationVariable isVariable is nullptr");
-    *isVariable = isVariable_ && !foldStateSensorOrientationMap_.empty();
+    *isVariable = isVariable_;
     MEDIA_INFO_LOG("CameraInput::IsPhysicalCameraOrientationVariable isVariable: %{public}d", *isVariable);
     return ServiceToCameraError(CAMERA_OK);
 }

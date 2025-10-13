@@ -215,6 +215,8 @@ public:
     int32_t GetIsNeedDynamicMeta(int32_t &isNeedDynamicMeta) override;
     int32_t SetUsePhysicalCameraOrientation(bool isUsed) override;
     bool GetUsePhysicalCameraOrientation();
+    void SetFrameRateRange(const std::vector<int32_t>& frameRateRange);
+    std::vector<int32_t> GetFrameRateRange();
 #ifdef CAMERA_LIVE_SCENE_RECOGNITION
     void UpdateLiveStreamSceneMedatadata(uint8_t mode);
 #endif
@@ -319,6 +321,8 @@ private:
     void ReportZoomInfos(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult);
 
     bool isMovingPhotoEnabled_ = false;
+    std::vector<int32_t> frameRateRange_ = {0, 0};
+    std::mutex fpsRangeLock_;
     std::mutex usePhysicalCameraOrientationMutex_;
     std::mutex movingPhotoStartTimeCallbackLock_;
     std::mutex movingPhotoEndTimeCallbackLock_;
