@@ -200,7 +200,7 @@ napi_value VideoOutputNapi::Init(napi_env env, napi_value exports)
 
     napi_property_descriptor video_output_props[] = {
         DECLARE_NAPI_FUNCTION_WRITABLE("start", Start),
-        DECLARE_NAPI_FUNCTION("stop", Stop),
+        DECLARE_NAPI_FUNCTION_WRITABLE("stop", Stop),
         DECLARE_NAPI_FUNCTION("setFrameRate", SetFrameRate),
         DECLARE_NAPI_FUNCTION("getActiveFrameRate", GetActiveFrameRate),
         DECLARE_NAPI_FUNCTION("getSupportedFrameRates", GetSupportedFrameRates),
