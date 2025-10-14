@@ -110,6 +110,17 @@ EffectSuggestionType CameraUtilsTaihe::ToTaiheEffectSuggestionType(
     return itr->second;
 }
 
+SystemPressureLevel CameraUtilsTaihe::ToTaiheSystemPressureLevel(
+    OHOS::CameraStandard::PressureStatus systemPressureLevel)
+{
+    auto itr = g_nativeToAniSystemPressureLevel.find(systemPressureLevel);
+    if (itr == g_nativeToAniSystemPressureLevel.end()) {
+        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT, "ToTaiheSystemPressureLevel fail");
+        return SystemPressureLevel::key_t::SYSTEM_PRESSURE_NORMAL;
+    }
+    return itr->second;
+}
+
 SlowMotionStatus CameraUtilsTaihe::ToTaiheSlowMotionState(OHOS::CameraStandard::SlowMotionState type)
 {
     auto itr = g_nativeToAniSlowMotionState.find(type);

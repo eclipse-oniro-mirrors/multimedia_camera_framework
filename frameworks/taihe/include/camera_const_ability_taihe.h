@@ -120,6 +120,20 @@ const std::unordered_map<OHOS::CameraStandard::MacroStatusCallback::MacroStatus,
     {OHOS::CameraStandard::MacroStatusCallback::MacroStatus::UNKNOWN, true},
 };
 
+const std::unordered_map<OHOS::CameraStandard::PressureStatus, SystemPressureLevel>
+    g_nativeToAniSystemPressureLevel = {
+    {OHOS::CameraStandard::PressureStatus::SYSTEM_PRESSURE_NORMAL,
+        SystemPressureLevel::key_t::SYSTEM_PRESSURE_NORMAL},
+    {OHOS::CameraStandard::PressureStatus::SYSTEM_PRESSURE_MILD,
+        SystemPressureLevel::key_t::SYSTEM_PRESSURE_MILD},
+    {OHOS::CameraStandard::PressureStatus::SYSTEM_PRESSURE_SEVERE,
+        SystemPressureLevel::key_t::SYSTEM_PRESSURE_SEVERE},
+    {OHOS::CameraStandard::PressureStatus::SYSTEM_PRESSURE_CRITICAL,
+        SystemPressureLevel::key_t::SYSTEM_PRESSURE_CRITICAL},
+    {OHOS::CameraStandard::PressureStatus::SYSTEM_PRESSURE_SHUTDOWN,
+        SystemPressureLevel::key_t::SYSTEM_PRESSURE_SHUTDOWN},
+};
+
 const std::unordered_map<OHOS::CameraStandard::EffectSuggestionType, EffectSuggestionType>
     g_nativeToAniEffectSuggestionType = {
     {OHOS::CameraStandard::EffectSuggestionType::EFFECT_SUGGESTION_NONE,

@@ -124,6 +124,17 @@ private:
     void OnEffectSuggestionCallback(OHOS::CameraStandard::EffectSuggestionType effectSuggestionType) const;
 };
 
+class PressureCallbackListener : public OHOS::CameraStandard::PressureCallback, public ListenerBase,
+    public std::enable_shared_from_this<PressureCallbackListener> {
+public:
+    PressureCallbackListener(ani_env* env) : ListenerBase(env) {}
+    ~PressureCallbackListener() = default;
+    void OnPressureStatusChanged(OHOS::CameraStandard::PressureStatus systemPressureLevel) override;
+
+private:
+    void OnSystemPressureLevelCallback(OHOS::CameraStandard::PressureStatus systemPressureLevel) const;
+};
+
 class SessionImpl : public CameraAniEventEmitter<SessionImpl>,
                     virtual public SessionBase {
 public:
@@ -190,6 +201,8 @@ public:
     void OffTryAEInfoChange(optional_view<callback<void(uintptr_t, TryAEInfo const&)>> callback);
     void OnSlowMotionStatus(callback_view<void(uintptr_t, SlowMotionStatus)> callback);
     void OffSlowMotionStatus(optional_view<callback<void(uintptr_t, SlowMotionStatus)>> callback);
+    void OnSystemPressureLevelChange(callback_view<void(uintptr_t, SystemPressureLevel)> callback);
+    void OffSystemPressureLevelChange(optional_view<callback<void(uintptr_t, SystemPressureLevel)>> callback);
 
     std::shared_ptr<SessionCallbackListener> sessionCallback_ = nullptr;
     std::shared_ptr<FocusCallbackListener> focusCallback_ = nullptr;
@@ -261,6 +274,10 @@ protected:
     virtual void RegisterSlowMotionStateCb(const std::string& eventName,
         std::shared_ptr<uintptr_t> callback, bool isOnce);
     virtual void UnregisterSlowMotionStateCb(const std::string& eventName,
+        std::shared_ptr<uintptr_t> callback);
+    virtual void RegisterPressureStatusCallbackListener(const std::string& eventName,
+        std::shared_ptr<uintptr_t> callback, bool isOnce);
+    virtual void UnregisterPressureStatusCallbackListener(const std::string& eventName,
         std::shared_ptr<uintptr_t> callback);
 };
 
