@@ -68,5 +68,29 @@ HWTEST_F(CameraAppManagerClientUnit, camera_app_manager_client_unittest_002, Tes
     ASSERT_NE(client->cameraAppManagerClient_, nullptr);
 }
 
+/*
+ * Feature: Framework
+ * Function: CameraAppManagerClient
+ * SubFunction: GetProcessState
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test the behavior of CameraAppManagerClient::GetProcessState with valid and invalid process IDs.
+ * The expected result is that the method should return the correct state for valid PIDs and -1 for invalid PIDs.
+ */
+HWTEST_F(CameraAppManagerClientUnit, camera_app_manager_client_unittest_003, TestSize.Level0)
+{
+    sptr<CameraAppManagerClient> client = CameraAppManagerClient::GetInstance();
+    ASSERT_NE(client, nullptr);
+
+    int32_t Pid = 1234;
+    AppExecFwk::RunningProcessInfo runningProcessstate;
+    std::shared_ptr<AppExecFwk::AppMgrClient> appMgrHolder_ = std::make_shared<AppExecFwk::AppMgrClient>();
+    int ret = appMgrHolder_->GetRunningProcessInfoByPid(Pid, runningProcessstate);
+    if (ret == CAMERA_OK) {
+        EXPECT_EQ(client->GetProcessState(Pid), 0);
+    } else {
+        EXPECT_EQ(client->GetProcessState(Pid), -1);
+    }
+}
 }
 }

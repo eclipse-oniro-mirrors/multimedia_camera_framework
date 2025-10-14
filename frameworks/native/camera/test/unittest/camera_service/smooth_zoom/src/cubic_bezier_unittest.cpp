@@ -285,5 +285,45 @@ HWTEST_F(CubicBezierUnitTest, cubic_bezier_unittest_014, TestSize.Level1)
     float res = cubicBezier->BinarySearch(value);
     EXPECT_NE(res, 0);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test SetBezierValue.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetBezierValue with default value.
+ */
+HWTEST_F(CubicBezierUnitTest, cubic_bezier_unittest_015, TestSize.Level1)
+{
+    auto cubicBezier = std::make_shared<CubicBezier>();
+    std::vector<float> zoomBezierValue = {450.0, 0.4, 0.0, 0.2, 1.0};
+    EXPECT_TRUE(cubicBezier->SetBezierValue(zoomBezierValue));
+    EXPECT_FLOAT_EQ(cubicBezier->mDurationBase, 450.0);
+    EXPECT_FLOAT_EQ(cubicBezier->mControPointX1, 0.4);
+    EXPECT_FLOAT_EQ(cubicBezier->mControPointY1, 0.0);
+    EXPECT_FLOAT_EQ(cubicBezier->mControPointX2, 0.2);
+    EXPECT_FLOAT_EQ(cubicBezier->mControPointY2, 1.0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test BinarySearch.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test BinarySearch normal branch..
+ */
+HWTEST_F(CubicBezierUnitTest, cubic_bezier_unittest_016, TestSize.Level1)
+{
+    auto cubicBezier = std::make_shared<CubicBezier>();
+    constexpr float MAX_RESOLUTION = 4000.0;
+    constexpr float SERCH_STEP = 1.0 / MAX_RESOLUTION;
+    int low = 0;
+    int high = MAX_RESOLUTION;
+    int middle = (low + high) / 2;
+    float intput = cubicBezier->GetCubicBezierX(SERCH_STEP * middle);
+    EXPECT_FLOAT_EQ(cubicBezier->BinarySearch(intput), middle);
+}
 } // CameraStandard
 } // OHOS
