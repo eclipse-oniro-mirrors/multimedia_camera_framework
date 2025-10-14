@@ -82,7 +82,7 @@ HWTEST_F(CameraAppManagerClientUnit, camera_app_manager_client_unittest_003, Tes
     sptr<CameraAppManagerClient> client = CameraAppManagerClient::GetInstance();
     ASSERT_NE(client, nullptr);
 
-    int32_t Pid = 1234; 
+    int32_t Pid = 1234;
     AppExecFwk::RunningProcessInfo runningProcessstate;
     std::shared_ptr<AppExecFwk::AppMgrClient> appMgrHolder_ = std::make_shared<AppExecFwk::AppMgrClient>();
     int ret = appMgrHolder_->GetRunningProcessInfoByPid(Pid, runningProcessstate);
@@ -91,8 +91,6 @@ HWTEST_F(CameraAppManagerClientUnit, camera_app_manager_client_unittest_003, Tes
     } else {
         EXPECT_EQ(client->GetProcessState(Pid), -1);
     }
-
 }
-
 }
 }
