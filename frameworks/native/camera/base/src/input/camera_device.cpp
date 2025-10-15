@@ -236,6 +236,17 @@ void CameraDevice::InitFoldStateSensorOrientationMap(common_metadata_header_t* m
             "orientation:%{public}d", innerFoldState, innerOrientation);
     }
     CHECK_EXECUTE(foldStateSensorOrientationMap_.empty(), isVariable_ = false);
+    CHECK_RETURN_ELOG(!isVariable_, "InitFoldStateSensorOrientationMap foldStateSensorOrientationMap is empty");
+
+    bool isNaturalDirectionCorrect = false;
+    sptr<ICameraDeviceService> deviceObj = nullptr;
+    int32_t retCode = CameraManager::GetInstance()->CreateCameraDevice(GetID(), &deviceObj);
+    CHECK_RETURN_ELOG(retCode != CameraErrorCode::SUCCESS,
+        "CameraDevice::InitFoldStateSensorOrientationMap CreateCameraDevice Failed");
+    deviceObj->GetNaturalDirectionCorrect(isNaturalDirectionCorrect);
+    CHECK_EXECUTE(isNaturalDirectionCorrect, isVariable_ = false);
+    MEDIA_INFO_LOG("CameraDevice isVariable: %{public}d, isNaturalDirectionCorrect: %{public}d",
+        isVariable_, isNaturalDirectionCorrect);
 }
 
 std::string CameraDevice::GetID()

@@ -38,6 +38,7 @@ ohos_shared_library("camera_service") {
     "src/camera_buffer_manager/thumbnail_buffer_consumer.cpp",
     "src/camera_common_event_manager.cpp",
     "src/camera_datashare_helper.cpp",
+    "src/camera_applist_manager.cpp",
     "src/camera_fwk_metadata_utils.cpp",
     "src/camera_info_dumper.cpp",
     "src/camera_privacy.cpp",
