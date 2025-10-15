@@ -209,6 +209,11 @@ HCameraDevice::HCameraDevice(
     cameraPid_ = IPCSkeleton::GetCallingPid();
 
     {
+        std::lock_guard<std::mutex> lock(dataShareHelperMutex_);
+        CameraApplistManager::GetInstance()->InitApplistConfigures();
+    }
+
+    {
         std::lock_guard<std::mutex> lock(g_cameraHostManagerMutex);
         g_cameraHostManager = cameraHostManager;
     }
@@ -1185,16 +1190,37 @@ int32_t HCameraDevice::GetOriginalCameraOrientation()
     return sensorOrientation;
 }
 
+// LCOV_EXCL_START
+int32_t HCameraDevice::GetNaturalDirectionCorrect(bool& isNaturalDirectionCorrect)
+{
+    if (clientName_ == "") {
+        int tokenId = static_cast<int32_t>(IPCSkeleton::GetCallingTokenID());
+        clientName_ = GetClientNameByToken(tokenId);
+    }
+    std::lock_guard<std::mutex> lock(dataShareHelperMutex_);
+    isNaturalDirectionCorrect = false;
+    if (!CameraApplistManager::GetInstance()->GetNaturalDirectionCorrectByBundleName(clientName_,
+        isNaturalDirectionCorrect)) {
+        MEDIA_ERR_LOG("HCameraDevice::GetNaturalDirectionCorrect failed");
+        return CAMERA_INVALID_ARG;
+    }
+    return CAMERA_OK;
+}
+// LCOV_EXCL_STOP
+
 bool HCameraDevice::IsPhysicalCameraOrientationVariable()
 {
-    bool isVariableCameraOritation = false;
+    bool isVariable = false;
     camera_metadata_item_t item;
     CHECK_RETURN_RET(deviceAbility_ == nullptr, false);
     int ret = OHOS::Camera::FindCameraMetadataItem(deviceAbility_->get(), OHOS_ABILITY_SENSOR_ORIENTATION_VARIABLE,
         &item);
     CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS, 0, "HCameraDevice::GetSensorOrientation failed");
-    isVariableCameraOritation =  item.count > 0 && item.data.u8[0];
-    return isVariableCameraOritation;
+    isVariable =  item.count > 0 && item.data.u8[0];
+    bool isNaturalDirectionCorrect = false;
+    GetNaturalDirectionCorrect(isNaturalDirectionCorrect);
+    CHECK_EXECUTE(isNaturalDirectionCorrect, isVariable = false);
+    return isVariable;
 }
 
 void HCameraDevice::UpdateCameraRotateAngle()

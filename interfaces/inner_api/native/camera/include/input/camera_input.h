@@ -426,6 +426,8 @@ private:
     void CameraServerDied(pid_t pid);
     int32_t UpdateSetting(std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata);
     int32_t CameraDevicePhysicOpen(sptr<ICameraDeviceService> cameraDevicePhysic, int32_t cameraConcurrentType);
+    bool InitDynamicOrientation(sptr<ICameraDeviceService> deviceObj,
+        std::shared_ptr<OHOS::Camera::CameraMetadata> metaData);
     void InputRemoveDeathRecipient();
     std::map<CameraPosition, camera_position_enum> positionMapping;
     bool isVariable_ = false;

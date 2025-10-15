@@ -102,6 +102,8 @@ ohos_fuzztest("HStreamCaptureFuzzTest") {
     "samgr:samgr_proxy",
     "window_manager:libdm",
     "window_manager:libdm_lite",
+    "data_share:datashare_common",
+    "data_share:datashare_consumer",
   ]
 }
 

@@ -42,6 +42,7 @@
 #include "dfx/camera_report_uitls.h"
 #include "icamera_ipc_checker.h"
 #include "camera_rotate_strategy_parser.h"
+#include "camera_applist_manager.h"
 #ifdef CAMERA_LIVE_SCENE_RECOGNITION
 #include "res_sched_event_listener.h"
 #endif
@@ -214,6 +215,7 @@ public:
     bool GetSigleStrategyInfo(CameraRotateStrategyInfo &strategyInfo);
     int32_t GetIsNeedDynamicMeta(int32_t &isNeedDynamicMeta) override;
     int32_t SetUsePhysicalCameraOrientation(bool isUsed) override;
+    int32_t GetNaturalDirectionCorrect(bool& isNaturalDirectionCorrect) override;
     bool GetUsePhysicalCameraOrientation();
     void SetFrameRateRange(const std::vector<int32_t>& frameRateRange);
     std::vector<int32_t> GetFrameRateRange();
@@ -324,6 +326,7 @@ private:
     std::vector<int32_t> frameRateRange_ = {0, 0};
     std::mutex fpsRangeLock_;
     std::mutex usePhysicalCameraOrientationMutex_;
+    std::mutex dataShareHelperMutex_;
     std::mutex movingPhotoStartTimeCallbackLock_;
     std::mutex movingPhotoEndTimeCallbackLock_;
     std::function<void(int32_t, int64_t)> movingPhotoStartTimeCallback_;

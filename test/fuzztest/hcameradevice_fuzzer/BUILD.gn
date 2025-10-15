@@ -97,6 +97,8 @@ ohos_fuzztest("HCameraDeviceFuzzTest") {
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
     "window_manager:libdm",
+    "data_share:datashare_common",
+    "data_share:datashare_consumer",
   ]
 }
 
