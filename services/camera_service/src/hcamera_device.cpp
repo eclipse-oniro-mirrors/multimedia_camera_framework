@@ -707,6 +707,8 @@ bool HCameraDevice::HandlePrivacyBeforeOpenDevice()
         CHECK_RETURN_RET_ELOG(!cameraPrivacy->StartUsingPermissionCallback(), false,
             "start using permission failed");
     }
+    CHECK_RETURN_RET_ELOG(cameraPrivacy->GetDisablePolicy(), false, "policy disabled");
+    CHECK_RETURN_RET_ELOG(!cameraPrivacy->RegisterPermDisablePolicyCallback(), false, "register Disable failed");
     CHECK_RETURN_RET_ELOG(!cameraPrivacy->RegisterPermissionCallback(), false, "register permission failed");
     CHECK_RETURN_RET_ELOG(!cameraPrivacy->AddCameraPermissionUsedRecord(), false, "add permission record failed");
     return true;
@@ -722,6 +724,7 @@ void HCameraDevice::HandlePrivacyWhenOpenDeviceFail()
         cameraPrivacy->StopUsingPermissionCallback();
     }
         cameraPrivacy->UnregisterPermissionCallback();
+        cameraPrivacy->UnRegisterPermDisablePolicyCallback();
 }
 
 void HCameraDevice::HandlePrivacyAfterCloseDevice()
@@ -737,6 +740,7 @@ void HCameraDevice::HandlePrivacyAfterCloseDevice()
             cameraPrivacy->StopUsingPermissionCallback();
         }
         cameraPrivacy->UnregisterPermissionCallback();
+        cameraPrivacy->UnRegisterPermDisablePolicyCallback();
     }
 }
 
