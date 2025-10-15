@@ -31,6 +31,7 @@
 #include "napi/native_common.h"
 #include "napi/native_node_api.h"
 #include "common/qos_utils.h"
+#include "output/native_common_napi.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -198,8 +199,8 @@ napi_value CameraInputNapi::Init(napi_env env, napi_value exports)
 
     // todo: Open and Close in native have not implemented
     napi_property_descriptor camera_input_props[] = {
-        DECLARE_NAPI_FUNCTION("open", Open),
-        DECLARE_NAPI_FUNCTION("close", Close),
+        DECLARE_NAPI_FUNCTION_WRITABLE("open", Open),
+        DECLARE_NAPI_FUNCTION_WRITABLE("close", Close),
         DECLARE_NAPI_FUNCTION("closeDelayed", closeDelayed),
         DECLARE_NAPI_FUNCTION("release", Release),
         DECLARE_NAPI_FUNCTION("on", On),
