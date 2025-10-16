@@ -428,58 +428,6 @@ HWTEST_F(HStreamOperatorUnitTest, CalcRotationDegree_002, TestSize.Level0)
 }
 
 /**
- * @tc.name  : Test SetLivePhotoRotation API
- * @tc.number: SetLivePhotoRotation
- * @tc.desc  : Test SetLivePhotoRotation API, when cameraPosition is invalid
- */
-HWTEST_F(HStreamOperatorUnitTest, SetLivePhotoRotation_001, TestSize.Level1)
-{
-    int32_t cameraPosition = -1;
-    streamOp_->livePhotoRotation_ = -999;
-    streamOp_->SetLivePhotoRotation(1, cameraPosition);
-    EXPECT_EQ(streamOp_->livePhotoRotation_, 1);
-}
-
-/**
- * @tc.name  : Test SetLivePhotoRotation API
- * @tc.number: SetLivePhotoRotation_002
- * @tc.desc  : Test SetLivePhotoRotation API, when cameraPosition is valid
- */
-HWTEST_F(HStreamOperatorUnitTest, SetLivePhotoRotation_002, TestSize.Level1)
-{
-    int32_t cameraPosition = 0;
-    streamOp_->livePhotoRotation_ = 0;
-    streamOp_->SetLivePhotoRotation(90, cameraPosition);
-    EXPECT_EQ(streamOp_->livePhotoRotation_, 270);
-}
-
-/**
- * @tc.name  : Test SetLivePhotoRotation API
- * @tc.number: SetLivePhotoRotation_003
- * @tc.desc  : Test SetLivePhotoRotation API, when cameraPosition is valid
- */
-HWTEST_F(HStreamOperatorUnitTest, SetLivePhotoRotation_003, TestSize.Level1)
-{
-    int32_t cameraPosition = 0;
-    streamOp_->livePhotoRotation_ = 0;
-    streamOp_->SetLivePhotoRotation(180, cameraPosition);
-    EXPECT_EQ(streamOp_->livePhotoRotation_, 180);
-}
-
-/**
- * @tc.name  : Test SetLivePhotoRotation API
- * @tc.number: SetLivePhotoRotation_004
- * @tc.desc  : Test SetLivePhotoRotation API, when cameraPosition is valid
- */
-HWTEST_F(HStreamOperatorUnitTest, SetLivePhotoRotation_004, TestSize.Level1)
-{
-    int32_t cameraPosition = 1;
-    streamOp_->livePhotoRotation_ = 1;
-    streamOp_->SetLivePhotoRotation(90, cameraPosition);
-    EXPECT_EQ(streamOp_->livePhotoRotation_, 90);
-}
-
-/**
  * @tc.name  : Test StartMovingPhotoEncode API
  * @tc.number: StartMovingPhotoEncode_001
  * @tc.desc  : Test StartMovingPhotoEncode API, when isSetMotionPhoto_ is false

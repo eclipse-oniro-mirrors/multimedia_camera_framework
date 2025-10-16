@@ -1234,19 +1234,6 @@ int32_t HStreamOperator::CalcRotationDegree(GravityData data)
 }
 #endif
 
-void HStreamOperator::SetLivePhotoRotation(int32_t rotationValue, int32_t cameraPosition)
-{
-    // LCOV_EXCL_START
-    MEDIA_INFO_LOG("SetLivePhotoRotation rotationValue : %{public}d, cameraPosition: %{public}d",
-        rotationValue, cameraPosition);
-    livePhotoRotation_ = rotationValue;
-    CHECK_RETURN(!(cameraPosition == OHOS_CAMERA_POSITION_FRONT));
-    bool isNeedMirrorOffset = rotationValue % STREAM_ROTATE_180 && isMovingPhotoMirror_;
-    CHECK_EXECUTE(isNeedMirrorOffset,
-        livePhotoRotation_ = (livePhotoRotation_ + STREAM_ROTATE_180) % STREAM_ROTATE_360);
-    // LCOV_EXCL_STOP
-}
-
 void HStreamOperator::StartMovingPhotoEncode(int32_t rotation, uint64_t timestamp, int32_t format, int32_t captureId)
 {
     CHECK_RETURN(!isSetMotionPhoto_);
@@ -1256,10 +1243,10 @@ void HStreamOperator::StartMovingPhotoEncode(int32_t rotation, uint64_t timestam
         MEDIA_DEBUG_LOG("HStreamOperator::StartMovingPhotoEncode cptureId : %{public}d, isSetMotionPhto : %{public}d",
             captureId, isSetMotionPhoto_);
     }
-    int32_t realRotation = livePhotoRotation_;
-    MEDIA_INFO_LOG("realRotation is : %{public}d", realRotation);
-    realRotation = realRotation % ROTATION_360;
-    StartRecord(timestamp, realRotation, captureId);
+    bool isNeedMirrorOffset = isMovingPhotoMirror_ && (rotation % STREAM_ROTATE_180);
+    CHECK_EXECUTE(isNeedMirrorOffset, rotation = (rotation + STREAM_ROTATE_180) % STREAM_ROTATE_360);
+    MEDIA_INFO_LOG("Moving Photo Rotation is : %{public}d", rotation);
+    StartRecord(timestamp, rotation, captureId);
 }
 
 void HStreamOperator::UpdateOrientationBaseGravity(int32_t rotationValue, int32_t sensorOrientation,
