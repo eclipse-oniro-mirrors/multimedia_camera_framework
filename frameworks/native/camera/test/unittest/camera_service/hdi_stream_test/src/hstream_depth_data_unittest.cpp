@@ -30,6 +30,8 @@ namespace OHOS {
 namespace CameraStandard {
 
 constexpr static uint32_t CAMERA_STREAM_DEPTH_ON_DEFAULT = 1;
+const uint32_t METADATA_ITEM_SIZE = 20;
+const uint32_t METADATA_DATA_SIZE = 200;
 
 void HStreamDepthDataUnitTest::SetUpTestCase(void) {}
 
@@ -271,5 +273,167 @@ HWTEST_F(HStreamDepthDataUnitTest, hstream_depth_data_unittest_008, TestSize.Lev
     EXPECT_EQ(errCode, IPC_STUB_UNKNOW_TRANS_ERR);
 }
 
+/*
+ * Feature: Framework
+ * Function: Test  SetStreamInfo
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetStreamInfo for assign streamInfo correctly.
+ */
+HWTEST_F(HStreamDepthDataUnitTest, hstream_depth_data_unittest_009, TestSize.Level1)
+{
+    int32_t systemAbilityId = 110;
+    bool runOnCreate = true;
+    sptr<HCameraService> cameraService;
+    cameraService = new (nothrow) HCameraService(systemAbilityId, runOnCreate);
+
+    sptr<OHOS::IConsumerSurface> cSurface = IConsumerSurface::Create();
+    sptr<OHOS::IBufferProducer> producer = cSurface->GetProducer();
+    int32_t format = OHOS_CAMERA_FORMAT_RGBA_8888;
+    int32_t width = 1920;
+    int32_t height = 1080;
+    sptr<IStreamDepthData> depthDataOutput;
+    cameraService->CreateDepthDataOutput(producer, format, width, height, depthDataOutput);
+    ASSERT_NE(depthDataOutput, nullptr);
+
+    HStreamDepthData* depthDataPtr = static_cast<HStreamDepthData*>(depthDataOutput.GetRefPtr());
+
+    StreamInfo_V1_5 streamInfo;
+    depthDataPtr->SetStreamInfo(streamInfo);
+    EXPECT_EQ(streamInfo.v1_0.intent_, static_cast<OHOS::HDI::Camera::V1_0::StreamIntent>(
+        OHOS::HDI::Camera::V1_3::StreamType::STREAM_TYPE_DEPTH));
+    EXPECT_EQ(streamInfo.v1_0.format_, GRAPHIC_PIXEL_FMT_RGBA_8888);
+
+    format = OHOS_CAMERA_FORMAT_YCBCR_420_888;
+    sptr<IStreamDepthData> depthDataOutput2;
+    cameraService->CreateDepthDataOutput(producer, format, width, height, depthDataOutput2);
+    ASSERT_NE(depthDataOutput2, nullptr);
+
+    HStreamDepthData* depthDataPtr2 = static_cast<HStreamDepthData*>(depthDataOutput2.GetRefPtr());
+
+    StreamInfo_V1_5 streamInfo2;
+    depthDataPtr2->SetStreamInfo(streamInfo2);
+    EXPECT_EQ(streamInfo2.v1_0.intent_, static_cast<OHOS::HDI::Camera::V1_0::StreamIntent>(
+        OHOS::HDI::Camera::V1_3::StreamType::STREAM_TYPE_DEPTH));
+    EXPECT_EQ(streamInfo2.v1_0.format_, GRAPHIC_PIXEL_FMT_YCBCR_420_SP);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test Release
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test Release. If streamOperator is not nullptr, it is expected to be null
+ *                  after release streamMetaData.
+ */
+HWTEST_F(HStreamDepthDataUnitTest, hstream_depth_data_unittest_010, TestSize.Level1)
+{
+    int32_t systemAbilityId = 110;
+    bool runOnCreate = true;
+    sptr<HCameraService> cameraService;
+    cameraService = new (nothrow) HCameraService(systemAbilityId, runOnCreate);
+
+    sptr<OHOS::IConsumerSurface> cSurface = IConsumerSurface::Create();
+    sptr<OHOS::IBufferProducer> producer = cSurface->GetProducer();
+    int32_t format = OHOS_CAMERA_FORMAT_RGBA_8888;
+    int32_t width = 1920;
+    int32_t height = 1080;
+    sptr<IStreamDepthData> depthDataOutput;
+    cameraService->CreateDepthDataOutput(producer, format, width, height, depthDataOutput);
+    ASSERT_NE(depthDataOutput, nullptr);
+
+    HStreamDepthData* depthDataPtr = static_cast<HStreamDepthData*>(depthDataOutput.GetRefPtr());
+
+    int32_t ret = depthDataPtr->Release();
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata =
+        std::make_shared<OHOS::Camera::CameraMetadata>(METADATA_ITEM_SIZE, METADATA_DATA_SIZE);
+    sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator;
+    depthDataPtr->LinkInput(streamOperator, metadata);
+    EXPECT_EQ(depthDataPtr->GetStreamOperator(), streamOperator);
+    ret = depthDataPtr->Release();
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(depthDataPtr->GetStreamOperator(), nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test DumpStreamInfo
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test DumpStreamInfo.
+ */
+HWTEST_F(HStreamDepthDataUnitTest, hstream_depth_data_unittest_011, TestSize.Level1)
+{
+    int32_t systemAbilityId = 110;
+    bool runOnCreate = true;
+    sptr<HCameraService> cameraService;
+    cameraService = new (nothrow) HCameraService(systemAbilityId, runOnCreate);
+
+    sptr<OHOS::IConsumerSurface> cSurface = IConsumerSurface::Create();
+    sptr<OHOS::IBufferProducer> producer = cSurface->GetProducer();
+    int32_t format = OHOS_CAMERA_FORMAT_RGBA_8888;
+    int32_t width = 1920;
+    int32_t height = 1080;
+    sptr<IStreamDepthData> depthDataOutput;
+    cameraService->CreateDepthDataOutput(producer, format, width, height, depthDataOutput);
+    ASSERT_NE(depthDataOutput, nullptr);
+
+    HStreamDepthData* depthDataPtr = static_cast<HStreamDepthData*>(depthDataOutput.GetRefPtr());
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata =
+    std::make_shared<OHOS::Camera::CameraMetadata>(METADATA_ITEM_SIZE, METADATA_DATA_SIZE);
+
+    CameraInfoDumper infoDumper(0);
+    sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator;
+    depthDataPtr->LinkInput(streamOperator, metadata);
+    depthDataPtr->LinkInput(nullptr, metadata);
+    depthDataPtr->Stop();
+    depthDataPtr->Start();
+    depthDataPtr->DumpStreamInfo(infoDumper);
+    depthDataPtr->Start();
+    depthDataPtr->Stop();
+    EXPECT_NE(infoDumper.dumperString_.find("depth stream"), std::string::npos);
+    EXPECT_NE(infoDumper.dumperString_.find("Stream Extened Info"), std::string::npos);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CallbackEnter and CallbackExit
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CallbackEnter and CallbackExit for an unauthorized caller token when starting a
+ *                  stream metadata operation. The expected return value is CAMERA_OPERATION_NOT_ALLOWED.
+ */
+HWTEST_F(HStreamDepthDataUnitTest, hstream_depth_data_unittest_012, TestSize.Level1)
+{
+    int32_t systemAbilityId = 110;
+    bool runOnCreate = true;
+    sptr<HCameraService> cameraService;
+    cameraService = new (nothrow) HCameraService(systemAbilityId, runOnCreate);
+
+    sptr<OHOS::IConsumerSurface> cSurface = IConsumerSurface::Create();
+    sptr<OHOS::IBufferProducer> producer = cSurface->GetProducer();
+    int32_t format = OHOS_CAMERA_FORMAT_RGBA_8888;
+    int32_t width = 1920;
+    int32_t height = 1080;
+    sptr<IStreamDepthData> depthDataOutput;
+    cameraService->CreateDepthDataOutput(producer, format, width, height, depthDataOutput);
+    ASSERT_NE(depthDataOutput, nullptr);
+
+    HStreamDepthData* depthDataPtr = static_cast<HStreamDepthData*>(depthDataOutput.GetRefPtr());
+
+    uint32_t interfaceCode = static_cast<uint32_t>(IStreamDepthDataIpcCode::COMMAND_START);
+    depthDataPtr->callerToken_ = 110;
+    int32_t ret = depthDataPtr->CallbackEnter(interfaceCode);
+    EXPECT_EQ(ret, CAMERA_OPERATION_NOT_ALLOWED);
+
+    int32_t ret2 = depthDataPtr->CallbackExit(interfaceCode, ret);
+    EXPECT_EQ(ret2, CAMERA_OK);
+}
 } // CameraStandard
 } // OHOS
