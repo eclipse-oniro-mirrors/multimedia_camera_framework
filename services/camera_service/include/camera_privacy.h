@@ -31,6 +31,15 @@ namespace CameraStandard {
 static const int32_t WAIT_RELEASE_STREAM_MS = 500; // 500ms
 static const int32_t WAIT_RELEASE_STREAM_MS_FOR_SYSTEM_CAMERA = 1500; // 1500ms
 class HCameraDevice;
+
+class DisablePolicyChangeCb : public Security::AccessToken::DisablePolicyChangeCallback {
+public:
+    explicit DisablePolicyChangeCb(const std::vector<std::string> &permList)
+        : DisablePolicyChangeCallback(permList) {}
+    virtual ~DisablePolicyChangeCb() = default;
+    void PermDisablePolicyCallback(const Security::AccessToken::PermDisablePolicyInfo& info) override;
+};
+
 class PermissionStatusChangeCb : public Security::AccessToken::PermStateChangeCallbackCustomize {
 public:
     explicit PermissionStatusChangeCb(const Security::AccessToken::PermStateChangeScope& scopeInfo)
@@ -50,6 +59,9 @@ class CameraPrivacy : public RefBase {
 public:
     explicit CameraPrivacy(uint32_t callingTokenId, int32_t pid) : pid_(pid), callerToken_(callingTokenId) {}
     ~CameraPrivacy();
+    bool GetDisablePolicy();
+    bool RegisterPermDisablePolicyCallback();
+    void UnRegisterPermDisablePolicyCallback();
     bool RegisterPermissionCallback();
     void UnregisterPermissionCallback();
     bool StartUsingPermissionCallback();
@@ -83,8 +95,10 @@ private:
     std::string clientName_;
     std::condition_variable canClose_;
     std::mutex canCloseMutex_;
+    std::mutex policyMutex_;
     std::mutex permissionCbMutex_;
     std::mutex cameraUseCbMutex_;
+    std::shared_ptr<DisablePolicyChangeCb> policyCallbackPtr_;
     std::shared_ptr<PermissionStatusChangeCb> permissionCallbackPtr_;
     std::shared_ptr<CameraUseStateChangeCb> cameraUseCallbackPtr_;
 };
