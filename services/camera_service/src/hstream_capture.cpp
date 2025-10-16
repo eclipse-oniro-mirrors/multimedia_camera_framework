@@ -859,10 +859,6 @@ void HStreamCapture::SetRotation(const std::shared_ptr<OHOS::Camera::CameraMetad
             rotation = rotation - CAPTURE_ROTATE_360;
         }
     }
-    auto hStreamOperator = hStreamOperator_.promote();
-    if (hStreamOperator) {
-        hStreamOperator->SetLivePhotoRotation(rotation, cameraPosition);
-    }
     {
         uint8_t connectType = 0;
         std::lock_guard<std::mutex> lock(cameraAbilityLock_);
@@ -878,6 +874,7 @@ void HStreamCapture::SetRotation(const std::shared_ptr<OHOS::Camera::CameraMetad
         MEDIA_INFO_LOG("set rotation camera real rotation %{public}d", rotation);
     }
     UpdateJpegBasicInfo(captureMetadataSetting_, rotation);
+    auto hStreamOperator = hStreamOperator_.promote();
     CHECK_EXECUTE(hStreamOperator, hStreamOperator->UpdateOrientationBaseGravity(rotation, sensorOrientation,
         cameraPosition, rotation));
     bool status = false;
