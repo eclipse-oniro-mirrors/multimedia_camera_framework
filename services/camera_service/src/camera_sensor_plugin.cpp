@@ -65,14 +65,19 @@ __attribute__((no_sanitize("cfi"))) bool UnsubscribeCallback(int32_t motionType,
 {
     CHECK_RETURN_RET_ELOG(callback == nullptr, false, "callback is nullptr");
     CHECK_RETURN_RET_ELOG(g_handle == nullptr, false, "g_handle is nullptr");
-    MotionUnsubscribeCallbackPtr func =
-        (MotionUnsubscribeCallbackPtr)(dlsym(g_handle, "MotionUnsubscribeCallback"));
-    const char* dlsymError = dlerror();
-    if  (dlsymError) {
-        MEDIA_ERR_LOG("dlsym error: %{public}s", dlsymError);
-        return false;
+    const int32_t TRY_TIMES = 3;
+    for (int32_t i = 0; i < TRY_TIMES; ++i) {
+        MotionUnsubscribeCallbackPtr func =
+            (MotionUnsubscribeCallbackPtr)(dlsym(g_handle, "MotionUnsubscribeCallback"));
+        const char* dlsymError = dlerror();
+        if (dlsymError) {
+            MEDIA_ERR_LOG("dlsym error: %{public}s", dlsymError);
+            MEDIA_WARNING_LOG("UnsubscribeCallback retry cnt: %{public}d", i);
+        } else {
+            return func(motionType, callback);
+        }
     }
-    return func(motionType, callback);
+    return false;
 }
 }
 }
