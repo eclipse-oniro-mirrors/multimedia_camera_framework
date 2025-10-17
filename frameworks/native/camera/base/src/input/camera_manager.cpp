@@ -251,7 +251,8 @@ bool CameraStatusListenerManager::CheckCameraStatusValid(sptr<CameraDevice> came
         false, "CheckCameraStatusValid CameraManager is nullptr");
     std::string foldScreenType = cameraManager->GetFoldScreenType();
     if (!foldScreenType.empty() && foldScreenType[0] == '4' &&
-        cameraInfo->GetPosition() == CAMERA_POSITION_BACK) {
+        cameraInfo->GetPosition() == CAMERA_POSITION_BACK &&
+        cameraInfo->GetConnectionType() == CAMERA_CONNECTION_BUILT_IN) {
         std::string bundleName_ = system::GetParameter("const.camera.folded_lens_change", "default");
         FoldStatus curFoldStatus = cameraManager->GetFoldStatus();
         auto supportedFoldStatus = cameraInfo->GetSupportedFoldStatus();
