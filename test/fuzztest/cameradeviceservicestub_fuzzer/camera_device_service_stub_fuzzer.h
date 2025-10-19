@@ -31,10 +31,6 @@ public:
     {
         return 0;
     }
-    int32_t GetIsNeedDynamicMeta(int32_t& isNeedDynamicMeta) override
-    {
-        return 0;
-    }
     int32_t GetNaturalDirectionCorrect(bool& isNaturalDirectionCorrect) override
     {
         return 0;

@@ -213,7 +213,6 @@ public:
     void UpdateCameraRotateAngle();
     void SetCameraRotateStrategyInfos(std::vector<CameraRotateStrategyInfo> infos);
     bool GetSigleStrategyInfo(CameraRotateStrategyInfo &strategyInfo);
-    int32_t GetIsNeedDynamicMeta(int32_t &isNeedDynamicMeta) override;
     int32_t SetUsePhysicalCameraOrientation(bool isUsed) override;
     int32_t GetNaturalDirectionCorrect(bool& isNaturalDirectionCorrect) override;
     bool GetUsePhysicalCameraOrientation();
