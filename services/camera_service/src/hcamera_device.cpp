@@ -696,19 +696,19 @@ int32_t HCameraDevice::CheckPermissionBeforeOpenDevice()
 bool HCameraDevice::HandlePrivacyBeforeOpenDevice()
 {
     MEDIA_INFO_LOG("enter HandlePrivacyBeforeOpenDevice");
+    auto cameraPrivacy = GetCameraPrivacy();
+    CHECK_RETURN_RET_ELOG(cameraPrivacy == nullptr, false, "cameraPrivacy is null");
+    CHECK_RETURN_RET_ELOG(cameraPrivacy->GetDisablePolicy(), false, "policy disabled");
+    CHECK_RETURN_RET_ELOG(!cameraPrivacy->RegisterPermDisablePolicyCallback(), false, "register Disable failed");
     CHECK_RETURN_RET_ELOG(!IsHapTokenId(callerToken_), true, "system ability called not need privacy");
     std::vector<sptr<HCameraDeviceHolder>> holders =
         HCameraDeviceManager::GetInstance()->GetCameraHolderByPid(cameraPid_);
     CHECK_RETURN_RET_ELOG(!holders.empty(), true, "current pid has active clients, no action is required");
-    auto cameraPrivacy = GetCameraPrivacy();
-    CHECK_RETURN_RET_ELOG(cameraPrivacy == nullptr, false, "cameraPrivacy is null");
     if (HCameraDeviceManager::GetInstance()->IsMultiCameraActive(cameraPid_) == false) {
         MEDIA_INFO_LOG("do StartUsingPermissionCallback");
         CHECK_RETURN_RET_ELOG(!cameraPrivacy->StartUsingPermissionCallback(), false,
             "start using permission failed");
     }
-    CHECK_RETURN_RET_ELOG(cameraPrivacy->GetDisablePolicy(), false, "policy disabled");
-    CHECK_RETURN_RET_ELOG(!cameraPrivacy->RegisterPermDisablePolicyCallback(), false, "register Disable failed");
     CHECK_RETURN_RET_ELOG(!cameraPrivacy->RegisterPermissionCallback(), false, "register permission failed");
     CHECK_RETURN_RET_ELOG(!cameraPrivacy->AddCameraPermissionUsedRecord(), false, "add permission record failed");
     return true;
