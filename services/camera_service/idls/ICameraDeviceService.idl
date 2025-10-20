@@ -35,6 +35,5 @@ interface ICameraDeviceService {
    [ipccode 13] void SetDeviceRetryTime();
    [ipccode 14] void OpenSecureCamera([out] unsigned long secureSeqId);
    [ipccode 15] void SetUsePhysicalCameraOrientation([in] boolean isUsed);
-   [ipccode 16] void GetIsNeedDynamicMeta([out] int isNeedDynamicMeta);
-   [ipccode 17] void GetNaturalDirectionCorrect([out] boolean isNaturalDirectionCorrect);
+   [ipccode 16] void GetNaturalDirectionCorrect([out] boolean isNaturalDirectionCorrect);
 }

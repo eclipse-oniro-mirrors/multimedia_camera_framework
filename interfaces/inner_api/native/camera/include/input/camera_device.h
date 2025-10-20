@@ -391,12 +391,10 @@ private:
     static const std::unordered_map<camera_foldscreen_enum_t, CameraFoldScreenType> metaToFwCameraFoldScreenType_;
     void init(common_metadata_header_t* metadataHeader);
     void InitLensEquivalentFocalLength(common_metadata_header_t* metadata);
-    void InitFoldStateSensorOrientationMap(common_metadata_header_t* metadata);
+    void InitVariableOrientation(common_metadata_header_t* metadata);
     bool isFindModuleTypeTag(uint32_t &tagId);
     bool isConcurrentDevice_ = false;
     bool usePhysicalCameraOrientation_ = false;
-    bool isVariable_ = false;
-    int32_t isNeedDynamicMeta_ = 0;
 };
 } // namespace CameraStandard
 } // namespace OHOS

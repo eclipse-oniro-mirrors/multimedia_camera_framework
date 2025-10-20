@@ -1281,16 +1281,6 @@ bool HCameraDevice::GetSigleStrategyInfo(CameraRotateStrategyInfo &strategyInfo)
     return true;
 }
 
-int32_t HCameraDevice::GetIsNeedDynamicMeta(int32_t &isNeedDynamicMeta)
-{
-    isNeedDynamicMeta = 0;
-    CameraRotateStrategyInfo strategyInfo;
-    CHECK_RETURN_RET_ELOG(!GetSigleStrategyInfo(strategyInfo), CAMERA_OK, "HCameraDevice::GetIsNeedDynamicMeta failed");
-    isNeedDynamicMeta = strategyInfo.isNeedDynamicMeta;
-    MEDIA_INFO_LOG("HCameraDevice::GetIsNeedDynamicMeta isNeedDynamicMeta: %{public}d", isNeedDynamicMeta);
-    return CAMERA_OK;
-}
-
 void HCameraDevice::SetCameraRotateStrategyInfos(std::vector<CameraRotateStrategyInfo> infos)
 {
     std::lock_guard<std::mutex> lock(cameraRotateStrategyInfosLock_);

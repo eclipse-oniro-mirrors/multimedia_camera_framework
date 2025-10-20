@@ -193,10 +193,7 @@ void CameraDevice::init(common_metadata_header_t* metadata)
 
     InitLensEquivalentFocalLength(metadata);
 
-    cameraDeviceRet = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_SENSOR_ORIENTATION_VARIABLE, &item);
-    CHECK_EXECUTE(cameraDeviceRet == CAM_META_SUCCESS, isVariable_ = item.count > 0 && item.data.u8[0]);
-
-    InitFoldStateSensorOrientationMap(metadata);
+    InitVariableOrientation(metadata);
 
     MEDIA_INFO_LOG("camera position: %{public}d, camera type: %{public}d, camera connection type: %{public}d, "
                    "camera foldScreen type: %{public}d, camera orientation: %{public}d, isretractable: %{public}d, "
@@ -208,7 +205,7 @@ void CameraDevice::InitLensEquivalentFocalLength(common_metadata_header_t* metad
 {
     std::vector<int32_t> lensEquivalentFocalLength = {};
     camera_metadata_item_t item;
-    int ret = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_LENS_EQUIVALENT_FOCUS, &item);
+    int ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_LENS_EQUIVALENT_FOCUS, &item);
     if (ret == CAM_META_SUCCESS) {
         for (uint32_t i = 0; i < item.count; i++) {
             lensEquivalentFocalLength.emplace_back(item.data.i32[i]);
@@ -220,33 +217,28 @@ void CameraDevice::InitLensEquivalentFocalLength(common_metadata_header_t* metad
         Container2String(lensEquivalentFocalLength_.begin(), lensEquivalentFocalLength_.end()).c_str());
 }
 
-void CameraDevice::InitFoldStateSensorOrientationMap(common_metadata_header_t* metadata)
+void CameraDevice::InitVariableOrientation(common_metadata_header_t* metadata)
 {
+    CHECK_RETURN_ILOG(system::GetParameter("const.system.sensor_correction_enable", "0") != "1",
+        "CameraDevice::InitVariableOrientation variable orientation is closed");
+
+    bool isVariable = false;
     camera_metadata_item item;
-    int ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_FOLD_STATE_SENSOR_ORIENTATION_MAP,
-        &item);
-    CHECK_RETURN_ELOG(ret != CAM_META_SUCCESS, "InitFoldStateSensorOrientationMap FindCameraMetadataItem Error");
+    int ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_SENSOR_ORIENTATION_VARIABLE, &item);
+    CHECK_EXECUTE(ret == CAM_META_SUCCESS, isVariable = item.count > 0 && item.data.u8[0]);
+    CHECK_RETURN_ELOG(!isVariable, "CameraDevice::InitVariableOrientation isVariable : %{public}d", isVariable);
+
+    ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_FOLD_STATE_SENSOR_ORIENTATION_MAP, &item);
+    CHECK_RETURN_ELOG(ret != CAM_META_SUCCESS, "CameraDevice::InitVariableOrientation FindCameraMetadataItem Error");
     uint32_t count = item.count;
-    CHECK_RETURN_ELOG(count % STEP_TWO, "InitFoldStateSensorOrientationMap FindCameraMetadataItem Count Error");
+    CHECK_RETURN_ELOG(count % STEP_TWO, "CameraDevice::InitVariableOrientation FindCameraMetadataItem Count Error");
     for (uint32_t index = 0; index < count / STEP_TWO; index++) {
         uint32_t innerFoldState = static_cast<uint32_t>(item.data.i32[STEP_TWO * index]);
         uint32_t innerOrientation = static_cast<uint32_t>(item.data.i32[STEP_TWO * index + STEP_ONE]);
         foldStateSensorOrientationMap_[innerFoldState] = innerOrientation;
-        MEDIA_INFO_LOG("CameraDevice::InitFoldStateSensorOrientationMap foldStatus: %{public}d, "
-            "orientation:%{public}d", innerFoldState, innerOrientation);
+        MEDIA_INFO_LOG("CameraDevice::InitVariableOrientation foldStatus: %{public}d, orientation:%{public}d",
+            innerFoldState, innerOrientation);
     }
-    CHECK_EXECUTE(foldStateSensorOrientationMap_.empty(), isVariable_ = false);
-    CHECK_RETURN_ELOG(!isVariable_, "InitFoldStateSensorOrientationMap foldStateSensorOrientationMap is empty");
-
-    bool isNaturalDirectionCorrect = false;
-    sptr<ICameraDeviceService> deviceObj = nullptr;
-    int32_t retCode = CameraManager::GetInstance()->CreateCameraDevice(GetID(), &deviceObj);
-    CHECK_RETURN_ELOG(retCode != CameraErrorCode::SUCCESS,
-        "CameraDevice::InitFoldStateSensorOrientationMap CreateCameraDevice Failed");
-    deviceObj->GetNaturalDirectionCorrect(isNaturalDirectionCorrect);
-    CHECK_EXECUTE(isNaturalDirectionCorrect, isVariable_ = false);
-    MEDIA_INFO_LOG("CameraDevice isVariable: %{public}d, isNaturalDirectionCorrect: %{public}d",
-        isVariable_, isNaturalDirectionCorrect);
 }
 
 std::string CameraDevice::GetID()
@@ -363,7 +355,7 @@ std::string CameraDevice::GetNetWorkId()
 uint32_t CameraDevice::GetCameraOrientation()
 {
     uint32_t cameraOrientation = cameraOrientation_;
-    if (GetUsePhysicalCameraOrientation() || isNeedDynamicMeta_ != 0) {
+    if (GetUsePhysicalCameraOrientation()) {
         uint32_t curFoldStatus;
         OHOS::Rosen::FoldDisplayMode displayMode = OHOS::Rosen::DisplayManager::GetInstance().GetFoldDisplayMode();
         if (displayMode == OHOS::Rosen::FoldDisplayMode::GLOBAL_FULL) {
@@ -385,19 +377,7 @@ uint32_t CameraDevice::GetCameraOrientation()
 
 uint32_t CameraDevice::GetStaticCameraOrientation()
 {
-    uint32_t cameraOrientation = cameraOrientation_;
-    CHECK_RETURN_RET_ILOG(system::GetParameter("const.system.sensor_correction_enable", "0") != "1" || !isVariable_,
-        cameraOrientation, "CameraDevice::GetStaticCameraOrientation variable orientation is closed");
-    sptr<ICameraDeviceService> deviceObj = nullptr;
-    int32_t retCode = CameraManager::GetInstance()->CreateCameraDevice(GetID(), &deviceObj);
-    CHECK_RETURN_RET_ELOG(retCode != CameraErrorCode::SUCCESS, cameraOrientation,
-        "CameraDevice::GetStaticCameraOrientation CreateCameraDevice Failed");
-    int32_t isNeedDynamicMeta = 0;
-    deviceObj->GetIsNeedDynamicMeta(isNeedDynamicMeta);
-    isNeedDynamicMeta_ = isNeedDynamicMeta;
-    CHECK_EXECUTE(isNeedDynamicMeta_ != 0, cameraOrientation = GetCameraOrientation());
-    MEDIA_DEBUG_LOG("CameraDevice::GetStaticCameraOrientation cameraOrientation: %{public}d", cameraOrientation);
-    return cameraOrientation;
+    return cameraOrientation_;
 }
 
 bool CameraDevice::GetisRetractable()

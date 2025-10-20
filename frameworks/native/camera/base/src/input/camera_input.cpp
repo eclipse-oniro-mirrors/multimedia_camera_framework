@@ -140,57 +140,50 @@ void CameraInput::InitCameraInput()
     bool result = object->AddDeathRecipient(deathRecipient_);
     CHECK_RETURN_ELOG(!result, "CameraInput::InitCameraInput failed to add deathRecipient");
 
-    InitDynamicOrientation(deviceObj, metaData);
+    InitVariableOrientation(deviceObj, metaData);
 
     CameraCountingTimer::GetInstance().IncreaseUserCount();
 }
 
-bool CameraInput::InitDynamicOrientation(sptr<ICameraDeviceService> deviceObj,
+bool CameraInput::InitVariableOrientation(sptr<ICameraDeviceService> deviceObj,
     std::shared_ptr<OHOS::Camera::CameraMetadata> metaData)
 {
-    CHECK_RETURN_RET_ELOG(deviceObj == nullptr, false, "CameraInput::InitDynamicOrientation deviceObj is nullptr");
-    CHECK_RETURN_RET_ELOG(metaData == nullptr, false, "CameraInput::InitDynamicOrientation failed get metaData");
+    CHECK_RETURN_RET_ELOG(deviceObj == nullptr, false, "CameraInput::InitVariableOrientation deviceObj is nullptr");
+    CHECK_RETURN_RET_ELOG(metaData == nullptr, false, "CameraInput::InitVariableOrientation failed get metaData");
 
     camera_metadata_item item;
     int32_t retCode = OHOS::Camera::FindCameraMetadataItem(metaData->get(), OHOS_SENSOR_ORIENTATION, &item);
     CHECK_EXECUTE(retCode == CAM_META_SUCCESS && item.count,
         staticOrientation_ = static_cast<uint32_t>(item.data.i32[0]));
 
-    CHECK_RETURN_RET_ELOG(system::GetParameter("const.system.sensor_correction_enable", "0") != "1", false,
-        "CameraInput::InitDynamicOrientation variable orientation is closed");
+    CHECK_RETURN_RET_ILOG(system::GetParameter("const.system.sensor_correction_enable", "0") != "1", false,
+        "CameraInput::InitVariableOrientation variable orientation is closed");
 
     retCode = OHOS::Camera::FindCameraMetadataItem(metaData->get(),
         OHOS_ABILITY_SENSOR_ORIENTATION_VARIABLE, &item);
     CHECK_EXECUTE(retCode == CAM_META_SUCCESS, isVariable_ = item.count > 0 && item.data.u8[0]);
-    CHECK_RETURN_RET_ILOG(!isVariable_, false, "CameraInput::InitDynamicOrientation do not support dynamic camera");
+    CHECK_RETURN_RET_ELOG(!isVariable_, false, "CameraInput::InitVariableOrientation do not support dynamic camera");
 
     retCode = OHOS::Camera::FindCameraMetadataItem(metaData->get(), OHOS_FOLD_STATE_SENSOR_ORIENTATION_MAP, &item);
     CHECK_RETURN_RET_ELOG(retCode != CAM_META_SUCCESS, false,
-        "InitDynamicOrientation OHOS_FOLD_STATE_SENSOR_ORIENTATION_MAP FindCameraMetadataItem Error");
+        "InitVariableOrientation OHOS_FOLD_STATE_SENSOR_ORIENTATION_MAP FindCameraMetadataItem Error");
     uint32_t count = item.count;
-    CHECK_RETURN_RET_ELOG(count % STEP_TWO, false, "InitDynamicOrientation FindCameraMetadataItem Count Error");
+    CHECK_RETURN_RET_ELOG(count % STEP_TWO, false, "InitVariableOrientation FindCameraMetadataItem Count Error");
     for (uint32_t index = 0; index < count / STEP_TWO; index++) {
         uint32_t innerFoldState = static_cast<uint32_t>(item.data.i32[STEP_TWO * index]);
         uint32_t innerOrientation = static_cast<uint32_t>(item.data.i32[STEP_TWO * index + STEP_ONE]);
         foldStateSensorOrientationMap_[innerFoldState] = innerOrientation;
-        MEDIA_INFO_LOG("CameraInput::InitDynamicOrientation foldStatus: %{public}d, orientation:%{public}d",
+        MEDIA_INFO_LOG("CameraInput::InitVariableOrientation foldStatus: %{public}d, orientation:%{public}d",
             innerFoldState, innerOrientation);
     }
     CHECK_EXECUTE(foldStateSensorOrientationMap_.empty(), isVariable_ = false);
-    CHECK_RETURN_RET_ELOG(!isVariable_, false, "InitDynamicOrientation foldStateSensorOrientationMap is empty");
+    CHECK_RETURN_RET_ELOG(!isVariable_, false, "InitVariableOrientation foldStateSensorOrientationMap is empty");
 
     bool isNaturalDirectionCorrect = false;
     deviceObj->GetNaturalDirectionCorrect(isNaturalDirectionCorrect);
     CHECK_EXECUTE(isNaturalDirectionCorrect, isVariable_ = false);
-    CHECK_RETURN_RET_ELOG(!isVariable_, false, "InitDynamicOrientation isNaturalDirectionCorrect: %{public}d",
+    CHECK_RETURN_RET_ELOG(!isVariable_, false, "InitVariableOrientation isNaturalDirectionCorrect: %{public}d",
         isNaturalDirectionCorrect);
-
-    int32_t isNeedDynamicMeta = 0;
-    deviceObj->GetIsNeedDynamicMeta(isNeedDynamicMeta);
-    CHECK_RETURN_RET_ELOG(isNeedDynamicMeta == 0, false,
-        "CameraInput::InitDynamicOrientation do not need dynamic orientation");
-    SetUsePhysicalCameraOrientation(true);
-    MEDIA_INFO_LOG("CameraInput::InitDynamicOrientation need dynamic orientation");
     return true;
 }
 

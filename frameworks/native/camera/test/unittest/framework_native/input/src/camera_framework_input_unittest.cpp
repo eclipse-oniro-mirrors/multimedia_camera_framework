@@ -726,7 +726,6 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_021, TestSize
     uint32_t tempCameraOrientation = cameras[0]->cameraOrientation_;
 
     cameras[0]->cameraOrientation_ = 1;
-    cameras[0]->isNeedDynamicMeta_ = 0;
     EXPECT_EQ(cameras[0]->GetStaticCameraOrientation(), 1);
 
     cameras[0]->cameraOrientation_ = tempCameraOrientation;
