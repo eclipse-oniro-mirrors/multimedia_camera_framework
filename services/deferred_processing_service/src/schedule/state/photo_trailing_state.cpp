@@ -68,7 +68,7 @@ void PhotoTrailingState::StopTrailing()
     DP_INFO_LOG("DPS_PHOTO: StopTrailing state: %{public}d", isTrailing_);
     DpsTimer::GetInstance().StopTimer(timerId_);
     isTrailing_ = false;
-    remainingTrailingTime_ -= static_cast<uint32_t>(GetDiffTime<Seconds>(startTimer_));
+    remainingTrailingTime_ -= static_cast<uint32_t>(GetDiffTime<Milli>(startTimer_));
     remainingTrailingTime_ = std::max(DEFAULT_TRAILING_TIME, remainingTrailingTime_);
 }
 
