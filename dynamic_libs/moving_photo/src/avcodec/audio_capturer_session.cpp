@@ -204,6 +204,7 @@ void AudioCapturerSession::Release()
         MEDIA_INFO_LOG("Audio capture Release enter");
         audioCapturer_->Release();
     }
+    audioCapturer_ = nullptr;
     MEDIA_INFO_LOG("Audio capture released");
 }
 
