@@ -543,7 +543,7 @@ ani_object CameraUtilsTaihe::ToBusinessError(ani_env *env, int32_t code, const s
     CHECK_RETURN_RET_ELOG(ANI_OK != env->Object_New(cls, ctor, &error), err,
         "new object %{public}s failed", CLASS_NAME_BUSINESSERROR);
     CHECK_RETURN_RET_ELOG(
-        ANI_OK != env->Object_SetPropertyByName_Int(error, "code", static_cast<ani_int>(code)), err,
+        ANI_OK != env->Object_SetPropertyByName_Int(error, "code_", static_cast<ani_int>(code)), err,
         "set property BusinessError.code failed");
     ani_string messageRef {};
     CHECK_RETURN_RET_ELOG(ANI_OK != env->String_NewUTF8(message.c_str(), message.size(), &messageRef), err,
