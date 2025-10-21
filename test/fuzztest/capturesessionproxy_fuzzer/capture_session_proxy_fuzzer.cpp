@@ -42,7 +42,7 @@ void CaptureSessionProxyFuzz::CaptureSessionProxyFuzzTest1(FuzzedDataProvider &f
     for (int i = 0; i < vectorSize; ++i) {
         virtualApertureMetadata.push_back(fdp.ConsumeFloatingPoint<float>());
     }
-    fuzz_->GetVirtualApertureMetadate(virtualApertureMetadata);
+    fuzz_->GetVirtualApertureMetadata(virtualApertureMetadata);
     float value;
     fuzz_->GetVirtualApertureValue(value);
     float values = fdp.ConsumeFloatingPoint<float>();

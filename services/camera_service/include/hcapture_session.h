@@ -171,7 +171,7 @@ public:
     static void DumpCameraSessionSummary(CameraInfoDumper& infoDumper);
     void ReleaseStreams();
     bool isEqual(float zoomPointA, float zoomPointB);
-    int32_t GetVirtualApertureMetadate(std::vector<float>& virtualApertureMetadata) override;
+    int32_t GetVirtualApertureMetadata(std::vector<float>& virtualApertureMetadata) override;
     int32_t GetVirtualApertureValue(float& value) override;
     int32_t SetVirtualApertureValue(float value, bool needPersist) override;
 
@@ -181,7 +181,6 @@ public:
     int32_t SetBeautyValue(int32_t type, int32_t value, bool needPersist) override;
 
     void SetControlCenterPrecondition(bool precondition);
-    void SetDeviceControlCenterAbility(bool ability);
 
     std::string GetBundleForControlCenter();
     void SetBundleForControlCenter(std::string bundleName);
@@ -281,7 +280,6 @@ private:
     bool isApertureActive = false;
     float biggestAperture = 0;
     bool controlCenterPrecondition = true;
-    bool deviceControlCenterAbility = false;
 
     std::string bundleForControlCenter_;
 

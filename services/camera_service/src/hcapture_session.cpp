@@ -658,24 +658,35 @@ int32_t HCaptureSession::LinkInputAndOutputs()
     return rc;
 }
 
-int32_t HCaptureSession::GetVirtualApertureMetadate(std::vector<float>& virtualApertureMetadata)
+int32_t HCaptureSession::GetVirtualApertureMetadata(std::vector<float>& virtualApertureMetadata)
 {
     CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION,
-        "GetVirtualApertureMetadate HCameraService::CheckSystemApp fail");
+        "GetVirtualApertureMetadata HCameraService::CheckSystemApp fail");
     CHECK_RETURN_RET_ELOG(!controlCenterPrecondition, CAMERA_INVALID_STATE,
-        "HCaptureSession::GetVirtualApertureMetadate controlCenterPrecondition false");
-    MEDIA_INFO_LOG("HCaptureSession::GetVirtualApertureMetadate");
+        "HCaptureSession::GetVirtualApertureMetadata controlCenterPrecondition false");
+    MEDIA_INFO_LOG("HCaptureSession::GetVirtualApertureMetadata");
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     int32_t errCode = CheckPermission(OHOS_PERMISSION_CAMERA, callerToken);
     CHECK_RETURN_RET_ELOG(errCode != CAMERA_OK, errCode,
-        "HCaptureSession::GetVirtualApertureMetadate check permission failed.");
+        "HCaptureSession::GetVirtualApertureMetadata check permission failed.");
 
     std::vector<float> supportedVirtualAperture = {};
     auto device = GetCameraDevice();
     CHECK_RETURN_RET(!device, CAMERA_INVALID_STATE);
     auto settings = device->GetDeviceAbility();
     camera_metadata_item_t item;
-    int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(),
+    int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_ABILITY_CONTROL_CENTER_EFFECT_TYPE, &item);
+    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS || item.count <= 0, ret,
+        "CaptureSession::GetSupportedEffectTypes Failed with return code %{public}d", ret);
+    bool supportAperture = false;
+    for (uint32_t i = 0; i < item.count; i++) {
+        if (ControlCenterEffectType::PORTRAIT == static_cast<ControlCenterEffectType>(item.data.u8[i])) {
+            supportAperture = true;
+            break;
+        }
+    }
+    CHECK_RETURN_RET_ILOG(!supportAperture, CAMERA_OK, "ControlCenter not support Aperture");
+    ret = OHOS::Camera::FindCameraMetadataItem(settings->get(),
         OHOS_ABILITY_CAMERA_VIRTUAL_APERTURE_RANGE, &item);
     CHECK_RETURN_RET_ELOG(
         ret != CAMERA_OK, ret, "CaptureSession::GetSupportedBeautyTypes abilityId is NULL");
@@ -710,10 +721,13 @@ int32_t HCaptureSession::SetVirtualApertureValue(float value, bool needPersist)
     int32_t errCode = CheckPermission(OHOS_PERMISSION_CAMERA, callerToken);
     CHECK_RETURN_RET_ELOG(errCode != CAMERA_OK, errCode,
         "HCaptureSession::SetVirtualApertureValue check permission failed.");
+    std::vector<float> virtualApertureMetadata = {};
+    int32_t ret = GetVirtualApertureMetadate(virtualApertureMetadata);
+    CHECK_RETURN_RET_ILOG(ret != CAMERA_OK || virtualApertureMetadata.size() == 0,
+        CAMERA_OK, "ControlCenter not support Aperture");
 
     auto device = GetCameraDevice();
     CHECK_RETURN_RET(!device, CAMERA_INVALID_STATE);
-    int32_t ret;
     constexpr int32_t DEFAULT_ITEMS = 1;
     constexpr int32_t DEFAULT_DATA_LENGTH = 1;
     shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata =
@@ -975,11 +989,6 @@ int32_t HCaptureSession::GetBeautyFromDataShareHelper(int32_t &value)
 void HCaptureSession::SetControlCenterPrecondition(bool precondition)
 {
     controlCenterPrecondition = precondition;
-}
-
-void HCaptureSession::SetDeviceControlCenterAbility(bool ability)
-{
-    deviceControlCenterAbility = ability;
 }
 
 std::string HCaptureSession::GetBundleForControlCenter()
