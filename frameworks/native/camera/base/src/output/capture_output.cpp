@@ -47,7 +47,7 @@ void CaptureOutput::RegisterStreamBinderDied()
         deathRecipient_->SetNotifyCb([thisPtr](pid_t pid) {
             auto ptr = thisPtr.promote();
             CHECK_RETURN(ptr == nullptr);
-            ptr->OnCameraServerDied(pid);
+            ptr->OnCameraServerDied(pid); 
         });
     }
 
