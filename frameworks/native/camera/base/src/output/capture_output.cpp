@@ -43,7 +43,12 @@ void CaptureOutput::RegisterStreamBinderDied()
     if (deathRecipient_ == nullptr) {
         deathRecipient_ = new (std::nothrow) CameraDeathRecipient(0);
         CHECK_RETURN_ELOG(deathRecipient_ == nullptr, "failed to new CameraDeathRecipient.");
-        deathRecipient_->SetNotifyCb([this](pid_t pid) { OnCameraServerDied(pid); });
+        auto thisPtr = wptr<CaptureOutput>(this);
+        deathRecipient_->SetNotifyCb([thisPtr](pid_t pid) {
+            auto ptr = thisPtr.promote();
+            CHECK_RETURN(ptr == nullptr);
+            ptr->OnCameraServerDied(pid);
+        });
     }
 
     bool result = object->AddDeathRecipient(deathRecipient_);
