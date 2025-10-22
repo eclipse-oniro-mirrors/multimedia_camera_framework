@@ -637,6 +637,7 @@ void HStreamOperator::StopMovingPhoto() __attribute__((no_sanitize("cfi")))
     std::lock_guard<std::mutex> lock(movingPhotoStatusLock_);
     CHECK_EXECUTE(livephotoListener_, livephotoListener_->StopDrainOut());
 #ifdef MOVING_PHOTO_ADD_AUDIO
+    CHECK_PRINT_ILOG(!audioCapturerSessionProxy_, "audioCapturerSessionProxy_ is nullptr");
     auto audioCaptureSessionProxy = sptr<AudioCapturerSessionIntf>(audioCapturerSessionProxy_);
     std::thread asyncAudioReleaseThread = thread([audioCaptureSessionProxy]() {
         CHECK_EXECUTE(audioCaptureSessionProxy, audioCaptureSessionProxy->StopAudioCapture());
