@@ -36,6 +36,9 @@
 #include "os_account_manager.h"
 #include "camera_service_callback_stub.h"
 #include "hcamera_session_manager.h"
+#ifdef CAMERA_LIVE_SCENE_RECOGNITION
+#include "res_value.h"
+#endif
 
 using namespace testing::ext;
 using ::testing::Return;
@@ -2684,5 +2687,51 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_070, TestSize.Level0)
     device->Release();
     device->Close();
 }
+
+#ifdef CAMERA_LIVE_SCENE_RECOGNITION
+/*
+ * Feature: CameraService
+ * Function: Test OnReceiveEvent and SetLiveScene
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OnReceiveEvent and SetLiveScene
+ */
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_071, TestSize.Level1)
+{
+    std::vector<string> cameraIds;
+    cameraService_->GetCameraIds(cameraIds);
+    ASSERT_NE(cameraIds.size(), 0);
+    cameraService_->SetServiceStatus(CameraServiceStatus::SERVICE_READY);
+    sptr<ICameraDeviceService> device = nullptr;
+    cameraService_->CreateCameraDevice(cameraIds[0], device);
+    ASSERT_NE(device, nullptr);
+    device->Open();
+
+    sptr<ResSchedToCameraEventListener> eventListener = new (std::nothrow) ResSchedToCameraEventListener;
+    ASSERT_NE(eventListener, nullptr);;
+
+    uint32_t eventType = static_cast<OHOS::ResourceSchedule::ResType::EventType>(-1);
+    uint32_t eventValue = OHOS::ResourceSchedule::ResType::EventValue::EVENT_VALUE_HFLS_BEGIN;
+    std::unordered_map<std::string, std::string> extInfo;
+    eventListener->OnReceiveEvent(eventType, eventValue, extInfo);
+
+    eventType = OHOS::ResourceSchedule::ResType::EventType::EVENT_REPORT_HFLS_LIVE_SCENE_CHANGED;
+    eventListener->OnReceiveEvent(eventType, eventValue, extInfo);
+
+    eventValue = OHOS::ResourceSchedule::ResType::EventValue::EVENT_VALUE_HFLS_END;
+    eventListener->OnReceiveEvent(eventType, eventValue, extInfo);
+
+    eventValue = static_cast<OHOS::ResourceSchedule::ResType::EventValue>(-1);
+    eventListener->OnReceiveEvent(eventType, eventValue, extInfo);
+
+    HCameraDeviceManager::GetInstance()->SetLiveScene(false);
+    bool isLiveScene = HCameraDeviceManager::GetInstance()->IsLiveScene();
+    EXPECT_FALSE(isLiveScene);
+
+    device->Release();
+    device->Close();
+}
+#endif
 }
 }

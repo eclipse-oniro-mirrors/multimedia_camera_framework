@@ -1041,145 +1041,29 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_039, TestSize.Level1)
     ASSERT_NE(camDevice, nullptr);
     int32_t ret = camDevice->HCameraDevice::Open();
     EXPECT_EQ(ret, 0);
-
+    HCameraDeviceManager::GetInstance()->SetLiveScene(true);
     ret = camDevice->HCameraDevice::Close();
     EXPECT_EQ(ret, 0);
 }
 
 /*
  * Feature: Framework
- * Function: Test OnReceiveEvent with normal branch
+ * Function: Test UpdateLiveStreamSceneMetadata with normal branch
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
  * CaseDescription: Test OnReceiveEvent with normal branch
  */
-HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_040, TestSize.Level1)
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_040, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
-    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
-    ASSERT_NE(input, nullptr);
-
-    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    std::string cameraSettings = camInput->GetCameraSettings();
-    camInput->SetCameraSettings(cameraSettings);
-
-    cameraHostManager_->AddCameraHost(LOCAL_SERVICE_NAME);
+    ASSERT_NE(cameras.size(), 0);
     std::string cameraId = cameras[0]->GetID();
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
     ASSERT_NE(camDevice, nullptr);
 
-    sptr<ResSchedToCameraEventListener> eventListener = new (std::nothrow) ResSchedToCameraEventListener;
-    ASSERT_NE(eventListener, nullptr);
-    eventListener->SetCameraDevice(camDevice);
-
-    uint32_t eventType = OHOS::ResourceSchedule::ResType::EventType::EVENT_REPORT_HFLS_LIVE_SCENE_CHANGED;
-    uint32_t eventValue = OHOS::ResourceSchedule::ResType::EventValue::EVENT_VALUE_HFLS_BEGIN;
-    std::unordered_map<std::string, std::string> extInfo;
-    eventListener->OnReceiveEvent(eventType, eventValue, extInfo);
-}
-
-/*
- * Feature: Framework
- * Function: Test OnReceiveEvent with normal branch
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test OnReceiveEvent with normal branch
- */
-HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_041, TestSize.Level1)
-{
-    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
-    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
-    ASSERT_NE(input, nullptr);
-
-    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    std::string cameraSettings = camInput->GetCameraSettings();
-    camInput->SetCameraSettings(cameraSettings);
-
-    cameraHostManager_->AddCameraHost(LOCAL_SERVICE_NAME);
-    std::string cameraId = cameras[0]->GetID();
-    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
-    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
-    ASSERT_NE(camDevice, nullptr);
-
-    sptr<ResSchedToCameraEventListener> eventListener = new (std::nothrow) ResSchedToCameraEventListener;
-    ASSERT_NE(eventListener, nullptr);
-    eventListener->SetCameraDevice(camDevice);
-
-    uint32_t eventType = OHOS::ResourceSchedule::ResType::EventType::EVENT_REPORT_HFLS_LIVE_SCENE_CHANGED;
-    uint32_t eventValue = OHOS::ResourceSchedule::ResType::EventValue::EVENT_VALUE_HFLS_END;
-    std::unordered_map<std::string, std::string> extInfo;
-    eventListener->OnReceiveEvent(eventType, eventValue, extInfo);
-}
-
-/*
- * Feature: Framework
- * Function: Test OnReceiveEvent with abnormal branch
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test OnReceiveEvent with abnormal branch
- */
-HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_042, TestSize.Level1)
-{
-    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
-    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
-    ASSERT_NE(input, nullptr);
-
-    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    std::string cameraSettings = camInput->GetCameraSettings();
-    camInput->SetCameraSettings(cameraSettings);
-
-    cameraHostManager_->AddCameraHost(LOCAL_SERVICE_NAME);
-    std::string cameraId = cameras[0]->GetID();
-    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
-    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
-    ASSERT_NE(camDevice, nullptr);
-
-    sptr<ResSchedToCameraEventListener> eventListener = new (std::nothrow) ResSchedToCameraEventListener;
-    ASSERT_NE(eventListener, nullptr);
-    eventListener->SetCameraDevice(camDevice);
-
-    uint32_t eventType = static_cast<OHOS::ResourceSchedule::ResType::EventType>(-1);
-    uint32_t eventValue = OHOS::ResourceSchedule::ResType::EventValue::EVENT_VALUE_HFLS_BEGIN;
-    std::unordered_map<std::string, std::string> extInfo;
-    eventListener->OnReceiveEvent(eventType, eventValue, extInfo);
-}
-
-/*
- * Feature: Framework
- * Function: Test OnReceiveEvent with abnormal branch
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test OnReceiveEvent with abnormal branch
- */
-HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_043, TestSize.Level1)
-{
-    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
-    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
-    ASSERT_NE(input, nullptr);
-
-    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    std::string cameraSettings = camInput->GetCameraSettings();
-    camInput->SetCameraSettings(cameraSettings);
-
-    cameraHostManager_->AddCameraHost(LOCAL_SERVICE_NAME);
-    std::string cameraId = cameras[0]->GetID();
-    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
-    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
-    ASSERT_NE(camDevice, nullptr);
-
-    sptr<ResSchedToCameraEventListener> eventListener = new (std::nothrow) ResSchedToCameraEventListener;
-    ASSERT_NE(eventListener, nullptr);
-    eventListener->SetCameraDevice(camDevice);
-
-    uint32_t eventType = OHOS::ResourceSchedule::ResType::EventType::EVENT_REPORT_HFLS_LIVE_SCENE_CHANGED;
-    uint32_t eventValue = static_cast<OHOS::ResourceSchedule::ResType::EventValue>(-1);
-    std::unordered_map<std::string, std::string> extInfo;
-    eventListener->OnReceiveEvent(eventType, eventValue, extInfo);
+    camDevice->UpdateLiveStreamSceneMetadata(OHOS_CAMERA_APP_HINT_NONE);
 }
 #endif
 }

@@ -474,6 +474,27 @@ int32_t HCameraService::CreateControlCenterDataShare(std::map<std::string,
     return ret;
 }
 
+#ifdef CAMERA_LIVE_SCENE_RECOGNITION
+void HCameraService::RegisterEventListenerToRss()
+{
+    eventListener_ = new (std::nothrow) ResSchedToCameraEventListener;
+    if (eventListener_ != nullptr) {
+        MEDIA_DEBUG_LOG("HCameraService::RegisterEventListenerToRss RegisterEventListener");
+        OHOS::ResourceSchedule::ResSchedClient::GetInstance().RegisterEventListener(eventListener_,
+            OHOS::ResourceSchedule::ResType::EventType::EVENT_REPORT_HFLS_LIVE_SCENE_CHANGED);
+    }
+}
+
+void HCameraService::UnRegisterEventListenerToRss()
+{
+    if (eventListener_ != nullptr) {
+        MEDIA_DEBUG_LOG("HCameraService::UnRegisterEventListenerToRss UnRegisterEventListener");
+        OHOS::ResourceSchedule::ResSchedClient::GetInstance().UnRegisterEventListener(eventListener_,
+            OHOS::ResourceSchedule::ResType::EventType::EVENT_REPORT_HFLS_LIVE_SCENE_CHANGED);
+    }
+    eventListener_ = nullptr;
+}
+#endif
 void HCameraService::OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId)
 {
     MEDIA_INFO_LOG("OnAddSystemAbility systemAbilityId:%{public}d", systemAbilityId);
@@ -503,6 +524,9 @@ void HCameraService::OnAddSystemAbility(int32_t systemAbilityId, const std::stri
         case RES_SCHED_SYS_ABILITY_ID:
             MEDIA_INFO_LOG("OnAddSystemAbility RES_SCHED_SYS_ABILITY_ID");
             RegisterSuspendObserver();
+#ifdef CAMERA_LIVE_SCENE_RECOGNITION
+            RegisterEventListenerToRss();
+#endif
             break;
         default:
             MEDIA_INFO_LOG("OnAddSystemAbility unhandled sysabilityId:%{public}d", systemAbilityId);
@@ -522,6 +546,9 @@ void HCameraService::OnRemoveSystemAbility(int32_t systemAbilityId, const std::s
             MEDIA_INFO_LOG("OnRemoveSystemAbility RES_SCHED_SYS_ABILITY_ID");
             ClearFreezedPidList();
             UnregisterSuspendObserver();
+#ifdef CAMERA_LIVE_SCENE_RECOGNITION
+            UnRegisterEventListenerToRss();
+#endif
             break;
         default:
             break;
@@ -2875,5 +2902,26 @@ void HCameraService::ExecuteDelayCallbackTask(const std::vector<int32_t>& pidLis
         delayCbtaskMap_.erase(pidIt);
     });
 }
+
+#ifdef CAMERA_LIVE_SCENE_RECOGNITION
+void ResSchedToCameraEventListener::OnReceiveEvent(uint32_t eventType, uint32_t eventValue,
+    std::unordered_map<std::string, std::string> extInfo)
+{
+    MEDIA_DEBUG_LOG("ResSchedToCameraEventListener::OnReceiveEvent eventType is %{public}d, eventValue is %{public}d",
+        eventType, eventValue);
+    if (eventType != OHOS::ResourceSchedule::ResType::EventType::EVENT_REPORT_HFLS_LIVE_SCENE_CHANGED) {
+        MEDIA_ERR_LOG("current scene is not live scene");
+        return;
+    }
+    if (eventValue == OHOS::ResourceSchedule::ResType::EventValue::EVENT_VALUE_HFLS_BEGIN) {
+        HCameraDeviceManager::GetInstance()->SetLiveScene(true);
+    } else if (eventValue == OHOS::ResourceSchedule::ResType::EventValue::EVENT_VALUE_HFLS_END) {
+        HCameraDeviceManager::GetInstance()->SetLiveScene(false);
+    } else {
+        MEDIA_ERR_LOG("current eventValue: %{public}d is not supported", eventValue);
+    }
+    return;
+}
+#endif
 } // namespace CameraStandard
 } // namespace OHOS

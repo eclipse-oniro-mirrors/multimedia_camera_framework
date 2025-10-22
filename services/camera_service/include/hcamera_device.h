@@ -43,9 +43,6 @@
 #include "icamera_ipc_checker.h"
 #include "camera_rotate_strategy_parser.h"
 #include "camera_applist_manager.h"
-#ifdef CAMERA_LIVE_SCENE_RECOGNITION
-#include "res_sched_event_listener.h"
-#endif
 
 namespace OHOS {
 namespace CameraStandard {
@@ -56,22 +53,6 @@ class IHCameraCloseListener : public virtual RefBase {
 public:
     virtual void BeforeDeviceClose() = 0;
 };
-
-#ifdef CAMERA_LIVE_SCENE_RECOGNITION
-class ResSchedToCameraEventListener : public OHOS::ResourceSchedule::ResSchedEventListener {
-public:
-    void OnReceiveEvent(uint32_t eventType, uint32_t eventValue,
-        std::unordered_map<std::string, std::string> extInfo) override;
-    void SetCameraDevice(wptr<HCameraDevice> hCameraDevice);
-    sptr<HCameraDevice> GetCameraDevice();
-    bool IsLiveScene();
-    void SetLiveScene(bool isLiveScene);
-private:
-    wptr<HCameraDevice> hCameraDevice_ = nullptr;
-    std::atomic<bool> isLiveScene_ = false;
-};
-#endif
-
 
 class EXPORT_API HCameraDevice
     : public CameraDeviceServiceStub, public ICameraDeviceCallback, public ICameraIpcChecker {
@@ -219,7 +200,7 @@ public:
     void SetFrameRateRange(const std::vector<int32_t>& frameRateRange);
     std::vector<int32_t> GetFrameRateRange();
 #ifdef CAMERA_LIVE_SCENE_RECOGNITION
-    void UpdateLiveStreamSceneMedatadata(uint8_t mode);
+    void UpdateLiveStreamSceneMetadata(uint32_t mode);
 #endif
 
 private:
@@ -347,9 +328,9 @@ private:
     int32_t videoStabilizationMode_ = 0;
     int32_t lastDisplayMode_ = -1;
     bool usePhysicalCameraOrientation_ = false;
-#ifdef CAMERA_LIVE_SCENE_RECOGNITION
-    sptr<ResSchedToCameraEventListener> eventListener_ = nullptr;
-#endif
+    std::string pidForLiveScene_;
+    std::string uidForLiveScene_;
+    std::string bundleNameForLiveScene_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

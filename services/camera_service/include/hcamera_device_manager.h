@@ -318,6 +318,10 @@ public:
     bool IsProcessHasConcurrentDevice(pid_t pid);
 
     std::mutex mapMutex_;
+#ifdef CAMERA_LIVE_SCENE_RECOGNITION
+    void SetLiveScene(bool isLiveScene);
+    bool IsLiveScene();
+#endif
 private:
     HCameraDeviceManager();
     static sptr<HCameraDeviceManager> cameraDeviceManager_;
@@ -342,6 +346,9 @@ private:
         uint32_t accessTokenId, uint32_t firstTokenId);
     std::vector<sptr<HCameraDeviceHolder>> SortDeviceByPriority();
     void RefreshCameraDeviceHolderState(sptr<HCameraDeviceHolder> requestCameraHolder);
+#ifdef CAMERA_LIVE_SCENE_RECOGNITION
+    std::atomic<bool> isLiveScene_ = false;
+#endif
 };
 } // namespace CameraStandard
 } // namespace OHOS

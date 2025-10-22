@@ -573,7 +573,27 @@ bool HCameraDeviceManager::IsProcessHasConcurrentDevice(pid_t pid)
     }
     return false;
 }
+#ifdef CAMERA_LIVE_SCENE_RECOGNITION
+bool HCameraDeviceManager::IsLiveScene()
+{
+    return isLiveScene_;
+}
 
+void HCameraDeviceManager::SetLiveScene(bool isLiveScene)
+{
+    isLiveScene_ = isLiveScene;
+    std::vector<sptr<HCameraDeviceHolder>> deviceHolderVector = GetActiveCameraHolders();
+    for (sptr<HCameraDeviceHolder> activeDeviceHolder : deviceHolderVector) {
+        sptr<HCameraDevice> activeDevice = activeDeviceHolder->GetDevice();
+        bool isChangeMetadata = activeDevice != nullptr && activeDevice->IsOpenedCameraDevice();
+        if (isChangeMetadata) {
+            uint32_t mode = isLiveScene ? OHOS_CAMERA_APP_HINT_LIVE_STREAM : OHOS_CAMERA_APP_HINT_NONE;
+            activeDevice->UpdateLiveStreamSceneMetadata(mode);
+            MEDIA_DEBUG_LOG("HCameraDeviceManager::SetLiveScene UpdateSetting");
+        }
+    }
+}
+#endif
 void CameraConcurrentSelector::SetRequestCameraId(sptr<HCameraDeviceHolder> requestCameraHolder)
 {
     CHECK_RETURN_ELOG(

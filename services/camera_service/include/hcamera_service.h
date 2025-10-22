@@ -58,6 +58,9 @@
 #include "ideferred_photo_processing_session.h"
 #include "input/i_standard_camera_listener.h"
 #include "suspend_state_observer.h"
+#ifdef CAMERA_LIVE_SCENE_RECOGNITION
+#include "res_sched_event_listener.h"
+#endif
 
 namespace OHOS {
 namespace CameraStandard {
@@ -100,6 +103,14 @@ enum TemperPressure {
 };
 
 class CameraInfoDumper;
+
+#ifdef CAMERA_LIVE_SCENE_RECOGNITION
+class ResSchedToCameraEventListener : public OHOS::ResourceSchedule::ResSchedEventListener {
+public:
+    void OnReceiveEvent(uint32_t eventType, uint32_t eventValue,
+        std::unordered_map<std::string, std::string> extInfo) override;
+};
+#endif
 
 class EXPORT_API HCameraService
     : public SystemAbility, public CameraServiceStub, public HCameraHostManager::StatusCallback,
@@ -235,6 +246,10 @@ private:
     void RegisterSuspendObserver();
     void UnregisterSuspendObserver();
     void ClearFreezedPidList();
+#ifdef CAMERA_LIVE_SCENE_RECOGNITION
+    void RegisterEventListenerToRss();
+    void UnRegisterEventListenerToRss();
+#endif
 
     int32_t GetMuteModeFromDataShareHelper(bool &muteMode);
     bool SetMuteModeFromDataShareHelper();
@@ -396,6 +411,9 @@ private:
 
     std::mutex observerMutex_;
     sptr<SuspendStateObserver> suspendStateObserver_ {nullptr};
+#ifdef CAMERA_LIVE_SCENE_RECOGNITION
+    sptr<ResSchedToCameraEventListener> eventListener_ = nullptr;
+#endif
 };
 } // namespace CameraStandard
 } // namespace OHOS
