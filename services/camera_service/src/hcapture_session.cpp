@@ -722,7 +722,7 @@ int32_t HCaptureSession::SetVirtualApertureValue(float value, bool needPersist)
     CHECK_RETURN_RET_ELOG(errCode != CAMERA_OK, errCode,
         "HCaptureSession::SetVirtualApertureValue check permission failed.");
     std::vector<float> virtualApertureMetadata = {};
-    int32_t ret = GetVirtualApertureMetadate(virtualApertureMetadata);
+    int32_t ret = GetVirtualApertureMetadata(virtualApertureMetadata);
     CHECK_RETURN_RET_ILOG(ret != CAMERA_OK || virtualApertureMetadata.size() == 0,
         CAMERA_OK, "ControlCenter not support Aperture");
 
