@@ -23,6 +23,7 @@
 #include <parameters.h>
 #include <parameter.h>
 
+#include "bms_adapter.h"
 #include "camera_common_event_manager.h"
 #include "camera_device_ability_items.h"
 #include "camera_log.h"
@@ -59,11 +60,7 @@
 #include "camera_dialog_manager.h"
 #include "tokenid_kit.h"
 #ifdef CAMERA_LIVE_SCENE_RECOGNITION
-#include "bms_adapter.h"
 #include "camera_metadata.h"
-#include "res_sched_client.h"
-#include "res_type.h"
-#include "res_value.h"
 #endif
 
 namespace OHOS {
@@ -217,15 +214,6 @@ HCameraDevice::HCameraDevice(
         std::lock_guard<std::mutex> lock(g_cameraHostManagerMutex);
         g_cameraHostManager = cameraHostManager;
     }
-#ifdef CAMERA_LIVE_SCENE_RECOGNITION
-    eventListener_ = new (std::nothrow) ResSchedToCameraEventListener;
-    if (eventListener_ != nullptr) {
-        MEDIA_DEBUG_LOG("HCameraDevice::HCameraDevice begin RegisterEventListener");
-        eventListener_->SetCameraDevice(this);
-        OHOS::ResourceSchedule::ResSchedClient::GetInstance().RegisterEventListener(eventListener_,
-            OHOS::ResourceSchedule::ResType::EventType::EVENT_REPORT_HFLS_LIVE_SCENE_CHANGED);
-    }
-#endif
 }
 
 HCameraDevice::~HCameraDevice()
@@ -241,13 +229,6 @@ HCameraDevice::~HCameraDevice()
         std::lock_guard<std::mutex> lock(movingPhotoEndTimeCallbackLock_);
         movingPhotoEndTimeCallback_ = nullptr;
     }
-#ifdef CAMERA_LIVE_SCENE_RECOGNITION
-    if (eventListener_ != nullptr) {
-        MEDIA_DEBUG_LOG("HCameraDevice::HCameraDevice UnRegisterEventListener");
-        OHOS::ResourceSchedule::ResSchedClient::GetInstance().UnRegisterEventListener(eventListener_,
-            OHOS::ResourceSchedule::ResType::EventType::EVENT_REPORT_HFLS_LIVE_SCENE_CHANGED);
-    }
-#endif
     MEDIA_INFO_LOG("HCameraDevice::~HCameraDevice Destructor Camera: %{public}s", cameraID_.c_str());
 }
 
@@ -463,22 +444,20 @@ int32_t HCameraDevice::Open()
         MEDIA_DEBUG_LOG("HCameraDevice::Open dialog start");
         NoFrontCameraDialog::GetInstance()->ShowCameraDialog();
     }
-#ifdef CAMERA_LIVE_SCENE_RECOGNITION
-	std::unordered_map<std::string, std::string> mapPayload;
-    std::string strPid = std::to_string(IPCSkeleton::GetCallingPid());
-    std::string strUid = std::to_string(IPCSkeleton::GetCallingUid());
-    std::string bundleName = BmsAdapter::GetInstance()->GetBundleName(IPCSkeleton::GetCallingUid());
+    std::unordered_map<std::string, std::string> mapPayload;
+    pidForLiveScene_ = std::to_string(IPCSkeleton::GetCallingPid());
+    uidForLiveScene_ = std::to_string(IPCSkeleton::GetCallingUid());
+    bundleNameForLiveScene_ = BmsAdapter::GetInstance()->GetBundleName(IPCSkeleton::GetCallingUid());
 
     mapPayload["camId"] = cameraID_;
-    mapPayload["pid"] = strPid;
-    mapPayload["uid"] = strUid;
-    mapPayload["bundleName"] = bundleName;
+    mapPayload["pid"] = pidForLiveScene_;
+    mapPayload["uid"] = uidForLiveScene_;
+    mapPayload["bundleName"] = bundleNameForLiveScene_;
     MEDIA_DEBUG_LOG("camera lens report: camId: %{public}s. pid: %{public}s. uid: %{public}s, bundleName: %{public}s",
-        cameraID_.c_str(), strPid.c_str(), strUid.c_str(), bundleName.c_str());
+        cameraID_.c_str(), pidForLiveScene_.c_str(), uidForLiveScene_.c_str(), bundleNameForLiveScene_.c_str());
     OHOS::ResourceSchedule::ResSchedClient::GetInstance().ReportData(
         OHOS::ResourceSchedule::ResType::RES_TYPE_CAMERA_LENS_STATUS_CHANGED,
         static_cast<int64_t>(OHOS::ResourceSchedule::ResType::CameraLensState ::CAMERA_LEN_OPENED), mapPayload);
-#endif
     return result;
 }
 
@@ -548,28 +527,25 @@ int32_t HCameraDevice::Close()
     CameraXCollie cameraXCollie("HCameraDeviceStub::Close");
     std::lock_guard<std::mutex> lock(g_deviceOpenCloseMutex_);
     MEDIA_INFO_LOG("HCameraDevice::Close Closing camera device: %{public}s", cameraID_.c_str());
-    int32_t result = CloseDevice();
+    if (isOpenedCameraDevice_.load()) {
+        std::unordered_map<std::string, std::string> mapPayload;
+        mapPayload["camId"] = cameraID_;
+        mapPayload["pid"] = pidForLiveScene_;
+        mapPayload["uid"] = uidForLiveScene_;
+        mapPayload["bundleName"] = bundleNameForLiveScene_;
+        MEDIA_DEBUG_LOG("camera lens report:camId: %{public}s, pid: %{public}s, uid: %{public}s, bundleName:%{public}s",
+            cameraID_.c_str(), pidForLiveScene_.c_str(), uidForLiveScene_.c_str(), bundleNameForLiveScene_.c_str());
+        OHOS::ResourceSchedule::ResSchedClient::GetInstance().ReportData(
+            OHOS::ResourceSchedule::ResType::RES_TYPE_CAMERA_LENS_STATUS_CHANGED,
+            static_cast<int64_t>(OHOS::ResourceSchedule::ResType::CameraLensState::CAMERA_LEN_CLOSED), mapPayload);
 #ifdef CAMERA_LIVE_SCENE_RECOGNITION
-    std::unordered_map<std::string, std::string> mapPayload;
-    std::string strPid = std::to_string(IPCSkeleton::GetCallingPid());
-    std::string strUid = std::to_string(IPCSkeleton::GetCallingUid());
-    std::string bundleName = BmsAdapter::GetInstance()->GetBundleName(IPCSkeleton::GetCallingUid());
-
-    mapPayload["camId"] = cameraID_;
-    mapPayload["pid"] = strPid;
-    mapPayload["uid"] = strUid;
-    mapPayload["bundleName"] = bundleName;
-    MEDIA_DEBUG_LOG("camera lens report: camId: %{public}s. pid: %{public}s. uid: %{public}s, bundleName: %{public}s",
-        cameraID_.c_str(), strPid.c_str(), strUid.c_str(), bundleName.c_str());
-    OHOS::ResourceSchedule::ResSchedClient::GetInstance().ReportData(
-        OHOS::ResourceSchedule::ResType::RES_TYPE_CAMERA_LENS_STATUS_CHANGED,
-        static_cast<int64_t>(OHOS::ResourceSchedule::ResType::CameraLensState::CAMERA_LEN_CLOSED), mapPayload);
-    if (eventListener_->IsLiveScene()) {
-        UpdateLiveStreamSceneMedatadata(OHOS_CAMERA_APP_HINT_NONE);
-        MEDIA_DEBUG_LOG("UpdateLiveStreamSceneMedatadata complete");
-        eventListener_->SetLiveScene(false);
-    }
+        if (HCameraDeviceManager::GetInstance()->IsLiveScene()) {
+            UpdateLiveStreamSceneMetadata(OHOS_CAMERA_APP_HINT_NONE);
+            MEDIA_DEBUG_LOG("HCameraDevice::Close UpdateLiveStreamSceneMetadata complete");
+        }
 #endif
+    }
+    int32_t result = CloseDevice();
     return result;
 }
 
@@ -2038,7 +2014,7 @@ std::vector<std::vector<std::int32_t>> HCameraDevice::GetConcurrentDevicesTable(
 }
 
 #ifdef CAMERA_LIVE_SCENE_RECOGNITION
-void HCameraDevice::UpdateLiveStreamSceneMedatadata(uint8_t mode)
+void HCameraDevice::UpdateLiveStreamSceneMetadata(uint32_t mode)
 {
     constexpr int32_t DEFAULT_ITEMS = 1;
     constexpr int32_t DEFAULT_DATA_LENGTH = 1;
@@ -2050,53 +2026,6 @@ void HCameraDevice::UpdateLiveStreamSceneMedatadata(uint8_t mode)
     CHECK_RETURN_ELOG(!status, "AddOrUpdateMetadata camera live scene Failed");
     int32_t ret = UpdateSetting(changedMetadata);
     CHECK_RETURN_ELOG(ret != CAMERA_OK, "UpdateSetting camera live scene Failed");
-    return;
-}
-
-void ResSchedToCameraEventListener::SetCameraDevice(wptr<HCameraDevice> hCameraDevice)
-{
-    hCameraDevice_ = hCameraDevice;
-}
-
-sptr<HCameraDevice> ResSchedToCameraEventListener::GetCameraDevice()
-{
-    return hCameraDevice_.promote();
-}
-
-bool ResSchedToCameraEventListener::IsLiveScene()
-{
-    return isLiveScene_;
-}
-
-void ResSchedToCameraEventListener::SetLiveScene(bool isLiveScene)
-{
-    isLiveScene_ = isLiveScene;
-}
-
-void ResSchedToCameraEventListener::OnReceiveEvent(uint32_t eventType, uint32_t eventValue,
-    std::unordered_map<std::string, std::string> extInfo)
-{
-    if (eventType != OHOS::ResourceSchedule::ResType::EventType::EVENT_REPORT_HFLS_LIVE_SCENE_CHANGED) {
-        MEDIA_ERR_LOG("current scene is not live scene");
-        return;
-    }
-    uint8_t mode = OHOS_CAMERA_APP_HINT_NONE;
-    if (eventValue == OHOS::ResourceSchedule::ResType::EventValue::EVENT_VALUE_HFLS_BEGIN) {
-        isLiveScene_ = true;
-        mode = OHOS_CAMERA_APP_HINT_LIVE_STREAM;
-    } else if (eventValue == OHOS::ResourceSchedule::ResType::EventValue::EVENT_VALUE_HFLS_END) {
-        CHECK_RETURN_ELOG(!isLiveScene_, "OnReceiveEvent isLiveScene_ is false");
-        isLiveScene_ = false;
-        mode = OHOS_CAMERA_APP_HINT_NONE;
-    } else {
-        MEDIA_ERR_LOG("current eventValue: %{public}d is not supported", eventValue);
-        return;
-    }
-
-    auto hcameraDevice = GetCameraDevice();
-    CHECK_RETURN_ELOG(hcameraDevice == nullptr, "hcameraDevice is nullptr");
-    hcameraDevice->UpdateLiveStreamSceneMedatadata(mode);
-    MEDIA_DEBUG_LOG("UpdateLiveStreamSceneMedatadata complete");
     return;
 }
 #endif

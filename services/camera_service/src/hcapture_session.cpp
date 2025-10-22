@@ -81,6 +81,9 @@
 #ifdef HOOK_CAMERA_OPERATOR
 #include "camera_rotate_plugin.h"
 #endif
+#ifdef CAMERA_LIVE_SCENE_RECOGNITION
+#include "hcamera_device_manager.h"
+#endif
 
 using namespace OHOS::AAFwk;
 namespace OHOS {
@@ -1075,6 +1078,12 @@ int32_t HCaptureSession::CommitConfigWithValidation()
                       "camera device is null, sessionID: %{public}d", GetSessionId());
         return CAMERA_INVALID_STATE;
     }
+#ifdef CAMERA_LIVE_SCENE_RECOGNITION
+    if (!CheckSystemApp() && HCameraDeviceManager::GetInstance()->IsLiveScene()) {
+        device->UpdateLiveStreamSceneMetadata(OHOS_CAMERA_APP_HINT_LIVE_STREAM);
+        MEDIA_DEBUG_LOG("UpdateLiveStreamSceneMetadata complete, sessionID: %{public}d", GetSessionId());
+    }
+#endif
     const int32_t secureMode = 15;
     uint64_t secureSeqId = 0L;
     device->GetSecureCameraSeq(&secureSeqId);

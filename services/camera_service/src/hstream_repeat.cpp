@@ -329,8 +329,6 @@ int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> setti
     CHECK_EXECUTE(isNeedBeautyNotification && notification != nullptr &&
         notification->GetBeautyStatus() == BEAUTY_STATUS_ON, UpdateBeautySettings(dynamicSetting));
 #endif
-    bool isLive = IsLive();
-    CHECK_EXECUTE(isLive, UpdateLiveSettings(dynamicSetting));
     std::vector<uint8_t> captureSetting;
     OHOS::Camera::MetadataUtils::ConvertMetadataToVec(dynamicSetting, captureSetting);
 
