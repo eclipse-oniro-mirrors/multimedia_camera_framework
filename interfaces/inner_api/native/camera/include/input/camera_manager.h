@@ -1170,7 +1170,6 @@ private:
     bool controlCenterResolutionCondition_ = true;
     bool controlCenterPositionCondition_ = true;
     bool controlCenterPrecondition_ = true;
-    bool isControlCenterSupported_ = true;
 };
 
 class CameraManagerGetter {

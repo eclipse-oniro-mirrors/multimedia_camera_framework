@@ -158,6 +158,7 @@ public:
     int32_t EnableControlCenter(bool status, bool needPersistEnable) override;
     int32_t SetControlCenterPrecondition(bool condition) override;
     int32_t SetDeviceControlCenterAbility(bool ability) override;
+    int32_t GetDeviceControlCenterAbility(bool &ability) override;
     int32_t GetControlCenterStatus(bool& status) override;
     int32_t CheckControlCenterPermission() override;
     int32_t MuteCameraPersist(PolicyType policyType, bool isMute) override;
@@ -252,6 +253,7 @@ private:
     int DestroyStubForPid(pid_t pid);
     void ClientDied(pid_t pid);
     sptr<HCaptureSession> videoSessionForControlCenter_;
+    bool deviceControlCenterAbility_ = false;
 #ifdef NOTIFICATION_ENABLE
     int32_t SetBeauty(int32_t beautyStatus);
 #endif
@@ -374,7 +376,6 @@ private:
     bool isFoldableInit = false;
     bool isControlCenterEnabled_ = false;
     std::atomic<bool> controlCenterPrecondition = true;
-    bool deviceControlCenterAbility = false;
     bool usePhysicalCameraOrientation_ = false;
     string preCameraId_;
     string preCameraClient_;

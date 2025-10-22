@@ -48,7 +48,7 @@ interface ICaptureSession{
   [ipccode 21] void UnSetPressureCallback();
   [ipccode 22] void SetCommitConfigFlag([in] boolean isNeedCommitting);
   [ipccode 23] void SetHasFitedRotation([in] boolean isHasFitedRotation);
-  [ipccode 25] void GetVirtualApertureMetadate([out] List<float> virtualApertureMetadata);
+  [ipccode 25] void GetVirtualApertureMetadata([out] List<float> virtualApertureMetadata);
   [ipccode 26] void GetVirtualApertureValue([out] float value);
   [ipccode 27] void SetVirtualApertureValue([in] float value, [in] boolean needPersist);
   [ipccode 28] void GetBeautyMetadata([out] List<int> beautyApertureMetadata);

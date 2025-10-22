@@ -51,7 +51,7 @@ int32_t ControlCenterSession::GetSupportedVirtualApertures(std::vector<float>& a
     auto ret = serviceProxy->GetVideoSessionForControlCenter(session);
     CHECK_RETURN_RET_ELOG(ret != CAMERA_OK || session == nullptr, ret,
         "ControlCenterSession::GetSupportedVirtualApertures failed, session is nullptr.");
-    ret = session->GetVirtualApertureMetadate(apertures);
+    ret = session->GetVirtualApertureMetadata(apertures);
     CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, ret,
         "ControlCenterSession::GetSupportedVirtualApertures failed, get apertures failed.");
     return CAMERA_OK;

@@ -36,6 +36,7 @@
 #include "camera_error_code.h"
 #include "camera_input.h"
 #include "camera_log.h"
+#include "camera_metadata_info.h"
 #include "camera_rotation_api_utils.h"
 #include "camera_security_utils.h"
 #include "camera_service_system_ability_listener.h"
@@ -3025,6 +3026,10 @@ bool CameraManager::IsControlCenterActive()
     auto serviceProxy = GetServiceProxy();
     CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, CAMERA_UNKNOWN_ERROR,
         "CameraManager::IsControlCenterActive serviceProxy is null");
+    if (!GetIsControlCenterSupported()) {
+        MEDIA_INFO_LOG("CameraManager::IsControlCenterActive control center not supported");
+        return false;
+    }
     
     int32_t retCode = serviceProxy->GetControlCenterStatus(status);
     CHECK_RETURN_RET_ELOG(retCode!=CAMERA_OK, false, "CameraManager::IsControlCenterActive failed");
@@ -3101,7 +3106,6 @@ void CameraManager::SetIsControlCenterSupported(bool isSupported)
 {
     // LCOV_EXCL_START
     MEDIA_DEBUG_LOG("CameraManager::SetIsControlCenterSupported, isSupported: %{public}d", isSupported);
-    isControlCenterSupported_ = isSupported;
 
     auto serviceProxy = GetServiceProxy();
     CHECK_RETURN_ELOG(serviceProxy == nullptr, "SetIsControlCenterSupported serviceProxy is null");
@@ -3112,7 +3116,14 @@ void CameraManager::SetIsControlCenterSupported(bool isSupported)
 
 bool CameraManager::GetIsControlCenterSupported()
 {
-    return isControlCenterSupported_;
+    bool isSupported = false;
+    auto serviceProxy = GetServiceProxy();
+    CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, isSupported, "GetIsControlCenterSupported serviceProxy is null");
+    int32_t retCode = serviceProxy->GetDeviceControlCenterAbility(isSupported);
+    CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, false,
+        "GetIsControlCenterSupported call failed, retCode: %{public}d", retCode);
+    MEDIA_INFO_LOG("WRK GetIsControlCenterSupported: %{public}d", isSupported);
+    return isSupported;
 }
 
 int32_t CameraMuteListenerManager::OnCameraMute(bool muteMode)

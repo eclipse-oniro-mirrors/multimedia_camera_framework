@@ -456,7 +456,7 @@ int32_t HCameraService::CreateControlCenterDataShare(std::map<std::string,
     CHECK_RETURN_RET_ELOG(sessionForControlCenter == nullptr, CAMERA_INVALID_STATE,
         "CreateControlCenterDataShare failed, not in video session.");
     std::vector<float> virtualMetadata = {};
-    sessionForControlCenter->GetVirtualApertureMetadate(virtualMetadata);
+    sessionForControlCenter->GetVirtualApertureMetadata(virtualMetadata);
     float biggestAperture = 0;
     CHECK_EXECUTE(virtualMetadata.size() > 0, biggestAperture = virtualMetadata.back());
 
@@ -1664,11 +1664,13 @@ int32_t HCameraService::SetControlCenterPrecondition(bool condition)
 
 int32_t HCameraService::SetDeviceControlCenterAbility(bool ability)
 {
-    sptr<HCaptureSession> sessionForControlCenter = GetSessionForControlCenter();
-    deviceControlCenterAbility = ability;
-    if (sessionForControlCenter != nullptr) {
-        sessionForControlCenter->SetDeviceControlCenterAbility(ability);
-    }
+    deviceControlCenterAbility_ = ability;
+    return CAMERA_OK;
+}
+
+int32_t HCameraService::GetDeviceControlCenterAbility(bool &ability)
+{
+    ability = deviceControlCenterAbility_;
     return CAMERA_OK;
 }
 
