@@ -89,7 +89,7 @@ public:
             return nullptr;
         }
         MEDIA_DEBUG_LOG("On eventType: %{public}s", jsCallbackParamParser.GetCallbackName().c_str());
-
+        CHECK_RETURN_RET_ELOG(targetInstance == nullptr, nullptr, "On: targetInstance is nullptr");
         return targetInstance->RegisterCallback(env, jsCallbackParamParser, false);
     }
 
@@ -108,6 +108,7 @@ public:
             return nullptr;
         }
         MEDIA_INFO_LOG("Once eventType: %{public}s", jsCallbackParamParser.GetCallbackName().c_str());
+        CHECK_RETURN_RET_ELOG(targetInstance == nullptr, nullptr, "Once: targetInstance is nullptr");
         return targetInstance->RegisterCallback(env, jsCallbackParamParser, true);
     }
 
@@ -121,6 +122,7 @@ public:
             return nullptr;
         }
         MEDIA_DEBUG_LOG("Off eventType: %{public}s", jsCallbackParamParser.GetCallbackName().c_str());
+        CHECK_RETURN_RET_ELOG(targetInstance == nullptr, nullptr, "Off: targetInstance is nullptr");
         return targetInstance->UnregisterCallback(env, jsCallbackParamParser);
     }
 };

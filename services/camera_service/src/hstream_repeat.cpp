@@ -1203,7 +1203,7 @@ void HStreamRepeat::UpdateHalRoateSettings(std::shared_ptr<OHOS::Camera::CameraM
     int32_t rotateAngle = -1;
     if (CameraRotatePlugin::GetInstance()->
         HookPreviewStreamStart(GetBasicInfo(), GetStreamProducer(), rotateAngle) && rotateAngle >= 0) {
-        CHECK_PRINT_ELOG(settings == nullptr, "HStreamRepeat::UpdateHalRoateSettings settings is nullptr");
+        CHECK_RETURN_ELOG(settings == nullptr, "HStreamRepeat::UpdateHalRoateSettings settings is nullptr");
         bool status = false;
         camera_metadata_item_t item;
 

@@ -268,11 +268,8 @@ void HStreamCapture::SetDataSpaceForCapture(StreamInfo_V1_1 &streamInfo)
     // LCOV_EXCL_START
     switch (streamInfo.v1_0.dataspace_) {
         case CM_ColorSpaceType_V2_1::CM_BT2020_HLG_FULL:
-            //  HDR Video Session need P3 for captureStream
-            streamInfo.v1_0.dataspace_ =  CM_ColorSpaceType_V2_1::CM_P3_FULL;
-            break;
         case CM_ColorSpaceType_V2_1::CM_BT2020_HLG_LIMIT:
-            // HDR Video Session need P3 for captureStream
+            //  HDR Video Session need P3 for captureStream
             streamInfo.v1_0.dataspace_ =  CM_ColorSpaceType_V2_1::CM_P3_FULL;
             break;
         case CM_ColorSpaceType_V2_1::CM_BT709_LIMIT:
