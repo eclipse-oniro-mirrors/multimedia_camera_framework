@@ -33,7 +33,7 @@ namespace CameraStandard {
 sptr<MetadataObjectFactory> MetadataObjectFactory::metaFactoryInstance_;
 std::mutex MetadataObjectFactory::instanceMutex_;
 
-MetadataObject::MetadataObject(const MetadataObjectType type, const int32_t timestamp, const Rect rect,
+MetadataObject::MetadataObject(const MetadataObjectType type, const int64_t timestamp, const Rect rect,
                                const int32_t objectId, const int32_t confidence)
     : type_(type),
       timestamp_(timestamp),
@@ -464,6 +464,9 @@ sptr<MetadataObjectFactory> &MetadataObjectFactory::GetInstance()
 sptr<MetadataObject> MetadataObjectFactory::createMetadataObject(MetadataObjectType type)
 {
     MetaObjectParms baseMetaParms = { type_, timestamp_, box_, objectId_, confidence_ };
+    MEDIA_DEBUG_LOG("MetadataObjectFactory::createMetadataObject type: %{public}d, timestamp_: %{public}" PRId64
+                    ", objectId_: %{public}d",
+        type_, timestamp_, objectId_);
     sptr<MetadataObject> metadataObject;
     // LCOV_EXCL_START
     switch (type) {
