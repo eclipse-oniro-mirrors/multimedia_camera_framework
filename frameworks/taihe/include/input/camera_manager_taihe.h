@@ -23,6 +23,7 @@
 #include "listener_base_taihe.h"
 #include "camera_event_emitter_taihe.h"
 #include "camera_event_listener_taihe.h"
+#include "camera_worker_queue_keeper_taihe.h"
 
 #include "image_receiver.h"
 #include "image_format.h"
@@ -118,6 +119,7 @@ public:
     array<CameraConcurrentInfo> GetCameraConcurrentInfos(array_view<CameraDevice> cameras);
     void SetPrelaunchConfig(PrelaunchConfig const& prelaunchConfig);
     CameraDevice GetCameraDevice(CameraPosition position, CameraType type);
+    int64_t GetCameraStorageSizeSync();
     void RegisterCameraMuteCallbackListener(const std::string& eventName,
         std::shared_ptr<uintptr_t> callback, bool isOnce);
     void UnregisterCameraMuteCallbackListener(const std::string& eventName, std::shared_ptr<uintptr_t> callback);
@@ -132,6 +134,8 @@ public:
     void UnregisterFoldStatusCallbackListener(const std::string& eventName, std::shared_ptr<uintptr_t> callback);
     virtual const EmitterFunctions& GetEmitterFunctions() override;
     bool IsTorchModeSupported(TorchMode mode);
+
+    static uint32_t cameraManagerTaskId_;
 private:
     static void GetSupportedOutputCapabilityAdaptNormalMode(OHOS::CameraStandard::SceneMode fwkMode,
         OHOS::sptr<OHOS::CameraStandard::CameraDevice>& cameraInfo,
@@ -141,6 +145,16 @@ private:
         const OHOS::CameraStandard::CameraType cameraType, OHOS::sptr<OHOS::CameraStandard::CameraDevice>& cameraInfo);
     SessionUnion CreateSessionWithMode(OHOS::CameraStandard::SceneMode sceneModeInner);
     OHOS::sptr<OHOS::CameraStandard::CameraManager> cameraManager_ = nullptr;
+};
+
+struct CameraManagerAsyncContext : public TaiheAsyncContext {
+    CameraManagerAsyncContext(std::string funcName, int32_t taskId) : TaiheAsyncContext(funcName, taskId) {};
+    ~CameraManagerAsyncContext()
+    {
+        objectInfo = nullptr;
+    }
+    CameraManagerImpl* objectInfo = nullptr;
+    int64_t storageSize = 0;
 };
 } // namespace Camera
 } // namespace Ani

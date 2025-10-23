@@ -219,18 +219,38 @@ array<PhysicalAperture> CameraUtilsTaihe::ToTaiheArrayPhysicalAperture(
     return array<PhysicalAperture>(resVec);
 }
 
+CameraDevice CameraUtilsTaihe::GetNullCameraDevice()
+{
+    std::string defaultString = "";
+    CameraDevice cameraTaihe {
+        .cameraId = CameraUtilsTaihe::ToTaiheString(defaultString),
+        .cameraPosition = CameraPosition::key_t::CAMERA_POSITION_UNSPECIFIED,
+        .cameraType = CameraType::key_t::CAMERA_TYPE_DEFAULT,
+        .connectionType = ConnectionType::key_t::CAMERA_CONNECTION_BUILT_IN,
+        .isRetractable = optional<bool>(std::nullopt),
+        .hostDeviceType = HostDeviceType::key_t::UNKNOWN_TYPE,
+        .hostDeviceName = CameraUtilsTaihe::ToTaiheString(defaultString),
+        .cameraOrientation = 0,
+        .lensEquivalentFocalLength = optional<array<int32_t>>(std::nullopt),
+    };
+    return cameraTaihe;
+}
+
 CameraDevice CameraUtilsTaihe::ToTaiheCameraDevice(sptr<OHOS::CameraStandard::CameraDevice> &obj)
 {
-    CameraDevice cameraTaihe {
-        .cameraId = ToTaiheString(obj->GetID()),
-        .cameraPosition = ToTaihePosition(obj->GetPosition()),
-        .cameraType = ToTaiheCameraType(obj->GetCameraType()),
-        .connectionType = ToTaiheConnectionType(obj->GetConnectionType()),
-        .isRetractable = optional<bool>::make(obj->GetisRetractable()),
-        .hostDeviceType = HostDeviceType::from_value(static_cast<int32_t>(obj->GetDeviceType())),
-        .hostDeviceName = ToTaiheString(obj->GetHostName()),
-        .cameraOrientation = obj->GetCameraOrientation(),
-    };
+    CameraDevice cameraTaihe = CameraUtilsTaihe::GetNullCameraDevice();
+    CHECK_RETURN_RET_ELOG(!obj, cameraTaihe, "obj is null");
+    cameraTaihe.cameraId = ToTaiheString(obj->GetID());
+    cameraTaihe.cameraPosition = ToTaihePosition(obj->GetPosition());
+    cameraTaihe.cameraType = ToTaiheCameraType(obj->GetCameraType());
+    cameraTaihe.connectionType = ToTaiheConnectionType(obj->GetConnectionType());
+    cameraTaihe.isRetractable = optional<bool>::make(obj->GetisRetractable());
+    cameraTaihe.hostDeviceType = HostDeviceType::from_value(static_cast<int32_t>(obj->GetDeviceType()));
+    cameraTaihe.hostDeviceName = ToTaiheString(obj->GetHostName());
+    cameraTaihe.cameraOrientation = obj->GetCameraOrientation();
+    std::vector<int32_t> lensEquivalentFocalLength = obj->GetLensEquivalentFocalLength();
+    cameraTaihe.lensEquivalentFocalLength =
+        optional<array<int32_t>>(std::in_place, array<int32_t>(lensEquivalentFocalLength));
     return cameraTaihe;
 }
 

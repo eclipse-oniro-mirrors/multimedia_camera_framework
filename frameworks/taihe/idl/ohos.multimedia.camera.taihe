@@ -167,6 +167,7 @@ struct CameraDevice {
   @readonly hostDeviceType: HostDeviceType;
   @readonly hostDeviceName: String;
   @readonly cameraOrientation: i32;
+  @readonly lensEquivalentFocalLength: Optional<Array<i32>>;
 }
 
 struct ZoomPointInfo {
@@ -574,6 +575,7 @@ enum SmoothZoomMode : i32 {
 interface ZoomQuery {
   GetZoomRatioRange(): Array<f64>;
   GetZoomPointInfos(): Array<ZoomPointInfo>;
+  IsZoomCenterPointSupported(): bool;
 }
 
 interface Zoom : ZoomQuery {
@@ -582,6 +584,8 @@ interface Zoom : ZoomQuery {
   PrepareZoom(): void;
   UnprepareZoom(): void;
   SetSmoothZoom(targetRatio: f64, mode: Optional<SmoothZoomMode>): void;
+  GetZoomCenterPoint(): Point;
+  SetZoomCenterPoint(point: Point): void;
 }
 
 interface Session {
@@ -1638,6 +1642,15 @@ interface CameraManager {
   CreateMetadataOutput(metadataObjectTypes: Array<MetadataObjectType>): MetadataOutput;
   IsTorchModeSupported(mode: TorchMode): bool;
   GetCameraDevice(position: CameraPosition, type: CameraType): CameraDevice;
+  @!sts_inject_into_interface("getCameraStorageSize(): Promise<long>;")
+  @!sts_inject_into_class("""
+  getCameraStorageSize(): Promise<long> {
+    return this.getCameraStorageSizeI64();
+  }
+  """)
+  @gen_promise("getCameraStorageSizeI64")
+  GetCameraStorageSizeSync(): i64;
+
 
   @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>, data: object)=> void): void;")
   @!sts_inject_into_class("""on(type: string, callback: object): void {
@@ -2393,7 +2406,8 @@ enum MetadataObjectType: i32 {
   DOG_FACE = 4,
   DOG_BODY = 5,
   SALIENT_DETECTION = 6,
-  BAR_CODE_DETECTION = 7
+  BAR_CODE_DETECTION = 7,
+  BASIC_FACE_DETECTION = 8,
 }
 
 struct MetadataObject {
