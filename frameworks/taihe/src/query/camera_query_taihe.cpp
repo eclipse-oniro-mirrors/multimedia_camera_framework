@@ -166,6 +166,18 @@ array<ZoomPointInfo> ZoomQueryImpl::GetZoomPointInfos()
     return CameraUtilsTaihe::ToTaiheArrayZoomPointInfo(vecZoomPointInfoList);
 }
 
+bool ZoomQueryImpl::IsZoomCenterPointSupported()
+{
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        false, "SystemApi IsZoomCenterPointSupported is called!");
+    bool isSupported = false;
+    if (captureSession_ == nullptr) {
+        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT,
+            "IsZoomCenterPointSupported failed, captureSession_ is nullptr");
+    }
+    return isSupported;
+}
+
 double ZoomImpl::GetZoomRatio()
 {
     float zoomRatio = -1.0;
@@ -215,6 +227,25 @@ void ZoomImpl::SetSmoothZoom(double targetRatio, optional_view<SmoothZoomMode> m
     } else {
         CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::OPERATION_NOT_ALLOWED, "SmoothZoomMode is null");
     }
+}
+
+Point ZoomImpl::GetZoomCenterPoint()
+{
+    Point zoomCenterPoint {
+        .x = -1,
+        .y = -1,
+    };
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        zoomCenterPoint, "SystemApi GetZoomCenterPoint is called!");
+    MEDIA_DEBUG_LOG("GetZoomCenterPoint is called");
+    return zoomCenterPoint;
+}
+
+void ZoomImpl::SetZoomCenterPoint(Point point)
+{
+    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi SetZoomCenterPoint is called!");
+    MEDIA_DEBUG_LOG("SetZoomCenterPoint is called");
 }
 
 void ColorReservationImpl::SetColorReservation(ColorReservationType type)

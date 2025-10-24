@@ -71,6 +71,7 @@ public:
     virtual ~ZoomQueryImpl() = default;
     array<double> GetZoomRatioRange();
     array<ZoomPointInfo> GetZoomPointInfos();
+    bool IsZoomCenterPointSupported();
 };
 
 class ZoomImpl : public ZoomQueryImpl {
@@ -82,6 +83,8 @@ public:
     void PrepareZoom();
     void UnprepareZoom();
     void SetSmoothZoom(double targetRatio, optional_view<SmoothZoomMode> mode);
+    Point GetZoomCenterPoint();
+    void SetZoomCenterPoint(Point point);
 };
 
 class ColorReservationQueryImpl : virtual public SessionBase {

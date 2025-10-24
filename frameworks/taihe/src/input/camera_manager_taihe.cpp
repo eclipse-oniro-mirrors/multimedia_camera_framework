@@ -58,6 +58,7 @@
 using namespace OHOS;
 namespace Ani {
 namespace Camera {
+uint32_t CameraManagerImpl::cameraManagerTaskId_ = CAMERA_MANAGER_TASKID;
 thread_local std::unordered_map<std::string, sptr<OHOS::CameraStandard::CameraOutputCapability>> g_aniValueCacheMap {};
 
 CameraMuteListenerAni::CameraMuteListenerAni(ani_env* env): ListenerBase(env)
@@ -1037,17 +1038,7 @@ array<CameraConcurrentInfo> CameraManagerImpl::GetCameraConcurrentInfos(array_vi
 CameraDevice CameraManagerImpl::GetCameraDevice(CameraPosition position, CameraType type)
 {
     MEDIA_INFO_LOG("CameraManagerImpl::GetCameraDevice is called");
-    std::string defaultString = "";
-    CameraDevice cameraTaihe {
-        .cameraId = CameraUtilsTaihe::ToTaiheString(defaultString),
-        .cameraPosition = CameraPosition::key_t::CAMERA_POSITION_UNSPECIFIED,
-        .cameraType = CameraType::key_t::CAMERA_TYPE_DEFAULT,
-        .connectionType = ConnectionType::key_t::CAMERA_CONNECTION_BUILT_IN,
-        .isRetractable = optional<bool>::make(false),
-        .hostDeviceType = HostDeviceType::key_t::UNKNOWN_TYPE,
-        .hostDeviceName = CameraUtilsTaihe::ToTaiheString(defaultString),
-        .cameraOrientation = 0,
-    };
+    CameraDevice cameraTaihe = CameraUtilsTaihe::GetNullCameraDevice();
     CHECK_RETURN_RET_ELOG(cameraManager_ == nullptr, cameraTaihe, "cameraManager_ is nullptr");
     int32_t cameraPosition = static_cast<int32_t>(position.get_value());
     int32_t cameraType = static_cast<int32_t>(type.get_value());
@@ -1060,6 +1051,32 @@ CameraDevice CameraManagerImpl::GetCameraDevice(CameraPosition position, CameraT
         return cameraTaihe;
     }
     return CameraUtilsTaihe::ToTaiheCameraDevice(cameraInfo);
+}
+
+int64_t CameraManagerImpl::GetCameraStorageSizeSync()
+{
+    MEDIA_INFO_LOG("CameraManagerImpl::GetCameraStorageSize is called");
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), 0,
+        "SystemApi GetCameraStorageSize is called!");
+    std::unique_ptr<CameraManagerAsyncContext> asyncContext = std::make_unique<CameraManagerAsyncContext>(
+        "CameraManagerImpl::GetCameraStorageSizeSync", CameraUtilsTaihe::IncrementAndGet(cameraManagerTaskId_));
+    CHECK_RETURN_RET_ELOG(cameraManager_ == nullptr, 0, "failed to GetCameraStorageSize, cameraManager is nullprt");
+    asyncContext->queueTask =
+        CameraTaiheWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueTask(
+            "CameraManagerImpl::GetCameraStorageSizeSync");
+    asyncContext->objectInfo = this;
+    CAMERA_START_ASYNC_TRACE(asyncContext->funcName, asyncContext->taskId);
+    CameraTaiheWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(asyncContext->queueTask, [&asyncContext]() {
+        CHECK_RETURN_ELOG(asyncContext->objectInfo == nullptr, "cameraManager_ is nullptr");
+        int64_t storageSize = 0;
+        asyncContext->errorCode = asyncContext->objectInfo->cameraManager_->GetCameraStorageSize(storageSize);
+        asyncContext->status = asyncContext->errorCode == OHOS::CameraStandard::SUCCESS;
+        asyncContext->storageSize = storageSize;
+
+        CameraUtilsTaihe::CheckError(asyncContext->errorCode);
+    });
+    CAMERA_FINISH_ASYNC_TRACE(asyncContext->funcName, asyncContext->taskId);
+    return static_cast<int32_t>(asyncContext->storageSize);
 }
 
 CameraManager getCameraManager(uintptr_t context)
