@@ -1455,6 +1455,21 @@ int32_t CaptureSession::UnlockForControl()
     return CameraErrorCode::SUCCESS;
 }
 
+CaptureSession::LockGuardForControl::LockGuardForControl(wptr<CaptureSession> session) : session_(session)
+{
+    auto spSession = session_.promote();
+    CHECK_RETURN_ELOG(spSession == nullptr, "session is nullptr");
+    spSession->LockForControl();
+}
+
+CaptureSession::LockGuardForControl::~LockGuardForControl()
+{
+    auto spSession = session_.promote();
+    CHECK_RETURN_ELOG(spSession == nullptr, "session is nullptr");
+    spSession->UnlockForControl();
+}
+
+
 VideoStabilizationMode CaptureSession::GetActiveVideoStabilizationMode()
 {
     sptr<CameraDevice> cameraObj_;
@@ -5169,8 +5184,7 @@ int32_t CaptureSession::SetQualityPrioritization(QualityPrioritization qualityPr
 int32_t CaptureSession::EnableAutoAigcPhoto(bool enabled)
 {
     MEDIA_INFO_LOG("CaptureSession::EnableAutoAigcPhoto enabled:%{public}d", enabled);
-
-    LockForControl();
+    LockGuardForControl lock(this);
     CHECK_RETURN_RET_ELOG(
         changedMetadata_ == nullptr, PARAMETER_ERROR, "CaptureSession::EnableAutoAigcPhoto changedMetadata_ is NULL");
     int32_t res = CameraErrorCode::SUCCESS;
@@ -5185,8 +5199,6 @@ int32_t CaptureSession::EnableAutoAigcPhoto(bool enabled)
     }
     CHECK_RETURN_RET_ELOG(
         !status, PARAMETER_ERROR, "CaptureSession::EnableAutoAigcPhoto failed to set type!");
-    UnlockForControl();
-
     CHECK_PRINT_ELOG(res != CameraErrorCode::SUCCESS, "CaptureSession::EnableAutoAigcPhoto failed");
     return res;
 }

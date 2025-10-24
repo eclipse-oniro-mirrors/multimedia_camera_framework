@@ -1833,6 +1833,16 @@ protected:
     CameraPosition GetUsedAsPosition();
 
 private:
+    class LockGuardForControl {
+    public:
+        explicit LockGuardForControl(wptr<CaptureSession> session);
+        ~LockGuardForControl();
+
+    private:
+        LockGuardForControl(const LockGuardForControl&) = delete;
+        LockGuardForControl& operator=(const LockGuardForControl&) = delete;
+        wptr<CaptureSession> session_ = nullptr;
+    };
     std::mutex switchDeviceMutex_;
     std::mutex functionMapMutex_;
     std::mutex changeMetaMutex_;
