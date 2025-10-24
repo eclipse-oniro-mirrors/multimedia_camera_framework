@@ -1561,6 +1561,7 @@ int32_t HCaptureSession::Start()
         camera_position_enum_t cameraPosition = static_cast<camera_position_enum_t>(usedAsPositionU8);
         auto hStreamOperatorSptr = GetStreamOperator();
         CHECK_RETURN_ELOG(hStreamOperatorSptr == nullptr, "hStreamOperatorSptr is null");
+        CHECK_RETURN_ELOG(cameraDevice == nullptr, "cameraDevice is null");
         cameraDevice->SetFrameRateRange(hStreamOperatorSptr->GetFrameRateRange());
         UpdateSettingForSpecialBundle();
         errorCode = hStreamOperatorSptr->StartPreviewStream(settings, cameraPosition);
