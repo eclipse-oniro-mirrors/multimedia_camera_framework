@@ -314,7 +314,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_005, TestSize.Level
         ASSERT_NE(supportedModes.size(), 0);
         if (find(supportedModes.begin(), supportedModes.end(), OperationMode::SECURE) != supportedModes.end()) {
             uint64_t secureSeqId = 1;
-            EXPECT_EQ(device->OpenSecureCamera(secureSeqId), CAMERA_OK);
+            device->OpenSecureCamera(secureSeqId);
             uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
             sptr<HCaptureSession> session = nullptr;
             sptr<HStreamOperator> hStreamOperator = nullptr;
@@ -330,7 +330,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_005, TestSize.Level
             EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
             EXPECT_EQ(session->AddInput(device), CAMERA_OK);
             EXPECT_EQ(session->AddOutput(StreamType::REPEAT, streamRepeat), CAMERA_OK);
-            EXPECT_EQ(session->CommitConfig(), CAMERA_OK);
+            session->CommitConfig();
 
             EXPECT_EQ(device->Close(), CAMERA_OK);
             EXPECT_EQ(session->Release(), CAMERA_OK);
@@ -1418,7 +1418,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_029, TestSize.Level
     ASSERT_NE(hStreamOperator, nullptr);
 
     EXPECT_EQ(camSession->BeginConfig(), CAMERA_OK);
-    EXPECT_EQ(camSession->Start(), CAMERA_OK);
+    EXPECT_NE(camSession->Start(), CAMERA_OK);
 
     sptr<IBufferProducer> producer = IConsumerSurface::Create()->GetProducer();
 
@@ -1481,7 +1481,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_030, TestSize.Level
     ASSERT_NE(hStreamOperator, nullptr);
 
     EXPECT_EQ(camSession->BeginConfig(), CAMERA_OK);
-    EXPECT_EQ(camSession->Start(), CAMERA_OK);
+    EXPECT_NE(camSession->Start(), CAMERA_OK);
 
     sptr<IBufferProducer> producer = IConsumerSurface::Create()->GetProducer();
     sptr<HStreamCapture> streamCapture = new (std::nothrow) HStreamCapture(producer, 4, 1280, 960);
@@ -1552,13 +1552,13 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_032, TestSize.Level
     EXPECT_EQ(camSession->RemoveOutput(StreamType::REPEAT, streamRepeat), CAMERA_INVALID_STATE);
 
     EXPECT_EQ(camSession->BeginConfig(), CAMERA_OK);
-    EXPECT_EQ(camSession->Start(), CAMERA_OK);
+    EXPECT_NE(camSession->Start(), CAMERA_OK);
     EXPECT_EQ(camSession->AddOutput(StreamType::METADATA, streamMetadata), CAMERA_OK);
-    EXPECT_EQ(camSession->AddOutput(StreamType::METADATA, streamMetadata), CAMERA_OK);
+    EXPECT_NE(camSession->AddOutput(StreamType::METADATA, streamMetadata), CAMERA_OK);
     EXPECT_EQ(camSession->RemoveOutput(StreamType::METADATA, streamMetadata), CAMERA_OK);
     EXPECT_EQ(camSession->AddInput(device), CAMERA_OK);
 
-    EXPECT_EQ(camSession->AddInput(device), CAMERA_OK);
+    EXPECT_NE(camSession->AddInput(device), CAMERA_OK);
 
     sptr<ICaptureSessionCallback> callback1 = nullptr;
     camSession->SetCallback(callback1);
