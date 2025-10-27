@@ -107,13 +107,17 @@ int32_t AudioVideoMuxer::SetStartTime(float timems)
     // LCOV_EXCL_STOP
 }
 
-int32_t AudioVideoMuxer::SetSqr(int32_t bitrate)
+int32_t AudioVideoMuxer::SetSqr(int32_t bitrate, int32_t iaBframeEnable)
 {
     // LCOV_EXCL_START
     CHECK_RETURN_RET_ELOG(avCodecProxy_|| bitrate <= 0, 1, "AudioVideoMuxer::SetSqr failed");
     std::string bitrateStr = STAGE_VIDEO_ENCODER_PARAM_VALUE + std::to_string(bitrate);
+    std::string BframeStr = STAGE_VIDEO_ENCODER_BFRAME_VALUE + std::to_string(iaBframeEnable);
+    std::string BframeModeStr = STAGE_VIDEO_ENCODER_BFRAME_MODE_VALUE;
+    std::string InfoStr = bitrateStr + BframeStr + BframeModeStr;
+    MEDIA_DEBUG_LOG("InfoStr:%{public}s", InfoStr.c_str());
     std::shared_ptr<Meta> userMeta = std::make_shared<Meta>();
-    userMeta->SetData(STAGE_ENCODER_PARAM_KEY, bitrateStr);
+    userMeta->SetData(STAGE_ENCODER_PARAM_KEY, InfoStr);
     int32_t ret = avCodecProxy_->AVMuxerSetUserMeta(userMeta);
     CHECK_RETURN_RET_ELOG(ret != AV_ERR_OK, 1, "SetSqr failed, ret: %{public}d", ret);
     return 0;

@@ -44,10 +44,13 @@ public:
     int32_t FreeOutputData(uint32_t bufferIndex);
     bool EncodeSurfaceBuffer(sptr<FrameRecord> frameRecord);
     int32_t Stop();
+    void TsVecInsert(int64_t timestamp);
     int32_t Release();
     int32_t GetSurface();
     int32_t ReleaseSurfaceBuffer(sptr<FrameRecord> frameRecord);
     int32_t DetachCodecBuffer(sptr<SurfaceBuffer> &surfaceBuffer, sptr<FrameRecord> frameRecord);
+    std::shared_ptr<AVBuffer> GetXpsBuffer();
+    void SetXpsBuffer(std::shared_ptr<AVBuffer> XpsBuffer);
     struct CallBack : public MediaCodecCallback {
         explicit CallBack(std::weak_ptr<VideoEncoder> encoder) : videoEncoder_(encoder) {}
         ~CallBack() override = default;
@@ -55,18 +58,35 @@ public:
         void OnOutputFormatChanged(const Format &format) override;
         void OnInputBufferAvailable(uint32_t index, std::shared_ptr<AVBuffer> buffer) override;
         void OnOutputBufferAvailable(uint32_t index, std::shared_ptr<AVBuffer> buffer) override;
+
+    private:
+        std::weak_ptr<VideoEncoder> videoEncoder_;
+    };
+
+    struct inputCallback : public MediaCodecParameterWithAttrCallback {
+        explicit inputCallback(std::weak_ptr<VideoEncoder> encoder) : videoEncoder_(encoder) {}
+        ~inputCallback() override = default;
+        void OnInputParameterWithAttrAvailable(uint32_t index, std::shared_ptr<Format> attribute,
+                                                   std::shared_ptr<Format> parameter) override;
+
     private:
         std::weak_ptr<VideoEncoder> videoEncoder_;
     };
     bool IsHdr(ColorSpace colorSpace);
     int32_t GetEncoderBitrate();
+    inline int32_t GetBframeAbility()
+    {
+        MEDIA_INFO_LOG("Bframeability:%{public}d , %{public}d", static_cast<int32_t>(BframeAbility_), BframeAbility_);
+        return static_cast<int32_t>(BframeAbility_);
+    }
     void SetVideoCodec(const std::shared_ptr<Size>& size, int32_t rotation);
 
 private:
     int32_t SetCallback();
     int32_t Configure();
+    std::shared_ptr<AVBuffer> CopyAVBuffer(std::shared_ptr<AVBuffer> &inputBuffer);
     void RestartVideoCodec(shared_ptr<Size> size, int32_t rotation);
-    bool EnqueueBuffer(sptr<FrameRecord> frameRecord, int32_t keyFrameInterval);
+    bool EnqueueBuffer(sptr<FrameRecord> frameRecord);
     bool ProcessFrameRecord(sptr<VideoCodecAVBufferInfo> bufferInfo, sptr<FrameRecord> frameRecord);
     std::atomic<bool> isStarted_ { false };
     std::mutex encoderMutex_;
@@ -79,11 +99,23 @@ private:
     sptr<Surface> codecSurface_;
     int32_t keyFrameInterval_ = KEY_FRAME_INTERVAL;
     VideoCodecType videoCodecType_ = VIDEO_ENCODE_TYPE_AVC;
+    int64_t muxerIndex = 0;
     int32_t bitrate_ = 0;
-    bool successFrame_ = false;
     int64_t preFrameTimestamp_ = 0;
     bool isHdr_ = false;
+    bool BframeAbility_ = false;
     sptr<SurfaceBuffer> codecDetachBuf_ = nullptr;
+
+    std::mutex enqueueMutex_;
+    std::condition_variable enqueueCond_;
+
+    int64_t current_min_timestamp = INT64_MAX;
+
+    std::mutex tsMutex_;
+    std::priority_queue<int64_t, std::vector<int64_t>, std::greater<int64_t>> tsVec_;
+    std::shared_ptr<AVBuffer> XpsBuffer_;
+    std::mutex overTimeMutex_;
+    std::unordered_set<int64_t>  overTimeVec;
 };
 } // CameraStandard
 } // OHOS

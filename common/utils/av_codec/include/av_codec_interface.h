@@ -63,8 +63,11 @@ public:
     virtual int32_t QueueInputBuffer(uint32_t index) = 0;
     virtual int32_t AVCodecVideoEncoderNotifyEos() = 0;
     virtual int32_t ReleaseOutputBuffer(uint32_t index) = 0;
+    virtual int32_t QueueInputParameter(uint32_t index) = 0;
     virtual int32_t AVCodecVideoEncoderSetParameter(const Format& format) = 0;
     virtual int32_t AVCodecVideoEncoderSetCallback(const std::shared_ptr<MediaCodecCallback>& callback) = 0;
+    virtual int32_t AVCodecVideoEncoderInfoIframeSetCallback(
+        const std::shared_ptr<MediaAVCodec::MediaCodecParameterWithAttrCallback>& callback) = 0;
     virtual int32_t AVCodecVideoEncoderConfigure(const Format& format) = 0;
     virtual void CreateAVSource(int32_t fd, int64_t offset, int64_t size) = 0;
     virtual int32_t AVSourceGetSourceFormat(Format& format) = 0;
@@ -74,6 +77,7 @@ public:
     virtual int32_t ReadSampleBuffer(uint32_t trackIndex, std::shared_ptr<AVBuffer> sample) = 0;
     virtual int32_t AVDemuxerSeekToTime(int64_t millisecond, SeekMode mode) = 0;
     virtual int32_t AVDemuxerSelectTrackByID(uint32_t trackIndex) = 0;
+    virtual bool IsBframeSurported() = 0;
 };
 }  // namespace OHOS::CameraStandard
 #endif //AV_CODEC_INTERFACE_H

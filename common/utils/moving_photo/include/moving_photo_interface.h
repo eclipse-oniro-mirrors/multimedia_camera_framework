@@ -53,6 +53,7 @@ public:
     virtual void DoMuxerVideo(std::vector<sptr<FrameRecord>> frameRecords,
         uint64_t taskName, int32_t rotation, int32_t captureId) = 0;
     virtual bool isEmptyVideoFdMap() = 0;
+    virtual void NotifyEOS() = 0;
     virtual bool TaskManagerInsertStartTime(int32_t captureId, int64_t startTimeStamp) = 0;
     virtual bool TaskManagerInsertEndTime(int32_t captureId, int64_t endTimeStamp) = 0;
 };

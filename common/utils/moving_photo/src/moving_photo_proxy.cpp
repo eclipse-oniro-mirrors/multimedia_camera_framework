@@ -244,6 +244,14 @@ sptr<MovingPhotoVideoCacheProxy> MovingPhotoVideoCacheProxy::CreateMovingPhotoVi
     return movingPhotoVideoCacheProxy;
 }
 
+void AvcodecTaskManagerProxy::NotifyEOS()
+{
+    MEDIA_INFO_LOG("notifyEOS start");
+    CHECK_RETURN_ELOG(avcodecTaskManagerIntf_ == nullptr, "avcodecTaskManagerIntf_ is nullptr");
+    avcodecTaskManagerIntf_->NotifyEOS();
+    MEDIA_INFO_LOG("notifyEOS End");
+}
+
 int32_t MovingPhotoVideoCacheProxy::CreateMovingPhotoVideoCache(sptr<AvcodecTaskManagerIntf> avcodecTaskManagerIntf)
 {
     MEDIA_DEBUG_LOG("CreateMovingPhotoVideoCache start");

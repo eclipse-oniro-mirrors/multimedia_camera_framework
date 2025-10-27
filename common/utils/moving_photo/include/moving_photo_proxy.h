@@ -39,6 +39,7 @@ public:
     bool isEmptyVideoFdMap() override;
     bool TaskManagerInsertStartTime(int32_t captureId, int64_t startTimeStamp) override;
     bool TaskManagerInsertEndTime(int32_t captureId, int64_t endTimeStamp) override;
+    void NotifyEOS() override;
     sptr<AvcodecTaskManagerIntf> GetTaskManagerAdapter() const;
 private:
     std::shared_ptr<Dynamiclib> avcodecTaskManagerLib_ = {nullptr};

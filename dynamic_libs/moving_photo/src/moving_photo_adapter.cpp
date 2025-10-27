@@ -77,6 +77,14 @@ void AvcodecTaskManagerAdapter::SetVideoBufferDuration(uint32_t preBufferCount, 
     MEDIA_DEBUG_LOG("SetVideoBufferDuration success");
 }
 
+void AvcodecTaskManagerAdapter::NotifyEOS()
+{
+    MEDIA_INFO_LOG("notifyEOS start");
+    CHECK_RETURN_ELOG(avcodecTaskManager_ == nullptr, "AvcodecTaskManager not created");
+    avcodecTaskManager_->NotifyEOS();
+    MEDIA_INFO_LOG("notifyEOS End");
+}
+
 void AvcodecTaskManagerAdapter::SetVideoFd(
     int64_t timestamp, std::shared_ptr<PhotoAssetIntf> photoAssetProxy, int32_t captureId)
 {

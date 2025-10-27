@@ -94,9 +94,9 @@ CodecUserData::~CodecUserData()
     Release();
 }
 
-VideoCodecAVBufferInfo::VideoCodecAVBufferInfo(uint32_t argBufferIndex,
+VideoCodecAVBufferInfo::VideoCodecAVBufferInfo(uint32_t argBufferIndex, int64_t muxerIndex,
     std::shared_ptr<OHOS::Media::AVBuffer> argBuffer)
-    : bufferIndex(argBufferIndex), buffer(argBuffer)
+    : bufferIndex(argBufferIndex), muxerIndex_(muxerIndex), buffer(argBuffer)
 {
 }
 
@@ -159,9 +159,7 @@ void VideoCodecUserData::Release()
     }
     {
         std::lock_guard<std::mutex> lock(outputMutex_);
-        while (!outputBufferInfoQueue_.empty()) {
-            outputBufferInfoQueue_.pop();
-        }
+        outputBufferInfoQueue_.clear();
     }
     // LCOV_EXCL_STOP
 }
