@@ -1424,7 +1424,8 @@ std::vector<dmDeviceInfo> CameraManager::GetDmDeviceInfo()
             nlohmann::json deviceInfoJson = nlohmann::json::parse(deviceInfoStr);
             if ((deviceInfoJson.contains("deviceName") && deviceInfoJson.contains("deviceTypeId") &&
                     deviceInfoJson.contains("networkId")) &&
-                (deviceInfoJson["deviceName"].is_string() && deviceInfoJson["networkId"].is_string())) {
+                (deviceInfoJson["deviceName"].is_string() && deviceInfoJson["networkId"].is_string() &&
+                    deviceInfoJson["networkId"].is_unsigned_int())) {
                 distributedCamInfo[i].deviceName = deviceInfoJson["deviceName"];
                 distributedCamInfo[i].deviceTypeId = deviceInfoJson["deviceTypeId"];
                 distributedCamInfo[i].networkId = deviceInfoJson["networkId"];
