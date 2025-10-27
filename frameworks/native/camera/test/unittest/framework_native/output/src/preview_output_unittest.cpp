@@ -109,6 +109,7 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_001, TestSize.Level1)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->SetMdmCheck(false);
     camInput->GetCameraDevice()->Open();
 
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
@@ -150,6 +151,7 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_002, TestSize.Level1)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->SetMdmCheck(false);
     camInput->GetCameraDevice()->Open();
 
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
@@ -219,6 +221,7 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_004, TestSize.Level1)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->SetMdmCheck(false);
     camInput->GetCameraDevice()->Open();
 
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
@@ -273,6 +276,7 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_005, TestSize.Level1)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->SetMdmCheck(false);
     camInput->GetCameraDevice()->Open();
 
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
@@ -342,6 +346,7 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_006, TestSize.Level1)
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->SetMdmCheck(false);
     camInput->GetCameraDevice()->Open();
 
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
@@ -435,6 +440,7 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_008, TestSize.Level1)
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->SetMdmCheck(false);
     camInput->GetCameraDevice()->Open();
 
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
@@ -482,6 +488,7 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_009, TestSize.Level1)
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->SetMdmCheck(false);
     camInput->GetCameraDevice()->Open();
 
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
@@ -557,6 +564,7 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_011, TestSize.Level1)
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->SetMdmCheck(false);
     camInput->GetCameraDevice()->Open();
 
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
@@ -1010,6 +1018,7 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_026, TestSize.Level0)
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->SetMdmCheck(false);
     camInput->GetCameraDevice()->Open();
 
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();

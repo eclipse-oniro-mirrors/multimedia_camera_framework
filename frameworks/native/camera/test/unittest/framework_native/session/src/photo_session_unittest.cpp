@@ -196,6 +196,7 @@ HWTEST_F(CameraPhotoSessionUnitTest, camera_photo_session_unittest_001, TestSize
     sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->SetMdmCheck(false);
     camInput->GetCameraDevice()->Open();
 
     sptr<HCameraHostManager> cameraHostManager = new(std::nothrow) HCameraHostManager(nullptr);
@@ -239,6 +240,7 @@ HWTEST_F(CameraPhotoSessionUnitTest, camera_photo_session_unittest_002, TestSize
     sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->SetMdmCheck(false);
     camInput->GetCameraDevice()->Open();
 
     sptr<HCameraHostManager> cameraHostManager = new(std::nothrow) HCameraHostManager(nullptr);
@@ -300,7 +302,10 @@ HWTEST_F(CameraPhotoSessionUnitTest, photo_session_function_unittest_001, TestSi
     ASSERT_NE(photoSession, nullptr);
 
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
-    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(cameraInput, nullptr);
+    cameraInput->GetCameraDevice()->SetMdmCheck(false);
+    sptr<CaptureInput> input = cameraInput;
     ASSERT_NE(input, nullptr);
     input->Open();
 
@@ -326,7 +331,10 @@ HWTEST_F(CameraPhotoSessionUnitTest, photo_session_function_unittest_002, TestSi
     ASSERT_NE(photoSession, nullptr);
 
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
-    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(cameraInput, nullptr);
+    cameraInput->GetCameraDevice()->SetMdmCheck(false);
+    sptr<CaptureInput> input = cameraInput;
     ASSERT_NE(input, nullptr);
     input->Open();
 

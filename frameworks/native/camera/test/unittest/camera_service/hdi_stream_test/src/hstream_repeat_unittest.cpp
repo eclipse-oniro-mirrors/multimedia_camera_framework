@@ -884,18 +884,15 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_032, TestSize.Level1)
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
     int32_t height = PHOTO_DEFAULT_HEIGHT;
-
     sptr<CameraManager> cameraManager = CameraManager::GetInstance();
     ASSERT_NE(cameraManager, nullptr);
     std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
     ASSERT_FALSE(cameras.empty());
-
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
-
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    std::string cameraSettings = camInput->GetCameraSettings();
-    camInput->SetCameraSettings(cameraSettings);
+    camInput->SetCameraSettings(camInput->GetCameraSettings());
+    camInput->GetCameraDevice()->SetMdmCheck(false);
     camInput->GetCameraDevice()->Open();
     sptr<CameraOutputCapability> outputCapability =
         cameraManager->GetSupportedOutputCapability(cameras[CONST_0], PHOTO_MODE);
@@ -904,26 +901,19 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_032, TestSize.Level1)
     ASSERT_FALSE(photoProfiles.empty());
     sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfiles[CONST_0]);
     ASSERT_NE(photo, nullptr);
-
     sptr<CaptureOutput> metadatOutput = cameraManager->CreateMetadataOutput();
     ASSERT_NE(metadatOutput, nullptr);
-
     sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-
     EXPECT_EQ(session->BeginConfig(), 0);
-
     EXPECT_EQ(session->AddInput(input), 0);
     EXPECT_EQ(session->AddOutput(photo), 0);
     EXPECT_EQ(session->AddOutput(metadatOutput), 0);
-
     EXPECT_EQ(session->CommitConfig(), 0);
-
     sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
     sptr<IBufferProducer> producer1 = Surface->GetProducer();
     auto streamRepeat = new (std::nothrow) HStreamRepeat(producer1, format, width, height, RepeatStreamType::PREVIEW);
     ASSERT_NE(streamRepeat, nullptr);
-
     std::shared_ptr<PhotoCaptureSetting> photoSetting = std::make_shared<PhotoCaptureSetting>();
     photoSetting->SetRotation(PhotoCaptureSetting::Rotation_90);
     photoSetting->SetQuality(PhotoCaptureSetting::QUALITY_LEVEL_MEDIUM);
@@ -933,9 +923,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_032, TestSize.Level1)
     if (streamRepeat->LinkInput(streamOperator, photoSetting->GetCaptureMetadataSetting()) != 0) {
         EXPECT_EQ(streamRepeat->Stop(), CAMERA_INVALID_STATE);
         EXPECT_EQ(streamRepeat->Start(), CAMERA_INVALID_STATE);
-
         EXPECT_EQ(streamRepeat->AddDeferredSurface(producer1), CAMERA_INVALID_STATE);
-
         EXPECT_EQ(streamRepeat->Start(), CAMERA_INVALID_STATE);
         EXPECT_EQ(streamRepeat->Stop(), CAMERA_INVALID_STATE);
     }

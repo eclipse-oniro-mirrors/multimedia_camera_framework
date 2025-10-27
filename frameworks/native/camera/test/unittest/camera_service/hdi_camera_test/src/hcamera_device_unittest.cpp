@@ -109,7 +109,8 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_002, TestSize.Level1)
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
     ASSERT_NE(camDevice, nullptr);
-
+    
+    camDevice->SetMdmCheck(false);
     camDevice->HandlePrivacyWhenOpenDeviceFail();
 
     camDevice->cameraPrivacy_ = nullptr;
@@ -291,6 +292,7 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_008, TestSize.Level1)
     sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
     ASSERT_NE(camDevice, nullptr);
 
+    camDevice->SetMdmCheck(false);
     camDevice->cameraPrivacy_ = nullptr;
     camDevice->cameraPid_ = 1;
     camDevice->HandlePrivacyAfterCloseDevice();
@@ -358,6 +360,7 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_010, TestSize.Level1)
 
     HCameraDeviceManager::GetInstance()->peerCallback_ = new (std::nothrow) ICameraBrokerTest();
     ASSERT_NE(HCameraDeviceManager::GetInstance()->peerCallback_, nullptr);
+    camDevice -> SetMdmCheck(false);
     int32_t ret = camDevice->HCameraDevice::Open();
     EXPECT_EQ(ret, 0);
 
@@ -406,7 +409,7 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_011, TestSize.Level1)
 
     camDevice->EnableResult(result);
     camDevice->DisableResult(result);
-
+    camDevice->SetMdmCheck(false);
     int32_t ret = camDevice->Open();
     EXPECT_EQ(ret, 0);
     camDevice->UpdateSetting(nullptr);
@@ -454,7 +457,7 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_012, TestSize.Level1)
     ASSERT_NE(callback1, nullptr);
     camDevice->EnableResult(result);
     camDevice->DisableResult(result);
-
+    camDevice->SetMdmCheck(false);
     int32_t ret = camDevice->Open();
     EXPECT_EQ(ret, 0);
     camDevice->Open();
@@ -586,6 +589,7 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_022, TestSize.Level1)
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->SetMdmCheck(false);
     camInput->GetCameraDevice()->Open();
 
     sptr<HCameraService> cameraService = new (std::nothrow) HCameraService(cameraHostManager_);
@@ -907,6 +911,7 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_034, TestSize.Level1)
 
     HCameraDeviceManager::GetInstance()->peerCallback_ = new (std::nothrow) ICameraBrokerTest();
     ASSERT_NE(HCameraDeviceManager::GetInstance()->peerCallback_, nullptr);
+    camDevice->SetMdmCheck(false);
     int32_t ret = camDevice->HCameraDevice::Open();
     EXPECT_EQ(ret, 0);
 
@@ -981,6 +986,7 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_036, TestSize.Level1)
 
     HCameraDeviceManager::GetInstance()->peerCallback_ = new (std::nothrow) ICameraBrokerTest();
     ASSERT_NE(HCameraDeviceManager::GetInstance()->peerCallback_, nullptr);
+    camDevice->SetMdmCheck(false);
     int32_t ret = camDevice->HCameraDevice::Open();
     EXPECT_EQ(ret, 0);
     camDevice->GetClientName();
@@ -1039,6 +1045,7 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_039, TestSize.Level1)
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
     ASSERT_NE(camDevice, nullptr);
+    
     int32_t ret = camDevice->HCameraDevice::Open();
     EXPECT_EQ(ret, 0);
     HCameraDeviceManager::GetInstance()->SetLiveScene(true);

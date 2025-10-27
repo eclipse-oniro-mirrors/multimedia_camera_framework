@@ -279,12 +279,11 @@ HWTEST_F(CameraSketchWrapperOutputUnit, sketch_wrapper_unittest_005, TestSize.Le
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     Size previewSize = { .width = 1440, .height = 1080 };
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
-    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
     camInput->SetCameraSettings(camInput->GetCameraSettings());
+    camInput->GetCameraDevice()->SetMdmCheck(false);
     camInput->GetCameraDevice()->Open();
-
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
     std::shared_ptr<OHOS::Camera::CameraMetadata> deviceMetadata =
@@ -292,10 +291,9 @@ HWTEST_F(CameraSketchWrapperOutputUnit, sketch_wrapper_unittest_005, TestSize.Le
     ASSERT_NE(deviceMetadata, nullptr);
     session->GetFeaturesMode();
     Profile previewProfile = Profile(CAMERA_FORMAT_YCBCR_420_888, previewSize);
-    sptr<CaptureOutput> preview = cameraManager_->CreatePreviewOutput(previewProfile, surface);
+    sptr<CaptureOutput> preview = cameraManager_->CreatePreviewOutput(previewProfile, Surface::CreateSurfaceAsConsumer());
     ASSERT_NE(preview, nullptr);
     auto previewOutput = (sptr<PreviewOutput>&)preview;
-
     SketchWrapper* sketchWrapper = new (std::nothrow) SketchWrapper(previewOutput->GetStream(), previewSize);
     ASSERT_NE(sketchWrapper, nullptr);
     std::shared_ptr<PreviewStateCallback> setCallback =
@@ -303,7 +301,6 @@ HWTEST_F(CameraSketchWrapperOutputUnit, sketch_wrapper_unittest_005, TestSize.Le
     ASSERT_NE(setCallback, nullptr);
     camera_metadata_item_t item;
     OHOS::Camera::FindCameraMetadataItem(deviceMetadata->get(), OHOS_CONTROL_ZOOM_RATIO, &item);
-
     auto sketchReferenceFovRangeVec = std::vector<SketchReferenceFovRange>(5);
     SketchReferenceFovRange sketchReferenceFovRange = { .zoomMin = -1.0f, .zoomMax = -1.0f, .referenceValue = -1.0f };
     sketchReferenceFovRangeVec[0] = sketchReferenceFovRange;
@@ -318,14 +315,12 @@ HWTEST_F(CameraSketchWrapperOutputUnit, sketch_wrapper_unittest_005, TestSize.Le
     sketchReferenceFovRangeVec[3] = sketchReferenceFovRange;
     sketchReferenceFovRange = { .zoomMin = 100.0f, .zoomMax = 200.0f, .referenceValue = -1.0f };
     sketchReferenceFovRangeVec[4] = sketchReferenceFovRange;
-
     SceneFeaturesMode illegalFeaturesMode2(static_cast<SceneMode>(100), {});
     SketchWrapper::g_sketchReferenceFovRatioMap_[illegalFeaturesMode2] = sketchReferenceFovRangeVec;
     EXPECT_EQ(sketchWrapper->GetSketchReferenceFovRatio(illegalFeaturesMode2, -1.0f), -1.0f);
     EXPECT_EQ(sketchWrapper->GetSketchReferenceFovRatio(illegalFeaturesMode2, 200.0f), -1.0f);
     EXPECT_EQ(sketchWrapper->GetSketchReferenceFovRatio(illegalFeaturesMode2, 100.0f), -1.0f);
     sketchWrapper->UpdateSketchReferenceFovRatio(item);
-
     EXPECT_EQ(preview->Release(), 0);
     EXPECT_EQ(input->Release(), 0);
     EXPECT_EQ(session->Release(), 0);

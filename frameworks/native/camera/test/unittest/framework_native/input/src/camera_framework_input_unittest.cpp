@@ -197,6 +197,7 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_006, TestSize
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->SetMdmCheck(false);
     camInput->GetCameraDevice()->Open();
     auto cameraProxy = CameraManager::g_cameraManager->GetServiceProxy();
     ASSERT_NE(cameraProxy, nullptr);
@@ -278,7 +279,10 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_008, TestSize
             uint64_t secureSeqId = 0;
             sptr<ICameraDeviceService> deviceObj = camInput->GetCameraDevice();
             ASSERT_NE(deviceObj, nullptr);
-
+            auto device = camInput->GetCameraDevice();
+            if (device) {
+                device->SetMdmCheck(false);
+            }
             int intResult = camInput->Open(true, &secureSeqId);
             EXPECT_EQ(intResult, 0);
             input->Close();
@@ -316,7 +320,7 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_009, TestSize
             uint64_t secureSeqId = 0;
             sptr<ICameraDeviceService> deviceObj = camInput->GetCameraDevice();
             ASSERT_NE(deviceObj, nullptr);
-
+            deviceObj->SetMdmCheck(false);
             int intResult = camInput->Open(true, &secureSeqId);
             EXPECT_EQ(intResult, 0);
             input->Close();
@@ -355,6 +359,7 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_010, TestSize
             ASSERT_NE(deviceObj, nullptr);
 
             uint64_t* secureSeqId = nullptr;
+            deviceObj->SetMdmCheck(false);
             int intResult = camInput->Open(true, secureSeqId);
             EXPECT_EQ(intResult, CAMERA_INVALID_ARG);
             input->Close();
@@ -393,6 +398,7 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_011, TestSize
             ASSERT_NE(deviceObj, nullptr);
 
             uint64_t secureSeqId = 0;
+            deviceObj->SetMdmCheck(false);
             int intResult = camInput->Open(false, &secureSeqId);
             EXPECT_EQ(intResult, CAMERA_OK);
             EXPECT_EQ(secureSeqId, 0);
@@ -795,6 +801,9 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_023, TestSize
             MEDIA_INFO_LOG("camera_framework_input_unittest_022 outputCapabilities not empty");
             sptr<CameraInput> inputFront = cameraManager_->CreateCameraInput(deviceFront);
             sptr<CameraInput> inputBack = cameraManager_->CreateCameraInput(deviceFront);
+            if (inputFront->GetCameraDevice()) {
+                inputFront->GetCameraDevice()->SetMdmCheck(false);
+            }
             int32_t ret = inputFront->Open(cameraConcurrentType[0]);
             EXPECT_EQ(ret, 0);
             ret = inputFront->Close();
@@ -1536,6 +1545,9 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_066, TestSize
     EXPECT_EQ(input->GetCameraDevice(), deviceObj);
  
     int32_t cameraConcurrentType = 0;
+    if (input->GetCameraDevice()) {
+        input->GetCameraDevice()->SetMdmCheck(false);
+    }
     EXPECT_NE(input->Open(cameraConcurrentType), 0);
     EXPECT_EQ(input->Close(), SERVICE_FATL_ERROR);
 }
