@@ -130,8 +130,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_001, TestSize.Level
     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
 
-    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
-    sptr<IBufferProducer> producer = surface->GetProducer();
+    sptr<IBufferProducer> producer = IConsumerSurface::Create()->GetProducer();
 
     sptr<HStreamRepeat> streamRepeat = new (std::nothrow) HStreamRepeat(producer, DEFAULT_FORMAT,
         DEFAULT_WIDTH, DEFAULT_HEIGHT, RepeatStreamType::PREVIEW);
@@ -228,8 +227,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_003, TestSize.Level
     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
 
-    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
-    sptr<IBufferProducer> producer = surface->GetProducer();
+    sptr<IBufferProducer> producer = IConsumerSurface::Create()->GetProducer();
     sptr<HStreamRepeat> streamRepeat = new (std::nothrow) HStreamRepeat(producer, DEFAULT_FORMAT,
         DEFAULT_WIDTH, DEFAULT_HEIGHT, RepeatStreamType::PREVIEW);
     ASSERT_NE(streamRepeat, nullptr);
@@ -324,8 +322,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_005, TestSize.Level
             InitSessionAndOperator(callerToken, opMode, session, hStreamOperator);
             ASSERT_NE(session, nullptr);
 
-            sptr<IConsumerSurface> surface = IConsumerSurface::Create();
-            sptr<IBufferProducer> producer = surface->GetProducer();
+            sptr<IBufferProducer> producer = IConsumerSurface::Create()->GetProducer();
             sptr<HStreamRepeat> streamRepeat = new (std::nothrow) HStreamRepeat(producer, DEFAULT_FORMAT,
                 DEFAULT_WIDTH, DEFAULT_HEIGHT, RepeatStreamType::PREVIEW);
             ASSERT_NE(streamRepeat, nullptr);
@@ -372,8 +369,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_006, TestSize.Level
     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
 
-    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
-    sptr<IBufferProducer> producer = surface->GetProducer();
+    sptr<IBufferProducer> producer = IConsumerSurface::Create()->GetProducer();
     sptr<HStreamRepeat> streamRepeat = new (std::nothrow) HStreamRepeat(producer, DEFAULT_FORMAT,
         DEFAULT_WIDTH, DEFAULT_HEIGHT, RepeatStreamType::PREVIEW);
     ASSERT_NE(streamRepeat, nullptr);
@@ -418,8 +414,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_007, TestSize.Level
     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
 
-    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
-    sptr<IBufferProducer> producer = surface->GetProducer();
+    sptr<IBufferProducer> producer = IConsumerSurface::Create()->GetProducer();
 
     sptr<HStreamRepeat> streamRepeat = new (std::nothrow) HStreamRepeat(producer, DEFAULT_FORMAT,
         DEFAULT_WIDTH, DEFAULT_HEIGHT, RepeatStreamType::PREVIEW);
@@ -479,8 +474,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_008, TestSize.Level
     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
 
-    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
-    sptr<IBufferProducer> producer = surface->GetProducer();
+    sptr<IBufferProducer> producer = IConsumerSurface::Create()->GetProducer();
     sptr<HStreamRepeat> streamRepeat = new (std::nothrow) HStreamRepeat(producer, DEFAULT_FORMAT,
         DEFAULT_WIDTH, DEFAULT_HEIGHT, RepeatStreamType::PREVIEW);
     ASSERT_NE(streamRepeat, nullptr);
@@ -587,8 +581,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_011, TestSize.Level
     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
 
-    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
-    sptr<IBufferProducer> producer = surface->GetProducer();
+    sptr<IBufferProducer> producer = IConsumerSurface::Create()->GetProducer();
 
     sptr<HStreamRepeat> streamRepeat = new (std::nothrow) HStreamRepeat(producer, DEFAULT_FORMAT,
         DEFAULT_WIDTH, DEFAULT_HEIGHT, RepeatStreamType::PREVIEW);
@@ -640,8 +633,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_012, TestSize.Level
     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
 
-    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
-    sptr<IBufferProducer> producer = surface->GetProducer();
+    sptr<IBufferProducer> producer = IConsumerSurface::Create()->GetProducer();
 
     sptr<HStreamRepeat> streamRepeat = new (std::nothrow) HStreamRepeat(producer, DEFAULT_FORMAT,
         DEFAULT_WIDTH, DEFAULT_HEIGHT, RepeatStreamType::PREVIEW);
@@ -763,8 +755,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_015, TestSize.Level
     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
 
-    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
-    sptr<IBufferProducer> producer = surface->GetProducer();
+    sptr<IBufferProducer> producer = IConsumerSurface::Create()->GetProducer();
 
     sptr<HStreamRepeat> streamRepeat = new (std::nothrow) HStreamRepeat(producer, DEFAULT_FORMAT,
         DEFAULT_WIDTH, DEFAULT_HEIGHT, RepeatStreamType::PREVIEW);
@@ -822,8 +813,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_016, TestSize.Level
     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
 
-    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
-    sptr<IBufferProducer> producer = surface->GetProducer();
+    sptr<IBufferProducer> producer = IConsumerSurface::Create()->GetProducer();
 
     sptr<HStreamRepeat> streamRepeat = new (std::nothrow) HStreamRepeat(producer, DEFAULT_FORMAT,
         DEFAULT_WIDTH, DEFAULT_HEIGHT, RepeatStreamType::PREVIEW);
@@ -871,8 +861,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_017, TestSize.Level
     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
 
-    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
-    sptr<IBufferProducer> producer = surface->GetProducer();
+    sptr<IBufferProducer> producer = IConsumerSurface::Create()->GetProducer();
 
     sptr<HStreamRepeat> streamRepeat = new (std::nothrow) HStreamRepeat(producer, DEFAULT_FORMAT,
         DEFAULT_WIDTH, DEFAULT_HEIGHT, RepeatStreamType::PREVIEW);
@@ -932,8 +921,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_018, TestSize.Level
     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
 
-    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
-    sptr<IBufferProducer> producer = surface->GetProducer();
+    sptr<IBufferProducer> producer = IConsumerSurface::Create()->GetProducer();
 
     sptr<HStreamRepeat> streamRepeat = new (std::nothrow) HStreamRepeat(producer, DEFAULT_FORMAT,
         DEFAULT_WIDTH, DEFAULT_HEIGHT, RepeatStreamType::PREVIEW);
@@ -986,8 +974,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_019, TestSize.Level
     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
 
-    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
-    sptr<IBufferProducer> producer = surface->GetProducer();
+    sptr<IBufferProducer> producer = IConsumerSurface::Create()->GetProducer();
 
     sptr<HStreamRepeat> streamRepeat = new (std::nothrow) HStreamRepeat(producer, DEFAULT_FORMAT,
         DEFAULT_WIDTH, DEFAULT_HEIGHT, RepeatStreamType::PREVIEW);
@@ -1075,8 +1062,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_021, TestSize.Level
     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
 
-    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
-    sptr<IBufferProducer> producer = surface->GetProducer();
+    sptr<IBufferProducer> producer = IConsumerSurface::Create()->GetProducer();
     sptr<HStreamRepeat> streamRepeat = new (std::nothrow) HStreamRepeat(producer, DEFAULT_FORMAT,
         DEFAULT_WIDTH, DEFAULT_HEIGHT, RepeatStreamType::PREVIEW);
     ASSERT_NE(streamRepeat, nullptr);
@@ -1155,8 +1141,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_023, TestSize.Level
     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
 
-    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
-    sptr<IBufferProducer> producer = surface->GetProducer();
+    sptr<IBufferProducer> producer = IConsumerSurface::Create()->GetProducer();
     sptr<HStreamRepeat> streamRepeat = new (std::nothrow) HStreamRepeat(producer, DEFAULT_FORMAT,
         DEFAULT_WIDTH, DEFAULT_HEIGHT, RepeatStreamType::PREVIEW);
     ASSERT_NE(streamRepeat, nullptr);
@@ -1228,8 +1213,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_025, TestSize.Level
     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
 
-    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
-    sptr<IBufferProducer> producer = surface->GetProducer();
+    sptr<IBufferProducer> producer = IConsumerSurface::Create()->GetProducer();
     sptr<HStreamRepeat> streamRepeat = new (std::nothrow) HStreamRepeat(producer, DEFAULT_FORMAT,
         DEFAULT_WIDTH, DEFAULT_HEIGHT, RepeatStreamType::PREVIEW);
     ASSERT_NE(streamRepeat, nullptr);
@@ -1281,8 +1265,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_026, TestSize.Level
     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
 
-    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
-    sptr<IBufferProducer> producer = surface->GetProducer();
+    sptr<IBufferProducer> producer = IConsumerSurface::Create()->GetProducer();
     sptr<HStreamRepeat> streamRepeat = new (std::nothrow) HStreamRepeat(producer, DEFAULT_FORMAT,
         DEFAULT_WIDTH, DEFAULT_HEIGHT, RepeatStreamType::PREVIEW);
     ASSERT_NE(streamRepeat, nullptr);
@@ -1329,8 +1312,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_027, TestSize.Level
     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
 
-    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
-    sptr<IBufferProducer> producer = surface->GetProducer();
+    sptr<IBufferProducer> producer = IConsumerSurface::Create()->GetProducer();
     sptr<HStreamRepeat> streamRepeat = new (std::nothrow) HStreamRepeat(producer, DEFAULT_FORMAT,
         DEFAULT_WIDTH, DEFAULT_HEIGHT, RepeatStreamType::PREVIEW);
     ASSERT_NE(streamRepeat, nullptr);
@@ -1438,8 +1420,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_029, TestSize.Level
     EXPECT_EQ(camSession->BeginConfig(), CAMERA_OK);
     EXPECT_EQ(camSession->Start(), CAMERA_OK);
 
-    sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
-    sptr<IBufferProducer> producer = Surface->GetProducer();
+    sptr<IBufferProducer> producer = IConsumerSurface::Create()->GetProducer();
 
     auto streamRepeat = new (std::nothrow) HStreamRepeat(producer, 4, 1280, 960, RepeatStreamType::PREVIEW);
     ASSERT_NE(streamRepeat, nullptr);
@@ -1502,8 +1483,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_030, TestSize.Level
     EXPECT_EQ(camSession->BeginConfig(), CAMERA_OK);
     EXPECT_EQ(camSession->Start(), CAMERA_OK);
 
-    sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
-    sptr<IBufferProducer> producer = Surface->GetProducer();
+    sptr<IBufferProducer> producer = IConsumerSurface::Create()->GetProducer();
     sptr<HStreamCapture> streamCapture = new (std::nothrow) HStreamCapture(producer, 4, 1280, 960);
     sptr<HStreamCapture> streamCapture1 = new (std::nothrow) HStreamCapture(producer, 3, 640, 480);
     sptr<HStreamRepeat> streamRepeat =
@@ -1563,8 +1543,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_032, TestSize.Level
 
     EXPECT_EQ(camSession->Start(), CAMERA_INVALID_STATE);
 
-    sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
-    sptr<IBufferProducer> producer = Surface->GetProducer();
+    sptr<IBufferProducer> producer = IConsumerSurface::Create()->GetProducer();
     sptr<HStreamRepeat> streamRepeat = new (std::nothrow) HStreamRepeat(producer, 0, 0, 0, RepeatStreamType::PREVIEW);
     ASSERT_NE(streamRepeat, nullptr);
     sptr<HStreamMetadata> streamMetadata= new(std::nothrow) HStreamMetadata(producer, 0, {1});
@@ -2363,8 +2342,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_057, TestSize.Level
     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
 
-    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
-    sptr<IBufferProducer> producer = surface->GetProducer();
+    sptr<IBufferProducer> producer = IConsumerSurface::Create()->GetProducer();
     sptr<HStreamRepeat> streamRepeat = new (std::nothrow) HStreamRepeat(producer, DEFAULT_FORMAT,
         DEFAULT_WIDTH, DEFAULT_HEIGHT, RepeatStreamType::PREVIEW);
     ASSERT_NE(streamRepeat, nullptr);
@@ -2426,8 +2404,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_059, TestSize.Level
     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
 
-    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
-    sptr<IBufferProducer> producer = surface->GetProducer();
+    sptr<IBufferProducer> producer = IConsumerSurface::Create()->GetProducer();
     sptr<HStreamRepeat> streamRepeat = new (std::nothrow) HStreamRepeat(producer, DEFAULT_FORMAT,
         DEFAULT_WIDTH, DEFAULT_HEIGHT, RepeatStreamType::PREVIEW);
     ASSERT_NE(streamRepeat, nullptr);
@@ -2631,7 +2608,6 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_065, TestSize.Level
     int32_t targetRangeId = 10;
     float actualWaitTime = camSession->GetCrossWaitTime(crossTime, targetRangeId, currentRangeId);
     EXPECT_EQ(actualWaitTime, 0.0);
-
     EXPECT_EQ(camSession->Release(), CAMERA_OK);
 }
 
@@ -2654,13 +2630,11 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_066, TestSize.Level
     ASSERT_NE(device, nullptr);
     device->SetMdmCheck(false);
     EXPECT_EQ(device->Open(), CAMERA_OK);
-
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCaptureSession> session = nullptr;
     SceneMode mode = SECURE;
     HCaptureSession::NewInstance(callerToken, mode, session);
     ASSERT_NE(session, nullptr);
-
     EXPECT_EQ(session->GetCameraDevice(), nullptr);
     EXPECT_EQ(session->EnableMovingPhoto(true), CAMERA_OK);
     EXPECT_EQ(device->Close(), CAMERA_OK);
@@ -2686,13 +2660,11 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_067, TestSize.Level
     ASSERT_NE(device, nullptr);
     device->SetMdmCheck(false);
     EXPECT_EQ(device->Open(), CAMERA_OK);
-
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCaptureSession> session = nullptr;
     SceneMode mode = SECURE;
     HCaptureSession::NewInstance(callerToken, mode, session);
     ASSERT_NE(session, nullptr);
-
     EXPECT_EQ(session->isSessionStarted_, false);
     pid_t pid = session->GetPid();
     EXPECT_EQ(session->GetConcurrentCameraIds(pid), "Concurrency cameras:[]");
@@ -2719,13 +2691,11 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_068, TestSize.Level
     ASSERT_NE(device, nullptr);
     device->SetMdmCheck(false);
     EXPECT_EQ(device->Open(), CAMERA_OK);
-
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCaptureSession> session = nullptr;
     SceneMode mode = SECURE;
     HCaptureSession::NewInstance(callerToken, mode, session);
     ASSERT_NE(session, nullptr);
-
     session->isSessionStarted_ = true;
     EXPECT_EQ(session->GetCameraDevice(), nullptr);
     pid_t pid = session->GetPid();
@@ -2753,13 +2723,11 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_069, TestSize.Level
     ASSERT_NE(device, nullptr);
     device->SetMdmCheck(false);
     EXPECT_EQ(device->Open(), CAMERA_OK);
-
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCaptureSession> session = nullptr;
     SceneMode mode = SECURE;
     HCaptureSession::NewInstance(callerToken, mode, session);
     ASSERT_NE(session, nullptr);
-
     session->isSessionStarted_ = true;
     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
@@ -2789,13 +2757,11 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_070, TestSize.Level
     ASSERT_NE(device, nullptr);
     device->SetMdmCheck(false);
     EXPECT_EQ(device->Open(), CAMERA_OK);
-
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCaptureSession> session = nullptr;
     SceneMode mode = PORTRAIT;
     HCaptureSession::NewInstance(callerToken, mode, session);
     ASSERT_NE(session, nullptr);
-
     EXPECT_EQ(session->Stop(), CAMERA_INVALID_STATE);
     EXPECT_EQ(device->Close(), CAMERA_OK);
     EXPECT_EQ(session->Release(), CAMERA_OK);
@@ -2820,13 +2786,11 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_071, TestSize.Level
     ASSERT_NE(device, nullptr);
     device->SetMdmCheck(false);
     EXPECT_EQ(device->Open(), CAMERA_OK);
-
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCaptureSession> session = nullptr;
     SceneMode mode = PORTRAIT;
     HCaptureSession::NewInstance(callerToken, mode, session);
     ASSERT_NE(session, nullptr);
-
     EXPECT_EQ(session->OperatePermissionCheck(INTERFACE_CODE), CAMERA_OK);
     EXPECT_EQ(device->Close(), CAMERA_OK);
     EXPECT_EQ(session->Release(), CAMERA_OK);
@@ -2851,13 +2815,11 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_072, TestSize.Level
     ASSERT_NE(device, nullptr);
     device->SetMdmCheck(false);
     EXPECT_EQ(device->Open(), CAMERA_OK);
-
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCaptureSession> session = nullptr;
     SceneMode mode = PORTRAIT;
     HCaptureSession::NewInstance(callerToken, mode, session);
     ASSERT_NE(session, nullptr);
-
     uint32_t interfaceCode = 0;
     EXPECT_EQ(session->OperatePermissionCheck(interfaceCode), CAMERA_OK);
     EXPECT_EQ(device->Close(), CAMERA_OK);
@@ -2883,13 +2845,11 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_073, TestSize.Level
     ASSERT_NE(device, nullptr);
     device->SetMdmCheck(false);
     EXPECT_EQ(device->Open(), CAMERA_OK);
-
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCaptureSession> session = nullptr;
     SceneMode mode = PORTRAIT;
     HCaptureSession::NewInstance(callerToken, mode, session);
     ASSERT_NE(session, nullptr);
-
     std::string suffix = "132";
     EXPECT_NE(session->CreateDisplayName(suffix), "");
     EXPECT_EQ(device->Close(), CAMERA_OK);
@@ -2915,18 +2875,15 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_074, TestSize.Level
     ASSERT_NE(device, nullptr);
     device->SetMdmCheck(false);
     EXPECT_EQ(device->Open(), CAMERA_OK);
-
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCaptureSession> session = nullptr;
     SceneMode mode = PORTRAIT;
     HCaptureSession::NewInstance(callerToken, mode, session);
     ASSERT_NE(session, nullptr);
-
     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
     EXPECT_EQ(session->SetCommitConfigFlag(true), CAMERA_OK);
     EXPECT_EQ(session->CommitConfig(), CAMERA_OK);
     EXPECT_EQ(session->Start(), CAMERA_OK);
-
     EXPECT_EQ(session->Stop(), CAMERA_OK);
     EXPECT_EQ(device->Close(), CAMERA_OK);
     EXPECT_EQ(session->Release(), CAMERA_OK);
@@ -2949,21 +2906,19 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_075, TestSize.Level
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[0], device);
     ASSERT_NE(device, nullptr);
-    device->Open();
-
+    device->SetMdmCheck(false);
+    EXPECT_EQ(device->Open(), CAMERA_OK);
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCaptureSession> session = nullptr;
     SceneMode mode = PORTRAIT;
     HCaptureSession::NewInstance(callerToken, mode, session);
     ASSERT_NE(session, nullptr);
-
     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
     EXPECT_EQ(session->SetCommitConfigFlag(true), CAMERA_OK);
     EXPECT_EQ(session->CommitConfig(), CAMERA_OK);
     EXPECT_EQ(session->Start(), CAMERA_OK);
     EXPECT_EQ(session->Stop(), CAMERA_OK);
-
     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
     EXPECT_EQ(session->RemoveInput(device), CAMERA_OK);
     EXPECT_EQ(session->CommitConfig(), CAMERA_OK);

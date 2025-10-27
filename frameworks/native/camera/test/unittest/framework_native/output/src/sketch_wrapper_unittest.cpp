@@ -291,7 +291,8 @@ HWTEST_F(CameraSketchWrapperOutputUnit, sketch_wrapper_unittest_005, TestSize.Le
     ASSERT_NE(deviceMetadata, nullptr);
     session->GetFeaturesMode();
     Profile previewProfile = Profile(CAMERA_FORMAT_YCBCR_420_888, previewSize);
-    sptr<CaptureOutput> preview = cameraManager_->CreatePreviewOutput(previewProfile, Surface::CreateSurfaceAsConsumer());
+    sptr<CaptureOutput> preview = cameraManager_->CreatePreviewOutput(previewProfile,
+                                                                      Surface::CreateSurfaceAsConsumer());
     ASSERT_NE(preview, nullptr);
     auto previewOutput = (sptr<PreviewOutput>&)preview;
     SketchWrapper* sketchWrapper = new (std::nothrow) SketchWrapper(previewOutput->GetStream(), previewSize);
