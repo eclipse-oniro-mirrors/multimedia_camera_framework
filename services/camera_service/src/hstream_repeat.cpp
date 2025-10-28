@@ -641,7 +641,6 @@ int32_t HStreamRepeat::SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate)
         bool status = AddOrUpdateMetadata(
             dynamicSetting, OHOS_CONTROL_FPS_RANGES, streamFrameRateRange_.data(), streamFrameRateRange_.size());
         CHECK_PRINT_ELOG(!status, "HStreamRepeat::SetFrameRate Failed to set frame range");
-        CHECK_EXECUTE(IsLive(), UpdateLiveSettings(dynamicSetting));
         OHOS::Camera::MetadataUtils::ConvertMetadataToVec(dynamicSetting, repeatSettings);
     }
     auto streamOperator = GetStreamOperator();
