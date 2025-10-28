@@ -75,6 +75,9 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_001, Test
     };
     ret = OH_CaptureSession_RegisterCallback(captureSession, &setCaptureSessionResultCallback);
     EXPECT_EQ(ret, CAMERA_OK);
+    OHOS::sptr<OHOS::CameraStandard::CameraInput> innerCameraInput = cameraInput->GetInnerCameraInput();
+    auto device = innerCameraInput->GetCameraDevice();
+    device->SetMdmCheck(false);
     ret = OH_CameraInput_Open(cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
 
@@ -238,6 +241,9 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_007, Test
     Camera_Input *cameraInput = nullptr;
     ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
+    OHOS::sptr<OHOS::CameraStandard::CameraInput> innerCameraInput = cameraInput->GetInnerCameraInput();
+    auto device = innerCameraInput->GetCameraDevice();
+    device->SetMdmCheck(false);
     ret = OH_CameraInput_Open(cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
 
@@ -328,6 +334,9 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_010, Test
     ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
     EXPECT_NE(cameraInput, nullptr);
+    OHOS::sptr<OHOS::CameraStandard::CameraInput> innerCameraInput = cameraInput->GetInnerCameraInput();
+    auto device = innerCameraInput->GetCameraDevice();
+    device->SetMdmCheck(false);
     ret = OH_CameraInput_Open(cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_CaptureSession_BeginConfig(captureSession);
@@ -411,6 +420,9 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_012, Test
     Camera_Input *cameraInput = nullptr;
     ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
+    OHOS::sptr<OHOS::CameraStandard::CameraInput> innerCameraInput = cameraInput->GetInnerCameraInput();
+    auto device = innerCameraInput->GetCameraDevice();
+    device->SetMdmCheck(false);
     ret = OH_CameraInput_Open(cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
     Camera_CaptureSession* captureSession = nullptr;
@@ -516,6 +528,9 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_015, Test
     ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
     EXPECT_NE(cameraInput, nullptr);
+    OHOS::sptr<OHOS::CameraStandard::CameraInput> innerCameraInput = cameraInput->GetInnerCameraInput();
+    auto device = innerCameraInput->GetCameraDevice();
+    device->SetMdmCheck(false);
     ret = OH_CameraInput_Open(cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_CaptureSession_BeginConfig(captureSession);
@@ -672,6 +687,7 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_018, Test
     ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
     EXPECT_NE(cameraInput, nullptr);
+    cameraInput->GetInnerCameraInput()->GetCameraDevice()SetMdmCheck(false);
     ret = OH_CameraInput_Open(cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_CaptureSession_BeginConfig(captureSession);
@@ -812,6 +828,9 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_021, Test
     ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
     ASSERT_NE(cameraInput, nullptr);
+    OHOS::sptr<OHOS::CameraStandard::CameraInput> innerCameraInput = cameraInput->GetInnerCameraInput();
+    auto device = innerCameraInput->GetCameraDevice();
+    device->SetMdmCheck(false);
     ret = OH_CameraInput_Open(cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_CaptureSession_BeginConfig(captureSession);
@@ -939,6 +958,9 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_024, Test
     ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
     EXPECT_NE(cameraInput, nullptr);
+    OHOS::sptr<OHOS::CameraStandard::CameraInput> innerCameraInput = cameraInput->GetInnerCameraInput();
+    auto device = innerCameraInput->GetCameraDevice();
+    device->SetMdmCheck(false);
     ret = OH_CameraInput_Open(cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_CaptureSession_BeginConfig(captureSession);
@@ -1049,6 +1071,9 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_027, Test
     Camera_Input *cameraInput = nullptr;
     ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
+    OHOS::sptr<OHOS::CameraStandard::CameraInput> innerCameraInput = cameraInput->GetInnerCameraInput();
+    auto device = innerCameraInput->GetCameraDevice();
+    device->SetMdmCheck(false);
     ret = OH_CameraInput_Open(cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
     Camera_CaptureSession* captureSession = nullptr;
@@ -1161,6 +1186,9 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_030, Test
     Camera_Input *cameraInput = nullptr;
     ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
+    OHOS::sptr<OHOS::CameraStandard::CameraInput> innerCameraInput = cameraInput->GetInnerCameraInput();
+    auto device = innerCameraInput->GetCameraDevice();
+    device->SetMdmCheck(false);
     ret = OH_CameraInput_Open(cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
     Camera_CaptureSession* captureSession = nullptr;
@@ -1215,6 +1243,9 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_031, Test
     Camera_Input *cameraInput = nullptr;
     ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
+    OHOS::sptr<OHOS::CameraStandard::CameraInput> innerCameraInput = cameraInput->GetInnerCameraInput();
+    auto device = innerCameraInput->GetCameraDevice();
+    device->SetMdmCheck(false);
     ret = OH_CameraInput_Open(cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
     Camera_CaptureSession* captureSession = nullptr;
@@ -1271,6 +1302,9 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_032, Test
     Camera_Input *cameraInput = nullptr;
     ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
+    OHOS::sptr<OHOS::CameraStandard::CameraInput> innerCameraInput = cameraInput->GetInnerCameraInput();
+    auto device = innerCameraInput->GetCameraDevice();
+    device->SetMdmCheck(false);
     ret = OH_CameraInput_Open(cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
     Camera_CaptureSession* captureSession = nullptr;
@@ -1399,6 +1433,9 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_035, Test
     Camera_FocusMode focusMode = Camera_FocusMode::FOCUS_MODE_MANUAL;
     ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
+    OHOS::sptr<OHOS::CameraStandard::CameraInput> innerCameraInput = cameraInput->GetInnerCameraInput();
+    auto device = innerCameraInput->GetCameraDevice();
+    device->SetMdmCheck(false);
     ret = OH_CameraInput_Open(cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
     Camera_CaptureSession* captureSession = nullptr;
@@ -1522,6 +1559,9 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_038, Test
     Camera_Input *cameraInput = nullptr;
     ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
+    OHOS::sptr<OHOS::CameraStandard::CameraInput> innerCameraInput = cameraInput->GetInnerCameraInput();
+    auto device = innerCameraInput->GetCameraDevice();
+    device->SetMdmCheck(false);
     ret = OH_CameraInput_Open(cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
     Camera_CaptureSession* captureSession = nullptr;
@@ -1636,6 +1676,9 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_041, Test
     ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
     ASSERT_NE(cameraInput, nullptr);
+    OHOS::sptr<OHOS::CameraStandard::CameraInput> innerCameraInput = cameraInput->GetInnerCameraInput();
+    auto device = innerCameraInput->GetCameraDevice();
+    device->SetMdmCheck(false);
     ret = OH_CameraInput_Open(cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_CaptureSession_BeginConfig(captureSession);
@@ -1740,6 +1783,9 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_044, Test
     Camera_Input *cameraInput;
     ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
+    OHOS::sptr<OHOS::CameraStandard::CameraInput> innerCameraInput = cameraInput->GetInnerCameraInput();
+    auto device = innerCameraInput->GetCameraDevice();
+    device->SetMdmCheck(false);
     ret = OH_CameraInput_Open(cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_CaptureSession_BeginConfig(captureSession);
@@ -1862,6 +1908,9 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_047, Test
     ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
     EXPECT_NE(cameraInput, nullptr);
+    OHOS::sptr<OHOS::CameraStandard::CameraInput> innerCameraInput = cameraInput->GetInnerCameraInput();
+    auto device = innerCameraInput->GetCameraDevice();
+    device->SetMdmCheck(false);
     ret = OH_CameraInput_Open(cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
     EXPECT_EQ(OH_CaptureSession_BeginConfig(captureSession), CAMERA_OK);
@@ -1956,6 +2005,9 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_050, Test
     Camera_Input *cameraInput = nullptr;
     ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
+    OHOS::sptr<OHOS::CameraStandard::CameraInput> innerCameraInput = cameraInput->GetInnerCameraInput();
+    auto device = innerCameraInput->GetCameraDevice();
+    device->SetMdmCheck(false);
     ret = OH_CameraInput_Open(cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
 
@@ -2055,6 +2107,9 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_053, Test
     ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
     ASSERT_NE(cameraInput, nullptr);
+    OHOS::sptr<OHOS::CameraStandard::CameraInput> innerCameraInput = cameraInput->GetInnerCameraInput();
+    auto device = innerCameraInput->GetCameraDevice();
+    device->SetMdmCheck(false);
     ret = OH_CameraInput_Open(cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
 
@@ -2158,6 +2213,9 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_056, Test
     ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
     ASSERT_NE(cameraInput, nullptr);
+    OHOS::sptr<OHOS::CameraStandard::CameraInput> innerCameraInput = cameraInput->GetInnerCameraInput();
+    auto device = innerCameraInput->GetCameraDevice();
+    device->SetMdmCheck(false);
     ret = OH_CameraInput_Open(cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
 
@@ -2277,6 +2335,9 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_059, Test
         ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
         EXPECT_EQ(ret, CAMERA_OK);
         ASSERT_NE(cameraInput, nullptr);
+        OHOS::sptr<OHOS::CameraStandard::CameraInput> innerCameraInput = cameraInput->GetInnerCameraInput();
+        auto device = innerCameraInput->GetCameraDevice();
+        device->SetMdmCheck(false);
         EXPECT_EQ(OH_CameraInput_Open(cameraInput), CAMERA_OK);
         ret = OH_CaptureSession_BeginConfig(captureSession);
         EXPECT_EQ(ret, CAMERA_OK);
@@ -2378,6 +2439,9 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_061, Test
         ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
         EXPECT_EQ(ret, CAMERA_OK);
         ASSERT_NE(cameraInput, nullptr);
+        OHOS::sptr<OHOS::CameraStandard::CameraInput> innerCameraInput = cameraInput->GetInnerCameraInput();
+        auto device = innerCameraInput->GetCameraDevice();
+        device->SetMdmCheck(false);
         EXPECT_EQ(OH_CameraInput_Open(cameraInput), CAMERA_OK);
         ret = OH_CaptureSession_BeginConfig(captureSession);
         EXPECT_EQ(ret, CAMERA_OK);
@@ -2468,6 +2532,9 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_063, Test
     ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
     ASSERT_NE(cameraInput, nullptr);
+    OHOS::sptr<OHOS::CameraStandard::CameraInput> innerCameraInput = cameraInput->GetInnerCameraInput();
+    auto device = innerCameraInput->GetCameraDevice();
+    device->SetMdmCheck(false);
     EXPECT_EQ(OH_CameraInput_Open(cameraInput), CAMERA_OK);
     EXPECT_EQ(OH_CaptureSession_AddInput(captureSession, cameraInput), CAMERA_OK);
     Camera_PhotoOutput *photooutput = CreatePhotoOutput();
@@ -2550,6 +2617,9 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_066, Test
     ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
     ASSERT_NE(cameraInput, nullptr);
+    OHOS::sptr<OHOS::CameraStandard::CameraInput> innerCameraInput = cameraInput->GetInnerCameraInput();
+    auto device = innerCameraInput->GetCameraDevice();
+    device->SetMdmCheck(false);
     EXPECT_EQ(OH_CameraInput_Open(cameraInput), CAMERA_OK);
     EXPECT_EQ(OH_CaptureSession_AddInput(captureSession, cameraInput), CAMERA_OK);
     Camera_PhotoOutput *photooutput = CreatePhotoOutput();
@@ -2633,6 +2703,9 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_069, Test
     ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
     ASSERT_NE(cameraInput, nullptr);
     EXPECT_EQ(ret, CAMERA_OK);
+    OHOS::sptr<OHOS::CameraStandard::CameraInput> innerCameraInput = cameraInput->GetInnerCameraInput();
+    auto device = innerCameraInput->GetCameraDevice();
+    device->SetMdmCheck(false);
     ret = OH_CameraInput_Open(cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_CaptureSession_BeginConfig(captureSession);
@@ -2708,6 +2781,9 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_071, Test
     Camera_Input *cameraInput = nullptr;
     ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
+    OHOS::sptr<OHOS::CameraStandard::CameraInput> innerCameraInput = cameraInput->GetInnerCameraInput();
+    auto device = innerCameraInput->GetCameraDevice();
+    device->SetMdmCheck(false);
     ret = OH_CameraInput_Open(cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_CaptureSession_BeginConfig(captureSession);
@@ -2753,6 +2829,9 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_072, Test
     ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
     ASSERT_NE(cameraInput, nullptr);
     EXPECT_EQ(ret, CAMERA_OK);
+    OHOS::sptr<OHOS::CameraStandard::CameraInput> innerCameraInput = cameraInput->GetInnerCameraInput();
+    auto device = innerCameraInput->GetCameraDevice();
+    device->SetMdmCheck(false);
     ret = OH_CameraInput_Open(cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_CaptureSession_BeginConfig(captureSession);
@@ -2907,6 +2986,9 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_photo_session_unittest_macro_001, 
     Camera_ErrorCode ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
 
+    OHOS::sptr<OHOS::CameraStandard::CameraInput> innerCameraInput = cameraInput->GetInnerCameraInput();
+    auto device = innerCameraInput->GetCameraDevice();
+    device->SetMdmCheck(false);
     ret = OH_CameraInput_Open(cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
 
@@ -2965,6 +3047,9 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_photo_session_unittest_macro_003, 
     Camera_PreviewOutput* previewOutput = CreatePreviewOutput();
     ASSERT_NE(previewOutput, nullptr);
 
+    OHOS::sptr<OHOS::CameraStandard::CameraInput> innerCameraInput = cameraInput->GetInnerCameraInput();
+    auto device = innerCameraInput->GetCameraDevice();
+    device->SetMdmCheck(false);
     ret = OH_CameraInput_Open(cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
 
@@ -3010,6 +3095,9 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_photo_session_unittest_macro_004, 
     Camera_PreviewOutput* previewOutput = CreatePreviewOutput();
     ASSERT_NE(previewOutput, nullptr);
 
+    OHOS::sptr<OHOS::CameraStandard::CameraInput> innerCameraInput = cameraInput->GetInnerCameraInput();
+    auto device = innerCameraInput->GetCameraDevice();
+    device->SetMdmCheck(false);
     ret = OH_CameraInput_Open(cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
 
@@ -3070,6 +3158,9 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_video_session_unittest_macro_001, 
     Camera_ErrorCode ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
 
+    OHOS::sptr<OHOS::CameraStandard::CameraInput> innerCameraInput = cameraInput->GetInnerCameraInput();
+    auto device = innerCameraInput->GetCameraDevice();
+    device->SetMdmCheck(false);
     ret = OH_CameraInput_Open(cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
 
@@ -3128,6 +3219,9 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_video_session_unittest_macro_003, 
     Camera_PreviewOutput* previewOutput = CreatePreviewOutput();
     ASSERT_NE(previewOutput, nullptr);
 
+    OHOS::sptr<OHOS::CameraStandard::CameraInput> innerCameraInput = cameraInput->GetInnerCameraInput();
+    auto device = innerCameraInput->GetCameraDevice();
+    device->SetMdmCheck(false);
     ret = OH_CameraInput_Open(cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
 
@@ -3173,6 +3267,9 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_video_session_unittest_macro_004, 
     Camera_PreviewOutput* previewOutput = CreatePreviewOutput();
     ASSERT_NE(previewOutput, nullptr);
 
+    OHOS::sptr<OHOS::CameraStandard::CameraInput> innerCameraInput = cameraInput->GetInnerCameraInput();
+    auto device = innerCameraInput->GetCameraDevice();
+    device->SetMdmCheck(false);
     ret = OH_CameraInput_Open(cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
 
@@ -3410,6 +3507,9 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_082, Test
     ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
     ASSERT_NE(cameraInput, nullptr);
+    OHOS::sptr<OHOS::CameraStandard::CameraInput> innerCameraInput = cameraInput->GetInnerCameraInput();
+    auto device = innerCameraInput->GetCameraDevice();
+    device->SetMdmCheck(false);
     ret = OH_CameraInput_Open(cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_CaptureSession_BeginConfig(captureSession);
@@ -3465,6 +3565,9 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_083, Test
     ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
     ASSERT_NE(cameraInput, nullptr);
+    OHOS::sptr<OHOS::CameraStandard::CameraInput> innerCameraInput = cameraInput->GetInnerCameraInput();
+    auto device = innerCameraInput->GetCameraDevice();
+    device->SetMdmCheck(false);
     ret = OH_CameraInput_Open(cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_CaptureSession_BeginConfig(captureSession);
@@ -3520,6 +3623,9 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_084, Test
     ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
     ASSERT_NE(cameraInput, nullptr);
+    OHOS::sptr<OHOS::CameraStandard::CameraInput> innerCameraInput = cameraInput->GetInnerCameraInput();
+    auto device = innerCameraInput->GetCameraDevice();
+    device->SetMdmCheck(false);
     ret = OH_CameraInput_Open(cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_CaptureSession_BeginConfig(captureSession);
@@ -3589,6 +3695,9 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_088, Test
     ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
     ASSERT_NE(cameraInput, nullptr);
+    OHOS::sptr<OHOS::CameraStandard::CameraInput> innerCameraInput = cameraInput->GetInnerCameraInput();
+    auto device = innerCameraInput->GetCameraDevice();
+    device->SetMdmCheck(false);
     ret = OH_CameraInput_Open(cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_CaptureSession_BeginConfig(captureSession);
@@ -3653,6 +3762,9 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_089, Test
     ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
     ASSERT_NE(cameraInput, nullptr);
+    OHOS::sptr<OHOS::CameraStandard::CameraInput> innerCameraInput = cameraInput->GetInnerCameraInput();
+    auto device = innerCameraInput->GetCameraDevice();
+    device->SetMdmCheck(false);
     ret = OH_CameraInput_Open(cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_CaptureSession_BeginConfig(captureSession);

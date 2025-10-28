@@ -45,6 +45,9 @@ void DisablePolicyChangeCb::PermDisablePolicyCallback(const Security::AccessToke
         std::vector<sptr<HCameraDeviceHolder>> holders = HCameraDeviceManager::GetInstance()->GetActiveCameraHolders();
         for (auto holder : holders) {
             auto device = holder->GetDevice();
+            if (device == nullptr) {
+                continue;
+            }
             auto session = CastToSession(device->GetStreamOperatorCallback());
             if (session) {
                 session->ReleaseStreams();

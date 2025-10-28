@@ -148,6 +148,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_002, TestSize.Level1)
     cameraHostManager_->OpenCameraDevice(cameraId, nullptr, pDevice_, true);
 
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->SetMdmCheck(false);
     camInput->GetCameraDevice()->Open();
 
     sptr<IConsumerSurface> surface = IConsumerSurface::Create();
@@ -185,6 +186,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_003, TestSize.Level1)
     cameraHostManager_->OpenCameraDevice(cameraId, nullptr, pDevice_, true);
 
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->SetMdmCheck(false);
     camInput->GetCameraDevice()->Open();
 
     sptr<IConsumerSurface> surface = IConsumerSurface::Create();
@@ -222,6 +224,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_004, TestSize.Level1)
     cameraHostManager_->OpenCameraDevice(cameraId, nullptr, pDevice_, true);
 
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->SetMdmCheck(false);
     camInput->GetCameraDevice()->Open();
 
     sptr<IConsumerSurface> surface = IConsumerSurface::Create();
@@ -275,6 +278,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_005, TestSize.Level1)
     cameraHostManager_->OpenCameraDevice(cameraId, nullptr, pDevice_, true);
 
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->SetMdmCheck(false);
     camInput->GetCameraDevice()->Open();
 
     sptr<IConsumerSurface> surface = IConsumerSurface::Create();
@@ -557,6 +561,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_015, TestSize.Level1)
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[0], device);
     ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     device->Open();
 
     std::string deviceId = "";
@@ -590,6 +595,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_016, TestSize.Level1)
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[0], device);
     ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     device->Open();
 
     cameraService_->isFoldable = false;
@@ -619,6 +625,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_017, TestSize.Level1)
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[0], device);
     ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     device->Open();
 
     shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility =
@@ -679,6 +686,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_018, TestSize.Level1)
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[0], device);
     ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     device->Open();
 
     shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility =
@@ -739,6 +747,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_019, TestSize.Level1)
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[0], device);
     ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     device->Open();
 
     cameraService_->cameraServiceCallbacks_ = {};
@@ -776,6 +785,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_020, TestSize.Level1)
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[0], device);
     ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     device->Open();
 
     cameraService_->cameraServiceCallbacks_ = {};
@@ -811,6 +821,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_021, TestSize.Level1)
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[0], device);
     ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     device->Open();
 
     cameraService_->cameraMuteServiceCallbacks_ = {};
@@ -851,6 +862,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_022, TestSize.Level1)
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[0], device);
     ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     device->Open();
 
     uint32_t callingTokenId = IPCSkeleton::GetCallingTokenID();
@@ -893,6 +905,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_023, TestSize.Level1)
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[0], device);
     ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     device->Open();
 
     cameraService_->torchServiceCallbacks_ = {};
@@ -996,6 +1009,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_026, TestSize.Level1)
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[0], device);
     ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     device->Open();
 
     cameraHostManager_->AddCameraHost(LOCAL_SERVICE_NAME);
@@ -1058,6 +1072,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_027, TestSize.Level1)
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[0], device);
     ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     device->Open();
 
     HCameraDeviceManager::GetInstance()->stateOfRgmCamera_.Clear();
@@ -1090,6 +1105,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_028, TestSize.Level1)
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[0], device);
     ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     device->Open();
     int32_t state = 0;
     bool canOpenCamera = false;
@@ -1120,6 +1136,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_029, TestSize.Level1)
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[0], device);
     ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     device->Open();
 
     shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility =
@@ -1150,6 +1167,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_030, TestSize.Level1)
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[0], device);
     ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     device->Open();
 
     shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility =
@@ -1186,6 +1204,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_031, TestSize.Level1)
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[0], device);
     ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     device->Open();
 
     shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility =
@@ -1222,6 +1241,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_032, TestSize.Level1)
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[0], device);
     ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     device->Open();
 
     shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility =
@@ -1258,6 +1278,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_033, TestSize.Level1)
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[0], device);
     ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     device->Open();
 
     shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility =
@@ -1294,6 +1315,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_034, TestSize.Level1)
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[0], device);
     ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     device->Open();
 
     shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility =
@@ -1330,6 +1352,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_035, TestSize.Level1)
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[0], device);
     ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     device->Open();
 
     shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility =
@@ -1366,6 +1389,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_037, TestSize.Level1)
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[0], device);
     ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     device->Open();
 
     shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata =
@@ -1396,6 +1420,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_038, TestSize.Level1)
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[0], device);
     ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     device->Open();
 
     shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata =
@@ -1426,6 +1451,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_039, TestSize.Level1)
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[0], device);
     ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     device->Open();
 
     shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata =
@@ -1456,6 +1482,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_040, TestSize.Level1)
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[0], device);
     ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     device->Open();
 
     std::set<int32_t> pidList = {};
@@ -1491,6 +1518,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_041, TestSize.Level1)
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[0], device);
     ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     device->Open();
 
     pid_t pid = IPCSkeleton::GetCallingPid();
@@ -1527,6 +1555,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_042, TestSize.Level1)
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[0], device);
     ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     device->Open();
 
     OHOS::AAFwk::Want want;
@@ -1555,6 +1584,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_043, TestSize.Level1)
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[0], device);
     ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     device->Open();
 
     cameraService_->torchServiceCallbacks_ = {};
@@ -1581,6 +1611,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_044, TestSize.Level1)
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[0], device);
     ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     device->Open();
 
     cameraIds = {};
@@ -1613,6 +1644,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_045, TestSize.Level1)
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[0], device);
     ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     device->Open();
 
     sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
@@ -1672,6 +1704,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_046, TestSize.Level1)
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[0], device);
     ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     device->Open();
 
     int32_t width = 0;
@@ -1717,6 +1750,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_047, TestSize.Level1)
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[0], device);
     ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     device->Open();
 
     sptr<ICameraServiceCallback> callback = nullptr;
@@ -1780,6 +1814,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_048, TestSize.Level1)
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[0], device);
     ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     device->Open();
 
     cameraService_->OnStart();
@@ -1920,6 +1955,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_053, TestSize.Level0)
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[0], device);
     ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     device->Open();
 
     OHOS::AAFwk::Want want;
@@ -1949,6 +1985,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_054, TestSize.Level0)
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[0], device);
     ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     device->Open();
 
     OHOS::AAFwk::Want want;
@@ -1978,6 +2015,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_055, TestSize.Level0)
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[0], device);
     ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     device->Open();
 
     OHOS::AAFwk::Want want;
@@ -2003,6 +2041,7 @@ HWTEST_F(HCameraServiceUnit, OnReceiveEvent_001, TestSize.Level0)
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[0], device);
     ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     device->Open();
 
     OHOS::AAFwk::Want want;
@@ -2052,6 +2091,7 @@ HWTEST_F(HCameraServiceUnit, SetBeauty_001, TestSize.Level0)
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[0], device);
     ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     device->Open();
 
     cameraHostManager_->AddCameraHost(LOCAL_SERVICE_NAME);
@@ -2110,6 +2150,7 @@ HWTEST_F(HCameraServiceUnit, AllowOpenByOHSide_001, TestSize.Level0)
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[0], device);
     ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     device->Open();
 
     HCameraDeviceManager::GetInstance()->pidToCameras_.clear();
@@ -2140,6 +2181,7 @@ HWTEST_F(HCameraServiceUnit, IsTorchSupported_001, TestSize.Level0)
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[BACK_CAM], device);
     ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     device->Open();
 
     std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList;
@@ -2174,6 +2216,7 @@ HWTEST_F(HCameraServiceUnit, DumpCameraAbility_001, TestSize.Level0)
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[BACK_CAM], device);
     ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     device->Open();
 
     std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList;
@@ -2210,6 +2253,7 @@ HWTEST_F(HCameraServiceUnit, DumpCameraStreamInfo_001, TestSize.Level0)
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[BACK_CAM], device);
     ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     device->Open();
 
     std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList;
@@ -2244,6 +2288,7 @@ HWTEST_F(HCameraServiceUnit, DumpCameraZoom_001, TestSize.Level0)
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[BACK_CAM], device);
     ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     device->Open();
 
     std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList;
@@ -2280,6 +2325,7 @@ HWTEST_F(HCameraServiceUnit, DumpCameraZoom_002, TestSize.Level0)
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[BACK_CAM], device);
     ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     device->Open();
 
     std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList;
@@ -2311,6 +2357,7 @@ HWTEST_F(HCameraServiceUnit, Dump_001, TestSize.Level1)
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[BACK_CAM], device);
     ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     device->Open();
 
     auto rc = cameraService_->Dump(0, std::vector<u16string>({ u"concurrency" }));
@@ -2337,6 +2384,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_056, TestSize.Level0)
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[0], device);
     ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     device->Open();
     const int32_t BEAUTY_STATUS_OFF = 0;
     const int32_t BEAUTY_STATUS_ON = 1;
@@ -2363,6 +2411,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_057, TestSize.Level0)
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[0], device);
     ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     device->Open();
 
     cameraService_->cameraServiceCallbacks_ = {};
@@ -2403,6 +2452,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_058, TestSize.Level0)
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[0], device);
     ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     device->Open();
 
     cameraService_->cameraServiceCallbacks_ = {};
@@ -2441,6 +2491,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_059, TestSize.Level0)
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[0], device);
     ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     device->Open();
 
     OHOS::AAFwk::Want want;
@@ -2470,6 +2521,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_060, TestSize.Level0)
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[0], device);
     ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     device->Open();
 
     pid_t pid = IPCSkeleton::GetCallingPid();
@@ -2498,6 +2550,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_061, TestSize.Level0)
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[0], device);
     ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     device->Open();
 
     auto &sessionManager = HCameraSessionManager::GetInstance();
@@ -2525,6 +2578,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_062, TestSize.Level0)
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[0], device);
     ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     device->Open();
 
     OHOS::AAFwk::Want want;
@@ -2554,6 +2608,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_063, TestSize.Level0)
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[0], device);
     ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     device->Open();
 
     HCameraDeviceManager::GetInstance()->stateOfRgmCamera_.Clear();
@@ -2581,6 +2636,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_068, TestSize.Level0)
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[0], device);
     ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     device->Open();
 
     OHOS::AAFwk::Want want;
@@ -2609,6 +2665,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_069, TestSize.Level0)
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[0], device);
     ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     device->Open();
 
     EXPECT_EQ(cameraService_->TransferTemperToPressure(0), PressureStatus::SYSTEM_PRESSURE_NORMAL);
@@ -2641,6 +2698,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_070, TestSize.Level0)
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[0], device);
     ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     device->Open();
 
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility =
@@ -2706,6 +2764,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_071, TestSize.Level1)
     sptr<ICameraDeviceService> device = nullptr;
     cameraService_->CreateCameraDevice(cameraIds[0], device);
     ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     device->Open();
 
     sptr<ResSchedToCameraEventListener> eventListener = new (std::nothrow) ResSchedToCameraEventListener;

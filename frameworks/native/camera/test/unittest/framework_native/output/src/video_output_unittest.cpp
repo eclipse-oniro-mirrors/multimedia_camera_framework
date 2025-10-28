@@ -109,6 +109,7 @@ HWTEST_F(CameraVedioOutputUnit, video_output_unittest_001, TestSize.Level1)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->SetMdmCheck(false);
     camInput->GetCameraDevice()->Open();
 
     sptr<CaptureOutput> output = CreateVideoOutput();
@@ -158,6 +159,7 @@ HWTEST_F(CameraVedioOutputUnit, video_output_unittest_002, TestSize.Level1)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->SetMdmCheck(false);
     camInput->GetCameraDevice()->Open();
 
     sptr<CaptureOutput> output = CreateVideoOutput();
@@ -214,6 +216,7 @@ HWTEST_F(CameraVedioOutputUnit, video_output_unittest_003, TestSize.Level1)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->SetMdmCheck(false);
     camInput->GetCameraDevice()->Open();
 
     sptr<CaptureOutput> output = CreateVideoOutput();
@@ -272,6 +275,7 @@ HWTEST_F(CameraVedioOutputUnit, video_output_unittest_004, TestSize.Level1)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->SetMdmCheck(false);
     camInput->GetCameraDevice()->Open();
 
     sptr<CaptureOutput> output = CreateVideoOutput();
@@ -309,6 +313,7 @@ HWTEST_F(CameraVedioOutputUnit, video_output_unittest_005, TestSize.Level1)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->SetMdmCheck(false);
     camInput->GetCameraDevice()->Open();
 
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
@@ -347,6 +352,7 @@ HWTEST_F(CameraVedioOutputUnit, video_output_unittest_006, TestSize.Level1)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->SetMdmCheck(false);
     camInput->GetCameraDevice()->Open();
 
     sptr<CaptureOutput> output = CreateVideoOutput();

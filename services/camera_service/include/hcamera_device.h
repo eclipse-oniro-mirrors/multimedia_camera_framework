@@ -98,6 +98,7 @@ public:
     int32_t OperatePermissionCheck(uint32_t interfaceCode) override;
     int32_t CallbackEnter([[maybe_unused]] uint32_t code) override;
     int32_t CallbackExit([[maybe_unused]] uint32_t code, [[maybe_unused]] int32_t result) override;
+    int32_t SetMdmCheck(bool mdmCheck) override;
 
     int32_t ResetDeviceSettings();
     int32_t DispatchDefaultSettingToHdi();
@@ -331,6 +332,7 @@ private:
     std::string pidForLiveScene_;
     std::string uidForLiveScene_;
     std::string bundleNameForLiveScene_;
+    bool mdmCheck_ = true;
 };
 } // namespace CameraStandard
 } // namespace OHOS

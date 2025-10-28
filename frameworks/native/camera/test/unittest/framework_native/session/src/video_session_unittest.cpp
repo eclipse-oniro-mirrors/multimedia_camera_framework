@@ -230,6 +230,7 @@ HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_001, TestSize.Level1
     sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->SetMdmCheck(false);
     EXPECT_EQ(camInput->GetCameraDevice()->Open(), 0);
 
     sptr<HCameraHostManager> cameraHostManager = new(std::nothrow) HCameraHostManager(nullptr);
@@ -272,6 +273,7 @@ HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_002, TestSize.Level1
     sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->SetMdmCheck(false);
     EXPECT_EQ(camInput->GetCameraDevice()->Open(), 0);
 
     sptr<HCameraHostManager> cameraHostManager = new(std::nothrow) HCameraHostManager(nullptr);
@@ -312,6 +314,7 @@ HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_003, TestSize.Level1
     ASSERT_NE(input, nullptr);
 
     sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
+    camInput->GetCameraDevice()->SetMdmCheck(false);
     camInput->GetCameraDevice()->Open();
 
     TestVideoSessionForSysCallback();
@@ -334,6 +337,7 @@ HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_004, TestSize.Level1
     ASSERT_NE(input, nullptr);
 
     sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
+    camInput->GetCameraDevice()->SetMdmCheck(false);
     camInput->GetCameraDevice()->Open();
 
     FocusTrackingMode mode = FOCUS_TRACKING_MODE_AUTO;
@@ -368,6 +372,7 @@ HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_005, TestSize.Level1
     ASSERT_NE(input, nullptr);
 
     sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
+    camInput->GetCameraDevice()->SetMdmCheck(false);
     camInput->GetCameraDevice()->Open();
 
     sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::VIDEO);
@@ -415,6 +420,7 @@ HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_006, TestSize.Level1
     ASSERT_NE(input, nullptr);
 
     sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
+    camInput->GetCameraDevice()->SetMdmCheck(false);
     camInput->GetCameraDevice()->Open();
 
     sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::VIDEO);
@@ -682,6 +688,7 @@ HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_009, TestSize.Level0
     sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->SetMdmCheck(false);
     EXPECT_EQ(camInput->GetCameraDevice()->Open(), 0);
 
     // 创建 CaptureSessionForSys 并转换为 VideoSessionForSys
@@ -738,6 +745,7 @@ HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_010, TestSize.Level0
     sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->SetMdmCheck(false);
     EXPECT_EQ(camInput->GetCameraDevice()->Open(), 0);
 
     // 创建 CaptureSessionForSys 并转换为 VideoSessionForSys

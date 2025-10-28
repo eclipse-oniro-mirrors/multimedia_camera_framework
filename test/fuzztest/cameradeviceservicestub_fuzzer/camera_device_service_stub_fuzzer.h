@@ -104,6 +104,10 @@ public:
     {
         return 0;
     }
+    int32_t SetMdmCheck(bool mdmCheck) override
+    {
+        return 0;
+    }
 };
 class CameraDeviceServiceStubFuzzer {
 public:

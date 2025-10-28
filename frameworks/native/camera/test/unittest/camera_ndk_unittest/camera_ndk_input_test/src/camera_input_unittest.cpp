@@ -21,7 +21,7 @@
 #include "token_setproc.h"
 #include "nativetoken_kit.h"
 #include "test_token.h"
-
+#include "capture_session_impl.h"
 using namespace testing::ext;
 
 namespace OHOS {
@@ -128,6 +128,9 @@ HWTEST_F(CameraInputUnitTest, camera_input_unittest_003, TestSize.Level0)
     ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
     ASSERT_NE(cameraInput, nullptr);
+    OHOS::sptr<OHOS::CameraStandard::CameraInput> innerCameraInput = cameraInput->GetInnerCameraInput();
+    auto device = innerCameraInput->GetCameraDevice();
+    device->SetMdmCheck(false);
     ret = OH_CameraInput_Open(cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
 
@@ -139,6 +142,9 @@ HWTEST_F(CameraInputUnitTest, camera_input_unittest_003, TestSize.Level0)
     ASSERT_NE(previewOutput, nullptr);
     for (uint32_t i = 0; i < size; i++) {
         if (sceneModes[i] == SECURE_PHOTO) {
+            OHOS::sptr<OHOS::CameraStandard::CameraInput> innerCameraInput = cameraInput->GetInnerCameraInput();
+            auto device = innerCameraInput->GetCameraDevice();
+            device->SetMdmCheck(false);
             ret = OH_CameraInput_OpenSecureCamera(cameraInput, &secureSeqId);
             EXPECT_EQ(ret, CAMERA_OK);
             EXPECT_EQ(OH_CaptureSession_AddPreviewOutput(captureSession, previewOutput), CAMERA_OK);
@@ -174,6 +180,9 @@ HWTEST_F(CameraInputUnitTest, camera_input_unittest_004, TestSize.Level0)
     ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
     ASSERT_NE(cameraInput, nullptr);
+    OHOS::sptr<OHOS::CameraStandard::CameraInput> innerCameraInput = cameraInput->GetInnerCameraInput();
+    auto device = innerCameraInput->GetCameraDevice();
+    device->SetMdmCheck(false);
     ret = OH_CameraInput_Open(cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_CaptureSession_BeginConfig(captureSession);
