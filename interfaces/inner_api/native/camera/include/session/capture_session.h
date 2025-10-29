@@ -728,6 +728,27 @@ public:
     int32_t GetExposureMode(ExposureMode& exposureMode);
 
     /**
+     * @brief Checks whether zoom center point is supported.
+     *
+     * @return Is zoom center point supported.
+     */
+    int32_t IsZoomCenterPointSupported(bool& isSupported);
+    
+    /**
+     * @brief Set the zoom center point.
+     * @param Point which specifies the area to zoom.
+     * @return errCode
+     */
+    int32_t SetZoomCenterPoint(Point zoomCenterPoint);
+    
+    /**
+     * @brief Get the zoom center point.
+     * @param Point current zoom center point.
+     * @return errCode
+     */
+    int32_t GetZoomCenterPoint(Point& zoomCenterPoint);
+
+    /**
      * @brief Set the centre point of exposure area.
      * @param Point which specifies the area to expose.
      * @return errCode

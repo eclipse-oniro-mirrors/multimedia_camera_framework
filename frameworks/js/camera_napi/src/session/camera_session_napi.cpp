@@ -2146,16 +2146,19 @@ napi_value CameraSessionNapi::IsZoomCenterPointSupported(napi_env env, napi_call
     MEDIA_DEBUG_LOG("CameraSessionNapi::IsZoomCenterPointSupported is called");
     CameraSessionNapi* cameraSessionNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
-    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error"), nullptr,
         "CameraSessionNapi::IsZoomCenterPointSupported parse parameter occur error");
 
     auto result = CameraNapiUtils::GetUndefinedValue(env);
     if (cameraSessionNapi->cameraSession_ != nullptr) {
         bool isSupported = false;
-        napi_get_boolean(env, isSupported, &result);
+        int32_t retCode = cameraSessionNapi->cameraSession_->IsZoomCenterPointSupported(isSupported);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
     } else {
         MEDIA_ERR_LOG("CameraSessionNapi::IsZoomCenterPointSupported get native object fail");
-        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
+        CameraNapiUtils::ThrowError(env, PARAMETER_ERROR, "get native object fail");
         return nullptr;
     }
     return result;
@@ -2165,14 +2168,26 @@ napi_value CameraSessionNapi::GetZoomCenterPoint(napi_env env, napi_callback_inf
 {
     CHECK_RETURN_RET_ELOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
         "SystemApi GetZoomCenterPoint is called!");
-    MEDIA_DEBUG_LOG("GetZoomCenterPoint is called");
+    MEDIA_DEBUG_LOG("CameraSessionNapi::GetZoomCenterPoint is called");
     CameraSessionNapi* cameraSessionNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
-    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error"), nullptr,
         "CameraSessionNapi::GetZoomCenterPoint parse parameter occur error");
 
     napi_value result = nullptr;
     napi_get_undefined(env, &result);
+    if (cameraSessionNapi->cameraSession_ == nullptr) {
+        MEDIA_ERR_LOG("CameraSessionNapi::GetZoomCenterPoint get native object fail");
+        CameraNapiUtils::ThrowError(env, PARAMETER_ERROR, "get native object fail");
+        return nullptr;
+    } else {
+        Point zoomCenterPoint;
+        int32_t retCode = cameraSessionNapi->cameraSession_->GetZoomCenterPoint(zoomCenterPoint);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
+        return GetPointNapiValue(env, zoomCenterPoint);
+    }
     return result;
 }
 
@@ -2181,18 +2196,25 @@ napi_value CameraSessionNapi::SetZoomCenterPoint(napi_env env, napi_callback_inf
     CHECK_RETURN_RET_ELOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
         "SystemApi SetZoomCenterPoint is called!");
     MEDIA_DEBUG_LOG("CameraSessionNapi::SetZoomCenterPoint is called");
-    double pointX = -1.0;
-    double pointY = -1.0;
-    CameraNapiObject zoomCenterPoint = {{{ "x", &pointX }, { "y", &pointY }}};
+    Point zoomCenterPoint;
+    CameraNapiObject pointArg = {{{ "x", &zoomCenterPoint.x }, { "y", &zoomCenterPoint.y }}};
     CameraSessionNapi* cameraSessionNapi = nullptr;
-    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, zoomCenterPoint);
-    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, pointArg);
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error"), nullptr,
         "CameraSessionNapi::SetZoomCenterPoint parse parameter occur error");
-
+    MEDIA_DEBUG_LOG("CameraSessionNapi::SetZoomCenterPoint is called x:%f, y:%f",
+        zoomCenterPoint.x, zoomCenterPoint.y);
     if (cameraSessionNapi->cameraSession_ == nullptr) {
         MEDIA_ERR_LOG("CameraSessionNapi::SetZoomCenterPoint get native object fail");
-        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
+        CameraNapiUtils::ThrowError(env, PARAMETER_ERROR, "get native object fail");
         return nullptr;
+    } else {
+        cameraSessionNapi->cameraSession_->LockForControl();
+        int32_t retCode = cameraSessionNapi->cameraSession_->SetZoomCenterPoint(zoomCenterPoint);
+        cameraSessionNapi->cameraSession_->UnlockForControl();
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
     }
     return CameraNapiUtils::GetUndefinedValue(env);
 }

@@ -11069,5 +11069,200 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_093, TestSize.Level0)
     input->Close();
     session->Release();
 }
+
+/*
+ *Feature: Framework
+ *Function: Test function IsZoomCenterPointSupported when not Configed.
+ *SubFunction: NA
+ *FunctionPoints: NA
+ *EnvConditions: NA
+ *CaseDescription: Test function IsZoomCenterPointSupported when not Configed.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_094, TestSize.Level0)
+{
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(sessionForSys, nullptr);
+
+    bool isSupported = false;
+    int32_t ret = sessionForSys->IsZoomCenterPointSupported(isSupported);
+    EXPECT_EQ(ret, CameraErrorCode::SESSION_NOT_CONFIG);
+
+    sessionForSys->Release();
+}
+
+/*
+ *Feature: Framework
+ *Function: Test function IsZoomCenterPointSupported when Configed.
+ *SubFunction: NA
+ *FunctionPoints: NA
+ *EnvConditions: NA
+ *CaseDescription: Test function IsZoomCenterPointSupported when Configed.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_095, TestSize.Level0)
+{
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(input, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
+    ASSERT_NE(photo, nullptr);
+
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(sessionForSys, nullptr);
+
+    int32_t ret = sessionForSys->BeginConfig();
+    EXPECT_EQ(ret, 0);
+    ret = sessionForSys->AddInput(input);
+    EXPECT_EQ(ret, 0);
+    ret = sessionForSys->AddOutput(photo);
+    EXPECT_EQ(ret, 0);
+    ret = sessionForSys->CommitConfig();
+    EXPECT_EQ(ret, 0);
+
+    bool isSupported = false;
+    ret = sessionForSys->IsZoomCenterPointSupported(isSupported);
+    EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
+
+    sessionForSys->RemoveInput(input);
+    sessionForSys->RemoveOutput(photo);
+    photo->Release();
+    input->Release();
+    sessionForSys->Release();
+}
+
+/*
+ *Feature: Framework
+ *Function: Test CaptureSession with GetZoomCenterPoint when not Configed.
+ *SubFunction: NA
+ *FunctionPoints: NA
+ *EnvConditions: NA
+ *CaseDescription: Test CaptureSession with GetZoomCenterPoint when not Configed.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_096, TestSize.Level0)
+{
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(sessionForSys, nullptr);
+
+    Point zoomCenterPoint;
+    EXPECT_EQ(sessionForSys->GetZoomCenterPoint(zoomCenterPoint), CameraErrorCode::SESSION_NOT_CONFIG);
+
+    sessionForSys->Release();
+}
+
+/*
+ *Feature: Framework
+ *Function: Test CaptureSession with GetZoomCenterPoint when Configed.
+ *SubFunction: NA
+ *FunctionPoints: NA
+ *EnvConditions: NA
+ *CaseDescription: Test CaptureSession with GetZoomCenterPoint when Configed.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_097, TestSize.Level0)
+{
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(input, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
+    ASSERT_NE(photo, nullptr);
+
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(sessionForSys, nullptr);
+
+    int32_t ret = sessionForSys->BeginConfig();
+    EXPECT_EQ(ret, 0);
+    ret = sessionForSys->AddInput(input);
+    EXPECT_EQ(ret, 0);
+    ret = sessionForSys->AddOutput(photo);
+    EXPECT_EQ(ret, 0);
+    ret = sessionForSys->CommitConfig();
+    EXPECT_EQ(ret, 0);
+
+    Point zoomCenterPoint;
+    EXPECT_EQ(sessionForSys->GetZoomCenterPoint(zoomCenterPoint), CameraErrorCode::SUCCESS);
+
+    sessionForSys->RemoveInput(input);
+    sessionForSys->RemoveOutput(photo);
+    photo->Release();
+    input->Release();
+    sessionForSys->Release();
+}
+
+/*
+ *Feature: Framework
+ *Function: Test CaptureSession with SetZoomCenterPoint when Configed.
+ *SubFunction: NA
+ *FunctionPoints: NA
+ *EnvConditions: NA
+ *CaseDescription: Test CaptureSession with SetZoomCenterPoint when Configed.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_098, TestSize.Level0)
+{
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(input, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
+    ASSERT_NE(photo, nullptr);
+
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(sessionForSys, nullptr);
+
+    int32_t ret = sessionForSys->BeginConfig();
+    EXPECT_EQ(ret, 0);
+    ret = sessionForSys->AddInput(input);
+    EXPECT_EQ(ret, 0);
+    ret = sessionForSys->AddOutput(photo);
+    EXPECT_EQ(ret, 0);
+    ret = sessionForSys->CommitConfig();
+    EXPECT_EQ(ret, 0);
+
+    Point zoomCenterPoint = {0.5, 0.5};
+    sessionForSys->LockForControl();
+    EXPECT_EQ(sessionForSys->SetZoomCenterPoint(zoomCenterPoint), CameraErrorCode::SUCCESS);
+    sessionForSys->UnlockForControl();
+
+    sessionForSys->RemoveInput(input);
+    sessionForSys->RemoveOutput(photo);
+    photo->Release();
+    input->Release();
+    sessionForSys->Release();
+}
+
+/*
+ *Feature: Framework
+ *Function: Test CaptureSession with SetZoomCenterPoint when not Configed.
+ *SubFunction: NA
+ *FunctionPoints: NA
+ *EnvConditions: NA
+ *CaseDescription: Test CaptureSession with SetZoomCenterPoint when not Configed.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_099, TestSize.Level0)
+{
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(sessionForSys, nullptr);
+
+    Point zoomCenterPoint = {0.5, 0.5};
+    sessionForSys->LockForControl();
+    EXPECT_EQ(sessionForSys->SetZoomCenterPoint(zoomCenterPoint), CameraErrorCode::SESSION_NOT_CONFIG);
+    sessionForSys->UnlockForControl();
+
+    sessionForSys->Release();
+}
 }
 }
