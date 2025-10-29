@@ -674,8 +674,10 @@ bool HCameraDevice::HandlePrivacyBeforeOpenDevice()
     MEDIA_INFO_LOG("enter HandlePrivacyBeforeOpenDevice");
     auto cameraPrivacy = GetCameraPrivacy();
     CHECK_RETURN_RET_ELOG(cameraPrivacy == nullptr, false, "cameraPrivacy is null");
-    CHECK_RETURN_RET_ELOG(cameraPrivacy->GetDisablePolicy(), false, "policy disabled");
-    CHECK_RETURN_RET_ELOG(!cameraPrivacy->RegisterPermDisablePolicyCallback(), false, "register Disable failed");
+    if (mdmCheck_) {
+        CHECK_RETURN_RET_ELOG(cameraPrivacy->GetDisablePolicy(), false, "policy disabled");
+        CHECK_RETURN_RET_ELOG(!cameraPrivacy->RegisterPermDisablePolicyCallback(), false, "register Disable failed");
+    }
     CHECK_RETURN_RET_ELOG(!IsHapTokenId(callerToken_), true, "system ability called not need privacy");
     std::vector<sptr<HCameraDeviceHolder>> holders =
         HCameraDeviceManager::GetInstance()->GetCameraHolderByPid(cameraPid_);
@@ -699,8 +701,10 @@ void HCameraDevice::HandlePrivacyWhenOpenDeviceFail()
         MEDIA_INFO_LOG("do StopUsingPermissionCallback");
         cameraPrivacy->StopUsingPermissionCallback();
     }
-        cameraPrivacy->UnregisterPermissionCallback();
+    cameraPrivacy->UnregisterPermissionCallback();
+    if (mdmCheck_) {
         cameraPrivacy->UnRegisterPermDisablePolicyCallback();
+    }
 }
 
 void HCameraDevice::HandlePrivacyAfterCloseDevice()
@@ -716,7 +720,9 @@ void HCameraDevice::HandlePrivacyAfterCloseDevice()
             cameraPrivacy->StopUsingPermissionCallback();
         }
         cameraPrivacy->UnregisterPermissionCallback();
-        cameraPrivacy->UnRegisterPermDisablePolicyCallback();
+        if (mdmCheck_) {
+            cameraPrivacy->UnRegisterPermDisablePolicyCallback();
+        }
     }
 }
 
@@ -2011,6 +2017,12 @@ std::vector<std::vector<std::int32_t>> HCameraDevice::GetConcurrentDevicesTable(
     MEDIA_INFO_LOG("HCameraDevice::GetConcurrentDevicesTable device id : %{public}s"
         "find concurrent table size: %{public}zu", cameraID_.c_str(), resultTable.size());
     return resultTable;
+}
+
+int32_t HCameraDevice::SetMdmCheck(bool mdmCheck)
+{
+    mdmCheck_ = mdmCheck;
+    return CAMERA_OK;
 }
 
 #ifdef CAMERA_LIVE_SCENE_RECOGNITION

@@ -93,6 +93,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_001, TestSize.Level1
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->SetMdmCheck(false);
     camInput->GetCameraDevice()->Open();
 
     sptr<CaptureOutput> metadata = cameraManager_->CreateMetadataOutput();
@@ -138,6 +139,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_002, TestSize.Level1
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->SetMdmCheck(false);
     camInput->GetCameraDevice()->Open();
 
     sptr<CaptureOutput> metadata = cameraManager_->CreateMetadataOutput();
@@ -183,6 +185,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_003, TestSize.Level1
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->SetMdmCheck(false);
     camInput->GetCameraDevice()->Open();
 
     sptr<CaptureOutput> metadata = cameraManager_->CreateMetadataOutput();
@@ -384,6 +387,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_010, TestSize.Level1
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->SetMdmCheck(false);
     camInput->GetCameraDevice()->Open();
 
     sptr<CaptureOutput> metadata = cameraManager_->CreateMetadataOutput();
@@ -415,6 +419,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_011, TestSize.Level1
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->SetMdmCheck(false);
     camInput->GetCameraDevice()->Open();
 
     sptr<CaptureOutput> metadata = cameraManager_->CreateMetadataOutput();
@@ -468,6 +473,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_012, TestSize.Level1
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->SetMdmCheck(false);
     camInput->GetCameraDevice()->Open();
 
     sptr<CaptureOutput> metadata = cameraManager_->CreateMetadataOutput();
@@ -521,6 +527,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_013, TestSize.Level1
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->SetMdmCheck(false);
     camInput->GetCameraDevice()->Open();
 
     sptr<CaptureOutput> metadata = cameraManager_->CreateMetadataOutput();
@@ -573,6 +580,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_014, TestSize.Level1
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->SetMdmCheck(false);
     camInput->GetCameraDevice()->Open();
 
     sptr<CaptureOutput> metadata = cameraManager_->CreateMetadataOutput();
@@ -637,6 +645,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_015, TestSize.Level1
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->SetMdmCheck(false);
     camInput->GetCameraDevice()->Open();
 
     sptr<CaptureOutput> metadata = cameraManager_->CreateMetadataOutput();
@@ -798,6 +807,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_020, TestSize.Level1
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->SetMdmCheck(false);
     camInput->GetCameraDevice()->Open();
 
     sptr<CaptureOutput> metadata = cameraManager_->CreateMetadataOutput();
@@ -837,6 +847,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_021, TestSize.Level1
 
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->SetMdmCheck(false);
     camInput->GetCameraDevice()->Open();
 
     sptr<CaptureOutput> metadata = cameraManager_->CreateMetadataOutput();
@@ -878,6 +889,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_022, TestSize.Level1
 
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->SetMdmCheck(false);
     camInput->GetCameraDevice()->Open();
 
     sptr<CaptureOutput> metadata = cameraManager_->CreateMetadataOutput();
@@ -961,6 +973,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_025, TestSize.Level1
 
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->SetMdmCheck(false);
     camInput->GetCameraDevice()->Open();
 
     sptr<CaptureOutput> metadata = cameraManager_->CreateMetadataOutput();
@@ -995,6 +1008,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_026, TestSize.Level1
 
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->SetMdmCheck(false);
     camInput->GetCameraDevice()->Open();
 
     sptr<CaptureOutput> metadata = cameraManager_->CreateMetadataOutput();
@@ -1025,6 +1039,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_027, TestSize.Level1
 
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->SetMdmCheck(false);
     camInput->GetCameraDevice()->Open();
 
     sptr<CaptureOutput> metadata = cameraManager_->CreateMetadataOutput();
@@ -1076,6 +1091,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_028, TestSize.Level1
 
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->SetMdmCheck(false);
     camInput->GetCameraDevice()->Open();
 
     sptr<CaptureOutput> metadata = cameraManager_->CreateMetadataOutput();
@@ -1111,6 +1127,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_029, TestSize.Level1
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->SetMdmCheck(false);
     camInput->GetCameraDevice()->Open();
 
     sptr<CaptureOutput> metadata = cameraManager_->CreateMetadataOutput();

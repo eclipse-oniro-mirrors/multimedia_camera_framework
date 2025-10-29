@@ -49,6 +49,7 @@ constexpr int64_t ONE_BILLION = 1000000000LL;
 constexpr uint32_t MAX_FRAME_COUNT = 90;
 constexpr uint32_t RELEASE_WAIT_TIME = 10000;
 constexpr size_t MIN_FRAME_RECORD_BUFFER_SIZE = 9;
+constexpr int64_t MAX_NANOSEC_RANGE = 3200000000LL;
 
 class AvcodecTaskManager : public RefBase, public std::enable_shared_from_this<AvcodecTaskManager> {
 public:

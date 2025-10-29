@@ -82,6 +82,7 @@ HWTEST_F(CameraPanoramaSessionUnit, camera_panorama_unittest_001, TestSize.Level
             sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
             std::string cameraSettings = camInput->GetCameraSettings();
             camInput->SetCameraSettings(cameraSettings);
+            camInput->GetCameraDevice()->SetMdmCheck(false);
             camInput->GetCameraDevice()->Open();
 
             sptr<CaptureSession> session =
@@ -137,6 +138,7 @@ HWTEST_F(CameraPanoramaSessionUnit, camera_panorama_unittest_002, TestSize.Level
             sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
             std::string cameraSettings = camInput->GetCameraSettings();
             camInput->SetCameraSettings(cameraSettings);
+            camInput->GetCameraDevice()->SetMdmCheck(false);
             camInput->GetCameraDevice()->Open();
 
             sptr<CaptureSession> session =

@@ -72,7 +72,10 @@ void ProfessionSessionUnitTest::SetUp()
     ASSERT_NE(manager_, nullptr);
     cameras_ = manager_->GetSupportedCameras();
     ASSERT_TRUE(cameras_.size() != 0);
-    input_ = manager_->CreateCameraInput(cameras_[0]);
+    auto cameraInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(cameraInput, nullptr);
+    cameraInput->GetCameraDevice()->SetMdmCheck(false);
+    input_ = cameraInput;
     ASSERT_NE(input_, nullptr);
     sceneMode_ = SceneMode::PROFESSIONAL_VIDEO;
     if (!IsSupportMode(sceneMode_)) {
@@ -296,7 +299,10 @@ HWTEST_F(ProfessionSessionUnitTest, profession_session_function_unittest_001, Te
     sptr<ProfessionSession> professionSession = static_cast<ProfessionSession*>(session.GetRefPtr());
     ASSERT_NE(professionSession, nullptr);
     std::vector<sptr<CameraDevice>> cameras = manager_->GetSupportedCameras();
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras[0]);
+    auto cameraInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(cameraInput, nullptr);
+    cameraInput->GetCameraDevice()->SetMdmCheck(false);
+    sptr<CaptureInput> input = cameraInput;
     ASSERT_NE(input, nullptr);
     input->Open();
 
@@ -345,7 +351,10 @@ HWTEST_F(ProfessionSessionUnitTest, profession_session_function_unittest_003, Te
     sptr<ProfessionSession> professionSession = static_cast<ProfessionSession*>(session.GetRefPtr());
     ASSERT_NE(professionSession, nullptr);
     std::vector<sptr<CameraDevice>> cameras = manager_->GetSupportedCameras();
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras[0]);
+    auto cameraInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(cameraInput, nullptr);
+    cameraInput->GetCameraDevice()->SetMdmCheck(false);
+    sptr<CaptureInput> input = cameraInput;
     ASSERT_NE(input, nullptr);
     input->Open();
 
@@ -367,7 +376,10 @@ HWTEST_F(ProfessionSessionUnitTest, profession_session_function_unittest_004, Te
     sptr<ProfessionSession> professionSession = static_cast<ProfessionSession*>(session.GetRefPtr());
     ASSERT_NE(professionSession, nullptr);
     std::vector<sptr<CameraDevice>> cameras = manager_->GetSupportedCameras();
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras[0]);
+    auto cameraInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(cameraInput, nullptr);
+    cameraInput->GetCameraDevice()->SetMdmCheck(false);
+    sptr<CaptureInput> input = cameraInput;
     ASSERT_NE(input, nullptr);
     input->Open();
 
@@ -391,7 +403,10 @@ HWTEST_F(ProfessionSessionUnitTest, profession_session_function_unittest_005, Te
     sptr<ProfessionSession> professionSession = static_cast<ProfessionSession*>(session.GetRefPtr());
     ASSERT_NE(professionSession, nullptr);
     std::vector<sptr<CameraDevice>> cameras = manager_->GetSupportedCameras();
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras[0]);
+    auto cameraInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(cameraInput, nullptr);
+    cameraInput->GetCameraDevice()->SetMdmCheck(false);
+    sptr<CaptureInput> input = cameraInput;
     ASSERT_NE(input, nullptr);
     input->Open();
 
@@ -415,7 +430,10 @@ HWTEST_F(ProfessionSessionUnitTest, profession_session_function_unittest_006, Te
     sptr<ProfessionSession> professionSession = static_cast<ProfessionSession*>(session.GetRefPtr());
     ASSERT_NE(professionSession, nullptr);
     std::vector<sptr<CameraDevice>> cameras = manager_->GetSupportedCameras();
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras[0]);
+    auto cameraInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(cameraInput, nullptr);
+    cameraInput->GetCameraDevice()->SetMdmCheck(false);
+    sptr<CaptureInput> input = cameraInput;
     ASSERT_NE(input, nullptr);
     input->Open();
 
@@ -439,7 +457,10 @@ HWTEST_F(ProfessionSessionUnitTest, profession_session_function_unittest_007, Te
     sptr<ProfessionSession> professionSession = static_cast<ProfessionSession*>(session.GetRefPtr());
     ASSERT_NE(professionSession, nullptr);
     std::vector<sptr<CameraDevice>> cameras = manager_->GetSupportedCameras();
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras[0]);
+    auto cameraInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(cameraInput, nullptr);
+    cameraInput->GetCameraDevice()->SetMdmCheck(false);
+    sptr<CaptureInput> input = cameraInput;
     ASSERT_NE(input, nullptr);
     input->Open();
 

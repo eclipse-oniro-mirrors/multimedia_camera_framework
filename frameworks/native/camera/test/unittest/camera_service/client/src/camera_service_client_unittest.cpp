@@ -384,6 +384,8 @@ void CameraServiceClientUnit::ProcessSize()
     videoHeight_ = size.height;
 
     sptr<CameraInput> camInput = (sptr<CameraInput>&)input_;
+    auto device = camInput->GetCameraDevice();
+    device->SetMdmCheck(false);
     camInput->Open();
     session_ = manager_->CreateCaptureSession();
     ASSERT_NE(session_, nullptr);
@@ -663,6 +665,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_004, TestSize.L
     sptr<ICameraDeviceService> deviceObj = iface_cast<ICameraDeviceService>(object);
     ASSERT_NE(deviceObj, nullptr);
 
+    deviceObj->SetMdmCheck(false);
     int32_t intResult = deviceObj->Open();
     EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
 

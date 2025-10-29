@@ -62,6 +62,7 @@ void MechSessionUnitTest::CommitConfig()
     ASSERT_NE(camInput_, nullptr);
     std::string cameraSettings = camInput_->GetCameraSettings();
     camInput_->SetCameraSettings(cameraSettings);
+    camInput_->GetCameraDevice()->SetMdmCheck(false);
     camInput_->GetCameraDevice()->Open();
     captureSession_ = cameraManager_->CreateCaptureSession(SceneMode::NORMAL);
     ASSERT_NE(captureSession_, nullptr);

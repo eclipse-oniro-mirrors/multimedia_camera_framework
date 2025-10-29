@@ -122,6 +122,7 @@ HWTEST_F(SecureCameraSessionUnitTest, camera_securecamera_unittest_001, TestSize
             std::string cameraSettings = camInput->GetCameraSettings();
             camInput->SetCameraSettings(cameraSettings);
             uint64_t secureSeqId = 0;
+            camInput->GetCameraDevice()->SetMdmCheck(false);
             int intResult = camInput->Open(false, &secureSeqId);
             EXPECT_EQ(intResult, CAMERA_OK);
             sptr<CaptureOutput> preview = CreatePreviewOutput();
@@ -172,6 +173,7 @@ HWTEST_F(SecureCameraSessionUnitTest, camera_securecamera_unittest_002, TestSize
             std::string cameraSettings = camInput->GetCameraSettings();
             camInput->SetCameraSettings(cameraSettings);
             uint64_t secureSeqId = 0;
+            camInput->GetCameraDevice()->SetMdmCheck(false);
             int intResult = camInput->Open(false, &secureSeqId);
             EXPECT_EQ(intResult, CAMERA_OK);
 
@@ -228,6 +230,7 @@ HWTEST_F(SecureCameraSessionUnitTest, camera_securecamera_unittest_003, TestSize
             std::string cameraSettings = camInput->GetCameraSettings();
             camInput->SetCameraSettings(cameraSettings);
             uint64_t secureSeqId = 0;
+            camInput->GetCameraDevice()->SetMdmCheck(false);
             int intResult = camInput->Open(false, &secureSeqId);
             EXPECT_EQ(intResult, CAMERA_OK);
             sptr<CaptureOutput> preview1 = CreatePreviewOutput();
@@ -282,6 +285,7 @@ HWTEST_F(SecureCameraSessionUnitTest, camera_securecamera_unittest_004, TestSize
             std::string cameraSettings = camInput->GetCameraSettings();
             camInput->SetCameraSettings(cameraSettings);
             uint64_t secureSeqId = 0;
+            camInput->GetCameraDevice()->SetMdmCheck(false);
             int intResult = camInput->Open(false, &secureSeqId);
             EXPECT_EQ(intResult, CAMERA_OK);
             sptr<CaptureOutput> preview = CreatePreviewOutput();
@@ -335,6 +339,7 @@ HWTEST_F(SecureCameraSessionUnitTest, camera_securecamera_unittest_005, TestSize
             std::string cameraSettings = camInput->GetCameraSettings();
             camInput->SetCameraSettings(cameraSettings);
             uint64_t secureSeqId = 0;
+            camInput->GetCameraDevice()->SetMdmCheck(false);
             int intResult = camInput->Open(false, &secureSeqId);
             EXPECT_EQ(intResult, CAMERA_OK);
 
@@ -394,6 +399,7 @@ HWTEST_F(SecureCameraSessionUnitTest, camera_securecamera_unittest_006, TestSize
             std::string cameraSettings = camInput->GetCameraSettings();
             camInput->SetCameraSettings(cameraSettings);
             uint64_t secureSeqId = 0;
+            camInput->GetCameraDevice()->SetMdmCheck(false);
             int intResult = camInput->Open(false, &secureSeqId);
             EXPECT_EQ(intResult, CAMERA_OK);
             sptr<CaptureOutput> preview1 = CreatePreviewOutput();

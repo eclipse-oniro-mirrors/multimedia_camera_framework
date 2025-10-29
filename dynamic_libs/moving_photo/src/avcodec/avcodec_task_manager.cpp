@@ -368,8 +368,18 @@ void AvcodecTaskManager::IgnoreDeblur(vector<sptr<FrameRecord>> frameRecords,
     CHECK_RETURN(frameRecords.empty());
     auto it = find_if(
         frameRecords.begin(), frameRecords.end(), [](const sptr<FrameRecord>& frame) { return frame->IsIDRFrame(); });
+    int64_t firstIdrTimeStamp = 0;
+    if (it != frameRecords.end()) {
+        firstIdrTimeStamp = it->GetRefPtr()->GetTimeStamp();
+    }
+    size_t frameCount = 0;
     while (it != frameRecords.end()) {
-        choosedBuffer.emplace_back(*it);
+        int64_t timeStamp = it->GetRefPtr()->GetTimeStamp();
+        bool isIgnoreDeblurFrame = frameCount < MAX_FRAME_COUNT && timeStamp - firstIdrTimeStamp < MAX_NANOSEC_RANGE;
+        CHECK_EXECUTE(isIgnoreDeblurFrame, {
+          choosedBuffer.emplace_back(*it);
+          ++frameCount;
+        });
         ++it;
     }
 }
@@ -394,20 +404,19 @@ void AvcodecTaskManager::ChooseVideoBuffer(vector<sptr<FrameRecord>> frameRecord
     size_t idrIndex = FindIdrFrameIndex(frameRecords, clearVideoEndTime, shutterTime, captureId);
     MEDIA_DEBUG_LOG("ChooseVideoBuffer::idrIndex:%{public}" PRIu32, idrIndex);
     size_t frameCount = 0;
-    for (auto ptr : frameRecords) {
-        MEDIA_DEBUG_LOG("ChooseVideoBuffer before choose timestamp:%{public}" PRIu64 ",flag:%{public}u",
-            ptr->GetTimeStamp(), ptr->encodedBuffer->flag_);
-    }
+    int64_t idrIndexTimeStamp = frameRecords[idrIndex]->GetTimeStamp();
     for (size_t index = idrIndex; index < frameRecords.size(); ++index) {
         auto frame = frameRecords[index];
         int64_t timestamp = frame->GetTimeStamp();
-        if (timestamp <= clearVideoEndTime && frameCount < MAX_FRAME_COUNT) {
+        bool isBeforeEndTimeAndUnderMaxFrameCount = timestamp <= clearVideoEndTime && frameCount < MAX_FRAME_COUNT
+            && timestamp - idrIndexTimeStamp < MAX_NANOSEC_RANGE;
+        CHECK_EXECUTE(isBeforeEndTimeAndUnderMaxFrameCount, {
             choosedBuffer.push_back(frame);
             MEDIA_DEBUG_LOG("ChooseVideoBuffer::after choose index:%{public}" PRIu32 ", timestamp:%{public}" PRIu64
                             ",pts:%{public}" PRIu64 ",flag:%{public}u",
                 index, frame->GetTimeStamp(), frame->encodedBuffer->pts_, frame->encodedBuffer->flag_);
             ++frameCount;
-        }
+        });
     }
 
     CHECK_EXECUTE(choosedBuffer.size() < MIN_FRAME_RECORD_BUFFER_SIZE || !frameRecords[idrIndex]->IsIDRFrame(),

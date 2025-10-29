@@ -192,7 +192,10 @@ HWTEST_F(CameraSlowMotionSessionUnitTest, slow_motion_session_unittest_001, Test
 HWTEST_F(CameraSlowMotionSessionUnitTest, IsSlowMotionDetectionSupported_002, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
-    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(cameraInput, nullptr);
+    cameraInput->GetCameraDevice()->SetMdmCheck(false);
+    sptr<CaptureInput> input = cameraInput;
     ASSERT_NE(input, nullptr);
     ASSERT_EQ(input->Open(), SUCCESS);
 
@@ -259,6 +262,7 @@ HWTEST_F(CameraSlowMotionSessionUnitTest, slow_motion_session_unittest_003, Test
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->SetMdmCheck(false);
     EXPECT_EQ(camInput->GetCameraDevice()->Open(), 0);
 
     sptr<CaptureSession> session =
@@ -433,7 +437,10 @@ HWTEST_F(CameraSlowMotionSessionUnitTest, slow_motion_session_function_unittest_
 HWTEST_F(CameraSlowMotionSessionUnitTest, slow_motion_session_function_unittest_004, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
-    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(cameraInput, nullptr);
+    cameraInput->GetCameraDevice()->SetMdmCheck(false);
+    sptr<CaptureInput> input = cameraInput;
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();

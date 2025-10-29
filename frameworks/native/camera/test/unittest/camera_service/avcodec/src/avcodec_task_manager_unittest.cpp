@@ -497,5 +497,38 @@ HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_015, TestSize
     EXPECT_EQ(ret, 0);
 }
 
+/*
+ * Feature: Framework
+ * Function: Test ChooseVideoBuffer abnormal branches.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test ChooseVideoBuffer abnormal branches.
+ */
+HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_016, TestSize.Level0)
+{
+    sptr<AudioCapturerSession> session = new AudioCapturerSession();
+    VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
+    ColorSpace colorSpace = ColorSpace::DISPLAY_P3;
+    sptr<AvcodecTaskManager> taskManager = new AvcodecTaskManager(session, type, colorSpace);
+
+    vector<sptr<FrameRecord>> frameRecords;
+    sptr<SurfaceBuffer> videoBuffer1 = SurfaceBuffer::Create();
+    int64_t timestamp1 = 0;
+    GraphicTransformType types = GraphicTransformType::GRAPHIC_FLIP_H_ROT90;
+    sptr<FrameRecord> frame1 = new FrameRecord(videoBuffer1, timestamp1, types);
+    frame1->SetIDRProperty(true);
+    frameRecords.emplace_back(frame1);
+    sptr<SurfaceBuffer> videoBuffer2 = SurfaceBuffer::Create();
+    int64_t timestamp2 = 3200000001LL;
+    sptr<FrameRecord> frame2 = new FrameRecord(videoBuffer2, timestamp2, types);
+    frame2->SetIDRProperty(false);
+    vector<sptr<FrameRecord>> choosedBuffer;
+    int64_t shutterTime = 1600000000LL;
+    int32_t captureId = 1;
+    taskManager->ChooseVideoBuffer(frameRecords, choosedBuffer, shutterTime, captureId);
+    EXPECT_EQ(choosedBuffer.size(), 1);
+}
+
 } // CameraStandard
 } // OHOS
