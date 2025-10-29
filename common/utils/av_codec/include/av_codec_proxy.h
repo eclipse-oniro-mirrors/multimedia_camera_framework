@@ -41,10 +41,13 @@ public:
     bool IsVideoEncoderExisted() override;
     sptr<Surface> CreateInputSurface() override;
     int32_t QueueInputBuffer(uint32_t index) override;
+    int32_t QueueInputParameter(uint32_t index) override;
     int32_t AVCodecVideoEncoderNotifyEos() override;
     int32_t ReleaseOutputBuffer(uint32_t index) override;
     int32_t AVCodecVideoEncoderSetParameter(const Format& format) override;
     int32_t AVCodecVideoEncoderSetCallback(const std::shared_ptr<MediaCodecCallback>& callback) override;
+    int32_t AVCodecVideoEncoderInfoIframeSetCallback(
+        const std::shared_ptr<MediaAVCodec::MediaCodecParameterWithAttrCallback>& callback) override;
     int32_t AVCodecVideoEncoderConfigure(const Format& format) override;
     void CreateAVSource(int32_t fd, int64_t offset, int64_t size) override;
     int32_t AVSourceGetSourceFormat(Format& format) override;
@@ -54,6 +57,7 @@ public:
     int32_t ReadSampleBuffer(uint32_t trackIndex, std::shared_ptr<AVBuffer> sample) override;
     int32_t AVDemuxerSeekToTime(int64_t millisecond, SeekMode mode) override;
     int32_t AVDemuxerSelectTrackByID(uint32_t trackIndex) override;
+    bool IsBframeSurported() override;
 private:
     std::shared_ptr<Dynamiclib> avcodecLib_ = {nullptr};
     std::shared_ptr<AVCodecIntf> avcodecIntf_ = {nullptr};

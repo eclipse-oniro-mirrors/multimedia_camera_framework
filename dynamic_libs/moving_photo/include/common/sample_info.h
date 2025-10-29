@@ -53,11 +53,11 @@ constexpr double VIDEO_FRAME_RATE = 30.0;
 constexpr int32_t CACHE_FRAME_COUNT = 45;
 constexpr size_t MAX_AUDIO_FRAME_COUNT = 140;
 constexpr int32_t BUFFER_RELEASE_EXPIREATION_TIME = 150;
-constexpr int32_t BUFFER_ENCODE_EXPIREATION_TIME = 20;
+constexpr int32_t BUFFER_ENCODE_EXPIREATION_TIME = 2000;
 constexpr int32_t ROTATION_360 = 360;
 constexpr OH_AVPixelFormat VIDOE_PIXEL_FORMAT = AV_PIXEL_FORMAT_NV21;
 constexpr int32_t IDR_FRAME_COUNT = 2;
-constexpr int32_t KEY_FRAME_INTERVAL = 10;
+constexpr int32_t KEY_FRAME_INTERVAL = 9;
 const std::string TIMED_METADATA_TRACK_MIMETYPE = "meta/timed-metadata";
 const std::string TIMED_METADATA_KEY = "com.openharmony.timed_metadata.movingphoto";
 constexpr int32_t DEFAULT_SIZE = 1920 * 1440;
@@ -98,9 +98,11 @@ public:
 
 class VideoCodecAVBufferInfo : public RefBase {
 public:
-    explicit VideoCodecAVBufferInfo(uint32_t argBufferIndex, std::shared_ptr<OHOS::Media::AVBuffer> argBuffer);
+    explicit VideoCodecAVBufferInfo(
+        uint32_t argBufferIndex, int64_t muxerIndex, std::shared_ptr<OHOS::Media::AVBuffer> argBuffer);
     ~VideoCodecAVBufferInfo() = default;
     uint32_t bufferIndex = 0;
+    int64_t muxerIndex_ = 0;
     std::shared_ptr<OHOS::Media::AVBuffer> buffer = nullptr;
 
     std::shared_ptr<OHOS::Media::AVBuffer> GetCopyAVBuffer();
@@ -121,7 +123,7 @@ public:
     uint32_t outputFrameCount_ = 0;
     std::mutex outputMutex_;
     std::condition_variable outputCond_;
-    std::queue<sptr<VideoCodecAVBufferInfo>> outputBufferInfoQueue_;
+    std::map<int64_t, sptr<VideoCodecAVBufferInfo>> outputBufferInfoQueue_;
 };
 } // CameraStandard
 } // OHOS

@@ -174,6 +174,16 @@ public:
         isIDRFrame_ = isIDRFrame;
     }
 
+    inline void SetMuxerIndex(int64_t muxerIndex)
+    {
+        muxerIndex_ = muxerIndex;
+    }
+
+    inline int64_t GetMuxerIndex()
+    {
+        return muxerIndex_;
+    }
+
     inline bool IsIDRFrame()
     {
         return isIDRFrame_;
@@ -205,7 +215,7 @@ public:
     std::shared_ptr<Media::AVBuffer> encodedBuffer = nullptr;
     std::string frameId_;
     std::mutex bufferMutex_;
-
+    int32_t muxerIndex_;
 private:
     static const int32_t STATUS_NONE = 0;
     static const int32_t STATUS_READY_CONVERT = 1;

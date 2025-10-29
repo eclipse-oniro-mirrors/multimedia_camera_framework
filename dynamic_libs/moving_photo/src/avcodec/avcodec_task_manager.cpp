@@ -103,7 +103,7 @@ shared_ptr<TaskManager>& AvcodecTaskManager::GetEncoderManager()
 {
     lock_guard<mutex> lock(encoderManagerMutex_);
     if (videoEncoderManager_ == nullptr && isActive_.load()) {
-        videoEncoderManager_ = make_unique<TaskManager>("VideoTaskManager", DEFAULT_ENCODER_THREAD_NUMBER, true);
+        videoEncoderManager_ = make_unique<TaskManager>("VideoTaskManager", DEFAULT_ENCODER_THREAD_NUMBER, false);
     }
     return videoEncoderManager_;
 }
@@ -113,6 +113,7 @@ void AvcodecTaskManager::EncodeVideoBuffer(sptr<FrameRecord> frameRecord, CacheC
     auto thisPtr = sptr<AvcodecTaskManager>(this);
     auto encodeManager = GetEncoderManager();
     CHECK_RETURN(!encodeManager);
+    videoEncoder_->TsVecInsert(frameRecord->GetTimeStamp());
     encodeManager->SubmitTask([thisPtr, frameRecord, cacheCallback]() {
         CAMERA_SYNC_TRACE;
         CHECK_RETURN(thisPtr == nullptr);
@@ -186,7 +187,8 @@ sptr<AudioVideoMuxer> AvcodecTaskManager::CreateAVMuxer(vector<sptr<FrameRecord>
             muxer->SetCoverTime(MovingPhotoNanosecToMillisec(std::min(timestamp,
                 choosedBuffer.back()->GetTimeStamp()) - choosedBuffer.front()->GetTimeStamp()));
             muxer->SetStartTime(MovingPhotoNanosecToMillisec(choosedBuffer.front()->GetTimeStamp()));
-            CHECK_EXECUTE(videoEncoder_ != nullptr, muxer->SetSqr(videoEncoder_->GetEncoderBitrate()));
+            CHECK_EXECUTE(videoEncoder_ != nullptr,
+            muxer->SetSqr(videoEncoder_->GetEncoderBitrate(), videoEncoder_->GetBframeAbility()));
         }
     );
     auto formatVideo = make_shared<Format>();
@@ -266,16 +268,20 @@ void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, ui
             MEDIA_ERR_LOG("choosed empty buffer, videoFdMap_ size is %{public}zu", thisPtr->videoFdMap_.size());
             return;
         }
+        auto result = muxer->WriteSampleBuffer(thisPtr->videoEncoder_->GetXpsBuffer(), VIDEO_TRACK);
+        MEDIA_DEBUG_LOG("write sample result %{public}d", result);
         int64_t videoStartTime = choosedBuffer.front()->GetTimeStamp();
         for (size_t index = 0; index < choosedBuffer.size(); index++) {
             MEDIA_DEBUG_LOG("write sample index %{public}zu", index);
             shared_ptr<Media::AVBuffer> buffer = choosedBuffer[index]->encodedBuffer;
             {
                 std::lock_guard<std::mutex> lock(choosedBuffer[index]->bufferMutex_);
-                OH_AVCodecBufferAttr attr = {0, 0, 0, AVCODEC_BUFFER_FLAGS_NONE};
                 CHECK_CONTINUE_WLOG(buffer == nullptr, "video encodedBuffer is null");
                 buffer->pts_ = NanosecToMicrosec(choosedBuffer[index]->GetTimeStamp() - videoStartTime);
-                MEDIA_DEBUG_LOG("choosed buffer pts:%{public}" PRIu64, attr.pts);
+                MEDIA_DEBUG_LOG("choosed buffer pts:%{public}" PRIu64 ",flag:%{public}d,dts:%{public}" PRId64
+                                ",muxerIndex:%{public}" PRId64,
+                    choosedBuffer[index]->GetTimeStamp(), buffer->flag_, buffer->pts_,
+                    choosedBuffer[index]->GetMuxerIndex());
                 muxer->WriteSampleBuffer(buffer, VIDEO_TRACK);
             }
             sptr<SurfaceBuffer> metaSurfaceBuffer = frameRecords[index]->GetMetaBuffer();
@@ -298,6 +304,14 @@ void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, ui
         #endif
         thisPtr->FinishMuxer(muxer, captureId);
     });
+}
+
+
+void AvcodecTaskManager::NotifyEOS()
+{
+    MEDIA_INFO_LOG("AvcodecTaskManager::NotifyEOS() start");
+    videoEncoder_->NotifyEndOfStream();
+    MEDIA_INFO_LOG("AvcodecTaskManager::NotifyEOS() end");
 }
 
 size_t AvcodecTaskManager::FindIdrFrameIndex(vector<sptr<FrameRecord>> frameRecords, int64_t clearVideoEndTime,
@@ -388,6 +402,7 @@ void AvcodecTaskManager::ChooseVideoBuffer(vector<sptr<FrameRecord>> frameRecord
     MEDIA_INFO_LOG("ChooseVideoBuffer captureId : %{public}d, shutterTime : %{public}" PRIu64 ", "
         "clearVideoEndTime : %{public}" PRIu64, captureId, shutterTime, clearVideoEndTime);
     size_t idrIndex = FindIdrFrameIndex(frameRecords, clearVideoEndTime, shutterTime, captureId);
+    MEDIA_DEBUG_LOG("ChooseVideoBuffer::idrIndex:%{public}" PRIu32, idrIndex);
     size_t frameCount = 0;
     int64_t idrIndexTimeStamp = frameRecords[idrIndex]->GetTimeStamp();
     for (size_t index = idrIndex; index < frameRecords.size(); ++index) {
@@ -397,6 +412,9 @@ void AvcodecTaskManager::ChooseVideoBuffer(vector<sptr<FrameRecord>> frameRecord
             && timestamp - idrIndexTimeStamp < MAX_NANOSEC_RANGE;
         CHECK_EXECUTE(isBeforeEndTimeAndUnderMaxFrameCount, {
             choosedBuffer.push_back(frame);
+            MEDIA_DEBUG_LOG("ChooseVideoBuffer::after choose index:%{public}" PRIu32 ", timestamp:%{public}" PRIu64
+                            ",pts:%{public}" PRIu64 ",flag:%{public}u",
+                index, frame->GetTimeStamp(), frame->encodedBuffer->pts_, frame->encodedBuffer->flag_);
             ++frameCount;
         });
     }
@@ -406,6 +424,13 @@ void AvcodecTaskManager::ChooseVideoBuffer(vector<sptr<FrameRecord>> frameRecord
     MEDIA_INFO_LOG("ChooseVideoBuffer with size %{public}zu, frontBuffer timeStamp: %{public}" PRIu64 ", "
         "backBuffer timeStamp: %{public}" PRIu64, choosedBuffer.size(), choosedBuffer.front()->GetTimeStamp(),
         choosedBuffer.back()->GetTimeStamp());
+    
+    std::sort(choosedBuffer.begin(), choosedBuffer.end(), [](sptr<FrameRecord> a, sptr<FrameRecord> b) {
+        return a->muxerIndex_ < b->muxerIndex_;
+    });
+    for (auto ptr:choosedBuffer) {
+        MEDIA_INFO_LOG("ChooseVideoBuffer timestamp:%{public}" PRIu64, ptr->GetTimeStamp());
+    }
     // LCOV_EXCL_STOP
 }
 

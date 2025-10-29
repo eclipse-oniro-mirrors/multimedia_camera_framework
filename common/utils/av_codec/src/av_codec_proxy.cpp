@@ -206,6 +206,16 @@ int32_t AVCodecProxy::QueueInputBuffer(uint32_t index)
     return ret;
 }
 
+int32_t AVCodecProxy::QueueInputParameter(uint32_t index)
+{
+    MEDIA_DEBUG_LOG("QueueInputParameter start");
+    CHECK_RETURN_RET_ELOG(avcodecIntf_ == nullptr, AV_ERR_INVALID_VAL, "avcodecIntf_ is not created");
+    int32_t ret = avcodecIntf_->QueueInputParameter(index);
+    CHECK_RETURN_RET_ELOG(ret != AV_ERR_OK, AV_ERR_FAILED, "QueueInputBuffer failed, ret: %{public}d", ret);
+    MEDIA_DEBUG_LOG("QueueInputParameter end");
+    return ret;
+}
+
 int32_t AVCodecProxy::AVCodecVideoEncoderNotifyEos()
 {
     MEDIA_DEBUG_LOG("AVCodecVideoEncoderNotifyEos start");
@@ -249,6 +259,20 @@ int32_t AVCodecProxy::AVCodecVideoEncoderSetCallback(const std::shared_ptr<Media
     MEDIA_DEBUG_LOG("AVCodecVideoEncoderSetCallback end");
     return ret;
 }
+
+int32_t AVCodecProxy::AVCodecVideoEncoderInfoIframeSetCallback(
+    const std::shared_ptr<MediaAVCodec::MediaCodecParameterWithAttrCallback>& callback)
+{
+    MEDIA_DEBUG_LOG("AVCodecVideoEncoderInfoIframeSetCallback start");
+    CHECK_RETURN_RET_ELOG(avcodecIntf_ == nullptr, AV_ERR_INVALID_VAL, "avcodecIntf_ is not created");
+    CHECK_RETURN_RET_ELOG(callback == nullptr, AV_ERR_INVALID_VAL, "input callback is nullptr!");
+    int32_t ret = avcodecIntf_->AVCodecVideoEncoderInfoIframeSetCallback(callback);
+    CHECK_RETURN_RET_ELOG(
+        ret != AV_ERR_OK, AV_ERR_FAILED, "AVCodecVideoEncoderSetCallback failed, ret: %{public}d", ret);
+    MEDIA_DEBUG_LOG("AVCodecVideoEncoderSetCallback end");
+    return ret;
+}
+
 int32_t AVCodecProxy::AVCodecVideoEncoderConfigure(const Format& format)
 {
     MEDIA_DEBUG_LOG("AVCodecVideoEncoderConfigure start");
@@ -307,6 +331,15 @@ void AVCodecProxy::CreateAVDemuxer(std::shared_ptr<AVSource> source)
     CHECK_RETURN_ELOG(avcodecIntf_ == nullptr, "avcodecIntf_ is nullptr");
     avcodecIntf_->CreateAVDemuxer(source);
     MEDIA_DEBUG_LOG("CreateAVDemuxer end");
+}
+
+bool AVCodecProxy::IsBframeSurported()
+{
+    MEDIA_DEBUG_LOG("IsBframeSurported start");
+    CHECK_RETURN_RET_ELOG(avcodecIntf_ == nullptr, false, "avcodecIntf_ is nullptr");
+    bool ret = avcodecIntf_->IsBframeSurported();
+    MEDIA_DEBUG_LOG("CreateAVDemuxer end");
+    return ret;
 }
 
 int32_t AVCodecProxy::ReadSampleBuffer(uint32_t trackIndex, std::shared_ptr<AVBuffer> sample)

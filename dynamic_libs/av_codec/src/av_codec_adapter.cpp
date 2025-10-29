@@ -14,7 +14,7 @@
  */
 #include "av_codec_adapter.h"
 #include "camera_log.h"
-
+#include "avcodec_list.h"
 namespace OHOS {
 namespace CameraStandard {
 AVCodecAdapter::AVCodecAdapter()
@@ -182,6 +182,16 @@ int32_t AVCodecAdapter::QueueInputBuffer(uint32_t index)
     return ret;
 }
 
+int32_t AVCodecAdapter::QueueInputParameter(uint32_t index)
+{
+    MEDIA_DEBUG_LOG("QueueInputParameter start");
+    CHECK_RETURN_RET_ELOG(videoEncoder_ == nullptr, AV_ERR_INVALID_VAL, "videoEncoder_ is not created");
+    int32_t ret = videoEncoder_->QueueInputParameter(index);
+    CHECK_RETURN_RET_ELOG(ret != AV_ERR_OK, AV_ERR_FAILED, "QueueInputBuffer failed, ret: %{public}d", ret);
+    MEDIA_DEBUG_LOG("QueueInputParameter end");
+    return ret;
+}
+
 int32_t AVCodecAdapter::AVCodecVideoEncoderNotifyEos()
 {
     MEDIA_DEBUG_LOG("AVCodecVideoEncoderNotifyEos start");
@@ -223,6 +233,19 @@ int32_t AVCodecAdapter::AVCodecVideoEncoderSetCallback(const std::shared_ptr<Med
     CHECK_RETURN_RET_ELOG(
         ret != AV_ERR_OK, AV_ERR_FAILED, "AVCodecVideoEncoderSetCallback failed, ret: %{public}d", ret);
     MEDIA_DEBUG_LOG("AVCodecVideoEncoderSetCallback end");
+    return ret;
+}
+
+int32_t AVCodecAdapter::AVCodecVideoEncoderInfoIframeSetCallback(
+    const std::shared_ptr<MediaAVCodec::MediaCodecParameterWithAttrCallback>& callback)
+{
+    MEDIA_DEBUG_LOG("AVCodecVideoEncoderInfoIframeSetCallback start");
+    CHECK_RETURN_RET_ELOG(videoEncoder_ == nullptr, AV_ERR_INVALID_VAL, "videoEncoder_ is not created");
+    CHECK_RETURN_RET_ELOG(callback == nullptr, AV_ERR_INVALID_VAL, "input callback is nullptr!");
+    int32_t ret = videoEncoder_->SetCallback(callback);
+    CHECK_RETURN_RET_ELOG(
+        ret != AV_ERR_OK, AV_ERR_FAILED, "AVCodecVideoEncoderInfoIframeSetCallback failed, ret: %{public}d", ret);
+    MEDIA_DEBUG_LOG("AVCodecVideoEncoderInfoIframeSetCallback end");
     return ret;
 }
 
@@ -321,6 +344,18 @@ int32_t AVCodecAdapter::AVDemuxerSelectTrackByID(uint32_t trackIndex)
         ret != AV_ERR_OK, AV_ERR_FAILED, "AVDemuxerSelectTrackByID failed, ret: %{public}d", ret);
     MEDIA_DEBUG_LOG("AVDemuxerSelectTrackByID end");
     return ret;
+}
+
+bool AVCodecAdapter::IsBframeSurported()
+{
+    auto codecList = MediaAVCodec::AVCodecListFactory::CreateAVCodecList();
+    CHECK_RETURN_RET_ELOG(codecList == nullptr, false, "CodecList is nullptr.");
+    MediaAVCodec::CapabilityData* capabilityData =
+        codecList->GetCapability("video/hevc", true, MediaAVCodec::AVCodecCategory::AVCODEC_HARDWARE);
+    CHECK_RETURN_RET_ELOG(capabilityData == nullptr, false, "CapabilityData is nullptr.");
+    auto codecInfo = std::make_shared<MediaAVCodec::AVCodecInfo>(capabilityData);
+    bool isBFrame = codecInfo->IsFeatureSupported(MediaAVCodec::AVCapabilityFeature::VIDEO_ENCODER_B_FRAME);
+    return isBFrame;
 }
 
 extern "C" AVCodecIntf *createAVCodecIntf()
