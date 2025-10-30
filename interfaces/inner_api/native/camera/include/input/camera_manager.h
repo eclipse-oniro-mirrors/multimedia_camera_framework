@@ -910,8 +910,6 @@ public:
 
     virtual bool GetIsFoldable();
 
-    bool GetIsVariableInfo();
-
     virtual FoldStatus GetFoldStatus();
 
     inline void ClearCameraDeviceListCache()

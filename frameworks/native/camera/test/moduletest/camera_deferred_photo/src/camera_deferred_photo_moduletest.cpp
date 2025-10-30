@@ -182,9 +182,9 @@ int32_t CameraDeferredPhotoModuleTest::AddPreviewOutput(sptr<CaptureOutput>& pre
 int32_t CameraDeferredPhotoModuleTest::CreateAndOpenCameraInput()
 {
     auto camInput = cameraManager_->CreateCameraInput(cameras_[0]);
-    ASSERT_NE(camInput, nullptr);
+    CHECK_RETURN_RET_ELOG(camInput == nullptr, EXECUTE_FAILED, "CreateCameraInput camInput failed");
     auto device = camInput->GetCameraDevice();
-    ASSERT_NE(device, nullptr);
+    CHECK_RETURN_RET_ELOG(device == nullptr, EXECUTE_FAILED, "CreateCameraInput device failed");
     device->SetMdmCheck(false);
     cameraInput_ = camInput;
     CHECK_RETURN_RET_ELOG(cameraInput_ == nullptr, EXECUTE_FAILED, "CreateCameraInput failed");
