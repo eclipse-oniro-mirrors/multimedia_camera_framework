@@ -148,8 +148,10 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_002, TestSize.Level1)
     cameraHostManager_->OpenCameraDevice(cameraId, nullptr, pDevice_, true);
 
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
 
     sptr<IConsumerSurface> surface = IConsumerSurface::Create();
     sptr<IBufferProducer> producer = surface->GetProducer();
@@ -186,8 +188,10 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_003, TestSize.Level1)
     cameraHostManager_->OpenCameraDevice(cameraId, nullptr, pDevice_, true);
 
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
 
     sptr<IConsumerSurface> surface = IConsumerSurface::Create();
     sptr<IBufferProducer> producer = surface->GetProducer();
@@ -224,8 +228,10 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_004, TestSize.Level1)
     cameraHostManager_->OpenCameraDevice(cameraId, nullptr, pDevice_, true);
 
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
 
     sptr<IConsumerSurface> surface = IConsumerSurface::Create();
     sptr<IBufferProducer> producer = surface->GetProducer();
@@ -278,8 +284,10 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_005, TestSize.Level1)
     cameraHostManager_->OpenCameraDevice(cameraId, nullptr, pDevice_, true);
 
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
 
     sptr<IConsumerSurface> surface = IConsumerSurface::Create();
     sptr<IBufferProducer> producer = surface->GetProducer();

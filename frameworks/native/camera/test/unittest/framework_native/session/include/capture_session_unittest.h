@@ -91,6 +91,7 @@ public:
     /* TearDown:Execute after each test case */
     void TearDown(void);
 
+    bool DisMdmOpenCheck(sptr<CameraInput> camInput);
     void SessionControlParams(sptr<CaptureSession> session);
     void SessionCommit(sptr<CaptureSession> session);
     void UpdateCameraOutputCapability(int32_t modeName = 0);

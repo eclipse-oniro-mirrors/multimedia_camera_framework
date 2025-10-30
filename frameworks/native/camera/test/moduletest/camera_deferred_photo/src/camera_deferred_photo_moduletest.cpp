@@ -88,6 +88,11 @@ void CameraDeferredPhotoModuleTest::TearDown()
             CHECK_EXECUTE(isCameraInputAdded_,
                 captureSession_->RemoveInput(cameraInput_));
             CHECK_EXECUTE(isCameraInputOpened_, cameraInput_->Close());
+            sptr<CameraInput> camInput = (sptr<CameraInput>&)cameraInput_;
+            auto device = camInput->GetCameraDevice();
+            if (device) {
+                device->SetMdmCheck(true);
+            }
             cameraInput_->Release();
         }
         if (previewOutput_) {
@@ -176,7 +181,12 @@ int32_t CameraDeferredPhotoModuleTest::AddPreviewOutput(sptr<CaptureOutput>& pre
 
 int32_t CameraDeferredPhotoModuleTest::CreateAndOpenCameraInput()
 {
-    cameraInput_ = cameraManager_->CreateCameraInput(cameras_[0]);
+    auto camInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(camInput, nullptr);
+    auto device = camInput->GetCameraDevice();
+    ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
+    cameraInput_ = camInput;
     CHECK_RETURN_RET_ELOG(cameraInput_ == nullptr, EXECUTE_FAILED, "CreateCameraInput failed");
 
     int ret = cameraInput_->Open();

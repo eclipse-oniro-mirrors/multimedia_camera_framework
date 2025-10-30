@@ -62,6 +62,7 @@ public:
                                               int32_t height = PREVIEW_DEFAULT_HEIGHT);
     Camera_VideoOutput* CreateVideoOutput(int32_t width = VIDEO_DEFAULT_WIDTH, int32_t height = VIDEO_DEFAULT_HEIGHT);
     Camera_MetadataOutput* CreateMetadataOutput(Camera_MetadataObjectType type);
+    static Camera_ErrorCode DisMdmOpenCheck(Camera_Input *cameraInput);
     static void OnCameraInputError(const Camera_Input* cameraInput, Camera_ErrorCode errorCode);
     static void CameraCaptureSessiononFocusStateChangeCb(Camera_CaptureSession* session, Camera_FocusState focusState);
     static void CameraCaptureSessionOnErrorCb(Camera_CaptureSession* session, Camera_ErrorCode errorCode);

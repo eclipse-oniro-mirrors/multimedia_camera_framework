@@ -258,6 +258,9 @@ void CameraMovingPhotoModuleTest::SetUp()
     ASSERT_NE(session_, nullptr);
     input_ = manager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input_, nullptr);
+    auto device = input_->GetCameraDevice();
+    ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     EXPECT_EQ(input_->Open(), SUCCESS);
 
     UpdateCameraOutputCapability();
@@ -279,7 +282,13 @@ void CameraMovingPhotoModuleTest::TearDown()
     previewOutput_->Release();
 
     manager_ = nullptr;
-    input_->Release();
+    if (input_) {
+        auto device = input_->GetCameraDevice();
+        if (device) {
+            device->SetMdmCheck(true);
+        }
+        input_->Release();
+    }
     session_->Release();
 
     if (photoSurface_) {

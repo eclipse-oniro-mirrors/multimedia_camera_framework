@@ -178,9 +178,10 @@ HWTEST_F(CameraScanSessionUnitTest, scan_session_unittest_001, TestSize.Level1)
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
-
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
     sptr<CaptureOutput> preview = CreatePreviewOutput();
     if (!preIsSupportedScanmode_) {
         camInput->GetCameraDevice()->Close();
@@ -234,8 +235,10 @@ HWTEST_F(CameraScanSessionUnitTest, scan_session_unittest_002, TestSize.Level1)
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
 
     sptr<CaptureOutput> preview = CreatePreviewOutput();
     if (!preIsSupportedScanmode_) {
@@ -293,8 +296,10 @@ HWTEST_F(CameraScanSessionUnitTest, scan_session_unittest_003, TestSize.Level1)
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
 
     sptr<CaptureOutput> preview = CreatePreviewOutput();
     if (!preIsSupportedScanmode_) {

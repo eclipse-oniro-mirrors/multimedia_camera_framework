@@ -29,6 +29,8 @@
 #include "native_image.h"
 #include "image_kits.h"
 #include "photo_native_impl.h"
+#include "capture_session_impl.h"
+
 using namespace testing::ext;
 
 namespace OHOS {
@@ -206,6 +208,20 @@ Camera_MetadataOutput* CameraNdkCommon::CreateMetadataOutput(Camera_MetadataObje
     EXPECT_EQ(ret, CAMERA_OK);
     EXPECT_NE(metadataOutput, nullptr);
     return metadataOutput;
+}
+
+Camera_ErrorCode CameraNdkCommon::DisMdmOpenCheck(Camera_Input *cameraInput)
+{
+    OHOS::sptr<OHOS::CameraStandard::CameraInput> innerCameraInput = cameraInput->GetInnerCameraInput();
+    if (innerCameraInput == nullptr) {
+        return CAMERA_INVALID_ARGUMENT;
+    }
+    auto device = innerCameraInput->GetCameraDevice();
+    if (device == nullptr) {
+        return CAMERA_INVALID_ARGUMENT;
+    }
+    device->SetMdmCheck(false);
+    return CAMERA_OK;
 }
 
 void CameraNdkCommon::SessionCommit(Camera_CaptureSession *captureSession)

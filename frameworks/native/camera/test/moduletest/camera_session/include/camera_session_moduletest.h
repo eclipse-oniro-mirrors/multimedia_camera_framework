@@ -312,6 +312,7 @@ public:
     /* TearDown: Execute after each test case */
     void TearDown();
 
+    bool DisMdmOpenCheck(sptr<CameraInput> camInput);
     sptr<CaptureOutput> CreatePreviewOutput(int32_t width, int32_t height);
     sptr<CaptureOutput> CreatePreviewOutput(Profile& profile);
     sptr<CaptureOutput> CreatePreviewOutput();

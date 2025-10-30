@@ -589,7 +589,9 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_022, TestSize.Level1)
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
-    camInput->GetCameraDevice()->SetMdmCheck(false);
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+    }
     camInput->GetCameraDevice()->Open();
 
     sptr<HCameraService> cameraService = new (std::nothrow) HCameraService(cameraHostManager_);

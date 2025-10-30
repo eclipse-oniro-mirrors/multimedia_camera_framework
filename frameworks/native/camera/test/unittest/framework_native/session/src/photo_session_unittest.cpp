@@ -196,8 +196,10 @@ HWTEST_F(CameraPhotoSessionUnitTest, camera_photo_session_unittest_001, TestSize
     sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
 
     sptr<HCameraHostManager> cameraHostManager = new(std::nothrow) HCameraHostManager(nullptr);
     sptr<HCameraService> cameraService =  new(std::nothrow) HCameraService(cameraHostManager);
@@ -240,8 +242,10 @@ HWTEST_F(CameraPhotoSessionUnitTest, camera_photo_session_unittest_002, TestSize
     sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
 
     sptr<HCameraHostManager> cameraHostManager = new(std::nothrow) HCameraHostManager(nullptr);
     sptr<HCameraService> cameraService =  new(std::nothrow) HCameraService(cameraHostManager);
@@ -307,6 +311,9 @@ HWTEST_F(CameraPhotoSessionUnitTest, photo_session_function_unittest_001, TestSi
     cameraInput->GetCameraDevice()->SetMdmCheck(false);
     sptr<CaptureInput> input = cameraInput;
     ASSERT_NE(input, nullptr);
+    if (cameraInput->GetCameraDevice()) {
+        cameraInput->GetCameraDevice()->SetMdmCheck(false);
+    }
     input->Open();
 
     int32_t minFps = 30;
@@ -333,7 +340,9 @@ HWTEST_F(CameraPhotoSessionUnitTest, photo_session_function_unittest_002, TestSi
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     auto cameraInput = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(cameraInput, nullptr);
-    cameraInput->GetCameraDevice()->SetMdmCheck(false);
+    if (cameraInput->GetCameraDevice()) {
+        cameraInput->GetCameraDevice()->SetMdmCheck(false);
+    }
     sptr<CaptureInput> input = cameraInput;
     ASSERT_NE(input, nullptr);
     input->Open();

@@ -282,8 +282,10 @@ HWTEST_F(CameraSketchWrapperOutputUnit, sketch_wrapper_unittest_005, TestSize.Le
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
     camInput->SetCameraSettings(camInput->GetCameraSettings());
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
     std::shared_ptr<OHOS::Camera::CameraMetadata> deviceMetadata =
@@ -511,7 +513,10 @@ HWTEST_F(CameraSketchWrapperOutputUnit, sketch_wrapper_unittest_009, TestSize.Le
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
     camInput->SetCameraSettings(camInput->GetCameraSettings());
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
 
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -571,7 +576,10 @@ HWTEST_F(CameraSketchWrapperOutputUnit, sketch_wrapper_unittest_010, TestSize.Le
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
     camInput->SetCameraSettings(camInput->GetCameraSettings());
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
 
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);

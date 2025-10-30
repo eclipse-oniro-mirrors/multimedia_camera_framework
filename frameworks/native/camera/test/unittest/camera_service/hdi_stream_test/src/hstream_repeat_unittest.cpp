@@ -892,8 +892,10 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_032, TestSize.Level1)
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     camInput->SetCameraSettings(camInput->GetCameraSettings());
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
     sptr<CameraOutputCapability> outputCapability =
         cameraManager->GetSupportedOutputCapability(cameras[CONST_0], PHOTO_MODE);
     ASSERT_NE(outputCapability, nullptr);

@@ -106,7 +106,12 @@ void CameraformatYUVModuleTest::SetUp()
     ASSERT_FALSE(cameras_.empty());
     session_ = cameraManager_->CreateCaptureSession(SceneMode::NORMAL);
     ASSERT_NE(session_, nullptr);
-    input_ = cameraManager_->CreateCameraInput(cameras_[0]);
+    auto camInput_ = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(camInput_, nullptr);
+    auto device = camInput_->GetCameraDevice();
+    ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
+    input_ = camInput_;
     ASSERT_NE(input_, nullptr);
     input_->Open();
 }
@@ -116,9 +121,16 @@ void CameraformatYUVModuleTest::TearDown()
     MEDIA_DEBUG_LOG("CameraformatYUVModuleTest::TearDown started!");
     cameraManager_ = nullptr;
     cameras_.clear();
-    input_->Close();
+    if (input_) {
+        sptr<CameraInput> camInput = (sptr<CameraInput>&)input_;
+        auto device = camInput->GetCameraDevice();
+        if (device) {
+            device->SetMdmCheck(true);
+        }
+        input_->Close();
+        input_->Release();
+    }
     preview_->Release();
-    input_->Release();
     session_->Release();
 }
 
