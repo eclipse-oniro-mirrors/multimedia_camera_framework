@@ -72,7 +72,8 @@
               "power_manager",
               "window_manager",
               "memmgr",
-              "e2fsprogs"
+              "e2fsprogs",
+              "libxml2"
             ]
         },
         "build": {
