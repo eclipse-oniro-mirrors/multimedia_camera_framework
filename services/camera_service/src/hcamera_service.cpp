@@ -327,6 +327,9 @@ int32_t HCameraService::GetControlCenterStatusFromDataShareHelper(bool &status)
     lock_guard<mutex> lock(g_dataShareHelperMutex);
     CHECK_RETURN_RET_ELOG(cameraDataShareHelper_ == nullptr, CAMERA_INVALID_ARG,
         "GetControlCenterStatusFromDataShareHelper NULL");
+    sptr<HCaptureSession> sessionForControlCenter = GetSessionForControlCenter();
+    CHECK_RETURN_RET_ELOG(sessionForControlCenter == nullptr, CAMERA_INVALID_STATE,
+        "GetControlCenterStatusFromDataShareHelper failed, not in video session.");
     
     std::string value = "";
     auto ret = cameraDataShareHelper_->QueryOnce(CONTROL_CENTER_DATA, value);
@@ -338,7 +341,7 @@ int32_t HCameraService::GetControlCenterStatusFromDataShareHelper(bool &status)
         return CAMERA_OK;
     }
 
-    std::string bundleName = videoSessionForControlCenter_->GetBundleForControlCenter();
+    std::string bundleName = sessionForControlCenter->GetBundleForControlCenter();
     std::map<std::string, std::array<float, CONTROL_CENTER_DATA_SIZE>> controlCenterMap
         = StringToControlCenterMap(value);
     if (controlCenterMap.find(bundleName) != controlCenterMap.end()) {
@@ -372,7 +375,11 @@ int32_t HCameraService::UpdateDataShareAndTag(bool status, bool needPersistEnabl
     CHECK_RETURN_RET_ELOG(cameraDataShareHelper_ == nullptr, CAMERA_ALLOC_ERROR,
         "GetMuteModeFromDataShareHelper NULL");
 
-    std::string bundleName = videoSessionForControlCenter_->GetBundleForControlCenter();
+    sptr<HCaptureSession> sessionForControlCenter = GetSessionForControlCenter();
+    CHECK_RETURN_RET_ELOG(sessionForControlCenter == nullptr, CAMERA_INVALID_STATE,
+        "GetControlCenterStatusFromDataShareHelper failed, not in video session.");
+
+    std::string bundleName = sessionForControlCenter->GetBundleForControlCenter();
     std::map<std::string, std::array<float, CONTROL_CENTER_DATA_SIZE>> controlCenterMap;
     std::string value = "";
     auto ret = cameraDataShareHelper_->QueryOnce(CONTROL_CENTER_DATA, value);
@@ -392,13 +399,13 @@ int32_t HCameraService::UpdateDataShareAndTag(bool status, bool needPersistEnabl
             MEDIA_INFO_LOG("UpdateDataShareAndTag ret:  %{public}d", ret);
         }
         if (status) {
-            videoSessionForControlCenter_->SetBeautyValue(
+            sessionForControlCenter->SetBeautyValue(
                 BeautyType::AUTO_TYPE, controlCenterMap[bundleName][CONTROL_CENTER_BEAUTY_INDEX], false);
-            videoSessionForControlCenter_->SetVirtualApertureValue(
+            sessionForControlCenter->SetVirtualApertureValue(
                 controlCenterMap[bundleName][CONTROL_CENTER_APERTURE_INDEX], false);
         } else if (needPersistEnable) {
-            videoSessionForControlCenter_->SetBeautyValue(BeautyType::AUTO_TYPE, 0, false);
-            videoSessionForControlCenter_->SetVirtualApertureValue(0, false);
+            sessionForControlCenter->SetBeautyValue(BeautyType::AUTO_TYPE, 0, false);
+            sessionForControlCenter->SetVirtualApertureValue(0, false);
         }
     } else {
         MEDIA_INFO_LOG("UpdateDataShareAndTag no bundle, create info for new bundle.");
@@ -410,8 +417,11 @@ int32_t HCameraService::UpdateDataShareAndTag(bool status, bool needPersistEnabl
 int32_t HCameraService::CreateControlCenterDataShare(std::map<std::string,
     std::array<float, CONTROL_CENTER_DATA_SIZE>> controlCenterMap, std::string bundleName, bool status)
 {
+    sptr<HCaptureSession> sessionForControlCenter = GetSessionForControlCenter();
+    CHECK_RETURN_RET_ELOG(sessionForControlCenter == nullptr, CAMERA_INVALID_STATE,
+        "CreateControlCenterDataShare failed, not in video session.");
     std::vector<float> virtualMetadata = {};
-    videoSessionForControlCenter_->GetVirtualApertureMetadate(virtualMetadata);
+    sessionForControlCenter->GetVirtualApertureMetadate(virtualMetadata);
     float biggestAperture = 0;
     CHECK_EXECUTE(virtualMetadata.size() > 0, biggestAperture = virtualMetadata.back());
 
@@ -420,11 +430,11 @@ int32_t HCameraService::CreateControlCenterDataShare(std::map<std::string,
     auto ret = cameraDataShareHelper_->UpdateOnce(CONTROL_CENTER_DATA, controlCenterString);
     CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, ret, "CreateControlCenterDataShare failed.");
 
-    videoSessionForControlCenter_->SetBeautyValue(BeautyType::AUTO_TYPE, 0, false);
+    sessionForControlCenter->SetBeautyValue(BeautyType::AUTO_TYPE, 0, false);
     if (status) {
-        videoSessionForControlCenter_->SetVirtualApertureValue(biggestAperture, false);
+        sessionForControlCenter->SetVirtualApertureValue(biggestAperture, false);
     } else {
-        videoSessionForControlCenter_->SetVirtualApertureValue(0, false);
+        sessionForControlCenter->SetVirtualApertureValue(0, false);
     }
     return ret;
 }
@@ -698,14 +708,14 @@ int32_t HCameraService::CreateCaptureSession(sptr<ICaptureSession>& session, int
     }
     session = captureSession;
     if (opMode == SceneMode::VIDEO) {
-        videoSessionForControlCenter_ = captureSession;
-        videoSessionForControlCenter_->SetUpdateControlCenterCallback(
+        SetSessionForControlCenter(captureSession);
+        captureSession->SetUpdateControlCenterCallback(
             std::bind(&HCameraService::UpdateControlCenterStatus, this, std::placeholders::_1));
         std::string bundleName = BmsAdapter::GetInstance()->GetBundleName(IPCSkeleton::GetCallingUid());
-        videoSessionForControlCenter_->SetBundleForControlCenter(bundleName);
+        captureSession->SetBundleForControlCenter(bundleName);
         MEDIA_INFO_LOG("Save videoSession for controlCenter");
     } else {
-        videoSessionForControlCenter_ = nullptr;
+        SetSessionForControlCenter(nullptr);
         MEDIA_INFO_LOG("Clear videoSession of controlCenter");
     }
 
@@ -731,11 +741,12 @@ int32_t HCameraService::GetVideoSessionForControlCenter(sptr<ICaptureSession>& s
 {
     std::lock_guard<std::mutex> lock(mutex_);
     MEDIA_INFO_LOG("HCameraService::GetVideoSessionForControlCenter");
-    if (videoSessionForControlCenter_ == nullptr) {
+    sptr<HCaptureSession> sessionForControlCenter = GetSessionForControlCenter();
+    if (sessionForControlCenter == nullptr) {
         MEDIA_ERR_LOG("GetVideoSessionForControlCenter failed, session == nullptr.");
         return CAMERA_INVALID_ARG;
     }
-    session = videoSessionForControlCenter_;
+    session = sessionForControlCenter;
     return CAMERA_OK;
 }
 
@@ -1559,11 +1570,11 @@ int32_t HCameraService::EnableControlCenter(bool status, bool needPersistEnable)
 
 int32_t HCameraService::SetControlCenterPrecondition(bool condition)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
     MEDIA_INFO_LOG("HCameraService::SetControlCenterPrecondition %{public}d", condition);
+    sptr<HCaptureSession> sessionForControlCenter = GetSessionForControlCenter();
     controlCenterPrecondition = condition;
-    if (videoSessionForControlCenter_ != nullptr) {
-        videoSessionForControlCenter_->SetControlCenterPrecondition(controlCenterPrecondition);
+    if (sessionForControlCenter != nullptr) {
+        sessionForControlCenter->SetControlCenterPrecondition(controlCenterPrecondition);
     } else {
         MEDIA_WARNING_LOG("");
     }
@@ -1572,6 +1583,7 @@ int32_t HCameraService::SetControlCenterPrecondition(bool condition)
     auto ret = EnableControlCenter(false, true);
     CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, ret, "EnableControlCenter failed.");
     isControlCenterEnabled_ = false;
+    std::lock_guard<mutex> lock(controlCenterStatusMutex_);
     for (auto it : controlcenterCallbacks_) {
         if (it.second == nullptr) {
             MEDIA_ERR_LOG("OnControlCenterStatusChanged pid:%{public}d Callbacks is null", it.first);
@@ -1588,10 +1600,10 @@ int32_t HCameraService::SetControlCenterPrecondition(bool condition)
 
 int32_t HCameraService::SetDeviceControlCenterAbility(bool ability)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
+    sptr<HCaptureSession> sessionForControlCenter = GetSessionForControlCenter();
     deviceControlCenterAbility = ability;
-    if (videoSessionForControlCenter_ != nullptr) {
-        videoSessionForControlCenter_->SetDeviceControlCenterAbility(ability);
+    if (sessionForControlCenter != nullptr) {
+        sessionForControlCenter->SetDeviceControlCenterAbility(ability);
     }
     return CAMERA_OK;
 }
