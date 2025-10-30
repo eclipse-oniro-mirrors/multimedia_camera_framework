@@ -129,8 +129,10 @@ HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_003, TestSize.Lev
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
 
     const std::string cameraId = "dadsada";
     const std::string clientName = "testClientName";
@@ -161,8 +163,10 @@ HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_004, TestSize.Lev
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
     ASSERT_NE(input, nullptr);
 
     bool result = cameraHostManager_->Init();
@@ -205,9 +209,10 @@ HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_005, TestSize.Lev
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
-
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
     const std::string cameraId = "dadsada";
     sptr<ICameraDeviceService> cameraDevice = camInput->GetCameraDevice();
     cameraHostManager_->cameraDevices_.emplace(cameraId, cameraDevice);
@@ -232,8 +237,10 @@ HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_006, TestSize.Lev
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
 
     std::vector<std::string> cameraIds = {};
     cameraHostManager_->Init();
@@ -335,8 +342,10 @@ HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_010, TestSize.Lev
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
 
     const std::string cameraId = "123465";
     const std::string checkCameraId = "654981";
@@ -362,8 +371,10 @@ HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_011, TestSize.Lev
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
 
     const std::string cameraId = "123465";
     std::string clientName = "testClientName";
@@ -387,8 +398,10 @@ HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_012, TestSize.Lev
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
 
     const std::string cameraId = "dadsada";
     sptr<ICameraDeviceService> cameraDevice = camInput->GetCameraDevice();
@@ -414,8 +427,10 @@ HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_013, TestSize.Lev
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
 
     const std::string cameraId1 = "dadsada";
     const std::string cameraId2 = "dfdfdss";
@@ -446,8 +461,10 @@ HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_014, TestSize.Lev
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
 
     cameraHostManager_->Init();
     ASSERT_NE(cameraHostManager_, nullptr);
@@ -472,8 +489,10 @@ HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_015, TestSize.Lev
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
 
     cameraHostManager_->Init();
     ASSERT_NE(cameraHostManager_, nullptr);

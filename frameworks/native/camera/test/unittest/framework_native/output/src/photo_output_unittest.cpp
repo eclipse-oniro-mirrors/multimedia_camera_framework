@@ -119,8 +119,10 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_001, TestSize.Level1)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
 
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
     ASSERT_NE(photoOutput, nullptr);
@@ -184,8 +186,10 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_002, TestSize.Level1)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
 
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
     ASSERT_NE(photoOutput, nullptr);
@@ -302,8 +306,10 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_006, TestSize.Level1)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
 
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
     ASSERT_NE(photoOutput, nullptr);
@@ -355,8 +361,10 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_007, TestSize.Level1)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
 
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
     ASSERT_NE(photoOutput, nullptr);
@@ -408,8 +416,10 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_008, TestSize.Level1)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
 
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
     ASSERT_NE(photoOutput, nullptr);
@@ -479,8 +489,10 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_010, TestSize.Level1)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
     ASSERT_NE(photoOutput, nullptr);
     sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
@@ -532,8 +544,10 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_011, TestSize.Level1)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
 
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
     ASSERT_NE(photoOutput, nullptr);
@@ -578,8 +592,10 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_012, TestSize.Level1)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
 
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
     ASSERT_NE(photoOutput, nullptr);
@@ -621,8 +637,10 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_013, TestSize.Level1)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
 
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
     ASSERT_NE(photoOutput, nullptr);
@@ -772,8 +790,10 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_018, TestSize.Level1)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
 
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
     ASSERT_NE(photoOutput, nullptr);
@@ -821,8 +841,10 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_019, TestSize.Level0)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
 
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
     ASSERT_NE(photoOutput, nullptr);
@@ -895,8 +917,10 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_020, TestSize.Level1)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
 
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
     ASSERT_NE(photoOutput, nullptr);
@@ -949,8 +973,10 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_021, TestSize.Level1)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
 
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
     ASSERT_NE(photoOutput, nullptr);
@@ -980,8 +1006,10 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_022, TestSize.Level1)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
 
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
     ASSERT_NE(photoOutput, nullptr);
@@ -1077,8 +1105,10 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_025, TestSize.Level1)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
 
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
     ASSERT_NE(photoOutput, nullptr);
@@ -1113,8 +1143,10 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_026, TestSize.Level1)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
 
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
     ASSERT_NE(photoOutput, nullptr);
@@ -1138,8 +1170,10 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_027, TestSize.Level1)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
 
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
     ASSERT_NE(photoOutput, nullptr);
@@ -1322,8 +1356,10 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_036, TestSize.Level1)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
 
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
     ASSERT_NE(photoOutput, nullptr);
@@ -1406,8 +1442,10 @@ HWTEST_F(CameraPhotoOutputUnit, IsOfflineSupported_003, TestSize.Level0)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
 
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
     ASSERT_NE(photoOutput, nullptr);
@@ -1484,8 +1522,10 @@ HWTEST_F(CameraPhotoOutputUnit, EnableOfflinePhoto_003, TestSize.Level0)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
 
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
     ASSERT_NE(photoOutput, nullptr);
@@ -1524,8 +1564,10 @@ HWTEST_F(CameraPhotoOutputUnit, EnableOfflinePhoto_004, TestSize.Level0)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
 
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
     ASSERT_NE(photoOutput, nullptr);
@@ -1659,8 +1701,10 @@ HWTEST_F(CameraPhotoOutputUnit, IsAutoAigcPhotoSupported_003, TestSize.Level0)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
 
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
     ASSERT_NE(photoOutput, nullptr);
@@ -1736,8 +1780,10 @@ HWTEST_F(CameraPhotoOutputUnit, EnableAutoAigcPhoto_003, TestSize.Level0)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
 
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
     ASSERT_NE(photoOutput, nullptr);
@@ -1772,8 +1818,10 @@ HWTEST_F(CameraPhotoOutputUnit, IsAutoAigcPhotoSupported_004, TestSize.Level0)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
 
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
     ASSERT_NE(photoOutput, nullptr);
@@ -1829,8 +1877,10 @@ HWTEST_F(CameraPhotoOutputUnit, EnableMirror_001, TestSize.Level0)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
     ASSERT_NE(photoOutput, nullptr);
     sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
@@ -1894,10 +1944,11 @@ HWTEST_F(CameraPhotoOutputUnit, NotifyOfflinePhotoOutput_001, TestSize.Level0)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    int32_t ret = camInput->GetCameraDevice()->Open();
-    ASSERT_EQ(ret, CAMERA_OK);
-
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        int32_t ret = camInput->GetCameraDevice()->Open();
+        ASSERT_EQ(ret, CAMERA_OK);
+    }
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
     ASSERT_NE(photoOutput, nullptr);
     sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
@@ -1974,8 +2025,10 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_030, TestSize.Level0)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
 
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
     ASSERT_NE(photoOutput, nullptr);
@@ -2002,8 +2055,10 @@ HWTEST_F(CameraPhotoOutputUnit, IsPhotoQualityPrioritizationSupported_001, TestS
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
     ASSERT_NE(photoOutput, nullptr);
     sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
@@ -2051,8 +2106,10 @@ HWTEST_F(CameraPhotoOutputUnit, IsPhotoQualityPrioritizationSupported_002, TestS
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
     ASSERT_NE(photoOutput, nullptr);
     sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
@@ -2098,8 +2155,10 @@ HWTEST_F(CameraPhotoOutputUnit, SetPhotoQualityPrioritization_001, TestSize.Leve
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
     ASSERT_NE(photoOutput, nullptr);
     sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
@@ -2150,9 +2209,10 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_031, TestSize.Level0)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
-
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
     ASSERT_NE(photoOutput, nullptr);
     sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;

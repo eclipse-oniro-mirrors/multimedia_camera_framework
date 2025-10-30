@@ -91,9 +91,7 @@ HWTEST_F(CameraMetadataOutputUnitTest, camera_metadata_output_unittest_002, Test
     ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
     ASSERT_NE(cameraInput, nullptr);
     EXPECT_EQ(ret, CAMERA_OK);
-    OHOS::sptr<OHOS::CameraStandard::CameraInput> innerCameraInput = cameraInput->GetInnerCameraInput();
-    auto device = innerCameraInput->GetCameraDevice();
-    device->SetMdmCheck(false);
+    EXPECT_EQ(CameraNdkCommon::DisMdmOpenCheck(cameraInput), CAMERA_OK);
     ret = OH_CameraInput_Open(cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
     ASSERT_NE(cameraInput, nullptr);

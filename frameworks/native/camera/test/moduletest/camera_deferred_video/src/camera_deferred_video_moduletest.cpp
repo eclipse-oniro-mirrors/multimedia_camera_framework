@@ -64,7 +64,12 @@ void CameraDeferredVideoModuleTest::SetUp()
     FilterPreviewProfiles(previewProfiles_);
     previewOutput_ = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput_, nullptr);
-    cameraInput_ = cameraManager_->CreateCameraInput(cameras_[0]);
+    auto camInput_ = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(camInput_, nullptr);
+    auto device = camInput_->GetCameraDevice();
+    ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
+    cameraInput_ = camInput_;
     ASSERT_NE(cameraInput_, nullptr);
     EXPECT_EQ(cameraInput_->Open(), CameraErrorCode::SUCCESS);
 }
@@ -74,6 +79,11 @@ void CameraDeferredVideoModuleTest::TearDown()
     MEDIA_DEBUG_LOG("CameraDeferredVideoModuleTest::TearDown started!");
     if (captureSession_) {
         if (cameraInput_) {
+            sptr<CameraInput> camInput = (sptr<CameraInput>&)cameraInput_;
+            auto device = camInput->GetCameraDevice();
+            if (device) {
+                device->SetMdmCheck(true);
+            }
             EXPECT_EQ(cameraInput_->Release(), CameraErrorCode::SUCCESS);
         }
         if (previewOutput_) {

@@ -829,10 +829,27 @@ void CameraSessionModuleTest::TearDown()
     }
     if (input_) {
         sptr<CameraInput> camInput = (sptr<CameraInput>&)input_;
+        auto device = camInput->GetCameraDevice();
+        if (device) {
+            device->SetMdmCheck(true);
+        }
         camInput->Close();
         input_->Release();
     }
     MEDIA_INFO_LOG("TearDown end");
+}
+
+bool CameraSessionModuleTest::DisMdmOpenCheck(sptr<CameraInput> camInput)
+{
+    if (camInput == nullptr) {
+        return false;
+    }
+    auto device = camInput->GetCameraDevice();
+    if (device == nullptr) {
+        return false;
+    }
+    device->SetMdmCheck(false);
+    return true;
 }
 
 bool CameraSessionModuleTest::IsSceneModeSupported(SceneMode mode)
@@ -909,6 +926,7 @@ void CameraSessionModuleTest::ProcessSize()
     videoHeight_ = size.height;
 
     sptr<CameraInput> camInput = (sptr<CameraInput>&)input_;
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
     camInput->Open();
     session_ = manager_->CreateCaptureSession();
     ASSERT_NE(session_, nullptr);
@@ -947,7 +965,9 @@ HWTEST_F(CameraSessionModuleTest, aperture_video_session_moduletest_001, TestSiz
     int32_t res = apertureVideoSession->BeginConfig();
     EXPECT_EQ(res, 0);
 
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+    auto camInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     input->Open();
     res = apertureVideoSession->AddInput(input);
@@ -995,7 +1015,9 @@ HWTEST_F(CameraSessionModuleTest, aperture_video_session_moduletest_002, TestSiz
     int32_t res = apertureVideoSession->BeginConfig();
     EXPECT_EQ(res, 0);
 
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+    auto camInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     input->Open();
     res = apertureVideoSession->AddInput(input);
@@ -1054,7 +1076,9 @@ HWTEST_F(CameraSessionModuleTest, fluorescence_photo_session_moduletest_001, Tes
     int32_t res = fluorescencePhotoSession->BeginConfig();
     EXPECT_EQ(res, 0);
 
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+    auto camInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     input->Open();
     res = fluorescencePhotoSession->AddInput(input);
@@ -1111,7 +1135,9 @@ HWTEST_F(CameraSessionModuleTest, fluorescence_photo_session_moduletest_002, Tes
     int32_t res = fluorescencePhotoSession->BeginConfig();
     EXPECT_EQ(res, 0);
 
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+    auto camInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     input->Open();
     res = fluorescencePhotoSession->AddInput(input);
@@ -1153,7 +1179,9 @@ HWTEST_F(CameraSessionModuleTest, high_res_photo_session_moduletest_001, TestSiz
     int32_t res = highResPhotoSession->BeginConfig();
     EXPECT_EQ(res, 0);
 
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+    auto camInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     input->Open();
     res = highResPhotoSession->AddInput(input);
@@ -1214,7 +1242,9 @@ HWTEST_F(CameraSessionModuleTest, high_res_photo_session_moduletest_002, TestSiz
     int32_t res = highResPhotoSession->BeginConfig();
     EXPECT_EQ(res, 0);
 
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+    auto camInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     input->Open();
     res = highResPhotoSession->AddInput(input);
@@ -1256,7 +1286,9 @@ HWTEST_F(CameraSessionModuleTest, light_painting_session_moduletest_001, TestSiz
     int32_t res = lightPaintingSession->BeginConfig();
     EXPECT_EQ(res, 0);
 
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+    auto camInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     input->Open();
     res = lightPaintingSession->AddInput(input);
@@ -1317,7 +1349,9 @@ HWTEST_F(CameraSessionModuleTest, light_painting_session_moduletest_002, TestSiz
     int32_t res = lightPaintingSession->BeginConfig();
     EXPECT_EQ(res, 0);
 
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+    auto camInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     input->Open();
     res = lightPaintingSession->AddInput(input);
@@ -1359,7 +1393,9 @@ HWTEST_F(CameraSessionModuleTest, light_painting_session_moduletest_003, TestSiz
     int32_t res = lightPaintingSession->BeginConfig();
     EXPECT_EQ(res, 0);
 
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+    auto camInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     input->Open();
     res = lightPaintingSession->AddInput(input);
@@ -1426,7 +1462,9 @@ HWTEST_F(CameraSessionModuleTest, light_painting_session_moduletest_004, TestSiz
     int32_t res = lightPaintingSession->BeginConfig();
     EXPECT_EQ(res, 0);
 
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+    auto camInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     input->Open();
     res = lightPaintingSession->AddInput(input);
@@ -1515,7 +1553,9 @@ HWTEST_F(CameraSessionModuleTest, macro_photo_session_moduletest_001, TestSize.L
     int32_t res = macroPhotoSession->BeginConfig();
     EXPECT_EQ(res, 0);
 
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+    auto camInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     input->Open();
     res = macroPhotoSession->AddInput(input);
@@ -1592,7 +1632,9 @@ HWTEST_F(CameraSessionModuleTest, macro_photo_session_moduletest_002, TestSize.L
     int32_t res = macroPhotoSession->BeginConfig();
     EXPECT_EQ(res, 0);
 
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+    auto camInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     input->Open();
     res = macroPhotoSession->AddInput(input);
@@ -1663,7 +1705,9 @@ HWTEST_F(CameraSessionModuleTest, macro_video_session_moduletest_001, TestSize.L
     int32_t res = macroVideoSession->BeginConfig();
     EXPECT_EQ(res, 0);
 
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+    auto camInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     input->Open();
     res = macroVideoSession->AddInput(input);
@@ -1740,7 +1784,9 @@ HWTEST_F(CameraSessionModuleTest, macro_video_session_moduletest_002, TestSize.L
     int32_t res = macroVideoSession->BeginConfig();
     EXPECT_EQ(res, 0);
 
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+    auto camInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     input->Open();
     res = macroVideoSession->AddInput(input);
@@ -1834,7 +1880,9 @@ HWTEST_F(CameraSessionModuleTest, panorama_session_moduletest_001, TestSize.Leve
     int32_t res = panoramaSession->BeginConfig();
     EXPECT_EQ(res, 0);
 
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+    auto camInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     input->Open();
     res = panoramaSession->AddInput(input);
@@ -1880,7 +1928,9 @@ HWTEST_F(CameraSessionModuleTest, panorama_session_moduletest_002, TestSize.Leve
     int32_t res = panoramaSession->BeginConfig();
     EXPECT_EQ(res, 0);
 
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+    auto camInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     input->Open();
     res = panoramaSession->AddInput(input);
@@ -1920,7 +1970,9 @@ HWTEST_F(CameraSessionModuleTest, panorama_session_moduletest_003, TestSize.Leve
     int32_t res = panoramaSession->BeginConfig();
     EXPECT_EQ(res, 0);
 
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+    auto camInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     input->Open();
     res = panoramaSession->AddInput(input);
@@ -1969,7 +2021,9 @@ HWTEST_F(CameraSessionModuleTest, portrait_session_moduletest_001, TestSize.Leve
     int32_t res = portraitSession->BeginConfig();
     EXPECT_EQ(res, 0);
 
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+    auto camInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     input->Open();
     res = portraitSession->AddInput(input);
@@ -2030,7 +2084,9 @@ HWTEST_F(CameraSessionModuleTest, portrait_session_moduletest_002, TestSize.Leve
     int32_t res = portraitSession->BeginConfig();
     EXPECT_EQ(res, 0);
 
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+    auto camInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     input->Open();
     res = portraitSession->AddInput(input);
@@ -2072,7 +2128,9 @@ HWTEST_F(CameraSessionModuleTest, portrait_session_moduletest_003, TestSize.Leve
     int32_t res = portraitSession->BeginConfig();
     EXPECT_EQ(res, 0);
 
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+    auto camInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     input->Open();
     res = portraitSession->AddInput(input);
@@ -2135,7 +2193,9 @@ HWTEST_F(CameraSessionModuleTest, portrait_session_moduletest_004, TestSize.Leve
     int32_t res = portraitSession->BeginConfig();
     EXPECT_EQ(res, 0);
 
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+    auto camInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     input->Open();
     res = portraitSession->AddInput(input);
@@ -2201,7 +2261,9 @@ HWTEST_F(CameraSessionModuleTest, portrait_session_moduletest_005, TestSize.Leve
     int32_t res = portraitSession->BeginConfig();
     EXPECT_EQ(res, 0);
 
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+    auto camInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     input->Open();
     res = portraitSession->AddInput(input);
@@ -2264,7 +2326,9 @@ HWTEST_F(CameraSessionModuleTest, portrait_session_moduletest_006, TestSize.Leve
     int32_t res = portraitSession->BeginConfig();
     EXPECT_EQ(res, 0);
 
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+    auto camInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     input->Open();
     res = portraitSession->AddInput(input);
@@ -2480,7 +2544,9 @@ HWTEST_F(CameraSessionModuleTest, quick_shot_photo_session_moduletest_001, TestS
     int32_t res = quickShotPhotoSession->BeginConfig();
     EXPECT_EQ(res, 0);
 
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+    auto camInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     input->Open();
     res = quickShotPhotoSession->AddInput(input);
@@ -2541,7 +2607,9 @@ HWTEST_F(CameraSessionModuleTest, quick_shot_photo_session_moduletest_002, TestS
     int32_t res = quickShotPhotoSession->BeginConfig();
     EXPECT_EQ(res, 0);
 
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+    auto camInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     input->Open();
     res = quickShotPhotoSession->AddInput(input);
@@ -2588,7 +2656,9 @@ HWTEST_F(CameraSessionModuleTest, scan_session_moduletest_001, TestSize.Level1)
     int32_t res = scanSession->BeginConfig();
     EXPECT_EQ(res, 0);
 
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+    auto camInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     input->Open();
     res = scanSession->AddInput(input);
@@ -2635,7 +2705,9 @@ HWTEST_F(CameraSessionModuleTest, scan_session_moduletest_002, TestSize.Level1)
     int32_t res = scanSession->BeginConfig();
     EXPECT_EQ(res, 0);
 
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+    auto camInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     input->Open();
     res = scanSession->AddInput(input);
@@ -2676,7 +2748,9 @@ HWTEST_F(CameraSessionModuleTest, scan_session_moduletest_003, TestSize.Level1)
     int32_t res = scanSession->BeginConfig();
     EXPECT_EQ(res, 0);
 
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+    auto camInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     input->Open();
     res = scanSession->AddInput(input);
@@ -2910,7 +2984,9 @@ HWTEST_F(CameraSessionModuleTest, secure_camera_session_moduletest_001, TestSize
     int32_t res = secureCameraSession->BeginConfig();
     EXPECT_EQ(res, 0);
 
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+    auto camInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     input->Open();
     res = secureCameraSession->AddInput(input);
@@ -2956,7 +3032,9 @@ HWTEST_F(CameraSessionModuleTest, secure_camera_session_moduletest_002, TestSize
     int32_t res = secureCameraSession->BeginConfig();
     EXPECT_EQ(res, 0);
 
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+    auto camInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     input->Open();
     res = secureCameraSession->AddInput(input);
@@ -2996,7 +3074,9 @@ HWTEST_F(CameraSessionModuleTest, secure_camera_session_moduletest_003, TestSize
     int32_t res = secureCameraSession->BeginConfig();
     EXPECT_EQ(res, 0);
 
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+    auto camInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     input->Open();
     res = secureCameraSession->AddInput(input);
@@ -3051,7 +3131,9 @@ HWTEST_F(CameraSessionModuleTest, slow_motion_session_moduletest_001, TestSize.L
     int32_t res = slowMotionSession->BeginConfig();
     EXPECT_EQ(res, 0);
 
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+    auto camInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     input->Open();
     res = slowMotionSession->AddInput(input);
@@ -3099,7 +3181,9 @@ HWTEST_F(CameraSessionModuleTest, slow_motion_session_moduletest_002, TestSize.L
     int32_t res = slowMotionSession->BeginConfig();
     EXPECT_EQ(res, 0);
 
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+    auto camInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     input->Open();
     res = slowMotionSession->AddInput(input);
@@ -3164,7 +3248,9 @@ HWTEST_F(CameraSessionModuleTest, slow_motion_session_moduletest_003, TestSize.L
     int32_t res = slowMotionSession->BeginConfig();
     EXPECT_EQ(res, 0);
 
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+    auto camInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     input->Open();
     res = slowMotionSession->AddInput(input);
@@ -3257,7 +3343,9 @@ HWTEST_F(CameraSessionModuleTest, night_session_moduletest_001, TestSize.Level1)
     int32_t res = nightSession->BeginConfig();
     EXPECT_EQ(res, 0);
 
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+    auto camInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     input->Open();
     res = nightSession->AddInput(input);
@@ -3318,7 +3406,9 @@ HWTEST_F(CameraSessionModuleTest, night_session_moduletest_002, TestSize.Level1)
     int32_t res = nightSession->BeginConfig();
     EXPECT_EQ(res, 0);
 
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+    auto camInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     input->Open();
     res = nightSession->AddInput(input);
@@ -3360,7 +3450,9 @@ HWTEST_F(CameraSessionModuleTest, night_session_moduletest_003, TestSize.Level0)
     int32_t res = nightSession->BeginConfig();
     EXPECT_EQ(res, 0);
 
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+    auto camInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     input->Open();
     res = nightSession->AddInput(input);
@@ -3479,7 +3571,9 @@ HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_001, TestSize.Le
     int32_t res = professionSession->BeginConfig();
     EXPECT_EQ(res, 0);
 
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+    auto camInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     input->Open();
     res = professionSession->AddInput(input);
@@ -3536,7 +3630,9 @@ HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_002, TestSize.Le
     int32_t res = professionSession->BeginConfig();
     EXPECT_EQ(res, 0);
 
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+    auto camInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     input->Open();
     res = professionSession->AddInput(input);
@@ -3595,7 +3691,9 @@ HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_003, TestSize.Le
     int32_t res = professionSession->BeginConfig();
     EXPECT_EQ(res, 0);
 
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+    auto camInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     input->Open();
     res = professionSession->AddInput(input);
@@ -3674,7 +3772,9 @@ HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_004, TestSize.Le
     int32_t res = professionSession->BeginConfig();
     EXPECT_EQ(res, 0);
 
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+    auto camInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     input->Open();
     res = professionSession->AddInput(input);
@@ -3751,7 +3851,9 @@ HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_005, TestSize.Le
     int32_t res = professionSession->BeginConfig();
     EXPECT_EQ(res, 0);
 
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+    auto camInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     input->Open();
     res = professionSession->AddInput(input);
@@ -3831,7 +3933,9 @@ HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_006, TestSize.Le
     int32_t res = professionSession->BeginConfig();
     EXPECT_EQ(res, 0);
 
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+    auto camInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     input->Open();
     res = professionSession->AddInput(input);
@@ -3906,7 +4010,9 @@ HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_007, TestSize.Le
     int32_t res = professionSession->BeginConfig();
     EXPECT_EQ(res, 0);
 
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+    auto camInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     input->Open();
     res = professionSession->AddInput(input);
@@ -3986,7 +4092,9 @@ HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_008, TestSize.Le
     int32_t res = professionSession->BeginConfig();
     EXPECT_EQ(res, 0);
 
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+    auto camInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     input->Open();
     res = professionSession->AddInput(input);
@@ -4071,7 +4179,9 @@ HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_009, TestSize.Le
     int32_t res = professionSession->BeginConfig();
     EXPECT_EQ(res, 0);
 
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+    auto camInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     input->Open();
     res = professionSession->AddInput(input);
@@ -4146,7 +4256,9 @@ HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_010, TestSize.Le
     int32_t res = professionSession->BeginConfig();
     EXPECT_EQ(res, 0);
 
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+    auto camInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     input->Open();
     res = professionSession->AddInput(input);
@@ -4934,7 +5046,9 @@ HWTEST_F(CameraSessionModuleTest, time_lapse_photo_session_moduletest_001, TestS
     int32_t res = timeLapsePhotoSession->BeginConfig();
     EXPECT_EQ(res, 0);
 
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+    auto camInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     input->Open();
     res = timeLapsePhotoSession->AddInput(input);
@@ -4995,7 +5109,9 @@ HWTEST_F(CameraSessionModuleTest, time_lapse_photo_session_moduletest_002, TestS
     int32_t res = timeLapsePhotoSession->BeginConfig();
     EXPECT_EQ(res, 0);
 
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+    auto camInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     input->Open();
     res = timeLapsePhotoSession->AddInput(input);
@@ -5050,7 +5166,9 @@ HWTEST_F(CameraSessionModuleTest, time_lapse_photo_session_moduletest_003, TestS
     ASSERT_NE(session, nullptr);
     int32_t status = session->BeginConfig();
     EXPECT_EQ(status, 0);
-    sptr<CaptureInput> input = cameraManager->CreateCameraInput(camera);
+    auto camInput = cameraManager->CreateCameraInput(camera);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     status = input->Open();
     EXPECT_EQ(status, 0);
@@ -5183,7 +5301,9 @@ HWTEST_F(CameraSessionModuleTest, time_lapse_photo_session_moduletest_004, TestS
     ASSERT_NE(session, nullptr);
     int32_t status = session->BeginConfig();
     EXPECT_EQ(status, 0);
-    sptr<CaptureInput> input = cameraManager->CreateCameraInput(camera);
+    auto camInput = cameraManager->CreateCameraInput(camera);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     status = input->Open();
     EXPECT_EQ(status, 0);
@@ -5316,7 +5436,9 @@ HWTEST_F(CameraSessionModuleTest, time_lapse_photo_session_moduletest_005, TestS
     ASSERT_NE(session, nullptr);
     int32_t status = session->BeginConfig();
     EXPECT_EQ(status, 0);
-    sptr<CaptureInput> input = cameraManager->CreateCameraInput(camera);
+    auto camInput = cameraManager->CreateCameraInput(camera);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     status = input->Open();
     EXPECT_EQ(status, 0);
@@ -5462,7 +5584,11 @@ HWTEST_F(CameraSessionModuleTest, time_lapse_photo_session_moduletest_006, TestS
     ASSERT_NE(session, nullptr);
     int32_t status = session->BeginConfig();
     EXPECT_EQ(status, 0);
-    sptr<CaptureInput> input = cameraManager->CreateCameraInput(camera);
+
+    auto camInput = cameraManager->CreateCameraInput(camera);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
+
     ASSERT_NE(input, nullptr);
     status = input->Open();
     EXPECT_EQ(status, 0);
@@ -5619,7 +5745,9 @@ HWTEST_F(CameraSessionModuleTest, time_lapse_photo_session_moduletest_007, TestS
     ASSERT_NE(session, nullptr);
     int32_t status = session->BeginConfig();
     EXPECT_EQ(status, 0);
-    sptr<CaptureInput> input = cameraManager->CreateCameraInput(camera);
+    auto camInput = cameraManager->CreateCameraInput(camera);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     status = input->Open();
     EXPECT_EQ(status, 0);
@@ -5770,7 +5898,9 @@ HWTEST_F(CameraSessionModuleTest, time_lapse_photo_session_moduletest_008, TestS
     ASSERT_NE(session, nullptr);
     int32_t status = session->BeginConfig();
     EXPECT_EQ(status, 0);
-    sptr<CaptureInput> input = cameraManager->CreateCameraInput(camera);
+    auto camInput = cameraManager->CreateCameraInput(camera);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     status = input->Open();
     EXPECT_EQ(status, 0);
@@ -5921,7 +6051,9 @@ HWTEST_F(CameraSessionModuleTest, time_lapse_photo_session_moduletest_009, TestS
     ASSERT_NE(session, nullptr);
     int32_t status = session->BeginConfig();
     EXPECT_EQ(status, 0);
-    sptr<CaptureInput> input = cameraManager->CreateCameraInput(camera);
+    auto camInput = cameraManager->CreateCameraInput(camera);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     status = input->Open();
     EXPECT_EQ(status, 0);
@@ -6054,7 +6186,9 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_001, TestSize.Level1)
     int32_t res = photoSession->BeginConfig();
     EXPECT_EQ(res, 0);
 
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+    auto camInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     input->Open();
     res = photoSession->AddInput(input);
@@ -6115,7 +6249,9 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_002, TestSize.Level1)
     int32_t res = photoSession->BeginConfig();
     EXPECT_EQ(res, 0);
 
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+    auto camInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     input->Open();
     res = photoSession->AddInput(input);
@@ -6157,7 +6293,9 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_003, TestSize.Level0)
     int32_t res = photoSession->BeginConfig();
     EXPECT_EQ(res, 0);
 
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+    auto camInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     input->Open();
     res = photoSession->AddInput(input);
@@ -6223,7 +6361,9 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_004, TestSize.Level1)
         res = photoSession->BeginConfig();
         EXPECT_EQ(res, 0);
 
-        sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+        auto camInput = manager_->CreateCameraInput(cameras_[0]);
+        ASSERT_TRUE(DisMdmOpenCheck(camInput));
+        sptr<CaptureInput> input = camInput;
         ASSERT_NE(input, nullptr);
         input->Open();
         res = photoSession->AddInput(input);
@@ -6285,7 +6425,9 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_005, TestSize.Level1)
         res = photoSession->BeginConfig();
         EXPECT_EQ(res, 0);
 
-        sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+        auto camInput = manager_->CreateCameraInput(cameras_[0]);
+        ASSERT_TRUE(DisMdmOpenCheck(camInput));
+        sptr<CaptureInput> input = camInput;
         ASSERT_NE(input, nullptr);
         input->Open();
         res = photoSession->AddInput(input);
@@ -6347,7 +6489,9 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_006, TestSize.Level1)
         res = photoSession->BeginConfig();
         EXPECT_EQ(res, 0);
 
-        sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+        auto camInput = manager_->CreateCameraInput(cameras_[0]);
+        ASSERT_TRUE(DisMdmOpenCheck(camInput));
+        sptr<CaptureInput> input = camInput;
         ASSERT_NE(input, nullptr);
         input->Open();
         res = photoSession->AddInput(input);
@@ -6409,7 +6553,9 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_007, TestSize.Level1)
         res = photoSession->BeginConfig();
         EXPECT_EQ(res, 0);
 
-        sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+        auto camInput = manager_->CreateCameraInput(cameras_[0]);
+        ASSERT_TRUE(DisMdmOpenCheck(camInput));
+        sptr<CaptureInput> input = camInput;
         ASSERT_NE(input, nullptr);
         input->Open();
         res = photoSession->AddInput(input);
@@ -6471,7 +6617,9 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_008, TestSize.Level1)
         res = photoSession->BeginConfig();
         EXPECT_EQ(res, 0);
 
-        sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+        auto camInput = manager_->CreateCameraInput(cameras_[0]);
+        ASSERT_TRUE(DisMdmOpenCheck(camInput));
+        sptr<CaptureInput> input = camInput;
         ASSERT_NE(input, nullptr);
         input->Open();
         res = photoSession->AddInput(input);
@@ -6533,7 +6681,9 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_009, TestSize.Level1)
         res = photoSession->BeginConfig();
         EXPECT_EQ(res, 0);
 
-        sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+        auto camInput = manager_->CreateCameraInput(cameras_[0]);
+        ASSERT_TRUE(DisMdmOpenCheck(camInput));
+        sptr<CaptureInput> input = camInput;
         ASSERT_NE(input, nullptr);
         input->Open();
         res = photoSession->AddInput(input);
@@ -6595,7 +6745,9 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_010, TestSize.Level1)
         res = photoSession->BeginConfig();
         EXPECT_EQ(res, 0);
 
-        sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+        auto camInput = manager_->CreateCameraInput(cameras_[0]);
+        ASSERT_TRUE(DisMdmOpenCheck(camInput));
+        sptr<CaptureInput> input = camInput;
         ASSERT_NE(input, nullptr);
         input->Open();
         res = photoSession->AddInput(input);
@@ -6657,7 +6809,9 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_011, TestSize.Level1)
         res = photoSession->BeginConfig();
         EXPECT_EQ(res, 0);
 
-        sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+        auto camInput = manager_->CreateCameraInput(cameras_[0]);
+        ASSERT_TRUE(DisMdmOpenCheck(camInput));
+        sptr<CaptureInput> input = camInput;
         ASSERT_NE(input, nullptr);
         input->Open();
         res = photoSession->AddInput(input);
@@ -6719,7 +6873,9 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_012, TestSize.Level1)
         res = photoSession->BeginConfig();
         EXPECT_EQ(res, 0);
 
-        sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+        auto camInput = manager_->CreateCameraInput(cameras_[0]);
+        ASSERT_TRUE(DisMdmOpenCheck(camInput));
+        sptr<CaptureInput> input = camInput;
         ASSERT_NE(input, nullptr);
         input->Open();
         res = photoSession->AddInput(input);
@@ -6781,7 +6937,9 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_013, TestSize.Level1)
         res = photoSession->BeginConfig();
         EXPECT_EQ(res, 0);
 
-        sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+        auto camInput = manager_->CreateCameraInput(cameras_[0]);
+        ASSERT_TRUE(DisMdmOpenCheck(camInput));
+        sptr<CaptureInput> input = camInput;
         ASSERT_NE(input, nullptr);
         input->Open();
         res = photoSession->AddInput(input);
@@ -6843,7 +7001,9 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_014, TestSize.Level1)
         res = photoSession->BeginConfig();
         EXPECT_EQ(res, 0);
 
-        sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+        auto camInput = manager_->CreateCameraInput(cameras_[0]);
+        ASSERT_TRUE(DisMdmOpenCheck(camInput));
+        sptr<CaptureInput> input = camInput;
         ASSERT_NE(input, nullptr);
         input->Open();
         res = photoSession->AddInput(input);
@@ -6905,7 +7065,9 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_015, TestSize.Level1)
         res = photoSession->BeginConfig();
         EXPECT_EQ(res, 0);
 
-        sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+        auto camInput = manager_->CreateCameraInput(cameras_[0]);
+        ASSERT_TRUE(DisMdmOpenCheck(camInput));
+        sptr<CaptureInput> input = camInput;
         ASSERT_NE(input, nullptr);
         input->Open();
         res = photoSession->AddInput(input);
@@ -6967,7 +7129,9 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_016, TestSize.Level1)
         res = photoSession->BeginConfig();
         EXPECT_EQ(res, 0);
 
-        sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+        auto camInput = manager_->CreateCameraInput(cameras_[0]);
+        ASSERT_TRUE(DisMdmOpenCheck(camInput));
+        sptr<CaptureInput> input = camInput;
         ASSERT_NE(input, nullptr);
         input->Open();
         res = photoSession->AddInput(input);
@@ -7029,7 +7193,9 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_017, TestSize.Level1)
         res = photoSession->BeginConfig();
         EXPECT_EQ(res, 0);
 
-        sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+        auto camInput = manager_->CreateCameraInput(cameras_[0]);
+        ASSERT_TRUE(DisMdmOpenCheck(camInput));
+        sptr<CaptureInput> input = camInput;
         ASSERT_NE(input, nullptr);
         input->Open();
         res = photoSession->AddInput(input);
@@ -7091,7 +7257,9 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_018, TestSize.Level1)
         res = photoSession->BeginConfig();
         EXPECT_EQ(res, 0);
 
-        sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+        auto camInput = manager_->CreateCameraInput(cameras_[0]);
+        ASSERT_TRUE(DisMdmOpenCheck(camInput));
+        sptr<CaptureInput> input = camInput;
         ASSERT_NE(input, nullptr);
         input->Open();
         res = photoSession->AddInput(input);
@@ -7153,7 +7321,9 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_019, TestSize.Level1)
         res = photoSession->BeginConfig();
         EXPECT_EQ(res, 0);
 
-        sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+        auto camInput = manager_->CreateCameraInput(cameras_[0]);
+        ASSERT_TRUE(DisMdmOpenCheck(camInput));
+        sptr<CaptureInput> input = camInput;
         ASSERT_NE(input, nullptr);
         input->Open();
         res = photoSession->AddInput(input);
@@ -7415,6 +7585,7 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_023, TestSize.Level0)
 HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_024, TestSize.Level1)
 {
     sptr<CameraInput> camInput = (sptr<CameraInput>&)input_;
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
     camInput->Open();
 
     if (session_) {
@@ -7479,6 +7650,7 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_024, TestSize.Level1)
 HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_025, TestSize.Level1)
 {
     sptr<CameraInput> camInput = (sptr<CameraInput>&)input_;
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
     camInput->Open();
 
     if (session_) {
@@ -7534,6 +7706,7 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_025, TestSize.Level1)
 HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_026, TestSize.Level1)
 {
     sptr<CameraInput> camInput = (sptr<CameraInput>&)input_;
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
     camInput->Open();
 
     if (session_) {
@@ -8151,7 +8324,9 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_035, TestSize.Level1)
     EXPECT_EQ(intResult, 0);
 
     if (cameras_.size() > 1) {
-        input_ = manager_->CreateCameraInput(cameras_[1]);
+        auto camInput = manager_->CreateCameraInput(cameras_[1]);
+        ASSERT_TRUE(DisMdmOpenCheck(camInput));
+        input_ = camInput; 
         ASSERT_NE(input_, nullptr);
         EXPECT_EQ(input_->Open(), 0);
 
@@ -8296,7 +8471,9 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_001, TestSize.Level1)
     int32_t res = videoSession->BeginConfig();
     EXPECT_EQ(res, 0);
 
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+    auto camInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     input->Open();
     res = videoSession->AddInput(input);
@@ -8355,7 +8532,9 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_002, TestSize.Level1)
     int32_t res = videoSession->BeginConfig();
     EXPECT_EQ(res, 0);
 
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+    auto camInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     input->Open();
     res = videoSession->AddInput(input);
@@ -8427,7 +8606,9 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_003, TestSize.Level0)
     int32_t res = videoSession->BeginConfig();
     EXPECT_EQ(res, 0);
 
-    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+    auto camInput = manager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(camInput));
+    sptr<CaptureInput> input = camInput;
     ASSERT_NE(input, nullptr);
     input->Open();
     res = videoSession->AddInput(input);
@@ -8510,7 +8691,9 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_004, TestSize.Level1)
         res = videoSession->BeginConfig();
         EXPECT_EQ(res, 0);
 
-        sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+        auto camInput = manager_->CreateCameraInput(cameras_[0]);
+        ASSERT_TRUE(DisMdmOpenCheck(camInput));
+        sptr<CaptureInput> input = camInput;
         ASSERT_NE(input, nullptr);
         input->Open();
         res = videoSession->AddInput(input);
@@ -8584,7 +8767,9 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_005, TestSize.Level0)
         res = videoSession->BeginConfig();
         EXPECT_EQ(res, 0);
 
-        sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+        auto camInput = manager_->CreateCameraInput(cameras_[0]);
+        ASSERT_TRUE(DisMdmOpenCheck(camInput));
+        sptr<CaptureInput> input = camInput;
         ASSERT_NE(input, nullptr);
         input->Open();
         res = videoSession->AddInput(input);
@@ -8658,7 +8843,9 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_006, TestSize.Level1)
         res = videoSession->BeginConfig();
         EXPECT_EQ(res, 0);
 
-        sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+        auto camInput = manager_->CreateCameraInput(cameras_[0]);
+        ASSERT_TRUE(DisMdmOpenCheck(camInput));
+        sptr<CaptureInput> input = camInput;
         ASSERT_NE(input, nullptr);
         input->Open();
         res = videoSession->AddInput(input);
@@ -8732,7 +8919,9 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_007, TestSize.Level1)
         res = videoSession->BeginConfig();
         EXPECT_EQ(res, 0);
 
-        sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+        auto camInput = manager_->CreateCameraInput(cameras_[0]);
+        ASSERT_TRUE(DisMdmOpenCheck(camInput));
+        sptr<CaptureInput> input = camInput;
         ASSERT_NE(input, nullptr);
         input->Open();
         res = videoSession->AddInput(input);
@@ -8806,7 +8995,9 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_008, TestSize.Level1)
         res = videoSession->BeginConfig();
         EXPECT_EQ(res, 0);
 
-        sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+        auto camInput = manager_->CreateCameraInput(cameras_[0]);
+        ASSERT_TRUE(DisMdmOpenCheck(camInput));
+        sptr<CaptureInput> input = camInput;
         ASSERT_NE(input, nullptr);
         input->Open();
         res = videoSession->AddInput(input);
@@ -8880,7 +9071,9 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_009, TestSize.Level0)
         res = videoSession->BeginConfig();
         EXPECT_EQ(res, 0);
 
-        sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+        auto camInput = manager_->CreateCameraInput(cameras_[0]);
+        ASSERT_TRUE(DisMdmOpenCheck(camInput));
+        sptr<CaptureInput> input = camInput;
         ASSERT_NE(input, nullptr);
         input->Open();
         res = videoSession->AddInput(input);
@@ -8954,7 +9147,9 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_010, TestSize.Level0)
         res = videoSession->BeginConfig();
         EXPECT_EQ(res, 0);
 
-        sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+        auto camInput = manager_->CreateCameraInput(cameras_[0]);
+        ASSERT_TRUE(DisMdmOpenCheck(camInput));
+        sptr<CaptureInput> input = camInput;
         ASSERT_NE(input, nullptr);
         input->Open();
         res = videoSession->AddInput(input);
@@ -9028,7 +9223,9 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_011, TestSize.Level0)
         res = videoSession->BeginConfig();
         EXPECT_EQ(res, 0);
 
-        sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+        auto camInput = manager_->CreateCameraInput(cameras_[0]);
+        ASSERT_TRUE(DisMdmOpenCheck(camInput));
+        sptr<CaptureInput> input = camInput;
         ASSERT_NE(input, nullptr);
         input->Open();
         res = videoSession->AddInput(input);
@@ -9103,7 +9300,9 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_012, TestSize.Level0)
         res = videoSession->BeginConfig();
         EXPECT_EQ(res, 0);
 
-        sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+        auto camInput = manager_->CreateCameraInput(cameras_[0]);
+        ASSERT_TRUE(DisMdmOpenCheck(camInput));
+        sptr<CaptureInput> input = camInput;
         ASSERT_NE(input, nullptr);
         input->Open();
         res = videoSession->AddInput(input);
@@ -9178,7 +9377,9 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_013, TestSize.Level0)
         res = videoSession->BeginConfig();
         EXPECT_EQ(res, 0);
 
-        sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+        auto camInput = manager_->CreateCameraInput(cameras_[0]);
+        ASSERT_TRUE(DisMdmOpenCheck(camInput));
+        sptr<CaptureInput> input = camInput;
         ASSERT_NE(input, nullptr);
         input->Open();
         res = videoSession->AddInput(input);
@@ -9252,7 +9453,9 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_014, TestSize.Level0)
         res = videoSession->BeginConfig();
         EXPECT_EQ(res, 0);
 
-        sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+        auto camInput = manager_->CreateCameraInput(cameras_[0]);
+        ASSERT_TRUE(DisMdmOpenCheck(camInput));
+        sptr<CaptureInput> input = camInput;
         ASSERT_NE(input, nullptr);
         input->Open();
         res = videoSession->AddInput(input);
@@ -9326,7 +9529,9 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_015, TestSize.Level0)
         res = videoSession->BeginConfig();
         EXPECT_EQ(res, 0);
 
-        sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+        auto camInput = manager_->CreateCameraInput(cameras_[0]);
+        ASSERT_TRUE(DisMdmOpenCheck(camInput));
+        sptr<CaptureInput> input = camInput;
         ASSERT_NE(input, nullptr);
         input->Open();
         res = videoSession->AddInput(input);
@@ -9400,7 +9605,9 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_016, TestSize.Level0)
         res = videoSession->BeginConfig();
         EXPECT_EQ(res, 0);
 
-        sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+        auto camInput = manager_->CreateCameraInput(cameras_[0]);
+        ASSERT_TRUE(DisMdmOpenCheck(camInput));
+        sptr<CaptureInput> input = camInput;
         ASSERT_NE(input, nullptr);
         input->Open();
         res = videoSession->AddInput(input);
@@ -9474,7 +9681,9 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_017, TestSize.Level0)
         res = videoSession->BeginConfig();
         EXPECT_EQ(res, 0);
 
-        sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+        auto camInput = manager_->CreateCameraInput(cameras_[0]);
+        ASSERT_TRUE(DisMdmOpenCheck(camInput));
+        sptr<CaptureInput> input = camInput;
         ASSERT_NE(input, nullptr);
         input->Open();
         res = videoSession->AddInput(input);
@@ -9548,7 +9757,9 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_018, TestSize.Level0)
         res = videoSession->BeginConfig();
         EXPECT_EQ(res, 0);
 
-        sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+        auto camInput = manager_->CreateCameraInput(cameras_[0]);
+        ASSERT_TRUE(DisMdmOpenCheck(camInput));
+        sptr<CaptureInput> input = camInput;
         ASSERT_NE(input, nullptr);
         input->Open();
         res = videoSession->AddInput(input);
@@ -9622,7 +9833,9 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_019, TestSize.Level0)
         res = videoSession->BeginConfig();
         EXPECT_EQ(res, 0);
 
-        sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[0]);
+        auto camInput = manager_->CreateCameraInput(cameras_[0]);
+        ASSERT_TRUE(DisMdmOpenCheck(camInput));
+        sptr<CaptureInput> input = camInput;
         ASSERT_NE(input, nullptr);
         input->Open();
         res = videoSession->AddInput(input);

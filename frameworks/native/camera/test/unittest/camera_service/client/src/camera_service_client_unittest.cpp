@@ -385,6 +385,7 @@ void CameraServiceClientUnit::ProcessSize()
 
     sptr<CameraInput> camInput = (sptr<CameraInput>&)input_;
     auto device = camInput->GetCameraDevice();
+    ASSERT_NE(device, nullptr);
     device->SetMdmCheck(false);
     camInput->Open();
     session_ = manager_->CreateCaptureSession();

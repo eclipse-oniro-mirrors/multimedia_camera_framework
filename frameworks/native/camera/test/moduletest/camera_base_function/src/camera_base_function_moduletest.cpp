@@ -141,7 +141,9 @@ void CameraBaseFunctionModuleTest::SetUp()
     ASSERT_TRUE(!cameraDevices_.empty());
     cameraInput_ = cameraManager_->CreateCameraInput(cameraDevices_[deviceBackIndex]);
     ASSERT_NE(cameraInput_, nullptr);
-
+    auto device = cameraInput_->GetCameraDevice();
+    ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     EXPECT_EQ(cameraInput_->Open(), SUCCESS);
 
     MEDIA_INFO_LOG("SetUp end.");
@@ -159,6 +161,10 @@ void CameraBaseFunctionModuleTest::TearDown()
     metadataObjectTypes_.clear();
 
     if (cameraInput_) {
+        auto device = cameraInput_->GetCameraDevice();
+        if (device) {
+            device->SetMdmCheck(true);
+        }
         EXPECT_EQ(cameraInput_->Release(), SUCCESS);
         cameraInput_ = nullptr;
     }
@@ -554,6 +560,10 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_003, Test
 
     sptr<CameraInput> otherCameraInput = cameraManager_->CreateCameraInput(cameraDevices_[deviceFrontIndex]);
     ASSERT_NE(otherCameraInput, nullptr);
+    auto device = otherCameraInput->GetCameraDevice();
+    ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
+
     EXPECT_EQ(otherCameraInput->Open(), SUCCESS);
     UpdateCameraOutputCapability(deviceFrontIndex);
 
@@ -621,6 +631,9 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_003, Test
 
     sptr<CameraInput> otherCameraInput = cameraManager_->CreateCameraInput(cameraDevices_[deviceFrontIndex]);
     ASSERT_NE(otherCameraInput, nullptr);
+    auto device = otherCameraInput->GetCameraDevice();
+    ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     EXPECT_EQ(otherCameraInput->Open(), SUCCESS);
     UpdateCameraOutputCapability(deviceFrontIndex);
 
@@ -4286,6 +4299,9 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_100, Test
 
     sptr<CameraInput> frontCameraInput = cameraManager_->CreateCameraInput(cameraDevices_[deviceFrontIndex]);
     ASSERT_NE(frontCameraInput, nullptr);
+    auto device = frontCameraInput->GetCameraDevice();
+    ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
     EXPECT_EQ(frontCameraInput->Open(), SUCCESS);
     UpdateCameraOutputCapability(deviceFrontIndex);
 

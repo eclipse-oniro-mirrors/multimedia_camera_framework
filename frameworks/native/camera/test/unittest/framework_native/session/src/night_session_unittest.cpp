@@ -162,8 +162,10 @@ HWTEST_F(CameraNightSessionUnit, night_session_unittest_001, TestSize.Level1)
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
 
     sptr<CaptureOutput> preview = CreatePreviewOutput();
     
@@ -225,8 +227,10 @@ HWTEST_F(CameraNightSessionUnit, night_session_unittest_002, TestSize.Level1)
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
 
     sptr<CaptureOutput> preview = CreatePreviewOutput();
     if (!preIsSupportedNightmode_) {
@@ -289,8 +293,10 @@ HWTEST_F(CameraNightSessionUnit, night_session_unittest_003, TestSize.Level1)
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
 
     sptr<CaptureOutput> preview = CreatePreviewOutput();
 
@@ -350,8 +356,10 @@ HWTEST_F(CameraNightSessionUnit, night_session_unittest_004, TestSize.Level0)
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
 
     sptr<CaptureOutput> preview = CreatePreviewOutput();
     if (!preIsSupportedNightmode_) {
@@ -423,9 +431,10 @@ HWTEST_F(CameraNightSessionUnit, night_session_unittest_005, TestSize.Level0)
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
-
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
     sptr<CaptureOutput> preview = CreatePreviewOutput();
     if (!preIsSupportedNighitmode_) {
         input->Close();
@@ -507,8 +516,10 @@ HWTEST_F(CameraNightSessionUnit, night_session_unittest_006, TestSize.Level0)
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
 
     sptr<CaptureOutput> preview = CreatePreviewOutput();
     if (!preIsSupportedNighitmode_) {
@@ -591,8 +602,10 @@ HWTEST_F(CameraNightSessionUnit, night_session_unittest_007, TestSize.Level0)
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
 
     sptr<CaptureOutput> preview = CreatePreviewOutput();
     if (!preIsSupportedNighitmode_) {

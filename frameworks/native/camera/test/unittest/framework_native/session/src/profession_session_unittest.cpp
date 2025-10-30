@@ -150,6 +150,10 @@ void ProfessionSessionUnitTest::Init()
 
     intResult = session_->AddInput(input_);
     EXPECT_EQ(intResult, 0);
+    sptr<CameraInput> camInput_ = (sptr<CameraInput>&)input_;
+    if (camInput_->GetCameraDevice()) {
+        camInput_->GetCameraDevice()->SetMdmCheck(false);
+    }
     intResult = input_->Open();
     EXPECT_EQ(intResult, 0);
     Profile previewProfile;
@@ -301,7 +305,9 @@ HWTEST_F(ProfessionSessionUnitTest, profession_session_function_unittest_001, Te
     std::vector<sptr<CameraDevice>> cameras = manager_->GetSupportedCameras();
     auto cameraInput = manager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(cameraInput, nullptr);
-    cameraInput->GetCameraDevice()->SetMdmCheck(false);
+    if (cameraInput->GetCameraDevice()) {
+        cameraInput->GetCameraDevice()->SetMdmCheck(false);
+    }
     sptr<CaptureInput> input = cameraInput;
     ASSERT_NE(input, nullptr);
     input->Open();
@@ -353,7 +359,9 @@ HWTEST_F(ProfessionSessionUnitTest, profession_session_function_unittest_003, Te
     std::vector<sptr<CameraDevice>> cameras = manager_->GetSupportedCameras();
     auto cameraInput = manager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(cameraInput, nullptr);
-    cameraInput->GetCameraDevice()->SetMdmCheck(false);
+    if (cameraInput->GetCameraDevice()) {
+        cameraInput->GetCameraDevice()->SetMdmCheck(false);
+    }
     sptr<CaptureInput> input = cameraInput;
     ASSERT_NE(input, nullptr);
     input->Open();
@@ -378,7 +386,9 @@ HWTEST_F(ProfessionSessionUnitTest, profession_session_function_unittest_004, Te
     std::vector<sptr<CameraDevice>> cameras = manager_->GetSupportedCameras();
     auto cameraInput = manager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(cameraInput, nullptr);
-    cameraInput->GetCameraDevice()->SetMdmCheck(false);
+    if (cameraInput->GetCameraDevice()) {
+        cameraInput->GetCameraDevice()->SetMdmCheck(false);
+    }
     sptr<CaptureInput> input = cameraInput;
     ASSERT_NE(input, nullptr);
     input->Open();
@@ -405,7 +415,9 @@ HWTEST_F(ProfessionSessionUnitTest, profession_session_function_unittest_005, Te
     std::vector<sptr<CameraDevice>> cameras = manager_->GetSupportedCameras();
     auto cameraInput = manager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(cameraInput, nullptr);
-    cameraInput->GetCameraDevice()->SetMdmCheck(false);
+    if (cameraInput->GetCameraDevice()) {
+        cameraInput->GetCameraDevice()->SetMdmCheck(false);
+    }
     sptr<CaptureInput> input = cameraInput;
     ASSERT_NE(input, nullptr);
     input->Open();
@@ -432,7 +444,9 @@ HWTEST_F(ProfessionSessionUnitTest, profession_session_function_unittest_006, Te
     std::vector<sptr<CameraDevice>> cameras = manager_->GetSupportedCameras();
     auto cameraInput = manager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(cameraInput, nullptr);
-    cameraInput->GetCameraDevice()->SetMdmCheck(false);
+    if (cameraInput->GetCameraDevice()) {
+        cameraInput->GetCameraDevice()->SetMdmCheck(false);
+    }
     sptr<CaptureInput> input = cameraInput;
     ASSERT_NE(input, nullptr);
     input->Open();
@@ -459,7 +473,9 @@ HWTEST_F(ProfessionSessionUnitTest, profession_session_function_unittest_007, Te
     std::vector<sptr<CameraDevice>> cameras = manager_->GetSupportedCameras();
     auto cameraInput = manager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(cameraInput, nullptr);
-    cameraInput->GetCameraDevice()->SetMdmCheck(false);
+    if (cameraInput->GetCameraDevice()) {
+        cameraInput->GetCameraDevice()->SetMdmCheck(false);
+    }
     sptr<CaptureInput> input = cameraInput;
     ASSERT_NE(input, nullptr);
     input->Open();

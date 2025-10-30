@@ -111,9 +111,10 @@ HWTEST_F(CameraCaptureOutputUnit, capture_output_unittest_001, TestSize.Level1)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
-
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
     sptr<CaptureOutput> captureOutput = CreatePhotoOutput();
     ASSERT_NE(captureOutput, nullptr);
 
@@ -163,9 +164,10 @@ HWTEST_F(CameraCaptureOutputUnit, capture_output_unittest_002, TestSize.Level1)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
-
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
     sptr<CaptureOutput> captureOutput = CreatePhotoOutput();
     ASSERT_NE(captureOutput, nullptr);
 
@@ -196,8 +198,10 @@ HWTEST_F(CameraCaptureOutputUnit, capture_output_unittest_003, TestSize.Level1)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
 
     sptr<CaptureOutput> captureOutput = CreatePhotoOutput();
     ASSERT_NE(captureOutput, nullptr);
@@ -225,8 +229,10 @@ HWTEST_F(CameraCaptureOutputUnit, capture_output_unittest_004, TestSize.Level0)
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
  
     sptr<CaptureOutput> captureOutput = CreatePhotoOutput();
     ASSERT_NE(captureOutput, nullptr);
