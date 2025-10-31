@@ -859,8 +859,8 @@ Profile PhotoOutputImpl::GetActiveProfile()
     auto profile = photoOutput_->GetPhotoProfile();
     CHECK_RETURN_RET_ELOG(profile == nullptr, res, "GetActiveProfile failed, profile is nullptr");
     CameraFormat cameraFormat = CameraUtilsTaihe::ToTaiheCameraFormat(profile->GetCameraFormat());
-    res.size.height = profile->GetSize().height;
-    res.size.width = profile->GetSize().width;
+    res.size.height = static_cast<uint32_t>(profile->GetSize().height);
+    res.size.width = static_cast<uint32_t>(profile->GetSize().width);
     res.format = cameraFormat;
     return res;
 }
