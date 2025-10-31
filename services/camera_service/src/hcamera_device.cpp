@@ -1192,6 +1192,12 @@ int32_t HCameraDevice::GetNaturalDirectionCorrect(bool& isNaturalDirectionCorrec
     }
     return CAMERA_OK;
 }
+
+void HCameraDevice::SetLastDisplayMode(int32_t lastDisplayMode)
+{
+    std::lock_guard<std::mutex> lock(lastDisplayModeLock_);
+    lastDisplayMode_ = lastDisplayMode;
+}
 // LCOV_EXCL_STOP
 
 bool HCameraDevice::IsPhysicalCameraOrientationVariable()
@@ -1213,10 +1219,13 @@ void HCameraDevice::UpdateCameraRotateAngle()
 {
     bool isFoldable = OHOS::Rosen::DisplayManager::GetInstance().IsFoldable();
     int32_t curDisplayMode = static_cast<int32_t>(OHOS::Rosen::DisplayManager::GetInstance().GetFoldDisplayMode());
-    MEDIA_INFO_LOG("HCameraDevice::UpdateCameraRotateAngle lastDisplayMode: %{public}d, curDisplayMode: %{public}d",
-        lastDisplayMode_, curDisplayMode);
-    CHECK_RETURN(!isFoldable || deviceAbility_ == nullptr || lastDisplayMode_ == curDisplayMode);
-    lastDisplayMode_ = curDisplayMode;
+    {
+        std::lock_guard<std::mutex> lock(lastDisplayModeLock_);
+        MEDIA_INFO_LOG("HCameraDevice::UpdateCameraRotateAngle lastDisplayMode:%{public}d, curDisplayMode:%{public}d",
+            lastDisplayMode_, curDisplayMode);
+        CHECK_RETURN(!isFoldable || deviceAbility_ == nullptr || lastDisplayMode_ == curDisplayMode);
+        lastDisplayMode_ = curDisplayMode;
+    }
     if (system::GetParameter("const.system.sensor_correction_enable", "0") != "1"
         || !IsPhysicalCameraOrientationVariable()) {
         MEDIA_DEBUG_LOG("HCameraDevice::UpdateCameraRotateAngle variable orientation is closed");
