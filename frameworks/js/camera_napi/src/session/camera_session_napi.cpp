@@ -2156,6 +2156,7 @@ napi_value CameraSessionNapi::IsZoomCenterPointSupported(napi_env env, napi_call
         if (!CameraNapiUtils::CheckError(env, retCode)) {
             return nullptr;
         }
+        napi_get_boolean(env, isSupported, &result);
     } else {
         MEDIA_ERR_LOG("CameraSessionNapi::IsZoomCenterPointSupported get native object fail");
         CameraNapiUtils::ThrowError(env, PARAMETER_ERROR, "get native object fail");
