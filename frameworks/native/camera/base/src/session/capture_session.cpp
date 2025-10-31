@@ -1764,6 +1764,72 @@ int32_t CaptureSession::GetExposureMode(ExposureMode& exposureMode)
     // LCOV_EXCL_STOP
 }
 
+int32_t CaptureSession::IsZoomCenterPointSupported(bool& isSupported)
+{
+    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+        "CaptureSession::IsZoomCenterPointSupported Session is not Commited");
+    isSupported = false;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = GetMetadata();
+    CHECK_RETURN_RET_ELOG(metadata == nullptr, CameraErrorCode::SUCCESS,
+        "CaptureSession::IsZoomCenterPointSupported metadata is null");
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_ZOOM_CENTER_POINT_SUPPORTED, &item);
+    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS || item.count < 1, CameraErrorCode::SUCCESS,
+        "CaptureSession::IsZoomCenterPointSupported Failed with return code %{public}d", ret);
+    isSupported = static_cast<bool>(item.data.u8[0]);
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::SetZoomCenterPoint(Point zoomCenterPoint)
+{
+    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+        "CaptureSession::SetZoomCenterPoint Session is not Commited");
+    CHECK_RETURN_RET_ELOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
+        "CaptureSession::SetZoomCenterPoint Need to call LockForControl() before setting camera properties");
+    Point zoomCenterVerifyPoint = VerifyFocusCorrectness(zoomCenterPoint);
+    MEDIA_DEBUG_LOG("CaptureSession::SetZoomCenterPoint is called x:%{public}f, y:%{public}f",
+        zoomCenterVerifyPoint.x, zoomCenterVerifyPoint.y);
+    std::vector<float> zoomCenterPointVector = { zoomCenterVerifyPoint.x, zoomCenterVerifyPoint.y };
+    bool status = AddOrUpdateMetadata(
+        changedMetadata_, OHOS_CONTROL_ZOOM_CENTER_POINT, zoomCenterPointVector.data(), zoomCenterPointVector.size());
+    CHECK_PRINT_ELOG(!status, "CaptureSession::SetZoomCenterPoint Failed to set zoom center point.");
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::GetZoomCenterPoint(Point& zoomCenterPoint)
+{
+    float DEFAULT_ZOOM_CENTER_POINT = 0.5;
+    zoomCenterPoint.x = DEFAULT_ZOOM_CENTER_POINT;
+    zoomCenterPoint.y = DEFAULT_ZOOM_CENTER_POINT;
+    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+        "CaptureSession::GetZoomCenterPoint Session is not Commited");
+    auto inputDevice = GetInputDevice();
+    CHECK_RETURN_RET_ELOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), CameraErrorCode::SUCCESS,
+        "CaptureSession::GetZoomCenterPoint camera device is null");
+    auto cameraDeviceObj = ((sptr<CameraInput>&)inputDevice)->GetCameraDevice();
+    CHECK_RETURN_RET_ELOG(
+        !cameraDeviceObj, CameraErrorCode::SUCCESS, "CaptureSession::GetZoomCenterPoint cameraDeviceObj is nullptr");
+
+    int32_t DEFAULT_ITEMS = 1;
+    int32_t DEFAULT_DATA_LENGTH = 100;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metaIn =
+        std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metaOut =
+        std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
+    std::vector<float> zoomCenterPointVector = { zoomCenterPoint.x, zoomCenterPoint.y };
+    metaIn->addEntry(OHOS_CONTROL_ZOOM_CENTER_POINT, zoomCenterPointVector.data(), zoomCenterPointVector.size());
+    cameraDeviceObj->GetStatus(metaIn, metaOut);
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metaOut->get(), OHOS_CONTROL_ZOOM_CENTER_POINT, &item);
+    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS || item.count < zoomCenterPointVector.size(),
+        CameraErrorCode::SUCCESS, "CaptureSession::GetZoomCenterPoint Failed with return code %{public}d", ret);
+    zoomCenterPoint.x = item.data.f[0];
+    zoomCenterPoint.y = item.data.f[1];
+    MEDIA_DEBUG_LOG("CaptureSession::GetZoomCenterPoint is called x:%{public}f, y:%{public}f",
+        zoomCenterPoint.x, zoomCenterPoint.y);
+    return CameraErrorCode::SUCCESS;
+}
+
 int32_t CaptureSession::SetMeteringPoint(Point exposurePoint)
 {
     CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,

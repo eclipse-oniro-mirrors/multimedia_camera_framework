@@ -224,6 +224,10 @@ void TestZoom(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
     session->GetZoomRatio(zoomRatio);
     vector<ZoomPointInfo> zoomPointInfoList;
     session->GetZoomPointInfos(zoomPointInfoList);
+    bool isSupported = false;
+    session->IsZoomCenterPointSupported(isSupported);
+    Point zoomCenterPoint;
+    session->GetZoomCenterPoint(zoomCenterPoint);
     session->LockForControl();
     session->SetZoomRatio(zoomRatio);
     session->PrepareZoom();
@@ -231,6 +235,9 @@ void TestZoom(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
     float targetZoomRatio = fdp.ConsumeFloatingPoint<double>();
     uint32_t smoothZoomType = fdp.ConsumeIntegral<uint32_t>();
     session->SetSmoothZoom(targetZoomRatio, smoothZoomType);
+    zoomCenterPoint.x = fdp.ConsumeFloatingPoint<float>();
+    zoomCenterPoint.y = fdp.ConsumeFloatingPoint<float>();
+    session->SetZoomCenterPoint(zoomCenterPoint);
     session->UnlockForControl();
 }
 
