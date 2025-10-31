@@ -17,6 +17,7 @@
 #include "camera_log.h"
 #include "camera_template_utils_taihe.h"
 #include "camera_const_ability_taihe.h"
+#include "camera_security_utils_taihe.h"
 #include "metadata_output.h"
 
 using namespace taihe;
@@ -201,6 +202,8 @@ void MetadataOutputImpl::OffMetadataObjectsAvailable(
 void MetadataOutputImpl::RemoveMetadataObjectTypes(array_view<MetadataObjectType> types)
 {
     MEDIA_INFO_LOG("RemoveMetadataObjectTypes is called");
+    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi RemoveMetadataObjectTypes is called!");
     std::vector<OHOS::CameraStandard::MetadataObjectType> metadataObjectType;
     for (const auto& item : types) {
         metadataObjectType.push_back(static_cast<OHOS::CameraStandard::MetadataObjectType>(item.get_value()));
@@ -212,6 +215,8 @@ void MetadataOutputImpl::RemoveMetadataObjectTypes(array_view<MetadataObjectType
 void MetadataOutputImpl::AddMetadataObjectTypes(array_view<MetadataObjectType> types)
 {
     MEDIA_INFO_LOG("AddMetadataObjectTypes is called");
+    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi AddMetadataObjectTypes is called!");
     std::vector<OHOS::CameraStandard::MetadataObjectType> metadataObjectType;
     for (const auto& item : types) {
         metadataObjectType.push_back(static_cast<OHOS::CameraStandard::MetadataObjectType>(item.get_value()));

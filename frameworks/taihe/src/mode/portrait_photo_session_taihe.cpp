@@ -52,6 +52,8 @@ array<PortraitPhotoFunctions> PortraitPhotoSessionImpl::GetSessionFunctions(
     CameraOutputCapability const& outputCapability)
 {
     MEDIA_INFO_LOG("PortraitPhotoSessionImpl::GetSessionFunctions is called");
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), {},
+        "SystemApi GetSessionFunctions is called!");
     std::vector<OHOS::CameraStandard::Profile> previewProfiles;
     std::vector<OHOS::CameraStandard::Profile> photoProfiles;
     std::vector<OHOS::CameraStandard::VideoProfile> videoProfiles;
@@ -66,6 +68,8 @@ array<PortraitPhotoFunctions> PortraitPhotoSessionImpl::GetSessionFunctions(
 array<PortraitPhotoConflictFunctions> PortraitPhotoSessionImpl::GetSessionConflictFunctions()
 {
     MEDIA_INFO_LOG("GetSessionConflictFunctions is called");
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), {},
+        "SystemApi GetSessionConflictFunctions is called!");
     CHECK_RETURN_RET_ELOG(portraitSession_ == nullptr, {}, "portraitSession_ is nullptr");
     auto conflictFunctionsList = portraitSession_->GetSessionConflictFunctions();
     auto result = CreateFunctionsPortraitPhotoConflictFunctionsArray(conflictFunctionsList);
@@ -74,6 +78,8 @@ array<PortraitPhotoConflictFunctions> PortraitPhotoSessionImpl::GetSessionConfli
 
 array<PortraitEffect> PortraitPhotoSessionImpl::GetSupportedPortraitEffects()
 {
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        array<PortraitEffect>(nullptr, 0), "SystemApi GetSupportedPortraitEffects is called!");
     CHECK_RETURN_RET_ELOG(portraitSession_ == nullptr, array<PortraitEffect>(nullptr, 0),
         "GetSupportedPortraitEffects portraitSession_ is null");
     std::vector<OHOS::CameraStandard::PortraitEffect> PortraitEffects = portraitSession_->GetSupportedPortraitEffects();
@@ -83,6 +89,8 @@ array<PortraitEffect> PortraitPhotoSessionImpl::GetSupportedPortraitEffects()
 void PortraitPhotoSessionImpl::SetPortraitEffect(PortraitEffect effect)
 {
     MEDIA_DEBUG_LOG("SetPortraitEffect is called");
+    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi SetPortraitEffect is called!");
     CHECK_RETURN_ELOG(portraitSession_ == nullptr, "SetPortraitEffect portraitSession_ is null");
     portraitSession_->LockForControl();
     portraitSession_->SetPortraitEffect(static_cast<OHOS::CameraStandard::PortraitEffect>(effect.get_value()));
@@ -93,6 +101,8 @@ PortraitEffect PortraitPhotoSessionImpl::GetPortraitEffect()
 {
     MEDIA_DEBUG_LOG("GetPortraitEffect is called");
     PortraitEffect errType = PortraitEffect(static_cast<PortraitEffect::key_t>(-1));
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), errType,
+        "SystemApi GetPortraitEffect is called!");
     CHECK_RETURN_RET_ELOG(portraitSession_ == nullptr, errType, "GetPortraitEffect portraitSession_ is null");
     OHOS::CameraStandard::PortraitEffect portaitEffect = portraitSession_->GetPortraitEffect();
     return PortraitEffect(static_cast<PortraitEffect::key_t>(portaitEffect));

@@ -60,7 +60,7 @@ private:
     std::map<std::string, T> _mapString2Enum;
     T _defaultValue;
 
-    static std::map<std::string, T> GenString2EnumMap(std::map<T, std::string> enum2StringMap)
+    static std::map<std::string, T> GenString2EnumMap(const std::map<T, std::string>& enum2StringMap)
     {
         std::map<std::string, T> result;
         for (const auto& item : enum2StringMap) {

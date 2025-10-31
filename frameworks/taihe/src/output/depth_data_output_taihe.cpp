@@ -18,7 +18,7 @@
 #include "camera_template_utils_taihe.h"
 #include "camera_utils_taihe.h"
 #include "camera_log.h"
-
+#include "camera_security_utils_taihe.h"
 #include "video_key_info.h"
 #include "pixel_map.h"
 
@@ -53,6 +53,8 @@ DepthDataOutputImpl::DepthDataOutputImpl(OHOS::sptr<OHOS::CameraStandard::Captur
 void DepthDataOutputImpl::StartSync()
 {
     MEDIA_DEBUG_LOG("StartSync is called");
+    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi StartSync is called!");
     std::unique_ptr<DepthDataOutputTaiheAsyncContext> asyncContext = std::make_unique<DepthDataOutputTaiheAsyncContext>(
         "DepthDataOutputImpl::StartSync", CameraUtilsTaihe::IncrementAndGet(depthDataOutputTaskId_));
     CHECK_RETURN_ELOG(depthDataOutput_ == nullptr, "depthDataOutput_ is nullptr");
@@ -71,6 +73,8 @@ void DepthDataOutputImpl::StartSync()
 void DepthDataOutputImpl::StopSync()
 {
     MEDIA_DEBUG_LOG("StopSync is called");
+    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi StopSync is called!");
     std::unique_ptr<DepthDataOutputTaiheAsyncContext> asyncContext = std::make_unique<DepthDataOutputTaiheAsyncContext>(
         "DepthDataOutputImpl::StopSync", CameraUtilsTaihe::IncrementAndGet(depthDataOutputTaskId_));
     CHECK_RETURN_ELOG(depthDataOutput_ == nullptr, "depthDataOutput_ is nullptr");
@@ -131,6 +135,8 @@ void DepthDataOutputImpl::OffError(optional_view<callback<void(uintptr_t)>> call
 void DepthDataOutputImpl::RegisterErrorCallbackListener(const std::string& eventName,
     std::shared_ptr<uintptr_t> callback, bool isOnce)
 {
+    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi on error is called!");
     if (depthDataCallback_ == nullptr) {
         ani_env *env = get_env();
         depthDataCallback_ = std::make_shared<DepthDataOutputErrorListener>(env);
@@ -142,6 +148,8 @@ void DepthDataOutputImpl::RegisterErrorCallbackListener(const std::string& event
 void DepthDataOutputImpl::UnregisterErrorCallbackListener(const std::string& eventName,
     std::shared_ptr<uintptr_t> callback)
 {
+    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi off error is called!");
     CHECK_RETURN_ELOG(depthDataCallback_ == nullptr, "depthDataCallback is null");
     depthDataCallback_->RemoveCallbackRef("error", callback);
 }
@@ -177,6 +185,8 @@ void DepthDataOutputImpl::OffDepthDataAvailable(optional_view<callback<void(uint
 void DepthDataOutputImpl::RegisterDepthDataAvailableCallbackListener(const std::string& eventName,
     std::shared_ptr<uintptr_t> callback, bool isOnce)
 {
+    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi on depthDataAvailable is called!");
     CHECK_RETURN_ELOG(sDepthDataSurface_ == nullptr, "sDepthDataSurface_ is null!");
     if (depthDataListener_ == nullptr) {
         MEDIA_DEBUG_LOG("new depthDataListener_ and register surface consumer listener");
@@ -195,6 +205,8 @@ void DepthDataOutputImpl::RegisterDepthDataAvailableCallbackListener(const std::
 void DepthDataOutputImpl::UnregisterDepthDataAvailableCallbackListener(const std::string& eventName,
     std::shared_ptr<uintptr_t> callback)
 {
+    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi off depthDataAvailable is called!");
     CHECK_EXECUTE(depthDataListener_ != nullptr,
         depthDataListener_->RemoveCallbackRef("depthDataAvailable", callback));
 }

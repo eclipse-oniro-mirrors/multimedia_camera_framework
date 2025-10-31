@@ -84,6 +84,8 @@ array<VideoConflictFunctions> CreateFunctionsVideoConflictFunctionsArray(
 array<VideoFunctions> VideoSessionImpl::GetSessionFunctions(CameraOutputCapability const& outputCapability)
 {
     MEDIA_INFO_LOG("VideoSessionImpl::GetSessionFunctions is called");
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), {},
+        "SystemApi GetSessionFunctions is called!");
     std::vector<OHOS::CameraStandard::Profile> previewProfiles;
     std::vector<OHOS::CameraStandard::Profile> photoProfiles;
     std::vector<OHOS::CameraStandard::VideoProfile> videoProfileList;
@@ -99,6 +101,8 @@ array<VideoFunctions> VideoSessionImpl::GetSessionFunctions(CameraOutputCapabili
 array<VideoConflictFunctions> VideoSessionImpl::GetSessionConflictFunctions()
 {
     MEDIA_INFO_LOG("GetSessionConflictFunctions is called");
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), {},
+        "SystemApi GetSessionConflictFunctions is called!");
     CHECK_RETURN_RET_ELOG(videoSession_ == nullptr, {}, "videoSession_ is nullptr");
     auto conflictFunctionsList = videoSession_->GetSessionConflictFunctions();
     auto result = CreateFunctionsVideoConflictFunctionsArray(conflictFunctionsList);

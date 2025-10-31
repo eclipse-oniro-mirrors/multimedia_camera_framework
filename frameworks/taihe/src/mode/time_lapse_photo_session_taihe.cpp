@@ -191,6 +191,8 @@ void TimeLapsePhotoSessionImpl::UnregisterTryAEInfoCallbackListener(const std::s
 
 void TimeLapsePhotoSessionImpl::SetTimeLapsePreviewType(ohos::multimedia::camera::TimeLapsePreviewType type)
 {
+    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi SetTimeLapsePreviewType is called!");
     CHECK_RETURN_ELOG(timeLapsePhotoSession_ == nullptr,
         "SetTimeLapsePreviewType failed, timeLapsePhotoSession_ is nullptr!");
     timeLapsePhotoSession_->LockForControl();
@@ -203,6 +205,8 @@ void TimeLapsePhotoSessionImpl::SetTimeLapsePreviewType(ohos::multimedia::camera
 
 void TimeLapsePhotoSessionImpl::SetTimeLapseInterval(int32_t interval)
 {
+    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi SetTimeLapseInterval is called!");
     CHECK_RETURN_ELOG(timeLapsePhotoSession_ == nullptr,
         "SetTimeLapseInterval failed, timeLapsePhotoSession_ is nullptr!");
     timeLapsePhotoSession_->LockForControl();
@@ -215,6 +219,8 @@ void TimeLapsePhotoSessionImpl::SetTimeLapseInterval(int32_t interval)
 int32_t TimeLapsePhotoSessionImpl::GetTimeLapseInterval()
 {
     int32_t interval = -1;
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), interval,
+        "SystemApi GetTimeLapseInterval is called!");
     CHECK_RETURN_RET_ELOG(timeLapsePhotoSession_ == nullptr, interval,
         "GetTimeLapseInterval failed, timeLapsePhotoSession_ is nullptr!");
     int32_t ret = timeLapsePhotoSession_->GetTimeLapseInterval(interval);
@@ -225,6 +231,8 @@ int32_t TimeLapsePhotoSessionImpl::GetTimeLapseInterval()
 
 array<int32_t> TimeLapsePhotoSessionImpl::GetSupportedTimeLapseIntervalRange()
 {
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), array<int32_t>(nullptr, 0),
+        "SystemApi GetSupportedTimeLapseIntervalRange is called!");
     CHECK_RETURN_RET_ELOG(timeLapsePhotoSession_ == nullptr, array<int32_t>(nullptr, 0),
         "GetSupportedTimeLapseIntervalRange failed, timeLapsePhotoSession_ is nullptr!");
     std::vector<int32_t> range;
@@ -287,6 +295,8 @@ int32_t TimeLapsePhotoSessionImpl::GetWhiteBalance()
 
 void TimeLapsePhotoSessionImpl::SetTimeLapseRecordState(ohos::multimedia::camera::TimeLapseRecordState state)
 {
+    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi SetTimeLapseRecordState is called!");
     CHECK_RETURN_ELOG(timeLapsePhotoSession_ == nullptr,
         "SetTimeLapseRecordState failed, timeLapsePhotoSession_ is nullptr!");
     timeLapsePhotoSession_->LockForControl();
@@ -299,6 +309,8 @@ void TimeLapsePhotoSessionImpl::SetTimeLapseRecordState(ohos::multimedia::camera
 
 void TimeLapsePhotoSessionImpl::SetIso(int32_t iso)
 {
+    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi SetIso is called!");
     CHECK_RETURN_ELOG(timeLapsePhotoSession_ == nullptr, "SetIso failed, timeLapsePhotoSession_ is nullptr!");
     timeLapsePhotoSession_->LockForControl();
     int32_t retCode = timeLapsePhotoSession_->SetIso(iso);
@@ -309,6 +321,8 @@ void TimeLapsePhotoSessionImpl::SetIso(int32_t iso)
 int32_t TimeLapsePhotoSessionImpl::GetIso()
 {
     int32_t iso = -1;
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), iso,
+        "SystemApi GetIso is called!");
     CHECK_RETURN_RET_ELOG(timeLapsePhotoSession_ == nullptr, iso,
         "GetIso failed, timeLapsePhotoSession_ is nullptr!");
     int32_t ret = timeLapsePhotoSession_->GetIso(iso);
@@ -319,6 +333,8 @@ int32_t TimeLapsePhotoSessionImpl::GetIso()
 
 int32_t TimeLapsePhotoSessionImpl::GetExposure()
 {
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), -1,
+        "SystemApi GetExposure is called!");
     CHECK_RETURN_RET_ELOG(timeLapsePhotoSession_ == nullptr, -1,
         "GetExposure failed, timeLapsePhotoSession_ is nullptr!");
     uint32_t exposure;
@@ -330,6 +346,8 @@ int32_t TimeLapsePhotoSessionImpl::GetExposure()
 
 void TimeLapsePhotoSessionImpl::SetExposure(int32_t exposure)
 {
+    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi SetExposure is called!");
     CHECK_RETURN_ELOG(timeLapsePhotoSession_ == nullptr, "SetExposure failed, timeLapsePhotoSession_ is nullptr!");
     timeLapsePhotoSession_->LockForControl();
     int32_t retCode = timeLapsePhotoSession_->SetExposure(exposure);
@@ -339,6 +357,8 @@ void TimeLapsePhotoSessionImpl::SetExposure(int32_t exposure)
 
 bool TimeLapsePhotoSessionImpl::IsTryAENeeded()
 {
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), false,
+        "SystemApi IsTryAENeeded is called!");
     CHECK_RETURN_RET_ELOG(timeLapsePhotoSession_ == nullptr, false,
         "IsTryAENeeded failed, timeLapsePhotoSession_ is nullptr!");
     bool needed = false;
@@ -350,6 +370,8 @@ bool TimeLapsePhotoSessionImpl::IsTryAENeeded()
 
 void TimeLapsePhotoSessionImpl::StartTryAE()
 {
+    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi StartTryAE is called!");
     CHECK_RETURN_ELOG(timeLapsePhotoSession_ == nullptr, "StartTryAE failed, timeLapsePhotoSession_ is nullptr!");
     timeLapsePhotoSession_->LockForControl();
     int32_t ret = timeLapsePhotoSession_->StartTryAE();
@@ -360,6 +382,8 @@ void TimeLapsePhotoSessionImpl::StartTryAE()
 
 void TimeLapsePhotoSessionImpl::StopTryAE()
 {
+    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi StopTryAE is called!");
     CHECK_RETURN_ELOG(timeLapsePhotoSession_ == nullptr, "StopTryAE failed, timeLapsePhotoSession_ is nullptr!");
     timeLapsePhotoSession_->LockForControl();
     int32_t retCode = timeLapsePhotoSession_->StopTryAE();
@@ -369,6 +393,8 @@ void TimeLapsePhotoSessionImpl::StopTryAE()
 
 array<int32_t> TimeLapsePhotoSessionImpl::GetIsoRange()
 {
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), array<int32_t>(nullptr, 0),
+        "SystemApi GetIsoRange is called!");
     CHECK_RETURN_RET_ELOG(timeLapsePhotoSession_ == nullptr, array<int32_t>(nullptr, 0),
         "GetIsoRange failed, timeLapsePhotoSession_ is nullptr!");
     std::vector<int32_t> vecIsoList;
@@ -380,6 +406,8 @@ array<int32_t> TimeLapsePhotoSessionImpl::GetIsoRange()
 
 bool TimeLapsePhotoSessionImpl::IsManualIsoSupported()
 {
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), false,
+        "SystemApi IsManualIsoSupported is called!");
     CHECK_RETURN_RET_ELOG(timeLapsePhotoSession_ == nullptr, false,
         "IsManualIsoSupported failed, timeLapsePhotoSession_ is nullptr!");
     bool supported = false;
@@ -391,6 +419,8 @@ bool TimeLapsePhotoSessionImpl::IsManualIsoSupported()
 
 void TimeLapsePhotoSessionImpl::SetExposureMeteringMode(ExposureMeteringMode aeMeteringMode)
 {
+    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi SetExposureMeteringMode is called!");
     CHECK_RETURN_ELOG(timeLapsePhotoSession_ == nullptr, "timeLapsePhotoSession_ is nullptr");
     timeLapsePhotoSession_->LockForControl();
     int32_t ret = timeLapsePhotoSession_->SetExposureMeteringMode(
@@ -403,6 +433,8 @@ void TimeLapsePhotoSessionImpl::SetExposureMeteringMode(ExposureMeteringMode aeM
 ExposureMeteringMode TimeLapsePhotoSessionImpl::GetExposureMeteringMode()
 {
     ExposureMeteringMode errType = ExposureMeteringMode(static_cast<ExposureMeteringMode::key_t>(-1));
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), errType,
+        "SystemApi GetExposureMeteringMode is called!");
     CHECK_RETURN_RET_ELOG(timeLapsePhotoSession_ == nullptr, errType,
         "GetExposureMeteringMode timeLapsePhotoSession_ is null");
     OHOS::CameraStandard::MeteringMode mode;
@@ -414,6 +446,8 @@ ExposureMeteringMode TimeLapsePhotoSessionImpl::GetExposureMeteringMode()
 
 bool TimeLapsePhotoSessionImpl::IsExposureMeteringModeSupported(ExposureMeteringMode aeMeteringMode)
 {
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), false,
+        "SystemApi IsExposureMeteringModeSupported is called!");
     CHECK_RETURN_RET_ELOG(timeLapsePhotoSession_ == nullptr, false,
         "IsExposureMeteringModeSupported failed, timeLapsePhotoSession_ is nullptr!");
     bool supported = false;
@@ -426,6 +460,8 @@ bool TimeLapsePhotoSessionImpl::IsExposureMeteringModeSupported(ExposureMetering
 
 array<int32_t> TimeLapsePhotoSessionImpl::GetSupportedExposureRange()
 {
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), {},
+        "SystemApi GetSupportedExposureRange is called!");
     CHECK_RETURN_RET_ELOG(timeLapsePhotoSession_ == nullptr, {},
         "GetSupportedExposureRange failed, timeLapsePhotoSession_ is nullptr!");
     std::vector<uint32_t> range;

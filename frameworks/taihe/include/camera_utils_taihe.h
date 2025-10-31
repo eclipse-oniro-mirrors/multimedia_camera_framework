@@ -83,10 +83,7 @@ public:
     {
         set_business_error(code, message);
     }
-    static bool GetEnableSecureCamera();
-    static void IsEnableSecureCamera(bool isEnable);
     static uintptr_t GetUndefined(ani_env* env);
-    static bool mEnableSecure;
     static void ToNativeCameraOutputCapability(CameraOutputCapability const& outputCapability,
         std::vector<OHOS::CameraStandard::Profile>& previewProfiles,
         std::vector<OHOS::CameraStandard::Profile>& photoProfiles,
@@ -101,7 +98,7 @@ public:
     {
         std::vector<T> vec;
         for (auto item : src) {
-            T res = T(static_cast<typename T::key_t>(item));
+            T res = T::from_value(static_cast<int32_t>(item));
             vec.emplace_back(res);
         }
         return array<T>(vec);

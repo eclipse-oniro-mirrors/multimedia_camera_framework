@@ -316,10 +316,12 @@ CameraOutputCapability CameraManagerImpl::GetSupportedOutputCapability(CameraDev
         CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT, "Get camera info fail");
         return nullImpl;
     }
-    bool isFound = false;
-    CameraOutputCapability cachedResult = GetCachedSupportedOutputCapability(cameraId, sceneMode, isFound);
-    CHECK_RETURN_RET(isFound, cachedResult);
-
+    auto foldType = cameraManager_->GetFoldScreenType();
+    if (!(!foldType.empty() && foldType[0] == '4')) {
+        bool isFound = false;
+        CameraOutputCapability cachedResult = GetCachedSupportedOutputCapability(cameraId, sceneMode, isFound);
+        CHECK_RETURN_RET(isFound, cachedResult);
+    }
     auto outputCapability = cameraManager_->GetSupportedOutputCapability(cameraInfo, sceneMode);
     CHECK_RETURN_RET_ELOG(outputCapability == nullptr, nullImpl,
         "failed to create CreateCameraOutputCapability");
@@ -365,6 +367,8 @@ bool CameraManagerImpl::IsCameraMuted()
 
 bool CameraManagerImpl::IsCameraMuteSupported()
 {
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), false,
+        "SystemApi IsCameraMuteSupported is called!");
     CHECK_RETURN_RET_ELOG(cameraManager_ == nullptr, false,
         "failed to IsCameraMuteSupported, cameraManager is nullprt");
     return cameraManager_->IsCameraMuteSupported();
@@ -372,6 +376,8 @@ bool CameraManagerImpl::IsCameraMuteSupported()
 
 bool CameraManagerImpl::IsPrelaunchSupported(CameraDevice const& camera)
 {
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), false,
+        "SystemApi IsPrelaunchSupported is called!");
     CHECK_RETURN_RET_ELOG(cameraManager_ == nullptr, false,
         "failed to IsPrelaunchSupported, cameraManager is nullprt");
     std::string nativeStr(camera.cameraId);
@@ -523,7 +529,7 @@ void CameraManagerImpl::RegisterFoldStatusCallbackListener(
     auto listener =
         CameraAniEventListener<FoldListenerAni>::RegisterCallbackListener(eventName, env, callback, isOnce);
     CHECK_RETURN_ELOG(
-        listener == nullptr, "CameraManagerImpl::RegisterTorchStatusCallbackListener listener is null");
+        listener == nullptr, "CameraManagerImpl::RegisterFoldStatusCallbackListener listener is null");
     cameraManager_->RegisterFoldListener(listener);
 }
 
@@ -917,6 +923,8 @@ DepthDataOutput CameraManagerImpl::CreateDepthDataOutput(DepthProfile const& pro
     auto Result = [](OHOS::sptr<OHOS::CameraStandard::CaptureOutput> output, OHOS::sptr<OHOS::Surface> surface) {
         return make_holder<DepthDataOutputImpl, DepthDataOutput>(output, surface);
     };
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), Result(nullptr, nullptr),
+        "SystemApi CreateDepthDataOutput is called!");
     CHECK_RETURN_RET_ELOG(cameraManager_ == nullptr, Result(nullptr, nullptr), "cameraManager_ is nullptr");
     OHOS::CameraStandard::CameraFormat cameraFormat =
         static_cast<OHOS::CameraStandard::CameraFormat>(profile.format.get_value());
@@ -1076,7 +1084,7 @@ int64_t CameraManagerImpl::GetCameraStorageSizeSync()
         CameraUtilsTaihe::CheckError(asyncContext->errorCode);
     });
     CAMERA_FINISH_ASYNC_TRACE(asyncContext->funcName, asyncContext->taskId);
-    return static_cast<int32_t>(asyncContext->storageSize);
+    return asyncContext->storageSize;
 }
 
 CameraManager getCameraManager(uintptr_t context)

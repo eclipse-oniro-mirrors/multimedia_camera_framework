@@ -15,7 +15,7 @@
 
 #include "depth_data_taihe.h"
 #include "camera_utils_taihe.h"
-
+#include "camera_security_utils_taihe.h"
 #include "camera_log.h"
 
 
@@ -26,6 +26,8 @@ uint32_t DepthDataImpl::depthDataTaskId_ = CAMERA_PREVIEW_OUTPUT_TASKID;
 void DepthDataImpl::ReleaseSync()
 {
     MEDIA_DEBUG_LOG("ReleaseSync is called");
+    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi ReleaseSync is called!");
     std::unique_ptr<DepthDataTaiheAsyncContext> asyncContext = std::make_unique<DepthDataTaiheAsyncContext>(
         "DepthDataImpl::ReleaseSync", CameraUtilsTaihe::IncrementAndGet(depthDataTaskId_));
     asyncContext->queueTask =

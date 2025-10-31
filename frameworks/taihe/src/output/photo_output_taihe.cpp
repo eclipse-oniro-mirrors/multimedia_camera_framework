@@ -81,6 +81,7 @@ void PhotoOutputCallbackAni::OnPhotoAvailableCallback(const std::shared_ptr<Medi
         CHECK_EXECUTE(sharePtr != nullptr, sharePtr->ExecuteAsyncCallback(
             CONST_CAPTURE_PHOTO_AVAILABLE, errCode, message, photoValue));
     };
+    CHECK_RETURN_ELOG(mainHandler_ == nullptr, "callback failed, mainHandler_ is nullptr!");
     mainHandler_->PostTask(task, "OnPhotoAvailableCallback", 0, OHOS::AppExecFwk::EventQueue::Priority::IMMEDIATE, {});
 }
 
@@ -96,6 +97,7 @@ void PhotoOutputCallbackAni::OnPhotoAssetAvailableCallback(const int32_t capture
             CONST_CAPTURE_PHOTO_ASSET_AVAILABLE, 0, "success", reinterpret_cast<uintptr_t>(photoAssetValue)));
         MEDIA_DEBUG_LOG("ExecuteCallback CONST_CAPTURE_PHOTO_ASSET_AVAILABLE X");
     };
+    CHECK_RETURN_ELOG(mainHandler_ == nullptr, "callback failed, mainHandler_ is nullptr!");
     mainHandler_->PostTask(task, "OnPhotoAssetAvailableCallback", 0,
         OHOS::AppExecFwk::EventQueue::Priority::IMMEDIATE, {});
 }
@@ -112,6 +114,7 @@ void PhotoOutputCallbackAni::OnThumbnailAvailableCallback(int32_t captureId, int
         CHECK_EXECUTE(sharePtr != nullptr,
             sharePtr->ExecuteAsyncCallback(CONST_CAPTURE_QUICK_THUMBNAIL, 0, "Callback is OK", pixelMapVal));
     };
+    CHECK_RETURN_ELOG(mainHandler_ == nullptr, "callback failed, mainHandler_ is nullptr!");
     mainHandler_->PostTask(task, "OnThumbnailAvailableCallback", 0, OHOS::AppExecFwk::EventQueue::Priority::IMMEDIATE);
 }
 
@@ -902,6 +905,8 @@ ImageRotation PhotoOutputImpl::GetPhotoRotation(int32_t deviceDegree)
 
 void PhotoOutputImpl::EnableQuickThumbnail(bool enabled)
 {
+    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi EnableQuickThumbnail is called!");
     CHECK_RETURN_ELOG(photoOutput_ == nullptr, "EnableQuickThumbnail photoOutput_ is null");
     isQuickThumbnailEnabled_ = enabled;
     int32_t retCode = photoOutput_->SetThumbnail(enabled);
@@ -911,7 +916,7 @@ void PhotoOutputImpl::EnableQuickThumbnail(bool enabled)
 void PhotoOutputImpl::EnableOffline()
 {
     CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
-        "SystemApi IsOfflineSupported on is called!");
+        "SystemApi EnableOffline on is called!");
     CHECK_RETURN_ELOG(photoOutput_ == nullptr, "EnableOfflinePhoto photoOutput_ is null");
     auto session = GetPhotoOutput()->GetSession();
     CHECK_RETURN_ELOG(session == nullptr, "EnableOfflinePhoto session is null");

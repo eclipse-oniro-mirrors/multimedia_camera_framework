@@ -25,6 +25,8 @@ namespace Ani::Camera {
 using namespace taihe;
 using namespace ohos::multimedia::camera;
 namespace ImageTaihe = ohos::multimedia::image::image;
+constexpr int32_t DEFAULT_QUALITY_LEVEL = 0;
+
 class PhotoImpl {
 public:
     PhotoImpl(ImageTaihe::Image mainImage, bool isRaw);
@@ -48,7 +50,7 @@ private:
     int32_t captureId_ = 0;
     DepthData depthData_ = taihe::make_holder<DepthDataImpl, DepthData>(
         OHOS::CameraStandard::CameraFormat::CAMERA_FORMAT_YCBCR_420_888,
-            OHOS::CameraStandard::DepthDataAccuracy::DEPTH_DATA_ACCURACY_RELATIVE, 0,
+            OHOS::CameraStandard::DepthDataAccuracy::DEPTH_DATA_ACCURACY_RELATIVE, DEFAULT_QUALITY_LEVEL,
                 make_holder<ANI::Image::PixelMapImpl, ImageTaihe::PixelMap>());
 };
 } // namespace Ani::Camera
