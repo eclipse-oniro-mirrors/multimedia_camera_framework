@@ -198,6 +198,7 @@ public:
     int32_t SetUsePhysicalCameraOrientation(bool isUsed) override;
     int32_t GetNaturalDirectionCorrect(bool& isNaturalDirectionCorrect) override;
     bool GetUsePhysicalCameraOrientation();
+    void SetLastDisplayMode(int32_t lastDisplayMode);
     void SetFrameRateRange(const std::vector<int32_t>& frameRateRange);
     std::vector<int32_t> GetFrameRateRange();
 #ifdef CAMERA_LIVE_SCENE_RECOGNITION
@@ -306,6 +307,7 @@ private:
     bool isMovingPhotoEnabled_ = false;
     std::vector<int32_t> frameRateRange_ = {0, 0};
     std::mutex fpsRangeLock_;
+    std::mutex lastDisplayModeLock_;
     std::mutex usePhysicalCameraOrientationMutex_;
     std::mutex dataShareHelperMutex_;
     std::mutex movingPhotoStartTimeCallbackLock_;
