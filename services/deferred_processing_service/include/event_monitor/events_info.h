@@ -44,7 +44,7 @@ private:
     BatteryLevel batteryLevel_ {BATTERY_LEVEL_LOW};
     SystemPressureLevel photoThermalLevel_ {SEVERE};
     ThermalLevel thermalLevel_ {LEVEL_2};
-    CameraSessionStatus cameraState_ {SYSTEM_CAMERA_OPEN};
+    CameraSessionStatus cameraState_ {SYSTEM_CAMERA_CLOSED};
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard
