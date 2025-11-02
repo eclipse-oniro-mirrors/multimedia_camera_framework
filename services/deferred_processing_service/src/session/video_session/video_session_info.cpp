@@ -111,6 +111,7 @@ void VideoSessionInfo::SetCallback(const sptr<IDeferredVideoProcessingSessionCal
 {
     DP_INFO_LOG("Reset video callback.");
     std::lock_guard lock(callbackMutex_);
+    DP_CHECK_EXECUTE(callback_ != nullptr && deathRecipient_ != nullptr, deathRecipient_->Destroy(callback_));
     isCreate_ = false;
     callback_ = callback;
     auto ret = deathRecipient_->Initialize(callback_);
