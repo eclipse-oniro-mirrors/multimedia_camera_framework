@@ -24,12 +24,12 @@
 namespace OHOS {
 namespace CameraStandard {
 thread_local napi_ref PhotoNapi::sConstructor_ = nullptr;
-thread_local napi_value PhotoNapi::sMainImage_ = nullptr;
+thread_local napi_ref PhotoNapi::sMainImageRef_ = nullptr;
 thread_local napi_value PhotoNapi::sRawImage_ = nullptr;
 sptr<SurfaceBuffer> PhotoNapi::imageBuffer_ = nullptr;
 thread_local uint32_t PhotoNapi::photoTaskId = PHOTO_TASKID;
 
-PhotoNapi::PhotoNapi() : env_(nullptr), mainImage_(nullptr), rawImage_(nullptr) {}
+PhotoNapi::PhotoNapi() : env_(nullptr), mainImageRef_(nullptr), rawImage_(nullptr) {}
 
 PhotoNapi::~PhotoNapi()
 {
@@ -50,7 +50,7 @@ napi_value PhotoNapi::PhotoNapiConstructor(napi_env env, napi_callback_info info
     if (status == napi_ok && thisVar != nullptr) {
         std::unique_ptr<PhotoNapi> obj = std::make_unique<PhotoNapi>();
         obj->env_ = env;
-        obj->mainImage_ = sMainImage_;
+        obj->mainImageRef_ = sMainImageRef_;
         obj->rawImage_ = sRawImage_;
         status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
                            PhotoNapi::PhotoNapiDestructor, nullptr, nullptr);
@@ -117,11 +117,14 @@ napi_value PhotoNapi::CreatePhoto(napi_env env, napi_value mainImage, bool isRaw
             sRawImage_ = mainImage;
             MEDIA_DEBUG_LOG("raw image");
         } else {
-            sMainImage_ = mainImage;
+            napi_ref mainImageRef;
+            napi_create_reference(env, mainImage, 1, &mainImageRef);
+            sMainImageRef_ = mainImageRef;
+            MEDIA_DEBUG_LOG("main image");
         }
         status = napi_new_instance(env, constructor, 0, nullptr, &result);
         sRawImage_ = nullptr;
-        sMainImage_ = nullptr;
+        sMainImageRef_  = nullptr;
         if (status == napi_ok && result != nullptr) {
             return result;
         } else {
@@ -149,7 +152,9 @@ napi_value PhotoNapi::GetMain(napi_env env, napi_callback_info info)
     PhotoNapi* photoNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&photoNapi));
     if (status == napi_ok && photoNapi != nullptr) {
-        result = photoNapi->mainImage_;
+        napi_value mainImage;
+        napi_get_reference_value(env, photoNapi->mainImageRef_, &mainImage);
+        result = mainImage;
         MEDIA_ERR_LOG("PhotoNapi::GetMain Success");
         return result;
     }
@@ -238,7 +243,9 @@ napi_value PhotoNapi::Release(napi_env env, napi_callback_info info)
                 CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
                 if (context->objectInfo != nullptr) {
                     context->status = true;
-                    context->objectInfo->mainImage_ = nullptr;
+                    napi_delete_reference(env, context->objectInfo->mainImageRef_);
+                    context->objectInfo->mainImageRef_ = nullptr;
+                    context->objectInfo->rawImage_ = nullptr;
                     context->objectInfo->rawImage_ = nullptr;
                 }
             },
