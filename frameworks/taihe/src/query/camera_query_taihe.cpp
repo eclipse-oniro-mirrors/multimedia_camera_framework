@@ -109,6 +109,7 @@ void FlashImpl::EnableLcdFlash(bool enabled)
 void FlashImpl::SetFlashMode(FlashMode flashMode)
 {
     MEDIA_DEBUG_LOG("SetFlashMode is called");
+    CHECK_RETURN_ELOG(captureSession_ == nullptr, "SetFlashMode captureSession_ is null");
     captureSession_->LockForControl();
     int retCode = captureSession_->SetFlashMode(static_cast<OHOS::CameraStandard::FlashMode>(flashMode.get_value()));
     captureSession_->UnlockForControl();
@@ -200,19 +201,23 @@ void ZoomImpl::SetZoomRatio(double zoomRatio)
 void ZoomImpl::PrepareZoom()
 {
     MEDIA_DEBUG_LOG("PrepareZoom is called");
-    CHECK_RETURN_ELOG(captureSession_ == nullptr, "PrepareZoom captureSession_ is null");
-    captureSession_->LockForControl();
-    int retCode = captureSession_->PrepareZoom();
-    captureSession_->UnlockForControl();
+    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi PrepareZoom is called!");
+    CHECK_RETURN_ELOG(captureSessionForSys_ == nullptr, "PrepareZoom captureSessionForSys_ is null");
+    captureSessionForSys_->LockForControl();
+    int retCode = captureSessionForSys_->PrepareZoom();
+    captureSessionForSys_->UnlockForControl();
     CHECK_RETURN_ELOG(!CameraUtilsTaihe::CheckError(retCode), "PrepareZoom is failed called!");
 }
 
 void ZoomImpl::UnprepareZoom()
 {
-    CHECK_RETURN_ELOG(captureSession_ == nullptr, "UnprepareZoom captureSession_ is null");
-    captureSession_->LockForControl();
-    int retCode = captureSession_->UnPrepareZoom();
-    captureSession_->UnlockForControl();
+    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi UnprepareZoom is called!");
+    CHECK_RETURN_ELOG(captureSessionForSys_ == nullptr, "UnprepareZoom captureSessionForSys_ is null");
+    captureSessionForSys_->LockForControl();
+    int retCode = captureSessionForSys_->UnPrepareZoom();
+    captureSessionForSys_->UnlockForControl();
     CHECK_RETURN_ELOG(!CameraUtilsTaihe::CheckError(retCode), "UnprepareZoom is failed called!");
 }
 
@@ -418,6 +423,8 @@ FocusRangeType FocusImpl::GetFocusRange()
 
 void FocusImpl::SetFocusAssist(bool enabled)
 {
+    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi SetFocusAssist is called!");
     CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::OPERATION_NOT_ALLOWED,
         "can not SetFocusAssist in current session!");
 }
@@ -682,6 +689,8 @@ bool AutoExposureQueryImpl::IsExposureModeSupported(ExposureMode aeMode)
 
 bool AutoExposureQueryImpl::IsExposureMeteringModeSupported(ExposureMeteringMode aeMeteringMode)
 {
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), false,
+        "SystemApi IsExposureMeteringModeSupported is called!");
     CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::OPERATION_NOT_ALLOWED,
         "can not IsExposureMeteringModeSupported in current session!");
     return false;
@@ -703,6 +712,8 @@ void AutoExposureImpl::SetExposureBias(double exposureBias)
 
 void AutoExposureImpl::SetExposureMeteringMode(ExposureMeteringMode aeMeteringMode)
 {
+    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi SetExposureMeteringMode is called!");
     CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::OPERATION_NOT_ALLOWED,
         "can not SetExposureMeteringMode in current session!");
     return;
@@ -710,9 +721,11 @@ void AutoExposureImpl::SetExposureMeteringMode(ExposureMeteringMode aeMeteringMo
 
 ExposureMeteringMode AutoExposureImpl::GetExposureMeteringMode()
 {
+    ExposureMeteringMode meteringMode = static_cast<ExposureMeteringMode::key_t>(-1);
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), meteringMode,
+        "SystemApi GetExposureMeteringMode is called!");
     CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::OPERATION_NOT_ALLOWED,
         "can not SetExposureMeteringMode in current session!");
-    ExposureMeteringMode meteringMode = static_cast<ExposureMeteringMode::key_t>(-1);
     return meteringMode;
 }
 
@@ -931,6 +944,8 @@ WhiteBalanceMode WhiteBalanceImpl::GetWhiteBalanceMode()
 
 array<int32_t> ManualExposureQueryImpl::GetSupportedExposureRange()
 {
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), array<int32_t>(0),
+        "SystemApi GetSupportedExposureRange is called!");
     if (isFunctionBase_) {
         CHECK_RETURN_RET_ELOG(cameraAbility_ == nullptr, array<int32_t>(0),
             "GetSupportedExposureRange failed, cameraAbility_ is nullptr");
@@ -950,6 +965,8 @@ array<int32_t> ManualExposureQueryImpl::GetSupportedExposureRange()
 
 int32_t ManualExposureImpl::GetExposure()
 {
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), -1,
+        "SystemApi GetExposure is called!");
     CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::OPERATION_NOT_ALLOWED,
         "can not GetExposure in current session!");
     return -1;
@@ -957,6 +974,8 @@ int32_t ManualExposureImpl::GetExposure()
 
 void ManualExposureImpl::SetExposure(int32_t exposure)
 {
+    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi SetExposure is called!");
     CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::OPERATION_NOT_ALLOWED,
         "can not SetExposure in current session!");
     return;
@@ -965,6 +984,8 @@ void ManualExposureImpl::SetExposure(int32_t exposure)
 array<ColorEffectType> ColorEffectQueryImpl::GetSupportedColorEffects()
 {
     std::vector<OHOS::CameraStandard::ColorEffect> colorEffects;
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        array<ColorEffectType>(nullptr, 0), "SystemApi GetSupportedColorEffects is called!");
     if (isSessionBase_) {
         CHECK_RETURN_RET_ELOG(captureSession_ == nullptr,
             array<ColorEffectType>(nullptr, 0), "GetSupportedColorEffects captureSession_ is null");
@@ -1004,6 +1025,8 @@ ColorEffectType ColorEffectImpl::GetColorEffect()
 
 array<int32_t> ManualIsoQueryImpl::GetIsoRange()
 {
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), array<int32_t>(nullptr, 0),
+        "SystemApi GetIsoRange is called!");
     CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::OPERATION_NOT_ALLOWED,
         "can not GetIsoRange in current session!");
     return array<int32_t>(nullptr, 0);
@@ -1011,6 +1034,8 @@ array<int32_t> ManualIsoQueryImpl::GetIsoRange()
 
 bool ManualIsoQueryImpl::IsManualIsoSupported()
 {
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), false,
+        "SystemApi IsManualIsoSupported is called!");
     CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::OPERATION_NOT_ALLOWED,
         "can not IsManualIsoSupported in current session!");
     return false;
@@ -1018,6 +1043,8 @@ bool ManualIsoQueryImpl::IsManualIsoSupported()
 
 void ManualIsoImpl::SetIso(int32_t iso)
 {
+    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi SetIso is called!");
     CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::OPERATION_NOT_ALLOWED,
         "can not SetIso in current session!");
     return ;
@@ -1025,6 +1052,8 @@ void ManualIsoImpl::SetIso(int32_t iso)
 
 int32_t ManualIsoImpl::GetIso()
 {
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), -1,
+        "SystemApi GetIso is called!");
     CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::OPERATION_NOT_ALLOWED,
         "can not GetIso in current session!");
     return -1;
@@ -1083,7 +1112,7 @@ void ApertureImpl::SetVirtualAperture(double aperture)
 {
     CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
         "SystemApi SetVirtualAperture is called!");
-    CHECK_RETURN_ELOG(captureSessionForSys_ == nullptr, "GetSupportedPhysicalApertures captureSessionForSys_ is null");
+    CHECK_RETURN_ELOG(captureSessionForSys_ == nullptr, "SetVirtualAperture captureSessionForSys_ is null");
     captureSessionForSys_->LockForControl();
     int32_t retCode = captureSessionForSys_->SetVirtualAperture(static_cast<float>(aperture));
     captureSessionForSys_->UnlockForControl();
@@ -1124,7 +1153,7 @@ double ApertureImpl::GetPhysicalAperture()
         "SystemApi GetPhysicalAperture is called!");
     MEDIA_DEBUG_LOG("GetPhysicalAperture is called");
     CHECK_RETURN_RET_ELOG(
-        captureSessionForSys_ == nullptr, physicalAperture, "SetPhysicalAperture captureSessionForSys_ is null");
+        captureSessionForSys_ == nullptr, physicalAperture, "GetPhysicalAperture captureSessionForSys_ is null");
     int32_t retCode = captureSessionForSys_->GetPhysicalAperture(physicalAperture);
     CHECK_RETURN_RET(!CameraUtilsTaihe::CheckError(retCode), physicalAperture);
     return static_cast<double>(physicalAperture);
@@ -1197,8 +1226,6 @@ array<EffectSuggestionType> EffectSuggestionImpl::GetSupportedEffectSuggestionTy
 
 bool MacroQueryImpl::IsMacroSupported()
 {
-    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
-        false, "SystemApi IsMacroSupported is called!");
     if (isSessionBase_) {
         CHECK_RETURN_RET_ELOG(captureSessionForSys_ == nullptr, false,
             "IsMacroSupported captureSessionForSys_ is null");
@@ -1215,8 +1242,6 @@ bool MacroQueryImpl::IsMacroSupported()
 
 void MacroImpl::EnableMacro(bool enabled)
 {
-    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
-        "SystemApi EnableMacro is called!");
     if (captureSessionForSys_ == nullptr) {
         CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT,
             "failed to EnableMacro, captureSessionForSys_ is nullptr");
@@ -1242,14 +1267,18 @@ double ManualFocusImpl::GetFocusDistance()
 
 void ManualFocusImpl::SetFocusDistance(double distance)
 {
-    CHECK_RETURN_ELOG(captureSession_ == nullptr, "SetFocusDistance captureSession_ is null");
-    captureSession_->LockForControl();
-    captureSession_->SetFocusDistance(static_cast<float>(distance));
-    captureSession_->UnlockForControl();
+    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi SetFocusDistance is called!");
+    CHECK_RETURN_ELOG(captureSessionForSys_ == nullptr, "SetFocusDistance captureSessionForSys_ is null");
+    captureSessionForSys_->LockForControl();
+    captureSessionForSys_->SetFocusDistance(static_cast<float>(distance));
+    captureSessionForSys_->UnlockForControl();
 }
 
 array<PortraitEffect> PortraitQueryImpl::GetSupportedPortraitEffects()
 {
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        array<PortraitEffect>(nullptr, 0), "SystemApi GetSupportedPortraitEffects is called!");
     if (isFunctionBase_) {
         CHECK_RETURN_RET_ELOG(cameraAbility_ == nullptr, array<PortraitEffect>(nullptr, 0),
             "GetSupportedPortraitEffects failed, cameraAbility_ is nullptr");
@@ -1266,6 +1295,8 @@ array<PortraitEffect> PortraitQueryImpl::GetSupportedPortraitEffects()
 
 void PortraitImpl::SetPortraitEffect(PortraitEffect effect)
 {
+    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi SetPortraitEffect is called!");
     CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::OPERATION_NOT_ALLOWED,
         "can not SetPortraitEffect in current session!");
 }

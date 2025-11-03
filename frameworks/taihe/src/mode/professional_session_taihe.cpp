@@ -23,6 +23,8 @@ using namespace ohos::multimedia::camera;
 
 void ProfessionalSessionImpl::SetFocusAssist(bool enabled)
 {
+    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi SetFocusAssist is called!");
     CHECK_RETURN_ELOG(professionSession_ == nullptr, "professionSession_ is nullptr");
     OHOS::CameraStandard::FocusAssistFlashMode mode =
         OHOS::CameraStandard::FocusAssistFlashMode::FOCUS_ASSIST_FLASH_MODE_OFF;
@@ -37,6 +39,8 @@ void ProfessionalSessionImpl::SetFocusAssist(bool enabled)
 
 array<int32_t> ProfessionalSessionImpl::GetIsoRange()
 {
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), array<int32_t>(nullptr, 0),
+        "SystemApi GetIsoRange is called!");
     CHECK_RETURN_RET_ELOG(professionSession_ == nullptr, array<int32_t>(nullptr, 0),
         "GetIsoRange failed, professionSession_ is nullptr!");
     std::vector<int32_t> vecIsoList;
@@ -48,6 +52,8 @@ array<int32_t> ProfessionalSessionImpl::GetIsoRange()
 
 void ProfessionalSessionImpl::SetIso(int32_t iso)
 {
+    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi SetIso is called!");
     CHECK_RETURN_ELOG(professionSession_ == nullptr, "SetIso failed, professionSession_ is nullptr!");
     professionSession_->LockForControl();
     int32_t retCode = professionSession_->SetISO(iso);
@@ -58,6 +64,8 @@ void ProfessionalSessionImpl::SetIso(int32_t iso)
 int32_t ProfessionalSessionImpl::GetIso()
 {
     int32_t iso = -1;
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), iso,
+        "SystemApi GetIso is called!");
     CHECK_RETURN_RET_ELOG(professionSession_ == nullptr, iso,
         "GetIso failed, professionSession_ is nullptr!");
     int32_t ret = professionSession_->GetISO(iso);
@@ -84,6 +92,8 @@ bool ProfessionalSessionImpl::IsManualIsoSupported()
 
 bool ProfessionalSessionImpl::IsExposureMeteringModeSupported(ExposureMeteringMode aeMeteringMode)
 {
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), false,
+        "SystemApi IsExposureMeteringModeSupported is called!");
     CHECK_RETURN_RET_ELOG(professionSession_ == nullptr, false,
         "IsExposureMeteringModeSupported failed, professionSession_ is nullptr!");
     bool supported = false;
@@ -96,6 +106,8 @@ bool ProfessionalSessionImpl::IsExposureMeteringModeSupported(ExposureMeteringMo
 
 void ProfessionalSessionImpl::SetExposureMeteringMode(ExposureMeteringMode aeMeteringMode)
 {
+    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi SetExposureMeteringMode is called!");
     CHECK_RETURN_ELOG(professionSession_ == nullptr, "professionSession_ is nullptr");
     professionSession_->LockForControl();
     professionSession_->SetMeteringMode(
@@ -106,6 +118,8 @@ void ProfessionalSessionImpl::SetExposureMeteringMode(ExposureMeteringMode aeMet
 ExposureMeteringMode ProfessionalSessionImpl::GetExposureMeteringMode()
 {
     ExposureMeteringMode errType = ExposureMeteringMode(static_cast<ExposureMeteringMode::key_t>(-1));
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), errType,
+        "SystemApi GetExposureMeteringMode is called!");
     CHECK_RETURN_RET_ELOG(professionSession_ == nullptr, errType,
         "GetExposureMeteringMode timeLapsePhotoSession_ is null");
     OHOS::CameraStandard::MeteringMode mode;

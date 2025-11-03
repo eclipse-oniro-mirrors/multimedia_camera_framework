@@ -23,6 +23,8 @@ namespace Camera {
 using namespace taihe;
 int32_t NightPhotoSessionImpl::GetExposure()
 {
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), -1,
+        "SystemApi GetExposure is called!");
     CHECK_RETURN_RET_ELOG(nightSession_ == nullptr, -1, "GetExposure failed, nightSession_ is nullptr!");
     uint32_t exposure;
     int32_t ret = nightSession_->GetExposure(exposure);
@@ -33,6 +35,8 @@ int32_t NightPhotoSessionImpl::GetExposure()
 
 void NightPhotoSessionImpl::SetExposure(int32_t exposure)
 {
+    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi SetExposure is called!");
     CHECK_RETURN_ELOG(nightSession_ == nullptr, "SetExposure failed, nightSession_ is nullptr!");
     nightSession_->LockForControl();
     int32_t retCode = nightSession_->SetExposure(exposure);
@@ -42,6 +46,8 @@ void NightPhotoSessionImpl::SetExposure(int32_t exposure)
 
 array<int32_t> NightPhotoSessionImpl::GetSupportedExposureRange()
 {
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), {},
+        "SystemApi GetSupportedExposureRange is called!");
     CHECK_RETURN_RET_ELOG(nightSession_ == nullptr, {},
         "GetSupportedExposureRange failed, nightSession_ is nullptr!");
     std::vector<uint32_t> range;

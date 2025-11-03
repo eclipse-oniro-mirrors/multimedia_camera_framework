@@ -75,6 +75,8 @@ array<PhotoConflictFunctions> CreateFunctionsPhotoConflictFunctionsArray(
 taihe::array<PhotoFunctions> PhotoSessionImpl::GetSessionFunctions(CameraOutputCapability const& outputCapability)
 {
     MEDIA_INFO_LOG("PhotoSessionImpl::GetSessionFunctions is called");
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), {},
+        "SystemApi GetSessionFunctions is called!");
     std::vector<OHOS::CameraStandard::Profile> previewProfiles;
     std::vector<OHOS::CameraStandard::Profile> photoProfiles;
     std::vector<OHOS::CameraStandard::VideoProfile> videoProfiles;
@@ -89,6 +91,8 @@ taihe::array<PhotoFunctions> PhotoSessionImpl::GetSessionFunctions(CameraOutputC
 taihe::array<PhotoConflictFunctions> PhotoSessionImpl::GetSessionConflictFunctions()
 {
     MEDIA_INFO_LOG("GetSessionConflictFunctions is called");
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), {},
+        "SystemApi GetSessionConflictFunctions is called!");
     CHECK_RETURN_RET_ELOG(photoSession_ == nullptr, {}, "photoSession_ is nullptr");
     auto conflictFunctionsList = photoSession_->GetSessionConflictFunctions();
     auto result = CreateFunctionsPhotoConflictFunctionsArray(conflictFunctionsList);

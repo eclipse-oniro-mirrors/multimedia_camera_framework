@@ -14,6 +14,7 @@
  */
 #include "deferred_photo_proxy_taihe.h"
 #include "camera_log.h"
+#include "camera_security_utils_taihe.h"
 
 using namespace taihe;
 using namespace OHOS;
@@ -28,6 +29,8 @@ DeferredPhotoProxyImpl::DeferredPhotoProxyImpl(sptr<OHOS::CameraStandard::Deferr
 
 ImageTaihe::PixelMap DeferredPhotoProxyImpl::GetThumbnailSync()
 {
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        ANI::Image::PixelMapImpl::CreatePixelMap(nullptr), "SystemApi GetThumbnailSync is called!");
     void* fdAddr = deferredPhotoProxy_->GetFileDataAddr();
     int32_t thumbnailWidth = deferredPhotoProxy_->GetWidth();
     int32_t thumbnailHeight = deferredPhotoProxy_->GetHeight();
@@ -44,6 +47,8 @@ ImageTaihe::PixelMap DeferredPhotoProxyImpl::GetThumbnailSync()
 
 void DeferredPhotoProxyImpl::ReleaseSync()
 {
+    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi ReleaseSync is called!");
     if (deferredPhotoProxy_ != nullptr) {
         deferredPhotoProxy_ = nullptr;
     }

@@ -34,7 +34,6 @@ void SecureSessionForSysImpl::AddSecureOutput(ohos::multimedia::camera::weak::Pr
     sptr<OHOS::CameraStandard::PreviewOutput> previewOutputImpl = outputImpl->GetPreviewOutput();
     CHECK_RETURN_ELOG(previewOutputImpl == nullptr, "AddSecureOutput previewOutputImpl is null");
     sptr<OHOS::CameraStandard::CaptureOutput> captureOutput = previewOutputImpl;
-    CHECK_RETURN_ELOG(captureOutput == nullptr, "AddSecureOutput captureOutput is null");
     int32_t retCode = secureCameraSessionForSys_->AddSecureOutput(captureOutput);
     CHECK_RETURN_ELOG(!CameraUtilsTaihe::CheckError(retCode),
         "SecureSessionForSysImpl::AddSecureOutput fail %{public}d", retCode);

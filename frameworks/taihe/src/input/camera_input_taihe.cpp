@@ -89,13 +89,10 @@ void CameraInputImpl::OpenSync()
     CAMERA_START_ASYNC_TRACE(asyncContext->funcName, asyncContext->taskId);
     CameraTaiheWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(asyncContext->queueTask, [&asyncContext]() {
         CHECK_RETURN_ELOG(asyncContext->objectInfo == nullptr, "cameraInput_ is nullptr");
-        asyncContext->isEnableSecCam = CameraUtilsTaihe::GetEnableSecureCamera();
-        MEDIA_DEBUG_LOG("CameraInputImpl::Open asyncContext->isEnableSecCam %{public}d", asyncContext->isEnableSecCam);
 
         asyncContext->errorCode = asyncContext->objectInfo->GetCameraInput()->Open();
 
         CameraUtilsTaihe::CheckError(asyncContext->errorCode);
-        CameraUtilsTaihe::IsEnableSecureCamera(false);
     });
     CAMERA_FINISH_ASYNC_TRACE(asyncContext->funcName, asyncContext->taskId);
 }
@@ -105,7 +102,7 @@ array<uint64_t> CameraInputImpl::OpenByIsSecureEnabledSync(bool isSecureEnabled)
     MEDIA_DEBUG_LOG("OpenByIsSecureEnabledSync is called");
     std::unique_ptr<CameraInputAsyncContext> asyncContext = std::make_unique<CameraInputAsyncContext>(
         "CameraInputImpl::OpenByIsSecureEnabledSync", CameraUtilsTaihe::IncrementAndGet(cameraInputTaskId_));
-    CameraUtilsTaihe::IsEnableSecureCamera(isSecureEnabled);
+    asyncContext->isEnableSecCam = isSecureEnabled;
     asyncContext->queueTask =
         CameraTaiheWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueTask(
             "CameraInputImpl::OpenByIsSecureEnabledSync");
@@ -113,7 +110,6 @@ array<uint64_t> CameraInputImpl::OpenByIsSecureEnabledSync(bool isSecureEnabled)
     CAMERA_START_ASYNC_TRACE(asyncContext->funcName, asyncContext->taskId);
     CameraTaiheWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(asyncContext->queueTask, [&asyncContext]() {
         CHECK_RETURN_ELOG(asyncContext->objectInfo == nullptr, "cameraInput_ is nullptr");
-        asyncContext->isEnableSecCam = CameraUtilsTaihe::GetEnableSecureCamera();
         MEDIA_DEBUG_LOG("CameraInputImpl::Open asyncContext->isEnableSecCam %{public}d", asyncContext->isEnableSecCam);
         if (asyncContext->isEnableSecCam) {
             asyncContext->errorCode =
@@ -123,7 +119,6 @@ array<uint64_t> CameraInputImpl::OpenByIsSecureEnabledSync(bool isSecureEnabled)
             asyncContext->errorCode = asyncContext->objectInfo->GetCameraInput()->Open();
         }
         CameraUtilsTaihe::CheckError(asyncContext->errorCode);
-        CameraUtilsTaihe::IsEnableSecureCamera(false);
     });
     CAMERA_FINISH_ASYNC_TRACE(asyncContext->funcName, asyncContext->taskId);
     array<uint64_t> secureCameraSeqId{asyncContext->secureCameraSeqId};
@@ -144,11 +139,8 @@ void CameraInputImpl::OpenByCameraConcurrentTypeSync(ohos::multimedia::camera::C
     CAMERA_START_ASYNC_TRACE(asyncContext->funcName, asyncContext->taskId);
     CameraTaiheWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(asyncContext->queueTask, [&asyncContext]() {
         CHECK_RETURN_ELOG(asyncContext->objectInfo == nullptr, "cameraInput_ is nullptr");
-        asyncContext->isEnableSecCam = CameraUtilsTaihe::GetEnableSecureCamera();
-        MEDIA_DEBUG_LOG("CameraInputImpl::Open asyncContext->isEnableSecCam %{public}d", asyncContext->isEnableSecCam);
         asyncContext->errorCode = asyncContext->objectInfo->GetCameraInput()->Open(asyncContext->cameraConcurrentType);
         CameraUtilsTaihe::CheckError(asyncContext->errorCode);
-        CameraUtilsTaihe::IsEnableSecureCamera(false);
     });
     CAMERA_FINISH_ASYNC_TRACE(asyncContext->funcName, asyncContext->taskId);
 }
@@ -167,7 +159,6 @@ void CameraInputImpl::CloseSync()
         CHECK_RETURN_ELOG(asyncContext->objectInfo == nullptr, "cameraInput_ is nullptr");
         asyncContext->errorCode = asyncContext->objectInfo->cameraInput_->Close();
         CameraUtilsTaihe::CheckError(asyncContext->errorCode);
-        CameraUtilsTaihe::IsEnableSecureCamera(false);
     });
     CAMERA_FINISH_ASYNC_TRACE(asyncContext->funcName, asyncContext->taskId);
 }

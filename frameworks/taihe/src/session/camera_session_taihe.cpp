@@ -198,6 +198,8 @@ void SessionImpl::SetUsage(UsageType usage, bool enabled)
 
 array<CameraOutputCapability> SessionImpl::GetCameraOutputCapabilities(CameraDevice const& camera)
 {
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), {},
+        "SystemApi GetCameraOutputCapabilities is called!");
     std::string nativeStr(camera.cameraId);
     sptr<OHOS::CameraStandard::CameraDevice> cameraInfo =
         OHOS::CameraStandard::CameraManager::GetInstance()->GetCameraDeviceFromId(nativeStr);
@@ -541,7 +543,7 @@ void SessionImpl::RegisterSlowMotionStateCb(
 void SessionImpl::UnregisterSlowMotionStateCb(const std::string& eventName, std::shared_ptr<uintptr_t> callback)
 {
     CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::CameraErrorCode::OPERATION_NOT_ALLOWED,
-        "this type callback can not be registered in current session!");
+        "this type callback can not be unRegistered in current session!");
 }
 
 
@@ -564,6 +566,8 @@ void SessionImpl::RegisterLcdFlashStatusCallbackListener(
 void SessionImpl::UnregisterLcdFlashStatusCallbackListener(
     const std::string& eventName, std::shared_ptr<uintptr_t> callback)
 {
+    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi off lcdFlashStatus is called!");
     CHECK_RETURN_ELOG(lcdFlashStatusCallback_ == nullptr, "LcdFlashStatusCallback is null");
     lcdFlashStatusCallback_->RemoveCallbackRef(eventName, callback);
 }

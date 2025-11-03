@@ -24,6 +24,7 @@ namespace Ani::Camera {
 constexpr size_t ZOOM_RANGE_SIZE = 2;
 constexpr size_t ZOOM_MIN_INDEX = 0;
 constexpr size_t ZOOM_MAX_INDEX = 1;
+constexpr int32_t FRAME_RATES_SIZE = 2;
 
 enum Rotation {
     ROTATION_0 = 0,
@@ -39,8 +40,6 @@ enum ReturnValues {
     RETURN_VAL_3 = 3,
     RETURN_VAL_DEFAULT = -1
 };
-
-bool CameraUtilsTaihe::mEnableSecure = false;
 
 string CameraUtilsTaihe::ToTaiheString(const std::string &src)
 {
@@ -428,6 +427,8 @@ array<VideoProfile> CameraUtilsTaihe::ToTaiheArrayVideoProfiles(
     std::vector<VideoProfile> vec;
     for (auto &item : profiles) {
         auto frameRates = item.GetFrameRates();
+        CHECK_CONTINUE_ELOG(frameRates.size() < FRAME_RATES_SIZE,
+            "ToTaiheArrayVideoProfiles failed, frameRates is error");
         CameraFormat cameraFormat = CameraUtilsTaihe::ToTaiheCameraFormat(item.GetCameraFormat());
         VideoProfile aniProfile {
             .base = {
@@ -581,16 +582,6 @@ int32_t CameraUtilsTaihe::EnumGetValueInt32(ani_env *env, ani_enum_item enumItem
     CHECK_RETURN_RET_ELOG(ANI_OK != env->EnumItem_GetValue_Int(enumItem, &aniInt), -1,
         "EnumItem_GetValue_Int failed");
     return static_cast<int32_t>(aniInt);
-}
-
-bool CameraUtilsTaihe::GetEnableSecureCamera()
-{
-    return mEnableSecure;
-}
-
-void CameraUtilsTaihe::IsEnableSecureCamera(bool isEnable)
-{
-    mEnableSecure = isEnable;
 }
 
 uintptr_t CameraUtilsTaihe::GetUndefined(ani_env* env)

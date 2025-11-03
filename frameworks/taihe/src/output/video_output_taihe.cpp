@@ -295,6 +295,8 @@ ImageRotation VideoOutputImpl::GetVideoRotation(int32_t deviceDegree)
 
 void VideoOutputImpl::AttachMetaSurface(string_view surfaceId, VideoMetaType type)
 {
+    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi AttachMetaSurface is called!");
     CHECK_PRINT_ELOG(videoOutput_ == nullptr, "AttachMetaSurface failed, videoOutput_ is nullptr");
     uint64_t iSurfaceId;
     std::istringstream iss((std::string(surfaceId)));
@@ -306,6 +308,8 @@ void VideoOutputImpl::AttachMetaSurface(string_view surfaceId, VideoMetaType typ
 
 array<VideoMetaType> VideoOutputImpl::GetSupportedVideoMetaTypes()
 {
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), array<VideoMetaType>(nullptr, 0),
+        "SystemApi GetSupportedVideoMetaTypes is called!");
     CHECK_RETURN_RET_ELOG(videoOutput_ == nullptr, array<VideoMetaType>(nullptr, 0),
         "GetSupportedVideoMetaTypes failed, videoOutput_ is nullptr");
     std::vector<OHOS::CameraStandard::VideoMetaType> videoMetaTypes = videoOutput_->GetSupportedVideoMetaTypes();
@@ -409,6 +413,8 @@ void VideoOutputImpl::UnregisterVideoOutputErrorCallbackListener(
 void VideoOutputImpl::RegisterDeferredVideoCallbackListener(
     const std::string& eventName, std::shared_ptr<uintptr_t> callback, bool isOnce)
 {
+    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi on deferredVideoEnhancementInfo is called!");
     if (videoCallback_ == nullptr) {
         ani_env *env = get_env();
         videoCallback_ = std::make_shared<VideoCallbackListener>(env);
@@ -420,6 +426,8 @@ void VideoOutputImpl::RegisterDeferredVideoCallbackListener(
 void VideoOutputImpl::UnregisterDeferredVideoCallbackListener(
     const std::string& eventName, std::shared_ptr<uintptr_t> callback)
 {
+    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi off deferredVideoEnhancementInfo is called!");
     CHECK_RETURN_ELOG(videoCallback_ == nullptr, "videoCallback is null");
     videoCallback_->RemoveCallbackRef(eventName, callback);
 }
@@ -529,8 +537,8 @@ void VideoOutputImpl::OffFrameEnd(optional_view<callback<void(uintptr_t, uintptr
 void VideoOutputImpl::EnableAutoDeferredVideoEnhancement(bool enabled)
 {
     CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
-        "SystemApi EnableAutoVideoFrameRate is called!");
-    CHECK_RETURN_ELOG(videoOutput_ == nullptr, "EnableAutoVideoFrameRate failed, videoOutput_ is nullptr");
+        "SystemApi EnableAutoDeferredVideoEnhancement is called!");
+    CHECK_RETURN_ELOG(videoOutput_ == nullptr, "EnableAutoDeferredVideoEnhancement failed, videoOutput_ is nullptr");
     int32_t res = videoOutput_->EnableAutoDeferredVideoEnhancement(enabled);
     CHECK_EXECUTE(res > 0, CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::SERVICE_FATL_ERROR, "inner fail"));
 }
