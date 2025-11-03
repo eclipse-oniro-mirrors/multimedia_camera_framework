@@ -38,7 +38,9 @@ public:
 
     napi_value GetMainForTransfer()
     {
-        return mainImage_;
+        napi_value mainImage;
+        napi_get_reference_value(env_, mainImageRef_, &mainImage);
+        return mainImage;
     }
     napi_value GetRawForTransfer()
     {
@@ -53,13 +55,13 @@ private:
     static napi_value PhotoNapiConstructor(napi_env env, napi_callback_info info);
 
     static thread_local napi_ref sConstructor_;
-    static thread_local napi_value sMainImage_;
+    static thread_local napi_ref sMainImageRef_;
     static thread_local napi_value sRawImage_;
     static thread_local uint32_t photoTaskId;
     static sptr<SurfaceBuffer> imageBuffer_;
 
     napi_env env_;
-    napi_value mainImage_;
+    napi_ref mainImageRef_;
     napi_value rawImage_;
 };
 
