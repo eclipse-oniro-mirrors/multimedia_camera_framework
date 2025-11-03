@@ -246,7 +246,6 @@ napi_value PhotoNapi::Release(napi_env env, napi_callback_info info)
                     napi_delete_reference(env, context->objectInfo->mainImageRef_);
                     context->objectInfo->mainImageRef_ = nullptr;
                     context->objectInfo->rawImage_ = nullptr;
-                    context->objectInfo->rawImage_ = nullptr;
                 }
             },
             [](napi_env env, napi_status status, void* data) {
