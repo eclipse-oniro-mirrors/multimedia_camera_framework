@@ -74,7 +74,9 @@ void ProfessionSessionUnitTest::SetUp()
     ASSERT_TRUE(cameras_.size() != 0);
     auto cameraInput = manager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(cameraInput, nullptr);
-    cameraInput->GetCameraDevice()->SetMdmCheck(false);
+    if (cameraInput->GetCameraDevice()) {
+        cameraInput->GetCameraDevice()->SetMdmCheck(false);
+    }
     input_ = cameraInput;
     ASSERT_NE(input_, nullptr);
     sceneMode_ = SceneMode::PROFESSIONAL_VIDEO;
