@@ -22,6 +22,9 @@
 #include <iostream>
 #include <refbase.h>
 
+#include <set>
+#include <string>
+
 #include "camera_metadata_info.h"
 #include "hstream_common.h"
 #include "stream_repeat_stub.h"
@@ -119,6 +122,8 @@ private:
     bool IsNeedBeautyNotification();
 #endif
     void SetSketchStreamInfo(StreamInfo_V1_1& streamInfo);
+    void InitWhiteList();
+    bool CheckInWhiteList();
     bool CheckVideoModeForSystemApp(int32_t sceneMode);
     bool IsLive();
     void UpdateLiveSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> &settings);
@@ -144,6 +149,7 @@ private:
     std::mutex movingPhotoCallbackLock_;
     std::function<void()> startMovingPhotoCallback_;
     std::vector<int32_t> streamFrameRateRange_ = {};
+    static std::set<std::string> whiteList_;
     sptr<BufferProducerSequenceable> metaSurfaceBufferQueue_;
     camera_position_enum_t cameraUsedAsPosition_ = OHOS_CAMERA_POSITION_OTHER;
     int32_t currentMode_ = 0;

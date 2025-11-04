@@ -1137,7 +1137,7 @@ std::vector<int32_t> HCameraDevice::GetFrameRateRange()
 void HCameraDevice::UpdateCameraRotateAngleAndZoom(std::vector<int32_t> &frameRateRange, bool isResetDegree)
 {
     CameraRotateStrategyInfo strategyInfo;
-    CHECK_RETURN_ELOG(!GetSigleStrategyInfo(strategyInfo), "Update roteta angle not supported");
+    CHECK_RETURN_ELOG(!GetSigleStrategyInfo(strategyInfo), "Update rotate angle not supported");
     auto flag = false;
     CHECK_EXECUTE(strategyInfo.fps <= 0, flag = true);
     CHECK_EXECUTE(strategyInfo.fps > 0 && frameRateRange.size() > 1 &&

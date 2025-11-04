@@ -77,6 +77,7 @@ static constexpr int32_t SKETCH_MIN_WIDTH = 480;
 static constexpr int32_t RENDER_FIL_FILL = 9;
 static constexpr int32_t RENDER_FIL_COVER = 13;
 static constexpr float TARGET_MIN_RATIO = 0.01;
+std::set<std::string> PreviewOutput::whiteList_;
 PreviewOutput::PreviewOutput(sptr<IBufferProducer> bufferProducer)
     : CaptureOutput(CAPTURE_OUTPUT_TYPE_PREVIEW, StreamType::REPEAT, bufferProducer, nullptr)
 {
@@ -551,6 +552,30 @@ int32_t PreviewOutput::StopSketch()
     // LCOV_EXCL_STOP
 }
 
+void PreviewOutput::InitWhiteList()
+{
+    if (!whiteList_.empty()) {
+        return;
+    }
+    std::string whiteListStr = system::GetParameter("const.display_rotation.package.list", "default");
+    if (whiteListStr == "default") {
+        return;
+    }
+    std::stringstream ss(whiteListStr);
+    std::string whiteListItem;
+    while (std::getline(ss, whiteListItem, ';')) {
+        if (!whiteListItem.empty()) {
+            whiteList_.insert(whiteListItem);
+        }
+    }
+}
+
+bool PreviewOutput::CheckInWhiteList()
+{
+    std::string clientName = CameraManager::GetInstance()->GetBundleName();
+    return whiteList_.find(clientName) != whiteList_.end();
+}
+
 std::shared_ptr<Camera::CameraMetadata> PreviewOutput::GetDeviceMetadata()
 {
     auto session = GetSession();
@@ -789,13 +814,14 @@ int32_t PreviewOutput::GetPreviewRotation(int32_t imageRotation)
 
 int32_t PreviewOutput::JudegRotationFunc(int32_t imageRotation)
 {
+    InitWhiteList();
     std::string deviceType = OHOS::system::GetDeviceType();
     if (imageRotation > CAPTURE_ROTATION_BASE) {
         return INVALID_ARGUMENT;
     }
     bool isTableFlag = system::GetBoolParameter("const.multimedia.enable_camera_rotation_compensation", 0);
     uint32_t apiCompatibleVersion = CameraApiVersion::GetApiVersion();
-    if (isTableFlag && apiCompatibleVersion < CameraApiVersion::APIVersion::API_FOURTEEN) {
+    if (isTableFlag && apiCompatibleVersion < CameraApiVersion::APIVersion::API_FOURTEEN && !CheckInWhiteList()) {
         imageRotation = ((imageRotation - ROTATION_90_DEGREES + CAPTURE_ROTATION_BASE) % CAPTURE_ROTATION_BASE);
     }
     return imageRotation;
