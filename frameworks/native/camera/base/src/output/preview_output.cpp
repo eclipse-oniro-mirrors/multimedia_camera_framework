@@ -441,6 +441,7 @@ void PreviewOutput::SetFrameRateRange(int32_t minFrameRate, int32_t maxFrameRate
 {
     MEDIA_DEBUG_LOG("PreviewOutput::SetFrameRateRange min = %{public}d and max = %{public}d",
                     minFrameRate, maxFrameRate);
+    CHECK_RETURN(minFrameRate > maxFrameRate);
     previewFrameRateRange_ = { minFrameRate, maxFrameRate };
 }
 

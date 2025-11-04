@@ -279,7 +279,7 @@ const std::vector<int32_t>& VideoOutput::GetFrameRateRange()
 void VideoOutput::SetFrameRateRange(int32_t minFrameRate, int32_t maxFrameRate)
 {
     MEDIA_DEBUG_LOG("VideoOutput::SetFrameRateRange min = %{public}d and max = %{public}d", minFrameRate, maxFrameRate);
-
+    CHECK_RETURN(minFrameRate > maxFrameRate);
     videoFrameRateRange_ = { minFrameRate, maxFrameRate };
 }
 
