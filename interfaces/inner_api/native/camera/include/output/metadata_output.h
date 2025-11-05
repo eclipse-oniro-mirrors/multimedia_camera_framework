@@ -218,74 +218,60 @@ public:
 
 class MetadataObjectFactory : public RefBase {
 public:
+    MetadataObjectFactory();
     virtual ~MetadataObjectFactory() = default;
-
-    static sptr<MetadataObjectFactory> &GetInstance();
-    inline sptr<MetadataObjectFactory> SetType(MetadataObjectType type)
+    void SetType(MetadataObjectType type)
     {
         type_ = type;
-        return this;
     }
-    inline sptr<MetadataObjectFactory> SetTimestamp(int64_t timestamp)
+    void SetTimestamp(int64_t timestamp)
     {
         timestamp_ = timestamp;
-        return this;
     }
-    inline sptr<MetadataObjectFactory> SetBox(Rect box)
+    void SetBox(Rect box)
     {
         box_ = box;
-        return this;
     }
-    inline sptr<MetadataObjectFactory> SetObjectId(int32_t objectId)
+    void SetObjectId(int32_t objectId)
     {
         objectId_ = objectId;
-        return this;
     }
-    inline sptr<MetadataObjectFactory> SetConfidence(int32_t confidence)
+    void SetConfidence(int32_t confidence)
     {
         confidence_ = confidence;
-        return this;
     }
-    inline sptr<MetadataObjectFactory> SetLeftEyeBoundingBox(Rect leftEyeBoundingBox)
+    void SetLeftEyeBoundingBox(Rect leftEyeBoundingBox)
     {
         leftEyeBoundingBox_ = leftEyeBoundingBox;
-        return this;
     }
-    inline sptr<MetadataObjectFactory> SetRightEyeBoundingBoxd(Rect rightEyeBoundingBox)
+    void SetRightEyeBoundingBoxd(Rect rightEyeBoundingBox)
     {
         rightEyeBoundingBox_ = rightEyeBoundingBox;
-        return this;
     }
-    inline sptr<MetadataObjectFactory> SetEmotion(Emotion emotion)
+    void SetEmotion(Emotion emotion)
     {
         emotion_ = emotion;
-        return this;
     }
-    inline sptr<MetadataObjectFactory> SetEmotionConfidence(int32_t emotionConfidence)
+    void SetEmotionConfidence(int32_t emotionConfidence)
     {
         emotionConfidence_ = emotionConfidence;
-        return this;
     }
-    inline sptr<MetadataObjectFactory> SetPitchAngle(int32_t pitchAngle)
+    void SetPitchAngle(int32_t pitchAngle)
     {
         pitchAngle_ = pitchAngle;
-        return this;
     }
-    inline sptr<MetadataObjectFactory> SetYawAngle(int32_t yawAngle)
+    void SetYawAngle(int32_t yawAngle)
     {
         yawAngle_ = yawAngle;
-        return this;
     }
-    inline sptr<MetadataObjectFactory> SetRollAngle(int32_t rollAngle)
+    void SetRollAngle(int32_t rollAngle)
     {
         rollAngle_ = rollAngle;
-        return this;
     }
 
     sptr<MetadataObject> createMetadataObject(MetadataObjectType type);
 
 private:
-    MetadataObjectFactory();
     static sptr<MetadataObjectFactory> metaFactoryInstance_;
     static std::mutex instanceMutex_;
     // Parameters of metadataObject
