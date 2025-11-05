@@ -449,18 +449,6 @@ int32_t HStreamMetadataCallbackImpl::OnMetadataResult(const int32_t streamId,
 
 MetadataObjectFactory::MetadataObjectFactory() {}
 
-sptr<MetadataObjectFactory> &MetadataObjectFactory::GetInstance()
-{
-    if (metaFactoryInstance_ == nullptr) {
-        std::lock_guard<std::mutex> lock(instanceMutex_);
-        if (metaFactoryInstance_ == nullptr) {
-            MEDIA_INFO_LOG("Initializing MetadataObjectFactory instance");
-            metaFactoryInstance_ = new MetadataObjectFactory();
-        }
-    }
-    return metaFactoryInstance_;
-}
-
 sptr<MetadataObject> MetadataObjectFactory::createMetadataObject(MetadataObjectType type)
 {
     MetaObjectParms baseMetaParms = { type_, timestamp_, box_, objectId_, confidence_ };

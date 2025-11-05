@@ -314,17 +314,17 @@ void MetadataCommonUtils::GenerateObjects(const camera_metadata_item_t &metadata
     }
     // LCOV_EXCL_START
     for (int32_t itr = 0; itr < countOfObject; ++itr) {
-        sptr<MetadataObjectFactory> objectFactoryPtr = MetadataObjectFactory::GetInstance();
+        MetadataObjectFactory objectfactory;
         MetadataObjectType typeFromHal = static_cast<MetadataObjectType>(metadataItem.data.i32[index]);
         index++;
-        ProcessBaseInfo(objectFactoryPtr, metadataItem, index, typeFromHal, isNeedMirror, isNeedFlip, rectBoxType);
-        ProcessExternInfo(objectFactoryPtr, metadataItem, index, typeFromHal, isNeedMirror, isNeedFlip, rectBoxType);
-        metaObjects.push_back(objectFactoryPtr->createMetadataObject(metadataType));
+        ProcessBaseInfo(objectfactory, metadataItem, index, typeFromHal, isNeedMirror, isNeedFlip, rectBoxType);
+        ProcessExternInfo(objectfactory, metadataItem, index, typeFromHal, isNeedMirror, isNeedFlip, rectBoxType);
+        metaObjects.push_back(objectfactory.createMetadataObject(metadataType));
     }
     // LCOV_EXCL_STOP
 }
  
-void MetadataCommonUtils::ProcessBaseInfo(sptr<MetadataObjectFactory> factoryPtr,
+void MetadataCommonUtils::ProcessBaseInfo(MetadataObjectFactory &factory,
     const camera_metadata_item_t &metadataItem, int32_t &index, MetadataObjectType typeFromHal,
     bool isNeedMirror, bool isNeedFlip, RectBoxType type)
 {
@@ -333,20 +333,20 @@ void MetadataCommonUtils::ProcessBaseInfo(sptr<MetadataObjectFactory> factoryPtr
     const int32_t offsetOne = 1;
     const int32_t offsetTwo = 2;
     const int32_t offsetThree = 3;
-    factoryPtr->SetType(typeFromHal)
-        ->SetObjectId(metadataItem.data.i32[index]);
+    factory.SetType(typeFromHal);
+    factory.SetObjectId(metadataItem.data.i32[index]);
     index++;
     int32_t timestampLowBits = metadataItem.data.i32[index++];
     int32_t timestampHighBits = metadataItem.data.i32[index++];
     int64_t timestamp =
         (static_cast<int64_t>(timestampHighBits) << 32) | (static_cast<int64_t>(timestampLowBits) & 0xFFFFFFFF);
     MEDIA_DEBUG_LOG("MetadataCommonUtils::ProcessBaseInfo, set timestamp: %{public}" PRId64, timestamp);
-    factoryPtr->SetTimestamp(timestamp);
-    factoryPtr->SetBox(ProcessRectBox(metadataItem.data.i32[index], metadataItem.data.i32[index + offsetOne],
-                                      metadataItem.data.i32[index + offsetTwo],
-                                      metadataItem.data.i32[index + offsetThree], isNeedMirror, isNeedFlip, type));
+    factory.SetTimestamp(timestamp);
+    factory.SetBox(ProcessRectBox(metadataItem.data.i32[index], metadataItem.data.i32[index + offsetOne],
+                                  metadataItem.data.i32[index + offsetTwo],
+                                  metadataItem.data.i32[index + offsetThree], isNeedMirror, isNeedFlip, type));
     index += rectLength;
-    factoryPtr->SetConfidence(metadataItem.data.i32[index]);
+    factory.SetConfidence(metadataItem.data.i32[index]);
     index++;
     int32_t externalLength = metadataItem.data.i32[index];
     index++;
@@ -355,7 +355,7 @@ void MetadataCommonUtils::ProcessBaseInfo(sptr<MetadataObjectFactory> factoryPtr
     // LCOV_EXCL_STOP
 }
  
-void MetadataCommonUtils::ProcessHumanFaceDetectInfo(sptr<MetadataObjectFactory> factoryPtr,
+void MetadataCommonUtils::ProcessHumanFaceDetectInfo(MetadataObjectFactory &factory,
     const camera_metadata_item_t &metadataItem, int32_t &index, bool isNeedMirror, bool isNeedFlip, RectBoxType type)
 {
     // LCOV_EXCL_START
@@ -366,43 +366,43 @@ void MetadataCommonUtils::ProcessHumanFaceDetectInfo(sptr<MetadataObjectFactory>
     const int32_t offsetOne = 1;
     const int32_t offsetTwo = 2;
     const int32_t offsetThree = 3;
-    factoryPtr->SetLeftEyeBoundingBox(ProcessRectBox(
+    factory.SetLeftEyeBoundingBox(ProcessRectBox(
         metadataItem.data.i32[index], metadataItem.data.i32[index + offsetOne],
         metadataItem.data.i32[index + offsetTwo],
         metadataItem.data.i32[index + offsetThree], isNeedMirror, isNeedFlip, type));
     index += rectLength;
-    factoryPtr->SetRightEyeBoundingBoxd(ProcessRectBox(
+    factory.SetRightEyeBoundingBoxd(ProcessRectBox(
         metadataItem.data.i32[index], metadataItem.data.i32[index + offsetOne],
         metadataItem.data.i32[index + offsetTwo],
         metadataItem.data.i32[index + offsetThree], isNeedMirror, isNeedFlip, type));
     index += rectLength;
-    factoryPtr->SetEmotion(static_cast<Emotion>(metadataItem.data.i32[index]));
+    factory.SetEmotion(static_cast<Emotion>(metadataItem.data.i32[index]));
     index++;
-    factoryPtr->SetEmotionConfidence(static_cast<Emotion>(metadataItem.data.i32[index]));
+    factory.SetEmotionConfidence(static_cast<Emotion>(metadataItem.data.i32[index]));
     index++;
-    factoryPtr->SetPitchAngle(metadataItem.data.i32[index]);
+    factory.SetPitchAngle(metadataItem.data.i32[index]);
     index++;
-    factoryPtr->SetYawAngle(metadataItem.data.i32[index]);
+    factory.SetYawAngle(metadataItem.data.i32[index]);
     index++;
-    factoryPtr->SetRollAngle(metadataItem.data.i32[index]);
+    factory.SetRollAngle(metadataItem.data.i32[index]);
     index++;
     // LCOV_EXCL_STOP
 }
  
-void MetadataCommonUtils::ProcessExternInfo(sptr<MetadataObjectFactory> factoryPtr,
+void MetadataCommonUtils::ProcessExternInfo(MetadataObjectFactory &factory,
     const camera_metadata_item_t &metadataItem, int32_t &index,
     MetadataObjectType typeFromHal, bool isNeedMirror, bool isNeedFlip, RectBoxType type)
 {
     // LCOV_EXCL_START
     switch (typeFromHal) {
         case MetadataObjectType::FACE:
-            ProcessHumanFaceDetectInfo(factoryPtr, metadataItem, index, isNeedMirror, isNeedFlip, type);
+            ProcessHumanFaceDetectInfo(factory, metadataItem, index, isNeedMirror, isNeedFlip, type);
             break;
         case MetadataObjectType::CAT_FACE:
-            ProcessCatFaceDetectInfo(factoryPtr, metadataItem, index, isNeedMirror, isNeedFlip, type);
+            ProcessCatFaceDetectInfo(factory, metadataItem, index, isNeedMirror, isNeedFlip, type);
             break;
         case MetadataObjectType::DOG_FACE:
-            ProcessDogFaceDetectInfo(factoryPtr, metadataItem, index, isNeedMirror, isNeedFlip, type);
+            ProcessDogFaceDetectInfo(factory, metadataItem, index, isNeedMirror, isNeedFlip, type);
             break;
         default:
             break;
@@ -410,7 +410,7 @@ void MetadataCommonUtils::ProcessExternInfo(sptr<MetadataObjectFactory> factoryP
     // LCOV_EXCL_STOP
 }
  
-void MetadataCommonUtils::ProcessCatFaceDetectInfo(sptr<MetadataObjectFactory> factoryPtr,
+void MetadataCommonUtils::ProcessCatFaceDetectInfo(MetadataObjectFactory &factory,
     const camera_metadata_item_t &metadataItem, int32_t &index,
     bool isNeedMirror, bool isNeedFlip, RectBoxType type)
 {
@@ -422,12 +422,12 @@ void MetadataCommonUtils::ProcessCatFaceDetectInfo(sptr<MetadataObjectFactory> f
     const int32_t offsetOne = 1;
     const int32_t offsetTwo = 2;
     const int32_t offsetThree = 3;
-    factoryPtr->SetLeftEyeBoundingBox(ProcessRectBox(
+    factory.SetLeftEyeBoundingBox(ProcessRectBox(
         metadataItem.data.i32[index], metadataItem.data.i32[index + offsetOne],
         metadataItem.data.i32[index + offsetTwo],
         metadataItem.data.i32[index + offsetThree], isNeedMirror, isNeedFlip, type));
     index += rectLength;
-    factoryPtr->SetRightEyeBoundingBoxd(ProcessRectBox(
+    factory.SetRightEyeBoundingBoxd(ProcessRectBox(
         metadataItem.data.i32[index], metadataItem.data.i32[index + offsetOne],
         metadataItem.data.i32[index + offsetTwo],
         metadataItem.data.i32[index + offsetThree], isNeedMirror, isNeedFlip, type));
@@ -435,7 +435,7 @@ void MetadataCommonUtils::ProcessCatFaceDetectInfo(sptr<MetadataObjectFactory> f
     // LCOV_EXCL_STOP
 }
  
-void MetadataCommonUtils::ProcessDogFaceDetectInfo(sptr<MetadataObjectFactory> factoryPtr,
+void MetadataCommonUtils::ProcessDogFaceDetectInfo(MetadataObjectFactory &factory,
     const camera_metadata_item_t &metadataItem, int32_t &index,
     bool isNeedMirror, bool isNeedFlip, RectBoxType type)
 {
@@ -447,12 +447,12 @@ void MetadataCommonUtils::ProcessDogFaceDetectInfo(sptr<MetadataObjectFactory> f
     const int32_t offsetOne = 1;
     const int32_t offsetTwo = 2;
     const int32_t offsetThree = 3;
-    factoryPtr->SetLeftEyeBoundingBox(ProcessRectBox(
+    factory.SetLeftEyeBoundingBox(ProcessRectBox(
         metadataItem.data.i32[index], metadataItem.data.i32[index + offsetOne],
         metadataItem.data.i32[index + offsetTwo],
         metadataItem.data.i32[index + offsetThree], isNeedMirror, isNeedFlip, type));
     index += rectLength;
-    factoryPtr->SetRightEyeBoundingBoxd(ProcessRectBox(
+    factory.SetRightEyeBoundingBoxd(ProcessRectBox(
         metadataItem.data.i32[index], metadataItem.data.i32[index + offsetOne],
         metadataItem.data.i32[index + offsetTwo],
         metadataItem.data.i32[index + offsetThree], isNeedMirror, isNeedFlip, type));

@@ -46,24 +46,24 @@ private:
 								    std::vector<sptr<MetadataObject>> &metaObjects,
 									bool isNeedMirror, bool isNeedFlip, RectBoxType rectBoxType);
 
-    static void ProcessBaseInfo(sptr<MetadataObjectFactory> factoryPtr, const camera_metadata_item_t &metadataItem,
+    static void ProcessBaseInfo(MetadataObjectFactory &factory, const camera_metadata_item_t &metadataItem,
                                         int32_t &index, MetadataObjectType typeFromHal, bool isNeedMirror,
                                         bool isNeedFlip, RectBoxType rectBoxType);
 
-    static void ProcessExternInfo(sptr<MetadataObjectFactory> factoryPtr,
+    static void ProcessExternInfo(MetadataObjectFactory &factory,
                                         const camera_metadata_item_t &metadataItem, int32_t &index,
                                         MetadataObjectType typeFromHal, bool isNeedMirror, bool isNeedFlip,
                                         RectBoxType rectBoxType);
 
-    static void ProcessHumanFaceDetectInfo(sptr<MetadataObjectFactory> factoryPtr,
+    static void ProcessHumanFaceDetectInfo(MetadataObjectFactory &factory,
                                                     const camera_metadata_item_t &metadataItem, int32_t &index,
                                                     bool isNeedMirror, bool isNeedFlip, RectBoxType rectBoxType);
 
-    static void ProcessCatFaceDetectInfo(sptr<MetadataObjectFactory> factoryPtr,
+    static void ProcessCatFaceDetectInfo(MetadataObjectFactory &factory,
                                                 const camera_metadata_item_t &metadataItem, int32_t &index,
                                                 bool isNeedMirror, bool isNeedFlip, RectBoxType rectBoxType);
 
-    static void ProcessDogFaceDetectInfo(sptr<MetadataObjectFactory> factoryPtr,
+    static void ProcessDogFaceDetectInfo(MetadataObjectFactory &factory,
                                                 const camera_metadata_item_t &metadataItem, int32_t &index,
                                                 bool isNeedMirror, bool isNeedFlip, RectBoxType rectBoxType);
 
