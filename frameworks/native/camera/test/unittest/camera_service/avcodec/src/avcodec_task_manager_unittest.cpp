@@ -518,11 +518,17 @@ HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_016, TestSize
     GraphicTransformType types = GraphicTransformType::GRAPHIC_FLIP_H_ROT90;
     sptr<FrameRecord> frame1 = new FrameRecord(videoBuffer1, timestamp1, types);
     frame1->SetIDRProperty(true);
+    std::shared_ptr<Media::AVBuffer> IDRBuffer = Media::AVBuffer::CreateAVBuffer(videoBuffer1);
+    IDRBuffer->pts_ = timestamp1;
+    frame1->CacheBuffer(IDRBuffer);
     frameRecords.emplace_back(frame1);
     sptr<SurfaceBuffer> videoBuffer2 = SurfaceBuffer::Create();
     int64_t timestamp2 = 3200000001LL;
     sptr<FrameRecord> frame2 = new FrameRecord(videoBuffer2, timestamp2, types);
     frame2->SetIDRProperty(false);
+    std::shared_ptr<Media::AVBuffer> PBuffer = Media::AVBuffer::CreateAVBuffer(videoBuffer2);
+    IDRBuffer->pts_ = timestamp2;
+    frame2->CacheBuffer(PBuffer);
     vector<sptr<FrameRecord>> choosedBuffer;
     int64_t shutterTime = 1600000000LL;
     int32_t captureId = 1;
