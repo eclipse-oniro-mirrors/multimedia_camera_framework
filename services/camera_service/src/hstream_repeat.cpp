@@ -47,6 +47,7 @@ using CM_ColorSpaceType_V2_1 = OHOS::HDI::Display::Graphic::Common::V2_1::CM_Col
 constexpr int32_t INT32_ZERO = 0;
 constexpr int32_t INT32_ONE = 1;
 constexpr int32_t INT32_TWO = 2;
+std::set<std::string> HStreamRepeat::whiteList_;
 HStreamRepeat::HStreamRepeat(
     sptr<OHOS::IBufferProducer> producer, int32_t format, int32_t width, int32_t height, RepeatStreamType type)
     : HStreamCommon(StreamType::REPEAT, producer, format, width, height), repeatStreamType_(type)
@@ -135,6 +136,7 @@ void HStreamRepeat::SetSketchStreamInfo(StreamInfo_V1_1& streamInfo)
 
 void HStreamRepeat::SetStreamInfo(StreamInfo_V1_1& streamInfo)
 {
+    InitWhiteList();
     HStreamCommon::SetStreamInfo(streamInfo);
     auto metaProducerSequenceable = metaProducer_ == nullptr ? nullptr : new BufferProducerSequenceable(metaProducer_);
     HDI::Camera::V1_1::ExtendedStreamInfo metaExtendedStreamInfo {
@@ -188,6 +190,30 @@ int32_t HStreamRepeat::SetCurrentMode(int32_t mode)
     MEDIA_DEBUG_LOG("HStreamRepeat::SetCurentMode current mode:%{public}d", mode);
     currentMode_ = mode;
     return 0;
+}
+
+void HStreamRepeat::InitWhiteList()
+{
+    if (!whiteList_.empty()) {
+        return;
+    }
+    std::string whiteListStr = system::GetParameter("const.display_rotation.package.list", "default");
+    if (whiteListStr == "default") {
+        return;
+    }
+    std::stringstream ss(whiteListStr);
+    std::string whiteListItem;
+    while (std::getline(ss, whiteListItem, ';')) {
+        if (!whiteListItem.empty()) {
+            whiteList_.insert(whiteListItem);
+        }
+    }
+}
+
+bool HStreamRepeat::CheckInWhiteList()
+{
+    std::string clientName = GetClientBundle(IPCSkeleton::GetCallingUid());
+    return whiteList_.find(clientName) != whiteList_.end();
 }
 
 bool HStreamRepeat::CheckVideoModeForSystemApp(int32_t sceneMode)
@@ -833,8 +859,12 @@ void HStreamRepeat::ProcessFixedTransform(int32_t& sensorOrientation, camera_pos
     }
     bool isTableFlag = system::GetBoolParameter("const.multimedia.enable_camera_rotation_compensation", 0);
     bool isNeedChangeRotation = system::GetBoolParameter("const.multimedia.enable_camera_rotation_change", 0);
-    if (isTableFlag) { // LCOV_EXCL_LINE
+    if (isTableFlag && !CheckInWhiteList()) { // LCOV_EXCL_LINE
         ProcessFixedDiffDeviceTransform(sensorOrientation, cameraPosition);
+        return;
+    }
+    if (isTableFlag) {
+        ProcessVerticalCameraPosition(sensorOrientation, cameraPosition);
         return;
     }
     if (isNeedChangeRotation) { // LCOV_EXCL_LINE

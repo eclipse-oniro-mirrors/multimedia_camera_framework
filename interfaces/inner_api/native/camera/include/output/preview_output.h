@@ -263,6 +263,7 @@ private:
     std::mutex surfaceIdMutex_;
     std::string surfaceId_ = "";
     Size previewSize_ = {0, 0};
+    static std::set<string> whiteList_;
     sptr<PreviewOutputListenerManager> previewOutputListenerManager_ = sptr<PreviewOutputListenerManager>::MakeSptr();
     std::atomic<int32_t> renderFit_ = 0;
     std::atomic<uint32_t> xComponentHeight_ = 0;
@@ -275,6 +276,8 @@ private:
     int32_t CreateSketchWrapper(Size sketchSize);
     int32_t StartSketch();
     int32_t StopSketch();
+    void InitWhiteList();
+    bool CheckInWhiteList();
     void CameraServerDied(pid_t pid) override;
     int32_t canSetFrameRateRange(int32_t minFrameRate, int32_t maxFrameRate);
     int32_t JudegRotationFunc(int32_t imageRotation);
