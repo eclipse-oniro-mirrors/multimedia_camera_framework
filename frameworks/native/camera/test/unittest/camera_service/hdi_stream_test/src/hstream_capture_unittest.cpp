@@ -1164,7 +1164,7 @@ HWTEST_F(HStreamCaptureUnitTest, DumpStreamInfo001, TestSize.Level1)
     sptr<HStreamCapture> streamCapture = new(std::nothrow) HStreamCapture(producer, format, width, height);
     ASSERT_NE(streamCapture, nullptr);
     CameraInfoDumper infoDumper(0);
-    streamCapture->thumbnailBufferQueue_ = new BufferProducerSequenceable(producer);
+    streamCapture->thumbnailBufferQueue_.Set(new BufferProducerSequenceable(producer));
     streamCapture->DumpStreamInfo(infoDumper);
     streamCapture->Release();
 }
@@ -1189,7 +1189,7 @@ HWTEST_F(HStreamCaptureUnitTest, DumpStreamInfo002, TestSize.Level1)
     sptr<HStreamCapture> streamCapture = new(std::nothrow) HStreamCapture(producer, format, width, height);
     ASSERT_NE(streamCapture, nullptr);
     CameraInfoDumper infoDumper(0);
-    streamCapture->thumbnailBufferQueue_ = nullptr;
+    streamCapture->thumbnailBufferQueue_.Set(nullptr);
     streamCapture->DumpStreamInfo(infoDumper);
     streamCapture->Release();
 }

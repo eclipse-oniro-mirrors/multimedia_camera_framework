@@ -40,40 +40,37 @@ void PictureAssembler::RegisterAuxiliaryConsumers()
     CHECK_RETURN_ELOG(streamCapture == nullptr, "streamCapture is null");
     SurfaceError ret;
     std::string retStr = "";
-    if (streamCapture->gainmapSurface_ != nullptr) {
-        MEDIA_INFO_LOG("RegisterAuxiliaryConsumers 1 surfaceId: %{public}" PRIu64,
-            streamCapture->gainmapSurface_->GetUniqueId());
+    auto gainmapSurfaceObj = streamCapture->gainmapSurface_.Get();
+    if (gainmapSurfaceObj != nullptr) {
+        MEDIA_INFO_LOG("RegisterAuxiliaryConsumers 1 surfaceId: %{public}" PRIu64, gainmapSurfaceObj->GetUniqueId());
         streamCapture->gainmapListener_ = new (std::nothrow) AuxiliaryBufferConsumer(S_GAINMAP, streamCapture);
         CHECK_RETURN_ELOG(streamCapture->gainmapListener_ == nullptr, "streamCapture->gainmapListener_ is null");
-        ret = streamCapture->gainmapSurface_->RegisterConsumerListener(
+        ret = gainmapSurfaceObj->RegisterConsumerListener(
             (sptr<IBufferConsumerListener> &)streamCapture->gainmapListener_);
         retStr = ret != SURFACE_ERROR_OK ? retStr + "[gainmap]" : retStr;
     }
-    if (streamCapture->deepSurface_ != nullptr) {
-        MEDIA_INFO_LOG("RegisterAuxiliaryConsumers 2 surfaceId: %{public}" PRIu64,
-            streamCapture->deepSurface_->GetUniqueId());
+    auto deepSurfaceObj = streamCapture->deepSurface_.Get();
+    if (deepSurfaceObj != nullptr) {
+        MEDIA_INFO_LOG("RegisterAuxiliaryConsumers 2 surfaceId: %{public}" PRIu64, deepSurfaceObj->GetUniqueId());
         streamCapture->deepListener_ = new (std::nothrow) AuxiliaryBufferConsumer(S_DEEP, streamCapture);
         CHECK_RETURN_ELOG(streamCapture->deepListener_ == nullptr, "streamCapture->deepListener_ is null");
-        ret = streamCapture->deepSurface_->RegisterConsumerListener(
-            (sptr<IBufferConsumerListener> &)streamCapture->deepListener_);
+        ret = deepSurfaceObj->RegisterConsumerListener((sptr<IBufferConsumerListener> &)streamCapture->deepListener_);
         retStr = ret != SURFACE_ERROR_OK ? retStr + "[deep]" : retStr;
     }
-    if (streamCapture->exifSurface_ != nullptr) {
-        MEDIA_INFO_LOG("RegisterAuxiliaryConsumers 3 surfaceId: %{public}" PRIu64,
-            streamCapture->exifSurface_->GetUniqueId());
+    auto exifSurfaceObj = streamCapture->exifSurface_.Get();
+    if (exifSurfaceObj != nullptr) {
+        MEDIA_INFO_LOG("RegisterAuxiliaryConsumers 3 surfaceId: %{public}" PRIu64, exifSurfaceObj->GetUniqueId());
         streamCapture->exifListener_ = new (std::nothrow) AuxiliaryBufferConsumer(S_EXIF, streamCapture);
         CHECK_RETURN_ELOG(streamCapture->exifListener_ == nullptr, "streamCapture->exifListener_ is null");
-        ret = streamCapture->exifSurface_->RegisterConsumerListener(
-            (sptr<IBufferConsumerListener> &)streamCapture->exifListener_);
+        ret = exifSurfaceObj->RegisterConsumerListener((sptr<IBufferConsumerListener> &)streamCapture->exifListener_);
         retStr = ret != SURFACE_ERROR_OK ? retStr + "[exif]" : retStr;
     }
-    if (streamCapture->debugSurface_ != nullptr) {
-        MEDIA_INFO_LOG("RegisterAuxiliaryConsumers 4 surfaceId: %{public}" PRIu64,
-            streamCapture->debugSurface_->GetUniqueId());
+    auto debugSurfaceObj = streamCapture->debugSurface_.Get();
+    if (debugSurfaceObj != nullptr) {
+        MEDIA_INFO_LOG("RegisterAuxiliaryConsumers 4 surfaceId: %{public}" PRIu64, debugSurfaceObj->GetUniqueId());
         streamCapture->debugListener_ = new (std::nothrow) AuxiliaryBufferConsumer(S_DEBUG, streamCapture);
         CHECK_RETURN_ELOG(streamCapture->debugListener_ == nullptr, "streamCapture->debugListener_ is null");
-        ret = streamCapture->debugSurface_->RegisterConsumerListener(
-            (sptr<IBufferConsumerListener> &)streamCapture->debugListener_);
+        ret = debugSurfaceObj->RegisterConsumerListener((sptr<IBufferConsumerListener> &)streamCapture->debugListener_);
         retStr = ret != SURFACE_ERROR_OK ? retStr + "[debug]" : retStr;
     }
     if (retStr != "") {

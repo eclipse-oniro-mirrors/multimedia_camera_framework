@@ -139,13 +139,13 @@ public:
     int32_t RequireMemorySize(int32_t memSize);
 
     bool isYuvCapture_ = false;
-    sptr<Surface> gainmapSurface_;
-    sptr<Surface> deepSurface_;
-    sptr<Surface> exifSurface_;
-    sptr<Surface> debugSurface_;
+    SpHolder<sptr<Surface>> gainmapSurface_;
+    SpHolder<sptr<Surface>> deepSurface_;
+    SpHolder<sptr<Surface>> exifSurface_;
+    SpHolder<sptr<Surface>> debugSurface_;
     SpHolder<sptr<Surface>> rawSurface_;
     std::mutex rawSurfaceMutex_;
-    sptr<Surface> thumbnailSurface_;
+    SpHolder<sptr<Surface>> thumbnailSurface_;
     sptr<IBufferConsumerListener> gainmapListener_ = nullptr;
     sptr<IBufferConsumerListener> deepListener_ = nullptr;
     sptr<IBufferConsumerListener> exifListener_ = nullptr;
@@ -199,7 +199,7 @@ private:
     int32_t movingPhotoSwitch_;
     std::condition_variable testDelay_;
     std::mutex testDelayMutex_;
-    sptr<BufferProducerSequenceable> thumbnailBufferQueue_;
+    SpHolder<sptr<BufferProducerSequenceable>> thumbnailBufferQueue_;
     SpHolder<sptr<BufferProducerSequenceable>> rawBufferQueue_;
     SpHolder<sptr<BufferProducerSequenceable>> gainmapBufferQueue_;
     SpHolder<sptr<BufferProducerSequenceable>> deepBufferQueue_;

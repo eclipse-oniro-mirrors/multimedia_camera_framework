@@ -55,23 +55,24 @@ void ThumbnailBufferConsumer::ExecuteOnBufferAvailable()
     CHECK_RETURN_ELOG(streamCapture == nullptr, "streamCapture is null");
     constexpr int32_t memSize = 20 * 1024;
     streamCapture->RequireMemorySize(memSize);
-    CHECK_RETURN_ELOG(streamCapture->thumbnailSurface_ == nullptr, "surface is null");
+    auto thumbnailSurfaceObj = streamCapture->thumbnailSurface_.Get();
+    CHECK_RETURN_ELOG(thumbnailSurfaceObj == nullptr, "surface is null");
     sptr<SurfaceBuffer> surfaceBuffer = nullptr;
     int32_t fence = -1;
     int64_t timestamp;
     OHOS::Rect damage;
-    SurfaceError surfaceRet = streamCapture->thumbnailSurface_->AcquireBuffer(surfaceBuffer, fence, timestamp, damage);
+    SurfaceError surfaceRet = thumbnailSurfaceObj->AcquireBuffer(surfaceBuffer, fence, timestamp, damage);
     CHECK_RETURN_ELOG(surfaceRet != SURFACE_ERROR_OK, "ThumbnailBufferConsumer Failed to acquire surface buffer");
     // burst captreu skip thumbnail
     int32_t burstSeqId = CameraSurfaceBufferUtil::GetBurstSequenceId(surfaceBuffer);
     if (burstSeqId != -1) {
-        streamCapture->thumbnailSurface_->ReleaseBuffer(surfaceBuffer, -1);
+        thumbnailSurfaceObj->ReleaseBuffer(surfaceBuffer, -1);
         MEDIA_INFO_LOG("T_ExecuteOnBufferAvailable X, burstCapture skip thumbnail");
         return;
     }
     sptr<SurfaceBuffer> newSurfaceBuffer = CameraSurfaceBufferUtil::DeepCopyThumbnailBuffer(surfaceBuffer);
     MEDIA_DEBUG_LOG("ThumbnailListener ReleaseBuffer begin");
-    streamCapture->thumbnailSurface_->ReleaseBuffer(surfaceBuffer, -1);
+    thumbnailSurfaceObj->ReleaseBuffer(surfaceBuffer, -1);
     CHECK_RETURN_ELOG(newSurfaceBuffer == nullptr, "newSurfaceBuffer is null");
     MEDIA_DEBUG_LOG("ThumbnailListener ReleaseBuffer end");
     streamCapture->OnThumbnailAvailable(newSurfaceBuffer, timestamp);
