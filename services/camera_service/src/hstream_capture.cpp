@@ -781,7 +781,7 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
         MEDIA_INFO_LOG("HStreamCapture::Capture set capture not ready");
         isCaptureReady_ = false;
     }
-    if (!isBursting_) {
+    if (photoAssetAvaiableCallback_ != nullptr && !isBursting_) {
         MEDIA_DEBUG_LOG("HStreamCapture::Capture CreateMediaLibraryPhotoAssetProxy E");
         CHECK_PRINT_ELOG(CreateMediaLibraryPhotoAssetProxy(preparedCaptureId) != CAMERA_OK,
             "HStreamCapture::Capture Failed with CreateMediaLibraryPhotoAssetProxy");
