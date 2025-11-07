@@ -1267,6 +1267,21 @@ void HStreamOperator::UpdateOrientationBaseGravity(int32_t rotationValue, int32_
     } else if (cameraPosition == OHOS_CAMERA_POSITION_FRONT) {
         rotation = (sensorOrientation - imageRotation + ROTATION_360_DEGREES) % ROTATION_360_DEGREES;
     }
+
+    std::shared_ptr<OHOS::Camera::CameraMetadata> ability = cameraDevice_->GetDeviceAbility();
+    CHECK_RETURN(ability == nullptr);
+    camera_metadata_item_t item;
+    int ret = OHOS::Camera::FindCameraMetadataItem(ability->get(), OHOS_ABILITY_SENSOR_ORIENTATION_VARIABLE, &item);
+    bool isVariable = false;
+    CHECK_EXECUTE(ret == CAM_META_SUCCESS, isVariable = item.count > 0 && item.data.u8[0]);
+    CHECK_RETURN_ILOG(!isVariable, "HStreamOperator::UpdateOrientationBaseGravity isVariable is False");
+
+    int32_t rotateDegree = strategyInfo.rotateDegree;
+    CHECK_RETURN_ILOG(rotateDegree < 0 || rotateDegree > ROTATION_360_DEGREES,
+        "HStreamOperator::UpdateOrientationBaseGravity no need correct rotation");
+    rotateDegree = cameraDevice_->GetCameraPosition() == OHOS_CAMERA_POSITION_BACK ?
+        ROTATION_360_DEGREES - strategyInfo.rotateDegree : strategyInfo.rotateDegree;
+    rotation = (rotation - rotateDegree + ROTATION_360_DEGREES) % ROTATION_360_DEGREES;
     MEDIA_INFO_LOG("UpdateOrientationBaseGravity sensorRotation is : %{public}d, rotation is %{public}d,",
         sensorRotation, rotation);
 }
