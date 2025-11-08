@@ -135,33 +135,49 @@ void HStreamCapture::CreateAuxiliarySurfaces()
 
     std::string retStr = "";
     int32_t ret = 0;
-    if (gainmapSurface_ == nullptr) {
+    auto gainmapSurfaceObj = gainmapSurface_.Get();
+    if (gainmapSurfaceObj == nullptr) {
         std::string bufferName = "gainmapImage";
-        gainmapSurface_ = Surface::CreateSurfaceAsConsumer(bufferName);
-        MEDIA_INFO_LOG("CreateAuxiliarySurfaces 1 surfaceId: %{public}" PRIu64, gainmapSurface_->GetUniqueId());
-        ret = SetBufferProducerInfo(bufferName, gainmapSurface_->GetProducer());
-        retStr += (ret != CAMERA_OK ? bufferName + "," : retStr);
+        gainmapSurface_.Set(Surface::CreateSurfaceAsConsumer(bufferName));
+        gainmapSurfaceObj = gainmapSurface_.Get();
+        if (gainmapSurfaceObj != nullptr) {
+            MEDIA_INFO_LOG("CreateAuxiliarySurfaces 1 surfaceId: %{public}" PRIu64, gainmapSurfaceObj->GetUniqueId());
+            ret = SetBufferProducerInfo(bufferName, gainmapSurfaceObj->GetProducer());
+            retStr += (ret != CAMERA_OK ? bufferName + "," : retStr);
+        }
     }
-    if (deepSurface_ == nullptr) {
+    auto deepSurfaceObj = deepSurface_.Get();
+    if (deepSurfaceObj == nullptr) {
         std::string bufferName = "deepImage";
-        deepSurface_ = Surface::CreateSurfaceAsConsumer(bufferName);
-        MEDIA_INFO_LOG("CreateAuxiliarySurfaces 2 surfaceId: %{public}" PRIu64, deepSurface_->GetUniqueId());
-        ret = SetBufferProducerInfo(bufferName, deepSurface_->GetProducer());
-        retStr += (ret != CAMERA_OK ? bufferName + "," : retStr);
+        deepSurface_.Set(Surface::CreateSurfaceAsConsumer(bufferName));
+        deepSurfaceObj = deepSurface_.Get();
+        if (deepSurfaceObj != nullptr) {
+            MEDIA_INFO_LOG("CreateAuxiliarySurfaces 2 surfaceId: %{public}" PRIu64, deepSurfaceObj->GetUniqueId());
+            ret = SetBufferProducerInfo(bufferName, deepSurfaceObj->GetProducer());
+            retStr += (ret != CAMERA_OK ? bufferName + "," : retStr);
+        }
     }
-    if (exifSurface_ == nullptr) {
+    auto exifSurfaceObj = exifSurface_.Get();
+    if (exifSurfaceObj == nullptr) {
         std::string bufferName = "exifImage";
-        exifSurface_ = Surface::CreateSurfaceAsConsumer(bufferName);
-        MEDIA_INFO_LOG("CreateAuxiliarySurfaces 3 surfaceId: %{public}" PRIu64, exifSurface_->GetUniqueId());
-        ret = SetBufferProducerInfo(bufferName, exifSurface_->GetProducer());
-        retStr += (ret != CAMERA_OK ? bufferName + "," : retStr);
+        exifSurface_.Set(Surface::CreateSurfaceAsConsumer(bufferName));
+        exifSurfaceObj = exifSurface_.Get();
+        if (exifSurfaceObj != nullptr) {
+            MEDIA_INFO_LOG("CreateAuxiliarySurfaces 3 surfaceId: %{public}" PRIu64, exifSurfaceObj->GetUniqueId());
+            ret = SetBufferProducerInfo(bufferName, exifSurfaceObj->GetProducer());
+            retStr += (ret != CAMERA_OK ? bufferName + "," : retStr);
+        }
     }
-    if (debugSurface_ == nullptr) {
+    auto debugSurfaceObj = debugSurface_.Get();
+    if (debugSurfaceObj == nullptr) {
         std::string bufferName = "debugImage";
-        debugSurface_ = Surface::CreateSurfaceAsConsumer(bufferName);
-        MEDIA_INFO_LOG("CreateAuxiliarySurfaces 4 surfaceId: %{public}" PRIu64, debugSurface_->GetUniqueId());
-        ret = SetBufferProducerInfo(bufferName, debugSurface_->GetProducer());
-        retStr += (ret != CAMERA_OK ? bufferName + "," : retStr);
+        debugSurface_.Set(Surface::CreateSurfaceAsConsumer(bufferName));
+        debugSurfaceObj = debugSurface_.Get();
+        if (debugSurfaceObj != nullptr) {
+            MEDIA_INFO_LOG("CreateAuxiliarySurfaces 4 surfaceId: %{public}" PRIu64, debugSurfaceObj->GetUniqueId());
+            ret = SetBufferProducerInfo(bufferName, debugSurfaceObj->GetProducer());
+            retStr += (ret != CAMERA_OK ? bufferName + "," : retStr);
+        }
     }
     MEDIA_INFO_LOG("CreateAuxiliarySurfaces X, res:%{public}s", retStr.c_str());
 }
@@ -257,7 +273,7 @@ void HStreamCapture::FillingRawAndThumbnailStreamInfo(StreamInfo_V1_1 &streamInf
             .height = 0,
             .format = pixelFormat, // HDR: YCRCB_P010 P3: nv21
             .dataspace = dataSpace_, // HDR: BT2020_HLG_FULL P3: P3
-            .bufferQueue = thumbnailBufferQueue_,
+            .bufferQueue = thumbnailBufferQueue_.Get(),
         };
         streamInfo.extendedStreamInfos.push_back(extendedStreamInfo);
     }
@@ -317,14 +333,14 @@ int32_t HStreamCapture::SetThumbnail(bool isEnabled)
 {
     if (isEnabled) {
         thumbnailSwitch_ = 1;
-        thumbnailSurface_ = nullptr;
-        thumbnailSurface_ = Surface::CreateSurfaceAsConsumer("quickThumbnail");
-        CHECK_RETURN_RET_ELOG(thumbnailSurface_ == nullptr, CAMERA_OK, "thumbnail surface create faild");
-        thumbnailBufferQueue_ = new BufferProducerSequenceable(thumbnailSurface_->GetProducer());
+        thumbnailSurface_.Set(Surface::CreateSurfaceAsConsumer("quickThumbnail"));
+        auto thumbnailSurfaceObj = thumbnailSurface_.Get();
+        CHECK_RETURN_RET_ELOG(thumbnailSurfaceObj == nullptr, CAMERA_OK, "thumbnail surface create faild");
+        thumbnailBufferQueue_.Set(new BufferProducerSequenceable(thumbnailSurfaceObj->GetProducer()));
     } else {
         thumbnailSwitch_ = 0;
-        thumbnailSurface_ = nullptr;
-        thumbnailBufferQueue_ = nullptr;
+        thumbnailSurface_.Set(nullptr);
+        thumbnailBufferQueue_.Set(nullptr);
     }
     return CAMERA_OK;
 }
@@ -1118,8 +1134,9 @@ int32_t HStreamCapture::RequireMemorySize(int32_t requiredMemSizeKB)
 int32_t HStreamCapture::SetThumbnailCallback(const sptr<IStreamCaptureThumbnailCallback> &callback)
 {
     MEDIA_INFO_LOG("HSetThumbnailCallback E");
+    auto thumbnailSurfaceObj = thumbnailSurface_.Get();
     CHECK_RETURN_RET_ELOG(
-        thumbnailSurface_ == nullptr, CAMERA_INVALID_ARG, "HStreamCapture::SetThumbnailCallback surface is null");
+        thumbnailSurfaceObj == nullptr, CAMERA_INVALID_ARG, "HStreamCapture::SetThumbnailCallback surface is null");
     CHECK_RETURN_RET_ELOG(
         callback == nullptr, CAMERA_INVALID_ARG, "HStreamCapture::SetThumbnailCallback callback is null");
     std::lock_guard<std::mutex> lock(thumbnailCallbackLock_);
@@ -1128,9 +1145,9 @@ int32_t HStreamCapture::SetThumbnailCallback(const sptr<IStreamCaptureThumbnailC
     if (thumbnailListener_ == nullptr) {
         thumbnailListener_ = new (std::nothrow) ThumbnailBufferConsumer(this);
     }
-    thumbnailSurface_->UnregisterConsumerListener();
-    MEDIA_INFO_LOG("SetThumbnailCallback GetUniqueId: %{public}" PRIu64, thumbnailSurface_->GetUniqueId());
-    SurfaceError ret = thumbnailSurface_->RegisterConsumerListener(
+    thumbnailSurfaceObj->UnregisterConsumerListener();
+    MEDIA_INFO_LOG("SetThumbnailCallback GetUniqueId: %{public}" PRIu64, thumbnailSurfaceObj->GetUniqueId());
+    SurfaceError ret = thumbnailSurfaceObj->RegisterConsumerListener(
         (sptr<IBufferConsumerListener> &)thumbnailListener_);
     CHECK_EXECUTE(thumbnailTask_ == nullptr, InitCaptureThread());
     CHECK_PRINT_ELOG(ret != SURFACE_ERROR_OK, "registerConsumerListener failed:%{public}d", ret);
@@ -1143,8 +1160,9 @@ int32_t HStreamCapture::UnSetThumbnailCallback()
     std::lock_guard<std::mutex> lock(thumbnailCallbackLock_);
     thumbnailAvaiableCallback_ = nullptr;
     thumbnailListener_ = nullptr;
-    if (thumbnailSurface_) {
-        thumbnailSurface_->UnregisterConsumerListener();
+    auto thumbnailSurfaceObj = thumbnailSurface_.Get();
+    if (thumbnailSurfaceObj) {
+        thumbnailSurfaceObj->UnregisterConsumerListener();
     }
     return CAMERA_OK;
 }
@@ -1159,7 +1177,7 @@ void HStreamCapture::InitCaptureThread()
     if (isYuvCapture_ && photoSubTask_ == nullptr) {
         photoSubTask_ = std::make_shared<DeferredProcessing::TaskManager>("photoSubTask", TASKMANAGER_FOUR, false);
     }
-    if (thumbnailSurface_ && thumbnailTask_ == nullptr) {
+    if (thumbnailSurface_.Get() && thumbnailTask_ == nullptr) {
         thumbnailTask_ = std::make_shared<DeferredProcessing::TaskManager>("thumbnailTask", TASKMANAGER_ONE, false);
     }
 }
@@ -1345,9 +1363,10 @@ void HStreamCapture::DumpStreamInfo(CameraInfoDumper& infoDumper)
     infoDumper.Title("capture stream");
     infoDumper.Msg("ThumbnailSwitch:[" + std::to_string(thumbnailSwitch_) + "]");
     infoDumper.Msg("RawDeliverSwitch:[" + std::to_string(rawDeliverySwitch_) + "]");
-    if (thumbnailBufferQueue_) {
-        infoDumper.Msg(
-            "ThumbnailBuffer producer Id:[" + std::to_string(thumbnailBufferQueue_->producer_->GetUniqueId()) + "]");
+    auto thumbnailBufferQueueObject = thumbnailBufferQueue_.Get();
+    if (thumbnailBufferQueueObject && thumbnailBufferQueueObject->producer_ != nullptr) {
+        infoDumper.Msg("ThumbnailBuffer producer Id:[" + std::to_string(
+            thumbnailBufferQueueObject->producer_->GetUniqueId()) + "]");
     }
     HStreamCommon::DumpStreamInfo(infoDumper);
 }

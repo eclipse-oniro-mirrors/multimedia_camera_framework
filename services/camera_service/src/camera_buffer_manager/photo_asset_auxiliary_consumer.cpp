@@ -58,13 +58,13 @@ void AuxiliaryBufferConsumer::ExecuteOnBufferAvailable()
     CHECK_RETURN_ELOG(streamCapture == nullptr, "streamCapture is null");
     sptr<Surface> surface;
     if (surfaceName_ == S_GAINMAP) {
-        surface = streamCapture->gainmapSurface_;
+        surface = streamCapture->gainmapSurface_.Get();
     } else if (surfaceName_ == S_DEEP) {
-        surface = streamCapture->deepSurface_;
+        surface = streamCapture->deepSurface_.Get();
     } else if (surfaceName_ == S_EXIF) {
-        surface = streamCapture->exifSurface_;
+        surface = streamCapture->exifSurface_.Get();
     } else if (surfaceName_ == S_DEBUG) {
-        surface = streamCapture->debugSurface_;
+        surface = streamCapture->debugSurface_.Get();
     }
     // acquire copy release buffer
     sptr<SurfaceBuffer> surfaceBuffer = nullptr;
