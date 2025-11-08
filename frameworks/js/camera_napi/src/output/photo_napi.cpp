@@ -243,7 +243,6 @@ napi_value PhotoNapi::Release(napi_env env, napi_callback_info info)
                 CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
                 if (context->objectInfo != nullptr) {
                     context->status = true;
-                    napi_delete_reference(env, context->objectInfo->mainImageRef_);
                     context->objectInfo->mainImageRef_ = nullptr;
                     context->objectInfo->rawImage_ = nullptr;
                 }
@@ -252,6 +251,7 @@ napi_value PhotoNapi::Release(napi_env env, napi_callback_info info)
                 auto context = static_cast<PhotoAsyncContext*>(data);
                 CAMERA_FINISH_ASYNC_TRACE(context->funcName, context->taskId);
                 napi_value result = nullptr;
+                napi_delete_reference(env, context->objectInfo->mainImageRef_);
                 napi_get_undefined(env, &result);
                 napi_resolve_deferred(env, context->deferred, result);
                 napi_delete_async_work(env, context->work);
