@@ -1134,10 +1134,23 @@ std::vector<int32_t> HCameraDevice::GetFrameRateRange()
     return frameRateRange_;
 }
 
+void HCameraDevice::SetIsHasFitedRotation(bool isHasFitedRotation)
+{
+    std::lock_guard<std::mutex> lock(isHasFitedRotationMutex_);
+    isHasFitedRotation_ = isHasFitedRotation;
+}
+
+bool HCameraDevice::GetIsHasFitedRotation()
+{
+    std::lock_guard<std::mutex> lock(isHasFitedRotationMutex_);
+    return isHasFitedRotation_;
+}
+
 void HCameraDevice::UpdateCameraRotateAngleAndZoom(std::vector<int32_t> &frameRateRange, bool isResetDegree)
 {
     CameraRotateStrategyInfo strategyInfo;
-    CHECK_RETURN_ELOG(!GetSigleStrategyInfo(strategyInfo), "Update rotate angle not supported");
+    CHECK_RETURN_ELOG(!GetSigleStrategyInfo(strategyInfo) || GetIsHasFitedRotation(),
+        "Update rotate angle not supported");
     auto flag = false;
     CHECK_EXECUTE(strategyInfo.fps <= 0, flag = true);
     CHECK_EXECUTE(strategyInfo.fps > 0 && frameRateRange.size() > 1 &&

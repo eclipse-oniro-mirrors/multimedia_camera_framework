@@ -1075,5 +1075,49 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_040, TestSize.Level0)
     camDevice->UpdateLiveStreamSceneMetadata(OHOS_CAMERA_APP_HINT_NONE);
 }
 #endif
+
+/*
+ * Feature: Framework
+ * Function: Test SetIsHasFitedRotation and GetIsHasFitedRotation when isHasFitedRotation is true
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetIsHasFitedRotation and GetIsHasFitedRotation
+ */
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_041, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+
+    bool isHasFitedRotation = true;
+    camDevice->SetIsHasFitedRotation(OHOS_CAMERA_APP_HINT_NONE);
+    EXPECT_EQ(camDevice->GetIsHasFitedRotation(), true);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test SetIsHasFitedRotation and GetIsHasFitedRotation when isHasFitedRotation is false
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetIsHasFitedRotation and GetIsHasFitedRotation
+ */
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_042, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+
+    bool isHasFitedRotation = false;
+    camDevice->SetIsHasFitedRotation(OHOS_CAMERA_APP_HINT_NONE);
+    EXPECT_EQ(camDevice->GetIsHasFitedRotation(), false);
+}
 }
 }
