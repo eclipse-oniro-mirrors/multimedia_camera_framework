@@ -231,8 +231,6 @@ bool VideoEncoder::EnqueueBuffer(sptr<FrameRecord> frameRecord)
 {
     // LCOV_EXCL_START
     MEDIA_DEBUG_LOG("EnqueueBuffer timestamp : %{public}s", frameRecord->GetFrameId().c_str());
-    CHECK_EXECUTE(!isStarted_ || avCodecProxy_ == nullptr || size_ == nullptr,
-        RestartVideoCodec(frameRecord->GetFrameSize(), frameRecord->GetRotation()));
     sptr<SurfaceBuffer> buffer = frameRecord->GetSurfaceBuffer();
     CHECK_RETURN_RET_ELOG(buffer == nullptr, false, "Enqueue video buffer is empty");
     std::lock_guard<std::mutex> lock(surfaceMutex_);

@@ -118,14 +118,24 @@ void AvcodecTaskManager::EncodeVideoBuffer(sptr<FrameRecord> frameRecord, CacheC
         CAMERA_SYNC_TRACE;
         CHECK_RETURN(thisPtr == nullptr);
         CHECK_RETURN(!thisPtr->videoEncoder_ || !frameRecord);
+        {
+            std::lock_guard<std::mutex> encodeLock(thisPtr->videoEncoder_->GetStartAvcodecMutex());
+            if (!thisPtr->videoEncoder_->GetIsStarted() || thisPtr->videoEncoder_->GetAvCodecProxy() == nullptr ||
+                thisPtr->videoEncoder_->GetSize() == nullptr) {
+                thisPtr->videoEncoder_->RestartVideoCodec(frameRecord->GetFrameSize(), frameRecord->GetRotation());
+            }
+        }
         sptr<Surface> movingSurface = thisPtr->movingSurface_.promote();
         if (movingSurface) {
             sptr<SurfaceBuffer> codecDetachBuf;
             thisPtr->videoEncoder_->DetachCodecBuffer(codecDetachBuf, frameRecord);
             SurfaceError surfaceRet = movingSurface->AttachBufferToQueue(codecDetachBuf);
-            CHECK_PRINT_ELOG(surfaceRet != SURFACE_ERROR_OK, "movingSurface AttachBuffer faild");
+            CHECK_EXECUTE(surfaceRet != SURFACE_ERROR_OK,
+                MEDIA_ERR_LOG("movingSurface AttachBuffer, surfaceRet = %{public}d, timestamp:%{public}llu", surfaceRet,
+                    (long long unsigned)frameRecord->GetTimeStamp()));
             surfaceRet = movingSurface->ReleaseBuffer(codecDetachBuf, SyncFence::INVALID_FENCE);
-            CHECK_PRINT_ELOG(surfaceRet != SURFACE_ERROR_OK, "movingSurface ReleaseBuffer faild");
+            CHECK_EXECUTE(surfaceRet != SURFACE_ERROR_OK,
+                MEDIA_ERR_LOG("movingSurface ReleaseBuffer, surfaceRet = %{public}d", surfaceRet));
         }
         bool isEncodeSuccess = thisPtr->videoEncoder_->EncodeSurfaceBuffer(frameRecord);
         CHECK_PRINT_ELOG(!isEncodeSuccess, "EncodeVideoBuffer faild");

@@ -74,24 +74,40 @@ public:
     };
     bool IsHdr(ColorSpace colorSpace);
     int32_t GetEncoderBitrate();
+    inline std::mutex& GetStartAvcodecMutex()
+    {
+        return startAvcodecMutex_;
+    }
+    inline std::atomic<bool>& GetIsStarted()
+    {
+        return isStarted_;
+    }
     inline int32_t GetBframeAbility()
     {
         MEDIA_INFO_LOG("Bframeability:%{public}d , %{public}d", static_cast<int32_t>(BframeAbility_), BframeAbility_);
         return static_cast<int32_t>(BframeAbility_);
     }
+    inline std::shared_ptr<AVCodecIntf> GetAvCodecProxy()
+    {
+        return avCodecProxy_;
+    }
+    inline shared_ptr<Size> GetSize()
+    {
+        return size_;
+    }
     void SetVideoCodec(const std::shared_ptr<Size>& size, int32_t rotation);
-
+    void RestartVideoCodec(shared_ptr<Size> size, int32_t rotation);
 private:
     int32_t SetCallback();
     int32_t Configure();
     std::shared_ptr<AVBuffer> CopyAVBuffer(std::shared_ptr<AVBuffer> &inputBuffer);
-    void RestartVideoCodec(shared_ptr<Size> size, int32_t rotation);
     bool EnqueueBuffer(sptr<FrameRecord> frameRecord);
     bool ProcessFrameRecord(sptr<VideoCodecAVBufferInfo> bufferInfo, sptr<FrameRecord> frameRecord);
     std::atomic<bool> isStarted_ { false };
     std::mutex encoderMutex_;
     std::shared_ptr<AVCodecIntf> avCodecProxy_ = nullptr;
     std::mutex contextMutex_;
+    std::mutex startAvcodecMutex_;
     sptr<VideoCodecUserData> context_ = nullptr;
     shared_ptr<Size> size_;
     int32_t rotation_ = 0;
