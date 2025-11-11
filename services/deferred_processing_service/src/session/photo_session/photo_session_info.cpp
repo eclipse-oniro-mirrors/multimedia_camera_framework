@@ -117,6 +117,7 @@ void PhotoSessionInfo::SetCallback(const sptr<IDeferredPhotoProcessingSessionCal
     DP_CHECK_EXECUTE(callback_ != nullptr && deathRecipient_ != nullptr, deathRecipient_->Destroy(callback_));
     isCreate_ = false;
     callback_ = callback;
+    DP_CHECK_RETURN(callback_ == nullptr);
     auto ret = deathRecipient_->Initialize(callback_);
     DP_CHECK_ERROR_PRINT_LOG(ret != DP_OK, "Set photo DeathRecipient failed.");
 }
