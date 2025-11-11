@@ -113,7 +113,7 @@ std::shared_ptr<PictureIntf> PhotoProcessResult::AssemblePicture(const HDI::Came
     int32_t rotationInIps = false;
     GetMetadataValue(buffer.metadata, MetadataKeys::EXIF_SIZE, exifDataSize);
     GetMetadataValue(buffer.metadata, MetadataKeys::ROTATION_IN_IPS, rotationInIps);
-    DP_CHECK_RETURN_RET(buffer.imageHandle == nullptr, nullptr); 
+    DP_CHECK_RETURN_RET(buffer.imageHandle == nullptr, nullptr);
     auto imageBuffer = TransBufferHandleToSurfaceBuffer(buffer.imageHandle->GetBufferHandle());
     DP_CHECK_ERROR_RETURN_RET_LOG(imageBuffer == nullptr, nullptr, "bufferHandle is nullptr.");
 
