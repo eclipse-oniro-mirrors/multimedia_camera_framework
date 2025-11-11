@@ -241,6 +241,8 @@ bool HCaptureSession::IsNeedDynamicConfig()
 int32_t HCaptureSession::SetHasFitedRotation(bool isHasFitedRotation)
 {
     isHasFitedRotation_ = isHasFitedRotation;
+    auto currentDevice = GetCameraDevice();
+    CHECK_EXECUTE(currentDevice != nullptr, currentDevice->SetIsHasFitedRotation(isHasFitedRotation));
     return CAMERA_OK;
 }
 

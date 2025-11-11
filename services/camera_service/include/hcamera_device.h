@@ -200,6 +200,8 @@ public:
     bool GetUsePhysicalCameraOrientation();
     void SetLastDisplayMode(int32_t lastDisplayMode);
     void SetFrameRateRange(const std::vector<int32_t>& frameRateRange);
+    void SetIsHasFitedRotation(bool isHasFitedRotation);
+    bool GetIsHasFitedRotation();
     std::vector<int32_t> GetFrameRateRange();
 #ifdef CAMERA_LIVE_SCENE_RECOGNITION
     void UpdateLiveStreamSceneMetadata(uint32_t mode);
@@ -241,6 +243,9 @@ private:
 
     std::mutex deviceOpenLifeCycleMutex_;
     std::shared_ptr<OHOS::Camera::CameraMetadata> deviceOpenLifeCycleSettings_;
+
+    std::mutex isHasFitedRotationMutex_;
+    bool isHasFitedRotation_ = false;
 
     std::string clientName_;
     int clientUserId_;
