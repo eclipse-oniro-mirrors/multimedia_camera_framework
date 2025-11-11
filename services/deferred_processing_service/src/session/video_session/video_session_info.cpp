@@ -114,6 +114,7 @@ void VideoSessionInfo::SetCallback(const sptr<IDeferredVideoProcessingSessionCal
     DP_CHECK_EXECUTE(callback_ != nullptr && deathRecipient_ != nullptr, deathRecipient_->Destroy(callback_));
     isCreate_ = false;
     callback_ = callback;
+    DP_CHECK_RETURN(callback_ == nullptr);
     auto ret = deathRecipient_->Initialize(callback_);
     DP_CHECK_ERROR_PRINT_LOG(ret != DP_OK, "Set video DeathRecipient failed.");
 }
