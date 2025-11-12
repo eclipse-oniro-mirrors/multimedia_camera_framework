@@ -65,6 +65,7 @@ static const std::string CLIENT_NAME = "clientName";
 static const uint32_t ROOT_UID = 0;
 static const uint32_t FACE_CLIENT_UID = 1088;
 static const uint32_t RSS_UID = 1096;
+static const uint32_t CAAS_UID = 5527;
 // event
 static const std::string COMMON_EVENT_CAMERA_STATUS = "usual.event.CAMERA_STATUS";
 static const std::string COMMON_EVENT_DATA_SHARE_READY = "usual.event.DATA_SHARE_READY";
