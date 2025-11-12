@@ -298,7 +298,8 @@ static const std::unordered_map<std::string, int32_t> mapMetadataObjectType = {
     {"DOG_FACE", 4},
     {"DOG_BODY", 5},
     {"SALIENT_DETECTION", 6},
-    {"BAR_CODE_DETECTION", 7}
+    {"BAR_CODE_DETECTION", 7},
+    {"BASIC_FACE_DETECTION", 8}
 };
 
 static const std::unordered_map<std::string, int32_t> mapMetaFaceEmotion = {

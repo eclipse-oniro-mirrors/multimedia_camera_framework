@@ -65,6 +65,17 @@ MetadataFaceObject::MetadataFaceObject(const MetaObjectParms &parms, const Rect 
       rollAngle_(rollAngle)
 {}
 
+MetadataBasicFaceObject::MetadataBasicFaceObject(const MetaObjectParms &parms, const Rect leftEyeBoundingBox,
+                                                 const Rect rightEyeBoundingBox, const int32_t pitchAngle,
+                                                 const int32_t yawAngle, const int32_t rollAngle)
+    : MetadataObject(parms),
+      leftEyeBoundingBox_(leftEyeBoundingBox),
+      rightEyeBoundingBox_(rightEyeBoundingBox),
+      pitchAngle_(pitchAngle),
+      yawAngle_(yawAngle),
+      rollAngle_(rollAngle)
+{}
+
 MetadataHumanBodyObject::MetadataHumanBodyObject(const MetaObjectParms &parms) : MetadataObject(parms) {}
 
 MetadataCatFaceObject::MetadataCatFaceObject(const MetaObjectParms &parms, const Rect leftEyeBoundingBox,
@@ -482,6 +493,10 @@ sptr<MetadataObject> MetadataObjectFactory::createMetadataObject(MetadataObjectT
             break;
         case MetadataObjectType::BAR_CODE_DETECTION:
             metadataObject = new MetadataBarCodeDetectionObject(baseMetaParms);
+            break;
+        case MetadataObjectType::BASE_FACE_DETECTION:
+            metadataObject = new MetadataBasicFaceObject(baseMetaParms, leftEyeBoundingBox_, rightEyeBoundingBox_,
+                                                         pitchAngle_, yawAngle_, rollAngle_);
             break;
         default:
             metadataObject = new MetadataObject(baseMetaParms);

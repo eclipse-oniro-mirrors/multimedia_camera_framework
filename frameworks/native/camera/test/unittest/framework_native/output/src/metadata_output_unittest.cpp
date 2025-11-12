@@ -1349,5 +1349,59 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_032, TestSize.Level0
     vector<MetadataObjectType>res = metadatOutput->GetSupportedMetadataObjectTypes();
     EXPECT_EQ(res.size(), 0);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test MetadataObjectFactory with createMetadataObject when MetadataObjectType is BASE_FACE_DETECTION
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test MetadataObjectFactory with createMetadataObject when MetadataObjectType is BASE_FACE_DETECTION
+ */
+HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_033, TestSize.Level4)
+{
+    std::shared_ptr<MetadataObjectFactory> factory = std::make_shared<MetadataObjectFactory>();
+    ASSERT_NE(factory, nullptr);
+    factory->ResetParameters();
+
+    MetadataObjectType type = MetadataObjectType::BASE_FACE_DETECTION;
+    sptr<MetadataObject> ret = factory->createMetadataObject(type);
+    EXPECT_NE(ret, nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test metadataoutput with ProcessExternInfo
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test metadataoutput with ProcessExternInfo when MetadataObjectType is BASE_FACE_DETECTION
+ */
+HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_033, TestSize.Level4)
+{
+    sptr<MetadataObjectFactory> factory = new MetadataObjectFactory();
+    ASSERT_NE(factory, nullptr);
+    camera_metadata_item_t metadataItem{};
+    metadataItem.index = 0;
+    metadataItem.item = OHOS_ABILITY_CAMERA_MODES;
+    metadataItem.data_type = META_TYPE_INT32;
+    metadataItem.count = 12;
+    int32_t mockData[12] = {
+        1,
+        10, 20, 30, 40,
+        50, 60, 70, 80,
+        15,
+        25,
+        5
+    };
+    metadataItem.data.i32 = mockData;
+    int32_t index = 0;
+    MetadataObjectType type = MetadataObjectType::BASE_FACE_DETECTION;
+    bool isNeedMirror = true;
+    bool isNeedFlip = false;
+    MetadataCommonUtils::ProcessExternInfo(*factory, metadataItem, index, type, isNeedMirror, isNeedFlip,
+        RectBoxType::RECT_CAMERA);
+    EXPECT_EQ(factory->pitchAngle_, 15);
+}
 }
 }

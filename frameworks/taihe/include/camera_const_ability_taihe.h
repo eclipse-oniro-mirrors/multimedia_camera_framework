@@ -200,7 +200,7 @@ const std::unordered_map<OHOS::CameraStandard::DepthDataAccuracy, DepthDataAccur
 
 const std::unordered_map<OHOS::CameraStandard::MetadataObjectType,
                          MetadataObjectType> g_nativeToAniMetadataObjectType = {
-    {OHOS::CameraStandard::MetadataObjectType::BASE_FACE_DETECTION, MetadataObjectType::key_t::FACE_DETECTION},
+    {OHOS::CameraStandard::MetadataObjectType::FACE, MetadataObjectType::key_t::FACE_DETECTION},
     {OHOS::CameraStandard::MetadataObjectType::HUMAN_BODY, MetadataObjectType::key_t::HUMAN_BODY},
     {OHOS::CameraStandard::MetadataObjectType::CAT_FACE, MetadataObjectType::key_t::CAT_FACE},
     {OHOS::CameraStandard::MetadataObjectType::CAT_BODY, MetadataObjectType::key_t::CAT_BODY},
@@ -208,6 +208,7 @@ const std::unordered_map<OHOS::CameraStandard::MetadataObjectType,
     {OHOS::CameraStandard::MetadataObjectType::DOG_BODY, MetadataObjectType::key_t::DOG_BODY},
     {OHOS::CameraStandard::MetadataObjectType::SALIENT_DETECTION, MetadataObjectType::key_t::SALIENT_DETECTION},
     {OHOS::CameraStandard::MetadataObjectType::BAR_CODE_DETECTION, MetadataObjectType::key_t::BAR_CODE_DETECTION},
+    {OHOS::CameraStandard::MetadataObjectType::BASE_FACE_DETECTION, MetadataObjectType::key_t::BASIC_FACE_DETECTION},
 };
 
 const std::unordered_map<OHOS::CameraStandard::TimeLapsePreviewType,

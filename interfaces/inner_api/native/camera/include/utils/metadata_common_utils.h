@@ -59,6 +59,10 @@ private:
                                                     const camera_metadata_item_t &metadataItem, int32_t &index,
                                                     bool isNeedMirror, bool isNeedFlip, RectBoxType rectBoxType);
 
+    static void ProcessBasicHumanFaceDetectInfo(MetadataObjectFactory &factory,
+                                                    const camera_metadata_item_t &metadataItem, int32_t &index,
+                                                    bool isNeedMirror, bool isNeedFlip, RectBoxType rectBoxType);
+
     static void ProcessCatFaceDetectInfo(MetadataObjectFactory &factory,
                                                 const camera_metadata_item_t &metadataItem, int32_t &index,
                                                 bool isNeedMirror, bool isNeedFlip, RectBoxType rectBoxType);

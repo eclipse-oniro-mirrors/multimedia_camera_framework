@@ -128,6 +128,9 @@ void MetadataOutputCallback::AddMetadataObjExtending(napi_env env, sptr<Metadata
         case MetadataObjectType::DOG_FACE:
             CreateDogFaceMetaData(env, metadataObj, metadataNapiObj);
             break;
+        case MetadataObjectType::BASE_FACE_DETECTION:
+            CreateBasicHumanFaceMetaData(env, metadataObj, metadataNapiObj);
+            break;
         default:
             return;
     }
@@ -153,6 +156,30 @@ void MetadataOutputCallback::CreateHumanFaceMetaData(napi_env env, sptr<Metadata
     napi_set_named_property(env, metadataNapiObj, "emotion", numberNapiObj);
     napi_create_int32(env, faceObjectPtr->GetEmotionConfidence(), &numberNapiObj);
     napi_set_named_property(env, metadataNapiObj, "emotionConfidence", numberNapiObj);
+    napi_create_int32(env, faceObjectPtr->GetPitchAngle(), &numberNapiObj);
+    napi_set_named_property(env, metadataNapiObj, "pitchAngle", numberNapiObj);
+    napi_create_int32(env, faceObjectPtr->GetYawAngle(), &numberNapiObj);
+    napi_set_named_property(env, metadataNapiObj, "yawAngle", numberNapiObj);
+    napi_create_int32(env, faceObjectPtr->GetRollAngle(), &numberNapiObj);
+    napi_set_named_property(env, metadataNapiObj, "rollAngle", numberNapiObj);
+}
+
+void MetadataOutputCallback::CreateBasicHumanFaceMetaData(napi_env env, sptr<MetadataObject> metadataObj,
+    napi_value &metadataNapiObj) const
+{
+    napi_value metadataObjResult = nullptr;
+    napi_value numberNapiObj = nullptr;
+
+    napi_get_undefined(env, &metadataObjResult);
+    CHECK_RETURN(metadataObj == nullptr && metadataNapiObj == nullptr);
+    MetadataBasicFaceObject* faceObjectPtr = static_cast<MetadataBasicFaceObject*>(metadataObj.GetRefPtr());
+    Rect boundingBox = faceObjectPtr->GetLeftEyeBoundingBox();
+    metadataObjResult = CameraNapiBoundingBox(boundingBox).GenerateNapiValue(env);
+    napi_set_named_property(env, metadataNapiObj, "leftEyeBoundingBox", metadataObjResult);
+    boundingBox = faceObjectPtr->GetRightEyeBoundingBox();
+    metadataObjResult = CameraNapiBoundingBox(boundingBox).GenerateNapiValue(env);
+    napi_set_named_property(env, metadataNapiObj, "rightEyeBoundingBox", metadataObjResult);
+
     napi_create_int32(env, faceObjectPtr->GetPitchAngle(), &numberNapiObj);
     napi_set_named_property(env, metadataNapiObj, "pitchAngle", numberNapiObj);
     napi_create_int32(env, faceObjectPtr->GetYawAngle(), &numberNapiObj);

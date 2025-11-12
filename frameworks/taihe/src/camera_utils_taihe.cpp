@@ -486,6 +486,8 @@ MetadataObjectType MapMetadataObjSupportedTypesEnum(OHOS::CameraStandard::Metada
             return MetadataObjectType::key_t::SALIENT_DETECTION;
         case OHOS::CameraStandard::MetadataObjectType::BAR_CODE_DETECTION:
             return MetadataObjectType::key_t::BAR_CODE_DETECTION;
+        case OHOS::CameraStandard::MetadataObjectType::BASE_FACE_DETECTION:
+            return MetadataObjectType::key_t::BASIC_FACE_DETECTION;
         default:
             // do nothing
             break;

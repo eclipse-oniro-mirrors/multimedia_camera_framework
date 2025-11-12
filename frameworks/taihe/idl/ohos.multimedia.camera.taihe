@@ -2490,6 +2490,15 @@ struct MetadataFaceObject {
   @readonly rollAngle: i32;
 }
 
+struct MetadataBasicFaceObject {
+  @extends base: MetadataObject;
+  @readonly leftEyeBoundingBox: Optional<Rect>;
+  @readonly rightEyeBoundingBox: Optional<Rect>;
+  @readonly pitchAngle: Optional<i32>;
+  @readonly yawAngle: Optional<i32>;
+  @readonly rollAngle: Optional<i32>;
+}
+
 enum Emotion : i32 {
   NEUTRAL = 0,
   SADNESS = 1,
