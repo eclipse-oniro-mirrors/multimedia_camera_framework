@@ -84,6 +84,7 @@ constexpr int32_t TOUCH_CANCEL = 2;
 #endif
 static sptr<HCameraService> g_cameraServiceHolder = nullptr;
 static bool g_isFoldScreen = system::GetParameter("const.window.foldscreen.type", "") != "";
+const std::string NOTIFICATION_PERMISSION = "ohos.permission.CAMERA";
 
 std::vector<uint32_t> restoreMetadataTag { // item.type is uint8
     OHOS_CONTROL_VIDEO_STABILIZATION_MODE,
@@ -509,7 +510,7 @@ void HCameraService::OnAddSystemAbility(int32_t systemAbilityId, const std::stri
             MEDIA_INFO_LOG("OnAddSystemAbility COMMON_EVENT_SERVICE");
 #ifdef NOTIFICATION_ENABLE
             CameraCommonEventManager::GetInstance()->SubscribeCommonEvent(EVENT_CAMERA_BEAUTY_NOTIFICATION,
-                std::bind(&HCameraService::OnReceiveEvent, this, std::placeholders::_1));
+                std::bind(&HCameraService::OnReceiveEvent, this, std::placeholders::_1), NOTIFICATION_PERMISSION);
 #endif
             CameraCommonEventManager::GetInstance()->SubscribeCommonEvent(COMMON_EVENT_SCREEN_LOCKED,
                 std::bind(&HCameraService::OnReceiveEvent, this, std::placeholders::_1));
