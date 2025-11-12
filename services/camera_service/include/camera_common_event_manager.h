@@ -36,7 +36,8 @@ public:
     CameraCommonEventManager();
     ~CameraCommonEventManager();
     static sptr<CameraCommonEventManager> GetInstance();
-    void SubscribeCommonEvent(const std::string &eventName, EventReceiver receiver);
+    void SubscribeCommonEvent(const std::string &eventName, EventReceiver receiver,
+        const std::string &permission = "");
     void UnSubscribeCommonEvent(const std::string &eventName);
     bool IsScreenLocked();
     void SetScreenLocked(bool status);

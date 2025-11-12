@@ -36,12 +36,14 @@ sptr<CameraCommonEventManager> CameraCommonEventManager::GetInstance()
     return instance_;
 }
 
-void CameraCommonEventManager::SubscribeCommonEvent(const std::string &eventName, EventReceiver receiver)
+void CameraCommonEventManager::SubscribeCommonEvent(const std::string &eventName, EventReceiver receiver,
+    const std::string &permission)
 {
     MEDIA_INFO_LOG("SubscribeCommonEvent eventName=%{public}s", eventName.c_str());
     EventFwk::MatchingSkills matchingSkills;
     matchingSkills.AddEvent(eventName);
     EventFwk::CommonEventSubscribeInfo subscribeInfo(matchingSkills);
+    CHECK_EXECUTE(!permission.empty(), subscribeInfo.SetPermission(permission));
     auto subscriberPtr = std::make_shared<CameraCommonEventSubscriber>(subscribeInfo, receiver);
     if (subscriberPtr == nullptr) {
         MEDIA_INFO_LOG("subscriberPtr is nullptr");
