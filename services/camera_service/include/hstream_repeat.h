@@ -127,6 +127,7 @@ private:
     bool CheckVideoModeForSystemApp(int32_t sceneMode);
     bool IsLive();
     void UpdateLiveSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> &settings);
+    void SetFrameRate(std::shared_ptr<OHOS::Camera::CameraMetadata> &settings);
 
     RepeatStreamType repeatStreamType_;
     sptr<IStreamRepeatCallback> streamRepeatCallback_;
