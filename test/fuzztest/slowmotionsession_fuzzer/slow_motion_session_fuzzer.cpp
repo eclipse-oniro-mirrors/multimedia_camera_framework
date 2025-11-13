@@ -60,6 +60,9 @@ sptr<CaptureOutput> CreateVideoOutput()
     auto outputCapability = manager->GetSupportedOutputCapability(cameras[0],
         static_cast<int32_t>(SceneMode::SLOW_MOTION));
     videoProfile_ = outputCapability->GetVideoProfiles();
+    if (videoProfile_.empty()) {
+        return nullptr;
+    }
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     if (surface == nullptr) {
         return nullptr;

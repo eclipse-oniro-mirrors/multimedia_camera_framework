@@ -1819,6 +1819,8 @@ int32_t CaptureSession::GetZoomCenterPoint(Point& zoomCenterPoint)
     std::vector<float> zoomCenterPointVector = { zoomCenterPoint.x, zoomCenterPoint.y };
     metaIn->addEntry(OHOS_CONTROL_ZOOM_CENTER_POINT, zoomCenterPointVector.data(), zoomCenterPointVector.size());
     cameraDeviceObj->GetStatus(metaIn, metaOut);
+    CHECK_RETURN_RET_ELOG(
+        metaOut == nullptr, CameraErrorCode::SUCCESS, "CaptureSession::GetZoomCenterPoint metaOut is nullptr");
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metaOut->get(), OHOS_CONTROL_ZOOM_CENTER_POINT, &item);
     CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS || item.count < zoomCenterPointVector.size(),

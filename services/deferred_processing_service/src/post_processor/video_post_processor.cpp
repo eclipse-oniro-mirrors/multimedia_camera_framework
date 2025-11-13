@@ -357,6 +357,7 @@ void VideoPostProcessor::SetStreamInfo(const StreamDescription& stream, sptr<Buf
     streamInfo.v1_0.format_ = stream.pixelFormat;
     streamInfo.v1_0.dataspace_ = stream.dataspace;
     streamInfo.v1_0.bufferQueue_ = producer;
+    DP_CHECK_ERROR_RETURN_LOG(allStreamInfo_.empty(), "allStreamInfo_ is empty");
     allStreamInfo_.emplace_back(streamInfo);
 }
 
