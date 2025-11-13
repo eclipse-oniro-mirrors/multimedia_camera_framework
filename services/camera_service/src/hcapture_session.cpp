@@ -1781,7 +1781,7 @@ int32_t HCaptureSession::SetSmoothZoom(
     // LCOV_EXCL_STOP
     std::vector<uint32_t> zoomAndTimeArray {};
     for (int i = 0; i < static_cast<int>(array.size()); i++) {
-        zoomAndTimeArray.push_back(static_cast<uint32_t>(array[i]));
+        zoomAndTimeArray.push_back(static_cast<uint32_t>(std::round(array[i])));
         zoomAndTimeArray.push_back(static_cast<uint32_t>(i * frameIntervalMs + waitTime));
         MEDIA_DEBUG_LOG("HCaptureSession::SetSmoothZoom() zoom %{public}d, waitMs %{public}d.",
             static_cast<uint32_t>(array[i]), static_cast<uint32_t>(i * frameIntervalMs + waitTime));
