@@ -314,6 +314,7 @@ int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> setti
             "HStreamRepeat::Start Failed to allocate a captureId");
     }
     UpdateSketchStatus(SketchStatus::STARTING);
+    SetFrameRate(settings);
 
     std::vector<uint8_t> ability;
     {
@@ -1207,6 +1208,17 @@ void HStreamRepeat::UpdateLiveSettings(std::shared_ptr<OHOS::Camera::CameraMetad
 
     status = AddOrUpdateMetadata(settings, OHOS_CONTROL_APP_HINT, &mode, count);
     CHECK_PRINT_ELOG(!status, "HStreamRepeat::UpdateLiveSettings Failed");
+}
+
+void HStreamRepeat::SetFrameRate(std::shared_ptr<OHOS::Camera::CameraMetadata> &settings)
+{
+    CHECK_RETURN(settings == nullptr);
+    camera_metadata_item_t item;
+    int res = OHOS::Camera::CameraMetadata::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_FPS_RANGES, &item);
+    CHECK_RETURN(res != CAM_META_SUCCESS);
+    int32_t minFrameRate = item.data.i32[0];
+    int32_t maxFrameRate = item.data.i32[1];
+    streamFrameRateRange_ = {minFrameRate, maxFrameRate};
 }
 
 int32_t HStreamRepeat::AttachMetaSurface(const sptr<OHOS::IBufferProducer>& producer, int32_t videoMetaType)
