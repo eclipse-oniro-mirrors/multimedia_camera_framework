@@ -51,6 +51,25 @@ constexpr uint32_t RELEASE_WAIT_TIME = 10000;
 constexpr size_t MIN_FRAME_RECORD_BUFFER_SIZE = 9;
 constexpr int64_t MAX_NANOSEC_RANGE = 3200000000LL;
 
+class AudioDeferredProcessSingle {
+public:
+    ~AudioDeferredProcessSingle();
+    AudioDeferredProcessSingle(const AudioDeferredProcessSingle&) = delete;
+    AudioDeferredProcessSingle operator=(const AudioDeferredProcessSingle&) = delete;
+
+    static AudioDeferredProcessSingle& GetInstance();
+    void ConfigAndProcess(sptr<AudioCapturerSession> audioCapturerSession_, vector<sptr<AudioRecord>>& audioRecords,
+        vector<sptr<AudioRecord>>& processedAudioRecords);
+    void DestroyAudioDeferredProcess();
+    void TimerDestroyAudioDeferredProcess();
+
+private:
+    AudioDeferredProcessSingle();
+
+    unique_ptr<AudioDeferredProcess> audioDeferredProcessPtr_;
+    mutex deferredProcessMutex_;
+};
+
 class AvcodecTaskManager : public RefBase, public std::enable_shared_from_this<AvcodecTaskManager> {
 public:
     explicit AvcodecTaskManager(sptr<AudioCapturerSession> audioCapturerSession, VideoCodecType type,
@@ -99,14 +118,12 @@ private:
     mutex videoFdMutex_;
     mutex taskManagerMutex_;
     mutex encoderManagerMutex_;
-    mutex deferredProcessMutex_;
     std::atomic<bool> isActive_ { true };
     map<int32_t, std::pair<int64_t, std::shared_ptr<PhotoAssetIntf>>> videoFdMap_;
     VideoCodecType videoCodecType_ = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
     std::atomic<int64_t> preBufferDuration_ = NANOSEC_RANGE;
     std::atomic<int64_t> postBufferDuration_ = NANOSEC_RANGE;
     uint32_t timerId_ = 0;
-    shared_ptr<AudioDeferredProcess> audioDeferredProcess_ = nullptr;
     ColorSpace colorSpace_ = ColorSpace::COLOR_SPACE_UNKNOWN;
     wptr<Surface> movingSurface_;
     shared_ptr<Size> size_ = std::make_shared<Size>();

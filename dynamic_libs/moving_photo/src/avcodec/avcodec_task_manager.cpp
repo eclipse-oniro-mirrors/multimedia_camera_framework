@@ -268,7 +268,7 @@ void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, ui
     CHECK_RETURN_ELOG(taskManager == nullptr, "GetTaskManager is null");
     GetTaskManager()->SubmitTask([thisPtr, frameRecords, captureRotation, captureId]() {
         CAMERA_SYNC_TRACE;
-        MEDIA_INFO_LOG("CreateAVMuxer with %{public}zu", frameRecords.size());
+        MEDIA_INFO_LOG("CreateAVMuxer with %{public}zu, captureId: %{public}d", frameRecords.size(), captureId);
         vector<sptr<FrameRecord>> choosedBuffer;
         sptr<AudioVideoMuxer> muxer = thisPtr->CreateAVMuxer(frameRecords, captureRotation, choosedBuffer, captureId);
         CHECK_RETURN_ELOG(muxer == nullptr, "CreateAVMuxer failed");
@@ -457,32 +457,20 @@ void AvcodecTaskManager::PrepareAudioBuffer(vector<sptr<FrameRecord>>& choosedBu
         for (auto ptr: audioRecords) {
             processedAudioRecords.emplace_back(new AudioRecord(ptr->GetTimeStamp()));
         }
-        std::lock_guard<mutex> lock(deferredProcessMutex_);
-        if (audioDeferredProcess_ == nullptr) {
-            audioDeferredProcess_ = std::make_shared<AudioDeferredProcess>();
-            CHECK_RETURN(!audioDeferredProcess_);
-            audioDeferredProcess_->StoreOptions(audioCapturerSession_->deferredInputOptions_,
-                audioCapturerSession_->deferredOutputOptions_);
-            CHECK_RETURN(audioDeferredProcess_->GetOfflineEffectChain() != 0);
-            CHECK_RETURN(audioDeferredProcess_->ConfigOfflineAudioEffectChain() != 0);
-            CHECK_RETURN(audioDeferredProcess_->PrepareOfflineAudioEffectChain() != 0);
-            CHECK_RETURN(audioDeferredProcess_->GetMaxBufferSize(audioCapturerSession_->deferredInputOptions_,
-                audioCapturerSession_->deferredOutputOptions_) != 0);
-        }
-        audioDeferredProcess_->Process(audioRecords, processedAudioRecords);
+        AudioDeferredProcessSingle& audioDeferredProcessSingle = AudioDeferredProcessSingle::GetInstance();
+        audioDeferredProcessSingle.ConfigAndProcess(audioCapturerSession_, audioRecords, processedAudioRecords);
         auto weakThis = wptr<AvcodecTaskManager>(this);
         if (timerId_) {
             MEDIA_INFO_LOG("audioDP release time reset, %{public}u", timerId_);
             CameraTimer::GetInstance().Unregister(timerId_);
         }
-        auto curObject = audioDeferredProcess_;
-        timerId_ = CameraTimer::GetInstance().Register([weakThis, curObject]()-> void {
+        
+        timerId_ = CameraTimer::GetInstance().Register([weakThis]()-> void {
             auto sharedThis = weakThis.promote();
             CHECK_RETURN(sharedThis == nullptr);
-            std::unique_lock<mutex> lock(sharedThis->deferredProcessMutex_, std::try_to_lock);
-            CHECK_RETURN(curObject != sharedThis->audioDeferredProcess_);
-            CHECK_RETURN(!lock.owns_lock());
-            sharedThis->audioDeferredProcess_ = nullptr;
+            AudioDeferredProcessSingle& audioDeferredProcessSingle = AudioDeferredProcessSingle::GetInstance();
+            audioDeferredProcessSingle.TimerDestroyAudioDeferredProcess();
+            MEDIA_INFO_LOG("AvcodecTaskManager::delete audioDeferredProcessPtr_.");
             sharedThis->timerId_ = 0;
         }, RELEASE_WAIT_TIME, true);
     }
@@ -525,7 +513,8 @@ void AvcodecTaskManager::Release()
     CHECK_EXECUTE(videoEncoder_ != nullptr, videoEncoder_->Release());
     CHECK_EXECUTE(audioEncoder_ != nullptr, audioEncoder_->Release());
     CHECK_EXECUTE(timerId_ != 0, CameraTimer::GetInstance().Unregister(timerId_));
-    audioDeferredProcess_ = nullptr;
+    AudioDeferredProcessSingle& audioDeferredProcessSingle = AudioDeferredProcessSingle::GetInstance();
+    audioDeferredProcessSingle.DestroyAudioDeferredProcess();
     unique_lock<mutex> lock(videoFdMutex_);
     MEDIA_INFO_LOG("videoFdMap_ size is %{public}zu", videoFdMap_.size());
     videoFdMap_.clear();
@@ -578,5 +567,56 @@ void AvcodecTaskManager::SetVideoBufferDuration(uint32_t preBufferCount, uint32_
     preBufferDuration_ = static_cast<int64_t>(preBufferCount) * ONE_BILLION / VIDEO_FRAME_RATE;
     postBufferDuration_ = static_cast<int64_t>(postBufferCount) * ONE_BILLION / VIDEO_FRAME_RATE;
 }
+
+AudioDeferredProcessSingle::~AudioDeferredProcessSingle()
+{
+    MEDIA_INFO_LOG("AudioDeferredProcessSingle destructor");
+    std::lock_guard<mutex> lock(deferredProcessMutex_);
+    audioDeferredProcessPtr_ = nullptr;
+}
+
+void AudioDeferredProcessSingle::DestroyAudioDeferredProcess()
+{
+    std::lock_guard<mutex> lock(deferredProcessMutex_);
+    audioDeferredProcessPtr_ = nullptr;
+}
+
+void AudioDeferredProcessSingle::TimerDestroyAudioDeferredProcess()
+{
+    std::unique_lock<mutex> lock(deferredProcessMutex_, std::try_to_lock);
+    CHECK_RETURN(!lock.owns_lock());
+    audioDeferredProcessPtr_ = nullptr;
+}
+
+AudioDeferredProcessSingle::AudioDeferredProcessSingle()
+{
+    MEDIA_INFO_LOG("AudioDeferredProcessSingle constructor");
+}
+
+AudioDeferredProcessSingle& AudioDeferredProcessSingle::GetInstance()
+{
+    static AudioDeferredProcessSingle audioDeferredProcessSingle;
+    return audioDeferredProcessSingle;
+}
+
+void AudioDeferredProcessSingle::ConfigAndProcess(sptr<AudioCapturerSession> audioCapturerSession_,
+    vector<sptr<AudioRecord>>& audioRecords, vector<sptr<AudioRecord>>& processedAudioRecords)
+{
+    std::lock_guard<mutex> lock(deferredProcessMutex_);
+    if (audioDeferredProcessPtr_ == nullptr) {
+            MEDIA_INFO_LOG("AvcodecTaskManager::create audioDeferredProcessPtr_.");
+            audioDeferredProcessPtr_ = std::make_unique<AudioDeferredProcess>();
+        }
+    CHECK_RETURN(!audioDeferredProcessPtr_);
+    audioDeferredProcessPtr_->StoreOptions(
+        audioCapturerSession_->deferredInputOptions_, audioCapturerSession_->deferredOutputOptions_);
+    CHECK_RETURN(audioDeferredProcessPtr_->GetOfflineEffectChain() != 0);
+    CHECK_RETURN(audioDeferredProcessPtr_->ConfigOfflineAudioEffectChain() != 0);
+    CHECK_RETURN(audioDeferredProcessPtr_->PrepareOfflineAudioEffectChain() != 0);
+    CHECK_RETURN(audioDeferredProcessPtr_->GetMaxBufferSize(
+        audioCapturerSession_->deferredInputOptions_, audioCapturerSession_->deferredOutputOptions_) != 0);
+    audioDeferredProcessPtr_->Process(audioRecords, processedAudioRecords);
+}
+
 } // namespace CameraStandard
 } // namespace OHOS
