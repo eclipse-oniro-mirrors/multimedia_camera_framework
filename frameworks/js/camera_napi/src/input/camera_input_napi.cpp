@@ -702,7 +702,10 @@ napi_value CameraInputNapi::UsePhysicalCameraOrientation(napi_env env, napi_call
         MEDIA_ERR_LOG("CameraInputNapi::UsePhysicalCameraOrientation invalid arguments");
         return nullptr;
     }
-    cameraInputNapi->cameraInput_->SetUsePhysicalCameraOrientation(isUsed);
+    int retCode = cameraInputNapi->cameraInput_->SetUsePhysicalCameraOrientation(isUsed);
+    if (!CameraNapiUtils::CheckError(env, retCode)) {
+        MEDIA_DEBUG_LOG("UsePhysicalCameraOrientation fail throw error");
+    }
     return CameraNapiUtils::GetUndefinedValue(env);
 }
 
