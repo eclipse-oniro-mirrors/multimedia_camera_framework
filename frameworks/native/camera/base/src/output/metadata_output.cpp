@@ -291,13 +291,13 @@ int32_t MetadataOutput::Start()
     // LCOV_EXCL_START
     MEDIA_DEBUG_LOG("MetadataOutput::Start is called");
     auto session = GetSession();
-    CHECK_RETURN_RET_ELOG(session == nullptr || !session->IsSessionCommited(), CameraErrorCode::SUCCESS,
+    CHECK_RETURN_RET_COMM_ELOG(session == nullptr || !session->IsSessionCommited(), CameraErrorCode::SUCCESS,
         "MetadataOutput Failed to Start!, session not commited");
     auto stream = GetStream();
-    CHECK_RETURN_RET_ELOG(
+    CHECK_RETURN_RET_COMM_ELOG(
         stream == nullptr, CameraErrorCode::SUCCESS, "MetadataOutput Failed to Start!, GetStream is nullptr");
     int32_t errCode = static_cast<IStreamMetadata *>(stream.GetRefPtr())->Start();
-    CHECK_PRINT_ELOG(errCode != CAMERA_OK, "Failed to Start MetadataOutput!, errCode: %{public}d", errCode);
+    CHECK_PRINT_COMM_ELOG(errCode != CAMERA_OK, "Failed to Start MetadataOutput!, errCode: %{public}d", errCode);
     return CameraErrorCode::SUCCESS;
     // LCOV_EXCL_STOP
 }
@@ -320,10 +320,10 @@ int32_t MetadataOutput::Stop()
     // LCOV_EXCL_START
     MEDIA_DEBUG_LOG("MetadataOutput::Stop");
     auto stream = GetStream();
-    CHECK_RETURN_RET_ELOG(stream == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_COMM_ELOG(stream == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "MetadataOutput Failed to Stop!, GetStream is nullptr");
     int32_t errCode = static_cast<IStreamMetadata*>(stream.GetRefPtr())->Stop();
-    CHECK_PRINT_ELOG(errCode != CAMERA_OK, "Failed to Stop MetadataOutput!, errCode: %{public}d", errCode);
+    CHECK_PRINT_COMM_ELOG(errCode != CAMERA_OK, "Failed to Stop MetadataOutput!, errCode: %{public}d", errCode);
     return ServiceToCameraError(errCode);
     // LCOV_EXCL_STOP
 }

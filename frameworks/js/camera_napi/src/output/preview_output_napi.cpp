@@ -112,14 +112,14 @@ void PreviewOutputCallback::UpdateJSCallbackAsync(PreviewOutputEventType eventTy
 void PreviewOutputCallback::OnFrameStarted() const
 {
     CAMERA_SYNC_TRACE;
-    MEDIA_INFO_LOG("OnFrameStarted is called");
+    COMM_INFO_LOG("OnFrameStarted is called");
     UpdateJSCallbackAsync(PreviewOutputEventType::PREVIEW_FRAME_START, -1);
 }
 
 void PreviewOutputCallback::OnFrameEnded(const int32_t frameCount) const
 {
     CAMERA_SYNC_TRACE;
-    MEDIA_DEBUG_LOG("OnFrameEnded is called, frameCount: %{public}d", frameCount);
+    COMM_INFO_LOG("OnFrameEnded is called, frameCount: %{public}d", frameCount);
     UpdateJSCallbackAsync(PreviewOutputEventType::PREVIEW_FRAME_END, frameCount);
 }
 
@@ -489,7 +489,7 @@ napi_value PreviewOutputNapi::Release(napi_env env, napi_callback_info info)
 
 napi_value PreviewOutputNapi::AddDeferredSurface(napi_env env, napi_callback_info info)
 {
-    MEDIA_DEBUG_LOG("AddDeferredSurface is called");
+    COMM_INFO_LOG("AddDeferredSurface is called");
     CHECK_RETURN_RET_ELOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
         "SystemApi AddDeferredSurface is called!");
 

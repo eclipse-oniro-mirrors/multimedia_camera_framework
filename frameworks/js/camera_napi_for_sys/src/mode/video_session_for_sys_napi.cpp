@@ -70,7 +70,7 @@ void VideoSessionForSysNapi::Init(napi_env env)
 
 napi_value VideoSessionForSysNapi::CreateCameraSession(napi_env env)
 {
-    MEDIA_DEBUG_LOG("VideoSessionForSysNapi::CreateCameraSession is called");
+    COMM_INFO_LOG("VideoSessionForSysNapi::CreateCameraSession is called");
     CAMERA_SYNC_TRACE;
     napi_status status;
     napi_value result = nullptr;

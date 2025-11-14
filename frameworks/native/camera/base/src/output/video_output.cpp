@@ -44,7 +44,7 @@ int32_t VideoOutputCallbackImpl::OnFrameStarted()
     if (item != nullptr && item->GetApplicationCallback() != nullptr) {
         item->GetApplicationCallback()->OnFrameStarted();
     } else {
-        MEDIA_INFO_LOG("Discarding VideoOutputCallbackImpl::OnFrameStarted callback in video");
+        COMM_INFO_LOG("Discarding VideoOutputCallbackImpl::OnFrameStarted callback in video");
     }
     return CAMERA_OK;
     // LCOV_EXCL_STOP
@@ -58,7 +58,7 @@ int32_t VideoOutputCallbackImpl::OnFrameEnded(const int32_t frameCount)
     if (item != nullptr && item->GetApplicationCallback() != nullptr) {
         item->GetApplicationCallback()->OnFrameEnded(frameCount);
     } else {
-        MEDIA_INFO_LOG("Discarding VideoOutputCallbackImpl::OnFrameEnded callback in video");
+        COMM_INFO_LOG("Discarding VideoOutputCallbackImpl::OnFrameEnded callback in video");
     }
     return CAMERA_OK;
     // LCOV_EXCL_STOP
@@ -133,10 +133,10 @@ int32_t VideoOutput::Start()
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
     MEDIA_DEBUG_LOG("Enter Into VideoOutput::Start");
     auto session = GetSession();
-    CHECK_RETURN_RET_ELOG(session == nullptr || !session->IsSessionCommited(),
+    CHECK_RETURN_RET_COMM_ELOG(session == nullptr || !session->IsSessionCommited(),
         CameraErrorCode::SESSION_NOT_CONFIG, "VideoOutput Failed to Start, session not commited");
     // LCOV_EXCL_START
-    CHECK_RETURN_RET_ELOG(GetStream() == nullptr,
+    CHECK_RETURN_RET_COMM_ELOG(GetStream() == nullptr,
         CameraErrorCode::SERVICE_FATL_ERROR, "VideoOutput Failed to Start!, GetStream is nullptr");
     if (!GetFrameRateRange().empty() && GetFrameRateRange()[0] >= FRAMERATE_120) {
         MEDIA_INFO_LOG("EnableFaceDetection is call");
@@ -149,7 +149,7 @@ int32_t VideoOutput::Start()
         "VideoOutput::Start() itemStream is nullptr");
     if (itemStream) {
         errCode = itemStream->Start();
-        CHECK_PRINT_ELOG(errCode != CAMERA_OK, "VideoOutput Failed to Start!, errCode: %{public}d", errCode);
+        CHECK_PRINT_COMM_ELOG(errCode != CAMERA_OK, "VideoOutput Failed to Start!, errCode: %{public}d", errCode);
         isVideoStarted_ = true;
     }
     return ServiceToCameraError(errCode);
@@ -168,13 +168,13 @@ int32_t VideoOutput::Stop()
     CHECK_PRINT_ELOG(itemStream == nullptr, "VideoOutput::Stop() itemStream is nullptr");
     if (itemStream) {
         errCode = itemStream->Stop();
-        CHECK_PRINT_ELOG(errCode != CAMERA_OK, "VideoOutput Failed to Stop!, errCode: %{public}d", errCode);
+        CHECK_PRINT_COMM_ELOG(errCode != CAMERA_OK, "VideoOutput Failed to Stop!, errCode: %{public}d", errCode);
         isVideoStarted_ = false;
     }
     // LCOV_EXCL_START
     if (!GetFrameRateRange().empty() && GetFrameRateRange()[0] >= FRAMERATE_120) {
         auto session = GetSession();
-        CHECK_RETURN_RET_ELOG(session == nullptr || !session->IsSessionCommited(),
+        CHECK_RETURN_RET_COMM_ELOG(session == nullptr || !session->IsSessionCommited(),
             CameraErrorCode::SESSION_NOT_CONFIG, "VideoOutput Failed to Start, session not commited");
         MEDIA_INFO_LOG("EnableFaceDetection is call");
         session->EnableFaceDetection(true);
@@ -250,7 +250,7 @@ int32_t VideoOutput::Release()
     }
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
     MEDIA_DEBUG_LOG("Enter Into VideoOutput::Release");
-    CHECK_RETURN_RET_ELOG(GetStream() == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_COMM_ELOG(GetStream() == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "VideoOutput Failed to Release!, GetStream is nullptr");
     auto stream = GetStream();
     sptr<IStreamRepeat> itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
@@ -259,7 +259,7 @@ int32_t VideoOutput::Release()
     if (itemStream) {
         errCode = itemStream->Release();
     }
-    CHECK_PRINT_ELOG(errCode != CAMERA_OK, "Failed to release VideoOutput!, errCode: %{public}d", errCode);
+    CHECK_PRINT_COMM_ELOG(errCode != CAMERA_OK, "Failed to release VideoOutput!, errCode: %{public}d", errCode);
     CaptureOutput::Release();
     isVideoStarted_ = false;
     return ServiceToCameraError(errCode);

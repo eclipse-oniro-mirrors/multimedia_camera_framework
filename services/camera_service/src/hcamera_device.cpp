@@ -433,7 +433,7 @@ int32_t HCameraDevice::Open()
     CHECK_PRINT_ELOG(isOpenedCameraDevice_.load(), "HCameraDevice::Open failed, camera is busy");
     CHECK_RETURN_RET_ELOG(!IsInForeGround(callerToken_), CAMERA_ALLOC_ERROR,
         "HCameraDevice::Open IsAllowedUsingPermission failed");
-    MEDIA_INFO_LOG("HCameraDevice::Open Camera:[%{public}s]", cameraID_.c_str());
+    COMM_INFO_LOG("HCameraDevice::Open Camera:[%{public}s]", cameraID_.c_str());
     int32_t result = OpenDevice();
     int32_t position = GetCameraPosition();
     auto foldStatus = OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus();
@@ -526,7 +526,7 @@ int32_t HCameraDevice::Close()
     CAMERA_SYNC_TRACE;
     CameraXCollie cameraXCollie("HCameraDeviceStub::Close");
     std::lock_guard<std::mutex> lock(g_deviceOpenCloseMutex_);
-    MEDIA_INFO_LOG("HCameraDevice::Close Closing camera device: %{public}s", cameraID_.c_str());
+    COMM_INFO_LOG("HCameraDevice::Close Closing camera device: %{public}s", cameraID_.c_str());
     if (isOpenedCameraDevice_.load()) {
         std::unordered_map<std::string, std::string> mapPayload;
         mapPayload["camId"] = cameraID_;
@@ -603,7 +603,7 @@ int32_t HCameraDevice::OpenDevice(bool isEnableSecCam)
     OHOS::ResourceSchedule::ResSchedClient::GetInstance().ReportData(
         OHOS::ResourceSchedule::ResType::RES_TYPE_THREAD_QOS_CHANGE, 0, qosParamMap);
 
-    MEDIA_INFO_LOG("HCameraDevice::OpenDevice start cameraId: %{public}s", cameraID_.c_str());
+    COMM_INFO_LOG("HCameraDevice::OpenDevice start cameraId: %{public}s", cameraID_.c_str());
     CAMERA_SYNC_TRACE;
     int32_t errorCode = CheckPermissionBeforeOpenDevice();
     CHECK_RETURN_RET(errorCode != CAMERA_OK, errorCode);
@@ -913,7 +913,7 @@ void HCameraDevice::ReleaseSessionBeforeCloseDevice()
 
 int32_t HCameraDevice::CloseDevice()
 {
-    MEDIA_INFO_LOG("HCameraDevice::CloseDevice start");
+    COMM_INFO_LOG("HCameraDevice::CloseDevice start");
     CAMERA_SYNC_TRACE;
     ReleaseSessionBeforeCloseDevice();
     bool isFoldable = OHOS::Rosen::DisplayManager::GetInstance().IsFoldable();
@@ -925,12 +925,12 @@ int32_t HCameraDevice::CloseDevice()
             "HCameraDevice::CloseDevice device has benn closed");
         if (hdiCameraDevice_ != nullptr) {
             isOpenedCameraDevice_.store(false);
-            MEDIA_INFO_LOG("Closing camera device: %{public}s start", cameraID_.c_str());
+            COMM_INFO_LOG("Closing camera device: %{public}s start", cameraID_.c_str());
             hdiCameraDevice_->Close();
             ResetCachedSettings();
             ResetDeviceOpenLifeCycleSettings();
             HCameraDeviceManager::GetInstance()->RemoveDevice(cameraID_);
-            MEDIA_INFO_LOG("Closing camera device: %{public}s end", cameraID_.c_str());
+            COMM_INFO_LOG("Closing camera device: %{public}s end", cameraID_.c_str());
             hdiCameraDevice_ = nullptr;
             HandlePrivacyAfterCloseDevice();
         } else {

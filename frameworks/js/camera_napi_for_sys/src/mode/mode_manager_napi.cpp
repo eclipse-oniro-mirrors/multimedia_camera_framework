@@ -116,7 +116,7 @@ void ModeManagerNapi::Init(napi_env env)
 
 napi_value ModeManagerNapi::CreateModeManager(napi_env env)
 {
-    MEDIA_INFO_LOG("CreateModeManager is called");
+    COMM_INFO_LOG("CreateModeManager is called");
     napi_status status;
     napi_value result = nullptr;
     napi_value ctor;
@@ -207,7 +207,7 @@ static napi_value CreateSceneModeJSArray(napi_env env, napi_status status,
 
 napi_value ModeManagerNapi::GetSupportedModes(napi_env env, napi_callback_info info)
 {
-    MEDIA_INFO_LOG("GetSupportedModes is called");
+    COMM_INFO_LOG("GetSupportedModes is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ONE;
@@ -259,7 +259,7 @@ napi_value ModeManagerNapi::GetSupportedOutputCapability(napi_env env, napi_call
 
     int32_t sceneMode;
     napi_get_value_int32(env, argv[PARAM1], &sceneMode);
-    MEDIA_INFO_LOG("ModeManagerNapi::GetSupportedOutputCapability mode = %{public}d", sceneMode);
+    COMM_INFO_LOG("ModeManagerNapi::GetSupportedOutputCapability mode = %{public}d", sceneMode);
 
     sptr<CameraOutputCapability> outputCapability = nullptr;
     auto cameraManager = CameraManager::GetInstance();
@@ -291,7 +291,7 @@ napi_value ModeManagerNapi::GetSupportedOutputCapability(napi_env env, napi_call
 
 extern "C" napi_value createModeManagerInstance(napi_env env)
 {
-    MEDIA_DEBUG_LOG("createModeManagerInstance is called");
+    HILOG_COMM_INFO("createModeManagerInstance is called");
     napi_value result = nullptr;
     result = ModeManagerNapi::CreateModeManager(env);
     CHECK_RETURN_RET_ELOG(result == nullptr, result, "createModeManagerInstance failed");

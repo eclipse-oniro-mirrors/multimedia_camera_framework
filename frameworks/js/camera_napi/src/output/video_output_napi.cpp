@@ -92,7 +92,7 @@ void VideoCallbackListener::UpdateJSCallbackAsync(VideoOutputEventType eventType
 void VideoCallbackListener::OnFrameStarted() const
 {
     CAMERA_SYNC_TRACE;
-    MEDIA_DEBUG_LOG("OnFrameStarted is called");
+    COMM_INFO_LOG("OnFrameStarted is called");
     VideoCallbackInfo info;
     UpdateJSCallbackAsync(VideoOutputEventType::VIDEO_FRAME_START, info);
 }
@@ -100,7 +100,7 @@ void VideoCallbackListener::OnFrameStarted() const
 void VideoCallbackListener::OnFrameEnded(const int32_t frameCount) const
 {
     CAMERA_SYNC_TRACE;
-    MEDIA_DEBUG_LOG("OnFrameEnded is called, frameCount: %{public}d", frameCount);
+    COMM_INFO_LOG("OnFrameEnded is called, frameCount: %{public}d", frameCount);
     VideoCallbackInfo info;
     info.frameCount = frameCount;
     UpdateJSCallbackAsync(VideoOutputEventType::VIDEO_FRAME_END, info);

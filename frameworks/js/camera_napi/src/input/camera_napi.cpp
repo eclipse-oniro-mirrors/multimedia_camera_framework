@@ -245,7 +245,7 @@ napi_value CameraNapi::CreateCameraManagerInstance(napi_env env, napi_callback_i
 
 napi_value CameraNapi::CreateModeManagerInstance(napi_env env, napi_callback_info info)
 {
-    MEDIA_INFO_LOG("CreateModeManagerInstance is called");
+    COMM_INFO_LOG("CreateModeManagerInstance is called");
     CHECK_RETURN_RET_ELOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
         "SystemApi CreateModeManagerInstance is called!");
     napi_value result = nullptr;

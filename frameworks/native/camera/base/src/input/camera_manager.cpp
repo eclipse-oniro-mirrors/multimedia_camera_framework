@@ -578,9 +578,9 @@ int CameraManager::CreatePhotoOutput(Profile &profile, sptr<IBufferProducer> &su
 {
     CAMERA_SYNC_TRACE;
     auto serviceProxy = GetServiceProxy();
-    CHECK_RETURN_RET_ELOG((serviceProxy == nullptr) || (surfaceProducer == nullptr), CameraErrorCode::INVALID_ARGUMENT,
+    CHECK_RETURN_RET_COMM_ELOG((serviceProxy == nullptr) || (surfaceProducer == nullptr), CameraErrorCode::INVALID_ARGUMENT,
         "CreatePhotoOutput serviceProxy is null or PhotoOutputSurface/profile is null");
-    CHECK_RETURN_RET_ELOG((profile.GetCameraFormat() == CAMERA_FORMAT_INVALID) || (profile.GetSize().width == 0)
+    CHECK_RETURN_RET_COMM_ELOG((profile.GetCameraFormat() == CAMERA_FORMAT_INVALID) || (profile.GetSize().width == 0)
         || (profile.GetSize().height == 0), CameraErrorCode::INVALID_ARGUMENT,
         "CreatePhotoOutput invalid fomrat or width or height is zero");
     // to adapter yuv photo
@@ -589,7 +589,7 @@ int CameraManager::CreatePhotoOutput(Profile &profile, sptr<IBufferProducer> &su
     sptr<IStreamCapture> streamCapture = nullptr;
     int32_t retCode = serviceProxy->CreatePhotoOutput(
         surfaceProducer, metaFormat, profile.GetSize().width, profile.GetSize().height, streamCapture);
-    CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, ServiceToCameraError(retCode),
+    CHECK_RETURN_RET_COMM_ELOG(retCode != CAMERA_OK, ServiceToCameraError(retCode),
         "Failed to get stream capture object from hcamera service!, %{public}d", retCode);
     sptr<PhotoOutput> photoOutput = new(std::nothrow) PhotoOutput(surfaceProducer);
     CHECK_RETURN_RET(photoOutput == nullptr, CameraErrorCode::SERVICE_FATL_ERROR);
@@ -605,10 +605,10 @@ int CameraManager::CreatePhotoOutput(Profile &profile, sptr<IBufferProducer> &su
     // LCOV_EXCL_START
     CAMERA_SYNC_TRACE;
     auto serviceProxy = GetServiceProxy();
-    CHECK_RETURN_RET_ELOG((serviceProxy == nullptr) || (surfaceProducer == nullptr),
+    CHECK_RETURN_RET_COMM_ELOG((serviceProxy == nullptr) || (surfaceProducer == nullptr),
         CameraErrorCode::INVALID_ARGUMENT,
         "CreatePhotoOutput serviceProxy is null or PhotoOutputSurface/profile is null");
-    CHECK_RETURN_RET_ELOG((profile.GetCameraFormat() == CAMERA_FORMAT_INVALID) || (profile.GetSize().width == 0)
+    CHECK_RETURN_RET_COMM_ELOG((profile.GetCameraFormat() == CAMERA_FORMAT_INVALID) || (profile.GetSize().width == 0)
         || (profile.GetSize().height == 0), CameraErrorCode::INVALID_ARGUMENT,
         "CreatePhotoOutput invalid fomrat or width or height is zero");
     // to adapter yuv photo
@@ -617,7 +617,7 @@ int CameraManager::CreatePhotoOutput(Profile &profile, sptr<IBufferProducer> &su
     sptr<IStreamCapture> streamCapture = nullptr;
     int32_t retCode = serviceProxy->CreatePhotoOutput(
         surfaceProducer, metaFormat, profile.GetSize().width, profile.GetSize().height, streamCapture);
-    CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, ServiceToCameraError(retCode),
+    CHECK_RETURN_RET_COMM_ELOG(retCode != CAMERA_OK, ServiceToCameraError(retCode),
         "Failed to get stream capture object from hcamera service!, %{public}d", retCode);
     sptr<PhotoOutput> photoOutput = new(std::nothrow) PhotoOutput(surfaceProducer, photoSurface);
     CHECK_RETURN_RET(photoOutput == nullptr, CameraErrorCode::SERVICE_FATL_ERROR);
@@ -633,9 +633,9 @@ int CameraManager::CreatePhotoOutput(Profile& profile, sptr<PhotoOutput>* pPhoto
     // LCOV_EXCL_START
     CAMERA_SYNC_TRACE;
     auto serviceProxy = GetServiceProxy();
-    CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, CameraErrorCode::INVALID_ARGUMENT,
+    CHECK_RETURN_RET_COMM_ELOG(serviceProxy == nullptr, CameraErrorCode::INVALID_ARGUMENT,
         "CreatePhotoOutput serviceProxy is null or PhotoOutputSurface/profile is null");
-    CHECK_RETURN_RET_ELOG((profile.GetCameraFormat() == CAMERA_FORMAT_INVALID) || (profile.GetSize().width == 0)
+    CHECK_RETURN_RET_COMM_ELOG((profile.GetCameraFormat() == CAMERA_FORMAT_INVALID) || (profile.GetSize().width == 0)
         || (profile.GetSize().height == 0), CameraErrorCode::INVALID_ARGUMENT,
         "CreatePhotoOutput invalid fomrat or width or height is zero");
     // to adapter yuv photo
@@ -644,7 +644,7 @@ int CameraManager::CreatePhotoOutput(Profile& profile, sptr<PhotoOutput>* pPhoto
     sptr<IStreamCapture> streamCapture = nullptr;
     int32_t retCode =
         serviceProxy->CreatePhotoOutput(metaFormat, profile.GetSize().width, profile.GetSize().height, streamCapture);
-    CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, ServiceToCameraError(retCode),
+    CHECK_RETURN_RET_COMM_ELOG(retCode != CAMERA_OK, ServiceToCameraError(retCode),
         "Failed to get stream capture object from hcamera service!, %{public}d", retCode);
     sptr<PhotoOutput> photoOutput = new(std::nothrow) PhotoOutput();
     CHECK_RETURN_RET(photoOutput == nullptr, CameraErrorCode::SERVICE_FATL_ERROR);
@@ -696,7 +696,7 @@ int CameraManager::CreatePreviewOutput(Profile &profile, sptr<Surface> surface, 
     sptr<IStreamRepeat> streamRepeat = nullptr;
     int32_t retCode = serviceProxy->CreatePreviewOutput(
         surface->GetProducer(), metaFormat, profile.GetSize().width, profile.GetSize().height, streamRepeat);
-    CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, ServiceToCameraError(retCode),
+    CHECK_RETURN_RET_COMM_ELOG(retCode != CAMERA_OK, ServiceToCameraError(retCode),
         "Failed to get stream repeat object from hcamera service! %{public}d", retCode);
     sptr<PreviewOutput> previewOutput = new (std::nothrow) PreviewOutput(surface->GetProducer());
     CHECK_RETURN_RET(previewOutput == nullptr, CameraErrorCode::SERVICE_FATL_ERROR);
@@ -725,7 +725,7 @@ int32_t CameraManager::CreatePreviewOutputStream(
     camera_format_t metaFormat = GetCameraMetadataFormat(profile.GetCameraFormat());
     int32_t retCode = serviceProxy->CreatePreviewOutput(
         producer, metaFormat, profile.GetSize().width, profile.GetSize().height, streamPtr);
-    CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, ServiceToCameraError(retCode),
+    CHECK_RETURN_RET_COMM_ELOG(retCode != CAMERA_OK, ServiceToCameraError(retCode),
         "CreatePreviewOutputStream Failed to get stream repeat object from hcamera service! %{public}d", retCode);
     return CameraErrorCode::SUCCESS;
     // LCOV_EXCL_STOP
@@ -746,7 +746,7 @@ int32_t CameraManager::CreatePhotoOutputStream(
     auto metaFormat = GetCameraMetadataFormat(yuvFormat);
     auto retCode = serviceProxy->CreatePhotoOutput(
         producer, metaFormat, profile.GetSize().width, profile.GetSize().height, streamPtr);
-    CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, ServiceToCameraError(retCode),
+    CHECK_RETURN_RET_COMM_ELOG(retCode != CAMERA_OK, ServiceToCameraError(retCode),
         "CameraManager::CreatePhotoOutputStream Failed to get stream capture object from hcamera service! "
         "%{public}d", retCode);
     return CameraErrorCode::SUCCESS;
@@ -764,7 +764,7 @@ int32_t CameraManager::CreatePhotoOutputStream(
     auto metaFormat = GetCameraMetadataFormat(yuvFormat);
     auto retCode =
         serviceProxy->CreatePhotoOutput(metaFormat, profile.GetSize().width, profile.GetSize().height, streamPtr);
-    CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, ServiceToCameraError(retCode),
+    CHECK_RETURN_RET_COMM_ELOG(retCode != CAMERA_OK, ServiceToCameraError(retCode),
         "CameraManager::CreatePhotoOutputStream Failed to get stream capture object from hcamera service! "
         "%{public}d", retCode);
     return CameraErrorCode::SUCCESS;
@@ -787,7 +787,7 @@ sptr<PreviewOutput> CameraManager::CreateDeferredPreviewOutput(Profile &profile)
 {
     // LCOV_EXCL_START
     CAMERA_SYNC_TRACE;
-    MEDIA_INFO_LOG("CameraManager::CreateDeferredPreviewOutput called");
+    COMM_INFO_LOG("CameraManager::CreateDeferredPreviewOutput called");
     sptr<PreviewOutput> previewOutput = nullptr;
     int32_t retCode = CreateDeferredPreviewOutput(profile, &previewOutput);
     CHECK_RETURN_RET_ELOG(retCode != CameraErrorCode::SUCCESS, nullptr,
@@ -925,7 +925,7 @@ int32_t CameraManager::CreateVideoOutputStream(
     MEDIA_DEBUG_LOG("metaFormat = %{public}d", static_cast<int32_t>(metaFormat));
     int32_t retCode = serviceProxy->CreateVideoOutput(
         producer, metaFormat, profile.GetSize().width, profile.GetSize().height, streamPtr);
-    CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, ServiceToCameraError(retCode),
+    CHECK_RETURN_RET_COMM_ELOG(retCode != CAMERA_OK, ServiceToCameraError(retCode),
         "CameraManager::CreateVideoOutputStream Failed to get stream capture object from hcamera service! "
         "%{public}d", retCode);
     return CameraErrorCode::SUCCESS;
@@ -974,7 +974,7 @@ int CameraManager::CreateVideoOutput(VideoProfile &profile, sptr<Surface> &surfa
     sptr<IStreamRepeat> streamRepeat = nullptr;
     int32_t retCode = serviceProxy->CreateVideoOutput(
         surface->GetProducer(), metaFormat, profile.GetSize().width, profile.GetSize().height, streamRepeat);
-    CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, ServiceToCameraError(retCode),
+    CHECK_RETURN_RET_COMM_ELOG(retCode != CAMERA_OK, ServiceToCameraError(retCode),
         "CameraManager::CreateVideoOutput Failed to get stream capture object from hcamera service! "
         "%{public}d", retCode);
     sptr<VideoOutput> videoOutput = new(std::nothrow) VideoOutput(surface->GetProducer());
@@ -2319,7 +2319,7 @@ int CameraManager::CreateCameraInput(sptr<CameraDevice> &camera, sptr<CameraInpu
 
     // Check for API compatibility
     FoldStatus curFoldStatus = GetFoldStatus();
-    MEDIA_INFO_LOG("CreateCameraInput curFoldStatus:%{public}d, position:%{public}d", curFoldStatus,
+    COMM_INFO_LOG("CreateCameraInput curFoldStatus:%{public}d, position:%{public}d", curFoldStatus,
         camera->GetPosition());
     uint32_t apiCompatibleVersion = CameraApiVersion::GetApiVersion();
     bool isFoldV4 = (!foldScreenType_.empty() && foldScreenType_[0] == '4');
@@ -2357,7 +2357,7 @@ sptr<CameraInput> CameraManager::CreateCameraInput(CameraPosition position, Came
     CAMERA_SYNC_TRACE;
     sptr<CameraInput> cameraInput = nullptr;
     int32_t retCode = CreateCameraInput(position, cameraType, &cameraInput);
-    CHECK_RETURN_RET_ELOG(retCode != CameraErrorCode::SUCCESS, nullptr,
+    CHECK_RETURN_RET_COMM_ELOG(retCode != CameraErrorCode::SUCCESS, nullptr,
         "CameraManager::CreateCameraInput Failed to CreateCameraInput with error code:%{public}d", retCode);
     return cameraInput;
 }
@@ -3140,7 +3140,7 @@ bool CameraManager::IsCameraMuted()
     auto serviceProxy = GetServiceProxy();
     CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, isMuted, "CameraManager::IsCameraMuted serviceProxy is null");
     int32_t retCode = serviceProxy->IsCameraMuted(isMuted);
-    CHECK_PRINT_ELOG(retCode != CAMERA_OK, "IsCameraMuted call failed, retCode: %{public}d", retCode);
+    CHECK_PRINT_COMM_ELOG(retCode != CAMERA_OK, "IsCameraMuted call failed, retCode: %{public}d", retCode);
     return isMuted;
 }
 
@@ -3150,7 +3150,7 @@ void CameraManager::MuteCamera(bool muteMode)
     auto serviceProxy = GetServiceProxy();
     CHECK_RETURN_ELOG(serviceProxy == nullptr, "CameraManager::MuteCamera serviceProxy is null");
     int32_t retCode = serviceProxy->MuteCamera(muteMode);
-    CHECK_PRINT_ELOG(retCode != CAMERA_OK, "MuteCamera call failed, retCode: %{public}d", retCode);
+    CHECK_PRINT_COMM_ELOG(retCode != CAMERA_OK, "MuteCamera call failed, retCode: %{public}d", retCode);
     // LCOV_EXCL_STOP
 }
 
@@ -3356,11 +3356,11 @@ int32_t CameraManager::CreateMetadataOutputInternal(sptr<MetadataOutput>& pMetad
         // LCOV_EXCL_STOP
     }
     auto serviceProxy = GetServiceProxy();
-    CHECK_RETURN_RET_ELOG(serviceProxy == nullptr,  CameraErrorCode::SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_COMM_ELOG(serviceProxy == nullptr,  CameraErrorCode::SERVICE_FATL_ERROR,
         "CameraManager::CreateMetadataOutput serviceProxy is null");
 
     sptr<IConsumerSurface> surface = IConsumerSurface::Create();
-    CHECK_RETURN_RET_ELOG(surface == nullptr,  CameraErrorCode::SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_COMM_ELOG(surface == nullptr,  CameraErrorCode::SERVICE_FATL_ERROR,
         "CameraManager::CreateMetadataOutput Failed to create MetadataOutputSurface");
     // only for face recognize
     int32_t format = OHOS_CAMERA_FORMAT_YCRCB_420_SP;
@@ -3373,7 +3373,7 @@ int32_t CameraManager::CreateMetadataOutputInternal(sptr<MetadataOutput>& pMetad
         return static_cast<int32_t>(obj);
     });
     int32_t retCode = serviceProxy->CreateMetadataOutput(surface->GetProducer(), format, result, streamMetadata);
-    CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, ServiceToCameraError(retCode),
+    CHECK_RETURN_RET_COMM_ELOG(retCode != CAMERA_OK, ServiceToCameraError(retCode),
         "CreateMetadataOutput Failed to get stream metadata object from hcamera service! %{public}d", retCode);
     pMetadataOutput = new (std::nothrow) MetadataOutput(surface, streamMetadata);
     CHECK_RETURN_RET_ELOG(pMetadataOutput == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,

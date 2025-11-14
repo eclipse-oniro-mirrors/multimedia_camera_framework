@@ -363,7 +363,7 @@ int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> setti
     captureInfo.streamIds_ = { GetHdiStreamId() };
     captureInfo.captureSetting_ = captureSetting;
     captureInfo.enableShutterCallback_ = false;
-    MEDIA_INFO_LOG("HStreamRepeat::Start streamId:%{public}d hdiStreamId:%{public}d With capture ID: %{public}d, "
+    COMM_INFO_LOG("HStreamRepeat::Start streamId:%{public}d hdiStreamId:%{public}d With capture ID: %{public}d, "
         "repeatStreamType:%{public}d",
         GetFwkStreamId(), GetHdiStreamId(), preparedCaptureId, repeatStreamType_);
     if (repeatStreamType_ == RepeatStreamType::VIDEO) {
@@ -550,7 +550,7 @@ int32_t HStreamRepeat::OnSketchStatusChanged(SketchStatus status)
 
 int32_t HStreamRepeat::AddDeferredSurface(const sptr<OHOS::IBufferProducer>& producer)
 {
-    MEDIA_INFO_LOG("HStreamRepeat::AddDeferredSurface called");
+    COMM_INFO_LOG("HStreamRepeat::AddDeferredSurface called");
     {
         std::lock_guard<std::mutex> lock(producerLock_);
         CHECK_RETURN_RET_ELOG(producer == nullptr, CAMERA_INVALID_ARG,
@@ -573,7 +573,7 @@ int32_t HStreamRepeat::AddDeferredSurface(const sptr<OHOS::IBufferProducer>& pro
     auto streamOperator = GetStreamOperator();
     CHECK_RETURN_RET_ELOG(streamOperator == nullptr, CAMERA_INVALID_STATE,
         "HStreamRepeat::CreateAndHandleDeferredStreams(), streamOperator_ == null");
-    MEDIA_INFO_LOG("HStreamRepeat::AttachBufferQueue start streamId:%{public}d, hdiStreamId:%{public}d",
+    COMM_INFO_LOG("HStreamRepeat::AttachBufferQueue start streamId:%{public}d, hdiStreamId:%{public}d",
         GetFwkStreamId(), GetHdiStreamId());
     sptr<BufferProducerSequenceable> bufferProducerSequenceable;
     CamRetCode rc;
@@ -582,9 +582,9 @@ int32_t HStreamRepeat::AddDeferredSurface(const sptr<OHOS::IBufferProducer>& pro
         bufferProducerSequenceable = new BufferProducerSequenceable(producer_);
     }
     rc = (CamRetCode)(streamOperator->AttachBufferQueue(GetHdiStreamId(), bufferProducerSequenceable));
-    CHECK_PRINT_ELOG(rc != HDI::Camera::V1_0::NO_ERROR,
+    CHECK_PRINT_COMM_ELOG(rc != HDI::Camera::V1_0::NO_ERROR,
         "HStreamRepeat::AttachBufferQueue(), Failed to AttachBufferQueue %{public}d", rc);
-    MEDIA_INFO_LOG("HStreamRepeat::AddDeferredSurface end %{public}d", rc);
+    COMM_INFO_LOG("HStreamRepeat::AddDeferredSurface end %{public}d", rc);
     std::lock_guard<std::mutex> lock(movingPhotoCallbackLock_);
     if (startMovingPhotoCallback_) {
         startMovingPhotoCallback_();
