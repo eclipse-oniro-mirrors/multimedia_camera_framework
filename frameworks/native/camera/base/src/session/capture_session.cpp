@@ -1929,11 +1929,11 @@ int32_t CaptureSession::SetExposureBias(float exposureValue)
         "CaptureSession::SetExposureValue Bias range is empty");
     if (exposureValue < biasRange[minIndex]) {
         COMM_INFO_LOG("CaptureSession::SetExposureValue bias value:"
-                        "%{public}f is lesser than minimum bias: %{public}f", exposureValue, biasRange[minIndex]);
+            "%{public}f is lesser than minimum bias: %{public}f", exposureValue, biasRange[minIndex]);
         exposureValue = biasRange[minIndex];
     } else if (exposureValue > biasRange[maxIndex]) {
         COMM_INFO_LOG("CaptureSession::SetExposureValue bias value: "
-                        "%{public}f is greater than maximum bias: %{public}f", exposureValue, biasRange[maxIndex]);
+            "%{public}f is greater than maximum bias: %{public}f", exposureValue, biasRange[maxIndex]);
         exposureValue = biasRange[maxIndex];
     }
 

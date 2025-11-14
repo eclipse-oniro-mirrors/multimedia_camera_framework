@@ -460,7 +460,7 @@ napi_value ControlCenterSessionNapi::GetSupportedBeautyRange(napi_env env, napi_
             controlCenterSessionNapi->controlCenterSession_->GetSupportedBeautyRange(
                 static_cast<BeautyType>(beautyType));
         COMM_INFO_LOG("controlCenterSessionNapi::GetSupportedBeautyRange beautyType = %{public}d, len = %{public}zu",
-                       beautyType, beautyRanges.size());
+            beautyType, beautyRanges.size());
         if (!beautyRanges.empty()) {
             for (size_t i = 0; i < beautyRanges.size(); i++) {
                 int beautyRange = beautyRanges[i];
