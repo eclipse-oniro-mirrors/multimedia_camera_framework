@@ -981,7 +981,8 @@ void TryAEInfoCallbackListener::OnTryAEInfoChangedCallbackAsync(TryAEInfo info) 
             delete callback;
         }
     };
-    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate,
+        "TryAEInfoCallbackListener::OnTryAEInfoChangedCallbackAsync")) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {
         (void)callback.release();

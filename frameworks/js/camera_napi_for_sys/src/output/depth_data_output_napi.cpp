@@ -137,8 +137,8 @@ void DepthDataListener::UpdateJSCallbackAsync(sptr<Surface> depthSurface) const
     std::unique_ptr<DepthDataListenerInfo> callbackInfo =
         std::make_unique<DepthDataListenerInfo>(depthSurface, shared_from_this());
     work->data = callbackInfo.get();
-    MEDIA_DEBUG_LOG("DepthDataListener UpdateJSCallbackAsync uv_queue_work_with_qos start");
-    int ret = uv_queue_work_with_qos(
+    MEDIA_DEBUG_LOG("DepthDataListener UpdateJSCallbackAsync uv_queue_work_with_qos_internal start");
+    int ret = uv_queue_work_with_qos_internal(
         loop, work, [](uv_work_t* work) {},
         [](uv_work_t* work, int status) {
             DepthDataListenerInfo* callbackInfo = reinterpret_cast<DepthDataListenerInfo*>(work->data);
@@ -152,7 +152,7 @@ void DepthDataListener::UpdateJSCallbackAsync(sptr<Surface> depthSurface) const
             }
             delete work;
         },
-        uv_qos_user_initiated);
+        uv_qos_user_initiated, "DepthDataListener::UpdateJSCallbackAsync[DepthDataAvailable]");
     if (ret) {
         MEDIA_ERR_LOG("DepthDataListenerInfo:UpdateJSCallbackAsync() failed to execute work");
         delete work;
@@ -201,7 +201,9 @@ void DepthDataOutputCallback::UpdateJSCallbackAsync(DepthDataOutputEventType eve
             delete callbackInfo;
         }
     };
-    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
+    string taskName = "DepthDataOutputCallback::UpdateJSCallbackAsync"
+        "[" + DepthDataOutputEventTypeHelper.GetKeyString(eventType) + "]";
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {
         callbackInfo.release();

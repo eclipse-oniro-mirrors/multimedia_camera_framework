@@ -88,7 +88,9 @@ void ErrorCallbackListener::OnErrorCallbackAsync(const int32_t errorType, const 
             delete callbackInfo;
         }
     };
-    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
+    std::string taskName = "ErrorCallbackListener::OnErrorCallbackAsync"
+        "[errorType:" + std::to_string(errorType) + "]";
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {
         callbackInfo.release();
@@ -157,7 +159,10 @@ void OcclusionDetectCallbackListener::OnCameraOcclusionDetectedCallbackAsync(
             delete callbackInfo;
         }
     };
-    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
+    std::string taskName = "OcclusionDetectCallbackListener::OnCameraOcclusionDetectedCallbackAsync"
+        "[occlusion:" + std::to_string(isCameraOcclusion) +
+        ", lensDirty:" + std::to_string(isCameraLensDirty) + "]";
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {
         callbackInfo.release();
@@ -387,11 +392,11 @@ napi_value CameraInputNapi::Open(napi_env env, napi_callback_info info)
     work->data = static_cast<void*>(asyncContext.get());
     asyncContext->queueTask =
         CameraNapiWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueTask("CameraInputNapi::Open");
-    int rev = uv_queue_work_with_qos(
+    int rev = uv_queue_work_with_qos_internal(
         loop, work, CameraInputNapi::OpenCameraAsync,
-        CameraInputNapi::UvWorkAsyncCompleted, uvQos);
+        CameraInputNapi::UvWorkAsyncCompleted, uvQos, "CameraInputNapi::Open");
     if (rev != 0) {
-        MEDIA_ERR_LOG("Failed to call uv_queue_work_with_qos for CameraInputNapi::Open");
+        MEDIA_ERR_LOG("Failed to call uv_queue_work_with_qos_internal for CameraInputNapi::Open");
         asyncFunction->Reset();
         if (work != nullptr) {
             delete work;

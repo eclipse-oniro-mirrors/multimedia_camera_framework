@@ -81,7 +81,8 @@ void MetadataOutputCallback::OnMetadataObjectsAvailable(const std::vector<sptr<M
             delete callbackInfo;
         }
     };
-    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate,
+        "MetadataOutputCallback::OnMetadataObjectsAvailable")) {
         MEDIA_ERR_LOG("failed to execute work");
     }  else {
         callbackInfo.release();
@@ -225,7 +226,9 @@ void MetadataStateCallbackNapi::OnErrorCallbackAsync(const int32_t errorType) co
             delete callbackInfo;
         }
     };
-    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
+    std::string taskName = "MetadataStateCallbackNapi::OnErrorCallbackAsync"
+        "[errorType:" + std::to_string(errorType) + "]";
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {
         callbackInfo.release();

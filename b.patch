@@ -1,0 +1,94 @@
+diff --git a/frameworks/js/camera_napi_for_sys/src/mode/slow_motion_session_napi.cpp b/frameworks/js/camera_napi_for_sys/src/mode/slow_motion_session_napi.cpp
+index ddf5238d..8ae0e20b 100644
+--- a/frameworks/js/camera_napi_for_sys/src/mode/slow_motion_session_napi.cpp
++++ b/frameworks/js/camera_napi_for_sys/src/mode/slow_motion_session_napi.cpp
+@@ -42,7 +42,9 @@ void SlowMotionStateListener::OnSlowMotionStateCbAsync(const SlowMotionState sta
+             delete callbackInfo;
+         }
+     };
+-    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
++    std::string taskName = "SlowMotionStateListener::OnSlowMotionStateCbAsync"
++        "[state:" + std::to_string(state) + "]";
++    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
+         MEDIA_ERR_LOG("failed to execute work");
+     } else {
+         callbackInfo.release();
+diff --git a/frameworks/js/camera_napi_for_sys/src/mode/time_lapse_photo_session_napi.cpp b/frameworks/js/camera_napi_for_sys/src/mode/time_lapse_photo_session_napi.cpp
+index 058b84dd..aef6ecc0 100644
+--- a/frameworks/js/camera_napi_for_sys/src/mode/time_lapse_photo_session_napi.cpp
++++ b/frameworks/js/camera_napi_for_sys/src/mode/time_lapse_photo_session_napi.cpp
+@@ -1111,7 +1111,8 @@ void TryAEInfoCallbackListener::OnTryAEInfoChangedCallbackAsync(TryAEInfo info)
+             delete callback;
+         }
+     };
+-    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
++    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate,
++        "TryAEInfoCallbackListener::OnTryAEInfoChangedCallbackAsync")) {
+         MEDIA_ERR_LOG("failed to execute work");
+     } else {
+         (void)callback.release();
+diff --git a/frameworks/js/camera_napi_for_sys/src/mode/video_session_for_sys_napi.cpp b/frameworks/js/camera_napi_for_sys/src/mode/video_session_for_sys_napi.cpp
+index ac630732..c3827c46 100644
+--- a/frameworks/js/camera_napi_for_sys/src/mode/video_session_for_sys_napi.cpp
++++ b/frameworks/js/camera_napi_for_sys/src/mode/video_session_for_sys_napi.cpp
+@@ -183,7 +183,8 @@ void FocusTrackingCallbackListener::OnFocusTrackingInfoCallbackAsync(FocusTracki
+             delete callback;
+         }
+     };
+-    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
++    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate,
++        "FocusTrackingCallbackListener::OnFocusTrackingInfoCallbackAsync")) {
+         MEDIA_ERR_LOG("%{public}s: failed to execute work", __FUNCTION__);
+     } else {
+         callback.release();
+diff --git a/frameworks/js/camera_napi_for_sys/src/output/depth_data_output_napi.cpp b/frameworks/js/camera_napi_for_sys/src/output/depth_data_output_napi.cpp
+index b83aec9f..f43e8903 100644
+--- a/frameworks/js/camera_napi_for_sys/src/output/depth_data_output_napi.cpp
++++ b/frameworks/js/camera_napi_for_sys/src/output/depth_data_output_napi.cpp
+@@ -170,7 +170,7 @@ void DepthDataListener::UpdateJSCallbackAsync(sptr<Surface> depthSurface) const
+             }
+             delete work;
+         },
+-        uv_qos_user_initiated);
++        uv_qos_user_initiated, "DepthDataListener::UpdateJSCallbackAsync[DepthDataAvailable]");
+     if (ret) {
+         MEDIA_ERR_LOG("DepthDataListenerInfo:UpdateJSCallbackAsync() failed to execute work");
+         delete work;
+diff --git a/frameworks/js/camera_napi_for_sys/src/session/camera_session_for_sys_napi.cpp b/frameworks/js/camera_napi_for_sys/src/session/camera_session_for_sys_napi.cpp
+index bbaaba0b..98dacb66 100644
+--- a/frameworks/js/camera_napi_for_sys/src/session/camera_session_for_sys_napi.cpp
++++ b/frameworks/js/camera_napi_for_sys/src/session/camera_session_for_sys_napi.cpp
+@@ -1921,7 +1921,9 @@ void EffectSuggestionCallbackListener::OnEffectSuggestionCallbackAsync(EffectSug
+             delete callbackInfo;
+         }
+     };
+-    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
++    std::string taskName = "EffectSuggestionCallbackListener::OnEffectSuggestionCallbackAsync"
++        "[effectSuggestionType:" + std::to_string(effectSuggestionType) + "]";
++    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
+         MEDIA_ERR_LOG("failed to execute work");
+     } else {
+         callbackInfo.release();
+@@ -1959,7 +1961,10 @@ void LcdFlashStatusCallbackListener::OnLcdFlashStatusCallbackAsync(LcdFlashStatu
+             delete callbackInfo;
+         }
+     };
+-    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
++    std::string taskName = "LcdFlashStatusCallbackListener::OnLcdFlashStatusCallbackAsync"
++        "[lcdCompensation:" + std::to_string(lcdFlashStatusInfo.lcdCompensation) +
++        ", isLcdFlashNeeded:" + std::to_string(lcdFlashStatusInfo.isLcdFlashNeeded) + "]";
++    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
+         MEDIA_ERR_LOG("failed to execute work");
+     } else {
+         callbackInfo.release();
+@@ -2004,7 +2009,9 @@ void FeatureDetectionStatusCallbackListener::OnFeatureDetectionStatusChangedCall
+             delete callbackInfo;
+         }
+     };
+-    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
++    std::string taskName = "FeatureDetectionStatusCallbackListener::OnFeatureDetectionStatusChangedCallbackAsync"
++        "[sceneFeature:" + std::to_string(feature) + ", status:" + std::to_string(status) + "]";
++    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
+         MEDIA_ERR_LOG("failed to execute work");
+     } else {
+         callbackInfo.release();
