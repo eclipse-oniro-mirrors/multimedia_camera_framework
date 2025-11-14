@@ -257,9 +257,8 @@ void ExposureCallbackListener::OnExposureStateCallbackAsync(ExposureState state)
             delete callbackInfo;
         }
     };
-    std::string taskName = "AutoDeviceSwitchCallbackListener::OnAutoDeviceSwitchCallbackAsync"
-        "[isDeviceSwitched:" + std::to_string(isDeviceSwitched) +
-        ", isDeviceCapabilityChanged" + std::to_string(isDeviceCapabilityChanged) + "]";
+    std::string taskName = "ExposureCallbackListener::OnExposureStateCallbackAsync"
+        "[state:" + std::to_string(state) + "]";
     if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {
@@ -300,7 +299,7 @@ void FocusCallbackListener::OnFocusStateCallbackAsync(FocusState state) const
             delete callbackInfo;
         }
     };
-    std::string taskName = "ExposureCallbackListener::OnExposureStateCallbackAsync"
+    std::string taskName = "FocusCallbackListener::OnFocusStateCallbackAsync"
         "[state:" + std::to_string(state) + "]";
     if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("failed to execute work");
@@ -342,8 +341,8 @@ void MoonCaptureBoostCallbackListener::OnMoonCaptureBoostStatusCallbackAsync(Moo
             delete callbackInfo;
         }
     };
-    std::string taskName = "FocusCallbackListener::OnFocusStateCallbackAsync"
-        "[state:" + std::to_string(state) + "]";
+    std::string taskName = "MoonCaptureBoostCallbackListener::OnMoonCaptureBoostStatusCallbackAsync"
+        "[status:" + std::to_string(status) + "]";
     if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {
@@ -385,8 +384,8 @@ void SessionCallbackListener::OnErrorCallbackAsync(int32_t errorCode) const
             delete callbackInfo;
         }
     };
-    std::string taskName = "MoonCaptureBoostCallbackListener::OnMoonCaptureBoostStatusCallbackAsync"
-        "[status:" + std::to_string(status) + "]";
+    std::string taskName = "SessionCallbackListener::OnErrorCallbackAsync"
+        "[errorType:" + std::to_string(errorCode) + "]";
     if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {
@@ -433,8 +432,8 @@ void PressureCallbackListener::OnPressureCallbackAsync(PressureStatus status) co
             delete callbackInfo;
         }
     };
-    std::string taskName = "SessionCallbackListener::OnErrorCallbackAsync"
-        "[errorType:" + std::to_string(errorCode) + "]";
+    std::string taskName = "PressureCallbackListener::OnPressureCallbackAsync"
+        "[status:" + std::to_string(static_cast<int32_t>(status)) + "]";
     if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {
@@ -479,8 +478,9 @@ void ControlCenterEffectStatusCallbackListener::OnControlCenterEffectStatusCallb
             delete callbackInfo;
         }
     };
-    std::string taskName = "PressureCallbackListener::OnPressureCallbackAsync"
-        "[status:" + std::to_string(static_cast<int32_t>(status)) + "]";
+    std::string taskName = "ControlCenterEffectStatusCallbackListener::OnControlCenterEffectStatusCallbackAsync"
+        "[effectType:" + std::to_string(static_cast<int32_t>(controlCenterStatusInfo.effectType)) +
+        ", isActive:" + std::to_string(controlCenterStatusInfo.isActive) + "]";
     if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {
@@ -526,9 +526,8 @@ void SmoothZoomCallbackListener::OnSmoothZoomCallbackAsync(int32_t duration) con
             delete callbackInfo;
         }
     };
-    std::string taskName = "ControlCenterEffectStatusCallbackListener::OnControlCenterEffectStatusCallbackAsync"
-        "[effectType:" + std::to_string(static_cast<int32_t>(controlCenterStatusInfo.effectType)) +
-        ", isActive:" + std::to_string(controlCenterStatusInfo.isActive) + "]";
+    std::string taskName = "SmoothZoomCallbackListener::OnSmoothZoomCallbackAsync"
+        "[duration" + std::to_string(duration) + "]";
     if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {
@@ -572,9 +571,8 @@ void AbilityCallbackListener::OnAbilityChangeCallbackAsync() const
             delete callbackInfo;
         }
     };
-    std::string taskName = "SmoothZoomCallbackListener::OnSmoothZoomCallbackAsync"
-        "[duration" + std::to_string(duration) + "]";
-    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate,
+        "AbilityCallbackListener::OnAbilityChangeCallbackAsync")) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {
         callbackInfo.release();
@@ -617,8 +615,10 @@ void AutoDeviceSwitchCallbackListener::OnAutoDeviceSwitchCallbackAsync(
             delete callbackInfo;
         }
     };
-    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate,
-        "AbilityCallbackListener::OnAbilityChangeCallbackAsync")) {
+    std::string taskName = "AutoDeviceSwitchCallbackListener::OnAutoDeviceSwitchCallbackAsync"
+        "[isDeviceSwitched:" + std::to_string(isDeviceSwitched) +
+        ", isDeviceCapabilityChanged" + std::to_string(isDeviceCapabilityChanged) + "]";
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {
         callbackInfo.release();
