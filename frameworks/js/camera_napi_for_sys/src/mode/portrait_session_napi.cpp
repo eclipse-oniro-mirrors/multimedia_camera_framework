@@ -68,7 +68,7 @@ void PortraitSessionNapi::Init(napi_env env)
 }
 napi_value PortraitSessionNapi::CreateCameraSession(napi_env env)
 {
-    MEDIA_DEBUG_LOG("CreateCameraSession is called");
+    COMM_INFO_LOG("CreateCameraSession is called");
     CAMERA_SYNC_TRACE;
     napi_status status;
     napi_value result = nullptr;
@@ -151,7 +151,7 @@ napi_value PortraitSessionNapi::GetSupportedPortraitEffects(napi_env env, napi_c
     if (status == napi_ok && portraitSessionNapi != nullptr && portraitSessionNapi->portraitSession_ != nullptr) {
         std::vector<PortraitEffect> PortraitEffects =
             portraitSessionNapi->portraitSession_->GetSupportedPortraitEffects();
-        MEDIA_INFO_LOG("PortraitSessionNapi::GetSupportedPortraitEffect len = %{public}zu",
+        COMM_INFO_LOG("PortraitSessionNapi::GetSupportedPortraitEffect len = %{public}zu",
             PortraitEffects.size());
         if (!PortraitEffects.empty()) {
             for (size_t i = 0; i < PortraitEffects.size(); i++) {
@@ -212,7 +212,7 @@ napi_value PortraitSessionNapi::SetPortraitEffect(napi_env env, napi_callback_in
         portraitSessionNapi->portraitSession_->LockForControl();
         portraitSessionNapi->portraitSession_->
                 SetPortraitEffect(static_cast<PortraitEffect>(portaitEffect));
-        MEDIA_INFO_LOG("PortraitSessionNapi setPortraitEffect set portaitEffect %{public}d!", portaitEffect);
+        COMM_INFO_LOG("PortraitSessionNapi setPortraitEffect set portaitEffect %{public}d!", portaitEffect);
         portraitSessionNapi->portraitSession_->UnlockForControl();
     } else {
         MEDIA_ERR_LOG("setPortraitEffect call Failed!");

@@ -40,6 +40,16 @@
     } while (0)
 #endif
 
+#define DECORATOR_COMM_HILOG(op, fmt, args...)                                          \
+    do {                                                                                \
+        op("{%{public}s()-%{public}s:%{public}d} " fmt, __FUNCTION__, __FILE_NAME__, __LINE__, ##args); \
+    } while (0)
+
+#define COMM_INFO_LOG(fmt, ...) DECORATOR_COMM_HILOG(HILOG_COMM_INFO, fmt, ##__VA_ARGS__)
+#define COMM_ERR_LOG(fmt, ...) DECORATOR_COMM_HILOG(HILOG_COMM_ERROR, fmt, ##__VA_ARGS__)
+#define COMM_WARNING_LOG(fmt, ...) DECORATOR_COMM_HILOG(HILOG_COMM_WARN, fmt, ##__VA_ARGS__)
+#define COMM_FATAL_LOG(fmt, ...) DECORATOR_COMM_HILOG(HILOG_COMM_FATAL, fmt, ##__VA_ARGS__)
+
 #define MEDIA_DEBUG_LOG(fmt, ...) DECORATOR_HILOG(HILOG_DEBUG, fmt, ##__VA_ARGS__)
 #define MEDIA_ERR_LOG(fmt, ...) DECORATOR_HILOG(HILOG_ERROR, fmt, ##__VA_ARGS__)
 #define MEDIA_WARNING_LOG(fmt, ...) DECORATOR_HILOG(HILOG_WARN, fmt, ##__VA_ARGS__)
@@ -251,6 +261,170 @@
     if (1) {                                    \
         if (CAMERA_UNLIKELY(cond)) {            \
             MEDIA_DEBUG_LOG(fmt, ##__VA_ARGS__); \
+            continue;                           \
+        }                                       \
+    } else                                      \
+        void(0)
+
+#define CHECK_PRINT_COMM_ELOG(cond, fmt, ...)       \
+    do {                                       \
+        if (CAMERA_UNLIKELY(cond)) {           \
+            COMM_ERR_LOG(fmt, ##__VA_ARGS__); \
+        }                                      \
+    } while (0)
+
+#define CHECK_PRINT_COMM_WLOG(cond, fmt, ...)           \
+    do {                                           \
+        if (CAMERA_UNLIKELY(cond)) {               \
+            COMM_WARNING_LOG(fmt, ##__VA_ARGS__); \
+        }                                          \
+    } while (0)
+
+#define CHECK_PRINT_COMM_ILOG(cond, fmt, ...)        \
+    do {                                        \
+        if (CAMERA_UNLIKELY(cond)) {            \
+            COMM_INFO_LOG(fmt, ##__VA_ARGS__); \
+        }                                       \
+    } while (0)
+
+#define CHECK_PRINT_COMM_DLOG(cond, fmt, ...)         \
+    do {                                         \
+        if (CAMERA_UNLIKELY(cond)) {             \
+            COMM_DEBUG_LOG(fmt, ##__VA_ARGS__); \
+        }                                        \
+    } while (0)
+
+#define CHECK_RETURN_COMM_ELOG(cond, fmt, ...)      \
+    do {                                       \
+        if (CAMERA_UNLIKELY(cond)) {           \
+            COMM_ERR_LOG(fmt, ##__VA_ARGS__); \
+            return;                            \
+        }                                      \
+    } while (0)
+
+#define CHECK_RETURN_COMM_WLOG(cond, fmt, ...)          \
+    do {                                           \
+        if (CAMERA_UNLIKELY(cond)) {               \
+            COMM_WARNING_LOG(fmt, ##__VA_ARGS__); \
+            return;                                \
+        }                                          \
+    } while (0)
+
+#define CHECK_RETURN_COMM_ILOG(cond, fmt, ...)       \
+    do {                                        \
+        if (CAMERA_UNLIKELY(cond)) {            \
+            COMM_INFO_LOG(fmt, ##__VA_ARGS__); \
+            return;                             \
+        }                                       \
+    } while (0)
+
+#define CHECK_RETURN_COMM_DLOG(cond, fmt, ...)        \
+    do {                                         \
+        if (CAMERA_UNLIKELY(cond)) {             \
+            COMM_DEBUG_LOG(fmt, ##__VA_ARGS__); \
+            return;                              \
+        }                                        \
+    } while (0)
+
+#define CHECK_RETURN_RET_COMM_ELOG(cond, ret, fmt, ...) \
+    do {                                           \
+        if (CAMERA_UNLIKELY(cond)) {               \
+            COMM_ERR_LOG(fmt, ##__VA_ARGS__);     \
+            return ret;                            \
+        }                                          \
+    } while (0)
+
+#define CHECK_RETURN_RET_COMM_WLOG(cond, ret, fmt, ...) \
+    do {                                           \
+        if (CAMERA_UNLIKELY(cond)) {               \
+            COMM_WARNING_LOG(fmt, ##__VA_ARGS__); \
+            return ret;                            \
+        }                                          \
+    } while (0)
+
+#define CHECK_RETURN_RET_COMM_ILOG(cond, ret, fmt, ...) \
+    do {                                           \
+        if (CAMERA_UNLIKELY(cond)) {               \
+            COMM_INFO_LOG(fmt, ##__VA_ARGS__);    \
+            return ret;                            \
+        }                                          \
+    } while (0)
+
+#define CHECK_RETURN_RET_COMM_DLOG(cond, ret, fmt, ...) \
+    do {                                           \
+        if (CAMERA_UNLIKELY(cond)) {               \
+            COMM_DEBUG_LOG(fmt, ##__VA_ARGS__);    \
+            return ret;                            \
+        }                                          \
+    } while (0)
+
+#define CHECK_BREAK_COMM_ELOG(cond, fmt, ...)       \
+    if (1) {                                   \
+        if (CAMERA_UNLIKELY(cond)) {           \
+            COMM_ERR_LOG(fmt, ##__VA_ARGS__); \
+            break;                             \
+        }                                      \
+    } else                                     \
+        void(0)
+
+#define CHECK_BREAK_COMM_WLOG(cond, fmt, ...)           \
+    if (1) {                                       \
+        if (CAMERA_UNLIKELY(cond)) {               \
+            COMM_WARNING_LOG(fmt, ##__VA_ARGS__); \
+            break;                                 \
+        }                                          \
+    } else                                         \
+        void(0)
+
+#define CHECK_BREAK_COMM_ILOG(cond, fmt, ...)        \
+    if (1) {                                    \
+        if (CAMERA_UNLIKELY(cond)) {            \
+            COMM_INFO_LOG(fmt, ##__VA_ARGS__); \
+            break;                              \
+        }                                       \
+    } else                                      \
+        void(0)
+
+#define CHECK_BREAK_COMM_DLOG(cond, fmt, ...)        \
+    if (1) {                                    \
+        if (CAMERA_UNLIKELY(cond)) {            \
+            COMM_DEBUG_LOG(fmt, ##__VA_ARGS__); \
+            break;                              \
+        }                                       \
+    } else                                      \
+        void(0)
+
+#define CHECK_CONTINUE_COMM_ELOG(cond, fmt, ...)    \
+    if (1) {                                   \
+        if (CAMERA_UNLIKELY(cond)) {           \
+            COMM_ERR_LOG(fmt, ##__VA_ARGS__); \
+            continue;                          \
+        }                                      \
+    } else                                     \
+        void(0)
+
+#define CHECK_CONTINUE_COMM_WLOG(cond, fmt, ...)        \
+    if (1) {                                       \
+        if (CAMERA_UNLIKELY(cond)) {               \
+            COMM_WARNING_LOG(fmt, ##__VA_ARGS__); \
+            continue;                              \
+        }                                          \
+    } else                                         \
+        void(0)
+
+#define CHECK_CONTINUE_COMM_ILOG(cond, fmt, ...)     \
+    if (1) {                                    \
+        if (CAMERA_UNLIKELY(cond)) {            \
+            COMM_INFO_LOG(fmt, ##__VA_ARGS__); \
+            continue;                           \
+        }                                       \
+    } else                                      \
+        void(0)
+
+#define CHECK_CONTINUE_COMM_DLOG(cond, fmt, ...)     \
+    if (1) {                                    \
+        if (CAMERA_UNLIKELY(cond)) {            \
+            COMM_DEBUG_LOG(fmt, ##__VA_ARGS__); \
             continue;                           \
         }                                       \
     } else                                      \

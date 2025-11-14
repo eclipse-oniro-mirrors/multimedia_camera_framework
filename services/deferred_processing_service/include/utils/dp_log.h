@@ -40,6 +40,16 @@
     } while (0)
 #endif
 
+#define DECORATOR_COMM_HILOG(op, fmt, args...)                                          \
+    do {                                                                                \
+        op("{%{public}s()-%{public}s:%{public}d} " fmt, __FUNCTION__, __FILE_NAME__, __LINE__, ##args); \
+    } while (0)
+
+#define COMM_DP_INFO_LOG(fmt, ...) DECORATOR_COMM_HILOG(HILOG_COMM_INFO, fmt, ##__VA_ARGS__)
+#define COMM_DP_ERR_LOG(fmt, ...) DECORATOR_COMM_HILOG(HILOG_COMM_ERROR, fmt, ##__VA_ARGS__)
+#define COMM_DP_WARNING_LOG(fmt, ...) DECORATOR_COMM_HILOG(HILOG_COMM_WARN, fmt, ##__VA_ARGS__)
+#define COMM_DP_FATAL_LOG(fmt, ...) DECORATOR_COMM_HILOG(HILOG_COMM_FATAL, fmt, ##__VA_ARGS__)
+
 #define DP_DEBUG_LOG(fmt, ...) DECORATOR_HILOG(HILOG_DEBUG, fmt, ##__VA_ARGS__)
 #define DP_ERR_LOG(fmt, ...) DECORATOR_HILOG(HILOG_ERROR, fmt, ##__VA_ARGS__)
 #define DP_WARNING_LOG(fmt, ...) DECORATOR_HILOG(HILOG_WARN, fmt, ##__VA_ARGS__)

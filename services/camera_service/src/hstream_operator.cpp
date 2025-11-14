@@ -244,7 +244,7 @@ void HStreamOperator::StartMovingPhotoStream(const std::shared_ptr<OHOS::Camera:
         StopMovingPhoto();
     }
 
-    MEDIA_INFO_LOG("HStreamOperator::StartMovingPhotoStream result:%{public}d", errorCode);
+    COMM_INFO_LOG("HStreamOperator::StartMovingPhotoStream result:%{public}d", errorCode);
 }
 
 void HStreamOperator::RegisterDisplayListener(sptr<HStreamRepeat> repeat)
@@ -413,7 +413,7 @@ int32_t HStreamOperator::LinkInputAndOutputs(const std::shared_ptr<OHOS::Camera:
         if (stream->GetHdiStreamId() == STREAM_ID_UNSET) {
             stream->SetHdiStreamId(GenerateHdiStreamId());
         }
-        MEDIA_INFO_LOG(
+        COMM_INFO_LOG(
             "HStreamOperator::LinkInputAndOutputs streamType:%{public}d, streamId:%{public}d ,hdiStreamId:%{public}d",
             stream->GetStreamType(), stream->GetFwkStreamId(), stream->GetHdiStreamId());
         StreamInfo_V1_1 curStreamInfo;
@@ -762,7 +762,7 @@ int32_t HStreamOperator::GetMovingPhotoBufferDuration()
     constexpr int32_t MILLSEC_MULTIPLE = 1000;
     camera_metadata_item_t item;
     bool ret = GetDeviceAbilityByMeta(OHOS_MOVING_PHOTO_BUFFER_DURATION, &item);
-    CHECK_RETURN_RET_ELOG(!ret, 0, "HStreamOperator::GetMovingPhotoBufferDuration get buffer duration failed");
+    CHECK_RETURN_RET_COMM_ELOG(!ret, 0, "HStreamOperator::GetMovingPhotoBufferDuration get buffer duration failed");
     preBufferDuration = item.data.ui32[0];
     postBufferDuration = item.data.ui32[1];
     preCacheFrameCount_ = preBufferDuration == 0
@@ -771,7 +771,7 @@ int32_t HStreamOperator::GetMovingPhotoBufferDuration()
     postCacheFrameCount_ = preBufferDuration == 0
                                ? postCacheFrameCount_
                                : static_cast<uint32_t>(float(postBufferDuration) / MILLSEC_MULTIPLE * VIDEO_FRAME_RATE);
-    MEDIA_INFO_LOG(
+    COMM_INFO_LOG(
         "HStreamOperator::GetMovingPhotoBufferDuration preBufferDuration : %{public}u, "
         "postBufferDuration : %{public}u, preCacheFrameCount_ : %{public}u, postCacheFrameCount_ : %{public}u",
         preBufferDuration, postBufferDuration, preCacheFrameCount_, postCacheFrameCount_);
@@ -799,7 +799,7 @@ void HStreamOperator::GetMovingPhotoStartAndEndTime()
 int32_t HStreamOperator::EnableMovingPhoto(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings,
     bool isEnable, int32_t sensorOritation)
 {
-    MEDIA_INFO_LOG("HStreamOperator::EnableMovingPhoto is %{public}d", isEnable);
+    COMM_INFO_LOG("HStreamOperator::EnableMovingPhoto is %{public}d", isEnable);
     isSetMotionPhoto_ = isEnable;
     deviceSensorOritation_ = sensorOritation;
     StartMovingPhotoStream(settings);
@@ -930,7 +930,7 @@ int32_t HStreamOperator::Stop()
 {
     CAMERA_SYNC_TRACE;
     int32_t errorCode = CAMERA_OK;
-    MEDIA_INFO_LOG("HStreamOperator::Stop prepare execute");
+    COMM_INFO_LOG("HStreamOperator::Stop prepare execute");
     auto allStreams = streamContainer_.GetAllStreams();
     for (auto& item : allStreams) {
         if (item->GetStreamType() == StreamType::REPEAT) {
@@ -957,7 +957,7 @@ int32_t HStreamOperator::Stop()
             "HStreamOperator::Stop(), Failed to stop stream, rc: %{public}d, streamId:%{public}d", errorCode,
             item->GetFwkStreamId());
     }
-    MEDIA_INFO_LOG("HStreamOperator::Stop execute success");
+    COMM_INFO_LOG("HStreamOperator::Stop execute success");
     return errorCode;
 }
 

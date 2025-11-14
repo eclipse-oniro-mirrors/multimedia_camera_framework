@@ -241,7 +241,7 @@ int CameraInput::Open()
     auto deviceObj = GetCameraDevice();
     if (deviceObj) {
         retCode = deviceObj->Open();
-        CHECK_PRINT_ELOG(retCode != CAMERA_OK, "Failed to open Camera Input, retCode: %{public}d", retCode);
+        CHECK_PRINT_COMM_ELOG(retCode != CAMERA_OK, "Failed to open Camera Input, retCode: %{public}d", retCode);
     } else {
         MEDIA_ERR_LOG("CameraInput::Open() deviceObj is nullptr");
     }
@@ -260,7 +260,7 @@ int32_t CameraInput::CameraDevicePhysicOpen(sptr<ICameraDeviceService> cameraDev
     MEDIA_INFO_LOG("CameraInput::cameraDevicePhysicOpen enter.");
     if (cameraDevicePhysic) {
         int32_t retCode = cameraDevicePhysic->Open(cameraConcurrentType);
-        CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, retCode,
+        CHECK_RETURN_RET_COMM_ELOG(retCode != CAMERA_OK, retCode,
             "Failed to open Camera Input, retCode: %{public}d", retCode);
     } else {
         MEDIA_ERR_LOG("CameraInput::Open()with CameraConcurrentType deviceObj is nullptr");
@@ -369,7 +369,7 @@ int CameraInput::Close()
     if (deviceObj) {
         deviceObj->UnSetCallback();
         retCode = deviceObj->Close();
-        CHECK_PRINT_ELOG(retCode != CAMERA_OK, "Failed to close Camera Input, retCode: %{public}d", retCode);
+        CHECK_PRINT_COMM_ELOG(retCode != CAMERA_OK, "Failed to close Camera Input, retCode: %{public}d", retCode);
     } else {
         MEDIA_ERR_LOG("CameraInput::Close() deviceObj is nullptr");
     }
@@ -438,7 +438,7 @@ int CameraInput::Release()
     if (deviceObj) {
         deviceObj->UnSetCallback();
         retCode = deviceObj->Release();
-        CHECK_PRINT_ELOG(retCode != CAMERA_OK, "Failed to release Camera Input, retCode: %{public}d", retCode);
+        CHECK_PRINT_COMM_ELOG(retCode != CAMERA_OK, "Failed to release Camera Input, retCode: %{public}d", retCode);
     } else {
         MEDIA_ERR_LOG("CameraInput::Release() deviceObj is nullptr");
     }

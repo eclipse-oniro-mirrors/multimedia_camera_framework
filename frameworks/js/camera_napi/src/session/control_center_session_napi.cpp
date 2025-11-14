@@ -408,7 +408,7 @@ napi_value ControlCenterSessionNapi::GetSupportedBeautyTypes(napi_env env, napi_
     if (status == napi_ok && controlCenterSessionNapi != nullptr
         && controlCenterSessionNapi->controlCenterSession_ != nullptr) {
         std::vector<int32_t> beautyTypes = controlCenterSessionNapi->controlCenterSession_->GetSupportedBeautyTypes();
-        MEDIA_INFO_LOG("controlCenterSessionNapi::GetSupportedBeautyTypes len = %{public}zu",
+        COMM_INFO_LOG("controlCenterSessionNapi::GetSupportedBeautyTypes len = %{public}zu",
             beautyTypes.size());
         if (!beautyTypes.empty() && status == napi_ok) {
             for (size_t i = 0; i < beautyTypes.size(); i++) {
@@ -459,8 +459,8 @@ napi_value ControlCenterSessionNapi::GetSupportedBeautyRange(napi_env env, napi_
         std::vector<int32_t> beautyRanges =
             controlCenterSessionNapi->controlCenterSession_->GetSupportedBeautyRange(
                 static_cast<BeautyType>(beautyType));
-        MEDIA_INFO_LOG("controlCenterSessionNapi::GetSupportedBeautyRange beautyType = %{public}d, len = %{public}zu",
-                       beautyType, beautyRanges.size());
+        COMM_INFO_LOG("controlCenterSessionNapi::GetSupportedBeautyRange beautyType = %{public}d, len = %{public}zu",
+            beautyType, beautyRanges.size());
         if (!beautyRanges.empty()) {
             for (size_t i = 0; i < beautyRanges.size(); i++) {
                 int beautyRange = beautyRanges[i];

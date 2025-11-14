@@ -77,12 +77,12 @@ int32_t LightPaintingSession::SetLightPainting(const LightPaintingType type)
         "LightPaintingSession::SetLightPainting Need to call LockForControl() before setting camera properties.");
     uint8_t lightPainting = LightPaintingType::CAR;
     auto itr = fwkLightPaintingTypeMap_.find(type);
-    CHECK_RETURN_RET_ELOG(itr == fwkLightPaintingTypeMap_.end(), CameraErrorCode::INVALID_ARGUMENT,
+    CHECK_RETURN_RET_COMM_ELOG(itr == fwkLightPaintingTypeMap_.end(), CameraErrorCode::INVALID_ARGUMENT,
         "LightPaintingSession::SetLightPainting unknown type of LightPainting.");
     lightPainting = itr->second;
     MEDIA_DEBUG_LOG("LightPaintingSession::SetLightPainting: %{public}d", type);
     bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_LIGHT_PAINTING_TYPE, &lightPainting, 1);
-    CHECK_RETURN_RET_ELOG(!status, CameraErrorCode::SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_COMM_ELOG(!status, CameraErrorCode::SERVICE_FATL_ERROR,
         "LightPaintingSession::SetLightPainting Failed to set LightPainting type");
         currentLightPaintingType_ = type;
     return CameraErrorCode::SUCCESS;

@@ -296,7 +296,7 @@ int32_t HCameraHostManager::CameraHostInfo::OpenCamera(std::string& cameraId,
     sptr<OHOS::HDI::Camera::V1_0::ICameraDevice>& pDevice,
     bool isEnableSecCam)
 {
-    MEDIA_INFO_LOG("CameraHostInfo::OpenCamera %{public}s", cameraId.c_str());
+    COMM_INFO_LOG("CameraHostInfo::OpenCamera %{public}s", cameraId.c_str());
     auto deviceInfo = FindCameraDeviceInfo(cameraId);
     CHECK_RETURN_RET_ELOG(deviceInfo == nullptr, CAMERA_UNKNOWN_ERROR,
         "CameraHostInfo::GetCameraAbility deviceInfo is null");
@@ -425,7 +425,7 @@ int32_t HCameraHostManager::CameraHostInfo::Prelaunch(sptr<HCameraRestoreParam> 
         rc = HDI::Camera::V1_0::NO_ERROR;
         // LCOV_EXCL_STOP
     }
-    CHECK_RETURN_RET_ELOG(rc != HDI::Camera::V1_0::NO_ERROR, HdiToServiceError(rc),
+    CHECK_RETURN_RET_COMM_ELOG(rc != HDI::Camera::V1_0::NO_ERROR, HdiToServiceError(rc),
         "CameraHostInfo::Prelaunch failed with error Code:%{public}d", rc);
     return CAMERA_OK;
 }
@@ -929,7 +929,7 @@ int32_t HCameraHostManager::OpenCameraDevice(std::string &cameraId,
     sptr<OHOS::HDI::Camera::V1_0::ICameraDevice> &pDevice,
     bool isEnableSecCam)
 {
-    MEDIA_INFO_LOG("HCameraHostManager::OpenCameraDevice try to open camera = %{public}s", cameraId.c_str());
+    COMM_INFO_LOG("HCameraHostManager::OpenCameraDevice try to open camera = %{public}s", cameraId.c_str());
     auto cameraHostInfo = FindCameraHostInfo(cameraId);
     CHECK_RETURN_RET_ELOG(cameraHostInfo == nullptr, CAMERA_INVALID_ARG,
         "HCameraHostManager::OpenCameraDevice failed with invalid device info.");

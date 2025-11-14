@@ -125,7 +125,7 @@ void ProfessionSessionNapi::Init(napi_env env)
 
 napi_value ProfessionSessionNapi::CreateCameraSession(napi_env env, SceneMode mode)
 {
-    MEDIA_DEBUG_LOG("ProfessionSessionNapi::CreateCameraSession is called");
+    COMM_INFO_LOG("ProfessionSessionNapi::CreateCameraSession is called");
     CAMERA_SYNC_TRACE;
     napi_status status;
     napi_value result = nullptr;
