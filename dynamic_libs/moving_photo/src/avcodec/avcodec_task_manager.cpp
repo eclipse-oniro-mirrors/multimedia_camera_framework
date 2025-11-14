@@ -402,7 +402,7 @@ void AvcodecTaskManager::ChooseVideoBuffer(vector<sptr<FrameRecord>> frameRecord
     MEDIA_INFO_LOG("ChooseVideoBuffer captureId : %{public}d, shutterTime : %{public}" PRIu64 ", "
         "clearVideoEndTime : %{public}" PRIu64, captureId, shutterTime, clearVideoEndTime);
     size_t idrIndex = FindIdrFrameIndex(frameRecords, clearVideoEndTime, shutterTime, captureId);
-    MEDIA_DEBUG_LOG("ChooseVideoBuffer::idrIndex:%{public}" PRIu32, idrIndex);
+    MEDIA_DEBUG_LOG("ChooseVideoBuffer::idrIndex:%{public}zu", idrIndex);
     size_t frameCount = 0;
     int64_t idrIndexTimeStamp = frameRecords[idrIndex]->GetTimeStamp();
     for (size_t index = idrIndex; index < frameRecords.size(); ++index) {
@@ -412,7 +412,7 @@ void AvcodecTaskManager::ChooseVideoBuffer(vector<sptr<FrameRecord>> frameRecord
             && timestamp - idrIndexTimeStamp < MAX_NANOSEC_RANGE;
         CHECK_EXECUTE(isBeforeEndTimeAndUnderMaxFrameCount, {
             choosedBuffer.push_back(frame);
-            MEDIA_DEBUG_LOG("ChooseVideoBuffer::after choose index:%{public}" PRIu32 ", timestamp:%{public}" PRIu64
+            MEDIA_DEBUG_LOG("ChooseVideoBuffer::after choose index:%{public}zu, timestamp:%{public}" PRIu64
                             ",pts:%{public}" PRIu64 ",flag:%{public}u",
                 index, frame->GetTimeStamp(), frame->encodedBuffer->pts_, frame->encodedBuffer->flag_);
             ++frameCount;
