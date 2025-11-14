@@ -338,13 +338,11 @@ HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_011, TestSize
     taskManager->videoEncoder_ = make_shared<VideoEncoder>(type, colorSpace);
     taskManager->videoEncoder_->isStarted_ = true;
     taskManager->audioEncoder_ = nullptr;
-    taskManager->audioDeferredProcess_ = nullptr;
     taskManager->timerId_ = 0;
 
     taskManager->Release();
     EXPECT_FALSE(taskManager->videoEncoder_->isStarted_);
     EXPECT_EQ(taskManager->audioEncoder_, nullptr);
-    EXPECT_EQ(taskManager->audioDeferredProcess_, nullptr);
     EXPECT_EQ(taskManager->timerId_, 0);
 }
 
@@ -367,13 +365,11 @@ HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_012, TestSize
     taskManager->audioEncoder_ = make_unique<AudioEncoder>();
     taskManager->audioEncoder_->encoder_ = nullptr;
     taskManager->audioEncoder_->isStarted_ = true;
-    taskManager->audioDeferredProcess_ = nullptr;
     taskManager->timerId_ = 0;
 
     taskManager->Release();
     EXPECT_EQ(taskManager->videoEncoder_, nullptr);
     EXPECT_FALSE(taskManager->audioEncoder_->isStarted_);
-    EXPECT_EQ(taskManager->audioDeferredProcess_, nullptr);
     EXPECT_EQ(taskManager->timerId_, 0);
 }
 
