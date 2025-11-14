@@ -291,7 +291,7 @@ napi_value ModeManagerNapi::GetSupportedOutputCapability(napi_env env, napi_call
 
 extern "C" napi_value createModeManagerInstance(napi_env env)
 {
-    HILOG_COMM_INFO("createModeManagerInstance is called");
+    COMM_INFO_LOG("createModeManagerInstance is called");
     napi_value result = nullptr;
     result = ModeManagerNapi::CreateModeManager(env);
     CHECK_RETURN_RET_ELOG(result == nullptr, result, "createModeManagerInstance failed");
