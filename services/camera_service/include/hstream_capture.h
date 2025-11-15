@@ -192,6 +192,7 @@ private:
     void CreateAuxiliarySurfaces();
     void InitCaptureThread();
     void SetRawCallbackUnLock();
+    int32_t GetRotation(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureMetadataSetting_);
     void GetLocation(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureMetadataSetting);
     std::mutex callbackLock_;
     int32_t thumbnailSwitch_;

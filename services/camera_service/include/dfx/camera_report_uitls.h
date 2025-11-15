@@ -63,6 +63,9 @@ struct DfxCaptureInfo {
     uint64_t captureEndTime;
     bool isOfflinCapture = false;
     uint32_t offlineOutputCnt = 0;
+    bool isMovingPhoto = false;
+    bool isDeferredImageDelivery = false;
+    int32_t rotation = 0;
 };
 
 class CameraReportUtils {
@@ -92,7 +95,8 @@ public:
     void SetModeChangePerfEndInfo();
 
     void SetCapturePerfStartInfo(DfxCaptureInfo captureInfo);
-    void SetCapturePerfEndInfo(int32_t captureId, bool isOfflinCapture = false, int32_t offlineOutputCnt = 0);
+    void SetCapturePerfEndInfo(int32_t captureId, bool isOfflinCapture = false, int32_t offlineOutputCnt = 0, 
+        bool isMovingPhoto = false, bool isDeferredImageDelivery = false);
 
     void SetSwitchCamPerfStartInfo(CallerInfo caller);
     void SetSwitchCamPerfEndInfo();

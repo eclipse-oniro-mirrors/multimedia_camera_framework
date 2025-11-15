@@ -248,6 +248,7 @@ private:
     bool isHasFitedRotation_ = false;
 
     std::string clientName_;
+    uint64_t openCamTime_;
     int clientUserId_;
     uint8_t usedAsPosition_ = OHOS_CAMERA_POSITION_OTHER;
     std::mutex unPrepareZoomMutex_;

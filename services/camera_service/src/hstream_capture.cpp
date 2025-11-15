@@ -750,6 +750,7 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
     DfxCaptureInfo captureInfo;
     captureInfo.captureId = preparedCaptureId;
     captureInfo.caller = CameraReportUtils::GetCallerInfo();
+    captureInfo.rotation = GetRotation(captureMetadataSetting_);
     CameraReportUtils::GetInstance().SetCapturePerfStartInfo(captureInfo);
     MEDIA_INFO_LOG("HStreamCapture::Capture Starting photo capture with capture ID: %{public}d", preparedCaptureId);
     HStreamCommon::PrintCaptureDebugLog(captureMetadataSetting_);
@@ -805,6 +806,32 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
     }
     return ret;
     // LCOV_EXCL_STOP
+}
+
+int32_t HStreamCapture::GetRotation(const std::shared_ptr<OHOS::Camera::CameraMetadata>& captureMetadataSetting_) {
+    int result = 0;
+    int32_t sensorOrientation = 0;
+    if(cameraAbility_ != nullptr){
+        // LCOV_EXCL_START
+        result = GetCorrectedCameraOrientation(usePhysicalCameraOrientation_, cameraAbility_, sensorOrientation);
+    }
+    camera_metadata_item_t item;
+    int32_t rotationValue = 0;
+    int32_t rotation = 0;
+    result = OHOS::Camera::FindCameraMetadataItem(captureMetadataSetting_->get(), OHOS_JPEG_ORIENTATION, &item);
+    if (result == CAM_META_SUCCESS && item.count > 0) {
+        rotationValue = item.data.i32[0];
+    }
+
+    if (enableCameraPhotoRotation_) {
+        rotation = rotationValue;
+    } else {
+        rotation = sensorOrientation + rotationValue;
+        if (rotation >= CAPTURE_ROTATE_360) {
+            rotation = rotation - CAPTURE_ROTATE_360;
+        }
+    }
+    return rotation;
 }
 
 void HStreamCapture::ProcessCaptureInfoPhoto(CaptureInfo& captureInfoPhoto,
@@ -1223,7 +1250,7 @@ int32_t HStreamCapture::OnCaptureEnded(int32_t captureId, int32_t frameCount)
     MEDIA_INFO_LOG("HStreamCapture::Capture, notify OnCaptureEnded with capture ID: %{public}d", captureId);
     int32_t offlineOutputCnt = mSwitchToOfflinePhoto_ ?
         HStreamOperatorManager::GetInstance()->GetOfflineOutputSize() : 0;
-    CameraReportUtils::GetInstance().SetCapturePerfEndInfo(captureId, mSwitchToOfflinePhoto_, offlineOutputCnt);
+    CameraReportUtils::GetInstance().SetCapturePerfEndInfo(captureId, mSwitchToOfflinePhoto_, offlineOutputCnt, movingPhotoSwitch_, deferredPhotoSwitch_);
     auto preparedCaptureId = GetPreparedCaptureId();
     if (preparedCaptureId != CAPTURE_ID_UNSET) {
         MEDIA_INFO_LOG("HStreamCapture::OnCaptureEnded capturId = %{public}d already used, need release",
