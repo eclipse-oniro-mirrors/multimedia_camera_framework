@@ -108,6 +108,10 @@ public:
     {
         return 0;
     }
+    int32_t SetCameraIdTransform(const std::string& originCameraId) override
+    {
+        return 0;
+    }
 };
 class CameraDeviceServiceStubFuzzer {
 public:

@@ -1190,6 +1190,14 @@ int CameraManager::CreateCameraDevice(std::string cameraId, sptr<ICameraDeviceSe
     return CameraErrorCode::SUCCESS;
 }
 
+void CameraManager::SetCameraIdTransform(sptr<ICameraDeviceService> deviceObj, std::string originCameraId)
+{
+    if (deviceObj == nullptr) {
+        return;
+    }
+    deviceObj->SetCameraIdTransform(originCameraId);
+}
+
 void CameraManager::SetCallback(std::shared_ptr<CameraManagerCallback> listener)
 {
     RegisterCameraStatusCallback(listener);
@@ -2328,6 +2336,7 @@ int CameraManager::CreateCameraInput(sptr<CameraDevice> &camera, sptr<CameraInpu
     bool isFoldStatusValid = (curFoldStatus == FoldStatus::EXPAND) || (curFoldStatus == FoldStatus::HALF_FOLD) ||
         (isFoldV4 && curFoldStatus == FoldStatus::UNKNOWN_FOLD);
     bool isFrontCamera = (camera->GetPosition() == CameraPosition::CAMERA_POSITION_FRONT);
+    std::string originCameraId = camera->GetID();
     // LCOV_EXCL_START
     if (isApiCompatRequired && isFoldStatusValid && isFrontCamera) {
         std::vector<sptr<CameraDevice>> cameraObjList = GetSupportedCameras();
@@ -2349,6 +2358,7 @@ int CameraManager::CreateCameraInput(sptr<CameraDevice> &camera, sptr<CameraInpu
     sptr<CameraInput> cameraInput = new(std::nothrow) CameraInput(deviceObj, camera);
     CHECK_RETURN_RET_ELOG(cameraInput == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "CameraManager::CreateCameraInput failed to new cameraInput!");
+    SetCameraIdTransform(deviceObj, originCameraId);
     *pCameraInput = cameraInput;
     return CameraErrorCode::SUCCESS;
 }

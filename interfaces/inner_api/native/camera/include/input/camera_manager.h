@@ -934,6 +934,7 @@ public:
 
     void GetCameraOutputStatus(int32_t pid, int32_t &status);
     int CreateCameraDevice(std::string cameraId, sptr<ICameraDeviceService> *pICameraDeviceService);
+    void SetCameraIdTransform(sptr<ICameraDeviceService> deviceObj, std::string originCameraId);
     inline sptr<ICameraService> GetServiceProxy()
     {
         std::lock_guard<std::mutex> lock(serviceProxyMutex_);
