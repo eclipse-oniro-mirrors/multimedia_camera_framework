@@ -236,8 +236,7 @@ void CameraReportUtils::SetCapturePerfStartInfo(DfxCaptureInfo captureInfo)
 }
 
 void CameraReportUtils::SetCapturePerfEndInfo(int32_t captureId, bool isOfflinCapture,
-    int32_t offlineOutputCnt, int32_t offlineOutputCnt, bool isMovingPhoto,
-    bool isDeferredImageDelivery)
+    int32_t offlineOutputCnt, bool isMovingPhoto, bool isDeferredImageDelivery)
 {
     MEDIA_DEBUG_LOG("SetCapturePerfEndInfo start");
     unique_lock<mutex> lock(mutex_);

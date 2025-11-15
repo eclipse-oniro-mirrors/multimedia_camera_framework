@@ -812,7 +812,7 @@ int32_t HStreamCapture::GetRotation(const std::shared_ptr<OHOS::Camera::CameraMe
 {
     int result = 0;
     int32_t sensorOrientation = 0;
-    if(cameraAbility_ != nullptr) {
+    if (cameraAbility_ != nullptr) {
         // LCOV_EXCL_START
         result = GetCorrectedCameraOrientation(usePhysicalCameraOrientation_, cameraAbility_, sensorOrientation);
     }
