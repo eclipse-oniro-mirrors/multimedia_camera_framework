@@ -99,6 +99,8 @@ public:
     int32_t CallbackEnter([[maybe_unused]] uint32_t code) override;
     int32_t CallbackExit([[maybe_unused]] uint32_t code, [[maybe_unused]] int32_t result) override;
     int32_t SetMdmCheck(bool mdmCheck) override;
+    int32_t SetCameraIdTransform(const std::string& originCameraId) override;
+    std::string GetCameraIdTransform();
 
     int32_t ResetDeviceSettings();
     int32_t DispatchDefaultSettingToHdi();
@@ -313,6 +315,7 @@ private:
     std::vector<int32_t> frameRateRange_ = {0, 0};
     std::mutex fpsRangeLock_;
     std::mutex lastDisplayModeLock_;
+    std::mutex originCameraIdLock_;
     std::mutex usePhysicalCameraOrientationMutex_;
     std::mutex dataShareHelperMutex_;
     std::mutex movingPhotoStartTimeCallbackLock_;
@@ -340,6 +343,7 @@ private:
     std::string uidForLiveScene_;
     std::string bundleNameForLiveScene_;
     bool mdmCheck_ = true;
+    std::string originCameraId_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

@@ -805,7 +805,9 @@ void HCameraHostManager::DeInit()
     registerServStatListener_ = nullptr;
 }
 
-void HCameraHostManager::AddCameraDevice(const std::string& cameraId, sptr<ICameraDeviceService> cameraDevice)
+void HCameraHostManager::AddCameraDevice(const std::string& cameraId,
+                                         sptr<ICameraDeviceService> cameraDevice,
+                                         std::string originCameraId)
 {
     std::lock_guard<std::mutex> lock(deviceMutex_);
     auto it = cameraDevices_.find(cameraId);
@@ -815,11 +817,16 @@ void HCameraHostManager::AddCameraDevice(const std::string& cameraId, sptr<ICame
     }
     cameraDevices_[cameraId] = cameraDevice;
     auto statusCallback = statusCallback_.lock();
-    CHECK_EXECUTE(statusCallback != nullptr,
-        statusCallback->OnCameraStatus(cameraId, CAMERA_STATUS_UNAVAILABLE, CallbackInvoker::APPLICATION));
+    string reportCameraId = "";
+    if (originCameraId != cameraId) {
+        reportCameraId = originCameraId;
+    } else {
+        reportCameraId = cameraId;
+    }
+    statusCallback->OnCameraStatus(reportCameraId, CAMERA_STATUS_UNAVAILABLE, CallbackInvoker::APPLICATION);
 }
 
-void HCameraHostManager::RemoveCameraDevice(const std::string& cameraId)
+void HCameraHostManager::RemoveCameraDevice(const std::string& cameraId, std::string originCameraId)
 {
     MEDIA_DEBUG_LOG("HCameraHostManager::RemoveCameraDevice start");
     {
@@ -830,8 +837,15 @@ void HCameraHostManager::RemoveCameraDevice(const std::string& cameraId)
         }
         cameraDevices_.erase(cameraId);
         auto statusCallback = statusCallback_.lock();
-        CHECK_EXECUTE(statusCallback,
-            statusCallback->OnCameraStatus(cameraId, CAMERA_STATUS_AVAILABLE, CallbackInvoker::APPLICATION));
+        if (statusCallback) {
+            string reportCameraId = "";
+            if (originCameraId != cameraId) {
+                reportCameraId = originCameraId;
+            } else {
+                reportCameraId = cameraId;
+            }
+            statusCallback->OnCameraStatus(reportCameraId, CAMERA_STATUS_AVAILABLE, CallbackInvoker::APPLICATION);
+        }
     }
     {
         std::lock_guard<std::mutex> lock(openPrelaunchMutex_);

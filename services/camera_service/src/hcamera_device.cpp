@@ -624,7 +624,7 @@ int32_t HCameraDevice::OpenDevice(bool isEnableSecCam)
         "HCameraDevice::OpenDevice InitStreamOperator fail err code is:%{public}d", errorCode);
     std::lock_guard<std::mutex> lockSetting(opMutex_);
     if (hdiCameraDevice_ != nullptr) {
-        cameraHostManager_->AddCameraDevice(cameraID_, this);
+        cameraHostManager_->AddCameraDevice(cameraID_, this, GetCameraIdTransform());
         if (updateSettings_ != nullptr || deviceMuteMode_) {
             CHECK_EXECUTE(deviceMuteMode_, CreateMuteSetting(updateSettings_));
             errorCode = UpdateDeviceSetting();
@@ -940,7 +940,7 @@ int32_t HCameraDevice::CloseDevice()
         EnableDeviceOpenedByConcurrent(false);
     }
     if (cameraHostManager_) {
-        cameraHostManager_->RemoveCameraDevice(cameraID_);
+        cameraHostManager_->RemoveCameraDevice(cameraID_, GetCameraIdTransform());
         cameraHostManager_->UpdateRestoreParamCloseTime(clientName_, cameraID_);
     }
     {
@@ -2047,6 +2047,18 @@ int32_t HCameraDevice::SetMdmCheck(bool mdmCheck)
     return CAMERA_OK;
 }
 
+int32_t HCameraDevice::SetCameraIdTransform(const std::string& originCameraId)
+{
+    std::lock_guard<std::mutex> lock(originCameraIdLock_);
+    originCameraId_ = originCameraId;
+    return CAMERA_OK;
+}
+
+std::string HCameraDevice::GetCameraIdTransform()
+{
+    std::lock_guard<std::mutex> lock(originCameraIdLock_);
+    return originCameraId_;
+}
 #ifdef CAMERA_LIVE_SCENE_RECOGNITION
 void HCameraDevice::UpdateLiveStreamSceneMetadata(uint32_t mode)
 {
