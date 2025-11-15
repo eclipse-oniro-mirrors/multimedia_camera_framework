@@ -330,22 +330,6 @@
                                      "CAMERA_POSITION", campos);           \
     } while (0)
 
-#define POWERMGR_SYSEVENT_CAMERA_CONFIG(type, width, height, camid, mode, nsmode,      \
-        lptype, format, fps, cs, iscs, stabmode, zoom, count, err)                     \
-    do {                                                                               \
-        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::CAMERA, "CAMERA_CONFIG",        \
-                                     HiviewDFX::HiSysEvent::EventType::STATISTIC,      \
-                                     "TYPE", type, "WIDTH", width, "HEIGHT", height,   \
-                                     "CAMERA_ID", camid, "MODE", mode,                 \
-                                     "NIGHT_SUB_MODE", nsmode,                         \
-                                     "LIGHT_PAINTING_TYPE", lptype, "FORMAT", format,  \
-                                     "FRAME_RATE_RANGE", fps, "COLOR_SPACE", cs,       \
-                                     "IS_COLOR_SPACE_SETTED", iscs,                    \
-                                     "STABILIZATION_MODE", stabmode,                   \
-                                     "ZOOM_RATIO_RANGE", zoom, "COUNT", count,         \
-                                     "ERROR_CODE", err);                               \
-    } while (0)
-
 #define POWERMGR_SYSEVENT_FLASH_ON()                                               \
     do {                                                                           \
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::CAMERA, "FLASHLIGHT_ON",    \
