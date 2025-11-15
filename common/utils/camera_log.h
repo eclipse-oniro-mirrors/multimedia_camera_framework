@@ -335,7 +335,7 @@
     do {                                                                               \
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::CAMERA, "CAMERA_CONFIG",        \
                                      HiviewDFX::HiSysEvent::EventType::STATISTIC,      \
-                                     "TYPE", type, "WIDTH", width, "HEIGHT", height,  \
+                                     "TYPE", type, "WIDTH", width, "HEIGHT", height,   \
                                      "CAMERA_ID", camid, "MODE", mode,                 \
                                      "NIGHT_SUB_MODE", nsmode,                         \
                                      "LIGHT_PAINTING_TYPE", lptype, "FORMAT", format,  \

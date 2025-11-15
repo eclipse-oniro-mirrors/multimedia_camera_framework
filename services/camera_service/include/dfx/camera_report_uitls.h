@@ -95,7 +95,7 @@ public:
     void SetModeChangePerfEndInfo();
 
     void SetCapturePerfStartInfo(DfxCaptureInfo captureInfo);
-    void SetCapturePerfEndInfo(int32_t captureId, bool isOfflinCapture = false, int32_t offlineOutputCnt = 0, 
+    void SetCapturePerfEndInfo(int32_t captureId, bool isOfflinCapture = false, int32_t offlineOutputCnt = 0,
         bool isMovingPhoto = false, bool isDeferredImageDelivery = false);
 
     void SetSwitchCamPerfStartInfo(CallerInfo caller);

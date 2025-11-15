@@ -143,8 +143,8 @@ public:
             foldScreenType.c_str(), position, mLastFoldStatus, currentFoldStatus);
         std::string bundleName = cameraDevice_->GetClientName();
         int32_t cameraPosition = cameraDevice_->GetCameraPosition();
-        POWERMGR_SYSEVENT_FOLD_STATE(bundleName, static_cast<uint>(mLastFoldStatus), static_cast<uint>(currentFoldStatus),
-            cameraId_, static_cast<uint>(cameraPosition));
+        POWERMGR_SYSEVENT_FOLD_STATE(bundleName, static_cast<uint>(mLastFoldStatus),
+            static_cast<uint>(currentFoldStatus), cameraId_, static_cast<uint>(cameraPosition));
         if (foldScreenType[0] == '6' && position == OHOS_CAMERA_POSITION_FRONT &&
             ((currentFoldStatus == FoldStatusRosen::EXPAND &&
             (mLastFoldStatus == FoldStatusRosen::HALF_FOLD || mLastFoldStatus == FoldStatusRosen::FOLDED)) ||
@@ -953,7 +953,8 @@ int32_t HCameraDevice::CloseDevice()
         std::lock_guard<std::mutex> lock(deviceSvcCbMutex_);
         deviceSvcCallback_ = nullptr;
     }
-    POWERMGR_SYSEVENT_CAMERA_DISCONNECT(cameraID_.c_str(), DeferredProcessing::SteadyClock::GetTimestampMilli() - openCamTime_);
+    POWERMGR_SYSEVENT_CAMERA_DISCONNECT(cameraID_.c_str(),
+        DeferredProcessing::SteadyClock::GetTimestampMilli() - openCamTime_);
     MEDIA_DEBUG_LOG("HCameraDevice::CloseDevice end");
     NotifyCameraStatus(CAMERA_CLOSE);
 #ifdef MEMMGR_OVERRID
@@ -1971,7 +1972,8 @@ void HCameraDevice::RemoveResourceWhenHostDied()
         cameraHostManager_->RemoveCameraDevice(cameraID_);
         cameraHostManager_->UpdateRestoreParamCloseTime(clientName_, cameraID_);
     }
-    POWERMGR_SYSEVENT_CAMERA_DISCONNECT(cameraID_.c_str(), DeferredProcessing::SteadyClock::GetTimestampMilli() - openCamTime_);
+    POWERMGR_SYSEVENT_CAMERA_DISCONNECT(cameraID_.c_str(),
+        DeferredProcessing::SteadyClock::GetTimestampMilli() - openCamTime_);
     NotifyCameraStatus(CAMERA_CLOSE);
 #ifdef MEMMGR_OVERRID
     RequireMemory(Memory::CAMERA_END);

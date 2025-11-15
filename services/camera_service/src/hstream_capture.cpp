@@ -808,10 +808,11 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
     // LCOV_EXCL_STOP
 }
 
-int32_t HStreamCapture::GetRotation(const std::shared_ptr<OHOS::Camera::CameraMetadata>& captureMetadataSetting_) {
+int32_t HStreamCapture::GetRotation(const std::shared_ptr<OHOS::Camera::CameraMetadata>& captureMetadataSetting_)
+{
     int result = 0;
     int32_t sensorOrientation = 0;
-    if(cameraAbility_ != nullptr){
+    if(cameraAbility_ != nullptr) {
         // LCOV_EXCL_START
         result = GetCorrectedCameraOrientation(usePhysicalCameraOrientation_, cameraAbility_, sensorOrientation);
     }
@@ -1250,7 +1251,8 @@ int32_t HStreamCapture::OnCaptureEnded(int32_t captureId, int32_t frameCount)
     MEDIA_INFO_LOG("HStreamCapture::Capture, notify OnCaptureEnded with capture ID: %{public}d", captureId);
     int32_t offlineOutputCnt = mSwitchToOfflinePhoto_ ?
         HStreamOperatorManager::GetInstance()->GetOfflineOutputSize() : 0;
-    CameraReportUtils::GetInstance().SetCapturePerfEndInfo(captureId, mSwitchToOfflinePhoto_, offlineOutputCnt, movingPhotoSwitch_, deferredPhotoSwitch_);
+    CameraReportUtils::GetInstance().SetCapturePerfEndInfo(captureId, mSwitchToOfflinePhoto_, offlineOutputCnt,
+        movingPhotoSwitch_, deferredPhotoSwitch_);
     auto preparedCaptureId = GetPreparedCaptureId();
     if (preparedCaptureId != CAPTURE_ID_UNSET) {
         MEDIA_INFO_LOG("HStreamCapture::OnCaptureEnded capturId = %{public}d already used, need release",
