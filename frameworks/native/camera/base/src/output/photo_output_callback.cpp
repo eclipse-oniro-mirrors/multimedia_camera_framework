@@ -165,12 +165,25 @@ int32_t HStreamCaptureThumbnailCallbackImpl::OnThumbnailAvailable(sptr<SurfaceBu
     int32_t thumbnailHeight = 0;
     int32_t burstSeqId = -1;
     int32_t captureId = 0;
+    int64_t expoTime = 0;
+    int32_t expoIso = 0;
+    double expoFNumber = 0;
+    double expoEfl = 0;
+    int64_t captureTime = 0;
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::dataWidth, thumbnailWidth);
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::dataHeight, thumbnailHeight);
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::burstSequenceId, burstSeqId);
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::captureId, captureId);
+    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::expoTime, expoTime);
+    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::expoIso, expoIso);
+    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::expoFNumber, expoFNumber);
+    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::expoEfl, expoEfl);
+    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::captureTime, captureTime);
     MEDIA_INFO_LOG("OnThumbnailAvailable width:%{public}d, height: %{public}d, captureId: %{public}d,"
         "burstSeqId: %{public}d", thumbnailWidth, thumbnailHeight, captureId, burstSeqId);
+    MEDIA_DEBUG_LOG("OnThumbnailAvailable expoTime:%{public}" PRId64 ", expoIso: %{public}" PRId32
+        ",expoFNumber: %{public}.1f, expoEfl: %{public}.1f, captureTime: %{public}" PRId64,
+        expoTime, expoIso, expoFNumber, expoEfl, captureTime);
     OHOS::ColorManager::ColorSpaceName colorSpace = GetColorSpace(surfaceBuffer);
     CHECK_RETURN_RET_ELOG(colorSpace == OHOS::ColorManager::ColorSpaceName::NONE, CAMERA_OK,
         "Thumbnail GetcolorSpace failed!");
@@ -180,8 +193,9 @@ int32_t HStreamCaptureThumbnailCallbackImpl::OnThumbnailAvailable(sptr<SurfaceBu
         thumbnailWidth, thumbnailHeight, isHdr);
     CHECK_PRINT_ELOG(pixelMap == nullptr, "ThumbnailListener create pixelMap is nullptr");
     ThumbnailSetColorSpaceAndRotate(pixelMap, surfaceBuffer, colorSpace);
-        
-    callback->OnThumbnailAvailable(captureId, timestamp, std::move(pixelMap));
+
+    WatermarkInfo info = { captureId, timestamp, expoTime, expoIso, expoFNumber, expoEfl, captureTime };
+    callback->OnThumbnailAvailable(info, std::move(pixelMap));
     return CAMERA_OK;
 }
 

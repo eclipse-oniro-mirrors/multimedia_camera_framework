@@ -29,6 +29,17 @@ class PhotoOutput;
 namespace DeferredProcessing {
 class TaskManager;
 }
+
+struct WatermarkInfo {
+    int32_t captureID;
+    uint64_t timestamp = 0;
+    int64_t expoTime = 0;
+    int32_t expoIso = 0;
+    double expoFNumber = 0;
+    double expoEfl = 0;
+    int64_t captureTime = 0;
+};
+
 class PhotoAvailableCallback {
 public:
     PhotoAvailableCallback() = default;
@@ -51,7 +62,7 @@ public:
     ThumbnailCallback() = default;
     virtual ~ThumbnailCallback() = default;
 
-    virtual void OnThumbnailAvailable(int32_t captureId, int64_t timestamp,
+    virtual void OnThumbnailAvailable(const WatermarkInfo &info,
         std::unique_ptr<Media::PixelMap> pixelMap) const = 0;
 };
 

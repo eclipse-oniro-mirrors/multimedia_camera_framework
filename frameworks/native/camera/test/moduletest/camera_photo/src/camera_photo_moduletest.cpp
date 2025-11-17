@@ -221,8 +221,8 @@ void TestCaptureCallback::OnPhotoAssetAvailable(
     photoAssetFlag_ = true;
 }
 
-void TestCaptureCallback::OnThumbnailAvailable(
-    int32_t captureId, int64_t timestamp, std::unique_ptr<Media::PixelMap> pixelMap) const
+void TestCaptureCallback::OnThumbnailAvailable(const WatermarkInfo &info,
+    std::unique_ptr<Media::PixelMap> pixelMap) const
 {
     MEDIA_DEBUG_LOG("TestCaptureCallback::OnThumbnailAvailable is called!");
     thumbnailFlag_ = true;
