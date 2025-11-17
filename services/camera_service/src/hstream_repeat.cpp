@@ -830,7 +830,7 @@ void HStreamRepeat::SetStreamTransform(int disPlayRotation)
         cameraPosition = cameraUsedAsPosition_;
         MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform used camera position: %{public}d", cameraPosition);
     }
-    if (enableCameraRotation_ && sensorOrientation != 0) {
+    if (enableCameraRotation_) {
         ProcessCameraSetRotation(sensorOrientation);
     }
     if (apiCompatibleVersion_ >= CAMERA_API_VERSION_BASE) {
