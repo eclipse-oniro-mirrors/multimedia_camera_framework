@@ -102,13 +102,13 @@ void PhotoOutputCallbackAni::OnPhotoAssetAvailableCallback(const int32_t capture
         OHOS::AppExecFwk::EventQueue::Priority::IMMEDIATE, {});
 }
 
-void PhotoOutputCallbackAni::OnThumbnailAvailableCallback(int32_t captureId, int64_t timestamp,
+void PhotoOutputCallbackAni::OnThumbnailAvailableCallback(const OHOS::CameraStandard::WatermarkInfo &info,
     std::unique_ptr<Media::PixelMap>& pixelMap) const
 {
     ohos::multimedia::image::image::PixelMap pixelMapVal =
         make_holder<ANI::Image::PixelMapImpl, ohos::multimedia::image::image::PixelMap>(std::move(pixelMap));
-    pixelMapVal->SetCaptureId(captureId);
-    pixelMapVal->SetTimestamp(timestamp);
+    pixelMapVal->SetCaptureId(info.captureID);
+    pixelMapVal->SetTimestamp(info.timestamp);
     auto sharePtr = shared_from_this();
     auto task = [pixelMapVal, sharePtr]() {
         CHECK_EXECUTE(sharePtr != nullptr,
@@ -296,11 +296,11 @@ void PhotoOutputCallbackAni::OnPhotoAssetAvailable(const int32_t captureId, cons
     OnPhotoAssetAvailableCallback(captureId, uri, cameraShotType, burstKey);
 }
 
-void PhotoOutputCallbackAni::OnThumbnailAvailable(int32_t captureId, int64_t timestamp,
+void PhotoOutputCallbackAni::OnThumbnailAvailable(const OHOS::CameraStandard::WatermarkInfo &info,
     std::unique_ptr<Media::PixelMap> pixelMap) const
 {
     MEDIA_DEBUG_LOG("OnThumbnailAvailable is called!");
-    OnThumbnailAvailableCallback(captureId, timestamp, pixelMap);
+    OnThumbnailAvailableCallback(info, pixelMap);
 }
 
 int32_t GetBurstSeqId(int32_t captureId)

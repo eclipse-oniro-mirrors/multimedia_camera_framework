@@ -72,6 +72,7 @@ struct CallbackInfo {
     std::string uri;
     int32_t cameraShotType;
     std::string burstKey;
+    WatermarkInfo watermarkInfo;
 };
 
 enum PhotoOutputEventType {
@@ -148,8 +149,8 @@ public:
         const std::shared_ptr<Media::NativeImage> nativeImage, const bool isRaw = false) const override;
     void OnPhotoAssetAvailable(const int32_t captureId, const std::string &uri, const int32_t cameraShotType,
         const std::string &burstKey) const override;
-    void OnThumbnailAvailable(
-        const int32_t captureId, const int64_t timestamp, unique_ptr<Media::PixelMap> pixelMap) const override;
+    void OnThumbnailAvailable(const WatermarkInfo &watermarkInfo,
+        unique_ptr<Media::PixelMap> pixelMap) const override;
 
 private:
     void UpdateJSCallback(PhotoOutputEventType eventType, const CallbackInfo& info) const;

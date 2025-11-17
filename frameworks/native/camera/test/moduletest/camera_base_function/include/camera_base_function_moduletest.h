@@ -131,8 +131,7 @@ class TestThumbnailCallback : public ThumbnailCallback {
 public:
     TestThumbnailCallback() = default;
     virtual ~TestThumbnailCallback() = default;
-    void OnThumbnailAvailable(
-        const int32_t captureId, const int64_t timestamp, unique_ptr<Media::PixelMap> pixelMap) const override;
+    void OnThumbnailAvailable(const WatermarkInfo &info, unique_ptr<Media::PixelMap> pixelMap) const override;
 };
 
 // ms

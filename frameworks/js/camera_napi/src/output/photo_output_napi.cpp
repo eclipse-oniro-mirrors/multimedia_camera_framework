@@ -213,7 +213,7 @@ void CleanAfterTransPicture(sptr<PhotoOutput> photoOutput, int32_t captureId)
     photoOutput->captureIdHandleMap_.erase(captureId);
 }
 
-void FillPixelMapWithCaptureIdAndTimestamp(napi_env env, int32_t captureId, int64_t timestamp, napi_value pixelMapNapi)
+void FillPixelMapWithCaptureIdAndTimestamp(napi_env env, WatermarkInfo watermarkInfo, napi_value pixelMapNapi)
 {
     napi_valuetype valueType = napi_undefined;
     if (napi_typeof(env, pixelMapNapi, &valueType) != napi_ok || valueType == napi_undefined) {
@@ -226,13 +226,31 @@ void FillPixelMapWithCaptureIdAndTimestamp(napi_env env, int32_t captureId, int6
     napi_get_undefined(env, &propertyName);
     napi_get_undefined(env, &propertyValue);
     napi_create_string_utf8(env, "captureId", NAPI_AUTO_LENGTH, &propertyName);
-    napi_create_int32(env, captureId, &propertyValue);
+    napi_create_int32(env, watermarkInfo.captureID, &propertyValue);
     napi_set_property(env, pixelMapNapi, propertyName, propertyValue);
-    MEDIA_INFO_LOG("FillPixelMapWithCaptureIdAndTimestamp captureId %{public}d", captureId);
+    MEDIA_INFO_LOG("FillPixelMapWithCaptureIdAndTimestamp captureId %{public}d", watermarkInfo.captureID);
 
     napi_create_string_utf8(env, "timestamp", NAPI_AUTO_LENGTH, &propertyName);
-    napi_create_int64(env, timestamp, &propertyValue);
+    napi_create_int64(env, watermarkInfo.timestamp, &propertyValue);
     napi_set_property(env, pixelMapNapi, propertyName, propertyValue);
+    napi_create_string_utf8(env, "expoTime", NAPI_AUTO_LENGTH, &propertyName);
+    napi_create_int64(env, watermarkInfo.expoTime, &propertyValue);
+    napi_set_property(env, pixelMapNapi, propertyName, propertyValue);
+    napi_create_string_utf8(env, "expoIso", NAPI_AUTO_LENGTH, &propertyName);
+    napi_create_int32(env, watermarkInfo.expoIso, &propertyValue);
+    napi_set_property(env, pixelMapNapi, propertyName, propertyValue);
+    napi_create_string_utf8(env, "expoFNumber", NAPI_AUTO_LENGTH, &propertyName);
+    napi_create_double(env, watermarkInfo.expoFNumber, &propertyValue);
+    napi_set_property(env, pixelMapNapi, propertyName, propertyValue);
+    napi_create_string_utf8(env, "expoEfl", NAPI_AUTO_LENGTH, &propertyName);
+    napi_create_double(env, watermarkInfo.expoEfl, &propertyValue);
+    napi_set_property(env, pixelMapNapi, propertyName, propertyValue);
+    napi_create_string_utf8(env, "captureTime", NAPI_AUTO_LENGTH, &propertyName);
+    napi_create_int64(env, watermarkInfo.captureTime, &propertyValue);
+    napi_set_property(env, pixelMapNapi, propertyName, propertyValue);
+    MEDIA_DEBUG_LOG("FillPixelMapWithCaptureIdAndTimestamp expoTime %{public}" PRId64 ", expoIso %{public}" PRId32
+        ", expoFNumber %{public}.1f, expoEfl %{public}.1f, captureTime %{public}" PRId64, watermarkInfo.expoTime,
+        watermarkInfo.expoIso, watermarkInfo.expoFNumber, watermarkInfo.expoEfl, watermarkInfo.captureTime);
 }
 
 PhotoOutputCallback::PhotoOutputCallback(napi_env env) : ListenerBase(env) {}
@@ -400,14 +418,15 @@ void PhotoOutputCallback::OnPhotoAssetAvailable(
     UpdateJSCallbackAsync(PhotoOutputEventType::CAPTURE_PHOTO_ASSET_AVAILABLE, info);
 }
 
-void PhotoOutputCallback::OnThumbnailAvailable(
-    const int32_t captureId, const int64_t timestamp, unique_ptr<Media::PixelMap> pixelMap) const
+void PhotoOutputCallback::OnThumbnailAvailable(const WatermarkInfo &watermarkInfo,
+    unique_ptr<Media::PixelMap> pixelMap) const
 {
     MEDIA_DEBUG_LOG("PhotoOutputCallback::OnThumbnailAvailable is called!");
     CallbackInfo info;
-    info.captureID = captureId;
-    info.timestamp = timestamp;
+    info.captureID = watermarkInfo.captureID;
+    info.timestamp = watermarkInfo.timestamp;
     info.pixelMap = std::move(pixelMap);
+    info.watermarkInfo = watermarkInfo;
     UpdateJSCallbackAsync(PhotoOutputEventType::CAPTURE_THUMBNAIL_AVAILABLE, info);
 }
 
@@ -583,7 +602,7 @@ void PhotoOutputCallback::ExecuteThumbnailAvailableCb(const CallbackInfo& info) 
         MEDIA_ERR_LOG("ImageNapi Create failed");
         napi_get_undefined(env_, &valueParam);
     }
-    FillPixelMapWithCaptureIdAndTimestamp(env_, info.captureID, info.timestamp, valueParam);
+    FillPixelMapWithCaptureIdAndTimestamp(env_, info.watermarkInfo, valueParam);
     MEDIA_INFO_LOG("enter ImageNapi::Create end");
     result[1] = valueParam;
     ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };

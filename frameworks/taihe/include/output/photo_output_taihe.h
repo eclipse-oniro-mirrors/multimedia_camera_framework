@@ -96,7 +96,7 @@ public:
     void OnPhotoAvailable(const std::shared_ptr<Media::NativeImage> nativeImage, bool isRaw) const override;
     void OnPhotoAssetAvailable(const int32_t captureId, const std::string &uri,
         int32_t cameraShotType, const std::string &burstKey) const override;
-    void OnThumbnailAvailable(int32_t captureId, int64_t timestamp,
+    void OnThumbnailAvailable(const OHOS::CameraStandard::WatermarkInfo &info,
         std::unique_ptr<Media::PixelMap> pixelMap) const override;
 
 private:
@@ -111,7 +111,7 @@ private:
     void OnPhotoAvailableCallback(const std::shared_ptr<Media::NativeImage> nativeImage, bool isRaw) const;
     void OnPhotoAssetAvailableCallback(const int32_t captureId, const std::string &uri,
         int32_t cameraShotType, const std::string &burstKey) const;
-    void OnThumbnailAvailableCallback(int32_t captureId, int64_t timestamp,
+    void OnThumbnailAvailableCallback(const OHOS::CameraStandard::WatermarkInfo &info,
         std::unique_ptr<Media::PixelMap>& pixelMap) const;
 };
 

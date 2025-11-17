@@ -43,8 +43,7 @@ public:
         const std::shared_ptr<Media::NativeImage> nativeImage, const bool isRaw = false) const override;
     void OnPhotoAssetAvailable(const int32_t captureId, const std::string &uri, const int32_t cameraShotType,
         const std::string &burstKey) const override;
-    void OnThumbnailAvailable(
-        int32_t captureId, int64_t timestamp, std::unique_ptr<Media::PixelMap> pixelMap) const override;
+    void OnThumbnailAvailable(const WatermarkInfo &info, std::unique_ptr<Media::PixelMap> pixelMap) const override;
 
 private:
 };

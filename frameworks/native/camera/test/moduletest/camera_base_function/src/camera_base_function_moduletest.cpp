@@ -106,8 +106,7 @@ void TestMetadataStateCallback::OnError(int32_t errorCode) const
     MEDIA_INFO_LOG("TestMetadataStateCallback::OnError called %{public}d", errorCode);
 }
 
-void TestThumbnailCallback::OnThumbnailAvailable(
-    const int32_t captureId, const int64_t timestamp, unique_ptr<Media::PixelMap> pixelMap) const
+void TestThumbnailCallback::OnThumbnailAvailable(const WatermarkInfo &info, unique_ptr<Media::PixelMap> pixelMap) const
 {
     MEDIA_DEBUG_LOG("TestThumbnailCallback::OnThumbnailAvailable is called!");
 }
