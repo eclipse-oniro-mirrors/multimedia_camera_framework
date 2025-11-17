@@ -1809,7 +1809,9 @@ void EffectSuggestionCallbackListener::OnEffectSuggestionCallbackAsync(EffectSug
             delete callbackInfo;
         }
     };
-    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
+    std::string taskName = "EffectSuggestionCallbackListener::OnEffectSuggestionCallbackAsync"
+        "[effectSuggestionType:" + std::to_string(effectSuggestionType) + "]";
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {
         callbackInfo.release();
@@ -1850,7 +1852,10 @@ void LcdFlashStatusCallbackListener::OnLcdFlashStatusCallbackAsync(LcdFlashStatu
             delete callbackInfo;
         }
     };
-    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
+    std::string taskName = "LcdFlashStatusCallbackListener::OnLcdFlashStatusCallbackAsync"
+        "[lcdCompensation:" + std::to_string(lcdFlashStatusInfo.lcdCompensation) +
+        ", isLcdFlashNeeded:" + std::to_string(lcdFlashStatusInfo.isLcdFlashNeeded) + "]";
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {
         callbackInfo.release();
@@ -1898,7 +1903,9 @@ void FeatureDetectionStatusCallbackListener::OnFeatureDetectionStatusChangedCall
             delete callbackInfo;
         }
     };
-    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
+    std::string taskName = "FeatureDetectionStatusCallbackListener::OnFeatureDetectionStatusChangedCallbackAsync"
+        "[sceneFeature:" + std::to_string(feature) + ", status:" + std::to_string(status) + "]";
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {
         callbackInfo.release();

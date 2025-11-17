@@ -82,7 +82,9 @@ void VideoCallbackListener::UpdateJSCallbackAsync(VideoOutputEventType eventType
             delete callbackInfo;
         }
     };
-    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
+    std::string taskName = "VideoCallbackListener::UpdateJSCallbackAsync"
+        "[" + VideoOutputEventTypeHelper.GetKeyString(eventType) + "]";
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("failed to execute work");
     }  else {
         callbackInfo.release();

@@ -40,7 +40,9 @@ void SlowMotionStateListener::OnSlowMotionStateCbAsync(const SlowMotionState sta
             delete callbackInfo;
         }
     };
-    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
+    std::string taskName = "SlowMotionStateListener::OnSlowMotionStateCbAsync"
+        "[state:" + std::to_string(state) + "]";
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {
         callbackInfo.release();

@@ -102,7 +102,9 @@ void PreviewOutputCallback::UpdateJSCallbackAsync(PreviewOutputEventType eventTy
             delete callbackInfo;
         }
     };
-    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
+    std::string taskName = "PreviewOutputCallback::UpdateJSCallbackAsync"
+        "[" + PreviewOutputEventTypeHelper.GetKeyString(eventType) + "]";
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {
         callbackInfo.release();
@@ -141,7 +143,9 @@ void PreviewOutputCallback::OnSketchStatusDataChangedAsync(SketchStatusData stat
             listener->OnSketchStatusDataChangedCall(callbackInfo->sketchStatusData_);
         }
     };
-    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
+    std::string taskName = "PreviewOutputCallback::OnSketchStatusDataChangedAsync"
+        "[status:" + std::to_string(static_cast<int32_t>(statusData.status)) + "]";
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("PreviewOutputCallback::OnSketchStatusDataChangedAsync failed to execute work");
     }
 }

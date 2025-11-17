@@ -257,7 +257,9 @@ void ExposureCallbackListener::OnExposureStateCallbackAsync(ExposureState state)
             delete callbackInfo;
         }
     };
-    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
+    std::string taskName = "ExposureCallbackListener::OnExposureStateCallbackAsync"
+        "[state:" + std::to_string(state) + "]";
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {
         callbackInfo.release();
@@ -297,7 +299,9 @@ void FocusCallbackListener::OnFocusStateCallbackAsync(FocusState state) const
             delete callbackInfo;
         }
     };
-    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
+    std::string taskName = "FocusCallbackListener::OnFocusStateCallbackAsync"
+        "[state:" + std::to_string(state) + "]";
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {
         callbackInfo.release();
@@ -337,7 +341,9 @@ void MoonCaptureBoostCallbackListener::OnMoonCaptureBoostStatusCallbackAsync(Moo
             delete callbackInfo;
         }
     };
-    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
+    std::string taskName = "MoonCaptureBoostCallbackListener::OnMoonCaptureBoostStatusCallbackAsync"
+        "[status:" + std::to_string(status) + "]";
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {
         callbackInfo.release();
@@ -378,7 +384,9 @@ void SessionCallbackListener::OnErrorCallbackAsync(int32_t errorCode) const
             delete callbackInfo;
         }
     };
-    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
+    std::string taskName = "SessionCallbackListener::OnErrorCallbackAsync"
+        "[errorType:" + std::to_string(errorCode) + "]";
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {
         callbackInfo.release();
@@ -424,7 +432,9 @@ void PressureCallbackListener::OnPressureCallbackAsync(PressureStatus status) co
             delete callbackInfo;
         }
     };
-    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
+    std::string taskName = "PressureCallbackListener::OnPressureCallbackAsync"
+        "[status:" + std::to_string(static_cast<int32_t>(status)) + "]";
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {
         callbackInfo.release();
@@ -468,7 +478,10 @@ void ControlCenterEffectStatusCallbackListener::OnControlCenterEffectStatusCallb
             delete callbackInfo;
         }
     };
-    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
+    std::string taskName = "ControlCenterEffectStatusCallbackListener::OnControlCenterEffectStatusCallbackAsync"
+        "[effectType:" + std::to_string(static_cast<int32_t>(controlCenterStatusInfo.effectType)) +
+        ", isActive:" + std::to_string(controlCenterStatusInfo.isActive) + "]";
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {
         callbackInfo.release();
@@ -513,7 +526,9 @@ void SmoothZoomCallbackListener::OnSmoothZoomCallbackAsync(int32_t duration) con
             delete callbackInfo;
         }
     };
-    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
+    std::string taskName = "SmoothZoomCallbackListener::OnSmoothZoomCallbackAsync"
+        "[duration" + std::to_string(duration) + "]";
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {
         callbackInfo.release();
@@ -556,7 +571,8 @@ void AbilityCallbackListener::OnAbilityChangeCallbackAsync() const
             delete callbackInfo;
         }
     };
-    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate,
+        "AbilityCallbackListener::OnAbilityChangeCallbackAsync")) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {
         callbackInfo.release();
@@ -599,7 +615,10 @@ void AutoDeviceSwitchCallbackListener::OnAutoDeviceSwitchCallbackAsync(
             delete callbackInfo;
         }
     };
-    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
+    std::string taskName = "AutoDeviceSwitchCallbackListener::OnAutoDeviceSwitchCallbackAsync"
+        "[isDeviceSwitched:" + std::to_string(isDeviceSwitched) +
+        ", isDeviceCapabilityChanged" + std::to_string(isDeviceCapabilityChanged) + "]";
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {
         callbackInfo.release();
@@ -877,11 +896,11 @@ napi_value CameraSessionNapi::CommitConfig(napi_env env, napi_callback_info info
     work->data = static_cast<void*>(asyncContext.get());
     asyncContext->queueTask =
         CameraNapiWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueTask("CameraSessionNapi::CommitConfig");
-    int rev = uv_queue_work_with_qos(
+    int rev = uv_queue_work_with_qos_internal(
         loop, work, CameraSessionNapi::CommitConfigAsync,
-        CameraSessionNapi::UvWorkAsyncCompleted, uvQos);
+        CameraSessionNapi::UvWorkAsyncCompleted, uvQos, "CameraSessionNapi::CommitConfig");
     if (rev != 0) {
-        MEDIA_ERR_LOG("Failed to call uv_queue_work_with_qos for CameraSessionNapi::CommitConfig");
+        MEDIA_ERR_LOG("Failed to call uv_queue_work_with_qos_internal for CameraSessionNapi::CommitConfig");
         asyncFunction->Reset();
         if (work != nullptr) {
             delete work;
@@ -1227,11 +1246,11 @@ napi_value CameraSessionNapi::Start(napi_env env, napi_callback_info info)
     work->data = static_cast<void*>(asyncContext.get());
     asyncContext->queueTask =
         CameraNapiWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueTask("CameraSessionNapi::Start");
-    int rev = uv_queue_work_with_qos(
+    int rev = uv_queue_work_with_qos_internal(
         loop, work, CameraSessionNapi::StartAsync,
-        CameraSessionNapi::UvWorkAsyncCompleted, uvQos);
+        CameraSessionNapi::UvWorkAsyncCompleted, uvQos, "CameraSessionNapi::Start");
     if (rev != 0) {
-        MEDIA_ERR_LOG("Failed to call uv_queue_work_with_qos for CameraSessionNapi::Start");
+        MEDIA_ERR_LOG("Failed to call uv_queue_work_with_qos_internal for CameraSessionNapi::Start");
         asyncFunction->Reset();
         if (work != nullptr) {
             delete work;
@@ -3286,7 +3305,9 @@ void MacroStatusCallbackListener::OnMacroStatusCallbackAsync(MacroStatus status)
             delete callbackInfo;
         }
     };
-    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
+    std::string taskName = "MacroStatusCallbackListener::OnMacroStatusCallbackAsync"
+        "[status:" + std::to_string(status) + "]";
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {
         callbackInfo.release();

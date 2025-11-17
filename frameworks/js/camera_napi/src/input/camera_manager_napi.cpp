@@ -213,7 +213,9 @@ void CameraManagerCallbackNapi::OnCameraStatusCallbackAsync(const CameraStatusIn
             delete callbackInfo;
         }
     };
-    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
+    std::string taskName = "CameraManagerCallbackNapi::OnCameraStatusCallbackAsync"
+        "[cameraStatus:" + std::to_string(cameraStatusInfo.cameraStatus) + "]";
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {
         callbackInfo.release();
@@ -277,7 +279,9 @@ void CameraMuteListenerNapi::OnCameraMuteCallbackAsync(bool muteMode) const
             delete callbackInfo;
         }
     };
-    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
+    std::string taskName = "CameraMuteListenerNapi::OnCameraMuteCallbackAsync"
+        "[muteMode:" + std::to_string(muteMode) + "]";
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("Failed to execute work");
     } else {
         callbackInfo.release();
@@ -328,7 +332,9 @@ void ControlCenterStatusListenerNapi::OnControlCenterStatusCallbackAsync(bool st
             delete callbackInfo;
         }
     };
-    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
+    std::string taskName = "ControlCenterStatusListenerNapi::OnControlCenterStatusCallbackAsync"
+        "[status:" + std::to_string(status) + "]";
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("Failed to execute work");
     } else {
         callbackInfo.release();
@@ -376,7 +382,11 @@ void TorchListenerNapi::OnTorchStatusChangeCallbackAsync(const TorchStatusInfo &
             delete callbackInfo;
         }
     };
-    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
+    std::string taskName = "TorchListenerNapi::OnTorchStatusChangeCallbackAsync";
+    taskName += torchStatusInfo.isTorchAvailable ? (
+        torchStatusInfo.isTorchActive ? "[torchLevel:" + std::to_string(torchStatusInfo.torchLevel) + "]" :
+        "[torchActive:0]") : "[torchAvailable:0]";
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("Failed to execute work");
     } else {
         callbackInfo.release();
@@ -432,7 +442,9 @@ void FoldListenerNapi::OnFoldStatusChangedCallbackAsync(const FoldStatusInfo &fo
             delete callbackInfo;
         }
     };
-    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
+    std::string taskName = "FoldListenerNapi::OnFoldStatusChangedCallbackAsync"
+        "[foldStatus:" + std::to_string(static_cast<int32_t>(foldStatusInfo.foldStatus)) + "]";
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("Failed to execute work");
     } else {
         callbackInfo.release();

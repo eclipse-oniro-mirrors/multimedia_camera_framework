@@ -849,7 +849,9 @@ void ExposureInfoCallbackListener::OnExposureInfoChangedCallbackAsync(ExposureIn
             delete callback;
         }
     };
-    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
+    std::string taskName = "ExposureInfoCallbackListener::OnExposureInfoChangedCallbackAsync"
+        "[exposureDurationValue:" + std::to_string(info.exposureDurationValue) + "]";
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("ExposureInfoCallbackListener::OnExposureInfoChangedCallbackAsync failed to execute work");
     } else {
         callback.release();
@@ -894,7 +896,9 @@ void IsoInfoCallbackListener::OnIsoInfoChangedCallbackAsync(IsoInfo info) const
             delete callback;
         }
     };
-    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
+    std::string taskName = "IsoInfoCallbackListener::OnIsoInfoChangedCallbackAsync"
+        "[isoValue:" + std::to_string(info.isoValue) + "]";
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("IsoInfoCallbackListener::OnIsoInfoChangedCallbackAsync failed to execute work");
     } else {
         callback.release();
@@ -938,7 +942,9 @@ void ApertureInfoCallbackListener::OnApertureInfoChangedCallbackAsync(ApertureIn
             delete callback;
         }
     };
-    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
+    std::string taskName = "ApertureInfoCallbackListener::OnApertureInfoChangedCallbackAsync"
+        "[apertureValue:" + std::to_string(info.apertureValue) + "]";
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("ApertureInfoCallbackListener::OnApertureInfoChangedCallbackAsync failed to execute work");
     } else {
         callback.release();
@@ -982,7 +988,9 @@ void LuminationInfoCallbackListener::OnLuminationInfoChangedCallbackAsync(Lumina
             delete callback;
         }
     };
-    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
+    std::string taskName = "LuminationInfoCallbackListener::OnLuminationInfoChangedCallbackAsync"
+        "[luminationValue:" + std::to_string(info.luminationValue) + "]";
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("LuminationInfoCallbackListener::OnLuminationInfoChangedCallbackAsync failed to execute work");
     } else {
         callback.release();

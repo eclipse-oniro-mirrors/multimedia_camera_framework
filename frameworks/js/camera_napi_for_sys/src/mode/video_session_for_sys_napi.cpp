@@ -177,7 +177,8 @@ void FocusTrackingCallbackListener::OnFocusTrackingInfoCallbackAsync(FocusTracki
             delete callback;
         }
     };
-    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate,
+        "FocusTrackingCallbackListener::OnFocusTrackingInfoCallbackAsync")) {
         MEDIA_ERR_LOG("%{public}s: failed to execute work", __FUNCTION__);
     } else {
         callback.release();
@@ -238,7 +239,9 @@ void LightStatusCallbackListener::OnLightStatusChangedCallbackAsync(LightStatus 
             delete callback;
         }
     };
-    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
+    std::string taskName = "LightStatusCallbackListener::OnLightStatusChangedCallbackAsync"
+        "[status:" + std::to_string(status.status) + "]";
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("LightStatusCallbackListener::OnLightStatusChangedCallbackAsync failed to execute work");
     } else {
         callback.release();
