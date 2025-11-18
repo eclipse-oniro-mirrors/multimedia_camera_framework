@@ -920,7 +920,7 @@ void HStreamRepeat::ProcessCameraSetRotation(int32_t& sensorOrientation)
 
 void HStreamRepeat::ProcessVerticalCameraPosition(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition)
 {
-    MEDIA_INFO_LOG("HStreamRepeat::ProcessVerticalCameraPosition is called");
+    MEDIA_DEBUG_LOG("HStreamRepeat::ProcessVerticalCameraPosition is called");
     int ret = SurfaceError::SURFACE_ERROR_OK;
 #ifdef HOOK_CAMERA_OPERATOR
     int32_t cameraPositionTemp = static_cast<int32_t>(cameraPosition);

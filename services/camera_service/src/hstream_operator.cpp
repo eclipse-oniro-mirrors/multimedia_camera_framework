@@ -1810,7 +1810,7 @@ int32_t HStreamOperator::OnCaptureError(int32_t captureId, const std::vector<Cap
     for (auto& errInfo : infos) {
         sptr<HStreamCommon> curStream = GetHdiStreamByStreamID(errInfo.streamId_);
         if (curStream == nullptr) {
-            MEDIA_ERR_LOG("HStreamOperator::OnCaptureError StreamId: %{public}d not found."
+            MEDIA_DEBUG_LOG("HStreamOperator::OnCaptureError StreamId: %{public}d not found."
                           " Error: %{public}d",
                 errInfo.streamId_, errInfo.error_);
             return CAMERA_INVALID_ARG;

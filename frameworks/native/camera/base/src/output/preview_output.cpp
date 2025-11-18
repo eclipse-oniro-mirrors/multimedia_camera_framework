@@ -81,7 +81,7 @@ std::set<std::string> PreviewOutput::whiteList_;
 PreviewOutput::PreviewOutput(sptr<IBufferProducer> bufferProducer)
     : CaptureOutput(CAPTURE_OUTPUT_TYPE_PREVIEW, StreamType::REPEAT, bufferProducer, nullptr)
 {
-    MEDIA_INFO_LOG("PreviewOutput::PreviewOutput construct");
+    MEDIA_DEBUG_LOG("PreviewOutput::PreviewOutput construct");
     previewFormat_ = 0;
     previewSize_.height = 0;
     previewSize_.width = 0;
@@ -92,7 +92,7 @@ PreviewOutput::PreviewOutput() : PreviewOutput(nullptr) {}
 
 PreviewOutput::~PreviewOutput()
 {
-    MEDIA_INFO_LOG("PreviewOutput::PreviewOutput destruct");
+    MEDIA_DEBUG_LOG("PreviewOutput::PreviewOutput destruct");
 }
 
 int32_t PreviewOutput::Release()

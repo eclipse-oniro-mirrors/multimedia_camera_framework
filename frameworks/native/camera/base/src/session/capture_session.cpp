@@ -335,8 +335,8 @@ int32_t CaptureSession::CommitConfig()
         MEDIA_ERR_LOG("CaptureSession::CommitConfig the camera can't support light status!");
     }
 
-    COMM_INFO_LOG("CaptureSession::CommitConfig isColorSpaceSetted_ = %{public}d", isColorSpaceSetted_);
     if (!isColorSpaceSetted_) {
+        COMM_INFO_LOG("CaptureSession::CommitConfig is not setColorSpace");
         auto preconfigProfiles = GetPreconfigProfiles();
         if (preconfigProfiles != nullptr) {
             SetColorSpace(preconfigProfiles->colorSpace);
@@ -632,8 +632,9 @@ void CaptureSession::UpdateDeviceDeferredability()
     std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();
     CHECK_RETURN_ELOG(metadata == nullptr, "UpdateDeviceDeferredability camera metadata is null");
     int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_DEFERRED_IMAGE_DELIVERY, &item);
-    MEDIA_INFO_LOG("UpdateDeviceDeferredability get ret: %{public}d", ret);
-    MEDIA_DEBUG_LOG("UpdateDeviceDeferredability item: %{public}d count: %{public}d", item.item, item.count);
+    CHECK_RETURN(ret != CAM_META_SUCCESS);
+    MEDIA_DEBUG_LOG("UpdateDeviceDeferredability get ret: %{public}d item: %{public}d count: %{public}d",
+        ret, item.item, item.count);
     for (uint32_t i = 0; i + 1 < item.count; i++) {
         if (i % DEFERRED_MODE_DATA_SIZE == 0) {
             MEDIA_DEBUG_LOG("UpdateDeviceDeferredability mode index:%{public}d, deferredType:%{public}d",
@@ -645,8 +646,9 @@ void CaptureSession::UpdateDeviceDeferredability()
 
     deviceInfo->modeVideoDeferredType_ = {};
     ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_AUTO_DEFERRED_VIDEO_ENHANCE, &item);
-    MEDIA_INFO_LOG("UpdateDeviceDeferredability get video ret: %{public}d", ret);
-    MEDIA_DEBUG_LOG("UpdateDeviceDeferredability video item: %{public}d count: %{public}d", item.item, item.count);
+    CHECK_RETURN(ret != CAM_META_SUCCESS);
+    MEDIA_DEBUG_LOG("UpdateDeviceDeferredability get video ret: %{public}d video item: %{public}d count: %{public}d",
+        ret, item.item, item.count);
     for (uint32_t i = 0; i + 1 < item.count; i++) {
         if (i % DEFERRED_MODE_DATA_SIZE == 0) {
             MEDIA_DEBUG_LOG("UpdateDeviceDeferredability mode index:%{public}d, video deferredType:%{public}d",
@@ -853,10 +855,10 @@ int32_t CaptureSession::ConfigureVideoOutput(sptr<CaptureOutput>& output)
 
 int32_t CaptureSession::ConfigureOutput(sptr<CaptureOutput>& output)
 {
-    MEDIA_INFO_LOG("Enter Into CaptureSession::ConfigureOutput");
+    MEDIA_DEBUG_LOG("Enter Into CaptureSession::ConfigureOutput");
     output->SetSession(this);
     auto type = output->GetOutputType();
-    MEDIA_INFO_LOG("CaptureSession::ConfigureOutput outputType is:%{public}d", type);
+    MEDIA_DEBUG_LOG("CaptureSession::ConfigureOutput outputType is:%{public}d", type);
     switch (type) {
         case CAPTURE_OUTPUT_TYPE_PREVIEW:
             return ConfigurePreviewOutput(output);
@@ -2612,7 +2614,7 @@ int32_t CaptureSession::GetZoomRatioRange(std::vector<float>& zoomRatioRange)
     }
 
     if (supportSpecSearch_) {
-        MEDIA_INFO_LOG("spec search enter");
+        MEDIA_DEBUG_LOG("spec search enter");
         int32_t retCode = DoSpecSearch(zoomRatioRange);
         return retCode;
     }

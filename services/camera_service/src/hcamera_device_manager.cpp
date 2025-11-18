@@ -473,14 +473,14 @@ int32_t HCameraDeviceManager::GetCurrentCost() const
 
 std::string HCameraDeviceManager::GetACameraId()
 {
-    MEDIA_INFO_LOG("HCameraDeviceManager::GetActiveClient start");
+    MEDIA_INFO_LOG("HCameraDeviceManager::GetACameraId start");
     std::string cameraId;
     if (!stateOfRgmCamera_.IsEmpty()) {
         stateOfRgmCamera_.Iterate([&](const std::string pid, int32_t state) {
             cameraId = pid;
         });
     }
-    MEDIA_INFO_LOG("HCameraDeviceManager::GetActiveClient end");
+    MEDIA_INFO_LOG("HCameraDeviceManager::GetACameraId end");
     return cameraId;
 }
 
