@@ -681,7 +681,7 @@ int32_t CameraInput::GetCameraAllVendorTags(std::vector<vendorTag_t> &infos) __a
     CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS, CAMERA_UNKNOWN_ERROR,
         "CameraInput::GetCameraAllVendorTags failed! because of hdi error, ret = %{public}d", ret);
     MEDIA_INFO_LOG("CameraInput::GetCameraAllVendorTags success! vendors size = %{public}zu!", infos.size());
-    MEDIA_INFO_LOG("CameraInput::GetCameraAllVendorTags end!");
+    MEDIA_DEBUG_LOG("CameraInput::GetCameraAllVendorTags end!");
     return CAMERA_OK;
 }
 

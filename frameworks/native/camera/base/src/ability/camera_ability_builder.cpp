@@ -25,7 +25,7 @@ std::vector<sptr<CameraAbility>> CameraAbilityBuilder::GetAbility(int32_t modeNa
     AvailableConfig availableConfig;
     CameraAbilityParseUtil::GetAvailableConfiguration(modeName, metadata, availableConfig);
     std::vector<sptr<CameraAbility>> abilities;
-    MEDIA_INFO_LOG("enter CameraAbilityBuilder::GetAbility");
+    MEDIA_DEBUG_LOG("enter CameraAbilityBuilder::GetAbility");
     for (const auto& configInfo : availableConfig.configInfos) {
         if (specIds.find(configInfo.specId) == specIds.end()) {
             continue;
