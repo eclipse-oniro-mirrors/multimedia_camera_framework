@@ -1119,5 +1119,49 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_042, TestSize.Level0)
     camDevice->SetIsHasFitedRotation(OHOS_CAMERA_APP_HINT_NONE);
     EXPECT_EQ(camDevice->GetIsHasFitedRotation(), false);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test GetCameraIdTransform
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetCameraIdTransform
+ */
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_043, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+
+    std::string testCameraId = camDevice->GetCameraIdTransform();
+    EXPECT_EQ(testCameraId, cameraId);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test SetCameraIdTransform
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetCameraIdTransform
+ */
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_044, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+
+    string testCameraId = "ForTest";
+    camDevice->SetCameraIdTransform(testCameraId);
+    std::string CurId = camDevice->GetCameraIdTransform();
+    EXPECT_EQ(CurId, testCameraId);
+}
 }
 }

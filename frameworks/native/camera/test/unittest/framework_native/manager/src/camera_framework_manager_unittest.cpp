@@ -2698,6 +2698,46 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_090, Test
 
     cameraManager_->OnCameraServerAlive();
     EXPECT_NE(cameraManager_->deathRecipient_, nullptr);
+
+/*
+ * Feature: Framework
+ * Function: Test SetCameraIdTransform When deviceObj is not nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetCameraIdTransform When After CreateCameraDevice
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_091, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
+    sptr<ICameraDeviceService> deviceObj = nullptr;
+    auto camera = cameras[0];
+    int32_t retCode = cameraManager_->CreateCameraDevice(camera->GetID(), &deviceObj);
+    ASSERT_EQ(retCode, CAMERA_OK);
+    std::string originCameraId = camera->GetID();
+    EXPECT_NE(originCameraId, "");
+    cameraManager_->SetCameraIdTransform(deviceObj, originCameraId);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test SetCameraIdTransform When deviceObj is nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetCameraIdTransform When After CreateCameraDevice
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_092, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
+    sptr<ICameraDeviceService> deviceObj = nullptr;
+    auto camera = cameras[0];
+    std::string originCameraId = camera->GetID();
+    EXPECT_NE(originCameraId, "");
+    cameraManager_->SetCameraIdTransform(deviceObj, originCameraId);
+}
 }
 }
 }
