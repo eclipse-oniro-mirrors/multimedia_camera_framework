@@ -214,6 +214,11 @@ HCameraDevice::HCameraDevice(
         std::lock_guard<std::mutex> lock(g_cameraHostManagerMutex);
         g_cameraHostManager = cameraHostManager;
     }
+
+    {
+        std::lock_guard<std::mutex> lock(originCameraIdLock_);
+        originCameraId_ = cameraID;
+    }
 }
 
 HCameraDevice::~HCameraDevice()

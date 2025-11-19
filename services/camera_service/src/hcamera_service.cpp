@@ -1125,6 +1125,8 @@ void HCameraService::OnCameraStatus(const string& cameraId, CameraStatus status,
     MEDIA_INFO_LOG("HCameraService::OnCameraStatus callbacks.size = %{public}zu, cameraId = %{public}s, "
                    "status = %{public}d, pid = %{public}d, bundleName = %{public}s",
         cameraServiceCallbacks_.size(), cameraId.c_str(), status, IPCSkeleton::GetCallingPid(), bundleName.c_str());
+    CacheCameraStatus(
+        cameraId, std::make_shared<CameraStatusCallbacksInfo>(CameraStatusCallbacksInfo { status, bundleName }));
     for (auto it : cameraServiceCallbacks_) {
         if (it.second == nullptr) {
             MEDIA_ERR_LOG("HCameraService::OnCameraStatus pid:%{public}d cameraServiceCallback is null", it.first);
@@ -1136,8 +1138,6 @@ void HCameraService::OnCameraStatus(const string& cameraId, CameraStatus status,
             continue;
         }
         it.second->OnCameraStatusChanged(cameraId, status, bundleName);
-        CacheCameraStatus(
-            cameraId, std::make_shared<CameraStatusCallbacksInfo>(CameraStatusCallbacksInfo { status, bundleName }));
         CAMERA_SYSEVENT_BEHAVIOR(
             CreateMsg("OnCameraStatusChanged! for cameraId:%s, current Camera Status:%d", cameraId.c_str(), status));
     }

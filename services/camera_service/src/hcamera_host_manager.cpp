@@ -817,12 +817,7 @@ void HCameraHostManager::AddCameraDevice(const std::string& cameraId,
     }
     cameraDevices_[cameraId] = cameraDevice;
     auto statusCallback = statusCallback_.lock();
-    string reportCameraId = "";
-    if (originCameraId != cameraId) {
-        reportCameraId = originCameraId;
-    } else {
-        reportCameraId = cameraId;
-    }
+    string reportCameraId = (originCameraId != cameraId) ? originCameraId : cameraId;
     statusCallback->OnCameraStatus(reportCameraId, CAMERA_STATUS_UNAVAILABLE, CallbackInvoker::APPLICATION);
 }
 
@@ -838,12 +833,7 @@ void HCameraHostManager::RemoveCameraDevice(const std::string& cameraId, std::st
         cameraDevices_.erase(cameraId);
         auto statusCallback = statusCallback_.lock();
         if (statusCallback) {
-            string reportCameraId = "";
-            if (originCameraId != cameraId) {
-                reportCameraId = originCameraId;
-            } else {
-                reportCameraId = cameraId;
-            }
+            string reportCameraId = (originCameraId != cameraId) ? originCameraId : cameraId;
             statusCallback->OnCameraStatus(reportCameraId, CAMERA_STATUS_AVAILABLE, CallbackInvoker::APPLICATION);
         }
     }
