@@ -227,7 +227,6 @@ private:
     std::map<int32_t, std::unique_ptr<std::mutex>> mutexMap;
     std::mutex photoCallbackLock_;
     std::mutex thumbnailCallbackLock_;
-    std::mutex streamOperatorLock_;
     SpHolder<sptr<IBufferConsumerListener>> photoListener_;
     sptr<IBufferConsumerListener> photoAssetListener_ = nullptr;
     sptr<IBufferConsumerListener> thumbnailListener_ = nullptr;
