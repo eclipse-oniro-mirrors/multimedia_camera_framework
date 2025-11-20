@@ -1350,7 +1350,9 @@ bool HStreamCapture::IsHasEnableOfflinePhoto()
 void HStreamCapture::SwitchToOffline()
 {
     mSwitchToOfflinePhoto_ = true;
-    streamOperatorOffline_ = GetStreamOperator();
+    std::lock_guardstd::mutex lock(streamOperatorLock_);
+    CHECK_RETURN(streamOperatorOffline_ != nullptr);
+    streamOperatorOffline_ = streamOperator_.promote();
 }
 
 bool HStreamCapture::IsHasSwitchToOffline()
