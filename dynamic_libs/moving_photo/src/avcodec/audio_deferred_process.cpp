@@ -181,7 +181,7 @@ int32_t AudioDeferredProcess::Process(vector<sptr<AudioRecord>>& audioRecords,
     for (uint32_t i = 0; i < audioRecordsLen; i ++) {
         int32_t ret = memcpy_s(rawArr.data() + count * oneUnprocessedSize_, oneUnprocessedSize_,
             audioRecords[i]->GetAudioBuffer(), oneUnprocessedSize_);
-        CHECK_PRINT_ELOG(ret != 0, "AudioDeferredProcess::Process memcpy_s err");
+        CHECK_PRINT_ELOG(ret != 0, "AudioDeferredProcess::Process memcpy_s err:%{public}d", ret);
         if (audioRecordsLen - 1 == i) {
             MemsetAndCheck(rawArr.data(), MAX_UNPROCESSED_SIZE * PROCESS_BATCH_SIZE,
                 0, PROCESS_BATCH_SIZE * oneUnprocessedSize_);

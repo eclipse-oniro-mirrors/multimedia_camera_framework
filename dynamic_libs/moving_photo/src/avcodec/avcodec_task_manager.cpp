@@ -604,17 +604,17 @@ void AudioDeferredProcessSingle::ConfigAndProcess(sptr<AudioCapturerSession> aud
 {
     std::lock_guard<mutex> lock(deferredProcessMutex_);
     if (audioDeferredProcessPtr_ == nullptr) {
-            MEDIA_INFO_LOG("AvcodecTaskManager::create audioDeferredProcessPtr_.");
-            audioDeferredProcessPtr_ = std::make_unique<AudioDeferredProcess>();
-        }
+        MEDIA_INFO_LOG("AvcodecTaskManager::create audioDeferredProcessPtr_.");
+        audioDeferredProcessPtr_ = std::make_unique<AudioDeferredProcess>();
+        audioDeferredProcessPtr_->StoreOptions(
+            audioCapturerSession_->deferredInputOptions_, audioCapturerSession_->deferredOutputOptions_);
+        CHECK_RETURN(audioDeferredProcessPtr_->GetOfflineEffectChain() != 0);
+        CHECK_RETURN(audioDeferredProcessPtr_->ConfigOfflineAudioEffectChain() != 0);
+        CHECK_RETURN(audioDeferredProcessPtr_->PrepareOfflineAudioEffectChain() != 0);
+        CHECK_RETURN(audioDeferredProcessPtr_->GetMaxBufferSize(audioCapturerSession_->deferredInputOptions_,
+            audioCapturerSession_->deferredOutputOptions_) != 0);
+    }
     CHECK_RETURN(!audioDeferredProcessPtr_);
-    audioDeferredProcessPtr_->StoreOptions(
-        audioCapturerSession_->deferredInputOptions_, audioCapturerSession_->deferredOutputOptions_);
-    CHECK_RETURN(audioDeferredProcessPtr_->GetOfflineEffectChain() != 0);
-    CHECK_RETURN(audioDeferredProcessPtr_->ConfigOfflineAudioEffectChain() != 0);
-    CHECK_RETURN(audioDeferredProcessPtr_->PrepareOfflineAudioEffectChain() != 0);
-    CHECK_RETURN(audioDeferredProcessPtr_->GetMaxBufferSize(
-        audioCapturerSession_->deferredInputOptions_, audioCapturerSession_->deferredOutputOptions_) != 0);
     audioDeferredProcessPtr_->Process(audioRecords, processedAudioRecords);
 }
 
