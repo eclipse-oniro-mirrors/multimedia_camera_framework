@@ -235,7 +235,8 @@ void CameraReportUtils::SetCapturePerfStartInfo(DfxCaptureInfo captureInfo)
     captureList_.insert(pair<int32_t, DfxCaptureInfo>(captureInfo.captureId, captureInfo));
 }
 
-void CameraReportUtils::SetCapturePerfEndInfo(int32_t captureId, bool isOfflinCapture, int32_t offlineOutputCnt)
+void CameraReportUtils::SetCapturePerfEndInfo(int32_t captureId, bool isOfflinCapture,
+    int32_t offlineOutputCnt, bool isMovingPhoto, bool isDeferredImageDelivery)
 {
     MEDIA_DEBUG_LOG("SetCapturePerfEndInfo start");
     unique_lock<mutex> lock(mutex_);
@@ -247,6 +248,8 @@ void CameraReportUtils::SetCapturePerfEndInfo(int32_t captureId, bool isOfflinCa
             dfxCaptureInfo.captureEndTime = DeferredProcessing::SteadyClock::GetTimestampMilli();
             dfxCaptureInfo.isOfflinCapture = isOfflinCapture;
             dfxCaptureInfo.offlineOutputCnt = static_cast<uint32_t>(offlineOutputCnt);
+            dfxCaptureInfo.isMovingPhoto = isMovingPhoto;
+            dfxCaptureInfo.isDeferredImageDelivery = isDeferredImageDelivery;
             ReportCapturePerf(dfxCaptureInfo);
             ReportImagingInfo(dfxCaptureInfo);
             captureList_.erase(captureId);
@@ -270,7 +273,10 @@ void CameraReportUtils::ReportCapturePerf(DfxCaptureInfo captureInfo)
         "CUR_MODE", curMode_,
         "CUR_CAMERA_ID", cameraId_,
         "IS_OFFLINE_CAPTURE", captureInfo.isOfflinCapture,
-        "CUR_OFFLINE_COUNT", captureInfo.offlineOutputCnt);
+        "CUR_OFFLINE_COUNT", captureInfo.offlineOutputCnt,
+        "IS_MOVING_PHOTO", captureInfo.isMovingPhoto,
+        "IS_DEFERRED_IMAGE_DELIVERY", captureInfo.isDeferredImageDelivery,
+        "ROTATION", captureInfo.rotation);
 }
 
 void CameraReportUtils::SetSwitchCamPerfStartInfo(CallerInfo caller)

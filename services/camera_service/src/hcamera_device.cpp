@@ -23,6 +23,7 @@
 #include <parameters.h>
 #include <parameter.h>
 
+#include "steady_clock.h"
 #include "bms_adapter.h"
 #include "camera_common_event_manager.h"
 #include "camera_device_ability_items.h"
@@ -140,6 +141,10 @@ public:
         position = cameraDevice_->GetCameraPosition();
         MEDIA_INFO_LOG("HCameraDevice::OnFoldStatusChanged %{public}s, %{public}d, %{public}d, %{public}d,",
             foldScreenType.c_str(), position, mLastFoldStatus, currentFoldStatus);
+        std::string bundleName = cameraDevice_->GetClientName();
+        int32_t cameraPosition = cameraDevice_->GetCameraPosition();
+        POWERMGR_SYSEVENT_FOLD_STATE(bundleName, static_cast<uint>(mLastFoldStatus),
+            static_cast<uint>(currentFoldStatus), cameraId_, static_cast<uint>(cameraPosition));
         if (foldScreenType[0] == '6' && position == OHOS_CAMERA_POSITION_FRONT &&
             ((currentFoldStatus == FoldStatusRosen::EXPAND &&
             (mLastFoldStatus == FoldStatusRosen::HALF_FOLD || mLastFoldStatus == FoldStatusRosen::FOLDED)) ||
@@ -639,6 +644,7 @@ int32_t HCameraDevice::OpenDevice(bool isEnableSecCam)
     }
     HandleFoldableDevice();
     POWERMGR_SYSEVENT_CAMERA_CONNECT(pid, uid, cameraID_.c_str(), clientName_);
+    openCamTime_ = DeferredProcessing::SteadyClock::GetTimestampMilli();
     NotifyCameraStatus(CAMERA_OPEN);
 #ifdef HOOK_CAMERA_OPERATOR
     if (!CameraRotatePlugin::GetInstance()->HookOpenDeviceForRotate(clientName_, GetDeviceAbility(), cameraID_)) {
@@ -952,7 +958,8 @@ int32_t HCameraDevice::CloseDevice()
         std::lock_guard<std::mutex> lock(deviceSvcCbMutex_);
         deviceSvcCallback_ = nullptr;
     }
-    POWERMGR_SYSEVENT_CAMERA_DISCONNECT(cameraID_.c_str());
+    POWERMGR_SYSEVENT_CAMERA_DISCONNECT(cameraID_.c_str(),
+        DeferredProcessing::SteadyClock::GetTimestampMilli() - openCamTime_);
     MEDIA_DEBUG_LOG("HCameraDevice::CloseDevice end");
     NotifyCameraStatus(CAMERA_CLOSE);
 #ifdef MEMMGR_OVERRID
@@ -1970,7 +1977,8 @@ void HCameraDevice::RemoveResourceWhenHostDied()
         cameraHostManager_->RemoveCameraDevice(cameraID_);
         cameraHostManager_->UpdateRestoreParamCloseTime(clientName_, cameraID_);
     }
-    POWERMGR_SYSEVENT_CAMERA_DISCONNECT(cameraID_.c_str());
+    POWERMGR_SYSEVENT_CAMERA_DISCONNECT(cameraID_.c_str(),
+        DeferredProcessing::SteadyClock::GetTimestampMilli() - openCamTime_);
     NotifyCameraStatus(CAMERA_CLOSE);
 #ifdef MEMMGR_OVERRID
     RequireMemory(Memory::CAMERA_END);

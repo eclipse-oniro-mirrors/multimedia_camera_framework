@@ -472,12 +472,12 @@
                                      "NAME", name);                                \
     } while (0)
 
-#define POWERMGR_SYSEVENT_CAMERA_DISCONNECT(camid)                                 \
+#define POWERMGR_SYSEVENT_CAMERA_DISCONNECT(camid, time)                                 \
     do {                                                                           \
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::CAMERA,                     \
                                      "CAMERA_DISCONNECT",                          \
                                      HiviewDFX::HiSysEvent::EventType::STATISTIC,  \
-                                     "ID", camid);                                 \
+                                     "ID", camid, "TIME", time);                                 \
     } while (0)
 
 #define POWERMGR_SYSEVENT_TORCH_STATE(pid, uid, status)                            \
@@ -487,11 +487,21 @@
                                      "PID", pid, "UID", uid, "STATE", status);     \
     } while (0)
 
-#define POWERMGR_SYSEVENT_CAMERA_CONFIG(type, width, height)                           \
-    do {                                                                               \
-        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::CAMERA, "CAMERA_CONFIG",        \
-                                     HiviewDFX::HiSysEvent::EventType::STATISTIC,      \
-                                     "TYPE", #type, "WIDTH", width, "HEIGHT", height); \
+#define POWERMGR_SYSEVENT_MACRO_STATUS(bname, state, mode)                         \
+    do {                                                                           \
+        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::CAMERA, "MACRO_STATUS",     \
+                                     HiviewDFX::HiSysEvent::EventType::STATISTIC,  \
+                                     "STATE", state, "BUNDLE_NAME", bname, "MODE", mode);     \
+    } while (0)
+
+#define POWERMGR_SYSEVENT_FOLD_STATE(bname, prestate, state, camid, campos)                         \
+    do {                                                                           \
+        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::CAMERA, "FOLD_STATE",       \
+                                     HiviewDFX::HiSysEvent::EventType::STATISTIC,  \
+                                     "BUNDLE_NAME", bname,                    \
+                                     "PRE_STATE", prestate, "STATE", state,        \
+                                     "CAMERA_ID", camid,                        \
+                                     "CAMERA_POSITION", campos);           \
     } while (0)
 
 #define POWERMGR_SYSEVENT_FLASH_ON()                                               \
