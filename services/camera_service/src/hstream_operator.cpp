@@ -1288,15 +1288,14 @@ void HStreamOperator::UpdateOrientationBaseGravity(int32_t rotationValue, int32_
 
 std::string HStreamOperator::GetLastDisplayName()
 {
-    std::lock_guardstd::mutex lock(lastDisplayNameMutex_);
+    std::lock_guard<std::mutex> lock(lastDisplayNameMutex_);
     return lastDisplayName_;
 }
 
 void HStreamOperator::SetLastDisplayName(std::string& lastDisplayName)
 {
-    std::lock_guardstd::mutex lock(lastDisplayNameMutex_);
+    std::lock_guard<std::mutex> lock(lastDisplayNameMutex_);
     lastDisplayName_ = lastDisplayName;
-    return;
 }
 
 std::string HStreamOperator::CreateDisplayName(const std::string& suffix)
