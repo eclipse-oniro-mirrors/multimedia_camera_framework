@@ -150,6 +150,40 @@ private:
     int32_t rollAngle_;
 };
 
+class MetadataBasicFaceObject : public MetadataObject {
+public:
+    MetadataBasicFaceObject(const MetaObjectParms& parms, const Rect leftEyeBoundingBox, const Rect rightEyeBoundingBox,
+                       const int32_t pitchAngle, const int32_t yawAngle, const int32_t rollAngle);
+    ~MetadataBasicFaceObject() = default;
+    inline Rect GetLeftEyeBoundingBox()
+    {
+        return leftEyeBoundingBox_;
+    };
+    inline Rect GetRightEyeBoundingBox()
+    {
+        return rightEyeBoundingBox_;
+    };
+    inline int32_t GetPitchAngle()
+    {
+        return pitchAngle_;
+    };
+    inline int32_t GetYawAngle()
+    {
+        return yawAngle_;
+    };
+    inline int32_t GetRollAngle()
+    {
+        return rollAngle_;
+    };
+
+private:
+    Rect leftEyeBoundingBox_;
+    Rect rightEyeBoundingBox_;
+    int32_t pitchAngle_;
+    int32_t yawAngle_;
+    int32_t rollAngle_;
+};
+
 class MetadataHumanBodyObject : public MetadataObject {
 public:
     MetadataHumanBodyObject(const MetaObjectParms& parms);

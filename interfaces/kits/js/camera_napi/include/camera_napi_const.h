@@ -145,7 +145,8 @@ enum JSMetadataObjectType {
     DOG_FACE,
     DOG_BODY,
     SALIENT_DETECTION,
-    BAR_CODE_DETECTION
+    BAR_CODE_DETECTION,
+    BASE_FACE_DETECTION
 };
 
 enum CameraSteps {

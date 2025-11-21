@@ -388,6 +388,34 @@ void MetadataCommonUtils::ProcessHumanFaceDetectInfo(MetadataObjectFactory &fact
     index++;
     // LCOV_EXCL_STOP
 }
+
+void MetadataCommonUtils::ProcessBasicHumanFaceDetectInfo(MetadataObjectFactory &factory,
+    const camera_metadata_item_t &metadataItem, int32_t &index, bool isNeedMirror, bool isNeedFlip, RectBoxType type)
+{
+    int32_t version = metadataItem.data.i32[index++];
+    MEDIA_DEBUG_LOG("isNeedMirror: %{public}d, isNeedFlip: %{public}d, version: %{public}d",
+        isNeedMirror, isNeedFlip, version);
+    const int32_t rectLength = 4;
+    const int32_t offsetOne = 1;
+    const int32_t offsetTwo = 2;
+    const int32_t offsetThree = 3;
+    factory.SetLeftEyeBoundingBox(ProcessRectBox(
+        metadataItem.data.i32[index], metadataItem.data.i32[index + offsetOne],
+        metadataItem.data.i32[index + offsetTwo],
+        metadataItem.data.i32[index + offsetThree], isNeedMirror, isNeedFlip, type));
+    index += rectLength;
+    factory.SetRightEyeBoundingBoxd(ProcessRectBox(
+        metadataItem.data.i32[index], metadataItem.data.i32[index + offsetOne],
+        metadataItem.data.i32[index + offsetTwo],
+        metadataItem.data.i32[index + offsetThree], isNeedMirror, isNeedFlip, type));
+    index += rectLength;
+    factory.SetPitchAngle(metadataItem.data.i32[index]);
+    index++;
+    factory.SetYawAngle(metadataItem.data.i32[index]);
+    index++;
+    factory.SetRollAngle(metadataItem.data.i32[index]);
+    index++;
+}
  
 void MetadataCommonUtils::ProcessExternInfo(MetadataObjectFactory &factory,
     const camera_metadata_item_t &metadataItem, int32_t &index,
@@ -403,6 +431,9 @@ void MetadataCommonUtils::ProcessExternInfo(MetadataObjectFactory &factory,
             break;
         case MetadataObjectType::DOG_FACE:
             ProcessDogFaceDetectInfo(factory, metadataItem, index, isNeedMirror, isNeedFlip, type);
+            break;
+        case MetadataObjectType::BASE_FACE_DETECTION:
+            ProcessBasicHumanFaceDetectInfo(factory, metadataItem, index, isNeedMirror, isNeedFlip, type);
             break;
         default:
             break;

@@ -132,6 +132,34 @@ void MetadataOutputFuzzer::MetadataOutputFuzzTest1(FuzzedDataProvider& fdp)
     fuzz_->RemoveMetadataObjectTypes(metadataObjectTypes);
 }
 
+void MetadataOutputFuzzer::MetadataOutputFuzzTest2(FuzzedDataProvider& fdp)
+{
+    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
+        return;
+    }
+    static constexpr int32_t MIN_TYPE = static_cast<int32_t>(MetadataObjectType::FACE);
+    static constexpr int32_t MAX_TYPE = static_cast<int32_t>(MetadataObjectType::MAX_VALUE);
+    int32_t rawType = fdp.ConsumeIntegralInRange<int32_t>(MIN_TYPE, MAX_TYPE);
+    MetadataObjectType type = static_cast<MetadataObjectType>(rawType);
+
+    MetadataObjectFactory factory;
+    factory.ResetParameters();
+    sptr<MetadataObject> obj = factory.createMetadataObject(type);
+
+    int32_t format = OHOS_CAMERA_FORMAT_YCRCB_420_SP;
+    camera_metadata_item_t metadataItem{};
+    metadataItem.index = 0;
+    metadataItem.item = OHOS_ABILITY_CAMERA_MODES;
+    metadataItem.data_type = META_TYPE_INT32;
+    metadataItem.count = 1;
+    metadataItem.data.i32 = &format;
+    int32_t index = 0;
+    bool isNeedMirror = fdp.ConsumeBool();
+    bool isNeedFlip = fdp.ConsumeBool();
+    MetadataCommonUtils::ProcessExternInfo(factory, metadataItem, index, type, isNeedMirror, isNeedFlip,
+        RectBoxType::RECT_CAMERA);
+}
+
 void Test(uint8_t* data, size_t size)
 {
     FuzzedDataProvider fdp(data, size);
@@ -148,6 +176,7 @@ void Test(uint8_t* data, size_t size)
     CHECK_RETURN_ELOG(!MetadataOutputFuzzer::fuzz_, "Create fuzz_ Error");
     metadataOutput->MetadataOutputFuzzTest(fdp);
     metadataOutput->MetadataOutputFuzzTest1(fdp);
+    metadataOutput->MetadataOutputFuzzTest2(fdp);
 }
 
 } // namespace CameraStandard

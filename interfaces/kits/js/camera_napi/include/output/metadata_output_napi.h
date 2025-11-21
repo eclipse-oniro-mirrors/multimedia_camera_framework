@@ -38,6 +38,8 @@ private:
     napi_value CreateMetadataObjJSArray(napi_env env, const std::vector<sptr<MetadataObject>> metadataObjList) const;
     void AddMetadataObjExtending(napi_env env, sptr<MetadataObject> metadataObj, napi_value &metadataNapiObj) const;
     void CreateHumanFaceMetaData(napi_env env, sptr<MetadataObject> metadataObj, napi_value &metadataNapiObj) const;
+    void CreateBasicHumanFaceMetaData(napi_env env, sptr<MetadataObject> metadataObj,
+        napi_value &metadataNapiObj) const;
     void CreateCatFaceMetaData(napi_env env, sptr<MetadataObject> metadataObj, napi_value &metadataNapiObj) const;
     void CreateDogFaceMetaData(napi_env env, sptr<MetadataObject> metadataObj, napi_value &metadataNapiObj) const;
 };

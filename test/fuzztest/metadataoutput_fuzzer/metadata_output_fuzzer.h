@@ -88,6 +88,7 @@ public:
 static std::shared_ptr<MetadataOutput> fuzz_;
 static void MetadataOutputFuzzTest(FuzzedDataProvider& fdp);
 static void MetadataOutputFuzzTest1(FuzzedDataProvider& fdp);
+static void MetadataOutputFuzzTest2(FuzzedDataProvider& fdp);
 };
 } //CameraStandard
 } //OHOS

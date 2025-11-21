@@ -40,6 +40,8 @@ int32_t MapMetadataObjSupportedTypesEnum(MetadataObjectType nativeMetadataObjTyp
             return JSMetadataObjectType::SALIENT_DETECTION;
         case MetadataObjectType::BAR_CODE_DETECTION:
             return JSMetadataObjectType::BAR_CODE_DETECTION;
+        case MetadataObjectType::BASE_FACE_DETECTION:
+            return JSMetadataObjectType::BASE_FACE_DETECTION;
         default:
             // do nothing
             break;
@@ -66,6 +68,8 @@ MetadataObjectType MapMetadataObjSupportedTypesEnumFromJS(int32_t jsMetadataObjT
             return MetadataObjectType::SALIENT_DETECTION;
         case JSMetadataObjectType::BAR_CODE_DETECTION:
             return MetadataObjectType::BAR_CODE_DETECTION;
+        case JSMetadataObjectType::BASE_FACE_DETECTION:
+            return MetadataObjectType::BASE_FACE_DETECTION;
         default:
             // do nothing
             break;
