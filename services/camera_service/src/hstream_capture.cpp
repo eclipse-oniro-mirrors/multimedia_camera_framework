@@ -958,8 +958,10 @@ int32_t HStreamCapture::ConfirmCapture()
         MEDIA_INFO_LOG("HStreamCapture::ConfirmCapture when burst capture");
         std::vector<uint8_t> settingVector;
         std::shared_ptr<OHOS::Camera::CameraMetadata> burstCaptureSettings = nullptr;
-        std::lock_guard<std::mutex> lock(cameraAbilityLock_);
-        OHOS::Camera::MetadataUtils::ConvertMetadataToVec(cameraAbility_, settingVector);
+        {
+            std::lock_guard<std::mutex> lock(cameraAbilityLock_);
+            OHOS::Camera::MetadataUtils::ConvertMetadataToVec(cameraAbility_, settingVector);
+        }
         OHOS::Camera::MetadataUtils::ConvertVecToMetadata(settingVector, burstCaptureSettings);
         if (burstCaptureSettings == nullptr) {
             burstCaptureSettings = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
