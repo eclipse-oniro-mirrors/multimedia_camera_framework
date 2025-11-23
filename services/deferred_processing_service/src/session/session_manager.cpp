@@ -30,6 +30,7 @@ SessionManager::SessionManager()
 SessionManager::~SessionManager()
 {
     DP_INFO_LOG("entered.");
+    std::lock_guard<std::mutex> lock(photoSessionMutex_);
     photoSessionInfos_.clear();
     videoSessionInfos_.clear();
 }

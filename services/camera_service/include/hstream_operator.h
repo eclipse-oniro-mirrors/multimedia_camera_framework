@@ -305,6 +305,9 @@ private:
     sptr<HStreamRepeat> livePhotoStreamRepeat_;
     std::atomic<int32_t> hdiStreamIdGenerator_ = HDI_STREAM_ID_INIT;
     int32_t deviceSensorOritation_ = 0;
+    std::mutex lastDisplayNameMutex_;
+    std::string GetLastDisplayName();
+    void SetLastDisplayName(std::string& lastDisplayName);
 
     inline int32_t GenerateHdiStreamId()
     {

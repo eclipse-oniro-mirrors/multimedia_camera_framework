@@ -1286,6 +1286,18 @@ void HStreamOperator::UpdateOrientationBaseGravity(int32_t rotationValue, int32_
         sensorRotation, rotation);
 }
 
+std::string HStreamOperator::GetLastDisplayName()
+{
+    std::lock_guard<std::mutex> lock(lastDisplayNameMutex_);
+    return lastDisplayName_;
+}
+
+void HStreamOperator::SetLastDisplayName(std::string& lastDisplayName)
+{
+    std::lock_guard<std::mutex> lock(lastDisplayNameMutex_);
+    lastDisplayName_ = lastDisplayName;
+}
+
 std::string HStreamOperator::CreateDisplayName(const std::string& suffix)
 {
     struct tm currentTime;
@@ -1302,13 +1314,14 @@ std::string HStreamOperator::CreateDisplayName(const std::string& suffix)
     } else {
         MEDIA_ERR_LOG("Failed to get current time.");
     }
-    if (lastDisplayName_ == formattedTime) { // LCOV_EXCL_LINE
+    auto lastDisplayName = GetLastDisplayName();
+    if (lastDisplayName == formattedTime) { // LCOV_EXCL_LINE
         saveIndex++;
         formattedTime = formattedTime + connector + std::to_string(saveIndex);
         MEDIA_INFO_LOG("CreateDisplayName is %{private}s", formattedTime.c_str());
         return formattedTime;
     }
-    lastDisplayName_ = formattedTime;
+    SetLastDisplayName(formattedTime);
     saveIndex = 0;
     MEDIA_INFO_LOG("CreateDisplayName is %{private}s", formattedTime.c_str());
     return formattedTime;
