@@ -102,7 +102,7 @@ int32_t VideoOutputCallbackImpl::OnDeferredVideoEnhancementInfo(const CaptureEnd
     auto item = videoOutput_.promote();
     std::shared_ptr<VideoStateCallback> appCallback =nullptr;
     if (item != nullptr) {
-        appCallback = item->GetApplicationCallback();
+        appCallback = item->GetApplicationCallback();  
     }
     if (appCallback != nullptr) {
         appCallback->OnDeferredVideoEnhancementInfo(captureEndedInfo);
