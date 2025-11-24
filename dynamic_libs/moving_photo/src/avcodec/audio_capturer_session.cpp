@@ -176,7 +176,6 @@ void AudioCapturerSession::ProcessAudioBuffer()
         int64_t timeOffset = 32;
         sptr<AudioRecord> audioRecord = new AudioRecord(GetTickCount() - timeOffset);
         audioRecord->SetAudioBuffer(buffer.get(), bufferLen);
-        MEDIA_DEBUG_LOG("audio push buffer frameId: %{public}s", audioRecord->GetFrameId().c_str());
         buffer.release();
         audioBufferQueue_.Push(audioRecord);
     }
