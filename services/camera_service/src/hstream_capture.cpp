@@ -52,6 +52,9 @@
 #include "mem_mgr_client.h"
 #include "mem_mgr_constant.h"
 #endif
+#include <string>
+#include "res_sched_client.h"
+#include "res_type.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -1595,6 +1598,22 @@ int32_t HStreamCapture::CreateMediaLibrary(const sptr<CameraPhotoProxy> &photoPr
     cameraPhotoProxy->SetLongitude(longitude_);
     hStreamOperatorSptr_->CreateMediaLibrary(cameraPhotoProxy, uri, cameraShotType, burstKey, timestamp);
     return CAMERA_OK;
+}
+
+void HStreamCapture::ElevateThreadPriority()
+{
+    MEDIA_INFO_LOG("ElevateThreadPriority set qos enter");
+    int32_t qosLevel = 7;  //  7 设置 qos 7 优先级41; -1 取消 qos 7；其他无效
+    std::string strBundleName = "camera_service";
+    std::string strPid = std::to_string(getpid());  // 提升优先级的进程id
+    std::string strTid = std::to_string(gettid());  // 提升优先级的线程id
+    std::string strQos = std::to_string(qosLevel);
+    std::unordered_map<std::string, std::string> mapPayLoad;
+    mapPayLoad["pid"] = strPid;
+    mapPayLoad[strTid] = strQos;  // 支持多个tid，{{tid0,qos0},{tid1,qos1}}
+    mapPayLoad["bundleName"] = strBundleName;
+    uint32_t type = OHOS::ResourceSchedule::ResType::RES_TYPE_THREAD_QOS_CHANGE;
+    OHOS::ResourceSchedule::ResSchedClient::GetInstance().ReportData(type, 0, mapPayLoad);  // 异步IPC，优先级提升到41
 }
 // LCOV_EXCL_STOP
 } // namespace CameraStandard

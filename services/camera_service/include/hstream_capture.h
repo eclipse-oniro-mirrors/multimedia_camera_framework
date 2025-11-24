@@ -137,6 +137,7 @@ public:
     int32_t CreateMediaLibrary(std::shared_ptr<PictureIntf> picture, sptr<CameraServerPhotoProxy> &photoProxy,
         std::string &uri, int32_t &cameraShotType, std::string& burstKey, int64_t timestamp);
     int32_t RequireMemorySize(int32_t memSize);
+    void ElevateThreadPriority();
 
     bool isYuvCapture_ = false;
     SpHolder<sptr<Surface>> gainmapSurface_;
