@@ -65,7 +65,15 @@ PhotoJobRepository::PhotoJobRepository(const int32_t userId) : userId_(userId)
 {
     DP_DEBUG_LOG("entered, userId: %{public}d", userId_);
     offlineJobQueue_ = std::make_unique<PhotoJobQueue>(
-        [] (const DeferredPhotoJobPtr& a, const DeferredPhotoJobPtr& b) {return *a > *b;});
+        [] (const DeferredPhotoJobPtr& a, const DeferredPhotoJobPtr& b) {
+        DP_DEBUG_LOG("a id: %{public}s, state: %{public}d, priority: %{public}d",
+            a->GetImageId().c_str(), a->GetCurStatus(), a->GetCurPriority());
+        DP_DEBUG_LOG("b id: %{public}s, state: %{public}d, priority: %{public}d",
+            b->GetImageId().c_str(), b->GetCurStatus(), b->GetCurPriority());
+        bool ret = *a > *b;
+        DP_DEBUG_LOG("*a > *b: %{public}d", ret);
+        return ret;
+    });
 }
 
 PhotoJobRepository::~PhotoJobRepository()
@@ -94,6 +102,7 @@ void PhotoJobRepository::AddDeferredJob(const std::string& imageId, bool discard
     DP_INFO_LOG("DPS_PHOTO: AddJob imageId: %{public}s, type: %{public}d, discardable: %{public}d",
         imageId.c_str(), type, discardable);
     if (jobPtr->GetPhotoJobType() == PhotoJobType::BACKGROUND) {
+        jobPtr->SetJobPriority(JobPriority::HIGH);
         backgroundJobMap_.emplace(imageId, jobPtr);
     } else {
         offlineJobQueue_->Push(jobPtr);

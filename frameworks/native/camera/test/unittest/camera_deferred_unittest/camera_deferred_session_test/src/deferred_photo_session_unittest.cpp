@@ -24,7 +24,7 @@ namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
 namespace {
-    constexpr int32_t USER_ID = 100;
+    constexpr int32_t USER_ID = 0;
     constexpr int32_t OTHER_USER_ID = 101;
 }
 

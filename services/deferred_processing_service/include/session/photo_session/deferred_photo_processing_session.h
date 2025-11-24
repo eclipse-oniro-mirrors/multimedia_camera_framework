@@ -45,6 +45,7 @@ public:
     int32_t RestoreImage(const std::string& imageId) override;
     int32_t ProcessImage(const std::string& appName, const std::string& imageId) override;
     int32_t CancelProcessImage(const std::string& imageId) override;
+    int32_t NotifyProcessImage() override;
 
 private:
     void ReportEvent(const std::string& imageId, int32_t event);

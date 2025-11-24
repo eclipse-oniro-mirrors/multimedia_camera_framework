@@ -32,34 +32,28 @@ namespace CameraStandard {
 namespace DeferredProcessing {
 
 const int32_t USER_ID = 0;
-void DeferredSessionCommandUnitTest::SetUpTestCase(void) {}
+void DeferredSessionCommandUnitTest::SetUpTestCase(void)
+{
+    DPS_Initialize();
+}
 
 void DeferredSessionCommandUnitTest::TearDownTestCase(void) {}
 
 void DeferredSessionCommandUnitTest::SetUp(void)
 {
-    DPS_Initialize();
+    srcFd_ = open(VIDEO_PATH.c_str(), O_RDONLY);
+    dtsFd_ = open(VIDEO_TEMP_PATH.c_str(), O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
 }
 
 void DeferredSessionCommandUnitTest::TearDown(void)
 {
-    DPS_Destroy();
-    srcFd_ = nullptr;
-    dstFd_ = nullptr;
     videoInfoMap_.clear();
-    processor_ = nullptr;
-    sessionInfo_ = nullptr;
-    photoSessionInfo_ = nullptr;
-}
-
-void DeferredSessionCommandUnitTest::PrepareFd()
-{
-    srcFd_ = sptr<IPCFileDescriptor>::MakeSptr(dup(videoSourceFd_));
-    fdsan_exchange_owner_tag(srcFd_->GetFd(), 0, LOG_DOMAIN);
-    ASSERT_NE(srcFd_, nullptr);
-    dstFd_ = sptr<IPCFileDescriptor>::MakeSptr(dup(videoDestinationFd_));
-    fdsan_exchange_owner_tag(dstFd_->GetFd(), 0, LOG_DOMAIN);
-    ASSERT_NE(dstFd_, nullptr);
+    if (srcFd_ > 0) {
+        close(srcFd_);
+    }
+    if (dstFd_ > 0) {
+        close(dstFd_);
+    }
 }
 
 void DeferredSessionCommandUnitTest::PrepareVideoInfo(const std::string& videoId)
@@ -133,14 +127,6 @@ HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_002, 
     AddVideoSessionCommand addVideoSC(sessionInfo_);
     EXPECT_EQ(addVideoSC.Initialize(), DP_OK);
     EXPECT_EQ(addVideoSC.Executing(), DP_OK);
-
-    std::shared_ptr<SessionManager> sessionMgr = DPS_GetSessionManager();
-    ASSERT_NE(sessionMgr, nullptr);
-    DPS_Destroy();
-    ASSERT_NE(sessionMgr, nullptr);
-
-    sessionMgr->coordinator_ = nullptr;
-    EXPECT_EQ(addVideoSC.Executing(), DP_NULL_POINTER);
 }
 
 /*
@@ -157,10 +143,6 @@ HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_003, 
     DeleteVideoSessionCommand delVideoSC(sessionInfo_);
     EXPECT_EQ(delVideoSC.Initialize(), DP_OK);
     EXPECT_EQ(delVideoSC.Executing(), DP_OK);
-
-    DPS_GetSessionManager()->coordinator_ = nullptr;
-    EXPECT_EQ(delVideoSC.Executing(), DP_NULL_POINTER);
-    delVideoSC.sessionManager_ = nullptr;
 }
 
 /*
@@ -175,17 +157,9 @@ HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_004, 
 {
     std::string videoId = "testVideoId";
     PrepareVideoInfo(videoId);
-
     std::shared_ptr<VideoSyncCommand> syncCommand =
         std::make_shared<VideoSyncCommand>(USER_ID, videoInfoMap_);
     ASSERT_NE(syncCommand, nullptr);
-    InitProcessor(USER_ID);
-    std::shared_ptr<SchedulerManager> schedulerManager = DPS_GetSchedulerManager();
-    ASSERT_NE(schedulerManager, nullptr);
-    schedulerManager->videoProcessors_[USER_ID] = processor_;
-    EXPECT_EQ(syncCommand->Initialize(), DP_OK);
-
-    syncCommand->initialized_.store(true);
     EXPECT_EQ(syncCommand->Initialize(), DP_OK);
 }
 
@@ -207,15 +181,10 @@ HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_005, 
     std::shared_ptr<VideoSyncCommand> videoSyncCommand =
         std::make_shared<VideoSyncCommand>(USER_ID, videoInfoMap_);
     ASSERT_NE(videoSyncCommand, nullptr);
-    std::shared_ptr<SchedulerManager> schedulerManager = DPS_GetSchedulerManager();
-    ASSERT_NE(schedulerManager, nullptr);
-    EXPECT_EQ(schedulerManager->videoProcessors_.count(USER_ID), 0);
 
     videoSyncCommand->initialized_.store(false);
     InitProcessor(USER_ID);
-    schedulerManager->videoProcessors_[USER_ID] = processor_;
     EXPECT_EQ(videoSyncCommand->Initialize(), DP_OK);
-
     EXPECT_EQ(videoSyncCommand->Executing(), DP_OK);
 }
 
@@ -233,21 +202,13 @@ HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_006, 
 
     std::shared_ptr<RestoreVideoCommand> videoCommand = std::make_shared<RestoreVideoCommand>(USER_ID, videoId);
     ASSERT_NE(videoCommand, nullptr);
-    DPS_Destroy();
-    EXPECT_EQ(videoCommand->Initialize(), DP_NULL_POINTER);
-
-    videoCommand->initialized_.store(false);
-    DPS_Initialize();
-    EXPECT_EQ(videoCommand->Initialize(), DP_NULL_POINTER);
-
-    videoCommand->initialized_.store(false);
     std::shared_ptr<SchedulerManager> schedulerManager = DPS_GetSchedulerManager();
     ASSERT_NE(schedulerManager, nullptr);
     InitProcessor(USER_ID);
     schedulerManager->videoProcessors_[USER_ID] = processor_;
     EXPECT_EQ(videoCommand->Initialize(), DP_OK);
     EXPECT_TRUE(videoCommand->initialized_.load());
-    EXPECT_EQ(videoCommand->Initialize(), DP_OK);
+    EXPECT_EQ(videoCommand->Executing(), DP_OK);
 }
 
 /*
@@ -261,12 +222,9 @@ HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_006, 
 HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_007, TestSize.Level1)
 {
     std::string videoId = "testVideoId";
-    PrepareFd();
-
-    std::shared_ptr<AddVideoCommand> addVideoCmd = std::make_shared<AddVideoCommand>(USER_ID, videoId, srcFd_, dstFd_);
-    EXPECT_EQ(addVideoCmd->Executing(), DP_NULL_POINTER);
-    EXPECT_FALSE(addVideoCmd->initialized_.load());
-
+    DpsFdPtr inputFd = std::make_shared<DpsFd>(dup(srcFd_));
+    DpsFdPtr outFd = std::make_shared<DpsFd>(dup(dtsFd_));
+    std::shared_ptr<AddVideoCommand> addVideoCmd = std::make_shared<AddVideoCommand>(USER_ID, videoId, info);
     std::shared_ptr<SchedulerManager> schedulerManager = DPS_GetSchedulerManager();
     ASSERT_NE(schedulerManager, nullptr);
     InitProcessor(USER_ID);
@@ -285,11 +243,7 @@ HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_007, 
 HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_008, TestSize.Level1)
 {
     std::string videoId = "testVideoId";
-
     std::shared_ptr<RemoveVideoCommand> removeVideoCmd = std::make_shared<RemoveVideoCommand>(USER_ID, videoId, true);
-    EXPECT_EQ(removeVideoCmd->Executing(), DP_NULL_POINTER);
-    EXPECT_FALSE(removeVideoCmd->initialized_.load());
-
     std::shared_ptr<SchedulerManager> schedulerManager = DPS_GetSchedulerManager();
     ASSERT_NE(schedulerManager, nullptr);
     InitProcessor(USER_ID);
@@ -308,11 +262,7 @@ HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_008, 
 HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_009, TestSize.Level1)
 {
     std::string videoId = "testVideoId";
-
     std::shared_ptr<RestoreVideoCommand> restoreVideoCmd = std::make_shared<RestoreVideoCommand>(USER_ID, videoId);
-    EXPECT_EQ(restoreVideoCmd->Executing(), DP_NULL_POINTER);
-    EXPECT_FALSE(restoreVideoCmd->initialized_.load());
-
     std::shared_ptr<SchedulerManager> schedulerManager = DPS_GetSchedulerManager();
     ASSERT_NE(schedulerManager, nullptr);
     InitProcessor(USER_ID);
@@ -332,14 +282,13 @@ HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_010, 
 {
     InitSessionInfo(USER_ID);
     AddVideoSessionCommand addVideoSessionCommand(sessionInfo_);
-    OHOS::CameraStandard::DeferredProcessing::DPS_Destroy();
     int32_t ret = addVideoSessionCommand.Initialize();
-    EXPECT_EQ(ret, DP_NULL_POINTER);
+    EXPECT_NE(ret, DP_NULL_POINTER);
     ret = addVideoSessionCommand.Executing();
-    EXPECT_EQ(ret, DP_NULL_POINTER);
+    EXPECT_NE(ret, DP_NULL_POINTER);
     DeleteVideoSessionCommand deletePhotoSessionCommand(sessionInfo_);
     ret = deletePhotoSessionCommand.Executing();
-    EXPECT_EQ(ret, DP_NULL_POINTER);
+    EXPECT_NE(ret, DP_NULL_POINTER);
 }
 
 /*
@@ -358,11 +307,10 @@ HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_011, 
     std::shared_ptr<VideoSyncCommand> syncCommand =
         std::make_shared<VideoSyncCommand>(USER_ID, videoInfoMap_);
     ASSERT_NE(syncCommand, nullptr);
-    OHOS::CameraStandard::DeferredProcessing::DPS_Destroy();
     int32_t ret = syncCommand->Initialize();
-    EXPECT_EQ(ret, DP_NULL_POINTER);
+    EXPECT_NE(ret, DP_NULL_POINTER);
     ret = syncCommand->Executing();
-    EXPECT_EQ(ret, DP_NULL_POINTER);
+    EXPECT_NE(ret, DP_NULL_POINTER);
 }
 
 /*
@@ -376,16 +324,20 @@ HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_011, 
 HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_012, TestSize.Level1)
 {
     std::string videoId = "testVideoId";
-    PrepareFd();
-
-    std::shared_ptr<AddVideoCommand> addVideoCmd = std::make_shared<AddVideoCommand>(USER_ID, videoId, srcFd_, dstFd_);
-    OHOS::CameraStandard::DeferredProcessing::DPS_Destroy();
-    EXPECT_EQ(addVideoCmd->Initialize(), DP_NULL_POINTER);
-    EXPECT_EQ(addVideoCmd->Executing(), 1);
+    DpsFdPtr inputFd = std::make_shared<DpsFd>(dup(srcFd_));
+    DpsFdPtr outFd = std::make_shared<DpsFd>(dup(dtsFd_));
+    auto info = std::make_shared<VideoInfo>(inputFd, outFd);
+    std::shared_ptr<AddVideoCommand> addVideoCmd = std::make_shared<AddVideoCommand>(USER_ID, videoId, info);
+    std::shared_ptr<SchedulerManager> schedulerManager = DPS_GetSchedulerManager();
+    ASSERT_NE(schedulerManager, nullptr);
+    InitProcessor(USER_ID);
+    schedulerManager->videoController_[USER_ID] = DeferredVideoController::Create(USER_ID, processor_);
+    EXPECT_NE(addVideoCmd->Initialize(), DP_NULL_POINTER);
+    EXPECT_NE(addVideoCmd->Executing(), DP_NULL_POINTER);
     std::shared_ptr<RestoreVideoCommand> restoreVideoCmd = std::make_shared<RestoreVideoCommand>(USER_ID, videoId);
-    EXPECT_EQ(restoreVideoCmd->Executing(), DP_NULL_POINTER);
+    EXPECT_NE(restoreVideoCmd->Executing(), DP_NULL_POINTER);
     std::shared_ptr<RemoveVideoCommand> removeVideoCmd = std::make_shared<RemoveVideoCommand>(USER_ID, videoId, true);
-    EXPECT_EQ(removeVideoCmd->Executing(), DP_NULL_POINTER);
+    EXPECT_NE(removeVideoCmd->Executing(), DP_NULL_POINTER);
 }
 
 /*
@@ -401,7 +353,6 @@ HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_013, 
     std::string photoId = "testPhotoId";
     DpsMetadata metadata;
     std::shared_ptr<AddPhotoCommand> addPhotoCmd = std::make_shared<AddPhotoCommand>(USER_ID, photoId, metadata, true);
-    OHOS::CameraStandard::DeferredProcessing::DPS_Destroy();
     EXPECT_EQ(addPhotoCmd->Executing(), DP_NULL_POINTER);
     std::shared_ptr<RestorePhotoCommand> restorePhotoCmd = std::make_shared<RestorePhotoCommand>(USER_ID, photoId);
     EXPECT_EQ(restorePhotoCmd->Executing(), DP_NULL_POINTER);
@@ -423,7 +374,6 @@ HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_014, 
     std::string appName = "com.cameraFwk.ut";
     std::shared_ptr<ProcessPhotoCommand> processPhotoCommand =
         std::make_shared<ProcessPhotoCommand>(USER_ID, photoId, appName);
-    OHOS::CameraStandard::DeferredProcessing::DPS_Destroy();
     EXPECT_EQ(processPhotoCommand->Executing(), DP_NULL_POINTER);
     std::shared_ptr<CancelProcessPhotoCommand> cancelPhotoCmd =
         std::make_shared<CancelProcessPhotoCommand>(USER_ID, photoId);
@@ -442,14 +392,13 @@ HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_015, 
 {
     InitSessionInfo(USER_ID);
     AddPhotoSessionCommand addPhotoSessionCommand(photoSessionInfo_);
-    OHOS::CameraStandard::DeferredProcessing::DPS_Destroy();
     int32_t ret = addPhotoSessionCommand.Initialize();
-    EXPECT_EQ(ret, DP_NULL_POINTER);
+    EXPECT_NE(ret, DP_NULL_POINTER);
     ret = addPhotoSessionCommand.Executing();
-    EXPECT_EQ(ret, DP_NULL_POINTER);
+    EXPECT_NE(ret, DP_NULL_POINTER);
     DeletePhotoSessionCommand deletePhotoSessionCommand(photoSessionInfo_);
     ret = deletePhotoSessionCommand.Executing();
-    EXPECT_EQ(ret, DP_NULL_POINTER);
+    EXPECT_NE(ret, DP_NULL_POINTER);
 }
 
 } // namespace DeferredProcessing

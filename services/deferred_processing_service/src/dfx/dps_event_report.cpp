@@ -129,7 +129,7 @@ void DPSEventReport::ReportPartitionUsage()
         PARTITION_NAME,
         EVENT_KEY_REMAIN_PARTITION_SIZE,
         remainPartitionSize,
-        EVENT_KEY_FILE_OR_FOLDER_PAT,
+        EVENT_KEY_FILE_OR_FOLDER_PATH,
         filePath,
         EVENT_KEY_FILE_OR_FOLDER_SIZE,
         fileSize);

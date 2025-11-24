@@ -59,6 +59,7 @@ public:
     void RestoreImage(const std::string& imageId);
     void ProcessImage(const std::string& appName, const std::string& imageId);
     bool CancelProcessImage(const std::string& imageId);
+    void NotifyProcessImage();
     std::shared_ptr<IDeferredPhotoProcSessionCallback> GetCallback();
 private:
     friend class CameraManager;

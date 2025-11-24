@@ -17,6 +17,7 @@
 
 #include "dp_log.h"
 #include "dps.h"
+#include "events_monitor.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -24,6 +25,7 @@ namespace DeferredProcessing {
 namespace {
     constexpr int32_t DEFAULT_TIMEOUT_COUNT = 3;
     constexpr uint32_t MAX_CONSECUTIVE_CRASH_COUNT = 3;
+    constexpr char DEFAULT_BP_CACHE_ID[] = "Null";
 }
 DeferredPhotoResult::DeferredPhotoResult()
 {
@@ -46,13 +48,13 @@ int32_t DeferredPhotoResult::Initialize()
     return DP_OK;
 }
 
-void DeferredPhotoResult::RecordHigh(const std::string &imageId)
+void DeferredPhotoResult::RecordHigh(const std::string& imageId)
 {
     DP_INFO_LOG("imageId: %{public}s", imageId.c_str());
     highImages_.insert(imageId);
 }
 
-void DeferredPhotoResult::DeRecordHigh(const std::string &imageId)
+void DeferredPhotoResult::DeRecordHigh(const std::string& imageId)
 {
     if (highImages_.erase(imageId) > 0) {
         DP_INFO_LOG("imageId: %{public}s", imageId.c_str());
@@ -82,16 +84,19 @@ ErrorType DeferredPhotoResult::OnError(const std::string& imageId, DpsError& err
     return ErrorType::NORMAL_FAILED;
 }
 
-void DeferredPhotoResult::RecordResult(const std::string& imageId, const std::shared_ptr<ImageInfo>& result)
+void DeferredPhotoResult::RecordResult(const std::string& imageId,
+    const std::shared_ptr<ImageInfo>& result, bool isBPcache)
 {
     DP_INFO_LOG("DPS_PHOTO: Cache imageId: %{public}s", imageId.c_str());
     cacheMap_.emplace(imageId, result);
+    DP_CHECK_EXECUTE(isBPcache, SetBPCacheId(imageId));
 }
 
 void DeferredPhotoResult::DeRecordResult(const std::string& imageId)
 {
     DP_INFO_LOG("DPS_PHOTO: Remove cache imageId: %{public}s", imageId.c_str());
     cacheMap_.erase(imageId);
+    DP_CHECK_EXECUTE(GetBPCacheId() == imageId, SetBPCacheId(DEFAULT_BP_CACHE_ID));
 }
 
 std::shared_ptr<ImageInfo> DeferredPhotoResult::GetCacheResult(const std::string& imageId)
@@ -129,6 +134,21 @@ bool DeferredPhotoResult::IsNeedReset()
     return false;
 }
 
+void DeferredPhotoResult::SetBPCacheId(const std::string& imageId)
+{
+    DP_INFO_LOG("DPS_PHOTO: Backpressure cache imageId: %{public}s", imageId.c_str());
+    cachePhotoId_ = imageId;
+    if (DEFAULT_BP_CACHE_ID == cachePhotoId_) {
+        EventsMonitor::GetInstance().NotifyEventToObervers(EventType::PHOTO_CACHE_EVENT, NO_CACHE);
+        return;
+    }
+    EventsMonitor::GetInstance().NotifyEventToObervers(EventType::PHOTO_CACHE_EVENT, CACHED);
+}
+
+std::string DeferredPhotoResult::GetBPCacheId()
+{
+    return cachePhotoId_;
+}
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS

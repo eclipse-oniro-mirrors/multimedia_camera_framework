@@ -41,7 +41,9 @@ void AddState::OnStateExited()
 
 void PendingState::OnStateEntered()
 {
-    DP_DEBUG_LOG("entered.");
+    auto listener = listener_.lock();
+    DP_CHECK_ERROR_RETURN_LOG(listener == nullptr, "Joblistener is nullptr.");
+    listener->TryDoNextJob(imageId_, false);
 }
 
 void RunningState::OnStateEntered()

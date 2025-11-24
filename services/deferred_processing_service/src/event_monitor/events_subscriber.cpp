@@ -30,7 +30,7 @@ namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
 namespace {
-    const std::string COMMON_EVENT_CAMERA_STATUS = "usual.event.CAMERA_STATUS";
+    constexpr char COMMON_EVENT_CAMERA_STATUS[] = "usual.event.CAMERA_STATUS";
 }
 
 const std::vector<std::string> EventSubscriber::events_ = {

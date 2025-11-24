@@ -117,7 +117,7 @@ inline int32_t GetVersionId(uint32_t major, uint32_t minor)
     return static_cast<int32_t>((major << offset) | minor);
 }
 
-inline bool StrToLL(const std::string &str, long long &value, int32_t base)
+inline bool StrToLL(const std::string& str, long long& value, int32_t base)
 {
     auto add = str.c_str();
     char *end = nullptr;
@@ -131,7 +131,7 @@ inline bool StrToLL(const std::string &str, long long &value, int32_t base)
     return true;
 }
 
-inline bool StrToULL(const std::string &str, unsigned long long &value)
+inline bool StrToULL(const std::string& str, unsigned long long& value)
 {
     auto add = str.c_str();
     char *end = nullptr;
@@ -145,7 +145,7 @@ inline bool StrToULL(const std::string &str, unsigned long long &value)
     return true;
 }
 
-inline bool StrToI64(const std::string &str, int64_t &value)
+inline bool StrToI64(const std::string& str, int64_t& value)
 {
     long long tmp = 0;
     bool isOK = StrToLL(str, tmp, DEC_RADIX);

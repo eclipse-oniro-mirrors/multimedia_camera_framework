@@ -16,8 +16,8 @@
 package OHOS.CameraStandard.DeferredProcessing;
 sequenceable IpcFileDescriptor..OHOS.IPCFileDescriptor;
 
-interface IDeferredVideoProcessingSessionCallback{
-  void OnProcessVideoDone([in] String videoId, [in] sptr<IPCFileDescriptor> fd);
-  void OnError([in] String videoId,[in] int errorCode);
-  void OnStateChanged([in] int status);
+[callback] interface IDeferredVideoProcessingSessionCallback{
+  [ipccode 1, oneway] void OnProcessVideoDone([in] String videoId, [in] sptr<IPCFileDescriptor> fd);
+  [ipccode 2, oneway] void OnError([in] String videoId, [in] int errorCode);
+  [ipccode 3, oneway] void OnStateChanged([in] int status);
 }

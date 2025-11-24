@@ -35,6 +35,8 @@ public:
     void SetCameraState(CameraSessionStatus state);
     bool IsCameraOpen();
     int32_t GetAvailableMemory();
+    void SetMediaLibraryState(MediaLibraryStatus state);
+    bool IsMediaBusy();
 
 private:
     std::mutex mutex_;
@@ -45,6 +47,8 @@ private:
     SystemPressureLevel photoThermalLevel_ {SEVERE};
     ThermalLevel thermalLevel_ {LEVEL_2};
     CameraSessionStatus cameraState_ {SYSTEM_CAMERA_CLOSED};
+    std::mutex mediaStateMutex_;
+    MediaLibraryStatus mediaState_ {MEDIA_LIBRARY_IDLE};
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

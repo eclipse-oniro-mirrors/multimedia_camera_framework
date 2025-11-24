@@ -18,6 +18,7 @@
 #include "dp_utils.h"
 #include "dps.h"
 #include "dps_event_report.h"
+#include "events_info.h"
 #include "photo_command.h"
 #include "sync_command.h"
 
@@ -101,7 +102,7 @@ int32_t DeferredPhotoProcessingSession::RestoreImage(const std::string& imageId)
     } else {
         auto ret = DPS_SendCommand<RestorePhotoCommand>(userId_, imageId);
         DP_CHECK_ERROR_PRINT_LOG(ret != DP_OK,
-            "DPS_PHOTO: restore imageId: %{public}s failed. ret: %{public}u", imageId.c_str(), ret);
+            "DPS_PHOTO: restore imageId: %{public}s failed. ret: %{public}d", imageId.c_str(), ret);
     }
 
     ReportEvent(imageId, static_cast<int32_t>(IDeferredPhotoProcessingSessionIpcCode::COMMAND_RESTORE_IMAGE));
@@ -115,11 +116,11 @@ int32_t DeferredPhotoProcessingSession::ProcessImage(const std::string& appName,
     } else {
         auto ret = DPS_SendCommand<ProcessPhotoCommand>(userId_, imageId, appName);
         DP_CHECK_ERROR_PRINT_LOG(ret != DP_OK,
-            "DPS_PHOTO: process imageId: %{public}s failed. ret: %{public}u", imageId.c_str(), ret);
+            "DPS_PHOTO: process imageId: %{public}s failed. ret: %{public}d", imageId.c_str(), ret);
     }
 
     ReportEvent(imageId, static_cast<int32_t>(IDeferredPhotoProcessingSessionIpcCode::COMMAND_PROCESS_IMAGE));
-    return 0;
+    return DP_OK;
 }
 
 int32_t DeferredPhotoProcessingSession::CancelProcessImage(const std::string& imageId)
@@ -129,11 +130,21 @@ int32_t DeferredPhotoProcessingSession::CancelProcessImage(const std::string& im
     } else {
         auto ret = DPS_SendCommand<CancelProcessPhotoCommand>(userId_, imageId);
         DP_CHECK_ERROR_PRINT_LOG(ret != DP_OK,
-            "DPS_PHOTO: cance process imageId: %{public}s failed. ret: %{public}u", imageId.c_str(), ret);
+            "DPS_PHOTO: cance process imageId: %{public}s failed. ret: %{public}d", imageId.c_str(), ret);
     }
 
     ReportEvent(imageId, static_cast<int32_t>(IDeferredPhotoProcessingSessionIpcCode::COMMAND_CANCEL_PROCESS_IMAGE));
-    return 0;
+    return DP_OK;
+}
+
+int32_t DeferredPhotoProcessingSession::NotifyProcessImage()
+{
+    // 设置媒体库状态为空闲
+    EventsInfo::GetInstance().SetMediaLibraryState(MediaLibraryStatus::MEDIA_LIBRARY_IDLE);
+    // 判断并处理缓存的图片任务
+    auto ret = DPS_SendUrgentCommand<ProcessCachePhotoCommand>(userId_, "");
+    DP_CHECK_ERROR_PRINT_LOG(ret != DP_OK, "DPS_PHOTO: BPcance process failed. ret: %{public}d", ret);
+    return DP_OK;
 }
 
 void DeferredPhotoProcessingSession::ReportEvent(const std::string& imageId, int32_t event)

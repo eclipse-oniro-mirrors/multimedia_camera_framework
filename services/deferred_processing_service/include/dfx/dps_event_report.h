@@ -21,36 +21,36 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-const std::string EVENT_KEY_IMAGEID = "IMAGEID";
-const std::string EVENT_KEY_USERID = "USERID";
-const std::string EVENT_KEY_DEFEVENTTYPE = "DEFEVENTTYPE";
-const std::string EVENT_KEY_DISCARDABLE = "DISCARDABLE";
-const std::string EVENT_KEY_TRIGGERMODE = "TRIGGERMODE";
-const std::string EVENT_KEY_HIGHJOBNUM = "HIGHJOBNUM";
-const std::string EVENT_KEY_NORMALJOBNUM = "NORMALJOBNUM";
-const std::string EVENT_KEY_LOWJOBNUM = "LOWJOBNUM";
-const std::string EVENT_KEY_TEMPERATURELEVEL = "TEMPERATURELEVEL";
-const std::string EVENT_KEY_SYNCHRONIZETIME = "SYNCHRONIZETIME";
-const std::string EVENT_KEY_DISPATCHTIME = "DISPATCHTIME";
-const std::string EVENT_KEY_PROCESSTIME = "PROCESSTIME";
-const std::string EVENT_KEY_IMAGEDONETIME = "IMAGEDONETIME";
-const std::string EVENT_KEY_RESTORETIME = "RESTORETIME";
-const std::string EVENT_KEY_REMOVETIME = "CANCELTIME";
-const std::string EVENT_KEY_TRAILINGTIME = "TRAILINGTIME";
-const std::string EVENT_KEY_PHOTOJOBTYPE = "PHOTOJOBTYPE";
-const std::string EVENT_KEY_EXCUTIONMODE = "EXCUTIONMODE";
-const std::string EVENT_KEY_CHANGEREASON = "CHANGEREASON";
-const std::string EVENT_KEY_EXCEPTIONSOURCE = "EXCEPTIONSOURCE";
-const std::string EVENT_KEY_EXCEPTIONCAUSE = "EXCEPTIONCAUSE";
-const std::string EVENT_KEY_EXECUTIONMODE = "EXECUTIONMODE";
-const std::string EVENT_KEY_COMPONENT_NAME = "COMPONENT_NAME";
-const std::string EVENT_KEY_PARTITION_NAME = "PARTITION_NAME";
-const std::string EVENT_KEY_REMAIN_PARTITION_SIZE = "REMAIN_PARTITION_SIZE";
-const std::string EVENT_KEY_FILE_OR_FOLDER_PAT = "FILE_OR_FOLDER_PATH";
-const std::string EVENT_KEY_FILE_OR_FOLDER_SIZE = "FILE_OR_FOLDER_SIZE";
-const std::string EVENT_KEY_MEMORY_SIZE = "AVAILABLEMEMORYSIZE";
-const std::string COMPONENT_NAME = "camera_framework";
-const std::string PARTITION_NAME = "/data";
+inline constexpr char EVENT_KEY_IMAGEID[] = "IMAGEID";
+inline constexpr char EVENT_KEY_USERID[] = "USERID";
+inline constexpr char EVENT_KEY_DEFEVENTTYPE[] = "DEFEVENTTYPE";
+inline constexpr char EVENT_KEY_DISCARDABLE[] = "DISCARDABLE";
+inline constexpr char EVENT_KEY_TRIGGERMODE[] = "TRIGGERMODE";
+inline constexpr char EVENT_KEY_HIGHJOBNUM[] = "HIGHJOBNUM";
+inline constexpr char EVENT_KEY_NORMALJOBNUM[] = "NORMALJOBNUM";
+inline constexpr char EVENT_KEY_LOWJOBNUM[] = "LOWJOBNUM";
+inline constexpr char EVENT_KEY_TEMPERATURELEVEL[] = "TEMPERATURELEVEL";
+inline constexpr char EVENT_KEY_SYNCHRONIZETIME[] = "SYNCHRONIZETIME";
+inline constexpr char EVENT_KEY_DISPATCHTIME[] = "DISPATCHTIME";
+inline constexpr char EVENT_KEY_PROCESSTIME[] = "PROCESSTIME";
+inline constexpr char EVENT_KEY_IMAGEDONETIME[] = "IMAGEDONETIME";
+inline constexpr char EVENT_KEY_RESTORETIME[] = "RESTORETIME";
+inline constexpr char EVENT_KEY_REMOVETIME[] = "CANCELTIME";
+inline constexpr char EVENT_KEY_TRAILINGTIME[] = "TRAILINGTIME";
+inline constexpr char EVENT_KEY_PHOTOJOBTYPE[] = "PHOTOJOBTYPE";
+inline constexpr char EVENT_KEY_EXCUTIONMODE[] = "EXCUTIONMODE";
+inline constexpr char EVENT_KEY_CHANGEREASON[] = "CHANGEREASON";
+inline constexpr char EVENT_KEY_EXCEPTIONSOURCE[] = "EXCEPTIONSOURCE";
+inline constexpr char EVENT_KEY_EXCEPTIONCAUSE[] = "EXCEPTIONCAUSE";
+inline constexpr char EVENT_KEY_EXECUTIONMODE[] = "EXECUTIONMODE";
+inline constexpr char EVENT_KEY_COMPONENT_NAME[] = "COMPONENT_NAME";
+inline constexpr char EVENT_KEY_PARTITION_NAME[] = "PARTITION_NAME";
+inline constexpr char EVENT_KEY_REMAIN_PARTITION_SIZE[] = "REMAIN_PARTITION_SIZE";
+inline constexpr char EVENT_KEY_FILE_OR_FOLDER_PATH[] = "FILE_OR_FOLDER_PATH";
+inline constexpr char EVENT_KEY_FILE_OR_FOLDER_SIZE[] = "FILE_OR_FOLDER_SIZE";
+inline constexpr char EVENT_KEY_MEMORY_SIZE[] = "AVAILABLEMEMORYSIZE";
+inline constexpr char COMPONENT_NAME[] = "camera_framework";
+inline constexpr char PARTITION_NAME[] = "/data";
 
 struct DPSEventInfo {
     std::string imageId;

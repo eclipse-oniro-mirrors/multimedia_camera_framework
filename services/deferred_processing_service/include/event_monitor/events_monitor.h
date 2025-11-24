@@ -40,7 +40,6 @@ class EventsMonitor : public Singleton<EventsMonitor> {
 public:
     void Initialize();
     void NotifyCameraSessionStatus(CameraSessionStatus status);
-    void NotifyMediaLibraryStatus(bool available);
     void NotifyImageEnhanceStatus(int32_t status);
     void NotifyVideoEnhanceStatus(int32_t status);
     void NotifyScreenStatus(int32_t status);

@@ -24,14 +24,14 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-const std::string EVENT_KEY_PNAMEID = "PNAMEID";
-const std::string EVENT_KEY_PVERSIONID = "PVERSIONID";
-const std::string EVENT_KEY_VIDEOID = "VIDEOID";
-const std::string EVENT_KEY_ABORTTYPE = "ABORTTYPE";
-const std::string EVENT_KEY_ABORTTIME = "ABORTTIME";
-const std::string EVENT_KEY_RECOVERTIME = "RECOVERTIME";
-const std::string EVENT_KEY_COMPLETETIME = "COMPLETETIME";
-const std::string EVENT_KEY_REALCOMPLETETIME = "REALCOMPLETETIME";
+inline constexpr char EVENT_KEY_PNAMEID[] = "PNAMEID";
+inline constexpr char EVENT_KEY_PVERSIONID[] = "PVERSIONID";
+inline constexpr char EVENT_KEY_VIDEOID[] = "VIDEOID";
+inline constexpr char EVENT_KEY_ABORTTYPE[] = "ABORTTYPE";
+inline constexpr char EVENT_KEY_ABORTTIME[] = "ABORTTIME";
+inline constexpr char EVENT_KEY_RECOVERTIME[] = "RECOVERTIME";
+inline constexpr char EVENT_KEY_COMPLETETIME[] = "COMPLETETIME";
+inline constexpr char EVENT_KEY_REALCOMPLETETIME[] = "REALCOMPLETETIME";
 
 struct VideoRecord {
     std::string videoId;
@@ -54,7 +54,7 @@ public:
     void ReportRemoveVideoEvent(const std::string& videoId, DpsCallerInfo callerInfo);
     void ReportPauseVideoEvent(const std::string& videoId, int32_t pauseReason);
     void ReportResumeVideoEvent(const std::string& videoId);
-    void ReportCompleteVideoEvent(const std::string &videoId);
+    void ReportCompleteVideoEvent(const std::string& videoId);
 
 private:
     SafeMap<std::string, VideoRecord> processVideoInfo_;

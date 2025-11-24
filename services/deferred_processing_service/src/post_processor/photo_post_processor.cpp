@@ -32,7 +32,7 @@ namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
 namespace {
-    const std::string PHOTO_SERVICE_NAME = "camera_image_process_service";
+    constexpr char PHOTO_SERVICE_NAME[] = "camera_image_process_service";
 }
 
 class PhotoPostProcessor::PhotoServiceListener : public HDI::ServiceManager::V1_0::ServStatListenerStub {

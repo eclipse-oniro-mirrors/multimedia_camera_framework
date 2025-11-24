@@ -25,4 +25,5 @@ interface IDeferredPhotoProcessingSession{
   [ipccode 4] void RestoreImage([in] String imageId);
   [ipccode 5] void ProcessImage([in] String appName, [in] String imageId);
   [ipccode 6] void CancelProcessImage([in] String imageId);
+  [ipccode 7] void NotifyProcessImage();
 }

@@ -68,6 +68,7 @@ void DeferredPhotoProcessor::RemoveImage(const std::string& imageId, bool restor
     DP_CHECK_RETURN(restorable);
     DP_CHECK_EXECUTE(repository_->IsRunningJob(imageId), postProcessor_->Interrupt());
     postProcessor_->RemoveImage(imageId);
+    result_->DeRecordResult(imageId);
 }
 
 void DeferredPhotoProcessor::RestoreImage(const std::string& imageId)
@@ -92,6 +93,11 @@ void DeferredPhotoProcessor::CancelProcessImage(const std::string& imageId)
         "DPS_PHOTO: imageId is backgroundJob %{public}s", imageId.c_str());
     result_->DeRecordHigh(imageId);
     repository_->CancelJob(imageId);
+}
+
+bool DeferredPhotoProcessor::ProcessBPCache()
+{
+    return ProcessCatchResults(result_->GetBPCacheId());
 }
 
 void DeferredPhotoProcessor::DoProcess(const DeferredPhotoJobPtr& job)
@@ -181,11 +187,17 @@ void DeferredPhotoProcessor::HandleSuccess(const int32_t userId, const std::stri
     auto jobPtr = repository_->GetJobUnLocked(imageId);
     auto callback = GetCallback();
     if (jobPtr == nullptr || callback == nullptr) {
+        result_->RecordResult(imageId, std::move(imageInfo), false);
+        return;
+    }
+
+    if (EventsInfo::GetInstance().IsMediaBusy() && jobPtr->GetCurPriority() != JobPriority::HIGH) {
+        result_->RecordResult(imageId, std::move(imageInfo), true);
         return;
     }
 
     jobPtr->Complete();
-    DP_INFO_LOG("DPS_OHOTO: userId: %{public}d, imageId: %{public}s", userId, imageId.c_str());
+    DP_INFO_LOG("DPS_PHOTO: userId: %{public}d, imageId: %{public}s", userId, imageId.c_str());
     uint32_t cloudFlag = imageInfo->GetCloudFlag();
     switch (imageInfo->GetType()) {
         case CallbackType::IMAGE_PROCESS_DONE: {
@@ -204,6 +216,7 @@ void DeferredPhotoProcessor::HandleSuccess(const int32_t userId, const std::stri
                 static_cast<int>(imageInfo->GetType()), imageId.c_str());
             break;
     }
+    EventsInfo::GetInstance().SetMediaLibraryState(MediaLibraryStatus::MEDIA_LIBRARY_BUSY);
 }
 
 void DeferredPhotoProcessor::HandleError(const int32_t userId, const std::string& imageId,
@@ -216,7 +229,7 @@ void DeferredPhotoProcessor::HandleError(const int32_t userId, const std::string
     if (jobPtr == nullptr || callback == nullptr) {
         auto errors = std::make_unique<ImageInfo>();
         errors->SetError(error);
-        result_->RecordResult(imageId, std::move(errors));
+        result_->RecordResult(imageId, std::move(errors), false);
         return;
     }
 

@@ -25,7 +25,7 @@ namespace DeferredProcessing {
 namespace {
     constexpr int32_t DEFAULT_CAPACITY = -1;
     constexpr int32_t BATTERY_THRESHOLD = 50;
-    const std::string KEY_CAPACITY = "soc";
+    constexpr char KEY_CAPACITY[] = "soc";
 }
 
 BatteryLevelStrategy::BatteryLevelStrategy() : preLevel_(BATTERY_LEVEL_LOW)

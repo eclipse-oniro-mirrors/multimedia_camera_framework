@@ -90,6 +90,15 @@ public:
 protected:
     int32_t Executing() override;
 };
+
+class ProcessCachePhotoCommand : public PhotoCommand {
+    DECLARE_CMD_CLASS(ProcessCachePhotoCommand)
+public:
+    using PhotoCommand::PhotoCommand;
+
+protected:
+    int32_t Executing() override;
+};
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS

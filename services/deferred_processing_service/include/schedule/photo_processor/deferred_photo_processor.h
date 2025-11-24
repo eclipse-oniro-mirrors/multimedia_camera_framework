@@ -36,6 +36,7 @@ public:
     void RestoreImage(const std::string& imageId);
     void ProcessImage(const std::string& appName, const std::string& imageId);
     void CancelProcessImage(const std::string& imageId);
+    bool ProcessBPCache();
     void DoProcess(const DeferredPhotoJobPtr& job);
 
     void OnProcessSuccess(const int32_t userId, const std::string& imageId, std::unique_ptr<ImageInfo> imageInfo);

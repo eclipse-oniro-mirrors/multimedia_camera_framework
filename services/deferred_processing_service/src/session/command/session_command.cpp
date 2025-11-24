@@ -60,7 +60,8 @@ int32_t AddPhotoSessionCommand::Executing()
     if (photoInfo_->isCreate_) {
         schedulerManager_->CreatePhotoProcessor(photoInfo_->GetUserId());
     }
-    EventsMonitor::GetInstance().NotifyEventToObervers(EventType::MEDIA_LIBRARY_STATUS_EVENT, true);
+    EventsMonitor::GetInstance().NotifyEventToObervers(EventType::MEDIA_LIBRARY_STATUS_EVENT,
+        MEDIA_LIBRARY_AVAILABLE);
     return DP_OK;
 }
 
@@ -77,7 +78,8 @@ int32_t DeletePhotoSessionCommand::Executing()
     }
     
     sessionManager_->DeletePhotoSession(photoInfo_->GetUserId());
-    EventsMonitor::GetInstance().NotifyEventToObervers(EventType::MEDIA_LIBRARY_STATUS_EVENT, false);
+    EventsMonitor::GetInstance().NotifyEventToObervers(EventType::MEDIA_LIBRARY_STATUS_EVENT,
+        MEDIA_LIBRARY_DISCONNECTED);
     return DP_OK;
 }
 
@@ -100,7 +102,8 @@ int32_t AddVideoSessionCommand::Executing()
         schedulerManager_->CreateVideoProcessor(videoInfo_->GetUserId(), coordinator->GetVideoProcCallbacks());
     }
     coordinator->AddVideoSession(videoInfo_);
-    EventsMonitor::GetInstance().NotifyEventToObervers(EventType::MEDIA_LIBRARY_STATUS_EVENT, true);
+    EventsMonitor::GetInstance().NotifyEventToObervers(EventType::MEDIA_LIBRARY_STATUS_EVENT,
+        MEDIA_LIBRARY_AVAILABLE);
     return DP_OK;
 }
 
@@ -119,7 +122,8 @@ int32_t DeleteVideoSessionCommand::Executing()
     auto coordinator = sessionManager_->GetSessionCoordinator();
     DP_CHECK_ERROR_RETURN_RET_LOG(coordinator == nullptr, DP_NULL_POINTER, "SessionCoordinator is nullptr.");
     coordinator->DeleteVideoSession(videoInfo_->GetUserId());
-    EventsMonitor::GetInstance().NotifyEventToObervers(EventType::MEDIA_LIBRARY_STATUS_EVENT, false);
+    EventsMonitor::GetInstance().NotifyEventToObervers(EventType::MEDIA_LIBRARY_STATUS_EVENT,
+        MEDIA_LIBRARY_DISCONNECTED);
     return DP_OK;
 }
 } // namespace DeferredProcessing

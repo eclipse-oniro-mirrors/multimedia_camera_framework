@@ -154,6 +154,18 @@ int32_t EventsInfo::GetAvailableMemory()
 #endif
     return DEFAULT_MEMORY_SIZE;
 }
+
+void EventsInfo::SetMediaLibraryState(MediaLibraryStatus state)
+{
+    std::lock_guard lock(mediaStateMutex_);
+    mediaState_ = state;
+}
+
+bool EventsInfo::IsMediaBusy()
+{
+    std::lock_guard lock(mediaStateMutex_);
+    return mediaState_ == MediaLibraryStatus::MEDIA_LIBRARY_BUSY;
+}
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS
