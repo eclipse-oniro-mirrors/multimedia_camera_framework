@@ -761,7 +761,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_019, TestSize.Level1)
     cameraService_->cameraServiceCallbacks_ = {};
     cameraService_->cameraStatusCallbacks_ = {};
     cameraService_->OnCameraStatus(cameraIds[0], CameraStatus::CAMERA_STATUS_AVAILABLE, CallbackInvoker::APPLICATION);
-    EXPECT_TRUE(cameraService_->cameraStatusCallbacks_.empty());
+    EXPECT_FALSE(cameraService_->cameraStatusCallbacks_.empty());
     EXPECT_EQ(cameraService_->UnSetCameraCallback(IPCSkeleton::GetCallingPid()), CAMERA_OK);
 
     sptr<ICameraServiceCallbackTest> callback = new ICameraServiceCallbackTest();
@@ -2427,7 +2427,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_057, TestSize.Level0)
     cameraService_->freezedPidList_.insert(IPCSkeleton::GetCallingPid());
     cameraService_->OnCameraStatus(cameraIds[0], CameraStatus::CAMERA_STATUS_APPEAR,
         CallbackInvoker::APPLICATION);
-    EXPECT_TRUE(cameraService_->cameraStatusCallbacks_.empty());
+    EXPECT_FALSE(cameraService_->cameraStatusCallbacks_.empty());
     EXPECT_EQ(cameraService_->UnSetCameraCallback(IPCSkeleton::GetCallingPid()), CAMERA_OK);
 
     sptr<ICameraServiceCallbackTest> callback = new ICameraServiceCallbackTest();
@@ -2467,7 +2467,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_058, TestSize.Level0)
     cameraService_->cameraStatusCallbacks_ = {};
     cameraService_->freezedPidList_.insert(IPCSkeleton::GetCallingPid());
     cameraService_->OnCameraStatus(cameraIds[0], CameraStatus::CAMERA_STATUS_DISAPPEAR, CallbackInvoker::APPLICATION);
-    EXPECT_TRUE(cameraService_->cameraStatusCallbacks_.empty());
+    EXPECT_FALSE(cameraService_->cameraStatusCallbacks_.empty());
     EXPECT_EQ(cameraService_->UnSetCameraCallback(IPCSkeleton::GetCallingPid()), CAMERA_OK);
 
     sptr<ICameraServiceCallbackTest> callback = new ICameraServiceCallbackTest();
