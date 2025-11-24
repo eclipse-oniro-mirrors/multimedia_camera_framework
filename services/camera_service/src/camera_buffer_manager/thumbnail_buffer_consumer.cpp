@@ -53,6 +53,7 @@ void ThumbnailBufferConsumer::ExecuteOnBufferAvailable()
     CAMERA_SYNC_TRACE;
     sptr<HStreamCapture> streamCapture = streamCapture_.promote();
     CHECK_RETURN_ELOG(streamCapture == nullptr, "streamCapture is null");
+    streamCapture->ElevateThreadPriority();
     constexpr int32_t memSize = 20 * 1024;
     streamCapture->RequireMemorySize(memSize);
     auto thumbnailSurfaceObj = streamCapture->thumbnailSurface_.Get();

@@ -62,6 +62,7 @@ void PhotoAssetBufferConsumer::ExecuteOnBufferAvailable()
     sptr<HStreamCapture> streamCapture = streamCapture_.promote();
     CHECK_RETURN_ELOG(streamCapture == nullptr, "streamCapture is null");
     CHECK_RETURN_ELOG(streamCapture->surface_ == nullptr, "surface is null");
+    streamCapture->ElevateThreadPriority();
     sptr<SurfaceBuffer> surfaceBuffer = nullptr;
     int32_t fence = -1;
     int64_t timestamp;
