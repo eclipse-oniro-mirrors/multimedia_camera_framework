@@ -41,8 +41,12 @@ int32_t VideoOutputCallbackImpl::OnFrameStarted()
     // LCOV_EXCL_START
     CAMERA_SYNC_TRACE;
     auto item = videoOutput_.promote();
-    if (item != nullptr && item->GetApplicationCallback() != nullptr) {
-        item->GetApplicationCallback()->OnFrameStarted();
+    std::shared_ptr<VideoStateCallback> appCallback =nullptr;
+    if (item != nullptr) {
+        appCallback = item->GetApplicationCallback();
+    }
+    if (appCallback != nullptr) {
+        appCallback->OnFrameStarted();
     } else {
         COMM_INFO_LOG("Discarding VideoOutputCallbackImpl::OnFrameStarted callback in video");
     }
@@ -55,8 +59,12 @@ int32_t VideoOutputCallbackImpl::OnFrameEnded(const int32_t frameCount)
     // LCOV_EXCL_START
     CAMERA_SYNC_TRACE;
     auto item = videoOutput_.promote();
-    if (item != nullptr && item->GetApplicationCallback() != nullptr) {
-        item->GetApplicationCallback()->OnFrameEnded(frameCount);
+    std::shared_ptr<VideoStateCallback> appCallback =nullptr;
+    if (item != nullptr) {
+        appCallback = item->GetApplicationCallback();
+    }
+    if (appCallback != nullptr) {
+        appCallback->OnFrameEnded(frameCount);
     } else {
         COMM_INFO_LOG("Discarding VideoOutputCallbackImpl::OnFrameEnded callback in video");
     }
@@ -68,8 +76,12 @@ int32_t VideoOutputCallbackImpl::OnFrameError(const int32_t errorCode)
 {
     // LCOV_EXCL_START
     auto item = videoOutput_.promote();
-    if (item != nullptr && item->GetApplicationCallback() != nullptr) {
-        item->GetApplicationCallback()->OnError(errorCode);
+    std::shared_ptr<VideoStateCallback> appCallback =nullptr;
+    if (item != nullptr) {
+        appCallback = item->GetApplicationCallback();
+    }
+    if (appCallback != nullptr) {
+        appCallback->OnError(errorCode);
     } else {
         MEDIA_INFO_LOG("Discarding VideoOutputCallbackImpl::OnFrameError callback in video");
     }
@@ -88,8 +100,12 @@ int32_t VideoOutputCallbackImpl::OnDeferredVideoEnhancementInfo(const CaptureEnd
     // LCOV_EXCL_START
     MEDIA_INFO_LOG("VideoOutputCallbackImpl::OnDeferredVideoEnhancementInfo callback in video");
     auto item = videoOutput_.promote();
-    if (item != nullptr && item->GetApplicationCallback() != nullptr) {
-        item->GetApplicationCallback()->OnDeferredVideoEnhancementInfo(captureEndedInfo);
+    std::shared_ptr<VideoStateCallback> appCallback =nullptr;
+    if (item != nullptr) {
+        appCallback = item->GetApplicationCallback();
+    }
+    if (appCallback != nullptr) {
+        appCallback->OnDeferredVideoEnhancementInfo(captureEndedInfo);
     } else {
         MEDIA_INFO_LOG("Discarding VideoOutputCallbackImpl::OnDeferredVideoEnhancementInfo callback in video");
     }
