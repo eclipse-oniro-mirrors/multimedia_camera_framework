@@ -119,6 +119,8 @@ public:
     array<CameraConcurrentInfo> GetCameraConcurrentInfos(array_view<CameraDevice> cameras);
     void SetPrelaunchConfig(PrelaunchConfig const& prelaunchConfig);
     CameraDevice GetCameraDevice(CameraPosition position, CameraType type);
+    array<CameraDevice> GetCameraDevices(CameraPosition position, array_view<CameraType> types,
+        ConnectionType connectionType);
     int64_t GetCameraStorageSizeSync();
     void RegisterCameraMuteCallbackListener(const std::string& eventName,
         std::shared_ptr<uintptr_t> callback, bool isOnce);
@@ -143,6 +145,11 @@ private:
     static void ProcessCameraInfo(OHOS::sptr<OHOS::CameraStandard::CameraManager>& cameraManager,
         const OHOS::CameraStandard::CameraPosition cameraPosition,
         const OHOS::CameraStandard::CameraType cameraType, OHOS::sptr<OHOS::CameraStandard::CameraDevice>& cameraInfo);
+    static void ProcessCameraInfos(OHOS::sptr<OHOS::CameraStandard::CameraManager>& cameraManager,
+        const OHOS::CameraStandard::CameraPosition cameraPosition,
+        const std::vector<OHOS::CameraStandard::CameraType>& cameraTypes,
+        const OHOS::CameraStandard::ConnectionType connectionType,
+        std::vector<OHOS::sptr<OHOS::CameraStandard::CameraDevice>>& cameraInfos);
     SessionUnion CreateSessionWithMode(OHOS::CameraStandard::SceneMode sceneModeInner);
     OHOS::sptr<OHOS::CameraStandard::CameraManager> cameraManager_ = nullptr;
 };

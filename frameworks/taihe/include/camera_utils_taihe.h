@@ -40,6 +40,7 @@ public:
     static CameraType ToTaiheCameraType(OHOS::CameraStandard::CameraType type);
     static CameraDevice ToTaiheCameraDevice(sptr<OHOS::CameraStandard::CameraDevice> &obj);
     static CameraDevice GetNullCameraDevice();
+    static array<CameraDevice> GetNullCameraDeviceArray();
     static ConnectionType ToTaiheConnectionType(OHOS::CameraStandard::ConnectionType type);
     static CameraFormat ToTaiheCameraFormat(OHOS::CameraStandard::CameraFormat format);
     static DepthDataQualityLevel ToTaiheDepthDataQualityLevel(int32_t level);

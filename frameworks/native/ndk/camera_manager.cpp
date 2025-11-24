@@ -444,6 +444,35 @@ Camera_ErrorCode OH_CameraManager_GetCameraDevice(Camera_Manager *cameraManager,
 }
 
 /**
+ * @since 23
+ * @version 1.0
+ */
+Camera_ErrorCode OH_CameraManager_GetCameraDevices(Camera_Manager* cameraManager,
+    Camera_DeviceQueryInfo* deviceQueryInfo, uint32_t* cameraSize, Camera_Device** cameras)
+{
+    CHECK_RETURN_RET_ELOG(cameraManager == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, cameraManager is null!");
+    CHECK_RETURN_RET_ELOG(deviceQueryInfo == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, deviceQueryInfo is null!");
+    CHECK_RETURN_RET_ELOG(cameraSize == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, cameraSize is null!");
+    CHECK_RETURN_RET_ELOG(cameras == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, cameras is null!");
+
+    return cameraManager->GetCameraDevices(deviceQueryInfo, cameraSize, cameras);
+}
+
+Camera_ErrorCode OH_CameraManager_DeleteCameraDevices(Camera_Manager* cameraManager, Camera_Device* cameras)
+{
+    CHECK_RETURN_RET_ELOG(cameraManager == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, cameraManager is null!");
+    CHECK_RETURN_RET_ELOG(cameras == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, cameras is null!");
+
+    return cameraManager->DeleteCameraDevices(cameras);
+}
+
+/**
  * @since 16
  * @version 1.0
  */

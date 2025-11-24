@@ -24,6 +24,7 @@
 #include "istream_metadata.h"
 #include "napi/native_api.h"
 #include "camera_types.h"
+#include "input/camera_device.h"
 
 #ifdef NAPI_ASSERT
 #undef NAPI_ASSERT
@@ -195,6 +196,8 @@ public:
     static napi_value ProcessingPhysicalApertures(napi_env env, std::vector<std::vector<float>> physicalApertures);
 
     static std::string GetErrorMessage(int32_t errorCode);
+
+    static bool ParseCameraTypesArray(napi_env env, napi_value typesValue, std::vector<CameraType>& outTypes);
 private:
     explicit CameraNapiUtils() {};
 

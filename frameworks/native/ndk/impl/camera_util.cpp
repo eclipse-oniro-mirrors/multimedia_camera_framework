@@ -70,5 +70,33 @@ Camera_ErrorCode FrameworkToNdkCameraError(int32_t ret)
     }
     return err;
 }
+
+void ProcessCameraInfos(const std::vector<sptr<CameraDevice>>& cameraObjList, CameraPosition innerPosition,
+    int32_t queryConnection, const std::vector<CameraType>& typeFilters,
+    std::vector<sptr<CameraDevice>>& matchedDevices)
+{
+    matchedDevices.clear();
+    matchedDevices.reserve(cameraObjList.size());
+
+    for (const auto& cameraDevice : cameraObjList) {
+        if (cameraDevice == nullptr) {
+            continue;
+        }
+        if (cameraDevice->GetPosition() != innerPosition) {
+            continue;
+        }
+        if (static_cast<int32_t>(cameraDevice->GetConnectionType()) != queryConnection) {
+            continue;
+        }
+        CameraType deviceType = cameraDevice->GetCameraType();
+        if (!typeFilters.empty()) {
+            auto it = std::find(typeFilters.begin(), typeFilters.end(), deviceType);
+            if (it == typeFilters.end()) {
+                continue;
+            }
+        }
+        matchedDevices.emplace_back(cameraDevice);
+    }
+}
 } // namespace CameraStandard
 } // namespace OHOS

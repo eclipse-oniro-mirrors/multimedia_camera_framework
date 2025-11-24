@@ -904,6 +904,65 @@ Camera_ErrorCode Camera_Manager::GetCameraDevice(Camera_Position position, Camer
     return CAMERA_OK;
 }
 
+Camera_ErrorCode Camera_Manager::GetCameraDevices(Camera_DeviceQueryInfo* deviceQueryInfo, uint32_t* cameraSize,
+    Camera_Device** cameras)
+{
+    MEDIA_DEBUG_LOG("Camera_Manager::GetCameraDevices is called");
+
+    CameraPosition innerPosition = CameraPosition::CAMERA_POSITION_UNSPECIFIED;
+    auto posItr = g_NdkCameraPositionToFwk_.find(deviceQueryInfo->cameraPosition);
+    CHECK_RETURN_RET_ELOG(posItr == g_NdkCameraPositionToFwk_.end(), CAMERA_INVALID_ARGUMENT,
+        "Camera_Manager::GetCameraDevices innerPosition not found!");
+    innerPosition = posItr->second;
+
+    std::vector<CameraType> typeFilters;
+    typeFilters.reserve(deviceQueryInfo->cameraTypeSize);
+    for (uint32_t i = 0; i < deviceQueryInfo->cameraTypeSize; ++i) {
+        Camera_Type ndkType = deviceQueryInfo->cameraType[i];
+        typeFilters.emplace_back(static_cast<CameraType>(ndkType));
+    }
+
+    int32_t queryConnection = static_cast<int32_t>(deviceQueryInfo->connectionType);
+    std::vector<sptr<CameraDevice>> cameraObjList = CameraManager::GetInstance()->GetSupportedCameras();
+    CHECK_RETURN_RET_ELOG(
+        cameraObjList.empty(), CAMERA_SERVICE_FATAL_ERROR, "Camera_Manager::GetSupportedCameras fail!");
+
+    std::vector<sptr<CameraDevice>> matchedDevices;
+    ProcessCameraInfos(cameraObjList, innerPosition, queryConnection, typeFilters, matchedDevices);
+    CHECK_RETURN_RET_ELOG(
+        matchedDevices.empty(), CAMERA_SERVICE_FATAL_ERROR, "Camera_Manager::GetCameraDevices no matched device!");
+
+    uint32_t outSize = static_cast<uint32_t>(matchedDevices.size());
+    Camera_Device* outArray = new (std::nothrow) Camera_Device[outSize + 1];
+    CHECK_RETURN_RET_ELOG(outArray == nullptr, CAMERA_SERVICE_FATAL_ERROR,
+        "Camera_Manager::GetCameraDevices new Camera_Device array failed!");
+
+    for (uint32_t i = 0; i < outSize; ++i) {
+        sptr<CameraDevice> cameraInfo = matchedDevices[i];
+        outArray[i].cameraId = strdup(cameraInfo->GetID().c_str());
+        outArray[i].cameraPosition = deviceQueryInfo->cameraPosition;
+        outArray[i].cameraType = static_cast<Camera_Type>(cameraInfo->GetCameraType());
+        outArray[i].connectionType = static_cast<Camera_Connection>(cameraInfo->GetConnectionType());
+    }
+    outArray[outSize].cameraId = nullptr;
+    *cameraSize = outSize;
+    *cameras = outArray;
+    MEDIA_DEBUG_LOG("Camera_Manager::GetCameraDevices success, outSize = %{public}u", outSize);
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_Manager::DeleteCameraDevices(Camera_Device* cameras)
+{
+    MEDIA_DEBUG_LOG("Camera_Manager::DeleteCameraDevices is called");
+    uint32_t i = 0;
+    while (cameras[i].cameraId != nullptr) {
+        free(cameras[i].cameraId);
+        i++;
+    }
+    delete[] cameras;
+    return CAMERA_OK;
+}
+
 Camera_ErrorCode Camera_Manager::GetCameraConcurrentInfos(const Camera_Device *camera, uint32_t deviceSize,
     Camera_ConcurrentInfo **CameraConcurrentInfo, uint32_t *infoSize)
 {

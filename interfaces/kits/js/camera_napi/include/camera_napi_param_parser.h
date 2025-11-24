@@ -350,6 +350,20 @@ private:
         return *this;
     }
 
+    CameraNapiParamParser& Next(napi_value& outData)
+    {
+        if (napiError != napi_status::napi_ok) {
+            return *this;
+        }
+        if (paraIndex_ >= paramSize_) {
+            napiError = napi_status::napi_invalid_arg;
+            return *this;
+        }
+        
+        outData = paramValue_[paraIndex_++];
+        return *this;
+    }
+
     napi_env env_ = nullptr;
     napi_value thisVar_ = nullptr;
     size_t paramSize_ = 0;
