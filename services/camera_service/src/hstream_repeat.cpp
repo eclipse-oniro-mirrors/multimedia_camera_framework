@@ -704,7 +704,8 @@ bool HStreamRepeat::SetMirrorForLivePhoto(bool isEnable, int32_t mode)
 int32_t HStreamRepeat::SetCameraRotation(bool isEnable, int32_t rotation)
 {
     enableCameraRotation_ = isEnable;
-    CHECK_RETURN_RET(rotation > STREAM_ROTATE_360, CAMERA_INVALID_ARG);
+    CHECK_RETURN_RET(rotation > STREAM_ROTATE_360 || rotation < STREAM_ROTATE_0 || rotation % STREAM_ROTATE_90 != 0,
+        CAMERA_INVALID_ARG);
     setCameraRotation_ = STREAM_ROTATE_360 - rotation;
     SetStreamTransform();
     return CAMERA_OK;
