@@ -30,8 +30,6 @@
 
 namespace OHOS {
 namespace CameraStandard {
-sptr<MetadataObjectFactory> MetadataObjectFactory::metaFactoryInstance_;
-std::mutex MetadataObjectFactory::instanceMutex_;
 
 MetadataObject::MetadataObject(const MetadataObjectType type, const int64_t timestamp, const Rect rect,
                                const int32_t objectId, const int32_t confidence)
