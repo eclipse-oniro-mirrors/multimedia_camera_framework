@@ -764,24 +764,30 @@ int32_t CaptureSessionForSys::SetPhysicalAperture(float physicalAperture)
     std::vector<std::vector<float>> physicalApertures;
     GetSupportedPhysicalApertures(physicalApertures);
     // physicalApertures size is one, means not support change
-    CHECK_RETURN_RET_ELOG(physicalApertures.size() == 1, CameraErrorCode::SUCCESS,
-        "SetPhysicalAperture not support");
+    CHECK_RETURN_RET_ELOG(physicalApertures.size() == 1, CameraErrorCode::SUCCESS, "SetPhysicalAperture not support");
     // accurately currentZoomRatio need smoothing zoom done
     float currentZoomRatio = targetZoomRatio_;
     CHECK_EXECUTE(!isSmoothZooming_ || FloatIsEqual(targetZoomRatio_, -1.0), currentZoomRatio = GetZoomRatio());
     int zoomMinIndex = 0;
-    auto it = std::find_if(physicalApertures.rbegin(), physicalApertures.rend(),
-        [&currentZoomRatio, &zoomMinIndex](const std::vector<float> physicalApertureRange) {
-            return (currentZoomRatio - physicalApertureRange[zoomMinIndex]) >= -std::numeric_limits<float>::epsilon();
-        });
+    for (const auto& physicalApertureRange : physicalApertures) {
+        if ((currentZoomRatio > physicalApertureRange[zoomMinIndex] - std::numeric_limits<float>::epsilon() &&
+            currentZoomRatio < physicalApertureRange[zoomMinIndex+1] + std::numeric_limits<float>::epsilon())) {
+            matchedRanges.push_back(physicalApertureRange);
+        }
+    }
+    CHECK_RETURN_RET_ELOG(matchedRanges.empty(), CameraErrorCode::SUCCESS, "matchedRanges is empty.");
+    for (const auto& matchedRange : matchedRanges) {
+        auto res = std::find_if(std::next(matchedRange.begin(), physicalAperturesIndex), matchedRange.end(),
+            [&physicalAperture](const float physicalApertureTemp) {
+                return FloatIsEqual(physicalAperture, physicalApertureTemp);
+            });
+        if (res != matchedRange.end()) {
+            isApertureSupported = true;
+            break;
+        }
+    }
     float autoAperture = 0.0;
-    CHECK_RETURN_RET_ELOG(it == physicalApertures.rend(), CameraErrorCode::SUCCESS,
-        "current zoomRatio not supported in physical apertures zoom ratio");
-    int physicalAperturesIndex = 2;
-    auto res = std::find_if(std::next((*it).begin(), physicalAperturesIndex), (*it).end(),
-        [&physicalAperture](
-            const float physicalApertureTemp) { return FloatIsEqual(physicalAperture, physicalApertureTemp); });
-    CHECK_RETURN_RET_ELOG((physicalAperture != autoAperture) && res == (*it).end(), CameraErrorCode::SUCCESS,
+    CHECK_RETURN_RET_ELOG((physicalAperture != autoAperture) && !isApertureSupported, CameraErrorCode::SUCCESS,
         "current physicalAperture is not supported");
     CHECK_RETURN_RET_ELOG(!AddOrUpdateMetadata(
         changedMetadata_->get(), OHOS_CONTROL_CAMERA_PHYSICAL_APERTURE_VALUE, &physicalAperture, 1),

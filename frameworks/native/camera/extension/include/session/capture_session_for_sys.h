@@ -300,6 +300,9 @@ private:
     int32_t IsColorReservationTypeSupported(ColorReservationType colorReservationType, bool& isSupported);
     volatile bool isDepthFusionEnable_ = false;
     static const std::unordered_map<EffectSuggestionType, CameraEffectSuggestionType> fwkEffectSuggestionTypeMap_;
+    atomic<bool> isApertureSupported = false;
+    const int32_t physicalAperturesIndex = 2;
+    std::vector<std::vector<float>> matchedRanges;
 };
 } // namespace CameraStandard
 } // namespace OHOS
