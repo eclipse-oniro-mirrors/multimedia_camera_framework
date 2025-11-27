@@ -764,8 +764,7 @@ int32_t CaptureSessionForSys::SetPhysicalAperture(float physicalAperture)
     std::vector<std::vector<float>> physicalApertures;
     GetSupportedPhysicalApertures(physicalApertures);
     // physicalApertures size is one, means not support change
-    CHECK_RETURN_RET_ELOG(physicalApertures.size() == 1, CameraErrorCode::SUCCESS,
-        "SetPhysicalAperture not support");
+    CHECK_RETURN_RET_ELOG(physicalApertures.size() == 1, CameraErrorCode::SUCCESS, "SetPhysicalAperture not support");
     // accurately currentZoomRatio need smoothing zoom done
     float currentZoomRatio = targetZoomRatio_;
     CHECK_EXECUTE(!isSmoothZooming_ || FloatIsEqual(targetZoomRatio_, -1.0), currentZoomRatio = GetZoomRatio());
