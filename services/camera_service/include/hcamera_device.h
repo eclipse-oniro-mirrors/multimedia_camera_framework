@@ -249,7 +249,7 @@ private:
     std::mutex isHasFitedRotationMutex_;
     bool isHasFitedRotation_ = false;
 
-    std::string clientName_;
+    std::string clientName_ = "";
     uint64_t openCamTime_;
     int clientUserId_;
     uint8_t usedAsPosition_ = OHOS_CAMERA_POSITION_OTHER;
@@ -314,6 +314,7 @@ private:
 
     bool isMovingPhotoEnabled_ = false;
     std::vector<int32_t> frameRateRange_ = {0, 0};
+    std::mutex clientNameMutex_;
     std::mutex fpsRangeLock_;
     std::mutex lastDisplayModeLock_;
     std::mutex originCameraIdLock_;
