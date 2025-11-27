@@ -778,8 +778,8 @@ int32_t CaptureSessionForSys::SetPhysicalAperture(float physicalAperture)
     CHECK_RETURN_RET_ELOG(matchedRanges.empty(), CameraErrorCode::SUCCESS, "matchedRanges is empty.");
     for (const auto& matchedRange : matchedRanges) {
         auto res = std::find_if(std::next(matchedRange.begin(), physicalAperturesIndex), matchedRange.end(),
-            [&physicalAperture](const float physicalApertureTemp) { 
-                return FloatIsEqual(physicalAperture, physicalApertureTemp); 
+            [&physicalAperture](const float physicalApertureTemp) {
+                return FloatIsEqual(physicalAperture, physicalApertureTemp);
             });
         if (res != matchedRange.end()) {
             isApertureSupported = true;
