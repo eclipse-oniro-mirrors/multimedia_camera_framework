@@ -692,7 +692,7 @@ void CJPhotoOutput::OffAllPhotoAvailable()
     }
     photoOutput_->UnSetPhotoAvailableCallback();
     callbackFlag_ &= ~CAPTURE_PHOTO;
-    photoOutput_->SetCallbackFlag(callbackFlag_);
+    photoOutput_->SetCallbackFlag(callbackFlag_, false);
     
     std::lock_guard<std::mutex> lock(photoOutputCallback_->photoAvailableMutex);
     photoOutputCallback_->photoAvailableCallbackList.clear();

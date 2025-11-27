@@ -1517,7 +1517,7 @@ void PhotoOutputNapi::UnregisterPhotoAvailableCallbackListener(
     CHECK_RETURN_ELOG(photoOutputCallback_ == nullptr, "photoOutputCallback is null!");
     photoOutput_->UnSetPhotoAvailableCallback();
     callbackFlag_ &= ~CAPTURE_PHOTO;
-    photoOutput_->SetCallbackFlag(callbackFlag_);
+    photoOutput_->SetCallbackFlag(callbackFlag_, false);
     photoOutputCallback_->RemoveCallbackRef(CONST_CAPTURE_PHOTO_AVAILABLE, callback);
 }
 
@@ -1556,7 +1556,7 @@ void PhotoOutputNapi::UnregisterPhotoAssetAvailableCallbackListener(
     CHECK_RETURN_ELOG(photoOutputCallback_ == nullptr, "photoOutputCallback is null!");
     photoOutput_->UnSetPhotoAssetAvailableCallback();
     callbackFlag_ &= ~CAPTURE_PHOTO_ASSET;
-    photoOutput_->SetCallbackFlag(callbackFlag_);
+    photoOutput_->SetCallbackFlag(callbackFlag_, false);
     photoOutput_->DeferImageDeliveryFor(DeferredDeliveryImageType::DELIVERY_NONE);
     photoOutputCallback_->RemoveCallbackRef(CONST_CAPTURE_PHOTO_ASSET_AVAILABLE, callback);
 }

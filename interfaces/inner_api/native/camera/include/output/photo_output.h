@@ -419,7 +419,7 @@ public:
     /**
      * @brief Set the callbackFlag when on photoAssetAvailable.
      */
-    void SetCallbackFlag(uint8_t callbackFlag);
+    void SetCallbackFlag(uint8_t callbackFlag, bool isNeedReConfig = true);
 
     /**
      * @brief Set the flag when on native surface.

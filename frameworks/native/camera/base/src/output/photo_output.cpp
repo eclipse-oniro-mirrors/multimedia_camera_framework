@@ -374,7 +374,7 @@ void PhotoOutput::SetNativeSurface(bool isNativeSurface)
     isNativeSurface_ = isNativeSurface;
 }
 
-void PhotoOutput::SetCallbackFlag(uint8_t callbackFlag)
+void PhotoOutput::SetCallbackFlag(uint8_t callbackFlag, bool isNeedReConfig)
 {
     std::lock_guard<std::mutex> lock(callbackMutex_);
     CHECK_RETURN_ELOG(!isNativeSurface_, "SetCallbackFlag when register imageReciver");
@@ -384,7 +384,7 @@ void PhotoOutput::SetCallbackFlag(uint8_t callbackFlag)
     bool afterStatus = IsEnableDeferred();
     // if session is commit or start, and isEnableDeferred is oppsite, need to restart session config
     auto session = GetSession();
-    if (beforeStatus != afterStatus && session) {
+    if (isNeedReConfig && beforeStatus != afterStatus && session) {
         FocusMode focusMode = session->GetFocusMode();
         FlashMode flashMode = session->GetFlashMode();
         MEDIA_INFO_LOG("session restart when callback status changed %{public}d, %{public}d", focusMode, flashMode);
