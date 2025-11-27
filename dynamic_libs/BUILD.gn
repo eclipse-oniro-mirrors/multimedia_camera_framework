@@ -439,6 +439,7 @@ ohos_shared_library("camera_dynamic_notification") {
   external_deps = [
     "ability_base:base",
     "ability_base:zuri",
+    "bundle_framework:appexecfwk_base",
     "distributed_notification_service:ans_innerkits",
     "hilog:libhilog",
     "hisysevent:libhisysevent",
