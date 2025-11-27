@@ -1,0 +1,92 @@
+diff --git a/frameworks/cj/camera/src/photo_output_impl.cpp b/frameworks/cj/camera/src/photo_output_impl.cpp
+index 1cbe0d5e0..abf31ee06 100644
+--- a/frameworks/cj/camera/src/photo_output_impl.cpp
++++ b/frameworks/cj/camera/src/photo_output_impl.cpp
+@@ -697,7 +697,7 @@ void CJPhotoOutput::OffAllPhotoAvailable()
+     }
+     photoOutput_->UnSetPhotoAvailableCallback();
+     callbackFlag_ &= ~CAPTURE_PHOTO;
+-    photoOutput_->SetCallbackFlag(callbackFlag_);
++    photoOutput_->SetCallbackFlag(callbackFlag_, false);
+     
+     std::lock_guard<std::mutex> lock(photoOutputCallback_->photoAvailableMutex);
+     photoOutputCallback_->photoAvailableCallbackList.clear();
+diff --git a/frameworks/js/camera_napi/src/output/photo_output_napi.cpp b/frameworks/js/camera_napi/src/output/photo_output_napi.cpp
+index c747a63f7..109883c8a 100644
+--- a/frameworks/js/camera_napi/src/output/photo_output_napi.cpp
++++ b/frameworks/js/camera_napi/src/output/photo_output_napi.cpp
+@@ -1595,7 +1595,7 @@ void PhotoOutputNapi::UnregisterPhotoAvailableCallbackListener(
+     CHECK_RETURN_ELOG(photoOutputCallback_ == nullptr, "photoOutputCallback is null!");
+     photoOutput_->UnSetPhotoAvailableCallback();
+     callbackFlag_ &= ~CAPTURE_PHOTO;
+-    photoOutput_->SetCallbackFlag(callbackFlag_);
++    photoOutput_->SetCallbackFlag(callbackFlag_, false);
+     photoOutputCallback_->RemoveCallbackRef(CONST_CAPTURE_PHOTO_AVAILABLE, callback);
+ }
+ 
+@@ -1634,7 +1634,7 @@ void PhotoOutputNapi::UnregisterPhotoAssetAvailableCallbackListener(
+     CHECK_RETURN_ELOG(photoOutputCallback_ == nullptr, "photoOutputCallback is null!");
+     photoOutput_->UnSetPhotoAssetAvailableCallback();
+     callbackFlag_ &= ~CAPTURE_PHOTO_ASSET;
+-    photoOutput_->SetCallbackFlag(callbackFlag_);
++    photoOutput_->SetCallbackFlag(callbackFlag_, false);
+     photoOutput_->DeferImageDeliveryFor(DeferredDeliveryImageType::DELIVERY_NONE);
+     photoOutputCallback_->RemoveCallbackRef(CONST_CAPTURE_PHOTO_ASSET_AVAILABLE, callback);
+ }
+diff --git a/frameworks/native/camera/base/src/output/photo_output.cpp b/frameworks/native/camera/base/src/output/photo_output.cpp
+index 19d7472ba..a4308d0e2 100644
+--- a/frameworks/native/camera/base/src/output/photo_output.cpp
++++ b/frameworks/native/camera/base/src/output/photo_output.cpp
+@@ -399,7 +399,7 @@ void PhotoOutput::SetNativeSurface(bool isNativeSurface)
+     isNativeSurface_ = isNativeSurface;
+ }
+ 
+-void PhotoOutput::SetCallbackFlag(uint8_t callbackFlag)
++void PhotoOutput::SetCallbackFlag(uint8_t callbackFlag, bool isNeedReConfig)
+ {
+     std::lock_guard<std::mutex> lock(callbackMutex_);
+     CHECK_RETURN_ELOG(!isNativeSurface_, "SetCallbackFlag when register imageReciver");
+@@ -409,7 +409,7 @@ void PhotoOutput::SetCallbackFlag(uint8_t callbackFlag)
+     bool afterStatus = IsEnableDeferred();
+     // if session is commit or start, and isEnableDeferred is oppsite, need to restart session config
+     auto session = GetSession();
+-    if (beforeStatus != afterStatus && session) {
++    if (isNeedReConfig && beforeStatus != afterStatus && session) {
+         FocusMode focusMode = session->GetFocusMode();
+         FlashMode flashMode = session->GetFlashMode();
+         MEDIA_INFO_LOG("focusMode %{public}d, flashMode %{public}d", focusMode, flashMode);
+diff --git a/frameworks/taihe/src/output/photo_output_taihe.cpp b/frameworks/taihe/src/output/photo_output_taihe.cpp
+index 9dc526e51..f2bb03476 100644
+--- a/frameworks/taihe/src/output/photo_output_taihe.cpp
++++ b/frameworks/taihe/src/output/photo_output_taihe.cpp
+@@ -587,7 +587,7 @@ void PhotoOutputImpl::UnregisterPhotoAvailableCallbackListener(const std::string
+     CHECK_RETURN_ELOG(photoOutputCallback_ == nullptr, "photoOutputCallback is null!");
+     photoOutput_->UnSetPhotoAvailableCallback();
+     callbackFlag_ &= ~OHOS::CameraStandard::CAPTURE_PHOTO;
+-    photoOutput_->SetCallbackFlag(callbackFlag_);
++    photoOutput_->SetCallbackFlag(callbackFlag_, false);
+     photoOutputCallback_->RemoveCallbackRef(eventName, callback);
+ }
+ 
+@@ -652,7 +652,7 @@ void PhotoOutputImpl::UnregisterPhotoAssetAvailableCallbackListener(const std::s
+     CHECK_RETURN_ELOG(photoOutputCallback_ == nullptr, "photoOutputCallback is null!");
+     photoOutput_->UnSetPhotoAssetAvailableCallback();
+     callbackFlag_ &= ~OHOS::CameraStandard::CAPTURE_PHOTO_ASSET;
+-    photoOutput_->SetCallbackFlag(callbackFlag_);
++    photoOutput_->SetCallbackFlag(callbackFlag_, false);
+     photoOutput_->DeferImageDeliveryFor(OHOS::CameraStandard::DeferredDeliveryImageType::DELIVERY_NONE);
+     photoOutputCallback_->RemoveCallbackRef(CONST_CAPTURE_PHOTO_ASSET_AVAILABLE, callback);
+ }
+diff --git a/interfaces/inner_api/native/camera/include/output/photo_output.h b/interfaces/inner_api/native/camera/include/output/photo_output.h
+index 624cbb513..eb4b61f53 100644
+--- a/interfaces/inner_api/native/camera/include/output/photo_output.h
++++ b/interfaces/inner_api/native/camera/include/output/photo_output.h
+@@ -411,7 +411,7 @@ public:
+     /**
+      * @brief Set the callbackFlag when on photoAssetAvailable.
+      */
+-    void SetCallbackFlag(uint8_t callbackFlag);
++    void SetCallbackFlag(uint8_t callbackFlag, bool isNeedReConfig = true);
+ 
+     /**
+     * @brief Set the flag when on native surface.
