@@ -249,7 +249,7 @@ std::string HCameraDevice::GetCameraId()
 
 int32_t HCameraDevice::GetCameraType()
 {
-    CHECK_RETURN_RET(clientName_ == SYSTEM_CAMERA, SYSTEM);
+    CHECK_RETURN_RET(GetClientName() == SYSTEM_CAMERA, SYSTEM);
     return OTHER;
 }
 
@@ -268,6 +268,11 @@ int32_t HCameraDevice::GetCameraConnectType()
 
 std::string HCameraDevice::GetClientName()
 {
+    std::lock_guard<std::mutex> lock(clientNameMutex_);
+    if (clientName_ == "") {
+        int tokenId = static_cast<int32_t>(IPCSkeleton::GetCallingTokenID());
+        clientName_ = GetClientNameByToken(tokenId);
+    }
     return clientName_;
 }
 
@@ -623,9 +628,8 @@ int32_t HCameraDevice::OpenDevice(bool isEnableSecCam)
     int pid = IPCSkeleton::GetCallingPid();
     int uid = IPCSkeleton::GetCallingUid();
     AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(uid, clientUserId_);
-    int tokenId = static_cast<int32_t>(IPCSkeleton::GetCallingTokenID());
-    clientName_ = GetClientNameByToken(tokenId);
-    cameraPrivacy_->SetClientName(clientName_);
+    std::string clientName = GetClientName();
+    cameraPrivacy_->SetClientName(clientName);
 #ifdef MEMMGR_OVERRID
     RequireMemory(Memory::CAMERA_START);
 #endif
@@ -643,11 +647,11 @@ int32_t HCameraDevice::OpenDevice(bool isEnableSecCam)
         }
     }
     HandleFoldableDevice();
-    POWERMGR_SYSEVENT_CAMERA_CONNECT(pid, uid, cameraID_.c_str(), clientName_);
+    POWERMGR_SYSEVENT_CAMERA_CONNECT(pid, uid, cameraID_.c_str(), clientName);
     openCamTime_ = DeferredProcessing::SteadyClock::GetTimestampMilli();
     NotifyCameraStatus(CAMERA_OPEN);
 #ifdef HOOK_CAMERA_OPERATOR
-    if (!CameraRotatePlugin::GetInstance()->HookOpenDeviceForRotate(clientName_, GetDeviceAbility(), cameraID_)) {
+    if (!CameraRotatePlugin::GetInstance()->HookOpenDeviceForRotate(clientName, GetDeviceAbility(), cameraID_)) {
         MEDIA_ERR_LOG("HCameraDevice::OpenDevice HookOpenDevice is failed");
     }
 #endif
@@ -660,10 +664,11 @@ int32_t HCameraDevice::RequireMemory(const std::string& reason)
 {
     int32_t pid = getpid();
     int32_t requiredMemSizeKB = 0;
+    std::string clientName = GetClientName();
     int32_t ret = Memory::MemMgrClient::GetInstance().RequireBigMem(pid, reason,
-        requiredMemSizeKB, clientName_);
+        requiredMemSizeKB, clientName);
     MEDIA_INFO_LOG("HCameraDevice::RequireMemory reason:%{public}s, clientName:%{public}s, ret:%{public}d",
-        reason.c_str(), clientName_.c_str(), ret);
+        reason.c_str(), clientName.c_str(), ret);
     return ret;
 }
 #endif
@@ -759,7 +764,7 @@ void HCameraDevice::ReportDeviceProtectionStatus(const std::shared_ptr<OHOS::Cam
     int32_t status = item.data.i32[0];
     MEDIA_INFO_LOG("HCameraDevice::ReportDeviceProtectionStatus status: %{public}d", status);
     CHECK_RETURN(!CanReportDeviceProtectionStatus(status));
-    if (clientName_ == SYSTEM_CAMERA) {
+    if (GetClientName() == SYSTEM_CAMERA) {
         auto callback = GetDeviceServiceCallback();
         auto itr = g_deviceProtectionToServiceError_.find(static_cast<DeviceProtectionStatus>(status));
         if (itr != g_deviceProtectionToServiceError_.end()) {
@@ -952,7 +957,7 @@ int32_t HCameraDevice::CloseDevice()
     }
     if (cameraHostManager_) {
         cameraHostManager_->RemoveCameraDevice(cameraID_, GetCameraIdTransform());
-        cameraHostManager_->UpdateRestoreParamCloseTime(clientName_, cameraID_);
+        cameraHostManager_->UpdateRestoreParamCloseTime(GetClientName(), cameraID_);
     }
     {
         std::lock_guard<std::mutex> lock(deviceSvcCbMutex_);
@@ -967,7 +972,7 @@ int32_t HCameraDevice::CloseDevice()
 #endif
     UnRegisterSensorCallback();
 #ifdef HOOK_CAMERA_OPERATOR
-    if (!CameraRotatePlugin::GetInstance()->HookCloseDeviceForRotate(clientName_, deviceAbility_, cameraID_)) {
+    if (!CameraRotatePlugin::GetInstance()->HookCloseDeviceForRotate(GetClientName(), deviceAbility_, cameraID_)) {
         MEDIA_ERR_LOG("HCameraDevice::CloseDevice HookCloseDevice is failed");
     }
 #endif
@@ -1204,13 +1209,10 @@ int32_t HCameraDevice::GetOriginalCameraOrientation()
 // LCOV_EXCL_START
 int32_t HCameraDevice::GetNaturalDirectionCorrect(bool& isNaturalDirectionCorrect)
 {
-    if (clientName_ == "") {
-        int tokenId = static_cast<int32_t>(IPCSkeleton::GetCallingTokenID());
-        clientName_ = GetClientNameByToken(tokenId);
-    }
+    std::string clientName = GetClientName();
     std::lock_guard<std::mutex> lock(dataShareHelperMutex_);
     isNaturalDirectionCorrect = false;
-    if (!CameraApplistManager::GetInstance()->GetNaturalDirectionCorrectByBundleName(clientName_,
+    if (!CameraApplistManager::GetInstance()->GetNaturalDirectionCorrectByBundleName(clientName,
         isNaturalDirectionCorrect)) {
         MEDIA_ERR_LOG("HCameraDevice::GetNaturalDirectionCorrect failed");
         return CAMERA_INVALID_ARG;
@@ -1975,7 +1977,7 @@ void HCameraDevice::RemoveResourceWhenHostDied()
     HCameraDeviceManager::GetInstance()->RemoveDevice(cameraID_);
     if (cameraHostManager_) {
         cameraHostManager_->RemoveCameraDevice(cameraID_);
-        cameraHostManager_->UpdateRestoreParamCloseTime(clientName_, cameraID_);
+        cameraHostManager_->UpdateRestoreParamCloseTime(GetClientName(), cameraID_);
     }
     POWERMGR_SYSEVENT_CAMERA_DISCONNECT(cameraID_.c_str(),
         DeferredProcessing::SteadyClock::GetTimestampMilli() - openCamTime_);
@@ -1991,6 +1993,7 @@ void HCameraDevice::NotifyCameraStatus(int32_t state, int32_t msg)
 {
     OHOS::AAFwk::Want want;
     MEDIA_DEBUG_LOG("HCameraDevice::NotifyCameraStatus strat");
+    std::string clientName = GetClientName();
     want.SetAction(COMMON_EVENT_CAMERA_STATUS);
     want.SetParam(CLIENT_USER_ID, clientUserId_);
     want.SetParam(CAMERA_ID, cameraID_);
@@ -1998,11 +2001,11 @@ void HCameraDevice::NotifyCameraStatus(int32_t state, int32_t msg)
     int32_t type = GetCameraType();
     want.SetParam(IS_SYSTEM_CAMERA, type);
     want.SetParam(CAMERA_MSG, msg);
-    want.SetParam(CLIENT_NAME, clientName_);
+    want.SetParam(CLIENT_NAME, clientName);
     MEDIA_DEBUG_LOG(
         "OnCameraStatusChanged userId: %{public}d, cameraId: %{public}s, state: %{public}d, "
         "cameraType: %{public}d, msg: %{public}d, clientName: %{public}s",
-        clientUserId_, cameraID_.c_str(), state, type, msg, clientName_.c_str());
+        clientUserId_, cameraID_.c_str(), state, type, msg, clientName.c_str());
     EventFwk::CommonEventData CommonEventData { want };
     EventFwk::CommonEventPublishInfo publishInfo;
     std::vector<std::string> permissionVec { OHOS_PERMISSION_MANAGE_CAMERA_CONFIG };
