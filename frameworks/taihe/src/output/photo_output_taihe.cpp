@@ -580,7 +580,7 @@ void PhotoOutputImpl::UnregisterPhotoAvailableCallbackListener(const std::string
     CHECK_RETURN_ELOG(photoOutputCallback_ == nullptr, "photoOutputCallback is null!");
     photoOutput_->UnSetPhotoAvailableCallback();
     callbackFlag_ &= ~OHOS::CameraStandard::CAPTURE_PHOTO;
-    photoOutput_->SetCallbackFlag(callbackFlag_);
+    photoOutput_->SetCallbackFlag(callbackFlag_, false);
     photoOutputCallback_->RemoveCallbackRef(eventName, callback);
 }
 
@@ -644,7 +644,7 @@ void PhotoOutputImpl::UnregisterPhotoAssetAvailableCallbackListener(const std::s
     CHECK_RETURN_ELOG(photoOutputCallback_ == nullptr, "photoOutputCallback is null!");
     photoOutput_->UnSetPhotoAssetAvailableCallback();
     callbackFlag_ &= ~OHOS::CameraStandard::CAPTURE_PHOTO_ASSET;
-    photoOutput_->SetCallbackFlag(callbackFlag_);
+    photoOutput_->SetCallbackFlag(callbackFlag_, false);
     photoOutput_->DeferImageDeliveryFor(OHOS::CameraStandard::DeferredDeliveryImageType::DELIVERY_NONE);
     photoOutputCallback_->RemoveCallbackRef(CONST_CAPTURE_PHOTO_ASSET_AVAILABLE, callback);
 }
