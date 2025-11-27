@@ -239,8 +239,11 @@ void LightStatusCallbackListener::OnLightStatusChangedCallbackAsync(LightStatus 
             delete callback;
         }
     };
-    std::string taskName = "LightStatusCallbackListener::OnLightStatusChangedCallbackAsync"
-        "[status:" + std::to_string(status.status) + "]";
+    std::unordered_map<std::string, std::string> params = {
+        {"status", std::to_string(status.status)},
+    };
+    std::string taskName = CameraNapiUtils::GetTaskName(
+        "LightStatusCallbackListener::OnLightStatusChangedCallbackAsync", params);
     if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("LightStatusCallbackListener::OnLightStatusChangedCallbackAsync failed to execute work");
     } else {

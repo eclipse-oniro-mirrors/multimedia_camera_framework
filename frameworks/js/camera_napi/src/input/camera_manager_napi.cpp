@@ -213,8 +213,11 @@ void CameraManagerCallbackNapi::OnCameraStatusCallbackAsync(const CameraStatusIn
             delete callbackInfo;
         }
     };
-    std::string taskName = "CameraManagerCallbackNapi::OnCameraStatusCallbackAsync"
-        "[cameraStatus:" + std::to_string(cameraStatusInfo.cameraStatus) + "]";
+    std::unordered_map<std::string, std::string> params = {
+        {"cameraStatus", std::to_string(cameraStatusInfo.cameraStatus)},
+    };
+    std::string taskName =
+        CameraNapiUtils::GetTaskName("CameraManagerCallbackNapi::OnCameraStatusCallbackAsync", params);
     if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {
@@ -279,8 +282,10 @@ void CameraMuteListenerNapi::OnCameraMuteCallbackAsync(bool muteMode) const
             delete callbackInfo;
         }
     };
-    std::string taskName = "CameraMuteListenerNapi::OnCameraMuteCallbackAsync"
-        "[muteMode:" + std::to_string(muteMode) + "]";
+    std::unordered_map<std::string, std::string> params = {
+        {"muteMode", std::to_string(muteMode)},
+    };
+    std::string taskName = CameraNapiUtils::GetTaskName("CameraMuteListenerNapi::OnCameraMuteCallbackAsync", params);
     if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("Failed to execute work");
     } else {
@@ -332,8 +337,11 @@ void ControlCenterStatusListenerNapi::OnControlCenterStatusCallbackAsync(bool st
             delete callbackInfo;
         }
     };
-    std::string taskName = "ControlCenterStatusListenerNapi::OnControlCenterStatusCallbackAsync"
-        "[status:" + std::to_string(status) + "]";
+    std::unordered_map<std::string, std::string> params = {
+        {"status", std::to_string(status)},
+    };
+    std::string taskName =
+        CameraNapiUtils::GetTaskName("ControlCenterStatusListenerNapi::OnControlCenterStatusCallbackAsync", params);
     if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("Failed to execute work");
     } else {
@@ -382,10 +390,12 @@ void TorchListenerNapi::OnTorchStatusChangeCallbackAsync(const TorchStatusInfo &
             delete callbackInfo;
         }
     };
-    std::string taskName = "TorchListenerNapi::OnTorchStatusChangeCallbackAsync";
-    taskName += torchStatusInfo.isTorchAvailable ? (
-        torchStatusInfo.isTorchActive ? "[torchLevel:" + std::to_string(torchStatusInfo.torchLevel) + "]" :
-        "[torchActive:0]") : "[torchAvailable:0]";
+    std::unordered_map<std::string, std::string> params = {
+        {"isTorchAvailable", to_string(torchStatusInfo.isTorchAvailable)},
+        {"isTorchActive", to_string(torchStatusInfo.isTorchActive)},
+        {"torchLevel", to_string(torchStatusInfo.torchLevel)},
+    };
+    std::string taskName = CameraNapiUtils::GetTaskName("TorchListenerNapi::OnTorchStatusChangeCallbackAsync", params);
     if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("Failed to execute work");
     } else {
@@ -442,8 +452,10 @@ void FoldListenerNapi::OnFoldStatusChangedCallbackAsync(const FoldStatusInfo &fo
             delete callbackInfo;
         }
     };
-    std::string taskName = "FoldListenerNapi::OnFoldStatusChangedCallbackAsync"
-        "[foldStatus:" + std::to_string(static_cast<int32_t>(foldStatusInfo.foldStatus)) + "]";
+    std::unordered_map<std::string, std::string> params = {
+        {"foldStatus", std::to_string(static_cast<int32_t>(foldStatusInfo.foldStatus))},
+    };
+    std::string taskName = CameraNapiUtils::GetTaskName("FoldListenerNapi::OnFoldStatusChangedCallbackAsync", params);
     if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("Failed to execute work");
     } else {

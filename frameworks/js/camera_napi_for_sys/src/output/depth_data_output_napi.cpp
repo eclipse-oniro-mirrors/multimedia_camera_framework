@@ -201,8 +201,10 @@ void DepthDataOutputCallback::UpdateJSCallbackAsync(DepthDataOutputEventType eve
             delete callbackInfo;
         }
     };
-    string taskName = "DepthDataOutputCallback::UpdateJSCallbackAsync"
-        "[" + DepthDataOutputEventTypeHelper.GetKeyString(eventType) + "]";
+    std::unordered_map<std::string, std::string> params = {
+        {"eventType", DepthDataOutputEventTypeHelper.GetKeyString(eventType)},
+    };
+    string taskName = CameraNapiUtils::GetTaskName("DepthDataOutputCallback::UpdateJSCallbackAsync", params);
     if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {

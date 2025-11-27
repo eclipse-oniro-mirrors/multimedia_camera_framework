@@ -298,8 +298,10 @@ void PhotoOutputCallback::UpdateJSCallbackAsync(PhotoOutputEventType eventType, 
             delete callbackInfo;
         }
     };
-    std::string taskName = "PhotoOutputCallback::UpdateJSCallbackAsync"
-        "[" + PhotoOutputEventTypeHelper.GetKeyString(eventType) + "]";
+    std::unordered_map<std::string, std::string> params = {
+        {"eventType", PhotoOutputEventTypeHelper.GetKeyString(eventType)},
+    };
+    std::string taskName = CameraNapiUtils::GetTaskName("PhotoOutputCallback::UpdateJSCallbackAsync", params);
     if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {

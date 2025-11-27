@@ -88,8 +88,10 @@ void ErrorCallbackListener::OnErrorCallbackAsync(const int32_t errorType, const 
             delete callbackInfo;
         }
     };
-    std::string taskName = "ErrorCallbackListener::OnErrorCallbackAsync"
-        "[errorType:" + std::to_string(errorType) + "]";
+    std::unordered_map<std::string, std::string> params = {
+        {"errorType:", std::to_string(errorType)},
+    };
+    std::string taskName = CameraNapiUtils::GetTaskName("ErrorCallbackListener::OnErrorCallbackAsync", params);
     if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {
@@ -159,9 +161,12 @@ void OcclusionDetectCallbackListener::OnCameraOcclusionDetectedCallbackAsync(
             delete callbackInfo;
         }
     };
-    std::string taskName = "OcclusionDetectCallbackListener::OnCameraOcclusionDetectedCallbackAsync"
-        "[occlusion:" + std::to_string(isCameraOcclusion) +
-        ", lensDirty:" + std::to_string(isCameraLensDirty) + "]";
+    std::unordered_map<std::string, std::string> params = {
+        {"isCameraOcclusion", std::to_string(isCameraOcclusion)},
+        {"isCameraLensDirty", std::to_string(isCameraLensDirty)},
+    };
+    std::string taskName =
+        CameraNapiUtils::GetTaskName("OcclusionDetectCallbackListener::OnCameraOcclusionDetectedCallbackAsync", params);
     if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {

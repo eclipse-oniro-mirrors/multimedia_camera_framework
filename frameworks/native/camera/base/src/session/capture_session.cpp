@@ -187,18 +187,6 @@ const std::unordered_map<TripodStatus, FwkTripodStatus>
     {TRIPOD_STATUS_EXITING, FwkTripodStatus::EXITING}
 };
 
-const std::string STREAM_TYPE_REPEAT = "RepeatStream";
-const std::string STREAM_TYPE_METADATA = "MetadataStream";
-const std::string STREAM_TYPE_CAPTURE = "CaptureStream";
-const std::string STREAM_TYPE_DEPTH = "DepthStream";
-
-const std::unordered_map<StreamType, std::string> mapStreamType = {
-    {StreamType::REPEAT, STREAM_TYPE_REPEAT},
-    {StreamType::METADATA, STREAM_TYPE_METADATA},
-    {StreamType::CAPTURE, STREAM_TYPE_CAPTURE},
-    {StreamType::DEPTH, STREAM_TYPE_DEPTH},
-};
-
 int32_t CaptureSessionCallback::OnError(int32_t errorCode)
 {
     MEDIA_INFO_LOG("CaptureSessionCallback::OnError() is called!, errorCode: %{public}d", errorCode);

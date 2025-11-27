@@ -40,8 +40,11 @@ void SlowMotionStateListener::OnSlowMotionStateCbAsync(const SlowMotionState sta
             delete callbackInfo;
         }
     };
-    std::string taskName = "SlowMotionStateListener::OnSlowMotionStateCbAsync"
-        "[state:" + std::to_string(state) + "]";
+    std::unordered_map<std::string, std::string> params = {
+        {"state", std::to_string(state)},
+    };
+    std::string taskName =
+        CameraNapiUtils::GetTaskName("SlowMotionStateListener::OnSlowMotionStateCbAsync", params);
     if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {

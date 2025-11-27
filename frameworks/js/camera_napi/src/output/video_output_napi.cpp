@@ -82,8 +82,10 @@ void VideoCallbackListener::UpdateJSCallbackAsync(VideoOutputEventType eventType
             delete callbackInfo;
         }
     };
-    std::string taskName = "VideoCallbackListener::UpdateJSCallbackAsync"
-        "[" + VideoOutputEventTypeHelper.GetKeyString(eventType) + "]";
+    std::unordered_map<std::string, std::string> params = {
+        {"eventType", VideoOutputEventTypeHelper.GetKeyString(eventType)},
+    };
+    std::string taskName = CameraNapiUtils::GetTaskName("VideoCallbackListener::UpdateJSCallbackAsync", params);
     if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("failed to execute work");
     }  else {

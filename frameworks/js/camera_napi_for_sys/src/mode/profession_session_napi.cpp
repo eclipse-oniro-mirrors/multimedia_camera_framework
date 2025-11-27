@@ -849,8 +849,11 @@ void ExposureInfoCallbackListener::OnExposureInfoChangedCallbackAsync(ExposureIn
             delete callback;
         }
     };
-    std::string taskName = "ExposureInfoCallbackListener::OnExposureInfoChangedCallbackAsync"
-        "[exposureDurationValue:" + std::to_string(info.exposureDurationValue) + "]";
+    std::unordered_map<std::string, std::string> params = {
+        {"exposureDurationValue", std::to_string(info.exposureDurationValue)},
+    };
+    std::string taskName =
+        CameraNapiUtils::GetTaskName("ExposureInfoCallbackListener::OnExposureInfoChangedCallbackAsync", params);
     if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("ExposureInfoCallbackListener::OnExposureInfoChangedCallbackAsync failed to execute work");
     } else {
@@ -896,8 +899,11 @@ void IsoInfoCallbackListener::OnIsoInfoChangedCallbackAsync(IsoInfo info) const
             delete callback;
         }
     };
-    std::string taskName = "IsoInfoCallbackListener::OnIsoInfoChangedCallbackAsync"
-        "[isoValue:" + std::to_string(info.isoValue) + "]";
+    std::unordered_map<std::string, std::string> params = {
+        {"isoValue", std::to_string(info.isoValue)},
+    };
+    std::string taskName =
+        CameraNapiUtils::GetTaskName("IsoInfoCallbackListener::OnIsoInfoChangedCallbackAsync", params);
     if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("IsoInfoCallbackListener::OnIsoInfoChangedCallbackAsync failed to execute work");
     } else {
@@ -942,8 +948,11 @@ void ApertureInfoCallbackListener::OnApertureInfoChangedCallbackAsync(ApertureIn
             delete callback;
         }
     };
-    std::string taskName = "ApertureInfoCallbackListener::OnApertureInfoChangedCallbackAsync"
-        "[apertureValue:" + std::to_string(info.apertureValue) + "]";
+    std::unordered_map<std::string, std::string> params = {
+        {"apertureValue", std::to_string(info.apertureValue)},
+    };
+    std::string taskName =
+        CameraNapiUtils::GetTaskName("ApertureInfoCallbackListener::OnApertureInfoChangedCallbackAsync", params);
     if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("ApertureInfoCallbackListener::OnApertureInfoChangedCallbackAsync failed to execute work");
     } else {
@@ -988,8 +997,11 @@ void LuminationInfoCallbackListener::OnLuminationInfoChangedCallbackAsync(Lumina
             delete callback;
         }
     };
-    std::string taskName = "LuminationInfoCallbackListener::OnLuminationInfoChangedCallbackAsync"
-        "[luminationValue:" + std::to_string(info.luminationValue) + "]";
+    std::unordered_map<std::string, std::string> params = {
+        {"luminationValue", std::to_string(info.luminationValue)},
+    };
+    std::string taskName =
+        CameraNapiUtils::GetTaskName("LuminationInfoCallbackListener::OnLuminationInfoChangedCallbackAsync", params);
     if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("LuminationInfoCallbackListener::OnLuminationInfoChangedCallbackAsync failed to execute work");
     } else {

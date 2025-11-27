@@ -102,8 +102,10 @@ void PreviewOutputCallback::UpdateJSCallbackAsync(PreviewOutputEventType eventTy
             delete callbackInfo;
         }
     };
-    std::string taskName = "PreviewOutputCallback::UpdateJSCallbackAsync"
-        "[" + PreviewOutputEventTypeHelper.GetKeyString(eventType) + "]";
+    std::unordered_map<std::string, std::string> params = {
+        {"eventType", PreviewOutputEventTypeHelper.GetKeyString(eventType)},
+    };
+    std::string taskName = CameraNapiUtils::GetTaskName("PreviewOutputCallback::UpdateJSCallbackAsync", params);
     if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {
@@ -143,8 +145,11 @@ void PreviewOutputCallback::OnSketchStatusDataChangedAsync(SketchStatusData stat
             listener->OnSketchStatusDataChangedCall(callbackInfo->sketchStatusData_);
         }
     };
-    std::string taskName = "PreviewOutputCallback::OnSketchStatusDataChangedAsync"
-        "[status:" + std::to_string(static_cast<int32_t>(statusData.status)) + "]";
+    std::unordered_map<std::string, std::string> params = {
+        {"status", std::to_string(static_cast<int32_t>(statusData.status))},
+    };
+    std::string taskName =
+        CameraNapiUtils::GetTaskName("PreviewOutputCallback::OnSketchStatusDataChangedAsync", params);
     if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("PreviewOutputCallback::OnSketchStatusDataChangedAsync failed to execute work");
     }

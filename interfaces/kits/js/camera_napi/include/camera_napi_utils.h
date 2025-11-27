@@ -182,6 +182,22 @@ public:
         napi_throw_error(env, errorCode.c_str(), message);
     }
 
+    inline static std::string GetTaskName(const std::string& func, const std::unordered_map<std::string, std::string>& params)
+    {
+        std::ostringstream oss;
+        bool isFirst = true;
+        oss << func << "[";
+        for (auto it : params) {
+            if (!isFirst) {
+                oss << ",";
+            }
+            oss << it.first << ":" << it.second;
+            isFirst = false;
+        }
+        oss << "]";
+        return oss.str();
+    }
+
     static void CreateFrameRateJSArray(napi_env env, std::vector<int32_t> frameRateRange, napi_value &result);
  
     static napi_value CreateSupportFrameRatesJSArray(
