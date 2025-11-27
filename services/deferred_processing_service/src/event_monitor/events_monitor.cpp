@@ -67,12 +67,6 @@ void EventsMonitor::NotifyCameraSessionStatus(CameraSessionStatus status)
     DPSEventReport::GetInstance().SetTemperatureLevel(static_cast<int>(level));
 }
 
-void EventsMonitor::NotifyMediaLibraryStatus(bool available)
-{
-    DP_INFO_LOG("DPS_EVENT: MediaLibraryStatus: %{public}d", available);
-    NotifyObserversUnlocked(EventType::MEDIA_LIBRARY_STATUS_EVENT, available);
-}
-
 void EventsMonitor::NotifyImageEnhanceStatus(int32_t status)
 {
     DP_INFO_LOG("DPS_EVENT: ImageEnhanceStatus: %{public}d", status);
@@ -120,7 +114,7 @@ void EventsMonitor::NotifyTrailingStatus(int32_t status)
 
 void EventsMonitor::NotifyObserversUnlocked(EventType event, int32_t value)
 {
-    int32_t ret = DPS_SendCommand<EventStatusChangeCommand>(event, value);
+    int32_t ret = DPS_SendUrgentCommand<EventStatusChangeCommand>(event, value);
     DP_CHECK_ERROR_PRINT_LOG(ret != DP_OK, "send command fail, ret: %{public}d", ret);
 }
 

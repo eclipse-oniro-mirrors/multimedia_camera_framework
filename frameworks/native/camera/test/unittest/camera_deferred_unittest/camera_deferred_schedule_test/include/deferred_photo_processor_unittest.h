@@ -17,6 +17,7 @@
 #define DEFERRED_PHOTO_PROCESSER_UNITTEST_H
 
 #include "deferred_photo_processor.h"
+#include "scheduler_manager.h"
 #include "gtest/gtest.h"
 
 #define SLEEP_TIME_FOR_WATCH_DOG 2
@@ -39,6 +40,7 @@ public:
     void TearDown();
 
     std::shared_ptr<DeferredPhotoProcessor> process_ {nullptr};
+    std::shared_ptr<SchedulerManager> scheduler_ {nullptr};
 };
 } // DeferredProcessing
 } // CameraStandard

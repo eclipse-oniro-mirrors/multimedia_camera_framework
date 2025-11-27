@@ -60,9 +60,11 @@ int32_t PhotoStrategyCenter::Initialize()
     eventsListener_ = std::make_shared<PhotoEventsListener>(weak_from_this());
     EventsMonitor::GetInstance().RegisterEventsListener({
         CAMERA_SESSION_STATUS_EVENT,
+        TRAILING_STATUS_EVENT,
         PHOTO_HDI_STATUS_EVENT,
         MEDIA_LIBRARY_STATUS_EVENT,
-        THERMAL_LEVEL_STATUS_EVENT},
+        THERMAL_LEVEL_STATUS_EVENT,
+        PHOTO_CACHE_EVENT},
         eventsListener_);
     return DP_OK;
 }
@@ -72,9 +74,11 @@ void PhotoStrategyCenter::InitHandleEvent()
     DP_DEBUG_LOG("entered.");
     eventHandlerList_ = {
         {CAMERA_SESSION_STATUS_EVENT, [this](int32_t value){ HandleCameraEvent(value); }},
+        {TRAILING_STATUS_EVENT, [this](int32_t value){ HandleTrailingEvent(value); }},
         {PHOTO_HDI_STATUS_EVENT, [this](int32_t value){ HandleHalEvent(value); }},
         {MEDIA_LIBRARY_STATUS_EVENT, [this](int32_t value){ HandleMedialLibraryEvent(value); }},
-        {THERMAL_LEVEL_STATUS_EVENT, [this](int32_t value){ HandleTemperatureEvent(value); }}
+        {THERMAL_LEVEL_STATUS_EVENT, [this](int32_t value){ HandleTemperatureEvent(value); }},
+        {PHOTO_CACHE_EVENT, [this](int32_t value){ HandleCacheEvent(value); }}
     };
 }
 
@@ -146,6 +150,12 @@ void PhotoStrategyCenter::HandleHalEvent(int32_t value)
     UpdateValue(PHOTO_HAL_STATE, value);
 }
 
+void PhotoStrategyCenter::HandleTrailingEvent(int32_t value)
+{
+    DP_DEBUG_LOG("TrailingEvent value: %{public}d", value);
+    UpdateValue(PHOTO_TRAILING_STATE, value);
+}
+
 void PhotoStrategyCenter::HandleMedialLibraryEvent(int32_t value)
 {
     DP_DEBUG_LOG("MedialLibraryEvent value: %{public}d", value);
@@ -157,6 +167,12 @@ void PhotoStrategyCenter::HandleTemperatureEvent(int32_t value)
     DP_DEBUG_LOG("TemperatureEvent value: %{public}d", value);
     auto level = ConvertPhotoThermalLevel(value);
     UpdateValue(PHOTO_THERMAL_LEVEL_STATE, level);
+}
+
+void PhotoStrategyCenter::HandleCacheEvent(int32_t value)
+{
+    DP_DEBUG_LOG("PhotoCacheEvent");
+    UpdateValue(PHOTO_CACHE_STATE, value);
 }
 
 void PhotoStrategyCenter::UpdateValue(SchedulerType type, int32_t value)
@@ -177,9 +193,11 @@ SchedulerInfo PhotoStrategyCenter::ReevaluateSchedulerInfo()
     SchedulerInfo cameraInfo = GetSchedulerInfo(PHOTO_CAMERA_STATE);
     SchedulerInfo halInfo = GetSchedulerInfo(PHOTO_HAL_STATE);
     SchedulerInfo mediaLibraryInfo = GetSchedulerInfo(PHOTO_MEDIA_LIBRARY_STATE);
-    if (cameraInfo.isNeedStop || halInfo.isNeedStop || mediaLibraryInfo.isNeedStop) {
-        DP_INFO_LOG("DPS_EVENT: Photo stop schedule, hdi: %{public}d, mediaLibrary: %{public}d, camera: %{public}d",
-            halInfo.isNeedStop, mediaLibraryInfo.isNeedStop, cameraInfo.isNeedStop);
+    SchedulerInfo cacheInfo = GetSchedulerInfo(PHOTO_CACHE_STATE);
+    if (cameraInfo.isNeedStop || halInfo.isNeedStop || mediaLibraryInfo.isNeedStop || cacheInfo.isNeedStop) {
+        DP_INFO_LOG("DPS_EVENT: Photo stop schedule, hdi: %{public}d, mediaLibrary: %{public}d, "
+			"camera: %{public}d, cache: %{public}d",
+            halInfo.isNeedStop, mediaLibraryInfo.isNeedStop, cameraInfo.isNeedStop, cacheInfo.isNeedStop);
         return {true, cameraInfo.isNeedInterrupt};
     }
 

@@ -21,7 +21,7 @@ namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
 namespace {
-    const std::string DEFERRED_LOCK_NAME = "DeferredProcessingWakeLock";
+    constexpr char DEFERRED_LOCK_NAME[] = "DeferredProcessingWakeLock";
 }
 
 DPSProwerManager::DPSProwerManager()

@@ -32,9 +32,9 @@ constexpr int32_t TOTAL_PROCESS_TIME = 10 * 60 * 1000;
 constexpr int32_t ONCE_PROCESS_TIME = 5 * 60 * 1000;
 constexpr uint32_t DELAY_TIME = 1000;
 constexpr int32_t INVALID_TRACK_ID = -1;
-const std::string PATH = "/data/service/el1/public/camera_service/";
-const std::string TEMP_TAG = "_vid_temp";
-const std::string OUT_TAG = "_vid";
+inline constexpr char PATH[] = "/data/service/el1/public/camera_service/";
+inline constexpr char TEMP_TAG[] = "_vid_temp";
+inline constexpr char OUT_TAG[] = "_vid";
 
 enum EventType : int32_t {
     CAMERA_SESSION_STATUS_EVENT = 1,
@@ -50,6 +50,7 @@ enum EventType : int32_t {
     TRAILING_STATUS_EVENT,
     USER_INITIATED_EVENT,
     AVAILABLE_CONCURRENT_EVENT,
+    PHOTO_CACHE_EVENT,
 };
 
 enum CameraSessionStatus : int32_t {
@@ -71,6 +72,8 @@ enum HdiStatus : int32_t {
 enum MediaLibraryStatus : int32_t {
     MEDIA_LIBRARY_DISCONNECTED = 0,
     MEDIA_LIBRARY_AVAILABLE,
+    MEDIA_LIBRARY_BUSY,
+    MEDIA_LIBRARY_IDLE,
 };
 
 enum ScreenStatus : int32_t {
@@ -96,6 +99,11 @@ enum BatteryLevel : int32_t {
 enum PhotoProcessStatus : int32_t {
     BUSY = 0, // > 0
     IDLE,
+};
+
+enum PhotoCacheStatus : int32_t {
+    CACHED = 0,
+    NO_CACHE,
 };
 
 enum ThermalLevel : int32_t {
@@ -198,6 +206,7 @@ enum SchedulerType : int32_t {
     PHOTO_HAL_STATE,
     PHOTO_MEDIA_LIBRARY_STATE,
     PHOTO_THERMAL_LEVEL_STATE,
+    PHOTO_CACHE_STATE,
     VIDEO_CAMERA_STATE,
     VIDEO_HAL_STATE,
     VIDEO_MEDIA_LIBRARY_STATE,

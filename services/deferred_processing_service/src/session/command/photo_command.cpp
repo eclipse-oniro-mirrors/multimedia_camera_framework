@@ -40,7 +40,7 @@ int32_t PhotoCommand::Initialize()
     schedulerManager_ = DPS_GetSchedulerManager();
     DP_CHECK_ERROR_RETURN_RET_LOG(schedulerManager_ == nullptr, DP_NULL_POINTER, "SchedulerManager is nullptr.");
     processor_ = schedulerManager_->GetPhotoProcessor(userId_);
-    DP_CHECK_ERROR_RETURN_RET_LOG(processor_ == nullptr, DP_NULL_POINTER, "VideoProcessor is nullptr.");
+    DP_CHECK_ERROR_RETURN_RET_LOG(processor_ == nullptr, DP_NULL_POINTER, "PhotoProcessor is nullptr.");
     initialized_.store(true);
     return DP_OK;
 }
@@ -116,6 +116,15 @@ int32_t CancelProcessPhotoCommand::Executing()
     }
 
     processor_->CancelProcessImage(photoId_);
+    return DP_OK;
+}
+
+int32_t ProcessCachePhotoCommand::Executing()
+{
+    int32_t ret = Initialize();
+    DP_CHECK_RETURN_RET(ret != DP_OK, ret);
+
+    processor_->ProcessBPCache();
     return DP_OK;
 }
 // LCOV_EXCL_STOP

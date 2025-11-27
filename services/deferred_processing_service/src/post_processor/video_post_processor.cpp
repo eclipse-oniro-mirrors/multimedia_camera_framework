@@ -31,7 +31,7 @@ namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
 namespace {
-    const std::string VIDEO_SERVICE_NAME = "camera_video_process_service";
+    constexpr char VIDEO_SERVICE_NAME[] = "camera_video_process_service";
     constexpr uint32_t MAX_PROC_TIME_MS = 20 * 60 * 1000;
 }
 

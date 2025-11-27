@@ -97,8 +97,6 @@ void EventMonitorFuzzer::EventMonitorCameraStrategyFuzzTest(FuzzedDataProvider& 
     enumval = fdp.ConsumeIntegralInRange<int32_t>(0, 3);
     camerasessionstatus = static_cast<CameraSessionStatus>(enumval);
     eventsmonitorfuzz_->NotifyCameraSessionStatus(camerasessionstatus);
-    bool available = fdp.ConsumeBool();
-    eventsmonitorfuzz_->NotifyMediaLibraryStatus(available);
     int32_t status = fdp.ConsumeIntegral<int32_t>();
     eventsmonitorfuzz_->NotifyImageEnhanceStatus(status);
     status = fdp.ConsumeIntegral<int32_t>();

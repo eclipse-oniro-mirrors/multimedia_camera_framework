@@ -32,6 +32,7 @@ ohos_static_library("test_common") {
   sources = [
     "./src/test_token.cpp",
     "./src/test_log_detector.cpp",
+    "./src/camera_log_detector.cpp",
   ]
 
   external_deps = [

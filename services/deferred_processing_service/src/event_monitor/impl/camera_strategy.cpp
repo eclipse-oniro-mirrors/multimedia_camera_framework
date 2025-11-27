@@ -23,9 +23,9 @@ namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
 namespace {
-    const std::string COMMON_CAMERA_ID = "cameraId";
-    const std::string COMMON_CAMERA_STATE = "cameraState";
-    const std::string COMMON_IS_SYSTEM_CAMERA = "isSystemCamera";
+    constexpr char COMMON_CAMERA_ID[] = "cameraId";
+    constexpr char COMMON_CAMERA_STATE[] = "cameraState";
+    constexpr char COMMON_IS_SYSTEM_CAMERA[] = "isSystemCamera";
 }
 enum CameraType {
     SYSTEM = 0,

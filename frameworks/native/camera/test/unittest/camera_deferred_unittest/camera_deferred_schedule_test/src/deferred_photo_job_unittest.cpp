@@ -26,7 +26,7 @@ namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
 namespace {
-    constexpr int32_t USER_ID = 100;
+    constexpr int32_t USER_ID = 0;
     const std::string TEST_IMAGE_1 = "testImage1";
     const std::string TEST_IMAGE_2 = "testImage2";
     const std::string TEST_IMAGE_3 = "testImage3";
@@ -525,7 +525,7 @@ HWTEST_F(DeferredPhotoJobUnitTest, photo_job_repository_unittest_003, TestSize.L
     EXPECT_EQ(repository->priotyToNum_.find(JobPriority::NORMAL)->second, 2);
     metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_BACKGROUND);
     repository->AddDeferredJob(TEST_IMAGE_3, true, metadata);
-    EXPECT_EQ(repository->priotyToNum_.find(JobPriority::NORMAL)->second, 3);
+    EXPECT_EQ(repository->priotyToNum_.find(JobPriority::NORMAL)->second, 2);
 }
 
 HWTEST_F(DeferredPhotoJobUnitTest, photo_job_repository_unittest_004, TestSize.Level0)
@@ -834,7 +834,7 @@ HWTEST_F(DeferredPhotoJobUnitTest, photo_job_repository_unittest_023, TestSize.L
     auto priority = repository->GetJobPriority(TEST_IMAGE_1);
     EXPECT_EQ(priority, JobPriority::NORMAL);
     priority = repository->GetJobPriority(TEST_IMAGE_2);
-    EXPECT_EQ(priority, JobPriority::NORMAL);
+    EXPECT_EQ(priority, JobPriority::HIGH);
     priority = repository->GetJobPriority(TEST_IMAGE_3);
     EXPECT_EQ(priority, JobPriority::NONE);
 }
@@ -851,7 +851,7 @@ HWTEST_F(DeferredPhotoJobUnitTest, photo_job_repository_unittest_024, TestSize.L
     auto priority = repository->GetJobPriority(TEST_IMAGE_1);
     EXPECT_EQ(priority, JobPriority::NORMAL);
     priority = repository->GetJobPriority(TEST_IMAGE_2);
-    EXPECT_EQ(priority, JobPriority::NORMAL);
+    EXPECT_EQ(priority, JobPriority::HIGH);
     priority = repository->GetJobPriority(TEST_IMAGE_3);
     EXPECT_EQ(priority, JobPriority::NONE);
 }

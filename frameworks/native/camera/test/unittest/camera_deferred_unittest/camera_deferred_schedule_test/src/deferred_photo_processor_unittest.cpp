@@ -15,6 +15,7 @@
 
 #include "deferred_photo_processor_unittest.h"
 
+#include "camera_log_detector.h"
 #include "deferred_photo_processing_session_callback_stub.h"
 #include "deferred_processing_service.h"
 #include "dps.h"
@@ -30,7 +31,30 @@ namespace {
 
     const std::string TEST_IMAGE_1 = "testImage1";
     const std::string TEST_IMAGE_2 = "testImage2";
+    const std::string TEST_IMAGE_3 = "testImage3";
 }
+
+class MockPhotoProcessSession : public HDI::Camera::V1_2::IImageProcessSession {
+public:
+    MOCK_METHOD(int32_t, GetCoucurrency, (OHOS::HDI::Camera::V1_2::ExecutionMode mode, int32_t& taskCount), (override));
+    MOCK_METHOD(int32_t, GetPendingImages, (std::vector<std::string>& imageIds), (override));
+    MOCK_METHOD(int32_t, SetExecutionMode, (OHOS::HDI::Camera::V1_2::ExecutionMode mode), (override));
+    MOCK_METHOD(int32_t, ProcessImage, (const std::string& imageId), (override));
+    MOCK_METHOD(int32_t, RemoveImage, (const std::string& imageId), (override));
+    MOCK_METHOD(int32_t, Interrupt, (), (override));
+    MOCK_METHOD(int32_t, Reset, (), (override));
+
+    MockPhotoProcessSession()
+    {
+        ON_CALL(*this, GetCoucurrency).WillByDefault(Return(OK));
+        ON_CALL(*this, GetPendingImages).WillByDefault(Return(OK));
+        ON_CALL(*this, SetExecutionMode).WillByDefault(Return(OK));
+        ON_CALL(*this, ProcessImage).WillByDefault(Return(OK));
+        ON_CALL(*this, RemoveImage).WillByDefault(Return(OK));
+        ON_CALL(*this, Interrupt).WillByDefault(Return(OK));
+        ON_CALL(*this, Reset).WillByDefault(Return(OK));
+    }
+};
 
 class PhotoProcessingSessionCallbackMock : public DeferredPhotoProcessingSessionCallbackStub {
 public:
@@ -51,20 +75,35 @@ void DeferredPhotoProcessorUnittest::SetUpTestCase(void)
     DeferredProcessingService::GetInstance().Initialize();
 }
 
-void DeferredPhotoProcessorUnittest::TearDownTestCase(void) {}
+void DeferredPhotoProcessorUnittest::TearDownTestCase(void)
+{
+    auto scheduler = DPS_GetSchedulerManager();
+    scheduler->GetPhotoProcessor(USER_ID)->postProcessor_->session_ = nullptr;
+    scheduler->photoController_.erase(USER_ID);
+}
 
 void DeferredPhotoProcessorUnittest::SetUp()
 {
     sptr<IDeferredPhotoProcessingSessionCallback> callback = new (std::nothrow) PhotoProcessingSessionCallbackMock();
     DeferredProcessingService::GetInstance().CreateDeferredPhotoProcessingSession(USER_ID, callback);
     sleep(1);
-    auto schedule = DPS_GetSchedulerManager();
-    ASSERT_NE(schedule, nullptr);
-    process_ = schedule->GetPhotoProcessor(USER_ID);
-    ASSERT_NE(process_, nullptr);
+    scheduler_ = DPS_GetSchedulerManager();
+    ASSERT_NE(scheduler_, nullptr);
+    auto controller = scheduler_->GetPhotoController(USER_ID);
+    ASSERT_NE(controller, nullptr);
+    controller->photoStrategyCenter_->HandleTemperatureEvent(0);
+    process_ = scheduler_->GetPhotoProcessor(USER_ID);
+    auto session = sptr<MockPhotoProcessSession>::MakeSptr();
+    process_->postProcessor_->session_ = session;
+    process_->result_->cacheMap_.clear();
 }
 
-void DeferredPhotoProcessorUnittest::TearDown() {}
+void DeferredPhotoProcessorUnittest::TearDown()
+{
+    process_->RemoveImage(TEST_IMAGE_1, false);
+    process_->RemoveImage(TEST_IMAGE_2, false);
+    process_->RemoveImage(TEST_IMAGE_3, false);
+}
 
 HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_001, TestSize.Level1)
 {
@@ -72,7 +111,6 @@ HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_001, 
     metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
     process_->AddImage(TEST_IMAGE_1, true, metadata);
     EXPECT_EQ(process_->repository_->GetOfflineJobSize(), 1);
-    process_->RemoveImage(TEST_IMAGE_1, false);
 }
 
 HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_002, TestSize.Level1)
@@ -83,8 +121,6 @@ HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_002, 
     manager->DeletePhotoSession(USER_ID);
     process_->AddImage(TEST_IMAGE_1, true, metadata);
     EXPECT_EQ(process_->repository_->GetOfflineJobSize(), 1);
-    process_->RemoveImage(TEST_IMAGE_1, false);
-
 }
 
 HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_003, TestSize.Level1)
@@ -92,7 +128,7 @@ HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_003, 
     DpsMetadata metadata;
     metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
     auto info = std::make_unique<ImageInfo>();
-    process_->result_->RecordResult(TEST_IMAGE_1, std::move(info));
+    process_->result_->RecordResult(TEST_IMAGE_1, std::move(info), false);
     process_->AddImage(TEST_IMAGE_1, true, metadata);
     EXPECT_EQ(process_->repository_->GetOfflineJobSize(), 0);
 }
@@ -104,7 +140,6 @@ HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_004, 
     process_->AddImage(TEST_IMAGE_1, true, metadata);
     process_->RemoveImage(TEST_IMAGE_1, true);
     EXPECT_EQ(process_->repository_->GetOfflineJobSize(), 1);
-    process_->RemoveImage(TEST_IMAGE_1, false);
 }
 
 HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_005, TestSize.Level1)
@@ -131,7 +166,6 @@ HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_007, 
     process_->RemoveImage(TEST_IMAGE_1, true);
     process_->RestoreImage(TEST_IMAGE_1);
     EXPECT_EQ(process_->repository_->GetOfflineJobSize(), 1);
-    process_->RemoveImage(TEST_IMAGE_1, false);
 }
 
 HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_008, TestSize.Level1)
@@ -143,7 +177,6 @@ HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_008, 
     EXPECT_EQ(process_->result_->highImages_.size(), 1);
     process_->CancelProcessImage(TEST_IMAGE_1);
     EXPECT_EQ(process_->result_->highImages_.size(), 0);
-    process_->RemoveImage(TEST_IMAGE_1, false);
 }
 
 HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_009, TestSize.Level1)
@@ -155,7 +188,6 @@ HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_009, 
     EXPECT_EQ(process_->result_->highImages_.size(), 0);
     process_->CancelProcessImage(TEST_IMAGE_2);
     EXPECT_EQ(process_->result_->highImages_.size(), 0);
-    process_->RemoveImage(TEST_IMAGE_1, false);
 }
 
 HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_010, TestSize.Level1)
@@ -167,7 +199,6 @@ HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_010, 
     EXPECT_EQ(process_->result_->highImages_.size(), 0);
     process_->CancelProcessImage(TEST_IMAGE_1);
     EXPECT_EQ(process_->result_->highImages_.size(), 0);
-    process_->RemoveImage(TEST_IMAGE_1, false);
 }
 
 HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_011, TestSize.Level1)
@@ -178,8 +209,6 @@ HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_011, 
     auto job = process_->repository_->GetJob();
     process_->DoProcess(job);
     ASSERT_NE(job, nullptr);
-    sleep(1);
-    process_->RemoveImage(TEST_IMAGE_1, false);
 }
 
 HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_012, TestSize.Level1)
@@ -255,6 +284,315 @@ HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_017, 
 {
     auto callback = process_->GetCallback();
     ASSERT_NE(callback, nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test BPCache normal job
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Validate functions of class DeferredPhotoProcessor in BPCache branch
+ */
+HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_018, TestSize.Level1)
+{
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    process_->AddImage(TEST_IMAGE_1, true, metadata);
+    process_->AddImage(TEST_IMAGE_2, true, metadata);
+    process_->AddImage(TEST_IMAGE_3, true, metadata);
+
+    auto controller = scheduler_->GetPhotoController(USER_ID);
+    ASSERT_NE(controller, nullptr);
+    DeferredPhotoJobPtr job = controller->photoStrategyCenter_->GetJob();
+    std::string imageId = job->GetImageId();
+    // 模拟底层返回高质量图场景
+    auto info = std::make_unique<ImageInfo>();
+    info->SetType(CallbackType::IMAGE_PROCESS_YUV_DONE);
+    process_->OnProcessSuccess(USER_ID, imageId, std::move(info));
+    ASSERT_EQ(imageId, TEST_IMAGE_1);
+    // 返回给媒体库后当前媒体库处理状态为busy
+    ASSERT_EQ(EventsInfo::GetInstance().IsMediaBusy(), true);
+
+    sleep(1);
+    // 模拟底层返回第二张高质量图，没有收到媒体库开始处理的通知
+    info = std::make_unique<ImageInfo>();
+    info->SetType(CallbackType::IMAGE_PROCESS_YUV_DONE);
+    process_->OnProcessSuccess(USER_ID, TEST_IMAGE_2, std::move(info));
+    // 缓存当前高质量图
+    ASSERT_EQ(process_->result_->cachePhotoId_, TEST_IMAGE_2);
+
+    // 模拟第三次调度高质量任务，不允许调度
+    ASSERT_EQ(controller->photoStrategyCenter_->isNeedStop_, true);
+    job = controller->photoStrategyCenter_->GetJob();
+    ASSERT_EQ(job, nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test BPCache normal job
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Validate functions of class DeferredPhotoProcessor in BPCache branch
+ */
+HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_019, TestSize.Level1)
+{
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    process_->AddImage(TEST_IMAGE_1, true, metadata);
+    process_->AddImage(TEST_IMAGE_2, true, metadata);
+    process_->AddImage(TEST_IMAGE_3, true, metadata);
+
+    auto controller = scheduler_->GetPhotoController(USER_ID);
+    ASSERT_NE(controller, nullptr);
+    DeferredPhotoJobPtr job = controller->photoStrategyCenter_->GetJob();
+    std::string imageId = job->GetImageId();
+    // 模拟底层返回高质量图场景
+    auto info = std::make_unique<ImageInfo>();
+    info->SetType(CallbackType::IMAGE_PROCESS_YUV_DONE);
+    process_->OnProcessSuccess(USER_ID, imageId, std::move(info));
+    ASSERT_EQ(imageId, TEST_IMAGE_1);
+    // 返回给媒体库后当前媒体库处理状态为busy
+    ASSERT_EQ(EventsInfo::GetInstance().IsMediaBusy(), true);
+
+    // 模拟媒体库通知开始调度
+    sleep(1);
+    EventsInfo::GetInstance().SetMediaLibraryState(MediaLibraryStatus::MEDIA_LIBRARY_IDLE);
+    process_->ProcessBPCache();
+
+    // 模拟底层返回第二张高质量图
+    info = std::make_unique<ImageInfo>();
+    info->SetType(CallbackType::IMAGE_PROCESS_YUV_DONE);
+    CameraLogDetector logDetector;
+    process_->OnProcessSuccess(USER_ID, TEST_IMAGE_2, std::move(info));
+    sleep(1);
+    // 模拟第三次调度高质量任务，允许调度
+    ASSERT_EQ(controller->photoStrategyCenter_->isNeedStop_, false);
+    EXPECT_TRUE(logDetector.IsLogContains("Process photo to ive, imageId: testImage3"));
+}
+
+/*
+ * Feature: Framework
+ * Function: Test BPCache normal job
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Validate functions of class DeferredPhotoProcessor in BPCache branch
+ */
+HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_020, TestSize.Level1)
+{
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    process_->AddImage(TEST_IMAGE_1, true, metadata);
+    process_->AddImage(TEST_IMAGE_2, true, metadata);
+    process_->AddImage(TEST_IMAGE_3, true, metadata);
+
+    auto controller = scheduler_->GetPhotoController(USER_ID);
+    ASSERT_NE(controller, nullptr);
+    DeferredPhotoJobPtr job = controller->photoStrategyCenter_->GetJob();
+    std::string imageId = job->GetImageId();
+    // 模拟底层返回高质量图场景
+    auto info = std::make_unique<ImageInfo>();
+    info->SetType(CallbackType::IMAGE_PROCESS_YUV_DONE);
+    process_->OnProcessSuccess(USER_ID, imageId, std::move(info));
+    ASSERT_EQ(imageId, TEST_IMAGE_1);
+    // 返回给媒体库后当前媒体库处理状态为busy
+    ASSERT_EQ(EventsInfo::GetInstance().IsMediaBusy(), true);
+
+    sleep(1);
+    // 模拟底层返回第二张高质量图，没有收到媒体库开始处理的通知
+    info = std::make_unique<ImageInfo>();
+    info->SetType(CallbackType::IMAGE_PROCESS_YUV_DONE);
+    process_->OnProcessSuccess(USER_ID, TEST_IMAGE_2, std::move(info));
+    // 缓存当前高质量图
+    ASSERT_EQ(process_->result_->cachePhotoId_, TEST_IMAGE_2);
+
+    // 模拟第三次调度高质量任务，不允许调度
+    ASSERT_EQ(controller->photoStrategyCenter_->isNeedStop_, true);
+    job = controller->photoStrategyCenter_->GetJob();
+    ASSERT_EQ(job, nullptr);
+
+    CameraLogDetector logDetector;
+    // 模拟媒体库通知开始调度
+    EventsInfo::GetInstance().SetMediaLibraryState(MediaLibraryStatus::MEDIA_LIBRARY_IDLE);
+    process_->ProcessBPCache();
+    EXPECT_TRUE(logDetector.IsLogContains("ProcessCatchResults imageId"));
+}
+
+/*
+ * Feature: Framework
+ * Function: Test BPCache high job
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Validate functions of class DeferredPhotoProcessor in BPCache branch
+ */
+HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_021, TestSize.Level1)
+{
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    process_->AddImage(TEST_IMAGE_1, true, metadata);
+    process_->AddImage(TEST_IMAGE_2, true, metadata);
+    process_->AddImage(TEST_IMAGE_3, true, metadata);
+
+    auto controller = scheduler_->GetPhotoController(USER_ID);
+    ASSERT_NE(controller, nullptr);
+    DeferredPhotoJobPtr job = controller->photoStrategyCenter_->GetJob();
+    std::string imageId = job->GetImageId();
+    // 模拟底层返回高质量图场景
+    auto info = std::make_unique<ImageInfo>();
+    info->SetType(CallbackType::IMAGE_PROCESS_YUV_DONE);
+    process_->OnProcessSuccess(USER_ID, imageId, std::move(info));
+    ASSERT_EQ(imageId, TEST_IMAGE_1);
+    // 返回给媒体库后当前媒体库处理状态为busy
+    ASSERT_EQ(EventsInfo::GetInstance().IsMediaBusy(), true);
+
+    sleep(1);
+    // 模拟底层返回第二张高质量图，没有收到媒体库开始处理的通知
+    info = std::make_unique<ImageInfo>();
+    info->SetType(CallbackType::IMAGE_PROCESS_YUV_DONE);
+    process_->OnProcessSuccess(USER_ID, TEST_IMAGE_2, std::move(info));
+    // 缓存当前高质量图
+    ASSERT_EQ(process_->result_->cachePhotoId_, TEST_IMAGE_2);
+
+    // 模拟第三次调度高优先级任务，正常调度
+    ASSERT_EQ(controller->photoStrategyCenter_->isNeedStop_, true);
+    process_->ProcessImage("deferred_photo_processor_unittest_021", TEST_IMAGE_3);
+    info = std::make_unique<ImageInfo>();
+    info->SetType(CallbackType::IMAGE_PROCESS_YUV_DONE);
+    CameraLogDetector logDetector;
+    process_->OnProcessSuccess(USER_ID, TEST_IMAGE_3, std::move(info));
+    EXPECT_TRUE(logDetector.IsLogContains("HandleSuccess"));
+}
+
+/*
+ * Feature: Framework
+ * Function: Test BPCache high job
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Validate functions of class DeferredPhotoProcessor in BPCache branch
+ */
+HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_022, TestSize.Level1)
+{
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    process_->AddImage(TEST_IMAGE_3, true, metadata);
+
+    // 模拟请求高优先级任务场景：TEST_IMAGE_3
+    process_->ProcessImage("deferred_photo_processor_unittest_022", TEST_IMAGE_3);
+    sleep(1);
+    auto info = std::make_unique<ImageInfo>();
+    info->SetType(CallbackType::IMAGE_PROCESS_YUV_DONE);
+    process_->OnProcessSuccess(USER_ID, TEST_IMAGE_3, std::move(info));
+    // 返回给媒体库后当前媒体库处理状态为busy
+    ASSERT_EQ(EventsInfo::GetInstance().IsMediaBusy(), true);
+
+    // 模拟请求高优先级任务场景：TEST_IMAGE_2
+    process_->AddImage(TEST_IMAGE_2, true, metadata);
+    process_->ProcessImage("deferred_photo_processor_unittest_022", TEST_IMAGE_2);
+    sleep(1);
+    info = std::make_unique<ImageInfo>();
+    info->SetType(CallbackType::IMAGE_PROCESS_YUV_DONE);
+    {
+        CameraLogDetector logDetector;
+        process_->OnProcessSuccess(USER_ID, TEST_IMAGE_2, std::move(info));
+        EXPECT_TRUE(logDetector.IsLogContains("HandleSuccess"));
+    }
+
+    process_->AddImage(TEST_IMAGE_1, true, metadata);
+    // 模拟请求普通优先级任务场景：TEST_IMAGE_1
+    auto controller = scheduler_->GetPhotoController(USER_ID);
+    ASSERT_NE(controller, nullptr);
+    DeferredPhotoJobPtr job = controller->photoStrategyCenter_->GetJob();
+    ASSERT_EQ(job->GetImageId(), TEST_IMAGE_1);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test BPCache high job
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Validate functions of class DeferredPhotoProcessor in BPCache branch
+ */
+HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_023, TestSize.Level1)
+{
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    process_->AddImage(TEST_IMAGE_1, true, metadata);
+    process_->AddImage(TEST_IMAGE_2, true, metadata);
+    process_->AddImage(TEST_IMAGE_3, true, metadata);
+
+    // 模拟请求高优先级任务场景：TEST_IMAGE_3
+    process_->ProcessImage("deferred_photo_processor_unittest_023", TEST_IMAGE_3);
+    auto info = std::make_unique<ImageInfo>();
+    info->SetType(CallbackType::IMAGE_PROCESS_YUV_DONE);
+    process_->OnProcessSuccess(USER_ID, TEST_IMAGE_3, std::move(info));
+    // 返回给媒体库后当前媒体库处理状态为busy
+    ASSERT_EQ(EventsInfo::GetInstance().IsMediaBusy(), true);
+
+    sleep(1);
+    // 模拟请求低优先级任务场景：TEST_IMAGE_1
+    info = std::make_unique<ImageInfo>();
+    info->SetType(CallbackType::IMAGE_PROCESS_YUV_DONE);
+    process_->OnProcessSuccess(USER_ID, TEST_IMAGE_1, std::move(info));
+    ASSERT_EQ(process_->result_->cachePhotoId_, TEST_IMAGE_1);
+
+    sleep(1);
+    // 模拟请求高优先级任务场景：TEST_IMAGE_2
+    process_->ProcessImage("deferred_photo_processor_unittest_023", TEST_IMAGE_2);
+    info = std::make_unique<ImageInfo>();
+    info->SetType(CallbackType::IMAGE_PROCESS_YUV_DONE);
+    CameraLogDetector logDetector;
+    process_->OnProcessSuccess(USER_ID, TEST_IMAGE_2, std::move(info));
+    EXPECT_TRUE(logDetector.IsLogContains("HandleSuccess"));
+}
+
+/*
+ * Feature: Framework
+ * Function: Test BPCache high job
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Validate functions of class DeferredPhotoProcessor in BPCache branch
+ */
+HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_024, TestSize.Level1)
+{
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    process_->AddImage(TEST_IMAGE_1, true, metadata);
+    process_->AddImage(TEST_IMAGE_2, true, metadata);
+    process_->AddImage(TEST_IMAGE_3, true, metadata);
+
+    // 模拟请求高优先级任务场景：TEST_IMAGE_3
+    process_->ProcessImage("deferred_photo_processor_unittest_024", TEST_IMAGE_3);
+    auto info = std::make_unique<ImageInfo>();
+    info->SetType(CallbackType::IMAGE_PROCESS_YUV_DONE);
+    process_->OnProcessSuccess(USER_ID, TEST_IMAGE_3, std::move(info));
+    // 返回给媒体库后当前媒体库处理状态为busy
+    ASSERT_EQ(EventsInfo::GetInstance().IsMediaBusy(), true);
+
+    sleep(1);
+    // 模拟媒体库通知开始调度
+    EventsInfo::GetInstance().SetMediaLibraryState(MediaLibraryStatus::MEDIA_LIBRARY_IDLE);
+    process_->ProcessBPCache();
+
+    // 模拟请求低优先级任务场景：TEST_IMAGE_1
+    info = std::make_unique<ImageInfo>();
+    info->SetType(CallbackType::IMAGE_PROCESS_YUV_DONE);
+    process_->OnProcessSuccess(USER_ID, TEST_IMAGE_1, std::move(info));
+    ASSERT_EQ(process_->result_->cachePhotoId_, "Null");
+
+    sleep(1);
+    // 模拟请求高优先级任务场景：TEST_IMAGE_2
+    process_->ProcessImage("deferred_photo_processor_unittest_024", TEST_IMAGE_2);
+    info = std::make_unique<ImageInfo>();
+    info->SetType(CallbackType::IMAGE_PROCESS_YUV_DONE);
+    CameraLogDetector logDetector;
+    process_->OnProcessSuccess(USER_ID, TEST_IMAGE_2, std::move(info));
+    EXPECT_TRUE(logDetector.IsLogContains("HandleSuccess"));
 }
 } // DeferredProcessing
 } // CameraStandard

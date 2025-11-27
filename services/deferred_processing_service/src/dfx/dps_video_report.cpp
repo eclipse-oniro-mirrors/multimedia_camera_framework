@@ -34,7 +34,7 @@ DfxVideoReport::~DfxVideoReport()
     DP_DEBUG_LOG("entered.");
 }
 
-void DfxVideoReport::ReportAddVideoEvent(const std::string &videoId, DpsCallerInfo callerInfo)
+void DfxVideoReport::ReportAddVideoEvent(const std::string& videoId, DpsCallerInfo callerInfo)
 {
     DP_DEBUG_LOG("ReportAddVideoEvent enter.");
     VideoRecord videoRecord{
@@ -59,7 +59,7 @@ void DfxVideoReport::ReportAddVideoEvent(const std::string &videoId, DpsCallerIn
         EVENT_KEY_VIDEOID, videoId);
 }
 
-void DfxVideoReport::ReportRemoveVideoEvent(const std::string &videoId, DpsCallerInfo callerInfo)
+void DfxVideoReport::ReportRemoveVideoEvent(const std::string& videoId, DpsCallerInfo callerInfo)
 {
     DP_DEBUG_LOG("ReportRemoveVideoEvent enter.");
     VideoRecord videoRecordFound;
@@ -102,7 +102,7 @@ void DfxVideoReport::ReportPauseVideoEvent(const std::string& videoId, int32_t p
         EVENT_KEY_ABORTTIME, processToPauseCost);
 }
 
-void DfxVideoReport::ReportResumeVideoEvent(const std::string &videoId)
+void DfxVideoReport::ReportResumeVideoEvent(const std::string& videoId)
 {
     DP_DEBUG_LOG("ReportResumeVideoEvent enter.");
     uint64_t pauseToResumeCost = 0;
@@ -136,7 +136,7 @@ void DfxVideoReport::ReportResumeVideoEvent(const std::string &videoId)
     }
 }
 
-void DfxVideoReport::ReportCompleteVideoEvent(const std::string &videoId)
+void DfxVideoReport::ReportCompleteVideoEvent(const std::string& videoId)
 {
     DP_DEBUG_LOG("ReportCompleteVideoEvent enter.");
     uint64_t completeTime = 0;

@@ -54,6 +54,7 @@ _common_sources = [
   "src/schedule/photo_processor/strategy/photo_strategy_center.cpp",
   "src/schedule/scheduler_coordinator.cpp",
   "src/schedule/scheduler_manager.cpp",
+  "src/schedule/state/photo_cache_state.cpp",
   "src/schedule/state/photo_camera_state.cpp",
   "src/schedule/state/photo_hal_state.cpp",
   "src/schedule/state/photo_media_library_state.cpp",

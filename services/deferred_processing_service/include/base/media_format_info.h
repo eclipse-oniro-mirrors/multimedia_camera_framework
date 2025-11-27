@@ -16,6 +16,8 @@
 #ifndef MEDIA_FORMAT_INFO_H
 #define MEDIA_FORMAT_INFO_H
 
+#include <string>
+
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {

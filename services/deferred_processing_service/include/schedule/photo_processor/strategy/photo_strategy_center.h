@@ -59,9 +59,11 @@ protected:
 private:
     bool IsReady();
     void HandleCameraEvent(int32_t value);
+    void HandleTrailingEvent(int32_t value);
     void HandleHalEvent(int32_t value);
     void HandleMedialLibraryEvent(int32_t value);
     void HandleTemperatureEvent(int32_t value);
+    void HandleCacheEvent(int32_t value);
     void UpdateValue(SchedulerType type, int32_t value);
     SchedulerInfo ReevaluateSchedulerInfo();
     SchedulerInfo GetSchedulerInfo(SchedulerType type);

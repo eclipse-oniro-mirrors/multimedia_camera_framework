@@ -255,6 +255,16 @@ bool DeferredPhotoProcSession::CancelProcessImage(const std::string& imageId)
     // LCOV_EXCL_STOP
 }
 
+void DeferredPhotoProcSession::NotifyProcessImage()
+{
+    // LCOV_EXCL_START
+    CHECK_RETURN_ELOG(remoteSession_ == nullptr,
+        "DeferredPhotoProcSession::NotifyProcessImage failed due to binder died.");
+    MEDIA_INFO_LOG("DeferredPhotoProcSession::NotifyProcessImage() enter.");
+    remoteSession_->NotifyProcessImage();
+    // LCOV_EXCL_STOP
+}
+
 int32_t DeferredPhotoProcSession::SetDeferredPhotoSession(
     sptr<DeferredProcessing::IDeferredPhotoProcessingSession>& session)
 {
