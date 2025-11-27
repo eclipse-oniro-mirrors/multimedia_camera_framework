@@ -237,6 +237,7 @@ public:
         std::lock_guard<std::mutex> lock(videoSessionMutex_);
         return videoSessionForControlCenter_;
     }
+    int32_t GetCameraStatusData(std::vector<CameraStatusData> &cameraStatusDataList) override;
 protected:
     explicit HCameraService(sptr<HCameraHostManager> cameraHostManager);
     void OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId) override;

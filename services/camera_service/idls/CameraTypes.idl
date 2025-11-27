@@ -154,3 +154,9 @@ struct CaptureSessionInfo {
     ZoomInfo zoomInfo;
     boolean sessionStatus;
 };
+
+struct CameraStatusData {
+    String cameraId;
+    int cameraStatus;
+    int flashStatus;
+};

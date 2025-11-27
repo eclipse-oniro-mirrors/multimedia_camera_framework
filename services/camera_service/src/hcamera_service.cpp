@@ -1277,6 +1277,31 @@ int32_t HCameraService::CloseCameraForDestory(pid_t pid)
     return CAMERA_OK;
 }
 
+int32_t HCameraService::GetCameraStatusData(std::vector<CameraStatusData> &cameraStatusDataList)
+{
+    std::vector<std::string> cameraIds;
+    GetCameraIds(cameraIds);
+    for (const auto& cameraId : cameraIds) {
+        auto info = GetCachedCameraStatus(cameraId);
+        auto flashStatus = GetCachedFlashStatus(cameraId);
+        CameraStatusData cameraStatusData;
+        cameraStatusData.cameraId = cameraId;
+        if (info != nullptr) {
+            MEDIA_INFO_LOG("GetCameraStatusData cameraId = %{public}s, status = %{public}d, bundleName = %{public}s, "
+                           "flash status = %{public}d",
+                cameraId.c_str(), info->status, info->bundleName.c_str(), flashStatus);
+            cameraStatusData.cameraStatus = info->status;
+            cameraStatusData.flashStatus = flashStatus;
+        } else {
+            MEDIA_INFO_LOG("GetCameraStatusData cameraId = %{public}s, status = 2", cameraId.c_str());
+            cameraStatusData.cameraStatus = static_cast<int32_t>(CameraStatus::CAMERA_STATUS_AVAILABLE);
+            cameraStatusData.flashStatus = static_cast<int32_t>(FlashStatus::FLASH_STATUS_UNAVAILABLE);
+        }
+        cameraStatusDataList.push_back(cameraStatusData);
+    }
+    return CAMERA_OK;
+}
+
 void HCameraService::ExecutePidSetCallback(const sptr<ICameraServiceCallback>& callback,
     std::vector<std::string>& cameraIds)
 {

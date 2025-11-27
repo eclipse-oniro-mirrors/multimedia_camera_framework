@@ -97,6 +97,7 @@ interface ICameraService{
   [ipccode 57] void SetUsePhysicalCameraOrientation([in] boolean isUsed);
   [ipccode 58] void UnSetListenerObject();
   [ipccode 59] void GetDeviceControlCenterAbility([out] boolean ability);
+  [ipccode 61] void GetCameraStatusData([out] List<CameraStatusData> cameraStatusDataList);
   [ipccode 101] void AllowOpenByOHSide([in] String cameraId, [in] int state, [inout] boolean canOpenCamera);
   [ipccode 102, oneway] void NotifyCameraState([in] String cameraId, [in] int state);
   [ipccode 104] void SetPeerCallback([in] ICameraBroker callbackFunc);

@@ -977,6 +977,7 @@ public:
         return cameraDeviceList_;
     }
     std::string GetBundleName();
+    void GetCameraStatusData(std::vector<CameraStatusData> &cameraStatusDataList);
 protected:
     // Only for UT
     explicit CameraManager(sptr<ICameraService> serviceProxy) : serviceProxyPrivate_(serviceProxy)
