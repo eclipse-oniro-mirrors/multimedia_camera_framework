@@ -100,7 +100,7 @@ int32_t DeferredPhotoProcessingSessionCallback::OnDeliveryLowQualityImage(const 
     const std::shared_ptr<PictureIntf>& pictureIntf)
 {
     // LCOV_EXCL_START
-    COMM_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnDeliveryLowQualityImage() is"
+    MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnDeliveryLowQualityImage() is"
         "called, status:%{public}s", imageId.c_str());
     auto callback = deferredPhotoProcSession_->GetCallback();
     if (pictureIntf != nullptr && callback != nullptr) {
@@ -209,7 +209,7 @@ void DeferredPhotoProcSession::AddImage(const std::string& imageId, DpsMetadata&
 {
     // LCOV_EXCL_START
     CHECK_RETURN_ELOG(remoteSession_ == nullptr, "DeferredPhotoProcSession::AddImage failed due to binder died.");
-    COMM_INFO_LOG("DeferredPhotoProcSession::AddImage() enter.");
+    MEDIA_INFO_LOG("DeferredPhotoProcSession::AddImage() enter.");
     remoteSession_->AddImage(imageId, metadata, discardable);
     // LCOV_EXCL_STOP
 }

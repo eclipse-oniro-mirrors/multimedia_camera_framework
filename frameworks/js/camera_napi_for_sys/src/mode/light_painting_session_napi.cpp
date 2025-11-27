@@ -74,7 +74,7 @@ void LightPaintingSessionNapi::Init(napi_env env)
 
 napi_value LightPaintingSessionNapi::CreateCameraSession(napi_env env)
 {
-    COMM_INFO_LOG("CreateCameraSession is called");
+    MEDIA_INFO_LOG("CreateCameraSession is called");
     CAMERA_SYNC_TRACE;
     napi_status status;
     napi_value result = nullptr;

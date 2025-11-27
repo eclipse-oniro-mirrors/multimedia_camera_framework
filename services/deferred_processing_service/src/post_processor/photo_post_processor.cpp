@@ -83,7 +83,7 @@ public:
 
     int32_t OnProcessDone(const std::string& imageId, const OHOS::HDI::Camera::V1_2::ImageBufferInfo& buffer) override
     {
-        COMM_DP_INFO_LOG("DPS_PHOTO: imageId: %{public}s", imageId.c_str());
+        DP_INFO_LOG("DPS_PHOTO: imageId: %{public}s", imageId.c_str());
         auto processResult = processResult_.lock();
         DP_CHECK_ERROR_RETURN_RET_LOG(processResult == nullptr, DP_OK, "PhotoProcessResult is nullptr.");
         auto ret = processResult->ProcessBufferInfo(imageId, buffer);
@@ -97,7 +97,7 @@ public:
     int32_t OnProcessDoneExt(const std::string& imageId,
         const OHOS::HDI::Camera::V1_3::ImageBufferInfoExt& buffer) override
     {
-        COMM_DP_INFO_LOG("DPS_PHOTO: imageId: %{public}s", imageId.c_str());
+        DP_INFO_LOG("DPS_PHOTO: imageId: %{public}s", imageId.c_str());
         auto processResult = processResult_.lock();
         DP_CHECK_ERROR_RETURN_RET_LOG(processResult == nullptr, DP_OK, "PhotoProcessResult is nullptr.");
 
@@ -111,7 +111,7 @@ public:
 
     int32_t OnError(const std::string& imageId,  OHOS::HDI::Camera::V1_2::ErrorCode errorCode) override
     {
-        COMM_DP_ERR_LOG("DPS_PHOTO: imageId: %{public}s, ive error: %{public}d", imageId.c_str(), errorCode);
+        DP_ERR_LOG("DPS_PHOTO: imageId: %{public}s, ive error: %{public}d", imageId.c_str(), errorCode);
         auto processResult = processResult_.lock();
         DP_CHECK_ERROR_RETURN_RET_LOG(processResult == nullptr, DP_OK, "PhotoProcessResult is nullptr.");
 
@@ -185,7 +185,7 @@ void PhotoPostProcessor::SetExecutionMode(ExecutionMode executionMode)
     DP_CHECK_ERROR_RETURN_LOG(session == nullptr, "photo session is nullptr.");
 
     int32_t ret = session->SetExecutionMode(MapToHdiExecutionMode(executionMode));
-    COMM_DP_INFO_LOG("DPS_PHOTO: SetExecutionMode to ive, ret: %{public}d", ret);
+    DP_INFO_LOG("DPS_PHOTO: SetExecutionMode to ive, ret: %{public}d", ret);
 }
 
 void PhotoPostProcessor::SetDefaultExecutionMode()

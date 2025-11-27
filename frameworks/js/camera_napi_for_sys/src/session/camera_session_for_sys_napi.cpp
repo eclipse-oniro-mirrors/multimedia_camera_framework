@@ -763,7 +763,7 @@ napi_value CameraSessionForSysNapi::GetSupportedBeautyTypes(napi_env env, napi_c
     if (status == napi_ok && cameraSessionForSysNapi != nullptr &&
         cameraSessionForSysNapi->cameraSessionForSys_ != nullptr) {
         std::vector<BeautyType> beautyTypes = cameraSessionForSysNapi->cameraSessionForSys_->GetSupportedBeautyTypes();
-        COMM_INFO_LOG("CameraSessionForSysNapi::GetSupportedBeautyTypes len = %{public}zu",
+        MEDIA_INFO_LOG("CameraSessionForSysNapi::GetSupportedBeautyTypes len = %{public}zu",
             beautyTypes.size());
         if (!beautyTypes.empty() && status == napi_ok) {
             for (size_t i = 0; i < beautyTypes.size(); i++) {
@@ -2031,7 +2031,7 @@ void CameraSessionForSysNapi::Init(napi_env env)
 
 napi_value CameraSessionForSysNapi::CreateCameraSession(napi_env env)
 {
-    COMM_INFO_LOG("CreateCameraSession is called");
+    MEDIA_DEBUG_LOG("CreateCameraSession is called");
     CAMERA_SYNC_TRACE;
     napi_status status;
     napi_value result = nullptr;

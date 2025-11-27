@@ -250,7 +250,7 @@ int32_t HCaptureSession::BeginConfig()
 {
     CAMERA_SYNC_TRACE;
     int32_t errCode;
-    COMM_INFO_LOG("HCaptureSession::BeginConfig prepare execute, sessionID: %{public}d", GetSessionId());
+    MEDIA_INFO_LOG("HCaptureSession::BeginConfig prepare execute, sessionID: %{public}d", GetSessionId());
     stateMachine_.StateGuard([&errCode, this](const CaptureSessionState state) {
         InitialHStreamOperator();
         DynamicConfigStream();
@@ -273,7 +273,7 @@ int32_t HCaptureSession::BeginConfig()
         }
     });
     if (errCode == CAMERA_OK) {
-        COMM_INFO_LOG("HCaptureSession::BeginConfig execute success, sessionID: %{public}d", GetSessionId());
+        MEDIA_INFO_LOG("HCaptureSession::BeginConfig execute success, sessionID: %{public}d", GetSessionId());
     } else {
         CameraReportUtils::ReportCameraError(
             "HCaptureSession::BeginConfig, sessionID: " + std::to_string(GetSessionId()),
@@ -327,7 +327,7 @@ int32_t HCaptureSession::AddInput(const sptr<ICameraDeviceService>& cameraDevice
             "HCaptureSession::AddInput", errorCode, false, CameraReportUtils::GetCallerInfo());
         return errorCode;
     }
-    COMM_INFO_LOG("HCaptureSession::AddInput prepare execute, sessionID: %{public}d", GetSessionId());
+    MEDIA_INFO_LOG("HCaptureSession::AddInput prepare execute, sessionID: %{public}d", GetSessionId());
     stateMachine_.StateGuard([this, &errorCode, &cameraDevice](const CaptureSessionState currentState) {
         if (currentState != CaptureSessionState::SESSION_CONFIG_INPROGRESS) {
             MEDIA_ERR_LOG("HCaptureSession::AddInput Need to call BeginConfig before "
@@ -344,7 +344,7 @@ int32_t HCaptureSession::AddInput(const sptr<ICameraDeviceService>& cameraDevice
             return;
         }
         sptr<HCameraDevice> hCameraDevice = static_cast<HCameraDevice*>(cameraDevice.GetRefPtr());
-        COMM_INFO_LOG("HCaptureSession::AddInput device:%{public}s", hCameraDevice->GetCameraId().c_str());
+        MEDIA_INFO_LOG("HCaptureSession::AddInput device:%{public}s", hCameraDevice->GetCameraId().c_str());
         SetCameraDevice(hCameraDevice);
         hCameraDevice->DispatchDefaultSettingToHdi();
         SetDeviceMechCallback();
@@ -355,7 +355,7 @@ int32_t HCaptureSession::AddInput(const sptr<ICameraDeviceService>& cameraDevice
         CameraReportUtils::ReportCameraError(
             "HCaptureSession::AddInput", errorCode, false, CameraReportUtils::GetCallerInfo());
     }
-    COMM_INFO_LOG("HCaptureSession::AddInput execute success, sessionID: %{public}d", GetSessionId());
+    MEDIA_INFO_LOG("HCaptureSession::AddInput execute success, sessionID: %{public}d", GetSessionId());
     return errorCode;
 }
 
@@ -499,7 +499,7 @@ int32_t HCaptureSession::AddOutputInner(StreamType streamType, const sptr<IStrea
         CameraReportUtils::ReportCameraError(
             "HCaptureSession::AddOutput", errorCode, false, CameraReportUtils::GetCallerInfo());
     }
-    COMM_INFO_LOG("CaptureSession::AddOutput with with %{public}d, rc = "
+    MEDIA_INFO_LOG("CaptureSession::AddOutput with with %{public}d, rc = "
                    "%{public}d, sessionID: %{public}d",
         streamType,
         errorCode,
@@ -1120,7 +1120,7 @@ int32_t HCaptureSession::CommitConfigWithValidation()
 int32_t HCaptureSession::CommitConfig()
 {
     CAMERA_SYNC_TRACE;
-    COMM_INFO_LOG("HCaptureSession::CommitConfig begin, sessionID: %{public}d", GetSessionId());
+    MEDIA_INFO_LOG("HCaptureSession::CommitConfig begin, sessionID: %{public}d", GetSessionId());
     int32_t errorCode = CAMERA_OK;
     stateMachine_.StateGuard([&errorCode, this](CaptureSessionState currentState) {
         bool isTransferSupport = stateMachine_.CheckTransfer(CaptureSessionState::SESSION_CONFIG_COMMITTED);
@@ -1657,7 +1657,7 @@ int32_t HCaptureSession::Stop()
         stateMachine_.Transfer(CaptureSessionState::SESSION_CONFIG_COMMITTED);
         OnSessionStatusChange(false);
     });
-    COMM_INFO_LOG("HCaptureSession::Stop execute success, sessionID: %{public}d", GetSessionId());
+    MEDIA_INFO_LOG("HCaptureSession::Stop execute success, sessionID: %{public}d", GetSessionId());
     return errorCode;
 }
 

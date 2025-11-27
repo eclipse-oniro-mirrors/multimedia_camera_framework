@@ -139,7 +139,7 @@ void PhotoCaptureSetting::SetMirror(bool enable)
     uint8_t mirror = enable;
     MEDIA_DEBUG_LOG("PhotoCaptureSetting::SetMirror value=%{public}d", enable);
     bool status = AddOrUpdateMetadata(captureMetadataSetting_, OHOS_CONTROL_CAPTURE_MIRROR, &mirror, 1);
-    CHECK_PRINT_COMM_ELOG(!status, "PhotoCaptureSetting::SetMirror Failed to set mirroring in photo capture setting");
+    CHECK_PRINT_ELOG(!status, "PhotoCaptureSetting::SetMirror Failed to set mirroring in photo capture setting");
     return;
 }
 
@@ -200,7 +200,7 @@ int32_t HStreamCaptureCallbackImpl::OnCaptureStarted(const int32_t captureId)
             if (ret == CAM_META_SUCCESS && meta.count >= CONST_2) {
                 callback->OnCaptureStarted(captureId, meta.data.ui32[1]);
             } else if (meta.count) {
-                COMM_WARNING_LOG("Discarding OnCaptureStarted callback, mode:%{public}d. exposureTime is not found",
+                MEDIA_WARNING_LOG("Discarding OnCaptureStarted callback, mode:%{public}d. exposureTime is not found",
                     meta.data.ui32[0]);
             } else {
                 MEDIA_WARNING_LOG("Discarding OnCaptureStarted callback, mode and exposureTime are not found");
@@ -780,7 +780,7 @@ int32_t PhotoOutput::Capture(std::shared_ptr<PhotoCaptureSetting> photoCaptureSe
 {
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
     auto session = GetSession();
-    CHECK_RETURN_RET_COMM_ELOG(session == nullptr || !session->IsSessionCommited(),
+    CHECK_RETURN_RET_ELOG(session == nullptr || !session->IsSessionCommited(),
         CameraErrorCode::SESSION_NOT_RUNNING, "PhotoOutput Failed to Capture with setting, session not commited");
     // LCOV_EXCL_START
     CHECK_RETURN_RET_ELOG(GetStream() == nullptr,
@@ -795,7 +795,7 @@ int32_t PhotoOutput::Capture(std::shared_ptr<PhotoCaptureSetting> photoCaptureSe
         errCode = itemStream->Capture(photoCaptureSettings->GetCaptureMetadataSetting());
         MEDIA_INFO_LOG("Capture End");
     }
-    CHECK_PRINT_COMM_ELOG(errCode != CAMERA_OK, "PhotoOutput Failed to Capture!, errCode: %{public}d", errCode);
+    CHECK_PRINT_ELOG(errCode != CAMERA_OK, "PhotoOutput Failed to Capture!, errCode: %{public}d", errCode);
     return ServiceToCameraError(errCode);
     // LCOV_EXCL_STOP
 }
@@ -807,7 +807,7 @@ int32_t PhotoOutput::Capture()
     CHECK_RETURN_RET_ELOG(session == nullptr || !session->IsSessionCommited(),
         CameraErrorCode::SESSION_NOT_RUNNING, "PhotoOutput Failed to Capture, session not commited");
     // LCOV_EXCL_START
-    CHECK_RETURN_RET_COMM_ELOG(GetStream() == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_ELOG(GetStream() == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "PhotoOutput Failed to Capture, GetStream is nullptr");
     int32_t items = 0;
     int32_t dataLength = 0;
@@ -822,7 +822,7 @@ int32_t PhotoOutput::Capture()
         errCode = itemStream->Capture(captureMetadataSetting);
         MEDIA_DEBUG_LOG("Capture end");
     }
-    CHECK_PRINT_COMM_ELOG(errCode != CAMERA_OK, "PhotoOutput Failed to Capture!, errCode: %{public}d", errCode);
+    CHECK_PRINT_ELOG(errCode != CAMERA_OK, "PhotoOutput Failed to Capture!, errCode: %{public}d", errCode);
     return ServiceToCameraError(errCode);
     // LCOV_EXCL_STOP
 }
@@ -904,7 +904,7 @@ int32_t PhotoOutput::Release()
     }
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
     MEDIA_DEBUG_LOG("Enter Into PhotoOutput::Release");
-    CHECK_RETURN_RET_COMM_ELOG(GetStream() == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_ELOG(GetStream() == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "PhotoOutput Failed to Release!, GetStream is nullptr");
     auto itemStream = CastStream<IStreamCapture>(GetStream());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
@@ -913,7 +913,7 @@ int32_t PhotoOutput::Release()
     } else {
         MEDIA_ERR_LOG("PhotoOutput::Release() itemStream is nullptr");
     }
-    CHECK_PRINT_COMM_ELOG(errCode != CAMERA_OK, "PhotoOutput Failed to release!, errCode: %{public}d", errCode);
+    CHECK_PRINT_ELOG(errCode != CAMERA_OK, "PhotoOutput Failed to release!, errCode: %{public}d", errCode);
     defaultCaptureSetting_ = nullptr;
     CaptureOutput::Release();
     return ServiceToCameraError(errCode);

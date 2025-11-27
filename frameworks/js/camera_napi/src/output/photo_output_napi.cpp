@@ -312,7 +312,7 @@ void PhotoOutputCallback::UpdateJSCallbackAsync(PhotoOutputEventType eventType, 
 void PhotoOutputCallback::OnCaptureStarted(const int32_t captureID) const
 {
     CAMERA_SYNC_TRACE;
-    COMM_INFO_LOG("OnCaptureStarted is called!, captureID: %{public}d", captureID);
+    MEDIA_DEBUG_LOG("OnCaptureStarted is called!, captureID: %{public}d", captureID);
     CallbackInfo info;
     info.captureID = captureID;
     UpdateJSCallbackAsync(PhotoOutputEventType::CAPTURE_START_WITH_INFO, info);
@@ -321,7 +321,7 @@ void PhotoOutputCallback::OnCaptureStarted(const int32_t captureID) const
 void PhotoOutputCallback::OnCaptureStarted(const int32_t captureID, uint32_t exposureTime) const
 {
     CAMERA_SYNC_TRACE;
-    COMM_INFO_LOG("OnCaptureStarted is called!, captureID: %{public}d", captureID);
+    MEDIA_DEBUG_LOG("OnCaptureStarted is called!, captureID: %{public}d", captureID);
     CallbackInfo info;
     info.captureID = captureID;
     info.timestamp = exposureTime;
@@ -331,7 +331,7 @@ void PhotoOutputCallback::OnCaptureStarted(const int32_t captureID, uint32_t exp
 void PhotoOutputCallback::OnCaptureEnded(const int32_t captureID, const int32_t frameCount) const
 {
     CAMERA_SYNC_TRACE;
-    COMM_INFO_LOG("OnCaptureEnded is called!, captureID: %{public}d, frameCount: %{public}d",
+    MEDIA_INFO_LOG("OnCaptureEnded is called!, captureID: %{public}d, frameCount: %{public}d",
         captureID, frameCount);
     CallbackInfo info;
     info.captureID = captureID;
@@ -342,7 +342,7 @@ void PhotoOutputCallback::OnCaptureEnded(const int32_t captureID, const int32_t 
 void PhotoOutputCallback::OnFrameShutter(const int32_t captureId, const uint64_t timestamp) const
 {
     CAMERA_SYNC_TRACE;
-    COMM_INFO_LOG(
+    MEDIA_DEBUG_LOG(
         "OnFrameShutter is called, captureID: %{public}d, timestamp: %{public}" PRIu64, captureId, timestamp);
     CallbackInfo info;
     info.captureID = captureId;
@@ -364,7 +364,7 @@ void PhotoOutputCallback::OnFrameShutterEnd(const int32_t captureId, const uint6
 void PhotoOutputCallback::OnCaptureReady(const int32_t captureId, const uint64_t timestamp) const
 {
     CAMERA_SYNC_TRACE;
-    COMM_INFO_LOG(
+    MEDIA_INFO_LOG(
         "OnCaptureReady is called, captureID: %{public}d, timestamp: %{public}" PRIu64, captureId, timestamp);
     CallbackInfo info;
     info.captureID = captureId;
@@ -383,7 +383,7 @@ void PhotoOutputCallback::OnCaptureError(const int32_t captureId, const int32_t 
 
 void PhotoOutputCallback::OnEstimatedCaptureDuration(const int32_t duration) const
 {
-    COMM_INFO_LOG("OnEstimatedCaptureDuration is called!, duration: %{public}d", duration);
+    MEDIA_DEBUG_LOG("OnEstimatedCaptureDuration is called!, duration: %{public}d", duration);
     CallbackInfo info;
     info.duration = duration;
     UpdateJSCallbackAsync(PhotoOutputEventType::CAPTURE_ESTIMATED_CAPTURE_DURATION, info);
@@ -1119,7 +1119,7 @@ napi_value PhotoOutputNapi::EnableMirror(napi_env env, napi_callback_info info)
 napi_value PhotoOutputNapi::IsQuickThumbnailSupported(napi_env env, napi_callback_info info)
 {
     if (!CameraNapiSecurity::CheckSystemApp(env)) {
-        COMM_ERR_LOG("SystemApi IsQuickThumbnailSupported is called!");
+        MEDIA_ERR_LOG("SystemApi IsQuickThumbnailSupported is called!");
         return nullptr;
     }
     napi_status status;
@@ -1375,7 +1375,7 @@ napi_value PhotoOutputNapi::SetMovingPhotoVideoCodecType(napi_env env, napi_call
 
 napi_value PhotoOutputNapi::EnableQuickThumbnail(napi_env env, napi_callback_info info)
 {
-    CHECK_RETURN_RET_COMM_ELOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
+    CHECK_RETURN_RET_ELOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
         "SystemApi PhotoOutputNapi::EnableQuickThumbnail is called!");
     napi_status status;
     napi_value result = nullptr;

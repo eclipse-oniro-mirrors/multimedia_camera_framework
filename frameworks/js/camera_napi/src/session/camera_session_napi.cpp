@@ -791,7 +791,7 @@ napi_value GetPointNapiValue(napi_env env, Point &point)
 
 napi_value CameraSessionNapi::CreateCameraSession(napi_env env)
 {
-    COMM_INFO_LOG("CreateCameraSession is called");
+    MEDIA_DEBUG_LOG("CreateCameraSession is called");
     CAMERA_SYNC_TRACE;
     napi_status status;
     napi_value result = nullptr;
@@ -826,7 +826,7 @@ napi_value CameraSessionNapi::CreateCameraSession(napi_env env)
 
 napi_value CameraSessionNapi::BeginConfig(napi_env env, napi_callback_info info)
 {
-    COMM_INFO_LOG("BeginConfig is called");
+    MEDIA_INFO_LOG("BeginConfig is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ZERO;
@@ -849,7 +849,7 @@ napi_value CameraSessionNapi::BeginConfig(napi_env env, napi_callback_info info)
 void CameraSessionNapi::CommitConfigAsync(uv_work_t* work)
 {
     CHECK_RETURN_ELOG(work == nullptr, "CommitConfigAsync null work");
-    COMM_INFO_LOG("CommitConfigAsync running on worker");
+    MEDIA_INFO_LOG("CommitConfigAsync running on worker");
     auto context = static_cast<CameraSessionAsyncContext*>(work->data);
     CHECK_RETURN_ELOG(context == nullptr, "CommitConfigAsync context is null");
     CHECK_RETURN_ELOG(
@@ -893,7 +893,7 @@ void CameraSessionNapi::UvWorkAsyncCompleted(uv_work_t* work, int status)
 
 napi_value CameraSessionNapi::CommitConfig(napi_env env, napi_callback_info info)
 {
-    COMM_INFO_LOG("CommitConfig is called");
+    MEDIA_INFO_LOG("CommitConfig is called");
     std::unique_ptr<CameraSessionAsyncContext> asyncContext = std::make_unique<CameraSessionAsyncContext>(
         "CameraSessionNapi::CommitConfig", CameraNapiUtils::IncrementAndGet(cameraSessionTaskId));
     auto asyncFunction = std::make_shared<CameraNapiAsyncFunction>(
@@ -1008,7 +1008,7 @@ napi_value GetJSArgsForCameraInput(napi_env env, size_t argc, const napi_value a
 
 napi_value CameraSessionNapi::AddInput(napi_env env, napi_callback_info info)
 {
-    COMM_INFO_LOG("AddInput is called");
+    MEDIA_INFO_LOG("AddInput is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ONE;
@@ -1150,7 +1150,7 @@ napi_value CameraSessionNapi::GetJSArgsForCameraOutput(napi_env env, size_t argc
 
 napi_value CameraSessionNapi::AddOutput(napi_env env, napi_callback_info info)
 {
-    COMM_INFO_LOG("AddOutput is called");
+    MEDIA_INFO_LOG("AddOutput is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ONE;
@@ -1243,7 +1243,7 @@ void CameraSessionNapi::StartAsync(uv_work_t* work)
 
 napi_value CameraSessionNapi::Start(napi_env env, napi_callback_info info)
 {
-    COMM_INFO_LOG("Start is called");
+    MEDIA_INFO_LOG("Start is called");
     std::unique_ptr<CameraSessionAsyncContext> asyncContext = std::make_unique<CameraSessionAsyncContext>(
         "CameraSessionNapi::Start", CameraNapiUtils::IncrementAndGet(cameraSessionTaskId));
     auto asyncFunction =
@@ -1287,7 +1287,7 @@ napi_value CameraSessionNapi::Start(napi_env env, napi_callback_info info)
 
 napi_value CameraSessionNapi::Stop(napi_env env, napi_callback_info info)
 {
-    COMM_INFO_LOG("Stop is called");
+    MEDIA_INFO_LOG("Stop is called");
     std::unique_ptr<CameraSessionAsyncContext> asyncContext = std::make_unique<CameraSessionAsyncContext>(
         "CameraSessionNapi::Stop", CameraNapiUtils::IncrementAndGet(cameraSessionTaskId));
     auto asyncFunction =
@@ -1299,14 +1299,14 @@ napi_value CameraSessionNapi::Stop(napi_env env, napi_callback_info info)
     napi_status status = napi_create_async_work(
         env, nullptr, asyncFunction->GetResourceName(),
         [](napi_env env, void* data) {
-            COMM_INFO_LOG("CameraSessionNapi::Stop running on worker");
+            MEDIA_INFO_LOG("CameraSessionNapi::Stop running on worker");
             auto context = static_cast<CameraSessionAsyncContext*>(data);
             CHECK_RETURN_ELOG(context->objectInfo == nullptr, "CameraSessionNapi::Stop async info is nullptr");
             CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
             CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(context->queueTask, [&context]() {
                 context->errorCode = context->objectInfo->cameraSession_->Stop();
                 context->status = context->errorCode == CameraErrorCode::SUCCESS;
-                COMM_INFO_LOG("CameraSessionNapi::Stop errorCode:%{public}d", context->errorCode);
+                MEDIA_INFO_LOG("CameraSessionNapi::Stop errorCode:%{public}d", context->errorCode);
             });
         },
         AsyncCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
@@ -1326,7 +1326,7 @@ napi_value CameraSessionNapi::Stop(napi_env env, napi_callback_info info)
 
 napi_value CameraSessionNapi::Release(napi_env env, napi_callback_info info)
 {
-    COMM_INFO_LOG("Release is called");
+    MEDIA_INFO_LOG("Release is called");
     std::unique_ptr<CameraSessionAsyncContext> asyncContext = std::make_unique<CameraSessionAsyncContext>(
         "CameraSessionNapi::Release", CameraNapiUtils::IncrementAndGet(cameraSessionTaskId));
     auto asyncFunction =
@@ -1338,7 +1338,7 @@ napi_value CameraSessionNapi::Release(napi_env env, napi_callback_info info)
     napi_status status = napi_create_async_work(
         env, nullptr, asyncFunction->GetResourceName(),
         [](napi_env env, void* data) {
-            COMM_INFO_LOG("CameraSessionNapi::Release running on worker");
+            MEDIA_INFO_LOG("CameraSessionNapi::Release running on worker");
             auto context = static_cast<CameraSessionAsyncContext*>(data);
             CHECK_RETURN_ELOG(context->objectInfo == nullptr, "CameraSessionNapi::Release async info is nullptr");
             CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
@@ -1499,7 +1499,7 @@ napi_value CameraSessionNapi::IsFlashModeSupported(napi_env env, napi_callback_i
 
 napi_value CameraSessionNapi::SetFlashMode(napi_env env, napi_callback_info info)
 {
-    COMM_INFO_LOG("SetFlashMode is called");
+    MEDIA_DEBUG_LOG("SetFlashMode is called");
     CAMERA_SYNC_TRACE;
     napi_status status;
     napi_value result = nullptr;
@@ -2277,7 +2277,7 @@ napi_value CameraSessionNapi::GetSupportedFilters(napi_env env, napi_callback_in
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
         std::vector<FilterType> filterTypes = cameraSessionNapi->cameraSession_->GetSupportedFilters();
-        COMM_INFO_LOG("CameraSessionNapi::GetSupportedFilters len = %{public}zu",
+        MEDIA_INFO_LOG("CameraSessionNapi::GetSupportedFilters len = %{public}zu",
             filterTypes.size());
         if (!filterTypes.empty()) {
             for (size_t i = 0; i < filterTypes.size(); i++) {

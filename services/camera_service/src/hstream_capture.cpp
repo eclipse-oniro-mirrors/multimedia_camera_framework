@@ -666,7 +666,7 @@ void ConcurrentMap::Release()
 int32_t HStreamCapture::CreateMediaLibraryPhotoAssetProxy(int32_t captureId)
 {
     CAMERA_SYNC_TRACE;
-    COMM_INFO_LOG("CreateMediaLibraryPhotoAssetProxy E captureId:%{public}d", captureId);
+    MEDIA_DEBUG_LOG("CreateMediaLibraryPhotoAssetProxy E captureId:%{public}d", captureId);
     constexpr int32_t imageShotType = 0;
     constexpr int32_t movingPhotoShotType = 2;
     constexpr int32_t burstShotType = 3;
@@ -678,7 +678,7 @@ int32_t HStreamCapture::CreateMediaLibraryPhotoAssetProxy(int32_t captureId)
     }
     auto photoAssetProxy = PhotoAssetProxy::GetPhotoAssetProxy(
         cameraShotType, IPCSkeleton::GetCallingUid(), IPCSkeleton::GetCallingTokenID());
-    CHECK_RETURN_RET_COMM_ELOG(photoAssetProxy == nullptr, CAMERA_ALLOC_ERROR,
+    CHECK_RETURN_RET_ELOG(photoAssetProxy == nullptr, CAMERA_ALLOC_ERROR,
         "HStreamCapture::CreateMediaLibraryPhotoAssetProxy get photoAssetProxy fail");
     photoAssetProxy_.Insert(captureId, photoAssetProxy);
     MEDIA_DEBUG_LOG("CreateMediaLibraryPhotoAssetProxy X captureId:%{public}d", captureId);
@@ -1540,7 +1540,7 @@ int32_t HStreamCapture::UpdateMediaLibraryPhotoAssetProxy(sptr<CameraServerPhoto
     MEDIA_DEBUG_LOG(
         "HStreamCapture UpdateMediaLibraryPhotoAssetProxy E captureId(%{public}d)", cameraPhotoProxy->GetCaptureId());
     SetCameraPhotoProxyInfo(cameraPhotoProxy);
-    COMM_INFO_LOG("HStreamCapture AddPhotoProxy E");
+    MEDIA_DEBUG_LOG("HStreamCapture AddPhotoProxy E");
     photoAssetProxy->AddPhotoProxy(cameraPhotoProxy);
     MEDIA_DEBUG_LOG("HStreamCapture AddPhotoProxy X");
     photoAssetProxy_.IncreaseCaptureStep(cameraPhotoProxy->GetCaptureId());
