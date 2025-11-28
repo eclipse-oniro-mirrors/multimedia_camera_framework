@@ -1306,7 +1306,7 @@ napi_value CameraSessionNapi::Stop(napi_env env, napi_callback_info info)
             CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(context->queueTask, [&context]() {
                 context->errorCode = context->objectInfo->cameraSession_->Stop();
                 context->status = context->errorCode == CameraErrorCode::SUCCESS;
-                MEDIA_INFO_LOG("CameraSessionNapi::Stop errorCode:%{public}d", context->errorCode);
+                COMM_INFO_LOG("CameraSessionNapi::Stop errorCode:%{public}d", context->errorCode);
             });
         },
         AsyncCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);

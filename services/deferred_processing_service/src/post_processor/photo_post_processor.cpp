@@ -88,7 +88,7 @@ public:
         DP_CHECK_ERROR_RETURN_RET_LOG(processResult == nullptr, DP_OK, "PhotoProcessResult is nullptr.");
         auto ret = processResult->ProcessBufferInfo(imageId, buffer);
         if (ret != DP_OK) {
-            DP_ERR_LOG("Process done failed imageId: %{public}s.", imageId.c_str());
+            COMM_DP_ERR_LOG("Process done failed imageId: %{public}s.", imageId.c_str());
             processResult->OnError(imageId, DPS_ERROR_IMAGE_PROC_FAILED);
         }
         return DP_OK;
@@ -103,7 +103,7 @@ public:
 
         auto ret = processResult->ProcessPictureInfoV1_3(imageId, buffer);
         if (ret != DP_OK) {
-            DP_ERR_LOG("Process yuv done failed imageId: %{public}s.", imageId.c_str());
+            COMM_DP_ERR_LOG("Process yuv done failed imageId: %{public}s.", imageId.c_str());
             processResult->OnError(imageId, DPS_ERROR_IMAGE_PROC_FAILED);
         }
         return DP_OK;
@@ -111,7 +111,7 @@ public:
 
     int32_t OnError(const std::string& imageId,  OHOS::HDI::Camera::V1_2::ErrorCode errorCode) override
     {
-        DP_ERR_LOG("DPS_PHOTO: imageId: %{public}s, ive error: %{public}d", imageId.c_str(), errorCode);
+        COMM_DP_ERR_LOG("DPS_PHOTO: imageId: %{public}s, ive error: %{public}d", imageId.c_str(), errorCode);
         auto processResult = processResult_.lock();
         DP_CHECK_ERROR_RETURN_RET_LOG(processResult == nullptr, DP_OK, "PhotoProcessResult is nullptr.");
 
@@ -209,7 +209,7 @@ void PhotoPostProcessor::ProcessImage(const std::string& imageId)
     }
 
     int32_t ret = session->ProcessImage(imageId);
-    DP_INFO_LOG("DPS_PHOTO: Process photo to ive, imageId: %{public}s, ret: %{public}d", imageId.c_str(), ret);
+    COMM_DP_INFO_LOG("DPS_PHOTO: Process photo to ive, imageId: %{public}s, ret: %{public}d", imageId.c_str(), ret);
     runningId_.emplace(imageId);
 }
 
@@ -235,7 +235,7 @@ void PhotoPostProcessor::Interrupt()
     DP_CHECK_ERROR_RETURN_LOG(session == nullptr, "photo session is nullptr.");
 
     int32_t ret = session->Interrupt();
-    DP_INFO_LOG("DPS_PHOTO: Interrupt photo to ive, ret: %{public}d", ret);
+    COMM_DP_INFO_LOG("DPS_PHOTO: Interrupt photo to ive, ret: %{public}d", ret);
 }
 
 void PhotoPostProcessor::Reset()

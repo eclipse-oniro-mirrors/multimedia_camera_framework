@@ -613,7 +613,7 @@ int32_t HCameraDevice::OpenDevice(bool isEnableSecCam)
     OHOS::ResourceSchedule::ResSchedClient::GetInstance().ReportData(
         OHOS::ResourceSchedule::ResType::RES_TYPE_THREAD_QOS_CHANGE, 0, qosParamMap);
 
-    MEDIA_INFO_LOG("HCameraDevice::OpenDevice start cameraId: %{public}s", cameraID_.c_str());
+    COMM_INFO_LOG("HCameraDevice::OpenDevice start cameraId: %{public}s", cameraID_.c_str());
     CAMERA_SYNC_TRACE;
     int32_t errorCode = CheckPermissionBeforeOpenDevice();
     CHECK_RETURN_RET(errorCode != CAMERA_OK, errorCode);
@@ -936,7 +936,7 @@ int32_t HCameraDevice::CloseDevice()
             "HCameraDevice::CloseDevice device has benn closed");
         if (hdiCameraDevice_ != nullptr) {
             isOpenedCameraDevice_.store(false);
-            MEDIA_INFO_LOG("Closing camera device: %{public}s start", cameraID_.c_str());
+            COMM_INFO_LOG("Closing camera device: %{public}s start", cameraID_.c_str());
             hdiCameraDevice_->Close();
             ResetCachedSettings();
             ResetDeviceOpenLifeCycleSettings();

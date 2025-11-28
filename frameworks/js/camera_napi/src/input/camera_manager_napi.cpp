@@ -778,7 +778,7 @@ bool ParsePrelaunchConfig(napi_env env, napi_value root, PrelaunchConfig* prelau
     if (napi_get_named_property(env, root, "restoreParamType", &res) == napi_ok) {
         napi_get_value_int32(env, res, &intValue);
         prelaunchConfig->restoreParamType = static_cast<RestoreParamType>(intValue);
-        MEDIA_INFO_LOG("SetPrelaunchConfig restoreParamType = %{public}d", intValue);
+        COMM_INFO_LOG("SetPrelaunchConfig restoreParamType = %{public}d", intValue);
     }
 
     if (napi_get_named_property(env, root, "activeTime", &res) == napi_ok) {
@@ -835,7 +835,7 @@ napi_value CameraManagerNapi::CreatePreviewOutputInstance(napi_env env, napi_cal
         CameraNapiParamParser jsParamParser(env, info, cameraManagerNapi, profileNapiOjbect, surfaceId);
         CHECK_RETURN_RET(!jsParamParser.AssertStatus(INVALID_ARGUMENT,
             "CameraManagerNapi::CreatePreviewOutputInstance 2 args parse error"), nullptr);
-        MEDIA_INFO_LOG("CameraManagerNapi::CreatePreviewOutputInstance ParseProfile "
+        COMM_INFO_LOG("CameraManagerNapi::CreatePreviewOutputInstance ParseProfile "
                        "size.width = %{public}d, size.height = %{public}d, format = %{public}d, surfaceId = %{public}s",
             profile.size_.width, profile.size_.height, profile.format_, surfaceId.c_str());
         return PreviewOutputNapi::CreatePreviewOutput(env, profile, surfaceId);
@@ -904,7 +904,7 @@ napi_value CameraManagerNapi::CreatePhotoOutputInstance(napi_env env, napi_callb
     } else if (napiArgsSize == 1) { // 1 parameters condition
         // Check one parameter only profile
         if (CameraNapiParamParser(env, info, cameraManagerNapi, profileNapiOjbect).IsStatusOk()) {
-            MEDIA_INFO_LOG(
+            COMM_INFO_LOG(
                 "CameraManagerNapi::CreatePhotoOutputInstance ParseProfile "
                 "size.width = %{public}d, size.height = %{public}d, format = %{public}d, surfaceId = %{public}s",
                 profile.size_.width, profile.size_.height, profile.format_, surfaceId.c_str());
@@ -953,7 +953,7 @@ napi_value CameraManagerNapi::CreateVideoOutputInstance(napi_env env, napi_callb
         CHECK_RETURN_RET(!CameraNapiParamParser(env, info, cameraManagerNapi, profileNapiOjbect, surfaceId)
             .AssertStatus(INVALID_ARGUMENT, "CameraManagerNapi::CreateVideoOutputInstance 2 args parse error"),
             nullptr);
-        MEDIA_INFO_LOG(
+        COMM_INFO_LOG(
             "CameraManagerNapi::CreateVideoOutputInstance ParseVideoProfile "
             "size.width = %{public}d, size.height = %{public}d, format = %{public}d, frameRateMin = %{public}d, "
             "frameRateMax = %{public}d, surfaceId = %{public}s",

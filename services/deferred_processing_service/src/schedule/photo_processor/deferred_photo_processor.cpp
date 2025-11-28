@@ -266,7 +266,7 @@ void DeferredPhotoProcessor::StopTimer(const std::string& imageId)
 
 void DeferredPhotoProcessor::ProcessPhotoTimeout(const std::string& imageId)
 {
-    DP_INFO_LOG("DPS_TIMER: Executed imageId: %{public}s", imageId.c_str());
+    COMM_DP_INFO_LOG("DPS_TIMER: Executed imageId: %{public}s", imageId.c_str());
     DP_CHECK_EXECUTE(result_->IsNeedReset(), postProcessor_->Reset());
     auto ret = DPS_SendCommand<PhotoProcessTimeOutCommand>(userId_, imageId, DPS_ERROR_IMAGE_PROC_TIMEOUT);
     DP_CHECK_ERROR_RETURN_LOG(ret != DP_OK,

@@ -23,13 +23,13 @@ std::shared_ptr<PhotoAssetProxy> PhotoAssetProxy::GetPhotoAssetProxy(
 {
     MEDIA_DEBUG_LOG("GetPhotoAssetProxy E callingUid:%{public}d", callingUid);
     auto dynamiclib = CameraDynamicLoader::GetDynamiclib(MEDIA_LIB_SO);
-    CHECK_RETURN_RET_ELOG(
+    CHECK_RETURN_RET_COMM_ELOG(
         dynamiclib == nullptr, nullptr, "PhotoAssetProxy::GetPhotoAssetProxy get dynamiclib fail");
     CreatePhotoAssetIntf createPhotoAssetIntf = (CreatePhotoAssetIntf)dynamiclib->GetFunction("createPhotoAssetIntf");
-    CHECK_RETURN_RET_ELOG(
+    CHECK_RETURN_RET_COMM_ELOG(
         createPhotoAssetIntf == nullptr, nullptr, "PhotoAssetProxy::GetPhotoAssetProxy get createPhotoAssetIntf fail");
     PhotoAssetIntf* photoAssetIntf = createPhotoAssetIntf(shootType, callingUid, callingTokenID);
-    CHECK_RETURN_RET_ELOG(
+    CHECK_RETURN_RET_COMM_ELOG(
         photoAssetIntf == nullptr, nullptr, "PhotoAssetProxy::GetPhotoAssetProxy get photoAssetIntf fail");
     std::shared_ptr<PhotoAssetProxy> photoAssetProxy =
         std::make_shared<PhotoAssetProxy>(dynamiclib, std::shared_ptr<PhotoAssetIntf>(photoAssetIntf));
