@@ -19,6 +19,7 @@
 #include <mutex>
 #include <nlohmann/json.hpp>
 #include "datashare_helper.h"
+#include "applist_manager/camera_applist_observer.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -40,7 +41,7 @@ class CameraApplistManager : public RefBase {
 public:
     static sptr<CameraApplistManager> &GetInstance();
     ~CameraApplistManager();
-    bool InitApplistConfigures();
+    bool Init();
     ApplistConfigure* GetConfigureByBundleName(const std::string& bundleName);
     bool GetNaturalDirectionCorrectByBundleName(const std::string& bundleName,
         bool& exemptNaturalDirectionCorrect);
@@ -49,19 +50,28 @@ private:
     CameraApplistManager();
 
     std::shared_ptr<DataShare::DataShareHelper> CreateCameraDataShareHelper();
-    bool GetApplistConfigure(Uri& uri, DataShare::DataSharePredicates& predicates, std::string& jsonStr);
+    bool GetApplistConfigure(std::string& jsonStr);
     void ParseApplistConfigureJsonStr(const std::string& cfgJsonStr);
     void UpdateApplistConfigure(const ApplistConfigure& appConfigure);
+    bool ReleaseDataShareHelper(std::shared_ptr<DataShare::DataShareHelper> &helper);
+    void ClearApplistManager();
+    bool RegisterCameraApplistManagerObserver();
+    sptr<CameraApplistObserver> CreateObserver(const CameraApplistObserver::UpdateFunc &func);
+    static void ExecRegisterCb(const sptr<CameraApplistObserver> &observer);
+    int32_t RegisterObserver(const sptr<CameraApplistObserver> &observer);
+    int32_t UnregisterObserver(const sptr<CameraApplistObserver> &observer);
 
 private:
     static sptr<CameraApplistManager> cameraApplistManager_;
     std::map<std::string, ApplistConfigure*> applistConfigures_;
-    std::shared_ptr<DataShare::DataShareHelper> dataShareHelper_;
 
     bool initResult_ = false;
+    sptr<CameraApplistObserver> observer_;
+    sptr<IRemoteObject> remoteObj_;
 
     static std::mutex instanceMutex_;
-    std::mutex dataShareHelperMutex_;
+    std::mutex applistConfigureMutex_;
+    std::mutex observerMutex_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

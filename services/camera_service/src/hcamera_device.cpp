@@ -212,7 +212,7 @@ HCameraDevice::HCameraDevice(
 
     {
         std::lock_guard<std::mutex> lock(dataShareHelperMutex_);
-        CameraApplistManager::GetInstance()->InitApplistConfigures();
+        CameraApplistManager::GetInstance()->Init();
     }
 
     {
