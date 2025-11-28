@@ -235,6 +235,13 @@ CameraDevice CameraUtilsTaihe::GetNullCameraDevice()
     return cameraTaihe;
 }
 
+array<CameraDevice> CameraUtilsTaihe::GetNullCameraDeviceArray()
+{
+    std::vector<CameraDevice> cameraDeviceVec;
+    cameraDeviceVec.emplace_back(GetNullCameraDevice());
+    return array<CameraDevice>(cameraDeviceVec);
+}
+
 CameraDevice CameraUtilsTaihe::ToTaiheCameraDevice(sptr<OHOS::CameraStandard::CameraDevice> &obj)
 {
     CameraDevice cameraTaihe = CameraUtilsTaihe::GetNullCameraDevice();

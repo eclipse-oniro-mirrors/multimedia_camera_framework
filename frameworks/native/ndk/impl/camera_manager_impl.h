@@ -98,6 +98,11 @@ public:
 
     Camera_ErrorCode GetCameraDevice(Camera_Position position, Camera_Type type, Camera_Device *camera);
 
+    Camera_ErrorCode GetCameraDevices(Camera_DeviceQueryInfo* deviceQueryInfo, uint32_t* cameraSize,
+        Camera_Device** cameras);
+
+    Camera_ErrorCode DeleteCameraDevices(Camera_Device* cameras);
+
     Camera_ErrorCode GetCameraConcurrentInfos(const Camera_Device *camera, uint32_t deviceSize,
         Camera_ConcurrentInfo **CameraConcurrentInfo, uint32_t *infoSize);
 

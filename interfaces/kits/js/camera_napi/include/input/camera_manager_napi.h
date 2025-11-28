@@ -188,6 +188,7 @@ public:
     static napi_value Once(napi_env env, napi_callback_info info);
     static napi_value Off(napi_env env, napi_callback_info info);
     static napi_value GetCameraDevice(napi_env env, napi_callback_info info);
+    static napi_value GetCameraDevices(napi_env env, napi_callback_info info);
     static napi_value GetCameraConcurrentInfos(napi_env env, napi_callback_info info);
     static napi_value GetCameraStorageSize(napi_env env, napi_callback_info info);
 
@@ -201,6 +202,9 @@ private:
     static napi_value CameraManagerNapiConstructor(napi_env env, napi_callback_info info);
     static void ProcessCameraInfo(sptr<CameraManager>& cameraManager, const CameraPosition cameraPosition,
         const CameraType cameraType, sptr<CameraDevice>& cameraInfo);
+    static void ProcessCameraDevices(sptr<CameraManager>& cameraManager, const CameraPosition cameraPosition,
+        const std::vector<CameraType>& cameraTypes, const ConnectionType connectionType,
+        std::vector<sptr<CameraDevice>>& outDevices);
     static void GetSupportedOutputCapabilityAdaptNormalMode(
         SceneMode fwkMode, sptr<CameraDevice>& cameraInfo, sptr<CameraOutputCapability>& outputCapability);
     static sptr<CameraDevice> GetSupportedOutputCapabilityGetCameraInfo(

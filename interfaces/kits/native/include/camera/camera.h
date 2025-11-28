@@ -258,6 +258,31 @@ typedef enum Camera_Connection {
 } Camera_Connection;
 
 /**
+ * @brief Describes the query information of the camera device.
+ *
+ * @since 23
+ * @version 1.0
+ */
+typedef struct Camera_DeviceQueryInfo {
+    /**
+     * Camera type list.
+     */
+    Camera_Type* cameraType;
+    /**
+     * Camera type size.
+     */
+    uint32_t cameraTypeSize;
+    /**
+     * Camera position attribute.
+     */
+    Camera_Position cameraPosition;
+    /**
+     * Camera connection type attribute.
+     */
+    Camera_Connection connectionType;
+} Camera_DeviceQueryInfo;
+
+/**
  * @brief Enum for camera format type.
  *
  * @since 11

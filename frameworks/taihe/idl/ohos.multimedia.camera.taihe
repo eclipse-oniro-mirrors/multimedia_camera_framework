@@ -949,6 +949,7 @@ interface CameraManager {
   CreateMetadataOutput(metadataObjectTypes: Array<MetadataObjectType>): MetadataOutput;
   IsTorchModeSupported(mode: TorchMode): bool;
   GetCameraDevice(position: CameraPosition, type: CameraType): CameraDevice;
+  GetCameraDevices(position: CameraPosition, types: Array<CameraType>, connectionType: ConnectionType): Array<CameraDevice>;
   @!sts_inject_into_interface("getCameraStorageSize(): Promise<long>;")
   @!sts_inject_into_class("""
   getCameraStorageSize(): Promise<long> {

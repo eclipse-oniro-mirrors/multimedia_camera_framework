@@ -629,6 +629,7 @@ napi_value CameraManagerNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("getTorchMode", GetTorchMode),
         DECLARE_NAPI_FUNCTION("setTorchMode", SetTorchMode),
         DECLARE_NAPI_FUNCTION("getCameraDevice", GetCameraDevice),
+        DECLARE_NAPI_FUNCTION("getCameraDevices", GetCameraDevices),
         DECLARE_NAPI_FUNCTION("getCameraConcurrentInfos", GetCameraConcurrentInfos),
         DECLARE_NAPI_FUNCTION("getCameraStorageSize", GetCameraStorageSize),
         DECLARE_NAPI_FUNCTION("on", On),
@@ -1050,6 +1051,60 @@ napi_value CameraManagerNapi::GetCameraDevice(napi_env env, napi_callback_info i
     }
     napi_value result = nullptr;
     result = CameraNapiObjCameraDevice(*cameraInfo).GenerateNapiValue(env);
+    return result;
+}
+
+napi_value CameraManagerNapi::GetCameraDevices(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("GetCameraDevices is called");
+    CameraManagerNapi* cameraManagerNapi = nullptr;
+    int32_t cameraPosition = 0;
+    napi_value typesValue = nullptr;
+    int32_t connectionType = 0;
+
+    CameraNapiParamParser jsParamParser(env, info, cameraManagerNapi, cameraPosition, typesValue, connectionType);
+    if (!jsParamParser.AssertStatus(PARAMETER_ERROR, "GetCameraDevices with 3 invalid arguments!")) {
+        MEDIA_ERR_LOG("CameraManagerNapi::GetCameraDevices invalid arguments");
+        return nullptr;
+    }
+
+    if (cameraManagerNapi == nullptr || cameraManagerNapi->cameraManager_ == nullptr) {
+        MEDIA_ERR_LOG("CameraManagerNapi::GetCameraDevices cameraManager is null");
+        CameraNapiUtils::ThrowError(env, SERVICE_FATL_ERROR, "Camera manager is null.");
+        return nullptr;
+    }
+
+    std::vector<CameraType> cameraTypes;
+    if (!CameraNapiUtils::ParseCameraTypesArray(env, typesValue, cameraTypes)) {
+        MEDIA_ERR_LOG("CameraManagerNapi::GetCameraDevices ParseCameraTypesArray failed");
+        return nullptr;
+    }
+
+    std::vector<sptr<CameraDevice>> cameraDeviceList;
+    ProcessCameraDevices(cameraManagerNapi->cameraManager_, static_cast<CameraPosition>(cameraPosition), cameraTypes,
+        static_cast<ConnectionType>(connectionType), cameraDeviceList);
+
+    if (cameraDeviceList.empty()) {
+        MEDIA_ERR_LOG("CameraManagerNapi::GetCameraDevices no camera devices found with parameters: "
+            "position=%{public}d, connectionType=%{public}d, cameraTypes count=%{public}zu", cameraPosition,
+            connectionType, cameraTypes.size());
+        CameraNapiUtils::ThrowError(env, SERVICE_FATL_ERROR, "cameraDeviceList is null.");
+        return nullptr;
+    } else {
+        MEDIA_DEBUG_LOG("CameraManagerNapi::GetCameraDevices found %{public}zu camera devices",
+            cameraDeviceList.size());
+    }
+
+    napi_value result = nullptr;
+    napi_create_array_with_length(env, cameraDeviceList.size(), &result);
+    for (size_t i = 0; i < cameraDeviceList.size(); ++i) {
+        if (cameraDeviceList[i] == nullptr) {
+            MEDIA_ERR_LOG("CameraManagerNapi::GetCameraDevices camera device at index %{public}zu is null", i);
+            continue;
+        }
+        napi_value jsDevice = CameraNapiObjCameraDevice(*cameraDeviceList[i]).GenerateNapiValue(env);
+        napi_set_element(env, result, i, jsDevice);
+    }
     return result;
 }
 
@@ -1517,6 +1572,39 @@ void CameraManagerNapi::ProcessCameraInfo(sptr<CameraManager>& cameraManager, co
             break;
         }
     }
+}
+
+void CameraManagerNapi::ProcessCameraDevices(sptr<CameraManager>& cameraManager, const CameraPosition cameraPosition,
+    const std::vector<CameraType>& cameraTypes, const ConnectionType connectionType,
+    std::vector<sptr<CameraDevice>>& outDevices)
+{
+    std::vector<sptr<CameraDevice>> cameraObjList = cameraManager->GetSupportedCameras();
+    MEDIA_DEBUG_LOG("GetCameraDevices cameraObjList size is %{public}zu", cameraObjList.size());
+
+    for (size_t i = 0; i < cameraObjList.size(); ++i) {
+        sptr<CameraDevice> cameraDevice = cameraObjList[i];
+        if (cameraDevice == nullptr) {
+            continue;
+        }
+
+        if (cameraDevice->GetPosition() != cameraPosition) {
+            continue;
+        }
+
+        if (cameraDevice->GetConnectionType() != connectionType) {
+            continue;
+        }
+
+        CameraType deviceType = cameraDevice->GetCameraType();
+        if (!cameraTypes.empty()) {
+            auto it = std::find(cameraTypes.begin(), cameraTypes.end(), deviceType);
+            if (it == cameraTypes.end()) {
+                continue;
+            }
+        }
+        outDevices.emplace_back(cameraDevice);
+    }
+    MEDIA_DEBUG_LOG("GetCameraDevices matched size is %{public}zu", outDevices.size());
 }
 
 void CameraManagerNapi::RegisterCameraStatusCallbackListener(

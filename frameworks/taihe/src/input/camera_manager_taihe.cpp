@@ -969,6 +969,37 @@ void CameraManagerImpl::ProcessCameraInfo(OHOS::sptr<OHOS::CameraStandard::Camer
     }
 }
 
+void CameraManagerImpl::ProcessCameraInfos(OHOS::sptr<OHOS::CameraStandard::CameraManager>& cameraManager,
+    const OHOS::CameraStandard::CameraPosition cameraPosition,
+    const std::vector<OHOS::CameraStandard::CameraType>& cameraTypes,
+    const OHOS::CameraStandard::ConnectionType connectionType,
+    std::vector<OHOS::sptr<OHOS::CameraStandard::CameraDevice>>& cameraInfos)
+{
+    std::vector<OHOS::sptr<OHOS::CameraStandard::CameraDevice>> cameraObjList = cameraManager->GetSupportedCameras();
+    MEDIA_DEBUG_LOG("ProcessCameraInfos cameraObjList size is %{public}zu", cameraObjList.size());
+
+    for (size_t i = 0; i < cameraObjList.size(); i++) {
+        OHOS::sptr<OHOS::CameraStandard::CameraDevice> cameraDevice = cameraObjList[i];
+        if (cameraDevice == nullptr) {
+            continue;
+        }
+        if (cameraDevice->GetPosition() != cameraPosition) {
+            continue;
+        }
+        if (cameraDevice->GetConnectionType() != connectionType) {
+            continue;
+        }
+        if (!cameraTypes.empty()) {
+            OHOS::CameraStandard::CameraType deviceType = cameraDevice->GetCameraType();
+            auto it = std::find(cameraTypes.begin(), cameraTypes.end(), deviceType);
+            if (it == cameraTypes.end()) {
+                continue;
+            }
+        }
+        cameraInfos.emplace_back(cameraDevice);
+    }
+}
+
 void CameraManagerImpl::SetPrelaunchConfig(PrelaunchConfig const& prelaunchConfig)
 {
     CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
@@ -1059,6 +1090,37 @@ CameraDevice CameraManagerImpl::GetCameraDevice(CameraPosition position, CameraT
         return cameraTaihe;
     }
     return CameraUtilsTaihe::ToTaiheCameraDevice(cameraInfo);
+}
+
+array<CameraDevice> CameraManagerImpl::GetCameraDevices(CameraPosition position, array_view<CameraType> types,
+    ConnectionType connectionType)
+{
+    MEDIA_INFO_LOG("CameraManagerImpl::GetCameraDevices is called");
+    array<CameraDevice> cameraTaiheArray = CameraUtilsTaihe::GetNullCameraDeviceArray();
+    CHECK_RETURN_RET_ELOG(cameraManager_ == nullptr, cameraTaiheArray, "cameraManager_ is nullptr");
+
+    int32_t cameraPosition = static_cast<int32_t>(position.get_value());
+    int32_t cameraConnectionType = static_cast<int32_t>(connectionType.get_value());
+
+    std::vector<OHOS::CameraStandard::CameraType> cameraTypes;
+    cameraTypes.reserve(types.size());
+    for (auto& t : types) {
+        int32_t cameraType = static_cast<int32_t>(t.get_value());
+        cameraTypes.emplace_back(static_cast<OHOS::CameraStandard::CameraType>(cameraType));
+    }
+
+    std::vector<sptr<OHOS::CameraStandard::CameraDevice>> cameraInfos;
+    ProcessCameraInfos(cameraManager_, static_cast<OHOS::CameraStandard::CameraPosition>(cameraPosition), cameraTypes,
+        static_cast<OHOS::CameraStandard::ConnectionType>(cameraConnectionType), cameraInfos);
+
+    if (cameraInfos.empty()) {
+        MEDIA_ERR_LOG("CameraManagerImpl::GetCameraDevices no matched camera device");
+        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::CameraErrorCode::SERVICE_FATL_ERROR,
+            "No camera device matched the query condition");
+        return cameraTaiheArray;
+    }
+
+    return CameraUtilsTaihe::ToTaiheArrayCameraDevice(cameraInfos);
 }
 
 int64_t CameraManagerImpl::GetCameraStorageSizeSync()

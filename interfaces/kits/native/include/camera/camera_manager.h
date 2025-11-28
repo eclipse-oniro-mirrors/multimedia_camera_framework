@@ -487,6 +487,32 @@ Camera_ErrorCode OH_CameraManager_GetCameraDevice(Camera_Manager *cameraManager,
                                                   Camera_Type type, Camera_Device *camera);
 
 /**
+ * @brief Queries specified devices based on camera type, connection type and position.
+ *
+ * @param cameraManager the {@link Camera_Manager} instance.
+ * @param deviceQueryInfo the {@link Camera_DeviceQueryInfo} instance.
+ * @param cameraSize the size of supported {@link Camera_Device} list.
+ * @param cameras the supported {@link Camera_Device} list.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
+ * @since 23
+ */
+Camera_ErrorCode OH_CameraManager_GetCameraDevices(Camera_Manager* cameraManager,
+    Camera_DeviceQueryInfo* deviceQueryInfo, uint32_t* cameraSize, Camera_Device** cameras);
+
+/**
+ * @brief Delete specified devices.
+ *
+ * @param cameraManager the {@link Camera_Manager} instance.
+ * @param cameras the {@link Camera_Device} list to be deleted.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ * @since 23
+ */
+Camera_ErrorCode OH_CameraManager_DeleteCameraDevices(Camera_Manager* cameraManager, Camera_Device* cameras);
+
+/**
  * @brief Obtains the concurrent information of specified cameras, the empty return means concurrency is not supported.
  *
  * @param cameraManager the {@link Camera_Manager} instance.

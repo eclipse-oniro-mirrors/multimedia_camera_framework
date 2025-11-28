@@ -1446,6 +1446,142 @@ HWTEST_F(CameraManagerUnitTest, camera_manager_getcameradevice_001, TestSize.Lev
 
 /*
  * Feature: Framework
+ * Function: Test GetCameraDevices and DeleteCameraDevices
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetCameraDevices and DeleteCameraDevices
+ */
+HWTEST_F(CameraManagerUnitTest, camera_manager_getcameradevices_001, TestSize.Level0)
+{
+    Camera_Type* types = new Camera_Type[4];
+    types[0] = Camera_Type::CAMERA_TYPE_TELEPHOTO;
+    types[1] = Camera_Type::CAMERA_TYPE_WIDE_ANGLE;
+    types[2] = Camera_Type::CAMERA_TYPE_ULTRA_WIDE;
+    types[3] = Camera_Type::CAMERA_TYPE_DEFAULT;
+    uint32_t typeSize = 4;
+    Camera_DeviceQueryInfo info = {
+        .cameraType = types,
+        .cameraTypeSize = typeSize,
+        .cameraPosition = Camera_Position::CAMERA_POSITION_BACK,
+        .connectionType = Camera_Connection::CAMERA_CONNECTION_BUILT_IN,
+    };
+
+    Camera_Device* cameras = nullptr;
+    uint32_t cameraSize = 0;
+    Camera_ErrorCode ret = OH_CameraManager_GetCameraDevices(cameraManager, &info, &cameraSize, &cameras);
+    if (cameras == nullptr || cameraSize == 0) {
+        EXPECT_EQ(ret, CAMERA_SERVICE_FATAL_ERROR);
+    } else {
+        EXPECT_EQ(ret, CAMERA_OK);
+    }
+
+    ret = OH_CameraManager_DeleteCameraDevices(nullptr, cameras);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+
+    ret = OH_CameraManager_DeleteCameraDevices(cameraManager, nullptr);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+
+    ret = OH_CameraManager_DeleteCameraDevices(cameraManager, cameras);
+    EXPECT_EQ(ret, CAMERA_OK);
+    cameras = nullptr;
+}
+
+/*
+ * Feature: Framework
+ * Function: Test OH_CameraManager_GetCameraDevices invalid arguments
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetCameraDevices when top-level arguments are invalid
+ */
+HWTEST_F(CameraManagerUnitTest, camera_manager_getcameradevices_002, TestSize.Level0)
+{
+    Camera_Type* types = new Camera_Type[2];
+    types[0] = Camera_Type::CAMERA_TYPE_DEFAULT;
+    types[1] = Camera_Type::CAMERA_TYPE_WIDE_ANGLE;
+    uint32_t typeSize = 2;
+    Camera_DeviceQueryInfo queryInfo {
+        .cameraType = types,
+        .cameraTypeSize = typeSize,
+        .cameraPosition = Camera_Position::CAMERA_POSITION_BACK,
+        .connectionType = Camera_Connection::CAMERA_CONNECTION_BUILT_IN,
+    };
+
+    Camera_Device* cameras = nullptr;
+    uint32_t cameraSize = 0;
+    Camera_ErrorCode ret;
+
+    ret = OH_CameraManager_GetCameraDevices(nullptr, &queryInfo, &cameraSize, &cameras);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+
+    ret = OH_CameraManager_GetCameraDevices(cameraManager, nullptr, &cameraSize, &cameras);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+
+    ret = OH_CameraManager_GetCameraDevices(cameraManager, &queryInfo, nullptr, &cameras);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+
+    ret = OH_CameraManager_GetCameraDevices(cameraManager, &queryInfo, &cameraSize, nullptr);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test OH_CameraManager_GetCameraDevices with invalid cameraPosition
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetCameraDevices when cameraPosition is invalid in impl layer
+ */
+HWTEST_F(CameraManagerUnitTest, camera_manager_getcameradevices_003, TestSize.Level0)
+{
+    Camera_Type* types = new Camera_Type[2];
+    types[0] = Camera_Type::CAMERA_TYPE_DEFAULT;
+    types[1] = Camera_Type::CAMERA_TYPE_WIDE_ANGLE;
+    uint32_t typeSize = 2;
+    Camera_DeviceQueryInfo queryInfo {
+        .cameraType = types,
+        .cameraTypeSize = typeSize,
+        .cameraPosition = static_cast<Camera_Position>(-1),
+        .connectionType = Camera_Connection::CAMERA_CONNECTION_BUILT_IN,
+    };
+
+    Camera_Device* cameras = nullptr;
+    uint32_t cameraSize = 0;
+
+    Camera_ErrorCode ret = OH_CameraManager_GetCameraDevices(cameraManager, &queryInfo, &cameraSize, &cameras);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test OH_CameraManager_GetCameraDevices when no matched device
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetCameraDevices when ProcessCameraInfos returns empty matchedDevices
+ */
+HWTEST_F(CameraManagerUnitTest, camera_manager_getcameradevices_004, TestSize.Level0)
+{
+    Camera_Type* types = new Camera_Type[1];
+    types[0] = Camera_Type::CAMERA_TYPE_TELEPHOTO;
+    uint32_t typeSize = 1;
+    Camera_DeviceQueryInfo queryInfo {
+        .cameraType = types,
+        .cameraTypeSize = typeSize,
+        .cameraPosition = Camera_Position::CAMERA_POSITION_FRONT,
+        .connectionType = Camera_Connection::CAMERA_CONNECTION_USB_PLUGIN,
+    };
+
+    Camera_Device* cameras = nullptr;
+    uint32_t cameraSize = 0;
+
+    Camera_ErrorCode ret = OH_CameraManager_GetCameraDevices(cameraManager, &queryInfo, &cameraSize, &cameras);
+    EXPECT_EQ(ret, CAMERA_SERVICE_FATAL_ERROR);
+}
+
+/*
+ * Feature: Framework
  * Function: Test GetCameraConcurrentInfos with Camera_Device = nullptr
  * SubFunction: NA
  * FunctionPoints: NA

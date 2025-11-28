@@ -476,5 +476,45 @@ napi_value CameraNapiUtils::ParseMetadataObjectTypes(napi_env env, napi_value ar
     napi_get_boolean(env, true, &result);
     return result;
 }
+
+bool CameraNapiUtils::ParseCameraTypesArray(napi_env env, napi_value typesValue, std::vector<CameraType>& outTypes)
+{
+    bool isArray = false;
+    napi_is_array(env, typesValue, &isArray);
+    if (!isArray) {
+        std::string errorCode = std::to_string(CameraErrorCode::INVALID_ARGUMENT);
+        napi_throw_type_error(env, errorCode.c_str(), "CameraTypes must be an array of CameraType.");
+        return false;
+    }
+
+    uint32_t length = 0;
+    napi_get_array_length(env, typesValue, &length);
+
+    outTypes.clear();
+    outTypes.reserve(length);
+    for (uint32_t i = 0; i < length; ++i) {
+        napi_value element = nullptr;
+        napi_get_element(env, typesValue, i, &element);
+
+        napi_valuetype valueType = napi_undefined;
+        napi_typeof(env, element, &valueType);
+        if (valueType != napi_number) {
+            std::string errorCode = std::to_string(CameraErrorCode::INVALID_ARGUMENT);
+            napi_throw_type_error(env, errorCode.c_str(), "CameraTypes element type incorrect, expect number.");
+            return false;
+        }
+
+        int32_t typeInt = 0;
+        if (napi_get_value_int32(env, element, &typeInt) != napi_ok) {
+            std::string errorCode = std::to_string(CameraErrorCode::INVALID_ARGUMENT);
+            napi_throw_type_error(env, errorCode.c_str(), "CameraTypes element parse failed.");
+            return false;
+        }
+
+        outTypes.emplace_back(static_cast<CameraType>(typeInt));
+    }
+    return true;
+}
+
 } // namespace CameraStandard
 } // namespace OHOS

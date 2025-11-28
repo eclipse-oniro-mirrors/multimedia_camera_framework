@@ -18,10 +18,14 @@
 
 #include <climits>
 #include "kits/native/include/camera/camera.h"
+#include "input/camera_device.h"
 
 namespace OHOS {
 namespace CameraStandard {
 Camera_ErrorCode FrameworkToNdkCameraError(int32_t ret);
+void ProcessCameraInfos(const std::vector<sptr<CameraDevice>> &cameraObjList, CameraPosition innerPosition,
+    int32_t queryConnection, const std::vector<CameraType> &typeFilters,
+    std::vector<sptr<CameraDevice>> &matchedDevices);
 } // namespace CameraStandard
 } // namespace OHOS
 #endif // OHOS_CAMERA_CAMERA_UTIL_H
