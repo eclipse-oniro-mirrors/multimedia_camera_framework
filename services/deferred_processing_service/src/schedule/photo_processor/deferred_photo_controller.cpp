@@ -90,7 +90,7 @@ void DeferredPhotoController::OnSchedulerChanged(const SchedulerType& type, cons
     COMM_DP_INFO_LOG("DPS_PHOTO: Photo isNeedStop: %{public}d, isNeedInterrupt: %{public}d",
         scheduleInfo.isNeedStop, scheduleInfo.isNeedInterrupt);
 
-    if (photoProcessor_->HasRunningJob() && (scheduleInfo.isNeedInterrupt || scheduleInfo.isNeedStop)) {
+    if (photoProcessor_->HasRunningJob() && scheduleInfo.isNeedInterrupt) {
         photoProcessor_->Interrupt();
     }
 
