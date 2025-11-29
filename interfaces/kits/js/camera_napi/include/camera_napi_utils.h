@@ -189,7 +189,7 @@ public:
         std::ostringstream oss;
         oss << func << "[";
         for (auto it : params) {
-            if (!oss.str().empty() && oss.str().back!='[') {
+            if (!oss.str().empty() && oss.str().back()!='[') {
                 oss << ",";
             }
             oss << it.first << ":" << it.second;
