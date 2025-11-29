@@ -356,13 +356,9 @@ uint32_t CameraDevice::GetCameraOrientation()
 {
     uint32_t cameraOrientation = cameraOrientation_;
     if (GetUsePhysicalCameraOrientation()) {
-        uint32_t curFoldStatus;
-        OHOS::Rosen::FoldDisplayMode displayMode = OHOS::Rosen::DisplayManager::GetInstance().GetFoldDisplayMode();
-        if (displayMode == OHOS::Rosen::FoldDisplayMode::GLOBAL_FULL) {
-            curFoldStatus = static_cast<uint32_t>(OHOS::Rosen::FoldStatus::FOLD_STATE_EXPAND_WITH_SECOND_EXPAND);
-        } else {
-            curFoldStatus = static_cast<uint32_t>(OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus());
-        }
+        uint32_t displayMode =
+            static_cast<uint32_t>(OHOS::Rosen::DisplayManager::GetInstance().GetFoldDisplayMode());
+        uint32_t curFoldStatus = CameraManager::GetInstance()->DisplayModeToFoldStatus(displayMode);
         auto itr = foldStateSensorOrientationMap_.find(curFoldStatus);
         if (itr != foldStateSensorOrientationMap_.end()) {
             cameraOrientation = itr->second;

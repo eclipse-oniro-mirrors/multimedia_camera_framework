@@ -590,8 +590,9 @@ shared_ptr<CameraMetaInfo>HCameraService::GetCameraMetaInfo(std::string &cameraI
     uint8_t cameraPosition = (res == CAM_META_SUCCESS && item.count) ? item.data.u8[0] : OHOS_CAMERA_POSITION_OTHER;
     res = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_FOLDSCREEN_TYPE, &item);
     uint8_t foldType = (res == CAM_META_SUCCESS) ? item.data.u8[0] : OHOS_CAMERA_FOLDSCREEN_OTHER;
+    auto foldScreenType = system::GetParameter("const.window.foldscreen.type", "")[0];
     if (isFoldable && cameraPosition == OHOS_CAMERA_POSITION_FRONT && foldType == OHOS_CAMERA_FOLDSCREEN_OTHER &&
-        system::GetParameter("const.window.foldscreen.type", "")[0] == '1') {
+        (foldScreenType == '1' || foldScreenType == '7')) {
         return nullptr;
     }
     if (isFoldable && cameraPosition == OHOS_CAMERA_POSITION_FRONT && foldType == OHOS_CAMERA_FOLDSCREEN_INNER) {

@@ -2110,6 +2110,33 @@ FoldStatus CameraManager::GetFoldStatus()
     return curFoldStatus;
 }
 
+uint32_t CameraManager::DisplayModeToFoldStatus(uint32_t displayMode)
+{
+    uint32_t foldStatus = static_cast<uint32_t>(OHOS::Rosen::FoldStatus::UNKNOWN);
+    switch (displayMode) {
+        case static_cast<uint32_t>(OHOS::Rosen::FoldDisplayMode::MAIN): {
+            foldStatus = static_cast<uint32_t>(OHOS::Rosen::FoldStatus::FOLDED);
+            break;
+        }
+        case static_cast<uint32_t>(OHOS::Rosen::FoldDisplayMode::COORDINATION):
+        case static_cast<uint32_t>(OHOS::Rosen::FoldDisplayMode::FULL): {
+            foldStatus = static_cast<uint32_t>(OHOS::Rosen::FoldStatus::EXPAND);
+            break;
+        }
+        case static_cast<uint32_t>(OHOS::Rosen::FoldDisplayMode::GLOBAL_FULL): {
+            foldStatus = static_cast<uint32_t>(OHOS::Rosen::FoldStatus::FOLD_STATE_EXPAND_WITH_SECOND_EXPAND);
+            break;
+        }
+        default: {
+            foldStatus = static_cast<uint32_t>(OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus());
+            break;
+        }
+    }
+    MEDIA_DEBUG_LOG("CameraManager::DisplayModeToFoldStatus, displayMode: %{public}d , foldStatus: %{public}d",
+        displayMode, foldStatus);
+    return foldStatus;
+}
+
 void CameraManager::CheckWhiteList()
 {
     // LCOV_EXCL_START

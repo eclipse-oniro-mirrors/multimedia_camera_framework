@@ -655,18 +655,40 @@ std::map<std::string, std::array<float, CONTROL_CENTER_DATA_SIZE>> StringToContr
     return result;
 }
 
+int32_t DisplayModeToFoldStatus(int32_t displayMode)
+{
+    int32_t foldStatus = static_cast<int32_t>(OHOS::Rosen::FoldStatus::UNKNOWN);
+    switch (displayMode) {
+        case static_cast<int32_t>(OHOS::Rosen::FoldDisplayMode::MAIN): {
+            foldStatus = static_cast<int32_t>(OHOS::Rosen::FoldStatus::FOLDED);
+            break;
+        }
+        case static_cast<int32_t>(OHOS::Rosen::FoldDisplayMode::COORDINATION):
+        case static_cast<int32_t>(OHOS::Rosen::FoldDisplayMode::FULL): {
+            foldStatus = static_cast<int32_t>(OHOS::Rosen::FoldStatus::EXPAND);
+            break;
+        }
+        case static_cast<int32_t>(OHOS::Rosen::FoldDisplayMode::GLOBAL_FULL): {
+            foldStatus = static_cast<int32_t>(OHOS::Rosen::FoldStatus::FOLD_STATE_EXPAND_WITH_SECOND_EXPAND);
+            break;
+        }
+        default: {
+            foldStatus = static_cast<int32_t>(OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus());
+            break;
+        }
+    }
+    MEDIA_DEBUG_LOG("DisplayModeToFoldStatus, displayMode: %{public}d , foldStatus: %{public}d",
+        displayMode, foldStatus);
+    return foldStatus;
+}
+
 int32_t GetPhysicalCameraOrientation(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility,
     int32_t& sensorOrientation, int32_t displayMode)
 {
-    int32_t curFoldStatus;
     camera_metadata_item item;
     displayMode = displayMode >= 0 ? displayMode :
         static_cast<int32_t>(OHOS::Rosen::DisplayManager::GetInstance().GetFoldDisplayMode());
-    if (displayMode == static_cast<int32_t>(OHOS::Rosen::FoldDisplayMode::GLOBAL_FULL)) {
-        curFoldStatus = static_cast<int32_t>(OHOS::Rosen::FoldStatus::FOLD_STATE_EXPAND_WITH_SECOND_EXPAND);
-    } else {
-        curFoldStatus = static_cast<int32_t>(OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus());
-    }
+    int32_t curFoldStatus = DisplayModeToFoldStatus(displayMode);
     int32_t ret = OHOS::Camera::FindCameraMetadataItem(cameraAbility->get(), OHOS_FOLD_STATE_SENSOR_ORIENTATION_MAP,
         &item);
     CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS, ret, "CameraUtil::GetPhysicalCameraOrientation "
@@ -674,11 +696,13 @@ int32_t GetPhysicalCameraOrientation(std::shared_ptr<OHOS::Camera::CameraMetadat
     uint32_t count = item.count;
     CHECK_RETURN_RET_ELOG(count % MAP_STEP_TWO, ret, "CameraUtil::GetPhysicalCameraOrientation FindCameraMetadataItem "
         "Count Error");
+    ret = CAM_META_FAILURE;
     for (uint32_t index = 0; index < count / MAP_STEP_TWO; index++) {
         int32_t innerFoldState = static_cast<int32_t>(item.data.i32[MAP_STEP_TWO * index]);
         int32_t innerOrientation = item.data.i32[MAP_STEP_TWO * index + MAP_STEP_ONE];
         if (curFoldStatus == innerFoldState) {
             sensorOrientation = innerOrientation;
+            ret = CAM_META_SUCCESS;
             break;
         }
     }
@@ -693,13 +717,13 @@ int32_t GetCorrectedCameraOrientation(bool usePhysicalCameraOrientation,
     CHECK_RETURN_RET(cameraAbility == nullptr, ret);
     CHECK_EXECUTE(usePhysicalCameraOrientation, ret =
         GetPhysicalCameraOrientation(cameraAbility, sensorOrientation, displayMode));
-    if (ret != CAM_META_SUCCESS) {
-        camera_metadata_item item;
-        ret = OHOS::Camera::FindCameraMetadataItem(cameraAbility->get(), OHOS_SENSOR_ORIENTATION, &item);
-        CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS || !item.count, ret, "CameraUtil::GetCameraOrientation get "
-            "sensor orientation failed");
-        sensorOrientation = item.data.i32[0];
-    }
+    CHECK_RETURN_RET(ret == CAM_META_SUCCESS, CAM_META_SUCCESS);
+
+    camera_metadata_item item;
+    ret = OHOS::Camera::FindCameraMetadataItem(cameraAbility->get(), OHOS_SENSOR_ORIENTATION, &item);
+    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS || !item.count, ret, "CameraUtil::GetCameraOrientation get "
+        "sensor orientation failed");
+    sensorOrientation = item.data.i32[0];
     return ret;
 }
 } // namespace CameraStandard

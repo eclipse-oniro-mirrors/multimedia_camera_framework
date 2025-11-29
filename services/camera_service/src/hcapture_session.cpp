@@ -2119,6 +2119,7 @@ void HCaptureSession::DealPluginCode(ParameterMap ParameterMap, std::shared_ptr<
         case PLUGIN_CAMERA_HAL_ROTATE_ANGLE: {
             int32_t rotateAngle = value;
             CHECK_EXECUTE(rotateAngle >= 0, settings->addEntry(OHOS_CONTROL_ROTATE_ANGLE, &rotateAngle, 1));
+            MEDIA_DEBUG_LOG("HCaptureSession::DealPluginCode HAL rotate angle, rotateAngle: %{public}d", rotateAngle);
             break;
         }
         case PLUGIN_CAPTURE_MIRROR:

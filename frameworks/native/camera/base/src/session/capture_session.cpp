@@ -5074,11 +5074,28 @@ void CaptureSession::ProcessTripodStatusChange(const std::shared_ptr<OHOS::Camer
     // LCOV_EXCL_STOP
 }
 
+bool CaptureSession::JudgeMultiFrontCamera()
+{
+    int32_t result = 0;
+    auto cameraDeviceList = CameraManager::GetInstance()->GetSupportedCameras();
+    for (const auto& cameraDevice : cameraDeviceList) {
+        CHECK_EXECUTE(cameraDevice->GetPosition() == CAMERA_POSITION_FRONT, result++);
+    }
+    return (result > 1);
+}
+
 bool CaptureSession::IsAutoDeviceSwitchSupported()
 {
-    bool isFoldable = CameraManager::GetInstance()->GetIsFoldable();
-    MEDIA_INFO_LOG("IsAutoDeviceSwitchSupported: %{public}d.", isFoldable);
-    return isFoldable;
+    bool isSupported = CameraManager::GetInstance()->GetIsFoldable();
+    CHECK_RETURN_RET_ILOG(!JudgeMultiFrontCamera(), isSupported, "IsAutoDeviceSwitchSupported: %{public}d.",
+        isSupported);
+    std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();
+    CHECK_RETURN_RET_ELOG(
+        metadata == nullptr, isSupported, "IsAutoDeviceSwitchSupported GetMetadata Failed");
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_SENSOR_ORIENTATION_VARIABLE, &item);
+    CHECK_EXECUTE(ret == CAMERA_OK && (item.count > 0 && item.data.u8[0]), isSupported = false);
+    return isSupported;
 }
 
 int32_t CaptureSession::EnableAutoDeviceSwitch(bool isEnable)

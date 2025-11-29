@@ -290,14 +290,11 @@ int32_t HCameraDevice::GetCameraPosition()
 
 int32_t HCameraDevice::GetSensorOrientation()
 {
-    camera_metadata_item_t item;
     auto ability = GetDeviceAbility();
-    CHECK_RETURN_RET_ELOG(ability == nullptr, 0,
-        "HCameraDevice::GetSensorOrientation deviceAbility_ is nullptr");
-    int ret = OHOS::Camera::FindCameraMetadataItem(deviceAbility_->get(), OHOS_SENSOR_ORIENTATION, &item);
-    CHECK_RETURN_RET_ELOG(
-        ret != CAM_META_SUCCESS || item.count <= 0, 0, "HCameraDevice::GetSensorOrientation failed");
-    return item.data.i32[0];
+    int32_t sensorOrientation = 0;
+    int ret = GetCorrectedCameraOrientation(GetUsePhysicalCameraOrientation(), ability, sensorOrientation);
+    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS, 0, "HCameraDevice::GetSensorOrientation failed");
+    return sensorOrientation;
 }
 
 bool HCameraDevice::IsOpenedCameraDevice()
