@@ -187,15 +187,14 @@ public:
         const std::unordered_map<std::string, std::string>& params)
     {
         std::ostringstream oss;
-        oss << func << "[";
         for (auto it : params) {
-            if (!oss.str().empty() && oss.str().back()!='[') {
+            if (!oss.str().empty()) {
                 oss << ",";
             }
             oss << it.first << ":" << it.second;
         }
-        oss << "]";
-        return oss.str();
+        std::string taskName = func + "[" + oss.str() + "]";
+        return params.empty()? func : taskName;
     }
 
     static void CreateFrameRateJSArray(napi_env env, std::vector<int32_t> frameRateRange, napi_value &result);
