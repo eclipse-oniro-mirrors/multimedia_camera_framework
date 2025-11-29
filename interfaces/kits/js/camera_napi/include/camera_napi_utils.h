@@ -16,6 +16,7 @@
 #ifndef CAMERA_NAPI_UTILS_H_
 #define CAMERA_NAPI_UTILS_H_
 
+#include <sstream>
 #include <cstddef>
 #include "camera_error_code.h"
 #include "camera_napi_const.h"
