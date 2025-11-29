@@ -1239,7 +1239,6 @@ int32_t HStreamCapture::OnCaptureEnded(int32_t captureId, int32_t frameCount)
         bool ret = hStreamOperatorSptr_->GetDeviceCachedSettingByMeta(OHOS_CONTROL_DEFERRED_IMAGE_DELIVERY, &item);
         if (ret && item.count > 0) {
             IsDeferredImageDeliveryEnabled = item.data.u8[0];
-            MEDIA_INFO_LOG("HStreamCapture::Capture, IsDeferredImageDeliveryEnabled: %{public}d", IsDeferredImageDeliveryEnabled);
         }
     }
     CameraReportUtils::GetInstance().SetCapturePerfEndInfo(captureId, mSwitchToOfflinePhoto_, offlineOutputCnt,
