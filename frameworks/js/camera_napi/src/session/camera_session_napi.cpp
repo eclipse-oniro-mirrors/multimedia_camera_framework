@@ -260,7 +260,8 @@ void ExposureCallbackListener::OnExposureStateCallbackAsync(ExposureState state)
     std::unordered_map<std::string, std::string> params = {
         {"state", std::to_string(state)},
     };
-    std::string taskName = CameraNapiUtils::GetTaskName("ExposureCallbackListener::OnExposureStateCallbackAsync", params);
+    std::string taskName = CameraNapiUtils::GetTaskName(
+        "ExposureCallbackListener::OnExposureStateCallbackAsync", params);
     if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {
