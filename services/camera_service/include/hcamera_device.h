@@ -42,7 +42,7 @@
 #include "dfx/camera_report_uitls.h"
 #include "icamera_ipc_checker.h"
 #include "camera_rotate_strategy_parser.h"
-#include "camera_applist_manager.h"
+#include "applist_manager/camera_applist_manager.h"
 
 namespace OHOS {
 namespace CameraStandard {
