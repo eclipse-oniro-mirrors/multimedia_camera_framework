@@ -28,6 +28,8 @@
 #include <cstddef>
 #include <cstdint>
 #include <iterator>
+#include <parameters.h>
+#include "applist_manager/camera_applist_manager.h"
 #include "rotate_plugin/camera_rotate_plugin.h"
 #include "camera_fwk_metadata_utils.h"
 #include "camera_simple_timer.h"
@@ -117,6 +119,7 @@ private:
     void RemoveDevice(const std::string& cameraId);
     void Cast2MultiVersionCameraHost();
     void UpdateMuteSetting(std::shared_ptr<OHOS::Camera::CameraMetadata> setting);
+    void UpdateCameraAbility(std::shared_ptr<OHOS::Camera::CameraMetadata>& inAbility);
 
     std::weak_ptr<StatusCallback> statusCallback_;
     std::weak_ptr<CameraHostDeadCallback> cameraHostDeadCallback_;
@@ -283,12 +286,56 @@ int32_t HCameraHostManager::CameraHostInfo::GetCameraAbility(const std::string& 
             deviceInfo->ability = ability;
         }
     }
+    UpdateCameraAbility(ability);
 #ifdef HOOK_CAMERA_OPERATOR
     if (!CameraRotatePlugin::GetInstance()->HookCameraAbility(cameraId, ability)) {
         MEDIA_DEBUG_LOG("CameraHostInfo::HookCameraAbility failed ");
     }
 #endif
     return CAMERA_OK;
+}
+
+void HCameraHostManager::CameraHostInfo::UpdateCameraAbility(std::shared_ptr<OHOS::Camera::CameraMetadata>& inAbility)
+{
+    CHECK_RETURN_ELOG(inAbility == nullptr, "CameraHostInfo::UpdateCameraAbility ability is nullptr");
+
+    bool isLogicCamera = system::GetParameter("const.system.sensor_correction_enable", "0") == "1";
+    auto foldScreenType = system::GetParameter("const.window.foldscreen.type", "");
+    CHECK_RETURN(!isLogicCamera || foldScreenType.empty() || foldScreenType[0] != '7');
+
+    camera_metadata_item_t item;
+    int32_t ret = OHOS::Camera::FindCameraMetadataItem(inAbility->get(), OHOS_ABILITY_CAMERA_POSITION, &item);
+    int32_t cameraPosition = OHOS_CAMERA_POSITION_BACK;
+    CHECK_RETURN_ELOG(ret != CAM_META_SUCCESS || item.count <= 0,
+        "CameraHostInfo::UpdateCameraAbility Get cameraPosition failed");
+    cameraPosition = static_cast<int32_t>(item.data.u8[0]);
+    CHECK_RETURN(cameraPosition != OHOS_CAMERA_POSITION_FRONT);
+
+    bool isVariable = false;
+    ret = OHOS::Camera::FindCameraMetadataItem(inAbility->get(), OHOS_ABILITY_SENSOR_ORIENTATION_VARIABLE, &item);
+    CHECK_EXECUTE(ret == CAM_META_SUCCESS, isVariable = item.count > 0 && item.data.u8[0]);
+    CHECK_RETURN_DLOG(!isVariable, "CameraHostInfo::UpdateCameraAbility donot support Variable Orientation");
+
+    ret = OHOS::Camera::FindCameraMetadataItem(inAbility->get(), OHOS_SENSOR_ORIENTATION, &item);
+    CHECK_RETURN_ELOG(ret != CAM_META_SUCCESS || item.count <= 0,
+        "CameraHostInfo::UpdateCameraAbility Get sensorOrientation failed");
+    int32_t sensorOrientation = item.data.i32[0];
+    CHECK_RETURN(sensorOrientation != CAMERA_ORIENTATION_0);
+
+    bool isNaturalDirectionCorrect = false;
+    int tokenId = static_cast<int32_t>(IPCSkeleton::GetCallingTokenID());
+    std::string clientName = GetClientNameByToken(tokenId);
+    CameraApplistManager::GetInstance()->GetNaturalDirectionCorrectByBundleName(clientName, isNaturalDirectionCorrect);
+
+    if (isNaturalDirectionCorrect) {
+        sensorOrientation = CAMERA_ORIENTATION_0;
+    } else {
+        sensorOrientation = CAMERA_FRONT_ORIENTATION;
+    }
+    MEDIA_DEBUG_LOG("CameraHostInfo::UpdateCameraAbility sensorOrientation: %{public}d", sensorOrientation);
+    auto outputCapability = CameraFwkMetadataUtils::CopyMetadata(inAbility);
+    outputCapability->updateEntry(OHOS_SENSOR_ORIENTATION, &sensorOrientation, 1);
+    inAbility = outputCapability;
 }
 
 int32_t HCameraHostManager::CameraHostInfo::OpenCamera(std::string& cameraId,

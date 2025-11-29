@@ -50,6 +50,8 @@ static const int32_t DISPALY_ROTATE_0 = 0;
 static const int32_t DISPALY_ROTATE_1 = 1;
 static const int32_t DISPALY_ROTATE_2 = 2;
 static const int32_t DISPALY_ROTATE_3 = 3;
+static const int32_t CAMERA_ORIENTATION_0 = 0;
+static const int32_t CAMERA_FRONT_ORIENTATION = 270;
 static const std::string OHOS_PERMISSION_CAMERA = "ohos.permission.CAMERA";
 static const std::string OHOS_PERMISSION_MICROPHONE = "ohos.permission.MICROPHONE";
 static const std::string OHOS_PERMISSION_MANAGE_CAMERA_CONFIG = "ohos.permission.MANAGE_CAMERA_CONFIG";
@@ -256,6 +258,7 @@ bool isIntegerRegex(const std::string& input);
 std::string GetValidCameraId(std::string& cameraId);
 std::string ControlCenterMapToString(const std::map<std::string, std::array<float, CONTROL_CENTER_DATA_SIZE>> &data);
 std::map<std::string, std::array<float, CONTROL_CENTER_DATA_SIZE>> StringToControlCenterMap(const std::string& str);
+int32_t DisplayModeToFoldStatus(int32_t displayMode);
 int32_t GetCorrectedCameraOrientation(bool usePhysicalCameraOrientation,
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility, int32_t& sensorOrientation, int32_t displayMode = -1);
 int32_t GetPhysicalCameraOrientation(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility,

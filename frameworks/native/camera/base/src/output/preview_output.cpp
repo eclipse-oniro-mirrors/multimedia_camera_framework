@@ -851,7 +851,7 @@ int32_t PreviewOutput::SetPreviewRotation(int32_t imageRotation, bool isDisplayL
         "PreviewOutput SetPreviewRotation error!, cameraObj is nullptr");
     sensorOrientation = static_cast<int32_t>(cameraObj->GetCameraOrientation());
     CameraPosition cameraPosition = cameraObj->GetPosition();
-    if (cameraPosition == CAMERA_POSITION_FRONT) {
+    if (cameraPosition == CAMERA_POSITION_FRONT || cameraPosition == CAMERA_POSITION_FOLD_INNER) {
         int32_t displayrotation = (imageRotation - sensorOrientation + CAPTURE_ROTATION_BASE) % CAPTURE_ROTATION_BASE;
         imageRotation = (sensorOrientation - displayrotation + CAPTURE_ROTATION_BASE) % CAPTURE_ROTATION_BASE;
     }

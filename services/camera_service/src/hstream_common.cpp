@@ -300,9 +300,16 @@ void HStreamCommon::DumpStreamInfo(CameraInfoDumper& infoDumper)
 
 int32_t HStreamCommon::SetUsePhysicalCameraOrientation(bool isUsed)
 {
+    std::lock_guard<std::mutex> lock(usePhysicalCameraOrientationMutex_);
     usePhysicalCameraOrientation_ = isUsed;
     MEDIA_INFO_LOG("HStreamCommon::SetUsePhysicalCameraOrientation isUsed %{public}d", isUsed);
     return CAMERA_OK;
+}
+
+bool HStreamCommon::GetUsePhysicalCameraOrientation()
+{
+    std::lock_guard<std::mutex> lock(usePhysicalCameraOrientationMutex_);
+    return usePhysicalCameraOrientation_;
 }
 
 void HStreamCommon::PrintCaptureDebugLog(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureMetadataSetting_)

@@ -963,6 +963,7 @@ public:
     friend int CameraInput::Open(int32_t cameraConcurrentType);
     std::string GetFoldScreenType();
     bool GetIsInWhiteList();
+    uint32_t DisplayModeToFoldStatus(uint32_t displayMode);
     void SaveOldCameraId(std::string realCameraId, std::string oldCameraId);
     std::string GetOldCameraIdfromReal(std::string realCameraId);
     void SaveOldMeta(std::string cameraId, std::shared_ptr<OHOS::Camera::CameraMetadata> metadata);

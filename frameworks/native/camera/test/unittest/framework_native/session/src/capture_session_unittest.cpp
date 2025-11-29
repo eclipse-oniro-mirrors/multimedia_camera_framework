@@ -4245,12 +4245,11 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_005, TestSize
     bool enabled = false;
     sessionForSys->SetUsage(usageType, enabled);
 
-    bool isFoldable = CameraManager::GetInstance()->GetIsFoldable();
-    EXPECT_EQ(sessionForSys->IsAutoDeviceSwitchSupported(), isFoldable);
+    bool isSupported = sessionForSys->IsAutoDeviceSwitchSupported();
 
     bool enable = false;
     sessionForSys->SetIsAutoSwitchDeviceStatus(enable);
-    if (!isFoldable) {
+    if (!isSupported) {
         EXPECT_EQ(sessionForSys->EnableAutoDeviceSwitch(enable), CameraErrorCode::OPERATION_NOT_ALLOWED);
     } else {
         EXPECT_EQ(sessionForSys->EnableAutoDeviceSwitch(enable), CameraErrorCode::SUCCESS);

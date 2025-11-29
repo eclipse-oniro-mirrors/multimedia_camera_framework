@@ -233,7 +233,7 @@ ApplistConfigure* CameraApplistManager::GetConfigureByBundleName(const std::stri
 {
     CHECK_RETURN_RET_ELOG(bundleName.empty(), nullptr, "CameraApplistManager::GetConfigureByBundleName bundleName "
         "is empty");
-    CHECK_EXECUTE(!initResult_, initResult_ = RegisterCameraApplistManagerObserver());
+    CHECK_EXECUTE(!initResult_, Init());
     ApplistConfigure* appConfigure = nullptr;
     {
         std::lock_guard<std::mutex> lock(applistConfigureMutex_);
@@ -249,7 +249,7 @@ bool CameraApplistManager::GetNaturalDirectionCorrectByBundleName(const std::str
 {
     CHECK_RETURN_RET_ELOG(bundleName.empty(), false,
         "CameraApplistManager::GetNaturalDirectionCorrectByBundleName bundleName is empty");
-    CHECK_EXECUTE(!initResult_, initResult_ = RegisterCameraApplistManagerObserver());
+    CHECK_EXECUTE(!initResult_,  Init());
     ApplistConfigure* appConfigure = nullptr;
     {
         std::lock_guard<std::mutex> lock(applistConfigureMutex_);

@@ -735,13 +735,9 @@ int CameraInput::GetPhysicalCameraOrientation(uint32_t* orientation)
         "CameraInput::GetPhysicalCameraOrientation orientation is nullptr");
     *orientation = staticOrientation_;
     if (isVariable_) {
-        uint32_t curFoldStatus;
-        OHOS::Rosen::FoldDisplayMode displayMode = OHOS::Rosen::DisplayManager::GetInstance().GetFoldDisplayMode();
-        if (displayMode == OHOS::Rosen::FoldDisplayMode::GLOBAL_FULL) {
-            curFoldStatus = static_cast<uint32_t>(OHOS::Rosen::FoldStatus::FOLD_STATE_EXPAND_WITH_SECOND_EXPAND);
-        } else {
-            curFoldStatus = static_cast<uint32_t>(OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus());
-        }
+        uint32_t displayMode =
+            static_cast<uint32_t>(OHOS::Rosen::DisplayManager::GetInstance().GetFoldDisplayMode());
+        uint32_t curFoldStatus = CameraManager::GetInstance()->DisplayModeToFoldStatus(displayMode);
         auto itr = foldStateSensorOrientationMap_.find(curFoldStatus);
         CHECK_RETURN_RET_ELOG(itr == foldStateSensorOrientationMap_.end(),
             ServiceToCameraError(CAMERA_OK), "GetPhysicalCameraOrientation Get Orientation From Map Error");
