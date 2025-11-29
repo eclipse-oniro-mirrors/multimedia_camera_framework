@@ -1203,6 +1203,14 @@ void CameraManager::SetCallback(std::shared_ptr<CameraManagerCallback> listener)
     RegisterCameraStatusCallback(listener);
 }
 
+void CameraManager::GetCameraStatusData(std::vector<CameraStatusData> &cameraStatusDataList)
+{
+    auto serviceProxy = GetServiceProxy();
+    CHECK_RETURN_ELOG(serviceProxy == nullptr, "GetCameraStatusData serviceProxy is null");
+    int32_t retCode = serviceProxy->GetCameraStatusData(cameraStatusDataList);
+    CHECK_RETURN_ELOG(retCode != CAMERA_OK, "GetCameraStatusData call failed, retCode: %{public}d", retCode);
+}
+
 void CameraManager::RegisterCameraStatusCallback(shared_ptr<CameraManagerCallback> listener)
 {
     CHECK_RETURN(listener == nullptr);
@@ -1220,17 +1228,32 @@ void CameraManager::RegisterCameraStatusCallback(shared_ptr<CameraManagerCallbac
     // Non-First register, async callback by cache data.
     auto cachedStatus = cameraStatusListenerManager_->GetCachedCameraStatus();
     auto cachedFlashStatus = cameraStatusListenerManager_->GetCachedFlashStatus();
+    std::vector<CameraStatusData> cameraStatusDataList;
+    GetCameraStatusData(cameraStatusDataList);
     cameraStatusListenerManager_->TriggerTargetListenerAsync(
-        listener, [cachedStatus, cachedFlashStatus](auto listener) {
+        listener, [cachedStatus, cachedFlashStatus, cameraStatusDataList](auto listener) {
             MEDIA_INFO_LOG("CameraManager::RegisterCameraStatusCallback async trigger status");
             for (auto& status : cachedStatus) {
-                if (status == nullptr) {
-                    continue;
-                }
+                CHECK_CONTINUE(status == nullptr || status->cameraDevice == nullptr);
+                auto cameraId = status->cameraDevice->GetID();
+                auto it = std::find_if(cameraStatusDataList.begin(), cameraStatusDataList.end(),
+                    [&cameraId](const CameraStatusData &data) {
+                        return data.cameraId == cameraId;
+                    });
+                CHECK_EXECUTE(it != cameraStatusDataList.end(),
+                    status->cameraStatus = static_cast<CameraStatus>(it->cameraStatus));
                 listener->OnCameraStatusChanged(*status);
             }
             for (auto& status : cachedFlashStatus) {
-                listener->OnFlashlightStatusChanged(status.first, status.second);
+                auto cameraId = status.first;
+                auto it = std::find_if(cameraStatusDataList.begin(), cameraStatusDataList.end(),
+                    [&cameraId](const CameraStatusData &data) {
+                        return data.cameraId == cameraId;
+                    });
+                CHECK_EXECUTE(it == cameraStatusDataList.end(),
+                    listener->OnFlashlightStatusChanged(status.first, status.second));
+                CHECK_EXECUTE(it != cameraStatusDataList.end(),
+                    listener->OnFlashlightStatusChanged(status.first, static_cast<FlashStatus>(it->flashStatus)));
             }
         });
     // LCOV_EXCL_STOP
