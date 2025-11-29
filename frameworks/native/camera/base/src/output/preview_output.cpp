@@ -102,14 +102,14 @@ int32_t PreviewOutput::Release()
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
     MEDIA_DEBUG_LOG("Enter Into PreviewOutput::Release");
     auto stream = GetStream();
-    CHECK_RETURN_RET_COMM_ELOG(stream == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_ELOG(stream == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "PreviewOutput Failed to Release!, GetStream is nullptr");
     sptr<IStreamRepeat> itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     CHECK_PRINT_ELOG(itemStream == nullptr, "register surface consumer listener failed!");
     if (itemStream) {
         errCode = itemStream->Release();
-        CHECK_PRINT_COMM_ELOG(errCode != CAMERA_OK, "Failed to release PreviewOutput!, errCode: %{public}d", errCode);
+        CHECK_PRINT_ELOG(errCode != CAMERA_OK, "Failed to release PreviewOutput!, errCode: %{public}d", errCode);
     }
     CaptureOutput::Release();
     return ServiceToCameraError(errCode);
@@ -134,7 +134,7 @@ int32_t PreviewOutputListenerManager::OnFrameEnded(int32_t frameCount)
     // LCOV_EXCL_START
     CAMERA_SYNC_TRACE;
     auto previewOutput = GetPreviewOutput();
-    CHECK_RETURN_RET_COMM_ELOG(
+    CHECK_RETURN_RET_ELOG(
         previewOutput == nullptr, CAMERA_OK, "PreviewOutputListenerManager::OnFrameEnded previewOutput is null");
     previewOutput->GetPreviewOutputListenerManager()->TriggerListener(
         [&frameCount](auto listener) { listener->OnFrameEnded(frameCount); });
@@ -200,7 +200,7 @@ int32_t PreviewOutput::OnSketchStatusChanged(SketchStatus status)
 
 void PreviewOutput::AddDeferredSurface(sptr<Surface> surface)
 {
-    COMM_INFO_LOG("PreviewOutput::AddDeferredSurface called");
+    MEDIA_INFO_LOG("PreviewOutput::AddDeferredSurface called");
     CHECK_RETURN_ELOG(surface == nullptr, "PreviewOutput::AddDeferredSurface surface is null");
     auto stream = GetStream();
     CHECK_RETURN_ELOG(!stream, "PreviewOutput::AddDeferredSurface itemStream is null");
@@ -227,13 +227,13 @@ int32_t PreviewOutput::Start()
         "PreviewOutput Failed to Start, session not commited");
     // LCOV_EXCL_START
     auto stream = GetStream();
-    CHECK_RETURN_RET_COMM_ELOG(
+    CHECK_RETURN_RET_ELOG(
         stream == nullptr, CameraErrorCode::SERVICE_FATL_ERROR, "PreviewOutput Failed to Start, GetStream is nullptr");
     sptr<IStreamRepeat> itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {
         errCode = itemStream->Start();
-        CHECK_PRINT_COMM_ELOG(errCode != CAMERA_OK, "PreviewOutput Failed to Start!, errCode: %{public}d", errCode);
+        CHECK_PRINT_ELOG(errCode != CAMERA_OK, "PreviewOutput Failed to Start!, errCode: %{public}d", errCode);
     } else {
         MEDIA_ERR_LOG("PreviewOutput::Start itemStream is nullptr");
     }
@@ -246,13 +246,13 @@ int32_t PreviewOutput::Stop()
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
     MEDIA_DEBUG_LOG("Enter Into PreviewOutput::Stop");
     auto stream = GetStream();
-    CHECK_RETURN_RET_COMM_ELOG(
+    CHECK_RETURN_RET_ELOG(
         stream == nullptr, CameraErrorCode::SERVICE_FATL_ERROR, "PreviewOutput Failed to Stop, GetStream is nullptr");
     sptr<IStreamRepeat> itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {
         errCode = itemStream->Stop();
-        CHECK_PRINT_COMM_ELOG(errCode != CAMERA_OK, "PreviewOutput Failed to Stop!, errCode: %{public}d", errCode);
+        CHECK_PRINT_ELOG(errCode != CAMERA_OK, "PreviewOutput Failed to Stop!, errCode: %{public}d", errCode);
     } else {
         MEDIA_ERR_LOG("PreviewOutput::Stop itemStream is nullptr");
     }

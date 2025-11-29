@@ -550,7 +550,7 @@ int32_t HStreamRepeat::OnSketchStatusChanged(SketchStatus status)
 
 int32_t HStreamRepeat::AddDeferredSurface(const sptr<OHOS::IBufferProducer>& producer)
 {
-    COMM_INFO_LOG("HStreamRepeat::AddDeferredSurface called");
+    MEDIA_INFO_LOG("HStreamRepeat::AddDeferredSurface called");
     {
         std::lock_guard<std::mutex> lock(producerLock_);
         CHECK_RETURN_RET_ELOG(producer == nullptr, CAMERA_INVALID_ARG,
@@ -573,7 +573,7 @@ int32_t HStreamRepeat::AddDeferredSurface(const sptr<OHOS::IBufferProducer>& pro
     auto streamOperator = GetStreamOperator();
     CHECK_RETURN_RET_ELOG(streamOperator == nullptr, CAMERA_INVALID_STATE,
         "HStreamRepeat::CreateAndHandleDeferredStreams(), streamOperator_ == null");
-    COMM_INFO_LOG("HStreamRepeat::AttachBufferQueue start streamId:%{public}d, hdiStreamId:%{public}d",
+    MEDIA_INFO_LOG("HStreamRepeat::AttachBufferQueue start streamId:%{public}d, hdiStreamId:%{public}d",
         GetFwkStreamId(), GetHdiStreamId());
     sptr<BufferProducerSequenceable> bufferProducerSequenceable;
     CamRetCode rc;
@@ -582,9 +582,9 @@ int32_t HStreamRepeat::AddDeferredSurface(const sptr<OHOS::IBufferProducer>& pro
         bufferProducerSequenceable = new BufferProducerSequenceable(producer_);
     }
     rc = (CamRetCode)(streamOperator->AttachBufferQueue(GetHdiStreamId(), bufferProducerSequenceable));
-    CHECK_PRINT_COMM_ELOG(rc != HDI::Camera::V1_0::NO_ERROR,
+    CHECK_PRINT_ELOG(rc != HDI::Camera::V1_0::NO_ERROR,
         "HStreamRepeat::AttachBufferQueue(), Failed to AttachBufferQueue %{public}d", rc);
-    COMM_INFO_LOG("HStreamRepeat::AddDeferredSurface end %{public}d", rc);
+    MEDIA_INFO_LOG("HStreamRepeat::AddDeferredSurface end %{public}d", rc);
     std::lock_guard<std::mutex> lock(movingPhotoCallbackLock_);
     if (startMovingPhotoCallback_) {
         startMovingPhotoCallback_();

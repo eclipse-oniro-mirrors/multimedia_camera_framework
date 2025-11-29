@@ -46,7 +46,7 @@ std::vector<PortraitEffect> PortraitSession::GetSupportedPortraitEffects()
     CHECK_RETURN_RET_ELOG(!inputDeviceInfo, supportedPortraitEffects,
         "PortraitSession::GetSupportedPortraitEffects camera deviceInfo is null");
     int ret = VerifyAbility(static_cast<uint32_t>(OHOS_ABILITY_SCENE_PORTRAIT_EFFECT_TYPES));
-    CHECK_RETURN_RET_COMM_ELOG(ret != CAMERA_OK, supportedPortraitEffects,
+    CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, supportedPortraitEffects,
         "PortraitSession::GetSupportedPortraitEffects abilityId is NULL");
     // LCOV_EXCL_START
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetCachedMetadata();
@@ -91,12 +91,12 @@ void PortraitSession::SetPortraitEffect(PortraitEffect portraitEffect)
     CAMERA_SYNC_TRACE;
     CHECK_RETURN_ELOG(!(IsSessionCommited() || IsSessionConfiged()),
         "CaptureSession::SetPortraitEffect Session is not Commited");
-    CHECK_RETURN_COMM_ELOG(changedMetadata_ == nullptr,
+    CHECK_RETURN_ELOG(changedMetadata_ == nullptr,
         "CaptureSession::SetPortraitEffect changedMetadata_ is NULL");
 
     std::vector<PortraitEffect> portraitEffects= GetSupportedPortraitEffects();
     auto itr = std::find(portraitEffects.begin(), portraitEffects.end(), portraitEffect);
-    CHECK_RETURN_COMM_ELOG(itr == portraitEffects.end(),
+    CHECK_RETURN_ELOG(itr == portraitEffects.end(),
         "CaptureSession::SetPortraitEffect::GetSupportedPortraitEffects abilityId is NULL");
     uint8_t effect = 0;
     auto itr2 = fwToMetaPortraitEffect_.find(portraitEffect);

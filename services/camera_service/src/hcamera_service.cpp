@@ -327,7 +327,7 @@ int32_t HCameraService::SetBeauty(int32_t beautyStatus)
         beautyLevel = BEAUTY_LEVEL;
         beautyType = OHOS_CAMERA_BEAUTY_TYPE_AUTO;
     }
-    COMM_INFO_LOG("HCameraService::SetBeauty beautyType: %{public}d, beautyLevel: %{public}d",
+    MEDIA_INFO_LOG("HCameraService::SetBeauty beautyType: %{public}d, beautyLevel: %{public}d",
         beautyType, beautyLevel);
     AddOrUpdateMetadata(changedMetadata, OHOS_CONTROL_BEAUTY_TYPE, &beautyType, count);
     AddOrUpdateMetadata(changedMetadata, OHOS_CONTROL_BEAUTY_AUTO_VALUE, &beautyLevel, count);
@@ -728,7 +728,7 @@ int32_t HCameraService::CreateCameraDevice(const string& cameraId, sptr<ICameraD
 {
     CAMERA_SYNC_TRACE;
     OHOS::Security::AccessToken::AccessTokenID callerToken = IPCSkeleton::GetCallingTokenID();
-    COMM_INFO_LOG("HCameraService::CreateCameraDevice prepare execute, cameraId:%{public}s", cameraId.c_str());
+    MEDIA_INFO_LOG("HCameraService::CreateCameraDevice prepare execute, cameraId:%{public}s", cameraId.c_str());
 
     string permissionName = OHOS_PERMISSION_CAMERA;
     int32_t ret = CheckPermission(permissionName, callerToken);
@@ -757,7 +757,7 @@ int32_t HCameraService::CreateCameraDevice(const string& cameraId, sptr<ICameraD
             CameraRoateParamManager::GetInstance().GetCameraRotateStrategyInfos());
     }
     CAMERA_SYSEVENT_STATISTIC(CreateMsg("CameraManager_CreateCameraInput CameraId:%s", cameraId.c_str()));
-    COMM_INFO_LOG("HCameraService::CreateCameraDevice execute success");
+    MEDIA_INFO_LOG("HCameraService::CreateCameraDevice execute success");
     return CAMERA_OK;
 }
 
@@ -915,7 +915,7 @@ int32_t HCameraService::CreatePhotoOutput(const sptr<OHOS::IBufferProducer>& pro
 {
     CAMERA_SYNC_TRACE;
     int32_t rc = CAMERA_OK;
-    COMM_INFO_LOG("HCameraService::CreatePhotoOutput prepare execute");
+    MEDIA_INFO_LOG("HCameraService::CreatePhotoOutput prepare execute");
     if ((producer == nullptr) || (width == 0) || (height == 0)) {
         rc = CAMERA_INVALID_ARG;
         MEDIA_ERR_LOG("HCameraService::CreatePhotoOutput producer is null");
@@ -945,7 +945,7 @@ int32_t HCameraService::CreatePhotoOutput(
 {
     CAMERA_SYNC_TRACE;
     int32_t rc = CAMERA_OK;
-    COMM_INFO_LOG("HCameraService::CreatePhotoOutput prepare execute");
+    MEDIA_INFO_LOG("HCameraService::CreatePhotoOutput prepare execute");
     sptr<HStreamCapture> streamCapture = new (nothrow) HStreamCapture(format, width, height);
     if (streamCapture == nullptr) {
         rc = CAMERA_ALLOC_ERROR;
@@ -970,14 +970,14 @@ int32_t HCameraService::CreateDeferredPreviewOutput(
     CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION, "HCameraService::CheckSystemApp fail");
     CameraXCollie cameraXCollie = CameraXCollie("HCameraService::CreateDeferredPreviewOutput");
     sptr<HStreamRepeat> streamDeferredPreview;
-    COMM_INFO_LOG("HCameraService::CreateDeferredPreviewOutput prepare execute");
+    MEDIA_INFO_LOG("HCameraService::CreateDeferredPreviewOutput prepare execute");
     CHECK_RETURN_RET_ELOG((width == 0) || (height == 0), CAMERA_INVALID_ARG,
         "HCameraService::CreateDeferredPreviewOutput producer is null!");
     streamDeferredPreview = new (nothrow) HStreamRepeat(nullptr, format, width, height, RepeatStreamType::PREVIEW);
     CHECK_RETURN_RET_ELOG(streamDeferredPreview == nullptr, CAMERA_ALLOC_ERROR,
         "HCameraService::CreateDeferredPreviewOutput HStreamRepeat allocation failed");
     previewOutput = streamDeferredPreview;
-    COMM_INFO_LOG("HCameraService::CreateDeferredPreviewOutput execute success");
+    MEDIA_INFO_LOG("HCameraService::CreateDeferredPreviewOutput execute success");
     return CAMERA_OK;
 }
 
@@ -987,7 +987,7 @@ int32_t HCameraService::CreatePreviewOutput(const sptr<OHOS::IBufferProducer>& p
     CAMERA_SYNC_TRACE;
     sptr<HStreamRepeat> streamRepeatPreview;
     int32_t rc = CAMERA_OK;
-    COMM_INFO_LOG("HCameraService::CreatePreviewOutput prepare execute");
+    MEDIA_INFO_LOG("HCameraService::CreatePreviewOutput prepare execute");
 
     if ((producer == nullptr) || (width == 0) || (height == 0)) {
         rc = CAMERA_INVALID_ARG;
@@ -1023,7 +1023,7 @@ int32_t HCameraService::CreateDepthDataOutput(const sptr<OHOS::IBufferProducer>&
         !CheckSystemApp(), CAMERA_NO_PERMISSION, "HCameraService::CreateDepthDataOutput:SystemApi is called");
     sptr<HStreamDepthData> streamDepthData;
     int32_t rc = CAMERA_OK;
-    COMM_INFO_LOG("HCameraService::CreateDepthDataOutput prepare execute");
+    MEDIA_INFO_LOG("HCameraService::CreateDepthDataOutput prepare execute");
 
     if ((producer == nullptr) || (width == 0) || (height == 0)) {
         rc = CAMERA_INVALID_ARG;
@@ -1050,7 +1050,7 @@ int32_t HCameraService::CreateMetadataOutput(const sptr<OHOS::IBufferProducer>& 
 {
     CAMERA_SYNC_TRACE;
     sptr<HStreamMetadata> streamMetadata;
-    COMM_INFO_LOG("HCameraService::CreateMetadataOutput prepare execute");
+    MEDIA_INFO_LOG("HCameraService::CreateMetadataOutput prepare execute");
 
     CHECK_RETURN_RET_ELOG(producer == nullptr, CAMERA_INVALID_ARG,
         "HCameraService::CreateMetadataOutput producer is null");
@@ -1069,7 +1069,7 @@ int32_t HCameraService::CreateVideoOutput(const sptr<OHOS::IBufferProducer>& pro
     CAMERA_SYNC_TRACE;
     sptr<HStreamRepeat> streamRepeatVideo;
     int32_t rc = CAMERA_OK;
-    COMM_INFO_LOG("HCameraService::CreateVideoOutput prepare execute");
+    MEDIA_INFO_LOG("HCameraService::CreateVideoOutput prepare execute");
 
     if ((producer == nullptr) || (width == 0) || (height == 0)) {
         rc = CAMERA_INVALID_ARG;
@@ -1561,7 +1561,7 @@ bool HCameraService::IsCameraMuteSupported(string cameraId)
     camera_metadata_item_t item;
     common_metadata_header_t* metadata = cameraAbility->get();
     ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_MUTE_MODES, &item);
-    CHECK_RETURN_RET_COMM_ELOG(
+    CHECK_RETURN_RET_ELOG(
         ret != CAM_META_SUCCESS, false, "HCameraService::IsCameraMuted not find MUTE ability, ret: %{public}d", ret);
     for (uint32_t i = 0; i < item.count; i++) {
         MEDIA_INFO_LOG("OHOS_ABILITY_MUTE_MODES %{public}d th is %{public}d", i, item.data.u8[i]);
@@ -1774,7 +1774,7 @@ int32_t HCameraService::PrelaunchCamera(int32_t flag)
     CAMERA_SYNC_TRACE;
     CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION, "HCameraService::CheckSystemApp fail");
     CameraXCollie cameraXCollie = CameraXCollie("HCameraService::PrelaunchCamera");
-    COMM_INFO_LOG("HCameraService::PrelaunchCamera");
+    MEDIA_INFO_LOG("HCameraService::PrelaunchCamera");
     CHECK_RETURN_RET_ELOG(torchStatus_ == TorchStatus::TORCH_STATUS_ON,
         CAMERA_DEVICE_CONFLICT, "HCameraService::PrelaunchCamera torch is running, abort!");
     #ifdef MEMMGR_OVERRID
@@ -1784,7 +1784,7 @@ int32_t HCameraService::PrelaunchCamera(int32_t flag)
     if ((flag != 1) && (flag != -1)) {
         return CAMERA_OK;
     }
-    COMM_INFO_LOG("HCameraService::PrelaunchCamera E");
+    MEDIA_INFO_LOG("HCameraService::PrelaunchCamera E");
     CHECK_RETURN_RET_ELOG(HCameraDeviceManager::GetInstance()->GetCameraStateOfASide().Size() != 0,
         CAMERA_DEVICE_CONFLICT, "HCameraService::PrelaunchCamera there is a device active in A side, abort!");
     if (preCameraId_.empty()) {
@@ -1941,7 +1941,7 @@ int32_t HCameraService::SetPrelaunchConfig(const string& cameraId, RestoreParamT
         SaveCurrentParamForRestore(cameraId, static_cast<RestoreParamTypeOhos>(restoreParamType), activeTime,
             effectParam, captureSession_);
     } else {
-        COMM_ERR_LOG("HCameraService::SetPrelaunchConfig illegal");
+        MEDIA_ERR_LOG("HCameraService::SetPrelaunchConfig illegal");
         ret = CAMERA_INVALID_ARG;
     }
     return ret;
@@ -2027,7 +2027,7 @@ bool HCameraService::IsPrelaunchSupported(string cameraId)
             "CameraManager::IsPrelaunchSupported() OHOS_ABILITY_PRELAUNCH_AVAILABLE is %{public}d", item.data.u8[0]);
         isPrelaunchSupported = (item.data.u8[0] == 1);
     } else {
-        COMM_ERR_LOG("Failed to get OHOS_ABILITY_PRELAUNCH_AVAILABLE ret = %{public}d", ret);
+        MEDIA_ERR_LOG("Failed to get OHOS_ABILITY_PRELAUNCH_AVAILABLE ret = %{public}d", ret);
     }
     return isPrelaunchSupported;
 }

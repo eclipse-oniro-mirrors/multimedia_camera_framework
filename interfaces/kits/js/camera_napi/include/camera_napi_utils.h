@@ -16,6 +16,7 @@
 #ifndef CAMERA_NAPI_UTILS_H_
 #define CAMERA_NAPI_UTILS_H_
 
+#include <sstream>
 #include <cstddef>
 #include "camera_error_code.h"
 #include "camera_napi_const.h"
@@ -181,6 +182,20 @@ public:
     {
         std::string errorCode = std::to_string(code);
         napi_throw_error(env, errorCode.c_str(), message);
+    }
+
+    inline static std::string GetTaskName(const std::string& func,
+        const std::unordered_map<std::string, std::string>& params)
+    {
+        std::ostringstream oss;
+        for (auto it : params) {
+            if (!oss.str().empty()) {
+                oss << ",";
+            }
+            oss << it.first << ":" << it.second;
+        }
+        std::string taskName = func + "[" + oss.str() + "]";
+        return params.empty()? func : taskName;
     }
 
     static void CreateFrameRateJSArray(napi_env env, std::vector<int32_t> frameRateRange, napi_value &result);

@@ -104,7 +104,7 @@ void DeferredPhotoProcessor::DoProcess(const DeferredPhotoJobPtr& job)
 {
     auto executionMode = job->GetExecutionMode();
     auto imageId = job->GetImageId();
-    COMM_DP_INFO_LOG("DPS_PHOTO: imageId: %{public}s, executionMode: %{public}d", imageId.c_str(), executionMode);
+    DP_INFO_LOG("DPS_PHOTO: imageId: %{public}s, executionMode: %{public}d", imageId.c_str(), executionMode);
     uint32_t timerId = StartTimer(imageId);
     job->Start(timerId);
     result_->DeRecordHigh(imageId);

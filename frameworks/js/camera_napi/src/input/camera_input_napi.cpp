@@ -88,8 +88,10 @@ void ErrorCallbackListener::OnErrorCallbackAsync(const int32_t errorType, const 
             delete callbackInfo;
         }
     };
-    std::string taskName = "ErrorCallbackListener::OnErrorCallbackAsync"
-        "[errorType:" + std::to_string(errorType) + "]";
+    std::unordered_map<std::string, std::string> params = {
+        {"errorType:", std::to_string(errorType)},
+    };
+    std::string taskName = CameraNapiUtils::GetTaskName("ErrorCallbackListener::OnErrorCallbackAsync", params);
     if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {
@@ -159,9 +161,12 @@ void OcclusionDetectCallbackListener::OnCameraOcclusionDetectedCallbackAsync(
             delete callbackInfo;
         }
     };
-    std::string taskName = "OcclusionDetectCallbackListener::OnCameraOcclusionDetectedCallbackAsync"
-        "[occlusion:" + std::to_string(isCameraOcclusion) +
-        ", lensDirty:" + std::to_string(isCameraLensDirty) + "]";
+    std::unordered_map<std::string, std::string> params = {
+        {"isCameraOcclusion", std::to_string(isCameraOcclusion)},
+        {"isCameraLensDirty", std::to_string(isCameraLensDirty)},
+    };
+    std::string taskName =
+        CameraNapiUtils::GetTaskName("OcclusionDetectCallbackListener::OnCameraOcclusionDetectedCallbackAsync", params);
     if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {
@@ -311,7 +316,7 @@ void ConsumeWorkerQueueTask(CameraInputAsyncContext* context)
 void CameraInputNapi::OpenCameraAsync(uv_work_t* work)
 {
     CHECK_RETURN_ELOG(work == nullptr, "OpenCameraAsync null work");
-    COMM_INFO_LOG("OpenCameraAsync running on worker");
+    MEDIA_INFO_LOG("OpenCameraAsync running on worker");
     auto context = static_cast<CameraInputAsyncContext*>(work->data);
     CHECK_RETURN_ELOG(context == nullptr, "OpenCameraAsync context is null");
     CHECK_RETURN_ELOG(context->objectInfo == nullptr, "OpenCameraAsync async info is nullptr");
@@ -354,7 +359,7 @@ void CameraInputNapi::UvWorkAsyncCompleted(uv_work_t* work, int status)
 
 napi_value CameraInputNapi::Open(napi_env env, napi_callback_info info)
 {
-    COMM_INFO_LOG("Open is called");
+    MEDIA_INFO_LOG("Open is called");
     std::unique_ptr<CameraInputAsyncContext> asyncContext = std::make_unique<CameraInputAsyncContext>(
         "CameraInputNapi::Open", CameraNapiUtils::IncrementAndGet(cameraInputTaskId));
     bool isEnableSecureCamera = false;
@@ -413,7 +418,7 @@ napi_value CameraInputNapi::Open(napi_env env, napi_callback_info info)
 
 napi_value CameraInputNapi::Close(napi_env env, napi_callback_info info)
 {
-    COMM_INFO_LOG("Close is called");
+    MEDIA_INFO_LOG("Close is called");
     std::unique_ptr<CameraInputAsyncContext> asyncContext = std::make_unique<CameraInputAsyncContext>(
         "CameraInputNapi::Close", CameraNapiUtils::IncrementAndGet(cameraInputTaskId));
     auto asyncFunction =
@@ -425,7 +430,7 @@ napi_value CameraInputNapi::Close(napi_env env, napi_callback_info info)
     napi_status status = napi_create_async_work(
         env, nullptr, asyncFunction->GetResourceName(),
         [](napi_env env, void* data) {
-            COMM_INFO_LOG("CameraInputNapi::Close running on worker");
+            MEDIA_INFO_LOG("CameraInputNapi::Close running on worker");
             auto context = static_cast<CameraInputAsyncContext*>(data);
             CHECK_RETURN_ELOG(context->objectInfo == nullptr, "CameraInputNapi::Close async info is nullptr");
             CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
@@ -511,7 +516,7 @@ napi_value CameraInputNapi::Release(napi_env env, napi_callback_info info)
     napi_status status = napi_create_async_work(
         env, nullptr, asyncFunction->GetResourceName(),
         [](napi_env env, void* data) {
-            COMM_INFO_LOG("CameraInputNapi::Release running on worker");
+            MEDIA_INFO_LOG("CameraInputNapi::Release running on worker");
             auto context = static_cast<CameraInputAsyncContext*>(data);
             CHECK_RETURN_ELOG(context->objectInfo == nullptr, "CameraInputNapi::Release async info is nullptr");
             CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);

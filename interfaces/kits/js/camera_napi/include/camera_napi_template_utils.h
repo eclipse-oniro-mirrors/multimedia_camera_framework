@@ -88,7 +88,7 @@ public:
             napi_throw_error(env, std::to_string(INVALID_ARGUMENT).c_str(), "callback invalid argument");
             return nullptr;
         }
-        COMM_INFO_LOG("On eventType: %{public}s", jsCallbackParamParser.GetCallbackName().c_str());
+        MEDIA_DEBUG_LOG("On eventType: %{public}s", jsCallbackParamParser.GetCallbackName().c_str());
         CHECK_RETURN_RET_ELOG(targetInstance == nullptr, nullptr, "On: targetInstance is nullptr");
         return targetInstance->RegisterCallback(env, jsCallbackParamParser, false);
     }

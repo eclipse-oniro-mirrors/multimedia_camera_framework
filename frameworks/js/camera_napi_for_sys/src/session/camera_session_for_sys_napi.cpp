@@ -763,7 +763,7 @@ napi_value CameraSessionForSysNapi::GetSupportedBeautyTypes(napi_env env, napi_c
     if (status == napi_ok && cameraSessionForSysNapi != nullptr &&
         cameraSessionForSysNapi->cameraSessionForSys_ != nullptr) {
         std::vector<BeautyType> beautyTypes = cameraSessionForSysNapi->cameraSessionForSys_->GetSupportedBeautyTypes();
-        COMM_INFO_LOG("CameraSessionForSysNapi::GetSupportedBeautyTypes len = %{public}zu",
+        MEDIA_INFO_LOG("CameraSessionForSysNapi::GetSupportedBeautyTypes len = %{public}zu",
             beautyTypes.size());
         if (!beautyTypes.empty() && status == napi_ok) {
             for (size_t i = 0; i < beautyTypes.size(); i++) {
@@ -1809,8 +1809,11 @@ void EffectSuggestionCallbackListener::OnEffectSuggestionCallbackAsync(EffectSug
             delete callbackInfo;
         }
     };
-    std::string taskName = "EffectSuggestionCallbackListener::OnEffectSuggestionCallbackAsync"
-        "[effectSuggestionType:" + std::to_string(effectSuggestionType) + "]";
+    std::unordered_map<std::string, std::string> params = {
+        {"effectSuggestionType", std::to_string(effectSuggestionType)},
+    };
+    std::string taskName =
+        CameraNapiUtils::GetTaskName("EffectSuggestionCallbackListener::OnEffectSuggestionCallbackAsync", params);
     if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {
@@ -1852,9 +1855,12 @@ void LcdFlashStatusCallbackListener::OnLcdFlashStatusCallbackAsync(LcdFlashStatu
             delete callbackInfo;
         }
     };
-    std::string taskName = "LcdFlashStatusCallbackListener::OnLcdFlashStatusCallbackAsync"
-        "[lcdCompensation:" + std::to_string(lcdFlashStatusInfo.lcdCompensation) +
-        ", isLcdFlashNeeded:" + std::to_string(lcdFlashStatusInfo.isLcdFlashNeeded) + "]";
+    std::unordered_map<std::string, std::string> params = {
+        {"isLcdFlashNeeded", std::to_string(lcdFlashStatusInfo.isLcdFlashNeeded)},
+        {"lcdCompensation", std::to_string(lcdFlashStatusInfo.lcdCompensation)},
+    };
+    std::string taskName =
+        CameraNapiUtils::GetTaskName("LcdFlashStatusCallbackListener::OnLcdFlashStatusCallbackAsync", params);
     if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {
@@ -1903,8 +1909,12 @@ void FeatureDetectionStatusCallbackListener::OnFeatureDetectionStatusChangedCall
             delete callbackInfo;
         }
     };
-    std::string taskName = "FeatureDetectionStatusCallbackListener::OnFeatureDetectionStatusChangedCallbackAsync"
-        "[sceneFeature:" + std::to_string(feature) + ", status:" + std::to_string(status) + "]";
+    std::unordered_map<std::string, std::string> params = {
+        {"sceneFeature", std::to_string(feature)},
+        {"featureDetectionStatus", std::to_string(status)},
+    };
+    std::string taskName = CameraNapiUtils::GetTaskName(
+        "FeatureDetectionStatusCallbackListener::OnFeatureDetectionStatusChangedCallbackAsync", params);
     if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {
@@ -2021,7 +2031,7 @@ void CameraSessionForSysNapi::Init(napi_env env)
 
 napi_value CameraSessionForSysNapi::CreateCameraSession(napi_env env)
 {
-    COMM_INFO_LOG("CreateCameraSession is called");
+    MEDIA_DEBUG_LOG("CreateCameraSession is called");
     CAMERA_SYNC_TRACE;
     napi_status status;
     napi_value result = nullptr;

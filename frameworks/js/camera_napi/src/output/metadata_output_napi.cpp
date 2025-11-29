@@ -253,8 +253,10 @@ void MetadataStateCallbackNapi::OnErrorCallbackAsync(const int32_t errorType) co
             delete callbackInfo;
         }
     };
-    std::string taskName = "MetadataStateCallbackNapi::OnErrorCallbackAsync"
-        "[errorType:" + std::to_string(errorType) + "]";
+    std::unordered_map<std::string, std::string> params = {
+        {"errorType", std::to_string(errorType)},
+    };
+    std::string taskName = CameraNapiUtils::GetTaskName("MetadataStateCallbackNapi::OnErrorCallbackAsync", params);
     if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {

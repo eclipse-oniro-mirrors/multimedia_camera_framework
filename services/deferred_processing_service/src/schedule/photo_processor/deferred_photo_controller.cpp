@@ -87,7 +87,7 @@ void DeferredPhotoController::OnPhotoJobChanged()
 
 void DeferredPhotoController::OnSchedulerChanged(const SchedulerType& type, const SchedulerInfo& scheduleInfo)
 {
-    COMM_DP_INFO_LOG("DPS_PHOTO: Photo isNeedStop: %{public}d, isNeedInterrupt: %{public}d",
+    DP_INFO_LOG("DPS_PHOTO: Photo isNeedStop: %{public}d, isNeedInterrupt: %{public}d",
         scheduleInfo.isNeedStop, scheduleInfo.isNeedInterrupt);
 
     if (photoProcessor_->HasRunningJob() && scheduleInfo.isNeedInterrupt) {
@@ -120,7 +120,7 @@ void DeferredPhotoController::TryDoSchedule()
         return;
     }
 
-    COMM_DP_INFO_LOG("DPS_PHOTO: imageId: %{public}s, status: %{public}d, priority: %{public}d",
+    DP_INFO_LOG("DPS_PHOTO: imageId: %{public}s, status: %{public}d, priority: %{public}d",
         job->GetImageId().c_str(), job->GetCurStatus(), job->GetCurPriority());
     DoProcess(job);
 }

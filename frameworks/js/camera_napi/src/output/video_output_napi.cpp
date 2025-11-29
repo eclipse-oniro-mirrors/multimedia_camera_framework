@@ -82,8 +82,10 @@ void VideoCallbackListener::UpdateJSCallbackAsync(VideoOutputEventType eventType
             delete callbackInfo;
         }
     };
-    std::string taskName = "VideoCallbackListener::UpdateJSCallbackAsync"
-        "[" + VideoOutputEventTypeHelper.GetKeyString(eventType) + "]";
+    std::unordered_map<std::string, std::string> params = {
+        {"eventType", VideoOutputEventTypeHelper.GetKeyString(eventType)},
+    };
+    std::string taskName = CameraNapiUtils::GetTaskName("VideoCallbackListener::UpdateJSCallbackAsync", params);
     if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("failed to execute work");
     }  else {
@@ -94,7 +96,7 @@ void VideoCallbackListener::UpdateJSCallbackAsync(VideoOutputEventType eventType
 void VideoCallbackListener::OnFrameStarted() const
 {
     CAMERA_SYNC_TRACE;
-    COMM_INFO_LOG("OnFrameStarted is called");
+    MEDIA_DEBUG_LOG("OnFrameStarted is called");
     VideoCallbackInfo info;
     UpdateJSCallbackAsync(VideoOutputEventType::VIDEO_FRAME_START, info);
 }
@@ -102,7 +104,7 @@ void VideoCallbackListener::OnFrameStarted() const
 void VideoCallbackListener::OnFrameEnded(const int32_t frameCount) const
 {
     CAMERA_SYNC_TRACE;
-    COMM_INFO_LOG("OnFrameEnded is called, frameCount: %{public}d", frameCount);
+    MEDIA_DEBUG_LOG("OnFrameEnded is called, frameCount: %{public}d", frameCount);
     VideoCallbackInfo info;
     info.frameCount = frameCount;
     UpdateJSCallbackAsync(VideoOutputEventType::VIDEO_FRAME_END, info);

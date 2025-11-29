@@ -66,7 +66,7 @@ napi_value VideoSessionNapi::Init(napi_env env, napi_value exports)
 
 napi_value VideoSessionNapi::CreateCameraSession(napi_env env)
 {
-    COMM_INFO_LOG("VideoSessionNapi::CreateCameraSession is called");
+    MEDIA_DEBUG_LOG("VideoSessionNapi::CreateCameraSession is called");
     CAMERA_SYNC_TRACE;
     napi_status status;
     napi_value result = nullptr;

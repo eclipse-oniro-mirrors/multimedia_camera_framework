@@ -257,8 +257,11 @@ void ExposureCallbackListener::OnExposureStateCallbackAsync(ExposureState state)
             delete callbackInfo;
         }
     };
-    std::string taskName = "ExposureCallbackListener::OnExposureStateCallbackAsync"
-        "[state:" + std::to_string(state) + "]";
+    std::unordered_map<std::string, std::string> params = {
+        {"state", std::to_string(state)},
+    };
+    std::string taskName = CameraNapiUtils::GetTaskName(
+        "ExposureCallbackListener::OnExposureStateCallbackAsync", params);
     if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {
@@ -299,8 +302,10 @@ void FocusCallbackListener::OnFocusStateCallbackAsync(FocusState state) const
             delete callbackInfo;
         }
     };
-    std::string taskName = "FocusCallbackListener::OnFocusStateCallbackAsync"
-        "[state:" + std::to_string(state) + "]";
+    std::unordered_map<std::string, std::string> params = {
+        {"state", std::to_string(state)},
+    };
+    std::string taskName = CameraNapiUtils::GetTaskName("FocusCallbackListener::OnFocusStateCallbackAsync", params);
     if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {
@@ -341,8 +346,11 @@ void MoonCaptureBoostCallbackListener::OnMoonCaptureBoostStatusCallbackAsync(Moo
             delete callbackInfo;
         }
     };
-    std::string taskName = "MoonCaptureBoostCallbackListener::OnMoonCaptureBoostStatusCallbackAsync"
-        "[status:" + std::to_string(status) + "]";
+    std::unordered_map<std::string, std::string> params = {
+        {"status", std::to_string(status)},
+    };
+    std::string taskName =
+        CameraNapiUtils::GetTaskName("MoonCaptureBoostCallbackListener::OnMoonCaptureBoostStatusCallbackAsync", params);
     if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {
@@ -384,8 +392,10 @@ void SessionCallbackListener::OnErrorCallbackAsync(int32_t errorCode) const
             delete callbackInfo;
         }
     };
-    std::string taskName = "SessionCallbackListener::OnErrorCallbackAsync"
-        "[errorType:" + std::to_string(errorCode) + "]";
+    std::unordered_map<std::string, std::string> params = {
+        {"errorCode:", std::to_string(errorCode)},
+    };
+    std::string taskName = CameraNapiUtils::GetTaskName("SessionCallbackListener::OnErrorCallbackAsync", params);
     if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {
@@ -432,8 +442,10 @@ void PressureCallbackListener::OnPressureCallbackAsync(PressureStatus status) co
             delete callbackInfo;
         }
     };
-    std::string taskName = "PressureCallbackListener::OnPressureCallbackAsync"
-        "[status:" + std::to_string(static_cast<int32_t>(status)) + "]";
+    std::unordered_map<std::string, std::string> params = {
+        {"status", std::to_string(static_cast<int32_t>(status))},
+    };
+    std::string taskName = CameraNapiUtils::GetTaskName("PressureCallbackListener::OnPressureCallbackAsync", params);
     if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {
@@ -478,9 +490,12 @@ void ControlCenterEffectStatusCallbackListener::OnControlCenterEffectStatusCallb
             delete callbackInfo;
         }
     };
-    std::string taskName = "ControlCenterEffectStatusCallbackListener::OnControlCenterEffectStatusCallbackAsync"
-        "[effectType:" + std::to_string(static_cast<int32_t>(controlCenterStatusInfo.effectType)) +
-        ", isActive:" + std::to_string(controlCenterStatusInfo.isActive) + "]";
+    std::unordered_map<std::string, std::string> params = {
+        {"effectType", std::to_string(static_cast<int32_t>(controlCenterStatusInfo.effectType))},
+        {"isActive", std::to_string(controlCenterStatusInfo.isActive)},
+    };
+    std::string taskName = CameraNapiUtils::GetTaskName(
+        "ControlCenterEffectStatusCallbackListener::OnControlCenterEffectStatusCallbackAsync", params);
     if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {
@@ -526,8 +541,11 @@ void SmoothZoomCallbackListener::OnSmoothZoomCallbackAsync(int32_t duration) con
             delete callbackInfo;
         }
     };
-    std::string taskName = "SmoothZoomCallbackListener::OnSmoothZoomCallbackAsync"
-        "[duration" + std::to_string(duration) + "]";
+    std::unordered_map<std::string, std::string> params = {
+        {"duration", std::to_string(duration)},
+    };
+    std::string taskName =
+        CameraNapiUtils::GetTaskName("SmoothZoomCallbackListener::OnSmoothZoomCallbackAsync", params);
     if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {
@@ -615,9 +633,12 @@ void AutoDeviceSwitchCallbackListener::OnAutoDeviceSwitchCallbackAsync(
             delete callbackInfo;
         }
     };
-    std::string taskName = "AutoDeviceSwitchCallbackListener::OnAutoDeviceSwitchCallbackAsync"
-        "[isDeviceSwitched:" + std::to_string(isDeviceSwitched) +
-        ", isDeviceCapabilityChanged" + std::to_string(isDeviceCapabilityChanged) + "]";
+    std::unordered_map<std::string, std::string> params = {
+        {"isDeviceSwitched", std::to_string(isDeviceSwitched)},
+        {"isDeviceCapabilityChanged", std::to_string(isDeviceCapabilityChanged)},
+    };
+    std::string taskName =
+        CameraNapiUtils::GetTaskName("AutoDeviceSwitchCallbackListener::OnAutoDeviceSwitchCallbackAsync", params);
     if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {
@@ -771,7 +792,7 @@ napi_value GetPointNapiValue(napi_env env, Point &point)
 
 napi_value CameraSessionNapi::CreateCameraSession(napi_env env)
 {
-    COMM_INFO_LOG("CreateCameraSession is called");
+    MEDIA_DEBUG_LOG("CreateCameraSession is called");
     CAMERA_SYNC_TRACE;
     napi_status status;
     napi_value result = nullptr;
@@ -806,7 +827,7 @@ napi_value CameraSessionNapi::CreateCameraSession(napi_env env)
 
 napi_value CameraSessionNapi::BeginConfig(napi_env env, napi_callback_info info)
 {
-    COMM_INFO_LOG("BeginConfig is called");
+    MEDIA_INFO_LOG("BeginConfig is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ZERO;
@@ -829,7 +850,7 @@ napi_value CameraSessionNapi::BeginConfig(napi_env env, napi_callback_info info)
 void CameraSessionNapi::CommitConfigAsync(uv_work_t* work)
 {
     CHECK_RETURN_ELOG(work == nullptr, "CommitConfigAsync null work");
-    COMM_INFO_LOG("CommitConfigAsync running on worker");
+    MEDIA_INFO_LOG("CommitConfigAsync running on worker");
     auto context = static_cast<CameraSessionAsyncContext*>(work->data);
     CHECK_RETURN_ELOG(context == nullptr, "CommitConfigAsync context is null");
     CHECK_RETURN_ELOG(
@@ -873,7 +894,7 @@ void CameraSessionNapi::UvWorkAsyncCompleted(uv_work_t* work, int status)
 
 napi_value CameraSessionNapi::CommitConfig(napi_env env, napi_callback_info info)
 {
-    COMM_INFO_LOG("CommitConfig is called");
+    MEDIA_INFO_LOG("CommitConfig is called");
     std::unique_ptr<CameraSessionAsyncContext> asyncContext = std::make_unique<CameraSessionAsyncContext>(
         "CameraSessionNapi::CommitConfig", CameraNapiUtils::IncrementAndGet(cameraSessionTaskId));
     auto asyncFunction = std::make_shared<CameraNapiAsyncFunction>(
@@ -988,7 +1009,7 @@ napi_value GetJSArgsForCameraInput(napi_env env, size_t argc, const napi_value a
 
 napi_value CameraSessionNapi::AddInput(napi_env env, napi_callback_info info)
 {
-    COMM_INFO_LOG("AddInput is called");
+    MEDIA_INFO_LOG("AddInput is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ONE;
@@ -1130,7 +1151,7 @@ napi_value CameraSessionNapi::GetJSArgsForCameraOutput(napi_env env, size_t argc
 
 napi_value CameraSessionNapi::AddOutput(napi_env env, napi_callback_info info)
 {
-    COMM_INFO_LOG("AddOutput is called");
+    MEDIA_INFO_LOG("AddOutput is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ONE;
@@ -1223,7 +1244,7 @@ void CameraSessionNapi::StartAsync(uv_work_t* work)
 
 napi_value CameraSessionNapi::Start(napi_env env, napi_callback_info info)
 {
-    COMM_INFO_LOG("Start is called");
+    MEDIA_INFO_LOG("Start is called");
     std::unique_ptr<CameraSessionAsyncContext> asyncContext = std::make_unique<CameraSessionAsyncContext>(
         "CameraSessionNapi::Start", CameraNapiUtils::IncrementAndGet(cameraSessionTaskId));
     auto asyncFunction =
@@ -1267,7 +1288,7 @@ napi_value CameraSessionNapi::Start(napi_env env, napi_callback_info info)
 
 napi_value CameraSessionNapi::Stop(napi_env env, napi_callback_info info)
 {
-    COMM_INFO_LOG("Stop is called");
+    MEDIA_INFO_LOG("Stop is called");
     std::unique_ptr<CameraSessionAsyncContext> asyncContext = std::make_unique<CameraSessionAsyncContext>(
         "CameraSessionNapi::Stop", CameraNapiUtils::IncrementAndGet(cameraSessionTaskId));
     auto asyncFunction =
@@ -1279,7 +1300,7 @@ napi_value CameraSessionNapi::Stop(napi_env env, napi_callback_info info)
     napi_status status = napi_create_async_work(
         env, nullptr, asyncFunction->GetResourceName(),
         [](napi_env env, void* data) {
-            COMM_INFO_LOG("CameraSessionNapi::Stop running on worker");
+            MEDIA_INFO_LOG("CameraSessionNapi::Stop running on worker");
             auto context = static_cast<CameraSessionAsyncContext*>(data);
             CHECK_RETURN_ELOG(context->objectInfo == nullptr, "CameraSessionNapi::Stop async info is nullptr");
             CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
@@ -1306,7 +1327,7 @@ napi_value CameraSessionNapi::Stop(napi_env env, napi_callback_info info)
 
 napi_value CameraSessionNapi::Release(napi_env env, napi_callback_info info)
 {
-    COMM_INFO_LOG("Release is called");
+    MEDIA_INFO_LOG("Release is called");
     std::unique_ptr<CameraSessionAsyncContext> asyncContext = std::make_unique<CameraSessionAsyncContext>(
         "CameraSessionNapi::Release", CameraNapiUtils::IncrementAndGet(cameraSessionTaskId));
     auto asyncFunction =
@@ -1318,7 +1339,7 @@ napi_value CameraSessionNapi::Release(napi_env env, napi_callback_info info)
     napi_status status = napi_create_async_work(
         env, nullptr, asyncFunction->GetResourceName(),
         [](napi_env env, void* data) {
-            COMM_INFO_LOG("CameraSessionNapi::Release running on worker");
+            MEDIA_INFO_LOG("CameraSessionNapi::Release running on worker");
             auto context = static_cast<CameraSessionAsyncContext*>(data);
             CHECK_RETURN_ELOG(context->objectInfo == nullptr, "CameraSessionNapi::Release async info is nullptr");
             CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
@@ -1479,7 +1500,7 @@ napi_value CameraSessionNapi::IsFlashModeSupported(napi_env env, napi_callback_i
 
 napi_value CameraSessionNapi::SetFlashMode(napi_env env, napi_callback_info info)
 {
-    COMM_INFO_LOG("SetFlashMode is called");
+    MEDIA_DEBUG_LOG("SetFlashMode is called");
     CAMERA_SYNC_TRACE;
     napi_status status;
     napi_value result = nullptr;
@@ -2257,7 +2278,7 @@ napi_value CameraSessionNapi::GetSupportedFilters(napi_env env, napi_callback_in
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
         std::vector<FilterType> filterTypes = cameraSessionNapi->cameraSession_->GetSupportedFilters();
-        COMM_INFO_LOG("CameraSessionNapi::GetSupportedFilters len = %{public}zu",
+        MEDIA_INFO_LOG("CameraSessionNapi::GetSupportedFilters len = %{public}zu",
             filterTypes.size());
         if (!filterTypes.empty()) {
             for (size_t i = 0; i < filterTypes.size(); i++) {
@@ -3305,8 +3326,11 @@ void MacroStatusCallbackListener::OnMacroStatusCallbackAsync(MacroStatus status)
             delete callbackInfo;
         }
     };
-    std::string taskName = "MacroStatusCallbackListener::OnMacroStatusCallbackAsync"
-        "[status:" + std::to_string(status) + "]";
+    std::unordered_map<std::string, std::string> params = {
+        {"status", std::to_string(status)},
+    };
+    std::string taskName = CameraNapiUtils::GetTaskName(
+        "MacroStatusCallbackListener::OnMacroStatusCallbackAsync", params);
     if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {

@@ -164,7 +164,7 @@ public:
 
     int32_t OnError(const std::string& videoId, OHOS::HDI::Camera::V1_2::ErrorCode errorCode) override
     {
-        DP_INFO_LOG("DPS_VIDEO: videoId: %{public}s, error: %{public}d", videoId.c_str(), errorCode);
+        COMM_DP_INFO_LOG("DPS_VIDEO: videoId: %{public}s, error: %{public}d", videoId.c_str(), errorCode);
         auto processResult = processResult_.lock();
         DP_CHECK_ERROR_RETURN_RET_LOG(processResult == nullptr, DP_OK, "VideoProcessResult is nullptr.");
 
@@ -277,7 +277,7 @@ void VideoPostProcessor::PauseRequest(const std::string& videoId, const Schedule
     DP_CHECK_ERROR_RETURN_LOG(session == nullptr, "video session is nullptr.");
 
     int32_t ret = session->Interrupt();
-    DP_INFO_LOG("DPS_VIDEO: Interrupt video to ive, videoId: %{public}s, ret: %{public}d", videoId.c_str(), ret);
+    COMM_DP_INFO_LOG("DPS_VIDEO: Interrupt video to ive, videoId: %{public}s, ret: %{public}d", videoId.c_str(), ret);
 }
 
 DpsError VideoPostProcessor::PrepareStreams(const std::string& videoId, const int inputFd)
@@ -343,7 +343,7 @@ void VideoPostProcessor::ReleaseStreams()
 
     auto ret = session->ReleaseStreams(allStreamInfo_);
     allStreamInfo_.clear();
-    DP_INFO_LOG("DPS_VIDEO: ReleaseStreams ret: %{public}d", ret);
+    COMM_DP_INFO_LOG("DPS_VIDEO: ReleaseStreams ret: %{public}d", ret);
 }
 
 void VideoPostProcessor::SetStreamInfo(const StreamDescription& stream, sptr<BufferProducerSequenceable>& producer)

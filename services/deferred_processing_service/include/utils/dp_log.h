@@ -45,10 +45,10 @@
         op("{%{public}s()-%{public}s:%{public}d} " fmt, __FUNCTION__, __FILE_NAME__, __LINE__, ##args); \
     } while (0)
 
-#define COMM_DP_INFO_LOG(fmt, ...) DECORATOR_COMM_HILOG(HILOG_COMM_INFO, fmt, ##__VA_ARGS__)
-#define COMM_DP_ERR_LOG(fmt, ...) DECORATOR_COMM_HILOG(HILOG_COMM_ERROR, fmt, ##__VA_ARGS__)
-#define COMM_DP_WARNING_LOG(fmt, ...) DECORATOR_COMM_HILOG(HILOG_COMM_WARN, fmt, ##__VA_ARGS__)
-#define COMM_DP_FATAL_LOG(fmt, ...) DECORATOR_COMM_HILOG(HILOG_COMM_FATAL, fmt, ##__VA_ARGS__)
+#define COMM_DP_INFO_LOG(fmt, ...) HILOG_COMM_INFO(fmt, ##__VA_ARGS__)
+#define COMM_DP_ERR_LOG(fmt, ...) HILOG_COMM_ERROR(fmt, ##__VA_ARGS__)
+#define COMM_DP_WARNING_LOG(fmt, ...) HILOG_COMM_WARN(fmt, ##__VA_ARGS__)
+#define COMM_DP_FATAL_LOG(fmt, ...) HILOG_COMM_FATAL(fmt, ##__VA_ARGS__)
 
 #define DP_DEBUG_LOG(fmt, ...) DECORATOR_HILOG(HILOG_DEBUG, fmt, ##__VA_ARGS__)
 #define DP_ERR_LOG(fmt, ...) DECORATOR_HILOG(HILOG_ERROR, fmt, ##__VA_ARGS__)
@@ -168,5 +168,83 @@
         if (cond) {                                         \
             DP_WARNING_LOG(fmt, ##__VA_ARGS__);             \
         }                                                   \
+    } while (0)
+
+#define DP_CHECK_ERROR_RETURN_RET_COMM_LOG(cond, ret, fmt, ...)  \
+    do {                                                         \
+        if (DP_UNLIKELY(cond)) {                                 \
+            COMM_DP_ERR_LOG(fmt, ##__VA_ARGS__);                 \
+            return ret;                                          \
+        }                                                        \
+    } while (0)
+
+#define DP_CHECK_ERROR_RETURN_COMM_LOG(cond, fmt, ...)           \
+    do {                                                         \
+        if (DP_UNLIKELY(cond)) {                                 \
+            COMM_DP_ERR_LOG(fmt, ##__VA_ARGS__);                 \
+            return;                                              \
+        }                                                        \
+    } while (0)
+
+#define DP_CHECK_ERROR_PRINT_COMM_LOG(cond, fmt, ...)            \
+    do {                                                         \
+        if (DP_UNLIKELY(cond)) {                                 \
+            COMM_DP_ERR_LOG(fmt, ##__VA_ARGS__);                 \
+        }                                                        \
+    } while (0)
+
+#define DP_CHECK_ERROR_BREAK_COMM_LOG(cond, fmt, ...)            \
+    if (1) {                                                     \
+        if (DP_UNLIKELY(cond)) {                                 \
+            COMM_DP_ERR_LOG(fmt, ##__VA_ARGS__);                 \
+            break;                                               \
+        }                                                        \
+    } else void (0)
+
+#define DP_CHECK_RETURN_RET_COMM_LOG(cond, ret, fmt, ...)        \
+    do {                                                         \
+        if (cond) {                                              \
+            COMM_DP_INFO_LOG(fmt, ##__VA_ARGS__);                \
+            return ret;                                          \
+        }                                                        \
+    } while (0)
+
+#define DP_CHECK_RETURN_COMM_LOG(cond, fmt, ...)                 \
+    do {                                                         \
+        if (cond) {                                              \
+            COMM_DP_INFO_LOG(fmt, ##__VA_ARGS__);                \
+            return;                                              \
+        }                                                        \
+    } while (0)
+
+#define DP_LOOP_BREAK_COMM_LOG(cond, fmt, ...)                   \
+    if (1) {                                                     \
+        if (cond) {                                              \
+            COMM_DP_INFO_LOG(fmt, ##__VA_ARGS__);                \
+            break;                                               \
+        }                                                        \
+    } else void (0)
+
+#define DP_LOOP_CONTINUE_COMM_LOG(cond, fmt, ...)                \
+    if (1) {                                                     \
+        if (cond) {                                              \
+            COMM_DP_INFO_LOG(fmt, ##__VA_ARGS__);                \
+            continue;                                            \
+        }                                                        \
+    } else void (0)
+
+#define DP_LOOP_ERROR_RETURN_RET_COMM_LOG(cond, ret, fmt, ...)   \
+    if (1) {                                                     \
+        if (cond) {                                              \
+            COMM_DP_ERR_LOG(fmt, ##__VA_ARGS__);                 \
+            return ret;                                          \
+        }                                                        \
+    } else void (0)
+
+#define DP_CHECK_WARNING_PRINT_COMM_LOG(cond, fmt, ...)          \
+    do {                                                         \
+        if (cond) {                                              \
+            COMM_DP_WARNING_LOG(fmt, ##__VA_ARGS__);             \
+        }                                                        \
     } while (0)
 #endif // OHOS_CAMERA_DPS_LOG_H

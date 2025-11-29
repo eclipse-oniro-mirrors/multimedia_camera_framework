@@ -49,7 +49,7 @@ void ThumbnailBufferConsumer::OnBufferAvailable()
 
 void ThumbnailBufferConsumer::ExecuteOnBufferAvailable()
 {
-    COMM_INFO_LOG("T_ExecuteOnBufferAvailable E");
+    MEDIA_INFO_LOG("T_ExecuteOnBufferAvailable E");
     CAMERA_SYNC_TRACE;
     sptr<HStreamCapture> streamCapture = streamCapture_.promote();
     CHECK_RETURN_ELOG(streamCapture == nullptr, "streamCapture is null");
