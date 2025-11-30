@@ -20,7 +20,7 @@ sequenceable DpsMetadataInfo..OHOS.CameraStandard.DpsMetadata;
 interface IDeferredPhotoProcessingSession{
   [ipccode 0] void BeginSynchronize();
   [ipccode 1] void EndSynchronize();
-  [ipccode 2] void AddImage([in] String imageId, [in] DpsMetadata metadata, [in] boolean discardable);
+  [ipccode 2] void AddImage([in] String imageId, [in] DpsMetadata metadata, [in] boolean discardable, [in] String bundleName);
   [ipccode 3] void RemoveImage([in]  String imageId, [in] boolean restorable);
   [ipccode 4] void RestoreImage([in] String imageId);
   [ipccode 5] void ProcessImage([in] String appName, [in] String imageId);

@@ -20,6 +20,7 @@
 #include "hstream_capture_thumbnail_callback_stub.h"
 #include "stream_capture_photo_asset_callback_stub.h"
 #include <native_image.h>
+#include <picture.h>
 #include <pixel_map.h>
 
 
@@ -46,6 +47,7 @@ public:
     virtual ~PhotoAvailableCallback() = default;
 
     virtual void OnPhotoAvailable(const std::shared_ptr<Media::NativeImage> nativeImage, bool isRaw) const = 0;
+    virtual void OnPhotoAvailable(const std::shared_ptr<Media::Picture> picture) const = 0;
 };
 
 class PhotoAssetAvailableCallback {

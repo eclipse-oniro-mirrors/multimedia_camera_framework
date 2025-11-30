@@ -23,13 +23,15 @@ namespace CameraStandard {
 
 class PhotoAssetAdapter : public OHOS::CameraStandard::PhotoAssetIntf {
 public:
-    PhotoAssetAdapter(int32_t cameraShotType, int32_t uid, uint32_t callingTokenID);
+    PhotoAssetAdapter(int32_t cameraShotType, int32_t uid, uint32_t callingTokenID, std::string bundleName = "");
     virtual ~PhotoAssetAdapter() = default;
-    void AddPhotoProxy(sptr<Media::PhotoProxy> photoProxy);
-    std::string GetPhotoAssetUri();
-    int32_t GetVideoFd();
-    void NotifyVideoSaveFinished();
-    int32_t GetUserId();
+    void AddPhotoProxy(sptr<Media::PhotoProxy> photoProxy) override;
+    std::string GetPhotoAssetUri() override;
+    int32_t GetVideoFd() override;
+    void NotifyVideoSaveFinished() override;
+    int32_t GetUserId() override;
+    void RegisterPhotoStateCallback(const std::function<void(int32_t)> &callback) override;
+    void UnregisterPhotoStateCallback() override;
 private:
     std::shared_ptr<Media::PhotoAssetProxy> photoAssetProxy_ = nullptr;
     int32_t userId_ = -1;

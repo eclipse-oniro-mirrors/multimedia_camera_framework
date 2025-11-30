@@ -40,7 +40,8 @@ public:
 
     int32_t BeginSynchronize() override;
     int32_t EndSynchronize() override;
-    int32_t AddImage(const std::string& imageId, const DpsMetadata& metadata, bool discardable) override;
+    int32_t AddImage(const std::string& imageId, const DpsMetadata& metadata, bool discardable,
+        const std::string& bundleName) override;
     int32_t RemoveImage(const std::string& imageId, bool restorable) override;
     int32_t RestoreImage(const std::string& imageId) override;
     int32_t ProcessImage(const std::string& appName, const std::string& imageId) override;

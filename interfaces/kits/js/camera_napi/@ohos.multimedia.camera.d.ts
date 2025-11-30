@@ -8303,6 +8303,16 @@ function getCameraManager(context: Context): CameraManager;
   }
 
   /**
+   * Define image container type.
+   *
+   * @typedef {image.Image | image.Picture}
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @atomicservice
+   * @since 23 dynamic&static
+   */
+  type ImageType = image.Image | image.Picture;
+
+  /**
    * Photo object
    *
    * @typedef Photo
@@ -8345,6 +8355,36 @@ function getCameraManager(context: Context): CameraManager;
      * @returns { Promise<void> } Promise used to return the result.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @since 11
+     */
+    release(): Promise<void>;
+  }
+
+  /**
+   * PhotoEx object, which supports capturing uncompressed photo, compared to Photo.
+   *
+   * @typedef PhotoEx
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @atomicservice
+   * @since 23 dynamic&static
+   */
+  interface PhotoEx {
+    /**
+     * Main image.
+     *
+     * @type { ImageType }
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @atomicservice
+     * @since 23 dynamic&static
+     */
+    main: ImageType;
+
+    /**
+     * Release PhotoEx object.
+     *
+     * @returns { Promise<void> } Promise used to return the result.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @atomicservice
+     * @since 23 dynamic&static
      */
     release(): Promise<void>;
   }
@@ -8638,6 +8678,46 @@ function getCameraManager(context: Context): CameraManager;
      * @since 11
      */
     off(type: 'photoAvailable', callback?: AsyncCallback<Photo>): void;
+
+    /**
+     * Subscribes photo available event callback, which supports delivery of uncompressed photo.
+     *
+     * @param { 'photoAvailable' } type - Event type.
+     * @param { AsyncCallback<PhotoEx> } callback - Callback used to get the PhotoEx.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @atomicservice
+     * @since 23 dynamic
+     */
+    on(type: 'photoAvailable', callback: AsyncCallback<PhotoEx>): void;
+
+    /**
+     * Subscribes photo available event callback, which supports delivery of uncompressed photo.
+     *
+     * @param { AsyncCallback<PhotoEx> } callback - Callback used to get the PhotoEx.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 23 static
+     */
+    onPhotoAvailable(callback: AsyncCallback<PhotoEx>): void;
+
+    /**
+     * Unsubscribes photo available event callback, which supports delivery of uncompressed photo.
+     *
+     * @param { 'photoAvailable' } type - Event type.
+     * @param { AsyncCallback<PhotoEx> } callback - Callback used to get the PhotoEx.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @atomicservice
+     * @since 23 dynamic
+     */
+    off(type: 'photoAvailable', callback?: AsyncCallback<PhotoEx>): void;
+
+    /**
+     * Unsubscribes photo available event callback, which supports delivery of uncompressed photo.
+     *
+     * @param { AsyncCallback<PhotoEx> } [callback] - Callback used to get the PhotoEx.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 23 static
+     */
+    offPhotoAvailable(callback?: AsyncCallback<PhotoEx>): void;
 
     /**
      * Subscribes deferred photo proxy available event callback.

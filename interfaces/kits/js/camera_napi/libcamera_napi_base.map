@@ -29,6 +29,7 @@
    OHOS::CameraStandard::MetadataOutputNapi::Init*;
    OHOS::CameraStandard::ModeManagerNapi::Init*;
    OHOS::CameraStandard::PhotoNapi::Init*;
+   OHOS::CameraStandard::PhotoExNapi::Init*;
    OHOS::CameraStandard::DeferredPhotoProxyNapi::Init*;
    OHOS::CameraStandard::NapiRefManager::CreateMemSafetyRef*;
  };

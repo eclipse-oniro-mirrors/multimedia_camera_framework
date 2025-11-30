@@ -54,7 +54,8 @@ public:
     virtual ~DeferredPhotoProcSession();
     void BeginSynchronize();
     void EndSynchronize();
-    void AddImage(const std::string& imageId, DpsMetadata& metadata, const bool discardable = false);
+    void AddImage(const std::string& imageId, DpsMetadata& metadata, const bool discardable = false,
+        const std::string& bundleName = "");
     void RemoveImage(const std::string& imageId, const bool restorable = true);
     void RestoreImage(const std::string& imageId);
     void ProcessImage(const std::string& appName, const std::string& imageId);

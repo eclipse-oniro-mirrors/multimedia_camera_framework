@@ -92,6 +92,11 @@ int32_t PhotoProcessResult::ProcessPictureInfoV1_3(const std::string& imageId,
     return DP_OK;
 }
 
+void PhotoProcessResult::SetBundleName(const std::string& bundleName)
+{
+    bundleName_ = bundleName;
+}
+
 std::unique_ptr<ImageInfo> PhotoProcessResult::CreateFromMeta(int32_t defaultSize,
     const sptr<HDI::Camera::V1_0::MapDataSequenceable>& metadata)
 {
@@ -137,7 +142,11 @@ std::shared_ptr<PictureIntf> PhotoProcessResult::AssemblePicture(const HDI::Came
 
     AssemleAuxilaryPicture(buffer, picture);
     DP_CHECK_ERROR_RETURN_RET_LOG(rotationInIps, picture, "HAL rotationInIps");
-    picture->RotatePicture();
+    DP_INFO_LOG("DPS_PHOTO rotate picture user id: %{public}d, bundle name: %{public}s",
+        userId_, bundleName_.c_str());
+    if (bundleName_ == SYSTEM_CAMERA) {
+        picture->RotatePicture();
+    }
     return picture;
 }
 

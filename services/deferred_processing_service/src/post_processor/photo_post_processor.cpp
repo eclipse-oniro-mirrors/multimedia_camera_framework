@@ -261,6 +261,11 @@ void PhotoPostProcessor::OnSessionDied()
     NotifyHalStateChanged(HdiStatus::HDI_DISCONNECTED);
 }
 
+void PhotoPostProcessor::SetProcessBundleNameResult(const std::string& bundleName)
+{
+    DP_CHECK_EXECUTE(processResult_, processResult_->SetBundleName(bundleName));
+}
+
 void PhotoPostProcessor::ConnectService()
 {
     auto svcMgr = HDI::ServiceManager::V1_0::IServiceManager::Get();

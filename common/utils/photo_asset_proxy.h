@@ -26,6 +26,7 @@ namespace OHOS {
 namespace CameraStandard {
 class PhotoAssetProxy : public PhotoAssetIntf {
 public:
+    static std::string GetBundleName(int32_t callingUid);
     static std::shared_ptr<PhotoAssetProxy> GetPhotoAssetProxy(
         int32_t shotType, int32_t callingUid, uint32_t callingTokenID);
     explicit PhotoAssetProxy(
@@ -37,6 +38,8 @@ public:
     int32_t GetVideoFd() override;
     void NotifyVideoSaveFinished() override;
     int32_t GetUserId() override;
+    void RegisterPhotoStateCallback(const std::function<void(int32_t)> &callback) override;
+    void UnregisterPhotoStateCallback() override;
 
 private:
     // Keep the order of members in this class, the bottom member will be destroyed first

@@ -43,6 +43,7 @@ public:
     void Interrupt();
     void Reset();
     void OnSessionDied();
+    void SetProcessBundleNameResult(const std::string& bundleName);
 
 protected:
     PhotoPostProcessor(const int32_t userId);

@@ -41,8 +41,10 @@
 #include "js_native_api_types.h"
 #include "listener_base.h"
 #include "media_library_comm_napi.h"
+#include "output/photo_ex_napi.h"
 #include "output/photo_napi.h"
 #include "photo_output.h"
+#include "picture_napi.h"
 #include "pixel_map_napi.h"
 #include "refbase.h"
 #include "native_common_napi.h"
@@ -401,10 +403,20 @@ void PhotoOutputCallback::OnOfflineDeliveryFinished(const int32_t captureId) con
 
 void PhotoOutputCallback::OnPhotoAvailable(const std::shared_ptr<Media::NativeImage> nativeImage, bool isRaw) const
 {
-    MEDIA_DEBUG_LOG("PhotoOutputCallback::OnPhotoAvailable is called!");
+    MEDIA_DEBUG_LOG("PhotoOutputCallback::OnPhotoAvailable native iamge is called!");
     CallbackInfo info;
     info.nativeImage = nativeImage;
     info.isRaw = isRaw;
+    info.isYuv = false;
+    UpdateJSCallbackAsync(PhotoOutputEventType::CAPTURE_PHOTO_AVAILABLE, info);
+}
+
+void PhotoOutputCallback::OnPhotoAvailable(const std::shared_ptr<Media::Picture> picture) const
+{
+    MEDIA_DEBUG_LOG("PhotoOutputCallback::OnPhotoAvailable picture is called!");
+    CallbackInfo info;
+    info.picture = picture;
+    info.isYuv = true;
     UpdateJSCallbackAsync(PhotoOutputEventType::CAPTURE_PHOTO_AVAILABLE, info);
 }
 
@@ -559,17 +571,32 @@ void PhotoOutputCallback::ExecutePhotoAvailableCb(const CallbackInfo& info) cons
     ExecuteCallbackScopeSafe(CONST_CAPTURE_PHOTO_AVAILABLE, [&]() {
         napi_value errCode = CameraNapiUtils::GetUndefinedValue(env_);
         napi_value callbackObj = CameraNapiUtils::GetUndefinedValue(env_);
-        napi_value mainImage = Media::ImageNapi::Create(env_, info.nativeImage);
-        if (mainImage == nullptr) {
-            MEDIA_ERR_LOG("ImageNapi Create failed");
-            napi_get_undefined(env_, &mainImage);
+        if (info.isYuv) {
+            std::shared_ptr<Media::Picture> pictureTmp = info.picture;
+            napi_value picture = Media::PictureNapi::CreatePicture(env_, pictureTmp);
+            if (picture == nullptr) {
+                MEDIA_ERR_LOG("PictureNapi Create failed");
+                napi_get_undefined(env_, &picture);
+            }
+            sptr<SurfaceBuffer> pictureBuffer;
+            if (info.picture) {
+                // bind pictureBuffer life cycle with photoNapiObj
+                pictureBuffer = info.picture->GetMaintenanceData();
+            }
+            callbackObj = PhotoExNapi::CreatePicture(env_, picture, pictureBuffer);
+        } else {
+            napi_value mainImage = Media::ImageNapi::Create(env_, info.nativeImage);
+            if (mainImage == nullptr) {
+                MEDIA_ERR_LOG("ImageNapi Create failed");
+                napi_get_undefined(env_, &mainImage);
+            }
+            sptr<SurfaceBuffer> imageBuffer;
+            if (info.nativeImage) {
+                // bind imageBuffer life cycle with photoNapiObj
+                imageBuffer = info.nativeImage->GetBuffer();
+            }
+            callbackObj = PhotoNapi::CreatePhoto(env_, mainImage, info.isRaw, imageBuffer);
         }
-        sptr<SurfaceBuffer> imageBuffer;
-        if (info.nativeImage) {
-            // bind imageBuffer life cycle with photoNapiObj
-            imageBuffer = info.nativeImage->GetBuffer();
-        }
-        callbackObj = PhotoNapi::CreatePhoto(env_, mainImage, info.isRaw, imageBuffer);
         return ExecuteCallbackData(env_, errCode, callbackObj);
     });
 }

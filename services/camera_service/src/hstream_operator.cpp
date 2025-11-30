@@ -105,6 +105,11 @@ constexpr int32_t IMAGE_SHOT_TYPE = 0;
 constexpr int32_t MOVING_PHOTO_SHOT_TYPE = 2;
 constexpr int32_t BURST_SHOT_TYPE = 3;
 static bool g_isNeedFilterMetadata = false;
+static int32_t g_unSavedPhotoNum = 0;
+static std::mutex g_captureReadyLock;
+static std::condition_variable g_captureReadyCv;
+static const int8_t PHOTO_STATE_TIMEOUT = 20;
+static const int8_t PHOTO_SAVE_MAX_NUM = 3;
 
 sptr<HStreamOperator> HStreamOperator::NewInstance(const uint32_t callerToken, int32_t opMode)
 {
@@ -122,6 +127,7 @@ int32_t HStreamOperator::Initialize(const uint32_t callerToken, int32_t opMode)
     MEDIA_INFO_LOG(
         "HStreamOperator::opMode_= %{public}d", opMode_);
     InitDefaultColortSpace(static_cast<SceneMode>(opMode));
+    photoStateCallback_ = HStreamOperator::OnPhotoStateCallback;
     return CAMERA_OK;
 }
 
@@ -926,6 +932,14 @@ int32_t HStreamOperator::UpdateSettingForFocusTrackingMech(bool isEnableMech)
     return CAMERA_OK;
 }
 
+void HStreamOperator::OnPhotoStateCallback(int32_t photoNum)
+{
+    MEDIA_INFO_LOG("OnPhotoStateCallback num:%{public}d", photoNum);
+    std::lock_guard<std::mutex> lock(g_captureReadyLock);
+    g_unSavedPhotoNum = photoNum;
+    g_captureReadyCv.notify_all();
+}
+
 int32_t HStreamOperator::Stop()
 {
     CAMERA_SYNC_TRACE;
@@ -1037,6 +1051,11 @@ int32_t HStreamOperator::Release()
         if (streamOperator != nullptr) {
             ResetHDIStreamOperator();
             MEDIA_INFO_LOG("HStreamOperator::Release ResetHDIStreamOperator");
+        }
+        if (photoAssetProxy_ != nullptr) {
+            photoStateCallback_ = nullptr;
+            photoAssetProxy_->UnregisterPhotoStateCallback();
+            photoAssetProxy_.reset();
         }
         HStreamOperatorManager::GetInstance()->RemoveStreamOperator(streamOperatorId_);
     }
@@ -1451,16 +1470,18 @@ void RotatePicture(std::weak_ptr<PictureIntf> picture)
     ptr->RotatePicture();
 }
 
-bool HStreamOperator::IsIpsRotateSupported()
+bool HStreamOperator::IsIpsRotateSupported(int32_t captureId)
 {
     bool ipsRotateSupported = false;
+    bool isSystemApp = PhotoLevelManager::GetInstance().GetPhotoLevelInfo(captureId);
     camera_metadata_item_t item;
     bool ret = GetDeviceAbilityByMeta(OHOS_ABILITY_ROTATION_IN_IPS_SUPPORTED, &item);
     if (ret && item.count > 0) {
         ipsRotateSupported = static_cast<bool>(item.data.u8[0]);
     }
-    MEDIA_INFO_LOG("HstreamOperator IsIpsRotateSupported %{public}d", ipsRotateSupported);
-    return ipsRotateSupported;
+    MEDIA_INFO_LOG("HstreamOperator IsIpsRotateSupported %{public}d, isSystemApp: %{public}d",
+        ipsRotateSupported, isSystemApp);
+    return ipsRotateSupported && isSystemApp;
 }
 
 std::shared_ptr<PhotoAssetIntf> HStreamOperator::ProcessPhotoProxy(int32_t captureId,
@@ -1483,17 +1504,29 @@ std::shared_ptr<PhotoAssetIntf> HStreamOperator::ProcessPhotoProxy(int32_t captu
     CHECK_RETURN_RET_ELOG(captureStream == nullptr, nullptr, "stream is null");
     std::shared_ptr<PhotoAssetIntf> photoAssetProxy = nullptr;
     std::thread taskThread;
+    bool isSystemApp = PhotoLevelManager::GetInstance().GetPhotoLevelInfo(captureId);
     if (isBursting) {
         int32_t cameraShotType = 3;
         photoAssetProxy = PhotoAssetProxy::GetPhotoAssetProxy(
             cameraShotType, IPCSkeleton::GetCallingUid(), callerToken_);
     } else {
-        photoAssetProxy = captureStream->GetPhotoAssetInstance(captureId);
+        if (isSystemApp) {
+            photoAssetProxy = captureStream->GetPhotoAssetInstance(captureId);
+        } else {
+            photoAssetProxy = captureStream->GetPhotoAssetInstanceForPub(captureId);
+        }
     }
     CHECK_RETURN_RET_ELOG(photoAssetProxy == nullptr, nullptr, "photoAssetProxy is null");
+    photoAssetProxy_ = photoAssetProxy;
+    if (photoStateCallback_) {
+        std::call_once(photoStateFlag_, [=]() {
+            MEDIA_INFO_LOG("RegisterPhotoStateCallback is called");
+            photoAssetProxy_->RegisterPhotoStateCallback(photoStateCallback_);
+        });
+    }
     if (!isBursting && picturePtr) {
         MEDIA_DEBUG_LOG("CreateMediaLibrary RotatePicture E");
-        if (!IsIpsRotateSupported()) {
+        if (!IsIpsRotateSupported(captureId)) {
             taskThread = std::thread(RotatePicture, picturePtr);
         }
     }
@@ -1887,13 +1920,31 @@ int32_t HStreamOperator::OnCaptureReady(
     for (auto& streamId : streamIds) {
         sptr<HStreamCommon> curStream = GetHdiStreamByStreamID(streamId);
         if ((curStream != nullptr) && (curStream->GetStreamType() == StreamType::CAPTURE)) {
-            CastStream<HStreamCapture>(curStream)->OnCaptureReady(captureId, timestamp);
+            NotifyCaptureReady(captureId, curStream, timestamp);
         } else {
             MEDIA_ERR_LOG("HStreamOperator::OnCaptureReady StreamId: %{public}d not found", streamId);
             return CAMERA_INVALID_ARG;
         }
     }
     return CAMERA_OK;
+}
+
+void HStreamOperator::NotifyCaptureReady(int32_t captureId, sptr<HStreamCommon> curStream, uint64_t timestamp)
+{
+    bool isSystemApp = PhotoLevelManager::GetInstance().GetPhotoLevelInfo(captureId);
+    if (!isSystemApp && (curStream->format_ == OHOS_CAMERA_FORMAT_YCRCB_420_SP)) {
+        std::unique_lock<std::mutex> readyLock(g_captureReadyLock);
+        if (g_captureReadyCv.wait_for(readyLock, std::chrono::seconds(PHOTO_STATE_TIMEOUT),
+            [=] { return g_unSavedPhotoNum <= PHOTO_SAVE_MAX_NUM; })) {
+            MEDIA_INFO_LOG("NotifyCaptureReady normal app");
+            CastStream<HStreamCapture>(curStream)->OnCaptureReady(captureId, timestamp);
+        } else {
+            MEDIA_ERR_LOG("OnCaptureReady fail wait timeout, captureId:%{public}d", captureId);
+        }
+    } else {
+        MEDIA_INFO_LOG("NotifyCaptureReady system app");
+        CastStream<HStreamCapture>(curStream)->OnCaptureReady(captureId, timestamp);
+    }
 }
 
 int32_t HStreamOperator::OnResult(int32_t streamId, const std::vector<uint8_t>& result)

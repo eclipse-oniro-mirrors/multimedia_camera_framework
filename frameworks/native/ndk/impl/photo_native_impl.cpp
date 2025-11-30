@@ -16,6 +16,7 @@
 #include "photo_native_impl.h"
 #include "camera_log.h"
 #include "image_kits.h"
+#include "picture_native_impl.h"
 
 using namespace OHOS;
 
@@ -45,6 +46,13 @@ Camera_ErrorCode OH_PhotoNative::GetMainImage(OH_ImageNative** mainImage)
     return CAMERA_OK;
 }
 
+Camera_ErrorCode OH_PhotoNative::GetPicture(OH_PictureNative** picture)
+{
+    OH_PictureNative *pictureNative = new OH_PictureNative(picture_);
+    *picture = pictureNative;
+    return CAMERA_OK;
+}
+
 void OH_PhotoNative::SetMainImage(const std::shared_ptr<OHOS::Media::NativeImage> &mainImage)
 {
     mainImage_ = mainImage;
@@ -53,4 +61,9 @@ void OH_PhotoNative::SetMainImage(const std::shared_ptr<OHOS::Media::NativeImage
 void OH_PhotoNative::SetRawImage(const std::shared_ptr<OHOS::Media::NativeImage> &rawImage)
 {
     rawImage_ = rawImage;
+}
+
+void OH_PhotoNative::SetPicture(const std::shared_ptr<OHOS::Media::Picture> &picture)
+{
+    picture_ = picture;
 }

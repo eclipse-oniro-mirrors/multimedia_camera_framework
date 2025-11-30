@@ -244,6 +244,18 @@ public:
         MEDIA_DEBUG_LOG("OnPhotoAvailable X");
     }
 
+    void OnPhotoAvailable(const std::shared_ptr<OHOS::Media::Picture> picture) const override
+    {
+        MEDIA_DEBUG_LOG("OnPhotoAvailable E");
+        CHECK_RETURN_ELOG(photoOutput_ == nullptr, "photoOutput is null");
+        CHECK_RETURN_ELOG(photoAvailableCallback_ == nullptr, "callback is null");
+        OH_PhotoNative *photoNative = new (std::nothrow) OH_PhotoNative;
+        CHECK_RETURN_ELOG(photoNative == nullptr, "Create photo native failed");
+        photoNative->SetPicture(picture);
+        photoAvailableCallback_(photoOutput_, photoNative);
+        MEDIA_DEBUG_LOG("OnPhotoAvailable X");
+    }
+
     void OnPhotoAssetAvailable(const int32_t captureId, const std::string &uri, int32_t cameraShotType,
         const std::string &burstKey) const override
     {

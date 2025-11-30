@@ -64,7 +64,7 @@ int32_t DeferredPhotoProcessingSession::EndSynchronize()
 }
 
 int32_t DeferredPhotoProcessingSession::AddImage(const std::string& imageId, const DpsMetadata& metadata,
-    bool discardable)
+    bool discardable, const std::string& bundleName)
 {
     if (inSync_.load()) {
         std::lock_guard<std::mutex> lock(mutex_);
@@ -72,7 +72,7 @@ int32_t DeferredPhotoProcessingSession::AddImage(const std::string& imageId, con
         auto info = std::make_shared<PhotoInfo>(discardable, metadata);
         imageIds_.emplace(imageId, info);
     } else {
-        auto ret = DPS_SendCommand<AddPhotoCommand>(userId_, imageId, metadata, discardable);
+        auto ret = DPS_SendCommand<AddPhotoCommand>(userId_, imageId, metadata, discardable, bundleName);
         DP_CHECK_ERROR_PRINT_LOG(ret != DP_OK,
             "DPS_PHOTO: add imageId: %{public}s failed. ret: %{public}d", imageId.c_str(), ret);
     }

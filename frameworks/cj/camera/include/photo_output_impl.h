@@ -46,6 +46,7 @@ public:
     void OnOfflineDeliveryFinished(const int32_t captureId) const override;
     void OnPhotoAvailable(
         const std::shared_ptr<Media::NativeImage> nativeImage, const bool isRaw = false) const override;
+    void OnPhotoAvailable(const std::shared_ptr<Media::Picture> picture) const override;
 
     mutable std::mutex captureStartedMutex{};
     std::vector<std::shared_ptr<CallbackRef<const int32_t, uint32_t>>> captureStartedCallbackList;

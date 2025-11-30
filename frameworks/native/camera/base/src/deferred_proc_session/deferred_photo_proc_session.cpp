@@ -205,12 +205,13 @@ void DeferredPhotoProcSession::EndSynchronize()
     // LCOV_EXCL_STOP
 }
 
-void DeferredPhotoProcSession::AddImage(const std::string& imageId, DpsMetadata& metadata, const bool discardable)
+void DeferredPhotoProcSession::AddImage(const std::string& imageId, DpsMetadata& metadata, const bool discardable,
+    const std::string& bundleName)
 {
     // LCOV_EXCL_START
     CHECK_RETURN_ELOG(remoteSession_ == nullptr, "DeferredPhotoProcSession::AddImage failed due to binder died.");
-    MEDIA_INFO_LOG("DeferredPhotoProcSession::AddImage() enter.");
-    remoteSession_->AddImage(imageId, metadata, discardable);
+    COMM_INFO_LOG("DeferredPhotoProcSession::AddImage() enter.");
+    remoteSession_->AddImage(imageId, metadata, discardable, bundleName);
     // LCOV_EXCL_STOP
 }
 

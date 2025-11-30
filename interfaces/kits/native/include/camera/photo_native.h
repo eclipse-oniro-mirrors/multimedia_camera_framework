@@ -44,6 +44,7 @@
 #include <stdio.h>
 #include "camera.h"
 #include "image/image_native.h"
+#include "image/picture_native.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -70,6 +71,18 @@ typedef struct OH_PhotoNative OH_PhotoNative;
  * @version 1.0
  */
 Camera_ErrorCode OH_PhotoNative_GetMainImage(OH_PhotoNative* photo, OH_ImageNative** mainImage);
+
+/**
+ * @brief Get main picture.
+ *
+ * @param photo the {@link OH_PhotoNative} instance.
+ * @param mainImage the {@link OH_PictureNative} which use to get picture.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ * @since 23
+ * @version 1.0
+ */
+Camera_ErrorCode OH_PhotoNative_GetPicture(OH_PhotoNative* photo, OH_PictureNative** picture);
 
 /**
  * @brief Release camera photo.

@@ -21,6 +21,7 @@
 #include "camera_security_utils_taihe.h"
 #include "camera_template_utils_taihe.h"
 #include "picture_proxy.h"
+#include "picture_taihe.h"
 #include "task_manager.h"
 #include "video_key_info.h"
 #include "buffer_extra_data_impl.h"
@@ -80,6 +81,26 @@ void PhotoOutputCallbackAni::OnPhotoAvailableCallback(const std::shared_ptr<Medi
     auto task = [photoValue, errCode, message, sharePtr]() {
         CHECK_EXECUTE(sharePtr != nullptr, sharePtr->ExecuteAsyncCallback(
             CONST_CAPTURE_PHOTO_AVAILABLE, errCode, message, photoValue));
+    };
+    CHECK_RETURN_ELOG(mainHandler_ == nullptr, "callback failed, mainHandler_ is nullptr!");
+    mainHandler_->PostTask(task, "OnPhotoAvailableCallback", 0, OHOS::AppExecFwk::EventQueue::Priority::IMMEDIATE, {});
+}
+
+void PhotoOutputCallbackAni::OnPhotoAvailableCallback(const std::shared_ptr<Media::Picture> picture) const
+{
+    MEDIA_INFO_LOG("PhotoOutputCallbackAni::OnPhotoAvailableCallback");
+    int32_t errCode = 0;
+    std::string message = "success";
+    ohos::multimedia::image::image::Picture mainPicture = ANI::Image::PictureImpl::CreatePicture(picture);
+    if (has_error()) {
+        reset_error();
+        errCode = -1;
+        message = "PictureTaihe Create failed";
+    }
+    auto sharePtr = shared_from_this();
+    auto task = [mainPicture, errCode, message, sharePtr]() {
+        CHECK_EXECUTE(sharePtr != nullptr, sharePtr->ExecuteAsyncCallback(
+            CONST_CAPTURE_PHOTO_AVAILABLE, errCode, message, mainPicture));
     };
     CHECK_RETURN_ELOG(mainHandler_ == nullptr, "callback failed, mainHandler_ is nullptr!");
     mainHandler_->PostTask(task, "OnPhotoAvailableCallback", 0, OHOS::AppExecFwk::EventQueue::Priority::IMMEDIATE, {});
@@ -287,6 +308,12 @@ void PhotoOutputCallbackAni::OnPhotoAvailable(const std::shared_ptr<Media::Nativ
 {
     MEDIA_DEBUG_LOG("OnPhotoAvailable is called!");
     OnPhotoAvailableCallback(nativeImage, isRaw);
+}
+
+void PhotoOutputCallbackAni::OnPhotoAvailable(const std::shared_ptr<Media::Picture> picture) const
+{
+    MEDIA_DEBUG_LOG("OnPhotoAvailable is called!");
+    OnPhotoAvailableCallback(picture);
 }
 
 void PhotoOutputCallbackAni::OnPhotoAssetAvailable(const int32_t captureId, const std::string &uri,

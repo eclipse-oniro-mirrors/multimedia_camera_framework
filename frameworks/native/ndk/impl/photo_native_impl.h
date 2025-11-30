@@ -19,6 +19,7 @@
 #include "kits/native/include/camera/camera.h"
 #include "kits/native/include/camera/photo_native.h"
 #include "native_image.h"
+#include "picture.h"
 
 struct OH_PhotoNative {
 public:
@@ -26,12 +27,15 @@ public:
     ~OH_PhotoNative();
 
     Camera_ErrorCode GetMainImage(OH_ImageNative** mainImage);
+    Camera_ErrorCode GetPicture(OH_PictureNative** picture);
 
     void SetMainImage(const std::shared_ptr<OHOS::Media::NativeImage> &mainImage);
     void SetRawImage(const std::shared_ptr<OHOS::Media::NativeImage> &rawImage);
+    void SetPicture(const std::shared_ptr<OHOS::Media::Picture> &picture);
 
 private:
     std::shared_ptr<OHOS::Media::NativeImage> mainImage_ = nullptr;
     std::shared_ptr<OHOS::Media::NativeImage> rawImage_ = nullptr;
+    std::shared_ptr<OHOS::Media::Picture> picture_ = nullptr;
 };
 #endif // OHOS_PHOTO_NATIVE_IMPL_H

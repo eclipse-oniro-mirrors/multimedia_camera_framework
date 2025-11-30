@@ -24,6 +24,7 @@
 #include "camera_manager.h"
 #include "camera_output_capability.h"
 #include "camera_util.h"
+#include "camera_security_utils.h"
 #include "capture_scene_const.h"
 #include "input/camera_device.h"
 #include "session/capture_session.h"
@@ -785,6 +786,10 @@ int32_t PhotoOutput::Capture(std::shared_ptr<PhotoCaptureSetting> photoCaptureSe
     // LCOV_EXCL_START
     CHECK_RETURN_RET_ELOG(GetStream() == nullptr,
         CameraErrorCode::SERVICE_FATL_ERROR, "PhotoOutput Failed to Capture with setting, GetStream is nullptr");
+    bool isSystemCapture = CameraSecurity::CheckSystemApp();
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metaData = photoCaptureSettings->GetCaptureMetadataSetting();
+    bool result = AddOrUpdateMetadata(metaData, OHOS_CONTROL_SYSTEM_CAPTURE, &isSystemCapture, 1);
+    MEDIA_INFO_LOG("AddOrUpdateMetadata isSystemCapture: %{public}d, result: %{public}d", isSystemCapture, result);
     defaultCaptureSetting_ = photoCaptureSettings;
     auto itemStream = CastStream<IStreamCapture>(GetStream());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;

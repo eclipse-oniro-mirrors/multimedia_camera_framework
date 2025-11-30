@@ -54,8 +54,10 @@ int32_t DeferredPhotoProcessor::Initialize()
     return DP_OK;
 }
 
-void DeferredPhotoProcessor::AddImage(const std::string& imageId, bool discardable, DpsMetadata& metadata)
+void DeferredPhotoProcessor::AddImage(const std::string& imageId, bool discardable, DpsMetadata& metadata,
+    const std::string& bundleName)
 {
+    DP_CHECK_EXECUTE(postProcessor_, postProcessor_->SetProcessBundleNameResult(bundleName));
     bool isProcess = ProcessCatchResults(imageId);
     DP_CHECK_RETURN(isProcess);
     repository_->AddDeferredJob(imageId, discardable, metadata);
