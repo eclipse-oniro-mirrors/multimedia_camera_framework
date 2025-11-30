@@ -15,9 +15,31 @@
 #include "photo_asset_proxy.h"
 #include "camera_log.h"
 #include "photo_proxy.h"
+#include "iservice_registry.h"
+#include "bundle_mgr_interface.h"
+#include "system_ability_definition.h"
+
 namespace OHOS {
 namespace CameraStandard {
-typedef PhotoAssetIntf* (*CreatePhotoAssetIntf)(int32_t, int32_t, uint32_t);
+typedef PhotoAssetIntf* (*CreatePhotoAssetIntf)(int32_t, int32_t, uint32_t, std::string);
+
+std::string PhotoAssetProxy::GetBundleName(int32_t callingUid)
+{
+    std::string bundleName = "";
+    OHOS::sptr<OHOS::ISystemAbilityManager> samgr =
+            OHOS::SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    CHECK_RETURN_RET_ELOG(samgr == nullptr, bundleName, "GetClientBundle Get ability manager failed");
+    OHOS::sptr<OHOS::IRemoteObject> remoteObject =
+            samgr->GetSystemAbility(BUNDLE_MGR_SERVICE_SYS_ABILITY_ID);
+    CHECK_RETURN_RET_ELOG(remoteObject == nullptr, bundleName, "GetClientBundle object is NULL.");
+    sptr<AppExecFwk::IBundleMgr> bms = OHOS::iface_cast<AppExecFwk::IBundleMgr>(remoteObject);
+    CHECK_RETURN_RET_ELOG(bms == nullptr, bundleName, "GetClientBundle bundle manager service is NULL.");
+    auto ret = bms->GetNameForUid(callingUid, bundleName);
+    CHECK_RETURN_RET_ELOG(ret != ERR_OK, bundleName, "GetBundleInfoForSelf failed.");
+    MEDIA_INFO_LOG("bundleName: [%{public}s]", bundleName.c_str());
+    return bundleName;
+}
+
 std::shared_ptr<PhotoAssetProxy> PhotoAssetProxy::GetPhotoAssetProxy(
     int32_t shootType, int32_t callingUid, uint32_t callingTokenID)
 {
@@ -28,7 +50,9 @@ std::shared_ptr<PhotoAssetProxy> PhotoAssetProxy::GetPhotoAssetProxy(
     CreatePhotoAssetIntf createPhotoAssetIntf = (CreatePhotoAssetIntf)dynamiclib->GetFunction("createPhotoAssetIntf");
     CHECK_RETURN_RET_COMM_ELOG(
         createPhotoAssetIntf == nullptr, nullptr, "PhotoAssetProxy::GetPhotoAssetProxy get createPhotoAssetIntf fail");
-    PhotoAssetIntf* photoAssetIntf = createPhotoAssetIntf(shootType, callingUid, callingTokenID);
+    std::string bundleName = GetBundleName(callingUid);
+    COMM_INFO_LOG("GetPhotoAssetProxy bundleName:%{public}s", bundleName.c_str());
+    PhotoAssetIntf* photoAssetIntf = createPhotoAssetIntf(shootType, callingUid, callingTokenID, bundleName);
     CHECK_RETURN_RET_COMM_ELOG(
         photoAssetIntf == nullptr, nullptr, "PhotoAssetProxy::GetPhotoAssetProxy get photoAssetIntf fail");
     std::shared_ptr<PhotoAssetProxy> photoAssetProxy =
@@ -75,6 +99,22 @@ int32_t PhotoAssetProxy::GetUserId()
 {
     CHECK_RETURN_RET_ELOG(photoAssetIntf_ == nullptr, -1, "PhotoAssetProxy::GetUserId photoAssetIntf_ is null");
     return photoAssetIntf_->GetUserId();
+}
+
+void PhotoAssetProxy::RegisterPhotoStateCallback(const std::function<void(int32_t)> &callback)
+{
+    MEDIA_DEBUG_LOG("PhotoAssetProxy::RegisterPhotoStateCallback is called");
+    CHECK_RETURN_ELOG(
+        photoAssetIntf_ == nullptr, "PhotoAssetProxy::RegisterPhotoStateCallback photoAssetIntf_ is null");
+    photoAssetIntf_->RegisterPhotoStateCallback(callback);
+}
+
+void PhotoAssetProxy::UnregisterPhotoStateCallback()
+{
+    MEDIA_DEBUG_LOG("PhotoAssetProxy::UnregisterPhotoStateCallback is called");
+    CHECK_RETURN_ELOG(
+        photoAssetIntf_ == nullptr, "PhotoAssetProxy::UnregisterPhotoStateCallback photoAssetIntf_ is null");
+    photoAssetIntf_->UnregisterPhotoStateCallback();
 }
 // LCOV_EXCL_STOP
 } // namespace CameraStandard

@@ -86,10 +86,17 @@ int32_t HStreamCapturePhotoCallbackImpl::OnPhotoAvailable(
     auto callback = photoOutput->GetAppPhotoCallback();
     CHECK_RETURN_RET_ELOG(
         callback == nullptr, CAMERA_OK, "HStreamCapturePhotoCallbackImpl::OnPhotoAvailable callback is nullptr");
-    std::shared_ptr<CameraBufferProcessor> bufferProcessor;
-    std::shared_ptr<Media::NativeImage> image =
-        std::make_shared<Media::NativeImage>(surfaceBuffer, bufferProcessor, timestamp);
-    callback->OnPhotoAvailable(image, isRaw);
+    CHECK_RETURN_RET_ELOG(surfaceBuffer == nullptr, CAMERA_OK,
+        "HStreamCapturePhotoCallbackImpl::OnPhotoAvailable surfaceBuffer is nullptr");
+    if (surfaceBuffer->GetFormat() == GRAPHIC_PIXEL_FMT_YCRCB_420_SP) {
+        std::unique_ptr<Media::Picture> picture = Media::Picture::Create(surfaceBuffer);
+        callback->OnPhotoAvailable(std::move(picture));
+    } else {
+        std::shared_ptr<CameraBufferProcessor> bufferProcessor;
+        std::shared_ptr<Media::NativeImage> image =
+            std::make_shared<Media::NativeImage>(surfaceBuffer, bufferProcessor, timestamp);
+        callback->OnPhotoAvailable(image, isRaw);
+    }
     MEDIA_INFO_LOG("HStreamCapturePhotoCallbackImpl OnPhotoAvailable X");
     return CAMERA_OK;
 }
@@ -334,10 +341,15 @@ void PhotoNativeConsumer::ExecutePhotoAvailable(sptr<SurfaceBuffer> surfaceBuffe
     CHECK_RETURN_ELOG(!photoOutput, "ExecutePhotoAvailable photoOutput is null");
     auto callback = photoOutput->GetAppPhotoCallback();
     CHECK_RETURN_ELOG(callback == nullptr, "ExecutePhotoAvailable callback is nullptr");
-    std::shared_ptr<CameraBufferProcessor> bufferProcessor;
-    std::shared_ptr<Media::NativeImage> image =
-        std::make_shared<Media::NativeImage>(surfaceBuffer, bufferProcessor, timestamp);
-    callback->OnPhotoAvailable(image, false);
+    if (surfaceBuffer->GetFormat() == GRAPHIC_PIXEL_FMT_YCRCB_420_SP) {
+        std::unique_ptr<Media::Picture> picture = Media::Picture::Create(surfaceBuffer);
+        callback->OnPhotoAvailable(std::move(picture));
+    } else {
+        std::shared_ptr<CameraBufferProcessor> bufferProcessor;
+        std::shared_ptr<Media::NativeImage> image =
+            std::make_shared<Media::NativeImage>(surfaceBuffer, bufferProcessor, timestamp);
+        callback->OnPhotoAvailable(image, false);
+    }
     MEDIA_INFO_LOG("PN_ExecutePhotoAvailable X");
 }
 

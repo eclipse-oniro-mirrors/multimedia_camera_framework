@@ -42,13 +42,14 @@ class AddPhotoCommand : public PhotoCommand {
     DECLARE_CMD_CLASS(AddPhotoCommand)
 public:
     AddPhotoCommand(const int32_t userId, const std::string& photoId,
-        const DpsMetadata& metadata, const bool discardable);
+        const DpsMetadata& metadata, const bool discardable, const std::string& bundleName);
 
 protected:
     int32_t Executing() override;
 
     DpsMetadata metadata_;
     const bool discardable_;
+    const std::string bundleName_;
 };
 
 class RemovePhotoCommand : public PhotoCommand {

@@ -18,6 +18,7 @@
 #include "camera_log.h"
 #include "cj_lambda.h"
 #include "ffi_remote_data.h"
+#include "picture_impl.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -139,6 +140,25 @@ void CJPhotoOutputCallback::OnPhotoAvailable(const std::shared_ptr<Media::Native
         }
         if (photoAvailableCallbackList[i] != nullptr) {
             photoAvailableCallbackList[i]->ref(image->GetID());
+        }
+    }
+}
+
+void CJPhotoOutputCallback::OnPhotoAvailable(const std::shared_ptr<Media::Picture> picture) const
+{
+    std::lock_guard<std::mutex> lock(photoAvailableMutex);
+    if (photoAvailableCallbackList.size() == 0) {
+        return;
+    }
+    for (size_t i = 0; i < photoAvailableCallbackList.size(); i++) {
+        MEDIA_INFO_LOG("OnPhotoAvailable");
+        auto pictureImpl = FFI::FFIData::Create<Media::PictureImpl>(picture);
+        if (pictureImpl == nullptr) {
+            MEDIA_ERR_LOG("Picture Create failed");
+            return;
+        }
+        if (photoAvailableCallbackList[i] != nullptr) {
+            photoAvailableCallbackList[i]->ref(pictureImpl->GetID());
         }
     }
 }

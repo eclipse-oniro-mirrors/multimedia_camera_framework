@@ -35,6 +35,7 @@ struct MetadataKeys {
     static constexpr auto EXIF_SIZE = "exifDataSize";
     static constexpr auto ROTATION_IN_IPS = "rotationInIps";
 };
+static const std::string SYSTEM_CAMERA = "com.huawei.hmos.camera";
 
 enum class PhotoFormat : int32_t {
     RGBA = 0,
@@ -106,6 +107,7 @@ public:
     void OnStateChanged(HdiStatus hdiStatus);
     void OnPhotoSessionDied();
     int32_t ProcessPictureInfoV1_3(const std::string& imageId, const HDI::Camera::V1_3::ImageBufferInfoExt& buffer);
+    void SetBundleName(const std::string& bundleName);
 
     template <typename BufferType>
     int32_t ProcessBufferInfo(const std::string& imageId, const BufferType& buffer)
@@ -160,6 +162,7 @@ private:
     }
 
     const int32_t userId_;
+    std::string bundleName_;
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

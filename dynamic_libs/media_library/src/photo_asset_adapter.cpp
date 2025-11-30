@@ -26,7 +26,8 @@ namespace OHOS {
 namespace CameraStandard {
 
 Media::MediaLibraryManager *g_mediaLibraryManager = nullptr;
-PhotoAssetAdapter::PhotoAssetAdapter(int32_t cameraShotType, int32_t uid, uint32_t callingTokenID)
+PhotoAssetAdapter::PhotoAssetAdapter(int32_t cameraShotType, int32_t uid, uint32_t callingTokenID,
+    std::string bundleName)
 {
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("PhotoAssetAdapter ctor");
@@ -46,8 +47,14 @@ PhotoAssetAdapter::PhotoAssetAdapter(int32_t cameraShotType, int32_t uid, uint32
     CHECK_PRINT_ELOG(uid <= INVALID_UID, "Get INVALID_UID UID %{public}d", uid);
     userId_ = uid / BASE_USER_RANGE;
     MEDIA_DEBUG_LOG("get uid:%{public}d, userId:%{public}d.", uid, userId_);
+    Media::PhotoAssetProxyCallerInfo callerInfo {
+        .callingUid = uid,
+        .userId = userId_,
+        .callingTokenId = callingTokenID,
+        .packageName = bundleName
+    };
     photoAssetProxy_ = g_mediaLibraryManager->CreatePhotoAssetProxy(
-        static_cast<Media::CameraShotType>(cameraShotType), uid, userId_, callingTokenID);
+        callerInfo, static_cast<Media::CameraShotType>(cameraShotType));
     CHECK_EXECUTE(!photoAssetProxy_, CameraReportUtils::GetInstance().ReportCameraCreateNullptr(
         "PhotoAssetAdapter::PhotoAssetAdapter", "Media::MediaLibraryManager::CreatePhotoAssetProxy"));
 }
@@ -89,10 +96,24 @@ void PhotoAssetAdapter::NotifyVideoSaveFinished()
 {
     CHECK_EXECUTE(photoAssetProxy_, photoAssetProxy_->NotifyVideoSaveFinished());
 }
-// LCOV_EXCL_STOP
-extern "C" PhotoAssetIntf *createPhotoAssetIntf(int32_t cameraShotType, int32_t uid, uint32_t callingTokenID)
+
+void PhotoAssetAdapter::RegisterPhotoStateCallback(const std::function<void(int32_t)> &callback)
 {
-    return new PhotoAssetAdapter(cameraShotType, uid, callingTokenID);
+    MEDIA_DEBUG_LOG("PhotoAssetAdapter::RegisterPhotoStateCallback is called");
+    CHECK_EXECUTE(photoAssetProxy_ != nullptr, photoAssetProxy_->RegisterPhotoStateCallback(callback));
+}
+
+void PhotoAssetAdapter::UnregisterPhotoStateCallback()
+{
+    MEDIA_DEBUG_LOG("PhotoAssetAdapter::UnregisterPhotoStateCallback is called");
+    CHECK_EXECUTE(photoAssetProxy_ != nullptr, photoAssetProxy_->UnregisterPhotoStateCallback());
+}
+
+// LCOV_EXCL_STOP
+extern "C" PhotoAssetIntf *createPhotoAssetIntf(int32_t cameraShotType, int32_t uid, uint32_t callingTokenID,
+    std::string bundleName)
+{
+    return new PhotoAssetAdapter(cameraShotType, uid, callingTokenID, bundleName);
 }
 
 }  // namespace AVSession

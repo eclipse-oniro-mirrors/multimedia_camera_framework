@@ -44,6 +44,27 @@ class PictureAssembler;
 namespace DeferredProcessing {
 class TaskManager;
 }
+class PhotoLevelManager {
+public:
+    static PhotoLevelManager& GetInstance()
+    {
+        static PhotoLevelManager instance;
+        return instance;
+    }
+
+    void SetPhotoLevelInfo(std::map<int32_t, bool> info);
+    bool GetPhotoLevelInfo(int32_t pictured);
+    void ClearPhotoLevelInfo();
+
+private:
+    PhotoLevelManager() = default;
+    ~PhotoLevelManager() = default;
+    PhotoLevelManager(const PhotoLevelManager&) = delete;
+    PhotoLevelManager& operator=(const PhotoLevelManager&) = delete;
+
+    std::vector<std::map<int32_t, bool>> photoLevelVec_;
+};
+
 class ConcurrentMap {
 public:
     void Insert(const int32_t& key, const std::shared_ptr<PhotoAssetIntf>& value);
@@ -123,6 +144,7 @@ public:
     int32_t CreateMediaLibraryPhotoAssetProxy(int32_t captureId);
     int32_t UpdateMediaLibraryPhotoAssetProxy(sptr<CameraServerPhotoProxy> photoProxy);
     std::shared_ptr<PhotoAssetIntf> GetPhotoAssetInstance(int32_t captureId);
+    std::shared_ptr<PhotoAssetIntf> GetPhotoAssetInstanceForPub(int32_t captureId);
     bool GetAddPhotoProxyEnabled();
     int32_t AcquireBufferToPrepareProxy(int32_t captureId);
     int32_t EnableOfflinePhoto(bool isEnable) override;

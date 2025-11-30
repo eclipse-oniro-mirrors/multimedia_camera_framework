@@ -46,8 +46,8 @@ int32_t PhotoCommand::Initialize()
 }
 
 AddPhotoCommand::AddPhotoCommand(const int32_t userId, const std::string& photoId, const DpsMetadata& metadata,
-    bool discardable)
-    : PhotoCommand(userId, photoId), metadata_(metadata), discardable_(discardable)
+    bool discardable, const std::string& bundleName)
+    : PhotoCommand(userId, photoId), metadata_(metadata), discardable_(discardable), bundleName_(bundleName)
 {
     DP_DEBUG_LOG("AddPhotoCommand, photoId: %{public}s, discardable: %{public}d", photoId_.c_str(), discardable_);
 }
@@ -59,7 +59,7 @@ int32_t AddPhotoCommand::Executing()
         return ret;
     }
 
-    processor_->AddImage(photoId_, discardable_, metadata_);
+    processor_->AddImage(photoId_, discardable_, metadata_, bundleName_);
     return DP_OK;
 }
 

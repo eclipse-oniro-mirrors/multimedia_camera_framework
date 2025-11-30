@@ -31,7 +31,8 @@ public:
     ~DeferredPhotoProcessor();
 
     int32_t Initialize() override;
-    void AddImage(const std::string& imageId, bool discardable, DpsMetadata& metadata);
+    void AddImage(const std::string& imageId, bool discardable, DpsMetadata& metadata,
+        const std::string& bundleName = "");
     void RemoveImage(const std::string& imageId, bool restorable);
     void RestoreImage(const std::string& imageId);
     void ProcessImage(const std::string& appName, const std::string& imageId);

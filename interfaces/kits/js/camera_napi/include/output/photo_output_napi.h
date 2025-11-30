@@ -67,8 +67,10 @@ struct CallbackInfo {
     int32_t errorCode;
     int32_t duration;
     std::shared_ptr<Media::NativeImage> nativeImage;
+    std::shared_ptr<Media::Picture> picture;
     std::shared_ptr<Media::PixelMap> pixelMap;
     bool isRaw = false;
+    bool isYuv = false;
     std::string uri;
     int32_t cameraShotType;
     std::string burstKey;
@@ -147,6 +149,7 @@ public:
     void OnOfflineDeliveryFinished(const int32_t captureId) const override;
     void OnPhotoAvailable(
         const std::shared_ptr<Media::NativeImage> nativeImage, const bool isRaw = false) const override;
+    void OnPhotoAvailable(const std::shared_ptr<Media::Picture> picture) const override;
     void OnPhotoAssetAvailable(const int32_t captureId, const std::string &uri, const int32_t cameraShotType,
         const std::string &burstKey) const override;
     void OnThumbnailAvailable(const WatermarkInfo &watermarkInfo,

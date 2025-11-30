@@ -30,6 +30,8 @@ public:
     virtual void NotifyVideoSaveFinished();
     virtual int32_t GetUserId();
     virtual ~PhotoAssetIntf() = default;
+    virtual void RegisterPhotoStateCallback(const std::function<void(int32_t)> &callback);
+    virtual void UnregisterPhotoStateCallback();
 };
 } // namespace OHOS::CameraStandard
 #endif

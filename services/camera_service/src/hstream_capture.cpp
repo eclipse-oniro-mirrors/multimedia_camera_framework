@@ -571,6 +571,27 @@ int32_t HStreamCapture::CheckBurstCapture(const std::shared_ptr<OHOS::Camera::Ca
     return CAM_META_SUCCESS;
 }
 
+void PhotoLevelManager::SetPhotoLevelInfo(std::map<int32_t, bool> info)
+{
+    photoLevelVec_.push_back(info);
+}
+
+bool PhotoLevelManager::GetPhotoLevelInfo(int32_t pictureId)
+{
+    for (const auto& map : photoLevelVec_) {
+        auto it = map.find(pictureId);
+        if (it != map.end()) {
+            return it->second;
+        }
+    }
+    return false;
+}
+
+void PhotoLevelManager::ClearPhotoLevelInfo()
+{
+    photoLevelVec_.clear();
+}
+
 void ConcurrentMap::Insert(const int32_t& key, const std::shared_ptr<PhotoAssetIntf>& value)
 {
     std::lock_guard<std::mutex> lock(map_mutex_);
@@ -661,6 +682,7 @@ void ConcurrentMap::Release()
     mutexes_.clear();
     cv_.clear();
     step_.clear();
+    PhotoLevelManager::GetInstance().ClearPhotoLevelInfo();
 }
 
 int32_t HStreamCapture::CreateMediaLibraryPhotoAssetProxy(int32_t captureId)
@@ -689,6 +711,19 @@ std::shared_ptr<PhotoAssetIntf> HStreamCapture::GetPhotoAssetInstance(int32_t ca
 {
     CAMERA_SYNC_TRACE;
     const int32_t getPhotoAssetStep = 2;
+    if (!photoAssetProxy_.WaitForUnlock(captureId, getPhotoAssetStep, GetMode(), std::chrono::seconds(1))) {
+        MEDIA_ERR_LOG("GetPhotoAsset faild wait timeout, captureId:%{public}d", captureId);
+        return nullptr;
+    }
+    std::shared_ptr<PhotoAssetIntf> proxy = photoAssetProxy_.Get(captureId);
+    photoAssetProxy_.Erase(captureId);
+    return proxy;
+}
+
+std::shared_ptr<PhotoAssetIntf> HStreamCapture::GetPhotoAssetInstanceForPub(int32_t captureId)
+{
+    CAMERA_SYNC_TRACE;
+    const int32_t getPhotoAssetStep = 1;
     if (!photoAssetProxy_.WaitForUnlock(captureId, getPhotoAssetStep, GetMode(), std::chrono::seconds(1))) {
         MEDIA_ERR_LOG("GetPhotoAsset faild wait timeout, captureId:%{public}d", captureId);
         return nullptr;
@@ -802,6 +837,11 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
         isCaptureReady_ = false;
     }
     if (photoAssetAvaiableCallback_ != nullptr && !isBursting_) {
+        bool isSystemApp = CheckSystemApp();
+        std::map<int32_t, bool> photoLevelInfo = { {preparedCaptureId, isSystemApp} };
+        PhotoLevelManager::GetInstance().SetPhotoLevelInfo(photoLevelInfo);
+        MEDIA_INFO_LOG("HStreamCapture::Capture SetPhotoLevelInfo captureId:%{public}d isSystemApp:%{public}d",
+            preparedCaptureId, isSystemApp);
         MEDIA_DEBUG_LOG("HStreamCapture::Capture CreateMediaLibraryPhotoAssetProxy E");
         CHECK_PRINT_ELOG(CreateMediaLibraryPhotoAssetProxy(preparedCaptureId) != CAMERA_OK,
             "HStreamCapture::Capture Failed with CreateMediaLibraryPhotoAssetProxy");
