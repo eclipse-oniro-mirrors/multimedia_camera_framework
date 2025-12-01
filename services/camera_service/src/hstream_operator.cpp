@@ -404,6 +404,16 @@ bool HStreamOperator::GetDeviceAbilityByMeta(uint32_t item, camera_metadata_item
     return true;
 }
 
+bool HStreamOperator::GetDeviceCachedSettingByMeta(uint32_t item, camera_metadata_item_t* metadataItem)
+{
+    CHECK_RETURN_RET_ELOG(cameraDevice_ == nullptr, false, "cameraDevice is nullptr.");
+    auto ability = cameraDevice_->CloneCachedSettings();
+    CHECK_RETURN_RET(ability == nullptr, false);
+    int ret = OHOS::Camera::FindCameraMetadataItem(ability->get(), item, metadataItem);
+    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS, false, "get ability failed.");
+    return true;
+}
+
 int32_t HStreamOperator::LinkInputAndOutputs(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings,
     int32_t opMode)
 {
