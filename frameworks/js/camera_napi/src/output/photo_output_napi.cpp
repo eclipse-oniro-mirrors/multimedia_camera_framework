@@ -162,6 +162,7 @@ static bool g_isSemInited;
 static std::mutex g_photoImageMutex;
 static std::mutex g_assembleImageMutex;
 static int32_t g_captureId;
+static const int64_t g_expoTimeUnit = 1000000000;
 
 void FillNapiObjectWithCaptureId(napi_env env, int32_t captureId, napi_value &photoAsset)
 {
@@ -236,7 +237,8 @@ void FillPixelMapWithCaptureIdAndTimestamp(napi_env env, WatermarkInfo watermark
     napi_create_int64(env, watermarkInfo.timestamp, &propertyValue);
     napi_set_property(env, pixelMapNapi, propertyName, propertyValue);
     napi_create_string_utf8(env, "expoTime", NAPI_AUTO_LENGTH, &propertyName);
-    napi_create_int64(env, watermarkInfo.expoTime, &propertyValue);
+    std::string expoTimeStr = CameraNapiUtils::TransFractionString(watermarkInfo.expoTime, g_expoTimeUnit);
+    napi_create_string_utf8(env, expoTimeStr.c_str(), NAPI_AUTO_LENGTH, &propertyValue);
     napi_set_property(env, pixelMapNapi, propertyName, propertyValue);
     napi_create_string_utf8(env, "expoIso", NAPI_AUTO_LENGTH, &propertyName);
     napi_create_int32(env, watermarkInfo.expoIso, &propertyValue);
@@ -250,8 +252,8 @@ void FillPixelMapWithCaptureIdAndTimestamp(napi_env env, WatermarkInfo watermark
     napi_create_string_utf8(env, "captureTime", NAPI_AUTO_LENGTH, &propertyName);
     napi_create_int64(env, watermarkInfo.captureTime, &propertyValue);
     napi_set_property(env, pixelMapNapi, propertyName, propertyValue);
-    MEDIA_DEBUG_LOG("FillPixelMapWithCaptureIdAndTimestamp expoTime %{public}" PRId64 ", expoIso %{public}" PRId32
-        ", expoFNumber %{public}.1f, expoEfl %{public}.1f, captureTime %{public}" PRId64, watermarkInfo.expoTime,
+    MEDIA_DEBUG_LOG("FillPixelMapWithCaptureIdAndTimestamp expoTime %{public}s, expoIso %{public}" PRId32
+        ", expoFNumber %{public}.1f, expoEfl %{public}.1f, captureTime %{public}" PRId64, expoTimeStr.c_str(),
         watermarkInfo.expoIso, watermarkInfo.expoFNumber, watermarkInfo.expoEfl, watermarkInfo.captureTime);
 }
 
