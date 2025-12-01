@@ -189,7 +189,7 @@ int32_t HStreamCaptureThumbnailCallbackImpl::OnThumbnailAvailable(sptr<SurfaceBu
     MEDIA_INFO_LOG("OnThumbnailAvailable width:%{public}d, height: %{public}d, captureId: %{public}d,"
         "burstSeqId: %{public}d", thumbnailWidth, thumbnailHeight, captureId, burstSeqId);
     MEDIA_DEBUG_LOG("OnThumbnailAvailable expoTime:%{public}" PRId64 ", expoIso: %{public}" PRId32
-        ",expoFNumber: %{public}.1f, expoEfl: %{public}.1f, captureTime: %{public}" PRId64,
+        ",expoFNumber: %{public}f, expoEfl: %{public}f, captureTime: %{public}" PRId64,
         expoTime, expoIso, expoFNumber, expoEfl, captureTime);
     OHOS::ColorManager::ColorSpaceName colorSpace = GetColorSpace(surfaceBuffer);
     CHECK_RETURN_RET_ELOG(colorSpace == OHOS::ColorManager::ColorSpaceName::NONE, CAMERA_OK,

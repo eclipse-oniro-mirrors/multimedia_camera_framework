@@ -213,6 +213,8 @@ public:
     static std::string GetErrorMessage(int32_t errorCode);
 
     static bool ParseCameraTypesArray(napi_env env, napi_value typesValue, std::vector<CameraType>& outTypes);
+
+    static std::string TransFractionString(int64_t minNum, int64_t maxNum);
 private:
     explicit CameraNapiUtils() {};
 

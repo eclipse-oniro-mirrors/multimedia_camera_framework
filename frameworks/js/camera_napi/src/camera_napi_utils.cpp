@@ -14,6 +14,7 @@
  */
 
 #include <map>
+#include <numeric>
 #include "camera_napi_utils.h"
 #include "camera_error_code.h"
 #include "camera_log.h"
@@ -514,6 +515,19 @@ bool CameraNapiUtils::ParseCameraTypesArray(napi_env env, napi_value typesValue,
         outTypes.emplace_back(static_cast<CameraType>(typeInt));
     }
     return true;
+}
+
+std::string CameraNapiUtils::TransFractionString(int64_t minNum, int64_t maxNum)
+{
+    CHECK_RETURN_RET(minNum == 0, "");
+    int64_t numerator = 1;
+    int64_t denominator = maxNum / minNum;
+
+    if (denominator < 0) {
+        numerator = -numerator;
+        denominator = -denominator;
+    }
+    return std::to_string(numerator) + "/" + std::to_string(denominator);
 }
 
 } // namespace CameraStandard
