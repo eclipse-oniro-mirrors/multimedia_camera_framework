@@ -269,7 +269,7 @@ int32_t HCameraDevice::GetCameraConnectType()
 std::string HCameraDevice::GetClientName()
 {
     std::lock_guard<std::mutex> lock(clientNameMutex_);
-    if (clientName_ == "") {
+    if (clientName_ == "" || clientName_ == "unknown") {
         int tokenId = static_cast<int32_t>(IPCSkeleton::GetCallingTokenID());
         clientName_ = GetClientNameByToken(tokenId);
     }
