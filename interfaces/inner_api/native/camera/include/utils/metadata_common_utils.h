@@ -46,28 +46,28 @@ private:
 								    std::vector<sptr<MetadataObject>> &metaObjects,
 									bool isNeedMirror, bool isNeedFlip, RectBoxType rectBoxType);
 
-    static void ProcessBaseInfo(MetadataObjectFactory &factory, const camera_metadata_item_t &metadataItem,
+    static void ProcessBaseInfo(sptr<MetadataObjectFactory> factoryPtr, const camera_metadata_item_t &metadataItem,
                                         int32_t &index, MetadataObjectType typeFromHal, bool isNeedMirror,
                                         bool isNeedFlip, RectBoxType rectBoxType);
 
-    static void ProcessExternInfo(MetadataObjectFactory &factory,
+    static void ProcessExternInfo(sptr<MetadataObjectFactory> factoryPtr,
                                         const camera_metadata_item_t &metadataItem, int32_t &index,
                                         MetadataObjectType typeFromHal, bool isNeedMirror, bool isNeedFlip,
                                         RectBoxType rectBoxType);
 
-    static void ProcessHumanFaceDetectInfo(MetadataObjectFactory &factory,
+    static void ProcessHumanFaceDetectInfo(sptr<MetadataObjectFactory> factoryPtr,
                                                     const camera_metadata_item_t &metadataItem, int32_t &index,
                                                     bool isNeedMirror, bool isNeedFlip, RectBoxType rectBoxType);
 
-    static void ProcessBasicHumanFaceDetectInfo(MetadataObjectFactory &factory,
+    static void ProcessBasicHumanFaceDetectInfo(sptr<MetadataObjectFactory> factoryPtr,
                                                     const camera_metadata_item_t &metadataItem, int32_t &index,
                                                     bool isNeedMirror, bool isNeedFlip, RectBoxType rectBoxType);
 
-    static void ProcessCatFaceDetectInfo(MetadataObjectFactory &factory,
+    static void ProcessCatFaceDetectInfo(sptr<MetadataObjectFactory> factoryPtr,
                                                 const camera_metadata_item_t &metadataItem, int32_t &index,
                                                 bool isNeedMirror, bool isNeedFlip, RectBoxType rectBoxType);
 
-    static void ProcessDogFaceDetectInfo(MetadataObjectFactory &factory,
+    static void ProcessDogFaceDetectInfo(sptr<MetadataObjectFactory> factoryPtr,
                                                 const camera_metadata_item_t &metadataItem, int32_t &index,
                                                 bool isNeedMirror, bool isNeedFlip, RectBoxType rectBoxType);
 

@@ -107,8 +107,7 @@ void MetadataOutputFuzzer::MetadataOutputFuzzTest1(FuzzedDataProvider& fdp)
     auto object = callback.AsObject();
     sptr<IStreamMetadata> streamMetadata = iface_cast<IStreamMetadata>(object);
     sptr<IConsumerSurface> surface = IConsumerSurface::Create();
-    sptr<MetadataObjectFactory> factoryPtr = MetadataObjectFactory::GetInstance();
-    sptr<MetadataObjectFactory> factoryPtr_2 = MetadataObjectFactory::GetInstance();
+    sptr<MetadataObjectFactory> factoryPtr = new MetadataObjectFactory();
     std::shared_ptr<OHOS::Camera::CameraMetadata> result = nullptr;
     std::vector<sptr<MetadataObject>> metaObjects = {};
     bool isNeedMirror = fdp.ConsumeBool();

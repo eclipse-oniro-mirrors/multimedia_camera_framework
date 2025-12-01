@@ -610,8 +610,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_014, TestSize.Level1
     session->CommitConfig();
     session->Start();
 
-    sptr<MetadataObjectFactory> factoryPtr = MetadataObjectFactory::GetInstance();
-    sptr<MetadataObjectFactory> factoryPtr_2 = MetadataObjectFactory::GetInstance();
+    sptr<MetadataObjectFactory> factoryPtr = new MetadataObjectFactory();
     std::shared_ptr<OHOS::Camera::CameraMetadata> result = session->GetMetadata();
     int32_t format = OHOS_CAMERA_FORMAT_YCRCB_420_SP;
     result->addEntry(OHOS_ABILITY_CAMERA_MODES, &format, 1);
