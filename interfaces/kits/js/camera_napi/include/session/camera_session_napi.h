@@ -32,6 +32,28 @@ namespace OHOS {
 namespace CameraStandard {
 static const char CAMERA_SESSION_NAPI_CLASS_NAME[] = "CaptureSession";
 
+class IsoInfoCallbackListener : public IsoInfoCallback, public ListenerBase,
+    public IsoInfoSyncCallback, public std::enable_shared_from_this<IsoInfoCallbackListener> {
+public:
+    IsoInfoCallbackListener(napi_env env) : ListenerBase(env) {}
+    ~IsoInfoCallbackListener() = default;
+    void OnIsoInfoChanged(IsoInfo info) override;
+    void OnIsoInfoChangedSync(IsoInfo info) override;
+
+private:
+    void OnIsoInfoChangedCallback(IsoInfo info) const;
+    void OnIsoInfoChangedCallbackOneArg(IsoInfo info) const;
+    
+    void OnIsoInfoChangedCallbackAsync(IsoInfo info, bool isSync) const;
+};
+
+struct IsoInfoChangedCallback {
+    IsoInfo info_;
+    weak_ptr<const IsoInfoCallbackListener> listener_;
+    IsoInfoChangedCallback(IsoInfo info, shared_ptr<const IsoInfoCallbackListener> listener)
+        : info_(info), listener_(listener) {}
+};
+
 class ExposureCallbackListener : public ExposureCallback, public ListenerBase,
     public std::enable_shared_from_this<ExposureCallbackListener> {
 public:
@@ -345,9 +367,12 @@ public:
     static napi_value SetUsage(napi_env env, napi_callback_info info);
     static napi_value IsAutoDeviceSwitchSupported(napi_env env, napi_callback_info info);
     static napi_value EnableAutoDeviceSwitch(napi_env env, napi_callback_info info);
+    static napi_value OnIsoInfoChange(napi_env env, napi_callback_info info);
+    static napi_value OffIsoInfoChange(napi_env env, napi_callback_info info);
 
     napi_env env_;
     sptr<CaptureSession> cameraSession_;
+    std::shared_ptr<IsoInfoCallbackListener> isoInfoCallback_ = nullptr;
     std::shared_ptr<FocusCallbackListener> focusCallback_;
     std::shared_ptr<SessionCallbackListener> sessionCallback_;
     std::shared_ptr<PressureCallbackListener> pressureCallback_;
@@ -384,6 +409,7 @@ public:
     static const std::vector<napi_property_descriptor> white_balance_props;
     static const std::vector<napi_property_descriptor> auto_switch_props;
     static const std::vector<napi_property_descriptor> quality_prioritization_props;
+    static const std::vector<napi_property_descriptor> iso_props;
     static void CommitConfigAsync(uv_work_t* work);
     static void StartAsync(uv_work_t* work);
     static void UvWorkAsyncCompleted(uv_work_t* work, int status);
@@ -392,6 +418,10 @@ private:
     static const EmitterFunctions fun_map_;
 
 protected:
+    virtual void RegisterIsoInfoCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    virtual void UnregisterIsoInfoCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args);
     void RegisterExposureCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
         const std::vector<napi_value>& args, bool isOnce);
     void UnregisterExposureCallbackListener(
@@ -457,10 +487,6 @@ protected:
     virtual void RegisterExposureInfoCallbackListener(const std::string& eventName,
         napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce) {}
     virtual void UnregisterExposureInfoCallbackListener(const std::string& eventName,
-        napi_env env, napi_value callback, const std::vector<napi_value>& args) {}
-    virtual void RegisterIsoInfoCallbackListener(const std::string& eventName,
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce) {}
-    virtual void UnregisterIsoInfoCallbackListener(const std::string& eventName,
         napi_env env, napi_value callback, const std::vector<napi_value>& args) {}
     virtual void RegisterApertureInfoCallbackListener(const std::string& eventName,
         napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce) {}

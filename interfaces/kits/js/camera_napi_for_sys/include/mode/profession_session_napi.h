@@ -40,25 +40,6 @@ struct ExposureInfoChangedCallback {
         : info_(info), listener_(listener) {}
 };
 
-class IsoInfoCallbackListener : public IsoInfoCallback, public ListenerBase,
-    public std::enable_shared_from_this<IsoInfoCallbackListener> {
-public:
-    IsoInfoCallbackListener(napi_env env) : ListenerBase(env) {}
-    ~IsoInfoCallbackListener() = default;
-    void OnIsoInfoChanged(IsoInfo info) override;
-
-private:
-    void OnIsoInfoChangedCallback(IsoInfo info) const;
-    void OnIsoInfoChangedCallbackAsync(IsoInfo info) const;
-};
-
-struct IsoInfoChangedCallback {
-    IsoInfo info_;
-    weak_ptr<const IsoInfoCallbackListener> listener_;
-    IsoInfoChangedCallback(IsoInfo info, shared_ptr<const IsoInfoCallbackListener> listener)
-        : info_(info), listener_(listener) {}
-};
-
 class ApertureInfoCallbackListener : public ApertureInfoCallback, public ListenerBase,
     public std::enable_shared_from_this<ApertureInfoCallbackListener> {
 public:

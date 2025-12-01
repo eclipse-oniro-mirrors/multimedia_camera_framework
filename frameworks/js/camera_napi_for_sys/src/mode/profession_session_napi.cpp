@@ -885,55 +885,6 @@ void ExposureInfoCallbackListener::OnExposureInfoChanged(ExposureInfo info)
     OnExposureInfoChangedCallbackAsync(info);
 }
 
-void IsoInfoCallbackListener::OnIsoInfoChangedCallbackAsync(IsoInfo info) const
-{
-    MEDIA_DEBUG_LOG("OnIsoInfoChangedCallbackAsync is called");
-    std::unique_ptr<IsoInfoChangedCallback> callback =
-        std::make_unique<IsoInfoChangedCallback>(info, shared_from_this());
-    IsoInfoChangedCallback *event = callback.get();
-    auto task = [event]() {
-        IsoInfoChangedCallback* callback = reinterpret_cast<IsoInfoChangedCallback *>(event);
-        if (callback) {
-            auto listener = callback->listener_.lock();
-            CHECK_EXECUTE(listener != nullptr, listener->OnIsoInfoChangedCallback(callback->info_));
-            delete callback;
-        }
-    };
-    std::unordered_map<std::string, std::string> params = {
-        {"isoValue", std::to_string(info.isoValue)},
-    };
-    std::string taskName =
-        CameraNapiUtils::GetTaskName("IsoInfoCallbackListener::OnIsoInfoChangedCallbackAsync", params);
-    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
-        MEDIA_ERR_LOG("IsoInfoCallbackListener::OnIsoInfoChangedCallbackAsync failed to execute work");
-    } else {
-        callback.release();
-    }
-}
-
-void IsoInfoCallbackListener::OnIsoInfoChangedCallback(IsoInfo info) const
-{
-    MEDIA_DEBUG_LOG("OnIsoInfoChangedCallback is called");
-
-    ExecuteCallbackScopeSafe("isoInfoChange", [&]() {
-        napi_value callbackObj;
-        napi_value value;
-        napi_value errCode;
-
-        napi_create_object(env_, &callbackObj);
-        napi_create_int32(env_, CameraNapiUtils::FloatToDouble(info.isoValue), &value);
-        napi_set_named_property(env_, callbackObj, "iso", value);
-        errCode = CameraNapiUtils::GetUndefinedValue(env_);
-        return ExecuteCallbackData(env_, errCode, callbackObj);
-    });
-}
-
-void IsoInfoCallbackListener::OnIsoInfoChanged(IsoInfo info)
-{
-    MEDIA_DEBUG_LOG("OnIsoInfoChanged is called, info: %{public}d", info.isoValue);
-    OnIsoInfoChangedCallbackAsync(info);
-}
-
 void ApertureInfoCallbackListener::OnApertureInfoChangedCallbackAsync(ApertureInfo info) const
 {
     MEDIA_DEBUG_LOG("OnApertureInfoChangedCallbackAsync is called");

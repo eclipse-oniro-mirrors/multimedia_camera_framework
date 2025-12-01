@@ -211,6 +211,26 @@ private:
     OH_CaptureSession_OnMacroStatusChange macroStatusCallback_ = nullptr;
 };
 
+class InnerCaptureSessionIsoInfoCallback : public IsoInfoSyncCallback {
+public:
+    InnerCaptureSessionIsoInfoCallback(Camera_CaptureSession* captureSession,
+        OH_CaptureSession_OnIsoChange isoInfoCallback)
+        : captureSession_(captureSession), isoInfoCallback_(isoInfoCallback) {};
+    ~InnerCaptureSessionIsoInfoCallback() = default;
+
+    void OnIsoInfoChangedSync(IsoInfo info) override
+    {
+        MEDIA_DEBUG_LOG("OnIsoInfoChangedSync is called!");
+        CHECK_RETURN(captureSession_ == nullptr || isoInfoCallback_ == nullptr);
+        uint32_t isoValue = info.isoValue;
+        isoInfoCallback_(captureSession_, isoValue);
+    }
+
+private:
+    Camera_CaptureSession* captureSession_;
+    OH_CaptureSession_OnIsoChange isoInfoCallback_ = nullptr;
+};
+
 bool IsCurrentModeInList(OHOS::sptr<CaptureSession> innerCaptureSession, const std::vector<SceneMode> modes)
 {
     CHECK_RETURN_RET(innerCaptureSession == nullptr, false);
@@ -1081,5 +1101,31 @@ Camera_ErrorCode Camera_CaptureSession::UnregisterMacroStatusCallback(
 {
     MEDIA_INFO_LOG("Camera_CaptureSession::UnregisterMacroStatusCallback");
     innerCaptureSession_->SetMacroStatusCallback(nullptr);
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_CaptureSession::RegisterIsoInfoCallback(
+    OH_CaptureSession_OnIsoChange isoInfoChange)
+{
+    CHECK_RETURN_RET_ELOG(innerCaptureSession_->GetMode() != VIDEO, CAMERA_OPERATION_NOT_ALLOWED,
+                          "IsoInfo listening is only available for video mode");
+    shared_ptr<InnerCaptureSessionIsoInfoCallback> innerIsoInfoCallback =
+        make_shared<InnerCaptureSessionIsoInfoCallback>(this, isoInfoChange);
+    CHECK_RETURN_RET_ELOG(
+        innerIsoInfoCallback == nullptr, CAMERA_SERVICE_FATAL_ERROR, "create innerCallback failed!");
+    innerCaptureSession_->SetIsoInfoCallback(innerIsoInfoCallback);
+    IsoInfo info{innerCaptureSession_->GetIsoValue()};
+    CHECK_EXECUTE(info.isoValue != 0, innerIsoInfoCallback->OnIsoInfoChangedSync(info));
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_CaptureSession::UnregisterIsoInfoCallback(
+    OH_CaptureSession_OnIsoChange isoInfoChange)
+{
+    CHECK_RETURN_RET_ELOG(innerCaptureSession_->GetMode() != VIDEO,
+                          CAMERA_OPERATION_NOT_ALLOWED,
+                          "IsoInfo listening is only available for video mode");
+    MEDIA_INFO_LOG("Camera_CaptureSession::UnregisterIsoInfoCallback");
+    innerCaptureSession_->SetIsoInfoCallback(nullptr);
     return CAMERA_OK;
 }
