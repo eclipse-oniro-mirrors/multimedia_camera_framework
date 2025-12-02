@@ -2716,8 +2716,8 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_091, Test
     int32_t retCode = cameraManager_->CreateCameraDevice(camera->GetID(), &deviceObj);
     ASSERT_EQ(retCode, CAMERA_OK);
     std::string originCameraId = camera->GetID();
-    EXPECT_NE(originCameraId, "");
     cameraManager_->SetCameraIdTransform(deviceObj, originCameraId);
+    EXPECT_NE(originCameraId, "");
 }
 
 /*
@@ -2735,9 +2735,8 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_092, Test
     sptr<ICameraDeviceService> deviceObj = nullptr;
     auto camera = cameras[0];
     std::string originCameraId = camera->GetID();
-    EXPECT_NE(originCameraId, "");
     cameraManager_->SetCameraIdTransform(deviceObj, originCameraId);
-}
+    EXPECT_NE(originCameraId, "");
 }
 }
 }
