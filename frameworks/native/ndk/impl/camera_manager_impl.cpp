@@ -946,6 +946,7 @@ Camera_ErrorCode Camera_Manager::GetCameraDevices(Camera_DeviceQueryInfo* device
     }
     outArray[outSize].cameraId = nullptr;
     *cameraSize = outSize;
+    cameraDevicesSize_ = outSize;
     *cameras = outArray;
     MEDIA_DEBUG_LOG("Camera_Manager::GetCameraDevices success, outSize = %{public}u", outSize);
     return CAMERA_OK;
@@ -954,10 +955,14 @@ Camera_ErrorCode Camera_Manager::GetCameraDevices(Camera_DeviceQueryInfo* device
 Camera_ErrorCode Camera_Manager::DeleteCameraDevices(Camera_Device* cameras)
 {
     MEDIA_DEBUG_LOG("Camera_Manager::DeleteCameraDevices is called");
-    uint32_t i = 0;
-    while (cameras[i].cameraId != nullptr) {
-        free(cameras[i].cameraId);
-        i++;
+    CHECK_RETURN_RET_ELOG(cameraDevicesSize_ == 0, CAMERA_INVALID_ARGUMENT,
+        "Camera_Manager::DeleteCameraDevices error, size is Invalid!");
+    CHECK_RETURN_RET_ELOG(cameras == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Camera_Manager::DeleteCameraDevices error, cameras is nullptr!");
+    for (size_t index = 0; index < cameraDevicesSize_; index++) {
+        if (&cameras[index] != nullptr) {
+            free(cameras[index].cameraId);
+        }
     }
     delete[] cameras;
     return CAMERA_OK;

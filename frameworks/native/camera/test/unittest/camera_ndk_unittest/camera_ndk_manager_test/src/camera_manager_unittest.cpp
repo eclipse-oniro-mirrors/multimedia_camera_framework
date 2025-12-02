@@ -1485,6 +1485,7 @@ HWTEST_F(CameraManagerUnitTest, camera_manager_getcameradevices_001, TestSize.Le
     ret = OH_CameraManager_DeleteCameraDevices(cameraManager, cameras);
     EXPECT_EQ(ret, CAMERA_OK);
     cameras = nullptr;
+    delete[] types;
 }
 
 /*
@@ -1523,6 +1524,7 @@ HWTEST_F(CameraManagerUnitTest, camera_manager_getcameradevices_002, TestSize.Le
 
     ret = OH_CameraManager_GetCameraDevices(cameraManager, &queryInfo, &cameraSize, nullptr);
     EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    delete[] types;
 }
 
 /*
@@ -1551,6 +1553,7 @@ HWTEST_F(CameraManagerUnitTest, camera_manager_getcameradevices_003, TestSize.Le
 
     Camera_ErrorCode ret = OH_CameraManager_GetCameraDevices(cameraManager, &queryInfo, &cameraSize, &cameras);
     EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    delete[] types;
 }
 
 /*
@@ -1578,6 +1581,7 @@ HWTEST_F(CameraManagerUnitTest, camera_manager_getcameradevices_004, TestSize.Le
 
     Camera_ErrorCode ret = OH_CameraManager_GetCameraDevices(cameraManager, &queryInfo, &cameraSize, &cameras);
     EXPECT_EQ(ret, CAMERA_SERVICE_FATAL_ERROR);
+    delete[] types;
 }
 
 /*
