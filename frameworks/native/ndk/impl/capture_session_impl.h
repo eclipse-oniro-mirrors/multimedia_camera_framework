@@ -203,6 +203,9 @@ public:
 
     Camera_ErrorCode UnregisterMacroStatusCallback(OH_CaptureSession_OnMacroStatusChange controlMacroStatusChange);
 
+    Camera_ErrorCode RegisterIsoInfoCallback(OH_CaptureSession_OnIsoChange isoInfoChange);
+
+    Camera_ErrorCode UnregisterIsoInfoCallback(OH_CaptureSession_OnIsoChange isoInfoChange);
 private:
     OHOS::sptr<OHOS::CameraStandard::CaptureSession> innerCaptureSession_;
 };

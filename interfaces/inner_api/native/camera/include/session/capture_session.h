@@ -245,6 +245,24 @@ public:
     FocusState currentState;
 };
 
+typedef struct {
+    uint32_t isoValue;
+} IsoInfo;
+
+class IsoInfoCallback {
+public:
+    IsoInfoCallback() = default;
+    virtual ~IsoInfoCallback() = default;
+    virtual void OnIsoInfoChanged(IsoInfo info) = 0;
+};
+
+class IsoInfoSyncCallback {
+public:
+    IsoInfoSyncCallback() = default;
+    virtual ~IsoInfoSyncCallback() = default;
+    virtual void OnIsoInfoChangedSync(IsoInfo info) = 0;
+};
+
 class MacroStatusCallback {
 public:
     enum MacroStatus { IDLE = 0, ACTIVE, UNKNOWN };
@@ -522,6 +540,14 @@ public:
      * @param SessionCallback pointer to be triggered.
      */
     void SetCallback(std::shared_ptr<SessionCallback> callback);
+
+    /**
+     * @brief Set the ISO callback.
+     * which will be called when there is ISO state change.
+     *
+     * @param The IsoInfoCallback pointer.
+     */
+    void SetIsoInfoCallback(std::shared_ptr<IsoInfoSyncCallback> callback);
 
     /**
      * @brief Set the pressure callback for the capture session.
@@ -1521,6 +1547,14 @@ public:
      */
     int32_t SetQualityPrioritization(QualityPrioritization qualityPrioritization);
 
+    /**
+     * @brief This function is called when there is Iso change
+     * and process the Iso callback.
+     *
+     * @param result Metadata got from callback from service layer.
+     */
+    void ProcessIsoChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result);
+
     void SetMode(SceneMode modeName);
     SceneMode GetMode();
     SceneFeaturesMode GetFeaturesMode();
@@ -1772,6 +1806,7 @@ public:
      */
     void SetMacroStatusCallback(std::shared_ptr<MacroStatusCallback> callback);
     void SetPhotoQualityPrioritization(camera_photo_quality_prioritization_t quality);
+    uint32_t GetIsoValue();
 protected:
 
     static const std::unordered_map<camera_awb_mode_t, WhiteBalanceMode> metaWhiteBalanceModeMap_;
@@ -1792,17 +1827,20 @@ protected:
     bool isVideoDeferred_ = false;
     std::atomic<bool> isMovingPhotoEnabled_ { false };
 
+    std::shared_ptr<IsoInfoSyncCallback> isoInfoSyncCallback_ = nullptr;
     std::shared_ptr<AbilityCallback> abilityCallback_;
     std::atomic<uint32_t> exposureDurationValue_ = 0;
 
     float apertureValue_ = 0.0;
 
+    std::mutex isoValueMutex_;
     std::mutex sessionCallbackMutex_;
     std::shared_ptr<MacroStatusCallback> macroStatusCallback_;
     std::shared_ptr<FeatureDetectionStatusCallback> featureDetectionStatusCallback_;
     std::shared_ptr<EffectSuggestionCallback> effectSuggestionCallback_;
     std::shared_ptr<LcdFlashStatusCallback> lcdFlashStatusCallback_;
     std::atomic<bool> isSmoothZooming_  = false;
+    uint32_t isoValue_ = 0;
     std::atomic<float> targetZoomRatio_  = -1.0;
     float focusDistance_ = 0.0;
     static const std::unordered_map<CameraEffectSuggestionType, EffectSuggestionType> metaEffectSuggestionTypeMap_;

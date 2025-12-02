@@ -315,6 +315,7 @@ void VideoSession::VideoSessionMetadataResultProcessor::ProcessCallbacks(const u
     session->ProcessAutoFocusUpdates(result);
     session->ProcessMacroStatusChange(result);
     session->ProcessLcdFlashStatusUpdates(result);
+    session->ProcessIsoChange(result);
     session->ProcessEffectSuggestionTypeUpdates(result);
     // LCOV_EXCL_STOP
 }

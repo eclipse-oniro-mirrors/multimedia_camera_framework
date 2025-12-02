@@ -33,7 +33,6 @@
 namespace OHOS {
 namespace CameraStandard {
 class ExposureInfoCallback;
-class IsoInfoCallback;
 class ApertureInfoCallback;
 class LuminationInfoCallback;
 typedef enum {
@@ -392,10 +391,6 @@ typedef struct {
 } ExposureInfo;
 
 typedef struct {
-    uint32_t isoValue;
-} IsoInfo;
-
-typedef struct {
     float apertureValue;
 } ApertureInfo;
 
@@ -408,13 +403,6 @@ public:
     ExposureInfoCallback() = default;
     virtual ~ExposureInfoCallback() = default;
     virtual void OnExposureInfoChanged(ExposureInfo info) = 0;
-};
-
-class IsoInfoCallback {
-public:
-    IsoInfoCallback() = default;
-    virtual ~IsoInfoCallback() = default;
-    virtual void OnIsoInfoChanged(IsoInfo info) = 0;
 };
 
 class ApertureInfoCallback {

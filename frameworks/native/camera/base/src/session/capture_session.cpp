@@ -1199,6 +1199,20 @@ void CaptureSession::SetCallback(std::shared_ptr<SessionCallback> callback)
     return;
 }
 
+void CaptureSession::SetIsoInfoCallback(std::shared_ptr<IsoInfoSyncCallback> callback)
+{
+    // LCOV_EXCL_START
+    std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
+    isoInfoSyncCallback_ = callback;
+    // LCOV_EXCL_STOP
+}
+
+uint32_t CaptureSession::GetIsoValue()
+{
+    std::lock_guard<std::mutex> isoLock(isoValueMutex_);
+    return isoValue_;
+}
+
 void CaptureSession::SetPressureCallback(std::shared_ptr<PressureCallback> callback)
 {
     CHECK_PRINT_ELOG(callback == nullptr,
@@ -4189,6 +4203,25 @@ void CaptureSession::ProcessMacroStatusChange(const std::shared_ptr<OHOS::Camera
     }
     statusCallback->currentStatus = macroStatus;
     statusCallback->OnMacroStatusChanged(macroStatus);
+}
+
+void CaptureSession::ProcessIsoChange(const std::shared_ptr<OHOS::Camera::CameraMetadata> &result)
+{
+    // LCOV_EXCL_START
+    camera_metadata_item_t item;
+    common_metadata_header_t* metadata = result->get();
+    int ret = Camera::FindCameraMetadataItem(metadata, OHOS_STATUS_ISO_VALUE, &item);
+    CHECK_RETURN(ret != CAM_META_SUCCESS);
+    MEDIA_DEBUG_LOG("Iso Value: %{public}d", item.data.ui32[0]);
+    IsoInfo info = {
+        .isoValue = item.data.ui32[0],
+    };
+    std::lock_guard<std::mutex> callbackLock(sessionCallbackMutex_);
+    std::lock_guard<std::mutex> isoLock(isoValueMutex_);
+    CHECK_EXECUTE(isoInfoSyncCallback_ != nullptr && item.data.ui32[0] != isoValue_,
+                  isoInfoSyncCallback_->OnIsoInfoChangedSync(info));
+    isoValue_ = item.data.ui32[0];
+    // LCOV_EXCL_STOP
 }
 
 void CaptureSession::ProcessMoonCaptureBoostStatusChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result)

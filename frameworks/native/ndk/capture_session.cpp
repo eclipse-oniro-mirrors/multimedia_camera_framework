@@ -915,6 +915,26 @@ Camera_ErrorCode OH_CaptureSession_UnregisterMacroStatusChangeCallback(
     return CAMERA_OK;
 }
 
+Camera_ErrorCode OH_CaptureSession_RegisterIsoChangeCallback(
+    Camera_CaptureSession* session, OH_CaptureSession_OnIsoChange isoInfoChange)
+{
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    CHECK_RETURN_RET_ELOG(
+        isoInfoChange == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, callback is null!");
+    session->RegisterIsoInfoCallback(isoInfoChange);
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode OH_CaptureSession_UnregisterIsoChangeCallback(
+    Camera_CaptureSession* session, OH_CaptureSession_OnIsoChange isoInfoChange)
+{
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    CHECK_RETURN_RET_ELOG(
+        isoInfoChange == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, callback is null!");
+    session->UnregisterIsoInfoCallback(isoInfoChange);
+    return CAMERA_OK;
+}
+
 #ifdef __cplusplus
 }
 #endif

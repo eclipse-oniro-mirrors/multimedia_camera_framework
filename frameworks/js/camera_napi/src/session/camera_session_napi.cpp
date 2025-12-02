@@ -243,6 +243,75 @@ const std::vector<napi_property_descriptor> CameraSessionNapi::auto_switch_props
     DECLARE_NAPI_FUNCTION("enableAutoDeviceSwitch", CameraSessionNapi::EnableAutoDeviceSwitch)
 };
 
+const std::vector<napi_property_descriptor> CameraSessionNapi::iso_props = {
+    DECLARE_NAPI_FUNCTION("onIsoInfoChange", CameraSessionNapi::OnIsoInfoChange),
+    DECLARE_NAPI_FUNCTION("offIsoInfoChange", CameraSessionNapi::OffIsoInfoChange)
+};
+
+void IsoInfoCallbackListener::OnIsoInfoChangedCallbackAsync(IsoInfo info, bool isSync) const
+{
+    MEDIA_DEBUG_LOG("OnIsoInfoChangedCallbackAsync is called");
+    std::unique_ptr<IsoInfoChangedCallback> callback =
+        std::make_unique<IsoInfoChangedCallback>(info, shared_from_this());
+    IsoInfoChangedCallback *event = callback.get();
+    auto task = [event, isSync]() {
+        IsoInfoChangedCallback* callback = reinterpret_cast<IsoInfoChangedCallback *>(event);
+        CHECK_RETURN(!callback);
+        auto listener = callback->listener_.lock();
+        CHECK_EXECUTE(
+            listener != nullptr,
+            isSync ? listener->OnIsoInfoChangedCallbackOneArg(callback->info_)
+                   : listener->OnIsoInfoChangedCallback(callback->info_));
+        delete callback;
+    };
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
+        MEDIA_ERR_LOG("failed to execute work");
+    } else {
+        callback.release();
+    }
+}
+
+void IsoInfoCallbackListener::OnIsoInfoChangedCallback(IsoInfo info) const
+{
+    MEDIA_DEBUG_LOG("OnIsoInfoChangedCallback is called");
+    napi_value result[ARGS_TWO] = { nullptr, nullptr };
+    napi_value retVal;
+
+    napi_get_undefined(env_, &result[PARAM0]);
+    napi_create_object(env_, &result[PARAM1]);
+    napi_value value;
+    napi_create_int32(env_, CameraNapiUtils::FloatToDouble(info.isoValue), &value);
+    napi_set_named_property(env_, result[PARAM1], "iso", value);
+    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
+    ExecuteCallback("isoInfoChange", callbackNapiPara);
+}
+
+void IsoInfoCallbackListener::OnIsoInfoChangedCallbackOneArg(IsoInfo info) const
+{
+    MEDIA_DEBUG_LOG("OnIsoInfoChangedCallbackOneArg is called");
+    napi_value result[ARGS_ONE] = { nullptr };
+    napi_value retVal;
+
+    napi_create_object(env_, &result[PARAM0]);
+    napi_value value;
+    napi_create_int32(env_, CameraNapiUtils::FloatToDouble(info.isoValue), &value);
+    napi_set_named_property(env_, result[PARAM0], "iso", value);
+    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_ONE, .argv = result, .result = &retVal };
+    ExecuteCallback("isoInfoChange", callbackNapiPara);
+}
+
+void IsoInfoCallbackListener::OnIsoInfoChanged(IsoInfo info)
+{
+    MEDIA_DEBUG_LOG("OnIsoInfoChanged is called, info: %{public}d", info.isoValue);
+    OnIsoInfoChangedCallbackAsync(info, false);
+}
+
+void IsoInfoCallbackListener::OnIsoInfoChangedSync(IsoInfo info)
+{
+    MEDIA_DEBUG_LOG("OnIsoInfoChangedSync is called, info: %{public}d", info.isoValue);
+    OnIsoInfoChangedCallbackAsync(info, true);
+}
+
 void ExposureCallbackListener::OnExposureStateCallbackAsync(ExposureState state) const
 {
     MEDIA_DEBUG_LOG("OnExposureStateCallbackAsync is called");
@@ -2946,6 +3015,42 @@ napi_value CameraSessionNapi::SetUsage(napi_env env, napi_callback_info info)
     CameraNapiUtils::ThrowError(env, CameraErrorCode::NO_SYSTEM_APP_PERMISSION,
         "SystemApi SetUsage is called!");
     return CameraNapiUtils::GetUndefinedValue(env);
+}
+
+void CameraSessionNapi::RegisterIsoInfoCallbackListener(
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+{
+    if (isoInfoCallback_ == nullptr) {
+        isoInfoCallback_ = std::make_shared<IsoInfoCallbackListener>(env);
+        cameraSession_->SetIsoInfoCallback(isoInfoCallback_);
+    }
+    isoInfoCallback_->SaveCallbackReference(eventName, callback, isOnce);
+    IsoInfo info{cameraSession_->GetIsoValue()};
+    CHECK_EXECUTE(info.isoValue != 0, isoInfoCallback_->OnIsoInfoChangedSync(info));
+}
+
+void CameraSessionNapi::UnregisterIsoInfoCallbackListener(
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
+{
+    if (isoInfoCallback_ == nullptr) {
+        MEDIA_ERR_LOG("abilityCallback is null");
+    } else {
+        isoInfoCallback_->RemoveCallbackRef(eventName, callback);
+    }
+}
+
+napi_value CameraSessionNapi::OnIsoInfoChange(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("CameraSessionNapi::OnIsoInfoChange is called");
+    const std::string eventName = "isoInfoChange";
+    return ListenerTemplate<CameraSessionNapi>::On(env, info, eventName);
+}
+
+napi_value CameraSessionNapi::OffIsoInfoChange(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("CameraSessionNapi::OffIsoInfoChange is called");
+    const std::string eventName = "isoInfoChange";
+    return ListenerTemplate<CameraSessionNapi>::Off(env, info, eventName);
 }
 
 void CameraSessionNapi::RegisterExposureCallbackListener(

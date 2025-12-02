@@ -1031,6 +1031,13 @@ Camera_ErrorCode OH_CaptureSession_RegisterMacroStatusChangeCallback(
 Camera_ErrorCode OH_CaptureSession_UnregisterMacroStatusChangeCallback(
     Camera_CaptureSession* session, OH_CaptureSession_OnMacroStatusChange macroStatusChange);
 
+typedef void (*OH_CaptureSession_OnIsoChange)(Camera_CaptureSession *session, int32_t isoValue);
+
+Camera_ErrorCode OH_CaptureSession_RegisterIsoChangeCallback(
+    Camera_CaptureSession* session, OH_CaptureSession_OnIsoChange isoChange);
+
+Camera_ErrorCode OH_CaptureSession_UnregisterIsoChangeCallback(
+    Camera_CaptureSession* session, OH_CaptureSession_OnIsoChange isoChange);
 
 #ifdef __cplusplus
 }
