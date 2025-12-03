@@ -23,6 +23,6 @@ option_parcel_hooks on;
   [ipccode 0, oneway] void OnProcessImageDone([in] String imageId, [in] sptr<IPCFileDescriptor> ipcFd, [in] long bytes, [in] unsigned int cloudImageEnhanceFlag);
   [ipccode 1, oneway] void OnError([in] String imageId, [in] ErrorCode errorCode);
   [ipccode 2, oneway] void OnStateChanged([in] StatusCode status);
-  [ipccode 3, oneway] void OnDeliveryLowQualityImage([in] String imageId, [in] sharedptr<PictureIntf> picture);
+  [ipccode 3] void OnDeliveryLowQualityImage([in] String imageId, [in] sharedptr<PictureIntf> picture);
   [ipccode 4, oneway] void OnProcessImageDone([in] String imageId, [in] sharedptr<PictureIntf> picture, [in] unsigned int cloudImageEnhanceFlag);
 }
