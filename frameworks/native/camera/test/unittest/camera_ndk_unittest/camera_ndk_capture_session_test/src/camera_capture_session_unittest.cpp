@@ -48,6 +48,7 @@ void CameraCaptureSessionUnitTest::TearDown(void)
     ReleaseCamera();
 }
 
+void IsoInfoChangeCb(Camera_CaptureSession *session, int32_t isoValue) {}
 /*
  * Feature: Framework
  * Function: Test register and unregister capture session callback
@@ -3710,6 +3711,50 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_089, Test
 
     EXPECT_EQ(OH_PhotoOutput_Release(photoOutput), CAMERA_OK);
     EXPECT_EQ(OH_CameraInput_Release(cameraInput), CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test register and unregister iso change callback when sceneMode is video
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test registration and deregistration iso info change callback.
+ * Deregistration and registration are successful when valid parameters are entered
+ */
+HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_090, TestSize.Level0)
+{
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_VIDEO);
+    ASSERT_NE(captureSession, nullptr);
+    ret = OH_CaptureSession_RegisterIsoChangeCallback(captureSession, IsoInfoChangeCb);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_UnregisterIsoChangeCallback(captureSession, IsoInfoChangeCb);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test register iso change callback when sceneMode is not video
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test registration iso info change callback.
+ * registration failed when when sceneMode is not video
+ */
+HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_091, TestSize.Level0)
+{
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_PHOTO);
+    ASSERT_NE(captureSession, nullptr);
+    ret = OH_CaptureSession_RegisterIsoChangeCallback(captureSession, IsoInfoChangeCb);
+    EXPECT_NE(ret, CAMERA_OK);
     EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
 }
 } // CameraStandard
