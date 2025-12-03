@@ -800,8 +800,7 @@ int32_t CaptureSessionForSys::SetPhysicalAperture(float physicalAperture)
         sharedThis->LockForControl();
         int32_t retCode = sharedThis->SetPhysicalAperture(physicalAperture);
         sharedThis->UnlockForControl();
-        CHECK_EXECUTE(retCode != CameraErrorCode::SUCCESS,
-                      sharedThis->SetDeviceCapabilityChangeStatus(true));
+        CHECK_EXECUTE(retCode != CameraErrorCode::SUCCESS, sharedThis->SetDeviceCapabilityChangeStatus(true));
     });
     apertureValue_ = physicalAperture;
     return CameraErrorCode::SUCCESS;
