@@ -33,7 +33,7 @@ using namespace testing::ext;
 namespace OHOS {
 namespace CameraStandard {
 
-const static double ACCURACY = 0.1;
+const static double ACCURCY = 0.1;
 
 void TestCameraMuteListener::OnCameraMute(bool muteMode) const
 {
