@@ -17,6 +17,7 @@
 #define CAMERA_BASE_FUNCTION_MODULETEST_H
 
 #include <vector>
+#include <cmath>
 
 #include "gtest/gtest.h"
 #include "input/camera_manager.h"

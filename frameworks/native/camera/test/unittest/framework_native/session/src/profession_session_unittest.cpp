@@ -35,6 +35,8 @@ namespace OHOS {
 namespace CameraStandard {
 using namespace testing::ext;
 
+const static double ACCURCY = 0.1;
+
 class ExposureInfoCallbackMock : public ExposureInfoCallback {
 public:
     void OnExposureInfoChanged(ExposureInfo info) override {}
@@ -163,8 +165,10 @@ void ProfessionSessionUnitTest::Init()
     auto previewProfiles = modeAbility->GetPreviewProfiles();
     auto videoProfiles = modeAbility->GetVideoProfiles();
     for (const auto &vProfile : videoProfiles) {
+        double precision = static_cast<double>(vProfile.size_.width) / static_cast<double>(vProfile.size_.height);
         for (const auto &pProfile : previewProfiles) {
-            if (vProfile.size_.width == pProfile.size_.width) {
+            double temp = static_cast<double>(pProfile.size_.width) / static_cast<double>(pProfile.size_.height);
+            if (fabs(precision - temp) <= ACCURCY) {
                 previewProfile = pProfile;
                 videoProfile = vProfile;
                 break;
