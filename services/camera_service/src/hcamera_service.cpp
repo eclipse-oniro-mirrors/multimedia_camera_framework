@@ -109,6 +109,12 @@ mutex g_dataShareHelperMutex;
 mutex g_dmDeviceInfoMutex;
 thread_local uint32_t g_dumpDepth = 0;
 
+std::map<OHOS::Rosen::FoldStatus, std::vector<OHOS::Rosen::FoldStatus>> g_foldStatusMap = {
+    {OHOS::Rosen::FoldStatus::EXPAND, {OHOS::Rosen::FoldStatus::FOLDED}},
+    {OHOS::Rosen::FoldStatus::FOLDED, {OHOS::Rosen::FoldStatus::HALF_FOLD, OHOS::Rosen::FoldStatus::EXPAND}},
+    {OHOS::Rosen::FoldStatus::HALF_FOLD, {OHOS::Rosen::FoldStatus::FOLDED}},
+};
+
 HCameraService::HCameraService(int32_t systemAbilityId, bool runOnCreate)
     : SystemAbility(systemAbilityId, runOnCreate), muteModeStored_(false), pressurePid_(0)
 {
@@ -1234,18 +1240,29 @@ void HCameraService::OnFoldStatusChanged(OHOS::Rosen::FoldStatus foldStatus)
 {
     MEDIA_INFO_LOG("OnFoldStatusChanged preFoldStatus = %{public}d, foldStatus = %{public}d, pid = %{public}d",
         preFoldStatus_, foldStatus, IPCSkeleton::GetCallingPid());
-    auto curFoldStatus = (FoldStatus)foldStatus;
-    if ((curFoldStatus == FoldStatus::HALF_FOLD && preFoldStatus_ == FoldStatus::EXPAND) ||
-        (curFoldStatus == FoldStatus::EXPAND && preFoldStatus_ == FoldStatus::HALF_FOLD)) {
+    auto curFoldStatus = foldStatus;
+    auto mapIt = g_foldStatusMap.find(curFoldStatus);
+    if (mapIt == g_foldStatusMap.end()) {
+        MEDIA_INFO_LOG("curFoldStatus does not match");
+        preFoldStatus_ = curFoldStatus;
+        return;
+    }
+    auto preFoldStatusCopy = preFoldStatus_;
+    auto vectorIt = std::find_if(mapIt->second.begin(), mapIt->second.end(),
+        [preFoldStatusCopy](const OHOS::Rosen::FoldStatus &curFoldStatus) {
+            return curFoldStatus == preFoldStatusCopy;
+        });
+    if (vectorIt == mapIt->second.end()) {
+        MEDIA_INFO_LOG("preFoldStatus does not match");
         preFoldStatus_ = curFoldStatus;
         return;
     }
     preFoldStatus_ = curFoldStatus;
-    if (curFoldStatus == FoldStatus::HALF_FOLD) {
-        curFoldStatus = FoldStatus::EXPAND;
+    if (curFoldStatus == OHOS::Rosen::FoldStatus::HALF_FOLD) {
+        curFoldStatus = OHOS::Rosen::FoldStatus::EXPAND;
     }
     lock_guard<recursive_mutex> lock(foldCbMutex_);
-    CHECK_EXECUTE(innerFoldCallback_, innerFoldCallback_->OnFoldStatusChanged(curFoldStatus));
+    CHECK_EXECUTE(innerFoldCallback_, innerFoldCallback_->OnFoldStatusChanged((FoldStatus)curFoldStatus));
     CHECK_RETURN_ELOG(foldServiceCallbacks_.empty(), "OnFoldStatusChanged foldServiceCallbacks is empty");
     MEDIA_INFO_LOG("OnFoldStatusChanged foldStatusCallback size = %{public}zu", foldServiceCallbacks_.size());
     for (auto it : foldServiceCallbacks_) {
@@ -1257,7 +1274,7 @@ void HCameraService::OnFoldStatusChanged(OHOS::Rosen::FoldStatus foldStatus)
         if (ShouldSkipStatusUpdates(pid)) {
             continue;
         }
-        it.second->OnFoldStatusChanged(curFoldStatus);
+        it.second->OnFoldStatusChanged((FoldStatus)curFoldStatus);
     }
 }
 
@@ -1553,7 +1570,7 @@ int32_t HCameraService::UnSetFoldStatusCallback(pid_t pid)
 void HCameraService::RegisterFoldStatusListener()
 {
     MEDIA_INFO_LOG("RegisterFoldStatusListener is called");
-    preFoldStatus_ = (FoldStatus)OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus();
+    preFoldStatus_ = OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus();
     auto ret = OHOS::Rosen::DisplayManager::GetInstance().RegisterFoldStatusListener(this);
     CHECK_RETURN_ELOG(ret != OHOS::Rosen::DMError::DM_OK, "RegisterFoldStatusListener failed");
     isFoldRegister = true;
@@ -1563,7 +1580,7 @@ void HCameraService::UnregisterFoldStatusListener()
 {
     MEDIA_INFO_LOG("UnregisterFoldStatusListener is called");
     auto ret = OHOS::Rosen::DisplayManager::GetInstance().UnregisterFoldStatusListener(this);
-    preFoldStatus_ = FoldStatus::UNKNOWN_FOLD;
+    preFoldStatus_ = OHOS::Rosen::FoldStatus::UNKNOWN;
     CHECK_PRINT_ELOG(ret != OHOS::Rosen::DMError::DM_OK, "UnregisterFoldStatusListener failed");
     isFoldRegister = false;
 }
