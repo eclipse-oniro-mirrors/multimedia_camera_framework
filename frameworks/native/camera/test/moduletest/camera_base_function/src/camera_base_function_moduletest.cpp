@@ -32,6 +32,9 @@ using namespace testing::ext;
 
 namespace OHOS {
 namespace CameraStandard {
+
+const static double ACCURACY = 0.1;
+
 void TestCameraMuteListener::OnCameraMute(bool muteMode) const
 {
     MEDIA_INFO_LOG("TestCameraMuteListener::OnCameraMute called %{public}d", muteMode);
@@ -330,14 +333,19 @@ void CameraBaseFunctionModuleTest::CreateAndConfigureDefaultCaptureOutput(sptr<P
 
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
+    double precision = static_cast<double>(previewProfiles_[0].size_.width) /
+        static_cast<double>(previewProfiles_[0].size_.height);
     photoOutput = CreatePhotoOutput(photoProfiles_[0]);
     ASSERT_NE(photoOutput, nullptr);
     for (auto profile : videoProfiles_) {
         if (profile.framerates_.size() >= VEDIO_FRAMERATES_SIZE && profile.framerates_[0] != VEDIO_FRAMERATES_120
-        && profile.framerates_[1] != VEDIO_FRAMERATES_120 && profile.framerates_[0] != VEDIO_FRAMERATES_240
+            && profile.framerates_[1] != VEDIO_FRAMERATES_120 && profile.framerates_[0] != VEDIO_FRAMERATES_240
             && profile.framerates_[1] != VEDIO_FRAMERATES_240) {
-            videoOutput = CreateVideoOutput(profile);
-            break;
+            double temp = static_cast<double>(profile.size_.width) / static_cast<double>(profile.size_.height);
+            if (fabs(precision - temp) <= ACCURCY) {
+                videoOutput = CreateVideoOutput(profile);
+                break;
+            }
         }
     }
     ASSERT_NE(videoOutput, nullptr);
@@ -354,17 +362,22 @@ void CameraBaseFunctionModuleTest::CreateAndConfigureDefaultCaptureOutputForSys(
     sptr<VideoOutput> &videoOutput)
 {
     ASSERT_NE(captureSessionForSys_, nullptr);
-
+    videoOutput = nullptr;
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfilesForSys_[0]);
     ASSERT_NE(previewOutput, nullptr);
+    double precision = static_cast<double>(previewProfilesForSys_[0].size_.width) /
+        static_cast<double>(previewProfilesForSys_[0].size_.height);
     photoOutput = CreatePhotoOutput(photoProfilesForSys_[0]);
     ASSERT_NE(photoOutput, nullptr);
     for (auto profile : videoProfilesForSys_) {
         if (profile.framerates_.size() >= VEDIO_FRAMERATES_SIZE && profile.framerates_[0] != VEDIO_FRAMERATES_120
         && profile.framerates_[1] != VEDIO_FRAMERATES_120 && profile.framerates_[0] != VEDIO_FRAMERATES_240
             && profile.framerates_[1] != VEDIO_FRAMERATES_240) {
-            videoOutput = CreateVideoOutput(profile);
-            break;
+            double temp = static_cast<double>(profile.size_.width) / static_cast<double>(profile.size_.height);
+            if (fabs(precision - temp) <= ACCURCY) {
+                videoOutput = CreateVideoOutput(profile);
+                break;
+            }
         }
     }
     ASSERT_NE(videoOutput, nullptr);
@@ -488,7 +501,16 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_002, Test
     CreateNormalSession();
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
-    sptr<VideoOutput> videoOutput = CreateVideoOutput(videoProfiles_[0]);
+    double precision = static_cast<double>(previewProfiles_[0].size_.width) /
+        static_cast<double>(previewProfiles_[0].size_.height);
+    sptr<VideoOutput> videoOutput = nullptr;
+    for (auto profile : videoProfiles_) {
+        double temp = static_cast<double>(profile.size_.width) / static_cast<double>(profile.size_.height);
+        if (fabs(precision - temp) <= ACCURCY) {
+            videoOutput = CreateVideoOutput(profile);
+            break;
+        }
+    }
     ASSERT_NE(videoOutput, nullptr);
 
     EXPECT_EQ(captureSession_->BeginConfig(), SUCCESS);
@@ -599,7 +621,16 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_003, Test
     CreateNormalSession();
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
-    sptr<VideoOutput> videoOutput = CreateVideoOutput(videoProfiles_[0]);
+    double precision = static_cast<double>(previewProfiles_[0].size_.width) /
+        static_cast<double>(previewProfiles_[0].size_.height);
+    sptr<VideoOutput> videoOutput = nullptr;
+    for (auto profile : videoProfiles_) {
+        double temp = static_cast<double>(profile.size_.width) / static_cast<double>(profile.size_.height);
+        if (fabs(precision - temp) <= ACCURCY) {
+            videoOutput = CreateVideoOutput(profile);
+            break;
+        }
+    }
     ASSERT_NE(videoOutput, nullptr);
 
     EXPECT_EQ(captureSession_->BeginConfig(), SUCCESS);
@@ -638,7 +669,16 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_003, Test
 
     sptr<PreviewOutput> otherPreviewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(otherPreviewOutput, nullptr);
-    sptr<VideoOutput> otherVideoOutput = CreateVideoOutput(videoProfiles_[0]);
+    precision = static_cast<double>(previewProfiles_[0].size_.width) /
+        static_cast<double>(previewProfiles_[0].size_.height);
+    sptr<VideoOutput> otherVideoOutput = nullptr;
+    for (auto profile : videoProfiles_) {
+        double temp = static_cast<double>(profile.size_.width) / static_cast<double>(profile.size_.height);
+        if (fabs(precision - temp) <= ACCURCY) {
+            otherVideoOutput = CreateVideoOutput(profile);
+            break;
+        }
+    }
     ASSERT_NE(otherVideoOutput, nullptr);
     EXPECT_EQ(captureSession_->AddInput((sptr<CaptureInput>&)otherCameraInput), SUCCESS);
     EXPECT_EQ(captureSession_->AddOutput((sptr<CaptureOutput>&)otherPreviewOutput), SUCCESS);
@@ -672,10 +712,19 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_003, Test
     CreateNormalSession();
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
+    double precision = static_cast<double>(previewProfiles_[0].size_.width) /
+        static_cast<double>(previewProfiles_[0].size_.height);
+    sptr<VideoOutput> videoOutput = nullptr;
+    for (auto profile : videoProfiles_) {
+        double temp = static_cast<double>(profile.size_.width) / static_cast<double>(profile.size_.height);
+        if (fabs(precision - temp) <= ACCURCY) {
+            videoOutput = CreateVideoOutput(profile);
+            break;
+        }
+    }
+    ASSERT_NE(videoOutput, nullptr);
     sptr<PhotoOutput> photoOutput = CreatePhotoOutput(photoProfiles_[0]);
     ASSERT_NE(photoOutput, nullptr);
-    sptr<VideoOutput> videoOutput = CreateVideoOutput(videoProfiles_[0]);
-    ASSERT_NE(videoOutput, nullptr);
 
     EXPECT_EQ(captureSession_->BeginConfig(), SUCCESS);
     EXPECT_EQ(captureSession_->AddInput((sptr<CaptureInput>&)cameraInput_), SUCCESS);
@@ -718,7 +767,16 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_003, Test
     ASSERT_NE(previewOutput, nullptr);
     sptr<PhotoOutput> photoOutput = CreatePhotoOutput(photoProfiles_[0]);
     ASSERT_NE(photoOutput, nullptr);
-    sptr<VideoOutput> videoOutput = CreateVideoOutput(videoProfiles_[0]);
+    double precision = static_cast<double>(previewProfiles_[0].size_.width) /
+        static_cast<double>(previewProfiles_[0].size_.height);
+    sptr<VideoOutput> videoOutput = nullptr;
+    for (auto profile : videoProfiles_) {
+        double temp = static_cast<double>(profile.size_.width) / static_cast<double>(profile.size_.height);
+        if (fabs(precision - temp) <= ACCURCY) {
+            videoOutput = CreateVideoOutput(profile);
+            break;
+        }
+    }
     ASSERT_NE(videoOutput, nullptr);
 
     EXPECT_EQ(captureSession_->BeginConfig(), SUCCESS);
@@ -954,7 +1012,16 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_003, Test
     ASSERT_NE(previewOutput, nullptr);
     sptr<PhotoOutput> photoOutput = CreatePhotoOutput(photoProfiles_[0]);
     ASSERT_NE(photoOutput, nullptr);
-    sptr<VideoOutput> videoOutput = CreateVideoOutput(videoProfiles_[0]);
+    double precision = static_cast<double>(previewProfiles_[0].size_.width) /
+        static_cast<double>(previewProfiles_[0].size_.height);
+    sptr<VideoOutput> videoOutput = nullptr;
+    for (auto profile : videoProfiles_) {
+        double temp = static_cast<double>(profile.size_.width) / static_cast<double>(profile.size_.height);
+        if (fabs(precision - temp) <= ACCURCY) {
+            videoOutput = CreateVideoOutput(profile);
+            break;
+        }
+    }
     ASSERT_NE(videoOutput, nullptr);
     sptr<MetadataOutput> metadataOutput = cameraManager_->CreateMetadataOutput();
     ASSERT_NE(metadataOutput, nullptr);
@@ -988,7 +1055,16 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_003, Test
     ASSERT_NE(previewOutput, nullptr);
     sptr<PhotoOutput> photoOutput = CreatePhotoOutput(photoProfiles_[0]);
     ASSERT_NE(photoOutput, nullptr);
-    sptr<VideoOutput> videoOutput = CreateVideoOutput(videoProfiles_[0]);
+    double precision = static_cast<double>(previewProfiles_[0].size_.width) /
+        static_cast<double>(previewProfiles_[0].size_.height);
+    sptr<VideoOutput> videoOutput = nullptr;
+    for (auto profile : videoProfiles_) {
+        double temp = static_cast<double>(profile.size_.width) / static_cast<double>(profile.size_.height);
+        if (fabs(precision - temp) <= ACCURCY) {
+            videoOutput = CreateVideoOutput(profile);
+            break;
+        }
+    }
     ASSERT_NE(videoOutput, nullptr);
     sptr<MetadataOutput> metadataOutput = cameraManager_->CreateMetadataOutput();
     ASSERT_NE(metadataOutput, nullptr);
@@ -2731,7 +2807,16 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_017, Test
     CreateNormalSession();
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
-    sptr<VideoOutput> videoOutput = CreateVideoOutput(videoProfiles_[0]);
+    double precision = static_cast<double>(previewProfiles_[0].size_.width) /
+        static_cast<double>(previewProfiles_[0].size_.height);
+    sptr<VideoOutput> videoOutput = nullptr;
+    for (auto profile : videoProfiles_) {
+        double temp = static_cast<double>(profile.size_.width) / static_cast<double>(profile.size_.height);
+        if (fabs(precision - temp) <= ACCURCY) {
+            videoOutput = CreateVideoOutput(profile);
+            break;
+        }
+    }
     ASSERT_NE(videoOutput, nullptr);
 
     EXPECT_EQ(captureSession_->BeginConfig(), SUCCESS);
@@ -2766,7 +2851,16 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_017, Test
     CreateNormalSession();
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
-    sptr<VideoOutput> videoOutput = CreateVideoOutput(videoProfiles_[0]);
+    double precision = static_cast<double>(previewProfiles_[0].size_.width) /
+        static_cast<double>(previewProfiles_[0].size_.height);
+    sptr<VideoOutput> videoOutput = nullptr;
+    for (auto profile : videoProfiles_) {
+        double temp = static_cast<double>(profile.size_.width) / static_cast<double>(profile.size_.height);
+        if (fabs(precision - temp) <= ACCURCY) {
+            videoOutput = CreateVideoOutput(profile);
+            break;
+        }
+    }
     ASSERT_NE(videoOutput, nullptr);
 
     EXPECT_EQ(captureSession_->BeginConfig(), SUCCESS);
@@ -2800,7 +2894,16 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_017, Test
     CreateNormalSession();
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
-    sptr<VideoOutput> videoOutput = CreateVideoOutput(videoProfiles_[0]);
+    double precision = static_cast<double>(previewProfiles_[0].size_.width) /
+        static_cast<double>(previewProfiles_[0].size_.height);
+    sptr<VideoOutput> videoOutput = nullptr;
+    for (auto profile : videoProfiles_) {
+        double temp = static_cast<double>(profile.size_.width) / static_cast<double>(profile.size_.height);
+        if (fabs(precision - temp) <= ACCURCY) {
+            videoOutput = CreateVideoOutput(profile);
+            break;
+        }
+    }
     ASSERT_NE(videoOutput, nullptr);
 
     EXPECT_EQ(captureSession_->BeginConfig(), SUCCESS);
@@ -3463,7 +3566,16 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_079, Test
     ASSERT_NE(previewOutput, nullptr);
     sptr<PhotoOutput> photoOutput = CreatePhotoOutput(photoProfiles_[0]);
     ASSERT_NE(photoOutput, nullptr);
-    sptr<VideoOutput> videoOutput = CreateVideoOutput(videoProfiles_[0]);
+    double precision = static_cast<double>(previewProfiles_[0].size_.width) /
+        static_cast<double>(previewProfiles_[0].size_.height);
+    sptr<VideoOutput> videoOutput = nullptr;
+    for (auto profile : videoProfiles_) {
+        double temp = static_cast<double>(profile.size_.width) / static_cast<double>(profile.size_.height);
+        if (fabs(precision - temp) <= ACCURCY) {
+            videoOutput = CreateVideoOutput(profile);
+            break;
+        }
+    }
     ASSERT_NE(videoOutput, nullptr);
 
     EXPECT_EQ(captureSession_->BeginConfig(), SUCCESS);
@@ -3570,7 +3682,16 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_082, Test
     ASSERT_NE(previewOutput, nullptr);
     sptr<PhotoOutput> photoOutput = CreatePhotoOutput(photoProfiles_[0]);
     ASSERT_NE(photoOutput, nullptr);
-    sptr<VideoOutput> videoOutput = CreateVideoOutput(videoProfiles_[0]);
+    double precision = static_cast<double>(previewProfiles_[0].size_.width) /
+        static_cast<double>(previewProfiles_[0].size_.height);
+    sptr<VideoOutput> videoOutput = nullptr;
+    for (auto profile : videoProfiles_) {
+        double temp = static_cast<double>(profile.size_.width) / static_cast<double>(profile.size_.height);
+        if (fabs(precision - temp) <= ACCURCY) {
+            videoOutput = CreateVideoOutput(profile);
+            break;
+        }
+    }
     ASSERT_NE(videoOutput, nullptr);
 
     EXPECT_EQ(captureSession_->BeginConfig(), SUCCESS);
@@ -4142,7 +4263,16 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_097, Test
     ASSERT_NE(previewOutput, nullptr);
     sptr<PhotoOutput> photoOutput = CreatePhotoOutput(photoProfiles_[0]);
     ASSERT_NE(photoOutput, nullptr);
-    sptr<VideoOutput> videoOutput = CreateVideoOutput(videoProfiles_[0]);
+    double precision = static_cast<double>(previewProfiles_[0].size_.width) /
+        static_cast<double>(previewProfiles_[0].size_.height);
+    sptr<VideoOutput> videoOutput = nullptr;
+    for (auto profile : videoProfiles_) {
+        double temp = static_cast<double>(profile.size_.width) / static_cast<double>(profile.size_.height);
+        if (fabs(precision - temp) <= ACCURCY) {
+            videoOutput = CreateVideoOutput(profile);
+            break;
+        }
+    }
     ASSERT_NE(videoOutput, nullptr);
 
     EXPECT_EQ(captureSession_->BeginConfig(), SUCCESS);
@@ -4186,7 +4316,16 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_098, Test
     ASSERT_NE(previewOutput, nullptr);
     sptr<PhotoOutput> photoOutput = CreatePhotoOutput(photoProfiles_[0]);
     ASSERT_NE(photoOutput, nullptr);
-    sptr<VideoOutput> videoOutput = CreateVideoOutput(videoProfiles_[0]);
+    double precision = static_cast<double>(previewProfiles_[0].size_.width) /
+        static_cast<double>(previewProfiles_[0].size_.height);
+    sptr<VideoOutput> videoOutput = nullptr;
+    for (auto profile : videoProfiles_) {
+        double temp = static_cast<double>(profile.size_.width) / static_cast<double>(profile.size_.height);
+        if (fabs(precision - temp) <= ACCURCY) {
+            videoOutput = CreateVideoOutput(profile);
+            break;
+        }
+    }
     ASSERT_NE(videoOutput, nullptr);
 
     EXPECT_EQ(captureSession_->BeginConfig(), SUCCESS);
@@ -4221,7 +4360,16 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_099, Test
     ASSERT_NE(previewOutput, nullptr);
     sptr<PhotoOutput> photoOutput = CreatePhotoOutput(photoProfiles_[0]);
     ASSERT_NE(photoOutput, nullptr);
-    sptr<VideoOutput> videoOutput = CreateVideoOutput(videoProfiles_[0]);
+    double precision = static_cast<double>(previewProfiles_[0].size_.width) /
+        static_cast<double>(previewProfiles_[0].size_.height);
+    sptr<VideoOutput> videoOutput = nullptr;
+    for (auto profile : videoProfiles_) {
+        double temp = static_cast<double>(profile.size_.width) / static_cast<double>(profile.size_.height);
+        if (fabs(precision - temp) <= ACCURCY) {
+            videoOutput = CreateVideoOutput(profile);
+            break;
+        }
+    }
     ASSERT_NE(videoOutput, nullptr);
 
     EXPECT_EQ(captureSession_->BeginConfig(), SUCCESS);
@@ -4264,7 +4412,16 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_100, Test
     ASSERT_NE(previewOutput, nullptr);
     sptr<PhotoOutput> photoOutput = CreatePhotoOutput(photoProfiles_[0]);
     ASSERT_NE(photoOutput, nullptr);
-    sptr<VideoOutput> videoOutput = CreateVideoOutput(videoProfiles_[0]);
+    double precision = static_cast<double>(previewProfiles_[0].size_.width) /
+        static_cast<double>(previewProfiles_[0].size_.height);
+    sptr<VideoOutput> videoOutput = nullptr;
+    for (auto profile : videoProfiles_) {
+        double temp = static_cast<double>(profile.size_.width) / static_cast<double>(profile.size_.height);
+        if (fabs(precision - temp) <= ACCURCY) {
+            videoOutput = CreateVideoOutput(profile);
+            break;
+        }
+    }
     ASSERT_NE(videoOutput, nullptr);
 
     EXPECT_EQ(captureSession_->BeginConfig(), SUCCESS);
@@ -4311,7 +4468,15 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_100, Test
     ASSERT_NE(frontPreviewOutput, nullptr);
     sptr<PhotoOutput> frontPhotoOutput = CreatePhotoOutput(photoProfiles_[0]);
     ASSERT_NE(frontPhotoOutput, nullptr);
-    sptr<VideoOutput> frontVideoOutput = CreateVideoOutput(videoProfiles_[0]);
+    precision = static_cast<double>(profile.size_.width) / static_cast<double>(profile.size_.height);
+    sptr<VideoOutput> frontVideoOutput = nullptr;
+    for (auto profile : videoProfiles_) {
+        double temp = static_cast<double>(profile.size_.width) / static_cast<double>(profile.size_.height);
+        if (fabs(precision - temp) <= ACCURCY) {
+            frontVideoOutput = CreateVideoOutput(profile);
+            break;
+        }
+    }
     ASSERT_NE(frontVideoOutput, nullptr);
     EXPECT_EQ(captureSession_->AddInput((sptr<CaptureInput>&)frontCameraInput), SUCCESS);
     EXPECT_EQ(captureSession_->AddOutput((sptr<CaptureOutput>&)frontPreviewOutput), SUCCESS);
@@ -4576,7 +4741,16 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_106, Test
 
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
-    sptr<VideoOutput> videoOutput = CreateVideoOutput(videoProfiles_[0]);
+    double precision = static_cast<double>(previewProfiles_[0].size_.width) /
+        static_cast<double>(previewProfiles_[0].size_.height);
+    sptr<VideoOutput> videoOutput = nullptr;
+    for (auto profile : videoProfiles_) {
+        double temp = static_cast<double>(profile.size_.width) / static_cast<double>(profile.size_.height);
+        if (fabs(precision - temp) <= ACCURCY) {
+            videoOutput = CreateVideoOutput(profile);
+            break;
+        }
+    }
     ASSERT_NE(videoOutput, nullptr);
     EXPECT_EQ(captureSession_->BeginConfig(), SUCCESS);
     EXPECT_EQ(captureSession_->AddInput((sptr<CaptureInput>&)cameraInput_), SUCCESS);
