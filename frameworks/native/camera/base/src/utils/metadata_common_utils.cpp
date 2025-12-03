@@ -355,8 +355,9 @@ void MetadataCommonUtils::ProcessBaseInfo(sptr<MetadataObjectFactory> factoryPtr
     // LCOV_EXCL_STOP
 }
  
-void MetadataCommonUtils::ProcessHumanFaceDetectInfo(sptr<MetadataObjectFactory> factoryPtr,
-    const camera_metadata_item_t &metadataItem, int32_t &index, bool isNeedMirror, bool isNeedFlip, RectBoxType type)
+void MetadataCommonUtils::ProcessFaceDetectInfo(sptr<MetadataObjectFactory> factoryPtr,
+    const camera_metadata_item_t &metadataItem, int32_t &index, bool isNeedMirror, bool isNeedFlip, RectBoxType type,
+    MetadataObjectType typeFromHal)
 {
     // LCOV_EXCL_START
     int32_t version = metadataItem.data.i32[index++];
@@ -376,10 +377,12 @@ void MetadataCommonUtils::ProcessHumanFaceDetectInfo(sptr<MetadataObjectFactory>
         metadataItem.data.i32[index + offsetTwo],
         metadataItem.data.i32[index + offsetThree], isNeedMirror, isNeedFlip, type));
     index += rectLength;
-    factoryPtr->SetEmotion(static_cast<Emotion>(metadataItem.data.i32[index]));
-    index++;
-    factoryPtr->SetEmotionConfidence(static_cast<Emotion>(metadataItem.data.i32[index]));
-    index++;
+    if (typeFromHal == MetadataObjectType::FACE) {
+        factoryPtr->SetEmotion(static_cast<Emotion>(metadataItem.data.i32[index]));
+        index++;
+        factoryPtr->SetEmotionConfidence(static_cast<Emotion>(metadataItem.data.i32[index]));
+        index++;
+    }
     factoryPtr->SetPitchAngle(metadataItem.data.i32[index]);
     index++;
     factoryPtr->SetYawAngle(metadataItem.data.i32[index]);
@@ -387,34 +390,6 @@ void MetadataCommonUtils::ProcessHumanFaceDetectInfo(sptr<MetadataObjectFactory>
     factoryPtr->SetRollAngle(metadataItem.data.i32[index]);
     index++;
     // LCOV_EXCL_STOP
-}
-
-void MetadataCommonUtils::ProcessBasicHumanFaceDetectInfo(sptr<MetadataObjectFactory> factoryPtr,
-    const camera_metadata_item_t &metadataItem, int32_t &index, bool isNeedMirror, bool isNeedFlip, RectBoxType type)
-{
-    int32_t version = metadataItem.data.i32[index++];
-    MEDIA_DEBUG_LOG("isNeedMirror: %{public}d, isNeedFlip: %{public}d, version: %{public}d",
-        isNeedMirror, isNeedFlip, version);
-    const int32_t rectLength = 4;
-    const int32_t offsetOne = 1;
-    const int32_t offsetTwo = 2;
-    const int32_t offsetThree = 3;
-    factoryPtr->SetLeftEyeBoundingBox(ProcessRectBox(
-        metadataItem.data.i32[index], metadataItem.data.i32[index + offsetOne],
-        metadataItem.data.i32[index + offsetTwo],
-        metadataItem.data.i32[index + offsetThree], isNeedMirror, isNeedFlip, type));
-    index += rectLength;
-    factoryPtr->SetRightEyeBoundingBoxd(ProcessRectBox(
-        metadataItem.data.i32[index], metadataItem.data.i32[index + offsetOne],
-        metadataItem.data.i32[index + offsetTwo],
-        metadataItem.data.i32[index + offsetThree], isNeedMirror, isNeedFlip, type));
-    index += rectLength;
-    factoryPtr->SetPitchAngle(metadataItem.data.i32[index]);
-    index++;
-    factoryPtr->SetYawAngle(metadataItem.data.i32[index]);
-    index++;
-    factoryPtr->SetRollAngle(metadataItem.data.i32[index]);
-    index++;
 }
  
 void MetadataCommonUtils::ProcessExternInfo(sptr<MetadataObjectFactory> factoryPtr,
@@ -424,16 +399,14 @@ void MetadataCommonUtils::ProcessExternInfo(sptr<MetadataObjectFactory> factoryP
     // LCOV_EXCL_START
     switch (typeFromHal) {
         case MetadataObjectType::FACE:
-            ProcessHumanFaceDetectInfo(factoryPtr, metadataItem, index, isNeedMirror, isNeedFlip, type);
+        case MetadataObjectType::BASE_FACE_DETECTION:
+            ProcessFaceDetectInfo(factoryPtr, metadataItem, index, isNeedMirror, isNeedFlip, type, typeFromHal);
             break;
         case MetadataObjectType::CAT_FACE:
             ProcessCatFaceDetectInfo(factoryPtr, metadataItem, index, isNeedMirror, isNeedFlip, type);
             break;
         case MetadataObjectType::DOG_FACE:
             ProcessDogFaceDetectInfo(factoryPtr, metadataItem, index, isNeedMirror, isNeedFlip, type);
-            break;
-        case MetadataObjectType::BASE_FACE_DETECTION:
-            ProcessBasicHumanFaceDetectInfo(factoryPtr, metadataItem, index, isNeedMirror, isNeedFlip, type);
             break;
         default:
             break;

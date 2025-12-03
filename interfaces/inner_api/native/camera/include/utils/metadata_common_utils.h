@@ -55,13 +55,10 @@ private:
                                         MetadataObjectType typeFromHal, bool isNeedMirror, bool isNeedFlip,
                                         RectBoxType rectBoxType);
 
-    static void ProcessHumanFaceDetectInfo(sptr<MetadataObjectFactory> factoryPtr,
+    static void ProcessFaceDetectInfo(sptr<MetadataObjectFactory> factoryPtr,
                                                     const camera_metadata_item_t &metadataItem, int32_t &index,
-                                                    bool isNeedMirror, bool isNeedFlip, RectBoxType rectBoxType);
-
-    static void ProcessBasicHumanFaceDetectInfo(sptr<MetadataObjectFactory> factoryPtr,
-                                                    const camera_metadata_item_t &metadataItem, int32_t &index,
-                                                    bool isNeedMirror, bool isNeedFlip, RectBoxType rectBoxType);
+                                                    bool isNeedMirror, bool isNeedFlip, RectBoxType rectBoxType,
+                                                    MetadataObjectType typeFromHal);
 
     static void ProcessCatFaceDetectInfo(sptr<MetadataObjectFactory> factoryPtr,
                                                 const camera_metadata_item_t &metadataItem, int32_t &index,
