@@ -630,6 +630,7 @@ int32_t HCameraDevice::OpenDevice(bool isEnableSecCam)
 #ifdef MEMMGR_OVERRID
     RequireMemory(Memory::CAMERA_START);
 #endif
+    NotifyCameraStatus(CAMERA_START_OPEN);
     errorCode = CameraHostMgrOpenCamera(isEnableSecCam);
     CHECK_RETURN_RET_ELOG(errorCode != CAMERA_OK, errorCode,
         "HCameraDevice::OpenDevice InitStreamOperator fail err code is:%{public}d", errorCode);

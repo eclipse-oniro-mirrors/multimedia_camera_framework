@@ -88,7 +88,8 @@ enum CamType {
 
 enum CamStatus {
     CAMERA_OPEN = 0,
-    CAMERA_CLOSE
+    CAMERA_CLOSE,
+    CAMERA_START_OPEN,
 };
 
 enum CamServiceError {
