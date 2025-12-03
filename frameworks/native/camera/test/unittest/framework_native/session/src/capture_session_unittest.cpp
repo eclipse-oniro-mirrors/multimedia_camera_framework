@@ -44,6 +44,10 @@ using namespace testing::ext;
 namespace OHOS {
 namespace CameraStandard {
 struct TestObject {};
+class IsoInfoSyncCallbackMock : public IsoInfoSyncCallback {
+public:
+    void OnIsoInfoChangedSync(IsoInfo info) override {}
+};
 
 void CaptureSessionUnitTest::SessionControlParams(sptr<CaptureSession> session)
 {
@@ -11275,6 +11279,35 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_099, TestSize.Level0)
     sessionForSys->UnlockForControl();
 
     sessionForSys->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test setting callback interface returns normal.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test setting callback interface returns normal.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_100, TestSize.Level0)
+{
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    sessionForSys->SetIsoInfoCallback(make_shared<IsoInfoSyncCallbackMock>());
+    EXPECT_NE(sessionForSys->isoInfoSyncCallback_, nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetIsoValue interface returns normal.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetIsoValue interface returns normal.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_101, TestSize.Level0)
+{
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    EXPECT_EQ(sessionForSys->GetIsoValue(), 0);
 }
 }
 }
