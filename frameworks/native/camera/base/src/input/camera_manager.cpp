@@ -2916,22 +2916,37 @@ vector<CameraFormat> CameraManager::GetSupportPhotoFormat(const int32_t modeName
     int32_t metadataTag = OHOS_STREAM_AVAILABLE_FORMATS;
     int32_t retCode = OHOS::Camera::FindCameraMetadataItem(metadata->get(), metadataTag, &item);
     CHECK_RETURN_RET_ELOG(retCode != CAM_META_SUCCESS || item.count == 0, photoFormats,
-        "Failed get metadata info tag = %{public}d, retCode = %{public}d, count = %{public}d", metadataTag, retCode,
-        item.count);
+        "Failed get metadata info tag = %{public}d, retCode = %{public}d, count = %{public}d",
+        metadataTag, retCode, item.count);
+    const int32_t UNSET = -1;
+    int32_t mode = UNSET;
     vector<int32_t> formats = {};
-    std::map<int32_t, vector<int32_t> > modePhotoFormats = {};
+    vector<int32_t> modePhotoFormats = {};
+ 
     for (uint32_t i = 0; i < item.count; i++) {
         if (item.data.i32[i] != -1) {
-            formats.push_back(item.data.i32[i]);
-            continue;
+            if (mode == UNSET) {
+                mode = item.data.i32[i];
+            } else {
+                formats.push_back(item.data.i32[i]);
+            }
         } else {
-            modePhotoFormats.insert(std::make_pair(modeName, std::move(formats)));
+            if (mode == modeName) {
+                modePhotoFormats = formats;
+                break;
+            }
+            if (mode == 0) {
+                // set default format
+                modePhotoFormats = formats;
+            }
+            mode = UNSET;
             formats.clear();
         }
     }
-    CHECK_RETURN_RET_ELOG(!modePhotoFormats.count(modeName), photoFormats,
-        "GetSupportPhotoFormat not support mode = %{public}d", modeName);
-    for (auto &val : modePhotoFormats[modeName]) {
+ 
+    CHECK_RETURN_RET_ELOG(
+        modePhotoFormats.empty(), photoFormats, "GetSupportPhotoFormat not support mode = %{public}d", modeName);
+    for (auto &val : modePhotoFormats) {
         camera_format_t hdiFomart = static_cast<camera_format_t>(val);
         if (metaToFwCameraFormat_.count(hdiFomart)) {
             photoFormats.push_back(metaToFwCameraFormat_.at(hdiFomart));
