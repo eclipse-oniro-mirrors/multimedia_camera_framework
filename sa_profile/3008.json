@@ -7,12 +7,9 @@
             "run-on-create": true,
             "distributed": false,
             "dump_level": 1,
-            "min_hdi_proxy_version":["libbuffer_handle_sequenceable_1.0.z.so",
-                                    "libcamera_proxy_1.5.z.so",
-                                    "libmap_data_sequenceable_1.0.z.so",
-                                    "libmetadata.z.so",
+            "min_hdi_proxy_version":["libcamera_proxy_1.5.z.so",
                                     "libdisplay_commontype_proxy_2.1.z.so",
-                                    "libdisplay_composer_hdi_impl_1.3.z.so"]
+                                    "libdisplay_composer_proxy_1.3.z.so"]
         }
     ]
 }
