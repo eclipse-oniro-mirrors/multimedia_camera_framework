@@ -211,11 +211,6 @@ HCameraDevice::HCameraDevice(
     cameraPid_ = IPCSkeleton::GetCallingPid();
 
     {
-        std::lock_guard<std::mutex> lock(dataShareHelperMutex_);
-        CameraApplistManager::GetInstance()->Init();
-    }
-
-    {
         std::lock_guard<std::mutex> lock(g_cameraHostManagerMutex);
         g_cameraHostManager = cameraHostManager;
     }
@@ -1208,7 +1203,6 @@ int32_t HCameraDevice::GetOriginalCameraOrientation()
 int32_t HCameraDevice::GetNaturalDirectionCorrect(bool& isNaturalDirectionCorrect)
 {
     std::string clientName = GetClientName();
-    std::lock_guard<std::mutex> lock(dataShareHelperMutex_);
     isNaturalDirectionCorrect = false;
     if (!CameraApplistManager::GetInstance()->GetNaturalDirectionCorrectByBundleName(clientName,
         isNaturalDirectionCorrect)) {

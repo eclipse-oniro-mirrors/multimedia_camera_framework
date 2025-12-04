@@ -19,7 +19,7 @@
 #include <mutex>
 #include <nlohmann/json.hpp>
 #include "datashare_helper.h"
-#include "applist_manager/camera_applist_observer.h"
+#include "data_ability_observer_stub.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -37,7 +37,7 @@ struct ApplistConfigure {
     bool exemptNaturalDirectionCorrect;
 };
 
-class CameraApplistManager : public RefBase {
+class CameraApplistManager : public AAFwk::DataAbilityObserverStub {
 public:
     static sptr<CameraApplistManager> &GetInstance();
     ~CameraApplistManager();
@@ -45,33 +45,29 @@ public:
     ApplistConfigure* GetConfigureByBundleName(const std::string& bundleName);
     bool GetNaturalDirectionCorrectByBundleName(const std::string& bundleName,
         bool& exemptNaturalDirectionCorrect);
+    void OnChange() override;
 
 private:
     CameraApplistManager();
 
     std::shared_ptr<DataShare::DataShareHelper> CreateCameraDataShareHelper();
-    bool GetApplistConfigure(std::string& jsonStr);
+    bool RegisterCameraApplistManagerObserver();
+    void UnregisterCameraApplistManagerObserver();
+    bool GetApplistConfigure();
     void ParseApplistConfigureJsonStr(const std::string& cfgJsonStr);
     void UpdateApplistConfigure(const ApplistConfigure& appConfigure);
-    bool ReleaseDataShareHelper(std::shared_ptr<DataShare::DataShareHelper> &helper);
     void ClearApplistManager();
-    bool RegisterCameraApplistManagerObserver();
-    sptr<CameraApplistObserver> CreateObserver(const CameraApplistObserver::UpdateFunc &func);
-    static void ExecRegisterCb(const sptr<CameraApplistObserver> &observer);
-    int32_t RegisterObserver(const sptr<CameraApplistObserver> &observer);
-    int32_t UnregisterObserver(const sptr<CameraApplistObserver> &observer);
 
 private:
     static sptr<CameraApplistManager> cameraApplistManager_;
     std::map<std::string, ApplistConfigure*> applistConfigures_;
 
     bool initResult_ = false;
-    sptr<CameraApplistObserver> observer_;
+    bool registerResult_ = false;
     sptr<IRemoteObject> remoteObj_;
 
     static std::mutex instanceMutex_;
     std::mutex applistConfigureMutex_;
-    std::mutex observerMutex_;
 };
 } // namespace CameraStandard
 } // namespace OHOS
