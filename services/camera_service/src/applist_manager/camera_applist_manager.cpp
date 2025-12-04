@@ -45,33 +45,64 @@ CameraApplistManager::CameraApplistManager()
 
 CameraApplistManager::~CameraApplistManager()
 {
-    remoteObj_ = nullptr;
     ClearApplistManager();
-    std::lock_guard<std::mutex> lock(observerMutex_);
-    CHECK_RETURN_ELOG(UnregisterObserver(observer_) != CAMERA_OK,
-        "CameraApplistManager::~CameraApplistManager UnregisterObserver failed");
+    UnregisterCameraApplistManagerObserver();
     MEDIA_INFO_LOG("CameraApplistManager::~CameraApplistManager");
 }
 
 bool CameraApplistManager::Init()
 {
-    if (remoteObj_ == nullptr) {
-        auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-        CHECK_RETURN_RET_ELOG(samgr == nullptr, false, "CameraApplistManager GetSystemAbilityManager failed.");
-        remoteObj_ = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
-        CHECK_RETURN_RET_ELOG(remoteObj_ == nullptr, false, "CameraApplistManager GetSystemAbility Service Failed.");
-    }
-    CHECK_EXECUTE(!initResult_, initResult_ = RegisterCameraApplistManagerObserver());
-    CHECK_RETURN_RET_ELOG(!initResult_, false, "CameraApplistManager::Init initResult: %{public}d", initResult_);
-    return initResult_;
+    CHECK_EXECUTE(!registerResult_, registerResult_ = RegisterCameraApplistManagerObserver());
+    CHECK_EXECUTE(!initResult_, initResult_ = GetApplistConfigure());
+    CHECK_RETURN_RET(registerResult_ && initResult_, true);
+    return false;
 }
 
-bool CameraApplistManager::GetApplistConfigure(std::string& jsonStr)
+std::shared_ptr<DataShare::DataShareHelper> CameraApplistManager::CreateCameraDataShareHelper()
 {
+    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    CHECK_RETURN_RET_ELOG(samgr == nullptr, nullptr, "CameraApplistManager GetSystemAbilityManager failed.");
+    sptr<IRemoteObject> remoteObj = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
+    CHECK_RETURN_RET_ELOG(remoteObj == nullptr, nullptr, "CameraApplistManager GetSystemAbility Service Failed.");
+    return DataShare::DataShareHelper::Creator(remoteObj, SETTING_URI_PROXY, SETTINGS_DATA_EXTRA_URI);
+}
+
+bool CameraApplistManager::RegisterCameraApplistManagerObserver()
+{
+    MEDIA_INFO_LOG("CameraApplistManager::RegisterCameraApplistManagerObserver is called");
+    auto dataShareHelper = CreateCameraDataShareHelper();
+    CHECK_RETURN_RET_ELOG(dataShareHelper == nullptr, false,
+        "CameraApplistManager::RegisterCameraApplistManagerObserver DataShareHelper is nullptr");
+    std::string uriApplistStr = SETTING_URI_PROXY + SETTINGS_DATA_KEY_URI + COMPATIBLE_APP_STRATEGY;
+    int ret = dataShareHelper->RegisterObserver(Uri(uriApplistStr), this);
+    dataShareHelper->Release();
+    CHECK_RETURN_RET_ELOG(ret != DataShare::E_OK, false,
+        "CameraApplistManager::RegisterCameraApplistManagerObserver Failed");
+    return true;
+}
+
+void CameraApplistManager::UnregisterCameraApplistManagerObserver()
+{
+    MEDIA_INFO_LOG("CameraApplistManager::UnregisterCameraApplistManagerObserver is called");
+    auto dataShareHelper = CreateCameraDataShareHelper();
+    CHECK_RETURN_ELOG(dataShareHelper == nullptr,
+        "CameraApplistManager::RegisterCameraApplistManagerObserver DataShareHelper is nullptr");
+    std::string uriApplistStr = SETTING_URI_PROXY + SETTINGS_DATA_KEY_URI + COMPATIBLE_APP_STRATEGY;
+    int ret = dataShareHelper->UnregisterObserver(Uri(uriApplistStr), this);
+    dataShareHelper->Release();
+    CHECK_RETURN_ELOG(ret != DataShare::E_OK,
+        "CameraApplistManager::UnregisterCameraApplistManagerObserver Failed");
+}
+
+bool CameraApplistManager::GetApplistConfigure()
+{
+    ClearApplistManager();
+    std::string jsonStr;
     auto dataShareHelper = CreateCameraDataShareHelper();
     CHECK_RETURN_RET_ELOG(dataShareHelper == nullptr, false,
         "CameraApplistManager::GetApplistConfigure dataShareHelper is nullptr");
-    Uri uri(SETTING_URI_PROXY + SETTINGS_DATA_KEY_URI + COMPATIBLE_APP_STRATEGY);
+    std::string uriApplistStr = SETTING_URI_PROXY + SETTINGS_DATA_KEY_URI + COMPATIBLE_APP_STRATEGY;
+    Uri uri(uriApplistStr);
     DataShare::DataSharePredicates predicates;
     predicates.EqualTo(SETTINGS_DATA_COLUMN_KEYWORD, COMPATIBLE_APP_STRATEGY);
     std::vector<std::string> columns = { SETTINGS_DATA_COLUMN_VALUE };
@@ -83,7 +114,7 @@ bool CameraApplistManager::GetApplistConfigure(std::string& jsonStr)
     if (count == 0) {
         MEDIA_ERR_LOG("CameraApplistManager::GetApplistConfigure DataShareHelper query none result");
         resultSet->Close();
-        ReleaseDataShareHelper(dataShareHelper);
+        dataShareHelper->Release();
         return false;
     }
 
@@ -93,12 +124,13 @@ bool CameraApplistManager::GetApplistConfigure(std::string& jsonStr)
         MEDIA_ERR_LOG("CameraApplistManager::GetApplistConfigure DataShareHelper query result GetString failed, "
             "ret: %{public}d", ret);
         resultSet->Close();
-        ReleaseDataShareHelper(dataShareHelper);
+        dataShareHelper->Release();
         return false;
     }
-
     resultSet->Close();
-    ReleaseDataShareHelper(dataShareHelper);
+    dataShareHelper->Release();
+
+    ParseApplistConfigureJsonStr(jsonStr);
     return true;
 }
 
@@ -136,6 +168,12 @@ void CameraApplistManager::UpdateApplistConfigure(const ApplistConfigure& appCon
     }
 }
 
+void CameraApplistManager::OnChange()
+{
+    MEDIA_INFO_LOG("CameraApplistManager::OnChange is called");
+    GetApplistConfigure();
+}
+
 void CameraApplistManager::ClearApplistManager()
 {
     std::lock_guard<std::mutex> lock(applistConfigureMutex_);
@@ -145,102 +183,18 @@ void CameraApplistManager::ClearApplistManager()
     applistConfigures_.clear();
 }
 
-bool CameraApplistManager::ReleaseDataShareHelper(std::shared_ptr<DataShare::DataShareHelper> &helper)
-{
-    CHECK_RETURN_RET_ELOG(helper == nullptr, false, "CameraApplistManager::ReleaseDataShareHelper helper is nullptr");
-    CHECK_RETURN_RET_ELOG(!helper->Release(), false, "CameraApplistManager::ReleaseDataShareHelper release fail");
-    return true;
-}
-
-std::shared_ptr<DataShare::DataShareHelper> CameraApplistManager::CreateCameraDataShareHelper()
-{
-    CHECK_RETURN_RET_ELOG(remoteObj_ == nullptr, nullptr,
-        "CameraApplistManager::CreateCameraDataShareHelper remoteObj is null");
-    return DataShare::DataShareHelper::Creator(remoteObj_, SETTING_URI_PROXY, SETTINGS_DATA_EXTRA_URI);
-}
-
-bool CameraApplistManager::RegisterCameraApplistManagerObserver()
-{
-    CameraApplistObserver::UpdateFunc updateFunc = [this]() {
-        std::string cfgJsonStr;
-        ClearApplistManager();
-        CHECK_RETURN_ELOG(!GetApplistConfigure(cfgJsonStr), "CameraApplistManager GetApplistConfigure failed");
-        ParseApplistConfigureJsonStr(cfgJsonStr);
-    };
-    std::lock_guard<std::mutex> lock(observerMutex_);
-    observer_ = CreateObserver(updateFunc);
-    CHECK_RETURN_RET_ELOG(observer_ == nullptr, false, "CameraApplistManager::Init observer is null");
-    CHECK_RETURN_RET_ELOG(RegisterObserver(observer_) != CAMERA_OK, false,
-        "CameraApplistManager::Init RegisterObserver failed");
-    return true;
-}
-
-sptr<CameraApplistObserver> CameraApplistManager::CreateObserver(const CameraApplistObserver::UpdateFunc &func)
-{
-    sptr<CameraApplistObserver> observer = new CameraApplistObserver();
-    CHECK_RETURN_RET_ELOG(observer == nullptr, observer, "CameraApplistManager::CreateObserver observer is null");
-    observer->SetUpdateFunc(func);
-    return observer;
-}
-
-void CameraApplistManager::ExecRegisterCb(const sptr<CameraApplistObserver> &observer)
-{
-    CHECK_RETURN_ELOG(observer == nullptr, "CameraApplistManager::ExecRegisterCb observer is nullptr");
-    observer->OnChange();
-}
-
-int32_t CameraApplistManager::RegisterObserver(const sptr<CameraApplistObserver> &observer)
-{
-    CHECK_RETURN_RET_ELOG(observer == nullptr, CAMERA_INVALID_ARG,
-        "CameraApplistManager::RegisterObserver observer is nullptr");
-    std::string callingIdentity = IPCSkeleton::ResetCallingIdentity();
-    auto helper = CreateCameraDataShareHelper();
-    if (helper == nullptr) {
-        IPCSkeleton::SetCallingIdentity(callingIdentity);
-        MEDIA_ERR_LOG("CameraApplistManager::RegisterObserver dataShareHelper is null");
-        return CAMERA_INVALID_ARG;
-    }
-    Uri uri(SETTING_URI_PROXY + SETTINGS_DATA_KEY_URI + COMPATIBLE_APP_STRATEGY);
-    helper->RegisterObserver(uri, observer);
-    helper->NotifyChange(uri);
-    std::thread execCb(CameraApplistManager::ExecRegisterCb, observer);
-    execCb.detach();
-    ReleaseDataShareHelper(helper);
-    IPCSkeleton::SetCallingIdentity(callingIdentity);
-    MEDIA_INFO_LOG("CameraApplistManager::RegisterObserver Success");
-    return CAMERA_OK;
-}
-
-int32_t CameraApplistManager::UnregisterObserver(const sptr<CameraApplistObserver> &observer)
-{
-    CHECK_RETURN_RET_ELOG(observer == nullptr, CAMERA_INVALID_ARG,
-        "CameraApplistManager::UnregisterObserver observer is nullptr");
-    std::string callingIdentity = IPCSkeleton::ResetCallingIdentity();
-    auto helper = CreateCameraDataShareHelper();
-    if (helper == nullptr) {
-        IPCSkeleton::SetCallingIdentity(callingIdentity);
-        return CAMERA_INVALID_ARG;
-    }
-    Uri uri(SETTING_URI_PROXY + SETTINGS_DATA_KEY_URI + COMPATIBLE_APP_STRATEGY);
-    helper->UnregisterObserver(uri, observer);
-    ReleaseDataShareHelper(helper);
-    IPCSkeleton::SetCallingIdentity(callingIdentity);
-    MEDIA_INFO_LOG("CameraApplistManager::UnregisterObserver Success");
-    return CAMERA_OK;
-}
-
 ApplistConfigure* CameraApplistManager::GetConfigureByBundleName(const std::string& bundleName)
 {
     CHECK_RETURN_RET_ELOG(bundleName.empty(), nullptr, "CameraApplistManager::GetConfigureByBundleName bundleName "
         "is empty");
-    CHECK_EXECUTE(!initResult_, Init());
+    CHECK_EXECUTE(!initResult_ || !registerResult_, Init());
     ApplistConfigure* appConfigure = nullptr;
     {
         std::lock_guard<std::mutex> lock(applistConfigureMutex_);
         auto item = applistConfigures_.find(bundleName);
         CHECK_EXECUTE(item != applistConfigures_.end(), appConfigure = item->second);
     }
-    MEDIA_INFO_LOG("CameraApplistManager::GeGetConfigureByBundleName BundleName: %{public}s", bundleName.c_str());
+    MEDIA_INFO_LOG("CameraApplistManager::GetConfigureByBundleName BundleName: %{public}s", bundleName.c_str());
     return appConfigure;
 }
 
@@ -249,7 +203,7 @@ bool CameraApplistManager::GetNaturalDirectionCorrectByBundleName(const std::str
 {
     CHECK_RETURN_RET_ELOG(bundleName.empty(), false,
         "CameraApplistManager::GetNaturalDirectionCorrectByBundleName bundleName is empty");
-    CHECK_EXECUTE(!initResult_,  Init());
+    CHECK_EXECUTE(!initResult_ || !registerResult_, Init());
     ApplistConfigure* appConfigure = nullptr;
     {
         std::lock_guard<std::mutex> lock(applistConfigureMutex_);

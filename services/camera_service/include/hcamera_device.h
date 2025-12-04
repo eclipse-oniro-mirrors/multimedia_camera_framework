@@ -319,7 +319,6 @@ private:
     std::mutex lastDisplayModeLock_;
     std::mutex originCameraIdLock_;
     std::mutex usePhysicalCameraOrientationMutex_;
-    std::mutex dataShareHelperMutex_;
     std::mutex movingPhotoStartTimeCallbackLock_;
     std::mutex movingPhotoEndTimeCallbackLock_;
     std::function<void(int32_t, int64_t)> movingPhotoStartTimeCallback_;

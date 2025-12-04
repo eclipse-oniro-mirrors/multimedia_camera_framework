@@ -66,7 +66,6 @@ ohos_shared_library("camera_service") {
     "src/hstream_operator_manager.cpp",
     "src/hstream_repeat.cpp",
     "src/applist_manager/camera_applist_manager.cpp",
-    "src/applist_manager/camera_applist_observer.cpp",
     "src/param_update/camera_rotate_param_manager.cpp",
     "src/param_update/camera_rotate_param_reader.cpp",
     "src/param_update/camera_rotate_param_sign_tools.cpp",

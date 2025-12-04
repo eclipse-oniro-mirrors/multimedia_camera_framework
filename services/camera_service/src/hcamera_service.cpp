@@ -510,7 +510,12 @@ void HCameraService::OnAddSystemAbility(int32_t systemAbilityId, const std::stri
             MEDIA_INFO_LOG("OnAddSystemAbility RegisterObserver start");
             CameraCommonEventManager::GetInstance()->SubscribeCommonEvent(COMMON_EVENT_DATA_SHARE_READY,
                 std::bind(&HCameraService::OnReceiveEvent, this, std::placeholders::_1));
-            CHECK_EXECUTE(cameraDataShareHelper_->IsDataShareReady(), SetMuteModeFromDataShareHelper());
+            if (cameraDataShareHelper_->IsDataShareReady()) {
+                SetMuteModeFromDataShareHelper();
+                if (system::GetParameter("const.system.sensor_correction_enable", "0") == "1") {
+                    CameraApplistManager::GetInstance()->Init();
+                }
+            }
             break;
         case COMMON_EVENT_SERVICE_ID:
             MEDIA_INFO_LOG("OnAddSystemAbility COMMON_EVENT_SERVICE");
