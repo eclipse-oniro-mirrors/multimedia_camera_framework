@@ -770,6 +770,7 @@ int32_t CaptureSessionForSys::SetPhysicalAperture(float physicalAperture)
     CHECK_EXECUTE(!isSmoothZooming_ || FloatIsEqual(targetZoomRatio_, -1.0), currentZoomRatio = GetZoomRatio());
     int zoomMinIndex = 0;
     for (const auto& physicalApertureRange : physicalApertures) {
+        CHECK_CONTINUE(physicalApertureRange.size() <= static_cast<size_t>(zoomMinIndex + 1));
         if ((currentZoomRatio > physicalApertureRange[zoomMinIndex] - std::numeric_limits<float>::epsilon() &&
             currentZoomRatio < physicalApertureRange[zoomMinIndex+1] + std::numeric_limits<float>::epsilon())) {
             matchedRanges.push_back(physicalApertureRange);
@@ -799,8 +800,7 @@ int32_t CaptureSessionForSys::SetPhysicalAperture(float physicalAperture)
         sharedThis->LockForControl();
         int32_t retCode = sharedThis->SetPhysicalAperture(physicalAperture);
         sharedThis->UnlockForControl();
-        CHECK_EXECUTE(retCode != CameraErrorCode::SUCCESS,
-                      sharedThis->SetDeviceCapabilityChangeStatus(true));
+        CHECK_EXECUTE(retCode != CameraErrorCode::SUCCESS, sharedThis->SetDeviceCapabilityChangeStatus(true));
     });
     apertureValue_ = physicalAperture;
     return CameraErrorCode::SUCCESS;
