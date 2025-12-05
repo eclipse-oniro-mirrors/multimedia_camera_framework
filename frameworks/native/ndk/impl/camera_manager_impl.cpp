@@ -933,19 +933,20 @@ Camera_ErrorCode Camera_Manager::GetCameraDevices(Camera_DeviceQueryInfo* device
         matchedDevices.empty(), CAMERA_SERVICE_FATAL_ERROR, "Camera_Manager::GetCameraDevices no matched device!");
 
     uint32_t outSize = static_cast<uint32_t>(matchedDevices.size());
-    Camera_Device* outArray = new (std::nothrow) Camera_Device[outSize + 1];
+    Camera_Device* outArray = new (std::nothrow) Camera_Device[outSize];
     CHECK_RETURN_RET_ELOG(outArray == nullptr, CAMERA_SERVICE_FATAL_ERROR,
         "Camera_Manager::GetCameraDevices new Camera_Device array failed!");
 
     for (uint32_t i = 0; i < outSize; ++i) {
         sptr<CameraDevice> cameraInfo = matchedDevices[i];
         outArray[i].cameraId = strdup(cameraInfo->GetID().c_str());
+        CHECK_RETURN_RET_ELOG(!(outArray[i].cameraId), CAMERA_SERVICE_FATAL_ERROR, "malloc memory fail!");
         outArray[i].cameraPosition = deviceQueryInfo->cameraPosition;
         outArray[i].cameraType = static_cast<Camera_Type>(cameraInfo->GetCameraType());
         outArray[i].connectionType = static_cast<Camera_Connection>(cameraInfo->GetConnectionType());
     }
-    outArray[outSize].cameraId = nullptr;
     *cameraSize = outSize;
+    cameraDevicesSize_ = outSize;
     *cameras = outArray;
     MEDIA_DEBUG_LOG("Camera_Manager::GetCameraDevices success, outSize = %{public}u", outSize);
     return CAMERA_OK;
@@ -954,10 +955,14 @@ Camera_ErrorCode Camera_Manager::GetCameraDevices(Camera_DeviceQueryInfo* device
 Camera_ErrorCode Camera_Manager::DeleteCameraDevices(Camera_Device* cameras)
 {
     MEDIA_DEBUG_LOG("Camera_Manager::DeleteCameraDevices is called");
-    uint32_t i = 0;
-    while (cameras[i].cameraId != nullptr) {
-        free(cameras[i].cameraId);
-        i++;
+    CHECK_RETURN_RET_ELOG(cameraDevicesSize_ == 0, CAMERA_INVALID_ARGUMENT,
+        "Camera_Manager::DeleteCameraDevices error, size is Invalid!");
+    CHECK_RETURN_RET_ELOG(cameras == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Camera_Manager::DeleteCameraDevices error, cameras is nullptr!");
+    for (size_t index = 0; index < cameraDevicesSize_; index++) {
+        if (&cameras[index] != nullptr) {
+            free(cameras[index].cameraId);
+        }
     }
     delete[] cameras;
     return CAMERA_OK;

@@ -140,6 +140,7 @@ private:
         std::vector<std::vector<OHOS::sptr<OHOS::CameraStandard::CameraOutputCapability>>> &outputCapabilities);
 
     OHOS::sptr<OHOS::CameraStandard::CameraManager> cameraManager_;
+    uint32_t cameraDevicesSize_ = 0;
 
     static NDKCallbackMap<CameraManager_Callbacks*, OHOS::CameraStandard::InnerCameraManagerCameraStatusCallback>
         cameraStatusCallbackMap_;
