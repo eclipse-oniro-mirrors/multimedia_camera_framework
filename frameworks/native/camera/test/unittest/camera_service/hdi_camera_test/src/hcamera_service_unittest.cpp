@@ -327,14 +327,14 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_005, TestSize.Level1)
 HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_006, TestSize.Level1)
 {
     OHOS::Rosen::FoldStatus foldStatus = OHOS::Rosen::FoldStatus::HALF_FOLD;
-    cameraService_->preFoldStatus_ = FoldStatus::EXPAND;
+    cameraService_->preFoldStatus_ = OHOS::Rosen::FoldStatus::EXPAND;
     cameraService_->OnFoldStatusChanged(foldStatus);
-    EXPECT_EQ(cameraService_->preFoldStatus_, FoldStatus::HALF_FOLD);
+    EXPECT_EQ(cameraService_->preFoldStatus_, OHOS::Rosen::FoldStatus::HALF_FOLD);
 
     foldStatus = OHOS::Rosen::FoldStatus::EXPAND;
-    cameraService_->preFoldStatus_ = FoldStatus::HALF_FOLD;
+    cameraService_->preFoldStatus_ = OHOS::Rosen::FoldStatus::HALF_FOLD;
     cameraService_->OnFoldStatusChanged(foldStatus);
-    EXPECT_EQ(cameraService_->preFoldStatus_, FoldStatus::EXPAND);
+    EXPECT_EQ(cameraService_->preFoldStatus_, OHOS::Rosen::FoldStatus::EXPAND);
 }
 
 /*
@@ -943,18 +943,18 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_023, TestSize.Level1)
 HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_024, TestSize.Level1)
 {
     OHOS::Rosen::FoldStatus foldStatus = OHOS::Rosen::FoldStatus::HALF_FOLD;
-    cameraService_->preFoldStatus_ = FoldStatus::FOLDED;
+    cameraService_->preFoldStatus_ = OHOS::Rosen::FoldStatus::FOLDED;
     cameraService_->foldServiceCallbacks_ = {};
     cameraService_->OnFoldStatusChanged(foldStatus);
-    EXPECT_EQ(cameraService_->preFoldStatus_, FoldStatus::HALF_FOLD);
+    EXPECT_EQ(cameraService_->preFoldStatus_, OHOS::Rosen::FoldStatus::HALF_FOLD);
     EXPECT_TRUE(cameraService_->foldServiceCallbacks_.empty());
 
     foldStatus = OHOS::Rosen::FoldStatus::EXPAND;
-    cameraService_->preFoldStatus_ = FoldStatus::FOLDED;
+    cameraService_->preFoldStatus_ = OHOS::Rosen::FoldStatus::FOLDED;
     sptr<IFoldServiceCallbackTest> callback = new IFoldServiceCallbackTest();
     cameraService_->foldServiceCallbacks_ = {{1, callback}, {2, nullptr}};
     cameraService_->OnFoldStatusChanged(foldStatus);
-    EXPECT_EQ(cameraService_->preFoldStatus_, FoldStatus::EXPAND);
+    EXPECT_EQ(cameraService_->preFoldStatus_, OHOS::Rosen::FoldStatus::EXPAND);
     EXPECT_EQ(cameraService_->foldServiceCallbacks_.size(), 2);
 
     if (callback) {

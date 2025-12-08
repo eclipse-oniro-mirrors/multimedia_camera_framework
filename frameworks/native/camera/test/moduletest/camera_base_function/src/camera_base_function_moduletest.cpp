@@ -5051,5 +5051,23 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_119, Test
     std::vector<float> res = cameraDevice->GetExposureBiasRange();
     EXPECT_NE(res.size(), 0);
 }
+
+/*
+ * Feature: Camera base function
+ * Function: Test GetCameraStatusData interface with null proxy
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetCameraStatusData interface with null proxy
+ */
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_200, TestSize.Level0)
+{
+    sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
+    ASSERT_NE(camManagerObj, nullptr);
+    camManagerObj->SetServiceProxy(nullptr);
+    std::vector<CameraStatusData> cameraStatusDataList;
+    camManagerObj->GetCameraStatusData(cameraStatusDataList);
+    EXPECT_EQ(cameraStatusDataList.size(), 0);
+}
 } // namespace CameraStandard
 } // namespace OHOS
