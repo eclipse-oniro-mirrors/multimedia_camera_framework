@@ -460,10 +460,10 @@ MetadataObjectFactory::MetadataObjectFactory() {}
 
 sptr<MetadataObject> MetadataObjectFactory::createMetadataObject(MetadataObjectType type)
 {
-    MetaObjectParms baseMetaParms = { type_, timestamp_, box_, objectId_, confidence_ };
+    MetaObjectParms baseMetaParms = { type, timestamp_, box_, objectId_, confidence_ };
     MEDIA_DEBUG_LOG("MetadataObjectFactory::createMetadataObject type: %{public}d, timestamp_: %{public}" PRId64
                     ", objectId_: %{public}d",
-        type_, timestamp_, objectId_);
+        type, timestamp_, objectId_);
     sptr<MetadataObject> metadataObject;
     // LCOV_EXCL_START
     switch (type) {
@@ -500,24 +500,7 @@ sptr<MetadataObject> MetadataObjectFactory::createMetadataObject(MetadataObjectT
             metadataObject = new MetadataObject(baseMetaParms);
     }
     // LCOV_EXCL_STOP
-    ResetParameters();
     return metadataObject;
-}
-
-void MetadataObjectFactory::ResetParameters()
-{
-    type_ = MetadataObjectType::INVALID;
-    timestamp_ = 0;
-    box_ = { 0, 0, 0, 0 };
-    objectId_ = 0;
-    confidence_ = 0.0f;
-    leftEyeBoundingBox_ = { 0, 0, 0, 0 };
-    rightEyeBoundingBox_ = { 0, 0, 0, 0 };
-    emotion_ = Emotion::NEUTRAL;
-    emotionConfidence_ = 0;
-    pitchAngle_ = 0;
-    yawAngle_ = 0;
-    rollAngle_ = 0;
 }
 }  // namespace CameraStandard
 }  // namespace OHOS

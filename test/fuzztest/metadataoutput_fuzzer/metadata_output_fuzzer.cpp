@@ -100,7 +100,6 @@ void MetadataOutputFuzzer::MetadataOutputFuzzTest1(FuzzedDataProvider& fdp)
         return;
     }
     std::shared_ptr<MetadataObjectFactory> factory = std::make_shared<MetadataObjectFactory>();
-    factory->ResetParameters();
     MetadataObjectType type = MetadataObjectType::HUMAN_BODY;
     sptr<MetadataObject> ret = factory->createMetadataObject(type);
     IDeferredPhotoProcessingSessionCallbackFuzz callback;
