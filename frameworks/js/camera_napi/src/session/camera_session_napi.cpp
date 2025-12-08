@@ -104,7 +104,9 @@ const std::vector<napi_property_descriptor> CameraSessionNapi::camera_process_pr
 
     DECLARE_NAPI_FUNCTION("on", CameraSessionNapi::On),
     DECLARE_NAPI_FUNCTION("once", CameraSessionNapi::Once),
-    DECLARE_NAPI_FUNCTION("off", CameraSessionNapi::Off)
+    DECLARE_NAPI_FUNCTION("off", CameraSessionNapi::Off),
+
+    DECLARE_NAPI_FUNCTION("setParameters", CameraSessionNapi::SetParameters)
 };
 
 const std::vector<napi_property_descriptor> CameraSessionNapi::camera_process_sys_props = {
@@ -3015,6 +3017,58 @@ napi_value CameraSessionNapi::SetUsage(napi_env env, napi_callback_info info)
     CameraNapiUtils::ThrowError(env, CameraErrorCode::NO_SYSTEM_APP_PERMISSION,
         "SystemApi SetUsage is called!");
     return CameraNapiUtils::GetUndefinedValue(env);
+}
+
+napi_value CameraSessionNapi::SetParameters(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("SetParameters is called");
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi SetParameters is called!");
+        return nullptr;
+    }
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
+    napi_value thisVar = nullptr;
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+    NAPI_ASSERT(env, argc == ARGS_ONE, "requires one parameter");
+    napi_value js_record_object = argv[PARAM0];
+    napi_valuetype valueType = napi_undefined;
+    napi_typeof(env, js_record_object, &valueType);
+    CHECK_RETURN_RET(valueType != napi_object && !CameraNapiUtils::CheckError(env, INVALID_ARGUMENT), result);
+    napi_get_undefined(env, &result);
+    CameraSessionNapi* CameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&CameraSessionNapi));
+    if (status == napi_ok && CameraSessionNapi != nullptr &&
+        CameraSessionNapi->cameraSession_ != nullptr) {
+        napi_value keys_array;
+        napi_get_property_names(env, js_record_object, &keys_array);
+        uint32_t length;
+        napi_get_array_length(env, keys_array, &length);
+        std::vector<std::pair<std::string, std::string>> kvPairs;
+        for (uint32_t i = 0; i < length; i++) {
+            napi_value key_val;
+            napi_get_element(env, keys_array, i, &key_val);
+            size_t sizeofres;
+            char buffer[PATH_MAX];
+            napi_get_value_string_utf8(env, key_val, buffer, PATH_MAX, &sizeofres);
+            std::string key = std::string(buffer);
+            napi_value value_val;
+            napi_get_property(env, js_record_object, key_val, &value_val);
+            napi_get_value_string_utf8(env, value_val, buffer, PATH_MAX, &sizeofres);
+            std::string value = std::string(buffer);
+            MEDIA_INFO_LOG("CameraSessionNapi::SetParameters key:%{public}s value:%{public}s",
+                key.c_str(), value.c_str());
+            kvPairs.emplace_back(key, value);
+        }
+        CameraSessionNapi->cameraSession_->LockForControl();
+        int32_t retCode =
+            CameraSessionNapi->cameraSession_->SetParameters(kvPairs);
+        CameraSessionNapi->cameraSession_->UnlockForControl();
+        CHECK_RETURN_RET(retCode != 0 && !CameraNapiUtils::CheckError(env, retCode), result);
+    }
+    return result;
 }
 
 void CameraSessionNapi::RegisterIsoInfoCallbackListener(

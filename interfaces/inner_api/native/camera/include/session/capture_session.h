@@ -1807,6 +1807,7 @@ public:
     void SetMacroStatusCallback(std::shared_ptr<MacroStatusCallback> callback);
     void SetPhotoQualityPrioritization(camera_photo_quality_prioritization_t quality);
     uint32_t GetIsoValue();
+    int32_t SetParameters(std::vector<std::pair<std::string, std::string>>& kvPairs);
 protected:
 
     static const std::unordered_map<camera_awb_mode_t, WhiteBalanceMode> metaWhiteBalanceModeMap_;
@@ -1815,6 +1816,8 @@ protected:
     static const std::unordered_map<LightPaintingType, CameraLightPaintingType> fwkLightPaintingTypeMap_;
     static const std::unordered_map<CameraLightPaintingType, LightPaintingType> metaLightPaintingTypeMap_;
     static const std::unordered_map<TripodStatus, FwkTripodStatus> metaTripodStatusMap_;
+
+    static const std::unordered_map<std::string, camera_device_metadata_tag_t> parametersMap_;
 
     std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata_;
     Profile photoProfile_;
