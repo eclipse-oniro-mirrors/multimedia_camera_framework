@@ -45,16 +45,22 @@ std::shared_ptr<PhotoAssetProxy> PhotoAssetProxy::GetPhotoAssetProxy(
 {
     MEDIA_DEBUG_LOG("GetPhotoAssetProxy E callingUid:%{public}d", callingUid);
     auto dynamiclib = CameraDynamicLoader::GetDynamiclib(MEDIA_LIB_SO);
-    CHECK_RETURN_RET_COMM_ELOG(
-        dynamiclib == nullptr, nullptr, "PhotoAssetProxy::GetPhotoAssetProxy get dynamiclib fail");
+    if (dynamiclib == nullptr) {
+        HILOG_COMM_ERROR("PhotoAssetProxy::GetPhotoAssetProxy get dynamiclib fail");
+        return nullptr;
+    }
     CreatePhotoAssetIntf createPhotoAssetIntf = (CreatePhotoAssetIntf)dynamiclib->GetFunction("createPhotoAssetIntf");
-    CHECK_RETURN_RET_COMM_ELOG(
-        createPhotoAssetIntf == nullptr, nullptr, "PhotoAssetProxy::GetPhotoAssetProxy get createPhotoAssetIntf fail");
+    if (createPhotoAssetIntf == nullptr) {
+        HILOG_COMM_ERROR("PhotoAssetProxy::GetPhotoAssetProxy get createPhotoAssetIntf fail");
+        return nullptr;
+    }
     std::string bundleName = GetBundleName(callingUid);
-    COMM_INFO_LOG("GetPhotoAssetProxy bundleName:%{public}s", bundleName.c_str());
+    MEDIA_DEBUG_LOG("GetPhotoAssetProxy bundleName:%{public}s", bundleName.c_str());
     PhotoAssetIntf* photoAssetIntf = createPhotoAssetIntf(shootType, callingUid, callingTokenID, bundleName);
-    CHECK_RETURN_RET_COMM_ELOG(
-        photoAssetIntf == nullptr, nullptr, "PhotoAssetProxy::GetPhotoAssetProxy get photoAssetIntf fail");
+    if (photoAssetIntf == nullptr) {
+        HILOG_COMM_ERROR("PhotoAssetProxy::GetPhotoAssetProxy get photoAssetIntf fail");
+        return nullptr;
+    }
     std::shared_ptr<PhotoAssetProxy> photoAssetProxy =
         std::make_shared<PhotoAssetProxy>(dynamiclib, std::shared_ptr<PhotoAssetIntf>(photoAssetIntf));
     return photoAssetProxy;

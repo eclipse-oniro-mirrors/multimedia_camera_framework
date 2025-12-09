@@ -29,7 +29,7 @@ int32_t DeferredPhotoProcessingSessionCallback::OnProcessImageDone(const std::st
     const sptr<IPCFileDescriptor>& ipcFileDescriptor, int64_t bytes, uint32_t cloudImageEnhanceFlag)
 {
     // LCOV_EXCL_START
-    COMM_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnProcessImageDone() is called!"
+    HILOG_COMM_INFO("DeferredPhotoProcessingSessionCallback::OnProcessImageDone() is called!"
         "cloudImageEnhanceFlag: %{public}u", cloudImageEnhanceFlag);
     CHECK_RETURN_RET(ipcFileDescriptor == nullptr, CAMERA_INVALID_ARG);
     int fd = ipcFileDescriptor->GetFd();
@@ -82,7 +82,7 @@ int32_t DeferredPhotoProcessingSessionCallback::OnProcessImageDone(const std::st
     const std::shared_ptr<PictureIntf>& pictureIntf, uint32_t cloudImageEnhanceFlag)
 {
     // LCOV_EXCL_START
-    COMM_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnProcessImageDone() is"
+    HILOG_COMM_INFO("DeferredPhotoProcessingSessionCallback::OnProcessImageDone() is"
         "called, status:%{public}s, cloudImageEnhanceFlag: %{public}u", imageId.c_str(), cloudImageEnhanceFlag);
     if (pictureIntf != nullptr) {
         MEDIA_INFO_LOG("picture is not null");
@@ -100,7 +100,7 @@ int32_t DeferredPhotoProcessingSessionCallback::OnDeliveryLowQualityImage(const 
     const std::shared_ptr<PictureIntf>& pictureIntf)
 {
     // LCOV_EXCL_START
-    COMM_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnDeliveryLowQualityImage() is"
+    HILOG_COMM_INFO("DeferredPhotoProcessingSessionCallback::OnDeliveryLowQualityImage() is"
         "called, status:%{public}s", imageId.c_str());
     auto callback = deferredPhotoProcSession_->GetCallback();
     if (pictureIntf != nullptr && callback != nullptr) {
@@ -210,7 +210,7 @@ void DeferredPhotoProcSession::AddImage(const std::string& imageId, DpsMetadata&
 {
     // LCOV_EXCL_START
     CHECK_RETURN_ELOG(remoteSession_ == nullptr, "DeferredPhotoProcSession::AddImage failed due to binder died.");
-    COMM_INFO_LOG("DeferredPhotoProcSession::AddImage() enter.");
+    MEDIA_INFO_LOG("DeferredPhotoProcSession::AddImage() enter.");
     remoteSession_->AddImage(imageId, metadata, discardable, bundleName);
     // LCOV_EXCL_STOP
 }
@@ -238,9 +238,11 @@ void DeferredPhotoProcSession::RestoreImage(const std::string& imageId)
 void DeferredPhotoProcSession::ProcessImage(const std::string& appName, const std::string& imageId)
 {
     // LCOV_EXCL_START
-    CHECK_RETURN_COMM_ELOG(
-        remoteSession_ == nullptr, "DeferredPhotoProcSession::ProcessImage failed due to binder died.");
-    COMM_INFO_LOG("DeferredPhotoProcSession::ProcessImage() enter.");
+    if (remoteSession_ == nullptr) {
+        HILOG_COMM_ERROR("DeferredPhotoProcSession::ProcessImage failed due to binder died.");
+        return;
+    }
+    HILOG_COMM_INFO("DeferredPhotoProcSession::ProcessImage() enter.");
     remoteSession_->ProcessImage(appName, imageId);
     // LCOV_EXCL_STOP
 }

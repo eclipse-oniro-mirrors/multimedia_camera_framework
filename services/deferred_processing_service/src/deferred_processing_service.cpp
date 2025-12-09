@@ -31,7 +31,7 @@ DeferredProcessingService::DeferredProcessingService()
 
 DeferredProcessingService::~DeferredProcessingService()
 {
-    COMM_DP_INFO_LOG("entered.");
+    HILOG_COMM_INFO("entered.");
     DPS_Destroy();
 }
 

@@ -29,7 +29,7 @@ CodecAVBufferInfo::CodecAVBufferInfo(uint32_t argBufferIndex, OH_AVBuffer* argBu
 OH_AVBuffer* CodecAVBufferInfo::GetCopyAVBuffer()
 {
     // LCOV_EXCL_START
-    MEDIA_INFO_LOG("CodecBufferInfo OH_AVBuffer_Create with size: %{public}d", attr.size);
+    MEDIA_DEBUG_LOG("CodecBufferInfo OH_AVBuffer_Create with size: %{public}d", attr.size);
     OH_AVBuffer* destBuffer = OH_AVBuffer_Create(attr.size);
     CHECK_RETURN_RET_ELOG(destBuffer == nullptr, nullptr, "destBuffer is null");
     auto sourceAddr = OH_AVBuffer_GetAddr(buffer);

@@ -164,7 +164,7 @@ public:
 
     int32_t OnError(const std::string& videoId, OHOS::HDI::Camera::V1_2::ErrorCode errorCode) override
     {
-        COMM_DP_INFO_LOG("DPS_VIDEO: videoId: %{public}s, error: %{public}d", videoId.c_str(), errorCode);
+        HILOG_COMM_INFO("DPS_VIDEO: videoId: %{public}s, error: %{public}d", videoId.c_str(), errorCode);
         auto processResult = processResult_.lock();
         DP_CHECK_ERROR_RETURN_RET_LOG(processResult == nullptr, DP_OK, "VideoProcessResult is nullptr.");
 
@@ -256,8 +256,8 @@ void VideoPostProcessor::ProcessRequest(const DeferredVideoWorkPtr& work)
     DP_CHECK_ERROR_RETURN_LOG(mediaManagerProxy_ == nullptr, "MediaManager is nullptr.");
     auto startTime = mediaManagerProxy_->MpegGetProcessTimeStamp();
     auto ret = session->ProcessVideo(videoId, startTime);
-    DP_INFO_LOG("DPS_VIDEO: ProcessVideo to ive, videoId: %{public}s, startTime: %{public}" PRIu64 ", ret: %{public}d",
-        videoId.c_str(), startTime, ret);
+    HILOG_COMM_INFO("DPS_VIDEO: ProcessVideo to ive, videoId: %{public}s, startTime: %{public}"
+        PRIu64 ", ret: %{public}d", videoId.c_str(), startTime, ret);
 }
 
 void VideoPostProcessor::RemoveRequest(const std::string& videoId)
@@ -277,7 +277,7 @@ void VideoPostProcessor::PauseRequest(const std::string& videoId, const Schedule
     DP_CHECK_ERROR_RETURN_LOG(session == nullptr, "video session is nullptr.");
 
     int32_t ret = session->Interrupt();
-    COMM_DP_INFO_LOG("DPS_VIDEO: Interrupt video to ive, videoId: %{public}s, ret: %{public}d", videoId.c_str(), ret);
+    HILOG_COMM_INFO("DPS_VIDEO: Interrupt video to ive, videoId: %{public}s, ret: %{public}d", videoId.c_str(), ret);
 }
 
 DpsError VideoPostProcessor::PrepareStreams(const std::string& videoId, const int inputFd)
@@ -343,7 +343,7 @@ void VideoPostProcessor::ReleaseStreams()
 
     auto ret = session->ReleaseStreams(allStreamInfo_);
     allStreamInfo_.clear();
-    COMM_DP_INFO_LOG("DPS_VIDEO: ReleaseStreams ret: %{public}d", ret);
+    HILOG_COMM_INFO("DPS_VIDEO: ReleaseStreams ret: %{public}d", ret);
 }
 
 void VideoPostProcessor::SetStreamInfo(const StreamDescription& stream, sptr<BufferProducerSequenceable>& producer)

@@ -35,7 +35,7 @@ ThumbnailBufferConsumer::~ThumbnailBufferConsumer()
 
 void ThumbnailBufferConsumer::OnBufferAvailable()
 {
-    COMM_INFO_LOG("ThumbnailBufferConsumer OnBufferAvailable E");
+    HILOG_COMM_INFO("ThumbnailBufferConsumer OnBufferAvailable E");
     sptr<HStreamCapture> streamCapture = streamCapture_.promote();
     CHECK_RETURN_ELOG(streamCapture == nullptr, "streamCapture is null");
     CHECK_RETURN_ELOG(streamCapture->thumbnailTask_ == nullptr, "thumbnailTask is null");

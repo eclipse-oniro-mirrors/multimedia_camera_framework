@@ -302,15 +302,19 @@ int32_t CaptureSession::BeginConfig()
 {
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("Enter Into CaptureSession::BeginConfig");
-    CHECK_RETURN_RET_COMM_ELOG(IsSessionConfiged(), CameraErrorCode::SESSION_CONFIG_LOCKED,
-        "CaptureSession::BeginConfig Session is locked");
+    if (IsSessionConfiged()) {
+        HILOG_COMM_ERROR("CaptureSession::BeginConfig Session is locked");
+        return CameraErrorCode::SESSION_CONFIG_LOCKED;
+    }
 
     isColorSpaceSetted_ = false;
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     auto captureSession = GetCaptureSession();
     if (captureSession) {
         errCode = captureSession->BeginConfig();
-        CHECK_PRINT_COMM_ELOG(errCode != CAMERA_OK, "Failed to BeginConfig!, %{public}d", errCode);
+        if (errCode != CAMERA_OK) {
+            HILOG_COMM_ERROR("Failed to BeginConfig!, %{public}d", errCode);
+        }
     } else {
         MEDIA_ERR_LOG("CaptureSession::BeginConfig() captureSession is nullptr");
     }
@@ -329,14 +333,14 @@ int32_t CaptureSession::CommitConfig()
 {
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("Enter Into CaptureSession::CommitConfig");
-    CHECK_RETURN_RET_COMM_ELOG(!IsSessionConfiged(), CameraErrorCode::OPERATION_NOT_ALLOWED,
-        "CaptureSession::CommitConfig operation Not allowed!");
-    if (!CheckLightStatus()) {
-        MEDIA_ERR_LOG("CaptureSession::CommitConfig the camera can't support light status!");
+    if (!IsSessionConfiged()) {
+        HILOG_COMM_ERROR("CaptureSession::CommitConfig operation Not allowed!");
+        return CameraErrorCode::OPERATION_NOT_ALLOWED;
     }
+    CHECK_PRINT_ELOG(!CheckLightStatus(), "CaptureSession::CommitConfig the camera can't support light status!");
 
     if (!isColorSpaceSetted_) {
-        COMM_INFO_LOG("CaptureSession::CommitConfig is not setColorSpace");
+        HILOG_COMM_INFO("CaptureSession::CommitConfig is not setColorSpace");
         auto preconfigProfiles = GetPreconfigProfiles();
         if (preconfigProfiles != nullptr) {
             SetColorSpace(preconfigProfiles->colorSpace);
@@ -370,7 +374,7 @@ int32_t CaptureSession::CommitConfig()
         errCode = captureSession->CommitConfig();
         MEDIA_INFO_LOG("CaptureSession::CommitConfig commit mode = %{public}d", GetMode());
         if (errCode != CAMERA_OK) {
-            COMM_ERR_LOG("Failed to CommitConfig!, %{public}d", errCode);
+            HILOG_COMM_ERROR("Failed to CommitConfig!, %{public}d", errCode);
         } else {
             CreateCameraAbilityContainer();
         }
@@ -893,13 +897,16 @@ int32_t CaptureSession::AddOutput(sptr<CaptureOutput>& output)
 {
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("Enter Into CaptureSession::AddOutput");
-    CHECK_RETURN_RET_COMM_ELOG(!IsSessionConfiged(), CameraErrorCode::OPERATION_NOT_ALLOWED,
-        "CaptureSession::AddOutput operation Not allowed!");
-    CHECK_RETURN_RET_COMM_ELOG(output == nullptr, ServiceToCameraError(CAMERA_INVALID_ARG),
-        "CaptureSession::AddOutput output is null");
+    if (!IsSessionConfiged()) {
+        HILOG_COMM_ERROR("CaptureSession::AddOutput operation Not allowed!");
+        return CameraErrorCode::OPERATION_NOT_ALLOWED;
+    }
+    if (output == nullptr) {
+        HILOG_COMM_ERROR("CaptureSession::AddOutput output is null");
+        return ServiceToCameraError(CAMERA_INVALID_ARG);
+    }
 
-    CHECK_RETURN_RET_ELOG(ConfigureOutput(output) != CameraErrorCode::SUCCESS,
-        CameraErrorCode::SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_ELOG(ConfigureOutput(output) != CameraErrorCode::SUCCESS, CameraErrorCode::SERVICE_FATL_ERROR,
         "CaptureSession::AddOutput ConfigureOutput fail!");
     if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_METADATA) {
         MEDIA_INFO_LOG("CaptureSession::AddOutput MetadataOutput");
@@ -4118,7 +4125,7 @@ bool CaptureSession::IsMovingPhotoSupported()
 int32_t CaptureSession::EnableMovingPhoto(bool isEnable)
 {
     CAMERA_SYNC_TRACE;
-    COMM_INFO_LOG("Enter EnableMovingPhoto, isEnable:%{public}d", isEnable);
+    HILOG_COMM_INFO("Enter EnableMovingPhoto, isEnable:%{public}d", isEnable);
     CHECK_RETURN_RET_ELOG(!IsMovingPhotoSupported(), CameraErrorCode::SERVICE_FATL_ERROR,
         "IsMovingPhotoSupported is false");
     CHECK_RETURN_RET_ELOG(!(IsSessionConfiged() || IsSessionCommited()), CameraErrorCode::SERVICE_FATL_ERROR,
@@ -4313,23 +4320,18 @@ bool CaptureSession::IsSetEnableMacro()
 
 bool CaptureSession::ValidateOutputProfile(Profile& outputProfile, CaptureOutputType outputType)
 {
-    MEDIA_DEBUG_LOG(
-        "CaptureSession::ValidateOutputProfile profile:w(%{public}d),h(%{public}d),f(%{public}d) outputType:%{public}d",
-        outputProfile.size_.width, outputProfile.size_.height, outputProfile.format_, outputType);
+    MEDIA_DEBUG_LOG("CaptureSession::ValidateOutputProfile profile:w(%{public}d),h(%{public}d),f(%{public}d) outputType"
+        ":%{public}d", outputProfile.size_.width, outputProfile.size_.height, outputProfile.format_, outputType);
     auto inputDevice = GetInputDevice();
     CHECK_RETURN_RET_ELOG(!inputDevice, false,
         "CaptureSession::ValidateOutputProfile Failed inputDevice is nullptr");
     auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
     CHECK_RETURN_RET_ELOG(!inputDeviceInfo, false,
         "CaptureSession::ValidateOutputProfile Failed inputDevice is nullptr");
-    if (outputType == CAPTURE_OUTPUT_TYPE_METADATA) {
-        MEDIA_INFO_LOG("CaptureSession::ValidateOutputProfile MetadataOutput");
-        return true;
-    }
-    if (outputType == CAPTURE_OUTPUT_TYPE_DEPTH_DATA) {
-        MEDIA_INFO_LOG("CaptureSession::ValidateOutputProfile DepthDataOutput");
-        return true;
-    }
+    CHECK_RETURN_RET_ILOG(outputType == CAPTURE_OUTPUT_TYPE_METADATA, true,
+        "CaptureSession::ValidateOutputProfile MetadataOutput");
+    CHECK_RETURN_RET_ILOG(outputType == CAPTURE_OUTPUT_TYPE_DEPTH_DATA, true,
+        "CaptureSession::ValidateOutputProfile DepthDataOutput");
     auto modeName = GetMode();
     auto validateOutputProfileFunc = [modeName](auto validateProfile, auto& profiles) -> bool {
         MEDIA_INFO_LOG("CaptureSession::ValidateOutputProfile in mode(%{public}d): "
@@ -4340,7 +4342,9 @@ bool CaptureSession::ValidateOutputProfile(Profile& outputProfile, CaptureOutput
             return validateProfile == profile;
         });
         CHECK_EXECUTE(result, MEDIA_INFO_LOG("CaptureSession::ValidateOutputProfile fail!"));
-        CHECK_PRINT_COMM_ELOG(!result, "CaptureSession::ValidateOutputProfile fail! Not in the profiles set.");
+        if (!result) {
+            HILOG_COMM_ERROR("CaptureSession::ValidateOutputProfile fail! Not in the profiles set.");
+        }
         return result;
     };
     switch (outputType) {
@@ -5250,7 +5254,7 @@ shared_ptr<AutoDeviceSwitchCallback> CaptureSession::GetAutoDeviceSwitchCallback
 void CaptureSession::AddFunctionToMap(std::string ctrlTarget, std::function<void()> func)
 {
     if (!GetIsAutoSwitchDeviceStatus() || !canAddFuncToMap_) {
-        MEDIA_INFO_LOG("The automatic switching device is not enabled.");
+        MEDIA_DEBUG_LOG("The automatic switching device is not enabled.");
         return;
     }
     std::lock_guard<std::mutex> lock(functionMapMutex_);

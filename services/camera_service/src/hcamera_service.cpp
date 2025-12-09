@@ -778,7 +778,7 @@ int32_t HCameraService::CreateCaptureSession(sptr<ICaptureSession>& session, int
     CAMERA_SYNC_TRACE;
     std::lock_guard<std::mutex> lock(mutex_);
     int32_t rc = CAMERA_OK;
-    COMM_INFO_LOG("HCameraService::CreateCaptureSession opMode_= %{public}d", opMode);
+    HILOG_COMM_INFO("HCameraService::CreateCaptureSession opMode_= %{public}d", opMode);
 
     OHOS::Security::AccessToken::AccessTokenID callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCaptureSession> captureSession = nullptr;
@@ -1858,7 +1858,7 @@ int32_t HCameraService::PrelaunchCamera(int32_t flag)
             preCameraId_ = cameraIds_.front();
         }
     }
-    COMM_INFO_LOG("HCameraService::PrelaunchCamera preCameraId_ is: %{public}s", preCameraId_.c_str());
+    HILOG_COMM_INFO("HCameraService::PrelaunchCamera preCameraId_ is: %{public}s", preCameraId_.c_str());
     CAMERA_SYSEVENT_STATISTIC(CreateMsg("Camera Prelaunch CameraId:%s", preCameraId_.c_str()));
     CameraReportUtils::GetInstance().SetOpenCamPerfPreInfo(preCameraId_.c_str(), CameraReportUtils::GetCallerInfo());
     int32_t ret = cameraHostManager_->Prelaunch(preCameraId_, preCameraClient_);
