@@ -48,7 +48,7 @@ void PhotoListener::OnBufferAvailable()
     MEDIA_INFO_LOG("PhotoListener::OnBufferAvailable");
     std::lock_guard<std::mutex> lock(g_photoImageMutex);
     CAMERA_SYNC_TRACE;
-    COMM_INFO_LOG("PhotoListener::OnBufferAvailable is called");
+    HILOG_COMM_INFO("PhotoListener::OnBufferAvailable is called");
     CHECK_RETURN_ELOG(photoSurface_ == nullptr, "photoSurface_ is null");
 
     int64_t timestamp;

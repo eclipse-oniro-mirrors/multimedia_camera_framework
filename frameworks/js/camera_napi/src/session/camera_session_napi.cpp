@@ -264,7 +264,12 @@ void IsoInfoCallbackListener::OnIsoInfoChangedCallbackAsync(IsoInfo info, bool i
                    : listener->OnIsoInfoChangedCallback(callback->info_));
         delete callback;
     };
-    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
+    std::unordered_map<std::string, std::string> params = {
+        {"isoValue", std::to_string(info.isoValue)},
+    };
+    std::string taskName =
+        CameraNapiUtils::GetTaskName("IsoInfoCallbackListener::OnIsoInfoChangedCallbackAsync", params);
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {
         callback.release();
@@ -1376,7 +1381,7 @@ napi_value CameraSessionNapi::Stop(napi_env env, napi_callback_info info)
             CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(context->queueTask, [&context]() {
                 context->errorCode = context->objectInfo->cameraSession_->Stop();
                 context->status = context->errorCode == CameraErrorCode::SUCCESS;
-                COMM_INFO_LOG("CameraSessionNapi::Stop errorCode:%{public}d", context->errorCode);
+                HILOG_COMM_INFO("CameraSessionNapi::Stop errorCode:%{public}d", context->errorCode);
             });
         },
         AsyncCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);

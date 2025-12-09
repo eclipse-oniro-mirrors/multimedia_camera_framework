@@ -86,7 +86,7 @@ int32_t AudioEncoder::FreeOutputData(uint32_t bufferIndex)
 {
     // LCOV_EXCL_START
     CHECK_RETURN_RET_ELOG(encoder_ == nullptr, 1, "Encoder is null");
-    MEDIA_INFO_LOG("FreeOutputData bufferIndex: %{public}u", bufferIndex);
+    MEDIA_DEBUG_LOG("FreeOutputData bufferIndex: %{public}u", bufferIndex);
     int32_t ret = OH_AudioCodec_FreeOutputBuffer(encoder_, bufferIndex);
     CHECK_RETURN_RET_ELOG(ret != AV_ERR_OK, 1,
         "Free output data failed, ret: %{public}d", ret);

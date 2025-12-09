@@ -228,7 +228,8 @@ void MetadataOutputCallback::OnMetadataObjectsAvailableCallback(
 
     ExecuteCallbackScopeSafe("metadataObjectsAvailable", [&]() {
         napi_value callbackObj = CreateMetadataObjJSArray(env_, metadataObjList);
-        MEDIA_INFO_LOG("OnMetadataObjectsAvailableCallback metadataObjList size = %{public}zu", metadataObjList.size());
+        MEDIA_DEBUG_LOG("OnMetadataObjectsAvailableCallback metadataObjList size = %{public}zu",
+            metadataObjList.size());
         if (callbackObj == nullptr) {
             return ExecuteCallbackData(nullptr, nullptr, nullptr);
         }

@@ -335,7 +335,7 @@ void PhotoOutputCallback::OnCaptureStarted(const int32_t captureID, uint32_t exp
 void PhotoOutputCallback::OnCaptureEnded(const int32_t captureID, const int32_t frameCount) const
 {
     CAMERA_SYNC_TRACE;
-    COMM_INFO_LOG("OnCaptureEnded is called!, captureID: %{public}d, frameCount: %{public}d",
+    HILOG_COMM_INFO("OnCaptureEnded is called!, captureID: %{public}d, frameCount: %{public}d",
         captureID, frameCount);
     CallbackInfo info;
     info.captureID = captureID;
@@ -368,7 +368,7 @@ void PhotoOutputCallback::OnFrameShutterEnd(const int32_t captureId, const uint6
 void PhotoOutputCallback::OnCaptureReady(const int32_t captureId, const uint64_t timestamp) const
 {
     CAMERA_SYNC_TRACE;
-    COMM_INFO_LOG(
+    HILOG_COMM_INFO(
         "OnCaptureReady is called, captureID: %{public}d, timestamp: %{public}" PRIu64, captureId, timestamp);
     CallbackInfo info;
     info.captureID = captureId;

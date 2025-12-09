@@ -363,7 +363,7 @@ int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> setti
     captureInfo.streamIds_ = { GetHdiStreamId() };
     captureInfo.captureSetting_ = captureSetting;
     captureInfo.enableShutterCallback_ = false;
-    COMM_INFO_LOG("HStreamRepeat::Start streamId:%{public}d hdiStreamId:%{public}d With capture ID: %{public}d, "
+    HILOG_COMM_INFO("HStreamRepeat::Start streamId:%{public}d hdiStreamId:%{public}d With capture ID: %{public}d, "
         "repeatStreamType:%{public}d",
         GetFwkStreamId(), GetHdiStreamId(), preparedCaptureId, repeatStreamType_);
     if (repeatStreamType_ == RepeatStreamType::VIDEO) {

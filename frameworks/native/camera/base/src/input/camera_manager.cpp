@@ -578,9 +578,10 @@ int CameraManager::CreatePhotoOutput(Profile &profile, sptr<IBufferProducer> &su
 {
     CAMERA_SYNC_TRACE;
     auto serviceProxy = GetServiceProxy();
-    CHECK_RETURN_RET_COMM_ELOG(
-        (serviceProxy == nullptr) || (surfaceProducer == nullptr), CameraErrorCode::INVALID_ARGUMENT,
-        "CreatePhotoOutput serviceProxy is null or PhotoOutputSurface/profile is null");
+    if ((serviceProxy == nullptr) || (surfaceProducer == nullptr)) {
+        HILOG_COMM_ERROR("CreatePhotoOutput serviceProxy is null or PhotoOutputSurface/profile is null");
+        return CameraErrorCode::INVALID_ARGUMENT;
+    }
     CHECK_RETURN_RET_ELOG((profile.GetCameraFormat() == CAMERA_FORMAT_INVALID) || (profile.GetSize().width == 0)
         || (profile.GetSize().height == 0), CameraErrorCode::INVALID_ARGUMENT,
         "CreatePhotoOutput invalid fomrat or width or height is zero");
@@ -606,9 +607,10 @@ int CameraManager::CreatePhotoOutput(Profile &profile, sptr<IBufferProducer> &su
     // LCOV_EXCL_START
     CAMERA_SYNC_TRACE;
     auto serviceProxy = GetServiceProxy();
-    CHECK_RETURN_RET_COMM_ELOG((serviceProxy == nullptr) || (surfaceProducer == nullptr),
-        CameraErrorCode::INVALID_ARGUMENT,
-        "CreatePhotoOutput serviceProxy is null or PhotoOutputSurface/profile is null");
+    if ((serviceProxy == nullptr) || (surfaceProducer == nullptr)) {
+        HILOG_COMM_ERROR("CreatePhotoOutput serviceProxy is null or PhotoOutputSurface/profile is null");
+        return CameraErrorCode::INVALID_ARGUMENT;
+    }
     CHECK_RETURN_RET_ELOG((profile.GetCameraFormat() == CAMERA_FORMAT_INVALID) || (profile.GetSize().width == 0)
         || (profile.GetSize().height == 0), CameraErrorCode::INVALID_ARGUMENT,
         "CreatePhotoOutput invalid fomrat or width or height is zero");
@@ -634,8 +636,10 @@ int CameraManager::CreatePhotoOutput(Profile& profile, sptr<PhotoOutput>* pPhoto
     // LCOV_EXCL_START
     CAMERA_SYNC_TRACE;
     auto serviceProxy = GetServiceProxy();
-    CHECK_RETURN_RET_COMM_ELOG(serviceProxy == nullptr, CameraErrorCode::INVALID_ARGUMENT,
-        "CreatePhotoOutput serviceProxy is null or PhotoOutputSurface/profile is null");
+    if (serviceProxy == nullptr) {
+        HILOG_COMM_ERROR("CreatePhotoOutput serviceProxy is null or PhotoOutputSurface/profile is null");
+        return CameraErrorCode::INVALID_ARGUMENT;
+    }
     CHECK_RETURN_RET_ELOG((profile.GetCameraFormat() == CAMERA_FORMAT_INVALID) || (profile.GetSize().width == 0)
         || (profile.GetSize().height == 0), CameraErrorCode::INVALID_ARGUMENT,
         "CreatePhotoOutput invalid fomrat or width or height is zero");
@@ -2378,7 +2382,7 @@ int CameraManager::CreateCameraInput(sptr<CameraDevice> &camera, sptr<CameraInpu
 
     // Check for API compatibility
     FoldStatus curFoldStatus = GetFoldStatus();
-    COMM_INFO_LOG("CreateCameraInput curFoldStatus:%{public}d, position:%{public}d", curFoldStatus,
+    HILOG_COMM_INFO("CreateCameraInput curFoldStatus:%{public}d, position:%{public}d", curFoldStatus,
         camera->GetPosition());
     uint32_t apiCompatibleVersion = CameraApiVersion::GetApiVersion();
     bool isFoldV4 = (!foldScreenType_.empty() && foldScreenType_[0] == '4');
@@ -2418,8 +2422,11 @@ sptr<CameraInput> CameraManager::CreateCameraInput(CameraPosition position, Came
     CAMERA_SYNC_TRACE;
     sptr<CameraInput> cameraInput = nullptr;
     int32_t retCode = CreateCameraInput(position, cameraType, &cameraInput);
-    CHECK_RETURN_RET_COMM_ELOG(retCode != CameraErrorCode::SUCCESS, nullptr,
-        "CameraManager::CreateCameraInput Failed to CreateCameraInput with error code:%{public}d", retCode);
+    if (retCode != CameraErrorCode::SUCCESS) {
+        HILOG_COMM_ERROR(
+            "CameraManager::CreateCameraInput Failed to CreateCameraInput with error code:%{public}d", retCode);
+        return nullptr;
+    }
     return cameraInput;
 }
 
@@ -3211,7 +3218,9 @@ void CameraManager::MuteCamera(bool muteMode)
     auto serviceProxy = GetServiceProxy();
     CHECK_RETURN_ELOG(serviceProxy == nullptr, "CameraManager::MuteCamera serviceProxy is null");
     int32_t retCode = serviceProxy->MuteCamera(muteMode);
-    CHECK_PRINT_COMM_ELOG(retCode != CAMERA_OK, "MuteCamera call failed, retCode: %{public}d", retCode);
+    if (retCode != CAMERA_OK) {
+        HILOG_COMM_ERROR("MuteCamera call failed, retCode: %{public}d", retCode);
+    }
     // LCOV_EXCL_STOP
 }
 

@@ -700,8 +700,10 @@ int32_t HStreamCapture::CreateMediaLibraryPhotoAssetProxy(int32_t captureId)
     }
     auto photoAssetProxy = PhotoAssetProxy::GetPhotoAssetProxy(
         cameraShotType, IPCSkeleton::GetCallingUid(), IPCSkeleton::GetCallingTokenID());
-    CHECK_RETURN_RET_COMM_ELOG(photoAssetProxy == nullptr, CAMERA_ALLOC_ERROR,
-        "HStreamCapture::CreateMediaLibraryPhotoAssetProxy get photoAssetProxy fail");
+    if (photoAssetProxy == nullptr) {
+        HILOG_COMM_ERROR("HStreamCapture::CreateMediaLibraryPhotoAssetProxy get photoAssetProxy fail");
+        return CAMERA_ALLOC_ERROR;
+    }
     photoAssetProxy_.Insert(captureId, photoAssetProxy);
     MEDIA_DEBUG_LOG("CreateMediaLibraryPhotoAssetProxy X captureId:%{public}d", captureId);
     return CAMERA_OK;
@@ -792,7 +794,7 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
     rotationMap_.Find(preparedCaptureId, rotation);
     captureInfo.rotation = rotation;
     CameraReportUtils::GetInstance().SetCapturePerfStartInfo(captureInfo);
-    COMM_INFO_LOG("HStreamCapture::Capture Starting photo capture with capture ID: %{public}d", preparedCaptureId);
+    HILOG_COMM_INFO("HStreamCapture::Capture Starting photo capture with capture ID: %{public}d", preparedCaptureId);
     HStreamCommon::PrintCaptureDebugLog(captureMetadataSetting_);
     CamRetCode rc = (CamRetCode)(streamOperator->Capture(preparedCaptureId, captureInfoPhoto, isBursting_));
     if (rc != HDI::Camera::V1_0::NO_ERROR) {
