@@ -315,17 +315,16 @@ void MetadataCommonUtils::GenerateObjects(const camera_metadata_item_t &metadata
     // LCOV_EXCL_START
     for (int32_t itr = 0; itr < countOfObject; ++itr) {
         sptr<MetadataObjectFactory> objectFactoryPtr = new MetadataObjectFactory();
-        MetadataObjectType typeFromHal = static_cast<MetadataObjectType>(metadataItem.data.i32[index]);
         index++;
-        ProcessBaseInfo(objectFactoryPtr, metadataItem, index, typeFromHal, isNeedMirror, isNeedFlip, rectBoxType);
-        ProcessExternInfo(objectFactoryPtr, metadataItem, index, typeFromHal, isNeedMirror, isNeedFlip, rectBoxType);
+        ProcessBaseInfo(objectFactoryPtr, metadataItem, index, metadataType, isNeedMirror, isNeedFlip, rectBoxType);
+        ProcessExternInfo(objectFactoryPtr, metadataItem, index, metadataType, isNeedMirror, isNeedFlip, rectBoxType);
         metaObjects.push_back(objectFactoryPtr->createMetadataObject(metadataType));
     }
     // LCOV_EXCL_STOP
 }
  
 void MetadataCommonUtils::ProcessBaseInfo(sptr<MetadataObjectFactory> factoryPtr,
-    const camera_metadata_item_t &metadataItem, int32_t &index, MetadataObjectType typeFromHal,
+    const camera_metadata_item_t &metadataItem, int32_t &index, MetadataObjectType metadataType,
     bool isNeedMirror, bool isNeedFlip, RectBoxType type)
 {
     // LCOV_EXCL_START
@@ -333,8 +332,7 @@ void MetadataCommonUtils::ProcessBaseInfo(sptr<MetadataObjectFactory> factoryPtr
     const int32_t offsetOne = 1;
     const int32_t offsetTwo = 2;
     const int32_t offsetThree = 3;
-    factoryPtr->SetType(typeFromHal)
-        ->SetObjectId(metadataItem.data.i32[index]);
+    factoryPtr->SetObjectId(metadataItem.data.i32[index]);
     index++;
     int32_t timestampLowBits = metadataItem.data.i32[index++];
     int32_t timestampHighBits = metadataItem.data.i32[index++];
@@ -350,14 +348,14 @@ void MetadataCommonUtils::ProcessBaseInfo(sptr<MetadataObjectFactory> factoryPtr
     index++;
     int32_t externalLength = metadataItem.data.i32[index];
     index++;
-    MEDIA_DEBUG_LOG("MetadataOutput::GenerateObjects, type: %{public}d, externalLength: %{public}d", typeFromHal,
+    MEDIA_DEBUG_LOG("MetadataOutput::GenerateObjects, type: %{public}d, externalLength: %{public}d", metadataType,
                     externalLength);
     // LCOV_EXCL_STOP
 }
  
 void MetadataCommonUtils::ProcessFaceDetectInfo(sptr<MetadataObjectFactory> factoryPtr,
     const camera_metadata_item_t &metadataItem, int32_t &index, bool isNeedMirror, bool isNeedFlip, RectBoxType type,
-    MetadataObjectType typeFromHal)
+    MetadataObjectType metadataType)
 {
     // LCOV_EXCL_START
     int32_t version = metadataItem.data.i32[index++];
@@ -377,7 +375,7 @@ void MetadataCommonUtils::ProcessFaceDetectInfo(sptr<MetadataObjectFactory> fact
         metadataItem.data.i32[index + offsetTwo],
         metadataItem.data.i32[index + offsetThree], isNeedMirror, isNeedFlip, type));
     index += rectLength;
-    if (typeFromHal == MetadataObjectType::FACE) {
+    if (metadataType == MetadataObjectType::FACE) {
         factoryPtr->SetEmotion(static_cast<Emotion>(metadataItem.data.i32[index]));
         index++;
         factoryPtr->SetEmotionConfidence(static_cast<Emotion>(metadataItem.data.i32[index]));
@@ -394,13 +392,13 @@ void MetadataCommonUtils::ProcessFaceDetectInfo(sptr<MetadataObjectFactory> fact
  
 void MetadataCommonUtils::ProcessExternInfo(sptr<MetadataObjectFactory> factoryPtr,
     const camera_metadata_item_t &metadataItem, int32_t &index,
-    MetadataObjectType typeFromHal, bool isNeedMirror, bool isNeedFlip, RectBoxType type)
+    MetadataObjectType metadataType, bool isNeedMirror, bool isNeedFlip, RectBoxType type)
 {
     // LCOV_EXCL_START
-    switch (typeFromHal) {
+    switch (metadataType) {
         case MetadataObjectType::FACE:
         case MetadataObjectType::BASE_FACE_DETECTION:
-            ProcessFaceDetectInfo(factoryPtr, metadataItem, index, isNeedMirror, isNeedFlip, type, typeFromHal);
+            ProcessFaceDetectInfo(factoryPtr, metadataItem, index, isNeedMirror, isNeedFlip, type, metadataType);
             break;
         case MetadataObjectType::CAT_FACE:
             ProcessCatFaceDetectInfo(factoryPtr, metadataItem, index, isNeedMirror, isNeedFlip, type);

@@ -703,8 +703,6 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_016, TestSize.Level1
 {
     std::shared_ptr<MetadataObjectFactory> factory = std::make_shared<MetadataObjectFactory>();
     ASSERT_NE(factory, nullptr);
-    factory->ResetParameters();
-    ASSERT_NE(factory, nullptr);
 
     MetadataObjectType type = MetadataObjectType::HUMAN_BODY;
     sptr<MetadataObject> ret = factory->createMetadataObject(type);

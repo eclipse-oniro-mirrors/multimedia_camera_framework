@@ -255,11 +255,6 @@ public:
     MetadataObjectFactory();
     virtual ~MetadataObjectFactory() = default;
 
-    inline sptr<MetadataObjectFactory> SetType(MetadataObjectType type)
-    {
-        type_ = type;
-        return this;
-    }
     inline sptr<MetadataObjectFactory> SetTimestamp(int64_t timestamp)
     {
         timestamp_ = timestamp;
@@ -320,7 +315,6 @@ public:
 
 private:
     // Parameters of metadataObject
-    MetadataObjectType type_ = MetadataObjectType::INVALID;
     int64_t timestamp_ = 0;
     Rect box_ = {0.0, 0.0, 0.0, 0.0};
     int32_t objectId_ = 0;
@@ -334,8 +328,6 @@ private:
     int32_t pitchAngle_ = 0;
     int32_t yawAngle_ = 0;
     int32_t rollAngle_ = 0;
-
-    void ResetParameters();
 };
 
 class MetadataObjectCallback {
