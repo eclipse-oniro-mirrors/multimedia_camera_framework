@@ -2698,7 +2698,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_090, Test
 
     cameraManager_->OnCameraServerAlive();
     EXPECT_NE(cameraManager_->deathRecipient_, nullptr);
-
+}
 /*
  * Feature: Framework
  * Function: Test SetCameraIdTransform When deviceObj is not nullptr
@@ -2737,6 +2737,75 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_092, Test
     std::string originCameraId = camera->GetID();
     cameraManager_->SetCameraIdTransform(deviceObj, originCameraId);
     EXPECT_NE(originCameraId, "");
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetCameraDevices
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetCameraDevices for normal branches
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_093, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDevices();
+    ASSERT_FALSE(cameras.empty());
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetSupportedCameras
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetSupportedCameras for abnormal branches
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_094, TestSize.Level1)
+{
+    cameraManager_->foldScreenType_ = "0";
+    EXPECT_TRUE(cameraManager_->GetIsFoldable());
+
+    auto changedMetadata = std::make_shared<OHOS::Camera::CameraMetadata>(2, 100);
+    int32_t connectionType = CAMERA_CONNECTION_USB_PLUGIN;
+    changedMetadata->addEntry(OHOS_ABILITY_CAMERA_CONNECTION_TYPE, &connectionType, 1);
+    auto camera0 = new CameraDevice("device0", changedMetadata);
+
+    std::vector<sptr<CameraDevice>> expectedCameraList;
+    expectedCameraList.emplace_back(camera0);
+    cameraManager_->cameraDeviceList_ = expectedCameraList;
+    auto result = cameraManager_->GetSupportedCameras();
+    ASSERT_EQ(result.size(), 1);
+    cameraManager_->cameraDeviceList_.clear();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetSupportedCameras
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetSupportedCameras for normal branches
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_095, TestSize.Level1)
+{
+    cameraManager_->foldScreenType_ = "0";
+    EXPECT_TRUE(cameraManager_->GetIsFoldable());
+
+    auto changedMetadata = std::make_shared<OHOS::Camera::CameraMetadata>(2, 100);
+    int32_t connectionType = CAMERA_CONNECTION_REMOTE;
+    changedMetadata->addEntry(OHOS_ABILITY_CAMERA_CONNECTION_TYPE, &connectionType, 1);
+    auto camera0 = new CameraDevice("device0", changedMetadata);
+
+    std::vector<sptr<CameraDevice>> expectedCameraList;
+    expectedCameraList.emplace_back(camera0);
+    cameraManager_->cameraDeviceList_ = expectedCameraList;
+    auto result = cameraManager_->GetSupportedCameras();
+    ASSERT_EQ(result.size(), 0);
+
+    result = cameraManager_->GetCameraDevices();
+    ASSERT_EQ(result.size(), 1);
+    cameraManager_->cameraDeviceList_.clear();
 }
 }
 }

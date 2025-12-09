@@ -975,7 +975,7 @@ void CameraManagerImpl::ProcessCameraInfos(OHOS::sptr<OHOS::CameraStandard::Came
     const OHOS::CameraStandard::ConnectionType connectionType,
     std::vector<OHOS::sptr<OHOS::CameraStandard::CameraDevice>>& cameraInfos)
 {
-    std::vector<OHOS::sptr<OHOS::CameraStandard::CameraDevice>> cameraObjList = cameraManager->GetSupportedCameras();
+    std::vector<OHOS::sptr<OHOS::CameraStandard::CameraDevice>> cameraObjList = cameraManager->GetCameraDevices();
     MEDIA_DEBUG_LOG("ProcessCameraInfos cameraObjList size is %{public}zu", cameraObjList.size());
 
     for (size_t i = 0; i < cameraObjList.size(); i++) {

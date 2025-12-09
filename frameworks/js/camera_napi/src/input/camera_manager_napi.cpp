@@ -1590,7 +1590,7 @@ void CameraManagerNapi::ProcessCameraDevices(sptr<CameraManager>& cameraManager,
     const std::vector<CameraType>& cameraTypes, const ConnectionType connectionType,
     std::vector<sptr<CameraDevice>>& outDevices)
 {
-    std::vector<sptr<CameraDevice>> cameraObjList = cameraManager->GetSupportedCameras();
+    std::vector<sptr<CameraDevice>> cameraObjList = cameraManager->GetCameraDevices();
     MEDIA_DEBUG_LOG("GetCameraDevices cameraObjList size is %{public}zu", cameraObjList.size());
 
     for (size_t i = 0; i < cameraObjList.size(); ++i) {
