@@ -404,14 +404,22 @@ bool HStreamOperator::GetDeviceAbilityByMeta(uint32_t item, camera_metadata_item
     return true;
 }
 
-bool HStreamOperator::GetDeviceCachedSettingByMeta(uint32_t item, camera_metadata_item_t* metadataItem)
+bool HStreamOperator::GetDeferredImageDeliveryEnabled()
 {
-    CHECK_RETURN_RET_ELOG(cameraDevice_ == nullptr, false, "cameraDevice is nullptr.");
+    bool isDeferredImageDeliveryEnabled = false;
+    CHECK_RETURN_RET_ELOG(cameraDevice_ == nullptr, isDeferredImageDeliveryEnabled,
+        "HStreamOperator::GetDeviceCachedSetting cameraDevice is nullptr");
     auto ability = cameraDevice_->CloneCachedSettings();
-    CHECK_RETURN_RET(ability == nullptr, false);
-    int ret = OHOS::Camera::FindCameraMetadataItem(ability->get(), item, metadataItem);
-    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS, false, "get ability failed.");
-    return true;
+    CHECK_RETURN_RET(!ability, isDeferredImageDeliveryEnabled);
+    camera_metadata_item_t item;
+    int retFindMeta =
+        OHOS::Camera::FindCameraMetadataItem(ability->get(), OHOS_CONTROL_DEFERRED_IMAGE_DELIVERY, &item);
+    CHECK_RETURN_RET_ELOG(retFindMeta != CAM_META_SUCCESS || item.count <= 0, isDeferredImageDeliveryEnabled,
+        "HStreamOperator::GetDeviceCachedSetting metadata not found");
+    isDeferredImageDeliveryEnabled = static_cast<bool>(item.data.u8[0]);
+    MEDIA_INFO_LOG("HStreamOperator::GetDeviceCachedSetting  IsDeferredImageDeliveryEnabled %{public}d.",
+        isDeferredImageDeliveryEnabled);
+    return isDeferredImageDeliveryEnabled;
 }
 
 int32_t HStreamOperator::LinkInputAndOutputs(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings,

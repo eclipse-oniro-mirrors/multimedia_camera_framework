@@ -1274,17 +1274,12 @@ int32_t HStreamCapture::OnCaptureEnded(int32_t captureId, int32_t frameCount)
     MEDIA_INFO_LOG("HStreamCapture::Capture, notify OnCaptureEnded with capture ID: %{public}d", captureId);
     int32_t offlineOutputCnt = mSwitchToOfflinePhoto_ ?
         HStreamOperatorManager::GetInstance()->GetOfflineOutputSize() : 0;
-    uint8_t IsDeferredImageDeliveryEnabled = false;
-    camera_metadata_item_t item;
+    bool isDeferredImageDeliveryEnabled = false;
     auto hStreamOperatorSptr_ = hStreamOperator_.promote();
-    if (hStreamOperatorSptr_ != nullptr) {
-        bool ret = hStreamOperatorSptr_->GetDeviceCachedSettingByMeta(OHOS_CONTROL_DEFERRED_IMAGE_DELIVERY, &item);
-        if (ret && item.count > 0) {
-            IsDeferredImageDeliveryEnabled = item.data.u8[0];
-        }
-    }
+    CHECK_EXECUTE(hStreamOperatorSptr_ != nullptr,
+        isDeferredImageDeliveryEnabled = hStreamOperatorSptr_->GetDeferredImageDeliveryEnabled());
     CameraReportUtils::GetInstance().SetCapturePerfEndInfo(captureId, mSwitchToOfflinePhoto_, offlineOutputCnt,
-        movingPhotoSwitch_, IsDeferredImageDeliveryEnabled);
+        movingPhotoSwitch_, isDeferredImageDeliveryEnabled);
     auto preparedCaptureId = GetPreparedCaptureId();
     if (preparedCaptureId != CAPTURE_ID_UNSET) {
         MEDIA_INFO_LOG("HStreamCapture::OnCaptureEnded capturId = %{public}d already used, need release",

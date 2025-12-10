@@ -256,8 +256,8 @@ void VideoPostProcessor::ProcessRequest(const DeferredVideoWorkPtr& work)
     DP_CHECK_ERROR_RETURN_LOG(mediaManagerProxy_ == nullptr, "MediaManager is nullptr.");
     auto startTime = mediaManagerProxy_->MpegGetProcessTimeStamp();
     auto ret = session->ProcessVideo(videoId, startTime);
-    HILOG_COMM_INFO("DPS_VIDEO: ProcessVideo to ive, videoId: %{public}s, startTime: %{public}"
-        PRIu64 ", ret: %{public}d", videoId.c_str(), startTime, ret);
+    HILOG_COMM_INFO("DPS_VIDEO: ProcessVideo to ive, videoId: %{public}s, startTime: %{public}" PRIu64
+        ", ret: %{public}d", videoId.c_str(), startTime, ret);
 }
 
 void VideoPostProcessor::RemoveRequest(const std::string& videoId)
