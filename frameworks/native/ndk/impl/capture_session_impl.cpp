@@ -1107,8 +1107,6 @@ Camera_ErrorCode Camera_CaptureSession::UnregisterMacroStatusCallback(
 Camera_ErrorCode Camera_CaptureSession::RegisterIsoInfoCallback(
     OH_CaptureSession_OnIsoChange isoInfoChange)
 {
-    CHECK_RETURN_RET_ELOG(innerCaptureSession_->GetMode() != VIDEO, CAMERA_OPERATION_NOT_ALLOWED,
-                          "IsoInfo listening is only available for video mode");
     shared_ptr<InnerCaptureSessionIsoInfoCallback> innerIsoInfoCallback =
         make_shared<InnerCaptureSessionIsoInfoCallback>(this, isoInfoChange);
     CHECK_RETURN_RET_ELOG(
@@ -1122,9 +1120,6 @@ Camera_ErrorCode Camera_CaptureSession::RegisterIsoInfoCallback(
 Camera_ErrorCode Camera_CaptureSession::UnregisterIsoInfoCallback(
     OH_CaptureSession_OnIsoChange isoInfoChange)
 {
-    CHECK_RETURN_RET_ELOG(innerCaptureSession_->GetMode() != VIDEO,
-                          CAMERA_OPERATION_NOT_ALLOWED,
-                          "IsoInfo listening is only available for video mode");
     MEDIA_INFO_LOG("Camera_CaptureSession::UnregisterIsoInfoCallback");
     innerCaptureSession_->SetIsoInfoCallback(nullptr);
     return CAMERA_OK;
