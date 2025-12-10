@@ -187,6 +187,10 @@ const std::unordered_map<TripodStatus, FwkTripodStatus>
     {TRIPOD_STATUS_EXITING, FwkTripodStatus::EXITING}
 };
 
+const std::unordered_map<std::string, camera_device_metadata_tag_t> CaptureSession::parametersMap_ = {
+    {"REMOVE_SENSOR_RESTRAINT", OHOS_CONTROL_REMOVE_SENSOR_RESTRAINT},
+};
+
 int32_t CaptureSessionCallback::OnError(int32_t errorCode)
 {
     MEDIA_INFO_LOG("CaptureSessionCallback::OnError() is called!, errorCode: %{public}d", errorCode);
@@ -5431,6 +5435,23 @@ void CaptureSession::SetPhotoQualityPrioritization(camera_photo_quality_prioriti
     bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_PHOTO_QUALITY_PRIORITIZATION, &quality, 1);
     CHECK_PRINT_ELOG(!status, "CaptureSession::SetPhotoQualityPrioritization Failed to AddOrUpdateMetadata!");
     return;
+}
+
+int32_t CaptureSession::SetParameters(std::vector<std::pair<std::string, std::string>>& kvPairs)
+{
+    for (auto const& [k, v] : kvPairs) {
+        MEDIA_INFO_LOG("CaptureSession::SetParameters key:%{public}s value:%{public}s",
+            k.c_str(), v.c_str());
+        auto itr = parametersMap_.find(k);
+        if (itr != parametersMap_.end()) {
+            MEDIA_INFO_LOG("CaptureSession::SetParameters start setParameters key:%{public}s", k.c_str());
+            int temp_int = std::stoi(v);
+            uint8_t value = static_cast<uint8_t>(temp_int);
+            CHECK_PRINT_ELOG(!AddOrUpdateMetadata(changedMetadata_, itr->second, &value, 1),
+                "CaptureSession::SetParameters failed");
+        }
+    }
+    return CameraErrorCode::SUCCESS;
 }
 
 } // namespace CameraStandard

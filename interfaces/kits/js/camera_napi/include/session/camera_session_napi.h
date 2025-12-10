@@ -370,6 +370,8 @@ public:
     static napi_value OnIsoInfoChange(napi_env env, napi_callback_info info);
     static napi_value OffIsoInfoChange(napi_env env, napi_callback_info info);
 
+    static napi_value SetParameters(napi_env env, napi_callback_info info);
+
     napi_env env_;
     sptr<CaptureSession> cameraSession_;
     std::shared_ptr<IsoInfoCallbackListener> isoInfoCallback_ = nullptr;
