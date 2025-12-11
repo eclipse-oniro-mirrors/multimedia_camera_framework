@@ -315,6 +315,9 @@ int32_t HStreamOperator::RemoveOutput(StreamType streamType, sptr<IStreamCommon>
             "HStreamOperator::RemoveOutput", errorCode, false, CameraReportUtils::GetCallerInfo());
         return errorCode;
     }
+    auto remote = stream->AsObject();
+    CHECK_RETURN_RET_ELOG(
+        remote && remote->IsProxyObject(), CAMERA_INVALID_ARG, "Please use stream created by service");
     if (streamType == StreamType::CAPTURE) {
         errorCode = RemoveOutputStream(static_cast<HStreamCapture*>(stream.GetRefPtr()));
     } else if (streamType == StreamType::REPEAT) {

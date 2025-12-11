@@ -285,6 +285,10 @@ int32_t HCaptureSession::BeginConfig()
 int32_t HCaptureSession::CanAddInput(const sptr<ICameraDeviceService>& cameraDevice, bool& result)
 {
     CAMERA_SYNC_TRACE;
+    CHECK_RETURN_RET(cameraDevice == nullptr, CAMERA_INVALID_ARG);
+    auto remote = cameraDevice->AsObject();
+    CHECK_RETURN_RET_ELOG(
+        remote && remote->IsProxyObject(), CAMERA_INVALID_ARG, "Please use cameraDevice created by service");
     int32_t errorCode = CAMERA_OK;
     result = false;
     stateMachine_.StateGuard([this, &errorCode, &cameraDevice](const CaptureSessionState currentState) {
@@ -327,6 +331,10 @@ int32_t HCaptureSession::AddInput(const sptr<ICameraDeviceService>& cameraDevice
             "HCaptureSession::AddInput", errorCode, false, CameraReportUtils::GetCallerInfo());
         return errorCode;
     }
+    sptr<IRemoteObject> remote = cameraDevice->AsObject();
+    CHECK_RETURN_RET_ELOG(
+        remote && remote->IsProxyObject(), CAMERA_INVALID_ARG, "Please use cameraDevice created by service");
+
     MEDIA_INFO_LOG("HCaptureSession::AddInput prepare execute, sessionID: %{public}d", GetSessionId());
     stateMachine_.StateGuard([this, &errorCode, &cameraDevice](const CaptureSessionState currentState) {
         if (currentState != CaptureSessionState::SESSION_CONFIG_INPROGRESS) {
@@ -456,6 +464,7 @@ void HCaptureSession::InitialHStreamOperator()
 int32_t HCaptureSession::AddOutput(StreamType streamType, const sptr<IRemoteObject>& remoteObj)
 {
     CHECK_RETURN_RET_ELOG(remoteObj == nullptr, CAMERA_INVALID_ARG, "HCaptureSession remoteObj is null");
+    CHECK_RETURN_RET_ELOG(remoteObj->IsProxyObject(), CAMERA_INVALID_ARG, "Please use remoteObj created by service");
     sptr<IStreamCommon> stream = nullptr;
     if (streamType == StreamType::CAPTURE) {
         stream = iface_cast<IStreamCapture>(remoteObj);
@@ -519,6 +528,9 @@ int32_t HCaptureSession::RemoveInput(const sptr<ICameraDeviceService>& cameraDev
             "HCaptureSession::RemoveInput", errorCode, false, CameraReportUtils::GetCallerInfo());
         return errorCode;
     }
+    auto remote = cameraDevice->AsObject();
+    CHECK_RETURN_RET_ELOG(
+        remote && remote->IsProxyObject(), CAMERA_INVALID_ARG, "Please use cameraDevice created by service");
     MEDIA_INFO_LOG("HCaptureSession::RemoveInput prepare execute, sessionID: %{public}d", GetSessionId());
     stateMachine_.StateGuard([this, &errorCode, &cameraDevice](const CaptureSessionState currentState) {
         if (currentState != CaptureSessionState::SESSION_CONFIG_INPROGRESS) {
@@ -577,6 +589,7 @@ int32_t HCaptureSession::RemoveOutputStream(sptr<HStreamCommon> stream)
 int32_t HCaptureSession::RemoveOutput(StreamType streamType, const sptr<IRemoteObject>& remoteObj)
 {
     CHECK_RETURN_RET_ELOG(remoteObj == nullptr, CAMERA_INVALID_ARG, "HCaptureSession remoteObj is null");
+    CHECK_RETURN_RET_ELOG(remoteObj->IsProxyObject(), CAMERA_INVALID_ARG, "Please use remoteObj created by service");
     sptr<IStreamCommon> stream = nullptr;
     if (streamType == StreamType::CAPTURE) {
         stream = iface_cast<IStreamCapture>(remoteObj);
