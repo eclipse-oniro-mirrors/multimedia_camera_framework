@@ -979,6 +979,7 @@ public:
     }
     std::string GetBundleName();
     void GetCameraStatusData(std::vector<CameraStatusData> &cameraStatusDataList);
+    std::vector<sptr<CameraDevice>> GetCameraDevices();
 protected:
     // Only for UT
     explicit CameraManager(sptr<ICameraService> serviceProxy) : serviceProxyPrivate_(serviceProxy)
@@ -1125,6 +1126,7 @@ private:
     void FindConcurrentLimtedEnd(double* originInfo, int32_t i, int32_t count, int32_t &countl);
 
     void CheckWhiteList();
+    std::vector<sptr<CameraDevice>> GetSupportedCamerasList();
     std::mutex cameraDeviceListMutex_;
     std::mutex innerCameraMutex_;
     std::vector<sptr<CameraDevice>> cameraDeviceList_ = {};

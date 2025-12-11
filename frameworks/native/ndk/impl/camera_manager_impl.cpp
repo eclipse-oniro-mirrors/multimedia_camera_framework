@@ -923,9 +923,9 @@ Camera_ErrorCode Camera_Manager::GetCameraDevices(Camera_DeviceQueryInfo* device
     }
 
     int32_t queryConnection = static_cast<int32_t>(deviceQueryInfo->connectionType);
-    std::vector<sptr<CameraDevice>> cameraObjList = CameraManager::GetInstance()->GetSupportedCameras();
+    std::vector<sptr<CameraDevice>> cameraObjList = CameraManager::GetInstance()->GetCameraDevices();
     CHECK_RETURN_RET_ELOG(
-        cameraObjList.empty(), CAMERA_SERVICE_FATAL_ERROR, "Camera_Manager::GetSupportedCameras fail!");
+        cameraObjList.empty(), CAMERA_SERVICE_FATAL_ERROR, "Camera_Manager::GetCameraDevices fail!");
 
     std::vector<sptr<CameraDevice>> matchedDevices;
     ProcessCameraInfos(cameraObjList, innerPosition, queryConnection, typeFilters, matchedDevices);

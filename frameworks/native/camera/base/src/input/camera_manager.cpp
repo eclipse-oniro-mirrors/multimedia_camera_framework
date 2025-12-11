@@ -2180,7 +2180,7 @@ bool CameraManager::GetIsInWhiteList()
     return isInWhiteList_;
 }
 
-std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCameras()
+std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCamerasList()
 {
     CAMERA_SYNC_TRACE;
     auto curFoldStatus = GetFoldStatus();
@@ -2256,6 +2256,34 @@ std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCameras()
     }
     // LCOV_EXCL_STOP
     return supportedCameraDeviceList;
+}
+
+std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCameras()
+{
+    MEDIA_DEBUG_LOG("CameraManager::GetSupportedCameras enter");
+    std::vector<sptr<CameraDevice>> cameraDeviceList = GetSupportedCamerasList();
+    MEDIA_DEBUG_LOG("CameraManager::GetSupportedCameras camerasList size: %{public}zu", cameraDeviceList.size());
+    std::vector<sptr<CameraDevice>> supportedCameraDeviceList;
+    for (const auto& deviceInfo : cameraDeviceList) {
+        MEDIA_DEBUG_LOG("CameraManager::GetSupportedCameras connectionType: %{public}d",
+            deviceInfo->GetConnectionType());
+        if (deviceInfo->GetConnectionType() != CAMERA_CONNECTION_REMOTE) {
+            MEDIA_DEBUG_LOG("CameraManager::GetSupportedCameras add supported camera id: %{public}s",
+                deviceInfo->GetID().c_str());
+            supportedCameraDeviceList.emplace_back(deviceInfo);
+        }
+    }
+    MEDIA_DEBUG_LOG("CameraManager::GetSupportedCameras supportedCameras size: %{public}zu",
+        supportedCameraDeviceList.size());
+    return supportedCameraDeviceList;
+}
+
+std::vector<sptr<CameraDevice>> CameraManager::GetCameraDevices()
+{
+    MEDIA_DEBUG_LOG("CameraManager::GetCameraDevices enter");
+    std::vector<sptr<CameraDevice>> cameraDeviceList = GetSupportedCamerasList();
+    MEDIA_DEBUG_LOG("CameraManager::GetCameraDevices cameras size: %{public}zu", cameraDeviceList.size());
+    return cameraDeviceList;
 }
 
 std::vector<SceneMode> CameraManager::GetSupportedModes(sptr<CameraDevice>& camera)
