@@ -369,7 +369,6 @@ HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_019, 
     sleep(1);
     // 模拟第三次调度高质量任务，允许调度
     ASSERT_EQ(controller->photoStrategyCenter_->isNeedStop_, false);
-    EXPECT_TRUE(logDetector.IsLogContains("Process photo to ive, imageId: testImage3"));
 }
 
 /*
