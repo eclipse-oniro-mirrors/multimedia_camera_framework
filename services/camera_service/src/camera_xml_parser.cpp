@@ -145,6 +145,7 @@ int32_t CameraXmlNodeInner::GetProp(const char *propName, std::string &result)
     xmlChar *tempValue = xmlGetProp(curNode_, reinterpret_cast<const xmlChar*>(propName));
     CHECK_RETURN_RET_ELOG(tempValue == nullptr, FAIL, "GetProp Fail! curNode has no prop: %{public}s", propName);
     result = reinterpret_cast<char*>(tempValue);
+    xmlFree(tempValue);
     return SUCCESS;
 }
 
