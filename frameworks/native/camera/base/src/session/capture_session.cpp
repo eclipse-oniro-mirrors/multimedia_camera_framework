@@ -2726,15 +2726,9 @@ int32_t CaptureSession::SetZoomRatio(float zoomRatio)
     std::vector<float> zoomRange = GetZoomRatioRange();
     CHECK_RETURN_RET_ELOG(zoomRange.empty(), CameraErrorCode::SUCCESS,
         "CaptureSession::SetZoomRatio Zoom range is empty");
-    if (zoomRatio < zoomRange[minIndex]) {
-        MEDIA_DEBUG_LOG("CaptureSession::SetZoomRatio Zoom ratio: %{public}f is lesser than minimum zoom: %{public}f",
-            zoomRatio, zoomRange[minIndex]);
-        zoomRatio = zoomRange[minIndex];
-    } else if (zoomRatio > zoomRange[maxIndex]) {
-        MEDIA_DEBUG_LOG("CaptureSession::SetZoomRatio Zoom ratio: %{public}f is greater than maximum zoom: %{public}f",
-            zoomRatio, zoomRange[maxIndex]);
-        zoomRatio = zoomRange[maxIndex];
-    }
+    float tempZoomRatio = std::clamp(zoomRatio, zoomRange[minIndex], zoomRange[maxIndex]);
+    CHECK_RETURN_RET_ELOG(tempZoomRatio != zoomRatio, CameraErrorCode::SUCCESS,
+        "Zoom ratio was clamped: original %{public}f, clamped %{public}f", zoomRatio, tempZoomRatio);
     CHECK_RETURN_RET_ELOG(zoomRatio == 0, CameraErrorCode::SUCCESS,
         "CaptureSession::SetZoomRatio Invalid zoom ratio");
     bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_ZOOM_RATIO, &zoomRatio, 1);
@@ -2802,15 +2796,9 @@ int32_t CaptureSession::SetSmoothZoom(float targetZoomRatio, uint32_t smoothZoom
     std::vector<float> zoomRange = GetZoomRatioRange();
     CHECK_RETURN_RET_ELOG(zoomRange.empty(), CameraErrorCode::SUCCESS,
         "CaptureSession::SetSmoothZoom Zoom range is empty");
-    if (targetZoomRatio < zoomRange[minIndex]) {
-        MEDIA_DEBUG_LOG("CaptureSession::SetSmoothZoom Zoom ratio: %{public}f is lesser than minimum zoom: %{public}f",
-            targetZoomRatio, zoomRange[minIndex]);
-        targetZoomRatio = zoomRange[minIndex];
-    } else if (targetZoomRatio > zoomRange[maxIndex]) {
-        MEDIA_DEBUG_LOG("CaptureSession::SetSmoothZoom Zoom ratio: %{public}f is greater than maximum zoom: %{public}f",
-            targetZoomRatio, zoomRange[maxIndex]);
-        targetZoomRatio = zoomRange[maxIndex];
-    }
+    float tempZoomRatio = std::clamp(targetZoomRatio, zoomRange[minIndex], zoomRange[maxIndex]);
+    CHECK_RETURN_RET_ELOG(tempZoomRatio != targetZoomRatio, CameraErrorCode::SUCCESS,
+        "Zoom ratio was clamped: original %{public}f, clamped %{public}f", targetZoomRatio, tempZoomRatio);
 
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     float duration;
