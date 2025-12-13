@@ -154,6 +154,7 @@ int32_t CameraXmlNodeInner::GetContent(std::string &result)
     xmlChar *tempContent = xmlNodeGetContent(curNode_);
     CHECK_RETURN_RET_ELOG(tempContent == nullptr, FAIL, "GetContent Fail!");
     result = reinterpret_cast<char*>(tempContent);
+    xmlFree(tempContent);
     return SUCCESS;
 }
 
