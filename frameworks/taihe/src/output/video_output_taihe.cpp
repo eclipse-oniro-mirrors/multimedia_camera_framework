@@ -208,8 +208,8 @@ VideoProfile VideoOutputImpl::GetActiveProfile()
     auto profile = videoOutput_->GetVideoProfile();
     CHECK_RETURN_RET_ELOG(profile == nullptr, res, "GetActiveProfile failed, profile is nullptr");
     CameraFormat cameraFormat = CameraUtilsTaihe::ToTaiheCameraFormat(profile->GetCameraFormat());
-    res.base.size.height = profile->GetSize().height;
-    res.base.size.width = profile->GetSize().width;
+    res.base.size.height = static_cast<int32_t>(profile->GetSize().height);
+    res.base.size.width = static_cast<int32_t>(profile->GetSize().width);
     res.base.format = cameraFormat;
     auto frameRates = profile->GetFrameRates();
     res.frameRateRange.min = frameRates[0] >= frameRates[1] ? frameRates[1] : frameRates[0];

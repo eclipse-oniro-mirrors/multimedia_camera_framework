@@ -35,6 +35,7 @@ namespace Ani {
 namespace Camera {
 constexpr char CAMERA_PICKER_ABILITY_ACTION_PHOTO[] = "ohos.want.action.imageCapture";
 constexpr char CAMERA_PICKER_ABILITY_ACTION_VIDEO[] = "ohos.want.action.videoCapture";
+const size_t MAX_MEDIA_TYPES_SIZE = 100;
 static std::shared_ptr<PickerContextProxy> GetAbilityContext(ani_env* env, uintptr_t value)
 {
     MEDIA_DEBUG_LOG("GetAbilityContext is called");
@@ -61,6 +62,7 @@ static void SetPickerWantParams(AAFwk::Want& want, std::shared_ptr<PickerContext
     AAFwk::WantParams wantParam;
     bool isPhotoType = false;
     bool isVideoType = false;
+    CHECK_RETURN_ELOG(mediaTypes.size() > MAX_MEDIA_TYPES_SIZE, "mediaTypes size exceeds maximum allowed size");
     for (int i = 0; i < mediaTypes.size(); i++) {
         if (strcmp(mediaTypes[i].get_value(), "photo") == 0) {
             isPhotoType = true;
