@@ -42,6 +42,8 @@ taihe_shared_library("camera_taihe") {
   taihe_generated_file_path = "${taihe_generated_file_path_camera}"
   subsystem_name = "$subsystem_name"
   part_name = "$part_name"
+  shlib_type = "ani"
+  version_script = "camera_framework.versionscript"
 
   include_dirs = [
     "include",
@@ -53,8 +55,6 @@ taihe_shared_library("camera_taihe") {
     "include/mode",
     "include/picker",
     "include/transfer",
-    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include",
-    "${multimedia_camera_framework_path}/frameworks/native/camera/extension/include",
   ]
 
   sources = get_target_outputs(":camera_run_taihe")
@@ -125,8 +125,21 @@ taihe_shared_library("camera_taihe") {
   }
   cflags = [
     "-fPIC",
+    "-fdata-sections",
+    "-ffunction-sections",
+    "-fstack-protector-strong",
+    "-fno-asynchronous-unwind-tables",
+    "-fno-unwind-tables",
+    "-fvisibility=hidden",
     "-DIMAGE_COLORSPACE_FLAG",
     "-Os",
+  ]
+
+  cflags_cc = cflags 
+
+  ldflags = [
+    "-Wl,--exclude-libs=ALL",
+    "-Wl,--gc-sections",
   ]
 }
 
