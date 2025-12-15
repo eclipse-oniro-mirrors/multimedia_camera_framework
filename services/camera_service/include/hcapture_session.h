@@ -234,6 +234,8 @@ private:
         static int32_t CalcRotationDegree(GravityData data);
     #endif
 
+    std::string GetConcurrentCameraIds(pid_t pid);
+
     std::mutex cbMutex_;
 
     // Make sure device thread safe,set device by {SetCameraDevice}, get device by {GetCameraDevice}
