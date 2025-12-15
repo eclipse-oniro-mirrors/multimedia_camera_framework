@@ -101,6 +101,8 @@ void CameraNapiUtils::InvokeJSAsyncMethodWithUvWork(napi_env env, napi_deferred 
     MEDIA_INFO_LOG("%{public}s, context->InvokeJSAsyncMethodWithUvWork start", funcName.c_str());
     /* Deferred is used when JS Callback method expects a promise value */
     if (deferred) {
+        napi_handle_scope scope;
+        napi_open_handle_scope(env, &scope);
         if (asyncContext.status) {
             napi_resolve_deferred(env, deferred, asyncContext.data);
             MEDIA_INFO_LOG("%{public}s, InvokeJSAsyncMethodWithUvWork napi_resolve_deferred", funcName.c_str());
@@ -108,6 +110,8 @@ void CameraNapiUtils::InvokeJSAsyncMethodWithUvWork(napi_env env, napi_deferred 
             napi_reject_deferred(env, deferred, asyncContext.error);
             MEDIA_ERR_LOG("%{public}s, InvokeJSAsyncMethodWithUvWork napi_reject_deferred", funcName.c_str());
         }
+        napi_close_handle_scope(env, scope);
+        deferred = nullptr;
         MEDIA_INFO_LOG("%{public}s, InvokeJSAsyncMethodWithUvWork end deferred", funcName.c_str());
     } else {
         MEDIA_INFO_LOG("%{public}s, InvokeJSAsyncMethodWithUvWork callback", funcName.c_str());
