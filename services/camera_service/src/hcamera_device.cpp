@@ -924,6 +924,7 @@ int32_t HCameraDevice::CloseDevice()
 {
     MEDIA_INFO_LOG("HCameraDevice::CloseDevice start");
     CAMERA_SYNC_TRACE;
+    ReleaseSessionBeforeCloseDevice();
     bool isFoldable = OHOS::Rosen::DisplayManager::GetInstance().IsFoldable();
     CHECK_EXECUTE(isFoldable, UnregisterFoldStatusListener());
     CHECK_EXECUTE(isFoldable, UnregisterDisplayModeListener());
