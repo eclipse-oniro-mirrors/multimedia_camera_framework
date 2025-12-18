@@ -350,7 +350,6 @@ private:
     OHOS::sptr<OHOS::CameraStandard::PhotoOutput> innerPhotoOutput_ = nullptr;
     std::shared_ptr<InnerPhotoOutputCallback> innerCallback_ = nullptr;
     uint8_t callbackFlag_ = 0;
-    OH_PhotoNative *photoNative_ = nullptr;
     bool isMirrorEnable_ = false;
 };
 #endif // OHOS_PHOTO_OUTPUT_IMPL_H

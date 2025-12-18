@@ -44,9 +44,6 @@ Camera_PhotoOutput::~Camera_PhotoOutput()
     if (innerCallback_) {
         innerCallback_ = nullptr;
     }
-    CHECK_RETURN(!photoNative_);
-    delete photoNative_;
-    photoNative_ = nullptr;
 }
 
 Camera_ErrorCode Camera_PhotoOutput::RegisterCallback(PhotoOutput_Callbacks* callback)
@@ -301,15 +298,14 @@ sptr<PhotoOutput> Camera_PhotoOutput::GetInnerPhotoOutput()
 
 OH_PhotoNative* Camera_PhotoOutput::CreateCameraPhotoNative(shared_ptr<Media::NativeImage> &image, bool isMain)
 {
-    photoNative_ = (photoNative_ == nullptr) ? new(std::nothrow) OH_PhotoNative : photoNative_;
-    CHECK_RETURN_RET_ELOG(photoNative_ == nullptr, nullptr, "Create camera photo native object failed");
-
+    MEDIA_DEBUG_LOG("Camera_PhotoOutput CreateCameraPhotoNative is called");
+    OH_PhotoNative* photoNative = new(std::nothrow) OH_PhotoNative;
     if (isMain) {
-        photoNative_->SetMainImage(image);
+        photoNative->SetMainImage(image);
     } else {
-        photoNative_->SetRawImage(image);
+        photoNative->SetRawImage(image);
     }
-    return photoNative_;
+    return photoNative;
 }
 
 Camera_ErrorCode Camera_PhotoOutput::GetActiveProfile(Camera_Profile** profile)
