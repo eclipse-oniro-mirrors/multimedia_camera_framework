@@ -38,6 +38,7 @@ public:
     int32_t SetExifMetadata(sptr<SurfaceBuffer> &surfaceBuffer) override;
     bool SetMaintenanceData(sptr<SurfaceBuffer> &surfaceBuffer) override;
     void RotatePicture() override;
+    std::shared_ptr<Media::Picture> GetPicture() const override;
     std::shared_ptr<PictureIntf> GetPictureIntf() const;
 private:
     // Keep the order of members in this class, the bottom member will be destroyed first

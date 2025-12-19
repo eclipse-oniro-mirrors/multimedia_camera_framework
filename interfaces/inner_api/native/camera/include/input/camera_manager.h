@@ -177,6 +177,15 @@ public:
     sptr<CameraOutputCapability> GetSupportedOutputCapability(sptr<CameraDevice>& cameraDevice, int32_t modeName = 0);
 
     /**
+     * @brief Get full output capaility of the mode of the given camera from cameraDevice.
+     *
+     * @param Camera device for which full capability need to be fetched.
+     * @return Returns vector the ability of the mode of cameraDevice of available camera from cameraDevice.
+     */
+    sptr<CameraOutputCapability> GetSupportedFullOutputCapability(sptr<CameraDevice>& cameraDevice,
+        int32_t modeName = 0);
+
+    /**
      * @brief Create camera input instance with provided camera position and type.
      *
      * @param The cameraDevice for which input has to be created.
@@ -1062,6 +1071,8 @@ private:
     vector<CameraFormat> GetSupportPhotoFormat(const int32_t modeName,
         std::shared_ptr<OHOS::Camera::CameraMetadata> metadata);
     void FillSupportPhotoFormats(std::vector<Profile>& profiles);
+    void FillExtendedSupportPhotoFormats(std::vector<Profile>& profiles);
+    void RemoveExtendedSupportPhotoFormats(std::vector<Profile>& photoProfiles);
     void FillSupportPreviewFormats(std::vector<Profile>& previewProfiles);
     inline void SetServiceProxy(sptr<ICameraService> proxy)
     {

@@ -178,7 +178,7 @@ napi_value PhotoExNapi::GetMain(napi_env env, napi_callback_info info)
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&photoExNapi));
     if (status == napi_ok && photoExNapi != nullptr) {
         napi_value photoEx;
-        if (photoExNapi->isCompressed_) {
+        if (PhotoExNapi::isCompressed_) {
             napi_get_reference_value(env, photoExNapi->mainImageRef_, &photoEx);
         } else {
             napi_get_reference_value(env, photoExNapi->pictureRef_, &photoEx);
@@ -230,11 +230,8 @@ napi_value PhotoExNapi::Release(napi_env env, napi_callback_info info)
                 auto context = static_cast<PictureAsyncContext*>(data);
                 CAMERA_FINISH_ASYNC_TRACE(context->funcName, context->taskId);
                 napi_value result = nullptr;
-                if (context->objectInfo->isCompressed_) {
-                    napi_delete_reference(env, context->objectInfo->mainImageRef_);
-                } else {
-                    napi_delete_reference(env, context->objectInfo->pictureRef_);
-                }
+                PhotoExNapi::SafeDeleteReference(env, context->objectInfo->mainImageRef_);
+                PhotoExNapi::SafeDeleteReference(env, context->objectInfo->pictureRef_);
                 napi_get_undefined(env, &result);
                 napi_resolve_deferred(env, context->deferred, result);
                 napi_delete_async_work(env, context->work);
@@ -251,6 +248,14 @@ napi_value PhotoExNapi::Release(napi_env env, napi_callback_info info)
         MEDIA_ERR_LOG("PhotoExNapi::Release call Failed!");
     }
     return result;
+}
+
+void PhotoExNapi::SafeDeleteReference(napi_env env, napi_ref& ref)
+{
+    if (ref != nullptr) {
+        napi_delete_reference(env, ref);
+        ref = nullptr;
+    }
 }
 } // namespace CameraStandard
 } // namespace OHOS

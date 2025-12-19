@@ -145,6 +145,23 @@ Camera_ErrorCode OH_CameraManager_GetSupportedCameraOutputCapabilityWithSceneMod
     return cameraManager->GetSupportedCameraOutputCapabilityWithSceneMode(camera, sceneMode, cameraOutputCapability);
 }
 
+Camera_ErrorCode OH_CameraManager_GetSupportedFullCameraOutputCapabilityWithSceneMode(Camera_Manager* cameraManager,
+    const Camera_Device* camera, Camera_SceneMode sceneMode, Camera_OutputCapability** cameraOutputCapability)
+{
+    MEDIA_DEBUG_LOG("OH_CameraManager_GetSupportedFullCameraOutputCapabilityWithSceneMode is called.");
+    CHECK_RETURN_RET_ELOG(cameraManager == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, cameraManager is null!");
+    CHECK_RETURN_RET_ELOG(camera == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, camera is null!");
+    CHECK_RETURN_RET_ELOG(cameraOutputCapability == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, cameraOutputCapability is null!");
+    CHECK_RETURN_RET_ELOG(camera->cameraId == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, cameraId is null!");
+
+    return cameraManager->GetSupportedFullCameraOutputCapabilityWithSceneMode(camera, sceneMode,
+        cameraOutputCapability);
+}
+
 Camera_ErrorCode OH_CameraManager_DeleteSupportedCameraOutputCapability(Camera_Manager* cameraManager,
     Camera_OutputCapability* cameraOutputCapability)
 {

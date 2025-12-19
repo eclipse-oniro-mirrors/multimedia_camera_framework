@@ -162,7 +162,8 @@ static bool g_isSemInited;
 static std::mutex g_photoImageMutex;
 static std::mutex g_assembleImageMutex;
 static int32_t g_captureId;
-static const int64_t g_expoTimeUnit = 1000000000;
+static int64_t g_expoTimeUnit = 1000000000;
+static std::atomic<bool> g_callbackExtendFlag = false;
 
 void FillNapiObjectWithCaptureId(napi_env env, int32_t captureId, napi_value &photoAsset)
 {
@@ -405,7 +406,7 @@ void PhotoOutputCallback::OnOfflineDeliveryFinished(const int32_t captureId) con
 
 void PhotoOutputCallback::OnPhotoAvailable(const std::shared_ptr<Media::NativeImage> nativeImage, bool isRaw) const
 {
-    MEDIA_DEBUG_LOG("PhotoOutputCallback::OnPhotoAvailable native iamge is called!");
+    MEDIA_DEBUG_LOG("PhotoOutputCallback::OnPhotoAvailable native image is called!");
     CallbackInfo info;
     info.nativeImage = nativeImage;
     info.isRaw = isRaw;
@@ -570,6 +571,7 @@ void PhotoOutputCallback::ExecuteOfflineDeliveryFinishedCb(const CallbackInfo& i
 void PhotoOutputCallback::ExecutePhotoAvailableCb(const CallbackInfo& info) const
 {
     MEDIA_INFO_LOG("ExecutePhotoAvailableCb");
+    bool isAsync = !g_callbackExtendFlag;
     ExecuteCallbackScopeSafe(CONST_CAPTURE_PHOTO_AVAILABLE, [&]() {
         napi_value errCode = CameraNapiUtils::GetUndefinedValue(env_);
         napi_value callbackObj = CameraNapiUtils::GetUndefinedValue(env_);
@@ -597,10 +599,12 @@ void PhotoOutputCallback::ExecutePhotoAvailableCb(const CallbackInfo& info) cons
                 // bind imageBuffer life cycle with photoNapiObj
                 imageBuffer = info.nativeImage->GetBuffer();
             }
-            callbackObj = PhotoNapi::CreatePhoto(env_, mainImage, info.isRaw, imageBuffer);
+            callbackObj = g_callbackExtendFlag ?
+                PhotoExNapi::CreatePhoto(env_, mainImage, imageBuffer) :
+                PhotoNapi::CreatePhoto(env_, mainImage, info.isRaw, imageBuffer);
         }
         return ExecuteCallbackData(env_, errCode, callbackObj);
-    });
+    }, isAsync);
 }
 
 void PhotoOutputCallback::ExecutePhotoAssetAvailableCb(const CallbackInfo& info) const
@@ -726,6 +730,8 @@ napi_value PhotoOutputNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("on", On),
         DECLARE_NAPI_FUNCTION("once", Once),
         DECLARE_NAPI_FUNCTION("off", Off),
+        DECLARE_NAPI_FUNCTION("onPhotoAvailable", OnPhotoAvailable),
+        DECLARE_NAPI_FUNCTION("offPhotoAvailable", OffPhotoAvailable),
         DECLARE_NAPI_FUNCTION("deferImageDelivery", DeferImageDeliveryFor),
         DECLARE_NAPI_FUNCTION("deferImageDeliveryFor", DeferImageDeliveryFor),
         DECLARE_NAPI_FUNCTION("isDeferredImageDeliverySupported", IsDeferredImageDeliverySupported),
@@ -1775,6 +1781,7 @@ const PhotoOutputNapi::EmitterFunctions& PhotoOutputNapi::GetEmitterFunctions()
 
 napi_value PhotoOutputNapi::On(napi_env env, napi_callback_info info)
 {
+    g_callbackExtendFlag = false;
     return ListenerTemplate<PhotoOutputNapi>::On(env, info);
 }
 
@@ -1786,6 +1793,17 @@ napi_value PhotoOutputNapi::Once(napi_env env, napi_callback_info info)
 napi_value PhotoOutputNapi::Off(napi_env env, napi_callback_info info)
 {
     return ListenerTemplate<PhotoOutputNapi>::Off(env, info);
+}
+
+napi_value PhotoOutputNapi::OnPhotoAvailable(napi_env env, napi_callback_info info)
+{
+    g_callbackExtendFlag = true;
+    return ListenerTemplate<PhotoOutputNapi>::On(env, info, CONST_CAPTURE_PHOTO_AVAILABLE);
+}
+
+napi_value PhotoOutputNapi::OffPhotoAvailable(napi_env env, napi_callback_info info)
+{
+    return ListenerTemplate<PhotoOutputNapi>::Off(env, info, CONST_CAPTURE_PHOTO_AVAILABLE);
 }
 
 napi_value PhotoOutputNapi::IsAutoHighQualityPhotoSupported(napi_env env, napi_callback_info info)

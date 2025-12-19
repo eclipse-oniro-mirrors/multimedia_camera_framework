@@ -32,6 +32,7 @@
 #include "image_receiver.h"
 #include "hdr_type.h"
 #include "photo_taihe.h"
+#include "photo_ex_taihe.h"
 #include "pixel_map_taihe.h"
 #include "media_library_comm_ani.h"
 #include "metadata_helper.h"
@@ -44,6 +45,7 @@ using namespace taihe;
 using namespace ohos::multimedia::camera;
 static std::mutex g_photoImageMutex;
 static std::mutex g_assembleImageMutex;
+static bool g_callbackExtendFlag = false;
 uint32_t PhotoOutputImpl::photoOutputTaskId_ = CAMERA_PHOTO_OUTPUT_TASKID;
 
 void PhotoOutputCallbackAni::OnCaptureStartedWithInfoCallback(const int32_t captureId, uint32_t exposureTime) const
@@ -76,11 +78,18 @@ void PhotoOutputCallbackAni::OnPhotoAvailableCallback(const std::shared_ptr<Medi
         errCode = -1;
         message = "ImageTaihe Create failed";
     }
-    Photo photoValue = make_holder<Ani::Camera::PhotoImpl, Photo>(mainImage, isRaw);
     auto sharePtr = shared_from_this();
-    auto task = [photoValue, errCode, message, sharePtr]() {
-        CHECK_EXECUTE(sharePtr != nullptr, sharePtr->ExecuteAsyncCallback(
-            CONST_CAPTURE_PHOTO_AVAILABLE, errCode, message, photoValue));
+    auto task = [mainImage, isRaw, errCode, message, sharePtr]() {
+        if (g_callbackExtendFlag) {
+            PhotoEx photoExValue = make_holder<Ani::Camera::PhotoExImpl, PhotoEx>();
+            photoExValue->SetMain(mainImage);
+            CHECK_EXECUTE(sharePtr != nullptr, sharePtr->ExecuteCallback(
+                CONST_CAPTURE_PHOTO_AVAILABLE, photoExValue));
+        } else {
+            Photo photoValue = make_holder<Ani::Camera::PhotoImpl, Photo>(mainImage, isRaw);
+            CHECK_EXECUTE(sharePtr != nullptr, sharePtr->ExecuteAsyncCallback(
+                CONST_CAPTURE_PHOTO_AVAILABLE, errCode, message, photoValue));
+        }
     };
     CHECK_RETURN_ELOG(mainHandler_ == nullptr, "callback failed, mainHandler_ is nullptr!");
     mainHandler_->PostTask(task, "OnPhotoAvailableCallback", 0, OHOS::AppExecFwk::EventQueue::Priority::IMMEDIATE, {});
@@ -89,18 +98,14 @@ void PhotoOutputCallbackAni::OnPhotoAvailableCallback(const std::shared_ptr<Medi
 void PhotoOutputCallbackAni::OnPhotoAvailableCallback(const std::shared_ptr<Media::Picture> picture) const
 {
     MEDIA_INFO_LOG("PhotoOutputCallbackAni::OnPhotoAvailableCallback");
-    int32_t errCode = 0;
-    std::string message = "success";
     ohos::multimedia::image::image::Picture mainPicture = ANI::Image::PictureImpl::CreatePicture(picture);
     if (has_error()) {
         reset_error();
-        errCode = -1;
-        message = "PictureTaihe Create failed";
     }
     auto sharePtr = shared_from_this();
-    auto task = [mainPicture, errCode, message, sharePtr]() {
-        CHECK_EXECUTE(sharePtr != nullptr, sharePtr->ExecuteAsyncCallback(
-            CONST_CAPTURE_PHOTO_AVAILABLE, errCode, message, mainPicture));
+    auto task = [mainPicture, sharePtr]() {
+        CHECK_EXECUTE(sharePtr != nullptr, sharePtr->ExecuteCallback(
+            CONST_CAPTURE_PHOTO_AVAILABLE, mainPicture));
     };
     CHECK_RETURN_ELOG(mainHandler_ == nullptr, "callback failed, mainHandler_ is nullptr!");
     mainHandler_->PostTask(task, "OnPhotoAvailableCallback", 0, OHOS::AppExecFwk::EventQueue::Priority::IMMEDIATE, {});
@@ -795,12 +800,26 @@ void PhotoOutputImpl::OffEstimatedCaptureDuration(optional_view<callback<void(ui
 void PhotoOutputImpl::OnPhotoAvailable(callback_view<void(uintptr_t, weak::Photo)> callback)
 {
     MEDIA_ERR_LOG("PhotoOutputImpl::OnPhotoAvailable");
+    g_callbackExtendFlag = false;
     ListenerTemplate<PhotoOutputImpl>::On(this, callback, CONST_CAPTURE_PHOTO_AVAILABLE);
 }
 
 void PhotoOutputImpl::OffPhotoAvailable(optional_view<callback<void(uintptr_t, weak::Photo)>> callback)
 {
     MEDIA_ERR_LOG("PhotoOutputImpl::OffPhotoAvailable");
+    ListenerTemplate<PhotoOutputImpl>::Off(this, callback, CONST_CAPTURE_PHOTO_AVAILABLE);
+}
+
+void PhotoOutputImpl::OnPhotoAvailableEx(callback_view<void(weak::PhotoEx)> callback)
+{
+    MEDIA_ERR_LOG("PhotoOutputImpl::OnPhotoAvailableEx");
+    g_callbackExtendFlag = true;
+    ListenerTemplate<PhotoOutputImpl>::On(this, callback, CONST_CAPTURE_PHOTO_AVAILABLE);
+}
+
+void PhotoOutputImpl::OffPhotoAvailableEx(optional_view<callback<void(weak::PhotoEx)>> callback)
+{
+    MEDIA_ERR_LOG("PhotoOutputImpl::OffPhotoAvailableEx");
     ListenerTemplate<PhotoOutputImpl>::Off(this, callback, CONST_CAPTURE_PHOTO_AVAILABLE);
 }
 

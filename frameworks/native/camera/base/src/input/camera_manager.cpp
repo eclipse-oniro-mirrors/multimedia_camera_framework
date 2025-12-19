@@ -2526,7 +2526,7 @@ void CameraManager::ParseBasicCapability(ProfilesWrapper& profilesWrapper,
         }
         profilesWrapper.photoProfiles.push_back(profile);
 #else
-        if (format == CAMERA_FORMAT_JPEG) {
+        if (format == CAMERA_FORMAT_JPEG || format == CAMERA_FORMAT_YUV_420_SP) {
             profilesWrapper.photoProfiles.push_back(profile);
             continue;
         }
@@ -2747,7 +2747,9 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<Ca
     CHECK_RETURN_RET(camera == nullptr, nullptr);
     sptr<CameraOutputCapability> cameraOutputCapability = new (std::nothrow) CameraOutputCapability();
     CHECK_RETURN_RET(cameraOutputCapability == nullptr, nullptr);
-    cameraOutputCapability->SetPhotoProfiles(camera->modePhotoProfiles_[modeName]);
+    std::vector<Profile> curPhotoProfiles = camera->modePhotoProfiles_[modeName];
+    CHECK_EXECUTE(!IsSystemApp(), RemoveExtendedSupportPhotoFormats(curPhotoProfiles));
+    cameraOutputCapability->SetPhotoProfiles(curPhotoProfiles);
     cameraOutputCapability->SetPreviewProfiles(camera->modePreviewProfiles_[modeName]);
     if (!isPhotoMode_.count(modeName)) {
         cameraOutputCapability->SetVideoProfiles(camera->modeVideoProfiles_[modeName]);
@@ -2767,6 +2769,30 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<Ca
     } else {
         cameraOutputCapability->SetSupportedMetadataObjectType(objectTypes);
     }
+    return cameraOutputCapability;
+}
+
+sptr<CameraOutputCapability> CameraManager::GetSupportedFullOutputCapability(sptr<CameraDevice>& cameraDevice,
+    int32_t modeName) __attribute__((no_sanitize("cfi")))
+{
+    MEDIA_DEBUG_LOG("GetSupportedFullOutputCapability mode = %{public}d", modeName);
+    auto camera = cameraDevice;
+    auto innerCamera = GetInnerCamera();
+    CHECK_RETURN_RET(innerCamera == nullptr, nullptr);
+    if (!foldScreenType_.empty() && foldScreenType_[0] == '4' &&
+        camera->GetPosition() == CAMERA_POSITION_FRONT && innerCamera && !GetIsInWhiteList() &&
+        (GetFoldStatus() == FoldStatus::EXPAND || GetFoldStatus() == FoldStatus::UNKNOWN_FOLD)) {
+        MEDIA_DEBUG_LOG("GetSupportedFullOutputCapability innerCamera Position = %{public}d",
+            innerCamera->GetPosition());
+        camera = innerCamera;
+    }
+    CHECK_RETURN_RET(camera == nullptr, nullptr);
+    sptr<CameraOutputCapability> cameraOutputCapability = GetSupportedFullOutputCapability(camera, modeName);
+    CHECK_RETURN_RET(cameraOutputCapability == nullptr, nullptr);
+    std::vector<Profile> photoProfiles = cameraOutputCapability->GetPhotoProfiles();
+    CHECK_EXECUTE(!IsSystemApp(), FillExtendedSupportPhotoFormats(photoProfiles));
+    cameraOutputCapability->SetPhotoProfiles(photoProfiles);
+    camera->SetProfile(cameraOutputCapability, modeName);
     return cameraOutputCapability;
 }
 
@@ -3436,6 +3462,36 @@ void CameraManager::FillSupportPhotoFormats(std::vector<Profile>& photoProfiles)
     }
     photoProfiles = extendProfiles;
     // LCOV_EXCL_STOP
+}
+
+void CameraManager::FillExtendedSupportPhotoFormats(vector<Profile>& photoProfiles)
+{
+    CHECK_RETURN(photoFormats_.size() == 0 || photoProfiles.size() == 0);
+    std::vector<Profile> extendProfiles = {};
+    for (const auto& profile : photoProfiles) {
+        if (profile.format_ == CAMERA_FORMAT_YUV_420_SP) {
+            extendProfiles.push_back(profile);
+            continue;
+        }
+        Profile extendedPhotoProfile = profile;
+        extendProfiles.push_back(extendedPhotoProfile);
+        extendedPhotoProfile.format_ = CAMERA_FORMAT_YUV_420_SP;
+        extendProfiles.push_back(extendedPhotoProfile);
+    }
+    photoProfiles = extendProfiles;
+}
+
+void CameraManager::RemoveExtendedSupportPhotoFormats(std::vector<Profile>& photoProfiles)
+{
+    CHECK_RETURN(photoProfiles.size() == 0);
+    std::vector<Profile> preserveProfiles = {};
+    for (const auto& profile : photoProfiles) {
+        if (profile.format_ == CAMERA_FORMAT_YUV_420_SP) {
+            continue;
+        }
+        preserveProfiles.push_back(profile);
+    }
+    photoProfiles = preserveProfiles;
 }
 
 int32_t CameraManager::CreateMetadataOutputInternal(sptr<MetadataOutput>& pMetadataOutput,

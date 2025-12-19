@@ -88,12 +88,29 @@ void CacheSupportedOutputCapability(napi_env env, const std::string& cameraId, i
     MEDIA_DEBUG_LOG("CacheSupportedOutputCapability cache->%{public}s:%{public}d", key.c_str(), mode);
 }
 
+void CacheSupportedFullOutputCapability(napi_env env, const std::string& cameraId, int32_t mode, napi_value value)
+{
+    std::string key = "OutputCapability:" + cameraId + ":\t" + to_string(mode);
+    CacheNapiValue(env, key, value);
+    MEDIA_DEBUG_LOG("CacheSupportedFullOutputCapability cache->%{public}s:%{public}d", key.c_str(), mode);
+}
+
 napi_value GetCachedSupportedOutputCapability(napi_env env, const std::string& cameraId, int32_t mode)
 {
     std::string key = "OutputCapability:" + cameraId + ":\t" + to_string(mode);
     napi_value result = GetCacheNapiValue(env, key);
     if (result != nullptr) {
         MEDIA_DEBUG_LOG("GetCachedSupportedOutputCapability hit cache->%{public}s:%{public}d", key.c_str(), mode);
+    }
+    return result;
+}
+
+napi_value GetCachedSupportedFullOutputCapability(napi_env env, const std::string& cameraId, int32_t mode)
+{
+    std::string key = "OutputCapability:" + cameraId + ":\t" + to_string(mode);
+    napi_value result = GetCacheNapiValue(env, key);
+    if (result != nullptr) {
+        MEDIA_DEBUG_LOG("GetCachedSupportedFullOutputCapability hit cache->%{public}s:%{public}d", key.c_str(), mode);
     }
     return result;
 }
@@ -616,6 +633,7 @@ napi_value CameraManagerNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("getSupportedCameras", GetSupportedCameras),
         DECLARE_NAPI_FUNCTION("getSupportedSceneModes", GetSupportedModes),
         DECLARE_NAPI_FUNCTION("getSupportedOutputCapability", GetSupportedOutputCapability),
+        DECLARE_NAPI_FUNCTION("getSupportedFullOutputCapability", GetSupportedFullOutputCapability),
         DECLARE_NAPI_FUNCTION("isCameraMuted", IsCameraMuted),
         DECLARE_NAPI_FUNCTION("isCameraMuteSupported", IsCameraMuteSupported),
         DECLARE_NAPI_FUNCTION("muteCamera", MuteCamera),
@@ -1445,6 +1463,48 @@ napi_value CameraManagerNapi::GetSupportedOutputCapability(napi_env env, napi_ca
     napi_value result = CameraNapiObjCameraOutputCapability(*outputCapability).GenerateNapiValue(env);
     CHECK_EXECUTE(cameraInfo->GetConnectionType() == CAMERA_CONNECTION_BUILT_IN,
         CacheSupportedOutputCapability(env, cameraId, jsSceneMode, result));
+    return result;
+}
+
+napi_value CameraManagerNapi::GetSupportedFullOutputCapability(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("GetSupportedFullOutputCapability is called");
+    CameraManagerNapi* cameraManagerNapi = nullptr;
+    int32_t jsSceneMode = JsSceneMode::JS_NORMAL;
+    sptr<CameraDevice> cameraInfo =
+        GetSupportedOutputCapabilityGetCameraInfo(env, info, cameraManagerNapi, jsSceneMode);
+
+    if (cameraInfo == nullptr) {
+        MEDIA_ERR_LOG("CameraManagerNapi::GetSupportedFullOutputCapability get camera info fail");
+        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "Get camera info fail");
+        return nullptr;
+    }
+    std::string cameraId = cameraInfo->GetID();
+    auto foldType = cameraManagerNapi->cameraManager_->GetFoldScreenType();
+    if (!(!foldType.empty() && foldType[0] == '4')) {
+        napi_value cachedResult = GetCachedSupportedFullOutputCapability(env, cameraId, jsSceneMode);
+        CHECK_RETURN_RET(cachedResult != nullptr, cachedResult);
+    }
+    SceneMode fwkMode = SceneMode::NORMAL;
+    std::unordered_map<JsSceneMode, SceneMode> jsToFwModeMap = g_jsToFwMode_;
+    if (CameraNapiSecurity::CheckSystemApp(env, false)) {
+        jsToFwModeMap = g_jsToFwMode4Sys_;
+    }
+    auto itr = jsToFwModeMap.find(static_cast<JsSceneMode>(jsSceneMode));
+    if (itr != jsToFwModeMap.end()) {
+        fwkMode = itr->second;
+    } else {
+        MEDIA_ERR_LOG("CreateCameraSessionInstance mode = %{public}d not supported", jsSceneMode);
+        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "Not support the input mode");
+        return nullptr;
+    }
+    auto outputCapability = cameraManagerNapi->cameraManager_->GetSupportedFullOutputCapability(cameraInfo, fwkMode);
+    CHECK_RETURN_RET_ELOG(outputCapability == nullptr, nullptr, "failed to create CreateCameraOutputCapability");
+    outputCapability->RemoveDuplicatesProfiles();
+    GetSupportedOutputCapabilityAdaptNormalMode(fwkMode, cameraInfo, outputCapability);
+    napi_value result = CameraNapiObjCameraOutputCapability(*outputCapability).GenerateNapiValue(env);
+    CHECK_EXECUTE(cameraInfo->GetConnectionType() == CAMERA_CONNECTION_BUILT_IN,
+        CacheSupportedFullOutputCapability(env, cameraId, jsSceneMode, result));
     return result;
 }
 

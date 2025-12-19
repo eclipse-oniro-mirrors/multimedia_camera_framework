@@ -54,7 +54,7 @@ public:
     virtual void SaveCallbackReference(const std::string eventName, napi_value callback, bool isOnce) final;
     virtual void ExecuteCallback(const std::string eventName, const ExecuteCallbackNapiPara& callbackPara) const final;
     virtual void ExecuteCallbackScopeSafe(
-        const std::string eventName, const std::function<ExecuteCallbackData()> fun) const final;
+        const std::string eventName, const std::function<ExecuteCallbackData()> fun, bool isAsync = true) const final;
     virtual void RemoveCallbackRef(const std::string eventName, napi_value callback) final;
     virtual void RemoveAllCallbacks(const std::string eventName) final;
     virtual bool IsEmpty(const std::string eventName) const final;

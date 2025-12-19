@@ -73,7 +73,7 @@ typedef struct OH_PhotoNative OH_PhotoNative;
 Camera_ErrorCode OH_PhotoNative_GetMainImage(OH_PhotoNative* photo, OH_ImageNative** mainImage);
 
 /**
- * @brief Get main picture.
+ * @brief Get uncompressed image.
  *
  * @param photo the {@link OH_PhotoNative} instance.
  * @param mainImage the {@link OH_PictureNative} which use to get picture.
@@ -82,7 +82,7 @@ Camera_ErrorCode OH_PhotoNative_GetMainImage(OH_PhotoNative* photo, OH_ImageNati
  * @since 23
  * @version 1.0
  */
-Camera_ErrorCode OH_PhotoNative_GetPicture(OH_PhotoNative* photo, OH_PictureNative** picture);
+Camera_ErrorCode OH_PhotoNative_GetUncompressedImage(OH_PhotoNative* photo, OH_PictureNative** picture);
 
 /**
  * @brief Release camera photo.

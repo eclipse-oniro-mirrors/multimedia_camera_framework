@@ -29,6 +29,7 @@ public:
 
 private:
     int HandleOnPhotoAvailable(MessageParcel& data);
+    int HandleOnPictureAvailable(MessageParcel& data);
 };
 } // namespace CameraStandard
 } // namespace OHOS

@@ -15,6 +15,7 @@
 
 #include "hstream_capture_photo_callback_stub.h"
 #include "camera_log.h"
+#include "picture_proxy.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -27,6 +28,9 @@ int HStreamCapturePhotoCallbackStub::OnRemoteRequest(
     switch (code) {
         case static_cast<uint32_t>(StreamCapturePhotoCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_PHOTO_AVAILABLE):
             errCode = HandleOnPhotoAvailable(data);
+            break;
+        case static_cast<uint32_t>(StreamCapturePhotoCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_PICTURE_AVAILABLE):
+            errCode = HandleOnPictureAvailable(data);
             break;
         default:
             MEDIA_ERR_LOG("HStreamCaptureCallbackStub request code %{public}u not handled", code);
@@ -47,6 +51,14 @@ int HStreamCapturePhotoCallbackStub::HandleOnPhotoAvailable(MessageParcel& data)
     int64_t timestamp = data.ReadInt64();
     bool isRaw = data.ReadBool();
     return OnPhotoAvailable(surfaceBuffer, timestamp, isRaw);
+}
+
+int HStreamCapturePhotoCallbackStub::HandleOnPictureAvailable(MessageParcel& data)
+{
+    MEDIA_INFO_LOG("HStreamCapturePhotoCallbackStub::OnPictureAvailable is called!");
+    std::shared_ptr<PictureIntf> pictureProxy = PictureProxy::CreatePictureProxy();
+    CHECK_EXECUTE(pictureProxy, pictureProxy->UnmarshallingPicture(data));
+    return OnPhotoAvailable(pictureProxy);
 }
 // LCOV_EXCL_STOP
 }  // namespace CameraStandard

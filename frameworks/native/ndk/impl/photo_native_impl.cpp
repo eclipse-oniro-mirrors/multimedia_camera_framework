@@ -32,6 +32,7 @@ OH_PhotoNative::~OH_PhotoNative()
         mainImage_->release();
         mainImage_ = nullptr;
     }
+    CHECK_EXECUTE(picture_, picture_ = nullptr);
 
     CHECK_RETURN(!rawImage_);
     rawImage_->release();
