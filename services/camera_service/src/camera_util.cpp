@@ -350,10 +350,10 @@ std::string GetClientNameByToken(int tokenIdNum)
     AccessTokenID tokenId = static_cast<AccessTokenID>(tokenIdNum);
     ATokenTypeEnum tokenType = AccessTokenKit::GetTokenType(tokenId);
     if (tokenType == TOKEN_HAP) {
-        HapTokenInfoExt hapTokenInfo = {};
-        int ret = AccessTokenKit::GetHapTokenInfoExtension(tokenId, hapTokenInfo);
-        CHECK_RETURN_RET_ELOG(ret != 0, "unknown", "GetHapTokenInfoExtension fail, ret %{public}d", ret);
-        return hapTokenInfo.baseInfo.bundleName;
+        HapTokenInfo hapTokenInfo = {};
+        int32_t ret = AccessTokenKit::GetHapTokenInfo(tokenId, hapTokenInfo);
+        CHECK_RETURN_RET_ELOG(ret != 0, "unknown", "GetHapTokenInfo fail, ret %{public}d", ret);
+        return hapTokenInfo.bundleName;
     } else if (tokenType == TOKEN_NATIVE) {
         NativeTokenInfo nativeTokenInfo = {};
         int ret = AccessTokenKit::GetNativeTokenInfo(tokenId, nativeTokenInfo);
