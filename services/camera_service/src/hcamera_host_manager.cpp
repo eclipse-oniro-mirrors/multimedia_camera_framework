@@ -91,6 +91,7 @@ public:
     int32_t GetCameraHostVersion();
     int32_t GetCameras(std::vector<std::string>& cameraIds);
     int32_t GetCameraAbility(const std::string& cameraId, std::shared_ptr<OHOS::Camera::CameraMetadata>& ability);
+    std::map<std::string, int32_t> GetSwitchCameraInfo();
     int32_t OpenCamera(std::string& cameraId, const sptr<ICameraDeviceCallback>& callback,
                        sptr<OHOS::HDI::Camera::V1_0::ICameraDevice>& pDevice, bool isEnableSecCam = false);
     int32_t SetFlashlight(const std::string& cameraId, bool isEnable);
@@ -120,6 +121,7 @@ private:
     void Cast2MultiVersionCameraHost();
     void UpdateMuteSetting(std::shared_ptr<OHOS::Camera::CameraMetadata> setting);
     void UpdateCameraAbility(std::shared_ptr<OHOS::Camera::CameraMetadata>& inAbility);
+    void SetSwitchCameraInfo(const std::string& cameraId, std::shared_ptr<OHOS::Camera::CameraMetadata>& inAbility);
 
     std::weak_ptr<StatusCallback> statusCallback_;
     std::weak_ptr<CameraHostDeadCallback> cameraHostDeadCallback_;
@@ -134,8 +136,10 @@ private:
     sptr<CameraHostDeathRecipient> cameraHostDeathRecipient_ = nullptr;
 
     std::mutex mutex_;
+    std::mutex cameraSwitchInfoMutex_;
     std::vector<std::string> cameraIds_;
     std::vector<std::shared_ptr<CameraDeviceInfo>> devices_;
+    std::map<std::string, int32_t> cameraSwitchInfoMap_ = {};
 };
 
 HCameraHostManager::CameraHostInfo::~CameraHostInfo()
@@ -286,6 +290,7 @@ int32_t HCameraHostManager::CameraHostInfo::GetCameraAbility(const std::string& 
             deviceInfo->ability = ability;
         }
     }
+    SetSwitchCameraInfo(cameraId, ability);
     UpdateCameraAbility(ability);
 #ifdef HOOK_CAMERA_OPERATOR
     if (!CameraRotatePlugin::GetInstance()->HookCameraAbility(cameraId, ability)) {
@@ -293,6 +298,35 @@ int32_t HCameraHostManager::CameraHostInfo::GetCameraAbility(const std::string& 
     }
 #endif
     return CAMERA_OK;
+}
+
+void HCameraHostManager::CameraHostInfo::SetSwitchCameraInfo(const std::string& cameraId,
+    std::shared_ptr<OHOS::Camera::CameraMetadata>& inAbility)
+{
+    CHECK_RETURN_ELOG(inAbility == nullptr, "CameraHostInfo::SetSwitchCameraInfo ability is nullptr");
+    std::lock_guard<std::mutex> lock(cameraSwitchInfoMutex_);
+    CHECK_RETURN(cameraSwitchInfoMap_.find(cameraId) != cameraSwitchInfoMap_.end());
+
+    camera_metadata_item_t item;
+    int32_t ret = OHOS::Camera::FindCameraMetadataItem(inAbility->get(), OHOS_ABILITY_CAMERA_POSITION, &item);
+    CHECK_RETURN_ELOG(ret != CAM_META_SUCCESS || item.count <= 0,
+        "CameraHostInfo::SetSwitchCameraInfo Get cameraPosition failed");
+    int32_t cameraPosition = static_cast<int32_t>(item.data.u8[0]);
+    CHECK_RETURN(cameraPosition != OHOS_CAMERA_POSITION_FRONT);
+
+    ret = OHOS::Camera::FindCameraMetadataItem(inAbility->get(), OHOS_SENSOR_ORIENTATION, &item);
+    CHECK_RETURN_ELOG(ret != CAM_META_SUCCESS || item.count <= 0,
+        "CameraHostInfo::SetSwitchCameraInfo Get sensorOrientation failed");
+    int32_t originOrientation = item.data.i32[0];
+    MEDIA_INFO_LOG("HCameraHostManager::CameraHostInfo::SetSwitchCameraInfo cameraId: %{public}s, cameraPosition: "
+        "%{public}d, cameraOrientation: %{public}d", cameraId.c_str(), cameraPosition, originOrientation);
+    cameraSwitchInfoMap_[cameraId] = originOrientation;
+}
+
+std::map<std::string, int32_t> HCameraHostManager::CameraHostInfo::GetSwitchCameraInfo()
+{
+    std::lock_guard<std::mutex> lock(cameraSwitchInfoMutex_);
+    return cameraSwitchInfoMap_;
 }
 
 void HCameraHostManager::CameraHostInfo::UpdateCameraAbility(std::shared_ptr<OHOS::Camera::CameraMetadata>& inAbility)
@@ -973,6 +1007,25 @@ int32_t HCameraHostManager::GetVersionByCamera(const std::string& cameraId)
     auto cameraHostInfo = FindCameraHostInfo(cameraId);
     CHECK_RETURN_RET_ELOG(cameraHostInfo == nullptr, 0, "GetVersionByCamera failed with invalid device info");
     return cameraHostInfo->GetCameraHostVersion();
+}
+
+int32_t HCameraHostManager::JudgeSupportSwitchCamera(bool& isSupported)
+{
+    isSupported = false;
+    std::vector<std::string> cameraIds;
+    GetCameras(cameraIds);
+    CHECK_RETURN_RET_ELOG(cameraIds.empty(), CAMERA_INVALID_ARG, "GetVersionByCamera failed with invalid device info");
+    auto cameraHostInfo = FindCameraHostInfo(cameraIds[0]);
+    CHECK_RETURN_RET_ELOG(cameraHostInfo == nullptr, CAMERA_INVALID_ARG,
+        "GetVersionByCamera failed with invalid device info");
+    auto cameraSwitchInfoMap = cameraHostInfo->GetSwitchCameraInfo();
+    CHECK_RETURN_RET_ELOG(cameraSwitchInfoMap.empty(), CAMERA_INVALID_ARG,
+        "HCameraHostManager::JudgeSupportSwitchCamera cameraSwitchInfoMap is empty");
+    int32_t firstValue = cameraSwitchInfoMap.begin()->second;
+    isSupported = std::all_of(cameraSwitchInfoMap.begin(), cameraSwitchInfoMap.end(),
+        [&firstValue](const auto& pair) { return pair.second == firstValue; });
+    MEDIA_INFO_LOG("HCameraHostManager::JudgeSupportSwitchCamera isSupported: %{public}d", isSupported);
+    return CAMERA_OK;
 }
 
 int32_t HCameraHostManager::OpenCameraDevice(std::string &cameraId,

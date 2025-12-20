@@ -736,6 +736,15 @@ vector<shared_ptr<CameraMetaInfo>> HCameraService::ChooseDeFaultCameras(vector<s
     return choosedCameras;
 }
 
+int32_t HCameraService::JudgeSupportSwitchCamera(bool& isSupported)
+{
+    MEDIA_DEBUG_LOG("HCameraService::JudgeSupportSwitchCamera is called");
+    isSupported = false;
+    int32_t ret = cameraHostManager_->JudgeSupportSwitchCamera(isSupported);
+    CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, ret, "HCameraService::GetCameraAbility failed");
+    return ret;
+}
+
 int32_t HCameraService::CreateCameraDevice(const string& cameraId, sptr<ICameraDeviceService>& device)
 {
     CAMERA_SYNC_TRACE;

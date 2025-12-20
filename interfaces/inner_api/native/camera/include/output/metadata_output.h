@@ -44,7 +44,7 @@ static const std::map<MetadataObjectType, int32_t> mapLengthOfType = {
     {MetadataObjectType::DOG_BODY, 10},
     {MetadataObjectType::SALIENT_DETECTION, 10},
     {MetadataObjectType::BAR_CODE_DETECTION, 10},
-    {MetadataObjectType::BASE_FACE_DETECTION, 10},
+    {MetadataObjectType::BASE_FACE_DETECTION, 22},
 };
 
 enum MetadataOutputErrorCode : int32_t {

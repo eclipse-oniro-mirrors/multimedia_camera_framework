@@ -1989,7 +1989,7 @@ private:
     void SetGuessMode(SceneMode mode);
     int32_t UpdateSetting(std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata);
     Point CoordinateTransform(Point point);
-    bool JudgeMultiFrontCamera();
+    bool JudgeSupportSwitchCamera();
     int32_t CalculateExposureValue(float exposureValue);
     Point VerifyFocusCorrectness(Point point);
     int32_t ConfigureOutput(sptr<CaptureOutput>& output);

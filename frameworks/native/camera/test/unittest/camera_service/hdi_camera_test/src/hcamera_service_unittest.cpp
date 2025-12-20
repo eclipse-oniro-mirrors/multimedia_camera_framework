@@ -2800,5 +2800,20 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_071, TestSize.Level1)
     device->Close();
 }
 #endif
+
+/*
+ * Feature: CameraService
+ * Function: Test JudgeSupportSwitchCamera
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test JudgeSupportSwitchCamera
+ */
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_076, TestSize.Level0)
+{
+    bool isSupported = false;
+    int32_t ret = cameraService_->JudgeSupportSwitchCamera(isSupported);
+    EXPECT_EQ(ret, CAMERA_OK);
+}
 }
 }
