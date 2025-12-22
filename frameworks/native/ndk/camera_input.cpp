@@ -119,6 +119,23 @@ Camera_ErrorCode OH_CameraInput_UsePhysicalCameraOrientation(Camera_Input* camer
     return cameraInput->UsePhysicalCameraOrientation(isUsed);
 }
 
+Camera_ErrorCode OH_CameraInput_RegisterOcclusionDetectionCallback(Camera_Input* cameraInput,
+    OH_CameraInput_OnOcclusionDetectionCallback occlusionDetectionCallback)
+{
+    CHECK_RETURN_RET_ELOG(cameraInput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, cameraInput is null!");
+    CHECK_RETURN_RET_ELOG(occlusionDetectionCallback == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, callback is null!");
+    return cameraInput->RegisterOcclusionDetectionCallback(occlusionDetectionCallback);
+}
+
+Camera_ErrorCode OH_CameraInput_UnregisterOcclusionDetectionCallback(Camera_Input* cameraInput,
+    OH_CameraInput_OnOcclusionDetectionCallback occlusionDetectionCallback)
+{
+    CHECK_RETURN_RET_ELOG(cameraInput == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, cameraInput is null!");
+    return cameraInput->UnregisterOcclusionDetectionCallback(occlusionDetectionCallback);
+}
+
 #ifdef __cplusplus
 }
 #endif
