@@ -56,4 +56,4 @@ private:
 
 } // namespace CameraStandard
 } // namespace OHOS
-#endif // CAMERA_BEAUTY_NOTIFICATION_H
+#endif // CAMERA_BEAUTY_NOTIFICATION_H
