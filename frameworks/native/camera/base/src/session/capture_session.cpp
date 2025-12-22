@@ -5089,7 +5089,7 @@ shared_ptr<AutoDeviceSwitchCallback> CaptureSession::GetAutoDeviceSwitchCallback
 void CaptureSession::AddFunctionToMap(std::string ctrlTarget, std::function<void()> func)
 {
     if (!GetIsAutoSwitchDeviceStatus() || !canAddFuncToMap_) {
-        MEDIA_INFO_LOG("The automatic switching device is not enabled.");
+        MEDIA_DEBUG_LOG("The automatic switching device is not enabled.");
         return;
     }
     std::lock_guard<std::mutex> lock(functionMapMutex_);
