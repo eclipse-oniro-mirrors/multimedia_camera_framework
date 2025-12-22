@@ -446,6 +446,48 @@ Camera_ErrorCode Camera_Manager::GetSupportedCameraOutputCapabilityWithSceneMode
     return CAMERA_OK;
 }
 
+Camera_ErrorCode Camera_Manager::GetSupportedFullCameraOutputCapabilityWithSceneMode(const Camera_Device* camera,
+    Camera_SceneMode sceneMode, Camera_OutputCapability** cameraOutputCapability)
+{
+    sptr<CameraDevice> cameraDevice = CameraManager::GetInstance()->GetCameraDeviceFromId(camera->cameraId);
+    CHECK_RETURN_RET_ELOG(cameraDevice == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Camera_Manager::GetSupportedFullCameraOutputCapabilityWithSceneMode get cameraDevice fail!");
+
+    auto itr = g_ndkToFwMode_.find(static_cast<Camera_SceneMode>(sceneMode));
+    CHECK_RETURN_RET_ELOG(itr == g_ndkToFwMode_.end(), CAMERA_INVALID_ARGUMENT,
+        "Camera_Manager::GetSupportedFullCameraOutputCapabilityWithSceneMode "
+        "sceneMode = %{public}d not supported!", sceneMode);
+
+    SceneMode innerSceneMode = static_cast<SceneMode>(itr->second);
+    sptr<CameraOutputCapability> innerCameraOutputCapability =
+        CameraManager::GetInstance()->GetSupportedFullOutputCapability(cameraDevice, innerSceneMode);
+    CHECK_RETURN_RET_ELOG(innerCameraOutputCapability == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Camera_Manager::GetSupportedFullCameraOutputCapabilityWithSceneMode innerCameraOutputCapability is null!");
+
+    Camera_OutputCapability* outCapability = new Camera_OutputCapability;
+    CHECK_RETURN_RET_ELOG(outCapability == nullptr, CAMERA_SERVICE_FATAL_ERROR,
+        "Camera_Manager::GetSupportedFullCameraOutputCapabilityWithSceneMode "
+        "failed to allocate memory for outCapability!");
+    std::vector<Profile> previewProfiles = innerCameraOutputCapability->GetPreviewProfiles();
+    std::vector<Profile> uniquePreviewProfiles;
+    for (const auto& profile : previewProfiles) {
+        if (std::find(uniquePreviewProfiles.begin(), uniquePreviewProfiles.end(),
+            profile) == uniquePreviewProfiles.end()) {
+            uniquePreviewProfiles.push_back(profile);
+        }
+    }
+    std::vector<Profile> photoProfiles = innerCameraOutputCapability->GetPhotoProfiles();
+    std::vector<VideoProfile> videoProfiles = innerCameraOutputCapability->GetVideoProfiles();
+    std::vector<MetadataObjectType> metadataTypeList =
+        innerCameraOutputCapability->GetSupportedMetadataObjectType();
+    GetSupportedPreviewProfiles(outCapability, uniquePreviewProfiles);
+    GetSupportedPhotoProfiles(outCapability, photoProfiles);
+    GetSupportedVideoProfiles(outCapability, videoProfiles);
+    GetSupportedMetadataTypeList(outCapability, metadataTypeList);
+    *cameraOutputCapability = outCapability;
+    return CAMERA_OK;
+}
+
 Camera_ErrorCode Camera_Manager::DeleteSupportedCameraOutputCapability(Camera_OutputCapability* cameraOutputCapability)
 {
     CHECK_RETURN_RET_ELOG(cameraOutputCapability == nullptr, CAMERA_OK,

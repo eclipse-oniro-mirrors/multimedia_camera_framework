@@ -225,6 +225,22 @@ Camera_ErrorCode OH_CameraManager_GetSupportedCameraOutputCapabilityWithSceneMod
     const Camera_Device* camera, Camera_SceneMode sceneMode, Camera_OutputCapability** cameraOutputCapability);
 
 /**
+ * @brief Gets full supported output capability for specific camera and specific sceneMode.
+ *
+ * @param cameraManager the {@link Camera_Manager} instance.
+ * @param camera the {@link Camera_Device} to be queryed.
+ * @param sceneMode the {@link Camera_SceneMode} to be queryed.
+ * @param cameraOutputCapability the supported {@link Camera_OutputCapability} will be filled
+ *        if the method call succeeds.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
+ * @since 23
+ */
+Camera_ErrorCode OH_CameraManager_GetSupportedFullCameraOutputCapabilityWithSceneMode(Camera_Manager* cameraManager,
+    const Camera_Device* camera, Camera_SceneMode sceneMode, Camera_OutputCapability** cameraOutputCapability);
+
+/**
  * @brief Delete the supported output capability.
  *
  * @param cameraManager the {@link Camera_Manager} instance.

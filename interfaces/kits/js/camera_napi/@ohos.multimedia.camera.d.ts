@@ -8682,42 +8682,20 @@ function getCameraManager(context: Context): CameraManager;
     /**
      * Subscribes photo available event callback, which supports delivery of uncompressed photo.
      *
-     * @param { 'photoAvailable' } type - Event type.
-     * @param { AsyncCallback<PhotoEx> } callback - Callback used to get the PhotoEx.
+     * @param { Callback<PhotoEx> } callback - Callback used to get the PhotoEx.
      * @syscap SystemCapability.Multimedia.Camera.Core
-     * @atomicservice
-     * @since 23 dynamic
+     * @since 23 dynamic&static
      */
-    on(type: 'photoAvailable', callback: AsyncCallback<PhotoEx>): void;
-
-    /**
-     * Subscribes photo available event callback, which supports delivery of uncompressed photo.
-     *
-     * @param { AsyncCallback<PhotoEx> } callback - Callback used to get the PhotoEx.
-     * @syscap SystemCapability.Multimedia.Camera.Core
-     * @since 23 static
-     */
-    onPhotoAvailable(callback: AsyncCallback<PhotoEx>): void;
+    onPhotoAvailable(callback: Callback<PhotoEx>): void;
 
     /**
      * Unsubscribes photo available event callback, which supports delivery of uncompressed photo.
      *
-     * @param { 'photoAvailable' } type - Event type.
-     * @param { AsyncCallback<PhotoEx> } callback - Callback used to get the PhotoEx.
+     * @param { Callback<PhotoEx> } [callback] - Callback used to get the PhotoEx.
      * @syscap SystemCapability.Multimedia.Camera.Core
-     * @atomicservice
-     * @since 23 dynamic
+     * @since 23 dynamic&static
      */
-    off(type: 'photoAvailable', callback?: AsyncCallback<PhotoEx>): void;
-
-    /**
-     * Unsubscribes photo available event callback, which supports delivery of uncompressed photo.
-     *
-     * @param { AsyncCallback<PhotoEx> } [callback] - Callback used to get the PhotoEx.
-     * @syscap SystemCapability.Multimedia.Camera.Core
-     * @since 23 static
-     */
-    offPhotoAvailable(callback?: AsyncCallback<PhotoEx>): void;
+    offPhotoAvailable(callback?: Callback<PhotoEx>): void;
 
     /**
      * Subscribes deferred photo proxy available event callback.

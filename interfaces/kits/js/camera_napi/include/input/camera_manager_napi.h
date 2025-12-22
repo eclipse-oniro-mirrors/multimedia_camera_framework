@@ -160,6 +160,7 @@ public:
     static napi_value GetSupportedCameras(napi_env env, napi_callback_info info);
     static napi_value GetSupportedModes(napi_env env, napi_callback_info info);
     static napi_value GetSupportedOutputCapability(napi_env env, napi_callback_info info);
+    static napi_value GetSupportedFullOutputCapability(napi_env env, napi_callback_info info);
     static napi_value IsCameraMuted(napi_env env, napi_callback_info info);
     static napi_value IsCameraMuteSupported(napi_env env, napi_callback_info info);
     static napi_value MuteCamera(napi_env env, napi_callback_info info);

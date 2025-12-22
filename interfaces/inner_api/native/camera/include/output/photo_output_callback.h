@@ -94,6 +94,8 @@ public:
 
     int32_t OnPhotoAvailable(sptr<SurfaceBuffer> surfaceBuffer, int64_t timestamp, bool isRaw) override;
 
+    int32_t OnPhotoAvailable(std::shared_ptr<PictureIntf> pictureProxy) override;
+
     inline sptr<PhotoOutput> GetPhotoOutput()
     {
         return innerPhotoOutput_.promote();

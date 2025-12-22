@@ -88,6 +88,7 @@ public:
     array<CameraDevice> GetSupportedCameras();
     array<SceneMode> GetSupportedSceneModes(CameraDevice const& camera);
     CameraOutputCapability GetSupportedOutputCapability(CameraDevice const& camera, SceneMode mode);
+    CameraOutputCapability GetSupportedFullOutputCapability(CameraDevice const& camera, SceneMode mode);
     void Prelaunch();
     void PreSwitchCamera(string_view cameraId);
     bool IsTorchSupported();

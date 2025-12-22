@@ -17,6 +17,7 @@
 #define OHOS_CAMERA_PHOTO_BUFFER_CONSUMER_H
 
 #include "ibuffer_consumer_listener.h"
+#include "surface.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -30,6 +31,10 @@ public:
 
 private:
     void ExecuteOnBufferAvailable();
+    void StartWaitAuxiliaryTask(
+        const int32_t captureId, const int32_t auxiliaryCount, int64_t timestamp, sptr<SurfaceBuffer> &surfaceBuffer);
+    void AssembleDeferredPicture(int64_t timestamp, int32_t captureId);
+    void CleanAfterTransPicture(int32_t captureId);
 
     wptr<HStreamCapture> streamCapture_ = nullptr;
     bool isRaw_ = false;
@@ -37,4 +42,4 @@ private:
 
 }  // namespace CameraStandard
 }  // namespace OHOS
-#endif
+#endif

@@ -336,7 +336,7 @@ private:
     void UpdateMuteSetting(bool muteMode, std::shared_ptr<OHOS::Camera::CameraMetadata> &settings);
     int32_t GetMovingPhotoBufferDuration();
     void GetMovingPhotoStartAndEndTime();
-    bool IsIpsRotateSupported(int32_t captureId);
+    bool IsIpsRotateSupported();
     void ConfigPayload(uint32_t pid, uint32_t tid, const char *bundleName, int32_t qosLevel,
         std::unordered_map<std::string, std::string> &mapPayload);
     std::shared_ptr<PhotoAssetIntf> ProcessPhotoProxy(int32_t captureId, std::shared_ptr<PictureIntf> picturePtr,

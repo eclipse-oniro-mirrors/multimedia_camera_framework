@@ -17,6 +17,9 @@
 #define OHOS_CAMERA_PICTURE_INTERFACE_H
 #include "parcel.h"
 #include "surface_buffer.h"
+namespace OHOS::Media {
+    class Picture;
+}
 /**
  * @brief Internal usage only, for camera framework interacts with photo asset related interfaces.
  * @since 12
@@ -47,6 +50,7 @@ public:
     virtual int32_t SetExifMetadata(sptr<SurfaceBuffer> &surfaceBuffer) = 0;
     virtual bool SetMaintenanceData(sptr<SurfaceBuffer> &surfaceBuffer) = 0;
     virtual void RotatePicture() = 0;
+    virtual std::shared_ptr<Media::Picture> GetPicture() const = 0;
 };
 typedef PictureIntf* (*GetPictureAdapter)();
 } // namespace OHOS::CameraStandard

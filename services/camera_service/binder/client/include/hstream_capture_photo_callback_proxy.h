@@ -18,21 +18,23 @@
 #define EXPORT_API __attribute__((visibility("default")))
 
 #include "iremote_proxy.h"
-#include "istream_capture_thumbnail_callback.h"
+#include "istream_capture_photo_callback.h"
 
 namespace OHOS {
 namespace CameraStandard {
-class EXPORT_API HStreamCaptureThumbnailCallbackProxy : public IRemoteProxy<IStreamCaptureThumbnailCallback> {
+class EXPORT_API HStreamCapturePhotoCallbackProxy : public IRemoteProxy<IStreamCapturePhotoCallback> {
 public:
-    explicit HStreamCaptureThumbnailCallbackProxy(const sptr<IRemoteObject> &impl);
+    explicit HStreamCapturePhotoCallbackProxy(const sptr<IRemoteObject> &impl);
 
-    virtual ~HStreamCaptureThumbnailCallbackProxy() = default;
+    virtual ~HStreamCapturePhotoCallbackProxy() = default;
 
-    int32_t OnThumbnailAvailable(sptr<SurfaceBuffer> surfaceBuffer, int64_t timestamp) override;
+    int32_t OnPhotoAvailable(sptr<SurfaceBuffer> surfaceBuffer, int64_t timestamp, bool isRaw) override;
+
+    int32_t OnPhotoAvailable(std::shared_ptr<PictureIntf> picture) override;
 
 private:
-    static inline BrokerDelegator<HStreamCaptureThumbnailCallbackProxy> delegator_;
+    static inline BrokerDelegator<HStreamCapturePhotoCallbackProxy> delegator_;
 };
 } // namespace CameraStandard
 } // namespace OHOS
-#endif // OHOS_CAMERA_HSTREAM_CAPTURE_THUMBNAIL_CALLBACK_PROXY_H
+#endif // OHOS_CAMERA_HSTREAM_CAPTURE_PHOTO_CALLBACK_PROXY_H

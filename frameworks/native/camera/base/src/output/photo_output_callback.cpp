@@ -88,15 +88,28 @@ int32_t HStreamCapturePhotoCallbackImpl::OnPhotoAvailable(
         callback == nullptr, CAMERA_OK, "HStreamCapturePhotoCallbackImpl::OnPhotoAvailable callback is nullptr");
     CHECK_RETURN_RET_ELOG(surfaceBuffer == nullptr, CAMERA_OK,
         "HStreamCapturePhotoCallbackImpl::OnPhotoAvailable surfaceBuffer is nullptr");
-    if (surfaceBuffer->GetFormat() == GRAPHIC_PIXEL_FMT_YCRCB_420_SP) {
-        std::unique_ptr<Media::Picture> picture = Media::Picture::Create(surfaceBuffer);
-        callback->OnPhotoAvailable(std::move(picture));
-    } else {
-        std::shared_ptr<CameraBufferProcessor> bufferProcessor;
-        std::shared_ptr<Media::NativeImage> image =
-            std::make_shared<Media::NativeImage>(surfaceBuffer, bufferProcessor, timestamp);
-        callback->OnPhotoAvailable(image, isRaw);
-    }
+    std::shared_ptr<CameraBufferProcessor> bufferProcessor;
+    std::shared_ptr<Media::NativeImage> image =
+        std::make_shared<Media::NativeImage>(surfaceBuffer, bufferProcessor, timestamp);
+    callback->OnPhotoAvailable(image, isRaw);
+    MEDIA_INFO_LOG("HStreamCapturePhotoCallbackImpl OnPhotoAvailable X");
+    return CAMERA_OK;
+}
+
+int32_t HStreamCapturePhotoCallbackImpl::OnPhotoAvailable(std::shared_ptr<PictureIntf> pictureProxy)
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_INFO_LOG("HStreamCapturePhotoCallbackImpl OnPhotoAvailable E");
+    auto photoOutput = GetPhotoOutput();
+    CHECK_RETURN_RET_ELOG(
+        photoOutput == nullptr, CAMERA_OK, "HStreamCapturePhotoCallbackImpl::OnPhotoAvailable photoOutput is nullptr");
+    auto callback = photoOutput->GetAppPhotoCallback();
+    CHECK_RETURN_RET_ELOG(
+        callback == nullptr, CAMERA_OK, "HStreamCapturePhotoCallbackImpl::OnPhotoAvailable callback is nullptr");
+    CHECK_RETURN_RET_ELOG(pictureProxy == nullptr, CAMERA_OK,
+        "HStreamCapturePhotoCallbackImpl::OnPhotoAvailable pictureProxy is nullptr");
+    std::shared_ptr<Media::Picture> picture = pictureProxy->GetPicture();
+    callback->OnPhotoAvailable(picture);
     MEDIA_INFO_LOG("HStreamCapturePhotoCallbackImpl OnPhotoAvailable X");
     return CAMERA_OK;
 }

@@ -119,6 +119,13 @@ void PictureProxy::RotatePicture()
     CHECK_RETURN_ELOG(!pictureIntf, "PictureProxy::RotatePicture pictureIntf is nullptr");
     pictureIntf->RotatePicture();
 }
+
+std::shared_ptr<Media::Picture> PictureProxy::GetPicture() const
+{
+    std::shared_ptr<PictureIntf> pictureIntf = GetPictureIntf();
+    CHECK_RETURN_RET_ELOG(!pictureIntf, nullptr, "PictureProxy::GetPicture pictureIntf is nullptr");
+    return pictureIntf->GetPicture();
+}
 // LCOV_EXCL_STOP
 }  // namespace CameraStandard
 }  // namespace OHOS

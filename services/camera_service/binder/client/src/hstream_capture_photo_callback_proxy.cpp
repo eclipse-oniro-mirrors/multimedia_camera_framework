@@ -51,5 +51,27 @@ int32_t HStreamCapturePhotoCallbackProxy::OnPhotoAvailable(
     }
     return error;
 }
+
+int32_t HStreamCapturePhotoCallbackProxy::OnPhotoAvailable(std::shared_ptr<PictureIntf> picture)
+{
+    MEDIA_INFO_LOG("HStreamCapturePhotoCallbackProxy::OnPhotoAvailable is called!");
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    option.SetFlags(option.TF_ASYNC);
+
+    data.WriteInterfaceToken(GetDescriptor());
+    CHECK_EXECUTE(picture, picture->Marshalling(data));
+
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(StreamCapturePhotoCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_PICTURE_AVAILABLE),
+        data,
+        reply,
+        option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HStreamCapturePhotoCallbackProxy OnPhotoAvailable failed, error: %{public}d", error);
+    }
+    return error;
+}
 }  // namespace CameraStandard
-}  // namespace OHOS
+}  // namespace OHOS

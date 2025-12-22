@@ -31,7 +31,7 @@ Camera_ErrorCode OH_PhotoNative_GetMainImage(OH_PhotoNative* photo, OH_ImageNati
     return photo->GetMainImage(mainImage);
 }
 
-Camera_ErrorCode OH_PhotoNative_GetPicture(OH_PhotoNative* photo, OH_PictureNative** picture)
+Camera_ErrorCode OH_PhotoNative_GetUncompressedImage(OH_PhotoNative* photo, OH_PictureNative** picture)
 {
     CHECK_RETURN_RET_ELOG(photo == nullptr, CAMERA_INVALID_ARGUMENT,
         "Invalid argument, photo is null!");

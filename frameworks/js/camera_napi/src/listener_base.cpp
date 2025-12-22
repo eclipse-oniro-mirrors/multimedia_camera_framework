@@ -103,7 +103,7 @@ void ListenerBase::ExecuteCallback(const std::string eventName, const ExecuteCal
 }
 
 void ListenerBase::ExecuteCallbackScopeSafe(
-    const std::string eventName, const std::function<ExecuteCallbackData()> fun) const
+    const std::string eventName, const std::function<ExecuteCallbackData()> fun, bool isAsync) const
 {
     napi_handle_scope scope_ = nullptr;
     if (!env_) {
@@ -125,12 +125,18 @@ void ListenerBase::ExecuteCallbackScopeSafe(
             continue;
         }
 
-        napi_value result[ARGS_TWO] = { nullptr, nullptr };
         napi_value retVal;
-        result[0] = callbackData.errCode_;
-        result[1] = callbackData.returnData_;
+        if (isAsync) {
+            napi_value result[ARGS_TWO] = { nullptr, nullptr };
+            result[0] = callbackData.errCode_;
+            result[1] = callbackData.returnData_;
 
-        napi_call_function(callbackData.env_, nullptr, it->GetCallbackFunction(), ARGS_TWO, result, &retVal);
+            napi_call_function(callbackData.env_, nullptr, it->GetCallbackFunction(), ARGS_TWO, result, &retVal);
+        } else {
+            napi_value argv[ARGS_ONE] = { nullptr };
+            argv[0] = callbackData.returnData_;
+            napi_call_function(callbackData.env_, nullptr, it->GetCallbackFunction(), ARGS_ONE, argv, &retVal);
+        }
         if (it->isOnce_) {
             it = callbackList.refList.erase(it);
         } else {

@@ -52,8 +52,8 @@ public:
         return instance;
     }
 
-    void SetPhotoLevelInfo(std::map<int32_t, bool> info);
-    bool GetPhotoLevelInfo(int32_t pictured);
+    void SetPhotoLevelInfo(int32_t pictureId, bool level);
+    bool GetPhotoLevelInfo(int32_t pictureId);
     void ClearPhotoLevelInfo();
 
 private:
@@ -62,7 +62,7 @@ private:
     PhotoLevelManager(const PhotoLevelManager&) = delete;
     PhotoLevelManager& operator=(const PhotoLevelManager&) = delete;
 
-    std::vector<std::map<int32_t, bool>> photoLevelVec_;
+    std::unordered_map<int32_t, bool> photoLevelMap_;
 };
 
 class ConcurrentMap {
@@ -118,6 +118,7 @@ public:
     int32_t OnFrameShutterEnd(int32_t captureId, uint64_t timestamp);
     int32_t OnCaptureReady(int32_t captureId, uint64_t timestamp);
     int32_t OnOfflineDeliveryFinished(int32_t captureId);
+    int32_t OnPhotoAvailable(std::shared_ptr<PictureIntf> picture);
     int32_t OnPhotoAvailable(sptr<SurfaceBuffer> surfaceBuffer, const int64_t timestamp, bool isRaw);
     int32_t OnPhotoAssetAvailable(
         const int32_t captureId, const std::string &uri, int32_t cameraShotType, const std::string &burstKey);
