@@ -164,7 +164,7 @@ int32_t HStreamCommon::UnlinkInput()
 int32_t HStreamCommon::StopStream()
 {
     CAMERA_SYNC_TRACE;
-    MEDIA_INFO_LOG("HStreamCommon::StopStream streamType:%{public}d, streamId:%{public}d, hdiStreamId:%{public}d, "
+    MEDIA_DEBUG_LOG("HStreamCommon::StopStream streamType:%{public}d, streamId:%{public}d, hdiStreamId:%{public}d, "
         "captureId:%{public}d", streamType_, fwkStreamId_, hdiStreamId_, curCaptureID_);
     auto streamOperator = GetStreamOperator();
     if (streamOperator == nullptr) {
@@ -234,7 +234,7 @@ void HStreamCommon::SetStreamInfo(StreamInfo_V1_1 &streamInfo)
 
 int32_t HStreamCommon::ReleaseStream(bool isDelay)
 {
-    MEDIA_INFO_LOG("Enter Into HStreamCommon::Release streamId is:%{public}d, hdiStreamId is:%{public}d, streamType "
+    MEDIA_DEBUG_LOG("Enter Into HStreamCommon::Release streamId is:%{public}d, hdiStreamId is:%{public}d, streamType "
         "is:%{public}d, isDelay:%{public}d",
         fwkStreamId_, hdiStreamId_, streamType_, isDelay);
     StopStream();
