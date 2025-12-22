@@ -317,9 +317,10 @@ typedef enum Camera_Format {
     CAMERA_FORMAT_YCRCB_P010 = 2002,
 
     /**
-     * MJPEG Format.
+     * HEIC Format.
+     * @since 23
      */
-    CAMERA_FORMAT_MJPEG = 2003
+    CAMERA_FORMAT_HEIC = 2003
 } Camera_Format;
 
 /**
