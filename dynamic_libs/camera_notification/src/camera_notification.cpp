@@ -212,4 +212,4 @@ extern "C" CameraNotificationIntf *createCameraNotificationIntf()
 }
 } // namespace CameraStandard
 } // namespace OHOS
-// LCOV_EXCL_STOP
+// LCOV_EXCL_STOP
