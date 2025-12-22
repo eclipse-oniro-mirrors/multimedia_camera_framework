@@ -82,6 +82,7 @@ public:
                          sptr<ICameraDeviceService> cameraDevice,
                          std::string originCameraId = "");
     virtual int32_t GetVersionByCamera(const std::string& cameraId);
+    int32_t JudgeSupportSwitchCamera(bool& isSupport);
     void RemoveCameraDevice(const std::string& cameraId, std::string originCameraId = "");
     void CloseCameraDevice(const std::string& cameraId);
 

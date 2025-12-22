@@ -5091,27 +5091,30 @@ void CaptureSession::ProcessTripodStatusChange(const std::shared_ptr<OHOS::Camer
     // LCOV_EXCL_STOP
 }
 
-bool CaptureSession::JudgeMultiFrontCamera()
+bool CaptureSession::JudgeSupportSwitchCamera()
 {
-    int32_t result = 0;
-    auto cameraDeviceList = CameraManager::GetInstance()->GetSupportedCameras();
+    int32_t count = 0;
+    auto cameraDeviceList = CameraManager::GetInstance()->GetCameraDeviceList();
     for (const auto& cameraDevice : cameraDeviceList) {
-        CHECK_EXECUTE(cameraDevice->GetPosition() == CAMERA_POSITION_FRONT, result++);
+        CameraPosition cameraPosition = cameraDevice->GetPosition();
+        CHECK_EXECUTE(
+            cameraPosition == CAMERA_POSITION_FRONT || cameraPosition == CAMERA_POSITION_FOLD_INNER, count++);
     }
-    return (result > 1);
+    CHECK_RETURN_RET_DLOG(count == 1, true, "CaptureSession::JudgeSupportSwitchCamera one front camera");
+    auto serviceProxy = CameraManager::GetInstance()->GetServiceProxy();
+    CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, false,
+        "CaptureSession::JudgeSupportSwitchCamera serviceProxy is null");
+    bool isSupported = false;
+    serviceProxy->JudgeSupportSwitchCamera(isSupported);
+    return isSupported;
 }
 
 bool CaptureSession::IsAutoDeviceSwitchSupported()
 {
     bool isSupported = CameraManager::GetInstance()->GetIsFoldable();
-    CHECK_RETURN_RET_ILOG(!JudgeMultiFrontCamera(), isSupported, "IsAutoDeviceSwitchSupported: %{public}d.",
-        isSupported);
-    std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();
-    CHECK_RETURN_RET_ELOG(
-        metadata == nullptr, isSupported, "IsAutoDeviceSwitchSupported GetMetadata Failed");
-    camera_metadata_item_t item;
-    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_SENSOR_ORIENTATION_VARIABLE, &item);
-    CHECK_EXECUTE(ret == CAMERA_OK && (item.count > 0 && item.data.u8[0]), isSupported = false);
+    CHECK_RETURN_RET_ILOG(!isSupported, isSupported, "IsAutoDeviceSwitchSupported: %{public}d.", isSupported);
+    isSupported = JudgeSupportSwitchCamera();
+    MEDIA_INFO_LOG("CaptureSession::IsAutoDeviceSwitchSupported isSupport: %{public}d", isSupported);
     return isSupported;
 }
 

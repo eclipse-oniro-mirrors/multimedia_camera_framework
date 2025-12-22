@@ -128,6 +128,7 @@ public:
     int32_t GetCameraIds(std::vector<std::string>& cameraIds) override;
     int32_t GetCameraAbility(const std::string& cameraId,
         std::shared_ptr<OHOS::Camera::CameraMetadata>& cameraAbility) override;
+    int32_t JudgeSupportSwitchCamera(bool& isSupported) override;
     int32_t CreateCameraDevice(const string& cameraId, sptr<ICameraDeviceService>& device) override;
     int32_t CreateCaptureSession(sptr<ICaptureSession>& session, int32_t opMode) override;
     int32_t GetVideoSessionForControlCenter(sptr<ICaptureSession>& session) override;
