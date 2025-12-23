@@ -794,6 +794,10 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
     CameraReportUtils::GetInstance().SetCapturePerfStartInfo(captureInfo);
     HILOG_COMM_INFO("HStreamCapture::Capture Starting photo capture with capture ID: %{public}d", preparedCaptureId);
     HStreamCommon::PrintCaptureDebugLog(captureMetadataSetting_);
+    bool isSystemApp = CheckSystemApp();
+    PhotoLevelManager::GetInstance().SetPhotoLevelInfo(preparedCaptureId, isSystemApp);
+    MEDIA_DEBUG_LOG("HStreamCapture::Capture SetPhotoLevelInfo captureId:%{public}d isSystemApp:%{public}d",
+        preparedCaptureId, isSystemApp);
     CamRetCode rc = (CamRetCode)(streamOperator->Capture(preparedCaptureId, captureInfoPhoto, isBursting_));
     if (rc != HDI::Camera::V1_0::NO_ERROR) {
         ResetCaptureId();
@@ -844,10 +848,6 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
             "HStreamCapture::Capture Failed with CreateMediaLibraryPhotoAssetProxy");
         MEDIA_DEBUG_LOG("HStreamCapture::Capture CreateMediaLibraryPhotoAssetProxy X");
     }
-    bool isSystemApp = CheckSystemApp();
-    PhotoLevelManager::GetInstance().SetPhotoLevelInfo(preparedCaptureId, isSystemApp);
-    MEDIA_DEBUG_LOG("HStreamCapture::Capture SetPhotoLevelInfo captureId:%{public}d isSystemApp:%{public}d",
-        preparedCaptureId, isSystemApp);
     return ret;
     // LCOV_EXCL_STOP
 }
