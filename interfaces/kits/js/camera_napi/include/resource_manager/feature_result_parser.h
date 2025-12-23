@@ -56,6 +56,7 @@ public:
             for (size_t i = 0; i < result.featureInfos.size(); ++i) {
                 const auto& detailTypeInfo = result.featureInfos[i];
                 napi_value detailTypeInfoObj = WrapTypeInfo(detailTypeInfo);
+                napi_valuetype valueType = napi_undefined;
                 CHECK_EXECUTE(
                     napi_typeof(env_, detailTypeInfoObj, &valueType) != napi_ok || valueType == napi_undefined,
                     napi_set_element(env_, featureArray, i, detailTypeInfoObj));
