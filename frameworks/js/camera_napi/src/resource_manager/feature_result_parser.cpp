@@ -16,7 +16,6 @@
 #include "resource_manager/feature_result_parser.h"
 
 #include <map>
-#include "camera_log.h"
 #include "napi/native_api.h"
 
 namespace OHOS {
@@ -95,40 +94,7 @@ napi_value FeatureResultParser::WrapResourceInfo(const ResourceInfo& resourceInf
         napi_get_undefined(env_, &resourceInfoObj);
         return resourceInfoObj;
     }
-    napi_value propValue;
-    if (napi_create_int32(env_, resourceInfo.resourceId, &propValue) == napi_ok) {
-        napi_set_named_property(env_, resourceInfoObj, "resourceId", propValue);
-    }
-    if (napi_create_int32(env_, resourceInfo.fullResourceId, &propValue) == napi_ok) {
-        napi_set_named_property(env_, resourceInfoObj, "fullResourceId", propValue);
-    }
-    if (napi_create_int32(env_, resourceInfo.templateId, &propValue) == napi_ok) {
-        napi_set_named_property(env_, resourceInfoObj, "templateId", propValue);
-    }
-    if (napi_create_int32(env_, static_cast<int32_t>(resourceInfo.typeId), &propValue) == napi_ok) {
-        napi_set_named_property(env_, resourceInfoObj, "typeId", propValue);
-    }
-    if (napi_create_string_utf8(env_, resourceInfo.effectiveTime.c_str(), NAPI_AUTO_LENGTH, &propValue) == napi_ok) {
-        napi_set_named_property(env_, resourceInfoObj, "effectiveTime", propValue);
-    }
-    if (napi_create_string_utf8(
-            env_, resourceInfo.expirationTime.c_str(), NAPI_AUTO_LENGTH, &propValue) == napi_ok) {
-        napi_set_named_property(env_, resourceInfoObj, "expirationTime", propValue);
-    }
-    if (napi_create_string_utf8(
-            env_, resourceInfo.coverUriForCamera.c_str(), NAPI_AUTO_LENGTH, &propValue) == napi_ok) {
-        napi_set_named_property(env_, resourceInfoObj, "coverUriForCamera", propValue);
-    }
-    if (napi_create_string_utf8(
-            env_, resourceInfo.coverUriForPhotoGallery.c_str(), NAPI_AUTO_LENGTH, &propValue) == napi_ok) {
-        napi_set_named_property(env_, resourceInfoObj, "coverUriForPhotoGallery", propValue);
-    }
-    if (napi_create_int32(env_, static_cast<int32_t>(resourceInfo.resourceDownloadStatus), &propValue) == napi_ok) {
-        napi_set_named_property(env_, resourceInfoObj, "resourceDownloadStatus", propValue);
-    }
-    if (napi_get_boolean(env_, resourceInfo.isVideoSupported, &propValue) == napi_ok) {
-        napi_set_named_property(env_, resourceInfoObj, "isVideoSupported", propValue);
-    }
+    WrapBaseResourceInfo(resourceInfo, resourceInfoObj);
     // 传入空值防止出现crash
     napi_value paramArray;
     if (napi_create_array(env_, &paramArray) == napi_ok) {
@@ -145,42 +111,7 @@ napi_value FeatureResultParser::WrapDetailTemplateInfo(const DetailTemplateInfo&
         napi_get_undefined(env_, &detailTemplateInfoObj);
         return detailTemplateInfoObj;
     }
-    napi_value propValue;
-    if (napi_create_int32(env_, detailTemplateInfo.resourceId, &propValue) == napi_ok) {
-        napi_set_named_property(env_, detailTemplateInfoObj, "resourceId", propValue);
-    }
-    if (napi_create_int32(env_, detailTemplateInfo.fullResourceId, &propValue) == napi_ok) {
-        napi_set_named_property(env_, detailTemplateInfoObj, "fullResourceId", propValue);
-    }
-    if (napi_create_int32(env_, detailTemplateInfo.templateId, &propValue) == napi_ok) {
-        napi_set_named_property(env_, detailTemplateInfoObj, "templateId", propValue);
-    }
-    if (napi_create_int32(env_, static_cast<int32_t>(detailTemplateInfo.typeId), &propValue) == napi_ok) {
-        napi_set_named_property(env_, detailTemplateInfoObj, "typeId", propValue);
-    }
-    if (napi_create_string_utf8(
-            env_, detailTemplateInfo.effectiveTime.c_str(), NAPI_AUTO_LENGTH, &propValue) == napi_ok) {
-        napi_set_named_property(env_, detailTemplateInfoObj, "effectiveTime", propValue);
-    }
-    if (napi_create_string_utf8(
-            env_, detailTemplateInfo.expirationTime.c_str(), NAPI_AUTO_LENGTH, &propValue) == napi_ok) {
-        napi_set_named_property(env_, detailTemplateInfoObj, "expirationTime", propValue);
-    }
-    if (napi_create_string_utf8(
-            env_, detailTemplateInfo.coverUriForCamera.c_str(), NAPI_AUTO_LENGTH, &propValue) == napi_ok) {
-        napi_set_named_property(env_, detailTemplateInfoObj, "coverUriForCamera", propValue);
-    }
-    if (napi_create_string_utf8(
-            env_, detailTemplateInfo.coverUriForPhotoGallery.c_str(), NAPI_AUTO_LENGTH, &propValue) == napi_ok) {
-        napi_set_named_property(env_, detailTemplateInfoObj, "coverUriForPhotoGallery", propValue);
-    }
-    if (napi_create_int32(
-            env_, static_cast<int32_t>(detailTemplateInfo.resourceDownloadStatus), &propValue) == napi_ok) {
-        napi_set_named_property(env_, detailTemplateInfoObj, "resourceDownloadStatus", propValue);
-    }
-    if (napi_get_boolean(env_, detailTemplateInfo.isVideoSupported, &propValue) == napi_ok) {
-        napi_set_named_property(env_, detailTemplateInfoObj, "isVideoSupported", propValue);
-    }
+    WrapBaseResourceInfo(detailTemplateInfo, detailTemplateInfoObj);
     napi_value paramArray = WrapParamList(detailTemplateInfo.paramList);
     napi_set_named_property(env_, detailTemplateInfoObj, "paramList", paramArray);
     return detailTemplateInfoObj;

@@ -21,6 +21,7 @@
 #include "napi/native_api.h"
 
 #include "resource_types.h"
+#include "camera_log.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -82,6 +83,54 @@ private:
         napi_set_named_property(env_, typeInfoObj, "infos", infoArray);
 
         return typeInfoObj;
+    }
+    template <typename E>
+    void WrapBaseResourceInfo(const E& info, napi_value& infoObj)
+    {
+        CHECK_RETURN(infoObj == nullptr);
+        napi_value propValue;
+        if (napi_create_int32(env_, info.resourceId, &propValue) == napi_ok) {
+            napi_set_named_property(env_, infoObj, "resourceId", propValue);
+        }
+        if (napi_create_int32(env_, info.fullResourceId, &propValue) == napi_ok) {
+            napi_set_named_property(env_, infoObj, "fullResourceId", propValue);
+        }
+        if (napi_create_int32(env_, info.templateId, &propValue) == napi_ok) {
+            napi_set_named_property(env_, infoObj, "templateId", propValue);
+        }
+        if (napi_create_int32(env_, static_cast<int32_t>(info.typeId), &propValue) == napi_ok) {
+            napi_set_named_property(env_, infoObj, "typeId", propValue);
+        }
+        if (napi_create_string_utf8(env_,
+                                    info.effectiveTime.c_str(),
+                                    NAPI_AUTO_LENGTH,
+                                    &propValue) == napi_ok) {
+            napi_set_named_property(env_, infoObj, "effectiveTime", propValue);
+        }
+        if (napi_create_string_utf8(env_,
+                                    info.expirationTime.c_str(),
+                                    NAPI_AUTO_LENGTH,
+                                    &propValue) == napi_ok) {
+            napi_set_named_property(env_, infoObj, "expirationTime", propValue);
+        }
+        if (napi_create_string_utf8(env_,
+                                    info.coverUriForCamera.c_str(),
+                                    NAPI_AUTO_LENGTH,
+                                    &propValue) == napi_ok) {
+            napi_set_named_property(env_, infoObj, "coverUriForCamera", propValue);
+        }
+        if (napi_create_string_utf8(env_,
+                                    info.coverUriForPhotoGallery.c_str(),
+                                    NAPI_AUTO_LENGTH,
+                                    &propValue) == napi_ok) {
+            napi_set_named_property(env_, infoObj, "coverUriForPhotoGallery", propValue);
+        }
+        if (napi_create_int32(env_, static_cast<int32_t>(info.resourceDownloadStatus), &propValue) == napi_ok) {
+            napi_set_named_property(env_, infoObj, "resourceDownloadStatus", propValue);
+        }
+        if (napi_get_boolean(env_, info.isVideoSupported, &propValue) == napi_ok) {
+            napi_set_named_property(env_, infoObj, "isVideoSupported", propValue);
+        }
     }
     napi_value WrapInfoArray(const std::vector<ResourceInfo>& infos);
     napi_value WrapInfoArray(const std::vector<DetailTemplateInfo>& infos);
