@@ -87,9 +87,9 @@ void CommonCompleteCallback(napi_env env, napi_status status, void *data)
         napi_get_undefined(env, &jsContext->error);
         if (!context->bRetBool) {
             FeatureResultParser featureResultParser(env);
-            jsContext->data = (context->requestBody.resourceId != -1) ? 
-                                featureResultParser.WrapFeatureResult(context->detailFeatureResult) 
-                                : featureResultParser.WrapFeatureResult(context->featureResult);
+            jsContext->data = (context->requestBody.resourceId != -1) ?
+                                featureResultParser.WrapFeatureResult(context->detailFeatureResult) :
+                                featureResultParser.WrapFeatureResult(context->featureResult);
         } else {
             napi_get_undefined(env, &jsContext->data);
         }

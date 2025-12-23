@@ -181,7 +181,7 @@ napi_value FeatureResultParser::WrapSelectors(const std::vector<Selector>& selec
     }
     if (selectors.empty()) {
         return selectorsArray;
-    } 
+    }
     for (size_t m = 0; m < selectors.size(); ++m) {
         const auto& selector = selectors[m];
         napi_value selectorObj = WrapSelector(selector);
