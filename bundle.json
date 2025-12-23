@@ -99,7 +99,8 @@
               "//foundation/multimedia/camera_framework/frameworks/cj:cj_camera_picker_ffi",
               "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi:camera_js",
               "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi:camerapicker_js",
-              "//foundation/multimedia/camera_framework/frameworks/taihe:camera_framework_taihe"
+              "//foundation/multimedia/camera_framework/frameworks/taihe:camera_framework_taihe",
+              "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi:resourcemanager_napi"
             ],
             "service_group": [
               "//foundation/multimedia/camera_framework/sa_profile:camera_service_sa_profile",
