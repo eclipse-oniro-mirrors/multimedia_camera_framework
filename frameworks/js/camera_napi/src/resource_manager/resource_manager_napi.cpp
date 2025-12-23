@@ -418,7 +418,7 @@ napi_value ResourceManagerNapi::QueryFeatureInfo(napi_env env, napi_callback_inf
         return result;
     }
     if (argc != ARGS_TWO) {
-        MEDIA_ERR_LOG("ResourceManagerNapi::QueryFeatureInfo arg size=2");
+        MEDIA_ERR_LOG("ResourceManagerNapi::QueryFeatureInfo argsize error");
         return result;
     }
     napi_valuetype res = napi_undefined;
