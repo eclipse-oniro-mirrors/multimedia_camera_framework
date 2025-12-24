@@ -15,13 +15,16 @@
 
 #include "ability/camera_ability_const.h"
 #include "camera_util.h"
-#include "camera/v1_3/types.h"
+#include "camera/v1_5/types.h"
 #include "capture_scene_const.h"
-#include "display/graphic/common/v1_0/cm_color_space.h"
+#include "display/graphic/common/v2_1/cm_color_space.h"
 #include "istream_metadata.h"
+#include "hstream_common.h"
 namespace OHOS {
 namespace CameraStandard {
-using OHOS::HDI::Camera::V1_3::OperationMode;
+using OHOS::HDI::Camera::V1_5::OperationMode;
+using namespace OHOS::HDI::Display::Graphic::Common::V2_1;
+using CM_ColorSpaceType_V2_1 = OHOS::HDI::Display::Graphic::Common::V2_1::CM_ColorSpaceType;
 
 const std::unordered_map<camera_flash_mode_enum_t, FlashMode> g_metaFlashModeMap_ = {
     {OHOS_CAMERA_FLASH_MODE_CLOSE, FLASH_MODE_CLOSE},
@@ -52,21 +55,35 @@ const std::unordered_map<camera_beauty_type_t, BeautyType> g_metaBeautyTypeMap_ 
     {OHOS_CAMERA_BEAUTY_TYPE_AUTO, AUTO_TYPE},
     {OHOS_CAMERA_BEAUTY_TYPE_SKIN_SMOOTH, SKIN_SMOOTH},
     {OHOS_CAMERA_BEAUTY_TYPE_FACE_SLENDER, FACE_SLENDER},
-    {OHOS_CAMERA_BEAUTY_TYPE_SKIN_TONE, SKIN_TONE}
+    {OHOS_CAMERA_BEAUTY_TYPE_SKIN_TONE, SKIN_TONE},
+    {OHOS_CAMERA_BEAUTY_TYPE_SKIN_TONEBRIGHT, SKIN_TONEBRIGHT},
+    {OHOS_CAMERA_BEAUTY_TYPE_EYE_BIGEYES, EYE_BIGEYES},
+    {OHOS_CAMERA_BEAUTY_TYPE_HAIR_HAIRLINE, HAIR_HAIRLINE},
+    {OHOS_CAMERA_BEAUTY_TYPE_FACE_MAKEUP, FACE_MAKEUP},
+    {OHOS_CAMERA_BEAUTY_TYPE_HEAD_SHRINK, HEAD_SHRINK},
+    {OHOS_CAMERA_BEAUTY_TYPE_NOSE_SLENDER, NOSE_SLENDER},
 };
 
 const std::unordered_map<camera_device_metadata_tag_t, BeautyType> g_metaBeautyAbilityMap_ = {
     {OHOS_ABILITY_BEAUTY_AUTO_VALUES, AUTO_TYPE},
     {OHOS_ABILITY_BEAUTY_SKIN_SMOOTH_VALUES, SKIN_SMOOTH},
     {OHOS_ABILITY_BEAUTY_FACE_SLENDER_VALUES, FACE_SLENDER},
-    {OHOS_ABILITY_BEAUTY_SKIN_TONE_VALUES, SKIN_TONE}
+    {OHOS_ABILITY_BEAUTY_SKIN_TONE_VALUES, SKIN_TONE},
+    {OHOS_ABILITY_BEAUTY_SKIN_TONEBRIGHT_VALUES, SKIN_TONEBRIGHT},
+    {OHOS_ABILITY_BEAUTY_EYE_BIGEYES_VALUES, EYE_BIGEYES},
+    {OHOS_ABILITY_BEAUTY_HAIR_HAIRLINE_VALUES, HAIR_HAIRLINE},
+    {OHOS_ABILITY_BEAUTY_FACE_MAKEUP_VALUES, FACE_MAKEUP},
+    {OHOS_ABILITY_BEAUTY_HEAD_SHRINK_VALUES, HEAD_SHRINK},
+    {OHOS_ABILITY_BEAUTY_NOSE_SLENDER_VALUES, NOSE_SLENDER},
 };
 
 const std::unordered_map<camera_xmage_color_type_t, ColorEffect> g_metaColorEffectMap_ = {
     {CAMERA_CUSTOM_COLOR_NORMAL, COLOR_EFFECT_NORMAL},
     {CAMERA_CUSTOM_COLOR_BRIGHT, COLOR_EFFECT_BRIGHT},
     {CAMERA_CUSTOM_COLOR_SOFT, COLOR_EFFECT_SOFT},
-    {CAMERA_CUSTOM_COLOR_MONO, COLOR_EFFECT_BLACK_WHITE}
+    {CAMERA_CUSTOM_COLOR_MONO, COLOR_EFFECT_BLACK_WHITE},
+    {CAMERA_CUSTOM_COLOR_CLASSIC, COLOR_EFFECT_CLASSIC},
+    {CAMERA_CUSTOM_COLOR_MODERN, COLOR_EFFECT_MODERN},
 };
 
 const std::unordered_map<CameraVideoStabilizationMode, VideoStabilizationMode> g_metaVideoStabModesMap_ = {
@@ -100,23 +117,23 @@ const std::unordered_map<ExposureMode, camera_exposure_mode_enum_t> g_fwkExposur
     {EXPOSURE_MODE_CONTINUOUS_AUTO, OHOS_CAMERA_EXPOSURE_MODE_CONTINUOUS_AUTO}
 };
 
-
-const std::map<CM_ColorSpaceType, ColorSpace> g_metaColorSpaceMap_ = {
-    {CM_COLORSPACE_NONE, COLOR_SPACE_UNKNOWN},
-    {CM_P3_FULL, DISPLAY_P3},
-    {CM_SRGB_FULL, SRGB},
-    {CM_BT709_FULL, BT709},
-    {CM_BT2020_HLG_FULL, BT2020_HLG},
-    {CM_BT2020_PQ_FULL, BT2020_PQ},
-    {CM_P3_HLG_FULL, P3_HLG},
-    {CM_P3_PQ_FULL, P3_PQ},
-    {CM_P3_LIMIT, DISPLAY_P3_LIMIT},
-    {CM_SRGB_LIMIT, SRGB_LIMIT},
-    {CM_BT709_LIMIT, BT709_LIMIT},
-    {CM_BT2020_HLG_LIMIT, BT2020_HLG_LIMIT},
-    {CM_BT2020_PQ_LIMIT, BT2020_PQ_LIMIT},
-    {CM_P3_HLG_LIMIT, P3_HLG_LIMIT},
-    {CM_P3_PQ_LIMIT, P3_PQ_LIMIT}
+const std::map<CM_ColorSpaceType_V2_1, ColorSpace> g_metaColorSpaceMap_ = {
+    {CM_ColorSpaceType_V2_1::CM_COLORSPACE_NONE, COLOR_SPACE_UNKNOWN},
+    {CM_ColorSpaceType_V2_1::CM_P3_FULL, DISPLAY_P3},
+    {CM_ColorSpaceType_V2_1::CM_SRGB_FULL, SRGB},
+    {CM_ColorSpaceType_V2_1::CM_BT709_FULL, BT709},
+    {CM_ColorSpaceType_V2_1::CM_BT2020_HLG_FULL, BT2020_HLG},
+    {CM_ColorSpaceType_V2_1::CM_BT2020_PQ_FULL, BT2020_PQ},
+    {CM_ColorSpaceType_V2_1::CM_P3_HLG_FULL, P3_HLG},
+    {CM_ColorSpaceType_V2_1::CM_P3_PQ_FULL, P3_PQ},
+    {CM_ColorSpaceType_V2_1::CM_P3_LIMIT, DISPLAY_P3_LIMIT},
+    {CM_ColorSpaceType_V2_1::CM_SRGB_LIMIT, SRGB_LIMIT},
+    {CM_ColorSpaceType_V2_1::CM_BT709_LIMIT, BT709_LIMIT},
+    {CM_ColorSpaceType_V2_1::CM_BT2020_HLG_LIMIT, BT2020_HLG_LIMIT},
+    {CM_ColorSpaceType_V2_1::CM_BT2020_PQ_LIMIT, BT2020_PQ_LIMIT},
+    {CM_ColorSpaceType_V2_1::CM_P3_HLG_LIMIT, P3_HLG_LIMIT},
+    {CM_ColorSpaceType_V2_1::CM_P3_PQ_LIMIT, P3_PQ_LIMIT},
+    {CM_ColorSpaceType_V2_1::CM_BT2020_LOG_FULL, H_LOG},
 };
 
 const std::unordered_map<FocusMode, camera_focus_mode_enum_t> g_fwkFocusModeMap_ = {
@@ -135,7 +152,9 @@ const std::unordered_map<ColorEffect, camera_xmage_color_type_t> g_fwkColorEffec
     {COLOR_EFFECT_NORMAL, CAMERA_CUSTOM_COLOR_NORMAL},
     {COLOR_EFFECT_BRIGHT, CAMERA_CUSTOM_COLOR_BRIGHT},
     {COLOR_EFFECT_SOFT, CAMERA_CUSTOM_COLOR_SOFT},
-    {COLOR_EFFECT_BLACK_WHITE, CAMERA_CUSTOM_COLOR_MONO}
+    {COLOR_EFFECT_BLACK_WHITE, CAMERA_CUSTOM_COLOR_MONO},
+    {COLOR_EFFECT_CLASSIC, CAMERA_CUSTOM_COLOR_CLASSIC},
+    {COLOR_EFFECT_MODERN, CAMERA_CUSTOM_COLOR_MODERN},
 };
 
 const std::unordered_map<FlashMode, camera_flash_mode_enum_t> g_fwkFlashModeMap_ = {
@@ -149,14 +168,26 @@ const std::unordered_map<BeautyType, camera_beauty_type_t> g_fwkBeautyTypeMap_ =
     {AUTO_TYPE, OHOS_CAMERA_BEAUTY_TYPE_AUTO},
     {SKIN_SMOOTH, OHOS_CAMERA_BEAUTY_TYPE_SKIN_SMOOTH},
     {FACE_SLENDER, OHOS_CAMERA_BEAUTY_TYPE_FACE_SLENDER},
-    {SKIN_TONE, OHOS_CAMERA_BEAUTY_TYPE_SKIN_TONE}
+    {SKIN_TONE, OHOS_CAMERA_BEAUTY_TYPE_SKIN_TONE},
+    {SKIN_TONEBRIGHT, OHOS_CAMERA_BEAUTY_TYPE_SKIN_TONEBRIGHT},
+    {EYE_BIGEYES, OHOS_CAMERA_BEAUTY_TYPE_EYE_BIGEYES},
+    {HAIR_HAIRLINE, OHOS_CAMERA_BEAUTY_TYPE_HAIR_HAIRLINE},
+    {FACE_MAKEUP, OHOS_CAMERA_BEAUTY_TYPE_FACE_MAKEUP},
+    {HEAD_SHRINK, OHOS_CAMERA_BEAUTY_TYPE_HEAD_SHRINK},
+    {NOSE_SLENDER, OHOS_CAMERA_BEAUTY_TYPE_NOSE_SLENDER},
 };
 
 const std::unordered_map<BeautyType, camera_device_metadata_tag_t> g_fwkBeautyAbilityMap_ = {
     {AUTO_TYPE, OHOS_ABILITY_BEAUTY_AUTO_VALUES},
     {SKIN_SMOOTH, OHOS_ABILITY_BEAUTY_SKIN_SMOOTH_VALUES},
     {FACE_SLENDER, OHOS_ABILITY_BEAUTY_FACE_SLENDER_VALUES},
-    {SKIN_TONE, OHOS_ABILITY_BEAUTY_SKIN_TONE_VALUES}
+    {SKIN_TONE, OHOS_ABILITY_BEAUTY_SKIN_TONE_VALUES},
+    {SKIN_TONEBRIGHT, OHOS_ABILITY_BEAUTY_SKIN_TONEBRIGHT_VALUES},
+    {EYE_BIGEYES, OHOS_ABILITY_BEAUTY_EYE_BIGEYES_VALUES},
+    {HAIR_HAIRLINE, OHOS_ABILITY_BEAUTY_HAIR_HAIRLINE_VALUES},
+    {FACE_MAKEUP, OHOS_ABILITY_BEAUTY_FACE_MAKEUP_VALUES},
+    {HEAD_SHRINK, OHOS_ABILITY_BEAUTY_HEAD_SHRINK_VALUES},
+    {NOSE_SLENDER, OHOS_ABILITY_BEAUTY_NOSE_SLENDER_VALUES},
 };
 
 const std::unordered_map<PortraitThemeType, CameraPortraitThemeTypes> g_fwkPortraitThemeTypeMap_ = {
@@ -169,6 +200,20 @@ const std::unordered_map<CameraPortraitThemeTypes, PortraitThemeType> g_metaPort
     {OHOS_CAMERA_PORTRAIT_THEME_TYPE_NATURAL, PortraitThemeType::NATURAL},
     {OHOS_CAMERA_PORTRAIT_THEME_TYPE_DELICATE, PortraitThemeType::DELICATE},
     {OHOS_CAMERA_PORTRAIT_THEME_TYPE_STYLISH, PortraitThemeType::STYLISH},
+};
+
+const std::unordered_map<NightSubMode, CameraNightSubMode> g_fwkNightSubModeMap_ = {
+    {NightSubMode::DEFAULT, OHOS_CAMERA_NIGHT_SUB_MODE_DEFAULT},
+    {NightSubMode::SUPER_MOON, OHOS_CAMERA_NIGHT_SUB_MODE_SUPER_MOON},
+    {NightSubMode::STARRY_SKY, OHOS_CAMERA_NIGHT_SUB_MODE_STARRY_SKY},
+    {NightSubMode::STARRY_SKY_PORTRAIT, OHOS_CAMERA_NIGHT_SUB_MODE_STARRY_SKY_PORTRAIT},
+};
+
+const std::unordered_map<CameraNightSubMode, NightSubMode> g_metaNightSubModeMap_ = {
+    {OHOS_CAMERA_NIGHT_SUB_MODE_DEFAULT, NightSubMode::DEFAULT},
+    {OHOS_CAMERA_NIGHT_SUB_MODE_SUPER_MOON, NightSubMode::SUPER_MOON},
+    {OHOS_CAMERA_NIGHT_SUB_MODE_STARRY_SKY, NightSubMode::STARRY_SKY},
+    {OHOS_CAMERA_NIGHT_SUB_MODE_STARRY_SKY_PORTRAIT, NightSubMode::STARRY_SKY_PORTRAIT},
 };
 
 const std::vector<VideoRotation> g_fwkVideoRotationVector_ = {
@@ -199,6 +244,8 @@ const std::unordered_map<OperationMode, SceneMode> g_metaToFwSupportedMode_ = {
     {OperationMode::LIGHT_PAINTING, LIGHT_PAINTING},
     {OperationMode::TIMELAPSE_PHOTO, TIMELAPSE_PHOTO},
     {OperationMode::FLUORESCENCE_PHOTO, FLUORESCENCE_PHOTO},
+    {OperationMode::STITCHING_PHOTO, STITCHING_PHOTO},
+    {OperationMode::CINEMATIC_VIDEO, CINEMATIC_VIDEO},
 };
 
 const std::unordered_map<SceneMode, OperationMode> g_fwToMetaSupportedMode_ = {
@@ -222,6 +269,8 @@ const std::unordered_map<SceneMode, OperationMode> g_fwToMetaSupportedMode_ = {
     {LIGHT_PAINTING, OperationMode::LIGHT_PAINTING},
     {TIMELAPSE_PHOTO, OperationMode::TIMELAPSE_PHOTO},
     {FLUORESCENCE_PHOTO, OperationMode::FLUORESCENCE_PHOTO},
+    {STITCHING_PHOTO, OperationMode::STITCHING_PHOTO},
+    {CINEMATIC_VIDEO, OperationMode::CINEMATIC_VIDEO},
 };
 
 const std::unordered_map<StatisticsDetectType, MetadataObjectType> g_metaToFwCameraMetaDetect_ = {
@@ -233,7 +282,8 @@ const std::unordered_map<StatisticsDetectType, MetadataObjectType> g_metaToFwCam
     {StatisticsDetectType::OHOS_CAMERA_DOG_BODY_DETECT, MetadataObjectType::DOG_BODY},
     {StatisticsDetectType::OHOS_CAMERA_SALIENT_DETECT, MetadataObjectType::SALIENT_DETECTION},
     {StatisticsDetectType::OHOS_CAMERA_BAR_CODE_DETECT, MetadataObjectType::BAR_CODE_DETECTION},
-    {StatisticsDetectType::OHOS_CAMERA_BASE_FACE_DETECT, MetadataObjectType::BASE_FACE_DETECTION}
+    {StatisticsDetectType::OHOS_CAMERA_BASE_FACE_DETECT, MetadataObjectType::BASE_FACE_DETECTION},
+    {StatisticsDetectType::OHOS_CAMERA_HUMAN_HEAD_DETECT, MetadataObjectType::HUMAN_HEAD}
 };
 
 const std::unordered_map<camera_focus_range_type_t, FocusRangeType> g_metaFocusRangeTypeMap_ = {

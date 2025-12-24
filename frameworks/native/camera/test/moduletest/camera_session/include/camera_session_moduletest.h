@@ -42,6 +42,7 @@
 #include "session/slow_motion_session.h"
 #include "session/time_lapse_photo_session.h"
 #include "session/video_session.h"
+#include "session/video_session_for_sys.h"
 
 #include "accesstoken_kit.h"
 #include "camera_error_code.h"
@@ -104,7 +105,6 @@ enum class CAM_MOON_CAPTURE_BOOST_EVENTS {
     CAM_MOON_CAPTURE_BOOST_EVENT_MAX_EVENT
 };
 
-const int32_t WAIT_TIME_ONE = 1;
 const int32_t WAIT_TIME_CALLBACK = 1;
 const int32_t WAIT_TIME_AFTER_CLOSE = 1;
 const int32_t WAIT_TIME_BEFORE_STOP = 1;
@@ -177,6 +177,10 @@ extern bool g_camInputOnError;
 extern bool g_sessionclosed;
 extern bool g_brightnessStatusChanged;
 extern bool g_slowMotionStatusChanged;
+extern bool g_imageGuideChanged;
+extern bool g_receiveProccess;
+extern bool g_receiveSucceeded;
+extern bool g_contellationDrawingChanged;
 
 class AppCallback : public CameraManagerCallback,
                     public TorchListener,
@@ -189,7 +193,14 @@ class AppCallback : public CameraManagerCallback,
                     public FeatureDetectionStatusCallback,
                     public FoldListener,
                     public LcdFlashStatusCallback,
-                    public BrightnessStatusCallback {
+                    public BrightnessStatusCallback,
+                    public CompositionPositionCalibrationCallback,
+                    public CompositionBeginCallback,
+                    public CompositionEndCallback,
+                    public ImageStabilizationGuideCallback,
+                    public CompositionPositionMatchCallback,
+                    public ZoomInfoCallback,
+                    public ControlCenterStatusListener {
 public:
     void OnCameraStatusChanged(const CameraStatusInfo& cameraDeviceInfo) const override;
 
@@ -237,9 +248,29 @@ public:
 
     void OnFoldStatusChanged(const FoldStatusInfo &foldStatusInfo) const override;
 
+    void OnControlCenterStatusChanged(bool status) const override;
+
     void OnLcdFlashStatusChanged(LcdFlashStatusInfo lcdFlashStatusInfo) override;
 
+    void OnCompositionPositionCalibrationAvailable(const CompositionPositionCalibrationInfo info) const override;
+
+    void OnCompositionBeginAvailable() const override;
+
+    void OnCompositionEndAvailable(CompositionEndState state) const override;
+
+    void OnCompositionPositionMatchAvailable(std::vector<float> zoomRatios) const override;
+    
     void OnOfflineDeliveryFinished(const int32_t captureId)  const override;
+
+    void OnImageStabilizationGuideChange(std::vector<Point> lineSegments) override;
+
+    void OnConstellationDrawingState(const int32_t drawingState) const override;
+
+    void OnFramePaused() const override;
+
+    void OnFrameResumed() const override;
+
+    void OnZoomInfoChange(const std::vector<float> zoomRatioRange) override;
 };
 
 class AppVideoCallback : public VideoStateCallback {

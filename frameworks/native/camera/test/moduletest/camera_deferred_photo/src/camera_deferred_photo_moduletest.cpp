@@ -171,8 +171,7 @@ sptr<CaptureOutput> CameraDeferredPhotoModuleTest::CreatePreviewOutput(Profile& 
 int32_t CameraDeferredPhotoModuleTest::AddPreviewOutput(sptr<CaptureOutput>& previewOutput)
 {
     CHECK_RETURN_RET(captureSession_ == nullptr, EXECUTE_FAILED);
-    CHECK_RETURN_RET_ELOG(!captureSession_->CanAddOutput(previewOutput), EXECUTE_FAILED,
-        "Can not add preview output");
+    CHECK_RETURN_RET_ELOG(!captureSession_->CanAddOutput(previewOutput), EXECUTE_FAILED, "Can not add preview output");
     int32_t ret = captureSession_->AddOutput(previewOutput);
     CHECK_RETURN_RET_ELOG(ret != EXECUTE_SUCCESS, EXECUTE_FAILED, "AddPreviewOutput failed");
     isPreviewOutputAdded_ = true;
@@ -184,7 +183,7 @@ int32_t CameraDeferredPhotoModuleTest::CreateAndOpenCameraInput()
     auto camInput = cameraManager_->CreateCameraInput(cameras_[0]);
     CHECK_RETURN_RET_ELOG(camInput == nullptr, EXECUTE_FAILED, "CreateCameraInput camInput failed");
     auto device = camInput->GetCameraDevice();
-    CHECK_RETURN_RET_ELOG(device == nullptr, EXECUTE_FAILED, "CreateCameraInput device failed");
+    CHECK_RETURN_RET_ELOG(device == nullptr, EXECUTE_FAILED, "device is null");
     device->SetMdmCheck(false);
     cameraInput_ = camInput;
     CHECK_RETURN_RET_ELOG(cameraInput_ == nullptr, EXECUTE_FAILED, "CreateCameraInput failed");
@@ -353,7 +352,7 @@ void PhotoListenerModuleTest::WaitForPhotoCallbackAndSetTimeOut()
  * CaseDescription: Verify the deferred photo is enabled by default in normal conditions after registering photo asset
  *                  available listener.
  */
-HWTEST_F(CameraDeferredPhotoModuleTest, camera_deferred_photo_moduletest_001, TestSize.Level1)
+HWTEST_F(CameraDeferredPhotoModuleTest, camera_deferred_photo_moduletest_001, TestSize.Level0)
 {
     CHECK_RETURN(!isInitSuccess_);
     photoOutput_ = CreatePhotoOutputWithoutSurfaceId(photoProfiles_[0]);
@@ -649,7 +648,7 @@ HWTEST_F(CameraDeferredPhotoModuleTest, camera_deferred_photo_moduletest_006, Te
  * EnvConditions: NA
  * CaseDescription: Verify the deferred photo is enabled in normal conditions.
  */
-HWTEST_F(CameraDeferredPhotoModuleTest, camera_deferred_photo_moduletest_007, TestSize.Level1)
+HWTEST_F(CameraDeferredPhotoModuleTest, camera_deferred_photo_moduletest_007, TestSize.Level0)
 {
     CHECK_RETURN(!isInitSuccess_);
     photoOutput_ = CreatePhotoOutputWithoutSurfaceId(photoProfiles_[0]);

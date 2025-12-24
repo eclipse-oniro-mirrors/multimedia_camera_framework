@@ -172,6 +172,8 @@ napi_value CameraNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_PROPERTY("UsageType", CreateObjectWithMap(env, "UsageType", mapUsageType, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY("PortraitThemeType",
             CreateObjectWithMap(env, "PortraitThemeType", mapPortraitThemeType, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY("StitchingCaptureState",
+            CreateObjectWithMap(env, "StitchingCaptureState", mapStitchingCaptureState, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY("FocusRangeType",
             CreateObjectWithMap(env, "FocusRangeType", mapFocusRangeType, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY("FocusDrivenType",
@@ -180,6 +182,10 @@ napi_value CameraNapi::Init(napi_env env, napi_value exports)
             CreateObjectWithMap(env, "ColorReservationType", mapColorReservationType, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY("FocusTrackingMode",
             CreateObjectWithMap(env, "FocusTrackingMode", mapFocusTrackingMode, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY("CompositionEndInfo",
+            CreateObjectWithMap(env, "CompositionEndInfo", mapCompositionEndInfo, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY("NightSubModeType",
+            CreateObjectWithMap(env, "NightSubModeType", mapNightSubModeType, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY("CameraConcurrentType",
             CreateObjectWithMap(env, "CameraConcurrentType", mapCameraConcurrentType, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY("AuxiliaryType",
@@ -192,6 +198,12 @@ napi_value CameraNapi::Init(napi_env env, napi_value exports)
             CreateObjectWithMap(env, "LightStatus", mapLightStatus, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY("WhiteBalanceMode",
             CreateObjectWithMap(env, "WhiteBalanceMode", mapWhiteBalanceMode, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY("CalibrationStatus",
+            CreateObjectWithMap(env, "CalibrationStatus", mapCalibrationStatus, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY("ConstellationDrawingState",
+            CreateObjectWithMap(env, "ConstellationDrawingState", mapConstellationDrawingState, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY("ApertureEffect",
+            CreateObjectWithMap(env, "ApertureEffect", mapApertureEffect, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY("PhotoQualityPrioritization",
             CreateObjectWithMap(env, "PhotoQualityPrioritization", mapPhotoQualityPrioritization, g_ignoreRef_)),
     };
@@ -239,15 +251,14 @@ napi_value CameraNapi::CreateCameraManagerInstance(napi_env env, napi_callback_i
 
     napi_get_undefined(env, &result);
     result = CameraManagerNapi::CreateCameraManager(env);
-    MEDIA_INFO_LOG("CreateCameraManagerInstance::CreateCameraManager() is end");
     return result;
 }
 
 napi_value CameraNapi::CreateModeManagerInstance(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("CreateModeManagerInstance is called");
-    CHECK_RETURN_RET_ELOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
-        "SystemApi CreateModeManagerInstance is called!");
+    CHECK_RETURN_RET_ELOG(
+        !CameraNapiSecurity::CheckSystemApp(env), nullptr, "SystemApi CreateModeManagerInstance is called!");
     napi_value result = nullptr;
     size_t argc = ARGS_ONE;
     napi_value argv[ARGS_ONE] = {0};
@@ -286,7 +297,9 @@ napi_value CameraNapi::CreateObjectWithMap(napi_env env,
     }
     if (status == napi_ok) {
         status = NapiRefManager::CreateMemSafetyRef(env, result, &outputRef);
-        CHECK_RETURN_RET(status == napi_ok, result);
+        if (status == napi_ok) {
+            return result;
+        }
     }
     MEDIA_ERR_LOG("Create %{public}s call Failed!", objectName.c_str());
     napi_get_undefined(env, &result);

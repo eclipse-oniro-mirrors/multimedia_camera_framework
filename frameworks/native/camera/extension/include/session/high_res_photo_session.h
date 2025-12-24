@@ -23,8 +23,8 @@ namespace OHOS {
 namespace CameraStandard {
 class HighResPhotoSession : public CaptureSessionForSys {
 public:
-    explicit HighResPhotoSession(sptr<ICaptureSession> &highResPhotoSession)
-        : CaptureSessionForSys(highResPhotoSession) {}
+    explicit HighResPhotoSession(sptr<ICaptureSession> &highResPhotoSession):
+        CaptureSessionForSys(highResPhotoSession) {}
     ~HighResPhotoSession();
  
     /**

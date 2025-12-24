@@ -22,7 +22,6 @@
 
 namespace OHOS {
 namespace CameraStandard {
-using namespace DeferredProcessing;
 
 class AudioCapturerSessionFuzzer {
 public:

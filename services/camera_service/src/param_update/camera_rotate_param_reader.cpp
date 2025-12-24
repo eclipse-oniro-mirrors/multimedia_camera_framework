@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
+
 #include "camera_rotate_param_reader.h"
 
 #include <memory>
@@ -21,10 +21,6 @@
 
 #include "camera_log.h"
 #include "camera_util.h"
-#ifdef CONFIG_POLICY_EXT_ENABLE
-#include "config_policy_param_upgrade_path.h"
-#include "config_policy_utils.h"
-#endif
 #include "camera_rotate_param_sign_tools.h"
 
 namespace OHOS {
@@ -39,35 +35,14 @@ constexpr int DEC = 10;
 // 获取高版本配置路径
 std::string CameraRoateParamReader::GetConfigFilePath()
 {
-#ifdef CONFIG_POLICY_EXT_ENABLE
-    std::lock_guard<std::mutex> lock(custMethodLock);
-    ::HwCustSetDataSourceType(HW_CUST_TYPE_SYSTEM);
-    std::string cfgDir = CAMERA_ROTATE_CFG_DIR;
-    //期望data/service/el1/public/update/param_service/install/system/etc/camera/version.txt
-    ParamVersionFileInfo *paramVersionFileInfo = ::GetDownloadCfgFile(cfgDir.c_str(), cfgDir.c_str());
-    if (paramVersionFileInfo == NULL) {
-        MEDIA_ERR_LOG("NULL ptr, can not found txt in path : %{public}s", cfgDir.c_str());
-        return {};
-    }
-    if (!paramVersionFileInfo->found) {
-        MEDIA_ERR_LOG("not found, can not found version txt in path : %{public}s", cfgDir.c_str());
-        free(paramVersionFileInfo);
-        return {};
-    }
-    std::string path = std::string(paramVersionFileInfo->path);
-    MEDIA_INFO_LOG("GetConfigFilePath path:%{public}s", path.c_str());
-    free(paramVersionFileInfo);
-    return path;
-#else
      return PARAM_SERVICE_INSTALL_PATH + CAMERA_ROTATE_CFG_DIR;
-#endif
 };
 
 // 获取路径下版本信息
 std::string CameraRoateParamReader::GetPathVersion()
 {
     std::string path = GetConfigFilePath();
-    MEDIA_INFO_LOG("GetPathVersion:%{public}s", path.c_str());
+    MEDIA_INFO_LOG("GetPathVersion:%{private}s", path.c_str());
     return path.find(PARAM_UPDATE_ABS_PATH) != std::string::npos ?
         GetVersionInfoStr(PARAM_SERVICE_INSTALL_PATH + CAMERA_ROTATE_CFG_DIR + VERSION_FILE_NAME) :
         GetVersionInfoStr(CAMERA_ROTATE_CFG_DIR + VERSION_FILE_NAME); // 返回本地的默认路径system/etc/camera/
@@ -83,6 +58,7 @@ bool CameraRoateParamReader::VerifyCertSfFile(
     if (!CameraRoateParamSignTool::VerifyFileSign(PUBKEY_PATH, certFile, canonicalPath)) {
         MEDIA_ERR_LOG("signToolManager verify failed %{public}s,%{public}s, %{public}s", PUBKEY_PATH.c_str(),
             certFile.c_str(), canonicalPath);
+        free(canonicalPath);
         return false;
     }
     std::ifstream file(canonicalPath);
@@ -99,9 +75,7 @@ bool CameraRoateParamReader::VerifyCertSfFile(
     TrimString(sha256Digest);
     std::tuple<int, std::string> ret = CameraRoateParamSignTool::CalcFileSha256Digest(manifestFile);
     std::string manifestDigest = std::get<1>(ret);
-    if (sha256Digest == manifestDigest) {
-        return true;
-    }
+    CHECK_RETURN_RET(sha256Digest == manifestDigest, true);
     return false;
 };
 
@@ -124,8 +98,7 @@ bool CameraRoateParamReader::VerifyParamFile(const std::string& cfgDirPath, cons
     CHECK_RETURN_RET_ELOG(
         !file.good(), false, "manifestFile is not good,manifestFile:%{public}s", manifestFile.c_str());
     std::ifstream paramFile(absFilePath);
-    CHECK_RETURN_RET_ELOG(
-        !paramFile.good(), false, "paramFile is not good,paramFile:%{public}s", absFilePath.c_str());
+    CHECK_RETURN_RET_ELOG(!paramFile.good(), false, "paramFile is not good,paramFile:%{public}s", absFilePath.c_str());
 
     while (std::getline(file, line)) {
         std::string nextline;
@@ -147,6 +120,7 @@ bool CameraRoateParamReader::VerifyParamFile(const std::string& cfgDirPath, cons
     }
 }
 
+// 读取version.txt 的第一行。例：version=1.2.2.21 ，需要version.txt 第一行为version。
 std::string CameraRoateParamReader::GetVersionInfoStr(const std::string &filePathStr)
 {
     char canonicalPath[PATH_MAX + 1] = {0x00};
@@ -182,6 +156,7 @@ bool CameraRoateParamReader::CompareVersion(
     }
     return false;
 }
-// LCOV_EXCL_STOP
+
 }
+// LCOV_EXCL_STOP
 }

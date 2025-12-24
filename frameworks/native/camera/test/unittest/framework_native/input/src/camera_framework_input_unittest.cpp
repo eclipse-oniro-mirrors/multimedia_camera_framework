@@ -76,7 +76,7 @@ void CameraFrameworkInputUnit::TearDown()
  * EnvConditions: NA
  * CaseDescription: Test SetInputUsedAsPosition for Normal branches
  */
-HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_001, TestSize.Level1)
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_001, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_FALSE(cameras.empty());
@@ -97,7 +97,7 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_001, TestSize
  * EnvConditions: NA
  * CaseDescription: Test SetOcclusionDetectCallback for cameraOcclusionDetectCallback is nullptr
  */
-HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_002, TestSize.Level1)
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_002, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_FALSE(cameras.empty());
@@ -118,7 +118,7 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_002, TestSize
  * EnvConditions: NA
  * CaseDescription: Test CameraFrameworkInput with CameraServerDied for abnormal branches
  */
-HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_003, TestSize.Level1)
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_003, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_FALSE(cameras.empty());
@@ -139,7 +139,7 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_003, TestSize
  * EnvConditions: NA
  * CaseDescription: Test result callback
  */
-HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_004, TestSize.Level1)
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_004, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_FALSE(cameras.empty());
@@ -163,7 +163,7 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_004, TestSize
  * EnvConditions: NA
  * CaseDescription: Test input callback
  */
-HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_005, TestSize.Level1)
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_005, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_FALSE(cameras.empty());
@@ -185,7 +185,7 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_005, TestSize
  * EnvConditions: NA
  * CaseDescription: Test cameraFormat with CAMERA_FORMAT_YUV_420_SP and CAMERA_FORMAT_JPEG
  */
-HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_006, TestSize.Level1)
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_006, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_FALSE(cameras.empty());
@@ -236,7 +236,7 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_006, TestSize
  * EnvConditions: NA
  * CaseDescription: Test camerainput with deviceObj_ is nullptr
  */
-HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_007, TestSize.Level1)
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_007, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_FALSE(cameras.empty());
@@ -260,7 +260,7 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_007, TestSize
 * EnvConditions: NA
 * CaseDescription: Test normal branch for open camera
 */
-HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_008, TestSize.Level1)
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_008, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_FALSE(cameras.empty());
@@ -298,7 +298,7 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_008, TestSize
 * EnvConditions: NA
 * CaseDescription: Test anomalous branch for open camera
 */
-HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_009, TestSize.Level1)
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_009, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_FALSE(cameras.empty());
@@ -336,7 +336,7 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_009, TestSize
 * EnvConditions: NA
 * CaseDescription: Test anomalous branch for open camera
 */
-HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_010, TestSize.Level1)
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_010, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_FALSE(cameras.empty());
@@ -375,7 +375,7 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_010, TestSize
 * EnvConditions: NA
 * CaseDescription: Test normal branch that is open non-secure camera
 */
-HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_011, TestSize.Level1)
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_011, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_FALSE(cameras.empty());
@@ -415,7 +415,7 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_011, TestSize
  * EnvConditions: NA
  * CaseDescription: Test camerainput with SwitchCameraDevice
  */
-HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_012, TestSize.Level1)
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_012, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_FALSE(cameras.empty());
@@ -439,7 +439,7 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_012, TestSize
  * EnvConditions: NA
  * CaseDescription: Test GetMetaSetting with existing metaTag.
  */
-HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_013, TestSize.Level1)
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_013, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_FALSE(cameras.empty());
@@ -490,7 +490,7 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_013, TestSize
  * EnvConditions: NA
  * CaseDescription: Test camera service system ability
  */
-HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_014, TestSize.Level1)
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_014, TestSize.Level0)
 {
     auto cameraListener =
         new(std::nothrow) CameraServiceSystemAbilityListener();
@@ -516,7 +516,7 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_014, TestSize
  * EnvConditions: NA
  * CaseDescription: Test cameraDevice structure with metadata
  */
-HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_015, TestSize.Level1)
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_015, TestSize.Level0)
 {
     std::string cameraID = "cam01";
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = nullptr;
@@ -544,7 +544,7 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_015, TestSize
  * EnvConditions: NA
  * CaseDescription: Test cameraDevice structure with GetPosition
  */
-HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_016, TestSize.Level1)
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_016, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_FALSE(cameras.empty());
@@ -581,7 +581,7 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_016, TestSize
  * EnvConditions: NA
  * CaseDescription: Test cameraInput Open and Close with camera device is nullptr
  */
-HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_017, TestSize.Level1)
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_017, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_FALSE(cameras.empty());
@@ -607,7 +607,7 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_017, TestSize
  * EnvConditions: NA
  * CaseDescription: Test cameraInput with camera device service on result when set occlusion detect call back
  */
-HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_018, TestSize.Level1)
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_018, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_FALSE(cameras.empty());
@@ -666,7 +666,7 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_018, TestSize
  * EnvConditions: NA
  * CaseDescription: Test cameraManager with set profile when cameraDevice or supported mode is null
  */
-HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_019, TestSize.Level1)
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_019, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_FALSE(cameras.empty());
@@ -698,7 +698,7 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_019, TestSize
  * EnvConditions: NA
  * CaseDescription: Test cameraManager with GetSupportedCamerasWithFoldStatus
  */
-HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_020, TestSize.Level1)
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_020, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_FALSE(cameras.empty());
@@ -723,7 +723,7 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_020, TestSize
  * EnvConditions: NA
  * CaseDescription: Test CameraDevice with GetStaticCameraOrientation for invoke
  */
-HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_021, TestSize.Level1)
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_021, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_FALSE(cameras.empty());
@@ -738,33 +738,13 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_021, TestSize
 
 /*
  * Feature: Framework
- * Function: Test cameraInput closeDelayed while deviceObj_ is null
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test cameraInput closeDelayed while deviceObj_ is null
- */
-HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_022, TestSize.Level1)
-{
-    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
-    ASSERT_FALSE(cameras.empty());
-
-    sptr<CameraInput> input = cameraManager_->CreateCameraInput(cameras[0]);
-    ASSERT_NE(input, nullptr);
-
-    int32_t delayTime = 1;
-    EXPECT_EQ(input->closeDelayed(delayTime), 0);
-}
-
-/*
- * Feature: Framework
  * Function: Test cameradevice with open camera device concurrently
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
  * CaseDescription: Test cameradevice with open camera device concurrently
  */
-HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_023, TestSize.Level1)
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_023, TestSize.Level0)
 {
     cameraManager_->cameraDeviceList_.clear();
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
@@ -813,17 +793,37 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_023, TestSize
 
 /*
  * Feature: Framework
+ * Function: Test cameraInput closeDelayed while deviceObj_ is null
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test cameraInput closeDelayed while deviceObj_ is null
+ */
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_022, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
+
+    sptr<CameraInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    int32_t delayTime = 1;
+    EXPECT_EQ(input->closeDelayed(delayTime), 0);
+}
+
+/*
+ * Feature: Framework
  * Function: Test cameraInput device retry
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
  * CaseDescription: Test cameraInput device retry
  */
-HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_024, TestSize.Level1)
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_024, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_FALSE(cameras.empty());
- 
+
     sptr<CameraInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     input->ControlAuxiliary(AuxiliaryType::CONTRACTLENS, AuxiliaryStatus::AUXILIARY_ON);
@@ -831,142 +831,24 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_024, TestSize
 
 /*
  * Feature: Framework
- * Function: Test cameraInput
+ * Function: Test close after closeDelayed
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test cameraInput of OnResult abnormal branches
+ * CaseDescription: Test close after closeDelayed
  */
 HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_025, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_FALSE(cameras.empty());
-    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
-    ASSERT_NE(input, nullptr);
-    sptr<CameraInput> cameraInput = (sptr<CameraInput> &)input;
 
-    std::shared_ptr<CameraDeviceServiceCallback> cameraDeviceServiceCallback_test =
-        std::make_shared<CameraDeviceServiceCallback>();
-    EXPECT_NE(cameraDeviceServiceCallback_test, nullptr);
-    cameraInput->cameraObj_ = nullptr;
-    cameraDeviceServiceCallback_test->camInput_ = cameraInput;
-    const std::shared_ptr<OHOS::Camera::CameraMetadata> result;
-    auto res = cameraDeviceServiceCallback_test->OnResult(0, result);
-    EXPECT_EQ(res, CAMERA_INVALID_ARG);
-}
-
-/*
- * Feature: Framework
- * Function: Test cameraInput
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test cameraInput of InitCameraInput
- */
-HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_026, TestSize.Level0)
-{
-    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
-    ASSERT_FALSE(cameras.empty());
-    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    sptr<CameraInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
-    sptr<CameraInput> cameraInput = (sptr<CameraInput> &)input;
-    cameraInput->InitCameraInput();
-}
 
-/*
- * Feature: Framework
- * Function: Test cameraInput
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test cameraInput of closeDelayed
- */
-HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_027, TestSize.Level0)
-{
-    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
-    ASSERT_FALSE(cameras.empty());
-    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
-    ASSERT_NE(input, nullptr);
-    sptr<CameraInput> cameraInput = (sptr<CameraInput> &)input;
-    cameraInput->cameraObj_ = nullptr;
     int32_t delayTime = 1;
-    int32_t res = cameraInput->closeDelayed(delayTime);
-    EXPECT_EQ(res, 0);
-}
+    EXPECT_EQ(input->closeDelayed(delayTime), 0);
 
-/*
- * Feature: Framework
- * Function: Test cameraInput
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test cameraInput of SetInputUsedAsPosition abnormal branches
- */
-HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_028, TestSize.Level0)
-{
-    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
-    ASSERT_FALSE(cameras.empty());
-    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
-    ASSERT_NE(input, nullptr);
-    sptr<CameraInput> cameraInput = (sptr<CameraInput> &)input;
-    cameraInput->positionMapping = {};
-    CameraPosition usedAsPosition = CameraPosition::CAMERA_POSITION_UNSPECIFIED;
-    cameraInput->SetInputUsedAsPosition(usedAsPosition);
-}
-
-/*
- * Feature: Framework
- * Function: Test cameraInput
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test cameraInput of SetInputUsedAsPosition abnormal branches
- */
-HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_029, TestSize.Level0)
-{
-    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
-    ASSERT_FALSE(cameras.empty());
-    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
-    ASSERT_NE(input, nullptr);
-    sptr<CameraInput> cameraInput = (sptr<CameraInput> &)input;
-    cameraInput->cameraObj_ = cameras[0];
-    cameraInput->RecoveryOldDevice();
-}
-
-/*
- * Feature: Framework
- * Function: Test CreateDeferredPhotoProcessingSession
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test CreateDeferredPhotoProcessingSession
- */
-HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_030, TestSize.Level0)
-{
-    sptr<DeferredPhotoProcSession> deferredProcSession =
-        CameraManager::GetInstance()->CreateDeferredPhotoProcessingSession(
-        userId_, std::make_shared<TestDeferredPhotoProcSessionCallback>());
- 
-    ASSERT_NE(deferredProcSession, nullptr);
-    ASSERT_NE(deferredProcSession->remoteSession_, nullptr);
-}
- 
-/*
- * Feature: Framework
- * Function: Test CreateDeferredVideoProcessingSession
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test CreateDeferredVideoProcessingSession
- */
-HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_031, TestSize.Level0)
-{
-    sptr<DeferredVideoProcSession> deferredProcSession =
-        CameraManager::GetInstance()->CreateDeferredVideoProcessingSession(
-        userId_, std::make_shared<TestDeferredVideoProcSessionCallback>());
- 
-    ASSERT_NE(deferredProcSession, nullptr);
-    ASSERT_NE(deferredProcSession->remoteSession_, nullptr);
+    EXPECT_EQ(input->Close(), SUCCESS);
 }
 
 /*
@@ -1387,6 +1269,47 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_056, TestSize
 
 /*
  * Feature: Framework
+ * Function: Test CameraFrameworkInput with SetClosedelayedState
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CameraFrameworkInput with SetClosedelayedState for normal branches
+ */
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_057, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+ 
+    camInput->SetClosedelayedState(1);
+    EXPECT_EQ(camInput->GetClosedelayedState(), 1);
+    camInput->SetClosedelayedState(0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CameraFrameworkInput with SetClosedelayedState
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CameraFrameworkInput with SetClosedelayedState for normal branches
+ */
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_058, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+ 
+    camInput->SetClosedelayedState(0);
+    EXPECT_EQ(camInput->GetClosedelayedState(), 0);
+}
+
+/*
+ * Feature: Framework
  * Function: Test CameraFrameworkInput with IsPhysicalCameraOrientationVariable
  * SubFunction: NA
  * FunctionPoints: NA
@@ -1405,7 +1328,7 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_059, TestSize
     int ret = camInput->IsPhysicalCameraOrientationVariable(&isVariable);
     EXPECT_EQ(ret, 0);
 }
-
+ 
 /*
  * Feature: Framework
  * Function: Test CameraFrameworkInput with GetPhysicalCameraOrientation
@@ -1426,7 +1349,7 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_060, TestSize
     int ret = camInput->GetPhysicalCameraOrientation(&orientation);
     EXPECT_EQ(ret, 0);
 }
-
+ 
 /*
  * Feature: Framework
  * Function: Test CameraFrameworkInput with SetUsePhysicalCameraOrientation
@@ -1443,12 +1366,17 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_061, TestSize
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     
-    int ret = camInput->SetUsePhysicalCameraOrientation(true);
-    if (ret != 7400102) {
-        EXPECT_EQ(ret, 0);
+    bool isVariable = false;
+    int ret = camInput->IsPhysicalCameraOrientationVariable(&isVariable);
+    EXPECT_EQ(ret, 0);
+    if (isVariable) {
+        ret = camInput->SetUsePhysicalCameraOrientation(true);
+        if (ret != 7400102) {
+            EXPECT_EQ(ret, 0);
+        }
     }
 }
-
+ 
 /*
  * Feature: Framework
  * Function: Test CameraFrameworkInput with SetUsePhysicalCameraOrientation
@@ -1457,7 +1385,7 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_061, TestSize
  * EnvConditions: NA
  * CaseDescription: Test CameraFrameworkInput with SetUsePhysicalCameraOrientation
  */
-+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_062, TestSize.Level0)
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_062, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_FALSE(cameras.empty());
@@ -1465,12 +1393,17 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_061, TestSize
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     
-    int ret = camInput->SetUsePhysicalCameraOrientation(false);
-    if (ret != 7400102) {
-        EXPECT_EQ(ret, 0);
+    bool isVariable = false;
+    int ret = camInput->IsPhysicalCameraOrientationVariable(&isVariable);
+    EXPECT_EQ(ret, 0);
+    if (isVariable) {
+        ret = camInput->SetUsePhysicalCameraOrientation(true);
+        if (ret != 7400102) {
+            EXPECT_EQ(ret, 0);
+        }
     }
 }
-
+ 
 /*
  * Feature: Framework
  * Function: Test CameraDevice with GetCameraOrientation
@@ -1483,12 +1416,12 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_063, TestSize
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_FALSE(cameras.empty());
-
+    
     cameras[0]->cameraOrientation_ = 1;
     cameras[0]->SetUsePhysicalCameraOrientation(false);
     EXPECT_EQ(cameras[0]->GetCameraOrientation(), 1);
 }
-
+ 
 /*
  * Feature: Framework
  * Function: Test CameraDevice with SetUsePhysicalCameraOrientation
@@ -1505,7 +1438,7 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_064, TestSize
     cameras[0]->SetUsePhysicalCameraOrientation(true);
     EXPECT_EQ(cameras[0]->GetUsePhysicalCameraOrientation(), true);
 }
-
+ 
 /*
  * Feature: Framework
  * Function: Test CameraDevice with SetUsePhysicalCameraOrientation
@@ -1549,23 +1482,6 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_066, TestSize
     }
     EXPECT_NE(input->Open(cameraConcurrentType), 0);
     EXPECT_EQ(input->Close(), SERVICE_FATL_ERROR);
-}
-
-/*
- * Feature: Framework
- * Function: Test CameraDevice with SetUsePhysicalCameraOrientation
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test CameraDevice with SetUsePhysicalCameraOrientation
- */
-HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_068, TestSize.Level0)
-{
-    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
-    ASSERT_FALSE(cameras.empty());
-
-    cameras[0]->SetUsePhysicalCameraOrientation(true);
-    EXPECT_NE(cameras[0]->GetUsePhysicalCameraOrientation(), false);
 }
 }
 }

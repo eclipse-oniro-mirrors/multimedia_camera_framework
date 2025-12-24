@@ -33,7 +33,7 @@ public:
     explicit VideoSessionImpl(sptr<OHOS::CameraStandard::CaptureSession> &obj) : SessionImpl(obj)
     {
         if (obj != nullptr) {
-            videoSession_ = static_cast<OHOS::CameraStandard::CaptureSession*>(obj.GetRefPtr());
+            videoSession_ = obj;
         }
     }
     ~VideoSessionImpl() = default;

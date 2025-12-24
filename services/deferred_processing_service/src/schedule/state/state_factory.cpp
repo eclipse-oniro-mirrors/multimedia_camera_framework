@@ -27,10 +27,7 @@ StateFactory& StateFactory::Instance()
 std::shared_ptr<IState> StateFactory::GetState(SchedulerType type)
 {
     auto it = states_.find(type);
-    if (it != states_.end()) {
-        return it->second;
-    }
-    return nullptr;
+    return it != states_.end() ? it->second : nullptr;
 }
 } // namespace DeferredProcessing
 } // namespace CameraStandard

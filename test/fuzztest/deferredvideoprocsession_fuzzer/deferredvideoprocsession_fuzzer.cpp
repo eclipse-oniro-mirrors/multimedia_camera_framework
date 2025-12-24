@@ -13,14 +13,15 @@
  * limitations under the License.
  */
 
+#include "deferredvideoprocsession_fuzzer.h"
+
 #include <cstddef>
-#include <cstdint>
 #include <memory>
 
 #include "accesstoken_kit.h"
 #include "camera_error_code.h"
 #include "camera_log.h"
-#include "deferredvideoprocsession_fuzzer.h"
+#include "deferred_processing_types.h"
 #include "message_parcel.h"
 #include "nativetoken_kit.h"
 #include "securec.h"
@@ -48,8 +49,8 @@ auto createSession(int userId,
     CHECK_RETURN_RET_ELOG(samgr == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "CreateDeferredVideoProcessingSession Failed to get System ability manager");
     sptr<IRemoteObject> object = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
-    CHECK_RETURN_RET_ELOG(object == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
-        "CreateDeferredVideoProcessingSession object is null");
+    CHECK_RETURN_RET_ELOG(
+        object == nullptr, CameraErrorCode::SERVICE_FATL_ERROR, "CreateDeferredVideoProcessingSession object is null");
     sptr<ICameraService> serviceProxy = iface_cast<ICameraService>(object);
     CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "CreateDeferredVideoProcessingSession serviceProxy is null");
@@ -69,11 +70,10 @@ void DeferredVideoProcSessionFuzzer::DeferredVideoProcSessionFuzzTest(FuzzedData
     }
     CHECK_RETURN_ELOG(!TestToken().GetAllCameraPermission(), "GetPermission error");
     std::string videoId(fdp.ConsumeRandomLengthString(MAX_LENGTH_STRING));
-    sptr<IPCFileDescriptor> ipcFileDescriptor = nullptr;
-    callback_->OnProcessVideoDone(videoId, ipcFileDescriptor);
-    callback_->OnError(videoId, DpsErrorCode::ERROR_SESSION_SYNC_NEEDED);
+    callback_->OnProcessVideoDone(videoId);
+    callback_->OnError(videoId, DeferredProcessing::ErrorCode::ERROR_SESSION_SYNC_NEEDED);
     int32_t status = fdp.ConsumeIntegral<int32_t>();
-    callback_->OnStateChanged(status);
+    callback_->OnStateChanged(static_cast<DeferredProcessing::StatusCode>(status));
 
     deferredVideoProcSession_->BeginSynchronize();
     deferredVideoProcSession_->EndSynchronize();

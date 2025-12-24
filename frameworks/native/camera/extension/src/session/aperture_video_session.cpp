@@ -25,8 +25,8 @@
 
 namespace OHOS {
 namespace CameraStandard {
-ApertureVideoSession::ApertureVideoSession(sptr<ICaptureSession>& captureSession)
-    : CaptureSessionForSys(captureSession) {}
+ApertureVideoSession::ApertureVideoSession(sptr<ICaptureSession>& captureSession) :
+    CaptureSessionForSys(captureSession) {}
 
 bool ApertureVideoSession::CanAddOutput(sptr<CaptureOutput>& output)
 {
@@ -64,7 +64,7 @@ int32_t ApertureVideoSession::CommitConfig()
     UnlockForControl();
     CHECK_RETURN_RET_ELOG(!updateStabilizationAutoResult, CameraErrorCode::SERVICE_FATL_ERROR,
         "ApertureVideoSession::CommitConfig add STABILIZATION fail");
-        return CameraErrorCode::SUCCESS;
+    return CameraErrorCode::SUCCESS;
 }
 } // namespace CameraStandard
 } // namespace OHOS

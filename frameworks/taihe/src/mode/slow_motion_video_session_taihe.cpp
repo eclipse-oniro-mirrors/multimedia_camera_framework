@@ -39,6 +39,30 @@ void SlowMotionStateListener::OnSlowMotionStateCb(const OHOS::CameraStandard::Sl
     mainHandler_->PostTask(task, "OnSlowMotionStatus", 0, OHOS::AppExecFwk::EventQueue::Priority::IMMEDIATE, {});
 }
 
+void SlowMotionZoomInfoListener::OnZoomInfoChange(const std::vector<float> zoomInfoRange)
+{
+    MEDIA_DEBUG_LOG("SlowMotionZoomInfoListener::OnZoomInfoChange is called");
+    OnZoomInfoChangeCb(zoomInfoRange);
+}
+
+void SlowMotionZoomInfoListener::OnZoomInfoChangeCb(const std::vector<float> zoomInfoRange) const
+{
+    MEDIA_DEBUG_LOG("SlowMotionZoomInfoListener::OnZoomInfoChangeCb is called");
+    auto sharePtr = shared_from_this();
+    auto task = [zoomInfoRange, sharePtr]() {
+        std::vector<double> zoomInfoTemp;
+        for (auto item : zoomInfoRange) {
+            zoomInfoTemp.push_back(static_cast<double>(item));
+        }
+        ZoomInfo zoomInfoTaihe {};
+        zoomInfoTaihe.zoomRatioRange = optional<array<double>>::make(zoomInfoTemp);
+        CHECK_EXECUTE(sharePtr != nullptr,
+            sharePtr->ExecuteAsyncCallback<ZoomInfo const&>("zoomInfoChange", 0, "Callback is OK", zoomInfoTaihe));
+    };
+    CHECK_RETURN_ELOG(mainHandler_ == nullptr, "callback failed, mainHandler_ is nullptr!");
+    mainHandler_->PostTask(task, "OnZoomInfoChange", 0, OHOS::AppExecFwk::EventQueue::Priority::IMMEDIATE, {});
+}
+
 void SlowMotionVideoSessionImpl::RegisterSlowMotionStateCb(
     const std::string& eventName, std::shared_ptr<uintptr_t> callback, bool isOnce)
 {
@@ -49,6 +73,7 @@ void SlowMotionVideoSessionImpl::RegisterSlowMotionStateCb(
             std::static_pointer_cast<SlowMotionStateListener>(slowMotionSession_->GetApplicationCallback());
         if (slowMotionStateListenerTemp == nullptr) {
             slowMotionStateListenerTemp = std::make_shared<SlowMotionStateListener>(env);
+            CHECK_RETURN_ELOG(slowMotionSession_ == nullptr, "slowMotionSession_ is null!");
             slowMotionSession_->SetCallback(slowMotionStateListenerTemp);
         }
         slowMotionState_ = slowMotionStateListenerTemp;
@@ -64,6 +89,32 @@ void SlowMotionVideoSessionImpl::UnregisterSlowMotionStateCb(
     CHECK_RETURN_ELOG(slowMotionState_ == nullptr, "slowMotionState_ is null");
     slowMotionState_->RemoveCallbackRef(eventName, callback);
     MEDIA_INFO_LOG("UnregisterSlowMotionStateCb success");
+}
+
+void SlowMotionVideoSessionImpl::RegisterZoomInfoCbListener(
+    const std::string& eventName, std::shared_ptr<uintptr_t> callback, bool isOnce)
+{
+    MEDIA_INFO_LOG("RegisterZoomInfoCbListener is called");
+    if (zoomInfoListener_ == nullptr) {
+        CHECK_RETURN_ELOG(!slowMotionSession_, "slowMotionSession_ is nullptr");
+        std::shared_ptr<SlowMotionZoomInfoListener> zoomInfoListenerTemp =
+            std::static_pointer_cast<SlowMotionZoomInfoListener>(slowMotionSession_->GetZoomInfoCallback());
+        if (zoomInfoListenerTemp == nullptr) {
+            ani_env *env = get_env();
+            zoomInfoListenerTemp = std::make_shared<SlowMotionZoomInfoListener>(env);
+            slowMotionSession_->SetZoomInfoCallback(zoomInfoListenerTemp);
+        }
+        zoomInfoListener_ = zoomInfoListenerTemp;
+    }
+    zoomInfoListener_->SaveCallbackReference(eventName, callback, isOnce);
+    MEDIA_INFO_LOG("RegisterZoomInfoCbListener success");
+}
+void SlowMotionVideoSessionImpl::UnregisterZoomInfoCbListener(
+    const std::string& eventName, std::shared_ptr<uintptr_t> callback)
+{
+    MEDIA_INFO_LOG("UnregisterZoomInfoCbListener is called");
+    CHECK_RETURN_ELOG(zoomInfoListener_ == nullptr, "zoomInfoListener_ is null");
+    zoomInfoListener_->RemoveCallbackRef(eventName, callback);
 }
 
 bool SlowMotionVideoSessionImpl::IsSlowMotionDetectionSupported()

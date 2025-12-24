@@ -33,6 +33,7 @@ const std::string PLUGIN_SO_PATH = "/system/lib64/platformsdk/libmotion_agent.z.
 const std::string PLUGIN_SO_PATH = "/system/lib/platformsdk/libmotion_agent.z.so";
 #endif
 const int32_t MOTION_TYPE_DROP_DETECTION = 1600;
+const int32_t MOTION_TYPE_ROTATION = 700;
 
 typedef struct MotionSensorEvent {
     int32_t type = -1;
@@ -51,4 +52,4 @@ bool SubscribeCallback(int32_t motionType, OnMotionChangedPtr callback);
 bool UnsubscribeCallback(int32_t motionType, OnMotionChangedPtr callback);
 }
 }
-#endif /* CAMERA_SENSOR_PLUGIN_H */
+#endif /* CAMERA_SENSOR_PLUGIN_H */

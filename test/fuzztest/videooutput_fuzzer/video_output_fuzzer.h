@@ -18,13 +18,12 @@
 
 #include "video_output.h"
 #include <memory>
-#include <fuzzer/FuzzedDataProvider.h>
 
 namespace OHOS {
 namespace CameraStandard {
 class VideoOutputFuzzer {
 public:
-static void VideoOutputFuzzTest(FuzzedDataProvider& fdp);
+static void VideoOutputFuzzTest();
 };
 } //CameraStandard
 } //OHOS

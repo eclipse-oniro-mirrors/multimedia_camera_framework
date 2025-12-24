@@ -18,15 +18,27 @@
 #include "dps_event_report.h"
 #include "events_info.h"
 #include "events_monitor.h"
+#include "interrupt_state.h"
 #include "state_factory.h"
+#include "video_battery_level_state.h"
+#include "video_battery_state.h"
+#include "video_camera_state.h"
+#include "video_charging_state.h"
+#include "video_hal_state.h"
+#include "video_media_library_state.h"
+#include "video_photo_process_state.h"
+#include "video_process_time_state.h"
+#include "video_screen_state.h"
+#include "video_temperature_state.h"
 
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
 namespace {
+    constexpr uint32_t TIME_OK = 0b0;
     constexpr uint32_t SINGLE_TIME_LIMIT = 0b1;
     constexpr uint32_t TOTAL_TIME_LIMIT = 0b10;
-    constexpr int32_t DEFAULT_TIME = 0;
+    constexpr int32_t DEFAULT_TIME = -1;
 }
 
 class VideoStrategyCenter::EventsListener : public IEventsListener {
@@ -63,13 +75,12 @@ VideoStrategyCenter::VideoStrategyCenter(const std::shared_ptr<VideoJobRepositor
 
 VideoStrategyCenter::~VideoStrategyCenter()
 {
-    DP_DEBUG_LOG("entered.");
+    DP_INFO_LOG("entered.");
     eventHandlerList_.clear();
 }
 
-void VideoStrategyCenter::Initialize()
+int32_t VideoStrategyCenter::Initialize()
 {
-    DP_DEBUG_LOG("entered.");
     InitHandleEvent();
     auto state = EventsInfo::GetInstance().GetChargingState();
     isCharging_ = state == ChargingStatus::CHARGING;
@@ -83,13 +94,25 @@ void VideoStrategyCenter::Initialize()
         BATTERY_STATUS_EVENT,
         BATTERY_LEVEL_STATUS_EVENT,
         CHARGING_STATUS_EVENT,
-        PHOTO_PROCESS_STATUS_EVENT},
+        PHOTO_PROCESS_STATUS_EVENT,
+        INTERRUPT_EVENT},
         eventsListener_);
+    return DP_OK;
 }
 
 void VideoStrategyCenter::InitHandleEvent()
 {
-    DP_DEBUG_LOG("entered.");
+    REGISTER_STATE(InterruptState, INTERRUPT_STATE, NO_INTERRUPT);
+    REGISTER_STATE(VideoBatteryLevelState, BATTERY_LEVEL_STATE, EventsInfo::GetInstance().GetBatteryLevel());
+    REGISTER_STATE(VideoBatteryState, BATTERY_STATE, EventsInfo::GetInstance().GetBatteryState());
+    REGISTER_STATE(VideoCameraState, VIDEO_CAMERA_STATE, SYSTEM_CAMERA_CLOSED);
+    REGISTER_STATE(VideoChargingState, CHARGING_STATE, EventsInfo::GetInstance().GetChargingState());
+    REGISTER_STATE(VideoHalState, VIDEO_HAL_STATE, HDI_DISCONNECTED);
+    REGISTER_STATE(VideoMediaLibraryState, VIDEO_MEDIA_LIBRARY_STATE, MEDIA_LIBRARY_DISCONNECTED);
+    REGISTER_STATE(VideoPhotoProcessState, PHOTO_PROCESS_STATE, IDLE);
+    REGISTER_STATE(VideoScreenState, SCREEN_STATE, EventsInfo::GetInstance().GetScreenState());
+    REGISTER_STATE(VideoTemperatureState, VIDEO_THERMAL_LEVEL_STATE,
+        ConvertVideoThermalLevel(EventsInfo::GetInstance().GetThermalLevel()));
     eventHandlerList_ = {
         {CAMERA_SESSION_STATUS_EVENT, [this](int32_t value){ HandleCameraEvent(value); }},
         {VIDEO_HDI_STATUS_EVENT, [this](int32_t value){ HandleHalEvent(value); }},
@@ -99,7 +122,8 @@ void VideoStrategyCenter::InitHandleEvent()
         {BATTERY_STATUS_EVENT, [this](int32_t value){ HandleBatteryEvent(value); }},
         {BATTERY_LEVEL_STATUS_EVENT, [this](int32_t value){ HandleBatteryLevelEvent(value); }},
         {THERMAL_LEVEL_STATUS_EVENT, [this](int32_t value){ HandleTemperatureEvent(value); }},
-        {PHOTO_PROCESS_STATUS_EVENT, [this](int32_t value){ HandlePhotoProcessEvent(value); }}
+        {PHOTO_PROCESS_STATUS_EVENT, [this](int32_t value){ HandlePhotoProcessEvent(value); }},
+        {INTERRUPT_EVENT, [this](int32_t value){ HandleInterruptEvent(value); }}
     };
 }
 
@@ -119,23 +143,24 @@ void VideoStrategyCenter::RegisterStateChangeListener(const std::weak_ptr<VideoS
     videoStateChangeListener_ = listener;
 }
 
-DeferredVideoWorkPtr VideoStrategyCenter::GetWork()
-{
-    auto jobPtr = GetJob();
-    ExecutionMode mode = GetExecutionMode();
-    if ((jobPtr != nullptr) && (mode != ExecutionMode::DUMMY)) {
-        return std::make_shared<DeferredVideoWork>(jobPtr, mode, isCharging_);
-    }
-    return nullptr;
-}
-
 DeferredVideoJobPtr VideoStrategyCenter::GetJob()
 {
-    return repository_->GetJob();
+    auto jobPtr = repository_->GetJob();
+    DP_CHECK_RETURN_RET(jobPtr == nullptr, nullptr);
+    ExecutionMode mode = GetExecutionMode(jobPtr->GetCurPriority());
+    DP_CHECK_RETURN_RET(mode == ExecutionMode::DUMMY, nullptr);
+    jobPtr->SetExecutionMode(mode);
+    jobPtr->SetChargState(isCharging_);
+    return jobPtr;
 }
 
-ExecutionMode VideoStrategyCenter::GetExecutionMode()
+ExecutionMode VideoStrategyCenter::GetExecutionMode(const JobPriority priority)
 {
+    if (priority == JobPriority::HIGH) {
+        DP_CHECK_RETURN_RET(EventsInfo::GetInstance().GetCameraState() <= CameraSessionStatus::NORMAL_CAMERA_OPEN,
+            ExecutionMode::DUMMY);
+        return ExecutionMode::LOAD_BALANCE;
+    }
     if (isCharging_) {
         DP_CHECK_RETURN_RET(IsReady(), ExecutionMode::LOAD_BALANCE);
     } else {
@@ -173,7 +198,7 @@ void VideoStrategyCenter::HandleChargingEvent(int32_t value)
 {
     DP_DEBUG_LOG("ChargingEvent value: %{public}d", value);
     isCharging_ = value == ChargingStatus::CHARGING;
-    DP_CHECK_EXECUTE(isCharging_, UpdateAvailableTime(true, DEFAULT_TIME));
+    DP_CHECK_EXECUTE(isCharging_, UpdateAvailableTime());
     UpdateValue(CHARGING_STATE, value);
 }
 
@@ -203,6 +228,12 @@ void VideoStrategyCenter::HandlePhotoProcessEvent(int32_t value)
     UpdateValue(PHOTO_PROCESS_STATE, state);
 }
 
+void VideoStrategyCenter::HandleInterruptEvent(int32_t value)
+{
+    DP_DEBUG_LOG("InterruptEvent");
+    UpdateValue(INTERRUPT_STATE, value);
+}
+
 void VideoStrategyCenter::UpdateValue(SchedulerType type, int32_t value)
 {
     auto scheduleState = GetSchedulerState(type);
@@ -218,29 +249,42 @@ void VideoStrategyCenter::UpdateValue(SchedulerType type, int32_t value)
 
 void VideoStrategyCenter::UpdateSingleTime(bool isOk)
 {
-    if (isOk) {
-        isTimeOk_ &= ~SINGLE_TIME_LIMIT;
-    } else {
-        isTimeOk_ |= SINGLE_TIME_LIMIT;
-    }
-    DP_INFO_LOG("DPS_VIDEO: Process time type: %{public}u", isTimeOk_);
+    isOk ? (isTimeOk_ &= ~SINGLE_TIME_LIMIT) : (isTimeOk_ |= SINGLE_TIME_LIMIT);
+    DP_CHECK_EXECUTE(isOk, singleTime_ = ONCE_PROCESS_TIME);
+    DP_INFO_LOG("DPS_VIDEO: Process time type: %{public}d", isTimeOk_);
 }
 
-void VideoStrategyCenter::UpdateAvailableTime(bool isNeedReset, int32_t useTime)
+void VideoStrategyCenter::UpdateAvailableTime(int32_t useTime)
 {
-    if (isNeedReset) {
+    if (useTime == DEFAULT_TIME) {
         availableTime_ = TOTAL_PROCESS_TIME;
     } else {
         availableTime_ -= useTime;
+        singleTime_ -= useTime;
     }
 
-    if (availableTime_ > 0) {
-        isTimeOk_ &= ~TOTAL_TIME_LIMIT;
-    } else {
-        availableTime_ = 0;
-        isTimeOk_ |= TOTAL_TIME_LIMIT;
-    }
-    DP_INFO_LOG("DPS_VIDEO: Available process time: %{public}d, type: %{public}u", availableTime_, isTimeOk_);
+    availableTime_ > 0 ? (isTimeOk_ &= ~TOTAL_TIME_LIMIT) : (isTimeOk_ |= TOTAL_TIME_LIMIT);
+    DP_CHECK_EXECUTE(availableTime_ < 0, availableTime_ = 0);
+    DP_CHECK_EXECUTE(singleTime_ < 0, singleTime_ = 0);
+    DP_INFO_LOG("DPS_VIDEO: Single processTime: %{public}d, Available processTime: %{public}d, type: %{public}d",
+        singleTime_, availableTime_, isTimeOk_);
+}
+
+bool VideoStrategyCenter::IsReady()
+{
+    DP_INFO_LOG("DPS_VIDEO: SchedulerOk is: %{public}d",  !isNeedStop_);
+    return !isNeedStop_;
+}
+
+bool VideoStrategyCenter::IsTimeReady()
+{
+    DP_INFO_LOG("DPS_VIDEO: TimeOk is: %{public}d", isTimeOk_);
+    return isTimeOk_ == TIME_OK;
+}
+
+int32_t VideoStrategyCenter::GetAvailableTime()
+{
+    return std::min(singleTime_, availableTime_);
 }
 
 SchedulerInfo VideoStrategyCenter::ReevaluateSchedulerInfo()
@@ -252,24 +296,22 @@ SchedulerInfo VideoStrategyCenter::ReevaluateSchedulerInfo()
     SchedulerInfo temperatureInfo = GetSchedulerInfo(VIDEO_THERMAL_LEVEL_STATE);
     SchedulerInfo photoProcessInfo = GetSchedulerInfo(PHOTO_PROCESS_STATE);
     SchedulerInfo chargingInfo = GetSchedulerInfo(CHARGING_STATE);
-    if (cameraInfo.isNeedStop || halInfo.isNeedStop || mediaLibraryInfo.isNeedStop ||
-        screenInfo.isNeedStop || temperatureInfo.isNeedStop || photoProcessInfo.isNeedStop) {
-        DP_INFO_LOG("DPS_EVENT: Video stop schedule, hdi: %{public}d, mediaLibrary: %{public}d, camera: %{public}d, "
-            "screen: %{public}d, temperature: %{public}d, photoRunning: %{public}d",
-            halInfo.isNeedStop, mediaLibraryInfo.isNeedStop, cameraInfo.isNeedStop,
-            screenInfo.isNeedStop, temperatureInfo.isNeedStop, photoProcessInfo.isNeedStop);
-        return {.isCharging = chargingInfo.isCharging};
-    }
+    SchedulerInfo interruptInfo = GetSchedulerInfo(INTERRUPT_STATE);
+    bool isNeedStop = cameraInfo.isNeedStop || halInfo.isNeedStop || mediaLibraryInfo.isNeedStop
+        || screenInfo.isNeedStop || temperatureInfo.isNeedStop || photoProcessInfo.isNeedStop
+        || interruptInfo.isNeedInterrupt;
+    SchedulerInfo result = {isNeedStop, interruptInfo.isNeedInterrupt, chargingInfo.isCharging};
+    DP_CHECK_RETURN_RET_LOG(isNeedStop, result,
+        "DPS_EVENT: Video stop schedule, hdi: %{public}d, mediaLibrary: %{public}d, camera: %{public}d, "
+        "screen: %{public}d, temperature: %{public}d, photoRunning: %{public}d",
+        halInfo.isNeedStop, mediaLibraryInfo.isNeedStop, cameraInfo.isNeedStop,
+        screenInfo.isNeedStop, temperatureInfo.isNeedStop, photoProcessInfo.isNeedStop);
 
     if (chargingInfo.isCharging) {
-        DP_CHECK_RETURN_RET_LOG(repository_->GetRunningJobCounts() > 0,
-            chargingInfo, "Has video job running.");
-        
-        DP_INFO_LOG("DPS_EVENT: Video try do schedule in charging.");
+        DP_CHECK_RETURN_RET_LOG(repository_->HasRunningJob(), chargingInfo, "Has video job running.");
         return GetSchedulerInfo(BATTERY_LEVEL_STATE);
     }
 
-    DP_INFO_LOG("DPS_EVENT: Video try do schedule in normal.");
     return GetSchedulerInfo(BATTERY_STATE);
 }
 
@@ -285,6 +327,7 @@ std::shared_ptr<IState> VideoStrategyCenter::GetSchedulerState(SchedulerType typ
 {
     return StateFactory::Instance().GetState(type);
 }
+
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS

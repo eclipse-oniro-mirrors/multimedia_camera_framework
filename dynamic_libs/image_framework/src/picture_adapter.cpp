@@ -23,9 +23,6 @@
 #include "picture.h"
 #include "pixel_map.h"
 #include "surface_buffer.h"
-#include "securec.h"
-#include <algorithm>
-#include <cstdint>
 namespace OHOS {
 namespace CameraStandard {
 std::unordered_map<std::string, float> exifOrientationDegree = {
@@ -102,56 +99,6 @@ void PictureAdapter::SetAuxiliaryPicture(sptr<SurfaceBuffer> &surfaceBuffer, Cam
     picture->SetAuxiliaryPicture(picturePtr);
 }
 
-void CopyMetaData(sptr<SurfaceBuffer> &inBuffer, sptr<SurfaceBuffer> &outBuffer)
-{
-    std::vector<uint32_t> keys = {};
-    CHECK_RETURN_ELOG(inBuffer == nullptr, "CopyMetaData: inBuffer is nullptr");
-    auto ret = inBuffer->ListMetadataKeys(keys);
-    CHECK_RETURN_ELOG(ret != GSError::GSERROR_OK,
-        "CopyMetaData: ListMetadataKeys fail! res=%{public}d", ret);
-    for (uint32_t key : keys) {
-        std::vector<uint8_t> values;
-        ret = inBuffer->GetMetadata(key, values);
-        CHECK_CONTINUE_ILOG(ret != 0, "GetMetadata fail! key = %{public}d res = %{public}d", key, ret);
-        ret = outBuffer->SetMetadata(key, values);
-        CHECK_CONTINUE_ILOG(ret != 0, "SetMetadata fail! key = %{public}d res = %{public}d", key, ret);
-    }
-}
- 
-void PictureAdapter::CreateWithDeepCopySurfaceBuffer(sptr<SurfaceBuffer> &surfaceBuffer)
-{
-    MEDIA_INFO_LOG("PictureAdapter CreateWithDeepCopySurfaceBuffer");
-    BufferRequestConfig requestConfig = {
-        .width = surfaceBuffer->GetWidth(),
-        .height = surfaceBuffer->GetHeight(),
-        .strideAlignment = surfaceBuffer->GetStride(),
-        .format = surfaceBuffer->GetFormat(),
-        .usage = surfaceBuffer->GetUsage(),
-        .timeout = 0,
-        .colorGamut = surfaceBuffer->GetSurfaceBufferColorGamut(),
-        .transform = surfaceBuffer->GetSurfaceBufferTransform(),
-    };
-    sptr<SurfaceBuffer> newSurfaceBuffer = SurfaceBuffer::Create();
-    CHECK_RETURN_ELOG(!newSurfaceBuffer,
-        "PictureAdapter::CreateWithDeepCopySurfaceBuffer newSurfaceBuffer is nullptr");
-    auto allocErrorCode = newSurfaceBuffer->Alloc(requestConfig);
-    MEDIA_INFO_LOG("PictureAdapter::CreateWithDeepCopySurfaceBuffer SurfaceBuffer alloc ret: %{public}d",
-        allocErrorCode);
-    unsigned char* dst = static_cast<unsigned char*>(newSurfaceBuffer->GetVirAddr());
-    unsigned char* src = static_cast<unsigned char*>(surfaceBuffer->GetVirAddr());
-    for (int32_t i = 0; i < surfaceBuffer->GetHeight() * PIXEL_SIZE_HDR_YUV / HDR_PIXEL_SIZE; i++) {
-        errno_t errNo = memcpy_s(dst, surfaceBuffer->GetWidth(), src, surfaceBuffer->GetWidth());
-        if (errNo != EOK) {
-            MEDIA_ERR_LOG("PictureAdapter memcpy_s failed, errNo = %{public}d", static_cast<int32_t>(errNo));
-            return;
-        }
-        dst += surfaceBuffer->GetWidth();
-        src += surfaceBuffer->GetStride();
-    }
-    CopyMetaData(surfaceBuffer, newSurfaceBuffer);
-    picture_ = Media::Picture::Create(newSurfaceBuffer);
-}
-
 bool PictureAdapter::Marshalling(Parcel &data) const
 {
     MEDIA_INFO_LOG("PictureAdapter::Marshalling enter");
@@ -200,8 +147,8 @@ void PictureAdapter::RotatePicture()
     CHECK_RETURN_ELOG(!picture, "PictureAdapter::RotatePicture picture is nullptr");
     std::string orientation = GetAndSetExifOrientation(
         reinterpret_cast<OHOS::Media::ImageMetadata*>(picture->GetExifMetadata().get()));
-    RotatePixelMap(picture->GetMainPixel(), orientation);
     MEDIA_INFO_LOG("PictureAdapter::RotatePicture orientation:%{public}s", orientation.c_str());
+    RotatePixelMap(picture->GetMainPixel(), orientation);
     auto gainMap = picture->GetAuxiliaryPicture(Media::AuxiliaryPictureType::GAINMAP);
     if (gainMap) {
         RotatePixelMap(gainMap->GetContentPixel(), orientation);
@@ -221,6 +168,21 @@ void PictureAdapter::RotatePicture()
     MEDIA_INFO_LOG("PictureAdapter::RotatePicture X");
 }
 
+uint32_t PictureAdapter::SetXtStyleMetadataBlob(const uint8_t *source, const uint32_t bufferSize)
+{
+    MEDIA_INFO_LOG("PictureAdapter::SetXtStyleMetadataBlob E");
+    uint32_t retCode = 0;
+    std::shared_ptr<Media::Picture> picture = GetPicture();
+    CHECK_RETURN_RET_ELOG(!picture, retCode, "PictureAdapter::SetXtStyleMetadataBlob picture is nullptr");
+    auto xtStyleMetadata = std::make_shared<Media::XtStyleMetadata>();
+    xtStyleMetadata->SetBlob(source, bufferSize);
+    retCode = picture->SetXtStyleMetadata(xtStyleMetadata);
+    CHECK_EXECUTE(retCode != 0, CameraReportUtils::GetInstance().ReportCameraError<uint32_t>(
+        "PictureAdapter::SetXtStyleMetadataBlob", "Media::Picture::SetXtStyleMetadata", retCode));
+    MEDIA_INFO_LOG("PictureAdapter::SetXtStyleMetadataBlob X");
+    return retCode;
+}
+
 std::shared_ptr<Media::Picture> PictureAdapter::GetPicture() const
 {
     return picture_;
@@ -231,5 +193,5 @@ extern "C" PictureIntf *createPictureAdapterIntf()
     return new PictureAdapter();
 }
 
-}  // namespace AVSession
+}  // namespace CameraStandard
 }  // namespace OHOS

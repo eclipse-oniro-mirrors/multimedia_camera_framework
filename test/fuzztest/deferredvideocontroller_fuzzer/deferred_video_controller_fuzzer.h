@@ -24,14 +24,6 @@
 namespace OHOS {
 namespace CameraStandard {
 using namespace DeferredProcessing;
-class IVideoProcessCallbacksFuzz : public IVideoProcessCallbacks {
-public:
-    void OnProcessDone(const int32_t userId,
-        const std::string& videoId, const sptr<IPCFileDescriptor>& ipcFd) override {}
-    void OnError(const int32_t userId, const std::string& videoId, DpsError errorCode) override {}
-    void OnStateChanged(const int32_t userId, DpsStatus statusCode) override {}
-};
-
 class DeferredVideoControllerFuzzer {
 public:
 static std::shared_ptr<DeferredProcessing::DeferredVideoController> fuzz_;

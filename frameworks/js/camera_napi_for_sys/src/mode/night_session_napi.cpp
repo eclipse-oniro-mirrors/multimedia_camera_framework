@@ -15,6 +15,8 @@
 
 #include "mode/night_session_napi.h"
 
+#include "camera_napi_object_types.h"
+#include "camera_napi_param_parser.h"
 #include "input/camera_manager_for_sys.h"
 #include "napi/native_node_api.h"
 #include "napi_ref_manager.h"
@@ -50,12 +52,24 @@ void NightSessionNapi::Init(napi_env env)
         DECLARE_NAPI_FUNCTION("getExposure", NightSessionNapi::GetExposure),
         DECLARE_NAPI_FUNCTION("setExposure", NightSessionNapi::SetExposure)
     };
+
+    std::vector<napi_property_descriptor> night_sub_mode_props = {
+        DECLARE_NAPI_FUNCTION("getSupportedNightSubModeTypes", NightSessionNapi::GetSupportedNightSubModeTypes),
+        DECLARE_NAPI_FUNCTION("setNightSubModeType", NightSessionNapi::SetNightSubModeType),
+        DECLARE_NAPI_FUNCTION("getNightSubModeType", NightSessionNapi::GetNightSubModeType)
+    };
+
+    std::vector<napi_property_descriptor> gps_info_props = {
+        DECLARE_NAPI_FUNCTION("setLocation", NightSessionNapi::SetLocation),
+    };
+
     std::vector<std::vector<napi_property_descriptor>> descriptors = { camera_process_props, stabilization_props,
         CameraSessionForSysNapi::camera_process_sys_props, CameraSessionForSysNapi::camera_output_capability_sys_props,
         flash_props, CameraSessionForSysNapi::flash_sys_props, auto_exposure_props, focus_props,
         CameraSessionForSysNapi::focus_sys_props, zoom_props, CameraSessionForSysNapi::zoom_sys_props,
         color_effect_sys_props, beauty_sys_props, color_management_props, manual_exposure_props, macro_props,
-        filter_props };
+        filter_props, CameraSessionForSysNapi::scene_detection_sys_props, composition_suggestion, gps_info_props, 
+        night_sub_mode_props, image_stabilization_guide_props, CameraSessionForSysNapi::camera_ability_sys_props };
     std::vector<napi_property_descriptor> night_session_props = CameraNapiUtils::GetPropertyDescriptor(descriptors);
     status = napi_define_class(env, NIGHT_SESSION_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
                                NightSessionNapiConstructor, nullptr,
@@ -118,8 +132,12 @@ napi_value NightSessionNapi::GetSupportedExposureRange(napi_env env, napi_callba
     if (status == napi_ok && nightSessionNapi != nullptr) {
         std::vector<uint32_t> vecExposureList;
         int32_t retCode = nightSessionNapi->nightSession_->GetExposureRange(vecExposureList);
-        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
-        CHECK_RETURN_RET(vecExposureList.empty() || napi_create_array(env, &result) != napi_ok, result);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
+        if (vecExposureList.empty() || napi_create_array(env, &result) != napi_ok) {
+            return result;
+        }
         for (size_t i = 0; i < vecExposureList.size(); i++) {
             uint32_t exposure = vecExposureList[i];
             MEDIA_DEBUG_LOG("EXPOSURE_RANGE : exposure = %{public}d", vecExposureList[i]);
@@ -151,7 +169,9 @@ napi_value NightSessionNapi::GetExposure(napi_env env, napi_callback_info info)
     if (status == napi_ok && nightSessionNapi!= nullptr) {
         uint32_t exposureValue;
         int32_t retCode = nightSessionNapi->nightSession_->GetExposure(exposureValue);
-        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
         MEDIA_DEBUG_LOG("GetExposure : exposure = %{public}d", exposureValue);
         napi_create_uint32(env, exposureValue, &result);
     } else {
@@ -182,9 +202,110 @@ napi_value NightSessionNapi::SetExposure(napi_env env, napi_callback_info info)
         nightSessionNapi->nightSession_->LockForControl();
         int32_t retCode = nightSessionNapi->nightSession_->SetExposure(exposureValue);
         nightSessionNapi->nightSession_->UnlockForControl();
-        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), result);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return result;
+        }
     } else {
         MEDIA_ERR_LOG("SetExposure call Failed!");
+    }
+    return result;
+}
+
+napi_value NightSessionNapi::GetSupportedNightSubModeTypes(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("GetSupportedNightSubModeTypes is called");
+    auto result = CameraNapiUtils::GetUndefinedValue(env);
+    NightSessionNapi* nightSessionNapi;
+    CameraNapiParamParser paramParser(env, info, nightSessionNapi);
+    if (!paramParser.AssertStatus(INVALID_ARGUMENT, "invalid argument.")) {
+        MEDIA_ERR_LOG("CameraManagerNapi::GetSupportedNightSubModeTypes invalid argument");
+        return nullptr;
+    }
+    napi_status status = napi_create_array(env, &result);
+    CHECK_RETURN_RET_ELOG(status != napi_ok, result, "napi_create_array call Failed!");
+    auto nightSession = nightSessionNapi->nightSession_;
+    CHECK_RETURN_RET_ELOG(nightSession == nullptr, result, "nightSession is null");
+    std::vector<NightSubMode> nightSubModes = nightSession->GetSupportedNightSubModeTypes();
+    MEDIA_DEBUG_LOG("NightSessionNapi::GetSupportedNightSubModeTypes len = %{public}zu", nightSubModes.size());
+    if (!nightSubModes.empty()) {
+        for (size_t i = 0; i < nightSubModes.size(); i++) {
+            int32_t subMode = static_cast<int32_t>(nightSubModes[i]);
+            napi_value value;
+            napi_create_int32(env, subMode, &value);
+            napi_set_element(env, result, i, value);
+        }
+    }
+    return result;
+}
+
+napi_value NightSessionNapi::GetNightSubModeType(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("GetNightSubModeType is called");
+    auto result = CameraNapiUtils::GetUndefinedValue(env);
+    NightSessionNapi* nightSessionNapi;
+    CameraNapiParamParser paramParser(env, info, nightSessionNapi);
+    if (!paramParser.AssertStatus(INVALID_ARGUMENT, "invalid argument.")) {
+        MEDIA_ERR_LOG("CameraManagerNapi::GetNightSubModeType invalid argument");
+        return nullptr;
+    }
+    auto nightSession = nightSessionNapi->nightSession_;
+    CHECK_RETURN_RET_ELOG(nightSession == nullptr, result, "nightSession is null");
+    NightSubMode nightSubMode;
+    int32_t ret = nightSession->GetNightSubModeType(nightSubMode);
+    if (!CameraNapiUtils::CheckError(env, ret)) {
+        return nullptr;
+    }
+    int32_t subMode = static_cast<int32_t>(nightSubMode);
+    napi_create_int32(env, subMode, &result);
+    return result;
+}
+
+napi_value NightSessionNapi::SetNightSubModeType(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("SetNightSubModeType is called");
+    auto result = CameraNapiUtils::GetUndefinedValue(env);
+    NightSessionNapi* nightSessionNapi;
+    int32_t value = 0;
+    CameraNapiParamParser paramParser(env, info, nightSessionNapi, value);
+    if (!paramParser.AssertStatus(INVALID_ARGUMENT, "invalid argument.")) {
+        MEDIA_ERR_LOG("CameraManagerNapi::SetNightSubModeType invalid argument");
+        return nullptr;
+    }
+    auto nightSession = nightSessionNapi->nightSession_;
+    CHECK_RETURN_RET_ELOG(nightSession == nullptr, result, "nightSession is null");
+    NightSubMode subMode = (NightSubMode)value;
+    nightSession->LockForControl();
+    int ret = nightSession->SetNightSubModeType(subMode);
+    nightSession->UnlockForControl();
+    if (!CameraNapiUtils::CheckError(env, ret)) {
+        return nullptr;
+    }
+    return result;
+}
+
+napi_value NightSessionNapi::SetLocation(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("SetLocation is called");
+    auto result = CameraNapiUtils::GetUndefinedValue(env);
+    Location location;
+    CameraNapiObject locationNapiOjbect { {
+        { "latitude", &location.latitude },
+        { "longitude", &location.longitude },
+        { "altitude", &location.altitude },
+    } };
+    NightSessionNapi* nightSessionNapi;
+    CameraNapiParamParser paramParser(env, info, nightSessionNapi, locationNapiOjbect);
+    if (!paramParser.AssertStatus(INVALID_ARGUMENT, "invalid argument.")) {
+        MEDIA_ERR_LOG("CameraManagerNapi::SetLocation invalid argument");
+        return result;
+    }
+    auto nightSession = nightSessionNapi->nightSession_;
+    CHECK_RETURN_RET_ELOG(nightSession == nullptr, result, "nightSession is null");
+    nightSession->LockForControl();
+    int ret = nightSession->SetLocation(location);
+    nightSession->UnlockForControl();
+    if (!CameraNapiUtils::CheckError(env, ret)) {
+        return result;
     }
     return result;
 }

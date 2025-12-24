@@ -25,7 +25,7 @@ namespace CameraStandard {
 
 class SimpleTimer {
 public:
-    enum TimerStatus { IDLE, RUNNING, CANCEL, DONE };
+    enum class TimerStatus { IDLE, RUNNING, CANCEL, DONE };
 
 public:
     explicit SimpleTimer(std::function<void()> fun);
@@ -37,7 +37,7 @@ private:
     void InterruptableSleep(uint64_t timeoutMs);
     std::mutex timerMtx_;
     std::condition_variable timerCv_;
-    TimerStatus timerStatus_ = IDLE;
+    TimerStatus timerStatus_ = TimerStatus::IDLE;
 
     std::function<void()> innerFun_;
 };

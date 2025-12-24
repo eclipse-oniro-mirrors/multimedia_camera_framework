@@ -117,6 +117,7 @@ public:
     CameraInput CreateCameraInputWithPosition(CameraPosition position, CameraType type);
     DepthDataOutput CreateDepthDataOutput(DepthProfile const& profile);
     MetadataOutput CreateMetadataOutput(array_view<MetadataObjectType> metadataObjectTypes);
+    MovieFileOutput CreateMovieFileOutput(optional_view<VideoProfile> profile);
     array<CameraConcurrentInfo> GetCameraConcurrentInfos(array_view<CameraDevice> cameras);
     void SetPrelaunchConfig(PrelaunchConfig const& prelaunchConfig);
     CameraDevice GetCameraDevice(CameraPosition position, CameraType type);

@@ -57,6 +57,7 @@ ohos_shared_library("camera_framework_ex") {
     "src/output/depth_data_output.cpp",
     "src/session/aperture_video_session.cpp",
     "src/session/capture_session_for_sys.cpp",
+    "src/session/cinematic_video_session.cpp",
     "src/session/fluorescence_photo_session.cpp",
     "src/session/high_res_photo_session.cpp",
     "src/session/light_painting_session.cpp",
@@ -70,6 +71,7 @@ ohos_shared_library("camera_framework_ex") {
     "src/session/quick_shot_photo_session.cpp",
     "src/session/secure_camera_session_for_sys.cpp",
     "src/session/slow_motion_session.cpp",
+    "src/session/stitching_photo_session.cpp",
     "src/session/time_lapse_photo_session.cpp",
     "src/session/video_session_for_sys.cpp",
   ]
@@ -89,7 +91,6 @@ ohos_shared_library("camera_framework_ex") {
     "-Wl,--gc-sections",
     "-fPIE",
   ]
-
   if (target_cpu == "arm") {
     cflags += [ "-DBINDER_IPC_32BIT" ]
   }
@@ -109,11 +110,16 @@ ohos_shared_library("camera_framework_ex") {
     "${multimedia_camera_framework_path}/services/deferred_processing_service/idls:deferred_processing_service_idl_config",
   ]
 
-  public_external_deps = [ "drivers_interface_camera:metadata" ]
-
-  deps = [ 
+  deps = [
     "${multimedia_camera_framework_path}/common:camera_utils",
     "${multimedia_camera_framework_path}/frameworks/native/camera/base:camera_framework",
+    "${multimedia_camera_framework_path}/services/camera_service/idls:camera_idl_sa_proxy",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/idls:camera_deferred_idl_sa_proxy",
+  ]
+  public_external_deps = [
+    "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
+    "drivers_interface_camera:libmap_data_sequenceable_1.0",
+    "drivers_interface_camera:metadata",
   ]
 
   external_deps = [
@@ -122,13 +128,13 @@ ohos_shared_library("camera_framework_ex") {
     "drivers_interface_camera:libcamera_proxy_1.1",
     "drivers_interface_camera:libcamera_proxy_1.2",
     "drivers_interface_camera:libcamera_proxy_1.3",
+    "drivers_interface_camera:libcamera_proxy_1.4",
     "graphic_surface:surface",
     "hilog:libhilog",
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
     "image_framework:image_native",
     "ipc:ipc_core",
-
   ]
 
   defines = []

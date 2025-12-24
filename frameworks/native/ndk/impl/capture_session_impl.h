@@ -132,7 +132,7 @@ public:
     Camera_ErrorCode DeleteEffectTypes(Camera_ControlCenterEffectType* types);
 
     Camera_ErrorCode EnableControlCenter(bool enabled);
-    
+
     Camera_ErrorCode SetActiveColorSpace(OH_NativeBuffer_ColorSpace colorSpace);
 
     Camera_ErrorCode Start();
@@ -167,7 +167,7 @@ public:
     Camera_ErrorCode RegisterSystemPressureLevelCallback(
         OH_CaptureSession_OnSystemPressureLevelChange systemPressureLevel);
     
-    Camera_ErrorCode UnRegisterSystemPressureLevelCallback(
+    Camera_ErrorCode UnregisterSystemPressureLevelCallback(
         OH_CaptureSession_OnSystemPressureLevelChange systemPressureLevel);
 
     Camera_ErrorCode RegisterControlCenterEffectStatusChangeCallback(
@@ -198,6 +198,10 @@ public:
     Camera_ErrorCode SetWhiteBalance(int32_t colorTemperature);
 
     Camera_ErrorCode SetWhiteBalanceMode(Camera_WhiteBalanceMode whiteBalanceMode);
+
+    Camera_ErrorCode RegisterCameraSwitchRequestCallback(OH_CaptureSession_OnCameraSwitchRequest cameraSwitchRequest);
+
+    Camera_ErrorCode UnregisterRemoteDeviceSwitchCallback(OH_CaptureSession_OnCameraSwitchRequest cameraSwitchRequest);
 
     Camera_ErrorCode RegisterMacroStatusCallback(OH_CaptureSession_OnMacroStatusChange controlMacroStatusChange);
 

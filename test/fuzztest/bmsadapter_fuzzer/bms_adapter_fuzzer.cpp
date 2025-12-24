@@ -44,7 +44,6 @@ void BmsAdapterFuzzer::Initialize()
     fuzz_ = std::make_shared<BmsAdapter>();
     CHECK_RETURN_ELOG(!fuzz_, "Create fuzz_ Error");
 
-    fuzz_->RegisterListener();
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     if (samgr == nullptr) {
         return;

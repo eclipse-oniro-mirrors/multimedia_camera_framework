@@ -66,9 +66,9 @@ void CameraWindowManagerClientFuzzer::GetFocusWindowInfoFuzzTest(FuzzedDataProvi
     fuzz_ = CameraWindowManagerClient::GetInstance();
     CHECK_RETURN_ELOG(!fuzz_, "Create fuzz_ Error");
     pid_t pid;
-    uint8_t randomNum = fdp.ConsumeIntegral<uint8_t>();
-    std::vector<std::string> testStrings = { "test1", "test2" };
-    std::string deviceId(testStrings[randomNum % testStrings.size()]);
+    size_t max_length = 32;
+    std::string str = fdp.ConsumeRandomLengthString(max_length);
+    std::string deviceId(str);
     fuzz_->GetFocusWindowInfo(pid);
 }
 
@@ -82,6 +82,7 @@ void Test(uint8_t* data, size_t size)
     FuzzedDataProvider fdp(data, size);
     cameraWindowManagerClient->CameraWindowManagerClientFuzzTest(fdp);
     cameraWindowManagerClient->GetFocusWindowInfoFuzzTest(fdp);
+
 }
 } // namespace CameraStandard
 } // namespace OHOS

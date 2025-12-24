@@ -25,14 +25,16 @@
 #include "message_parcel.h"
 #include "nativetoken_kit.h"
 #include "photo_output_fuzzer.h"
-#include "token_setproc.h"
 #include "test_token.h"
+#include "token_setproc.h"
+
 
 namespace OHOS {
 namespace CameraStandard {
 namespace PhotoOutputFuzzer {
-const int32_t LIMITSIZE = 128;
-const int32_t CONST_2 = 2;
+const int32_t LIMITSIZE = 4;
+const int32_t NUM_TWO = 2;
+bool g_isCameraDevicePermission = false;
 
 void Test(uint8_t *rawData, size_t size)
 {
@@ -43,17 +45,17 @@ void Test(uint8_t *rawData, size_t size)
     auto manager = CameraManager::GetInstance();
     CHECK_RETURN_ELOG(!manager, "PhotoOutputFuzzer: Get CameraManager instance Error");
     auto cameras = manager->GetSupportedCameras();
-    CHECK_RETURN_ELOG(cameras.size() < CONST_2, "PhotoOutputFuzzer: GetSupportedCameras Error");
+    CHECK_RETURN_ELOG(cameras.size() < NUM_TWO, "PhotoOutputFuzzer: GetSupportedCameras Error");
     MessageParcel data;
     data.WriteRawData(rawData, size);
     auto camera = cameras[data.ReadUint32() % cameras.size()];
     CHECK_RETURN_ELOG(!camera, "PhotoOutputFuzzer: camera is null");
-    int32_t mode = data.ReadInt32() % (SceneMode::APERTURE_VIDEO + CONST_2);
+    int32_t mode = data.ReadInt32() % (SceneMode::APERTURE_VIDEO + NUM_TWO);
     auto capability = manager->GetSupportedOutputCapability(camera, mode);
     CHECK_RETURN_ELOG(!capability, "PhotoOutputFuzzer: GetSupportedOutputCapability Error");
     auto profiles = capability->GetPhotoProfiles();
     CHECK_RETURN_ELOG(profiles.empty(), "PhotoOutputFuzzer: GetPhotoProfiles empty");
-    Profile profile = profiles[data.ReadUint32()  % profiles.size()];
+    Profile profile = profiles[data.ReadUint32() % profiles.size()];
     sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
     CHECK_RETURN_ELOG(!photoSurface, "PhotoOutputFuzzer: create photoSurface Error");
     sptr<IBufferProducer> producer = photoSurface->GetProducer();
@@ -88,7 +90,8 @@ void TestOutput1(sptr<PhotoOutput> output, uint8_t *rawData, size_t size)
     output->GetApplicationCallback();
     output->IsMirrorSupported();
     output->IsQuickThumbnailSupported();
-    int32_t type = data.ReadInt32() % (DeferredDeliveryImageType::DELIVERY_VIDEO + CONST_2);
+    data.RewindRead(0);
+    int32_t type = data.ReadInt32() % (DeferredDeliveryImageType::DELIVERY_VIDEO + 1 + 1);
     output->DeferImageDeliveryFor(static_cast<DeferredDeliveryImageType>(type));
     output->IsDeferredImageDeliverySupported(static_cast<DeferredDeliveryImageType>(type));
     output->IsDeferredImageDeliveryEnabled(static_cast<DeferredDeliveryImageType>(type));
@@ -115,7 +118,7 @@ void TestOutput1(sptr<PhotoOutput> output, uint8_t *rawData, size_t size)
     output->Release();
 }
 
-void TestOutput2(sptr<PhotoOutput> output, uint8_t *rawData, size_t size) __attribute__((no_sanitize("cfi")))
+void TestOutput2(sptr<PhotoOutput> output, uint8_t *rawData, size_t size)
 {
     MEDIA_INFO_LOG("PhotoOutputFuzzer: ENTER");
     MessageParcel data;
@@ -150,6 +153,14 @@ void TestOutput2(sptr<PhotoOutput> output, uint8_t *rawData, size_t size) __attr
     output->GetPhotoRotation(data.ReadInt32());
     data.RewindRead(0);
     output->EnableAutoAigcPhoto(data.ReadBool());
+    bool isAutoMotionBoostDeliverySupported = static_cast<bool>(rawData);
+    output->IsAutoMotionBoostDeliverySupported(isAutoMotionBoostDeliverySupported);
+    bool isAutoBokehDataDeliverySupported = static_cast<bool>(rawData);
+    output->IsAutoBokehDataDeliverySupported(isAutoBokehDataDeliverySupported);
+    data.RewindRead(0);
+    output->EnableAutoMotionBoostDelivery(data.ReadBool());
+    data.RewindRead(0);
+    output->EnableAutoBokehDataDelivery(data.ReadBool());
     pid_t pid = *reinterpret_cast<const pid_t*>(rawData);
     output->CameraServerDied(pid);
     output->Release();
@@ -196,12 +207,13 @@ void CaptureCallback(sptr<HStreamCaptureCallbackImpl> callback, uint8_t *rawData
     callback->OnCaptureReady(data.ReadInt32(), data.ReadInt32());
 }
 
-} // namespace PhotoOutputFuzzer
+} // namespace StreamRepeatStubFuzzer
 } // namespace CameraStandard
 } // namespace OHOS
 
 /* Fuzzer entry point */
-extern "C" int LLVMFuzzerTestOneInput(uint8_t *data, size_t size) {
+extern "C" int LLVMFuzzerTestOneInput(uint8_t *data, size_t size)
+{
     /* Run your code on data */
     OHOS::CameraStandard::PhotoOutputFuzzer::Test(data, size);
     return 0;

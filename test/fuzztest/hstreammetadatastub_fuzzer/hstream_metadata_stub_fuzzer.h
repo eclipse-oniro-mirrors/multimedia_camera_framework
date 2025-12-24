@@ -56,6 +56,14 @@ public:
     {
         return 0;
     }
+    int32_t AddMetadataType(const std::vector<int32_t>& metadataTypes) override
+    {
+        return 0;
+    }
+    int32_t RemoveMetadataType(const std::vector<int32_t>& metadataTypes) override
+    {
+        return 0;
+    }
     int32_t CallbackEnter([[maybe_unused]] uint32_t code) override
     {
         return 0;

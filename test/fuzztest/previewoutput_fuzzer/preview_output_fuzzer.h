@@ -17,7 +17,6 @@
 #define PREVIEW_OUTPUT_FUZZER_H
 
 #include "output/preview_output.h"
-#include <fuzzer/FuzzedDataProvider.h>
 
 namespace OHOS {
 namespace CameraStandard {

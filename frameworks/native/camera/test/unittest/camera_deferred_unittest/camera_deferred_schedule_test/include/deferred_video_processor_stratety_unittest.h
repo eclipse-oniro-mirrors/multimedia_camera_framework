@@ -40,6 +40,8 @@ public:
     uint64_t tokenId_;
     int32_t uid_;
     int32_t userId_;
+    int32_t srcFd_ {-1};
+    int32_t dtsFd_ {-1};
 };
 } // CameraStandard
 } // OHOS

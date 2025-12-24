@@ -17,28 +17,14 @@
 #define OHOS_CAMERA_DPS_DEFERRED_VIDEO_PROCESSING_SESSION_H
 
 #include "deferred_video_processing_session_stub.h"
+#include "dps_fd.h"
+#include "video_info.h"
 
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
 class DeferredVideoProcessingSession : public DeferredVideoProcessingSessionStub {
 public:
-    class VideoInfo {
-    public:
-        VideoInfo(const sptr<IPCFileDescriptor>& srcFd, const sptr<IPCFileDescriptor>& dstFd)
-            : srcFd_(srcFd), dstFd_(dstFd)
-        {}
-
-        ~VideoInfo()
-        {
-            srcFd_ = nullptr;
-            dstFd_ = nullptr;
-        }
-
-        sptr<IPCFileDescriptor> srcFd_;
-        sptr<IPCFileDescriptor> dstFd_;
-    };
-
     DeferredVideoProcessingSession(const int32_t userId);
     ~DeferredVideoProcessingSession();
     
@@ -46,8 +32,11 @@ public:
     int32_t EndSynchronize() override;
     int32_t AddVideo(const std::string& videoId, const sptr<IPCFileDescriptor>& srcFd,
         const sptr<IPCFileDescriptor>& dstFd) override;
+    int32_t AddVideo(const std::string& videoId, const std::vector<sptr<IPCFileDescriptor>>& fds) override;
     int32_t RemoveVideo(const std::string& videoId, bool restorable) override;
     int32_t RestoreVideo(const std::string& videoId) override;
+    int32_t ProcessVideo(const std::string& appName, const std::string& videoId) override;
+    int32_t CancelProcessVideo(const std::string& videoId) override;
 
 private:
     std::mutex mutex_;

@@ -14,10 +14,9 @@
  */
 
 #include "task_manager.h"
-
+#include "camera_log.h"
 #include <tuple>
 
-#include "camera_log.h"
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
@@ -75,11 +74,8 @@ void TaskManager::CreateDelayedTaskGroupIfNeed()
     if (delayedTaskHandle_ != INVALID_TASK_GROUP_HANDLE) {
         return;
     } else {
-        std::weak_ptr defaultTaskHandle = defaultTaskHandle_;
         RegisterTaskGroup("delayedTaskGroup",
-            [this, defaultTaskHandle](std::any param) {
-                auto taskHandle = defaultTaskHandle.lock();
-                CHECK_RETURN(!taskHandle);
+            [this](std::any param) {
                 if (param.has_value()) {
                     DoDefaultWorks(std::move(param));
                 } else {
@@ -153,10 +149,7 @@ void TaskManager::CancelAllTasks()
 bool TaskManager::IsEmpty()
 {
     MEDIA_INFO_LOG("Get tasks count: %{public}d", static_cast<int>(*defaultTaskHandle_));
-    if (taskRegistry_ == nullptr) {
-        return true;
-    }
-    return taskRegistry_->GetTaskCount(*defaultTaskHandle_) == 0;
+    return taskRegistry_ == nullptr ? true : taskRegistry_->GetTaskCount(*defaultTaskHandle_) == 0;
 }
 
 bool TaskManager::RegisterTaskGroup(const std::string& name, TaskFunc func, bool serial, bool delayTask,

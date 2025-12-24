@@ -37,6 +37,7 @@ enum CameraStatus {
     CAMERA_CLOSE
 };
 
+// LCOV_EXCL_START
 CameraStrategy::CameraStrategy()
 {
     DP_DEBUG_LOG("entered.");
@@ -71,6 +72,7 @@ void CameraStrategy::handleEvent(const EventFwk::CommonEventData& data)
     EventsInfo::GetInstance().SetCameraState(cameraSessionStatus);
     EventsMonitor::GetInstance().NotifyCameraSessionStatus(cameraSessionStatus);
 }
+// LCOV_EXCL_STOP
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS

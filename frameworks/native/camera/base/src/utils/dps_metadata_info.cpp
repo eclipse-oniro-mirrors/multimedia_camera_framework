@@ -14,8 +14,8 @@
  */
 
 #include "dps_metadata_info.h"
-#include <message_parcel.h>
 #include "dp_log.h"
+#include <message_parcel.h>
 
 #define DPS_MAX_USER_DATA_COUNT 1000
 
@@ -25,9 +25,8 @@ namespace CameraStandard {
 DpsMetadataError DpsMetadata::ReadFromParcel(MessageParcel &parcel)
 {
     int32_t size = parcel.ReadInt32();
-    if (size > DPS_MAX_USER_DATA_COUNT || size < 0) {
-        return DPS_METADATA_INTERNAL_ERROR;
-    }
+    bool isSizeInvalid = size > DPS_MAX_USER_DATA_COUNT || size < 0;
+    DP_CHECK_RETURN_RET(isSizeInvalid, DPS_METADATA_INTERNAL_ERROR);
 
     DpsMetadataError ret = DPS_METADATA_OK;
     for (int32_t i = 0; i < size; i++) {
@@ -48,6 +47,10 @@ DpsMetadataError DpsMetadata::ReadFromParcel(MessageParcel &parcel)
             }
             case DpsDataType::string: {
                 ret = Set(key, type, parcel.ReadString());
+                break;
+            }
+            case DpsDataType::u32: {
+                ret = Set(key, type, parcel.ReadUint32());
                 break;
             }
             default: break;
@@ -71,62 +74,44 @@ DpsMetadataError DpsMetadata::WriteToParcel(MessageParcel &parcel) const
             case DpsDataType::i32: {
                 int32_t i32 = -1;
                 auto dpVal = std::any_cast<int32_t>(&data.val);
-                if (dpVal != nullptr) {
-                    i32 = *dpVal;
-                }
+                DP_CHECK_EXECUTE(dpVal != nullptr, i32 = *dpVal);
                 parcel.WriteInt32(i32);
                 break;
             }
             case DpsDataType::i64: {
                 int64_t i64 = -1;
                 auto dpVal = std::any_cast<int64_t>(&data.val);
-                if (dpVal != nullptr) {
-                    i64 = *dpVal;
-                }
+                DP_CHECK_EXECUTE(dpVal != nullptr, i64 = *dpVal);
                 parcel.WriteInt64(i64);
                 break;
             }
             case DpsDataType::f64: {
                 double f64 = -1;
                 auto dpVal = std::any_cast<double>(&data.val);
-                if (dpVal != nullptr) {
-                    f64 = *dpVal;
-                }
+                DP_CHECK_EXECUTE(dpVal != nullptr, f64 = *dpVal);
                 parcel.WriteDouble(f64);
                 break;
             }
             case DpsDataType::string: {
                 std::string string = "-1";
                 auto dpVal = std::any_cast<std::string>(&data.val);
-                if (dpVal != nullptr) {
-                    string = *dpVal;
-                }
+                DP_CHECK_EXECUTE(dpVal != nullptr, string = *dpVal);
                 parcel.WriteString(string);
+                break;
+            }
+            case DpsDataType::u32: {
+                uint32_t u32 = 0;
+                auto dpVal = std::any_cast<uint32_t>(&data.val);
+                DP_CHECK_EXECUTE(dpVal != nullptr, u32 = *dpVal);
+                parcel.WriteUint32(u32);
                 break;
             }
             default:
                 break;
         }
     }
-    // LCOV_EXCL_STOP
     return DPS_METADATA_OK;
-}
-
-bool DpsMetadata::Marshalling(Parcel& parcel) const
-{
-    // LCOV_EXCL_START
-    DpsMetadataError ret = WriteToParcel(static_cast<MessageParcel&>(parcel));
-    DP_CHECK_ERROR_RETURN_RET_LOG(ret != DPS_METADATA_OK, false, "DpsMetadata Marshalling fail");
-    return true;
     // LCOV_EXCL_STOP
-}
-
-DpsMetadata* DpsMetadata::Unmarshalling(Parcel& parcel)
-{
-    DpsMetadata* metadata = new (std::nothrow) DpsMetadata();
-    DP_CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, nullptr, "create DpsMetadata fail");
-    metadata->ReadFromParcel(static_cast<MessageParcel&>(parcel));
-    return metadata;
 }
 
 DpsMetadataError DpsMetadata::Get(const std::string &key, int32_t &value) const
@@ -149,6 +134,11 @@ DpsMetadataError DpsMetadata::Get(const std::string &key, std::string &value) co
     return Get<std::string>(key, DpsDataType::string, value);
 }
 
+DpsMetadataError DpsMetadata::Get(const std::string &key, uint32_t &value) const
+{
+    return Get<uint32_t>(key, DpsDataType::u32, value);
+}
+
 DpsMetadataError DpsMetadata::Set(const std::string &key, int32_t value)
 {
     return Set(key, DpsDataType::i32, value);
@@ -167,6 +157,11 @@ DpsMetadataError DpsMetadata::Set(const std::string &key, double value)
 DpsMetadataError DpsMetadata::Set(const std::string &key, const std::string& value)
 {
     return Set(key, DpsDataType::string, value);
+}
+
+DpsMetadataError DpsMetadata::Set(const std::string &key, const uint32_t value)
+{
+    return Set(key, DpsDataType::u32, value);
 }
 
 template<class T>
@@ -189,6 +184,23 @@ DpsMetadataError DpsMetadata::Set(const std::string &key, DpsDataType type, cons
     datas[key].type = type;
     datas[key].val = val;
     return DPS_METADATA_OK;
+}
+
+bool DpsMetadata::Marshalling(Parcel& parcel) const
+{
+    // LCOV_EXCL_START
+    DpsMetadataError ret = WriteToParcel(static_cast<MessageParcel&>(parcel));
+    DP_CHECK_ERROR_RETURN_RET_LOG(ret != DPS_METADATA_OK, false, "DpsMetadata Marshalling fail");
+    return true;
+    // LCOV_EXCL_STOP
+}
+ 
+DpsMetadata* DpsMetadata::Unmarshalling(Parcel& parcel)
+{
+    DpsMetadata* metadata = new (std::nothrow) DpsMetadata();
+    DP_CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, nullptr, "create DpsMetadata fail");
+    metadata->ReadFromParcel(static_cast<MessageParcel&>(parcel));
+    return metadata;
 }
 
 } // namespace CameraStandard

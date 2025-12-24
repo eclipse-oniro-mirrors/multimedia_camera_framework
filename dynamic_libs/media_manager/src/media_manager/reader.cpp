@@ -12,8 +12,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+// LCOV_EXCL_START
 #include "reader.h"
+
+#include <cstring>
 
 #include "dp_utils.h"
 #include "track_factory.h"
@@ -22,7 +24,6 @@ namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
 namespace {
-    constexpr int32_t DEFAULT_INT_VAL = 0;
     constexpr double DEFAULT_DOUBLE_VAL = 0.0;
     constexpr int32_t FPS_30 = 30;
     constexpr int32_t FPS_60 = 60;
@@ -31,9 +32,6 @@ namespace {
 
 Reader::~Reader()
 {
-    source_ = nullptr;
-    sourceFormat_ = nullptr;
-    inputDemuxer_ = nullptr;
     tracks_.clear();
 }
 
@@ -67,6 +65,7 @@ MediaManagerError Reader::GetSourceFormat()
     auto ret = source_->GetSourceFormat(sourceFormat);
     DP_CHECK_ERROR_RETURN_RET_LOG(ret != static_cast<int32_t>(OK), ERROR_FAIL, "Get avsource format failed.");
     sourceFormat_ = std::make_shared<Format>(sourceFormat);
+    DP_INFO_LOG("GetSource data: %{public}s", sourceFormat_->Stringify().c_str());
     return OK;
 }
 
@@ -97,7 +96,7 @@ MediaManagerError Reader::InitTracksAndDemuxer()
         trackCount_, static_cast<int32_t>(tracks_.size()));
     inputDemuxer_ = std::make_shared<Demuxer>();
     auto ret = inputDemuxer_->Create(source_, tracks_);
-    DP_CHECK_ERROR_RETURN_RET_LOG(ret != OK, ERROR_FAIL, "Audio demuxer init failed.");
+    DP_CHECK_ERROR_RETURN_RET_LOG(ret != OK, ERROR_FAIL, "Demuxer init failed.");
     return OK;
 }
 
@@ -113,14 +112,14 @@ MediaManagerError Reader::Read(Media::Plugins::MediaType trackType, std::shared_
 
 MediaManagerError Reader::GetMediaInfo(std::shared_ptr<MediaInfo>& mediaInfo)
 {
-    GetSourceMediaInfo(mediaInfo);
     mediaInfo->streamCount = trackCount_;
-
+    GetSourceMediaInfo(mediaInfo);
+    GetUserMediaInfo(mediaInfo);
     auto it = tracks_.find(Media::Plugins::MediaType::VIDEO);
     DP_CHECK_ERROR_RETURN_RET_LOG(it == tracks_.end(), ERROR_FAIL, "Not find video track.");
     
-    auto videoFormat = it->second->GetFormat();
-    GetTrackMediaInfo(videoFormat, mediaInfo);
+    auto videoMeta = it->second->GetMeta();
+    GetTrackMediaInfo(videoMeta, mediaInfo);
     return OK;
 }
 
@@ -137,74 +136,76 @@ MediaManagerError Reader::Reset(int64_t resetPts)
 
 void Reader::GetSourceMediaInfo(std::shared_ptr<MediaInfo>& mediaInfo) const
 {
-    CheckAndGetValue(sourceFormat_, Tag::MEDIA_CREATION_TIME, mediaInfo->creationTime);
-    CheckAndGetValue(sourceFormat_, Tag::MEDIA_DURATION, mediaInfo->codecInfo.duration);
-    CheckAndGetValue(sourceFormat_, Tag::MEDIA_LATITUDE, mediaInfo->latitude);
-    CheckAndGetValue(sourceFormat_, Tag::MEDIA_LONGITUDE, mediaInfo->longitude);
-    CheckAndGetValue(userFormat_, LIVE_PHOTO_COVERTIME, mediaInfo->livePhotoCovertime);
-    std::string encParam;
-    CheckAndGetValue(userFormat_, STAGE_ENC_PARAM_KEY, encParam);
-    auto result = ParseKeyValue(encParam);
-    for (const auto& [tag, value] : result) {
-        if (tag == Tag::VIDEO_ENCODE_BITRATE_MODE) {
-            mediaInfo->codecInfo.bitMode = MapVideoBitrateMode(value);
-        } else if (tag == Tag::MEDIA_BITRATE) {
-            int64_t bitRate;
-            DP_CHECK_EXECUTE(StrToI64(value, bitRate), mediaInfo->codecInfo.bitRate = bitRate);
-        }
-    }
-    DP_INFO_LOG("MediaInfo creationTime: %{public}s, duration: %{public}" PRId64 ", livePhotoCovertime: %{public}f, "
-        "bitMode: %{public}d, bitRate: %{public}" PRId64,
-        mediaInfo->creationTime.c_str(), mediaInfo->codecInfo.duration, mediaInfo->livePhotoCovertime,
-        mediaInfo->codecInfo.bitMode, mediaInfo->codecInfo.bitRate);
+    DP_CHECK_RETURN(sourceFormat_ == nullptr);
+    auto sourceMeta = sourceFormat_->GetMeta();
+    DP_CHECK_ERROR_RETURN_LOG(sourceMeta == nullptr, "SourceMeta is nullptr.");
+    DP_INFO_LOG("SourceMediaInfo: %{public}s", sourceFormat_->Stringify().c_str());
+    sourceMeta->Get<Tag::MEDIA_CREATION_TIME>(mediaInfo->creationTime);
+    sourceMeta->Get<Tag::MEDIA_DURATION>(mediaInfo->codecInfo.duration);
+    sourceMeta->Get<Tag::MEDIA_LATITUDE>(mediaInfo->latitude);
+    sourceMeta->Get<Tag::MEDIA_LONGITUDE>(mediaInfo->longitude);
 }
 
-MediaManagerError Reader::GetTrackMediaInfo(const TrackFormat& trackFormat,
+void Reader::GetUserMediaInfo(std::shared_ptr<MediaInfo>& mediaInfo) const
+{
+    DP_CHECK_RETURN(userFormat_ == nullptr);
+    auto userMeta = userFormat_->GetMeta();
+    DP_CHECK_ERROR_RETURN_LOG(userMeta == nullptr, "UserMeta is nullptr.");
+    DP_INFO_LOG("UserMediaInfo: %{public}s", userFormat_->Stringify().c_str());
+    userMeta->GetData(IS_WATER_MARK_KEY, mediaInfo->isWaterMark);
+    userMeta->GetData(WATER_MARK_INFO_KEY, mediaInfo->waterMarkInfo);
+    std::string encParam;
+    userMeta->GetData(ENC_PARAM_KEY, encParam);
+    auto result = ParseKeyValue(encParam);
+    for (const auto& [tag, value] : result) {
+        if (strcmp(tag.c_str(), Tag::VIDEO_ENCODE_BITRATE_MODE) == 0) {
+            mediaInfo->codecInfo.bitMode = MapVideoBitrateMode(value);
+        } else if (strcmp(tag.c_str(), Tag::MEDIA_BITRATE) == 0) {
+            int64_t bitRate;
+            DP_CHECK_EXECUTE(StrToI64(value, bitRate), mediaInfo->codecInfo.bitRate = bitRate);
+        } else if (strcmp(tag.c_str(), Tag::VIDEO_ENCODER_ENABLE_B_FRAME) == 0) {
+            int64_t isBFrame;
+            DP_CHECK_EXECUTE(StrToI64(value, isBFrame), mediaInfo->codecInfo.isBFrame = static_cast<bool>(isBFrame));
+        } else if (strcmp(tag.c_str(), Tag::VIDEO_ENCODE_B_FRAME_GOP_MODE) == 0) {
+            mediaInfo->codecInfo.bFrameGopMode = MapVideoBFrameGopMode(value);
+        }
+    }
+    userMeta->GetData(LIVE_PHOTO_COVERTIME, mediaInfo->livePhotoCovertime);
+    userMeta->GetData(DEVICE_FOLD_STATE_KEY, mediaInfo->deviceFoldState);
+    userMeta->GetData(DEVICE_MODEL_KEY, mediaInfo->deviceModel);
+    userMeta->GetData(CAMERA_POSITION_KEY, mediaInfo->cameraPosition);
+}
+
+void Reader::GetTrackMediaInfo(const std::shared_ptr<Media::Meta>& trackMeta,
     std::shared_ptr<MediaInfo>& mediaInfo) const
 {
-    auto& format = trackFormat.format;
-    CheckAndGetValue(format, Tag::MIME_TYPE, mediaInfo->codecInfo.mimeType);
-    CheckAndGetValue(format, Tag::MEDIA_PROFILE, mediaInfo->codecInfo.profile);
-    CheckAndGetValue(format, Tag::MEDIA_LEVEL, mediaInfo->codecInfo.level);
-    CheckAndGetValue(format, Tag::VIDEO_WIDTH, mediaInfo->codecInfo.width);
-    CheckAndGetValue(format, Tag::VIDEO_HEIGHT, mediaInfo->codecInfo.height);
-    CheckAndGetValue(format, Tag::VIDEO_ROTATION, mediaInfo->codecInfo.rotation);
-    DP_CHECK_EXECUTE(mediaInfo->codecInfo.bitRate == 0,
-        CheckAndGetValue(format, Tag::MEDIA_BITRATE, mediaInfo->codecInfo.bitRate));
-
-    int32_t intVal {DEFAULT_INT_VAL};
-    if (CheckAndGetValue(format, Tag::VIDEO_COLOR_RANGE, intVal)) {
-        mediaInfo->codecInfo.colorRange = static_cast<ColorRange>(intVal);
-    }
-    if (CheckAndGetValue(format, Tag::VIDEO_PIXEL_FORMAT, intVal)) {
-        mediaInfo->codecInfo.pixelFormat = static_cast<Media::Plugins::VideoPixelFormat>(intVal);
-    }
-    if (CheckAndGetValue(format, Tag::VIDEO_COLOR_PRIMARIES, intVal)) {
-        mediaInfo->codecInfo.colorPrimary = static_cast<Media::Plugins::ColorPrimary>(intVal);
-    }
-    if (CheckAndGetValue(format, Tag::VIDEO_COLOR_TRC, intVal)) {
-        mediaInfo->codecInfo.colorTransferCharacter = static_cast<Media::Plugins::TransferCharacteristic>(intVal);
-    }
-    if (CheckAndGetValue(format, Tag::VIDEO_IS_HDR_VIVID, intVal)) {
-        mediaInfo->codecInfo.isHdrvivid = static_cast<bool>(intVal);
-    }
-
+    DP_CHECK_ERROR_RETURN_LOG(trackMeta == nullptr, "Track is nullptr.");
+    trackMeta->Get<Tag::MIME_TYPE>(mediaInfo->codecInfo.mimeType);
+    trackMeta->Get<Tag::MEDIA_PROFILE>(mediaInfo->codecInfo.profile);
+    trackMeta->Get<Tag::MEDIA_LEVEL>(mediaInfo->codecInfo.level);
+    trackMeta->Get<Tag::VIDEO_WIDTH>(mediaInfo->codecInfo.width);
+    trackMeta->Get<Tag::VIDEO_HEIGHT>(mediaInfo->codecInfo.height);
+    trackMeta->Get<Tag::VIDEO_ROTATION>(mediaInfo->codecInfo.rotation);
+    trackMeta->Get<Tag::VIDEO_PIXEL_FORMAT>(mediaInfo->codecInfo.pixelFormat);
+    trackMeta->Get<Tag::VIDEO_COLOR_PRIMARIES>(mediaInfo->codecInfo.colorPrimary);
+    trackMeta->Get<Tag::VIDEO_COLOR_TRC>(mediaInfo->codecInfo.colorTransferCharacter);
+    trackMeta->Get<Tag::VIDEO_IS_HDR_VIVID>(mediaInfo->codecInfo.isHdrvivid);
+    trackMeta->Get<Tag::VIDEO_COLOR_RANGE>(mediaInfo->codecInfo.colorRange);
     double doubleVal {DEFAULT_DOUBLE_VAL};
-    if (CheckAndGetValue(format, Tag::VIDEO_FRAME_RATE, doubleVal)) {
-        mediaInfo->codecInfo.fps = FixFPS(doubleVal);
-    }
-
+    DP_CHECK_EXECUTE(trackMeta->Get<Tag::VIDEO_FRAME_RATE>(doubleVal),
+        mediaInfo->codecInfo.fps = FixFPS(doubleVal));
+    DP_CHECK_EXECUTE(mediaInfo->codecInfo.bitRate == -1,
+        trackMeta->Get<Tag::MEDIA_BITRATE>(mediaInfo->codecInfo.bitRate));
     DP_INFO_LOG("TrackMediaInfo colorRange: %{public}d, pixelFormat: %{public}d, colorPrimary: %{public}d, "
         "transfer: %{public}d, profile: %{public}d, level: %{public}d, bitRate: %{public}" PRId64 ", "
-        "fps: %{public}d, rotation: %{public}d, mime: %{public}s, isHdrvivid: %{public}d",
+        "fps: %{public}d, rotation: %{public}d, mime: %{public}s, isHdrvivid: %{public}d, bitMode: %{public}d",
         mediaInfo->codecInfo.colorRange, mediaInfo->codecInfo.pixelFormat, mediaInfo->codecInfo.colorPrimary,
         mediaInfo->codecInfo.colorTransferCharacter, mediaInfo->codecInfo.profile, mediaInfo->codecInfo.level,
         mediaInfo->codecInfo.bitRate, mediaInfo->codecInfo.fps, mediaInfo->codecInfo.rotation,
-        mediaInfo->codecInfo.mimeType.c_str(), mediaInfo->codecInfo.isHdrvivid);
-    return OK;
+        mediaInfo->codecInfo.mimeType.c_str(), mediaInfo->codecInfo.isHdrvivid, mediaInfo->codecInfo.bitMode);
 }
 
-inline int32_t Reader::FixFPS(const double fps)
+int32_t Reader::FixFPS(const double fps) const
 {
     return fps < static_cast<double>(FPS_30) * FACTOR ? FPS_30 : FPS_60;
 }
@@ -223,6 +224,19 @@ Media::Plugins::VideoEncodeBitrateMode Reader::MapVideoBitrateMode(const std::st
     DP_CHECK_RETURN_RET(it == modeMap.end(), Media::Plugins::VideoEncodeBitrateMode::CBR);
     return it->second;
 }
+
+Media::Plugins::VideoEncodeBFrameGopMode Reader::MapVideoBFrameGopMode(const std::string& gopModeName) const
+{
+    static const std::unordered_map<std::string, Media::Plugins::VideoEncodeBFrameGopMode> gopModeMap = {
+        {"ADAPTIVE", Media::Plugins::VideoEncodeBFrameGopMode::VIDEO_ENCODE_GOP_ADAPTIVE_B_MODE},
+        {"H3B", Media::Plugins::VideoEncodeBFrameGopMode::VIDEO_ENCODE_GOP_H3B_MODE},
+    };
+    auto it = gopModeMap.find(gopModeName);
+    DP_CHECK_RETURN_RET(it == gopModeMap.end(),
+        Media::Plugins::VideoEncodeBFrameGopMode::VIDEO_ENCODE_GOP_ADAPTIVE_B_MODE);
+    return it->second;
+}
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS
+// LCOV_EXCL_STOP

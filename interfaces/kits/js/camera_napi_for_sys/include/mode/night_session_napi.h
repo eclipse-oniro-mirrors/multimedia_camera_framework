@@ -35,6 +35,11 @@ public:
     static napi_value GetSupportedExposureRange(napi_env env, napi_callback_info info);
     static napi_value GetExposure(napi_env env, napi_callback_info info);
     static napi_value SetExposure(napi_env env, napi_callback_info info);
+    static napi_value GetSupportedNightSubModeTypes(napi_env env, napi_callback_info info);
+    static napi_value SetNightSubModeType(napi_env env, napi_callback_info info);
+    static napi_value GetNightSubModeType(napi_env env, napi_callback_info info);
+    static napi_value SetLocation(napi_env env, napi_callback_info info);
+
     napi_env env_;
     sptr<NightSession> nightSession_;
     static thread_local napi_ref sConstructor_;

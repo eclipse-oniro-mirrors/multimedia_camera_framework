@@ -14,6 +14,7 @@
  */
 
 #include "audio_encoder.h"
+#include "external_window.h"
 #include "native_avbuffer.h"
 #include "sample_callback.h"
 #include "utils/camera_log.h"
@@ -88,8 +89,7 @@ int32_t AudioEncoder::FreeOutputData(uint32_t bufferIndex)
     CHECK_RETURN_RET_ELOG(encoder_ == nullptr, 1, "Encoder is null");
     MEDIA_DEBUG_LOG("FreeOutputData bufferIndex: %{public}u", bufferIndex);
     int32_t ret = OH_AudioCodec_FreeOutputBuffer(encoder_, bufferIndex);
-    CHECK_RETURN_RET_ELOG(ret != AV_ERR_OK, 1,
-        "Free output data failed, ret: %{public}d", ret);
+    CHECK_RETURN_RET_ELOG(ret != AV_ERR_OK, 1, "Free output data failed, ret: %{public}d", ret);
     return 0;
     // LCOV_EXCL_STOP
 }
@@ -137,7 +137,7 @@ bool AudioEncoder::EnqueueBuffer(sptr<AudioRecord> audioRecord)
     CAMERA_SYNC_TRACE;
     uint8_t* buffer = audioRecord->GetAudioBuffer();
     CHECK_RETURN_RET_ELOG(buffer == nullptr, false, "Enqueue audio buffer is empty");
-    int enqueueRetryCount = 2;
+    int enqueueRetryCount = 3;
     while (enqueueRetryCount > 0) {
         std::unique_lock<std::mutex> encoderLock(encoderMutex_);
         enqueueRetryCount--;
@@ -145,10 +145,10 @@ bool AudioEncoder::EnqueueBuffer(sptr<AudioRecord> audioRecord)
         std::unique_lock<std::mutex> lock(context_->inputMutex_);
         if (context_->inputBufferInfoQueue_.empty()) {
             bool condRet = context_->inputCond_.wait_for(lock,
-                std::chrono::milliseconds(AUDIO_ENCODE_EXPIREATION_TIME),
+                std::chrono::milliseconds(BUFFER_ENCODE_EXPIREATION_TIME),
                 [this]() { return !isStarted_ || !context_->inputBufferInfoQueue_.empty(); });
-        CHECK_CONTINUE_WLOG(context_->inputBufferInfoQueue_.empty(),
-            "Buffer queue is empty, continue, cond ret: %{public}d", condRet);
+            CHECK_CONTINUE_WLOG(context_->inputBufferInfoQueue_.empty(),
+                "Buffer queue is empty, continue, cond ret: %{public}d", condRet);
         }
         sptr<CodecAVBufferInfo> bufferInfo = context_->inputBufferInfoQueue_.front();
         context_->inputBufferInfoQueue_.pop();
@@ -163,6 +163,7 @@ bool AudioEncoder::EnqueueBuffer(sptr<AudioRecord> audioRecord)
             "Destination buffer capacity is insufficient to hold the data.");
         errno_t cpyRet = memcpy_s(bufferAddr, bufferCap, buffer, DEFAULT_MAX_INPUT_SIZE);
         CHECK_RETURN_RET_ELOG(cpyRet != 0, false, "encoder memcpy_s failed. %{public}d", cpyRet);
+        lock.unlock();
         int32_t ret = PushInputData(bufferInfo);
         CHECK_RETURN_RET_ELOG(ret != 0, false, "Push data failed");
         MEDIA_DEBUG_LOG("Success frame id is : %{public}s", audioRecord->GetFrameId().c_str());
@@ -183,7 +184,7 @@ bool AudioEncoder::EncodeAudioBuffer(sptr<AudioRecord> audioRecord)
     }
     audioRecord->SetStatusReadyConvertStatus();
     CHECK_RETURN_RET(!EnqueueBuffer(audioRecord), false);
-    int retryCount = 3;
+    int retryCount = 2;
     while (retryCount > 0) {
         std::unique_lock<std::mutex> encoderLock(encoderMutex_);
         retryCount--;
@@ -193,8 +194,8 @@ bool AudioEncoder::EncodeAudioBuffer(sptr<AudioRecord> audioRecord)
             bool condRet = context_->outputCond_.wait_for(lock,
                 std::chrono::milliseconds(AUDIO_ENCODE_EXPIREATION_TIME),
                 [this]() { return !isStarted_ || !context_->outputBufferInfoQueue_.empty(); });
-        CHECK_CONTINUE_WLOG(context_->outputBufferInfoQueue_.empty(),
-            "Buffer queue is empty, continue, cond ret: %{public}d", condRet);
+            CHECK_CONTINUE_WLOG(context_->outputBufferInfoQueue_.empty(),
+                "Buffer queue is empty, continue, cond ret: %{public}d", condRet);
         }
         sptr<CodecAVBufferInfo> bufferInfo = context_->outputBufferInfoQueue_.front();
         context_->outputBufferInfoQueue_.pop();
@@ -220,7 +221,9 @@ bool AudioEncoder::EncodeAudioBuffer(vector<sptr<AudioRecord>> audioRecords)
     CAMERA_SYNC_TRACE;
     std::lock_guard<std::mutex> lock(serialMutex_);
     MEDIA_INFO_LOG("EncodeAudioBuffer enter");
-    CHECK_EXECUTE(!isStarted_.load(), RestartAudioCodec());
+    if (!isStarted_.load()) {
+        RestartAudioCodec();
+    }
     bool isSuccess = true;
     isEncoding_.store(true);
     // LCOV_EXCL_START

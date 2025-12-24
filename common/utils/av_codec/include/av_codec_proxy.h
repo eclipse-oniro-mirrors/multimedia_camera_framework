@@ -24,40 +24,9 @@ public:
     explicit AVCodecProxy(
         std::shared_ptr<Dynamiclib> avcodecLib, std::shared_ptr<AVCodecIntf> avcodecIntf);
     static std::shared_ptr<AVCodecProxy> CreateAVCodecProxy();
-    ~AVCodecProxy() override;
-    static void Release();
-    int32_t CreateAVMuxer(int32_t fd, OutputFormat format) override;
-    int32_t CreateAVCodecVideoEncoder(const std::string& codecMime) override;
-    int32_t AVMuxerSetParameter(const std::shared_ptr<Meta>& param) override;
-    int32_t AVMuxerSetUserMeta(const std::shared_ptr<Meta>& userMeta) override;
-    int32_t AVMuxerAddTrack(int32_t& trackIndex, const std::shared_ptr<Meta>& trackDesc) override;
-    int32_t AVMuxerStart() override;
-    int32_t AVMuxerWriteSample(uint32_t trackIndex, const std::shared_ptr<AVBuffer>& sample) override;
-    int32_t AVMuxerStop() override;
-    int32_t AVCodecVideoEncoderPrepare() override;
-    int32_t AVCodecVideoEncoderStart() override;
-    int32_t AVCodecVideoEncoderStop() override;
-    int32_t AVCodecVideoEncoderRelease() override;
-    bool IsVideoEncoderExisted() override;
-    sptr<Surface> CreateInputSurface() override;
-    int32_t QueueInputBuffer(uint32_t index) override;
-    int32_t QueueInputParameter(uint32_t index) override;
-    int32_t AVCodecVideoEncoderNotifyEos() override;
-    int32_t ReleaseOutputBuffer(uint32_t index) override;
-    int32_t AVCodecVideoEncoderSetParameter(const Format& format) override;
-    int32_t AVCodecVideoEncoderSetCallback(const std::shared_ptr<MediaCodecCallback>& callback) override;
-    int32_t AVCodecVideoEncoderInfoIframeSetCallback(
-        const std::shared_ptr<MediaAVCodec::MediaCodecParameterWithAttrCallback>& callback) override;
-    int32_t AVCodecVideoEncoderConfigure(const Format& format) override;
-    void CreateAVSource(int32_t fd, int64_t offset, int64_t size) override;
-    int32_t AVSourceGetSourceFormat(Format& format) override;
-    int32_t AVSourceGetUserMeta(Format& format) override;
-    int32_t AVSourceGetTrackFormat(Format& format, uint32_t trackIndex) override;
-    void CreateAVDemuxer(std::shared_ptr<AVSource> source) override;
-    int32_t ReadSampleBuffer(uint32_t trackIndex, std::shared_ptr<AVBuffer> sample) override;
-    int32_t AVDemuxerSeekToTime(int64_t millisecond, SeekMode mode) override;
-    int32_t AVDemuxerSelectTrackByID(uint32_t trackIndex) override;
-    bool IsBframeSurported() override;
+    ~AVCodecProxy();
+    bool IsBframeSupported(int32_t videoCodecType) override;
+    int32_t GetSupportedVideoCodecTypes(std::vector<int32_t>& supportedVideoCodecTypes) override;
 private:
     std::shared_ptr<Dynamiclib> avcodecLib_ = {nullptr};
     std::shared_ptr<AVCodecIntf> avcodecIntf_ = {nullptr};

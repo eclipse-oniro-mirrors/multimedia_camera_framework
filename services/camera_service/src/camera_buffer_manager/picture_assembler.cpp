@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+// LCOV_EXCL_START
 #include "picture_assembler.h"
 
 #include "camera_log.h"
@@ -73,10 +73,9 @@ void PictureAssembler::RegisterAuxiliaryConsumers()
         ret = debugSurfaceObj->RegisterConsumerListener((sptr<IBufferConsumerListener> &)streamCapture->debugListener_);
         retStr = ret != SURFACE_ERROR_OK ? retStr + "[debug]" : retStr;
     }
-    if (retStr != "") {
-        MEDIA_ERR_LOG("register surface consumer listener failed! type = %{public}s", retStr.c_str());
-    }
+    CHECK_PRINT_ELOG(retStr != "", "register surface consumer listener failed! type = %{public}s", retStr.c_str());
     MEDIA_INFO_LOG("RegisterAuxiliaryConsumers X");
 }
 }  // namespace CameraStandard
 }  // namespace OHOS
+// LCOV_EXCL_STOP

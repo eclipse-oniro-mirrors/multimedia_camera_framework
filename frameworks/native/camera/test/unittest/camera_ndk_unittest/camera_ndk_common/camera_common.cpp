@@ -35,6 +35,7 @@ using namespace testing::ext;
 
 namespace OHOS {
 namespace CameraStandard {
+
 void CameraNdkCommon::InitCamera(void)
 {
     Camera_ErrorCode ret = OH_Camera_GetCameraManager(&cameraManager);
@@ -86,7 +87,6 @@ void CameraNdkCommon::ObtainAvailableFrameRate(Camera_FrameRateRange activeframe
             minFps++;
         }
     }
-    return;
 }
 
 Camera_PhotoOutput* CameraNdkCommon::CreatePhotoOutput(int32_t width, int32_t height)
@@ -317,6 +317,17 @@ void CameraNdkCommon::CameraCaptureSessionAutoDeviceSwitchStatusCb(Camera_Captur
 
 void CameraNdkCommon::CameraCaptureSessionSystemPressureLevelCb(Camera_CaptureSession* session,
     Camera_SystemPressureLevel pressureLevel)
+{
+    MEDIA_DEBUG_LOG("fun:%s", __FUNCTION__);
+}
+
+void CameraNdkCommon::CameraSwitchRequestCb(Camera_CaptureSession *session, Camera_Device *device)
+{
+    MEDIA_DEBUG_LOG("fun:%s", __FUNCTION__);
+}
+
+void CameraNdkCommon::ControlCenterEffectStatusCb(Camera_CaptureSession* session,
+    Camera_ControlCenterStatusInfo* statusInfo)
 {
     MEDIA_DEBUG_LOG("fun:%s", __FUNCTION__);
 }

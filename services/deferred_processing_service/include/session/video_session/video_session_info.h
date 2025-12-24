@@ -18,7 +18,6 @@
 
 #include "ideferred_video_processing_session_callback.h"
 #include "ideferred_video_processing_session.h"
-#include "ivideo_process_callbacks.h"
 
 namespace OHOS {
 namespace CameraStandard {

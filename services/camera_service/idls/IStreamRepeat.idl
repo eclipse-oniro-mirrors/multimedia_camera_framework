@@ -15,6 +15,7 @@
 
 package OHOS.CameraStandard;
 import IStreamRepeatCallback;
+import CameraTypes;
 interface OHOS.IBufferProducer;
 interface IStreamCommon;
 sequenceable OHOS.IRemoteObject;
@@ -31,11 +32,15 @@ interface IStreamRepeat extends IStreamCommon {
   [ipccode 7] void UpdateSketchRatio([in] float sketchRatio);
   [ipccode 8] void SetFrameRate([in] int minFrameRate, [in] int maxFrameRate);
   [ipccode 9] void EnableSecure([in] boolean isEnable);
-  [ipccode 10] void SetMirror([in] boolean isEnable);
-  [ipccode 11] void AttachMetaSurface([in] IBufferProducer producer, [in] int videoMetaType);
-  [ipccode 12] void SetCameraRotation([in] boolean isEnable, [in] int rotation);
-  [ipccode 13] void SetCameraApi([in] unsigned int apiCompatibleVersion);
-  [ipccode 14] void GetMirror([out] boolean isEnable);
-  [ipccode 15] void UnSetCallback();
-  [ipccode 20] void RemoveDeferredSurface([in] IBufferProducer producer);
+  [ipccode 10] void EnableStitching([in] boolean isEnable);
+  [ipccode 11] void SetMirror([in] boolean isEnable);
+  [ipccode 12] void AttachMetaSurface([in] IBufferProducer producer, [in] int videoMetaType);
+  [ipccode 13] void SetCameraRotation([in] boolean isEnable, [in] int rotation);
+  [ipccode 14] void SetCameraApi([in] unsigned int apiCompatibleVersion);
+  [ipccode 15] void GetMirror([out] boolean isEnable);
+  [ipccode 16] void UnSetCallback();
+  [ipccode 17] void SetOutputSettings([in] MovieSettings movieSettings);
+  [ipccode 18] void GetSupportedVideoCodecTypes([out] List<int> supportedVideoCodecTypes);
+  [ipccode 19] void SetBandwidthCompression([in] boolean isEnabled);
+  [ipccode 20] void RemoveDeferredSurface();
 }

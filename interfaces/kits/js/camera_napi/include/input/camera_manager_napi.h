@@ -87,10 +87,7 @@ struct ControlCenterStatusCallbackInfo {
     weak_ptr<const ControlCenterStatusListenerNapi> listener_;
     ControlCenterStatusCallbackInfo(bool status, shared_ptr<const ControlCenterStatusListenerNapi> listener)
         : controlCenterStatus_(status), listener_(listener) {}
-    ~ControlCenterStatusCallbackInfo()
-    {
-        listener_.reset();
-    }
+    ~ControlCenterStatusCallbackInfo() {}
 };
 
 struct CameraMuteCallbackInfo {
@@ -181,6 +178,7 @@ public:
     static napi_value CreateVideoOutputInstance(napi_env env, napi_callback_info info);
     static napi_value CreateMetadataOutputInstance(napi_env env, napi_callback_info info);
     static napi_value CreateDepthDataOutputInstance(napi_env env, napi_callback_info info);
+    static napi_value CreateMovieFileOutputInstance(napi_env env, napi_callback_info info);
     static napi_value IsTorchSupported(napi_env env, napi_callback_info info);
     static napi_value IsTorchModeSupported(napi_env env, napi_callback_info info);
     static napi_value GetTorchMode(napi_env env, napi_callback_info info);
@@ -217,6 +215,8 @@ private:
     static napi_value CreateCameraConcurrentResult(napi_env env, vector<sptr<CameraDevice>> &cameraDeviceArrray,
         std::vector<bool> &cameraConcurrentType, std::vector<std::vector<SceneMode>> &modes,
         std::vector<std::vector<sptr<CameraOutputCapability>>> &outputCapabilities);
+    static napi_value SplitGetCameraConcurrentInfos(napi_env env, CameraManagerNapi* cameraManagerNapi,
+        std::vector<sptr<CameraDevice>> &cameraDeviceArrray);
     void ParseGetCameraConcurrentInfos(napi_env env, napi_value arrayParam,
         std::vector<string> &cameraIdv);
 

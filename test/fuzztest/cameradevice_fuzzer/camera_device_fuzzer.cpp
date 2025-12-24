@@ -20,11 +20,12 @@
 #include "input/camera_manager.h"
 #include "metadata_utils.h"
 #include "ipc_skeleton.h"
+#include "access_token.h"
+#include "hap_token_info.h"
 #include "accesstoken_kit.h"
 #include "nativetoken_kit.h"
 #include "token_setproc.h"
 #include <fuzzer/FuzzedDataProvider.h>
-#include "hcamera_device.h"
 #include "test_token.h"
 
 using namespace std;
@@ -36,7 +37,7 @@ const int32_t MIN_SIZE_NUM = 256;
 const int32_t NUM_10 = 10;
 const int32_t NUM_100 = 100;
 const int32_t MAX_BUFFER_SIZE = 16;
-const int32_t MAX_STRING_LEN = 4;
+const int32_t MAX_STRING_LEN_SIZE = 4;
 sptr<HCameraDevice> fuzzCameraDevice = nullptr;
 
 void PrepareHCameraDevice()
@@ -45,13 +46,19 @@ void PrepareHCameraDevice()
         sptr<HCameraHostManager> cameraHostManager = new HCameraHostManager(nullptr);
         std::vector<std::string> cameraIds;
         cameraHostManager->GetCameras(cameraIds);
-        CHECK_RETURN_ELOG(cameraIds.empty(), "Fuzz:PrepareHCameraDevice: GetCameras returns empty");
+        if (cameraIds.empty()) {
+            MEDIA_ERR_LOG("Fuzz:PrepareHCameraDevice: GetCameras returns empty");
+            return;
+        }
         string cameraID = cameraIds[0];
         auto callingTokenId = IPCSkeleton::GetCallingTokenID();
         MEDIA_INFO_LOG("Fuzz:PrepareHCameraDevice: callingTokenId = %{public}d", callingTokenId);
         string permissionName = OHOS_PERMISSION_CAMERA;
         int32_t ret = CheckPermission(permissionName, callingTokenId);
-        CHECK_RETURN_ELOG(ret != CAMERA_OK, "Fuzz:PrepareHCameraDevice: CheckPermission Failed");
+        if (ret != CAMERA_OK) {
+            MEDIA_ERR_LOG("Fuzz:PrepareHCameraDevice: CheckPermission Failed");
+            return;
+        }
         fuzzCameraDevice = new HCameraDevice(cameraHostManager, cameraID, callingTokenId);
         MEDIA_INFO_LOG("Fuzz:PrepareHCameraDevice: Success");
     }
@@ -62,7 +69,7 @@ void CameraDeviceFuzzTest(FuzzedDataProvider& fdp)
     int32_t itemCount = NUM_10;
     int32_t dataSize = NUM_100;
     uint8_t streamSize = fdp.ConsumeIntegralInRange<uint8_t>(0, MAX_BUFFER_SIZE);
-    std::vector<int32_t> streamData ;
+    std::vector<int32_t> streamData;
     for (int i = 0; i < streamSize; ++i) {
         streamData.push_back(fdp.ConsumeIntegral<int32_t>());
     }
@@ -73,7 +80,8 @@ void CameraDeviceFuzzTest(FuzzedDataProvider& fdp)
         streamData.data(), streamData.size());
 
     {
-        int32_t compensationRange[2] = {fdp.ConsumeIntegral<int32_t>(), fdp.ConsumeIntegral<int32_t>()};
+        int32_t compensationRange[2] = {fdp.ConsumeIntegral<int32_t>(),
+            fdp.ConsumeIntegral<int32_t>()};
         ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_RANGE, compensationRange,
             sizeof(compensationRange) / sizeof(compensationRange[0]));
     }
@@ -121,7 +129,8 @@ void CameraDeviceFuzzTestUpdateSetting(FuzzedDataProvider& fdp)
     auto ability = std::make_shared<OHOS::Camera::CameraMetadata>(itemCount, dataSize);
     
     {
-        int32_t compensationRange[2] = {fdp.ConsumeIntegral<int32_t>(), fdp.ConsumeIntegral<int32_t>()};
+        int32_t compensationRange[2] = {fdp.ConsumeIntegral<int32_t>(),
+            fdp.ConsumeIntegral<int32_t>()};
         ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_RANGE, compensationRange,
             sizeof(compensationRange) / sizeof(compensationRange[0]));
     }
@@ -244,7 +253,7 @@ void Test3(FuzzedDataProvider& fdp)
 
 void TestXCollie(FuzzedDataProvider& fdp)
 {
-    string tag = fdp.ConsumeRandomLengthString(MAX_STRING_LEN);
+    string tag = fdp.ConsumeRandomLengthString(MAX_STRING_LEN_SIZE);
     uint32_t flag = fdp.ConsumeIntegral<int32_t>();
     uint32_t timeoutSeconds = fdp.ConsumeIntegral<uint32_t>();
     auto func = [](void*) {};
@@ -264,7 +273,7 @@ void TestXCollie(FuzzedDataProvider& fdp)
 
 void TestDynamicLoader(FuzzedDataProvider& fdp)
 {
-    string libName = fdp.ConsumeRandomLengthString(MAX_STRING_LEN);
+    string libName = fdp.ConsumeRandomLengthString(MAX_STRING_LEN_SIZE);
     CameraDynamicLoader::GetDynamiclib(libName);
     CameraDynamicLoader::LoadDynamiclibAsync(libName);
     CameraDynamicLoader::FreeDynamicLibDelayed(libName);

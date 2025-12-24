@@ -23,7 +23,6 @@
 #include "token_setproc.h"
 #include "nativetoken_kit.h"
 #include "capture_session_impl.h"
-#include "camera/camera.h"
 #include "test_token.h"
 
 using namespace testing::ext;
@@ -48,7 +47,6 @@ void CameraCaptureSessionUnitTest::TearDown(void)
     ReleaseCamera();
 }
 
-void IsoInfoChangeCb(Camera_CaptureSession *session, int32_t isoValue) {}
 /*
  * Feature: Framework
  * Function: Test register and unregister capture session callback
@@ -2918,7 +2916,397 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_077, Test
     Camera_MetadataOutput* metadataOutput = CreateMetadataOutput(type);
     ASSERT_NE(metadataOutput, nullptr);
     ret = OH_CaptureSession_RemoveMetadataOutput(captureSession, metadataOutput);
-    EXPECT_EQ(ret, CAMERA_SERVICE_FATAL_ERROR);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+}
+
+/*
+ * Feature: Framework
+ * Function: RegisterCallback and UnregisterCallback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test registration and deregistration when parameters is nullptr
+ */
+HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_078, TestSize.Level0)
+{
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+    CaptureSession_Callbacks setCaptureSessionResultCallback = {
+        .onFocusStateChange = nullptr,
+        .onError = nullptr
+    };
+    ret = OH_CaptureSession_RegisterCallback(captureSession, &setCaptureSessionResultCallback);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    ret = OH_CaptureSession_UnregisterCallback(captureSession, &setCaptureSessionResultCallback);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+
+    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: RegisterAutoDeviceSwitchStatusCallback and UnregisterAutoDeviceSwitchStatusCallback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test RegisterAutoDeviceSwitchStatusCallback and UnregisterAutoDeviceSwitchStatusCallback
+ */
+HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_079, TestSize.Level0)
+{
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+    ret = OH_CaptureSession_RegisterAutoDeviceSwitchStatusCallback(captureSession,
+        CameraCaptureSessionAutoDeviceSwitchStatusCb);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_UnregisterAutoDeviceSwitchStatusCallback(captureSession,
+        CameraCaptureSessionAutoDeviceSwitchStatusCb);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: RegisterAutoDeviceSwitchStatusCallback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test RegisterAutoDeviceSwitchStatusCallback  with abnormal branch
+ */
+HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_080, TestSize.Level0)
+{
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+    ret = OH_CaptureSession_RegisterAutoDeviceSwitchStatusCallback(nullptr,
+        CameraCaptureSessionAutoDeviceSwitchStatusCb);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    ret = OH_CaptureSession_RegisterAutoDeviceSwitchStatusCallback(captureSession, nullptr);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+
+    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: UnregisterAutoDeviceSwitchStatusCallback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test UnregisterAutoDeviceSwitchStatusCallback  with abnormal branch
+ */
+HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_081, TestSize.Level0)
+{
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+    ret = OH_CaptureSession_UnregisterAutoDeviceSwitchStatusCallback(nullptr,
+        CameraCaptureSessionAutoDeviceSwitchStatusCb);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    ret = OH_CaptureSession_UnregisterAutoDeviceSwitchStatusCallback(captureSession, nullptr);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+
+    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: EnableAutoDeviceSwitch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test enable auto device switch
+ */
+HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_082, TestSize.Level0)
+{
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+
+    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_VIDEO);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_Input *cameraInput = nullptr;
+    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(cameraInput, nullptr);
+    EXPECT_EQ(CameraNdkCommon::DisMdmOpenCheck(cameraInput), CAMERA_OK);
+    ret = OH_CameraInput_Open(cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_BeginConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_VideoOutput* videoOutput = CreateVideoOutput();
+    ASSERT_NE(videoOutput, nullptr);
+    ret = OH_CaptureSession_AddVideoOutput(captureSession, videoOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_CommitConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    bool isSupported = false;
+    ret = OH_CaptureSession_IsAutoDeviceSwitchSupported(captureSession, &isSupported);
+    EXPECT_EQ(ret, CAMERA_OK);
+    if (isSupported) {
+        ret = OH_CaptureSession_EnableAutoDeviceSwitch(nullptr, true);
+        EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+        ret = OH_CaptureSession_EnableAutoDeviceSwitch(captureSession, true);
+        EXPECT_EQ(ret, CAMERA_OK);
+    } else {
+        ret = OH_CaptureSession_EnableAutoDeviceSwitch(nullptr, true);
+        EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+        ret = OH_CaptureSession_EnableAutoDeviceSwitch(captureSession, true);
+        EXPECT_EQ(ret, CAMERA_OPERATION_NOT_ALLOWED);
+    }
+    ret = OH_VideoOutput_Release(videoOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CameraInput_Release(cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_Release(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: EnableAutoDeviceSwitch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test disable auto device switch
+ */
+HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_083, TestSize.Level0)
+{
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+
+    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_VIDEO);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_Input *cameraInput = nullptr;
+    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(cameraInput, nullptr);
+    EXPECT_EQ(CameraNdkCommon::DisMdmOpenCheck(cameraInput), CAMERA_OK);
+    ret = OH_CameraInput_Open(cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_BeginConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_VideoOutput* videoOutput = CreateVideoOutput();
+    ASSERT_NE(videoOutput, nullptr);
+    ret = OH_CaptureSession_AddVideoOutput(captureSession, videoOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_CommitConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    bool isSupported = false;
+    ret = OH_CaptureSession_IsAutoDeviceSwitchSupported(captureSession, &isSupported);
+    EXPECT_EQ(ret, CAMERA_OK);
+    if (isSupported) {
+        ret = OH_CaptureSession_EnableAutoDeviceSwitch(nullptr, false);
+        EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+        ret = OH_CaptureSession_EnableAutoDeviceSwitch(captureSession, false);
+        EXPECT_EQ(ret, CAMERA_OK);
+    } else {
+        ret = OH_CaptureSession_EnableAutoDeviceSwitch(nullptr, false);
+        EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+        ret = OH_CaptureSession_EnableAutoDeviceSwitch(captureSession, false);
+        EXPECT_EQ(ret, CAMERA_OPERATION_NOT_ALLOWED);
+    }
+    ret = OH_VideoOutput_Release(videoOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CameraInput_Release(cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_Release(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: IsAutoDeviceSwitchSupported
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsAutoDeviceSwitchSupported with abnormal branch
+ */
+HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_084, TestSize.Level0)
+{
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+
+    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_VIDEO);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_Input *cameraInput = nullptr;
+    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(cameraInput, nullptr);
+    EXPECT_EQ(CameraNdkCommon::DisMdmOpenCheck(cameraInput), CAMERA_OK);
+    ret = OH_CameraInput_Open(cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_BeginConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_VideoOutput* videoOutput = CreateVideoOutput();
+    ASSERT_NE(videoOutput, nullptr);
+    ret = OH_CaptureSession_AddVideoOutput(captureSession, videoOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_CommitConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    bool isSupported = false;
+    ret = OH_CaptureSession_IsAutoDeviceSwitchSupported(nullptr, &isSupported);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+
+    ret = OH_VideoOutput_Release(videoOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CameraInput_Release(cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_Release(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: RegisterSystemPressureLevelCallback and UnregisterSystemPressureLevelCallback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test RegisterSystemPressureLevelCallback and UnregisterSystemPressureLevelCallback
+ */
+HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_085, TestSize.Level0)
+{
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+    ret = OH_CaptureSession_RegisterSystemPressureLevelChangeCallback(captureSession,
+        CameraCaptureSessionSystemPressureLevelCb);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_UnregisterSystemPressureLevelChangeCallback(captureSession,
+        CameraCaptureSessionSystemPressureLevelCb);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: WhiteBalance
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test WhiteBalance API
+ */
+HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_088, TestSize.Level0)
+{
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+
+    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_VIDEO);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_Input *cameraInput = nullptr;
+    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(cameraInput, nullptr);
+    EXPECT_EQ(CameraNdkCommon::DisMdmOpenCheck(cameraInput), CAMERA_OK);
+    ret = OH_CameraInput_Open(cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_BeginConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_VideoOutput* videoOutput = CreateVideoOutput();
+    ASSERT_NE(videoOutput, nullptr);
+    ret = OH_CaptureSession_AddVideoOutput(captureSession, videoOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_CommitConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    bool isSupported = false;
+    ret = OH_CaptureSession_IsWhiteBalanceModeSupported(captureSession, CAMERA_WHITE_BALANCE_MODE_AUTO, &isSupported);
+    int32_t min = 0;
+    int32_t max = 0;
+    ret = OH_CaptureSession_GetWhiteBalanceRange(captureSession, &min, &max);
+    if (min == 0 && max == 0) {
+        EXPECT_EQ(ret, CAMERA_SERVICE_FATAL_ERROR);
+    } else {
+        EXPECT_EQ(ret, CAMERA_OK);
+    }
+    int32_t value = 3000;
+    ret = OH_CaptureSession_SetWhiteBalance(captureSession, value);
+    EXPECT_EQ(ret, CAMERA_OK);
+    value = 0;
+    ret = OH_CaptureSession_GetWhiteBalance(captureSession, &value);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_SetWhiteBalanceMode(captureSession, CAMERA_WHITE_BALANCE_MODE_AUTO);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_WhiteBalanceMode mode;
+    ret = OH_CaptureSession_GetWhiteBalanceMode(captureSession, &mode);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+
+    ret = OH_VideoOutput_Release(videoOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CameraInput_Release(cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_Release(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: RegisterControlCenterEffectStatusCallback and UnregisterControlCenterEffectStatusCallback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test RegisterControlCenterEffectStatusCallback and UnregisterControlCenterEffectStatusCallback
+ */
+HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_089, TestSize.Level0)
+{
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+    ret = OH_CaptureSession_RegisterControlCenterEffectStatusChangeCallback(captureSession,
+        ControlCenterEffectStatusCb);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_UnregisterControlCenterEffectStatusChangeCallback(captureSession,
+        ControlCenterEffectStatusCb);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: RegisterSystemPressureLevelCallback and UnregisterSystemPressureLevelCallback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test RegisterSystemPressureLevelCallback and UnregisterSystemPressureLevelCallback
+ */
+HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_090, TestSize.Level0)
+{
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+    ret = OH_CaptureSession_RegisterCameraSwitchRequestCallback(captureSession, CameraSwitchRequestCb);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_UnregisterRemoteDeviceSwitchCallback(captureSession, CameraSwitchRequestCb);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
 }
 
 /*
@@ -3329,357 +3717,13 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_macro_004
 
 /*
  * Feature: Framework
- * Function: RegisterCallback and UnregisterCallback
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test registration and deregistration when parameters is nullptr
- */
-HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_078, TestSize.Level0)
-{
-    Camera_CaptureSession* captureSession = nullptr;
-    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ASSERT_NE(captureSession, nullptr);
-    CaptureSession_Callbacks setCaptureSessionResultCallback = {
-        .onFocusStateChange = nullptr,
-        .onError = nullptr
-    };
-    ret = OH_CaptureSession_RegisterCallback(captureSession, &setCaptureSessionResultCallback);
-    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
-    ret = OH_CaptureSession_UnregisterCallback(captureSession, &setCaptureSessionResultCallback);
-    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
-
-    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
-}
-
-/*
- * Feature: Framework
- * Function: RegisterAutoDeviceSwitchStatusCallback and UnregisterAutoDeviceSwitchStatusCallback
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test RegisterAutoDeviceSwitchStatusCallback and UnregisterAutoDeviceSwitchStatusCallback
- */
-HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_079, TestSize.Level0)
-{
-    Camera_CaptureSession* captureSession = nullptr;
-    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ASSERT_NE(captureSession, nullptr);
-    ret = OH_CaptureSession_RegisterAutoDeviceSwitchStatusCallback(captureSession,
-        CameraCaptureSessionAutoDeviceSwitchStatusCb);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CaptureSession_UnregisterAutoDeviceSwitchStatusCallback(captureSession,
-        CameraCaptureSessionAutoDeviceSwitchStatusCb);
-    EXPECT_EQ(ret, CAMERA_OK);
-
-    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
-}
-
-/*
- * Feature: Framework
- * Function: RegisterAutoDeviceSwitchStatusCallback
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test RegisterAutoDeviceSwitchStatusCallback  with abnormal branch
- */
-HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_080, TestSize.Level0)
-{
-    Camera_CaptureSession* captureSession = nullptr;
-    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ASSERT_NE(captureSession, nullptr);
-    ret = OH_CaptureSession_RegisterAutoDeviceSwitchStatusCallback(nullptr,
-        CameraCaptureSessionAutoDeviceSwitchStatusCb);
-    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
-    ret = OH_CaptureSession_RegisterAutoDeviceSwitchStatusCallback(captureSession, nullptr);
-    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
-
-    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
-}
-
-/*
- * Feature: Framework
- * Function: UnregisterAutoDeviceSwitchStatusCallback
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test UnregisterAutoDeviceSwitchStatusCallback  with abnormal branch
- */
-HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_081, TestSize.Level0)
-{
-    Camera_CaptureSession* captureSession = nullptr;
-    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ASSERT_NE(captureSession, nullptr);
-    ret = OH_CaptureSession_UnregisterAutoDeviceSwitchStatusCallback(nullptr,
-        CameraCaptureSessionAutoDeviceSwitchStatusCb);
-    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
-    ret = OH_CaptureSession_UnregisterAutoDeviceSwitchStatusCallback(captureSession, nullptr);
-    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
-
-    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
-}
-
-/*
- * Feature: Framework
- * Function: EnableAutoDeviceSwitch
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test enable auto device switch
- */
-HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_082, TestSize.Level0)
-{
-    Camera_CaptureSession* captureSession = nullptr;
-    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ASSERT_NE(captureSession, nullptr);
-
-    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_VIDEO);
-    EXPECT_EQ(ret, CAMERA_OK);
-    Camera_Input *cameraInput = nullptr;
-    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ASSERT_NE(cameraInput, nullptr);
-    EXPECT_EQ(CameraNdkCommon::DisMdmOpenCheck(cameraInput), CAMERA_OK);
-    ret = OH_CameraInput_Open(cameraInput);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CaptureSession_BeginConfig(captureSession);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
-    EXPECT_EQ(ret, CAMERA_OK);
-    Camera_VideoOutput* videoOutput = CreateVideoOutput();
-    ASSERT_NE(videoOutput, nullptr);
-    ret = OH_CaptureSession_AddVideoOutput(captureSession, videoOutput);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CaptureSession_CommitConfig(captureSession);
-    EXPECT_EQ(ret, CAMERA_OK);
-    bool isSupported = false;
-    ret = OH_CaptureSession_IsAutoDeviceSwitchSupported(captureSession, &isSupported);
-    EXPECT_EQ(ret, CAMERA_OK);
-    if (isSupported) {
-        ret = OH_CaptureSession_EnableAutoDeviceSwitch(nullptr, true);
-        EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
-        ret = OH_CaptureSession_EnableAutoDeviceSwitch(captureSession, true);
-        EXPECT_EQ(ret, CAMERA_OK);
-    } else {
-        ret = OH_CaptureSession_EnableAutoDeviceSwitch(nullptr, true);
-        EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
-        ret = OH_CaptureSession_EnableAutoDeviceSwitch(captureSession, true);
-        EXPECT_EQ(ret, CAMERA_OPERATION_NOT_ALLOWED);
-    }
-    ret = OH_VideoOutput_Release(videoOutput);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CameraInput_Release(cameraInput);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CaptureSession_Release(captureSession);
-    EXPECT_EQ(ret, CAMERA_OK);
-}
-
-/*
- * Feature: Framework
- * Function: EnableAutoDeviceSwitch
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test disable auto device switch
- */
-HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_083, TestSize.Level0)
-{
-    Camera_CaptureSession* captureSession = nullptr;
-    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ASSERT_NE(captureSession, nullptr);
-
-    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_VIDEO);
-    EXPECT_EQ(ret, CAMERA_OK);
-    Camera_Input *cameraInput = nullptr;
-    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ASSERT_NE(cameraInput, nullptr);
-    EXPECT_EQ(CameraNdkCommon::DisMdmOpenCheck(cameraInput), CAMERA_OK);
-    ret = OH_CameraInput_Open(cameraInput);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CaptureSession_BeginConfig(captureSession);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
-    EXPECT_EQ(ret, CAMERA_OK);
-    Camera_VideoOutput* videoOutput = CreateVideoOutput();
-    ASSERT_NE(videoOutput, nullptr);
-    ret = OH_CaptureSession_AddVideoOutput(captureSession, videoOutput);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CaptureSession_CommitConfig(captureSession);
-    EXPECT_EQ(ret, CAMERA_OK);
-    bool isSupported = false;
-    ret = OH_CaptureSession_IsAutoDeviceSwitchSupported(captureSession, &isSupported);
-    EXPECT_EQ(ret, CAMERA_OK);
-    if (isSupported) {
-        ret = OH_CaptureSession_EnableAutoDeviceSwitch(nullptr, false);
-        EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
-        ret = OH_CaptureSession_EnableAutoDeviceSwitch(captureSession, false);
-        EXPECT_EQ(ret, CAMERA_OK);
-    } else {
-        ret = OH_CaptureSession_EnableAutoDeviceSwitch(nullptr, false);
-        EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
-        ret = OH_CaptureSession_EnableAutoDeviceSwitch(captureSession, false);
-        EXPECT_EQ(ret, CAMERA_OPERATION_NOT_ALLOWED);
-    }
-    ret = OH_VideoOutput_Release(videoOutput);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CameraInput_Release(cameraInput);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CaptureSession_Release(captureSession);
-    EXPECT_EQ(ret, CAMERA_OK);
-}
-
-/*
- * Feature: Framework
- * Function: IsAutoDeviceSwitchSupported
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test IsAutoDeviceSwitchSupported with abnormal branch
- */
-HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_084, TestSize.Level0)
-{
-    Camera_CaptureSession* captureSession = nullptr;
-    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ASSERT_NE(captureSession, nullptr);
-
-    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_VIDEO);
-    EXPECT_EQ(ret, CAMERA_OK);
-    Camera_Input *cameraInput = nullptr;
-    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ASSERT_NE(cameraInput, nullptr);
-    EXPECT_EQ(CameraNdkCommon::DisMdmOpenCheck(cameraInput), CAMERA_OK);
-    ret = OH_CameraInput_Open(cameraInput);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CaptureSession_BeginConfig(captureSession);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
-    EXPECT_EQ(ret, CAMERA_OK);
-    Camera_VideoOutput* videoOutput = CreateVideoOutput();
-    ASSERT_NE(videoOutput, nullptr);
-    ret = OH_CaptureSession_AddVideoOutput(captureSession, videoOutput);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CaptureSession_CommitConfig(captureSession);
-    EXPECT_EQ(ret, CAMERA_OK);
-    bool isSupported = false;
-    ret = OH_CaptureSession_IsAutoDeviceSwitchSupported(nullptr, &isSupported);
-    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
-
-    ret = OH_VideoOutput_Release(videoOutput);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CameraInput_Release(cameraInput);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CaptureSession_Release(captureSession);
-    EXPECT_EQ(ret, CAMERA_OK);
-}
-
-/*
- * Feature: Framework
- * Function: RegisterSystemPressureLevelCallback and UnRegisterSystemPressureLevelCallback
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test RegisterSystemPressureLevelCallback and UnRegisterSystemPressureLevelCallback
- */
-HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_085, TestSize.Level0)
-{
-    Camera_CaptureSession* captureSession = nullptr;
-    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ASSERT_NE(captureSession, nullptr);
-    ret = OH_CaptureSession_RegisterSystemPressureLevelChangeCallback(captureSession,
-        CameraCaptureSessionSystemPressureLevelCb);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CaptureSession_UnregisterSystemPressureLevelChangeCallback(captureSession,
-        CameraCaptureSessionSystemPressureLevelCb);
-    EXPECT_EQ(ret, CAMERA_OK);
-
-    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
-}
-
-/*
- * Feature: Framework
- * Function: WhiteBalance
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test WhiteBalance API
- */
-HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_088, TestSize.Level0)
-{
-    Camera_CaptureSession* captureSession = nullptr;
-    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ASSERT_NE(captureSession, nullptr);
-
-    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_VIDEO);
-    EXPECT_EQ(ret, CAMERA_OK);
-    Camera_Input *cameraInput = nullptr;
-    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ASSERT_NE(cameraInput, nullptr);
-    EXPECT_EQ(CameraNdkCommon::DisMdmOpenCheck(cameraInput), CAMERA_OK);
-    ret = OH_CameraInput_Open(cameraInput);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CaptureSession_BeginConfig(captureSession);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
-    EXPECT_EQ(ret, CAMERA_OK);
-    Camera_VideoOutput* videoOutput = CreateVideoOutput();
-    ASSERT_NE(videoOutput, nullptr);
-    ret = OH_CaptureSession_AddVideoOutput(captureSession, videoOutput);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CaptureSession_CommitConfig(captureSession);
-    EXPECT_EQ(ret, CAMERA_OK);
-
-    bool isSupported = false;
-    ret = OH_CaptureSession_IsWhiteBalanceModeSupported(captureSession, CAMERA_WHITE_BALANCE_MODE_AUTO, &isSupported);
-    int32_t min = 0;
-    int32_t max = 0;
-    ret = OH_CaptureSession_GetWhiteBalanceRange(captureSession, &min, &max);
-    if (min == 0 && max == 0) {
-        EXPECT_EQ(ret, CAMERA_SERVICE_FATAL_ERROR);
-    } else {
-        EXPECT_EQ(ret, CAMERA_OK);
-    }
-    int32_t value = 3000;
-    ret = OH_CaptureSession_SetWhiteBalance(captureSession, value);
-    EXPECT_EQ(ret, CAMERA_OK);
-    value = 0;
-    ret = OH_CaptureSession_GetWhiteBalance(captureSession, &value);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CaptureSession_SetWhiteBalanceMode(captureSession, CAMERA_WHITE_BALANCE_MODE_AUTO);
-    EXPECT_EQ(ret, CAMERA_OK);
-    Camera_WhiteBalanceMode mode;
-    ret = OH_CaptureSession_GetWhiteBalanceMode(captureSession, &mode);
-    EXPECT_EQ(ret, CAMERA_OK);
-
-
-    ret = OH_VideoOutput_Release(videoOutput);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CameraInput_Release(cameraInput);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CaptureSession_Release(captureSession);
-    EXPECT_EQ(ret, CAMERA_OK);
-}
-
-/*
- * Feature: Framework
  * Function: Test OH_CaptureSession_SetSmoothZoom
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
  * CaseDescription: Test OH_CaptureSession_SetSmoothZoom
  */
-HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_089, TestSize.Level0)
+HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_091, TestSize.Level0)
 {
     Camera_CaptureSession* captureSession = nullptr;
     Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
@@ -3711,50 +3755,6 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_089, Test
 
     EXPECT_EQ(OH_PhotoOutput_Release(photoOutput), CAMERA_OK);
     EXPECT_EQ(OH_CameraInput_Release(cameraInput), CAMERA_OK);
-    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
-}
-
-/*
- * Feature: Framework
- * Function: Test register and unregister iso change callback when sceneMode is video
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test registration and deregistration iso info change callback.
- * Deregistration and registration are successful when valid parameters are entered
- */
-HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_090, TestSize.Level0)
-{
-    Camera_CaptureSession* captureSession = nullptr;
-    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_VIDEO);
-    ASSERT_NE(captureSession, nullptr);
-    ret = OH_CaptureSession_RegisterIsoChangeCallback(captureSession, IsoInfoChangeCb);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CaptureSession_UnregisterIsoChangeCallback(captureSession, IsoInfoChangeCb);
-    EXPECT_EQ(ret, CAMERA_OK);
-    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
-}
-
-/*
- * Feature: Framework
- * Function: Test register iso change callback when sceneMode is not video
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test registration iso info change callback.
- * registration failed when when sceneMode is not video
- */
-HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_091, TestSize.Level0)
-{
-    Camera_CaptureSession* captureSession = nullptr;
-    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_PHOTO);
-    ASSERT_NE(captureSession, nullptr);
-    ret = OH_CaptureSession_RegisterIsoChangeCallback(captureSession, IsoInfoChangeCb);
-    EXPECT_NE(ret, CAMERA_OK);
     EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
 }
 } // CameraStandard

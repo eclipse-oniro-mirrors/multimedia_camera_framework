@@ -37,22 +37,20 @@ public:
     void OnFrameStarted() const override
     {
         MEDIA_DEBUG_LOG("OnFrameStarted is called!");
-        CHECK_EXECUTE(videoOutput_ != nullptr && callback_.onFrameStart != nullptr,
-            callback_.onFrameStart(videoOutput_));
+        CHECK_RETURN(videoOutput_ == nullptr || callback_.onFrameStart == nullptr);
+        callback_.onFrameStart(videoOutput_);
     }
 
     void OnFrameEnded(const int32_t frameCount) const override
     {
         MEDIA_DEBUG_LOG("OnFrameEnded is called! frame count: %{public}d", frameCount);
-        CHECK_EXECUTE(videoOutput_ != nullptr && callback_.onFrameEnd != nullptr,
-            callback_.onFrameEnd(videoOutput_, frameCount));
+        CHECK_RETURN(videoOutput_ == nullptr || callback_.onFrameEnd == nullptr);
     }
 
     void OnError(const int32_t errorCode) const override
     {
         MEDIA_DEBUG_LOG("OnError is called!, errorCode: %{public}d", errorCode);
-        CHECK_EXECUTE(videoOutput_ != nullptr && callback_.onError != nullptr,
-            callback_.onError(videoOutput_, FrameworkToNdkCameraError(errorCode)));
+        CHECK_RETURN(videoOutput_ == nullptr || callback_.onError == nullptr);
     }
 
     void OnDeferredVideoEnhancementInfo(const CaptureEndedInfoExt info) const override
@@ -74,7 +72,6 @@ Camera_VideoOutput::Camera_VideoOutput(sptr<VideoOutput> &innerVideoOutput) : in
 Camera_VideoOutput::~Camera_VideoOutput()
 {
     MEDIA_DEBUG_LOG("~Camera_VideoOutput is called");
-    CHECK_RETURN(!innerVideoOutput_);
     innerVideoOutput_ = nullptr;
 }
 
@@ -174,11 +171,9 @@ Camera_ErrorCode Camera_VideoOutput::GetSupportedFrameRates(Camera_FrameRateRang
 
 Camera_ErrorCode Camera_VideoOutput::DeleteFrameRates(Camera_FrameRateRange* frameRateRange)
 {
-    if (frameRateRange != nullptr) {
-        delete[] frameRateRange;
-        frameRateRange = nullptr;
-    }
-
+    CHECK_RETURN_RET(frameRateRange == nullptr, CAMERA_OK);
+    delete[] frameRateRange;
+    frameRateRange = nullptr;
     return CAMERA_OK;
 }
 
@@ -191,8 +186,7 @@ Camera_ErrorCode Camera_VideoOutput::SetFrameRate(int32_t minFps, int32_t maxFps
 Camera_ErrorCode Camera_VideoOutput::GetActiveFrameRate(Camera_FrameRateRange* frameRateRange)
 {
     std::vector<int32_t> activeFrameRate = innerVideoOutput_->GetFrameRateRange();
-    CHECK_RETURN_RET_ELOG(activeFrameRate.size() <= 1, CAMERA_SERVICE_FATAL_ERROR,
-        "invalid activeFrameRate size!");
+    CHECK_RETURN_RET_ELOG(activeFrameRate.size() <= 1, CAMERA_SERVICE_FATAL_ERROR, "invalid activeFrameRate size!");
 
     frameRateRange->min = static_cast<uint32_t>(activeFrameRate[0]);
     frameRateRange->max = static_cast<uint32_t>(activeFrameRate[1]);
@@ -202,28 +196,23 @@ Camera_ErrorCode Camera_VideoOutput::GetActiveFrameRate(Camera_FrameRateRange* f
 
 Camera_ErrorCode Camera_VideoOutput::IsMirrorSupported(bool* isSupported)
 {
-    CHECK_RETURN_RET_ELOG(innerVideoOutput_ == nullptr, CAMERA_SERVICE_FATAL_ERROR,
-        "innerVideoOutput_ is nullptr");
-    CHECK_RETURN_RET_ELOG(isSupported == nullptr, CAMERA_SERVICE_FATAL_ERROR,
-        "isSupported is nullptr");
+    CHECK_RETURN_RET_ELOG(innerVideoOutput_ == nullptr, CAMERA_SERVICE_FATAL_ERROR, "innerVideoOutput_ is nullptr");
+    CHECK_RETURN_RET_ELOG(isSupported == nullptr, CAMERA_SERVICE_FATAL_ERROR, "isSupported is nullptr");
     *isSupported = innerVideoOutput_->IsMirrorSupported();
     return CAMERA_OK;
 }
 
 Camera_ErrorCode Camera_VideoOutput::EnableMirror(bool mirrorMode)
 {
-    CHECK_RETURN_RET_ELOG(innerVideoOutput_ == nullptr, CAMERA_SERVICE_FATAL_ERROR,
-        "innerVideoOutput_ is nullptr");
+    CHECK_RETURN_RET_ELOG(innerVideoOutput_ == nullptr, CAMERA_SERVICE_FATAL_ERROR, "innerVideoOutput_ is nullptr");
     int32_t ret = innerVideoOutput_->enableMirror(mirrorMode);
     return FrameworkToNdkCameraError(ret);
 }
 
 Camera_ErrorCode Camera_VideoOutput::GetVideoRotation(int32_t imageRotation, Camera_ImageRotation* cameraImageRotation)
 {
-    CHECK_RETURN_RET_ELOG(cameraImageRotation == nullptr, CAMERA_SERVICE_FATAL_ERROR,
-        "GetCameraImageRotation failed");
-    CHECK_RETURN_RET_ELOG(innerVideoOutput_ == nullptr, CAMERA_SERVICE_FATAL_ERROR,
-        "innerVideoOutput_ is nullptr");
+    CHECK_RETURN_RET_ELOG(cameraImageRotation == nullptr, CAMERA_SERVICE_FATAL_ERROR, "GetCameraImageRotation failed");
+    CHECK_RETURN_RET_ELOG(innerVideoOutput_ == nullptr, CAMERA_SERVICE_FATAL_ERROR, "innerVideoOutput_ is nullptr");
     int32_t cameraOutputRotation = innerVideoOutput_->GetVideoRotation(imageRotation);
     CHECK_RETURN_RET_ELOG(cameraOutputRotation == CAMERA_SERVICE_FATAL_ERROR, CAMERA_SERVICE_FATAL_ERROR,
         "Camera_VideoOutput::GetVideoRotation camera service fatal error! ret: %{public}d", cameraOutputRotation);

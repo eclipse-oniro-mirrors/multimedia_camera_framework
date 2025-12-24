@@ -38,17 +38,17 @@
 #include "v1_1/icamera_device.h"
 #include "v1_2/icamera_device.h"
 #include "v1_3/icamera_device.h"
+#include "v1_5/icamera_device.h"
 #include "v1_0/icamera_host.h"
-#include "dfx/camera_report_uitls.h"
-#include "icamera_ipc_checker.h"
 #include "camera_rotate_strategy_parser.h"
-#include "applist_manager/camera_applist_manager.h"
+#include "icamera_ipc_checker.h"
+#include "camera_applist_manager.h"
 
 namespace OHOS {
 namespace CameraStandard {
 constexpr int32_t HDI_STREAM_ID_INIT = 1;
 using OHOS::HDI::Camera::V1_0::ICameraDeviceCallback;
-using OHOS::HDI::Camera::V1_3::IStreamOperatorCallback;
+using OHOS::HDI::Camera::V1_5::IStreamOperatorCallback;
 class IHCameraCloseListener : public virtual RefBase {
 public:
     virtual void BeforeDeviceClose() = 0;
@@ -86,12 +86,6 @@ public:
     std::string GetCameraId();
     int32_t GetCameraType();
     int32_t GetCameraPosition();
-    std::string GetClientName();
-
-    int32_t GetCameraConnectType();
-
-    int32_t GetSensorOrientation();
-
     bool IsOpenedCameraDevice();
     int32_t GetCallerToken();
 
@@ -137,8 +131,6 @@ public:
         std::lock_guard<std::mutex> lock(cameraPrivacyMutex_);
         return cameraPrivacy_;
     }
-    
-    void NotifyCameraSessionStatus(bool running);
 
     void RemoveResourceWhenHostDied();
 
@@ -148,9 +140,9 @@ public:
 
     void NotifyCameraStatus(int32_t state, int32_t msg = 0);
 
-    bool GetCameraResourceCost(int32_t &cost, std::set<std::string> &conflicting);
-
     int32_t CloseDevice();
+
+    bool GetCameraResourceCost(int32_t &cost, std::set<std::string> &conflicting);
 
     int32_t closeDelayedDevice();
 
@@ -177,8 +169,14 @@ public:
     inline void SetCameraCloseListener(wptr<IHCameraCloseListener> listener)
     {
         std::lock_guard<std::mutex> lock(cameraCloseListenerMutex_);
-        cameraCloseListenerVec_.push_back(listener);
+        cameraCloseListener_ = listener;
     }
+
+    std::string GetClientName();
+
+    int32_t GetCameraConnectType();
+
+    int32_t GetSensorOrientation();
 
     inline bool IsDeviceOpenedByConcurrent()
     {
@@ -197,9 +195,13 @@ public:
     void UpdateCameraRotateAngle();
     void SetCameraRotateStrategyInfos(std::vector<CameraRotateStrategyInfo> infos);
     bool GetSigleStrategyInfo(CameraRotateStrategyInfo &strategyInfo);
+    void EnableKeyFrameReport(bool isKeyFrameReportEnabled);
+    std::vector<uint8_t> GetKeyFrameInfoBuffer(int64_t firstFrameTimestamp);
     int32_t SetUsePhysicalCameraOrientation(bool isUsed) override;
     int32_t GetNaturalDirectionCorrect(bool& isNaturalDirectionCorrect) override;
     bool GetUsePhysicalCameraOrientation();
+    bool ShowDialogFlag();
+    void UpdateCameraSwitchCameraId(std::string cameraId);
     void SetLastDisplayMode(int32_t lastDisplayMode);
     void SetFrameRateRange(const std::vector<int32_t>& frameRateRange);
     void SetIsHasFitedRotation(bool isHasFitedRotation);
@@ -213,8 +215,8 @@ private:
     class FoldScreenListener;
     class DisplayModeListener;
     sptr<FoldScreenListener> listener_;
+    static const std::vector<std::tuple<uint32_t, std::string, std::string>> reportTagInfos_;
     sptr<DisplayModeListener> displayModeListener_;
-    static const std::vector<std::tuple<uint32_t, std::string, DFX_UB_NAME>> reportTagInfos_;
 
     std::mutex opMutex_; // Lock the operations updateSettings_, streamOperator_, and hdiCameraDevice_.
     std::shared_ptr<OHOS::Camera::CameraMetadata> updateSettings_;
@@ -234,9 +236,9 @@ private:
 
     uint32_t callerToken_;
     std::mutex cameraPrivacyMutex_;
-    sptr<CameraPrivacy> cameraPrivacy_;
     int32_t cameraPid_;
 
+    sptr<CameraPrivacy> cameraPrivacy_;
     std::mutex proxyStreamOperatorCallbackMutex_;
     wptr<IStreamOperatorCallback> proxyStreamOperatorCallback_;
 
@@ -263,11 +265,18 @@ private:
     std::mutex deviceProtectionStatusMutex_;
     int64_t lastDeviceEjectTime_ = 0;
     std::atomic<uint32_t> deviceEjectTimes_ = 0;
+    std::atomic<bool> isKeyFrameReportEnabled_ { false };
 
     void UpdateDeviceOpenLifeCycleSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> changedSettings);
     void ResetDeviceOpenLifeCycleSettings();
 
     sptr<ICameraDeviceServiceCallback> GetDeviceServiceCallback();
+    inline void SetDeviceServiceCallback(sptr<ICameraDeviceServiceCallback> callback)
+    {
+        std::lock_guard<std::mutex> lock(deviceSvcCbMutex_);
+        deviceSvcCallback_ = callback;
+    };
+
     void ResetCachedSettings();
     void ReportMetadataDebugLog(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
     void RegisterFoldStatusListener();
@@ -282,8 +291,6 @@ private:
     void CheckVideoStabilizationChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
     void UnPrepareZoom();
     int32_t OpenDevice(bool isEnableSecCam = false);
-    void ConfigQosParam(const char *bundleName, int32_t qosLevel,
-                        std::unordered_map<std::string, std::string> &qosParamMap);
     void HandleFoldableDevice();
     int32_t CheckPermissionBeforeOpenDevice();
     bool HandlePrivacyBeforeOpenDevice();
@@ -293,14 +300,13 @@ private:
     void DebugLogForAfRegions(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
     void DebugLogForAeRegions(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
     void DebugLogTag(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings,
-                     uint32_t tag, std::string tagName, DFX_UB_NAME dfxUbStr);
+                     uint32_t tag, std::string tagName, std::string dfxUbStr);
     void CreateMuteSetting(std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
     int32_t UpdateDeviceSetting();
     void ReleaseSessionBeforeCloseDevice();
 #ifdef MEMMGR_OVERRID
     int32_t RequireMemory(const std::string& reason);
 #endif
-    int32_t CameraHostMgrOpenCamera(bool isEnableSecCam);
     void GetMovingPhotoStartAndEndTime(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult);
     std::vector<CameraRotateStrategyInfo> GetCameraRotateStrategyInfos();
     void ReportDeviceProtectionStatus(const std::shared_ptr<OHOS::Camera::CameraMetadata> &metadata);
@@ -311,14 +317,16 @@ private:
     void UnRegisterSensorCallback();
     static void DropDetectionDataCallbackImpl(const OHOS::Rosen::MotionSensorEvent &motionData);
     void ReportZoomInfos(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult);
+    void SaveKeyFrameInfo(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult);
 
     bool isMovingPhotoEnabled_ = false;
     std::vector<int32_t> frameRateRange_ = {0, 0};
     std::mutex clientNameMutex_;
-    std::mutex fpsRangeLock_;
     std::mutex lastDisplayModeLock_;
+    std::mutex fpsRangeLock_;
     std::mutex originCameraIdLock_;
     std::mutex usePhysicalCameraOrientationMutex_;
+    std::mutex dataShareHelperMutex_;
     std::mutex movingPhotoStartTimeCallbackLock_;
     std::mutex movingPhotoEndTimeCallbackLock_;
     std::function<void(int32_t, int64_t)> movingPhotoStartTimeCallback_;
@@ -326,20 +334,22 @@ private:
     std::mutex sensorLock_;
     std::mutex cameraCloseListenerMutex_;
     std::mutex foldStateListenerMutex_;
+    wptr<IHCameraCloseListener> cameraCloseListener_;
     std::mutex displayModeListenerMutex_;
-    std::vector<wptr<IHCameraCloseListener>> cameraCloseListenerVec_;
     std::mutex cameraRotateStrategyInfosLock_;
     std::vector<CameraRotateStrategyInfo> cameraRotateStrategyInfos_;
     std::string bundleName_ = "";
-    std::shared_mutex mechCallbackLock_;
     std::shared_mutex zoomInfoCallbackLock_;
     std::function<void(ZoomInfo)> zoomInfoCallback_;
     float zoomRatio_ = 1.0f;
     int32_t focusMode_ = -1;
     bool focusStatus_ = false;
+    std::map<int64_t, uint8_t> keyFrameInfoMap_;
+    int64_t firstFrameTimestamp_ {0};
     int32_t videoStabilizationMode_ = 0;
     int32_t lastDisplayMode_ = -1;
     bool usePhysicalCameraOrientation_ = false;
+    std::vector<std::string> keyFrameInfoVec_;
     std::string pidForLiveScene_;
     std::string uidForLiveScene_;
     std::string bundleNameForLiveScene_;

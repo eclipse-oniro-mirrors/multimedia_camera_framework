@@ -26,7 +26,7 @@ constexpr int32_t DIALOG_DURATION = 3000;
 
 std::shared_ptr<NoFrontCameraDialog> NoFrontCameraDialog::instance_ = nullptr;
 std::mutex NoFrontCameraDialog::mutex_;
-
+ 
 std::shared_ptr<NoFrontCameraDialog> NoFrontCameraDialog::GetInstance()
 {
     if (instance_ == nullptr) {
@@ -64,6 +64,7 @@ void NoFrontCameraDialog::ShowCameraDialog()
     sptr<NoFrontCameraAbilityConnection> connection =
         sptr<NoFrontCameraAbilityConnection>(new (std::nothrow) NoFrontCameraAbilityConnection(commandStr));
     CHECK_RETURN_ELOG(connection == nullptr, "connection is nullptr");
+    DisconnectAbilityForDialog();
     NoFrontCameraDialog::GetInstance()->SetConnection(connection);
     std::string identity = IPCSkeleton::ResetCallingIdentity();
     auto connectResult = AAFwk::ExtensionManagerClient::GetInstance().ConnectServiceExtensionAbility(want,

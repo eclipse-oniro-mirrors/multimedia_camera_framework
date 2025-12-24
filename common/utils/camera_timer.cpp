@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,6 +18,12 @@
 
 namespace OHOS {
 namespace CameraStandard {
+CameraTimer& CameraTimer::GetInstance()
+{
+    static CameraTimer instance;
+    return instance;
+}
+
 CameraTimer::CameraTimer() : timer_(std::make_unique<OHOS::Utils::Timer>("CameraServiceTimer"))
 {
     MEDIA_INFO_LOG("entered.");
@@ -35,8 +41,8 @@ CameraTimer::~CameraTimer()
 
 uint32_t CameraTimer::Register(const TimerCallback& callback, uint32_t interval, bool once)
 {
+    std::lock_guard lock(mutex_);
     CHECK_RETURN_RET_ELOG(timer_ == nullptr, 0, "timer is nullptr");
-
     uint32_t timerId = timer_->Register(callback, interval, once);
     MEDIA_DEBUG_LOG("timerId: %{public}u", timerId);
     return timerId;
@@ -44,9 +50,9 @@ uint32_t CameraTimer::Register(const TimerCallback& callback, uint32_t interval,
 
 void CameraTimer::Unregister(uint32_t timerId)
 {
+    std::lock_guard lock(mutex_);
     MEDIA_DEBUG_LOG("timerId: %{public}d", timerId);
     CHECK_RETURN_ELOG(timer_ == nullptr, "timer is nullptr");
-
     timer_->Unregister(timerId);
 }
 } // namespace CameraStandard

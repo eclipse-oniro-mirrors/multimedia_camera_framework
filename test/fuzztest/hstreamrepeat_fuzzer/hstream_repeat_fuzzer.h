@@ -1,4 +1,4 @@
- /*
+/*
  * Copyright (c) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,14 +46,21 @@ public:
     {
         return 0;
     }
+    int32_t OnFramePaused() override
+    {
+        return 0;
+    }
+    int32_t OnFrameResumed() override
+    {
+        return 0;
+    }
 };
 
 class IStreamOperatorMock : public IStreamOperator {
 public:
     explicit IStreamOperatorMock() = default;
     inline int32_t IsStreamsSupported(OHOS::HDI::Camera::V1_0::OperationMode mode,
-        const std::vector<uint8_t>& modeSetting,
-        const std::vector<OHOS::HDI::Camera::V1_0::StreamInfo>& infos,
+        const std::vector<uint8_t>& modeSetting, const std::vector<OHOS::HDI::Camera::V1_0::StreamInfo>& infos,
         OHOS::HDI::Camera::V1_0::StreamSupportType& type) override
     {
         return 0;
@@ -66,8 +73,8 @@ public:
     {
         return 0;
     }
-    inline int32_t CommitStreams(OHOS::HDI::Camera::V1_0::OperationMode mode,
-        const std::vector<uint8_t>& modeSetting) override
+    inline int32_t CommitStreams(
+        OHOS::HDI::Camera::V1_0::OperationMode mode, const std::vector<uint8_t>& modeSetting) override
     {
         return 0;
     }
@@ -75,8 +82,8 @@ public:
     {
         return 0;
     }
-    inline int32_t AttachBufferQueue(int32_t streamId,
-        const sptr<OHOS::HDI::Camera::V1_0::BufferProducerSequenceable>& bufferProducer) override
+    inline int32_t AttachBufferQueue(
+        int32_t streamId, const sptr<OHOS::HDI::Camera::V1_0::BufferProducerSequenceable>& bufferProducer) override
     {
         return 0;
     }
@@ -84,8 +91,8 @@ public:
     {
         return 0;
     }
-    inline int32_t Capture(int32_t captureId, const OHOS::HDI::Camera::V1_0::CaptureInfo& info,
-        bool isStreaming) override
+    inline int32_t Capture(
+        int32_t captureId, const OHOS::HDI::Camera::V1_0::CaptureInfo& info, bool isStreaming) override
     {
         return 0;
     }
@@ -94,8 +101,8 @@ public:
         return 0;
     }
     inline int32_t ChangeToOfflineStream(const std::vector<int32_t>& streamIds,
-         const sptr<OHOS::HDI::Camera::V1_0::IStreamOperatorCallback>& callbackObj,
-         sptr<OHOS::HDI::Camera::V1_0::IOfflineStreamOperator>& offlineOperator) override
+        const sptr<OHOS::HDI::Camera::V1_0::IStreamOperatorCallback>& callbackObj,
+        sptr<OHOS::HDI::Camera::V1_0::IOfflineStreamOperator>& offlineOperator) override
     {
         return 0;
     }
@@ -115,14 +122,43 @@ public:
     }
 };
 
-class HStreamRepeatFuzzer {
+class MockStreamRepeatCallback : public StreamRepeatCallbackStub {
 public:
-static bool hasPermission;
-static std::shared_ptr<HStreamRepeat> fuzz_;
-static void HStreamRepeatFuzzTest1(FuzzedDataProvider& fdp);
-static void HStreamRepeatFuzzTest2(FuzzedDataProvider& fdp);
-static void HStreamRepeatFuzzTest3(FuzzedDataProvider& fdp);
+    ErrCode OnFrameStarted() override
+    {
+        return 0;
+    }
+
+    ErrCode OnFrameEnded(int32_t frameCount) override
+    {
+        return 0;
+    }
+
+    ErrCode OnFrameError(int32_t errorCode) override
+    {
+        return 0;
+    }
+
+    ErrCode OnSketchStatusChanged(SketchStatus status) override
+    {
+        return 0;
+    }
+
+    ErrCode OnDeferredVideoEnhancementInfo(const CaptureEndedInfoExt& captureEndedInfo) override
+    {
+        return 0;
+    }
+
+    ErrCode OnFramePaused() override
+    {
+        return 0;
+    }
+
+    ErrCode OnFrameResumed() override
+    {
+        return 0;
+    }
 };
-} //CameraStandard
-} //OHOS
-#endif //HSTREAM_REPEAT_FUZZER_H
+} // namespace CameraStandard
+} // namespace OHOS
+#endif // HSTREAM_REPEAT_FUZZER_H

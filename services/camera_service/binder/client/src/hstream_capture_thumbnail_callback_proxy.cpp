@@ -45,10 +45,9 @@ int32_t HStreamCaptureThumbnailCallbackProxy::OnThumbnailAvailable(sptr<SurfaceB
         data,
         reply,
         option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamCaptureThumbnailCallbackProxy OnThumbnailAvailable failed, error: %{public}d", error);
-    }
+    CHECK_PRINT_ELOG(error != ERR_NONE,
+        "HStreamCaptureThumbnailCallbackProxy OnThumbnailAvailable failed, error: %{public}d", error);
     return error;
 }
 }  // namespace CameraStandard
-}  // namespace OHOS
+}  // namespace OHOS

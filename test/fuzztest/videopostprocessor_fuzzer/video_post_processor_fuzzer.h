@@ -17,7 +17,6 @@
 #define VIDEOPOSTPROCESSOR_FUZZER_H
 
 #include "video_post_processor.h"
-#include <fuzzer/FuzzedDataProvider.h>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -25,8 +24,8 @@ using namespace OHOS::CameraStandard::DeferredProcessing;
 class VideoPostProcessorFuzzer {
 public:
 static std::shared_ptr<VideoPostProcessor> processor_;
-static void VideoPostProcessorFuzzTest1(FuzzedDataProvider& fdp);
-static void VideoPostProcessorFuzzTest2(FuzzedDataProvider& fdp);
+static void VideoPostProcessorFuzzTest1();
+static void VideoPostProcessorFuzzTest2();
 };
 } //CameraStandard
 } //OHOS

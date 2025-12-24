@@ -19,6 +19,8 @@
 #include "camera_window_manager_client.h"
 #include "camera_app_manager_utils.h"
 #include "ipc_skeleton.h"
+#include "system_ability_definition.h"
+#include "iservice_registry.h"
 #include "hcamera_device_manager.h"
 #include <mutex>
 #include <regex>
@@ -27,11 +29,11 @@ namespace OHOS {
 namespace CameraStandard {
 static const int32_t FOREGROUND_STATE_OF_PROCESS = 0;
 static const int32_t PIP_STATE_OF_PROCESS = 1;
-static const int32_t BACKGROUND_STATE_OF_PROCESS = 2;
+static const int32_t BCAKGROUND_STATE_OF_PROCESS = 2;
 static const int32_t UNKNOW_STATE_OF_PROCESS = 3;
 static const std::unordered_map<int32_t, int32_t> APP_MGR_STATE_TO_CAMERA_STATE = {
     {2,  FOREGROUND_STATE_OF_PROCESS},
-    {4,  BACKGROUND_STATE_OF_PROCESS}
+    {4,  BCAKGROUND_STATE_OF_PROCESS}
 };
 static const int32_t FOCUSED_STATE_OF_PROCESS = 1;
 static const int32_t UNFOCUSED_STATE_OF_PROCESS = 0;
@@ -77,7 +79,7 @@ void HCameraDeviceManager::AddDevice(pid_t pid, sptr<HCameraDevice> device)
     int32_t uidOfRequestProcess = IPCSkeleton::GetCallingUid();
     int32_t pidOfRequestProcess = IPCSkeleton::GetCallingPid();
     uint32_t accessTokenIdOfRequestProc = IPCSkeleton::GetCallingTokenID();
-    int32_t firstTokenIdOfRequestProc = IPCSkeleton::GetFirstTokenID();
+    uint32_t firstTokenIdOfRequestProc = IPCSkeleton::GetFirstTokenID();
     sptr<HCameraDeviceHolder> cameraHolder = new HCameraDeviceHolder(
         pidOfRequestProcess, uidOfRequestProcess, FOREGROUND_STATE_OF_PROCESS,
         FOCUSED_STATE_OF_PROCESS, device, accessTokenIdOfRequestProc, cost, conflicting, firstTokenIdOfRequestProc);
@@ -121,10 +123,8 @@ std::vector<sptr<HCameraDeviceHolder>> HCameraDeviceManager::GetCameraHolderByPi
     MEDIA_INFO_LOG("HCameraDeviceManager::GetCameraHolderByPid start");
     std::lock_guard<std::mutex> lock(mapMutex_);
     auto it = pidToCameras_.find(pidRequest);
-    if (it == pidToCameras_.end()) {
-        MEDIA_INFO_LOG("HCameraDeviceManager::GetCameraHolderByPid end, pid: %{public}d not found", pidRequest);
-        return {};
-    }
+    CHECK_RETURN_RET_ILOG(it == pidToCameras_.end(), {},
+        "HCameraDeviceManager::GetCameraHolderByPid end, pid: %{public}d not found", pidRequest);
     MEDIA_INFO_LOG("HCameraDeviceManager::GetCameraHolderByPid end, pid: %{public}d found", pidRequest);
     return it->second;
 }
@@ -134,10 +134,8 @@ std::vector<sptr<HCameraDevice>> HCameraDeviceManager::GetCamerasByPid(pid_t pid
     MEDIA_INFO_LOG("HCameraDeviceManager::GetCameraByPid start");
     std::lock_guard<std::mutex> lock(mapMutex_);
     auto it = pidToCameras_.find(pidRequest);
-    if (it == pidToCameras_.end()) {
-        MEDIA_INFO_LOG("HCameraDeviceManager::GetCamerasByPid end, pid: %{public}d not found", pidRequest);
-        return {};
-    }
+    CHECK_RETURN_RET_ILOG(it == pidToCameras_.end(), {},
+        "HCameraDeviceManager::GetCamerasByPid end, pid: %{public}d not found", pidRequest);
     std::vector<sptr<HCameraDevice>> cameras = {};
     if (!it->second.empty()) {
         for (auto cameraHolder : it->second) {
@@ -154,7 +152,7 @@ std::vector<pid_t> HCameraDeviceManager::GetActiveClient()
     std::lock_guard<std::mutex> lock(mapMutex_);
     std::vector<pid_t> activeClientPids;
     if (!pidToCameras_.empty()) {
-        for (auto& pair : pidToCameras_) {
+        for (auto pair : pidToCameras_) {
             activeClientPids.emplace_back(pair.first);
         }
     }
@@ -199,27 +197,19 @@ void HCameraDeviceManager::UnsetPeerCallback()
 }
 
 static void GetInfoFromCameraDeviceHolder(sptr<HCameraDeviceHolder> requestCameraHolder, int32_t &retPid,
-    int32_t &retUid, int32_t &retTokenId)
+    int32_t &retUid, uint32_t &retTokenId)
 {
     using namespace Security::AccessToken;
     retPid = requestCameraHolder->GetPid();
     retUid = requestCameraHolder->GetUid();
     retTokenId = requestCameraHolder->GetAccessTokenId();
-
-    if (AccessTokenKit::GetTokenTypeFlag(requestCameraHolder->GetAccessTokenId()) != ATokenTypeEnum::TOKEN_NATIVE) {
-        MEDIA_DEBUG_LOG("token is not sa");
-        return;
-    }
+    CHECK_RETURN_DLOG(AccessTokenKit::GetTokenTypeFlag(retTokenId) != ATokenTypeEnum::TOKEN_NATIVE, "token is not sa");
 
     uint32_t firstTokenId = requestCameraHolder->GetFirstTokenID();
-    if (firstTokenId == 0) {
-        return;
-    }
+    CHECK_RETURN_ILOG(firstTokenId == 0, "first token is not set");
 
-    if (AccessTokenKit::GetTokenTypeFlag(firstTokenId) != ATokenTypeEnum::TOKEN_HAP) {
-        MEDIA_INFO_LOG("first token is not hap");
-        return;
-    }
+    CHECK_RETURN_ILOG(
+        AccessTokenKit::GetTokenTypeFlag(firstTokenId) != ATokenTypeEnum::TOKEN_HAP, "first token is not hap");
 
     HapTokenInfo hapTokenInfo = {};
     int32_t getHapInfoRet = AccessTokenKit::GetHapTokenInfo(firstTokenId, hapTokenInfo);
@@ -237,40 +227,33 @@ static void GetInfoFromCameraDeviceHolder(sptr<HCameraDeviceHolder> requestCamer
         }
     }
 
-    if (!callerAppData.has_value()) {
-        MEDIA_INFO_LOG("app not found");
-        return;
-    }
+    CHECK_RETURN_ILOG(!callerAppData.has_value(), "app not found");
 
     MEDIA_INFO_LOG("get camera device holder info by first token id, origin pid: %{public}d, uid %{public}d, "
-        "after pid: %{public}d, uid %{public}d", retPid, retUid, callerAppData->pid, callerAppData->uid);
+        "first token pid: %{public}d, uid %{public}d", retPid, retUid, callerAppData->pid, callerAppData->uid);
     retPid = callerAppData->pid;
     retUid = callerAppData->uid;
     retTokenId = firstTokenId;
 }
 
-void HCameraDeviceManager::RefreshCameraDeviceHolderState(sptr<HCameraDeviceHolder> requestCameraHolder)
+void HCameraDeviceManager::RefreshCameraDeviceHolderState(sptr<HCameraDeviceHolder> holder)
 {
-    if (requestCameraHolder == nullptr) {
-        return;
-    }
+    CHECK_RETURN(holder == nullptr);
 
     int32_t uid = 0;
     int32_t pid = 0;
-    int32_t tokenId = 0;
-    GetInfoFromCameraDeviceHolder(requestCameraHolder, pid, uid, tokenId);
+    uint32_t tokenId = 0;
+    GetInfoFromCameraDeviceHolder(holder, pid, uid, tokenId);
     int32_t processState = CameraAppManagerClient::GetInstance()->GetProcessState(pid);
     GenerateEachProcessCameraState(processState, tokenId);
 
     pid_t focusWindowPid = -1;
     CameraWindowManagerClient::GetInstance()->GetFocusWindowInfo(focusWindowPid);
-    if (focusWindowPid == -1) {
-        MEDIA_INFO_LOG("GetFocusWindowInfo faild");
-    }
+    CHECK_PRINT_ILOG(focusWindowPid == -1, "GetFocusWindowInfo faild");
     int32_t focusState = focusWindowPid == pid ? FOCUSED_STATE_OF_PROCESS : UNFOCUSED_STATE_OF_PROCESS;
-    requestCameraHolder->SetState(processState);
-    requestCameraHolder->SetFocusState(focusState);
-    requestCameraHolder->SetPriorityUid(uid);
+    holder->SetState(processState);
+    holder->SetFocusState(focusState);
+    holder->SetPriorityUid(uid);
 }
 
 bool HCameraDeviceManager::GetConflictDevices(std::vector<sptr<HCameraDevice>>& cameraNeedEvict,
@@ -283,7 +266,8 @@ bool HCameraDeviceManager::GetConflictDevices(std::vector<sptr<HCameraDevice>>& 
     uint32_t firstTokenIdOfOpenRequest = IPCSkeleton::GetFirstTokenID();
     for (auto pidItem : pidOfActiveClients) {
         MEDIA_INFO_LOG("GetConflictDevices get active: %{public}d, openRequestPid: %{public}d "
-            "openRequestUid: %{public}d", pidItem, pidOfOpenRequest, uidOfOpenRequest);
+            "openRequestUid: %{public}d",
+            pidItem, pidOfOpenRequest, uidOfOpenRequest);
     }
     // Protecting for mysterious call
     if (stateOfRgmCamera_.Size() != 0) {
@@ -301,8 +285,16 @@ bool HCameraDeviceManager::GetConflictDevices(std::vector<sptr<HCameraDevice>>& 
             firstTokenIdOfOpenRequest);
 
     // Update each cameraHolder.
-    UpdateCameraHolders(pidOfActiveClients, requestHolder);
-
+    for (auto pidOfEachClient : pidOfActiveClients) {
+        std::vector<sptr<HCameraDeviceHolder>> activeCameraHolders = GetCameraHolderByPid(pidOfEachClient);
+        CHECK_CONTINUE_WLOG(activeCameraHolders.empty(),
+            "HCameraDeviceManager::GetConflictDevices the current PID has an unknown behavior.");
+        for (auto holder : activeCameraHolders) {
+            // Device startup requests from different processes.
+            RefreshCameraDeviceHolderState(holder);
+            PrintClientInfo(holder, requestHolder);
+        }
+    }
     concurrentSelector_->SetRequestCameraId(requestHolder);
     // Active clients that have been sorted by priority. The same priority complies with the LRU rule.
     holderSortedByProprity_ = SortDeviceByPriority();
@@ -325,32 +317,12 @@ bool HCameraDeviceManager::GetConflictDevices(std::vector<sptr<HCameraDevice>>& 
         concurrentSelector_->GetConcurrentCameraTable());
 }
 
-void HCameraDeviceManager::UpdateCameraHolders(const std::vector<pid_t>& pidOfActiveClients,
-                                               sptr<HCameraDeviceHolder> requestHolder)
-{
-    // Update each cameraHolder.
-    for (auto pidOfEachClient : pidOfActiveClients) {
-        std::vector<sptr<HCameraDeviceHolder>> activeCameraHolders = GetCameraHolderByPid(pidOfEachClient);
-        if (activeCameraHolders.empty()) {
-            MEDIA_WARNING_LOG("HCameraDeviceManager::GetConflictDevices the current PID has an unknown behavior.");
-            continue;
-        }
-        for (auto holder : activeCameraHolders) {
-            // Device startup requests from different processes.
-            RefreshCameraDeviceHolderState(holder);
-            PrintClientInfo(holder, requestHolder);
-        }
-    }
-}
-
 bool HCameraDeviceManager::HandleCameraEvictions(std::vector<sptr<HCameraDeviceHolder>> &evictedClients,
     sptr<HCameraDeviceHolder> &cameraRequestOpen)
 {
     std::vector<pid_t> pidOfActiveClients = GetActiveClient();
     pid_t pidOfOpenRequest = IPCSkeleton::GetCallingPid();
     sptr<CameraAppManagerClient> amsClientInstance = CameraAppManagerClient::GetInstance();
-    CHECK_RETURN_RET_ELOG(cameraRequestOpen == nullptr, false,
-        "HCameraDeviceManager::HandleCameraEvictions cameraRequestOpen is nullptr.");
     const std::string &cameraId = cameraRequestOpen->GetDevice()->GetCameraId();
     int32_t requestState = amsClientInstance->GetProcessState(pidOfOpenRequest);
     for (auto eachClientPid : pidOfActiveClients) {
@@ -371,36 +343,16 @@ bool HCameraDeviceManager::HandleCameraEvictions(std::vector<sptr<HCameraDeviceH
 
     // If the incoming client was 'evicted,' higher priority clients have the camera in the
     // background, so we cannot do evictions
-    if (std::find(evicted.begin(), evicted.end(), cameraRequestOpen) != evicted.end()) {
-        MEDIA_INFO_LOG("PID %{public}d) rejected with higher priority", pidOfOpenRequest);
-        return false;
-    }
+    CHECK_RETURN_RET_ILOG(std::find(evicted.begin(), evicted.end(), cameraRequestOpen) != evicted.end(), false,
+        "PID %{public}d) rejected with higher priority", pidOfOpenRequest);
     for (auto &x : evicted) {
-        if (x == nullptr) {
-            MEDIA_ERR_LOG("Invalid state: Null client in active client list.");
-            continue;
-        }
+        CHECK_CONTINUE_ELOG(x == nullptr, "Invalid state: Null client in active client list.");
         MEDIA_INFO_LOG("evicting conflicting client for camera ID %s",
                        x->GetDevice()->GetCameraId().c_str());
         evictedClients.push_back(x);
     }
     MEDIA_INFO_LOG("Camera: %{public}s could be opened", cameraId.c_str());
     return true;
-}
-
-void HCameraDeviceManager::DetermineHighestPriorityOwner(int32_t &highestPriorityOwner, int32_t &owner,
-    sptr<CameraProcessPriority> requestPriority)
-{
-    sptr<CameraProcessPriority> highestPriority = requestPriority;
-    for (const auto &x : activeCameras_) {
-        sptr<CameraProcessPriority> curPriority = x->GetPriority();
-        if (*curPriority > *highestPriority) {
-            highestPriority = curPriority;
-            highestPriorityOwner = x->GetPid();
-        }
-    }
-    // Switch back owner if the incoming client has the highest priority, as it is MRU
-    highestPriorityOwner = (*highestPriority == *requestPriority) ? owner : highestPriorityOwner;
 }
 
 std::vector<sptr<HCameraDeviceHolder>> HCameraDeviceManager::WouldEvict(sptr<HCameraDeviceHolder> &cameraRequestOpen)
@@ -418,7 +370,16 @@ std::vector<sptr<HCameraDeviceHolder>> HCameraDeviceManager::WouldEvict(sptr<HCa
 
     // Determine the MRU of the owners tied for having the highest priority
     int32_t highestPriorityOwner = owner;
-    DetermineHighestPriorityOwner(highestPriorityOwner, owner, requestPriority);
+    sptr<CameraProcessPriority> highestPriority = requestPriority;
+    for (const auto &x : activeCameras_) {
+        sptr<CameraProcessPriority> curPriority = x->GetPriority();
+        if (*curPriority > *highestPriority) {
+            highestPriority = curPriority;
+            highestPriorityOwner = x->GetPid();
+        }
+    }
+    // Switch back owner if the incoming client has the highest priority, as it is MRU
+    highestPriorityOwner = (*highestPriority == *requestPriority) ? owner : highestPriorityOwner;
 
     // Build eviction list of clients to remove
     for (const auto &x : activeCameras_) {
@@ -489,12 +450,12 @@ bool HCameraDeviceManager::IsAllowOpen(pid_t pidOfOpenRequest)
     MEDIA_INFO_LOG("HCameraDeviceManager::isAllowOpen has a client open in A proxy");
     CHECK_RETURN_RET_ELOG(pidOfOpenRequest == -1, false,
         "HCameraDeviceManager::GetConflictDevices wrong pid of the process whitch is goning to turn on");
-        std::string cameraId = GetACameraId();
-    CHECK_RETURN_RET_ELOG(peerCallback_ == nullptr, false,
-        "HCameraDeviceManager::isAllowOpen falied to close peer device");
-            peerCallback_->NotifyCloseCamera(cameraId);
-            MEDIA_ERR_LOG("HCameraDeviceManager::isAllowOpen success to close peer device");
-        return true;
+    std::string cameraId = GetACameraId();
+    CHECK_RETURN_RET_ELOG(
+        peerCallback_ == nullptr, false, "HCameraDeviceManager::isAllowOpen falied to close peer device");
+    peerCallback_->NotifyCloseCamera(cameraId);
+    MEDIA_ERR_LOG("HCameraDeviceManager::isAllowOpen success to close peer device");
+    return true;
 }
 
 void HCameraDeviceManager::GenerateEachProcessCameraState(int32_t& processState, uint32_t processTokenId)
@@ -520,7 +481,6 @@ void HCameraDeviceManager::GenerateEachProcessCameraState(int32_t& processState,
 void HCameraDeviceManager::PrintClientInfo(sptr<HCameraDeviceHolder> activeCameraHolder,
     sptr<HCameraDeviceHolder> requestCameraHolder)
 {
-    CHECK_RETURN_ELOG(activeCameraHolder->GetPriority() == nullptr, "GetPriority is nullptr");
     MEDIA_INFO_LOG("activeInfo: uid: %{public}d, pid: %{public}d, processState: %{public}d, "
                    "focusState: %{public}d, cameraId: %{public}s "
                    "requestInfo: uid: %{public}d, pid: %{public}d, processState: %{public}d, "
@@ -542,7 +502,7 @@ bool HCameraDeviceManager::IsMultiCameraActive(int32_t pid)
             count++;
         }
     }
-
+ 
     MEDIA_INFO_LOG("pid(%{public}d) has activated %{public}d camera.", pid, count);
     return count > 0;
 }
@@ -566,38 +526,37 @@ bool HCameraDeviceManager::IsProcessHasConcurrentDevice(pid_t pid)
     CHECK_RETURN_RET(mapIt == pidToCameras_.end(), false);
     for (auto& holder : mapIt->second) {
         auto device = holder->GetDevice();
-        if (device == nullptr) {
-            continue;
-        }
+        CHECK_CONTINUE(device == nullptr);
         CHECK_RETURN_RET(device->IsDeviceOpenedByConcurrent(), true);
     }
     return false;
 }
-#ifdef CAMERA_LIVE_SCENE_RECOGNITION
-bool HCameraDeviceManager::IsLiveScene()
-{
-    return isLiveScene_;
-}
 
+#ifdef CAMERA_LIVE_SCENE_RECOGNITION
 void HCameraDeviceManager::SetLiveScene(bool isLiveScene)
 {
     isLiveScene_ = isLiveScene;
     std::vector<sptr<HCameraDeviceHolder>> deviceHolderVector = GetActiveCameraHolders();
     for (sptr<HCameraDeviceHolder> activeDeviceHolder : deviceHolderVector) {
         sptr<HCameraDevice> activeDevice = activeDeviceHolder->GetDevice();
-        bool isChangeMetadata = activeDevice != nullptr && activeDevice->IsOpenedCameraDevice();
-        if (isChangeMetadata) {
+        bool isChangedMetadata = activeDevice != nullptr && activeDevice->IsOpenedCameraDevice();
+        if (isChangedMetadata) {
             uint32_t mode = isLiveScene ? OHOS_CAMERA_APP_HINT_LIVE_STREAM : OHOS_CAMERA_APP_HINT_NONE;
             activeDevice->UpdateLiveStreamSceneMetadata(mode);
             MEDIA_DEBUG_LOG("HCameraDeviceManager::SetLiveScene UpdateSetting");
         }
     }
 }
+
+bool HCameraDeviceManager::IsLiveScene()
+{
+    return isLiveScene_;
+}
 #endif
+
 void CameraConcurrentSelector::SetRequestCameraId(sptr<HCameraDeviceHolder> requestCameraHolder)
 {
-    CHECK_RETURN_ELOG(
-        requestCameraHolder == nullptr, "requestCameraHolder is null");
+    CHECK_RETURN_ELOG(requestCameraHolder == nullptr, "requestCameraHolder is null");
     requestCameraHolder_ = requestCameraHolder;
     concurrentCameraTable_ = requestCameraHolder->GetDevice()->GetConcurrentDevicesTable();
     listOfCameraRetainable_ = {};
@@ -613,7 +572,6 @@ std::vector<sptr<HCameraDeviceHolder>> HCameraDeviceManager::SortDeviceByPriorit
     return sortedList;
 }
 
-// LCOV_EXCL_START
 bool CameraConcurrentSelector::CanOpenCameraconcurrently(std::vector<sptr<HCameraDeviceHolder>> reservedCameras,
                                                          std::vector<std::vector<std::int32_t>> concurrentCameraTable)
 {
@@ -631,7 +589,6 @@ bool CameraConcurrentSelector::CanOpenCameraconcurrently(std::vector<sptr<HCamer
     CHECK_RETURN_RET(reservedCameras.size() == 0, true);
     std::vector<int32_t> cameraIds;
     for (const auto& camera : reservedCameras) {
-        CHECK_CONTINUE_ELOG(camera->GetDevice() == nullptr, "CanOpenCameraconcurrently camera GetDevice is null.");
         cameraIds.push_back(GetCameraIdNumber(camera->GetDevice()->GetCameraId()));
     }
     for (const auto& group : concurrentCameraTable) {
@@ -723,11 +680,8 @@ bool CameraConcurrentSelector::ConcurrentWithRetainedDevicesOrNot(sptr<HCameraDe
 {
     std::vector<int32_t> tempListToCheck;
     for (auto each : listOfCameraRetainable_) {
-        CHECK_CONTINUE_ELOG(each->GetDevice() == nullptr, "ConcurrentWithRetainedDevicesOrNot GetDevice is nullptr");
         tempListToCheck.emplace_back(GetCameraIdNumber(each->GetDevice()->GetCameraId()));
     }
-    CHECK_RETURN_RET_ELOG(cameraIdNeedConfirm->GetDevice() == nullptr && requestCameraHolder_->GetDevice() == nullptr,
-        false, "ConcurrentWithRetainedDevicesOrNot GetDevice is nullptr.");
     tempListToCheck.emplace_back(GetCameraIdNumber(cameraIdNeedConfirm->GetDevice()->GetCameraId()));
     bool canOpenConcurrent = std::any_of(
         concurrentCameraTable_.begin(), concurrentCameraTable_.end(), [&](const std::vector<int32_t> &innerVec) {
@@ -744,6 +698,5 @@ bool CameraConcurrentSelector::ConcurrentWithRetainedDevicesOrNot(sptr<HCameraDe
            (targetConcurrencyType == cameraIdNeedConfirm->GetDevice()->GetTargetConcurrencyType() &&
             targetConcurrencyType == requestCameraHolder_->GetDevice()->GetTargetConcurrencyType());
 }
-// LCOV_EXCL_STOP
 } // namespace CameraStandard
 } // namespace OHOS

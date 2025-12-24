@@ -81,6 +81,26 @@ void HStreamRepeatCallbackStubFuzzer::HStreamRepeatCallbackStubFuzzTest4(FuzzedD
         static_cast<uint32_t>(IStreamRepeatCallbackIpcCode::COMMAND_ON_SKETCH_STATUS_CHANGED), data, reply, option);
 }
 
+void HStreamRepeatCallbackStubFuzzer::HStreamRepeatCallbackStubFuzzTest5()
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    data.WriteInterfaceToken(g_interfaceToken);
+    fuzz_->OnRemoteRequest(
+        static_cast<uint32_t>(IStreamRepeatCallbackIpcCode::COMMAND_ON_FRAME_PAUSED), data, reply, option);
+}
+
+void HStreamRepeatCallbackStubFuzzer::HStreamRepeatCallbackStubFuzzTest6()
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    data.WriteInterfaceToken(g_interfaceToken);
+    fuzz_->OnRemoteRequest(
+        static_cast<uint32_t>(IStreamRepeatCallbackIpcCode::COMMAND_ON_FRAME_RESUMED), data, reply, option);
+}
+
 void FuzzTest(const uint8_t *rawData, size_t size)
 {
     FuzzedDataProvider fdp(rawData, size);
@@ -90,10 +110,16 @@ void FuzzTest(const uint8_t *rawData, size_t size)
         return;
     }
     HStreamRepeatCallbackStubFuzzer::fuzz_ = std::make_shared<HStreamRepeatCallbackStubFuzz>();
+    if (HStreamRepeatCallbackStubFuzzer::fuzz_ == nullptr) {
+        MEDIA_INFO_LOG("fuzz_ is null");
+        return;
+    }
     hStreamRepeatCallbackStub->HStreamRepeatCallbackStubFuzzTest1();
     hStreamRepeatCallbackStub->HStreamRepeatCallbackStubFuzzTest2(fdp);
     hStreamRepeatCallbackStub->HStreamRepeatCallbackStubFuzzTest3(fdp);
     hStreamRepeatCallbackStub->HStreamRepeatCallbackStubFuzzTest4(fdp);
+    hStreamRepeatCallbackStub->HStreamRepeatCallbackStubFuzzTest5();
+    hStreamRepeatCallbackStub->HStreamRepeatCallbackStubFuzzTest6();
 }
 }  // namespace CameraStandard
 }  // namespace OHOS

@@ -17,7 +17,7 @@
 #define OHOS_DEFERRED_PROCESSING_SERVICE_DELAYED_TASK_GROUP_H
 
 #include "base_task_group.h"
-#include "timer/time_broker.h"
+#include "time_broker.h"
 
 namespace OHOS {
 namespace CameraStandard {

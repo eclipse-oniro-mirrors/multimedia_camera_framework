@@ -38,4 +38,4 @@ private:
 };
 } // namespace CameraStandard
 } // namespace OHOS
-#endif // CAMERA_NOTIFICATION_PROXY_H
+#endif // CAMERA_NOTIFICATION_PROXY_H

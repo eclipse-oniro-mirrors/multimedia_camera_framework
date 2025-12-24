@@ -128,20 +128,21 @@ void PhotoOutputCallbackAni::OnPhotoAssetAvailableCallback(const int32_t capture
         OHOS::AppExecFwk::EventQueue::Priority::IMMEDIATE, {});
 }
 
-void PhotoOutputCallbackAni::OnThumbnailAvailableCallback(const OHOS::CameraStandard::WatermarkInfo &info,
+void PhotoOutputCallbackAni::OnThumbnailAvailableCallback(int32_t captureId, int64_t timestamp,
     std::unique_ptr<Media::PixelMap>& pixelMap) const
 {
     ohos::multimedia::image::image::PixelMap pixelMapVal =
         make_holder<ANI::Image::PixelMapImpl, ohos::multimedia::image::image::PixelMap>(std::move(pixelMap));
-    pixelMapVal->SetCaptureId(info.captureID);
-    pixelMapVal->SetTimestamp(info.timestamp);
+    pixelMapVal->SetCaptureId(captureId);
+    pixelMapVal->SetTimestamp(timestamp);
     auto sharePtr = shared_from_this();
     auto task = [pixelMapVal, sharePtr]() {
         CHECK_EXECUTE(sharePtr != nullptr,
             sharePtr->ExecuteAsyncCallback(CONST_CAPTURE_QUICK_THUMBNAIL, 0, "Callback is OK", pixelMapVal));
     };
     CHECK_RETURN_ELOG(mainHandler_ == nullptr, "callback failed, mainHandler_ is nullptr!");
-    mainHandler_->PostTask(task, "OnThumbnailAvailableCallback", 0, OHOS::AppExecFwk::EventQueue::Priority::IMMEDIATE);
+    mainHandler_->PostTask(task, "OnThumbnailAvailableCallback",
+        0, OHOS::AppExecFwk::EventQueue::Priority::IMMEDIATE, {});
 }
 
 void PhotoOutputCallbackAni::OnCaptureEndedCallback(const int32_t captureId, const int32_t frameCount) const
@@ -160,7 +161,7 @@ void PhotoOutputCallbackAni::OnCaptureEndedCallback(const int32_t captureId, con
     };
     CHECK_RETURN_ELOG(mainHandler_ == nullptr, "callback failed, mainHandler_ is nullptr!");
     mainHandler_->PostTask(task, "OnCaptureEnd", 0, OHOS::AppExecFwk::EventQueue::Priority::IMMEDIATE, {});
-    }
+}
 
 void PhotoOutputCallbackAni::OnFrameShutterCallback(const int32_t captureId, const uint64_t timestamp) const
 {
@@ -202,7 +203,7 @@ void PhotoOutputCallbackAni::OnCaptureReadyCallback(const int32_t captureId, con
     MEDIA_DEBUG_LOG("OnCaptureReadyCallback is called, captureId: %{public}d, timestamp: %{public}" PRIu64,
         captureId, timestamp);
     auto sharePtr = shared_from_this();
-    auto task = [captureId, timestamp, sharePtr, this]() {
+    auto task = [captureId, timestamp, sharePtr]() {
         uintptr_t undefined = CameraUtilsTaihe::GetUndefined(get_env());
         CHECK_EXECUTE(sharePtr != nullptr,
             sharePtr->ExecuteAsyncCallback(CONST_CAPTURE_READY, 0, "Callback is OK", undefined));
@@ -241,7 +242,7 @@ void PhotoOutputCallbackAni::OnOfflineDeliveryFinishedCallback(const int32_t cap
 {
     MEDIA_DEBUG_LOG("OnOfflineDeliveryFinished is called, captureId: %{public}d", captureId);
     auto sharePtr = shared_from_this();
-    auto task = [captureId, sharePtr, this]() {
+    auto task = [captureId, sharePtr]() {
         uintptr_t undefined = CameraUtilsTaihe::GetUndefined(get_env());
         CHECK_EXECUTE(sharePtr != nullptr,
             sharePtr->ExecuteAsyncCallback(CONST_CAPTURE_OFFLINE_DELIVERY_FINISHED, 0, "Callback is OK", undefined));
@@ -309,6 +310,10 @@ void PhotoOutputCallbackAni::OnOfflineDeliveryFinished(const int32_t captureId) 
     OnOfflineDeliveryFinishedCallback(captureId);
 }
 
+void PhotoOutputCallbackAni::OnConstellationDrawingState(const int32_t state) const
+{
+}
+
 void PhotoOutputCallbackAni::OnPhotoAvailable(const std::shared_ptr<Media::NativeImage> nativeImage, bool isRaw) const
 {
     MEDIA_DEBUG_LOG("OnPhotoAvailable is called!");
@@ -328,11 +333,11 @@ void PhotoOutputCallbackAni::OnPhotoAssetAvailable(const int32_t captureId, cons
     OnPhotoAssetAvailableCallback(captureId, uri, cameraShotType, burstKey);
 }
 
-void PhotoOutputCallbackAni::OnThumbnailAvailable(const OHOS::CameraStandard::WatermarkInfo &info,
+void PhotoOutputCallbackAni::OnThumbnailAvailable(int32_t captureId, int64_t timestamp,
     std::unique_ptr<Media::PixelMap> pixelMap) const
 {
     MEDIA_DEBUG_LOG("OnThumbnailAvailable is called!");
-    OnThumbnailAvailableCallback(info, pixelMap);
+    OnThumbnailAvailableCallback(captureId, timestamp, pixelMap);
 }
 
 int32_t GetBurstSeqId(int32_t captureId)
@@ -374,6 +379,8 @@ void ThumbnailSetColorSpaceAndRotate(std::unique_ptr<Media::PixelMap>& pixelMap,
     OHOS::ColorManager::ColorSpaceName colorSpaceName)
 {
     int32_t thumbnailrotation = 0;
+    CHECK_RETURN_ELOG(!surfaceBuffer, "surfaceBuffer is nullptr");
+    CHECK_RETURN_ELOG(!(surfaceBuffer->GetExtraData()), "surfaceBuffer extra data is nullptr");
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::dataRotation, thumbnailrotation);
     MEDIA_DEBUG_LOG("ThumbnailListener current rotation is : %{public}d", thumbnailrotation);
     if (!pixelMap) {
@@ -633,12 +640,13 @@ void PhotoOutputImpl::RegisterOfflineDeliveryFinishedCallbackListener(const std:
 {
     CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
         "SystemApi RegisterOfflineDeliveryFinishedCallbackListener is called!");
+    CHECK_RETURN_ELOG(photoOutput_ == nullptr, "PhotoOutput is null!");
     if (photoOutputCallback_ == nullptr) {
         ani_env* env = get_env();
         photoOutputCallback_ = std::make_shared<PhotoOutputCallbackAni>(env);
         photoOutput_->SetCallback(photoOutputCallback_);
-        photoOutputCallback_->SaveCallbackReference(CONST_CAPTURE_OFFLINE_DELIVERY_FINISHED, callback, isOnce);
     }
+    photoOutputCallback_->SaveCallbackReference(CONST_CAPTURE_OFFLINE_DELIVERY_FINISHED, callback, isOnce);
 }
 
 void PhotoOutputImpl::UnregisterOfflineDeliveryFinishedCallbackListener(const std::string& eventName,
@@ -662,8 +670,8 @@ void PhotoOutputImpl::RegisterPhotoAssetAvailableCallbackListener(const std::str
         ani_env* env = get_env();
         photoOutputCallback_ = std::make_shared<PhotoOutputCallbackAni>(env);
         photoOutput_->SetCallback(photoOutputCallback_);
-        photoOutput_->SetPhotoAssetAvailableCallback(photoOutputCallback_);
     }
+    photoOutput_->SetPhotoAssetAvailableCallback(photoOutputCallback_);
     photoOutputCallback_->SaveCallbackReference(CONST_CAPTURE_PHOTO_ASSET_AVAILABLE, callback, isOnce);
     callbackFlag_ |= OHOS::CameraStandard::CAPTURE_PHOTO_ASSET;
     photoOutput_->SetCallbackFlag(callbackFlag_);
@@ -714,86 +722,72 @@ void PhotoOutputImpl::UnregisterQuickThumbnailCallbackListener(const std::string
 
 void PhotoOutputImpl::OnError(callback_view<void(uintptr_t)> callback)
 {
-    MEDIA_ERR_LOG("PhotoOutputImpl::OnError");
     ListenerTemplate<PhotoOutputImpl>::On(this, callback, CONST_CAPTURE_ERROR);
 }
 
 void PhotoOutputImpl::OffError(optional_view<callback<void(uintptr_t)>> callback)
 {
-    MEDIA_ERR_LOG("PhotoOutputImpl::OffError");
     ListenerTemplate<PhotoOutputImpl>::Off(this, callback, CONST_CAPTURE_ERROR);
 }
 
 void PhotoOutputImpl::OnCaptureStartWithInfo(callback_view<void(uintptr_t, CaptureStartInfo const&)> callback)
 {
-    MEDIA_ERR_LOG("PhotoOutputImpl::OnCaptureStartWithInfo");
     ListenerTemplate<PhotoOutputImpl>::On(this, callback, CONST_CAPTURE_START_WITH_INFO);
 }
 
 void PhotoOutputImpl::OffCaptureStartWithInfo(
     optional_view<callback<void(uintptr_t, CaptureStartInfo const&)>> callback)
 {
-    MEDIA_ERR_LOG("PhotoOutputImpl::OffCaptureStartWithInfo");
     ListenerTemplate<PhotoOutputImpl>::Off(this, callback, CONST_CAPTURE_START_WITH_INFO);
 }
 
 void PhotoOutputImpl::OnCaptureEnd(callback_view<void(uintptr_t, CaptureEndInfo const&)> callback)
 {
-    MEDIA_ERR_LOG("PhotoOutputImpl::OnCaptureEnd");
     ListenerTemplate<PhotoOutputImpl>::On(this, callback, CONST_CAPTURE_END);
 }
 
 void PhotoOutputImpl::OffCaptureEnd(optional_view<callback<void(uintptr_t, CaptureEndInfo const&)>> callback)
 {
-    MEDIA_ERR_LOG("PhotoOutputImpl::OffCaptureEnd");
     ListenerTemplate<PhotoOutputImpl>::Off(this, callback, CONST_CAPTURE_END);
 }
 
 void PhotoOutputImpl::OnCaptureReady(callback_view<void(uintptr_t, uintptr_t)> callback)
 {
-    MEDIA_ERR_LOG("PhotoOutputImpl::OnCaptureReady");
     ListenerTemplate<PhotoOutputImpl>::On(this, callback, CONST_CAPTURE_READY);
 }
 
 void PhotoOutputImpl::OffCaptureReady(optional_view<callback<void(uintptr_t, uintptr_t)>> callback)
 {
-    MEDIA_ERR_LOG("PhotoOutputImpl::OffCaptureReady");
     ListenerTemplate<PhotoOutputImpl>::Off(this, callback, CONST_CAPTURE_READY);
 }
 
 void PhotoOutputImpl::OnFrameShutter(callback_view<void(uintptr_t, FrameShutterInfo const&)> callback)
 {
-    MEDIA_ERR_LOG("PhotoOutputImpl::OnFrameShutter");
     ListenerTemplate<PhotoOutputImpl>::On(this, callback, CONST_CAPTURE_FRAME_SHUTTER);
 }
 
 void PhotoOutputImpl::OffFrameShutter(optional_view<callback<void(uintptr_t, FrameShutterInfo const&)>> callback)
 {
-    MEDIA_ERR_LOG("PhotoOutputImpl::OffFrameShutter");
     ListenerTemplate<PhotoOutputImpl>::Off(this, callback, CONST_CAPTURE_FRAME_SHUTTER);
 }
 
 void PhotoOutputImpl::OnFrameShutterEnd(callback_view<void(uintptr_t, FrameShutterEndInfo const&)> callback)
 {
-    MEDIA_ERR_LOG("PhotoOutputImpl::OnFrameShutterEnd");
     ListenerTemplate<PhotoOutputImpl>::On(this, callback, CONST_CAPTURE_FRAME_SHUTTER_END);
 }
 
 void PhotoOutputImpl::OffFrameShutterEnd(optional_view<callback<void(uintptr_t, FrameShutterEndInfo const&)>> callback)
 {
-    MEDIA_ERR_LOG("PhotoOutputImpl::OffFrameShutterEnd");
     ListenerTemplate<PhotoOutputImpl>::Off(this, callback, CONST_CAPTURE_FRAME_SHUTTER_END);
 }
 
 void PhotoOutputImpl::OnEstimatedCaptureDuration(callback_view<void(uintptr_t, double)> callback)
 {
-    MEDIA_ERR_LOG("PhotoOutputImpl::OnEstimatedCaptureDuration");
     ListenerTemplate<PhotoOutputImpl>::On(this, callback, CONST_CAPTURE_ESTIMATED_CAPTURE_DURATION);
 }
 
 void PhotoOutputImpl::OffEstimatedCaptureDuration(optional_view<callback<void(uintptr_t, double)>> callback)
 {
-    MEDIA_ERR_LOG("PhotoOutputImpl::OffEstimatedCaptureDuration");
     ListenerTemplate<PhotoOutputImpl>::Off(this, callback, CONST_CAPTURE_ESTIMATED_CAPTURE_DURATION);
 }
 
@@ -806,7 +800,6 @@ void PhotoOutputImpl::OnPhotoAvailable(callback_view<void(uintptr_t, weak::Photo
 
 void PhotoOutputImpl::OffPhotoAvailable(optional_view<callback<void(uintptr_t, weak::Photo)>> callback)
 {
-    MEDIA_ERR_LOG("PhotoOutputImpl::OffPhotoAvailable");
     ListenerTemplate<PhotoOutputImpl>::Off(this, callback, CONST_CAPTURE_PHOTO_AVAILABLE);
 }
 
@@ -825,26 +818,22 @@ void PhotoOutputImpl::OffPhotoAvailableEx(optional_view<callback<void(weak::Phot
 
 void PhotoOutputImpl::OnDeferredPhotoProxyAvailable(callback_view<void(uintptr_t, weak::DeferredPhotoProxy)> callback)
 {
-    MEDIA_ERR_LOG("PhotoOutputImpl::OnDeferredPhotoProxyAvailable");
     ListenerTemplate<PhotoOutputImpl>::On(this, callback, CONST_CAPTURE_DEFERRED_PHOTO_AVAILABLE);
 }
 
 void PhotoOutputImpl::OffDeferredPhotoProxyAvailable(
     optional_view<callback<void(uintptr_t, weak::DeferredPhotoProxy)>> callback)
 {
-    MEDIA_ERR_LOG("PhotoOutputImpl::OffDeferredPhotoProxyAvailable");
     ListenerTemplate<PhotoOutputImpl>::Off(this, callback, CONST_CAPTURE_DEFERRED_PHOTO_AVAILABLE);
 }
 
 void PhotoOutputImpl::OnOfflineDeliveryFinished(callback_view<void(uintptr_t, uintptr_t)> callback)
 {
-    MEDIA_ERR_LOG("PhotoOutputImpl::OnOfflineDeliveryFinished");
     ListenerTemplate<PhotoOutputImpl>::On(this, callback, CONST_CAPTURE_OFFLINE_DELIVERY_FINISHED);
 }
 
 void PhotoOutputImpl::OffOfflineDeliveryFinished(optional_view<callback<void(uintptr_t, uintptr_t)>> callback)
 {
-    MEDIA_ERR_LOG("PhotoOutputImpl::OffOfflineDeliveryFinished");
     ListenerTemplate<PhotoOutputImpl>::Off(this, callback, CONST_CAPTURE_OFFLINE_DELIVERY_FINISHED);
 }
 
@@ -908,8 +897,8 @@ Profile PhotoOutputImpl::GetActiveProfile()
     auto profile = photoOutput_->GetPhotoProfile();
     CHECK_RETURN_RET_ELOG(profile == nullptr, res, "GetActiveProfile failed, profile is nullptr");
     CameraFormat cameraFormat = CameraUtilsTaihe::ToTaiheCameraFormat(profile->GetCameraFormat());
-    res.size.height = static_cast<uint32_t>(profile->GetSize().height);
-    res.size.width = static_cast<uint32_t>(profile->GetSize().width);
+    res.size.height = profile->GetSize().height;
+    res.size.width = profile->GetSize().width;
     res.format = cameraFormat;
     return res;
 }
@@ -986,7 +975,9 @@ void ProcessCapture(PhotoOutputTaiheAsyncContext* context, bool isBurst)
 {
     CHECK_RETURN(context == nullptr);
     context->status = true;
+    CHECK_RETURN_ELOG(context->objectInfo == nullptr, "context->objectInfo is null");
     OHOS::sptr<OHOS::CameraStandard::PhotoOutput> photoOutput = context->objectInfo->GetPhotoOutput();
+    CHECK_RETURN_ELOG(!photoOutput, "photoOutput is null");
     MEDIA_INFO_LOG("PhotoOutputTaiheAsyncContext objectInfo GetEnableMirror is %{public}d",
         context->objectInfo->GetEnableMirror());
     if (context->hasPhotoSettings) {
@@ -1225,6 +1216,7 @@ bool PhotoOutputImpl::IsRawDeliverySupported()
 void PhotoOutputImpl::SetMovingPhotoVideoCodecType(VideoCodecType codecType)
 {
     MEDIA_DEBUG_LOG("PhotoOutputImpl::SetMovingPhotoVideoCodecType is called");
+    CHECK_RETURN_ELOG(!photoOutput_, "photoOutput_ is null");
     int32_t retCode = photoOutput_->SetMovingPhotoVideoCodecType(static_cast<int32_t>(codecType.get_value()));
     CHECK_PRINT_ELOG(retCode != 0 && !CameraUtilsTaihe::CheckError(retCode),
         "PhotoOutputImpl::SetMovingPhotoVideoCodecType fail %{public}d", retCode);
@@ -1232,7 +1224,7 @@ void PhotoOutputImpl::SetMovingPhotoVideoCodecType(VideoCodecType codecType)
 
 array<VideoCodecType> PhotoOutputImpl::GetSupportedMovingPhotoVideoCodecTypes()
 {
-    MEDIA_DEBUG_LOG("IsMotionPhotoSupported is called");
+    MEDIA_DEBUG_LOG("GetSupportedMovingPhotoVideoCodecTypes is called");
     std::vector<VideoCodecType> videoCodecTypes;
     videoCodecTypes.emplace_back(VideoCodecType::key_t::AVC);
     videoCodecTypes.emplace_back(VideoCodecType::key_t::HEVC);

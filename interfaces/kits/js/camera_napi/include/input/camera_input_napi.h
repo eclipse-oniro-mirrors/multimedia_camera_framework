@@ -70,7 +70,7 @@ private:
     void OnCameraOcclusionDetectedCallbackAsync(const uint8_t isCameraOcclusion,
                                                 const uint8_t isCameraLensDirty) const;
 };
- 
+
 struct CameraOcclusionDetectResult {
     uint8_t isCameraOccluded_;
     uint8_t isCameraLensDirty_;

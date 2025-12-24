@@ -16,6 +16,7 @@
 #ifndef OHOS_CAMERA_SURFACE_BUFFER_UTIL_H
 #define OHOS_CAMERA_SURFACE_BUFFER_UTIL_H
 
+#include "inttypes.h"
 #include "surface.h"
 #include "video_key_info.h"
 #include "metadata_helper.h"
@@ -39,14 +40,14 @@ public:
         MEDIA_DEBUG_LOG("DeepCopyBuffer dataStride:%{public}d", dataStride);
         // deep copy buffer
         BufferRequestConfig requestConfig = {
-            .width = surfaceBuffer->GetWidth(),
-            .height = surfaceBuffer->GetHeight(),
-            .strideAlignment = 0x8, // default stride is 8 Bytes.
-            .format = surfaceBuffer->GetFormat(),
-            .usage = surfaceBuffer->GetUsage(),
-            .timeout = 0,
-            .colorGamut = surfaceBuffer->GetSurfaceBufferColorGamut(),
-            .transform = surfaceBuffer->GetSurfaceBufferTransform(),
+                .width = surfaceBuffer->GetWidth(),
+                .height = surfaceBuffer->GetHeight(),
+                .strideAlignment = 0x8,  // default stride is 8 Bytes.
+                .format = surfaceBuffer->GetFormat(),
+                .usage = surfaceBuffer->GetUsage(),
+                .timeout = 0,
+                .colorGamut = surfaceBuffer->GetSurfaceBufferColorGamut(),
+                .transform = surfaceBuffer->GetSurfaceBufferTransform(),
         };
         sptr<SurfaceBuffer> newSurfaceBuffer = SurfaceBuffer::Create();
         auto allocErrorCode = newSurfaceBuffer->Alloc(requestConfig);
@@ -110,8 +111,8 @@ public:
         bool isHdr = colorSpaceType ==  HDI::Display::Graphic::Common::V1_0::CM_ColorSpaceType::CM_BT2020_HLG_FULL;
         MEDIA_DEBUG_LOG("DeepCopyThumbnailBuffer colorSpaceType: %{public}d, isHdr: %{public}d", colorSpaceType, isHdr);
         const float ROW_FACTOR = 1.5;
-        uint32_t bytesPerPixel = isHdr ? 2 : 1;
-        uint32_t newStride = newSurfaceBuffer->GetStride();
+        int32_t bytesPerPixel = isHdr ? 2 : 1;
+        int32_t newStride = newSurfaceBuffer->GetStride();
         MEDIA_DEBUG_LOG("DeepCopyThumbnailBuffer newSurfaceBuffer stride: %{public}u, size: %{public}u", newStride,
             newSurfaceBuffer->GetSize());
         if (thumbnailStride > newStride) {
@@ -156,7 +157,10 @@ public:
     static int32_t GetDataSize(sptr<SurfaceBuffer> surfaceBuffer)
     {
         int32_t dataSize = 0;
-        surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::dataSize, dataSize);
+        CHECK_RETURN_RET_ELOG(surfaceBuffer == nullptr, dataSize, "GetCaptureId: surfaceBuffer is nullptr");
+        sptr<BufferExtraData> extraData = surfaceBuffer->GetExtraData();
+        CHECK_RETURN_RET_ELOG(extraData == nullptr, dataSize, "GetCaptureId: extraData is nullptr");
+        extraData->ExtraGet(OHOS::Camera::dataSize, dataSize);
         MEDIA_DEBUG_LOG("GetDataSize:%{public}d", dataSize);
         return dataSize;
     }
@@ -164,21 +168,27 @@ public:
     static int32_t GetCaptureId(sptr<SurfaceBuffer> surfaceBuffer)
     {
         int32_t captureId = 0;
-        surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::captureId, captureId);
+        CHECK_RETURN_RET_ELOG(surfaceBuffer == nullptr, captureId, "GetCaptureId: surfaceBuffer is nullptr");
+        sptr<BufferExtraData> extraData = surfaceBuffer->GetExtraData();
+        CHECK_RETURN_RET_ELOG(extraData == nullptr, captureId, "GetCaptureId: extraData is nullptr");
+        extraData->ExtraGet(OHOS::Camera::captureId, captureId);
         MEDIA_DEBUG_LOG("GetCaptureId:%{public}d", captureId);
         return captureId;
     }
 
     static int32_t GetMaskCaptureId(sptr<SurfaceBuffer> surfaceBuffer)
     {
-        int32_t captureId;
+        int32_t captureId = 0;
         int32_t burstSeqId = -1;
         int32_t maskBurstSeqId = 0;
         int32_t invalidSeqenceId = -1;
         int32_t captureIdMask = 0x0000FFFF;
         int32_t captureIdShit = 16;
-        surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::burstSequenceId, burstSeqId);
-        surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::captureId, captureId);
+        CHECK_RETURN_RET_ELOG(surfaceBuffer == nullptr, captureId, "GetCaptureId: surfaceBuffer is nullptr");
+        sptr<BufferExtraData> extraData = surfaceBuffer->GetExtraData();
+        CHECK_RETURN_RET_ELOG(extraData == nullptr, captureId, "GetCaptureId: extraData is nullptr");
+        extraData->ExtraGet(OHOS::Camera::burstSequenceId, burstSeqId);
+        extraData->ExtraGet(OHOS::Camera::captureId, captureId);
         if (burstSeqId != invalidSeqenceId && captureId >= 0) {
             maskBurstSeqId = ((static_cast<uint32_t>(captureId) & static_cast<uint32_t>(captureIdMask)) <<
                 static_cast<uint32_t>(captureIdShit)) | static_cast<uint32_t>(burstSeqId);
@@ -216,11 +226,12 @@ public:
     static int64_t GetImageId(sptr<SurfaceBuffer> surfaceBuffer)
     {
         int64_t imageId = 0;
-        CHECK_RETURN_RET_ELOG(surfaceBuffer == nullptr, imageId, "GetImageId: surfaceBuffer is nullptr");
+        CHECK_RETURN_RET_ELOG(surfaceBuffer == nullptr, imageId,
+            "GetImageId: surfaceBuffer is nullptr");
         sptr<BufferExtraData> extraData = surfaceBuffer->GetExtraData();
         CHECK_RETURN_RET_ELOG(extraData == nullptr, imageId, "GetImageId: extraData is nullptr");
         extraData->ExtraGet(OHOS::Camera::imageId, imageId);
-        MEDIA_DEBUG_LOG("GetImageId:%{public}s", std::to_string(imageId).c_str());
+        MEDIA_DEBUG_LOG("GetImageId:%{public}" PRId64, imageId);
         return imageId;
     }
 
@@ -254,7 +265,7 @@ public:
         int32_t dataWidth = 0;
         CHECK_RETURN_RET_ELOG(surfaceBuffer == nullptr, dataWidth, "GetDataWidth: surfaceBuffer is nullptr");
         sptr<BufferExtraData> extraData = surfaceBuffer->GetExtraData();
-        CHECK_RETURN_RET_ELOG(extraData  == nullptr, dataWidth, "GetDataWidth: extraData is nullptr");
+        CHECK_RETURN_RET_ELOG(extraData == nullptr, dataWidth, "GetDataWidth: extraData is nullptr");
         extraData->ExtraGet(OHOS::Camera::dataWidth, dataWidth);
         MEDIA_DEBUG_LOG("GetDataWidth:%{public}d", dataWidth);
         return dataWidth;
@@ -263,7 +274,10 @@ public:
     static int32_t GetDataHeight(sptr<SurfaceBuffer> surfaceBuffer)
     {
         int32_t dataHeight = 0;
-        surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::dataHeight, dataHeight);
+        CHECK_RETURN_RET_ELOG(surfaceBuffer == nullptr, dataHeight, "GetDataHeight: surfaceBuffer is nullptr");
+        sptr<BufferExtraData> extraData = surfaceBuffer->GetExtraData();
+        CHECK_RETURN_RET_ELOG(extraData == nullptr, dataHeight, "GetDataHeight: extraData is nullptr");
+        extraData->ExtraGet(OHOS::Camera::dataHeight, dataHeight);
         MEDIA_DEBUG_LOG("GetDataHeight:%{public}d", dataHeight);
         return dataHeight;
     }

@@ -36,15 +36,9 @@ ohos_unittest("camera_ndk_test") {
 
   sources = [
     "${multimedia_camera_framework_path}/frameworks/native/camera/test/unittest/camera_ndk_unittest/camera_ndk_common/camera_common.cpp",
-    "${multimedia_camera_framework_path}/frameworks/native/ndk/impl/camera_input_impl.cpp",
     "${multimedia_camera_framework_path}/frameworks/native/ndk/impl/camera_manager_impl.cpp",
-    "${multimedia_camera_framework_path}/frameworks/native/ndk/impl/camera_util.cpp",
-    "${multimedia_camera_framework_path}/frameworks/native/ndk/impl/capture_session_impl.cpp",
-    "${multimedia_camera_framework_path}/frameworks/native/ndk/impl/metadata_output_impl.cpp",
-    "${multimedia_camera_framework_path}/frameworks/native/ndk/impl/photo_native_impl.cpp",
     "${multimedia_camera_framework_path}/frameworks/native/ndk/impl/photo_output_impl.cpp",
-    "${multimedia_camera_framework_path}/frameworks/native/ndk/impl/preview_output_impl.cpp",
-    "${multimedia_camera_framework_path}/frameworks/native/ndk/impl/video_output_impl.cpp",
+    "${multimedia_camera_framework_path}/frameworks/native/ndk/impl/camera_util.cpp",
     "${multimedia_camera_framework_path}/interfaces/inner_api/native/test/test_common.cpp",
     "camera_ndk_capture_session_test/src/camera_capture_session_unittest.cpp",
     "camera_ndk_input_test/src/camera_input_unittest.cpp",
@@ -72,7 +66,6 @@ ohos_unittest("camera_ndk_test") {
     "access_token:libtoken_setproc",
     "av_codec:av_codec_client",
     "c_utils:utils",
-    "cJSON:cjson_static",
     "data_share:datashare_common",
     "data_share:datashare_consumer",
     "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
@@ -98,7 +91,6 @@ ohos_unittest("camera_ndk_test") {
     "napi:ace_napi",
     "resource_management:librawfile",
     "safwk:system_ability_fwk",
-    "selinux_adapter:librestorecon",
     "sensor:sensor_interface_native",
     "window_manager:libdm",
   ]

@@ -293,9 +293,10 @@ private:
         paraIndex_++;
         return *this;
     }
-
+    
     template<typename T, typename = std::enable_if_t<std::is_same_v<T, bool> || std::is_same_v<T, int32_t> ||
                                                      std::is_same_v<T, int64_t> || std::is_same_v<T, uint32_t> ||
+                                                     std::is_same_v<T, int8_t> || std::is_same_v<T, uint8_t> ||
                                                      std::is_same_v<T, double> || std::is_same_v<T, std::string>>>
     CameraNapiParamParser& Next(T& outData)
     {
@@ -332,6 +333,22 @@ private:
             if (napiError != napi_ok) {
                 paraIndex_++;
                 return *this;
+            }
+        } else if (std::is_same_v<T, uint8_t> && valueNapiType == napi_number) {
+            int32_t temp;
+            napiError = napi_get_value_int32(env_, paramValue_[paraIndex_], &temp);
+            if (temp < std::numeric_limits<uint8_t>::min() || temp > std::numeric_limits<uint8_t>::max()) {
+                napiError = napi_status::napi_invalid_arg;
+            } else {
+                outData = static_cast<uint8_t>(temp);
+            }
+        } else if (std::is_same_v<T, int8_t> && valueNapiType == napi_number) {
+            int32_t temp;
+            napiError = napi_get_value_int32(env_, paramValue_[paraIndex_], &temp);
+            if (temp < std::numeric_limits<int8_t>::min() || temp > std::numeric_limits<int8_t>::max()) {
+                napiError = napi_status::napi_invalid_arg;
+            } else {
+                outData = static_cast<int8_t>(temp);
             }
         } else {
             napiError = napi_status::napi_invalid_arg;

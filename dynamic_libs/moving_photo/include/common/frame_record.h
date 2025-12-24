@@ -165,8 +165,13 @@ public:
 
     inline sptr<SurfaceBuffer> GetMetaBuffer()
     {
-        std::unique_lock<std::mutex> lock(metaBufferMutex_);
+        metaBufferMutex_.lock();
         return metaBuffer_;
+    }
+    
+    inline void UnLockMetaBuffer()
+    {
+        metaBufferMutex_.unlock();
     }
 
     inline void SetIDRProperty(bool isIDRFrame)
@@ -215,7 +220,7 @@ public:
     std::shared_ptr<Media::AVBuffer> encodedBuffer = nullptr;
     std::string frameId_;
     std::mutex bufferMutex_;
-    int32_t muxerIndex_;
+    int64_t muxerIndex_;
 private:
     static const int32_t STATUS_NONE = 0;
     static const int32_t STATUS_READY_CONVERT = 1;
@@ -232,9 +237,9 @@ private:
     GraphicTransformType transformType_;
     std::mutex mutex_;
     std::condition_variable canReleased_;
-    bool isIDRFrame_ = false;
     std::mutex metaBufferMutex_;
     sptr<SurfaceBuffer> metaBuffer_;
+    bool isIDRFrame_ = false;
 };
 } // namespace CameraStandard
 } // namespace OHOS

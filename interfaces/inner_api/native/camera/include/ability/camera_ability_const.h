@@ -25,14 +25,14 @@ namespace HDI {
 namespace Display {
 namespace Graphic {
 namespace Common {
-namespace V1_0 {
+namespace V2_1 {
 enum CM_ColorSpaceType : int32_t;
 }}}}}}
 
 namespace OHOS {
 namespace HDI {
 namespace Camera {
-namespace V1_3 {
+namespace V1_5 {
 enum OperationMode : int32_t;
 }}}}
 
@@ -41,7 +41,7 @@ namespace CameraStandard {
 enum SceneMode : int32_t;
 enum class MetadataObjectType : int32_t;
 
-using namespace OHOS::HDI::Display::Graphic::Common::V1_0;
+using namespace OHOS::HDI::Display::Graphic::Common::V2_1;
 
 enum FlashMode {
     FLASH_MODE_CLOSE = 0,
@@ -64,16 +64,17 @@ enum FocusMode {
     FOCUS_MODE_LOCKED,
 };
 
-enum QualityPrioritization {
-    HIGH_QUALITY = 0,
-    POWER_BALANCE,
-};
-
 enum BeautyType {
     AUTO_TYPE = 0,
     SKIN_SMOOTH = 1,
     FACE_SLENDER = 2,
     SKIN_TONE = 3,
+    SKIN_TONEBRIGHT = 4,
+    EYE_BIGEYES = 5,
+    HAIR_HAIRLINE = 6,
+    FACE_MAKEUP = 7,
+    HEAD_SHRINK = 8,
+    NOSE_SLENDER = 9,
 };
 
 enum ColorEffect {
@@ -81,6 +82,8 @@ enum ColorEffect {
     COLOR_EFFECT_BRIGHT,
     COLOR_EFFECT_SOFT,
     COLOR_EFFECT_BLACK_WHITE,
+    COLOR_EFFECT_CLASSIC,
+    COLOR_EFFECT_MODERN
 };
 
 enum PortraitEffect {
@@ -115,7 +118,8 @@ enum ColorSpace {
     BT2020_HLG_LIMIT = 19, // CM_BT2020_HLG_LIMIT
     BT2020_PQ_LIMIT = 20, // CM_BT2020_PQ_LIMIT
     P3_HLG_LIMIT = 21, // CM_P3_HLG_LIMIT
-    P3_PQ_LIMIT = 22 // CM_P3_PQ_LIMIT
+    P3_PQ_LIMIT = 22, // CM_P3_PQ_LIMIT
+    H_LOG = 26, // CM_BT2020_LOG_FULL
 };
 
 enum class PortraitThemeType {
@@ -129,6 +133,22 @@ enum class VideoRotation {
     ROTATION_90 = 90,
     ROTATION_180 = 180,
     ROTATION_270 = 270
+};
+
+enum QualityPrioritization {
+    HIGH_QUALITY = 0,
+    POWER_BALANCE,
+};
+
+enum class StitchingType {
+    LONG_SCROLL = 0,
+    PAINTING_SCROLL = 1,
+    NINE_GRID = 2
+};
+
+enum class StitchingDirection {
+    LANDSCAPE = 0,
+    PORTRAIT = 1
 };
 
 enum FocusRangeType {
@@ -146,6 +166,12 @@ enum ColorReservationType {
     COLOR_RESERVATION_TYPE_PORTRAIT
 };
 
+enum class NightSubMode {
+    DEFAULT = 0,
+    SUPER_MOON,
+    STARRY_SKY,
+    STARRY_SKY_PORTRAIT,
+};
 enum FlashStatus {
     FLASH_STATUS_OFF = 0,
     FLASH_STATUS_ON,
@@ -160,6 +186,12 @@ enum CameraStatus {
     CAMERA_SERVER_UNAVAILABLE
 };
 
+enum ColorStylePhotoType {
+    UNSET = 0,
+    EFFECT = 1,
+    ORIGIN_AND_EFFECT = 2,
+};
+
 extern const std::unordered_map<camera_flash_mode_enum_t, FlashMode> g_metaFlashModeMap_;
 extern const std::unordered_map<camera_exposure_mode_enum_t, ExposureMode> g_metaExposureModeMap_;
 extern const std::unordered_map<camera_focus_mode_enum_t, FocusMode> g_metaFocusModeMap_;
@@ -170,7 +202,8 @@ extern const std::unordered_map<CameraVideoStabilizationMode, VideoStabilization
 extern const std::unordered_map<camera_portrait_effect_type_t, PortraitEffect> g_metaToFwPortraitEffect_;
 extern const std::unordered_map<VideoStabilizationMode, CameraVideoStabilizationMode> g_fwkVideoStabModesMap_;
 extern const std::unordered_map<ExposureMode, camera_exposure_mode_enum_t> g_fwkExposureModeMap_;
-extern const std::map<CM_ColorSpaceType, ColorSpace> g_metaColorSpaceMap_;
+using CM_ColorSpaceType_V2_1 = OHOS::HDI::Display::Graphic::Common::V2_1::CM_ColorSpaceType;
+extern const std::map<CM_ColorSpaceType_V2_1, ColorSpace> g_metaColorSpaceMap_;
 extern const std::unordered_map<FocusMode, camera_focus_mode_enum_t> g_fwkFocusModeMap_;
 extern const std::unordered_map<ColorEffect, camera_xmage_color_type_t> g_fwkColorEffectMap_;
 extern const std::unordered_map<FlashMode, camera_flash_mode_enum_t> g_fwkFlashModeMap_;
@@ -181,8 +214,8 @@ extern const std::unordered_map<CameraPortraitThemeTypes, PortraitThemeType> g_m
 extern const std::vector<VideoRotation> g_fwkVideoRotationVector_;
 extern const std::unordered_map<CameraQualityPrioritization, QualityPrioritization> g_metaQualityPrioritizationMap_;
 extern const std::unordered_map<QualityPrioritization, CameraQualityPrioritization> g_fwkQualityPrioritizationMap_;
-extern const std::unordered_map<OHOS::HDI::Camera::V1_3::OperationMode, SceneMode> g_metaToFwSupportedMode_;
-extern const std::unordered_map<SceneMode, OHOS::HDI::Camera::V1_3::OperationMode> g_fwToMetaSupportedMode_;
+extern const std::unordered_map<OHOS::HDI::Camera::V1_5::OperationMode, SceneMode> g_metaToFwSupportedMode_;
+extern const std::unordered_map<SceneMode, OHOS::HDI::Camera::V1_5::OperationMode> g_fwToMetaSupportedMode_;
 extern const std::unordered_map<StatisticsDetectType, MetadataObjectType> g_metaToFwCameraMetaDetect_;
 extern const std::unordered_map<camera_focus_range_type_t, FocusRangeType> g_metaFocusRangeTypeMap_;
 extern const std::unordered_map<FocusRangeType, camera_focus_range_type_t> g_fwkocusRangeTypeMap_;
@@ -190,6 +223,8 @@ extern const std::unordered_map<camera_focus_driven_type_t, FocusDrivenType> g_m
 extern const std::unordered_map<FocusDrivenType, camera_focus_driven_type_t> g_fwkFocusDrivenTypeMap_;
 extern const std::unordered_map<camera_color_reservation_type_t, ColorReservationType> g_metaColorReservationTypeMap_;
 extern const std::unordered_map<ColorReservationType, camera_color_reservation_type_t> g_fwkColorReservationTypeMap_;
+extern const std::unordered_map<NightSubMode, CameraNightSubMode> g_fwkNightSubModeMap_;
+extern const std::unordered_map<CameraNightSubMode, NightSubMode> g_metaNightSubModeMap_;
 
 template <typename S, typename T>
 void g_transformValidData(
@@ -197,6 +232,18 @@ void g_transformValidData(
 {
     for (uint32_t i = 0; i < item.count; i++) {
         auto it = map.find(static_cast<S>(item.data.u8[i]));
+        if (it != map.end()) {
+            validModes.emplace_back(it->second);
+        }
+    }
+}
+
+template <typename S, typename T>
+void g_transformValidData(
+    const std::vector<int32_t>& data, const std::unordered_map<S, T>& map, std::vector<T>& validModes)
+{
+    for (size_t i = 0; i < data.size(); i++) {
+        auto it = map.find(static_cast<S>(data[i]));
         if (it != map.end()) {
             validModes.emplace_back(it->second);
         }

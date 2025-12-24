@@ -25,6 +25,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
+class PictureIntf;
 using namespace DeferredProcessing;
 class IDeferredPhotoProcessingSessionCallbackFuzz : public IDeferredPhotoProcessingSessionCallback {
 public:
@@ -36,7 +37,7 @@ public:
         return 0;
     }
     inline int32_t OnProcessImageDone(const std::string &imageId, const std::shared_ptr<PictureIntf>& picture,
-        uint32_t cloudImageEnhanceFlag) override
+        const DpsMetadata& metadata) override
     {
         return 0;
     }
@@ -88,7 +89,6 @@ public:
 static std::shared_ptr<MetadataOutput> fuzz_;
 static void MetadataOutputFuzzTest(FuzzedDataProvider& fdp);
 static void MetadataOutputFuzzTest1(FuzzedDataProvider& fdp);
-static void MetadataOutputFuzzTest2(FuzzedDataProvider& fdp);
 };
 } //CameraStandard
 } //OHOS

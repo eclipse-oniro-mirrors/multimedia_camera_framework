@@ -17,8 +17,10 @@
 #define OHOS_CAMERA_DPS_MPEG_MANAGER_H
 
 #include "avcodec_video_encoder.h"
-#include "ipc_file_descriptor.h"
+#include "dps_fd.h"
 #include "media_manager.h"
+#include "media_progress_notifier.h"
+#include "pixel_map.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -32,21 +34,23 @@ public:
     MpegManager(MediaManager&&) = delete;
     MpegManager& operator=(MediaManager&&) = delete;
 
-    MediaManagerError Init(const std::string& requestId, const sptr<IPCFileDescriptor>& inputFd);
+    MediaManagerError Init(const std::string& requestId, const DpsFdPtr& inputFd, int32_t width, int32_t height);
     MediaManagerError UnInit(const MediaResult result);
     sptr<Surface> GetSurface();
     sptr<Surface> GetMakerSurface();
     uint64_t GetProcessTimeStamp();
+    uint32_t GetDuration();
     MediaManagerError NotifyEnd();
-    sptr<IPCFileDescriptor> GetResultFd();
+    DpsFdPtr GetResultFd();
     void AddUserMeta(std::unique_ptr<MediaUserInfo> userInfo);
-    void SetMarkSize(int32_t size);
+    void SetProgressNotifer(std::unique_ptr<MediaProgressNotifier> processNotifer);
 
 private:
     class VideoCodecCallback;
     class VideoMakerListener;
 
-    MediaManagerError InitVideoCodec();
+    MediaManagerError InitVideoCodec(int32_t width, int32_t height);
+    MediaManagerError ConfigVideoCodec(const CodecInfo& codecInfo, int32_t width, int32_t height);
     bool UnInitVideoCodec();
     MediaManagerError ReleaseBuffer(uint32_t index);
     MediaManagerError InitVideoMakerSurface();
@@ -55,7 +59,10 @@ private:
     MediaManagerError ReleaseMakerBuffer(sptr<SurfaceBuffer>& buffer);
     void OnBufferAvailable(uint32_t index, const std::shared_ptr<AVBuffer>& buffer);
     void OnMakerBufferAvailable();
-    sptr<IPCFileDescriptor> GetFileFd(const std::string& requestId, int flags, const std::string& tag);
+    DpsFdPtr GetFileFd(const std::string& requestId, int flags, const std::string& tag);
+    bool CheckFilePath(const std::string& path);
+    std::shared_ptr<AVBuffer> CreateWatermarkBuffer(const std::string& infoParam);
+    void ParseWatermarkConfigFromJson(WaterMarkInfo& waterMarkInfo, const std::string& infoParam);
 
     std::mutex mediaInfoMutex_;
     std::mutex makerMutex_;
@@ -68,9 +75,10 @@ private:
     std::shared_ptr<MediaInfo> mediaInfo_ {nullptr};
     std::string outPath_;
     std::string tempPath_;
-    sptr<IPCFileDescriptor> outputFd_ {nullptr};
-    sptr<IPCFileDescriptor> tempFd_ {nullptr};
+    DpsFdPtr outputFd_ {nullptr};
+    DpsFdPtr tempFd_ {nullptr};
     MediaResult result_ {FAIL};
+    std::unique_ptr<MediaProgressNotifier> processNotifer_ {nullptr};
     std::mutex eosMutex_;
     std::condition_variable eosCondition_;
     bool eos_ {false};

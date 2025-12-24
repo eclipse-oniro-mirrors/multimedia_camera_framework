@@ -37,6 +37,8 @@ using  UpdateParameterFunc = bool(*)(ParameterMap&, ParameterMap&);
 bool CameraRotatePlugin::initResult = false;
 sptr<CameraRotatePlugin> CameraRotatePlugin::cameraRotatePlugin_;
 std::mutex CameraRotatePlugin::instanceMutex_;
+// wptr<HCaptureSession> CameraRotatePlugin::hcaptureSession_;
+// std::mutex CameraRotatePlugin::sessionLock_;
 sptr<CameraRotatePlugin> &CameraRotatePlugin::GetInstance()
 {
     if (cameraRotatePlugin_ == nullptr) {
@@ -60,10 +62,9 @@ CameraRotatePlugin::CameraRotatePlugin()
 
 CameraRotatePlugin::~CameraRotatePlugin()
 {
-    if (handle_) {
-        dlclose(handle_);
-        handle_ = nullptr;
-    }
+    CHECK_RETURN(!handle_);
+    dlclose(handle_);
+    handle_ = nullptr;
 }
 
 
@@ -75,9 +76,7 @@ void CameraRotatePlugin::SetCaptureSession(const std::string& bundleName, wptr<H
 bool CameraRotatePlugin::HookCameraAbility(const std::string& cameraId,
     std::shared_ptr<OHOS::Camera::CameraMetadata>& inability)
 {
-    if (inability == nullptr) {
-        return false;
-    }
+    CHECK_RETURN_RET(inability == nullptr, false);
     ParameterMap param;
     int uid = IPCSkeleton::GetCallingUid();
     InitParam(GetClientBundle(uid), inability, cameraId, param);
@@ -135,9 +134,7 @@ bool CameraRotatePlugin::HookCreatePreviewFormat(const std::string& bundleName, 
 
 bool CameraRotatePlugin::HookCreateVideoOutput(ParameterMap basicInfoMap, const sptr<OHOS::IBufferProducer>& producer)
 {
-    if (producer == nullptr) {
-        return false;
-    }
+    CHECK_RETURN_RET(producer == nullptr, false);
     std::string surfaceAppFwkType = "";
     uint32_t transform = 0;
     if (CreateVideoOutput(basicInfoMap, surfaceAppFwkType, transform)) {
@@ -151,9 +148,7 @@ bool CameraRotatePlugin::HookCreateVideoOutput(ParameterMap basicInfoMap, const 
 bool CameraRotatePlugin::HookPreviewStreamStart(ParameterMap basicInfoMap,
     const sptr<OHOS::IBufferProducer>& producer, int32_t& rotateAngle)
 {
-    if (producer == nullptr) {
-        return false;
-    }
+    CHECK_RETURN_RET(producer == nullptr, false);
     MEDIA_DEBUG_LOG("CameraRotatePlugin::HookPreviewStreamStart enter");
     int32_t frameGravity = -1;
     int32_t fixedRotation = -1;
@@ -171,9 +166,7 @@ bool CameraRotatePlugin::HookPreviewTransform(ParameterMap basicInfoMap,
     const sptr<OHOS::IBufferProducer>& producer,
     int32_t& sensorOrientation, int32_t& cameraPosition)
 {
-    if (producer == nullptr) {
-        return false;
-    }
+    CHECK_RETURN_RET(producer == nullptr, false);
     int32_t frameGravity = -1;
     int32_t fixedRotation = -1;
     if (PreviewTransform(basicInfoMap, frameGravity, fixedRotation, sensorOrientation, cameraPosition)) {
@@ -190,9 +183,7 @@ bool CameraRotatePlugin::HookPreviewTransform(ParameterMap basicInfoMap,
 bool CameraRotatePlugin::HookVideoStreamStart(ParameterMap basicInfoMap,
     const sptr<OHOS::IBufferProducer>& producer, bool& mirror)
 {
-    if (producer == nullptr) {
-        return false;
-    }
+    CHECK_RETURN_RET(producer == nullptr, false);
 
     std::string surfaceAppFwkType = "";
     uint32_t transform = 0;
@@ -211,16 +202,12 @@ bool CameraRotatePlugin::HookCaptureStreamStart(ParameterMap basicInfoMap, int32
 
 void* CameraRotatePlugin::GetFunction(const std::string& functionName)
 {
-    CHECK_RETURN_RET_DLOG(
-        handle_ == nullptr, nullptr, "CameraRotatePlugin::GetFunction fail not loaded");
+    CHECK_RETURN_RET_DLOG(handle_ == nullptr, nullptr, "CameraRotatePlugin::GetFunction fail not loaded");
     void* funcInstance = nullptr;
-    if (functionMap_.Find(functionName, funcInstance)) {
-        return funcInstance;
-    }
+    CHECK_RETURN_RET(functionMap_.Find(functionName, funcInstance), funcInstance);
     void* handleFunc = dlsym(handle_, functionName.c_str());
-    CHECK_RETURN_RET_DLOG(
-        handleFunc == nullptr, nullptr, "CameraRotatePlugin::GetFunction fail function:%{public}s not find",
-        functionName.c_str());
+    CHECK_RETURN_RET_DLOG(handleFunc == nullptr, nullptr,
+        "CameraRotatePlugin::GetFunction fail function:%{public}s not find", functionName.c_str());
     MEDIA_INFO_LOG("CameraRotatePlugin::GetFunction %{public}s success", functionName.c_str());
     functionMap_.EnsureInsert(functionName, handleFunc);
     return handleFunc;
@@ -230,8 +217,7 @@ bool CameraRotatePlugin::GetParameterResult(ParameterMap basicInfoMap, const std
     ParameterMap& parameterMap)
 {
     UpdateParameterFunc updateParameterFunc = (UpdateParameterFunc)GetFunction(functionName);
-    CHECK_RETURN_RET_DLOG(updateParameterFunc == nullptr, false,
-        "function %{public}s is failed", functionName.c_str());
+    CHECK_RETURN_RET_DLOG(updateParameterFunc == nullptr, false, "function %{public}s is failed", functionName.c_str());
     bool result = updateParameterFunc(basicInfoMap, parameterMap);
     CHECK_RETURN_RET_DLOG(!result, false, "function %{public}s is failed", functionName.c_str());
     return true;
@@ -240,9 +226,7 @@ bool CameraRotatePlugin::GetParameterResult(ParameterMap basicInfoMap, const std
 void CameraRotatePlugin::InitParam(const std::string& bundleName,
     std::shared_ptr<OHOS::Camera::CameraMetadata> inputCapability, const std::string& cameraId, ParameterMap& param)
 {
-    if (inputCapability == nullptr) {
-        return;
-    }
+    CHECK_RETURN(inputCapability == nullptr);
     camera_metadata_item_t item;
     int32_t ret = OHOS::Camera::FindCameraMetadataItem(inputCapability->get(),
         OHOS_ABILITY_CAMERA_CONNECTION_TYPE, &item);
@@ -267,10 +251,7 @@ bool CameraRotatePlugin::Init()
         return false;
     }
     handle_ = ::dlopen(CAMERA_PLUGIN_SO_PATH.c_str(), RTLD_NOW);
-    if (!handle_) {
-        MEDIA_ERR_LOG("dlopen failed check so file exists");
-        return false;
-    }
+    CHECK_RETURN_RET_ELOG(!handle_, false, "dlopen failed check so file exists");
     ParameterMap updateParameter;
     bool result = GetParameterResult(updateParameter, "Init", updateParameter);
     return result;
@@ -298,8 +279,8 @@ int32_t CameraRotatePlugin::OnParameterChange(ParameterMap ParameterMap)
     wptr<HCaptureSession> hcaptureSessionWptr;
     captureSessionMap_.Find(ParameterMap[PLUGIN_BUNDLE_NAME], hcaptureSessionWptr);
     sptr<HCaptureSession> hcaptureSessionSptr = hcaptureSessionWptr.promote();
-    CHECK_RETURN_RET_ELOG((hcaptureSessionSptr == nullptr || ParameterMap.size() < 1), CAMERA_INVALID_ARG,
-        "hcaptureSession is null");
+    CHECK_RETURN_RET_ELOG(
+        (hcaptureSessionSptr == nullptr || ParameterMap.size() < 1), CAMERA_INVALID_ARG, "hcaptureSession is null");
     hcaptureSessionSptr->UpdateHookBasicInfo(ParameterMap);
     return 0;
 }
@@ -347,13 +328,13 @@ bool CameraRotatePlugin::PreviewStreamStart(ParameterMap basicInfoMap, int32_t& 
     result = updateParameter.find(PLUGIN_CAMERA_HAL_ROTATE_ANGLE) != updateParameter.end();
     CHECK_RETURN_RET_ELOG(!result, false, "PreviewStreamStart result not include needed parameter");
     CHECK_EXECUTE(updateParameter.find(PLUGIN_SURFACE_FRAME_GRAVITY) != updateParameter.end() &&
-        isIntegerRegex(updateParameter[PLUGIN_SURFACE_FIXED_ROTATION]),
+            isIntegerRegex(updateParameter[PLUGIN_SURFACE_FRAME_GRAVITY]),
         frameGravity = std::stoi(updateParameter[PLUGIN_SURFACE_FRAME_GRAVITY]));
     CHECK_EXECUTE(updateParameter.find(PLUGIN_SURFACE_FIXED_ROTATION) != updateParameter.end() &&
-        isIntegerRegex(updateParameter[PLUGIN_SURFACE_FIXED_ROTATION]),
+            isIntegerRegex(updateParameter[PLUGIN_SURFACE_FIXED_ROTATION]),
         fixedRotation = std::stoi(updateParameter[PLUGIN_SURFACE_FIXED_ROTATION]));
     result = isIntegerRegex(updateParameter[PLUGIN_CAMERA_HAL_ROTATE_ANGLE]);
-    CHECK_RETURN_RET_ELOG(!result, false, "PreviewStreamStart stoi is failed");
+    CHECK_RETURN_RET_ELOG(!result, false, "PreviewStreamStart isIntegerRegex failed");
     rotateAngle = std::stoi(updateParameter[PLUGIN_CAMERA_HAL_ROTATE_ANGLE]);
     return true;
 }
@@ -373,6 +354,7 @@ bool CameraRotatePlugin::PreviewTransform(ParameterMap basicInfoMap, int32_t& fr
         isIntegerRegex(updateParameter[PLUGIN_SURFACE_FIXED_ROTATION]) &&
         isIntegerRegex(updateParameter[PLUGIN_CAMERA_POSITION]) &&
         isIntegerRegex(updateParameter[PLUGIN_SENSOR_ORIENTATION]);
+    CHECK_RETURN_RET_ELOG(!result, false, "PreviewTransform isIntegerRegex failed");
     frameGravity = std::stoi(updateParameter[PLUGIN_SURFACE_FRAME_GRAVITY]);
     fixedRotation = std::stoi(updateParameter[PLUGIN_SURFACE_FIXED_ROTATION]);
     cameraPosition = std::stoi(updateParameter[PLUGIN_CAMERA_POSITION]);

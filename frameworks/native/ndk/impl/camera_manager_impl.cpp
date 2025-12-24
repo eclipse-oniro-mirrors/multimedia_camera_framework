@@ -66,11 +66,6 @@ const std::unordered_map<Camera_TorchMode, TorchMode> g_ndkToFwTorchMode_ = {
     {Camera_TorchMode::CAMERA_TORCH_MODE_ON, TorchMode::TORCH_MODE_ON},
     {Camera_TorchMode::CAMERA_TORCH_MODE_AUTO, TorchMode::TORCH_MODE_AUTO}
 };
-const std::unordered_map<OHOS::CameraStandard::FoldStatus, Camera_FoldStatus> g_FwkFoldStatusToNdk_ = {
-    {OHOS::CameraStandard::FoldStatus::UNKNOWN_FOLD, Camera_FoldStatus::CAMERA_FOLD_STATUS_NON_FOLDABLE},
-    {OHOS::CameraStandard::FoldStatus::EXPAND, Camera_FoldStatus::CAMERA_FOLD_STATUS_EXPANDED},
-    {OHOS::CameraStandard::FoldStatus::FOLDED, Camera_FoldStatus::CAMERA_FOLD_STATUS_FOLDED},
-};
 
 namespace OHOS::CameraStandard {
 class InnerCameraManagerCameraStatusCallback : public CameraManagerCallback {
@@ -94,8 +89,8 @@ public:
         statusInfo.camera->connectionType =
             static_cast<Camera_Connection>(cameraStatusInfo.cameraDevice->GetConnectionType());
         statusInfo.status = static_cast<Camera_Status>(cameraStatusInfo.cameraStatus);
-        CHECK_EXECUTE(cameraManager_ != nullptr && callback_.onCameraStatus != nullptr,
-            callback_.onCameraStatus(cameraManager_, &statusInfo));
+        CHECK_RETURN(cameraManager_ == nullptr || callback_.onCameraStatus == nullptr);
+        callback_.onCameraStatus(cameraManager_, &statusInfo);
     }
 
     void OnFlashlightStatusChanged(const std::string& cameraID, const FlashStatus flashStatus) const override
@@ -120,13 +115,12 @@ public:
     void OnTorchStatusChange(const TorchStatusInfo& torchStatusInfo) const override
     {
         MEDIA_DEBUG_LOG("OnTorchStatusChange is called!");
-        if (cameraManager_ != nullptr && torchStatusCallback_ != nullptr) {
-            Camera_TorchStatusInfo statusInfo;
-            statusInfo.isTorchAvailable = torchStatusInfo.isTorchAvailable;
-            statusInfo.isTorchActive = torchStatusInfo.isTorchActive;
-            statusInfo.torchLevel = torchStatusInfo.torchLevel;
-            torchStatusCallback_(cameraManager_, &statusInfo);
-        }
+        CHECK_RETURN(cameraManager_ == nullptr || torchStatusCallback_ == nullptr);
+        Camera_TorchStatusInfo statusInfo;
+        statusInfo.isTorchAvailable = torchStatusInfo.isTorchAvailable;
+        statusInfo.isTorchActive = torchStatusInfo.isTorchActive;
+        statusInfo.torchLevel = torchStatusInfo.torchLevel;
+        torchStatusCallback_(cameraManager_, &statusInfo);
     }
 
 private:
@@ -167,10 +161,7 @@ public:
             }
             statusInfo.supportedCameras = supportedCamerasPtr;
             statusInfo.cameraSize = outSize;
-            auto itr = g_FwkFoldStatusToNdk_.find(foldStatusInfo.foldStatus);
-            if (itr != g_FwkFoldStatusToNdk_.end()) {
-                statusInfo.foldStatus = itr->second;
-            }
+            statusInfo.foldStatus = (Camera_FoldStatus)foldStatusInfo.foldStatus;
             foldStatusCallback_(cameraManager_, &statusInfo);
         }
     }
@@ -190,7 +181,6 @@ Camera_Manager::Camera_Manager()
 Camera_Manager::~Camera_Manager()
 {
     MEDIA_DEBUG_LOG("~Camera_Manager is called");
-    CHECK_RETURN(!cameraManager_);
     cameraManager_ = nullptr;
 }
 
@@ -206,9 +196,8 @@ Camera_ErrorCode Camera_Manager::RegisterCallback(CameraManager_Callbacks* camer
 Camera_ErrorCode Camera_Manager::UnregisterCallback(CameraManager_Callbacks* cameraStatusCallback)
 {
     auto callback = cameraStatusCallbackMap_.RemoveValue(cameraStatusCallback);
-    if (callback != nullptr) {
-        cameraManager_->UnregisterCameraStatusCallback(callback);
-    }
+    CHECK_RETURN_RET(callback == nullptr, CAMERA_OK);
+    cameraManager_->UnregisterCameraStatusCallback(callback);
     return CAMERA_OK;
 }
 
@@ -224,9 +213,8 @@ Camera_ErrorCode Camera_Manager::RegisterTorchStatusCallback(OH_CameraManager_To
 Camera_ErrorCode Camera_Manager::UnregisterTorchStatusCallback(OH_CameraManager_TorchStatusCallback torchStatusCallback)
 {
     auto callback = torchStatusCallbackMap_.RemoveValue(torchStatusCallback);
-    if (callback != nullptr) {
-        cameraManager_->UnregisterTorchListener(callback);
-    }
+    CHECK_RETURN_RET(callback == nullptr, CAMERA_OK);
+    cameraManager_->UnregisterTorchListener(callback);
     return CAMERA_OK;
 }
 
@@ -235,8 +223,8 @@ Camera_ErrorCode Camera_Manager::GetSupportedCameras(Camera_Device** cameras, ui
     std::vector<sptr<CameraDevice>> cameraObjList = CameraManager::GetInstance()->GetSupportedCameras();
     uint32_t cameraSize = cameraObjList.size();
     uint32_t cameraMaxSize = 32;
-    CHECK_RETURN_RET_ELOG(cameraSize == 0 || cameraSize > cameraMaxSize, CAMERA_INVALID_ARGUMENT,
-        "Invalid camera size.");
+    CHECK_RETURN_RET_ELOG(
+        cameraSize == 0 || cameraSize > cameraMaxSize, CAMERA_INVALID_ARGUMENT, "Invalid camera size.");
     Camera_Device* outCameras = new Camera_Device[cameraSize];
     for (size_t index = 0; index < cameraSize; index++) {
         const string cameraGetID = cameraObjList[index]->GetID();
@@ -245,7 +233,7 @@ Camera_ErrorCode Camera_Manager::GetSupportedCameras(Camera_Device** cameras, ui
         if (!dst) {
             MEDIA_ERR_LOG("Allocate memory for cameraId Failed!");
             for (size_t i = 0; i < index; ++i) {
-                delete[] outCameras[index].cameraId;
+                delete[] outCameras[i].cameraId;
             }
             delete[] dst;
             delete[] outCameras;
@@ -264,14 +252,13 @@ Camera_ErrorCode Camera_Manager::GetSupportedCameras(Camera_Device** cameras, ui
 
 Camera_ErrorCode Camera_Manager::DeleteSupportedCameras(Camera_Device* cameras, uint32_t size)
 {
-    if (cameras != nullptr) {
-        for (size_t index = 0; index < size; index++) {
-            if (&cameras[index] != nullptr) {
-                delete[] cameras[index].cameraId;
-            }
+    CHECK_RETURN_RET(cameras == nullptr, CAMERA_OK);
+    for (size_t index = 0; index < size; index++) {
+        if (&cameras[index] != nullptr) {
+            delete[] cameras[index].cameraId;
         }
-        delete[] cameras;
     }
+    delete[] cameras;
     return CAMERA_OK;
 }
 
@@ -284,7 +271,6 @@ Camera_ErrorCode Camera_Manager::GetSupportedCameraOutputCapability(const Camera
     Camera_OutputCapability* outCapability = new Camera_OutputCapability;
     CHECK_RETURN_RET_ELOG(outCapability == nullptr, CAMERA_SERVICE_FATAL_ERROR,
         "Camera_Manager::GetSupportedCameraOutputCapability failed to allocate memory for outCapability!");
-
     sptr<CameraOutputCapability> innerCameraOutputCapability =
         CameraManager::GetInstance()->GetSupportedOutputCapability(cameraDevice);
     if (innerCameraOutputCapability == nullptr) {
@@ -297,7 +283,6 @@ Camera_ErrorCode Camera_Manager::GetSupportedCameraOutputCapability(const Camera
     std::vector<VideoProfile> videoProfiles = innerCameraOutputCapability->GetVideoProfiles();
 
     std::vector<MetadataObjectType> metadataTypeList = innerCameraOutputCapability->GetSupportedMetadataObjectType();
-    
     std::vector<Profile> uniquePreviewProfiles;
     for (const auto& profile : previewProfiles) {
         if (std::find(uniquePreviewProfiles.begin(), uniquePreviewProfiles.end(),
@@ -395,8 +380,8 @@ Camera_ErrorCode Camera_Manager::GetSupportedMetadataTypeList(Camera_OutputCapab
         return CAMERA_INVALID_ARGUMENT;
     }
     outCapability->supportedMetadataObjectTypes = new Camera_MetadataObjectType* [metadataTypeList.size()];
-    CHECK_PRINT_ELOG(!outCapability->supportedMetadataObjectTypes,
-        "Failed to allocate memory for supportedMetadataObjectTypes");
+    CHECK_PRINT_ELOG(
+        !outCapability->supportedMetadataObjectTypes, "Failed to allocate memory for supportedMetadataObjectTypes");
     for (size_t index = 0; index < metadataTypeList.size(); index++) {
         Camera_MetadataObjectType* outmetadataObject = new Camera_MetadataObjectType {};
         *outmetadataObject = static_cast<Camera_MetadataObjectType>(metadataTypeList[index]);
@@ -415,7 +400,8 @@ Camera_ErrorCode Camera_Manager::GetSupportedCameraOutputCapabilityWithSceneMode
     auto itr = g_ndkToFwMode_.find(static_cast<Camera_SceneMode>(sceneMode));
     CHECK_RETURN_RET_ELOG(itr == g_ndkToFwMode_.end(), CAMERA_INVALID_ARGUMENT,
         "Camera_Manager::GetSupportedCameraOutputCapabilityWithSceneMode "
-        "sceneMode = %{public}d not supported!", sceneMode);
+        "sceneMode = %{public}d not supported!",
+        sceneMode);
 
     SceneMode innerSceneMode = static_cast<SceneMode>(itr->second);
     sptr<CameraOutputCapability> innerCameraOutputCapability =
@@ -553,8 +539,8 @@ Camera_ErrorCode Camera_Manager::CreateCameraInput(const Camera_Device* camera, 
 {
     MEDIA_INFO_LOG("CameraId is: %{public}s", camera->cameraId);
     sptr<CameraDevice> cameraDevice = CameraManager::GetInstance()->GetCameraDeviceFromId(camera->cameraId);
-    CHECK_RETURN_RET_ELOG(cameraDevice == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Camera_Manager::CreateCameraInput get cameraDevice fail!");
+    CHECK_RETURN_RET_ELOG(
+        cameraDevice == nullptr, CAMERA_INVALID_ARGUMENT, "Camera_Manager::CreateCameraInput get cameraDevice fail!");
 
     sptr<CameraInput> innerCameraInput = nullptr;
     int32_t retCode = CameraManager::GetInstance()->CreateCameraInput(cameraDevice, &innerCameraInput);
@@ -577,9 +563,8 @@ Camera_ErrorCode Camera_Manager::CreateCameraInputWithPositionAndType(Camera_Pos
     CameraType innerType = static_cast<CameraType>(type);
 
     innerCameraInput = CameraManager::GetInstance()->CreateCameraInput(innerPosition, innerType);
-    CHECK_RETURN_RET_ELOG(innerCameraInput == nullptr, CAMERA_SERVICE_FATAL_ERROR,
-        "Failed to CreateCameraInputWithPositionAndType");
-
+    CHECK_RETURN_RET_ELOG(
+        innerCameraInput == nullptr, CAMERA_SERVICE_FATAL_ERROR, "Failed to CreateCameraInputWithPositionAndType");
     Camera_Input* outInput = new Camera_Input(innerCameraInput);
     *cameraInput = outInput;
     return CAMERA_OK;
@@ -598,9 +583,8 @@ Camera_ErrorCode Camera_Manager::CreatePreviewOutput(const Camera_Profile* profi
     std::istringstream iss(surfaceId);
     iss >> iSurfaceId;
     sptr<Surface> surface = SurfaceUtils::GetInstance()->GetSurface(iSurfaceId);
-    surface = surface == nullptr ? Media::ImageReceiver::getSurfaceById(surfaceId) : surface;
-    CHECK_RETURN_RET_ELOG(surface == nullptr, CAMERA_INVALID_ARGUMENT, "Failed to get previewOutput surface");
-
+    surface = (surface == nullptr) ? Media::ImageReceiver::getSurfaceById(surfaceId) : surface;
+    CHECK_RETURN_RET_ELOG(surface == nullptr, CAMERA_SERVICE_FATAL_ERROR, "Failed to get previewOutput surface");
     surface->SetUserData(CameraManager::surfaceFormat, std::to_string(innerProfile.GetCameraFormat()));
     int32_t retCode = CameraManager::GetInstance()->CreatePreviewOutput(innerProfile, surface, &innerPreviewOutput);
     CHECK_RETURN_RET(retCode != CameraErrorCode::SUCCESS, CAMERA_SERVICE_FATAL_ERROR);
@@ -621,7 +605,7 @@ Camera_ErrorCode Camera_Manager::CreatePreviewOutputUsedInPreconfig(const char* 
     std::istringstream iss(surfaceId);
     iss >> iSurfaceId;
     sptr<Surface> surface = SurfaceUtils::GetInstance()->GetSurface(iSurfaceId);
-    surface = surface == nullptr ? Media::ImageReceiver::getSurfaceById(surfaceId) : surface;
+    surface = (surface == nullptr) ? Media::ImageReceiver::getSurfaceById(surfaceId) : surface;
     CHECK_RETURN_RET_ELOG(surface == nullptr, CAMERA_INVALID_ARGUMENT,
         "Camera_Manager::CreatePreviewOutputUsedInPreconfig get previewOutput surface fail!");
     int32_t retCode = CameraManager::GetInstance()->CreatePreviewOutputWithoutProfile(surface, &innerPreviewOutput);
@@ -638,6 +622,7 @@ Camera_ErrorCode Camera_Manager::CreatePreviewOutputUsedInPreconfig(const char* 
 Camera_ErrorCode Camera_Manager::CreatePhotoOutput(const Camera_Profile* profile,
     const char* surfaceId, Camera_PhotoOutput** photoOutput)
 {
+    MEDIA_ERR_LOG("Camera_Manager CreatePhotoOutput is called");
     sptr<PhotoOutput> innerPhotoOutput = nullptr;
     Size size;
     size.width = profile->size.width;
@@ -651,25 +636,6 @@ Camera_ErrorCode Camera_Manager::CreatePhotoOutput(const Camera_Profile* profile
         CameraManager::GetInstance()->CreatePhotoOutput(innerProfile, surfaceProducer, &innerPhotoOutput, surface);
     CHECK_RETURN_RET(retCode != CameraErrorCode::SUCCESS, CAMERA_SERVICE_FATAL_ERROR);
     Camera_PhotoOutput* out = new Camera_PhotoOutput(innerPhotoOutput);
-    *photoOutput = out;
-    return CAMERA_OK;
-}
-
-Camera_ErrorCode Camera_Manager::CreatePhotoOutputWithoutSurface(const Camera_Profile* profile,
-    Camera_PhotoOutput** photoOutput)
-{
-    sptr<PhotoOutput> innerPhotoOutput = nullptr;
-    Size size;
-    size.width = profile->size.width;
-    size.height = profile->size.height;
-    Profile innerProfile(static_cast<CameraFormat>(profile->format), size);
-    int32_t retCode = CameraManager::GetInstance()->CreatePhotoOutput(innerProfile, &innerPhotoOutput);
-    CHECK_RETURN_RET_ELOG((retCode != CameraErrorCode::SUCCESS || innerPhotoOutput == nullptr),
-        CAMERA_SERVICE_FATAL_ERROR, "Create photo output failed");
-
-    innerPhotoOutput->SetNativeSurface(true);
-    Camera_PhotoOutput* out = new Camera_PhotoOutput(innerPhotoOutput);
-    CHECK_RETURN_RET_ELOG(out == nullptr, CAMERA_SERVICE_FATAL_ERROR, "Create Camera_PhotoOutput failed");
     *photoOutput = out;
     return CAMERA_OK;
 }
@@ -700,6 +666,26 @@ Camera_ErrorCode Camera_Manager::CreatePhotoOutputUsedInPreconfig(const char* su
     return CAMERA_OK;
 }
 
+Camera_ErrorCode Camera_Manager::CreatePhotoOutputWithoutSurface(const Camera_Profile* profile,
+    Camera_PhotoOutput** photoOutput)
+{
+    MEDIA_ERR_LOG("Camera_Manager CreatePhotoOutputWithoutSurface is called");
+    sptr<PhotoOutput> innerPhotoOutput = nullptr;
+    Size size;
+    size.width = profile->size.width;
+    size.height = profile->size.height;
+    Profile innerProfile(static_cast<CameraFormat>(profile->format), size);
+    int32_t retCode = CameraManager::GetInstance()->CreatePhotoOutput(innerProfile, &innerPhotoOutput);
+    CHECK_RETURN_RET_ELOG((retCode != CameraErrorCode::SUCCESS || innerPhotoOutput == nullptr),
+        CAMERA_SERVICE_FATAL_ERROR, "Create photo output failed");
+
+    innerPhotoOutput->SetNativeSurface(true);
+    Camera_PhotoOutput* out = new Camera_PhotoOutput(innerPhotoOutput);
+    CHECK_RETURN_RET_ELOG(out == nullptr, CAMERA_SERVICE_FATAL_ERROR, "Create Camera_PhotoOutput failed");
+    *photoOutput = out;
+    return CAMERA_OK;
+}
+
 Camera_ErrorCode Camera_Manager::CreateVideoOutput(const Camera_VideoProfile* profile,
     const char* surfaceId, Camera_VideoOutput** videoOutput)
 {
@@ -714,9 +700,8 @@ Camera_ErrorCode Camera_Manager::CreateVideoOutput(const Camera_VideoProfile* pr
     std::istringstream iss(surfaceId);
     iss >> iSurfaceId;
     sptr<Surface> surface = SurfaceUtils::GetInstance()->GetSurface(iSurfaceId);
-    surface = surface == nullptr ? Media::ImageReceiver::getSurfaceById(surfaceId) : surface;
+    surface = (surface == nullptr) ? Media::ImageReceiver::getSurfaceById(surfaceId) : surface;
     CHECK_RETURN_RET_ELOG(surface == nullptr, CAMERA_INVALID_ARGUMENT, "Failed to get videoOutput surface");
-
     surface->SetUserData(CameraManager::surfaceFormat, std::to_string(innerProfile.GetCameraFormat()));
     int32_t retCode = CameraManager::GetInstance()->CreateVideoOutput(innerProfile, surface, &innerVideoOutput);
     CHECK_RETURN_RET(retCode != CameraErrorCode::SUCCESS, CAMERA_SERVICE_FATAL_ERROR);
@@ -822,6 +807,27 @@ Camera_ErrorCode Camera_Manager::GetHostDeviceType(Camera_Device* camera, Camera
         case Camera_HostDeviceType::HOST_DEVICE_TYPE_TABLET:
             *hostDeviceType = Camera_HostDeviceType::HOST_DEVICE_TYPE_TABLET;
             break;
+        case Camera_HostDeviceType::HOST_DEVICE_TYPE_GLASSES:
+            *hostDeviceType = Camera_HostDeviceType::HOST_DEVICE_TYPE_GLASSES;
+            break;
+        case Camera_HostDeviceType::HOST_DEVICE_TYPE_TV:
+            *hostDeviceType = Camera_HostDeviceType::HOST_DEVICE_TYPE_TV;
+            break;
+        case Camera_HostDeviceType::HOST_DEVICE_TYPE_CAR:
+            *hostDeviceType = Camera_HostDeviceType::HOST_DEVICE_TYPE_CAR;
+            break;
+        case Camera_HostDeviceType::HOST_DEVICE_TYPE_2IN1:
+            *hostDeviceType = Camera_HostDeviceType::HOST_DEVICE_TYPE_2IN1;
+            break;
+        case Camera_HostDeviceType::HOST_DEVICE_TYPE_WATCH:
+            *hostDeviceType = Camera_HostDeviceType::HOST_DEVICE_TYPE_WATCH;
+            break;
+        case Camera_HostDeviceType::HOST_DEVICE_TYPE_SMART_DISPLAY:
+            *hostDeviceType = Camera_HostDeviceType::HOST_DEVICE_TYPE_SMART_DISPLAY;
+            break;
+        case Camera_HostDeviceType::HOST_DEVICE_TYPE_WIFI_CAMERA:
+            *hostDeviceType = Camera_HostDeviceType::HOST_DEVICE_TYPE_WIFI_CAMERA;
+            break;
         default:
             *hostDeviceType = Camera_HostDeviceType::HOST_DEVICE_TYPE_UNKNOWN_TYPE;
             break;
@@ -852,8 +858,9 @@ Camera_ErrorCode Camera_Manager::GetSupportedSceneModes(Camera_Device* camera,
     std::vector<Camera_SceneMode> cameraSceneMode;
     for (size_t index = 0; index < innerSceneMode.size(); index++) {
         auto itr = g_fwModeToNdk_.find(static_cast<SceneMode>(innerSceneMode[index]));
-        CHECK_EXECUTE(itr != g_fwModeToNdk_.end(),
-            cameraSceneMode.push_back(static_cast<Camera_SceneMode>(itr->second)));
+        if (itr != g_fwModeToNdk_.end()) {
+            cameraSceneMode.push_back(static_cast<Camera_SceneMode>(itr->second));
+        }
     }
 
     Camera_SceneMode* sceneMode = new Camera_SceneMode[cameraSceneMode.size()];
@@ -870,6 +877,7 @@ Camera_ErrorCode Camera_Manager::GetSupportedSceneModes(Camera_Device* camera,
 
 Camera_ErrorCode Camera_Manager::DeleteSceneModes(Camera_SceneMode* sceneModes)
 {
+    CHECK_RETURN_RET(sceneModes == nullptr, CAMERA_OK);
     delete[] sceneModes;
     sceneModes = nullptr;
     return CAMERA_OK;
@@ -889,8 +897,8 @@ Camera_ErrorCode Camera_Manager::IsTorchSupportedByTorchMode(Camera_TorchMode to
     MEDIA_DEBUG_LOG("Camera_Manager::IsTorchSupportedByTorchMode is called");
 
     auto itr = g_ndkToFwTorchMode_.find(torchMode);
-    CHECK_RETURN_RET_ELOG(itr == g_ndkToFwTorchMode_.end(), CAMERA_INVALID_ARGUMENT,
-        "torchMode[%{public}d] is invalid", torchMode);
+    CHECK_RETURN_RET_ELOG(
+        itr == g_ndkToFwTorchMode_.end(), CAMERA_INVALID_ARGUMENT, "torchMode[%{public}d] is invalid", torchMode);
     *isTorchSupported = CameraManager::GetInstance()->IsTorchModeSupported(itr->second);
     MEDIA_DEBUG_LOG("IsTorchSupportedByTorchMode[%{public}d]", *isTorchSupported);
     return CAMERA_OK;
@@ -901,8 +909,8 @@ Camera_ErrorCode Camera_Manager::SetTorchMode(Camera_TorchMode torchMode)
     MEDIA_DEBUG_LOG("Camera_Manager::SetTorchMode is called");
 
     auto itr = g_ndkToFwTorchMode_.find(torchMode);
-    CHECK_RETURN_RET_ELOG(itr == g_ndkToFwTorchMode_.end(), CAMERA_INVALID_ARGUMENT,
-        "torchMode[%{public}d] is invalid", torchMode);
+    CHECK_RETURN_RET_ELOG(
+        itr == g_ndkToFwTorchMode_.end(), CAMERA_INVALID_ARGUMENT, "torchMode[%{public}d] is invalid", torchMode);
     int32_t ret = CameraManager::GetInstance()->SetTorchMode(itr->second);
     return FrameworkToNdkCameraError(ret);
 }
@@ -918,15 +926,15 @@ Camera_ErrorCode Camera_Manager::GetCameraDevice(Camera_Position position, Camer
     innerPosition = itr->second;
 
     CameraType innerType = static_cast<CameraType>(type);
-    
+
     sptr<CameraDevice> cameraInfo = nullptr;
     std::vector<sptr<CameraDevice>> cameraObjList = CameraManager::GetInstance()->GetSupportedCameras();
-    CHECK_RETURN_RET_ELOG(cameraObjList.size() == 0, CAMERA_SERVICE_FATAL_ERROR,
-        "Camera_Manager::GetSupportedCameras  fail!");
+    CHECK_RETURN_RET_ELOG(
+        cameraObjList.size() == 0, CAMERA_SERVICE_FATAL_ERROR, "Camera_Manager::GetSupportedCameras  fail!");
     for (size_t i = 0; i < cameraObjList.size(); i++) {
         sptr<CameraDevice> cameraDevice = cameraObjList[i];
-        bool isFindCameraDevice = cameraDevice != nullptr && cameraDevice->GetPosition() == innerPosition
-            && cameraDevice->GetCameraType() == innerType;
+        bool isFindCameraDevice = cameraDevice != nullptr &&
+            cameraDevice->GetPosition() == innerPosition && cameraDevice->GetCameraType() == innerType;
         if (isFindCameraDevice) {
             cameraInfo = cameraDevice;
             break;
@@ -1041,18 +1049,18 @@ Camera_ErrorCode Camera_Manager::GetCameraConcurrentInfos(const Camera_Device *c
     *infoSize = deviceSize;
     return CAMERA_OK;
 }
- 
+
 Camera_ErrorCode Camera_Manager::SetCameraConcurrentInfothis(const Camera_Device *camera, uint32_t deviceSize,
     Camera_ConcurrentInfo *CameraConcurrentInfothis,
     std::vector<bool> &cameraConcurrentType, std::vector<std::vector<OHOS::CameraStandard::SceneMode>> &modes,
     std::vector<std::vector<OHOS::sptr<OHOS::CameraStandard::CameraOutputCapability>>> &outputCapabilities)
 {
-    for (int i = 0; i < deviceSize; i++) {
+    for (uint32_t i = 0; i < deviceSize; i++) {
         CameraConcurrentInfothis[i].camera = camera[i];
         if (cameraConcurrentType[i] == false) {
-            CameraConcurrentInfothis[i].type = CONCURRENT_TYPE_LIMITED_CAPABILITY;
+            CameraConcurrentInfothis[i].type = CAMERA_CONCURRENT_TYPE_LIMITED_CAPABILITY;
         } else {
-            CameraConcurrentInfothis[i].type = CONCURRENT_TYPE_FULL_CAPABILITY;
+            CameraConcurrentInfothis[i].type = CAMERA_CONCURRENT_TYPE_FULL_CAPABILITY;
         }
         Camera_SceneMode* newmodes = new Camera_SceneMode[modes.size()];
         for (uint32_t j = 0; j < modes[i].size(); j++) {
@@ -1100,8 +1108,7 @@ Camera_ErrorCode Camera_Manager::UnregisterFoldStatusCallback(
     OH_CameraManager_OnFoldStatusInfoChange foldStatusCallback)
 {
     auto callback = cameraFoldStatusCallbackMap_.RemoveValue(foldStatusCallback);
-    if (callback != nullptr) {
-        cameraManager_->UnregisterFoldListener(callback);
-    }
+    CHECK_RETURN_RET(callback == nullptr, CAMERA_OK);
+    cameraManager_->UnregisterFoldListener(callback);
     return CAMERA_OK;
 }

@@ -78,20 +78,20 @@ napi_value MacroPhotoSessionNapi::CreateCameraSession(napi_env env)
         sCameraSessionForSys_ =
             CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(SceneMode::CAPTURE_MACRO);
         if (sCameraSessionForSys_ == nullptr) {
-            MEDIA_ERR_LOG("MacroPhotoSessionNapi::CreateCameraSession Failed to create instance");
+            MEDIA_ERR_LOG("Failed to create Photo session instance");
             napi_get_undefined(env, &result);
             return result;
         }
         status = napi_new_instance(env, constructor, 0, nullptr, &result);
         sCameraSessionForSys_ = nullptr;
         if (status == napi_ok && result != nullptr) {
-            MEDIA_DEBUG_LOG("MacroPhotoSessionNapi::CreateCameraSession success to create napi instance");
+            MEDIA_DEBUG_LOG("success to create Photo session napi instance");
             return result;
         } else {
-            MEDIA_ERR_LOG("MacroPhotoSessionNapi::CreateCameraSession Failed to create napi instance");
+            MEDIA_ERR_LOG("Failed to create Photo session napi instance");
         }
     }
-    MEDIA_ERR_LOG("MacroPhotoSessionNapi::CreateCameraSession Failed to create napi instance last");
+    MEDIA_ERR_LOG("Failed to create Photo session napi instance last");
     napi_get_undefined(env, &result);
     return result;
 }

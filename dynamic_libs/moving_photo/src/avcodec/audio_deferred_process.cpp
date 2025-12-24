@@ -17,6 +17,7 @@
 
 #include "utils/camera_log.h"
 #include "camera_util.h"
+#include "sample_info.h"
 #include <cstring>
 
 namespace OHOS {
@@ -41,15 +42,10 @@ int32_t AudioDeferredProcess::GetOfflineEffectChain()
         offlineAudioEffectManager_ = std::make_unique<OfflineAudioEffectManager>();
     }
     vector<std::string> effectChains = offlineAudioEffectManager_->GetOfflineAudioEffectChains();
-    if (std::find(effectChains.begin(), effectChains.end(), chainName_) == effectChains.end()) {
-        MEDIA_ERR_LOG("AudioDeferredProcess::GetOfflineEffectChain no effectChain moving photo needed");
-        return -1;
-    }
+    CHECK_RETURN_RET_ELOG(std::find(effectChains.begin(), effectChains.end(), chainName_) == effectChains.end(), -1,
+        "AudioDeferredProcess::GetOfflineEffectChain no effectChain moving photo needed");
     offlineEffectChain_ = offlineAudioEffectManager_->CreateOfflineAudioEffectChain(chainName_);
-    if (!offlineEffectChain_) {
-        MEDIA_ERR_LOG("AudioDeferredProcess::GetOfflineEffectChain ERR");
-        return -1;
-    }
+    CHECK_RETURN_RET_ELOG(!offlineEffectChain_, -1, "AudioDeferredProcess::GetOfflineEffectChain ERR");
     return CAMERA_OK;
 }
 
@@ -78,8 +74,8 @@ int32_t AudioDeferredProcess::PrepareOfflineAudioEffectChain()
     // LCOV_EXCL_START
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("AudioDeferredProcess::PrepareOfflineAudioEffectChain Enter");
-    CHECK_RETURN_RET_ELOG(offlineEffectChain_->Prepare() != 0, -1,
-        "AudioDeferredProcess::PrepareOfflineAudioEffectChain Err");
+    CHECK_RETURN_RET_ELOG(
+        offlineEffectChain_->Prepare() != 0, -1, "AudioDeferredProcess::PrepareOfflineAudioEffectChain Err");
     return CAMERA_OK;
     // LCOV_EXCL_STOP
 }
@@ -92,15 +88,16 @@ int32_t AudioDeferredProcess::GetMaxBufferSize(const AudioStreamInfo& inputOptio
     MEDIA_INFO_LOG("AudioDeferredProcess::GetMaxBufferSize Enter");
     uint32_t maxUnprocessedBufferSize_ = 0;
     uint32_t maxProcessedBufferSize_ = 0;
-    CHECK_RETURN_RET_ELOG(offlineEffectChain_->GetEffectBufferSize(maxUnprocessedBufferSize_,
-        maxProcessedBufferSize_) != 0, -1, "AudioDeferredProcess::GetMaxBufferSize Err");
+    CHECK_RETURN_RET_ELOG(
+        offlineEffectChain_->GetEffectBufferSize(maxUnprocessedBufferSize_, maxProcessedBufferSize_) != 0, -1,
+        "AudioDeferredProcess::GetMaxBufferSize Err");
     oneUnprocessedSize_ = inputOptions.samplingRate / ONE_THOUSAND *
         inputOptions.channels * DURATION_EACH_AUDIO_FRAME * sizeof(short);
     oneProcessedSize_ = outputOptions.samplingRate / ONE_THOUSAND *
         outputOptions.channels * DURATION_EACH_AUDIO_FRAME * sizeof(short);
     CHECK_RETURN_RET_ELOG(oneUnprocessedSize_ * PROCESS_BATCH_SIZE > maxUnprocessedBufferSize_ ||
-        oneProcessedSize_ * PROCESS_BATCH_SIZE > maxProcessedBufferSize_, -1,
-        "AudioDeferredProcess::GetMaxBufferSize MaxBufferSize Not Enough");
+            oneProcessedSize_ * PROCESS_BATCH_SIZE > maxProcessedBufferSize_,
+        -1, "AudioDeferredProcess::GetMaxBufferSize MaxBufferSize Not Enough");
     return CAMERA_OK;
     // LCOV_EXCL_STOP
 }
@@ -117,8 +114,8 @@ void AudioDeferredProcess::FadeOneBatch(std::array<uint8_t, MAX_PROCESSED_SIZE *
     int16_t* data = reinterpret_cast<int16_t*>(processedArr.data());
     int32_t temp;
     int32_t oneSize = outputOptions_.samplingRate / ONE_THOUSAND * DURATION_EACH_AUDIO_FRAME;
-    CHECK_RETURN_ELOG(oneSize >= MAX_PROCESSED_SIZE * PROCESS_BATCH_SIZE,
-        "AudioDeferredProcess::FadeOneBatch arrSize overSize");
+    CHECK_RETURN_ELOG(
+        oneSize >= MAX_PROCESSED_SIZE * PROCESS_BATCH_SIZE, "AudioDeferredProcess::FadeOneBatch arrSize overSize");
     for (int k = 0; k < oneSize; k++) {
         temp = static_cast<int32_t>(data[k]);
         rate = static_cast<float>(k) / oneSize;
@@ -146,10 +143,8 @@ void AudioDeferredProcess::ReturnToRecords(std::array<uint8_t, MAX_PROCESSED_SIZ
         uint8_t* temp = new uint8_t[oneProcessedSize_];
         int32_t ret = memcpy_s(temp, oneProcessedSize_, processedArr.data() + j * oneProcessedSize_, oneProcessedSize_);
         CHECK_PRINT_ELOG(ret != 0, "AudioDeferredProcess::Process returnToRecords memcpy_s err");
-        int64_t index = i + 1 + j - batchSize;
-        CHECK_RETURN_ELOG(index < 0 || index >= static_cast<int64_t>(processedRecords.size()),
-            "ReturnToRecords unexpected error occured");
-        processedRecords[index]->SetAudioBuffer(temp, oneProcessedSize_);
+        CHECK_RETURN_ELOG(i + 1 + j - batchSize < 0, "ReturnToRecords unexpected error occured");
+        processedRecords[i + 1 + j - batchSize]->SetAudioBuffer(temp, oneProcessedSize_);
     }
     // LCOV_EXCL_STOP
 }
@@ -166,10 +161,8 @@ int32_t AudioDeferredProcess::Process(vector<sptr<AudioRecord>>& audioRecords,
     vector<sptr<AudioRecord>>& processedRecords)
 {
     CAMERA_SYNC_TRACE;
-    if (offlineEffectChain_ == nullptr) {
-        MEDIA_WARNING_LOG("AudioDeferredProcess::Process offlineEffectChain_ is nullptr.");
-        return -1;
-    }
+    CHECK_RETURN_RET_WLOG(
+        offlineEffectChain_ == nullptr, -1, "AudioDeferredProcess::Process offlineEffectChain_ is nullptr.");
     MEDIA_INFO_LOG("AudioDeferredProcess::Process Enter");
     uint32_t audioRecordsLen = audioRecords.size();
     CHECK_RETURN_RET_ELOG(0 == audioRecordsLen, CAMERA_OK, "audioRecords.size == 0");
@@ -189,8 +182,8 @@ int32_t AudioDeferredProcess::Process(vector<sptr<AudioRecord>>& audioRecords,
             MemsetAndCheck(processedArr.data(), MAX_PROCESSED_SIZE * PROCESS_BATCH_SIZE,
                 0, PROCESS_BATCH_SIZE * oneProcessedSize_);
             ReturnToRecords(processedArr, processedRecords, i, count + 1);
-        } else if (audioRecordsLen >= PROCESS_BATCH_SIZE + 1 && i >= audioRecordsLen - PROCESS_BATCH_SIZE - 1 &&
-            count == PROCESS_BATCH_SIZE - 1) {
+        } else if (count == PROCESS_BATCH_SIZE - 1 && audioRecordsLen >= PROCESS_BATCH_SIZE + 1 &&
+            i >= audioRecordsLen - PROCESS_BATCH_SIZE - 1) {
             EffectChainProcess(rawArr, processedArr);
             FadeOneBatch(processedArr);
             MemsetAndCheck(processedArr.data() + oneProcessedSize_, MAX_PROCESSED_SIZE * PROCESS_BATCH_SIZE,
@@ -209,12 +202,13 @@ int32_t AudioDeferredProcess::Process(vector<sptr<AudioRecord>>& audioRecords,
 void AudioDeferredProcess::Release()
 {
     CAMERA_SYNC_TRACE;
-    lock_guard<std::mutex> lock(mutex_);
+    std::lock_guard<std::mutex> lock(mutex_);
     MEDIA_INFO_LOG("AudioDeferredProcess::Release Enter");
-    CHECK_EXECUTE(offlineEffectChain_, offlineEffectChain_->Release());
+    if (offlineEffectChain_) {
+        offlineEffectChain_->Release();
+    }
     offlineEffectChain_ = nullptr;
     offlineAudioEffectManager_ = nullptr;
 }
-
 } // CameraStandard
 } // OHOS

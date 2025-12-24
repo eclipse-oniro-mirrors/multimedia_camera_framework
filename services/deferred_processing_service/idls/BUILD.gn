@@ -26,6 +26,7 @@ idl_gen_interface("deferred_processing_service_idl_interface") {
 
   sources_common = [ "DeferredProcessingTypes.idl" ]
 
+  inputs = sources_callback + sources_common
 
   hitrace = "HITRACE_TAG_ABILITY_MANAGER"
 

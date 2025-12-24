@@ -29,8 +29,11 @@ public:
 
 private:
     int HandleOnPhotoAvailable(MessageParcel& data);
+    int32_t HandleAddMetadataType(MessageParcel& data);
+    int32_t HandleRemoveMetadataType(MessageParcel& data);
     int HandleOnPictureAvailable(MessageParcel& data);
 };
 } // namespace CameraStandard
 } // namespace OHOS
 #endif // OHOS_CAMERA_HSTREAM_CAPTURE_PHOTO_CALLBACK_STUB_H
+

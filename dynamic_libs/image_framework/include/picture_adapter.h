@@ -30,18 +30,16 @@ public:
     void Create(sptr<SurfaceBuffer> &surfaceBuffer) override;
     void SetAuxiliaryPicture(sptr<SurfaceBuffer> &surfaceBuffer,
         CameraAuxiliaryPictureType type) override;
-    void CreateWithDeepCopySurfaceBuffer(sptr<SurfaceBuffer> &surfaceBuffer) override;
     bool Marshalling(Parcel &data) const override;
     void UnmarshallingPicture(Parcel &data) override;
     int32_t SetExifMetadata(sptr<SurfaceBuffer> &surfaceBuffer) override;
     bool SetMaintenanceData(sptr<SurfaceBuffer> &surfaceBuffer) override;
     void RotatePicture() override;
+    uint32_t SetXtStyleMetadataBlob(const uint8_t *source, const uint32_t bufferSize) override;
     std::shared_ptr<Media::Picture> GetPicture() const override;
 private:
     // Keep the order of members in this class, the bottom member will be destroyed first
     std::shared_ptr<Media::Picture> picture_;
-    static constexpr uint8_t PIXEL_SIZE_HDR_YUV = 3;
-    static constexpr uint8_t HDR_PIXEL_SIZE = 2;
 };
 } // namespace CameraStandard
 } // namespace OHOS

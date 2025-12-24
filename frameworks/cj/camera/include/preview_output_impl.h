@@ -32,7 +32,8 @@ public:
     void OnFrameEnded(const int32_t frameCount) const override;
     void OnError(const int32_t errorCode) const override;
     void OnSketchStatusDataChanged(const SketchStatusData &statusData) const override;
-
+    void OnFramePaused() const override;
+    void OnFrameResumed() const override;
     mutable std::mutex frameStartedMutex{};
     std::vector<std::shared_ptr<CallbackRef<>>> frameStartedCallbackList;
     mutable std::mutex frameEndedMutex{};

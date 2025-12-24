@@ -203,6 +203,8 @@ public:
     void OffSlowMotionStatus(optional_view<callback<void(uintptr_t, SlowMotionStatus)>> callback);
     void OnSystemPressureLevelChange(callback_view<void(uintptr_t, SystemPressureLevel)> callback);
     void OffSystemPressureLevelChange(optional_view<callback<void(uintptr_t, SystemPressureLevel)>> callback);
+    void OnZoomInfoChange(callback_view<void(uintptr_t, ZoomInfo const&)> callback);
+    void OffZoomInfoChange(optional_view<callback<void(uintptr_t, ZoomInfo const&)>> callback);
 
     std::shared_ptr<SessionCallbackListener> sessionCallback_ = nullptr;
     std::shared_ptr<FocusCallbackListener> focusCallback_ = nullptr;
@@ -278,6 +280,10 @@ protected:
     virtual void RegisterPressureStatusCallbackListener(const std::string& eventName,
         std::shared_ptr<uintptr_t> callback, bool isOnce);
     virtual void UnregisterPressureStatusCallbackListener(const std::string& eventName,
+        std::shared_ptr<uintptr_t> callback);
+    virtual void RegisterZoomInfoCbListener(const std::string& eventName,
+        std::shared_ptr<uintptr_t> callback, bool isOnce);
+    virtual void UnregisterZoomInfoCbListener(const std::string& eventName,
         std::shared_ptr<uintptr_t> callback);
 };
 

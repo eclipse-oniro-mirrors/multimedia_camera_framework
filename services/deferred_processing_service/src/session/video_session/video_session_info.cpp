@@ -16,6 +16,7 @@
 #include "video_session_info.h"
 
 #include "deferred_video_processing_session.h"
+#include "dp_catch.h"
 #include "dp_log.h"
 #include "dps.h"
 #include "session_command.h"

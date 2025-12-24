@@ -33,8 +33,7 @@ int32_t LightPaintingSession::GetSupportedLightPaintings(std::vector<LightPainti
     CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "LightPaintingSession::GetSupportedLightPaintings Session is not Commited");
     auto inputDevice = GetInputDevice();
-    CHECK_RETURN_RET_ELOG(!inputDevice,
-        CameraErrorCode::SESSION_NOT_CONFIG,
+    CHECK_RETURN_RET_ELOG(!inputDevice, CameraErrorCode::SESSION_NOT_CONFIG,
         "LightPaintingSession::GetSupportedLightPaintings camera device is null");
     auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
     CHECK_RETURN_RET_ELOG(!inputDeviceInfo, CameraErrorCode::SESSION_NOT_CONFIG,
@@ -48,7 +47,9 @@ int32_t LightPaintingSession::GetSupportedLightPaintings(std::vector<LightPainti
     lightPaintings.clear();
     for (uint32_t i = 0; i < item.count; i++) {
         auto itr = metaLightPaintingTypeMap_.find(static_cast<CameraLightPaintingType>(item.data.u8[i]));
-        CHECK_EXECUTE(itr != metaLightPaintingTypeMap_.end(), lightPaintings.emplace_back(itr->second));
+        if (itr != metaLightPaintingTypeMap_.end()) {
+            lightPaintings.emplace_back(itr->second);
+        }
     }
     return CameraErrorCode::SUCCESS;
     // LCOV_EXCL_STOP
@@ -84,7 +85,7 @@ int32_t LightPaintingSession::SetLightPainting(const LightPaintingType type)
     bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_LIGHT_PAINTING_TYPE, &lightPainting, 1);
     CHECK_RETURN_RET_ELOG(!status, CameraErrorCode::SERVICE_FATL_ERROR,
         "LightPaintingSession::SetLightPainting Failed to set LightPainting type");
-        currentLightPaintingType_ = type;
+    currentLightPaintingType_ = type;
     return CameraErrorCode::SUCCESS;
     // LCOV_EXCL_STOP
 }

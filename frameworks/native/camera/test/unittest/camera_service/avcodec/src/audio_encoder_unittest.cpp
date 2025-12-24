@@ -59,7 +59,7 @@ void AudioEncoderUnitTest::TearDown()
  * EnvConditions: NA
  * CaseDescription: Test EncodeAudioBuffer and Release normal branches.
  */
-HWTEST_F(AudioEncoderUnitTest, audio_encoder_unittest_001, TestSize.Level1)
+HWTEST_F(AudioEncoderUnitTest, audio_encoder_unittest_001, TestSize.Level0)
 {
     vector<sptr<AudioRecord>> audioRecords;
     std::string codecMime = "OH_AVCODEC_MIMETYPE_AUDIO_AAC";
@@ -85,7 +85,7 @@ HWTEST_F(AudioEncoderUnitTest, audio_encoder_unittest_001, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test EncodeAudioBuffer normal branches.
  */
-HWTEST_F(AudioEncoderUnitTest, audio_encoder_unittest_002, TestSize.Level1)
+HWTEST_F(AudioEncoderUnitTest, audio_encoder_unittest_002, TestSize.Level0)
 {
     sptr<AudioRecord> audioRecord;
     std::string codecMime = "OH_AVCODEC_MIMETYPE_AUDIO_AAC";
@@ -110,7 +110,7 @@ HWTEST_F(AudioEncoderUnitTest, audio_encoder_unittest_002, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test EncodeAudioBuffer normal branches.
  */
-HWTEST_F(AudioEncoderUnitTest, audio_encoder_unittest_003, TestSize.Level1)
+HWTEST_F(AudioEncoderUnitTest, audio_encoder_unittest_003, TestSize.Level0)
 {
     sptr<AudioRecord> audioRecord;
     std::string codecMime = "OH_AVCODEC_MIMETYPE_AUDIO_AAC";
@@ -136,7 +136,7 @@ HWTEST_F(AudioEncoderUnitTest, audio_encoder_unittest_003, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test AudioEncoder release normal branches.
  */
-HWTEST_F(AudioEncoderUnitTest, audio_encoder_unittest_004, TestSize.Level1)
+HWTEST_F(AudioEncoderUnitTest, audio_encoder_unittest_004, TestSize.Level0)
 {
     std::string codecMime = "OH_AVCODEC_MIMETYPE_AUDIO_AAC";
     std::shared_ptr<AudioEncoder> coder = std::make_shared<AudioEncoder>();

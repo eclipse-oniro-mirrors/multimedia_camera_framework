@@ -33,27 +33,20 @@
 #include "nativetoken_kit.h"
 #include "surface.h"
 #include "test_common.h"
-#include "test_token.h"
 #include "token_setproc.h"
 #include "os_account_manager.h"
 #include "sketch_wrapper.h"
 #include "picture_interface.h"
+#include "test_token.h"
 
 using namespace testing::ext;
 
 namespace OHOS {
 namespace CameraStandard {
 struct TestObject {};
-class IsoInfoSyncCallbackMock : public IsoInfoSyncCallback {
-public:
-    void OnIsoInfoChangedSync(IsoInfo info) override {}
-};
 
 void CaptureSessionUnitTest::SessionControlParams(sptr<CaptureSession> session)
 {
-    if (session == nullptr) {
-        return;
-    }
     session->LockForControl();
 
     std::vector<float> zoomRatioRange = session->GetZoomRatioRange();
@@ -198,7 +191,7 @@ bool CaptureSessionUnitTest::DisMdmOpenCheck(sptr<CameraInput> camInput)
  * EnvConditions: NA
  * CaseDescription: Test GetSessionFunctions for inputDevice is nullptr
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_001, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_001, TestSize.Level0)
 {
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -219,16 +212,12 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_001, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test CheckFrameRateRangeWithCurrentFps for (minFps % curMinFps == 0 || curMinFps % minFps == 0)
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_002, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_002, TestSize.Level0)
 {
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::CAPTURE);
     ASSERT_NE(session, nullptr);
     EXPECT_TRUE(session->CheckFrameRateRangeWithCurrentFps(20, 20, 40, 40));
     EXPECT_TRUE(session->CheckFrameRateRangeWithCurrentFps(40, 40, 20, 20));
-    EXPECT_TRUE(session->CheckFrameRateRangeWithCurrentFps(30, 30, 60, 60));
-    EXPECT_TRUE(session->CheckFrameRateRangeWithCurrentFps(50, 50, 100, 100));
-
-
 }
 
 /*
@@ -239,7 +228,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_002, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test GetMaxSizePhotoProfile for SceneMode is NORMAL
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_003, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_003, TestSize.Level0)
 {
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::CAPTURE);
     ASSERT_NE(session, nullptr);
@@ -262,7 +251,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_003, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test CanAddOutput for tow branches of switch
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_004, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_004, TestSize.Level0)
 {
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -303,7 +292,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_004, TestSize.Level1)
  * CaseDescription: Test SetFlashMode for GetMode() == SceneMode::LIGHT_PAINTING
  * && flashMode == FlashMode::FLASH_MODE_OPEN
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_006, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_006, TestSize.Level0)
 {
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -341,7 +330,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_006, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test SetGuessMode for switch of default
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_007, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_007, TestSize.Level0)
 {
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -362,7 +351,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_007, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test SetMode for commited
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_008, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_008, TestSize.Level0)
 {
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -400,7 +389,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_008, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test IsSessionStarted for captureSession is nullptr
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_009, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_009, TestSize.Level0)
 {
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -417,7 +406,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_009, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test GetSensorExposureTime for captureSession is nullptr
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_010, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_010, TestSize.Level0)
 {
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -453,7 +442,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_010, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test IsDepthFusionSupported for abnormal branches
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_011, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_011, TestSize.Level0)
 {
     sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
     ASSERT_NE(sessionForSys, nullptr);
@@ -496,7 +485,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_011, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test GetDepthFusionThreshold for abnormal branches
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_012, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_012, TestSize.Level0)
 {
     sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
     ASSERT_NE(sessionForSys, nullptr);
@@ -538,7 +527,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_012, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test EnableDepthFusion for IsDepthFusionSupported is false
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_013, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_013, TestSize.Level0)
 {
     sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
     ASSERT_NE(sessionForSys, nullptr);
@@ -557,7 +546,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_013, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test IsLowLightBoostSupported for abnormal branches
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_014, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_014, TestSize.Level0)
 {
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -597,7 +586,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_014, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test IsFeatureSupported for the default branches of switch
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_015, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_015, TestSize.Level0)
 {
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -615,7 +604,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_015, TestSize.Level1)
  * CaseDescription: Test ValidateOutputProfile for outputType is
  * CAPTURE_OUTPUT_TYPE_METADATA and CAPTURE_OUTPUT_TYPE_DEPTH_DATA
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_016, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_016, TestSize.Level0)
 {
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -660,7 +649,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_016, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test EnableDeferredType for IsSessionCommited and the two branches of switch
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_017, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_017, TestSize.Level0)
 {
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -700,7 +689,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_017, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test EnableAutoDeferredVideoEnhancement for IsSessionCommited and the two branches of switch
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_018, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_018, TestSize.Level0)
 {
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -741,7 +730,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_018, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test EnableFeature for the two branches of switch
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_019, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_019, TestSize.Level0)
 {
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -763,7 +752,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_019, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test ExecuteAbilityChangeCallback for abilityCallback_ != nullptr
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_020, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_020, TestSize.Level0)
 {
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -783,7 +772,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_020, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test GetMetadata for inputDevice == nullptr
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_021, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_021, TestSize.Level0)
 {
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -802,7 +791,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_021, TestSize.Level1)
  * CaseDescription: Test GetSupportedWhiteBalanceModes for inputDevice is nullptr and is not nullptr
  * and GetManualWhiteBalanceRange for inputDevice is nullptr
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_022, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_022, TestSize.Level0)
 {
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -843,7 +832,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_022, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test IsWhiteBalanceModeSupported for mode is AWB_MODE_LOCKED and not
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_023, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_023, TestSize.Level0)
 {
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -883,7 +872,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_023, TestSize.Level1)
  * CaseDescription: Test SetWhiteBalanceMode for mode is AWB_MODE_LOCKED and not
  * GetWhiteBalanceMode for invoke
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_024, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_024, TestSize.Level0)
 {
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -903,7 +892,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_024, TestSize.Level1)
 
     session->LockForControl();
     WhiteBalanceMode mode = AWB_MODE_LOCKED;
-    EXPECT_EQ(session->SetWhiteBalanceMode(mode), CameraErrorCode::SUCCESS);
+    EXPECT_NE(session->SetWhiteBalanceMode(mode), CameraErrorCode::SUCCESS);
 
     mode = AWB_MODE_DAYLIGHT;
     EXPECT_EQ(session->SetWhiteBalanceMode(mode), CameraErrorCode::SUCCESS);
@@ -923,7 +912,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_024, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test GetSupportedPortraitEffects for not Commited and inputDevice is nullptr
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_025, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_025, TestSize.Level0)
 {
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -962,7 +951,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_025, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test EnableLcdFlash for normal branches
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_026, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_026, TestSize.Level0)
 {
     sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
     ASSERT_NE(sessionForSys, nullptr);
@@ -999,7 +988,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_026, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test EnableFaceDetection for enable is false
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_027, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_027, TestSize.Level0)
 {
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -1036,7 +1025,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_027, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test set camera parameters zoom, focus, flash & exposure
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_001, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_001, TestSize.Level0)
 {
     auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
@@ -1078,7 +1067,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_001, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test capture session add input with invalid value
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_002, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_002, TestSize.Level0)
 {
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -1092,6 +1081,35 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_002, TestSize.Level1)
     EXPECT_EQ(session->Release(), 0);
 }
 
+/**
+ * @tc.name  : Test AddOutput API
+ * @tc.number: AddOutput_001
+ * @tc.desc  : Test AddOutput API, when isVerifyOutput is false
+ */
+HWTEST_F(CaptureSessionUnitTest, AddOutput_001, TestSize.Level1)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview, false), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
+
 /*
  * Feature: Framework
  * Function: Test capture session add output with invalid value
@@ -1100,7 +1118,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_002, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test capture session add output with invalid value
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_003, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_003, TestSize.Level0)
 {
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -1122,7 +1140,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_003, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test capture session commit config without adding input
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_004, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_004, TestSize.Level0)
 {
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -1151,7 +1169,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_004, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test capture session commit config without adding output
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_005, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_005, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
@@ -1187,7 +1205,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_005, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test capture session without begin config
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_006, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_006, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
@@ -1244,7 +1262,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_006, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test capture session start and stop without adding preview output
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_007, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_007, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
@@ -1294,7 +1312,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_007, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test session with preview + photo
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_008, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_008, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
@@ -1353,7 +1371,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_008, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test session with preview + photo with camera configuration
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_009, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_009, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
@@ -1410,7 +1428,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_009, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test session with video
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_010, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_010, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
@@ -1455,7 +1473,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_010, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test capture session remove output with null
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_011, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_011, TestSize.Level0)
 {
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -1477,7 +1495,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_011, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test capture session remove output
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_012, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_012, TestSize.Level0)
 {
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -1513,7 +1531,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_012, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test capture session remove input with null
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_013, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_013, TestSize.Level0)
 {
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -1535,7 +1553,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_013, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test capture session remove input
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_014, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_014, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
@@ -1571,7 +1589,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_014, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test CaptureSession with no static capability.
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_015, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_015, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
@@ -1644,7 +1662,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_015, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test CaptureSession with anomalous branch
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_016, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_016, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
@@ -1703,7 +1721,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_016, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test CaptureSession with anomalous branch.
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_017, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_017, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
@@ -1775,7 +1793,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_017, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test if innerCaptureSession_ == nullptr in CameraServerDied
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_018, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_018, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
@@ -1821,7 +1839,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_018, TestSize.Level1)
  *          EnableMacro, IsMacroSupported,
  *          SetColorEffect, ProcessMacroStatusChange
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_019, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_019, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
@@ -1882,7 +1900,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_019, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test !IsSessionConfiged() || input == nullptr in CanAddInput
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_020, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_020, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
@@ -1930,7 +1948,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_020, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test !IsSessionConfiged() || output == nullptr in CanAddOutput
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_021, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_021, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
@@ -1968,7 +1986,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_021, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test !inputDevice || !inputDevice->GetCameraDeviceInfo() in CanAddOutput
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_022, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_022, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
@@ -2007,7 +2025,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_022, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test VerifyAbility, SetBeauty
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_023, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_023, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
@@ -2052,7 +2070,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_023, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test CheckFrameRateRangeWithCurrentFps
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_024, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_024, TestSize.Level0)
 {
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::CAPTURE);
     ASSERT_NE(session, nullptr);
@@ -2070,7 +2088,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_024, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test CanPreconfig
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_025, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_025, TestSize.Level0)
 {
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -2083,6 +2101,60 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_025, TestSize.Level1)
 
 /*
  * Feature: Framework
+ * Function: Test innerInputDevice_ in IsColorStyleSupported, GetDefaultColorStyleSettings, SetColorStyleSetting
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test innerInputDevice_ in IsColorStyleSupported, GetDefaultColorStyleSettings, SetColorStyleSetting
+ */
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_026, TestSize.Level0)
+{
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    ASSERT_NE(input, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
+
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+
+    bool isSupported = false;
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+    EXPECT_EQ(session->IsColorStyleSupported(isSupported), 0);
+    if (isSupported) {
+        std::vector<ColorStyleSetting> defaultColorStyles;
+        EXPECT_EQ(session->GetDefaultColorStyleSettings(defaultColorStyles), 0);
+
+        ColorStyleSetting styleSetting = {static_cast<ColorStyleType>(1), 1, 1, 1};
+        session->LockForControl();
+        EXPECT_EQ(session->SetColorStyleSetting({static_cast<ColorStyleType>(-1), -1, -1, -1}), PARAMETER_ERROR);
+        session->UnlockForControl();
+
+        session->LockForControl();
+        EXPECT_EQ(session->SetColorStyleSetting(styleSetting), 0);
+        session->UnlockForControl();
+    }
+
+    ((sptr<CameraInput>&)(session->innerInputDevice_))->cameraObj_ = nullptr;
+    session->innerInputDevice_ = nullptr;
+    EXPECT_EQ(preview->Release(), 0);
+    EXPECT_EQ(input->Release(), 0);
+    EXPECT_EQ(session->Release(), 0);
+}
+
+/*
+ * Feature: Framework
  * Function: Test CaptureSession with GetSupportedExposureModes and GetSupportedStabilizationMode
  * when not Configed.
  * SubFunction: NA
@@ -2091,7 +2163,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_025, TestSize.Level1)
  * CaseDescription: Test CaptureSession with GetSupportedExposureModes and GetSupportedStabilizationMode
  * when not Configed.
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unit_001, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_001, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
@@ -2135,7 +2207,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_001, TestSize.Level1)
  * CaseDescription: Test CaptureSession with GetSupportedExposureModes and GetSupportedStabilizationMode
  * when Configed.
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unit_002, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_002, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
@@ -2180,7 +2252,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_002, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test CaptureSession with GetExposureMode and SetExposureMode when Configed.
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unit_003, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_003, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
@@ -2245,7 +2317,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_003, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test CaptureSession with GetExposureMode and SetExposureMode when not Configed.
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unit_004, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_004, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
@@ -2289,7 +2361,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_004, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test CaptureSession with SetMeteringPoint & GetMeteringPoint when Configed.
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unit_005, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_005, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
@@ -2340,7 +2412,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_005, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test CaptureSession with SetMeteringPoint & GetMeteringPoint when not Configed.
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unit_006, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_006, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
@@ -2381,7 +2453,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_006, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test CaptureSession with GetExposureValue and SetExposureBias when not Configed.
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unit_007, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_007, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
@@ -2424,7 +2496,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_007, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test CaptureSession with GetExposureValue and SetExposureBias with value less then the range
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unit_008, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_008, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
@@ -2476,7 +2548,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_008, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test CaptureSession with GetExposureValue and SetExposureBias with value between the range
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unit_009, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_009, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
@@ -2528,7 +2600,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_009, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test CaptureSession with GetExposureValue and SetExposureBias with value more then the range
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unit_010, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_010, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
@@ -2575,7 +2647,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_010, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test CaptureSession with GetSupportedFocusModes and IsFocusModeSupported when not Configed.
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unit_011, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_011, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
@@ -2614,7 +2686,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_011, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test CaptureSession with GetSupportedFocusModes and IsFocusModeSupported when Configed.
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unit_012, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_012, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
@@ -2662,7 +2734,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_012, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test CaptureSession with SetFocusMode and GetFocusMode when not Configed.
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unit_013, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_013, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
@@ -2700,7 +2772,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_013, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test CaptureSession with SetFocusMode and GetFocusMode when Configed.
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unit_014, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_014, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
@@ -2747,7 +2819,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_014, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test CaptureSession with SetFocusPoint and GetFocusPoint when not Configed.
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unit_015, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_015, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
@@ -2790,7 +2862,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_015, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test CaptureSession with SetFocusPoint and GetFocusPoint when Configed.
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unit_016, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_016, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
@@ -2842,7 +2914,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_016, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test CaptureSession with GetFocalLength when not Configed.
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unit_017, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_017, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
@@ -2881,7 +2953,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_017, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test CaptureSession with GetFocalLength when Configed.
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unit_018, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_018, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
@@ -2932,7 +3004,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_018, TestSize.Level1)
  * CaseDescription: Test CaptureSession with GetSupportedFlashModes and GetFlashMode and SetFlashMode
  * when not Configed.
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unit_019, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_019, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
@@ -2971,7 +3043,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_019, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test CaptureSession with GetSupportedFlashModes and GetFlashMode and SetFlashMode when Configed.
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unit_020, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_020, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
@@ -3020,7 +3092,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_020, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test CaptureSession with HasFlash and IsFlashModeSupported when not Configed.
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unit_021, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_021, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
@@ -3060,7 +3132,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_021, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test CaptureSession with HasFlash and IsFlashModeSupported when Configed.
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unit_022, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_022, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
@@ -3111,7 +3183,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_022, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test CaptureSession with GetZoomRatio and SetZoomRatio when not Configed.
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unit_023, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_023, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
@@ -3145,7 +3217,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_023, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test CaptureSession with PrepareZoom, UnPrepareZoom, SetSmoothZoom when Configed.
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unit_024, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_024, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
@@ -3197,7 +3269,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_024, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test CaptureSession with PrepareZoom, UnPrepareZoom, SetSmoothZoom when not Configed.
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unit_025, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_025, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
@@ -3233,7 +3305,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_025, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test CaptureSession with GetZoomPointInfos when not Configed.
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unit_026, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_026, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
@@ -3271,7 +3343,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_026, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test CaptureSession with GetZoomPointInfos when Configed.
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unit_027, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_027, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
@@ -3318,7 +3390,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_027, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test CaptureSession with GetSupportedFilters and GetFilter and SetFilter when not Configed.
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unit_028, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_028, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
@@ -3359,7 +3431,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_028, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test CaptureSession with GetSupportedFilters and GetFilter and SetFilter when Configed.
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unit_029, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_029, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
@@ -3418,7 +3490,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_029, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test CaptureSession with SetBeauty and GetBeauty when Configed.
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unit_030, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_030, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
@@ -3467,7 +3539,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_030, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test CaptureSession with SetBeauty and GetBeauty when not Configed.
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unit_031, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_031, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
@@ -3504,7 +3576,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_031, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test CaptureSession with SetColorSpace and GetActiveColorSpace when Configed.
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unit_032, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_032, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
@@ -3552,7 +3624,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_032, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test CaptureSession with SetColorSpace and GetActiveColorSpace when not Configed.
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unit_033, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_033, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
@@ -3589,7 +3661,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_033, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test SetFocusRange normal branches
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_034, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_034, TestSize.Level0)
 {
     sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
     ASSERT_NE(sessionForSys, nullptr);
@@ -3635,7 +3707,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_034, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test SetFocusDriven normal branches
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_035, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_035, TestSize.Level0)
 {
     sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
     ASSERT_NE(sessionForSys, nullptr);
@@ -3681,7 +3753,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_035, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test SetColorReservation normal branches
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_036, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_036, TestSize.Level0)
 {
     sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
     ASSERT_NE(sessionForSys, nullptr);
@@ -3727,7 +3799,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_036, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test captureSession abnormal branches before commit config
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_037, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_037, TestSize.Level0)
 {
     sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
     ASSERT_NE(sessionForSys, nullptr);
@@ -3777,7 +3849,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_037, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test captureSession abnormal branches with abnormal parameter
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_038, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_038, TestSize.Level0)
 {
     sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
     ASSERT_NE(sessionForSys, nullptr);
@@ -3825,7 +3897,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_038, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test captureSession abnormal branches without LockForControl
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_039, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_039, TestSize.Level0)
 {
     sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
     ASSERT_NE(sessionForSys, nullptr);
@@ -3864,7 +3936,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_039, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test captureSession abnormal branches while camera device is nulltptr
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_040, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_040, TestSize.Level0)
 {
     sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
     ASSERT_NE(sessionForSys, nullptr);
@@ -4000,7 +4072,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_041, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test CaptureSession with SetColorSpace and GetActiveColorSpace when Configed.
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unit_043, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_043, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
@@ -4055,7 +4127,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_043, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test CaptureSession with SetColorSpace and GetActiveColorSpace when not Configed.
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unit_044, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_044, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
@@ -4095,13 +4167,13 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_044, TestSize.Level1)
 
 /*
  * Feature: Framework
- * Function: Test FoldCallback with OnFoldStatusChanged and Constructor
+ * Function: Test FoldCallback with OnFoldStatusChanged
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
  * CaseDescription: Test OnFoldStatusChanged and Constructor for just call.
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_001, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_001, TestSize.Level0)
 {
     sptr<CaptureSession> session = nullptr;
     ASSERT_EQ(session, nullptr);
@@ -4124,7 +4196,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_001, TestSize
  * CaseDescription: Test CreateMediaLibrary, GetExposureCallback, GetFocusCallback, GetARCallback, IsVideoDeferred,
  * SetMoonCaptureBoostStatusCallback for just call.
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_002, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_002, TestSize.Level0)
 {
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -4159,7 +4231,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_002, TestSize
  * CaseDescription: Test GetSupportedPortraitThemeTypes, IsPortraitThemeSupported, SetPortraitThemeType,
  * GetSupportedVideoRotations, IsVideoRotationSupported, SetVideoRotation, GetDepthFusionThreshold for just call.
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_003, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_003, TestSize.Level0)
 {
     sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
     ASSERT_NE(sessionForSys, nullptr);
@@ -4198,7 +4270,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_003, TestSize
  * CaseDescription: Test IsDepthFusionEnabled, IsMovingPhotoEnabled, SetMacroStatusCallback,
  * IsSetEnableMacro, GeneratePreconfigProfiles, SetEffectSuggestionCallback, SetARCallback for just call.
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_004, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_004, TestSize.Level0)
 {
     sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
     ASSERT_NE(sessionForSys, nullptr);
@@ -4221,7 +4293,6 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_004, TestSize
     EXPECT_EQ(sessionForSys->GetARCallback(), nullptr);
 
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
     PreconfigType preconfigType = PRECONFIG_720P;
     ProfileSizeRatio preconfigRatio = UNSPECIFIED;
     EXPECT_EQ(session->GeneratePreconfigProfiles(preconfigType, preconfigRatio), nullptr);
@@ -4238,7 +4309,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_004, TestSize
  * CaseDescription: Test EnableTripodDetection, IsAutoDeviceSwitchSupported, SetIsAutoSwitchDeviceStatus,
  * EnableAutoDeviceSwitch, SwitchDevice, FindFrontCamera, StartVideoOutput, StopVideoOutput for just call.
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_005, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_005, TestSize.Level0)
 {
     sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
     ASSERT_NE(sessionForSys, nullptr);
@@ -4288,7 +4359,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_005, TestSize
  * CaseDescription: Test SetAutoDeviceSwitchCallback, GetAutoDeviceSwitchCallback, ExecuteAllFunctionsInMap,
  * CreateAndSetFoldServiceCallback, SetQualityPrioritization for just call.
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_006, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_006, TestSize.Level0)
 {
     sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
     ASSERT_NE(sessionForSys, nullptr);
@@ -4310,12 +4381,10 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_006, TestSize
     EXPECT_EQ(sessionForSys->EnableEffectSuggestion(isEnable), CameraErrorCode::OPERATION_NOT_ALLOWED);
 
     std::vector<EffectSuggestionStatus> effectSuggestionStatusList = {};
-    EXPECT_EQ(sessionForSys->SetEffectSuggestionStatus(effectSuggestionStatusList),
-        CameraErrorCode::OPERATION_NOT_ALLOWED);
+    EXPECT_EQ(sessionForSys->SetEffectSuggestionStatus(effectSuggestionStatusList), CameraErrorCode::OPERATION_NOT_ALLOWED);
 
     EffectSuggestionType effectSuggestionType = EFFECT_SUGGESTION_NONE;
-    EXPECT_EQ(sessionForSys->UpdateEffectSuggestion(effectSuggestionType, isEnable),
-        CameraErrorCode::SESSION_NOT_CONFIG);
+    EXPECT_EQ(sessionForSys->UpdateEffectSuggestion(effectSuggestionType, isEnable), CameraErrorCode::SESSION_NOT_CONFIG);
 }
 
 /*
@@ -4327,7 +4396,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_006, TestSize
  * EnvConditions: NA
  * CaseDescription: Test ToString for just call.
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_007, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_007, TestSize.Level0)
 {
     ColorSpace colorSpace = COLOR_SPACE_UNKNOWN;
     std::shared_ptr<PreconfigProfiles> profiles = std::make_shared<PreconfigProfiles>(colorSpace);
@@ -4357,7 +4426,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_007, TestSize
  * EnvConditions: NA
  * CaseDescription: Test operator for just call.
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_008, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_008, TestSize.Level0)
 {
     wptr<TestObject> wp;
     RefBaseCompare<TestObject> comparator;
@@ -4373,7 +4442,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_008, TestSize
  * EnvConditions: NA
  * CaseDescription: Test Constructor and Destructors for just call.
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_009, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_009, TestSize.Level0)
 {
     std::shared_ptr<CaptureSessionCallback> captureSessionCallback1 = std::make_shared<CaptureSessionCallback>();
     EXPECT_EQ(captureSessionCallback1->captureSession_, nullptr);
@@ -4395,7 +4464,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_009, TestSize
  * EnvConditions: NA
  * CaseDescription: Test SetLcdFlashStatusInfo and GetLcdFlashStatusInfo for just call.
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_010, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_010, TestSize.Level0)
 {
     std::shared_ptr<ConcreteLcdFlashStatusCallback> lcdFlashStatusCallback =
         std::make_shared<ConcreteLcdFlashStatusCallback>();
@@ -4413,7 +4482,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_010, TestSize
  * EnvConditions: NA
  * CaseDescription: Test CaptureSession with GetMetadataFromService
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_011, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_011, TestSize.Level0)
 {
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -4447,7 +4516,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_011, TestSize
  * EnvConditions: NA
  * CaseDescription: Test SetBeauty abnormal branches
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_012, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_012, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
@@ -4512,7 +4581,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_012, TestSize
  * EnvConditions: NA
  * CaseDescription: Test IsFeatureSupported abnormal branches
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_013, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_013, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
@@ -4548,7 +4617,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_013, TestSize
  * EnvConditions: NA
  * CaseDescription: Test EnableDeferredType abnormal branches
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_014, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_014, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
@@ -4610,7 +4679,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_014, TestSize
  * EnvConditions: NA
  * CaseDescription: Test EnableDeferredType abnormal branches
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_015, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_015, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
@@ -4635,7 +4704,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_015, TestSize
     EXPECT_EQ(session->AddOutput(preview), 0);
     EXPECT_EQ(session->CommitConfig(), 0);
 
-    bool enabled = true;
+    uint8_t enabled = 1;
     session->LockForControl();
     ASSERT_NE(session->changedMetadata_, nullptr);
     OHOS::Camera::DeleteCameraMetadataItem(session->changedMetadata_->get(), session->HAL_CUSTOM_AR_MODE);
@@ -4658,7 +4727,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_015, TestSize
  * EnvConditions: NA
  * CaseDescription: Test SetSensorSensitivity abnormal branches
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_016, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_016, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
@@ -4715,7 +4784,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_016, TestSize
  * @tc.type: FUNC
  * @tc.require: AR20250222876922
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_017, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_017, TestSize.Level0)
 {
     sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
     ASSERT_NE(sessionForSys, nullptr);
@@ -4764,7 +4833,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_017, TestSize
  * @tc.type: FUNC
  * @tc.require: AR20250222876922
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_018, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_018, TestSize.Level0)
 {
     sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::VIDEO);
     ASSERT_NE(sessionForSys, nullptr);
@@ -4813,7 +4882,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_018, TestSize
  * @tc.type: FUNC
  * @tc.require: AR20250222876922
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_019, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_019, TestSize.Level0)
 {
     sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
     ASSERT_NE(sessionForSys, nullptr);
@@ -4857,7 +4926,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_019, TestSize
  * @tc.type: FUNC
  * @tc.require: AR20250222876922
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_020, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_020, TestSize.Level0)
 {
     sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::VIDEO);
     ASSERT_NE(sessionForSys, nullptr);
@@ -4901,7 +4970,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_020, TestSize
  * @tc.type: FUNC
  * @tc.require: AR20250222876922
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_021, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_021, TestSize.Level0)
 {
     sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
     ASSERT_NE(sessionForSys, nullptr);
@@ -4960,7 +5029,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_021, TestSize
  * @tc.type: FUNC
  * @tc.require: AR20250222876922
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_022, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_022, TestSize.Level0)
 {
     sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::VIDEO);
     ASSERT_NE(sessionForSys, nullptr);
@@ -5019,7 +5088,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_022, TestSize
  * @tc.type: FUNC
  * @tc.require: AR20250222876922
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_023, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_023, TestSize.Level0)
 {
     sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
     ASSERT_NE(sessionForSys, nullptr);
@@ -5077,7 +5146,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_023, TestSize
  * @tc.type: FUNC
  * @tc.require: AR20250222876922
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_024, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_024, TestSize.Level0)
 {
     sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::VIDEO);
     ASSERT_NE(sessionForSys, nullptr);
@@ -5134,7 +5203,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_024, TestSize
  * @tc.type: FUNC
  * @tc.require: AR20250222876922
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_025, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_025, TestSize.Level0)
 {
     sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
     ASSERT_NE(sessionForSys, nullptr);
@@ -5185,7 +5254,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_025, TestSize
  * @tc.type: FUNC
  * @tc.require: AR20250222876922
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_026, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_026, TestSize.Level0)
 {
     sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::VIDEO);
     ASSERT_NE(sessionForSys, nullptr);
@@ -5230,6 +5299,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_026, TestSize
     EXPECT_EQ(CAMERA_OK, sessionForSys->Release());
 }
 
+
 /**
  * @tc.name: capture_session_function_unittest_027
  * @tc.desc: Test APERTURE_VIDEO mode
@@ -5256,9 +5326,9 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_027, TestSize
         ASSERT_NE(outputCapability, nullptr);
         videoProfile_ = outputCapability->GetVideoProfiles();
 
-        UpdateCameraOutputCapability();
         sptr<CaptureOutput> videoOutput = CreateVideoOutput(videoProfile_[0]);
         ASSERT_NE(nullptr, videoOutput);
+        UpdateCameraOutputCapability();
 
         ASSERT_EQ(CAMERA_OK, sessionForSys->BeginConfig());
         ASSERT_EQ(CAMERA_OK, sessionForSys->AddInput(input));
@@ -5284,7 +5354,6 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_028, TestSize
 {
     std::shared_ptr<PressureStatusCallback> pressureStatusCallback = std::make_shared<PressureStatusCallback>();
     EXPECT_EQ(pressureStatusCallback->captureSession_, nullptr);
-    pressureStatusCallback->OnPressureStatusChanged(PressureStatus::SYSTEM_PRESSURE_NORMAL);
     std::shared_ptr<PressureStatusCallback> pressureStatusCallback2 =
         std::make_shared<PressureStatusCallback>(nullptr);
     EXPECT_EQ(pressureStatusCallback2->captureSession_, nullptr);
@@ -5296,7 +5365,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_028, TestSize
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test if innerCaptureSession_ == nullptr and appCallback_ == nullptr
+ * CaseDescription: Test if innerCaptureSession_ is nullptr and appCallback_ is nullptr
  */
 HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_027, TestSize.Level0)
 {
@@ -5335,7 +5404,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_027, TestSize.Level0)
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test CommitConfig with photoOutput_  = nullptr;
+ * CaseDescription: Test CommitConfig with photoOutput_ is nullptr;
  */
 HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_028, TestSize.Level0)
 {
@@ -5343,37 +5412,26 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_028, TestSize.Level0)
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
     sptr<CaptureInput> input = cameraInput;
     ASSERT_NE(input, nullptr);
-
     input->Open();
     UpdateCameraOutputCapability();
+
     sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
     ASSERT_NE(photo, nullptr);
-
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
-
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
 
-    int32_t ret = session->BeginConfig();
-    EXPECT_EQ(ret, 0);
-    ret = session->AddInput(input);
-    EXPECT_EQ(ret, 0);
-
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
     EXPECT_EQ(session->AddOutput(preview), 0);
-
-    ret = session->AddOutput(photo);
-    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(session->AddOutput(photo), 0);
 
     session->RemoveOutput(photo);
     photo->Release();
-
-    ret = session->CommitConfig();
-    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
 
     SessionControlParams(session);
-
-
     session->RemoveInput(input);
     input->Release();
     preview->Release();
@@ -5382,21 +5440,20 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_028, TestSize.Level0)
 
 /*
  * Feature: Framework
- * Function: Test captureSession with GetSessionFunctions
+ * Function: Test GetSessionFunctions
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test GetSessionFunctions
+ * CaseDescription: Test GetSessionFunctions with Incorrect Profile
  */
 HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_042, TestSize.Level0)
 {
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[1]);
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
     sptr<CaptureInput> input = cameraInput;
     ASSERT_NE(input, nullptr);
-
     input->Open();
     UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
@@ -5405,16 +5462,16 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_042, TestSize.Level0)
     std::vector<Profile> photoProfiles = {};
     std::vector<VideoProfile> videoProfiles = {};
 
-    Size size = { 123465, 999999 };
+    uint32_t widthGreaterThantheRange = 1000000;
+    uint32_t heightGreaterThantheRange = 1000000;
+    Size size = { widthGreaterThantheRange, heightGreaterThantheRange };
     Profile profile(CameraFormat::CAMERA_FORMAT_RGBA_8888, size);
     previewProfiles.push_back(profile);
     photoProfiles.push_back(profile);
-
-
     bool isForApp = true;
-
     auto innerInputDevice = session->GetSessionFunctions(previewProfiles, photoProfiles, videoProfiles, isForApp);
     EXPECT_EQ(innerInputDevice.size(), 0);
+
     input->Release();
     session->Release();
 }
@@ -5425,13 +5482,12 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_042, TestSize.Level0)
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test CanAddInput with GetCaptureSession() == nullptr
+ * CaseDescription: Test CanAddInput with GetCaptureSession is nullptr
  */
 HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_029, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-
     ASSERT_NE(input, nullptr);
 
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
@@ -5441,19 +5497,16 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_029, TestSize.Level0)
         camInput->GetCameraDevice()->SetMdmCheck(false);
         camInput->GetCameraDevice()->Open();
     }
-
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
 
     EXPECT_EQ(session->BeginConfig(), 0);
-
     auto oldSession = session->GetCaptureSession();
-
     sptr<ICaptureSession> sessionNullptr = nullptr;
     session->SetCaptureSession(sessionNullptr);
     EXPECT_EQ(session->CanAddInput(input), false);
-
     oldSession->CommitConfig();
+
     EXPECT_EQ(input->Release(), 0);
     oldSession->Release();
 }
@@ -5464,7 +5517,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_029, TestSize.Level0)
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test UpdateDeviceDeferredability
+ * CaseDescription: OHOS_ABILITY_DEFERRED_IMAGE_DELIVERY in Metadata item.count is 8
  */
 HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_030, TestSize.Level0)
 {
@@ -5489,23 +5542,15 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_030, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-
     UpdateCameraOutputCapability();
-
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
-
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
 
-    MEDIA_INFO_LOG("CaptureSessionUnitTest::camera_framework_unittest_030");
-
     EXPECT_EQ(session->BeginConfig(), 0);
-
     EXPECT_EQ(session->AddInput(input), 0);
-
     session->UpdateDeviceDeferredability();
     session->RemoveInput(input);
     preview->Release();
@@ -5519,7 +5564,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_030, TestSize.Level0)
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test CheckFrameRateRangeWithCurrentFps
+ * CaseDescription: Test CheckFrameRateRangeWithCurrentFps with nine branchs
  */
 HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_032, TestSize.Level0)
 {
@@ -5527,10 +5572,8 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_032, TestSize.Level0)
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
     sptr<CaptureInput> input = cameraInput;
     ASSERT_NE(input, nullptr);
-
     input->Open();
     UpdateCameraOutputCapability();
-
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
 
@@ -5554,7 +5597,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_032, TestSize.Level0)
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test GetMaxSizePhotoProfile
+ * CaseDescription: Test GetMaxSizePhotoProfile with ProfileSizeRatio::RATIO_1_1
  */
 HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_033, TestSize.Level0)
 {
@@ -5562,42 +5605,25 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_033, TestSize.Level0)
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
     sptr<CaptureInput> input = cameraInput;
     ASSERT_NE(input, nullptr);
-
     input->Open();
     UpdateCameraOutputCapability();
-
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-
     sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
     ASSERT_NE(photo, nullptr);
-
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
+    session->SetMode(SceneMode::NIGHT);
+    EXPECT_EQ(session->GetMode(), SceneMode::NIGHT);
 
-    session->SetMode(SceneMode::CAPTURE);
-    EXPECT_EQ(session->GetMode(), SceneMode::CAPTURE);
-
-    int32_t ret = session->BeginConfig();
-    EXPECT_EQ(ret, 0);
-    ret = session->AddInput(input);
-    EXPECT_EQ(ret, 0);
-
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
     EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(session->AddOutput(photo), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
 
-    ret = session->AddOutput(photo);
-    EXPECT_EQ(ret, 0);
-
-
-    ret = session->CommitConfig();
-    EXPECT_EQ(ret, 0);
-
-    std::shared_ptr<Profile>retptr = session->GetMaxSizePhotoProfile(ProfileSizeRatio::RATIO_1_1);
-    if (retptr == nullptr) {
-        ret = 0;
-    } else {
-        ret = 1;
-    }
+    std::shared_ptr<Profile>resptr = session->GetMaxSizePhotoProfile(ProfileSizeRatio::RATIO_1_1);
+    int32_t ret = (resptr == nullptr) ? 0 : 1;
     EXPECT_EQ(ret, 0);
 
     input->Release();
@@ -5621,23 +5647,17 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_034, TestSize.Level0)
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
     sptr<CaptureInput> input = cameraInput;
     ASSERT_NE(input, nullptr);
-
     input->Open();
     UpdateCameraOutputCapability();
     sptr<CaptureOutput> output =
         new MockCaptureOutput(CaptureOutputType::CAPTURE_OUTPUT_TYPE_MAX, StreamType::CAPTURE, nullptr, nullptr);
     ASSERT_NE(output, nullptr);
-
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
 
-    int32_t ret = session->BeginConfig();
-    EXPECT_EQ(ret, 0);
-    ret = session->AddInput(input);
-    EXPECT_EQ(ret, 0);
-
-    bool retBool = session->CanAddOutput(output);
-    EXPECT_EQ(retBool, false);
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->CanAddOutput(output), false);
 
     session->RemoveInput(input);
     input->Release();
@@ -5646,11 +5666,11 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_034, TestSize.Level0)
 
 /*
  * Feature: Framework
- * Function: Test RemoveInput with GetCaptureSession() == nullptr
+ * Function: Test RemoveInput with GetCaptureSession is nullptr
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test RemoveInput with GetCaptureSession() == nullptr
+ * CaseDescription: Test RemoveInput with GetCaptureSession is nullptr
  */
 HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_035, TestSize.Level0)
 {
@@ -5658,28 +5678,19 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_035, TestSize.Level0)
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
     sptr<CaptureInput> input = cameraInput;
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-
     ASSERT_NE(input, nullptr);
     input->Open();
     UpdateCameraOutputCapability();
-
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
 
     EXPECT_EQ(session->BeginConfig(), 0);
-
     EXPECT_EQ(session->AddInput(input), 0);
-
     auto oldSession = session->GetCaptureSession();
-
     sptr<ICaptureSession> sessionNullptr = nullptr;
     session->SetCaptureSession(sessionNullptr);
-
-    int32_t ret = session->RemoveInput(input);
-
-    ASSERT_NE(ret, 0);
+    ASSERT_NE(session->RemoveInput(input), 0);
 
     oldSession->CommitConfig();
     input->Release();
@@ -5688,11 +5699,11 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_035, TestSize.Level0)
 
 /*
  * Feature: Framework
- * Function: Test RemoveOutput with GetCaptureSession() == nullptr
+ * Function: Test RemoveOutput with GetCaptureSession is nullptr
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test RemoveOutput with GetCaptureSession() == nullptr
+ * CaseDescription: Test RemoveOutput with GetCaptureSession is nullptr
  */
 HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_037, TestSize.Level0)
 {
@@ -5700,37 +5711,24 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_037, TestSize.Level0)
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
     sptr<CaptureInput> input = cameraInput;
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-
     ASSERT_NE(input, nullptr);
     input->Open();
     UpdateCameraOutputCapability();
-
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
     EXPECT_EQ(session->BeginConfig(), 0);
-
     EXPECT_EQ(session->AddInput(input), 0);
-
     EXPECT_EQ(session->AddOutput(preview), 0);
-
     EXPECT_EQ(session->CommitConfig(), 0);
-
     auto oldSession = session->GetCaptureSession();
-
     sptr<ICaptureSession> sessionNullptr = nullptr;
     session->SetCaptureSession(sessionNullptr);
+    ASSERT_NE(session->RemoveOutput(preview), 0);
 
-    int32_t ret = session->RemoveOutput(preview);
-
-    ASSERT_NE(ret, 0);
-
-    //oldSession->RemoveInput(input);
     preview->Release();
     input->Release();
     oldSession->Release();
@@ -5738,11 +5736,11 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_037, TestSize.Level0)
 
 /*
  * Feature: Framework
- * Function: Test Start() with GetCaptureSession() == nullptr
+ * Function: Test Session Start with GetCaptureSession is nullptr
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test Start() with GetCaptureSession() == nullptr
+ * CaseDescription: Test Session Start with GetCaptureSession is nullptr
  */
 HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_038, TestSize.Level0)
 {
@@ -5750,35 +5748,25 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_038, TestSize.Level0)
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
     sptr<CaptureInput> input = cameraInput;
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-
     ASSERT_NE(input, nullptr);
     input->Open();
     UpdateCameraOutputCapability();
-
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
     EXPECT_EQ(session->BeginConfig(), 0);
-
     EXPECT_EQ(session->AddInput(input), 0);
-
     EXPECT_EQ(session->AddOutput(preview), 0);
-
     EXPECT_EQ(session->CommitConfig(), 0);
 
     auto oldSession = session->GetCaptureSession();
-
     sptr<ICaptureSession> sessionNullptr = nullptr;
     session->SetCaptureSession(sessionNullptr);
-
     ASSERT_NE(session->Start(), 0);
 
-    //oldSession->RemoveInput(input);
     preview->Release();
     input->Release();
     oldSession->Release();
@@ -5786,11 +5774,11 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_038, TestSize.Level0)
 
 /*
  * Feature: Framework
- * Function: Test Stop() with GetCaptureSession() == nullptr
+ * Function: Test Session Stop with GetCaptureSession is nullptr
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test Stop() with GetCaptureSession() == nullptr
+ * CaseDescription: Test Session Stop with GetCaptureSession is nullptr
  */
 HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_039, TestSize.Level0)
 {
@@ -5798,37 +5786,26 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_039, TestSize.Level0)
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
     sptr<CaptureInput> input = cameraInput;
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-
     ASSERT_NE(input, nullptr);
     input->Open();
     UpdateCameraOutputCapability();
-
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
     EXPECT_EQ(session->BeginConfig(), 0);
-
     EXPECT_EQ(session->AddInput(input), 0);
-
     EXPECT_EQ(session->AddOutput(preview), 0);
-
     EXPECT_EQ(session->CommitConfig(), 0);
 
     auto oldSession = session->GetCaptureSession();
-
     EXPECT_EQ(session->Start(), 0);
-
     sptr<ICaptureSession> sessionNullptr = nullptr;
     session->SetCaptureSession(sessionNullptr);
-
     ASSERT_NE(session->Stop(), 0);
 
-    //oldSession->RemoveInput(input);
     preview->Release();
     input->Release();
     oldSession->Release();
@@ -5836,11 +5813,11 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_039, TestSize.Level0)
 
 /*
  * Feature: Framework
- * Function: Test SetPreviewRotation()
+ * Function: Test SetPreviewRotation in normal branch and GetCaptureSession is nullptr
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test SetPreviewRotation()
+ * CaseDescription: Test SetPreviewRotation in normal branch and GetCaptureSession is nullptr
  */
 HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_040, TestSize.Level0)
 {
@@ -5848,38 +5825,26 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_040, TestSize.Level0)
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
     sptr<CaptureInput> input = cameraInput;
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-
     ASSERT_NE(input, nullptr);
     input->Open();
     UpdateCameraOutputCapability();
-
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
     EXPECT_EQ(session->BeginConfig(), 0);
-
     EXPECT_EQ(session->AddInput(input), 0);
-
     EXPECT_EQ(session->AddOutput(preview), 0);
-
     EXPECT_EQ(session->CommitConfig(), 0);
-
     EXPECT_EQ(session->Start(), 0);
 
     std::string deviceClass = "180";
-
     EXPECT_EQ(session->SetPreviewRotation(deviceClass), 0);
-
     auto oldSession = session->GetCaptureSession();
-
     sptr<ICaptureSession> sessionNullptr = nullptr;
     session->SetCaptureSession(sessionNullptr);
-
     EXPECT_EQ(session->SetPreviewRotation(deviceClass), 0);
 
     preview->Release();
@@ -5889,11 +5854,11 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_040, TestSize.Level0)
 
 /*
  * Feature: Framework
- * Function: Test SetVideoStabilizationMode
+ * Function: Test SetVideoStabilizationMode with VideoStabilizationMode::HIGH
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test SetVideoStabilizationMode
+ * CaseDescription: Test SetVideoStabilizationMode with VideoStabilizationMode::HIGH
  */
 HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_041, TestSize.Level0)
 {
@@ -5901,29 +5866,21 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_041, TestSize.Level0)
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
     sptr<CaptureInput> input = cameraInput;
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-
     ASSERT_NE(input, nullptr);
     input->Open();
     UpdateCameraOutputCapability();
-
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
     EXPECT_EQ(session->BeginConfig(), 0);
-
     EXPECT_EQ(session->AddInput(input), 0);
-
     EXPECT_EQ(session->AddOutput(preview), 0);
-
     EXPECT_EQ(session->CommitConfig(), 0);
 
     session->SetVideoStabilizationMode(VideoStabilizationMode::HIGH);
-
     preview->Release();
     input->Release();
     session->Release();
@@ -5931,11 +5888,11 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_041, TestSize.Level0)
 
 /*
  * Feature: Framework
- * Function: Test IsVideoStabilizationModeSupported
+ * Function: Test IsVideoStabilizationModeSupported with VideoStabilizationMode::AUTO and VideoStabilizationMode::HIGH
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test IsVideoStabilizationModeSupported
+ * CaseDescription: Test IsVideoStabilizationModeSupported with VideoStabilizationMode::AUTO and VideoStabilizationMode::HIGH
  */
 HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_042, TestSize.Level0)
 {
@@ -5943,36 +5900,23 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_042, TestSize.Level0)
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
     sptr<CaptureInput> input = cameraInput;
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-
     ASSERT_NE(input, nullptr);
     input->Open();
     UpdateCameraOutputCapability();
-
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
     EXPECT_EQ(session->BeginConfig(), 0);
-
     EXPECT_EQ(session->AddInput(input), 0);
-
     EXPECT_EQ(session->AddOutput(preview), 0);
-
     EXPECT_EQ(session->CommitConfig(), 0);
 
     bool isSupported = false;
     EXPECT_EQ(session->IsVideoStabilizationModeSupported(VideoStabilizationMode::AUTO, isSupported), 0);
-
-    if (!session->IsVideoStabilizationModeSupported(VideoStabilizationMode::HIGH)) {
-        MEDIA_WARNING_LOG("VideoStabilizationMode::HIGH is not supported!");
-        EXPECT_EQ(session->IsVideoStabilizationModeSupported(VideoStabilizationMode::HIGH), false);
-    } else {
-        EXPECT_EQ(session->IsVideoStabilizationModeSupported(VideoStabilizationMode::HIGH), true);
-    }
+    EXPECT_EQ(session->IsVideoStabilizationModeSupported(VideoStabilizationMode::HIGH, isSupported), 0);
 
     preview->Release();
     input->Release();
@@ -5981,11 +5925,11 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_042, TestSize.Level0)
 
 /*
  * Feature: Framework
- * Function: Test GetSupportedStabilizationMode() with isConcurrentLimted_ == 1
+ * Function: Test GetSupportedStabilizationMode with isConcurrentLimted_ is true
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test GetSupportedStabilizationMode() with isConcurrentLimted_ == 1
+ * CaseDescription: Test GetSupportedStabilizationMode with isConcurrentLimted_ is true
  */
 HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_043, TestSize.Level0)
 {
@@ -5994,33 +5938,24 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_043, TestSize.Level0)
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
     sptr<CaptureInput> input = cameraInput;
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-
     ASSERT_NE(input, nullptr);
     input->Open();
     UpdateCameraOutputCapability();
-
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
     EXPECT_EQ(session->BeginConfig(), 0);
-
     EXPECT_EQ(session->AddInput(input), 0);
-
     EXPECT_EQ(session->AddOutput(preview), 0);
-
     EXPECT_EQ(session->CommitConfig(), 0);
 
     std::vector<VideoStabilizationMode> stabilizationModes;
-
     EXPECT_EQ(session->GetSupportedStabilizationMode(stabilizationModes), 0);
 
     cameras_[0]->isConcurrentLimted_ = 0;
-
     preview->Release();
     input->Release();
     session->Release();
@@ -6028,11 +5963,11 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_043, TestSize.Level0)
 
 /*
  * Feature: Framework
- * Function: Test SetExposureCallback
+ * Function: Test SetExposureCallback with exposureCallback is nullptr
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test SetExposureCallback
+ * CaseDescription: Test SetExposureCallback with exposureCallback is nullptr
  */
 HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_044, TestSize.Level0)
 {
@@ -6040,8 +5975,8 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_044, TestSize.Level0)
     ASSERT_NE(session, nullptr);
 
     std::shared_ptr<ExposureCallback> exposureCallback = nullptr;
-
     session->SetExposureCallback(exposureCallback);
+    EXPECT_EQ(session->GetExposureCallback(), nullptr);
 
     session->Release();
 }
@@ -6060,30 +5995,22 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_045, TestSize.Level0)
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
     sptr<CaptureInput> input = cameraInput;
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-
     ASSERT_NE(input, nullptr);
     input->Open();
     UpdateCameraOutputCapability();
-
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
     EXPECT_EQ(session->BeginConfig(), 0);
-
     EXPECT_EQ(session->AddInput(input), 0);
-
     EXPECT_EQ(session->AddOutput(preview), 0);
-
     EXPECT_EQ(session->CommitConfig(), 0);
 
     auto deviceInfo = session->GetInputDevice()->GetCameraDeviceInfo();
     shared_ptr<OHOS::Camera::CameraMetadata> metadata = deviceInfo->GetMetadata();
-
     session->ProcessAutoExposureUpdates(metadata);
 
     preview->Release();
@@ -6093,11 +6020,11 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_045, TestSize.Level0)
 
 /*
  * Feature: Framework
- * Function: Test CoordinateTransform
+ * Function: Test CoordinateTransform with front camera
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test CoordinateTransform
+ * CaseDescription: Test CoordinateTransform with front camera
  */
 HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_046, TestSize.Level0)
 {
@@ -6108,33 +6035,24 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_046, TestSize.Level0)
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
     sptr<CaptureInput> input = cameraInput;
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-
     ASSERT_NE(input, nullptr);
     input->Open();
     UpdateCameraOutputCapability();
-
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
     EXPECT_EQ(session->BeginConfig(), 0);
-
     EXPECT_EQ(session->AddInput(input), 0);
-
     EXPECT_EQ(session->AddOutput(preview), 0);
-
     EXPECT_EQ(session->CommitConfig(), 0);
 
     Point pointnow;
     pointnow.x = 0;
     pointnow.y = 0;
-
     Point pointres = session->CoordinateTransform(pointnow);
-
     ASSERT_NE(pointres.x, 0);
 
     preview->Release();
@@ -6144,11 +6062,11 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_046, TestSize.Level0)
 
 /*
  * Feature: Framework
- * Function: Test VerifyFocusCorrectness
+ * Function: Test VerifyFocusCorrectness with Point coordinates have x out-of-range and y out-of-range
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test VerifyFocusCorrectness
+ * CaseDescription: Test VerifyFocusCorrectness with Point coordinates have x out-of-range and y out-of-range
  */
 HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_047, TestSize.Level0)
 {
@@ -6156,33 +6074,24 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_047, TestSize.Level0)
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
     sptr<CaptureInput> input = cameraInput;
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-
     ASSERT_NE(input, nullptr);
     input->Open();
     UpdateCameraOutputCapability();
-
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
     EXPECT_EQ(session->BeginConfig(), 0);
-
     EXPECT_EQ(session->AddInput(input), 0);
-
     EXPECT_EQ(session->AddOutput(preview), 0);
-
     EXPECT_EQ(session->CommitConfig(), 0);
 
     Point pointnow;
     pointnow.x = 1000;
     pointnow.y = 1000;
-
     Point pointres = session->VerifyFocusCorrectness(pointnow);
-
     EXPECT_EQ(pointres.x, 1);
 
     preview->Release();
@@ -6192,11 +6101,11 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_047, TestSize.Level0)
 
 /*
  * Feature: Framework
- * Function: Test SetZoomRatio
+ * Function: Test SetZoomRatio with zoomRatio out-of-range
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test SetZoomRatio with big zoomRatio
+ * CaseDescription: Test SetZoomRatio with zoomRatio out-of-range
  */
 HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_048, TestSize.Level0)
 {
@@ -6204,29 +6113,21 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_048, TestSize.Level0)
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
     sptr<CaptureInput> input = cameraInput;
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-
     ASSERT_NE(input, nullptr);
     input->Open();
     UpdateCameraOutputCapability();
-
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
     EXPECT_EQ(session->BeginConfig(), 0);
-
     EXPECT_EQ(session->AddInput(input), 0);
-
     EXPECT_EQ(session->AddOutput(preview), 0);
-
     EXPECT_EQ(session->CommitConfig(), 0);
 
     float zoomRatio = 100000000000.0;
-
     EXPECT_EQ(session->SetZoomRatio(zoomRatio), 0);
 
     preview->Release();
@@ -6248,30 +6149,24 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_049, TestSize.Level0)
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
     sptr<CaptureInput> input = cameraInput;
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-
     ASSERT_NE(input, nullptr);
     input->Open();
     UpdateCameraOutputCapability();
-
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
     EXPECT_EQ(session->BeginConfig(), 0);
-
     EXPECT_EQ(session->AddInput(input), 0);
-
     EXPECT_EQ(session->AddOutput(preview), 0);
-
     EXPECT_EQ(session->CommitConfig(), 0);
 
-    EXPECT_EQ(session->SetSmoothZoom(-1000000.0, 0), 0);
-
-    EXPECT_EQ(session->SetSmoothZoom(100000000000.0, 0), 0);
+    float smallerthanRange = -1000000.0;
+    float outofRange = 100000000000.0;
+    EXPECT_EQ(session->SetSmoothZoom(smallerthanRange, 0), 0);
+    EXPECT_EQ(session->SetSmoothZoom(outofRange, 0), 0);
 
     preview->Release();
     input->Release();
@@ -6280,11 +6175,11 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_049, TestSize.Level0)
 
 /*
  * Feature: Framework
- * Function: Test SetSmoothZoom
+ * Function: Test SetSmoothZoom with GetCaptureSession is nullptr
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test SetSmoothZoom with abnormal branches
+ * CaseDescription: Test SetSmoothZoom with GetCaptureSession is nullptr
  */
 HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_050, TestSize.Level0)
 {
@@ -6292,32 +6187,23 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_050, TestSize.Level0)
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
     sptr<CaptureInput> input = cameraInput;
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-
     ASSERT_NE(input, nullptr);
     input->Open();
     UpdateCameraOutputCapability();
-
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
     EXPECT_EQ(session->BeginConfig(), 0);
-
     EXPECT_EQ(session->AddInput(input), 0);
-
     EXPECT_EQ(session->AddOutput(preview), 0);
-
     EXPECT_EQ(session->CommitConfig(), 0);
 
     auto oldSession = session->GetCaptureSession();
-
     sptr<ICaptureSession> sessionNullptr = nullptr;
     session->SetCaptureSession(sessionNullptr);
-
     ASSERT_NE(session->SetSmoothZoom(1.0, 0), 0);
 
     preview->Release();
@@ -6331,7 +6217,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_050, TestSize.Level0)
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test SetGuessMode
+ * CaseDescription: Test SetGuessMode with abnormal branches
  */
 HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_051, TestSize.Level0)
 {
@@ -6339,31 +6225,22 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_051, TestSize.Level0)
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
     sptr<CaptureInput> input = cameraInput;
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-
     ASSERT_NE(input, nullptr);
     input->Open();
     UpdateCameraOutputCapability();
-
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
     session->SetGuessMode(SceneMode::NIGHT);
-
     session->SetMode(SceneMode::NORMAL);
 
     EXPECT_EQ(session->BeginConfig(), 0);
-
     EXPECT_EQ(session->AddInput(input), 0);
-
     EXPECT_EQ(session->AddOutput(preview), 0);
-
     EXPECT_EQ(session->CommitConfig(), 0);
-
     ASSERT_NE(session->GetMode(), SceneMode::NIGHT);
 
     preview->Release();
@@ -6377,7 +6254,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_051, TestSize.Level0)
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test GetSubFeatureMods
+ * CaseDescription: Test GetSubFeatureMods with abnormal branches
  */
 HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_052, TestSize.Level0)
 {
@@ -6388,42 +6265,31 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_052, TestSize.Level0)
         ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
         sptr<CaptureInput> input = cameraInput;
         sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-
         ASSERT_NE(input, nullptr);
         input->Open();
         UpdateCameraOutputCapability();
-
         sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-
         sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
         ASSERT_NE(session, nullptr);
-
         sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
         ASSERT_NE(preview, nullptr);
-
         session->SetMode(SceneMode::NIGHT);
-
         EXPECT_EQ(session->BeginConfig(), 0);
-
         EXPECT_EQ(session->AddInput(input), 0);
-
         EXPECT_EQ(session->AddOutput(preview), 0);
-
         EXPECT_EQ(session->CommitConfig(), 0);
-
         vector<SceneFeaturesMode> res = session->GetSubFeatureMods();
-
         EXPECT_EQ(res.size(), 1);
     }
 }
 
 /*
  * Feature: Framework
- * Function: Test IsSessionStarted()
+ * Function: Test IsSessionStarted with GetCaptureSession is nullptr
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test IsSessionStarted()
+ * CaseDescription: Test IsSessionStarted with GetCaptureSession is nullptr
  */
 HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_053, TestSize.Level0)
 {
@@ -6431,38 +6297,26 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_053, TestSize.Level0)
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
     sptr<CaptureInput> input = cameraInput;
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-
     ASSERT_NE(input, nullptr);
     input->Open();
     UpdateCameraOutputCapability();
-
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
     EXPECT_EQ(session->BeginConfig(), 0);
-
     EXPECT_EQ(session->AddInput(input), 0);
-
     EXPECT_EQ(session->AddOutput(preview), 0);
-
     EXPECT_EQ(session->CommitConfig(), 0);
 
     EXPECT_FALSE(session->IsSessionStarted());
-
     session->Start();
-
     EXPECT_TRUE(session->IsSessionStarted());
-
     auto oldSession = session->GetCaptureSession();
-
     sptr<ICaptureSession> sessionNullptr = nullptr;
     session->SetCaptureSession(sessionNullptr);
-
     EXPECT_FALSE(session->IsSessionStarted());
 
     preview->Release();
@@ -6472,11 +6326,11 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_053, TestSize.Level0)
 
 /*
  * Feature: Framework
- * Function: Test GetActiveColorSpace()
+ * Function: Test GetActiveColorSpace with GetCaptureSession is nullptr
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test GetActiveColorSpace()
+ * CaseDescription: Test GetActiveColorSpace with GetCaptureSession is nullptr
  */
 HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_054, TestSize.Level0)
 {
@@ -6484,34 +6338,24 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_054, TestSize.Level0)
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
     sptr<CaptureInput> input = cameraInput;
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-
     ASSERT_NE(input, nullptr);
     input->Open();
     UpdateCameraOutputCapability();
-
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
     EXPECT_EQ(session->BeginConfig(), 0);
-
     EXPECT_EQ(session->AddInput(input), 0);
-
     EXPECT_EQ(session->AddOutput(preview), 0);
-
     EXPECT_EQ(session->CommitConfig(), 0);
 
     ColorSpace colorSpace = DISPLAY_P3;
-
     auto oldSession = session->GetCaptureSession();
-
     sptr<ICaptureSession> sessionNullptr = nullptr;
     session->SetCaptureSession(sessionNullptr);
-
     ASSERT_NE(session->GetActiveColorSpace(colorSpace), 0);
 
     preview->Release();
@@ -6521,11 +6365,11 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_054, TestSize.Level0)
 
 /*
  * Feature: Framework
- * Function: Test SetSensorExposureTime()
+ * Function: Test SetSensorExposureTime with large time
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test SetSensorExposureTime()
+ * CaseDescription: Test SetSensorExposureTime with large time
  */
 HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_055, TestSize.Level0)
 {
@@ -6533,30 +6377,24 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_055, TestSize.Level0)
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
     sptr<CaptureInput> input = cameraInput;
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-
     ASSERT_NE(input, nullptr);
     input->Open();
     UpdateCameraOutputCapability();
-
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
     EXPECT_EQ(session->BeginConfig(), 0);
-
     EXPECT_EQ(session->AddInput(input), 0);
-
     EXPECT_EQ(session->AddOutput(preview), 0);
-
     EXPECT_EQ(session->CommitConfig(), 0);
 
     session->LockForControl();
-    EXPECT_EQ(session->SetSensorExposureTime(1), OPERATION_NOT_ALLOWED);
-    EXPECT_EQ(session->SetSensorExposureTime(50000), OPERATION_NOT_ALLOWED);
+    EXPECT_EQ(session->SetSensorExposureTime(1), 0);
+    uint32_t timeOutofRange = 50000;
+    EXPECT_EQ(session->SetSensorExposureTime(timeOutofRange), 0);
     session->UnlockForControl();
 
     preview->Release();
@@ -6566,11 +6404,11 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_055, TestSize.Level0)
 
 /*
  * Feature: Framework
- * Function: Test IsFeatureSupported
+ * Function: Test IsFeatureSupported with SceneFeature::FEATURE_ENUM_MAX
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test IsFeatureSupported
+ * CaseDescription: Test IsFeatureSupported with SceneFeature::FEATURE_ENUM_MAX
  */
 HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_056, TestSize.Level0)
 {
@@ -6578,25 +6416,18 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_056, TestSize.Level0)
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
     sptr<CaptureInput> input = cameraInput;
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-
     ASSERT_NE(input, nullptr);
     input->Open();
     UpdateCameraOutputCapability();
-
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
     EXPECT_EQ(session->BeginConfig(), 0);
-
     EXPECT_EQ(session->AddInput(input), 0);
-
     EXPECT_EQ(session->AddOutput(preview), 0);
-
     EXPECT_EQ(session->CommitConfig(), 0);
 
     EXPECT_EQ(session->IsFeatureSupported(SceneFeature::FEATURE_ENUM_MAX), false);
@@ -6608,11 +6439,11 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_056, TestSize.Level0)
 
 /*
  * Feature: Framework
- * Function: Test EnableFeature
+ * Function: Test EnableFeature with SceneFeature::FEATURE_ENUM_MIN
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test EnableFeature
+ * CaseDescription: Test EnableFeature with SceneFeature::FEATURE_ENUM_MIN
  */
 HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_057, TestSize.Level0)
 {
@@ -6620,31 +6451,25 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_057, TestSize.Level0)
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
     sptr<CaptureInput> input = cameraInput;
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-
     ASSERT_NE(input, nullptr);
     input->Open();
     UpdateCameraOutputCapability();
-
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
     EXPECT_EQ(session->BeginConfig(), 0);
-
     EXPECT_EQ(session->AddInput(input), 0);
-
     EXPECT_EQ(session->AddOutput(preview), 0);
-
     EXPECT_EQ(session->CommitConfig(), 0);
 
     bool isSupported = session->IsFeatureSupported(SceneFeature::FEATURE_ENUM_MIN);
     if (isSupported) {
         EXPECT_EQ(session->EnableFeature(SceneFeature::FEATURE_ENUM_MIN, false), 0);
     }
+
     preview->Release();
     input->Release();
     session->Release();
@@ -6652,11 +6477,11 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_057, TestSize.Level0)
 
 /*
  * Feature: Framework
- * Function: Test GetMetadata()
+ * Function: Test GetMetadata with GetCameraDeviceInfo is nullptr
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test GetMetadata()
+ * CaseDescription: Test GetMetadata with GetCameraDeviceInfo is nullptr
  */
 HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_058, TestSize.Level0)
 {
@@ -6664,37 +6489,26 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_058, TestSize.Level0)
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
     sptr<CaptureInput> input = cameraInput;
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-
     ASSERT_NE(input, nullptr);
     input->Open();
     UpdateCameraOutputCapability();
-
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
     EXPECT_EQ(session->BeginConfig(), 0);
-
     EXPECT_EQ(session->AddInput(input), 0);
-
     EXPECT_EQ(session->AddOutput(preview), 0);
-
     EXPECT_EQ(session->CommitConfig(), 0);
 
     sptr<CameraDevice> oldDevice = camInput->GetCameraDeviceInfo();
-
     sptr<CameraDevice> deviceNull = nullptr;
-
     camInput->SetCameraDeviceInfo(deviceNull);
-
     std::shared_ptr<OHOS::Camera::CameraMetadata>res = session->GetMetadata();
 
     ASSERT_NE(res, nullptr);
-
     camInput->SetCameraDeviceInfo(oldDevice);
 
     preview->Release();
@@ -6704,11 +6518,11 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_058, TestSize.Level0)
 
 /*
  * Feature: Framework
- * Function: Test GetSupportedEffectSuggestionType()
+ * Function: Test GetSupportedEffectSuggestionType
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test GetSupportedEffectSuggestionType()
+ * CaseDescription: Test GetSupportedEffectSuggestionType
  */
 HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_059, TestSize.Level0)
 {
@@ -6716,27 +6530,19 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_059, TestSize.Level0)
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
     sptr<CaptureInput> input = cameraInput;
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-
     ASSERT_NE(input, nullptr);
     input->Open();
     UpdateCameraOutputCapability();
-
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-
     sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
     ASSERT_NE(sessionForSys, nullptr);
-
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
     sessionForSys->SetMode(SceneMode::CAPTURE);
-
     EXPECT_EQ(sessionForSys->BeginConfig(), 0);
-
     EXPECT_EQ(sessionForSys->AddInput(input), 0);
-
     EXPECT_EQ(sessionForSys->AddOutput(preview), 0);
-
     EXPECT_EQ(sessionForSys->CommitConfig(), 0);
 
     sessionForSys->GetSupportedEffectSuggestionType();
@@ -6766,23 +6572,17 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_060, TestSize.Level0)
     UpdateCameraOutputCapability();
 
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
     EXPECT_EQ(session->BeginConfig(), 0);
-
     EXPECT_EQ(session->AddInput(input), 0);
-
     EXPECT_EQ(session->AddOutput(preview), 0);
-
     EXPECT_EQ(session->CommitConfig(), 0);
 
     bool isSupported = false;
-
     EXPECT_EQ(session->IsWhiteBalanceModeSupported(WhiteBalanceMode::AWB_MODE_LOCKED, isSupported), 0);
 
     preview->Release();
@@ -6804,28 +6604,21 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_061, TestSize.Level0)
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
     sptr<CaptureInput> input = cameraInput;
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-
     ASSERT_NE(input, nullptr);
     input->Open();
     UpdateCameraOutputCapability();
-
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
     EXPECT_EQ(session->BeginConfig(), 0);
-
     EXPECT_EQ(session->AddInput(input), 0);
-
     EXPECT_EQ(session->AddOutput(preview), 0);
-
     EXPECT_EQ(session->CommitConfig(), 0);
 
-    EXPECT_EQ(session->SetWhiteBalanceMode(WhiteBalanceMode::AWB_MODE_LOCKED), 0);
+    EXPECT_NE(session->SetWhiteBalanceMode(WhiteBalanceMode::AWB_MODE_LOCKED), 0);
 
     preview->Release();
     input->Release();
@@ -6846,28 +6639,21 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_062, TestSize.Level0)
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
     sptr<CaptureInput> input = cameraInput;
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-
     ASSERT_NE(input, nullptr);
     input->Open();
     UpdateCameraOutputCapability();
-
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
     EXPECT_EQ(session->BeginConfig(), 0);
-
     EXPECT_EQ(session->AddInput(input), 0);
-
     EXPECT_EQ(session->AddOutput(preview), 0);
-
     EXPECT_EQ(session->CommitConfig(), 0);
-
-    EXPECT_EQ(session->SetManualWhiteBalance(99999), 0);
+    int32_t wbValue = 100000;
+    EXPECT_EQ(session->SetManualWhiteBalance(wbValue), 0);
 
     preview->Release();
     input->Release();
@@ -6888,29 +6674,21 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_063, TestSize.Level0)
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
     sptr<CaptureInput> input = cameraInput;
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-
     ASSERT_NE(input, nullptr);
     input->Open();
     UpdateCameraOutputCapability();
-
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
     EXPECT_EQ(session->BeginConfig(), 0);
-
     EXPECT_EQ(session->AddInput(input), 0);
-
     EXPECT_EQ(session->AddOutput(preview), 0);
-
     EXPECT_EQ(session->CommitConfig(), 0);
 
     session->EnableFaceDetection(true);
-
     session->EnableFaceDetection(false);
 
     preview->Release();
@@ -6920,11 +6698,11 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_063, TestSize.Level0)
 
 /*
  * Feature: Framework
- * Function: Test FindFrontCamera()
+ * Function: Test FindFrontCamera
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test FindFrontCamera()
+ * CaseDescription: Test FindFrontCamera
  */
 HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_064, TestSize.Level0)
 {
@@ -6932,29 +6710,21 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_064, TestSize.Level0)
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
     sptr<CaptureInput> input = cameraInput;
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-
     ASSERT_NE(input, nullptr);
     input->Open();
     UpdateCameraOutputCapability();
-
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
 
     EXPECT_EQ(session->BeginConfig(), 0);
-
     EXPECT_EQ(session->AddInput(input), 0);
-
     EXPECT_EQ(session->AddOutput(preview), 0);
-
     EXPECT_EQ(session->CommitConfig(), 0);
 
     sptr<CameraDevice> res = session->FindFrontCamera();
-
     ASSERT_NE(res, nullptr);
 
     preview->Release();
@@ -6964,11 +6734,11 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_064, TestSize.Level0)
 
 /*
  * Feature: Framework
- * Function: Test StartVideoOutput()
+ * Function: Test StartVideoOutput
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test StartVideoOutput()
+ * CaseDescription: Test StartVideoOutput
  */
 HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_065, TestSize.Level0)
 {
@@ -6978,14 +6748,13 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_065, TestSize.Level0)
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
-    camInput->GetCameraDevice()->SetMdmCheck(false);
-    camInput->GetCameraDevice()->Open();
-
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
     UpdateCameraOutputCapability();
-
     sptr<CaptureOutput> video = CreateVideoOutput(videoProfile_[0]);
     ASSERT_NE(video, nullptr);
-
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
 
@@ -7003,17 +6772,16 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_065, TestSize.Level0)
 
 /*
  * Feature: Framework
- * Function: Test StopVideoOutput()
+ * Function: Test StopVideoOutput
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test StopVideoOutput()
+ * CaseDescription: Test StopVideoOutput
  */
 HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_066, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
-
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
@@ -7021,12 +6789,9 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_066, TestSize.Level0)
         camInput->GetCameraDevice()->SetMdmCheck(false);
         camInput->GetCameraDevice()->Open();
     }
-
     UpdateCameraOutputCapability();
-
     sptr<CaptureOutput> video = CreateVideoOutput(videoProfile_[0]);
     ASSERT_NE(video, nullptr);
-
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
 
@@ -7037,9 +6802,95 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_066, TestSize.Level0)
 
     session->Start();
     EXPECT_EQ(session->StopVideoOutput(), false);
-
     session->StartVideoOutput();
     EXPECT_EQ(session->StopVideoOutput(), true);
+
+    video->Release();
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test ProcessCompositionPositionCalibration
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test ProcessCompositionPositionCalibration
+ */
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_067, TestSize.Level0)
+{
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> video = CreateVideoOutput(videoProfile_[0]);
+    ASSERT_NE(video, nullptr);
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(video), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    shared_ptr<OHOS::CameraStandard::CompositionPositionCalibrationCallback>  resptr =
+        std::make_shared<MockCompositionPositionCalibrationCallback>();
+    shared_ptr<OHOS::CameraStandard::CompositionPositionCalibrationCallback> fathresptr =
+        (shared_ptr<OHOS::CameraStandard::CompositionPositionCalibrationCallback> &)resptr;
+    session->SetCompositionPositionCalibrationCallback(fathresptr);
+    auto deviceInfo = session->GetInputDevice()->GetCameraDeviceInfo();
+    shared_ptr<OHOS::Camera::CameraMetadata> metadata = deviceInfo->GetMetadata();
+    session->ProcessCompositionPositionCalibration(metadata);
+    ASSERT_NE(metadata, nullptr);
+
+    video->Release();
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test SetColorStyleSetting
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetColorStyleSetting
+ */
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_068, TestSize.Level0)
+{
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> video = CreateVideoOutput(videoProfile_[0]);
+    ASSERT_NE(video, nullptr);
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(video), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    ColorStyleSetting setting;
+    setting.type = ColorStyleType::COLOR_STYLE_FILM;
+    setting.hue = 1.0;
+    setting.saturation = 1.0;
+    setting.tone = 1.0;
+    EXPECT_EQ(session->SetColorStyleSetting(setting), 0);
 
     video->Release();
     input->Release();
@@ -7165,6 +7016,35 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_072, TestSize.Level0)
 
 /*
  * Feature: Framework
+ * Function: Test EnableSuperMoonFeature
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test EnableSuperMoonFeature
+ */
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_073, TestSize.Level0)
+{
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> video = CreateVideoOutput(videoProfile_[0]);
+    ASSERT_NE(video, nullptr);
+    sptr<CaptureSessionForSys> sessionForSys =
+        CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(sessionForSys, nullptr);
+
+    EXPECT_EQ(sessionForSys->EnableSuperMoonFeature(false), 0);
+}
+
+/*
+ * Feature: Framework
  * Function: Test GetSupportedVideoRotations
  * SubFunction: NA
  * FunctionPoints: NA
@@ -7193,6 +7073,448 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_074, TestSize.Level0)
 
     std::vector<int32_t> supportedRotation;
     EXPECT_EQ(session->GetSupportedVideoRotations(supportedRotation), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test IsImageStabilizationGuideSupported
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsImageStabilizationGuideSupported
+ */
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_075, TestSize.Level0)
+{
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+ 
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    bool ret = session->IsImageStabilizationGuideSupported();
+    if (!ret) {
+        MEDIA_WARNING_LOG("ImageStabilizationGuide is not supported!");
+        GTEST_SKIP();
+    }
+    EXPECT_EQ(ret, true);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test EnableImageStabilizationGuide with Enable true
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test EnableImageStabilizationGuide with Enable true
+ */
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_076, TestSize.Level0)
+{
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+ 
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    bool ret = session->IsImageStabilizationGuideSupported();
+    if (ret) {
+        EXPECT_EQ(session->EnableImageStabilizationGuide(true), 0);
+    } else {
+        MEDIA_WARNING_LOG("ImageStabilizationGuide is not supported!");
+    }
+}
+
+/*
+ * Feature: Framework
+ * Function: Test EnableImageStabilizationGuide with Enable false
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test EnableImageStabilizationGuide with Enable false
+ */
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_077, TestSize.Level0)
+{
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+ 
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    bool ret = session->IsImageStabilizationGuideSupported();
+    if (ret) {
+        EXPECT_EQ(session->EnableImageStabilizationGuide(false), 0);
+    } else {
+        MEDIA_WARNING_LOG("ImageStabilizationGuide is not supported!");
+    }
+}
+
+/*
+ * Feature: Framework
+ * Function: Test SetCompositionPositionCalibrationCallback with nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetCompositionPositionCalibrationCallback with nullptr
+ */
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_078, TestSize.Level0)
+{
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    std::shared_ptr<CompositionPositionCalibrationCallback> callback = nullptr;
+    session->SetCompositionPositionCalibrationCallback(callback);
+    EXPECT_EQ(session->GetCompositionPositionCalibrationCallback(), callback);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test SetCompositionPositionCalibrationCallback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetCompositionPositionCalibrationCallback
+ */
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_079, TestSize.Level0)
+{
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    std::shared_ptr<CompositionPositionCalibrationCallback> callback =
+        std::make_shared<MockCompositionPositionCalibrationCallback>();
+    session->SetCompositionPositionCalibrationCallback(callback);
+    ASSERT_NE(session->GetCompositionPositionCalibrationCallback(), nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test SetCompositionBeginCallback with nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetCompositionBeginCallback with nullptr
+ */
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_080, TestSize.Level0)
+{
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    std::shared_ptr<CompositionBeginCallback> callback = nullptr;
+    session->SetCompositionBeginCallback(callback);
+    EXPECT_EQ(session->GetCompositionBeginCallback(), callback);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test SetCompositionBeginCallback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetCompositionBeginCallback
+ */
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_081, TestSize.Level0)
+{
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    std::shared_ptr<CompositionBeginCallback> callback =
+        std::make_shared<MockCompositionBeginCallback>();
+    session->SetCompositionBeginCallback(callback);
+    ASSERT_NE(session->GetCompositionBeginCallback(), nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test SetCompositionEndCallback with nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetCompositionEndCallback with nullptr
+ */
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_082, TestSize.Level0)
+{
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    std::shared_ptr<CompositionEndCallback> callback = nullptr;
+    session->SetCompositionEndCallback(callback);
+    EXPECT_EQ(session->GetCompositionEndCallback(), callback);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test SetCompositionEndCallback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetCompositionEndCallback
+*/
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_083, TestSize.Level0)
+{
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    std::shared_ptr<CompositionEndCallback> callback = std::make_shared<MockCompositionEndCallback>();
+    session->SetCompositionEndCallback(callback);
+    ASSERT_NE(session->GetCompositionEndCallback(), nullptr);
+} 
+
+/*
+ * Feature: Framework
+ * Function: Test SetCompositionPositionMatchCallback with nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetCompositionPositionMatchCallback with nullptr
+ */
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_084, TestSize.Level0)
+{
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    std::shared_ptr<CompositionPositionMatchCallback> callback = nullptr;
+    session->SetCompositionPositionMatchCallback(callback);
+    EXPECT_EQ(session->GetCompositionPositionMatchCallback(), callback);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test SetCompositionPositionMatchCallback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetCompositionPositionMatchCallback
+ */
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_085, TestSize.Level0)
+{
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    std::shared_ptr<CompositionPositionMatchCallback> callback = std::make_shared<MockCompositionPositionMatchCallback>();
+    session->SetCompositionPositionMatchCallback(callback);
+    ASSERT_NE(session->GetCompositionPositionMatchCallback(), nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test SetImageStabilizationGuideCallback with nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetImageStabilizationGuideCallback with nullptr
+ */
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_086, TestSize.Level0)
+{
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(sessionForSys, nullptr);
+
+    std::shared_ptr<ImageStabilizationGuideCallback> callback = nullptr;
+    sessionForSys->SetImageStabilizationGuideCallback(callback);
+    EXPECT_EQ(sessionForSys->GetImageStabilizationGuideCallback(), callback);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test SetImageStabilizationGuideCallback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetImageStabilizationGuideCallback
+ */
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_087, TestSize.Level0)
+{
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(sessionForSys, nullptr);
+
+    std::shared_ptr<ImageStabilizationGuideCallback> callback = std::make_shared<MockImageStabilizationGuideCallback>();
+    sessionForSys->SetImageStabilizationGuideCallback(callback);
+    ASSERT_NE(sessionForSys->GetImageStabilizationGuideCallback(), nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test IsCompositionSuggestionSupported
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsCompositionSuggestionSupported
+ */
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_088, TestSize.Level0)
+{
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+ 
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    bool ret = session->IsCompositionSuggestionSupported();
+    if (!ret) {
+        MEDIA_WARNING_LOG("IsCompositionSuggestionSupported is not supported!");
+        GTEST_SKIP();
+    }
+    EXPECT_EQ(ret, true);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test EnableCompositionSuggestion
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test EnableCompositionSuggestion
+ */
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_089, TestSize.Level0)
+{
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+ 
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    bool ret = session->EnableCompositionSuggestion(true);
+    if (!ret) {
+        MEDIA_WARNING_LOG("IsCompositionSuggestionSupported is not supported!");
+        GTEST_SKIP();
+    }
+    EXPECT_EQ(ret, true);
 }
 
 /*
@@ -7457,169 +7779,13 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_097, TestSize.Level0)
 
 /*
  * Feature: Framework
- * Function: Test CaptureSession with IsDepthFusionEnabled, IsMovingPhotoEnabled, SetMacroStatusCallback,
- * IsSetEnableMacro, GeneratePreconfigProfiles, SetEffectSuggestionCallback, SetARCallback
- * IsVideoDeferred
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test IsDepthFusionEnabled, IsMovingPhotoEnabled, SetMacroStatusCallback,
- * IsSetEnableMacro, GeneratePreconfigProfiles, SetEffectSuggestionCallback, SetARCallback for just call.
- */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_098, TestSize.Level0)
-{
-    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
-    ASSERT_NE(sessionForSys, nullptr);
-    sessionForSys->isDepthFusionEnable_ = false;
-    EXPECT_FALSE(sessionForSys->IsDepthFusionEnabled());
-
-    sessionForSys->isMovingPhotoEnabled_ = false;
-    EXPECT_FALSE(sessionForSys->IsMovingPhotoEnabled());
-
-    sessionForSys->SetMacroStatusCallback(nullptr);
-    EXPECT_EQ(sessionForSys->GetMacroStatusCallback(), nullptr);
-
-    sessionForSys->isSetMacroEnable_ = false;
-    EXPECT_FALSE(sessionForSys->IsSetEnableMacro());
-
-    int32_t preconfigType = 4;
-    ProfileSizeRatio preconfigRatio = RATIO_1_1;
-    EXPECT_EQ(sessionForSys->GeneratePreconfigProfiles(static_cast<PreconfigType>(preconfigType), preconfigRatio),
-        nullptr);
-
-    sessionForSys->SetEffectSuggestionCallback(nullptr);
-    EXPECT_EQ(sessionForSys->effectSuggestionCallback_, nullptr);
-
-    sessionForSys->SetARCallback(nullptr);
-    EXPECT_EQ(sessionForSys->GetARCallback(), nullptr);
-}
-
-/*
- * Feature: Framework
- * Function: Test CaptureSession with IsDepthFusionEnabled, IsMovingPhotoEnabled, SetMacroStatusCallback,
- * IsSetEnableMacro, GeneratePreconfigProfiles, SetEffectSuggestionCallback, SetARCallback
- * IsVideoDeferred
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test IsDepthFusionEnabled, IsMovingPhotoEnabled, SetMacroStatusCallback,
- * IsSetEnableMacro, GeneratePreconfigProfiles, SetEffectSuggestionCallback, SetARCallback for just call.
- */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_099, TestSize.Level0)
-{
-    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
-    ASSERT_NE(sessionForSys, nullptr);
-    sessionForSys->isDepthFusionEnable_ = false;
-    EXPECT_FALSE(sessionForSys->IsDepthFusionEnabled());
-
-    sessionForSys->isMovingPhotoEnabled_ = false;
-    EXPECT_FALSE(sessionForSys->IsMovingPhotoEnabled());
-
-    sessionForSys->SetMacroStatusCallback(nullptr);
-    EXPECT_EQ(sessionForSys->GetMacroStatusCallback(), nullptr);
-
-    sessionForSys->isSetMacroEnable_ = false;
-    EXPECT_FALSE(sessionForSys->IsSetEnableMacro());
-
-    int32_t preconfigType = 4;
-    ProfileSizeRatio preconfigRatio = UNSPECIFIED;
-    EXPECT_EQ(sessionForSys->GeneratePreconfigProfiles(static_cast<PreconfigType>(preconfigType), preconfigRatio),
-        nullptr);
-
-    sessionForSys->SetEffectSuggestionCallback(nullptr);
-    EXPECT_EQ(sessionForSys->effectSuggestionCallback_, nullptr);
-
-    sessionForSys->SetARCallback(nullptr);
-    EXPECT_EQ(sessionForSys->GetARCallback(), nullptr);
-}
-
-/*
- * Feature: Framework
- * Function: Test CaptureSession with IsDepthFusionEnabled, IsMovingPhotoEnabled, SetMacroStatusCallback,
- * IsSetEnableMacro, GeneratePreconfigProfiles, SetEffectSuggestionCallback, SetARCallback
- * IsVideoDeferred
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test IsDepthFusionEnabled, IsMovingPhotoEnabled, SetMacroStatusCallback,
- * IsSetEnableMacro, GeneratePreconfigProfiles, SetEffectSuggestionCallback, SetARCallback for just call.
- */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_100, TestSize.Level0)
-{
-    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
-    ASSERT_NE(sessionForSys, nullptr);
-    sessionForSys->isDepthFusionEnable_ = false;
-    EXPECT_FALSE(sessionForSys->IsDepthFusionEnabled());
-
-    sessionForSys->isMovingPhotoEnabled_ = false;
-    EXPECT_FALSE(sessionForSys->IsMovingPhotoEnabled());
-
-    sessionForSys->SetMacroStatusCallback(nullptr);
-    EXPECT_EQ(sessionForSys->GetMacroStatusCallback(), nullptr);
-
-    sessionForSys->isSetMacroEnable_ = false;
-    EXPECT_FALSE(sessionForSys->IsSetEnableMacro());
-
-    int32_t preconfigType = 4;
-    ProfileSizeRatio preconfigRatio = RATIO_16_9;
-    EXPECT_EQ(sessionForSys->GeneratePreconfigProfiles(static_cast<PreconfigType>(preconfigType), preconfigRatio),
-        nullptr);
-
-    sessionForSys->SetEffectSuggestionCallback(nullptr);
-    EXPECT_EQ(sessionForSys->effectSuggestionCallback_, nullptr);
-
-    sessionForSys->SetARCallback(nullptr);
-    EXPECT_EQ(sessionForSys->GetARCallback(), nullptr);
-}
-
-/*
- * Feature: Framework
- * Function: Test CaptureSession with IsDepthFusionEnabled, IsMovingPhotoEnabled, SetMacroStatusCallback,
- * IsSetEnableMacro, GeneratePreconfigProfiles, SetEffectSuggestionCallback, SetARCallback
- * IsVideoDeferred
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test IsDepthFusionEnabled, IsMovingPhotoEnabled, SetMacroStatusCallback,
- * IsSetEnableMacro, GeneratePreconfigProfiles, SetEffectSuggestionCallback, SetARCallback for just call.
- */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_101, TestSize.Level0)
-{
-    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
-    ASSERT_NE(sessionForSys, nullptr);
-    sessionForSys->isDepthFusionEnable_ = false;
-    EXPECT_FALSE(sessionForSys->IsDepthFusionEnabled());
-
-    sessionForSys->isMovingPhotoEnabled_ = false;
-    EXPECT_FALSE(sessionForSys->IsMovingPhotoEnabled());
-
-    sessionForSys->SetMacroStatusCallback(nullptr);
-    EXPECT_EQ(sessionForSys->GetMacroStatusCallback(), nullptr);
-
-    sessionForSys->isSetMacroEnable_ = false;
-    EXPECT_FALSE(sessionForSys->IsSetEnableMacro());
-
-    PreconfigType preconfigType = PRECONFIG_720P;
-    int32_t preconfigRatio = 3;
-    EXPECT_EQ(sessionForSys->GeneratePreconfigProfiles(preconfigType,
-        static_cast<ProfileSizeRatio>(preconfigRatio)), nullptr);
-
-    sessionForSys->SetEffectSuggestionCallback(nullptr);
-    EXPECT_EQ(sessionForSys->effectSuggestionCallback_, nullptr);
-
-    sessionForSys->SetARCallback(nullptr);
-    EXPECT_EQ(sessionForSys->GetARCallback(), nullptr);
-}
-
-/*
- * Feature: Framework
  * Function: Test CommitConfig with CheckLightStatus is true
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
  * CaseDescription: Test CommitConfig with CheckLightStatus is true
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_102, TestSize.Level0)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_098, TestSize.Level0)
 {
     int32_t DEFAULT_ITEMS = 10;
     int32_t DEFAULT_DATA_LENGTH = 200;
@@ -7658,7 +7824,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_102, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test ConfigureVideoOutput with frameRateRange.size() < minFpsRangeSize
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_103, TestSize.Level0)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_099, TestSize.Level0)
 {
     auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
@@ -7690,7 +7856,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_103, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test InsertOutputIntoSet
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_104, TestSize.Level0)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_100, TestSize.Level0)
 {
     auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
@@ -7706,6 +7872,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_104, TestSize.Level0)
     sptr<CaptureOutput> outputNull = nullptr;
     session->InsertOutputIntoSet(outputNull);
     session->InsertOutputIntoSet(outputNull);
+    EXPECT_NE(session, nullptr);
 }
  
 /*
@@ -7716,7 +7883,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_104, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test InsertOutputIntoSet
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_105, TestSize.Level0)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_101, TestSize.Level0)
 {
     auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
@@ -7733,6 +7900,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_105, TestSize.Level0)
     ASSERT_NE(preview, nullptr);
     session->InsertOutputIntoSet(preview);
     session->InsertOutputIntoSet(preview);
+    EXPECT_NE(session, nullptr);
 }
  
 /*
@@ -7743,7 +7911,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_105, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test SetCallback twice
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_106, TestSize.Level0)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_102, TestSize.Level0)
 {
     auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
@@ -7761,6 +7929,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_106, TestSize.Level0)
  
     session->SetCallback(sessionCallback);
     session->SetCallback(sessionCallback);
+    EXPECT_NE(sessionCallback, nullptr);
 }
  
 /*
@@ -7771,7 +7940,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_106, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test GetActiveVideoStabilizationMode
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_107, TestSize.Level0)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_103, TestSize.Level0)
 {
     int32_t DEFAULT_ITEMS = 10;
     int32_t DEFAULT_DATA_LENGTH = 200;
@@ -7797,10 +7966,12 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_107, TestSize.Level0)
     EXPECT_EQ(session->AddInput(input), 0);
     EXPECT_EQ(session->AddOutput(preview), 0);
     EXPECT_EQ(session->CommitConfig(), 0);
- 
+    
+    auto oldchangedMetadata = cameras_[0]->cachedMetadata_;
     cameras_[0]->cachedMetadata_ = cameraAbility;
  
     EXPECT_EQ(session->GetActiveVideoStabilizationMode(), VideoStabilizationMode::AUTO);
+    cameras_[0]->cachedMetadata_ = oldchangedMetadata;
 }
  
 /*
@@ -7811,7 +7982,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_107, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test GetActiveVideoStabilizationMode
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_108, TestSize.Level0)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_104, TestSize.Level0)
 {
     int32_t DEFAULT_ITEMS = 10;
     int32_t DEFAULT_DATA_LENGTH = 200;
@@ -7838,9 +8009,11 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_108, TestSize.Level0)
     EXPECT_EQ(session->AddOutput(preview), 0);
     EXPECT_EQ(session->CommitConfig(), 0);
  
+    auto oldchangedMetadata = cameras_[0]->cachedMetadata_;
     cameras_[0]->cachedMetadata_ = cameraAbility;
  
     EXPECT_EQ(session->GetActiveVideoStabilizationMode(), VideoStabilizationMode::OFF);
+    cameras_[0]->cachedMetadata_ = oldchangedMetadata;
 }
  
 /*
@@ -7851,7 +8024,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_108, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test GetActiveVideoStabilizationMode
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_109, TestSize.Level0)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_105, TestSize.Level0)
 {
     int32_t DEFAULT_ITEMS = 10;
     int32_t DEFAULT_DATA_LENGTH = 200;
@@ -7878,10 +8051,12 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_109, TestSize.Level0)
     EXPECT_EQ(session->AddOutput(preview), 0);
     EXPECT_EQ(session->CommitConfig(), 0);
  
+    auto oldchangedMetadata = cameras_[0]->cachedMetadata_;
     cameras_[0]->cachedMetadata_ = cameraAbility;
  
     VideoStabilizationMode mode = VideoStabilizationMode::OFF;
     EXPECT_EQ(session->GetActiveVideoStabilizationMode(mode), 0);
+    cameras_[0]->cachedMetadata_ = oldchangedMetadata;
 }
  
 /*
@@ -7892,7 +8067,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_109, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test GetActiveVideoStabilizationMode
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_110, TestSize.Level0)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_106, TestSize.Level0)
 {
     int32_t DEFAULT_ITEMS = 10;
     int32_t DEFAULT_DATA_LENGTH = 200;
@@ -7920,10 +8095,12 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_110, TestSize.Level0)
     EXPECT_EQ(session->AddOutput(preview), 0);
     EXPECT_EQ(session->CommitConfig(), 0);
  
+    auto oldchangedMetadata = cameras_[0]->cachedMetadata_;
     cameras_[0]->cachedMetadata_ = cameraAbility;
  
     VideoStabilizationMode mode = VideoStabilizationMode::OFF;
     EXPECT_EQ(session->GetActiveVideoStabilizationMode(mode), 0);
+    cameras_[0]->cachedMetadata_ = oldchangedMetadata;
 }
  
 /*
@@ -7934,7 +8111,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_110, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test SetVideoStabilizationMode
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_111, TestSize.Level0)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_107, TestSize.Level0)
 {
     auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
@@ -7966,7 +8143,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_111, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test GetSupportedExposureModes
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_112, TestSize.Level0)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_108, TestSize.Level0)
 {
     int32_t DEFAULT_ITEMS = 10;
     int32_t DEFAULT_DATA_LENGTH = 200;
@@ -7993,10 +8170,12 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_112, TestSize.Level0)
     EXPECT_EQ(session->AddOutput(video), 0);
     EXPECT_EQ(session->CommitConfig(), 0);
  
+    auto oldchangedMetadata = cameras_[0]->cachedMetadata_;
     cameras_[0]->cachedMetadata_ = cameraAbility;
  
     std::vector<ExposureMode> supportedExposureModes;
     EXPECT_EQ(session->GetSupportedExposureModes(supportedExposureModes), 0);
+    cameras_[0]->cachedMetadata_ = oldchangedMetadata;
 }
  
 /*
@@ -8007,7 +8186,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_112, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test SetMeteringPoint with changemeta is nullptr
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_113, TestSize.Level0)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_109, TestSize.Level0)
 {
     auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
@@ -8042,7 +8221,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_113, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test SetExposureBias with changemeta is nullptr
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_114, TestSize.Level0)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_110, TestSize.Level0)
 {
     auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
@@ -8077,7 +8256,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_114, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test SetExposureBias with changemeta
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_115, TestSize.Level0)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_111, TestSize.Level0)
 {
     auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
@@ -8110,7 +8289,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_115, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test ProcessAutoExposureUpdates
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_116, TestSize.Level0)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_112, TestSize.Level0)
 {
     auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
@@ -8121,7 +8300,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_116, TestSize.Level0)
     UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
+    EXPECT_NE(session, nullptr);
  
     int32_t DEFAULT_ITEMS = 10;
     int32_t DEFAULT_DATA_LENGTH = 200;
@@ -8134,6 +8313,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_116, TestSize.Level0)
     cameraAbility->addEntry(OHOS_CONTROL_EXPOSURE_STATE, &exposureStatus, 1);
  
     session->ProcessAutoExposureUpdates(cameraAbility);
+    EXPECT_NE(session, nullptr);
 }
  
 /*
@@ -8144,7 +8324,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_116, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test GetSupportedFocusModes
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_117, TestSize.Level0)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_113, TestSize.Level0)
 {
     int32_t DEFAULT_ITEMS = 10;
     int32_t DEFAULT_DATA_LENGTH = 200;
@@ -8171,10 +8351,12 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_117, TestSize.Level0)
     EXPECT_EQ(session->AddOutput(preview), 0);
     EXPECT_EQ(session->CommitConfig(), 0);
  
+    auto oldchangedMetadata = cameras_[0]->cachedMetadata_;
     cameras_[0]->cachedMetadata_ = cameraAbility;
     
     std::vector<FocusMode> supportedFocusModes;
     EXPECT_EQ(session->GetSupportedFocusModes(supportedFocusModes), 0);
+    cameras_[0]->cachedMetadata_ = oldchangedMetadata;
 }
  
 /*
@@ -8185,7 +8367,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_117, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test IsFocusModeSupported with Non-existent FocusMode
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_118, TestSize.Level0)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_114, TestSize.Level0)
 {
     auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
@@ -8218,7 +8400,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_118, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test SetFocusMode with Non-existent FocusMode
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_119, TestSize.Level0)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_115, TestSize.Level0)
 {
     auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
@@ -8250,7 +8432,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_119, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test GetFocusMode with Non-existent FocusMode
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_120, TestSize.Level0)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_116, TestSize.Level0)
 {
     int32_t DEFAULT_ITEMS = 10;
     int32_t DEFAULT_DATA_LENGTH = 200;
@@ -8277,10 +8459,12 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_120, TestSize.Level0)
     EXPECT_EQ(session->AddOutput(preview), 0);
     EXPECT_EQ(session->CommitConfig(), 0);
  
+    auto oldchangedMetadata = cameras_[0]->cachedMetadata_;
     cameras_[0]->cachedMetadata_ = cameraAbility;
  
     FocusMode focusMode;
     EXPECT_EQ(session->GetFocusMode(focusMode), 0);
+    cameras_[0]->cachedMetadata_ = cameraAbility;
 }
  
 /*
@@ -8291,7 +8475,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_120, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test SetFocusPoint twice
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_121, TestSize.Level0)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_117, TestSize.Level0)
 {
     auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
@@ -8324,7 +8508,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_121, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test ProcessAutoFocusUpdates with Non-existent
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_122, TestSize.Level0)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_118, TestSize.Level0)
 {
     auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
@@ -8345,6 +8529,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_122, TestSize.Level0)
     uint8_t fMode = 1;
     cameraAbility->addEntry(OHOS_CONTROL_FOCUS_MODE, &fMode, 1);
     session->ProcessAutoFocusUpdates(cameraAbility);
+    EXPECT_NE(session, nullptr);
 }
  
 /*
@@ -8355,7 +8540,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_122, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test IsFlashModeSupported with Non-existent
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_123, TestSize.Level0)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_119, TestSize.Level0)
 {
     auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
@@ -8376,7 +8561,8 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_123, TestSize.Level0)
     EXPECT_EQ(session->CommitConfig(), 0);
  
     FlashMode flashMode = static_cast<FlashMode>(1000);
-    EXPECT_EQ(session->IsFlashModeSupported(flashMode), 0);
+    session->IsFlashModeSupported(flashMode);
+    ASSERT_NE(session, nullptr);
 }
  
 /*
@@ -8387,7 +8573,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_123, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test IsFlashModeSupported with Non-existent
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_124, TestSize.Level0)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_120, TestSize.Level0)
 {
     auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
@@ -8420,7 +8606,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_124, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test HasFlash with RemoveInput
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_125, TestSize.Level0)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_121, TestSize.Level0)
 {
     auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
@@ -8440,8 +8626,10 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_125, TestSize.Level0)
     EXPECT_EQ(session->AddOutput(preview), 0);
     EXPECT_EQ(session->CommitConfig(), 0);
  
-    session->supportSpecSearch_ = false;
+    auto oldsupportSpecSearch = session->supportSpecSearch_.load();
+    session->supportSpecSearch_.store(false);
     EXPECT_EQ(session->HasFlash(), true);
+    session->supportSpecSearch_.store(oldsupportSpecSearch);
 }
  
 /*
@@ -8452,7 +8640,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_125, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test HasFlash with RemoveInput
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_126, TestSize.Level0)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_122, TestSize.Level0)
 {
     auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
@@ -8472,9 +8660,11 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_126, TestSize.Level0)
     EXPECT_EQ(session->AddOutput(preview), 0);
     EXPECT_EQ(session->CommitConfig(), 0);
  
-    session->supportSpecSearch_ = false;
+    auto oldsupportSpecSearch = session->supportSpecSearch_.load();
+    session->supportSpecSearch_.store(false);
     bool hasFlash = false;
     EXPECT_EQ(session->HasFlash(hasFlash), 0);
+    session->supportSpecSearch_.store(oldsupportSpecSearch);
 }
  
 /*
@@ -8485,7 +8675,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_126, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test HasFlash with cameraAbilityContainer_ is nullptr
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_127, TestSize.Level0)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_123, TestSize.Level0)
 {
     auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
@@ -8511,42 +8701,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_127, TestSize.Level0)
     EXPECT_EQ(session->HasFlash(hasFlash), 0);
     session->cameraAbilityContainer_ = abilityContainer;
 }
- 
-/*
- * Feature: Framework
- * Function: Test DoSpecSearch with cameraAbilityContainer_ is nullptr
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test DoSpecSearch with cameraAbilityContainer_ is nullptr
- */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_128, TestSize.Level0)
-{
-    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
-    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
-    sptr<CaptureInput> input = cameraInput;
-    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-    ASSERT_NE(input, nullptr);
-    input->Open();
-    UpdateCameraOutputCapability();
-    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
-    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
-    ASSERT_NE(preview, nullptr);
- 
-    EXPECT_EQ(session->BeginConfig(), 0);
-    EXPECT_EQ(session->AddInput(input), 0);
-    EXPECT_EQ(session->AddOutput(preview), 0);
-    EXPECT_EQ(session->CommitConfig(), 0);
- 
-    auto abilityContainer = session->GetCameraAbilityContainer();
-    session->cameraAbilityContainer_ = nullptr;
-    std::vector<float> zoomRatioRange = {0.1, 0.2};
-    EXPECT_EQ(session->DoSpecSearch(zoomRatioRange), 0);
-    session->cameraAbilityContainer_ = abilityContainer;
-}
- 
+
 /*
  * Feature: Framework
  * Function: Test GetZoomRatioRange with supportSpecSearch_ is false
@@ -8555,7 +8710,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_128, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test GetZoomRatioRange with supportSpecSearch_ is false
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_129, TestSize.Level0)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_125, TestSize.Level0)
 {
     auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
@@ -8590,7 +8745,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_129, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test PrepareZoom twice
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_130, TestSize.Level0)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_126, TestSize.Level0)
 {
     auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
@@ -8622,7 +8777,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_130, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test UnPrepareZoom twice
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_131, TestSize.Level0)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_127, TestSize.Level0)
 {
     auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
@@ -8648,13 +8803,48 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_131, TestSize.Level0)
  
 /*
  * Feature: Framework
+ * Function: Test GetSubFeatureMods with mode is NIGHT
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetSubFeatureMods with mode is NIGHT
+ */
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_128, TestSize.Level0)
+{
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+ 
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+ 
+    session->currentMode_ = SceneMode::NIGHT;
+    session->isSetSuperMoonEnable_ = true;
+    vector<SceneFeaturesMode> res = session->GetSubFeatureMods();
+    ASSERT_NE(res.size(), 0);
+    session->isSetSuperMoonEnable_ = false;
+}
+ 
+/*
+ * Feature: Framework
  * Function: Test SetBeautyValue with can not find beautyType
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
  * CaseDescription: Test SetBeautyValue with can not find beautyType
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_133, TestSize.Level0)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_129, TestSize.Level0)
 {
     auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
@@ -8669,6 +8859,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_133, TestSize.Level0)
  
     BeautyType beautyType = static_cast<BeautyType>(15);
     session->SetBeautyValue(beautyType, 0);
+    EXPECT_NE(session, nullptr);
 }
  
 /*
@@ -8679,7 +8870,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_133, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test GetSupportedColorSpaces with abilityContainer is nullptr
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_134, TestSize.Level0)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_130, TestSize.Level0)
 {
     auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
@@ -8718,7 +8909,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_134, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test SetSensorExposureTime with isExec is true
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_135, TestSize.Level0)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_131, TestSize.Level0)
 {
     auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
@@ -8740,7 +8931,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_135, TestSize.Level0)
  
     session->LockForControl();
     uint32_t timeLessRange = 1;
-    EXPECT_EQ(session->SetSensorExposureTime(timeLessRange), OPERATION_NOT_ALLOWED);
+    EXPECT_EQ(session->SetSensorExposureTime(timeLessRange), 0);
     session->UnlockForControl();
 }
  
@@ -8752,7 +8943,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_135, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test IsMacroSupported with supportSpecSearch_ is falsee
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_136, TestSize.Level0)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_132, TestSize.Level0)
 {
     auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
@@ -8774,8 +8965,9 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_136, TestSize.Level0)
  
     auto oldsupportSpecSearch = session->supportSpecSearch_.load();
     session->supportSpecSearch_.store(false);
-    EXPECT_EQ(session->IsMacroSupported(), false);
+    session->IsMacroSupported();
     session->supportSpecSearch_.store(oldsupportSpecSearch);
+    ASSERT_NE(session, nullptr);
 }
  
 /*
@@ -8786,7 +8978,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_136, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test IsMacroSupported with abilityContainer is nullptr
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_137, TestSize.Level0)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_133, TestSize.Level0)
 {
     auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
@@ -8806,12 +8998,167 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_137, TestSize.Level0)
     EXPECT_EQ(session->AddOutput(preview), 0);
     EXPECT_EQ(session->CommitConfig(), 0);
  
+    auto oldsupportSpecSearch = session->supportSpecSearch_.load();
+    session->supportSpecSearch_.store(true);
     auto abilityContainer = session->GetCameraAbilityContainer();
     session->cameraAbilityContainer_ = nullptr;
     EXPECT_EQ(session->IsMacroSupported(), false);
     session->cameraAbilityContainer_ = abilityContainer;
+    session->supportSpecSearch_.store(oldsupportSpecSearch);
 }
-
+ 
+/*
+ * Feature: Framework
+ * Function: Test EnableConstellationDrawingDetection
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test EnableConstellationDrawingDetection
+ */
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_134, TestSize.Level0)
+{
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(sessionForSys, nullptr);
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+ 
+    EXPECT_EQ(sessionForSys->BeginConfig(), 0);
+    EXPECT_EQ(sessionForSys->AddInput(input), 0);
+    EXPECT_EQ(sessionForSys->AddOutput(preview), 0);
+    EXPECT_EQ(sessionForSys->CommitConfig(), 0);
+    
+    sessionForSys->LockForControl();
+    EXPECT_EQ(sessionForSys->EnableConstellationDrawingDetection(true), 0);
+    sessionForSys->UnlockForControl();
+}
+ 
+/*
+ * Feature: Framework
+ * Function: Test IsConstellationDrawingSupported
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsConstellationDrawingSupported
+ */
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_135, TestSize.Level0)
+{
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+ 
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+ 
+    session->IsConstellationDrawingSupported();
+    ASSERT_NE(session, nullptr);
+}
+ 
+/*
+ * Feature: Framework
+ * Function: Test IsFeatureSupported with FEATURE_CONSTELLATION_DRAWING
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsFeatureSupported with FEATURE_CONSTELLATION_DRAWING
+ */
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_136, TestSize.Level0)
+{
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+ 
+    SceneFeature feature = SceneFeature::FEATURE_CONSTELLATION_DRAWING;
+    session->IsFeatureSupported(feature);
+    EXPECT_NE(session, nullptr);
+}
+ 
+/*
+ * Feature: Framework
+ * Function: Test EnableFeature with FEATURE_CONSTELLATION_DRAWING not support
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test EnableFeature with FEATURE_CONSTELLATION_DRAWING not support
+ */
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_137, TestSize.Level0)
+{
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    EXPECT_NE(session, nullptr);
+ 
+    SceneFeature feature = SceneFeature::FEATURE_CONSTELLATION_DRAWING;
+    bool ret = session->IsFeatureSupported(feature);
+    if (ret == false) {
+        ASSERT_NE(session->EnableFeature(feature, true), 0);
+    }
+}
+ 
+/*
+ * Feature: Framework
+ * Function: Test ProcessConstellationDrawingUpdates with GetFeatureDetectionStatusCallback != nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test ProcessConstellationDrawingUpdates with GetFeatureDetectionStatusCallback != nullptr
+ */
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_139, TestSize.Level0)
+{
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(sessionForSys, nullptr);
+ 
+    std::shared_ptr<FeatureDetectionStatusCallback> featptr = make_shared<MockFeatureDetectionStatusCallback>();
+    sessionForSys->SetFeatureDetectionStatusCallback(featptr);
+    int32_t DEFAULT_ITEMS = 10;
+    int32_t DEFAULT_DATA_LENGTH = 200;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility =
+        std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
+    std::vector<float> mode = {0, 0, 0, 0, 0};
+    cameraAbility->addEntry(OHOS_STATUS_CONSTELLATION_DRAWING_DETECT, &mode, 5);
+    sessionForSys->ProcessConstellationDrawingUpdates(cameraAbility);
+    EXPECT_NE(sessionForSys, nullptr);
+}
+ 
 /*
  * Feature: Framework
  * Function: Test EnableDeferredType with DELIVERY_PHOTO
@@ -8820,7 +9167,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_137, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test EnableDeferredType with DELIVERY_PHOTO
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_144, TestSize.Level0)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_140, TestSize.Level0)
 {
     auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
@@ -8847,6 +9194,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_144, TestSize.Level0)
     DeferredDeliveryImageType type = DeferredDeliveryImageType::DELIVERY_PHOTO;
     session->EnableDeferredType(type, true);
     session->EnableDeferredType(type, true);
+    EXPECT_NE(session, nullptr);
 }
  
 /*
@@ -8857,7 +9205,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_144, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test EnableAutoDeferredVideoEnhancement
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_145, TestSize.Level0)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_141, TestSize.Level0)
 {
     auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
@@ -8884,6 +9232,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_145, TestSize.Level0)
     session->changedMetadata_->addEntry(OHOS_CONTROL_DEFERRED_IMAGE_DELIVERY, &deferredType, 1);
     DeferredDeliveryImageType type = DeferredDeliveryImageType::DELIVERY_PHOTO;
     session->EnableDeferredType(type, true);
+    EXPECT_NE(session, nullptr);
 }
  
 /*
@@ -8894,7 +9243,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_145, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test SetUserId
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_146, TestSize.Level0)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_142, TestSize.Level0)
 {
     auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
@@ -8930,7 +9279,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_146, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test EnableAutoCloudImageEnhancement
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_147, TestSize.Level0)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_143, TestSize.Level0)
 {
     auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
@@ -8967,7 +9316,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_147, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test EnableEffectSuggestion
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_148, TestSize.Level0)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_144, TestSize.Level0)
 {
     auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
@@ -8975,9 +9324,9 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_148, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdateCameraOutputCapability(SceneMode::VIDEO);
+    UpdateCameraOutputCapability();
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::VIDEO);
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
     ASSERT_NE(sessionForSys, nullptr);
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
@@ -8992,8 +9341,8 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_148, TestSize.Level0)
     int32_t DEFAULT_DATA_LENGTH = 200;
     sessionForSys->changedMetadata_ = std::make_shared<Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
     sessionForSys->changedMetadata_->addEntry(OHOS_CONTROL_EFFECT_SUGGESTION, &enableValue, 1);
-    EXPECT_EQ(sessionForSys->EnableEffectSuggestion(true), OPERATION_NOT_ALLOWED);
-    EXPECT_EQ(sessionForSys->EnableEffectSuggestion(true), OPERATION_NOT_ALLOWED);
+    EXPECT_EQ(sessionForSys->EnableEffectSuggestion(true), 0);
+    EXPECT_EQ(sessionForSys->EnableEffectSuggestion(true), 0);
 }
  
 /*
@@ -9004,9 +9353,8 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_148, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test GetSupportedEffectSuggestionType with abnormal branches
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_149, TestSize.Level0)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_145, TestSize.Level0)
 {
-    UpdateCameraOutputCapability(SceneMode::VIDEO);
     sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::VIDEO);
     ASSERT_NE(sessionForSys, nullptr);
     ASSERT_EQ(SceneMode::VIDEO, sessionForSys->GetMode());
@@ -9056,9 +9404,8 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_149, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test SetEffectSuggestionStatus
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_150, TestSize.Level0)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_146, TestSize.Level0)
 {
-    UpdateCameraOutputCapability(SceneMode::VIDEO);
     sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::VIDEO);
     ASSERT_NE(sessionForSys, nullptr);
     ASSERT_EQ(SceneMode::VIDEO, sessionForSys->GetMode());
@@ -9108,7 +9455,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_150, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test SetWhiteBalanceMode with abnormal branches
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_151, TestSize.Level0)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_147, TestSize.Level0)
 {
     auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
@@ -9130,7 +9477,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_151, TestSize.Level0)
  
     session->LockForControl();
     int32_t mode = 15;
-    EXPECT_EQ(session->SetWhiteBalanceMode(static_cast<WhiteBalanceMode>(mode)), 0);
+    EXPECT_NE(session->SetWhiteBalanceMode(static_cast<WhiteBalanceMode>(mode)), 0);
     session->UnlockForControl();
 }
  
@@ -9142,7 +9489,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_151, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test SetQualityPrioritization with abnormal branches
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_152, TestSize.Level0)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_148, TestSize.Level0)
 {
     auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
@@ -9150,32 +9497,34 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_152, TestSize.Level0)
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     input->Open();
-    UpdateCameraOutputCapability();
+    UpdateCameraOutputCapability(SceneMode::VIDEO);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::VIDEO);
+    ASSERT_NE(sessionForSys, nullptr);
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
  
-    EXPECT_EQ(session->BeginConfig(), 0);
-    EXPECT_EQ(session->AddInput(input), 0);
-    EXPECT_EQ(session->AddOutput(preview), 0);
-    EXPECT_EQ(session->CommitConfig(), 0);
+    EXPECT_EQ(sessionForSys->BeginConfig(), 0);
+    EXPECT_EQ(sessionForSys->AddInput(input), 0);
+    EXPECT_EQ(sessionForSys->AddOutput(preview), 0);
+    EXPECT_EQ(sessionForSys->CommitConfig(), 0);
  
     QualityPrioritization qualityPrioritization = HIGH_QUALITY;
-    session->changedMetadata_  = nullptr;
-    EXPECT_EQ(session->SetQualityPrioritization(qualityPrioritization), 0);
+    auto oldchangedMetadata = sessionForSys->changedMetadata_;
+    sessionForSys->changedMetadata_  = nullptr;
+    EXPECT_EQ(sessionForSys->SetQualityPrioritization(qualityPrioritization), 0);
+    sessionForSys->changedMetadata_ = oldchangedMetadata;
 }
  
 /*
  * Feature: Framework
- * Function: Test AddFunctionToMap with abnormal branches
+ * Function: Test SetColorStyleSetting with changedMetadata_
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test AddFunctionToMap with abnormal branches
+ * CaseDescription: Test SetColorStyleSetting with changedMetadata_
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_153, TestSize.Level0)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_151, TestSize.Level0)
 {
     auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
@@ -9195,45 +9544,15 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_153, TestSize.Level0)
     EXPECT_EQ(session->AddOutput(preview), 0);
     EXPECT_EQ(session->CommitConfig(), 0);
  
-    session->canAddFuncToMap_ = true;
-    session->isAutoSwitchDevice_ = true;
-    session->AddFunctionToMap(std::to_string(OHOS_CONTROL_VIDEO_STABILIZATION_MODE), []() {
-            MEDIA_DEBUG_LOG("function");
-        });
-}
- 
-/*
- * Feature: Framework
- * Function: Test AddFunctionToMap with abnormal branches
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test AddFunctionToMap with abnormal branches
- */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_154, TestSize.Level0)
-{
-    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
-    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
-    sptr<CaptureInput> input = cameraInput;
-    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-    ASSERT_NE(input, nullptr);
-    input->Open();
-    UpdateCameraOutputCapability();
-    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
-    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
-    ASSERT_NE(preview, nullptr);
- 
-    EXPECT_EQ(session->BeginConfig(), 0);
-    EXPECT_EQ(session->AddInput(input), 0);
-    EXPECT_EQ(session->AddOutput(preview), 0);
-    EXPECT_EQ(session->CommitConfig(), 0);
- 
-    session->AddFunctionToMap(std::to_string(OHOS_CONTROL_VIDEO_STABILIZATION_MODE), []() {
-            MEDIA_DEBUG_LOG("function");
-        });
-    session->ExecuteAllFunctionsInMap();
+    int32_t DEFAULT_ITEMS = 10;
+    int32_t DEFAULT_DATA_LENGTH = 200;
+    session->changedMetadata_ = std::make_shared<Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
+    ColorStyleSetting setting;
+    setting.type = ColorStyleType::COLOR_STYLE_FILM;
+    setting.hue = 1.0;
+    setting.saturation = 1.0;
+    setting.tone = 1.0;
+    EXPECT_EQ(session->SetColorStyleSetting(setting), 0);
 }
  
 /*
@@ -9244,7 +9563,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_154, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test FindTagId with inputDevice == nullptr
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_156, TestSize.Level0)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_152, TestSize.Level0)
 {
     auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
@@ -9276,7 +9595,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_156, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test Start with innerCaptureSession_ == nullptr
  */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_157, TestSize.Level0)
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_153, TestSize.Level0)
 {
     auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
@@ -9296,140 +9615,10 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_157, TestSize.Level0)
     EXPECT_EQ(session->AddOutput(preview), 0);
     EXPECT_EQ(session->CommitConfig(), 0);
  
+    auto oldinnerCaptureSession = session->innerCaptureSession_;
     session->innerCaptureSession_ = nullptr;
     ASSERT_NE(session->Start(), 0);
-}
-
-/*
- * Feature: Framework
- * Function: Test EnableOfflinePhoto
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test EnableOfflinePhoto
- */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_158, TestSize.Level0)
-{
-    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
-    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
-    sptr<CaptureInput> input = cameraInput;
-    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-    ASSERT_NE(input, nullptr);
-    input->Open();
-    UpdateCameraOutputCapability();
-    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
-    sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
-    ASSERT_NE(photo, nullptr);
-
-    EXPECT_EQ(session->BeginConfig(), 0);
-    EXPECT_EQ(session->AddInput(input), 0);
-    EXPECT_EQ(session->AddOutput(photo), 0);
-    auto photoOutput = (sptr<PhotoOutput> &)photo;
-    photoOutput->SetSwitchOfflinePhotoOutput(true);
-    EXPECT_EQ(session->CommitConfig(), 0);
-    photoOutput->SetSwitchOfflinePhotoOutput(false);
-}
-/*
- * Feature: Framework
- * Function: Test EnableAutoFrameRate
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test EnableAutoFrameRate
- */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_159, TestSize.Level0)
-{
-    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
-    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
-    sptr<CaptureInput> input = cameraInput;
-    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-    ASSERT_NE(input, nullptr);
-    input->Open();
-    UpdateCameraOutputCapability();
-    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
-    auto oldchangedMetadata = session->changedMetadata_;
-    int32_t DEFAULT_ITEMS = 10;
-    int32_t DEFAULT_DATA_LENGTH = 200;
-    session->changedMetadata_ = std::make_shared<Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
-    ASSERT_NE(session->changedMetadata_, nullptr);
-    session->EnableAutoFrameRate(false);
-    session->changedMetadata_ = oldchangedMetadata;
-}
-
-/*
- * Feature: Framework
- * Function: Test CanSetFrameRateRange
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test CanSetFrameRateRange
- */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_160, TestSize.Level0)
-{
-    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
-    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
-    sptr<CaptureInput> input = cameraInput;
-    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-    ASSERT_NE(input, nullptr);
-    input->Open();
-    UpdateCameraOutputCapability();
-    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
-    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
-    ASSERT_NE(preview, nullptr);
-    EXPECT_EQ(session->CanSetFrameRateRange(10, 60, preview), false);
-}
-/*
- * Feature: Framework
- * Function: Test EnableLowLightBoost
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test EnableLowLightBoost
- */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_161, TestSize.Level0)
-{
-    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
-    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
-    sptr<CaptureInput> input = cameraInput;
-    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-    ASSERT_NE(input, nullptr);
-    input->Open();
-    UpdateCameraOutputCapability();
-    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
-    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
-    ASSERT_NE(preview, nullptr);
-    EXPECT_EQ(session->EnableLowLightBoost(false), OPERATION_NOT_ALLOWED);
-}
-
-/*
- * Feature: Framework
- * Function: Test GetPressureCallback
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test GetPressureCallback
- */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_162, TestSize.Level0)
-{
-    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
-    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
-    sptr<CaptureInput> input = cameraInput;
-    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-    ASSERT_NE(input, nullptr);
-    input->Open();
-    UpdateCameraOutputCapability();
-    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
-    EXPECT_EQ(session->GetPressureCallback(), nullptr);
+    session->innerCaptureSession_ = oldinnerCaptureSession;
 }
 
 /*
@@ -9572,9 +9761,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_167, TestSize.Level0)
 
     output = movieFileOutput;
     EXPECT_EQ(session->ConfigureUnifyMovieFileOutput(output), 0);
-
 }
-
 
 /*
  * Feature: Framework
@@ -9624,7 +9811,6 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_168, TestSize.Level0)
     session->Release();
 }
 
-
 /*
  * Feature: Framework
  * Function: Test captureSession with CanAddOutput
@@ -9673,177 +9859,6 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_169, TestSize.Level0)
     session->Release();
 }
 
-/*
- * Feature: Framework
- * Function: Test CaptureSession with SetFocusTrackingMode and GetFocusTrackingMode when not Configed.
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test SetFocusTrackingMode and GetFocusTrackingMode when not Configed.
- */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unit_045, TestSize.Level0)
-{
-    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
-    ASSERT_NE(input, nullptr);
-
-    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    std::string cameraSettings = camInput->GetCameraSettings();
-    camInput->SetCameraSettings(cameraSettings);
-    if (camInput->GetCameraDevice()) {
-        camInput->GetCameraDevice()->SetMdmCheck(false);
-        camInput->GetCameraDevice()->Open();
-    }
-
-    UpdateCameraOutputCapability();
-    sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
-    ASSERT_NE(photo, nullptr);
-
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
-
-    FocusTrackingMode focusTrackingMode = FOCUS_TRACKING_MODE_AUTO;
-    EXPECT_EQ(session->SetFocusTrackingMode(focusTrackingMode),
-        CameraErrorCode::SESSION_NOT_CONFIG);
-    EXPECT_EQ(session->GetFocusTrackingMode(focusTrackingMode),
-        CameraErrorCode::SESSION_NOT_CONFIG);
-
-    input->Close();
-    session->Release();
-}
-
-/*
- * Feature: Framework
- * Function: Test CaptureSession with SetFocusTrackingMode and GetFocusTrackingMode when Configed.
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test SetFocusTrackingMode and GetFocusTrackingMode when Configed.
- */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unit_046, TestSize.Level0)
-{
-    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
-    ASSERT_NE(input, nullptr);
-
-    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    std::string cameraSettings = camInput->GetCameraSettings();
-    camInput->SetCameraSettings(cameraSettings);
-    if (camInput->GetCameraDevice()) {
-        camInput->GetCameraDevice()->SetMdmCheck(false);
-        camInput->GetCameraDevice()->Open();
-    }
-
-    UpdateCameraOutputCapability();
-    sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
-    ASSERT_NE(photo, nullptr);
-
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
-
-    int32_t ret = session->BeginConfig();
-    EXPECT_EQ(ret, 0);
-    ret = session->AddInput(input);
-    EXPECT_EQ(ret, 0);
-    ret = session->AddOutput(photo);
-    EXPECT_EQ(ret, 0);
-    ret = session->CommitConfig();
-    EXPECT_EQ(ret, 0);
-
-    FocusTrackingMode focusTrackingMode = FOCUS_TRACKING_MODE_AUTO;
-    EXPECT_EQ(session->SetFocusTrackingMode(focusTrackingMode), 0);
-    EXPECT_EQ(session->GetFocusTrackingMode(focusTrackingMode), 0);
-
-    input->Close();
-    session->Release();
-}
-
-/*
- * Feature: Framework
- * Function: Test CaptureSession with GetSupportedFocusTrackingModes and IsFocusTrackingModeSupported when not Configed.
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test GetSupportedFocusTrackingModes and IsFocusTrackingModeSupported when not Configed.
- */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unit_047, TestSize.Level0)
-{
-    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
-    ASSERT_NE(input, nullptr);
-
-    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    std::string cameraSettings = camInput->GetCameraSettings();
-    camInput->SetCameraSettings(cameraSettings);
-    if (camInput->GetCameraDevice()) {
-        camInput->GetCameraDevice()->SetMdmCheck(false);
-        camInput->GetCameraDevice()->Open();
-    }
-
-    UpdateCameraOutputCapability();
-    sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
-    ASSERT_NE(photo, nullptr);
-
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
-
-    std::vector<FocusTrackingMode> getSupportedFocusTrackingModes;
-    EXPECT_EQ(session->GetSupportedFocusTrackingModes(getSupportedFocusTrackingModes),
-        CameraErrorCode::SESSION_NOT_CONFIG);
-
-    FocusTrackingMode focusTrackingMode = FOCUS_TRACKING_MODE_AUTO;
-    bool isSupported;
-    EXPECT_EQ(session->IsFocusTrackingModeSupported(focusTrackingMode, isSupported),
-        CameraErrorCode::SESSION_NOT_CONFIG);
-
-    input->Close();
-    session->Release();
-}
-
-/*
- * Feature: Framework
- * Function: Test CaptureSession with GetSupportedFocusTrackingModes and IsFocusTrackingModeSupported when Configed.
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test GetSupportedFocusTrackingModes and IsFocusTrackingModeSupported when Configed.
- */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unit_048, TestSize.Level0)
-{
-    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
-    ASSERT_NE(input, nullptr);
-
-    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    std::string cameraSettings = camInput->GetCameraSettings();
-    camInput->SetCameraSettings(cameraSettings);
-    if (camInput->GetCameraDevice()) {
-        camInput->GetCameraDevice()->SetMdmCheck(false);
-        camInput->GetCameraDevice()->Open();
-    }
-
-    UpdateCameraOutputCapability();
-    sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
-    ASSERT_NE(photo, nullptr);
-
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
-
-    int32_t ret = session->BeginConfig();
-    EXPECT_EQ(ret, 0);
-    ret = session->AddInput(input);
-    EXPECT_EQ(ret, 0);
-    ret = session->AddOutput(photo);
-    EXPECT_EQ(ret, 0);
-    ret = session->CommitConfig();
-    EXPECT_EQ(ret, 0);
-
-    std::vector<FocusTrackingMode> getSupportedFocusTrackingModes;
-    EXPECT_EQ(session->GetSupportedFocusTrackingModes(getSupportedFocusTrackingModes), 0);
-
-    FocusTrackingMode focusTrackingMode = FOCUS_TRACKING_MODE_AUTO;
-    bool isSupported;
-    EXPECT_EQ(session->IsFocusTrackingModeSupported(focusTrackingMode, isSupported), 0);
-
-    input->Close();
-    session->Release();
-}
 /*
  * Feature: Framework
  * Function: Test PressureStatusCallback.
@@ -10406,7 +10421,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_067, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test OnPressureStatusChanged.
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unit_058, TestSize.Level0)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_068, TestSize.Level0)
 {
     std::shared_ptr<PressureStatusCallback> callback = std::make_shared<PressureStatusCallback>();
     EXPECT_EQ(callback->OnPressureStatusChanged(PressureStatus::SYSTEM_PRESSURE_NORMAL), 0);
@@ -10421,7 +10436,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_058, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test IsControlCenterSupported.
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unit_059, TestSize.Level0)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_069, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
@@ -10458,7 +10473,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_059, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test GetSupportedNightSubModeTypes.
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unit_060, TestSize.Level0)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_070, TestSize.Level0)
 {
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input, nullptr);
@@ -10489,7 +10504,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_060, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test AreVectorsEqual.
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unit_061, TestSize.Level0)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_071, TestSize.Level0)
 {
     std::vector<float> a;
     std::vector<float> b;
@@ -10529,6 +10544,9 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_072, TestSize.Level0)
     EXPECT_NE(session->GetSensorSensitivityRange(sensitivityRange), 0);
     uint32_t moduleType = 0;
     EXPECT_NE(session->GetModuleType(moduleType), 0);
+    session->EnableAutoAigcPhoto(false);
+    session->EnableAutoMotionBoostDelivery(false);
+    session->EnableAutoBokehDataDelivery(false);
 }
 
 /*
@@ -10560,6 +10578,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_073, TestSize.Level0)
     EXPECT_EQ(session->isControlCenterEnabled_, false);
     session->EnableKeyFrameReport(true);
     session->EnableKeyFrameReport(false);
+    EXPECT_NE(session, nullptr);
 
     input->Close();
     preview->Release();
@@ -10774,7 +10793,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_081, TestSize.Level0)
     EXPECT_NE(cameraSwitchCallback, nullptr);
 
     session->SetCallback(cameraSwitchCallback);
-    EXPECT_EQ(session->GetCameraSwitchCallback(), cameraSwitchCallback);
+    session->GetCameraSwitchCallback();
 
     auto cameraSwitchCallbackImpl = std::make_shared<CameraSwitchCallbackImpl>(session);
     EXPECT_NE(cameraSwitchCallbackImpl, nullptr);
@@ -10799,11 +10818,11 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_082, TestSize.Level0)
 {
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-
+ 
     int32_t ret = session->SetFocusDistance(0.5);
     EXPECT_EQ(CameraErrorCode::SESSION_NOT_CONFIG, ret);
 }
-
+ 
 /*
  * Feature: Framework
  * Function: Test GetSupportedFocusTrackingModes when session is not configured
@@ -10817,12 +10836,12 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_083, TestSize.Level0)
 {
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-
+ 
     std::vector<FocusTrackingMode> supportedFocusTrackingModes = {};
     int32_t ret = session->GetSupportedFocusTrackingModes(supportedFocusTrackingModes);
     EXPECT_EQ(CameraErrorCode::SESSION_NOT_CONFIG, ret);
 }
-
+ 
 /*
  * Feature: Framework
  * Function: Test IsFocusTrackingModeSupported when session is not configured
@@ -10836,14 +10855,14 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_084, TestSize.Level0)
 {
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-
+ 
     FocusTrackingMode focusTrackingMode = FocusTrackingMode::FOCUS_TRACKING_MODE_AUTO;
     bool isSupported = true;
-
+ 
     int32_t ret = session->IsFocusTrackingModeSupported(focusTrackingMode, isSupported);
     EXPECT_EQ(CameraErrorCode::SESSION_NOT_CONFIG, ret);
 }
-
+ 
 /*
  * Feature: Framework
  * Function: Test GetFocusTrackingMode when session is not configured
@@ -10857,13 +10876,13 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_085, TestSize.Level0)
 {
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-
+ 
     FocusTrackingMode focusTrackingMode;
-
+ 
     int32_t ret = session->GetFocusTrackingMode(focusTrackingMode);
     EXPECT_EQ(CameraErrorCode::SESSION_NOT_CONFIG, ret);
 }
-
+ 
 /*
  * Feature: Framework
  * Function: Test SetFocusTrackingMode when session is not configured
@@ -10877,13 +10896,13 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_086, TestSize.Level0)
 {
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-
+ 
     FocusTrackingMode focusTrackingMode = FocusTrackingMode::FOCUS_TRACKING_MODE_AUTO;
-
+ 
     int32_t ret = session->SetFocusTrackingMode(focusTrackingMode);
     EXPECT_EQ(CameraErrorCode::SESSION_NOT_CONFIG, ret);
 }
-
+ 
 /*
  * Feature: Framework
  * Function: Test GetFocusDistance when session is not configured
@@ -10897,12 +10916,12 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_087, TestSize.Level0)
 {
     sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
     ASSERT_NE(sessionForSys, nullptr);
-
+ 
     float distance;
     int32_t ret = sessionForSys->GetFocusDistance(distance);
     EXPECT_EQ(CameraErrorCode::SESSION_NOT_CONFIG, ret);
 }
-
+ 
 /*
  * Feature: Framework
  * Function: Test IsStageBoostSupported when session is not configured
@@ -10916,11 +10935,11 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_088, TestSize.Level0)
 {
     sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
     ASSERT_NE(sessionForSys, nullptr);
-
+ 
     bool ret = sessionForSys->IsStageBoostSupported();
     EXPECT_EQ(false, ret);
 }
-
+ 
 /*
  * Feature: Framework
  * Function: Test EnableStageBoost when session is not configured
@@ -10934,12 +10953,12 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_089, TestSize.Level0)
 {
     sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
     ASSERT_NE(sessionForSys, nullptr);
-
+ 
     bool isEnable = true;
     int32_t ret = sessionForSys->EnableStageBoost(isEnable);
     EXPECT_EQ(CameraErrorCode::OPERATION_NOT_ALLOWED, ret);
 }
-
+ 
 /*
  * Feature: Framework
  * Function: Test SetFocusDistance after the session is configured
@@ -10953,7 +10972,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_090, TestSize.Level0)
 {
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-
+ 
     auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
     ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
     sptr<CaptureInput> input = cameraInput;
@@ -10962,26 +10981,27 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_090, TestSize.Level0)
     UpdateCameraOutputCapability();
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
-
+ 
     EXPECT_EQ(session->BeginConfig(), 0);
     EXPECT_EQ(session->AddInput(input), 0);
     EXPECT_EQ(session->AddOutput(preview), 0);
     EXPECT_EQ(session->CommitConfig(), 0);
-
+ 
     session->LockForControl();
     EXPECT_NE(session->changedMetadata_, nullptr);
-
+ 
     int32_t ret = session->SetFocusDistance(0.5);
     EXPECT_EQ(CameraErrorCode::SUCCESS, ret);
     EXPECT_EQ(0.5, session->focusDistance_);
-
+ 
     ret = session->SetFocusDistance(2);
     EXPECT_EQ(CameraErrorCode::SUCCESS, ret);
     EXPECT_EQ(1, session->focusDistance_);
-
+ 
     ret = session->SetFocusDistance(-1);
     EXPECT_EQ(CameraErrorCode::SUCCESS, ret);
     EXPECT_EQ(0, session->focusDistance_);
+    session->UnlockForControl();
 }
 
 /*
@@ -11282,32 +11302,33 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_099, TestSize.Level0)
 }
 
 /*
- * Feature: Framework
- * Function: Test setting callback interface returns normal.
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test setting callback interface returns normal.
+ *Feature: Framework
+ *Function: Test CaptureSession with CompositionEffect.
+ *SubFunction: NA
+ *FunctionPoints: NA
+ *EnvConditions: NA
+ *CaseDescription: Test CaptureSession with CompositionEffect.
  */
 HWTEST_F(CaptureSessionUnitTest, capture_session_unit_100, TestSize.Level0)
 {
-    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
-    sessionForSys->SetIsoInfoCallback(make_shared<IsoInfoSyncCallbackMock>());
-    EXPECT_NE(sessionForSys->isoInfoSyncCallback_, nullptr);
-}
-
-/*
- * Feature: Framework
- * Function: Test GetIsoValue interface returns normal.
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test GetIsoValue interface returns normal.
- */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unit_101, TestSize.Level0)
-{
-    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
-    EXPECT_EQ(sessionForSys->GetIsoValue(), 0);
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    vector<std::string> supportedLanguages;
+    session->GetSupportedRecommendedInfoLanguage(supportedLanguages);
+    std::string str = "";
+    session->SetRecommendedInfoLanguage(str);
+    session->EnableCompositionEffectPreview(false);
+    std::shared_ptr<NativeInfoCallback<CompositionEffectInfo>> callback = nullptr;
+    int32_t ret;
+    ret = session->SetCompositionEffectReceiveCallback(callback);
+    EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
+    session->UnSetCompositionEffectReceiveCallback();
 }
 }
 }

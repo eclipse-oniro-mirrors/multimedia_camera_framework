@@ -73,9 +73,12 @@ void CameraPortraitSessionUnitTest::PortraitSessionControlParams(sptr<PortraitSe
     }
 
     std::shared_ptr<Camera::CameraMetadata> metadata1 = portraitSession->GetMetadata();
-    uint8_t beautyAbility[5] = {OHOS_CAMERA_BEAUTY_TYPE_OFF, OHOS_CAMERA_BEAUTY_TYPE_AUTO,
+    uint8_t beautyAbility[11] = {OHOS_CAMERA_BEAUTY_TYPE_OFF, OHOS_CAMERA_BEAUTY_TYPE_AUTO,
                                 OHOS_CAMERA_BEAUTY_TYPE_SKIN_SMOOTH, OHOS_CAMERA_BEAUTY_TYPE_FACE_SLENDER,
-                                OHOS_CAMERA_BEAUTY_TYPE_SKIN_TONE};
+                                OHOS_CAMERA_BEAUTY_TYPE_SKIN_TONE, OHOS_CAMERA_BEAUTY_TYPE_SKIN_TONEBRIGHT,
+                                OHOS_CAMERA_BEAUTY_TYPE_EYE_BIGEYES, OHOS_CAMERA_BEAUTY_TYPE_HAIR_HAIRLINE,
+                                OHOS_CAMERA_BEAUTY_TYPE_FACE_MAKEUP, OHOS_CAMERA_BEAUTY_TYPE_HEAD_SHRINK,
+                                OHOS_CAMERA_BEAUTY_TYPE_NOSE_SLENDER,};
     OHOS::Camera::DeleteCameraMetadataItem(metadata1->get(), OHOS_ABILITY_SCENE_BEAUTY_TYPES);
     metadata1->addEntry(OHOS_ABILITY_SCENE_BEAUTY_TYPES, beautyAbility,
         sizeof(beautyAbility) / sizeof(beautyAbility[0]));
@@ -141,9 +144,12 @@ void CameraPortraitSessionUnitTest::PortraitSessionFilterParams(sptr<PortraitSes
 void CameraPortraitSessionUnitTest::PortraitSessionBeautyParams(sptr<PortraitSession> portraitSession)
 {
     std::shared_ptr<Camera::CameraMetadata> metadata = portraitSession->GetMetadata();
-        uint8_t beautyAbility[5] = {OHOS_CAMERA_BEAUTY_TYPE_OFF, OHOS_CAMERA_BEAUTY_TYPE_AUTO,
+        uint8_t beautyAbility[11] = {OHOS_CAMERA_BEAUTY_TYPE_OFF, OHOS_CAMERA_BEAUTY_TYPE_AUTO,
             OHOS_CAMERA_BEAUTY_TYPE_SKIN_SMOOTH, OHOS_CAMERA_BEAUTY_TYPE_FACE_SLENDER,
-            OHOS_CAMERA_BEAUTY_TYPE_SKIN_TONE};
+            OHOS_CAMERA_BEAUTY_TYPE_SKIN_TONE,OHOS_CAMERA_BEAUTY_TYPE_SKIN_TONEBRIGHT,
+            OHOS_CAMERA_BEAUTY_TYPE_EYE_BIGEYES, OHOS_CAMERA_BEAUTY_TYPE_HAIR_HAIRLINE,
+            OHOS_CAMERA_BEAUTY_TYPE_FACE_MAKEUP, OHOS_CAMERA_BEAUTY_TYPE_HEAD_SHRINK,
+            OHOS_CAMERA_BEAUTY_TYPE_NOSE_SLENDER,};
     OHOS::Camera::DeleteCameraMetadataItem(metadata->get(), OHOS_ABILITY_SCENE_BEAUTY_TYPES);
     metadata->addEntry(OHOS_ABILITY_SCENE_BEAUTY_TYPES, beautyAbility,
         sizeof(beautyAbility) / sizeof(beautyAbility[0]));
@@ -168,11 +174,8 @@ void CameraPortraitSessionUnitTest::PortraitSessionBeautyParams(sptr<PortraitSes
 sptr<CaptureOutput> CameraPortraitSessionUnitTest::CreatePreviewOutput()
 {
     previewProfile_ = {};
-    if (!cameraManager_) {
-        return nullptr;
-    }
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
-    if (cameras.empty()) {
+    if (!cameraManager_ || cameras.empty()) {
         return nullptr;
     }
     preIsSupportedPortraitmode_ = false;
@@ -208,11 +211,8 @@ sptr<CaptureOutput> CameraPortraitSessionUnitTest::CreatePreviewOutput()
 sptr<CaptureOutput> CameraPortraitSessionUnitTest::CreatePhotoOutput()
 {
     photoProfile_ = {};
-    if (!cameraManager_) {
-        return nullptr;
-    }
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
-    if (cameras.empty()) {
+    if (!cameraManager_ || cameras.empty()) {
         return nullptr;
     }
     phoIsSupportedPortraitmode_ = false;
@@ -352,7 +352,7 @@ HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_001, TestSize.
  * EnvConditions: NA
  * CaseDescription: Test cameraManager to CreateCaptureSession
  */
-HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_002, TestSize.Level1)
+HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_002, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     SceneMode mode = PORTRAIT;
@@ -427,7 +427,7 @@ HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_002, TestSize.
  * EnvConditions: NA
  * CaseDescription: Test GetPortraitEffect and SetPortraitEffect with value
  */
-HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_003, TestSize.Level1)
+HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_003, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     SceneMode mode = PORTRAIT;
@@ -503,7 +503,7 @@ HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_003, TestSize.
  * EnvConditions: NA
  * CaseDescription: Test GetFilter and SetFilter with value
  */
-HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_004, TestSize.Level1)
+HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_004, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     SceneMode mode = PORTRAIT;
@@ -579,7 +579,7 @@ HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_004, TestSize.
  * EnvConditions: NA
  * CaseDescription: Test GetBeauty and SetBeauty with value
  */
-HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_005, TestSize.Level1)
+HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_005, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     SceneMode mode = PORTRAIT;

@@ -30,11 +30,13 @@
 #include "camera_manager.h"
 #include "ipc_skeleton.h"
 #include "securec.h"
+#include <fuzzer/FuzzedDataProvider.h>
+#include "fuzz_util.h"
+#include "test_token.h"
 
-namespace OHOS {
-namespace CameraStandard {
+using namespace OHOS;
+using namespace OHOS::CameraStandard;
 using namespace OHOS::HDI::Camera::V1_0;
-static constexpr int32_t MIN_SIZE_NUM = 256;
 const std::u16string INTERFACE_TOKEN = u"OHOS.CameraStandard.IStreamRepeatCallback";
 const size_t MAX_LENGTH = 64;
 const int32_t ITEMCOUNT = 10;
@@ -42,99 +44,218 @@ const int32_t DATASIZE = 100;
 const int32_t PHOTO_WIDTH = 1280;
 const int32_t PHOTO_HEIGHT = 960;
 const int32_t PHOTO_FORMAT = 2000;
+const int32_t ROTATION_360 = 360;
 
-std::shared_ptr<HStreamRepeat> HStreamRepeatFuzzer::fuzz_{nullptr};
+sptr<HStreamRepeat> g_hStreamRepeat;
 
-void HStreamRepeatFuzzer::HStreamRepeatFuzzTest1(FuzzedDataProvider &fdp)
+void Start(FuzzedDataProvider& fdp)
+{
+    g_hStreamRepeat->Start();
+}
+
+void Stop(FuzzedDataProvider& fdp)
+{
+    g_hStreamRepeat->Stop();
+}
+
+void Release(FuzzedDataProvider& fdp)
+{
+    g_hStreamRepeat->Release();
+}
+
+void SetCallback(FuzzedDataProvider& fdp)
+{
+    auto cb = sptr<MockStreamRepeatCallback>::MakeSptr();
+    g_hStreamRepeat->SetCallback(cb);
+}
+
+void AddDeferredSurface(FuzzedDataProvider& fdp)
+{
+    sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
+    sptr<IBufferProducer> producer = photoSurface->GetProducer();
+    g_hStreamRepeat->AddDeferredSurface(producer);
+}
+
+void ForkSketchStreamRepeat(FuzzedDataProvider& fdp)
+{
+    sptr<IRemoteObject> remote = sptr<MockIRemoteObject>::MakeSptr();
+    g_hStreamRepeat->ForkSketchStreamRepeat(
+        fdp.ConsumeIntegral<int32_t>(), fdp.ConsumeIntegral<int32_t>(), remote, fdp.ConsumeFloatingPoint<float>());
+}
+
+void RemoveSketchStreamRepeat(FuzzedDataProvider& fdp)
+{
+    g_hStreamRepeat->RemoveSketchStreamRepeat();
+}
+
+void UpdateSketchRatio(FuzzedDataProvider& fdp)
+{
+    g_hStreamRepeat->UpdateSketchRatio(fdp.ConsumeFloatingPoint<float>());
+}
+
+void SetFrameRate(FuzzedDataProvider& fdp)
+{
+    g_hStreamRepeat->SetFrameRate(fdp.ConsumeIntegral<int32_t>(), fdp.ConsumeIntegral<int32_t>());
+}
+
+void EnableSecure(FuzzedDataProvider& fdp)
+{
+    g_hStreamRepeat->EnableSecure(fdp.ConsumeBool());
+}
+
+void EnableStitching(FuzzedDataProvider& fdp)
+{
+    g_hStreamRepeat->EnableStitching(fdp.ConsumeBool());
+}
+
+void SetMirror(FuzzedDataProvider& fdp)
+{
+    g_hStreamRepeat->SetMirror(fdp.ConsumeBool());
+}
+
+void AttachMetaSurface(FuzzedDataProvider& fdp)
+{
+    sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
+    sptr<IBufferProducer> producer = photoSurface->GetProducer();
+    g_hStreamRepeat->AttachMetaSurface(producer, fdp.ConsumeIntegral<int32_t>());
+}
+
+void SetCameraRotation(FuzzedDataProvider& fdp)
+{
+    g_hStreamRepeat->SetCameraRotation(fdp.ConsumeBool(), fdp.ConsumeIntegral<int32_t>());
+}
+
+void SetCameraApi(FuzzedDataProvider& fdp)
+{
+    g_hStreamRepeat->SetCameraApi(fdp.ConsumeIntegral<uint32_t>());
+}
+
+void GetMirror(FuzzedDataProvider& fdp)
+{
+    bool isEnable;
+    g_hStreamRepeat->GetMirror(isEnable);
+}
+
+void UnSetCallback(FuzzedDataProvider& fdp)
+{
+    g_hStreamRepeat->UnSetCallback();
+}
+
+void SetOutputSettings(FuzzedDataProvider& fdp)
+{
+    MovieSettings setting { PickEnumInRange(fdp, VideoCodecType::VIDEO_ENCODE_TYPE_HEVC),
+        fdp.ConsumeIntegral<int32_t>(), fdp.ConsumeBool(),
+        { fdp.ConsumeFloatingPoint<float>(), fdp.ConsumeFloatingPoint<float>(), fdp.ConsumeFloatingPoint<float>() },
+        fdp.ConsumeBool(), fdp.ConsumeIntegral<int32_t>() };
+    g_hStreamRepeat->SetOutputSettings(setting);
+}
+
+void GetSupportedVideoCodecTypes(FuzzedDataProvider& fdp)
+{
+    std::vector<int32_t> supportedTypes;
+    g_hStreamRepeat->GetSupportedVideoCodecTypes(supportedTypes);
+}
+
+void SetBandwidthCompression(FuzzedDataProvider& fdp)
+{
+    g_hStreamRepeat->SetBandwidthCompression(fdp.ConsumeBool());
+}
+
+void RemoveDeferredSurface(FuzzedDataProvider& fdp)
+{
+    g_hStreamRepeat->RemoveDeferredSurface();
+}
+
+void HStreamRepeatFuzzTest1(FuzzedDataProvider& fdp)
 {
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility;
     sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator;
-    fuzz_->LinkInput(streamOperator, cameraAbility);
-    StreamInfo_V1_1 streamInfo;
-    fuzz_->SetVideoStreamInfo(streamInfo);
-    fuzz_->SetStreamInfo(streamInfo);
+    g_hStreamRepeat->LinkInput(streamOperator, cameraAbility);
+    StreamInfo_V1_5 streamInfo;
+    g_hStreamRepeat->SetVideoStreamInfo(streamInfo);
+    g_hStreamRepeat->SetStreamInfo(streamInfo);
     sptr<OHOS::IBufferProducer> metaProducer;
-    fuzz_->SetMetaProducer(metaProducer);
+    g_hStreamRepeat->SetMetaProducer(metaProducer);
     SketchStatus status = SketchStatus::STOPED;
-    fuzz_->UpdateSketchStatus(status);
+    g_hStreamRepeat->UpdateSketchStatus(status);
     std::shared_ptr<OHOS::Camera::CameraMetadata> settings;
     settings = std::make_shared<OHOS::Camera::CameraMetadata>(ITEMCOUNT, DATASIZE);
-    fuzz_->StartSketchStream(settings);
+    g_hStreamRepeat->StartSketchStream(settings);
     camera_position_enum_t cameraPosition = OHOS_CAMERA_POSITION_FRONT;
-    fuzz_->SetUsedAsPosition(cameraPosition);
-    fuzz_->Start(settings, fdp.ConsumeBool());
-    fuzz_->Start();
-    fuzz_->OnFrameStarted();
-    fuzz_->OnFrameEnded(fdp.ConsumeIntegral<int32_t>());
-    CaptureEndedInfoExt captureEndedInfo = {1, 100, true, "video123"};
-    fuzz_->OnDeferredVideoEnhancementInfo(captureEndedInfo);
-    fuzz_->OnFrameError(fdp.ConsumeIntegral<int32_t>());
-    fuzz_->OnSketchStatusChanged(status);
-    fuzz_->Stop();
-    fuzz_->Release();
-    fuzz_->ReleaseStream(fdp.ConsumeBool());
+    g_hStreamRepeat->SetUsedAsPosition(cameraPosition);
+    g_hStreamRepeat->Start(settings, fdp.ConsumeBool());
+    g_hStreamRepeat->Start();
+    g_hStreamRepeat->OnFrameStarted();
+    g_hStreamRepeat->OnFrameEnded(fdp.ConsumeIntegral<int32_t>());
+    CaptureEndedInfoExt captureEndedInfo = { 1, 100, true, "video123" };
+    g_hStreamRepeat->OnDeferredVideoEnhancementInfo(captureEndedInfo);
+    g_hStreamRepeat->OnFrameError(fdp.ConsumeIntegral<int32_t>());
+    g_hStreamRepeat->OnSketchStatusChanged(status);
+    g_hStreamRepeat->Stop();
+    g_hStreamRepeat->Release();
+    g_hStreamRepeat->ReleaseStream(fdp.ConsumeBool());
 }
 
-void HStreamRepeatFuzzer::HStreamRepeatFuzzTest2(FuzzedDataProvider &fdp)
+void HStreamRepeatFuzzTest2(FuzzedDataProvider& fdp)
 {
     sptr<Surface> photoSurface = Surface::CreateSurfaceAsConsumer("hstreamrepeat");
     CHECK_RETURN_ELOG(!photoSurface, "CreateSurfaceAsConsumer Error");
     sptr<IBufferProducer> producer = photoSurface->GetProducer();
-    fuzz_->AddDeferredSurface(producer);
-    fuzz_->SetFrameRate(fdp.ConsumeIntegral<int32_t>(), fdp.ConsumeIntegral<int32_t>());
-    fuzz_->SetMirror(fdp.ConsumeBool());
-    fuzz_->SetMirrorForLivePhoto(fdp.ConsumeBool(), fdp.ConsumeIntegral<int32_t>());
+    g_hStreamRepeat->AddDeferredSurface(producer);
+    g_hStreamRepeat->SetFrameRate(fdp.ConsumeIntegral<int32_t>(), fdp.ConsumeIntegral<int32_t>());
+    g_hStreamRepeat->SetMirror(fdp.ConsumeBool());
+    g_hStreamRepeat->SetMirrorForLivePhoto(fdp.ConsumeBool(), fdp.ConsumeIntegral<int32_t>());
     uint8_t randomNum = fdp.ConsumeIntegral<uint8_t>();
-    std::vector<std::int32_t> test = {0, 90, 180, 270, 360};
+    std::vector<std::int32_t> test = { 0, 90, 180, 270, 360 };
     std::int32_t rotation(test[randomNum % test.size()]);
-    fuzz_->SetCameraRotation(fdp.ConsumeBool(), rotation);
-    fuzz_->SetCameraApi(fdp.ConsumeIntegral<uint32_t>());
+    g_hStreamRepeat->SetCameraRotation(fdp.ConsumeBool(), rotation);
+    g_hStreamRepeat->SetCameraApi(fdp.ConsumeIntegral<uint32_t>());
     std::string deviceClass;
-    fuzz_->SetPreviewRotation(deviceClass);
-    fuzz_->UpdateSketchRatio(fdp.ConsumeBool());
-    fuzz_->GetSketchStream();
-    fuzz_->GetRepeatStreamType();
-    fuzz_->SyncTransformToSketch();
-    fuzz_->SetStreamTransform(fdp.ConsumeIntegral<int>());
+    g_hStreamRepeat->SetPreviewRotation(deviceClass);
+    g_hStreamRepeat->UpdateSketchRatio(fdp.ConsumeBool());
+    g_hStreamRepeat->GetSketchStream();
+    g_hStreamRepeat->GetRepeatStreamType();
+    g_hStreamRepeat->SyncTransformToSketch();
+    g_hStreamRepeat->SetStreamTransform(fdp.ConsumeIntegral<int>());
     camera_position_enum_t cameraPosition = OHOS_CAMERA_POSITION_FRONT;
-    int32_t sensorOrientation = ((fdp.ConsumeIntegral<int32_t>() % 360) + 360) % 360;
-    fuzz_->ProcessVerticalCameraPosition(sensorOrientation, cameraPosition);
+    int32_t sensorOrientation = ((fdp.ConsumeIntegral<int32_t>() % ROTATION_360) + ROTATION_360) % ROTATION_360;
+    g_hStreamRepeat->ProcessVerticalCameraPosition(sensorOrientation, cameraPosition);
     int32_t streamRotation = fdp.ConsumeIntegral<int32_t>();
-    fuzz_->ProcessCameraPosition(streamRotation, cameraPosition);
-    fuzz_->ProcessFixedTransform(sensorOrientation, cameraPosition);
-    fuzz_->ProcessFixedDiffDeviceTransform(sensorOrientation, cameraPosition);
-    fuzz_->ProcessCameraSetRotation(sensorOrientation);
+    g_hStreamRepeat->ProcessCameraPosition(streamRotation, cameraPosition);
+    g_hStreamRepeat->ProcessFixedTransform(sensorOrientation, cameraPosition);
+    g_hStreamRepeat->ProcessFixedDiffDeviceTransform(sensorOrientation, cameraPosition);
+    g_hStreamRepeat->ProcessCameraSetRotation(sensorOrientation);
     camera_position_enum_t cameraPosition1 = OHOS_CAMERA_POSITION_BACK;
-    int32_t sensorOrientation1 = ((fdp.ConsumeIntegral<int32_t>() % 360) + 360) % 360;
-    fuzz_->ProcessVerticalCameraPosition(sensorOrientation1, cameraPosition1);
+    int32_t sensorOrientation1 = ((fdp.ConsumeIntegral<int32_t>() % ROTATION_360) + ROTATION_360) % ROTATION_360;
+    g_hStreamRepeat->ProcessVerticalCameraPosition(sensorOrientation1, cameraPosition1);
     int32_t streamRotation1 = fdp.ConsumeIntegral<int32_t>();
-    fuzz_->ProcessCameraPosition(streamRotation1, cameraPosition1);
-    fuzz_->ProcessFixedTransform(sensorOrientation1, cameraPosition1);
-    fuzz_->ProcessFixedDiffDeviceTransform(sensorOrientation1, cameraPosition1);
-    fuzz_->ProcessCameraSetRotation(sensorOrientation1);
+    g_hStreamRepeat->ProcessCameraPosition(streamRotation1, cameraPosition1);
+    g_hStreamRepeat->ProcessFixedTransform(sensorOrientation1, cameraPosition1);
+    g_hStreamRepeat->ProcessFixedDiffDeviceTransform(sensorOrientation1, cameraPosition1);
+    g_hStreamRepeat->ProcessCameraSetRotation(sensorOrientation1);
 }
 
-void HStreamRepeatFuzzer::HStreamRepeatFuzzTest3(FuzzedDataProvider &fdp)
+void HStreamRepeatFuzzTest3(FuzzedDataProvider& fdp)
 {
     sptr<Surface> photoSurface = Surface::CreateSurfaceAsConsumer("hstreamrepeat");
     CHECK_RETURN_ELOG(!photoSurface, "CreateSurfaceAsConsumer Error");
     sptr<IBufferProducer> producer = photoSurface->GetProducer();
     std::shared_ptr<OHOS::Camera::CameraMetadata> settings;
     settings = std::make_shared<OHOS::Camera::CameraMetadata>(ITEMCOUNT, DATASIZE);
-    fuzz_->OperatePermissionCheck(fdp.ConsumeIntegral<int>());
-    fuzz_->OpenVideoDfxSwitch(settings);
-    fuzz_->EnableSecure(fdp.ConsumeBool());
-    fuzz_->UpdateVideoSettings(settings);
-    fuzz_->UpdateFrameRateSettings(settings);
+    g_hStreamRepeat->OperatePermissionCheck(fdp.ConsumeIntegral<int>());
+    g_hStreamRepeat->OpenVideoDfxSwitch(settings);
+    g_hStreamRepeat->EnableSecure(fdp.ConsumeBool());
+    g_hStreamRepeat->UpdateVideoSettings(settings);
+    g_hStreamRepeat->UpdateFrameRateSettings(settings);
     std::shared_ptr<OHOS::Camera::CameraMetadata> dynamicSetting;
-    fuzz_->UpdateFrameMuteSettings(settings, dynamicSetting);
+    g_hStreamRepeat->UpdateFrameMuteSettings(settings, dynamicSetting);
 #ifdef NOTIFICATION_ENABLE
-    fuzz_->UpdateBeautySettings(settings);
-    fuzz_->CancelNotification();
-    fuzz_->IsNeedBeautyNotification();
+    g_hStreamRepeat->UpdateBeautySettings(settings);
+    g_hStreamRepeat->CancelNotification();
+    g_hStreamRepeat->IsNeedBeautyNotification();
 #endif
     sptr<IStreamCapture> photoOutput = nullptr;
-    fuzz_->AttachMetaSurface(producer, fdp.ConsumeIntegral<int32_t>());
+    g_hStreamRepeat->AttachMetaSurface(producer, fdp.ConsumeIntegral<int32_t>());
     std::shared_ptr<StreamRepeatCallbackStub> callback = std::make_shared<HStreamRepeatCallbackStubDemo>();
     MessageParcel data;
     MessageParcel reply;
@@ -146,37 +267,62 @@ void HStreamRepeatFuzzer::HStreamRepeatFuzzTest3(FuzzedDataProvider &fdp)
     data.WriteString16(Str8ToStr16(fdp.ConsumeRandomLengthString(MAX_LENGTH)));
     data.WriteUint32(fdp.ConsumeIntegral<uint32_t>());
     callback->OnRemoteRequest(
-        static_cast<uint32_t>(IStreamRepeatCallbackIpcCode::COMMAND_ON_DEFERRED_VIDEO_ENHANCEMENT_INFO),
-        data,
-        reply,
+        static_cast<uint32_t>(IStreamRepeatCallbackIpcCode::COMMAND_ON_DEFERRED_VIDEO_ENHANCEMENT_INFO), data, reply,
         option);
 }
 
-void Test(uint8_t *data, size_t size)
+void Init()
 {
-    FuzzedDataProvider fdp(data, size);
-    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
-        return;
-    }
-    auto hstreamRepeat = std::make_unique<HStreamRepeatFuzzer>();
-    if (hstreamRepeat == nullptr) {
-        MEDIA_INFO_LOG("hstreamRepeat is null");
-        return;
-    }
-    HStreamRepeatFuzzer::fuzz_ =
-        std::make_shared<HStreamRepeat>(nullptr, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT, RepeatStreamType::PREVIEW);
-    CHECK_RETURN_ELOG(!HStreamRepeatFuzzer::fuzz_, "Create fuzz_ Error");
-    hstreamRepeat->HStreamRepeatFuzzTest1(fdp);
-    hstreamRepeat->HStreamRepeatFuzzTest2(fdp);
-    hstreamRepeat->HStreamRepeatFuzzTest3(fdp);
+    CHECK_RETURN_ELOG(!TestToken().GetAllCameraPermission(), "Get permission fail");
+    sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
+    sptr<IBufferProducer> producer = photoSurface->GetProducer();
+    g_hStreamRepeat = new HStreamRepeat(producer, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT, RepeatStreamType::PREVIEW);
 }
 
-}  // namespace CameraStandard
-}  // namespace OHOS
-
-/* Fuzzer entry point */
-extern "C" int LLVMFuzzerTestOneInput(uint8_t *data, size_t size)
+void Test(FuzzedDataProvider& fdp)
 {
-    OHOS::CameraStandard::Test(data, size);
+    CHECK_RETURN_ELOG(g_hStreamRepeat == nullptr, "g_hStreamMetadata is nullptr");
+    auto func = fdp.PickValueInArray({
+        Start,
+        Stop,
+        Release,
+        SetCallback,
+        AddDeferredSurface,
+        ForkSketchStreamRepeat,
+        RemoveSketchStreamRepeat,
+        UpdateSketchRatio,
+        SetFrameRate,
+        EnableSecure,
+        EnableStitching,
+        SetMirror,
+        AttachMetaSurface,
+        SetCameraRotation,
+        SetCameraApi,
+        GetMirror,
+        UnSetCallback,
+        SetOutputSettings,
+        GetSupportedVideoCodecTypes,
+        SetBandwidthCompression,
+        RemoveDeferredSurface,
+        HStreamRepeatFuzzTest1,
+        HStreamRepeatFuzzTest2,
+        HStreamRepeatFuzzTest3,
+    });
+    func(fdp);
+}
+
+extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
+{
+    FuzzedDataProvider fdp(data, size);
+    Test(fdp);
+    return 0;
+}
+
+extern "C" int LLVMFuzzerInitialize(int* argc, char*** argv)
+{
+    if (SetSelfTokenID(718336240ull | (1ull << 32)) < 0) {
+        return -1;
+    }
+    Init();
     return 0;
 }

@@ -37,8 +37,8 @@ CameraPhotoProxy::CameraPhotoProxy()
     bufferHandle_ = nullptr;
     fileSize_ = 0;
     isDeferredPhoto_ = 0;
-    longitude_ = -1.0;
-    latitude_ = -1.0;
+    longitude_ = 0.0;
+    latitude_ = 0.0;
     captureId_ = 0;
     burstSeqId_ = -1;
     imageFormat_ = 0;
@@ -49,19 +49,19 @@ CameraPhotoProxy::CameraPhotoProxy(BufferHandle* bufferHandle, int32_t format,
     int32_t photoWidth, int32_t photoHeight, bool isHighQuality, int32_t captureId)
 {
     MEDIA_INFO_LOG("CameraPhotoProxy");
+    bufferHandle_ = bufferHandle;
     format_ = format;
     photoWidth_ = photoWidth;
     photoHeight_ = photoHeight;
     fileSize_ = 0;
-    bufferHandle_ = bufferHandle;
     isHighQuality_ = isHighQuality;
     deferredProcType_ = 0;
     isDeferredPhoto_ = 0;
-    longitude_ = -1.0;
-    latitude_ = -1.0;
-    imageFormat_ = 0;
+    longitude_ = 0.0;
+    latitude_ = 0.0;
     captureId_ = captureId;
     burstSeqId_ = -1;
+    imageFormat_ = 0;
     cloudImageEnhanceFlag_ = 0;
     MEDIA_INFO_LOG("format = %{public}d, width = %{public}d, height = %{public}d",
         format_, photoWidth, photoHeight);
@@ -79,8 +79,8 @@ CameraPhotoProxy::CameraPhotoProxy(BufferHandle* bufferHandle, int32_t format,
     isHighQuality_ = isHighQuality;
     deferredProcType_ = 0;
     isDeferredPhoto_ = 0;
-    longitude_ = -1.0;
-    latitude_ = -1.0;
+    longitude_ = 0.0;
+    latitude_ = 0.0;
     captureId_ = captureId;
     burstSeqId_ = burstSeqId;
     imageFormat_ = 0;
@@ -156,9 +156,7 @@ void CameraPhotoProxy::WriteToParcel(MessageParcel &parcel) const
     if (bufferHandle_) {
         MEDIA_DEBUG_LOG("PhotoProxy::WriteToParcel %{public}d", bufferHandle_->fd);
         bool ret = WriteBufferHandle(parcel, *bufferHandle_);
-        if (ret == false) {
-            MEDIA_ERR_LOG("Failure, Reason: WriteBufferHandle return false");
-        }
+        CHECK_PRINT_ELOG(ret == false, "Failure, Reason: WriteBufferHandle return false");
     } else {
         MEDIA_ERR_LOG("PhotoProxy::WriteToParcel without bufferHandle_");
     }

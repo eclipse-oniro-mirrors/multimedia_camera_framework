@@ -21,8 +21,8 @@ namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
 struct DpsInfo {
-    std::atomic<bool> initialized_{false};
-    std::mutex mutex{};
+    std::atomic<bool> initialized_ {false};
+    std::mutex mutex;
     std::shared_ptr<CommandServer> server;
     std::shared_ptr<SessionManager> session;
     std::shared_ptr<SchedulerManager> scheduler;

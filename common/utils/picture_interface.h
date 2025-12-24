@@ -41,7 +41,6 @@ public:
     virtual void Create(sptr<SurfaceBuffer> &surfaceBuffer) = 0;
     virtual void SetAuxiliaryPicture(sptr<SurfaceBuffer> &surfaceBuffer,
         CameraAuxiliaryPictureType type) = 0;
-    virtual void CreateWithDeepCopySurfaceBuffer(sptr<SurfaceBuffer> &surfaceBuffer) = 0;
     static PictureIntf* Unmarshalling(Parcel &data)
     {
         return nullptr;
@@ -50,6 +49,7 @@ public:
     virtual int32_t SetExifMetadata(sptr<SurfaceBuffer> &surfaceBuffer) = 0;
     virtual bool SetMaintenanceData(sptr<SurfaceBuffer> &surfaceBuffer) = 0;
     virtual void RotatePicture() = 0;
+    virtual uint32_t SetXtStyleMetadataBlob(const uint8_t *source, const uint32_t bufferSize) = 0;
     virtual std::shared_ptr<Media::Picture> GetPicture() const = 0;
 };
 typedef PictureIntf* (*GetPictureAdapter)();

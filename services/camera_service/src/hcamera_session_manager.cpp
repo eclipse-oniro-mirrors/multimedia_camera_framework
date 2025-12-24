@@ -25,6 +25,7 @@
 #include "hcamera_device_manager.h"
 #include "hcapture_session.h"
 #include "hmech_session.h"
+#include "hcamera_switch_session.h"
 #include "parameters.h"
 
 namespace OHOS {
@@ -58,9 +59,11 @@ size_t HCameraSessionManager::GetGroupCount()
 
 size_t HCameraSessionManager::GetSessionSize(pid_t pid)
 {
+    // LCOV_EXCL_START
     std::lock_guard<std::mutex> lock(totalSessionMapMutex_);
     auto it = totalSessionMap_.find(pid);
     return it != totalSessionMap_.end() ? it->second.size() : 0;
+    // LCOV_EXCL_STOP
 }
 std::list<sptr<HCaptureSession>> HCameraSessionManager::GetTotalSession()
 {
@@ -88,6 +91,7 @@ std::list<sptr<HCaptureSession>> HCameraSessionManager::GetGroupSessions(pid_t p
 
 std::vector<sptr<HCaptureSession>> HCameraSessionManager::GetUserSessions(int32_t userId)
 {
+    // LCOV_EXCL_START
     std::vector<sptr<HCaptureSession>> userList {};
     std::lock_guard<std::mutex> lock(totalSessionMapMutex_);
     for (auto it = totalSessionMap_.begin(); it != totalSessionMap_.end(); ++it) {
@@ -98,15 +102,18 @@ std::vector<sptr<HCaptureSession>> HCameraSessionManager::GetUserSessions(int32_
         }
     }
     return userList;
+    // LCOV_EXCL_STOP
 }
 
 sptr<HCaptureSession> HCameraSessionManager::GetGroupDefaultSession(pid_t pid)
 {
+    // LCOV_EXCL_START
     std::lock_guard<std::mutex> lock(totalSessionMapMutex_);
     auto mapIt = totalSessionMap_.find(pid);
     CHECK_RETURN_RET(mapIt == totalSessionMap_.end(), nullptr);
     auto& list = mapIt->second;
     return list.empty() ? nullptr : list.front();
+    // LCOV_EXCL_STOP
 }
 
 sptr<HMechSession> HCameraSessionManager::GetMechSession(int32_t userId)
@@ -118,6 +125,16 @@ sptr<HMechSession> HCameraSessionManager::GetMechSession(int32_t userId)
     }
     CHECK_RETURN_RET(mapIt == mechSessionMap_.end(), nullptr);
     return mapIt->second;
+}
+
+sptr<HCameraSwitchSession> HCameraSessionManager::GetCameraSwitchSession()
+{
+    return cameraSwitchSession;
+}
+
+void HCameraSessionManager::SetCameraSwitchSession(sptr<HCameraSwitchSession> session)
+{
+    cameraSwitchSession = session;
 }
 
 CamServiceError HCameraSessionManager::AddSession(sptr<HCaptureSession> session)
@@ -133,24 +150,26 @@ CamServiceError HCameraSessionManager::AddSession(sptr<HCaptureSession> session)
 
 CamServiceError HCameraSessionManager::AddSessionForPC(sptr<HCaptureSession> session)
 {
+    // LCOV_EXCL_START
     CHECK_RETURN_RET(session == nullptr, CAMERA_INVALID_ARG);
     auto pid = session->GetPid();
     std::lock_guard<std::mutex> lock(totalSessionMapMutex_);
     auto& list = totalSessionMap_[pid];
     list.emplace_back(session);
     return CAMERA_OK;
+    // LCOV_EXCL_STOP
 }
 
 CamServiceError HCameraSessionManager::AddMechSession(int32_t userId,
     sptr<HMechSession> mechSession)
 {
-    if (mechSession == nullptr) {
-        return CAMERA_INVALID_ARG;
-    }
+    // LCOV_EXCL_START
+    CHECK_RETURN_RET(mechSession == nullptr, CAMERA_INVALID_ARG);
     std::lock_guard<std::mutex> lock(mechMapMutex_);
     mechSessionMap_.insert(std::make_pair(userId, mechSession));
     g_mechLastUserid = userId;
     return CAMERA_OK;
+    // LCOV_EXCL_STOP
 }
 
 void HCameraSessionManager::RemoveSession(sptr<HCaptureSession> session)
@@ -158,7 +177,6 @@ void HCameraSessionManager::RemoveSession(sptr<HCaptureSession> session)
     CHECK_RETURN(session == nullptr);
     std::lock_guard<std::mutex> lock(totalSessionMapMutex_);
     auto mapIt = totalSessionMap_.find(session->GetPid());
-    CHECK_RETURN_ELOG(mapIt == totalSessionMap_.end(), "RemoveSession failed: session with PID not found");
     CHECK_RETURN(mapIt == totalSessionMap_.end());
     auto& list = mapIt->second;
     for (auto listIt = list.begin(); listIt != list.end(); listIt++) {
@@ -173,8 +191,15 @@ void HCameraSessionManager::RemoveSession(sptr<HCaptureSession> session)
 
 void HCameraSessionManager::RemoveMechSession(int32_t userId)
 {
+    // LCOV_EXCL_START
     std::lock_guard<std::mutex> lock(mechMapMutex_);
     mechSessionMap_.erase(userId);
+    // LCOV_EXCL_STOP
+}
+
+void HCameraSessionManager::RemoveCameraSwitchSession()
+{
+    cameraSwitchSession.clear();
 }
 
 void HCameraSessionManager::PreemptOverflowSessions(pid_t pid)

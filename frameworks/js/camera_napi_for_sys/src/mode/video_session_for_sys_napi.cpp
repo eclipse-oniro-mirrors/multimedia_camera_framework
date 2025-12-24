@@ -19,6 +19,7 @@
 #include "input/camera_manager_for_sys.h"
 #include "mode/video_session_for_sys_napi.h"
 #include "session/video_session.h"
+#include "camera_napi_param_parser.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -44,6 +45,11 @@ void VideoSessionForSysNapi::VideoSessionForSysNapiDestructor(napi_env env, void
     }
 }
 
+const std::vector<napi_property_descriptor> VideoSessionForSysNapi::video_session_sys_props = {
+    DECLARE_NAPI_FUNCTION("isExternalCameraLensBoostSupported", VideoSessionForSysNapi::IsExternalCameraLensBoostSupported),
+    DECLARE_NAPI_FUNCTION("enableExternalCameraLensBoost", VideoSessionForSysNapi::EnableExternalCameraLensBoost)
+};
+
 void VideoSessionForSysNapi::Init(napi_env env)
 {
     MEDIA_DEBUG_LOG("Init is called");
@@ -56,7 +62,8 @@ void VideoSessionForSysNapi::Init(napi_env env)
         auto_exposure_props, focus_props, CameraSessionForSysNapi::focus_sys_props, zoom_props,
         CameraSessionForSysNapi::zoom_sys_props, filter_props, beauty_sys_props, color_effect_sys_props,
         quality_prioritization_props, macro_props, color_management_props, stabilization_props, preconfig_props,
-        aperture_sys_props, color_reservation_sys_props, effect_suggestion_sys_props };
+        aperture_sys_props, color_reservation_sys_props, effect_suggestion_sys_props, stage_boost_props,
+        VideoSessionForSysNapi::video_session_sys_props, manual_focus_sys_props};
     std::vector<napi_property_descriptor> video_session_props = CameraNapiUtils::GetPropertyDescriptor(descriptors);
     status = napi_define_class(env, VIDEO_SESSION_FOR_SYS_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
                                VideoSessionForSysNapiConstructor, nullptr,
@@ -70,7 +77,7 @@ void VideoSessionForSysNapi::Init(napi_env env)
 
 napi_value VideoSessionForSysNapi::CreateCameraSession(napi_env env)
 {
-    MEDIA_DEBUG_LOG("VideoSessionForSysNapi::CreateCameraSession is called");
+    MEDIA_DEBUG_LOG("CreateCameraSession is called");
     CAMERA_SYNC_TRACE;
     napi_status status;
     napi_value result = nullptr;
@@ -84,20 +91,20 @@ napi_value VideoSessionForSysNapi::CreateCameraSession(napi_env env)
         sCameraSessionForSys_ =
             CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(SceneMode::VIDEO);
         if (sCameraSessionForSys_ == nullptr) {
-            MEDIA_ERR_LOG("VideoSessionForSysNapi::CreateCameraSession Failed to create instance");
+            MEDIA_ERR_LOG("Failed to create Video session instance");
             napi_get_undefined(env, &result);
             return result;
         }
         status = napi_new_instance(env, constructor, 0, nullptr, &result);
         sCameraSessionForSys_ = nullptr;
         if (status == napi_ok && result != nullptr) {
-            MEDIA_DEBUG_LOG("VideoSessionForSysNapi::CreateCameraSession success to create napi instance");
+            MEDIA_DEBUG_LOG("success to create Video session napi instance");
             return result;
         } else {
-            MEDIA_ERR_LOG("VideoSessionForSysNapi::CreateCameraSession Failed to create napi instance");
+            MEDIA_ERR_LOG("Failed to create Video session napi instance");
         }
     }
-    MEDIA_ERR_LOG("VideoSessionForSysNapi::CreateCameraSession Failed to create napi instance last");
+    MEDIA_ERR_LOG("Failed to create Video session napi instance last");
     napi_get_undefined(env, &result);
     return result;
 }
@@ -113,18 +120,17 @@ napi_value VideoSessionForSysNapi::VideoSessionForSysNapiConstructor(napi_env en
     CAMERA_NAPI_GET_JS_OBJ_WITH_ZERO_ARGS(env, info, status, thisVar);
 
     if (status == napi_ok && thisVar != nullptr) {
-        std::unique_ptr<VideoSessionForSysNapi> videoSessionObj = std::make_unique<VideoSessionForSysNapi>();
-        videoSessionObj->env_ = env;
+        std::unique_ptr<VideoSessionForSysNapi> obj = std::make_unique<VideoSessionForSysNapi>();
+        obj->env_ = env;
         CHECK_RETURN_RET_ELOG(sCameraSessionForSys_ == nullptr, result, "sCameraSessionForSys_ is null");
-        videoSessionObj->videoSessionForSys_ = static_cast<VideoSessionForSys*>(sCameraSessionForSys_.GetRefPtr());
-        videoSessionObj->cameraSessionForSys_ = videoSessionObj->videoSessionForSys_;
-        videoSessionObj->cameraSession_ = videoSessionObj->videoSessionForSys_;
-        CHECK_RETURN_RET_ELOG(videoSessionObj->videoSessionForSys_ == nullptr, result,
-            "videoSessionForSys_ is null");
-        status = napi_wrap(env, thisVar, reinterpret_cast<void*>(videoSessionObj.get()),
+        obj->videoSessionForSys_ = static_cast<VideoSessionForSys*>(sCameraSessionForSys_.GetRefPtr());
+        obj->cameraSessionForSys_ = obj->videoSessionForSys_;
+        obj->cameraSession_ = obj->videoSessionForSys_;
+        CHECK_RETURN_RET_ELOG(obj->videoSessionForSys_ == nullptr, result, "videoSessionForSys_ is null");
+        status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
             VideoSessionForSysNapi::VideoSessionForSysNapiDestructor, nullptr, nullptr);
         if (status == napi_ok) {
-            videoSessionObj.release();
+            obj.release();
             return thisVar;
         } else {
             MEDIA_ERR_LOG("VideoSessionForSysNapi Failure wrapping js to native napi");
@@ -150,8 +156,8 @@ void VideoSessionForSysNapi::UnregisterFocusTrackingInfoCallbackListener(const s
     napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
     MEDIA_DEBUG_LOG("%{public}s is called", __FUNCTION__);
-    CHECK_RETURN_ELOG(focusTrackingInfoCallback_ == nullptr,
-        "%{public}s focusTrackingInfoCallback_ is nullptr", __FUNCTION__);
+    CHECK_RETURN_ELOG(
+        focusTrackingInfoCallback_ == nullptr, "%{public}s focusTrackingInfoCallback_ is nullptr", __FUNCTION__);
     focusTrackingInfoCallback_->RemoveCallbackRef(eventName, callback);
 }
 
@@ -189,14 +195,13 @@ void FocusTrackingCallbackListener::OnFocusTrackingInfoCallback(FocusTrackingInf
 {
     MEDIA_DEBUG_LOG("%{public}s is called", __FUNCTION__);
 
-    ExecuteCallbackScopeSafe("focusTrackingInfoAvailable", [&]() {
-        napi_value callbackObj;
-        napi_value errCode;
+    napi_value result[ARGS_ONE] = { nullptr };
+    napi_value retVal = nullptr;
 
-        callbackObj = CameraNapiFocusTrackingInfo(focusTrackingInfo).GenerateNapiValue(env_);
-        errCode = CameraNapiUtils::GetUndefinedValue(env_);
-        return ExecuteCallbackData(env_, errCode, callbackObj);
-    });
+    result[PARAM0] = CameraNapiFocusTrackingInfo(focusTrackingInfo).GenerateNapiValue(env_);
+
+    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_ONE, .argv = result, .result = &retVal };
+    ExecuteCallback("focusTrackingInfoAvailable", callbackNapiPara);
 }
 
 void VideoSessionForSysNapi::RegisterLightStatusCallbackListener(
@@ -245,7 +250,7 @@ void LightStatusCallbackListener::OnLightStatusChangedCallbackAsync(LightStatus 
     std::string taskName = CameraNapiUtils::GetTaskName(
         "LightStatusCallbackListener::OnLightStatusChangedCallbackAsync", params);
     if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
-        MEDIA_ERR_LOG("LightStatusCallbackListener::OnLightStatusChangedCallbackAsync failed to execute work");
+        MEDIA_ERR_LOG("failed to execute work");
     } else {
         callback.release();
     }
@@ -268,6 +273,80 @@ void LightStatusCallbackListener::OnLightStatusChanged(LightStatus &status)
     OnLightStatusChangedCallbackAsync(status);
 }
 
+void HighFrameRateZoomInfoListener::OnHighFrameRateZoomInfoChangeAsync(const std::vector<float> zoomRatioRange) const
+{
+    MEDIA_DEBUG_LOG("OnHighFrameRateZoomInfoChangeAsync is called");
+    std::unique_ptr<HighFrameRateZoomInfoListenerInfo> callbackInfo =
+        std::make_unique<HighFrameRateZoomInfoListenerInfo>(zoomRatioRange, shared_from_this());
+    HighFrameRateZoomInfoListenerInfo *event = callbackInfo.get();
+    auto task = [event]() {
+        HighFrameRateZoomInfoListenerInfo* callbackInfo = reinterpret_cast<HighFrameRateZoomInfoListenerInfo *>(event);
+        if (callbackInfo) {
+            auto listener = callbackInfo->listener_.lock();
+            if (listener != nullptr) {
+                listener->OnHighFrameRateZoomInfoChange(callbackInfo->zoomRatioRange_);
+            }
+            delete callbackInfo;
+        }
+    };
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate,
+        "HighFrameRateZoomInfoListener::OnHighFrameRateZoomInfoChangeAsync")) {
+        MEDIA_ERR_LOG("failed to execute work");
+    } else {
+        callbackInfo.release();
+    }
+}
+
+void HighFrameRateZoomInfoListener::OnHighFrameRateZoomInfoChange(const std::vector<float> zoomRatioRange) const
+{
+    MEDIA_DEBUG_LOG("OnHighFrameRateZoomInfoChange is called");
+
+    ExecuteCallbackScopeSafe("zoomInfoChange", [&]() {
+        napi_value errCode = CameraNapiUtils::GetUndefinedValue(env_);
+        napi_value zoomRatioRangeObj;
+        napi_create_array(env_, &zoomRatioRangeObj);
+        for (size_t i = 0; i < zoomRatioRange.size(); i++) {
+            napi_value zoomRatio;
+            napi_create_double(env_, CameraNapiUtils::FloatToDouble(zoomRatioRange[i]), &zoomRatio);
+            napi_set_element(env_, zoomRatioRangeObj, i, zoomRatio);
+        }
+        return ExecuteCallbackData(env_, errCode, zoomRatioRangeObj);
+    });
+}
+
+void HighFrameRateZoomInfoListener::OnZoomInfoChange(const std::vector<float> zoomRatioRange)
+{
+    OnHighFrameRateZoomInfoChangeAsync(zoomRatioRange);
+}
+
+void VideoSessionForSysNapi::RegisterZoomInfoCbListener(
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+{
+    MEDIA_INFO_LOG("VideoSessionForSysNapi::RegisterZoomInfoCbListener is called");
+    if (zoomInfoListener_ == nullptr) {
+        shared_ptr<HighFrameRateZoomInfoListener> zoomInfoListenerTemp =
+            static_pointer_cast<HighFrameRateZoomInfoListener>(videoSessionForSys_->GetZoomInfoCallback());
+        if (zoomInfoListenerTemp == nullptr) {
+            zoomInfoListenerTemp = make_shared<HighFrameRateZoomInfoListener>(env);
+            videoSessionForSys_->SetZoomInfoCallback(zoomInfoListenerTemp);
+        }
+        zoomInfoListener_ = zoomInfoListenerTemp;
+    }
+    zoomInfoListener_->SaveCallbackReference(eventName, callback, isOnce);
+    MEDIA_INFO_LOG("RegisterZoomInfoCbListener success");
+}
+
+void VideoSessionForSysNapi::UnregisterZoomInfoCbListener(
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
+{
+    MEDIA_INFO_LOG("VideoSessionForSysNapi::UnregisterZoomInfoCbListener is called");
+    if (zoomInfoListener_ == nullptr) {
+        MEDIA_ERR_LOG("UnregisterZoomInfoCbListener is null");
+    } else {
+        zoomInfoListener_->RemoveCallbackRef(eventName, callback);
+    }
+}
+
 void VideoSessionForSysNapi::RegisterPressureStatusCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
@@ -288,6 +367,80 @@ void VideoSessionForSysNapi::UnregisterPressureStatusCallbackListener(
         return;
     }
     pressureCallback_->RemoveCallbackRef(eventName, callback);
+    if (pressureCallback_->GetCallbackCount(eventName) == 0) {
+        videoSessionForSys_->UnSetPressureCallback();
+        pressureCallback_ = nullptr;
+    }
+}
+
+napi_value VideoSessionForSysNapi::IsExternalCameraLensBoostSupported(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("VideoSessionForSysNapi::isExternalCameraLensBoostSupported is called");
+    VideoSessionForSysNapi* videoSessionForSysNapi = nullptr;
+    auto result = CameraNapiUtils::GetUndefinedValue(env);
+    CameraNapiParamParser jsParamParser(env, info, videoSessionForSysNapi);
+    if (!jsParamParser.AssertStatus(PARAMETER_ERROR, "parameter occur error")) {
+        MEDIA_ERR_LOG("VideoSessionForSysNapi::IsExternalCameraLensBoostSupported parse parameter occur error");
+        return result;
+    }
+    if (videoSessionForSysNapi != nullptr && videoSessionForSysNapi->videoSessionForSys_ != nullptr) {
+        bool isSupported = videoSessionForSysNapi->videoSessionForSys_->IsExternalCameraLensBoostSupported();
+        napi_get_boolean(env, isSupported, &result);
+    } else {
+        MEDIA_ERR_LOG("VideoSessionForSysNapi::IsExternalCameraLensBoostSupported get native object fail");
+        CameraNapiUtils::ThrowError(env, PARAMETER_ERROR, "get native object fail");
+    }
+    return result;
+}
+
+napi_value VideoSessionForSysNapi::EnableExternalCameraLensBoost(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("VideoSessionForSysNapi::EnableExternalCameraLensBoost is called");
+    VideoSessionForSysNapi* videoSessionForSysNapi = nullptr;
+    bool enabled = 0;
+    auto result = CameraNapiUtils::GetUndefinedValue(env);
+    CameraNapiParamParser jsParamParser(env, info, videoSessionForSysNapi, enabled);
+    if (!jsParamParser.AssertStatus(PARAMETER_ERROR, "parameter occur error")) {
+        MEDIA_ERR_LOG("VideoSessionForSysNapi::EnableExternalCameraLensBoost parse parameter occur error");
+        return result;
+    }
+    if (videoSessionForSysNapi != nullptr && videoSessionForSysNapi->videoSessionForSys_ != nullptr) {
+        int32_t ret = videoSessionForSysNapi->videoSessionForSys_->EnableExternalCameraLensBoost(enabled);
+        if (ret != 1) {
+            MEDIA_ERR_LOG("VideoSessionForSysNapi::EnableExternalCameraLensBoost enable error");
+            CameraNapiUtils::ThrowError(env, PARAMETER_ERROR, "enable fail");
+        }
+    } else {
+        MEDIA_ERR_LOG("VideoSessionForSysNapi::EnableExternalCameraLensBoost get native object fail");
+        CameraNapiUtils::ThrowError(env, PARAMETER_ERROR, "get native object fail");
+    }
+    return result;
+}
+
+void VideoSessionForSysNapi::RegisterCameraSwitchRequestCallbackListener(
+    const std::string &eventName, napi_env env, napi_value callback, const std::vector<napi_value> &args, bool isOnce)
+{
+    MEDIA_INFO_LOG("VideoSessionForSysNapi::RegisterCameraSwitchRequestCallbackListener");
+    if (cameraSwitchSessionNapiCallback_ == nullptr) {
+        cameraSwitchSessionNapiCallback_ = std::make_shared<CameraSwitchRequestCallbackListener>(env);
+        videoSessionForSys_->SetCameraSwitchRequestCallback(cameraSwitchSessionNapiCallback_);
+    }
+    cameraSwitchSessionNapiCallback_->SaveCallbackReference(eventName, callback, isOnce);
+}
+
+void VideoSessionForSysNapi::UnregisterCameraSwitchRequestCallbackListener(
+    const std::string &eventName, napi_env env, napi_value callback, const std::vector<napi_value> &args)
+{
+    MEDIA_INFO_LOG("VideoSessionForSysNapi::UnregisterCameraSwitchRequestCallbackListener");
+    if (cameraSwitchSessionNapiCallback_ == nullptr) {
+        MEDIA_INFO_LOG("cameraSwitchSessionNapiCallback_ is null");
+        return;
+    }
+    cameraSwitchSessionNapiCallback_->RemoveCallbackRef(eventName, callback);
+    if (cameraSwitchSessionNapiCallback_->GetCallbackCount(eventName) == 0) {
+        videoSessionForSys_->UnSetCameraSwitchRequestCallback();
+        cameraSwitchSessionNapiCallback_ = nullptr;
+    }
 }
 } // namespace CameraStandard
 } // namespace OHOS

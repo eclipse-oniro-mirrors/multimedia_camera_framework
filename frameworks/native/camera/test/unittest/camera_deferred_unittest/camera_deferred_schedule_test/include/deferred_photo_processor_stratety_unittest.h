@@ -43,12 +43,6 @@ public:
     int32_t userId_ = 1;
     std::shared_ptr<PhotoStrategyCenter> strategyCenter_ {nullptr};
 };
-
-template <typename T, typename U>
-inline std::shared_ptr<T> ReinterpretPointerCast(const std::shared_ptr<U> &ptr) noexcept
-{
-    return std::shared_ptr<T>(ptr, reinterpret_cast<T *>(ptr.get()));
-}
 } // DeferredProcessing
 } // CameraStandard
 } // OHOS

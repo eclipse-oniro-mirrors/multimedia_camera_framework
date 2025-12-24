@@ -1,6 +1,8 @@
 {
  global:
  extern "C++" {
+   OHOS::CameraStandard::CameraNapiObjectTypes*;
+   OHOS::CameraStandard::CameraNapiObjCameraOutputCapability*;
    OHOS::CameraStandard::CameraNapiUtils::CheckError*;
    OHOS::CameraStandard::CameraNapiUtils::FloatToDouble*;
    OHOS::CameraStandard::CameraNapiUtils::GetPropertyDescriptor*;
@@ -10,9 +12,9 @@
    OHOS::CameraStandard::CameraNapiUtils::CreateNapiErrorObject*;
    OHOS::CameraStandard::CameraNapiUtils::InvokeJSAsyncMethod*;
    OHOS::CameraStandard::CameraNapiUtils::CheckInvalidArgument*;
+   OHOS::CameraStandard::CameraNapiUtils::CreateJsPointArray*;
    OHOS::CameraStandard::CameraNapiUtils::GetStringArgument*;
-   OHOS::CameraStandard::CameraNapiObjectTypes*;
-   OHOS::CameraStandard::CameraNapiObjCameraOutputCapability*;
+   OHOS::CameraStandard::CameraNapiWorkerQueueKeeper*;
    OHOS::CameraStandard::ListenerBase*;
 
    OHOS::CameraStandard::CameraSessionNapi*;
@@ -27,10 +29,10 @@
    OHOS::CameraStandard::CameraManagerNapi::Init*;
    OHOS::CameraStandard::CameraNapi::Init*;
    OHOS::CameraStandard::MetadataOutputNapi::Init*;
-   OHOS::CameraStandard::ModeManagerNapi::Init*;
    OHOS::CameraStandard::PhotoNapi::Init*;
    OHOS::CameraStandard::PhotoExNapi::Init*;
-   OHOS::CameraStandard::DeferredPhotoProxyNapi::Init*;
+   OHOS::CameraStandard::UnifyMovieFileOutputNapi::Init*;
+   OHOS::CameraStandard::VideoCapabilityNapi::CreateVideoCapability*;
    OHOS::CameraStandard::NapiRefManager::CreateMemSafetyRef*;
  };
  local:

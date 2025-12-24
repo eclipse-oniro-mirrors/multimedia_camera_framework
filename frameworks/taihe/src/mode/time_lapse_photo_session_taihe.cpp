@@ -107,6 +107,7 @@ void TryAEInfoCallbackListener::OnTryAEInfoChangedCallback(OHOS::CameraStandard:
 void TimeLapsePhotoSessionImpl::RegisterIsoInfoCallbackListener(const std::string& eventName,
     std::shared_ptr<uintptr_t> callback, bool isOnce)
 {
+    CHECK_RETURN_ELOG(timeLapsePhotoSession_ == nullptr, "timeLapsePhotoSession_ is null!");
     if (isoInfoCallback_ == nullptr) {
         ani_env *env = get_env();
         isoInfoCallback_ = std::make_shared<IsoInfoCallbackListenerTime>(env);
@@ -133,6 +134,7 @@ void TimeLapsePhotoSessionImpl::RegisterLuminationInfoCallbackListener(const std
         MEDIA_INFO_LOG("TimeLapsePhotoSessionImpl SetExposureHintMode set exposureHint %{public}d!", mode);
         ani_env *env = get_env();
         luminationInfoCallback_ = std::make_shared<LuminationInfoCallbackListenerTime>(env);
+        CHECK_RETURN_ELOG(timeLapsePhotoSession_ == nullptr, "timeLapsePhotoSession_ is null!");
         timeLapsePhotoSession_->SetLuminationInfoCallback(luminationInfoCallback_);
     }
     luminationInfoCallback_->SaveCallbackReference(eventName, callback, isOnce);
@@ -156,6 +158,7 @@ void TimeLapsePhotoSessionImpl::UnregisterLuminationInfoCallbackListener(const s
 void TimeLapsePhotoSessionImpl::RegisterExposureInfoCallbackListener(const std::string& eventName,
     std::shared_ptr<uintptr_t> callback, bool isOnce)
 {
+    CHECK_RETURN_ELOG(timeLapsePhotoSession_ == nullptr, "timeLapsePhotoSession_ is null!");
     if (exposureInfoCallback_ == nullptr) {
         ani_env *env = get_env();
         exposureInfoCallback_ = std::make_shared<ExposureInfoCallbackListenerTime>(env);
@@ -174,6 +177,7 @@ void TimeLapsePhotoSessionImpl::UnregisterExposureInfoCallbackListener(const std
 void TimeLapsePhotoSessionImpl::RegisterTryAEInfoCallbackListener(const std::string& eventName,
     std::shared_ptr<uintptr_t> callback, bool isOnce)
 {
+    CHECK_RETURN_ELOG(timeLapsePhotoSession_ == nullptr, "timeLapsePhotoSession_ is null!");
     if (tryAEInfoCallback_ == nullptr) {
         ani_env *env = get_env();
         tryAEInfoCallback_ = std::make_shared<TryAEInfoCallbackListener>(env);

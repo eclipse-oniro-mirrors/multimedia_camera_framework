@@ -12,9 +12,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+// LCOV_EXCL_START
 #include "video_process_command.h"
 
+#include "basic_definitions.h"
+#include "dp_utils.h"
 #include "dps.h"
 
 namespace OHOS {
@@ -34,6 +36,8 @@ int32_t VideoProcessCommand::Initialize()
     videoPostProcess_ = schedulerManager->GetVideoPostProcessor(userId_);
     DP_CHECK_ERROR_RETURN_RET_LOG(videoPostProcess_ == nullptr, DP_NULL_POINTER, "VideoPostProcessor is nullptr.");
 
+    controller_ = schedulerManager->GetVideoController(userId_);
+    DP_CHECK_ERROR_RETURN_RET_LOG(controller_ == nullptr, DP_NULL_POINTER, "DeferredVideoController is nullptr.");
     initialized_.store(true);
     return DP_OK;
 }
@@ -41,22 +45,20 @@ int32_t VideoProcessCommand::Initialize()
 int32_t VideoProcessSuccessCommand::Executing()
 {
     int32_t ret = Initialize();
-    if (ret != DP_OK) {
-        return ret;
-    }
+    DP_CHECK_RETURN_RET(ret != DP_OK, ret);
 
-    videoPostProcess_->OnProcessDone(videoId_, std::move(userInfo_));
+    videoPostProcess_->ReleaseStreams(videoId_);
+    controller_->HandleSuccess(videoId_, std::move(userInfo_));
     return DP_OK;
 }
 
 int32_t VideoProcessFailedCommand::Executing()
 {
     int32_t ret = Initialize();
-    if (ret != DP_OK) {
-        return ret;
-    }
+    DP_CHECK_RETURN_RET(ret != DP_OK, ret);
 
-    videoPostProcess_->OnError(videoId_, error_);
+    videoPostProcess_->ReleaseStreams(videoId_);
+    controller_->HandleError(videoId_, error_);
     return DP_OK;
 }
 
@@ -64,6 +66,17 @@ int32_t VideoStateChangedCommand::Executing()
 {
     return DP_OK;
 }
+
+int32_t VideoProcessTimeOutCommand::Executing()
+{
+    int32_t ret = Initialize();
+    DP_CHECK_RETURN_RET(ret != DP_OK, ret);
+
+    videoPostProcess_->ReleaseStreams(videoId_);
+    controller_->HandleError(videoId_, error_);
+    return DP_OK;
+}
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS
+  // LCOV_EXCL_STOP

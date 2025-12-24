@@ -5,6 +5,7 @@
   createSessionInstanceForSys;
   createDeprecatedSessionInstanceForSys;
   createDepthDataOutputInstance;
+  createMovieFileOutputInstance;
   checkAndGetOutput;
  };
  local:

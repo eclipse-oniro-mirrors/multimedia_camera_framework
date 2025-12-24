@@ -1435,11 +1435,7 @@ HWTEST_F(CameraManagerUnitTest, camera_manager_getcameradevice_001, TestSize.Lev
     Camera_Device* cameranow = nullptr;
     Camera_ErrorCode ret = cameraManager->GetCameraDevice(
         Camera_Position::CAMERA_POSITION_BACK, Camera_Type::CAMERA_TYPE_DEFAULT, cameranow);
-    if (cameranow == nullptr) {
-        EXPECT_EQ(ret, CAMERA_SERVICE_FATAL_ERROR);
-    } else {
-        EXPECT_EQ(ret, CAMERA_OK);
-    }
+    EXPECT_EQ(ret, CAMERA_OK);
     delete cameranow;
     cameranow = nullptr;
 }

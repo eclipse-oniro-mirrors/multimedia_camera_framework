@@ -14,6 +14,8 @@
  */
 #ifndef FRAMEWORKS_TAIHE_PICKER_CAMERA_PICKER_TAIHE_H
 #define FRAMEWORKS_TAIHE_PICKER_CAMERA_PICKER_TAIHE_H
+#include <utility>
+
 #include "ohos.multimedia.cameraPicker.proj.hpp"
 #include "ohos.multimedia.cameraPicker.impl.hpp"
 #include "taihe/runtime.hpp"
@@ -83,6 +85,34 @@ struct PickerContextProxy {
                 break;
         }
         return nullptr;
+    }
+
+    ErrCode StartAbilityForResult(const AAFwk::Want& want, int requestCode, AbilityRuntime::RuntimeTask&& task)
+    {
+        auto context = mContext_.lock();
+        if (context == nullptr) {
+            return ERR_INVALID_OPERATION;
+        }
+        switch (type_) {
+            case PickerContextType::UI_EXTENSION: {
+                auto ctx = AbilityRuntime::Context::ConvertTo<AbilityRuntime::UIExtensionContext>(context);
+                if (ctx != nullptr) {
+                    return ctx->StartAbilityForResult(want, requestCode, std::move(task));
+                }
+                break;
+            }
+            case PickerContextType::ABILITY: {
+                auto ctx = AbilityRuntime::Context::ConvertTo<AbilityRuntime::AbilityContext>(context);
+                if (ctx != nullptr) {
+                    return ctx->StartAbilityForResult(want, requestCode, std::move(task));
+                }
+                break;
+            }
+            default:
+                // Do nothing
+                break;
+        }
+        return ERR_INVALID_OPERATION;
     }
 
 private:

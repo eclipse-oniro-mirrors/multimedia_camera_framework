@@ -18,7 +18,6 @@
 #include <atomic>
 #include <cstdint>
 #include <mutex>
-#include <stdint.h>
 #include "camera_metadata_info.h"
 #include "icontrol_center_status_callback.h"
 #include "task_manager.h"
@@ -36,7 +35,7 @@
 #include "camera_util.h"
 #include "common_event_support.h"
 #include "common_event_manager.h"
-#include "display_manager.h"
+#include "display_manager_lite.h"
 #include "hcamera_device.h"
 #include "hcamera_host_manager.h"
 #include "camera_service_stub.h"
@@ -50,6 +49,8 @@
 #include "datashare_helper.h"
 #include "icamera_service_callback.h"
 #include "imech_session_callback.h"
+#include "hcamera_switch_session.h"
+#include "icamera_switch_session_callback.h"
 #include "iremote_stub.h"
 #include "privacy_kit.h"
 #include "refbase.h"
@@ -114,7 +115,7 @@ public:
 
 class EXPORT_API HCameraService
     : public SystemAbility, public CameraServiceStub, public HCameraHostManager::StatusCallback,
-    public OHOS::Rosen::DisplayManager::IFoldStatusListener {
+    public OHOS::Rosen::DisplayManagerLite::IFoldStatusListener {
     DECLARE_SYSTEM_ABILITY(HCameraService);
 
 public:
@@ -128,7 +129,6 @@ public:
     int32_t GetCameraIds(std::vector<std::string>& cameraIds) override;
     int32_t GetCameraAbility(const std::string& cameraId,
         std::shared_ptr<OHOS::Camera::CameraMetadata>& cameraAbility) override;
-    int32_t JudgeSupportSwitchCamera(bool& isSupported) override;
     int32_t CreateCameraDevice(const string& cameraId, sptr<ICameraDeviceService>& device) override;
     int32_t CreateCaptureSession(sptr<ICaptureSession>& session, int32_t opMode) override;
     int32_t GetVideoSessionForControlCenter(sptr<ICaptureSession>& session) override;
@@ -140,6 +140,7 @@ public:
         sptr<DeferredProcessing::IDeferredVideoProcessingSession>& session) override;
     int32_t CreateMechSession(int32_t userId, sptr<IMechSession>& session) override;
     int32_t IsMechSupported(bool &isMechSupported) override;
+    int32_t CreateCameraSwitchSession(sptr<ICameraSwitchSession>& switchSession) override;
     int32_t CreatePhotoOutput(const sptr<OHOS::IBufferProducer>& producer, int32_t format, int32_t width,
         int32_t height, sptr<IStreamCapture>& photoOutput) override;
     int32_t CreatePhotoOutput(
@@ -154,6 +155,10 @@ public:
         const std::vector<int32_t>& metadataTypes, sptr<IStreamMetadata>& metadataOutput) override;
     int32_t CreateVideoOutput(const sptr<OHOS::IBufferProducer>& producer, int32_t format, int32_t width,
         int32_t height, sptr<IStreamRepeat>& videoOutput) override;
+    int32_t CreateMovieFileOutput(
+        int32_t format, int32_t width, int32_t height, sptr<IStreamRepeat>& movieFileStream) override;
+    int32_t CreateMovieFileOutput(
+        const IpcVideoProfile& videoProfile, sptr<IMovieFileOutput>& movieFileOutput) override;
     int32_t UnSetAllCallback(pid_t pid);
     int32_t CloseCameraForDestory(pid_t pid);
     int32_t SetCameraCallback(const sptr<ICameraServiceCallback>& callback) override;
@@ -194,7 +199,6 @@ public:
     int32_t Dump(int fd, const vector<u16string>& args) override;
     int DestroyStubObj() override;
     int SetListenerObject(const sptr<IRemoteObject>& object) override;
-    int UnSetListenerObject() override;
 
     CameraServiceStatus GetServiceStatus();
     void SetServiceStatus(CameraServiceStatus);
@@ -223,6 +227,7 @@ public:
     int32_t GetConcurrentCameraAbility(const std::string& cameraId,
         std::shared_ptr<OHOS::Camera::CameraMetadata>& cameraAbility) override;
     int32_t CheckWhiteList(bool &isInWhiteList) override;
+    int32_t CloseDelayed(const std::string& cameraId) override;
     int32_t GetCameraStorageSize(int64_t& size) override;
     int32_t CallbackEnter([[maybe_unused]] uint32_t code) override;
     int32_t CallbackExit([[maybe_unused]] uint32_t code, [[maybe_unused]] int32_t result) override;
@@ -238,7 +243,6 @@ public:
         std::lock_guard<std::mutex> lock(videoSessionMutex_);
         return videoSessionForControlCenter_;
     }
-    int32_t GetCameraStatusData(std::vector<CameraStatusData> &cameraStatusDataList) override;
 protected:
     explicit HCameraService(sptr<HCameraHostManager> cameraHostManager);
     void OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId) override;
@@ -248,6 +252,7 @@ private:
     void RegisterSuspendObserver();
     void UnregisterSuspendObserver();
     void ClearFreezedPidList();
+
 #ifdef CAMERA_LIVE_SCENE_RECOGNITION
     void RegisterEventListenerToRss();
     void UnRegisterEventListenerToRss();
@@ -271,6 +276,7 @@ private:
     void ClientDied(pid_t pid);
     sptr<HCaptureSession> videoSessionForControlCenter_;
     bool deviceControlCenterAbility_ = false;
+
 #ifdef NOTIFICATION_ENABLE
     int32_t SetBeauty(int32_t beautyStatus);
 #endif
@@ -348,10 +354,8 @@ private:
     bool IsPrelaunchSupported(string cameraId);
     int32_t UpdateMuteSetting(sptr<HCameraDevice> cameraDevice, bool muteMode);
     std::shared_ptr<OHOS::Camera::CameraMetadata> CreateDefaultSettingForRestore(sptr<HCameraDevice> activeDevice);
-    int32_t UpdateSkinSmoothSetting(shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata, int skinSmoothValue);
-    int32_t UpdateFaceSlenderSetting(shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata,
-        int faceSlenderValue);
-    int32_t UpdateSkinToneSetting(shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata, int skinToneValue);
+    int32_t UpdateBeautySetting(std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata,
+        EffectParam effectParam);
     int32_t UnSetCameraCallback(pid_t pid);
     int32_t UnSetMuteCallback(pid_t pid);
     int32_t UnSetTorchCallback(pid_t pid);
@@ -368,7 +372,7 @@ private:
     recursive_mutex torchCbMutex_;
     recursive_mutex foldCbMutex_;
     TorchStatus torchStatus_ = TorchStatus::TORCH_STATUS_UNAVAILABLE;
-    OHOS::Rosen::FoldStatus preFoldStatus_ = OHOS::Rosen::FoldStatus::UNKNOWN;
+    FoldStatus preFoldStatus_ = FoldStatus::UNKNOWN_FOLD;
     sptr<HCameraHostManager> cameraHostManager_;
     std::shared_ptr<StatusCallback> statusCallback_;
     map<uint32_t, sptr<ITorchServiceCallback>> torchServiceCallbacks_;
@@ -392,7 +396,7 @@ private:
     bool isFoldable = false;
     bool isFoldableInit = false;
     bool isControlCenterEnabled_ = false;
-    std::atomic<bool> controlCenterPrecondition = true;
+    std::atomic<bool> controlCenterPrecondition_ = true;
     bool usePhysicalCameraOrientation_ = false;
     string preCameraId_;
     string preCameraClient_;

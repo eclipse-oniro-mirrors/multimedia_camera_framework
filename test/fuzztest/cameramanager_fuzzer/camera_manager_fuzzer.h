@@ -17,6 +17,7 @@
 #define CAMERA_MANAGER_FUZZER_H
 
 #include "input/camera_manager.h"
+#include "picture_interface.h"
 #include <memory>
 #include <fuzzer/FuzzedDataProvider.h>
 
@@ -34,7 +35,7 @@ public:
     void OnProcessImageDone(const std::string& imageId, const uint8_t* addr, const long bytes,
         uint32_t cloudImageEnhanceFlag) override {}
     void OnProcessImageDone(const std::string &imageId, std::shared_ptr<PictureIntf> picture,
-        uint32_t cloudImageEnhanceFlag) override {}
+        const DpsMetadata& metadata) override {}
     void OnDeliveryLowQualityImage(const std::string &imageId, std::shared_ptr<PictureIntf> picture) override {}
     void OnError(const std::string& imageId, const DpsErrorCode errorCode) override {}
     void OnStateChanged(const DpsStatusCode status) override {}
@@ -78,7 +79,7 @@ public:
 
 class IDeferredVideoProcSessionCallbackFuzz : public IDeferredVideoProcSessionCallback {
 public:
-    void OnProcessVideoDone(const std::string& videoId, const sptr<IPCFileDescriptor> ipcFd) override {}
+    void OnProcessVideoDone(const std::string& videoId) override {}
     void OnError(const std::string& videoId, const DpsErrorCode errorCode) override {}
     void OnStateChanged(const DpsStatusCode status) override {}
 };

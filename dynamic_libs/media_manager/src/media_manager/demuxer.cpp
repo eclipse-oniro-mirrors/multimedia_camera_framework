@@ -12,9 +12,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+// LCOV_EXCL_START
 #include "demuxer.h"
 
+#include "avcodec_errors.h"
 #include "dp_log.h"
 
 namespace OHOS {
@@ -30,18 +31,17 @@ MediaManagerError Demuxer::Create(const std::shared_ptr<AVSource>& source,
     const std::map<Media::Plugins::MediaType, std::shared_ptr<Track>>& tracks)
 {
     DP_CHECK_ERROR_RETURN_RET_LOG(source == nullptr, ERROR_FAIL, "AVSource is nullptr.");
-
+    DP_INFO_LOG("DemuxerFilter Prepare.");
     demuxer_ = AVDemuxerFactory::CreateWithSource(source);
     DP_CHECK_ERROR_RETURN_RET_LOG(demuxer_ == nullptr, ERROR_FAIL, "Create demuxer failed.");
 
     DP_DEBUG_LOG("tracks size: %{public}d", static_cast<int32_t>(tracks.size()));
     for (const auto& [mediaType, trackPtr] : tracks) {
-        auto trackFormat = trackPtr->GetFormat();
-        SetTrackId(mediaType, trackFormat.trackId);
-        auto ret = SeletctTrackByID(trackFormat.trackId);
+        auto trackId = trackPtr->GetId();
+        SetTrackId(mediaType, trackId);
+        auto ret = SeletctTrackByID(trackId);
         DP_CHECK_ERROR_RETURN_RET_LOG(ret != OK, ERROR_FAIL,
-            "Select track by %{public}d failed, track type: %{public}d, ret: %{public}d.",
-            trackFormat.trackId, mediaType, ret);
+            "Select track by %{public}d failed, track type: %{public}d, ret: %{public}d.", trackId, mediaType, ret);
     }
     
     return OK;
@@ -97,3 +97,4 @@ MediaManagerError Demuxer::SeletctTrackByID(int32_t trackId)
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS
+// LCOV_EXCL_STOP

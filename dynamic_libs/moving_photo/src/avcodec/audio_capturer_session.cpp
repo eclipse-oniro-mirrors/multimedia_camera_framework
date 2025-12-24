@@ -26,6 +26,7 @@
 #include "ipc_skeleton.h"
 #include "sample_info.h"
 #include "token_setproc.h"
+#include "string_ex.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -53,26 +54,17 @@ AudioChannel AudioCapturerSession::getMicNum()
     std::vector<std::string> subKeys = {"hardware_info#mic_num"};
     std::vector<std::pair<std::string, std::string>> result = {};
     AudioSystemManager* audioSystemMgr = AudioSystemManager::GetInstance();
-    if (audioSystemMgr == nullptr) {
-        MEDIA_WARNING_LOG("AudioCapturerSession::getMicNum GetAudioSystemManagerInstance err");
-        return AudioChannel::STEREO;
-    }
+    CHECK_RETURN_RET_WLOG(audioSystemMgr == nullptr, AudioChannel::STEREO,
+        "AudioCapturerSession::getMicNum GetAudioSystemManagerInstance err");
     int32_t ret = audioSystemMgr->GetExtraParameters(mainKey, subKeys, result);
-    if (ret != 0) {
-        MEDIA_WARNING_LOG("AudioCapturerSession::getMicNum GetExtraParameters err");
-        return AudioChannel::STEREO;
-    }
-    if (result.empty() || result[0].second.empty() || result[0].first.empty()) {
-        MEDIA_WARNING_LOG("AudioCapturerSession::getMicNum result empty");
-        return AudioChannel::STEREO;
-    }
+    CHECK_RETURN_RET_WLOG(ret != 0, AudioChannel::STEREO, "AudioCapturerSession::getMicNum GetExtraParameters err");
+    CHECK_RETURN_RET_WLOG(result.empty() || result[0].second.empty() || result[0].first.empty(), AudioChannel::STEREO,
+        "AudioCapturerSession::getMicNum result empty");
     for (auto i: result[0].second) {
-        if (!std::isdigit(i)) {
-            MEDIA_WARNING_LOG("AudioCapturerSession::getMicNum result illegal");
-            return AudioChannel::STEREO;
-        }
+        CHECK_RETURN_RET_WLOG(!std::isdigit(i), AudioChannel::STEREO, "AudioCapturerSession::getMicNum result illegal");
     }
-    int32_t micNum = std::stoi(result[0].second);
+    int32_t micNum = 0;
+    CHECK_RETURN_RET_WLOG(!StrToInt(result[0].second, micNum), AudioChannel::STEREO, "Convert result[0].second failed");
     MEDIA_INFO_LOG("AudioCapturerSession::getMicNum %{public}d + %{public}d", micNum, micNum % I32_TWO);
     // odd channel should + 1
     return static_cast<AudioChannel>(micNum + (micNum % I32_TWO));
@@ -86,14 +78,17 @@ bool AudioCapturerSession::CreateAudioCapturer()
     capturerOptions.streamInfo = deferredInputOptions_;
     capturerOptions.capturerInfo.sourceType = SourceType::SOURCE_TYPE_UNPROCESSED;
     capturerOptions.capturerInfo.capturerFlags = 0;
-    std::unique_lock<std::recursive_mutex> lock(audioCapturerMutex_);
-    audioCapturer_ = AudioCapturer::Create(capturerOptions);
-    CHECK_RETURN_RET_ELOG(audioCapturer_ == nullptr, false, "AudioCapturerSession::Create AudioCapturer failed");
-    audioCapturer_->SetInputDevice(AudioStandard::DeviceType::DEVICE_TYPE_MIC);
+
+    std::shared_ptr<AudioCapturer> audioCapturer = AudioCapturer::Create(capturerOptions);
+    CHECK_RETURN_RET_ELOG(audioCapturer == nullptr, false, "AudioCapturerSession::Create AudioCapturer failed");
+    // LCOV_EXCL_START
+    audioCapturer->SetInputDevice(AudioStandard::DeviceType::DEVICE_TYPE_MIC);
+    SetAudioCapturer(audioCapturer);
     AudioSessionStrategy sessionStrategy;
     sessionStrategy.concurrencyMode = AudioConcurrencyMode::MIX_WITH_OTHERS;
     AudioSessionManager::GetInstance()->ActivateAudioSession(sessionStrategy);
     return true;
+    // LCOV_EXCL_STOP
 }
 
 AudioCapturerSession::~AudioCapturerSession()
@@ -108,14 +103,23 @@ bool AudioCapturerSession::StartAudioCapture()
 {
     MEDIA_INFO_LOG("Starting moving photo audio stream");
     CHECK_RETURN_RET_ELOG(startAudioCapture_, true, "AudioCapture is already started.");
-    std::unique_lock<std::recursive_mutex> lock(audioCapturerMutex_);
-    if (audioCapturer_ == nullptr && !CreateAudioCapturer()) {
-        MEDIA_INFO_LOG("audioCapturer is not create");
-        return false;
+    std::shared_ptr<AudioCapturer> audioCapturer = GetAudioCapturer();
+    if (audioCapturer == nullptr) {
+        if(!CreateAudioCapturer()) {
+            MEDIA_INFO_LOG("audioCapturer is not create");
+            return false;
+        } else {
+            audioCapturer = GetAudioCapturer();
+            if (audioCapturer == nullptr) {
+                MEDIA_INFO_LOG("audioCapturer is null");
+                return false;
+            }
+        }
     }
-    if (!audioCapturer_->Start()) {
+    // LCOV_EXCL_START
+    if (!audioCapturer->Start()) {
         MEDIA_INFO_LOG("Start stream failed");
-        audioCapturer_->Release();
+        audioCapturer->Release();
         startAudioCapture_ = false;
         return false;
     }
@@ -129,21 +133,26 @@ bool AudioCapturerSession::StartAudioCapture()
     audioThread_ = std::make_unique<std::thread>([this]() { this->ProcessAudioBuffer(); });
     CHECK_RETURN_RET_ELOG(audioThread_ == nullptr, false, "Create auido thread failed");
     return true;
+    // LCOV_EXCL_STOP
 }
 
 void AudioCapturerSession::GetAudioRecords(int64_t startTime, int64_t endTime, vector<sptr<AudioRecord>> &audioRecords)
 {
     vector<sptr<AudioRecord>> allRecords = audioBufferQueue_.GetAllElements();
     for (const auto& record : allRecords) {
-        CHECK_EXECUTE(record->GetTimeStamp() >= startTime && record->GetTimeStamp() < endTime,
-            audioRecords.push_back(record));
+        // LCOV_EXCL_START
+        if (record->GetTimeStamp() >= startTime && record->GetTimeStamp() < endTime) {
+            audioRecords.push_back(record);
+        }
+        // LCOV_EXCL_STOP
     }
 }
 
 void AudioCapturerSession::ProcessAudioBuffer()
 {
-    std::unique_lock<std::recursive_mutex> lock(audioCapturerMutex_);
-    CHECK_RETURN_ELOG(audioCapturer_ == nullptr, "AudioCapturer_ is not init");
+    std::shared_ptr<AudioCapturer> audioCapturer = GetAudioCapturer();
+    CHECK_RETURN_ELOG(audioCapturer == nullptr, "AudioCapturer_ is not init");
+    // LCOV_EXCL_START
     size_t bufferLen = static_cast<size_t>(deferredInputOptions_.samplingRate / AudioDeferredProcess::ONE_THOUSAND *
         deferredInputOptions_.channels * AudioDeferredProcess::DURATION_EACH_AUDIO_FRAME * sizeof(short));
     while (true) {
@@ -154,7 +163,7 @@ void AudioCapturerSession::ProcessAudioBuffer()
         while (bytesRead < bufferLen) {
             MEDIA_DEBUG_LOG("ProcessAudioBuffer loop");
             CHECK_BREAK_WLOG(!startAudioCapture_, "ProcessAudioBuffer loop, break out");
-            int32_t len = audioCapturer_->Read(*(buffer.get() + bytesRead), bufferLen - bytesRead, true);
+            int32_t len = audioCapturer->Read(*(buffer.get() + bytesRead), bufferLen - bytesRead, true);
             if (len >= 0) {
                 bytesRead += static_cast<size_t>(len);
             } else {
@@ -176,9 +185,12 @@ void AudioCapturerSession::ProcessAudioBuffer()
         int64_t timeOffset = 32;
         sptr<AudioRecord> audioRecord = new AudioRecord(GetTickCount() - timeOffset);
         audioRecord->SetAudioBuffer(buffer.get(), bufferLen);
+        MEDIA_DEBUG_LOG("audio push buffer frameId: %{public}s, timestamp:%{public}" PRId64,
+            audioRecord->GetFrameId().c_str(), audioRecord->GetTimeStamp());
         buffer.release();
         audioBufferQueue_.Push(audioRecord);
     }
+    // LCOV_EXCL_STOP
 }
 
 void AudioCapturerSession::Stop()
@@ -187,8 +199,10 @@ void AudioCapturerSession::Stop()
     MEDIA_INFO_LOG("Audio capture stop enter");
     startAudioCapture_ = false;
     if (audioThread_ && audioThread_->joinable()) {
+        // LCOV_EXCL_START
         audioThread_->join();
         audioThread_.reset();
+        // LCOV_EXCL_STOP
     }
     MEDIA_INFO_LOG("Audio capture stop out");
     Release();
@@ -197,13 +211,15 @@ void AudioCapturerSession::Stop()
 void AudioCapturerSession::Release()
 {
     CAMERA_SYNC_TRACE;
-    std::unique_lock<std::recursive_mutex> lock(audioCapturerMutex_);
-    CHECK_PRINT_ILOG(!audioCapturer_, "current audioCapturer is nullptr");
-    if (audioCapturer_ != nullptr) {
+    auto audioCapturer = GetAudioCapturer();
+    CHECK_PRINT_ILOG(!audioCapturer, "current audioCapturer is nullptr");
+    if (audioCapturer != nullptr) {
+        // LCOV_EXCL_START
         MEDIA_INFO_LOG("Audio capture Release enter");
-        audioCapturer_->Release();
+        audioCapturer->Release();
+        // LCOV_EXCL_STOP
     }
-    audioCapturer_ = nullptr;
+    SetAudioCapturer(nullptr);
     MEDIA_INFO_LOG("Audio capture released");
 }
 

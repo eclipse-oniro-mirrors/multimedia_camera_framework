@@ -19,6 +19,21 @@
 
 namespace OHOS {
 namespace CameraStandard {
+static const int8_t DECIMAL = 10;
+// LCOV_EXCL_START
+bool CameraRotateStrategyParser::LoadConfiguration()
+{
+    curNode_ = CameraXmlNode::Create();
+    int32_t ret = curNode_->Config(DEVICE_CONFIG_FILE, nullptr, 0);
+    CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, false, "Not found camera_rotate_strategy.xml!");
+    {
+        std::lock_guard<std::mutex> lock(strategyInfosMutex_);
+        cameraRotateStrategyInfos_.clear();
+    }
+    bool result = ParseInternal(curNode_->GetCopyNode());
+    CHECK_RETURN_RET_ELOG(!result, false, "Camera rotate strategy xml parse failed.");
+    return true;
+}
 
 void CameraRotateStrategyParser::Destroy()
 {
@@ -26,5 +41,68 @@ void CameraRotateStrategyParser::Destroy()
     curNode_->CleanUpParser();
 }
 
+bool CameraRotateStrategyParser::ParseInternal(std::shared_ptr<CameraXmlNode> curNode)
+{
+    for (; curNode->IsNodeValid(); curNode->MoveToNext()) {
+        CHECK_CONTINUE(!curNode->IsElementNode());
+        if (curNode->CompareName("strategy")) {
+            ParserStrategyInfo(curNode->GetCopyNode());
+        } else {
+            ParseInternal(curNode->GetChildrenNode());
+        }
+    }
+    return true;
+}
+
+void CameraRotateStrategyParser::ParserStrategyInfo(std::shared_ptr<CameraXmlNode> curNode)
+{
+    std::lock_guard<std::mutex> lock(strategyInfosMutex_);
+    bool isNodeValidAndElement = curNode->IsNodeValid() && curNode->IsElementNode();
+    if (isNodeValidAndElement) {
+        CameraRotateStrategyInfo info = {};
+        curNode->GetProp("bundleName", info.bundleName);
+
+        std::string pValue;
+        float wideValue = -1.0;
+        curNode->GetProp("wideValue", pValue);
+        char* endPtr;
+        wideValue = std::strtof(pValue.c_str(), &endPtr);
+        if (*endPtr != '\0' || pValue.empty()) {
+            MEDIA_ERR_LOG("The wideValue parameter is invalid.");
+            wideValue = -1.0;
+        }
+        info.wideValue = wideValue;
+        endPtr = nullptr;
+
+        int32_t rotateDegree = -1;
+        curNode->GetProp("rotateDegree", pValue);
+        long result = strtol(pValue.c_str(), &endPtr, DECIMAL);
+
+        if (*endPtr != '\0' || pValue.empty()) {
+            MEDIA_ERR_LOG("The rotateDegree parameter is invalid.");
+            rotateDegree = -1;
+        } else {
+            rotateDegree = static_cast<int32_t>(result);
+        }
+        info.rotateDegree = rotateDegree;
+
+        int16_t fps = -1;
+        curNode->GetProp("fps", pValue);
+        endPtr = nullptr;
+        result = strtol(pValue.c_str(), &endPtr, DECIMAL);
+
+        if (*endPtr != '\0' || pValue.empty()) {
+            MEDIA_ERR_LOG("The fps parameter is invalid.");
+            fps = -1;
+        } else {
+            fps = static_cast<int16_t>(result);
+        }
+        info.fps = fps;
+        cameraRotateStrategyInfos_.push_back(info);
+        MEDIA_INFO_LOG("ParserStrategyInfo: bundleName:%{public}s, wideValue:%{public}f, "
+            "rotateDegree:%{public}d, fps:%{public}d",
+            info.bundleName.c_str(), info.wideValue, info.rotateDegree, info.fps);
+    }
+} // LCOV_EXCL_STOP
 } // namespace CameraStandard
 } // namespace OHOS

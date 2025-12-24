@@ -42,6 +42,9 @@ template<typename T>
 bool AddOrUpdateMetadata(
     std::shared_ptr<OHOS::Camera::CameraMetadata>& metadata, uint32_t tag, const T* data, uint32_t dataCount)
 {
+    if (metadata == nullptr) {
+        return false;
+    }
     common_metadata_header_t* src = metadata->get();
     if (src == nullptr) {
         return false;
@@ -65,4 +68,4 @@ std::shared_ptr<camera_metadata_item_t> GetMetadataItem(const common_metadata_he
 
 } // namespace CameraStandard
 } // namespace OHOS
-#endif
+#endif

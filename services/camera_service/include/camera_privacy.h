@@ -68,10 +68,11 @@ public:
     void StopUsingPermissionCallback();
     bool AddCameraPermissionUsedRecord();
     bool IsAllowUsingCamera();
-    void SetClientName(std::string clientName);
+    void SetClientName(const std::string& clientName);
 
     inline std::string GetClientName()
     {
+        std::lock_guard<std::mutex> lock(clientNameMutex_);
         return clientName_;
     }
 
@@ -98,6 +99,7 @@ private:
     std::mutex policyMutex_;
     std::mutex permissionCbMutex_;
     std::mutex cameraUseCbMutex_;
+    std::mutex clientNameMutex_;
     std::shared_ptr<DisablePolicyChangeCb> policyCallbackPtr_;
     std::shared_ptr<PermissionStatusChangeCb> permissionCallbackPtr_;
     std::shared_ptr<CameraUseStateChangeCb> cameraUseCallbackPtr_;

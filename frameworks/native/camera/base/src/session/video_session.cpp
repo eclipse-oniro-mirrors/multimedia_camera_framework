@@ -154,7 +154,7 @@ std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles16_9(PreconfigType p
             break;
         default:
             MEDIA_ERR_LOG(
-                "VideoSession::GeneratePreconfigProfiles16_9 not support this config:%{public}d", preconfigType);
+                "VideoSession::GeneratePreconfigProfiles4_3 not support this config:%{public}d", preconfigType);
             return nullptr;
     }
     return configs;
@@ -242,8 +242,9 @@ bool VideoSession::IsPhotoProfileLegal(sptr<CameraDevice>& device, Profile& phot
         "VideoSession::CanPreconfig check photo profile fail, empty photo profiles");
     auto photoProfiles = photoProfilesIt->second;
     return std::any_of(photoProfiles.begin(), photoProfiles.end(), [&photoProfile](auto& profile) {
-        CHECK_RETURN_RET(!photoProfile.sizeFollowSensorMax_, profile == photoProfile);
-        return IsProfileSameRatio(profile, photoProfile.sizeRatio_, RATIO_VALUE_16_9);
+        return !photoProfile.sizeFollowSensorMax_ ?
+            profile == photoProfile :
+            IsProfileSameRatio(profile, photoProfile.sizeRatio_, RATIO_VALUE_16_9);
     });
     // LCOV_EXCL_STOP
 }

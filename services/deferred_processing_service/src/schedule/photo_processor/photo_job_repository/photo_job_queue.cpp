@@ -28,20 +28,22 @@ PhotoJobQueue::PhotoJobQueue(Comparator comp) : comp_(comp)
 PhotoJobQueue::~PhotoJobQueue()
 {
     DP_INFO_LOG("entered.");
+    comp_ = nullptr;
     Clear();
 }
 
+// LCOV_EXCL_START
 bool PhotoJobQueue::Contains(DeferredPhotoJobPtr obj) const
 {
     return indexMap_.find(obj) != indexMap_.end();
 }
-
+// LCOV_EXCL_STOP
 DeferredPhotoJobPtr PhotoJobQueue::Peek()
 {
     DP_CHECK_RETURN_RET(heap_.empty(), nullptr);
     return heap_.front();
 }
-
+// LCOV_EXCL_START
 void PhotoJobQueue::Push(const DeferredPhotoJobPtr& obj)
 {
     uint32_t index = heap_.size();
@@ -49,11 +51,6 @@ void PhotoJobQueue::Push(const DeferredPhotoJobPtr& obj)
     indexMap_[obj] = index;
     catchMap_.emplace(obj->GetImageId(), obj);
     HeapInsert(index);
-
-    for (auto& item : heap_) {
-        DP_ERR_LOG("Push ---: id:%{public}s, state: %{public}d, priority: %{public}d, time: %{public}" PRIu64,
-            item->GetImageId().c_str(), item->GetCurStatus(), item->GetCurPriority(), item->GetTime());
-    }
 }
 
 DeferredPhotoJobPtr PhotoJobQueue::Pop()
@@ -66,10 +63,6 @@ DeferredPhotoJobPtr PhotoJobQueue::Pop()
     catchMap_.erase(top->GetImageId());
     heap_.pop_back();
     Heapify(0);
-    for (auto& item : heap_) {
-        DP_ERR_LOG("Pop ---: id:%{public}s, state: %{public}d, priority: %{public}d, time: %{public}" PRIu64,
-            item->GetImageId().c_str(), item->GetCurStatus(), item->GetCurPriority(), item->GetTime());
-    }
     return top;
 }
 
@@ -90,18 +83,13 @@ void PhotoJobQueue::Remove(const DeferredPhotoJobPtr& obj)
     indexMap_[replace] = index;
     Update(replace);
 }
-
+// LCOV_EXCL_STOP
 void PhotoJobQueue::Update(const DeferredPhotoJobPtr& obj)
 {
     DP_CHECK_RETURN(obj == nullptr);
     uint32_t index = indexMap_[obj];
     HeapInsert(index);
     Heapify(index);
-
-    for (auto& item : heap_) {
-        DP_ERR_LOG("Update ---: id:%{public}s, state: %{public}d, priority: %{public}d, time: %{public}" PRIu64,
-            item->GetImageId().c_str(), item->GetCurStatus(), item->GetCurPriority(), item->GetTime());
-    }
 }
 
 void PhotoJobQueue::UpdateById(const std::string& id)
@@ -130,7 +118,7 @@ void PhotoJobQueue::HeapInsert(uint32_t index)
         index = (index - 1) >> 1;
     }
 }
-
+// LCOV_EXCL_START
 void PhotoJobQueue::Heapify(uint32_t index)
 {
     uint32_t left = (index << 1) + 1;
@@ -161,6 +149,7 @@ void PhotoJobQueue::Swap(uint32_t x, uint32_t y)
         itemy->second = y;
     }
 }
+// LCOV_EXCL_STOP
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS

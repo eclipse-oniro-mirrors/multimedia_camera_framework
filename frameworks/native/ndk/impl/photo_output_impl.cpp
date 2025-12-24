@@ -38,11 +38,13 @@ Camera_PhotoOutput::Camera_PhotoOutput(sptr<PhotoOutput> &innerPhotoOutput) : in
 Camera_PhotoOutput::~Camera_PhotoOutput()
 {
     MEDIA_DEBUG_LOG("~Camera_PhotoOutput is called");
-    if (innerPhotoOutput_) {
-        innerPhotoOutput_ = nullptr;
-    }
+    innerPhotoOutput_ = nullptr;
     if (innerCallback_) {
         innerCallback_ = nullptr;
+    }
+    if (photoNative_) {
+        delete photoNative_;
+        photoNative_ = nullptr;
     }
 }
 
@@ -50,8 +52,7 @@ Camera_ErrorCode Camera_PhotoOutput::RegisterCallback(PhotoOutput_Callbacks* cal
 {
     if (innerCallback_ == nullptr) {
         innerCallback_ = make_shared<InnerPhotoOutputCallback>(this);
-        CHECK_RETURN_RET_ELOG(innerCallback_ == nullptr, CAMERA_SERVICE_FATAL_ERROR,
-            "create innerCallback_ failed!");
+        CHECK_RETURN_RET_ELOG(innerCallback_ == nullptr, CAMERA_SERVICE_FATAL_ERROR, "create innerCallback_ failed!");
         innerCallback_->SaveCallback(callback);
         innerPhotoOutput_->SetCallback(innerCallback_);
     } else {
@@ -65,8 +66,7 @@ Camera_ErrorCode Camera_PhotoOutput::RegisterPhotoAvailableCallback(OH_PhotoOutp
     CHECK_RETURN_RET_ELOG(innerPhotoOutput_ == nullptr, CAMERA_SERVICE_FATAL_ERROR, "PhotoOutput is null!");
     if (innerCallback_ == nullptr) {
         innerCallback_ = make_shared<InnerPhotoOutputCallback>(this);
-        CHECK_RETURN_RET_ELOG(innerCallback_ == nullptr, CAMERA_SERVICE_FATAL_ERROR,
-            "create innerCallback_ failed!");
+        CHECK_RETURN_RET_ELOG(innerCallback_ == nullptr, CAMERA_SERVICE_FATAL_ERROR, "create innerCallback_ failed!");
         innerPhotoOutput_->SetCallback(innerCallback_);
     }
 
@@ -84,8 +84,7 @@ Camera_ErrorCode Camera_PhotoOutput::RegisterPhotoAssetAvailableCallback(OH_Phot
     CHECK_RETURN_RET_ELOG(innerPhotoOutput_ == nullptr, CAMERA_SERVICE_FATAL_ERROR, "PhotoOutput is null!");
     if (innerCallback_ == nullptr) {
         innerCallback_ = make_shared<InnerPhotoOutputCallback>(this);
-        CHECK_RETURN_RET_ELOG(innerCallback_ == nullptr, CAMERA_SERVICE_FATAL_ERROR,
-            "create innerCallback_ failed!");
+        CHECK_RETURN_RET_ELOG(innerCallback_ == nullptr, CAMERA_SERVICE_FATAL_ERROR, "create innerCallback_ failed!");
         innerPhotoOutput_->SetCallback(innerCallback_);
     }
 
@@ -109,8 +108,7 @@ Camera_ErrorCode Camera_PhotoOutput::RegisterCaptureStartWithInfoCallback(
 {
     if (innerCallback_ == nullptr) {
         innerCallback_ = make_shared<InnerPhotoOutputCallback>(this);
-        CHECK_RETURN_RET_ELOG(innerCallback_ == nullptr, CAMERA_SERVICE_FATAL_ERROR,
-            "create innerCallback_ failed!");
+        CHECK_RETURN_RET_ELOG(innerCallback_ == nullptr, CAMERA_SERVICE_FATAL_ERROR, "create innerCallback_ failed!");
         innerCallback_->SaveCaptureStartWithInfoCallback(callback);
         innerPhotoOutput_->SetCallback(innerCallback_);
     } else {
@@ -132,8 +130,7 @@ Camera_ErrorCode Camera_PhotoOutput::RegisterCaptureEndCallback(OH_PhotoOutput_C
 {
     if (innerCallback_ == nullptr) {
         innerCallback_ = make_shared<InnerPhotoOutputCallback>(this);
-        CHECK_RETURN_RET_ELOG(innerCallback_ == nullptr, CAMERA_SERVICE_FATAL_ERROR,
-            "create innerCallback_ failed!");
+        CHECK_RETURN_RET_ELOG(innerCallback_ == nullptr, CAMERA_SERVICE_FATAL_ERROR, "create innerCallback_ failed!");
         innerCallback_->SaveCaptureEndCallback(callback);
         innerPhotoOutput_->SetCallback(innerCallback_);
     } else {
@@ -154,8 +151,7 @@ Camera_ErrorCode Camera_PhotoOutput::RegisterFrameShutterEndCallback(OH_PhotoOut
 {
     if (innerCallback_ == nullptr) {
         innerCallback_ = make_shared<InnerPhotoOutputCallback>(this);
-        CHECK_RETURN_RET_ELOG(innerCallback_ == nullptr, CAMERA_SERVICE_FATAL_ERROR,
-            "create innerCallback_ failed!");
+        CHECK_RETURN_RET_ELOG(innerCallback_ == nullptr, CAMERA_SERVICE_FATAL_ERROR, "create innerCallback_ failed!");
         innerCallback_->SaveFrameShutterEndCallback(callback);
         innerPhotoOutput_->SetCallback(innerCallback_);
     } else {
@@ -176,8 +172,7 @@ Camera_ErrorCode Camera_PhotoOutput::RegisterCaptureReadyCallback(OH_PhotoOutput
 {
     if (innerCallback_ == nullptr) {
         innerCallback_ = make_shared<InnerPhotoOutputCallback>(this);
-        CHECK_RETURN_RET_ELOG(innerCallback_ == nullptr, CAMERA_SERVICE_FATAL_ERROR,
-            "create innerCallback_ failed!");
+        CHECK_RETURN_RET_ELOG(innerCallback_ == nullptr, CAMERA_SERVICE_FATAL_ERROR, "create innerCallback_ failed!");
         innerCallback_->SaveCaptureReadyCallback(callback);
         innerPhotoOutput_->SetCallback(innerCallback_);
     } else {
@@ -199,8 +194,7 @@ Camera_ErrorCode Camera_PhotoOutput::RegisterEstimatedCaptureDurationCallback(
 {
     if (innerCallback_ == nullptr) {
         innerCallback_ = make_shared<InnerPhotoOutputCallback>(this);
-        CHECK_RETURN_RET_ELOG(innerCallback_ == nullptr, CAMERA_SERVICE_FATAL_ERROR,
-            "create innerCallback_ failed!");
+        CHECK_RETURN_RET_ELOG(innerCallback_ == nullptr, CAMERA_SERVICE_FATAL_ERROR, "create innerCallback_ failed!");
         innerCallback_->SaveEstimatedCaptureDurationCallback(callback);
         innerPhotoOutput_->SetCallback(innerCallback_);
     } else {
@@ -224,7 +218,7 @@ Camera_ErrorCode Camera_PhotoOutput::UnregisterPhotoAvailableCallback(OH_PhotoOu
     CHECK_RETURN_RET_ELOG(innerCallback_ == nullptr, CAMERA_OPERATION_NOT_ALLOWED, "callback is null!");
     innerPhotoOutput_->UnSetPhotoAvailableCallback();
     callbackFlag_ &= ~CAPTURE_PHOTO;
-    innerPhotoOutput_->SetCallbackFlag(callbackFlag_);
+    innerPhotoOutput_->SetCallbackFlag(callbackFlag_, false);
     innerCallback_->RemovePhotoAvailableCallback(callback);
     return CAMERA_OK;
 }
@@ -235,7 +229,7 @@ Camera_ErrorCode Camera_PhotoOutput::UnregisterPhotoAssetAvailableCallback(OH_Ph
     CHECK_RETURN_RET_ELOG(innerCallback_ == nullptr, CAMERA_OPERATION_NOT_ALLOWED, "callback is null!");
     innerPhotoOutput_->UnSetPhotoAssetAvailableCallback();
     callbackFlag_ &= ~CAPTURE_PHOTO_ASSET;
-    innerPhotoOutput_->SetCallbackFlag(callbackFlag_);
+    innerPhotoOutput_->SetCallbackFlag(callbackFlag_, false);
     innerCallback_->RemovePhotoAssetAvailableCallback(callback);
     return CAMERA_OK;
 }
@@ -330,7 +324,6 @@ Camera_ErrorCode Camera_PhotoOutput::GetActiveProfile(Camera_Profile** profile)
     *profile = newProfile;
     return CAMERA_OK;
 }
-
 Camera_ErrorCode Camera_PhotoOutput::IsMovingPhotoSupported(bool* isSupported)
 {
     MEDIA_DEBUG_LOG("Camera_PhotoOutput IsMovingPhotoSupported is called");
@@ -356,8 +349,7 @@ Camera_ErrorCode Camera_PhotoOutput::EnableMovingPhoto(bool enableMovingPhoto)
 
 Camera_ErrorCode Camera_PhotoOutput::GetPhotoRotation(int32_t imageRotation, Camera_ImageRotation* cameraImageRotation)
 {
-    CHECK_RETURN_RET_ELOG(cameraImageRotation == nullptr, CAMERA_SERVICE_FATAL_ERROR,
-        "GetCameraImageRotation failed");
+    CHECK_RETURN_RET_ELOG(cameraImageRotation == nullptr, CAMERA_SERVICE_FATAL_ERROR, "GetCameraImageRotation failed");
     int32_t cameraOutputRotation = innerPhotoOutput_->GetPhotoRotation(imageRotation);
     CHECK_RETURN_RET_ELOG(cameraOutputRotation == CAMERA_SERVICE_FATAL_ERROR, CAMERA_SERVICE_FATAL_ERROR,
         "Camera_PhotoOutput::GetPhotoRotation failed to get photo profile! ret: %{public}d", cameraOutputRotation);
@@ -368,7 +360,7 @@ Camera_ErrorCode Camera_PhotoOutput::GetPhotoRotation(int32_t imageRotation, Cam
 Camera_ErrorCode Camera_PhotoOutput::IsPhotoQualityPrioritizationSupported(
     Camera_PhotoQualityPrioritization qualityPrioritization, bool* isSupported)
 {
-    CHECK_RETURN_RET_ELOG(isSupported == nullptr, CAMERA_SERVICE_FATAL_ERROR,
+    CHECK_RETURN_RET_ELOG(isSupported == nullptr, CAMERA_INVALID_ARGUMENT,
         "Camera_PhotoOutput::IsPhotoQualityPrioritizationSupported failed, isSupported is null");
     CHECK_RETURN_RET_ELOG(innerPhotoOutput_ == nullptr, CAMERA_SERVICE_FATAL_ERROR,
         "Camera_PhotoOutput::IsPhotoQualityPrioritizationSupported failed, innerPhotoOutput_ is null");

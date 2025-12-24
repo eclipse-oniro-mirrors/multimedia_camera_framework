@@ -31,7 +31,6 @@ using ::testing::Return;
 using ::testing::_;
 namespace OHOS {
 namespace CameraStandard {
-constexpr static uint32_t CAMERA_STREAM_REPEAT_ON_DEFAULT = 1;
 const uint32_t CONST_1 = 1;
 const uint32_t CONST_0 = 0;
 const uint32_t PHOTO_MODE = 1;
@@ -103,7 +102,7 @@ public:
     MOCK_METHOD0(UnSetCallback, int32_t());
     MOCK_METHOD0(Release, int32_t());
     MOCK_METHOD1(AddDeferredSurface, int32_t(const sptr<OHOS::IBufferProducer>& producer));
-    MOCK_METHOD1(RemoveDeferredSurface, int32_t(const sptr<OHOS::IBufferProducer>& producer));
+    MOCK_METHOD0(RemoveDeferredSurface, int32_t());
     MOCK_METHOD4(ForkSketchStreamRepeat, int32_t(
         int32_t width, int32_t height, sptr<IRemoteObject>& sketchStream, float sketchRatio));
     MOCK_METHOD1(UpdateSketchRatio, int32_t(float sketchRatio));
@@ -118,6 +117,10 @@ public:
     MOCK_METHOD2(CallbackExit, int32_t(uint32_t code, int32_t result));
     MOCK_METHOD1(GetMirror, int32_t(bool& isEnable));
     MOCK_METHOD1(SetCameraApi, int32_t(uint32_t apiCompatibleVersion));
+    MOCK_METHOD1(EnableStitching, int32_t(bool isEnable));
+    MOCK_METHOD1(SetOutputSettings, int32_t(const MovieSettings& movieSettings));
+    MOCK_METHOD1(GetSupportedVideoCodecTypes, int32_t(std::vector<int32_t>& supportedVideoCodecTypes));
+    MOCK_METHOD1(SetBandwidthCompression, int32_t(bool isEnable));
     virtual ~MockHStreamRepeatStub() {}
 };
 
@@ -128,13 +131,15 @@ public:
     MOCK_METHOD1(OnFrameError, int32_t(int32_t errorCode));
     MOCK_METHOD1(OnSketchStatusChanged, int32_t(SketchStatus status));
     MOCK_METHOD1(OnDeferredVideoEnhancementInfo, int32_t(const CaptureEndedInfoExt& captureEndedInfo));
+    MOCK_METHOD0(OnFramePaused, int32_t());
+    MOCK_METHOD0(OnFrameResumed, int32_t());
+    virtual ~MockHStreamRepeatCallbackStub() {}
     MockHStreamRepeatCallbackStub()
     {
         ON_CALL(*this, OnFrameStarted()).WillByDefault(Return(CAMERA_OK));
         ON_CALL(*this, OnDeferredVideoEnhancementInfo(_)).WillByDefault(Return(CAMERA_OK));
         ON_CALL(*this, OnSketchStatusChanged(_)).WillByDefault(Return(CAMERA_OK));
     }
-    virtual ~MockHStreamRepeatCallbackStub() {}
 };
 
 void HStreamRepeatUnit::SetUpTestCase(void)
@@ -178,11 +183,11 @@ sptr<CaptureOutput> HStreamRepeatUnit::CreatePhotoOutput(Profile& photoProfile)
  * CaseDescription: Test the SetStreamInfo function when mEnableSecure is true.
  *    The extendedStreamInfos should not be empty after setting stream info.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_001, TestSize.Level1)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_001, TestSize.Level0)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
-    StreamInfo_V1_1 streamInfo;
+    StreamInfo_V1_5 streamInfo;
     streamRepeat->repeatStreamType_ = RepeatStreamType::PREVIEW;
     streamRepeat->mEnableSecure = true;
     streamRepeat->SetStreamInfo(streamInfo);
@@ -198,11 +203,11 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_001, TestSize.Level1)
  * CaseDescription: Test the SetStreamInfo function when mEnableSecure is false.
  *    The extendedStreamInfos should be empty after setting stream info.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_002, TestSize.Level1)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_002, TestSize.Level0)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
-    StreamInfo_V1_1 streamInfo;
+    StreamInfo_V1_5 streamInfo;
     streamRepeat->repeatStreamType_ = RepeatStreamType::PREVIEW;
     streamRepeat->mEnableSecure = false;
     streamRepeat->SetStreamInfo(streamInfo);
@@ -218,7 +223,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_002, TestSize.Level1)
  * CaseDescription: Test the UpdateSketchStatus function. When the sketch status is updated to STOPED,
  *    the parentStreamRepeat should remain unchanged.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_003, TestSize.Level1)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_003, TestSize.Level0)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -239,7 +244,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_003, TestSize.Level1)
  * CaseDescription: Test the Start function. When the stream is not in a valid state,
  *    the expected return value is CAMERA_INVALID_STATE.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_004, TestSize.Level1)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_004, TestSize.Level0)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -258,7 +263,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_004, TestSize.Level1)
  * CaseDescription: Test the ReleaseStream function.
  *    When the stream is released without delay, the expected return value is CAMERA_OK.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_005, TestSize.Level1)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_005, TestSize.Level0)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -277,7 +282,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_005, TestSize.Level1)
  * When the deferred video enhancement info is received,
  *    the expected return value is CAMERA_OK.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_006, TestSize.Level1)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_006, TestSize.Level0)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -296,7 +301,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_006, TestSize.Level1)
  * CaseDescription: Test the OnFrameError function. When a frame error of type HIGH_TEMPERATURE_ERROR is reported,
  *    the expected return value is CAMERA_OK.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_007, TestSize.Level1)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_007, TestSize.Level0)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -314,7 +319,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_007, TestSize.Level1)
  * CaseDescription: Test SetMirrorForLivePhoto when the mirror mode is supported.
  *    The expected return value is CAM_META_SUCCESS.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_008, TestSize.Level1)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_008, TestSize.Level0)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -343,7 +348,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_008, TestSize.Level1)
  * CaseDescription: Test SetMirrorForLivePhoto when the mirror mode is not supported.
  *    The expected return value is CAM_META_ITEM_NOT_FOUND.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_009, TestSize.Level1)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_009, TestSize.Level0)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -370,7 +375,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_009, TestSize.Level1)
  * CaseDescription: Test SetStreamTransform for front camera.
  *    The expected camera position remains OHOS_CAMERA_POSITION_FRONT.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_010, TestSize.Level1)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_010, TestSize.Level0)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -393,7 +398,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_010, TestSize.Level1)
  * CaseDescription: Test ProcessCameraSetRotation for front camera with 180-degree sensor orientation.
  *    The expected sensor orientation is 180.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_011, TestSize.Level1)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_011, TestSize.Level0)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -412,7 +417,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_011, TestSize.Level1)
  * CaseDescription: Test ProcessCameraSetRotation for back camera with 90-degree sensor orientation.
  *    The expected sensor orientation is 270.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_012, TestSize.Level1)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_012, TestSize.Level0)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -431,7 +436,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_012, TestSize.Level1)
  * CaseDescription: Test ProcessVerticalCameraPosition for front camera with 90-degree sensor orientation.
  *    The expected transform is GRAPHIC_FLIP_H_ROT90.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_013, TestSize.Level1)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_013, TestSize.Level0)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -451,7 +456,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_013, TestSize.Level1)
  * CaseDescription: Test ProcessVerticalCameraPosition for front camera with 180-degree sensor orientation.
  *    The expected transform is GRAPHIC_FLIP_H_ROT180.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_014, TestSize.Level1)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_014, TestSize.Level0)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -471,7 +476,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_014, TestSize.Level1)
  * CaseDescription: Test ProcessVerticalCameraPosition for front camera with 360-degree sensor orientation.
  *    The expected transform is GRAPHIC_FLIP_H_ROT90.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_015, TestSize.Level1)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_015, TestSize.Level0)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -542,7 +547,7 @@ HWTEST_F(HStreamRepeatUnit, ProcessVerticalCameraPosition_003, TestSize.Level0)
  * CaseDescription: Test ProcessVerticalCameraPosition for back camera with 360-degree sensor orientation.
  *    The expected transform is GRAPHIC_ROTATE_NONE.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_016, TestSize.Level1)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_016, TestSize.Level0)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -562,7 +567,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_016, TestSize.Level1)
  * CaseDescription: Test ProcessVerticalCameraPosition for back camera with 270-degree sensor orientation.
  *    The expected transform is GRAPHIC_ROTATE_90.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_017, TestSize.Level1)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_017, TestSize.Level0)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -582,7 +587,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_017, TestSize.Level1)
  * CaseDescription: Test ProcessVerticalCameraPosition for back camera with 180-degree sensor orientation.
  *    The expected transform is GRAPHIC_ROTATE_180.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_018, TestSize.Level1)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_018, TestSize.Level0)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -602,7 +607,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_018, TestSize.Level1)
  * CaseDescription: Test ProcessVerticalCameraPosition for back camera with 0-degree sensor orientation.
  *    The expected transform is GRAPHIC_ROTATE_180.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_019, TestSize.Level1)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_019, TestSize.Level0)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -622,7 +627,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_019, TestSize.Level1)
  * CaseDescription: Test ProcessCameraPosition for front camera with 0-degree stream rotation.
  *    The expected transform is GRAPHIC_FLIP_H.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_020, TestSize.Level1)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_020, TestSize.Level0)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -642,7 +647,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_020, TestSize.Level1)
  * CaseDescription: Test ProcessCameraPosition for front camera with 90-degree stream rotation.
  *    The expected transform is GRAPHIC_FLIP_H_ROT90.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_021, TestSize.Level1)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_021, TestSize.Level0)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -662,7 +667,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_021, TestSize.Level1)
  * CaseDescription: Test ProcessCameraPosition for front camera with 180-degree stream rotation.
  *    The expected transform is GRAPHIC_FLIP_H_ROT180.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_022, TestSize.Level1)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_022, TestSize.Level0)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -682,7 +687,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_022, TestSize.Level1)
  * CaseDescription: Test ProcessCameraPosition for front camera with 270-degree stream rotation.
  *    The expected transform is GRAPHIC_FLIP_H_ROT270.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_023, TestSize.Level1)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_023, TestSize.Level0)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -702,7 +707,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_023, TestSize.Level1)
  * CaseDescription: Test ProcessCameraPosition for front camera with 360-degree stream rotation.
  *    The expected transform is GRAPHIC_ROTATE_NONE.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_024, TestSize.Level1)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_024, TestSize.Level0)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -722,7 +727,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_024, TestSize.Level1)
  * CaseDescription: Test ProcessCameraPosition for back camera with 0-degree stream rotation.
  *    The expected transform is GRAPHIC_ROTATE_NONE.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_025, TestSize.Level1)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_025, TestSize.Level0)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -742,7 +747,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_025, TestSize.Level1)
  * CaseDescription: Test ProcessCameraPosition for back camera with 90-degree stream rotation.
  *    The expected transform is GRAPHIC_ROTATE_90.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_026, TestSize.Level1)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_026, TestSize.Level0)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -762,7 +767,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_026, TestSize.Level1)
  * CaseDescription: Test ProcessCameraPosition for back camera with 180-degree stream rotation.
  *    The expected transform is GRAPHIC_ROTATE_180.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_027, TestSize.Level1)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_027, TestSize.Level0)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -782,7 +787,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_027, TestSize.Level1)
  * CaseDescription: Test ProcessCameraPosition for back camera with 270-degree stream rotation.
  *    The expected transform is GRAPHIC_ROTATE_270.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_028, TestSize.Level1)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_028, TestSize.Level0)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -802,7 +807,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_028, TestSize.Level1)
  * CaseDescription: Test ProcessCameraPosition for back camera with 360-degree stream rotation.
  *    The expected transform is GRAPHIC_ROTATE_NONE.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_029, TestSize.Level1)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_029, TestSize.Level0)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -822,7 +827,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_029, TestSize.Level1)
  * CaseDescription: Test OperatePermissionCheck for an unauthorized caller token.
  *    The expected return value is CAMERA_OPERATION_NOT_ALLOWED.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_030, TestSize.Level1)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_030, TestSize.Level0)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -855,7 +860,7 @@ HWTEST_F(HStreamRepeatUnit, OperatePermissionCheck_001, TestSize.Level0)
  * CaseDescription: Test OpenVideoDfxSwitch to ensure the debug switch is set correctly in camera ability metadata.
  *    The expected return value is CAMERA_OK.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_031, TestSize.Level1)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_031, TestSize.Level0)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -879,19 +884,23 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_031, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test HStreamRepeat with no static capability.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_032, TestSize.Level1)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_032, TestSize.Level0)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
     int32_t height = PHOTO_DEFAULT_HEIGHT;
+
     sptr<CameraManager> cameraManager = CameraManager::GetInstance();
     ASSERT_NE(cameraManager, nullptr);
     std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
     ASSERT_FALSE(cameras.empty());
+
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
+
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    camInput->SetCameraSettings(camInput->GetCameraSettings());
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
     if (camInput->GetCameraDevice()) {
         camInput->GetCameraDevice()->SetMdmCheck(false);
         camInput->GetCameraDevice()->Open();
@@ -903,19 +912,26 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_032, TestSize.Level1)
     ASSERT_FALSE(photoProfiles.empty());
     sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfiles[CONST_0]);
     ASSERT_NE(photo, nullptr);
+
     sptr<CaptureOutput> metadatOutput = cameraManager->CreateMetadataOutput();
     ASSERT_NE(metadatOutput, nullptr);
+
     sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
+
     EXPECT_EQ(session->BeginConfig(), 0);
+
     EXPECT_EQ(session->AddInput(input), 0);
     EXPECT_EQ(session->AddOutput(photo), 0);
     EXPECT_EQ(session->AddOutput(metadatOutput), 0);
+
     EXPECT_EQ(session->CommitConfig(), 0);
+
     sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
     sptr<IBufferProducer> producer1 = Surface->GetProducer();
     auto streamRepeat = new (std::nothrow) HStreamRepeat(producer1, format, width, height, RepeatStreamType::PREVIEW);
     ASSERT_NE(streamRepeat, nullptr);
+
     std::shared_ptr<PhotoCaptureSetting> photoSetting = std::make_shared<PhotoCaptureSetting>();
     photoSetting->SetRotation(PhotoCaptureSetting::Rotation_90);
     photoSetting->SetQuality(PhotoCaptureSetting::QUALITY_LEVEL_MEDIUM);
@@ -925,7 +941,9 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_032, TestSize.Level1)
     if (streamRepeat->LinkInput(streamOperator, photoSetting->GetCaptureMetadataSetting()) != 0) {
         EXPECT_EQ(streamRepeat->Stop(), CAMERA_INVALID_STATE);
         EXPECT_EQ(streamRepeat->Start(), CAMERA_INVALID_STATE);
+
         EXPECT_EQ(streamRepeat->AddDeferredSurface(producer1), CAMERA_INVALID_STATE);
+
         EXPECT_EQ(streamRepeat->Start(), CAMERA_INVALID_STATE);
         EXPECT_EQ(streamRepeat->Stop(), CAMERA_INVALID_STATE);
     }
@@ -941,7 +959,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_032, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test HStreamRepeat & HStreamCommon
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_033, TestSize.Level1)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_033, TestSize.Level0)
 {
     int32_t format = 0;
     int32_t width = 0;
@@ -1020,7 +1038,7 @@ HWTEST_F(HStreamRepeatUnit, LinkInput_001, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test HStreamRepeat
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_034, TestSize.Level1)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_034, TestSize.Level0)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -1048,7 +1066,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_034, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test HStreamRepeat when status is STARTED
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_035, TestSize.Level1)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_035, TestSize.Level0)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -1071,7 +1089,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_035, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test HStreamRepeat when sketchStream is nullptr
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_036, TestSize.Level1)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_036, TestSize.Level0)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -1096,7 +1114,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_036, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test HStreamRepeat when sketchStreamRepeat_ is nullptr
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_037, TestSize.Level1)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_037, TestSize.Level0)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -1121,7 +1139,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_037, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test HStreamRepeat
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_038, TestSize.Level1)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_038, TestSize.Level0)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -1144,7 +1162,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_038, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test HStreamRepeat when repeatStreamType_ is SKETCH
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_039, TestSize.Level1)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_039, TestSize.Level0)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -1155,7 +1173,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_039, TestSize.Level1)
     auto streamRepeat = new (std::nothrow)
         HStreamRepeat(producer, format, width, height, RepeatStreamType::PREVIEW);
     ASSERT_NE(streamRepeat, nullptr);
-    StreamInfo_V1_1 streamInfo;
+    StreamInfo_V1_5 streamInfo;
     streamRepeat->repeatStreamType_ = RepeatStreamType::SKETCH;
     streamRepeat->SetStreamInfo(streamInfo);
 }
@@ -1175,7 +1193,7 @@ HWTEST_F(HStreamRepeatUnit, SetStreamInfo_001, TestSize.Level0)
     sptr<IBufferProducer> producer = Surface->GetProducer();
     auto streamRepeat = new (std::nothrow) HStreamRepeat(producer, format, width, height, RepeatStreamType::LIVEPHOTO);
     ASSERT_NE(streamRepeat, nullptr);
-    StreamInfo_V1_1 streamInfo;
+    StreamInfo_V1_5 streamInfo;
     streamRepeat->SetStreamInfo(streamInfo);
 }
 
@@ -1195,7 +1213,7 @@ HWTEST_F(HStreamRepeatUnit, SetStreamInfo_002, TestSize.Level0)
     auto streamRepeat = new (std::nothrow) HStreamRepeat(producer, format, width, height,
         static_cast<RepeatStreamType>(static_cast<int32_t>(RepeatStreamType::LIVEPHOTO) + 1));
     ASSERT_NE(streamRepeat, nullptr);
-    StreamInfo_V1_1 streamInfo;
+    StreamInfo_V1_5 streamInfo;
     streamRepeat->SetStreamInfo(streamInfo);
 }
 
@@ -1256,7 +1274,7 @@ HWTEST_F(HStreamRepeatUnit, StartSketchStream_003, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test OnRemoteRequest for switch of COMMAND_ON_FRAME_ERROR
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_040, TestSize.Level1)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_040, TestSize.Level0)
 {
     MockHStreamRepeatCallbackStub stub;
     MessageParcel data;
@@ -1279,7 +1297,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_040, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test OnRemoteRequest for switch of CAMERA_ENABLE_STREAM_MIRROR
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_041, TestSize.Level1)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_041, TestSize.Level0)
 {
     MockHStreamRepeatStub stub;
     MessageParcel data;
@@ -1302,7 +1320,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_041, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test OnRemoteRequest for switch of CAMERA_ENABLE_SECURE_STREAM
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_042, TestSize.Level1)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_042, TestSize.Level0)
 {
     MockHStreamRepeatStub stub;
     MessageParcel data;
@@ -1325,7 +1343,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_042, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test OnRemoteRequest for switch of CAMERA_STREAM_FRAME_RANGE_SET
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_043, TestSize.Level1)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_043, TestSize.Level0)
 {
     MockHStreamRepeatStub stub;
     MessageParcel data;
@@ -1402,6 +1420,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_048, TestSize.Level1)
     data.RewindRead(0);
     MessageParcel reply;
     MessageOption option;
+    const uint32_t CAMERA_STREAM_REPEAT_ON_DEFAULT = 1;
     uint32_t code = CAMERA_STREAM_REPEAT_ON_DEFAULT;
     int errCode = stub.OnRemoteRequest(code, data, reply, option);
     EXPECT_EQ(errCode, ERR_NONE);

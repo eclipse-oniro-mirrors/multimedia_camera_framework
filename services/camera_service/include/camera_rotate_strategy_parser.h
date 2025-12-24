@@ -30,6 +30,9 @@ using namespace std;
 
 class CameraRotateStrategyParser : public Parser {
 public:
+    static constexpr char DEVICE_CONFIG_FILE[] = "/sys_prod/etc/camera/camera_rotate_strategy.xml";
+
+    bool LoadConfiguration() final;
     void Destroy() final;
 
     CameraRotateStrategyParser()
@@ -45,8 +48,17 @@ public:
         curNode_ = nullptr;
     }
 
+    inline std::vector<CameraRotateStrategyInfo> GetCameraRotateStrategyInfos()
+    {
+        return cameraRotateStrategyInfos_;
+    }
+
 private:
+    std::mutex strategyInfosMutex_;
+    bool ParseInternal(std::shared_ptr<CameraXmlNode> curNode);
+    void ParserStrategyInfo(std::shared_ptr<CameraXmlNode> curNode);
     std::shared_ptr<CameraXmlNode> curNode_ = nullptr;
+    std::vector<CameraRotateStrategyInfo> cameraRotateStrategyInfos_ = {};
 };
 } // namespace CameraStandard
 } // namespace OHOS

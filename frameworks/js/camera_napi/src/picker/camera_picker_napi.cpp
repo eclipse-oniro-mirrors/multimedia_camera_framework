@@ -30,11 +30,15 @@
 #include "modal_ui_extension_config.h"
 #include "napi/native_common.h"
 #include "napi_base_context.h"
+#include "parameters.h"
 #include "string_wrapper.h"
 
 namespace OHOS {
 namespace CameraStandard {
 namespace {
+constexpr char CAMERA_PICKER_BUNDLE_HAP_NAME[] = "com.huawei.hmos.camera";
+constexpr char CAMERA_PICKER_BUNDLE_ABILITY_NAME[] = "PickerAbility";
+constexpr char CAMERA_PICKER_BUNDLE_ABILITY_NAME_FOR_UIEXTENSION[] = "com.huawei.hmos.camera.ExtensionPickerAbility";
 constexpr char CAMERA_PICKER_ABILITY_ACTION_PHOTO[] = "ohos.want.action.imageCapture";
 constexpr char CAMERA_PICKER_ABILITY_ACTION_VIDEO[] = "ohos.want.action.videoCapture";
 const std::map<std::string, PickerMediaType> PICKER_MEDIA_TYPE_MAP = {
@@ -42,6 +46,11 @@ const std::map<std::string, PickerMediaType> PICKER_MEDIA_TYPE_MAP = {
     { "video", PickerMediaType::VIDEO },
 };
 constexpr char CAMERA_PICKER_NAPI_CLASS_NAME[] = "CameraPicker";
+
+enum PickerAbilityType { UIABILITY, UIEXTENSION };
+
+static PickerAbilityType g_pickerAbilityType = UIABILITY;
+
 } // namespace
 
 using namespace std;
@@ -59,17 +68,35 @@ void __attribute__((destructor)) OnUnload()
     MEDIA_INFO_LOG("CameraPickerNapi::OnUnload");
 }
 
+CameraPickerNapi::CameraPickerNapi() : env_(nullptr)
+{
+    CAMERA_SYNC_TRACE;
+}
+
+CameraPickerNapi::~CameraPickerNapi()
+{
+    MEDIA_DEBUG_LOG("~CameraPickerNapi is called");
+}
+
 static std::shared_ptr<PickerContextProxy> GetAbilityContext(napi_env env, napi_value value)
 {
     MEDIA_DEBUG_LOG("GetAbilityContext is called");
     bool stageMode = false;
     napi_status status = OHOS::AbilityRuntime::IsStageContext(env, value, stageMode);
-    CHECK_RETURN_RET_ELOG(status != napi_ok || !stageMode, nullptr, "GetAbilityContext It is not stage Mode");
+    if (status != napi_ok || !stageMode) {
+        MEDIA_ERR_LOG("GetAbilityContext It is not stage Mode");
+        return nullptr;
+    }
     auto context = AbilityRuntime::GetStageModeContext(env, value);
-    CHECK_RETURN_RET_ELOG(context == nullptr, nullptr, "GetAbilityContext get context failed context");
+    if (context == nullptr) {
+        MEDIA_ERR_LOG("GetAbilityContext get context failed context");
+        return nullptr;
+    }
     auto contextProxy = std::make_shared<PickerContextProxy>(context);
-    CHECK_RETURN_RET_ELOG(contextProxy->GetType() == PickerContextType::UNKNOWN, nullptr,
-        "GetAbilityContext AbilityRuntime convert context failed");
+    if (contextProxy == nullptr || contextProxy->GetType() == PickerContextType::UNKNOWN) {
+        MEDIA_ERR_LOG("GetAbilityContext AbilityRuntime convert context failed");
+        return nullptr;
+    }
     if (contextProxy->GetType() == PickerContextType::UI_EXTENSION) {
         MEDIA_INFO_LOG("GetAbilityContext type is UI_EXTENSION");
     } else if (contextProxy->GetType() == PickerContextType::ABILITY) {
@@ -85,22 +112,32 @@ static bool GetMediaTypes(napi_env env, napi_value napiMediaTypesArray, std::vec
 {
     MEDIA_DEBUG_LOG("GetMediaTypes is called");
     uint32_t typeLen;
-    CHECK_RETURN_RET_ELOG(napi_get_array_length(env, napiMediaTypesArray, &typeLen) != napi_ok, false,
-        "napi_get_array_length failed");
+    if (napi_get_array_length(env, napiMediaTypesArray, &typeLen) != napi_ok) {
+        MEDIA_ERR_LOG("napi_get_array_length failed");
+        return false;
+    }
     for (uint32_t i = 0; i < typeLen; i++) {
         napi_value element;
-        CHECK_RETURN_RET_ELOG(napi_get_element(env, napiMediaTypesArray, i, &element) != napi_ok,
-            false, "napi_get_element failed");
+        if (napi_get_element(env, napiMediaTypesArray, i, &element) != napi_ok) {
+            MEDIA_ERR_LOG("napi_get_element failed");
+            return false;
+        }
         std::string typeString;
         size_t stringSize = 0;
-        CHECK_RETURN_RET_ELOG(napi_get_value_string_utf8(env, element, nullptr, 0, &stringSize) != napi_ok,
-            false, "napi_get_value_string_utf8 failed");
+        if (napi_get_value_string_utf8(env, element, nullptr, 0, &stringSize) != napi_ok) {
+            MEDIA_ERR_LOG("napi_get_value_string_utf8 failed");
+            return false;
+        }
         typeString.reserve(stringSize + 1);
         typeString.resize(stringSize);
-        CHECK_RETURN_RET_ELOG(napi_get_value_string_utf8(env, element, typeString.data(), (stringSize + 1),
-            &stringSize) != napi_ok, false, "napi_get_value_string_utf8 failed");
+        if (napi_get_value_string_utf8(env, element, typeString.data(), (stringSize + 1), &stringSize) != napi_ok) {
+            MEDIA_ERR_LOG("napi_get_value_string_utf8 failed");
+            return false;
+        }
         auto it = PICKER_MEDIA_TYPE_MAP.find(typeString.c_str());
-        CHECK_EXECUTE(it != PICKER_MEDIA_TYPE_MAP.end(), mediaTypes.emplace_back(it->second));
+        if (it != PICKER_MEDIA_TYPE_MAP.end()) {
+            mediaTypes.emplace_back(it->second);
+        }
     }
     MEDIA_DEBUG_LOG("GetMediaTypes end valid size is %{public}zu", mediaTypes.size());
     return true;
@@ -112,15 +149,19 @@ static bool GetPickerProfile(napi_env env, napi_value napiPickerProfile, PickerP
     napi_value value = nullptr;
 
     // get cameraPosition
-    CHECK_RETURN_RET_ELOG(napi_get_named_property(env, napiPickerProfile, "cameraPosition", &value) != napi_ok,
-        false, "napi_get_named_property failed");
+    if (napi_get_named_property(env, napiPickerProfile, "cameraPosition", &value) != napi_ok) {
+        MEDIA_ERR_LOG("napi_get_named_property failed");
+        return false;
+    }
     int32_t cameraPosition = 0;
     if (napi_get_value_int32(env, value, &cameraPosition) != napi_ok) {
         MEDIA_WARNING_LOG("napi_get_value_int32 failed");
     }
     // get videoDuration
-    CHECK_RETURN_RET_ELOG(napi_get_named_property(env, napiPickerProfile, "videoDuration", &value) != napi_ok,
-        false, "napi_get_named_property failed");
+    if (napi_get_named_property(env, napiPickerProfile, "videoDuration", &value) != napi_ok) {
+        MEDIA_ERR_LOG("napi_get_named_property failed");
+        return false;
+    }
     int32_t videoDuration = 0;
     if (napi_get_value_int32(env, value, &videoDuration) != napi_ok) {
         MEDIA_WARNING_LOG("napi_get_value_int32 failed");
@@ -128,8 +169,10 @@ static bool GetPickerProfile(napi_env env, napi_value napiPickerProfile, PickerP
     // get saveUri
     char saveUri[PATH_MAX];
     size_t length = 0;
-    CHECK_RETURN_RET_ELOG(napi_get_named_property(env, napiPickerProfile, "saveUri", &value) != napi_ok,
-        false, "napi_get_named_property failed");
+    if (napi_get_named_property(env, napiPickerProfile, "saveUri", &value) != napi_ok) {
+        MEDIA_ERR_LOG("napi_get_named_property failed");
+        return false;
+    }
     if (napi_get_value_string_utf8(env, value, saveUri, PATH_MAX, &length) != napi_ok) {
         MEDIA_WARNING_LOG("get saveUri fail!");
     }
@@ -145,7 +188,7 @@ static void SetPickerWantParams(AAFwk::Want& want, std::shared_ptr<PickerContext
     const vector<PickerMediaType>& mediaTypes, PickerProfile& pickerProfile)
 {
     MEDIA_DEBUG_LOG("SetPickerWantParams enter");
-    AAFwk::WantParams wantParams;
+    AAFwk::WantParams wantParam;
     bool isPhotoType = false;
     bool isVideoType = false;
     for (auto type : mediaTypes) {
@@ -160,15 +203,26 @@ static void SetPickerWantParams(AAFwk::Want& want, std::shared_ptr<PickerContext
         }
     }
 
+    if (g_pickerAbilityType == UIABILITY) {
+        want.SetElementName(CAMERA_PICKER_BUNDLE_HAP_NAME, CAMERA_PICKER_BUNDLE_ABILITY_NAME);
+    } else {
+        want.SetElementName(CAMERA_PICKER_BUNDLE_HAP_NAME, CAMERA_PICKER_BUNDLE_ABILITY_NAME_FOR_UIEXTENSION);
+    }
     want.SetUri(pickerProfile.saveUri);
     want.SetFlags(AAFwk::Want::FLAG_AUTH_READ_URI_PERMISSION | AAFwk::Want::FLAG_AUTH_WRITE_URI_PERMISSION);
-    wantParams.SetParam("ability.want.params.uiExtensionTargetType", AAFwk::String::Box("cameraPicker"));
-    wantParams.SetParam("callBundleName", AAFwk::String::Box(pickerContextProxy->GetBundleName().c_str()));
-    wantParams.SetParam("cameraPosition", AAFwk::Integer::Box(pickerProfile.cameraPosition));
-    wantParams.SetParam("videoDuration", AAFwk::Integer::Box(pickerProfile.videoDuration));
-    wantParams.SetParam("saveUri", AAFwk::String::Box(pickerProfile.saveUri.c_str()));
-    CHECK_EXECUTE(isPhotoType && isVideoType, wantParams.SetParam("supportMultiMode", AAFwk::Boolean::Box(true)));
-    want.SetParams(wantParams);
+    if (g_pickerAbilityType == UIABILITY) {
+        wantParam.SetParam("ability.want.params.uiExtensionTargetType", AAFwk::String::Box("cameraPicker"));
+    } else {
+        wantParam.SetParam("ability.want.params.uiExtensionType", AAFwk::String::Box("sys/commonUI"));
+    }
+    wantParam.SetParam("callBundleName", AAFwk::String::Box(pickerContextProxy->GetBundleName().c_str()));
+    wantParam.SetParam("cameraPosition", AAFwk::Integer::Box(pickerProfile.cameraPosition));
+    wantParam.SetParam("videoDuration", AAFwk::Integer::Box(pickerProfile.videoDuration));
+    wantParam.SetParam("saveUri", AAFwk::String::Box(pickerProfile.saveUri.c_str()));
+    if (isPhotoType && isVideoType) {
+        wantParam.SetParam("supportMultiMode", AAFwk::Boolean::Box(true));
+    }
+    want.SetParams(wantParam);
     if (isPhotoType) {
         want.SetAction(CAMERA_PICKER_ABILITY_ACTION_PHOTO);
     } else if (isVideoType) {
@@ -186,27 +240,27 @@ static void CommonCompleteCallback(napi_env env, napi_status status, void* data)
     napi_value resultCode = nullptr;
     napi_value resultUri = nullptr;
     napi_value resultMediaType = nullptr;
-    auto cameraPickerAsyncContext = static_cast<CameraPickerAsyncContext*>(data);
-    CHECK_RETURN_ELOG(cameraPickerAsyncContext == nullptr, "Async context is null");
+    auto context = static_cast<CameraPickerAsyncContext*>(data);
+    if (context == nullptr) {
+        MEDIA_ERR_LOG("Async context is null");
+        return;
+    }
 
     std::unique_ptr<JSAsyncContextOutput> jsContext = std::make_unique<JSAsyncContextOutput>();
 
-    if (!cameraPickerAsyncContext->status) {
-        CameraNapiUtils::CreateNapiErrorObject(env, cameraPickerAsyncContext->errorCode,
-            cameraPickerAsyncContext->errorMsg.c_str(), jsContext);
+    if (!context->status) {
+        CameraNapiUtils::CreateNapiErrorObject(env, context->errorCode, context->errorMsg.c_str(), jsContext);
     } else {
         jsContext->status = true;
         napi_get_undefined(env, &jsContext->error);
-        if (!cameraPickerAsyncContext->bRetBool) {
+        if (!context->bRetBool) {
             napi_create_object(env, &callbackObj);
-            napi_create_int32(env, cameraPickerAsyncContext->uiExtCallback->GetResultCode(), &resultCode);
+            napi_create_int32(env, context->uiExtCallback->GetResultCode(), &resultCode);
             napi_set_named_property(env, callbackObj, "resultCode", resultCode);
-            napi_create_string_utf8(env, cameraPickerAsyncContext->uiExtCallback->GetResultUri().c_str(),
-                NAPI_AUTO_LENGTH, &resultUri);
+            napi_create_string_utf8(env, context->uiExtCallback->GetResultUri().c_str(), NAPI_AUTO_LENGTH, &resultUri);
             napi_set_named_property(env, callbackObj, "resultUri", resultUri);
             napi_create_string_utf8(
-                env, cameraPickerAsyncContext->uiExtCallback->GetResultMediaType().c_str(),
-                    NAPI_AUTO_LENGTH, &resultMediaType);
+                env, context->uiExtCallback->GetResultMediaType().c_str(), NAPI_AUTO_LENGTH, &resultMediaType);
             napi_set_named_property(env, callbackObj, "mediaType", resultMediaType);
             jsContext->data = callbackObj;
         } else {
@@ -214,47 +268,83 @@ static void CommonCompleteCallback(napi_env env, napi_status status, void* data)
         }
     }
 
-    if (!cameraPickerAsyncContext->funcName.empty() && cameraPickerAsyncContext->taskId > 0) {
+    if (!context->funcName.empty() && context->taskId > 0) {
         // Finish async trace
-        CAMERA_FINISH_ASYNC_TRACE(cameraPickerAsyncContext->funcName, cameraPickerAsyncContext->taskId);
-        jsContext->funcName = cameraPickerAsyncContext->funcName;
+        CAMERA_FINISH_ASYNC_TRACE(context->funcName, context->taskId);
+        jsContext->funcName = context->funcName;
     }
 
-    CHECK_EXECUTE(cameraPickerAsyncContext->work != nullptr,
-        CameraNapiUtils::InvokeJSAsyncMethod(env, cameraPickerAsyncContext->deferred,
-            cameraPickerAsyncContext->callbackRef, cameraPickerAsyncContext->work, *jsContext));
-    delete cameraPickerAsyncContext;
+    if (context->work != nullptr) {
+        CameraNapiUtils::InvokeJSAsyncMethod(env, context->deferred, context->callbackRef, context->work, *jsContext);
+    }
+    delete context;
 }
 
 static std::shared_ptr<UIExtensionCallback> StartCameraAbility(
     napi_env env, std::shared_ptr<PickerContextProxy> pickerContextProxy, AAFwk::Want& want)
 {
-    auto uiCallback = std::make_shared<UIExtensionCallback>(pickerContextProxy);
-    OHOS::Ace::ModalUIExtensionCallbacks extCallbacks = {
-        [uiCallback](int32_t releaseCode) { uiCallback->OnRelease(releaseCode); },
-        [uiCallback](int32_t resultCode, const OHOS::AAFwk::Want& result) {
-            uiCallback->OnResult(resultCode, result); },
-        [uiCallback](const OHOS::AAFwk::WantParams& request) { uiCallback->OnReceive(request); },
-        [uiCallback](int32_t errorCode, const std::string& name, const std::string& message) {
-            uiCallback->OnError(errorCode, name, message); },
-        [uiCallback](const std::shared_ptr<OHOS::Ace::ModalUIExtensionProxy>& uiProxy) {
-            uiCallback->OnRemoteReady(uiProxy); },
-        [uiCallback]() { uiCallback->OnDestroy(); }
+    auto uiExtCallback = std::make_shared<UIExtensionCallback>(pickerContextProxy);
+    OHOS::Ace::ModalUIExtensionCallbacks extensionCallbacks = {
+        [uiExtCallback](int32_t releaseCode) { uiExtCallback->OnRelease(releaseCode); },
+        [uiExtCallback](int32_t resultCode, const OHOS::AAFwk::Want& result) {
+            uiExtCallback->OnResult(resultCode, result); },
+        [uiExtCallback](const OHOS::AAFwk::WantParams& request) { uiExtCallback->OnReceive(request); },
+        [uiExtCallback](int32_t errorCode, const std::string& name, const std::string& message) {
+            uiExtCallback->OnError(errorCode, name, message); },
+        [uiExtCallback](const std::shared_ptr<OHOS::Ace::ModalUIExtensionProxy>& uiProxy) {
+            uiExtCallback->OnRemoteReady(uiProxy); },
+        [uiExtCallback]() { uiExtCallback->OnDestroy(); }
     };
+
+    AbilityRuntime::RuntimeTask task = [extensionCallbacks](
+                                           const int32_t code, const AAFwk::Want& returnWant, bool isInner) {
+        if (code == 0) {
+            extensionCallbacks.onResult(0, returnWant);
+        } else {
+            extensionCallbacks.onError(code, "", "");
+        }
+        MEDIA_INFO_LOG("picker StartCameraAbility get result %{public}d %{public}d", code, isInner);
+    };
+
+    auto ret = pickerContextProxy->StartAbilityForResult(want, 1, std::move(task));
+    if (ret != ERR_OK) {
+        MEDIA_ERR_LOG("picker StartCameraAbility picker StartCameraAbility is %{public}d", ret);
+        return nullptr;
+    }
+    return uiExtCallback;
+}
+
+
+static std::shared_ptr<UIExtensionCallback> StartCameraAbilityForUIExtension(
+    napi_env env, std::shared_ptr<PickerContextProxy> pickerContextProxy, AAFwk::Want& want)
+{
+    auto uiExtCallback = std::make_shared<UIExtensionCallback>(pickerContextProxy);
+    OHOS::Ace::ModalUIExtensionCallbacks extensionCallbacks = {
+        [uiExtCallback](int32_t releaseCode) { uiExtCallback->OnRelease(releaseCode); },
+        [uiExtCallback](int32_t resultCode, const OHOS::AAFwk::Want& result) {
+            uiExtCallback->OnResult(resultCode, result); },
+        [uiExtCallback](const OHOS::AAFwk::WantParams& request) { uiExtCallback->OnReceive(request); },
+        [uiExtCallback](int32_t errorCode, const std::string& name, const std::string& message) {
+            uiExtCallback->OnError(errorCode, name, message); },
+        [uiExtCallback](const std::shared_ptr<OHOS::Ace::ModalUIExtensionProxy>& uiProxy) {
+            uiExtCallback->OnRemoteReady(uiProxy); },
+        [uiExtCallback]() { uiExtCallback->OnDestroy(); }
+    };
+
     Ace::ModalUIExtensionConfig config;
     auto uiContent = pickerContextProxy->GetUIContent();
     if (uiContent == nullptr) {
         MEDIA_ERR_LOG("StartCameraAbility fail uiContent is null");
         return nullptr;
     }
-    int32_t sessionId = uiContent->CreateModalUIExtension(want, extCallbacks, config);
+    int32_t sessionId = uiContent->CreateModalUIExtension(want, extensionCallbacks, config);
     MEDIA_DEBUG_LOG("StartCameraAbility CreateModalUIExtension session id is %{public}d", sessionId);
     if (sessionId == 0) {
         MEDIA_ERR_LOG("StartCameraAbility CreateModalUIExtension fail");
         return nullptr;
     }
-    uiCallback->SetSessionId(sessionId);
-    return uiCallback;
+    uiExtCallback->SetSessionId(sessionId);
+    return uiExtCallback;
 }
 
 static napi_status StartAsyncWork(napi_env env, CameraPickerAsyncContext* pickerAsyncCtx)
@@ -280,6 +370,38 @@ static napi_status StartAsyncWork(napi_env env, CameraPickerAsyncContext* picker
         CommonCompleteCallback, static_cast<void*>(pickerAsyncCtx), &pickerAsyncCtx->work);
 }
 
+static void InitPickerAbilityType(std::unique_ptr<CameraPickerAsyncContext>& asyncCtx)
+{
+    static bool inited = false;
+    if (inited) {
+        return;
+    }
+    std::string deviceType = system::GetParameter("const.product.devicetype", "");
+    MEDIA_INFO_LOG("CameraPickerNapi::Pick GetParameter deviceType is:%{public}s", deviceType.c_str());
+    if (deviceType.empty()) {
+        deviceType = system::GetParameter("const.build.characteristics", "");
+        MEDIA_INFO_LOG("CameraPickerNapi::Pick GetParameter characteristics is:%{public}s", deviceType.c_str());
+    }
+    if (deviceType == "tv") {
+        MEDIA_INFO_LOG("CameraPickerNapi::Pick get device type is tv");
+        g_pickerAbilityType = UIEXTENSION;
+    }
+    inited = true;
+}
+
+static std::unique_ptr<CameraPickerAsyncContext> InitContext(uint32_t taskId, napi_env env, napi_value napiContext)
+{
+    std::unique_ptr<CameraPickerAsyncContext> asyncCtx = std::make_unique<CameraPickerAsyncContext>();
+    asyncCtx->funcName = "CameraPickerNapi::Pick";
+    asyncCtx->taskId = CameraNapiUtils::IncrementAndGet(taskId);
+    asyncCtx->contextProxy = GetAbilityContext(env, napiContext);
+    if (asyncCtx->contextProxy == nullptr) {
+        MEDIA_ERR_LOG("GetAbilityContext failed");
+        return nullptr;
+    }
+    return asyncCtx;
+}
+
 napi_value CameraPickerNapi::Pick(napi_env env, napi_callback_info cbInfo)
 {
     MEDIA_INFO_LOG("CameraPicker::Pick is called");
@@ -290,25 +412,41 @@ napi_value CameraPickerNapi::Pick(napi_env env, napi_callback_info cbInfo)
     napi_value thisVar = nullptr;
 
     napi_get_undefined(env, &result);
-    CHECK_RETURN_RET_ELOG(napi_get_cb_info(env, cbInfo, &argc, argv, &thisVar, nullptr) != napi_ok,
-        result, "napi_get_cb_info failed");
+    if (napi_get_cb_info(env, cbInfo, &argc, argv, &thisVar, nullptr) != napi_ok) {
+        MEDIA_ERR_LOG("napi_get_cb_info failed");
+        return result;
+    }
 
-    CHECK_RETURN_RET_ELOG(argc < ARGS_THREE, result, "the parameter of number should be at least three");
+    if (argc < ARGS_THREE) {
+        MEDIA_ERR_LOG("the parameter of number should be at least three");
+        return result;
+    }
 
-    std::unique_ptr<CameraPickerAsyncContext> asyncCtx = std::make_unique<CameraPickerAsyncContext>();
-    asyncCtx->funcName = "CameraPickerNapi::Pick";
-    asyncCtx->taskId = CameraNapiUtils::IncrementAndGet(cameraPickerTaskId);
-    asyncCtx->contextProxy = GetAbilityContext(env, argv[ARGS_ZERO]);
-    CHECK_RETURN_RET_ELOG(asyncCtx->contextProxy == nullptr, result, "GetAbilityContext failed");
+    std::unique_ptr<CameraPickerAsyncContext> asyncCtx = InitContext(cameraPickerTaskId, env, argv[ARGS_ZERO]);
+    if (asyncCtx == nullptr) {
+        return result;
+    }
+    InitPickerAbilityType(asyncCtx);
 
     std::vector<PickerMediaType> mediaTypes;
-    CHECK_RETURN_RET_ELOG(!GetMediaTypes(env, argv[ARGS_ONE], mediaTypes), result, "GetMediaTypes failed");
+    if (!GetMediaTypes(env, argv[ARGS_ONE], mediaTypes)) {
+        MEDIA_ERR_LOG("GetMediaTypes failed");
+        return result;
+    }
 
-    CHECK_RETURN_RET_ELOG(!GetPickerProfile(env, argv[ARGS_TWO], asyncCtx->pickerProfile),
-        result, "GetPhotoProfiles failed");
+    if (!GetPickerProfile(env, argv[ARGS_TWO], asyncCtx->pickerProfile)) {
+        MEDIA_ERR_LOG("GetPhotoProfiles failed");
+        return result;
+    }
     SetPickerWantParams(asyncCtx->want, asyncCtx->contextProxy, mediaTypes, asyncCtx->pickerProfile);
-    asyncCtx->uiExtCallback = StartCameraAbility(env, asyncCtx->contextProxy, asyncCtx->want);
-    CHECK_RETURN_RET_ELOG(asyncCtx->uiExtCallback == nullptr, result, "StartCameraAbility failed");
+    asyncCtx->uiExtCallback = g_pickerAbilityType == UIABILITY
+                                  ? StartCameraAbility(env, asyncCtx->contextProxy, asyncCtx->want)
+                                  : StartCameraAbilityForUIExtension(env, asyncCtx->contextProxy, asyncCtx->want);
+
+    if (asyncCtx->uiExtCallback == nullptr) {
+        MEDIA_ERR_LOG("StartCameraAbility failed");
+        return result;
+    }
     CAMERA_NAPI_CREATE_PROMISE(env, asyncCtx->callbackRef, asyncCtx->deferred, result);
     if (StartAsyncWork(env, asyncCtx.get()) != napi_ok) {
         MEDIA_ERR_LOG("Failed to create napi_create_async_work for Pick");
@@ -344,7 +482,6 @@ napi_value CameraPickerNapi::Init(napi_env env, napi_value exports)
                 napi_define_properties(env, exports,
                     sizeof(camera_picker_static_props) / sizeof(camera_picker_static_props[PARAM0]),
                     camera_picker_static_props) == napi_ok) {
-                MEDIA_INFO_LOG("CameraPickerNapi::Init is ok");
                 return exports;
             }
         }
@@ -374,7 +511,9 @@ napi_value CameraPickerNapi::CreatePickerProfile(napi_env env)
 
             napi_get_undefined(env, &result);
             CAMERA_NAPI_GET_JS_OBJ_WITH_ZERO_ARGS(env, info, status, thisVar);
-            CHECK_RETURN_RET(status == napi_ok, thisVar);
+            if (status == napi_ok) {
+                return thisVar;
+            }
             return result;
         },
         nullptr, sizeof(pickerProfileProps) / sizeof(pickerProfileProps[PARAM0]), pickerProfileProps, &result);
@@ -396,7 +535,9 @@ napi_value CameraPickerNapi::CreatePickerMediaType(napi_env env)
     napi_status status;
     if (mediaTypeRef_ != nullptr) {
         status = napi_get_reference_value(env, mediaTypeRef_, &result);
-        CHECK_RETURN_RET(status == napi_ok, result);
+        if (status == napi_ok) {
+            return result;
+        }
     }
     status = CameraNapiUtils::CreateObjectWithPropNameAndValues(env, &result, typeSize, pickerMediaType,
         pickerMediaTypeValue);
@@ -430,7 +571,9 @@ napi_value CameraPickerNapi::CreatePickerResult(napi_env env)
 
             napi_get_undefined(env, &result);
             CAMERA_NAPI_GET_JS_OBJ_WITH_ZERO_ARGS(env, info, status, thisVar);
-            CHECK_RETURN_RET(status == napi_ok, thisVar);
+            if (status == napi_ok) {
+                return thisVar;
+            }
             return result;
         },
         nullptr, sizeof(pickerResultProps) / sizeof(pickerResultProps[PARAM0]), pickerResultProps, &result);
@@ -454,6 +597,7 @@ napi_value CameraPickerNapi::CameraPickerNapiConstructor(napi_env env, napi_call
 
     if (status == napi_ok && thisVar != nullptr) {
         std::unique_ptr<CameraPickerNapi> obj = std::make_unique<CameraPickerNapi>();
+        obj->env_ = env;
         status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
             CameraPickerNapi::CameraPickerNapiDestructor, nullptr, nullptr);
         if (status == napi_ok) {
@@ -483,7 +627,10 @@ bool UIExtensionCallback::FinishPicker(int32_t code)
 {
     {
         std::unique_lock<std::mutex> lock(cbMutex_);
-        CHECK_RETURN_RET_ELOG(isCallbackReturned_, false, "alreadyCallback");
+        if (isCallbackReturned_) {
+            MEDIA_ERR_LOG("alreadyCallback");
+            return false;
+        }
         isCallbackReturned_ = true;
     }
     resultCode_ = code;
@@ -512,6 +659,11 @@ void UIExtensionCallback::OnResult(int32_t resultCode, const OHOS::AAFwk::Want& 
 
 void UIExtensionCallback::OnReceive(const OHOS::AAFwk::WantParams& request)
 {
+    MEDIA_INFO_LOG("UIExtensionComponent OnReceive()");
+    if (g_pickerAbilityType == UIABILITY) {
+        return;
+    }
+
     int32_t code = request.GetIntParam("code", 0);
     MEDIA_INFO_LOG("UIExtensionCallback::OnReceive get code %{public}d", code);
     if (code == 1) { // 1 is page appear.
@@ -552,9 +704,16 @@ void UIExtensionCallback::OnDestroy()
 void UIExtensionCallback::CloseWindow()
 {
     MEDIA_INFO_LOG("start CloseWindow");
-    CHECK_RETURN_ELOG(contextProxy_ == nullptr, "contextProxy_ is nullptr");
+    if (contextProxy_ == nullptr) {
+        MEDIA_ERR_LOG("contextProxy_ is nullptr");
+        return;
+    }
+    if (sessionId_ == 0) {
+        MEDIA_WARNING_LOG("sessionId_ is 0");
+        return;
+    }
     auto uiContent = contextProxy_->GetUIContent();
-    if (uiContent != nullptr && sessionId_ != 0) {
+    if (uiContent != nullptr) {
         MEDIA_INFO_LOG("CloseModalUIExtension");
         uiContent->CloseModalUIExtension(sessionId_);
     }

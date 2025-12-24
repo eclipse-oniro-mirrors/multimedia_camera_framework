@@ -12,7 +12,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "thumbnail_buffer_consumer.h"
 
 #include "camera_log.h"
@@ -20,6 +19,7 @@
 #include "hstream_capture.h"
 #include "task_manager.h"
 #include "camera_server_photo_proxy.h"
+
 namespace OHOS {
 namespace CameraStandard {
 
@@ -72,7 +72,7 @@ void ThumbnailBufferConsumer::ExecuteOnBufferAvailable()
         return;
     }
     sptr<SurfaceBuffer> newSurfaceBuffer = CameraSurfaceBufferUtil::DeepCopyThumbnailBuffer(surfaceBuffer);
-    MEDIA_DEBUG_LOG("ThumbnailListener ReleaseBuffer begin");
+    MEDIA_DEBUG_LOG("ThumbnailListener ReleaseBuffer begin");   
     thumbnailSurfaceObj->ReleaseBuffer(surfaceBuffer, -1);
     CHECK_RETURN_ELOG(newSurfaceBuffer == nullptr, "newSurfaceBuffer is null");
     MEDIA_DEBUG_LOG("ThumbnailListener ReleaseBuffer end");

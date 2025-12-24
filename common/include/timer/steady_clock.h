@@ -17,8 +17,8 @@
 #define OHOS_DEFERRED_PROCESSING_SERVICE_STEADY_CLOCK_H
 #define EXPORT_API __attribute__((visibility("default")))
 
-
 #include <chrono>
+
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {

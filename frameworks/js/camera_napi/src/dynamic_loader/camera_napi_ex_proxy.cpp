@@ -23,8 +23,7 @@ namespace CameraStandard {
 std::shared_ptr<CameraNapiExProxy> CameraNapiExProxy::GetCameraNapiExProxy()
 {
     auto dynamiclib = CameraDynamicLoader::GetDynamiclib(NAPI_EXT_SO);
-    CHECK_RETURN_RET_ELOG(
-        dynamiclib == nullptr, nullptr, "get extension lib fail");
+    CHECK_RETURN_RET_ELOG(dynamiclib == nullptr, nullptr, "get extension lib fail");
     std::shared_ptr<CameraNapiExProxy> sessionForSysProxy = std::make_shared<CameraNapiExProxy>(dynamiclib);
     return sessionForSysProxy;
 }
@@ -54,15 +53,13 @@ napi_value CameraNapiExProxy::CreateSessionForSys(napi_env env, int32_t jsModeNa
     CHECK_RETURN_RET_ELOG(
         createSessionInstanceForSys == nullptr, result, "get function createSessionInstanceForSys fail");
     result = createSessionInstanceForSys(env, jsModeName);
-    CHECK_RETURN_RET_ELOG(
-        result == nullptr, result, "createSessionInstanceForSys fail");
+    CHECK_RETURN_RET_ELOG(result == nullptr, result, "createSessionInstanceForSys fail");
     return result;
 }
 
 typedef napi_value (*CreateDeprecatedSessionInstanceForSys)(napi_env);
 napi_value CameraNapiExProxy::CreateDeprecatedSessionForSys(napi_env env)
 {
-    MEDIA_DEBUG_LOG("CameraNapiExProxy::CreateDeprecatedSessionForSys is called");
     napi_value result = nullptr;
     CHECK_RETURN_RET_ELOG(napiExLib_ == nullptr, result, "napiExLib_ is null");
     CreateDeprecatedSessionInstanceForSys createDeprecatedSessionInstanceForSys =
@@ -70,8 +67,7 @@ napi_value CameraNapiExProxy::CreateDeprecatedSessionForSys(napi_env env)
     CHECK_RETURN_RET_ELOG(createDeprecatedSessionInstanceForSys == nullptr, result,
         "get function createDeprecatedSessionInstanceForSys fail");
     result = createDeprecatedSessionInstanceForSys(env);
-    CHECK_RETURN_RET_ELOG(
-        result == nullptr, result, "createDeprecatedSessionInstanceForSys fail");
+    CHECK_RETURN_RET_ELOG(result == nullptr, result, "createDeprecatedSessionInstanceForSys fail");
     return result;
 }
 
@@ -83,11 +79,9 @@ napi_value CameraNapiExProxy::CreateModeManager(napi_env env)
     CHECK_RETURN_RET_ELOG(napiExLib_ == nullptr, result, "napiExLib_ is null");
     CreateModeManagerInstance createModeManagerInstance =
         (CreateModeManagerInstance)napiExLib_->GetFunction("createModeManagerInstance");
-    CHECK_RETURN_RET_ELOG(createModeManagerInstance == nullptr, result,
-        "get function createModeManagerInstance fail");
+    CHECK_RETURN_RET_ELOG(createModeManagerInstance == nullptr, result, "get function createModeManagerInstance fail");
     result = createModeManagerInstance(env);
-    CHECK_RETURN_RET_ELOG(
-        result == nullptr, result, "createModeManagerInstance fail");
+    CHECK_RETURN_RET_ELOG(result == nullptr, result, "createModeManagerInstance fail");
     return result;
 }
 
@@ -102,8 +96,23 @@ napi_value CameraNapiExProxy::CreateDepthDataOutput(napi_env env, DepthProfile& 
     CHECK_RETURN_RET_ELOG(
         createDepthDataOutputInstance == nullptr, result, "get function createDepthDataOutputInstance fail");
     result = createDepthDataOutputInstance(env, depthProfile);
+    CHECK_RETURN_RET_ELOG(result == nullptr, result, "createDepthDataOutputInstance fail");
+    return result;
+}
+
+
+typedef napi_value (*CreateMovieFileOutputInstance)(napi_env, VideoProfile&);
+napi_value CameraNapiExProxy::CreateMovieFileOutput(napi_env env, VideoProfile& videoProfile)
+{
+    MEDIA_DEBUG_LOG("CameraNapiExProxy::CreateMovieFileOutput is called");
+    napi_value result = nullptr;
+    CHECK_RETURN_RET_ELOG(napiExLib_ == nullptr, result, "napiExLib_ is null");
+    CreateMovieFileOutputInstance createMovieFileOutputInstance =
+        (CreateMovieFileOutputInstance)napiExLib_->GetFunction("createMovieFileOutputInstance");
     CHECK_RETURN_RET_ELOG(
-        result == nullptr, result, "createDepthDataOutputInstance fail");
+        createMovieFileOutputInstance == nullptr, result, "get function createMovieFileOutputInstance fail");
+    result = createMovieFileOutputInstance(env, videoProfile);
+    CHECK_RETURN_RET_ELOG(result == nullptr, result, "createMovieFileOutputInstance fail");
     return result;
 }
 
@@ -115,8 +124,7 @@ bool CameraNapiExProxy::CheckAndGetOutput(napi_env env, napi_value obj, sptr<Cap
     CHECK_RETURN_RET_ELOG(napiExLib_ == nullptr, result, "napiExLib_ is null");
     CheckAndGetSysOutput checkAndGetOutput =
         (CheckAndGetSysOutput)napiExLib_->GetFunction("checkAndGetOutput");
-    CHECK_RETURN_RET_ELOG(
-        checkAndGetOutput == nullptr, result, "get function checkAndGetOutput fail");
+    CHECK_RETURN_RET_ELOG(checkAndGetOutput == nullptr, result, "get function checkAndGetOutput fail");
     result = checkAndGetOutput(env, obj, output);
     return result;
 }

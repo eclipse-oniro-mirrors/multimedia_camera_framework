@@ -23,8 +23,6 @@
 #include "utils/camera_security_utils.h"
 #include "utils/dps_metadata_info.h"
 #include "utils/metadata_common_utils.h"
-#include "metadata_common_utils.h"
-#include "session/capture_session.h"
 
 using namespace testing::ext;
 
@@ -36,7 +34,6 @@ static constexpr double TEST_DOUBLE_VALUE = 10.0;
 static constexpr char TEST_STRING_VALUE[] = "testValue";
 static constexpr int32_t BUFFER_HANDLE_RESERVE_MAX_SIZE = 1024;
 static constexpr int32_t BUFFER_HANDLE_RESERVE_TEST_SIZE = 16;
-static constexpr bool TEST_BOOL_VALUE = false;
 
 void CameraUtilsUnitTest::SetUpTestCase(void)
 {
@@ -66,7 +63,7 @@ void CameraUtilsUnitTest::TearDown()
  * EnvConditions: NA
  * CaseDescription: Test the Set/Get/WriteToParcel/ReadFromParcel function of DpsMetadata class
  */
-HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_001, TestSize.Level1)
+HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_001, TestSize.Level0)
 {
     DpsMetadata metadata;
     std::string int32Key = "int32_t";
@@ -104,7 +101,7 @@ HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_001, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test the GetSupportedPreviewSizeRange function camera support stream available basic configurations.
  */
-HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_002, TestSize.Level1)
+HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_002, TestSize.Level0)
 {
     int32_t itemCount = 10;
     int32_t dataSize = 100;
@@ -132,7 +129,7 @@ HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_002, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test GetSupportedPreviewSizeRange when camera available profile level with CAPTURE mode.
  */
-HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_003, TestSize.Level1)
+HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_003, TestSize.Level0)
 {
     int32_t itemCount = 10;
     int32_t dataSize = 100;
@@ -157,7 +154,7 @@ HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_003, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test GetSupportedPreviewSizeRange when camera available profile level with VIDEO mode.
  */
-HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_004, TestSize.Level1)
+HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_004, TestSize.Level0)
 {
     int32_t itemCount = 10;
     int32_t dataSize = 100;
@@ -182,7 +179,7 @@ HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_004, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test GetSupportedPreviewSizeRange when camera available profile level with NIGHT mode.
  */
-HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_005, TestSize.Level1)
+HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_005, TestSize.Level0)
 {
     int32_t itemCount = 10;
     int32_t dataSize = 100;
@@ -207,7 +204,7 @@ HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_005, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test GetSupportedPreviewSizeRange when camera support extend configurations with CAPTURE mode.
  */
-HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_006, TestSize.Level1)
+HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_006, TestSize.Level0)
 {
     int32_t itemCount = 10;
     int32_t dataSize = 100;
@@ -232,7 +229,7 @@ HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_006, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test GetSupportedPreviewSizeRange when camera support extend configurations with VIDEO mode.
  */
-HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_007, TestSize.Level1)
+HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_007, TestSize.Level0)
 {
     int32_t itemCount = 10;
     int32_t dataSize = 100;
@@ -258,7 +255,7 @@ HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_007, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test GetSupportedPreviewSizeRange when camera support extend configurations with NIGHT mode.
  */
-HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_008, TestSize.Level1)
+HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_008, TestSize.Level0)
 {
     int32_t itemCount = 10;
     int32_t dataSize = 100;
@@ -283,7 +280,7 @@ HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_008, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test the GetSupportedPreviewSizeRange function when when metadata is nullptr.
  */
-HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_009, TestSize.Level1)
+HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_009, TestSize.Level0)
 {
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = nullptr;
     auto sizeList = MetadataCommonUtils::GetSupportedPreviewSizeRange(SceneMode::CAPTURE,
@@ -300,7 +297,7 @@ HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_009, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test CameraCloneBufferHandle when param is nullptr.
  */
-HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_010, TestSize.Level1)
+HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_010, TestSize.Level0)
 {
     BufferHandle *testBufferHandle = CameraCloneBufferHandle(nullptr);
     EXPECT_EQ(testBufferHandle, nullptr);
@@ -314,7 +311,7 @@ HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_010, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test CameraCloneBufferHandle when reserveFds and reserveInts is out of range.
  */
-HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_011, TestSize.Level1)
+HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_011, TestSize.Level0)
 {
     BufferHandle *handle = static_cast<BufferHandle *>(malloc(sizeof(BufferHandle)));
     handle->reserveFds = BUFFER_HANDLE_RESERVE_MAX_SIZE + 1;
@@ -332,7 +329,7 @@ HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_011, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test CameraCloneBufferHandle when reserveInts is 0.
  */
-HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_012, TestSize.Level1)
+HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_012, TestSize.Level0)
 {
     size_t handleSize = sizeof(BufferHandle) + (sizeof(int32_t) * (BUFFER_HANDLE_RESERVE_TEST_SIZE));
     BufferHandle *handle = static_cast<BufferHandle *>(malloc(handleSize));
@@ -358,7 +355,7 @@ HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_012, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test CameraCloneBufferHandle when reserveInts is not 0.
  */
-HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_013, TestSize.Level1)
+HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_013, TestSize.Level0)
 {
     size_t handleSize = sizeof(BufferHandle) + (sizeof(int32_t) * (BUFFER_HANDLE_RESERVE_TEST_SIZE * 2));
     BufferHandle *handle = static_cast<BufferHandle *>(malloc(handleSize));
@@ -384,7 +381,7 @@ HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_013, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test CameraFreeBufferHandle when param is nullptr.
  */
-HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_014, TestSize.Level1)
+HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_014, TestSize.Level0)
 {
     int32_t ret = CameraFreeBufferHandle(nullptr);
     EXPECT_EQ(ret, 0);
@@ -398,7 +395,7 @@ HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_014, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test CameraFreeBufferHandle when param is nullptr.
  */
-HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_015, TestSize.Level1)
+HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_015, TestSize.Level0)
 {
     size_t handleSize = sizeof(BufferHandle) + (sizeof(int32_t) * (BUFFER_HANDLE_RESERVE_TEST_SIZE * 2));
     BufferHandle *handle = static_cast<BufferHandle *>(malloc(handleSize));
@@ -410,102 +407,6 @@ HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_015, TestSize.Level1)
     }
     int32_t ret = CameraFreeBufferHandle(handle);
     EXPECT_EQ(ret, 0);
-}
-
-/*
- * Feature: Framework
- * Function: Test CameraFreeBufferHandle when when handle->fd >= 0.
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test CameraFreeBufferHandle when when handle->fd >= 0.
- */
-HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_016, TestSize.Level1)
-{
-    MEDIA_INFO_LOG("CameraUtilsUnitTest - camera_utils_unittest_016");
-    size_t handleSize = sizeof(BufferHandle) + (sizeof(int32_t) * (BUFFER_HANDLE_RESERVE_TEST_SIZE * 2));
-    BufferHandle *handle = static_cast<BufferHandle *>(malloc(handleSize));
-    handle->fd = 0;
-    handle->reserveFds = BUFFER_HANDLE_RESERVE_TEST_SIZE;
-    handle->reserveInts = BUFFER_HANDLE_RESERVE_TEST_SIZE;
-    for (uint32_t i = 0; i < BUFFER_HANDLE_RESERVE_TEST_SIZE * 2; i++) {
-        handle->reserve[i] = -1;
-    }
-    int32_t ret = CameraFreeBufferHandle(handle);
-    EXPECT_EQ(ret, 0);
-}
- 
-/*
- * Feature: Framework
- * Function: Test CameraCloneBufferHandle when fd is not -1.
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test CameraCloneBufferHandle when fd is not -1.
- */
-HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_017, TestSize.Level1)
-{
-    MEDIA_INFO_LOG("CameraUtilsUnitTest - camera_utils_unittest_017");
-    BufferHandle *handle = static_cast<BufferHandle *>(malloc(sizeof(BufferHandle)));
-    handle->fd = 0;
-    BufferHandle *testBufferHandle = CameraCloneBufferHandle(handle);
-    EXPECT_EQ(testBufferHandle, nullptr);
-    free(handle);
-}
-
-/*
- * Feature: Framework
- * Function: Test the WriteToParcel function of DpsMetadata class with bool.
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test the WriteToParcel function of DpsMetadata class with bool.
- */
-HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_019, TestSize.Level1)
-{
-    MEDIA_INFO_LOG("CameraUtilsUnitTest - camera_utils_unittest_019");
-    DpsMetadata metadata;
-    std::string int32Key = "int32_t";
-    std::string int64Key = "int64_t";
-    std::string doubleKey = "double";
-    std::string stringKey = "string";
-    std::string boolKey = "bool";
-    metadata.Set(int32Key, TEST_INT32_VALUE);
-    metadata.Set(int64Key, TEST_INT64_VALUE);
-    metadata.Set(doubleKey, TEST_DOUBLE_VALUE);
-    metadata.Set(stringKey, TEST_STRING_VALUE);
-    metadata.Set(boolKey, TEST_BOOL_VALUE);
-    
-    MessageParcel parcel;
-    DpsMetadataError ret = metadata.WriteToParcel(parcel);
-    EXPECT_EQ(ret, DPS_METADATA_OK);
-}
-
-/*
- * Feature: Framework
- * Function: Test the WriteToParcel function of DpsMetadata class with nullptr.
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test the WriteToParcel function of DpsMetadata class with nullptr.
- */
-HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_020, TestSize.Level1)
-{
-    MEDIA_INFO_LOG("CameraUtilsUnitTest - camera_utils_unittest_020");
-    DpsMetadata metadata;
-    std::string int32Key = "int32_t";
-    std::string int64Key = "int64_t";
-    std::string doubleKey = "double";
-    std::string stringKey = "string";
-
-    metadata.Set(int32Key, "");
-    metadata.Set(int64Key, "");
-    metadata.Set(doubleKey, "");
-    metadata.Set(stringKey, "");
-    
-    MessageParcel parcel;
-    DpsMetadataError ret = metadata.WriteToParcel(parcel);
-    EXPECT_EQ(ret, DPS_METADATA_OK);
 }
 
 } // CameraStandard

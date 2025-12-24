@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (C) 2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -223,6 +223,20 @@ Camera_ErrorCode OH_PhotoOutput_RegisterCaptureStartWithInfoCallback(Camera_Phot
     OH_PhotoOutput_CaptureStartWithInfo callback);
 
 /**
+ * @brief Gets the photo rotation angle.
+ *
+ * @param photoOutput the {@link Camera_PhotoOutput} instance which used to get the photo rotation angle.
+ * @param deviceDegree the current device rotation degree.
+ * @param imageRotation the {@link Camera_ImageRotation} result of photo rotation angle.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
+ * @since 12
+ */
+Camera_ErrorCode OH_PhotoOutput_GetPhotoRotation(Camera_PhotoOutput* photoOutput, int deviceDegree,
+    Camera_ImageRotation* imageRotation);
+
+/**
  * @brief Unregister capture start event callback.
  *
  * @param photoOutput the {@link Camera_PhotoOutput} instance.
@@ -337,7 +351,6 @@ Camera_ErrorCode OH_PhotoOutput_UnregisterEstimatedCaptureDurationCallback(Camer
  * @param callback the {@link OH_PhotoOutput_PhotoAvailable} to be registered.
  * @return {@link #CAMERA_OK} if the method call succeeds.
  *         {@link #INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
- *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
  * @since 12
  */
 Camera_ErrorCode OH_PhotoOutput_RegisterPhotoAvailableCallback(Camera_PhotoOutput* photoOutput,
@@ -362,7 +375,6 @@ Camera_ErrorCode OH_PhotoOutput_UnregisterPhotoAvailableCallback(Camera_PhotoOut
  * @param callback the {@link OH_PhotoOutput_PhotoAssetAvailable} to be registered.
  * @return {@link #CAMERA_OK} if the method call succeeds.
  *         {@link #INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
- *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
  * @since 12
  */
 Camera_ErrorCode OH_PhotoOutput_RegisterPhotoAssetAvailableCallback(Camera_PhotoOutput* photoOutput,
@@ -430,15 +442,15 @@ Camera_ErrorCode OH_PhotoOutput_Release(Camera_PhotoOutput* photoOutput);
 Camera_ErrorCode OH_PhotoOutput_IsMirrorSupported(Camera_PhotoOutput* photoOutput, bool* isSupported);
 
 /**
- * @brief Enable mirror photo or not.
+ * @brief Enable mirror for photo capture.
  *
- * @param photoOutput the {@link Camera_PhotoOutput} instance which used to enable mirror photo or not.
- * @param enabled the flag of enable mirror photo or not.
+ * @param photoOutput the {@link Camera_PhotoOutput} instance which used to configure mirror.
+ * @param enabled the flag indicates whether mirror is enabled.
  * @return {@link #CAMERA_OK} if the method call succeeds.
  *         {@link #INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
  *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
  * @since 13
-  */
+ */
 Camera_ErrorCode OH_PhotoOutput_EnableMirror(Camera_PhotoOutput* photoOutput, bool enabled);
 
 /**
@@ -483,24 +495,9 @@ Camera_ErrorCode OH_PhotoOutput_IsMovingPhotoSupported(Camera_PhotoOutput* photo
  * @return {@link #CAMERA_OK} if the method call succeeds.
  *         {@link #INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
  *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
- * @permission ohos.permission.MICROPHONE
  * @since 12
  */
 Camera_ErrorCode OH_PhotoOutput_EnableMovingPhoto(Camera_PhotoOutput* photoOutput, bool enabled);
-
-/**
- * @brief Gets the photo rotation angle.
- *
- * @param photoOutput the {@link Camera_PhotoOutput} instance which used to get the photo rotation angle.
- * @param deviceDegree the current device rotation degree.
- * @param imageRotation the {@link Camera_ImageRotation} result of photo rotation angle.
- * @return {@link #CAMERA_OK} if the method call succeeds.
- *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
- *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
- * @since 12
- */
-Camera_ErrorCode OH_PhotoOutput_GetPhotoRotation(Camera_PhotoOutput* photoOutput, int deviceDegree,
-    Camera_ImageRotation* imageRotation);
 
 /**
  * @brief Check whether to support photo quality prioritization.
@@ -511,6 +508,7 @@ Camera_ErrorCode OH_PhotoOutput_GetPhotoRotation(Camera_PhotoOutput* photoOutput
  * @param isSupported the result of whether quality prioritization is supported.
  * @return {@link #CAMERA_OK} if the method call succeeds.
  *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
  * @since 21
  */
 
@@ -531,7 +529,6 @@ Camera_ErrorCode OH_PhotoOutput_IsPhotoQualityPrioritizationSupported(Camera_Pho
  */
 Camera_ErrorCode OH_PhotoOutput_SetPhotoQualityPrioritization(Camera_PhotoOutput* photoOutput,
     Camera_PhotoQualityPrioritization qualityPrioritization);
-
 #ifdef __cplusplus
 }
 #endif

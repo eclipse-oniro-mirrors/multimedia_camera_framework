@@ -26,12 +26,21 @@ namespace DeferredProcessing {
 const std::string MIME_VIDEO_AVC = Media::Plugins::MimeType::VIDEO_AVC;
 const std::string MIME_VIDEO_HEVC = Media::Plugins::MimeType::VIDEO_HEVC;
 const std::string MIME_TIMED_META = Media::Plugins::MimeType::TIMED_METADATA;
+
+const std::string ENC_PARAM_KEY = "com.openharmony.encParam";
+const std::string IS_WATER_MARK_KEY = "com.openharmony.isWaterMark";
+const std::string RECORDER_TIMESTAMP_KEY = "com.openharmony.recorder.timestamp";
 const std::string LIVE_PHOTO_COVERTIME = "com.openharmony.covertime";
 const std::string TIMED_METADATA_VALUE = "com.openharmony.timed_metadata.vid_maker_info";
+
+const std::string DEVICE_FOLD_STATE_KEY = "com.openharmony.deviceFoldState";
+const std::string DEVICE_MODEL_KEY = "com.openharmony.deviceModel";
+const std::string CAMERA_POSITION_KEY = "com.openharmony.cameraPosition";
+
 const std::string SCALING_FACTOR_KEY = "com.openharmony.scaling_factor";
 const std::string INTERPOLATION_FRAME_PTS_KEY = "com.openharmony.interp_frame_pts";
 const std::string STAGE_VID_KEY = "com.openharmony.stage_vid";
-const std::string STAGE_ENC_PARAM_KEY = "com.openharmony.encParam";
+const std::string WATER_MARK_INFO_KEY = "com.openharmony.water_mark_info";
 
 enum class MediaInfoKey : uint32_t {
     META_VALUE_TYPE_NONE,
@@ -42,38 +51,49 @@ enum class MediaInfoKey : uint32_t {
     META_VALUE_TYPE_STRING,
 };
 
-enum class ColorRange {
-    COL_RANGE_NONE = -1,
-    COL_RANGE_UNSPECIFIED = 0,
-    COL_RANGE_MPEG = 1,
-    COL_RANGE_JPEG = 2,
+struct WaterMarkInfo {
+    std::string imagePath;
+    int32_t rotation {0};
+    float scaleFactor {0};
+    int32_t x {0};
+    int32_t y {0};
+    int32_t width {0};
+    int32_t height {0};
 };
 
 struct CodecInfo {
     std::string mimeType;
-    ColorRange colorRange;
-    Media::Plugins::VideoPixelFormat pixelFormat;
-    Media::Plugins::ColorPrimary colorPrimary;
-    Media::Plugins::TransferCharacteristic colorTransferCharacter;
-    int32_t profile;
-    int32_t level;
-    int64_t bitRate;
-    int32_t fps;
-    int64_t duration;
-    int32_t width;
-    int32_t height;
-    int32_t rotation;
-    Media::Plugins::VideoEncodeBitrateMode bitMode;
-    bool isHdrvivid;
+    int32_t profile {-1};
+    int32_t level {-1};
+    int64_t bitRate {-1};
+    int32_t fps {-1};
+    int64_t duration {-1};
+    int32_t width {-1};
+    int32_t height {-1};
+    bool isHdrvivid {false};
+    bool colorRange {false};
+    bool isBFrame {false};
+    Media::Plugins::VideoPixelFormat pixelFormat {Media::Plugins::VideoPixelFormat::NV12};
+    Media::Plugins::ColorPrimary colorPrimary {Media::Plugins::ColorPrimary::BT2020};
+    Media::Plugins::TransferCharacteristic colorTransferCharacter {Media::Plugins::TransferCharacteristic::BT709};
+    Media::Plugins::VideoRotation rotation {Media::Plugins::VideoRotation::VIDEO_ROTATION_0};
+    Media::Plugins::VideoEncodeBitrateMode bitMode {Media::Plugins::VideoEncodeBitrateMode::SQR};
+    Media::Plugins::VideoEncodeBFrameGopMode bFrameGopMode
+        {Media::Plugins::VideoEncodeBFrameGopMode::VIDEO_ENCODE_GOP_ADAPTIVE_B_MODE};
 };
 
 struct MediaInfo {
-    int64_t recoverTime;
-    int32_t streamCount;
-    std::string creationTime;
+    int64_t recoverTime {-1};
+    int32_t streamCount {-1};
     float latitude {-1.0};
     float longitude {-1.0};
     float livePhotoCovertime {-1.0};
+    std::string creationTime;
+    std::string isWaterMark;
+    std::string waterMarkInfo;
+    std::string deviceFoldState;
+    std::string deviceModel;
+    std::string cameraPosition;
     CodecInfo codecInfo {};
 };
 

@@ -14,17 +14,17 @@
  */
 
 #include "photo_process_result.h"
-
 #include "buffer_extra_data_impl.h"
 #include "dp_log.h"
 #include "dps.h"
 #include "dps_event_report.h"
+#include "dps_metadata_info.h"
 #include "events_monitor.h"
 #include "photo_process_command.h"
 #include "picture_proxy.h"
 #include "securec.h"
 #include "service_died_command.h"
-#include <optional>
+#include "camera_util.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -39,6 +39,7 @@ PhotoProcessResult::~PhotoProcessResult()
     DP_INFO_LOG("entered.");
 }
 
+// LCOV_EXCL_START
 void PhotoProcessResult::OnProcessDone(const std::string& imageId, std::unique_ptr<ImageInfo> imageInfo)
 {
     DP_DEBUG_LOG("DPS_PHOTO: OnProcessDone imageId: %{public}s", imageId.c_str());
@@ -68,7 +69,7 @@ void PhotoProcessResult::OnPhotoSessionDied()
     auto ret = DPS_SendCommand<PhotoDiedCommand>(userId_);
     DP_CHECK_ERROR_RETURN_LOG(ret != DP_OK, "process photoSessionDied. ret: %{public}d", ret);
 }
-
+// LCOV_EXCL_STOP
 
 int32_t PhotoProcessResult::ProcessPictureInfoV1_3(const std::string& imageId,
     const HDI::Camera::V1_3::ImageBufferInfoExt& buffer)
@@ -92,6 +93,46 @@ int32_t PhotoProcessResult::ProcessPictureInfoV1_3(const std::string& imageId,
     return DP_OK;
 }
 
+int32_t PhotoProcessResult::ProcessPictureInfoV1_4(
+    const std::string& imageId, const HDI::Camera::V1_5::ImageBufferInfo_V1_4& buffer)
+{
+    const auto& bufferV_3 = buffer.v1_3;
+    DP_CHECK_RETURN_RET(bufferV_3.imageHandle == nullptr, DPS_ERROR_IMAGE_PROC_FAILED);
+    auto bufferHandle = bufferV_3.imageHandle->GetBufferHandle();
+    DP_CHECK_ERROR_RETURN_RET_LOG(bufferHandle == nullptr, DPS_ERROR_IMAGE_PROC_FAILED, "bufferHandle is nullptr.");
+
+    int32_t deferredFormat = 0;
+    GetMetadataValue(bufferV_3.metadata, MetadataKeys::DEFERRED_FORMAT, deferredFormat);
+    if (deferredFormat != static_cast<int32_t>(PhotoFormat::YUV)) {
+        return ProcessBufferInfo(imageId, bufferV_3);
+    }
+
+    auto imageInfo = CreateFromMeta(bufferHandle->size, bufferV_3.metadata);
+    std::vector<std::shared_ptr<PictureIntf>> pictures = AssemblePictureList(buffer);
+    DP_CHECK_ERROR_RETURN_RET_LOG(pictures.empty(), DPS_ERROR_IMAGE_PROC_FAILED, "failed to AssemblePictureList.");
+
+    imageInfo->SetPicture(pictures[0]);
+    OnProcessDone(imageId, std::move(imageInfo));
+    return DP_OK;
+}
+
+std::vector<std::shared_ptr<PictureIntf>> PhotoProcessResult::AssemblePictureList(
+    const HDI::Camera::V1_5::ImageBufferInfo_V1_4& bufferV4)
+{
+    std::vector<std::shared_ptr<PictureIntf>> pictures;
+    if (bufferV4.isOriginalImageValid) {
+        auto picXTstyle = AssemblePictureV4(bufferV4, !bufferV4.isAuxiliaryInfoValid);
+        DP_CHECK_ERROR_RETURN_RET_LOG(picXTstyle == nullptr, pictures, "picXTstyle is nullptr.");
+
+        pictures.emplace_back(picXTstyle);
+    }
+    auto picture = AssemblePictureV4(bufferV4, true);
+    DP_CHECK_ERROR_RETURN_RET_LOG(picture == nullptr, pictures, "picture is nullptr.");
+
+    pictures.emplace_back(picture);
+    return pictures;
+}
+
 void PhotoProcessResult::SetBundleName(const std::string& bundleName)
 {
     bundleName_ = bundleName;
@@ -103,13 +144,19 @@ std::unique_ptr<ImageInfo> PhotoProcessResult::CreateFromMeta(int32_t defaultSiz
     int32_t dataSize = defaultSize;
     int32_t isDegradedImage = 0;
     uint32_t cloudFlag = 0;
+    uint32_t captureFlag = 0;
     GetMetadataValue(metadata, MetadataKeys::DATA_SIZE, dataSize);
     GetMetadataValue(metadata, MetadataKeys::DEGRADED_IMAGE, isDegradedImage);
     GetMetadataValue(metadata, MetadataKeys::CLOUD_FLAG, cloudFlag);
+    GetMetadataValue(metadata, MetadataKeys::CPATURE_FLAG, captureFlag);
+    DpsMetadata dpsMetadata;
+    dpsMetadata.Set(MetadataKeys::CLOUD_FLAG, cloudFlag);
+    dpsMetadata.Set(MetadataKeys::CPATURE_FLAG, captureFlag);
     bool isHighQuality = isDegradedImage == 0;
     DP_INFO_LOG("DPS_PHOTO: bufferHandle param size: %{public}d, dataSize: %{public}d, "
-        "isDegradedImage: %{public}d, cloudFlag: %{public}u", defaultSize, dataSize, isDegradedImage, cloudFlag);
-    return std::make_unique<ImageInfo>(dataSize, isHighQuality, cloudFlag);
+        "isDegradedImage: %{public}d, cloudFlag: %{public}u, captureFlag : %{public}u", defaultSize,
+        dataSize, isDegradedImage, cloudFlag, captureFlag);
+    return std::make_unique<ImageInfo>(dataSize, isHighQuality, cloudFlag, captureFlag, dpsMetadata);
 }
 
 std::shared_ptr<PictureIntf> PhotoProcessResult::AssemblePicture(const HDI::Camera::V1_3::ImageBufferInfoExt& buffer)
@@ -118,9 +165,9 @@ std::shared_ptr<PictureIntf> PhotoProcessResult::AssemblePicture(const HDI::Came
     int32_t rotationInIps = false;
     GetMetadataValue(buffer.metadata, MetadataKeys::EXIF_SIZE, exifDataSize);
     GetMetadataValue(buffer.metadata, MetadataKeys::ROTATION_IN_IPS, rotationInIps);
-    DP_CHECK_RETURN_RET(buffer.imageHandle == nullptr, nullptr);
+    DP_CHECK_ERROR_RETURN_RET_LOG(buffer.imageHandle == nullptr, nullptr, "imageHandle is nullptr.");
     auto imageBuffer = TransBufferHandleToSurfaceBuffer(buffer.imageHandle->GetBufferHandle());
-    DP_CHECK_ERROR_RETURN_RET_LOG(imageBuffer == nullptr, nullptr, "bufferHandle is nullptr.");
+    DP_CHECK_ERROR_RETURN_RET_LOG(imageBuffer == nullptr, nullptr, "imageBuffer is nullptr.");
 
     DP_INFO_LOG("DPS_PHOTO: AssemblePicture: gainMap(%{public}d), depthMap(%{public}d), unrefocusMap(%{public}d), "
         "linearMap(%{public}d), exif(%{public}d), makeInfo(%{public}d), exifDataSize(%{public}d)",
@@ -128,9 +175,10 @@ std::shared_ptr<PictureIntf> PhotoProcessResult::AssemblePicture(const HDI::Came
         buffer.isHighBitDepthLinearImageValid, buffer.isExifValid, buffer.isMakerInfoValid, exifDataSize);
     std::shared_ptr<PictureIntf> picture = PictureProxy::CreatePictureProxy();
     DP_CHECK_ERROR_RETURN_RET_LOG(picture == nullptr, nullptr, "picture is nullptr.");
-    picture->CreateWithDeepCopySurfaceBuffer(imageBuffer);
+    picture->Create(imageBuffer);
 
     if (buffer.isExifValid) {
+        DP_CHECK_ERROR_RETURN_RET_LOG(buffer.exifHandle == nullptr, nullptr, "exifHandle is nullptr.");
         auto exifBuffer = TransBufferHandleToSurfaceBuffer(buffer.exifHandle->GetBufferHandle());
         sptr<BufferExtraData> extraData = sptr<BufferExtraDataImpl>::MakeSptr();
         extraData->ExtraSet(MetadataKeys::EXIF_SIZE, exifDataSize);
@@ -150,6 +198,53 @@ std::shared_ptr<PictureIntf> PhotoProcessResult::AssemblePicture(const HDI::Came
     return picture;
 }
 
+std::shared_ptr<PictureIntf> PhotoProcessResult::AssemblePictureV4(
+    const HDI::Camera::V1_5::ImageBufferInfo_V1_4& buffer, bool isUseImageHandle)
+{
+    DP_INFO_LOG("PhotoProcessListener::AssemblePictureV4 isUseImageHandle: %{public}d", isUseImageHandle);
+    const auto& bufferV_3 = buffer.v1_3;
+    int32_t exifDataSize = 0;
+    int32_t rotationInIps = false;
+    GetMetadataValue(bufferV_3.metadata, MetadataKeys::EXIF_SIZE, exifDataSize);
+    GetMetadataValue(bufferV_3.metadata, MetadataKeys::ROTATION_IN_IPS, rotationInIps);
+    DP_CHECK_ERROR_RETURN_RET_LOG((isUseImageHandle && bufferV_3.imageHandle == nullptr)
+        || (!isUseImageHandle && buffer.originalImageHandle == nullptr), nullptr,
+        "imageHandle or originalImageHandle is nullptr.");
+    BufferHandle* handle = isUseImageHandle ?
+        bufferV_3.imageHandle->GetBufferHandle() : buffer.originalImageHandle->GetBufferHandle();
+    auto imageBuffer = TransBufferHandleToSurfaceBuffer(handle);
+    DP_CHECK_ERROR_RETURN_RET_LOG(imageBuffer == nullptr, nullptr, "imageBuffer is nullptr.");
+
+    DP_INFO_LOG("DPS_PHOTO: AssemblePicture ImageBufferInfo_V1_4 valid: gainMap(%{public}d),"
+        "depthMap(%{public}d), unrefocusMap(%{public}d), linearMap(%{public}d), exif(%{public}d),"
+        "makeInfo(%{public}d), OriginalImage(%{public}d), auxiliaryInfo(%{public}d), exifDataSize(%{public}d)",
+        bufferV_3.isGainMapValid, bufferV_3.isDepthMapValid, bufferV_3.isUnrefocusImageValid,
+        bufferV_3.isHighBitDepthLinearImageValid, bufferV_3.isExifValid, bufferV_3.isMakerInfoValid,
+        buffer.isOriginalImageValid, buffer.isAuxiliaryInfoValid, exifDataSize);
+    std::shared_ptr<PictureIntf> picture = PictureProxy::CreatePictureProxy();
+    DP_CHECK_ERROR_RETURN_RET_LOG(picture == nullptr, nullptr, "picture is nullptr.");
+
+    picture->Create(imageBuffer);
+    if (bufferV_3.isExifValid) {
+        DP_CHECK_ERROR_RETURN_RET_LOG(bufferV_3.exifHandle == nullptr, nullptr, "exifHandle is nullptr.");
+        auto exifBuffer = TransBufferHandleToSurfaceBuffer(bufferV_3.exifHandle->GetBufferHandle());
+        sptr<BufferExtraData> extraData = sptr<BufferExtraDataImpl>::MakeSptr();
+        extraData->ExtraSet(MetadataKeys::EXIF_SIZE, exifDataSize);
+        if (exifBuffer) {
+            exifBuffer->SetExtraData(extraData);
+        }
+        picture->SetExifMetadata(exifBuffer);
+    }
+    AssemleAuxilaryPictureV4(buffer, picture);
+    DP_CHECK_ERROR_RETURN_RET_LOG(rotationInIps, picture, "HAL rotationInIps");
+    DP_INFO_LOG("DPS_PHOTO rotate picture user id: %{public}d, bundle name: %{public}s",
+        userId_, bundleName_.c_str());
+    if (bundleName_ == SYSTEM_CAMERA) {
+        picture->RotatePicture();
+    }
+    return picture;
+}
+
 sptr<SurfaceBuffer> PhotoProcessResult::TransBufferHandleToSurfaceBuffer(const BufferHandle *bufferHandle)
 {
     DP_CHECK_ERROR_RETURN_RET_LOG(bufferHandle == nullptr, nullptr, "bufferHandle is nullptr.");
@@ -160,7 +255,7 @@ sptr<SurfaceBuffer> PhotoProcessResult::TransBufferHandleToSurfaceBuffer(const B
     surfaceBuffer->SetBufferHandle(surfaceBufferHandle);
     DP_INFO_LOG("TransBufferHandleToSurfaceBuffer w=%{public}d, h=%{public}d, f=%{public}d",
         surfaceBuffer->GetWidth(), surfaceBuffer->GetHeight(), surfaceBuffer->GetFormat());
-    return DpCopyBuffer(surfaceBuffer);
+    return surfaceBuffer;
 }
 
 BufferHandle* PhotoProcessResult::CloneBufferHandle(const BufferHandle* handle)
@@ -182,6 +277,12 @@ BufferHandle* PhotoProcessResult::CloneBufferHandle(const BufferHandle* handle)
         DP_CHECK_ERROR_RETURN_RET_LOG(newHandle->fd == -1, nullptr,
             "CloneBufferHandle: FD dup failed (errno:%{public}d)", errno);
     }
+    DP_DEBUG_LOG("width(%{public}d) -> (%{public}d)", handle->width, newHandle->width);
+    DP_DEBUG_LOG("stride(%{public}d) -> (%{public}d)", handle->stride, newHandle->stride);
+    DP_DEBUG_LOG("height(%{public}d) -> (%{public}d)", handle->height, newHandle->height);
+    DP_DEBUG_LOG("size(%{public}d) -> (%{public}d)", handle->size, newHandle->size);
+    DP_DEBUG_LOG("format(%{public}d) -> (%{public}d)", handle->format, newHandle->format);
+    DP_DEBUG_LOG("usage(%{public}" PRIu64 ") -> usage(%{public}" PRIu64 ")", handle->usage, newHandle->usage);
 
     for (uint32_t i = 0; i < newHandle->reserveFds; i++) {
         newHandle->reserve[i] = dup(handle->reserve[i]);
@@ -199,59 +300,10 @@ BufferHandle* PhotoProcessResult::CloneBufferHandle(const BufferHandle* handle)
     return newHandleGuard.release();
 }
 
-sptr<SurfaceBuffer> PhotoProcessResult::DpCopyBuffer(const sptr<SurfaceBuffer>& surfaceBuffer)
-{
-    DP_CHECK_ERROR_RETURN_RET_LOG(surfaceBuffer == nullptr, nullptr, "surfaceBuffer is nullptr");
-    DP_DEBUG_LOG("DpCopyBuffer w=%{public}d, h=%{public}d, f=%{public}d",
-        surfaceBuffer->GetWidth(), surfaceBuffer->GetHeight(), surfaceBuffer->GetFormat());
-    BufferRequestConfig requestConfig = {
-        .width = surfaceBuffer->GetWidth(),
-        .height = surfaceBuffer->GetHeight(),
-        .strideAlignment = 0x8, // default stride is 8 Bytes.
-        .format = surfaceBuffer->GetFormat(),
-        .usage = surfaceBuffer->GetUsage(),
-        .timeout = 0,
-        .colorGamut = surfaceBuffer->GetSurfaceBufferColorGamut(),
-        .transform = surfaceBuffer->GetSurfaceBufferTransform(),
-    };
-    sptr<SurfaceBuffer> newSurfaceBuffer = SurfaceBuffer::Create();
-    DP_CHECK_ERROR_RETURN_RET_LOG(newSurfaceBuffer == nullptr, nullptr, "newSurfaceBuffer is nullptr.");
-    auto allocErrorCode = newSurfaceBuffer->Alloc(requestConfig);
-    DP_DEBUG_LOG("DpCopyBuffer SurfaceBuffer alloc ret: %{public}d", allocErrorCode);
-    DP_CHECK_ERROR_RETURN_RET_LOG(allocErrorCode != GSError::GSERROR_OK, nullptr,
-        "DpCopyBuffer Alloc faled!, errCode:%{public}d", static_cast<int32_t>(allocErrorCode));
-
-    errno_t errNo = memcpy_s(newSurfaceBuffer->GetVirAddr(), newSurfaceBuffer->GetSize(),
-        surfaceBuffer->GetVirAddr(), surfaceBuffer->GetSize());
-    DP_CHECK_ERROR_RETURN_RET_LOG(errNo != EOK, nullptr, "DpCopyBuffer memcpy_s failed");
-    DpCopyMetaData(surfaceBuffer, newSurfaceBuffer);
-    DP_DEBUG_LOG("DpCopyBuffer memcpy end");
-    return newSurfaceBuffer;
-}
-
-void PhotoProcessResult::DpCopyMetaData(const sptr<SurfaceBuffer>& inBuffer, sptr<SurfaceBuffer>& outBuffer)
-{
-    std::vector<uint32_t> keys = {};
-    DP_CHECK_ERROR_RETURN_LOG(inBuffer == nullptr || outBuffer == nullptr,
-        "DpCopyMetaData: inBuffer or outBuffer is nullptr.");
-    auto ret = inBuffer->ListMetadataKeys(keys);
-    DP_CHECK_ERROR_RETURN_LOG(ret != GSError::GSERROR_OK, "DpCopyMetaData: ListMetadataKeys fail!");
-    for (uint32_t key : keys) {
-        std::vector<uint8_t> values;
-        ret = inBuffer->GetMetadata(key, values);
-        DP_LOOP_CONTINUE_LOG(ret != GSError::GSERROR_OK,
-            "GetMetadata fail! key = %{public}d res = %{public}d", key, ret);
-
-        ret = outBuffer->SetMetadata(key, values);
-        DP_LOOP_CONTINUE_LOG(ret != GSError::GSERROR_OK,
-            "SetMetadata fail! key = %{public}d res = %{public}d", key, ret);
-    }
-}
-
 void PhotoProcessResult::SetAuxiliaryPicture(const std::shared_ptr<PictureIntf>& picture, BufferHandle *bufferHandle,
     CameraAuxiliaryPictureType type)
 {
-    DP_INFO_LOG("entered, AuxiliaryPictureType type = %{public}d", static_cast<int32_t>(type));
+    DP_DEBUG_LOG("entered, AuxiliaryPictureType type = %{public}d", static_cast<int32_t>(type));
     DP_CHECK_ERROR_RETURN_LOG(picture == nullptr || bufferHandle == nullptr, "bufferHandle is nullptr.");
 
     auto buffer = TransBufferHandleToSurfaceBuffer(bufferHandle);
@@ -261,26 +313,30 @@ void PhotoProcessResult::SetAuxiliaryPicture(const std::shared_ptr<PictureIntf>&
 void PhotoProcessResult::AssemleAuxilaryPicture(const OHOS::HDI::Camera::V1_3::ImageBufferInfoExt& buffer,
     const std::shared_ptr<PictureIntf>& picture)
 {
-    if (buffer.isGainMapValid) {
-        SetAuxiliaryPicture(picture, buffer.gainMapHandle->GetBufferHandle(),
-            CameraAuxiliaryPictureType::GAINMAP);
-    }
-    if (buffer.isDepthMapValid) {
-        SetAuxiliaryPicture(picture, buffer.depthMapHandle->GetBufferHandle(),
-            CameraAuxiliaryPictureType::DEPTH_MAP);
-    }
-    if (buffer.isUnrefocusImageValid) {
-        SetAuxiliaryPicture(picture, buffer.unrefocusImageHandle->GetBufferHandle(),
-            CameraAuxiliaryPictureType::UNREFOCUS_MAP);
-    }
-    if (buffer.isHighBitDepthLinearImageValid) {
-        SetAuxiliaryPicture(picture, buffer.highBitDepthLinearImageHandle->GetBufferHandle(),
-            CameraAuxiliaryPictureType::LINEAR_MAP);
-    }
-    if (buffer.isMakerInfoValid) {
+    DP_CHECK_EXECUTE(buffer.isGainMapValid, SetAuxiliaryPicture(picture, buffer.gainMapHandle->GetBufferHandle(),
+        CameraAuxiliaryPictureType::GAINMAP));
+    DP_CHECK_EXECUTE(buffer.isDepthMapValid, SetAuxiliaryPicture(picture, buffer.depthMapHandle->GetBufferHandle(),
+        CameraAuxiliaryPictureType::DEPTH_MAP));
+    DP_CHECK_EXECUTE(buffer.isUnrefocusImageValid, SetAuxiliaryPicture(picture,
+        buffer.unrefocusImageHandle->GetBufferHandle(), CameraAuxiliaryPictureType::UNREFOCUS_MAP));
+    DP_CHECK_EXECUTE(buffer.isHighBitDepthLinearImageValid, SetAuxiliaryPicture(picture,
+        buffer.highBitDepthLinearImageHandle->GetBufferHandle(), CameraAuxiliaryPictureType::LINEAR_MAP));
+    DP_CHECK_EXECUTE(buffer.isMakerInfoValid, {
         auto makerInfoBuffer = TransBufferHandleToSurfaceBuffer(buffer.makerInfoHandle->GetBufferHandle());
         picture->SetMaintenanceData(makerInfoBuffer);
+    });
+}
+
+void PhotoProcessResult::AssemleAuxilaryPictureV4(
+    const HDI::Camera::V1_5::ImageBufferInfo_V1_4& bufferV4, const std::shared_ptr<PictureIntf>& picture)
+{
+    if (bufferV4.isAuxiliaryInfoValid) {
+        auto imageBuffer = TransBufferHandleToSurfaceBuffer(bufferV4.auxiliaryInfoHandle->GetBufferHandle());
+        uint32_t retCode = picture->SetXtStyleMetadataBlob(
+            reinterpret_cast<uint8_t*>(imageBuffer->GetVirAddr()), imageBuffer->GetSize());
+        DP_INFO_LOG("retCode=%{public}u, imageBuffer->GetSize()%{public}d", retCode, imageBuffer->GetSize());
     }
+    AssemleAuxilaryPicture(bufferV4.v1_3, picture);
 }
 
 void PhotoProcessResult::ReportEvent(const std::string& imageId)

@@ -13,32 +13,30 @@
  * limitations under the License.
  */
 
-#include <cstddef>
-#include <cstdint>
-#include <memory>
-
-#include "accesstoken_kit.h"
+#include "capture_session_fuzzer.h"
 #include "camera_input.h"
 #include "camera_log.h"
 #include "camera_photo_proxy.h"
 #include "capture_input.h"
 #include "capture_output.h"
+#include "preview_output.h"
 #include "capture_scene_const.h"
-#include "capture_session_fuzzer.h"
 #include "input/camera_manager.h"
-#include "ipc_skeleton.h"
+#include "message_parcel.h"
+#include "refbase.h"
+#include <cstddef>
+#include <cstdint>
+#include <memory>
+#include "token_setproc.h"
+#include "nativetoken_kit.h"
+#include "accesstoken_kit.h"
 #include "iservice_registry.h"
 #include "input/camera_manager_for_sys.h"
-#include "message_parcel.h"
-#include "nativetoken_kit.h"
-#include "os_account_manager.h"
-#include "preview_output.h"
-#include "refbase.h"
 #include "system_ability_definition.h"
+#include "os_account_manager.h"
+#include "ipc_skeleton.h"
 #include "test_token.h"
-#include "token_setproc.h"
 #include "camera_device_utils.h"
-
 
 namespace OHOS {
 namespace CameraStandard {
@@ -53,7 +51,6 @@ sptr<CameraDevice> camera;
 Profile profile;
 CaptureOutput* curOutput;
 bool g_isSupported;
-bool g_isCameraDevicePermission = false;
 SceneMode g_sceneMode;
 std::vector<Profile> previewProfile_ = {};
 
@@ -334,7 +331,7 @@ void TestAperture(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
     session->GetSupportedEffectSuggestionType();
 
     session->LockForControl();
-    session->SetARMode(fdp.ConsumeBool());
+    session->SetARMode(fdp.ConsumeIntegral<uint8_t>());
     session->EnableEffectSuggestion(fdp.ConsumeBool());
     vector<EffectSuggestionStatus> effectSuggestionStatusList;
     size_t max = EffectSuggestionType::EFFECT_SUGGESTION_SUNRISE_SUNSET + NUM_TWO;
@@ -453,6 +450,12 @@ void TestOther2(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
     session->SetVirtualAperture(aperture);
     session->GetPhysicalAperture(aperture);
     session->SetPhysicalAperture(aperture);
+    bool isSupported = fdp.ConsumeBool();
+    session->IsColorStyleSupported(isSupported);
+    std::vector<ColorStyleSetting> defaultColorStyles;
+    session->GetDefaultColorStyleSettings(defaultColorStyles);
+    ColorStyleSetting styleSetting = {static_cast<ColorStyleType>(1), 1, 1, 1};
+    session->SetColorStyleSetting(styleSetting);
     session->UnlockForControl();
 }
 
@@ -574,6 +577,8 @@ void TestOther3(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
     session->IsManualWhiteBalanceSupported(isSupported);
     session->SetManualWhiteBalance(fdp.ConsumeIntegral<int32_t>());
     session->SetWhiteBalanceMode(WhiteBalanceMode::AWB_MODE_AUTO);
+    session->EnableAutoMotionBoostDelivery(fdp.ConsumeBool());
+    session->EnableAutoBokehDataDelivery(fdp.ConsumeBool());
     session->UnlockForControl();
 }
 

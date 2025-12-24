@@ -22,11 +22,6 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-const std::string IGNORE_BATTERY_LEVEL = "ohos.dps.ignore_battery_level";
-const std::string IGNORE_BATTERY = "ohos.dps.ignore_battery";
-const std::string IGNORE_SCREEN = "ohos.dps.ignore_screen";
-const std::string IGNORE_TEMPERATURE = "ohos.dps.ignore_temperature";
-
 struct SchedulerInfo {
     bool isNeedStop {true};
     bool isNeedInterrupt {false};
@@ -59,14 +54,12 @@ public:
         return currentInfo_;
     }
 
-    bool UpdateSchedulerInfo(int32_t newValue)
+    virtual bool UpdateSchedulerInfo(int32_t newValue)
     {
-        DP_CHECK_RETURN_RET_LOG(stateValue_ == newValue, false,
-            "DPS_EVENT: SchedulerInfo[%{public}d] is not change, state: %{public}d", type_, stateValue_);
-
+        DP_CHECK_RETURN_RET(stateValue_ == newValue, false);
         stateValue_ = newValue;
         currentInfo_ = ReevaluateSchedulerInfo();
-        DP_INFO_LOG("DPS_EVENT: SchedulerInfo[%{public}d] state set: %{public}d", type_, stateValue_);
+        DP_DEBUG_LOG("DPS_EVENT: SchedulerInfo[%{public}d] state set: %{public}d", type_, stateValue_);
         return true;
     }
 

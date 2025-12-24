@@ -1,4 +1,4 @@
-# Copyright (c) 2024-2025 Huawei Device Co., Ltd.
+# Copyright (c) 2024 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -20,12 +20,12 @@ ohos_unittest("camera_service_unittest") {
   module_out_path = module_output_path
   include_dirs = [
     "./avcodec/include",
-    "./param_update/include",
     "./camera_service_common/include",
     "./client/include/",
     "./hdi_camera_test/include",
     "./hdi_stream_test/include",
     "./media_library/include",
+    "./pipeline/include",
     "./smooth_zoom/include",
     "${multimedia_camera_framework_path}/services/camera_service/include",
     "${multimedia_camera_framework_path}/dynamic_libs/moving_photo/include/avcodec",
@@ -33,10 +33,18 @@ ohos_unittest("camera_service_unittest") {
     "${multimedia_camera_framework_path}/services/camera_service/include/app_manager_utils",
     "${multimedia_camera_framework_path}/services/camera_service/include/camera_buffer_manager",
     "${multimedia_camera_framework_path}/services/camera_service/include/media_library",
-    "${multimedia_camera_framework_path}/services/camera_service/include/param_update",
-    "${multimedia_camera_framework_path}/services/camera_service/include/dfx",
+    "${multimedia_camera_framework_path}/services/camera_service/include/recorder",
     "${multimedia_camera_framework_path}/services/camera_service/include/rss",
     "${multimedia_camera_framework_path}/services/camera_service/include/smooth_zoom",
+    "${multimedia_camera_framework_path}/services/camera_service/include/movie_file",
+    "${multimedia_camera_framework_path}/services/camera_service/include/movie_file/plugin",
+    "${multimedia_camera_framework_path}/services/camera_service/include/movie_file/producer",
+    "${multimedia_camera_framework_path}/services/camera_service/include/moving_photo",
+    "${multimedia_camera_framework_path}/services/camera_service/include/pipeline",
+    "${multimedia_camera_framework_path}/services/camera_service/include/pipeline/buffer",
+    "${multimedia_camera_framework_path}/services/camera_service/include/pipeline/plugin",
+    "${multimedia_camera_framework_path}/services/camera_service/include/pipeline/producer",
+    "${multimedia_camera_framework_path}/services/camera_service/include/pipeline/thread",
     "${multimedia_camera_framework_path}/services/camera_service/binder/base/include",
     "${multimedia_camera_framework_path}/services/camera_service/binder/client/include",
     "${multimedia_camera_framework_path}/services/camera_service/binder/server/include",
@@ -47,14 +55,15 @@ ohos_unittest("camera_service_unittest") {
     "${multimedia_camera_framework_path}/interfaces/kits/native/include/",
     "${multimedia_camera_framework_path}/frameworks/native/ndk/impl",
     "${multimedia_camera_framework_path}/interfaces",
+    "${multimedia_camera_framework_path}/dynamic_libs/dfx/include",
+    "${multimedia_camera_framework_path}/dynamic_libs/image_framework/include",
     "${multimedia_camera_framework_path}/dynamic_libs/media_library/include",
   ]
   sources = [
+    "${multimedia_camera_framework_path}/dynamic_libs/dfx/src/dfx_report.cpp",
+    "${multimedia_camera_framework_path}/dynamic_libs/image_framework/src/picture_adapter.cpp",
     "${multimedia_camera_framework_path}/dynamic_libs/media_library/src/photo_asset_adapter.cpp",
     "${multimedia_camera_framework_path}/interfaces/inner_api/native/test/test_common.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/src/camera_server_photo_proxy.cpp",
-    "avcodec/src/audio_capturer_session_unittest.cpp",
-    "avcodec/src/audio_deferred_process_unittest.cpp",
     "hdi_camera_test/src/hcamera_host_manager_unittest.cpp",
     "hdi_stream_test/src/hcapture_session_unittest.cpp",
     "hdi_stream_test/src/hstream_capture_unittest.cpp",
@@ -64,8 +73,9 @@ ohos_unittest("camera_service_unittest") {
     "media_library/src/photo_asset_adapter_unittest.cpp",
   ]
 
-  if (fwk_no_hidden || use_libfuzzer || use_clang_coverage || !using_hb_new) {
+  if (fwk_no_hidden || use_clang_coverage) {
     sources += [
+      "avcodec/src/audio_capturer_session_unittest.cpp",
       "avcodec/src/audio_encoder_unittest.cpp",
       "avcodec/src/audio_video_muxer_unittest.cpp",
       "avcodec/src/avcodec_task_manager_unittest.cpp",
@@ -74,7 +84,6 @@ ohos_unittest("camera_service_unittest") {
       "avcodec/src/moving_photo_video_cache_unittest.cpp",
       "avcodec/src/video_encoder_unittest.cpp",
       "camera_service_common/src/camera_app_manager_client_unittest.cpp",
-      "camera_service_common/src/camera_app_manager_utils_unittest.cpp",
       "camera_service_common/src/camera_beauty_notification_unittest.cpp",
       "camera_service_common/src/camera_fwk_metadata_utils_unittest.cpp",
       "camera_service_common/src/camera_info_dumper_unittest.cpp",
@@ -85,14 +94,11 @@ ohos_unittest("camera_service_unittest") {
       "hdi_camera_test/src/hcamera_device_manager_unittest.cpp",
       "hdi_camera_test/src/hcamera_device_unittest.cpp",
       "hdi_camera_test/src/hcamera_preconfig_unittest.cpp",
-      "hdi_camera_test/src/hcamera_restore_param_unittest.cpp",
       "hdi_camera_test/src/hcamera_service_unittest.cpp",
       "hdi_stream_test/src/hstream_operator_unittest.cpp",
-      "param_update/src/camera_rotate_param_sign_tools_unittest.cpp",
-      "param_update/src/camera_rotate_param_manager_unittest.cpp",
-      "param_update/src/camera_rotate_param_reader_unittest.cpp",
-      "smooth_zoom/src/smooth_zoom_unittest.cpp",
+      "pipeline/src/camera_common_pipeline_unittest.cpp",
       "smooth_zoom/src/cubic_bezier_unittest.cpp",
+      "smooth_zoom/src/smooth_zoom_unittest.cpp",
     ]
   }
 
@@ -101,9 +107,11 @@ ohos_unittest("camera_service_unittest") {
     "${multimedia_camera_framework_path}/dynamic_libs:camera_dynamic_medialibrary",
     "${multimedia_camera_framework_path}/frameworks/native/camera/base:camera_framework",
     "${multimedia_camera_framework_path}/frameworks/native/camera/extension:camera_framework_ex",
+    "${multimedia_camera_framework_path}/mediastream:media_stream",
     "${multimedia_camera_framework_path}/services/camera_service:camera_service",
-    "${multimedia_camera_framework_path}/test/test_common:test_common",
     "${multimedia_camera_framework_path}/dynamic_libs:camera_dynamic_moving_photo",
+    "${multimedia_camera_framework_path}/test/test_common:test_common",
+    "${multimedia_camera_framework_path}/moviefile:movie_file",
   ]
 
   external_deps = [
@@ -116,18 +124,15 @@ ohos_unittest("camera_service_unittest") {
     "access_token:libtokensetproc_shared",
     "audio_framework:audio_capturer",
     "audio_framework:audio_client",
-    "audio_framework:offline_audio_effect",
     "av_codec:av_codec_client",
     "bundle_framework:appexecfwk_base",
     "bundle_framework:appexecfwk_core",
     "c_utils:utils",
-    "cJSON:cjson_static",
     "data_share:datashare_common",
     "data_share:datashare_consumer",
     "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
     "drivers_interface_camera:libcamera_proxy_1.0",
     "drivers_interface_camera:libcamera_proxy_1.1",
-    "drivers_interface_display:libdisplay_commontype_proxy_1.0",
     "drivers_interface_camera:libmap_data_sequenceable_1.0",
     "drivers_interface_camera:metadata",
     "googletest:gmock_main",
@@ -154,7 +159,6 @@ ohos_unittest("camera_service_unittest") {
     "resource_management:librawfile",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
-    "selinux_adapter:librestorecon",
     "sensor:sensor_interface_native",
     "window_manager:libdm_lite",
   ]
@@ -163,6 +167,7 @@ ohos_unittest("camera_service_unittest") {
     "private=public",
     "protected=public",
   ]
+
   if (use_sensor) {
     external_deps += [ "sensor:sensor_interface_native" ]
     defines += [ "CAMERA_USE_SENSOR" ]

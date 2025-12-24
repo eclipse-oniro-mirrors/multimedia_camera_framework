@@ -24,7 +24,11 @@ idl_gen_interface("camera_service_idl_interface") {
     "IStreamDepthData.idl",
     "IStreamMetadata.idl",
     "IStreamRepeat.idl",
+    "ICameraRecorder.idl",
     "IMechSession.idl",
+    "IMovieFileOutput.idl",
+    "ICameraMultiStreamOutput.idl",
+    "ICameraSwitchSession.idl",
   ]
   sources_callback = [
     "ICameraDeviceServiceCallback.idl",
@@ -37,14 +41,19 @@ idl_gen_interface("camera_service_idl_interface") {
     "ITorchServiceCallback.idl",
     "IFoldServiceCallback.idl",
     "ICameraMuteServiceCallback.idl",
-    "IControlCenterStatusCallback",
-    "IControlCenterEffectStatusCallback",
+    "IControlCenterStatusCallback.idl",
+    "IControlCenterEffectStatusCallback.idl",
     "IPressureStatusCallback.idl",
-    "IMechSessionCallback.idl",
     "IStreamCapturePhotoAssetCallback.idl",
+    "ICameraRecorderCallback.idl",
+    "IMechSessionCallback.idl",
+    "IMovieFileOutputCallback.idl",
+    "ICameraSwitchSessionCallback.idl",
   ]
 
   sources_common = [ "CameraTypes.idl" ]
+
+  inputs = sources_common + sources_callback
 
   hitrace = "HITRACE_TAG_ABILITY_MANAGER"
 
@@ -75,6 +84,8 @@ ohos_source_set("camera_idl_sa_proxy") {
                              "*_repeat_proxy.cpp",
                              "*_callback_stub.cpp",
                              "*_types.cpp",
+                             "*_recorder_proxy.cpp",
+                             "*movie_file_output_proxy.cpp",
                            ])
 
   public_configs = [
@@ -136,6 +147,8 @@ ohos_source_set("camera_idl_sa_stub") {
                              "*_repeat_stub.cpp",
                              "*_callback_proxy.cpp",
                              "*_types.cpp",
+                             "*_recorder_stub.cpp",
+                             "*movie_file_output_stub.cpp"
                            ])
 
   public_configs = [ ":camera_sa_idl_config",

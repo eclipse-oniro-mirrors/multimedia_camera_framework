@@ -42,21 +42,18 @@ namespace CameraStandard {
 sptr<CaptureOutput> CameraNightSessionUnit::CreatePreviewOutput()
 {
     previewProfile_ = {};
-    if (!cameraManager_) {
-        return nullptr;
-    }
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
-    if (cameras.empty()) {
+    if (!cameraManager_ || cameras.empty()) {
         return nullptr;
     }
-    preIsSupportedNightmode_ = false;
+    preIsSupportedNighitmode_ = false;
     for (sptr<CameraDevice> camDevice : cameras) {
         std::vector<SceneMode> modes = cameraManager_->GetSupportedModes(camDevice);
         if (find(modes.begin(), modes.end(), SceneMode::NIGHT) != modes.end()) {
-            preIsSupportedNightmode_ = true;
+            preIsSupportedNighitmode_ = true;
         }
 
-        if (!preIsSupportedNightmode_) {
+        if (!preIsSupportedNighitmode_) {
             continue;
         }
 
@@ -82,21 +79,18 @@ sptr<CaptureOutput> CameraNightSessionUnit::CreatePreviewOutput()
 sptr<CaptureOutput> CameraNightSessionUnit::CreatePhotoOutput()
 {
     photoProfile_ = {};
-    if (!cameraManager_) {
-        return nullptr;
-    }
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
-    if (cameras.empty()) {
+    if (!cameraManager_ || cameras.empty()) {
         return nullptr;
     }
-    phoIsSupportedNightmode_ = false;
+    phoIsSupportedNighitmode_ = false;
     for (sptr<CameraDevice> camDevice : cameras) {
         std::vector<SceneMode> modes = cameraManager_->GetSupportedModes(camDevice);
         if (find(modes.begin(), modes.end(), SceneMode::NIGHT) != modes.end()) {
-            phoIsSupportedNightmode_ = true;
+            phoIsSupportedNighitmode_ = true;
         }
 
-        if (!phoIsSupportedNightmode_) {
+        if (!phoIsSupportedNighitmode_) {
             continue;
         }
 
@@ -147,7 +141,7 @@ void CameraNightSessionUnit::TearDown()
  * EnvConditions: NA
  * CaseDescription: Test NightSession about exposure
  */
-HWTEST_F(CameraNightSessionUnit, night_session_unittest_001, TestSize.Level1)
+HWTEST_F(CameraNightSessionUnit, night_session_unittest_001, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     SceneMode mode = NIGHT;
@@ -170,7 +164,7 @@ HWTEST_F(CameraNightSessionUnit, night_session_unittest_001, TestSize.Level1)
     sptr<CaptureOutput> preview = CreatePreviewOutput();
     
     sptr<CaptureOutput> photo = CreatePhotoOutput();
-    if (!preIsSupportedNightmode_ || !phoIsSupportedNightmode_) {
+    if (!preIsSupportedNighitmode_ || !phoIsSupportedNighitmode_) {
         input->Close();
         GTEST_SKIP();
     }
@@ -195,8 +189,11 @@ HWTEST_F(CameraNightSessionUnit, night_session_unittest_001, TestSize.Level1)
     uint32_t exposureValue = 0;
     OHOS::Camera::DeleteCameraMetadataItem(info->GetMetadata()->get(), OHOS_ABILITY_NIGHT_MODE_SUPPORTED_EXPOSURE_TIME);
     OHOS::Camera::DeleteCameraMetadataItem(info->GetMetadata()->get(), OHOS_CONTROL_MANUAL_EXPOSURE_TIME);
-
-    EXPECT_EQ(nightSession->GetExposureRange(exposureRange), CameraErrorCode::INVALID_ARGUMENT);
+    if (nightSession->IsSupportSpecSearch()) {
+        EXPECT_EQ(nightSession->GetExposureRange(exposureRange), CameraErrorCode::SUCCESS);
+    } else {
+        EXPECT_EQ(nightSession->GetExposureRange(exposureRange), CameraErrorCode::INVALID_ARGUMENT);
+    }
     EXPECT_EQ(nightSession->GetExposure(exposureValue), CameraErrorCode::INVALID_ARGUMENT);
 
     nightSession->Release();
@@ -211,7 +208,7 @@ HWTEST_F(CameraNightSessionUnit, night_session_unittest_001, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test NightSession when innerInputDevice_ and output is nullptr
  */
-HWTEST_F(CameraNightSessionUnit, night_session_unittest_002, TestSize.Level1)
+HWTEST_F(CameraNightSessionUnit, night_session_unittest_002, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     SceneMode mode = NIGHT;
@@ -231,15 +228,14 @@ HWTEST_F(CameraNightSessionUnit, night_session_unittest_002, TestSize.Level1)
         camInput->GetCameraDevice()->SetMdmCheck(false);
         camInput->GetCameraDevice()->Open();
     }
-
     sptr<CaptureOutput> preview = CreatePreviewOutput();
-    if (!preIsSupportedNightmode_) {
+    if (!preIsSupportedNighitmode_) {
         input->Close();
         GTEST_SKIP();
     }
     ASSERT_NE(preview, nullptr);
     sptr<CaptureOutput> photo = CreatePhotoOutput();
-    if (!phoIsSupportedNightmode_) {
+    if (!phoIsSupportedNighitmode_) {
         input->Close();
         GTEST_SKIP();
     }
@@ -277,7 +273,7 @@ HWTEST_F(CameraNightSessionUnit, night_session_unittest_002, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test NightSession with SetExposure
  */
-HWTEST_F(CameraNightSessionUnit, night_session_unittest_003, TestSize.Level1)
+HWTEST_F(CameraNightSessionUnit, night_session_unittest_003, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     SceneMode mode = NIGHT;
@@ -301,7 +297,7 @@ HWTEST_F(CameraNightSessionUnit, night_session_unittest_003, TestSize.Level1)
     sptr<CaptureOutput> preview = CreatePreviewOutput();
 
     sptr<CaptureOutput> photo = CreatePhotoOutput();
-    if (!preIsSupportedNightmode_ || !phoIsSupportedNightmode_) {
+    if (!preIsSupportedNighitmode_ || !phoIsSupportedNighitmode_) {
         input->Close();
         GTEST_SKIP();
     }
@@ -325,7 +321,11 @@ HWTEST_F(CameraNightSessionUnit, night_session_unittest_003, TestSize.Level1)
     std::vector<uint32_t> exposureRange = {};
     uint32_t exposureValue = 0;
     OHOS::Camera::DeleteCameraMetadataItem(info->GetMetadata()->get(), OHOS_ABILITY_NIGHT_MODE_SUPPORTED_EXPOSURE_TIME);
-    EXPECT_EQ(nightSession->GetExposureRange(exposureRange), CameraErrorCode::INVALID_ARGUMENT);
+    if (nightSession->IsSupportSpecSearch()) {
+        EXPECT_EQ(nightSession->GetExposureRange(exposureRange), CameraErrorCode::SUCCESS);
+    } else {
+        EXPECT_EQ(nightSession->GetExposureRange(exposureRange), CameraErrorCode::INVALID_ARGUMENT);
+    }
     EXPECT_EQ(nightSession->SetExposure(exposureValue), CameraErrorCode::SUCCESS);
 
     nightSession->Release();
@@ -362,13 +362,13 @@ HWTEST_F(CameraNightSessionUnit, night_session_unittest_004, TestSize.Level0)
     }
 
     sptr<CaptureOutput> preview = CreatePreviewOutput();
-    if (!preIsSupportedNightmode_) {
+    if (!preIsSupportedNighitmode_) {
         input->Close();
         GTEST_SKIP();
     }
     ASSERT_NE(preview, nullptr);
     sptr<CaptureOutput> photo = CreatePhotoOutput();
-    if (!phoIsSupportedNightmode_) {
+    if (!phoIsSupportedNighitmode_) {
         input->Close();
         GTEST_SKIP();
     }
@@ -393,14 +393,23 @@ HWTEST_F(CameraNightSessionUnit, night_session_unittest_004, TestSize.Level0)
     int32_t count = 1;
     nightSession->LockForControl();
     OHOS::Camera::DeleteCameraMetadataItem(info->GetMetadata()->get(), OHOS_ABILITY_NIGHT_MODE_SUPPORTED_EXPOSURE_TIME);
+    if (nightSession->IsSupportSpecSearch()) {
+        EXPECT_EQ(nightSession->GetExposureRange(exposureRange), CameraErrorCode::SUCCESS);
+        EXPECT_EQ(nightSession->SetExposure(exposureValue), CameraErrorCode::SUCCESS);
 
-    EXPECT_EQ(nightSession->GetExposureRange(exposureRange), CameraErrorCode::INVALID_ARGUMENT);
-    EXPECT_EQ(nightSession->SetExposure(exposureValue), CameraErrorCode::OPERATION_NOT_ALLOWED);
+        OHOS::Camera::DeleteCameraMetadataItem(info->GetMetadata()->get(), OHOS_CONTROL_MANUAL_EXPOSURE_TIME);
+        EXPECT_EQ(nightSession->SetExposure(exposureValue), CameraErrorCode::SUCCESS);
+        nightSession->changedMetadata_->addEntry(OHOS_CONTROL_MANUAL_EXPOSURE_TIME, &exposureValue, count);
+        EXPECT_EQ(nightSession->SetExposure(exposureValue), CameraErrorCode::SUCCESS);
+    } else {
+        EXPECT_EQ(nightSession->GetExposureRange(exposureRange), CameraErrorCode::INVALID_ARGUMENT);
+        EXPECT_EQ(nightSession->SetExposure(exposureValue), CameraErrorCode::OPERATION_NOT_ALLOWED);
 
-    OHOS::Camera::DeleteCameraMetadataItem(info->GetMetadata()->get(), OHOS_CONTROL_MANUAL_EXPOSURE_TIME);
-    EXPECT_EQ(nightSession->SetExposure(exposureValue), CameraErrorCode::OPERATION_NOT_ALLOWED);
-    nightSession->changedMetadata_->addEntry(OHOS_CONTROL_MANUAL_EXPOSURE_TIME, &exposureValue, count);
-    EXPECT_EQ(nightSession->SetExposure(exposureValue), CameraErrorCode::OPERATION_NOT_ALLOWED);
+        OHOS::Camera::DeleteCameraMetadataItem(info->GetMetadata()->get(), OHOS_CONTROL_MANUAL_EXPOSURE_TIME);
+        EXPECT_EQ(nightSession->SetExposure(exposureValue), CameraErrorCode::OPERATION_NOT_ALLOWED);
+        nightSession->changedMetadata_->addEntry(OHOS_CONTROL_MANUAL_EXPOSURE_TIME, &exposureValue, count);
+        EXPECT_EQ(nightSession->SetExposure(exposureValue), CameraErrorCode::OPERATION_NOT_ALLOWED);
+    }
     nightSession->UnlockForControl();
 
     nightSession->Release();
@@ -435,6 +444,7 @@ HWTEST_F(CameraNightSessionUnit, night_session_unittest_005, TestSize.Level0)
         camInput->GetCameraDevice()->SetMdmCheck(false);
         camInput->GetCameraDevice()->Open();
     }
+
     sptr<CaptureOutput> preview = CreatePreviewOutput();
     if (!preIsSupportedNighitmode_) {
         input->Close();

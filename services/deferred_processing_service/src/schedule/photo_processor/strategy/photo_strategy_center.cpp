@@ -19,6 +19,13 @@
 #include "dps_event_report.h"
 #include "events_info.h"
 #include "events_monitor.h"
+#include "interrupt_state.h"
+#include "photo_cache_state.h"
+#include "photo_camera_state.h"
+#include "photo_hal_state.h"
+#include "photo_media_library_state.h"
+#include "photo_temperature_state.h"
+#include "photo_trailing_state.h"
 #include "state_factory.h"
 
 namespace OHOS {
@@ -64,6 +71,7 @@ int32_t PhotoStrategyCenter::Initialize()
         PHOTO_HDI_STATUS_EVENT,
         MEDIA_LIBRARY_STATUS_EVENT,
         THERMAL_LEVEL_STATUS_EVENT,
+        INTERRUPT_EVENT,
         PHOTO_CACHE_EVENT},
         eventsListener_);
     return DP_OK;
@@ -71,13 +79,21 @@ int32_t PhotoStrategyCenter::Initialize()
 
 void PhotoStrategyCenter::InitHandleEvent()
 {
-    DP_DEBUG_LOG("entered.");
+    REGISTER_STATE(InterruptState, PHOTO_INTERRUPT_STATE, NO_INTERRUPT);
+    REGISTER_STATE(PhotoCameraState, PHOTO_CAMERA_STATE, SYSTEM_CAMERA_CLOSED);
+    REGISTER_STATE(PhotoHalState, PHOTO_HAL_STATE, HDI_DISCONNECTED);
+    REGISTER_STATE(PhotoMediaLibraryState, PHOTO_MEDIA_LIBRARY_STATE, MEDIA_LIBRARY_DISCONNECTED);
+    REGISTER_STATE(PhotoTemperatureState, PHOTO_THERMAL_LEVEL_STATE,
+        ConvertPhotoThermalLevel(EventsInfo::GetInstance().GetThermalLevel()));
+    REGISTER_STATE(PhotoTrailingState, PHOTO_TRAILING_STATE, CAMERA_ON_STOP_TRAILING);
+    REGISTER_STATE(PhotoCacheState, PHOTO_CACHE_STATE, NO_CACHE);
     eventHandlerList_ = {
         {CAMERA_SESSION_STATUS_EVENT, [this](int32_t value){ HandleCameraEvent(value); }},
         {TRAILING_STATUS_EVENT, [this](int32_t value){ HandleTrailingEvent(value); }},
         {PHOTO_HDI_STATUS_EVENT, [this](int32_t value){ HandleHalEvent(value); }},
         {MEDIA_LIBRARY_STATUS_EVENT, [this](int32_t value){ HandleMedialLibraryEvent(value); }},
         {THERMAL_LEVEL_STATUS_EVENT, [this](int32_t value){ HandleTemperatureEvent(value); }},
+        {INTERRUPT_EVENT, [this](int32_t value){ HandleInterruptEvent(value); }},
         {PHOTO_CACHE_EVENT, [this](int32_t value){ HandleCacheEvent(value); }}
     };
 }
@@ -114,11 +130,12 @@ DeferredPhotoJobPtr PhotoStrategyCenter::GetJob()
     return jobPtr;
 }
 
-ExecutionMode PhotoStrategyCenter::GetExecutionMode(JobPriority priority)
+ExecutionMode PhotoStrategyCenter::GetExecutionMode(const JobPriority priority)
 {
     if (priority == JobPriority::HIGH) {
-        DP_CHECK_RETURN_RET(!IsReady() && EventsInfo::GetInstance().GetCameraStatus() ==
-            CameraSessionStatus::SYSTEM_CAMERA_OPEN, ExecutionMode::DUMMY);
+        DP_CHECK_RETURN_RET(EventsInfo::GetInstance().GetCameraState() == CameraSessionStatus::SYSTEM_CAMERA_OPEN,
+            ExecutionMode::DUMMY);
+        return ExecutionMode::HIGH_PERFORMANCE;
     }
     DP_CHECK_RETURN_RET(!IsReady(), ExecutionMode::DUMMY);
     return ExecutionMode::LOAD_BALANCE;
@@ -169,6 +186,12 @@ void PhotoStrategyCenter::HandleTemperatureEvent(int32_t value)
     UpdateValue(PHOTO_THERMAL_LEVEL_STATE, level);
 }
 
+void PhotoStrategyCenter::HandleInterruptEvent(int32_t value)
+{
+    DP_DEBUG_LOG("InterruptEvent");
+    UpdateValue(PHOTO_INTERRUPT_STATE, value);
+}
+
 void PhotoStrategyCenter::HandleCacheEvent(int32_t value)
 {
     DP_DEBUG_LOG("PhotoCacheEvent");
@@ -193,19 +216,19 @@ SchedulerInfo PhotoStrategyCenter::ReevaluateSchedulerInfo()
     SchedulerInfo cameraInfo = GetSchedulerInfo(PHOTO_CAMERA_STATE);
     SchedulerInfo halInfo = GetSchedulerInfo(PHOTO_HAL_STATE);
     SchedulerInfo mediaLibraryInfo = GetSchedulerInfo(PHOTO_MEDIA_LIBRARY_STATE);
+    SchedulerInfo interruptInfo = GetSchedulerInfo(PHOTO_INTERRUPT_STATE);
     SchedulerInfo cacheInfo = GetSchedulerInfo(PHOTO_CACHE_STATE);
-    if (cameraInfo.isNeedStop || halInfo.isNeedStop || mediaLibraryInfo.isNeedStop || cacheInfo.isNeedStop) {
-        DP_INFO_LOG("DPS_EVENT: Photo stop schedule, hdi: %{public}d, mediaLibrary: %{public}d, "
-			"camera: %{public}d, cache: %{public}d",
-            halInfo.isNeedStop, mediaLibraryInfo.isNeedStop, cameraInfo.isNeedStop, cacheInfo.isNeedStop);
-        return {true, cameraInfo.isNeedInterrupt};
-    }
+    bool isNeedStop = cameraInfo.isNeedStop || halInfo.isNeedStop || mediaLibraryInfo.isNeedStop
+        || interruptInfo.isNeedInterrupt || cacheInfo.isNeedStop;
+    bool isNeedInterrupt = cameraInfo.isNeedInterrupt || interruptInfo.isNeedInterrupt;
+    SchedulerInfo result = {isNeedStop, isNeedInterrupt};
+    DP_CHECK_RETURN_RET_LOG(isNeedStop, result,
+        "DPS_EVENT: Photo stop schedule, hdi: %{public}d, mediaLibrary: %{public}d, "
+        "camera: %{public}d, cache: %{public}d",
+        halInfo.isNeedStop, mediaLibraryInfo.isNeedStop, cameraInfo.isNeedStop, cacheInfo.isNeedStop);
 
     SchedulerInfo trailingInfo = GetSchedulerInfo(PHOTO_TRAILING_STATE);
-    if (!trailingInfo.isNeedStop) {
-        DP_INFO_LOG("DPS_EVENT: Photo try do schedule in trailing.");
-        return trailingInfo;
-    }
+    DP_CHECK_RETURN_RET_LOG(!trailingInfo.isNeedStop, trailingInfo, "DPS_EVENT: Photo try do schedule in trailing.");
 
     DP_INFO_LOG("DPS_EVENT: Photo try do schedule in normal.");
     return GetSchedulerInfo(PHOTO_THERMAL_LEVEL_STATE);

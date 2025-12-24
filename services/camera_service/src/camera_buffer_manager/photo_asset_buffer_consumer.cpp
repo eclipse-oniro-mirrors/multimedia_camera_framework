@@ -12,6 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "photo_asset_buffer_consumer.h"
 
 #include "camera_log.h"
@@ -99,7 +100,7 @@ void PhotoAssetBufferConsumer::ExecuteOnBufferAvailable()
 
     MEDIA_INFO_LOG("PA_ExecuteOnBufferAvailable X");
 }
-
+// LCOV_EXCL_START
 void PhotoAssetBufferConsumer::StartWaitAuxiliaryTask(
     const int32_t captureId, const int32_t auxiliaryCount, int64_t timestamp, sptr<SurfaceBuffer> &newSurfaceBuffer)
 {
@@ -137,7 +138,7 @@ void PhotoAssetBufferConsumer::StartWaitAuxiliaryTask(
             AssembleDeferredPicture(timestamp, captureId);
         } else {
             // start timeer to do assamble
-            uint32_t pictureHandle;
+            uint32_t pictureHandle = 0;
             constexpr uint32_t delayMilli = 1 * 1000;
             MEDIA_INFO_LOG(
                 "PhotoAssetBufferConsumer StartWaitAuxiliaryTask GetGlobalWatchdog StartMonitor, captureId=%{public}d",
@@ -246,3 +247,4 @@ void PhotoAssetBufferConsumer::AssembleDeferredPicture(int64_t timestamp, int32_
 }
 }  // namespace CameraStandard
 }  // namespace OHOS
+// LCOV_EXCL_STOP

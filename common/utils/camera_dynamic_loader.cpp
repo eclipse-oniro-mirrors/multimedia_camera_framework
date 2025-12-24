@@ -22,12 +22,11 @@
 #include <memory>
 #include <mutex>
 #include <thread>
-#include <unordered_set>
 #include <utility>
 
 #include "camera_log.h"
-#include "common_timer_errors.h"
 #include "camera_simple_timer.h"
+#include "thread_priority_util.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -146,10 +145,8 @@ void* Dynamiclib::GetFunction(const string& functionName)
 shared_ptr<Dynamiclib> CameraDynamicLoader::GetDynamiclibNoLock(const string& libName)
 {
     auto loadedIterator = g_dynamiclibMap.find(libName);
-    if (loadedIterator != g_dynamiclibMap.end()) {
-        MEDIA_INFO_LOG("Dynamiclib::GetDynamiclib %{public}s by cache", libName.c_str());
-        return loadedIterator->second;
-    }
+    CHECK_RETURN_RET_ILOG(loadedIterator != g_dynamiclibMap.end(), loadedIterator->second,
+        "Dynamiclib::GetDynamiclib %{public}s by cache", libName.c_str());
 
     shared_ptr<Dynamiclib> dynamiclib = nullptr;
     auto loadedWeakIterator = g_weakDynamiclibMap.find(libName);
@@ -174,18 +171,17 @@ shared_ptr<Dynamiclib> CameraDynamicLoader::GetDynamiclib(const string& libName)
     lock_guard<mutex> lock(g_libMutex);
     return GetDynamiclibNoLock(libName);
 }
-
+// LCOV_EXCL_START
 void CameraDynamicLoader::LoadDynamiclibAsync(const std::string& libName)
 {
     CAMERA_SYNC_TRACE;
     unique_lock<mutex> asyncLock(g_asyncLoadingMutex);
     MEDIA_INFO_LOG("CameraDynamicLoader::LoadDynamiclibAsync %{public}s", libName.c_str());
-    if (g_isAsyncLoading != AsyncLoadingState::NONE) {
-        MEDIA_INFO_LOG("CameraDynamicLoader::LoadDynamiclibAsync %{public}s is loading", libName.c_str());
-        return;
-    }
+    CHECK_RETURN_ILOG(g_isAsyncLoading != AsyncLoadingState::NONE,
+        "CameraDynamicLoader::LoadDynamiclibAsync %{public}s is loading", libName.c_str());
     g_isAsyncLoading = AsyncLoadingState::PREPARE;
     thread asyncThread = thread([libName]() {
+        SetVipPrioThread(VIP_PRIO_LEVEL_10);
         CancelFreeDynamicLibDelayed(libName);
         unique_lock<mutex> lock(g_libMutex);
         {
@@ -209,8 +205,8 @@ void CameraDynamicLoader::FreeDynamiclibNoLock(const string& libName)
     CAMERA_SYNC_TRACE;
     auto loadedIterator = g_dynamiclibMap.find(libName);
     CHECK_RETURN(loadedIterator == g_dynamiclibMap.end());
-    MEDIA_INFO_LOG("Dynamiclib::FreeDynamiclib %{public}s lib use count is:%{public}d", libName.c_str(),
-        static_cast<int32_t>(loadedIterator->second.use_count()));
+    MEDIA_INFO_LOG("Dynamiclib::FreeDynamiclib %{public}s lib use count is:%{public}ld", libName.c_str(),
+        loadedIterator->second.use_count());
 
     weak_ptr<Dynamiclib> weaklib = loadedIterator->second;
     g_weakDynamiclibMap[libName] = weaklib;
@@ -243,5 +239,6 @@ void CameraDynamicLoader::FreeDynamicLibDelayed(const std::string& libName, uint
     MEDIA_INFO_LOG("CameraDynamicLoader::FreeDynamicLibDelayed %{public}s StartTask success:%{public}d",
         libName.c_str(), isStartSuccess);
 }
+// LCOV_EXCL_STOP
 } // namespace CameraStandard
 } // namespace OHOS

@@ -16,13 +16,14 @@
 #include "deferred_photo_processor.h"
 
 #include "basic_definitions.h"
+#include "camera_timer.h"
 #include "deferred_photo_result.h"
 #include "dp_log.h"
-#include "dp_timer.h"
 #include "dp_utils.h"
 #include "dps.h"
 #include "dps_event_report.h"
 #include "events_info.h"
+#include "dps_metadata_info.h"
 #include "photo_process_command.h"
 
 namespace OHOS {
@@ -70,6 +71,7 @@ void DeferredPhotoProcessor::RemoveImage(const std::string& imageId, bool restor
     DP_CHECK_RETURN(restorable);
     DP_CHECK_EXECUTE(repository_->IsRunningJob(imageId), postProcessor_->Interrupt());
     postProcessor_->RemoveImage(imageId);
+    result_->ResetCrashCount(imageId);
     result_->DeRecordResult(imageId);
 }
 
@@ -84,6 +86,10 @@ void DeferredPhotoProcessor::ProcessImage(const std::string& appName, const std:
         "DPS_PHOTO: imageId is backgroundJob %{public}s", imageId.c_str());
     if (!repository_->RequestJob(imageId)) {
         OnProcessError(userId_, imageId, DpsError::DPS_ERROR_IMAGE_PROC_INVALID_PHOTO_ID);
+        return;
+    }
+    // 当前任务已经处理过了，但是又下发了高优先级任务，需要直接返回缓存结果
+    if (ProcessCatchResults(imageId)) {
         return;
     }
     result_->RecordHigh(imageId);
@@ -193,14 +199,20 @@ void DeferredPhotoProcessor::HandleSuccess(const int32_t userId, const std::stri
         return;
     }
 
+    jobPtr->Complete();
+    // 背压策略：普通任务直接缓存，高优先级任务直接返回
     if (EventsInfo::GetInstance().IsMediaBusy() && jobPtr->GetCurPriority() != JobPriority::HIGH) {
         result_->RecordResult(imageId, std::move(imageInfo), true);
         return;
     }
 
-    jobPtr->Complete();
     DP_INFO_LOG("DPS_PHOTO: userId: %{public}d, imageId: %{public}s", userId, imageId.c_str());
     uint32_t cloudFlag = imageInfo->GetCloudFlag();
+    DpsMetadata metadata = imageInfo->GetMetaData();
+    uint32_t captureFlag = 0;
+    metadata.Get("captureEnhancementFlag", captureFlag);
+    DP_DEBUG_LOG("DPS_OHOTO: HandleSuccess cloudFlag: %{public}d, captureFlag: %{public}d ",
+        cloudFlag, captureFlag);
     switch (imageInfo->GetType()) {
         case CallbackType::IMAGE_PROCESS_DONE: {
             int32_t dataSize = imageInfo->GetDataSize();
@@ -210,7 +222,7 @@ void DeferredPhotoProcessor::HandleSuccess(const int32_t userId, const std::stri
         }
         case CallbackType::IMAGE_PROCESS_YUV_DONE: {
             std::shared_ptr<PictureIntf> picture = imageInfo->GetPicture();
-            callback->OnProcessImageDone(imageId, picture, cloudFlag);
+            callback->OnProcessImageDone(imageId, picture, metadata);
             break;
         }
         default:
@@ -219,13 +231,14 @@ void DeferredPhotoProcessor::HandleSuccess(const int32_t userId, const std::stri
             break;
     }
     EventsInfo::GetInstance().SetMediaLibraryState(MediaLibraryStatus::MEDIA_LIBRARY_BUSY);
+    DPSEventReport::GetInstance().ReportImageProcessCaptureFlag(captureFlag);
 }
 
 void DeferredPhotoProcessor::HandleError(const int32_t userId, const std::string& imageId,
     DpsError error, bool isHighJob)
 {
     StopTimer(imageId);
-    ErrorType ret = result_->OnError(imageId, error, isHighJob);
+    JobErrorType ret = result_->OnError(imageId, error, isHighJob);
     auto jobPtr = repository_->GetJobUnLocked(imageId);
     auto callback = GetCallback();
     if (jobPtr == nullptr || callback == nullptr) {
@@ -237,20 +250,22 @@ void DeferredPhotoProcessor::HandleError(const int32_t userId, const std::string
 
     bool needNotify = false;
     switch (ret) {
-        case ErrorType::RETRY:
+        case JobErrorType::RETRY:
             jobPtr->Prepare();
             break;
-        case ErrorType::NORMAL_FAILED:
+        case JobErrorType::NORMAL_FAILED:
             jobPtr->Fail();
             break;
-        case ErrorType::FATAL_NOTIFY:
+        case JobErrorType::FATAL_NOTIFY:
             jobPtr->Error();
             needNotify = true;
             break;
-        case ErrorType::FAILED_NOTIFY:
-        case ErrorType::HIGH_FAILED:
+        case JobErrorType::FAILED_NOTIFY:
+        case JobErrorType::HIGH_FAILED:
             jobPtr->Fail();
             needNotify = true;
+            break;
+        default:
             break;
     }
     DP_CHECK_RETURN(!needNotify);
@@ -264,10 +279,10 @@ void DeferredPhotoProcessor::HandleError(const int32_t userId, const std::string
 uint32_t DeferredPhotoProcessor::StartTimer(const std::string& imageId)
 {
     auto thisPtr = weak_from_this();
-    uint32_t timerId = DpsTimer::GetInstance().StartTimer([thisPtr, imageId]() {
+    uint32_t timerId = CameraTimer::GetInstance().Register([thisPtr, imageId]() {
         auto process = thisPtr.lock();
         DP_CHECK_EXECUTE(process != nullptr, process->ProcessPhotoTimeout(imageId));
-    }, MAX_PROC_TIME_MS);
+    }, MAX_PROC_TIME_MS, true);
     DP_INFO_LOG("DPS_TIMER: Start imageId: %{public}s, timerId: %{public}u", imageId.c_str(), timerId);
     return timerId;
 }
@@ -276,7 +291,7 @@ void DeferredPhotoProcessor::StopTimer(const std::string& imageId)
 {
     uint32_t timerId = repository_->GetJobTimerId(imageId);
     DP_INFO_LOG("DPS_TIMER: Stop imageId: %{public}s, timeId: %{public}u", imageId.c_str(), timerId);
-    DpsTimer::GetInstance().StopTimer(timerId);
+    CameraTimer::GetInstance().Unregister(timerId);
 }
 
 void DeferredPhotoProcessor::ProcessPhotoTimeout(const std::string& imageId)
@@ -310,7 +325,7 @@ bool DeferredPhotoProcessor::ProcessCatchResults(const std::string& imageId)
                 result->GetDataSize(), result->GetCloudFlag());
             break;
         case CallbackType::IMAGE_PROCESS_YUV_DONE:
-            callback->OnProcessImageDone(imageId, result->GetPicture(), result->GetCloudFlag());
+            callback->OnProcessImageDone(imageId, result->GetPicture(), result->GetMetaData());
             break;
         case CallbackType::IMAGE_ERROR:
             callback->OnError(imageId, MapDpsErrorCode(result->GetErrorCode()));

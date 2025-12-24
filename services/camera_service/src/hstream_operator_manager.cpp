@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+// LCOV_EXCL_START
 #include "hstream_operator_manager.h"
 #include "hstream_operator.h"
 #include "camera_dynamic_loader.h"
@@ -84,21 +84,24 @@ void HStreamOperatorManager::AddTaskManager(int32_t& hStreamOperatorId,
     CHECK_RETURN_ELOG(
         avcodecTaskManagerProxy == nullptr, "HStreamOperatorManager::AddTaskManager avcodecTaskManagerProxy is null");
     MEDIA_INFO_LOG("HStreamOperatorManager::AddTaskManager hStreamOperatorId is %{public}d", hStreamOperatorId);
-    taskManagerMap_.EnsureInsert(hStreamOperatorId, avcodecTaskManagerProxy);
+    std::vector<sptr<AvcodecTaskManagerIntf>> vec;
+    taskManagerMap_.Find(hStreamOperatorId, vec);
+    vec.emplace_back(avcodecTaskManagerProxy);
+    taskManagerMap_.EnsureInsert(hStreamOperatorId, vec);
 }
 
 void HStreamOperatorManager::RemoveTaskManager(int32_t& hStreamOperatorId)
 {
     MEDIA_INFO_LOG("HStreamOperatorManager::RemoveTaskManager hStreamOperatorId is %{public}d", hStreamOperatorId);
-    sptr<AvcodecTaskManagerIntf> avcodecTaskManagerProxy = nullptr;
-    taskManagerMap_.Find(hStreamOperatorId, avcodecTaskManagerProxy);
-    CHECK_RETURN_ELOG(!avcodecTaskManagerProxy, "not found hStreamOperatorId: %{public}d", hStreamOperatorId);
-    thread asyncThread = thread([hStreamOperatorId, avcodecTaskManagerProxy]() {
+    std::vector<sptr<AvcodecTaskManagerIntf>> taskManagerVec {};
+    taskManagerMap_.Find(hStreamOperatorId, taskManagerVec);
+    CHECK_RETURN_ELOG(taskManagerVec.empty(), "not found hStreamOperatorId: %{public}d", hStreamOperatorId);
+    thread asyncThread = thread([hStreamOperatorId, taskManagerVec]() {
         CAMERA_SYNC_TRACE;
         MEDIA_INFO_LOG(
             "HStreamOperatorManager::RemoveTaskManager thread hStreamOperatorId: %{public}d", hStreamOperatorId);
-        int32_t delayTime = avcodecTaskManagerProxy == nullptr ||
-            (avcodecTaskManagerProxy && avcodecTaskManagerProxy->isEmptyVideoFdMap()) ? 0 : 30;
+        int32_t delayTime = taskManagerVec.empty() ||
+            (taskManagerVec.front()->isEmptyVideoFdMap() && taskManagerVec.back()->isEmptyVideoFdMap()) ? 0 : 30;
         std::this_thread::sleep_for(std::chrono::seconds(delayTime));
     });
     taskManagerMap_.Erase(hStreamOperatorId);
@@ -143,3 +146,4 @@ std::vector<sptr<HStreamOperator>> HStreamOperatorManager::GetStreamOperatorByPi
 }
 } // namespace CameraStandard
 } // namespace OHOS
+// LCOV_EXCL_STOP

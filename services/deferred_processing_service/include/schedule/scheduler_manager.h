@@ -32,7 +32,7 @@ public:
     std::shared_ptr<PhotoPostProcessor> GetPhotoPostProcessor(const int32_t userId);
     std::shared_ptr<DeferredPhotoProcessor> GetPhotoProcessor(const int32_t userId);
     std::shared_ptr<DeferredPhotoController> GetPhotoController(const int32_t userId);
-    void CreateVideoProcessor(const int32_t userId, const std::shared_ptr<IVideoProcessCallbacks>& callbacks);
+    void CreateVideoProcessor(const int32_t userId);
     std::shared_ptr<VideoPostProcessor> GetVideoPostProcessor(const int32_t userId);
     std::shared_ptr<DeferredVideoProcessor> GetVideoProcessor(const int32_t userId);
     std::shared_ptr<DeferredVideoController> GetVideoController(const int32_t userId);
@@ -42,8 +42,6 @@ protected:
 
 private:
     std::unordered_map<int32_t, std::shared_ptr<DeferredPhotoController>> photoController_ {};
-    std::unordered_map<int32_t, std::shared_ptr<VideoPostProcessor>> videoPosts_ {};
-    std::unordered_map<int32_t, std::shared_ptr<DeferredVideoProcessor>> videoProcessors_ {};
     std::unordered_map<int32_t, std::shared_ptr<DeferredVideoController>> videoController_ {};
 };
 } // namespace DeferredProcessing

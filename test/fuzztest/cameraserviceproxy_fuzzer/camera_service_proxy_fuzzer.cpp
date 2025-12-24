@@ -14,9 +14,10 @@
  */
 
 #include "camera_service_proxy_fuzzer.h"
+
+#include <memory>
 #include "camera_log.h"
 #include "iconsumer_surface.h"
-#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {

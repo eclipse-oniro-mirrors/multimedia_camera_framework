@@ -17,8 +17,13 @@
 #include "camera_log.h"
 #include "camera_metadata_operator.h"
 #include "camera_util.h"
+#include "capture_session_callback_stub.h"
 #include "input/camera_manager.h"
 #include "metadata_common_utils.h"
+#include "input/camera_input.h"
+#include "output/photo_output.h"
+#include "output/preview_output.h"
+#include "output/video_output.h"
 #include <algorithm>
 #include <cstdint>
 
@@ -84,10 +89,10 @@ int32_t ProfessionSession::GetSupportedMeteringModes(std::vector<MeteringMode> &
     CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "ProfessionSession::GetSupportedMeteringModes Session is not Commited");
     auto inputDevice = GetInputDevice();
-    CHECK_RETURN_RET_ELOG(!inputDevice, CameraErrorCode::SUCCESS,
-        "ProfessionSession::GetSupportedMeteringModes camera device is null");
+    CHECK_RETURN_RET_ELOG(
+        !inputDevice, CameraErrorCode::SUCCESS, "ProfessionSession::GetSupportedMeteringModes camera device is null");
     auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
-    CHECK_RETURN_RET_ELOG(!inputDeviceInfo, CameraErrorCode::SUCCESS,
+    CHECK_RETURN_RET_ELOG(!inputDeviceInfo, PortraitEffect::OFF_EFFECT,
         "ProfessionSession::GetSupportedMeteringModes camera deviceInfo is null");
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetCachedMetadata();
     camera_metadata_item_t item;
@@ -96,7 +101,9 @@ int32_t ProfessionSession::GetSupportedMeteringModes(std::vector<MeteringMode> &
         "ProfessionSession::GetSupportedMeteringModes Failed with return code %{public}d", ret);
     for (uint32_t i = 0; i < item.count; i++) {
         auto itr = metaMeteringModeMap_.find(static_cast<camera_meter_mode_t>(item.data.u8[i]));
-        CHECK_EXECUTE(itr != metaMeteringModeMap_.end(), supportedMeteringModes.emplace_back(itr->second));
+        if (itr != metaMeteringModeMap_.end()) {
+            supportedMeteringModes.emplace_back(itr->second);
+        }
     }
     return CameraErrorCode::SUCCESS;
 }
@@ -144,11 +151,11 @@ int32_t ProfessionSession::GetMeteringMode(MeteringMode &meteringMode)
     CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "ProfessionSession::GetMeteringMode Session is not Commited");
     auto inputDevice = GetInputDevice();
-    CHECK_RETURN_RET_ELOG(!inputDevice,
-        CameraErrorCode::SUCCESS, "ProfessionSession::GetMeteringMode camera device is null");
+    CHECK_RETURN_RET_ELOG(
+        !inputDevice, CameraErrorCode::SUCCESS, "ProfessionSession::GetMeteringMode camera device is null");
     auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
-    CHECK_RETURN_RET_ELOG(!inputDeviceInfo, CameraErrorCode::SUCCESS,
-        "ProfessionSession::GetSupportedMeteringModes camera deviceInfo is null");
+    CHECK_RETURN_RET_ELOG(
+        !inputDeviceInfo, CameraErrorCode::SUCCESS, "ProfessionSession::GetMeteringMode camera deviceInfo is null");
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetCachedMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_METER_MODE, &item);
@@ -170,11 +177,11 @@ int32_t ProfessionSession::GetIsoRange(std::vector<int32_t> &isoRange)
     CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "ProfessionSession::GetIsoRange Session is not Commited");
     auto inputDevice = GetInputDevice();
-    CHECK_RETURN_RET_ELOG(!inputDevice, CameraErrorCode::SUCCESS,
-        "ProfessionSession::GetIsoRange camera device is null");
+    CHECK_RETURN_RET_ELOG(
+        !inputDevice, CameraErrorCode::SUCCESS, "ProfessionSession::GetIsoRange camera device is null");
     auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
-    CHECK_RETURN_RET_ELOG(!inputDeviceInfo, CameraErrorCode::SUCCESS,
-        "ProfessionSession::GetIsoRange camera deviceInfo is null");
+    CHECK_RETURN_RET_ELOG(
+        !inputDeviceInfo, CameraErrorCode::SUCCESS, "ProfessionSession::GetIsoRange camera deviceInfo is null");
     // Enabling rawImageDelivery implies using raw camera through the YUV profile, Therefore, we need to get raw camera
     // static metadata rather than get dynamic metadata.
     bool isNeedPhysicalCameraMeta = isRawImageDelivery_ || photoProfile_.format_ == CAMERA_FORMAT_DNG_XDRAW;
@@ -213,15 +220,15 @@ int32_t ProfessionSession::GetIsoRange(std::vector<int32_t> &isoRange)
 
 int32_t ProfessionSession::SetISO(int32_t iso)
 {
-    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
-        "ProfessionSession::SetISO Session is not Commited");
+    CHECK_RETURN_RET_ELOG(
+        !IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG, "ProfessionSession::SetISO Session is not Commited");
     CHECK_RETURN_RET_ELOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
         "ProfessionSession::SetISO Need to call LockForControl() before setting camera properties");
     // LCOV_EXCL_START
     MEDIA_DEBUG_LOG("ProfessionSession::SetISO iso value: %{public}d", iso);
     auto inputDevice = GetInputDevice();
-    CHECK_RETURN_RET_ELOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(),
-        CameraErrorCode::SUCCESS, "ProfessionSession::SetISO camera device is null");
+    CHECK_RETURN_RET_ELOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), CameraErrorCode::SUCCESS,
+        "ProfessionSession::SetISO camera device is null");
 
     std::vector<int32_t> isoRange;
     CHECK_RETURN_RET_ELOG((GetIsoRange(isoRange) != CameraErrorCode::SUCCESS) && isoRange.empty(),
@@ -239,14 +246,14 @@ int32_t ProfessionSession::SetISO(int32_t iso)
 
 int32_t ProfessionSession::GetISO(int32_t &iso)
 {
-    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
-        "ProfessionSession::GetISO Session is not Commited");
+    CHECK_RETURN_RET_ELOG(
+        !IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG, "ProfessionSession::GetISO Session is not Commited");
     auto inputDevice = GetInputDevice();
-    CHECK_RETURN_RET_ELOG(!inputDevice, CameraErrorCode::INVALID_ARGUMENT,
-        "ProfessionSession::GetISO camera device is null");
+    CHECK_RETURN_RET_ELOG(
+        !inputDevice, CameraErrorCode::INVALID_ARGUMENT, "ProfessionSession::GetISO camera device is null");
     auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
-    CHECK_RETURN_RET_ELOG(!inputDeviceInfo, CameraErrorCode::INVALID_ARGUMENT,
-        "ProfessionSession::GetISO camera device is null");
+    CHECK_RETURN_RET_ELOG(
+        !inputDeviceInfo, CameraErrorCode::SUCCESS, "ProfessionSession::GetISO camera deviceInfo is null");
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = inputDeviceInfo->GetCachedMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_ISO_VALUE, &item);
@@ -264,16 +271,16 @@ bool ProfessionSession::IsManualIsoSupported()
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("Enter IsManualIsoSupported");
 
-    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), false,
-        "ProfessionSession::IsManualIsoSupported Session is not Commited");
+    CHECK_RETURN_RET_ELOG(
+        !IsSessionCommited(), false, "ProfessionSession::IsManualIsoSupported Session is not Commited");
 
     auto inputDevice = GetInputDevice();
-    CHECK_RETURN_RET_ELOG(inputDevice == nullptr, false,
-        "ProfessionSession::IsManualIsoSupported camera device is null");
+    CHECK_RETURN_RET_ELOG(
+        inputDevice == nullptr, false, "ProfessionSession::IsManualIsoSupported camera device is null");
 
     auto deviceInfo = inputDevice->GetCameraDeviceInfo();
-    CHECK_RETURN_RET_ELOG(deviceInfo == nullptr, false,
-        "ProfessionSession::IsManualIsoSupported camera deviceInfo is null");
+    CHECK_RETURN_RET_ELOG(
+        deviceInfo == nullptr, false, "ProfessionSession::IsManualIsoSupported camera deviceInfo is null");
     std::shared_ptr<Camera::CameraMetadata> metadata = deviceInfo->GetCachedMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_ISO_VALUES, &item);
@@ -290,13 +297,14 @@ int32_t ProfessionSession::GetSupportedFocusModes(std::vector<FocusMode> &suppor
         "ProfessionSession::GetSupportedFocusModes Session is not Commited");
 
     auto inputDevice = GetInputDevice();
-    CHECK_RETURN_RET_ELOG(!inputDevice,
-        CameraErrorCode::SUCCESS, "ProfessionSession::GetSupportedFocusModes camera device is null");
+    CHECK_RETURN_RET_ELOG(
+        !inputDevice, CameraErrorCode::SUCCESS, "ProfessionSession::GetSupportedFocusModes camera device is null");
     auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
     CHECK_RETURN_RET_ELOG(!inputDeviceInfo, CameraErrorCode::SUCCESS,
         "ProfessionSession::GetSupportedFocusModes camera deviceInfo is null");
     sptr<CameraDevice> cameraDevNow = inputDevice->GetCameraDeviceInfo();
-    if (cameraDevNow != nullptr && cameraDevNow->isConcurrentLimted_ == 1) {
+    bool isConcurrentLimitEnabled = cameraDevNow != nullptr && cameraDevNow->isConcurrentLimted_ == 1;
+    if (isConcurrentLimitEnabled) {
         // LCOV_EXCL_START
         for (int i = 0; i < cameraDevNow->limtedCapabilitySave_.focusmodes.count;
             i++) {
@@ -317,7 +325,9 @@ int32_t ProfessionSession::GetSupportedFocusModes(std::vector<FocusMode> &suppor
         "ProfessionSession::GetSupportedFocusModes Failed with return code %{public}d", ret);
     for (uint32_t i = 0; i < item.count; i++) {
         auto itr = g_metaFocusModeMap_.find(static_cast<camera_focus_mode_enum_t>(item.data.u8[i]));
-        CHECK_EXECUTE(itr != g_metaFocusModeMap_.end(), supportedFocusModes.emplace_back(itr->second));
+        if (itr != g_metaFocusModeMap_.end()) {
+            supportedFocusModes.emplace_back(itr->second);
+        }
     }
     return CameraErrorCode::SUCCESS;
 }
@@ -365,11 +375,11 @@ int32_t ProfessionSession::GetFocusMode(FocusMode &focusMode)
     CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "ProfessionSession::GetFocusMode Session is not Commited");
     auto inputDevice = GetInputDevice();
-    CHECK_RETURN_RET_ELOG(!inputDevice, CameraErrorCode::SUCCESS,
-        "ProfessionSession::GetFocusMode camera device is null");
+    CHECK_RETURN_RET_ELOG(
+        !inputDevice, CameraErrorCode::SUCCESS, "ProfessionSession::GetFocusMode camera device is null");
     auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
-    CHECK_RETURN_RET_ELOG(!inputDeviceInfo, CameraErrorCode::SUCCESS,
-        "ProfessionSession::GetFocusMode camera deviceInfo is null");
+    CHECK_RETURN_RET_ELOG(
+        !inputDeviceInfo, CameraErrorCode::SUCCESS, "ProfessionSession::GetFocusMode camera deviceInfo is null");
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetCachedMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_FOCUS_MODE, &item);
@@ -392,8 +402,7 @@ int32_t ProfessionSession::GetSupportedExposureHintModes(std::vector<ExposureHin
     CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "ProfessionSession::GetSupportedExposureHintModes Session is not Commited");
     auto inputDevice = GetInputDevice();
-    CHECK_RETURN_RET_ELOG(!inputDevice,
-        CameraErrorCode::SUCCESS,
+    CHECK_RETURN_RET_ELOG(!inputDevice, CameraErrorCode::SUCCESS,
         "ProfessionSession::GetSupportedExposureHintModes camera device is null");
     auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
     CHECK_RETURN_RET_ELOG(!inputDeviceInfo, CameraErrorCode::SUCCESS,
@@ -405,7 +414,9 @@ int32_t ProfessionSession::GetSupportedExposureHintModes(std::vector<ExposureHin
         "ProfessionSession::GetSupportedExposureHintModes Failed with return code %{public}d", ret);
     for (uint32_t i = 0; i < item.count; i++) {
         auto itr = metaExposureHintModeMap_.find(static_cast<camera_exposure_hint_mode_enum_t>(item.data.u8[i]));
-        CHECK_EXECUTE(itr != metaExposureHintModeMap_.end(), supportedExposureHintModes.emplace_back(itr->second));
+        if (itr != metaExposureHintModeMap_.end()) {
+            supportedExposureHintModes.emplace_back(itr->second);
+        }
     }
     return CameraErrorCode::SUCCESS;
 }
@@ -438,11 +449,11 @@ int32_t ProfessionSession::GetExposureHintMode(ExposureHintMode &mode)
     CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "ProfessionSession::GetExposureHintMode Session is not Commited");
     auto inputDevice = GetInputDevice();
-    CHECK_RETURN_RET_ELOG(!inputDevice, CameraErrorCode::SUCCESS,
-        "ProfessionSession::GetExposureHintMode camera device is null");
+    CHECK_RETURN_RET_ELOG(
+        !inputDevice, CameraErrorCode::SUCCESS, "ProfessionSession::GetExposureHintMode camera device is null");
     auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
-    CHECK_RETURN_RET_ELOG(!inputDeviceInfo, CameraErrorCode::SUCCESS,
-        "ProfessionSession::GetExposureHintMode camera device is null");
+    CHECK_RETURN_RET_ELOG(
+        !inputDeviceInfo, CameraErrorCode::SUCCESS, "ProfessionSession::GetExposureHintMode camera deviceInfo is null");
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetCachedMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_EXPOSURE_HINT_MODE, &item);
@@ -478,8 +489,9 @@ int32_t ProfessionSession::GetSupportedFocusAssistFlashModes(
     for (uint32_t i = 0; i < item.count; i++) {
         auto itr = metaFocusAssistFlashModeMap_.find(
             static_cast<camera_focus_assist_flash_mode_enum_t>(item.data.u8[i]));
-        CHECK_EXECUTE(itr != metaFocusAssistFlashModeMap_.end(),
-            supportedFocusAssistFlashModes.emplace_back(itr->second));
+        if (itr != metaFocusAssistFlashModeMap_.end()) {
+            supportedFocusAssistFlashModes.emplace_back(itr->second);
+        }
     }
     return CameraErrorCode::SUCCESS;
 }
@@ -529,8 +541,8 @@ int32_t ProfessionSession::GetFocusAssistFlashMode(FocusAssistFlashMode &mode)
     CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "ProfessionSession::GetFocusAssistFlashMode Session is not Commited");
     auto inputDevice = GetInputDevice();
-    CHECK_RETURN_RET_ELOG(!inputDevice, CameraErrorCode::SUCCESS,
-        "ProfessionSession::GetFocusAssistFlashMode camera device is null");
+    CHECK_RETURN_RET_ELOG(
+        !inputDevice, CameraErrorCode::SUCCESS, "ProfessionSession::GetFocusAssistFlashMode camera device is null");
     auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
     CHECK_RETURN_RET_ELOG(!inputDeviceInfo, CameraErrorCode::SUCCESS,
         "ProfessionSession::GetFocusAssistFlashMode camera deviceInfo is null");
@@ -557,10 +569,11 @@ int32_t ProfessionSession::GetSupportedFlashModes(std::vector<FlashMode> &suppor
     CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "ProfessionSession::GetSupportedFlashModes Session is not Commited");
     auto inputDevice = GetInputDevice();
-    CHECK_RETURN_RET_ELOG(!inputDevice, CameraErrorCode::SUCCESS,
-        "ProfessionSession::GetSupportedFlashModes camera device is null");
+    CHECK_RETURN_RET_ELOG(
+        !inputDevice, CameraErrorCode::SUCCESS, "ProfessionSession::GetSupportedFlashModes camera device is null");
     sptr<CameraDevice> cameraDevNow = inputDevice->GetCameraDeviceInfo();
-    if (cameraDevNow != nullptr && cameraDevNow->isConcurrentLimted_ == 1) {
+    bool isConcurrentLimitEnabled = cameraDevNow != nullptr && cameraDevNow->isConcurrentLimted_ == 1;
+    if (isConcurrentLimitEnabled) {
         for (int i = 0; i < cameraDevNow->limtedCapabilitySave_.flashmodes.count;
             i++) {
             camera_flash_mode_enum_t num = static_cast<camera_flash_mode_enum_t>(cameraDevNow->
@@ -572,13 +585,27 @@ int32_t ProfessionSession::GetSupportedFlashModes(std::vector<FlashMode> &suppor
         }
         return CameraErrorCode::SUCCESS;
     }
+
+    if (IsSupportSpecSearch()) {
+        MEDIA_INFO_LOG("spec search enter");
+        auto abilityContainer = GetCameraAbilityContainer();
+        if (abilityContainer) {
+            supportedFlashModes = abilityContainer->GetSupportedFlashModes();
+            std::string rangeStr = Container2String(supportedFlashModes.begin(), supportedFlashModes.end());
+            MEDIA_INFO_LOG("spec search result flash: %{public}s", rangeStr.c_str());
+        } else {
+            MEDIA_ERR_LOG("spec search abilityContainer is null");
+        }
+        return CameraErrorCode::SUCCESS;
+    }
+
     auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
     CHECK_RETURN_RET_ELOG(!inputDeviceInfo, CameraErrorCode::SUCCESS,
         "ProfessionSession::GetSupportedFlashModes camera deviceInfo is null");
     auto metadata = isRawImageDelivery_ ? GetMetadata() : inputDeviceInfo->GetCachedMetadata();
     camera_metadata_item_t item;
     CHECK_RETURN_RET_ELOG(
-        !metadata, CameraErrorCode::SUCCESS, "ProfessionSession::GetSupportedFlashModes metadata is nullptr");
+        metadata == nullptr, CameraErrorCode::SUCCESS, "ProfessionSession::GetSupportedFlashModes metadata is nullptr");
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_FLASH_MODES, &item);
     CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
         "ProfessionSession::GetSupportedFlashModes Failed with return code %{public}d", ret);
@@ -594,11 +621,11 @@ int32_t ProfessionSession::GetFlashMode(FlashMode &flashMode)
     CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "ProfessionSession::GetFlashMode Session is not Commited");
     auto inputDevice = GetInputDevice();
-    CHECK_RETURN_RET_ELOG(!inputDevice, CameraErrorCode::SUCCESS,
-        "ProfessionSession::GetFlashMode camera device is null");
+    CHECK_RETURN_RET_ELOG(
+        !inputDevice, CameraErrorCode::SUCCESS, "ProfessionSession::GetFlashMode camera device is null");
     auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
-    CHECK_RETURN_RET_ELOG(!inputDeviceInfo, CameraErrorCode::SUCCESS,
-        "ProfessionSession::GetFlashMode camera deviceInfo is null");
+    CHECK_RETURN_RET_ELOG(
+        !inputDeviceInfo, CameraErrorCode::SUCCESS, "ProfessionSession::GetFlashMode camera deviceInfo is null");
     auto metadata = isRawImageDelivery_ ? GetMetadata() : inputDeviceInfo->GetCachedMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_FLASH_MODE, &item);
@@ -659,10 +686,24 @@ int32_t ProfessionSession::HasFlash(bool &hasFlash)
     hasFlash = false;
     CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "ProfessionSession::HasFlash Session is not Commited");
+
+    if (IsSupportSpecSearch()) {
+        MEDIA_INFO_LOG("spec search enter");
+        auto abilityContainer = GetCameraAbilityContainer();
+        if (abilityContainer) {
+            hasFlash = abilityContainer->HasFlash();
+            MEDIA_INFO_LOG("spec search result: %{public}d", hasFlash);
+        } else {
+            MEDIA_ERR_LOG("spec search abilityContainer is null");
+        }
+        return CameraErrorCode::SUCCESS;
+    }
+
     std::vector<FlashMode> supportedFlashModeList;
     GetSupportedFlashModes(supportedFlashModeList);
     bool onlyHasCloseMode = supportedFlashModeList.size() == 1 && supportedFlashModeList[0] == FLASH_MODE_CLOSE;
-    if (!supportedFlashModeList.empty() && !onlyHasCloseMode) {
+    bool hasValidFlashModes = !supportedFlashModeList.empty() && !onlyHasCloseMode;
+    if (hasValidFlashModes) {
         hasFlash = true;
     }
     return CameraErrorCode::SUCCESS;
@@ -676,8 +717,8 @@ int32_t ProfessionSession::GetSupportedColorEffects(std::vector<ColorEffect>& su
     CHECK_RETURN_RET_ELOG(!(IsSessionCommited() || IsSessionConfiged()), CameraErrorCode::SESSION_NOT_CONFIG,
         "ProfessionSession::GetSupportedColorEffects Session is not Commited");
     auto inputDevice = GetInputDevice();
-    CHECK_RETURN_RET_ELOG(!inputDevice, CameraErrorCode::SUCCESS,
-        "ProfessionSession::GetSupportedColorEffects camera device is null");
+    CHECK_RETURN_RET_ELOG(
+        !inputDevice, CameraErrorCode::SUCCESS, "ProfessionSession::GetSupportedColorEffects camera device is null");
     auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
     CHECK_RETURN_RET_ELOG(!inputDeviceInfo, CameraErrorCode::SUCCESS,
         "ProfessionSession::GetSupportedColorEffects camera deviceInfo is null");
@@ -686,9 +727,26 @@ int32_t ProfessionSession::GetSupportedColorEffects(std::vector<ColorEffect>& su
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_SUPPORTED_COLOR_MODES, &item);
     CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
         "ProfessionSession::GetSupportedColorEffects Failed with return code %{public}d", ret);
-    for (uint32_t i = 0; i < item.count; i++) {
-        auto itr = g_metaColorEffectMap_.find(static_cast<camera_xmage_color_type_t>(item.data.u8[i]));
-        CHECK_EXECUTE(itr != g_metaColorEffectMap_.end(), supportedColorEffects.emplace_back(itr->second));
+    int32_t currentMode = GetMode();
+    for (uint32_t i = 0; i < item.count;) {
+        int32_t mode = item.data.i32[i];
+        i++;
+        std::vector<ColorEffect> currentColorEffects = {};
+        while (i < item.count && item.data.i32[i] != -1) {
+            auto itr = g_metaColorEffectMap_.find(static_cast<camera_xmage_color_type_t>(item.data.i32[i]));
+            if (itr != g_metaColorEffectMap_.end()) {
+                currentColorEffects.emplace_back(itr->second);
+            }
+            i++;
+        }
+        i++;
+        if (mode == 0) {
+            supportedColorEffects = currentColorEffects;
+        }
+        if (mode == currentMode) {
+            supportedColorEffects = currentColorEffects;
+            break;
+        }
     }
     return CameraErrorCode::SUCCESS;
 }
@@ -699,11 +757,11 @@ int32_t ProfessionSession::GetColorEffect(ColorEffect& colorEffect)
     CHECK_RETURN_RET_ELOG(!(IsSessionCommited() || IsSessionConfiged()), CameraErrorCode::SESSION_NOT_CONFIG,
         "ProfessionSession::GetColorEffect Session is not Commited");
     auto inputDevice = GetInputDevice();
-    CHECK_RETURN_RET_ELOG(!inputDevice, CameraErrorCode::SUCCESS,
-        "ProfessionSession::GetColorEffect camera device is null");
+    CHECK_RETURN_RET_ELOG(
+        !inputDevice, CameraErrorCode::SUCCESS, "ProfessionSession::GetColorEffect camera device is null");
     auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
-    CHECK_RETURN_RET_ELOG(!inputDeviceInfo, CameraErrorCode::SUCCESS,
-        "ProfessionSession::GetColorEffect camera deviceInfo is null");
+    CHECK_RETURN_RET_ELOG(
+        !inputDeviceInfo, CameraErrorCode::SUCCESS, "ProfessionSession::GetColorEffect camera deviceInfo is null");
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetCachedMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_SUPPORTED_COLOR_MODES, &item);
@@ -744,8 +802,8 @@ bool ProfessionSession::CanAddOutput(sptr<CaptureOutput> &output)
 {
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("Enter Into ProfessionSession::CanAddOutput");
-    CHECK_RETURN_RET_ELOG(!IsSessionConfiged() || output == nullptr, false,
-        "ProfessionSession::CanAddOutput operation is Not allowed!");
+    CHECK_RETURN_RET_ELOG(
+        !IsSessionConfiged() || output == nullptr, false, "ProfessionSession::CanAddOutput operation is Not allowed!");
     return CaptureSession::CanAddOutput(output);
 }
 
@@ -788,23 +846,22 @@ void ProfessionSession::ProcessSensorExposureTimeChange(const std::shared_ptr<OH
     camera_metadata_item_t item;
     common_metadata_header_t* metadata = result->get();
     int ret = Camera::FindCameraMetadataItem(metadata, OHOS_STATUS_SENSOR_EXPOSURE_TIME, &item);
-    if (ret == CAM_META_SUCCESS) {
-        int32_t numerator = item.data.r->numerator;
-        int32_t denominator = item.data.r->denominator;
-        MEDIA_DEBUG_LOG("SensorExposureTime: %{public}d/%{public}d", numerator, denominator);
-        CHECK_RETURN_ELOG(denominator == 0, "ProcessSensorExposureTimeChange error! divide by zero");
-        constexpr int32_t timeUnit = 1000000;
-        uint32_t value = static_cast<uint32_t>(numerator / (denominator / timeUnit));
-        MEDIA_DEBUG_LOG("SensorExposureTime: %{public}d", value);
-        ExposureInfo info = {
-            .exposureDurationValue = value,
-        };
-        std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
-        if (exposureInfoCallback_ != nullptr && (value != exposureDurationValue_)) {
-            exposureInfoCallback_->OnExposureInfoChanged(info);
-            exposureDurationValue_ = value;
-        }
-    }
+    CHECK_RETURN(ret != CAM_META_SUCCESS);
+    int32_t numerator = item.data.r->numerator;
+    int32_t denominator = item.data.r->denominator;
+    MEDIA_DEBUG_LOG("SensorExposureTime: %{public}d/%{public}d", numerator, denominator);
+    CHECK_RETURN_ELOG(denominator == 0, "ProcessSensorExposureTimeChange error! divide by zero");
+    constexpr int32_t timeUnit = 1000000;
+    uint32_t value = static_cast<uint32_t>(numerator / (denominator / timeUnit));
+    MEDIA_DEBUG_LOG("SensorExposureTime: %{public}d", value);
+    ExposureInfo info = {
+        .exposureDurationValue = value,
+    };
+    std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
+    bool isUpdateExposureInfo = exposureInfoCallback_ != nullptr && (value != exposureDurationValue_);
+    CHECK_RETURN(!isUpdateExposureInfo);
+    exposureInfoCallback_->OnExposureInfoChanged(info);
+    exposureDurationValue_ = value;
     // LCOV_EXCL_STOP
 }
 
@@ -814,17 +871,16 @@ void ProfessionSession::ProcessIsoChange(const std::shared_ptr<OHOS::Camera::Cam
     camera_metadata_item_t item;
     common_metadata_header_t* metadata = result->get();
     int ret = Camera::FindCameraMetadataItem(metadata, OHOS_STATUS_ISO_VALUE, &item);
-    if (ret == CAM_META_SUCCESS) {
-        MEDIA_DEBUG_LOG("Iso Value: %{public}d", item.data.ui32[0]);
-        IsoInfo info = {
-            .isoValue = item.data.ui32[0],
-        };
-        std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
-        if (isoInfoCallback_ != nullptr && item.data.ui32[0] != isoValue_) {
-            isoInfoCallback_->OnIsoInfoChanged(info);
-            isoValue_ = item.data.ui32[0];
-        }
-    }
+    CHECK_RETURN(ret != CAM_META_SUCCESS);
+    MEDIA_DEBUG_LOG("Iso Value: %{public}d", item.data.ui32[0]);
+    IsoInfo info = {
+        .isoValue = item.data.ui32[0],
+    };
+    std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
+    bool isUpdateExposureInfo = isoInfoCallback_ != nullptr && item.data.ui32[0] != isoValue_;
+    CHECK_RETURN(!isUpdateExposureInfo);
+    isoInfoCallback_->OnIsoInfoChanged(info);
+    isoValue_ = item.data.ui32[0];
     // LCOV_EXCL_STOP
 }
 
@@ -834,17 +890,16 @@ void ProfessionSession::ProcessApertureChange(const std::shared_ptr<OHOS::Camera
     camera_metadata_item_t item;
     common_metadata_header_t* metadata = result->get();
     int ret = Camera::FindCameraMetadataItem(metadata, OHOS_STATUS_CAMERA_APERTURE_VALUE, &item);
-    if (ret == CAM_META_SUCCESS) {
-        MEDIA_DEBUG_LOG("aperture Value: %{public}f", ConfusingNumber(item.data.f[0]));
-        std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
-        ApertureInfo info = {
-            .apertureValue = item.data.f[0],
-        };
-        if (apertureInfoCallback_ != nullptr && (item.data.f[0] != apertureValue_ || apertureValue_ == 0)) {
-            apertureInfoCallback_->OnApertureInfoChanged(info);
-            apertureValue_ = item.data.f[0];
-        }
-    }
+    CHECK_RETURN(ret != CAM_META_SUCCESS);
+    MEDIA_DEBUG_LOG("aperture Value: %{public}f", ConfusingNumber(item.data.f[0]));
+    std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
+    ApertureInfo info = {
+        .apertureValue = item.data.f[0],
+    };
+    bool isChanged = apertureInfoCallback_ != nullptr && (item.data.f[0] != apertureValue_ || apertureValue_ == 0);
+    CHECK_RETURN(!isChanged);
+    apertureInfoCallback_->OnApertureInfoChanged(info);
+    apertureValue_ = item.data.f[0];
     // LCOV_EXCL_STOP
 }
 
@@ -856,17 +911,16 @@ void ProfessionSession::ProcessLuminationChange(const std::shared_ptr<OHOS::Came
     common_metadata_header_t* metadata = result->get();
     int ret = Camera::FindCameraMetadataItem(metadata, OHOS_STATUS_ALGO_MEAN_Y, &item);
     float value = item.data.ui32[0] / normalizedMeanValue;
-    if (ret == CAM_META_SUCCESS) {
-        MEDIA_DEBUG_LOG("Lumination Value: %{public}f", value);
-        LuminationInfo info = {
-            .luminationValue = value,
-        };
-        std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
-        if (luminationInfoCallback_ != nullptr && value != luminationValue_) {
-            luminationInfoCallback_->OnLuminationInfoChanged(info);
-            luminationValue_ = value;
-        }
-    }
+    CHECK_RETURN(ret != CAM_META_SUCCESS);
+    MEDIA_DEBUG_LOG("Lumination Value: %{public}f", value);
+    LuminationInfo info = {
+        .luminationValue = value,
+    };
+    std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
+    bool isUpdateNeeded = luminationInfoCallback_ != nullptr && value != luminationValue_;
+    CHECK_RETURN(!isUpdateNeeded);
+    luminationInfoCallback_->OnLuminationInfoChanged(info);
+    luminationValue_ = value;
     // LCOV_EXCL_STOP
 }
 
@@ -900,7 +954,9 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> ProfessionSession::GetMetadata()
     // DELIVERY_PHOTO for default when commit
     if (physicalCameraDevice != supportedDevices_.end()) {
         MEDIA_DEBUG_LOG("ProfessionSession::GetMetadata physicalCameraId: device/%{public}s", phyCameraId.c_str());
-        if ((*physicalCameraDevice)->GetCameraType() == CAMERA_TYPE_WIDE_ANGLE && !isRawImageDelivery_) {
+        bool isWideAngleNotRaw = (*physicalCameraDevice)->GetCameraType() == CAMERA_TYPE_WIDE_ANGLE &&
+            !isRawImageDelivery_;
+        if (isWideAngleNotRaw) {
             auto inputDevice = GetInputDevice();
             CHECK_RETURN_RET(inputDevice == nullptr,
                 std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH));

@@ -17,8 +17,10 @@
 #define OHOS_CAMERA_DPS_VIDEO_COMMAND_H
 
 #include "command.h"
+#include "dps_fd.h"
 #include "ipc_file_descriptor.h"
 #include "scheduler_manager.h"
+#include "video_info.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -26,7 +28,7 @@ namespace DeferredProcessing {
 class VideoCommand : public Command {
 public:
     VideoCommand(const int32_t userId, const std::string& videoId);
-    ~VideoCommand();
+    virtual ~VideoCommand() override;
 
 protected:
     int32_t Initialize();
@@ -41,14 +43,12 @@ protected:
 class AddVideoCommand : public VideoCommand {
     DECLARE_CMD_CLASS(AddVideoCommand)
 public:
-    AddVideoCommand(const int32_t userId, const std::string& videoId,
-        const sptr<IPCFileDescriptor>& srcFd, const sptr<IPCFileDescriptor>& dstFd);
+    AddVideoCommand(const int32_t userId, const std::string& videoId, const std::shared_ptr<VideoInfo>& info);
 
 protected:
     int32_t Executing() override;
 
-    sptr<IPCFileDescriptor> srcFd_;
-    sptr<IPCFileDescriptor> dstFd_;
+    std::shared_ptr<VideoInfo> info_ {nullptr};
 };
 
 class RemoveVideoCommand : public VideoCommand {
@@ -64,6 +64,24 @@ protected:
 
 class RestoreVideoCommand : public VideoCommand {
     DECLARE_CMD_CLASS(RestoreCommand)
+public:
+    using VideoCommand::VideoCommand;
+
+protected:
+    int32_t Executing() override;
+};
+
+class ProcessVideoCommand : public VideoCommand {
+    DECLARE_CMD_CLASS(ProcessVideoCommand)
+public:
+    using VideoCommand::VideoCommand;
+
+protected:
+    int32_t Executing() override;
+};
+
+class CancelProcessVideoCommand : public VideoCommand {
+    DECLARE_CMD_CLASS(CancelProcessVideoCommand)
 public:
     using VideoCommand::VideoCommand;
 

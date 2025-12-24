@@ -13,18 +13,18 @@
  * limitations under the License.
  */
 
-#ifndef CAMERA_COMMON_STRUCT_H
-#define CAMERA_COMMON_STRUCT_H
+#ifndef OHOS_CAMERASTANDARD_CAMMERA_COMMON_STRUCT_H
+#define OHOS_CAMERASTANDARD_CAMMERA_COMMON_STRUCT_H
+
+#include <cstdint>
+#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {
-
 typedef struct {
     float x;
     float y;
 } CameraPoint;
-
 } // namespace CameraStandard
 } // namespace OHOS
-
-#endif // CAMERA_COMMON_STRUCT_H
+#endif // OHOS_CAMERASTANDARD_CAMMERA_COMMON_STRUCT_H

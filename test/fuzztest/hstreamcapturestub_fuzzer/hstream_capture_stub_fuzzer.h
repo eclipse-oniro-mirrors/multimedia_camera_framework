@@ -107,15 +107,15 @@ public:
     {
         return 0;
     }
-    int32_t UnSetPhotoAvailableCallback() override
+    ErrCode UnSetPhotoAvailableCallback() override
     {
         return 0;
     }
-    int32_t UnSetPhotoAssetAvailableCallback() override
+    ErrCode UnSetPhotoAssetAvailableCallback() override
     {
         return 0;
     }
-    int32_t UnSetThumbnailCallback() override
+    ErrCode UnSetThumbnailCallback() override
     {
         return 0;
     }
@@ -124,32 +124,6 @@ public:
     {
         return 0;
     }
-};
-class HStreamCaptureStubFuzzer {
-public:
-    static std::shared_ptr<HStreamCaptureStubFuzz> fuzz_;
-    static void HStreamCaptureStubFuzzTest1(FuzzedDataProvider &fdp);
-    static void HStreamCaptureStubFuzzTest2(FuzzedDataProvider &fdp);
-    static void HStreamCaptureStubFuzzTest3();
-    static void HStreamCaptureStubFuzzTest4(FuzzedDataProvider &fdp);
-    static void HStreamCaptureStubFuzzTest5(FuzzedDataProvider &fdp);
-    static void HStreamCaptureStubFuzzTest6(FuzzedDataProvider &fdp);
-    static void HStreamCaptureStubFuzzTest7(FuzzedDataProvider &fdp);
-    static void HStreamCaptureStubFuzzTest8(FuzzedDataProvider &fdp);
-    static void HStreamCaptureStubFuzzTest9(FuzzedDataProvider &fdp);
-    static void HStreamCaptureStubFuzzTest10(FuzzedDataProvider &fdp);
-    static void HStreamCaptureStubFuzzTest11();
-    static void HStreamCaptureStubFuzzTest12();
-    static void HStreamCaptureStubFuzzTest13();
-    static void HStreamCaptureStubFuzzTest14();
-    static void HStreamCaptureStubFuzzTest15();
-    static void HStreamCaptureStubFuzzTest16();
-    static void HStreamCaptureStubFuzzTest17();
-    static void HStreamCaptureStubFuzzTest18();
-    static void HStreamCaptureStubFuzzTest19();
-    static void HStreamCaptureStubFuzzTest20();
-    static void HStreamCaptureStubFuzzTest21();
-    static void HStreamCaptureStubFuzzTest22(FuzzedDataProvider &fdp);
 };
 }  // namespace CameraStandard
 }  // namespace OHOS

@@ -50,7 +50,7 @@ bool PhotoSessionImpl::CanPreconfig(PreconfigType preconfigType, optional_view<P
 array<PhotoFunctions> CreateFunctionsPhotoFunctionsArray(
     std::vector<sptr<OHOS::CameraStandard::CameraAbility>> functionsList)
 {
-    MEDIA_DEBUG_LOG("CreateFunctionsJSArray is called");
+    MEDIA_DEBUG_LOG("CreateFunctionsPhotoFunctionsArray is called");
     CHECK_PRINT_ELOG(functionsList.empty(), "functionsList is empty");
     std::vector<PhotoFunctions> functionsArray;
     for (size_t i = 0; i < functionsList.size(); i++) {
@@ -62,7 +62,7 @@ array<PhotoFunctions> CreateFunctionsPhotoFunctionsArray(
 array<PhotoConflictFunctions> CreateFunctionsPhotoConflictFunctionsArray(
     std::vector<sptr<OHOS::CameraStandard::CameraAbility>> conflictFunctionsList)
 {
-    MEDIA_DEBUG_LOG("CreateFunctionsJSArray is called");
+    MEDIA_DEBUG_LOG("CreateFunctionsPhotoConflictFunctionsArray is called");
     CHECK_PRINT_ELOG(conflictFunctionsList.empty(), "conflictFunctionsList is empty");
     std::vector<PhotoConflictFunctions> functionsArray;
     for (size_t i = 0; i < conflictFunctionsList.size(); i++) {

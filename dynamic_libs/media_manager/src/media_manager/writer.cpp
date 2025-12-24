@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+// LCOV_EXCL_START
 #include "writer.h"
 
 #include "dp_log.h"
@@ -47,7 +47,7 @@ MediaManagerError Writer::Write(Media::Plugins::MediaType type, const std::share
         DP_DEBUG_LOG("sample size: %{public}d", sample->memory_->GetSize());
     }
     
-    DP_CHECK_RETURN_RET_LOG(type == Media::Plugins::MediaType::VIDEO && sample->pts_ <= lastPause_, OK,
+    DP_CHECK_RETURN_RET_LOG(type == Media::Plugins::MediaType::VIDEO && sample->pts_ < lastPause_, OK,
         "MediaType: %{public}d, drop feame pts: %{public}" PRId64, type, sample->pts_);
 
     auto ret = outputMuxer_->WriteStream(type, sample);
@@ -98,3 +98,4 @@ MediaManagerError Writer::AddUserMeta(const std::shared_ptr<Meta>& userMeta)
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS
+// LCOV_EXCL_STOP

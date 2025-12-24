@@ -14,7 +14,6 @@
  */
 
 #include "deferred_utils_unittest.h"
-#include "dp_timer.h"
 #include "dp_utils.h"
 #include "ipc_skeleton.h"
 #include "nativetoken_kit.h"
@@ -37,51 +36,15 @@ void DeferredUtilsUnitTest::TearDown(void) {}
 
 /*
  * Feature: Framework
- * Function: Test functions of class DpsTimer.
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Validate the functions of class DpsTimer in normal condition.
- */
-HWTEST_F(DeferredUtilsUnitTest, deferred_utils_unittest_001, TestSize.Level1)
-{
-    uint32_t testTimeId = 1;
-    EXPECT_NE(DpsTimer::GetInstance().StartTimer([]() -> void {}, 0), 0);
-    DpsTimer::GetInstance().StopTimer(testTimeId);
-    EXPECT_EQ(testTimeId, 0);
-}
-
-/*
- * Feature: Framework
- * Function: Test functions of class DpsTimer in abnormal condition.
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Validate the functions of class DpsTimer in abnormal condition, timer_ is null.
- */
-HWTEST_F(DeferredUtilsUnitTest, deferred_utils_unittest_002, TestSize.Level1)
-{
-    uint32_t invalidTimeId = 0;
-    uint32_t testTimeId = 1;
-    DpsTimer::GetInstance().~DpsTimer();
-
-    EXPECT_EQ(DpsTimer::GetInstance().StartTimer([]() -> void {}, 0), 0);
-    DpsTimer::GetInstance().StopTimer(testTimeId);
-    EXPECT_TRUE(testTimeId == 1);
-    DpsTimer::GetInstance().StopTimer(invalidTimeId);
-}
-
-/*
- * Feature: Framework
  * Function: Test GetGlobalWatchdog.
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
  * CaseDescription: Validate the correctness of GetGlobalWatchdog.
  */
-HWTEST_F(DeferredUtilsUnitTest, deferred_utils_unittest_005, TestSize.Level1)
+HWTEST_F(DeferredUtilsUnitTest, deferred_utils_unittest_001, TestSize.Level0)
 {
-    EXPECT_EQ(Watchdog::GetGlobalWatchdog().name_, "DPSGlobalWatchdog");
+    EXPECT_EQ(Watchdog::GetGlobalWatchdog().name_, "GlobalWatchdog");
 }
 
 /*
@@ -92,7 +55,7 @@ HWTEST_F(DeferredUtilsUnitTest, deferred_utils_unittest_005, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Validate the correctness of GetDpsCallerInfo.
  */
-HWTEST_F(DeferredUtilsUnitTest, deferred_utils_unittest_006, TestSize.Level1)
+HWTEST_F(DeferredUtilsUnitTest, deferred_utils_unittest_002, TestSize.Level0)
 {
     DpsCallerInfo info = GetDpsCallerInfo();
     EXPECT_EQ(info.pid, IPCSkeleton::GetCallingPid());

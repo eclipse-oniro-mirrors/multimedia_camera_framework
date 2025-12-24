@@ -76,7 +76,7 @@ void DepthDataOutputUnit::TearDown()
  * EnvConditions: NA
  * CaseDescription: Test depthDataOutput with a normal stream for normal branches
  */
-HWTEST_F(DepthDataOutputUnit, depth_data_output_unittest_001, TestSize.Level1)
+HWTEST_F(DepthDataOutputUnit, depth_data_output_unittest_001, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -129,7 +129,7 @@ HWTEST_F(DepthDataOutputUnit, depth_data_output_unittest_001, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test depthDataOutput when session is null or session is not commit for abnormal branches
  */
-HWTEST_F(DepthDataOutputUnit, depth_data_output_unittest_002, TestSize.Level1)
+HWTEST_F(DepthDataOutputUnit, depth_data_output_unittest_002, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -184,7 +184,7 @@ HWTEST_F(DepthDataOutputUnit, depth_data_output_unittest_002, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test depthDataOutput when stream is nullptr
  */
-HWTEST_F(DepthDataOutputUnit, depth_data_output_unittest_003, TestSize.Level1)
+HWTEST_F(DepthDataOutputUnit, depth_data_output_unittest_003, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -237,7 +237,7 @@ HWTEST_F(DepthDataOutputUnit, depth_data_output_unittest_003, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test depthDataOutput when appCallback_ is not nullptr
  */
-HWTEST_F(DepthDataOutputUnit, depth_data_output_unittest_004, TestSize.Level1)
+HWTEST_F(DepthDataOutputUnit, depth_data_output_unittest_004, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -297,7 +297,7 @@ HWTEST_F(DepthDataOutputUnit, depth_data_output_unittest_004, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test depthDataOutput when appCallback_ is nullptr
  */
-HWTEST_F(DepthDataOutputUnit, depth_data_output_unittest_005, TestSize.Level1)
+HWTEST_F(DepthDataOutputUnit, depth_data_output_unittest_005, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -353,7 +353,7 @@ HWTEST_F(DepthDataOutputUnit, depth_data_output_unittest_005, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test depthDataOutput when svcCallback_ is not nullptr
  */
-HWTEST_F(DepthDataOutputUnit, depth_data_output_unittest_006, TestSize.Level1)
+HWTEST_F(DepthDataOutputUnit, depth_data_output_unittest_006, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -413,7 +413,7 @@ HWTEST_F(DepthDataOutputUnit, depth_data_output_unittest_006, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test DepthDataOutputCallbackImpl when appCallback_ is nullptr or is not nullptr
  */
-HWTEST_F(DepthDataOutputUnit, depth_data_output_unittest_007, TestSize.Level1)
+HWTEST_F(DepthDataOutputUnit, depth_data_output_unittest_007, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());

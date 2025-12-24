@@ -22,12 +22,10 @@
 #include "native_avbuffer.h"
 #include <atomic>
 #include <cstdint>
-#include <memory>
 #include <refbase.h>
 #include "avmuxer.h"
 #include "media_description.h"
 #include "photo_asset_interface.h"
-#include "av_codec_proxy.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -46,7 +44,8 @@ public:
     explicit AudioVideoMuxer();
     ~AudioVideoMuxer();
 
-    int32_t Create(OH_AVOutputFormat format, std::shared_ptr<PhotoAssetIntf> photoAssetProxy);
+    int32_t Create(OH_AVOutputFormat format, std::shared_ptr<PhotoAssetIntf> photoAssetProxy,
+        VideoType videoType = VideoType::ORIGIN_VIDEO);
     int32_t AddTrack(int &trackId, std::shared_ptr<Format> format, TrackType type);
     int32_t Start();
     int32_t WriteSampleBuffer(std::shared_ptr<OHOS::Media::AVBuffer> sample, TrackType type);
@@ -56,18 +55,22 @@ public:
     int32_t SetCoverTime(float timems);
     int32_t SetStartTime(float timems);
     int32_t SetTimedMetadata();
+    int32_t SetDeferredVideoEnhanceFlag(uint32_t flag);
+    int32_t SetVideoId(std::string videoId);
     int32_t GetVideoFd();
     std::shared_ptr<PhotoAssetIntf> GetPhotoAssetProxy();
+    VideoType GetVideoType();
     std::atomic<int32_t> releaseSignal_ = 2;
-    int32_t SetSqr(int32_t bitrate, int32_t iaBframeEnable);
+    int32_t SetSqr(int32_t bitrate, bool isBframeEnable);
 
 private:
-    std::shared_ptr<AVCodecIntf> avCodecProxy_ = nullptr;
+    std::shared_ptr<AVMuxer> muxer_ = nullptr;
     int32_t fd_ = -1;
     std::shared_ptr<PhotoAssetIntf> photoAssetProxy_ = nullptr;
     int audioTrackId_ = -1;
     int videoTrackId_ = -1;
     int metaTrackId_ = -1;
+    VideoType videoTp_ = VideoType::ORIGIN_VIDEO;
 };
 } // CameraStandard
 } // OHOS

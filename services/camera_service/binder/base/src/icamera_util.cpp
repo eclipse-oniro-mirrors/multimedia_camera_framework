@@ -17,7 +17,6 @@
 #include "camera_error_code.h"
 #include "camera_util.h"
 #include "camera_log.h"
-#include "icamera_service.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -101,11 +100,6 @@ int32_t ServiceToCameraError(int32_t ret)
             break;
     }
     return err;
-}
-
-int32_t GetIsCameraMutedIpcCode()
-{
-    return static_cast<uint32_t>(ICameraServiceIpcCode::COMMAND_IS_CAMERA_MUTED);
 }
 } // namespace CameraStandard
 } // namespace OHOS

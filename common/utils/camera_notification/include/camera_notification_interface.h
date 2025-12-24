@@ -38,4 +38,4 @@ public:
     virtual int32_t CancelBeautyNotification() = 0;
 };
 } // namespace OHOS::CameraStandard
-#endif // OHOS_CAMERA_NOTIFICATION_INTERFACE_H
+#endif // OHOS_CAMERA_NOTIFICATION_INTERFACE_H

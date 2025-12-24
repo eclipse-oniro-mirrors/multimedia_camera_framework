@@ -16,7 +16,7 @@
 #include "mode/fluorescence_photo_session_napi.h"
 
 #include "input/camera_manager_for_sys.h"
-
+ 
 namespace OHOS {
 namespace CameraStandard {
 using namespace std;
@@ -115,8 +115,7 @@ napi_value FluorescencePhotoSessionNapi::FluorescencePhotoSessionNapiConstructor
         obj->fluorescencePhotoSession_ = static_cast<FluorescencePhotoSession*>(sCameraSessionForSys_.GetRefPtr());
         obj->cameraSessionForSys_ = obj->fluorescencePhotoSession_;
         obj->cameraSession_ = obj->fluorescencePhotoSession_;
-        CHECK_RETURN_RET_ELOG(obj->fluorescencePhotoSession_ == nullptr,
-            result, "fluorescencePhotoSession_ is null");
+        CHECK_RETURN_RET_ELOG(obj->fluorescencePhotoSession_ == nullptr, result, "fluorescencePhotoSession_ is null");
         status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
             FluorescencePhotoSessionNapi::FluorescencePhotoSessionNapiDestructor, nullptr, nullptr);
         if (status == napi_ok) {

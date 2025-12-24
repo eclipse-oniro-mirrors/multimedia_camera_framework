@@ -127,7 +127,10 @@ public:
         }
         // If the priorities are the same and both are high priority, compare creation time
         if (priority_ == JobPriority::HIGH) {
-            return createTime_ > other.createTime_;
+            if (currState_->GetState() == other.currState_->GetState()) {
+                return createTime_ > other.createTime_;
+            }
+            return currState_->GetState() < other.currState_->GetState();
         }
         // If statuses are equal, compare creation time
         if (currState_->GetState() == other.currState_->GetState()) {

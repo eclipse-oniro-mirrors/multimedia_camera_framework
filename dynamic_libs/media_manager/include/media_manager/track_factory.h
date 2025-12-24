@@ -28,6 +28,7 @@ class TrackFactory : public Singleton<TrackFactory> {
 public:
     std::shared_ptr<Track> CreateTrack(const std::shared_ptr<AVSource>& source, int32_t trackIndex);
     bool CheckTrackFormat(Media::Plugins::MediaType type);
+    AuxiliaryType ParseAuxiliaryType(const std::string& input);
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

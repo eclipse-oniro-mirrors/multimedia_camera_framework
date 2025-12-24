@@ -13,11 +13,10 @@
  * limitations under the License.
  */
 
-#include "accesstoken_kit.h"
+#include <fuzzer/FuzzedDataProvider.h>
 #include "camera_log.h"
 #include "camera_output_capability.h"
 #include "input/camera_manager.h"
-#include "ipc_skeleton.h"
 #include "input/camera_manager_for_sys.h"
 #include "message_parcel.h"
 #include "nativetoken_kit.h"
@@ -60,9 +59,7 @@ sptr<CaptureOutput> CreateVideoOutput()
     auto outputCapability = manager->GetSupportedOutputCapability(cameras[0],
         static_cast<int32_t>(SceneMode::SLOW_MOTION));
     videoProfile_ = outputCapability->GetVideoProfiles();
-    if (videoProfile_.empty()) {
-        return nullptr;
-    }
+    CHECK_RETURN_RET(videoProfile_.empty(), nullptr);
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     if (surface == nullptr) {
         return nullptr;
@@ -70,7 +67,7 @@ sptr<CaptureOutput> CreateVideoOutput()
     return manager->CreateVideoOutput(videoProfile_[0], surface);
 }
 
-void SlowMotionSessionFuzzer::SlowMotionSessionFuzzTest(FuzzedDataProvider& fdp)
+void SlowMotionSessionFuzzTest(FuzzedDataProvider& fdp)
 {
     manager = CameraManager::GetInstance();
     sptr<CaptureSessionForSys> captureSessionForSys =
@@ -123,12 +120,7 @@ void Test(uint8_t* data, size_t size)
         return;
     }
     CHECK_RETURN_ELOG(!TestToken().GetAllCameraPermission(), "GetPermission error");
-    auto slowMotionSession = std::make_unique<SlowMotionSessionFuzzer>();
-    if (slowMotionSession == nullptr) {
-        MEDIA_INFO_LOG("slowMotionSession is null");
-        return;
-    }
-    slowMotionSession->SlowMotionSessionFuzzTest(fdp);
+    SlowMotionSessionFuzzTest(fdp);
 }
 } // namespace CameraStandard
 } // namespace OHOS

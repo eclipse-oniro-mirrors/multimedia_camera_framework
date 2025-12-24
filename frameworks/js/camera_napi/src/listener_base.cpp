@@ -14,6 +14,7 @@
  */
 #include "listener_base.h"
 
+#include <cstdint>
 #include <memory>
 #include <uv.h>
 
@@ -35,6 +36,7 @@ ListenerBase::ListenerBase(napi_env env) : env_(env)
 ListenerBase::~ListenerBase()
 {
     MEDIA_DEBUG_LOG("~ListenerBase is called.");
+    CHECK_RETURN(env_ == nullptr);
     auto ret = napi_remove_env_cleanup_hook(env_, ListenerBase::CleanUp, this);
     if (ret != napi_status::napi_ok) {
         MEDIA_ERR_LOG("remove env hook error: %{public}d", ret);
@@ -46,12 +48,16 @@ ListenerBase::ExecuteCallbackData::ExecuteCallbackData(napi_env env, napi_value 
 
 void ListenerBase::SaveCallbackReference(const std::string eventName, napi_value callback, bool isOnce)
 {
-    CHECK_RETURN_ELOG(callback == nullptr,
-        "SaveCallbackReference:%s js callback is nullptr, save nothing", eventName.c_str());
+    if (callback == nullptr) {
+        MEDIA_ERR_LOG("SaveCallbackReference:%s js callback is nullptr, save nothing", eventName.c_str());
+        return;
+    }
     napi_valuetype valueType = napi_undefined;
     napi_typeof(env_, callback, &valueType);
-    CHECK_RETURN_ELOG(valueType != napi_function,
-        "SaveCallbackReference:%s js callback valueType is not function", eventName.c_str());
+    if (valueType != napi_function) {
+        MEDIA_ERR_LOG("SaveCallbackReference:%s js callback valueType is not function", eventName.c_str());
+        return;
+    }
     auto& callbackList = GetCallbackList(eventName);
     std::lock_guard<std::mutex> lock(callbackList.listMutex);
     for (auto it = callbackList.refList.begin(); it != callbackList.refList.end(); ++it) {
@@ -81,6 +87,13 @@ void ListenerBase::RemoveCallbackRef(const std::string eventName, napi_value cal
         }
     }
     MEDIA_INFO_LOG("RemoveCallbackReference: %s callback not find", eventName.c_str());
+}
+
+int32_t ListenerBase::GetCallbackCount(const std::string eventName)
+{
+    auto& callbackList = GetCallbackList(eventName);
+    std::lock_guard<std::mutex> lock(callbackList.listMutex);
+    return callbackList.refList.size();
 }
 
 void ListenerBase::ExecuteCallback(const std::string eventName, const ExecuteCallbackNapiPara& callbackPara) const

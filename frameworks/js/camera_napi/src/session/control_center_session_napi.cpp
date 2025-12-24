@@ -28,6 +28,7 @@
 #include <vector>
 #include "capture_session.h"
 #include "camera_napi_security_utils.h"
+#include "camera_napi_worker_queue_keeper.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -73,7 +74,6 @@ void ControlCenterSessionNapi::ControlCenterSessionDestructor(napi_env env, void
     MEDIA_INFO_LOG("ControlCenterSessionDestructor is called");
     ControlCenterSessionNapi* cameraObj = reinterpret_cast<ControlCenterSessionNapi*>(nativeObject);
     if (cameraObj != nullptr) {
-        cameraObj->controlCenterSession_ = nullptr;
         delete cameraObj;
     }
 }
@@ -109,7 +109,7 @@ napi_value ControlCenterSessionNapi::ControlCenterSessionConstructor(napi_env en
     return result;
 }
  
-napi_value ControlCenterSessionNapi::Init(napi_env env, napi_value exports)
+void ControlCenterSessionNapi::Init(napi_env env)
 {
     MEDIA_INFO_LOG("ControlCenterSession::Init is called");
     napi_status status;
@@ -139,17 +139,10 @@ napi_value ControlCenterSessionNapi::Init(napi_env env, napi_value exports)
         ControlCenterSessionConstructor, nullptr,
         sizeof(control_center_session_props) / sizeof(control_center_session_props[0]),
         control_center_session_props, &ctorObj);
-    if (status == napi_ok) {
-        status = NapiRefManager::CreateMemSafetyRef(env, ctorObj, &sConstructor_);
-        if (status == napi_ok) {
-            status = napi_set_named_property(env, exports, CONTROL_CENTER_SESSION_NAPI_CLASS_NAME, ctorObj);
-            if (status == napi_ok) {
-                return exports;
-            }
-        }
-    }
-    MEDIA_ERR_LOG("ControlCenterSessionNapi::Init Failed!");
-    return nullptr;
+    CHECK_RETURN_ELOG(status != napi_ok, "ControlCenterSessionNapi defined class failed");
+    status = NapiRefManager::CreateMemSafetyRef(env, ctorObj, &sConstructor_);
+    CHECK_RETURN_ELOG(status != napi_ok, "ControlCenterSessionNapi Init failed");
+    MEDIA_DEBUG_LOG("ControlCenterSessionNapi Init success");
 }
 
 napi_value ControlCenterSessionNapi::CreateControlCenterSession(napi_env env)
@@ -159,6 +152,9 @@ napi_value ControlCenterSessionNapi::CreateControlCenterSession(napi_env env)
     napi_value result = nullptr;
     napi_value constructor;
 
+    if (sConstructor_ == nullptr) {
+        ControlCenterSessionNapi::Init(env);
+    }
     status = napi_get_reference_value(env, sConstructor_, &constructor);
     if (status == napi_ok) {
         int retCode =  CameraManager::GetInstance()->CreateControlCenterSession(sControlCenterSession_);
@@ -191,7 +187,7 @@ napi_value ControlCenterSessionNapi::GetSupportedVirtualApertures(napi_env env, 
     MEDIA_DEBUG_LOG("GetSupportedVirtualApertures is called");
     ControlCenterSessionNapi* controlCenterSessionNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, controlCenterSessionNapi);
-    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+    if (!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error")) {
         MEDIA_ERR_LOG("controlCenterSessionNapi::GetSupportedVirtualApertures parse parameter occur error");
         return nullptr;
     }
@@ -224,6 +220,7 @@ napi_value ControlCenterSessionNapi::GetSupportedVirtualApertures(napi_env env, 
         MEDIA_ERR_LOG("GetSupportedVirtualApertures call Failed!");
     }
     return result;
+
 }
 
 napi_value ControlCenterSessionNapi::GetVirtualAperture(napi_env env, napi_callback_info info)
@@ -235,7 +232,7 @@ napi_value ControlCenterSessionNapi::GetVirtualAperture(napi_env env, napi_callb
     MEDIA_DEBUG_LOG("GetVirtualAperture is called");
     ControlCenterSessionNapi* controlCenterSessionNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, controlCenterSessionNapi);
-    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+    if (!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error")) {
         MEDIA_ERR_LOG("controlCenterSessionNapi::GetVirtualAperture parse parameter occur error");
         return nullptr;
     }
@@ -261,10 +258,10 @@ napi_value ControlCenterSessionNapi::SetVirtualAperture(napi_env env, napi_callb
         return nullptr;
     }
     MEDIA_INFO_LOG("SetVirtualAperture is called");
-    double virtualAperture;
+    double virtualAperture = 0.0;
     ControlCenterSessionNapi* controlCenterSessionNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, controlCenterSessionNapi, virtualAperture);
-    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+    if (!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error")) {
         MEDIA_ERR_LOG("controlCenterSessionNapi::SetVirtualAperture parse parameter occur error");
         return nullptr;
     }
@@ -288,7 +285,7 @@ napi_value ControlCenterSessionNapi::GetSupportedPhysicalApertures(napi_env env,
     MEDIA_DEBUG_LOG("GetSupportedPhysicalApertures is called");
     ControlCenterSessionNapi* controlCenterSessionNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, controlCenterSessionNapi);
-    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+    if (!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error")) {
         MEDIA_ERR_LOG("controlCenterSessionNapi::GetSupportedPhysicalApertures parse parameter occur error");
         return nullptr;
     }
@@ -327,7 +324,7 @@ napi_value ControlCenterSessionNapi::GetPhysicalAperture(napi_env env, napi_call
     MEDIA_DEBUG_LOG("GetPhysicalAperture is called");
     ControlCenterSessionNapi* controlCenterSessionNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, controlCenterSessionNapi);
-    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+    if (!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error")) {
         MEDIA_ERR_LOG("controlCenterSessionNapi::GetPhysicalAperture parse parameter occur error");
         return nullptr;
     }
@@ -354,10 +351,10 @@ napi_value ControlCenterSessionNapi::SetPhysicalAperture(napi_env env, napi_call
         return nullptr;
     }
     MEDIA_DEBUG_LOG("SetPhysicalAperture is called");
-    double physicalAperture;
+    double physicalAperture = 0.0;
     ControlCenterSessionNapi* controlCenterSessionNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, controlCenterSessionNapi, physicalAperture);
-    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+    if (!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error")) {
         MEDIA_ERR_LOG("controlCenterSessionNapi::SetPhysicalAperture parse parameter occur error");
         return nullptr;
     }
@@ -383,7 +380,7 @@ napi_value ControlCenterSessionNapi::GetSupportedBeautyTypes(napi_env env, napi_
     }
     ControlCenterSessionNapi* controlCenterSessionNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, controlCenterSessionNapi);
-    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+    if (!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error")) {
         MEDIA_ERR_LOG("controlCenterSessionNapi::GetSupportedBeautyTypes parse parameter occur error");
         return nullptr;
     }
@@ -391,22 +388,12 @@ napi_value ControlCenterSessionNapi::GetSupportedBeautyTypes(napi_env env, napi_
     MEDIA_DEBUG_LOG("GetSupportedBeautyTypes is called");
     napi_status status;
     napi_value result = nullptr;
-    size_t argc = ARGS_ZERO;
-    napi_value argv[ARGS_ZERO];
-    napi_value thisVar = nullptr;
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-
-    napi_get_undefined(env, &result);
     status = napi_create_array(env, &result);
     if (status != napi_ok) {
         MEDIA_ERR_LOG("napi_create_array call Failed!");
         return result;
     }
-    
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&controlCenterSessionNapi));
-    if (status == napi_ok && controlCenterSessionNapi != nullptr
-        && controlCenterSessionNapi->controlCenterSession_ != nullptr) {
+    if (controlCenterSessionNapi != nullptr && controlCenterSessionNapi->controlCenterSession_ != nullptr) {
         std::vector<int32_t> beautyTypes = controlCenterSessionNapi->controlCenterSession_->GetSupportedBeautyTypes();
         MEDIA_INFO_LOG("controlCenterSessionNapi::GetSupportedBeautyTypes len = %{public}zu",
             beautyTypes.size());
@@ -432,30 +419,21 @@ napi_value ControlCenterSessionNapi::GetSupportedBeautyRange(napi_env env, napi_
     }
     MEDIA_DEBUG_LOG("GetSupportedBeautyRange is called");
     ControlCenterSessionNapi* controlCenterSessionNapi = nullptr;
-    CameraNapiParamParser jsParamParser(env, info, controlCenterSessionNapi);
-    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
-        MEDIA_ERR_LOG("controlCenterSessionNapi::GetSupportedBeautyTypes parse parameter occur error");
+    int32_t beautyType = 0;
+    CameraNapiParamParser jsParamParser(env, info, controlCenterSessionNapi, beautyType);
+    if (!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("controlCenterSessionNapi::GetSupportedBeautyRange parse parameter occur error");
         return nullptr;
     }
     napi_status status;
     napi_value result = nullptr;
-    size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE];
-    napi_value thisVar = nullptr;
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-
-    napi_get_undefined(env, &result);
     status = napi_create_array(env, &result);
     if (status != napi_ok) {
         MEDIA_ERR_LOG("napi_create_array call Failed!");
         return result;
     }
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&controlCenterSessionNapi));
     if (status == napi_ok && controlCenterSessionNapi != nullptr
         && controlCenterSessionNapi->controlCenterSession_ != nullptr) {
-        int32_t beautyType;
-        napi_get_value_int32(env, argv[PARAM0], &beautyType);
         std::vector<int32_t> beautyRanges =
             controlCenterSessionNapi->controlCenterSession_->GetSupportedBeautyRange(
                 static_cast<BeautyType>(beautyType));
@@ -483,20 +461,15 @@ napi_value ControlCenterSessionNapi::GetBeauty(napi_env env, napi_callback_info 
         return nullptr;
     }
     MEDIA_DEBUG_LOG("GetBeauty is called");
-    napi_status status;
-    napi_value result = nullptr;
-    size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE];
-    napi_value thisVar = nullptr;
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    napi_get_undefined(env, &result);
     ControlCenterSessionNapi* controlCenterSessionNapi = nullptr;
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&controlCenterSessionNapi));
-    if (status == napi_ok && controlCenterSessionNapi != nullptr
-        && controlCenterSessionNapi->controlCenterSession_ != nullptr) {
-        int32_t beautyType;
-        napi_get_value_int32(env, argv[PARAM0], &beautyType);
+    int32_t beautyType = 0;
+    CameraNapiParamParser jsParamParser(env, info, controlCenterSessionNapi, beautyType);
+    if (!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("controlCenterSessionNapi::GetBeauty parse parameter occur error");
+        return nullptr;
+    }
+    napi_value result = nullptr;
+    if (controlCenterSessionNapi != nullptr && controlCenterSessionNapi->controlCenterSession_ != nullptr) {
         int32_t beautyStrength =
             controlCenterSessionNapi->controlCenterSession_->GetBeauty(static_cast<BeautyType>(beautyType));
 
@@ -514,23 +487,18 @@ napi_value ControlCenterSessionNapi::SetBeauty(napi_env env, napi_callback_info 
         MEDIA_ERR_LOG("SystemApi SetBeauty is called!");
         return nullptr;
     }
-    napi_status status;
-    napi_value result = nullptr;
-    size_t argc = ARGS_TWO;
-    napi_value argv[ARGS_TWO];
-    napi_value thisVar = nullptr;
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    napi_get_undefined(env, &result);
     ControlCenterSessionNapi* controlCenterSessionNapi = nullptr;
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&controlCenterSessionNapi));
+    int32_t beautyType = 0;
+    int32_t beautyStrength = 0;
+    CameraNapiParamParser jsParamParser(env, info, controlCenterSessionNapi, beautyType, beautyStrength);
+    if (!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("controlCenterSessionNapi::SetBeauty parse parameter occur error");
+        return nullptr;
+    }
+    napi_value result = nullptr;
     MEDIA_INFO_LOG("ControlCenterSessionNapi::SetBeauty is called.");
-    if (status == napi_ok && controlCenterSessionNapi != nullptr
-        && controlCenterSessionNapi->controlCenterSession_ != nullptr) {
-        int32_t beautyType;
-        napi_get_value_int32(env, argv[PARAM0], &beautyType);
-        int32_t beautyStrength;
-        napi_get_value_int32(env, argv[PARAM1], &beautyStrength);
+    if (controlCenterSessionNapi != nullptr && controlCenterSessionNapi->controlCenterSession_ != nullptr) {
+
         controlCenterSessionNapi->controlCenterSession_->SetBeauty(
             static_cast<BeautyType>(beautyType), beautyStrength);
     } else {
@@ -548,7 +516,7 @@ napi_value ControlCenterSessionNapi::GetSupportedPortraitThemeTypes(napi_env env
     MEDIA_DEBUG_LOG("GetSupportedPortraitThemeTypes is called");
     ControlCenterSessionNapi* controlCenterSessionNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, controlCenterSessionNapi);
-    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+    if (!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error")) {
         MEDIA_ERR_LOG("controlCenterSessionNapi::GetSupportedPortraitThemeTypes parse parameter occur error");
         return nullptr;
     }
@@ -591,7 +559,7 @@ napi_value ControlCenterSessionNapi::IsPortraitThemeSupported(napi_env env, napi
     MEDIA_DEBUG_LOG("CameraSessionNapi::IsPortraitThemeSupported is called");
     ControlCenterSessionNapi* controlCenterSessionNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, controlCenterSessionNapi);
-    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+    if (!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error")) {
         MEDIA_ERR_LOG("CameraSessionNapi::IsPortraitThemeSupported parse parameter occur error");
         return nullptr;
     }
@@ -621,7 +589,7 @@ napi_value ControlCenterSessionNapi::SetPortraitThemeType(napi_env env, napi_cal
     int32_t type = 0;
     ControlCenterSessionNapi* controlCenterSessionNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, controlCenterSessionNapi, type);
-    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+    if (!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error")) {
         MEDIA_ERR_LOG("controlCenterSessionNapi::SetPortraitThemeType parse parameter occur error");
         return nullptr;
     }
@@ -650,9 +618,38 @@ napi_value ControlCenterSessionNapi::Release(napi_env env, napi_callback_info in
     auto asyncFunction =
         std::make_shared<CameraNapiAsyncFunction>(env, "Release", asyncContext->callbackRef, asyncContext->deferred);
     CameraNapiParamParser jsParamParser(env, info, asyncContext->objectInfo, asyncFunction);
-    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument")) {
+    if (!jsParamParser.AssertStatus(PARAMETER_ERROR, "invalid argument")) {
         MEDIA_ERR_LOG("ControlCenterSessionNapi::Release invalid argument");
         return nullptr;
+    }
+    asyncContext->HoldNapiValue(env, jsParamParser.GetThisVar());
+    napi_status status = napi_create_async_work(
+        env, nullptr, asyncFunction->GetResourceName(),
+        [](napi_env env, void* data) {
+            MEDIA_INFO_LOG("ControlCenterSessionNapi::Release running on worker");
+            auto context = static_cast<ControlCenterSessionAsyncContext*>(data);
+            CHECK_RETURN_ELOG(
+                context->objectInfo == nullptr, "ControlCenterSessionNapi::Release async info is nullptr");
+            CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
+            CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(context->queueTask, [&context]() {
+                context->errorCode = context->objectInfo->controlCenterSession_->Release();
+                context->status = context->errorCode == CameraErrorCode::SUCCESS;
+                MEDIA_INFO_LOG("ControlCenterSessionNapi::Release errorCode:%{public}d", context->errorCode);
+            });
+        },
+        AsyncCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
+
+    if (status != napi_ok) {
+        MEDIA_ERR_LOG("Failed to create napi_create_async_work for ControlCenterSessionNapi::Release");
+        asyncFunction->Reset();
+    } else {
+        asyncContext->queueTask =
+            CameraNapiWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueTask("ControlCenterSessionNapi::Release");
+        napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
+        asyncContext.release();
+    }
+    if (asyncFunction->GetAsyncFunctionType() == ASYNC_FUN_TYPE_PROMISE) {
+        return asyncFunction->GetPromise();
     }
     return CameraNapiUtils::GetUndefinedValue(env);
 }

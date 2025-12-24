@@ -28,7 +28,7 @@ static const char CONTROL_CENTER_SESSION_NAPI_CLASS_NAME[] = "ControlCenterSessi
  
 class ControlCenterSessionNapi {
 public:
-    static napi_value Init(napi_env env, napi_value exports);
+    static void Init(napi_env env);
     static napi_value CreateControlCenterSession(napi_env env);
     ControlCenterSessionNapi();
     ~ControlCenterSessionNapi();

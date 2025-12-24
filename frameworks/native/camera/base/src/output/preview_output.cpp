@@ -23,7 +23,6 @@
 #include <utility>
 #include <variant>
 
-#include "camera/v1_3/types.h"
 #include "camera_device_ability_items.h"
 #include "camera_error_code.h"
 #include "camera_log.h"
@@ -32,15 +31,20 @@
 #include "camera_output_capability.h"
 #include "camera_rotation_api_utils.h"
 #include "camera_util.h"
-#include "display_manager.h"
+#include "display_manager_lite.h"
 #include "stream_repeat_callback_stub.h"
 #include "image_format.h"
 #include "istream_repeat.h"
 #include "istream_repeat_callback.h"
 #include "metadata_common_utils.h"
-#include "parameters.h"
+#include "pixel_map.h"
 #include "session/capture_session.h"
 #include "sketch_wrapper.h"
+#include "parameters.h"
+#include "bundle_mgr_interface.h"
+#include "iservice_registry.h"
+#include "system_ability_definition.h"
+#include "camera_rotation_api_utils.h"
 #include "surface.h"
 #include "surface_utils.h"
 
@@ -64,7 +68,7 @@ camera_format_t GetHdiFormatFromCameraFormat(CameraFormat cameraFormat)
         case CAMERA_FORMAT_YUV_422_YUYV:
             return OHOS_CAMERA_FORMAT_422_YUYV;
         case CAMERA_FORMAT_YUV_422_UYVY:
-            return OHOS_CAMERA_FORMAT_422_UYVY;
+            return OHOS_CAMERA_FORMAT_422_YUYV;
         default:
             return OHOS_CAMERA_FORMAT_IMPLEMENTATION_DEFINED;
     }
@@ -77,7 +81,6 @@ static constexpr int32_t SKETCH_MIN_WIDTH = 480;
 static constexpr int32_t RENDER_FIL_FILL = 9;
 static constexpr int32_t RENDER_FIL_COVER = 13;
 static constexpr float TARGET_MIN_RATIO = 0.01;
-std::set<std::string> PreviewOutput::whiteList_;
 PreviewOutput::PreviewOutput(sptr<IBufferProducer> bufferProducer)
     : CaptureOutput(CAPTURE_OUTPUT_TYPE_PREVIEW, StreamType::REPEAT, bufferProducer, nullptr)
 {
@@ -106,10 +109,11 @@ int32_t PreviewOutput::Release()
         "PreviewOutput Failed to Release!, GetStream is nullptr");
     sptr<IStreamRepeat> itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
-    CHECK_PRINT_ELOG(itemStream == nullptr, "register surface consumer listener failed!");
     if (itemStream) {
         errCode = itemStream->Release();
         CHECK_PRINT_ELOG(errCode != CAMERA_OK, "Failed to release PreviewOutput!, errCode: %{public}d", errCode);
+    } else {
+        MEDIA_ERR_LOG("PreviewOutput::Release() itemStream is nullptr");
     }
     CaptureOutput::Release();
     return ServiceToCameraError(errCode);
@@ -183,7 +187,35 @@ void PreviewOutputListenerManager::SetPreviewOutput(wptr<PreviewOutput> previewO
 
 sptr<PreviewOutput> PreviewOutputListenerManager::GetPreviewOutput()
 {
+    // LCOV_EXCL_START
     return previewOutput_.promote();
+    // LCOV_EXCL_STOP
+}
+
+int32_t PreviewOutputListenerManager::OnFramePaused()
+{
+    // LCOV_EXCL_START
+    CAMERA_SYNC_TRACE;
+    auto previewOutput = GetPreviewOutput();
+    CHECK_RETURN_RET_ELOG(
+        previewOutput == nullptr, CAMERA_OK, "PreviewOutputListenerManager::OnFramePaused previewOutput is null");
+    previewOutput->GetPreviewOutputListenerManager()->TriggerListener(
+        [](auto listener) { listener->OnFramePaused(); });
+    return CAMERA_OK;
+    // LCOV_EXCL_STOP
+}
+
+int32_t PreviewOutputListenerManager::OnFrameResumed()
+{
+    // LCOV_EXCL_START
+    CAMERA_SYNC_TRACE;
+    auto previewOutput = GetPreviewOutput();
+    CHECK_RETURN_RET_ELOG(
+        previewOutput == nullptr, CAMERA_OK, "PreviewOutputListenerManager::OnFrameResumed previewOutput is null");
+    previewOutput->GetPreviewOutputListenerManager()->TriggerListener(
+        [](auto listener) { listener->OnFrameResumed(); });
+    return CAMERA_OK;
+    // LCOV_EXCL_STOP
 }
 
 int32_t PreviewOutput::OnSketchStatusChanged(SketchStatus status)
@@ -208,14 +240,13 @@ void PreviewOutput::AddDeferredSurface(sptr<Surface> surface)
     itemStream->AddDeferredSurface(surface->GetProducer());
 }
 
-void PreviewOutput::RemoveDeferredSurface(sptr<Surface> surface)
+void PreviewOutput::RemoveDeferredSurface()
 {
     MEDIA_INFO_LOG("PreviewOutput::RemoveDeferredSurface called");
-    CHECK_RETURN_ELOG(surface == nullptr, "PreviewOutput::RemoveDeferredSurface surface is null");
     auto stream = GetStream();
     CHECK_RETURN_ELOG(!stream, "PreviewOutput::RemoveDeferredSurface itemStream is null");
     sptr<IStreamRepeat> itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
-    itemStream->RemoveDeferredSurface(surface->GetProducer());
+    itemStream->RemoveDeferredSurface();
 }
 
 int32_t PreviewOutput::Start()
@@ -273,14 +304,10 @@ bool PreviewOutput::IsDynamicSketchNotifySupported()
         "PreviewOutput::IsDynamicSketchNotifySupported Failed with return code %{public}d", ret);
     std::vector<int32_t> supportedModes = {};
     for (uint32_t i = 0; i < item.count; i++) {
-        auto opMode = static_cast<OHOS::HDI::Camera::V1_3::OperationMode>(item.data.i32[i]);
+        auto opMode = static_cast<OHOS::HDI::Camera::V1_5::OperationMode>(item.data.i32[i]);
         auto it = g_metaToFwSupportedMode_.find(opMode);
-        if (it == g_metaToFwSupportedMode_.end()) {
-            continue;
-        }
-        if (session->GetMode() == it->second) {
-            return true;
-        }
+        CHECK_CONTINUE(it == g_metaToFwSupportedMode_.end());
+        CHECK_RETURN_RET(session->GetMode() == it->second, true);
         supportedModes.emplace_back(item.data.i32[i]);
     }
     MEDIA_DEBUG_LOG("PreviewOutput::IsDynamicSketchNotifySupported modes:%{public}s",
@@ -296,9 +323,7 @@ bool PreviewOutput::IsSketchSupported()
     auto sketchSize = FindSketchSize();
     CHECK_RETURN_RET(sketchSize == nullptr, false);
     // LCOV_EXCL_START
-    if (IsDynamicSketchNotifySupported()) {
-        return true;
-    }
+    CHECK_RETURN_RET(IsDynamicSketchNotifySupported(), true);
     MEDIA_INFO_LOG(
         "IsSketchSupported FindSketchSize Size is %{public}dx%{public}d", sketchSize->width, sketchSize->height);
     auto sketchRatio = GetSketchRatio();
@@ -306,7 +331,11 @@ bool PreviewOutput::IsSketchSupported()
     MEDIA_DEBUG_LOG("IsSketchSupported GetSketchRatio failed, %{public}f ", sketchRatio);
     auto session = GetSession();
     CHECK_RETURN_RET(session == nullptr, false);
-    SketchWrapper::UpdateSketchStaticInfo(GetDeviceMetadata());
+    if (SketchWrapper::IsSupportSpecSearch(GetDeviceMetadata())) {
+        SketchWrapper::UpdateSketchData(GetDeviceMetadata(), session->GetMode());
+    } else {
+        SketchWrapper::UpdateSketchStaticInfo(GetDeviceMetadata());
+    }
     auto subModeNames = session->GetSubFeatureMods();
     for (auto subModeName : subModeNames) {
         float ratio = SketchWrapper::GetSketchEnableRatio(subModeName);
@@ -325,17 +354,16 @@ float PreviewOutput::GetSketchRatio()
     MEDIA_DEBUG_LOG("Enter Into PreviewOutput::GetSketchRatio");
 
     auto session = GetSession();
-    if (session == nullptr) {
-        MEDIA_WARNING_LOG("PreviewOutput::GetSketchRatio session is null");
-        return -1.0f;
-    }
+    CHECK_RETURN_RET_WLOG(session == nullptr, -1.0f, "PreviewOutput::GetSketchRatio session is null");
     // LCOV_EXCL_START
     auto currentMode = session->GetFeaturesMode();
-    SketchWrapper::UpdateSketchStaticInfo(GetDeviceMetadata());
-    float ratio = SketchWrapper::GetSketchEnableRatio(currentMode);
-    if (ratio <= 0) {
-        MEDIA_WARNING_LOG("PreviewOutput::GetSketchRatio mode:%{public}s", currentMode.Dump().c_str());
+    if (SketchWrapper::IsSupportSpecSearch(GetDeviceMetadata())) {
+        SketchWrapper::UpdateSketchData(GetDeviceMetadata(), session->GetMode());
+    } else {
+        SketchWrapper::UpdateSketchStaticInfo(GetDeviceMetadata());
     }
+    float ratio = SketchWrapper::GetSketchEnableRatio(currentMode);
+    CHECK_PRINT_WLOG(ratio <= 0, "PreviewOutput::GetSketchRatio mode:%{public}s", currentMode.Dump().c_str());
     return ratio;
     // LCOV_EXCL_STOP
 }
@@ -346,8 +374,7 @@ int32_t PreviewOutput::CreateSketchWrapper(Size sketchSize)
     MEDIA_DEBUG_LOG("PreviewOutput::CreateSketchWrapper enter sketchSize is:%{public}d x %{public}d", sketchSize.width,
         sketchSize.height);
     auto session = GetSession();
-    CHECK_RETURN_RET_ELOG(
-        session == nullptr, ServiceToCameraError(CAMERA_INVALID_STATE), "EnableSketch session null");
+    CHECK_RETURN_RET_ELOG(session == nullptr, ServiceToCameraError(CAMERA_INVALID_STATE), "EnableSketch session null");
     auto wrapper = std::make_shared<SketchWrapper>(GetStream(), sketchSize, IsDynamicSketchNotifySupported());
     sketchWrapper_ = wrapper;
     wrapper->SetPreviewOutputCallbackManager(previewOutputListenerManager_);
@@ -360,21 +387,21 @@ int32_t PreviewOutput::CreateSketchWrapper(Size sketchSize)
 int32_t PreviewOutput::EnableSketch(bool isEnable)
 {
     MEDIA_DEBUG_LOG("Enter Into PreviewOutput::EnableSketch %{public}d", isEnable);
-    CHECK_RETURN_RET_ELOG(!IsSketchSupported(), CameraErrorCode::OPERATION_NOT_ALLOWED,
-        "EnableSketch IsSketchSupported is false");
+    CHECK_RETURN_RET_ELOG(
+        !IsSketchSupported(), CameraErrorCode::OPERATION_NOT_ALLOWED, "EnableSketch IsSketchSupported is false");
     // LCOV_EXCL_START
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
 
     auto session = GetSession();
-    CHECK_RETURN_RET_ELOG(session == nullptr || !session->IsSessionConfiged(),
-        CameraErrorCode::SESSION_NOT_CONFIG, "PreviewOutput Failed EnableSketch!, session not config");
+    CHECK_RETURN_RET_ELOG(session == nullptr || !session->IsSessionConfiged(), CameraErrorCode::SESSION_NOT_CONFIG,
+        "PreviewOutput Failed EnableSketch!, session not config");
 
     if (isEnable) {
         CHECK_RETURN_RET(sketchWrapper_ != nullptr, ServiceToCameraError(CAMERA_OPERATION_NOT_ALLOWED));
         auto sketchSize = FindSketchSize();
-        CHECK_RETURN_RET_ELOG(sketchSize == nullptr, ServiceToCameraError(errCode),
-            "PreviewOutput EnableSketch FindSketchSize is null");
+        CHECK_RETURN_RET_ELOG(
+            sketchSize == nullptr, ServiceToCameraError(errCode), "PreviewOutput EnableSketch FindSketchSize is null");
         MEDIA_INFO_LOG("EnableSketch FindSketchSize Size is %{public}dx%{public}d",
             sketchSize->width, sketchSize->height);
         return CreateSketchWrapper(*sketchSize);
@@ -392,8 +419,8 @@ int32_t PreviewOutput::AttachSketchSurface(sptr<Surface> sketchSurface)
 {
     // LCOV_EXCL_START
     auto session = GetSession();
-    CHECK_RETURN_RET_ELOG(session == nullptr || !session->IsSessionCommited(),
-        CameraErrorCode::SESSION_NOT_CONFIG, "PreviewOutput Failed to AttachSketchSurface, session not commited");
+    CHECK_RETURN_RET_ELOG(session == nullptr || !session->IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+        "PreviewOutput Failed to AttachSketchSurface, session not commited");
     CHECK_RETURN_RET(sketchWrapper_ == nullptr, CameraErrorCode::INVALID_ARGUMENT);
     CHECK_RETURN_RET(sketchSurface == nullptr, CameraErrorCode::INVALID_ARGUMENT);
     int32_t errCode = sketchWrapper_->AttachSketchSurface(sketchSurface);
@@ -470,16 +497,16 @@ int32_t PreviewOutput::SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate)
     sptr<IStreamRepeat> itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
     if (itemStream) {
         int32_t ret = itemStream->SetFrameRate(minFrameRate, maxFrameRate);
-        CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, ServiceToCameraError(ret),
-            "PreviewOutput::setFrameRate failed to set stream frame rate");
+        CHECK_RETURN_RET_ELOG(
+            ret != CAMERA_OK, ServiceToCameraError(ret), "PreviewOutput::setFrameRate failed to set stream frame rate");
         SetFrameRateRange(minFrameRate, maxFrameRate);
     }
     auto session = GetSession();
     wptr<PreviewOutput> weakThis(this);
-    CHECK_EXECUTE(session != nullptr, session->AddFunctionToMap("preview" + std::to_string(OHOS_CONTROL_FPS_RANGES),
+    CHECK_EXECUTE(session, session->AddFunctionToMap("preview" + std::to_string(OHOS_CONTROL_FPS_RANGES),
         [weakThis, minFrameRate, maxFrameRate]() {
             auto sharedThis = weakThis.promote();
-            CHECK_RETURN_ELOG(!sharedThis, "SetFrameRate previewOutput is nullptr.");
+            CHECK_RETURN_ELOG(!sharedThis, "SetFrameRate previewOutput is nullptr");
             sharedThis->SetFrameRate(minFrameRate, maxFrameRate);
         }));
     return CameraErrorCode::SUCCESS;
@@ -526,8 +553,7 @@ int32_t PreviewOutput::StartSketch()
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
 
     auto session = GetSession();
-    CHECK_RETURN_RET_ELOG(session == nullptr || !session->IsSessionCommited(),
-        CameraErrorCode::SESSION_NOT_CONFIG,
+    CHECK_RETURN_RET_ELOG(session == nullptr || !session->IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "PreviewOutput Failed to StartSketch, session not commited");
     // LCOV_EXCL_START
     if (sketchWrapper_ != nullptr) {
@@ -542,8 +568,7 @@ int32_t PreviewOutput::StopSketch()
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
 
     auto session = GetSession();
-    CHECK_RETURN_RET_ELOG(session == nullptr || !session->IsSessionCommited(),
-        CameraErrorCode::SESSION_NOT_CONFIG,
+    CHECK_RETURN_RET_ELOG(session == nullptr || !session->IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "PreviewOutput Failed to StopSketch, session not commited");
     // LCOV_EXCL_START
     if (sketchWrapper_ != nullptr) {
@@ -596,8 +621,8 @@ std::shared_ptr<Size> PreviewOutput::FindSketchSize()
 {
     auto session = GetSession();
     auto metaData = GetDeviceMetadata();
-    CHECK_RETURN_RET_ELOG(session == nullptr || metaData == nullptr, nullptr,
-        "PreviewOutput::FindSketchSize GetDeviceMetadata failed");
+    CHECK_RETURN_RET_ELOG(
+        session == nullptr || metaData == nullptr, nullptr, "PreviewOutput::FindSketchSize GetDeviceMetadata failed");
     // LCOV_EXCL_START
     auto profile = GetPreviewProfile();
     CHECK_RETURN_RET_ELOG(profile == nullptr, nullptr, "PreviewOutput::FindSketchSize profile is nullptr");
@@ -614,9 +639,7 @@ std::shared_ptr<Size> PreviewOutput::FindSketchSize()
         previewSize.width, previewSize.height, ratio);
     std::shared_ptr<Size> outSize;
     for (auto size : *sizeList.get()) {
-        if (size.width >= previewSize.width || size.width < SKETCH_MIN_WIDTH) {
-            continue;
-        }
+        CHECK_CONTINUE(size.width >= previewSize.width || size.width < SKETCH_MIN_WIDTH);
         float checkRatio = static_cast<float>(size.width) / size.height;
         MEDIA_DEBUG_LOG("PreviewOutput::FindSketchSize List size:%{public}dx%{public}d,ratio:%{public}f", size.width,
             size.height, checkRatio);
@@ -639,13 +662,15 @@ void PreviewOutput::SetCallback(std::shared_ptr<PreviewStateCallback> callback)
     CHECK_RETURN(stream == nullptr);
     bool isSuccess = previewOutputListenerManager_->AddListener(callback);
     CHECK_RETURN(!isSuccess);
-    CHECK_RETURN(!(previewOutputListenerManager_->GetListenerCount() == 1));
-    sptr<IStreamRepeatCallback> ipcCallback = previewOutputListenerManager_;
-    sptr<IStreamRepeat> itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
-    int32_t errCode = itemStream->SetCallback(ipcCallback);
-    CHECK_RETURN(errCode == CAMERA_OK);
-    MEDIA_ERR_LOG("PreviewOutput::SetCallback fail");
-    previewOutputListenerManager_->RemoveListener(callback);
+    if (previewOutputListenerManager_->GetListenerCount() == 1) {
+        sptr<IStreamRepeatCallback> ipcCallback = previewOutputListenerManager_;
+        sptr<IStreamRepeat> itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
+        int32_t errCode = itemStream->SetCallback(ipcCallback);
+        if (errCode != CAMERA_OK) {
+            MEDIA_ERR_LOG("PreviewOutput::SetCallback fail");
+            previewOutputListenerManager_->RemoveListener(callback);
+        }
+    }
     // LCOV_EXCL_STOP
 }
 
@@ -711,7 +736,63 @@ int32_t PreviewOutput::OnResultMetadataChanged(
 
 sptr<PreviewOutputListenerManager> PreviewOutput::GetPreviewOutputListenerManager()
 {
+    // LCOV_EXCL_START
     return previewOutputListenerManager_;
+    // LCOV_EXCL_STOP
+}
+
+bool PreviewOutput::IsLogAssistanceSupported()
+{
+    // LCOV_EXCL_START
+    auto session = GetSession();
+    CHECK_RETURN_RET_ELOG(
+        session == nullptr, false, "PreviewOutput IsLogAssistanceSupported error!, session is nullptr");
+    auto inputDevice = session->GetInputDevice();
+    CHECK_RETURN_RET_ELOG(
+        inputDevice == nullptr, false, "PreviewOutput IsLogAssistanceSupported error!, inputDevice is nullptr");
+    sptr<CameraDevice> cameraObj = inputDevice->GetCameraDeviceInfo();
+    CHECK_RETURN_RET_ELOG(
+        cameraObj == nullptr, false, "PreviewOutput IsLogAssistanceSupported error!, cameraObj is nullptr");
+    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetCachedMetadata();
+    CHECK_RETURN_RET(metadata == nullptr, false);
+    camera_metadata_item_t item;
+    int32_t retCode = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_LOG_ASSISTANCE_SUPPORTED, &item);
+    CHECK_RETURN_RET_ELOG(
+        retCode != CAM_META_SUCCESS, false, "PreviewOutput Can not find OHOS_ABILITY_LOG_ASSISTANCE_SUPPORTED");
+    bool isLogAssistanceSupported = false;
+    SceneMode currentSceneMode = session->GetMode();
+    for (int i = 0; i < static_cast<int>(item.count); i++) {
+        MEDIA_DEBUG_LOG("mode u8[%{public}d]: %{public}d", i, item.data.u8[i]);
+        if (currentSceneMode == static_cast<SceneMode>(item.data.u8[i])) {
+            isLogAssistanceSupported = true;
+        }
+    }
+    MEDIA_DEBUG_LOG("IsLogAssistanceSupported isSupport: %{public}d", isLogAssistanceSupported);
+    return isLogAssistanceSupported;
+    // LCOV_EXCL_STOP
+}
+
+int32_t PreviewOutput::EnableLogAssistance(bool isEnable)
+{
+    // LCOV_EXCL_START
+    MEDIA_DEBUG_LOG("PreviewOutput::EnableLogAssistance is called, enable: %{public}d", isEnable);
+    CHECK_RETURN_RET(!IsLogAssistanceSupported(), CameraErrorCode::OPERATION_NOT_ALLOWED);
+    auto captureSession = GetSession();
+    CHECK_RETURN_RET_ELOG(captureSession == nullptr, SERVICE_FATL_ERROR,
+        "PreviewOutput::EnableLogAssistance failed, captureSession is nullptr");
+    auto inputDevice = captureSession->GetInputDevice();
+    CHECK_RETURN_RET_ELOG(inputDevice == nullptr, SERVICE_FATL_ERROR,
+        "PreviewOutput::EnableLogAssistance failed, inputDevice is nullptr");
+    sptr<CameraDevice> cameraObj = inputDevice->GetCameraDeviceInfo();
+    CHECK_RETURN_RET_ELOG(
+        cameraObj == nullptr, SERVICE_FATL_ERROR, "PreviewOutput::EnableLogAssistance failed, cameraObj is nullptr");
+    captureSession->LockForControl();
+    int32_t retCode = captureSession->EnableLogAssistance(isEnable);
+    captureSession->UnlockForControl();
+    CHECK_RETURN_RET_ELOG(retCode != CameraErrorCode::SUCCESS, SERVICE_FATL_ERROR,
+        "PreviewOutput::EnableLogAssistance failed, EnableLogAssistance retCode: %{public}d", retCode);
+    return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 void PreviewOutput::OnNativeRegisterCallback(const std::string& eventString)
@@ -774,10 +855,9 @@ int32_t PreviewOutput::canSetFrameRateRange(int32_t minFrameRate, int32_t maxFra
     int32_t maxIndex = 1;
     std::vector<std::vector<int32_t>> supportedFrameRange = GetSupportedFrameRates();
     for (auto item : supportedFrameRange) {
-        CHECK_RETURN_RET(item[minIndex] <= minFrameRate && item[maxIndex] >= maxFrameRate,
-            CameraErrorCode::SUCCESS);
+        CHECK_RETURN_RET(item[minIndex] <= minFrameRate && item[maxIndex] >= maxFrameRate, CameraErrorCode::SUCCESS);
     }
-    MEDIA_WARNING_LOG("PreviewOutput::canSetFrameRateRange Can not set frame rate range with invalid parameters");
+    MEDIA_WARNING_LOG("Can not set frame rate range with invalid parameters");
     return CameraErrorCode::INVALID_ARGUMENT;
     // LCOV_EXCL_STOP
 }
@@ -792,15 +872,15 @@ int32_t PreviewOutput::GetPreviewRotation(int32_t imageRotation)
     ImageRotation result = ImageRotation::ROTATION_0;
     sptr<CameraDevice> cameraObj;
     auto session = GetSession();
-    CHECK_RETURN_RET_ELOG(session == nullptr, SERVICE_FATL_ERROR,
-        "PreviewOutput GetPreviewRotation error!, session is nullptr");
+    CHECK_RETURN_RET_ELOG(
+        session == nullptr, SERVICE_FATL_ERROR, "PreviewOutput GetPreviewRotation error!, session is nullptr");
     // LCOV_EXCL_START
     auto inputDevice = session->GetInputDevice();
-    CHECK_RETURN_RET_ELOG(inputDevice == nullptr, SERVICE_FATL_ERROR,
-        "PreviewOutput GetPreviewRotation error!, inputDevice is nullptr");
+    CHECK_RETURN_RET_ELOG(
+        inputDevice == nullptr, SERVICE_FATL_ERROR, "PreviewOutput GetPreviewRotation error!, inputDevice is nullptr");
     cameraObj = inputDevice->GetCameraDeviceInfo();
-    CHECK_RETURN_RET_ELOG(cameraObj == nullptr, SERVICE_FATL_ERROR,
-        "PreviewOutput GetPreviewRotation error!, cameraObj is nullptr");
+    CHECK_RETURN_RET_ELOG(
+        cameraObj == nullptr, SERVICE_FATL_ERROR, "PreviewOutput GetPreviewRotation error!, cameraObj is nullptr");
     uint32_t apiCompatibleVersion = CameraApiVersion::GetApiVersion();
     if (apiCompatibleVersion < CameraApiVersion::APIVersion::API_FOURTEEN) {
         imageRotation = JudegRotationFunc(imageRotation);
@@ -817,13 +897,13 @@ int32_t PreviewOutput::JudegRotationFunc(int32_t imageRotation)
 {
     InitWhiteList();
     std::string deviceType = OHOS::system::GetDeviceType();
-    if (imageRotation > CAPTURE_ROTATION_BASE) {
-        return INVALID_ARGUMENT;
-    }
+    CHECK_RETURN_RET(imageRotation > CAPTURE_ROTATION_BASE, INVALID_ARGUMENT);
     bool isTableFlag = system::GetBoolParameter("const.multimedia.enable_camera_rotation_compensation", 0);
     uint32_t apiCompatibleVersion = CameraApiVersion::GetApiVersion();
     if (isTableFlag && apiCompatibleVersion < CameraApiVersion::APIVersion::API_FOURTEEN && !CheckInWhiteList()) {
+        // LCOV_EXCL_START
         imageRotation = ((imageRotation - ROTATION_90_DEGREES + CAPTURE_ROTATION_BASE) % CAPTURE_ROTATION_BASE);
+        // LCOV_EXCL_STOP
     }
     return imageRotation;
 }
@@ -839,16 +919,16 @@ int32_t PreviewOutput::SetPreviewRotation(int32_t imageRotation, bool isDisplayL
     ImageRotation result = ROTATION_0;
     sptr<CameraDevice> cameraObj;
     auto session = GetSession();
-    CHECK_RETURN_RET_ELOG(session == nullptr, SERVICE_FATL_ERROR,
-        "PreviewOutput SetPreviewRotation error!, session is nullptr");
+    CHECK_RETURN_RET_ELOG(
+        session == nullptr, SERVICE_FATL_ERROR, "PreviewOutput SetPreviewRotation error!, session is nullptr");
     // LCOV_EXCL_START
     session->SetHasFitedRotation(true);
     auto inputDevice = session->GetInputDevice();
-    CHECK_RETURN_RET_ELOG(inputDevice == nullptr, SERVICE_FATL_ERROR,
-        "PreviewOutput SetPreviewRotation error!, inputDevice is nullptr");
+    CHECK_RETURN_RET_ELOG(
+        inputDevice == nullptr, SERVICE_FATL_ERROR, "PreviewOutput SetPreviewRotation error!, inputDevice is nullptr");
     cameraObj = inputDevice->GetCameraDeviceInfo();
-    CHECK_RETURN_RET_ELOG(cameraObj == nullptr, SERVICE_FATL_ERROR,
-        "PreviewOutput SetPreviewRotation error!, cameraObj is nullptr");
+    CHECK_RETURN_RET_ELOG(
+        cameraObj == nullptr, SERVICE_FATL_ERROR, "PreviewOutput SetPreviewRotation error!, cameraObj is nullptr");
     sensorOrientation = static_cast<int32_t>(cameraObj->GetCameraOrientation());
     CameraPosition cameraPosition = cameraObj->GetPosition();
     if (cameraPosition == CAMERA_POSITION_FRONT || cameraPosition == CAMERA_POSITION_FOLD_INNER) {
@@ -861,14 +941,14 @@ int32_t PreviewOutput::SetPreviewRotation(int32_t imageRotation, bool isDisplayL
     auto stream = GetStream();
     sptr<IStreamRepeat> itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
-    CHECK_RETURN_RET_ELOG(itemStream == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
-        "PreviewOutput::SetCameraRotation() itemStream is nullptr");
     if (itemStream) {
         errCode = itemStream->SetCameraRotation(true, result);
-        CHECK_RETURN_RET_ELOG(errCode != CAMERA_OK, SERVICE_FATL_ERROR,
-            "Failed to SetCameraRotation!, errCode: %{public}d", errCode);
+        CHECK_RETURN_RET_ELOG(
+            errCode != CAMERA_OK, SERVICE_FATL_ERROR, "Failed to SetCameraRotation! , errCode: %{public}d", errCode);
+    } else {
+        MEDIA_ERR_LOG("PreviewOutput::SetCameraRotation() itemStream is nullptr");
+        return CameraErrorCode::SERVICE_FATL_ERROR;
     }
-    MEDIA_ERR_LOG("PreviewOutput SetPreviewRotation sucess");
     return CameraErrorCode::SUCCESS;
     // LCOV_EXCL_STOP
 }
@@ -876,10 +956,10 @@ int32_t PreviewOutput::SetPreviewRotation(int32_t imageRotation, bool isDisplayL
 bool PreviewOutput::IsXComponentSwap()
 {
     // LCOV_EXCL_START
-    sptr<OHOS::Rosen::Display> display = OHOS::Rosen::DisplayManager::GetInstance().GetDefaultDisplay();
+    sptr<OHOS::Rosen::DisplayLite> display = OHOS::Rosen::DisplayManagerLite::GetInstance().GetDefaultDisplay();
     if (display == nullptr) {
         MEDIA_ERR_LOG("Get display info failed");
-        display = OHOS::Rosen::DisplayManager::GetInstance().GetDisplayById(0);
+        display = OHOS::Rosen::DisplayManagerLite::GetInstance().GetDisplayById(0);
         CHECK_RETURN_RET_ELOG(display == nullptr, true, "Get display info failed, display is nullptr");
     }
     uint32_t currentRotation = static_cast<uint32_t>(display->GetRotation()) * 90;
@@ -890,8 +970,8 @@ bool PreviewOutput::IsXComponentSwap()
     CHECK_EXECUTE(apiCompatibleVersion < CameraApiVersion::APIVersion::API_FOURTEEN && deviceType == "tablet",
         currentRotation = (currentRotation + STREAM_ROTATE_270) % STREAM_ROTATE_360);
     uint32_t cameraRotation = 0;
-    CHECK_RETURN_RET_ELOG(GetCameraDeviceRotationAngle(cameraRotation) != CAMERA_OK,
-        false, "Get camera rotation failed");
+    CHECK_RETURN_RET_ELOG(
+        GetCameraDeviceRotationAngle(cameraRotation) != CAMERA_OK, false, "Get camera rotation failed");
     MEDIA_INFO_LOG("display rotation: %{public}d, camera rotation: %{public}d", currentRotation, cameraRotation);
     uint32_t rotationAngle = (currentRotation + cameraRotation) % STREAM_ROTATE_360;
     return rotationAngle == STREAM_ROTATE_90 || rotationAngle == STREAM_ROTATE_270;
@@ -902,14 +982,12 @@ int32_t PreviewOutput::GetCameraDeviceRotationAngle(uint32_t &cameraRotation)
 {
     // LCOV_EXCL_START
     auto session = GetSession();
-    CHECK_RETURN_RET_ELOG(session == nullptr, SERVICE_FATL_ERROR,
-        "GetCameraDeviceRotationAngle sesion is null");
+    CHECK_RETURN_RET_ELOG(session == nullptr, SERVICE_FATL_ERROR, "GetCameraDeviceRotationAngle sesion is null");
     auto inputDevice = session->GetInputDevice();
-    CHECK_RETURN_RET_ELOG(inputDevice == nullptr, SERVICE_FATL_ERROR,
-        "GetCameraDeviceRotationAngle inputDevice is null");
+    CHECK_RETURN_RET_ELOG(
+        inputDevice == nullptr, SERVICE_FATL_ERROR, "GetCameraDeviceRotationAngle inputDevice is null");
     auto deviceInfo = inputDevice->GetCameraDeviceInfo();
-    CHECK_RETURN_RET_ELOG(deviceInfo == nullptr, SERVICE_FATL_ERROR,
-        "GetCameraDeviceRotationAngle deviceInfo is null");
+    CHECK_RETURN_RET_ELOG(deviceInfo == nullptr, SERVICE_FATL_ERROR, "GetCameraDeviceRotationAngle deviceInfo is null");
     cameraRotation = deviceInfo->GetCameraOrientation();
     return CAMERA_OK;
     // LCOV_EXCL_STOP
@@ -984,6 +1062,58 @@ std::string PreviewOutput::GetSurfaceId()
     std::lock_guard<std::mutex> lock(surfaceIdMutex_);
     return surfaceId_;
     // LCOV_EXCL_STOP
+}
+
+bool PreviewOutput::IsBandwidthCompressionSupported()
+{
+    MEDIA_DEBUG_LOG("Enter Into PreviewOutput::IsBandwidthCompressionSupported");
+    bool isBandwidthCompressionSupported = false;
+    auto session = GetSession();
+    CHECK_RETURN_RET_ELOG(session == nullptr, false, "IsBandwidthCompressionSupported error!, session is nullptr");
+    auto inputDevice = session->GetInputDevice();
+    CHECK_RETURN_RET_ELOG(inputDevice == nullptr, false,
+        "IsBandwidthCompressionSupported error!, inputDevice is nullptr");
+    sptr<CameraDevice> cameraObj = inputDevice->GetCameraDeviceInfo();
+    CHECK_RETURN_RET_ELOG(cameraObj == nullptr, false, "IsBandwidthCompressionSupported error!, cameraObj is nullptr");
+    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetCachedMetadata();
+    CHECK_RETURN_RET_ELOG(metadata == nullptr, false, "IsBandwidthCompressionSupported error!, meta not found");
+    camera_metadata_item_t item;
+    int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_BANDWIDTH_COMPRESSION_AVAILABLE, &item);
+    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS, false, "IsBandwidthCompressionSupported tag not found");
+        int32_t curMode = session->GetMode();
+        compressionSupportedModes_.clear();
+        for (uint32_t i = 0; i < item.count; i++) {
+            compressionSupportedModes_.emplace_back(item.data.u8[i]);
+            MEDIA_DEBUG_LOG("compression supported modes:%d", item.data.u8[i]);
+        }
+        isBandwidthCompressionSupported =
+            std::find(compressionSupportedModes_.begin(), compressionSupportedModes_.end(), curMode) !=
+            compressionSupportedModes_.end();
+    return isBandwidthCompressionSupported;
+}
+
+int32_t PreviewOutput::EnableBandwidthCompression(bool isEnable)
+{
+    MEDIA_DEBUG_LOG("EnableBandwidthCompression isEnable:%{public}d", isEnable);
+    bool isSupported = IsBandwidthCompressionSupported();
+    CHECK_RETURN_RET_ELOG(!isSupported, OPERATION_NOT_ALLOWED,
+        "PreviewOutput EnableBandwidthCompression error!, BandwidthCompression is not supported");
+    auto stream = GetStream();
+    CHECK_RETURN_RET_ELOG(stream == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
+        "EnableBandwidthCompression GetStream is nullptr");
+    sptr<IStreamRepeat> itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
+    CHECK_RETURN_RET_ELOG(itemStream == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
+        "EnableBandwidthCompression GetStream cast faild");
+    auto session = GetSession();
+    CHECK_RETURN_RET_ELOG(session == nullptr, SESSION_NOT_CONFIG,
+        "PhotoOutput EnableBandwidthCompression error!, session is nullptr");
+    auto inputDevice = session->GetInputDevice();
+    CHECK_RETURN_RET_ELOG(inputDevice == nullptr, SESSION_NOT_CONFIG,
+        "PhotoOutput EnableBandwidthCompression error!, inputDevice is nullptr");
+    sptr<CameraDevice> cameraObj = inputDevice->GetCameraDeviceInfo();
+    CHECK_RETURN_RET_ELOG(cameraObj == nullptr, SESSION_NOT_CONFIG,
+        "PhotoOutput EnableBandwidthCompression error!, cameraObj is nullptr");
+    return itemStream->SetBandwidthCompression(isEnable);
 }
 
 void PreviewOutput::ReportXComponentInfoEvent()

@@ -16,6 +16,7 @@
 #ifndef LISTENER_BASE_H_
 #define LISTENER_BASE_H_
 
+#include <cstdint>
 #include <list>
 #include <memory>
 #include <mutex>
@@ -57,6 +58,7 @@ public:
         const std::string eventName, const std::function<ExecuteCallbackData()> fun, bool isAsync = true) const final;
     virtual void RemoveCallbackRef(const std::string eventName, napi_value callback) final;
     virtual void RemoveAllCallbacks(const std::string eventName) final;
+    virtual int32_t GetCallbackCount(const std::string eventName) final;
     virtual bool IsEmpty(const std::string eventName) const final;
 
 protected:

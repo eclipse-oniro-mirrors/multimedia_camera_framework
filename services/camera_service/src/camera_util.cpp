@@ -25,8 +25,7 @@
 #include "access_token.h"
 #include "accesstoken_kit.h"
 #include "privacy_kit.h"
-#include "display.h"
-#include "display_manager.h"
+#include "display_manager_lite.h"
 #include "display/composer/v1_1/display_composer_type.h"
 #include "iservice_registry.h"
 #include "bundle_mgr_interface.h"
@@ -37,8 +36,8 @@
 namespace OHOS {
 namespace CameraStandard {
 using namespace OHOS::HDI::Display::Composer::V1_1;
-static bool g_tablet = false;
-
+using namespace OHOS::Security::AccessToken;
+static bool g_tablet = true;
 std::unordered_map<int32_t, int32_t> g_cameraToPixelFormat = {
     {OHOS_CAMERA_FORMAT_RGBA_8888, GRAPHIC_PIXEL_FMT_RGBA_8888},
     {OHOS_CAMERA_FORMAT_YCBCR_420_888, GRAPHIC_PIXEL_FMT_YCBCR_420_SP},
@@ -128,8 +127,8 @@ std::map<int, std::string> g_cameraQuickThumbnailAvailable = {
 };
 
 std::map<int, std::string> g_cameraQualityPrioritization = {
-    {0, "HighQuality "},
-    {1, "PowerBalance "},
+    {0, "HighQuality"},
+    {1, "PowerBalance"},
 };
 
 bool g_cameraDebugOn = false;
@@ -246,35 +245,27 @@ std::string CreateMsg(const char* format, ...)
 
 bool IsHapTokenId(uint32_t tokenId)
 {
-    return Security::AccessToken::AccessTokenKit::GetTokenTypeFlag(tokenId) ==
-        Security::AccessToken::ATokenTypeEnum::TOKEN_HAP;
+    return AccessTokenKit::GetTokenTypeFlag(tokenId) == ATokenTypeEnum::TOKEN_HAP;
 }
 
 bool IsValidMode(int32_t opMode, std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility)
 {
-    if (opMode == 0 || opMode == 1 || opMode == 2) { // 0 is normal mode, 1 is capture mode, 2 is video mode
-        MEDIA_INFO_LOG("operationMode:%{public}d", opMode);
-        return true;
-    }
+    // 0 is normal mode, 1 is capture mode, 2 is video mode, TODO: remove this stub || opMode == 24
+    CHECK_RETURN_RET_ILOG(opMode == 0 || opMode == 1 || opMode == 2, true, "operationMode:%{public}d", opMode);
     camera_metadata_item_t item;
-    CHECK_RETURN_RET_ELOG(cameraAbility == nullptr, false, "cameraAbility is nullptr.");
     int ret = Camera::FindCameraMetadataItem(cameraAbility->get(), OHOS_ABILITY_CAMERA_MODES, &item);
-    if (ret != CAM_META_SUCCESS || item.count == 0) {
+    bool isFindMetadata = ret != CAM_META_SUCCESS || item.count == 0;
+    if (isFindMetadata) {
         MEDIA_ERR_LOG("Failed to find stream extend configuration in camera ability with return code %{public}d", ret);
         ret = Camera::FindCameraMetadataItem(cameraAbility->get(),
                                              OHOS_ABILITY_STREAM_AVAILABLE_BASIC_CONFIGURATIONS, &item);
-        if (ret == CAM_META_SUCCESS && item.count != 0) {
-            MEDIA_INFO_LOG("basic config no need valid mode");
-            return true;
-        }
+        CHECK_RETURN_RET_ILOG(ret == CAM_META_SUCCESS && item.count != 0, true, "basic config no need valid mode");
         return false;
     }
 
     for (uint32_t i = 0; i < item.count; i++) {
-        if (opMode == item.data.u8[i]) {
-            MEDIA_INFO_LOG("operationMode:%{public}d found in supported streams", opMode);
-            return true;
-        }
+        CHECK_RETURN_RET_ILOG(
+            opMode == item.data.u8[i], true, "operationMode:%{public}d found in supported streams", opMode);
     }
     MEDIA_ERR_LOG("operationMode:%{public}d not found in supported streams", opMode);
     return false;
@@ -302,7 +293,7 @@ void DumpMetadata(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraSettings)
             }
         } else if (item.data_type == META_TYPE_UINT32) {
             for (size_t k = 0; k < item.count; k++) {
-                MEDIA_DEBUG_LOG("tag index:%d, name:%s, value:%u", item.index, name, (uint32_t)(item.data.ui32[k]));
+                MEDIA_DEBUG_LOG("tag index:%d, name:%s, value:%d", item.index, name, (uint32_t)(item.data.ui32[k]));
             }
         } else if (item.data_type == META_TYPE_FLOAT) {
             for (size_t k = 0; k < item.count; k++) {
@@ -335,10 +326,7 @@ std::string GetClientBundle(int uid)
     CHECK_RETURN_RET_ELOG(bms == nullptr, bundleName, "GetClientBundle bundle manager service is NULL.");
 
     auto result = bms->GetNameForUid(uid, bundleName);
-    if (result != ERR_OK) {
-        MEDIA_DEBUG_LOG("GetClientBundle GetBundleNameForUid fail");
-        return "";
-    }
+    CHECK_RETURN_RET_DLOG(result != ERR_OK, "", "GetClientBundle GetBundleNameForUid fail");
     MEDIA_INFO_LOG("bundle name is %{public}s ", bundleName.c_str());
 
     return bundleName;
@@ -378,12 +366,9 @@ bool IsSameClient(const pid_t& pid, const pid_t& pidCompared)
 bool IsInForeGround(const uint32_t callerToken)
 {
     bool isAllowed = true;
-    if (IPCSkeleton::GetCallingUid() == 0) {
-        MEDIA_DEBUG_LOG("HCameraService::IsInForeGround isAllowed!");
-        return isAllowed;
-    }
+    CHECK_RETURN_RET_DLOG(IPCSkeleton::GetCallingUid() == 0, isAllowed, "HCameraService::IsInForeGround isAllowed!");
     if (IsHapTokenId(callerToken)) {
-        isAllowed = Security::AccessToken::PrivacyKit::IsAllowedUsingPermission(callerToken, OHOS_PERMISSION_CAMERA);
+        isAllowed = PrivacyKit::IsAllowedUsingPermission(callerToken, OHOS_PERMISSION_CAMERA);
     }
     return isAllowed;
 }
@@ -391,33 +376,27 @@ bool IsInForeGround(const uint32_t callerToken)
 bool IsCameraNeedClose(const uint32_t callerToken, const pid_t& pid, const pid_t& pidCompared)
 {
     bool needClose = !(IsInForeGround(callerToken) && (JudgmentPriority(pid, pidCompared) != PRIORITY_LEVEL_HIGHER));
-    if (Security::AccessToken::AccessTokenKit::GetTokenTypeFlag(callerToken) ==
-        Security::AccessToken::ATokenTypeEnum::TOKEN_NATIVE) {
+    ATokenTypeEnum tokenType = AccessTokenKit::GetTokenTypeFlag(callerToken);
+    if (tokenType == ATokenTypeEnum::TOKEN_NATIVE) {
         needClose = true;
     }
     MEDIA_INFO_LOG("IsCameraNeedClose pid = %{public}d, IsInForeGround = %{public}d, TokenType = %{public}d, "
-                   "needClose = %{public}d",
-                   pid, IsInForeGround(callerToken),
-                   Security::AccessToken::AccessTokenKit::GetTokenTypeFlag(callerToken), needClose);
+                   "needClose = %{public}d", pid, IsInForeGround(callerToken), tokenType, needClose);
     return needClose;
 }
 
 int32_t CheckPermission(const std::string permissionName, uint32_t callerToken)
 {
-    int permissionResult
-        = OHOS::Security::AccessToken::TypePermissionState::PERMISSION_DENIED;
-    Security::AccessToken::ATokenTypeEnum tokenType
-        = OHOS::Security::AccessToken::AccessTokenKit::GetTokenTypeFlag(callerToken);
-    if ((tokenType == OHOS::Security::AccessToken::ATokenTypeEnum::TOKEN_NATIVE)
-        || (tokenType == OHOS::Security::AccessToken::ATokenTypeEnum::TOKEN_HAP)) {
-        permissionResult = OHOS::Security::AccessToken::AccessTokenKit::VerifyAccessToken(
-            callerToken, permissionName);
+    int permissionResult = TypePermissionState::PERMISSION_DENIED;
+    ATokenTypeEnum tokenType = AccessTokenKit::GetTokenTypeFlag(callerToken);
+    if (tokenType == ATokenTypeEnum::TOKEN_NATIVE || tokenType == ATokenTypeEnum::TOKEN_HAP) {
+        permissionResult = AccessTokenKit::VerifyAccessToken(callerToken, permissionName);
     } else {
         MEDIA_ERR_LOG("HCameraService::CheckPermission: Unsupported Access Token Type");
         return CAMERA_INVALID_ARG;
     }
 
-    if (permissionResult != OHOS::Security::AccessToken::TypePermissionState::PERMISSION_GRANTED) {
+    if (permissionResult != TypePermissionState::PERMISSION_GRANTED) {
         MEDIA_ERR_LOG("HCameraService::CheckPermission: Permission to Access Camera Denied!!!!");
         return CAMERA_NO_PERMISSION;
     } else {
@@ -430,28 +409,23 @@ void AddCameraPermissionUsedRecord(const uint32_t callingTokenId, const std::str
 {
     int32_t successCout = 1;
     int32_t failCount = 0;
-    int32_t ret = Security::AccessToken::PrivacyKit::AddPermissionUsedRecord(callingTokenId, permissionName,
-        successCout, failCount);
+    int32_t ret = PrivacyKit::AddPermissionUsedRecord(callingTokenId, permissionName, successCout, failCount);
     MEDIA_INFO_LOG("AddPermissionUsedRecord");
-    if (ret != CAMERA_OK) {
-        MEDIA_ERR_LOG("AddPermissionUsedRecord failed.");
-    }
+    CHECK_PRINT_ELOG(ret != CAMERA_OK, "AddPermissionUsedRecord failed.");
 }
-
 bool IsVerticalDevice()
 {
     bool isVerticalDevice = true;
-    auto display = OHOS::Rosen::DisplayManager::GetInstance().GetDefaultDisplay();
-
+    auto display = OHOS::Rosen::DisplayManagerLite::GetInstance().GetDefaultDisplay();
     CHECK_RETURN_RET_ELOG(display == nullptr, isVerticalDevice, "IsVerticalDevice GetDefaultDisplay failed");
-    MEDIA_DEBUG_LOG("GetDefaultDisplay:W(%{public}d),H(%{public}d),Orientation(%{public}d),Rotation(%{public}d)",
-        display->GetWidth(), display->GetHeight(), display->GetOrientation(), display->GetRotation());
+    MEDIA_DEBUG_LOG("GetDefaultDisplay:W(%{public}d),H(%{public}d),Rotation(%{public}d)",
+        display->GetWidth(), display->GetHeight(), display->GetRotation());
     bool isScreenVertical = display->GetRotation() == OHOS::Rosen::Rotation::ROTATION_0 ||
-                            display->GetRotation() == OHOS::Rosen::Rotation::ROTATION_180;
+        display->GetRotation() == OHOS::Rosen::Rotation::ROTATION_180;
     bool isScreenHorizontal = display->GetRotation() == OHOS::Rosen::Rotation::ROTATION_90 ||
-                              display->GetRotation() == OHOS::Rosen::Rotation::ROTATION_270;
+        display->GetRotation() == OHOS::Rosen::Rotation::ROTATION_270;
     isVerticalDevice = (isScreenVertical && (display->GetWidth() < display->GetHeight())) ||
-                            (isScreenHorizontal && (display->GetWidth() > display->GetHeight()));
+        (isScreenHorizontal && (display->GetWidth() > display->GetHeight()));
     return isVerticalDevice;
 }
 
@@ -477,22 +451,18 @@ int32_t GetStreamRotation(int32_t& sensorOrientation, camera_position_enum_t& ca
         streamRotation = (sensorOrientation + degrees) % STREAM_ROTATE_360;
         streamRotation = (STREAM_ROTATE_360 - streamRotation) % STREAM_ROTATE_360;
     }
-    MEDIA_DEBUG_LOG("SetStreamTransform filp streamRotation %{public}d, rotate %{public}d",
+    MEDIA_DEBUG_LOG("HStreamRepeat::SetStreamTransform filp streamRotation %{public}d, rotate %{public}d",
         streamRotation, disPlayRotation);
     return streamRotation;
 }
 
 bool CheckSystemApp()
 {
-    Security::AccessToken::AccessTokenID callerToken = IPCSkeleton::GetCallingTokenID();
-    Security::AccessToken::ATokenTypeEnum tokenType =
-        Security::AccessToken::AccessTokenKit::GetTokenTypeFlag(callerToken);
-    if (tokenType !=  Security::AccessToken::TOKEN_HAP) {
-        MEDIA_DEBUG_LOG("Caller is not a application.");
-        return true;
-    }
+    AccessTokenID callerToken = IPCSkeleton::GetCallingTokenID();
+    ATokenTypeEnum tokenType = AccessTokenKit::GetTokenTypeFlag(callerToken);
+    CHECK_RETURN_RET_DLOG(tokenType != TOKEN_HAP, true, "Caller is not a application.");
     uint64_t accessTokenId = IPCSkeleton::GetCallingFullTokenID();
-    bool isSystemApplication = Security::AccessToken::TokenIdKit::IsSystemAppByFullTokenID(accessTokenId);
+    bool isSystemApplication = TokenIdKit::IsSystemAppByFullTokenID(accessTokenId);
     MEDIA_DEBUG_LOG("isSystemApplication:%{public}d", isSystemApplication);
     return isSystemApplication;
 }
@@ -519,20 +489,15 @@ int64_t GetTimestamp()
 std::string GetFileStream(const std::string &filepath)
 {
     char *canonicalPath = realpath(filepath.c_str(), nullptr);
-    CHECK_RETURN_RET(canonicalPath == nullptr, NULL);
+    CHECK_RETURN_RET(canonicalPath == nullptr, "");
     std::ifstream file(canonicalPath, std::ios::in | std::ios::binary);
     free(canonicalPath);
     // 文件流的异常处理，不能用try catch的形式
-    if (!file) {
-        MEDIA_INFO_LOG("Failed to open the file!");
-        return NULL;
-    }
+    CHECK_RETURN_RET_ILOG(!file, "", "Failed to open the file!");
     std::stringstream infile;
     infile << file.rdbuf();
     const std::string fileString = infile.str();
-    if (fileString.empty()) {
-        return NULL;
-    }
+    CHECK_RETURN_RET(fileString.empty(), "");
     return fileString;
 }
  
@@ -581,16 +546,12 @@ bool CheckPathExist(const char *path)
 bool isIntegerRegex(const std::string& input)
 {
     size_t start = 0;
-    if (input.empty()) {
-        return false;
-    }
+    CHECK_RETURN_RET(input.empty(), false);
     if (input[0] == '-' && input.size() > 1) {
         start = 1; // deal negative sign
     }
     for (size_t i = start; i < input.size(); ++i) {
-        if (!std::isdigit(input[i])) {
-            return false;
-        }
+        CHECK_RETURN_RET(!std::isdigit(input[i]), false);
     }
     return true;
 }
@@ -599,9 +560,7 @@ std::string GetValidCameraId(std::string& cameraId)
 {
     std::string cameraIdTemp = cameraId;
     size_t pos = cameraId.find('/');
-    if (pos == std::string::npos) {
-        return cameraId;
-    }
+    CHECK_RETURN_RET(pos == std::string::npos, cameraId);
     cameraIdTemp = cameraId.substr(pos + 1);
     return cameraIdTemp;
 }
@@ -609,10 +568,10 @@ std::string GetValidCameraId(std::string& cameraId)
 std::string ControlCenterMapToString(const std::map<std::string, std::array<float, CONTROL_CENTER_DATA_SIZE>> &data)
 {
     std::ostringstream oss;
-    bool firstEntry = true;
+    bool first_entry = true;
     for (const auto& [key, arr] : data) {
-        if (!firstEntry) oss << ';';
-        firstEntry = false;
+        if (!first_entry) oss << ';';
+        first_entry = false;
         oss << key << ':'
             << std::setprecision(CONTROL_CENTER_DATA_PRECISION) << arr[CONTROL_CENTER_STATUS_INDEX] << ','
             << std::setprecision(CONTROL_CENTER_DATA_PRECISION) << arr[CONTROL_CENTER_BEAUTY_INDEX] << ','
@@ -628,27 +587,35 @@ std::map<std::string, std::array<float, CONTROL_CENTER_DATA_SIZE>> StringToContr
     std::string entry;
     
     while (std::getline(iss, entry, ';')) {
-        if (entry.empty()) {
+        if (entry.empty()){
+            continue;
+        } 
+        size_t colon_pos = entry.find(':');
+        if (colon_pos == std::string::npos) {
             continue;
         }
-        size_t colonPos = entry.find(':');
-        if (colonPos == std::string::npos) {
-            continue;
-        }
-        std::string key = entry.substr(0, colonPos);
-        std::string valuesStr = entry.substr(colonPos + 1);
+        std::string key = entry.substr(0, colon_pos);
+        std::string values_str = entry.substr(colon_pos + 1);
         
-        std::istringstream vss(valuesStr);
+        std::istringstream vss(values_str);
         std::array<float, CONTROL_CENTER_DATA_SIZE> arr;
-        std::string numStr;
+        std::string num_str;
         int index = 0;
-        bool valid = true;
-        
-        while (std::getline(vss, numStr, ',') && index < CONTROL_CENTER_DATA_SIZE) {
-            arr[index++] = std::stof(numStr);
+        bool conversion_failed = false;
+        while (std::getline(vss, num_str, ',') && index < CONTROL_CENTER_DATA_SIZE) {
+            char* endptr;
+            errno = 0;
+            float value = std::strtof(num_str.c_str(), &endptr);
+            
+            if (endptr != num_str.c_str() + num_str.size() || errno == ERANGE) {
+                MEDIA_ERR_LOG("Conversion failed");
+                conversion_failed = true;
+                break;
+            }
+            arr[index++] = value;
         }
         
-        if (valid && index == CONTROL_CENTER_DATA_SIZE && vss.eof()) {
+        if (!conversion_failed && index == CONTROL_CENTER_DATA_SIZE && vss.eof()) {
             result[key] = arr;
         }
     }
@@ -673,7 +640,7 @@ int32_t DisplayModeToFoldStatus(int32_t displayMode)
             break;
         }
         default: {
-            foldStatus = static_cast<int32_t>(OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus());
+            foldStatus = static_cast<int32_t>(OHOS::Rosen::DisplayManagerLite::GetInstance().GetFoldStatus());
             break;
         }
     }
@@ -687,11 +654,11 @@ int32_t GetPhysicalCameraOrientation(std::shared_ptr<OHOS::Camera::CameraMetadat
 {
     camera_metadata_item item;
     displayMode = displayMode >= 0 ? displayMode :
-        static_cast<int32_t>(OHOS::Rosen::DisplayManager::GetInstance().GetFoldDisplayMode());
+        static_cast<int32_t>(OHOS::Rosen::DisplayManagerLite::GetInstance().GetFoldDisplayMode());
     int32_t curFoldStatus = DisplayModeToFoldStatus(displayMode);
     int32_t ret = OHOS::Camera::FindCameraMetadataItem(cameraAbility->get(), OHOS_FOLD_STATE_SENSOR_ORIENTATION_MAP,
         &item);
-    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS, ret, "CameraUtil::GetPhysicalCameraOrientation "
+    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS || !item.count, ret, "CameraUtil::GetPhysicalCameraOrientation "
         "FindCameraMetadataItem Error");
     uint32_t count = item.count;
     CHECK_RETURN_RET_ELOG(count % MAP_STEP_TWO, ret, "CameraUtil::GetPhysicalCameraOrientation FindCameraMetadataItem "

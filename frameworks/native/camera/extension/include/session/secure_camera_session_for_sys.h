@@ -23,8 +23,8 @@ namespace OHOS {
 namespace CameraStandard {
 class SecureCameraSessionForSys : public CaptureSessionForSys {
 public:
-    explicit SecureCameraSessionForSys(sptr<ICaptureSession> &secureCameraSession)
-        : CaptureSessionForSys(secureCameraSession) {}
+    explicit SecureCameraSessionForSys(sptr<ICaptureSession> &secureCameraSession) :
+        CaptureSessionForSys(secureCameraSession) {}
 
     ~SecureCameraSessionForSys();
 

@@ -21,42 +21,37 @@ namespace CameraStandard {
 void CameraReportUtils::ReportCameraCreateNullptr(std::string funcName,
     std::string useFunc)
 {
-    std::string str = funcName;
-    str += " use ";
-    str += useFunc;
-    str += " get nullptr";
+    std::ostringstream oss;
+    oss << funcName << " use " << useFunc << " get nullptr";
     HiSysEventWrite(
         HiviewDFX::HiSysEvent::Domain::CAMERA,
         "CAMERA_ERR",
         HiviewDFX::HiSysEvent::EventType::FAULT,
-        "MSG", str);
+        "MSG", oss.str());
 }
  
 void CameraReportUtils::ReportCameraFalse(std::string funcName, std::string useFunc)
 {
-    std::string str = funcName;
-    str += " use ";
-    str += useFunc;
-    str += "get false";
+    std::ostringstream oss;
+    oss << funcName << " use " << useFunc << " get false";
     HiSysEventWrite(
         HiviewDFX::HiSysEvent::Domain::CAMERA,
         "CAMERA_ERR",
         HiviewDFX::HiSysEvent::EventType::FAULT,
-        "MSG", str);
+        "MSG", oss.str());
 }
  
+
 template<typename T>
 void CameraReportUtils::ReportCameraError(std::string funcName, std::string useFunc, T ret)
 {
-    std::string str = funcName;
-    str += " use ";
-    str += useFunc;
-    str += "get retCode is " + std::to_string(ret);
+    std::ostringstream oss;
+    oss << funcName << " use " << useFunc << " get retCode is " << ret;
     HiSysEventWrite(
         HiviewDFX::HiSysEvent::Domain::CAMERA,
         "CAMERA_ERR",
         HiviewDFX::HiSysEvent::EventType::FAULT,
-        "MSG", str);
+        "MSG", oss.str());
 }
  
 template void CameraReportUtils::ReportCameraError<int32_t>(
@@ -64,30 +59,27 @@ template void CameraReportUtils::ReportCameraError<int32_t>(
 template void CameraReportUtils::ReportCameraError<uint32_t>(
     std::string, std::string, uint32_t);
  
+
 void CameraReportUtils::ReportCameraGetNullStr(std::string funcName, std::string useFunc)
 {
-    std::string str = funcName;
-    str += " use ";
-    str += useFunc;
-    str += "get null string ";
+    std::ostringstream oss;
+    oss << funcName << " use " << useFunc << " get null string";
     HiSysEventWrite(
         HiviewDFX::HiSysEvent::Domain::CAMERA,
         "CAMERA_ERR",
         HiviewDFX::HiSysEvent::EventType::FAULT,
-        "MSG", str);
+        "MSG", oss.str());
 }
  
 void CameraReportUtils::ReportCameraFail(std::string funcName, std::string useFunc)
 {
-    std::string str = funcName;
-    str += " use ";
-    str += useFunc;
-    str += " is false";
+    std::ostringstream oss;
+    oss << funcName << " use " << useFunc << " is false";
     HiSysEventWrite(
         HiviewDFX::HiSysEvent::Domain::CAMERA,
         "CAMERA_ERR",
         HiviewDFX::HiSysEvent::EventType::FAULT,
-        "MSG", str);
+        "MSG", oss.str());
 }
  
 }  // namespace CameraStandard
