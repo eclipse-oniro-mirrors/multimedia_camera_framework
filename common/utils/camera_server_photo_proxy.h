@@ -77,7 +77,7 @@ public:
     void SetLatitude(double latitude);
     void SetLongitude(double longitude);
     void SetPhotoId(std::string photoId);
-    int32_t GetVideoEnhancementType();// wait for media_lib
+    int32_t GetVideoEnhancementType() override;
     void SetVideoEnhancementType(int32_t videoEnhancementType);
     void SetHighQuality(bool isHigh);
 

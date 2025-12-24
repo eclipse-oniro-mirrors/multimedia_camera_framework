@@ -56,7 +56,7 @@ PhotoAssetAdapter::PhotoAssetAdapter(
         .packageName = bundleName
     };
     photoAssetProxy_ = g_mediaLibraryManager->CreatePhotoAssetProxy(
-        callerInfo, static_cast<Media::CameraShotType>(cameraShotType));// wait for media_lib
+        callerInfo, static_cast<Media::CameraShotType>(cameraShotType), photoCount);
     CHECK_EXECUTE(!photoAssetProxy_, CameraReportUtils::GetInstance().ReportCameraCreateNullptr(
         "PhotoAssetAdapter::PhotoAssetAdapter", "Media::MediaLibraryManager::CreatePhotoAssetProxy"));
 }
@@ -82,7 +82,7 @@ int32_t PhotoAssetAdapter::GetVideoFd(VideoType videoType)
 {
     int32_t res = -1;
     CHECK_RETURN_RET(!photoAssetProxy_, res);
-    res = photoAssetProxy_->GetVideoFd();// wait for media_lib
+    res = photoAssetProxy_->GetVideoFd(static_cast<Media::VideoType>(videoType));
     CHECK_EXECUTE(res == -1, CameraReportUtils::GetInstance().ReportCameraFail(
         "PhotoAssetAdapter::GetVideoFd", "Media::PhotoAssetProxy::GetVideoFd"));
     return res;
@@ -96,7 +96,7 @@ int32_t PhotoAssetAdapter::GetUserId()
 void PhotoAssetAdapter::NotifyVideoSaveFinished(VideoType videoType)
 {
     if (photoAssetProxy_) {
-        photoAssetProxy_->NotifyVideoSaveFinished();// wait for media_lib
+        photoAssetProxy_->NotifyVideoSaveFinished(static_cast<Media::VideoType>(videoType));
     }
 }
 
@@ -120,7 +120,7 @@ void PhotoAssetAdapter::UpdatePhotoProxy(const sptr<Media::PhotoProxy> &photoPro
 {
     MEDIA_INFO_LOG("PhotoAssetAdapter::UpdatePhotoProxy is called");
     if (photoAssetProxy_) {
-        MEDIA_ERR_LOG("not apply: photoAssetProxy_->UpdatePhotoProxy(photoProxy);");// wait for media_lib
+        photoAssetProxy_->UpdatePhotoProxy(photoProxy);
     }
 }
 
