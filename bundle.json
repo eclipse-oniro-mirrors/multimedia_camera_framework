@@ -50,6 +50,7 @@
               "ipc",
               "image_effect",
               "image_framework",
+              "libexif",
               "media_foundation",
               "media_library",
               "runtime_core",
