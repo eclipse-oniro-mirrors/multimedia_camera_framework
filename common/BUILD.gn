@@ -53,7 +53,7 @@ common_sources = [
   "src/timer/core/timer_core.cpp",
   "src/timer/steady_clock.cpp",
   "src/timer/time_broker.cpp",
-  "src/timer/timer.cpp",
+  "src/timer/camera_deferred_timer.cpp",
   "utils/av_codec/src/av_codec_proxy.cpp",
   "utils/camera_dynamic_loader.cpp",
   "utils/camera_metadata.cpp",

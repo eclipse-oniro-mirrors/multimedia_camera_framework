@@ -20,7 +20,7 @@
 #include <queue>
 #include <thread>
 
-#include "timer/timer.h"
+#include "camera_deferred_timer.h"
 
 namespace OHOS {
 namespace CameraStandard {
