@@ -18,7 +18,7 @@
 #include "message_parcel.h"
 #include "securec.h"
 #include <memory>
-#include "timer.h"
+#include "camera_deferred_timer.h"
 
 namespace OHOS {
 namespace CameraStandard {

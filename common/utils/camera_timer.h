@@ -15,7 +15,7 @@
 #ifndef CAMERA_TIMER_H
 #define CAMERA_TIMER_H
 
-#include "commonlibrary/c_utils/base/include/timer.h"
+#include "timer.h"
 
 namespace OHOS {
 namespace CameraStandard {

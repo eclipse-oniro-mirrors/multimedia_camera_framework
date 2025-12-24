@@ -31,7 +31,6 @@
 #include "metadata_utils.h"
 #include "output/metadata_output.h"
 #include "session/capture_session.h"
-#include "timer.h"
 #include "time_broker.h"
 #include "display_manager_lite.h"
 
