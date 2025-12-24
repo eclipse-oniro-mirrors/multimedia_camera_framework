@@ -93,11 +93,12 @@ public:
     void OnCaptureError(const int32_t captureId, const int32_t errorCode) const override;
     void OnEstimatedCaptureDuration(const int32_t duration) const override;
     void OnOfflineDeliveryFinished(const int32_t captureId) const override;
+    void OnConstellationDrawingState(const int32_t state) const override;
     void OnPhotoAvailable(const std::shared_ptr<Media::NativeImage> nativeImage, bool isRaw) const override;
     void OnPhotoAvailable(const std::shared_ptr<Media::Picture> picture) const override;
     void OnPhotoAssetAvailable(const int32_t captureId, const std::string &uri,
         int32_t cameraShotType, const std::string &burstKey) const override;
-    void OnThumbnailAvailable(const OHOS::CameraStandard::WatermarkInfo &info,
+    void OnThumbnailAvailable(int32_t captureId, int64_t timestamp,
         std::unique_ptr<Media::PixelMap> pixelMap) const override;
 
 private:
@@ -113,7 +114,7 @@ private:
     void OnPhotoAvailableCallback(const std::shared_ptr<Media::Picture> picture) const;
     void OnPhotoAssetAvailableCallback(const int32_t captureId, const std::string &uri,
         int32_t cameraShotType, const std::string &burstKey) const;
-    void OnThumbnailAvailableCallback(const OHOS::CameraStandard::WatermarkInfo &info,
+    void OnThumbnailAvailableCallback(int32_t captureId, int64_t timestamp,
         std::unique_ptr<Media::PixelMap>& pixelMap) const;
 };
 
@@ -141,6 +142,8 @@ public:
     void OffEstimatedCaptureDuration(optional_view<callback<void(uintptr_t, double)>> callback);
     void OnPhotoAvailable(callback_view<void(uintptr_t, weak::Photo)> callback);
     void OffPhotoAvailable(optional_view<callback<void(uintptr_t, weak::Photo)>> callback);
+    void OnPhotoAvailableEx(callback_view<void(weak::PhotoEx data)> callback);
+    void OffPhotoAvailableEx(optional_view<callback<void(weak::PhotoEx data)>> callback);
     void OnDeferredPhotoProxyAvailable(callback_view<void(uintptr_t, weak::DeferredPhotoProxy)> callback);
     void OffDeferredPhotoProxyAvailable(optional_view<callback<void(uintptr_t, weak::DeferredPhotoProxy)>> callback);
     void OnOfflineDeliveryFinished(callback_view<void(uintptr_t, uintptr_t)> callback);
@@ -227,7 +230,6 @@ private:
     OHOS::sptr<OHOS::CameraStandard::PhotoOutput> photoOutput_ = nullptr;
     std::shared_ptr<OHOS::CameraStandard::Profile> profile_;
     std::shared_ptr<PhotoOutputCallbackAni> photoOutputCallback_ = nullptr;
-    std::shared_ptr<uintptr_t> rawCallback_;
     bool isQuickThumbnailEnabled_ = false;
     bool isMirrorEnabled_ = false;
     bool isDeferredPhotoEnabled_ = false;

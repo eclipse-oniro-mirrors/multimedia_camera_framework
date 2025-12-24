@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -22,13 +22,20 @@ namespace OHOS::Media {
     class PhotoProxy;
 }
 namespace OHOS::CameraStandard {
+enum VideoType {
+    ORIGIN_VIDEO = 0,
+    XT_ORIGIN_VIDEO = 1,
+    XT_EFFECT_VIDEO = 2
+};
 class PhotoAssetIntf {
 public:
     virtual void AddPhotoProxy(sptr<Media::PhotoProxy> photoProxy);
     virtual std::string GetPhotoAssetUri();
-    virtual int32_t GetVideoFd();
-    virtual void NotifyVideoSaveFinished();
+    virtual int32_t GetVideoFd(VideoType videoType);
+    virtual void NotifyVideoSaveFinished(VideoType videoType);
     virtual int32_t GetUserId();
+    virtual int32_t OpenAsset();
+    virtual void UpdatePhotoProxy(const sptr<Media::PhotoProxy> &photoProxy);
     virtual ~PhotoAssetIntf() = default;
     virtual void RegisterPhotoStateCallback(const std::function<void(int32_t)> &callback);
     virtual void UnregisterPhotoStateCallback();

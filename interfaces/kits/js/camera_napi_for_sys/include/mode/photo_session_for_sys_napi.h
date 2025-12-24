@@ -31,6 +31,10 @@ public:
 
     static void PhotoSessionForSysNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
     static napi_value PhotoSessionForSysNapiConstructor(napi_env env, napi_callback_info info);
+    static napi_value IsExternalCameraLensBoostSupported(napi_env env, napi_callback_info info);
+    static napi_value EnableExternalCameraLensBoost(napi_env env, napi_callback_info info);
+
+    static const std::vector<napi_property_descriptor> photo_session_sys_props;
 
     napi_env env_;
     sptr<PhotoSessionForSys> photoSessionForSys_;
@@ -40,6 +44,10 @@ protected:
         const std::vector<napi_value>& args, bool isOnce) override;
     void UnregisterPressureStatusCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
+    void RegisterCameraSwitchRequestCallbackListener(const std::string &eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value> &args, bool isOnce) override;
+    void UnregisterCameraSwitchRequestCallbackListener(
+        const std::string &eventName, napi_env env, napi_value callback, const std::vector<napi_value> &args) override;
 };
 }
 }

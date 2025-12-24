@@ -106,6 +106,14 @@
         }                                                   \
     } while (0)
 
+#define DP_CHECK_EXECUTE_AND_RETURN(cond, cmd)              \
+    do {                                                    \
+        if (cond) {                                         \
+            cmd;                                            \
+            return;                                         \
+        }                                                   \
+    } while (0)
+
 #define DP_CHECK_RETURN(cond)                               \
     do {                                                    \
         if (cond) {                                         \

@@ -36,6 +36,7 @@ protected:
     explicit EventSubscriber(const EventFwk::CommonEventSubscribeInfo& subscriberInfo);
 
 private:
+    std::mutex mutex_;
     static const std::vector<std::string> events_;
     std::unordered_map<std::string, std::shared_ptr<EventStrategy>> eventStrategy_ {};
 };

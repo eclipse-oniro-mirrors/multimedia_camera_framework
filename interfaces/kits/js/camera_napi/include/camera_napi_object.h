@@ -41,6 +41,25 @@ public:
 
     CameraNapiObject(CameraNapiObjFieldMap fieldMap) : fieldMap_(fieldMap) {}
 
+    template<typename T>
+    bool GetFieldMapValueByKey(const std::string& key, T& result) const
+    {
+        auto it = fieldMap_.find(key);
+        if (it == fieldMap_.end()) {
+            return false;
+        }
+        const NapiVariantBindAddr& variantAddr = it->second;
+        auto variantAddrPointer = std::get_if<T*>(&variantAddr);
+        if (variantAddrPointer == nullptr) {
+            return false;
+        }
+        if (!*variantAddrPointer) {
+            return false;
+        }
+        result = **variantAddrPointer;
+        return true;
+    }
+
     napi_status ParseNapiObjectToMap(napi_env env, napi_value napiObject)
     {
         napi_valuetype type = napi_undefined;

@@ -21,14 +21,15 @@ namespace CameraStandard {
 namespace DeferredProcessing {
 void StateMachine::ChangeStateTo(const std::shared_ptr<State> &targetState)
 {
+    DP_CHECK_RETURN_LOG(targetState == nullptr, "targetState is null");
     DP_CHECK_RETURN_LOG(currState_ == targetState, "already is type: %{public}d", currState_->GetState());
 
     std::shared_ptr<State> lastState = currState_;
     currState_ = targetState;
     if (lastState == nullptr) {
-        DP_INFO_LOG("change to %{public}d", currState_->GetState());
+        DP_DEBUG_LOG("change to %{public}d", currState_->GetState());
     } else {
-        DP_INFO_LOG("from %{public}d to %{public}d", lastState->GetState(), currState_->GetState());
+        DP_DEBUG_LOG("from %{public}d to %{public}d", lastState->GetState(), currState_->GetState());
         lastState->OnStateExited();
     }
     currState_->OnStateEntered();

@@ -46,6 +46,8 @@ enum CaptureOutputType {
     CAPTURE_OUTPUT_TYPE_VIDEO,
     CAPTURE_OUTPUT_TYPE_METADATA,
     CAPTURE_OUTPUT_TYPE_DEPTH_DATA,
+    CAPTURE_OUTPUT_TYPE_MOVIE_FILE,
+    CAPTURE_OUTPUT_TYPE_UNIFY_MOVIE_FILE,
     CAPTURE_OUTPUT_TYPE_MAX
 };
 
@@ -121,6 +123,7 @@ public:
     virtual int32_t Release() = 0;
 
     CaptureOutputType GetOutputType();
+    bool IsVideoProfileType();
     const char* GetOutputTypeString();
     StreamType GetStreamType();
     sptr<IStreamCommon> GetStream();
@@ -148,6 +151,8 @@ public:
     virtual void AddTag(Tag tag) final;
     virtual void RemoveTag(Tag tag) final;
     virtual bool IsTagSetted(Tag tag) final;
+
+    bool IsMultiStreamOutput();
 
 protected:
     virtual sptr<IBufferProducer> GetBufferProducer() final;

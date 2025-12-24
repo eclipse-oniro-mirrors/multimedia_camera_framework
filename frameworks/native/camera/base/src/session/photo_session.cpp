@@ -22,8 +22,11 @@
 #include "camera_device.h"
 #include "camera_error_code.h"
 #include "camera_log.h"
+#include "camera_util.h"
 #include "capture_scene_const.h"
 #include "capture_session.h"
+#include "icapture_session.h"
+#include "input/camera_input.h"
 #include "input/camera_manager.h"
 #include "output/camera_output_capability.h"
 
@@ -199,9 +202,7 @@ bool PhotoSession::IsPreconfigProfilesLegal(std::shared_ptr<PreconfigProfiles> c
     for (auto& device : cameraList) {
         MEDIA_INFO_LOG("PhotoSession::IsPreconfigProfilesLegal check camera:%{public}s type:%{public}d",
             device->GetID().c_str(), device->GetCameraType());
-        if (device->GetCameraType() != CAMERA_TYPE_DEFAULT) {
-            continue;
-        }
+        CHECK_CONTINUE(device->GetCameraType() != CAMERA_TYPE_DEFAULT);
         // Check photo
         bool isPhotoCanPreconfig = IsPhotoProfileLegal(device, configs->photoProfile);
         CHECK_RETURN_RET_ELOG(!isPhotoCanPreconfig, false,
@@ -231,8 +232,9 @@ bool PhotoSession::IsPhotoProfileLegal(sptr<CameraDevice>& device, Profile& phot
         "PhotoSession::CanPreconfig check photo profile fail, empty photo profiles");
     auto photoProfiles = photoProfilesIt->second;
     return std::any_of(photoProfiles.begin(), photoProfiles.end(), [&photoProfile](auto& profile) {
-        CHECK_RETURN_RET(!photoProfile.sizeFollowSensorMax_, profile == photoProfile);
-        return IsProfileSameRatio(profile, photoProfile.sizeRatio_, RATIO_VALUE_4_3);
+        return !photoProfile.sizeFollowSensorMax_ ?
+            profile == photoProfile :
+            IsProfileSameRatio(profile, photoProfile.sizeRatio_, RATIO_VALUE_4_3);
     });
     // LCOV_EXCL_STOP
 }

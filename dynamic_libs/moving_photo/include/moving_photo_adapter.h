@@ -17,6 +17,7 @@
 #define MOVING_PHOTO_ADAPTER_H
 
 #include "moving_photo_interface.h"
+#include "moving_photo_manager.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -26,18 +27,19 @@ public:
     ~AvcodecTaskManagerAdapter() override;
     int32_t CreateAvcodecTaskManager(sptr<AudioCapturerSessionIntf> audioCapturerSessionIntf,
         VideoCodecType type, int32_t colorSpace) override;
-    int32_t CreateAvcodecTaskManager(wptr<Surface> movingSurface, shared_ptr<Size> size,
+    int32_t CreateAvcodecTaskManager(wptr<Surface> movingSurface, std::shared_ptr<Size> size,
         sptr<AudioCapturerSessionIntf> audioCapturerSessionIntf, VideoCodecType type, int32_t colorSpace) override;
     void SetVideoBufferDuration(uint32_t preBufferCount, uint32_t postBufferCount) override;
     void SetVideoFd(int64_t timestamp, std::shared_ptr<PhotoAssetIntf> photoAssetProxy, int32_t captureId) override;
+    uint32_t GetDeferredVideoEnhanceFlag(int32_t captureId) override;
+    void SetDeferredVideoEnhanceFlag(int32_t captureId, uint32_t deferredVideoEnhanceFlag) override;
+    void SetVideoId(int32_t captureId, std::string videoId) override;
     void SubmitTask(std::function<void()> task) override;
-    void EncodeVideoBuffer(sptr<FrameRecord> frameRecord, CacheCbFunc cacheCallback) override;
-    void DoMuxerVideo(std::vector<sptr<FrameRecord>> frameRecords, uint64_t taskName, int32_t rotation,
-        int32_t captureId) override;
     bool isEmptyVideoFdMap() override;
     bool TaskManagerInsertStartTime(int32_t captureId, int64_t startTimeStamp) override;
     bool TaskManagerInsertEndTime(int32_t captureId, int64_t endTimeStamp) override;
-    void NotifyEOS() override;
+    void SetMutexMap(int64_t timestamp) override;
+    void RecordVideoType(int32_t captureId, VideoType type) override;
     sptr<AvcodecTaskManager> GetTaskManager() const;
 private:
     sptr<AvcodecTaskManager> avcodecTaskManager_ = nullptr;
@@ -55,18 +57,31 @@ private:
     sptr<AudioCapturerSession> audioCapturerSession_ = nullptr;
 };
 
-class MovingPhotoVideoCacheAdapter : public MovingPhotoVideoCacheIntf {
+class MovingPhotoManagerAdapter : public MovingPhotoManagerIntf {
 public:
-    MovingPhotoVideoCacheAdapter();
-    ~MovingPhotoVideoCacheAdapter() override;
-    int32_t CreateMovingPhotoVideoCache(sptr<AvcodecTaskManagerIntf> avcodecTaskManagerIntf) override;
-    void OnDrainFrameRecord(sptr<FrameRecord> frame) override;
-    void GetFrameCachedResult(std::vector<sptr<FrameRecord>> frameRecords,
-        uint64_t taskName, int32_t rotation, int32_t captureId) override;
+    MovingPhotoManagerAdapter();
+    ~MovingPhotoManagerAdapter() override;
+
+    void StartAudioCapture() override;
+    void SetVideoFd(int64_t timestamp, std::shared_ptr<PhotoAssetIntf> photoAssetProxy, int32_t captureId) override;
+    void ExpandMovingPhoto(VideoType videoType, int32_t width, int32_t height, ColorSpace colorspace,
+        sptr<Surface> videoSurface, sptr<Surface> metaSurface, sptr<AvcodecTaskManagerIntf>& taskManager) override;
+    void SetBrotherListener() override;
+    void SetBufferDuration(uint32_t preBufferDuration, uint32_t postBufferDuration) override;
+    void ReleaseStreamStruct(VideoType videoType) override;
+    void StopMovingPhoto(VideoType type) override;
+    void ChangeListenerSetXtStyleType(bool isXtStyleEnabled) override;
+    void StartRecord(uint64_t timestamp, int32_t rotation, int32_t captureId,
+        ColorStylePhotoType colorStylePhotoType, bool isXtStyleEnabled) override;
+    void InsertStartTime(int32_t captureId, int64_t startTimeStamp) override;
+    void InsertEndTime(int32_t captureId, int64_t endTimeStamp) override;
+    void SetClearFlag() override;
+    void SetDeferredVideoEnhanceFlag(int32_t captureId, uint32_t deferredFlag, std::string videoId,
+        ColorStylePhotoType colorStylePhotoType, bool isXtStyleEnabled) override;
+    void Release() override;
 private:
-    sptr<MovingPhotoVideoCache> movingPhotoVideoCache_ = nullptr;
-    wptr<MovingPhotoVideoCache> videoCache_ = nullptr;
+    sptr<MovingPhotoManager> movingPhotoManager_ = nullptr;
 };
 } // namespace CameraStandard
 } // namespace OHOS
-#endif //MOVING_PHOTO_ADAPTER_H
+#endif // MOVING_PHOTO_ADAPTER_H

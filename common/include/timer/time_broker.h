@@ -16,12 +16,10 @@
 #ifndef OHOS_DEFERRED_PROCESSING_SERVICE_TIME_BROKER_H
 #define OHOS_DEFERRED_PROCESSING_SERVICE_TIME_BROKER_H
 
-
 #include <map>
-
 #include <queue>
 
-#include "timer/camera_deferred_timer.h"
+#include "timer.h"
 
 namespace OHOS {
 namespace CameraStandard {

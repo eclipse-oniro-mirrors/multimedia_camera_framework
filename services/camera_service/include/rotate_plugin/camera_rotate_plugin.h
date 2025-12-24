@@ -97,4 +97,4 @@ private:
 };
 }
 }
-#endif /* CAMERA_ROTATE_PLUGIN_H */
+#endif /* CAMERA_ROTATE_PLUGIN_H */

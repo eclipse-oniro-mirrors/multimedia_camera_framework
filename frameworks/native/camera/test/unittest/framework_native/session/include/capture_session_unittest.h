@@ -111,15 +111,33 @@ public:
     sptr<IStreamCommon> stream)
         : OHOS::CameraStandard::CaptureOutput(type, streamType, bufferProducer, stream) {}
     
-    int32_t Release()
-    {
+    int32_t Release() {
         return 0;
     }
     void CameraServerDied(pid_t pid) {}
-    int32_t CreateStream()
-    {
+    int32_t CreateStream() {
         return 0;
     }
+};
+ 
+class MockCompositionPositionCalibrationCallback : public OHOS::CameraStandard::CompositionPositionCalibrationCallback {
+    void OnCompositionPositionCalibrationAvailable(const CompositionPositionCalibrationInfo info) const override {}
+};
+
+class MockCompositionBeginCallback : public OHOS::CameraStandard::CompositionBeginCallback {
+    void OnCompositionBeginAvailable() const override {}
+};
+
+class MockCompositionEndCallback : public OHOS::CameraStandard::CompositionEndCallback {
+    void OnCompositionEndAvailable(CompositionEndState state) const override {}
+};
+
+class MockCompositionPositionMatchCallback : public OHOS::CameraStandard::CompositionPositionMatchCallback {
+    void OnCompositionPositionMatchAvailable(std::vector<float> zoomRatios) const override {}
+};
+
+class MockImageStabilizationGuideCallback : public OHOS::CameraStandard::ImageStabilizationGuideCallback {
+    void OnImageStabilizationGuideChange(std::vector<Point> lineSegments) override {}
 };
 
 class MockFeatureDetectionStatusCallback : public OHOS::CameraStandard::FeatureDetectionStatusCallback {

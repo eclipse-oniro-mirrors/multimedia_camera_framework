@@ -29,9 +29,7 @@ SchedulerManager::~SchedulerManager()
 {
     DP_INFO_LOG("entered.");
     photoController_.clear();
-    videoPosts_.clear();
     videoController_.clear();
-    videoProcessors_.clear();
 }
 
 int32_t SchedulerManager::Initialize()
@@ -43,10 +41,7 @@ int32_t SchedulerManager::Initialize()
 std::shared_ptr<PhotoPostProcessor> SchedulerManager::GetPhotoPostProcessor(const int32_t userId)
 {
     DP_DEBUG_LOG("entered.");
-    auto controller = GetPhotoController(userId);
-    DP_CHECK_ERROR_RETURN_RET_LOG(controller == nullptr, nullptr,
-        "PhotoPostProcessor not found for userId: %{public}d.", userId);
-    auto process = controller->GetPhotoProcessor();
+    auto process = GetPhotoProcessor(userId);
     DP_CHECK_ERROR_RETURN_RET_LOG(process == nullptr, nullptr,
         "PhotoPostProcessor not found for userId: %{public}d.", userId);
     return process->GetPhotoPostProcessor();
@@ -73,6 +68,7 @@ std::shared_ptr<DeferredPhotoController> SchedulerManager::GetPhotoController(co
 void SchedulerManager::CreatePhotoProcessor(const int32_t userId)
 {
     DP_DEBUG_LOG("entered");
+    DP_CHECK_RETURN(photoController_.find(userId) != photoController_.end());
     auto photoRepository = PhotoJobRepository::Create(userId);
     auto photoPost = PhotoPostProcessor::Create(userId);
     auto photoProcessor = DeferredPhotoProcessor::Create(userId, photoRepository, photoPost);
@@ -82,20 +78,19 @@ void SchedulerManager::CreatePhotoProcessor(const int32_t userId)
 
 std::shared_ptr<VideoPostProcessor> SchedulerManager::GetVideoPostProcessor(const int32_t userId)
 {
-    DP_DEBUG_LOG("entered.");
-    auto it = videoPosts_.find(userId);
-    DP_CHECK_ERROR_RETURN_RET_LOG(it == videoPosts_.end(), nullptr,
-        "VideoPostProcessor not found for userId: %{public}d", userId);
-    return it->second;
+    auto process = GetVideoProcessor(userId);
+    DP_CHECK_ERROR_RETURN_RET_LOG(process == nullptr, nullptr,
+        "PhotoPostProcessor not found for userId: %{public}d.", userId);
+    return process->GetVideoPostProcessor();
 }
 
 std::shared_ptr<DeferredVideoProcessor> SchedulerManager::GetVideoProcessor(const int32_t userId)
 {
     DP_DEBUG_LOG("entered.");
-    auto it = videoProcessors_.find(userId);
-    DP_CHECK_ERROR_RETURN_RET_LOG(it == videoProcessors_.end(), nullptr,
-        "VideoProcessor not found for userId: %{public}d", userId);
-    return it->second;
+    auto controller = GetVideoController(userId);
+    DP_CHECK_ERROR_RETURN_RET_LOG(controller == nullptr, nullptr,
+        "VideoProcessor not found for userId: %{public}d.", userId);
+    return controller->GetVideoProcessor();
 }
 
 std::shared_ptr<DeferredVideoController> SchedulerManager::GetVideoController(const int32_t userId)
@@ -107,17 +102,14 @@ std::shared_ptr<DeferredVideoController> SchedulerManager::GetVideoController(co
     return it->second;
 }
 
-void SchedulerManager::CreateVideoProcessor(const int32_t userId,
-    const std::shared_ptr<IVideoProcessCallbacks>& callbacks)
+void SchedulerManager::CreateVideoProcessor(const int32_t userId)
 {
     DP_DEBUG_LOG("entered.");
-    auto videoRepository = std::make_shared<VideoJobRepository>(userId);
-    auto videoPost = CreateShared<VideoPostProcessor>(userId);
-    auto videoProcessor = CreateShared<DeferredVideoProcessor>(videoRepository, videoPost, callbacks);
-    auto videoController = CreateShared<DeferredVideoController>(userId, videoRepository, videoProcessor);
-    videoController->Initialize();
-    videoPosts_[userId] = videoPost;
-    videoProcessors_[userId] = videoProcessor;
+    DP_CHECK_RETURN(videoController_.find(userId) != videoController_.end());
+    auto videoRepository = VideoJobRepository::Create(userId);
+    auto videoPost = VideoPostProcessor::Create(userId);
+    auto videoProcessor = DeferredVideoProcessor::Create(userId, videoRepository, videoPost);
+    auto videoController = DeferredVideoController::Create(userId, videoProcessor);
     videoController_[userId] = videoController;
 }
 } // namespace DeferredProcessing

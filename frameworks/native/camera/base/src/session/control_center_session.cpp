@@ -42,56 +42,42 @@ int32_t ControlCenterSession::Release()
 int32_t ControlCenterSession::GetSupportedVirtualApertures(std::vector<float>& apertures)
 {
     MEDIA_INFO_LOG("ControlCenterSession::GetSupportedVirtualApertures");
-    CHECK_RETURN_RET_ELOG(!CheckIsSupportControlCenter(), CAMERA_INVALID_STATE,
-        "Current status does not support control center.");
-    sptr<ICaptureSession> session = nullptr;
-    auto serviceProxy = CameraManager::GetInstance()->GetServiceProxy();
-    CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, CAMERA_INVALID_ARG,
-        "ControlCenterSession::GetSupportedVirtualApertures serviceProxy is null");
-    auto ret = serviceProxy->GetVideoSessionForControlCenter(session);
-    CHECK_RETURN_RET_ELOG(ret != CAMERA_OK || session == nullptr, ret,
+    CHECK_RETURN_RET_ELOG(
+        !CheckIsSupportControlCenter(), CAMERA_INVALID_STATE, "Current status does not support control center.");
+    sptr<ICaptureSession> session = GetSessionForControlCenter();
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARG,
         "ControlCenterSession::GetSupportedVirtualApertures failed, session is nullptr.");
-    ret = session->GetVirtualApertureMetadata(apertures);
-    CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, ret,
-        "ControlCenterSession::GetSupportedVirtualApertures failed, get apertures failed.");
+    auto ret = session->GetVirtualApertureMetadata(apertures);
+    CHECK_RETURN_RET_ELOG(
+        ret != CAMERA_OK, ret, "ControlCenterSession::GetSupportedVirtualApertures failed, get apertures failed.");
     return CAMERA_OK;
 }
 
 int32_t ControlCenterSession::GetVirtualAperture(float& aperture)
 {
     MEDIA_INFO_LOG("ControlCenterSession::GetVirtualAperture");
-    CHECK_RETURN_RET_ELOG(!CheckIsSupportControlCenter(), CAMERA_INVALID_STATE,
-        "Current status does not support control center.");
-    sptr<ICaptureSession> session = nullptr;
-    auto serviceProxy = CameraManager::GetInstance()->GetServiceProxy();
-    CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, CAMERA_INVALID_ARG,
-        "ControlCenterSession::GetVirtualAperture serviceProxy is null");
-    auto ret = serviceProxy->GetVideoSessionForControlCenter(session);
-    CHECK_RETURN_RET_ELOG(ret != CAMERA_OK || session == nullptr, ret,
-        "ControlCenterSession::GetVirtualAperture failed, session is nullptr.");
-    ret = session->GetVirtualApertureValue(aperture);
-    CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, ret,
-        "ControlCenterSession::GetVirtualAperture failed, get aperture failed.");
+    CHECK_RETURN_RET_ELOG(
+        !CheckIsSupportControlCenter(), CAMERA_INVALID_STATE, "Current status does not support control center.");
+    sptr<ICaptureSession> session = GetSessionForControlCenter();
+    CHECK_RETURN_RET_ELOG(
+        session == nullptr, CAMERA_INVALID_ARG, "ControlCenterSession::GetVirtualAperture failed, session is nullptr.");
+    auto ret = session->GetVirtualApertureValue(aperture);
+    CHECK_RETURN_RET_ELOG(
+        ret != CAMERA_OK, ret, "ControlCenterSession::GetVirtualAperture failed, get aperture failed.");
     return CAMERA_OK;
 }
 
 int32_t ControlCenterSession::SetVirtualAperture(const float virtualAperture)
 {
     MEDIA_INFO_LOG("ControlCenterSession::SetVirtualAperture");
-    CHECK_RETURN_RET_ELOG(!CheckIsSupportControlCenter(), CAMERA_INVALID_STATE,
-        "Current status does not support control center.");
-    sptr<ICaptureSession> session = nullptr;
-    auto serviceProxy = CameraManager::GetInstance()->GetServiceProxy();
-    CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, CAMERA_INVALID_ARG,
-        "ControlCenterSession::SetVirtualAperture serviceProxy is null");
-
-    auto ret = serviceProxy->GetVideoSessionForControlCenter(session);
-    CHECK_RETURN_RET_ELOG(ret != CAMERA_OK || session == nullptr, ret,
-        "ControlCenterSession::SetVirtualAperture failed, session is nullptr.");
-    
-    ret = session->SetVirtualApertureValue(virtualAperture, true);
-    CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, ret,
-        "ControlCenterSession::SetVirtualAperture failed, set apertures failed.");
+    CHECK_RETURN_RET_ELOG(
+        !CheckIsSupportControlCenter(), CAMERA_INVALID_STATE, "Current status does not support control center.");
+    sptr<ICaptureSession> session = GetSessionForControlCenter();
+    CHECK_RETURN_RET_ELOG(
+        session == nullptr, CAMERA_INVALID_ARG, "ControlCenterSession::SetVirtualAperture failed, session is nullptr.");
+    auto ret = session->SetVirtualApertureValue(virtualAperture, true);
+    CHECK_RETURN_RET_ELOG(
+        ret != CAMERA_OK, ret, "ControlCenterSession::SetVirtualAperture failed, set apertures failed.");
     MEDIA_INFO_LOG("SetVirtualAperture success, value: %{public}f", virtualAperture);
     return CAMERA_OK;
 }
@@ -114,17 +100,12 @@ int32_t ControlCenterSession::SetPhysicalAperture(float physicalAperture)
 std::vector<int32_t> ControlCenterSession::GetSupportedBeautyTypes()
 {
     MEDIA_INFO_LOG("ControlCenterSession::GetSupportedBeautyTypes");
-    CHECK_RETURN_RET_ELOG(!CheckIsSupportControlCenter(), {},
-        "Current status does not support control center.");
-    sptr<ICaptureSession> session = nullptr;
+    CHECK_RETURN_RET_ELOG(!CheckIsSupportControlCenter(), {}, "Current status does not support control center.");
+    sptr<ICaptureSession> session = GetSessionForControlCenter();
     std::vector<int32_t> metadata = {};
-    auto serviceProxy = CameraManager::GetInstance()->GetServiceProxy();
-    CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, metadata,
-        "ControlCenterSession::GetSupportedBeautyTypes serviceProxy is null");
-    auto ret = serviceProxy->GetVideoSessionForControlCenter(session);
-    CHECK_RETURN_RET_ELOG(ret != CAMERA_OK || session == nullptr, metadata,
-        "ControlCenterSession::GetSupportedBeautyTypes failed, session is nullptr.");
-    ret = session->GetBeautyMetadata(metadata);
+    CHECK_RETURN_RET_ELOG(
+        session == nullptr, {}, "ControlCenterSession::GetSupportedBeautyTypes failed, session is nullptr.");
+    auto ret = session->GetBeautyMetadata(metadata);
     CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, metadata,
         "ControlCenterSession::GetSupportedBeautyTypes failed, get beauty metadata failed.");
     return metadata;
@@ -133,20 +114,14 @@ std::vector<int32_t> ControlCenterSession::GetSupportedBeautyTypes()
 std::vector<int32_t> ControlCenterSession::GetSupportedBeautyRange(BeautyType type)
 {
     MEDIA_INFO_LOG("ControlCenterSession::GetSupportedBeautyRange");
-    CHECK_RETURN_RET_ELOG(!CheckIsSupportControlCenter(), {},
-        "Current status does not support control center.");
-    sptr<ICaptureSession> session = nullptr;
+    CHECK_RETURN_RET_ELOG(!CheckIsSupportControlCenter(), {}, "Current status does not support control center.");
+    sptr<ICaptureSession> session = GetSessionForControlCenter();
     std::vector<int32_t> metadata = {};
-    auto serviceProxy = CameraManager::GetInstance()->GetServiceProxy();
-    CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, metadata,
-        "ControlCenterSession::GetSupportedBeautyRange serviceProxy is null");
-    
-    auto ret = serviceProxy->GetVideoSessionForControlCenter(session);
-    CHECK_RETURN_RET_ELOG(ret != CAMERA_OK || session == nullptr, metadata,
-        "ControlCenterSession::GetSupportedBeautyRange failed, session is nullptr.");
-    ret = session->GetBeautyRange(metadata, type);
-    CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, metadata,
-        "ControlCenterSession::GetSupportedBeautyRange failed, get beauty range failed.");
+    CHECK_RETURN_RET_ELOG(
+        session == nullptr, {}, "ControlCenterSession::GetSupportedBeautyRange failed, session is nullptr.");
+    auto ret = session->GetBeautyRange(metadata, type);
+    CHECK_RETURN_RET_ELOG(
+        ret != CAMERA_OK, metadata, "ControlCenterSession::GetSupportedBeautyRange failed, get beauty range failed.");
     return metadata;
 }
 
@@ -155,16 +130,10 @@ void ControlCenterSession::SetBeauty(BeautyType type, int value)
 {
     MEDIA_INFO_LOG("ControlCenterSession::SetBeauty");
     CHECK_RETURN_ELOG(!CheckIsSupportControlCenter(), "Current status does not support control center.");
-    sptr<ICaptureSession> session = nullptr;
-    auto serviceProxy = CameraManager::GetInstance()->GetServiceProxy();
-    CHECK_RETURN_ELOG(serviceProxy == nullptr,
-        "ControlCenterSession::SetBeauty serviceProxy is null");
-    auto ret = serviceProxy->GetVideoSessionForControlCenter(session);
-    CHECK_RETURN_ELOG(ret != CAMERA_OK || session == nullptr,
-        "ControlCenterSession::SetBeauty failed, session is nullptr.");
-    ret = session->SetBeautyValue(type, value, true);
-    CHECK_RETURN_ELOG(ret != CAMERA_OK,
-        "ControlCenterSession::SetBeauty failed, set beauty failed.");
+    sptr<ICaptureSession> session = GetSessionForControlCenter();
+    CHECK_RETURN_ELOG(session == nullptr, "ControlCenterSession::SetBeauty failed, session is nullptr.");
+    auto ret = session->SetBeautyValue(type, value, true);
+    CHECK_RETURN_ELOG(ret != CAMERA_OK, "ControlCenterSession::SetBeauty failed, set beauty failed.");
     MEDIA_INFO_LOG("SetBeauty success value: %{public}d", value);
 }
 
@@ -172,18 +141,13 @@ int32_t ControlCenterSession::GetBeauty(BeautyType type)
 {
     MEDIA_INFO_LOG("ControlCenterSession::GetBeauty");
     CHECK_RETURN_RET_ELOG(!CheckIsSupportControlCenter(), 0, "Current status does not support control center.");
-    sptr<ICaptureSession> session = nullptr;
+    sptr<ICaptureSession> session = GetSessionForControlCenter();
     int32_t value = 0;
-    auto serviceProxy = CameraManager::GetInstance()->GetServiceProxy();
-    CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, value,
-        "ControlCenterSession::GetBeauty serviceProxy is null");
-    auto ret = serviceProxy->GetVideoSessionForControlCenter(session);
-    CHECK_RETURN_RET_ELOG(ret != CAMERA_OK || session == nullptr, value,
-        "ControlCenterSession::GetBeauty failed, session is nullptr.");
-    ret = session->GetBeautyValue(type, value);
-    CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, value,
-        "ControlCenterSession::GetBeauty failed, get beauty failed.");
-    MEDIA_INFO_LOG("GetBeauty success value:%{public}d", value);
+    CHECK_RETURN_RET_ELOG(session == nullptr, value, "ControlCenterSession::GetBeauty failed, session is nullptr.");
+    auto ret = session->GetBeautyValue(type, value);
+    CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, value, "ControlCenterSession::GetBeauty failed, get beauty failed.");
+
+    MEDIA_INFO_LOG("GetBeauty success value:%{public}d",value);
     return value;
 }
 
@@ -212,5 +176,16 @@ bool ControlCenterSession::CheckIsSupportControlCenter()
     return CameraManager::GetInstance()->GetIsControlCenterSupported();
 }
 
+sptr<ICaptureSession> ControlCenterSession::GetSessionForControlCenter()
+{
+    sptr<ICaptureSession> session = nullptr;
+    auto serviceProxy = CameraManager::GetInstance()->GetServiceProxy();
+    CHECK_RETURN_RET_ELOG(
+        serviceProxy == nullptr, nullptr, "ControlCenterSession::GetSessionForControlCenter serviceProxy is null");
+    auto ret = serviceProxy->GetVideoSessionForControlCenter(session);
+    CHECK_RETURN_RET_ELOG(ret != CAMERA_OK || session == nullptr, nullptr,
+        "ControlCenterSession::GetSessionForControlCenter failed, session is nullptr.");
+    return session;
+}
 } // namespace CameraStandard
 } // namespace OHOS

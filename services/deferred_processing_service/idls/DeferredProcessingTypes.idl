@@ -31,8 +31,15 @@ enum ErrorCode {
 
 enum StatusCode {
     SESSION_STATE_IDLE = 0,
-    SESSION_STATE_RUNNALBE,
+    SESSION_STATE_RUNNABLE,
     SESSION_STATE_RUNNING,
     SESSION_STATE_SUSPENDED,
     SESSION_STATE_PREEMPTED,
+};
+
+enum FdType {
+    SRC = 0,
+    DST = 1,
+    MOVIE = 2,
+    MOVIE_COPY = 3,
 };

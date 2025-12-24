@@ -140,6 +140,9 @@ public:
     static napi_value IsDepthFusionEnabled(napi_env env, napi_callback_info info);
     static napi_value EnableDepthFusion(napi_env env, napi_callback_info info);
 
+    static napi_value IsStageBoostSupported(napi_env env, napi_callback_info info);
+    static napi_value EnableStageBoost(napi_env env, napi_callback_info info);
+
     static napi_value IsFeatureSupported(napi_env env, napi_callback_info info);
     static napi_value EnableFeature(napi_env env, napi_callback_info info);
 
@@ -176,6 +179,7 @@ public:
     static const std::vector<napi_property_descriptor> color_effect_sys_props;
     static const std::vector<napi_property_descriptor> depth_fusion_sys_props;
     static const std::vector<napi_property_descriptor> scene_detection_sys_props;
+    static const std::vector<napi_property_descriptor> stage_boost_props;
     static const std::vector<napi_property_descriptor> effect_suggestion_sys_props;
     static const std::vector<napi_property_descriptor> aperture_sys_props;
     static const std::vector<napi_property_descriptor> color_reservation_sys_props;
@@ -229,6 +233,22 @@ protected:
     void RegisterLightStatusCallbackListener(const std::string& eventName,
         napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce) override;
     void UnregisterLightStatusCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
+    void RegisterStitchingTargetInfoCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce) override;
+    void UnregisterStitchingTargetInfoCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
+    void RegisterStitchingCaptureInfoCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce) override;
+    void UnregisterStitchingCaptureInfoCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
+    void RegisterStitchingHintInfoCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce) override;
+    void UnregisterStitchingHintInfoCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
+    void RegisterStitchingCaptureStateCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce) override;
+    void UnregisterStitchingCaptureStateCallbackListener(const std::string& eventName,
         napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
 };
 } // namespace CameraStandard

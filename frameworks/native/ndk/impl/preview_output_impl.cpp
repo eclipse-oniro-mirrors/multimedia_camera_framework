@@ -40,22 +40,32 @@ public:
     void OnFrameStarted() const override
     {
         MEDIA_DEBUG_LOG("OnFrameStarted is called!");
-        CHECK_EXECUTE(previewOutput_ != nullptr && callback_.onFrameStart != nullptr,
-            callback_.onFrameStart(previewOutput_));
+        CHECK_RETURN(previewOutput_ == nullptr || callback_.onFrameStart == nullptr);
+        callback_.onFrameStart(previewOutput_);
     }
 
     void OnFrameEnded(const int32_t frameCount) const override
     {
         MEDIA_DEBUG_LOG("OnFrameEnded is called! frame count: %{public}d", frameCount);
-        CHECK_EXECUTE(previewOutput_ != nullptr && callback_.onFrameEnd != nullptr,
-            callback_.onFrameEnd(previewOutput_, frameCount));
+        CHECK_RETURN(previewOutput_ == nullptr || callback_.onFrameEnd == nullptr);
+        callback_.onFrameEnd(previewOutput_, frameCount);
     }
 
     void OnError(const int32_t errorCode) const override
     {
         MEDIA_DEBUG_LOG("OnError is called!, errorCode: %{public}d", errorCode);
-        CHECK_EXECUTE(previewOutput_ != nullptr && callback_.onError != nullptr,
-            callback_.onError(previewOutput_, FrameworkToNdkCameraError(errorCode)));
+        CHECK_RETURN(previewOutput_ == nullptr || callback_.onError == nullptr);
+        callback_.onError(previewOutput_, FrameworkToNdkCameraError(errorCode));
+    }
+
+    void OnFramePaused() const override
+    {
+        MEDIA_DEBUG_LOG("OnFramePaused is called!");
+    }
+
+    void OnFrameResumed() const override
+    {
+        MEDIA_DEBUG_LOG("OnFrameResumed is called!");
     }
 
     void OnSketchStatusDataChanged(const SketchStatusData& statusData) const override {}
@@ -75,25 +85,22 @@ Camera_PreviewOutput::Camera_PreviewOutput(sptr<PreviewOutput> &innerPreviewOutp
 Camera_PreviewOutput::~Camera_PreviewOutput()
 {
     MEDIA_DEBUG_LOG("~Camera_PreviewOutput is called");
-    CHECK_RETURN(!innerPreviewOutput_);
     innerPreviewOutput_ = nullptr;
 }
 
 Camera_ErrorCode Camera_PreviewOutput::RegisterCallback(PreviewOutput_Callbacks* callback)
 {
     shared_ptr<InnerPreviewOutputCallback> innerCallback = make_shared<InnerPreviewOutputCallback>(this, callback);
-    if (callbackMap_.SetMapValue(callback, innerCallback)) {
-        innerPreviewOutput_->SetCallback(innerCallback);
-    }
+    CHECK_RETURN_RET(callbackMap_.SetMapValue(callback, innerCallback) == false, CAMERA_OK);
+    innerPreviewOutput_->SetCallback(innerCallback);
     return CAMERA_OK;
 }
 
 Camera_ErrorCode Camera_PreviewOutput::UnregisterCallback(PreviewOutput_Callbacks* callback)
 {
     auto innerCallback = callbackMap_.RemoveValue(callback);
-    if (innerCallback != nullptr) {
-        innerPreviewOutput_->RemoveCallback(innerCallback);
-    }
+    CHECK_RETURN_RET(innerCallback == nullptr, CAMERA_OK);
+    innerPreviewOutput_->RemoveCallback(innerCallback);
     return CAMERA_OK;
 }
 
@@ -173,11 +180,9 @@ Camera_ErrorCode Camera_PreviewOutput::GetSupportedFrameRates(Camera_FrameRateRa
 
 Camera_ErrorCode Camera_PreviewOutput::DeleteFrameRates(Camera_FrameRateRange* frameRateRange)
 {
-    if (frameRateRange != nullptr) {
-        delete[] frameRateRange;
-        frameRateRange = nullptr;
-    }
-
+    CHECK_RETURN_RET(frameRateRange == nullptr, CAMERA_OK);
+    delete[] frameRateRange;
+    frameRateRange = nullptr;
     return CAMERA_OK;
 }
 
@@ -190,25 +195,22 @@ Camera_ErrorCode Camera_PreviewOutput::SetFrameRate(int32_t minFps, int32_t maxF
 Camera_ErrorCode Camera_PreviewOutput::GetActiveFrameRate(Camera_FrameRateRange* frameRateRange)
 {
     std::vector<int32_t> activeFrameRate = innerPreviewOutput_->GetFrameRateRange();
-    CHECK_RETURN_RET_ELOG(activeFrameRate.size() <= 1, CAMERA_SERVICE_FATAL_ERROR,
-        "invalid activeFrameRate size!");
+    CHECK_RETURN_RET_ELOG(activeFrameRate.size() <= 1, CAMERA_SERVICE_FATAL_ERROR, "invalid activeFrameRate size!");
 
     frameRateRange->min = static_cast<uint32_t>(activeFrameRate[0]);
     frameRateRange->max = static_cast<uint32_t>(activeFrameRate[1]);
 
     return CAMERA_OK;
 }
-
 Camera_ErrorCode Camera_PreviewOutput::GetPreviewRotation(int32_t imageRotation,
     Camera_ImageRotation* cameraImageRotation)
 {
-    CHECK_RETURN_RET_ELOG(cameraImageRotation == nullptr, CAMERA_SERVICE_FATAL_ERROR,
-        "GetCameraImageRotation failed");
+    CHECK_RETURN_RET_ELOG(cameraImageRotation == nullptr, CAMERA_SERVICE_FATAL_ERROR, "GetCameraImageRotation failed");
     int32_t cameraOutputRotation = innerPreviewOutput_->GetPreviewRotation(imageRotation);
-    CHECK_RETURN_RET_ELOG(cameraOutputRotation == CAMERA_SERVICE_FATAL_ERROR, CAMERA_SERVICE_FATAL_ERROR,
-        "Camera_PreviewOutput::GetPreviewRotation camera service fatal error! ret: %{public}d", cameraOutputRotation);
     CHECK_RETURN_RET_ELOG(cameraOutputRotation == CAMERA_INVALID_ARGUMENT, CAMERA_INVALID_ARGUMENT,
         "Camera_PreviewOutput::GetPreviewRotation camera invalid argument! ret: %{public}d", cameraOutputRotation);
+    CHECK_RETURN_RET_ELOG(cameraOutputRotation == CAMERA_SERVICE_FATAL_ERROR, CAMERA_SERVICE_FATAL_ERROR,
+        "Camera_PreviewOutput::GetPreviewRotation camera service fatal error! ret: %{public}d", cameraOutputRotation);
     *cameraImageRotation = static_cast<Camera_ImageRotation>(cameraOutputRotation);
     return CAMERA_OK;
 }
@@ -216,9 +218,28 @@ Camera_ErrorCode Camera_PreviewOutput::GetPreviewRotation(int32_t imageRotation,
 Camera_ErrorCode Camera_PreviewOutput::SetPreviewRotation(int32_t imageRotation, bool isDisplayLocked)
 {
     int32_t ret = innerPreviewOutput_->SetPreviewRotation(imageRotation, isDisplayLocked);
-    CHECK_RETURN_RET_ELOG(ret == CAMERA_SERVICE_FATAL_ERROR, CAMERA_SERVICE_FATAL_ERROR,
-        "Camera_PhotoOutput::SetPreviewRotation camera service fatal error! ret: %{public}d", ret);
     CHECK_RETURN_RET_ELOG(ret == CAMERA_INVALID_ARGUMENT, CAMERA_INVALID_ARGUMENT,
         "Camera_PreviewOutput::SetPreviewRotation camera invalid argument! ret: %{public}d", ret);
+    CHECK_RETURN_RET_ELOG(ret == CAMERA_SERVICE_FATAL_ERROR, CAMERA_SERVICE_FATAL_ERROR,
+        "Camera_PhotoOutput::SetPreviewRotation camera service fatal error! ret: %{public}d", ret);
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_PreviewOutput::IsBandwidthCompressionSupported(bool* isSupported)
+{
+    *isSupported = innerPreviewOutput_->IsBandwidthCompressionSupported();
+
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_PreviewOutput::EnableBandwidthCompression(bool enabled)
+{
+    int32_t ret = innerPreviewOutput_->EnableBandwidthCompression(enabled);
+    CHECK_RETURN_RET_ELOG(ret == CAMERA_SERVICE_FATAL_ERROR, CAMERA_SERVICE_FATAL_ERROR,
+        "Camera_PreviewOutput::EnableBandwidthCompression camera service fatal error! ret: %{public}d", ret);
+    CHECK_RETURN_RET_ELOG(ret == CAMERA_SESSION_NOT_CONFIG, CAMERA_SESSION_NOT_CONFIG,
+        "Camera_PreviewOutput::EnableBandwidthCompression camera session not config! ret: %{public}d", ret);
+    CHECK_RETURN_RET_ELOG(ret == CAMERA_OPERATION_NOT_ALLOWED, CAMERA_OPERATION_NOT_ALLOWED,
+        "Camera_PreviewOutput::EnableBandwidthCompression camera operation not allowed! ret: %{public}d", ret);
     return CAMERA_OK;
 }

@@ -23,10 +23,10 @@ void CameraAbilityParseUtil::GetModeInfo(
 {
     int32_t* originInfo = item.data.i32;
     uint32_t count = item.count;
-    CHECK_RETURN(count == 0 || originInfo == nullptr);
+    CHECK_RETURN_ELOG(count == 0 || originInfo == nullptr, "count 0 or originInfo is null");
     uint32_t i = 0;
     uint32_t j = i + STEP_THREE;
-    auto isEnd = [](int32_t *originInfo, uint32_t j) {
+    auto isModeEnd = [](int32_t *originInfo, uint32_t j) {
         return originInfo[j] == MODE_END && originInfo[j - 1] == SPEC_END &&
                 originInfo[j - 2] == STREAM_END && originInfo[j - 3] == DETAIL_END;
     };
@@ -35,7 +35,7 @@ void CameraAbilityParseUtil::GetModeInfo(
             j = j + STEP_FOUR;
             continue;
         }
-        if (isEnd(originInfo, j)) {
+        if (isModeEnd(originInfo, j)) {
             if (originInfo[i] == modeName) {
                 GetSpecInfo(originInfo, i + 1, j - 1, modeInfo);
                 break;
@@ -57,7 +57,7 @@ void CameraAbilityParseUtil::GetAvailableConfiguration(
     CHECK_RETURN_ELOG(ret != CAM_META_SUCCESS, "GetAvailableConfiguration failed due to can't find related tag");
     int32_t* originInfo = item.data.i32;
     uint32_t count = item.count;
-    CHECK_RETURN(count == 0 || originInfo == nullptr);
+    CHECK_RETURN_ELOG(count == 0 || originInfo == nullptr, "count 0 or originInfo is null");
     uint32_t i = 0;
     uint32_t j = i + STEP_ONE;
     while (j < count) {
@@ -87,7 +87,7 @@ void CameraAbilityParseUtil::GetConflictConfiguration(
     CHECK_RETURN_ELOG(ret != CAM_META_SUCCESS, "GetConflictConfiguration failed due to can't find related tag");
     int32_t* originInfo = item.data.i32;
     uint32_t count = item.count;
-    CHECK_RETURN(count == 0 || originInfo == nullptr);
+    CHECK_RETURN_ELOG(count == 0 || originInfo == nullptr, "count 0 or originInfo is null");
     uint32_t i = 0;
     uint32_t j = i + STEP_ONE;
     while (j < count) {
@@ -109,26 +109,20 @@ void CameraAbilityParseUtil::GetConflictConfiguration(
     }
 }
 
-void CameraAbilityParseUtil::GetAbilityInfo(const int32_t modeName, common_metadata_header_t *metadata, uint32_t tagId,
-    std::map<int32_t, std::vector<int32_t>> &infoMap)
+template<typename T>
+void CameraAbilityParseUtil::GetOriginInfo(
+    T *originInfo, uint32_t count, int32_t modeName, std::map<int32_t, MultiTypeArray> &infoMap)
 {
-    infoMap = {};
-    camera_metadata_item_t item;
-    int ret = Camera::FindCameraMetadataItem(metadata, tagId, &item);
-    CHECK_RETURN_ELOG(ret != CAM_META_SUCCESS,
-        "GetAbilityInfo failed due to can't find related tag %{public}u", tagId);
-    int32_t* originInfo = item.data.i32;
-    uint32_t count = item.count;
-    CHECK_RETURN(count == 0 || originInfo == nullptr);
+    CHECK_RETURN_ELOG(count == 0 || originInfo == nullptr, "count 0 or originInfo is null");
     uint32_t i = 0;
     uint32_t j = i + STEP_ONE;
     while (j < count) {
-        if (originInfo[j] != MODE_END) {
+        if (static_cast<int32_t>(originInfo[j] != MODE_END)) {
             j = j + STEP_TWO;
             continue;
         }
-        if (originInfo[j - 1] == INFO_END) {
-            if (originInfo[i] == modeName) {
+        if (static_cast<int32_t>(originInfo[j - 1]) == INFO_END) {
+            if (static_cast<int32_t>(originInfo[i]) == modeName) {
                 GetInfo(originInfo, i + 1, j - 1, infoMap);
                 break;
             } else {
@@ -141,14 +135,43 @@ void CameraAbilityParseUtil::GetAbilityInfo(const int32_t modeName, common_metad
     }
 }
 
+void CameraAbilityParseUtil::GetAbilityInfo(const int32_t modeName, common_metadata_header_t *metadata, uint32_t tagId,
+    std::map<int32_t, MultiTypeArray> &infoMap)
+{
+    infoMap = {};
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata, tagId, &item);
+    CHECK_RETURN_ELOG(ret != CAM_META_SUCCESS, "GetAbilityInfo failed, can't find related tag %{public}u", tagId);
+    if (item.data_type == META_TYPE_INT32) {
+        GetOriginInfo(item.data.i32, item.count, modeName, infoMap);
+    } else if (item.data_type == META_TYPE_FLOAT) {
+        GetOriginInfo(item.data.f, item.count, modeName, infoMap);
+    } else {
+        MEDIA_ERR_LOG("invalid data type");
+    }
+}
+
+void CameraAbilityParseUtil::SaveMap(
+    int32_t specId, std::vector<int32_t> &infoValues, std::map<int32_t, MultiTypeArray> &infoMap)
+{
+    infoMap[specId].i32 = std::move(infoValues);
+}
+
+void CameraAbilityParseUtil::SaveMap(
+    int32_t specId, std::vector<float> &infoValues, std::map<int32_t, MultiTypeArray> &infoMap)
+{
+    infoMap[specId].f = std::move(infoValues);
+}
+
+template<typename T>
 void CameraAbilityParseUtil::GetInfo(
-    int32_t *originInfo, uint32_t start, uint32_t end, std::map<int32_t, std::vector<int32_t>> &infoMap)
+    T *originInfo, uint32_t start, uint32_t end, std::map<int32_t, MultiTypeArray> &infoMap)
 {
     uint32_t i = start;
     uint32_t j = i;
     std::vector<std::pair<uint32_t, uint32_t>> infoIndexRange;
     while (j <= end) {
-        if (originInfo[j] == INFO_END) {
+        if (static_cast<int32_t>(originInfo[j]) == INFO_END) {
             std::pair<uint32_t, uint32_t> indexPair(i, j);
             infoIndexRange.push_back(indexPair);
             i = j + STEP_ONE;
@@ -161,9 +184,9 @@ void CameraAbilityParseUtil::GetInfo(
     for (const auto& indexPair : infoIndexRange) {
         i = indexPair.first;
         j = indexPair.second;
-        int32_t specId = originInfo[i];
-        std::vector<int32_t> infoValues(originInfo + i + 1, originInfo + j);
-        infoMap[specId] = std::move(infoValues);
+        int32_t specId = static_cast<int32_t>(originInfo[i]);
+        std::vector<T> infoValues(originInfo + i + 1, originInfo + j);
+        SaveMap(specId, infoValues, infoMap);
     }
 }
 
@@ -177,7 +200,8 @@ void CameraAbilityParseUtil::GetSpecInfo(int32_t *originInfo, uint32_t start, ui
             j = j + STEP_THREE;
             continue;
         }
-        if (originInfo[j - STEP_ONE] == STREAM_END && originInfo[j - STEP_TWO] == DETAIL_END) {
+        bool isSpecInfo = originInfo[j - STEP_ONE] == STREAM_END && originInfo[j - STEP_TWO] == DETAIL_END;
+        if (isSpecInfo) {
             std::pair<uint32_t, uint32_t> indexPair(i, j);
             specIndexRange.push_back(indexPair);
             i = j + STEP_ONE;
@@ -203,12 +227,12 @@ void CameraAbilityParseUtil::GetStreamInfo(int32_t *originInfo, uint32_t start, 
     uint32_t i = start;
     uint32_t j = i + STEP_ONE;
 
-    std::vector<std::pair<uint32_t, uint32_t>> streamRange;
+    std::vector<std::pair<uint32_t, uint32_t>> streamIndexRange;
     while (j <= end) {
         if (originInfo[j] == STREAM_END) {
             if (originInfo[j - 1] == DETAIL_END) {
                 std::pair<uint32_t, uint32_t> indexPair(i, j);
-                streamRange.push_back(indexPair);
+                streamIndexRange.push_back(indexPair);
                 i = j + STEP_ONE;
                 j = i + STEP_ONE;
             } else {
@@ -218,13 +242,13 @@ void CameraAbilityParseUtil::GetStreamInfo(int32_t *originInfo, uint32_t start, 
             j = j + STEP_TWO;
         }
     }
-    uint32_t streamTypeCount = streamRange.size();
+    uint32_t streamTypeCount = streamIndexRange.size();
     specInfo.streamInfos.resize(streamTypeCount);
 
     for (uint32_t k = 0; k < streamTypeCount; ++k) {
         StreamInfo& streamInfo = specInfo.streamInfos[k];
-        i = streamRange[k].first;
-        j = streamRange[k].second;
+        i = streamIndexRange[k].first;
+        j = streamIndexRange[k].second;
         streamInfo.streamType = originInfo[i];
         GetDetailInfo(originInfo, i + 1, j - 1, streamInfo);
     }
@@ -234,11 +258,11 @@ void CameraAbilityParseUtil::GetDetailInfo(int32_t *originInfo, uint32_t start, 
 {
     uint32_t i = start;
     uint32_t j = i;
-    std::vector<std::pair<uint32_t, uint32_t>> detailRange;
+    std::vector<std::pair<uint32_t, uint32_t>> detailIndexRange;
     while (j <= end) {
         if (originInfo[j] == DETAIL_END) {
             std::pair<uint32_t, uint32_t> indexPair(i, j);
-            detailRange.push_back(indexPair);
+            detailIndexRange.push_back(indexPair);
             i = j + STEP_ONE;
             j = i;
         } else {
@@ -246,13 +270,13 @@ void CameraAbilityParseUtil::GetDetailInfo(int32_t *originInfo, uint32_t start, 
         }
     }
 
-    uint32_t detailCount = detailRange.size();
+    uint32_t detailCount = detailIndexRange.size();
     streamInfo.detailInfos.resize(detailCount);
 
     for (uint32_t k = 0; k < detailCount; ++k) {
         auto &detailInfo = streamInfo.detailInfos[k];
-        i = detailRange[k].first;
-        j = detailRange[k].second;
+        i = detailIndexRange[k].first;
+        j = detailIndexRange[k].second;
         detailInfo.format = static_cast<uint32_t>(originInfo[i++]);
         detailInfo.width = static_cast<uint32_t>(originInfo[i++]);
         detailInfo.height = static_cast<uint32_t>(originInfo[i++]);
@@ -270,11 +294,11 @@ void CameraAbilityParseUtil::GetAvailableConfigInfo(
 {
     uint32_t i = start;
     uint32_t j = i;
-    std::vector<std::pair<uint32_t, uint32_t>> infoRange;
+    std::vector<std::pair<uint32_t, uint32_t>> infoIndexRange;
     while (j <= end) {
         if (originInfo[j] == TAG_END) {
             std::pair<uint32_t, uint32_t> indexPair(i, j-1);
-            infoRange.push_back(indexPair);
+            infoIndexRange.push_back(indexPair);
             i = j + STEP_ONE;
             j = i;
         } else {
@@ -282,11 +306,11 @@ void CameraAbilityParseUtil::GetAvailableConfigInfo(
         }
     }
 
-    uint32_t configInfoCount = infoRange.size();
+    uint32_t configInfoCount = infoIndexRange.size();
     availableConfig.configInfos.resize(configInfoCount);
     for (uint32_t k = 0; k < configInfoCount; ++k) {
-        i = infoRange[k].first;
-        j = infoRange[k].second;
+        i = infoIndexRange[k].first;
+        j = infoIndexRange[k].second;
         auto &configInfo = availableConfig.configInfos[k];
         configInfo.specId = originInfo[i++];
         configInfo.tagIds.resize(j - i + 1);

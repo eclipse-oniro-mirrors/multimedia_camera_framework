@@ -34,7 +34,7 @@ public:
 
     virtual const EmitterFunctions& GetEmitterFunctions() = 0;
 
-    virtual void RegisterCallback(std::shared_ptr<uintptr_t> func, std::string callbackName, bool isOnce) final
+    virtual void RegisterCallback(std::shared_ptr<uintptr_t> func, const std::string& callbackName, bool isOnce) final
     {
         MEDIA_DEBUG_LOG("CameraAniEventEmitter::RegisterCallback:%{public}s", callbackName.c_str());
         auto emitterFunctions = GetEmitterFunctions();
@@ -49,7 +49,7 @@ public:
         }
     }
 
-    virtual void UnregisterCallback(std::shared_ptr<uintptr_t> func, std::string callbackName) final
+    virtual void UnregisterCallback(std::shared_ptr<uintptr_t> func, const std::string& callbackName) final
     {
         MEDIA_DEBUG_LOG("CameraAniEventEmitter::UnregisterCallback functionName:%{public}s", callbackName.c_str());
         auto emitterFunctions = GetEmitterFunctions();

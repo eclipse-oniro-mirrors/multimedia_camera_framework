@@ -14,7 +14,10 @@
  */
 
 #include "video_job_queue_fuzzer.h"
-#include "camera_log.h"
+
+#include <fcntl.h>
+
+#include "dp_log.h"
 #include "message_parcel.h"
 #include "ipc_file_descriptor.h"
 #include "securec.h"
@@ -29,8 +32,9 @@ static const uint8_t* RAW_DATA = nullptr;
 const size_t THRESHOLD = 10;
 static size_t g_dataSize = 0;
 static size_t g_pos;
+const char* TEST_FILE_PATH_1 = "/data/test/VideoJobQueueFuzzTest_test_file1.mp4";
+const char* TEST_FILE_PATH_2 = "/data/test/VideoJobQueueFuzzTest_test_file2.mp4";
 std::shared_ptr<VideoJobQueue> VideoJobQueueFuzzer::fuzz_{nullptr};
-std::shared_ptr<DeferredVideoWork> DeferredVideoWorkFuzzer::fuzz_{nullptr};
 
 /*
 * describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
@@ -56,29 +60,10 @@ template<class T>
 uint32_t GetArrLength(T& arr)
 {
     if (arr == nullptr) {
-        MEDIA_INFO_LOG("%{public}s: The array length is equal to 0", __func__);
+        DP_INFO_LOG("%{public}s: The array length is equal to 0", __func__);
         return 0;
     }
     return sizeof(arr) / sizeof(arr[0]);
-}
-
-void DeferredVideoWorkFuzzer::Initialization()
-{
-    if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
-        return;
-    }
-    uint8_t randomNum = GetData<uint8_t>();
-    std::vector<std::string> testStrings = {"test1", "test2"};
-    std::string videoId_(testStrings[randomNum % testStrings.size()]);
-
-    sptr<IPCFileDescriptor> srcFd = sptr<IPCFileDescriptor>::MakeSptr(GetData<int>());
-    sptr<IPCFileDescriptor> dstFd = sptr<IPCFileDescriptor>::MakeSptr(GetData<int>());
-    
-    DeferredVideoJobPtr jobPtr = std::make_shared<DeferredVideoJob>(videoId_, srcFd, dstFd);
-    auto isAutoSuspend = GetData<bool>();
-    fuzz_ = std::make_shared<DeferredProcessing::
-        DeferredVideoWork>(jobPtr, ExecutionMode::HIGH_PERFORMANCE, isAutoSuspend);
-    CHECK_RETURN_ELOG(!fuzz_, "Create fuzz_ Error");
 }
 
 void VideoJobQueueFuzzer::VideoJobQueueFuzzTest()
@@ -91,17 +76,18 @@ void VideoJobQueueFuzzer::VideoJobQueueFuzzTest()
     std::vector<std::string> testStrings = {"test1", "test2"};
     std::string videoId(testStrings[randomNum % testStrings.size()]);
 
-    sptr<IPCFileDescriptor> srcFd = sptr<IPCFileDescriptor>::MakeSptr(GetData<int>());
-    sptr<IPCFileDescriptor> dstFd = sptr<IPCFileDescriptor>::MakeSptr(GetData<int>());
-    
-    DeferredVideoJobPtr jobPtr = std::make_shared<DeferredVideoJob>(videoId, srcFd, dstFd);
-    if (fuzz_ == nullptr) {
-        DeferredProcessing::VideoJobQueue::Comparator comp =
-            [](DeferredVideoJobPtr a, DeferredVideoJobPtr b) {
-                return a->GetVideoId() < b->GetVideoId();
-            };
-        fuzz_ = std::make_shared<DeferredProcessing::VideoJobQueue>(comp);
-    }
+    int sfd = open(TEST_FILE_PATH_1, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+    int dfd = open(TEST_FILE_PATH_2, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+    DpsFdPtr inputFd = std::make_shared<DpsFd>(sfd);
+    DpsFdPtr outFd = std::make_shared<DpsFd>(dfd);
+    DeferredVideoJobPtr jobPtr = std::make_shared<DeferredVideoJob>(videoId, inputFd, outFd, nullptr, nullptr);
+    DeferredProcessing::VideoJobQueue::Comparator comp =
+        [](DeferredVideoJobPtr a, DeferredVideoJobPtr b) {
+            DP_CHECK_ERROR_RETURN_RET_LOG(!a, false, "CreateDeferredVideoJobPtr Error");
+            DP_CHECK_ERROR_RETURN_RET_LOG(!b, false, "CreateDeferredVideoJobPtr Error");
+            return a->GetVideoId() < b->GetVideoId();
+        };
+    fuzz_ = std::make_shared<DeferredProcessing::VideoJobQueue>(comp);
     fuzz_->Contains(jobPtr);
     fuzz_->Peek();
     fuzz_->Push(jobPtr);
@@ -111,19 +97,15 @@ void VideoJobQueueFuzzer::VideoJobQueueFuzzTest()
     auto x = (GetData<uint32_t>());
     auto y = (GetData<uint32_t>());
     fuzz_->Swap(x, y);
+    remove(TEST_FILE_PATH_1);
+    remove(TEST_FILE_PATH_2);
 }
 
 void Test()
 {
-    auto deferredVideoWork = std::make_unique<DeferredVideoWorkFuzzer>();
-    if (deferredVideoWork == nullptr) {
-        MEDIA_INFO_LOG("deferredVideoWork is null");
-        return;
-    }
-    deferredVideoWork->Initialization();
     auto videoJobQueue = std::make_unique<VideoJobQueueFuzzer>();
     if (videoJobQueue == nullptr) {
-        MEDIA_INFO_LOG("videoJobQueue is null");
+        DP_INFO_LOG("videoJobQueue is null");
         return;
     }
     videoJobQueue->VideoJobQueueFuzzTest();
@@ -147,7 +129,7 @@ bool FuzzTest(const uint8_t* rawData, size_t size)
     if (len > 0) {
         g_testFuncs[code % len]();
     } else {
-        MEDIA_INFO_LOG("%{public}s: The len length is equal to 0", __func__);
+        DP_INFO_LOG("%{public}s: The len length is equal to 0", __func__);
     }
 
     return true;

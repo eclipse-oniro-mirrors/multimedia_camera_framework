@@ -35,7 +35,7 @@ void PreviewOutputCallbackAni::OnFrameStartedCallback() const
 {
     MEDIA_DEBUG_LOG("OnFrameStartedCallback is called");
     auto sharePtr = shared_from_this();
-    auto task = [sharePtr, this]() {
+    auto task = [sharePtr]() {
         uintptr_t undefined = CameraUtilsTaihe::GetUndefined(get_env());
         CHECK_EXECUTE(sharePtr != nullptr,
             sharePtr->ExecuteAsyncCallback("frameStart", 0, "Callback is OK", undefined));
@@ -48,7 +48,7 @@ void PreviewOutputCallbackAni::OnFrameEndedCallback(const int32_t frameCount) co
 {
     MEDIA_DEBUG_LOG("OnFrameEndedCallback is called");
     auto sharePtr = shared_from_this();
-    auto task = [sharePtr, this]() {
+    auto task = [sharePtr]() {
         uintptr_t undefined = CameraUtilsTaihe::GetUndefined(get_env());
         CHECK_EXECUTE(sharePtr != nullptr,
             sharePtr->ExecuteAsyncCallback("frameEnd", 0, "Callback is OK", undefined));
@@ -82,6 +82,32 @@ void PreviewOutputCallbackAni::OnSketchStatusDataChangedCallback(
     mainHandler_->PostTask(task, "OnSketchStatusChanged", 0, OHOS::AppExecFwk::EventQueue::Priority::IMMEDIATE, {});
 }
 
+void PreviewOutputCallbackAni::OnFramePauseCallback() const
+{
+    MEDIA_DEBUG_LOG("OnFramePauseCallback is called");
+    auto sharePtr = shared_from_this();
+    auto task = [sharePtr]() {
+        uintptr_t undefined = CameraUtilsTaihe::GetUndefined(get_env());
+        CHECK_EXECUTE(sharePtr != nullptr,
+            sharePtr->ExecuteAsyncCallback("framePause", 0, "Callback is OK", undefined));
+    };
+    CHECK_RETURN_ELOG(mainHandler_ == nullptr, "callback failed, mainHandler_ is nullptr!");
+    mainHandler_->PostTask(task, "OnFramePause", 0, OHOS::AppExecFwk::EventQueue::Priority::IMMEDIATE, {});
+}
+
+void PreviewOutputCallbackAni::OnFrameResumedCallback() const
+{
+    MEDIA_DEBUG_LOG("OnFrameResumedCallback is called");
+    auto sharePtr = shared_from_this();
+    auto task = [sharePtr]() {
+        uintptr_t undefined = CameraUtilsTaihe::GetUndefined(get_env());
+        CHECK_EXECUTE(sharePtr != nullptr,
+            sharePtr->ExecuteAsyncCallback("frameResumed", 0, "Callback is OK", undefined));
+    };
+    CHECK_RETURN_ELOG(mainHandler_ == nullptr, "callback failed, mainHandler_ is nullptr!");
+    mainHandler_->PostTask(task, "OnFrameResumed", 0, OHOS::AppExecFwk::EventQueue::Priority::IMMEDIATE, {});
+}
+
 void PreviewOutputCallbackAni::OnFrameStarted() const
 {
     MEDIA_DEBUG_LOG("OnFrameStarted is called");
@@ -104,6 +130,18 @@ void PreviewOutputCallbackAni::OnSketchStatusDataChanged(
 {
     MEDIA_DEBUG_LOG("OnSketchStatusDataChanged is called");
     OnSketchStatusDataChangedCallback(sketchStatusData);
+}
+
+void PreviewOutputCallbackAni::OnFramePaused() const
+{
+    MEDIA_DEBUG_LOG("OnFramePause is called");
+    OnFramePauseCallback();
+}
+
+void PreviewOutputCallbackAni::OnFrameResumed() const
+{
+    MEDIA_DEBUG_LOG("OnFrameResumed is called");
+    OnFrameResumedCallback();
 }
 
 PreviewOutputImpl::PreviewOutputImpl(OHOS::sptr<OHOS::CameraStandard::CaptureOutput> output) : CameraOutputImpl(output)
@@ -149,7 +187,7 @@ void PreviewOutputImpl::AddDeferredSurface(string_view surfaceId)
         CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT, "invalid argument surface get fail");
         return;
     }
-    CHECK_RETURN_ELOG(previewOutput_ == nullptr, "EnablAddDeferredSurfaceeSketch failed, videoOutput_ is nullptr");
+    CHECK_RETURN_ELOG(previewOutput_ == nullptr, "AddDeferredSurface failed, previewOutput_ is nullptr");
     auto previewProfile = previewOutput_->GetPreviewProfile();
     CHECK_EXECUTE(previewProfile != nullptr, surface->SetUserData(
         OHOS::CameraStandard::CameraManager::surfaceFormat, std::to_string(previewProfile->GetCameraFormat())));
@@ -197,11 +235,11 @@ Profile PreviewOutputImpl::GetActiveProfile()
         .format = CameraFormat::key_t::CAMERA_FORMAT_YUV_420_SP,
     };
     CHECK_RETURN_RET_ELOG(previewOutput_ == nullptr, res, "GetActiveProfile failed, previewOutput_ is nullptr");
-    auto profile = previewOutput_->GetPhotoProfile();
+    auto profile = previewOutput_->GetPreviewProfile();
     CHECK_RETURN_RET_ELOG(profile == nullptr, res, "GetActiveProfile failed, profile is nullptr");
     CameraFormat cameraFormat = CameraUtilsTaihe::ToTaiheCameraFormat(profile->GetCameraFormat());
-    res.size.height = static_cast<uint32_t>(profile->GetSize().height);
-    res.size.width = static_cast<uint32_t>(profile->GetSize().width);
+    res.size.height = profile->GetSize().height;
+    res.size.width = profile->GetSize().width;
     res.format = cameraFormat;
     return res;
 }
@@ -315,7 +353,13 @@ const PreviewOutputImpl::EmitterFunctions& PreviewOutputImpl::GetEmitterFunction
             &PreviewOutputImpl::UnregisterCommonCallbackListener } },
         { "sketchStatusChanged", {
             &PreviewOutputImpl::RegisterSketchStatusChangedCallbackListener,
-            &PreviewOutputImpl::UnregisterSketchStatusChangedCallbackListener } }
+            &PreviewOutputImpl::UnregisterSketchStatusChangedCallbackListener } },
+        { "framePause", {
+            &PreviewOutputImpl::RegisterFramePauseCallbackListener,
+            &PreviewOutputImpl::UnregisterFramePauseCallbackListener } },
+        { "frameResumed", {
+            &PreviewOutputImpl::RegisterFrameResumeChangedCallbackListener,
+            &PreviewOutputImpl::UnregisterFrameResumeChangedCallbackListener } }
         };
     return funMap;
 }
@@ -409,53 +453,155 @@ void PreviewOutputImpl::UnregisterSketchStatusChangedCallbackListener(const std:
     }
 }
 
+void PreviewOutputImpl::RegisterFramePauseCallbackListener(const std::string& eventName,
+    std::shared_ptr<uintptr_t> callback, bool isOnce)
+{
+    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi On framePause is called!");
+    CHECK_RETURN_ELOG(previewOutput_ == nullptr,
+        "failed to RegisterFramePauseCallbackListener, previewOutput is nullptr");
+    ani_env *env = get_env();
+    auto listener =
+        CameraAniEventListener<PreviewOutputCallbackAni>::RegisterCallbackListener(eventName, env, callback, isOnce);
+    CHECK_RETURN_ELOG(
+        listener == nullptr, "PreviewOutputImpl::RegisterFramePauseCallbackListener listener is null");
+    previewOutput_->SetCallback(listener);
+    previewOutput_->OnNativeRegisterCallback(eventName);
+}
+
+void PreviewOutputImpl::UnregisterFramePauseCallbackListener(const std::string& eventName,
+    std::shared_ptr<uintptr_t> callback)
+{
+    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi Off framePause is called!");
+    CHECK_RETURN_ELOG(previewOutput_ == nullptr,
+        "failed to UnregisterFramePauseCallbackListener, previewOutput is nullptr");
+    ani_env *env = get_env();
+    auto listener =
+        CameraAniEventListener<PreviewOutputCallbackAni>::UnregisterCallbackListener(eventName, env, callback);
+    CHECK_RETURN_ELOG(listener == nullptr,
+        "PreviewOutputImpl::UnregisterFramePauseCallbackListener %{public}s listener is null", eventName.c_str());
+    previewOutput_->OnNativeUnregisterCallback(eventName);
+    if (!(listener->IsEmpty(eventName))) {
+        previewOutput_->RemoveCallback(listener);
+    }
+}
+
+void PreviewOutputImpl::RegisterFrameResumeChangedCallbackListener(const std::string& eventName,
+    std::shared_ptr<uintptr_t> callback, bool isOnce)
+{
+    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi On frameResumed is called!");
+    CHECK_RETURN_ELOG(previewOutput_ == nullptr,
+        "failed to RegisterFrameResumeChangedCallbackListener, previewOutput is nullptr");
+    ani_env *env = get_env();
+    auto listener =
+        CameraAniEventListener<PreviewOutputCallbackAni>::RegisterCallbackListener(eventName, env, callback, isOnce);
+    CHECK_RETURN_ELOG(
+        listener == nullptr, "PreviewOutputImpl::RegisterFrameResumeChangedCallbackListener listener is null");
+    previewOutput_->SetCallback(listener);
+    previewOutput_->OnNativeRegisterCallback(eventName);
+}
+
+void PreviewOutputImpl::UnregisterFrameResumeChangedCallbackListener(const std::string& eventName,
+    std::shared_ptr<uintptr_t> callback)
+{
+    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi Off frameResumed is called!");
+    CHECK_RETURN_ELOG(previewOutput_ == nullptr,
+        "failed to UnregisterFrameResumeChangedCallbackListener, previewOutput is nullptr");
+    ani_env *env = get_env();
+    auto listener =
+        CameraAniEventListener<PreviewOutputCallbackAni>::UnregisterCallbackListener(eventName, env, callback);
+    CHECK_RETURN_ELOG(listener == nullptr,
+        "PreviewOutputImpl::UnregisterFrameResumeChangedCallbackListener %{public}s listener is null",
+        eventName.c_str());
+    previewOutput_->OnNativeUnregisterCallback(eventName);
+    if (!(listener->IsEmpty(eventName))) {
+        previewOutput_->RemoveCallback(listener);
+    }
+}
+
 void PreviewOutputImpl::OnError(callback_view<void(uintptr_t)> callback)
 {
-    MEDIA_ERR_LOG("PreviewOutputImpl::OnError");
     ListenerTemplate<PreviewOutputImpl>::On(this, callback, "error");
 }
 
 void PreviewOutputImpl::OffError(optional_view<callback<void(uintptr_t)>> callback)
 {
-    MEDIA_ERR_LOG("PreviewOutputImpl::OffError");
     ListenerTemplate<PreviewOutputImpl>::Off(this, callback, "error");
 }
 
 void PreviewOutputImpl::OnFrameStart(callback_view<void(uintptr_t, uintptr_t)> callback)
 {
-    MEDIA_ERR_LOG("PreviewOutputImpl::OnFrameStart");
     ListenerTemplate<PreviewOutputImpl>::On(this, callback, "frameStart");
 }
 
 void PreviewOutputImpl::OffFrameStart(optional_view<callback<void(uintptr_t, uintptr_t)>> callback)
 {
-    MEDIA_ERR_LOG("PreviewOutputImpl::OffFrameStart");
     ListenerTemplate<PreviewOutputImpl>::Off(this, callback, "frameStart");
 }
 
 void PreviewOutputImpl::OnFrameEnd(callback_view<void(uintptr_t, uintptr_t)> callback)
 {
-    MEDIA_ERR_LOG("PreviewOutputImpl::OnFrameEnd");
     ListenerTemplate<PreviewOutputImpl>::On(this, callback, "frameEnd");
 }
 
 void PreviewOutputImpl::OffFrameEnd(optional_view<callback<void(uintptr_t, uintptr_t)>> callback)
 {
-    MEDIA_ERR_LOG("PreviewOutputImpl::OffFrameEnd");
     ListenerTemplate<PreviewOutputImpl>::Off(this, callback, "frameEnd");
 }
 
 void PreviewOutputImpl::OnSketchStatusChanged(callback_view<void(uintptr_t, SketchStatusData const&)> callback)
 {
-    MEDIA_ERR_LOG("PreviewOutputImpl::OnSketchStatusChanged");
     ListenerTemplate<PreviewOutputImpl>::On(this, callback, "sketchStatusChanged");
 }
 
 void PreviewOutputImpl::OffSketchStatusChanged(
     optional_view<callback<void(uintptr_t, SketchStatusData const&)>> callback)
 {
-    MEDIA_ERR_LOG("PreviewOutputImpl::OffSketchStatusChanged");
     ListenerTemplate<PreviewOutputImpl>::Off(this, callback, "sketchStatusChanged");
+}
+
+void PreviewOutputImpl::OnFramePause(callback_view<void(uintptr_t, uintptr_t)> callback)
+{
+    ListenerTemplate<PreviewOutputImpl>::On(this, callback, "framePause");
+}
+
+void PreviewOutputImpl::OffFramePause(optional_view<callback<void(uintptr_t, uintptr_t)>> callback)
+{
+    ListenerTemplate<PreviewOutputImpl>::Off(this, callback, "framePause");
+}
+
+void PreviewOutputImpl::OnFrameResumed(callback_view<void(uintptr_t, uintptr_t)> callback)
+{
+    ListenerTemplate<PreviewOutputImpl>::On(this, callback, "frameResumed");
+}
+
+void PreviewOutputImpl::OffFrameResumed(optional_view<callback<void(uintptr_t, uintptr_t)>> callback)
+{
+    ListenerTemplate<PreviewOutputImpl>::Off(this, callback, "frameResumed");
+}
+
+bool PreviewOutputImpl::IsBandwidthCompressionSupported()
+{
+    MEDIA_INFO_LOG("PreviewOutputImpl::IsBandwidthCompressionSupported is called");
+    CHECK_RETURN_RET_ELOG(previewOutput_ == nullptr, false,
+        "IsBandwidthCompressionSupported failed, previewOutput is nullptr");
+
+    bool isSupported = previewOutput_->IsBandwidthCompressionSupported();
+    return isSupported;
+}
+
+void PreviewOutputImpl::EnableBandwidthCompression(bool enabled)
+{
+    MEDIA_INFO_LOG("PreviewOutputImpl::EnableBandwidthCompression is called, enabled: %{public}d", enabled);
+    CHECK_RETURN_ELOG(previewOutput_ == nullptr,
+        "EnableBandwidthCompression failed, previewOutput is nullptr");
+
+    int32_t retCode = previewOutput_->EnableBandwidthCompression(enabled);
+    CHECK_RETURN_ELOG(!CameraUtilsTaihe::CheckError(retCode),
+        "PreviewOutputImpl::EnableBandwidthCompression fail! %{public}d", retCode);
 }
 } // namespace Camera
 } // namespace Ani

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -14,7 +14,7 @@
  */
 
 #include "basic_definitions.h"
- 
+
 #include "dp_log.h"
 
 namespace OHOS {
@@ -72,7 +72,7 @@ StatusCode MapDpsStatus(DpsStatus statusCode)
             code = StatusCode::SESSION_STATE_IDLE;
             break;
         case DpsStatus::DPS_SESSION_STATE_RUNNABLE:
-            code = StatusCode::SESSION_STATE_RUNNALBE;
+            code = StatusCode::SESSION_STATE_RUNNABLE;
             break;
         case DpsStatus::DPS_SESSION_STATE_RUNNING:
             code = StatusCode::SESSION_STATE_RUNNING;
@@ -111,6 +111,29 @@ DpsError MapHdiError(OHOS::HDI::Camera::V1_2::ErrorCode errorCode)
             break;
         case OHOS::HDI::Camera::V1_2::ErrorCode::ERROR_ABORT:
             code = DpsError::DPS_ERROR_IMAGE_PROC_INTERRUPTED;
+            break;
+        default:
+            DP_ERR_LOG("unexpected error code: %{public}d.", errorCode);
+            break;
+    }
+    return code;
+}
+
+DpsError MapHdiVideoError(OHOS::HDI::Camera::V1_2::ErrorCode errorCode)
+{
+    DpsError code = DPS_ERROR_UNKNOWN;
+    switch (errorCode) {
+        case OHOS::HDI::Camera::V1_2::ErrorCode::ERROR_INVALID_ID:
+            code = DPS_ERROR_VIDEO_PROC_INVALID_VIDEO_ID;
+            break;
+        case OHOS::HDI::Camera::V1_2::ErrorCode::ERROR_PROCESS:
+            code = DPS_ERROR_VIDEO_PROC_FAILED;
+            break;
+        case OHOS::HDI::Camera::V1_2::ErrorCode::ERROR_TIMEOUT:
+            code = DPS_ERROR_VIDEO_PROC_TIMEOUT;
+            break;
+        case OHOS::HDI::Camera::V1_2::ErrorCode::ERROR_ABORT:
+            code = DPS_ERROR_VIDEO_PROC_INTERRUPTED;
             break;
         default:
             DP_ERR_LOG("unexpected error code: %{public}d.", errorCode);
@@ -167,7 +190,8 @@ OHOS::HDI::Camera::V1_2::ExecutionMode MapToHdiExecutionMode(ExecutionMode execu
 
 SystemPressureLevel ConvertPhotoThermalLevel(int32_t level)
 {
-    if (level < LEVEL_0 || level > LEVEL_5) {
+    bool isLevelOutOfRange = level < LEVEL_0 || level > LEVEL_5;
+    if (isLevelOutOfRange) {
         return SystemPressureLevel::SEVERE;
     }
     SystemPressureLevel eventLevel = SystemPressureLevel::SEVERE;

@@ -27,6 +27,7 @@
 #include "input/camera_manager.h"
 #include "listener_base.h"
 #include "session/capture_session.h"
+#include "camera_napi_adaptor.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -43,7 +44,7 @@ public:
 private:
     void OnIsoInfoChangedCallback(IsoInfo info) const;
     void OnIsoInfoChangedCallbackOneArg(IsoInfo info) const;
-    
+
     void OnIsoInfoChangedCallbackAsync(IsoInfo info, bool isSync) const;
 };
 
@@ -147,7 +148,7 @@ public:
     ControlCenterEffectStatusCallbackListener(napi_env env) : ListenerBase(env) {}
     ~ControlCenterEffectStatusCallbackListener() = default;
     void OnControlCenterEffectStatusChanged(ControlCenterStatusInfo controlCenterStatusInfo) override;
- 
+
 private:
     void OnControlCenterEffectStatusCallback(ControlCenterStatusInfo controlCenterStatusInfo) const;
     void OnControlCenterEffectStatusCallbackAsync(ControlCenterStatusInfo controlCenterStatusInfo) const;
@@ -211,8 +212,7 @@ struct AbilityCallbackInfo {
     AbilityCallbackInfo(shared_ptr<const AbilityCallbackListener> listener) : listener_(listener) {}
 };
 
-class AutoDeviceSwitchCallbackListener : public AutoDeviceSwitchCallback, public ListenerBase,
-    public std::enable_shared_from_this<AutoDeviceSwitchCallbackListener> {
+class AutoDeviceSwitchCallbackListener : public AutoDeviceSwitchCallback, public ListenerBase {
 public:
     AutoDeviceSwitchCallbackListener(napi_env env) : ListenerBase(env) {}
     ~AutoDeviceSwitchCallbackListener() = default;
@@ -225,11 +225,153 @@ private:
 struct AutoDeviceSwitchCallbackListenerInfo {
     bool isDeviceSwitched_;
     bool isDeviceCapabilityChanged_;
-    weak_ptr<const AutoDeviceSwitchCallbackListener> listener_;
+    const AutoDeviceSwitchCallbackListener* listener_;
     AutoDeviceSwitchCallbackListenerInfo(bool isDeviceSwitched, bool isDeviceCapabilityChanged,
-        shared_ptr<const AutoDeviceSwitchCallbackListener> listener)
+        const AutoDeviceSwitchCallbackListener* listener)
         : isDeviceSwitched_(isDeviceSwitched), isDeviceCapabilityChanged_(isDeviceCapabilityChanged),
         listener_(listener) {}
+};
+
+class CompositionPositionCalibrationCallbackListener : public CompositionPositionCalibrationCallback,
+    public ListenerBase, public std::enable_shared_from_this<CompositionPositionCalibrationCallbackListener> {
+public:
+    CompositionPositionCalibrationCallbackListener(napi_env env) : ListenerBase(env) {}
+    ~CompositionPositionCalibrationCallbackListener() = default;
+    void OnCompositionPositionCalibrationAvailable(
+        const CompositionPositionCalibrationInfo info) const override;
+private:
+    void OnCompositionPositionCalibrationCallback(
+        const CompositionPositionCalibrationInfo info) const;
+    void OnCompositionPositionCalibrationCallbackAsync(
+        const CompositionPositionCalibrationInfo info) const;
+};
+
+struct CompositionPositionCalibrationCallbackListenerInfo {
+    CompositionPositionCalibrationInfo info_;
+    weak_ptr<const CompositionPositionCalibrationCallbackListener> listener_;
+    CompositionPositionCalibrationCallbackListenerInfo(CompositionPositionCalibrationInfo info,
+        shared_ptr<const CompositionPositionCalibrationCallbackListener> listener)
+        : info_(info), listener_(listener) {}
+};
+
+class CompositionBeginCallbackListener : public CompositionBeginCallback, public ListenerBase,
+    public std::enable_shared_from_this<CompositionBeginCallbackListener> {
+public:
+    CompositionBeginCallbackListener(napi_env env) : ListenerBase(env) {}
+    ~CompositionBeginCallbackListener() = default;
+    void OnCompositionBeginAvailable() const override;
+private:
+    void OnCompositionBeginCallback() const;
+    void OnCompositionBeginCallbackAsync() const;
+};
+
+struct CompositionBeginCallbackListenerInfo {
+    weak_ptr<const CompositionBeginCallbackListener> listener_;
+    CompositionBeginCallbackListenerInfo(shared_ptr<const CompositionBeginCallbackListener> listener)
+        : listener_(listener) {}
+};
+
+class CompositionEndCallbackListener : public CompositionEndCallback, public ListenerBase,
+    public std::enable_shared_from_this<CompositionEndCallbackListener> {
+public:
+    CompositionEndCallbackListener(napi_env env) : ListenerBase(env) {}
+    ~CompositionEndCallbackListener() = default;
+    void OnCompositionEndAvailable(CompositionEndState state) const override;
+private:
+    void OnCompositionEndCallback(CompositionEndState state) const;
+    void OnCompositionEndCallbackAsync(CompositionEndState state) const;
+};
+
+struct CompositionEndCallbackListenerInfo {
+    CompositionEndState state_;
+    weak_ptr<const CompositionEndCallbackListener> listener_;
+    CompositionEndCallbackListenerInfo(CompositionEndState state,
+        shared_ptr<const CompositionEndCallbackListener> listener)
+        : state_(state), listener_(listener) {}
+};
+
+class CompositionPositionMatchCallbackListener : public CompositionPositionMatchCallback, public ListenerBase,
+    public std::enable_shared_from_this<CompositionPositionMatchCallbackListener> {
+public:
+    CompositionPositionMatchCallbackListener(napi_env env) : ListenerBase(env) {}
+    ~CompositionPositionMatchCallbackListener() = default;
+    void OnCompositionPositionMatchAvailable(const std::vector<float> zoomRatios) const override;
+private:
+    void OnCompositionPositionMatchCallback(const std::vector<float> zoomRatios) const;
+    void OnCompositionPositionMatchCallbackAsync(const std::vector<float> zoomRatios) const;
+};
+
+struct CompositionPositionMatchCallbackListenerInfo {
+    std::vector<float> zoomRatios_;
+    weak_ptr<const CompositionPositionMatchCallbackListener> listener_;
+    CompositionPositionMatchCallbackListenerInfo(std::vector<float> zoomRatios,
+        shared_ptr<const CompositionPositionMatchCallbackListener> listener)
+        : zoomRatios_(zoomRatios), listener_(listener) {}
+};
+
+class ImageStabilizationGuideCallbackListener : public ImageStabilizationGuideCallback, public ListenerBase,
+    public std::enable_shared_from_this<ImageStabilizationGuideCallbackListener> {
+public:
+    ImageStabilizationGuideCallbackListener(napi_env env) : ListenerBase(env) {}
+    ~ImageStabilizationGuideCallbackListener() = default;
+    void OnImageStabilizationGuideChange(std::vector<Point> lineSegments) override;
+
+private:
+    void OnImageStabilizationGuideCallback(std::vector<Point> lineSegments) const;
+    void OnImageStabilizationGuideCallbackAsync(std::vector<Point> lineSegments) const;
+};
+
+struct ImageStabilizationGuideCallbackInfo {
+    std::vector<Point> lineSegments_;
+    weak_ptr<const ImageStabilizationGuideCallbackListener> listener_;
+    ImageStabilizationGuideCallbackInfo(std::vector<Point> lineSegments,
+        shared_ptr<const ImageStabilizationGuideCallbackListener> listener)
+        : lineSegments_(lineSegments), listener_(listener) {}
+};
+
+
+class ApertureEffectChangeCallbackListener :
+    public ApertureEffectChangeCallback,
+    public ListenerBase,
+    public std::enable_shared_from_this<ApertureEffectChangeCallbackListener> {
+public:
+    ApertureEffectChangeCallbackListener(napi_env env) : ListenerBase(env) {}
+    ~ApertureEffectChangeCallbackListener() = default;
+    void OnApertureEffectChange(ApertureEffectType apertureEffectType) const override;
+
+private:
+    void OnApertureEffectChangeCallback(ApertureEffectType apertureEffectType) const;
+    void OnApertureEffectChangeCallbackAsync(ApertureEffectType apertureEffectType) const;
+};
+
+struct ApertureEffectChangeCallbackInfo {
+    ApertureEffectChangeCallbackInfo(ApertureEffectType apertureEffectType,
+        shared_ptr<const ApertureEffectChangeCallbackListener> listener)
+            : apertureEffectType_(apertureEffectType), listener_(listener) {}
+    ApertureEffectType apertureEffectType_;
+    weak_ptr<const ApertureEffectChangeCallbackListener> listener_;
+};
+
+class CameraSwitchRequestCallbackListener :
+    public CameraSwitchRequestCallback,
+    public ListenerBase,
+    public std::enable_shared_from_this<CameraSwitchRequestCallbackListener> {
+public:
+    CameraSwitchRequestCallbackListener(napi_env env) : ListenerBase(env) {}
+    ~CameraSwitchRequestCallbackListener() = default;
+    void OnAppCameraSwitch(const std::string &cameraId) override;
+
+private:
+    void OnAppCameraSwitchCallback(std::string &cameraId) const;
+    void OnAppCameraSwitchCallbackAsync(const std::string &cameraId) const;
+};
+
+struct CameraSwitchRequestCallbackInfoCameraId {
+    std::string cameraId_;
+    weak_ptr<const CameraSwitchRequestCallbackListener> listener_;
+    CameraSwitchRequestCallbackInfoCameraId(
+        const std::string &cameraId, shared_ptr<const CameraSwitchRequestCallbackListener> listener)
+        : cameraId_(cameraId), listener_(listener) {}
 };
 
 class MacroStatusCallbackListener : public MacroStatusCallback, public ListenerBase,
@@ -255,6 +397,14 @@ struct MacroStatusCallbackInfo {
 };
 
 class CameraSessionNapi : public CameraNapiEventEmitter<CameraSessionNapi> {
+private:
+    sptr<CaptureSession> GetSession()
+    {
+        return cameraSession_;
+    }
+    using Adaptor = CameraNapiAdaptor<CameraSessionNapi, CaptureSession, &CameraSessionNapi::GetSession>;
+    friend Adaptor;
+
 public:
     static void Init(napi_env env);
     static napi_value CreateCameraSession(napi_env env);
@@ -367,6 +517,23 @@ public:
     static napi_value SetUsage(napi_env env, napi_callback_info info);
     static napi_value IsAutoDeviceSwitchSupported(napi_env env, napi_callback_info info);
     static napi_value EnableAutoDeviceSwitch(napi_env env, napi_callback_info info);
+    static napi_value IsCompositionSuggestionSupported(napi_env env, napi_callback_info info);
+    static napi_value EnableCompositionSuggestion(napi_env env, napi_callback_info info);
+    static napi_value IsCompositionEffectPreviewSupported(napi_env env, napi_callback_info info);
+    static napi_value EnableCompositionEffectPreview(napi_env env, napi_callback_info info);
+    static napi_value GetSupportedRecommendedInfoLanguage(napi_env env, napi_callback_info info);
+    static napi_value SetRecommendedInfoLanguage(napi_env env, napi_callback_info info);
+    static napi_value IsColorStyleSupported(napi_env env, napi_callback_info info);
+    static napi_value GetDefaultColorStyleSettings(napi_env env, napi_callback_info info);
+    static napi_value SetColorStyleSetting(napi_env env, napi_callback_info info);
+
+    static napi_value IsImageStabilizationGuideSupported(napi_env env, napi_callback_info info);
+    static napi_value EnableImageStabilizationGuide(napi_env env, napi_callback_info info);
+
+    static napi_value IsFocusTrackingModeSupported(napi_env env, napi_callback_info info);
+    static napi_value GetFocusTrackingMode(napi_env env, napi_callback_info info);
+    static napi_value SetFocusTrackingMode(napi_env env, napi_callback_info info);
+
     static napi_value OnIsoInfoChange(napi_env env, napi_callback_info info);
     static napi_value OffIsoInfoChange(napi_env env, napi_callback_info info);
 
@@ -384,7 +551,15 @@ public:
     std::shared_ptr<SmoothZoomCallbackListener> smoothZoomCallback_;
     std::shared_ptr<AbilityCallbackListener> abilityCallback_;
     std::shared_ptr<AutoDeviceSwitchCallbackListener> autoDeviceSwitchCallback_;
+    std::shared_ptr<CompositionPositionCalibrationCallbackListener> compositionPositionCalibrationCallback_;
+    std::shared_ptr<CompositionBeginCallbackListener> compositionBeginCallback_;
+    std::shared_ptr<NapiInfoCallback<CompositionEffectInfo>> compositionEffectReceiveCallback_;
+    std::shared_ptr<CompositionPositionMatchCallbackListener> compositionPositionMatchCallback_;
+    std::shared_ptr<CompositionEndCallbackListener> compositionEndCallback_;
+    std::shared_ptr<ImageStabilizationGuideCallbackListener> imageStabilizationGuideCallback_;
+    std::shared_ptr<ApertureEffectChangeCallbackListener> apertureEffectChangeCallbackListener_;
     std::shared_ptr<MacroStatusCallbackListener> macroStatusCallback_ = nullptr;
+    std::shared_ptr<CameraSwitchRequestCallbackListener> cameraSwitchSessionNapiCallback_;
 
     static thread_local napi_ref sConstructor_;
     static thread_local sptr<CaptureSession> sCameraSession_;
@@ -411,19 +586,19 @@ public:
     static const std::vector<napi_property_descriptor> white_balance_props;
     static const std::vector<napi_property_descriptor> auto_switch_props;
     static const std::vector<napi_property_descriptor> quality_prioritization_props;
+    static const std::vector<napi_property_descriptor> composition_suggestion;
+    static const std::vector<napi_property_descriptor> color_style_props;
+    static const std::vector<napi_property_descriptor> image_stabilization_guide_props;
+    static const std::vector<napi_property_descriptor> focus_tracking_props;
     static const std::vector<napi_property_descriptor> iso_props;
-    static void CommitConfigAsync(uv_work_t* work);
-    static void StartAsync(uv_work_t* work);
-    static void UvWorkAsyncCompleted(uv_work_t* work, int status);
 
 private:
     static const EmitterFunctions fun_map_;
+    static void CommitConfigAsync(uv_work_t *work);
+    static void StartAsync(uv_work_t *work);
+    static void UvWorkAsyncCompleted(uv_work_t* work, int status);
 
 protected:
-    virtual void RegisterIsoInfoCallbackListener(const std::string& eventName,
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
-    virtual void UnregisterIsoInfoCallbackListener(const std::string& eventName,
-        napi_env env, napi_value callback, const std::vector<napi_value>& args);
     void RegisterExposureCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
         const std::vector<napi_value>& args, bool isOnce);
     void UnregisterExposureCallbackListener(
@@ -449,13 +624,17 @@ protected:
     void UnregisterAutoDeviceSwitchCallbackListener(const std::string& eventName,
         napi_env env, napi_value callback, const std::vector<napi_value>& args);
 
-    virtual void RegisterFeatureDetectionStatusListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce);
-    virtual void UnregisterFeatureDetectionStatusListener(
-        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    virtual void RegisterIsoInfoCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    virtual void UnregisterIsoInfoCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args);
     virtual void RegisterMacroStatusCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
         const std::vector<napi_value>& args, bool isOnce);
     virtual void UnregisterMacroStatusCallbackListener(
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    virtual void RegisterFeatureDetectionStatusListener(const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce);
+    virtual void UnregisterFeatureDetectionStatusListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
     virtual void RegisterEffectSuggestionCallbackListener(const std::string& eventName, napi_env env,
         napi_value callback, const std::vector<napi_value>& args, bool isOnce);
@@ -473,14 +652,50 @@ protected:
         napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
     virtual void UnregisterFocusTrackingInfoCallbackListener(const std::string& eventName,
         napi_env env, napi_value callback, const std::vector<napi_value>& args);
-    virtual void RegisterPressureStatusCallbackListener(const std::string& eventName,
+    virtual void RegisterPressureStatusCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce);
+    virtual void UnregisterPressureStatusCallbackListener(
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    virtual void RegisterCompositionPositionCalibrationCallbackListener(const std::string& eventName,
         napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
-    virtual void UnregisterPressureStatusCallbackListener(const std::string& eventName,
+    virtual void UnregisterCompositionPositionCalibrationCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    virtual void RegisterCompositionBeginCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    virtual void UnregisterCompositionBeginCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    virtual void RegisterCompositionEffectReceiveCallbackListener(const std::string& eventName, napi_env env,
+        napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    virtual void UnregisterCompositionEffectReceiveCallbackListener(
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    virtual void RegisterCompositionPositionMatchCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    virtual void UnregisterCompositionPositionMatchCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    virtual void RegisterCompositionEndCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    virtual void UnregisterCompositionEndCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    virtual void RegisterImageStabilizationGuideCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    virtual void UnregisterImageStabilizationGuideCallbackListener(const std::string& eventName,
         napi_env env, napi_value callback, const std::vector<napi_value>& args);
     virtual void RegisterControlCenterEffectStatusCallbackListener(const std::string& eventName, napi_env env,
-        napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+        napi_value callback,const std::vector<napi_value>& args, bool isOnce);
     virtual void UnregisterControlCenterEffectStatusCallbackListener(const std::string& eventName, napi_env env,
         napi_value callback, const std::vector<napi_value>& args);
+    virtual void RegisterCameraSwitchRequestCallbackListener(const std::string &eventName, napi_env env,
+        napi_value callback, const std::vector<napi_value> &args, bool isOnce);
+    virtual void UnregisterCameraSwitchRequestCallbackListener(
+        const std::string &eventName, napi_env env, napi_value callback, const std::vector<napi_value> &args);
+    virtual void RegisterZoomInfoCbListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    virtual void UnregisterZoomInfoCbListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    virtual void RegisterApertureEffectChangeCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    virtual void UnregisterApertureEffectChangeCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args);
 
     virtual void RegisterSlowMotionStateCb(const std::string& eventName, napi_env env, napi_value callback,
         const std::vector<napi_value>& args, bool isOnce) {}
@@ -498,14 +713,31 @@ protected:
         napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce) {}
     virtual void UnregisterLuminationInfoCallbackListener(const std::string& eventName,
         napi_env env, napi_value callback, const std::vector<napi_value>& args) {}
-    virtual void RegisterTryAEInfoCallbackListener(const std::string& eventName,
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce) {}
-    virtual void UnregisterTryAEInfoCallbackListener(const std::string& eventName,
-        napi_env env, napi_value callback, const std::vector<napi_value>& args) {}
     virtual void RegisterLightStatusCallbackListener(const std::string& eventName,
         napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce) {}
     virtual void UnregisterLightStatusCallbackListener(const std::string& eventName,
         napi_env env, napi_value callback, const std::vector<napi_value>& args) {}
+    virtual void RegisterTryAEInfoCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce) {}
+    virtual void UnregisterTryAEInfoCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args) {}
+    virtual void RegisterStitchingTargetInfoCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce) {}
+    virtual void UnregisterStitchingTargetInfoCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args) {}
+    virtual void RegisterStitchingCaptureInfoCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce) {}
+    virtual void UnregisterStitchingCaptureInfoCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args) {}
+    virtual void RegisterStitchingHintInfoCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce) {}
+    virtual void UnregisterStitchingHintInfoCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args) {}
+    virtual void RegisterStitchingCaptureStateCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce) {}
+    virtual void UnregisterStitchingCaptureStateCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args) {}
+
 };
 
 struct CameraSessionAsyncContext : public AsyncContext {

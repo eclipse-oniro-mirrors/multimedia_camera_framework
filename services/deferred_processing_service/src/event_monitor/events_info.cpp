@@ -17,6 +17,7 @@
 
 #include "basic_definitions.h"
 #include "dp_log.h"
+#include "parameters.h"
 #ifdef CAMERA_USE_BATTERY
 #include "battery_srv_client.h"
 #include "battery_info.h"
@@ -64,6 +65,8 @@ ScreenStatus EventsInfo::GetScreenState()
 
 BatteryStatus EventsInfo::GetBatteryState()
 {
+    DP_CHECK_ERROR_RETURN_RET_LOG(system::GetBoolParameter(IGNORE_BATTERY, false), BATTERY_OKAY,
+        "ignore GetBatteryState");
 #ifdef CAMERA_USE_BATTERY
     auto& battery = PowerMgr::BatterySrvClient::GetInstance();
     auto level = battery.GetCapacityLevel();
@@ -103,6 +106,8 @@ ChargingStatus EventsInfo::GetChargingState()
 
 BatteryLevel EventsInfo::GetBatteryLevel()
 {
+    DP_CHECK_ERROR_RETURN_RET_LOG(system::GetBoolParameter(IGNORE_BATTERY_LEVEL, false), BATTERY_LEVEL_OKAY,
+        "ignore GetBatteryLevel");
 #ifdef CAMERA_USE_BATTERY
     auto& battery = PowerMgr::BatterySrvClient::GetInstance();
     auto capacity = battery.GetCapacity();
@@ -118,6 +123,8 @@ BatteryLevel EventsInfo::GetBatteryLevel()
 
 ThermalLevel EventsInfo::GetThermalLevel()
 {
+    DP_CHECK_ERROR_RETURN_RET_LOG(system::GetBoolParameter(IGNORE_TEMPERATURE, false), LEVEL_0,
+        "ignore GetThermalLevel");
 #ifdef CAMERA_USE_THERMAL
     auto& thermal = OHOS::PowerMgr::ThermalMgrClient::GetInstance();
     thermalLevel_ = static_cast<ThermalLevel>(thermal.GetThermalLevel());
@@ -126,7 +133,7 @@ ThermalLevel EventsInfo::GetThermalLevel()
     return thermalLevel_;
 }
 
-CameraSessionStatus EventsInfo::GetCameraStatus()
+CameraSessionStatus EventsInfo::GetCameraState()
 {
     std::lock_guard lock(mutex_);
     return cameraState_;

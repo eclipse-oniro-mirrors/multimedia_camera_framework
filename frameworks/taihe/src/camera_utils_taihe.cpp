@@ -493,8 +493,6 @@ MetadataObjectType MapMetadataObjSupportedTypesEnum(OHOS::CameraStandard::Metada
             return MetadataObjectType::key_t::SALIENT_DETECTION;
         case OHOS::CameraStandard::MetadataObjectType::BAR_CODE_DETECTION:
             return MetadataObjectType::key_t::BAR_CODE_DETECTION;
-        case OHOS::CameraStandard::MetadataObjectType::BASE_FACE_DETECTION:
-            return MetadataObjectType::key_t::BASIC_FACE_DETECTION;
         default:
             // do nothing
             break;
@@ -573,7 +571,7 @@ ani_object CameraUtilsTaihe::ToBusinessError(ani_env *env, int32_t code, const s
     CHECK_RETURN_RET_ELOG(ANI_OK != env->Object_New(cls, ctor, &error), err,
         "new object %{public}s failed", CLASS_NAME_BUSINESSERROR);
     CHECK_RETURN_RET_ELOG(
-        ANI_OK != env->Object_SetPropertyByName_Int(error, "code_", static_cast<ani_int>(code)), err,
+        ANI_OK != env->Object_SetPropertyByName_Int(error, "code", static_cast<ani_int>(code)), err,
         "set property BusinessError.code failed");
     ani_string messageRef {};
     CHECK_RETURN_RET_ELOG(ANI_OK != env->String_NewUTF8(message.c_str(), message.size(), &messageRef), err,
@@ -610,20 +608,20 @@ void CameraUtilsTaihe::ToNativeCameraOutputCapability(CameraOutputCapability con
     std::vector<OHOS::CameraStandard::Profile>& photoProfiles,
     std::vector<OHOS::CameraStandard::VideoProfile>& videoProfiles)
 {
-    for (auto item : outputCapability.previewProfiles) {
+    for (const auto& item : outputCapability.previewProfiles) {
         OHOS::CameraStandard::Profile nativeProfile(
             static_cast<OHOS::CameraStandard::CameraFormat>(item.format.get_value()),
                 { .height = item.size.height, .width = item.size.width });
         previewProfiles.push_back(nativeProfile);
     }
-    for (auto item : outputCapability.photoProfiles) {
+    for (const auto& item : outputCapability.photoProfiles) {
         OHOS::CameraStandard::Profile nativeProfile(
             static_cast<OHOS::CameraStandard::CameraFormat>(item.format.get_value()),
                 { .height = item.size.height, .width = item.size.width });
         photoProfiles.push_back(nativeProfile);
     }
 
-    for (auto item : outputCapability.videoProfiles) {
+    for (const auto& item : outputCapability.videoProfiles) {
         std::vector<int32_t> framerates;
         framerates.push_back(item.frameRateRange.min);
         framerates.push_back(item.frameRateRange.max);

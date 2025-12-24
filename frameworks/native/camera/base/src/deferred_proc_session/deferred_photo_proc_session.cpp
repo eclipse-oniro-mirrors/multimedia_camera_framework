@@ -15,12 +15,14 @@
 
 #include <sys/mman.h>
 #include "deferred_proc_session/deferred_photo_proc_session.h"
-#include "picture_proxy.h"
+#include "ipc_skeleton.h"
 #include "iservice_registry.h"
 #include "camera_log.h"
 #include "camera_util.h"
 #include "system_ability_definition.h"
-#include "picture_interface.h"
+#include "camera_error_code.h"
+#include "picture_proxy.h"
+#include "dps_metadata_info.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -34,7 +36,8 @@ int32_t DeferredPhotoProcessingSessionCallback::OnProcessImageDone(const std::st
     CHECK_RETURN_RET(ipcFileDescriptor == nullptr, CAMERA_INVALID_ARG);
     int fd = ipcFileDescriptor->GetFd();
     void* addr = mmap(nullptr, bytes, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-    if (deferredPhotoProcSession_ != nullptr && deferredPhotoProcSession_->GetCallback() != nullptr) {
+    bool isCallbackSet = deferredPhotoProcSession_ != nullptr && deferredPhotoProcSession_->GetCallback() != nullptr;
+    if (isCallbackSet) {
         if (addr == MAP_FAILED) {
             MEDIA_ERR_LOG("DeferredPhotoProcessingSessionCallback::OnProcessImageDone() mmap failed");
             deferredPhotoProcSession_->GetCallback()->OnError(imageId, DpsErrorCode::ERROR_IMAGE_PROC_FAILED);
@@ -56,7 +59,8 @@ int32_t DeferredPhotoProcessingSessionCallback::OnError(const std::string &image
 {
     // LCOV_EXCL_START
     MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnError() is called, errorCode: %{public}d", errorCode);
-    if (deferredPhotoProcSession_ != nullptr && deferredPhotoProcSession_->GetCallback() != nullptr) {
+    bool isCallbackSet = deferredPhotoProcSession_ != nullptr && deferredPhotoProcSession_->GetCallback() != nullptr;
+    if (isCallbackSet) {
         deferredPhotoProcSession_->GetCallback()->OnError(imageId, DpsErrorCode(errorCode));
     } else {
         MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnError not set!, Discarding callback");
@@ -69,7 +73,8 @@ int32_t DeferredPhotoProcessingSessionCallback::OnStateChanged(DeferredProcessin
 {
     // LCOV_EXCL_START
     MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnStateChanged() is called, status:%{public}d", status);
-    if (deferredPhotoProcSession_ != nullptr && deferredPhotoProcSession_->GetCallback() != nullptr) {
+    bool isCallbackSet = deferredPhotoProcSession_ != nullptr && deferredPhotoProcSession_->GetCallback() != nullptr;
+    if (isCallbackSet) {
         deferredPhotoProcSession_->GetCallback()->OnStateChanged(DpsStatusCode(status));
     } else {
         MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnStateChanged not set!, Discarding callback");
@@ -79,16 +84,16 @@ int32_t DeferredPhotoProcessingSessionCallback::OnStateChanged(DeferredProcessin
 }
 
 int32_t DeferredPhotoProcessingSessionCallback::OnProcessImageDone(const std::string &imageId,
-    const std::shared_ptr<PictureIntf>& pictureIntf, uint32_t cloudImageEnhanceFlag)
+    const std::shared_ptr<PictureIntf>& pictureIntf, const DpsMetadata& metadata)
 {
     // LCOV_EXCL_START
     HILOG_COMM_INFO("DeferredPhotoProcessingSessionCallback::OnProcessImageDone() is"
-        "called, status:%{public}s, cloudImageEnhanceFlag: %{public}u", imageId.c_str(), cloudImageEnhanceFlag);
+        "called, status:%{public}s", imageId.c_str());
     if (pictureIntf != nullptr) {
         MEDIA_INFO_LOG("picture is not null");
     }
     if (deferredPhotoProcSession_ != nullptr && deferredPhotoProcSession_->GetCallback() != nullptr) {
-        deferredPhotoProcSession_->GetCallback()->OnProcessImageDone(imageId, pictureIntf, cloudImageEnhanceFlag);
+        deferredPhotoProcSession_->GetCallback()->OnProcessImageDone(imageId, pictureIntf, metadata);
     } else {
         MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnProcessImageDone not set!, Discarding callback");
     }
@@ -102,10 +107,13 @@ int32_t DeferredPhotoProcessingSessionCallback::OnDeliveryLowQualityImage(const 
     // LCOV_EXCL_START
     HILOG_COMM_INFO("DeferredPhotoProcessingSessionCallback::OnDeliveryLowQualityImage() is"
         "called, status:%{public}s", imageId.c_str());
-    auto callback = deferredPhotoProcSession_->GetCallback();
-    if (pictureIntf != nullptr && callback != nullptr) {
-        MEDIA_INFO_LOG("pictureIntf is not null");
-        callback->OnDeliveryLowQualityImage(imageId, pictureIntf);
+    CHECK_PRINT_ILOG(pictureIntf != nullptr, "picture is not null");
+    bool isCallbackSet = deferredPhotoProcSession_ != nullptr && deferredPhotoProcSession_->GetCallback() != nullptr
+        && pictureIntf != nullptr;
+    if (isCallbackSet) {
+        deferredPhotoProcSession_->GetCallback()->OnDeliveryLowQualityImage(imageId, pictureIntf);
+    } else {
+        HILOG_COMM_ERROR("DeferredPhotoProcessingSessionCallback::OnDeliveryLowQualityImage not set, Discard callback");
     }
     return 0;
     // LCOV_EXCL_STOP
@@ -120,7 +128,7 @@ int32_t DeferredPhotoProcessingSessionCallback::CallbackParcel([[maybe_unused]] 
         != DeferredProcessing::IDeferredPhotoProcessingSessionCallbackIpcCode::COMMAND_ON_DELIVERY_LOW_QUALITY_IMAGE)
         && (static_cast<DeferredProcessing::IDeferredPhotoProcessingSessionCallbackIpcCode>(code)
         != DeferredProcessing::IDeferredPhotoProcessingSessionCallbackIpcCode::
-        COMMAND_ON_PROCESS_IMAGE_DONE_IN_STRING_IN_SHARED_PTR_PICTUREINTF_IN_UNSIGNED_INT)) {
+        COMMAND_ON_PROCESS_IMAGE_DONE_IN_STRING_IN_SHARED_PTR_PICTUREINTF_IN_DPSMETADATA)) {
         return ERR_NONE;
     }
     CHECK_RETURN_RET(data.ReadInterfaceToken() != GetDescriptor(), ERR_TRANSACTION_FAILED);
@@ -139,12 +147,11 @@ int32_t DeferredPhotoProcessingSessionCallback::CallbackParcel([[maybe_unused]] 
             MEDIA_DEBUG_LOG("HandleProcessLowQualityImage Picture::Unmarshalling X");
             ErrCode errCode = OnDeliveryLowQualityImage(imageId, picturePtr->GetPictureIntf());
             MEDIA_INFO_LOG("HandleProcessLowQualityImage result: %{public}d", errCode);
-            CHECK_RETURN_RET_ELOG(!reply.WriteInt32(errCode), ERR_INVALID_VALUE,
-                "OnDeliveryLowQualityImage faild");
+            CHECK_RETURN_RET_ELOG(!reply.WriteInt32(errCode), ERR_INVALID_VALUE, "OnDeliveryLowQualityImage faild");
             break;
         }
         case DeferredProcessing::IDeferredPhotoProcessingSessionCallbackIpcCode::
-            COMMAND_ON_PROCESS_IMAGE_DONE_IN_STRING_IN_SHARED_PTR_PICTUREINTF_IN_UNSIGNED_INT: {
+            COMMAND_ON_PROCESS_IMAGE_DONE_IN_STRING_IN_SHARED_PTR_PICTUREINTF_IN_DPSMETADATA: {
             MEDIA_INFO_LOG("HandleOnProcessPictureDone enter");
             std::string imageId = Str16ToStr8(data.ReadString16());
             int32_t size = data.ReadInt32();
@@ -154,10 +161,10 @@ int32_t DeferredPhotoProcessingSessionCallback::CallbackParcel([[maybe_unused]] 
             MEDIA_DEBUG_LOG("HandleOnProcessPictureDone Picture::Unmarshalling E");
             picturePtr->UnmarshallingPicture(data);
             MEDIA_DEBUG_LOG("HandleOnProcessPictureDone Picture::Unmarshalling X");
-            uint32_t cloudImageEnhanceFlag = data.ReadUint32();
-            ErrCode errCode = OnProcessImageDone(imageId, picturePtr->GetPictureIntf(), cloudImageEnhanceFlag);
-            MEDIA_INFO_LOG("HandleOnProcessPictureDone result: %{public}d, cloudImageEnhanceFlag: %{public}u",
-                errCode, cloudImageEnhanceFlag);
+            sptr<DpsMetadata> metadata = data.ReadParcelable<DpsMetadata>();
+            CHECK_RETURN_RET_ELOG(metadata == nullptr, ERR_INVALID_DATA, "metadata is nullptr");
+            ErrCode errCode = OnProcessImageDone(imageId, picturePtr->GetPictureIntf(), *metadata);
+            MEDIA_INFO_LOG("HandleOnProcessPictureDone result: %{public}d", errCode);
             CHECK_RETURN_RET_ELOG(!reply.WriteInt32(errCode), ERR_INVALID_VALUE, "OnProcessImageDone faild");
             break;
         }
@@ -198,8 +205,7 @@ void DeferredPhotoProcSession::BeginSynchronize()
 void DeferredPhotoProcSession::EndSynchronize()
 {
     // LCOV_EXCL_START
-    CHECK_RETURN_ELOG(
-        remoteSession_ == nullptr, "DeferredPhotoProcSession::EndSynchronize failed due to binder died.");
+    CHECK_RETURN_ELOG(remoteSession_ == nullptr, "DeferredPhotoProcSession::EndSynchronize failed due to binder died.");
     MEDIA_INFO_LOG("DeferredPhotoProcSession::EndSynchronize() enter.");
     remoteSession_->EndSynchronize();
     // LCOV_EXCL_STOP
@@ -218,8 +224,7 @@ void DeferredPhotoProcSession::AddImage(const std::string& imageId, DpsMetadata&
 void DeferredPhotoProcSession::RemoveImage(const std::string& imageId, const bool restorable)
 {
     // LCOV_EXCL_START
-    CHECK_RETURN_ELOG(
-        remoteSession_ == nullptr, "DeferredPhotoProcSession::RemoveImage failed due to binder died.");
+    CHECK_RETURN_ELOG(remoteSession_ == nullptr, "DeferredPhotoProcSession::RemoveImage failed due to binder died.");
     MEDIA_INFO_LOG("DeferredPhotoProcSession RemoveImage() enter.");
     remoteSession_->RemoveImage(imageId, restorable);
     // LCOV_EXCL_STOP
@@ -228,8 +233,7 @@ void DeferredPhotoProcSession::RemoveImage(const std::string& imageId, const boo
 void DeferredPhotoProcSession::RestoreImage(const std::string& imageId)
 {
     // LCOV_EXCL_START
-    CHECK_RETURN_ELOG(
-        remoteSession_ == nullptr, "DeferredPhotoProcSession::RestoreImage failed due to binder died.");
+    CHECK_RETURN_ELOG(remoteSession_ == nullptr, "DeferredPhotoProcSession::RestoreImage failed due to binder died.");
     MEDIA_INFO_LOG("DeferredPhotoProcSession RestoreImage() enter.");
     remoteSession_->RestoreImage(imageId);
     // LCOV_EXCL_STOP
@@ -296,7 +300,7 @@ void DeferredPhotoProcSession::CameraServerDied(pid_t pid)
     deathRecipient_ = nullptr;
     ReconnectDeferredProcessingSession();
     if (callback_ != nullptr) {
-        MEDIA_INFO_LOG("DeferredPhotoProcSession Reconnect session successful, send sync requestion.");
+        MEDIA_INFO_LOG("Reconnect session successful, send sync requestion.");
         callback_->OnError("", DpsErrorCode::ERROR_SESSION_SYNC_NEEDED);
     }
     return;
@@ -336,7 +340,9 @@ void DeferredPhotoProcSession::ConnectDeferredProcessingSession()
     remoteCallback = new(std::nothrow) DeferredPhotoProcessingSessionCallback(deferredPhotoProcSession);
     CHECK_RETURN(remoteCallback == nullptr);
     serviceProxy_->CreateDeferredPhotoProcessingSession(userId_, remoteCallback, session);
-    CHECK_EXECUTE(session, SetDeferredPhotoSession(session));
+    if (session) {
+        SetDeferredPhotoSession(session);
+    }
     return;
     // LCOV_EXCL_STOP
 }

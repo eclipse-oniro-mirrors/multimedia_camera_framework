@@ -17,6 +17,7 @@
 #include <cinttypes>
 
 #include "camera_log.h"
+#include "camera_util.h"
 
 namespace OHOS {
 namespace CameraStandard {

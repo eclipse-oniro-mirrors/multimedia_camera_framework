@@ -18,7 +18,6 @@
 
 #include "reader.h"
 #include <memory>
-#include <fuzzer/FuzzedDataProvider.h>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -26,7 +25,7 @@ using namespace DeferredProcessing;
 class ReaderFuzzer {
 public:
 static std::shared_ptr<Reader> fuzz_;
-static void ReaderFuzzTest(FuzzedDataProvider& fdp);
+static void ReaderFuzzTest();
 };
 
 } //CameraStandard

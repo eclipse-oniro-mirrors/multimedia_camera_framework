@@ -110,7 +110,7 @@ class HCameraDeviceHolder : public RefBase {
 public:
     HCameraDeviceHolder(int32_t pid, int32_t uid, int32_t state, int32_t focusState,
         sptr<HCameraDevice> device, uint32_t accessTokenId, int32_t cost, const std::set<std::string> &conflicting,
-        int32_t firstTokenId)
+        uint32_t firstTokenId)
         :pid_(pid), uid_(uid), accessTokenId_(accessTokenId), device_(device), cost_(cost), conflicting_(conflicting),
         firstTokenId_(firstTokenId)
     {
@@ -143,12 +143,12 @@ public:
     inline uint32_t GetAccessTokenId() const { return accessTokenId_; }
 
     inline sptr<HCameraDevice> GetDevice() const { return device_; }
-    
+
     inline sptr<CameraProcessPriority> GetPriority() const {return processPriority_;}
 
-    inline int32_t GetCost() const{ return cost_; }
+    int32_t GetCost() const{ return cost_; }
 
-    inline bool IsConflicting(const std::string &cameraId) const
+    bool IsConflicting(const std::string &cameraId) const
     {
         std::string curCameraId = device_->GetCameraId();
         if (cameraId == curCameraId) {
@@ -164,7 +164,7 @@ public:
 
     inline uint32_t GetFirstTokenID() const { return firstTokenId_; }
 
-    inline std::set<std::string> GetConflicting() const { return conflicting_; }
+    std::set<std::string> GetConflicting() const { return conflicting_; }
 
 private:
     int32_t pid_;
@@ -174,7 +174,7 @@ private:
     sptr<HCameraDevice> device_;
     int32_t cost_;
     std::set<std::string> conflicting_;
-    int32_t firstTokenId_;
+    uint32_t firstTokenId_;
 };
 
 class CameraConcurrentSelector : public RefBase {
@@ -304,8 +304,6 @@ public:
     */
     bool GetConflictDevices(std::vector<sptr<HCameraDevice>> &cameraNeedEvict, sptr<HCameraDevice> cameraIdRequestOpen,
                             int32_t concurrentTypeOfRequest);
-    void UpdateCameraHolders(const std::vector<pid_t>& pidOfActiveClients,
-                            sptr<HCameraDeviceHolder> requestHolder);
     /**
     * @brief handle active camera evictions in camera device manager.
     *
@@ -337,8 +335,6 @@ private:
     std::string GetACameraId();
     bool IsAllowOpen(pid_t activeClient);
     int32_t GetCurrentCost() const;
-    void DetermineHighestPriorityOwner(int32_t &highestPriorityOwner, int32_t &owner,
-        sptr<CameraProcessPriority> requestPriority);
     std::vector<sptr<HCameraDeviceHolder>> WouldEvict(sptr<HCameraDeviceHolder> &cameraRequestOpen);
     void GenerateEachProcessCameraState(int32_t& processState, uint32_t processTokenId);
     void PrintClientInfo(sptr<HCameraDeviceHolder> activeCameraHolder, sptr<HCameraDeviceHolder> requestCameraHolder);

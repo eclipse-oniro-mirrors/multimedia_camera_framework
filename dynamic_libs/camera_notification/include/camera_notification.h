@@ -19,7 +19,6 @@
 #include "camera_log.h"
 #include "camera_notification_interface.h"
 #include "image_source.h"
-#include "image_source_proxy.h"
 #include "int_wrapper.h"
 #include "ipc_skeleton.h"
 #include "locale_config.h"
@@ -55,4 +54,4 @@ private:
 };
 } // namespace CameraStandard
 } // namespace OHOS
-#endif // CAMERA_NOTIFICATION_H
+#endif // CAMERA_NOTIFICATION_H

@@ -31,7 +31,7 @@ PhotoJobStateListener::PhotoJobStateListener(const std::weak_ptr<PhotoJobReposit
 
 void PhotoJobStateListener::UpdateRunningJob(const std::string& imageId, bool running)
 {
-    DP_ERR_LOG("UpdateRunningJob: %{public}s, running state: %{public}d", imageId.c_str(), running);
+    DP_DEBUG_LOG("UpdateRunningJob: %{public}s, running state: %{public}d", imageId.c_str(), running);
     auto repository = repository_.lock();
     DP_CHECK_ERROR_RETURN_LOG(repository == nullptr, "PhotoJobRepository is nullptr.");
     repository->UpdateRunningJobUnLocked(imageId, running);
@@ -39,26 +39,26 @@ void PhotoJobStateListener::UpdateRunningJob(const std::string& imageId, bool ru
 
 void PhotoJobStateListener::UpdatePriorityJob(JobPriority cur, JobPriority pre)
 {
-    DP_ERR_LOG("UpdatePriorityJob cur: %{public}d, pre: %{public}d", cur, pre);
+    DP_DEBUG_LOG("UpdatePriorityJob cur: %{public}d, pre: %{public}d", cur, pre);
     auto repository = repository_.lock();
     DP_CHECK_ERROR_RETURN_LOG(repository == nullptr, "PhotoJobRepository is nullptr.");
-    repository->UpdatePriotyNumUnLocked(cur, pre);
+    repository->UpdatePriorityNumUnLocked(cur, pre);
 }
 
 void PhotoJobStateListener::UpdateJobSize()
 {
-    DP_ERR_LOG("UpdateJobSize");
+    DP_DEBUG_LOG("UpdateJobSize");
     auto repository = repository_.lock();
     DP_CHECK_ERROR_RETURN_LOG(repository == nullptr, "PhotoJobRepository is nullptr.");
     repository->UpdateJobSizeUnLocked();
 }
 
-void PhotoJobStateListener::TryDoNextJob(const std::string& imageId, bool isTyrDo)
+void PhotoJobStateListener::TryDoNextJob(const std::string& imageId, bool isTryDo)
 {
-    DP_ERR_LOG("TryDoNextJob");
+    DP_DEBUG_LOG("TryDoNextJob");
     auto repository = repository_.lock();
     DP_CHECK_ERROR_RETURN_LOG(repository == nullptr, "PhotoJobRepository is nullptr.");
-    repository->NotifyJobChanged(imageId, isTyrDo);
+    repository->NotifyJobChanged(imageId, isTryDo);
 }
 
 PhotoJobRepository::PhotoJobRepository(const int32_t userId) : userId_(userId)
@@ -80,7 +80,7 @@ PhotoJobRepository::~PhotoJobRepository()
 {
     DP_INFO_LOG("entered, userId: %{public}d", userId_);
     backgroundJobMap_.clear();
-    priotyToNum_.clear();
+    priorityToNum_.clear();
     offlineJobQueue_->Clear();
     runningJob_.clear();
 }
@@ -179,7 +179,10 @@ DeferredPhotoJobPtr PhotoJobRepository::GetJob()
     DP_INFO_LOG("DPS_PHOTO: offline size: %{public}d, background size: %{public}zu, running job: %{public}zu",
         offlineJobQueue_->GetSize(), backgroundJobMap_.size(), runningJob_.size());
     DeferredPhotoJobPtr jobPtr = offlineJobQueue_->Peek();
-    DP_CHECK_RETURN_RET(jobPtr == nullptr || jobPtr->GetCurStatus() >= JobState::RUNNING, nullptr);
+    DP_CHECK_RETURN_RET(jobPtr == nullptr, nullptr);
+    DP_INFO_LOG("DPS_PHOTO: jobId: %{public}s, status: %{public}d, priority: %{public}d",
+        jobPtr->GetImageId().c_str(), jobPtr->GetCurStatus(), jobPtr->GetCurPriority());
+    DP_CHECK_RETURN_RET(jobPtr->GetCurStatus() >= JobState::RUNNING, nullptr);
     return jobPtr;
 }
 
@@ -204,10 +207,10 @@ uint32_t PhotoJobRepository::GetJobTimerId(const std::string& imageId)
     return jobPtr->GetTimerId();
 }
 
-void PhotoJobRepository::NotifyJobChanged(const std::string& imageId, bool isTyrDo)
+void PhotoJobRepository::NotifyJobChanged(const std::string& imageId, bool isTryDo)
 {
     offlineJobQueue_->UpdateById(imageId);
-    DP_CHECK_RETURN(!isTyrDo);
+    DP_CHECK_RETURN(!isTryDo);
     DP_INFO_LOG("DPS_PHOTO: NotifyJobChanged imageId %{public}s", imageId.c_str());
     auto ret = DPS_SendCommand<NotifyJobChangedCommand>(userId_);
     DP_CHECK_ERROR_RETURN_LOG(ret != DP_OK, "NotifyJobChanged failed, ret: %{public}d", ret);
@@ -224,14 +227,14 @@ void PhotoJobRepository::UpdateRunningJobUnLocked(const std::string& imageId, bo
     DP_INFO_LOG("DPS_PHOTO: running job: %{public}s, total size: %{public}zu", imageId.c_str(), runningJob_.size());
 }
 
-void PhotoJobRepository::UpdatePriotyNumUnLocked(JobPriority cur, JobPriority pre)
+void PhotoJobRepository::UpdatePriorityNumUnLocked(JobPriority cur, JobPriority pre)
 {
-    auto it = priotyToNum_.find(cur);
-    if (it != priotyToNum_.end()) {
+    auto it = priorityToNum_.find(cur);
+    if (it != priorityToNum_.end()) {
         (it->second)++;
     }
-    it = priotyToNum_.find(pre);
-    if (it != priotyToNum_.end()) {
+    it = priorityToNum_.find(pre);
+    if (it != priorityToNum_.end()) {
         (it->second)--;
     }
 }
@@ -333,9 +336,9 @@ bool PhotoJobRepository::IsRunningJob(const std::string& imageId)
 void PhotoJobRepository::ReportEvent(const DeferredPhotoJobPtr& jobPtr, IDeferredPhotoProcessingSessionIpcCode event)
 {
     DP_CHECK_ERROR_RETURN_LOG(jobPtr == nullptr, "DeferredPhotoJob is nullptr.");
-    int32_t highJobNum = priotyToNum_.find(JobPriority::HIGH)->second;
-    int32_t normalJobNum = priotyToNum_.find(JobPriority::NORMAL)->second;
-    int32_t lowJobNum = priotyToNum_.find(JobPriority::LOW)->second;
+    int32_t highJobNum = priorityToNum_.find(JobPriority::HIGH)->second;
+    int32_t normalJobNum = priorityToNum_.find(JobPriority::NORMAL)->second;
+    int32_t lowJobNum = priorityToNum_.find(JobPriority::LOW)->second;
     std::string imageId = jobPtr->GetImageId();
     DPSEventInfo dpsEventInfo;
     dpsEventInfo.imageId = imageId;

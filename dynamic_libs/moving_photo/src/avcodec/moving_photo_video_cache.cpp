@@ -20,8 +20,11 @@
 #include <fcntl.h>
 #include <memory>
 #include <utility>
+#include "external_window.h"
+#include "native_buffer_inner.h"
 #include "utils/camera_log.h"
 #include "refbase.h"
+#include "surface_buffer.h"
 
 namespace {
     using namespace std::string_literals;
@@ -58,7 +61,7 @@ void MovingPhotoVideoCache::CacheFrame(sptr<FrameRecord> frameRecord)
 }
 
 void MovingPhotoVideoCache::DoMuxerVideo(std::vector<sptr<FrameRecord>> frameRecords, uint64_t taskName,
-    int32_t rotation, int32_t captureId)
+                                         int32_t rotation, int32_t captureId)
 {
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("DoMuxerVideo enter");
@@ -79,10 +82,8 @@ void MovingPhotoVideoCache::OnImageEncoded(sptr<FrameRecord> frameRecord, bool e
     CAMERA_SYNC_TRACE;
     std::lock_guard<std::mutex> lock(callbackVecLock_);
     for (auto cachedFrameCallbackHandle : cachedFrameCallbackHandles_) {
-        if (cachedFrameCallbackHandle == nullptr) {
-            MEDIA_ERR_LOG("MovingPhotoVideoCache::OnImageEncoded with null cachedFrameCallbackHandle");
-            continue;
-        }
+        CHECK_CONTINUE_ELOG(cachedFrameCallbackHandle == nullptr,
+            "MovingPhotoVideoCache::OnImageEncoded with null cachedFrameCallbackHandle");
         cachedFrameCallbackHandle->OnCacheFrameFinish(frameRecord, encodeResult);
     }
 }
@@ -97,8 +98,9 @@ void MovingPhotoVideoCache::GetFrameCachedResult(std::vector<sptr<FrameRecord>> 
     cachedFrameCallbackHandles_.push_back(cacheFrameHandler);
     callbackVecLock_.unlock();
     for (auto frameRecord : frameRecords) {
-        CHECK_EXECUTE(frameRecord->IsFinishCache(),
-            cacheFrameHandler->OnCacheFrameFinish(frameRecord, frameRecord->IsEncoded()));
+        if (frameRecord->IsFinishCache()) {
+            cacheFrameHandler->OnCacheFrameFinish(frameRecord, frameRecord->IsEncoded());
+        }
     }
 }
 
@@ -149,22 +151,17 @@ void CachedFrameCallbackHandle::OnCacheFrameFinish(sptr<FrameRecord> frameRecord
         return;
     }
     auto it = cacheRecords_.find(frameRecord);
-    if (it != cacheRecords_.end()) {
-        cacheRecords_.erase(it);
-        if (cachedSuccess && frameRecord != nullptr && frameRecord->encodedBuffer != nullptr) {
-            successCacheRecords_.push_back(frameRecord);
-        } else {
-            errorCacheRecords_.push_back(frameRecord);
-        }
-        // Still waiting for more cache encoded buffer
-        CHECK_RETURN(!cacheRecords_.empty());
-        MEDIA_INFO_LOG("encodedEndCbFunc_ is called success count: %{public}zu", successCacheRecords_.size());
-        // All buffer have been encoded
-        if (encodedEndCbFunc_ != nullptr) {
-            encodedEndCbFunc_(successCacheRecords_, taskName_, rotation_, captureId_);
-            encodedEndCbFunc_ = nullptr;
-        }
-    }
+    CHECK_RETURN(it == cacheRecords_.end());
+    cacheRecords_.erase(it);
+    bool isSucc = cachedSuccess && frameRecord != nullptr && frameRecord->encodedBuffer != nullptr;
+    (isSucc ? successCacheRecords_ : errorCacheRecords_).push_back(frameRecord);
+    // Still waiting for more cache encoded buffer
+    CHECK_RETURN(!cacheRecords_.empty());
+    MEDIA_INFO_LOG("encodedEndCbFunc_ is called success count: %{public}zu", successCacheRecords_.size());
+    // All buffer have been encoded
+    CHECK_RETURN(encodedEndCbFunc_ == nullptr);
+    encodedEndCbFunc_(successCacheRecords_, taskName_, rotation_, captureId_);
+    encodedEndCbFunc_ = nullptr;
 }
 
 // This function is called when prestop capture
@@ -183,5 +180,6 @@ CachedFrameSet CachedFrameCallbackHandle::GetCacheRecord()
     std::lock_guard<std::mutex> lock(cacheFrameMutex_);
     return cacheRecords_;
 }
+
 } // CameraStandard
 } // OHOS

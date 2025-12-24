@@ -30,8 +30,7 @@ std::shared_ptr<CameraNapiExProxy> CameraNapiExManager::GetCameraNapiExProxy(Cam
     std::lock_guard<std::mutex> lock(mutex_);
     if (cameraNapiExProxy_ == nullptr) {
         cameraNapiExProxy_ = CameraNapiExProxy::GetCameraNapiExProxy();
-        CHECK_RETURN_RET_ELOG(cameraNapiExProxy_ == nullptr, nullptr,
-            "get cameraNapiExProxy failed");
+        CHECK_RETURN_RET_ELOG(cameraNapiExProxy_ == nullptr, nullptr, "get cameraNapiExProxy failed");
     }
     auto item = std::find(userList_.begin(), userList_.end(), type);
     if (item == userList_.end()) {
@@ -51,6 +50,12 @@ void CameraNapiExManager::FreeCameraNapiExProxy(CameraNapiExProxyUserType type)
     if (userList_.empty() && cameraNapiExProxy_ != nullptr) {
         cameraNapiExProxy_ = nullptr;
     }
+}
+
+bool CameraNapiExManager::IsLoadedNapiEx()
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    return cameraNapiExProxy_ != nullptr;
 }
 } // namespace CameraStandard
 } // namespace OHOS

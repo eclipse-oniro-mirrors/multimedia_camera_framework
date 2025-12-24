@@ -34,9 +34,10 @@ class IDeferredVideoProcSessionCallback : public RefBase {
 public:
     IDeferredVideoProcSessionCallback() = default;
     virtual ~IDeferredVideoProcSessionCallback() = default;
-    virtual void OnProcessVideoDone(const std::string& videoId, const sptr<IPCFileDescriptor> ipcFd) = 0;
+    virtual void OnProcessVideoDone(const std::string& videoId) = 0;
     virtual void OnError(const std::string& videoId, const DpsErrorCode errorCode) = 0;
     virtual void OnStateChanged(const DpsStatusCode status) = 0;
+    virtual void OnProcessingProgress(const std::string& videoId, float progress) {};
 };
 
 class DeferredVideoProcSession : public RefBase {
@@ -49,6 +50,9 @@ public:
         const sptr<IPCFileDescriptor> dstFd);
     void RemoveVideo(const std::string& videoId, const bool restorable = false);
     void RestoreVideo(const std::string& videoId);
+    void AddVideo(const std::string& videoId, const std::vector<sptr<IPCFileDescriptor>>& fds);
+    void ProcessVideo(const std::string& appName, const std::string& videoId);
+    void CancelProcessVideo(const std::string& videoId);
     std::shared_ptr<IDeferredVideoProcSessionCallback> GetCallback();
 private:
     friend class CameraManager;
@@ -78,9 +82,10 @@ public:
         deferredVideoProcSession_ = nullptr;
     }
 
-    ErrCode OnProcessVideoDone(const std::string& videoId, const sptr<IPCFileDescriptor>& ipcFileDescriptor) override;
-    ErrCode OnError(const std::string& videoId, int32_t errorCode) override;
-    ErrCode OnStateChanged(int32_t status) override;
+    ErrCode OnProcessVideoDone(const std::string& videoId) override;
+    ErrCode OnError(const std::string& videoId, DeferredProcessing::ErrorCode errorCode) override;
+    ErrCode OnStateChanged(DeferredProcessing::StatusCode status) override;
+    ErrCode OnProcessingProgress(const std::string& videoId, float progress) override;
 
 private:
     sptr<DeferredVideoProcSession> deferredVideoProcSession_;

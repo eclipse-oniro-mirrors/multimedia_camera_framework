@@ -30,6 +30,7 @@
 #include "hap_token_info.h"
 #include "nativetoken_kit.h"
 #include "surface.h"
+#include "system_ability_definition.h"
 #include "test_common.h"
 #include "token_setproc.h"
 

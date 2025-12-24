@@ -63,6 +63,7 @@ sptr<IDeferredPhotoProcessingSession> DeferredProcessingService::CreateDeferredP
     const int32_t userId, const sptr<IDeferredPhotoProcessingSessionCallback>& callback)
 {
     DP_CHECK_RETURN_RET(!initialized_.load(), nullptr);
+
     DP_INFO_LOG("Create photo session for userId: %{public}d", userId);
     auto sessionManager = DPS_GetSessionManager();
     DP_CHECK_ERROR_RETURN_RET_LOG(sessionManager == nullptr, nullptr,
@@ -74,11 +75,17 @@ sptr<IDeferredVideoProcessingSession> DeferredProcessingService::CreateDeferredV
     const int32_t userId, const sptr<IDeferredVideoProcessingSessionCallback>& callbacks)
 {
     DP_CHECK_RETURN_RET(!initialized_.load(), nullptr);
+
     DP_INFO_LOG("Create video session for userId: %{public}d", userId);
     auto sessionManager = DPS_GetSessionManager();
     DP_CHECK_ERROR_RETURN_RET_LOG(sessionManager == nullptr, nullptr,
         "SessionManager is null, userId: %{public}d", userId);
     return sessionManager->CreateDeferredVideoProcessingSession(userId, callbacks);
+}
+
+void DeferredProcessingService::NotifyInterrupt()
+{
+    EventsMonitor::GetInstance().NotifyInterrupt();
 }
 } // namespace DeferredProcessing
 } // namespace CameraStandard

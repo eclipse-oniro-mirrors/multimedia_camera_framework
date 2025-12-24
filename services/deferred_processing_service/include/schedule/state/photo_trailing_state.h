@@ -22,7 +22,7 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-class PhotoTrailingState : public IState {
+class PhotoTrailingState : public IState, public std::enable_shared_from_this<PhotoTrailingState> {
 public:
     explicit PhotoTrailingState(SchedulerType type, int32_t stateValue);
 
@@ -36,7 +36,7 @@ private:
 
     bool isTrailing_ {false};
     uint32_t timerId_ {INVALID_TIMERID};
-    SteadyTimePoint startTimer_;
+    SteadyTimePoint startTime_;
     uint32_t remainingTrailingTime_ {DEFAULT_TRAILING_TIME};
 };
 } // namespace DeferredProcessing

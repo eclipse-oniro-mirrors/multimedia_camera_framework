@@ -28,6 +28,7 @@
 #include "stream_metadata_callback_stub.h"
 #include "iconsumer_surface.h"
 #include "istream_metadata.h"
+#include "session/capture_session.h"
 
 #include "nocopyable.h"
 #include "singleton.h"
@@ -36,15 +37,16 @@
 namespace OHOS {
 namespace CameraStandard {
 static const std::map<MetadataObjectType, int32_t> mapLengthOfType = {
-    {MetadataObjectType::FACE, 24},
-    {MetadataObjectType::HUMAN_BODY, 10},
-    {MetadataObjectType::CAT_FACE, 19},
-    {MetadataObjectType::CAT_BODY, 10},
-    {MetadataObjectType::DOG_FACE, 19},
-    {MetadataObjectType::DOG_BODY, 10},
-    {MetadataObjectType::SALIENT_DETECTION, 10},
-    {MetadataObjectType::BAR_CODE_DETECTION, 10},
-    {MetadataObjectType::BASE_FACE_DETECTION, 22},
+    { MetadataObjectType::FACE, 24 },
+    { MetadataObjectType::HUMAN_BODY, 10 },
+    { MetadataObjectType::CAT_FACE, 19 },
+    { MetadataObjectType::CAT_BODY, 10 },
+    { MetadataObjectType::DOG_FACE, 19 },
+    { MetadataObjectType::DOG_BODY, 10 },
+    { MetadataObjectType::SALIENT_DETECTION, 10 },
+    { MetadataObjectType::BAR_CODE_DETECTION, 10 },
+    { MetadataObjectType::BASE_FACE_DETECTION, 22 },
+    { MetadataObjectType::HUMAN_HEAD, 10 },
 };
 
 enum MetadataOutputErrorCode : int32_t {
@@ -145,40 +147,6 @@ private:
     Rect rightEyeBoundingBox_;
     Emotion emotion_;
     int32_t emotionConfidence_;
-    int32_t pitchAngle_;
-    int32_t yawAngle_;
-    int32_t rollAngle_;
-};
-
-class MetadataBasicFaceObject : public MetadataObject {
-public:
-    MetadataBasicFaceObject(const MetaObjectParms& parms, const Rect leftEyeBoundingBox, const Rect rightEyeBoundingBox,
-                       const int32_t pitchAngle, const int32_t yawAngle, const int32_t rollAngle);
-    ~MetadataBasicFaceObject() = default;
-    inline Rect GetLeftEyeBoundingBox()
-    {
-        return leftEyeBoundingBox_;
-    };
-    inline Rect GetRightEyeBoundingBox()
-    {
-        return rightEyeBoundingBox_;
-    };
-    inline int32_t GetPitchAngle()
-    {
-        return pitchAngle_;
-    };
-    inline int32_t GetYawAngle()
-    {
-        return yawAngle_;
-    };
-    inline int32_t GetRollAngle()
-    {
-        return rollAngle_;
-    };
-
-private:
-    Rect leftEyeBoundingBox_;
-    Rect rightEyeBoundingBox_;
     int32_t pitchAngle_;
     int32_t yawAngle_;
     int32_t rollAngle_;
@@ -393,6 +361,14 @@ private:
     std::vector<sptr<MetadataObject>> detectedObjects_{};
 };
 
+class FocusTrackingMetaInfoCallback {
+public:
+    FocusTrackingMetaInfoCallback() = default;
+    virtual ~FocusTrackingMetaInfoCallback() = default;
+    virtual void OnFocusTrackingMetaInfoAvailable(FocusTrackingMetaInfo focusTrackingMetaInfo) const = 0;
+};
+
+
 class MetadataOutput : public CaptureOutput {
 public:
     MetadataOutput(sptr<IConsumerSurface> surface, sptr<IStreamMetadata> &streamMetadata);
@@ -440,6 +416,8 @@ public:
      */
     void SetCallback(std::shared_ptr<MetadataStateCallback> metadataStateCallback);
 
+    void SetFocusTrackingMetaInfoCallback(std::shared_ptr<FocusTrackingMetaInfoCallback> listener);
+
     int32_t CreateStream() override;
 
     /**
@@ -460,8 +438,13 @@ public:
     bool reportLastFaceResults_ = false;
     void ProcessMetadata(const int32_t streamId, const std::shared_ptr<OHOS::Camera::CameraMetadata>& result,
                                std::vector<sptr<MetadataObject>>& metaObjects, bool isNeedMirror, bool isNeedFlip);
+    void ProcessFocusTrackingMetaInfo(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result,
+        FocusTrackingMetaInfo& info, bool isNeedMirror, bool isNeedFlip);
+    bool ProcessFocusTrackingRegion(const std::shared_ptr<OHOS::Camera::CameraMetadata>& metadata,
+        Rect& region, bool isNeedMirror, bool isNeedFlip);
     std::shared_ptr<MetadataObjectCallback> GetAppObjectCallback();
     std::shared_ptr<MetadataStateCallback> GetAppStateCallback();
+    std::shared_ptr<FocusTrackingMetaInfoCallback> GetFocusTrackingMetaInfoCallback();
 
     friend class MetadataObjectListener;
 
@@ -472,11 +455,12 @@ private:
     bool checkValidType(const std::vector<MetadataObjectType>& typeAdded,
                         const std::vector<MetadataObjectType>& supportedType);
     std::vector<int32_t> convert(const std::vector<MetadataObjectType>& typesOfMetadata);
-    
+
     std::mutex surfaceMutex_;
     sptr<IConsumerSurface> surface_;
     std::shared_ptr<MetadataObjectCallback> appObjectCallback_;
     std::shared_ptr<MetadataStateCallback> appStateCallback_;
+    std::shared_ptr<FocusTrackingMetaInfoCallback> focusTrackingMetaInfoCallback_;
     sptr<IStreamMetadataCallback> cameraMetadataCallback_;
 };
 

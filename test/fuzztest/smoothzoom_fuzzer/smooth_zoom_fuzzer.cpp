@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -14,30 +14,16 @@
  */
 
 #include "smooth_zoom_fuzzer.h"
-#include "camera_timer.h"
-#include "hstream_capture.h"
-#include "message_parcel.h"
-#include "nativetoken_kit.h"
-#include "token_setproc.h"
-#include "accesstoken_kit.h"
-#include "camera_metadata_info.h"
-#include "metadata_utils.h"
 #include <fuzzer/FuzzedDataProvider.h>
 #include "test_token.h"
-
-namespace {
-
-const int32_t LIMITSIZE = 12;
-
-}
 
 namespace OHOS {
 namespace CameraStandard {
 
-std::shared_ptr<SmoothZoom> SmoothZoomFuzzer::fuzz_{nullptr};
-static constexpr int32_t MIN_SIZE_NUM = 4;
+std::shared_ptr<SmoothZoom> SmoothZoomFuzzer::fuzz_ { nullptr };
+static constexpr int32_t MIN_SIZE_NUM = 13;
 
-void SmoothZoomFuzzer::Test(uint8_t *rawData, size_t size)
+void SmoothZoomFuzzer::Test(uint8_t* rawData, size_t size)
 {
     FuzzedDataProvider fdp(rawData, size);
     if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
@@ -47,16 +33,13 @@ void SmoothZoomFuzzer::Test(uint8_t *rawData, size_t size)
 
     fuzz_ = std::make_shared<SmoothZoom>();
     CHECK_RETURN_ELOG(!fuzz_, "Create fuzz_ Error");
-    MessageParcel data;
-    data.WriteRawData(rawData, size);
 
     SmoothZoomType mode = static_cast<SmoothZoomType>(fdp.ConsumeBool());
     auto alg = fuzz_->GetZoomAlgorithm(mode);
 
-    data.RewindRead(0);
-    float currentZoom = data.ReadFloat();
-    float targetZoom = data.ReadFloat();
-    float frameInterval = data.ReadFloat();
+    float currentZoom = fdp.ConsumeFloatingPoint<float>();
+    float targetZoom = fdp.ConsumeFloatingPoint<float>();
+    float frameInterval = fdp.ConsumeFloatingPoint<float>();
     alg->GetZoomArray(currentZoom, targetZoom, frameInterval);
 }
 
@@ -64,7 +47,7 @@ void SmoothZoomFuzzer::Test(uint8_t *rawData, size_t size)
 } // namespace OHOS
 
 /* Fuzzer entry point */
-extern "C" int LLVMFuzzerTestOneInput(uint8_t *data, size_t size)
+extern "C" int LLVMFuzzerTestOneInput(uint8_t* data, size_t size)
 {
     /* Run your code on data */
     OHOS::CameraStandard::SmoothZoomFuzzer::Test(data, size);

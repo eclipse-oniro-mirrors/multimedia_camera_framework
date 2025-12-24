@@ -16,10 +16,15 @@
 #include "deferred_photo_session_unittest.h"
 #include "deferred_photo_processing_session_callback_stub.h"
 #include "deferred_processing_service.h"
+#include "deferred_processing_types.h"
 #include "dps.h"
+#include "dps_metadata_info.h"
+#include "gmock/gmock.h"
 
 using namespace testing::ext;
 using namespace testing::mt;
+using namespace testing;
+
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
@@ -44,42 +49,24 @@ void PhotoSessionUnitTest::TearDown()
 
 class PhotoProcessingSessionCallbackMock : public DeferredPhotoProcessingSessionCallbackStub {
 public:
-    ErrCode OnProcessImageDone(const std::string& imageId, const sptr<IPCFileDescriptor>& ipcFd,
-        int64_t bytes, uint32_t cloudImageEnhanceFlag)
-    {
-        DP_DEBUG_LOG("entered.");
-        return 0;
-    }
+    MOCK_METHOD(int32_t, OnProcessImageDone, (const std::string &imageId, const std::shared_ptr<PictureIntf>& picture,
+        const DpsMetadata& DpsMetadata), (override));
+    MOCK_METHOD(int32_t, OnDeliveryLowQualityImage, (const std::string &imageId,
+        const std::shared_ptr<PictureIntf>& picture));
+    MOCK_METHOD(int32_t, OnProcessImageDone, (const std::string &imageId,
+        const sptr<IPCFileDescriptor>& ipcFd, int64_t bytes, uint32_t cloudImageEnhanceFlag), (override));
+    MOCK_METHOD(int32_t, OnError, (const std::string &imageId, DeferredProcessing::ErrorCode errorCode));
+    MOCK_METHOD(int32_t, OnStateChanged, (DeferredProcessing::StatusCode status));
+    MOCK_METHOD(int32_t, CallbackParcel, (uint32_t code, MessageParcel& data, MessageParcel& reply,
+        MessageOption& option));
 
-    ErrCode OnDeliveryLowQualityImage(const std::string& imageId, const std::shared_ptr<PictureIntf>& picture)
+    PhotoProcessingSessionCallbackMock()
     {
-        DP_DEBUG_LOG("entered.");
-        return 0;
-    }
-
-    ErrCode OnProcessImageDone(const std::string& imageId, const std::shared_ptr<PictureIntf>& picture,
-        uint32_t cloudImageEnhanceFlag)
-    {
-        DP_DEBUG_LOG("entered.");
-        return 0;
-    }
-
-    ErrCode OnError(const std::string& imageId, ErrorCode errorCode)
-    {
-        DP_DEBUG_LOG("entered.");
-        return 0;
-    }
-
-    ErrCode OnStateChanged(StatusCode status)
-    {
-        DP_DEBUG_LOG("entered.");
-        return 0;
-    }
-
-    int32_t CallbackParcel([[maybe_unused]] uint32_t code, [[maybe_unused]] MessageParcel& data,
-        [[maybe_unused]] MessageParcel& reply, [[maybe_unused]] MessageOption& option)
-    {
-        return 0;
+        ON_CALL(*this, OnProcessImageDone(Matcher<const string&>(_),_,_)).WillByDefault(Return(0));
+        ON_CALL(*this, OnDeliveryLowQualityImage).WillByDefault(Return(0));
+        ON_CALL(*this, OnProcessImageDone(Matcher<const string&>(_),_,_,_)).WillByDefault(Return(0));
+        ON_CALL(*this, OnError(Matcher<const string&>(_),_)).WillByDefault(Return(0));
+        ON_CALL(*this, OnStateChanged).WillByDefault(Return(0));
     }
 };
 

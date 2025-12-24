@@ -40,37 +40,33 @@ private:
     static int32_t ProcessMetaObjects(const int32_t streamId, std::vector<sptr<MetadataObject>>& metaObjects,
                                             const std::vector<camera_metadata_item_t>& metadataItem,
                                             const std::vector<uint32_t>& metadataTypes,
-                                            bool isNeedMirror, bool isNeedFlip, RectBoxType rectBoxType);
+                                            bool isNeedMirror, bool isNeedFlip, RectBoxType type);
 
     static void GenerateObjects(const camera_metadata_item_t &metadataItem, MetadataObjectType metadataType,
-								    std::vector<sptr<MetadataObject>> &metaObjects,
-									bool isNeedMirror, bool isNeedFlip, RectBoxType rectBoxType);
+                                        std::vector<sptr<MetadataObject>> &metaObjects,
+                                        bool isNeedMirror, bool isNeedFlip, RectBoxType rectBoxType);
 
     static void ProcessBaseInfo(sptr<MetadataObjectFactory> factoryPtr, const camera_metadata_item_t &metadataItem,
                                         int32_t &index, MetadataObjectType typeFromHal, bool isNeedMirror,
-                                        bool isNeedFlip, RectBoxType rectBoxType);
+                                        bool isNeedFlip, RectBoxType type);
 
     static void ProcessExternInfo(sptr<MetadataObjectFactory> factoryPtr,
                                         const camera_metadata_item_t &metadataItem, int32_t &index,
                                         MetadataObjectType typeFromHal, bool isNeedMirror, bool isNeedFlip,
-                                        RectBoxType rectBoxType);
+                                        RectBoxType type);
 
     static void ProcessFaceDetectInfo(sptr<MetadataObjectFactory> factoryPtr,
                                                     const camera_metadata_item_t &metadataItem, int32_t &index,
-                                                    bool isNeedMirror, bool isNeedFlip, RectBoxType rectBoxType,
+                                                    bool isNeedMirror, bool isNeedFlip, RectBoxType type,
                                                     MetadataObjectType typeFromHal);
 
     static void ProcessCatFaceDetectInfo(sptr<MetadataObjectFactory> factoryPtr,
                                                 const camera_metadata_item_t &metadataItem, int32_t &index,
-                                                bool isNeedMirror, bool isNeedFlip, RectBoxType rectBoxType);
+                                                bool isNeedMirror, bool isNeedFlip, RectBoxType type);
 
     static void ProcessDogFaceDetectInfo(sptr<MetadataObjectFactory> factoryPtr,
                                                 const camera_metadata_item_t &metadataItem, int32_t &index,
-                                                bool isNeedMirror, bool isNeedFlip, RectBoxType rectBoxType);
-
-    static Rect ProcessRectBox(int32_t offsetTopLeftX, int32_t offsetTopLeftY,
-        int32_t offsetBottomRightX, int32_t offsetBottomRightY, bool isNeedMirror, bool isNeedFlip,
-        RectBoxType rectBoxType);
+                                                bool isNeedMirror, bool isNeedFlip, RectBoxType type);
 
     static Rect ProcessCameraRectBox(int32_t offsetTopLeftX, int32_t offsetTopLeftY,
         int32_t offsetBottomRightX, int32_t offsetBottomRightY, bool isNeedMirror, bool isNeedFlip);
@@ -91,7 +87,11 @@ public:
         FocusTrackingMode& mode);
 
     static bool ProcessMetaObjects(const int32_t streamId, const std::shared_ptr<OHOS::Camera::CameraMetadata>& result,
-        std::vector<sptr<MetadataObject>> &metaObjects, bool isNeedMirror, bool isNeedFlip, RectBoxType rectBoxType);
+        std::vector<sptr<MetadataObject>> &metaObjects, bool isNeedMirror, bool isNeedFlip, RectBoxType type);
+
+    static Rect ProcessRectBox(int32_t offsetTopLeftX, int32_t offsetTopLeftY,
+        int32_t offsetBottomRightX, int32_t offsetBottomRightY, bool isNeedMirror, bool isNeedFlip,
+        RectBoxType type);
 };
 
 std::vector<float> ParsePhysicalApertureRangeByMode(const camera_metadata_item_t &item, const int32_t modeName);

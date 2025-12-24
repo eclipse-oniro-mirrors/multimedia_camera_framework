@@ -17,6 +17,8 @@
 #define CAMERADEVICE_FUZZER_H
 #define FUZZ_PROJECT_NAME "cameradevice_fuzzer"
 #include <iostream>
+#include "hcamera_host_manager.h"
+#include "hcamera_device.h"
 #include "icamera_device_service_callback.h"
 #include "v1_3/icamera_device.h"
 #include "fuzzer/FuzzedDataProvider.h"
@@ -64,7 +66,6 @@ public:
     }
 };
 
-using OHOS::HDI::Camera::V1_3::IStreamOperatorCallback;
 class IStreamOperatorCallbackMock : public IStreamOperatorCallback {
 public:
     inline int32_t OnCaptureReady(int32_t captureId,
@@ -84,6 +85,13 @@ public:
     {
         return 0;
     }
+
+    inline int32_t OnCaptureEndedExt_V1_4(
+        int32_t captureId, const std::vector<OHOS::HDI::Camera::V1_5::CaptureEndedInfoExt_v1_4>& infos) override
+    {
+        return 0;
+    }
+
     inline int32_t OnCaptureStarted(int32_t captureId, const std::vector<int32_t>& streamIds) override
     {
         return 0;
@@ -112,6 +120,14 @@ public:
         return 0;
     }
     inline int32_t OnResult(int32_t streamId, const std::vector<uint8_t>& result) override
+    {
+        return 0;
+    }
+    inline int32_t OnCapturePaused(int32_t captureId, const std::vector<int32_t>& streamIds) override
+    {
+        return 0;
+    }
+    inline int32_t OnCaptureResumed(int32_t captureId, const std::vector<int32_t>& streamIds) override
     {
         return 0;
     }

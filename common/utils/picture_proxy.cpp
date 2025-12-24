@@ -45,14 +45,12 @@ typedef PictureIntf* (*CreatePictureIntf)();
 std::shared_ptr<PictureProxy> PictureProxy::CreatePictureProxy()
 {
     auto dynamiclib = CameraDynamicLoader::GetDynamiclib(PICTURE_SO);
-    CHECK_RETURN_RET_ELOG(
-        dynamiclib == nullptr, nullptr, "PictureProxy::CreatePictureProxy get dynamiclib fail");
+    CHECK_RETURN_RET_ELOG(dynamiclib == nullptr, nullptr, "PictureProxy::CreatePictureProxy get dynamiclib fail");
     CreatePictureIntf createPictureIntf = (CreatePictureIntf)dynamiclib->GetFunction("createPictureAdapterIntf");
     CHECK_RETURN_RET_ELOG(
         createPictureIntf == nullptr, nullptr, "PictureProxy::CreatePictureProxy get createPictureIntf fail");
     PictureIntf* pictureIntf = createPictureIntf();
-    CHECK_RETURN_RET_ELOG(
-        pictureIntf == nullptr, nullptr, "PictureProxy::CreatePictureProxy get pictureIntf fail");
+    CHECK_RETURN_RET_ELOG(pictureIntf == nullptr, nullptr, "PictureProxy::CreatePictureProxy get pictureIntf fail");
     std::shared_ptr<PictureProxy> pictureProxy =
         std::make_shared<PictureProxy>(dynamiclib, std::shared_ptr<PictureIntf>(pictureIntf));
     return pictureProxy;
@@ -68,14 +66,6 @@ void PictureProxy::SetAuxiliaryPicture(sptr<SurfaceBuffer> &surfaceBuffer, Camer
     std::shared_ptr<PictureIntf> pictureIntf = GetPictureIntf();
     CHECK_RETURN_ELOG(!pictureIntf, "PictureProxy::SetAuxiliaryPicture pictureIntf_ is nullptr");
     pictureIntf->SetAuxiliaryPicture(surfaceBuffer, type);
-}
-
-void PictureProxy::CreateWithDeepCopySurfaceBuffer(sptr<SurfaceBuffer> &surfaceBuffer)
-{
-    MEDIA_INFO_LOG("PictureProxy::CreateWithDeepCopySurfaceBuffer enter");
-    std::shared_ptr<PictureIntf> pictureIntf = GetPictureIntf();
-    CHECK_RETURN_ELOG(!pictureIntf, "PictureProxy::CreateWithDeepCopySurfaceBuffer pictureIntf_ is nullptr");
-    pictureIntf->CreateWithDeepCopySurfaceBuffer(surfaceBuffer);
 }
 
 bool PictureProxy::Marshalling(Parcel &data) const
@@ -113,11 +103,27 @@ bool PictureProxy::SetMaintenanceData(sptr<SurfaceBuffer> &surfaceBuffer)
     return retCode;
 }
 
+uint32_t PictureProxy::SetXtStyleMetadataBlob(const uint8_t *source, const uint32_t bufferSize)
+{
+    uint32_t retCode = 0;
+    std::shared_ptr<PictureIntf> pictureIntf = GetPictureIntf();
+    CHECK_RETURN_RET_ELOG(!pictureIntf, retCode, "PictureProxy::SetMaintenanceData pictureIntf is nullptr");
+    retCode = pictureIntf->SetXtStyleMetadataBlob(source, bufferSize);
+    return retCode;
+}
+
 void PictureProxy::RotatePicture()
 {
     std::shared_ptr<PictureIntf> pictureIntf = GetPictureIntf();
     CHECK_RETURN_ELOG(!pictureIntf, "PictureProxy::RotatePicture pictureIntf is nullptr");
     pictureIntf->RotatePicture();
+}
+
+std::shared_ptr<Media::Picture> PictureProxy::GetPicture() const
+{
+    std::shared_ptr<PictureIntf> pictureIntf = GetPictureIntf();
+    CHECK_RETURN_RET_ELOG(!pictureIntf, nullptr, "PictureProxy::GetPicture pictureIntf is nullptr");
+    return pictureIntf->GetPicture();
 }
 // LCOV_EXCL_STOP
 }  // namespace CameraStandard

@@ -17,7 +17,7 @@
 #define DEFERRED_VIDEO_JOB_UNITTEST_H
 
 #include "gtest/gtest.h"
-#include "ivideo_job_repository_listener.h"
+#include "deferred_video_job.h"
 #include "ideferred_video_processing_session.h"
 #include "dps.h"
 #include "deferred_video_proc_session.h"
@@ -41,19 +41,10 @@ public:
 
     DeferredVideoJobPtr CreateTestDeferredVideoJobPtr(const std::string& videoId, VideoJobState curStatus);
 
-    sptr<IPCFileDescriptor> srcFd_;
-    sptr<IPCFileDescriptor> dstFd_;
+    int32_t srcFd_ {-1};
+    int32_t dtsFd_ {-1};
+    std::unique_ptr<VideoJobQueue> jobQueue_ {nullptr};
 };
-
-class TestVideoJobRepositoryListener : public IVideoJobRepositoryListener {
-public:
-    explicit TestVideoJobRepositoryListener() {}
-
-    ~TestVideoJobRepositoryListener() {}
-
-    void OnVideoJobChanged(const DeferredVideoJobPtr& jobPtr) override {}
-};
-
 } // DeferredProcessing
 } // CameraStandard
 } // OHOS

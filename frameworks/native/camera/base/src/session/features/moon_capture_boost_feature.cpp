@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+// LCOV_EXCL_START
 #include "features/moon_capture_boost_feature.h"
 
 #include <cstdint>
@@ -36,12 +36,10 @@ MoonCaptureBoostFeature::MoonCaptureBoostFeature(
     int ret = OHOS::Camera::FindCameraMetadataItem(deviceAbility->get(), OHOS_ABILITY_MOON_CAPTURE_BOOST, &item);
     CHECK_RETURN_ELOG(ret != CAM_META_SUCCESS || item.count <= 0,
         "MoonCaptureBoostFeature get OHOS_ABILITY_MOON_CAPTURE_BOOST failed");
-
     uint32_t currentMode = INVALID_MODE;
     float currentMinRatio = INVALID_ZOOM_RATIO;
     float currentMaxRatio = INVALID_ZOOM_RATIO;
-    const int32_t MAX_OFFSET = 2;
-    for (uint32_t i = 0; i + MAX_OFFSET < item.count; i++) {
+    for (uint32_t i = 0; i < item.count; i++) {
         if (currentMode == INVALID_MODE) {
             currentMode = static_cast<SceneMode>(item.data.ui32[i]);
             continue;
@@ -54,19 +52,17 @@ MoonCaptureBoostFeature::MoonCaptureBoostFeature(
             currentMaxRatio = static_cast<float>(item.data.ui32[i]) / SKETCH_DIV;
             continue;
         }
-        SketchReferenceFovRange sketchReferencefovRange;
-        sketchReferencefovRange.zoomMin = static_cast<float>(item.data.ui32[i]) / SKETCH_DIV;
-        sketchReferencefovRange.zoomMax = static_cast<float>(item.data.ui32[i + 1]) / SKETCH_DIV;  // Offset 1 data
-        sketchReferencefovRange.referenceValue =
-            static_cast<float>(item.data.ui32[i + 2]) / SKETCH_DIV; // Offset 2 data
+        SketchReferenceFovRange fovRange;
+        fovRange.zoomMin = static_cast<float>(item.data.ui32[i]) / SKETCH_DIV;
+        fovRange.zoomMax = static_cast<float>(item.data.ui32[i + 1]) / SKETCH_DIV;        // Offset 1 data
+        fovRange.referenceValue = static_cast<float>(item.data.ui32[i + 2]) / SKETCH_DIV; // Offset 2 data
         i = i + 2;                                                                        // Offset 2 data
-        sketchFovRangeList_.emplace_back(sketchReferencefovRange);
+        sketchFovRangeList_.emplace_back(fovRange);
         MEDIA_DEBUG_LOG(
             "MoonCaptureBoostFeature::MoonCaptureBoostFeature get sketch reference fov ratio:mode->%{public}d "
             "%{public}f-%{public}f value->%{public}f",
-            currentMode, sketchReferencefovRange.zoomMin,
-                sketchReferencefovRange.zoomMax, sketchReferencefovRange.referenceValue);
-        if (sketchReferencefovRange.zoomMax - currentMaxRatio >= -std::numeric_limits<float>::epsilon()) {
+            currentMode, fovRange.zoomMin, fovRange.zoomMax, fovRange.referenceValue);
+        if (fovRange.zoomMax - currentMaxRatio >= -std::numeric_limits<float>::epsilon()) {
             if (currentMode == static_cast<uint32_t>(relatedMode_)) {
                 sketchZoomRatioRange_.zoomMin = currentMinRatio;
                 sketchZoomRatioRange_.zoomMax = currentMaxRatio;
@@ -110,3 +106,4 @@ SceneMode MoonCaptureBoostFeature::GetRelatedMode()
 }
 } // namespace CameraStandard
 } // namespace OHOS
+// LCOV_EXCL_STOP

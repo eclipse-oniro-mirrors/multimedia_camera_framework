@@ -25,8 +25,8 @@ namespace OHOS {
 namespace CameraStandard {
 class LightPaintingSession : public CaptureSessionForSys {
 public:
-    explicit LightPaintingSession(sptr<ICaptureSession> &lightPaintingSession)
-        : CaptureSessionForSys(lightPaintingSession) {}
+    explicit LightPaintingSession(sptr<ICaptureSession> &lightPaintingSession):
+        CaptureSessionForSys(lightPaintingSession) {}
     ~LightPaintingSession();
  
     /**

@@ -29,7 +29,8 @@ void BmsSaListener::OnAddSystemAbility(int32_t systemAbilityId, const std::strin
 void BmsSaListener::OnRemoveSystemAbility(int32_t systemAbilityId, const std::string& deviceId)
 {
     MEDIA_INFO_LOG("OnRemoveSystemAbility,id: %{public}d", systemAbilityId);
-    CHECK_EXECUTE(systemAbilityId == BUNDLE_MGR_SERVICE_SYS_ABILITY_ID, callback_());
+    CHECK_RETURN(systemAbilityId != BUNDLE_MGR_SERVICE_SYS_ABILITY_ID);
+    callback_();
 }
 
 BmsAdapter::BmsAdapter()
@@ -76,17 +77,12 @@ void BmsAdapter::SetBms(sptr<OHOS::AppExecFwk::IBundleMgr> bms)
 std::string BmsAdapter::GetBundleName(int uid)
 {
     std::string bundleName = "";
-    if (cacheMap.Get(uid, bundleName)) {
-        MEDIA_DEBUG_LOG("GetBundleName by cache, uid: %{public}d bundleName is %{public}s", uid, bundleName.c_str());
-        return bundleName;
-    }
+    CHECK_RETURN_RET_DLOG(cacheMap.Get(uid, bundleName), bundleName,
+        "GetBundleName by cache, uid: %{public}d bundleName is %{public}s", uid, bundleName.c_str());
     auto bms = GetBms();
     CHECK_RETURN_RET_ELOG(bms == nullptr, "", "bms is null");
     auto result = bms->GetNameForUid(uid, bundleName);
-    if (result != ERR_OK) {
-        MEDIA_DEBUG_LOG("GetNameForUid fail, ret: %{public}d", result);
-        return "";
-    }
+    CHECK_RETURN_RET_DLOG(result != ERR_OK, "", "GetNameForUid fail, ret: %{public}d", result);
     MEDIA_DEBUG_LOG("GetBundleName by GetNameForUid, uid: %{public}d bundleName is %{public}s",
         uid, bundleName.c_str());
     cacheMap.Put(uid, bundleName);
@@ -102,7 +98,9 @@ bool BmsAdapter::RegisterListener()
     auto bmsAdapterWptr = wptr<BmsAdapter>(this);
     auto removeCallback = [bmsAdapterWptr]() {
         auto adapter = bmsAdapterWptr.promote();
-        CHECK_EXECUTE(adapter, adapter->SetBms(nullptr));
+        if (adapter) {
+            adapter->SetBms(nullptr);
+        }
     };
     bmsSaListener_ = new BmsSaListener(removeCallback);
     CHECK_RETURN_RET_ELOG(bmsSaListener_ == nullptr, false, "bmsSaListener_ alloc failed");

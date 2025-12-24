@@ -34,6 +34,8 @@ public:
 
     /* TearDown:Execute after each test case */
     void TearDown();
+
+    int32_t fd_ {-1};
 };
 } // CameraStandard
 } // OHOS

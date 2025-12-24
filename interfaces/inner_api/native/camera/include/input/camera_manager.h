@@ -25,9 +25,10 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include <unordered_map>
 
 #include "camera_stream_info_parse.h"
+#include "camera_timer.h"
+#include "color_space_info_parse.h"
 #include "control_center_session.h"
 #include "deferred_proc_session/deferred_photo_proc_session.h"
 #include "deferred_proc_session/deferred_video_proc_session.h"
@@ -49,12 +50,14 @@
 #include "istream_repeat.h"
 #include "output/camera_output_capability.h"
 #include "output/metadata_output.h"
+#include "output/movie_file_output.h"
 #include "output/photo_output.h"
 #include "output/preview_output.h"
 #include "output/video_output.h"
 #include "safe_map.h"
 #include "session/mech_session.h"
-#include "color_space_info_parse.h"
+#include "session/cameraSwitch_session.h"
+#include "unify_movie_file_output.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -177,6 +180,15 @@ public:
     sptr<CameraOutputCapability> GetSupportedOutputCapability(sptr<CameraDevice>& cameraDevice, int32_t modeName = 0);
 
     /**
+     * @brief Get full output capaility of the mode of the given camera from cameraDevice.
+     *
+     * @param Camera device for which full capability need to be fetched.
+     * @return Returns vector the ability of the mode of cameraDevice of available camera from cameraDevice.
+     */
+    sptr<CameraOutputCapability> GetSupportedFullOutputCapability(sptr<CameraDevice>& cameraDevice,
+        int32_t modeName = 0);
+
+    /**
      * @brief Create camera input instance with provided camera position and type.
      *
      * @param The cameraDevice for which input has to be created.
@@ -289,7 +301,7 @@ public:
     static int CreateDeferredPhotoProcessingSession(int userId,
         std::shared_ptr<IDeferredPhotoProcSessionCallback> callback,
         sptr<DeferredPhotoProcSession> *pDeferredPhotoProcSession);
-    
+
     /**
      * @brief Create deferred video processing session.
      *
@@ -329,6 +341,21 @@ public:
      * @return Returns true is supported, false is not supported.
      */
     bool IsMechSupported();
+
+    /**
+     * @brief Create cameraSwitch session.
+     *
+     * @return Returns pointer to cameraSwitch session.
+     */
+    sptr<CameraSwitchSession> CreateCameraSwitchSession();
+
+    /**
+     * @brief Create cameraSwitch session.
+     *
+     * @param pMechSession pointer to cameraSwitch session instance.
+     * @return Returns error code.
+     */
+    int CreateCameraSwitchSession(sptr<CameraSwitchSession> *switchSession);
 
     /**
      * @brief Create photo output instance.
@@ -571,6 +598,22 @@ public:
         std::vector<MetadataObjectType> metadataObjectTypes);
 
     /**
+     * @brief Create movie file output instance.
+     *
+     * @param Returns pointer to movie file output instance.
+     * @return Returns error code.
+     */
+    int CreateMovieFileOutput(VideoProfile &profile, sptr<MovieFileOutput> *pMovieFileOutput);
+
+    /**
+     * @brief Create movie file output instance.
+     *
+     * @param Returns pointer to movie file output instance.
+     * @return Returns error code.
+     */
+    int CreateMovieFileOutput(VideoProfile &profile, sptr<UnifyMovieFileOutput> *pMovieFileOutput);
+
+    /**
      * @brief Register camera status listener.
      *
      * @param listener CameraManagerCallback pointer.
@@ -609,10 +652,10 @@ public:
     /**
      * @brief check if control center active
      *
-     * @return Returns true is active, false is not active.
+     * @return Returns true if active, false if not active.
      */
     bool IsControlCenterActive();
- 
+
     /**
      * @brief create the ControlCenterSession instance.
      *
@@ -678,7 +721,7 @@ public:
      * @brief Register control center status listener
      *
      * @param listener The control center status listener object.
-     *
+     * @return.
      */
     void RegisterControlCenterStatusListener(std::shared_ptr<ControlCenterStatusListener> listener);
 
@@ -696,7 +739,7 @@ public:
      * @return ControlCenterStatusListenerManager.
      */
     sptr<ControlCenterStatusListenerManager> GetControlCenterStatusListenerManager();
-    
+
     /**
      * @brief Set control center frame condition.
      *
@@ -704,7 +747,7 @@ public:
      * @return.
      */
     void SetControlCenterFrameCondition(bool frameCondition);
-    
+
     /**
      * @brief Set control center resolution condition.
      *
@@ -712,7 +755,7 @@ public:
      * @return.
      */
     void SetControlCenterResolutionCondition(bool resolutionCondition);
-    
+
     /**
      * @brief Set control center position condition.
      *
@@ -948,9 +991,6 @@ public:
         std::vector<VideoProfile> vidProfiles = {};
     };
 
-    void ProcessModeAndOutputCapability(std::vector<std::vector<SceneMode>> &modes,
-        std::vector<SceneMode> modeofThis, std::vector<std::vector<sptr<CameraOutputCapability>>> &outputCapabilities,
-        std::vector<sptr<CameraOutputCapability>> outputCapabilitiesofThis);
     void GetCameraConcurrentInfos(std::vector<sptr<CameraDevice>> cameraDeviceArrray,
         std::vector<bool> cameraConcurrentType, std::vector<std::vector<SceneMode>> &modes,
         std::vector<std::vector<sptr<CameraOutputCapability>>> &outputCapabilities);
@@ -963,6 +1003,8 @@ public:
     friend int CameraInput::Open(int32_t cameraConcurrentType);
     std::string GetFoldScreenType();
     bool GetIsInWhiteList();
+    void RegisterTimeforDevice(const std::string& cameraId, const uint32_t& timestmp);
+    void UnregisterTimeforDevice(const std::string& cameraId);
     uint32_t DisplayModeToFoldStatus(uint32_t displayMode);
     void SaveOldCameraId(std::string realCameraId, std::string oldCameraId);
     std::string GetOldCameraIdfromReal(std::string realCameraId);
@@ -1049,7 +1091,7 @@ private:
     void ParseCapability(ProfilesWrapper& profilesWrapper, sptr<CameraDevice>& camera, const int32_t modeName,
         camera_metadata_item_t& item, std::shared_ptr<OHOS::Camera::CameraMetadata> metadata);
     camera_format_t GetCameraMetadataFormat(CameraFormat format);
-    
+
     dmDeviceInfo GetDmDeviceInfo(const std::string& cameraId, const std::vector<dmDeviceInfo>& dmDeviceInfoList);
     int32_t SetTorchLevel(float level);
     int32_t ValidCreateOutputStream(Profile& profile, const sptr<OHOS::IBufferProducer>& producer);
@@ -1062,6 +1104,8 @@ private:
     vector<CameraFormat> GetSupportPhotoFormat(const int32_t modeName,
         std::shared_ptr<OHOS::Camera::CameraMetadata> metadata);
     void FillSupportPhotoFormats(std::vector<Profile>& profiles);
+    void FillExtendedSupportPhotoFormats(std::vector<Profile>& profiles);
+    void RemoveExtendedSupportPhotoFormats(std::vector<Profile>& photoProfiles);
     void FillSupportPreviewFormats(std::vector<Profile>& previewProfiles);
     inline void SetServiceProxy(sptr<ICameraService> proxy)
     {
@@ -1167,6 +1211,8 @@ private:
     std::string curBundleName_ = "";
     sptr<CameraDevice> innerCamera_ = nullptr;
     FoldStatus preFoldStatus = FoldStatus::UNKNOWN_FOLD;
+    unordered_map<std::string, std::queue<uint32_t>> timeQueueforDevice_;
+    std::mutex registerTime_;
     std::unordered_map<std::string, std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraOldCamera_;
     std::unordered_map<std::string, std::string>realtoVirtual_;
     bool controlCenterFrameCondition_ = true;
@@ -1261,6 +1307,7 @@ class ControlCenterStatusListenerManager : public CameraManagerGetter,
                                           public CameraListenerManager<ControlCenterStatusListener> {
 public:
     int32_t OnControlCenterStatusChanged(bool status) override;
+
 };
 
 class FoldStatusListenerManager : public CameraManagerGetter,

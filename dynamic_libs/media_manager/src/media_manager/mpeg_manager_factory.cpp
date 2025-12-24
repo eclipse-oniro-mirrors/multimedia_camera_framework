@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+// LCOV_EXCL_START
 #include "mpeg_manager_factory.h"
 
 #include "dp_log.h"
@@ -31,7 +31,7 @@ MpegManagerFactory::~MpegManagerFactory()
 }
 
 std::shared_ptr<MpegManager> MpegManagerFactory::Acquire(const std::string& requestId,
-    const sptr<IPCFileDescriptor>& inputFd)
+    const DpsFdPtr& inputFd, int32_t width, int32_t height)
 {
     std::lock_guard<std::mutex> lock(mutex_);
     if (mpegManager_ != nullptr) {
@@ -45,7 +45,7 @@ std::shared_ptr<MpegManager> MpegManagerFactory::Acquire(const std::string& requ
     DP_CHECK_ERROR_RETURN_RET_LOG(inputFd == nullptr, nullptr, "inputFd is nullptr.");
 
     mpegManager_ = std::make_shared<MpegManager>();
-    if (mpegManager_->Init(requestId, inputFd) != OK) {
+    if (mpegManager_->Init(requestId, inputFd, width, height) != OK) {
         DP_ERR_LOG("Failed to initialize MpegManager.");
         mpegManager_.reset();
         return nullptr;
@@ -74,3 +74,4 @@ void MpegManagerFactory::Release(std::shared_ptr<MpegManager>& mpegManager)
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS
+// LCOV_EXCL_STOP

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,7 +18,7 @@
 
 #include <cstdint>
 #include <memory>
-
+#include <mutex>
 #include "camera_dynamic_loader.h"
 #include "photo_asset_interface.h"
 
@@ -28,20 +28,23 @@ class PhotoAssetProxy : public PhotoAssetIntf {
 public:
     static std::string GetBundleName(int32_t callingUid);
     static std::shared_ptr<PhotoAssetProxy> GetPhotoAssetProxy(
-        int32_t shotType, int32_t callingUid, uint32_t callingTokenID);
+        int32_t shotType, int32_t callingUid, uint32_t callingTokenID, int32_t photoCount = 1);
     explicit PhotoAssetProxy(
         std::shared_ptr<Dynamiclib> mediaLibraryLib, std::shared_ptr<PhotoAssetIntf> photoAssetIntf);
     ~PhotoAssetProxy() override = default;
 
     void AddPhotoProxy(sptr<Media::PhotoProxy> photoProxy) override;
     std::string GetPhotoAssetUri() override;
-    int32_t GetVideoFd() override;
-    void NotifyVideoSaveFinished() override;
+    int32_t GetVideoFd(VideoType videoType) override;
+    void NotifyVideoSaveFinished(VideoType videoType) override;
     int32_t GetUserId() override;
+    int32_t OpenAsset() override;
+    void UpdatePhotoProxy(const sptr<Media::PhotoProxy> &photoProxy) override;
     void RegisterPhotoStateCallback(const std::function<void(int32_t)> &callback) override;
     void UnregisterPhotoStateCallback() override;
 
 private:
+    std::mutex opMutex_;
     // Keep the order of members in this class, the bottom member will be destroyed first
     std::shared_ptr<Dynamiclib> mediaLibraryLib_;
     std::shared_ptr<PhotoAssetIntf> photoAssetIntf_;

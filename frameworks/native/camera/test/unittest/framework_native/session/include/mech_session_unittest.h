@@ -40,6 +40,7 @@ private:
     void SetFocusPoint(float x, float y);
     void ReleaseSession();
 
+    uint64_t tokenId_ = 0;
     int32_t uid_ = 0;
     int32_t userId_ = 0;
     sptr<CameraManager> cameraManager_ = nullptr;
@@ -60,8 +61,7 @@ public:
     }
 
     void OnZoomInfoChange(int sessionid, ZoomInfo zoomInfo) override
-     {
-        return cameraAppInfos_;
+    {
         zoomInfo_ = zoomInfo;
     }
 

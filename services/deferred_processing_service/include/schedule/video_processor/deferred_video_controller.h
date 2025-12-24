@@ -17,46 +17,49 @@
 #define OHOS_CAMERA_DPS_DEFERRED_VIDEO_CONTROLLER_H
 
 #include "deferred_video_processor.h"
+#include "enable_shared_create.h"
 #include "video_strategy_center.h"
 
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-class DeferredVideoController : public std::enable_shared_from_this<DeferredVideoController> {
+class DeferredVideoController : public EnableSharedCreateInit<DeferredVideoController> {
 public:
     ~DeferredVideoController();
 
-    void Initialize();
+    int32_t Initialize() override;
     void HandleServiceDied();
-    void HandleSuccess(const DeferredVideoWorkPtr& work);
-    void HandleError(const DeferredVideoWorkPtr& work, DpsError errorCode);
+    void HandleSuccess(const std::string& videoId, std::unique_ptr<MediaUserInfo> userInfo);
+    void HandleError(const std::string& videoId, DpsError errorCode);
+    void OnVideoJobChanged();
+
+    inline std::shared_ptr<DeferredVideoProcessor> GetVideoProcessor()
+    {
+        return videoProcessor_;
+    }
 
 protected:
-    DeferredVideoController(const int32_t userId, const std::shared_ptr<VideoJobRepository>& repository,
-        const std::shared_ptr<DeferredVideoProcessor>& processor);
+    DeferredVideoController(const int32_t userId, const std::shared_ptr<DeferredVideoProcessor>& processor);
 
 private:
     class StateListener;
-    class VideoJobRepositoryListener;
 
     void OnSchedulerChanged(const SchedulerType& type, const SchedulerInfo& scheduleInfo);
-    void OnVideoJobChanged(const DeferredVideoJobPtr& jobPtr);
     void TryDoSchedule();
+    void DoProcess(const DeferredVideoJobPtr& job);
     void PauseRequests(const SchedulerType& type);
-    void PostProcess(const DeferredVideoWorkPtr& work);
     void SetDefaultExecutionMode();
     void StartSuspendLock();
     void StopSuspendLock();
-    void HandleNormalSchedule(const DeferredVideoWorkPtr& work);
+    void HandleNormalSchedule(const DeferredVideoJobPtr& job);
     void OnTimerOut();
+    DeferredVideoJobPtr GetJob(const std::string& videoId);
 
     const int32_t userId_;
     uint32_t normalTimeId_ {INVALID_TIMERID};
     std::shared_ptr<DeferredVideoProcessor> videoProcessor_;
-    std::shared_ptr<VideoJobRepository> repository_;
     std::shared_ptr<VideoStrategyCenter> videoStrategyCenter_ {nullptr};
     std::shared_ptr<StateListener> videoStateChangeListener_ {nullptr};
-    std::shared_ptr<VideoJobRepositoryListener> videoJobChangeListener_ {nullptr};
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

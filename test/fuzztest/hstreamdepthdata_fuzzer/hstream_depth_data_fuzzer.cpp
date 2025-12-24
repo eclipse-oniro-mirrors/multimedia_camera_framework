@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,109 +18,81 @@
 #include "message_parcel.h"
 #include "iconsumer_surface.h"
 #include "securec.h"
+#include "test_token.h"
+#include <fuzzer/FuzzedDataProvider.h>
 
-namespace OHOS {
-namespace CameraStandard {
+using namespace OHOS;
+using namespace OHOS::CameraStandard;
 using namespace OHOS::HDI::Camera::V1_0;
-static constexpr int32_t MAX_CODE_LEN = 512;
-static constexpr int32_t MIN_SIZE_NUM = 4;
-static const uint8_t* RAW_DATA = nullptr;
-const size_t THRESHOLD = 10;
-static size_t g_dataSize = 0;
-static size_t g_pos;
 const int32_t PHOTO_WIDTH = 1280;
 const int32_t PHOTO_HEIGHT = 960;
 const int32_t PHOTO_FORMAT = 2000;
-std::shared_ptr<HStreamDepthData> HStreamDepthDataFuzzer::fuzz_{nullptr};
+std::shared_ptr<HStreamDepthData> g_hStreamDepthData;
 
-/*
-* describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
-* tips: only support basic type
-*/
-template<class T>
-T GetData()
+void Start(FuzzedDataProvider& fdp)
 {
-    T object {};
-    size_t objectSize = sizeof(object);
-    if (RAW_DATA == nullptr || objectSize > g_dataSize - g_pos) {
-        return object;
-    }
-    errno_t ret = memcpy_s(&object, objectSize, RAW_DATA + g_pos, objectSize);
-    if (ret != EOK) {
-        return {};
-    }
-    g_pos += objectSize;
-    return object;
+    g_hStreamDepthData->Start();
 }
 
-template<class T>
-uint32_t GetArrLength(T& arr)
+void Stop(FuzzedDataProvider& fdp)
 {
-    if (arr == nullptr) {
-        MEDIA_INFO_LOG("%{public}s: The array length is equal to 0", __func__);
-        return 0;
-    }
-    return sizeof(arr) / sizeof(arr[0]);
+    g_hStreamDepthData->Stop();
 }
 
-void HStreamDepthDataFuzzer::HStreamDepthDataFuzzTest()
+void SetCallback(FuzzedDataProvider& fdp)
 {
-    if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
-        return;
-    }
+    auto cb = sptr<MockStreamDepthDataCallback>::MakeSptr();
+    g_hStreamDepthData->SetCallback(cb);
+}
+
+void SetDataAccuracy(FuzzedDataProvider& fdp)
+{
+    g_hStreamDepthData->SetDataAccuracy(fdp.ConsumeIntegral<int32_t>());
+}
+
+void Release(FuzzedDataProvider& fdp)
+{
+    g_hStreamDepthData->Release();
+}
+
+void UnSetCallback(FuzzedDataProvider& fdp)
+{
+    g_hStreamDepthData->UnSetCallback();
+}
+
+void Init()
+{
+    CHECK_RETURN_ELOG(!TestToken().GetAllCameraPermission(), "Get permission fail");
     sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
     sptr<IBufferProducer> producer = photoSurface->GetProducer();
-
-    fuzz_ = std::make_shared<HStreamDepthData>(producer, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT);
-    CHECK_RETURN_ELOG(!fuzz_, "Create fuzz_ Error");
-    fuzz_->Start();
-    fuzz_->Stop();
-    fuzz_->Release();
+    g_hStreamDepthData = std::make_shared<HStreamDepthData>(producer, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT);
 }
 
-void Test()
+void Test(FuzzedDataProvider& fdp)
 {
-    auto hstreamDepthData = std::make_unique<HStreamDepthDataFuzzer>();
-    if (hstreamDepthData == nullptr) {
-        MEDIA_INFO_LOG("hstreamDepthData is null");
-        return;
-    }
-    hstreamDepthData->HStreamDepthDataFuzzTest();
+    auto func = fdp.PickValueInArray({
+        Start,
+        Stop,
+        SetCallback,
+        SetDataAccuracy,
+        Release,
+        UnSetCallback,
+    });
+    func(fdp);
 }
 
-typedef void (*TestFuncs[1])();
-
-TestFuncs g_testFuncs = {
-    Test,
-};
-
-bool FuzzTest(const uint8_t* rawData, size_t size)
+extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
-    // initialize data
-    RAW_DATA = rawData;
-    g_dataSize = size;
-    g_pos = 0;
-
-    uint32_t code = GetData<uint32_t>();
-    uint32_t len = GetArrLength(g_testFuncs);
-    if (len > 0) {
-        g_testFuncs[code % len]();
-    } else {
-        MEDIA_INFO_LOG("%{public}s: The len length is equal to 0", __func__);
-    }
-
-    return true;
+    FuzzedDataProvider fdp(data, size);
+    Test(fdp);
+    return 0;
 }
-} // namespace CameraStandard
-} // namespace OHOS
 
-/* Fuzzer entry point */
-extern "C" int LLVMFuzzerTestOneInput(uint8_t* data, size_t size)
+extern "C" int LLVMFuzzerInitialize(int* argc, char*** argv)
 {
-    if (size < OHOS::CameraStandard::THRESHOLD) {
-        return 0;
+    if (SetSelfTokenID(718336240ull | (1ull << 32)) < 0) {
+        return -1;
     }
-
-    OHOS::CameraStandard::FuzzTest(data, size);
+    Init();
     return 0;
 }

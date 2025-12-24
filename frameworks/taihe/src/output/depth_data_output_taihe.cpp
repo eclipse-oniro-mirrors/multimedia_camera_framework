@@ -137,6 +137,7 @@ void DepthDataOutputImpl::RegisterErrorCallbackListener(const std::string& event
 {
     CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
         "SystemApi on error is called!");
+    CHECK_RETURN_ELOG(depthDataOutput_ == nullptr, "depthDataOutput_ is null!");
     if (depthDataCallback_ == nullptr) {
         ani_env *env = get_env();
         depthDataCallback_ = std::make_shared<DepthDataOutputErrorListener>(env);
@@ -252,7 +253,6 @@ void DepthDataTaiheListener::ExecuteDepthData(OHOS::sptr<OHOS::SurfaceBuffer> su
         depthDataWidth * depthDataHeight * formatSize, 0, depthDataWidth, opts, true);
     CHECK_PRINT_ELOG(pixelMap == nullptr, "create pixelMap failed, pixelMap is null");
     std::shared_ptr<OHOS::Media::PixelMap> sharedPtr = std::shared_ptr<OHOS::Media::PixelMap>(pixelMap.release());
-    // depend on the implementation of PixelMapImpl
     auto pixelMapTaihe = make_holder<ANI::Image::PixelMapImpl, ImageTaihe::PixelMap>(sharedPtr);
     OHOS::CameraStandard::CameraFormat nativeFormat = depthProfile_->GetCameraFormat();
     OHOS::CameraStandard::DepthDataAccuracy nativeDataAccuracy = depthProfile_->GetDataAccuracy();
@@ -262,11 +262,12 @@ void DepthDataTaiheListener::ExecuteDepthData(OHOS::sptr<OHOS::SurfaceBuffer> su
     DepthData depthData = make_holder<DepthDataImpl, DepthData>(
         nativeFormat, nativeDataAccuracy, nativeQualityLevel, pixelMapTaihe);
     auto sharePtr = shared_from_this();
-    auto task = [depthData, sharePtr, &surfaceBuffer]() {
+    auto task = [depthData, sharePtr, surfaceBuffer]() {
         CHECK_RETURN_ELOG(sharePtr == nullptr, "sharePtr is nullptr");
         sharePtr->ExecuteAsyncCallback("depthDataAvailable", 0, "Callback is OK", depthData);
         CHECK_RETURN_ELOG(sharePtr->depthDataSurface_ == nullptr, "depthDataSurface_ is nullptr");
-        sharePtr->depthDataSurface_->ReleaseBuffer(surfaceBuffer, -1);
+        auto buffer = surfaceBuffer;
+        sharePtr->depthDataSurface_->ReleaseBuffer(buffer, -1);
     };
     CHECK_RETURN_ELOG(mainHandler_ == nullptr, "callback failed, mainHandler_ is nullptr!");
     mainHandler_->PostTask(task, "OnDepthDataAvailable", 0, OHOS::AppExecFwk::EventQueue::Priority::IMMEDIATE, {});

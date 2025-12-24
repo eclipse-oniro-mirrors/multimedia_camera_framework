@@ -28,11 +28,9 @@ sptr<IRemoteObject> CameraMockSessionManagerProxy::GetSessionManagerService()
     int32_t error = Remote()->SendRequest(
         static_cast<uint32_t>(MockSessionManagerServiceMessage::TRANS_ID_GET_SESSION_MANAGER_SERVICE),
         data, reply, option);
-    CHECK_RETURN_RET_ELOG(error != ERR_NONE, nullptr,
-        "RegisterWindowManagerAgent failed, error: %{public}d", error);
+    CHECK_RETURN_RET_ELOG(error != ERR_NONE, nullptr, "RegisterWindowManagerAgent failed, error: %{public}d", error);
     ErrCode errCode = reply.ReadInt32();
-    CHECK_RETURN_RET_ELOG(error != ERR_OK, nullptr,
-        "Read result failed, error: %{public}d", errCode);
+    CHECK_RETURN_RET_ELOG(error != ERR_OK, nullptr, "Read result failed, error: %{public}d", errCode);
     sptr<IRemoteObject> remoteObject = reply.ReadRemoteObject();
     return remoteObject;
 }

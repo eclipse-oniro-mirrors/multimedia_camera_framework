@@ -202,36 +202,36 @@ static void SetPickerWantParams(AAFwk::Want &want, std::shared_ptr<PickerContext
 static std::shared_ptr<UIExtensionCallback> StartCameraAbility(std::shared_ptr<PickerContextProxy> pickerContextProxy,
                                                                AAFwk::Want &want)
 {
-    auto uiExtenCallback = std::make_shared<UIExtensionCallback>(pickerContextProxy);
-    OHOS::Ace::ModalUIExtensionCallbacks extenCallbacks = {
-        [uiExtenCallback](int32_t releaseCode) { uiExtenCallback->OnRelease(releaseCode); },
-        [uiExtenCallback](int32_t resultCode, const OHOS::AAFwk::Want &result) {
-            uiExtenCallback->OnResult(resultCode, result);
+    auto uiExtCallback = std::make_shared<UIExtensionCallback>(pickerContextProxy);
+    OHOS::Ace::ModalUIExtensionCallbacks extensionCallbacks = {
+        [uiExtCallback](int32_t releaseCode) { uiExtCallback->OnRelease(releaseCode); },
+        [uiExtCallback](int32_t resultCode, const OHOS::AAFwk::Want &result) {
+            uiExtCallback->OnResult(resultCode, result);
         },
-        [uiExtenCallback](const OHOS::AAFwk::WantParams &request) { uiExtenCallback->OnReceive(request); },
-        [uiExtenCallback](int32_t errorCode, const std::string &name, const std::string &message) {
-            uiExtenCallback->OnError(errorCode, name, message);
+        [uiExtCallback](const OHOS::AAFwk::WantParams &request) { uiExtCallback->OnReceive(request); },
+        [uiExtCallback](int32_t errorCode, const std::string &name, const std::string &message) {
+            uiExtCallback->OnError(errorCode, name, message);
         },
-        [uiExtenCallback](const std::shared_ptr<OHOS::Ace::ModalUIExtensionProxy> &uiProxy) {
-            uiExtenCallback->OnRemoteReady(uiProxy);
+        [uiExtCallback](const std::shared_ptr<OHOS::Ace::ModalUIExtensionProxy> &uiProxy) {
+            uiExtCallback->OnRemoteReady(uiProxy);
         },
-        [uiExtenCallback]() { uiExtenCallback->OnDestroy(); }};
-    AbilityRuntime::RuntimeTask task = [extenCallbacks](const int32_t code, const AAFwk::Want &returnWant,
+        [uiExtCallback]() { uiExtCallback->OnDestroy(); }};
+    AbilityRuntime::RuntimeTask task = [extensionCallbacks](const int32_t code, const AAFwk::Want &returnWant,
                                                             bool isInner) {
         if (code == 0) {
-            extenCallbacks.onResult(0, returnWant);
+            extensionCallbacks.onResult(0, returnWant);
         } else {
-            extenCallbacks.onError(code, "", "");
+            extensionCallbacks.onError(code, "", "");
         }
         MEDIA_INFO_LOG("picker StartCameraAbility get result %{public}d %{public}d", code, isInner);
     };
- 
+
     auto ret = pickerContextProxy->StartAbilityForResult(want, 1, std::move(task));
     if (ret != ERR_OK) {
         MEDIA_ERR_LOG("picker StartCameraAbility is %{public}d", ret);
         return nullptr;
     }
-    return uiExtenCallback;
+    return uiExtCallback;
 }
 
 static int32_t IncrementAndGet(uint32_t &num)

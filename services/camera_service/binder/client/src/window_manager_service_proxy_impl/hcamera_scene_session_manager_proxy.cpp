@@ -52,7 +52,7 @@ int32_t CameraSceneSessionManagerProxy::UnregisterWindowManagerAgent(WindowManag
         SceneSessionManagerMessage::TRANS_ID_UNREGISTER_WINDOW_MANAGER_AGENT),
         data, reply, option);
     CHECK_PRINT_ELOG(error != ERR_NONE, "UnregisterWindowManagerAgent failed, error: %{public}d", error);
- 
+
     return reply.ReadInt32();
 }
  
@@ -61,8 +61,19 @@ void CameraSceneSessionManagerProxy::GetFocusWindowInfo(OHOS::Rosen::FocusChange
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
- 
-    data.WriteInterfaceToken(GetDescriptor());
+    if (!data.WriteInterfaceToken(GetDescriptor())) {
+        MEDIA_ERR_LOG("WriteInterfaceToken failed");
+        return;
+    }
+    if (!data.WriteUint64(0)) {
+        MEDIA_ERR_LOG("Write displayId failed");
+        return;
+    }
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        MEDIA_ERR_LOG("Remote is null");
+        return;
+    }
  
     int32_t error = Remote()->SendRequest(
         static_cast<uint32_t>(SceneSessionManagerMessage::TRANS_ID_GET_FOCUS_SESSION_INFO),
@@ -76,6 +87,5 @@ void CameraSceneSessionManagerProxy::GetFocusWindowInfo(OHOS::Rosen::FocusChange
     }
 }
 // LCOV_EXCL_STOP
-
 } // namespace CameraStandard
 } // namespace OHOS

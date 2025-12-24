@@ -14,7 +14,6 @@
  */
 
 #include <map>
-#include <numeric>
 #include "camera_napi_utils.h"
 #include "camera_error_code.h"
 #include "camera_log.h"
@@ -274,23 +273,35 @@ std::string CameraNapiUtils::GetStringArgument(napi_env env, napi_value value)
 {
     napi_valuetype valueNapiType = napi_undefined;
     napi_typeof(env, value, &valueNapiType);
-    CHECK_RETURN_RET(valueNapiType != napi_string, "");
+    if (valueNapiType != napi_string) {
+        return "";
+    }
     size_t stringSize = 0;
     napi_status status = napi_get_value_string_utf8(env, value, nullptr, 0, &stringSize);
-    CHECK_RETURN_RET(status != napi_ok || stringSize == 0, "");
+    if (status != napi_ok || stringSize == 0) {
+        return "";
+    }
     std::string strValue = std::string(stringSize, '\0');
     status = napi_get_value_string_utf8(env, value, strValue.data(), stringSize + 1, &stringSize);
-    CHECK_RETURN_RET(status != napi_ok || stringSize == 0, "");
+    if (status != napi_ok || stringSize == 0) {
+        return "";
+    }
     return strValue;
 }
 
 bool CameraNapiUtils::IsSameNapiValue(napi_env env, napi_value valueSrc, napi_value valueDst)
 {
-    CHECK_RETURN_RET(valueSrc == nullptr && valueDst == nullptr, true);
-    CHECK_RETURN_RET(valueSrc == nullptr || valueDst == nullptr, false);
+    if (valueSrc == nullptr && valueDst == nullptr) {
+        return true;
+    }
+    if (valueSrc == nullptr || valueDst == nullptr) {
+        return false;
+    }
     bool isEquals = false;
-    CHECK_RETURN_RET_ELOG(napi_strict_equals(env, valueSrc, valueDst, &isEquals) != napi_ok, false,
-        "get napi_strict_equals failed");
+    if (napi_strict_equals(env, valueSrc, valueDst, &isEquals) != napi_ok) {
+        MEDIA_ERR_LOG("get napi_strict_equals failed");
+        return false;
+    }
     return isEquals;
 }
 
@@ -300,22 +311,37 @@ napi_status CameraNapiUtils::CallPromiseFun(
     MEDIA_DEBUG_LOG("CallPromiseFun Start");
     bool isPromise = false;
     napi_is_promise(env, promiseValue, &isPromise);
-    CHECK_RETURN_RET_ELOG(!isPromise, napi_invalid_arg, "CallPromiseFun promiseValue is not promise");
+    if (!isPromise) {
+        MEDIA_ERR_LOG("CallPromiseFun promiseValue is not promise");
+        return napi_invalid_arg;
+    }
     // Create promiseThen
     napi_value promiseThen = nullptr;
     napi_get_named_property(env, promiseValue, "then", &promiseThen);
-    CHECK_RETURN_RET_ELOG(promiseThen == nullptr, napi_invalid_arg, "CallPromiseFun get promiseThen failed");
+    if (promiseThen == nullptr) {
+        MEDIA_ERR_LOG("CallPromiseFun get promiseThen failed");
+        return napi_invalid_arg;
+    }
     napi_value thenValue;
     napi_status ret = napi_create_function(env, "thenCallback", NAPI_AUTO_LENGTH, thenCallback, data, &thenValue);
-    CHECK_RETURN_RET_ELOG(ret != napi_ok, ret, "CallPromiseFun thenCallback got exception");
+    if (ret != napi_ok) {
+        MEDIA_ERR_LOG("CallPromiseFun thenCallback got exception");
+        return ret;
+    }
     napi_value catchValue;
     ret = napi_create_function(env, "catchCallback", NAPI_AUTO_LENGTH, catchCallback, data, &catchValue);
-    CHECK_RETURN_RET_ELOG(ret != napi_ok, ret, "CallPromiseFun catchCallback got exception");
+    if (ret != napi_ok) {
+        MEDIA_ERR_LOG("CallPromiseFun  catchCallback got exception");
+        return ret;
+    }
     napi_value thenReturnValue;
     constexpr uint32_t THEN_ARGC = 2;
     napi_value thenArgv[THEN_ARGC] = { thenValue, catchValue };
     ret = napi_call_function(env, promiseValue, promiseThen, THEN_ARGC, thenArgv, &thenReturnValue);
-    CHECK_RETURN_RET_ELOG(ret != napi_ok, ret, "CallPromiseFun PromiseThen got exception");
+    if (ret != napi_ok) {
+        MEDIA_ERR_LOG("CallPromiseFun PromiseThen got exception");
+        return ret;
+    }
     MEDIA_DEBUG_LOG("CallPromiseFun End");
     return napi_ok;
 }
@@ -362,7 +388,9 @@ size_t CameraNapiUtils::GetNapiArgs(napi_env env, napi_callback_info callbackInf
 void CameraNapiUtils::CreateFrameRateJSArray(napi_env env, std::vector<int32_t> frameRateRange, napi_value &result)
 {
     MEDIA_DEBUG_LOG("CreateFrameRateJSArray called");
-    CHECK_PRINT_ELOG(frameRateRange.empty(), "frameRateRange is empty");
+    if (frameRateRange.empty()) {
+        MEDIA_ERR_LOG("frameRateRange is empty");
+    }
 
     napi_status status = napi_create_object(env, &result);
     if (status == napi_ok) {
@@ -370,9 +398,10 @@ void CameraNapiUtils::CreateFrameRateJSArray(napi_env env, std::vector<int32_t> 
         status = napi_create_int32(env, frameRateRange[0], &minRate);
         napi_value maxRate;
         status = napi_create_int32(env, frameRateRange[1], &maxRate);
-        CHECK_PRINT_ELOG(status != napi_ok || napi_set_named_property(env, result, "min", minRate) != napi_ok ||
-            napi_set_named_property(env, result, "max", maxRate) != napi_ok,
-            "Failed to create frameRateArray with napi wrapper object.");
+        if (status != napi_ok || napi_set_named_property(env, result, "min", minRate) != napi_ok ||
+            napi_set_named_property(env, result, "max", maxRate) != napi_ok) {
+            MEDIA_ERR_LOG("Failed to create frameRateArray with napi wrapper object.");
+        }
     }
 }
 
@@ -381,15 +410,19 @@ napi_value CameraNapiUtils::CreateSupportFrameRatesJSArray(
 {
     MEDIA_DEBUG_LOG("CreateFrameRateJSArray called");
     napi_value supportedFrameRateArray = nullptr;
-    CHECK_PRINT_ELOG(supportedFrameRatesRange.empty(), "frameRateRange is empty");
+    if (supportedFrameRatesRange.empty()) {
+        MEDIA_ERR_LOG("frameRateRange is empty");
+    }
 
     napi_status status = napi_create_array(env, &supportedFrameRateArray);
     if (status == napi_ok) {
         for (size_t i = 0; i < supportedFrameRatesRange.size(); i++) {
             napi_value supportedFrameRateItem;
             CreateFrameRateJSArray(env, supportedFrameRatesRange[i], supportedFrameRateItem);
-            CHECK_RETURN_RET_ELOG(napi_set_element(env, supportedFrameRateArray, i, supportedFrameRateItem) !=
-                napi_ok, nullptr, "Failed to create supportedFrameRateArray with napi wrapper object.");
+            if (napi_set_element(env, supportedFrameRateArray, i, supportedFrameRateItem) != napi_ok) {
+                MEDIA_ERR_LOG("Failed to create supportedFrameRateArray with napi wrapper object.");
+                return nullptr;
+            }
         }
     }
     return supportedFrameRateArray;
@@ -434,20 +467,22 @@ napi_value CameraNapiUtils::ProcessingPhysicalApertures(napi_env env, std::vecto
     return result;
 }
 
-napi_value CameraNapiUtils::CreateJSArray(napi_env env, napi_status &status,
-    std::vector<int32_t> nativeArray)
+napi_value CameraNapiUtils::CreateJSArray(napi_env env, napi_status& status, std::vector<int32_t> nativeArray)
 {
-    MEDIA_DEBUG_LOG("CameraNapiUtils::CreateJSArray is called");
- 
-    napi_value item = nullptr;
+    MEDIA_DEBUG_LOG("CreateJSArray is called");
     napi_value jsArray = nullptr;
- 
+    napi_value item = nullptr;
+
     if (nativeArray.empty()) {
         MEDIA_ERR_LOG("nativeArray is empty");
+    }
+
+    status = napi_create_array(env, &jsArray);
+    if (status == napi_ok) {
         for (size_t i = 0; i < nativeArray.size(); i++) {
             napi_create_int32(env, nativeArray[i], &item);
             if (napi_set_element(env, jsArray, i, item) != napi_ok) {
-                MEDIA_ERR_LOG("CameraNapiUtils::CreateJSArray Failed to create profile napi wrapper object");
+                MEDIA_ERR_LOG("Failed to create profile napi wrapper object");
                 return nullptr;
             }
         }
@@ -480,6 +515,50 @@ napi_value CameraNapiUtils::ParseMetadataObjectTypes(napi_env env, napi_value ar
     }
     napi_get_boolean(env, true, &result);
     return result;
+}
+
+napi_value CameraNapiUtils::CreateJsPointArray(
+    napi_env env, napi_status& status, const std::vector<float>& nativePointArray)
+{
+    MEDIA_INFO_LOG("%{public}s enter", __FUNCTION__);
+    napi_value jsPointArray = nullptr;
+    if (nativePointArray.empty()) {
+        MEDIA_WARNING_LOG("%{public}s nativePointArray is empty", __FUNCTION__);
+        status = napi_ok;
+        return jsPointArray;
+    }
+    uint32_t positionsSize = nativePointArray.size();
+    const int two = 2;
+    bool isOdd = positionsSize % two;
+    CHECK_RETURN_RET_ELOG(
+        isOdd, nullptr, "%{public}s invalid position array length: %{public}u", __FUNCTION__, positionsSize);
+
+    status = napi_create_array(env, &jsPointArray);
+    if (status != napi_ok) {
+        MEDIA_ERR_LOG("%{public}s failed to create napi_create_array", __FUNCTION__);
+        return nullptr;
+    }
+
+    for (size_t i = 0; i < positionsSize; i += two) {
+        napi_value pointObj;
+        napi_create_object(env, &pointObj);
+
+        double x = FloatToDouble(nativePointArray[i]);
+        napi_value napi_x;
+        napi_create_double(env, x, &napi_x);
+        napi_set_named_property(env, pointObj, "x", napi_x);
+
+        double y = FloatToDouble(nativePointArray[i + 1]);
+        napi_value napi_y;
+        napi_create_double(env, y, &napi_y);
+        napi_set_named_property(env, pointObj, "y", napi_y);
+
+        if (napi_set_element(env, jsPointArray, i, pointObj) != napi_ok) {
+            MEDIA_ERR_LOG("%{public}s failed to create profile napi wrapper object", __FUNCTION__);
+            return nullptr;
+        }
+    }
+    return jsPointArray;
 }
 
 bool CameraNapiUtils::ParseCameraTypesArray(napi_env env, napi_value typesValue, std::vector<CameraType>& outTypes)
@@ -519,19 +598,6 @@ bool CameraNapiUtils::ParseCameraTypesArray(napi_env env, napi_value typesValue,
         outTypes.emplace_back(static_cast<CameraType>(typeInt));
     }
     return true;
-}
-
-std::string CameraNapiUtils::TransFractionString(int64_t minNum, int64_t maxNum)
-{
-    CHECK_RETURN_RET(minNum == 0, "");
-    int64_t numerator = 1;
-    int64_t denominator = maxNum / minNum;
-
-    if (denominator < 0) {
-        numerator = -numerator;
-        denominator = -denominator;
-    }
-    return std::to_string(numerator) + "/" + std::to_string(denominator);
 }
 
 } // namespace CameraStandard

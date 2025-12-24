@@ -43,7 +43,8 @@ private:
     std::unordered_map<Media::Plugins::MediaType, int32_t> trackIds_ = {
         {Media::Plugins::MediaType::AUDIO, INVALID_TRACK_ID},
         {Media::Plugins::MediaType::VIDEO, INVALID_TRACK_ID},
-        {Media::Plugins::MediaType::TIMEDMETA, INVALID_TRACK_ID}
+        {Media::Plugins::MediaType::TIMEDMETA, INVALID_TRACK_ID},
+        {Media::Plugins::MediaType::AUXILIARY, INVALID_TRACK_ID}
     };
 };
 } // namespace DeferredProcessing

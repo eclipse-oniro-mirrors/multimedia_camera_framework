@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,21 +15,26 @@
 #ifndef CAMERA_TIMER_H
 #define CAMERA_TIMER_H
 
-#include <timer.h>
-#include "singleton.h"
+#include "commonlibrary/c_utils/base/include/timer.h"
 
 namespace OHOS {
 namespace CameraStandard {
 using TimerCallback = std::function<void()>;
 
-class CameraTimer : public Singleton<CameraTimer> {
-    DECLARE_SINGLETON(CameraTimer)
-
+class CameraTimer {
 public:
+    ~CameraTimer();
+    CameraTimer(const CameraTimer&) = delete;
+    CameraTimer operator=(const CameraTimer&) = delete;
+
+    static CameraTimer& GetInstance();
     uint32_t Register(const TimerCallback& callback, uint32_t interval, bool once);
     void Unregister(uint32_t timerId);
 
 private:
+    CameraTimer();
+
+    std::mutex mutex_;
     std::unique_ptr<OHOS::Utils::Timer> timer_;
 };
 } // namespace CameraStandard

@@ -28,7 +28,6 @@ namespace OHOS {
 namespace CameraStandard {
 using namespace AudioStandard;
 using namespace std::chrono;
-using namespace DeferredProcessing;
 constexpr uint32_t DEFAULT_AUDIO_CACHE_NUMBER = 400;
 class AudioCapturerSession : public RefBase, public std::enable_shared_from_this<AudioCapturerSession> {
 public:
@@ -44,13 +43,25 @@ public:
     AudioStreamInfo deferredOutputOptions_;
 
 private:
+    inline std::shared_ptr<AudioCapturer> GetAudioCapturer()
+    {
+        std::lock_guard<std::mutex> lock(audioCapturerMutex_);
+        return audioCapturer_;
+    }
+
+    inline void SetAudioCapturer(std::shared_ptr<AudioCapturer> audioCapturer)
+    {
+        std::lock_guard<std::mutex> lock(audioCapturerMutex_);
+        audioCapturer_ = audioCapturer;
+    }
+
     bool CreateAudioCapturer();
     // Already guard by hcapture_session
+    std::mutex audioCapturerMutex_;
     std::shared_ptr<AudioCapturer> audioCapturer_ = nullptr;
     BlockingQueue<sptr<AudioRecord>> audioBufferQueue_;
     std::atomic<bool> startAudioCapture_ { false };
     std::unique_ptr<std::thread> audioThread_ = nullptr;
-    std::recursive_mutex audioCapturerMutex_;
 };
 } // CameraStandard
 } // OHOS

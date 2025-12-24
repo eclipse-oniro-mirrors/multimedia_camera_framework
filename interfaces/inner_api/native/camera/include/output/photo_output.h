@@ -109,6 +109,13 @@ public:
      * @param captureId Obtain the constant capture id for the photo capture callback.
      */
     virtual void OnOfflineDeliveryFinished(const int32_t captureId) const = 0;
+
+    /**
+     * @brief Called when ConstellationDrawingState.
+     *
+     * @param state Obtain the drawing state for the photo capture callback.
+     */
+    virtual void OnConstellationDrawingState(const int32_t state) const = 0;
 };
 
 class [[deprecated]] PhotoCallback {
@@ -154,21 +161,6 @@ public:
      */
     virtual void OnOfflineDeliveryFinished(const int32_t captureId) const = 0;
 };
-
-typedef struct Location {
-    /**
-     * Latitude.
-     */
-    double latitude = -1;
-    /**
-     * Longitude.
-     */
-    double longitude = -1;
-    /**
-     * Altitude.
-     */
-    double altitude = -1;
-} Location;
 
 class PhotoCaptureSetting {
 public:
@@ -305,13 +297,6 @@ public:
     void UnSetThumbnailAvailableCallback();
 
     /**
-     * @brief Get the photo rotation.
-     *
-     * @return result of the photo rotation angle.
-     */
-    int32_t GetPhotoRotation(int32_t imageRotation);
-
-    /**
      * @brief Set the Thumbnail profile.
      *
      * @param isEnabled quickThumbnail is enabled.
@@ -324,6 +309,13 @@ public:
      * @return Returns the result of the raw imgage delivery enable.
      */
     int32_t EnableRawDelivery(bool enabled);
+
+    /**
+     * @brief Get the photo rotation.
+     *
+     * @return result of the photo rotation angle.
+     */
+    int32_t GetPhotoRotation(int32_t imageRotation);
 
     /**
      * @brief Set the photo callback.
@@ -422,9 +414,9 @@ public:
     void SetCallbackFlag(uint8_t callbackFlag, bool isNeedReConfig = true);
 
     /**
-     * @brief Set the flag when on native surface.
-     */
-    void SetNativeSurface(bool isNativeSurface);
+    * @brief Set the flag when on native surface.
+    */
+    void SetNativeSurface(bool SetNativeSurface);
 
     /**
      * @brief To check the deferredImageDelivery capability is enable or not.
@@ -434,6 +426,8 @@ public:
     int32_t IsDeferredImageDeliveryEnabled(DeferredDeliveryImageType type);
 
     void ProcessSnapshotDurationUpdates(int32_t snapshotDuration);
+
+    void ProcessConstellationDrawingState(int32_t drawingState);
 
     /**
      * @brief To check the auto high quality photo is supported or not.
@@ -450,25 +444,25 @@ public:
     int32_t EnableAutoHighQualityPhoto(bool enabled);
 
     /**
-     * @brief To check the auto cloud image enhance is supported or not.
-     *
-     * @return Returns the support result.
-     */
-    int32_t IsAutoCloudImageEnhancementSupported(bool& isAutoCloudImageEnhanceSupported);
-
-    /**
-     * @brief To enable the auto cloud image enhance.
-     *
-     * @return Returns the result of the auto cloud image enhance enable.
-     */
-    int32_t EnableAutoCloudImageEnhancement(bool enabled);
-
-    /**
      * @brief To get status by callbackFlags.
      *
      * @return Returns the result to check enable deferred.
      */
     bool IsEnableDeferred();
+
+    /**
+     * @brief Check whether the current mode supports auto cloud image enhance.
+     *
+     * @return Return the supported result.
+     */
+    int32_t IsAutoCloudImageEnhancementSupported(bool& isAutoCloudImageEnhancementSupported);
+
+    /**
+     * @brief To enable the auto cloud image enhuance.
+     *
+     * @return Returns the result of the auto cloud image enhuance enable.
+     */
+    int32_t EnableAutoCloudImageEnhancement(bool enabled);
 
     /**
      * @brief Get default photo capture setting.
@@ -519,9 +513,46 @@ public:
     void CreateMediaLibrary(std::shared_ptr<PictureIntf> picture, sptr<CameraPhotoProxy> photoProxy,
         std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp);
 
+        /**
+     * @brief check is supported of Auto Motion Boost Delivery.
+     *
+     * @param isSupported True to supported, false otherWise.
+     * @return Return the supported result.
+     */
+    int32_t IsAutoMotionBoostDeliverySupported(bool &isSupported);
+
+    /**
+     * @brief Enables or disables the Auto Motion Boost Delivery.
+     *
+     * @param isEnable True to enable, false to disable.
+     * @return 0 on success, or a negative error code on failure.
+     */
+    int32_t EnableAutoMotionBoostDelivery(bool isEnable);
+    
+    /**
+     * @brief check is supported of Bokeh Data Delivery.
+     *
+     * @param isSupported True to supported, false otherWise.
+     * @return Return the supported result.
+     */
+    int32_t IsAutoBokehDataDeliverySupported(bool &isSupported);
+
+    /**
+     * @brief Enables or disables the Bokeh Data Delivery.
+     * @param isEnable True to enable, false to disable.
+     *
+     * @return 0 on success, or a negative error code on failure.
+     */
+    int32_t EnableAutoBokehDataDelivery(bool isEnable);
+
+    void ReportCaptureEnhanceSupported(const std::string& str, bool support);
+    
+    void ReportCaptureEnhanceEnabled(const std::string &str, bool enable, int32_t result);
+
     bool IsPhotoQualityPrioritizationSupported(PhotoQualityPrioritization quality);
 
     int32_t SetPhotoQualityPrioritization(PhotoQualityPrioritization quality);
+
     /**
      * @brief Get photo buffer.
      */
@@ -561,8 +592,7 @@ public:
     std::map<int32_t, sptr<SurfaceBuffer>> captureIdExifMap_;
     std::map<int32_t, sptr<SurfaceBuffer>> captureIdDebugMap_;
     std::atomic<bool> isRawImageDelivery_ = false;
-    std::map<int32_t, captureMonitorInfo> captureIdToCaptureInfoMap_;
-
+    SafeMap<int32_t, captureMonitorInfo> captureIdToCaptureInfoMap_;
     uint8_t callbackFlag_ = CAPTURE_DEFERRED_PHOTO;
 private:
     std::mutex callbackMutex_;

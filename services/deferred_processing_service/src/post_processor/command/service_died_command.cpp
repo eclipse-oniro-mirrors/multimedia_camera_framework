@@ -15,6 +15,7 @@
 
 #include "service_died_command.h"
 
+#include "basic_definitions.h"
 #include "dps.h"
 
 namespace OHOS {
@@ -39,9 +40,7 @@ int32_t ServiceDiedCommand::Initialize()
 int32_t PhotoDiedCommand::Executing()
 {
     int32_t ret = Initialize();
-    if (ret != DP_OK) {
-        return ret;
-    }
+    DP_CHECK_RETURN_RET(ret != DP_OK, ret);
 
     auto photoPost = schedulerManager_->GetPhotoPostProcessor(userId_);
     DP_CHECK_ERROR_RETURN_RET_LOG(photoPost == nullptr, DP_NULL_POINTER, "PhotoPostProcessor is nullptr.");
@@ -52,9 +51,7 @@ int32_t PhotoDiedCommand::Executing()
 int32_t VideoDiedCommand::Executing()
 {
     int32_t ret = Initialize();
-    if (ret != DP_OK) {
-        return ret;
-    }
+    DP_CHECK_RETURN_RET(ret != DP_OK, ret);
 
     auto videoPost = schedulerManager_->GetVideoPostProcessor(userId_);
     DP_CHECK_ERROR_RETURN_RET_LOG(videoPost == nullptr, DP_NULL_POINTER, "VideoPostProcessor is nullptr.");

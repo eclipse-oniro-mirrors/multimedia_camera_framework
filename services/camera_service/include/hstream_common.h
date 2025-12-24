@@ -32,24 +32,64 @@
 #include "v1_1/istream_operator.h"
 #include "v1_2/istream_operator.h"
 #include "v1_3/istream_operator.h"
+#include "v1_5/istream_operator.h"
 #include "ability/camera_ability_const.h"
 
 namespace OHOS {
+namespace HDI::Display::Graphic::Common::V2_1 {
+enum CM_ColorSpaceType : int32_t {
+    CM_COLORSPACE_NONE,
+    CM_BT601_EBU_FULL = 2 | (1 << 8) | (2 << 16) | (1 << 21),
+    CM_BT601_SMPTE_C_FULL = 3 | (1 << 8) | (3 << 16) | (1 << 21),
+    CM_BT709_FULL = 1 | (1 << 8) | (1 << 16) | (1 << 21),
+    CM_BT2020_HLG_FULL = 4 | (5 << 8) | (4 << 16) | (1 << 21),
+    CM_BT2020_PQ_FULL = 4 | (4 << 8) | (4 << 16) | (1 << 21),
+    CM_BT601_EBU_LIMIT = 2 | (1 << 8) | (2 << 16) | (2 << 21),
+    CM_BT601_SMPTE_C_LIMIT = 3 | (1 << 8) | (3 << 16) | (2 << 21),
+    CM_BT709_LIMIT = 1 | (1 << 8) | (1 << 16) | (2 << 21),
+    CM_BT2020_HLG_LIMIT = 4 | (5 << 8) | (4 << 16) | (2 << 21),
+    CM_BT2020_PQ_LIMIT = 4 | (4 << 8) | (4 << 16) | (2 << 21),
+    CM_SRGB_FULL = 1 | (2 << 8) | (3 << 16) | (1 << 21),
+    CM_P3_FULL = 6 | (2 << 8) | (3 << 16) | (1 << 21),
+    CM_P3_HLG_FULL = 6 | (5 << 8) | (3 << 16) | (1 << 21),
+    CM_P3_PQ_FULL = 6 | (4 << 8) | (3 << 16) | (1 << 21),
+    CM_ADOBERGB_FULL = 23 | (6 << 8) | (0 << 16) | (1 << 21),
+    CM_SRGB_LIMIT = 1 | (2 << 8) | (3 << 16) | (2 << 21),
+    CM_P3_LIMIT = 6 | (2 << 8) | (3 << 16) | (2 << 21),
+    CM_P3_HLG_LIMIT = 6 | (5 << 8) | (3 << 16) | (2 << 21),
+    CM_P3_PQ_LIMIT = 6 | (4 << 8) | (3 << 16) | (2 << 21),
+    CM_ADOBERGB_LIMIT = 23 | (6 << 8) | (0 << 16) | (2 << 21),
+    CM_LINEAR_SRGB = 1 | (3 << 8),
+    CM_LINEAR_BT709 = 1 | (3 << 8),
+    CM_LINEAR_P3 = 6 | (3 << 8),
+    CM_LINEAR_BT2020 = 4 | (3 << 8),
+    CM_DISPLAY_SRGB = 1 | (2 << 8) | (3 << 16) | (1 << 21),
+    CM_DISPLAY_P3_SRGB = 6 | (2 << 8) | (3 << 16) | (1 << 21),
+    CM_DISPLAY_P3_HLG = 6 | (5 << 8) | (3 << 16) | (1 << 21),
+    CM_DISPLAY_P3_PQ = 6 | (4 << 8) | (3 << 16) | (1 << 21),
+    CM_DISPLAY_BT2020_SRGB = 4 | (2 << 8) | (4 << 16) | (1 << 21),
+    CM_DISPLAY_BT2020_HLG = 4 | (5 << 8) | (4 << 16) | (1 << 21),
+    CM_DISPLAY_BT2020_PQ = 4 | (4 << 8) | (4 << 16) | (1 << 21),
+    CM_BT2020_LOG_FULL = 4 | (9 << 8) | (4 << 16) | (1 << 21),
+    CM_BT2020_LOG_LIMIT = 4 | (9 << 8) | (4 << 16) | (2 << 21),
+};
+} // namespace HDI::Display::Graphic::Common::V2_1
 namespace CameraStandard {
 using OHOS::HDI::Camera::V1_0::IStreamOperator;
-using OHOS::HDI::Camera::V1_1::StreamInfo_V1_1;
+using OHOS::HDI::Camera::V1_5::StreamInfo_V1_5;
 constexpr int32_t CAPTURE_ID_UNSET = 0;
 constexpr int32_t STREAM_ID_UNSET = 0;
 class HStreamCommon : virtual public RefBase {
 public:
     explicit HStreamCommon(
         StreamType streamType, sptr<OHOS::IBufferProducer> producer, int32_t format, int32_t width, int32_t height);
-    explicit HStreamCommon(StreamType streamType, int32_t format, int32_t width, int32_t height);
+    explicit HStreamCommon(
+        StreamType streamType, int32_t format, int32_t width, int32_t height);
     virtual ~HStreamCommon();
     virtual int32_t LinkInput(wptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator,
         std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility);
     virtual int32_t UnlinkInput();
-    virtual void SetStreamInfo(StreamInfo_V1_1& streamInfo) = 0;
+    virtual void SetStreamInfo(StreamInfo_V1_5& streamInfo) = 0;
     virtual int32_t ReleaseStream(bool isDelay) = 0;
     virtual void DumpStreamInfo(CameraInfoDumper& infoDumper) = 0;
 
@@ -76,7 +116,7 @@ public:
     {
         hdiStreamId_ = hdiStreamId;
     }
-    
+
     inline std::map<int32_t, std::string> GetBasicInfo()
     {
         std::lock_guard<std::mutex> lock(basicInfoLock_);
@@ -103,9 +143,12 @@ public:
     int32_t dataSpace_ = 0;
     std::map<int32_t, std::string> param;
     sptr<OHOS::IBufferProducer> producer_;
-    std::string surfaceId_ = "";
+    std::string surfaceId_= "";
     sptr<Surface> surface_;
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility_ = nullptr;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> streamSettingsMeta_ =
+        std::make_shared<OHOS::Camera::CameraMetadata>(1, 1);
+    std::string videoId_;
 
 protected:
     /*

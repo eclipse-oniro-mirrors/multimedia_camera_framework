@@ -114,8 +114,7 @@ napi_value SecureSessionForSysNapi::SecureSessionForSysNapiConstructor(napi_env 
         obj->secureCameraSessionForSys_ = static_cast<SecureCameraSessionForSys*>(sCameraSessionForSys_.GetRefPtr());
         obj->cameraSessionForSys_ = obj->secureCameraSessionForSys_;
         obj->cameraSession_ = obj->secureCameraSessionForSys_;
-        CHECK_RETURN_RET_ELOG(obj->secureCameraSessionForSys_ == nullptr, result,
-            "secureCameraSessionForSys_ is null");
+        CHECK_RETURN_RET_ELOG(obj->secureCameraSessionForSys_ == nullptr, result, "secureCameraSessionForSys_ is null");
         status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
                            SecureSessionForSysNapi::SecureSessionForSysNapiDestructor, nullptr, nullptr);
         if (status == napi_ok) {
@@ -132,10 +131,10 @@ napi_value SecureSessionForSysNapi::SecureSessionForSysNapiConstructor(napi_env 
 napi_value SecureSessionForSysNapi::AddSecureOutput(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("AddSecureOutput is called");
-    napi_value argv[ARGS_ONE] = {0};
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);

@@ -116,7 +116,7 @@ public:
         return 0;
     }
     inline int32_t OnProcessImageDone(const std::string &imageId, const std::shared_ptr<PictureIntf>& picture,
-        uint32_t cloudImageEnhanceFlag) override
+        const DpsMetadata& metadata) override
     {
         return 0;
     }
@@ -149,15 +149,19 @@ public:
 
 class DeferredVideoProcessingSessionCallback : public DeferredProcessing::IDeferredVideoProcessingSessionCallback {
 public:
-    ErrCode OnProcessVideoDone(const std::string& videoId, const sptr<IPCFileDescriptor>& ipcFileDescriptor) override
+    ErrCode OnProcessVideoDone(const std::string& videoId) override
     {
         return 0;
     }
-    ErrCode OnError(const std::string& videoId, int32_t errorCode) override
+    ErrCode OnError(const std::string& videoId, DeferredProcessing::ErrorCode errorCode) override
     {
         return 0;
     }
-    ErrCode OnStateChanged(int32_t status) override
+    ErrCode OnStateChanged(DeferredProcessing::StatusCode status) override
+    {
+        return 0;
+    }
+    ErrCode OnProcessingProgress(const std::string& videoId, float progress) override
     {
         return 0;
     }

@@ -16,13 +16,10 @@
 #include "photo_media_library_state.h"
 
 #include "dp_log.h"
-#include "state_factory.h"
 
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-REGISTER_STATE(PhotoMediaLibraryState, PHOTO_MEDIA_LIBRARY_STATE, MEDIA_LIBRARY_DISCONNECTED);
-
 PhotoMediaLibraryState::PhotoMediaLibraryState(SchedulerType type, int32_t stateValue)
     : IState(type, stateValue)
 {

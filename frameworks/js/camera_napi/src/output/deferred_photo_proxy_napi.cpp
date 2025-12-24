@@ -93,7 +93,9 @@ napi_value DeferredPhotoProxyNapi::Init(napi_env env, napi_value exports)
     if (status == napi_ok) {
         if (NapiRefManager::CreateMemSafetyRef(env, ctorObj, &sConstructor_) == napi_ok) {
             status = napi_set_named_property(env, exports, DEFERRED_PHOTO_NAPI_CLASS_NAME, ctorObj);
-            CHECK_RETURN_RET(status == napi_ok, exports);
+            if (status == napi_ok) {
+                return exports;
+            }
         }
     }
     MEDIA_ERR_LOG("Init call Failed!");
@@ -234,7 +236,7 @@ napi_value DeferredPhotoProxyNapi::Release(napi_env env, napi_callback_info info
             asyncContext.release();
         }
     } else {
-        MEDIA_ERR_LOG("DeferredPhotoProxyNapi::Release call Failed!");
+        MEDIA_ERR_LOG("Release call Failed!");
     }
     return result;
 }

@@ -15,19 +15,16 @@
 
 #include "photo_trailing_state.h"
 
+#include "basic_definitions.h"
+#include "camera_timer.h"
 #include "dp_log.h"
-#include "dp_timer.h"
-#include "dp_utils.h"
 #include "events_monitor.h"
-#include "state_factory.h"
 
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-REGISTER_STATE(PhotoTrailingState, PHOTO_TRAILING_STATE, CAMERA_ON_STOP_TRAILING);
-
 namespace {
-    constexpr int32_t DURATIONMS_25_SEC = 25 * 1000;
+    constexpr uint32_t DURATIONMS_25_SEC = 25 * 1000;
 }
 
 PhotoTrailingState::PhotoTrailingState(SchedulerType type, int32_t stateValue)
@@ -41,7 +38,7 @@ SchedulerInfo PhotoTrailingState::ReevaluateSchedulerInfo()
     DP_DEBUG_LOG("PhotoTrailingState: %{public}d", stateValue_);
     if (stateValue_ == TrailingStatus::SYSTEM_CAMERA_OFF_START_TRAILING) {
         StartTrailing(DURATIONMS_25_SEC);
-    } else if (stateValue_ == TrailingStatus::CAMERA_ON_STOP_TRAILING) {
+    } else if (stateValue_ == TrailingStatus::NORMAL_CAMERA_OFF_START_TRAILING) {
         StartTrailing(DEFAULT_TRAILING_TIME);
     } else if (stateValue_ == TrailingStatus::CAMERA_ON_STOP_TRAILING) {
         StopTrailing();
@@ -55,21 +52,26 @@ void PhotoTrailingState::StartTrailing(uint32_t duration)
     remainingTrailingTime_ = std::max(duration, remainingTrailingTime_);
     DP_CHECK_RETURN(remainingTrailingTime_ == 0);
 
-    startTimer_ = GetSteadyNow();
+    startTime_ = GetSteadyNow();
     isTrailing_ = true;
-    DP_INFO_LOG("DPS_PHOTO: StartTrailing time: %{public}u, state: %{public}d",
-        remainingTrailingTime_, isTrailing_);
-    timerId_ = DpsTimer::GetInstance().StartTimer([&]() {OnTimerOut();}, remainingTrailingTime_);
+    DP_INFO_LOG("DPS_PHOTO: StartTrailing time: %{public}u, state: %{public}d", remainingTrailingTime_, isTrailing_);
+    auto thisPtr = weak_from_this();
+    timerId_ = CameraTimer::GetInstance().Register([thisPtr]() {
+        auto trailingState = thisPtr.lock();
+        DP_CHECK_EXECUTE(trailingState != nullptr, trailingState->OnTimerOut());
+    }, remainingTrailingTime_, true);
 }
 
 void PhotoTrailingState::StopTrailing()
 {
     DP_CHECK_RETURN(!isTrailing_);
     DP_INFO_LOG("DPS_PHOTO: StopTrailing state: %{public}d", isTrailing_);
-    DpsTimer::GetInstance().StopTimer(timerId_);
+    CameraTimer::GetInstance().Unregister(timerId_);
+    timerId_ = INVALID_TIMERID;
     isTrailing_ = false;
-    remainingTrailingTime_ -= static_cast<uint32_t>(GetDiffTime<Milli>(startTimer_));
-    remainingTrailingTime_ = std::max(DEFAULT_TRAILING_TIME, remainingTrailingTime_);
+    auto useTime = static_cast<uint32_t>(GetDiffTime<Milli>(startTime_));
+    remainingTrailingTime_ = remainingTrailingTime_ > useTime ?
+        remainingTrailingTime_ - useTime : DEFAULT_TRAILING_TIME;
 }
 
 void PhotoTrailingState::OnTimerOut()

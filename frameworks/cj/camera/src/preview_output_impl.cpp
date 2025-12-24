@@ -68,6 +68,14 @@ void CJPreviewOutputCallback::OnSketchStatusDataChanged(const SketchStatusData &
 {
 }
 
+void CJPreviewOutputCallback::OnFramePaused() const
+{
+}
+
+void CJPreviewOutputCallback::OnFrameResumed() const
+{
+}
+
 CJPreviewOutput::CJPreviewOutput()
 {
     previewOutput_ = sPreviewOutput_;

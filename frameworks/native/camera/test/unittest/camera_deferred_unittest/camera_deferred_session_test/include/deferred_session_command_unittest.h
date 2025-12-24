@@ -22,8 +22,6 @@
 #include "deferred_photo_processor.h"
 #include "errors.h"
 #include "gtest/gtest.h"
-#include "ivideo_job_repository_listener.h"
-#include "ivideo_process_callbacks.h"
 #include "video_session_info.h"
 #include "photo_session_info.h"
 #include "video_post_processor.h"
@@ -46,34 +44,19 @@ public:
     /* TearDown:Execute after each test case */
     void TearDown();
 
-    void PrepareFd();
-
     void PrepareVideoInfo(const std::string& videoId);
 
     void InitProcessor(int32_t userId);
 
     void InitSessionInfo(int32_t userId);
 
-    sptr<IPCFileDescriptor> srcFd_;
-    sptr<IPCFileDescriptor> dstFd_;
-    std::unordered_map<std::string, std::shared_ptr<DeferredVideoProcessingSession::VideoInfo>> videoInfoMap_;
+    std::unordered_map<std::string, std::shared_ptr<VideoInfo>> videoInfoMap_;
     std::shared_ptr<DeferredVideoProcessor> processor_ {nullptr};
     std::shared_ptr<DeferredPhotoProcessor> photoProcessor_ {nullptr};
     sptr<VideoSessionInfo> sessionInfo_ {nullptr};
     sptr<PhotoSessionInfo> photoSessionInfo_ {nullptr};
-
-    static constexpr int videoSourceFd_ = 1;
-    static constexpr int videoDestinationFd_ = 2;
-};
-
-class TestIVideoProcCb : public IVideoProcessCallbacks {
-public:
-    TestIVideoProcCb() = default;
-    ~TestIVideoProcCb() = default;
-    void OnProcessDone(const int32_t userId,
-        const std::string& videoId, const sptr<IPCFileDescriptor>& ipcFd) override {}
-    void OnError(const int32_t userId, const std::string& videoId, DpsError errorCode) override {}
-    void OnStateChanged(const int32_t userId, DpsStatus statusCode) override {}
+    int32_t srcFd_ {-1};
+    int32_t dtsFd_ {-1};
 };
 
 class IRemoteObjectUnitTest : public IRemoteObject {

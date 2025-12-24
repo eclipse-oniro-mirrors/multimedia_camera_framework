@@ -33,7 +33,8 @@ public:
         virtual void OnBufferArrival(sptr<SurfaceBuffer> buffer, int64_t timestamp, GraphicTransformType transform) = 0;
     };
 
-    static sptr<MovingPhotoSurfaceWrapper> CreateMovingPhotoSurfaceWrapper(int32_t width, int32_t height);
+    static sptr<MovingPhotoSurfaceWrapper> CreateMovingPhotoSurfaceWrapper(
+        sptr<Surface> videoSurface, int32_t width, int32_t height);
     sptr<OHOS::IBufferProducer> GetProducer() const;
 
     void RecycleBuffer(sptr<SurfaceBuffer> buffer);
@@ -50,7 +51,7 @@ public:
         std::lock_guard<std::mutex> lock(surfaceBufferListenerMutex_);
         return surfaceBufferListener_.promote();
     }
-    sptr<Surface> videoSurface_ = nullptr;
+    wptr<Surface> videoSurface_ = nullptr;
 
 private:
     class BufferConsumerListener : public IBufferConsumerListener {
@@ -64,7 +65,7 @@ private:
 
     explicit MovingPhotoSurfaceWrapper() = default;
     ~MovingPhotoSurfaceWrapper() override;
-    bool Init(int32_t width, int32_t height);
+    bool InitVideoSurface(sptr<Surface> videoSurface, int32_t width, int32_t height);
 
     mutable std::recursive_mutex videoSurfaceMutex_;
 

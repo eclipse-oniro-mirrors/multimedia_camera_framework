@@ -27,7 +27,7 @@ namespace DeferredProcessing {
 class SyncCommand : public Command {
 public:
     SyncCommand(const int32_t userId);
-    ~SyncCommand();
+    virtual ~SyncCommand() override;
 
 protected:
     int32_t Initialize();
@@ -55,13 +55,13 @@ class VideoSyncCommand : public SyncCommand {
     DECLARE_CMD_CLASS(VideoSyncCommand)
 public:
     VideoSyncCommand(const int32_t userId,
-        const std::unordered_map<std::string, std::shared_ptr<DeferredVideoProcessingSession::VideoInfo>>& videoIds);
+        const std::unordered_map<std::string, std::shared_ptr<VideoInfo>>& videoIds);
     ~VideoSyncCommand() override;
 
 protected:
     int32_t Executing() override;
 
-    std::unordered_map<std::string, std::shared_ptr<DeferredVideoProcessingSession::VideoInfo>> videoIds_ {};
+    std::unordered_map<std::string, std::shared_ptr<VideoInfo>> videoIds_ {};
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

@@ -49,7 +49,6 @@ public:
     void TearDown(void);
     
     sptr<CaptureOutput> CreatePhotoOutput();
-    std::map<int32_t, captureMonitorInfo> captureIdToCaptureInfoMap_;
 };
 
 }

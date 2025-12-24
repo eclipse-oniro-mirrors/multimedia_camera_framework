@@ -21,6 +21,7 @@
 namespace OHOS {
 namespace CameraStandard {
 using namespace DeferredProcessing;
+static constexpr int32_t MIN_SIZE_NUM = 6;
 
 std::shared_ptr<Demuxer> CameraDemuxerFuzzer::fuzz_ {nullptr};
 
@@ -76,7 +77,9 @@ void Test(uint8_t* data, size_t size)
         return;
     }
     FuzzedDataProvider fdp(data, size);
-
+    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
+        return;
+    }
     cameraDemuxer->CameraDemuxerFuzzTest(fdp);
 }
 } // namespace CameraStandard

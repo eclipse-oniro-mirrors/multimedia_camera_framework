@@ -41,6 +41,8 @@ enum JsSceneMode : int32_t {
     JS_PANORAMA_PHOTO = 15,
     JS_TIMELAPSE_PHOTO = 16,
     JS_FLUORESCENCE_PHOTO = 17,
+    JS_STITCHING_PHOTO = 18,
+    JS_CINEMATIC_VIDEO = 19,
 };
 
 enum SceneMode : int32_t {
@@ -65,6 +67,8 @@ enum SceneMode : int32_t {
     TIMELAPSE_PHOTO = 19,
     APERTURE_VIDEO = 20,
     FLUORESCENCE_PHOTO = 21,
+    STITCHING_PHOTO = 23,
+    CINEMATIC_VIDEO = 24,
 };
 
 enum SceneFeature : int32_t {
@@ -72,7 +76,9 @@ enum SceneFeature : int32_t {
     FEATURE_MOON_CAPTURE_BOOST = 0,
     FEATURE_TRIPOD_DETECTION,
     FEATURE_LOW_LIGHT_BOOST,
+    FEATURE_CONSTELLATION_DRAWING,
     FEATURE_MACRO,
+    FEATURE_SUPER_MOON,
     FEATURE_ENUM_MAX
 };
 

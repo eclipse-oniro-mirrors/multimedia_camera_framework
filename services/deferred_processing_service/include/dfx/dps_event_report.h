@@ -51,6 +51,7 @@ inline constexpr char EVENT_KEY_FILE_OR_FOLDER_SIZE[] = "FILE_OR_FOLDER_SIZE";
 inline constexpr char EVENT_KEY_MEMORY_SIZE[] = "AVAILABLEMEMORYSIZE";
 inline constexpr char COMPONENT_NAME[] = "camera_framework";
 inline constexpr char PARTITION_NAME[] = "/data";
+inline constexpr char EVENT_KEY_CAPTUREFLAG[] = "CAPTUREFLAG";
 
 struct DPSEventInfo {
     std::string imageId;
@@ -106,6 +107,7 @@ public:
     void UpdateProcessDoneTime(const std::string& imageId, int32_t userId);
     void UpdateRemoveTime(const std::string& imageId, int32_t userId);
     void UpdateExecutionMode(const std::string& imageId, int32_t userId, ExecutionMode executionMode);
+    void ReportImageProcessCaptureFlag(uint32_t captureFlag);
 
 private:
     DPSEventInfo GetEventInfo(const std::string& imageId, int32_t userId);
@@ -120,7 +122,7 @@ private:
     int GetTotalTime (uint64_t beginTime, uint64_t endTime);
     bool GetDeviceValidSize(const std::string& path, double& size);
     uint64_t GetFolderSize(const std::string& path);
-    std::recursive_mutex mutex_;
+    std::mutex mutex_;
     std::map<int32_t, std::map<std::string, DPSEventInfo>> userIdToImageIdEventInfo; //userid--imageid--eventinfo
     ExecutionMode executionMode_;
     int temperatureLevel_;

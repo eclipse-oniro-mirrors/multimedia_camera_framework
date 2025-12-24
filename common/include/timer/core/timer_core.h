@@ -19,8 +19,8 @@
 #include <map>
 #include <queue>
 #include <thread>
-#include "timer/camera_deferred_timer.h"
 
+#include "timer/timer.h"
 
 namespace OHOS {
 namespace CameraStandard {

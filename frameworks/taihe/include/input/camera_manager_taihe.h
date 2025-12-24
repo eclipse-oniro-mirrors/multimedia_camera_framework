@@ -88,6 +88,7 @@ public:
     array<CameraDevice> GetSupportedCameras();
     array<SceneMode> GetSupportedSceneModes(CameraDevice const& camera);
     CameraOutputCapability GetSupportedOutputCapability(CameraDevice const& camera, SceneMode mode);
+    CameraOutputCapability GetSupportedFullOutputCapability(CameraDevice const& camera, SceneMode mode);
     void Prelaunch();
     void PreSwitchCamera(string_view cameraId);
     bool IsTorchSupported();
@@ -116,6 +117,7 @@ public:
     CameraInput CreateCameraInputWithPosition(CameraPosition position, CameraType type);
     DepthDataOutput CreateDepthDataOutput(DepthProfile const& profile);
     MetadataOutput CreateMetadataOutput(array_view<MetadataObjectType> metadataObjectTypes);
+    MovieFileOutput CreateMovieFileOutput(optional_view<VideoProfile> profile);
     array<CameraConcurrentInfo> GetCameraConcurrentInfos(array_view<CameraDevice> cameras);
     void SetPrelaunchConfig(PrelaunchConfig const& prelaunchConfig);
     CameraDevice GetCameraDevice(CameraPosition position, CameraType type);

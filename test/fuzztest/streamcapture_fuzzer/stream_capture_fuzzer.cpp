@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,17 +15,11 @@
 
 #include <fuzzer/FuzzedDataProvider.h>
 
-#include "access_token.h"
-#include "accesstoken_kit.h"
-#include "foundation/multimedia/camera_framework/common/utils/camera_log.h"
-#include "hap_token_info.h"
+#include "camera_log.h"
 #include "iconsumer_surface.h"
-#include "ipc_skeleton.h"
 #include "metadata_utils.h"
-#include "nativetoken_kit.h"
 #include "stream_capture_fuzzer.h"
 #include "test_token.h"
-#include "token_setproc.h"
 
 using namespace std;
 
@@ -58,28 +52,28 @@ void StreamCaptureFuzzTest(uint8_t *rawData, size_t size)
     float focalLength = fdp.ConsumeFloatingPoint<float>();
     ability->addEntry(OHOS_ABILITY_FOCAL_LENGTH, &focalLength, 1);
 
-    int32_t sensorOrientation = fdp.ConsumeIntegral<int32_t>();
-    ability->addEntry(OHOS_SENSOR_ORIENTATION, &sensorOrientation, 1);
+     int32_t sensorOrientation = fdp.ConsumeIntegral<int32_t>();
+     ability->addEntry(OHOS_SENSOR_ORIENTATION, &sensorOrientation, 1);
 
-    int32_t cameraPosition = fdp.ConsumeIntegral<int32_t>();
-    ability->addEntry(OHOS_ABILITY_CAMERA_POSITION, &cameraPosition, 1);
+     int32_t cameraPosition = fdp.ConsumeIntegral<int32_t>();
+     ability->addEntry(OHOS_ABILITY_CAMERA_POSITION, &cameraPosition, 1);
 
     const camera_rational_t aeCompensationStep[] = {{rawData[0], rawData[1]}};
     ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_STEP, &aeCompensationStep,
         sizeof(aeCompensationStep) / sizeof(aeCompensationStep[0]));
 
-    MessageParcel data;
-    data.WriteInterfaceToken(FORMMGR_INTERFACE_TOKEN);
-    CHECK_RETURN_ELOG(!(OHOS::Camera::MetadataUtils::EncodeCameraMetadata(ability, data)),
-        "StreamCaptureFuzzer: EncodeCameraMetadata Error");
-    data.RewindRead(0);
+     MessageParcel data;
+     data.WriteInterfaceToken(FORMMGR_INTERFACE_TOKEN);
+     CHECK_RETURN_ELOG(!(OHOS::Camera::MetadataUtils::EncodeCameraMetadata(ability, data)),
+         "StreamCaptureFuzzer: EncodeCameraMetadata Error");
+     data.RewindRead(0);
 
-    sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
-    CHECK_RETURN_ELOG(!photoSurface, "StreamCaptureFuzzer: Create photoSurface Error");
-    sptr<IBufferProducer> producer = photoSurface->GetProducer();
-    sptr<HStreamCapture> streamcapture = new HStreamCapture(producer, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT);
-    CHECK_RETURN(streamcapture == nullptr);
-    streamcapture->Release();
+     sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
+     CHECK_RETURN_ELOG(!photoSurface, "StreamCaptureFuzzer: Create photoSurface Error");
+     sptr<IBufferProducer> producer = photoSurface->GetProducer();
+     sptr<HStreamCapture> streamcapture = new HStreamCapture(producer, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT);
+     CHECK_RETURN(streamcapture == nullptr);
+     streamcapture->Release();
 }
 } // namespace CameraStandard
 } // namespace OHOS
@@ -91,4 +85,3 @@ extern "C" int LLVMFuzzerTestOneInput(uint8_t *data, size_t size)
     OHOS::CameraStandard::StreamCaptureFuzzTest(data, size);
     return 0;
 }
-

@@ -46,4 +46,4 @@ private:
 } // namespace CameraStandard
 } // namespace OHOS
 
-#endif // DEVICE_PROTECTION_ABILITY_CONNECTION_H
+#endif // DEVICE_PROTECTION_ABILITY_CONNECTION_H

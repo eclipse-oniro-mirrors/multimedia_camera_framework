@@ -23,6 +23,8 @@
 #include "hcamera_device_manager.h"
 #include "hcapture_session.h"
 #include "hstream_operator.h"
+#include "ipc_skeleton.h"
+#include "types.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -60,18 +62,15 @@ void DisablePolicyChangeCb::PermDisablePolicyCallback(const Security::AccessToke
 
 void PermissionStatusChangeCb::PermStateChangeCallback(Security::AccessToken::PermStateChangeInfo& result)
 {
-    MEDIA_INFO_LOG("enter CameraUseStateChangeNotify permStateChangeType:%{public}d"
+    MEDIA_INFO_LOG("enter PermissionStatusChangeNotify permStateChangeType:%{public}d"
         " permissionName:%{public}s", result.permStateChangeType, result.permissionName.c_str());
-    CHECK_RETURN_ELOG(HCameraDeviceManager::GetInstance() == nullptr,
-        "PermissionStatusChangeCb::PermStateChangeCallback GetInstance is null");
     std::vector<sptr<HCameraDeviceHolder>> holders = HCameraDeviceManager::GetInstance()->GetActiveCameraHolders();
     for (auto holder : holders) {
-        if (holder->GetAccessTokenId() != result.tokenID) {
-            MEDIA_INFO_LOG("PermissionStatusChangeCb::PermStateChangeCallback not current tokenId, checking continue");
-            continue;
-        }
+        CHECK_CONTINUE_ILOG(holder->GetAccessTokenId() != result.tokenID,
+            "PermissionStatusChangeCb::PermStateChangeCallback not current tokenId, checking continue");
         auto device = holder->GetDevice();
-        if ((result.permStateChangeType == 0) && (device != nullptr)) {
+        bool isPermStateChange = (result.permStateChangeType == 0) && (device != nullptr);
+        if (isPermStateChange) {
             auto session = CastToSession(device->GetStreamOperatorCallback());
             if (session) {
                 session->ReleaseStreams();
@@ -87,13 +86,9 @@ void CameraUseStateChangeCb::StateChangeNotify(Security::AccessToken::AccessToke
 {
     MEDIA_INFO_LOG("CameraUseStateChangeCb::StateChangeNotify is called, isShowing: %{public}d", isShowing);
     std::vector<sptr<HCameraDeviceHolder>> holders = HCameraDeviceManager::GetInstance()->GetActiveCameraHolders();
-    CHECK_RETURN_ELOG(holders.empty(),
-        "CameraUseStateChangeCb::StateChangeNotify holders is null, skip.");
     for (auto holder : holders) {
-        if (holder->GetAccessTokenId() != tokenId) {
-            MEDIA_INFO_LOG("CameraUseStateChangeCb::StateChangeNotify not current tokenId, checking continue");
-            continue;
-        }
+        CHECK_CONTINUE_ILOG(holder->GetAccessTokenId() != tokenId,
+            "CameraUseStateChangeCb::StateChangeNotify not current tokenId, checking continue");
         auto device = holder->GetDevice();
         CHECK_RETURN_ELOG((isShowing == true) || (device == nullptr), "abnormal callback from privacy.");
         auto cameraPrivacy = device->GetCameraPrivacy();
@@ -130,8 +125,9 @@ bool CameraPrivacy::IsAllowUsingCamera()
     return PrivacyKit::IsAllowedUsingPermission(callerToken_, OHOS_PERMISSION_CAMERA);
 }
 
-void CameraPrivacy::SetClientName(std::string clientName)
+void CameraPrivacy::SetClientName(const std::string& clientName)
 {
+    std::lock_guard<std::mutex> lock(clientNameMutex_);
     clientName_ = clientName;
 }
 
@@ -198,9 +194,9 @@ bool CameraPrivacy::AddCameraPermissionUsedRecord()
 {
     CAMERA_SYNC_TRACE;
 
-    int32_t successCount = 1;
+    int32_t successCout = 1;
     int32_t failCount = 0;
-    int32_t res = PrivacyKit::AddPermissionUsedRecord(callerToken_, OHOS_PERMISSION_CAMERA, successCount, failCount);
+    int32_t res = PrivacyKit::AddPermissionUsedRecord(callerToken_, OHOS_PERMISSION_CAMERA, successCout, failCount);
     MEDIA_INFO_LOG("CameraPrivacy::AddCameraPermissionUsedRecord res:%{public}d", res);
     CHECK_PRINT_ELOG(res != CAMERA_OK, "AddCameraPermissionUsedRecord failed.");
     return res == CAMERA_OK;
@@ -208,6 +204,7 @@ bool CameraPrivacy::AddCameraPermissionUsedRecord()
 
 bool CameraPrivacy::StartUsingPermissionCallback()
 {
+    MEDIA_INFO_LOG("CameraPrivacy::StartUsingPermissionCallback is called, pid_: %{public}d", pid_);
     CAMERA_SYNC_TRACE;
 
     int32_t res;

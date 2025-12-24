@@ -58,7 +58,7 @@ void PrelaunchConfigUnit::TearDown()
  * EnvConditions: NA
  * CaseDescription: Test prelaunchConfig with GetCameraDevice
  */
-HWTEST_F(PrelaunchConfigUnit, prelaunch_config_unittest_001, TestSize.Level1)
+HWTEST_F(PrelaunchConfigUnit, prelaunch_config_unittest_001, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     std::shared_ptr<PrelaunchConfig> prelaunchConfig = std::make_shared<PrelaunchConfig>(cameras[0]);
@@ -74,7 +74,7 @@ HWTEST_F(PrelaunchConfigUnit, prelaunch_config_unittest_001, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test prelaunchConfig with GetRestoreParamType
  */
-HWTEST_F(PrelaunchConfigUnit, prelaunch_config_unittest_002, TestSize.Level1)
+HWTEST_F(PrelaunchConfigUnit, prelaunch_config_unittest_002, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     std::shared_ptr<PrelaunchConfig> prelaunchConfig = std::make_shared<PrelaunchConfig>(cameras[0]);
@@ -91,7 +91,7 @@ HWTEST_F(PrelaunchConfigUnit, prelaunch_config_unittest_002, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test prelaunchConfig with GetActiveTime
  */
-HWTEST_F(PrelaunchConfigUnit, prelaunch_config_unittest_003, TestSize.Level1)
+HWTEST_F(PrelaunchConfigUnit, prelaunch_config_unittest_003, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     std::shared_ptr<PrelaunchConfig> prelaunchConfig = std::make_shared<PrelaunchConfig>(cameras[0]);
@@ -108,7 +108,7 @@ HWTEST_F(PrelaunchConfigUnit, prelaunch_config_unittest_003, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test prelaunchConfig with GetSettingParam
  */
-HWTEST_F(PrelaunchConfigUnit, prelaunch_config_unittest_004, TestSize.Level1)
+HWTEST_F(PrelaunchConfigUnit, prelaunch_config_unittest_004, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     std::shared_ptr<PrelaunchConfig> prelaunchConfig = std::make_shared<PrelaunchConfig>(cameras[0]);

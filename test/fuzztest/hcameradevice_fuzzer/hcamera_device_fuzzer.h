@@ -1,4 +1,4 @@
- /*
+/*
  * Copyright (c) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
 #include "camera_device_service_stub.h"
 #include "hcamera_device.h"
 #include <fuzzer/FuzzedDataProvider.h>
+#include "camera_device_service_callback_stub.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -31,19 +32,19 @@ public:
     {
         return 0;
     }
-    inline int SendRequest(uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option) override
+    inline int SendRequest(uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option) override
     {
         return 0;
     }
-    inline bool AddDeathRecipient(const sptr<DeathRecipient> &recipient) override
+    inline bool AddDeathRecipient(const sptr<DeathRecipient>& recipient) override
     {
         return true;
     }
-    inline bool RemoveDeathRecipient(const sptr<DeathRecipient> &recipient) override
+    inline bool RemoveDeathRecipient(const sptr<DeathRecipient>& recipient) override
     {
         return true;
     }
-    inline int Dump(int fd, const std::vector<std::u16string> &args) override
+    inline int Dump(int fd, const std::vector<std::u16string>& args) override
     {
         return 0;
     }
@@ -55,8 +56,8 @@ public:
     {
         return 0;
     }
-    inline int32_t OnResult(const uint64_t timestamp,
-        const std::shared_ptr<OHOS::Camera::CameraMetadata> &result) override
+    inline int32_t OnResult(
+        const uint64_t timestamp, const std::shared_ptr<OHOS::Camera::CameraMetadata>& result) override
     {
         return 0;
     }
@@ -66,15 +67,19 @@ public:
     }
 };
 
-class HCameraDeviceFuzzer {
+class MockCameraDeviceServiceCallback : public CameraDeviceServiceCallbackStub {
 public:
-static bool hasPermission;
-static sptr<HCameraDevice> fuzz_;
-static void HCameraDeviceFuzzTest1(FuzzedDataProvider& fdp);
-static void HCameraDeviceFuzzTest2(FuzzedDataProvider& fdp);
-static void HCameraDeviceFuzzTest3(FuzzedDataProvider& fdp);
-static void HCameraDeviceFuzzTest4(FuzzedDataProvider& fdp);
+    ErrCode OnError(int32_t errorType, int32_t errorMsg) override
+    {
+        return 0;
+    }
+
+    ErrCode OnResult(uint64_t timestamp, const std::shared_ptr<CameraMetadata>& results) override
+    {
+        return 0;
+    }
 };
-} //CameraStandard
-} //OHOS
-#endif //CAMERA_INPUT_FUZZER_H
+
+} // namespace CameraStandard
+} // namespace OHOS
+#endif // CAMERA_INPUT_FUZZER_H

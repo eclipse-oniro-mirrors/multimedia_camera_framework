@@ -33,7 +33,7 @@ public:
         handle_ = dlopen(lib_name.c_str(), RTLD_LAZY | RTLD_LOCAL);
         if (!handle_) {
             MEDIA_ERR_LOG("%{public}s dlopen failed, lib: %{public}s, error: %{public}s", __func__,
-                LIB_CAMERA_NAPI_SO.c_str(), dlerror());
+                lib_name_.c_str(), dlerror());
         }
     }
 
@@ -80,7 +80,8 @@ public:
         
         void* symbol = dlsym(lib->GetHandlePtr(), name);
         if (!symbol) {
-            MEDIA_ERR_LOG("%{public}s Failed to find symbol: %{public}s", __func__, name);
+            MEDIA_ERR_LOG("%{public}s Failed to find symbol: %{public}s,  error: %{public}s",
+                __func__, name, dlerror());
             return false;
         }
         
@@ -96,4 +97,4 @@ private:
 } // namespace Camera
 } // namespace Ani
 
-#endif // FRAMEWORKS_TAIHE_INCLUDE_CAMERA_TRANSFER_TAIHE_H
+#endif // FRAMEWORKS_TAIHE_INCLUDE_CAMERA_LIB_MANAGER_TAIHE_H

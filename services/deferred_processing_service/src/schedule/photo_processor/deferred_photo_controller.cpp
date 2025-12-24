@@ -15,13 +15,12 @@
 
 #include "deferred_photo_controller.h"
 
-#include "dp_timer.h"
+#include "camera_dynamic_loader.h"
 #include "dp_utils.h"
 #include "dp_log.h"
 #include "dps_event_report.h"
 #include "events_monitor.h"
 #include "parameters.h"
-#include "camera_dynamic_loader.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -90,7 +89,7 @@ void DeferredPhotoController::OnSchedulerChanged(const SchedulerType& type, cons
     DP_INFO_LOG("DPS_PHOTO: Photo isNeedStop: %{public}d, isNeedInterrupt: %{public}d",
         scheduleInfo.isNeedStop, scheduleInfo.isNeedInterrupt);
 
-    if (photoProcessor_->HasRunningJob() && scheduleInfo.isNeedInterrupt) {
+    if (photoProcessor_->HasRunningJob() && (scheduleInfo.isNeedInterrupt || scheduleInfo.isNeedStop)) {
         photoProcessor_->Interrupt();
     }
 
@@ -101,7 +100,7 @@ void DeferredPhotoController::OnSchedulerChanged(const SchedulerType& type, cons
         }
         return;
     }
-
+    
     TryDoSchedule();
 }
 
@@ -115,11 +114,7 @@ void DeferredPhotoController::TryDoSchedule()
         SetDefaultExecutionMode();
         return;
     }
-
-    if (photoProcessor_->HasRunningJob()) {
-        return;
-    }
-
+    DP_CHECK_RETURN(photoProcessor_->HasRunningJob());
     DP_INFO_LOG("DPS_PHOTO: imageId: %{public}s, status: %{public}d, priority: %{public}d",
         job->GetImageId().c_str(), job->GetCurStatus(), job->GetCurPriority());
     DoProcess(job);
@@ -140,7 +135,8 @@ void DeferredPhotoController::SetDefaultExecutionMode()
 void DeferredPhotoController::NotifyScheduleState(bool workAvailable)
 {
     DpsStatus scheduleState = DpsStatus::DPS_SESSION_STATE_IDLE;
-    if (workAvailable || photoProcessor_->HasRunningJob()) {
+    bool isRunning = workAvailable || photoProcessor_->HasRunningJob();
+    if (isRunning) {
         scheduleState = DpsStatus::DPS_SESSION_STATE_RUNNING;
     } else {
         if (photoProcessor_->IsIdleState()) {

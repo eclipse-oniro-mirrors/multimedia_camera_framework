@@ -16,7 +16,7 @@
 #ifndef OHOS_DEFERRED_PROCESSING_SERVICE_WATCH_DOG_H
 #define OHOS_DEFERRED_PROCESSING_SERVICE_WATCH_DOG_H
 
-#include "timer/time_broker.h"
+#include "time_broker.h"
 #include "camera_log.h"
 
 namespace OHOS {

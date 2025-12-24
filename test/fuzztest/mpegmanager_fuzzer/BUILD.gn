@@ -76,7 +76,7 @@ ohos_fuzztest("MpegManagerFuzzTest") {
 
   deps = [
     "${multimedia_camera_framework_path}/services/camera_service:camera_service",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service:deferred_processing_service_test_only",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service:deferred_processing_service",
     "${multimedia_camera_framework_path}/dynamic_libs:camera_dynamic_media_manager"
   ]
   external_deps = [

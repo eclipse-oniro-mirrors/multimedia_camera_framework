@@ -34,6 +34,7 @@ protected:
     const int32_t userId_;
     std::atomic<bool> initialized_ {false};
     std::shared_ptr<VideoPostProcessor> videoPostProcess_ {nullptr};
+    std::shared_ptr<DeferredVideoController> controller_ {nullptr};
 };
 
 class VideoProcessSuccessCommand : public VideoProcessCommand {
@@ -85,6 +86,15 @@ protected:
     int32_t Executing() override;
 
     HdiStatus status_;
+};
+
+class VideoProcessTimeOutCommand : public VideoProcessFailedCommand {
+    DECLARE_CMD_CLASS(VideoProcessTimeOutCommand);
+public:
+    using VideoProcessFailedCommand::VideoProcessFailedCommand;
+
+protected:
+    int32_t Executing() override;
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

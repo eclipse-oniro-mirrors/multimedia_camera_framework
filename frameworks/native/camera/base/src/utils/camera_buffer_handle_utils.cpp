@@ -19,17 +19,19 @@
 #include <stdint.h>
 #include <unistd.h>
 
+#include "buffer_handle_utils.h"
 #include "camera_log.h"
+#include "dps_metadata_info.h"
 
 
 namespace OHOS {
 namespace CameraStandard {
-#define BUFFER_HANDLE_RESERVE_MAX_SIZE 1024
+#define RESERVE_MAX_SIZE 1024
 
 BufferHandle *CameraAllocateBufferHandle(uint32_t reserveFds, uint32_t reserveInts)
 {
-    CHECK_RETURN_RET_ELOG(reserveFds > BUFFER_HANDLE_RESERVE_MAX_SIZE || reserveInts >
-        BUFFER_HANDLE_RESERVE_MAX_SIZE, nullptr, "CameraAllocateBufferHandle reserveFds or reserveInts too lager");
+    CHECK_RETURN_RET_ELOG(reserveFds > RESERVE_MAX_SIZE || reserveInts > RESERVE_MAX_SIZE, nullptr,
+        "CameraAllocateBufferHandle reserveFds or reserveInts too lager");
     size_t handleSize = sizeof(BufferHandle) + (sizeof(int32_t) * (reserveFds + reserveInts));
     BufferHandle *handle = static_cast<BufferHandle *>(malloc(handleSize));
     if (handle != nullptr) {
@@ -66,11 +68,10 @@ int32_t CameraFreeBufferHandle(BufferHandle *handle)
 
 BufferHandle *CameraCloneBufferHandle(const BufferHandle *handle)
 {
-    CHECK_RETURN_RET_ELOG(handle == nullptr, nullptr, "%{public}s handle is nullptr", __func__);
+    CHECK_RETURN_RET_ELOG(handle == nullptr, nullptr, "CameraCloneBufferHandle with nullptr handle");
     BufferHandle *newHandle = CameraAllocateBufferHandle(handle->reserveFds, handle->reserveInts);
-    CHECK_RETURN_RET_ELOG(newHandle == nullptr, nullptr,
-        "%{public}s CameraAllocateBufferHandle failed, newHandle is nullptr", __func__);
-
+    CHECK_RETURN_RET_ELOG(
+        newHandle == nullptr, nullptr, "CameraCloneBufferHandle alloc buffer failed, newHandle is nullptr");
     if (handle->fd == -1) {
         newHandle->fd = handle->fd;
     } else {
@@ -81,8 +82,8 @@ BufferHandle *CameraCloneBufferHandle(const BufferHandle *handle)
             return nullptr;
         }
     }
-    newHandle->stride = handle->stride;
     newHandle->width = handle->width;
+    newHandle->stride = handle->stride;
     newHandle->height = handle->height;
     newHandle->size = handle->size;
     newHandle->format = handle->format;
@@ -91,10 +92,8 @@ BufferHandle *CameraCloneBufferHandle(const BufferHandle *handle)
 
     // 此处当前缺乏reserveFds中各个fd的dup，原因在于surfacebuffer中reserveFds fd不合法。且相机流程中reserveFds暂时无用
 
-    if (handle->reserveInts == 0) {
-        MEDIA_INFO_LOG("There is no reserved integer value in old handle, no need to copy");
-        return newHandle;
-    }
+    CHECK_RETURN_RET_ILOG(
+        handle->reserveInts == 0, newHandle, "There is no reserved integer value in old handle, no need to copy");
 
     if (memcpy_s(&newHandle->reserve[newHandle->reserveFds], sizeof(int32_t) * newHandle->reserveInts,
         &handle->reserve[handle->reserveFds], sizeof(int32_t) * handle->reserveInts) != EOK) {

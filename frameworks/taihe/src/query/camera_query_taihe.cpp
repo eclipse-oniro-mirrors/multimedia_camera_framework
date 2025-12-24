@@ -480,8 +480,7 @@ void FocusImpl::SetFocusMode(FocusMode afMode)
     int retCode = captureSession_->
             SetFocusMode(static_cast<OHOS::CameraStandard::FocusMode>(afMode.get_value()));
     captureSession_->UnlockForControl();
-    CHECK_RETURN_ELOG(!CameraUtilsTaihe::CheckError(retCode),
-        "FlashImpl::SetFocusMode fail %{public}d", retCode);
+    CHECK_RETURN_ELOG(!CameraUtilsTaihe::CheckError(retCode), "FlashImpl::SetFocusMode fail");
 }
 
 FocusMode FocusImpl::GetFocusMode()
@@ -602,7 +601,7 @@ bool BeautyQueryImpl::IsPortraitThemeSupported()
     bool isSupported;
     int32_t retCode = captureSessionForSys_->IsPortraitThemeSupported(isSupported);
     CHECK_RETURN_RET(!CameraUtilsTaihe::CheckError(retCode), false);
-    return false;
+    return isSupported;
 }
 
 void BeautyImpl::SetPortraitThemeType(PortraitThemeType type)
@@ -840,6 +839,7 @@ uintptr_t ColorManagementImpl::GetActiveColorSpace()
     ani_enum_item aniEnumItem {};
     ani_env* env = get_env();
     CHECK_RETURN_RET_ELOG(env == nullptr, 0, "GetActiveColorSpace env is null");
+    CHECK_RETURN_RET_ELOG(ANI_OK != env->FindEnum(ENUM_NAME_COLORSPACE, &aniEnum), 0, "Find Enum Fail");
     CHECK_RETURN_RET_ELOG(ANI_OK != env->Enum_GetEnumItemByIndex(
         aniEnum, reinterpret_cast<ani_int>(static_cast<int32_t>(colorSpace)), &aniEnumItem), 0, "Find Enum item Fail");
     return reinterpret_cast<uintptr_t>(aniEnumItem);
@@ -1227,9 +1227,8 @@ array<EffectSuggestionType> EffectSuggestionImpl::GetSupportedEffectSuggestionTy
 bool MacroQueryImpl::IsMacroSupported()
 {
     if (isSessionBase_) {
-        CHECK_RETURN_RET_ELOG(captureSessionForSys_ == nullptr, false,
-            "IsMacroSupported captureSessionForSys_ is null");
-        return captureSessionForSys_->IsMacroSupported();
+        CHECK_RETURN_RET_ELOG(captureSession_ == nullptr, false, "IsMacroSupported captureSession_ is null");
+        return captureSession_->IsMacroSupported();
     } else if (isFunctionBase_) {
         CHECK_RETURN_RET_ELOG(cameraAbility_ == nullptr, false,
             "IsMacroSupported failed, cameraAbility_ is nullptr");
@@ -1242,14 +1241,14 @@ bool MacroQueryImpl::IsMacroSupported()
 
 void MacroImpl::EnableMacro(bool enabled)
 {
-    if (captureSessionForSys_ == nullptr) {
+    if (captureSession_ == nullptr) {
         CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT,
-            "failed to EnableMacro, captureSessionForSys_ is nullptr");
+            "failed to EnableMacro, captureSession_ is nullptr");
         return;
     }
-    captureSessionForSys_->LockForControl();
-    int32_t retCode = captureSessionForSys_->EnableMacro(enabled);
-    captureSessionForSys_->UnlockForControl();
+    captureSession_->LockForControl();
+    int32_t retCode = captureSession_->EnableMacro(enabled);
+    captureSession_->UnlockForControl();
     CHECK_RETURN_ELOG(retCode != 0 && !CameraUtilsTaihe::CheckError(retCode),
         "MacroImpl::EnableMacro fail %{public}d", retCode);
 }
@@ -1258,7 +1257,7 @@ double ManualFocusImpl::GetFocusDistance()
 {
     float distance = -1.0;
     CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), static_cast<double>(distance),
-        "SystemApi EnableMacro is called!");
+        "SystemApi GetFocusDistance is called!");
     CHECK_RETURN_RET_ELOG(captureSessionForSys_ == nullptr, distance, "GetFocusDistance captureSessionForSys_ is null");
     int32_t retCode = captureSessionForSys_->GetFocusDistance(distance);
     CHECK_RETURN_RET(!CameraUtilsTaihe::CheckError(retCode), distance);
@@ -1319,7 +1318,7 @@ bool DepthFusionQueryImpl::IsDepthFusionSupported()
                 "failed to IsDepthFusionSupported, captureSessionForSys_ is nullptr");
             return false;
         }
-        return captureSessionForSys_->IsDepthFusionEnabled();
+        return captureSessionForSys_->IsDepthFusionSupported();
     } else if (isFunctionBase_) {
         CHECK_RETURN_RET_ELOG(cameraAbility_ == nullptr, false,
             "IsDepthFusionSupported failed, cameraAbility_ is nullptr");

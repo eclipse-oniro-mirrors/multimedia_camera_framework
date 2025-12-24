@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -38,7 +38,7 @@ public:
     virtual void UpdateRunningJob(const std::string& imageId, bool running) = 0;
     virtual void UpdatePriorityJob(JobPriority cur, JobPriority pre) = 0;
     virtual void UpdateJobSize() = 0;
-    virtual void TryDoNextJob(const std::string& imageId, bool isTyrDo) = 0;
+    virtual void TryDoNextJob(const std::string& imageId, bool isTryDo) = 0;
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

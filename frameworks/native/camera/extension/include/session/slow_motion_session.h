@@ -20,6 +20,7 @@
 #include "icapture_session.h"
 #include "input/capture_input.h"
 #include "output/metadata_output.h"
+#include "utils/zoom_info_change_callback.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -132,9 +133,26 @@ public:
      */
     std::shared_ptr<SlowMotionStateCallback> GetApplicationCallback();
 
+    /**
+     * @brief Sets the callback function for handling changes in zoom ratio.
+     *
+     * @param callback A shared pointer to the callback function object.
+     */
+    void SetZoomInfoCallback(std::shared_ptr<ZoomInfoCallback> callback);
+
+    /**
+     * @brief Retrieves the application callback for zoom ratio changes.
+     *
+     * @return A shared pointer to the application callback for zoom ratio changes.
+     */
+    std::shared_ptr<ZoomInfoCallback> GetZoomInfoCallback();
+    void ProcessZoomInfoChange(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult);
+
 private:
     std::mutex stateCallbackMutex_;
     std::shared_ptr<SlowMotionStateCallback> slowMotionStateCallback_;
+    std::mutex zoomInfoCallbackMutex_;
+    std::shared_ptr<ZoomInfoCallback> zoomInfoCallback_;
     static const std::unordered_map<camera_slow_motion_status_type_t, SlowMotionState> metaMotionStateMap_;
 };
 } // namespace CameraStandard

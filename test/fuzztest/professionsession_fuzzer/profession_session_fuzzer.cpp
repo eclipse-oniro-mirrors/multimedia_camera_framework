@@ -36,7 +36,6 @@ static const uint8_t* RAW_DATA = nullptr;
 const size_t THRESHOLD = 10;
 static size_t g_dataSize = 0;
 static size_t g_pos;
-
 const int32_t NUM_FOUR = 4;
 const int32_t NUM_THREE = 3;
 sptr<ProfessionSession> ProfessionSessionFuzzer::fuzz_{nullptr};
@@ -168,7 +167,7 @@ void Test()
     cameras = manager_->GetSupportedCameras();
     CHECK_RETURN_ELOG(cameras.empty(), "GetCameraDeviceListFromServer Error");
     sptr<CaptureInput> input = manager_->CreateCameraInput(cameras[0]);
-    CHECK_RETURN_ELOG(!input, "CreateCameraInput Error");
+    CHECK_RETURN_ELOG(!input, "create camerainput Error");
     sptr<CameraOutputCapability> modeAbility =
         manager_->GetSupportedOutputCapability(cameras[0], sceneMode);
     captureSessionForSys->BeginConfig();

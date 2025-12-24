@@ -87,6 +87,7 @@ void VideoSessionForSysImpl::RegisterLightStatusCallbackListener(
     const std::string& eventName, std::shared_ptr<uintptr_t> callback, bool isOnce)
 {
     MEDIA_INFO_LOG("VideoSessionForSysImpl::RegisterLightStatusCallbackListener called");
+    CHECK_RETURN_ELOG(videoSessionForSys_ == nullptr, "videoSessionForSys_ is null!");
     if (lightStatusCallback_ == nullptr) {
         ani_env *env = get_env();
         lightStatusCallback_ = std::make_shared<LightStatusCallbackListener>(env);

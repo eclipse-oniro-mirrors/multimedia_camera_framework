@@ -19,16 +19,18 @@
 #include "deferred_photo_processing_session_callback_stub.h"
 #include "deferred_processing_service.h"
 #include "dps.h"
+#include "dps_metadata_info.h"
+#include "events_info.h"
 #include "gmock/gmock.h"
 
 using namespace testing::ext;
+using namespace testing;
 
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
 namespace {
-    constexpr int32_t USER_ID = 100;
-
+    constexpr int32_t USER_ID = 0;
     const std::string TEST_IMAGE_1 = "testImage1";
     const std::string TEST_IMAGE_2 = "testImage2";
     const std::string TEST_IMAGE_3 = "testImage3";
@@ -58,16 +60,25 @@ public:
 
 class PhotoProcessingSessionCallbackMock : public DeferredPhotoProcessingSessionCallbackStub {
 public:
-    MOCK_METHOD4(OnProcessImageDone, ErrCode(const std::string& imageId,
-        const sptr<IPCFileDescriptor>& ipcFd, int64_t bytes, uint32_t cloudImageEnhanceFlag));
-    MOCK_METHOD2(OnDeliveryLowQualityImage, ErrCode(const std::string& imageId,
+    MOCK_METHOD(int32_t, OnProcessImageDone, (const std::string &imageId, const std::shared_ptr<PictureIntf>& picture,
+        const DpsMetadata& metadata), (override));
+    MOCK_METHOD(int32_t, OnDeliveryLowQualityImage, (const std::string &imageId,
         const std::shared_ptr<PictureIntf>& picture));
-    MOCK_METHOD3(OnProcessImageDone, ErrCode(const std::string& imageId,
-        const std::shared_ptr<PictureIntf>& picture, uint32_t cloudImageEnhanceFlag));
-    MOCK_METHOD2(OnError, ErrCode(const std::string& imageId, ErrorCode errorCode));
-    MOCK_METHOD1(OnStateChanged, ErrCode(StatusCode status));
-    MOCK_METHOD4(CallbackParcel, int32_t(uint32_t code, MessageParcel& data,
-        MessageParcel& reply, MessageOption& option));
+    MOCK_METHOD(int32_t, OnProcessImageDone, (const std::string &imageId,
+        const sptr<IPCFileDescriptor>& ipcFd, int64_t bytes, uint32_t cloudImageEnhanceFlag), (override));
+    MOCK_METHOD(int32_t, OnError, (const std::string &imageId, DeferredProcessing::ErrorCode errorCode));
+    MOCK_METHOD(int32_t, OnStateChanged, (DeferredProcessing::StatusCode status));
+    MOCK_METHOD(int32_t, CallbackParcel, (uint32_t code, MessageParcel& data, MessageParcel& reply,
+        MessageOption& option));
+
+    PhotoProcessingSessionCallbackMock()
+    {
+        ON_CALL(*this, OnProcessImageDone(Matcher<const string&>(_),_,_)).WillByDefault(Return(0));
+        ON_CALL(*this, OnDeliveryLowQualityImage).WillByDefault(Return(0));
+        ON_CALL(*this, OnProcessImageDone(Matcher<const string&>(_),_,_,_)).WillByDefault(Return(0));
+        ON_CALL(*this, OnError(Matcher<const string&>(_),_)).WillByDefault(Return(0));
+        ON_CALL(*this, OnStateChanged).WillByDefault(Return(0));
+    }
 };
 
 void DeferredPhotoProcessorUnittest::SetUpTestCase(void)
@@ -93,6 +104,7 @@ void DeferredPhotoProcessorUnittest::SetUp()
     ASSERT_NE(controller, nullptr);
     controller->photoStrategyCenter_->HandleTemperatureEvent(0);
     process_ = scheduler_->GetPhotoProcessor(USER_ID);
+    ASSERT_NE(process_, nullptr);
     auto session = sptr<MockPhotoProcessSession>::MakeSptr();
     process_->postProcessor_->session_ = session;
     process_->result_->cacheMap_.clear();
@@ -230,6 +242,7 @@ HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_012, 
     info = std::make_unique<ImageInfo>();
     process_->OnProcessSuccess(USER_ID, TEST_IMAGE_2, std::move(info));
     process_->RemoveImage(TEST_IMAGE_1, false);
+    EXPECT_EQ(process_->repository_->GetOfflineJobSize(), 0);
 }
 
 HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_013, TestSize.Level1)

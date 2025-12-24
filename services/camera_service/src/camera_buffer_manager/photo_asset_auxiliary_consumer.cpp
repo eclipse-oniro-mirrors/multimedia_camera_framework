@@ -12,6 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+// LCOV_EXCL_START
 #include "photo_asset_auxiliary_consumer.h"
 
 #include "camera_log.h"
@@ -56,6 +57,7 @@ void AuxiliaryBufferConsumer::ExecuteOnBufferAvailable()
     CAMERA_SYNC_TRACE;
     sptr<HStreamCapture> streamCapture = streamCapture_.promote();
     CHECK_RETURN_ELOG(streamCapture == nullptr, "streamCapture is null");
+    streamCapture->ElevateThreadPriority();
     sptr<Surface> surface;
     if (surfaceName_ == S_GAINMAP) {
         surface = streamCapture->gainmapSurface_.Get();
@@ -71,11 +73,10 @@ void AuxiliaryBufferConsumer::ExecuteOnBufferAvailable()
     int32_t fence = -1;
     int64_t timestamp;
     OHOS::Rect damage;
+    CHECK_RETURN_ELOG(surface == nullptr, "surface is null");
     SurfaceError surfaceRet = surface->AcquireBuffer(surfaceBuffer, fence, timestamp, damage);
     MEDIA_INFO_LOG("AuxiliaryBufferConsumer surfaceName = %{public}s AcquireBuffer end", surfaceName_.c_str());
-    if (surfaceRet != SURFACE_ERROR_OK) {
-        MEDIA_ERR_LOG("AuxiliaryBufferConsumer Failed to acquire surface buffer");
-    }
+    CHECK_PRINT_ELOG(surfaceRet != SURFACE_ERROR_OK, "AuxiliaryBufferConsumer Failed to acquire surface buffer");
     sptr<SurfaceBuffer> newSurfaceBuffer = CameraSurfaceBufferUtil::DeepCopyBuffer(surfaceBuffer);
     surface->ReleaseBuffer(surfaceBuffer, -1);
     CHECK_RETURN_ELOG(newSurfaceBuffer == nullptr, "newSurfaceBuffer is null");
@@ -95,10 +96,8 @@ void AuxiliaryBufferConsumer::ExecuteOnBufferAvailable()
             int32_t auxiliaryCount = streamCapture->captureIdAuxiliaryCountMap_[captureId];
             int32_t expectCount = streamCapture->captureIdCountMap_[captureId];
             // AuxiliaryBuffer unexpected
-            if (auxiliaryCount == -1 || (expectCount != 0 && auxiliaryCount == expectCount)) {
-                MEDIA_INFO_LOG("AuxiliaryBufferConsumer ReleaseBuffer, captureId=%{public}d", captureId);
-                return;
-            }
+            CHECK_RETURN_ILOG(auxiliaryCount == -1 || (expectCount != 0 && auxiliaryCount == expectCount),
+                "AuxiliaryBufferConsumer ReleaseBuffer, captureId=%{public}d", captureId);
         }
         // cache buffer and check assemble
         streamCapture->captureIdAuxiliaryCountMap_[captureId]++;
@@ -135,3 +134,4 @@ void AuxiliaryBufferConsumer::ExecuteOnBufferAvailable()
 }
 }  // namespace CameraStandard
 }  // namespace OHOS
+// LCOV_EXCL_STOP

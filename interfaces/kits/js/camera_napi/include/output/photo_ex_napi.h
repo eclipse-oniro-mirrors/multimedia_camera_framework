@@ -35,6 +35,7 @@ public:
 
     static napi_value GetMain(napi_env env, napi_callback_info info);
     static napi_value Release(napi_env env, napi_callback_info info);
+    static void SafeDeleteReference(napi_env env, napi_ref& ref);
 
 private:
     static void PhotoExNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);

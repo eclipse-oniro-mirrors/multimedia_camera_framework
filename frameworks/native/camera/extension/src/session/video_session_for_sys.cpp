@@ -17,6 +17,8 @@
 
 #include "camera_error_code.h"
 #include "camera_log.h"
+#include "camera_util.h"
+#include "input/camera_input.h"
 #include "input/camera_manager.h"
 #include "output/camera_output_capability.h"
 
@@ -151,17 +153,12 @@ std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles16_9(PreconfigType p
             break;
         default:
             MEDIA_ERR_LOG(
-                "VideoSessionForSys::GeneratePreconfigProfiles16_9 not support this config:%{public}d", preconfigType);
+                "VideoSessionForSys::GeneratePreconfigProfiles4_3 not support this config:%{public}d", preconfigType);
             return nullptr;
     }
     return configs;
 }
 } // namespace
-
-const std::unordered_map<camera_focus_tracking_mode_t, FocusTrackingMode>
-    VideoSessionForSys::metaToFwFocusTrackingMode_ = {
-    { OHOS_CAMERA_FOCUS_TRACKING_AUTO, FocusTrackingMode::FOCUS_TRACKING_MODE_AUTO }
-};
 
 FocusTrackingInfo::FocusTrackingInfo(const FocusTrackingMode mode, const Rect rect) : mode_(mode), region_(rect)
 {}
@@ -212,28 +209,29 @@ bool VideoSessionForSys::IsPreconfigProfilesLegal(std::shared_ptr<PreconfigProfi
     for (auto& device : cameraList) {
         MEDIA_INFO_LOG("VideoSessionForSys::IsPreconfigProfilesLegal check camera:%{public}s type:%{public}d",
             device->GetID().c_str(), device->GetCameraType());
-        if (device->GetCameraType() != CAMERA_TYPE_DEFAULT) {
-            continue;
-        }
+        CHECK_CONTINUE(device->GetCameraType() != CAMERA_TYPE_DEFAULT);
         // Check photo
         bool isPhotoCanPreconfig = IsPhotoProfileLegal(device, configs->photoProfile);
         CHECK_RETURN_RET_ELOG(!isPhotoCanPreconfig, false,
-            "VideoSessionForSys::IsPreconfigProfilesLegal check photo profile fail, "
-            "no matched photo profiles:%{public}d %{public}dx%{public}d",
+            "VideoSessionForSys::IsPreconfigProfilesLegal check photo profile fail,"
+            "no matched photo profiles:%{public}d "
+            "%{public}dx%{public}d",
             configs->photoProfile.format_, configs->photoProfile.size_.width, configs->photoProfile.size_.height);
 
         // Check preview
         bool isPreviewCanPreconfig = IsPreviewProfileLegal(device, configs->previewProfile);
         CHECK_RETURN_RET_ELOG(!isPreviewCanPreconfig, false,
-            "VideoSessionForSys::IsPreconfigProfilesLegal check preview profile fail, "
-            "no matched preview profiles:%{public}d %{public}dx%{public}d",
+            "VideoSessionForSys::IsPreconfigProfilesLegal check preview profile fail,"
+            "no matched preview profiles:%{public}d "
+            "%{public}dx%{public}d",
             configs->previewProfile.format_, configs->previewProfile.size_.width, configs->previewProfile.size_.height);
 
         // Check video
         auto isVideoCanPreconfig = IsVideoProfileLegal(device, configs->videoProfile);
         CHECK_RETURN_RET_ELOG(!isVideoCanPreconfig, false,
-            "VideoSessionForSys::IsPreconfigProfilesLegal check video profile fail, "
-            "no matched video profiles:%{public}d %{public}dx%{public}d",
+            "VideoSessionForSys::IsPreconfigProfilesLegal check video profile fail,"
+            "no matched video profiles:%{public}d "
+            "%{public}dx%{public}d",
             configs->videoProfile.format_, configs->videoProfile.size_.width, configs->videoProfile.size_.height);
         supportedCameraNum++;
     }
@@ -249,8 +247,9 @@ bool VideoSessionForSys::IsPhotoProfileLegal(sptr<CameraDevice>& device, Profile
         "VideoSessionForSys::CanPreconfig check photo profile fail, empty photo profiles");
     auto photoProfiles = photoProfilesIt->second;
     return std::any_of(photoProfiles.begin(), photoProfiles.end(), [&photoProfile](auto& profile) {
-        CHECK_RETURN_RET(!photoProfile.sizeFollowSensorMax_, profile == photoProfile);
-        return IsProfileSameRatio(profile, photoProfile.sizeRatio_, RATIO_VALUE_16_9);
+        return !photoProfile.sizeFollowSensorMax_ ?
+            profile == photoProfile :
+            IsProfileSameRatio(profile, photoProfile.sizeRatio_, RATIO_VALUE_16_9);
     });
 }
 
@@ -276,7 +275,8 @@ bool VideoSessionForSys::IsVideoProfileLegal(sptr<CameraDevice>& device, VideoPr
 
 bool VideoSessionForSys::CanPreconfig(PreconfigType preconfigType, ProfileSizeRatio preconfigRatio)
 {
-    MEDIA_INFO_LOG("VideoSessionForSys::CanPreconfig check type:%{public}d, check ratio:%{public}d",
+    MEDIA_INFO_LOG(
+        "VideoSessionForSys::CanPreconfig check type:%{public}d, check ratio:%{public}d",
         preconfigType, preconfigRatio);
     std::shared_ptr<PreconfigProfiles> configs = GeneratePreconfigProfiles(preconfigType, preconfigRatio);
     CHECK_RETURN_RET_ELOG(configs == nullptr, false, "VideoSessionForSys::CanPreconfig get configs fail.");
@@ -288,8 +288,8 @@ int32_t VideoSessionForSys::Preconfig(PreconfigType preconfigType, ProfileSizeRa
     MEDIA_INFO_LOG("VideoSessionForSys::Preconfig type:%{public}d ratio:%{public}d", preconfigType, preconfigRatio);
     std::shared_ptr<PreconfigProfiles> configs = GeneratePreconfigProfiles(preconfigType, preconfigRatio);
     CHECK_RETURN_RET_ELOG(configs == nullptr, SERVICE_FATL_ERROR,
-        "VideoSessionForSys::Preconfig not support this type:%{public}d ratio:%{public}d",
-        preconfigType, preconfigRatio);
+        "VideoSessionForSys::Preconfig not support this type:%{public}d ratio:%{public}d", preconfigType,
+        preconfigRatio);
     CHECK_RETURN_RET_ELOG(!IsPreconfigProfilesLegal(configs), SERVICE_FATL_ERROR,
         "VideoSessionForSys::Preconfig preconfigProfile is illegal.");
     SetPreconfigProfiles(configs);
@@ -320,21 +320,12 @@ void VideoSessionForSys::ProcessFocusTrackingInfo(const std::shared_ptr<OHOS::Ca
     Rect region = {0.0, 0.0, 0.0, 0.0};
 
     auto focusTrackingCallback = GetFocusTrackingCallback();
-    if (focusTrackingCallback == nullptr) {
-        MEDIA_DEBUG_LOG("%{public}s focusTrackingCallback is null", __FUNCTION__);
-        return;
-    }
+    CHECK_RETURN_DLOG(focusTrackingCallback == nullptr, "%{public}s focusTrackingCallback is null", __FUNCTION__);
 
     bool ret = ProcessFocusTrackingModeInfo(result, mode);
-    if (!ret) {
-        MEDIA_DEBUG_LOG("ProcessFocusTrackingModeInfo failed");
-        return;
-    }
+    CHECK_RETURN_DLOG(!ret, "ProcessFocusTrackingModeInfo failed");
     ret = ProcessRectInfo(result, region);
-    if (!ret) {
-        MEDIA_DEBUG_LOG("ProcessRectInfo failed");
-        return;
-    }
+    CHECK_RETURN_DLOG(!ret, "ProcessRectInfo failed");
     FocusTrackingInfo focusTrackingInfo(mode, region);
     focusTrackingCallback->OnFocusTrackingInfoAvailable(focusTrackingInfo);
 }
@@ -345,13 +336,11 @@ bool VideoSessionForSys::ProcessFocusTrackingModeInfo(const std::shared_ptr<OHOS
     CHECK_RETURN_RET_ELOG(metadata == nullptr, false, "metadata is nullptr");
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_FOCUS_TRACKING_MODE, &item);
-    if (ret != CAM_META_SUCCESS || item.count == 0) {
-        MEDIA_DEBUG_LOG("%{public}s FindCameraMetadataItem failed", __FUNCTION__);
-        return false;
-    }
+    bool isFindMetadataItem = ret != CAM_META_SUCCESS || item.count == 0;
+    CHECK_RETURN_RET_DLOG(isFindMetadataItem, false, "%{public}s FindCameraMetadataItem failed", __FUNCTION__);
     auto itr = metaToFwFocusTrackingMode_.find(static_cast<camera_focus_tracking_mode_t>(item.data.u8[0]));
-    CHECK_RETURN_RET_ELOG(itr == metaToFwFocusTrackingMode_.end(), false,
-        "%{public}s trackingMode data error", __FUNCTION__);
+    CHECK_RETURN_RET_ELOG(
+        itr == metaToFwFocusTrackingMode_.end(), false, "%{public}s trackingMode data error", __FUNCTION__);
     mode = itr->second;
     return true;
 }
@@ -367,10 +356,8 @@ bool VideoSessionForSys::ProcessRectInfo(const std::shared_ptr<OHOS::Camera::Cam
     CHECK_RETURN_RET_ELOG(metadata == nullptr, false, "metadata is nullptr");
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_FOCUS_TRACKING_REGION, &item);
-    if (ret != CAM_META_SUCCESS || item.count < FOCUS_TRACKING_REGION_DATA_CNT) {
-        MEDIA_DEBUG_LOG("%{public}s FindCameraMetadataItem failed", __FUNCTION__);
-        return false;
-    }
+    bool isFindMetadataItem = ret != CAM_META_SUCCESS || item.count < FOCUS_TRACKING_REGION_DATA_CNT;
+    CHECK_RETURN_RET_DLOG(isFindMetadataItem, false, "%{public}s FindCameraMetadataItem failed", __FUNCTION__);
     int32_t offsetTopLeftX = item.data.i32[0];
     int32_t offsetTopLeftY = item.data.i32[offsetOne];
     int32_t offsetBottomRightX = item.data.i32[offsetTwo];
@@ -406,14 +393,12 @@ void VideoSessionForSys::ProcessLightStatusChange(const std::shared_ptr<OHOS::Ca
 {
     MEDIA_DEBUG_LOG("VideoSessionForSys::ProcessLightStatusChange is called");
     auto lightStatusCallback = GetLightStatusCallback();
-    if (lightStatusCallback == nullptr) {
-        MEDIA_DEBUG_LOG("%{public}s lightStatusCallback is null", __FUNCTION__);
-        return;
-    }
+    CHECK_RETURN_DLOG(lightStatusCallback == nullptr, "%{public}s lightStatusCallback is null", __FUNCTION__);
     camera_metadata_item_t item;
     common_metadata_header_t *metadata = result->get();
     int ret = Camera::FindCameraMetadataItem(metadata, OHOS_STATUS_LIGHT_STATUS, &item);
-    if (ret != CAM_META_SUCCESS || item.count == 0) {
+    bool isFindMetadataItem = ret != CAM_META_SUCCESS || item.count == 0;
+    if (isFindMetadataItem) {
         MEDIA_DEBUG_LOG("can't get OHOS_STATUS_LIGHT_STATUS value");
         return;
     } else {
@@ -443,8 +428,81 @@ void VideoSessionForSys::VideoSessionMetadataResultProcessor::ProcessCallbacks(c
     session->ProcessMacroStatusChange(result);
     session->ProcessLcdFlashStatusUpdates(result);
     session->ProcessFocusTrackingInfo(result);
-    session->ProcessLightStatusChange(result);
     session->ProcessEffectSuggestionTypeUpdates(result);
+    session->ProcessLightStatusChange(result);
+    session->ProcessZoomInfoChange(result);
+}
+
+void VideoSessionForSys::SetZoomInfoCallback(std::shared_ptr<ZoomInfoCallback> callback)
+{
+    CHECK_RETURN_ELOG(callback == nullptr, "VideoSessionForSys::SetZoomInfoCallback callback is null");
+    std::lock_guard<std::mutex> lock(zoomInfoCallbackMutex_);
+    zoomInfoCallback_ = callback;
+}
+
+std::shared_ptr<ZoomInfoCallback> VideoSessionForSys::GetZoomInfoCallback()
+{
+    std::lock_guard<std::mutex> lock(zoomInfoCallbackMutex_);
+    return zoomInfoCallback_;
+}
+
+void VideoSessionForSys::ProcessZoomInfoChange(const std::shared_ptr<OHOS::Camera::CameraMetadata> &result)
+{
+    std::shared_ptr<ZoomInfoCallback> zoomInfoCallback = GetZoomInfoCallback();
+    CHECK_RETURN_DLOG(
+        zoomInfoCallback == nullptr, "VideoSessionForSys::ProcessZoomInfoChange zoomInfoCallback is null");
+    CHECK_RETURN_ELOG(result == nullptr, "result is null");
+    camera_metadata_item_t item;
+    common_metadata_header_t* metadata = result->get();
+    int ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_STATUS_CAMERA_CURRENT_ZOOM_RATIO_RANGE, &item);
+    CHECK_RETURN_ELOG(
+        ret != CAM_META_SUCCESS, "VideoSessionForSys::ProcessZoomInfoChange Failed with return code %{public}d", ret);
+    std::vector<float> zoomRatioRange;
+    for (uint32_t i = 0; i < item.count; i += 1) {
+        MEDIA_DEBUG_LOG("VideoSessionForSys::ProcessZoomInfoChange, zoomRatioRange[%{public}d]: %{public}f",
+            i, item.data.f[i]);
+        zoomRatioRange.push_back(item.data.f[i]);
+    }
+    std::vector<float> preZoomRatioRange = zoomInfoCallback->GetZoomRatioRange();
+    if (!zoomRatioRange.empty() && (zoomRatioRange.size() != preZoomRatioRange.size() ||
+        !CalculationHelper::AreVectorsEqual(preZoomRatioRange, zoomRatioRange))) {
+        MEDIA_DEBUG_LOG("VideoSessionForSys::ProcessZoomInfoChange call success");
+        zoomInfoCallback->SetZoomRatioRange(zoomRatioRange);
+        zoomInfoCallback->OnZoomInfoChange(zoomRatioRange);
+    }
+}
+
+bool VideoSessionForSys::IsExternalCameraLensBoostSupported()
+{
+    MEDIA_INFO_LOG("VideoSessionForSys::IsExternalCameraLensBoostSupported E");
+    bool isSupported = false;
+    auto inputDevice = GetInputDevice();
+    CHECK_RETURN_RET_ELOG(!inputDevice, isSupported,
+        "VideoSessionForSys::IsExternalCameraLensBoostSupported Failed inputDevice is nullptr");
+    sptr<CameraDevice> cameraObj = inputDevice->GetCameraDeviceInfo();
+    CHECK_RETURN_RET_ELOG(cameraObj == nullptr, isSupported,
+        "VideoSessionForSys::IsExternalCameraLensBoostSupported error!, cameraObj is nullptr");
+    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetCachedMetadata();
+    CHECK_RETURN_RET_ELOG(metadata == nullptr, isSupported,
+        "VideoSessionForSys::IsExternalCameraLensBoostSupported error!, metadata is nullptr");
+    camera_metadata_item_t item;
+    int result = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_EXTERNAL_CAMERA_LENS_BOOST, &item);
+    CHECK_RETURN_RET_ELOG(result != CAM_META_SUCCESS || item.count <= 0, isSupported,
+        "VideoSessionForSys::IsExternalCameraLensBoostSupported error!, FindCameraMetadataItem error");
+    isSupported = static_cast<bool>(item.data.u8[0]);
+    return isSupported;
+}
+
+int32_t VideoSessionForSys::EnableExternalCameraLensBoost(bool enabled)
+{
+    MEDIA_INFO_LOG("VideoSessionForSys::EnableExternalCameraLensBoost E");
+    bool isSupported = IsExternalCameraLensBoostSupported();
+    CHECK_RETURN_RET_ELOG(!isSupported, OPERATION_NOT_ALLOWED,
+        "VideoSessionForSys::EnableExternalCameraLensBoost error!is not supported");
+    LockForControl();
+    int32_t status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_EXTERNAL_CAMERA_LENS_BOOST, &enabled, 1);
+    UnlockForControl();
+    return status;
 }
 } // namespace CameraStandard
 } // namespace OHOS

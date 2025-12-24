@@ -16,7 +16,6 @@
 #ifndef STRATEGY_CENTER_FUZZER_H
 #define STRATEGY_CENTER_FUZZER_H
 
-#include <fuzzer/FuzzedDataProvider.h>
 #include "video_strategy_center.h"
 #include "video_job_repository.h"
 
@@ -27,7 +26,7 @@ class VideoStrategyCenterFuzzer {
 public:
 static std::shared_ptr<DeferredProcessing::VideoStrategyCenter> fuzz_;
 
-static void VideoStrategyCenterFuzzTest(FuzzedDataProvider& fdp);
+static void VideoStrategyCenterFuzzTest();
 };
 } //CameraStandard
 } //OHOS

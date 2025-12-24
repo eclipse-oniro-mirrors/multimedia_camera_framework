@@ -43,7 +43,7 @@ public:
     void OnProcessSuccess(const int32_t userId, const std::string& imageId, std::unique_ptr<ImageInfo> imageInfo);
     void OnProcessError(const int32_t userId, const std::string& imageId, DpsError error);
     void NotifyScheduleState(DpsStatus status);
-
+    
     void Interrupt();
     void SetDefaultExecutionMode();
     bool GetPendingImages(std::vector<std::string>& pendingImages);

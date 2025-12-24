@@ -30,7 +30,9 @@ enum class FunctionsType {
     PORTRAIT_PHOTO_FUNCTIONS,
     PORTRAIT_PHOTO_CONFLICT_FUNCTIONS,
     VIDEO_FUNCTIONS,
-    VIDEO_CONFLICT_FUNCTIONS
+    VIDEO_CONFLICT_FUNCTIONS,
+    NIGHT_PHOTO_FUNCTIONS,
+    NIGHT_PHOTO_CONFLICT_FUNCTIONS
 };
 
 static const char PHOTO_ABILITY_NAPI_CLASS_NAME[] = "PhotoFunctions";
@@ -39,6 +41,8 @@ static const char VIDEO_ABILITY_NAPI_CLASS_NAME[] = "VideoFunctions";
 static const char PHOTO_CONFLICT_ABILITY_NAPI_CLASS_NAME[] = "PhotoConflictFunctions";
 static const char PORTRAIT_PHOTO_CONFLICT_ABILITY_NAPI_CLASS_NAME[] = "PortraitPhotoConflictFunctions";
 static const char VIDEO_CONFLICT_ABILITY_NAPI_CLASS_NAME[] = "VideoConflictFunctions";
+static const char NIGHT_PHOTO_ABILITY_NAPI_CLASS_NAME[] = "NightPhotoFunctions";
+static const char NIGHT_PHOTO_CONFLICT_ABILITY_NAPI_CLASS_NAME[] = "NightPhotoConflictFunctions";
 
 class CameraFunctionsNapi {
 public:
@@ -68,6 +72,8 @@ public:
     // BeautyQuery
     static napi_value GetSupportedBeautyTypes(napi_env env, napi_callback_info info);
     static napi_value GetSupportedBeautyRange(napi_env env, napi_callback_info info);
+    static napi_value GetSupportedPortraitThemeTypes(napi_env env, napi_callback_info info);
+    static napi_value IsPortraitThemeSupported(napi_env env, napi_callback_info info);
     // ColorEffectQuery
     static napi_value GetSupportedColorEffects(napi_env env, napi_callback_info info);
     // ColorManagementQuery
@@ -86,8 +92,14 @@ public:
     static napi_value IsVideoStabilizationModeSupported(napi_env env, napi_callback_info info);
     // ManualExposureQuery
     static napi_value GetSupportedExposureRange(napi_env env, napi_callback_info info);
+    // ManualExposureQuery only for night
+    static napi_value GetExposureRange(napi_env env, napi_callback_info info);
     // SceneDetectionQuery
     static napi_value IsFeatureSupported(napi_env env, napi_callback_info info);
+    // ImageStabilizationGuideQuery
+    static napi_value IsImageStabilizationGuideSupported(napi_env env, napi_callback_info info);
+    // NightSubModeQuery
+    static napi_value GetSupportedNightSubModeTypes(napi_env env, napi_callback_info info);
 
     template<typename U>
     static napi_value HandleQuery(napi_env env, napi_callback_info info, napi_value thisVar, U queryFunction);
@@ -104,6 +116,8 @@ public:
     static thread_local napi_ref sPortraitPhotoConflictConstructor_;
     static thread_local napi_ref sVideoConstructor_;
     static thread_local napi_ref sVideoConflictConstructor_;
+    static thread_local napi_ref sNightPhotoConstructor_;
+    static thread_local napi_ref sNightPhotoConflictConstructor_;
 
     static thread_local sptr<CameraAbility> sCameraAbility_;
 
@@ -120,7 +134,10 @@ public:
     static const std::vector<napi_property_descriptor> aperture_query_props;
     static const std::vector<napi_property_descriptor> stabilization_query_props;
     static const std::vector<napi_property_descriptor> manual_exposure_query_props;
+    static const std::vector<napi_property_descriptor> night_manual_exposure_query_props;
     static const std::vector<napi_property_descriptor> features_query_props;
+    static const std::vector<napi_property_descriptor> night_sub_mode_query_props;
+    static const std::vector<napi_property_descriptor> image_stabilization_guide_query_props;
 
     static const std::map<FunctionsType, const char*> functionsNameMap_;
     static const std::map<FunctionsType, Descriptor> functionsDescMap_;

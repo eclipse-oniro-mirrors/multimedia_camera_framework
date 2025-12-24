@@ -36,6 +36,8 @@ static const std::string CONST_PREVIEW_FRAME_START = "frameStart";
 static const std::string CONST_PREVIEW_FRAME_END = "frameEnd";
 static const std::string CONST_PREVIEW_FRAME_ERROR = "error";
 static const std::string CONST_SKETCH_STATUS_CHANGED = "sketchStatusChanged";
+static const std::string CONST_PREVIEW_FRAME_PAUSE = "framePause";
+static const std::string CONST_PREVIEW_FRAME_RESUME = "frameResume";
 class SketchWrapper;
 class PreviewStateCallback {
 public:
@@ -67,6 +69,16 @@ public:
      * @param statusData Indicates a {@link SketchStatusData}.
      */
     virtual void OnSketchStatusDataChanged(const SketchStatusData& statusData) const = 0;
+
+    /**
+     * @brief Called when preview frame is paused.
+     */
+    virtual void OnFramePaused() const = 0;
+
+    /**
+     * @brief Called when preview frame is resumed.
+     */
+    virtual void OnFrameResumed() const = 0;
 };
 
 class PreviewOutputListenerManager;
@@ -111,7 +123,7 @@ public:
      *
      * @param surface to remove.
      */
-    void RemoveDeferredSurface(sptr<Surface> surface);
+    void RemoveDeferredSurface();
 
     /**
      * @brief Start preview stream.
@@ -122,18 +134,6 @@ public:
      * @brief stop preview stream.
      */
     int32_t Stop();
-
-    /**
-     * @brief get the preview rotation angle.
-     *
-     * @return result of the photo rotation angle.
-     */
-    int32_t GetPreviewRotation(int32_t imageRotation);
-
-    /**
-     * @brief set the preview rotation angle.
-     */
-    int32_t SetPreviewRotation(int32_t imageRotation, bool isDisplayLocked);
 
     /**
      * @brief Check whether the current preview mode supports sketch.
@@ -150,6 +150,18 @@ public:
      * @return Return the threshold value.
      */
     float GetSketchRatio();
+
+    /**
+     * @brief get the preview rotation angle.
+     *
+     * @return result of the photo rotation angle.
+     */
+    int32_t GetPreviewRotation(int32_t imageRotation);
+
+    /**
+     * @brief set the preview rotation angle.
+     */
+    int32_t SetPreviewRotation(int32_t imageRotation, bool isDisplayLocked);
 
     /**
      * @brief Enable sketch
@@ -219,6 +231,36 @@ public:
     sptr<PreviewOutputListenerManager> GetPreviewOutputListenerManager();
 
     /**
+     * @brief Check whether the current preview mode supports log assistance.
+     *
+     * @return Return the supported result.
+     */
+    bool IsLogAssistanceSupported();
+
+        /**
+     * @brief Enable log assistance
+     *
+     * @param isEnable True for enable, false otherwise.
+     *
+     */
+    int32_t EnableLogAssistance(bool isEnable);
+
+    /**
+     * @brief Check whether the current previewOutput support band width compression.
+     *
+     * @return Return the supported result.
+     */
+    bool IsBandwidthCompressionSupported();
+
+    /**
+     * @brief Enable band width compression
+     *
+     * @param isEnable True for enable, false otherwise.
+     *
+     */
+    int32_t EnableBandwidthCompression(bool isEnable);
+
+    /**
      * @brief Get Observed matadata tags
      *        Register tags into capture session. If the tags data changes,{@link OnControlMetadataChanged} will be
      *        called.
@@ -263,7 +305,7 @@ private:
     std::mutex surfaceIdMutex_;
     std::string surfaceId_ = "";
     Size previewSize_ = {0, 0};
-    static std::set<string> whiteList_;
+    std::set<string> whiteList_;
     sptr<PreviewOutputListenerManager> previewOutputListenerManager_ = sptr<PreviewOutputListenerManager>::MakeSptr();
     std::atomic<int32_t> renderFit_ = 0;
     std::atomic<uint32_t> xComponentHeight_ = 0;
@@ -281,6 +323,7 @@ private:
     void CameraServerDied(pid_t pid) override;
     int32_t canSetFrameRateRange(int32_t minFrameRate, int32_t maxFrameRate);
     int32_t JudegRotationFunc(int32_t imageRotation);
+    std::vector<int32_t> compressionSupportedModes_{};
 };
 
 class PreviewOutputListenerManager : public StreamRepeatCallbackStub,
@@ -316,7 +359,8 @@ public:
 
     void SetPreviewOutput(wptr<PreviewOutput> previewOutput);
     sptr<PreviewOutput> GetPreviewOutput();
-
+    int32_t OnFramePaused() override;
+    int32_t OnFrameResumed() override;
 private:
     wptr<PreviewOutput> previewOutput_ = nullptr;
 };

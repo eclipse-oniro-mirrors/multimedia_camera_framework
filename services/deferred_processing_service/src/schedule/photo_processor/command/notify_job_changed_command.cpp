@@ -39,9 +39,8 @@ int32_t NotifyJobChangedCommand::Initialize()
 
 int32_t NotifyJobChangedCommand::Executing()
 {
-    if (int32_t ret = Initialize() != DP_OK) {
-        return ret;
-    }
+    int32_t ret = Initialize();
+    DP_CHECK_RETURN_RET(ret != DP_OK, ret);
 
     controller_->OnPhotoJobChanged();
     return DP_OK;

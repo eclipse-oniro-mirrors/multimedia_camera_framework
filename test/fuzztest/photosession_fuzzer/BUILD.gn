@@ -26,8 +26,6 @@ ohos_fuzztest("PhotoSessionFuzzTest") {
     "${multimedia_camera_framework_path}/services/camera_service/binder/server/include",
     "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include",
     "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include/output/",
-    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include/session/",
-    "${multimedia_camera_framework_path}/frameworks/native/camera/extension/include/session/"
   ]
 
   cflags = [
@@ -40,7 +38,10 @@ ohos_fuzztest("PhotoSessionFuzzTest") {
 
   sources = [ "photo_session_fuzzer.cpp" ]
 
-  deps = [ "${multimedia_camera_framework_path}/frameworks/native/camera/base:camera_framework" ]
+  deps = [
+    "${multimedia_camera_framework_path}/frameworks/native/camera/base:camera_framework",
+    "${multimedia_camera_framework_path}/frameworks/native/camera/extension:camera_framework_ex",
+  ]
   external_deps = [
     "ability_base:want",
     "access_token:libaccesstoken_sdk",

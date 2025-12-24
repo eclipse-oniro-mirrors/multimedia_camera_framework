@@ -59,6 +59,10 @@ public:
 
     Camera_ErrorCode SetPreviewRotation(int32_t imageRotation, bool isDisplayLocked);
 
+    Camera_ErrorCode IsBandwidthCompressionSupported(bool* isSupported);
+
+    Camera_ErrorCode EnableBandwidthCompression(bool enabled);
+
 private:
     OHOS::sptr<OHOS::CameraStandard::PreviewOutput> innerPreviewOutput_;
 

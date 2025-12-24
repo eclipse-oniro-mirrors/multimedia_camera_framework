@@ -12,10 +12,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+// LCOV_EXCL_START
 #include "battery_level_strategy.h"
+#include "parameters.h"
 
 #ifdef CAMERA_USE_BATTERY
+#include "battery_info.h"
 #endif
 #include "events_monitor.h"
 
@@ -40,6 +42,9 @@ BatteryLevelStrategy::~BatteryLevelStrategy()
 
 void BatteryLevelStrategy::handleEvent(const EventFwk::CommonEventData& data)
 {
+    bool ignore = system::GetBoolParameter(IGNORE_BATTERY_LEVEL, false);
+    DP_CHECK_ERROR_RETURN_LOG(ignore, "ignore VideoBatteryLevelState");
+
     int32_t capacity = data.GetWant().GetIntParam(KEY_CAPACITY, DEFAULT_CAPACITY);
     DP_CHECK_RETURN(capacity == DEFAULT_CAPACITY);
     int32_t batteryLevel = BatteryLevel::BATTERY_LEVEL_LOW;
@@ -55,3 +60,4 @@ void BatteryLevelStrategy::handleEvent(const EventFwk::CommonEventData& data)
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS
+  // LCOV_EXCL_STOP

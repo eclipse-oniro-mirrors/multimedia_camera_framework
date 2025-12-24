@@ -48,7 +48,7 @@ public:
         return 0;
     }
 
-    int32_t RemoveDeferredSurface(const sptr<IBufferProducer>& producer) override
+    int32_t RemoveDeferredSurface() override
     {
         return 0;
     }
@@ -118,6 +118,26 @@ public:
     }
 
     int32_t CallbackExit([[maybe_unused]] uint32_t code, [[maybe_unused]] int32_t result) override
+    {
+        return 0;
+    }
+
+    int32_t EnableStitching(bool isEnable) override
+    {
+        return 0;
+    }
+
+    int32_t SetOutputSettings(const MovieSettings& movieSettings) override
+    {
+        return 0;
+    }
+
+    int32_t GetSupportedVideoCodecTypes(std::vector<int32_t>& supportedVideoCodecTypes) override
+    {
+        return 0;
+    }
+
+    int32_t SetBandwidthCompression(bool isEnable) override
     {
         return 0;
     }

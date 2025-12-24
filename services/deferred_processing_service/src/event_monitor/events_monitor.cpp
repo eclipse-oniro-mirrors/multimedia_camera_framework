@@ -16,6 +16,7 @@
 #include "events_monitor.h"
 
 #include "dp_log.h"
+#include "dp_utils.h"
 #include "dps_event_report.h"
 #include "dps.h"
 #include "event_status_change_command.h"
@@ -81,7 +82,6 @@ void EventsMonitor::NotifyVideoEnhanceStatus(int32_t status)
 
 void EventsMonitor::NotifyScreenStatus(int32_t status)
 {
-    DP_INFO_LOG("DPS_EVENT: ScreenStatus: %{public}d", status);
     NotifyObserversUnlocked(EventType::SCREEN_STATUS_EVENT, status);
 }
 
@@ -110,6 +110,12 @@ void EventsMonitor::NotifyTrailingStatus(int32_t status)
 {
     DP_INFO_LOG("DPS_EVENT: TrailingStatus: %{public}d", status);
     NotifyObserversUnlocked(EventType::TRAILING_STATUS_EVENT, status);
+}
+
+void EventsMonitor::NotifyInterrupt()
+{
+    DP_INFO_LOG("DPS_EVENT: Interrupt");
+    NotifyObserversUnlocked(EventType::INTERRUPT_EVENT, IS_INTERRUPT);
 }
 
 void EventsMonitor::NotifyObserversUnlocked(EventType event, int32_t value)

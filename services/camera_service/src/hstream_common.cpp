@@ -53,6 +53,7 @@ static const std::map<ColorSpace, CM_ColorSpaceType_V2_1> g_fwkToMetaColorSpaceM
     {BT2020_PQ_LIMIT, CM_ColorSpaceType_V2_1::CM_BT2020_PQ_LIMIT},
     {P3_HLG_LIMIT, CM_ColorSpaceType_V2_1::CM_P3_HLG_LIMIT},
     {P3_PQ_LIMIT, CM_ColorSpaceType_V2_1::CM_P3_PQ_LIMIT},
+    {H_LOG, CM_ColorSpaceType_V2_1::CM_BT2020_LOG_FULL},
 };
 namespace {
 static const int32_t STREAMID_BEGIN = 1;
@@ -167,10 +168,7 @@ int32_t HStreamCommon::StopStream()
     MEDIA_DEBUG_LOG("HStreamCommon::StopStream streamType:%{public}d, streamId:%{public}d, hdiStreamId:%{public}d, "
         "captureId:%{public}d", streamType_, fwkStreamId_, hdiStreamId_, curCaptureID_);
     auto streamOperator = GetStreamOperator();
-    if (streamOperator == nullptr) {
-        MEDIA_DEBUG_LOG("HStreamCommon::StopStream streamOperator is nullptr");
-        return CAMERA_OK;
-    }
+    CHECK_RETURN_RET_DLOG(streamOperator == nullptr, CAMERA_OK, "HStreamCommon::StopStream streamOperator is nullptr");
 
     if (curCaptureID_ != CAPTURE_ID_UNSET) {
         CamRetCode rc = (CamRetCode)(streamOperator->CancelCapture(curCaptureID_));
@@ -199,7 +197,7 @@ int32_t HStreamCommon::GetPreparedCaptureId()
     return curCaptureID_;
 }
 
-void HStreamCommon::SetStreamInfo(StreamInfo_V1_1 &streamInfo)
+void HStreamCommon::SetStreamInfo(StreamInfo_V1_5 &streamInfo)
 {
     int32_t pixelFormat = OHOS::HDI::Display::Composer::V1_1::PIXEL_FMT_YCRCB_420_SP;
     auto it = g_cameraToPixelFormat.find(format_);
@@ -230,6 +228,7 @@ void HStreamCommon::SetStreamInfo(StreamInfo_V1_1 &streamInfo)
         }
     }
     streamInfo.extendedStreamInfos = {};
+    streamInfo.settings = {};
 }
 
 int32_t HStreamCommon::ReleaseStream(bool isDelay)
@@ -238,7 +237,8 @@ int32_t HStreamCommon::ReleaseStream(bool isDelay)
         "is:%{public}d, isDelay:%{public}d",
         fwkStreamId_, hdiStreamId_, streamType_, isDelay);
     StopStream();
-    if (!isDelay && hdiStreamId_ != STREAM_ID_UNSET) {
+    bool isReleaseStream = !isDelay && hdiStreamId_ != STREAM_ID_UNSET;
+    if (isReleaseStream) {
         auto streamOperator = GetStreamOperator();
         if (streamOperator != nullptr) {
             streamOperator->ReleaseStreams({ hdiStreamId_ });
@@ -260,12 +260,13 @@ int32_t HStreamCommon::ReleaseStream(bool isDelay)
 
 void HStreamCommon::DumpStreamInfo(CameraInfoDumper& infoDumper)
 {
-    StreamInfo_V1_1 curStreamInfo;
+    StreamInfo_V1_5 curStreamInfo;
     SetStreamInfo(curStreamInfo);
     std::string streamInfo = "Buffer producer Id:";
     {
         std::lock_guard<std::mutex> lock(producerLock_);
-        if (curStreamInfo.v1_0.bufferQueue_ && curStreamInfo.v1_0.bufferQueue_->producer_) {
+        bool isProducerValid = curStreamInfo.v1_0.bufferQueue_ && curStreamInfo.v1_0.bufferQueue_->producer_;
+        if (isProducerValid) {
             streamInfo.append("[" + std::to_string(curStreamInfo.v1_0.bufferQueue_->producer_->GetUniqueId()) + "]");
         } else {
             streamInfo.append("[empty]");
@@ -273,7 +274,9 @@ void HStreamCommon::DumpStreamInfo(CameraInfoDumper& infoDumper)
     }
     streamInfo.append("    stream Id:[" + std::to_string(curStreamInfo.v1_0.streamId_) + "]");
     std::map<int, std::string>::const_iterator iter = g_cameraFormat.find(format_);
-    CHECK_EXECUTE(iter != g_cameraFormat.end(), streamInfo.append("    format:[" + iter->second + "]"));
+    if (iter != g_cameraFormat.end()) {
+        streamInfo.append("    format:[" + iter->second + "]");
+    }
     streamInfo.append("  width:[" + std::to_string(curStreamInfo.v1_0.width_) + "]");
     streamInfo.append("  height:[" + std::to_string(curStreamInfo.v1_0.height_) + "]");
     streamInfo.append("  dataspace:[" + std::to_string(curStreamInfo.v1_0.dataspace_) + "]");
@@ -314,8 +317,8 @@ bool HStreamCommon::GetUsePhysicalCameraOrientation()
 
 void HStreamCommon::PrintCaptureDebugLog(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureMetadataSetting_)
 {
-    CHECK_RETURN_ELOG(captureMetadataSetting_ == nullptr,
-        "HStreamCapture::PrintCaptureDebugLog captureMetadataSetting_ is nullptr");
+    CHECK_RETURN_ELOG(
+        captureMetadataSetting_ == nullptr, "HStreamCapture::PrintCaptureDebugLog captureMetadataSetting_ is nullptr");
     camera_metadata_item_t item;
     int result = OHOS::Camera::FindCameraMetadataItem(captureMetadataSetting_->get(), OHOS_JPEG_QUALITY, &item);
     if (result != CAM_META_SUCCESS) {

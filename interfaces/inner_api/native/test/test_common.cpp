@@ -31,8 +31,7 @@ namespace CameraStandard {
 std::shared_ptr<PictureIntf> GetPictureIntfInstance()
 {
     auto pictureProxy = PictureProxy::CreatePictureProxy();
-    CHECK_PRINT_ELOG(pictureProxy == nullptr || pictureProxy.use_count() != 1,
-        "pictureProxy use count is not 1");
+    CHECK_PRINT_ELOG(pictureProxy == nullptr || pictureProxy.use_count() != 1, "pictureProxy use count is not 1");
     return pictureProxy;
 }
 
@@ -63,9 +62,7 @@ int32_t TestUtils::SaveYUV(const char* buffer, int32_t size, SurfaceType type)
 {
     char path[PATH_MAX] = {0};
     int32_t retVal;
-
     CHECK_RETURN_RET_ELOG((buffer == nullptr) || (size == 0), -1, "buffer is null or size is 0");
-
     MEDIA_DEBUG_LOG("TestUtils::SaveYUV(), type: %{public}d", type);
     if (type == SurfaceType::PREVIEW) {
         (void)system("mkdir -p /data/media/preview");
@@ -87,10 +84,9 @@ int32_t TestUtils::SaveYUV(const char* buffer, int32_t size, SurfaceType type)
         return -1;
     }
 
-    MEDIA_DEBUG_LOG("%s, saving file to %{private}s", __FUNCTION__, path);
+    MEDIA_DEBUG_LOG("TestUtils::SaveYUV saving file to %{private}s", path);
     int imgFd = open(path, O_RDWR | O_CREAT, FILE_PERMISSIONS_FLAG);
-    CHECK_RETURN_RET_ELOG(imgFd == -1, -1,
-        "%s, open file failed, errno = %{public}s.", __FUNCTION__, strerror(errno));
+    CHECK_RETURN_RET_ELOG(imgFd == -1, -1, "TestUtils::SaveYUV open file failed, errno = %{public}s.", strerror(errno));
     fdsan_exchange_owner_tag(imgFd, 0, LOG_DOMAIN);
     int ret = write(imgFd, buffer, size);
     if (ret == -1) {
@@ -105,7 +101,9 @@ int32_t TestUtils::SaveYUV(const char* buffer, int32_t size, SurfaceType type)
 bool TestUtils::IsNumber(const char number[])
 {
     for (int i = 0; number[i] != 0; i++) {
-        CHECK_RETURN_RET(!std::isdigit(number[i]), false);
+        if (!std::isdigit(number[i])) {
+            return false;
+        }
     }
     return true;
 }
@@ -225,6 +223,11 @@ void TestPhotoOutputCallback::OnEstimatedCaptureDuration(const int32_t duration)
     MEDIA_INFO_LOG("OnEstimatedCaptureDuration(), duration: %{public}d", duration);
 }
 
+void TestPhotoOutputCallback::OnConstellationDrawingState(const int32_t drawingState) const
+{
+    MEDIA_INFO_LOG("OnConstellationDrawingState(), drawingState: %{public}d", drawingState);
+}
+
 void TestPhotoOutputCallback::OnOfflineDeliveryFinished(const int32_t captureId) const
 {
     MEDIA_INFO_LOG("OnOfflineDeliveryFinished(), captureId: %{public}d", captureId);
@@ -260,6 +263,16 @@ void TestPreviewOutputCallback::OnSketchStatusDataChanged(const SketchStatusData
 {
     MEDIA_DEBUG_LOG("TestPreviewOutputCallback::OnSketchStatusDataChanged(), testName_: %{public}s", testName_);
     return;
+}
+
+void TestPreviewOutputCallback::OnFramePaused() const
+{
+    MEDIA_INFO_LOG("TestPreviewOutputCallback:OnFramePaused()");
+}
+
+void TestPreviewOutputCallback::OnFrameResumed() const
+{
+    MEDIA_INFO_LOG("TestPreviewOutputCallback:OnFrameResumed()");
 }
 
 TestVideoOutputCallback::TestVideoOutputCallback(const char* testName) : testName_(testName) {
@@ -313,7 +326,7 @@ void TestDeferredPhotoProcSessionCallback::OnProcessImageDone(const std::string&
 }
 
 void TestDeferredPhotoProcSessionCallback::OnProcessImageDone(const std::string &imageId,
-    std::shared_ptr<PictureIntf> picture, uint32_t cloudImageEnhanceFlag)
+    std::shared_ptr<PictureIntf> picture, const DpsMetadata& dpsMetadata)
 {
     MEDIA_INFO_LOG("TestDeferredPhotoProcSessionCallback OnProcessImageDone Picture.");
 }
@@ -334,10 +347,15 @@ void TestDeferredPhotoProcSessionCallback::OnStateChanged(const DpsStatusCode st
     MEDIA_INFO_LOG("TestDeferredPhotoProcSessionCallback OnStateChanged.");
 }
 
-void TestDeferredVideoProcSessionCallback::OnProcessVideoDone(
-    const std::string& videoId, const sptr<IPCFileDescriptor> ipcFd)
+void TestDeferredVideoProcSessionCallback::OnProcessVideoDone(const std::string& videoId,
+    const sptr<IPCFileDescriptor> ipcFd)
 {
-    MEDIA_INFO_LOG("TestDeferredVideoProcSessionCallback OnProcessImageDone Picture.");
+    MEDIA_INFO_LOG("TestDeferredVideoProcSessionCallback OnProcessVideoDone.");
+}
+
+void TestDeferredVideoProcSessionCallback::OnProcessVideoDone(const std::string& videoId)
+{
+    MEDIA_INFO_LOG("TestDeferredVideoProcSessionCallback OnProcessVideoDone.");
 }
 
 void TestDeferredVideoProcSessionCallback::OnError(const std::string& videoId, const DpsErrorCode errorCode)
@@ -362,7 +380,10 @@ void SurfaceListener::OnBufferAvailable()
     MEDIA_DEBUG_LOG("SurfaceListener::OnBufferAvailable(), testName_: %{public}s, surfaceType_: %{public}d",
                     testName_, surfaceType_);
     OHOS::sptr<OHOS::SurfaceBuffer> buffer = nullptr;
-    CHECK_RETURN_ELOG(surface_ == nullptr, "OnBufferAvailable:surface_ is null");
+    if (surface_ == nullptr) {
+        MEDIA_ERR_LOG("OnBufferAvailable:surface_ is null");
+        return;
+    }
     surface_->AcquireBuffer(buffer, flushFence, timestamp, damage);
     if (buffer != nullptr) {
         char* addr = static_cast<char *>(buffer->GetVirAddr());
@@ -388,15 +409,18 @@ void SurfaceListener::OnBufferAvailable()
                 break;
 
             case SurfaceType::PHOTO:
-                CHECK_PRINT_ELOG(TestUtils::SaveYUV(addr, size, surfaceType_) != CAMERA_OK,
-                    "Failed to save buffer");
+                if (TestUtils::SaveYUV(addr, size, surfaceType_) != CAMERA_OK) {
+                    MEDIA_ERR_LOG("Failed to save buffer");
+                }
                 break;
 
             case SurfaceType::VIDEO:
-                CHECK_PRINT_ELOG(fd_ == -1 && (TestUtils::SaveVideoFile(nullptr, 0, VideoSaveMode::CREATE, fd_) !=
-                    CAMERA_OK), "Failed to Create video file");
-                CHECK_PRINT_ELOG(TestUtils::SaveVideoFile(addr, size, VideoSaveMode::APPEND, fd_) != CAMERA_OK,
-                    "Failed to save buffer");
+                if (fd_ == -1 && (TestUtils::SaveVideoFile(nullptr, 0, VideoSaveMode::CREATE, fd_) != CAMERA_OK)) {
+                    MEDIA_ERR_LOG("Failed to Create video file");
+                }
+                if (TestUtils::SaveVideoFile(addr, size, VideoSaveMode::APPEND, fd_) != CAMERA_OK) {
+                    MEDIA_ERR_LOG("Failed to save buffer");
+                }
                 break;
 
             default:

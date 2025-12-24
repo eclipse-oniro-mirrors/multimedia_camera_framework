@@ -73,6 +73,9 @@ taihe_shared_library("camera_taihe") {
     "src/output/preview_output_taihe.cpp",
     "src/output/video_output_taihe.cpp",
     "src/output/metadata_output_taihe.cpp",
+    "src/output/movie_file_output_taihe.cpp",
+    "src/output/unify_movie_file_output_taihe.cpp",
+    "src/output/video_capability_taihe.cpp",
     "src/query/camera_query_taihe.cpp",
     "src/session/camera_session_taihe.cpp",
     "src/mode/professional_session_taihe.cpp",
@@ -88,6 +91,7 @@ taihe_shared_library("camera_taihe") {
     "src/mode/night_photo_session_taihe.cpp",
     "src/mode/slow_motion_video_session_taihe.cpp",
     "src/photo_taihe.cpp",
+    "src/photo_ex_taihe.cpp",
     "src/transfer/camera_transfer_taihe.cpp",
   ]
 
@@ -134,7 +138,6 @@ taihe_shared_library("camera_taihe") {
     "-DIMAGE_COLORSPACE_FLAG",
     "-Os",
   ]
-
   cflags_cc = cflags 
 
   ldflags = [
@@ -200,6 +203,7 @@ taihe_shared_library("camera_picker_taihe") {
     "hilog:libhilog",
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
+    "init:libbegetutil",
     "ipc:ipc_core",
     "graphic_surface:surface",
   ]

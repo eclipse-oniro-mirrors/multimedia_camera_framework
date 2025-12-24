@@ -13,29 +13,32 @@
  * limitations under the License.
  */
 
-#include "hcamera_service_unittest.h"
-#include "gtest/gtest.h"
 #include <cstdint>
 #include <vector>
+
 #include "access_token.h"
 #include "accesstoken_kit.h"
 #include "camera_common_event_manager.h"
 #include "camera_log.h"
 #include "camera_manager.h"
 #include "camera_notification_interface.h"
+#include "camera_service_callback_stub.h"
 #include "camera_util.h"
 #include "gmock/gmock.h"
+#include "gtest/gtest.h"
+#include "hcamera_service_unittest.h"
+#include "hcamera_session_manager.h"
 #include "control_center_status_callback_stub.h"
+#include "icapture_session_callback.h"
 #include "input/camera_input.h"
 #include "ipc_skeleton.h"
 #include "nativetoken_kit.h"
+#include "os_account_manager.h"
 #include "slow_motion_session.h"
 #include "surface.h"
 #include "test_token.h"
 #include "token_setproc.h"
-#include "os_account_manager.h"
-#include "camera_service_callback_stub.h"
-#include "hcamera_session_manager.h"
+#include "session/cameraSwitch_session.h"
 #ifdef CAMERA_LIVE_SCENE_RECOGNITION
 #include "res_value.h"
 #endif
@@ -118,7 +121,7 @@ public:
  * EnvConditions: NA
  * CaseDescription: Test constructor with an argument as sptr<HCameraHostManager>
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_001, TestSize.Level1)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_001, TestSize.Level0)
 {
     ASSERT_NE(cameraService_, nullptr);
     cameraService_->cameraDataShareHelper_ = nullptr;
@@ -138,7 +141,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_001, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test CreatePhotoOutput when height or width equals 0,returns CAMERA_INVALID_ARG
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_002, TestSize.Level1)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_002, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_FALSE(cameras.empty());
@@ -178,7 +181,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_002, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test CreatePreviewOutput,when height or width equals 0,returns CAMERA_INVALID_ARG
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_003, TestSize.Level1)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_003, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_FALSE(cameras.empty());
@@ -218,7 +221,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_003, TestSize.Level1)
  * CaseDescription: Test CreateDepthDataOutput,when height or width equals 0,or producer equals nullptr,
  *                  returns CAMERA_INVALID_ARG,in normal branch,returns CAMERA_OK
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_004, TestSize.Level1)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_004, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_FALSE(cameras.empty());
@@ -272,7 +275,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_004, TestSize.Level1)
  * CaseDescription: Test CreateVideoOutput,when height or width equals 0,or producer equals nullptr,
  *                  returns CAMERA_INVALID_ARG
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_005, TestSize.Level1)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_005, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_FALSE(cameras.empty());
@@ -324,7 +327,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_005, TestSize.Level1)
  * CaseDescription: Test OnFoldStatusChanged,after executing OnFoldStatusChanged,the value of private member
  *                  preFoldStatus_ will be changed
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_006, TestSize.Level1)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_006, TestSize.Level0)
 {
     OHOS::Rosen::FoldStatus foldStatus = OHOS::Rosen::FoldStatus::HALF_FOLD;
     cameraService_->preFoldStatus_ = OHOS::Rosen::FoldStatus::EXPAND;
@@ -346,7 +349,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_006, TestSize.Level1)
  * CaseDescription: After executing RegisterFoldStatusListener,isFoldRegister will be changed to true,
  *                  after executing UnregisterFoldStatusListener,isFoldRegister will be changed to false
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_007, TestSize.Level1)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_007, TestSize.Level0)
 {
     cameraService_->RegisterFoldStatusListener();
     EXPECT_TRUE(cameraService_->isFoldRegister);
@@ -363,7 +366,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_007, TestSize.Level1)
  * CaseDescription: Test AllowOpenByOHSide,after executing AllowOpenByOHSide,the argument canOpenCamera
  *                  will be changed from false to true
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_008, TestSize.Level1)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_008, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_FALSE(cameras.empty());
@@ -383,7 +386,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_008, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test SetPeerCallback with callback as nullptr,returns CAMERA_INVALID_ARG
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_009, TestSize.Level1)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_009, TestSize.Level0)
 {
     sptr<ICameraBroker> callback = nullptr;
     int32_t ret = cameraService_->SetPeerCallback(callback);
@@ -398,7 +401,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_009, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Unset the Callback to default value,returns CAMERA_OK
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_010, TestSize.Level1)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_010, TestSize.Level0)
 {
     int32_t ret = cameraService_->UnsetPeerCallback();
     EXPECT_EQ(ret, CAMERA_OK);
@@ -413,7 +416,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_010, TestSize.Level1)
  * CaseDescription: After executing DumpCameraSummary, the argument infoDumper will be changed,
  *                  "Number of Camera clients" can be found in dumperString_
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_011, TestSize.Level1)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_011, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_FALSE(cameras.empty());
@@ -440,7 +443,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_011, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test DumpCameraAbility
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_012, TestSize.Level1)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_012, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_FALSE(cameras.empty());
@@ -481,7 +484,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_012, TestSize.Level1)
  * CaseDescription: Test DumpCameraStreamInfo when there is no data for
  *     OHOS_ABILITY_STREAM_AVAILABLE_BASIC_CONFIGURATIONS
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_013, TestSize.Level1)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_013, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_FALSE(cameras.empty());
@@ -517,7 +520,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_013, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test DumpCameraZoom
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_014, TestSize.Level1)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_014, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_FALSE(cameras.empty());
@@ -560,7 +563,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_014, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test OnAddSystemAbility with different systemAbilityId
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_015, TestSize.Level1)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_015, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -594,7 +597,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_015, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test GetCameras when isFoldable and isFoldableInit are false
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_016, TestSize.Level1)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_016, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -624,7 +627,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_016, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test GetCameraMetaInfo with different isFoldable cameraPosition and foldType
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_017, TestSize.Level1)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_017, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -685,7 +688,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_017, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test GetCameraMetaInfo with different isFoldable cameraPosition and foldType
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_018, TestSize.Level1)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_018, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -746,7 +749,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_018, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test OnCameraStatus with different cameraServiceCallbacks_
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_019, TestSize.Level1)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_019, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -784,7 +787,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_019, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test OnFlashlightStatus with different cameraServiceCallbacks_
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_020, TestSize.Level1)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_020, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -820,7 +823,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_020, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test OnMute with cameraServiceCallbacks_ is different and peerCallback_ is not null;
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_021, TestSize.Level1)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_021, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -861,7 +864,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_021, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test CreateDefaultSettingForRestore with correct currentSetting
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_022, TestSize.Level1)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_022, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -904,7 +907,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_022, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test OnTorchStatus with different torchServiceCallbacks_
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_023, TestSize.Level1)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_023, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -940,7 +943,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_023, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test OnFoldStatusChanged with different curFoldStatus preFoldStatus_ and foldServiceCallbacks_
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_024, TestSize.Level1)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_024, TestSize.Level0)
 {
     OHOS::Rosen::FoldStatus foldStatus = OHOS::Rosen::FoldStatus::HALF_FOLD;
     cameraService_->preFoldStatus_ = OHOS::Rosen::FoldStatus::FOLDED;
@@ -970,7 +973,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_024, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test SetFoldStatusCallback when isInnerCallback is true
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_025, TestSize.Level1)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_025, TestSize.Level0)
 {
     sptr<IFoldServiceCallback> callback = new IFoldServiceCallbackTest();
     EXPECT_EQ(cameraService_->SetFoldStatusCallback(callback, true), CAMERA_OK);
@@ -1008,7 +1011,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_025, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test MuteCameraFunc when HCameraDeviceHolder is nullptr or not nullptr
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_026, TestSize.Level1)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_026, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -1071,7 +1074,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_026, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test PrelaunchCamera when preCameraId_ is null or is not null
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_027, TestSize.Level1)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_027, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -1085,12 +1088,12 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_027, TestSize.Level1)
 
     HCameraDeviceManager::GetInstance()->stateOfRgmCamera_.Clear();
     cameraService_->preCameraId_ = cameraIds[0];
-    EXPECT_EQ(cameraService_->PrelaunchCamera(0), CAMERA_INVALID_ARG);
+    EXPECT_EQ(cameraService_->PrelaunchCamera(0), CAMERA_OK);
 
     HCameraDeviceManager::GetInstance()->stateOfRgmCamera_.Clear();
     cameraIds[0].resize(0);
     cameraService_->preCameraId_.clear();
-    EXPECT_EQ(cameraService_->PrelaunchCamera(0), CAMERA_INVALID_ARG);
+    EXPECT_EQ(cameraService_->PrelaunchCamera(0), 0);
     EXPECT_EQ(cameraService_->PreSwitchCamera(cameraIds[0]), CAMERA_INVALID_ARG);
     device->Release();
     device->Close();
@@ -1104,7 +1107,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_027, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test AllowOpenByOHSide when activedevice is not null or is null
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_028, TestSize.Level1)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_028, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -1135,7 +1138,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_028, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test AllowOpenByOHSide when activedevice is not null or is null
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_029, TestSize.Level1)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_029, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -1166,7 +1169,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_029, TestSize.Level1)
  * CaseDescription: After executing DumpCameraFlash, the argument infoDumper will be changed,
  *                  "Available Focus Modes:[" can be found in dumperString_
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_030, TestSize.Level1)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_030, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -1203,7 +1206,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_030, TestSize.Level1)
  * CaseDescription: After executing DumpCameraAF, the argument infoDumper will be changed,
  *                  "Available Focus Modes:[" can be found in dumperString_
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_031, TestSize.Level1)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_031, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -1240,7 +1243,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_031, TestSize.Level1)
  * CaseDescription: After executing DumpCameraAE, the argument infoDumper will be changed,
  *                  "Available Exposure Modes:[ " can be found in dumperString_
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_032, TestSize.Level1)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_032, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -1277,7 +1280,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_032, TestSize.Level1)
  * CaseDescription: After executing DumpCameraVideoStabilization, the argument infoDumper will be changed,
  *                  "Available Video Stabilization Modes:[" can be found in dumperString_
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_033, TestSize.Level1)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_033, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -1314,7 +1317,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_033, TestSize.Level1)
  * CaseDescription: After executing DumpCameraPrelaunch, the argument infoDumper will be changed,
  *                  "Available Prelaunch Info:[" can be found in dumperString_
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_034, TestSize.Level1)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_034, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -1351,7 +1354,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_034, TestSize.Level1)
  * CaseDescription: After executing DumpCameraThumbnail, the argument infoDumper will be changed,
  *                  "Available Focus Modes:[ " can be found in dumperString_
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_035, TestSize.Level1)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_035, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -1382,13 +1385,13 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_035, TestSize.Level1)
 
 /*
  * Feature: CameraService
- * Function: Test UpdateSkinSmoothSetting in class HCameraService
+ * Function: Test UpdateBeautySetting in class HCameraService
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test UpdateSkinSmoothSetting when changedMetadata can be found
+ * CaseDescription: Test UpdateBeautySetting when changedMetadata can be found
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_037, TestSize.Level1)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_037, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -1402,24 +1405,33 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_037, TestSize.Level1)
 
     shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata =
         std::make_shared<OHOS::Camera::CameraMetadata>(METADATA_ITEM_SIZE, METADATA_DATA_SIZE);
-    int skinSmoothValue = 1;
+    int value = 1;
+    EffectParam effectParam = {1, 2, 3, 4, 5, 1, 2, 3, 4};
     uint8_t beauty = OHOS_CAMERA_BEAUTY_TYPE_SKIN_SMOOTH;
+    camera_device_metadata_tag beautyControl[9] = { OHOS_CONTROL_BEAUTY_FACE_SLENDER_VALUE,
+        OHOS_CONTROL_BEAUTY_SKIN_SMOOTH_VALUE, OHOS_CONTROL_BEAUTY_SKIN_TONE_VALUE,
+        OHOS_CONTROL_BEAUTY_SKIN_TONEBRIGHT_VALUE, OHOS_CONTROL_BEAUTY_EYE_BIGEYES_VALUE,
+        OHOS_CONTROL_BEAUTY_HAIR_HAIRLINE_VALUE, OHOS_CONTROL_BEAUTY_FACE_MAKEUP_VALUE,
+        OHOS_CONTROL_BEAUTY_HEAD_SHRINK_VALUE, OHOS_CONTROL_BEAUTY_NOSE_SLENDER_VALUE
+    };
     changedMetadata->addEntry(OHOS_CONTROL_BEAUTY_TYPE, &beauty, 1);
-    changedMetadata->addEntry(OHOS_CONTROL_BEAUTY_SKIN_SMOOTH_VALUE, &skinSmoothValue, 1);
-    EXPECT_EQ(cameraService_->UpdateSkinSmoothSetting(changedMetadata, skinSmoothValue), CAMERA_OK);
+    for (auto controlTag: beautyControl) {
+        changedMetadata->addEntry(controlTag, &value, 1);
+    }
+    EXPECT_EQ(cameraService_->UpdateBeautySetting(changedMetadata, effectParam), CAMERA_OK);
     device->Release();
     device->Close();
 }
 
 /*
  * Feature: CameraService
- * Function: Test UpdateFaceSlenderSetting in class HCameraService
+ * Function: Test UpdateBeautySetting in class HCameraService
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test UpdateFaceSlenderSetting when changedMetadata can not be found
+ * CaseDescription: Test UpdateBeautySetting when changedMetadata can not be found
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_038, TestSize.Level1)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_038, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -1434,23 +1446,31 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_038, TestSize.Level1)
     shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata =
         std::make_shared<OHOS::Camera::CameraMetadata>(METADATA_ITEM_SIZE, METADATA_DATA_SIZE);
         common_metadata_header_t* metadataEntry = changedMetadata->get();
-    int faceSlenderValue = 1;
+    EffectParam effectParam = {1, 2, 3, 4, 5, 1, 2, 3, 4};
+    camera_device_metadata_tag beautyControl[9] = { OHOS_CONTROL_BEAUTY_FACE_SLENDER_VALUE,
+        OHOS_CONTROL_BEAUTY_SKIN_SMOOTH_VALUE, OHOS_CONTROL_BEAUTY_SKIN_TONE_VALUE,
+        OHOS_CONTROL_BEAUTY_SKIN_TONEBRIGHT_VALUE, OHOS_CONTROL_BEAUTY_EYE_BIGEYES_VALUE,
+        OHOS_CONTROL_BEAUTY_HAIR_HAIRLINE_VALUE, OHOS_CONTROL_BEAUTY_FACE_MAKEUP_VALUE,
+        OHOS_CONTROL_BEAUTY_HEAD_SHRINK_VALUE, OHOS_CONTROL_BEAUTY_NOSE_SLENDER_VALUE
+    };
     OHOS::Camera::DeleteCameraMetadataItem(metadataEntry, OHOS_CONTROL_BEAUTY_TYPE);
-    OHOS::Camera::DeleteCameraMetadataItem(metadataEntry, OHOS_CONTROL_BEAUTY_FACE_SLENDER_VALUE);
-    EXPECT_EQ(cameraService_->UpdateFaceSlenderSetting(changedMetadata, faceSlenderValue), CAMERA_OK);
+    for (auto controlTag: beautyControl) {
+        OHOS::Camera::DeleteCameraMetadataItem(metadataEntry, controlTag);
+    }
+    EXPECT_EQ(cameraService_->UpdateBeautySetting(changedMetadata, effectParam), CAMERA_OK);
     device->Release();
     device->Close();
 }
 
 /*
  * Feature: CameraService
- * Function: Test UpdateSkinToneSetting in class HCameraService
+ * Function: Test UpdateBeautySetting in class HCameraService
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test UpdateSkinToneSetting when changedMetadata can not be found
+ * CaseDescription: Test UpdateBeautySetting when value is negative
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_039, TestSize.Level1)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_039, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -1464,11 +1484,20 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_039, TestSize.Level1)
 
     shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata =
         std::make_shared<OHOS::Camera::CameraMetadata>(METADATA_ITEM_SIZE, METADATA_DATA_SIZE);
-        common_metadata_header_t* metadataEntry = changedMetadata->get();
-    int skinToneValue = 1;
-    OHOS::Camera::DeleteCameraMetadataItem(metadataEntry, OHOS_CONTROL_BEAUTY_TYPE);
-    changedMetadata->addEntry(OHOS_CONTROL_BEAUTY_SKIN_TONE_VALUE, &skinToneValue, 1);
-    EXPECT_EQ(cameraService_->UpdateSkinToneSetting(changedMetadata, skinToneValue), CAMERA_OK);
+    int value = 1;
+    EffectParam effectParam = {-1, -1, -1, -1, -1, -1, -1, -1, -1};
+    uint8_t beauty = OHOS_CAMERA_BEAUTY_TYPE_SKIN_SMOOTH;
+    camera_device_metadata_tag beautyControl[9] = { OHOS_CONTROL_BEAUTY_FACE_SLENDER_VALUE,
+        OHOS_CONTROL_BEAUTY_SKIN_SMOOTH_VALUE, OHOS_CONTROL_BEAUTY_SKIN_TONE_VALUE,
+        OHOS_CONTROL_BEAUTY_SKIN_TONEBRIGHT_VALUE, OHOS_CONTROL_BEAUTY_EYE_BIGEYES_VALUE,
+        OHOS_CONTROL_BEAUTY_HAIR_HAIRLINE_VALUE, OHOS_CONTROL_BEAUTY_FACE_MAKEUP_VALUE,
+        OHOS_CONTROL_BEAUTY_HEAD_SHRINK_VALUE, OHOS_CONTROL_BEAUTY_NOSE_SLENDER_VALUE
+    };
+    changedMetadata->addEntry(OHOS_CONTROL_BEAUTY_TYPE, &beauty, 1);
+    for (auto controlTag: beautyControl) {
+        changedMetadata->addEntry(controlTag, &value, 1);
+    }
+    EXPECT_EQ(cameraService_->UpdateBeautySetting(changedMetadata, effectParam), CAMERA_OK);
     device->Release();
     device->Close();
 }
@@ -1481,7 +1510,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_039, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test ProxyForFreeze when isProxy is false and pidList is nulll
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_040, TestSize.Level1)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_040, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -1517,7 +1546,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_040, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test GetCameraOutputStatus when captureSession is nullptr or is not nullptr
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_041, TestSize.Level1)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_041, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -1554,7 +1583,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_041, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test OnReceiveEvent when want.GetAction is "usual.event.CAMERA_STATUS"
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_042, TestSize.Level1)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_042, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -1583,7 +1612,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_042, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test UnSetTorchCallback with different cameraServiceCallbacks_
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_043, TestSize.Level1)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_043, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -1610,7 +1639,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_043, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test dump with args empty
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_044, TestSize.Level1)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_044, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -1643,7 +1672,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_044, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test HCameraService with anomalous branch
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_045, TestSize.Level1)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_045, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -1703,7 +1732,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_045, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test HCameraService with anomalous branch
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_046, TestSize.Level1)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_046, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -1749,7 +1778,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_046, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test HCameraService with anomalous branch
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_047, TestSize.Level1)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_047, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -1813,7 +1842,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_047, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test dump with no static capability.
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_048, TestSize.Level1)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_048, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -1847,15 +1876,13 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_048, TestSize.Level1)
 
 /*
  * Feature: Framework
- * Function: Test HCameraService in UpdateSkinSmoothSetting,
- *              UpdateFaceSlenderSetting, UpdateSkinToneSetting
+ * Function: Test HCameraService in UpdateBeautySetting
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test HCameraService in UpdateSkinSmoothSetting,
- *              UpdateFaceSlenderSetting, UpdateSkinToneSetting
+ * CaseDescription: Test HCameraService in UpdateBeautySetting
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_049, TestSize.Level1)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_049, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_NE(cameras.size(), 0);
@@ -1865,15 +1892,9 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_049, TestSize.Level1)
         std::make_shared<OHOS::Camera::CameraMetadata>(METADATA_ITEM_SIZE, METADATA_DATA_SIZE);
     ASSERT_NE(metadata, nullptr);
 
-    EXPECT_EQ(hCameraService->UpdateSkinSmoothSetting(metadata, 0), CAMERA_OK);
-    EXPECT_EQ(hCameraService->UpdateSkinSmoothSetting(metadata, 1), CAMERA_OK);
-    EXPECT_EQ(hCameraService->UpdateSkinSmoothSetting(nullptr, 1), CAMERA_OK);
-    EXPECT_EQ(hCameraService->UpdateFaceSlenderSetting(metadata, 0), CAMERA_OK);
-    EXPECT_EQ(hCameraService->UpdateFaceSlenderSetting(metadata, 1), CAMERA_OK);
-    EXPECT_EQ(hCameraService->UpdateFaceSlenderSetting(nullptr, 1), CAMERA_OK);
-    EXPECT_EQ(hCameraService->UpdateSkinToneSetting(metadata, 0), CAMERA_OK);
-    EXPECT_EQ(hCameraService->UpdateSkinToneSetting(metadata, 1), CAMERA_OK);
-    EXPECT_EQ(hCameraService->UpdateSkinToneSetting(nullptr, 1), CAMERA_OK);
+    EXPECT_EQ(hCameraService->UpdateBeautySetting(metadata, {0, 0, 0, 0, 0, 0, 0, 0, 0}), CAMERA_OK);
+    EXPECT_EQ(hCameraService->UpdateBeautySetting(metadata, {1, 1, 1, 1, 1, 1, 1, 1, 1}), CAMERA_OK);
+    EXPECT_EQ(hCameraService->UpdateBeautySetting(nullptr, {1, 1, 1, 1, 1, 1, 1, 1, 1}), CAMERA_OK);
     hCameraService = nullptr;
 }
 
@@ -1885,7 +1906,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_049, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test OnRemoteRequest for switch of CAMERA_CALLBACK_FLASHLIGHT_STATUS_CHANGED
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_050, TestSize.Level1)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_050, TestSize.Level0)
 {
     MockHCameraServiceCallbackStub stub;
     MessageParcel data;
@@ -1908,12 +1929,12 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_050, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test OnRemoteRequest for switch of FOLD_CALLBACK_FOLD_STATUS_CHANGE
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_051, TestSize.Level1)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_051, TestSize.Level0)
 {
     MockHFoldServiceCallbackStub stub;
     MessageParcel data;
     data.WriteInterfaceToken(stub.GetDescriptor());
-    data.RewindRead(0);
+    data.WriteInt32(0);
     MessageParcel reply;
     MessageOption option;
     uint32_t code = static_cast<uint32_t>(IFoldServiceCallbackIpcCode::COMMAND_ON_FOLD_STATUS_CHANGED);
@@ -1931,7 +1952,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_051, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test OnRemoteRequest for switch of CAMERA_CALLBACK_MUTE_MODE
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_052, TestSize.Level1)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_052, TestSize.Level0)
 {
     MockHCameraMuteServiceCallbackStub stub;
     MessageParcel data;
@@ -2425,15 +2446,13 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_057, TestSize.Level0)
     cameraService_->cameraServiceCallbacks_ = {};
     cameraService_->cameraStatusCallbacks_ = {};
     cameraService_->freezedPidList_.insert(IPCSkeleton::GetCallingPid());
-    cameraService_->OnCameraStatus(cameraIds[0], CameraStatus::CAMERA_STATUS_APPEAR,
-        CallbackInvoker::APPLICATION);
+    cameraService_->OnCameraStatus(cameraIds[0], CameraStatus::CAMERA_STATUS_APPEAR, CallbackInvoker::APPLICATION);
     EXPECT_FALSE(cameraService_->cameraStatusCallbacks_.empty());
     EXPECT_EQ(cameraService_->UnSetCameraCallback(IPCSkeleton::GetCallingPid()), CAMERA_OK);
 
     sptr<ICameraServiceCallbackTest> callback = new ICameraServiceCallbackTest();
     cameraService_->cameraServiceCallbacks_ = {{1, callback}, {2, nullptr}};
-    cameraService_->OnCameraStatus(cameraIds[0], CameraStatus::CAMERA_STATUS_APPEAR,
-        CallbackInvoker::APPLICATION);
+    cameraService_->OnCameraStatus(cameraIds[0], CameraStatus::CAMERA_STATUS_APPEAR, CallbackInvoker::APPLICATION);
     EXPECT_EQ(cameraService_->cameraStatusCallbacks_.size(), 1);
 
     if (callback) {
@@ -2488,7 +2507,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_058, TestSize.Level0)
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test OnReceiveEvent when want.GetAction is "common.event.ressched.window.state"
+ * CaseDescription: Test OnReceiveEvent when want.GetAction is COMMON_EVENT_THERMAL_LEVEL_CHANGED, param is 0.
  */
 HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_059, TestSize.Level0)
 {
@@ -2503,22 +2522,23 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_059, TestSize.Level0)
     device->Open();
 
     OHOS::AAFwk::Want want;
-    const std::string COMMON_EVENT_RSS_MULTI_WINDOW_TYPE = "common.event.ressched.window.state";
-    want.SetAction(COMMON_EVENT_RSS_MULTI_WINDOW_TYPE);
+    want.SetAction(EventFwk::CommonEventSupport::COMMON_EVENT_THERMAL_LEVEL_CHANGED);
+    want.SetParam("0", TEMPER_PRESSURE_COOL);
     EventFwk::CommonEventData CommonEventData { want };
     cameraService_->OnReceiveEvent(CommonEventData);
-    EXPECT_EQ(CommonEventData.GetWant().GetAction(), COMMON_EVENT_RSS_MULTI_WINDOW_TYPE);
+    EXPECT_EQ(CommonEventData.GetWant().GetAction(),
+        EventFwk::CommonEventSupport::COMMON_EVENT_THERMAL_LEVEL_CHANGED);
     device->Release();
     device->Close();
 }
 
 /*
  * Feature: CameraService
- * Function: Test GetCameraOutputStatus in class HCameraService
+ * Function: Test OnReceiveEvent in class HCameraService
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test GetCameraOutputStatus when captureSession is nullptr or is not nullptr
+ * CaseDescription: Test OnReceiveEvent when want.GetAction is COMMON_EVENT_THERMAL_LEVEL_CHANGED, param is 1.
  */
 HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_060, TestSize.Level0)
 {
@@ -2532,22 +2552,24 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_060, TestSize.Level0)
     device->SetMdmCheck(false);
     device->Open();
 
-    pid_t pid = IPCSkeleton::GetCallingPid();
-    auto &sessionManager = HCameraSessionManager::GetInstance();
-    size_t size = sessionManager.GetSessionSize(pid);
-    EXPECT_NE(size, 0);
-
+    OHOS::AAFwk::Want want;
+    want.SetAction(EventFwk::CommonEventSupport::COMMON_EVENT_THERMAL_LEVEL_CHANGED);
+    want.SetParam("0", TEMPER_PRESSURE_NORMAL);
+    EventFwk::CommonEventData CommonEventData { want };
+    cameraService_->OnReceiveEvent(CommonEventData);
+    EXPECT_EQ(CommonEventData.GetWant().GetAction(),
+        EventFwk::CommonEventSupport::COMMON_EVENT_THERMAL_LEVEL_CHANGED);
     device->Release();
     device->Close();
 }
 
 /*
  * Feature: CameraService
- * Function: Test GetCameraOutputStatus in class HCameraService
+ * Function: Test OnReceiveEvent in class HCameraService
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test GetCameraOutputStatus when captureSession is nullptr or is not nullptr
+ * CaseDescription: Test OnReceiveEvent when want.GetAction is COMMON_EVENT_THERMAL_LEVEL_CHANGED, param is 2.
  */
 HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_061, TestSize.Level0)
 {
@@ -2561,10 +2583,13 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_061, TestSize.Level0)
     device->SetMdmCheck(false);
     device->Open();
 
-    auto &sessionManager = HCameraSessionManager::GetInstance();
-    std::list<sptr<HCaptureSession>> sessionList = sessionManager.GetTotalSession();
-    EXPECT_NE(sessionList.size(), 0);
-
+    OHOS::AAFwk::Want want;
+    want.SetAction(EventFwk::CommonEventSupport::COMMON_EVENT_THERMAL_LEVEL_CHANGED);
+    want.SetParam("0", TEMPER_PRESSURE_WARM);
+    EventFwk::CommonEventData CommonEventData { want };
+    cameraService_->OnReceiveEvent(CommonEventData);
+    EXPECT_EQ(CommonEventData.GetWant().GetAction(),
+        EventFwk::CommonEventSupport::COMMON_EVENT_THERMAL_LEVEL_CHANGED);
     device->Release();
     device->Close();
 }
@@ -2575,7 +2600,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_061, TestSize.Level0)
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test OnReceiveEvent when want.GetAction is "common.event.ressched.window.state"
+ * CaseDescription: Test OnReceiveEvent when want.GetAction is COMMON_EVENT_THERMAL_LEVEL_CHANGED, param is 3.
  */
 HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_062, TestSize.Level0)
 {
@@ -2590,11 +2615,167 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_062, TestSize.Level0)
     device->Open();
 
     OHOS::AAFwk::Want want;
-    const std::string COMMON_EVENT_RSS_MULTI_WINDOW_TYPE = "common.event.ressched.window.state";
-    want.SetAction(COMMON_EVENT_RSS_MULTI_WINDOW_TYPE);
+    want.SetAction(EventFwk::CommonEventSupport::COMMON_EVENT_THERMAL_LEVEL_CHANGED);
+    want.SetParam("0", TEMPER_PRESSURE_HOT);
     EventFwk::CommonEventData CommonEventData { want };
     cameraService_->OnReceiveEvent(CommonEventData);
-    EXPECT_EQ(CommonEventData.GetWant().GetAction(), COMMON_EVENT_RSS_MULTI_WINDOW_TYPE);
+    EXPECT_EQ(CommonEventData.GetWant().GetAction(),
+        EventFwk::CommonEventSupport::COMMON_EVENT_THERMAL_LEVEL_CHANGED);
+    device->Release();
+    device->Close();
+}
+
+/*
+ * Feature: CameraService
+ * Function: Test OnReceiveEvent in class HCameraService
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OnReceiveEvent when want.GetAction is COMMON_EVENT_THERMAL_LEVEL_CHANGED, param is 4.
+ */
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_063, TestSize.Level0)
+{
+    std::vector<string> cameraIds;
+    cameraService_->GetCameraIds(cameraIds);
+    ASSERT_NE(cameraIds.size(), 0);
+    cameraService_->SetServiceStatus(CameraServiceStatus::SERVICE_READY);
+    sptr<ICameraDeviceService> device = nullptr;
+    cameraService_->CreateCameraDevice(cameraIds[0], device);
+    ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
+    device->Open();
+
+    OHOS::AAFwk::Want want;
+    want.SetAction(EventFwk::CommonEventSupport::COMMON_EVENT_THERMAL_LEVEL_CHANGED);
+    want.SetParam("0", TEMPER_PRESSURE_OVERHEATED);
+    EventFwk::CommonEventData CommonEventData { want };
+    cameraService_->OnReceiveEvent(CommonEventData);
+    EXPECT_EQ(CommonEventData.GetWant().GetAction(),
+        EventFwk::CommonEventSupport::COMMON_EVENT_THERMAL_LEVEL_CHANGED);
+    device->Release();
+    device->Close();
+}
+
+/*
+ * Feature: CameraService
+ * Function: Test OnReceiveEvent in class HCameraService
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OnReceiveEvent when want.GetAction is COMMON_EVENT_THERMAL_LEVEL_CHANGED, param is 5.
+ */
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_064, TestSize.Level0)
+{
+    std::vector<string> cameraIds;
+    cameraService_->GetCameraIds(cameraIds);
+    ASSERT_NE(cameraIds.size(), 0);
+    cameraService_->SetServiceStatus(CameraServiceStatus::SERVICE_READY);
+    sptr<ICameraDeviceService> device = nullptr;
+    cameraService_->CreateCameraDevice(cameraIds[0], device);
+    ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
+    device->Open();
+
+    OHOS::AAFwk::Want want;
+    want.SetAction(EventFwk::CommonEventSupport::COMMON_EVENT_THERMAL_LEVEL_CHANGED);
+    want.SetParam("0", TEMPER_PRESSURE_WARNING);
+    EventFwk::CommonEventData CommonEventData { want };
+    cameraService_->OnReceiveEvent(CommonEventData);
+    EXPECT_EQ(CommonEventData.GetWant().GetAction(),
+        EventFwk::CommonEventSupport::COMMON_EVENT_THERMAL_LEVEL_CHANGED);
+    device->Release();
+    device->Close();
+}
+
+/*
+ * Feature: CameraService
+ * Function: Test OnReceiveEvent in class HCameraService
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OnReceiveEvent when want.GetAction is COMMON_EVENT_THERMAL_LEVEL_CHANGED, param is 6.
+ */
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_065, TestSize.Level0)
+{
+    std::vector<string> cameraIds;
+    cameraService_->GetCameraIds(cameraIds);
+    ASSERT_NE(cameraIds.size(), 0);
+    cameraService_->SetServiceStatus(CameraServiceStatus::SERVICE_READY);
+    sptr<ICameraDeviceService> device = nullptr;
+    cameraService_->CreateCameraDevice(cameraIds[0], device);
+    ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
+    device->Open();
+
+    OHOS::AAFwk::Want want;
+    want.SetAction(EventFwk::CommonEventSupport::COMMON_EVENT_THERMAL_LEVEL_CHANGED);
+    want.SetParam("0", TEMPER_PRESSURE_EMERGENCY);
+    EventFwk::CommonEventData CommonEventData { want };
+    cameraService_->OnReceiveEvent(CommonEventData);
+    EXPECT_EQ(CommonEventData.GetWant().GetAction(),
+        EventFwk::CommonEventSupport::COMMON_EVENT_THERMAL_LEVEL_CHANGED);
+    device->Release();
+    device->Close();
+}
+
+/*
+ * Feature: CameraService
+ * Function: Test OnReceiveEvent in class HCameraService
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OnReceiveEvent when want.GetAction is COMMON_EVENT_THERMAL_LEVEL_CHANGED, param is 7.
+ */
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_066, TestSize.Level0)
+{
+    std::vector<string> cameraIds;
+    cameraService_->GetCameraIds(cameraIds);
+    ASSERT_NE(cameraIds.size(), 0);
+    cameraService_->SetServiceStatus(CameraServiceStatus::SERVICE_READY);
+    sptr<ICameraDeviceService> device = nullptr;
+    cameraService_->CreateCameraDevice(cameraIds[0], device);
+    ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
+    device->Open();
+
+    OHOS::AAFwk::Want want;
+    want.SetAction(EventFwk::CommonEventSupport::COMMON_EVENT_THERMAL_LEVEL_CHANGED);
+    want.SetParam("0", TEMPER_PRESSURE_ESCAPE);
+    EventFwk::CommonEventData CommonEventData { want };
+    cameraService_->OnReceiveEvent(CommonEventData);
+    EXPECT_EQ(CommonEventData.GetWant().GetAction(),
+        EventFwk::CommonEventSupport::COMMON_EVENT_THERMAL_LEVEL_CHANGED);
+    device->Release();
+    device->Close();
+}
+
+/*
+ * Feature: CameraService
+ * Function: Test OnReceiveEvent in class HCameraService
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OnReceiveEvent when want.GetAction is COMMON_EVENT_THERMAL_LEVEL_CHANGED, param is -1.
+ */
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_067, TestSize.Level0)
+{
+    std::vector<string> cameraIds;
+    cameraService_->GetCameraIds(cameraIds);
+    ASSERT_NE(cameraIds.size(), 0);
+    cameraService_->SetServiceStatus(CameraServiceStatus::SERVICE_READY);
+    sptr<ICameraDeviceService> device = nullptr;
+    cameraService_->CreateCameraDevice(cameraIds[0], device);
+    ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
+    device->Open();
+
+    OHOS::AAFwk::Want want;
+    want.SetAction(EventFwk::CommonEventSupport::COMMON_EVENT_THERMAL_LEVEL_CHANGED);
+    want.SetParam("0", -1);
+    EventFwk::CommonEventData CommonEventData { want };
+    cameraService_->OnReceiveEvent(CommonEventData);
+    EXPECT_EQ(CommonEventData.GetWant().GetAction(),
+        EventFwk::CommonEventSupport::COMMON_EVENT_THERMAL_LEVEL_CHANGED);
     device->Release();
     device->Close();
 }
@@ -2607,7 +2788,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_062, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test ResetRssPriority when preCameraId_ is null or is not null
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_063, TestSize.Level0)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_068, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -2635,7 +2816,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_063, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test OnReceiveEvent when want.GetAction is "COMMON_EVENT_RSS_MULTI_WINDOW_TYPE"
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_068, TestSize.Level0)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_069, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -2664,7 +2845,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_068, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test TransferTemperToPressure
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_069, TestSize.Level0)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_070, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -2697,7 +2878,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_069, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test ChooseFisrtBootFoldCamIdx
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_070, TestSize.Level0)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_071, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -2754,6 +2935,82 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_070, TestSize.Level0)
     device->Close();
 }
 
+/*
+ * Feature: Framework
+ * Function: Test SwitchCamera
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SwitchCamera function and verify the session creation
+ */
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_072, TestSize.Level0)
+{
+    std::string oriCameraId = "device/0";
+    std::string destCameraId = "device/1";
+    sptr<CameraSwitchSession> cameraSwitchSession = cameraManager_->CreateCameraSwitchSession();
+    ASSERT_NE(cameraSwitchSession, nullptr);
+    int32_t retCode = cameraSwitchSession->SwitchCamera(oriCameraId, destCameraId);
+    EXPECT_NE(retCode, 0);
+    auto switchSession = new (std::nothrow) HCameraSwitchSession();
+    auto &sessionManager = HCameraSessionManager::GetInstance();
+    sessionManager.SetCameraSwitchSession(switchSession);
+    sptr<HCameraSwitchSession> hCameraSwitchSession = sessionManager.GetCameraSwitchSession();
+    EXPECT_NE(hCameraSwitchSession, nullptr);
+    uint32_t callerToken = IPCSkeleton::GetCallingPid();
+    sessionManager.AddSession(new HCaptureSession(callerToken, SceneMode::NORMAL));
+    EXPECT_EQ(hCameraSwitchSession->GetAppCameraSwitchSession(), nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test SwitchCamera with invalid arguments
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SwitchCamera function with invalid arguments and verify the error code
+ */
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_073, TestSize.Level0)
+{
+    auto switchSession = new (std::nothrow) HCameraSwitchSession();
+    auto &sessionManager = HCameraSessionManager::GetInstance();
+    sessionManager.SetCameraSwitchSession(switchSession);
+    sptr<HCameraSwitchSession> hCameraSwitchSession = sessionManager.GetCameraSwitchSession();
+    EXPECT_NE(hCameraSwitchSession, nullptr);
+    std::string oriCameraId = "device/0";
+    std::string destCameraId = "device/1";
+    int32_t ret = hCameraSwitchSession->SwitchCamera(oriCameraId, destCameraId);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARG);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test Complete Camera Switch Flow
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test the complete camera switch flow including session creation, configuration, and cleanup
+ */
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_074, TestSize.Level0)
+{
+    sptr<CameraSwitchSession> cameraSwitchSession_ = nullptr;
+    int32_t retCode = cameraManager_->CreateCameraSwitchSession(&cameraSwitchSession_);
+    EXPECT_EQ(retCode, 0);
+    auto cameraSwitchCallback = std::make_shared<AppCameraSwitchSessionCallback>();
+    cameraSwitchSession_->SetCallback(cameraSwitchCallback);
+    auto switchSession = new (std::nothrow) HCameraSwitchSession();
+    auto &sessionManager = HCameraSessionManager::GetInstance();
+    sessionManager.SetCameraSwitchSession(switchSession);
+    sptr<HCameraSwitchSession> hCameraSwitchSession = sessionManager.GetCameraSwitchSession();
+    EXPECT_NE(hCameraSwitchSession, nullptr);
+    uint32_t callerToken = IPCSkeleton::GetCallingPid();
+    sessionManager.AddSession(new HCaptureSession(callerToken, SceneMode::NORMAL));
+    EXPECT_EQ(hCameraSwitchSession->GetAppCameraSwitchSession(), nullptr);
+    std::string oriCameraId = "device/0";
+    std::string destCameraId = "device/1";
+    int32_t ret = hCameraSwitchSession->SwitchCamera(oriCameraId, destCameraId);
+    EXPECT_NE(ret, 0);
+}
+
 #ifdef CAMERA_LIVE_SCENE_RECOGNITION
 /*
  * Feature: CameraService
@@ -2763,7 +3020,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_070, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test OnReceiveEvent and SetLiveScene
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_071, TestSize.Level1)
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_075, TestSize.Level1)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -2776,7 +3033,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_071, TestSize.Level1)
     device->Open();
 
     sptr<ResSchedToCameraEventListener> eventListener = new (std::nothrow) ResSchedToCameraEventListener;
-    ASSERT_NE(eventListener, nullptr);;
+    ASSERT_NE(eventListener, nullptr);
 
     uint32_t eventType = static_cast<OHOS::ResourceSchedule::ResType::EventType>(-1);
     uint32_t eventValue = OHOS::ResourceSchedule::ResType::EventValue::EVENT_VALUE_HFLS_BEGIN;
@@ -2800,5 +3057,6 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_071, TestSize.Level1)
     device->Close();
 }
 #endif
+
 }
 }

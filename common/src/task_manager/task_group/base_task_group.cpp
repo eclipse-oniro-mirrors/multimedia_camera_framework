@@ -60,7 +60,7 @@ bool BaseTaskGroup::SubmitTask(std::any param)
 {
     std::lock_guard<std::mutex> lock(mutex_);
     if (que_.Full()) {
-        MEDIA_WARNING_LOG("Submit task (%s), handle: %{public}d, que is full!", name_.c_str(),
+        MEDIA_WARNING_LOG("Submit task (%s), handle: %{public}d, que is full!", name_.c_str(), 
             static_cast<int>(handle_));
     } else {
         MEDIA_DEBUG_LOG("Submit task (%s), handle: %{public}d, size: %zu.", name_.c_str(),
@@ -74,7 +74,7 @@ bool BaseTaskGroup::SubmitTask(std::any param)
 void BaseTaskGroup::CancelAllTasks()
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    MEDIA_DEBUG_LOG("Cancel all tasks for task group (%s), handle: %{public}d", name_.c_str(),
+    MEDIA_DEBUG_LOG("Cancel all tasks for task group (%s), handle: %{public}d", name_.c_str(), 
         static_cast<int>(handle_));
     que_.Clear();
     CHECK_RETURN(!serial_);

@@ -58,6 +58,9 @@ public:
     Camera_ErrorCode GetSupportedCameraOutputCapabilityWithSceneMode(const Camera_Device* camera,
         Camera_SceneMode sceneMode, Camera_OutputCapability** cameraOutputCapability);
 
+    Camera_ErrorCode GetSupportedFullCameraOutputCapabilityWithSceneMode(const Camera_Device* camera,
+        Camera_SceneMode sceneMode, Camera_OutputCapability** cameraOutputCapability);
+
     Camera_ErrorCode DeleteSupportedCameraOutputCapability(Camera_OutputCapability* cameraOutputCapability);
 
     Camera_ErrorCode IsCameraMuted(bool* isCameraMuted);

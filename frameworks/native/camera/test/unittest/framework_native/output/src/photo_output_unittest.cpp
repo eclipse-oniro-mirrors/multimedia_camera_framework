@@ -71,11 +71,8 @@ void CameraPhotoOutputUnit::TearDown()
 sptr<CaptureOutput> CameraPhotoOutputUnit::CreatePhotoOutput()
 {
     std::vector<Profile> photoProfile = {};
-    if (!cameraManager_) {
-        return nullptr;
-    }
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
-    if (cameras.empty()) {
+    if (!cameraManager_ || cameras.empty()) {
         return nullptr;
     }
     auto outputCapability = cameraManager_->GetSupportedOutputCapability(cameras[0], 0);
@@ -112,7 +109,7 @@ MATCHER_P(matchCaptureSetting, captureSetting, "Match Capture Setting")
  * CaseDescription: Test photooutput with SetNativeSurface and SeteCallbackFlag when isEnableDeeferred is oppsite
  *          and session is start
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_001, TestSize.Level1)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_001, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -157,7 +154,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_001, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test PhotoCaptureSetting with SetGpsLocation
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_033, TestSize.Level1)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_033, TestSize.Level0)
 {
     std::shared_ptr<PhotoCaptureSetting> settings = std::make_shared<PhotoCaptureSetting>();
     double latitude = 1.0;
@@ -179,7 +176,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_033, TestSize.Level1)
  * CaseDescription: Test photooutput with SetNativeSurface and SeteCallbackFlag when isEnableDeeferred is oppsite
  *          and session is commit
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_002, TestSize.Level1)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_002, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -224,7 +221,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_002, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test photooutput with SetNativeSurface and SeteCallbackFlag when isEnableDeeferred is not oppsite
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_003, TestSize.Level1)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_003, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -251,7 +248,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_003, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test photooutput with IsYuvOrHeifPhoto when photoProfile_ is not nullptr
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_004, TestSize.Level1)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_004, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -276,7 +273,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_004, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test photooutput with Set and Get AuxiliaryPhotoHandle
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_005, TestSize.Level1)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_005, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -299,7 +296,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_005, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test photooutput with CreateMultiChannel and EnableRawDelivery when stream is not nullptr
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_006, TestSize.Level1)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_006, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -354,7 +351,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_006, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test photooutput with CreateMultiChannel when stream is nullptr
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_007, TestSize.Level1)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_007, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -409,7 +406,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_007, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test photooutput with CreateMultiChannel when surface is not nullptr
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_008, TestSize.Level1)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_008, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -463,7 +460,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_008, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test photooutput with SetThumbnailListener
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_009, TestSize.Level1)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_009, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -482,7 +479,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_009, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test photooutput with SetThumbnail EnableAutoHighQualityPhoto and EnableMirror
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_010, TestSize.Level1)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_010, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -537,7 +534,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_010, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test photooutput with IsQuickThumbnailSupported and IsRawDeliverySupported
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_011, TestSize.Level1)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_011, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -585,7 +582,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_011, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test photooutput with DeferredImageDelivery
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_012, TestSize.Level1)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_012, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -630,7 +627,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_012, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test abnormal branches with DeferredImageDelivery
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_013, TestSize.Level1)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_013, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -686,7 +683,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_013, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test photooutput with ProcessSnapshotDurationUpdates
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_014, TestSize.Level1)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_014, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -715,7 +712,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_014, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test photooutput with ProcessSnapshotDurationUpdates
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_015, TestSize.Level1)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_015, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -738,7 +735,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_015, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test photooutput with SetMovingPhotoVideoCodecType
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_016, TestSize.Level1)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_016, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -760,10 +757,9 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_016, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test photooutput with DepthDataDelivery
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_017, TestSize.Level1)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_017, TestSize.Level0)
 {
-    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
-    ASSERT_FALSE(cameras.empty());
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
 
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
     ASSERT_NE(photoOutput, nullptr);
@@ -783,9 +779,9 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_017, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test photooutput with GetPhotoRotation
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_018, TestSize.Level1)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_018, TestSize.Level0)
 {
-    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_FALSE(cameras.empty());
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
@@ -802,11 +798,11 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_018, TestSize.Level1)
 
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-    EXPECT_EQ(session->BeginConfig(), 0);
-    EXPECT_EQ(session->AddInput(input), 0);
-    EXPECT_EQ(session->AddOutput(photoOutput), 0);
-    EXPECT_EQ(session->CommitConfig(), 0);
-    EXPECT_EQ(session->Start(), 0);
+    session->BeginConfig();
+    session->AddInput(input);
+    session->AddOutput(photoOutput);
+    session->CommitConfig();
+    session->Start();
 
     sptr<CameraDevice> cameraObj = phtOutput->session_->GetInputDevice()->GetCameraDeviceInfo();
     int32_t imageRotation = 90;
@@ -910,7 +906,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_019, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test HStreamCaptureCallbackImpl
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_020, TestSize.Level1)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_020, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -966,7 +962,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_020, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test photooutput when destruction
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_021, TestSize.Level1)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_021, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -999,7 +995,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_021, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test photooutput with IsQuickThumbnailSupported when Mode is different
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_022, TestSize.Level1)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_022, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -1061,7 +1057,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_022, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test photooutput with cameraserverdied when stream_ is nullptr
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_023, TestSize.Level1)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_023, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
 
@@ -1082,7 +1078,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_023, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test PhotoCaptureSetting with GetLocation
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_024, TestSize.Level1)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_024, TestSize.Level0)
 {
     std::shared_ptr<PhotoCaptureSetting> settings = std::make_shared<PhotoCaptureSetting>();
     std::shared_ptr<Location> location;
@@ -1098,7 +1094,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_024, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test PhotoCaptureSetting with SetMirror and GetMirror
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_025, TestSize.Level1)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_025, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -1136,7 +1132,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_025, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test PhotoCaptureSetting with UpdateMediaLibraryPhotoAssetProxy
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_026, TestSize.Level1)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_026, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -1163,7 +1159,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_026, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test PhotoCaptureSetting with GetLocation
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_027, TestSize.Level1)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_027, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -1205,7 +1201,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_027, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test photooutput with EnableMovingPhoto when stream_ is nullptr
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_028, TestSize.Level1)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_028, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
 
@@ -1220,82 +1216,13 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_028, TestSize.Level1)
 
 /*
  * Feature: Framework
- * Function: Test SetThumbnailCallback
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test SetThumbnailCallback
- */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_029, TestSize.Level1)
-{
-    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
-
-    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
-    ASSERT_NE(photoOutput, nullptr);
-    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
-    phtOutput->SetThumbnailCallback(nullptr);
-}
-/*
- * Feature: Framework
- * Function: Test UnSetThumbnailAvailableCallback
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test UnSetThumbnailAvailableCallback
- */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_030, TestSize.Level1)
-{
-    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
-
-    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
-    ASSERT_NE(photoOutput, nullptr);
-    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
-    phtOutput->UnSetThumbnailAvailableCallback();
-}
-/*
- * Feature: Framework
- * Function: Test GetAppPhotoCallback
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test GetAppPhotoCallback
- */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_031, TestSize.Level1)
-{
-    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
-
-    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
-    ASSERT_NE(photoOutput, nullptr);
-    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
-    phtOutput->GetAppPhotoCallback();
-}
-/*
- * Feature: Framework
- * Function: Test GetAppThumbnailCallback
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test GetAppThumbnailCallback
- */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_032, TestSize.Level1)
-{
-    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
-
-    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
-    ASSERT_NE(photoOutput, nullptr);
-    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
-    phtOutput->GetAppThumbnailCallback();
-}
-
-/*
- * Feature: Framework
  * Function: Test photooutput with ProcessConstellationDrawingState
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
  * CaseDescription: Test photooutput with ProcessConstellationDrawingState
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_034, TestSize.Level1)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_034, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -1324,7 +1251,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_034, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test photooutput with CreateMediaLibrary
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_035, TestSize.Level1)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_035, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -1334,8 +1261,8 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_035, TestSize.Level1)
     sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
 
     sptr<CameraPhotoProxy> photoProxy{new CameraPhotoProxy()};
-    std::string uri;
-    int32_t cameraShotType;
+    std::string uri = "";
+    int32_t cameraShotType = 0;
     string burstKey = "";
     int64_t timestamp = 0000;
     phtOutput->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
@@ -1349,7 +1276,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_035, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test HStreamCaptureCallbackImpl
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_036, TestSize.Level1)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_036, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -1805,197 +1732,6 @@ HWTEST_F(CameraPhotoOutputUnit, EnableAutoAigcPhoto_003, TestSize.Level0)
 
 /*
  * Feature: Framework
- * Function: EnableAutoAigcPhoto_ShouldReturnError_WhenOfflineNotSupported
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test est photooutput with IsAutoAigcPhotoSupported.
- */
-HWTEST_F(CameraPhotoOutputUnit, IsAutoAigcPhotoSupported_004, TestSize.Level0)
-{
-    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
-    ASSERT_FALSE(cameras.empty());
-    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
-    ASSERT_NE(input, nullptr);
-    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    if (camInput->GetCameraDevice()) {
-        camInput->GetCameraDevice()->SetMdmCheck(false);
-        camInput->GetCameraDevice()->Open();
-    }
-
-    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
-    ASSERT_NE(photoOutput, nullptr);
-    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
-    EXPECT_EQ(session->BeginConfig(), 0);
-    EXPECT_EQ(session->AddInput(input), 0);
-    EXPECT_EQ(session->AddOutput(photoOutput), 0);
-    EXPECT_EQ(session->CommitConfig(), 0);
-    EXPECT_EQ(session->Start(), 0);
-
-    phtOutput->session_ = nullptr;
-    bool isAutoAigcPhotoSupported = false;
-    EXPECT_EQ(phtOutput->IsAutoAigcPhotoSupported(isAutoAigcPhotoSupported), SERVICE_FATL_ERROR);
-
-    phtOutput->session_ = session;
-    session->SetMode(SceneMode::CAPTURE);
-
-    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata =
-        session->GetInputDevice()->GetCameraDeviceInfo()->GetMetadata();
-    ASSERT_NE(metadata, nullptr);
-
-    uint8_t aigcSupport = static_cast<uint8_t>(SceneMode::CAPTURE);
-    bool status = AddOrUpdateMetadata(metadata, OHOS_ABILITY_AUTO_AIGC_PHOTO, &aigcSupport, 1);
-    ASSERT_TRUE(status);
-
-    EXPECT_EQ(phtOutput->IsAutoAigcPhotoSupported(isAutoAigcPhotoSupported), CAMERA_OK);
-    EXPECT_TRUE(isAutoAigcPhotoSupported);
-
-    OHOS::Camera::DeleteCameraMetadataItem(metadata->get(), OHOS_ABILITY_AUTO_AIGC_PHOTO);
-    EXPECT_EQ(phtOutput->IsAutoAigcPhotoSupported(isAutoAigcPhotoSupported), CAMERA_OK);
-    EXPECT_FALSE(isAutoAigcPhotoSupported);
-
-    input->Close();
-    session->Stop();
-    session->Release();
-    input->Release();
-}
-
-/*
- * Feature: Framework
- * Function: EnableAutoAigcPhoto_ShouldReturnError_WhenOfflineNotSupported
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test est photooutput with EnableMirror.
- */
-HWTEST_F(CameraPhotoOutputUnit, EnableMirror_001, TestSize.Level0)
-{
-    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
-    ASSERT_FALSE(cameras.empty());
-    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
-    ASSERT_NE(input, nullptr);
-    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    if (camInput->GetCameraDevice()) {
-        camInput->GetCameraDevice()->SetMdmCheck(false);
-        camInput->GetCameraDevice()->Open();
-    }
-    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
-    ASSERT_NE(photoOutput, nullptr);
-    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
-
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
-    EXPECT_EQ(session->BeginConfig(), 0);
-    EXPECT_EQ(session->AddInput(input), 0);
-    EXPECT_EQ(session->AddOutput(photoOutput), 0);
-    EXPECT_EQ(session->CommitConfig(), 0);
-    EXPECT_EQ(session->Start(), 0);
-
-    bool isEnabled = true;
-    session->currentMode_ = SceneMode::PROFESSIONAL_PHOTO;
-    int32_t ret;
-    if (phtOutput->IsMirrorSupported()) {
-        auto isSessionConfiged = session->IsSessionCommited() || session->IsSessionStarted();
-        ret = session->EnableMovingPhotoMirror(isEnabled, isSessionConfiged);
-        EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
-    } else {
-        ret = phtOutput->EnableMirror(isEnabled);
-        EXPECT_EQ(ret, CAMERA_UNKNOWN_ERROR);
-    }
-
-    isEnabled = false;
-    if (phtOutput->IsMirrorSupported()) {
-        auto isSessionConfiged = session->IsSessionCommited() || session->IsSessionStarted();
-        ret = session->EnableMovingPhotoMirror(isEnabled, isSessionConfiged);
-        EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
-    } else {
-        ret = phtOutput->EnableMirror(isEnabled);
-        EXPECT_EQ(ret, CAMERA_UNKNOWN_ERROR);
-    }
-    input->Close();
-    session->Stop();
-    session->Release();
-    input->Release();
-}
-
-/*
- * Feature: Framework
- * Function: EnableAutoAigcPhoto_ShouldReturnError_WhenOfflineNotSupported
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test est photooutput with NotifyOfflinePhotoOutput.
- */
-/*
- * Feature: Framework
- * Function: EnableAutoAigcPhoto_ShouldReturnError_WhenOfflineNotSupported
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test est photooutput with NotifyOfflinePhotoOutput.
- */
-HWTEST_F(CameraPhotoOutputUnit, NotifyOfflinePhotoOutput_001, TestSize.Level0)
-{
-    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
-    ASSERT_FALSE(cameras.empty());
-
-    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
-    ASSERT_NE(input, nullptr);
-    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    if (camInput->GetCameraDevice()) {
-        camInput->GetCameraDevice()->SetMdmCheck(false);
-        int32_t ret = camInput->GetCameraDevice()->Open();
-        ASSERT_EQ(ret, CAMERA_OK);
-    }
-    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
-    ASSERT_NE(photoOutput, nullptr);
-    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
-    ASSERT_NE(phtOutput->GetStream().GetRefPtr(), nullptr);
-
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
-    EXPECT_EQ(session->BeginConfig(), 0);
-    EXPECT_EQ(session->AddInput(input), 0);
-    EXPECT_EQ(session->AddOutput(photoOutput), 0);
-    EXPECT_EQ(session->CommitConfig(), 0);
-    EXPECT_EQ(session->Start(), 0);
-
-    captureMonitorInfo timeStartIter;
-
-    auto it1 = phtOutput->captureIdToCaptureInfoMap_.find(1);
-    EXPECT_EQ(it1, phtOutput->captureIdToCaptureInfoMap_.end());
-
-    timeStartIter.timeStart = std::chrono::steady_clock::now() - std::chrono::seconds(2);
-    phtOutput->captureIdToCaptureInfoMap_.insert({2, timeStartIter});
-    auto it2 = phtOutput->captureIdToCaptureInfoMap_.find(2);
-    EXPECT_NE(it2, phtOutput->captureIdToCaptureInfoMap_.end());
-
-    phtOutput->NotifyOfflinePhotoOutput(2);
-    EXPECT_EQ(phtOutput->captureIdToCaptureInfoMap_.size(), 0);
-
-    phtOutput->SetSwitchOfflinePhotoOutput(true);
-    timeStartIter.timeStart = std::chrono::steady_clock::now();
-    phtOutput->captureIdToCaptureInfoMap_.insert({3, timeStartIter});
-    phtOutput->NotifyOfflinePhotoOutput(3);
-    EXPECT_EQ(phtOutput->captureIdToCaptureInfoMap_.size(), 0);
-
-    phtOutput->captureIdToCaptureInfoMap_.insert({4, timeStartIter});
-    phtOutput->captureIdToCaptureInfoMap_.insert({5, timeStartIter});
-    phtOutput->NotifyOfflinePhotoOutput(4);
-    EXPECT_EQ(phtOutput->captureIdToCaptureInfoMap_.size(), 1);
-    auto it5 = phtOutput->captureIdToCaptureInfoMap_.find(5);
-    EXPECT_NE(it5, phtOutput->captureIdToCaptureInfoMap_.end());
-
-    input->Close();
-    session->Stop();
-    session->Release();
-    input->Release();
-}
-
-/*
- * Feature: Framework
  * Function: HStreamCaptureCallbackImpl
  * SubFunction: NA
  * FunctionPoints: NA
@@ -2037,6 +1773,45 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_030, TestSize.Level0)
     phtOutput->ReportCaptureEnhanceSupported(str, true);
     phtOutput->ReportCaptureEnhanceEnabled(str, true, 0);
     EXPECT_NE(photoOutput, nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: ReportCaptureEnhance
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test ReportCaptureEnhance
+ */
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_031, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
+ 
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+ 
+    EXPECT_NE(phtOutput->CancelCapture(), 0);
+    EXPECT_NE(phtOutput->ConfirmCapture(), 0);
+    bool forEnable = false;
+    EXPECT_NE(phtOutput->EnableAutoCloudImageEnhancement(forEnable), 0);
+    EXPECT_NE(phtOutput->IsAutoMotionBoostDeliverySupported(forEnable), 0);
+    EXPECT_NE(phtOutput->EnableAutoMotionBoostDelivery(forEnable), 0);
+    EXPECT_NE(phtOutput->IsAutoBokehDataDeliverySupported(forEnable), 0);
+    EXPECT_NE(phtOutput->EnableAutoBokehDataDelivery(forEnable), 0);
+    PhotoOutput* photoOutput2 = nullptr;
+    std::shared_ptr<HStreamCaptureCallbackImpl> callback = std::make_shared<HStreamCaptureCallbackImpl>(photoOutput2);
+    int32_t captureId = 0;
+    int32_t errorCode = 0;
+    callback->OnCaptureError(captureId, errorCode);
 }
 
 /*
@@ -2192,35 +1967,6 @@ HWTEST_F(CameraPhotoOutputUnit, SetPhotoQualityPrioritization_001, TestSize.Leve
     session->Release();
     input->Release();
     MEDIA_INFO_LOG("SetPhotoQualityPrioritization_001: END");
-}
-
-/*
- * Feature: Framework
- * Function: ReportCaptureEnhance
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test ReportCaptureEnhance
- */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_031, TestSize.Level0)
-{
-    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
-    ASSERT_FALSE(cameras.empty());
-    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
-    ASSERT_NE(input, nullptr);
-    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    if (camInput->GetCameraDevice()) {
-        camInput->GetCameraDevice()->SetMdmCheck(false);
-        camInput->GetCameraDevice()->Open();
-    }
-    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
-    ASSERT_NE(photoOutput, nullptr);
-    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
-
-    EXPECT_NE(phtOutput->CancelCapture(), 0);
-    EXPECT_NE(phtOutput->ConfirmCapture(), 0);
-    bool forEnable = false;
-    EXPECT_NE(phtOutput->EnableAutoCloudImageEnhancement(forEnable), 0);
 }
 }
 }

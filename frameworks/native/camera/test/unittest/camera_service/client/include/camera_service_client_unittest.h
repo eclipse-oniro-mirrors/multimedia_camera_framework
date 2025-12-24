@@ -146,7 +146,8 @@ class AppCallback : public CameraManagerCallback,
                     public FeatureDetectionStatusCallback,
                     public FoldListener,
                     public LcdFlashStatusCallback,
-                    public BrightnessStatusCallback {
+                    public BrightnessStatusCallback,
+                    public ControlCenterStatusListener {
 public:
     void OnCameraStatusChanged(const CameraStatusInfo& cameraDeviceInfo) const override;
 
@@ -194,9 +195,17 @@ public:
 
     void OnFoldStatusChanged(const FoldStatusInfo &foldStatusInfo) const override;
 
+    void OnControlCenterStatusChanged(bool status) const override;
+
     void OnLcdFlashStatusChanged(LcdFlashStatusInfo lcdFlashStatusInfo) override;
 
     void OnOfflineDeliveryFinished(const int32_t captureId)  const override;
+
+    void OnConstellationDrawingState(const int32_t drawingState) const override;
+
+    void OnFramePaused() const override;
+
+    void OnFrameResumed() const override;
 };
 
 class CameraServiceClientUnit : public testing::Test {

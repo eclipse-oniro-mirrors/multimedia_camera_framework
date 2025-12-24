@@ -36,6 +36,7 @@ ohos_shared_library("camera_napi") {
   branch_protector_ret = "pac_ret"
 
   public_configs = [ ":camera_napi_public_config" ]
+
   sources = [
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/native_module_ohos_camera.cpp",
   ]
@@ -47,27 +48,27 @@ ohos_shared_library("camera_napi") {
     "${multimedia_camera_framework_path}/frameworks/native/camera/extension:camera_framework_ex",
   ]
   external_deps = [
-    "c_utils:utils",
     "data_share:datashare_common",
     "data_share:datashare_consumer",
-    "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
     "drivers_interface_camera:libcamera_proxy_1.0",
     "drivers_interface_camera:libcamera_proxy_1.1",
-    "drivers_interface_camera:libmap_data_sequenceable_1.0",
-    "drivers_interface_camera:metadata",
-    "drivers_interface_display:libdisplay_commontype_proxy_1.0",
+    "drivers_interface_display:display_commontype_idl_headers",
     "graphic_2d:color_manager",
     "graphic_surface:surface",
     "hilog:libhilog",
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
-    "image_framework:image",
     "image_framework:image_native",
     "ipc:ipc_core",
-    "media_library:medialibrary_nutils",
     "napi:ace_napi",
-    "qos_manager:qos",
     "samgr:samgr_proxy",
+    "c_utils:utils",
+  ]
+
+  public_external_deps = [
+    "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
+    "drivers_interface_camera:libmap_data_sequenceable_1.0",
+    "drivers_interface_camera:metadata",
   ]
 
   defines = []
@@ -148,14 +149,18 @@ if (gen_camera_picker) {
       "ability_runtime:ui_extension",  # ui_extension_context.h
       "ace_engine:ace_uicontent",
       "c_utils:utils",
-      "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
-      "drivers_interface_camera:libmap_data_sequenceable_1.0",
-      "drivers_interface_camera:metadata",
       "hilog:libhilog",
       "hisysevent:libhisysevent",
       "hitrace:hitrace_meter",
+      "init:libbegetutil",  # parameters.h
       "napi:ace_napi",  # native_reference <-- camera_napi_utils.h
       "samgr:samgr_proxy",
+      "window_manager:libwm",  # windows.h
+    ]
+    public_external_deps = [
+      "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
+      "drivers_interface_camera:libmap_data_sequenceable_1.0",
+      "drivers_interface_camera:metadata",
     ]
     sanitize = {
       cfi = true
@@ -199,10 +204,10 @@ ohos_shared_library("camera_napi_base") {
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/common/qos_utils.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/dynamic_loader/camera_napi_ex_manager.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/dynamic_loader/camera_napi_ex_proxy.cpp",
-    "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/listener_base.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/input/camera_input_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/input/camera_manager_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/input/camera_napi.cpp",
+    "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/listener_base.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/mode/photo_session_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/mode/secure_camera_session_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/mode/video_session_napi.cpp",
@@ -212,6 +217,8 @@ ohos_shared_library("camera_napi_base") {
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/output/photo_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/output/photo_output_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/output/preview_output_napi.cpp",
+    "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/output/unify_movie_file_output_napi.cpp",
+    "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/output/video_capability_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/output/video_output_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/session/camera_session_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/session/control_center_session_napi.cpp",
@@ -225,15 +232,11 @@ ohos_shared_library("camera_napi_base") {
     "c_utils:utils",
     "data_share:datashare_common",
     "data_share:datashare_consumer",
-    "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
     "drivers_interface_camera:libcamera_proxy_1.0",
     "drivers_interface_camera:libcamera_proxy_1.1",
-    "drivers_interface_camera:libmap_data_sequenceable_1.0",
-    "drivers_interface_camera:metadata",
-    "drivers_interface_display:libdisplay_commontype_proxy_1.0",
+    "drivers_interface_display:display_commontype_idl_headers",
     "graphic_2d:color_manager",
     "graphic_surface:surface",
-    "hilog:libhilog",
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
     "image_framework:image",
@@ -243,6 +246,12 @@ ohos_shared_library("camera_napi_base") {
     "napi:ace_napi",
     "qos_manager:qos",
     "samgr:samgr_proxy",
+  ]
+
+  public_external_deps = [
+    "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
+    "drivers_interface_camera:libmap_data_sequenceable_1.0",
+    "drivers_interface_camera:metadata",
   ]
 
   defines = []
@@ -277,6 +286,55 @@ ohos_shared_library("camera_napi_base") {
     cflags += [ "-DIS_RELEASE_VERSION" ]
   }
   cflags_cc = cflags
+  part_name = "camera_framework"
+  subsystem_name = "multimedia"
+}
+
+ohos_shared_library("resourcemanager_napi") {
+  branch_protector_ret = "pac_ret"
+  include_dirs = [ "${multimedia_camera_framework_path}/interfaces/kits/js/camera_napi/include" ]
+  sources = [
+    "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/camera_napi_utils.cpp",
+    "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/napi_ref_manager.cpp",
+    "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/camera_napi_security_utils.cpp",
+    "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/native_module_ohos_resource_manager.cpp",
+    "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/resource_manager/resource_manager_napi.cpp",
+    "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/resource_manager/feature_result_parser.cpp"
+  ]
+  deps = [
+    ":camera_napi_base",
+    "${multimedia_camera_framework_path}/frameworks/native/camera/base:camera_framework",
+  ]
+ 
+  # configuration.h <-- context.h <-- ability_context.h
+  # pixel_map.h <-- iability_callback.h <-- ability_context.h
+  external_deps = [
+    "c_utils:utils",
+    "graphic_surface:surface",
+    "hilog:libhilog",
+    "hisysevent:libhisysevent",
+    "hitrace:hitrace_meter",
+    "init:libbegetutil",  # parameters.h
+    "napi:ace_napi",  # native_reference <-- camera_napi_utils.h
+    "samgr:samgr_proxy",
+    "window_manager:libwm",  # windows.h
+  ]
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+  cflags = [
+    "-fPIC",
+    "-Os",
+  ]
+  version_script = "libcamera_napi.map"
+ 
+  if (build_variant == "user") {
+    cflags += [ "-DIS_RELEASE_VERSION" ]
+  }
+  cflags_cc = cflags
+  relative_install_dir = "module/multimedia"
   part_name = "camera_framework"
   subsystem_name = "multimedia"
 }

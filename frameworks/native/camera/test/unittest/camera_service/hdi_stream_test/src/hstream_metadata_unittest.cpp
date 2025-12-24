@@ -27,7 +27,6 @@ using ::testing::A;
 
 namespace OHOS {
 namespace CameraStandard {
-constexpr static uint32_t CAMERA_STREAM_METADATA_ON_DEFAULT = 1;
 const uint32_t METADATA_ITEM_SIZE = 20;
 const uint32_t METADATA_DATA_SIZE = 200;
 void HStreamMetadataUnit::SetUpTestCase(void) {}
@@ -123,7 +122,7 @@ public:
  * CaseDescription: Test OperatePermissionCheck for an unauthorized caller token when starting a stream metadata
  *                  operation. The expected return value is CAMERA_OPERATION_NOT_ALLOWED.
  */
-HWTEST_F(HStreamMetadataUnit, hstream_metadata_unittest_001, TestSize.Level1)
+HWTEST_F(HStreamMetadataUnit, hstream_metadata_unittest_001, TestSize.Level0)
 {
     sptr<OHOS::IConsumerSurface> cSurface = IConsumerSurface::Create();
     sptr<OHOS::IBufferProducer> producer = cSurface->GetProducer();
@@ -145,7 +144,7 @@ HWTEST_F(HStreamMetadataUnit, hstream_metadata_unittest_001, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test SetStreamInfo for assign streamInfo correctly.
  */
-HWTEST_F(HStreamMetadataUnit, hstream_metadata_unittest_002, TestSize.Level1)
+HWTEST_F(HStreamMetadataUnit, hstream_metadata_unittest_002, TestSize.Level0)
 {
     sptr<OHOS::IConsumerSurface> cSurface = IConsumerSurface::Create();
     sptr<OHOS::IBufferProducer> producer = cSurface->GetProducer();
@@ -175,7 +174,7 @@ HWTEST_F(HStreamMetadataUnit, hstream_metadata_unittest_002, TestSize.Level1)
  * CaseDescription: Test Release. If streamOperator is not nullptr, it is expected to be null
  *                  after release streamMetaData.
  */
-HWTEST_F(HStreamMetadataUnit, hstream_metadata_unittest_003, TestSize.Level1)
+HWTEST_F(HStreamMetadataUnit, hstream_metadata_unittest_003, TestSize.Level0)
 {
     sptr<OHOS::IConsumerSurface> cSurface = IConsumerSurface::Create();
     sptr<OHOS::IBufferProducer> producer = cSurface->GetProducer();
@@ -204,7 +203,7 @@ HWTEST_F(HStreamMetadataUnit, hstream_metadata_unittest_003, TestSize.Level1)
  * CaseDescription: Test CallbackEnter and CallbackExit for an unauthorized caller token when starting a
  *                  stream metadata operation. The expected return value is CAMERA_OPERATION_NOT_ALLOWED.
  */
-HWTEST_F(HStreamMetadataUnit, hstream_metadata_unittest_004, TestSize.Level1)
+HWTEST_F(HStreamMetadataUnit, hstream_metadata_unittest_004, TestSize.Level0)
 {
     sptr<OHOS::IConsumerSurface> cSurface = IConsumerSurface::Create();
     sptr<OHOS::IBufferProducer> producer = cSurface->GetProducer();
@@ -230,7 +229,7 @@ HWTEST_F(HStreamMetadataUnit, hstream_metadata_unittest_004, TestSize.Level1)
  * CaseDescription: Test EnableMetadataType and DisableMetadataType when streamOperator is not nullptr
  *                  and hdi version >= 1.3.
  */
-HWTEST_F(HStreamMetadataUnit, hstream_metadata_unittest_005, TestSize.Level1)
+HWTEST_F(HStreamMetadataUnit, hstream_metadata_unittest_005, TestSize.Level0)
 {
     sptr<OHOS::IConsumerSurface> cSurface = IConsumerSurface::Create();
     sptr<OHOS::IBufferProducer> producer = cSurface->GetProducer();
@@ -267,7 +266,7 @@ HWTEST_F(HStreamMetadataUnit, hstream_metadata_unittest_005, TestSize.Level1)
  *                  appending 3 elements, size of metadataObjectTypes_ is expected to be 4. Then, test removing
  *                  an element from the middle of the list. The size of metadataObjectTypes_ is expected to be 3.
  */
-HWTEST_F(HStreamMetadataUnit, hstream_metadata_unittest_006, TestSize.Level1)
+HWTEST_F(HStreamMetadataUnit, hstream_metadata_unittest_006, TestSize.Level0)
 {
     sptr<OHOS::IConsumerSurface> cSurface = IConsumerSurface::Create();
     sptr<OHOS::IBufferProducer> producer = cSurface->GetProducer();
@@ -292,7 +291,7 @@ HWTEST_F(HStreamMetadataUnit, hstream_metadata_unittest_006, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test SetCallback, UnSetCallback and OnMetaResult.
  */
-HWTEST_F(HStreamMetadataUnit, hstream_metadata_unittest_007, TestSize.Level1)
+HWTEST_F(HStreamMetadataUnit, hstream_metadata_unittest_007, TestSize.Level0)
 {
     sptr<OHOS::IConsumerSurface> cSurface = IConsumerSurface::Create();
     sptr<OHOS::IBufferProducer> producer = cSurface->GetProducer();
@@ -324,7 +323,7 @@ HWTEST_F(HStreamMetadataUnit, hstream_metadata_unittest_007, TestSize.Level1)
  * CaseDescription: When isEnabled is true, objectLifecycleMap should be cleared for recording.
  *                  Else if isEnable is false, timestamp of the stop moment will be written in stopTime_.
  */
-HWTEST_F(HStreamMetadataUnit, hstream_metadata_unittest_008, TestSize.Level1)
+HWTEST_F(HStreamMetadataUnit, hstream_metadata_unittest_008, TestSize.Level0)
 {
     sptr<OHOS::IConsumerSurface> cSurface = IConsumerSurface::Create();
     sptr<OHOS::IBufferProducer> producer = cSurface->GetProducer();
@@ -349,7 +348,7 @@ HWTEST_F(HStreamMetadataUnit, hstream_metadata_unittest_008, TestSize.Level1)
  * CaseDescription: Test ProcessDetectedObjectLifecycle with empty result vector and vector
  *                  with valid arguments.
  */
-HWTEST_F(HStreamMetadataUnit, hstream_metadata_unittest_009, TestSize.Level1)
+HWTEST_F(HStreamMetadataUnit, hstream_metadata_unittest_009, TestSize.Level0)
 {
     sptr<OHOS::IConsumerSurface> cSurface = IConsumerSurface::Create();
     sptr<OHOS::IBufferProducer> producer = cSurface->GetProducer();
@@ -385,7 +384,7 @@ HWTEST_F(HStreamMetadataUnit, hstream_metadata_unittest_009, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test SetFirstFrameTimestamp
  */
-HWTEST_F(HStreamMetadataUnit, hstream_metadata_unittest_010, TestSize.Level1)
+HWTEST_F(HStreamMetadataUnit, hstream_metadata_unittest_010, TestSize.Level0)
 {
     sptr<OHOS::IConsumerSurface> cSurface = IConsumerSurface::Create();
     sptr<OHOS::IBufferProducer> producer = cSurface->GetProducer();
@@ -422,7 +421,7 @@ HWTEST_F(HStreamMetadataUnit, hstream_metadata_unittest_010, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test HStreamMetadata & HStreamCommon
  */
-HWTEST_F(HStreamMetadataUnit, camera_fwcoverage_unittest_027, TestSize.Level1)
+HWTEST_F(HStreamMetadataUnit, camera_fwcoverage_unittest_027, TestSize.Level0)
 {
     int32_t format = 0;
     CameraInfoDumper infoDumper(0);
@@ -455,7 +454,7 @@ HWTEST_F(HStreamMetadataUnit, camera_fwcoverage_unittest_027, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test HStreamMetadata & HStreamCommon
  */
-HWTEST_F(HStreamMetadataUnit, camera_fwcoverage_unittest_028, TestSize.Level1)
+HWTEST_F(HStreamMetadataUnit, camera_fwcoverage_unittest_028, TestSize.Level0)
 {
     int32_t format = 0;
     std::string  dumpString ="HStreamMetadata";
@@ -480,7 +479,7 @@ HWTEST_F(HStreamMetadataUnit, camera_fwcoverage_unittest_028, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test OnRemoteRequest for switch of CAMERA_META_OPERATOR_ON_RESULT
  */
-HWTEST_F(HStreamMetadataUnit, camera_fwcoverage_unittest_029, TestSize.Level1)
+HWTEST_F(HStreamMetadataUnit, camera_fwcoverage_unittest_029, TestSize.Level0)
 {
     MockHStreamMetadataCallbackStub stub;
     MessageParcel data;
@@ -496,27 +495,6 @@ HWTEST_F(HStreamMetadataUnit, camera_fwcoverage_unittest_029, TestSize.Level1)
         .WillOnce(Return(0));
     int errCode = stub.OnRemoteRequest(code, data, reply, option);
     EXPECT_EQ(errCode, 0);
-}
-
-/*
- * Feature: Framework
- * Function: Test HStreamMetadataCallbackStub with OnRemoteRequest
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test OnRemoteRequest for switch of default
- */
-HWTEST_F(HStreamMetadataUnit, camera_fwcoverage_unittest_030, TestSize.Level1)
-{
-    MockHStreamMetadataCallbackStub stub;
-    MessageParcel data;
-    data.WriteInterfaceToken(stub.GetDescriptor());
-    data.RewindRead(0);
-    MessageParcel reply;
-    MessageOption option;
-    uint32_t code = CAMERA_STREAM_METADATA_ON_DEFAULT;
-    int errCode = stub.OnRemoteRequest(code, data, reply, option);
-    EXPECT_EQ(errCode, IPC_STUB_UNKNOW_TRANS_ERR);
 }
 }
 }

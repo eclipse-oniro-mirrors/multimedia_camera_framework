@@ -101,18 +101,6 @@ void CaptureSessionProxyFuzz::CaptureSessionProxyFuzzTest6()
     sptr<IControlCenterEffectStatusCallback> callbackFunc = new (std::nothrow)ControlCenterEffectStatusCallback();
     fuzz_->SetControlCenterEffectStatusCallback(callbackFunc);
     fuzz_->UnSetControlCenterEffectStatusCallback();
-    if (captureSessionCallback != nullptr) {
-        delete captureSessionCallback;
-        captureSessionCallback = nullptr;
-    }
-    if (pressureStatusCallback != nullptr) {
-        delete pressureStatusCallback;
-        pressureStatusCallback = nullptr;
-    }
-    if (callbackFunc != nullptr) {
-        delete callbackFunc;
-        callbackFunc = nullptr;
-    }
 }
 
 void CaptureSessionProxyFuzz::CaptureSessionProxyFuzzTest7(FuzzedDataProvider &fdp)
@@ -141,6 +129,22 @@ void CaptureSessionProxyFuzz::CaptureSessionProxyFuzzTest8(FuzzedDataProvider &f
     fuzz_->SetBeautyValue(type, value, needPersist);
 }
 
+void CaptureSessionProxyFuzz::CaptureSessionProxyFuzzTest9(FuzzedDataProvider &fdp)
+{
+    sptr<IRemoteObject> remote = nullptr;
+    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    CHECK_RETURN_ELOG(!samgr, "samgr nullptr");
+    remote = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
+    CHECK_RETURN_ELOG(!remote, "remote nullptr");
+    sptr<ICameraRecorder> recorder = nullptr;
+    fuzz_->CreateRecorder(remote, recorder);
+    int32_t opMode = fdp.ConsumeIntegral<int32_t>();
+    fuzz_->AddMultiStreamOutput(remote, opMode);
+    fuzz_->RemoveMultiStreamOutput(remote);
+    bool isKeyFrameReportEnabled = fdp.ConsumeBool();
+    fuzz_->EnableKeyFrameReport(isKeyFrameReportEnabled);
+}
+
 void FuzzTest(const uint8_t *rawData, size_t size)
 {
     FuzzedDataProvider fdp(rawData, size);
@@ -163,6 +167,7 @@ void FuzzTest(const uint8_t *rawData, size_t size)
     captureSessionProxy->CaptureSessionProxyFuzzTest6();
     captureSessionProxy->CaptureSessionProxyFuzzTest7(fdp);
     captureSessionProxy->CaptureSessionProxyFuzzTest8(fdp);
+    captureSessionProxy->CaptureSessionProxyFuzzTest9(fdp);
 }
 }  // namespace CameraStandard
 }  // namespace OHOS

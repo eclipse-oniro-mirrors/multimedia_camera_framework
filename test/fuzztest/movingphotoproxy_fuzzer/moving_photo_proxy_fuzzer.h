@@ -26,7 +26,6 @@ class MovingPhotoProxyFuzzer {
 public:
     static sptr<AvcodecTaskManagerIntf> taskManagerfuzz_;
     static sptr<AudioCapturerSessionIntf> capturerSessionfuzz_;
-    static sptr<MovingPhotoVideoCacheIntf> videoCachefuzz_;
     static void MovingPhotoProxyFuzzTest(FuzzedDataProvider& fdp);
     static void SetVideoIdFuzzTest(FuzzedDataProvider& fdp);
     static void SetDeferredVideoEnhanceFlagFuzzTest(FuzzedDataProvider& fdp);

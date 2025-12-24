@@ -111,6 +111,12 @@ std::unique_ptr<T> CreateUnique(Args&&... args)
     return std::make_unique<MakeUniqueHelper<T, Args &&...>>(std::forward<Args>(args)...);
 }
 
+template <typename T, typename U>
+inline std::shared_ptr<T> ReinterpretPointerCast(const std::shared_ptr<U>& ptr) noexcept
+{
+    return std::shared_ptr<T>(ptr, reinterpret_cast<T *>(ptr.get()));
+}
+
 inline int32_t GetVersionId(uint32_t major, uint32_t minor)
 {
     const uint32_t offset = 8;
@@ -127,7 +133,7 @@ inline bool StrToLL(const std::string& str, long long& value, int32_t base)
         (errno == ERANGE && (value == LLONG_MAX || value == LLONG_MIN)) || (errno != 0 && value == 0),
         false, "strtoll converse error,str=%{public}s", str.c_str());
     DP_CHECK_ERROR_RETURN_RET_LOG(end == add, false, "strtoll no digit find");
-    DP_CHECK_ERROR_RETURN_RET_LOG(end[0] != '\0', false, "strtoll no all find");
+    DP_CHECK_ERROR_RETURN_RET_LOG(end[0] != '\0', false, "strtoll no all digit");
     return true;
 }
 
@@ -141,7 +147,7 @@ inline bool StrToULL(const std::string& str, unsigned long long& value)
         (errno == ERANGE && value == ULLONG_MAX) || (errno != 0 && value == 0),
         false, "strtoull converse error,str=%{public}s", str.c_str());
     DP_CHECK_ERROR_RETURN_RET_LOG(end == add, false, "strtoull no digit find");
-    DP_CHECK_ERROR_RETURN_RET_LOG(end[0] != '\0', false, "strtoull no all find");
+    DP_CHECK_ERROR_RETURN_RET_LOG(end[0] != '\0', false, "strtoull no all digit");
     return true;
 }
 

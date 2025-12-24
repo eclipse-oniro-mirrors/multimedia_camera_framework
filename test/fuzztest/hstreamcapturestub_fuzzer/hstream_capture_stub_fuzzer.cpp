@@ -31,49 +31,14 @@
 #include "system_ability_definition.h"
 #include "iservice_registry.h"
 
-namespace OHOS {
-namespace CameraStandard {
-static const uint8_t *RAW_DATA = nullptr;
-const size_t THRESHOLD = 10;
-static size_t g_dataSize = 0;
-size_t max_length = 64;
-static const std::u16string g_interfaceToken = u"OHOS.CameraStandard.IStreamCapture";
-static size_t g_pos;
-const int32_t NUM_10 = 10;
-const int32_t NUM_100 = 100;
-std::shared_ptr<HStreamCaptureStubFuzz> HStreamCaptureStubFuzzer::fuzz_{nullptr};
+using namespace OHOS::CameraStandard;
+static const size_t MAX_LENGTH = 64;
+static const int32_t NUM_10 = 10;
+static const int32_t NUM_100 = 100;
+static const std::u16string INTERFACE_TOKEN = u"OHOS.CameraStandard.IStreamCapture";
+static std::shared_ptr<HStreamCaptureStubFuzz> g_hStreamCaptureStubFuzz;
 
-/*
- * describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
- * tips: only support basic type
- */
-template <class T>
-T GetData()
-{
-    T object{};
-    size_t objectSize = sizeof(object);
-    if (RAW_DATA == nullptr || objectSize > g_dataSize - g_pos) {
-        return object;
-    }
-    errno_t ret = memcpy_s(&object, objectSize, RAW_DATA + g_pos, objectSize);
-    if (ret != EOK) {
-        return {};
-    }
-    g_pos += objectSize;
-    return object;
-}
-
-template <class T>
-uint32_t GetArrLength(T &arr)
-{
-    if (arr == nullptr) {
-        MEDIA_INFO_LOG("%{public}s: The array length is equal to 0", __func__);
-        return 0;
-    }
-    return sizeof(arr) / sizeof(arr[0]);
-}
-
-void HStreamCaptureStubFuzzer::HStreamCaptureStubFuzzTest1(FuzzedDataProvider &fdp)
+void HStreamCaptureStubFuzzTest1(FuzzedDataProvider& fdp)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -82,14 +47,14 @@ void HStreamCaptureStubFuzzer::HStreamCaptureStubFuzzTest1(FuzzedDataProvider &f
     CHECK_RETURN(photoSurface == nullptr);
     sptr<IBufferProducer> producer = photoSurface->GetProducer();
     CHECK_RETURN_ELOG(!producer, "producer is nullptr");
-    data.WriteInterfaceToken(g_interfaceToken);
-    data.WriteString16(Str8ToStr16(fdp.ConsumeRandomLengthString(max_length)));
+    data.WriteInterfaceToken(INTERFACE_TOKEN);
+    data.WriteString16(Str8ToStr16(fdp.ConsumeRandomLengthString(MAX_LENGTH)));
     data.WriteRemoteObject(producer->AsObject());
-    fuzz_->OnRemoteRequestInner(
+    g_hStreamCaptureStubFuzz->OnRemoteRequestInner(
         static_cast<uint32_t>(IStreamCaptureIpcCode::COMMAND_SET_BUFFER_PRODUCER_INFO), data, reply, option);
 }
 
-void HStreamCaptureStubFuzzer::HStreamCaptureStubFuzzTest2(FuzzedDataProvider &fdp)
+void HStreamCaptureStubFuzzTest2(FuzzedDataProvider& fdp)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -99,105 +64,98 @@ void HStreamCaptureStubFuzzer::HStreamCaptureStubFuzzTest2(FuzzedDataProvider &f
     sptr<IBufferProducer> producer = photoSurface->GetProducer();
     CHECK_RETURN_ELOG(!producer, "producer is nullptr");
     auto value = fdp.ConsumeBool();
-    data.WriteInterfaceToken(g_interfaceToken);
+    data.WriteInterfaceToken(INTERFACE_TOKEN);
     data.WriteInt32(value);
     data.WriteRemoteObject(producer->AsObject());
-    fuzz_->OnRemoteRequestInner(
+    g_hStreamCaptureStubFuzz->OnRemoteRequestInner(
         static_cast<uint32_t>(IStreamCaptureIpcCode::COMMAND_SET_THUMBNAIL), data, reply, option);
 }
 
-void HStreamCaptureStubFuzzer::HStreamCaptureStubFuzzTest3()
-{
-    MessageParcel data;
-    auto value = GetData<int32_t>();
-    data.WriteInt32(value);
-}
-
-void HStreamCaptureStubFuzzer::HStreamCaptureStubFuzzTest4(FuzzedDataProvider &fdp)
+void HStreamCaptureStubFuzzTest4(FuzzedDataProvider& fdp)
 {
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
     auto value = fdp.ConsumeIntegral<int32_t>();
-    data.WriteInterfaceToken(g_interfaceToken);
+    data.WriteInterfaceToken(INTERFACE_TOKEN);
     data.WriteInt32(value);
-    fuzz_->OnRemoteRequestInner(
+    g_hStreamCaptureStubFuzz->OnRemoteRequestInner(
         static_cast<uint32_t>(IStreamCaptureIpcCode::COMMAND_DEFER_IMAGE_DELIVERY_FOR), data, reply, option);
 }
 
-void HStreamCaptureStubFuzzer::HStreamCaptureStubFuzzTest5(FuzzedDataProvider &fdp)
+void HStreamCaptureStubFuzzTest5(FuzzedDataProvider& fdp)
 {
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
     auto value = fdp.ConsumeIntegral<int32_t>();
-    data.WriteInterfaceToken(g_interfaceToken);
+    data.WriteInterfaceToken(INTERFACE_TOKEN);
     data.WriteInt32(value);
-    fuzz_->OnRemoteRequestInner(
+    g_hStreamCaptureStubFuzz->OnRemoteRequestInner(
         static_cast<uint32_t>(IStreamCaptureIpcCode::COMMAND_SET_MOVING_PHOTO_VIDEO_CODEC_TYPE), data, reply, option);
 }
 
-void HStreamCaptureStubFuzzer::HStreamCaptureStubFuzzTest6(FuzzedDataProvider &fdp)
+void HStreamCaptureStubFuzzTest6(FuzzedDataProvider& fdp)
 {
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
     auto value = fdp.ConsumeIntegral<int32_t>();
-    data.WriteInterfaceToken(g_interfaceToken);
+    data.WriteInterfaceToken(INTERFACE_TOKEN);
     data.WriteInt32(value);
-    fuzz_->OnRemoteRequestInner(
+    g_hStreamCaptureStubFuzz->OnRemoteRequestInner(
         static_cast<uint32_t>(IStreamCaptureIpcCode::COMMAND_CONFIRM_CAPTURE), data, reply, option);
 }
 
-void HStreamCaptureStubFuzzer::HStreamCaptureStubFuzzTest7(FuzzedDataProvider &fdp)
+void HStreamCaptureStubFuzzTest7(FuzzedDataProvider& fdp)
 {
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
     auto value = fdp.ConsumeBool();
-    data.WriteInterfaceToken(g_interfaceToken);
+    data.WriteInterfaceToken(INTERFACE_TOKEN);
     data.WriteInt32(value);
-    fuzz_->OnRemoteRequestInner(
+    g_hStreamCaptureStubFuzz->OnRemoteRequestInner(
         static_cast<uint32_t>(IStreamCaptureIpcCode::COMMAND_ENABLE_RAW_DELIVERY), data, reply, option);
 }
 
-void HStreamCaptureStubFuzzer::HStreamCaptureStubFuzzTest8(FuzzedDataProvider &fdp)
+void HStreamCaptureStubFuzzTest8(FuzzedDataProvider& fdp)
 {
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
     auto value = fdp.ConsumeBool();
-    data.WriteInterfaceToken(g_interfaceToken);
+    data.WriteInterfaceToken(INTERFACE_TOKEN);
     data.WriteInt32(value);
-    fuzz_->OnRemoteRequestInner(
+    g_hStreamCaptureStubFuzz->OnRemoteRequestInner(
         static_cast<uint32_t>(IStreamCaptureIpcCode::COMMAND_ENABLE_MOVING_PHOTO), data, reply, option);
 }
 
-void HStreamCaptureStubFuzzer::HStreamCaptureStubFuzzTest9(FuzzedDataProvider &fdp)
+void HStreamCaptureStubFuzzTest9(FuzzedDataProvider& fdp)
 {
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
     auto value = fdp.ConsumeBool();
-    data.WriteInterfaceToken(g_interfaceToken);
+    data.WriteInterfaceToken(INTERFACE_TOKEN);
     data.WriteInt32(value);
-    fuzz_->OnRemoteRequestInner(
+    g_hStreamCaptureStubFuzz->OnRemoteRequestInner(
         static_cast<uint32_t>(IStreamCaptureIpcCode::COMMAND_SET_CAMERA_PHOTO_ROTATION), data, reply, option);
 }
 
-void HStreamCaptureStubFuzzer::HStreamCaptureStubFuzzTest10(FuzzedDataProvider &fdp)
+void HStreamCaptureStubFuzzTest10(FuzzedDataProvider& fdp)
 {
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
     auto value = fdp.ConsumeBool();
-    data.WriteInterfaceToken(g_interfaceToken);
+    data.WriteInterfaceToken(INTERFACE_TOKEN);
     data.WriteInt32(value);
-    fuzz_->OnRemoteRequestInner(
+    g_hStreamCaptureStubFuzz->OnRemoteRequestInner(
         static_cast<uint32_t>(IStreamCaptureIpcCode::COMMAND_ENABLE_OFFLINE_PHOTO), data, reply, option);
 }
 
-void HStreamCaptureStubFuzzer::HStreamCaptureStubFuzzTest11()
+void HStreamCaptureStubFuzzTest11(FuzzedDataProvider&)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -205,23 +163,23 @@ void HStreamCaptureStubFuzzer::HStreamCaptureStubFuzzTest11()
     std::shared_ptr<OHOS::Camera::CameraMetadata> captureSettings =
         std::make_shared<OHOS::Camera::CameraMetadata>(NUM_10, NUM_100);
     CHECK_RETURN_ELOG(!captureSettings, "captureSettings is nullptr");
-    data.WriteInterfaceToken(g_interfaceToken);
+    data.WriteInterfaceToken(INTERFACE_TOKEN);
     data.WriteParcelable(captureSettings.get());
-    fuzz_->OnRemoteRequestInner(
+    g_hStreamCaptureStubFuzz->OnRemoteRequestInner(
         static_cast<uint32_t>(IStreamCaptureIpcCode::COMMAND_CAPTURE), data, reply, option);
 }
 
-void HStreamCaptureStubFuzzer::HStreamCaptureStubFuzzTest12()
+void HStreamCaptureStubFuzzTest12(FuzzedDataProvider&)
 {
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
-    data.WriteInterfaceToken(g_interfaceToken);
-    fuzz_->OnRemoteRequestInner(
+    data.WriteInterfaceToken(INTERFACE_TOKEN);
+    g_hStreamCaptureStubFuzz->OnRemoteRequestInner(
         static_cast<uint32_t>(IStreamCaptureIpcCode::COMMAND_CANCEL_CAPTURE), data, reply, option);
 }
 
-void HStreamCaptureStubFuzzer::HStreamCaptureStubFuzzTest13()
+void HStreamCaptureStubFuzzTest13(FuzzedDataProvider&)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -232,53 +190,53 @@ void HStreamCaptureStubFuzzer::HStreamCaptureStubFuzzTest13()
     CHECK_RETURN_ELOG(!object, "object is nullptr");
     auto proxy = std::make_shared<StreamCaptureCallbackProxy>(object);
     CHECK_RETURN_ELOG(!proxy, "proxy is nullptr");
-    data.WriteInterfaceToken(g_interfaceToken);
+    data.WriteInterfaceToken(INTERFACE_TOKEN);
     data.WriteRemoteObject(proxy->AsObject());
-    fuzz_->OnRemoteRequestInner(
+    g_hStreamCaptureStubFuzz->OnRemoteRequestInner(
         static_cast<uint32_t>(IStreamCaptureIpcCode::COMMAND_SET_CALLBACK), data, reply, option);
 }
 
-void HStreamCaptureStubFuzzer::HStreamCaptureStubFuzzTest14()
+void HStreamCaptureStubFuzzTest14(FuzzedDataProvider&)
 {
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
-    data.WriteInterfaceToken(g_interfaceToken);
-    fuzz_->OnRemoteRequestInner(
+    data.WriteInterfaceToken(INTERFACE_TOKEN);
+    g_hStreamCaptureStubFuzz->OnRemoteRequestInner(
         static_cast<uint32_t>(IStreamCaptureIpcCode::COMMAND_RELEASE), data, reply, option);
 }
 
-void HStreamCaptureStubFuzzer::HStreamCaptureStubFuzzTest15()
+void HStreamCaptureStubFuzzTest15(FuzzedDataProvider&)
 {
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
-    data.WriteInterfaceToken(g_interfaceToken);
-    fuzz_->OnRemoteRequestInner(
+    data.WriteInterfaceToken(INTERFACE_TOKEN);
+    g_hStreamCaptureStubFuzz->OnRemoteRequestInner(
         static_cast<uint32_t>(IStreamCaptureIpcCode::COMMAND_IS_DEFERRED_PHOTO_ENABLED), data, reply, option);
 }
 
-void HStreamCaptureStubFuzzer::HStreamCaptureStubFuzzTest16()
+void HStreamCaptureStubFuzzTest16(FuzzedDataProvider&)
 {
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
-    data.WriteInterfaceToken(g_interfaceToken);
-    fuzz_->OnRemoteRequestInner(
+    data.WriteInterfaceToken(INTERFACE_TOKEN);
+    g_hStreamCaptureStubFuzz->OnRemoteRequestInner(
         static_cast<uint32_t>(IStreamCaptureIpcCode::COMMAND_IS_DEFERRED_VIDEO_ENABLED), data, reply, option);
 }
 
-void HStreamCaptureStubFuzzer::HStreamCaptureStubFuzzTest17()
+void HStreamCaptureStubFuzzTest17(FuzzedDataProvider&)
 {
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
-    data.WriteInterfaceToken(g_interfaceToken);
-    fuzz_->OnRemoteRequestInner(
+    data.WriteInterfaceToken(INTERFACE_TOKEN);
+    g_hStreamCaptureStubFuzz->OnRemoteRequestInner(
         static_cast<uint32_t>(IStreamCaptureIpcCode::COMMAND_UN_SET_CALLBACK), data, reply, option);
 }
 
-void HStreamCaptureStubFuzzer::HStreamCaptureStubFuzzTest18()
+void HStreamCaptureStubFuzzTest18(FuzzedDataProvider&)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -289,100 +247,88 @@ void HStreamCaptureStubFuzzer::HStreamCaptureStubFuzzTest18()
     CHECK_RETURN_ELOG(!object, "object is nullptr");
     auto proxy = std::make_shared<StreamCapturePhotoAssetCallbackProxy>(object);
     CHECK_RETURN_ELOG(!proxy, "proxy is nullptr");
-    data.WriteInterfaceToken(g_interfaceToken);
+    data.WriteInterfaceToken(INTERFACE_TOKEN);
     data.WriteRemoteObject(proxy->AsObject());
-    fuzz_->OnRemoteRequestInner(
+    g_hStreamCaptureStubFuzz->OnRemoteRequestInner(
         static_cast<uint32_t>(IStreamCaptureIpcCode::COMMAND_SET_PHOTO_ASSET_AVAILABLE_CALLBACK), data, reply, option);
 }
 
-void HStreamCaptureStubFuzzer::HStreamCaptureStubFuzzTest19()
+void HStreamCaptureStubFuzzTest19(FuzzedDataProvider&)
 {
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
-    data.WriteInterfaceToken(g_interfaceToken);
-    fuzz_->OnRemoteRequestInner(
+    data.WriteInterfaceToken(INTERFACE_TOKEN);
+    g_hStreamCaptureStubFuzz->OnRemoteRequestInner(
         static_cast<uint32_t>(IStreamCaptureIpcCode::COMMAND_UN_SET_PHOTO_AVAILABLE_CALLBACK), data, reply, option);
 }
 
-void HStreamCaptureStubFuzzer::HStreamCaptureStubFuzzTest20()
+void HStreamCaptureStubFuzzTest20(FuzzedDataProvider&)
 {
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
-    data.WriteInterfaceToken(g_interfaceToken);
-    fuzz_->OnRemoteRequestInner(
-        static_cast<uint32_t>(IStreamCaptureIpcCode::COMMAND_UN_SET_PHOTO_ASSET_AVAILABLE_CALLBACK),
-        data, reply, option);
+    data.WriteInterfaceToken(INTERFACE_TOKEN);
+    g_hStreamCaptureStubFuzz->OnRemoteRequestInner(
+        static_cast<uint32_t>(IStreamCaptureIpcCode::COMMAND_UN_SET_PHOTO_ASSET_AVAILABLE_CALLBACK), data, reply,
+        option);
 }
 
-void HStreamCaptureStubFuzzer::HStreamCaptureStubFuzzTest21()
+void HStreamCaptureStubFuzzTest21(FuzzedDataProvider&)
 {
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
-    data.WriteInterfaceToken(g_interfaceToken);
-    fuzz_->OnRemoteRequestInner(
+    data.WriteInterfaceToken(INTERFACE_TOKEN);
+    g_hStreamCaptureStubFuzz->OnRemoteRequestInner(
         static_cast<uint32_t>(IStreamCaptureIpcCode::COMMAND_UN_SET_THUMBNAIL_CALLBACK), data, reply, option);
 }
 
-void HStreamCaptureStubFuzzer::HStreamCaptureStubFuzzTest22(FuzzedDataProvider &fdp)
+void HStreamCaptureStubFuzzTest22(FuzzedDataProvider& fdp)
 {
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
-    data.WriteInterfaceToken(g_interfaceToken);
-    sptr<CameraPhotoProxy> photoProxy = new(std::nothrow) CameraPhotoProxy();
+    data.WriteInterfaceToken(INTERFACE_TOKEN);
+    sptr<CameraPhotoProxy> photoProxy = new (std::nothrow) CameraPhotoProxy();
     CHECK_RETURN_ELOG(!photoProxy, "photoProxy is nullptr");
     data.WriteParcelable(photoProxy);
     int64_t timestamp = fdp.ConsumeIntegral<int64_t>();
     data.WriteInt64(timestamp);
-    fuzz_->OnRemoteRequestInner(
+    g_hStreamCaptureStubFuzz->OnRemoteRequestInner(
         static_cast<uint32_t>(IStreamCaptureIpcCode::COMMAND_CREATE_MEDIA_LIBRARY), data, reply, option);
 }
 
-void FuzzTest(const uint8_t *rawData, size_t size)
+void Init()
 {
-    FuzzedDataProvider fdp(rawData, size);
-    auto hstreamCaptureStub = std::make_unique<HStreamCaptureStubFuzzer>();
-    if (hstreamCaptureStub == nullptr) {
-        MEDIA_INFO_LOG("hstreamCaptureStub is null");
-        return;
-    }
-    HStreamCaptureStubFuzzer::fuzz_ = std::make_shared<HStreamCaptureStubFuzz>();
-    hstreamCaptureStub->HStreamCaptureStubFuzzTest1(fdp);
-    hstreamCaptureStub->HStreamCaptureStubFuzzTest2(fdp);
-    hstreamCaptureStub->HStreamCaptureStubFuzzTest3();
-    hstreamCaptureStub->HStreamCaptureStubFuzzTest4(fdp);
-    hstreamCaptureStub->HStreamCaptureStubFuzzTest5(fdp);
-    hstreamCaptureStub->HStreamCaptureStubFuzzTest6(fdp);
-    hstreamCaptureStub->HStreamCaptureStubFuzzTest7(fdp);
-    hstreamCaptureStub->HStreamCaptureStubFuzzTest8(fdp);
-    hstreamCaptureStub->HStreamCaptureStubFuzzTest9(fdp);
-    hstreamCaptureStub->HStreamCaptureStubFuzzTest10(fdp);
-    hstreamCaptureStub->HStreamCaptureStubFuzzTest11();
-    hstreamCaptureStub->HStreamCaptureStubFuzzTest12();
-    hstreamCaptureStub->HStreamCaptureStubFuzzTest13();
-    hstreamCaptureStub->HStreamCaptureStubFuzzTest14();
-    hstreamCaptureStub->HStreamCaptureStubFuzzTest15();
-    hstreamCaptureStub->HStreamCaptureStubFuzzTest16();
-    hstreamCaptureStub->HStreamCaptureStubFuzzTest17();
-    hstreamCaptureStub->HStreamCaptureStubFuzzTest18();
-    hstreamCaptureStub->HStreamCaptureStubFuzzTest19();
-    hstreamCaptureStub->HStreamCaptureStubFuzzTest20();
-    hstreamCaptureStub->HStreamCaptureStubFuzzTest21();
-    hstreamCaptureStub->HStreamCaptureStubFuzzTest22(fdp);
+    g_hStreamCaptureStubFuzz = std::make_shared<HStreamCaptureStubFuzz>();
 }
-}  // namespace CameraStandard
-}  // namespace OHOS
 
-/* Fuzzer entry point */
-extern "C" int LLVMFuzzerTestOneInput(uint8_t *data, size_t size)
+void Test(FuzzedDataProvider& fdp)
 {
-    if (size < OHOS::CameraStandard::THRESHOLD) {
-        return 0;
-    }
+    auto func =
+        fdp.PickValueInArray({ HStreamCaptureStubFuzzTest1, HStreamCaptureStubFuzzTest2, HStreamCaptureStubFuzzTest4,
+            HStreamCaptureStubFuzzTest5, HStreamCaptureStubFuzzTest6, HStreamCaptureStubFuzzTest7,
+            HStreamCaptureStubFuzzTest8, HStreamCaptureStubFuzzTest9, HStreamCaptureStubFuzzTest10,
+            HStreamCaptureStubFuzzTest11, HStreamCaptureStubFuzzTest12, HStreamCaptureStubFuzzTest13,
+            HStreamCaptureStubFuzzTest14, HStreamCaptureStubFuzzTest15, HStreamCaptureStubFuzzTest16,
+            HStreamCaptureStubFuzzTest17, HStreamCaptureStubFuzzTest18, HStreamCaptureStubFuzzTest19,
+            HStreamCaptureStubFuzzTest20, HStreamCaptureStubFuzzTest21, HStreamCaptureStubFuzzTest22 });
+    func(fdp);
+}
 
-    OHOS::CameraStandard::FuzzTest(data, size);
+extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
+{
+    FuzzedDataProvider fdp(data, size);
+    Test(fdp);
+    return 0;
+}
+
+extern "C" int LLVMFuzzerInitialize(int* argc, char*** argv)
+{
+    if (SetSelfTokenID(718336240ull | (1ull << 32)) < 0) {
+        return -1;
+    }
+    Init();
     return 0;
 }

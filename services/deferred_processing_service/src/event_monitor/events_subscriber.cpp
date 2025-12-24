@@ -112,9 +112,9 @@ void EventSubscriber::OnReceiveEvent(const OHOS::EventFwk::CommonEventData& data
 {
     auto action = data.GetWant().GetAction();
     DP_DEBUG_LOG("DPS_EVENT: %{public}s.", action.c_str());
+    std::lock_guard lock(mutex_);
     auto iter = eventStrategy_.find(action);
     DP_CHECK_ERROR_RETURN_LOG(iter == eventStrategy_.end(), "Not find strategy.");
-
     if (auto strategy = iter->second) {
         strategy->handleEvent(data);
     }

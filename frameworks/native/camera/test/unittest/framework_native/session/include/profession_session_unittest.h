@@ -16,7 +16,6 @@
 #ifndef CAMERA_PROFESSION_SESSION_UNITTEST_H
 #define CAMERA_PROFESSION_SESSION_UNITTEST_H
 
-#include <cmath>
 #include "gtest/gtest.h"
 #include "session/profession_session.h"
 #include "input/camera_manager.h"
