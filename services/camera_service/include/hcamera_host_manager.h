@@ -31,10 +31,12 @@
 #include "v1_1/icamera_device.h"
 #include "v1_2/icamera_device.h"
 #include "v1_3/icamera_device.h"
+#include "v1_5/icamera_device.h"
 #include "v1_0/icamera_host.h"
 #include "v1_1/icamera_host.h"
 #include "v1_2/icamera_host.h"
 #include "v1_3/icamera_host.h"
+#include "v1_5/icamera_host.h"
 #include "icamera_device_service.h"
 #include "icamera_service_callback.h"
 #include "iservmgr_hdi.h"
@@ -82,7 +84,6 @@ public:
                          sptr<ICameraDeviceService> cameraDevice,
                          std::string originCameraId = "");
     virtual int32_t GetVersionByCamera(const std::string& cameraId);
-    int32_t JudgeSupportSwitchCamera(bool& isSupport);
     void RemoveCameraDevice(const std::string& cameraId, std::string originCameraId = "");
     void CloseCameraDevice(const std::string& cameraId);
 
@@ -130,8 +131,9 @@ public:
 
     void GetPhysicCameraId(int32_t position, std::string &cameraid);
 
-    void GetCameraStorageSize(const int& userId, int64_t& storageSize);
+    void EntireCloseDevice(std::string &cameraid);
 
+    void GetCameraStorageSize(const int& userId, int64_t& storageSize);
 private:
     struct CameraDeviceInfo;
     class CameraHostInfo;

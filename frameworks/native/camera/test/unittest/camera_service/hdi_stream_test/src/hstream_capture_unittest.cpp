@@ -160,7 +160,7 @@ void HStreamCaptureUnitTest::TearDown()
  * EnvConditions: NA
  * CaseDescription: Test SetThumbnail with different input parameters.
  */
-HWTEST_F(HStreamCaptureUnitTest, SetThumbnail001, TestSize.Level1)
+HWTEST_F(HStreamCaptureUnitTest, SetThumbnail001, TestSize.Level0)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -180,7 +180,7 @@ HWTEST_F(HStreamCaptureUnitTest, SetThumbnail001, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test EnableRawDelivery with different input parameters.
  */
-HWTEST_F(HStreamCaptureUnitTest, EnableRawDelivery001, TestSize.Level1)
+HWTEST_F(HStreamCaptureUnitTest, EnableRawDelivery001, TestSize.Level0)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -204,7 +204,7 @@ HWTEST_F(HStreamCaptureUnitTest, EnableRawDelivery001, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test SetBufferProducerInfo with different input parameters.
  */
-HWTEST_F(HStreamCaptureUnitTest, SetBufferProducerInfo001, TestSize.Level1)
+HWTEST_F(HStreamCaptureUnitTest, SetBufferProducerInfo001, TestSize.Level0)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -242,7 +242,7 @@ HWTEST_F(HStreamCaptureUnitTest, SetBufferProducerInfo001, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test DeferImageDeliveryFor with different input parameters.
  */
-HWTEST_F(HStreamCaptureUnitTest, DeferImageDeliveryFor001, TestSize.Level1)
+HWTEST_F(HStreamCaptureUnitTest, DeferImageDeliveryFor001, TestSize.Level0)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -272,7 +272,7 @@ HWTEST_F(HStreamCaptureUnitTest, DeferImageDeliveryFor001, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test ResetBurstKey with correct input parameters.
  */
-HWTEST_F(HStreamCaptureUnitTest, ResetBurstKey001, TestSize.Level1)
+HWTEST_F(HStreamCaptureUnitTest, ResetBurstKey001, TestSize.Level0)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -303,7 +303,7 @@ HWTEST_F(HStreamCaptureUnitTest, ResetBurstKey001, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test ResetBurstKey with abnormal burstNumMap_.
  */
-HWTEST_F(HStreamCaptureUnitTest, ResetBurstKey002, TestSize.Level1)
+HWTEST_F(HStreamCaptureUnitTest, ResetBurstKey002, TestSize.Level0)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -332,7 +332,7 @@ HWTEST_F(HStreamCaptureUnitTest, ResetBurstKey002, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test ResetBurstKey with abnormal burstImagesMap_.
  */
-HWTEST_F(HStreamCaptureUnitTest, ResetBurstKey003, TestSize.Level1)
+HWTEST_F(HStreamCaptureUnitTest, ResetBurstKey003, TestSize.Level0)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -361,7 +361,7 @@ HWTEST_F(HStreamCaptureUnitTest, ResetBurstKey003, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test ResetBurstKey with abnormal burstkeyMap_.
  */
-HWTEST_F(HStreamCaptureUnitTest, ResetBurstKey004, TestSize.Level1)
+HWTEST_F(HStreamCaptureUnitTest, ResetBurstKey004, TestSize.Level0)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -390,7 +390,7 @@ HWTEST_F(HStreamCaptureUnitTest, ResetBurstKey004, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test GetBurstKey with correct input parameters.
  */
-HWTEST_F(HStreamCaptureUnitTest, GetBurstKey001, TestSize.Level1)
+HWTEST_F(HStreamCaptureUnitTest, GetBurstKey001, TestSize.Level0)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -416,7 +416,7 @@ HWTEST_F(HStreamCaptureUnitTest, GetBurstKey001, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test GetBurstKey with abnormal burstkeyMap_.
  */
-HWTEST_F(HStreamCaptureUnitTest, GetBurstKey002, TestSize.Level1)
+HWTEST_F(HStreamCaptureUnitTest, GetBurstKey002, TestSize.Level0)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -442,7 +442,7 @@ HWTEST_F(HStreamCaptureUnitTest, GetBurstKey002, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test GetCurBurstSeq with correct input parameters.
  */
-HWTEST_F(HStreamCaptureUnitTest, GetCurBurstSeq001, TestSize.Level1)
+HWTEST_F(HStreamCaptureUnitTest, GetCurBurstSeq001, TestSize.Level0)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -469,7 +469,7 @@ HWTEST_F(HStreamCaptureUnitTest, GetCurBurstSeq001, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test GetCurBurstSeq with abnormal burstImagesMap_.
  */
-HWTEST_F(HStreamCaptureUnitTest, GetCurBurstSeq002, TestSize.Level1)
+HWTEST_F(HStreamCaptureUnitTest, GetCurBurstSeq002, TestSize.Level0)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -496,7 +496,7 @@ HWTEST_F(HStreamCaptureUnitTest, GetCurBurstSeq002, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test SetBurstImages with correct input parameters.
  */
-HWTEST_F(HStreamCaptureUnitTest, SetBurstImages001, TestSize.Level1)
+HWTEST_F(HStreamCaptureUnitTest, SetBurstImages001, TestSize.Level0)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -526,7 +526,7 @@ HWTEST_F(HStreamCaptureUnitTest, SetBurstImages001, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test SetBurstImages with abnormal burstImagesMap_.
  */
-HWTEST_F(HStreamCaptureUnitTest, SetBurstImages002, TestSize.Level1)
+HWTEST_F(HStreamCaptureUnitTest, SetBurstImages002, TestSize.Level0)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -554,7 +554,7 @@ HWTEST_F(HStreamCaptureUnitTest, SetBurstImages002, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test CheckResetBurstKey with correct input parameters.
  */
-HWTEST_F(HStreamCaptureUnitTest, CheckResetBurstKeys001, TestSize.Level1)
+HWTEST_F(HStreamCaptureUnitTest, CheckResetBurstKeys001, TestSize.Level0)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -583,7 +583,7 @@ HWTEST_F(HStreamCaptureUnitTest, CheckResetBurstKeys001, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test CheckResetBurstKey with abnormal burstImagesMap_.
  */
-HWTEST_F(HStreamCaptureUnitTest, CheckResetBurstKeys002, TestSize.Level1)
+HWTEST_F(HStreamCaptureUnitTest, CheckResetBurstKeys002, TestSize.Level0)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -614,7 +614,7 @@ HWTEST_F(HStreamCaptureUnitTest, CheckResetBurstKeys002, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test CheckResetBurstKey with correct input parameters.
  */
-HWTEST_F(HStreamCaptureUnitTest, CheckResetBurstKeys003, TestSize.Level1)
+HWTEST_F(HStreamCaptureUnitTest, CheckResetBurstKeys003, TestSize.Level0)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -649,7 +649,7 @@ HWTEST_F(HStreamCaptureUnitTest, CheckResetBurstKeys003, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test CheckBurstCapture with correct input parameters.
  */
-HWTEST_F(HStreamCaptureUnitTest, CheckBurstCapture001, TestSize.Level1)
+HWTEST_F(HStreamCaptureUnitTest, CheckBurstCapture001, TestSize.Level0)
 {
     MEDIA_INFO_LOG("CheckBurstCapture001 start");
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
@@ -687,7 +687,7 @@ HWTEST_F(HStreamCaptureUnitTest, CheckBurstCapture001, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test CheckBurstCapture with abnormal burstkeyMap_.
  */
-HWTEST_F(HStreamCaptureUnitTest, CheckBurstCapture002, TestSize.Level1)
+HWTEST_F(HStreamCaptureUnitTest, CheckBurstCapture002, TestSize.Level0)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -724,7 +724,7 @@ HWTEST_F(HStreamCaptureUnitTest, CheckBurstCapture002, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test CheckBurstCapture with abnormal metadata.
  */
-HWTEST_F(HStreamCaptureUnitTest, CheckBurstCapture003, TestSize.Level1)
+HWTEST_F(HStreamCaptureUnitTest, CheckBurstCapture003, TestSize.Level0)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -753,7 +753,7 @@ HWTEST_F(HStreamCaptureUnitTest, CheckBurstCapture003, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test OnCaptureStarted with correct input parameters.
  */
-HWTEST_F(HStreamCaptureUnitTest, OnCaptureStarted001, TestSize.Level1)
+HWTEST_F(HStreamCaptureUnitTest, OnCaptureStarted001, TestSize.Level0)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -781,7 +781,7 @@ HWTEST_F(HStreamCaptureUnitTest, OnCaptureStarted001, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test OnCaptureStarted with abnormal streamCaptureCallback_.
  */
-HWTEST_F(HStreamCaptureUnitTest, OnCaptureStarted002, TestSize.Level1)
+HWTEST_F(HStreamCaptureUnitTest, OnCaptureStarted002, TestSize.Level0)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -806,7 +806,7 @@ HWTEST_F(HStreamCaptureUnitTest, OnCaptureStarted002, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test OnCaptureStarted with abnormal captureId.
  */
-HWTEST_F(HStreamCaptureUnitTest, OnCaptureStarted003, TestSize.Level1)
+HWTEST_F(HStreamCaptureUnitTest, OnCaptureStarted003, TestSize.Level0)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -832,7 +832,7 @@ HWTEST_F(HStreamCaptureUnitTest, OnCaptureStarted003, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test OnCaptureStarted with abnormal captureId.
  */
-HWTEST_F(HStreamCaptureUnitTest, OnCaptureStarted004, TestSize.Level1)
+HWTEST_F(HStreamCaptureUnitTest, OnCaptureStarted004, TestSize.Level0)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -861,7 +861,7 @@ HWTEST_F(HStreamCaptureUnitTest, OnCaptureStarted004, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test OnCaptureEnded with correct input parameters.
  */
-HWTEST_F(HStreamCaptureUnitTest, OnCaptureEnded001, TestSize.Level1)
+HWTEST_F(HStreamCaptureUnitTest, OnCaptureEnded001, TestSize.Level0)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -891,7 +891,7 @@ HWTEST_F(HStreamCaptureUnitTest, OnCaptureEnded001, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test OnCaptureEnded with abnormal streamCaptureCallback_.
  */
-HWTEST_F(HStreamCaptureUnitTest, OnCaptureEnded002, TestSize.Level1)
+HWTEST_F(HStreamCaptureUnitTest, OnCaptureEnded002, TestSize.Level0)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -921,7 +921,7 @@ HWTEST_F(HStreamCaptureUnitTest, OnCaptureEnded002, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test OnCaptureError with correct input parameters.
  */
-HWTEST_F(HStreamCaptureUnitTest, OnCaptureError001, TestSize.Level1)
+HWTEST_F(HStreamCaptureUnitTest, OnCaptureError001, TestSize.Level0)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -951,7 +951,7 @@ HWTEST_F(HStreamCaptureUnitTest, OnCaptureError001, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test OnCaptureError with abnormal streamCaptureCallback_.
  */
-HWTEST_F(HStreamCaptureUnitTest, OnCaptureError002, TestSize.Level1)
+HWTEST_F(HStreamCaptureUnitTest, OnCaptureError002, TestSize.Level0)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -981,7 +981,7 @@ HWTEST_F(HStreamCaptureUnitTest, OnCaptureError002, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test OnFrameShutter with correct input parameters.
  */
-HWTEST_F(HStreamCaptureUnitTest, OnFrameShutter001, TestSize.Level1)
+HWTEST_F(HStreamCaptureUnitTest, OnFrameShutter001, TestSize.Level0)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -1010,7 +1010,7 @@ HWTEST_F(HStreamCaptureUnitTest, OnFrameShutter001, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test OnFrameShutter with abnormal streamCaptureCallback_.
  */
-HWTEST_F(HStreamCaptureUnitTest, OnFrameShutter002, TestSize.Level1)
+HWTEST_F(HStreamCaptureUnitTest, OnFrameShutter002, TestSize.Level0)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -1036,7 +1036,7 @@ HWTEST_F(HStreamCaptureUnitTest, OnFrameShutter002, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test OnFrameShutterEnd with correct input parameters.
  */
-HWTEST_F(HStreamCaptureUnitTest, OnFrameShutterEnd001, TestSize.Level1)
+HWTEST_F(HStreamCaptureUnitTest, OnFrameShutterEnd001, TestSize.Level0)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -1066,7 +1066,7 @@ HWTEST_F(HStreamCaptureUnitTest, OnFrameShutterEnd001, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test OnFrameShutterEnd  with abnormal streamCaptureCallback_.
  */
-HWTEST_F(HStreamCaptureUnitTest, OnFrameShutterEnd002, TestSize.Level1)
+HWTEST_F(HStreamCaptureUnitTest, OnFrameShutterEnd002, TestSize.Level0)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -1093,7 +1093,7 @@ HWTEST_F(HStreamCaptureUnitTest, OnFrameShutterEnd002, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test OnCaptureReady with correct input parameters.
  */
-HWTEST_F(HStreamCaptureUnitTest, OnCaptureReady001, TestSize.Level1)
+HWTEST_F(HStreamCaptureUnitTest, OnCaptureReady001, TestSize.Level0)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -1124,7 +1124,7 @@ HWTEST_F(HStreamCaptureUnitTest, OnCaptureReady001, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test OnCaptureReady with abnormal streamCaptureCallback_.
  */
-HWTEST_F(HStreamCaptureUnitTest, OnCaptureReady002, TestSize.Level1)
+HWTEST_F(HStreamCaptureUnitTest, OnCaptureReady002, TestSize.Level0)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -1152,7 +1152,7 @@ HWTEST_F(HStreamCaptureUnitTest, OnCaptureReady002, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test DumpStreamInfo with correct input parameters.
  */
-HWTEST_F(HStreamCaptureUnitTest, DumpStreamInfo001, TestSize.Level1)
+HWTEST_F(HStreamCaptureUnitTest, DumpStreamInfo001, TestSize.Level0)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -1177,7 +1177,7 @@ HWTEST_F(HStreamCaptureUnitTest, DumpStreamInfo001, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test DumpStreamInfo with abnormal thumbnailBufferQueue_.
  */
-HWTEST_F(HStreamCaptureUnitTest, DumpStreamInfo002, TestSize.Level1)
+HWTEST_F(HStreamCaptureUnitTest, DumpStreamInfo002, TestSize.Level0)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -1202,7 +1202,7 @@ HWTEST_F(HStreamCaptureUnitTest, DumpStreamInfo002, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test IsDeferredPhotoEnabled with correct input parameters.
  */
-HWTEST_F(HStreamCaptureUnitTest, IsDeferredPhotoEnabled001, TestSize.Level1)
+HWTEST_F(HStreamCaptureUnitTest, IsDeferredPhotoEnabled001, TestSize.Level0)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -1227,7 +1227,7 @@ HWTEST_F(HStreamCaptureUnitTest, IsDeferredPhotoEnabled001, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test IsDeferredPhotoEnabled with abnormal deferredPhotoSwitch_.
  */
-HWTEST_F(HStreamCaptureUnitTest, IsDeferredPhotoEnabled002, TestSize.Level1)
+HWTEST_F(HStreamCaptureUnitTest, IsDeferredPhotoEnabled002, TestSize.Level0)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -1252,7 +1252,7 @@ HWTEST_F(HStreamCaptureUnitTest, IsDeferredPhotoEnabled002, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test IsDeferredVideoEnabled with correct input parameters.
  */
-HWTEST_F(HStreamCaptureUnitTest, IsDeferredVideoEnabled001, TestSize.Level1)
+HWTEST_F(HStreamCaptureUnitTest, IsDeferredVideoEnabled001, TestSize.Level0)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -1277,7 +1277,7 @@ HWTEST_F(HStreamCaptureUnitTest, IsDeferredVideoEnabled001, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test IsDeferredVideoEnabled with abnormal deferredVideoSwitch_.
  */
-HWTEST_F(HStreamCaptureUnitTest, IsDeferredVideoEnabled002, TestSize.Level1)
+HWTEST_F(HStreamCaptureUnitTest, IsDeferredVideoEnabled002, TestSize.Level0)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -1302,7 +1302,7 @@ HWTEST_F(HStreamCaptureUnitTest, IsDeferredVideoEnabled002, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test ConfirmCapture with correct input parameters.
  */
-HWTEST_F(HStreamCaptureUnitTest, ConfirmCapture001, TestSize.Level1)
+HWTEST_F(HStreamCaptureUnitTest, ConfirmCapture001, TestSize.Level0)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -1329,7 +1329,7 @@ HWTEST_F(HStreamCaptureUnitTest, ConfirmCapture001, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test ConfirmCapture with abnormal isBursting_.
  */
-HWTEST_F(HStreamCaptureUnitTest, ConfirmCapture002, TestSize.Level1)
+HWTEST_F(HStreamCaptureUnitTest, ConfirmCapture002, TestSize.Level0)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -1357,7 +1357,7 @@ HWTEST_F(HStreamCaptureUnitTest, ConfirmCapture002, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test ConfirmCapture with abnormal captureIdForConfirmCapture_.
  */
-HWTEST_F(HStreamCaptureUnitTest, ConfirmCapture003, TestSize.Level1)
+HWTEST_F(HStreamCaptureUnitTest, ConfirmCapture003, TestSize.Level0)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -1385,7 +1385,7 @@ HWTEST_F(HStreamCaptureUnitTest, ConfirmCapture003, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test EndBurstCapture with correct input parameters.
  */
-HWTEST_F(HStreamCaptureUnitTest, EndBurstCapture001, TestSize.Level1)
+HWTEST_F(HStreamCaptureUnitTest, EndBurstCapture001, TestSize.Level0)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -1419,7 +1419,7 @@ HWTEST_F(HStreamCaptureUnitTest, EndBurstCapture001, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test HStreamCapture & HStreamCommon
  */
-HWTEST_F(HStreamCaptureUnitTest, camera_fwcoverage_unittest_029, TestSize.Level1)
+HWTEST_F(HStreamCaptureUnitTest, camera_fwcoverage_unittest_029, TestSize.Level0)
 {
     int32_t format = 0;
     int32_t width = 0;
@@ -1468,7 +1468,7 @@ HWTEST_F(HStreamCaptureUnitTest, camera_fwcoverage_unittest_029, TestSize.Level1
  * EnvConditions: NA
  * CaseDescription: Test OnRemoteRequest for switch of COMMAND_ON_CAPTURE_STARTED
  */
-HWTEST_F(HStreamCaptureUnitTest, camera_fwcoverage_unittest_030, TestSize.Level1)
+HWTEST_F(HStreamCaptureUnitTest, camera_fwcoverage_unittest_030, TestSize.Level0)
 {
     MockHStreamCaptureCallbackStub stub;
     MessageParcel data;
@@ -1492,7 +1492,7 @@ HWTEST_F(HStreamCaptureUnitTest, camera_fwcoverage_unittest_030, TestSize.Level1
  * EnvConditions: NA
  * CaseDescription: Test OnRemoteRequest for switch of COMMAND_ON_CAPTURE_ENDED
  */
-HWTEST_F(HStreamCaptureUnitTest, camera_fwcoverage_unittest_031, TestSize.Level1)
+HWTEST_F(HStreamCaptureUnitTest, camera_fwcoverage_unittest_031, TestSize.Level0)
 {
     MockHStreamCaptureCallbackStub stub;
     MessageParcel data;
@@ -1516,7 +1516,7 @@ HWTEST_F(HStreamCaptureUnitTest, camera_fwcoverage_unittest_031, TestSize.Level1
  * EnvConditions: NA
  * CaseDescription: Test OnRemoteRequest for switch of COMMAND_ON_CAPTURE_ERROR
  */
-HWTEST_F(HStreamCaptureUnitTest, camera_fwcoverage_unittest_032, TestSize.Level1)
+HWTEST_F(HStreamCaptureUnitTest, camera_fwcoverage_unittest_032, TestSize.Level0)
 {
     MockHStreamCaptureCallbackStub stub;
     MessageParcel data;
@@ -1534,134 +1534,13 @@ HWTEST_F(HStreamCaptureUnitTest, camera_fwcoverage_unittest_032, TestSize.Level1
 
 /*
  * Feature: Framework
- * Function: Test HStreamCaptureCallbackStub with OnRemoteRequest
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test OnRemoteRequest for switch of COMMAND_ON_CAPTURE_STARTED
- */
-HWTEST_F(HStreamCaptureUnitTest, camera_fwcoverage_unittest_033, TestSize.Level1)
-{
-    MockHStreamCaptureCallbackStub stub;
-    MessageParcel data;
-    data.WriteInterfaceToken(stub.GetDescriptor());
-    data.RewindRead(0);
-    MessageParcel reply;
-    MessageOption option;
- 
-    uint32_t code = static_cast<uint32_t>(IStreamCaptureCallbackIpcCode::COMMAND_ON_CAPTURE_STARTED);
-    EXPECT_CALL(stub, OnCaptureStarted(_))
-        .WillOnce(Return(0));
-    int errCode = stub.OnRemoteRequest(code, data, reply, option);
-    EXPECT_EQ(errCode, 0);
-}
-
-/*
- * Feature: Framework
- * Function: Test HStreamCaptureCallbackStub with OnRemoteRequest
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test OnRemoteRequest for switch of CAMERA_STREAM_CAPTURE_ON_FRAME_SHUTTER
- */
-HWTEST_F(HStreamCaptureUnitTest, camera_fwcoverage_unittest_034, TestSize.Level1)
-{
-    MockHStreamCaptureCallbackStub stub;
-    MessageParcel data;
-    data.WriteInterfaceToken(stub.GetDescriptor());
-    data.WriteInt32(0);
-    MessageParcel reply;
-    MessageOption option;
- 
-    uint32_t code = static_cast<uint32_t>(IStreamCaptureCallbackIpcCode::COMMAND_ON_FRAME_SHUTTER);
-    EXPECT_CALL(stub, OnFrameShutter(_, _))
-        .WillOnce(Return(0));
-    int errCode = stub.OnRemoteRequest(code, data, reply, option);
-    EXPECT_EQ(errCode, 0);
-}
-
-/*
- * Feature: Framework
- * Function: Test HStreamCaptureCallbackStub with OnRemoteRequest
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test OnRemoteRequest for switch of COMMAND_ON_FRAME_SHUTTER_END
- */
-HWTEST_F(HStreamCaptureUnitTest, camera_fwcoverage_unittest_035, TestSize.Level1)
-{
-    MockHStreamCaptureCallbackStub stub;
-    MessageParcel data;
-    data.WriteInterfaceToken(stub.GetDescriptor());
-    data.RewindRead(0);
-    MessageParcel reply;
-    MessageOption option;
- 
-    uint32_t code = static_cast<uint32_t>(IStreamCaptureCallbackIpcCode::COMMAND_ON_FRAME_SHUTTER_END);
-    EXPECT_CALL(stub, OnFrameShutterEnd(_, _))
-        .WillOnce(Return(0));
-    int errCode = stub.OnRemoteRequest(code, data, reply, option);
-    EXPECT_EQ(errCode, 0);
-}
-
-/*
- * Feature: Framework
- * Function: Test HStreamCaptureCallbackStub with OnRemoteRequest
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test OnRemoteRequest for switch of COMMAND_ON_CAPTURE_READY
- */
-HWTEST_F(HStreamCaptureUnitTest, camera_fwcoverage_unittest_036, TestSize.Level1)
-{
-    MockHStreamCaptureCallbackStub stub;
-    MessageParcel data;
-    data.WriteInterfaceToken(stub.GetDescriptor());
-    data.RewindRead(0);
-    MessageParcel reply;
-    MessageOption option;
- 
-    uint32_t code = static_cast<uint32_t>(IStreamCaptureCallbackIpcCode::COMMAND_ON_CAPTURE_READY);
-    EXPECT_CALL(stub, OnCaptureReady(_, _))
-        .WillOnce(Return(0));
-    int errCode = stub.OnRemoteRequest(code, data, reply, option);
-    EXPECT_EQ(errCode, 0);
-}
-
-/*
- * Feature: Framework
- * Function: Test HStreamCaptureCallbackStub with OnRemoteRequest
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test OnRemoteRequest for switch of COMMAND_ON_OFFLINE_DELIVERY_FINISHED
- */
-HWTEST_F(HStreamCaptureUnitTest, camera_fwcoverage_unittest_037, TestSize.Level1)
-{
-    MockHStreamCaptureCallbackStub stub;
-    MessageParcel data;
-    data.WriteInterfaceToken(stub.GetDescriptor());
-    data.RewindRead(0);
-    MessageParcel reply;
-    MessageOption option;
-    
-    uint32_t code = static_cast<uint32_t>(IStreamCaptureCallbackIpcCode::COMMAND_ON_OFFLINE_DELIVERY_FINISHED);
-    EXPECT_CALL(stub, OnOfflineDeliveryFinished(_))
-        .WillOnce(Return(0));
-    int errCode = stub.OnRemoteRequest(code, data, reply, option);
-    EXPECT_EQ(errCode, 0);
-}
-
-
-/*
- * Feature: Framework
  * Function: Test HStreamCapture
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
  * CaseDescription: test HStreamCapture with abnormal branches
  */
-HWTEST_F(HStreamCaptureUnitTest, camera_fwcoverage_hstream_capture_001, TestSize.Level1)
+HWTEST_F(HStreamCaptureUnitTest, camera_fwcoverage_hstream_capture_001, TestSize.Level0)
 {
     sptr<IRemoteObject> object = nullptr;
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();

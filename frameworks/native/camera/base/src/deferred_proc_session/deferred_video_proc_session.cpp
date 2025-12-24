@@ -22,12 +22,12 @@
 namespace OHOS {
 namespace CameraStandard {
 
-int32_t DeferredVideoProcessingSessionCallback::OnProcessVideoDone(const std::string& videoId,
-    const sptr<IPCFileDescriptor>& ipcFileDescriptor)
+int32_t DeferredVideoProcessingSessionCallback::OnProcessVideoDone(const std::string& videoId)
 {
     MEDIA_INFO_LOG("DeferredVideoProcessingSessionCallback::OnProcessVideoDone() is called!");
-    if (deferredVideoProcSession_ != nullptr && deferredVideoProcSession_->GetCallback() != nullptr) {
-        deferredVideoProcSession_->GetCallback()->OnProcessVideoDone(videoId, ipcFileDescriptor);
+    bool isCallbackSet = deferredVideoProcSession_ != nullptr && deferredVideoProcSession_->GetCallback() != nullptr;
+    if (isCallbackSet) {
+        deferredVideoProcSession_->GetCallback()->OnProcessVideoDone(videoId);
     } else {
         MEDIA_INFO_LOG("DeferredVideoProcessingSessionCallback::OnProcessVideoDone not set!, Discarding callback");
     }
@@ -35,10 +35,11 @@ int32_t DeferredVideoProcessingSessionCallback::OnProcessVideoDone(const std::st
 }
 
 int32_t DeferredVideoProcessingSessionCallback::OnError(const std::string& videoId,
-    int32_t errorCode)
+    DeferredProcessing::ErrorCode errorCode)
 {
     MEDIA_INFO_LOG("DeferredVideoProcessingSessionCallback::OnError() is called, errorCode: %{public}d", errorCode);
-    if (deferredVideoProcSession_ != nullptr && deferredVideoProcSession_->GetCallback() != nullptr) {
+    bool isCallbackSet = deferredVideoProcSession_ != nullptr && deferredVideoProcSession_->GetCallback() != nullptr;
+    if (isCallbackSet) {
         deferredVideoProcSession_->GetCallback()->OnError(videoId, DpsErrorCode(errorCode));
     } else {
         MEDIA_INFO_LOG("DeferredVideoProcessingSessionCallback::OnError not set!, Discarding callback");
@@ -46,13 +47,27 @@ int32_t DeferredVideoProcessingSessionCallback::OnError(const std::string& video
     return ERR_OK;
 }
 
-int32_t DeferredVideoProcessingSessionCallback::OnStateChanged(int32_t status)
+int32_t DeferredVideoProcessingSessionCallback::OnStateChanged(DeferredProcessing::StatusCode status)
 {
     MEDIA_INFO_LOG("DeferredVideoProcessingSessionCallback::OnStateChanged() is called, status:%{public}d", status);
-    if (deferredVideoProcSession_ != nullptr && deferredVideoProcSession_->GetCallback() != nullptr) {
+    bool isCallbackSet = deferredVideoProcSession_ != nullptr && deferredVideoProcSession_->GetCallback() != nullptr;
+    if (isCallbackSet) {
         deferredVideoProcSession_->GetCallback()->OnStateChanged(DpsStatusCode(status));
     } else {
         MEDIA_INFO_LOG("DeferredVideoProcessingSessionCallback::OnStateChanged not set!, Discarding callback");
+    }
+    return ERR_OK;
+}
+
+int32_t DeferredVideoProcessingSessionCallback::OnProcessingProgress(const std::string& videoId, float progress)
+{
+    MEDIA_DEBUG_LOG("DeferredVideoProcessingSessionCallback::OnProcessingProgress() is called, progress:%{public}f",
+        progress);
+    bool isCallbackSet = deferredVideoProcSession_ != nullptr && deferredVideoProcSession_->GetCallback() != nullptr;
+    if (isCallbackSet) {
+        deferredVideoProcSession_->GetCallback()->OnProcessingProgress(videoId, progress);
+    } else {
+        MEDIA_INFO_LOG("DeferredVideoProcessingSessionCallback::OnProcessingProgress not set!, Discarding callback");
     }
     return ERR_OK;
 }
@@ -75,58 +90,67 @@ DeferredVideoProcSession::~DeferredVideoProcSession()
 
 void DeferredVideoProcSession::BeginSynchronize()
 {
-    if (remoteSession_ == nullptr) {
-        MEDIA_ERR_LOG("DeferredVideoProcSession::BeginSynchronize failed due to binder died.");
-    } else {
-        MEDIA_INFO_LOG("DeferredVideoProcSession:BeginSynchronize() enter.");
-        auto ret = remoteSession_->BeginSynchronize();
-        CHECK_PRINT_ELOG(ret != ERR_OK, "EndSynchronize failed errorCode: %{public}d", ret);
-    }
+    CHECK_RETURN_ELOG(remoteSession_ == nullptr, "BeginSynchronize failed due to binder died.");
+    MEDIA_INFO_LOG("DeferredVideoProcSession:BeginSynchronize() enter.");
+    auto ret = remoteSession_->BeginSynchronize();
+    CHECK_PRINT_ELOG(ret != ERR_OK, "EndSynchronize failed errorCode: %{public}d", ret);
 }
 
 void DeferredVideoProcSession::EndSynchronize()
 {
-    if (remoteSession_ == nullptr) {
-        MEDIA_ERR_LOG("DeferredVideoProcSession::EndSynchronize failed due to binder died.");
-    } else {
-        MEDIA_INFO_LOG("DeferredVideoProcSession::EndSynchronize() enter.");
-        auto ret = remoteSession_->EndSynchronize();
-        CHECK_PRINT_ELOG(ret != ERR_OK, "EndSynchronize failed errorCode: %{public}d", ret);
-    }
+    CHECK_RETURN_ELOG(remoteSession_ == nullptr, "EndSynchronize failed due to binder died.");
+    MEDIA_INFO_LOG("DeferredVideoProcSession::EndSynchronize() enter.");
+    auto ret = remoteSession_->EndSynchronize();
+    CHECK_PRINT_ELOG(ret != ERR_OK, "EndSynchronize failed errorCode: %{public}d", ret);
 }
 
 void DeferredVideoProcSession::AddVideo(const std::string& videoId, const sptr<IPCFileDescriptor> srcFd,
     const sptr<IPCFileDescriptor> dstFd)
 {
-    if (remoteSession_ == nullptr) {
-        MEDIA_ERR_LOG("DeferredVideoProcSession::AddVideo failed due to binder died.");
-    } else {
-        MEDIA_INFO_LOG("DeferredVideoProcSession::AddVideo() enter.");
-        auto ret = remoteSession_->AddVideo(videoId, srcFd, dstFd);
-        CHECK_PRINT_ELOG(ret != ERR_OK, "AddVideo failed errorCode: %{public}d", ret);
-    }
+    CHECK_RETURN_ELOG(remoteSession_ == nullptr, "AddVideo failed due to binder died.");
+    MEDIA_INFO_LOG("DeferredVideoProcSession::AddVideo() enter.");
+    auto ret = remoteSession_->AddVideo(videoId, srcFd, dstFd);
+    CHECK_PRINT_ELOG(ret != ERR_OK, "AddVideo failed errorCode: %{public}d", ret);
 }
 
 void DeferredVideoProcSession::RemoveVideo(const std::string& videoId, const bool restorable)
 {
-    if (remoteSession_ == nullptr) {
-        MEDIA_ERR_LOG("DeferredVideoProcSession::RemoveVideo failed due to binder died.");
-    } else {
-        MEDIA_INFO_LOG("DeferredVideoProcSession RemoveVideo() enter.");
-        auto ret = remoteSession_->RemoveVideo(videoId, restorable);
-        CHECK_PRINT_ELOG(ret != ERR_OK, "RemoveVideo failed errorCode: %{public}d", ret);
-    }
+    CHECK_RETURN_ELOG(remoteSession_ == nullptr, "RemoveVideo failed due to binder died.");
+    MEDIA_INFO_LOG("DeferredVideoProcSession RemoveVideo() enter.");
+    auto ret = remoteSession_->RemoveVideo(videoId, restorable);
+    CHECK_PRINT_ELOG(ret != ERR_OK, "RemoveVideo failed errorCode: %{public}d", ret);
 }
 
 void DeferredVideoProcSession::RestoreVideo(const std::string& videoId)
 {
-    if (remoteSession_ == nullptr) {
-        MEDIA_ERR_LOG("DeferredVideoProcSession::RestoreVideo failed due to binder died.");
-    } else {
-        MEDIA_INFO_LOG("DeferredVideoProcSession RestoreVideo() enter.");
-        auto ret = remoteSession_->RestoreVideo(videoId);
-        CHECK_PRINT_ELOG(ret != ERR_OK, "RestoreVideo failed errorCode: %{public}d", ret);
-    }
+    CHECK_RETURN_ELOG(remoteSession_ == nullptr, "RestoreVideo failed due to binder died.");
+    MEDIA_INFO_LOG("DeferredVideoProcSession RestoreVideo() enter.");
+    auto ret = remoteSession_->RestoreVideo(videoId);
+    CHECK_PRINT_ELOG(ret != ERR_OK, "RestoreVideo failed errorCode: %{public}d", ret);
+}
+
+void DeferredVideoProcSession::AddVideo(const std::string& videoId, const std::vector<sptr<IPCFileDescriptor>>& fds)
+{
+    CHECK_RETURN_ELOG(remoteSession_ == nullptr, "AddMovieVideo failed due to binder died.");
+    MEDIA_INFO_LOG("DeferredVideoProcSession AddMovieVideo() enter.");
+    auto ret = remoteSession_->AddVideo(videoId, fds);
+    CHECK_PRINT_ELOG(ret != ERR_OK, "AddMovieVideo failed errorCode: %{public}d", ret);
+}
+
+void DeferredVideoProcSession::ProcessVideo(const std::string& appName, const std::string& videoId)
+{
+    CHECK_RETURN_ELOG(remoteSession_ == nullptr, "ProcessVideo failed due to binder died.");
+    MEDIA_INFO_LOG("DeferredVideoProcSession ProcessVideo() enter.");
+    auto ret = remoteSession_->ProcessVideo(appName, videoId);
+    CHECK_PRINT_ELOG(ret != ERR_OK, "ProcessVideo failed errorCode: %{public}d", ret);
+}
+
+void DeferredVideoProcSession::CancelProcessVideo(const std::string& videoId)
+{
+    CHECK_RETURN_ELOG(remoteSession_ == nullptr, "CancelProcessVideo failed due to binder died.");
+    MEDIA_INFO_LOG("DeferredVideoProcSession CancelProcessVideo() enter.");
+    auto ret = remoteSession_->CancelProcessVideo(videoId);
+    CHECK_PRINT_ELOG(ret != ERR_OK, "CancelProcessVideo failed errorCode: %{public}d", ret);
 }
 
 int32_t DeferredVideoProcSession::SetDeferredVideoSession(
@@ -154,7 +178,7 @@ void DeferredVideoProcSession::CameraServerDied(pid_t pid)
     deathRecipient_ = nullptr;
     ReconnectDeferredProcessingSession();
     CHECK_RETURN(callback_ == nullptr);
-    MEDIA_INFO_LOG("DeferredVideoProcSession Reconnect session successful, send sync requestion.");
+    MEDIA_INFO_LOG("Reconnect session successful, send sync requestion.");
     callback_->OnError("", DpsErrorCode::ERROR_SESSION_SYNC_NEEDED);
 }
 
@@ -171,20 +195,18 @@ void DeferredVideoProcSession::ConnectDeferredProcessingSession()
 {
     MEDIA_INFO_LOG("DeferredVideoProcSession::ConnectDeferredProcessingSession, enter.");
     CHECK_RETURN_ELOG(remoteSession_ != nullptr, "remoteSession_ is not null");
-    sptr<IRemoteObject> object = nullptr;
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     CHECK_RETURN_ELOG(samgr == nullptr, "Failed to get System ability manager");
-    object = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
+    sptr<IRemoteObject> object = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
     CHECK_RETURN_ELOG(object == nullptr, "object is null");
     serviceProxy_ = iface_cast<ICameraService>(object);
     CHECK_RETURN_ELOG(serviceProxy_ == nullptr, "serviceProxy_ is null");
-    sptr<DeferredProcessing::IDeferredVideoProcessingSession> session = nullptr;
-    sptr<DeferredProcessing::IDeferredVideoProcessingSessionCallback> remoteCallback = nullptr;
-    sptr<DeferredVideoProcSession> deferredVideoProcSession = nullptr;
-    deferredVideoProcSession = new(std::nothrow) DeferredVideoProcSession(userId_, callback_);
+    auto deferredVideoProcSession = sptr<DeferredVideoProcSession>::MakeSptr(userId_, callback_);
     CHECK_RETURN(deferredVideoProcSession == nullptr);
-    remoteCallback = new(std::nothrow) DeferredVideoProcessingSessionCallback(deferredVideoProcSession);
+    sptr<DeferredProcessing::IDeferredVideoProcessingSessionCallback> remoteCallback = 
+        sptr<DeferredVideoProcessingSessionCallback>::MakeSptr(deferredVideoProcSession);
     CHECK_RETURN(remoteCallback == nullptr);
+    sptr<DeferredProcessing::IDeferredVideoProcessingSession> session = nullptr;
     serviceProxy_->CreateDeferredVideoProcessingSession(userId_, remoteCallback, session);
     CHECK_EXECUTE(session, SetDeferredVideoSession(session));
 }

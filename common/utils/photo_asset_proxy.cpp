@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -21,7 +21,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
-typedef PhotoAssetIntf* (*CreatePhotoAssetIntf)(int32_t, int32_t, uint32_t, std::string);
+typedef PhotoAssetIntf* (*CreatePhotoAssetIntf)(int32_t, int32_t, uint32_t, int32_t, std::string);
 
 std::string PhotoAssetProxy::GetBundleName(int32_t callingUid)
 {
@@ -41,11 +41,11 @@ std::string PhotoAssetProxy::GetBundleName(int32_t callingUid)
 }
 
 std::shared_ptr<PhotoAssetProxy> PhotoAssetProxy::GetPhotoAssetProxy(
-    int32_t shootType, int32_t callingUid, uint32_t callingTokenID)
+    int32_t shootType, int32_t callingUid, uint32_t callingTokenID, int32_t photoCount)
 {
     MEDIA_DEBUG_LOG("GetPhotoAssetProxy E callingUid:%{public}d", callingUid);
     auto dynamiclib = CameraDynamicLoader::GetDynamiclib(MEDIA_LIB_SO);
-    if (dynamiclib == nullptr) {
+    if (dynamiclib == nullptr){
         HILOG_COMM_ERROR("PhotoAssetProxy::GetPhotoAssetProxy get dynamiclib fail");
         return nullptr;
     }
@@ -56,7 +56,8 @@ std::shared_ptr<PhotoAssetProxy> PhotoAssetProxy::GetPhotoAssetProxy(
     }
     std::string bundleName = GetBundleName(callingUid);
     MEDIA_DEBUG_LOG("GetPhotoAssetProxy bundleName:%{public}s", bundleName.c_str());
-    PhotoAssetIntf* photoAssetIntf = createPhotoAssetIntf(shootType, callingUid, callingTokenID, bundleName);
+    PhotoAssetIntf* photoAssetIntf = createPhotoAssetIntf(
+        shootType, callingUid, callingTokenID, photoCount, bundleName);
     if (photoAssetIntf == nullptr) {
         HILOG_COMM_ERROR("PhotoAssetProxy::GetPhotoAssetProxy get photoAssetIntf fail");
         return nullptr;
@@ -77,34 +78,53 @@ PhotoAssetProxy::PhotoAssetProxy(
 // LCOV_EXCL_START
 void PhotoAssetProxy::AddPhotoProxy(sptr<Media::PhotoProxy> photoProxy)
 {
+    CAMERA_SYNC_TRACE;
+    std::lock_guard<std::mutex> lock(opMutex_);
     CHECK_RETURN_ELOG(photoAssetIntf_ == nullptr, "PhotoAssetProxy::AddPhotoProxy photoAssetIntf_ is null");
     photoAssetIntf_->AddPhotoProxy(photoProxy);
 }
 
 std::string PhotoAssetProxy::GetPhotoAssetUri()
 {
-    CHECK_RETURN_RET_ELOG(
-        photoAssetIntf_ == nullptr, "", "PhotoAssetProxy::GetPhotoAssetUri photoAssetIntf_ is null");
+    CAMERA_SYNC_TRACE;
+    std::lock_guard<std::mutex> lock(opMutex_);
+    CHECK_RETURN_RET_ELOG(photoAssetIntf_ == nullptr, "", "PhotoAssetProxy::GetPhotoAssetUri photoAssetIntf_ is null");
     return photoAssetIntf_->GetPhotoAssetUri();
 }
 
-int32_t PhotoAssetProxy::GetVideoFd()
+int32_t PhotoAssetProxy::GetVideoFd(VideoType videoType)
 {
     CHECK_RETURN_RET_ELOG(photoAssetIntf_ == nullptr, -1, "PhotoAssetProxy::GetVideoFd photoAssetIntf_ is null");
-    return photoAssetIntf_->GetVideoFd();
+    return photoAssetIntf_->GetVideoFd(videoType);
 }
 
-void PhotoAssetProxy::NotifyVideoSaveFinished()
+void PhotoAssetProxy::NotifyVideoSaveFinished(VideoType videoType)
 {
-    CHECK_RETURN_ELOG(
-        photoAssetIntf_ == nullptr, "PhotoAssetProxy::NotifyVideoSaveFinished photoAssetIntf_ is null");
-    photoAssetIntf_->NotifyVideoSaveFinished();
+    CHECK_RETURN_ELOG(photoAssetIntf_ == nullptr, "PhotoAssetProxy::NotifyVideoSaveFinished photoAssetIntf_ is null");
+    photoAssetIntf_->NotifyVideoSaveFinished(videoType);
 }
 
 int32_t PhotoAssetProxy::GetUserId()
 {
     CHECK_RETURN_RET_ELOG(photoAssetIntf_ == nullptr, -1, "PhotoAssetProxy::GetUserId photoAssetIntf_ is null");
     return photoAssetIntf_->GetUserId();
+}
+
+int32_t PhotoAssetProxy::OpenAsset()
+{
+    MEDIA_INFO_LOG("PhotoAssetProxy::OpenAsset() is called");
+    CHECK_RETURN_RET_ELOG(photoAssetIntf_ == nullptr, -1, "PhotoAssetProxy::OpenAsset photoAssetIntf_ is null");
+    return photoAssetIntf_->OpenAsset();
+}
+
+void PhotoAssetProxy::UpdatePhotoProxy(const sptr<Media::PhotoProxy> &photoProxy)
+{
+    MEDIA_INFO_LOG("PhotoAssetProxy::UpdatePhotoProxy is called");
+    if (photoAssetIntf_ == nullptr) {
+        HILOG_COMM_ERROR("PhotoAssetProxy::UpdatePhotoProxy photoAssetIntf_ is null");
+        return;
+    }
+    photoAssetIntf_->UpdatePhotoProxy(photoProxy);
 }
 
 void PhotoAssetProxy::RegisterPhotoStateCallback(const std::function<void(int32_t)> &callback)

@@ -13,27 +13,23 @@
  * limitations under the License.
  */
 
-#include "video_session_unittest.h"
-
-#include "gtest/gtest.h"
 #include <cstdint>
 #include <vector>
-#include "access_token.h"
-#include "accesstoken_kit.h"
-#include "camera_device_ability_items.h"
+
 #include "camera_util.h"
 #include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include "hap_token_info.h"
+#include "hcamera_service.h"
 #include "ipc_skeleton.h"
 #include "metadata_utils.h"
 #include "nativetoken_kit.h"
+#include "os_account_manager.h"
+#include "sketch_wrapper.h"
 #include "surface.h"
 #include "test_common.h"
 #include "test_token.h"
-#include "token_setproc.h"
-#include "os_account_manager.h"
-#include "sketch_wrapper.h"
-#include "hcamera_service.h"
+#include "video_session_unittest.h"
 
 using namespace testing::ext;
 
@@ -265,7 +261,7 @@ HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_001, TestSize.Level1
  * EnvConditions: NA
  * CaseDescription: Test preconfig VideoSession all config.
  */
-HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_002, TestSize.Level1)
+HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_002, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
@@ -310,7 +306,7 @@ HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_002, TestSize.Level1
  * EnvConditions: NA
  * CaseDescription: Test VideoSession callback normal branches
  */
-HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_003, TestSize.Level1)
+HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_003, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
@@ -335,7 +331,7 @@ HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_003, TestSize.Level1
  * EnvConditions: NA
  * CaseDescription: Test VideoSessionForSys callback while metadata is nullptr
  */
-HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_004, TestSize.Level1)
+HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_004, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
@@ -372,7 +368,7 @@ HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_004, TestSize.Level1
  * EnvConditions: NA
  * CaseDescription: Test VideoSessionForSys callback normal branches while metadata have ability
  */
-HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_005, TestSize.Level1)
+HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_005, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
@@ -422,7 +418,7 @@ HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_005, TestSize.Level1
  * EnvConditions: NA
  * CaseDescription: Test VideoSessionForSys callback normal branches while metadata have ability
  */
-HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_006, TestSize.Level1)
+HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_006, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
@@ -439,137 +435,6 @@ HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_006, TestSize.Level1
     sptr<VideoSessionForSys> videoSessionForSys = static_cast<VideoSessionForSys*>(sessionForSys.GetRefPtr());
     ASSERT_NE(videoSessionForSys, nullptr);
 
-    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameras[0]->GetMetadata();
-    ASSERT_NE(metadata, nullptr);
-    OHOS::Camera::DeleteCameraMetadataItem(metadata->get(), OHOS_STATUS_LIGHT_STATUS);
-    uint8_t lightStart = 1;
-    videoSessionForSys->LockForControl();
-    metadata->addEntry(OHOS_STATUS_LIGHT_STATUS, &lightStart, 1);
-    videoSessionForSys->UnlockForControl();
-    videoSessionForSys->ProcessLightStatusChange(metadata);
-    input->Close();
-}
-
-/*
- * Feature: Framework
- * Function: Test VideoSession callback normal branches
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test VideoSession callback normal branches while metadata have ability
- */
-HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_007, TestSize.Level0)
-{
-    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
-    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
-    ASSERT_NE(input, nullptr);
-
-    sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
-    if (camInput->GetCameraDevice()) {
-        camInput->GetCameraDevice()->SetMdmCheck(false);
-        camInput->GetCameraDevice()->Open();
-    }
-
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::VIDEO);
-    ASSERT_NE(session, nullptr);
-    sptr<VideoSession> videoSession = static_cast<VideoSession*>(session.GetRefPtr());
-    ASSERT_NE(videoSession, nullptr);
-
-    FocusTrackingInfoParms parms = {.trackingMode = FOCUS_TRACKING_MODE_AUTO,
-        .trackingRegion  = {0.0, 0.0, 0.0, 0.0}};
-    sptr<OHOS::CameraStandard::FocusTrackingInfo> focusInfo = new OHOS::CameraStandard::FocusTrackingInfo(parms);
-    input->Close();
-}
-
-/*
- * Feature: Framework
- * Function: Test VideoSession callback normal branches
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test VideoSession callback normal branches while metadata have ability
- */
-HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_008, TestSize.Level0)
-{
-    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
-    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
-    ASSERT_NE(input, nullptr);
-
-    sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
-    if (camInput->GetCameraDevice()) {
-        camInput->GetCameraDevice()->SetMdmCheck(false);
-        camInput->GetCameraDevice()->Open();
-    }
-
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::VIDEO);
-    ASSERT_NE(session, nullptr);
-    sptr<VideoSession> videoSession = static_cast<VideoSession*>(session.GetRefPtr());
-    ASSERT_NE(videoSession, nullptr);
-    int32_t preType = 4;
-    ProfileSizeRatio proSizeType = RATIO_16_9;
-    shared_ptr<PreconfigProfiles> res = videoSession->GeneratePreconfigProfiles(static_cast<PreconfigType>(preType),
-        proSizeType);
-    EXPECT_EQ(res, nullptr);
-    input->Close();
-}
-
-/*
- * Feature: Framework
- * Function: Test VideoSessionForSys callback normal branches
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test VideoSessionForSys callback normal branches while metadata have ability
- */
-HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_009, TestSize.Level0)
-{
-    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
-    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
-    ASSERT_NE(input, nullptr);
-
-    sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
-    if (camInput->GetCameraDevice()) {
-        camInput->GetCameraDevice()->SetMdmCheck(false);
-        camInput->GetCameraDevice()->Open();
-    }
-
-    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::VIDEO);
-    ASSERT_NE(sessionForSys, nullptr);
-    sptr<VideoSessionForSys> videoSessionForSys = static_cast<VideoSessionForSys*>(sessionForSys.GetRefPtr());
-    ASSERT_NE(videoSessionForSys, nullptr);
-
-    shared_ptr<TestLightStatusCallback>lightCallback = std::make_shared<TestLightStatusCallback>();
-    videoSessionForSys->SetLightStatusCallback(lightCallback);
-    input->Close();
-}
-
-/*
- * Feature: Framework
- * Function: Test VideoSessionForSys callback normal branches
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test VideoSessionForSys callback normal branches while metadata have ability
- */
-HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_010, TestSize.Level0)
-{
-    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
-    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
-    ASSERT_NE(input, nullptr);
-
-    sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
-    if (camInput->GetCameraDevice()) {
-        camInput->GetCameraDevice()->SetMdmCheck(false);
-        camInput->GetCameraDevice()->Open();
-    }
-
-    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::VIDEO);
-    ASSERT_NE(sessionForSys, nullptr);
-    sptr<VideoSessionForSys> videoSessionForSys = static_cast<VideoSessionForSys*>(sessionForSys.GetRefPtr());
-    ASSERT_NE(videoSessionForSys, nullptr);
-
-    shared_ptr<TestLightStatusCallback>lightCallback = std::make_shared<TestLightStatusCallback>();
-    videoSessionForSys->SetLightStatusCallback(lightCallback);
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameras[0]->GetMetadata();
     ASSERT_NE(metadata, nullptr);
     OHOS::Camera::DeleteCameraMetadataItem(metadata->get(), OHOS_STATUS_LIGHT_STATUS);
@@ -594,7 +459,7 @@ HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_007, TestSize.Level0
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
-
+ 
     sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
@@ -602,39 +467,38 @@ HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_007, TestSize.Level0
         camInput->GetCameraDevice()->SetMdmCheck(false);
         EXPECT_EQ(camInput->GetCameraDevice()->Open(), 0);
     }
-
+ 
     sptr<HCameraHostManager> cameraHostManager = new(std::nothrow) HCameraHostManager(nullptr);
     sptr<HCameraService> cameraService =  new(std::nothrow) HCameraService(cameraHostManager);
     ASSERT_NE(cameraService, nullptr);
-
+ 
     sptr<ControlCenterSession> mControlCenterSession = nullptr;
     cameraManager_->CreateControlCenterSession(mControlCenterSession);
     EXPECT_NE(mControlCenterSession, nullptr);
-
+ 
     std::vector<float> virtualApertures = {};
     mControlCenterSession->GetSupportedVirtualApertures(virtualApertures);
     EXPECT_EQ(virtualApertures.size(), 0);
-
+ 
     float virtualAperture = 0;
     mControlCenterSession->GetVirtualAperture(virtualAperture);
-
     auto setVirtualApertureRet = mControlCenterSession->SetVirtualAperture(0.0);
-    EXPECT_NE(setVirtualApertureRet, CAMERA_OK);
-
+    EXPECT_EQ(setVirtualApertureRet, CAMERA_OK);
+ 
     std::vector<std::vector<float>> physicalApertures = {};
     mControlCenterSession->GetSupportedPhysicalApertures(physicalApertures);
     EXPECT_EQ(physicalApertures.size(), 0);
-
+ 
     float physicalAperture = 0;
     mControlCenterSession->GetPhysicalAperture(physicalAperture);
     EXPECT_EQ(physicalAperture, 0);
-
+ 
     auto setPhysicalApertureRet = mControlCenterSession->SetPhysicalAperture(0.0);
     EXPECT_EQ(setPhysicalApertureRet, CameraErrorCode::INVALID_ARGUMENT);
-
+ 
     input->Close();
 }
-
+ 
 /*
  * Feature: Framework
  * Function: Test ControlCenterSession beauty effect
@@ -648,7 +512,7 @@ HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_008, TestSize.Level0
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
-
+ 
     sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
@@ -656,45 +520,45 @@ HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_008, TestSize.Level0
         camInput->GetCameraDevice()->SetMdmCheck(false);
         EXPECT_EQ(camInput->GetCameraDevice()->Open(), 0);
     }
-
+ 
     sptr<HCameraHostManager> cameraHostManager = new(std::nothrow) HCameraHostManager(nullptr);
     sptr<HCameraService> cameraService =  new(std::nothrow) HCameraService(cameraHostManager);
     ASSERT_NE(cameraService, nullptr);
-
+ 
     sptr<ControlCenterSession> mControlCenterSession = nullptr;
     cameraManager_->CreateControlCenterSession(mControlCenterSession);
     EXPECT_NE(mControlCenterSession, nullptr);
-
+ 
     std::vector<int32_t> beautyTypes = {};
     beautyTypes = mControlCenterSession->GetSupportedBeautyTypes();
     EXPECT_EQ(beautyTypes.size(), 0);
-
+ 
     std::vector<int32_t> beautyRange = {};
     beautyRange = mControlCenterSession->GetSupportedBeautyRange(BeautyType::AUTO_TYPE);
     EXPECT_EQ(beautyRange.size(), 0);
-
+ 
     mControlCenterSession->SetBeauty(BeautyType::AUTO_TYPE, 0);
-
+ 
     int32_t beautyValue = mControlCenterSession->GetBeauty(BeautyType::AUTO_TYPE);
     EXPECT_EQ(beautyValue, 0);
-
+ 
     std::vector<PortraitThemeType> themeTypes = {};
     auto getThemeTypesRet = mControlCenterSession->GetSupportedPortraitThemeTypes(themeTypes);
     EXPECT_EQ(getThemeTypesRet, CameraErrorCode::INVALID_ARGUMENT);
     EXPECT_EQ(themeTypes.size(), 0);
-
+ 
     bool isSupportportraitTheme = false;
     auto isSupportRet = mControlCenterSession->IsPortraitThemeSupported(isSupportportraitTheme);
     EXPECT_EQ(isSupportRet, CameraErrorCode::INVALID_ARGUMENT);
     EXPECT_EQ(isSupportportraitTheme, false);
     EXPECT_EQ(mControlCenterSession->IsPortraitThemeSupported(), false);
-
+ 
     auto setThemeTypeRet = mControlCenterSession->SetPortraitThemeType(PortraitThemeType::NATURAL);
     EXPECT_EQ(setThemeTypeRet, CameraErrorCode::INVALID_ARGUMENT);
-
+ 
     auto releaseRet = mControlCenterSession->Release();
     EXPECT_EQ(releaseRet, 0);
-
+ 
     input->Close();
 }
 
@@ -801,7 +665,7 @@ HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_010, TestSize.Level0
 
     // 会话未配置时
     result = videoSessionForSys->AddOutput(nullOutput);
-    EXPECT_EQ(result, CameraErrorCode::SERVICE_FATL_ERROR);
+    EXPECT_EQ(result, CameraErrorCode::OPERATION_NOT_ALLOWED);
 
     result = videoSessionForSys->AddOutput(videoOutputCaptureUpper);
     EXPECT_EQ(result, CameraErrorCode::OPERATION_NOT_ALLOWED);
@@ -821,6 +685,29 @@ HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_010, TestSize.Level0
 
     // 关闭相机输入
     input->Close();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test PhotoSessionsys EnableExternalCameraLensBoost
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test EnableExternalCameraLensBoost.
+ */
+HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_011, TestSize.Level1)
+{
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::VIDEO);
+    ASSERT_NE(sessionForSys, nullptr);
+    sptr<VideoSessionForSys> videoSessionForSys = static_cast<VideoSessionForSys*>(sessionForSys.GetRefPtr());
+    ASSERT_NE(videoSessionForSys, nullptr);
+    bool issupperted = videoSessionForSys->IsExternalCameraLensBoostSupported();
+    if (issupperted == true) {
+        EXPECT_EQ(issupperted, true);
+        EXPECT_EQ(videoSessionForSys->EnableExternalCameraLensBoost(0), 1);
+    } else {
+        videoSessionForSys->EnableExternalCameraLensBoost(0);
+    }
 }
 }
 }

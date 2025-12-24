@@ -1,4 +1,4 @@
- /*
+/*
  * Copyright (c) 2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,16 +19,18 @@
 #include "hstream_depth_data.h"
 #include "stream_depth_data_stub.h"
 #include "hstream_common.h"
+#include "stream_depth_data_callback_stub.h"
 
 namespace OHOS {
 namespace CameraStandard {
-
-class HStreamDepthDataFuzzer {
+class MockStreamDepthDataCallback : public StreamDepthDataCallbackStub {
 public:
-static std::shared_ptr<HStreamDepthData> fuzz_;
-static void HStreamDepthDataFuzzTest();
+    ErrCode OnDepthDataError(int32_t errorCode) override
+    {
+        return 0;
+    }
 };
 
-} //CameraStandard
-} //OHOS
-#endif //HSTREAM_DEPTH_DATA_FUZZER_H
+} // namespace CameraStandard
+} // namespace OHOS
+#endif // HSTREAM_DEPTH_DATA_FUZZER_H

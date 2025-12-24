@@ -126,8 +126,8 @@ void ThreadPool::PrintThreadInfo()
             MEDIA_DEBUG_LOG("thread (%s) priority: %{public}d, policy = %{public}d(0:OTHER, 1:FIFO, 2:RR)",
                 workerInfo.name.c_str(), sch.sched_priority, policy);
         } else {
-            MEDIA_DEBUG_LOG("thread (%s) pthread_getschedparam failed, ret = %{public}d.",
-                workerInfo.name.c_str(), ret);
+            MEDIA_DEBUG_LOG("thread (%s) pthread_getschedparam failed, ret = %{public}d.", 
+            workerInfo.name.c_str(), ret);
         }
     }
 }

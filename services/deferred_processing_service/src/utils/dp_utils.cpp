@@ -75,11 +75,12 @@ DpsCallerInfo GetDpsCallerInfo()
     return dpsCallerInfo;
 }
 
-std::unordered_map<std::string, std::string> ParseKeyValue(const std::string& input)
-{
+std::unordered_map<std::string, std::string> ParseKeyValue(const std::string& input) {
     std::unordered_map<std::string, std::string> result;
+    DP_CHECK_RETURN_RET(input.empty(), result);
     std::stringstream src(input);
     std::string pair;
+
     while (std::getline(src, pair, ':')) {
         size_t pos = pair.find('=');
         if (pos != std::string::npos) {
@@ -88,6 +89,7 @@ std::unordered_map<std::string, std::string> ParseKeyValue(const std::string& in
             result[key] = value;
         }
     }
+
     return result;
 }
 } // namespace DeferredProcessing

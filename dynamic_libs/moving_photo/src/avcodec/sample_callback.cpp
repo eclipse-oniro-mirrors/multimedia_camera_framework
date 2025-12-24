@@ -21,22 +21,27 @@ namespace OHOS {
 namespace CameraStandard {
 void SampleCallback::OnCodecError(OH_AVCodec *codec, int32_t errorCode, void *userData)
 {
+    // LCOV_EXCL_START
     (void)codec;
     (void)errorCode;
     (void)userData;
     MEDIA_ERR_LOG("On decoder error, error code: %{public}d", errorCode);
+    // LCOV_EXCL_STOP
 }
 
 void SampleCallback::OnCodecFormatChange(OH_AVCodec *codec, OH_AVFormat *format, void *userData)
 {
+    // LCOV_EXCL_START
     CHECK_RETURN(userData == nullptr);
     (void)codec;
     MEDIA_ERR_LOG("OnCodecFormatChange");
+    // LCOV_EXCL_STOP
 }
 
 
 void SampleCallback::OnNeedInputBuffer(OH_AVCodec *codec, uint32_t index, OH_AVBuffer *buffer, void *userData)
 {
+    // LCOV_EXCL_START
     MEDIA_DEBUG_LOG("OnNeedInputBuffer");
     CHECK_RETURN(userData == nullptr);
     (void)codec;
@@ -44,10 +49,12 @@ void SampleCallback::OnNeedInputBuffer(OH_AVCodec *codec, uint32_t index, OH_AVB
     std::unique_lock<std::mutex> lock(codecUserData->inputMutex_);
     codecUserData->inputBufferInfoQueue_.emplace(new CodecAVBufferInfo(index, buffer));
     codecUserData->inputCond_.notify_all();
+    // LCOV_EXCL_STOP
 }
 
 void SampleCallback::OnNewOutputBuffer(OH_AVCodec *codec, uint32_t index, OH_AVBuffer *buffer, void *userData)
 {
+    // LCOV_EXCL_START
     MEDIA_DEBUG_LOG("OnNewOutputBuffer");
     (void)codec;
     CHECK_RETURN(userData == nullptr);
@@ -55,14 +62,17 @@ void SampleCallback::OnNewOutputBuffer(OH_AVCodec *codec, uint32_t index, OH_AVB
     std::unique_lock<std::mutex> lock(codecUserData->outputMutex_);
     codecUserData->outputBufferInfoQueue_.emplace(new CodecAVBufferInfo(index, buffer));
     codecUserData->outputCond_.notify_all();
+    // LCOV_EXCL_STOP
 }
 
 void SampleCallback::OnOutputFormatChanged(OH_AVCodec *codec, OH_AVFormat *format, void *userData)
 {
+    // LCOV_EXCL_START
     (void)codec;
     (void)format;
     (void)userData;
     MEDIA_DEBUG_LOG("OnOutputFormatChanged received");
+    // LCOV_EXCL_STOP
 }
 
 void SampleCallback::OnInputBufferAvailable(OH_AVCodec *codec, uint32_t index, OH_AVBuffer *buffer, void *userData)
@@ -79,6 +89,7 @@ void SampleCallback::OnInputBufferAvailable(OH_AVCodec *codec, uint32_t index, O
 
 void SampleCallback::OnOutputBufferAvailable(OH_AVCodec *codec, uint32_t index, OH_AVBuffer *buffer, void *userData)
 {
+    // LCOV_EXCL_START
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("OnOutputBufferAvailable");
     (void)codec;
@@ -87,6 +98,7 @@ void SampleCallback::OnOutputBufferAvailable(OH_AVCodec *codec, uint32_t index, 
     std::unique_lock<std::mutex> lock(codecAudioData->outputMutex_);
     codecAudioData->outputBufferInfoQueue_.emplace(new CodecAVBufferInfo(index, buffer));
     codecAudioData->outputCond_.notify_all();
+    // LCOV_EXCL_STOP
 }
 } // CameraStandard
 } // OHOS

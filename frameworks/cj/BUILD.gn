@@ -60,10 +60,8 @@ ohos_shared_library("cj_camera_ffi") {
       "ability_runtime:napi_base_context",  # napi_base_context.h
       "ace_engine:ace_uicontent",
       "c_utils:utils",
-      "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
       "drivers_interface_camera:libcamera_proxy_1.0",
       "drivers_interface_camera:libcamera_proxy_1.1",
-      "drivers_interface_camera:libmap_data_sequenceable_1.0",
       "graphic_surface:surface",
       "hilog:libhilog",
       "hisysevent:libhisysevent",
@@ -147,10 +145,8 @@ ohos_shared_library("cj_camera_picker_ffi") {
       "ability_runtime:ui_extension",  # ui_extension_context.h
       "ace_engine:ace_uicontent",
       "c_utils:utils",
-      "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
       "drivers_interface_camera:libcamera_proxy_1.0",
       "drivers_interface_camera:libcamera_proxy_1.1",
-      "drivers_interface_camera:libmap_data_sequenceable_1.0",
       "graphic_surface:surface",
       "hilog:libhilog",
       "hisysevent:libhisysevent",

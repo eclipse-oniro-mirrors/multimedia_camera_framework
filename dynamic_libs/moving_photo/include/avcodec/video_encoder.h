@@ -16,15 +16,17 @@
 #ifndef AVCODEC_SAMPLE_VIDEO_ENCODER_H
 #define AVCODEC_SAMPLE_VIDEO_ENCODER_H
 
+#include <unordered_set>
 #include "frame_record.h"
 #include "avcodec_video_encoder.h"
+#include "camera_types.h"
+#include "output/camera_output_capability.h"
 #include "sample_info.h"
 #include "camera_util.h"
 #include "surface_buffer.h"
 #include "camera_photo_proxy.h"
 #include "icapture_session.h"
 #include "ability/camera_ability_const.h"
-#include "av_codec_proxy.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -58,66 +60,42 @@ public:
         void OnOutputFormatChanged(const Format &format) override;
         void OnInputBufferAvailable(uint32_t index, std::shared_ptr<AVBuffer> buffer) override;
         void OnOutputBufferAvailable(uint32_t index, std::shared_ptr<AVBuffer> buffer) override;
-
-    private:
-        std::weak_ptr<VideoEncoder> videoEncoder_;
-    };
-
-    struct inputCallback : public MediaCodecParameterWithAttrCallback {
-        explicit inputCallback(std::weak_ptr<VideoEncoder> encoder) : videoEncoder_(encoder) {}
-        ~inputCallback() override = default;
-        void OnInputParameterWithAttrAvailable(uint32_t index, std::shared_ptr<Format> attribute,
-                                                   std::shared_ptr<Format> parameter) override;
-
     private:
         std::weak_ptr<VideoEncoder> videoEncoder_;
     };
     bool IsHdr(ColorSpace colorSpace);
     int32_t GetEncoderBitrate();
-    inline std::mutex& GetStartAvcodecMutex()
+    inline bool CheckIfRestartNeeded()
     {
-        return startAvcodecMutex_;
+        return !isStarted_ || encoder_ == nullptr || size_ == nullptr;
     }
-    inline std::atomic<bool>& GetIsStarted()
+    inline bool GetBframeAbility()
     {
-        return isStarted_;
-    }
-    inline int32_t GetBframeAbility()
-    {
-        MEDIA_INFO_LOG("Bframeability:%{public}d , %{public}d", static_cast<int32_t>(BframeAbility_), BframeAbility_);
-        return static_cast<int32_t>(BframeAbility_);
-    }
-    inline std::shared_ptr<AVCodecIntf> GetAvCodecProxy()
-    {
-        return avCodecProxy_;
-    }
-    inline shared_ptr<Size> GetSize()
-    {
-        return size_;
+        MEDIA_INFO_LOG("Bframeability:%{public}d", BframeAbility_);
+        return BframeAbility_;
     }
     void SetVideoCodec(const std::shared_ptr<Size>& size, int32_t rotation);
     void RestartVideoCodec(shared_ptr<Size> size, int32_t rotation);
 private:
+    bool IsBframeSupported();
     int32_t SetCallback();
     int32_t Configure();
     std::shared_ptr<AVBuffer> CopyAVBuffer(std::shared_ptr<AVBuffer> &inputBuffer);
     bool EnqueueBuffer(sptr<FrameRecord> frameRecord);
-    bool ProcessFrameRecord(sptr<VideoCodecAVBufferInfo> bufferInfo, sptr<FrameRecord> frameRecord);
     std::atomic<bool> isStarted_ { false };
     std::mutex encoderMutex_;
-    std::shared_ptr<AVCodecIntf> avCodecProxy_ = nullptr;
+    shared_ptr<AVCodecVideoEncoder> encoder_ = nullptr;
     std::mutex contextMutex_;
-    std::mutex startAvcodecMutex_;
+
     sptr<VideoCodecUserData> context_ = nullptr;
+    std::condition_variable contextCond_;
     shared_ptr<Size> size_;
-    int32_t rotation_ = 0;
+    int32_t rotation_;
     std::mutex surfaceMutex_; // guard codecSurface_
     sptr<Surface> codecSurface_;
-    int32_t keyFrameInterval_ = KEY_FRAME_INTERVAL;
-    VideoCodecType videoCodecType_ = VIDEO_ENCODE_TYPE_AVC;
+    VideoCodecType videoCodecType_ = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
     int64_t muxerIndex = 0;
     int32_t bitrate_ = 0;
-    int64_t preFrameTimestamp_ = 0;
     bool isHdr_ = false;
     bool BframeAbility_ = false;
     sptr<SurfaceBuffer> codecDetachBuf_ = nullptr;
@@ -125,13 +103,13 @@ private:
     std::mutex enqueueMutex_;
     std::condition_variable enqueueCond_;
 
-    int64_t current_min_timestamp = INT64_MAX;
+    int64_t currentMinTimestamp = INT64_MAX;
 
     std::mutex tsMutex_;
     std::priority_queue<int64_t, std::vector<int64_t>, std::greater<int64_t>> tsVec_;
     std::shared_ptr<AVBuffer> XpsBuffer_;
     std::mutex overTimeMutex_;
-    std::unordered_set<int64_t>  overTimeVec;
+    std::unordered_set<int64_t>  overTimeSet;
 };
 } // CameraStandard
 } // OHOS

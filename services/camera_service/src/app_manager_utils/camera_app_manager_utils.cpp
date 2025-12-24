@@ -47,11 +47,11 @@ sptr<OHOS::AppExecFwk::IAppMgr> CameraAppManagerUtils::GetAppManagerInstance()
         OHOS::SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     CHECK_RETURN_RET_ELOG(abilityMgr == nullptr, nullptr, "Failed to get ISystemAbilityManager");
     sptr<IRemoteObject> remoteObject = abilityMgr->GetSystemAbility(APP_MGR_SERVICE_ID);
-    CHECK_RETURN_RET_ELOG(remoteObject == nullptr, nullptr,
-        "Failed to get app manager service, id=%{public}u", APP_MGR_SERVICE_ID);
+    CHECK_RETURN_RET_ELOG(
+        remoteObject == nullptr, nullptr, "Failed to get app manager service, id=%{public}u", APP_MGR_SERVICE_ID);
     sptr<OHOS::AppExecFwk::IAppMgr> appMgrProxy = iface_cast<OHOS::AppExecFwk::IAppMgr>(remoteObject);
-    CHECK_RETURN_RET_ELOG(appMgrProxy == nullptr || !appMgrProxy->AsObject(), nullptr,
-        "Failed to get app manager proxy");
+    CHECK_RETURN_RET_ELOG(
+        appMgrProxy == nullptr || !appMgrProxy->AsObject(), nullptr, "Failed to get app manager proxy");
     sptr<CameraAppManagerUtilsDeathRecipient> CameraAppManagerUtilsDeathRecipient_ =
         new CameraAppManagerUtilsDeathRecipient();
     remoteObject->AddDeathRecipient(CameraAppManagerUtilsDeathRecipient_);

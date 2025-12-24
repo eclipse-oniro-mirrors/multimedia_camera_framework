@@ -23,8 +23,8 @@ config("camera_dynamic_medialibrary_public_config") {
 ohos_shared_library("camera_dynamic_medialibrary") {
   install_enable = true
   sources = [
-    "${multimedia_camera_framework_path}/dynamic_libs/dfx/src/dfx_report.cpp", 
-    "${multimedia_camera_framework_path}/dynamic_libs/media_library/src/photo_asset_adapter.cpp" 
+    "${multimedia_camera_framework_path}/dynamic_libs/dfx/src/dfx_report.cpp",
+    "${multimedia_camera_framework_path}/dynamic_libs/media_library/src/photo_asset_adapter.cpp"
   ]
   cflags = [
     "-fPIC",
@@ -36,7 +36,7 @@ ohos_shared_library("camera_dynamic_medialibrary") {
     cfi_cross_dso = true
     debug = false
   }
-  include_dirs = [ 
+  include_dirs = [
     "${multimedia_camera_framework_path}/common/utils" ,
     "${multimedia_camera_framework_path}/dynamic_libs/dfx/include",
   ]
@@ -74,10 +74,9 @@ config("camera_dynamic_picture_public_config") {
 
 ohos_shared_library("camera_dynamic_picture") {
   install_enable = true
-  sources = [ 
+  sources = [
     "${multimedia_camera_framework_path}/dynamic_libs/dfx/src/dfx_report.cpp",
     "${multimedia_camera_framework_path}/dynamic_libs/image_framework/src/picture_adapter.cpp",
-    "${multimedia_camera_framework_path}/dynamic_libs/image_framework/src/image_source_adapter.cpp",
   ]
   cflags = [
     "-fPIC",
@@ -89,8 +88,8 @@ ohos_shared_library("camera_dynamic_picture") {
     cfi_cross_dso = true
     debug = false
   }
-  include_dirs = [ 
-    "${multimedia_camera_framework_path}/common/utils" ,
+  include_dirs = [
+    "${multimedia_camera_framework_path}/common/utils",
     "${multimedia_camera_framework_path}/dynamic_libs/dfx/include",
     "${multimedia_camera_framework_path}/common/utils/image_framework/include",
   ]
@@ -107,8 +106,6 @@ ohos_shared_library("camera_dynamic_picture") {
     "image_framework:image_native",
     "ipc:ipc_single",
     "samgr:samgr_proxy",
-    "graphic_surface:buffer_handle",
-    "graphic_surface:surface",
   ]
 
   cflags_cc = cflags
@@ -169,9 +166,7 @@ config("camera_dynamic_moving_photo_public_config") {
   include_dirs = [
     "${multimedia_camera_framework_path}/common/",
     "${multimedia_camera_framework_path}/common/utils",
-    "${multimedia_camera_framework_path}/common/utils/av_codec/include",
-    "${multimedia_camera_framework_path}/common/utils/moving_photo/include",
-    "${multimedia_camera_framework_path}/dynamic_libs/moving_photo/include/",
+    "${multimedia_camera_framework_path}/dynamic_libs/moving_photo/include",
     "${multimedia_camera_framework_path}/dynamic_libs/moving_photo/include/avcodec",
     "${multimedia_camera_framework_path}/dynamic_libs/moving_photo/include/common",
     "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include",
@@ -197,6 +192,8 @@ ohos_shared_library("camera_dynamic_moving_photo") {
     "${multimedia_camera_framework_path}/dynamic_libs/moving_photo/src/avcodec/sample_callback.cpp",
     "${multimedia_camera_framework_path}/dynamic_libs/moving_photo/src/avcodec/video_encoder.cpp",
     "${multimedia_camera_framework_path}/dynamic_libs/moving_photo/src/common/frame_record.cpp",
+    "${multimedia_camera_framework_path}/dynamic_libs/moving_photo/src/common/moving_photo_listener.cpp",
+    "${multimedia_camera_framework_path}/dynamic_libs/moving_photo/src/common/moving_photo_manager.cpp",
     "${multimedia_camera_framework_path}/dynamic_libs/moving_photo/src/common/sample_info.cpp",
     "${multimedia_camera_framework_path}/dynamic_libs/moving_photo/src/moving_photo_surface_wrapper.cpp",
     "${multimedia_camera_framework_path}/frameworks/native/camera/base/src/output/camera_photo_proxy.cpp",
@@ -216,11 +213,11 @@ ohos_shared_library("camera_dynamic_moving_photo") {
 
   deps = [
     "${multimedia_camera_framework_path}/common:camera_utils",
-    "${multimedia_camera_framework_path}/services/camera_service:camera_service",
   ]
 
   public_configs = [
     ":camera_dynamic_moving_photo_public_config",
+    "${multimedia_camera_framework_path}/services/camera_service/idls:camera_sa_idl_config",
   ]
 
   if (target_cpu == "arm") {
@@ -247,7 +244,7 @@ ohos_shared_library("camera_dynamic_moving_photo") {
     "drivers_interface_camera:libcamera_proxy_1.4",
     "drivers_interface_camera:libmap_data_sequenceable_1.0",
     "drivers_interface_camera:metadata",
-    "drivers_interface_display:libdisplay_commontype_proxy_1.0",  
+    "drivers_interface_display:libdisplay_commontype_proxy_1.0",
     "graphic_surface:surface",
     "graphic_surface:sync_fence",
     "hilog:libhilog",
@@ -260,7 +257,6 @@ ohos_shared_library("camera_dynamic_moving_photo") {
     "samgr:samgr_proxy",
   ]
   defines = []
-  defines += [ "MOVING_PHOTO_ADD_AUDIO" ]
   cflags_cc = cflags
   cflags_cc += ["-std=c++20",]
 
@@ -273,7 +269,6 @@ config("camera_dynamic_media_manager_public_config") {
     "${multimedia_camera_framework_path}/dynamic_libs/media_manager/include",
     "${multimedia_camera_framework_path}/dynamic_libs/media_manager/include/media_manager",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/dfx",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/utils",
   ]
 }
@@ -283,7 +278,7 @@ config("camera_dynamic_notification_public_config") {
     "${multimedia_camera_framework_path}/common/utils",
     "${multimedia_camera_framework_path}/common/utils/camera_notification/include",
     "${multimedia_camera_framework_path}/common/utils/image_framework/include",
-  ] 
+  ]
 }
 
 ohos_shared_library("camera_dynamic_media_manager") {
@@ -300,6 +295,8 @@ ohos_shared_library("camera_dynamic_media_manager") {
     "${multimedia_camera_framework_path}/dynamic_libs/media_manager/src/media_manager/track.cpp",
     "${multimedia_camera_framework_path}/dynamic_libs/media_manager/src/media_manager/writer.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/utils/dp_utils.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/dps_fd.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/media_progress_notifier.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/dfx/dps_event_report.cpp",
   ]
   cflags = [
@@ -315,11 +312,12 @@ ohos_shared_library("camera_dynamic_media_manager") {
   include_dirs = [
     "${multimedia_camera_framework_path}/common/utils",
     "${multimedia_camera_framework_path}/common/utils/media_manager/include",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/dfx",
   ]
 
   deps = [
     "${multimedia_camera_framework_path}/services/deferred_processing_service/idls:camera_deferred_idl_sa_proxy",
-    ]
+  ]
 
   public_configs = [
     ":camera_dynamic_media_manager_public_config",
@@ -366,48 +364,6 @@ ohos_shared_library("camera_dynamic_media_manager") {
   subsystem_name = "multimedia"
 }
 
-config("camera_dynamic_xcomponent_controller_public_config") {
-  include_dirs = [
-    "${multimedia_camera_framework_path}/dynamic_libs/xcomponent_controller/include",
-  ]
-}
-ohos_shared_library("camera_dynamic_xcomponent_controller") {
-  install_enable = true
-  sources = [
-    "${multimedia_camera_framework_path}/dynamic_libs/xcomponent_controller/src/xcomponent_controller_adapter.cpp" 
-  ]
-  cflags = [
-    "-fPIC",
-    "-Wall",
-    "-Os",
-  ]
-  sanitize = {
-    cfi = true
-    cfi_cross_dso = true
-    debug = false
-  }
-  include_dirs = [ 
-    "${multimedia_camera_framework_path}/common/utils" ,
-    "${multimedia_camera_framework_path}/common/utils/xcomponent_controller/include",
-  ]
-  public_configs = [ ":camera_dynamic_xcomponent_controller_public_config" ]
-  if (target_cpu == "arm") {
-    cflags += [ "-DBINDER_IPC_32BIT" ]
-  }
-
-  external_deps = [
-    "ace_engine:ace_xcomponent_controller",
-    "hilog:libhilog",
-    "hisysevent:libhisysevent",
-    "hitrace:hitrace_meter",
-  ]
-
-  cflags_cc = cflags
-
-  part_name = "camera_framework"
-  subsystem_name = "multimedia"
-}
-
 ohos_shared_library("camera_dynamic_notification") {
   install_enable = true
   sources = [
@@ -439,7 +395,6 @@ ohos_shared_library("camera_dynamic_notification") {
   external_deps = [
     "ability_base:base",
     "ability_base:zuri",
-    "bundle_framework:appexecfwk_base",
     "distributed_notification_service:ans_innerkits",
     "hilog:libhilog",
     "hisysevent:libhisysevent",
@@ -447,6 +402,99 @@ ohos_shared_library("camera_dynamic_notification") {
     "os_account:libaccountkits",
     "os_account:os_account_innerkits",
   ]
+
+  cflags_cc = cflags
+
+  part_name = "camera_framework"
+  subsystem_name = "multimedia"
+}
+
+config("camera_dynamic_xcomponent_controller_public_config") {
+  include_dirs = [
+    "${multimedia_camera_framework_path}/dynamic_libs/xcomponent_controller/include",
+  ]
+}
+ohos_shared_library("camera_dynamic_xcomponent_controller") {
+  install_enable = true
+  sources = [
+    "${multimedia_camera_framework_path}/dynamic_libs/xcomponent_controller/src/xcomponent_controller_adapter.cpp"
+  ]
+  cflags = [
+    "-fPIC",
+    "-Wall",
+    "-Os",
+  ]
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+  include_dirs = [
+    "${multimedia_camera_framework_path}/common/utils" ,
+    "${multimedia_camera_framework_path}/common/utils/xcomponent_controller/include",
+  ]
+  public_configs = [ ":camera_dynamic_xcomponent_controller_public_config" ]
+  if (target_cpu == "arm") {
+    cflags += [ "-DBINDER_IPC_32BIT" ]
+  }
+
+  external_deps = [
+    "ace_engine:ace_xcomponent_controller",
+    "hilog:libhilog",
+    "hisysevent:libhisysevent",
+    "hitrace:hitrace_meter",
+  ]
+
+  cflags_cc = cflags
+
+  part_name = "camera_framework"
+  subsystem_name = "multimedia"
+}
+
+config("camera_dynamic_image_effect_public_config") {
+  include_dirs = [
+    "${multimedia_camera_framework_path}/dynamic_libs/image_effect/include",
+  ]
+}
+ohos_shared_library("camera_dynamic_image_effect") {
+  install_enable = true
+  sources = []
+  cflags = [
+    "-fPIC",
+    "-Wall",
+    "-Os",
+  ]
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+  include_dirs = [
+    "${multimedia_camera_framework_path}/common/utils" ,
+    "${multimedia_camera_framework_path}/common/utils/image_effect/include",
+  ]
+  public_configs = [ ":camera_dynamic_image_effect_public_config" ]
+  if (target_cpu == "arm") {
+    cflags += [ "-DBINDER_IPC_32BIT" ]
+  }
+
+  external_deps = [
+    "hilog:libhilog",
+    "hisysevent:libhisysevent",
+    "hitrace:hitrace_meter",
+    "graphic_surface:surface",
+    "image_framework:image_native",
+    "c_utils:utils",
+  ]
+
+  if (use_image_effect) {
+    external_deps += [ "image_effect:image_effect_impl" ]
+    sources += [
+      "${multimedia_camera_framework_path}/dynamic_libs/image_effect/src/image_effect_adapter.cpp"
+    ]
+  }
+
+  use_exceptions = true
 
   cflags_cc = cflags
 

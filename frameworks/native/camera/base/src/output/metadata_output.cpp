@@ -26,6 +26,8 @@
 #include "camera_manager.h"
 #include "camera_security_utils.h"
 #include "camera_util.h"
+#include "foundation/multimedia/camera_framework/interfaces/kits/native/include/camera/camera.h"
+#include "input/camera_input.h"
 #include "session/capture_session.h"
 
 namespace OHOS {
@@ -58,17 +60,6 @@ MetadataFaceObject::MetadataFaceObject(const MetaObjectParms &parms, const Rect 
       rightEyeBoundingBox_(rightEyeBoundingBox),
       emotion_(emotion),
       emotionConfidence_(emotionConfidence),
-      pitchAngle_(pitchAngle),
-      yawAngle_(yawAngle),
-      rollAngle_(rollAngle)
-{}
-
-MetadataBasicFaceObject::MetadataBasicFaceObject(const MetaObjectParms &parms, const Rect leftEyeBoundingBox,
-                                                 const Rect rightEyeBoundingBox, const int32_t pitchAngle,
-                                                 const int32_t yawAngle, const int32_t rollAngle)
-    : MetadataObject(parms),
-      leftEyeBoundingBox_(leftEyeBoundingBox),
-      rightEyeBoundingBox_(rightEyeBoundingBox),
       pitchAngle_(pitchAngle),
       yawAngle_(yawAngle),
       rollAngle_(rollAngle)
@@ -127,8 +118,15 @@ std::shared_ptr<MetadataStateCallback> MetadataOutput::GetAppStateCallback()
     // LCOV_EXCL_STOP
 }
 
+std::shared_ptr<FocusTrackingMetaInfoCallback> MetadataOutput::GetFocusTrackingMetaInfoCallback()
+{
+    std::lock_guard<std::mutex> lock(outputCallbackMutex_);
+    return focusTrackingMetaInfoCallback_;
+}
+
 std::vector<MetadataObjectType> MetadataOutput::GetSupportedMetadataObjectTypes()
 {
+    // LCOV_EXCL_START
     auto session = GetSession();
     CHECK_RETURN_RET(session == nullptr, {});
     auto inputDevice = session->GetInputDevice();
@@ -142,23 +140,31 @@ std::vector<MetadataObjectType> MetadataOutput::GetSupportedMetadataObjectTypes(
     CHECK_RETURN_RET(ret, {});
     std::vector<MetadataObjectType> objectTypes;
     for (size_t index = 0; index < item.count; index++) {
-        CHECK_EXECUTE(item.data.u8[index] == OHOS_CAMERA_FACE_DETECT_MODE_SIMPLE,
-            objectTypes.emplace_back(MetadataObjectType::FACE));
+        if (item.data.u8[index] == OHOS_CAMERA_FACE_DETECT_MODE_SIMPLE) {
+            objectTypes.emplace_back(MetadataObjectType::FACE);
+        }
     }
     return objectTypes;
+    // LCOV_EXCL_STOP
 }
 
 void MetadataOutput::SetCapturingMetadataObjectTypes(std::vector<MetadataObjectType> metadataObjectTypes)
 {
     auto session = GetSession();
     CHECK_RETURN((session == nullptr) || (session->GetInputDevice() == nullptr));
+    // LCOV_EXCL_START
     std::set<camera_face_detect_mode_t> objectTypes;
     for (const auto& type : metadataObjectTypes) {
-        CHECK_EXECUTE(type == MetadataObjectType::FACE, objectTypes.insert(OHOS_CAMERA_FACE_DETECT_MODE_SIMPLE));
+        if (type == MetadataObjectType::FACE) {
+            objectTypes.insert(OHOS_CAMERA_FACE_DETECT_MODE_SIMPLE);
+        }
     }
-    CHECK_EXECUTE(objectTypes.empty(), objectTypes.insert(OHOS_CAMERA_FACE_DETECT_MODE_OFF));
+    if (objectTypes.empty()) {
+        objectTypes.insert(OHOS_CAMERA_FACE_DETECT_MODE_OFF);
+    }
 
     session->SetCaptureMetadataObjectTypes(objectTypes);
+    // LCOV_EXCL_STOP
 }
 
 int32_t MetadataOutput::AddMetadataObjectTypes(std::vector<MetadataObjectType> metadataObjectTypes)
@@ -166,7 +172,7 @@ int32_t MetadataOutput::AddMetadataObjectTypes(std::vector<MetadataObjectType> m
     const size_t maxSize4NonSystemApp  = 1;
     // LCOV_EXCL_START
     if (!CameraSecurity::CheckSystemApp()) {
-        MEDIA_DEBUG_LOG("MetadataOutput::AddMetadataObjectTypes public calling for metadataOutput");
+        MEDIA_DEBUG_LOG("public calling for metadataOutput");
         if (metadataObjectTypes.size() > maxSize4NonSystemApp ||
             std::any_of(metadataObjectTypes.begin(), metadataObjectTypes.end(),
                 [](MetadataObjectType type) { return type != MetadataObjectType::FACE; })) {
@@ -201,8 +207,7 @@ int32_t MetadataOutput::AddMetadataObjectTypes(std::vector<MetadataObjectType> m
         "MetadataOutput Failed to AddMetadataObjectTypes!, GetStream is nullptr");
     std::vector<int32_t> numberOfTypes = convert(metadataObjectTypes);
     int32_t errCode = static_cast<IStreamMetadata *>(stream.GetRefPtr())->EnableMetadataType(numberOfTypes);
-    CHECK_RETURN_RET_ELOG(
-        errCode != CAMERA_OK, CameraErrorCode::SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_ELOG(errCode != CAMERA_OK, CameraErrorCode::SERVICE_FATL_ERROR,
         "MetadataOutput Failed to AddMetadataObjectTypes!, EnableMetadataType failed ret: %{public}d", errCode);
     return CameraErrorCode::SUCCESS;
     // LCOV_EXCL_STOP
@@ -213,7 +218,7 @@ int32_t MetadataOutput::RemoveMetadataObjectTypes(std::vector<MetadataObjectType
     const size_t maxSize4NonSystemApp  = 1;
     // LCOV_EXCL_START
     if (!CameraSecurity::CheckSystemApp()) {
-        MEDIA_DEBUG_LOG("MetadataOutput::RemoveMetadataObjectTypes public calling for metadataOutput");
+        MEDIA_DEBUG_LOG("public calling for metadataOutput");
         if (metadataObjectTypes.size() > maxSize4NonSystemApp ||
             std::any_of(metadataObjectTypes.begin(), metadataObjectTypes.end(),
                 [](MetadataObjectType type) { return type != MetadataObjectType::FACE; })) {
@@ -230,8 +235,7 @@ int32_t MetadataOutput::RemoveMetadataObjectTypes(std::vector<MetadataObjectType
 
     std::vector<int32_t> numberOfTypes = convert(metadataObjectTypes);
     int32_t errCode = static_cast<IStreamMetadata *>(stream.GetRefPtr())->DisableMetadataType(numberOfTypes);
-    CHECK_RETURN_RET_ELOG(
-        errCode != CAMERA_OK, CameraErrorCode::SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_ELOG(errCode != CAMERA_OK, CameraErrorCode::SERVICE_FATL_ERROR,
         "MetadataOutput Failed to AddMetadataObjectTypes!, EnableMetadataType failed ret: %{public}d", errCode);
     return CameraErrorCode::SUCCESS;
     // LCOV_EXCL_STOP
@@ -275,10 +279,11 @@ void MetadataOutput::SetCallback(std::shared_ptr<MetadataObjectCallback> metadat
     } else {
         MEDIA_ERR_LOG("MetadataOutput::SetCallback() itemStream is nullptr");
     }
-    CHECK_RETURN(errorCode == CAMERA_OK);
-    MEDIA_ERR_LOG("MetadataOutput::SetCallback(): Failed to register callback, errorCode: %{public}d", errorCode);
-    cameraMetadataCallback_ = nullptr;
-    appObjectCallback_ = nullptr;
+    if (errorCode != CAMERA_OK) {
+        MEDIA_ERR_LOG("MetadataOutput::SetCallback(): Failed to register callback, errorCode: %{public}d", errorCode);
+        cameraMetadataCallback_ = nullptr;
+        appObjectCallback_ = nullptr;
+    }
     // LCOV_EXCL_STOP
 }
 
@@ -288,6 +293,12 @@ void MetadataOutput::SetCallback(std::shared_ptr<MetadataStateCallback> metadata
     std::lock_guard<std::mutex> lock(outputCallbackMutex_);
     appStateCallback_ = metadataStateCallback;
     // LCOV_EXCL_STOP
+}
+
+void MetadataOutput::SetFocusTrackingMetaInfoCallback(std::shared_ptr<FocusTrackingMetaInfoCallback> callback)
+{
+    std::lock_guard<std::mutex> lock(outputCallbackMutex_);
+    focusTrackingMetaInfoCallback_ = callback;
 }
 
 int32_t MetadataOutput::CreateStream()
@@ -329,8 +340,8 @@ int32_t MetadataOutput::Stop()
     // LCOV_EXCL_START
     MEDIA_DEBUG_LOG("MetadataOutput::Stop");
     auto stream = GetStream();
-    CHECK_RETURN_RET_ELOG(stream == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
-        "MetadataOutput Failed to Stop!, GetStream is nullptr");
+    CHECK_RETURN_RET_ELOG(
+        stream == nullptr, CameraErrorCode::SERVICE_FATL_ERROR, "MetadataOutput Failed to Stop!, GetStream is nullptr");
     int32_t errCode = static_cast<IStreamMetadata*>(stream.GetRefPtr())->Stop();
     CHECK_PRINT_ELOG(errCode != CAMERA_OK, "Failed to Stop MetadataOutput!, errCode: %{public}d", errCode);
     return ServiceToCameraError(errCode);
@@ -390,15 +401,77 @@ void MetadataOutput::ProcessMetadata(const int32_t streamId,
         reportFaceResults_ = false;
     }
     // LCOV_EXCL_STOP
-    MEDIA_ERR_LOG("Camera not ProcessFaceRectangles");
+    MEDIA_DEBUG_LOG("Camera not ProcessFaceRectangles");
     return;
+}
+
+void MetadataOutput::ProcessFocusTrackingMetaInfo(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result,
+    FocusTrackingMetaInfo& info, bool isNeedMirror, bool isNeedFlip)
+{
+    // LCOV_EXCL_START
+    MEDIA_DEBUG_LOG("MetadataOutput::ProcessFocusTrackingMetaInfo is called");
+    CHECK_RETURN(result == nullptr);
+    common_metadata_header_t *metadata = result->get();
+    std::vector<camera_metadata_item_t> metadataResults;
+    std::vector<uint32_t> metadataTypes;
+
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_FOCUS_TRACKING_MODE, &item);
+    if (item.count == 1) {
+        info.SetTrackingMode(static_cast<FocusTrackingMode>(item.data.u8[0]));
+    }
+
+    Rect region;
+    ProcessFocusTrackingRegion(result, region, isNeedMirror, isNeedFlip);
+    info.SetTrackingRegion(region);
+
+    ret = Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_FOCUS_TRACKING_OBJECT_ID, &item);
+    if (item.count == 1) {
+        info.SetTrackingObjectId(item.data.i32[0]);
+    }
+
+    MEDIA_INFO_LOG("Get FocusTrackingObjectId: %{public}d", info.GetTrackingObjectId());
+
+    CHECK_RETURN_ELOG(ret != CameraErrorCode::SUCCESS, "MetadataOutput::ProcessFocusTrackingMetaInfo failed.");
+    // LCOV_EXCL_STOP
+}
+
+bool MetadataOutput::ProcessFocusTrackingRegion(const std::shared_ptr<OHOS::Camera::CameraMetadata>& metadata,
+    Rect& region, bool isNeedMirror, bool isNeedFlip)
+{
+    // LCOV_EXCL_START
+    constexpr int32_t offsetOne = 1;
+    constexpr int32_t offsetTwo = 2;
+    constexpr int32_t offsetThree = 3;
+    constexpr int32_t data_cnt = 4;
+
+    CHECK_RETURN_RET_ELOG(metadata == nullptr, false, "metadata is nullptr");
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_FOCUS_TRACKING_REGION, &item);
+    CHECK_RETURN_RET_DLOG(ret != CAM_META_SUCCESS || item.count < data_cnt, false,
+        "%{public}s FindCameraMetadataItem failed, ret: %{public}d, item.count: %{public}d", __FUNCTION__, ret,
+        item.count);
+    int32_t offsetTopLeftX = item.data.i32[0];
+    int32_t offsetTopLeftY = item.data.i32[offsetOne];
+    int32_t offsetBottomRightX = item.data.i32[offsetTwo];
+    int32_t offsetBottomRightY = item.data.i32[offsetThree];
+
+    region = MetadataCommonUtils::ProcessRectBox(offsetTopLeftX, offsetTopLeftY, offsetBottomRightX, offsetBottomRightY,
+        isNeedMirror, isNeedFlip, RectBoxType::RECT_CAMERA);
+    MEDIA_INFO_LOG(
+        "Processed FocusTrackingRegion [tlx, tly, wth, hgt]: [ %{public}f, %{public}f, %{public}f, %{public}f ]",
+        region.topLeftX, region.topLeftY, region.width, region.height);
+    return true;
+    // LCOV_EXCL_STOP
 }
 
 MetadataObjectListener::MetadataObjectListener(sptr<MetadataOutput> metadata) : metadata_(metadata) {}
 
 int32_t MetadataObjectListener::ProcessMetadataBuffer(void *buffer, int64_t timestamp)
 {
+    // LCOV_EXCL_START
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 void MetadataObjectListener::OnBufferAvailable()
@@ -421,7 +494,9 @@ void MetadataObjectListener::OnBufferAvailable()
     int32_t ret = ProcessMetadataBuffer(buffer->GetVirAddr(), timestamp);
     if (ret) {
         std::shared_ptr<MetadataStateCallback> appStateCallback = metadataOutput->GetAppStateCallback();
-        CHECK_EXECUTE(appStateCallback, appStateCallback->OnError(ret));
+        if (appStateCallback) {
+            appStateCallback->OnError(ret);
+        }
     }
     surface->ReleaseBuffer(buffer, -1);
     // LCOV_EXCL_STOP
@@ -442,16 +517,25 @@ int32_t HStreamMetadataCallbackImpl::OnMetadataResult(const int32_t streamId,
     bool isNeedFlip = false;
     if (inputDevice) {
         auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
-        isNeedMirror = (inputDeviceInfo->GetPosition() == CAMERA_POSITION_FRONT ||
-                        inputDeviceInfo->GetPosition() == CAMERA_POSITION_FOLD_INNER);
-        isNeedFlip = inputDeviceInfo->GetUsedAsPosition() == CAMERA_POSITION_FRONT;
+        if (inputDeviceInfo) {
+            isNeedMirror = (inputDeviceInfo->GetPosition() == CAMERA_POSITION_FRONT ||
+                            inputDeviceInfo->GetPosition() == CAMERA_POSITION_FOLD_INNER);
+            isNeedFlip = inputDeviceInfo->GetUsedAsPosition() == CAMERA_POSITION_FRONT;
+        }
     }
     std::vector<sptr<MetadataObject>> metaObjects;
     metadataOutput->ProcessMetadata(streamId, result, metaObjects, isNeedMirror, isNeedFlip);
     auto objectCallback = metadataOutput->GetAppObjectCallback();
-    CHECK_RETURN_RET(objectCallback == nullptr, INVALID_ARGUMENT);
-    CHECK_EXECUTE((metadataOutput->reportFaceResults_ || metadataOutput->reportLastFaceResults_) && objectCallback,
-        objectCallback->OnMetadataObjectsAvailable(metaObjects));
+    auto focusTrackingMetaInfoCallback = metadataOutput->GetFocusTrackingMetaInfoCallback();
+    if ((metadataOutput->reportFaceResults_ || metadataOutput->reportLastFaceResults_) && objectCallback) {
+        objectCallback->OnMetadataObjectsAvailable(metaObjects);
+    }
+    if (focusTrackingMetaInfoCallback) {
+        FocusTrackingMetaInfo focusTrackingMetaInfo;
+        metadataOutput->ProcessFocusTrackingMetaInfo(result, focusTrackingMetaInfo, isNeedMirror, isNeedFlip);
+        focusTrackingMetaInfo.SetDetectedObjects(metaObjects);
+        focusTrackingMetaInfoCallback->OnFocusTrackingMetaInfoAvailable(focusTrackingMetaInfo);
+    }
     return SUCCESS;
     // LCOV_EXCL_STOP
 }
@@ -491,10 +575,6 @@ sptr<MetadataObject> MetadataObjectFactory::createMetadataObject(MetadataObjectT
             break;
         case MetadataObjectType::BAR_CODE_DETECTION:
             metadataObject = new MetadataBarCodeDetectionObject(baseMetaParms);
-            break;
-        case MetadataObjectType::BASE_FACE_DETECTION:
-            metadataObject = new MetadataBasicFaceObject(baseMetaParms, leftEyeBoundingBox_, rightEyeBoundingBox_,
-                                                         pitchAngle_, yawAngle_, rollAngle_);
             break;
         default:
             metadataObject = new MetadataObject(baseMetaParms);

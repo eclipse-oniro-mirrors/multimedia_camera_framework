@@ -32,6 +32,7 @@ const int32_t WAIT_TIME_AFTER_CAPTURE = 1;
 const int32_t WAIT_TIME_AFTER_START = 1;
 const int32_t WAIT_TIME_CALLBACK = 2;
 
+
 typedef void (*PhotoOutputTest_PhotoAssetAvailable)(PhotoOutput* photoOutput, OH_MediaAsset* photoAsset);
 
 class PhotoListenerTest : public IBufferConsumerListener {

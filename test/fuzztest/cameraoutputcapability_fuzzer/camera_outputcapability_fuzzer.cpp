@@ -33,7 +33,7 @@
  
 namespace OHOS {
 namespace CameraStandard {
-static constexpr int32_t MIN_SIZE_NUM = 4;
+static constexpr int32_t MIN_SIZE_NUM = 100;
  
 std::shared_ptr<CameraOutputCapability> CameraOutputCapabilityFuzzer::capabilityfuzz_{nullptr};
 std::shared_ptr<Profile> CameraOutputCapabilityFuzzer::profilefuzz_{nullptr};
@@ -41,12 +41,12 @@ std::shared_ptr<VideoProfile> CameraOutputCapabilityFuzzer::videoProfilefuzz_{nu
  
 void CameraOutputCapabilityFuzzer::CameraOutputCapabilityFuzzTest(FuzzedDataProvider& fdp)
 {
-    int32_t value = fdp.ConsumeIntegralInRange<int32_t>(-2, 5);
+    int32_t value = fdp.ConsumeIntegralInRange<int32_t>(-1, 2);
     ProfileSizeRatio sizeRatio = static_cast<ProfileSizeRatio>(value);
     float unspecifiedValue = fdp.ConsumeFloatingPoint<float>();
     GetTargetRatio(sizeRatio, unspecifiedValue);
  
-    value = fdp.ConsumeIntegral<int32_t>();
+    value = fdp.ConsumeIntegralInRange<int32_t>(2, 5);
     CameraFormat format = static_cast<CameraFormat>(value);
     Size profileSize;
     value = fdp.ConsumeIntegral<uint32_t>();
@@ -79,6 +79,7 @@ void CameraOutputCapabilityFuzzer::CameraOutputCapabilityFuzzTest(FuzzedDataProv
  
     VideoProfile videoProfile1(format, profileSize, framerates);
     videoProfilefuzz_->IsContains(videoProfile1);
+    value = fdp.ConsumeIntegralInRange<int32_t>(2, 5);
     format = static_cast<CameraFormat>(value);
     value = fdp.ConsumeIntegral<uint32_t>();
     profileSize.width = value;
@@ -94,7 +95,7 @@ void CameraOutputCapabilityFuzzer::CameraOutputCapabilityFuzzTest(FuzzedDataProv
  
     capabilityfuzz_ = std::make_shared<CameraOutputCapability>();
     std::vector<Profile> previewProfiles;
-    value = fdp.ConsumeIntegral<int32_t>();
+    value = fdp.ConsumeIntegralInRange<int32_t>(2, 5);
     format = static_cast<CameraFormat>(value);
     Size profileSize1;
     value = fdp.ConsumeIntegral<uint32_t>();
@@ -120,15 +121,16 @@ void CameraOutputCapabilityFuzzer::CameraOutputCapabilityFuzzTest(FuzzedDataProv
  
 void Test(uint8_t* data, size_t size)
 {
+    FuzzedDataProvider fdp(data, size);
+    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
+        return;
+    }
     auto cameraOutputCapability = std::make_unique<CameraOutputCapabilityFuzzer>();
     if (cameraOutputCapability == nullptr) {
         MEDIA_INFO_LOG("cameraOutputCapability is null");
         return;
     }
-    FuzzedDataProvider fdp(data, size);
-    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
-        return;
-    }
+    
     cameraOutputCapability->CameraOutputCapabilityFuzzTest(fdp);
 }
 } // namespace CameraStandard

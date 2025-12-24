@@ -27,7 +27,7 @@ namespace OHOS {
 namespace CameraStandard {
 class IDeferredVideoProcSessionCallbackFuzz : public IDeferredVideoProcSessionCallback {
 public:
-    void OnProcessVideoDone(const std::string& videoId, const sptr<IPCFileDescriptor> ipcFd) override {}
+    void OnProcessVideoDone(const std::string& videoId) override {}
     void OnError(const std::string& videoId, const DpsErrorCode errorCode) override {}
     void OnStateChanged(const DpsStatusCode status) override {}
 };

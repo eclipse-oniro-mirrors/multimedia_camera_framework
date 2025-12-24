@@ -15,6 +15,7 @@
 
 #include "media_manager_proxy_fuzzer.h"
 #include "camera_log.h"
+#include "dps_fd.h"
 #include "ipc_file_descriptor.h"
 
 namespace OHOS {
@@ -33,16 +34,16 @@ void MediaManagerProxyFuzzer::MediaManagerProxyFuzzerTest(FuzzedDataProvider& fd
     mediaManagerProxyFuzz_ = MediaManagerProxy::CreateMediaManagerProxy();
     CHECK_RETURN_ELOG(!mediaManagerProxyFuzz_, "CreateMediaManagerProxy Error");
     std::string requestId(fdp.ConsumeRandomLengthString(MAX_LENGTH_STRING));
-    sptr<IPCFileDescriptor> inputFd = sptr<IPCFileDescriptor>::MakeSptr(dup(REQUEST_FD_ID));
-    mediaManagerProxyFuzz_->MpegAcquire(requestId, inputFd);
+    auto inputFd = std::make_shared<DeferredProcessing::DpsFd>(dup(REQUEST_FD_ID));
+    int32_t width = fdp.ConsumeIntegral<int32_t>();
+    int32_t height = fdp.ConsumeIntegral<int32_t>();
+    mediaManagerProxyFuzz_->MpegAcquire(requestId, inputFd, width, height);
     mediaManagerProxyFuzz_->MpegGetResultFd();
     std::unique_ptr<MediaUserInfo> userInfo = std::make_unique<MediaUserInfo>();
     mediaManagerProxyFuzz_->MpegAddUserMeta(std::move(userInfo));
     mediaManagerProxyFuzz_->MpegGetProcessTimeStamp();
     mediaManagerProxyFuzz_->MpegGetSurface();
     mediaManagerProxyFuzz_->MpegGetMakerSurface();
-    int32_t size = fdp.ConsumeIntegral<int32_t>();
-    mediaManagerProxyFuzz_->MpegSetMarkSize(size);
     int32_t result = fdp.ConsumeIntegral<int32_t>();
     mediaManagerProxyFuzz_->MpegUnInit(result);
     mediaManagerProxyFuzz_->MpegRelease();

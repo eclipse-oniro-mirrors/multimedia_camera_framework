@@ -16,7 +16,7 @@ import("//build/test.gni")
 import("./../../../multimedia_camera_framework.gni")
 
 ohos_fuzztest("HStreamRepeatFuzzTest") {
-  module_out_path = "camera_framework/camera_framework"
+  module_out_path = "camera_framework/camera_framework/concurrent"
   fuzz_config_file = "../hstreamrepeat_fuzzer"
 
   include_dirs = [
@@ -65,6 +65,7 @@ ohos_fuzztest("HStreamRepeatFuzzTest") {
     "${multimedia_camera_framework_path}/common:camera_utils",
     "${multimedia_camera_framework_path}/frameworks/native/camera/base:camera_framework",
     "${multimedia_camera_framework_path}/services/camera_service:camera_service",
+    "${multimedia_camera_framework_path}/test/test_common:test_common",
   ]
   external_deps = [
     "ability_base:want",

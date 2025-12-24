@@ -94,7 +94,9 @@ napi_value PhotoNapi::Init(napi_env env, napi_value exports)
     if (status == napi_ok) {
         if (NapiRefManager::CreateMemSafetyRef(env, ctorObj, &sConstructor_) == napi_ok) {
             status = napi_set_named_property(env, exports, PHOTO_NAPI_CLASS_NAME, ctorObj);
-            CHECK_RETURN_RET(status == napi_ok, exports);
+            if (status == napi_ok) {
+                return exports;
+            }
         }
     }
     MEDIA_ERR_LOG("Init call Failed!");
@@ -124,7 +126,7 @@ napi_value PhotoNapi::CreatePhoto(napi_env env, napi_value mainImage, bool isRaw
         }
         status = napi_new_instance(env, constructor, 0, nullptr, &result);
         sRawImage_ = nullptr;
-        sMainImageRef_  = nullptr;
+        sMainImageRef_ = nullptr;
         if (status == napi_ok && result != nullptr) {
             return result;
         } else {
@@ -145,7 +147,6 @@ napi_value PhotoNapi::GetMain(napi_env env, napi_callback_info info)
     napi_value argv[ARGS_ZERO];
     napi_value thisVar = nullptr;
 
-    MEDIA_DEBUG_LOG("PhotoNapi::GetMain get js args");
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
 
     napi_get_undefined(env, &result);
@@ -155,7 +156,7 @@ napi_value PhotoNapi::GetMain(napi_env env, napi_callback_info info)
         napi_value mainImage;
         napi_get_reference_value(env, photoNapi->mainImageRef_, &mainImage);
         result = mainImage;
-        MEDIA_ERR_LOG("PhotoNapi::GetMain Success");
+        MEDIA_DEBUG_LOG("PhotoNapi::GetMain Success");
         return result;
     }
     napi_get_undefined(env, &result);
@@ -197,7 +198,6 @@ napi_value PhotoNapi::GetRaw(napi_env env, napi_callback_info info)
     napi_value argv[ARGS_ZERO];
     napi_value thisVar = nullptr;
 
-    MEDIA_DEBUG_LOG("PhotoNapi::GetRaw get js args");
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
 
     napi_get_undefined(env, &result);
@@ -243,7 +243,6 @@ napi_value PhotoNapi::Release(napi_env env, napi_callback_info info)
                 CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
                 if (context->objectInfo != nullptr) {
                     context->status = true;
-                    context->objectInfo->mainImageRef_ = nullptr;
                     context->objectInfo->rawImage_ = nullptr;
                 }
             },
@@ -252,6 +251,7 @@ napi_value PhotoNapi::Release(napi_env env, napi_callback_info info)
                 CAMERA_FINISH_ASYNC_TRACE(context->funcName, context->taskId);
                 napi_value result = nullptr;
                 napi_delete_reference(env, context->objectInfo->mainImageRef_);
+                context->objectInfo->mainImageRef_ = nullptr;
                 napi_get_undefined(env, &result);
                 napi_resolve_deferred(env, context->deferred, result);
                 napi_delete_async_work(env, context->work);
@@ -265,7 +265,7 @@ napi_value PhotoNapi::Release(napi_env env, napi_callback_info info)
             asyncContext.release();
         }
     } else {
-        MEDIA_ERR_LOG("PhotoNapi::Release call Failed!");
+        MEDIA_ERR_LOG("Release call Failed!");
     }
     return result;
 }

@@ -14,10 +14,13 @@
  */
  
 #include "session/slow_motion_session.h"
+#include "input/camera_input.h"
+#include "input/camera_manager.h"
+#include "output/camera_output_capability.h"
 #include "camera_log.h"
 #include "camera_error_code.h"
-#include "metadata_common_utils.h"
-
+#include "camera_util.h"
+ 
 namespace OHOS {
 namespace CameraStandard {
 
@@ -35,11 +38,12 @@ void SlowMotionSession::SlowMotionSessionMetadataResultProcessor::ProcessCallbac
     // LCOV_EXCL_START
     MEDIA_DEBUG_LOG("SlowMotionSessionMetadataResultProcessor::ProcessCallbacks is called");
     auto session = session_.promote();
-    CHECK_RETURN_ELOG(session == nullptr,
-        "SlowMotionSessionMetadataResultProcessor ProcessCallbacks but session is null");
+    CHECK_RETURN_ELOG(
+        session == nullptr, "SlowMotionSessionMetadataResultProcessor ProcessCallbacks but session is null");
 
     session->ProcessAutoFocusUpdates(result);
     session->OnSlowMotionStateChange(result);
+    session->ProcessZoomInfoChange(result);
     // LCOV_EXCL_STOP
 }
 
@@ -60,20 +64,17 @@ bool SlowMotionSession::IsSlowMotionDetectionSupported()
     // LCOV_EXCL_START
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("IsSlowMotionDetectionSupported is called");
-    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), false,
-        "IsSlowMotionDetectionSupported Session is not Commited");
+    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), false, "IsSlowMotionDetectionSupported Session is not Commited");
     auto inputDevice = GetInputDevice();
-    CHECK_RETURN_RET_ELOG(!inputDevice, false,
-        "IsSlowMotionDetectionSupported camera device is null");
+    CHECK_RETURN_RET_ELOG(!inputDevice, false, "IsSlowMotionDetectionSupported camera device is null");
     auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
-    CHECK_RETURN_RET_ELOG(!inputDeviceInfo, false,
-        "IsSlowMotionDetectionSupported camera deviceInfo is null");
+    CHECK_RETURN_RET_ELOG(!inputDeviceInfo, false, "IsSlowMotionDetectionSupported camera deviceInfo is null");
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetCachedMetadata();
     CHECK_RETURN_RET(!metadata, false);
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_MOTION_DETECTION_SUPPORT, &item);
-    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS, false,
-        "IsSlowMotionDetectionSupported Failed with return code %{public}d", ret);
+    CHECK_RETURN_RET_ELOG(
+        ret != CAM_META_SUCCESS, false, "IsSlowMotionDetectionSupported Failed with return code %{public}d", ret);
     MEDIA_INFO_LOG("IsSlowMotionDetectionSupported value: %{public}u", item.data.u8[0]);
     CHECK_RETURN_RET(item.data.u8[0] == 1, true);
     return false;
@@ -98,11 +99,9 @@ void SlowMotionSession::SetSlowMotionDetectionArea(Rect rect)
     // LCOV_EXCL_START
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("SetSlowMotionDetectionArea is called");
-    CHECK_RETURN_ELOG(!IsSessionCommited(),
-        "SetSlowMotionDetectionArea Session is not Commited");
+    CHECK_RETURN_ELOG(!IsSessionCommited(), "SetSlowMotionDetectionArea Session is not Commited");
     this->LockForControl();
-    CHECK_RETURN_ELOG(changedMetadata_ == nullptr,
-        "SetSlowMotionDetectionArea changedMetadata is null");
+    CHECK_RETURN_ELOG(changedMetadata_ == nullptr, "SetSlowMotionDetectionArea changedMetadata is null");
     int32_t retCode = EnableMotionDetection(true);
     CHECK_RETURN_ELOG(retCode != CameraErrorCode::SUCCESS, "EnableMotionDetection call failed");
     MEDIA_INFO_LOG("topLeftX: %{public}f, topLeftY: %{public}f, width: %{public}f, height: %{public}f",
@@ -171,14 +170,52 @@ int32_t SlowMotionSession::EnableMotionDetection(bool isEnable)
     // LCOV_EXCL_START
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("Enter EnableMotionDetection, isEnable:%{public}d", isEnable);
-    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
-        "EnableMotionDetection session not commited");
+    CHECK_RETURN_RET_ELOG(
+        !IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG, "EnableMotionDetection session not commited");
     uint8_t enableValue = static_cast<uint8_t>(isEnable ?
         OHOS_CAMERA_MOTION_DETECTION_ENABLE : OHOS_CAMERA_MOTION_DETECTION_DISABLE);
     bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_MOTION_DETECTION, &enableValue, 1);
     CHECK_PRINT_ELOG(!status, "EnableMotionDetection Failed to enable motion detection");
     return CameraErrorCode::SUCCESS;
     // LCOV_EXCL_STOP
+}
+
+void SlowMotionSession::SetZoomInfoCallback(std::shared_ptr<ZoomInfoCallback> callback)
+{
+    CHECK_RETURN_ELOG(callback == nullptr, "SlowMotionSession::SetZoomInfoCallback callback is null");
+    std::lock_guard<std::mutex> lock(zoomInfoCallbackMutex_);
+    zoomInfoCallback_ = callback;
+}
+
+std::shared_ptr<ZoomInfoCallback> SlowMotionSession::GetZoomInfoCallback()
+{
+    std::lock_guard<std::mutex> lock(zoomInfoCallbackMutex_);
+    return zoomInfoCallback_;
+}
+
+void SlowMotionSession::ProcessZoomInfoChange(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult)
+{
+    std::shared_ptr<ZoomInfoCallback> zoomInfoCallback = GetZoomInfoCallback();
+    CHECK_RETURN_DLOG(zoomInfoCallback == nullptr, "SlowMotionSession::ProcessZoomInfoChange zoomInfoCallback is null");
+    CHECK_RETURN_ELOG(cameraResult == nullptr, "cameraResult is null");
+    camera_metadata_item_t item;
+    common_metadata_header_t* metadata = cameraResult->get();
+    int ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_STATUS_CAMERA_CURRENT_ZOOM_RATIO_RANGE, &item);
+    CHECK_RETURN_ELOG(
+        ret != CAM_META_SUCCESS, "SlowMotionSession::ProcessZoomInfoChange Failed with return code %{public}d", ret);
+    std::vector<float> zoomRatioRange;
+    for (uint32_t i = 0; i < item.count; i += 1) {
+        MEDIA_DEBUG_LOG("SlowMotionSession::ProcessZoomInfoChange, zoomRatioRange[%{public}d]: %{public}f",
+            i, item.data.f[i]);
+        zoomRatioRange.push_back(item.data.f[i]);
+    }
+    std::vector<float> preZoomRatioRange = zoomInfoCallback->GetZoomRatioRange();
+    if (!zoomRatioRange.empty() && (zoomRatioRange.size() != preZoomRatioRange.size() ||
+        !CalculationHelper::AreVectorsEqual(preZoomRatioRange, zoomRatioRange))) {
+        MEDIA_DEBUG_LOG("SlowMotionSession::ProcessZoomInfoChange call success");
+        zoomInfoCallback->SetZoomRatioRange(zoomRatioRange);
+        zoomInfoCallback->OnZoomInfoChange(zoomRatioRange);
+    }
 }
 } // namespace CameraStandard
 } // namespace OHOS

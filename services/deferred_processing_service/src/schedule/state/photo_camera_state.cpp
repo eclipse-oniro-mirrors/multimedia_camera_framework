@@ -16,13 +16,10 @@
 #include "photo_camera_state.h"
 
 #include "dp_log.h"
-#include "state_factory.h"
 
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-REGISTER_STATE(PhotoCameraState, PHOTO_CAMERA_STATE, SYSTEM_CAMERA_CLOSED);
-
 PhotoCameraState::PhotoCameraState(SchedulerType type, int32_t stateValue)
     : IState(type, stateValue)
 {
@@ -34,9 +31,7 @@ SchedulerInfo PhotoCameraState::ReevaluateSchedulerInfo()
     DP_DEBUG_LOG("PhotoCameraState: %{public}d", stateValue_);
     bool isNeedStop = stateValue_ == CameraSessionStatus::SYSTEM_CAMERA_OPEN ||
         stateValue_ == CameraSessionStatus::NORMAL_CAMERA_OPEN;
-    bool isNeedInterrupt = stateValue_ == CameraSessionStatus::SYSTEM_CAMERA_OPEN ||
-        stateValue_ == CameraSessionStatus::NORMAL_CAMERA_OPEN;
-    return {isNeedStop, isNeedInterrupt};
+    return {isNeedStop};
 }
 } // namespace DeferredProcessing
 } // namespace CameraStandard

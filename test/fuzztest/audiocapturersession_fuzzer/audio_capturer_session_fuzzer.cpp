@@ -21,7 +21,6 @@
 
 namespace OHOS {
 namespace CameraStandard {
-using namespace DeferredProcessing;
 
 static constexpr int32_t MAX_CODE_LEN = 512;
 static constexpr int32_t MIN_SIZE_NUM = 4;

@@ -48,21 +48,18 @@ int32_t VideoCommand::Initialize()
 
 // LCOV_EXCL_START
 AddVideoCommand::AddVideoCommand(const int32_t userId, const std::string& videoId,
-    const sptr<IPCFileDescriptor>& srcFd, const sptr<IPCFileDescriptor>& dstFd)
-    : VideoCommand(userId, videoId), srcFd_(srcFd), dstFd_(dstFd)
+    const std::shared_ptr<VideoInfo>& info)
+    : VideoCommand(userId, videoId), info_(info)
 {
     DP_DEBUG_LOG("AddVideoCommand, videoId: %{public}s, srcFd: %{public}d, dstFd: %{public}d",
-        videoId_.c_str(), srcFd_->GetFd(), dstFd_->GetFd());
+        videoId_.c_str(), info_->srcFd_->GetFd(), info_->dstFd_->GetFd());
 }
 
 int32_t AddVideoCommand::Executing()
 {
     int32_t ret = Initialize();
-    if (ret != DP_OK) {
-        return ret;
-    }
-
-    processor_->AddVideo(videoId_, srcFd_, dstFd_);
+    DP_CHECK_RETURN_RET(ret != DP_OK, ret);
+    processor_->AddVideo(videoId_, info_);
     return DP_OK;
 }
 // LCOV_EXCL_STOP
@@ -76,10 +73,7 @@ RemoveVideoCommand::RemoveVideoCommand(const int32_t userId, const std::string& 
 int32_t RemoveVideoCommand::Executing()
 {
     int32_t ret = Initialize();
-    if (ret != DP_OK) {
-        return ret;
-    }
-    
+    DP_CHECK_RETURN_RET(ret != DP_OK, ret);
     processor_->RemoveVideo(videoId_, restorable_);
     return DP_OK;
 }
@@ -87,11 +81,24 @@ int32_t RemoveVideoCommand::Executing()
 int32_t RestoreVideoCommand::Executing()
 {
     int32_t ret = Initialize();
-    if (ret != DP_OK) {
-        return ret;
-    }
-
+    DP_CHECK_RETURN_RET(ret != DP_OK, ret);
     processor_->RestoreVideo(videoId_);
+    return DP_OK;
+}
+
+int32_t ProcessVideoCommand::Executing()
+{
+    int32_t ret = Initialize();
+    DP_CHECK_RETURN_RET(ret != DP_OK, ret);
+    processor_->ProcessVideo(videoId_);
+    return DP_OK;
+}
+
+int32_t CancelProcessVideoCommand::Executing()
+{
+    int32_t ret = Initialize();
+    DP_CHECK_RETURN_RET(ret != DP_OK, ret);
+    processor_->CancelProcessVideo(videoId_);
     return DP_OK;
 }
 } // namespace DeferredProcessing

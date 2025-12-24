@@ -45,7 +45,8 @@ void MetadataOutputImpl::StartSync()
     asyncContext->objectInfo = this;
     CAMERA_START_ASYNC_TRACE(asyncContext->funcName, asyncContext->taskId);
     CameraTaiheWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(asyncContext->queueTask, [&asyncContext]() {
-        CHECK_RETURN_ELOG(asyncContext->objectInfo == nullptr, "metadataOutput_ is nullptr");
+        CHECK_RETURN_ELOG(asyncContext->objectInfo == nullptr, "metadataOutput instance is nullptr");
+        CHECK_RETURN_ELOG(asyncContext->objectInfo->metadataOutput_ == nullptr, "metadataOutput_ is nullptr");
         asyncContext->errorCode = asyncContext->objectInfo->metadataOutput_->Start();
         CameraUtilsTaihe::CheckError(asyncContext->errorCode);
     });
@@ -105,6 +106,7 @@ const MetadataOutputImpl::EmitterFunctions& MetadataOutputImpl::GetEmitterFuncti
 void MetadataOutputImpl::RegisterErrorCallbackListener(const std::string& eventName,
                                                        std::shared_ptr<uintptr_t> callback, bool isOnce)
 {
+    CHECK_RETURN_ELOG(metadataOutput_ == nullptr, "metadataOutput_ is null!");
     if (metadataOutputCallback_ == nullptr) {
         ani_env *env = get_env();
         metadataOutputCallback_ = std::make_shared<MetadataOutputCallbackListener>(env);
@@ -150,6 +152,7 @@ void MetadataOutputImpl::OffError(optional_view<callback<void(uintptr_t)>> callb
 void MetadataOutputImpl::RegisterMetadataObjectsAvailableCallbackListener(
     const std::string& eventName, std::shared_ptr<uintptr_t> callback, bool isOnce)
 {
+    CHECK_RETURN_ELOG(metadataOutput_ == nullptr, "metadataOutput_ is null!");
     if (metadataObjectsAvailableCallback_ == nullptr) {
         ani_env *env = get_env();
         metadataObjectsAvailableCallback_ = std::make_shared<MetadataObjectsAvailableCallbackListener>(env);

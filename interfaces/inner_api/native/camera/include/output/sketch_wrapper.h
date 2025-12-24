@@ -25,15 +25,22 @@
 #include "image_receiver.h"
 #include "preview_output.h"
 #include "refbase.h"
-#include "camera_common_struct.h"
 
 namespace OHOS {
 namespace CameraStandard {
+
+struct CenterOffset{
+    float x = 0;
+    float y = 0;
+};
+
 class SketchWrapper {
 public:
     static float GetSketchReferenceFovRatio(const SceneFeaturesMode& sceneFeaturesMode, float zoomRatio);
     static float GetSketchEnableRatio(const SceneFeaturesMode& sceneFeaturesMode);
     static void UpdateSketchStaticInfo(std::shared_ptr<OHOS::Camera::CameraMetadata> deviceMetadata);
+    static void UpdateSketchData(std::shared_ptr<OHOS::Camera::CameraMetadata> deviceMetadata, SceneMode mode);
+    static bool IsSupportSpecSearch(std::shared_ptr<OHOS::Camera::CameraMetadata> deviceMetadata);
 
     explicit SketchWrapper(wptr<IStreamCommon> hostStream, const Size size, bool isDynamicNotify = false);
     virtual ~SketchWrapper();
@@ -72,13 +79,17 @@ private:
     volatile float sketchEnableRatio_ = -1.0f;
     volatile float currentZoomRatio_ = 1.0f;
     SketchStatusData currentSketchStatusData_ = {
-        .status = SketchStatus::STOPED, .sketchRatio = -1.0f, .offsetx = 0.0f, .offsety = 0.0f };
-    CameraPoint offset_ = { .x = 0.0f, .y = 0.0f};
+        .status = SketchStatus::STOPED, .sketchRatio = -1.0f, .offsetx = 0.0f, .offsety = 0.0f};
+    CenterOffset offset_ = { .x = 0.0f, .y = 0.0f};
 
     static SceneFeaturesMode GetSceneFeaturesModeFromModeData(float floatModeData);
     static void InsertSketchReferenceFovRatioMapValue(
         SceneFeaturesMode& sceneFeaturesMode, SketchReferenceFovRange& sketchReferenceFovRange);
     static void InsertSketchEnableRatioMapValue(SceneFeaturesMode& sceneFeaturesMode, float ratioValue);
+    static void UpdateSpecSketchEnableRatio(
+        std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceMetadata, SceneMode mode);
+    static void UpdateSpecSketchReferenceFovRatio(
+        std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceMetadata, SceneMode mode);
     static void UpdateSketchEnableRatio(std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceMetadata);
     static void UpdateSketchReferenceFovRatio(std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceMetadata);
     static void UpdateSketchReferenceFovRatio(camera_metadata_item_t& metadataItem);
@@ -93,8 +104,8 @@ private:
         const camera_metadata_item_t& metadataItem);
     int32_t OnMetadataChangedMoonCaptureBoost(const SceneFeaturesMode& sceneFeaturesMode,
         const camera_device_metadata_tag_t tag, const camera_metadata_item_t& metadataItem);
-    int32_t OnMetadataChangedSketchDynamicNotify(const camera_metadata_item_t& metadataItem,
-        const SceneFeaturesMode& sceneFeaturesMode);
+    int32_t OnMetadataChangedSketchDynamicNotify(
+        const camera_metadata_item_t& metadataItem, const SceneFeaturesMode& sceneFeaturesMode);
 
     void AutoStream();
 };

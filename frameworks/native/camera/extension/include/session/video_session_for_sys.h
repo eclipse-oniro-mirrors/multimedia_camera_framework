@@ -22,6 +22,7 @@
 #include "icapture_session.h"
 #include "metadata_output.h"
 #include "refbase.h"
+#include "utils/zoom_info_change_callback.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -180,6 +181,37 @@ public:
         return lightStatus_;
     }
 
+    /**
+     * @brief Sets the callback function for handling changes in zoom ratio.
+     *
+     * @param callback A shared pointer to the callback function object.
+     */
+    void SetZoomInfoCallback(std::shared_ptr<ZoomInfoCallback> callback);
+
+    /**
+     * @brief Retrieves the application callback for zoom ratio changes.
+     *
+     * @return A shared pointer to the application callback for zoom ratio changes.
+     */
+    std::shared_ptr<ZoomInfoCallback> GetZoomInfoCallback();
+    void ProcessZoomInfoChange(const std::shared_ptr<OHOS::Camera::CameraMetadata> &result);
+
+    /**
+     * @brief Querying Whether External Lens Enhancement Is Supported.
+     *
+     * @return Support or Not.
+     */
+    bool IsExternalCameraLensBoostSupported();
+
+    /**
+     * @brief External Lens Enhancement Enable Control.
+     *
+     * @param enabled Enable or not.
+     *
+     * @return Camera error code.
+     */
+    int32_t EnableExternalCameraLensBoost(bool enabled);
+
 protected:
     std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles(
         PreconfigType preconfigType, ProfileSizeRatio preconfigRatio) override;
@@ -196,8 +228,9 @@ private:
 
     std::mutex videoSessionCallbackMutex_;
     std::shared_ptr<FocusTrackingCallback> focusTrackingInfoCallback_ = nullptr;
-    static const std::unordered_map<camera_focus_tracking_mode_t, FocusTrackingMode> metaToFwFocusTrackingMode_;
     int32_t lightStatus_ = 0;
+    std::mutex zoomInfoCallbackMutex_;
+    std::shared_ptr<ZoomInfoCallback> zoomInfoCallback_;
 };
 
 class LightStatusCallback {

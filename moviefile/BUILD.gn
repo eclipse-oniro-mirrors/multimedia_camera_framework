@@ -1,0 +1,125 @@
+# Copyright (c) 2024 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("../multimedia_camera_framework.gni")
+
+config("movie_file_config") {
+  include_dirs = [
+    "include",
+    "include/movie_file",
+    "include/movie_file/plugin",
+    "include/movie_file/producer",
+    "include/pipeline",
+    "include/pipeline/buffer",
+    "include/pipeline/plugin",
+    "include/pipeline/producer",
+    "include/pipeline/thread",
+    "${multimedia_camera_framework_path}/dynamic_libs/media_library/include",
+  ]
+}
+
+ohos_shared_library("movie_file") {
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+
+  branch_protector_ret = "pac_ret"
+  cflags = [
+    "-Werror",
+    "-Os",
+  ]
+
+  sources = [
+    "src/movie_file_adapter.cpp",
+    "src/movie_file/movie_file_common_utils.cpp",
+    "src/movie_file/movie_file_consumer.cpp",
+    "src/movie_file/movie_file_controller_base.cpp",
+    "src/movie_file/movie_file_controller_video.cpp",
+    "src/movie_file/plugin/movie_file_audio_effect_plugin.cpp",
+    "src/movie_file/plugin/movie_file_audio_encoder_encode_node.cpp",
+    "src/movie_file/plugin/movie_file_audio_encoder_plugin.cpp",
+    "src/movie_file/plugin/movie_file_audio_offline_algo_node.cpp",
+    "src/movie_file/plugin/movie_file_audio_raw_package_node.cpp",
+    "src/movie_file/plugin/movie_file_audio_raw_plugin.cpp",
+    "src/movie_file/plugin/movie_file_audio_plugin.cpp",
+    "src/movie_file/plugin/movie_file_audio_package_node.cpp",
+    "src/movie_file/plugin/movie_file_meta_plugin.cpp",
+    "src/movie_file/plugin/movie_file_video_encoder_encode_node.cpp",
+    "src/movie_file/plugin/movie_file_video_encoder_plugin.cpp",
+    "src/movie_file/producer/movie_file_audio_buffer_producer.cpp",
+    "src/movie_file/producer/movie_file_meta_buffer_producer.cpp",
+    "src/movie_file/producer/movie_file_video_buffer_producer.cpp",
+    "src/movie_file/producer/movie_file_video_encoded_buffer_producer.cpp",
+    "src/pipeline/buffer/unified_pipeline_audio_buffer.cpp",
+    "src/pipeline/buffer/unified_pipeline_audio_encoded_buffer.cpp",
+    "src/pipeline/buffer/unified_pipeline_buffer.cpp",
+    "src/pipeline/buffer/unified_pipeline_command.cpp",
+    "src/pipeline/buffer/unified_pipeline_surface_buffer.cpp",
+    "src/pipeline/buffer/unified_pipeline_video_encoded_buffer.cpp",
+    "src/pipeline/plugin/unified_pipeline_plugin.cpp",
+    "src/pipeline/producer/unified_pipeline_audio_capture_wrap.cpp",
+    "src/pipeline/producer/unified_pipeline_audio_data_producer.cpp",
+    "src/pipeline/producer/unified_pipeline_data_producer.cpp",
+    "src/pipeline/producer/unified_pipeline_surface_data_producer.cpp",
+    "src/pipeline/thread/unified_pipeline_threadpool.cpp",
+    "src/pipeline/thread/unified_pipeline_worker_thread.cpp",
+    "src/pipeline/unified_pipeline.cpp",
+    "src/pipeline/unified_pipeline_manager.cpp",
+  ]
+
+  deps = [
+    "${multimedia_camera_framework_path}/common:camera_utils",
+    "${multimedia_camera_framework_path}/dynamic_libs:camera_dynamic_medialibrary",
+  ]
+
+  external_deps = [
+    "av_codec:av_codec_client",
+    "av_codec:av_codec_media_engine_modules",
+    "audio_framework:audio_capturer",
+    "c_utils:utils",
+    "graphic_surface:surface",
+    "graphic_surface:sync_fence",
+    "hilog:libhilog",
+    "hisysevent:libhisysevent",
+    "hitrace:hitrace_meter",
+    "image_framework:image_native",
+    "ipc:ipc_core",
+    "samgr:samgr_proxy",
+    "access_token:libtokensetproc_shared",
+    "audio_framework:audio_client",
+    "audio_framework:offline_audio_effect",
+    "av_codec:native_media_acodec",
+    "av_codec:native_media_codecbase",
+    "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
+    "drivers_interface_camera:libmap_data_sequenceable_1.0",
+    "drivers_interface_camera:metadata",
+    "media_library:media_library_manager",
+    "drivers_interface_camera:libcamera_proxy_1.0",
+    "init:libbegetutil",
+    "window_manager:libdm_lite",
+    "media_foundation:media_foundation",
+    "media_foundation:native_media_core",
+  ]
+
+  defines = [
+  ]
+
+  public_configs = [ 
+    ":movie_file_config",
+  ]
+  part_name = "camera_framework"
+  subsystem_name = "multimedia"
+}

@@ -54,7 +54,7 @@ void MediaManagerFuzzer::MediaManagerFuzzTest(FuzzedDataProvider& fdp)
     fuzz_->ReadSample(selectedMediaType, buffer);
     auto configSize = fdp.ConsumeIntegral<int64_t>();
     fuzz_->Recover(configSize);
-    fuzz_->CopyAudioTrack();
+    fuzz_->CopyAudioTrack(Media::Plugins::MediaType::AUDIO);
     fuzz_->InitReader();
     fuzz_->InitWriter();
     auto duration = fdp.ConsumeIntegral<int64_t>();
@@ -76,10 +76,6 @@ void MediaManagerFuzzer::ReaderFuzzTest(FuzzedDataProvider& fdp)
 void MediaManagerFuzzer::TrackFuzzTest(FuzzedDataProvider& fdp)
 {
     std::shared_ptr<Track> track {nullptr};
-    track = std::make_shared<Track>();
-    CHECK_RETURN_ELOG(!track, "Create track Error");
-    TrackFormat formatOfIndex;
-    Format trackFormat;
     int32_t trackType = fdp.ConsumeIntegral<int32_t>();
     int32_t trackIndex = fdp.ConsumeIntegral<int32_t>();
 
@@ -95,11 +91,11 @@ void MediaManagerFuzzer::TrackFuzzTest(FuzzedDataProvider& fdp)
     uint8_t mediaTypeIndex = fdp.ConsumeIntegral<uint8_t>() % mediaTypes.size();
     Media::Plugins::MediaType selectedMediaType = mediaTypes[mediaTypeIndex];
 
-    trackFormat.GetIntValue(Media::Tag::MEDIA_TYPE, trackType);
-    formatOfIndex.format = std::make_shared<Format>(trackFormat);
-    formatOfIndex.trackId = trackIndex;
-    track->SetFormat(formatOfIndex, selectedMediaType);
-    track->GetFormat();
+    auto format = std::make_unique<Format>();
+    format->PutIntValue(Media::Tag::MEDIA_TYPE, trackType);
+    track = std::make_shared<Track>(trackIndex, std::move(format), selectedMediaType);
+    CHECK_RETURN_ELOG(!track, "Create track Error");
+    
 }
 
 void MediaManagerFuzzer::WriterFuzzTest(FuzzedDataProvider& fdp)

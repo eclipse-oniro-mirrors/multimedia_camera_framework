@@ -26,4 +26,6 @@ interface IStreamMetadata extends IStreamCommon {
   [ipccode 4] void EnableMetadataType([in] List<int> metadataTypes);
   [ipccode 5] void DisableMetadataType([in] List<int> metadataTypes);
   [ipccode 6] void UnSetCallback();
+  [ipccode 7] void AddMetadataType([in] List<int> metadataTypes);
+  [ipccode 8] void RemoveMetadataType([in] List<int> metadataTypes);
 }

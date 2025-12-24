@@ -111,6 +111,7 @@ void CameraformatYUVModuleTest::SetUp()
     auto device = camInput_->GetCameraDevice();
     ASSERT_NE(device, nullptr);
     device->SetMdmCheck(false);
+
     input_ = camInput_;
     ASSERT_NE(input_, nullptr);
     input_->Open();

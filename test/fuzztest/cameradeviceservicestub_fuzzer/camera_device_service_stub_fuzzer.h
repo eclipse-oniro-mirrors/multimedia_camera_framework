@@ -31,6 +31,10 @@ public:
     {
         return 0;
     }
+    int32_t SetUsePhysicalCameraOrientation(bool isUsed) override
+    {
+        return 0;
+    }
     int32_t GetNaturalDirectionCorrect(bool& isNaturalDirectionCorrect) override
     {
         return 0;

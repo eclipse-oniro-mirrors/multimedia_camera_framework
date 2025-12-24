@@ -17,14 +17,10 @@
 
 #include "dp_log.h"
 #include "events_info.h"
-#include "parameters.h"
-#include "state_factory.h"
 
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-REGISTER_STATE(VideoScreenState, SCREEN_STATE, EventsInfo::GetInstance().GetScreenState());
-
 VideoScreenState::VideoScreenState(SchedulerType type, int32_t stateValue)
     : IState(type, stateValue)
 {
@@ -33,9 +29,6 @@ VideoScreenState::VideoScreenState(SchedulerType type, int32_t stateValue)
 
 SchedulerInfo VideoScreenState::ReevaluateSchedulerInfo()
 {
-    bool ignore = system::GetBoolParameter(IGNORE_SCREEN, false);
-    DP_CHECK_ERROR_RETURN_RET_LOG(ignore, {false}, "ignore VideoScreenState: %{public}d", stateValue_);
-
     DP_DEBUG_LOG("VideoScreenState: %{public}d", stateValue_);
     bool isNeedStop = stateValue_ == ScreenStatus::SCREEN_ON;
     return {isNeedStop};

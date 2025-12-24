@@ -53,9 +53,9 @@ void PortraitSessionNapi::Init(napi_env env)
     std::vector<std::vector<napi_property_descriptor>> descriptors = { camera_process_props,
         CameraSessionForSysNapi::camera_process_sys_props, CameraSessionForSysNapi::camera_output_capability_sys_props,
         CameraSessionForSysNapi::camera_ability_sys_props, flash_props, CameraSessionForSysNapi::flash_sys_props,
-        auto_exposure_props, focus_props, CameraSessionForSysNapi::focus_sys_props, zoom_props,
+        auto_exposure_props, focus_props, CameraSessionForSysNapi::focus_sys_props, zoom_props, color_style_props,
         CameraSessionForSysNapi::zoom_sys_props, filter_props, beauty_sys_props, color_effect_sys_props,
-        macro_props, color_management_props, portrait_props, aperture_sys_props };
+        macro_props, color_management_props, portrait_props, aperture_sys_props, composition_suggestion };
     std::vector<napi_property_descriptor> portrait_session_props = CameraNapiUtils::GetPropertyDescriptor(descriptors);
     status = napi_define_class(env, PORTRAIT_SESSION_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
                                PortraitSessionNapiConstructor, nullptr,
@@ -66,6 +66,7 @@ void PortraitSessionNapi::Init(napi_env env)
     CHECK_RETURN_ELOG(status != napi_ok, "PortraitSessionNapi Init failed");
     MEDIA_DEBUG_LOG("PortraitSessionNapi Init success");
 }
+
 napi_value PortraitSessionNapi::CreateCameraSession(napi_env env)
 {
     MEDIA_DEBUG_LOG("CreateCameraSession is called");
@@ -137,15 +138,18 @@ napi_value PortraitSessionNapi::GetSupportedPortraitEffects(napi_env env, napi_c
     MEDIA_DEBUG_LOG("GetPortraitEffect is called");
     napi_status status;
     napi_value result = nullptr;
-    napi_value argv[ARGS_ZERO];
     size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
 
     napi_get_undefined(env, &result);
     status = napi_create_array(env, &result);
-    CHECK_RETURN_RET_ELOG(status != napi_ok, result, "napi_create_array call Failed!");
+    if (status != napi_ok) {
+        MEDIA_ERR_LOG("napi_create_array call Failed!");
+        return result;
+    }
     PortraitSessionNapi* portraitSessionNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&portraitSessionNapi));
     if (status == napi_ok && portraitSessionNapi != nullptr && portraitSessionNapi->portraitSession_ != nullptr) {

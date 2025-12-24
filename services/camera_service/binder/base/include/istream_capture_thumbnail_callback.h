@@ -34,3 +34,4 @@ public:
 } // namespace CameraStandard
 } // namespace OHOS
 #endif // OHOS_CAMERA_ISTREAM_CAPTURE_THUMBNAIL_CALLBACK_H
+

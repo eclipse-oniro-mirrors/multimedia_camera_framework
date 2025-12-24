@@ -25,6 +25,7 @@ ohos_shared_library("camera_napi_ex") {
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi_for_sys/src/ability/camera_ability_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi_for_sys/src/camera_napi_sys_object_types.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi_for_sys/src/mode/aperture_video_session_napi.cpp",
+    "${multimedia_camera_framework_path}/frameworks/js/camera_napi_for_sys/src/mode/cinematic_video_session_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi_for_sys/src/mode/fluorescence_photo_session_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi_for_sys/src/mode/high_res_photo_session_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi_for_sys/src/mode/light_painting_session_napi.cpp",
@@ -39,10 +40,13 @@ ohos_shared_library("camera_napi_ex") {
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi_for_sys/src/mode/quick_shot_photo_session_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi_for_sys/src/mode/secure_session_for_sys_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi_for_sys/src/mode/slow_motion_session_napi.cpp",
+    "${multimedia_camera_framework_path}/frameworks/js/camera_napi_for_sys/src/mode/stitching_photo_session_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi_for_sys/src/mode/time_lapse_photo_session_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi_for_sys/src/mode/video_session_for_sys_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi_for_sys/src/output/depth_data_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi_for_sys/src/output/depth_data_output_napi.cpp",
+    "${multimedia_camera_framework_path}/frameworks/js/camera_napi_for_sys/src/output/movie_file_output_napi.cpp",
+    "${multimedia_camera_framework_path}/frameworks/js/camera_napi_for_sys/src/output/output_utils.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi_for_sys/src/session/camera_session_for_sys_napi.cpp",
   ]
 
@@ -54,17 +58,23 @@ ohos_shared_library("camera_napi_ex") {
   ]
   external_deps = [
     "c_utils:utils",
-    "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
     "drivers_interface_camera:libcamera_proxy_1.0",
-    "drivers_interface_camera:libmap_data_sequenceable_1.0",
+    "drivers_interface_camera:libcamera_proxy_1.1",
+    "drivers_interface_display:display_commontype_idl_headers",
     "graphic_surface:surface",
-    "hilog:libhilog",
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
     "image_framework:image",
     "image_framework:image_native",
     "ipc:ipc_core",
+    "media_library:medialibrary_nutils",
     "napi:ace_napi",
+  ]
+
+  public_external_deps = [
+    "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
+    "drivers_interface_camera:libmap_data_sequenceable_1.0",
+    "drivers_interface_camera:metadata",
   ]
 
   defines = []
@@ -85,7 +95,16 @@ ohos_shared_library("camera_napi_ex") {
     "-fPIC",
     "-DIMAGE_COLORSPACE_FLAG",
     "-Os",
+    "-fno-merge-all-constants",
+    "-flto",
+    "-ffunction-sections"
   ]
+
+  ldflags = [
+    "-Wl,--gc-sections",
+    "-fPIE",
+  ]
+
 
   if (build_variant == "user") {
     cflags += [ "-DIS_RELEASE_VERSION" ]

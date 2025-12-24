@@ -110,6 +110,7 @@ public:
     void OnCaptureReady(const int32_t captureId, const uint64_t timestamp) const override;
     void OnEstimatedCaptureDuration(const int32_t duration) const override;
     void OnOfflineDeliveryFinished(const int32_t captureId) const override;
+    void OnConstellationDrawingState(const int32_t drawingState) const override;
 
 private:
     const char* testName_;
@@ -123,6 +124,8 @@ public:
     void OnFrameEnded(const int32_t frameCount) const override;
     void OnError(const int32_t errorCode) const override;
     void OnSketchStatusDataChanged(const SketchStatusData& statusData) const override;
+    void OnFramePaused() const override;
+    void OnFrameResumed() const override;
 
 private:
     const char* testName_;
@@ -152,11 +155,11 @@ private:
 
 class TestDeferredPhotoProcSessionCallback : public IDeferredPhotoProcSessionCallback {
 public:
+    void OnProcessImageDone(const std::string &imageId, std::shared_ptr<PictureIntf> picture,
+        const DpsMetadata& dpsMetadata);
+    void OnDeliveryLowQualityImage(const std::string &imageId, std::shared_ptr<PictureIntf> picture);
     void OnProcessImageDone(const std::string& imageId, const uint8_t* addr, const long bytes,
         uint32_t cloudImageEnhanceFlag);
-    void OnProcessImageDone(const std::string &imageId, std::shared_ptr<PictureIntf> picture,
-        uint32_t cloudImageEnhanceFlag);
-    void OnDeliveryLowQualityImage(const std::string &imageId, std::shared_ptr<PictureIntf> picture);
     void OnError(const std::string& imageId, const DpsErrorCode errorCode);
     void OnStateChanged(const DpsStatusCode status);
 };
@@ -164,6 +167,7 @@ public:
 class TestDeferredVideoProcSessionCallback : public IDeferredVideoProcSessionCallback {
 public:
     void OnProcessVideoDone(const std::string& videoId, const sptr<IPCFileDescriptor> ipcFd);
+    void OnProcessVideoDone(const std::string& videoId);
     void OnError(const std::string& videoId, const DpsErrorCode errorCode);
     void OnStateChanged(const DpsStatusCode status);
 };

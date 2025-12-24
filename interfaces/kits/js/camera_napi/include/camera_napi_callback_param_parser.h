@@ -79,15 +79,16 @@ public:
     }
 
     template<typename T>
-    explicit CameraNapiCallbackParamParser(napi_env env, napi_callback_info info,
-                                           T *&nativeObjPointer,
-                                           const std::string &eventName) : env_(env)
+    explicit CameraNapiCallbackParamParser(napi_env env,
+                                           napi_callback_info info,
+                                           T*& nativeObjPointer,
+                                           const std::string& eventName) : env_(env)
     {
         static const size_t CALLBACK_ARGS_MIN = 0;
         static const size_t CALLBACK_ARGS_MAX = 1;
         napi_value thisVar;
         size_t paramSize = CALLBACK_ARGS_MAX;
-        
+
         std::vector<napi_value> paramValue(paramSize, nullptr);
         napiError = napi_get_cb_info(env_, info, &paramSize, paramValue.data(), &thisVar, nullptr);
         if (napiError != napi_ok) {

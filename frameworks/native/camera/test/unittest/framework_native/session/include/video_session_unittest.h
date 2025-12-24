@@ -41,6 +41,9 @@ public:
     void SetUp(void);
     /* TearDown:Execute after each test case */
     void TearDown(void);
+
+    void TestVideoSessionCallback();
+
     void TestVideoSessionForSysCallback();
     void TestVideoSessionForSysPreconfig(sptr<CaptureInput>& input,
         PreconfigType preconfigType, ProfileSizeRatio profileSizeRatio);
@@ -54,12 +57,6 @@ private:
     sptr<CameraManagerForSys> cameraManagerForSys_ = nullptr;
 };
 
-class TestLightStatusCallback : public LightStatusCallback {
-public:
-    TestLightStatusCallback() {}
-    ~TestLightStatusCallback() {}
-    void OnLightStatusChanged(LightStatus &status)  override {}
-};
 }
 }
 

@@ -16,13 +16,10 @@
 #include <cstdint>
 #include <vector>
 
-#include "access_token.h"
-#include "accesstoken_kit.h"
 #include "camera_manager_for_sys.h"
 #include "camera_util.h"
 #include "fluorescence_photo_session.h"
 #include "gtest/gtest.h"
-#include "hap_token_info.h"
 #include "hcamera_service.h"
 #include "hcapture_session.h"
 #include "ipc_skeleton.h"
@@ -35,7 +32,6 @@
 #include "surface.h"
 #include "test_common.h"
 #include "test_token.h"
-#include "token_setproc.h"
 
 using namespace testing::ext;
 namespace OHOS {
@@ -50,6 +46,7 @@ void CameraPhotoSessionUnitTest::TearDownTestCase(void) {}
 
 void CameraPhotoSessionUnitTest::SetUp()
 {
+
     cameraManager_ = CameraManager::GetInstance();
     ASSERT_NE(cameraManager_, nullptr);
 }
@@ -233,7 +230,7 @@ HWTEST_F(CameraPhotoSessionUnitTest, camera_photo_session_unittest_001, TestSize
  * EnvConditions: NA
  * CaseDescription: Test preconfig PhotoSession all config.
  */
-HWTEST_F(CameraPhotoSessionUnitTest, camera_photo_session_unittest_002, TestSize.Level1)
+HWTEST_F(CameraPhotoSessionUnitTest, camera_photo_session_unittest_002, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
@@ -279,7 +276,7 @@ HWTEST_F(CameraPhotoSessionUnitTest, camera_photo_session_unittest_002, TestSize
  * EnvConditions: NA
  * CaseDescription: Test CanAddOutput for just call.
  */
-HWTEST_F(CameraPhotoSessionUnitTest, fluorescence_photo_session_function_unittest_001, TestSize.Level1)
+HWTEST_F(CameraPhotoSessionUnitTest, fluorescence_photo_session_function_unittest_001, TestSize.Level0)
 {
     sptr<CaptureSession> captureSession =
         CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(SceneMode::FLUORESCENCE_PHOTO);
@@ -299,7 +296,7 @@ HWTEST_F(CameraPhotoSessionUnitTest, fluorescence_photo_session_function_unittes
  * EnvConditions: NA
  * CaseDescription: Test CanSetFrameRateRange for just call.
  */
-HWTEST_F(CameraPhotoSessionUnitTest, photo_session_function_unittest_001, TestSize.Level1)
+HWTEST_F(CameraPhotoSessionUnitTest, photo_session_function_unittest_001, TestSize.Level0)
 {
     sptr<CaptureSession> photoSession =
         CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(SceneMode::CAPTURE);
@@ -362,7 +359,7 @@ HWTEST_F(CameraPhotoSessionUnitTest, photo_session_function_unittest_002, TestSi
  * EnvConditions: NA
  * CaseDescription: Test CanAddOutput for just call.
  */
-HWTEST_F(CameraPhotoSessionUnitTest, quick_shot_photo_session_function_unittest_001, TestSize.Level1)
+HWTEST_F(CameraPhotoSessionUnitTest, quick_shot_photo_session_function_unittest_001, TestSize.Level0)
 {
     sptr<CaptureSession> captureSession =
         CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(SceneMode::QUICK_SHOT_PHOTO);
@@ -372,6 +369,32 @@ HWTEST_F(CameraPhotoSessionUnitTest, quick_shot_photo_session_function_unittest_
     ASSERT_NE(quickShotPhotoSession, nullptr);
     sptr<CaptureOutput> output = nullptr;
     EXPECT_FALSE(quickShotPhotoSession->CanAddOutput(output));
+}
+
+/*
+ * Feature: Framework
+ * Function: Test PhotoSessionsys EnableExternalCameraLensBoost
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test EnableExternalCameraLensBoost.
+ */
+HWTEST_F(CameraPhotoSessionUnitTest, photo_session_function_unittest_003, TestSize.Level1)
+{
+    sptr<CameraManagerForSys> cameraManagerForSys_ = nullptr;
+    cameraManagerForSys_ = CameraManagerForSys::GetInstance();
+    ASSERT_NE(cameraManagerForSys_, nullptr);
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(sessionForSys, nullptr);
+    sptr<PhotoSessionForSys> photoSessionForSys = static_cast<PhotoSessionForSys*>(sessionForSys.GetRefPtr());
+    ASSERT_NE(photoSessionForSys, nullptr);
+    bool issupperted = photoSessionForSys->IsExternalCameraLensBoostSupported();
+    if (issupperted == true) {
+        EXPECT_EQ(issupperted, true);
+        EXPECT_EQ(photoSessionForSys->EnableExternalCameraLensBoost(0), 1);
+    } else {
+        photoSessionForSys->EnableExternalCameraLensBoost(0);
+    }
 }
 }
 }

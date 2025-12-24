@@ -60,7 +60,7 @@ void DpsEventReportUnittest::TearDown()
  * CaseDescription: Test GetTotalTime with correct beginTime and endTime.
  * Expected: return endTime - beginTime = 10.
  */
-HWTEST_F(DpsEventReportUnittest, GetTotalTime001, TestSize.Level1)
+HWTEST_F(DpsEventReportUnittest, GetTotalTime001, TestSize.Level0)
 {
     uint64_t beginTime = UINT64_BEGINTIME;
     uint64_t endTime = UINT64_ENDTIME;
@@ -77,7 +77,7 @@ HWTEST_F(DpsEventReportUnittest, GetTotalTime001, TestSize.Level1)
  * CaseDescription: Test GetTotalTime with abnormal beginTime and endTime.
  * Expected: return 0.
  */
-HWTEST_F(DpsEventReportUnittest, GetTotalTime002, TestSize.Level1)
+HWTEST_F(DpsEventReportUnittest, GetTotalTime002, TestSize.Level0)
 {
     uint64_t endTime = UINT64_BEGINTIME;
     uint64_t beginTime = UINT64_ENDTIME;
@@ -93,7 +93,7 @@ HWTEST_F(DpsEventReportUnittest, GetTotalTime002, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test ReportImageProcessResult with correct endTime.
  */
-HWTEST_F(DpsEventReportUnittest, ReportImageProcessResult001, TestSize.Level1)
+HWTEST_F(DpsEventReportUnittest, ReportImageProcessResult001, TestSize.Level0)
 {
     const std::string imageId = IMAGEID;
     uint64_t endTime = UINT64_ENDTIME;
@@ -117,7 +117,7 @@ HWTEST_F(DpsEventReportUnittest, ReportImageProcessResult001, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test ReportImageProcessResult with abnormal endTime.
  */
-HWTEST_F(DpsEventReportUnittest, ReportImageProcessResult002, TestSize.Level1)
+HWTEST_F(DpsEventReportUnittest, ReportImageProcessResult002, TestSize.Level0)
 {
     const std::string imageId = IMAGEID;
     uint64_t endTime = 0;
@@ -141,7 +141,7 @@ HWTEST_F(DpsEventReportUnittest, ReportImageProcessResult002, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test SetEventInfo which input is userId and imageId with abnormal userId.
  */
-HWTEST_F(DpsEventReportUnittest, SetEventInfo001, TestSize.Level1)
+HWTEST_F(DpsEventReportUnittest, SetEventInfo001, TestSize.Level0)
 {
     const std::string imageId = IMAGEID;
     int32_t userId = USERID;
@@ -163,7 +163,7 @@ HWTEST_F(DpsEventReportUnittest, SetEventInfo001, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test SetEventInfo which input is userId and imageId with correct userId.
  */
-HWTEST_F(DpsEventReportUnittest, SetEventInfo002, TestSize.Level1)
+HWTEST_F(DpsEventReportUnittest, SetEventInfo002, TestSize.Level0)
 {
     const std::string imageId = IMAGEID;
     int32_t userId = USERID;
@@ -184,7 +184,7 @@ HWTEST_F(DpsEventReportUnittest, SetEventInfo002, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test SetEventInfo which input is dpsEventInfo with correct userId.
  */
-HWTEST_F(DpsEventReportUnittest, SetEventInfo003, TestSize.Level1)
+HWTEST_F(DpsEventReportUnittest, SetEventInfo003, TestSize.Level0)
 {
     const std::string imageId = IMAGEID;
     int32_t userId = USERID;
@@ -205,7 +205,7 @@ HWTEST_F(DpsEventReportUnittest, SetEventInfo003, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test SetEventInfo which input is dpsEventInfo with abnormal userId.
  */
-HWTEST_F(DpsEventReportUnittest, SetEventInfo004, TestSize.Level1)
+HWTEST_F(DpsEventReportUnittest, SetEventInfo004, TestSize.Level0)
 {
     const std::string imageId = IMAGEID;
     const std::string imageIdSec = IMAGEID_SECOND;
@@ -229,7 +229,7 @@ HWTEST_F(DpsEventReportUnittest, SetEventInfo004, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test UpdateEventInfo which input is dpsEventInfo with abnormal userId.
  */
-HWTEST_F(DpsEventReportUnittest, UpdateEventInfo001, TestSize.Level1)
+HWTEST_F(DpsEventReportUnittest, UpdateEventInfo001, TestSize.Level0)
 {
     const std::string imageId = IMAGEID;
     const std::string imageIdSec = IMAGEID_SECOND;
@@ -253,7 +253,7 @@ HWTEST_F(DpsEventReportUnittest, UpdateEventInfo001, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test UpdateEventInfo which input is dpsEventInfo with correct userId.
  */
-HWTEST_F(DpsEventReportUnittest, UpdateEventInfo002, TestSize.Level1)
+HWTEST_F(DpsEventReportUnittest, UpdateEventInfo002, TestSize.Level0)
 {
     const std::string imageId = IMAGEID;
     int32_t userId = USERID;
@@ -276,7 +276,7 @@ HWTEST_F(DpsEventReportUnittest, UpdateEventInfo002, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test GetEventInfo with abnormal userId and imageId.return empty DPSEventInfo.
  */
-HWTEST_F(DpsEventReportUnittest, GetEventInfo001, TestSize.Level1)
+HWTEST_F(DpsEventReportUnittest, GetEventInfo001, TestSize.Level0)
 {
     const std::string imageId = IMAGEID;
     int32_t userId = USERID;
@@ -299,7 +299,7 @@ HWTEST_F(DpsEventReportUnittest, GetEventInfo001, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test GetEventInfo with correct userId but abnormal imageId.return empty DPSEventInfo.
  */
-HWTEST_F(DpsEventReportUnittest, GetEventInfo002, TestSize.Level1)
+HWTEST_F(DpsEventReportUnittest, GetEventInfo002, TestSize.Level0)
 {
     const std::string imageId = IMAGEID;
     int32_t userId = USERID;
@@ -322,7 +322,7 @@ HWTEST_F(DpsEventReportUnittest, GetEventInfo002, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test GetEventInfo with correct userId and imageId.return correct DPSEventInfo.
  */
-HWTEST_F(DpsEventReportUnittest, GetEventInfo003, TestSize.Level1)
+HWTEST_F(DpsEventReportUnittest, GetEventInfo003, TestSize.Level0)
 {
     const std::string imageId = IMAGEID;
     int32_t userId = USERID;
@@ -344,7 +344,7 @@ HWTEST_F(DpsEventReportUnittest, GetEventInfo003, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test RemoveEventInfo with abnormal userId.return original DPSEventInfo.
  */
-HWTEST_F(DpsEventReportUnittest, RemoveEventInfo001, TestSize.Level1)
+HWTEST_F(DpsEventReportUnittest, RemoveEventInfo001, TestSize.Level0)
 {
     const std::string imageId = IMAGEID;
     int32_t userId = USERID;
@@ -368,7 +368,7 @@ HWTEST_F(DpsEventReportUnittest, RemoveEventInfo001, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test RemoveEventInfo with correct userId but abnormal imageId.return original DPSEventInfo.
  */
-HWTEST_F(DpsEventReportUnittest, RemoveEventInfo002, TestSize.Level1)
+HWTEST_F(DpsEventReportUnittest, RemoveEventInfo002, TestSize.Level0)
 {
     const std::string imageId = IMAGEID;
     int32_t userId = USERID;
@@ -392,7 +392,7 @@ HWTEST_F(DpsEventReportUnittest, RemoveEventInfo002, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test RemoveEventInfo with correct userId and imageId.Remove DPSEventInfo.
  */
-HWTEST_F(DpsEventReportUnittest, RemoveEventInfo003, TestSize.Level1)
+HWTEST_F(DpsEventReportUnittest, RemoveEventInfo003, TestSize.Level0)
 {
     const std::string imageId = IMAGEID;
     int32_t userId = USERID;
@@ -415,7 +415,7 @@ HWTEST_F(DpsEventReportUnittest, RemoveEventInfo003, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test UpdateProcessDoneTime with abnormal userId.
  */
-HWTEST_F(DpsEventReportUnittest, UpdateProcessDoneTime001, TestSize.Level1)
+HWTEST_F(DpsEventReportUnittest, UpdateProcessDoneTime001, TestSize.Level0)
 {
     const std::string imageId = IMAGEID;
     int32_t userId = USERID;
@@ -439,7 +439,7 @@ HWTEST_F(DpsEventReportUnittest, UpdateProcessDoneTime001, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test UpdateProcessDoneTime with correct userId.
  */
-HWTEST_F(DpsEventReportUnittest, UpdateProcessDoneTime002, TestSize.Level1)
+HWTEST_F(DpsEventReportUnittest, UpdateProcessDoneTime002, TestSize.Level0)
 {
     const std::string imageId = IMAGEID;
     int32_t userId = USERID;
@@ -462,7 +462,7 @@ HWTEST_F(DpsEventReportUnittest, UpdateProcessDoneTime002, TestSize.Level1)
  * CaseDescription: Test UpdateSynchronizeTime with dpsEventInfoSrc.synchronizeTimeEndTime > 0
  * and dpsEventInfoSrc.synchronizeTimeBeginTime > 0.
  */
-HWTEST_F(DpsEventReportUnittest, UpdateSynchronizeTime001, TestSize.Level1)
+HWTEST_F(DpsEventReportUnittest, UpdateSynchronizeTime001, TestSize.Level0)
 {
     DPSEventInfo dpsEventInfo;
     dpsEventInfo.userId = USERID;
@@ -488,7 +488,7 @@ HWTEST_F(DpsEventReportUnittest, UpdateSynchronizeTime001, TestSize.Level1)
  * CaseDescription: Test UpdateSynchronizeTime with dpsEventInfoSrc.synchronizeTimeEndTime = 0
  * and dpsEventInfoSrc.synchronizeTimeBeginTime = 0.
  */
-HWTEST_F(DpsEventReportUnittest, UpdateSynchronizeTime002, TestSize.Level1)
+HWTEST_F(DpsEventReportUnittest, UpdateSynchronizeTime002, TestSize.Level0)
 {
     DPSEventInfo dpsEventInfo;
     dpsEventInfo.userId = USERID;
@@ -514,7 +514,7 @@ HWTEST_F(DpsEventReportUnittest, UpdateSynchronizeTime002, TestSize.Level1)
  * CaseDescription: Test UpdateDispatchTime with dpsEventInfoSrc.dispatchTimeEndTime > 0
  * and dpsEventInfoSrc.dispatchTimeBeginTime > 0.
  */
-HWTEST_F(DpsEventReportUnittest, UpdateDispatchTime001, TestSize.Level1)
+HWTEST_F(DpsEventReportUnittest, UpdateDispatchTime001, TestSize.Level0)
 {
     DPSEventInfo dpsEventInfo;
     dpsEventInfo.userId = USERID;
@@ -540,7 +540,7 @@ HWTEST_F(DpsEventReportUnittest, UpdateDispatchTime001, TestSize.Level1)
  * CaseDescription: Test UpdateDispatchTime with dpsEventInfoSrc.dispatchTimeEndTime = 0
  * and dpsEventInfoSrc.dispatchTimeBeginTime = 0.
  */
-HWTEST_F(DpsEventReportUnittest, UpdateDispatchTime002, TestSize.Level1)
+HWTEST_F(DpsEventReportUnittest, UpdateDispatchTime002, TestSize.Level0)
 {
     DPSEventInfo dpsEventInfo;
     dpsEventInfo.userId = USERID;
@@ -566,7 +566,7 @@ HWTEST_F(DpsEventReportUnittest, UpdateDispatchTime002, TestSize.Level1)
  * CaseDescription: Test UpdateProcessTime with dpsEventInfoSrc.processTimeEndTime > 0
  * and dpsEventInfoSrc.processTimeBeginTime > 0.
  */
-HWTEST_F(DpsEventReportUnittest, UpdateProcessTime001, TestSize.Level1)
+HWTEST_F(DpsEventReportUnittest, UpdateProcessTime001, TestSize.Level0)
 {
     DPSEventInfo dpsEventInfo;
     dpsEventInfo.userId = USERID;
@@ -592,7 +592,7 @@ HWTEST_F(DpsEventReportUnittest, UpdateProcessTime001, TestSize.Level1)
  * CaseDescription: Test UpdateProcessTime with dpsEventInfoSrc.processTimeEndTime = 0
  * and dpsEventInfoSrc.processTimeBeginTime = 0.
  */
-HWTEST_F(DpsEventReportUnittest, UpdateProcessTime002, TestSize.Level1)
+HWTEST_F(DpsEventReportUnittest, UpdateProcessTime002, TestSize.Level0)
 {
     DPSEventInfo dpsEventInfo;
     dpsEventInfo.userId = USERID;
@@ -618,7 +618,7 @@ HWTEST_F(DpsEventReportUnittest, UpdateProcessTime002, TestSize.Level1)
  * CaseDescription: Test UpdateImageDoneTime with dpsEventInfoSrc.imageDoneTimeEndTime > 0
  * and dpsEventInfoSrc.imageDoneTimeBeginTime > 0.
  */
-HWTEST_F(DpsEventReportUnittest, UpdateImageDoneTime001, TestSize.Level1)
+HWTEST_F(DpsEventReportUnittest, UpdateImageDoneTime001, TestSize.Level0)
 {
     DPSEventInfo dpsEventInfo;
     dpsEventInfo.userId = USERID;
@@ -644,7 +644,7 @@ HWTEST_F(DpsEventReportUnittest, UpdateImageDoneTime001, TestSize.Level1)
  * CaseDescription: Test UpdateImageDoneTime with dpsEventInfoSrc.imageDoneTimeEndTime = 0
  * and dpsEventInfoSrc.imageDoneTimeBeginTime = 0.
  */
-HWTEST_F(DpsEventReportUnittest, UpdateImageDoneTime002, TestSize.Level1)
+HWTEST_F(DpsEventReportUnittest, UpdateImageDoneTime002, TestSize.Level0)
 {
     DPSEventInfo dpsEventInfo;
     dpsEventInfo.userId = USERID;
@@ -670,7 +670,7 @@ HWTEST_F(DpsEventReportUnittest, UpdateImageDoneTime002, TestSize.Level1)
  * CaseDescription: Test UpdateRestoreTime with dpsEventInfoSrc.restoreTimeEndTime > 0
  * and dpsEventInfoSrc.restoreTimeBeginTime > 0.
  */
-HWTEST_F(DpsEventReportUnittest, UpdateRestoreTime001, TestSize.Level1)
+HWTEST_F(DpsEventReportUnittest, UpdateRestoreTime001, TestSize.Level0)
 {
     DPSEventInfo dpsEventInfo;
     dpsEventInfo.userId = USERID;
@@ -696,7 +696,7 @@ HWTEST_F(DpsEventReportUnittest, UpdateRestoreTime001, TestSize.Level1)
  * CaseDescription: Test UpdateRestoreTime with dpsEventInfoSrc.restoreTimeEndTime = 0
  * and dpsEventInfoSrc.restoreTimeBeginTime = 0.
  */
-HWTEST_F(DpsEventReportUnittest, UpdateRestoreTime002, TestSize.Level1)
+HWTEST_F(DpsEventReportUnittest, UpdateRestoreTime002, TestSize.Level0)
 {
     DPSEventInfo dpsEventInfo;
     dpsEventInfo.userId = USERID;
@@ -722,7 +722,7 @@ HWTEST_F(DpsEventReportUnittest, UpdateRestoreTime002, TestSize.Level1)
  * CaseDescription: Test UpdateRemoveTime with dpsEventInfoSrc.removeTimeEndTime > 0
  * and dpsEventInfoSrc.removeTimeBeginTime > 0.
  */
-HWTEST_F(DpsEventReportUnittest, UpdateRemoveTime001, TestSize.Level1)
+HWTEST_F(DpsEventReportUnittest, UpdateRemoveTime001, TestSize.Level0)
 {
     DPSEventInfo dpsEventInfo;
     dpsEventInfo.userId = USERID;
@@ -748,7 +748,7 @@ HWTEST_F(DpsEventReportUnittest, UpdateRemoveTime001, TestSize.Level1)
  * CaseDescription: Test UpdateRemoveTime with dpsEventInfoSrc.removeTimeEndTime = 0
  * and dpsEventInfoSrc.removeTimeBeginTime = 0.
  */
-HWTEST_F(DpsEventReportUnittest, UpdateRemoveTime002, TestSize.Level1)
+HWTEST_F(DpsEventReportUnittest, UpdateRemoveTime002, TestSize.Level0)
 {
     DPSEventInfo dpsEventInfo;
     dpsEventInfo.userId = USERID;
@@ -773,7 +773,7 @@ HWTEST_F(DpsEventReportUnittest, UpdateRemoveTime002, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test UpdateRemoveTime with abnormal userId.
  */
-HWTEST_F(DpsEventReportUnittest, UpdateRemoveTime003, TestSize.Level1)
+HWTEST_F(DpsEventReportUnittest, UpdateRemoveTime003, TestSize.Level0)
 {
     const std::string imageId = IMAGEID;
     int32_t userId = USERID;
@@ -797,7 +797,7 @@ HWTEST_F(DpsEventReportUnittest, UpdateRemoveTime003, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test UpdateRemoveTime with correct userId.
  */
-HWTEST_F(DpsEventReportUnittest, UpdateRemoveTime004, TestSize.Level1)
+HWTEST_F(DpsEventReportUnittest, UpdateRemoveTime004, TestSize.Level0)
 {
     const std::string imageId = IMAGEID;
     int32_t userId = USERID;
@@ -821,7 +821,7 @@ HWTEST_F(DpsEventReportUnittest, UpdateRemoveTime004, TestSize.Level1)
  * CaseDescription: Test UpdateTrailingTime with dpsEventInfoSrc.trailingTimeEndTime > 0
  * and dpsEventInfoSrc.trailingTimeBeginTime > 0.
  */
-HWTEST_F(DpsEventReportUnittest, UpdateTrailingTime001, TestSize.Level1)
+HWTEST_F(DpsEventReportUnittest, UpdateTrailingTime001, TestSize.Level0)
 {
     DPSEventInfo dpsEventInfo;
     dpsEventInfo.userId = USERID;
@@ -847,7 +847,7 @@ HWTEST_F(DpsEventReportUnittest, UpdateTrailingTime001, TestSize.Level1)
  * CaseDescription: Test UpdateTrailingTime with dpsEventInfoSrc.trailingTimeEndTime = 0
  * and dpsEventInfoSrc.trailingTimeBeginTime = 0.
  */
-HWTEST_F(DpsEventReportUnittest, UpdateTrailingTime002, TestSize.Level1)
+HWTEST_F(DpsEventReportUnittest, UpdateTrailingTime002, TestSize.Level0)
 {
     DPSEventInfo dpsEventInfo;
     dpsEventInfo.userId = USERID;

@@ -14,8 +14,11 @@
  */
 
 #include "session/secure_camera_session.h"
-#include "istream_repeat.h"
+#include "input/camera_input.h"
+#include "input/camera_manager.h"
+#include "output/camera_output_capability.h"
 #include "camera_log.h"
+#include "camera_error_code.h"
 #include "camera_util.h"
 
 namespace OHOS {
@@ -27,8 +30,8 @@ int32_t SecureCameraSession::AddSecureOutput(sptr<CaptureOutput> &output)
 {
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("Enter Into SecureCameraSession::AddSecureOutput");
-    CHECK_RETURN_RET_ELOG(!IsSessionConfiged() || output == nullptr || isSetSecureOutput_,
-        CAMERA_OPERATION_NOT_ALLOWED, "SecureCameraSession::CanAddOutput operation is not allowed!");
+    CHECK_RETURN_RET_ELOG(!IsSessionConfiged() || output == nullptr || isSetSecureOutput_, CAMERA_OPERATION_NOT_ALLOWED,
+        "SecureCameraSession::CanAddOutput operation is not allowed!");
     sptr<IStreamCommon> stream = output->GetStream();
     IStreamRepeat* repeatStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
     repeatStream->EnableSecure(true);

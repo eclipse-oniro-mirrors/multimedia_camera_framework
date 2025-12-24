@@ -18,9 +18,12 @@ import IDeferredVideoProcessingSessionCallback;
 sequenceable IpcFileDescriptor..OHOS.IPCFileDescriptor;
 
 interface IDeferredVideoProcessingSession{
-  void BeginSynchronize();
-  void EndSynchronize();
-  void AddVideo([in] String videoId, [in] sptr<IPCFileDescriptor> srcFd, [in] sptr<IPCFileDescriptor> dstFd);
-  void RemoveVideo([in] String videoId, [in] boolean restorable);
-  void RestoreVideo([in] String videoId);
+  [ipccode 1] void BeginSynchronize();
+  [ipccode 2] void EndSynchronize();
+  [ipccode 3] void AddVideo([in] String videoId, [in] sptr<IPCFileDescriptor> srcFd, [in] sptr<IPCFileDescriptor> dstFd);
+  [ipccode 4] void RemoveVideo([in] String videoId, [in] boolean restorable);
+  [ipccode 5] void RestoreVideo([in] String videoId);
+  [ipccode 6] void AddVideo([in] String videoId, [in] sptr<IPCFileDescriptor> []fds);
+  [ipccode 7] void ProcessVideo([in] String appName, [in] String videoId);
+  [ipccode 8] void CancelProcessVideo([in] String videoId);
 }

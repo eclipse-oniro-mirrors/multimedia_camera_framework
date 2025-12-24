@@ -16,7 +16,7 @@
 #include "mode/high_res_photo_session_napi.h"
 
 #include "input/camera_manager_for_sys.h"
-
+ 
 namespace OHOS {
 namespace CameraStandard {
 using namespace std;
@@ -38,6 +38,7 @@ void HighResPhotoSessionNapi::HighResPhotoSessionNapiDestructor(napi_env env, vo
         delete cameraObj;
     }
 }
+
 void HighResPhotoSessionNapi::Init(napi_env env)
 {
     MEDIA_DEBUG_LOG("Init is called");
@@ -57,7 +58,6 @@ void HighResPhotoSessionNapi::Init(napi_env env)
     CHECK_RETURN_ELOG(status != napi_ok, "HighResPhotoSessionNapi Init failed");
     MEDIA_DEBUG_LOG("HighResPhotoSessionNapi Init success");
 }
-
 
 napi_value HighResPhotoSessionNapi::CreateCameraSession(napi_env env)
 {

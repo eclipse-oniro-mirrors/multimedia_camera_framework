@@ -125,6 +125,11 @@ void CJPhotoOutputCallback::OnOfflineDeliveryFinished(const int32_t captureId) c
     return;
 }
 
+void CJPhotoOutputCallback::OnConstellationDrawingState(const int32_t drawingState) const
+{
+    return;
+}
+
 void CJPhotoOutputCallback::OnPhotoAvailable(const std::shared_ptr<Media::NativeImage> nativeImage, bool isRaw) const
 {
     std::lock_guard<std::mutex> lock(photoAvailableMutex);

@@ -18,8 +18,8 @@
 
 #include "enable_shared_create.h"
 #include "photo_session_info.h"
-#include "session_coordinator.h"
 #include "video_session_info.h"
+#include <mutex>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -41,7 +41,8 @@ public:
     sptr<IDeferredVideoProcessingSession> CreateDeferredVideoProcessingSession(const int32_t userId,
         const sptr<IDeferredVideoProcessingSessionCallback>& callback);
     sptr<VideoSessionInfo> GetVideoInfo(const int32_t userId);
-    std::shared_ptr<SessionCoordinator> GetSessionCoordinator();
+    void AddVideoSession(const sptr<VideoSessionInfo>& sessionInfo);
+    void DeleteVideoSession(const int32_t userId);
 
 protected:
     SessionManager();
@@ -50,9 +51,10 @@ private:
     std::mutex photoSessionMutex_;
     std::mutex videoSessionMutex_;
     std::atomic<bool> initialized_ {false};
+    std::mutex photoInfoMutex_;
     std::unordered_map<int32_t, sptr<PhotoSessionInfo>> photoSessionInfos_ {};
+    std::mutex videoInfoMutex_;
     std::unordered_map<int32_t, sptr<VideoSessionInfo>> videoSessionInfos_ {};
-    std::shared_ptr<SessionCoordinator> coordinator_;
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

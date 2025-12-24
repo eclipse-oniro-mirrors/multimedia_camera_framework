@@ -20,6 +20,7 @@
 #include "photo_session.h"
 #include "camera_manager.h"
 #include "camera_log.h"
+#include "photo_session_for_sys.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -33,6 +34,7 @@ public:
     void SetUp(void);
     /* TearDown:Execute after each test case */
     void TearDown(void);
+
     void TestPhotoSessionForSysPreconfig(sptr<CaptureInput>& input,
         PreconfigType preconfigType, ProfileSizeRatio profileSizeRatio);
     void TestPhotoSessionPreconfig(sptr<CaptureInput>& input,

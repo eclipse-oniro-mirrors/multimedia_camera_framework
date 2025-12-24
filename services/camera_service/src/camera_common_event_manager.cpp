@@ -45,10 +45,7 @@ void CameraCommonEventManager::SubscribeCommonEvent(const std::string &eventName
     EventFwk::CommonEventSubscribeInfo subscribeInfo(matchingSkills);
     CHECK_EXECUTE(!permission.empty(), subscribeInfo.SetPermission(permission));
     auto subscriberPtr = std::make_shared<CameraCommonEventSubscriber>(subscribeInfo, receiver);
-    if (subscriberPtr == nullptr) {
-        MEDIA_INFO_LOG("subscriberPtr is nullptr");
-        return;
-    }
+    CHECK_RETURN_ILOG(subscriberPtr == nullptr, "subscriberPtr is nullptr");
     if (EventFwk::CommonEventManager::SubscribeCommonEvent(subscriberPtr)) {
         MEDIA_INFO_LOG("SubscribeCommonEvent success");
         {
@@ -63,13 +60,12 @@ void CameraCommonEventManager::UnSubscribeCommonEvent(const std::string &eventNa
     MEDIA_INFO_LOG("UnSubscribeCommonEvent eventName=%{public}s", eventName.c_str());
     std::lock_guard<std::mutex> lock(mapMutex_);
     auto subscriber = commonEventSubscriberMap_.find(eventName);
-    if (subscriber == commonEventSubscriberMap_.end()) {
-        MEDIA_INFO_LOG("UnSubscribeCommonEvent event:%{public}s is not subscribed", eventName.c_str());
-        return;
-    }
+    CHECK_RETURN_ILOG(subscriber == commonEventSubscriberMap_.end(),
+        "UnSubscribeCommonEvent event:%{public}s is not subscribed", eventName.c_str());
     auto commonEventSubscriber = subscriber->second;
-    CHECK_EXECUTE(commonEventSubscriber != nullptr,
-        EventFwk::CommonEventManager::UnSubscribeCommonEvent(commonEventSubscriber));
+    if (commonEventSubscriber != nullptr) {
+        EventFwk::CommonEventManager::UnSubscribeCommonEvent(commonEventSubscriber);
+    }
     commonEventSubscriberMap_.erase(subscriber);
 }
 
@@ -89,10 +85,7 @@ CameraCommonEventManager::CameraCommonEventSubscriber::CameraCommonEventSubscrib
 
 void CameraCommonEventManager::CameraCommonEventSubscriber::OnReceiveEvent(const EventFwk::CommonEventData &data)
 {
-    if (eventReceiver_ == nullptr) {
-        MEDIA_INFO_LOG("eventReceiver_ is nullptr");
-        return;
-    }
+    CHECK_RETURN_ILOG(eventReceiver_ == nullptr, "eventReceiver_ is nullptr");
     eventReceiver_(data);
 }
 

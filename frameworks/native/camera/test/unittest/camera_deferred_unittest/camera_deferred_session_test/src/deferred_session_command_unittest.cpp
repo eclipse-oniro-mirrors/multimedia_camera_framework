@@ -14,6 +14,9 @@
  */
 
 #include "deferred_session_command_unittest.h"
+
+#include <fcntl.h>
+
 #include "deferred_video_processing_session_callback_proxy.h"
 #include "deferred_photo_processing_session_callback_proxy.h"
 #include "dps.h"
@@ -30,8 +33,11 @@ using namespace testing::ext;
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-
+const std::string MEDIA_ROOT = "/data/test/media/";
+const std::string VIDEO_PATH = MEDIA_ROOT + "test_video.mp4";
+const std::string VIDEO_TEMP_PATH = MEDIA_ROOT + "test_video_temp.mp4";
 const int32_t USER_ID = 0;
+
 void DeferredSessionCommandUnitTest::SetUpTestCase(void)
 {
     DPS_Initialize();
@@ -51,30 +57,27 @@ void DeferredSessionCommandUnitTest::TearDown(void)
     if (srcFd_ > 0) {
         close(srcFd_);
     }
-    if (dstFd_ > 0) {
-        close(dstFd_);
+    if (dtsFd_ > 0) {
+        close(dtsFd_);
     }
 }
 
 void DeferredSessionCommandUnitTest::PrepareVideoInfo(const std::string& videoId)
 {
-    PrepareFd();
-    std::shared_ptr<DeferredVideoProcessingSession::VideoInfo> videoInfo =
-        std::make_shared<DeferredVideoProcessingSession::VideoInfo>(srcFd_, dstFd_);
+    DpsFdPtr inputFd = std::make_shared<DpsFd>(dup(srcFd_));
+    DpsFdPtr outFd = std::make_shared<DpsFd>(dup(dtsFd_));
+    std::shared_ptr<VideoInfo> videoInfo = std::make_shared<VideoInfo>(inputFd, outFd);
     ASSERT_NE(videoInfo, nullptr);
     videoInfoMap_[videoId] = videoInfo;
 }
 
 void DeferredSessionCommandUnitTest::InitProcessor(int32_t userId)
 {
-    std::shared_ptr<VideoJobRepository> repository = std::make_shared<VideoJobRepository>(userId);
+    std::shared_ptr<VideoJobRepository> repository = VideoJobRepository::Create(userId);
     ASSERT_NE(repository, nullptr);
-    std::shared_ptr<VideoPostProcessor> postProcessor = std::make_shared<VideoPostProcessor>(userId);
+    std::shared_ptr<VideoPostProcessor> postProcessor = VideoPostProcessor::Create(userId);
     ASSERT_NE(postProcessor, nullptr);
-    std::shared_ptr<TestIVideoProcCb> callback = std::make_shared<TestIVideoProcCb>();
-    ASSERT_NE(callback, nullptr);
-    processor_ =
-        std::make_shared<DeferredVideoProcessor>(repository, postProcessor, callback);
+    processor_ = DeferredVideoProcessor::Create(userId, repository, postProcessor);
     ASSERT_NE(processor_, nullptr);
 }
 
@@ -103,7 +106,7 @@ void DeferredSessionCommandUnitTest::InitSessionInfo(int32_t userId)
  * EnvConditions: NA
  * CaseDescription: Validate the functions in class SessionCommand by using its derived class AddVideoSessionCommand.
  */
-HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_001, TestSize.Level1)
+HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_001, TestSize.Level0)
 {
     InitSessionInfo(USER_ID);
     AddVideoSessionCommand sessionCommand(sessionInfo_);
@@ -121,7 +124,7 @@ HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_001, 
  * EnvConditions: NA
  * CaseDescription: Validate the functions in class AddVideoSessionCommand.
  */
-HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_002, TestSize.Level1)
+HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_002, TestSize.Level0)
 {
     InitSessionInfo(USER_ID);
     AddVideoSessionCommand addVideoSC(sessionInfo_);
@@ -137,7 +140,7 @@ HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_002, 
  * EnvConditions: NA
  * CaseDescription: Validate the functions in class DeleteVideoSessionCommand.
  */
-HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_003, TestSize.Level1)
+HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_003, TestSize.Level0)
 {
     InitSessionInfo(USER_ID);
     DeleteVideoSessionCommand delVideoSC(sessionInfo_);
@@ -153,7 +156,7 @@ HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_003, 
  * EnvConditions: NA
  * CaseDescription: Validate the functions in class SyncCommand by using its derived class VideoSyncCommand.
  */
-HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_004, TestSize.Level1)
+HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_004, TestSize.Level0)
 {
     std::string videoId = "testVideoId";
     PrepareVideoInfo(videoId);
@@ -172,7 +175,7 @@ HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_004, 
  * EnvConditions: NA
  * CaseDescription: Validate the functions in class VideoSyncCommand.
  */
-HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_005, TestSize.Level1)
+HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_005, TestSize.Level0)
 {
     std::string videoId = "testVideoId";
     std::string invalidId = "invalidVideoId";
@@ -196,7 +199,7 @@ HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_005, 
  * EnvConditions: NA
  * CaseDescription: Validate the functions in class VideoCommand by using its derived class RestoreCommand.
  */
-HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_006, TestSize.Level1)
+HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_006, TestSize.Level0)
 {
     std::string videoId = "testVideoId";
 
@@ -205,7 +208,7 @@ HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_006, 
     std::shared_ptr<SchedulerManager> schedulerManager = DPS_GetSchedulerManager();
     ASSERT_NE(schedulerManager, nullptr);
     InitProcessor(USER_ID);
-    schedulerManager->videoProcessors_[USER_ID] = processor_;
+    schedulerManager->videoController_[USER_ID] = DeferredVideoController::Create(USER_ID, processor_);
     EXPECT_EQ(videoCommand->Initialize(), DP_OK);
     EXPECT_TRUE(videoCommand->initialized_.load());
     EXPECT_EQ(videoCommand->Executing(), DP_OK);
@@ -219,16 +222,17 @@ HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_006, 
  * EnvConditions: NA
  * CaseDescription: Validate the functions in class AddVideoCommand.
  */
-HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_007, TestSize.Level1)
+HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_007, TestSize.Level0)
 {
     std::string videoId = "testVideoId";
     DpsFdPtr inputFd = std::make_shared<DpsFd>(dup(srcFd_));
     DpsFdPtr outFd = std::make_shared<DpsFd>(dup(dtsFd_));
+    auto info = std::make_shared<VideoInfo>(inputFd, outFd);
     std::shared_ptr<AddVideoCommand> addVideoCmd = std::make_shared<AddVideoCommand>(USER_ID, videoId, info);
     std::shared_ptr<SchedulerManager> schedulerManager = DPS_GetSchedulerManager();
     ASSERT_NE(schedulerManager, nullptr);
     InitProcessor(USER_ID);
-    schedulerManager->videoProcessors_[USER_ID] = processor_;
+    schedulerManager->videoController_[USER_ID] = DeferredVideoController::Create(USER_ID, processor_);
     EXPECT_EQ(addVideoCmd->Executing(), DP_OK);
 }
 
@@ -240,14 +244,14 @@ HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_007, 
  * EnvConditions: NA
  * CaseDescription: Validate the functions in class RemoveVideoCommand.
  */
-HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_008, TestSize.Level1)
+HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_008, TestSize.Level0)
 {
     std::string videoId = "testVideoId";
     std::shared_ptr<RemoveVideoCommand> removeVideoCmd = std::make_shared<RemoveVideoCommand>(USER_ID, videoId, true);
     std::shared_ptr<SchedulerManager> schedulerManager = DPS_GetSchedulerManager();
     ASSERT_NE(schedulerManager, nullptr);
     InitProcessor(USER_ID);
-    schedulerManager->videoProcessors_[USER_ID] = processor_;
+    schedulerManager->videoController_[USER_ID] = DeferredVideoController::Create(USER_ID, processor_);
     EXPECT_EQ(removeVideoCmd->Executing(), DP_OK);
 }
 
@@ -259,14 +263,14 @@ HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_008, 
  * EnvConditions: NA
  * CaseDescription: Validate the functions in class RestoreCommand.
  */
-HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_009, TestSize.Level1)
+HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_009, TestSize.Level0)
 {
     std::string videoId = "testVideoId";
     std::shared_ptr<RestoreVideoCommand> restoreVideoCmd = std::make_shared<RestoreVideoCommand>(USER_ID, videoId);
     std::shared_ptr<SchedulerManager> schedulerManager = DPS_GetSchedulerManager();
     ASSERT_NE(schedulerManager, nullptr);
     InitProcessor(USER_ID);
-    schedulerManager->videoProcessors_[USER_ID] = processor_;
+    schedulerManager->videoController_[USER_ID] = DeferredVideoController::Create(USER_ID, processor_);
     EXPECT_EQ(restoreVideoCmd->Executing(), DP_OK);
 }
 
@@ -278,7 +282,7 @@ HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_009, 
  * EnvConditions: NA
  * CaseDescription: Tests the execution of the sessionCommand when the dps is not initialized
  */
-HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_010, TestSize.Level1)
+HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_010, TestSize.Level0)
 {
     InitSessionInfo(USER_ID);
     AddVideoSessionCommand addVideoSessionCommand(sessionInfo_);
@@ -299,7 +303,7 @@ HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_010, 
  * EnvConditions: NA
  * CaseDescription: Tests the execution of the syncCommand when the dps is not initialized
  */
-HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_011, TestSize.Level1)
+HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_011, TestSize.Level0)
 {
     std::string videoId = "testVideoId";
     PrepareVideoInfo(videoId);
@@ -321,7 +325,7 @@ HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_011, 
  * EnvConditions: NA
  * CaseDescription: Tests the execution of the videoCommand when the dps is not initialized
  */
-HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_012, TestSize.Level1)
+HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_012, TestSize.Level0)
 {
     std::string videoId = "testVideoId";
     DpsFdPtr inputFd = std::make_shared<DpsFd>(dup(srcFd_));
@@ -348,7 +352,7 @@ HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_012, 
  * EnvConditions: NA
  * CaseDescription: Test abnormal functions in class RestorePhotoCommand and RemovePhotoCommand
  */
-HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_013, TestSize.Level1)
+HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_013, TestSize.Level0)
 {
     std::string photoId = "testPhotoId";
     DpsMetadata metadata;
@@ -368,7 +372,7 @@ HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_013, 
  * EnvConditions: NA
  * CaseDescription: Test abnormal functions in class ProcessPhotoCommand and CancelProcessPhotoCommand
  */
-HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_014, TestSize.Level1)
+HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_014, TestSize.Level0)
 {
     std::string photoId = "testPhotoId";
     std::string appName = "com.cameraFwk.ut";
@@ -388,7 +392,7 @@ HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_014, 
  * EnvConditions: NA
  * CaseDescription: Test abnormal functions in class addPhotoSessionCommand and deletePhotoSessionCommand
  */
-HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_015, TestSize.Level1)
+HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_015, TestSize.Level0)
 {
     InitSessionInfo(USER_ID);
     AddPhotoSessionCommand addPhotoSessionCommand(photoSessionInfo_);

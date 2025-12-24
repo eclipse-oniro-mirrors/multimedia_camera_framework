@@ -69,15 +69,17 @@ void PhotoListener::OnBufferAvailable()
 
         ExecutePhotoAsset(newSurfaceBuffer, extraData, extraData.isDegradedImage == 0, timestamp);
         MEDIA_DEBUG_LOG("PhotoListener on capture photo asset callback end");
-    } else if (extraData.isDegradedImage == 0 && (callbackFlag_ & CAPTURE_PHOTO) != 0) {
+        return;
+    }
+    if (extraData.isDegradedImage == 0 && (callbackFlag_ & CAPTURE_PHOTO) != 0) {
         MEDIA_DEBUG_LOG("PhotoListener on capture photo callback");
         ExecutePhoto(surfaceBuffer, timestamp);
         photoSurface_->ReleaseBuffer(surfaceBuffer, -1);
         MEDIA_DEBUG_LOG("PhotoListener on capture photo callback end");
-    } else {
-        MEDIA_INFO_LOG("PhotoListener on error callback");
-        photoSurface_->ReleaseBuffer(surfaceBuffer, -1);
+        return;
     }
+    MEDIA_INFO_LOG("PhotoListener on error callback");
+    photoSurface_->ReleaseBuffer(surfaceBuffer, -1);
 }
 
 CameraBufferExtraData PhotoListener::GetCameraBufferExtraData(const sptr<SurfaceBuffer> &surfaceBuffer)
@@ -168,7 +170,6 @@ void PhotoListener::UnregisterPhotoAssetAvailableCallback(OH_PhotoOutput_PhotoAs
     if (photoAssetCallback_ != nullptr && callback != nullptr) {
         photoAssetCallback_ = nullptr;
     }
-    return;
 }
 
 void PhotoListener::ExecutePhoto(sptr<SurfaceBuffer> surfaceBuffer, int64_t timestamp)
@@ -177,7 +178,7 @@ void PhotoListener::ExecutePhoto(sptr<SurfaceBuffer> surfaceBuffer, int64_t time
         bufferProcessor_, timestamp);
     CHECK_RETURN_ELOG(nativeImage == nullptr, "Create native image failed");
     CHECK_RETURN(photoCallback_ == nullptr || photoOutput_ == nullptr);
-    OH_PhotoNative *photoNative = photoOutput_->CreateCameraPhotoNative(nativeImage, true);
+    OH_PhotoNative* photoNative = photoOutput_->CreateCameraPhotoNative(nativeImage, true);
     CHECK_RETURN_ELOG(photoNative == nullptr, "Create photo native failed");
 
     photoCallback_(photoOutput_, photoNative);
@@ -207,16 +208,17 @@ void PhotoListener::ExecutePhotoAsset(sptr<SurfaceBuffer> surfaceBuffer, CameraB
     if (photoAssetCallback_ != nullptr && photoOutput_ != nullptr) {
         photoAssetCallback_(photoOutput_, mediaAsset);
     }
+    return;
 }
 
 void PhotoListener::DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<SurfaceBuffer> surfaceBuffer)
 {
     CAMERA_SYNC_TRACE;
     BufferRequestConfig requestConfig = {
+        .width = surfaceBuffer->GetWidth(),
         .height = surfaceBuffer->GetHeight(),
         .strideAlignment = 0x8, // default stride is 8 Bytes.
         .format = surfaceBuffer->GetFormat(),
-        .width = surfaceBuffer->GetWidth(),
         .usage = surfaceBuffer->GetUsage(),
         .timeout = 0,
         .colorGamut = surfaceBuffer->GetSurfaceBufferColorGamut(),
@@ -224,8 +226,10 @@ void PhotoListener::DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<Su
     };
     auto allocErrorCode = newSurfaceBuffer->Alloc(requestConfig);
     MEDIA_INFO_LOG("SurfaceBuffer alloc ret: %d", allocErrorCode);
-    CHECK_PRINT_ELOG(memcpy_s(newSurfaceBuffer->GetVirAddr(), newSurfaceBuffer->GetSize(),
-        surfaceBuffer->GetVirAddr(), surfaceBuffer->GetSize()) != EOK, "PhotoListener memcpy_s failed");
+    if (memcpy_s(newSurfaceBuffer->GetVirAddr(), newSurfaceBuffer->GetSize(),
+        surfaceBuffer->GetVirAddr(), surfaceBuffer->GetSize()) != EOK) {
+        MEDIA_ERR_LOG("PhotoListener memcpy_s failed");
+    }
 }
 
 void PhotoListener::CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, BufferHandle *bufferHandle,
@@ -301,6 +305,7 @@ void RawPhotoListener::ExecuteRawPhoto(sptr<SurfaceBuffer> surfaceBuffer, int64_
     std::shared_ptr<Media::NativeImage> nativeImage = std::make_shared<Media::NativeImage>(surfaceBuffer,
         bufferProcessor_, timestamp);
     CHECK_RETURN_ELOG(nativeImage == nullptr, "Create native image failed");
+
     CHECK_RETURN(callback_ == nullptr || photoOutput_ == nullptr);
     OH_PhotoNative* photoNative = photoOutput_->CreateCameraPhotoNative(nativeImage, false);
     CHECK_RETURN_ELOG(photoNative == nullptr, "Create photo native failed");
@@ -326,6 +331,5 @@ void RawPhotoListener::UnregisterCallback(OH_PhotoOutput_PhotoAvailable callback
     CHECK_RETURN(callback == nullptr || callback_ == nullptr);
     callback_ = nullptr;
 }
-
 }
 }

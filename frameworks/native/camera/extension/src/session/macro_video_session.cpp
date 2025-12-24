@@ -25,8 +25,8 @@ MacroVideoSession::MacroVideoSession(sptr<ICaptureSession>& captureSession) : Ca
 bool MacroVideoSession::CanAddOutput(sptr<CaptureOutput>& output)
 {
     MEDIA_DEBUG_LOG("Enter Into MacroVideoSession::CanAddOutput");
-    CHECK_RETURN_RET_ELOG(!IsSessionConfiged() || output == nullptr, false,
-        "MacroVideoSession::CanAddOutput operation is Not allowed!");
+    CHECK_RETURN_RET_ELOG(
+        !IsSessionConfiged() || output == nullptr, false, "MacroVideoSession::CanAddOutput operation is Not allowed!");
     return CaptureSession::CanAddOutput(output);
 }
 

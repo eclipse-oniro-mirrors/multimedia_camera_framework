@@ -88,8 +88,6 @@ private:
     bool IsPhotoProfileLegal(sptr<CameraDevice>& device, Profile& photoProfile);
     bool IsPreviewProfileLegal(sptr<CameraDevice>& device, Profile& previewProfile);
     bool IsVideoProfileLegal(sptr<CameraDevice>& device, VideoProfile& videoProfile);
-
-    std::mutex videoSessionCallbackMutex_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

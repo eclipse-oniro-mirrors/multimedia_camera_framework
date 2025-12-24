@@ -14,26 +14,24 @@
  */
 
 #include "track.h"
+#include "dp_log.h"
 
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-Track::~Track()
+Track::Track(int32_t id, std::unique_ptr<Format> format, Media::Plugins::MediaType trackType)
+    : trackId_(id), format_(std::move(format)), trackType_(trackType)
+{}
+
+void Track::SetAuxiliaryType(AuxiliaryType type)
 {
-    if (trackFormat_.format != nullptr) {
-        trackFormat_.format = nullptr;
-    }
+    auxType_ = type;
 }
 
-void Track::SetFormat(const TrackFormat &format, Media::Plugins::MediaType type)
+std::shared_ptr<Media::Meta> Track::GetMeta()
 {
-    trackFormat_ = format;
-    trackType_ = type;
-}
-
-const TrackFormat& Track::GetFormat()
-{
-    return trackFormat_;
+    DP_CHECK_RETURN_RET(format_ == nullptr, nullptr);
+    return format_->GetMeta();
 }
 } // namespace DeferredProcessing
 } // namespace CameraStandard

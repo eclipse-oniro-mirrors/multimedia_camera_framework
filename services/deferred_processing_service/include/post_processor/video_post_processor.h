@@ -16,39 +16,49 @@
 #ifndef OHOS_CAMERA_DPS_VIDEO_POST_PROCESSOR_H
 #define OHOS_CAMERA_DPS_VIDEO_POST_PROCESSOR_H
 
+#include <unordered_set>
+
 #include "basic_definitions.h"
 #include "deferred_video_job.h"
+#include "enable_shared_create.h"
 #include "iservstat_listener_hdi.h"
-#include "ivideo_process_callbacks.h"
 #include "media_manager_proxy.h"
-#include "v1_4/ivideo_process_service.h"
-#include "v1_4/ivideo_process_callback.h"
+#include "v1_5/types.h"
+#include "v1_5/ivideo_process_session.h"
 #include "video_process_result.h"
 
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-using OHOS::HDI::Camera::V1_3::IVideoProcessSession;
-using OHOS::HDI::Camera::V1_3::StreamDescription;
-using OHOS::HDI::Camera::V1_1::StreamInfo_V1_1;
+using VideoSessionV1_3 = HDI::Camera::V1_3::IVideoProcessSession;
+using VideoSessionV1_5 = HDI::Camera::V1_5::IVideoProcessSession;
+using HDI::Camera::V1_3::StreamDescription;
+using HDI::Camera::V1_1::StreamInfo_V1_1;
 using HDI::Camera::V1_0::BufferProducerSequenceable;
 
-class VideoPostProcessor : public std::enable_shared_from_this<VideoPostProcessor> {
+struct VideoStreamInfo {
+    VideoStreamInfo(const std::string& videoId) : videoId_(videoId) {}
+
+    std::string videoId_;
+    std::vector<StreamInfo_V1_1> infos_ {};
+};
+
+class VideoPostProcessor : public EnableSharedCreateInit<VideoPostProcessor> {
 public:
     ~VideoPostProcessor();
 
-    void Initialize();
+    int32_t Initialize() override;
     bool GetPendingVideos(std::vector<std::string>& pendingVideos);
     void SetExecutionMode(ExecutionMode executionMode);
     void SetDefaultExecutionMode();
-    void ProcessRequest(const DeferredVideoWorkPtr& work);
+    std::vector<StreamDescription> PrepareStreams(const DeferredVideoJobPtr& job);
+    void ProcessRequest(const std::string& videoId, const std::vector<StreamDescription>& streams,
+        const std::shared_ptr<MediaManagerIntf>& mediaManagerIntf);
     void RemoveRequest(const std::string& videoId);
     void PauseRequest(const std::string& videoId, const SchedulerType& type);
-    DeferredVideoWorkPtr GetRunningWork(const std::string& videoId);
-    void OnProcessDone(const std::string& videoId, std::unique_ptr<MediaUserInfo> userInfo);
-    void OnError(const std::string& videoId, DpsError errorCode);
     void OnStateChanged(HdiStatus hdiStatus);
     void OnSessionDied();
+    void ReleaseStreams(const std::string& videoId);
 
 protected:
     explicit VideoPostProcessor(const int32_t userId);
@@ -60,43 +70,43 @@ private:
 
     void ConnectService();
     void DisconnectService();
-    DpsError PrepareStreams(const std::string& videoId, const int inputFd);
-    bool ProcessStream(const StreamDescription& stream);
-    void ReleaseStreams();
+    bool ProcessStream(const StreamDescription& stream, const std::shared_ptr<MediaManagerIntf>& mediaManagerIntf);
     void SetStreamInfo(const StreamDescription& stream, sptr<BufferProducerSequenceable>& producer);
     HDI::Camera::V1_0::StreamIntent GetIntent(HDI::Camera::V1_3::MediaStreamType type);
-    bool StartMpeg(const std::string& videoId, const sptr<IPCFileDescriptor>& inputFd);
-    bool StopMpeg(const MediaResult result, const DeferredVideoWorkPtr& work);
-    void ReleaseMpeg();
-    void StartTimer(const std::string& videoId, const DeferredVideoWorkPtr& work);
-    void StopTimer(const DeferredVideoWorkPtr& work);
-    void OnTimerOut(const std::string& videoId);
     void OnServiceChange(const HDI::ServiceManager::V1_0::ServiceStatus& status);
-    void copyFileByFd(const int srcFd, const int dstFd);
-    DpsError MapHdiError(OHOS::HDI::Camera::V1_2::ErrorCode errorCode);
+    void RemoveNeedJbo(const sptr<VideoSessionV1_3>& session);
+    
 
-    inline sptr<IVideoProcessSession> GetVideoSession()
+    template <typename T>
+    inline sptr<T> GetVideoSession()
     {
         std::lock_guard<std::mutex> lock(sessionMutex_);
-        return session_;
+        if constexpr (std::is_same<T, HDI::Camera::V1_5::IVideoProcessSession>::value) {
+            return T::CastFrom(sessionV1_3_);
+        } else if constexpr (std::is_same<T, HDI::Camera::V1_3::IVideoProcessSession>::value) {
+            return sessionV1_3_;
+        }
+        return nullptr;
     }
 
-    inline void SetVideoSession(const sptr<IVideoProcessSession>& session)
+    inline void SetVideoSession(const sptr<VideoSessionV1_3>& session)
     {
         std::lock_guard<std::mutex> lock(sessionMutex_);
-        session_ = session;
+        sessionV1_3_ = session;
     }
 
+    std::mutex mpegManagerMutex_;
     std::mutex sessionMutex_;
     const int32_t userId_;
-    sptr<IVideoProcessSession> session_ {nullptr};
-    std::shared_ptr<MediaManagerProxy> mediaManagerProxy_ {nullptr};
+    sptr<VideoSessionV1_3> sessionV1_3_ {nullptr};
     std::shared_ptr<VideoProcessResult> processResult_ {nullptr};
     sptr<VideoServiceListener> serviceListener_;
     sptr<SessionDeathRecipient> sessionDeathRecipient_;
     sptr<VideoProcessListener> processListener_;
-    std::vector<StreamInfo_V1_1> allStreamInfo_ {};
-    std::unordered_map<std::string, DeferredVideoWorkPtr> runningWork_ {};
+    std::unique_ptr<VideoStreamInfo> streamInfo_ {};
+    std::unordered_set<std::string> runningId_ {};
+    std::mutex removeMutex_;
+    std::list<std::string> removeNeededList_ {};
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

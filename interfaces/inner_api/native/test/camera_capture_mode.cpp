@@ -64,33 +64,63 @@ std::map<camera_beauty_type_t, BeautyType> g_metaToFwBeautyType_ = {
     {OHOS_CAMERA_BEAUTY_TYPE_AUTO, AUTO_TYPE},
     {OHOS_CAMERA_BEAUTY_TYPE_SKIN_SMOOTH, SKIN_SMOOTH},
     {OHOS_CAMERA_BEAUTY_TYPE_FACE_SLENDER, FACE_SLENDER},
-    {OHOS_CAMERA_BEAUTY_TYPE_SKIN_TONE, SKIN_TONE}
+    {OHOS_CAMERA_BEAUTY_TYPE_SKIN_TONE, SKIN_TONE},
+    {OHOS_CAMERA_BEAUTY_TYPE_SKIN_TONEBRIGHT, SKIN_TONEBRIGHT},
+    {OHOS_CAMERA_BEAUTY_TYPE_EYE_BIGEYES, EYE_BIGEYES},
+    {OHOS_CAMERA_BEAUTY_TYPE_HAIR_HAIRLINE, HAIR_HAIRLINE},
+    {OHOS_CAMERA_BEAUTY_TYPE_FACE_MAKEUP, FACE_MAKEUP},
+    {OHOS_CAMERA_BEAUTY_TYPE_HEAD_SHRINK, HEAD_SHRINK},
+    {OHOS_CAMERA_BEAUTY_TYPE_NOSE_SLENDER, NOSE_SLENDER},
 };
 
 std::map<BeautyType, camera_beauty_type_t> g_fwToMetaBeautyType_ = {
     {AUTO_TYPE, OHOS_CAMERA_BEAUTY_TYPE_AUTO},
     {SKIN_SMOOTH, OHOS_CAMERA_BEAUTY_TYPE_SKIN_SMOOTH},
     {FACE_SLENDER, OHOS_CAMERA_BEAUTY_TYPE_FACE_SLENDER},
-    {SKIN_TONE, OHOS_CAMERA_BEAUTY_TYPE_SKIN_TONE}
+    {SKIN_TONE, OHOS_CAMERA_BEAUTY_TYPE_SKIN_TONE},
+    {SKIN_TONEBRIGHT, OHOS_CAMERA_BEAUTY_TYPE_SKIN_TONEBRIGHT},
+    {EYE_BIGEYES, OHOS_CAMERA_BEAUTY_TYPE_EYE_BIGEYES},
+    {HAIR_HAIRLINE, OHOS_CAMERA_BEAUTY_TYPE_HAIR_HAIRLINE},
+    {FACE_MAKEUP, OHOS_CAMERA_BEAUTY_TYPE_FACE_MAKEUP},
+    {HEAD_SHRINK, OHOS_CAMERA_BEAUTY_TYPE_HEAD_SHRINK},
+    {NOSE_SLENDER, OHOS_CAMERA_BEAUTY_TYPE_NOSE_SLENDER},
 };
 
 std::map<BeautyType, camera_device_metadata_tag_t> g_beautyTypeAbility_ = {
     {SKIN_SMOOTH, OHOS_ABILITY_BEAUTY_SKIN_SMOOTH_VALUES},
     {FACE_SLENDER, OHOS_ABILITY_BEAUTY_FACE_SLENDER_VALUES},
-    {SKIN_TONE, OHOS_ABILITY_BEAUTY_SKIN_TONE_VALUES}
+    {SKIN_TONE, OHOS_ABILITY_BEAUTY_SKIN_TONE_VALUES},
+    {SKIN_TONEBRIGHT, OHOS_ABILITY_BEAUTY_SKIN_TONEBRIGHT_VALUES},
+    {EYE_BIGEYES, OHOS_ABILITY_BEAUTY_EYE_BIGEYES_VALUES},
+    {HAIR_HAIRLINE, OHOS_ABILITY_BEAUTY_HAIR_HAIRLINE_VALUES},
+    {FACE_MAKEUP, OHOS_ABILITY_BEAUTY_FACE_MAKEUP_VALUES},
+    {HEAD_SHRINK, OHOS_ABILITY_BEAUTY_HEAD_SHRINK_VALUES},
+    {NOSE_SLENDER, OHOS_ABILITY_BEAUTY_NOSE_SLENDER_VALUES},
 };
 
 std::map<BeautyType, std::string> g_beautyTypeStr_ = {
     {AUTO_TYPE, "OHOS_CAMERA_BEAUTY_TYPE_AUTO"},
     {SKIN_SMOOTH, "OHOS_CAMERA_BEAUTY_TYPE_SKIN_SMOOTH"},
     {FACE_SLENDER, "OHOS_CAMERA_BEAUTY_TYPE_FACE_SLENDER"},
-    {SKIN_TONE, "OHOS_CAMERA_BEAUTY_TYPE_SKIN_TONE"}
+    {SKIN_TONE, "OHOS_CAMERA_BEAUTY_TYPE_SKIN_TONE"},
+    {SKIN_TONEBRIGHT, "OHOS_CAMERA_BEAUTY_TYPE_SKIN_TONEBRIGHT"},
+    {EYE_BIGEYES, "OHOS_CAMERA_BEAUTY_TYPE_EYE_BIGEYES"},
+    {HAIR_HAIRLINE, "OHOS_CAMERA_BEAUTY_TYPE_HAIR_HAIRLINE"},
+    {FACE_MAKEUP, "OHOS_CAMERA_BEAUTY_TYPE_FACE_MAKEUP"},
+    {HEAD_SHRINK, "OHOS_CAMERA_BEAUTY_TYPE_HEAD_SHRINK"},
+    {NOSE_SLENDER, "OHOS_CAMERA_BEAUTY_TYPE_NOSE_SLENDER"},
 };
 
 std::map<BeautyType, std::string> g_beautyAbilityStr_ = {
     {SKIN_SMOOTH, "OHOS_ABILITY_BEAUTY_SKIN_SMOOTH_VALUES"},
     {FACE_SLENDER, "OHOS_ABILITY_BEAUTY_FACE_SLENDER_VALUES"},
-    {SKIN_TONE, "OHOS_ABILITY_BEAUTY_SKIN_TONE_VALUES"}
+    {SKIN_TONE, "OHOS_ABILITY_BEAUTY_SKIN_TONE_VALUES"},
+    {SKIN_TONEBRIGHT, "OHOS_ABILITY_BEAUTY_SKIN_TONEBRIGHT_VALUES"},
+    {EYE_BIGEYES, "OHOS_ABILITY_BEAUTY_EYE_BIGEYES_VALUES"},
+    {HAIR_HAIRLINE, "OHOS_ABILITY_BEAUTY_HAIR_HAIRLINE_VALUES"},
+    {FACE_MAKEUP, "OHOS_ABILITY_BEAUTY_FACE_MAKEUP_VALUES"},
+    {HEAD_SHRINK, "OHOS_ABILITY_BEAUTY_HEAD_SHRINK_VALUES"},
+    {NOSE_SLENDER, "OHOS_ABILITY_BEAUTY_NOSE_SLENDER_VALUES"},
 };
 
 std::map<FilterType, std::string> g_filterTypeStr_ = {
@@ -222,7 +252,37 @@ std::vector<int32_t> GetSupportedBeautyRangeStub(void* obj, BeautyType beautyTyp
             break;
         }
         case BeautyType::FACE_SLENDER : {
-            std::vector<int32_t> values = {0, 1, 2, 3, 4, 5};
+            std::vector<int32_t> values = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+            beautyRange = values;
+            break;
+        }
+        case BeautyType::SKIN_TONEBRIGHT : {
+            std::vector<int32_t> values = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+            beautyRange = values;
+            break;
+        }
+        case BeautyType::EYE_BIGEYES : {
+            std::vector<int32_t> values = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+            beautyRange = values;
+            break;
+        }
+        case BeautyType::HAIR_HAIRLINE : {
+            std::vector<int32_t> values = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+            beautyRange = values;
+            break;
+        }
+        case BeautyType::FACE_MAKEUP : {
+            std::vector<int32_t> values = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+            beautyRange = values;
+            break;
+        }
+        case BeautyType::HEAD_SHRINK : {
+            std::vector<int32_t> values = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+            beautyRange = values;
+            break;
+        }
+        case BeautyType::NOSE_SLENDER : {
+            std::vector<int32_t> values = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
             beautyRange = values;
             break;
         }
@@ -326,7 +386,9 @@ int main(int argc, char **argv)
     MEDIA_INFO_LOG("Setting callback to listen camera status and flash status");
     camManagerObj->RegisterCameraStatusCallback(std::make_shared<TestCameraMngerCallback>(testName));
     std::vector<sptr<CameraDevice>> cameraObjList = camManagerObj->GetSupportedCameras();
-    CHECK_RETURN_RET(cameraObjList.size() == 0, 0);
+    if (cameraObjList.size() == 0) {
+        return 0;
+    }
     sptr<CameraDevice> device = cameraObjList[0];
     MEDIA_INFO_LOG("Camera ID count: %{public}zu", cameraObjList.size());
     for (auto& it : cameraObjList) {
@@ -352,10 +414,14 @@ int main(int argc, char **argv)
     sptr<CaptureSession> captureSession = modeManagerObj->CreateCaptureSession(SceneMode::PORTRAIT);
     sptr<PortraitSession> portraitSession = nullptr;
     portraitSession = static_cast<PortraitSession *> (captureSession.GetRefPtr());
-    CHECK_RETURN_RET(portraitSession == nullptr, 0);
+    if (portraitSession == nullptr) {
+        return 0;
+    }
     portraitSession->BeginConfig();
     sptr<CaptureInput> captureInput = camManagerObj->CreateCameraInput(device);
-    CHECK_RETURN_RET(captureInput == nullptr, 0);
+    if (captureInput == nullptr) {
+        return 0;
+    }
 
     sptr<CameraInput> cameraInput = (sptr<CameraInput> &)captureInput;
     cameraInput->Open();
@@ -403,10 +469,14 @@ int main(int argc, char **argv)
 
     cameraInput->SetErrorCallback(std::make_shared<TestDeviceCallback>(testName));
     ret = portraitSession->AddInput(captureInput);
-    CHECK_RETURN_RET(ret != 0, 0);
+    if (ret != 0) {
+        return 0;
+    }
 
     sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
-    CHECK_RETURN_RET(photoSurface == nullptr, 0);
+    if (photoSurface == nullptr) {
+        return 0;
+    }
     photosize.width = photoWidth;
     photosize.height = photoHeight;
     Profile photoprofile;
@@ -428,26 +498,36 @@ int main(int argc, char **argv)
 
     sptr<SurfaceListener> captureListener = new(std::nothrow) SurfaceListener("Photo", SurfaceType::PHOTO,
                                                                               photoFd, photoSurface);
-    CHECK_RETURN_RET(captureListener == nullptr, 0);
+    if (captureListener == nullptr) {
+        return 0;
+    }
     photoSurface->RegisterConsumerListener((sptr<IBufferConsumerListener> &)captureListener);
     sptr<IBufferProducer> bp = photoSurface->GetProducer();
     sptr<CaptureOutput> photoOutput = camManagerObj->CreatePhotoOutput(photoprofile, bp);
-    CHECK_RETURN_RET(photoOutput == nullptr, 0);
+    if (photoOutput == nullptr) {
+        return 0;
+    }
 
     MEDIA_INFO_LOG("Setting photo callback");
     ((sptr<PhotoOutput> &)photoOutput)->SetCallback(std::make_shared<TestPhotoOutputCallback>(testName));
     ret = portraitSession->AddOutput(photoOutput);
-    CHECK_RETURN_RET(ret != 0, 0);
+    if (ret != 0) {
+        return 0;
+    }
 
     sptr<CaptureOutput> metaOutput = camManagerObj->CreateMetadataOutput();
     MEDIA_INFO_LOG("Setting Meta callback");
     ((sptr<MetadataOutput> &)metaOutput)->SetCallback(std::make_shared<TestMetadataOutputObjectCallback>(testName));
 
     ret = portraitSession->AddOutput(metaOutput);
-    CHECK_RETURN_RET(ret != 0, 0);
+    if (ret != 0) {
+        return 0;
+    }
 
     sptr<IConsumerSurface> previewSurface = IConsumerSurface::Create();
-    CHECK_RETURN_RET(previewSurface == nullptr, 0);
+    if (previewSurface == nullptr) {
+        return 0;
+    }
     previewsize.width = previewWidth;
     previewsize.height = previewHeight;
     Profile previewprofile;
@@ -471,24 +551,34 @@ int main(int argc, char **argv)
     cout << "------------------------------------------------------------------------------------------------"<<endl;
     sptr<SurfaceListener> listener = new(std::nothrow) SurfaceListener("Preview", SurfaceType::PREVIEW,
                                                                        previewFd, previewSurface);
-    CHECK_RETURN_RET(listener == nullptr, 0);
+    if (listener == nullptr) {
+        return 0;
+    }
     previewSurface->RegisterConsumerListener((sptr<IBufferConsumerListener> &)listener);
     sptr<IBufferProducer> previewProducer = previewSurface->GetProducer();
     sptr<Surface> previewProducerSurface = Surface::CreateSurfaceAsProducer(previewProducer);
     sptr<CaptureOutput> previewOutput = camManagerObj->CreatePreviewOutput(previewprofile, previewProducerSurface);
-    CHECK_RETURN_RET(previewOutput == nullptr, 0);
+    if (previewOutput == nullptr) {
+        return 0;
+    }
 
     MEDIA_INFO_LOG("Setting preview callback");
     ((sptr<PreviewOutput> &)previewOutput)->SetCallback(std::make_shared<TestPreviewOutputCallback>(testName));
     ret = portraitSession->AddOutput(previewOutput);
-    CHECK_RETURN_RET(ret != 0, 0);
+    if (ret != 0) {
+        return 0;
+    }
 
     ret = portraitSession->CommitConfig();
-    CHECK_RETURN_RET(ret != 0, 0);
+    if (ret != 0) {
+        return 0;
+    }
 
     MEDIA_INFO_LOG("Preview started");
     ret = portraitSession->Start();
-    CHECK_RETURN_RET(ret != 0, 0);
+    if (ret != 0) {
+        return 0;
+    }
 
     std::vector<float> vecZoomRatioList;
     portraitSession->GetZoomRatioRange(vecZoomRatioList);
@@ -505,6 +595,24 @@ int main(int argc, char **argv)
 
     std::vector<int32_t> skinToneRange = portraitSession->GetSupportedBeautyRange(BeautyType::SKIN_TONE);
     PrintSupportBeautyRange(BeautyType::SKIN_TONE, skinToneRange);
+
+    std::vector<int32_t> skinToneBrightRange = portraitSession->GetSupportedBeautyRange(BeautyType::SKIN_TONEBRIGHT);
+    PrintSupportBeautyRange(BeautyType::SKIN_TONEBRIGHT, skinToneBrightRange);
+
+    std::vector<int32_t> eyeBigEyesRange = portraitSession->GetSupportedBeautyRange(BeautyType::EYE_BIGEYES);
+    PrintSupportBeautyRange(BeautyType::EYE_BIGEYES, eyeBigEyesRange);
+
+    std::vector<int32_t> hairHairlineRange = portraitSession->GetSupportedBeautyRange(BeautyType::HAIR_HAIRLINE);
+    PrintSupportBeautyRange(BeautyType::HAIR_HAIRLINE, hairHairlineRange);
+
+    std::vector<int32_t> faceMakeUpRange = portraitSession->GetSupportedBeautyRange(BeautyType::FACE_MAKEUP);
+    PrintSupportBeautyRange(BeautyType::FACE_MAKEUP, faceMakeUpRange);
+
+    std::vector<int32_t> headShrinkRange = portraitSession->GetSupportedBeautyRange(BeautyType::HEAD_SHRINK);
+    PrintSupportBeautyRange(BeautyType::HEAD_SHRINK, headShrinkRange);
+
+    std::vector<int32_t> noseSlenderRange = portraitSession->GetSupportedBeautyRange(BeautyType::NOSE_SLENDER);
+    PrintSupportBeautyRange(BeautyType::NOSE_SLENDER, noseSlenderRange);
 
     vector<FilterType> supportedFilterTypes = portraitSession->GetSupportedFilters();
     PrintSupportFilterTypes(supportedFilterTypes);
@@ -535,7 +643,9 @@ int main(int argc, char **argv)
         portraitSession->UnlockForControl();
         sleep(gapAfterCapture);
         ret = ((sptr<PhotoOutput> &)photoOutput)->Capture(ConfigPhotoCaptureSetting());
-        CHECK_RETURN_RET(ret != 0, 0);
+        if (ret != 0) {
+            return 0;
+        }
         MEDIA_INFO_LOG("Photo capture cnt [%{public}d] filter : %{public}s",
                        photoCnt++, g_filterTypeStr_[filter].c_str());
         sleep(gapAfterCapture);
@@ -550,36 +660,132 @@ int main(int argc, char **argv)
         portraitSession->SetBeauty(BeautyType::SKIN_TONE, beautyVal);
         portraitSession->UnlockForControl();
         ret = ((sptr<PhotoOutput> &)photoOutput)->Capture(ConfigPhotoCaptureSetting());
-        CHECK_RETURN_RET(ret != 0, 0);
+        if (ret != 0) {
+            return 0;
+        }
         sleep(gapAfterCapture);
     }
     cout<< "BeautyType::SKIN_TONE Capture end" <<endl;
 
     cout<< "BeautyType::FACE_SLENDER Capture started" <<endl;
-    for (auto beautyVal : skinToneRange) {
+    for (auto beautyVal : faceSlenderRange) {
         MEDIA_INFO_LOG("Set Beauty: %{public}s beautyVal= %{public}d",
                        g_beautyTypeStr_[BeautyType::FACE_SLENDER].c_str(), beautyVal);
         portraitSession->LockForControl();
         portraitSession->SetBeauty(BeautyType::FACE_SLENDER, beautyVal);
         portraitSession->UnlockForControl();
         ret = ((sptr<PhotoOutput> &)photoOutput)->Capture(ConfigPhotoCaptureSetting());
-        CHECK_RETURN_RET(ret != 0, 0);
+        if (ret != 0) {
+            return 0;
+        }
         sleep(gapAfterCapture);
     }
     cout<< "BeautyType::FACE_SLENDER Capture end" <<endl;
 
     cout<< "BeautyType::SKIN_SMOOTH Capture started" <<endl;
-    for (auto beautyVal : skinToneRange) {
+    for (auto beautyVal : skinSmoothRange) {
         MEDIA_INFO_LOG("Set Beauty: %{public}s beautyVal= %{public}d",
                        g_beautyTypeStr_[BeautyType::SKIN_SMOOTH].c_str(), beautyVal);
         portraitSession->LockForControl();
         portraitSession->SetBeauty(BeautyType::SKIN_SMOOTH, beautyVal);
         portraitSession->UnlockForControl();
         ret = ((sptr<PhotoOutput> &)photoOutput)->Capture(ConfigPhotoCaptureSetting());
-        CHECK_RETURN_RET(ret != 0, 0);
+        if (ret != 0) {
+            return 0;
+        }
         sleep(gapAfterCapture);
     }
     cout<< "BeautyType::SKIN_SMOOTH Capture end" <<endl;
+
+    cout<< "BeautyType::SKIN_TONEBRIGHT Capture started" <<endl;
+    for (auto beautyVal : skinToneBrightRange) {
+        MEDIA_INFO_LOG("Set Beauty: %{public}s beautyVal= %{public}d",
+                       g_beautyTypeStr_[BeautyType::SKIN_TONEBRIGHT].c_str(), beautyVal);
+        portraitSession->LockForControl();
+        portraitSession->SetBeauty(BeautyType::SKIN_TONEBRIGHT, beautyVal);
+        portraitSession->UnlockForControl();
+        ret = ((sptr<PhotoOutput> &)photoOutput)->Capture(ConfigPhotoCaptureSetting());
+        if (ret != 0) {
+            return 0;
+        }
+        sleep(gapAfterCapture);
+    }
+    cout<< "BeautyType::SKIN_TONEBRIGHT Capture end" <<endl;
+
+    cout<< "BeautyType::EYE_BIGEYES Capture started" <<endl;
+    for (auto beautyVal : eyeBigEyesRange) {
+        MEDIA_INFO_LOG("Set Beauty: %{public}s beautyVal= %{public}d",
+                       g_beautyTypeStr_[BeautyType::EYE_BIGEYES].c_str(), beautyVal);
+        portraitSession->LockForControl();
+        portraitSession->SetBeauty(BeautyType::EYE_BIGEYES, beautyVal);
+        portraitSession->UnlockForControl();
+        ret = ((sptr<PhotoOutput> &)photoOutput)->Capture(ConfigPhotoCaptureSetting());
+        if (ret != 0) {
+            return 0;
+        }
+        sleep(gapAfterCapture);
+    }
+    cout<< "BeautyType::EYE_BIGEYES Capture end" <<endl;
+
+    cout<< "BeautyType::HAIR_HAIRLINE Capture started" <<endl;
+    for (auto beautyVal : hairHairlineRange) {
+        MEDIA_INFO_LOG("Set Beauty: %{public}s beautyVal= %{public}d",
+                       g_beautyTypeStr_[BeautyType::HAIR_HAIRLINE].c_str(), beautyVal);
+        portraitSession->LockForControl();
+        portraitSession->SetBeauty(BeautyType::HAIR_HAIRLINE, beautyVal);
+        portraitSession->UnlockForControl();
+        ret = ((sptr<PhotoOutput> &)photoOutput)->Capture(ConfigPhotoCaptureSetting());
+        if (ret != 0) {
+            return 0;
+        }
+        sleep(gapAfterCapture);
+    }
+    cout<< "BeautyType::HAIR_HAIRLINE Capture end" <<endl;
+
+    cout<< "BeautyType::FACE_MAKEUP Capture started" <<endl;
+    for (auto beautyVal : faceMakeUpRange) {
+        MEDIA_INFO_LOG("Set Beauty: %{public}s beautyVal= %{public}d",
+                       g_beautyTypeStr_[BeautyType::FACE_MAKEUP].c_str(), beautyVal);
+        portraitSession->LockForControl();
+        portraitSession->SetBeauty(BeautyType::FACE_MAKEUP, beautyVal);
+        portraitSession->UnlockForControl();
+        ret = ((sptr<PhotoOutput> &)photoOutput)->Capture(ConfigPhotoCaptureSetting());
+        if (ret != 0) {
+            return 0;
+        }
+        sleep(gapAfterCapture);
+    }
+    cout<< "BeautyType::FACE_MAKEUP Capture end" <<endl;
+
+    cout<< "BeautyType::HEAD_SHRINK Capture started" <<endl;
+    for (auto beautyVal : headShrinkRange) {
+        MEDIA_INFO_LOG("Set Beauty: %{public}s beautyVal= %{public}d",
+                       g_beautyTypeStr_[BeautyType::HEAD_SHRINK].c_str(), beautyVal);
+        portraitSession->LockForControl();
+        portraitSession->SetBeauty(BeautyType::HEAD_SHRINK, beautyVal);
+        portraitSession->UnlockForControl();
+        ret = ((sptr<PhotoOutput> &)photoOutput)->Capture(ConfigPhotoCaptureSetting());
+        if (ret != 0) {
+            return 0;
+        }
+        sleep(gapAfterCapture);
+    }
+    cout<< "BeautyType::HEAD_SHRINK Capture end" <<endl;
+
+    cout<< "BeautyType::NOSE_SLENDER Capture started" <<endl;
+    for (auto beautyVal : noseSlenderRange) {
+        MEDIA_INFO_LOG("Set Beauty: %{public}s beautyVal= %{public}d",
+                       g_beautyTypeStr_[BeautyType::NOSE_SLENDER].c_str(), beautyVal);
+        portraitSession->LockForControl();
+        portraitSession->SetBeauty(BeautyType::NOSE_SLENDER, beautyVal);
+        portraitSession->UnlockForControl();
+        ret = ((sptr<PhotoOutput> &)photoOutput)->Capture(ConfigPhotoCaptureSetting());
+        if (ret != 0) {
+            return 0;
+        }
+        sleep(gapAfterCapture);
+    }
+    cout<< "BeautyType::NOSE_SLENDER Capture end" <<endl;
 
     cout<< "PortraitEffect Capture started" <<endl;
     for (auto effect : supportedPortraitEffects) {
@@ -588,7 +794,9 @@ int main(int argc, char **argv)
         portraitSession->SetPortraitEffect(effect);
         portraitSession->UnlockForControl();
         ret = ((sptr<PhotoOutput> &)photoOutput)->Capture(ConfigPhotoCaptureSetting());
-        CHECK_RETURN_RET(ret != 0, 0);
+        if (ret != 0) {
+            return 0;
+        }
         MEDIA_INFO_LOG("Photo capture [%{public}d] filter : %{public}s",
                        photoCnt++, g_portraitEffectStr_[effect].c_str());
         sleep(gapAfterCapture);

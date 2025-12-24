@@ -113,13 +113,6 @@ public:
     int32_t SetPortraitThemeType(PortraitThemeType type);
 
     /**
-     * @brief Get the current color effect.
-     *
-     * @return Returns current color effect.
-     */
-    ColorEffect GetColorEffect();
-
-    /**
      * @brief Set the color effect.
      */
     void SetColorEffect(ColorEffect colorEffect);
@@ -161,6 +154,8 @@ public:
     * @brief Check curernt status is enabled depth fusion.
     */
     bool IsDepthFusionEnabled();
+
+    
 
     /**
      * @brief Set the feature detection status callback.
@@ -212,34 +207,6 @@ public:
      * @return errCode
      */
     int32_t UpdateEffectSuggestion(EffectSuggestionType effectSuggestionType, bool isEnable);
-
-    /**
-     * @brief Get the virtual aperture.
-     * @param aperture returns the current virtual aperture.
-     * @return Error code.
-     */
-    int32_t GetVirtualAperture(float& aperture);
-
-    /**
-     * @brief Set the virtual aperture.
-     * @param virtualAperture set virtual aperture value.
-     * @return Error code.
-     */
-    int32_t SetVirtualAperture(const float virtualAperture);
-
-    /**
-     * @brief Get the physical aperture.
-     * @param aperture returns current physical aperture.
-     * @return Error code.
-     */
-    int32_t GetPhysicalAperture(float& aperture);
-
-    /**
-     * @brief Set the physical aperture.
-     * @param physicalAperture set physical aperture value.
-     * @return Error code.
-     */
-    int32_t SetPhysicalAperture(float physicalAperture);
 
     /**
      * @brief Enables or disables LCD flash detection.
@@ -296,13 +263,43 @@ public:
      */
     int32_t EnableLcdFlash(bool isEnable);
 
+    /**
+     * @brief This function is called when there is constellation drawing update
+     * and process the constellation drawing update status callback.
+     *
+     * @param result Metadata got from callback from service layer.
+     */
+    void ProcessConstellationDrawingUpdates(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result);
+
+    /**
+     * @brief This function is called when there is constellation drawing state update
+     *
+     * @param result Metadata got from callback from service layer.
+     */
+    void ProcessConstellationDrawingState(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result);
+
+    int32_t EnableConstellationDrawingDetection(bool isEnable);
+
+    /**
+     * @brief This function is called when there is image stabilization guide update
+     * and process the image stabilization guide update status callback.
+     *
+     * @param result Metadata got from callback from service layer.
+     */
+    void ProcessImageStabilizationGuide(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result);
+
+    int32_t EnableSuperMoonFeature(bool isEnable);
+
+    bool IsStageBoostSupported();
+    
+    int32_t EnableStageBoost(bool isEnable);
+
+    std::shared_ptr<ImageStabilizationGuideCallback> GetImageStabilizationGuideCallback();
+
 private:
     int32_t IsColorReservationTypeSupported(ColorReservationType colorReservationType, bool& isSupported);
     volatile bool isDepthFusionEnable_ = false;
     static const std::unordered_map<EffectSuggestionType, CameraEffectSuggestionType> fwkEffectSuggestionTypeMap_;
-    atomic<bool> isApertureSupported = false;
-    const int32_t physicalAperturesIndex = 2;
-    std::vector<std::vector<float>> matchedRanges;
 };
 } // namespace CameraStandard
 } // namespace OHOS

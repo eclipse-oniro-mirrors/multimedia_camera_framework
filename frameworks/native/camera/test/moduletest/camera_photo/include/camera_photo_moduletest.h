@@ -44,7 +44,8 @@ public:
     void OnPhotoAvailable(const std::shared_ptr<Media::Picture> picture) const override;
     void OnPhotoAssetAvailable(const int32_t captureId, const std::string &uri, const int32_t cameraShotType,
         const std::string &burstKey) const override;
-    void OnThumbnailAvailable(const WatermarkInfo &info, std::unique_ptr<Media::PixelMap> pixelMap) const override;
+    void OnThumbnailAvailable(
+        int32_t captureId, int64_t timestamp, std::unique_ptr<Media::PixelMap> pixelMap) const override;
 
 private:
 };
@@ -62,6 +63,8 @@ public:
 
     /* TearDown:Execute after each test case */
     void TearDown();
+
+    void NativeAuthorization();
 
 protected:
     void UpdateCameraOutputCapability(int32_t modeName = 0);

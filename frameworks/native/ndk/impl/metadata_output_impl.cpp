@@ -30,9 +30,8 @@ public:
     void OnError(const int32_t errorCode) const override
     {
         MEDIA_DEBUG_LOG("OnError is called!, errorCode: %{public}d", errorCode);
-        if (metadataOutput_ != nullptr && callback_.onError != nullptr) {
-            callback_.onError(metadataOutput_, FrameworkToNdkCameraError(errorCode));
-        }
+        CHECK_RETURN(metadataOutput_ == nullptr || callback_.onError == nullptr);
+        callback_.onError(metadataOutput_, FrameworkToNdkCameraError(errorCode));
     }
 
 private:
@@ -49,27 +48,22 @@ public:
 
     void OnMetadataObjectsAvailable(std::vector<sptr<MetadataObject>> metaObjects) const override
     {
-        CHECK_PRINT_ELOG(metaObjects.empty(), "OnMetadataObjectsAvailable: metaObjects is empty");
+        CHECK_RETURN_ELOG(metaObjects.empty(), "OnMetadataObjectsAvailable: metaObjects is empty");
         size_t size = metaObjects.size();
-        CHECK_PRINT_ELOG(size <= 0, "Invalid metadata objects size.");
+        CHECK_RETURN(metadataOutput_ == nullptr || callback_.onMetadataObjectAvailable == nullptr);
         Camera_MetadataObject* object = new Camera_MetadataObject[size];
         Camera_Rect boundingBox;
-        if (metadataOutput_ != nullptr && callback_.onMetadataObjectAvailable != nullptr) {
-            for (size_t index = 0; index < size; index++) {
-                if (MetadataObjectType::FACE == metaObjects[index]->GetType()) {
-                    object[index].type = Camera_MetadataObjectType::FACE_DETECTION;
-                }
-                object[index].timestamp = metaObjects[index]->GetTimestamp();
-                boundingBox.topLeftX = metaObjects[index]->GetBoundingBox().topLeftX;
-                boundingBox.topLeftY = metaObjects[index]->GetBoundingBox().topLeftY;
-                boundingBox.width = metaObjects[index]->GetBoundingBox().width;
-                boundingBox.height = metaObjects[index]->GetBoundingBox().height;
-                object[index].boundingBox = &boundingBox;
-            }
-            callback_.onMetadataObjectAvailable(metadataOutput_, object, size);
-        } else {
-            delete[] object;
+        for (size_t index = 0; index < size; index++) {
+            CHECK_EXECUTE(MetadataObjectType::FACE == metaObjects[index]->GetType(),
+                object[index].type = Camera_MetadataObjectType::FACE_DETECTION;);
+            object[index].timestamp = metaObjects[index]->GetTimestamp();
+            boundingBox.topLeftX = metaObjects[index]->GetBoundingBox().topLeftX;
+            boundingBox.topLeftY = metaObjects[index]->GetBoundingBox().topLeftY;
+            boundingBox.width = metaObjects[index]->GetBoundingBox().width;
+            boundingBox.height = metaObjects[index]->GetBoundingBox().height;
+            object[index].boundingBox = &boundingBox;
         }
+        callback_.onMetadataObjectAvailable(metadataOutput_, object, size);
     }
 
 private:
@@ -86,7 +80,6 @@ Camera_MetadataOutput::Camera_MetadataOutput(sptr<MetadataOutput> &innerMetadata
 Camera_MetadataOutput::~Camera_MetadataOutput()
 {
     MEDIA_DEBUG_LOG("~Camera_MetadataOutput is called");
-    CHECK_RETURN(!innerMetadataOutput_);
     innerMetadataOutput_ = nullptr;
 }
 

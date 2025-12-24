@@ -15,10 +15,11 @@
 #ifndef OHOS_CAMERA_DPS_MEDIA_MANAGER_INTERFACE_H
 #define OHOS_CAMERA_DPS_MEDIA_MANAGER_INTERFACE_H
 
+#include "dps_fd.h"
+#include "media_progress_notifier.h"
 #include "refbase.h"
 #include "surface.h"
 #include "media_format_info.h"
-#include <memory>
 
 namespace OHOS {
 class IPCFileDescriptor;
@@ -27,15 +28,17 @@ namespace DeferredProcessing {
 class MediaManagerIntf : public RefBase {
 public:
     virtual ~MediaManagerIntf() = default;
-    virtual int32_t MpegAcquire(const std::string& requestId, const sptr<IPCFileDescriptor>& inputFd) = 0;
+    virtual int32_t MpegAcquire(const std::string& requestId, const DpsFdPtr& inputFd,
+        int32_t width, int32_t height) = 0;
     virtual int32_t MpegUnInit(const int32_t result) = 0;
-    virtual sptr<IPCFileDescriptor> MpegGetResultFd() = 0;
+    virtual DpsFdPtr MpegGetResultFd() = 0;
     virtual void MpegAddUserMeta(std::unique_ptr<MediaUserInfo> userInfo) = 0;
     virtual uint64_t MpegGetProcessTimeStamp() = 0;
     virtual sptr<Surface> MpegGetSurface() = 0;
     virtual sptr<Surface> MpegGetMakerSurface() = 0;
-    virtual void MpegSetMarkSize(int32_t size) = 0;
     virtual int32_t MpegRelease() = 0;
+    virtual uint32_t MpegGetDuration() = 0;
+    virtual int32_t MpegSetProgressNotifer(std::unique_ptr<MediaProgressNotifier> processNotifer) = 0;
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

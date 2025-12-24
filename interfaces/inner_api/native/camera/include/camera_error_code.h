@@ -27,6 +27,7 @@ namespace CameraStandard {
  */
 enum CameraErrorCode : int32_t {
     SUCCESS = 0,
+    NO_API_PERMISSION = 201,
     NO_SYSTEM_APP_PERMISSION = 202,
     PARAMETER_ERROR = 401,
     INVALID_ARGUMENT = 7400101,

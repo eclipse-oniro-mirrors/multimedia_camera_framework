@@ -23,6 +23,8 @@
 #include "camera_napi_object.h"
 #include "camera_output_capability.h"
 #include "js_native_api_types.h"
+#include "metadata_output.h"
+#include "movie_file_output.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -131,6 +133,34 @@ public:
 
 private:
     CameraOutputCapability& cameraOutputCapability_;
+};
+
+class CameraNapiFocusTrackingMetaInfo : public CameraNapiObjectTypes {
+public:
+    explicit CameraNapiFocusTrackingMetaInfo(FocusTrackingMetaInfo& info) : focusTrackingMetaInfo_(info)
+    {}
+    CameraNapiObject& GetCameraNapiObject() override;
+
+private:
+    FocusTrackingMetaInfo& focusTrackingMetaInfo_;
+};
+
+class CameraNapiObjLocation : public CameraNapiObjectTypes {
+public:
+    explicit CameraNapiObjLocation(Location& location) : location_(location) {}
+    CameraNapiObject& GetCameraNapiObject() override;
+
+private:
+    Location& location_;
+};
+
+class CameraNapiObjOutputSettings : public CameraNapiObjectTypes {
+public:
+    explicit CameraNapiObjOutputSettings(MovieSettings& settings) : settings_(settings) {}
+    CameraNapiObject& GetCameraNapiObject() override;
+
+private:
+    MovieSettings& settings_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

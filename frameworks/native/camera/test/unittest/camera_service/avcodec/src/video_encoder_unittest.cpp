@@ -60,7 +60,7 @@ void VideoEncoderUnitTest::TearDown()
  * EnvConditions: NA
  * CaseDescription: Test RestartVideoCodec normal branches.
  */
-HWTEST_F(VideoEncoderUnitTest, video_encoder_unittest_001, TestSize.Level1)
+HWTEST_F(VideoEncoderUnitTest, video_encoder_unittest_001, TestSize.Level0)
 {
     VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
     ColorSpace colorSpace = ColorSpace::DISPLAY_P3;
@@ -75,9 +75,7 @@ HWTEST_F(VideoEncoderUnitTest, video_encoder_unittest_001, TestSize.Level1)
     int64_t timestamp = VIDEO_FRAMERATE;
     GraphicTransformType graphicTransformType = GraphicTransformType::GRAPHIC_ROTATE_90;
     sptr<FrameRecord> frameRecord = new(std::nothrow) FrameRecord(videoBuffer, timestamp, graphicTransformType);
-    int32_t keyFrameInterval = 10;
-    EXPECT_FALSE(encoder->EnqueueBuffer(frameRecord, keyFrameInterval));
-    EXPECT_FALSE(encoder->EnqueueBuffer(frameRecord, rotation));
+    EXPECT_FALSE(encoder->EnqueueBuffer(frameRecord));
 }
 
 /*
@@ -88,7 +86,7 @@ HWTEST_F(VideoEncoderUnitTest, video_encoder_unittest_001, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test EncodeSurfaceBuffer normal branches.
  */
-HWTEST_F(VideoEncoderUnitTest, video_encoder_unittest_002, TestSize.Level1)
+HWTEST_F(VideoEncoderUnitTest, video_encoder_unittest_002, TestSize.Level0)
 {
     VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
     ColorSpace colorSpace = ColorSpace::DISPLAY_P3;
@@ -101,19 +99,13 @@ HWTEST_F(VideoEncoderUnitTest, video_encoder_unittest_002, TestSize.Level1)
     sptr<FrameRecord> frameRecord = new(std::nothrow) FrameRecord(videoBuffer, timestamp, graphicTransformType);
     frameRecord->timestamp_ = 1600000001LL;
     encoder->EncodeSurfaceBuffer(frameRecord);
-    EXPECT_EQ(encoder->keyFrameInterval_, KEY_FRAME_INTERVAL);
 
-    encoder->preFrameTimestamp_ = 0;
     frameRecord->timestamp_ = 1000000000LL;
-    encoder->keyFrameInterval_ = 0;
     encoder->EncodeSurfaceBuffer(frameRecord);
-    EXPECT_EQ(encoder->keyFrameInterval_, KEY_FRAME_INTERVAL);
 
-    encoder->preFrameTimestamp_ = 0;
+
     frameRecord->timestamp_ = 1000000000LL;
-    encoder->keyFrameInterval_ = 5;
     encoder->EncodeSurfaceBuffer(frameRecord);
-    EXPECT_EQ(encoder->keyFrameInterval_, 5);
 
     std::string imageId = "testImageId";
     EXPECT_EQ(encoder->Release(), 0);
@@ -127,7 +119,7 @@ HWTEST_F(VideoEncoderUnitTest, video_encoder_unittest_002, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test Release normal branches.
  */
-HWTEST_F(VideoEncoderUnitTest, video_encoder_unittest_003, TestSize.Level1)
+HWTEST_F(VideoEncoderUnitTest, video_encoder_unittest_003, TestSize.Level0)
 {
     VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
     ColorSpace colorSpace = ColorSpace::DISPLAY_P3;
@@ -207,60 +199,6 @@ HWTEST_F(VideoEncoderUnitTest, video_encoder_unittest_006, TestSize.Level1)
 
 /*
  * Feature: Framework
- * Function: Test Config abnormal branches.
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test Config abnormal branches.
- */
-HWTEST_F(VideoEncoderUnitTest, video_encoder_unittest_007, TestSize.Level1)
-{
-    VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
-    ColorSpace colorSpace = ColorSpace::DISPLAY_P3;
-    std::shared_ptr<VideoEncoder> encoder = std::make_shared<VideoEncoder>(type, colorSpace);
-
-    int32_t ret = encoder->Config();
-    EXPECT_EQ(ret, 0);
-}
-
-/*
- * Feature: Framework
- * Function: Test Start abnormal branches.
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test Start abnormal branches.
- */
-HWTEST_F(VideoEncoderUnitTest, video_encoder_unittest_008, TestSize.Level1)
-{
-    VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
-    ColorSpace colorSpace = ColorSpace::DISPLAY_P3;
-    std::shared_ptr<VideoEncoder> encoder = std::make_shared<VideoEncoder>(type, colorSpace);
-
-    int32_t ret = encoder->Start();
-    EXPECT_EQ(ret, 0);
-}
-
-/*
- * Feature: Framework
- * Function: Test Stop abnormal branches.
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test Stop abnormal branches.
- */
-HWTEST_F(VideoEncoderUnitTest, video_encoder_unittest_009, TestSize.Level1)
-{
-    VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
-    ColorSpace colorSpace = ColorSpace::DISPLAY_P3;
-    std::shared_ptr<VideoEncoder> encoder = std::make_shared<VideoEncoder>(type, colorSpace);
-
-    int32_t ret = encoder->Stop();
-    EXPECT_EQ(ret, 0);
-}
-
-/*
- * Feature: Framework
  * Function: Test Release normal branches when type is HEVC.
  * SubFunction: NA
  * FunctionPoints: NA
@@ -333,24 +271,6 @@ HWTEST_F(VideoEncoderUnitTest, video_encoder_unittest_012, TestSize.Level1)
 
 /*
  * Feature: Framework
- * Function: Test NotifyEndOfStream abnormal branches.
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test NotifyEndOfStream abnormal branches.
- */
-HWTEST_F(VideoEncoderUnitTest, video_encoder_unittest_013, TestSize.Level1)
-{
-    VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
-    ColorSpace colorSpace = ColorSpace::DISPLAY_P3;
-    std::shared_ptr<VideoEncoder> encoder = std::make_shared<VideoEncoder>(type, colorSpace);
-
-    int32_t ret = encoder->NotifyEndOfStream();
-    EXPECT_EQ(ret, 0);
-}
-
-/*
- * Feature: Framework
  * Function: Test EnqueueBuffer abnormal branches.
  * SubFunction: NA
  * FunctionPoints: NA
@@ -375,11 +295,10 @@ HWTEST_F(VideoEncoderUnitTest, video_encoder_unittest_014, TestSize.Level1)
     int64_t timestamp = VIDEO_FRAMERATE;
     GraphicTransformType graphicTransformType = GraphicTransformType::GRAPHIC_ROTATE_90;
     sptr<FrameRecord> frameRecord = new (std::nothrow) FrameRecord(videoBuffer, timestamp, graphicTransformType);
-    int32_t keyFrameInterval = 1;
     encoder->rotation_ = 0;
     encoder->size_ = size;
     encoder->isStarted_ = true;
-    EXPECT_FALSE(encoder->EnqueueBuffer(frameRecord, keyFrameInterval));
+    EXPECT_FALSE(encoder->EnqueueBuffer(frameRecord));
 }
 
 } // CameraStandard

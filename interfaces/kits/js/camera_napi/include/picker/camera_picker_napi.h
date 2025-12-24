@@ -19,6 +19,7 @@
 #include <atomic>
 #include <memory>
 #include <cstdint>
+#include <utility>
 
 #include "ability_context.h"
 #include "camera_device.h"
@@ -66,20 +67,20 @@ struct PickerContextProxy {
 
     Ace::UIContent* GetUIContent()
     {
-        auto uiContext  = mContext_.lock();
-        if (uiContext  == nullptr) {
+        auto context = mContext_.lock();
+        if (context == nullptr) {
             return nullptr;
         }
         switch (type_) {
             case PickerContextType::UI_EXTENSION: {
-                auto ctx = AbilityRuntime::Context::ConvertTo<AbilityRuntime::UIExtensionContext>(uiContext);
+                auto ctx = AbilityRuntime::Context::ConvertTo<AbilityRuntime::UIExtensionContext>(context);
                 if (ctx != nullptr) {
                     return ctx->GetUIContent();
                 }
                 break;
             }
             case PickerContextType::ABILITY: {
-                auto ctx = AbilityRuntime::Context::ConvertTo<AbilityRuntime::AbilityContext>(uiContext);
+                auto ctx = AbilityRuntime::Context::ConvertTo<AbilityRuntime::AbilityContext>(context);
                 if (ctx != nullptr) {
                     return ctx->GetUIContent();
                 }
@@ -90,6 +91,34 @@ struct PickerContextProxy {
                 break;
         }
         return nullptr;
+    }
+
+    ErrCode StartAbilityForResult(const AAFwk::Want& want, int requestCode, AbilityRuntime::RuntimeTask&& task)
+    {
+        auto context = mContext_.lock();
+        if (context == nullptr) {
+            return ERR_INVALID_OPERATION;
+        }
+        switch (type_) {
+            case PickerContextType::UI_EXTENSION: {
+                auto ctx = AbilityRuntime::Context::ConvertTo<AbilityRuntime::UIExtensionContext>(context);
+                if (ctx != nullptr) {
+                    return ctx->StartAbilityForResult(want, requestCode, std::move(task));
+                }
+                break;
+            }
+            case PickerContextType::ABILITY: {
+                auto ctx = AbilityRuntime::Context::ConvertTo<AbilityRuntime::AbilityContext>(context);
+                if (ctx != nullptr) {
+                    return ctx->StartAbilityForResult(want, requestCode, std::move(task));
+                }
+                break;
+            }
+            default:
+                // Do nothing
+                break;
+        }
+        return ERR_INVALID_OPERATION;
     }
 
 private:
@@ -107,8 +136,13 @@ public:
     void OnReceive(const OHOS::AAFwk::WantParams& request);
     void OnError(int32_t code, const std::string& name, const std::string& message);
     void OnRemoteReady(const std::shared_ptr<OHOS::Ace::ModalUIExtensionProxy>& uiProxy);
-    void CloseWindow();
     void OnDestroy();
+    void CloseWindow();
+
+    inline void SetSessionId(int32_t sessionId)
+    {
+        sessionId_ = sessionId;
+    }
 
     inline void WaitResultLock()
     {
@@ -118,23 +152,10 @@ public:
         }
     }
 
-    inline void SetSessionId(int32_t sessionId)
-    {
-        sessionId_ = sessionId;
-    }
-
     inline void NotifyResultLock()
     {
         std::unique_lock<std::mutex> lock(cbMutex_);
         cbFinishCondition_.notify_one();
-    }
-
-    inline std::string GetResultMediaType()
-    {
-        if (resultMode_ == "VIDEO") {
-            return "video";
-        }
-        return "photo";
     }
 
     inline int32_t GetResultCode()
@@ -147,12 +168,20 @@ public:
         return resultUri_;
     }
 
+    inline std::string GetResultMediaType()
+    {
+        if (resultMode_ == "VIDEO") {
+            return "video";
+        }
+        return "photo";
+    }
+
 private:
     bool FinishPicker(int32_t code);
     int32_t sessionId_ = 0;
     int32_t resultCode_ = 0;
-    std::string resultMode_ = "";
     std::string resultUri_ = "";
+    std::string resultMode_ = "";
     std::shared_ptr<PickerContextProxy> contextProxy_;
     std::condition_variable cbFinishCondition_;
     std::mutex cbMutex_;
@@ -170,8 +199,11 @@ public:
 
     static napi_value CameraPickerNapiConstructor(napi_env env, napi_callback_info info);
     static void CameraPickerNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
+    CameraPickerNapi();
+    ~CameraPickerNapi();
 
 private:
+    napi_env env_;
     static thread_local uint32_t cameraPickerTaskId;
     static thread_local napi_ref sConstructor_;
     static thread_local napi_ref mediaTypeRef_;

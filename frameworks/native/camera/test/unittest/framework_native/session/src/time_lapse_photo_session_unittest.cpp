@@ -68,7 +68,7 @@ void TimeLapsePhotoSessionUnitTest::TearDown()
  * CaseDescription: Test ProcessCallbacks, StartTryAE, StopTryAE, IsWhiteBalanceModeSupported,
  * SetWhiteBalanceMode, GetWhiteBalanceMode for just call.
  */
-HWTEST_F(TimeLapsePhotoSessionUnitTest, time_lapse_photo_function_unittest_001, TestSize.Level1)
+HWTEST_F(TimeLapsePhotoSessionUnitTest, time_lapse_photo_function_unittest_001, TestSize.Level0)
 {
     sptr<CaptureSession> captureSession =
         CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(SceneMode::TIMELAPSE_PHOTO);

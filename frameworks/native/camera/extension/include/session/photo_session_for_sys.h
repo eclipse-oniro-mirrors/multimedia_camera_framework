@@ -61,6 +61,22 @@ public:
      */
     bool CanSetFrameRateRange(int32_t minFps, int32_t maxFps, CaptureOutput* curOutput) override;
 
+    /**
+     * @brief Querying Whether External Lens Enhancement Is Supported.
+     *
+     * @return Support or Not.
+     */
+    bool IsExternalCameraLensBoostSupported();
+
+    /**
+     * @brief External Lens Enhancement Enable Control.
+     *
+     * @param enabled Enable or not.
+     *
+     * @return Camera error code.
+     */
+    int32_t EnableExternalCameraLensBoost(bool enabled);
+
 protected:
     std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles(
         PreconfigType preconfigType, ProfileSizeRatio preconfigRatio) override;

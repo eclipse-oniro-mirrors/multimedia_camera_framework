@@ -19,7 +19,7 @@
 #include "dp_log.h"
 #include "istate.h"
 
-#define REGISTER_STATE(T, ST, V) static AutoRegister<T> gAutoRegster_##T(ST, V)
+#define REGISTER_STATE(T, ST, V) AutoRegister<T> gAutoRegster_##T(ST, V)
 
 namespace OHOS {
 namespace CameraStandard {

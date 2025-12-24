@@ -13,23 +13,27 @@
  * limitations under the License.
  */
 
-#include "cloud_enhance_session_fuzzer.h"
+#include <cstddef>
+#include <cstdint>
+#include <memory>
+
+#include "accesstoken_kit.h"
 #include "camera_input.h"
 #include "camera_log.h"
 #include "camera_photo_proxy.h"
 #include "capture_input.h"
 #include "capture_output.h"
 #include "capture_scene_const.h"
+#include "cloud_enhance_session_fuzzer.h"
 #include "input/camera_manager.h"
 #include "message_parcel.h"
+#include "nativetoken_kit.h"
 #include "refbase.h"
-#include <cstddef>
-#include <cstdint>
-#include <memory>
+#include "test_common.h"
+#include "test_token.h"
 #include "token_setproc.h"
 #include "nativetoken_kit.h"
 #include "accesstoken_kit.h"
-#include "picture.h"
 #include "test_token.h"
 
 namespace OHOS {
@@ -54,8 +58,7 @@ sptr<CaptureInput> GetCameraInput(uint8_t *rawData, size_t size)
     MEDIA_INFO_LOG("CloudEnhanceSessionFuzzer: ENTER");
     auto manager = CameraManager::GetInstance();
     auto cameras = manager->GetSupportedCameras();
-    CHECK_RETURN_RET_ELOG(cameras.size() < NUM_TWO,
-        nullptr, "CloudEnhanceSessionFuzzer: GetSupportedCameras Error");
+    CHECK_RETURN_RET_ELOG(cameras.size() < NUM_TWO, nullptr, "CloudEnhanceSessionFuzzer: GetSupportedCameras Error");
     MessageParcel data;
     data.WriteRawData(rawData, size);
     camera = cameras[data.ReadUint32() % cameras.size()];
@@ -120,7 +123,9 @@ void TestSession(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
 
 void Test(uint8_t *rawData, size_t size)
 {
-    CHECK_RETURN(rawData == nullptr || size < LIMITSIZE);
+    if (rawData == nullptr || size < LIMITSIZE) {
+        return;
+    }
     CHECK_RETURN_ELOG(!TestToken().GetAllCameraPermission(), "GetPermission error");
     MessageParcel data;
     data.WriteRawData(rawData, size);
@@ -134,7 +139,6 @@ void Test(uint8_t *rawData, size_t size)
     session->Release();
     session->Stop();
 }
-
 } // namespace StreamRepeatStubFuzzer
 } // namespace CameraStandard
 } // namespace OHOS

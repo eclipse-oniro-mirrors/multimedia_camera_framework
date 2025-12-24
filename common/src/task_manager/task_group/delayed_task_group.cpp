@@ -14,9 +14,9 @@
  */
 
 #include "delayed_task_group.h"
-#include "camera_log.h"
-#include "timer/steady_clock.h"
 
+#include "camera_log.h"
+#include "steady_clock.h"
 
 namespace OHOS {
 namespace CameraStandard {

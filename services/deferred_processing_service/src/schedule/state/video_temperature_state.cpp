@@ -17,15 +17,10 @@
 
 #include "dp_log.h"
 #include "events_info.h"
-#include "parameters.h"
-#include "state_factory.h"
 
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-REGISTER_STATE(VideoTemperatureState, VIDEO_THERMAL_LEVEL_STATE,
-    ConvertVideoThermalLevel(EventsInfo::GetInstance().GetThermalLevel()));
-
 VideoTemperatureState::VideoTemperatureState(SchedulerType type, int32_t stateValue)
     : IState(type, stateValue)
 {
@@ -34,9 +29,6 @@ VideoTemperatureState::VideoTemperatureState(SchedulerType type, int32_t stateVa
 
 SchedulerInfo VideoTemperatureState::ReevaluateSchedulerInfo()
 {
-    bool ignore = system::GetBoolParameter(IGNORE_TEMPERATURE, false);
-    DP_CHECK_ERROR_RETURN_RET_LOG(ignore, {false}, "ignore VideoTemperatureState: %{public}d", stateValue_);
-
     DP_DEBUG_LOG("VideoTemperatureState: %{public}d", stateValue_);
     bool isNeedStop = stateValue_ == VideoThermalLevel::HOT;
     return {isNeedStop};

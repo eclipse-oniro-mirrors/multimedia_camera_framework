@@ -22,7 +22,7 @@
 #include "dp_log.h"
 #include "image_info.h"
 #include "picture_interface.h"
-#include "v1_4/types.h"
+#include "v1_5/types.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -34,6 +34,7 @@ struct MetadataKeys {
     static constexpr auto DEFERRED_FORMAT = "deferredImageFormat";
     static constexpr auto EXIF_SIZE = "exifDataSize";
     static constexpr auto ROTATION_IN_IPS = "rotationInIps";
+    static constexpr auto CPATURE_FLAG = "captureEnhancementFlag";
 };
 static const std::string SYSTEM_CAMERA = "com.huawei.hmos.camera";
 
@@ -46,7 +47,7 @@ enum class PhotoFormat : int32_t {
 
 class MappedMemory {
 public:
-    MappedMemory(int fd, size_t size)
+    MappedMemory(int fd, size_t size) : size_(size)
     {
         addr_ = mmap(nullptr, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
         valid_ = (addr_ != MAP_FAILED);
@@ -54,7 +55,7 @@ public:
 
     ~MappedMemory()
     {
-        DP_INFO_LOG("entered.");
+        DP_DEBUG_LOG("entered.");
         if (valid_) {
             munmap(addr_, size_);
         }
@@ -71,9 +72,9 @@ public:
     }
 
 private:
-    void* addr_ = MAP_FAILED;
-    size_t size_ = 0;
-    bool valid_ = false;
+    void* addr_ {MAP_FAILED};
+    size_t size_ {0};
+    bool valid_ {false};
 };
 
 class BufferHandleGuard {
@@ -107,6 +108,7 @@ public:
     void OnStateChanged(HdiStatus hdiStatus);
     void OnPhotoSessionDied();
     int32_t ProcessPictureInfoV1_3(const std::string& imageId, const HDI::Camera::V1_3::ImageBufferInfoExt& buffer);
+    int32_t ProcessPictureInfoV1_4(const std::string& imageId, const HDI::Camera::V1_5::ImageBufferInfo_V1_4& buffer);
     void SetBundleName(const std::string& bundleName);
 
     template <typename BufferType>
@@ -141,14 +143,18 @@ private:
     std::unique_ptr<ImageInfo> CreateFromMeta(int32_t defaultSize,
         const sptr<HDI::Camera::V1_0::MapDataSequenceable>& metadata);
     std::shared_ptr<PictureIntf> AssemblePicture(const HDI::Camera::V1_3::ImageBufferInfoExt& buffer);
+    std::shared_ptr<PictureIntf> AssemblePictureV4(
+        const HDI::Camera::V1_5::ImageBufferInfo_V1_4& bufferV4, bool isUseImageHandle);
+    std::vector<std::shared_ptr<PictureIntf>> AssemblePictureList(
+        const HDI::Camera::V1_5::ImageBufferInfo_V1_4& buffer);
     sptr<SurfaceBuffer> TransBufferHandleToSurfaceBuffer(const BufferHandle* bufferHandle);
     BufferHandle* CloneBufferHandle(const BufferHandle* handle);
-    sptr<SurfaceBuffer> DpCopyBuffer(const sptr<SurfaceBuffer>& surfaceBuffer);
-    void DpCopyMetaData(const sptr<SurfaceBuffer>& inBuffer, sptr<SurfaceBuffer>& outBuffer);
     void SetAuxiliaryPicture(const std::shared_ptr<PictureIntf>& picture, BufferHandle *bufferHandle,
         CameraAuxiliaryPictureType type);
     void AssemleAuxilaryPicture(const HDI::Camera::V1_3::ImageBufferInfoExt& buffer,
         const std::shared_ptr<PictureIntf>& picture);
+    void AssemleAuxilaryPictureV4(
+        const HDI::Camera::V1_5::ImageBufferInfo_V1_4& bufferV4, const std::shared_ptr<PictureIntf>& picture);
     void ReportEvent(const std::string& imageId);
 
     template <typename T>
@@ -157,7 +163,9 @@ private:
     {
         if (metadata) {
             auto ret = metadata->Get(key, value);
-            DP_INFO_LOG("Get metaTag: %{public}s ret: %{public}d", key.c_str(), ret);
+            DP_DEBUG_LOG("Get metaTag: %{public}s ret: %{public}d", key.c_str(), ret);
+        } else {
+            DP_ERR_LOG("Get metadataTag failed, metadata is null");
         }
     }
 

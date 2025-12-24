@@ -35,6 +35,15 @@ public:
 
     /* TearDown:Execute after each test case */
     void TearDown();
+
+    static void mssleep(unsigned long ms)
+    {
+        struct timespec ts = { 
+            .tv_sec  = (long int) (ms / 1000), 
+            .tv_nsec = (long int) (ms % 1000) * 1000000ul 
+        };
+        nanosleep(&ts, 0);
+    }
 };
 } // DeferredProcessing
 } // CameraStandard

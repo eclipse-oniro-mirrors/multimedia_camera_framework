@@ -20,7 +20,7 @@
 #include <refbase.h>
 #include <sys/time.h>
 
-#include "camera/v1_2/types.h"
+#include "camera/v1_1/types.h"
 #include "camera_metadata_info.h"
 #include "icamera_service.h"
 
@@ -69,4 +69,4 @@ private:
 };
 } // namespace CameraStandard
 } // namespace OHOS
-#endif // OHOS_CAMERA_H_STREAM_COMMON_H
+#endif // OHOS_CAMERA_H_STREAM_COMMON_H

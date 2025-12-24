@@ -45,7 +45,6 @@ void CameraDeviceServiceProxyFuzz::CameraDeviceServiceProxyTest(FuzzedDataProvid
     }
     fuzz_ = std::make_shared<CameraDeviceServiceProxy>(object);
     CHECK_RETURN_ELOG(!fuzz_, "fuzz_ nullptr");
-    fuzz_->Close();
     uint8_t vectorSize = fdp.ConsumeIntegralInRange<uint8_t>(0, MAX_BUFFER_SIZE);
     std::vector<int32_t> results;
     for (int i = 0; i < vectorSize; ++i) {
@@ -68,12 +67,13 @@ void CameraDeviceServiceProxyFuzz::CameraDeviceServiceProxyTest(FuzzedDataProvid
 
     auto value = fdp.ConsumeIntegral<uint8_t>();
     fuzz_->SetUsedAsPosition(value);
-    fuzz_->closeDelayed();
     int32_t concurrentTypeofcamera = fdp.ConsumeIntegral<int32_t>();
     fuzz_->Open(concurrentTypeofcamera);
     fuzz_->SetDeviceRetryTime();
     uint64_t secureSeqId = fdp.ConsumeIntegral<uint64_t>();
     fuzz_->OpenSecureCamera(secureSeqId);
+    fuzz_->Close();
+    fuzz_->closeDelayed();
 }
 
 void FuzzTest(const uint8_t *rawData, size_t size)

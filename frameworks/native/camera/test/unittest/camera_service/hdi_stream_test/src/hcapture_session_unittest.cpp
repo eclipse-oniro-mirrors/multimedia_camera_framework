@@ -19,6 +19,7 @@
 #include "camera_util.h"
 #include "capture_session_callback_stub.h"
 #include "gmock/gmock.h"
+#include <cstdint>
 #include "hap_token_info.h"
 #include "hcapture_session_unittest.h"
 #include "icapture_session_callback.h"
@@ -31,6 +32,9 @@
 #include "test_common.h"
 #include "test_token.h"
 #include "token_setproc.h"
+#include "os_account_manager.h"
+#include "picture_interface.h"
+#include "capture_session_callback_stub.h"
 #include "camera_server_photo_proxy.h"
 #include "hcamera_device.h"
 
@@ -48,7 +52,6 @@ constexpr static int32_t DEFAULT_HEIGHT = 960;
 constexpr static int32_t INVALID_WIDTH = 0;
 constexpr static int32_t INVALID_HEIGHT = 0;
 constexpr static int32_t DEFAULT_FORMAT = 4;
-constexpr static uint32_t CAMERA_CAPTURE_SESSION_ON_DEFAULT = 1;
 constexpr int32_t WIDE_CAMERA_ZOOM_RANGE = 0;
 constexpr int32_t MAIN_CAMERA_ZOOM_RANGE = 1;
 constexpr int32_t TWO_X_EXIT_TELE_ZOOM_RANGE = 2;
@@ -83,8 +86,7 @@ void HCaptureSessionUnitTest::TearDown()
 }
 
 void HCaptureSessionUnitTest::InitSessionAndOperator(uint32_t callerToken, int32_t opMode,
-    sptr<HCaptureSession>&  session, sptr<HStreamOperator>&  hStreamOperator)
-{
+    sptr<HCaptureSession>&  session, sptr<HStreamOperator>&  hStreamOperator) {
     session = new (std::nothrow) HCaptureSession(callerToken, opMode);
     hStreamOperator = session->GetStreamOperator();
 }
@@ -97,9 +99,10 @@ public:
 
 class MockHPressureStatusCallbackStub : public PressureStatusCallbackStub {
 public:
-    MOCK_METHOD1(OnPressureStatusChanged, int32_t(PressureStatus status));
+    MOCK_METHOD1(OnPressureStatusChanged,int32_t(PressureStatus status));
     ~MockHPressureStatusCallbackStub() {}
 };
+
 /*
  * Feature: HCaptureSession
  * Function: Test current stream infos are not empty after config normal streams
@@ -108,7 +111,7 @@ public:
  * EnvConditions: NA
  * CaseDescription: Test current stream infos are not empty after config normal streams
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_001, TestSize.Level1)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_001, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -130,7 +133,8 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_001, TestSize.Level
     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
 
-    sptr<IBufferProducer> producer = IConsumerSurface::Create()->GetProducer();
+    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
+    sptr<IBufferProducer> producer = surface->GetProducer();
 
     sptr<HStreamRepeat> streamRepeat = new (std::nothrow) HStreamRepeat(producer, DEFAULT_FORMAT,
         DEFAULT_WIDTH, DEFAULT_HEIGHT, RepeatStreamType::PREVIEW);
@@ -144,7 +148,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_001, TestSize.Level
     EXPECT_EQ(session->CommitConfig(), CAMERA_OK);
     EXPECT_EQ(session->Start(), CAMERA_OK);
 
-    std::vector<StreamInfo_V1_1> streamInfos = {};
+    std::vector<StreamInfo_V1_5> streamInfos = {};
     EXPECT_EQ(session->GetCurrentStreamInfos(streamInfos), CAMERA_OK);
     ASSERT_TRUE(streamInfos.size() != 0);
 
@@ -162,7 +166,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_001, TestSize.Level
  * CaseDescription: Test multiple add camera device, CanAddInput interface is not supported,
  * and commit comfig return camera invalid session cfg
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_002, TestSize.Level1)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_002, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -205,7 +209,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_002, TestSize.Level
  * CaseDescription: Test need set preview rotation, preview stream can register display listener and
  * enable preview rotation when add output
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_003, TestSize.Level1)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_003, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -227,7 +231,8 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_003, TestSize.Level
     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
 
-    sptr<IBufferProducer> producer = IConsumerSurface::Create()->GetProducer();
+    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
+    sptr<IBufferProducer> producer = surface->GetProducer();
     sptr<HStreamRepeat> streamRepeat = new (std::nothrow) HStreamRepeat(producer, DEFAULT_FORMAT,
         DEFAULT_WIDTH, DEFAULT_HEIGHT, RepeatStreamType::PREVIEW);
     ASSERT_NE(streamRepeat, nullptr);
@@ -262,7 +267,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_003, TestSize.Level
  * CaseDescription: Test delete camera device after config normal stream, commit config return
  * camera invalid session cfg
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_004, TestSize.Level1)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_004, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -285,7 +290,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_004, TestSize.Level
  * CaseDescription: Test secure camera when mode is secure but seqId is different, commit config return
  * camera operator not allowed
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_005, TestSize.Level1)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_005, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -322,7 +327,8 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_005, TestSize.Level
             InitSessionAndOperator(callerToken, opMode, session, hStreamOperator);
             ASSERT_NE(session, nullptr);
 
-            sptr<IBufferProducer> producer = IConsumerSurface::Create()->GetProducer();
+            sptr<IConsumerSurface> surface = IConsumerSurface::Create();
+            sptr<IBufferProducer> producer = surface->GetProducer();
             sptr<HStreamRepeat> streamRepeat = new (std::nothrow) HStreamRepeat(producer, DEFAULT_FORMAT,
                 DEFAULT_WIDTH, DEFAULT_HEIGHT, RepeatStreamType::PREVIEW);
             ASSERT_NE(streamRepeat, nullptr);
@@ -347,7 +353,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_005, TestSize.Level
  * Function: Test set color space interface, when color space format not match and need update,
  * result return camera operator not allowed
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_006, TestSize.Level1)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_006, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -369,7 +375,8 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_006, TestSize.Level
     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
 
-    sptr<IBufferProducer> producer = IConsumerSurface::Create()->GetProducer();
+    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
+    sptr<IBufferProducer> producer = surface->GetProducer();
     sptr<HStreamRepeat> streamRepeat = new (std::nothrow) HStreamRepeat(producer, DEFAULT_FORMAT,
         DEFAULT_WIDTH, DEFAULT_HEIGHT, RepeatStreamType::PREVIEW);
     ASSERT_NE(streamRepeat, nullptr);
@@ -391,7 +398,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_006, TestSize.Level
  * CaseDescription: Test cancel stream and get stream infos with capture session configure preview stream,
  * metadata stream and capture stream in the context of session start and session stop
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_007, TestSize.Level1)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_007, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -414,7 +421,8 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_007, TestSize.Level
     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
 
-    sptr<IBufferProducer> producer = IConsumerSurface::Create()->GetProducer();
+    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
+    sptr<IBufferProducer> producer = surface->GetProducer();
 
     sptr<HStreamRepeat> streamRepeat = new (std::nothrow) HStreamRepeat(producer, DEFAULT_FORMAT,
         DEFAULT_WIDTH, DEFAULT_HEIGHT, RepeatStreamType::PREVIEW);
@@ -429,7 +437,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_007, TestSize.Level
     EXPECT_EQ(session->AddOutput(StreamType::METADATA, streamMetadata), CAMERA_OK);
     EXPECT_EQ(session->AddOutput(StreamType::CAPTURE, streamCapture), CAMERA_OK);
     EXPECT_EQ(session->CommitConfig(), CAMERA_OK);
-    std::vector<StreamInfo_V1_1> streamInfos = {};
+    std::vector<StreamInfo_V1_5> streamInfos = {};
 
     EXPECT_EQ(session->Start(), CAMERA_OK);
     hStreamOperator->CancelStreamsAndGetStreamInfos(streamInfos);
@@ -451,7 +459,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_007, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test in the case of EnableMovingPhoto, live photo stream can start, preview and null streams can not
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_008, TestSize.Level1)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_008, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -474,7 +482,8 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_008, TestSize.Level
     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
 
-    sptr<IBufferProducer> producer = IConsumerSurface::Create()->GetProducer();
+    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
+    sptr<IBufferProducer> producer = surface->GetProducer();
     sptr<HStreamRepeat> streamRepeat = new (std::nothrow) HStreamRepeat(producer, DEFAULT_FORMAT,
         DEFAULT_WIDTH, DEFAULT_HEIGHT, RepeatStreamType::PREVIEW);
     ASSERT_NE(streamRepeat, nullptr);
@@ -516,7 +525,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_008, TestSize.Level
  * EnvConditions: NA
  * Function: Test operate permission check, when interfaceCode unequal calling token id
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_009, TestSize.Level1)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_009, TestSize.Level0)
 {
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     uint32_t callerToken1 = ++callerToken;
@@ -538,7 +547,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_009, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test capture session get pid and destory stub object by pid
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_010, TestSize.Level1)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_010, TestSize.Level0)
 {
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCaptureSession> session = nullptr;
@@ -559,7 +568,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_010, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test dump session info with capture session configure preview stream and photo stream
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_011, TestSize.Level1)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_011, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -581,7 +590,8 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_011, TestSize.Level
     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
 
-    sptr<IBufferProducer> producer = IConsumerSurface::Create()->GetProducer();
+    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
+    sptr<IBufferProducer> producer = surface->GetProducer();
 
     sptr<HStreamRepeat> streamRepeat = new (std::nothrow) HStreamRepeat(producer, DEFAULT_FORMAT,
         DEFAULT_WIDTH, DEFAULT_HEIGHT, RepeatStreamType::PREVIEW);
@@ -611,7 +621,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_011, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test get output status with capture session configure null capture, normal preview and video stream
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_012, TestSize.Level1)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_012, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -633,7 +643,8 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_012, TestSize.Level
     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
 
-    sptr<IBufferProducer> producer = IConsumerSurface::Create()->GetProducer();
+    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
+    sptr<IBufferProducer> producer = surface->GetProducer();
 
     sptr<HStreamRepeat> streamRepeat = new (std::nothrow) HStreamRepeat(producer, DEFAULT_FORMAT,
         DEFAULT_WIDTH, DEFAULT_HEIGHT, RepeatStreamType::PREVIEW);
@@ -672,7 +683,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_012, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test create media library with CameraPhotoProxy object for moving photo callback
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_013, TestSize.Level1)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_013, TestSize.Level0)
 {
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCaptureSession> session = nullptr;
@@ -700,7 +711,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_013, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test create media library with Picture and CameraPhotoProxy object for moving photo callback
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_014, TestSize.Level1)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_014, TestSize.Level0)
 {
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCaptureSession> session = nullptr;
@@ -732,7 +743,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_014, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test onCaptureStarted and OnCaptureStarted_V1_2 when GetHdiStreamByStreamID is null
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_015, TestSize.Level1)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_015, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -744,7 +755,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_015, TestSize.Level
     device->SetMdmCheck(false);
     EXPECT_EQ(device->Open(), CAMERA_OK);
 
-    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+   uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCaptureSession> session = nullptr;
     sptr<HStreamOperator> hStreamOperator = nullptr;
     int32_t opMode = SceneMode::NORMAL;
@@ -755,7 +766,8 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_015, TestSize.Level
     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
 
-    sptr<IBufferProducer> producer = IConsumerSurface::Create()->GetProducer();
+    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
+    sptr<IBufferProducer> producer = surface->GetProducer();
 
     sptr<HStreamRepeat> streamRepeat = new (std::nothrow) HStreamRepeat(producer, DEFAULT_FORMAT,
         DEFAULT_WIDTH, DEFAULT_HEIGHT, RepeatStreamType::PREVIEW);
@@ -790,7 +802,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_015, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test OnCaptureEnded and OnCaptureEndedExt when GetHdiStreamByStreamID is null
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_016, TestSize.Level1)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_016, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -813,7 +825,8 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_016, TestSize.Level
     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
 
-    sptr<IBufferProducer> producer = IConsumerSurface::Create()->GetProducer();
+    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
+    sptr<IBufferProducer> producer = surface->GetProducer();
 
     sptr<HStreamRepeat> streamRepeat = new (std::nothrow) HStreamRepeat(producer, DEFAULT_FORMAT,
         DEFAULT_WIDTH, DEFAULT_HEIGHT, RepeatStreamType::PREVIEW);
@@ -825,6 +838,12 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_016, TestSize.Level
     std::vector<OHOS::HDI::Camera::V1_3::CaptureEndedInfoExt> infos = {{1, 100, true, "video123"},
         {2, 100, true, "video123"}};
     EXPECT_EQ(hStreamOperator->OnCaptureEndedExt(captureId, infos), CAMERA_INVALID_ARG);
+
+    OHOS::HDI::Camera::V1_5::CaptureEndedInfoExt_v1_4 info;
+    info.captureEndedInfoExt = { 2, 100, true, "video123" };
+    std::vector<OHOS::HDI::Camera::V1_5::CaptureEndedInfoExt_v1_4> vlist;
+    vlist.push_back(info);
+    EXPECT_EQ(hStreamOperator->OnCaptureEndedExt_V1_4(captureId, vlist), CAMERA_INVALID_ARG);
 
     EXPECT_EQ(device->Close(), CAMERA_OK);
     EXPECT_EQ(session->Release(), CAMERA_OK);
@@ -838,7 +857,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_016, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test OnCaptureError when stream type is repeat or capture
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_017, TestSize.Level1)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_017, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -861,7 +880,8 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_017, TestSize.Level
     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
 
-    sptr<IBufferProducer> producer = IConsumerSurface::Create()->GetProducer();
+    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
+    sptr<IBufferProducer> producer = surface->GetProducer();
 
     sptr<HStreamRepeat> streamRepeat = new (std::nothrow) HStreamRepeat(producer, DEFAULT_FORMAT,
         DEFAULT_WIDTH, DEFAULT_HEIGHT, RepeatStreamType::PREVIEW);
@@ -898,7 +918,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_017, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test OnResult when stream type is not metadata, session return camera invalid arg
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_018, TestSize.Level1)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_018, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -921,7 +941,8 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_018, TestSize.Level
     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
 
-    sptr<IBufferProducer> producer = IConsumerSurface::Create()->GetProducer();
+    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
+    sptr<IBufferProducer> producer = surface->GetProducer();
 
     sptr<HStreamRepeat> streamRepeat = new (std::nothrow) HStreamRepeat(producer, DEFAULT_FORMAT,
         DEFAULT_WIDTH, DEFAULT_HEIGHT, RepeatStreamType::PREVIEW);
@@ -952,7 +973,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_018, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test AddStream when stream exists already, add same stream fail
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_019, TestSize.Level1)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_019, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -974,7 +995,8 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_019, TestSize.Level
     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
 
-    sptr<IBufferProducer> producer = IConsumerSurface::Create()->GetProducer();
+    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
+    sptr<IBufferProducer> producer = surface->GetProducer();
 
     sptr<HStreamRepeat> streamRepeat = new (std::nothrow) HStreamRepeat(producer, DEFAULT_FORMAT,
         DEFAULT_WIDTH, DEFAULT_HEIGHT, RepeatStreamType::PREVIEW);
@@ -996,7 +1018,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_019, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test add input output, when session state is not in-progress, return camera invalid state
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_020, TestSize.Level1)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_020, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -1022,6 +1044,13 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_020, TestSize.Level
     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
     EXPECT_EQ(session->CanAddInput(device, result), CAMERA_OK);
     ASSERT_TRUE(result);
+
+    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
+    sptr<IBufferProducer> producer = surface->GetProducer();
+    sptr<HStreamRepeat> streamRepeat = new (std::nothrow) HStreamRepeat(producer, DEFAULT_FORMAT,
+        DEFAULT_WIDTH, DEFAULT_HEIGHT, RepeatStreamType::PREVIEW);
+
+    EXPECT_EQ(session->AddOutput(StreamType::REPEAT, streamRepeat), CAMERA_OK);
     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
     EXPECT_EQ(session->CommitConfig(), CAMERA_OK);
 
@@ -1039,7 +1068,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_020, TestSize.Level
  * CaseDescription: Test AddOutputStream and RemoveOutput when stream type is metadata or depthdata,
  * various situations covering parameters
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_021, TestSize.Level1)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_021, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -1062,7 +1091,8 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_021, TestSize.Level
     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
 
-    sptr<IBufferProducer> producer = IConsumerSurface::Create()->GetProducer();
+    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
+    sptr<IBufferProducer> producer = surface->GetProducer();
     sptr<HStreamRepeat> streamRepeat = new (std::nothrow) HStreamRepeat(producer, DEFAULT_FORMAT,
         DEFAULT_WIDTH, DEFAULT_HEIGHT, RepeatStreamType::PREVIEW);
     ASSERT_NE(streamRepeat, nullptr);
@@ -1092,7 +1122,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_021, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test UpdateStreamInfos when camera device in null, return camera unknown error
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_022, TestSize.Level1)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_022, TestSize.Level0)
 {
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCaptureSession> session = nullptr;
@@ -1119,7 +1149,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_022, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test session stop, when other undefined stream exists, other types of streams cannot be stopped
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_023, TestSize.Level1)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_023, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -1141,7 +1171,8 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_023, TestSize.Level
     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
 
-    sptr<IBufferProducer> producer = IConsumerSurface::Create()->GetProducer();
+    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
+    sptr<IBufferProducer> producer = surface->GetProducer();
     sptr<HStreamRepeat> streamRepeat = new (std::nothrow) HStreamRepeat(producer, DEFAULT_FORMAT,
         DEFAULT_WIDTH, DEFAULT_HEIGHT, RepeatStreamType::PREVIEW);
     ASSERT_NE(streamRepeat, nullptr);
@@ -1165,7 +1196,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_023, TestSize.Level
  * EnvConditions: NA
  * Function: Test get session state, when another capture session state exists, other state cannot be found
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_024, TestSize.Level1)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_024, TestSize.Level0)
 {
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCaptureSession> session = nullptr;
@@ -1191,7 +1222,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_024, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test EnableMovingPhotoMirror with preview stream and livephoto stream, interface call is normal
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_025, TestSize.Level1)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_025, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -1213,7 +1244,8 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_025, TestSize.Level
     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
 
-    sptr<IBufferProducer> producer = IConsumerSurface::Create()->GetProducer();
+    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
+    sptr<IBufferProducer> producer = surface->GetProducer();
     sptr<HStreamRepeat> streamRepeat = new (std::nothrow) HStreamRepeat(producer, DEFAULT_FORMAT,
         DEFAULT_WIDTH, DEFAULT_HEIGHT, RepeatStreamType::PREVIEW);
     ASSERT_NE(streamRepeat, nullptr);
@@ -1243,7 +1275,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_025, TestSize.Level
  * Function: Test ExpandSketchRepeatStream and ClearSketchRepeatStream with sketch stream,
  * when it exists, it is normally added to output streams
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_026, TestSize.Level1)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_026, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -1265,7 +1297,8 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_026, TestSize.Level
     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
 
-    sptr<IBufferProducer> producer = IConsumerSurface::Create()->GetProducer();
+    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
+    sptr<IBufferProducer> producer = surface->GetProducer();
     sptr<HStreamRepeat> streamRepeat = new (std::nothrow) HStreamRepeat(producer, DEFAULT_FORMAT,
         DEFAULT_WIDTH, DEFAULT_HEIGHT, RepeatStreamType::PREVIEW);
     ASSERT_NE(streamRepeat, nullptr);
@@ -1290,7 +1323,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_026, TestSize.Level
  * Function: Test ExpandMovingPhotoRepeatStream, CreateMovingPhotoSurfaceWrapper when width or height is invalid,
  * and livePhotoStreamRepeat_ needs to be released and recreated when it is not null
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_027, TestSize.Level1)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_027, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -1312,7 +1345,8 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_027, TestSize.Level
     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
 
-    sptr<IBufferProducer> producer = IConsumerSurface::Create()->GetProducer();
+    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
+    sptr<IBufferProducer> producer = surface->GetProducer();
     sptr<HStreamRepeat> streamRepeat = new (std::nothrow) HStreamRepeat(producer, DEFAULT_FORMAT,
         DEFAULT_WIDTH, DEFAULT_HEIGHT, RepeatStreamType::PREVIEW);
     ASSERT_NE(streamRepeat, nullptr);
@@ -1341,7 +1375,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_027, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test HCaptureSession with anomalous branch
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_028, TestSize.Level1)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_028, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -1397,7 +1431,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_028, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test HCaptureSession with anomalous branch.
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_029, TestSize.Level1)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_029, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -1420,7 +1454,8 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_029, TestSize.Level
     EXPECT_EQ(camSession->BeginConfig(), CAMERA_OK);
     EXPECT_NE(camSession->Start(), CAMERA_OK);
 
-    sptr<IBufferProducer> producer = IConsumerSurface::Create()->GetProducer();
+    sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
+    sptr<IBufferProducer> producer = Surface->GetProducer();
 
     auto streamRepeat = new (std::nothrow) HStreamRepeat(producer, 4, 1280, 960, RepeatStreamType::PREVIEW);
     ASSERT_NE(streamRepeat, nullptr);
@@ -1460,7 +1495,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_029, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test HCaptureSession with anomalous branch.
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_030, TestSize.Level1)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_030, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -1483,7 +1518,8 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_030, TestSize.Level
     EXPECT_EQ(camSession->BeginConfig(), CAMERA_OK);
     EXPECT_NE(camSession->Start(), CAMERA_OK);
 
-    sptr<IBufferProducer> producer = IConsumerSurface::Create()->GetProducer();
+    sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
+    sptr<IBufferProducer> producer = Surface->GetProducer();
     sptr<HStreamCapture> streamCapture = new (std::nothrow) HStreamCapture(producer, 4, 1280, 960);
     sptr<HStreamCapture> streamCapture1 = new (std::nothrow) HStreamCapture(producer, 3, 640, 480);
     sptr<HStreamRepeat> streamRepeat =
@@ -1522,7 +1558,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_030, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test HCaptureSession with anomalous branch.
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_032, TestSize.Level1)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_032, TestSize.Level0)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -1543,7 +1579,8 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_032, TestSize.Level
 
     EXPECT_EQ(camSession->Start(), CAMERA_INVALID_STATE);
 
-    sptr<IBufferProducer> producer = IConsumerSurface::Create()->GetProducer();
+    sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
+    sptr<IBufferProducer> producer = Surface->GetProducer();
     sptr<HStreamRepeat> streamRepeat = new (std::nothrow) HStreamRepeat(producer, 0, 0, 0, RepeatStreamType::PREVIEW);
     ASSERT_NE(streamRepeat, nullptr);
     sptr<HStreamMetadata> streamMetadata= new(std::nothrow) HStreamMetadata(producer, 0, {1});
@@ -1582,7 +1619,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_032, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test HCaptureSession when stream is nullptr
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_033, TestSize.Level1)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_033, TestSize.Level0)
 {
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCaptureSession> camSession = nullptr;
@@ -1591,7 +1628,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_033, TestSize.Level
     InitSessionAndOperator(callerToken, mode, camSession, hStreamOperator);
     ASSERT_NE(camSession, nullptr);
 
-    std::vector<StreamInfo_V1_1> streamInfos = {};
+    std::vector<StreamInfo_V1_5> streamInfos = {};
     EXPECT_EQ(camSession->GetCurrentStreamInfos(streamInfos), 0);
     EXPECT_EQ(camSession->AddOutput(StreamType::REPEAT, nullptr), CAMERA_INVALID_ARG);
     EXPECT_EQ(camSession->RemoveOutputStream(nullptr), CAMERA_INVALID_ARG);
@@ -1606,7 +1643,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_033, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test HCaptureSession when cameraDevice_ is nullptr
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_034, TestSize.Level1)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_034, TestSize.Level0)
 {
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCaptureSession> camSession = nullptr;
@@ -1628,7 +1665,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_034, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test HCaptureSession with SetColorSpace
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_035, TestSize.Level1)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_035, TestSize.Level0)
 {
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCaptureSession> camSession = nullptr;
@@ -1652,7 +1689,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_035, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test HCaptureSession with CheckIfColorSpaceMatchesFormat
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_036, TestSize.Level1)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_036, TestSize.Level0)
 {
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCaptureSession> camSession = nullptr;
@@ -1690,7 +1727,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_036, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test HCaptureSession
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_037, TestSize.Level1)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_037, TestSize.Level0)
 {
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCaptureSession> camSession = nullptr;
@@ -1710,7 +1747,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_037, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test HCaptureSession when isSessionStarted_ is true
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_038, TestSize.Level1)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_038, TestSize.Level0)
 {
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCaptureSession> camSession = nullptr;
@@ -1722,7 +1759,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_038, TestSize.Level
 
     hStreamOperator->SetColorSpaceForStreams();
 
-    std::vector<StreamInfo_V1_1> streamInfos = {};
+    std::vector<StreamInfo_V1_5> streamInfos = {};
     hStreamOperator->CancelStreamsAndGetStreamInfos(streamInfos);
 
     camSession->isSessionStarted_ = true;
@@ -1744,7 +1781,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_038, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test HCaptureSession when cameraDevice is nullptr
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_039, TestSize.Level1)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_039, TestSize.Level0)
 {
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCaptureSession> camSession = nullptr;
@@ -1774,7 +1811,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_039, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test opMode PORTRAIT fuzz test
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_040, TestSize.Level1)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_040, TestSize.Level0)
 {
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     SceneMode opMode = PORTRAIT;
@@ -1792,7 +1829,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_040, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test CreateBurstDisplayName
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_041, TestSize.Level1)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_041, TestSize.Level0)
 {
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     SceneMode opMode = CAPTURE;
@@ -1818,7 +1855,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_041, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test OnRemoteRequest for switch of CAMERA_CAPTURE_SESSION_ON_ERROR
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_042, TestSize.Level1)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_042, TestSize.Level0)
 {
     MockHCaptureSessionCallbackStub stub;
     MessageParcel data;
@@ -1831,29 +1868,6 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_042, TestSize.Level
         .WillOnce(Return(0));
     int errCode = stub.OnRemoteRequest(code, data, reply, option);
     EXPECT_EQ(errCode, 0);
-}
-
-
-/*
- * Feature: Framework
- * Function: Test HCaptureSessionCallbackStub with OnRemoteRequest
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test OnRemoteRequest for switch of default case
- */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_043, TestSize.Level1)
-{
-    MockHCaptureSessionCallbackStub stub;
-    MessageParcel data;
-    data.WriteInterfaceToken(stub.GetDescriptor());
-    data.RewindRead(0);
-    MessageParcel reply;
-    MessageOption option;
-    
-    uint32_t code = CAMERA_CAPTURE_SESSION_ON_DEFAULT;
-    int errCode = stub.OnRemoteRequest(code, data, reply, option);
-    EXPECT_EQ(errCode, IPC_STUB_UNKNOW_TRANS_ERR);
 }
 
 /*
@@ -1991,7 +2005,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_047, TestSize.Level
 
     std::vector<float> crossZoomAndTime = {1.0, 2.0, 3.0, 0.0, 5.0, 6.0};
     std::vector<float> crossZoom;
-    std::vector<std::vector<float>> crossTime(2, std::vector<float>(2, 0.0));
+    std::vector<std::vector<float>> crossTime;
     camSession->GetCrossZoomAndTime(crossZoomAndTime, crossZoom, crossTime);
 
     EXPECT_EQ(crossZoom.size(), 1);
@@ -2342,7 +2356,8 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_057, TestSize.Level
     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
 
-    sptr<IBufferProducer> producer = IConsumerSurface::Create()->GetProducer();
+    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
+    sptr<IBufferProducer> producer = surface->GetProducer();
     sptr<HStreamRepeat> streamRepeat = new (std::nothrow) HStreamRepeat(producer, DEFAULT_FORMAT,
         DEFAULT_WIDTH, DEFAULT_HEIGHT, RepeatStreamType::PREVIEW);
     ASSERT_NE(streamRepeat, nullptr);
@@ -2352,27 +2367,6 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_057, TestSize.Level
     EXPECT_EQ(session->RemoveOutput(StreamType::REPEAT, streamRepeat), CAMERA_OK);
     EXPECT_EQ(device->Close(), CAMERA_OK);
     EXPECT_EQ(session->Release(), CAMERA_OK);
-}
-
-/*
- * Feature: coverage
- * Function: Test CommitConfigWithValidation when cameraDevice_ is nullptr
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test CommitConfigWithValidation when cameraDevice_ is nullptr
- */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_058, TestSize.Level1)
-{
-    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
-    sptr<HCaptureSession> session = nullptr;
-    SceneMode mode = PORTRAIT;
-    HCaptureSession::NewInstance(callerToken, mode, session);
-    ASSERT_NE(session, nullptr);
-
-    session->cameraDevice_ = nullptr;
-    EXPECT_EQ(session->CommitConfigWithValidation(), CAMERA_INVALID_STATE);
-    session->Release();
 }
 
 /*
@@ -2404,7 +2398,8 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_059, TestSize.Level
     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
 
-    sptr<IBufferProducer> producer = IConsumerSurface::Create()->GetProducer();
+    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
+    sptr<IBufferProducer> producer = surface->GetProducer();
     sptr<HStreamRepeat> streamRepeat = new (std::nothrow) HStreamRepeat(producer, DEFAULT_FORMAT,
         DEFAULT_WIDTH, DEFAULT_HEIGHT, RepeatStreamType::PREVIEW);
     ASSERT_NE(streamRepeat, nullptr);
@@ -2478,40 +2473,6 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_061, TestSize.Level
 
     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
-    EXPECT_EQ(session->RemoveInput(device), CAMERA_OK);
-    EXPECT_EQ(device->Close(), CAMERA_OK);
-    EXPECT_EQ(session->Release(), CAMERA_OK);
-}
-
-/*
- * Feature: Framework
- * Function: Test CommitConfigWithValidation
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test CommitConfigWithValidation not allowed
- */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_062, TestSize.Level1)
-{
-    std::vector<string> cameraIds;
-    cameraService_->GetCameraIds(cameraIds);
-    ASSERT_NE(cameraIds.size(), 0);
-    cameraService_->SetServiceStatus(CameraServiceStatus::SERVICE_READY);
-    sptr<ICameraDeviceService> device = nullptr;
-    cameraService_->CreateCameraDevice(cameraIds[0], device);
-    ASSERT_NE(device, nullptr);
-    device->SetMdmCheck(false);
-    EXPECT_EQ(device->Open(), CAMERA_OK);
-
-    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
-    sptr<HCaptureSession> session = nullptr;
-    SceneMode mode = SECURE;
-    HCaptureSession::NewInstance(callerToken, mode, session);
-    ASSERT_NE(session, nullptr);
-
-    EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
-    EXPECT_EQ(session->AddInput(device), CAMERA_OK);
-    EXPECT_EQ(session->CommitConfigWithValidation(), CAMERA_OPERATION_NOT_ALLOWED);
     EXPECT_EQ(session->RemoveInput(device), CAMERA_OK);
     EXPECT_EQ(device->Close(), CAMERA_OK);
     EXPECT_EQ(session->Release(), CAMERA_OK);
@@ -2608,6 +2569,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_065, TestSize.Level
     int32_t targetRangeId = 10;
     float actualWaitTime = camSession->GetCrossWaitTime(crossTime, targetRangeId, currentRangeId);
     EXPECT_EQ(actualWaitTime, 0.0);
+
     EXPECT_EQ(camSession->Release(), CAMERA_OK);
 }
 
@@ -2630,11 +2592,13 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_066, TestSize.Level
     ASSERT_NE(device, nullptr);
     device->SetMdmCheck(false);
     EXPECT_EQ(device->Open(), CAMERA_OK);
+
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCaptureSession> session = nullptr;
     SceneMode mode = SECURE;
     HCaptureSession::NewInstance(callerToken, mode, session);
     ASSERT_NE(session, nullptr);
+
     EXPECT_EQ(session->GetCameraDevice(), nullptr);
     EXPECT_EQ(session->EnableMovingPhoto(true), CAMERA_OK);
     EXPECT_EQ(device->Close(), CAMERA_OK);
@@ -2660,11 +2624,13 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_067, TestSize.Level
     ASSERT_NE(device, nullptr);
     device->SetMdmCheck(false);
     EXPECT_EQ(device->Open(), CAMERA_OK);
+
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCaptureSession> session = nullptr;
     SceneMode mode = SECURE;
     HCaptureSession::NewInstance(callerToken, mode, session);
     ASSERT_NE(session, nullptr);
+
     EXPECT_EQ(session->isSessionStarted_, false);
     pid_t pid = session->GetPid();
     EXPECT_EQ(session->GetConcurrentCameraIds(pid), "Concurrency cameras:[]");
@@ -2691,11 +2657,13 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_068, TestSize.Level
     ASSERT_NE(device, nullptr);
     device->SetMdmCheck(false);
     EXPECT_EQ(device->Open(), CAMERA_OK);
+
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCaptureSession> session = nullptr;
     SceneMode mode = SECURE;
     HCaptureSession::NewInstance(callerToken, mode, session);
     ASSERT_NE(session, nullptr);
+
     session->isSessionStarted_ = true;
     EXPECT_EQ(session->GetCameraDevice(), nullptr);
     pid_t pid = session->GetPid();
@@ -2723,11 +2691,13 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_069, TestSize.Level
     ASSERT_NE(device, nullptr);
     device->SetMdmCheck(false);
     EXPECT_EQ(device->Open(), CAMERA_OK);
+
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCaptureSession> session = nullptr;
     SceneMode mode = SECURE;
     HCaptureSession::NewInstance(callerToken, mode, session);
     ASSERT_NE(session, nullptr);
+
     session->isSessionStarted_ = true;
     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
@@ -2757,11 +2727,13 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_070, TestSize.Level
     ASSERT_NE(device, nullptr);
     device->SetMdmCheck(false);
     EXPECT_EQ(device->Open(), CAMERA_OK);
+
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCaptureSession> session = nullptr;
     SceneMode mode = PORTRAIT;
     HCaptureSession::NewInstance(callerToken, mode, session);
     ASSERT_NE(session, nullptr);
+
     EXPECT_EQ(session->Stop(), CAMERA_INVALID_STATE);
     EXPECT_EQ(device->Close(), CAMERA_OK);
     EXPECT_EQ(session->Release(), CAMERA_OK);
@@ -2786,11 +2758,13 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_071, TestSize.Level
     ASSERT_NE(device, nullptr);
     device->SetMdmCheck(false);
     EXPECT_EQ(device->Open(), CAMERA_OK);
+
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCaptureSession> session = nullptr;
     SceneMode mode = PORTRAIT;
     HCaptureSession::NewInstance(callerToken, mode, session);
     ASSERT_NE(session, nullptr);
+
     EXPECT_EQ(session->OperatePermissionCheck(INTERFACE_CODE), CAMERA_OK);
     EXPECT_EQ(device->Close(), CAMERA_OK);
     EXPECT_EQ(session->Release(), CAMERA_OK);
@@ -2815,11 +2789,13 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_072, TestSize.Level
     ASSERT_NE(device, nullptr);
     device->SetMdmCheck(false);
     EXPECT_EQ(device->Open(), CAMERA_OK);
+
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCaptureSession> session = nullptr;
     SceneMode mode = PORTRAIT;
     HCaptureSession::NewInstance(callerToken, mode, session);
     ASSERT_NE(session, nullptr);
+
     uint32_t interfaceCode = 0;
     EXPECT_EQ(session->OperatePermissionCheck(interfaceCode), CAMERA_OK);
     EXPECT_EQ(device->Close(), CAMERA_OK);
@@ -2845,11 +2821,13 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_073, TestSize.Level
     ASSERT_NE(device, nullptr);
     device->SetMdmCheck(false);
     EXPECT_EQ(device->Open(), CAMERA_OK);
+
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCaptureSession> session = nullptr;
     SceneMode mode = PORTRAIT;
     HCaptureSession::NewInstance(callerToken, mode, session);
     ASSERT_NE(session, nullptr);
+
     std::string suffix = "132";
     EXPECT_NE(session->CreateDisplayName(suffix), "");
     EXPECT_EQ(device->Close(), CAMERA_OK);
@@ -2875,15 +2853,18 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_074, TestSize.Level
     ASSERT_NE(device, nullptr);
     device->SetMdmCheck(false);
     EXPECT_EQ(device->Open(), CAMERA_OK);
+
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCaptureSession> session = nullptr;
     SceneMode mode = PORTRAIT;
     HCaptureSession::NewInstance(callerToken, mode, session);
     ASSERT_NE(session, nullptr);
+
     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
     EXPECT_EQ(session->SetCommitConfigFlag(true), CAMERA_OK);
     EXPECT_EQ(session->CommitConfig(), CAMERA_OK);
     EXPECT_EQ(session->Start(), CAMERA_OK);
+
     EXPECT_EQ(session->Stop(), CAMERA_OK);
     EXPECT_EQ(device->Close(), CAMERA_OK);
     EXPECT_EQ(session->Release(), CAMERA_OK);
@@ -2908,17 +2889,20 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_075, TestSize.Level
     ASSERT_NE(device, nullptr);
     device->SetMdmCheck(false);
     EXPECT_EQ(device->Open(), CAMERA_OK);
+
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCaptureSession> session = nullptr;
     SceneMode mode = PORTRAIT;
     HCaptureSession::NewInstance(callerToken, mode, session);
     ASSERT_NE(session, nullptr);
+
     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
     EXPECT_EQ(session->SetCommitConfigFlag(true), CAMERA_OK);
     EXPECT_EQ(session->CommitConfig(), CAMERA_OK);
     EXPECT_EQ(session->Start(), CAMERA_OK);
     EXPECT_EQ(session->Stop(), CAMERA_OK);
+
     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
     EXPECT_EQ(session->RemoveInput(device), CAMERA_OK);
     EXPECT_EQ(session->CommitConfig(), CAMERA_OK);

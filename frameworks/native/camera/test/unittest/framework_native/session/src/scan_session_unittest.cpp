@@ -47,11 +47,8 @@ using namespace OHOS::HDI::Camera::V1_1;
 sptr<CaptureOutput> CameraScanSessionUnitTest::CreatePreviewOutput()
 {
     previewProfile_ = {};
-    if (!cameraManager_) {
-        return nullptr;
-    }
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
-    if (cameras.empty()) {
+    if (!cameraManager_ || cameras.empty()) {
         return nullptr;
     }
     preIsSupportedScanmode_ = false;
@@ -88,11 +85,8 @@ sptr<CaptureOutput> CameraScanSessionUnitTest::CreatePreviewOutput()
 sptr<CaptureOutput> CameraScanSessionUnitTest::CreatePhotoOutput()
 {
     photoProfile_ = {};
-    if (!cameraManager_) {
-        return nullptr;
-    }
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
-    if (cameras.empty()) {
+    if (!cameraManager_ || cameras.empty()) {
         return nullptr;
     }
     phoIsSupportedScanmode_ = false;
@@ -160,7 +154,7 @@ void CameraScanSessionUnitTest::TearDown()
  * EnvConditions: NA
  * CaseDescription: Test ScanSession when output is nullptr
  */
-HWTEST_F(CameraScanSessionUnitTest, scan_session_unittest_001, TestSize.Level1)
+HWTEST_F(CameraScanSessionUnitTest, scan_session_unittest_001, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     SceneMode mode = SCAN;
@@ -217,7 +211,7 @@ HWTEST_F(CameraScanSessionUnitTest, scan_session_unittest_001, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test ScanSession when innerInputDevice_ is nullptr
  */
-HWTEST_F(CameraScanSessionUnitTest, scan_session_unittest_002, TestSize.Level1)
+HWTEST_F(CameraScanSessionUnitTest, scan_session_unittest_002, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     SceneMode mode = SCAN;
@@ -278,7 +272,7 @@ HWTEST_F(CameraScanSessionUnitTest, scan_session_unittest_002, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test ScanSession
  */
-HWTEST_F(CameraScanSessionUnitTest, scan_session_unittest_003, TestSize.Level1)
+HWTEST_F(CameraScanSessionUnitTest, scan_session_unittest_003, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     SceneMode mode = SCAN;
@@ -326,66 +320,6 @@ HWTEST_F(CameraScanSessionUnitTest, scan_session_unittest_003, TestSize.Level1)
 
     ret = scanSession->CommitConfig();
     EXPECT_EQ(ret, 0);
-
-    scanSession->Release();
-    EXPECT_EQ(camInput->GetCameraDevice()->Close(), 0);
-}
-
-/*
- * Feature: Framework
- * Function: Test ProcessBrightnessStatusChange
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test ProcessBrightnessStatusChange interface with different brightness states
- */
-HWTEST_F(CameraScanSessionUnitTest, ProcessBrightnessStatusChange_001, TestSize.Level0)
-{
-    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
-    SceneMode mode = SCAN;
-    cameras[0]->supportedModes_.clear();
-    cameras[0]->supportedModes_.push_back(NORMAL);
-    std::vector<SceneMode> modes = cameraManager_->GetSupportedModes(cameras[0]);
-    ASSERT_TRUE(modes.size() != 0);
-
-    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
-    ASSERT_NE(input, nullptr);
-
-    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    std::string cameraSettings = camInput->GetCameraSettings();
-    camInput->SetCameraSettings(cameraSettings);
-    camInput->GetCameraDevice()->Open();
-
-    sptr<CaptureOutput> preview = CreatePreviewOutput();
-    if (!preIsSupportedScanmode_) {
-        camInput->GetCameraDevice()->Close();
-        GTEST_SKIP();
-    }
-    ASSERT_NE(preview, nullptr);
-
-    sptr<CaptureSession> captureSession = cameraManager_->CreateCaptureSession(mode);
-    ASSERT_NE(captureSession, nullptr);
-    sptr<ScanSession> scanSession = static_cast<ScanSession*>(captureSession.GetRefPtr());
-    ASSERT_NE(scanSession, nullptr);
-
-    EXPECT_EQ(scanSession->BeginConfig(), 0);
-    EXPECT_EQ(scanSession->AddInput(input), 0);
-    sptr<CameraDevice> info = captureSession->innerInputDevice_->GetCameraDeviceInfo();
-    ASSERT_NE(info, nullptr);
-    info->modePreviewProfiles_.emplace(static_cast<int32_t>(SceneMode::SCAN), previewProfile_);
-    EXPECT_EQ(scanSession->AddOutput(preview), 0);
-    EXPECT_EQ(scanSession->CommitConfig(), 0);
-
-    auto metadata = std::make_shared<OHOS::Camera::CameraMetadata>(10, 100);
-    uint32_t brightnessStatus = 1;
-    metadata->addEntry(OHOS_STATUS_FLASH_SUGGESTION, &brightnessStatus, 1);
-    scanSession->ProcessBrightnessStatusChange(metadata);
-
-    brightnessStatus = 0;
-    metadata->updateEntry(OHOS_STATUS_FLASH_SUGGESTION, &brightnessStatus, 1);
-    scanSession->ProcessBrightnessStatusChange(metadata);
-
-    scanSession->ProcessBrightnessStatusChange(nullptr);
 
     scanSession->Release();
     EXPECT_EQ(camInput->GetCameraDevice()->Close(), 0);

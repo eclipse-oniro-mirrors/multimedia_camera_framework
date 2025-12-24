@@ -24,26 +24,40 @@ namespace CameraStandard {
 namespace DeferredProcessing {
 using namespace MediaAVCodec;
 
-struct TrackFormat {
-    std::shared_ptr<Format> format;
-    int32_t trackId;
+enum class AuxiliaryType : int32_t {
+    UNKNOWN = -1,
+    RAW_AUDIO,
+    VIDEO,
 };
 
 class Track {
 public:
-    Track() = default;
-    virtual ~Track();
-    const TrackFormat& GetFormat();
-    void SetFormat(const TrackFormat& format, Media::Plugins::MediaType type);
+    Track(int32_t id, std::unique_ptr<Format> format, Media::Plugins::MediaType trackType);
+    virtual ~Track() = default;
+
+    void SetAuxiliaryType(AuxiliaryType type);
+    std::shared_ptr<Media::Meta> GetMeta();
+
+    inline int32_t GetId() const
+    {
+        return trackId_;
+    }
     
-    inline Media::Plugins::MediaType GetType()
+    inline Media::Plugins::MediaType GetType() const
     {
         return trackType_;
     };
 
+    inline AuxiliaryType GetAuxiliaryType() const
+    {
+        return auxType_;
+    };
+
 private:
-    TrackFormat trackFormat_ {nullptr};
+    int32_t trackId_ {-1};
+    std::unique_ptr<Format> format_ {nullptr};
     Media::Plugins::MediaType trackType_ {Media::Plugins::MediaType::UNKNOWN};
+    AuxiliaryType auxType_ {AuxiliaryType::UNKNOWN};
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

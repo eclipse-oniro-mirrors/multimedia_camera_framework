@@ -34,7 +34,7 @@ public:
     explicit PhotoSessionImpl(sptr<OHOS::CameraStandard::CaptureSession> &obj) : SessionImpl(obj)
     {
         if (obj != nullptr) {
-            photoSession_ = static_cast<OHOS::CameraStandard::CaptureSession*>(obj.GetRefPtr());
+            photoSession_ = obj;
         }
     }
     ~PhotoSessionImpl() = default;

@@ -27,15 +27,15 @@
 namespace OHOS {
 namespace CameraStandard {
 sptr<MovingPhotoSurfaceWrapper> MovingPhotoSurfaceWrapper::CreateMovingPhotoSurfaceWrapper(
-    int32_t width, int32_t height)
+    sptr<Surface> videoSurface, int32_t width, int32_t height)
 {
     CHECK_RETURN_RET_ELOG(width <= 0 || height <= 0, nullptr,
-        "MovingPhotoSurfaceWrapper::CreateMovingPhotoSurfaceWrapper size "
-        "invalid, width:%{public}d, height:%{public}d", width, height);
+        "CreateMovingPhotoSurfaceWrapper size invalid, width:%{public}d, height:%{public}d", width, height);
+    CHECK_RETURN_RET_ELOG(videoSurface == nullptr, nullptr, "CreateMovingPhotoSurfaceWrapper videoSurface is null");
     sptr<MovingPhotoSurfaceWrapper> movingPhotoSurfaceWrapper = new (std::nothrow) MovingPhotoSurfaceWrapper();
     CHECK_RETURN_RET_ELOG(movingPhotoSurfaceWrapper == nullptr, nullptr,
         "MovingPhotoSurfaceWrapper::CreateMovingPhotoSurfaceWrapper fail.");
-    bool initResult = movingPhotoSurfaceWrapper->Init(width, height);
+    bool initResult = movingPhotoSurfaceWrapper->InitVideoSurface(videoSurface, width, height);
     CHECK_RETURN_RET(initResult, movingPhotoSurfaceWrapper);
     MEDIA_ERR_LOG("MovingPhotoSurfaceWrapper::CreateMovingPhotoSurfaceWrapper init fail.");
     return nullptr;
@@ -49,53 +49,59 @@ MovingPhotoSurfaceWrapper::~MovingPhotoSurfaceWrapper()
 sptr<OHOS::IBufferProducer> MovingPhotoSurfaceWrapper::GetProducer() const
 {
     std::lock_guard<std::recursive_mutex> lock(videoSurfaceMutex_);
-    CHECK_RETURN_RET(videoSurface_ == nullptr, nullptr);
-    return videoSurface_->GetProducer();
+    auto videoSurface = videoSurface_.promote();
+    CHECK_RETURN_RET(videoSurface == nullptr, nullptr);
+    return videoSurface->GetProducer();
 }
 
-bool MovingPhotoSurfaceWrapper::Init(int32_t width, int32_t height)
+bool MovingPhotoSurfaceWrapper::InitVideoSurface(sptr<Surface> videoSurface, int32_t width, int32_t height)
 {
     std::lock_guard<std::recursive_mutex> lock(videoSurfaceMutex_);
-    videoSurface_ = Surface::CreateSurfaceAsConsumer("movingPhoto");
-    CHECK_RETURN_RET_ELOG(videoSurface_ == nullptr, false, "MovingPhotoSurfaceWrapper::Init create surface fail.");
-    auto err = videoSurface_->SetDefaultUsage(BUFFER_USAGE_VIDEO_ENCODER);
+    videoSurface_ = videoSurface;
+    CHECK_RETURN_RET_ELOG(videoSurface == nullptr, false, "Init create surface fail.");
+
+    auto err = videoSurface->SetDefaultUsage(BUFFER_USAGE_VIDEO_ENCODER);
     CHECK_RETURN_RET_ELOG(err != GSERROR_OK, false, "MovingPhotoSurfaceWrapper::Init SetDefaultUsage fail.");
+
     bufferConsumerListener_ = new (std::nothrow) BufferConsumerListener(this);
-    err = videoSurface_->RegisterConsumerListener(bufferConsumerListener_);
-    CHECK_RETURN_RET_ELOG(err != GSERROR_OK, false,
-        "MovingPhotoSurfaceWrapper::Init RegisterConsumerListener fail.");
-    err = videoSurface_->SetDefaultWidthAndHeight(width, height);
-    CHECK_RETURN_RET_ELOG(err != GSERROR_OK, false,
-        "MovingPhotoSurfaceWrapper::Init SetDefaultWidthAndHeight fail.");
+    CHECK_RETURN_RET_ELOG(bufferConsumerListener_ == nullptr, false, "New bufferConsumerListener failed.");
+
+    err = videoSurface->RegisterConsumerListener(bufferConsumerListener_);
+    CHECK_RETURN_RET_ELOG(err != GSERROR_OK, false, "Init RegisterConsumerListener fail.");
+
+    err = videoSurface->SetDefaultWidthAndHeight(width, height);
+    CHECK_RETURN_RET_ELOG(err != GSERROR_OK, false, "Init SetDefaultWidthAndHeight fail.");
+
     return true;
 }
 
 void MovingPhotoSurfaceWrapper::OnBufferArrival()
 {
     std::lock_guard<std::recursive_mutex> lock(videoSurfaceMutex_);
-    CHECK_RETURN_ELOG(videoSurface_ == nullptr, "MovingPhotoSurfaceWrapper::OnBufferArrival surface is nullptr");
-    auto transform = videoSurface_->GetTransform();
+    auto videoSurface = videoSurface_.promote();
+    CHECK_RETURN_ELOG(videoSurface == nullptr, "MovingPhotoSurfaceWrapper::OnBufferArrival surface is nullptr");
+    auto transform = videoSurface->GetTransform();
     MEDIA_DEBUG_LOG("MovingPhotoSurfaceWrapper::OnBufferArrival queueSize %{public}u, transform %{public}d",
-        videoSurface_->GetQueueSize(), transform);
+        videoSurface->GetQueueSize(), transform);
 
     int64_t timestamp;
     OHOS::Rect damage;
     sptr<SurfaceBuffer> buffer;
     sptr<SyncFence> syncFence = SyncFence::INVALID_FENCE;
-    GSError err = videoSurface_->AcquireBuffer(buffer, syncFence, timestamp, damage);
-    CHECK_RETURN_ELOG(err != GSERROR_OK, "Failed to acquire surface buffer");
+    GSError err = videoSurface->AcquireBuffer(buffer, syncFence, timestamp, damage);
+    CHECK_RETURN_ELOG(err != GSERROR_OK || buffer == nullptr, "Failed to acquire surface buffer or buffer is null");
 
     auto surfaceBufferListener = GetSurfaceBufferListener();
     if (surfaceBufferListener == nullptr) {
         MEDIA_DEBUG_LOG("MovingPhotoSurfaceWrapper::OnBufferArrival surfaceBufferListener_ is nullptr.");
-        err = videoSurface_->ReleaseBuffer(buffer, SyncFence::INVALID_FENCE);
+        err = videoSurface->ReleaseBuffer(buffer, SyncFence::INVALID_FENCE);
         CHECK_PRINT_ELOG(err != GSERROR_OK, "MovingPhotoSurfaceWrapper::OnBufferArrival ReleaseBuffer fail.");
         return;
     }
+    err = videoSurface->DetachBufferFromQueue(buffer, true);
+    CHECK_RETURN_ELOG(
+        err != GSERROR_OK, "MovingPhotoSurfaceWrapper::OnBufferArrival detach buffer fail. %{public}d", err);
 
-    err = videoSurface_->DetachBufferFromQueue(buffer, true);
-    CHECK_RETURN_ELOG(err != GSERROR_OK,
-        "MovingPhotoSurfaceWrapper::OnBufferArrival detach buffer fail. %{public}d", err);
     MEDIA_DEBUG_LOG("MovingPhotoSurfaceWrapper::OnBufferArrival buffer %{public}d x %{public}d, stride is %{public}d",
         buffer->GetSurfaceBufferWidth(), buffer->GetSurfaceBufferHeight(), buffer->GetStride());
     surfaceBufferListener->OnBufferArrival(buffer, timestamp, transform);
@@ -109,17 +115,19 @@ MovingPhotoSurfaceWrapper::BufferConsumerListener::BufferConsumerListener(
 void MovingPhotoSurfaceWrapper::BufferConsumerListener::OnBufferAvailable()
 {
     auto surfaceWrapper = movingPhotoSurfaceWrapper_.promote();
-    CHECK_EXECUTE(surfaceWrapper != nullptr, surfaceWrapper->OnBufferArrival());
+    CHECK_RETURN(surfaceWrapper == nullptr);
+    surfaceWrapper->OnBufferArrival();
 }
 
 void MovingPhotoSurfaceWrapper::RecycleBuffer(sptr<SurfaceBuffer> buffer)
 {
     std::lock_guard<std::recursive_mutex> lock(videoSurfaceMutex_);
-    CHECK_RETURN_ELOG(videoSurface_ == nullptr, "MovingPhotoSurfaceWrapper::RecycleBuffer videoSurface_ is nullptr");
-    GSError err = videoSurface_->AttachBufferToQueue(buffer);
+    auto videoSurface = videoSurface_.promote();
+    CHECK_RETURN_ELOG(videoSurface == nullptr, "MovingPhotoSurfaceWrapper::RecycleBuffer videoSurface is nullptr");
+    GSError err = videoSurface->AttachBufferToQueue(buffer);
     CHECK_RETURN_ELOG(err != GSERROR_OK, "Failed to attach buffer %{public}d", err);
-    err = videoSurface_->ReleaseBuffer(buffer, SyncFence::INVALID_FENCE);
-    CHECK_RETURN_ELOG(err != GSERROR_OK, "Failed to Release Buffer %{public}d", err);
+    err = videoSurface->ReleaseBuffer(buffer, SyncFence::INVALID_FENCE);
+    CHECK_RETURN_ELOG(err != GSERROR_OK, "Failed to Release buffer %{public}d", err);
 }
 } // namespace CameraStandard
 } // namespace OHOS

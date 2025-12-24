@@ -350,7 +350,7 @@ public:
     void SetInputUsedAsPosition(CameraPosition usedAsPosition);
 
     /**
-    *@brief set the cameraObj.
+    * @brief set the cameraObj.
     */
     sptr<CameraDevice> GetCameraDeviceInfo() override;
 
@@ -404,11 +404,12 @@ public:
     void GetMetadataFromService(sptr<CameraDevice> &cameraObj,
         std::shared_ptr<OHOS::Camera::CameraMetadata>& metaData);
     void ControlAuxiliary(AuxiliaryType type, AuxiliaryStatus status);
+    void SetClosedelayedState(bool closedelayedstate);
+    bool GetClosedelayedState();
     void RecoveryOldDevice();
     CameraConcurrentLimtedCapability limtedCapabilitySave_;
     int32_t isConcurrentLimted_ = 0;
-    std::queue<uint32_t>timeQueue_;
-    void UnregisterTime();
+    std::string cameraIDforcloseDelayed_;
 private:
     std::mutex deviceObjMutex_;
     std::mutex errorCallbackMutex_;
@@ -425,13 +426,13 @@ private:
     sptr<CameraDeathRecipient> deathRecipient_ = nullptr;
     void CameraServerDied(pid_t pid);
     int32_t UpdateSetting(std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata);
-    int32_t CameraDevicePhysicOpen(sptr<ICameraDeviceService> cameraDevicePhysic, int32_t cameraConcurrentType);
     bool InitVariableOrientation(sptr<ICameraDeviceService> deviceObj,
         std::shared_ptr<OHOS::Camera::CameraMetadata> metaData);
     void InputRemoveDeathRecipient();
     std::map<CameraPosition, camera_position_enum> positionMapping;
+    bool isCloseDelayed_ = false;
     bool isVariable_ = false;
-    uint32_t staticOrientation_;
+    uint32_t staticOrientation_ = 0;
     std::map<uint32_t, uint32_t> foldStateSensorOrientationMap_;
 };
 

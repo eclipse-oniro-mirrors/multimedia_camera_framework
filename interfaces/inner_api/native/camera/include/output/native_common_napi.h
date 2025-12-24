@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef OHOS_CAMERA_NATIVE_NAPI_H
-#define OHOS_CAMERA_NATIVE_NAPI_H
+#ifndef OHOS_CAMERA_NATIVE_COMMON_NAPI_H
+#define OHOS_CAMERA_NATIVE_COMMON_NAPI_H
 
 // W-writable E-enumerable C-configurable napi_writable is not EC
 #define DECLARE_NAPI_FUNCTION_WRITABLE(name, func)                                 \
@@ -22,4 +22,4 @@
         (name), nullptr, (func), nullptr, nullptr, nullptr, napi_writable, nullptr \
     }
 
-#endif // OHOS_CAMERA_NATIVE_NAPI_H
+#endif // OHOS_CAMERA_NATIVE_COMMON_NAPI_H

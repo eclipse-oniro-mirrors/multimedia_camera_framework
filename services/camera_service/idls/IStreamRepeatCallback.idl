@@ -22,4 +22,6 @@ interface IStreamRepeatCallback {
   [ipccode 2, oneway] void OnFrameError([in] int errorCode);
   [ipccode 3, oneway] void OnSketchStatusChanged([in] SketchStatus status);
   [ipccode 4, oneway] void OnDeferredVideoEnhancementInfo([in] CaptureEndedInfoExt captureEndedInfo);
+  [ipccode 5, oneway] void OnFramePaused();
+  [ipccode 6, oneway] void OnFrameResumed();
 }

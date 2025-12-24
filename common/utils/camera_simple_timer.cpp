@@ -14,9 +14,9 @@
  */
 
 #include "camera_simple_timer.h"
+#include "camera_log.h"
 
 #include <chrono>
-
 #include <thread>
 
 namespace OHOS {
@@ -28,35 +28,33 @@ SimpleTimer::SimpleTimer(std::function<void()> fun) : innerFun_(fun)  {
 SimpleTimer::~SimpleTimer()
 {
     std::unique_lock<std::mutex> lock(timerMtx_);
-    if (timerStatus_ == RUNNING) {
-        timerStatus_ = CANCEL;
+    if (timerStatus_ == TimerStatus::RUNNING) {
+        timerStatus_ = TimerStatus::CANCEL;
         timerCv_.notify_all();
-        timerCv_.wait(lock, [this]() { return timerStatus_ == DONE; });
-    } else if (timerStatus_ == CANCEL) {
-        timerCv_.wait(lock, [this]() { return timerStatus_ == DONE; });
+        timerCv_.wait(lock, [this]() { return timerStatus_ == TimerStatus::DONE; });
+    } else if (timerStatus_ == TimerStatus::CANCEL) {
+        timerCv_.wait(lock, [this]() { return timerStatus_ == TimerStatus::DONE; });
     }
 }
 
 void SimpleTimer::InterruptableSleep(uint64_t timeoutMs)
 {
     std::unique_lock<std::mutex> lock(timerMtx_);
-    bool isWakeUp =
-        timerCv_.wait_for(lock, std::chrono::milliseconds(timeoutMs), [this] { return timerStatus_ != RUNNING; });
+    bool isWakeUp = timerCv_.wait_for(
+        lock, std::chrono::milliseconds(timeoutMs), [this] { return timerStatus_ != TimerStatus::RUNNING; });
     if (!isWakeUp && innerFun_ != nullptr) {
         innerFun_();
     }
 
-    timerStatus_ = DONE;
+    timerStatus_ = TimerStatus::DONE;
     timerCv_.notify_all();
 }
 
 bool SimpleTimer::StartTask(uint64_t timeoutMs)
 {
     std::unique_lock<std::mutex> lockStatus(timerMtx_);
-    if (timerStatus_ == RUNNING) {
-        return false;
-    }
-    timerStatus_ = RUNNING;
+    CHECK_RETURN_RET(timerStatus_ == TimerStatus::RUNNING, false);
+    timerStatus_ = TimerStatus::RUNNING;
     std::thread taskThread(&SimpleTimer::InterruptableSleep, this, timeoutMs);
     taskThread.detach();
     return true;
@@ -65,10 +63,8 @@ bool SimpleTimer::StartTask(uint64_t timeoutMs)
 bool SimpleTimer::CancelTask()
 {
     std::unique_lock<std::mutex> lockStatus(timerMtx_);
-    if (timerStatus_ != RUNNING) {
-        return false;
-    }
-    timerStatus_ = CANCEL;
+    CHECK_RETURN_RET(timerStatus_ != TimerStatus::RUNNING, false);
+    timerStatus_ = TimerStatus::CANCEL;
     timerCv_.notify_all();
     return true;
 }

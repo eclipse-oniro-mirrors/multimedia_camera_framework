@@ -25,19 +25,21 @@ class MediaManagerAdapter : public MediaManagerIntf {
 public:
     MediaManagerAdapter();
     ~MediaManagerAdapter() override;
-    int32_t MpegAcquire(const std::string& requestId, const sptr<IPCFileDescriptor>& inputFd) override;
+    int32_t MpegAcquire(const std::string& requestId, const DpsFdPtr& inputFd,
+        int32_t width, int32_t height) override;
     int32_t MpegUnInit(const int32_t result) override;
-    sptr<IPCFileDescriptor> MpegGetResultFd() override;
+    DpsFdPtr MpegGetResultFd() override;
     void MpegAddUserMeta(std::unique_ptr<MediaUserInfo> userInfo) override;
     uint64_t MpegGetProcessTimeStamp() override;
     sptr<Surface> MpegGetSurface() override;
     sptr<Surface> MpegGetMakerSurface() override;
-    void MpegSetMarkSize(int32_t size) override;
     int32_t MpegRelease() override;
+    uint32_t MpegGetDuration() override;
+    int32_t MpegSetProgressNotifer(std::unique_ptr<MediaProgressNotifier> processNotifer) override;
 private:
     std::shared_ptr<MpegManager> mpegManager_ = {nullptr};
 };
-} // namespace DeferredProcessing
-} // namespace CameraStandard
-} // namespace OHOS
+} // DeferredProcessing
+} // CameraStandard
+} // OHOS
 #endif // OHOS_CAMERA_DPS_MEDIA_MANAGER_ADAPTER_H

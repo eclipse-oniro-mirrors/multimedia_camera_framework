@@ -25,7 +25,6 @@
 #include "camera_napi_object.h"
 #include "js_native_api_types.h"
 #include "metadata_output.h"
-#include "camera_security_utils.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -158,20 +157,56 @@ CameraNapiObject& CameraNapiObjCameraOutputCapability::GetCameraNapiObject()
         supportedMetadataObjectTypes->emplace_back(static_cast<int32_t>(type));
     }
 
-    // Non-system applications do not return depthProfiles
-    if (!CameraSecurity::CheckSystemApp()) {
-        return *Hold<CameraNapiObject>(CameraNapiObject::CameraNapiObjFieldMap {
-            { "previewProfiles", previewProfiles },
-            { "photoProfiles", photoProfiles },
-            { "videoProfiles", videoProfiles },
-            { "supportedMetadataObjectTypes", supportedMetadataObjectTypes } });
-    }
     return *Hold<CameraNapiObject>(CameraNapiObject::CameraNapiObjFieldMap {
         { "previewProfiles", previewProfiles },
         { "photoProfiles", photoProfiles },
         { "videoProfiles", videoProfiles },
         { "depthProfiles", depthProfiles },
         { "supportedMetadataObjectTypes", supportedMetadataObjectTypes } });
+}
+
+CameraNapiObject& CameraNapiFocusTrackingMetaInfo::GetCameraNapiObject()
+{
+    auto trackingMode = Hold<int32_t>(focusTrackingMetaInfo_.GetTrackingMode());
+    auto trackingRegion = Hold<CameraNapiBoundingBox>(*Hold<Rect>(focusTrackingMetaInfo_.GetTrackingRegion()));
+    auto trackingObjectId = Hold<int32_t>(focusTrackingMetaInfo_.GetTrackingObjectId());
+    auto detectedObjects = Hold<std::list<CameraNapiObject>>();
+    auto nativeDetectedObjects = Hold<std::vector<sptr<MetadataObject>>>(focusTrackingMetaInfo_.GetDetectedObjects());
+    for (auto& obj : *nativeDetectedObjects) {
+        detectedObjects->emplace_back(std::move(Hold<CameraNapiObjMetadataObject>(*obj)->GetCameraNapiObject()));
+    }
+    return *Hold<CameraNapiObject>(CameraNapiObject::CameraNapiObjFieldMap {
+        { "trackingMode", trackingMode },
+        { "trackingRegion", &trackingRegion->GetCameraNapiObject() },
+        { "trackingObjectId", trackingObjectId },
+        { "detectedObjects", detectedObjects }
+        });
+}
+
+CameraNapiObject& CameraNapiObjLocation::GetCameraNapiObject()
+{
+    return *Hold<CameraNapiObject>(CameraNapiObject::CameraNapiObjFieldMap {
+        { "latitude", &location_.latitude },
+        { "longitude", &location_.longitude },
+        { "altitude", &location_.altitude }
+        });
+}
+
+CameraNapiObject& CameraNapiObjOutputSettings::GetCameraNapiObject()
+{
+    auto videoCodecType = Hold<int32_t>(static_cast<int32_t>(settings_.videoCodecType));
+    auto rotation = Hold<int32_t>(settings_.rotation);
+    auto locationObj = Hold<CameraNapiObjLocation>(settings_.location);
+    auto isBFrameEnabled = Hold<bool>(settings_.isBFrameEnabled);
+    auto videoBitrate = Hold<int32_t>(settings_.videoBitrate);
+    auto objFieldMap = CameraNapiObject::CameraNapiObjFieldMap {
+        { "videoCodec", videoCodecType },
+        { "rotation", rotation },
+        { "location", &locationObj->GetCameraNapiObject() },
+        { "isBFrameEnabled", isBFrameEnabled },
+        { "videoBitrate", videoBitrate }
+    };
+    return *Hold<CameraNapiObject>(objFieldMap);
 }
 } // namespace CameraStandard
 } // namespace OHOS

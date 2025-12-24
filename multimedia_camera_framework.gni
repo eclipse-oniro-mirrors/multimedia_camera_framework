@@ -14,7 +14,6 @@ graphic_surface_path = "//foundation/graphic/graphic_surface"
 graphic_2d_path = "//foundation/graphic/graphic_2d"
 multimedia_camera_framework_path = "//foundation/multimedia/camera_framework"
 multimedia_image_framework_path = "//foundation/multimedia/image_framework"
-multimedia_media_library_path = "//foundation/multimedia/media_library"
 driver_camera_path = "//drivers/interface/camera"
 third_party_path = "//third_party/googletest"
 driver_peripheral_path = "//drivers/peripheral/camera"
@@ -22,6 +21,7 @@ base_security_path = "//base/security/access_token"
 driver_disply_path = "//drivers/peripheral/display"
 window_manager_path = "//foundation/window/window_manager"
 system_safwk_path = "//utils/system/safwk"
+multimedia_media_library_path = "//foundation/multimedia/media_library"
 declare_args() {
   camera_framework_feature_camera_rotate_plugin = false
   camera_framework_feature_camera_live_scene_recognition = false
@@ -49,10 +49,10 @@ if (defined(global_parts_info) &&
   use_power_manager = true
 }
 
-config_policy_ext_enable = false
+use_image_effect = false
 if (defined(global_parts_info) &&
-    defined(global_parts_info.customization_config_policy_ext)) {
-  config_policy_ext_enable = true
+    defined(global_parts_info.multimedia_image_effect)) {
+  use_image_effect = true
 }
 
 use_memmgr_override = false

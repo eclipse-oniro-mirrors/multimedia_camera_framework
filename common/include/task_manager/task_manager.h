@@ -24,7 +24,7 @@ namespace CameraStandard {
 namespace DeferredProcessing {
 class TaskManager {
 public:
-    EXPORT_API TaskManager(const std::string& name, uint32_t  numThreads, bool serial);
+    EXPORT_API TaskManager(const std::string& name, uint32_t  numThreads, bool serial); // serial = false -> async
     EXPORT_API ~TaskManager();
     void CreateDelayedTaskGroupIfNeed();
     void BeginBackgroundTasks();

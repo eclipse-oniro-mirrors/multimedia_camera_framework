@@ -58,6 +58,12 @@ public:
     std::vector<uint32_t> GetSupportedExposureRange();
     bool IsFeatureSupported(SceneFeature sceneFeature);
     bool IsLcdFlashSupported();
+    bool IsImageStabilizationGuideSupported();
+    std::vector<NightSubMode> GetSupportedNightSubModeTypes();
+    bool IsConstellationDrawingSupported();
+    std::vector<uint32_t> GetExposureRange();
+    std::vector<PortraitThemeType> GetSupportedPortraitThemeTypes();
+    bool IsPortraitThemeSupported();
 
     std::vector<FlashMode> supportedFlashModes_;
     std::vector<ExposureMode> supportedExposureModes_;
@@ -76,11 +82,20 @@ public:
     std::vector<uint32_t> supportedExposureRange_;
     std::vector<SceneFeature> supportedSceneFeature_;
     bool isLcdFlashSupported_;
-
+    bool isImageStabilizationGuideSupported_;
+    std::vector<NightSubMode> supportedNightSubModes_;
+    bool isConstellationDrawingSupported;
     std::optional<std::vector<float>> zoomRatioRange_;
     std::optional<bool> isMacroSupported_;
     std::optional<bool> isDepthFusionSupported_;
     std::optional<std::vector<float>> getDepthFusionThreshold_;
+    std::vector<PortraitThemeType> supportedPortraitThemeTypes_;
+    bool isPortraitThemeSupported_;
+    bool isSketchSupported_;
+    bool isManalExposureSupported_;
+    std::vector<uint32_t> supportedManalExposureRange_;
+    std::optional<float> canEnableSketchRatio_;
+    std::vector<float> sketchFovRatio_;
 };
 
 class CaptureSession;
@@ -94,8 +109,17 @@ public:
                            wptr<CaptureSession> session);
     void FilterByZoomRatio(float zoomRatio);
     void FilterByMacro(bool enableMacro);
+    void FilterByNightSubMode(NightSubMode nightSubMode);
+
     std::vector<float> GetZoomRatioRange();
     bool IsMacroSupported();
+    bool IsConstellationDrawingSupported();
+    std::vector<NightSubMode> GetSupportedNightSubModeTypes();
+    bool HasFlash();
+    std::vector<uint32_t> GetExposureRange();
+    std::vector<ColorEffect> GetSupportedColorEffects();
+    std::vector<ColorSpace> GetSupportedColorSpaces();
+    std::vector<FlashMode> GetSupportedFlashModes();
 
 private:
 
@@ -107,12 +131,21 @@ private:
 
     bool IsMacroSupportedInSpec_ = false;
     std::vector<float> zoomRatioRangeInSpec_;
+    std::vector<NightSubMode> nightSubModesInSpec_;
+    std::vector<FlashMode> supportedFlashModesInSpec_;
+    std::vector<ColorEffect> supportedColorEffectsInSpec_;
+    std::vector<ColorSpace> supportedColorSpacesInSpec_;
+    std::vector<uint32_t> supportedManalExposureRangeInSpec_;
+    bool isConstellationDrawingSupportedInSpec_ = false;
+    bool hasFlashInSpec_ = false;
 
     std::optional<std::vector<float>> lastGetZoomRatioRange_;
     std::optional<bool> lastIsMacroSupported_;
 
     std::optional<float> zoomRatioSet_;
     std::optional<bool> enableMacroSet_;
+    std::optional<NightSubMode> nightSubModeSet_;
+    sptr<CameraAbility> nightSubModeAbility_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

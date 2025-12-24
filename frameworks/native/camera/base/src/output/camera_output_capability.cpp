@@ -204,8 +204,9 @@ void CameraOutputCapability::RemoveDuplicatesProfile(std::vector<T>& profiles)
 {
     std::vector<T> uniqueProfiles;
     for (const auto& profile : profiles) {
-        CHECK_EXECUTE(std::find(uniqueProfiles.begin(), uniqueProfiles.end(), profile) == uniqueProfiles.end(),
-            uniqueProfiles.push_back(profile));
+        if (std::find(uniqueProfiles.begin(), uniqueProfiles.end(), profile) == uniqueProfiles.end()) {
+            uniqueProfiles.push_back(profile);
+        }
     }
     profiles = uniqueProfiles;
 }

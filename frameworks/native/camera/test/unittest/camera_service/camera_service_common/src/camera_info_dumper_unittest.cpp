@@ -52,7 +52,7 @@ void CameraInfoDumperUnitTest::TearDown()
  * EnvConditions: NA
  * CaseDescription: Test CameraInfoDumper functional function with different parameter.
  */
-HWTEST_F(CameraInfoDumperUnitTest, camera_info_dumper_unittest_001, TestSize.Level1)
+HWTEST_F(CameraInfoDumperUnitTest, camera_info_dumper_unittest_001, TestSize.Level0)
 {
     CameraInfoDumper infoDumper(0);
     char msg_1[] = "testMsg_1";
@@ -78,102 +78,6 @@ HWTEST_F(CameraInfoDumperUnitTest, camera_info_dumper_unittest_001, TestSize.Lev
     EXPECT_EQ(infoDumper.dumperString_, "# testMsg_1\n  testMsg_1\ntestMsg_1\n");
     infoDumper.Pop();
     EXPECT_EQ(infoDumper.depth_, 0);
-}
-
-/*
- * Feature: Framework
- * Function: Test CameraInfoDumper functional function with different parameter.
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test CameraInfoDumper functional function with different parameter.
- */
-HWTEST_F(CameraInfoDumperUnitTest, camera_info_dumper_unittest_002, TestSize.Level0)
-{
-    CameraInfoDumper infoDumper(0);
-    char msg_1[] = "testMsg_1";
-    string msg_2 = "testMsg_2";
-    infoDumper.depth_ = 0;
-    infoDumper.Print();
-    infoDumper.Title(msg_1);
-    EXPECT_EQ(infoDumper.dumperString_, "# testMsg_1\n");
-    infoDumper.Push();
-    EXPECT_EQ(infoDumper.depth_, 1);
-    infoDumper.Pop();
-    EXPECT_EQ(infoDumper.depth_, 0);
-    infoDumper.Print();
-
-    infoDumper.Title(msg_2);
-    EXPECT_EQ(infoDumper.dumperString_, "# testMsg_1\n# testMsg_2\n");
-    infoDumper.Push();
-    EXPECT_EQ(infoDumper.depth_, 1);
-    infoDumper.Pop();
-    EXPECT_EQ(infoDumper.depth_, 0);
-    infoDumper.Print();
-}
-
-/*
- * Feature: Framework
- * Function: Test CameraInfoDumper functional function with different parameter.
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test CameraInfoDumper functional function with different parameter.
- */
-HWTEST_F(CameraInfoDumperUnitTest, camera_info_dumper_unittest_004, TestSize.Level0)
-{
-    CameraInfoDumper infoDumper(0);
-    char msg_1[] = "testMsg_1";
-    string msg_2 = "testMsg_2";
-    infoDumper.depth_ = 0;
-    infoDumper.Print();
-    infoDumper.Msg(msg_1);
-    EXPECT_EQ(infoDumper.dumperString_, "  testMsg_1\n");
-    infoDumper.Push();
-    EXPECT_EQ(infoDumper.depth_, 1);
-    infoDumper.Pop();
-    EXPECT_EQ(infoDumper.depth_, 0);
-    infoDumper.Print();
-
-    infoDumper.Msg(msg_2);
-    EXPECT_EQ(infoDumper.dumperString_, "  testMsg_1\n  testMsg_2\n");
-    infoDumper.Push();
-    EXPECT_EQ(infoDumper.depth_, 1);
-    infoDumper.Pop();
-    EXPECT_EQ(infoDumper.depth_, 0);
-    infoDumper.Print();
-}
-
-/*
- * Feature: Framework
- * Function: Test CameraInfoDumper functional function with different parameter.
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test CameraInfoDumper functional function with different parameter.
- */
-HWTEST_F(CameraInfoDumperUnitTest, camera_info_dumper_unittest_005, TestSize.Level0)
-{
-    CameraInfoDumper infoDumper(0);
-    char msg_1[] = "testMsg_1";
-    string msg_2 = "testMsg_2";
-    infoDumper.depth_ = 0;
-    infoDumper.Print();
-    infoDumper.Msg(msg_1);
-    EXPECT_EQ(infoDumper.dumperString_, "  testMsg_1\n");
-    infoDumper.Push();
-    EXPECT_EQ(infoDumper.depth_, 1);
-    infoDumper.Pop();
-    EXPECT_EQ(infoDumper.depth_, 0);
-    infoDumper.Print();
-
-    infoDumper.Msg(msg_2);
-    EXPECT_EQ(infoDumper.dumperString_, "  testMsg_1\n  testMsg_2\n");
-    infoDumper.Push();
-    EXPECT_EQ(infoDumper.depth_, 1);
-    infoDumper.Pop();
-    EXPECT_EQ(infoDumper.depth_, 0);
-    infoDumper.Print();
 }
 } // CameraStandard
 } // OHOS

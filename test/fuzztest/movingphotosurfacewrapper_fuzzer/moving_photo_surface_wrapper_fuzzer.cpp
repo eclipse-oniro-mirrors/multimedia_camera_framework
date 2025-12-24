@@ -50,7 +50,8 @@ void MovingPhotoSurfaceWrapperFuzzer::MovingPhotoSurfaceWrapperFuzzTest(FuzzedDa
     fuzz_->GetProducer();
     int32_t width = fdp.ConsumeIntegral<int32_t>();
     int32_t height = fdp.ConsumeIntegral<int32_t>();
-    fuzz_->CreateMovingPhotoSurfaceWrapper(width, height);
+    sptr<Surface> videoSurface = Surface::CreateSurfaceAsConsumer("movingPhoto");
+    fuzz_->CreateMovingPhotoSurfaceWrapper(videoSurface, width, height);
     fuzz_->OnBufferArrival();
     if (listener_ == nullptr) {
         sptr<MovingPhotoSurfaceWrapper> surfaceWrapper = nullptr;

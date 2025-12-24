@@ -47,11 +47,8 @@ ohos_executable("camera_video") {
     "access_token:libnativetoken",
     "access_token:libtoken_setproc",
     "c_utils:utils",
-    "cJSON:cjson_static",
-    "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
     "drivers_interface_camera:libcamera_proxy_1.0",
     "drivers_interface_camera:libcamera_proxy_1.1",
-    "drivers_interface_camera:libmap_data_sequenceable_1.0",
     "drivers_interface_camera:metadata",
     "drivers_peripheral_display:hdi_gralloc_client",
     "graphic_surface:surface",
@@ -61,7 +58,6 @@ ohos_executable("camera_video") {
     "ipc:ipc_core",
     "ipc:ipc_single",
     "player_framework:media_client",
-    "selinux_adapter:librestorecon",
   ]
   part_name = "camera_framework"
   subsystem_name = "multimedia"
@@ -89,18 +85,14 @@ ohos_executable("camera_capture") {
     "access_token:libnativetoken",
     "access_token:libtoken_setproc",
     "c_utils:utils",
-    "cJSON:cjson_static",
-    "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
     "drivers_interface_camera:libcamera_proxy_1.0",
     "drivers_interface_camera:libcamera_proxy_1.1",
-    "drivers_interface_camera:libmap_data_sequenceable_1.0",
     "drivers_interface_camera:metadata",
     "graphic_surface:surface",
     "hilog:libhilog",
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
     "ipc:ipc_core",
-    "selinux_adapter:librestorecon",
   ]
   part_name = "camera_framework"
   subsystem_name = "multimedia"
@@ -128,18 +120,14 @@ ohos_executable("camera_capture_video") {
     "access_token:libnativetoken",
     "access_token:libtoken_setproc",
     "c_utils:utils",
-    "cJSON:cjson_static",
-    "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
     "drivers_interface_camera:libcamera_proxy_1.0",
     "drivers_interface_camera:libcamera_proxy_1.1",
-    "drivers_interface_camera:libmap_data_sequenceable_1.0",
     "drivers_interface_camera:metadata",
     "graphic_surface:surface",
     "hilog:libhilog",
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
     "ipc:ipc_core",
-    "selinux_adapter:librestorecon",
   ]
   part_name = "camera_framework"
   subsystem_name = "multimedia"
@@ -167,7 +155,6 @@ ohos_executable("camera_capture_mode") {
     "access_token:libnativetoken",
     "access_token:libtoken_setproc",
     "c_utils:utils",
-    "cJSON:cjson_static",
     "drivers_interface_camera:libcamera_proxy_1.0",
     "drivers_interface_camera:libcamera_proxy_1.1",
     "drivers_interface_camera:metadata",
@@ -176,7 +163,6 @@ ohos_executable("camera_capture_mode") {
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
     "ipc:ipc_core",
-    "selinux_adapter:librestorecon",
   ]
   part_name = "camera_framework"
   subsystem_name = "multimedia"

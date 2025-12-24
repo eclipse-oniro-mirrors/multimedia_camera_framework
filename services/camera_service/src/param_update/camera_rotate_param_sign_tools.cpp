@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
+
 #include "camera_rotate_param_sign_tools.h"
 
 #include <fstream> // ifstream所需
@@ -41,8 +41,7 @@ bool CameraRoateParamSignTool::VerifyFileSign(const std::string &pubKeyPath, con
 
     RSA *pubKey = RSA_new();
 
-    CHECK_RETURN_RET_ELOG(
-        PEM_read_bio_RSA_PUBKEY(bio, &pubKey, NULL, NULL) == NULL, false, "get pubKey is failed");
+    CHECK_RETURN_RET_ELOG(PEM_read_bio_RSA_PUBKEY(bio, &pubKey, NULL, NULL) == NULL, false, "get pubKey is failed");
 
     bool verify = false;
     if (!(pubKey == NULL || signStr.empty() || digeststr.empty())) {
@@ -61,7 +60,11 @@ bool CameraRoateParamSignTool::VerifyRsa(RSA *pubKey, const std::string &digest,
     EVP_MD_CTX *ctx = NULL;
     evpKey = EVP_PKEY_new();
     CHECK_RETURN_RET_ELOG(evpKey == nullptr, false, "evpKey == nullptr");
-    CHECK_RETURN_RET_ELOG(EVP_PKEY_set1_RSA(evpKey, pubKey) != 1, false, "EVP_PKEY_set1_RSA(evpKey, pubKey) != 1");
+    if (EVP_PKEY_set1_RSA(evpKey, pubKey) != 1) {
+        EVP_PKEY_free(evpKey);
+        MEDIA_ERR_LOG("EVP_PKEY_set1_RSA(evpKey, pubKey) != 1");
+        return false;
+    }
     ctx = EVP_MD_CTX_new();
     EVP_MD_CTX_init(ctx);
     if (ctx == nullptr) {
@@ -115,9 +118,7 @@ int CameraRoateParamSignTool::ForEachFileSegment(const std::string &fpath, std::
     CHECK_RETURN_RET_ELOG(
         realpath(fpath.c_str(), canonicalPath) == nullptr, errno, "ForEachFileSegment filepath is irregular");
     std::unique_ptr<FILE, decltype(&fclose)> filp = { fopen(canonicalPath, "r"), fclose };
-    if (!filp) {
-        return errno;
-    }
+    CHECK_RETURN_RET(!filp, errno);
     const size_t pageSize { getpagesize() };
     auto buf = std::make_unique<char[]>(pageSize);
     size_t actLen;

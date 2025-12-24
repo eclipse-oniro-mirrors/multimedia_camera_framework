@@ -31,6 +31,11 @@ namespace CameraStandard {
 
 using namespace std;
 
+struct MultiTypeArray {
+    std::vector<int32_t> i32;
+    std::vector<float> f;
+};
+
 typedef struct ProfileDetailInfo {
     uint32_t format;
     uint32_t width;
@@ -93,18 +98,24 @@ public:
     static void GetConflictConfiguration(
         const int32_t modeName, common_metadata_header_t* metadata, ConflictConfig& conflictConfig);
     static void GetAbilityInfo(const int32_t modeName, common_metadata_header_t* metadata, uint32_t tagId,
-        std::map<int32_t, std::vector<int32_t>>& infoMap);
+        std::map<int32_t, MultiTypeArray>& infoMap);
     static void GetSpecInfo(int32_t* originInfo, uint32_t start, uint32_t end, ProfileLevelInfo& modeInfo);
 
 private:
-    static void GetInfo(
-        int32_t* originInfo, uint32_t start, uint32_t end, std::map<int32_t, std::vector<int32_t>>& infoMap);
+
+    template<typename T>
+    static void GetInfo(T* originInfo, uint32_t start, uint32_t end, std::map<int32_t, MultiTypeArray>& infoMap);
     static void GetStreamInfo(int32_t* originInfo, uint32_t start, uint32_t end, SpecInfo& specInfo);
     static void GetDetailInfo(int32_t* originInfo, uint32_t start, uint32_t end, StreamInfo& streamInfo);
     static void GetAvailableConfigInfo(
         int32_t* originInfo, uint32_t start, uint32_t end, AvailableConfig& availableConfig);
     static void GetConflictConfigInfo(
         int32_t* originInfo, uint32_t start, uint32_t end, ConflictConfig& conflictConfig);
+    template<typename T>
+    static void GetOriginInfo(
+        T *originInfo, uint32_t count, int32_t modeName, std::map<int32_t, MultiTypeArray> &infoMap);
+    static void SaveMap(int32_t specId, std::vector<int32_t> &infoValues, std::map<int32_t, MultiTypeArray> &infoMap);
+    static void SaveMap(int32_t specId, std::vector<float> &infoValues, std::map<int32_t, MultiTypeArray> &infoMap);
 };
 } // namespace CameraStandard
 } // namespace OHOS

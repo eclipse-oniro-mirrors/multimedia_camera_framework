@@ -25,6 +25,7 @@
 #include "output/photo_ex_napi.h"
 #include "output/photo_output_napi.h"
 #include "output/preview_output_napi.h"
+#include "output/unify_movie_file_output_napi.h"
 #include "output/video_output_napi.h"
 
 namespace OHOS {
@@ -43,6 +44,7 @@ static napi_value Export(napi_env env, napi_value exports)
     CameraNapi::Init(env, exports);
     MetadataOutputNapi::Init(env, exports);
     PhotoSessionNapi::Init(env, exports);
+    UnifyMovieFileOutputNapi::Init(env, exports);
     VideoSessionNapi::Init(env, exports);
     PhotoNapi::Init(env, exports);
     PhotoExNapi::Init(env, exports);
@@ -52,7 +54,7 @@ static napi_value Export(napi_env env, napi_value exports)
 }
 
 /*
- * module define0......................................................................................................
+ * module define
  */
 static napi_module g_module = { .nm_version = 1,
     .nm_flags = 0,

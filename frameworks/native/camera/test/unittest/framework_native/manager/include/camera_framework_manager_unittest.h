@@ -71,24 +71,10 @@ public:
     IDeferredVideoProcSessionCallbackTest() = default;
     virtual ~IDeferredVideoProcSessionCallbackTest() = default;
     virtual void OnProcessVideoDone(const std::string& videoId, const sptr<IPCFileDescriptor> ipcFd) {};
+    virtual void OnProcessVideoDone(const std::string& videoId) {};
     virtual void OnError(const std::string& videoId, const DpsErrorCode errorCode) {};
     virtual void OnStateChanged(const DpsStatusCode status) {};
 };
-
-class CameraManagerCallbackTest : public CameraManagerCallback {
-public:
-    CameraManagerCallbackTest() = default;
-    virtual ~CameraManagerCallbackTest() = default;
-    void OnCameraStatusChanged(const CameraStatusInfo &cameraStatusInfo) const {};
-    void OnFlashlightStatusChanged(const std::string &cameraID, const FlashStatus flashStatus) const {};
-};
-
-class CameraManagerTest : public CameraManager {
-public:
-    bool ConvertMetaToFwkMode(const HDI::Camera::V1_3::OperationMode opMode, SceneMode &scMode);
-    bool ConvertFwkToMetaMode(const SceneMode scMode, HDI::Camera::V1_3::OperationMode &opMode);
-};
-
 class CameraFrameWorkManagerUnit : public testing::Test {
 public:
     static const int32_t PHOTO_DEFAULT_WIDTH = 1280;
@@ -97,6 +83,8 @@ public:
     static const int32_t PREVIEW_DEFAULT_HEIGHT = 480;
     static const int32_t VIDEO_DEFAULT_WIDTH = 640;
     static const int32_t VIDEO_DEFAULT_HEIGHT = 360;
+    static const int32_t MOVIE_DEFAULT_WIDTH = 1280;
+    static const int32_t MOVIE_DEFAULT_HEIGHT = 720;
     static const int32_t FIXEDFPS_DEFAULT = 30;
     static const int32_t MINFPS_DEFAULT = 12;
     static const int32_t MAXFPS_DEFAULT = 30;

@@ -46,11 +46,15 @@ public:
     void OnFrameEnded(const int32_t frameCount) const override;
     void OnError(const int32_t errorCode) const override;
     void OnSketchStatusDataChanged(const OHOS::CameraStandard::SketchStatusData& sketchStatusData) const override;
+    void OnFramePaused() const override;
+    void OnFrameResumed() const override;
 private:
     void OnFrameStartedCallback() const;
     void OnFrameEndedCallback(const int32_t frameCount) const;
     void OnErrorCallback(const int32_t errorCode) const;
     void OnSketchStatusDataChangedCallback(const OHOS::CameraStandard::SketchStatusData& sketchStatusData) const;
+    void OnFramePauseCallback() const;
+    void OnFrameResumedCallback() const;
 };
 
 class PreviewOutputImpl : public CameraOutputImpl,
@@ -79,6 +83,12 @@ public:
     void OffFrameEnd(optional_view<callback<void(uintptr_t, uintptr_t)>> callback);
     void OnSketchStatusChanged(callback_view<void(uintptr_t, SketchStatusData const&)> callback);
     void OffSketchStatusChanged(optional_view<callback<void(uintptr_t, SketchStatusData const&)>> callback);
+    void OnFramePause(callback_view<void(uintptr_t, uintptr_t)> callback);
+    void OffFramePause(optional_view<callback<void(uintptr_t, uintptr_t)>> callback);
+    void OnFrameResumed(callback_view<void(uintptr_t, uintptr_t)> callback);
+    void OffFrameResumed(optional_view<callback<void(uintptr_t, uintptr_t)>> callback);
+    bool IsBandwidthCompressionSupported();
+    void EnableBandwidthCompression(bool enabled);
     
     OHOS::sptr<OHOS::CameraStandard::PreviewOutput> GetPreviewOutput()
     {
@@ -96,6 +106,14 @@ private:
     void RegisterSketchStatusChangedCallbackListener(
         const std::string& eventName, std::shared_ptr<uintptr_t> callback, bool isOnce);
     void UnregisterSketchStatusChangedCallbackListener(
+        const std::string& eventName, std::shared_ptr<uintptr_t> callback);
+    void RegisterFramePauseCallbackListener(
+        const std::string& eventName, std::shared_ptr<uintptr_t> callback, bool isOnce);
+    void UnregisterFramePauseCallbackListener(
+        const std::string& eventName, std::shared_ptr<uintptr_t> callback);
+    void RegisterFrameResumeChangedCallbackListener(
+        const std::string& eventName, std::shared_ptr<uintptr_t> callback, bool isOnce);
+    void UnregisterFrameResumeChangedCallbackListener(
         const std::string& eventName, std::shared_ptr<uintptr_t> callback);
     virtual const EmitterFunctions& GetEmitterFunctions() override;
     OHOS::sptr<OHOS::CameraStandard::PreviewOutput> previewOutput_ = nullptr;

@@ -41,7 +41,7 @@ void DeferredVideoProcessorFuzzer::DeferredVideoProcessorFuzzTest(FuzzedDataProv
     }
     int32_t userId = fdp.ConsumeIntegral<int32_t>();
     std::string videoId(fdp.ConsumeRandomLengthString(MAX_LENGTH_STRING));
-    std::shared_ptr<VideoJobRepository> repository = std::make_shared<VideoJobRepository>(userId);
+    std::shared_ptr<VideoJobRepository> repository = VideoJobRepository::Create(userId);
     DP_CHECK_ERROR_RETURN_LOG(!repository, "Create repository Error");
     repository->SetJobPending(videoId);
     repository->SetJobRunning(videoId);
@@ -49,25 +49,23 @@ void DeferredVideoProcessorFuzzer::DeferredVideoProcessorFuzzTest(FuzzedDataProv
     repository->SetJobFailed(videoId);
     repository->SetJobPause(videoId);
     repository->SetJobError(videoId);
-    center_ = std::make_shared<DeferredProcessing::VideoStrategyCenter>(repository);
+    center_ = VideoStrategyCenter::Create(repository);
     DP_CHECK_ERROR_RETURN_LOG(!center_, "Create center_ Error");
-    const std::shared_ptr<VideoPostProcessor> postProcessor = std::make_shared<VideoPostProcessor>(userId);
-    const std::shared_ptr<IVideoProcessCallbacksFuzz> callback = std::make_shared<IVideoProcessCallbacksFuzz>();
-    fuzz_ = std::make_shared<DeferredVideoProcessor>(repository, postProcessor, callback);
+    const std::shared_ptr<VideoPostProcessor> postProcessor = VideoPostProcessor::Create(userId);
+    fuzz_ = std::make_shared<DeferredVideoProcessor>(userId, repository, postProcessor);
     int sfd = open(TEST_FILE_PATH_1, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
     int dfd = open(TEST_FILE_PATH_2, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
-    fdsan_exchange_owner_tag(sfd, 0, LOG_DOMAIN);
-    fdsan_exchange_owner_tag(dfd, 0, LOG_DOMAIN);
-    sptr<IPCFileDescriptor> srcFd = sptr<IPCFileDescriptor>::MakeSptr(sfd);
-    sptr<IPCFileDescriptor> dstFd = sptr<IPCFileDescriptor>::MakeSptr(dfd);
-    std::shared_ptr<DeferredVideoJob> jobPtr = std::make_shared<DeferredVideoJob>(videoId, srcFd, dstFd);
+    DpsFdPtr inputFd = std::make_shared<DpsFd>(sfd);
+    DpsFdPtr outFd = std::make_shared<DpsFd>(dfd);
+    std::shared_ptr<DeferredVideoJob> jobPtr =
+        std::make_shared<DeferredVideoJob>(videoId, inputFd, outFd, nullptr, nullptr);
     constexpr int32_t executionModeCount1 = static_cast<int32_t>(ExecutionMode::DUMMY) + 1;
     ExecutionMode selectedExecutionMode =
         static_cast<ExecutionMode>(fdp.ConsumeIntegral<uint8_t>() % executionModeCount1);
-    std::shared_ptr<DeferredVideoWork> work =
-        std::make_shared<DeferredVideoWork>(jobPtr, selectedExecutionMode, fdp.ConsumeBool());
+    jobPtr->SetExecutionMode(selectedExecutionMode);
+    jobPtr->SetChargState(fdp.ConsumeBool());
     fuzz_->Initialize();
-    fuzz_->PostProcess(work);
+    fuzz_->DoProcess(jobPtr);
     constexpr int32_t executionModeCount2 =
         static_cast<int32_t>(SchedulerType::NORMAL_TIME_STATE) + NUM_TWO;
     SchedulerType selectedScheduleType =
@@ -75,16 +73,10 @@ void DeferredVideoProcessorFuzzer::DeferredVideoProcessorFuzzTest(FuzzedDataProv
     constexpr int32_t executionModeCount3 =
         static_cast<int32_t>(DpsError::DPS_ERROR_VIDEO_PROC_INTERRUPTED) + NUM_TWO;
     DpsError selectedDpsError = static_cast<DpsError>(fdp.ConsumeIntegral<uint8_t>() % executionModeCount3);
-    constexpr int32_t executionModeCount4 =
-        static_cast<int32_t>(DpsStatus::DPS_SESSION_STATE_SUSPENDED) + NUM_TWO;
-    DpsStatus selectedDpsStatus = static_cast<DpsStatus>(fdp.ConsumeIntegral<uint8_t>() % executionModeCount4);
     fuzz_->PauseRequest(selectedScheduleType);
     fuzz_->SetDefaultExecutionMode();
-    fuzz_->IsFatalError(selectedDpsError);
-    fuzz_->OnStateChanged(userId, selectedDpsStatus);
-    fuzz_->OnError(userId, videoId, selectedDpsError);
-    sptr<IPCFileDescriptor> ipcFd = sptr<IPCFileDescriptor>::MakeSptr(fdp.ConsumeIntegral<int>());
-    fuzz_->OnProcessDone(userId, videoId, ipcFd);
+    fuzz_->OnProcessError(userId, videoId, selectedDpsError);
+    fuzz_->OnProcessSuccess(userId, videoId, nullptr);
 
     remove(TEST_FILE_PATH_1);
     remove(TEST_FILE_PATH_2);

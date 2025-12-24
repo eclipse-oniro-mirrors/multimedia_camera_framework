@@ -26,7 +26,6 @@
 #include "dps_metadata_info.h"
 #include "camera_service_proxy.h"
 #include "deferred_type.h"
-#include "deferred_processing_types.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -34,18 +33,13 @@ class IDeferredPhotoProcSessionCallback : public RefBase {
 public:
     IDeferredPhotoProcSessionCallback() = default;
     virtual ~IDeferredPhotoProcSessionCallback() = default;
+    virtual void OnProcessImageDone(const std::string &imageId, std::shared_ptr<PictureIntf> picture,
+        const DpsMetadata& metadata) = 0;
+    virtual void OnDeliveryLowQualityImage(const std::string &imageId, std::shared_ptr<PictureIntf> picture) = 0;
     virtual void OnProcessImageDone(const std::string& imageId, const uint8_t* addr, const long bytes,
         uint32_t cloudImageEnhanceFlag) = 0;
-    virtual void OnProcessImageDone(const std::string &imageId, std::shared_ptr<PictureIntf> picture,
-        uint32_t cloudImageEnhanceFlag) = 0;
-    virtual void OnDeliveryLowQualityImage(const std::string &imageId, std::shared_ptr<PictureIntf> picture) = 0;
     virtual void OnError(const std::string& imageId, const DpsErrorCode errorCode) = 0;
     virtual void OnStateChanged(const DpsStatusCode status) = 0;
-    int32_t CallbackParcel(
-        [[maybe_unused]] uint32_t code,
-        [[maybe_unused]] MessageParcel& data,
-        [[maybe_unused]] MessageParcel& reply,
-        [[maybe_unused]] MessageOption& option);
 };
 
 class DeferredPhotoProcSession : public RefBase {
@@ -91,10 +85,11 @@ public:
     }
 
     int32_t OnProcessImageDone(const std::string &imageId, const sptr<IPCFileDescriptor>& ipcFileDescriptor,
-        int64_t bytes, uint32_t cloudImageEnhanceFlag) override;
+        int64_t bytes, const uint32_t cloudImageEnhanceFlag) override;
     int32_t OnProcessImageDone(const std::string &imageId, const std::shared_ptr<PictureIntf>& picture,
-        uint32_t cloudImageEnhanceFlag) override;
-    int32_t OnDeliveryLowQualityImage(const std::string &imageId, const std::shared_ptr<PictureIntf>& picture) override;
+        const DpsMetadata& metadata) override;
+    int32_t OnDeliveryLowQualityImage(const std::string &imageId,
+        const std::shared_ptr<PictureIntf>& picture) override;
     int32_t OnError(const std::string &imageId, DeferredProcessing::ErrorCode errorCode) override;
     int32_t OnStateChanged(DeferredProcessing::StatusCode status) override;
     int32_t CallbackParcel(

@@ -26,7 +26,9 @@
 #include "camera_device_ability_items.h"
 #include "camera_metadata_info.h"
 #include "hcamera_host_manager.h"
+#include "metadata_utils.h"
 #include "v1_3/types.h"
+#include "v1_5/types.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -60,14 +62,13 @@ std::shared_ptr<T> GetMaxSizeDetailInfo(std::vector<T>& detailInfos, float targe
     CHECK_RETURN_RET(targetRatioValue <= 0, nullptr);
     std::shared_ptr<T> maxSizeProfile = nullptr;
     for (auto& detailInfo : detailInfos) {
-        if (detailInfo.width == 0 || detailInfo.height == 0 || detailInfo.format != format) {
-            continue;
-        }
+        CHECK_CONTINUE(detailInfo.width == 0 || detailInfo.height == 0 || detailInfo.format != format);
         float ratio = ((float)detailInfo.width) / detailInfo.height;
         if (abs(ratio - targetRatioValue) / targetRatioValue > 0.05f) { // 0.05f is 5% tolerance.
             continue;
         }
-        if (maxSizeProfile == nullptr || detailInfo.width > maxSizeProfile->width) {
+        bool isNewSizeProfile = maxSizeProfile == nullptr || detailInfo.width > maxSizeProfile->width;
+        if (isNewSizeProfile) {
             maxSizeProfile = std::make_shared<T>(detailInfo);
         }
     }
@@ -124,9 +125,7 @@ struct PreconfigProfile {
         specInfos.insert(specInfos.end(), modeInfo.specInfos.begin(), modeInfo.specInfos.end());
         for (SpecInfo& specInfo : specInfos) {
             for (StreamInfo& streamInfo : specInfo.streamInfos) {
-                if (streamInfo.streamType != HDI::Camera::V1_3::StreamType::STREAM_TYPE_STILL_CAPTURE) {
-                    continue;
-                }
+                CHECK_CONTINUE(streamInfo.streamType != HDI::Camera::V1_3::StreamType::STREAM_TYPE_STILL_CAPTURE);
                 float ratioValue = GetRatioValue(followSensorMaxRatio);
                 return GetMaxSizeDetailInfo(streamInfo.detailInfos, ratioValue, OHOS_CAMERA_FORMAT_JPEG);
             }
@@ -145,13 +144,9 @@ struct PreconfigProfile {
         std::shared_ptr<CameraStreamInfoParse> modeStreamParse = std::make_shared<CameraStreamInfoParse>();
         modeStreamParse->getModeInfo(item.data.i32, item.count, extendInfo); // 解析tag中带的数据信息意义
         for (auto& modeInfo : extendInfo.modeInfo) {
-            if (modeInfo.modeName != modeName) {
-                continue;
-            }
+            CHECK_CONTINUE(modeInfo.modeName != modeName);
             for (auto& streamInfo : modeInfo.streamInfo) {
-                if (streamInfo.streamType != HDI::Camera::V1_3::StreamType::STREAM_TYPE_STILL_CAPTURE) {
-                    continue;
-                }
+                CHECK_CONTINUE(streamInfo.streamType != HDI::Camera::V1_3::StreamType::STREAM_TYPE_STILL_CAPTURE);
                 float ratioValue = GetRatioValue(followSensorMaxRatio);
                 return GetMaxSizeDetailInfo(streamInfo.detailInfo, ratioValue, OHOS_CAMERA_FORMAT_JPEG);
             }
@@ -165,14 +160,11 @@ struct PreconfigProfile {
         std::string maxSizeInfo = "";
         for (auto& cameraInfo : cameraInfos) {
             camera_metadata_item_t item;
-            CHECK_RETURN_RET(cameraInfo.ability == nullptr, "cameraInfo.ability is null");
             int ret = OHOS::Camera::CameraMetadata::FindCameraMetadataItem(
                 cameraInfo.ability->get(), OHOS_ABILITY_CAMERA_TYPE, &item);
             CHECK_RETURN_RET(ret != CAM_META_SUCCESS || item.count == 0, "device camera type info error");
             camera_type_enum_t cameraType = static_cast<camera_type_enum_t>(item.data.u8[0]);
-            if (cameraType != OHOS_CAMERA_TYPE_UNSPECIFIED) {
-                continue;
-            }
+            CHECK_CONTINUE(cameraType != OHOS_CAMERA_TYPE_UNSPECIFIED);
             auto maxDetail = FindMaxDetailInfoFromProfileLevel(cameraInfo, modeName);
             if (maxDetail) {
                 maxSizeInfo += std::to_string(maxDetail->width) + "x" + std::to_string(maxDetail->height) + "(" +
@@ -180,9 +172,7 @@ struct PreconfigProfile {
                 continue;
             }
             auto maxDetailInfo = FindMaxDetailInfoFromExtendConfig(cameraInfo, modeName);
-            if (maxDetailInfo == nullptr) {
-                continue;
-            }
+            CHECK_CONTINUE(maxDetailInfo == nullptr);
             maxSizeInfo += std::to_string(maxDetailInfo->width) + "x" + std::to_string(maxDetailInfo->height) + "(" +
                            cameraInfo.cameraId + ") ";
         }
@@ -378,7 +368,6 @@ void DumpPreconfigInfo(CameraInfoDumper& infoDumper, sptr<HCameraHostManager>& h
         { RATIO_16_9, "ratio 16:9" } };
     std::vector<std::string> cameraIds;
     std::vector<CameraInfo> cameraInfos;
-    CHECK_RETURN_ELOG(hostManager == nullptr, "DumpPreconfigInfo hostManager is nullptr.");
     hostManager->GetCameras(cameraIds);
     for (auto& cameraId : cameraIds) {
         CameraInfo cameraInfo { .cameraId = cameraId };

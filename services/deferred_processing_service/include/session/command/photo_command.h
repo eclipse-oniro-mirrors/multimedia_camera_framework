@@ -26,7 +26,7 @@ namespace DeferredProcessing {
 class PhotoCommand : public Command {
 public:
     PhotoCommand(const int32_t userId, const std::string& photoId);
-    ~PhotoCommand();
+    virtual ~PhotoCommand() override;
 
 protected:
     int32_t Initialize();

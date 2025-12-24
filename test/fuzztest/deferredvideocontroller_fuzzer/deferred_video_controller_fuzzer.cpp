@@ -14,7 +14,10 @@
  */
 
 #include "deferred_video_controller_fuzzer.h"
-#include "camera_log.h"
+
+#include <fcntl.h>
+
+#include "dp_log.h"
 #include "message_parcel.h"
 #include "ipc_file_descriptor.h"
 #include "securec.h"
@@ -28,6 +31,8 @@ static const uint8_t* RAW_DATA = nullptr;
 const size_t THRESHOLD = 10;
 static size_t g_dataSize = 0;
 static size_t g_pos;
+const char* TEST_FILE_PATH_1 = "/data/test/DeferredVideoControllerFuzzTest_test_file1.mp4";
+const char* TEST_FILE_PATH_2 = "/data/test/DeferredVideoControllerFuzzTest_test_file2.mp4";
 
 std::shared_ptr<DeferredVideoController> DeferredVideoControllerFuzzer::fuzz_{nullptr};
 std::shared_ptr<VideoStrategyCenter> DeferredVideoControllerFuzzer::center_{nullptr};
@@ -56,7 +61,7 @@ template<class T>
 uint32_t GetArrLength(T& arr)
 {
     if (arr == nullptr) {
-        MEDIA_INFO_LOG("%{public}s: The array length is equal to 0", __func__);
+        DP_INFO_LOG("%{public}s: The array length is equal to 0", __func__);
         return 0;
     }
     return sizeof(arr) / sizeof(arr[0]);
@@ -65,50 +70,52 @@ uint32_t GetArrLength(T& arr)
 void DeferredVideoControllerFuzzer::DeferredVideoControllerFuzzTest()
 {
     int32_t userId = GetData<int32_t>();
-    std::shared_ptr<VideoJobRepository> repository;
     uint8_t randomNum = GetData<uint8_t>();
     std::vector<std::string> testStrings = {"test1", "test2"};
     std::string videoId(testStrings[randomNum % testStrings.size()]);
-    repository = std::make_shared<VideoJobRepository>(userId);
-    CHECK_RETURN_ELOG(!repository, "Create repository Error");
+    auto repository = VideoJobRepository::Create(userId);
+    DP_CHECK_ERROR_RETURN_LOG(!repository, "Create repository Error");
     repository->SetJobPending(videoId);
     repository->SetJobRunning(videoId);
     repository->SetJobCompleted(videoId);
     repository->SetJobFailed(videoId);
     repository->SetJobPause(videoId);
     repository->SetJobError(videoId);
-    center_ = std::make_shared<DeferredProcessing::VideoStrategyCenter>(repository);
-    CHECK_RETURN_ELOG(!center_, "Create center_ Error");
+    center_ = VideoStrategyCenter::Create(repository);
+    DP_CHECK_ERROR_RETURN_LOG(!center_, "Create center_ Error");
     const std::shared_ptr<VideoPostProcessor> postProcessor =
-        std::make_shared<VideoPostProcessor>(userId);
-    const std::shared_ptr<IVideoProcessCallbacksFuzz> callback =
-        std::make_shared<IVideoProcessCallbacksFuzz>();
+        VideoPostProcessor::Create(userId);
     std::shared_ptr<DeferredVideoProcessor> processor =
-        std::make_shared<DeferredVideoProcessor>(repository, postProcessor, callback);
-    fuzz_ = std::make_shared<DeferredVideoController>(userId, repository, processor);
-    CHECK_RETURN_ELOG(!fuzz_, "Create fuzz_ Error");
-    sptr<IPCFileDescriptor> srcFd = sptr<IPCFileDescriptor>::MakeSptr(GetData<int>());
-    sptr<IPCFileDescriptor> dstFd = sptr<IPCFileDescriptor>::MakeSptr(GetData<int>());
+        DeferredVideoProcessor::Create(userId, repository, postProcessor);
+    fuzz_ = DeferredVideoController::Create(userId, processor);
+    DP_CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
+    int sfd = open(TEST_FILE_PATH_1, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+    int dfd = open(TEST_FILE_PATH_2, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+    DpsFdPtr inputFd = std::make_shared<DpsFd>(sfd);
+    DpsFdPtr outFd = std::make_shared<DpsFd>(dfd);
     std::shared_ptr<DeferredVideoJob> jobPtr =
-        std::make_shared<DeferredVideoJob>(videoId, srcFd, dstFd);
+        std::make_shared<DeferredVideoJob>(videoId, inputFd, outFd, nullptr, nullptr);
     fuzz_->Initialize();
-    fuzz_->OnVideoJobChanged(jobPtr);
+    fuzz_->OnVideoJobChanged();
     constexpr int32_t executionModeCount1 = static_cast<int32_t>(ExecutionMode::DUMMY) + 1;
     ExecutionMode selectedExecutionMode = static_cast<ExecutionMode>(GetData<uint8_t>() % executionModeCount1);
     constexpr int32_t executionModeCount2 = static_cast<int32_t>(DpsError::DPS_ERROR_VIDEO_PROC_INTERRUPTED) + 1;
     DpsError selectedDpsError = static_cast<DpsError>(GetData<uint8_t>() % executionModeCount2);
-    std::shared_ptr<DeferredVideoWork> work =
-        std::make_shared<DeferredVideoWork>(jobPtr, selectedExecutionMode, dstFd);
-    fuzz_->HandleSuccess(work);
-    fuzz_->HandleError(work, selectedDpsError);
+    jobPtr->SetExecutionMode(selectedExecutionMode);
+    jobPtr->SetChargState(GetData<bool>());
+    fuzz_->HandleSuccess(videoId, nullptr);
+    fuzz_->HandleError(videoId, selectedDpsError);
     fuzz_->HandleServiceDied();
     fuzz_->TryDoSchedule();
-    fuzz_->PostProcess(work);
+    fuzz_->DoProcess(jobPtr);
     fuzz_->SetDefaultExecutionMode();
     fuzz_->StartSuspendLock();
     fuzz_->StopSuspendLock();
-    fuzz_->HandleNormalSchedule(work);
+    fuzz_->HandleNormalSchedule(jobPtr);
     fuzz_->OnTimerOut();
+
+    remove(TEST_FILE_PATH_1);
+    remove(TEST_FILE_PATH_2);
 }
 
 void Test()
@@ -118,7 +125,7 @@ void Test()
     }
     auto deferredVideoController = std::make_unique<DeferredVideoControllerFuzzer>();
     if (deferredVideoController == nullptr) {
-        MEDIA_INFO_LOG("deferredVideoController is null");
+        DP_INFO_LOG("deferredVideoController is null");
         return;
     }
     deferredVideoController->DeferredVideoControllerFuzzTest();
@@ -142,7 +149,7 @@ bool FuzzTest(const uint8_t* rawData, size_t size)
     if (len > 0) {
         g_testFuncs[code % len]();
     } else {
-        MEDIA_INFO_LOG("%{public}s: The len length is equal to 0", __func__);
+        DP_INFO_LOG("%{public}s: The len length is equal to 0", __func__);
     }
 
     return true;

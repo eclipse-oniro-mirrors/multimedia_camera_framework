@@ -36,7 +36,9 @@ void SlowMotionStateListener::OnSlowMotionStateCbAsync(const SlowMotionState sta
         SlowMotionStateListenerInfo* callbackInfo = reinterpret_cast<SlowMotionStateListenerInfo *>(event);
         if (callbackInfo) {
             auto listener = callbackInfo->listener_.lock();
-            CHECK_EXECUTE(listener != nullptr, listener->OnSlowMotionStateCb(callbackInfo->state_));
+            if (listener != nullptr) {
+                listener->OnSlowMotionStateCb(callbackInfo->state_);
+            }
             delete callbackInfo;
         }
     };
@@ -55,20 +57,63 @@ void SlowMotionStateListener::OnSlowMotionStateCbAsync(const SlowMotionState sta
 void SlowMotionStateListener::OnSlowMotionStateCb(const SlowMotionState state) const
 {
     MEDIA_DEBUG_LOG("OnSlowMotionStateCb is called, state: %{public}d", state);
-
-    ExecuteCallbackScopeSafe("slowMotionStatus", [&]() {
-        napi_value callbackObj;
-        napi_value errCode;
-
-        napi_create_int32(env_, state, &callbackObj);
-        errCode = CameraNapiUtils::GetUndefinedValue(env_);
-        return ExecuteCallbackData(env_, errCode, callbackObj);
-    });
+    napi_value result[ARGS_TWO] = {nullptr, nullptr};
+    napi_value retVal;
+    napi_get_undefined(env_, &result[PARAM0]);
+    napi_create_int32(env_, state, &result[PARAM1]);
+    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
+    ExecuteCallback("slowMotionStatus", callbackNapiPara);
 }
 
 void SlowMotionStateListener::OnSlowMotionState(SlowMotionState state)
 {
     OnSlowMotionStateCbAsync(state);
+}
+
+void SlowMotionZoomInfoListener::OnSlowMotionZoomInfoChangeAsync(const std::vector<float> zoomRatioRange) const
+{
+    MEDIA_DEBUG_LOG("OnSlowMotionZoomInfoChangeAsync is called");
+    std::unique_ptr<SlowMotionZoomInfoListenerInfo> callbackInfo =
+        std::make_unique<SlowMotionZoomInfoListenerInfo>(zoomRatioRange, shared_from_this());
+    SlowMotionZoomInfoListenerInfo *event = callbackInfo.get();
+    auto task = [event]() {
+        SlowMotionZoomInfoListenerInfo* callbackInfo = reinterpret_cast<SlowMotionZoomInfoListenerInfo *>(event);
+        if (callbackInfo) {
+            auto listener = callbackInfo->listener_.lock();
+            if (listener != nullptr) {
+                listener->OnSlowMotionZoomInfoChange(callbackInfo->zoomRatioRange_);
+            }
+            delete callbackInfo;
+        }
+    };
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate,
+        "SlowMotionZoomInfoListener::OnSlowMotionZoomInfoChangeAsync")) {
+        MEDIA_ERR_LOG("failed to execute work");
+    } else {
+        callbackInfo.release();
+    }
+}
+
+void SlowMotionZoomInfoListener::OnSlowMotionZoomInfoChange(const std::vector<float> zoomRatioRange) const
+{
+    MEDIA_DEBUG_LOG("OnSlowMotionZoomInfoChange is called");
+
+    ExecuteCallbackScopeSafe("zoomInfoChange", [&]() {
+        napi_value errCode = CameraNapiUtils::GetUndefinedValue(env_);
+        napi_value zoomRatioRangeObj;
+        napi_create_array(env_, &zoomRatioRangeObj);
+        for (size_t i = 0; i < zoomRatioRange.size(); i++) {
+            napi_value zoomRatio;
+            napi_create_double(env_, CameraNapiUtils::FloatToDouble(zoomRatioRange[i]), &zoomRatio);
+            napi_set_element(env_, zoomRatioRangeObj, i, zoomRatio);
+        }
+        return ExecuteCallbackData(env_, errCode, zoomRatioRangeObj);
+    });
+}
+
+void SlowMotionZoomInfoListener::OnZoomInfoChange(const std::vector<float> zoomRatioRange)
+{
+    OnSlowMotionZoomInfoChangeAsync(zoomRatioRange);
 }
 
 SlowMotionSessionNapi::SlowMotionSessionNapi() : env_(nullptr)
@@ -185,8 +230,10 @@ napi_value SlowMotionSessionNapi::IsSlowMotionDetectionSupported(napi_env env, n
     napi_value result = CameraNapiUtils::GetUndefinedValue(env);
     SlowMotionSessionNapi* slowMotionSessionNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, slowMotionSessionNapi);
-    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"),
-        result, "IsSlowMotionDetectionSupported parse parameter occur error");
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("IsSlowMotionDetectionSupported parse parameter occur error");
+        return result;
+    }
     if (slowMotionSessionNapi != nullptr && slowMotionSessionNapi->slowMotionSession_ != nullptr) {
         bool isSupported = slowMotionSessionNapi->slowMotionSession_->IsSlowMotionDetectionSupported();
         napi_get_boolean(env, isSupported, &result);
@@ -202,9 +249,13 @@ napi_value SlowMotionSessionNapi::GetDoubleProperty(napi_env env, napi_value par
     napi_status status;
     napi_value property;
     status = napi_get_named_property(env, param, propertyName.c_str(), &property);
-    CHECK_RETURN_RET(status != napi_ok, nullptr);
+    if (status != napi_ok) {
+        return nullptr;
+    }
     status = napi_get_value_double(env, property, &propertyValue);
-    CHECK_RETURN_RET(status != napi_ok, nullptr);
+    if (status != napi_ok) {
+        return nullptr;
+    }
     return property;
 }
 
@@ -267,6 +318,34 @@ void SlowMotionSessionNapi::UnregisterSlowMotionStateCb(
         MEDIA_ERR_LOG("slowMotionStateListener_ is null");
     } else {
         slowMotionStateListener_->RemoveCallbackRef(eventName, callback);
+    }
+}
+
+void SlowMotionSessionNapi::RegisterZoomInfoCbListener(
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+{
+    MEDIA_INFO_LOG("RegisterZoomInfoCbListener is called");
+    if (zoomInfoListener_ == nullptr) {
+        shared_ptr<SlowMotionZoomInfoListener> zoomInfoListenerTemp =
+            static_pointer_cast<SlowMotionZoomInfoListener>(slowMotionSession_->GetZoomInfoCallback());
+        if (zoomInfoListenerTemp == nullptr) {
+            zoomInfoListenerTemp = make_shared<SlowMotionZoomInfoListener>(env);
+            slowMotionSession_->SetZoomInfoCallback(zoomInfoListenerTemp);
+        }
+        zoomInfoListener_ = zoomInfoListenerTemp;
+    }
+    zoomInfoListener_->SaveCallbackReference(eventName, callback, isOnce);
+    MEDIA_INFO_LOG("RegisterZoomInfoCbListener success");
+}
+
+void SlowMotionSessionNapi::UnregisterZoomInfoCbListener(
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
+{
+    MEDIA_INFO_LOG("UnregisterZoomInfoCbListener is called");
+    if (zoomInfoListener_ == nullptr) {
+        MEDIA_ERR_LOG("UnregisterZoomInfoCbListener is null");
+    } else {
+        zoomInfoListener_->RemoveCallbackRef(eventName, callback);
     }
 }
 } // namespace CameraStandard

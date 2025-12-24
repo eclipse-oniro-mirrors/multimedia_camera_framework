@@ -51,12 +51,12 @@ public:
     void TearDown();
 
     sptr<HStreamCapture> GenStreamCapture(int32_t w = PHOTO_DEFAULT_WIDTH, int32_t h = PHOTO_DEFAULT_HEIGHT);
-    sptr<HStreamMetadata> GenSteamMetadata(std::vector<int32_t> metadataTypes = {});
-    sptr<HStreamRepeat> GenSteamRepeat(
+    sptr<HStreamMetadata> GenStreamMetadata(std::vector<int32_t> metadataTypes = {});
+    sptr<HStreamRepeat> GenStreamRepeat(
         RepeatStreamType type, int32_t w = PHOTO_DEFAULT_WIDTH, int32_t h = PHOTO_DEFAULT_HEIGHT);
-    sptr<HStreamDepthData> GenSteamDepthData(int32_t w = PHOTO_DEFAULT_WIDTH, int32_t h = PHOTO_DEFAULT_HEIGHT);
+    sptr<HStreamDepthData> GenStreamDepthData(int32_t w = PHOTO_DEFAULT_WIDTH, int32_t h = PHOTO_DEFAULT_HEIGHT);
 };
 
 } // namespace CameraStandard
 } // namespace OHOS
-#endif // HSTREAM_OPERATOR_UNITTEST_H
+#endif // HSTREAM_OPERATOR_UNITTEST_H

@@ -17,7 +17,6 @@
 #define OHOS_CAMERA_DPS_PHOTO_PROCESS_COMMAND_H
 
 #include "command.h"
-#include "image_info.h"
 #include "photo_post_processor.h"
 #include "scheduler_manager.h"
 

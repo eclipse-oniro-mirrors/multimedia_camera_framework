@@ -21,10 +21,17 @@
 #include <utility>
 #include <variant>
 
+#include "camera_device_ability_items.h"
 #include "camera_error_code.h"
 #include "camera_log.h"
+#include "camera_manager.h"
+#include "camera_metadata_operator.h"
 #include "camera_output_capability.h"
 #include "camera_util.h"
+#include "stream_depth_data_callback_stub.h"
+#include "image_format.h"
+#include "metadata_common_utils.h"
+#include "pixel_map.h"
 #include "session/capture_session.h"
 
 namespace OHOS {
@@ -73,10 +80,11 @@ int32_t DepthDataOutput::Start()
     auto stream = GetStream();
     sptr<IStreamDepthData> itemStream = static_cast<IStreamDepthData*>(stream.GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
-    CHECK_PRINT_ELOG(itemStream == nullptr, "DepthDataOutput::Start itemStream is nullptr");
     if (itemStream) {
         errCode = itemStream->Start();
         CHECK_PRINT_ELOG(errCode != CAMERA_OK, "DepthDataOutput Failed to Start!, errCode: %{public}d", errCode);
+    } else {
+        MEDIA_ERR_LOG("DepthDataOutput::Start itemStream is nullptr");
     }
     return ServiceToCameraError(errCode);
 }
@@ -90,10 +98,11 @@ int32_t DepthDataOutput::Stop()
     auto stream = GetStream();
     sptr<IStreamDepthData> itemStream = static_cast<IStreamDepthData*>(stream.GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
-    CHECK_PRINT_ELOG(itemStream == nullptr, "DepthDataOutput::Stop itemStream is nullptr");
     if (itemStream) {
         errCode = itemStream->Stop();
         CHECK_PRINT_ELOG(errCode != CAMERA_OK, "DepthDataOutput Failed to Stop!, errCode: %{public}d", errCode);
+    } else {
+        MEDIA_ERR_LOG("DepthDataOutput::Stop itemStream is nullptr");
     }
     return ServiceToCameraError(errCode);
 }
@@ -110,8 +119,8 @@ int32_t DepthDataOutput::SetDataAccuracy(int32_t dataAccuracy)
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {
         errCode = itemStream->SetDataAccuracy(dataAccuracy);
-        CHECK_PRINT_ELOG(errCode != CAMERA_OK,
-            "DepthDataOutput Failed to SetDataAccuracy!, errCode: %{public}d", errCode);
+        CHECK_PRINT_ELOG(
+            errCode != CAMERA_OK, "DepthDataOutput Failed to SetDataAccuracy!, errCode: %{public}d", errCode);
     } else {
         MEDIA_ERR_LOG("DepthDataOutput::SetDataAccuracy itemStream is nullptr");
     }

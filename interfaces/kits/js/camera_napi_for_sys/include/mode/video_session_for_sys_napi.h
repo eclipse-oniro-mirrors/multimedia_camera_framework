@@ -18,6 +18,7 @@
 
 #include "session/camera_session_for_sys_napi.h"
 #include "session/video_session_for_sys.h"
+#include "zoom_info_change_callback.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -65,6 +66,25 @@ struct LightStatusChangedCallback {
     {}
 };
 
+class HighFrameRateZoomInfoListener : public ZoomInfoCallback, public ListenerBase,
+    public std::enable_shared_from_this<HighFrameRateZoomInfoListener> {
+public:
+    explicit HighFrameRateZoomInfoListener(napi_env env) : ListenerBase(env) {};
+    ~HighFrameRateZoomInfoListener() = default;
+    void OnZoomInfoChange(const std::vector<float> zoomRatioRange) override;
+private:
+    void OnHighFrameRateZoomInfoChange(const std::vector<float> zoomRatioRange) const;
+    void OnHighFrameRateZoomInfoChangeAsync(const std::vector<float> zoomRatioRange) const;
+};
+
+struct HighFrameRateZoomInfoListenerInfo {
+    std::vector<float> zoomRatioRange_;
+    weak_ptr<const HighFrameRateZoomInfoListener> listener_;
+    HighFrameRateZoomInfoListenerInfo(std::vector<float> zoomRatioRange,
+    shared_ptr<const HighFrameRateZoomInfoListener> listener)
+        : zoomRatioRange_(zoomRatioRange), listener_(listener) {}
+};
+
 class VideoSessionForSysNapi : public CameraSessionForSysNapi  {
 public:
     static void Init(napi_env env);
@@ -75,11 +95,18 @@ public:
     static void VideoSessionForSysNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
     static napi_value VideoSessionForSysNapiConstructor(napi_env env, napi_callback_info info);
 
+    static napi_value SetQualityPrioritization(napi_env env, napi_callback_info info);
+    static napi_value IsExternalCameraLensBoostSupported(napi_env env, napi_callback_info info);
+    static napi_value EnableExternalCameraLensBoost(napi_env env, napi_callback_info info);
+
+    static const std::vector<napi_property_descriptor> video_session_sys_props;
+
     napi_env env_;
     sptr<VideoSessionForSys> videoSessionForSys_;
     static thread_local napi_ref sConstructor_;
     std::shared_ptr<FocusTrackingCallbackListener> focusTrackingInfoCallback_ = nullptr;
     std::shared_ptr<LightStatusCallbackListener> lightStatusCallback_ = nullptr;
+    std::shared_ptr<HighFrameRateZoomInfoListener> zoomInfoListener_;
 
 protected:
     void RegisterFocusTrackingInfoCallbackListener(const std::string& eventName,
@@ -90,10 +117,18 @@ protected:
         const std::vector<napi_value> &args, bool isOnce) override;
     void UnregisterLightStatusCallbackListener(
         const std::string &eventName, napi_env env, napi_value callback, const std::vector<napi_value> &args) override;
+    void RegisterZoomInfoCbListener(const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce) override;
+    void UnregisterZoomInfoCbListener(
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
     void RegisterPressureStatusCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
         const std::vector<napi_value>& args, bool isOnce) override;
     void UnregisterPressureStatusCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
+    void RegisterCameraSwitchRequestCallbackListener(const std::string &eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value> &args, bool isOnce) override;
+    void UnregisterCameraSwitchRequestCallbackListener(
+        const std::string &eventName, napi_env env, napi_value callback, const std::vector<napi_value> &args) override;
 };
 } // namespace CameraStandard
 } // namespace OHOS

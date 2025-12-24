@@ -34,11 +34,11 @@
 #include "os_account_manager.h"
 #include <fuzzer/FuzzedDataProvider.h>
 #include "test_token.h"
-#include "test_token.h"
 
-using namespace OHOS;
-using namespace OHOS::CameraStandard;
+namespace OHOS {
+namespace CameraStandard {
 static constexpr int32_t MIN_SIZE_NUM = 4;
+static constexpr int32_t PORTRAIT_SIZE = 6;
 sptr<CameraManager> cameraManager_ = nullptr;
 sptr<CameraManagerForSys> cameraManagerForSys_ = nullptr;
 std::vector<Profile> previewProfile_ = {};
@@ -49,11 +49,8 @@ bool g_phoIsSupportedPortraitmode = false;
 sptr<CaptureOutput> CreatePreviewOutput()
 {
     previewProfile_ = {};
-    if (!cameraManager_) {
-        return nullptr;
-    }
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
-    if (cameras.empty()) {
+    if (!cameraManager_ || cameras.empty()) {
         return nullptr;
     }
     g_preIsSupportedPortraitmode = false;
@@ -89,11 +86,8 @@ sptr<CaptureOutput> CreatePreviewOutput()
 sptr<CaptureOutput> CreatePhotoOutput()
 {
     photoProfile_ = {};
-    if (!cameraManager_) {
-        return nullptr;
-    }
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
-    if (cameras.empty()) {
+    if (!cameraManager_ || cameras.empty()) {
         return nullptr;
     }
     g_phoIsSupportedPortraitmode = false;
@@ -155,8 +149,8 @@ void PortraitSessionFuzzTest(FuzzedDataProvider& fdp)
     portraitSession->LockForControl();
     auto portraitEffect = portraitSession->GetSupportedPortraitEffects();
     portraitSession->GetPortraitEffect();
+    uint8_t portraitEnum = fdp.ConsumeIntegral<uint8_t>() % PORTRAIT_SIZE;
     if (!portraitEffect.empty()) {
-        uint8_t portraitEnum = fdp.ConsumeIntegralInRange(0, 5);
         portraitSession->SetPortraitEffect(portraitEffect[portraitEnum]);
     }
     portraitSession->CanAddOutput(photo);
@@ -172,10 +166,12 @@ void Test(uint8_t* data, size_t size)
     CHECK_RETURN_ELOG(!TestToken().GetAllCameraPermission(), "GetPermission error");
     PortraitSessionFuzzTest(fdp);
 }
+} // namespace CameraStandard
+} // namespace OHOS
 
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(uint8_t* data, size_t size)
 {
-    Test(data, size);
+    OHOS::CameraStandard::Test(data, size);
     return 0;
 }

@@ -1,0 +1,132 @@
+# Copyright (c) 2024 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("../multimedia_camera_framework.gni")
+
+config("media_stream_config") {
+  include_dirs = [
+    "include",
+    "include/buffer",
+    "include/engine",
+    "include/factory",
+    "include/filter",
+    "include/interface",
+    "include/pipeline",
+    "include/util",
+    "${multimedia_camera_framework_path}/dynamic_libs/media_library/include",
+    "${multimedia_camera_framework_path}/dynamic_libs/moving_photo/include",
+  ]
+}
+
+ohos_shared_library("media_stream") {
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+
+  branch_protector_ret = "pac_ret"
+  cflags = [
+    "-Werror",
+    "-Os",
+  ]
+
+  sources = [
+    "src/filter/audio_capture_adapter.cpp",
+    "src/filter/audio_deferred_process_adapter.cpp",
+    "src/filter/audio_capturer_session_adapter.cpp",
+    "src/filter/audio_capture_filter.cpp",
+    "src/filter/audio_encoder_filter.cpp",
+    "src/filter/audio_fork_filter.cpp",
+    "src/filter/audio_process_filter.cpp",
+    "src/filter/cfilter_factory.cpp",
+    "src/filter/cfilter.cpp",
+    "src/filter/demuxer_filter.cpp",
+    "src/filter/metadata_filter.cpp",
+    "src/filter/muxer_filter.cpp",
+    "src/filter/sink_filter.cpp",
+    "src/filter/video_encoder_adapter.cpp",
+    "src/filter/video_encoder_filter.cpp",
+    "src/filter/moving_photo_muxer_filter.cpp",
+    "src/filter/moving_photo_video_encoder_filter.cpp",
+    "src/filter/moving_photo_audio_encoder_filter.cpp",
+    "src/filter/audio_cache_filter.cpp",
+    "src/filter/meta_cache_filter.cpp",
+    "src/filter/video_cache_filter.cpp",
+    "src/filter/cinematic_video_cache_filter.cpp",
+    "src/pipeline/pipeline.cpp",
+    "src/buffer/audio_buffer_wrapper.cpp",
+    "src/buffer/video_buffer_wrapper.cpp",
+    "src/buffer/meta_buffer_wrapper.cpp",
+    "src/util/avbuffer_context.cpp",
+    "src/util/moving_photo_recorder_task.cpp",
+    "src/util/moving_photo_avmuxer.cpp",
+    "src/util/engine_context_ext.cpp",
+    "src/util/moving_photo_engine_context.cpp",
+    "src/deferred_process.cpp",
+    "src/recorder_engine_adapter.cpp",
+    "src/recorder_engine.cpp",
+  ]
+
+  deps = [
+    "${multimedia_camera_framework_path}/common:camera_utils",
+    "${multimedia_camera_framework_path}/dynamic_libs:camera_dynamic_medialibrary",
+  ]
+
+  external_deps = [
+    "av_codec:av_codec_client",
+    "av_codec:av_codec_media_engine_modules",
+    "audio_framework:audio_capturer",
+    "c_utils:utils",
+    "graphic_surface:surface",
+    "graphic_surface:sync_fence",
+    "hilog:libhilog",
+    "hisysevent:libhisysevent",
+    "hitrace:hitrace_meter",
+    "image_framework:image_native",
+    "ipc:ipc_core",
+    "samgr:samgr_proxy",
+    "access_token:libtokensetproc_shared",
+    "audio_framework:audio_client",
+    "media_library:media_library",
+    "drivers_interface_camera:metadata",
+    "drivers_interface_camera:libcamera_proxy_1.0",
+    "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
+    "drivers_interface_camera:libmap_data_sequenceable_1.0",
+    "init:libbegetutil",
+    "safwk:system_ability_fwk",
+    "bundle_framework:appexecfwk_base",
+    "bundle_framework:appexecfwk_core",
+  ]
+
+  public_external_deps = [
+    "audio_framework:offline_audio_effect",
+  ]
+
+  defines = [
+  ]
+
+  if (use_image_effect) {
+    defines += [ "CAMERA_USE_IMAGE_EFFECT" ]
+    sources += [
+      "src/filter/image_effect_filter.cpp",
+    ]
+  }
+
+  public_configs = [
+    ":media_stream_config",
+  ]
+  part_name = "camera_framework"
+  subsystem_name = "multimedia"
+}

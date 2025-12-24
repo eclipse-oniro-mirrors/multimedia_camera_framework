@@ -53,7 +53,7 @@ void CameraFwkMetadataUtilsUnitTest::TearDown()
  * EnvConditions: NA
  * CaseDescription: Test DumpMetadataInfo normal branch.
  */
-HWTEST_F(CameraFwkMetadataUtilsUnitTest, camera_fwk_metadata_utils_unittest_001, TestSize.Level1)
+HWTEST_F(CameraFwkMetadataUtilsUnitTest, camera_fwk_metadata_utils_unittest_001, TestSize.Level0)
 {
     int32_t itemCount = 10;
     int32_t dataSize = 100;
@@ -75,7 +75,7 @@ HWTEST_F(CameraFwkMetadataUtilsUnitTest, camera_fwk_metadata_utils_unittest_001,
  * EnvConditions: NA
  * CaseDescription: Test DumpMetadataItemInfo and RecreateMetadata normal branch with different dataType.
  */
-HWTEST_F(CameraFwkMetadataUtilsUnitTest, camera_fwk_metadata_utils_unittest_002, TestSize.Level1)
+HWTEST_F(CameraFwkMetadataUtilsUnitTest, camera_fwk_metadata_utils_unittest_002, TestSize.Level0)
 {
     camera_metadata_item_t item;
     item.data_type = META_TYPE_BYTE;
@@ -110,29 +110,12 @@ HWTEST_F(CameraFwkMetadataUtilsUnitTest, camera_fwk_metadata_utils_unittest_002,
  * EnvConditions: NA
  * CaseDescription: Test UpdateMetadataTag normal branch.
  */
-HWTEST_F(CameraFwkMetadataUtilsUnitTest, camera_fwk_metadata_utils_unittest_003, TestSize.Level1)
+HWTEST_F(CameraFwkMetadataUtilsUnitTest, camera_fwk_metadata_utils_unittest_003, TestSize.Level0)
 {
     camera_metadata_item_t item;
     std::shared_ptr<OHOS::Camera::CameraMetadata> dstMetadata = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
     bool ret = CameraFwkMetadataUtils::UpdateMetadataTag(item, dstMetadata);
     EXPECT_FALSE(ret);
-}
-
-/*
- * Feature: Framework
- * Function: Test UpdateMetadataTag normal branch.
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test UpdateMetadataTag normal branch.
- */
-HWTEST_F(CameraFwkMetadataUtilsUnitTest, camera_fwk_metadata_utils_unittest_004, TestSize.Level0)
-{
-    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
-    std::shared_ptr<OHOS::Camera::CameraMetadata> testMetadata =
-        CameraFwkMetadataUtils::RecreateMetadata(metadata);
-    ASSERT_NE(testMetadata, nullptr);
-    CameraFwkMetadataUtils::LogFormatCameraMetadata(testMetadata);
 }
 } // CameraStandard
 } // OHOS

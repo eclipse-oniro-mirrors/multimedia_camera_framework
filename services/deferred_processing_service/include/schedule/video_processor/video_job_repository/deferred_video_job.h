@@ -18,7 +18,7 @@
 
 #include "basic_definitions.h"
 #include "dp_utils.h"
-#include "ipc_file_descriptor.h"
+#include "dps_fd.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -36,22 +36,23 @@ enum class VideoJobState {
 
 class DeferredVideoJob {
 public:
-    DeferredVideoJob(const std::string& videoId, const sptr<IPCFileDescriptor>& srcFd,
-        const sptr<IPCFileDescriptor>& dstFd);
-    ~DeferredVideoJob();
+    DeferredVideoJob(const std::string& videoId, const DpsFdPtr& srcFd,
+        const DpsFdPtr& dstFd, const DpsFdPtr& movieFd, const DpsFdPtr& movieCopyFd);
+    ~DeferredVideoJob() = default;
 
     inline VideoJobState GetCurStatus()
     {
-        DP_DEBUG_LOG("videoId: %{public}s, current status: %{public}d, previous status: %{public}d",
-            videoId_.c_str(), curStatus_, preStatus_);
         return curStatus_;
     }
 
     inline VideoJobState GetPreStatus()
     {
-        DP_DEBUG_LOG("videoId: %{public}s, current status: %{public}d, previous status: %{public}d",
-            videoId_.c_str(), curStatus_, preStatus_);
         return preStatus_;
+    }
+
+    inline JobPriority GetCurPriority()
+    {
+        return priority_;
     }
 
     inline std::string GetVideoId()
@@ -59,50 +60,24 @@ public:
         return videoId_;
     }
 
-    inline sptr<IPCFileDescriptor> GetInputFd()
+    inline DpsFdPtr GetInputFd()
     {
         return srcFd_;
     }
 
-    inline sptr<IPCFileDescriptor> GetOutputFd()
+    inline DpsFdPtr GetOutputFd()
     {
         return dstFd_;
     }
 
-    bool operator==(const DeferredVideoJob& other) const
+    inline DpsFdPtr GetMovieFd()
     {
-        return videoId_ == other.videoId_;
+        return movieFd_;
     }
 
-    bool operator>(const DeferredVideoJob& other) const
+    inline DpsFdPtr GetMovieCopyFd()
     {
-        if (curStatus_ == other.curStatus_) {
-            return createTime_ < other.createTime_;
-        }
-        return curStatus_ < other.curStatus_;
-    }
-
-private:
-    friend class VideoJobRepository;
-    bool SetJobState(VideoJobState curStatus);
-
-    const std::string videoId_;
-    sptr<IPCFileDescriptor> srcFd_;
-    sptr<IPCFileDescriptor> dstFd_;
-    VideoJobState preStatus_ {VideoJobState::NONE};
-    VideoJobState curStatus_ {VideoJobState::NONE};
-    SteadyTimePoint createTime_;
-};
-using DeferredVideoJobPtr = std::shared_ptr<DeferredVideoJob>;
-
-class DeferredVideoWork {
-public:
-    DeferredVideoWork(const DeferredVideoJobPtr& jobPtr, ExecutionMode mode, bool isAutoSuspend);
-    ~DeferredVideoWork();
-
-    inline DeferredVideoJobPtr GetDeferredVideoJob() const
-    {
-        return jobPtr_;
+        return movieCopyFd_;
     }
 
     inline ExecutionMode GetExecutionMode() const
@@ -110,9 +85,20 @@ public:
         return executionMode_;
     }
 
+    inline void SetExecutionMode(ExecutionMode mode)
+    {
+        executionMode_ = mode;
+        startTime_ = GetSteadyNow();
+    }
+
     inline bool IsSuspend() const
     {
         return !isCharging_;
+    }
+
+    inline void SetChargState(bool isCharging)
+    {
+        isCharging_ = isCharging;
     }
 
     inline SteadyTimePoint GetStartTime() const
@@ -125,24 +111,82 @@ public:
         return static_cast<uint32_t>(GetDiffTime<Milli>(GetStartTime()));
     }
 
-    inline uint32_t GetTimeId() const
+    inline uint32_t GetTimerId() const
     {
-        return timeId_;
+        return timerId_;
     }
 
-    inline void SetTimeId(const uint32_t timeId)
+    inline void SetTimerId(const uint32_t timerId)
     {
-        timeId_ = timeId;
+        timerId_ = timerId;
+    }
+
+    inline bool isMoving()
+    {
+        return type_ == VideoJobType::MOVIE;
+    }
+
+    bool operator==(const DeferredVideoJob& other) const
+    {
+        return videoId_ == other.videoId_;
+    }
+
+    bool operator>(const DeferredVideoJob& other) const
+    {
+        // Compare based on priority first
+        if (priority_ != other.priority_) {
+            // If the job's status is more than running, compare the priority
+            if (curStatus_ >= VideoJobState::RUNNING &&
+                other.curStatus_ >= VideoJobState::RUNNING) {
+                return priority_ > other.priority_;
+            }
+            // If only this job status is more than running, it is lesser
+            if (curStatus_ >= VideoJobState::RUNNING) {
+                return false;
+            }
+            // If only the other job status is more than running, this job is greater
+            if (other.curStatus_ >= VideoJobState::RUNNING) {
+                return true;
+            }
+            // If neither job status is more than running, compare priority
+            return priority_ > other.priority_;
+        }
+        // If the priorities are the same and both are high priority, compare creation time
+        if (priority_ == JobPriority::HIGH) {
+            if (curStatus_ == other.curStatus_) {
+                return createTime_ > other.createTime_;
+            }
+            return curStatus_ < other.curStatus_;
+        }
+        // If statuses are equal, compare creation time
+        if (curStatus_ == other.curStatus_) {
+            return createTime_ < other.createTime_;
+        }
+        return curStatus_ < other.curStatus_;
     }
 
 private:
-    DeferredVideoJobPtr jobPtr_;
-    ExecutionMode executionMode_;
+    friend class VideoJobRepository;
+    bool SetJobState(VideoJobState curStatus);
+    bool SetJobPriority(JobPriority priority);
+    void UpdateTime();
+
+    const std::string videoId_;
+    DpsFdPtr srcFd_;
+    DpsFdPtr dstFd_;
+    DpsFdPtr movieFd_;
+    DpsFdPtr movieCopyFd_;
+    JobPriority priority_ {JobPriority::NORMAL};
+    VideoJobState preStatus_ {VideoJobState::NONE};
+    VideoJobState curStatus_ {VideoJobState::NONE};
+    SteadyTimePoint createTime_;
     SteadyTimePoint startTime_;
-    bool isCharging_;
-    uint32_t timeId_ {0};
+    ExecutionMode executionMode_ {ExecutionMode::DUMMY};
+    bool isCharging_ {false};
+    uint32_t timerId_ {INVALID_TIMERID};
+    VideoJobType type_ {VideoJobType::NORMAL};
 };
-using DeferredVideoWorkPtr = std::shared_ptr<DeferredVideoWork>;
+using DeferredVideoJobPtr = std::shared_ptr<DeferredVideoJob>;
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS

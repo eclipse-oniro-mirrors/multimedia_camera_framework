@@ -39,7 +39,7 @@ public:
 
     int32_t GetOfflineOutputSize();
 
-    void AddTaskManager(int32_t& hStreamOperatorId, sptr<AvcodecTaskManagerIntf> AvcodecTaskManagerProxy);
+    void AddTaskManager(int32_t& hStreamOperatorId, sptr<AvcodecTaskManagerIntf> avcodecTaskManagerProxy);
 
     void RemoveTaskManager(int32_t& hStreamOperatorId);
 
@@ -50,7 +50,7 @@ private:
     std::mutex mapMutex_;
     static sptr<HStreamOperatorManager> streamOperatorManager_;
     std::map<int32_t, sptr<HStreamOperator>> streamOperatorManagerMap_;
-    SafeMap<int32_t, sptr<AvcodecTaskManagerIntf>> taskManagerMap_;
+    SafeMap<int32_t, std::vector<sptr<AvcodecTaskManagerIntf>>> taskManagerMap_;
     static std::mutex instanceMutex_;
     std::atomic<int32_t> streamOperatorIdGenerator_ = -1;
 

@@ -225,7 +225,12 @@ public:
 
     void OnOfflineDeliveryFinished(const int32_t captureId) const override
     {
-        MEDIA_DEBUG_LOG("OnOfflineDeliveryFinished is called");
+        MEDIA_DEBUG_LOG("OnOfflineDeliveryFinished is called in ndk!");
+    }
+
+    void OnConstellationDrawingState(const int32_t drawingState) const override
+    {
+        MEDIA_DEBUG_LOG("OnConstellationDrawingState is called in ndk!");
     }
 
     void OnPhotoAvailable(const std::shared_ptr<OHOS::Media::NativeImage> nativeImage, bool isRaw) const override
@@ -331,6 +336,7 @@ public:
 
     OHOS::sptr<OHOS::CameraStandard::PhotoOutput> GetInnerPhotoOutput();
 
+
     OH_PhotoNative* CreateCameraPhotoNative(std::shared_ptr<OHOS::Media::NativeImage> &image, bool isMain);
 
     Camera_ErrorCode IsMovingPhotoSupported(bool* isSupported);
@@ -350,6 +356,7 @@ private:
     OHOS::sptr<OHOS::CameraStandard::PhotoOutput> innerPhotoOutput_ = nullptr;
     std::shared_ptr<InnerPhotoOutputCallback> innerCallback_ = nullptr;
     uint8_t callbackFlag_ = 0;
+    OH_PhotoNative *photoNative_ = nullptr;
     bool isMirrorEnable_ = false;
 };
 #endif // OHOS_PHOTO_OUTPUT_IMPL_H

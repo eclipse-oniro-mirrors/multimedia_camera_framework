@@ -37,6 +37,7 @@ config("camera_framework_local_config") {
     "${multimedia_camera_framework_path}/services/camera_service/binder/server/include",
     "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include",
     "${multimedia_camera_framework_path}/common/utils",
+    "${multimedia_camera_framework_path}/dynamic_libs/image_framework/include",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/utils",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/base/include",
@@ -76,16 +77,21 @@ common_sources = [
   "src/output/preview_output.cpp",
   "src/output/sketch_wrapper.cpp",
   "src/output/video_output.cpp",
+  "src/output/video_capability.cpp",
+  "src/output/movie_file_output.cpp",
+  "src/output/unify_movie_file_output.cpp",
   "src/session/capture_session.cpp",
   "src/session/control_center_session.cpp",
+  "src/session/features/composition_feature.cpp",
   "src/session/features/moon_capture_boost_feature.cpp",
   "src/session/mech_session.cpp",
+  "src/session/cameraSwitch_session.cpp",
   "src/session/photo_session.cpp",
   "src/session/scan_session.cpp",
   "src/session/secure_camera_session.cpp",
   "src/session/video_session.cpp",
   "src/utils/camera_buffer_handle_utils.cpp",
-  "src/utils/camera_counting_timer.cpp",
+  "src/utils/camera_device_utils.cpp",
   "src/utils/camera_rotation_api_utils.cpp",
   "src/utils/camera_security_utils.cpp",
   "src/utils/camera_thread_utils.cpp",
@@ -95,18 +101,21 @@ common_sources = [
 
 common_external_deps = [
   "access_token:libtokenid_sdk",
+  "audio_framework:audio_client",
+  "audio_framework:audio_capturer",
   "bundle_framework:appexecfwk_base",
   "bundle_framework:appexecfwk_core",
   "c_utils:utils",
   "data_share:datashare_common",
   "data_share:datashare_consumer",
-  "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
   "drivers_interface_camera:libcamera_proxy_1.0",
   "drivers_interface_camera:libcamera_proxy_1.1",
   "drivers_interface_camera:libcamera_proxy_1.2",
   "drivers_interface_camera:libcamera_proxy_1.3",
-  "drivers_interface_camera:libmap_data_sequenceable_1.0",
+  "drivers_interface_camera:libcamera_proxy_1.4",
+  "drivers_interface_camera:libcamera_proxy_1.5",
   "drivers_interface_display:libdisplay_commontype_proxy_1.0",
+  "drivers_interface_display:libdisplay_commontype_proxy_2.1",
   "graphic_2d:color_manager",
   "graphic_2d:librender_service_client",
   "graphic_surface:buffer_handle",
@@ -126,7 +135,7 @@ common_external_deps = [
   "os_account:os_account_innerkits",
   "safwk:system_ability_fwk",
   "samgr:samgr_proxy",
-  "window_manager:libdm",
+  "window_manager:libdm_lite",
 ]
 
 ohos_shared_library("camera_framework") {
@@ -169,11 +178,15 @@ ohos_shared_library("camera_framework") {
     "${multimedia_camera_framework_path}/services/deferred_processing_service/idls:deferred_processing_service_idl_config",
   ]
 
-  public_external_deps = [ "drivers_interface_camera:metadata" ]
-
-  deps = [ "${multimedia_camera_framework_path}/common:camera_utils",
+  deps = [
+    "${multimedia_camera_framework_path}/common:camera_utils",
     "${multimedia_camera_framework_path}/services/camera_service/idls:camera_idl_sa_proxy",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/idls:camera_deferred_idl_sa_proxy",
+  ]
+  public_external_deps = [
+    "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
+    "drivers_interface_camera:libmap_data_sequenceable_1.0",
+    "drivers_interface_camera:metadata",
   ]
 
   external_deps = common_external_deps
@@ -233,15 +246,19 @@ ohos_static_library("camera_framework_static") {
     "${multimedia_camera_framework_path}/services/deferred_processing_service/idls:deferred_processing_service_idl_config",
   ]
 
-  public_external_deps = [ "drivers_interface_camera:metadata" ]
-
   deps = [
-    "${multimedia_camera_framework_path}/common:camera_utils",
+    "${multimedia_camera_framework_path}/common:camera_utils_static",
     "${multimedia_camera_framework_path}/services/camera_service/idls:camera_idl_sa_proxy",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/idls:camera_deferred_idl_sa_proxy",
   ]
 
   external_deps = common_external_deps
+
+  external_deps += [
+    "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
+    "drivers_interface_camera:libmap_data_sequenceable_1.0",
+    "drivers_interface_camera:metadata",
+  ]
 
   defines = []
   if (use_sensor) {

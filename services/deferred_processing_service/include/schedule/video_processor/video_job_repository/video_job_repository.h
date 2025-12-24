@@ -18,45 +18,49 @@
 
 #include <unordered_set>
 
-#include "deferred_video_job.h"
-#include "ivideo_job_repository_listener.h"
+#include "enable_shared_create.h"
+#include "video_info.h"
 #include "video_job_queue.h"
 
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-class VideoJobRepository {
+class VideoJobRepository : public EnableSharedCreateInit<VideoJobRepository> {
 public:
-    VideoJobRepository(const int32_t userId);
     ~VideoJobRepository();
     
-    void AddVideoJob(const std::string& videoId, const sptr<IPCFileDescriptor>& srcFd,
-        const sptr<IPCFileDescriptor>& dstFd);
+    int32_t Initialize() override;
+    void AddVideoJob(const std::string& videoId, const std::shared_ptr<VideoInfo>& info);
     bool RemoveVideoJob(const std::string& videoId, bool restorable);
     void RestoreVideoJob(const std::string& videoId);
+    bool RequestJob(const std::string& videoId);
+    void CancelJob(const std::string& videoId);
     void SetJobPending(const std::string& videoId);
     void SetJobRunning(const std::string& videoId);
     void SetJobCompleted(const std::string& videoId);
     void SetJobFailed(const std::string& videoId);
     void SetJobPause(const std::string& videoId);
     void SetJobError(const std::string& videoId);
-
     DeferredVideoJobPtr GetJob();
-    int32_t GetRunningJobCounts();
+    DeferredVideoJobPtr GetJobUnLocked(const std::string& videoId);
+    uint32_t GetJobTimerId(const std::string& videoId);
     void GetRunningJobList(std::vector<std::string>& list);
-    void RegisterJobListener(const std::weak_ptr<IVideoJobRepositoryListener>& listener);
+    bool HasRunningJob();
+    bool IsHighJob(const std::string& videoId);
+    bool IsRunningJob(const std::string& videoId);
+    bool IsNeedStopJob();
+
+protected:
+    explicit VideoJobRepository(const int32_t userId);
 
 private:
-    void NotifyJobChangedUnLocked(bool statusChanged, DeferredVideoJobPtr jobPtr);
+    void NotifyJobChangedUnLocked(const std::string& videoId);
     void UpdateRunningCountUnLocked(bool statusChanged, const DeferredVideoJobPtr& jobPtr);
-    DeferredVideoJobPtr GetJobUnLocked(const std::string& videoId);
     void ClearCatch();
 
     const int32_t userId_;
-    std::shared_ptr<VideoJobQueue> jobQueue_ {nullptr};
-    std::unordered_map<std::string, DeferredVideoJobPtr> jobMap_ {};
+    std::unique_ptr<VideoJobQueue> jobQueue_ {nullptr};
     std::unordered_set<std::string> runningSet_ {};
-    std::weak_ptr<IVideoJobRepositoryListener> jobListener_ ;
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

@@ -53,9 +53,9 @@ ohos_fuzztest("VideoPostProcessorFuzzTest") {
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/photo_processor/strategy",
     "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include/input",
     "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include/session",
-    "${multimedia_camera_framework_path}/frameworks/native/camera/src",
+    "${multimedia_camera_framework_path}/frameworks/native/camera/base/src",
     "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include/output",
-    "${multimedia_camera_framework_path}/frameworks/native/camera/src/output/",
+    "${multimedia_camera_framework_path}/frameworks/native/camera/base/src/output/",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/video_processor/video_job_repository",
     "${multimedia_camera_framework_path}/dynamic_libs/media_manager/include/media_manager",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/command_server",
@@ -85,7 +85,7 @@ ohos_fuzztest("VideoPostProcessorFuzzTest") {
   deps = [
     "${multimedia_camera_framework_path}/common:camera_utils",
     "${multimedia_camera_framework_path}/services/camera_service:camera_service",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service:deferred_processing_service_test_only",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service:deferred_processing_service",
     "${multimedia_camera_framework_path}/dynamic_libs:camera_dynamic_media_manager"
   ]
   external_deps = [
@@ -105,6 +105,7 @@ ohos_fuzztest("VideoPostProcessorFuzzTest") {
     "drivers_interface_camera:libcamera_proxy_1.1",
     "drivers_interface_camera:libcamera_proxy_1.2",
     "drivers_interface_camera:libcamera_proxy_1.3",
+    "drivers_interface_camera:libcamera_proxy_1.4",
     "drivers_interface_camera:libmap_data_sequenceable_1.0",
     "drivers_interface_camera:metadata",
     "graphic_2d:librender_service_client",

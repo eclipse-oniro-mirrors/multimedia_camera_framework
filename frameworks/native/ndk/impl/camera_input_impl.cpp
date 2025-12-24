@@ -29,9 +29,8 @@ public:
     void OnError(const int32_t errorType, const int32_t errorMsg) const override
     {
         MEDIA_DEBUG_LOG("OnError is called!, errorType: %{public}d", errorType);
-        if (cameraInput_ != nullptr && callback_.onError != nullptr) {
-            callback_.onError(cameraInput_, FrameworkToNdkCameraError(errorType));
-        }
+        CHECK_RETURN(cameraInput_ == nullptr || callback_.onError == nullptr);
+        callback_.onError(cameraInput_, FrameworkToNdkCameraError(errorType));
     }
 
 private:
@@ -47,7 +46,6 @@ Camera_Input::Camera_Input(sptr<CameraInput> &innerCameraInput) : innerCameraInp
 Camera_Input::~Camera_Input()
 {
     MEDIA_DEBUG_LOG("~Camera_Input is called");
-    CHECK_RETURN(!innerCameraInput_);
     innerCameraInput_ = nullptr;
 }
 

@@ -17,14 +17,13 @@
 #define CAMERA_BASE_FUNCTION_MODULETEST_H
 
 #include <vector>
-#include <cmath>
 
 #include "gtest/gtest.h"
 #include "input/camera_manager.h"
 #include "input/camera_manager_for_sys.h"
-#include "photo_output_callback.h"
 #include "session/capture_session.h"
 #include "session/capture_session_for_sys.h"
+#include "photo_output_callback.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -132,7 +131,8 @@ class TestThumbnailCallback : public ThumbnailCallback {
 public:
     TestThumbnailCallback() = default;
     virtual ~TestThumbnailCallback() = default;
-    void OnThumbnailAvailable(const WatermarkInfo &info, unique_ptr<Media::PixelMap> pixelMap) const override;
+    void OnThumbnailAvailable(
+        const int32_t captureId, const int64_t timestamp, unique_ptr<Media::PixelMap> pixelMap) const override;
 };
 
 // ms
@@ -195,8 +195,8 @@ public:
     void CreateAndConfigureDefaultCaptureOutput(sptr<PhotoOutput> &photoOutput, sptr<VideoOutput> &videoOutput);
     void CreateAndConfigureDefaultCaptureOutputForSys(sptr<PhotoOutput> &photoOutput, sptr<VideoOutput> &videoOutput);
     void CreateAndConfigureDefaultCaptureOutput(sptr<PhotoOutput> &photoOutput);
-    void StartDefaultCaptureOutput(sptr<PhotoOutput> photoOutput, sptr<VideoOutput> videoOutput);
     void StartDefaultCaptureOutputForSys(sptr<PhotoOutput> photoOutput, sptr<VideoOutput> videoOutput);
+    void StartDefaultCaptureOutput(sptr<PhotoOutput> photoOutput, sptr<VideoOutput> videoOutput);
     void StartDefaultCaptureOutput(sptr<PhotoOutput> photoOutput);
 
     void CreateNormalSession();

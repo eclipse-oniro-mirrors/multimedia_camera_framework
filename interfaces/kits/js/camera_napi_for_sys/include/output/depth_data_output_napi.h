@@ -61,8 +61,7 @@ private:
     sptr<Surface> depthDataSurface_ = nullptr;
 };
 
-class DepthDataListener : public IBufferConsumerListener, public ListenerBase,
-    public std::enable_shared_from_this<DepthDataListener > {
+class DepthDataListener : public IBufferConsumerListener, public ListenerBase {
 public:
     explicit DepthDataListener(napi_env env, const sptr<Surface> depthSurface, sptr<DepthDataOutput> depthDataOutput);
     ~DepthDataListener() = default;
@@ -83,8 +82,8 @@ private:
 
 struct DepthDataListenerInfo {
     sptr<Surface> depthDataSurface_;
-    std::weak_ptr<const DepthDataListener> listener_;
-    DepthDataListenerInfo(sptr<Surface> depthDataSurface, std::shared_ptr<const DepthDataListener > listener)
+    wptr<DepthDataListener> listener_;
+    DepthDataListenerInfo(sptr<Surface> depthDataSurface, wptr<DepthDataListener> listener)
         : depthDataSurface_(depthDataSurface), listener_(listener)
     {}
 };

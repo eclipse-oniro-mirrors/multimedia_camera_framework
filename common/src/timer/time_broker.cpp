@@ -13,8 +13,9 @@
  * limitations under the License.
  */
 
-#include "timer/time_broker.h"
-#include "timer/steady_clock.h"
+#include "time_broker.h"
+
+#include "steady_clock.h"
 #include "camera_log.h"
 
 namespace OHOS {
@@ -60,7 +61,7 @@ bool TimeBroker::RegisterCallback(uint32_t delayTimeMs, std::function<void(uint3
     uint32_t& handle)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    MEDIA_DEBUG_LOG("(%s) register callback with delayTimeMs (%{public}d).",
+    MEDIA_DEBUG_LOG("(%s) register callback with delayTimeMs (%{public}d).", 
         name_.c_str(), static_cast<int>(delayTimeMs));
     auto ret = GetNextHandle(handle);
     if (ret) {

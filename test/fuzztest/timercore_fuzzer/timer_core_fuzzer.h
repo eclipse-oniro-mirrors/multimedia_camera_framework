@@ -17,8 +17,7 @@
 #define TIMER_BROKER_FUZZER_H
 
 #include <memory>
-#include "timer/core/timer_core.h"
-#include <fuzzer/FuzzedDataProvider.h>
+#include "timer_core.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -26,7 +25,7 @@ using namespace DeferredProcessing;
 class TimerCoreFuzzer {
 public:
 static std::shared_ptr<TimerCore> fuzz_;
-static void TimerCoreFuzzTest(FuzzedDataProvider& fdp);
+static void TimerCoreFuzzTest();
 };
 } //CameraStandard
 } //OHOS

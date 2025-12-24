@@ -30,6 +30,8 @@ thread_local napi_ref CameraFunctionsNapi::sPortraitPhotoConstructor_ = nullptr;
 thread_local napi_ref CameraFunctionsNapi::sPortraitPhotoConflictConstructor_ = nullptr;
 thread_local napi_ref CameraFunctionsNapi::sVideoConstructor_ = nullptr;
 thread_local napi_ref CameraFunctionsNapi::sVideoConflictConstructor_ = nullptr;
+thread_local napi_ref CameraFunctionsNapi::sNightPhotoConstructor_ = nullptr;
+thread_local napi_ref CameraFunctionsNapi::sNightPhotoConflictConstructor_ = nullptr;
 
 const std::map<FunctionsType, const char*> CameraFunctionsNapi::functionsNameMap_ = {
     {FunctionsType::PHOTO_FUNCTIONS, PHOTO_ABILITY_NAPI_CLASS_NAME},
@@ -37,7 +39,9 @@ const std::map<FunctionsType, const char*> CameraFunctionsNapi::functionsNameMap
     {FunctionsType::PORTRAIT_PHOTO_FUNCTIONS, PORTRAIT_PHOTO_ABILITY_NAPI_CLASS_NAME},
     {FunctionsType::PORTRAIT_PHOTO_CONFLICT_FUNCTIONS, PORTRAIT_PHOTO_CONFLICT_ABILITY_NAPI_CLASS_NAME},
     {FunctionsType::VIDEO_FUNCTIONS, VIDEO_ABILITY_NAPI_CLASS_NAME},
-    {FunctionsType::VIDEO_CONFLICT_FUNCTIONS, VIDEO_CONFLICT_ABILITY_NAPI_CLASS_NAME}
+    {FunctionsType::VIDEO_CONFLICT_FUNCTIONS, VIDEO_CONFLICT_ABILITY_NAPI_CLASS_NAME},
+    {FunctionsType::NIGHT_PHOTO_FUNCTIONS, NIGHT_PHOTO_ABILITY_NAPI_CLASS_NAME},
+    {FunctionsType::NIGHT_PHOTO_CONFLICT_FUNCTIONS, NIGHT_PHOTO_CONFLICT_ABILITY_NAPI_CLASS_NAME}
 };
 
 const std::vector<napi_property_descriptor> CameraFunctionsNapi::flash_query_props = {
@@ -63,7 +67,9 @@ const std::vector<napi_property_descriptor> CameraFunctionsNapi::zoom_query_prop
 
 const std::vector<napi_property_descriptor> CameraFunctionsNapi::beauty_query_props = {
     DECLARE_NAPI_FUNCTION("getSupportedBeautyTypes", CameraFunctionsNapi::GetSupportedBeautyTypes),
-    DECLARE_NAPI_FUNCTION("getSupportedBeautyRange", CameraFunctionsNapi::GetSupportedBeautyRange)
+    DECLARE_NAPI_FUNCTION("getSupportedBeautyRange", CameraFunctionsNapi::GetSupportedBeautyRange),
+    DECLARE_NAPI_FUNCTION("getSupportedPortraitThemeTypes", CameraFunctionsNapi::GetSupportedPortraitThemeTypes),
+    DECLARE_NAPI_FUNCTION("isPortraitThemeSupported", CameraFunctionsNapi::IsPortraitThemeSupported)
 };
 
 const std::vector<napi_property_descriptor> CameraFunctionsNapi::color_effect_query_props = {
@@ -100,8 +106,20 @@ const std::vector<napi_property_descriptor> CameraFunctionsNapi::manual_exposure
     DECLARE_NAPI_FUNCTION("getSupportedExposureRange", CameraFunctionsNapi::GetSupportedExposureRange),
 };
 
+const std::vector<napi_property_descriptor> CameraFunctionsNapi::night_manual_exposure_query_props = {
+    DECLARE_NAPI_FUNCTION("getSupportedExposureRange", CameraFunctionsNapi::GetExposureRange),
+};
+
 const std::vector<napi_property_descriptor> CameraFunctionsNapi::features_query_props = {
     DECLARE_NAPI_FUNCTION("isSceneFeatureSupported", CameraFunctionsNapi::IsFeatureSupported),
+};
+
+const std::vector<napi_property_descriptor> CameraFunctionsNapi::night_sub_mode_query_props = {
+    DECLARE_NAPI_FUNCTION("getSupportedNightSubModeTypes", CameraFunctionsNapi::GetSupportedNightSubModeTypes),
+};
+
+const std::vector<napi_property_descriptor> CameraFunctionsNapi::image_stabilization_guide_query_props = {
+    DECLARE_NAPI_FUNCTION("isImageStabilizationGuideSupported", CameraFunctionsNapi::IsImageStabilizationGuideSupported)
 };
 
 const std::map<FunctionsType, Descriptor> CameraFunctionsNapi::functionsDescMap_ = {
@@ -114,28 +132,28 @@ const std::map<FunctionsType, Descriptor> CameraFunctionsNapi::functionsDescMap_
     {FunctionsType::VIDEO_FUNCTIONS, {flash_query_props, auto_exposure_query_props, focus_query_props, zoom_query_props,
         stabilization_query_props, beauty_query_props, color_effect_query_props, color_management_query_props,
         macro_query_props, manual_exposure_query_props, features_query_props}},
+    {FunctionsType::NIGHT_PHOTO_FUNCTIONS, {flash_query_props, auto_exposure_query_props, night_sub_mode_query_props,
+        focus_query_props, zoom_query_props, beauty_query_props, color_effect_query_props, color_management_query_props,
+        features_query_props, image_stabilization_guide_query_props, night_manual_exposure_query_props}},
     {FunctionsType::PHOTO_CONFLICT_FUNCTIONS, {zoom_query_props, macro_query_props}},
     {FunctionsType::PORTRAIT_PHOTO_CONFLICT_FUNCTIONS, {zoom_query_props, portrait_query_props, aperture_query_props}},
-    {FunctionsType::VIDEO_CONFLICT_FUNCTIONS, {zoom_query_props, macro_query_props}}};
+    {FunctionsType::VIDEO_CONFLICT_FUNCTIONS, {zoom_query_props, macro_query_props}},
+    {FunctionsType::NIGHT_PHOTO_CONFLICT_FUNCTIONS, {night_sub_mode_query_props, zoom_query_props, features_query_props,
+        color_management_query_props, flash_query_props, color_effect_query_props, night_manual_exposure_query_props}}};
 
 void CameraFunctionsNapi::Init(napi_env env, FunctionsType type)
 {
     MEDIA_DEBUG_LOG("Init is called");
-    napi_status status;
-    napi_value ctorObj;
     std::vector<std::vector<napi_property_descriptor>> descriptors;
     auto nameIt = functionsNameMap_.find(type);
     CHECK_RETURN_ELOG(nameIt == functionsNameMap_.end(), "Init call Failed, className not find");
     auto className = nameIt->second;
-
     auto descIt = functionsDescMap_.find(type);
     CHECK_RETURN_ELOG(descIt == functionsDescMap_.end(), "Init call Failed, descriptors not find");
     std::vector<napi_property_descriptor> camera_ability_props = CameraNapiUtils::GetPropertyDescriptor(descIt->second);
-
-    status = napi_define_class(env, className, NAPI_AUTO_LENGTH,
-                               CameraFunctionsNapiConstructor, nullptr,
-                               camera_ability_props.size(),
-                               camera_ability_props.data(), &ctorObj);
+    napi_value ctorObj;
+    napi_status status = napi_define_class(env, className, NAPI_AUTO_LENGTH, CameraFunctionsNapiConstructor, nullptr,
+        camera_ability_props.size(), camera_ability_props.data(), &ctorObj);
     if (status == napi_ok) {
         if (type == FunctionsType::PHOTO_FUNCTIONS) {
             status = NapiRefManager::CreateMemSafetyRef(env, ctorObj, &sPhotoConstructor_);
@@ -149,11 +167,16 @@ void CameraFunctionsNapi::Init(napi_env env, FunctionsType type)
             status = NapiRefManager::CreateMemSafetyRef(env, ctorObj, &sVideoConstructor_);
         } else if (type == FunctionsType::VIDEO_CONFLICT_FUNCTIONS) {
             status = NapiRefManager::CreateMemSafetyRef(env, ctorObj, &sVideoConflictConstructor_);
+        } else if (type == FunctionsType::NIGHT_PHOTO_FUNCTIONS) {
+            status = NapiRefManager::CreateMemSafetyRef(env, ctorObj, &sNightPhotoConstructor_);
+        } else if (type == FunctionsType::NIGHT_PHOTO_CONFLICT_FUNCTIONS) {
+            status = NapiRefManager::CreateMemSafetyRef(env, ctorObj, &sNightPhotoConflictConstructor_);
         } else {
             return;
         }
     }
-    CHECK_RETURN_ELOG(status != napi_ok, "Init call Failed");
+    CHECK_RETURN_ELOG(status != napi_ok, "CameraFunctionsNapi Init failed");
+    MEDIA_DEBUG_LOG("CameraFunctionsNapi Init success");
     return;
 }
 
@@ -181,6 +204,12 @@ napi_value CameraFunctionsNapi::CreateCameraFunctions(napi_env env, sptr<CameraA
     } else if (type == FunctionsType::VIDEO_CONFLICT_FUNCTIONS) {
         CHECK_EXECUTE(sVideoConflictConstructor_ == nullptr, CameraFunctionsNapi::Init(env, type));
         status = napi_get_reference_value(env, sVideoConflictConstructor_, &constructor);
+    } else if (type == FunctionsType::NIGHT_PHOTO_FUNCTIONS) {
+        CHECK_EXECUTE(sNightPhotoConstructor_ == nullptr, CameraFunctionsNapi::Init(env, type));
+        status = napi_get_reference_value(env, sNightPhotoConstructor_, &constructor);
+    } else if (type == FunctionsType::NIGHT_PHOTO_CONFLICT_FUNCTIONS) {
+        CHECK_EXECUTE(sNightPhotoConflictConstructor_ == nullptr, CameraFunctionsNapi::Init(env, type));
+        status = napi_get_reference_value(env, sNightPhotoConflictConstructor_, &constructor);
     } else {
         MEDIA_ERR_LOG("CreateCameraFunctions call Failed type not find");
         napi_get_undefined(env, &result);
@@ -207,7 +236,9 @@ CameraFunctionsNapi::CameraFunctionsNapi() : env_(nullptr), wrapper_(nullptr) {}
 CameraFunctionsNapi::~CameraFunctionsNapi()
 {
     MEDIA_DEBUG_LOG("~CameraFunctionsNapi is called");
-    CHECK_EXECUTE(wrapper_ != nullptr, napi_delete_reference(env_, wrapper_));
+    if (wrapper_ != nullptr) {
+        napi_delete_reference(env_, wrapper_);
+    }
     if (cameraAbility_) {
         cameraAbility_ = nullptr;
     }
@@ -266,7 +297,7 @@ napi_value CameraFunctionsNapi::HandleQuery(napi_env env, napi_callback_info inf
             status = napi_create_array(env, &result);
             CHECK_RETURN_RET_ELOG(status != napi_ok, nullptr, "napi_create_array call Failed!");
             for (size_t i = 0; i < queryResult.size(); i++) {
-                int32_t value = queryResult[i];
+                int32_t value = static_cast<int32_t>(queryResult[i]);
                 napi_value element;
                 napi_create_int32(env, value, &element);
                 napi_set_element(env, result, i, element);
@@ -459,6 +490,32 @@ napi_value CameraFunctionsNapi::GetSupportedBeautyRange(napi_env env, napi_callb
     });
 }
 
+napi_value CameraFunctionsNapi::GetSupportedPortraitThemeTypes(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("GetSupportedPortraitThemeTypes is called");
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    return HandleQuery(env, info, thisVar, [](auto ability) {
+        return ability->GetSupportedPortraitThemeTypes();
+    });
+}
+
+napi_value CameraFunctionsNapi::IsPortraitThemeSupported(napi_env env, napi_callback_info info)
+{
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    return HandleQuery(env, info, thisVar, [](auto ability) {
+        return ability->IsPortraitThemeSupported();
+    });
+}
+
+
 napi_value CameraFunctionsNapi::GetSupportedColorEffects(napi_env env, napi_callback_info info)
 {
     MEDIA_DEBUG_LOG("GetSupportedColorEffects is called");
@@ -503,8 +560,10 @@ napi_value CameraFunctionsNapi::IsDepthFusionSupported(napi_env env, napi_callba
     napi_value thisVar = nullptr;
     CameraFunctionsNapi* cameraFunctionsNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, cameraFunctionsNapi);
-    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"),
-        nullptr, "CameraSessionNapi::IsDepthFusionSupported parse parameter occur error");
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("CameraFunctionsNapi::IsDepthFusionSupported parse parameter occur error");
+        return nullptr;
+    }
     thisVar = jsParamParser.GetThisVar();
 
     return HandleQuery(env, info, thisVar, [](auto ability) {
@@ -518,8 +577,10 @@ napi_value CameraFunctionsNapi::GetDepthFusionThreshold(napi_env env, napi_callb
     napi_value thisVar = nullptr;
     CameraFunctionsNapi* cameraFunctionsNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, cameraFunctionsNapi);
-    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"),
-        nullptr, "CameraSessionNapi::GetDepthFusionThreshold parse parameter occur error");
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("CameraFunctionsNapi::GetDepthFusionThreshold parse parameter occur error");
+        return nullptr;
+    }
     thisVar = jsParamParser.GetThisVar();
 
     return HandleQuery(env, info, thisVar, [](auto ability) {
@@ -563,7 +624,10 @@ napi_value CameraFunctionsNapi::GetSupportedPhysicalApertures(napi_env env, napi
     napi_value result = nullptr;
     napi_get_undefined(env, &result);
     status = napi_create_array(env, &result);
-    CHECK_RETURN_RET_ELOG(status != napi_ok, result, "napi_create_array call Failed!");
+    if (status != napi_ok) {
+        MEDIA_ERR_LOG("napi_create_array call Failed!");
+        return result;
+    }
     CameraFunctionsNapi*  cameraAbilityNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraAbilityNapi));
     if (status == napi_ok && cameraAbilityNapi != nullptr && cameraAbilityNapi->GetNativeObj() !=nullptr) {
@@ -608,6 +672,19 @@ napi_value CameraFunctionsNapi::GetSupportedExposureRange(napi_env env, napi_cal
     });
 }
 
+napi_value CameraFunctionsNapi::GetExposureRange(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("GetExposureRange is called");
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    return HandleQuery(env, info, thisVar, [](auto ability) {
+        return ability->GetExposureRange();
+    });
+}
+
 napi_value CameraFunctionsNapi::IsFeatureSupported(napi_env env, napi_callback_info info)
 {
     MEDIA_DEBUG_LOG("IsFeatureSupported is called");
@@ -621,6 +698,32 @@ napi_value CameraFunctionsNapi::IsFeatureSupported(napi_env env, napi_callback_i
         napi_get_value_int32(env, argv[PARAM0], &value);
         SceneFeature sceneFeature = (SceneFeature)value;
         return ability->IsFeatureSupported(sceneFeature);
+    });
+}
+
+napi_value CameraFunctionsNapi::IsImageStabilizationGuideSupported(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("IsImageStabilizationGuideSupported is called");
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    return HandleQuery(env, info, thisVar, [](auto ability) {
+        return ability->IsImageStabilizationGuideSupported();
+    });
+}
+
+napi_value CameraFunctionsNapi::GetSupportedNightSubModeTypes(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("GetSupportedNightSubModeTypes is called");
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    return HandleQuery(env, info, thisVar, [](auto ability) {
+        return ability->GetSupportedNightSubModeTypes();
     });
 }
 } // namespace CameraStandard

@@ -26,8 +26,7 @@
 #include "input/camera_manager.h"
 #include "metadata_common_utils.h"
 #include "capture_scene_const.h"
-#include "display_manager.h"
-#include "anonymization.h"
+#include "display_manager_lite.h"
 
 using namespace std;
 
@@ -39,7 +38,8 @@ const std::unordered_map<camera_type_enum_t, CameraType> CameraDevice::metaToFwC
     {OHOS_CAMERA_TYPE_TELTPHOTO, CAMERA_TYPE_TELEPHOTO},
     {OHOS_CAMERA_TYPE_TRUE_DEAPTH, CAMERA_TYPE_TRUE_DEPTH},
     {OHOS_CAMERA_TYPE_LOGICAL, CAMERA_TYPE_UNSUPPORTED},
-    {OHOS_CAMERA_TYPE_UNSPECIFIED, CAMERA_TYPE_DEFAULT}
+    {OHOS_CAMERA_TYPE_UNSPECIFIED, CAMERA_TYPE_DEFAULT},
+    {OHOS_CAMERA_TYPE_SUPER_TELTPHOTO, CAMERA_TYPE_SUPER_TELEPHOTO}
 };
 
 const std::unordered_map<camera_position_enum_t, CameraPosition> CameraDevice::metaToFwCameraPosition_ = {
@@ -64,9 +64,10 @@ CameraDevice::CameraDevice(std::string cameraID, std::shared_ptr<Camera::CameraM
     : cameraID_(cameraID), baseAbility_(MetadataCommonUtils::CopyMetadata(metadata)),
       cachedMetadata_(MetadataCommonUtils::CopyMetadata(metadata))
 {
-    CHECK_EXECUTE(metadata != nullptr, init(metadata->get()));
+    CHECK_RETURN(metadata == nullptr);
+    init(metadata->get());
 }
-
+// LCOV_EXCL_START
 CameraDevice::CameraDevice(
     std::string cameraID, std::shared_ptr<OHOS::Camera::CameraMetadata> metadata, dmDeviceInfo deviceInfo)
     : cameraID_(cameraID), baseAbility_(MetadataCommonUtils::CopyMetadata(metadata)),
@@ -75,8 +76,8 @@ CameraDevice::CameraDevice(
     dmDeviceInfo_.deviceName = deviceInfo.deviceName;
     dmDeviceInfo_.deviceTypeId = deviceInfo.deviceTypeId;
     dmDeviceInfo_.networkId = deviceInfo.networkId;
-    MEDIA_INFO_LOG("camera cameraid = %{public}s, devicename: = %{public}s", cameraID_.c_str(),
-        OHOS::CameraStandard::Anonymization::AnonymizeString(dmDeviceInfo_.deviceName).c_str());
+    MEDIA_INFO_LOG("camera cameraid = %{public}s, devicename: = %{private}s", cameraID_.c_str(),
+        dmDeviceInfo_.deviceName.c_str());
     CHECK_RETURN(metadata == nullptr);
     init(metadata->get());
 }
@@ -88,18 +89,20 @@ CameraDevice::CameraDevice(
     dmDeviceInfo_.deviceName = deviceInfo.deviceName;
     dmDeviceInfo_.deviceTypeId = deviceInfo.deviceTypeId;
     dmDeviceInfo_.networkId = deviceInfo.networkId;
-    MEDIA_INFO_LOG("cameraDevice cameraid = %{public}s, devicename: = %{public}s", cameraID_.c_str(),
-        OHOS::CameraStandard::Anonymization::AnonymizeString(dmDeviceInfo_.deviceName).c_str());
-    CHECK_EXECUTE(metadata != nullptr, init(metadata->get()));
+    MEDIA_INFO_LOG("camera cameraid = %{public}s, devicename: = %{public}s", cameraID_.c_str(),
+        dmDeviceInfo_.deviceName.c_str());
+    CHECK_RETURN(metadata == nullptr);
+    init(metadata->get());
 }
-
+// LCOV_EXCL_STOP
 bool CameraDevice::isFindModuleTypeTag(uint32_t &tagId)
 {
     std::vector<vendorTag_t> infos;
     int32_t ret = OHOS::Camera::GetAllVendorTags(infos);
     if (ret == CAM_META_SUCCESS) {
         for (auto info : infos) {
-            if (info.tagName != nullptr && strcmp(info.tagName, "hwSensorName") == 0) {
+            bool isFindTagId = info.tagName != nullptr && strcmp(info.tagName, "hwSensorName") == 0;
+            if (isFindTagId) {
                 tagId = info.tagId;
                 return true;
             }
@@ -111,74 +114,74 @@ bool CameraDevice::isFindModuleTypeTag(uint32_t &tagId)
 void CameraDevice::init(common_metadata_header_t* metadata)
 {
     camera_metadata_item_t item;
-    
-    int cameraDeviceRet = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_POSITION, &item);
-    if (cameraDeviceRet == CAM_META_SUCCESS) {
+
+    int ret = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_POSITION, &item);
+    if (ret == CAM_META_SUCCESS) {
         auto itr = metaToFwCameraPosition_.find(static_cast<camera_position_enum_t>(item.data.u8[0]));
         if (itr != metaToFwCameraPosition_.end()) {
             cameraPosition_ = itr->second;
         }
     }
 
-    cameraDeviceRet = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_TYPE, &item);
-    if (cameraDeviceRet == CAM_META_SUCCESS) {
+    ret = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_TYPE, &item);
+    if (ret == CAM_META_SUCCESS) {
         auto itr = metaToFwCameraType_.find(static_cast<camera_type_enum_t>(item.data.u8[0]));
         if (itr != metaToFwCameraType_.end()) {
             cameraType_ = itr->second;
         }
     }
 
-    cameraDeviceRet = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_CONNECTION_TYPE, &item);
-    if (cameraDeviceRet == CAM_META_SUCCESS) {
+    ret = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_CONNECTION_TYPE, &item);
+    if (ret == CAM_META_SUCCESS) {
         auto itr = metaToFwConnectionType_.find(static_cast<camera_connection_type_t>(item.data.u8[0]));
         if (itr != metaToFwConnectionType_.end()) {
             connectionType_ = itr->second;
         }
     }
 
-    cameraDeviceRet = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_FOLDSCREEN_TYPE, &item);
-    if (cameraDeviceRet == CAM_META_SUCCESS) {
+    ret = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_FOLDSCREEN_TYPE, &item);
+    if (ret == CAM_META_SUCCESS) {
         auto itr = metaToFwCameraFoldScreenType_.find(static_cast<camera_foldscreen_enum_t>(item.data.u8[0]));
         if (itr != metaToFwCameraFoldScreenType_.end()) {
             foldScreenType_ = itr->second;
         }
     }
 
-    cameraDeviceRet = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_SENSOR_ORIENTATION, &item);
-    if (cameraDeviceRet == CAM_META_SUCCESS) {
+    ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_SENSOR_ORIENTATION, &item);
+    if (ret == CAM_META_SUCCESS) {
         cameraOrientation_ = static_cast<uint32_t>(item.data.i32[0]);
     }
 
-    cameraDeviceRet = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_IS_RETRACTABLE, &item);
-    if (cameraDeviceRet == CAM_META_SUCCESS) {
+    ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_IS_RETRACTABLE, &item);
+    if (ret == CAM_META_SUCCESS) {
         isRetractable_ = static_cast<bool>(item.data.u8[0]);
         MEDIA_INFO_LOG("Get isRetractable_  = %{public}d", isRetractable_);
     }
 
     uint32_t moduleTypeTagId;
     if (isFindModuleTypeTag(moduleTypeTagId)) {
-        cameraDeviceRet = Camera::FindCameraMetadataItem(metadata, moduleTypeTagId, &item);
-        if (cameraDeviceRet == CAM_META_SUCCESS) {
+        ret = Camera::FindCameraMetadataItem(metadata, moduleTypeTagId, &item);
+        if (ret == CAM_META_SUCCESS) {
             moduleType_ = item.data.ui32[0];
         }
     }
 
-    cameraDeviceRet = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_FOLD_STATUS, &item);
+    ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_FOLD_STATUS, &item);
 
-    foldStatus_ = (cameraDeviceRet == CAM_META_SUCCESS) ? item.data.u8[0] : OHOS_CAMERA_FOLD_STATUS_NONFOLDABLE;
+    foldStatus_ = (ret == CAM_META_SUCCESS) ? item.data.u8[0] : OHOS_CAMERA_FOLD_STATUS_NONFOLDABLE;
 
-    cameraDeviceRet = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_MODES, &item);
-    if (cameraDeviceRet == CAM_META_SUCCESS) {
+    ret = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_MODES, &item);
+    if (ret == CAM_META_SUCCESS) {
         for (uint32_t i = 0; i < item.count; i++) {
-            auto it = g_metaToFwSupportedMode_.find(static_cast<HDI::Camera::V1_3::OperationMode>(item.data.u8[i]));
+            auto it = g_metaToFwSupportedMode_.find(static_cast<HDI::Camera::V1_5::OperationMode>(item.data.u8[i]));
             if (it != g_metaToFwSupportedMode_.end()) {
                 supportedModes_.emplace_back(it->second);
             }
         }
     }
 
-    cameraDeviceRet = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_STATISTICS_DETECT_TYPE, &item);
-    if (cameraDeviceRet == CAM_META_SUCCESS) {
+    ret = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_STATISTICS_DETECT_TYPE, &item);
+    if (ret == CAM_META_SUCCESS) {
         for (uint32_t i = 0; i < item.count; i++) {
             auto iterator = g_metaToFwCameraMetaDetect_.find(static_cast<StatisticsDetectType>(item.data.u8[i]));
             if (iterator != g_metaToFwCameraMetaDetect_.end()) {
@@ -187,9 +190,13 @@ void CameraDevice::init(common_metadata_header_t* metadata)
         }
     }
 
-    cameraDeviceRet = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_PRELAUNCH_AVAILABLE, &item);
+    ret = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_PRELAUNCH_AVAILABLE, &item);
 
-    isPrelaunch_ = (cameraDeviceRet == CAM_META_SUCCESS && item.data.u8[0] == 1);
+    isPrelaunch_ = (ret == CAM_META_SUCCESS && item.data.u8[0] == 1);
+
+    ret = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_AVAILABLE_PROFILE_LEVEL, &item);
+
+    supportSpecSearch_ = (ret == CAM_META_SUCCESS && item.count != 0);
 
     InitLensEquivalentFocalLength(metadata);
 
@@ -197,8 +204,9 @@ void CameraDevice::init(common_metadata_header_t* metadata)
 
     MEDIA_INFO_LOG("camera position: %{public}d, camera type: %{public}d, camera connection type: %{public}d, "
                    "camera foldScreen type: %{public}d, camera orientation: %{public}d, isretractable: %{public}d, "
-                   "moduleType: %{public}u, foldStatus: %{public}d", cameraPosition_, cameraType_, connectionType_,
-                   foldScreenType_, cameraOrientation_, isRetractable_, moduleType_, foldStatus_);
+                   "moduleType: %{public}u, foldStatus: %{public}d, supportSpecSearch: %{public}d",
+                   cameraPosition_, cameraType_, connectionType_, foldScreenType_, cameraOrientation_, isRetractable_,
+                   moduleType_, foldStatus_, supportSpecSearch_);
 }
 
 void CameraDevice::InitLensEquivalentFocalLength(common_metadata_header_t* metadata)
@@ -357,7 +365,7 @@ uint32_t CameraDevice::GetCameraOrientation()
     uint32_t cameraOrientation = cameraOrientation_;
     if (GetUsePhysicalCameraOrientation()) {
         uint32_t displayMode =
-            static_cast<uint32_t>(OHOS::Rosen::DisplayManager::GetInstance().GetFoldDisplayMode());
+            static_cast<uint32_t>(OHOS::Rosen::DisplayManagerLite::GetInstance().GetFoldDisplayMode());
         uint32_t curFoldStatus = CameraManager::GetInstance()->DisplayModeToFoldStatus(displayMode);
         auto itr = foldStateSensorOrientationMap_.find(curFoldStatus);
         if (itr != foldStateSensorOrientationMap_.end()) {
@@ -394,6 +402,11 @@ uint32_t CameraDevice::GetModuleType()
     return moduleType_;
 }
 
+bool CameraDevice::IsSupportSpecSearch()
+{
+    return supportSpecSearch_;
+}
+
 std::vector<float> CameraDevice::GetZoomRatioRange()
 {
     int32_t minIndex = 0;
@@ -406,23 +419,22 @@ std::vector<float> CameraDevice::GetZoomRatioRange()
     uint32_t zoomRangeCount = 2;
     camera_metadata_item_t item;
 
-    CHECK_RETURN_RET_ELOG(cachedMetadata_ == nullptr, {},
-        "Failed to get zoom ratio range with cachedMetadata_ is nullptr");
+    CHECK_RETURN_RET_ELOG(
+        cachedMetadata_ == nullptr, {}, "Failed to get zoom ratio range with cachedMetadata_ is nullptr");
     ret = Camera::FindCameraMetadataItem(cachedMetadata_->get(), OHOS_ABILITY_ZOOM_RATIO_RANGE, &item);
-    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS, {},
-        "Failed to get zoom ratio range with return code %{public}d", ret);
-    CHECK_RETURN_RET_ELOG(item.count != zoomRangeCount, {},
-        "Failed to get zoom ratio range with return code %{public}d", ret);
+    CHECK_RETURN_RET_ELOG(
+        ret != CAM_META_SUCCESS, {}, "Failed to get zoom ratio range with return code %{public}d", ret);
+    CHECK_RETURN_RET_ELOG(
+        item.count != zoomRangeCount, {}, "Failed to get zoom ratio range with return code %{public}d", ret);
     range = {item.data.f[minIndex], item.data.f[maxIndex]};
-
-    CHECK_RETURN_RET_ELOG(range[minIndex] > range[maxIndex], {},
-        "Invalid zoom range. min: %{public}f, max: %{public}f", range[minIndex], range[maxIndex]);
+    CHECK_RETURN_RET_ELOG(range[minIndex] > range[maxIndex], {}, "Invalid zoom range. min: %{public}f, max: %{public}f",
+        range[minIndex], range[maxIndex]);
     MEDIA_DEBUG_LOG("Zoom range min: %{public}f, max: %{public}f", range[minIndex], range[maxIndex]);
 
     zoomRatioRange_ = range;
     return zoomRatioRange_;
 }
-
+// LCOV_EXCL_START
 void CameraDevice::SetProfile(sptr<CameraOutputCapability> capability)
 {
     CHECK_RETURN(capability == nullptr);
@@ -452,6 +464,11 @@ std::vector<float> CameraDevice::GetExposureBiasRange()
 {
     int32_t minIndex = 0;
     int32_t maxIndex = 1;
+    std::vector<int32_t> range;
+
+    CHECK_RETURN_RET(!exposureBiasRange_.empty(), exposureBiasRange_);
+
+    int ret;
     uint32_t biasRangeCount = 2;
 
     if (isConcurrentLimted_ == 1) {
@@ -467,19 +484,19 @@ std::vector<float> CameraDevice::GetExposureBiasRange()
     CHECK_RETURN_RET(!exposureBiasRange_.empty(), exposureBiasRange_);
 
     camera_metadata_item_t item;
-    int ret = Camera::FindCameraMetadataItem(GetMetadata()->get(), OHOS_ABILITY_AE_COMPENSATION_RANGE, &item);
-    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS, {},
-        "Failed to get exposure compensation range with return code %{public}d", ret);
-    CHECK_RETURN_RET_ELOG(item.count != biasRangeCount, {},
-        "Invalid exposure compensation range count: %{public}d", item.count);
-    int32_t minRange = item.data.i32[minIndex];
-    int32_t maxRange = item.data.i32[maxIndex];
+    auto metadata = GetMetadata();
+    ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_AE_COMPENSATION_RANGE, &item);
+    CHECK_RETURN_RET_ELOG(
+        ret != CAM_META_SUCCESS, {}, "Failed to get exposure compensation range with return code %{public}d", ret);
+    CHECK_RETURN_RET_ELOG(
+        item.count != biasRangeCount, {}, "Invalid exposure compensation range count: %{public}d", item.count);
 
-    CHECK_RETURN_RET_ELOG(minRange > maxRange, {},
-        "Invalid exposure compensation range. min: %{public}d, max: %{public}d", minRange, maxRange);
+    range = { item.data.i32[minIndex], item.data.i32[maxIndex] };
+    CHECK_RETURN_RET_ELOG(range[minIndex] > range[maxIndex], {},
+        "Invalid exposure compensation range. min: %{public}d, max: %{public}d", range[minIndex], range[maxIndex]);
 
-    MEDIA_DEBUG_LOG("Exposure hdi compensation min: %{public}d, max: %{public}d", minRange, maxRange);
-    exposureBiasRange_ = { static_cast<float>(minRange), static_cast<float>(maxRange) };
+    MEDIA_DEBUG_LOG("Exposure hdi compensation min: %{public}d, max: %{public}d", range[minIndex], range[maxIndex]);
+    exposureBiasRange_ = { range[minIndex], range[maxIndex] };
     return exposureBiasRange_;
 }
 
@@ -508,6 +525,8 @@ void CameraDevice::SetConcurrentDeviceType(bool changeType)
 {
     isConcurrentDevice_ = changeType;
 }
+
+// LCOV_EXCL_STOP
 
 void CameraDevice::SetUsePhysicalCameraOrientation(bool isUsed)
 {

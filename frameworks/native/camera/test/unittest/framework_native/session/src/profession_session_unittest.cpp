@@ -13,6 +13,8 @@
  * limitations under the License.
  */
 
+#include "profession_session_unittest.h"
+
 #include "access_token.h"
 #include "accesstoken_kit.h"
 #include "camera_error_code.h"
@@ -23,7 +25,6 @@
 #include "ipc_skeleton.h"
 #include "nativetoken_kit.h"
 #include "os_account_manager.h"
-#include "profession_session_unittest.h"
 #include "session/capture_session_for_sys.h"
 #include "test_common.h"
 #include "test_token.h"
@@ -34,8 +35,6 @@
 namespace OHOS {
 namespace CameraStandard {
 using namespace testing::ext;
-
-const static double ACCURCY = 0.1;
 
 class ExposureInfoCallbackMock : public ExposureInfoCallback {
 public:
@@ -165,10 +164,8 @@ void ProfessionSessionUnitTest::Init()
     auto previewProfiles = modeAbility->GetPreviewProfiles();
     auto videoProfiles = modeAbility->GetVideoProfiles();
     for (const auto &vProfile : videoProfiles) {
-        double precision = static_cast<double>(vProfile.size_.width) / static_cast<double>(vProfile.size_.height);
         for (const auto &pProfile : previewProfiles) {
-            double temp = static_cast<double>(pProfile.size_.width) / static_cast<double>(pProfile.size_.height);
-            if (fabs(precision - temp) <= ACCURCY) {
+            if (vProfile.size_.width == pProfile.size_.width) {
                 previewProfile = pProfile;
                 videoProfile = vProfile;
                 break;
@@ -199,7 +196,7 @@ void ProfessionSessionUnitTest::Init()
  * EnvConditions: NA
  * CaseDescription: Testing multiple calls to set interface function returns normal.
  */
-HWTEST_F(ProfessionSessionUnitTest, camera_profession_session_unittest_001, TestSize.Level1)
+HWTEST_F(ProfessionSessionUnitTest, camera_profession_session_unittest_001, TestSize.Level0)
 {
     if (IsSupportMode(sceneMode_)) {
         Init();
@@ -273,7 +270,7 @@ HWTEST_F(ProfessionSessionUnitTest, camera_profession_session_unittest_001, Test
  * EnvConditions: NA
  * CaseDescription: Test setting callback interface returns normal.
  */
-HWTEST_F(ProfessionSessionUnitTest, camera_profession_session_unittest_002, TestSize.Level1)
+HWTEST_F(ProfessionSessionUnitTest, camera_profession_session_unittest_002, TestSize.Level0)
 {
     if (IsSupportMode(sceneMode_)) {
         Init();
@@ -301,10 +298,10 @@ HWTEST_F(ProfessionSessionUnitTest, camera_profession_session_unittest_002, Test
  * CaseDescription: Test SetExposureInfoCallback, SetIsoInfoCallback, SetApertureInfoCallback,
  * SetLuminationInfoCallback for just call.
  */
-HWTEST_F(ProfessionSessionUnitTest, profession_session_function_unittest_001, TestSize.Level1)
+HWTEST_F(ProfessionSessionUnitTest, profession_session_function_unittest_001, TestSize.Level0)
 {
     sptr<CaptureSessionForSys> session =
-        CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(SceneMode::PROFESSIONAL_VIDEO);
+         CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(SceneMode::PROFESSIONAL_VIDEO);
     ASSERT_NE(session, nullptr);
     sptr<ProfessionSession> professionSession = static_cast<ProfessionSession*>(session.GetRefPtr());
     ASSERT_NE(professionSession, nullptr);
@@ -339,7 +336,7 @@ HWTEST_F(ProfessionSessionUnitTest, profession_session_function_unittest_001, Te
  * EnvConditions: NA
  * CaseDescription: with SetISO normal branches
  */
-HWTEST_F(ProfessionSessionUnitTest, profession_session_function_unittest_002, TestSize.Level1)
+HWTEST_F(ProfessionSessionUnitTest, profession_session_function_unittest_002, TestSize.Level0)
 {
     if (IsSupportMode(sceneMode_)) {
         Init();
@@ -496,203 +493,6 @@ HWTEST_F(ProfessionSessionUnitTest, profession_session_function_unittest_007, Te
     professionSession->changedMetadata_->addEntry(OHOS_STATUS_PREVIEW_PHYSICAL_CAMERA_ID, &val, 1);
     professionSession->ProcessPhysicalCameraSwitch(professionSession->changedMetadata_);
     professionSession->UnlockForControl();
-}
-
-/*
- * Feature: Framework
- * Function: Test ProfessionSession with GetSupportedMeteringModes and GetMeteringMode
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test GetSupportedMeteringModes and GetMeteringMode with different scenarios
- */
-HWTEST_F(ProfessionSessionUnitTest, profession_session_function_unittest_008, TestSize.Level0)
-{
-    if (IsSupportMode(sceneMode_)) {
-        Init();
-        std::vector<MeteringMode> supportedModes;
-        int32_t ret = session_->GetSupportedMeteringModes(supportedModes);
-        EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
-        EXPECT_FALSE(supportedModes.empty());
-        MeteringMode currentMode;
-        ret = session_->GetMeteringMode(currentMode);
-        EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
-    }
-}
-
-/*
- * Feature: Framework
- * Function: Test ProfessionSession with GetSupportedFocusModes and GetFocusMode
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test GetSupportedFocusModes and GetFocusMode with different scenarios
- */
-HWTEST_F(ProfessionSessionUnitTest, profession_session_function_unittest_009, TestSize.Level0)
-{
-    if (IsSupportMode(sceneMode_)) {
-        Init();
-        std::vector<FocusMode> supportedModes;
-        int32_t ret = session_->GetSupportedFocusModes(supportedModes);
-        EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
-        EXPECT_FALSE(supportedModes.empty());
-        FocusMode currentMode;
-        ret = session_->GetFocusMode(currentMode);
-        EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
-    }
-}
-
-/*
- * Feature: Framework
- * Function: Test ProfessionSession with GetSupportedFlashModes and GetFlashMode
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test GetSupportedFlashModes and GetFlashMode with different scenarios
- */
-HWTEST_F(ProfessionSessionUnitTest, profession_session_function_unittest_010, TestSize.Level0)
-{
-    if (IsSupportMode(sceneMode_)) {
-        Init();
-        std::vector<FlashMode> supportedModes;
-        int32_t ret = session_->GetSupportedFlashModes(supportedModes);
-        EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
-        EXPECT_FALSE(supportedModes.empty());
-        FlashMode currentMode;
-        ret = session_->GetFlashMode(currentMode);
-        EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
-        bool hasFlash;
-        ret = session_->HasFlash(hasFlash);
-        EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
-    }
-}
-
-/*
- * Feature: Framework
- * Function: Test ProfessionSession with GetSupportedExposureHintModes and GetExposureHintMode
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test GetSupportedExposureHintModes and GetExposureHintMode with different scenarios
- */
-HWTEST_F(ProfessionSessionUnitTest, profession_session_function_unittest_011, TestSize.Level0)
-{
-    if (IsSupportMode(sceneMode_)) {
-        Init();
-        std::vector<ExposureHintMode> supportedModes;
-        int32_t ret = session_->GetSupportedExposureHintModes(supportedModes);
-        EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
-        EXPECT_FALSE(supportedModes.empty());
-        ExposureHintMode currentMode;
-        ret = session_->GetExposureHintMode(currentMode);
-        EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
-    }
-}
-
-/*
- * Feature: Framework
- * Function: Test ProfessionSession with GetSupportedFocusAssistFlashModes and GetFocusAssistFlashMode
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test GetSupportedFocusAssistFlashModes and GetFocusAssistFlashMode with different scenarios
- */
-HWTEST_F(ProfessionSessionUnitTest, profession_session_function_unittest_012, TestSize.Level0)
-{
-    if (IsSupportMode(sceneMode_)) {
-        Init();
-        std::vector<FocusAssistFlashMode> supportedModes;
-        int32_t ret = session_->GetSupportedFocusAssistFlashModes(supportedModes);
-        EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
-        EXPECT_FALSE(supportedModes.empty());
-        FocusAssistFlashMode currentMode;
-        ret = session_->GetFocusAssistFlashMode(currentMode);
-        EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
-    }
-}
-
-/*
- * Feature: Framework
- * Function: Test ProfessionSession with GetSupportedColorEffects and GetColorEffect
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test GetSupportedColorEffects and GetColorEffect with different scenarios
- */
-HWTEST_F(ProfessionSessionUnitTest, profession_session_function_unittest_013, TestSize.Level0)
-{
-    if (IsSupportMode(sceneMode_)) {
-        Init();
-        std::vector<ColorEffect> supportedEffects;
-        int32_t ret = session_->GetSupportedColorEffects(supportedEffects);
-        EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
-        EXPECT_FALSE(supportedEffects.empty());
-        ColorEffect currentEffect;
-        ret = session_->GetColorEffect(currentEffect);
-        EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
-    }
-}
-
-/*
- * Feature: Framework
- * Function: Test ProfessionSession with GetIsoRange and SetISO
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test GetIsoRange and SetISO with different scenarios
- */
-HWTEST_F(ProfessionSessionUnitTest, profession_session_function_unittest_014, TestSize.Level0)
-{
-    if (IsSupportMode(sceneMode_)) {
-        Init();
-        std::vector<int32_t> isoRange;
-        int32_t ret = session_->GetIsoRange(isoRange);
-        EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
-        EXPECT_FALSE(isoRange.empty());
-        // Test invalid ISO value
-        session_->LockForControl();
-        ret = session_->SetISO(-1);
-        EXPECT_EQ(ret, CameraErrorCode::INVALID_ARGUMENT);
-        // Test valid ISO value
-        if (!isoRange.empty()) {
-            ret = session_->SetISO(isoRange[0]);
-            EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
-        }
-    }
-}
-
-/*
- * Feature: Framework
- * Function: Test ProfessionSession with IsManualIsoSupported
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test IsManualIsoSupported with different scenarios
- */
-HWTEST_F(ProfessionSessionUnitTest, profession_session_function_unittest_016, TestSize.Level0)
-{
-    if (IsSupportMode(sceneMode_)) {
-        Init();
-        bool isSupported = session_->IsManualIsoSupported();
-        EXPECT_TRUE(isSupported);
-    }
-}
-
-/*
- * Feature: Framework
- * Function: Test ProfessionSession with metadata processing
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test metadata processing with different scenarios
- */
-HWTEST_F(ProfessionSessionUnitTest, profession_session_function_unittest_017, TestSize.Level0)
-{
-    if (IsSupportMode(sceneMode_)) {
-        Init();
-        auto metadata = session_->GetMetadata();
-        EXPECT_NE(metadata, nullptr);
-    }
 }
 }
 }

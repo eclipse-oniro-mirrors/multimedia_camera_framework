@@ -16,22 +16,22 @@
 #include "camera_deferred_base_unittest.h"
 #include <cstdint>
 #include <vector>
+#include "camera_manager.h"
 #include "camera_util.h"
 #include "gmock/gmock.h"
 #include "ipc_skeleton.h"
+#include "test_common.h"
 
-#include "session_manager.h"
+#include "time_broker.h"
 #include "shared_buffer.h"
 #include "task_manager/thread_pool.h"
-#include "timer/core/timer_core.h"
-#include "timer/steady_clock.h"
-#include "timer/time_broker.h"
+#include "steady_clock.h"
+#include "timer_core.h"
 #include "basic_definitions.h"
 #include "dps.h"
 #include "session_manager.h"
 #include "scheduler_manager.h"
-#include "session_coordinator.h"
-#include "scheduler_coordinator.h"
+#include "task_manager.h"
 
 using namespace testing::ext;
 using namespace OHOS::CameraStandard::DeferredProcessing;
@@ -58,7 +58,7 @@ void DeferredBaseUnitTest::TearDown() {}
  * EnvConditions: NA
  * CaseDescription: Test gets the size and fd of sharebuffer
  */
-HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_001, TestSize.Level1)
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_001, TestSize.Level0)
 {
     int32_t dataSize = 1;
     std::shared_ptr<SharedBuffer> sharedBuffer = std::make_shared<SharedBuffer>(dataSize);
@@ -82,13 +82,12 @@ HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_001, TestSize.Level
  * CaseDescription: Test create delayed task group, when taskRegistry is empty,
  * the task group is deregistered, tasks are submitted, and all tasks are canceled
  */
-HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_002, TestSize.Level1)
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_002, TestSize.Level0)
 {
     int32_t numThreads = 1;
-    std::shared_ptr<DeferredProcessing::TaskManager> taskManager =
-        std::make_shared<DeferredProcessing::TaskManager>("camera_deferred_base", numThreads, false);
+    std::shared_ptr<TaskManager> taskManager =
+        std::make_shared<TaskManager>("camera_deferred_base", numThreads, false);
     ASSERT_NE(taskManager, nullptr);
-    taskManager->Initialize();
     if (taskManager->delayedTaskHandle_ != INVALID_TASK_GROUP_HANDLE) {
         taskManager->CreateDelayedTaskGroupIfNeed();
     } else {
@@ -113,12 +112,11 @@ HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_002, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test get task group
  */
-HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_003, TestSize.Level1)
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_003, TestSize.Level0)
 {
     int32_t numThreads = 1;
-    std::shared_ptr<DeferredProcessing::TaskManager> taskManager =
-        std::make_shared<DeferredProcessing::TaskManager>("camera_deferred_base", numThreads, false);
-    taskManager->Initialize();
+    std::shared_ptr<TaskManager> taskManager =
+        std::make_shared<TaskManager>("camera_deferred_base", numThreads, false);
     auto it = taskManager->taskRegistry_->registry_.find(taskManager->delayedTaskHandle_);
     if (it == taskManager->taskRegistry_->registry_.end()) {
         EXPECT_EQ(taskManager->taskRegistry_->GetTaskCount(taskManager->delayedTaskHandle_), 0);
@@ -135,7 +133,7 @@ HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_003, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Tests creating a thread pool when numThreads is 0
  */
-HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_004, TestSize.Level1)
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_004, TestSize.Level0)
 {
     uint32_t numThreads = 0;
     std::shared_ptr<ThreadPool> threadPool = std::make_shared<ThreadPool>("camera_deferred_base", numThreads);
@@ -153,7 +151,7 @@ HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_004, TestSize.Level
  * CaseDescription: Test the creation of the time broker and test
  * the registration and deregistration callbacks of the time broker
  */
-HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_005, TestSize.Level1)
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_005, TestSize.Level0)
 {
     std::shared_ptr<TimeBroker> timeBroker = TimeBroker::Create("camera_deferred_base");
     ASSERT_NE(timeBroker, nullptr);
@@ -181,7 +179,7 @@ HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_005, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test timer expiration and restart timer
  */
-HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_006, TestSize.Level1)
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_006, TestSize.Level0)
 {
     std::shared_ptr<TimeBroker> timeBroker = TimeBroker::Create("camera_deferred_base");
     ASSERT_NE(timeBroker, nullptr);
@@ -211,7 +209,7 @@ HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_006, TestSize.Level
  * CaseDescription: Test registration and deregistration timer core callbacks,
  * and succeeds when valid parameters are entered
  */
-HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_007, TestSize.Level1)
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_007, TestSize.Level0)
 {
     std::shared_ptr<TimerCore> timerCore = std::make_shared<TimerCore>();
     ASSERT_NE(timerCore, nullptr);
@@ -234,7 +232,7 @@ HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_007, TestSize.Level
  * CaseDescription: Test registration and deregistration timer core callbacks,
  * registration failed when invalid parameters were entered
  */
-HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_008, TestSize.Level1)
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_008, TestSize.Level0)
 {
     std::shared_ptr<TimerCore> timerCore = std::make_shared<TimerCore>();
     ASSERT_NE(timerCore, nullptr);
@@ -257,7 +255,7 @@ HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_008, TestSize.Level
  * CaseDescription: Test registration and deregistration timer core callbacks,
  * and failed when invalid parameters were entered
  */
-HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_009, TestSize.Level1)
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_009, TestSize.Level0)
 {
     std::shared_ptr<TimerCore> timerCore = std::make_shared<TimerCore>();
     ASSERT_NE(timerCore, nullptr);
@@ -279,7 +277,7 @@ HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_009, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test DoTimeout and GetNextExpirationTimeUnlocked hooks When the timerTime is null
  */
-HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_010, TestSize.Level1)
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_010, TestSize.Level0)
 {
     std::shared_ptr<TimerCore> timerCore = std::make_shared<TimerCore>();
     ASSERT_NE(timerCore, nullptr);
@@ -296,7 +294,7 @@ HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_010, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test repeated initialization
  */
-HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_011, TestSize.Level1)
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_011, TestSize.Level0)
 {
     DeferredProcessing::DPS_Destroy();
     DeferredProcessing::DPS_GetCommandServer();
@@ -313,7 +311,7 @@ HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_011, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test different branches of GetElapsedTimeMs
  */
-HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_012, TestSize.Level1)
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_012, TestSize.Level0)
 {
     uint64_t startMs = 1;
     uint64_t diff = DeferredProcessing::SteadyClock::GetElapsedTimeMs(startMs);
@@ -331,7 +329,7 @@ HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_012, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test the abnormal branch of DeregisterCallback
  */
-HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_013, TestSize.Level1)
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_013, TestSize.Level0)
 {
     std::shared_ptr<TimeBroker> timeBroker = TimeBroker::Create("camera_deferred_base");
     ASSERT_NE(timeBroker, nullptr);
@@ -354,7 +352,7 @@ HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_013, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test TimerExpired when timeline is empty
  */
-HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_014, TestSize.Level1)
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_014, TestSize.Level0)
 {
     std::shared_ptr<TimeBroker> timeBroker = TimeBroker::Create("camera_deferred_base");
     ASSERT_NE(timeBroker, nullptr);
@@ -372,7 +370,7 @@ HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_014, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test the branch when the active of timer is true
  */
-HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_015, TestSize.Level1)
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_015, TestSize.Level0)
 {
     uint64_t timestampMs = 0;
     std::function<void()> timerCallback;
@@ -391,7 +389,7 @@ HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_015, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test TimerExpired
  */
-HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_016, TestSize.Level1)
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_016, TestSize.Level0)
 {
     std::function<void()> timerCallback;
     const std::shared_ptr<Timer>& timer = Timer::Create("camera_deferred_base", TimerType::ONCE, 0, timerCallback);
@@ -411,7 +409,7 @@ HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_016, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test the different branches of TimerExpired
  */
-HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_017, TestSize.Level1)
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_017, TestSize.Level0)
 {
     std::function<void()> timerCallback;
     const std::shared_ptr<Timer>& timer = Timer::Create("camera_deferred_base", TimerType::PERIODIC, 0, timerCallback);
@@ -421,6 +419,125 @@ HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_017, TestSize.Level
     EXPECT_TRUE(timer->active_);
 }
 
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_018, TestSize.Level0) {
+    DpsStatus statusCode = DpsStatus::DPS_SESSION_STATE_IDLE;
+    StatusCode result = MapDpsStatus(statusCode);
+    EXPECT_EQ(result, StatusCode::SESSION_STATE_IDLE);
+    statusCode = DpsStatus::DPS_SESSION_STATE_RUNNABLE;
+    result = MapDpsStatus(statusCode);
+    EXPECT_EQ(result, StatusCode::SESSION_STATE_RUNNABLE);
+    statusCode = DpsStatus::DPS_SESSION_STATE_RUNNING;
+    result = MapDpsStatus(statusCode);
+    EXPECT_EQ(result, StatusCode::SESSION_STATE_RUNNING);
+    statusCode = DpsStatus::DPS_SESSION_STATE_SUSPENDED;
+    result = MapDpsStatus(statusCode);
+    EXPECT_EQ(result, StatusCode::SESSION_STATE_SUSPENDED);
+    statusCode = DpsStatus::DPS_SESSION_STATE_PREEMPTED;
+    result = MapDpsStatus(statusCode);
+    EXPECT_EQ(result, StatusCode::SESSION_STATE_PREEMPTED);
+    statusCode = static_cast<DpsStatus>(100); // 假设 100 是一个无效的 DpsStatus 值
+    result = MapDpsStatus(statusCode);
+    EXPECT_EQ(result, StatusCode::SESSION_STATE_IDLE);
+}
+
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_019, TestSize.Level0) {
+    OHOS::HDI::Camera::V1_2::ErrorCode errorCode = OHOS::HDI::Camera::V1_2::ErrorCode::ERROR_INVALID_ID;
+    DpsError result = MapHdiError(errorCode);
+    EXPECT_EQ(result, DpsError::DPS_ERROR_IMAGE_PROC_INVALID_PHOTO_ID);
+    errorCode = OHOS::HDI::Camera::V1_2::ErrorCode::ERROR_PROCESS;
+    result = MapHdiError(errorCode);
+    EXPECT_EQ(result, DpsError::DPS_ERROR_IMAGE_PROC_FAILED);
+    errorCode = OHOS::HDI::Camera::V1_2::ErrorCode::ERROR_TIMEOUT;
+    result = MapHdiError(errorCode);
+    EXPECT_EQ(result, DpsError::DPS_ERROR_IMAGE_PROC_TIMEOUT);
+    errorCode = OHOS::HDI::Camera::V1_2::ErrorCode::ERROR_HIGH_TEMPERATURE;
+    result = MapHdiError(errorCode);
+    EXPECT_EQ(result, DpsError::DPS_ERROR_IMAGE_PROC_HIGH_TEMPERATURE);
+    errorCode = OHOS::HDI::Camera::V1_2::ErrorCode::ERROR_ABNORMAL;
+    result = MapHdiError(errorCode);
+    EXPECT_EQ(result, DpsError::DPS_ERROR_IMAGE_PROC_ABNORMAL);
+    errorCode = OHOS::HDI::Camera::V1_2::ErrorCode::ERROR_ABORT;
+    result = MapHdiError(errorCode);
+    EXPECT_EQ(result, DpsError::DPS_ERROR_IMAGE_PROC_INTERRUPTED);
+    errorCode = static_cast<OHOS::HDI::Camera::V1_2::ErrorCode>(999); // 999 是一个未定义的错误码
+    result = MapHdiError(errorCode);
+    EXPECT_EQ(result, DpsError::DPS_ERROR_IMAGE_PROC_ABNORMAL);
+}
+
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_020, TestSize.Level0) {
+    ExecutionMode input = ExecutionMode::HIGH_PERFORMANCE;
+    OHOS::HDI::Camera::V1_2::ExecutionMode expected = OHOS::HDI::Camera::V1_2::ExecutionMode::HIGH_PREFORMANCE;
+    OHOS::HDI::Camera::V1_2::ExecutionMode result = MapToHdiExecutionMode(input);
+    EXPECT_EQ(result, expected);
+    input = ExecutionMode::LOAD_BALANCE;
+    expected = OHOS::HDI::Camera::V1_2::ExecutionMode::BALANCED;
+    result = MapToHdiExecutionMode(input);
+    EXPECT_EQ(result, expected);
+    input = ExecutionMode::LOW_POWER;
+    expected = OHOS::HDI::Camera::V1_2::ExecutionMode::LOW_POWER;
+    result = MapToHdiExecutionMode(input);
+    EXPECT_EQ(result, expected);
+    input = static_cast<ExecutionMode>(999); // 假设999是一个无效的枚举值
+    expected = OHOS::HDI::Camera::V1_2::ExecutionMode::LOW_POWER; // 预期结果,具体值不重要
+    result = MapToHdiExecutionMode(input);
+    EXPECT_EQ(result, expected);
+}
+
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_021, TestSize.Level0) {
+    OHOS::HDI::Camera::V1_2::SessionStatus statusCode = OHOS::HDI::Camera::V1_2::SessionStatus::SESSION_STATUS_READY;
+    HdiStatus result = MapHdiStatus(statusCode);
+    EXPECT_EQ(result, HdiStatus::HDI_READY);
+    statusCode = OHOS::HDI::Camera::V1_2::SessionStatus::SESSION_STATUS_READY_SPACE_LIMIT_REACHED;
+    result = MapHdiStatus(statusCode);
+    EXPECT_EQ(result, HdiStatus::HDI_READY_SPACE_LIMIT_REACHED);
+    statusCode = OHOS::HDI::Camera::V1_2::SessionStatus::SESSSON_STATUS_NOT_READY_TEMPORARILY;
+    result = MapHdiStatus(statusCode);
+    EXPECT_EQ(result, HdiStatus::HDI_NOT_READY_TEMPORARILY);
+    statusCode = OHOS::HDI::Camera::V1_2::SessionStatus::SESSION_STATUS_NOT_READY_OVERHEAT;
+    result = MapHdiStatus(statusCode);
+    EXPECT_EQ(result, HdiStatus::HDI_NOT_READY_OVERHEAT);
+    statusCode = OHOS::HDI::Camera::V1_2::SessionStatus::SESSION_STATUS_NOT_READY_PREEMPTED;
+    result = MapHdiStatus(statusCode);
+    EXPECT_EQ(result, HdiStatus::HDI_NOT_READY_PREEMPTED);
+    statusCode = static_cast<OHOS::HDI::Camera::V1_2::SessionStatus>(999); // 假设999是一个无效的statusCode
+    result = MapHdiStatus(statusCode);
+    EXPECT_EQ(result, HdiStatus::HDI_DISCONNECTED);
+}
+
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_022, TestSize.Level0) {
+    int32_t level = ThermalLevel::LEVEL_0;
+    VideoThermalLevel result = ConvertVideoThermalLevel(level);
+    EXPECT_EQ(result, VideoThermalLevel::COOL);
+    level = ThermalLevel::LEVEL_1; // 假设LEVEL_1是其他级别
+    result = ConvertVideoThermalLevel(level);
+    EXPECT_EQ(result, VideoThermalLevel::HOT);
+    level = ThermalLevel::LEVEL_2;
+    result = ConvertVideoThermalLevel(level);
+    EXPECT_EQ(result, VideoThermalLevel::HOT);
+}
+
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_023, TestSize.Level0) {
+    EXPECT_EQ(MapDpsErrorCode(DpsError::DPS_ERROR_SESSION_SYNC_NEEDED), ErrorCode::ERROR_SESSION_SYNC_NEEDED);
+    EXPECT_EQ(MapDpsErrorCode(DpsError::DPS_ERROR_SESSION_NOT_READY_TEMPORARILY), ErrorCode::ERROR_SESSION_NOT_READY_TEMPORARILY);
+    EXPECT_EQ(MapDpsErrorCode(DpsError::DPS_ERROR_IMAGE_PROC_INVALID_PHOTO_ID), ErrorCode::ERROR_IMAGE_PROC_INVALID_PHOTO_ID);
+    EXPECT_EQ(MapDpsErrorCode(DpsError::DPS_ERROR_IMAGE_PROC_FAILED), ErrorCode::ERROR_IMAGE_PROC_FAILED);
+    EXPECT_EQ(MapDpsErrorCode(DpsError::DPS_ERROR_IMAGE_PROC_TIMEOUT), ErrorCode::ERROR_IMAGE_PROC_TIMEOUT);
+    EXPECT_EQ(MapDpsErrorCode(DpsError::DPS_ERROR_IMAGE_PROC_ABNORMAL), ErrorCode::ERROR_IMAGE_PROC_ABNORMAL);
+    EXPECT_EQ(MapDpsErrorCode(DpsError::DPS_ERROR_IMAGE_PROC_INTERRUPTED), ErrorCode::ERROR_IMAGE_PROC_INTERRUPTED);
+    EXPECT_EQ(MapDpsErrorCode(DpsError::DPS_ERROR_VIDEO_PROC_INVALID_VIDEO_ID), ErrorCode::ERROR_VIDEO_PROC_INVALID_VIDEO_ID);
+    EXPECT_EQ(MapDpsErrorCode(DpsError::DPS_ERROR_VIDEO_PROC_FAILED), ErrorCode::ERROR_VIDEO_PROC_FAILED);
+    EXPECT_EQ(MapDpsErrorCode(DpsError::DPS_ERROR_VIDEO_PROC_TIMEOUT), ErrorCode::ERROR_VIDEO_PROC_TIMEOUT);
+    EXPECT_EQ(MapDpsErrorCode(DpsError::DPS_ERROR_VIDEO_PROC_INTERRUPTED), ErrorCode::ERROR_VIDEO_PROC_INTERRUPTED);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test the ConvertPhotoThermalLevel
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test the ConvertPhotoThermalLevel
+ */
 HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_024, TestSize.Level0) {
     int32_t level = 5;
     EXPECT_EQ(ConvertPhotoThermalLevel(level), SystemPressureLevel::SEVERE);

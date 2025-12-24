@@ -30,28 +30,24 @@ SessionManager::SessionManager()
 SessionManager::~SessionManager()
 {
     DP_INFO_LOG("entered.");
-    std::lock_guard<std::mutex> lock(photoSessionMutex_);
     photoSessionInfos_.clear();
     videoSessionInfos_.clear();
 }
 
 int32_t SessionManager::Initialize()
 {
-    coordinator_ = SessionCoordinator::Create();
-    DP_CHECK_ERROR_RETURN_RET_LOG(coordinator_ == nullptr, DP_INIT_FAIL, "SessionCoordinator init failed.");
-
     initialized_.store(true);
     return DP_OK;
 }
 
 void SessionManager::Start()
 {
-    coordinator_->Start();
+    DP_DEBUG_LOG("entered.");
 }
 
 void SessionManager::Stop()
 {
-    coordinator_->Stop();
+    DP_DEBUG_LOG("entered.");
 }
 
 sptr<IDeferredPhotoProcessingSession> SessionManager::CreateDeferredPhotoProcessingSession(const int32_t userId,
@@ -60,6 +56,7 @@ sptr<IDeferredPhotoProcessingSession> SessionManager::CreateDeferredPhotoProcess
     DP_CHECK_ERROR_RETURN_RET_LOG(!initialized_.load(), nullptr, "failed due to uninitialized.");
 
     DP_INFO_LOG("Create photo session for userId: %{public}d", userId);
+    std::lock_guard<std::mutex> lock(photoSessionMutex_);
     auto sessionInfo = GetPhotoInfo(userId);
     if (sessionInfo == nullptr) {
         DP_INFO_LOG("Photo session creat susses");
@@ -76,7 +73,7 @@ sptr<IDeferredPhotoProcessingSession> SessionManager::CreateDeferredPhotoProcess
 
 sptr<PhotoSessionInfo> SessionManager::GetPhotoInfo(const int32_t userId)
 {
-    std::lock_guard<std::mutex> lock(photoSessionMutex_);
+    std::lock_guard<std::mutex> lock(photoInfoMutex_);
     auto it = photoSessionInfos_.find(userId);
     DP_CHECK_ERROR_RETURN_RET_LOG(it == photoSessionInfos_.end(), nullptr,
         "Not find PhotoSessionInfo for userId: %{public}d", userId);
@@ -86,7 +83,7 @@ sptr<PhotoSessionInfo> SessionManager::GetPhotoInfo(const int32_t userId)
 
 void SessionManager::AddPhotoSession(const sptr<PhotoSessionInfo>& sessionInfo)
 {
-    std::lock_guard<std::mutex> lock(photoSessionMutex_);
+    std::lock_guard<std::mutex> lock(photoInfoMutex_);
     int32_t userId = sessionInfo->GetUserId();
     DP_INFO_LOG("Add photo session userId: %{public}d", userId);
     photoSessionInfos_[userId] = sessionInfo;
@@ -94,7 +91,7 @@ void SessionManager::AddPhotoSession(const sptr<PhotoSessionInfo>& sessionInfo)
 
 void SessionManager::DeletePhotoSession(const int32_t userId)
 {
-    std::lock_guard<std::mutex> lock(photoSessionMutex_);
+    std::lock_guard<std::mutex> lock(photoInfoMutex_);
     if (photoSessionInfos_.erase(userId) > 0) {
         DP_INFO_LOG("Delete photo session userId: %{public}d", userId);
     }
@@ -132,6 +129,7 @@ sptr<IDeferredVideoProcessingSession> SessionManager::CreateDeferredVideoProcess
 
 sptr<VideoSessionInfo> SessionManager::GetVideoInfo(const int32_t userId)
 {
+    std::lock_guard<std::mutex> lock(videoInfoMutex_);
     auto it = videoSessionInfos_.find(userId);
     DP_CHECK_ERROR_RETURN_RET_LOG(it == videoSessionInfos_.end(), nullptr,
         "Not find VideoSessionInfo for userId: %{public}d", userId);
@@ -139,9 +137,20 @@ sptr<VideoSessionInfo> SessionManager::GetVideoInfo(const int32_t userId)
     return it->second;
 }
 
-std::shared_ptr<SessionCoordinator> SessionManager::GetSessionCoordinator()
+void SessionManager::AddVideoSession(const sptr<VideoSessionInfo>& sessionInfo)
 {
-    return coordinator_;
+    std::lock_guard<std::mutex> lock(videoInfoMutex_);
+    int32_t userId = sessionInfo->GetUserId();
+    DP_INFO_LOG("Add video session userId: %{public}d", userId);
+    videoSessionInfos_[userId] = sessionInfo;
+}
+
+void SessionManager::DeleteVideoSession(const int32_t userId)
+{
+    std::lock_guard<std::mutex> lock(videoInfoMutex_);
+    if (videoSessionInfos_.erase(userId) > 0) {
+        DP_INFO_LOG("Delete video session userId: %{public}d", userId);
+    }
 }
 } // namespace DeferredProcessing
 } // namespace CameraStandard

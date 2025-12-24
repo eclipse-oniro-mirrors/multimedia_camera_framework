@@ -119,12 +119,14 @@ public:
 
     /**
      * @brief Sets a portrait theme type for a camera device.
-     * @param type PortraitTheme type to be sety.
+     * @param type PortraitTheme type to be set.
      * @return Returns errCode.
      */
     int32_t SetPortraitThemeType(PortraitThemeType type);
 private:
     bool CheckIsSupportControlCenter();
+    sptr<ICaptureSession> GetSessionForControlCenter();
+
 };
 
 } // namespace CameraStandard

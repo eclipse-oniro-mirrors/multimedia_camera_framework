@@ -37,6 +37,7 @@ public:
         const sptr<IDeferredPhotoProcessingSessionCallback>& callback);
     sptr<IDeferredVideoProcessingSession> CreateDeferredVideoProcessingSession(const int32_t userId,
         const sptr<IDeferredVideoProcessingSessionCallback>& callbacks);
+    void NotifyInterrupt();
 
 private:
     std::atomic<bool> initialized_ {false};

@@ -94,7 +94,9 @@ DeferredPhotoProxy::~DeferredPhotoProxy()
 {
     std::lock_guard<std::mutex> lock(mutex_);
     MEDIA_INFO_LOG("~DeferredPhotoProxy");
-    CHECK_EXECUTE(isMmaped_, munmap(fileDataAddr_, fileSize_));
+    if (isMmaped_) {
+        munmap(fileDataAddr_, fileSize_);
+    }
     CameraFreeBufferHandle(const_cast<BufferHandle*>(bufferHandle_));
     fileDataAddr_ = nullptr;
     fileSize_ = 0;
@@ -135,26 +137,23 @@ Media::DeferredProcType DeferredPhotoProxy::GetDeferredProcType()
 {
     MEDIA_INFO_LOG("DeferredPhotoProxy::GetDeferredProcType");
     std::lock_guard<std::mutex> lock(mutex_);
-    if (deferredProcType_ == 0) {
-        return Media::DeferredProcType::BACKGROUND;
-    } else {
-        return Media::DeferredProcType::OFFLINE;
-    }
+    return deferredProcType_ == 0 ? Media::DeferredProcType::BACKGROUND : Media::DeferredProcType::OFFLINE;
 }
 
 void* DeferredPhotoProxy::GetFileDataAddr()
 {
     MEDIA_INFO_LOG("DeferredPhotoProxy::GetFileDataAddr");
     std::lock_guard<std::mutex> lock(mutex_);
-    CHECK_RETURN_RET_ELOG(buffer_ != nullptr, buffer_, "DeferredPhotoProxy::GetFileDataAddr get addr temp!");
+    CHECK_RETURN_RET_ILOG(buffer_ != nullptr, buffer_, "DeferredPhotoProxy::GetFileDataAddr get addr temp!");
 
-    CHECK_RETURN_RET_ELOG(isMmaped_ == true, fileDataAddr_, "DeferredPhotoProxy::GetFileDataAddr mmap failed");
     if (!isMmaped_) {
         MEDIA_INFO_LOG("DeferredPhotoProxy::GetFileDataAddr mmap");
         fileDataAddr_ = mmap(nullptr, bufferHandle_->size, PROT_READ | PROT_WRITE, MAP_SHARED, bufferHandle_->fd, 0);
         CHECK_RETURN_RET_ELOG(
             fileDataAddr_ == MAP_FAILED, fileDataAddr_, "DeferredPhotoProxy::GetFileDataAddr mmap failed");
         isMmaped_ = true;
+    } else {
+        MEDIA_ERR_LOG("DeferredPhotoProxy::GetFileDataAddr mmap failed");
     }
     return fileDataAddr_;
 }
@@ -173,8 +172,7 @@ size_t DeferredPhotoProxy::GetFileSize()
 {
     MEDIA_INFO_LOG("DeferredPhotoProxy::GetFileSize");
     std::lock_guard<std::mutex> lock(mutex_);
-    CHECK_RETURN_RET_ELOG(buffer_ != nullptr, fileSize_,
-        "DeferredPhotoProxy::GetFileSize temp!");
+    CHECK_RETURN_RET_ELOG(buffer_ != nullptr, fileSize_, "DeferredPhotoProxy::GetFileSize temp!");
     CHECK_RETURN_RET_ELOG(
         bufferHandle_ == nullptr, fileSize_, "DeferredPhotoProxy::GetFileSize bufferHandle_ is nullptr!");
     fileSize_ = bufferHandle_->size;

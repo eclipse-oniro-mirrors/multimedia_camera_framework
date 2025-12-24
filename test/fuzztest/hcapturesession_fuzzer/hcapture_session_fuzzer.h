@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,18 +18,35 @@
 
 #include "hcapture_session.h"
 #include <fuzzer/FuzzedDataProvider.h>
-
-namespace OHOS {
-namespace CameraStandard {
-
-class HCaptureSessionFuzzer {
+#include <buffer_handle_parcel.h>
+#include "capture_session_callback_stub.h"
+#include "pressure_status_callback_stub.h"
+#include "capture_session.h"
+#include "fuzz_util.h"
+namespace OHOS::CameraStandard {
+class MockCaptureSessionCallback : public CaptureSessionCallbackStub {
 public:
-static void HCaptureSessionFuzzTest1(FuzzedDataProvider& fdp);
-static void HCaptureSessionFuzzTest2(FuzzedDataProvider& fdp);
-static void HCaptureSessionFuzzTest3(FuzzedDataProvider& fdp);
-static void HCaptureSessionFuzzTest4(FuzzedDataProvider& fdp);
+    ErrCode OnError(int32_t errorCode) override
+    {
+        return 0;
+    }
+    int32_t OnRemoteRequest(uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option) override
+    {
+        return IPCObjectStub::OnRemoteRequest(code, data, reply, option);
+    }
 };
 
-} //CameraStandard
-} //CameraStandard
-#endif //HCAPTURE_SEESION_FUZZER_H
+class MockPressureStatusCallback : public PressureStatusCallbackStub {
+public:
+    ErrCode OnPressureStatusChanged(PressureStatus status) override
+    {
+        return 0;
+    }
+    int32_t OnRemoteRequest(uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option) override
+    {
+        return IPCObjectStub::OnRemoteRequest(code, data, reply, option);
+    }
+};
+
+} // namespace OHOS::CameraStandard
+#endif // HCAPTURE_SEESION_FUZZER_H

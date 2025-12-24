@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (C) 2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -314,12 +314,7 @@ typedef enum Camera_Format {
      * YCRCB P010 Format.
      * @since 12
      */
-    CAMERA_FORMAT_YCRCB_P010 = 2002,
-
-    /**
-     * MJPEG Format.
-     */
-    CAMERA_FORMAT_MJPEG = 2003
+    CAMERA_FORMAT_YCRCB_P010 = 2002
 } Camera_Format;
 
 /**
@@ -661,7 +656,7 @@ typedef enum Camera_PreconfigRatio {
 /**
  * @brief Enum for remote camera device type.
  *
- * @since 12
+ * @since 15
  * @version 1.0
  */
 typedef enum Camera_HostDeviceType {
@@ -678,7 +673,35 @@ typedef enum Camera_HostDeviceType {
     /**
      * Indicates tablet camera.
      */
-    HOST_DEVICE_TYPE_TABLET = 0x11
+    HOST_DEVICE_TYPE_TABLET = 0x11,
+    /**
+     * Indicates glasses.
+     */
+    HOST_DEVICE_TYPE_GLASSES = 0xA31,
+    /**
+     * Indicates TV.
+     */
+    HOST_DEVICE_TYPE_TV = 0x9C,
+    /**
+     * Indicates a car.
+     */
+    HOST_DEVICE_TYPE_CAR = 0x83,
+    /**
+     * Indicates 2in1 tablet.
+     */
+    HOST_DEVICE_TYPE_2IN1 = 0xA2F,
+    /**
+     * Indicates smart watch.
+     */
+    HOST_DEVICE_TYPE_WATCH = 0x6D,
+    /**
+     * Indicates smart display.
+     */
+    HOST_DEVICE_TYPE_SMART_DISPLAY = 0xA02,
+    /**
+     * Indicates wifi camera.
+     */
+    HOST_DEVICE_TYPE_WIFI_CAMERA = 0x08,
 } Camera_HostDeviceType;
 
 /**
@@ -1199,37 +1222,37 @@ typedef enum Camera_QualityPrioritization {
 } Camera_QualityPrioritization;
 
 /**
- * @brief Enum for camera concurrency type.
+ * @brief Enum for camera concurrent type.
  *
- * @since 16
+ * @since 18
  * @version 1.0
  */
 typedef enum Camera_ConcurrentType {
     /**
-     * Hight quality priority.
+     * Cameras concurrency with limited capability.
      */
-    CONCURRENT_TYPE_LIMITED_CAPABILITY  = 0,
+    CAMERA_CONCURRENT_TYPE_LIMITED_CAPABILITY  = 0,
 
     /**
-     * Power balance priority.
+     * Cameras concurrenct with full capability.
      */
-    CONCURRENT_TYPE_FULL_CAPABILITY = 1
+    CAMERA_CONCURRENT_TYPE_FULL_CAPABILITY = 1
 } Camera_ConcurrentType;
 
 /**
  * @brief Concurrency capability infos.
  *
- * @since 16
+ * @since 18
  * @version 1.0
  */
 typedef struct Camera_ConcurrentInfo {
     /**
-    * Device.
+     * Camera instance.
      */
     Camera_Device camera;
 
     /**
-     * Concurrent type.
+     * Supported concurrent type.
      */
     Camera_ConcurrentType type;
 
@@ -1239,49 +1262,99 @@ typedef struct Camera_ConcurrentInfo {
     Camera_SceneMode* sceneModes;
 
     /**
-    * Supported profiles set
-    */
+     * Supported outputCapabilities
+     */
     Camera_OutputCapability* outputCapabilities;
 
     /**
-    * Supported profiles set
-    */
+     * Supported outputCapabilities size.
+     */
     uint32_t modeAndCapabilitySize;
 } Camera_ConcurrentInfo;
 
 /**
- * @brief Enum for system pressure level.
+ * @brief Enumerates the white balance modes.
+ *
+ * @since 20
+ * @version 1.0
+ */
+typedef enum Camera_WhiteBalanceMode {
+    /**
+     * Automatic white balance mode.
+     */
+    CAMERA_WHITE_BALANCE_MODE_AUTO = 0,
+
+    /**
+     * Cloudy white balance mode.
+     */
+    CAMERA_WHITE_BALANCE_MODE_CLOUDY = 1,
+
+    /**
+     * Incandescent white balance mode.
+     */
+    CAMERA_WHITE_BALANCE_MODE_INCANDESCENT = 2,
+
+    /**
+     * Fluorescent white balance mode.
+     */
+    CAMERA_WHITE_BALANCE_MODE_FLUORESCENT = 3,
+
+    /**
+     * Daylight white balance mode.
+     */
+    CAMERA_WHITE_BALANCE_MODE_DAYLIGHT = 4,
+
+    /**
+     * Manual white balance mode.
+     */
+    CAMERA_WHITE_BALANCE_MODE_MANUAL = 5,
+
+    /**
+     * Lock white balance mode.
+     */
+    CAMERA_WHITE_BALANCE_MODE_LOCKED = 6
+} Camera_WhiteBalanceMode;
+
+/**
+ * @brief Enumerates the system pressure levels of the current camera session. When the system pressure
+ * increases, you are advised to reduce the load of the current camera session.
  *
  * @since 20
  * @version 1.0
  */
 typedef enum Camera_SystemPressureLevel {
     /**
-     * System pressure normal.
+     * Normal level. This level indicates the system pressure is normal.
      */
     SYSTEM_PRESSURE_NORMAL = 0,
 
     /**
-     * System pressure mild.
+     * Mild level. This level indicates the system pressure is slightly elevated.
      */
     SYSTEM_PRESSURE_MILD = 1,
 
     /**
-     * System pressure severe.
+     * Severe level. This level indicates the system pressure is severely elevated.
      */
     SYSTEM_PRESSURE_SEVERE = 2,
 
     /**
-     * System pressure critical.
+     * Critical level. This level indicates the system pressure is critically elevated.
      */
     SYSTEM_PRESSURE_CRITICAL = 3,
 
     /**
-     * System pressure shutdown.
+     * Shutdown level. This level indicates the system pressure is fatal, so the camera session will be shut down soon.
      */
     SYSTEM_PRESSURE_SHUTDOWN = 4
 } Camera_SystemPressureLevel;
 
+/**
+ * @brief Enumerates the control center effect types.
+ *
+ * @since 20
+ * @version 1.0
+ */
 typedef enum Camera_ControlCenterEffectType {
     /**
      * Control center beauty effect type.
@@ -1307,23 +1380,10 @@ typedef struct Camera_ControlCenterStatusInfo {
     Camera_ControlCenterEffectType effectType;
 
     /**
-     * IsActive
+     * If control center effect is active.
      */
     bool isActive;
 } Camera_ControlCenterStatusInfo;
-
-typedef enum Camera_WhiteBalanceMode {
-    /**
-     * Auto white balance mode.
-     */
-    CAMERA_WHITE_BALANCE_MODE_AUTO = 0,
-    CAMERA_WHITE_BALANCE_MODE_CLOUDY = 1,
-    CAMERA_WHITE_BALANCE_MODE_INCANDESCENT = 2,
-    CAMERA_WHITE_BALANCE_MODE_FLUORESCENT = 3,
-    CAMERA_WHITE_BALANCE_MODE_DAYLIGHT = 4,
-    CAMERA_WHITE_BALANCE_MODE_MANUAL = 5,
-    CAMERA_WHITE_BALANCE_MODE_LOCKED = 6
-} Camera_WhiteBalanceMode;
 
 /**
  * @brief Enum for photo quality prioritization.

@@ -34,6 +34,7 @@ public:
     static std::shared_ptr<CameraNapiExProxy>
         GetCameraNapiExProxy(CameraNapiExProxyUserType type = CameraNapiExProxyUserType::CAMERA_MANAGER_NAPI);
     static void FreeCameraNapiExProxy(CameraNapiExProxyUserType type = CameraNapiExProxyUserType::CAMERA_MANAGER_NAPI);
+    static bool IsLoadedNapiEx();
 private:
     static std::shared_ptr<CameraNapiExProxy> cameraNapiExProxy_;
     static std::vector<CameraNapiExProxyUserType> userList_;

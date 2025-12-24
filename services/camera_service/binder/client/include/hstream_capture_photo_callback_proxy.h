@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef OHOS_CAMERA_HSTREAM_CAPTURE_THUMBNAIL_CALLBACK_PROXY_H
-#define OHOS_CAMERA_HSTREAM_CAPTURE_THUMBNAIL_CALLBACK_PROXY_H
+#ifndef OHOS_CAMERA_HSTREAM_CAPTURE_PHOTO_CALLBACK_PROXY_H
+#define OHOS_CAMERA_HSTREAM_CAPTURE_PHOTO_CALLBACK_PROXY_H
 #define EXPORT_API __attribute__((visibility("default")))
 
 #include "iremote_proxy.h"

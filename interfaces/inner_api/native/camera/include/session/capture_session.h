@@ -50,13 +50,13 @@
 #include "ability/camera_ability_parse_util.h"
 #include "fold_service_callback_stub.h"
 #include "pressure_status_callback_stub.h"
-#include "camera_common_struct.h"
+#include "camera_switch_session_callback_stub.h"
+#include "native_info_callback.h"
+#include "features/composition_feature.h"
 
 namespace OHOS {
 namespace CameraStandard {
-
-using Point = CameraPoint;
-
+class PictureIntf;
 enum FocusState {
     FOCUS_STATE_SCAN = 0,
     FOCUS_STATE_FOCUSED,
@@ -80,6 +80,17 @@ enum FilterType {
     PINK = 8,
 };
 
+enum ColorStyleType {
+    COLOR_STYLE_NONE = 0,
+    COLOR_STYLE_NATURE = 1,
+    COLOR_STYLE_FILM = 2,
+    COLOR_STYLE_CINE = 3,
+    COLOR_STYLE_ANIME = 4,
+    COLOR_STYLE_VIVID = 5,
+    COLOR_STYLE_BRIGHT = 6,
+    COLOR_STYLE_BLACK_WHITE = 7
+};
+
 enum PreconfigType : int32_t {
     PRECONFIG_720P = 0,
     PRECONFIG_1080P = 1,
@@ -95,6 +106,13 @@ enum FocusTrackingMode : int32_t {
     FOCUS_TRACKING_MODE_AUTO = 0,
     FOCUS_TRACKING_MODE_LOCKED,
 };
+
+class CalculationHelper {
+public:
+    static bool AreVectorsEqual(const std::vector<float>& a,
+        const std::vector<float>& b, float epsilon = 1e-6);
+};
+
 
 struct PreconfigProfiles {
 public:
@@ -164,12 +182,64 @@ enum LightPaintingType {
     LIGHT
 };
 
+typedef struct {
+    float x;
+    float y;
+} Point;
+
+typedef struct Star {
+    Point position;
+    uint8_t sizeLevel;
+    uint8_t brightnessLevel;
+} Star;
+
+typedef struct Constellation {
+    uint8_t id;
+    float opacity;
+    Point centerPoint;
+    std::vector<Point> lineSegments;
+} Constellation;
+
+typedef struct StarsInfo {
+    std::vector<Star> stars;
+    std::vector<Constellation> constellations;
+} StarsInfo;
+
 enum class FwkTripodStatus {
     INVALID = 0,
     ACTIVE,
     ENTER,
     EXITING
 };
+
+enum class ConstellationDrawingState {
+    PROCESSING = 0,
+    SUCCEEDED,
+    FAILED_OVERBRIGHT,
+    FAILED_INSUFFICIENT_STARS
+};
+
+enum class ApertureEffectType : int32_t {
+    APERTURE_EFFECT_MIN = -1,
+    APERTURE_EFFECT_NORMAL = 0,
+    APERTURE_EFFECT_LOWLIGHT,
+    APERTURE_EFFECT_MACRO,
+    APERTURE_EFFECT_MAX
+};
+
+typedef struct StreamConfigInfo {
+    CaptureOutputType outputType = CaptureOutputType::CAPTURE_OUTPUT_TYPE_PREVIEW;
+    StreamType type = StreamType::CAPTURE;
+    CameraFormat format = CameraFormat::CAMERA_FORMAT_INVALID;
+    Size size = {0, 0};
+    std::vector<int32_t> fps = {};
+} StreamConfigInfo;
+
+typedef struct ModeConfigInfo {
+    SceneMode mode = SceneMode::NORMAL;
+    NightSubMode nightSubMode = NightSubMode::DEFAULT;
+    LightPaintingType lightPaintingType = LightPaintingType::CAR;
+} ModeConfigInfo;
 
 typedef struct {
     float zoomRatio;
@@ -219,6 +289,13 @@ public:
      * @param status Indicates the control center effect status.
      */
     virtual void OnControlCenterEffectStatusChanged(ControlCenterStatusInfo status) = 0;
+};
+
+class CameraSwitchRequestCallback {
+public:
+    CameraSwitchRequestCallback() = default;
+    virtual ~CameraSwitchRequestCallback() = default;
+    virtual void OnAppCameraSwitch(const std::string &cameraId) = 0;
 };
 
 class ExposureCallback {
@@ -313,7 +390,18 @@ public:
     {
         return featureStatus_;
     }
+
+    inline void SetStarsInfo(StarsInfo starsInfo)
+    {
+        starsInfo_ = starsInfo;
+    }
+
+    inline StarsInfo GetStarsInfo() const
+    {
+        return starsInfo_;
+    }
 private:
+    StarsInfo starsInfo_;
     std::atomic<int8_t> featureStatus_ = -1;
     std::mutex featureStatusMapMutex_;
     std::unordered_map<SceneFeature, FeatureDetectionStatus> featureStatusMap_;
@@ -336,15 +424,10 @@ public:
 
 class PressureStatusCallback : public PressureStatusCallbackStub {
 public:
-    CaptureSession* captureSession_ = nullptr;
-    PressureStatusCallback() : captureSession_(nullptr) {}
+    wptr<CaptureSession> captureSession_;
+    PressureStatusCallback() : captureSession_() {}
 
-    explicit PressureStatusCallback(CaptureSession* captureSession) : captureSession_(captureSession) {}
-
-    ~PressureStatusCallback()
-    {
-        captureSession_ = nullptr;
-    }
+    explicit PressureStatusCallback(wptr<CaptureSession> captureSession) : captureSession_(captureSession) {}
 
     int32_t OnPressureStatusChanged(PressureStatus status) override;
 };
@@ -358,6 +441,18 @@ public:
         : captureSession_(captureSession) {}
 
     int32_t OnControlCenterEffectStatusChanged(const ControlCenterStatusInfo& statusInfo) override;
+};
+
+class CameraSwitchSessionCallback : public CameraSwitchSessionCallbackStub {
+public:
+    wptr<CaptureSession> captureSession_;
+    CameraSwitchSessionCallback() : captureSession_() {}
+
+    explicit CameraSwitchSessionCallback(wptr<CaptureSession> captureSession) : captureSession_(captureSession) {}
+    int32_t OnCameraActive(const std::string &cameraId, bool isRegisterCameraSwitchCallback,
+        const CaptureSessionInfo &sessionInfo) override;
+    int32_t OnCameraUnactive(const std::string &cameraId) override;
+    int32_t OnCameraSwitch(const std::string &oriCameraId, const std::string &destCameraId, bool status) override;
 };
 
 class SmoothZoomCallback {
@@ -440,9 +535,95 @@ private:
     wptr<CaptureSession> captureSession_ = nullptr;
 };
 
+enum CalibrationStatus {
+    CALIBRATION_INVALID = -1,
+    INACTIVE = 0,
+    CALIBRATING = 1,
+    CALIBRATION_SUCCESS = 2,
+};
+
+struct CompositionPositionCalibrationInfo {
+    Point targetPosition;
+    std::vector<Point> compositionPoints;
+    CalibrationStatus pitchAngleStatus;
+    CalibrationStatus positionStatus;
+    float pitchAngle;
+    CalibrationStatus rotationAngleStatus;
+    float rotationAngle;
+};
+
+enum CompositionEndState {
+    COMPOSITION_SUCCESS = 0,
+    COMPOSITION_TIMEOUT = 1,
+    COMPOSITION_INTERRUPTED = 2,
+};
+
+class CompositionPositionCalibrationCallback {
+public:
+    CompositionPositionCalibrationCallback() = default;
+    virtual ~CompositionPositionCalibrationCallback() = default;
+    virtual void OnCompositionPositionCalibrationAvailable(
+        const CompositionPositionCalibrationInfo info) const = 0 ;
+};
+
+class CompositionBeginCallback {
+public:
+    CompositionBeginCallback() = default;
+    virtual ~CompositionBeginCallback() = default;
+    virtual void OnCompositionBeginAvailable() const = 0 ;
+};
+
+class CompositionEndCallback {
+public:
+    CompositionEndCallback() = default;
+    virtual ~CompositionEndCallback() = default;
+    virtual void OnCompositionEndAvailable(CompositionEndState state) const = 0 ;
+};
+
+class CompositionPositionMatchCallback {
+public:
+    CompositionPositionMatchCallback() = default;
+    virtual ~CompositionPositionMatchCallback() = default;
+    virtual void OnCompositionPositionMatchAvailable(std::vector<float> zoomRatios) const = 0 ;
+};
+
+class ImageStabilizationGuideCallback {
+public:
+    ImageStabilizationGuideCallback() = default;
+    virtual ~ImageStabilizationGuideCallback() = default;
+    virtual void OnImageStabilizationGuideChange(std::vector<Point> lineSegments) = 0;
+};
+
+class ApertureEffectChangeCallback {
+public:
+    ApertureEffectChangeCallback() = default;
+    virtual ~ApertureEffectChangeCallback() = default;
+    virtual void OnApertureEffectChange(ApertureEffectType effectSuggestionType) const = 0;
+    bool isFirstRecord = true;
+    ApertureEffectType currentType{ApertureEffectType::APERTURE_EFFECT_MIN};
+};
+
 struct EffectSuggestionStatus {
     EffectSuggestionType type;
     bool status;
+};
+
+struct ColorStyleSetting {
+    static const uint32_t typeOffset = 0;
+    static const uint32_t hueOffset = 1;
+    static const uint32_t saturationOffset = 2;
+    static const uint32_t toneOffset = 3;
+    ColorStyleType type;
+    float hue;
+    float saturation;
+    float tone;
+
+    inline bool CheckColorStyleSettingParam() const
+    {
+        return static_cast<int32_t>(type) >= static_cast<int32_t>(COLOR_STYLE_NONE) &&
+            static_cast<int32_t>(type) <= static_cast<int32_t>(COLOR_STYLE_BLACK_WHITE) &&
+            hue >= 0 && saturation >= 0 && tone >= 0;
+    }
 };
 
 inline bool FloatIsEqual(float x, float y)
@@ -458,6 +639,7 @@ inline float ConfusingNumber(float data)
 }
 
 class CaptureSession : public RefBase {
+    friend class CompositionFeature;
 public:
     class CaptureSessionMetadataResultProcessor : public MetadataResultProcessor {
     public:
@@ -506,9 +688,17 @@ public:
     /**
      * @brief Add CaptureOutput for the capture session.
      *
-     * @param CaptureOutput to be added to session.
+     * @param output to be added to session.
      */
     virtual int32_t AddOutput(sptr<CaptureOutput> &output);
+
+    /**
+     * @brief Add CaptureOutput for the capture session.
+     *
+     * @param output to be added to session.
+     * @param isVerifyOutput set false to skip CanAddOutput.
+     */
+    virtual int32_t AddOutput(sptr<CaptureOutput>& output, bool isVerifyOutput);
 
     /**
      * @brief Remove CaptureInput for the capture session.
@@ -557,6 +747,11 @@ public:
     void SetPressureCallback(std::shared_ptr<PressureCallback>);
 
     /**
+     * @brief Unset the pressure callback for the capture session.
+     */
+    void UnSetPressureCallback();
+
+    /**
      * @brief Set the control center effect status callback for the capture session.
      *
      * @param ControlCenterEffectStatusCallback pointer to be triggered.
@@ -567,6 +762,25 @@ public:
      * @brief Unset the control center effect status callback for the capture session.
      */
     void UnSetControlCenterEffectStatusCallback();
+
+    /**
+     * @brief Set the camera switch request callback for the capture session.
+     *
+     * @param CameraSwitchRequestCallback pointer to be triggered.
+     */
+    void SetCameraSwitchRequestCallback(std::shared_ptr<CameraSwitchRequestCallback> callback);
+
+    /**
+     * @brief Unset the camera switch request callback for the capture session.
+     */
+    void UnSetCameraSwitchRequestCallback();
+
+    /**
+     * @brief Get the camera switch callback information.
+     *
+     * @return Returns the pointer to SwitchRequestCallback set by application.
+     */
+    std::shared_ptr<CameraSwitchRequestCallback> GetCameraSwitchRequestCallback();
 
     /**
      * @brief Get the application callback information.
@@ -759,14 +973,14 @@ public:
      * @return Is zoom center point supported.
      */
     int32_t IsZoomCenterPointSupported(bool& isSupported);
-    
+
     /**
      * @brief Set the zoom center point.
      * @param Point which specifies the area to zoom.
      * @return errCode
      */
     int32_t SetZoomCenterPoint(Point zoomCenterPoint);
-    
+
     /**
      * @brief Get the zoom center point.
      * @param Point current zoom center point.
@@ -1226,19 +1440,47 @@ public:
     std::vector<ColorEffect> GetSupportedColorEffects();
 
     /**
+     * @brief Get the current color effect.
+     *
+     * @return Returns current color effect.
+     */
+    ColorEffect GetColorEffect();
+
+    /**
+     * @brief Checks whether color style is supported.
+     * @param isSupported True if supported false otherwise.
+     * @return Returns errCode.
+     */
+    int32_t IsColorStyleSupported(bool &isSupported);
+
+    /**
+     * @brief Get default color style setttings.
+     * @param defaultColorStyles default color style setttings.
+     * @return Returns errCode.
+     */
+    int32_t GetDefaultColorStyleSettings(std::vector<ColorStyleSetting>& defaultColorStyles);
+
+    /**
+     * @brief Set color style.
+     * @param setting color style settting to set.
+     * @return Returns errCode.
+     */
+    int32_t SetColorStyleSetting(const ColorStyleSetting& setting);
+
+    /**
      * @brief Checks whether control center is supported.
      *
      * @return Is control center supported.
      */
     bool IsControlCenterSupported();
- 
+
     /**
      * @brief Get the supported effect types.
      *
      * @return Returns supported efftect types.
      */
     std::vector<ControlCenterEffectType> GetSupportedEffectTypes();
- 
+
     /**
      * @brief Enable control center.
      */
@@ -1340,6 +1582,21 @@ public:
      * @brief Check current status is support moon capture boost or not.
      */
     bool IsLowLightBoostSupported();
+
+    /**
+     * @brief Check current mode is support constellation drawing or not.
+     */
+    bool IsConstellationDrawingSupported();
+
+    /**
+     * @brief Check current device is support image stabilization guide or not.
+     */
+    bool IsImageStabilizationGuideSupported();
+
+    /**
+     * @brief Enable or disable image stabilization guide.
+     */
+    int32_t EnableImageStabilizationGuide(bool enabled);
 
     /**
      * @brief Enable or disable moon capture boost ability.
@@ -1453,10 +1710,10 @@ public:
 
     /**
      * @brief Set ar mode.
-     * @param isEnable switch to control ar mode.
+     * @param arModeTag switch to control ar mode.
      * @return errCode
      */
-    int32_t SetARMode(bool isEnable);
+    int32_t SetARMode(uint8_t arModeTag);
 
     /**
      * @brief Set the ar callback.
@@ -1540,6 +1797,34 @@ public:
     int32_t GetSupportedPhysicalApertures(std::vector<std::vector<float>>& apertures);
 
     /**
+     * @brief Get the virtual aperture.
+     * @param aperture returns the current virtual aperture.
+     * @return Error code.
+     */
+    int32_t GetVirtualAperture(float& aperture);
+
+    /**
+     * @brief Set the virtual aperture.
+     * @param virtualAperture set virtual aperture value.
+     * @return Error code.
+     */
+    int32_t SetVirtualAperture(const float virtualAperture);
+
+    /**
+     * @brief Get the physical aperture.
+     * @param aperture returns current physical aperture.
+     * @return Error code.
+     */
+    int32_t GetPhysicalAperture(float& aperture);
+
+    /**
+     * @brief Set the physical aperture.
+     * @param physicalAperture set physical aperture value.
+     * @return Error code.
+     */
+    int32_t SetPhysicalAperture(float physicalAperture);
+
+    /**
      * @brief Set quality prioritization.
      *
      * @param QualityPrioritization quality prioritization to be set.
@@ -1554,6 +1839,8 @@ public:
      * @param result Metadata got from callback from service layer.
      */
     void ProcessIsoChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result);
+
+    int32_t EnableConstellationDrawing(bool isEnable);
 
     void SetMode(SceneMode modeName);
     SceneMode GetMode();
@@ -1580,12 +1867,11 @@ public:
     bool IsMovingPhotoEnabled();
     bool IsImageDeferred();
     bool IsVideoDeferred();
+    virtual bool CanSetFrameRateRange(int32_t minFps, int32_t maxFps, CaptureOutput* curOutput);
+    bool CanSetFrameRateRangeForOutput(int32_t minFps, int32_t maxFps, CaptureOutput* curOutput);
 
     int32_t EnableAutoHighQualityPhoto(bool enabled);
     int32_t EnableAutoCloudImageEnhancement(bool enabled);
-
-    virtual bool CanSetFrameRateRange(int32_t minFps, int32_t maxFps, CaptureOutput* curOutput);
-    bool CanSetFrameRateRangeForOutput(int32_t minFps, int32_t maxFps, CaptureOutput* curOutput);
     int32_t AddSecureOutput(sptr<CaptureOutput> &output);
 
     int32_t EnableAutoAigcPhoto(bool enabled);
@@ -1662,13 +1948,13 @@ public:
         return innerInputDevice_;
     }
 
+    int32_t SetPreviewRotation(std::string &deviceClass);
+
     inline sptr<ICaptureSession> GetCaptureSession()
     {
         std::lock_guard<std::mutex> lock(captureSessionMutex_);
         return innerCaptureSession_;
     }
-
-    int32_t SetPreviewRotation(std::string &deviceClass);
 
     /**
      * @brief Checks if the LCD flash feature is supported.
@@ -1779,6 +2065,13 @@ public:
         return isDeviceCapabilityChanged_;
     }
 
+    inline bool IsVirtualApertureEnabled()
+    {
+        return isVirtualApertureEnabled_.load();
+    }
+
+    void EnableKeyFrameReport(bool isKeyFrameReportEnabled);
+
     /**
      * @brief Adds a function to the mapping with the specified control tag.
      *
@@ -1796,7 +2089,40 @@ public:
      */
     void AddFunctionToMap(std::string ctrlTag, std::function<void()> func);
     void ExecuteAllFunctionsInMap();
-    void EnableAutoFrameRate(bool isEnable);
+    /**
+     * @brief Checks if the composition suggestion is supported.
+     *
+     * @return true if supported; false otherwise.
+     */
+    bool IsCompositionSuggestionSupported();
+
+    /**
+     * @brief Enables or disables the composition suggestion.
+     *
+     * @param isEnable True to enable, false to disable.
+     * @return 0 on success, or a negative error code on failure.
+     */
+    int32_t EnableCompositionSuggestion(bool isEnable);
+
+    /**
+     * @brief Enables or disables the Auto Motion Boost Delivery.
+     *
+     * @param isEnable True to enable, false to disable.
+     * @return 0 on success, or a negative error code on failure.
+     */
+    int32_t EnableAutoMotionBoostDelivery(bool isEnable);
+
+    /**
+     * @brief Enables or disables the Auto Bokeh Data Delivery.
+     *
+     * @param isEnable True to enable, false to disable.
+     * @return 0 on success, or a negative error code on failure.
+     */
+    int32_t EnableAutoBokehDataDelivery(bool isEnable);
+    int32_t IsCompositionEffectPreviewSupported(bool& isSupported);
+    int32_t GetSupportedRecommendedInfoLanguage(std::vector<std::string>& supportedLanguages);
+    int32_t SetRecommendedInfoLanguage(const std::string& language);
+    int32_t EnableCompositionEffectPreview(bool isEnable);
 
     /**
      * @brief Set the macro status callback.
@@ -1805,20 +2131,55 @@ public:
      * @param The MacroStatusCallback pointer.
      */
     void SetMacroStatusCallback(std::shared_ptr<MacroStatusCallback> callback);
+
+    void SetImageStabilizationGuideCallback(std::shared_ptr<ImageStabilizationGuideCallback> callback);
+
+    void SetCompositionPositionCalibrationCallback(std::shared_ptr<CompositionPositionCalibrationCallback> callback);
+    std::shared_ptr<CompositionPositionCalibrationCallback> GetCompositionPositionCalibrationCallback();
+    void ProcessCompositionPositionCalibration(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result);
+
+    void SetCompositionBeginCallback(std::shared_ptr<CompositionBeginCallback> callback);
+    int32_t SetCompositionEffectReceiveCallback(std::shared_ptr<NativeInfoCallback<CompositionEffectInfo>> callback);
+    int32_t UnSetCompositionEffectReceiveCallback();
+    std::shared_ptr<CompositionBeginCallback> GetCompositionBeginCallback();
+    void ProcessCompositionBegin(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result);
+
+    void SetCompositionEndCallback(std::shared_ptr<CompositionEndCallback> callback);
+    std::shared_ptr<CompositionEndCallback> GetCompositionEndCallback();
+    void ProcessCompositionEnd(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result);
+
+    void SetCompositionPositionMatchCallback(std::shared_ptr<CompositionPositionMatchCallback> callback);
+    std::shared_ptr<CompositionPositionMatchCallback> GetCompositionPositionMatchCallback();
+    void ProcessCompositionPositionMatch(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result);
+
+    int32_t EnableLogAssistance(const bool enable);
+    void EnableAutoFrameRate(bool isEnable);
+    int32_t GetSupportedFocusTrackingModes(std::vector<FocusTrackingMode>& supportedFocusTrackingModes);
+    int32_t IsFocusTrackingModeSupported(FocusTrackingMode focusTrackingMode, bool& isSupported);
+    int32_t GetFocusTrackingMode(FocusTrackingMode& focusTrackingMode);
+    int32_t SetFocusTrackingMode(const FocusTrackingMode& focusTrackingMode);
+    void SetApertureEffectChangeCallback(std::shared_ptr<ApertureEffectChangeCallback> apertureEffectChangeCb);
+    void ProcessApertureEffectChange(const std::shared_ptr<OHOS::Camera::CameraMetadata> &result);
+    int32_t GetSupportedVideoCodecTypes(std::vector<int32_t>& supportedVideoCodecTypes);
+    std::vector<NightSubMode> GetSupportedNightSubModeTypes();
     void SetPhotoQualityPrioritization(camera_photo_quality_prioritization_t quality);
     uint32_t GetIsoValue();
     int32_t SetParameters(std::vector<std::pair<std::string, std::string>>& kvPairs);
 protected:
-
     static const std::unordered_map<camera_awb_mode_t, WhiteBalanceMode> metaWhiteBalanceModeMap_;
     static const std::unordered_map<WhiteBalanceMode, camera_awb_mode_t> fwkWhiteBalanceModeMap_;
 
     static const std::unordered_map<LightPaintingType, CameraLightPaintingType> fwkLightPaintingTypeMap_;
     static const std::unordered_map<CameraLightPaintingType, LightPaintingType> metaLightPaintingTypeMap_;
     static const std::unordered_map<TripodStatus, FwkTripodStatus> metaTripodStatusMap_;
+    static const std::unordered_map<camera_constellation_drawing_state, ConstellationDrawingState> drawingStateMap_;
 
     static const std::unordered_map<std::string, camera_device_metadata_tag_t> parametersMap_;
 
+    static const std::unordered_map<camera_focus_tracking_mode_t, FocusTrackingMode> metaToFwFocusTrackingMode_;
+    static const std::unordered_map<FocusTrackingMode, camera_focus_tracking_mode_t> fwkToMetaFocusTrackingMode_;
+    static const std::unordered_map<CameraApertureEffectType, ApertureEffectType> metaToFwkApertureEffectTypeMap_;
+    std::shared_ptr<CompositionFeature> compositionFeature_;
     std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata_;
     Profile photoProfile_;
     Profile previewProfile_;
@@ -1830,7 +2191,6 @@ protected:
     bool isVideoDeferred_ = false;
     std::atomic<bool> isMovingPhotoEnabled_ { false };
 
-    std::shared_ptr<IsoInfoSyncCallback> isoInfoSyncCallback_ = nullptr;
     std::shared_ptr<AbilityCallback> abilityCallback_;
     std::atomic<uint32_t> exposureDurationValue_ = 0;
 
@@ -1838,15 +2198,23 @@ protected:
 
     std::mutex isoValueMutex_;
     std::mutex sessionCallbackMutex_;
+    std::mutex imageStabilizationGuidehCallbackMutex_;
+    std::shared_ptr<IsoInfoSyncCallback> isoInfoSyncCallback_ = nullptr;
     std::shared_ptr<MacroStatusCallback> macroStatusCallback_;
     std::shared_ptr<FeatureDetectionStatusCallback> featureDetectionStatusCallback_;
     std::shared_ptr<EffectSuggestionCallback> effectSuggestionCallback_;
     std::shared_ptr<LcdFlashStatusCallback> lcdFlashStatusCallback_;
+    std::shared_ptr<ImageStabilizationGuideCallback> imageStabilizationGuideCallback_;
     std::atomic<bool> isSmoothZooming_  = false;
-    uint32_t isoValue_ = 0;
     std::atomic<float> targetZoomRatio_  = -1.0;
     float focusDistance_ = 0.0;
+    uint32_t isoValue_ = 0;
+    std::atomic<bool> isSetSuperMoonEnable_ = false;
     static const std::unordered_map<CameraEffectSuggestionType, EffectSuggestionType> metaEffectSuggestionTypeMap_;
+    static const std::unordered_set<SceneMode> videoModeSet_;
+
+    sptr<CaptureOutput> photoOutput_;
+    std::atomic<int32_t> prevDrawingState_{-1};
 
     inline void ClearPreconfigProfiles()
     {
@@ -1891,10 +2259,12 @@ protected:
 
     virtual std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles(
         PreconfigType preconfigType, ProfileSizeRatio preconfigRatio);
-    
+
     CameraPosition GetUsedAsPosition();
 
-private:
+    int32_t CheckCommonPreconditions(bool isSystemApp = true, bool isAfterSessionCommited = true);
+
+    private:
     class LockGuardForControl {
     public:
         explicit LockGuardForControl(wptr<CaptureSession> session);
@@ -1905,6 +2275,21 @@ private:
         LockGuardForControl& operator=(const LockGuardForControl&) = delete;
         wptr<CaptureSession> session_ = nullptr;
     };
+    class CameraDfxReportHelper {
+    public:
+        explicit CameraDfxReportHelper(wptr<CaptureSession> session) : session_(session) {}
+        void ReportCameraConfigInfo(int32_t errorCode);
+    protected:
+        static const std::unordered_map<StreamType, std::string> streamTypeMap_;
+        static const std::unordered_map<CaptureOutputType, std::string> repeatStreamTypeMap_;
+    private:
+        wptr<CaptureSession> session_;
+        std::vector<StreamConfigInfo> ExtractStreamConfigInfo();
+        ModeConfigInfo ExtractModeConfigInfo();
+        std::string GetStreamTypeName(StreamType type);
+        std::string GetRepeatStreamTypeName(CaptureOutputType outputType);
+        std::string GetTypeName(StreamType type, CaptureOutputType outputType);
+    };
     std::mutex switchDeviceMutex_;
     std::mutex functionMapMutex_;
     std::mutex changeMetaMutex_;
@@ -1913,9 +2298,11 @@ private:
     std::shared_ptr<SessionCallback> appCallback_;
     std::shared_ptr<PressureCallback> appPressureCallback_;
     std::shared_ptr<ControlCenterEffectCallback> appControlCenterEffectStatusCallback_;
+    std::shared_ptr<CameraSwitchRequestCallback> appSwitchRequestCallback_;
     sptr<ICaptureSessionCallback> captureSessionCallback_;
     sptr<IPressureStatusCallback> pressureStatusCallback_;
     sptr<IControlCenterEffectStatusCallback> controlCenterEffectStatusCallback_;
+    sptr<ICameraSwitchSessionCallback> cameraSwitchRequestCallback_;
     std::shared_ptr<ExposureCallback> exposureCallback_;
     std::shared_ptr<FocusCallback> focusCallback_;
     std::shared_ptr<MoonCaptureBoostStatusCallback> moonCaptureBoostStatusCallback_;
@@ -1927,7 +2314,21 @@ private:
     std::vector<int32_t> faceSlendorBeautyRange_;
     std::vector<int32_t> skinToneBeautyRange_;
     std::mutex captureOutputSetsMutex_;
+    std::mutex positionCalibrationCallbackMutex_;
+    std::mutex compositionBeginCallbackMutex_;
+    std::mutex compositionEndCallbackMutex_;
+    std::mutex positionMatchCallbackMutex_;
+    std::shared_ptr<CompositionPositionCalibrationCallback> compositionPositionCalibrationCallback_;
+    std::shared_ptr<CompositionBeginCallback> compositionBeginCallback_;
+    std::shared_ptr<CompositionEndCallback> compositionEndCallback_;
+    std::shared_ptr<CompositionPositionMatchCallback> compositionPositionMatchCallback_;
+
+    std::shared_ptr<ApertureEffectChangeCallback> apertureEffectChangeCallback_;
+    std::shared_ptr<CameraSwitchRequestCallback> cameraSwitchCallback_;
+
     std::set<wptr<CaptureOutput>, RefBaseCompare<CaptureOutput>> captureOutputSets_;
+
+    std::shared_ptr<CameraDfxReportHelper> cameraDfxReportHelper_;
 
     std::mutex inputDeviceMutex_;
     std::mutex chooseDeviceMutex_;
@@ -1937,6 +2338,8 @@ private:
     volatile bool isSetTripodDetectionEnable_ = false;
     volatile bool isSetSecureOutput_ = false;
     std::atomic<bool> isSetLowLightBoostEnable_ = false;
+    std::atomic<bool> isSetConstellationDrawingEnable_ = false;
+
     static const std::unordered_map<camera_focus_state_t, FocusCallback::FocusState> metaFocusStateMap_;
     static const std::unordered_map<camera_exposure_state_t, ExposureCallback::ExposureState> metaExposureStateMap_;
 
@@ -1945,7 +2348,6 @@ private:
     static const std::unordered_map<BeautyType, camera_device_metadata_tag_t> fwkBeautyControlMap_;
     static const std::unordered_map<camera_device_metadata_tag_t, BeautyType> metaBeautyControlMap_;
     sptr<CaptureOutput> metaOutput_ = nullptr;
-    sptr<CaptureOutput> photoOutput_;
     std::atomic<int32_t> prevDuration_ = 0;
     sptr<CameraDeathRecipient> deathRecipient_ = nullptr;
     bool isColorSpaceSetted_ = false;
@@ -1953,7 +2355,12 @@ private:
     atomic<bool> isAutoSwitchDevice_ = false;
     atomic<bool> isDeviceCapabilityChanged_ = false;
     atomic<bool> canAddFuncToMap_ = true;
+    std::atomic<bool> isVirtualApertureEnabled_;
     bool isControlCenterEnabled_ = false;
+    atomic<bool> isColorStyleWorking_ = false;
+    atomic<bool> isApertureSupported_ = false;
+    const int32_t physicalAperturesIndex_ = 2;
+    std::vector<std::vector<float>> matchedRanges;
 
     // Only for the SceneMode::CAPTURE and SceneMode::VIDEO mode
     map<std::string, std::function<void()>> functionMap;
@@ -1989,13 +2396,15 @@ private:
     void SetGuessMode(SceneMode mode);
     int32_t UpdateSetting(std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata);
     Point CoordinateTransform(Point point);
-    bool JudgeSupportSwitchCamera();
+    bool JudgeMultiFrontCamera();
     int32_t CalculateExposureValue(float exposureValue);
     Point VerifyFocusCorrectness(Point point);
     int32_t ConfigureOutput(sptr<CaptureOutput>& output);
     int32_t ConfigurePreviewOutput(sptr<CaptureOutput>& output);
     int32_t ConfigurePhotoOutput(sptr<CaptureOutput>& output);
     int32_t ConfigureVideoOutput(sptr<CaptureOutput>& output);
+    int32_t ConfigureMovieFileOutput(sptr<CaptureOutput>& output);
+    int32_t ConfigureUnifyMovieFileOutput(sptr<CaptureOutput>& output);
     std::shared_ptr<Profile> GetMaxSizePhotoProfile(ProfileSizeRatio sizeRatio);
     std::shared_ptr<Profile> GetPreconfigPreviewProfile();
     std::shared_ptr<Profile> GetPreconfigPhotoProfile();
@@ -2018,8 +2427,23 @@ private:
     void StartVideoOutput();
     bool StopVideoOutput();
     void CreateAndSetFoldServiceCallback();
-    int32_t DoSpecSearch(std::vector<float>& zoomRatioRange);
+    void ParsePositionOnly(const camera_metadata_item_t& item, Point& targetPosition,
+        std::vector<Point>& compositionPoints);
+    void ParseFullCalibration(const camera_metadata_item_t& item, CalibrationStatus& pitchAngleStatus,
+        CalibrationStatus& positionStatus, float& pitchAngle, Point& targetPosition,
+        std::vector<Point>& compositionPoints);
+    void RoParseFullCalibration(const camera_metadata_item_t& item,
+        CalibrationStatus& rotationAngleStatus, float& rotationAngle);
+    int32_t AddOutputInner(sptr<ICaptureSession>& captureSession, sptr<CaptureOutput>& output);
     void AdjustRenderFit();
+    /**
+     * @brief This function is called when there hal cal smoothZoom duration change
+     *
+     *
+     * @param result Metadata got from callback from service layer.
+     */
+    void ProcessSmoothZoomDurationChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result);
+    void SetZoomRatioForAudio(float zoomRatio);
 };
 } // namespace CameraStandard
 } // namespace OHOS

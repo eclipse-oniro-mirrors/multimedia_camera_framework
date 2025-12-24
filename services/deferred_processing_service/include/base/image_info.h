@@ -17,6 +17,7 @@
 #define OHOS_CAMERA_DPS_IMAGE_INFO_H
 
 #include "basic_definitions.h"
+#include "dps_metadata_info.h"
 #include "ipc_file_descriptor.h"
 #include "shared_buffer.h"
 
@@ -27,7 +28,8 @@ namespace DeferredProcessing {
 class ImageInfo {
 public:
     ImageInfo();
-    ImageInfo(int32_t dataSize, bool isHighQuality, uint32_t cloudFlag);
+    ImageInfo(int32_t dataSize, bool isHighQuality, uint32_t cloudFlag, uint32_t captureFlag,
+        DpsMetadata metadata);
     ~ImageInfo();
     ImageInfo(const ImageInfo&) = delete;
     ImageInfo& operator=(const ImageInfo&) = delete;
@@ -55,6 +57,12 @@ public:
         return cloudFlag_;
     }
 
+    inline uint32_t GetCaptureFlag() const
+    {
+        return captureFlag_;
+    }
+
+
     inline CallbackType GetType()
     {
         return type_;
@@ -65,12 +73,19 @@ public:
         return error_;
     }
 
+    inline DpsMetadata GetMetaData()
+    {
+        return dpsMetaData_;
+    }
+
 private:
     void SetType(CallbackType type);
 
     int32_t dataSize_ {0};
     bool isHighQuality_ {false};
     uint32_t cloudFlag_ {0};
+    uint32_t captureFlag_ {0};
+    DpsMetadata dpsMetaData_;
     DpsError error_ {DpsError::DPS_NO_ERROR};
     CallbackType type_ {CallbackType::NONE};
     std::unique_ptr<SharedBuffer> sharedBuffer_ {nullptr};

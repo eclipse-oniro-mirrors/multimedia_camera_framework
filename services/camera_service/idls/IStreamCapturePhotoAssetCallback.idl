@@ -17,4 +17,4 @@ package OHOS.CameraStandard;
 
 interface IStreamCapturePhotoAssetCallback {
   [ipccode 0, oneway] void OnPhotoAssetAvailable([in] int captureId, [in] String uri, [in] int cameraShotType, [in] String burstKey);
-}
+}

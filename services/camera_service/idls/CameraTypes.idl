@@ -25,6 +25,12 @@ struct EffectParam {
     int skinSmoothLevel;
     int faceSlender;
     int skinTone;
+    int skinToneBright;
+    int eyeBigEyes;
+    int hairHairline;
+    int faceMakeUp;
+    int headShrink;
+    int noseSlender;
 };
 
 enum PolicyType{
@@ -53,7 +59,11 @@ enum MetadataObjectType {
     BAR_CODE_DETECTION = 7,
     BASE_FACE_DETECTION = 8,
     BASE_TRACKING_REGION = 9,
-    MAX_VALUE = BASE_TRACKING_REGION
+    HUMAN_HEAD = 10,
+    TRACKING_MODE = 11,
+    TRACKING_OBJECT_ID = 12,
+    TIMESTAMP = 13,
+    MAX_VALUE = TIMESTAMP
 };
 
 enum SketchStatus {
@@ -75,6 +85,9 @@ struct CaptureEndedInfoExt {
     int frameCount;
     boolean isDeferredVideoEnhancementAvailable;
     String videoId;
+    unsigned int deferredVideoEnhanceFlag;
+    String eisStartInfo;
+    String cinemaKeyPts;
 };
 
 enum StreamType {
@@ -82,6 +95,7 @@ enum StreamType {
     REPEAT,
     METADATA,
     DEPTH,
+    UNIFY_MOVIE,
 };
 
 enum TorchStatus {
@@ -118,6 +132,34 @@ enum ControlCenterEffectType {
 struct ControlCenterStatusInfo {
     ControlCenterEffectType effectType;
     boolean isActive;
+};
+
+struct IpcVideoProfile {
+    int format;
+    int width;
+    int height;
+    int minFrameRate;
+    int maxFrameRate;
+};
+
+enum VideoCodecType {
+    VIDEO_ENCODE_TYPE_AVC = 0,
+    VIDEO_ENCODE_TYPE_HEVC,
+};
+
+struct Location {
+    double latitude;
+    double longitude;
+    double altitude;
+};
+
+struct MovieSettings {
+    enum VideoCodecType videoCodecType;
+    int rotation;
+    boolean isHasLocation;
+    struct Location location;
+    boolean isBFrameEnabled;
+    int videoBitrate;
 };
 
 enum OutputType {

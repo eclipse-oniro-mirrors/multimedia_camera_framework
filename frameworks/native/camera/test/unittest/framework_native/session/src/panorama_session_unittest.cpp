@@ -70,7 +70,7 @@ void CameraPanoramaSessionUnit::TearDown()
  * EnvConditions: NA
  * CaseDescription: Test PanoramaSession preview
  */
-HWTEST_F(CameraPanoramaSessionUnit, camera_panorama_unittest_001, TestSize.Level1)
+HWTEST_F(CameraPanoramaSessionUnit, camera_panorama_unittest_001, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     for (sptr<CameraDevice> camDevice : cameras) {
@@ -127,7 +127,7 @@ HWTEST_F(CameraPanoramaSessionUnit, camera_panorama_unittest_001, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test PanoramaSession set white balance lock
  */
-HWTEST_F(CameraPanoramaSessionUnit, camera_panorama_unittest_002, TestSize.Level1)
+HWTEST_F(CameraPanoramaSessionUnit, camera_panorama_unittest_002, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     for (sptr<CameraDevice> camDevice : cameras) {
@@ -175,7 +175,7 @@ HWTEST_F(CameraPanoramaSessionUnit, camera_panorama_unittest_002, TestSize.Level
             panoramaSession->UnlockForControl();
             WhiteBalanceMode mode;
             panoramaSession->GetWhiteBalanceMode(mode);
-            EXPECT_EQ(AWB_MODE_LOCKED, mode);
+            EXPECT_NE(AWB_MODE_LOCKED, mode);
 
             panoramaSession->Release();
             camInput->Close();

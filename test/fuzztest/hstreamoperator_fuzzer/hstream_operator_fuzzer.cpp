@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -26,6 +26,7 @@
 #include "iservice_registry.h"
 #include "ipc_skeleton.h"
 #include "buffer_extra_data_impl.h"
+#include "moving_photo_proxy.h"
 #include "camera_photo_proxy.h"
 
 namespace OHOS {
@@ -49,7 +50,6 @@ void HStreamOperatorFuzzer::HStreamOperatorFuzzTest(FuzzedDataProvider& fdp)
     int32_t captureId = fdp.ConsumeIntegral<int32_t>();
     int64_t timestamp = fdp.ConsumeIntegral<int64_t>();
     fuzz_->StartMovingPhotoEncode(rotation, timestamp, format, captureId);
-    fuzz_->StartRecord(timestamp, rotation, captureId);
     fuzz_->GetHdiStreamByStreamID(streamId);
     fuzz_->EnableMovingPhotoMirror(fdp.ConsumeBool(), fdp.ConsumeBool());
     ColorSpace getColorSpace;
@@ -60,7 +60,7 @@ void HStreamOperatorFuzzer::HStreamOperatorFuzzTest(FuzzedDataProvider& fdp)
     fuzz_->GetStreamOperator();
     std::vector<int32_t> results = {fdp.ConsumeIntegral<uint32_t>()};
     fuzz_->ReleaseStreams();
-    std::vector<HDI::Camera::V1_1::StreamInfo_V1_1> streamInfos;
+    std::vector<HDI::Camera::V1_5::StreamInfo_V1_5> streamInfos;
     fuzz_->CreateStreams(streamInfos);
     std::shared_ptr<OHOS::Camera::CameraMetadata> settings;
     const int32_t NUM_10 = 10;

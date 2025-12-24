@@ -80,6 +80,7 @@ bool CameraTaiheWorkerQueueKeeper::WorkerLockCondition(std::shared_ptr<TaiheWork
                   "timeout, waitTime:%{public}lld",
         queueTask->taskName.c_str(), firstTask->taskName.c_str(), diffTime.count());
     workerQueueTasks_.pop_front();
+    CHECK_RETURN_RET_ELOG(workerQueueTasks_.empty(), false, "workerQueueTasks is empty.");
     auto frontTask = workerQueueTasks_.front();
     CHECK_RETURN_RET(frontTask == queueTask, true);
     MEDIA_INFO_LOG("CameraTaiheWorkerQueueKeeper::WorkerLockCondition current task not equal front task,%{public}s "

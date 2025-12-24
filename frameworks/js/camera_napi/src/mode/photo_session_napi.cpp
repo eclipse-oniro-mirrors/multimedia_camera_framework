@@ -15,6 +15,7 @@
 
 #include "mode/photo_session_napi.h"
 
+#include "camera_log.h"
 #include "input/camera_manager.h"
 
 namespace OHOS {
@@ -55,7 +56,9 @@ napi_value PhotoSessionNapi::Init(napi_env env, napi_value exports)
         status = NapiRefManager::CreateMemSafetyRef(env, ctorObj, &sConstructor_);
         if (status == napi_ok) {
             status = napi_set_named_property(env, exports, PHOTO_SESSION_NAPI_CLASS_NAME, ctorObj);
-            CHECK_RETURN_RET(status == napi_ok, exports);
+            if (status == napi_ok) {
+                return exports;
+            }
         }
     }
     MEDIA_ERR_LOG("Init call Failed!");
@@ -73,20 +76,20 @@ napi_value PhotoSessionNapi::CreateCameraSession(napi_env env)
     if (status == napi_ok) {
         sCameraSession_ = CameraManager::GetInstance()->CreateCaptureSession(SceneMode::CAPTURE);
         if (sCameraSession_ == nullptr) {
-            MEDIA_ERR_LOG("PhotoSessionNapi::CreateCameraSession Failed to create instance");
+            MEDIA_ERR_LOG("Failed to create Photo session instance");
             napi_get_undefined(env, &result);
             return result;
         }
         status = napi_new_instance(env, constructor, 0, nullptr, &result);
         sCameraSession_ = nullptr;
         if (status == napi_ok && result != nullptr) {
-            MEDIA_DEBUG_LOG("PhotoSessionNapi::CreateCameraSession success to create napi instance");
+            MEDIA_DEBUG_LOG("success to create Photo session napi instance");
             return result;
         } else {
-            MEDIA_ERR_LOG("PhotoSessionNapi::CreateCameraSession Failed to create napi instance");
+            MEDIA_ERR_LOG("Failed to create Photo session napi instance");
         }
     }
-    MEDIA_ERR_LOG("PhotoSessionNapi::CreateCameraSession Failed to create napi instance last");
+    MEDIA_ERR_LOG("Failed to create Photo session napi instance last");
     napi_get_undefined(env, &result);
     return result;
 }
@@ -127,16 +130,22 @@ napi_value PhotoSessionNapi::PhotoSessionNapiConstructor(napi_env env, napi_call
     CAMERA_NAPI_GET_JS_OBJ_WITH_ZERO_ARGS(env, info, status, thisVar);
 
     if (status == napi_ok && thisVar != nullptr) {
-        std::unique_ptr<PhotoSessionNapi> photoSessionObj = std::make_unique<PhotoSessionNapi>();
-        photoSessionObj->env_ = env;
-        CHECK_RETURN_RET_ELOG(sCameraSession_ == nullptr, result, "sCameraSession_ is null");
-        photoSessionObj->photoSession_ = static_cast<PhotoSession*>(sCameraSession_.GetRefPtr());
-        photoSessionObj->cameraSession_ = photoSessionObj->photoSession_;
-        CHECK_RETURN_RET_ELOG(photoSessionObj->photoSession_ == nullptr, result, "photoSession_ is null");
-        status = napi_wrap(env, thisVar, reinterpret_cast<void*>(photoSessionObj.get()),
+        std::unique_ptr<PhotoSessionNapi> obj = std::make_unique<PhotoSessionNapi>();
+        obj->env_ = env;
+        if (sCameraSession_ == nullptr) {
+            MEDIA_ERR_LOG("sCameraSession_ is null");
+            return result;
+        }
+        obj->photoSession_ = static_cast<PhotoSession*>(sCameraSession_.GetRefPtr());
+        obj->cameraSession_ = obj->photoSession_;
+        if (obj->photoSession_ == nullptr) {
+            MEDIA_ERR_LOG("photoSession_ is null");
+            return result;
+        }
+        status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
             PhotoSessionNapi::PhotoSessionNapiDestructor, nullptr, nullptr);
         if (status == napi_ok) {
-            photoSessionObj.release();
+            obj.release();
             return thisVar;
         } else {
             MEDIA_ERR_LOG("PhotoSessionNapi Failure wrapping js to native napi");
@@ -161,11 +170,38 @@ void PhotoSessionNapi::UnregisterPressureStatusCallbackListener(
     const std::string &eventName, napi_env env, napi_value callback, const std::vector<napi_value> &args)
 {
     MEDIA_INFO_LOG("PhotoSessionNapi::UnregisterPressureStatusCallbackListener");
-    if (pressureCallback_ == nullptr) {
-        MEDIA_INFO_LOG("pressureCallback is null");
+    CHECK_RETURN_ELOG(pressureCallback_ == nullptr, "pressureCallback is null");
+    pressureCallback_->RemoveCallbackRef(eventName, callback);
+    if (pressureCallback_->GetCallbackCount(eventName) == 0) {
+        cameraSession_->UnSetPressureCallback();
+        pressureCallback_ = nullptr;
+    }
+}
+
+void PhotoSessionNapi::RegisterCameraSwitchRequestCallbackListener(
+    const std::string &eventName, napi_env env, napi_value callback, const std::vector<napi_value> &args, bool isOnce)
+{
+    MEDIA_INFO_LOG("PhotoSessionNapi::RegisterCameraSwitchRequestCallbackListener is enter");
+    if (cameraSwitchSessionNapiCallback_ == nullptr) {
+        cameraSwitchSessionNapiCallback_ = std::make_shared<CameraSwitchRequestCallbackListener>(env);
+        cameraSession_->SetCameraSwitchRequestCallback(cameraSwitchSessionNapiCallback_);
+    }
+    cameraSwitchSessionNapiCallback_->SaveCallbackReference(eventName, callback, isOnce);
+}
+
+void PhotoSessionNapi::UnregisterCameraSwitchRequestCallbackListener(
+    const std::string &eventName, napi_env env, napi_value callback, const std::vector<napi_value> &args)
+{
+    MEDIA_INFO_LOG("PhotoSessionNapi::UnregisterCameraSwitchRequestCallbackListener is enter");
+    if (cameraSwitchSessionNapiCallback_ == nullptr) {
+        MEDIA_INFO_LOG("cameraSwitchSessionNapiCallback_ is null");
         return;
     }
-    pressureCallback_->RemoveCallbackRef(eventName, callback);
+    cameraSwitchSessionNapiCallback_->RemoveCallbackRef(eventName, callback);
+    if (cameraSwitchSessionNapiCallback_->GetCallbackCount(eventName) == 0) {
+        cameraSession_->UnSetCameraSwitchRequestCallback();
+        cameraSwitchSessionNapiCallback_ = nullptr;
+    }
 }
 
 extern "C" {

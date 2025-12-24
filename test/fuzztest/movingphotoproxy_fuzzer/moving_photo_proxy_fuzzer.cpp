@@ -22,6 +22,7 @@
 #include "camera_util.h"
 #include "ipc_skeleton.h"
 #include "photo_asset_proxy.h"
+#include "frame_record.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -31,7 +32,6 @@ static constexpr int32_t NUM_2 = 2;
 
 sptr<AvcodecTaskManagerIntf> MovingPhotoProxyFuzzer::taskManagerfuzz_ { nullptr };
 sptr<AudioCapturerSessionIntf> MovingPhotoProxyFuzzer::capturerSessionfuzz_ { nullptr };
-sptr<MovingPhotoVideoCacheIntf> MovingPhotoProxyFuzzer::videoCachefuzz_ { nullptr };
 
 std::vector<GraphicTransformType> graphicType = {
     GRAPHIC_ROTATE_NONE,
@@ -83,9 +83,6 @@ void MovingPhotoProxyFuzzer::MovingPhotoProxyFuzzTest(FuzzedDataProvider& fdp)
     CHECK_EXECUTE(capturerSessionfuzz_ == nullptr,
         capturerSessionfuzz_ = AudioCapturerSessionProxy::CreateAudioCapturerSessionProxy());
     CHECK_RETURN_ELOG(!capturerSessionfuzz_, "CreateAudioCapturerSessionProxy Error");
-    CHECK_EXECUTE(
-        videoCachefuzz_ == nullptr, videoCachefuzz_ = MovingPhotoVideoCacheProxy::CreateMovingPhotoVideoCacheProxy());
-    CHECK_RETURN_ELOG(!videoCachefuzz_, "CreateMovingPhotoVideoCacheProxy Error");
 
     capturerSessionfuzz_->CreateAudioSession();
     capturerSessionfuzz_->StartAudioCapture();
@@ -112,18 +109,12 @@ void MovingPhotoProxyFuzzer::MovingPhotoProxyFuzzTest(FuzzedDataProvider& fdp)
     sptr<FrameRecord> frameRecord = new (std::nothrow) FrameRecord(videoBuffer, timestamp, type_);
     std::vector<sptr<FrameRecord>> frameRecords;
     frameRecords.push_back(frameRecord);
-    int32_t taskName = fdp.ConsumeIntegral<uint64_t>();
-    int32_t rotation = fdp.ConsumeIntegral<int32_t>();
-    taskManagerfuzz_->DoMuxerVideo(frameRecords, taskName, rotation, captureId);
     taskManagerfuzz_->isEmptyVideoFdMap();
     int64_t startTimeStamp = fdp.ConsumeIntegral<int64_t>();
     taskManagerfuzz_->TaskManagerInsertStartTime(captureId, startTimeStamp);
     int64_t endTimeStamp = fdp.ConsumeIntegral<int64_t>();
     taskManagerfuzz_->TaskManagerInsertEndTime(captureId, endTimeStamp);
 
-    videoCachefuzz_->CreateMovingPhotoVideoCache(taskManagerfuzz_);
-    videoCachefuzz_->OnDrainFrameRecord(frameRecord);
-    videoCachefuzz_->GetFrameCachedResult(frameRecords, taskName, rotation, captureId);
     std::this_thread::sleep_for(std::chrono::seconds(1));
 }
 
@@ -168,7 +159,7 @@ void MovingPhotoProxyFuzzer::SetDeferredVideoEnhanceFlagFuzzTest(FuzzedDataProvi
     taskManagerfuzz_->CreateAvcodecTaskManager(capturerSessionfuzz_, videoCodecType, colorSpace);
     int32_t captureId = fdp.ConsumeIntegral<int32_t>();
     uint32_t deferredVideoEnhanceFlag = fdp.ConsumeIntegral<uint32_t>();
-    taskManagerfuzz_->SetDeferredVideoEnhanceFlag(captureId, deferredVideoEnhanceFlag);
+    taskManagerfuzz_->SetDeferredVideoEnhanceFlag(captureId,deferredVideoEnhanceFlag);
     taskManagerfuzz_->GetDeferredVideoEnhanceFlag(captureId);
 }
 
@@ -191,7 +182,7 @@ void MovingPhotoProxyFuzzer::RecordVideoTypeFuzzTest(FuzzedDataProvider& fdp)
     taskManagerfuzz_->CreateAvcodecTaskManager(capturerSessionfuzz_, videoCodecType, colorSpace);
     int32_t captureId = fdp.ConsumeIntegral<int32_t>();
     VideoType videoType = static_cast<VideoType>(XT_ORIGIN_VIDEO);
-    taskManagerfuzz_->RecordVideoType(captureId, videoType);
+    taskManagerfuzz_->RecordVideoType(captureId,videoType);
 }
 
 void Test(uint8_t* data, size_t size)

@@ -15,6 +15,8 @@
 
 #include "photo_asset_adapter_unittest.h"
 #include "photo_asset_adapter.h"
+#include "picture_adapter.h"
+#include "dfx_report.h"
 #include "camera_log.h"
 #include "surface.h"
 #include "media_photo_asset_proxy.h"
@@ -45,12 +47,11 @@ void PhotoAssetAdapterUnit::TearDown() {}
  *-GetVideoFd should return -1.
  *-NotifyVideoSaveFinished should set photoAssetProxy_ to nullptr.
  */
-HWTEST_F(PhotoAssetAdapterUnit, photo_asset_adapter_unittest_001, TestSize.Level1)
+HWTEST_F(PhotoAssetAdapterUnit, photo_asset_adapter_unittest_001, TestSize.Level0)
 {
     int32_t cameraShotType = 0;
     int32_t uid = 1;
-    std::unique_ptr<PhotoAssetAdapter> photoAssetAdapterTest =
-        std::make_unique<PhotoAssetAdapter>(cameraShotType, uid, IPCSkeleton::GetCallingTokenID());
+    std::unique_ptr<PhotoAssetAdapter> photoAssetAdapterTest = std::make_unique<PhotoAssetAdapter>(cameraShotType, uid, IPCSkeleton::GetCallingTokenID());
     sptr<Media::PhotoProxy> photoProxy;
     photoAssetAdapterTest->photoAssetProxy_ = nullptr;
     photoAssetAdapterTest->AddPhotoProxy(photoProxy);
@@ -59,10 +60,11 @@ HWTEST_F(PhotoAssetAdapterUnit, photo_asset_adapter_unittest_001, TestSize.Level
     string ret001 = "";
     EXPECT_EQ(ret01, ret001);
 
-    int32_t ret02 = photoAssetAdapterTest->GetVideoFd();
+    auto videoTp = VideoType::ORIGIN_VIDEO;
+    int32_t ret02 = photoAssetAdapterTest->GetVideoFd(videoTp);
     EXPECT_EQ(ret02, -1);
 
-    photoAssetAdapterTest->NotifyVideoSaveFinished();
+    photoAssetAdapterTest->NotifyVideoSaveFinished(videoTp);
     ASSERT_EQ(photoAssetAdapterTest->photoAssetProxy_, nullptr);
 }
 
@@ -78,7 +80,7 @@ HWTEST_F(PhotoAssetAdapterUnit, photo_asset_adapter_unittest_001, TestSize.Level
  *-GetVideoFd should return -1.
  *-NotifyVideoSaveFinished should not change the state of photoAssetProxy_.
  */
-HWTEST_F(PhotoAssetAdapterUnit, photo_asset_adapter_unittest_002, TestSize.Level1)
+HWTEST_F(PhotoAssetAdapterUnit, photo_asset_adapter_unittest_002, TestSize.Level0)
 {
     int32_t cameraShotType = 0;
     int32_t uid = 1;
@@ -87,8 +89,9 @@ HWTEST_F(PhotoAssetAdapterUnit, photo_asset_adapter_unittest_002, TestSize.Level
     EXPECT_NE(photoAssetAdapterTest, nullptr);
 
     std::shared_ptr<DataShare::DataShareHelper> dataShareHelper;
-    std::shared_ptr<Media::PhotoAssetProxy> photoAssetProxy = std::make_shared <Media::PhotoAssetProxy>(
-            dataShareHelper, Media::CameraShotType::IMAGE, 1, 1024, IPCSkeleton::GetCallingTokenID());
+    std::shared_ptr<Media::PhotoAssetProxy> photoAssetProxy =
+        std::make_shared <Media::PhotoAssetProxy>(
+            dataShareHelper, Media::CameraShotType::IMAGE, 1, 1024, 1, IPCSkeleton::GetCallingTokenID());
     sptr<Media::PhotoProxy> photoProxy;
     photoAssetAdapterTest->photoAssetProxy_ = photoAssetProxy;
     EXPECT_NE(photoAssetAdapterTest->photoAssetProxy_, nullptr);
@@ -100,11 +103,57 @@ HWTEST_F(PhotoAssetAdapterUnit, photo_asset_adapter_unittest_002, TestSize.Level
     string ret001 = "";
     EXPECT_EQ(ret01, ret001);
 
-    int32_t ret02 = photoAssetAdapterTest->GetVideoFd();
+    auto videoTp = VideoType::ORIGIN_VIDEO;
+    int32_t ret02 = photoAssetAdapterTest->GetVideoFd(videoTp);
     EXPECT_EQ(ret02, -1);
 
-    photoAssetAdapterTest->NotifyVideoSaveFinished();
+    photoAssetAdapterTest->NotifyVideoSaveFinished(videoTp);
     EXPECT_NE(photoAssetAdapterTest->photoAssetProxy_, nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test For DFX.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test For DFX.
+ */
+HWTEST_F(PhotoAssetAdapterUnit, photo_asset_adapter_unittest_003, TestSize.Level0)
+{
+    std::unique_ptr<PictureAdapter> pictureAdapterTest =
+        std::make_unique<PictureAdapter>();
+    sptr<SurfaceBuffer> surfaceBuffer = nullptr;
+    pictureAdapterTest->Create(surfaceBuffer);
+    EXPECT_EQ(surfaceBuffer, nullptr);
+}
+ 
+/*
+ * Feature: Framework
+ * Function: Test For DFX.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test For DFX.
+ */
+HWTEST_F(PhotoAssetAdapterUnit, photo_asset_adapter_unittest_004, TestSize.Level0)
+{
+    std::unique_ptr<PictureAdapter> pictureAdapterTest =
+        std::make_unique<PictureAdapter>();
+    sptr<SurfaceBuffer> surfaceBuffer = nullptr;
+    std::string pictureAdapterUse = "DFX::TEST";
+    CameraReportUtils::GetInstance().ReportCameraCreateNullptr("DFX::TEST",
+        pictureAdapterUse);
+    CameraReportUtils::GetInstance().ReportCameraFalse("DFX::TEST",
+        pictureAdapterUse);
+    int32_t ret = 0;
+    CameraReportUtils::GetInstance().ReportCameraError("DFX::TEST",
+        pictureAdapterUse, ret);
+    CameraReportUtils::GetInstance().ReportCameraGetNullStr("DFX::TEST",
+        pictureAdapterUse);
+    CameraReportUtils::GetInstance().ReportCameraFail("DFX::TEST",
+        pictureAdapterUse);
+    EXPECT_EQ(surfaceBuffer, nullptr);
 }
 }
 }

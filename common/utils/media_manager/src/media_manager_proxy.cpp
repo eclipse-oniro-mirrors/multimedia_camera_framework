@@ -16,6 +16,7 @@
 #include "media_manager_proxy.h"
 #include "ipc_file_descriptor.h"
 #include "dp_log.h"
+
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
@@ -46,14 +47,15 @@ std::shared_ptr<MediaManagerProxy> MediaManagerProxy::CreateMediaManagerProxy()
 
 MediaManagerProxy::~MediaManagerProxy()
 {
-    DP_DEBUG_LOG("MediaManagerProxy destructor");
+    DP_INFO_LOG("MediaManagerProxy destructor");
 }
 
-int32_t MediaManagerProxy::MpegAcquire(const std::string& requestId, const sptr<IPCFileDescriptor>& inputFd)
+int32_t MediaManagerProxy::MpegAcquire(const std::string& requestId, const DpsFdPtr& inputFd,
+    int32_t width, int32_t height)
 {
     DP_DEBUG_LOG("MpegAcquire requestId: %{public}s", requestId.c_str());
     DP_CHECK_ERROR_RETURN_RET_LOG(mediaManagerIntf_ == nullptr, DP_ERR, "MediaManagerIntf is null");
-    return mediaManagerIntf_->MpegAcquire(requestId, inputFd);
+    return mediaManagerIntf_->MpegAcquire(requestId, inputFd, width, height);
 }
 
 int32_t MediaManagerProxy::MpegUnInit(const int32_t result)
@@ -63,7 +65,7 @@ int32_t MediaManagerProxy::MpegUnInit(const int32_t result)
     return mediaManagerIntf_->MpegUnInit(result);
 }
 
-sptr<IPCFileDescriptor> MediaManagerProxy::MpegGetResultFd()
+DpsFdPtr MediaManagerProxy::MpegGetResultFd()
 {
     DP_DEBUG_LOG("MpegGetResultFd");
     DP_CHECK_ERROR_RETURN_RET_LOG(mediaManagerIntf_ == nullptr, nullptr, "MediaManagerIntf is null");
@@ -98,18 +100,24 @@ sptr<Surface> MediaManagerProxy::MpegGetMakerSurface()
     return mediaManagerIntf_->MpegGetMakerSurface();
 }
 
-void MediaManagerProxy::MpegSetMarkSize(int32_t size)
-{
-    DP_DEBUG_LOG("MpegSetMarkSize size: %{public}d", size);
-    DP_CHECK_ERROR_RETURN_LOG(mediaManagerIntf_ == nullptr, "MediaManagerIntf is null");
-    mediaManagerIntf_->MpegSetMarkSize(size);
-}
-
 int32_t MediaManagerProxy::MpegRelease()
 {
     DP_DEBUG_LOG("MpegRelease");
     DP_CHECK_ERROR_RETURN_RET_LOG(mediaManagerIntf_ == nullptr, DP_ERR, "MediaManagerIntf is null");
     return mediaManagerIntf_->MpegRelease();
+}
+
+uint32_t MediaManagerProxy::MpegGetDuration()
+{
+    DP_DEBUG_LOG("MpegGetDuration");
+    DP_CHECK_ERROR_RETURN_RET_LOG(mediaManagerIntf_ == nullptr, 0, "MediaManagerIntf is null");
+    return mediaManagerIntf_->MpegGetDuration();
+}
+
+int32_t MediaManagerProxy::MpegSetProgressNotifer(std::unique_ptr<MediaProgressNotifier> processNotifer)
+{
+    DP_CHECK_ERROR_RETURN_RET_LOG(mediaManagerIntf_ == nullptr, DP_ERR, "MediaManagerIntf is null");
+    return mediaManagerIntf_->MpegSetProgressNotifer(std::move(processNotifer));
 }
 } // namespace DeferredProcessing
 } // namespace CameraStandard

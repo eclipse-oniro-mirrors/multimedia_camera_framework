@@ -12,27 +12,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "camera_service_client_unittest.h"
 #include <vector>
-
-#include "accesstoken_kit.h"
-#include "camera_device_service_proxy.h"
 #include "camera_error_code.h"
 #include "camera_log.h"
-#include "camera_mute_service_callback_proxy.h"
-#include "camera_service_client_unittest.h"
-#include "capture_session.h"
-#include "fold_service_callback_proxy.h"
 #include "gtest/gtest.h"
-#include "hcamera_service.h"
+#include "camera_device_service_proxy.h"
 #include "input/camera_input.h"
 #include "input/camera_manager.h"
+#include "hcamera_service.h"
 #include "ipc_skeleton.h"
-#include "iservice_registry.h"
-#include "nativetoken_kit.h"
+#include "capture_session.h"
 #include "system_ability_definition.h"
-#include "test_token.h"
+#include "iservice_registry.h"
+#include "accesstoken_kit.h"
+#include "nativetoken_kit.h"
 #include "token_setproc.h"
+#include "camera_mute_service_callback_proxy.h"
 #include "torch_service_callback_proxy.h"
+#include "fold_service_callback_proxy.h"
+#include "test_token.h"
 
 using namespace testing::ext;
 using namespace OHOS::HDI::Camera::V1_0;
@@ -279,6 +278,11 @@ void AppCallback::OnFoldStatusChanged(const FoldStatusInfo &foldStatusInfo) cons
     MEDIA_DEBUG_LOG("AppCallback::OnFoldStatusChanged"); 
 }
 
+void AppCallback::OnControlCenterStatusChanged(bool status) const
+{
+    MEDIA_DEBUG_LOG("AppCallback::OnControlCenterStatusChanged"); 
+}
+
 void AppCallback::OnLcdFlashStatusChanged(LcdFlashStatusInfo lcdFlashStatusInfo)
 {
     MEDIA_DEBUG_LOG("AppCallback::OnLcdFlashStatusChanged");
@@ -287,6 +291,21 @@ void AppCallback::OnLcdFlashStatusChanged(LcdFlashStatusInfo lcdFlashStatusInfo)
 void AppCallback::OnOfflineDeliveryFinished(const int32_t captureId) const
 {
     MEDIA_DEBUG_LOG("AppCallback::OnOfflineDeliveryFinished");
+}
+
+void AppCallback::OnConstellationDrawingState(const int32_t drawingState) const
+{
+    MEDIA_INFO_LOG("AppCallback::OnConstellationDrawingState");
+}
+
+void AppCallback::OnFramePaused() const
+{
+    MEDIA_DEBUG_LOG("AppMetadataCallback::OnFramePaused");
+}
+
+void AppCallback::OnFrameResumed() const
+{
+    MEDIA_DEBUG_LOG("AppMetadataCallback::OnFrameResumed");
 }
 
 void CameraServiceClientUnit::ProcessPreviewProfiles(sptr<CameraOutputCapability>& outputcapability)
@@ -387,6 +406,7 @@ void CameraServiceClientUnit::ProcessSize()
     auto device = camInput->GetCameraDevice();
     ASSERT_NE(device, nullptr);
     device->SetMdmCheck(false);
+
     camInput->Open();
     session_ = manager_->CreateCaptureSession();
     ASSERT_NE(session_, nullptr);
@@ -491,7 +511,7 @@ void CameraServiceClientUnit::TearDown()
  * EnvConditions: NA
  * CaseDescription: test HCameraDeviceProxy_cpp with anomalous branch
  */
-HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_001, TestSize.Level1)
+HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_001, TestSize.Level0)
 {
     if (g_isSupportedDeviceStatus) {
         GTEST_SKIP();
@@ -502,11 +522,11 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_001, TestSize.L
 
     sptr<ICameraDeviceServiceCallback> callback = nullptr;
     int32_t intResult = deviceObj->SetCallback(callback);
-    EXPECT_EQ(intResult, 200);
+    EXPECT_EQ(intResult, 5);
 
     std::shared_ptr<OHOS::Camera::CameraMetadata> settings = nullptr;
     intResult = deviceObj->UpdateSetting(settings);
-    EXPECT_EQ(intResult, 200);
+    EXPECT_EQ(intResult, 5);
 
     std::vector<int32_t> results = {};
     intResult = deviceObj->GetEnabledResults(results);
@@ -524,7 +544,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_001, TestSize.L
  * EnvConditions: NA
  * CaseDescription: test HCameraServiceProxy_cpp with anomalous branch
  */
-HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_002, TestSize.Level1)
+HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_002, TestSize.Level0)
 {
     if (g_isSupportedDeviceStatus) {
         GTEST_SKIP();
@@ -539,11 +559,11 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_002, TestSize.L
 
     sptr<ICameraServiceCallback> callback = nullptr;
     int32_t intResult = serviceProxy->SetCameraCallback(callback);
-    EXPECT_EQ(intResult, 200);
+    EXPECT_EQ(intResult, 5);
 
     sptr<ICameraMuteServiceCallback> callback_2 = nullptr;
     intResult = serviceProxy->SetMuteCallback(callback_2);
-    EXPECT_EQ(intResult, 200);
+    EXPECT_EQ(intResult, 5);
 
     int32_t format = 0;
     int32_t width = 0;
@@ -551,21 +571,21 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_002, TestSize.L
     sptr<IStreamCapture> output = nullptr;
     sptr<IBufferProducer> producer = nullptr;
     intResult = serviceProxy->CreatePhotoOutput(producer, format, width, height, output);
-    EXPECT_EQ(intResult, 200);
+    EXPECT_EQ(intResult, 5);
 
     sptr<IStreamRepeat> output_2 = nullptr;
     intResult = serviceProxy->CreatePreviewOutput(producer, format, width, height, output_2);
-    EXPECT_EQ(intResult, 200);
+    EXPECT_EQ(intResult, 5);
 
     intResult = serviceProxy->CreateDeferredPreviewOutput(format, width, height, output_2);
-    EXPECT_EQ(intResult, 200);
+    EXPECT_EQ(intResult, 2);
 
     sptr<IStreamMetadata> output_3 = nullptr;
     intResult = serviceProxy->CreateMetadataOutput(producer, format, {1}, output_3);
-    EXPECT_EQ(intResult, 200);
+    EXPECT_EQ(intResult, 5);
 
     intResult = serviceProxy->CreateVideoOutput(producer, format, width, height, output_2);
-    EXPECT_EQ(intResult, 200);
+    EXPECT_EQ(intResult, 5);
 }
 
 /*
@@ -602,46 +622,46 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_003, TestSize.L
     sptr<ICameraServiceCallback> callback = manager_->GetCameraStatusListenerManager();
     ASSERT_NE(callback, nullptr);
     int32_t intResult = serviceProxy->SetCameraCallback(callback);
-    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
+    EXPECT_EQ(intResult, 1);
 
     sptr<ICameraMuteServiceCallback> callback_2 = manager_->GetCameraMuteListenerManager();
     ASSERT_NE(callback_2, nullptr);
     serviceProxy->SetMuteCallback(callback_2);
-    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
+    EXPECT_EQ(intResult, 1);
 
     intResult = serviceProxy->GetCameras(cameraIds, cameraAbilityList);
-    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
+    EXPECT_EQ(intResult, 1);
 
     sptr<ICaptureSession> session = nullptr;
     intResult = serviceProxy->CreateCaptureSession(session, 0);
-    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
+    EXPECT_EQ(intResult, 1);
 
     sptr<IStreamCapture> output = nullptr;
     intResult = serviceProxy->CreatePhotoOutput(producer, format, width, height, output);
-    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
+    EXPECT_EQ(intResult, 1);
 
     width = PREVIEW_DEFAULT_WIDTH;
     height = PREVIEW_DEFAULT_HEIGHT;
     sptr<IStreamRepeat> output_2 = nullptr;
     intResult = serviceProxy->CreatePreviewOutput(producer, format, width, height, output_2);
-    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
+    EXPECT_EQ(intResult, 1);
 
     intResult = serviceProxy->CreateDeferredPreviewOutput(format, width, height, output_2);
-    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
+    EXPECT_EQ(intResult, 1);
 
     sptr<IStreamMetadata> output_3 = nullptr;
     intResult = serviceProxy->CreateMetadataOutput(producer, format, {1}, output_3);
-    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
+    EXPECT_EQ(intResult, 1);
 
     intResult = serviceProxy->CreateVideoOutput(producer, format, width, height, output_2);
-    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
+    EXPECT_EQ(intResult, 1);
 
     intResult = serviceProxy->SetListenerObject(object);
-    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
+    EXPECT_EQ(intResult, 1);
 
     bool muteMode = true;
     intResult = serviceProxy->IsCameraMuted(muteMode);
-    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
+    EXPECT_EQ(intResult, 1);
 }
 
 /*
@@ -652,7 +672,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_003, TestSize.L
  * EnvConditions: NA
  * CaseDescription: test HCameraDeviceProxy_cpp with anomalous branch
  */
-HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_004, TestSize.Level1)
+HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_004, TestSize.Level0)
 {
     if (g_isSupportedDeviceStatus) {
         GTEST_SKIP();
@@ -668,30 +688,30 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_004, TestSize.L
 
     deviceObj->SetMdmCheck(false);
     int32_t intResult = deviceObj->Open();
-    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
+    EXPECT_EQ(intResult, 1);
 
     intResult = deviceObj->Close();
-    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
+    EXPECT_EQ(intResult, 1);
 
     intResult = deviceObj->Release();
-    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
+    EXPECT_EQ(intResult, 1);
 
     sptr<CameraInput> input = (sptr<CameraInput>&)input_;
     sptr<ICameraDeviceServiceCallback> callback = new (std::nothrow) CameraDeviceServiceCallback(input);
     ASSERT_NE(callback, nullptr);
 
     intResult = deviceObj->SetCallback(callback);
-    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
+    EXPECT_EQ(intResult, 1);
 
     std::shared_ptr<OHOS::Camera::CameraMetadata> settings = cameras_[0]->GetMetadata();
     ASSERT_NE(settings, nullptr);
 
     intResult = deviceObj->UpdateSetting(settings);
-    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
+    EXPECT_EQ(intResult, 1);
 
     std::vector<int32_t> results = {};
     intResult = deviceObj->GetEnabledResults(results);
-    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
+    EXPECT_EQ(intResult, 1);
 }
 
 /*
@@ -702,7 +722,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_004, TestSize.L
  * EnvConditions: NA
  * CaseDescription: test HCaptureSessionProxy_cpp with anomalous branch
  */
-HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_005, TestSize.Level1)
+HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_005, TestSize.Level0)
 {
     if (g_isSupportedDeviceStatus) {
         GTEST_SKIP();
@@ -722,17 +742,17 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_005, TestSize.L
     sptr<IRemoteObject> stream = nullptr;
 
     int32_t intResult = captureSession->AddOutput(previewOutput->GetStreamType(), stream);
-    EXPECT_EQ(intResult, 200);
+    EXPECT_EQ(intResult, 5);
 
     sptr<ICameraDeviceService> cameraDevice = nullptr;
     intResult = captureSession->RemoveInput(cameraDevice);
-    EXPECT_EQ(intResult, 200);
+    EXPECT_EQ(intResult, 5);
 
     intResult = captureSession->RemoveOutput(previewOutput->GetStreamType(), stream);
-    EXPECT_EQ(intResult, 200);
+    EXPECT_EQ(intResult, 5);
 
     sptr<ICaptureSessionCallback> callback = nullptr;
-    EXPECT_EQ(intResult, 200);
+    EXPECT_EQ(intResult, 5);
 }
 
 /*
@@ -743,7 +763,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_005, TestSize.L
  * EnvConditions: NA
  * CaseDescription: test HCaptureSessionProxy_cpp with anomalous branch
  */
-HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_006, TestSize.Level1)
+HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_006, TestSize.Level0)
 {
     if (g_isSupportedDeviceStatus) {
         GTEST_SKIP();
@@ -758,37 +778,37 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_006, TestSize.L
     ASSERT_NE(captureSession, nullptr);
 
     int32_t intResult = captureSession->BeginConfig();
-    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
+    EXPECT_EQ(intResult, 1);
 
     sptr<CameraInput> input_1 = (sptr<CameraInput>&)input_;
     sptr<ICameraDeviceService> deviceObj = input_1->GetCameraDevice();
     ASSERT_NE(deviceObj, nullptr);
 
     intResult = captureSession->AddInput(deviceObj);
-    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
+    EXPECT_EQ(intResult, 1);
 
     sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
     ASSERT_NE(previewOutput, nullptr);
-	
+
     ASSERT_NE(previewOutput->GetStream(), nullptr);
     intResult = captureSession->AddOutput(previewOutput->GetStreamType(), previewOutput->GetStream()->AsObject());
-    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
+    EXPECT_EQ(intResult, 1);
 
     intResult = captureSession->Start();
-    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
+    EXPECT_EQ(intResult, 1);
 
     intResult = captureSession->Release();
-    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
+    EXPECT_EQ(intResult, 1);
 
     sptr<ICaptureSessionCallback> callback = new (std::nothrow) CaptureSessionCallback(session_);
     ASSERT_NE(callback, nullptr);
 
     intResult = captureSession->SetCallback(callback);
-    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
+    EXPECT_EQ(intResult, 1);
 
     CaptureSessionState currentState = CaptureSessionState::SESSION_CONFIG_INPROGRESS;
     intResult = captureSession->GetSessionState(currentState);
-    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
+    EXPECT_EQ(intResult, 1);
 }
 
 /*
@@ -799,7 +819,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_006, TestSize.L
  * EnvConditions: NA
  * CaseDescription: test HStreamCaptureProxy_cpp with anomalous branch
  */
-HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_007, TestSize.Level1)
+HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_007, TestSize.Level0)
 {
     if (g_isSupportedDeviceStatus) {
         GTEST_SKIP();
@@ -815,7 +835,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_007, TestSize.L
 
     sptr<IStreamCaptureCallback> callback = nullptr;
     int32_t intResult = capture->SetCallback(callback);
-    EXPECT_EQ(intResult, 200);
+    EXPECT_EQ(intResult, 5);
 
     bool isEnabled = false;
     intResult = capture->SetThumbnail(isEnabled);
@@ -826,7 +846,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_007, TestSize.L
 
     std::shared_ptr<OHOS::Camera::CameraMetadata> captureSettings = nullptr;
     intResult = capture->Capture(captureSettings);
-    EXPECT_EQ(intResult, 200);
+    EXPECT_EQ(intResult, 1);
 }
 
 /*
@@ -837,7 +857,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_007, TestSize.L
  * EnvConditions: NA
  * CaseDescription: test HStreamCaptureProxy_cpp with anomalous branch
  */
-HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_008, TestSize.Level1)
+HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_008, TestSize.Level0)
 {
     if (g_isSupportedDeviceStatus) {
         GTEST_SKIP();
@@ -853,13 +873,13 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_008, TestSize.L
 
     std::shared_ptr<OHOS::Camera::CameraMetadata> captureSettings = cameras_[0]->GetMetadata();
     int32_t intResult = capture->Capture(captureSettings);
-    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
+    EXPECT_EQ(intResult, 1);
 
     intResult = capture->CancelCapture();
-    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
+    EXPECT_EQ(intResult, 1);
 
     intResult = capture->Release();
-    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
+    EXPECT_EQ(intResult, 1);
 
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
     ASSERT_NE(photoOutput, nullptr);
@@ -869,7 +889,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_008, TestSize.L
     ASSERT_NE(callback, nullptr);
 
     intResult = capture->SetCallback(callback);
-    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
+    EXPECT_EQ(intResult, 1);
 }
 
 /*
@@ -880,7 +900,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_008, TestSize.L
  * EnvConditions: NA
  * CaseDescription: test HStreamMetadataProxy_cpp with anomalous branch
  */
-HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_009, TestSize.Level1)
+HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_009, TestSize.Level0)
 {
     if (g_isSupportedDeviceStatus) {
         GTEST_SKIP();
@@ -895,10 +915,10 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_009, TestSize.L
     ASSERT_NE(metadata, nullptr);
 
     int32_t intResult = metadata->Start();
-    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
+    EXPECT_EQ(intResult, 1);
 
     intResult = metadata->Release();
-    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
+    EXPECT_EQ(intResult, 1);
 }
 
 /*
@@ -909,7 +929,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_009, TestSize.L
  * EnvConditions: NA
  * CaseDescription: test HStreamRepeatProxy_cpp with anomalous branch
  */
-HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_010, TestSize.Level1)
+HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_010, TestSize.Level0)
 {
     if (g_isSupportedDeviceStatus) {
         GTEST_SKIP();
@@ -925,11 +945,11 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_010, TestSize.L
 
     sptr<IStreamRepeatCallback> callback = nullptr;
     int32_t intResult = repeat->SetCallback(callback);
-    EXPECT_EQ(intResult, 200);
+    EXPECT_EQ(intResult, 5);
 
     sptr<OHOS::IBufferProducer> producer = nullptr;
     intResult = repeat->AddDeferredSurface(producer);
-    EXPECT_EQ(intResult, 200);
+    EXPECT_EQ(intResult, 5);
 
     object = samgr->GetSystemAbility(AUDIO_POLICY_SERVICE_ID);
 
@@ -944,13 +964,13 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_010, TestSize.L
     ASSERT_NE(callback, nullptr);
 
     intResult = repeat->SetCallback(callback);
-    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
+    EXPECT_EQ(intResult, 1);
 
     sptr<IConsumerSurface> previewSurface = IConsumerSurface::Create();
     producer = previewSurface->GetProducer();
 
     intResult = repeat->AddDeferredSurface(producer);
-    EXPECT_EQ(intResult, ERR_TRANSACTION_FAILED);
+    EXPECT_EQ(intResult, 1);
 }
 
 /*
@@ -961,7 +981,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_010, TestSize.L
  * EnvConditions: NA
  * CaseDescription: test CallbackProxy_cpp with anomalous branch
  */
-HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_011, TestSize.Level1)
+HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_011, TestSize.Level0)
 {
     if (g_isSupportedDeviceStatus) {
         GTEST_SKIP();
@@ -983,7 +1003,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_011, TestSize.L
     uint64_t timestamp = 10;
     std::shared_ptr<OHOS::Camera::CameraMetadata> result = nullptr;
     int32_t intResult = deviceCallback->OnResult(timestamp, result);
-    EXPECT_EQ(intResult, 200);
+    EXPECT_EQ(intResult, 0);
 }
 
 /*
@@ -994,7 +1014,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_011, TestSize.L
  * EnvConditions: NA
  * CaseDescription: test prelaunch the camera with serviceProxy_ null anomalous branch
  */
-HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_012, TestSize.Level1)
+HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_012, TestSize.Level0)
 {
     if (g_isSupportedDeviceStatus) {
         GTEST_SKIP();
@@ -1015,12 +1035,12 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_012, TestSize.L
         EXPECT_EQ(intResult, 0);
     }
 
-    intResult = camManagerObj->PrelaunchCamera(0);
+    intResult = camManagerObj->PrelaunchCamera();
     EXPECT_EQ(intResult, 7400201);
     // CameraManager instance has been changed, need recover
     camManagerObj->SetServiceProxy(nullptr);
 
-    intResult = camManagerObj->PrelaunchCamera(0);
+    intResult = camManagerObj->PrelaunchCamera();
     EXPECT_EQ(intResult, 7400201);
 
     bool isPreLaunchSupported = camManagerObj->IsPrelaunchSupported(cameras_[0]);
@@ -1045,7 +1065,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_012, TestSize.L
  * EnvConditions: NA
  * CaseDescription: test serviceProxy_ null with anomalous branch
  */
-HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_013, TestSize.Level1)
+HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_013, TestSize.Level0)
 {
     if (g_isSupportedDeviceStatus) {
         GTEST_SKIP();
@@ -1093,7 +1113,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_013, TestSize.L
  * EnvConditions: NA
  * CaseDescription: test serviceProxy_ null with muteCamera anomalous branch
  */
-HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_014, TestSize.Level1)
+HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_014, TestSize.Level0)
 {
     if (g_isSupportedDeviceStatus) {
         GTEST_SKIP();
@@ -1126,7 +1146,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_014, TestSize.L
  * EnvConditions: NA
  * CaseDescription: test errorCode with abnormal branches
  */
-HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_015, TestSize.Level1)
+HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_015, TestSize.Level0)
 {
     if (g_isSupportedDeviceStatus) {
         GTEST_SKIP();
@@ -1142,7 +1162,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_015, TestSize.L
     sptr<ICameraDeviceService> device = nullptr;
     sptr<ITorchServiceCallback> torchSvcCallback = nullptr;
     bool canOpenCamera = true;
-    EXPECT_EQ(hCameraServiceProxy->CreateCameraDevice(cameras_[0]->GetID(), device), ERR_TRANSACTION_FAILED);
+    EXPECT_EQ(hCameraServiceProxy->CreateCameraDevice(cameras_[0]->GetID(), device), 1);
     hCameraServiceProxy->SetTorchCallback(torchSvcCallback);
     sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
     torchSvcCallback =  camManagerObj->GetTorchServiceListenerManager();
@@ -1166,7 +1186,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_015, TestSize.L
  * EnvConditions: NA
  * CaseDescription: test errorCode with abnormal branches
  */
-HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_016, TestSize.Level1)
+HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_016, TestSize.Level0)
 {
     if (g_isSupportedDeviceStatus) {
         GTEST_SKIP();
@@ -1199,7 +1219,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_016, TestSize.L
  * EnvConditions: NA
  * CaseDescription: test errorCode, width and height, if sketchRatio > SKETCH_RATIO_MAX_VALUE with abnormal branches
  */
-HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_017, TestSize.Level1)
+HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_017, TestSize.Level0)
 {
     if (g_isSupportedDeviceStatus) {
         GTEST_SKIP();
@@ -1230,7 +1250,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_017, TestSize.L
  * EnvConditions: NA
  * CaseDescription: test errorCode, width and height, if sketchRatio > SKETCH_RATIO_MAX_VALUE with abnormal branches
  */
-HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_018, TestSize.Level1)
+HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_018, TestSize.Level0)
 {
     if (g_isSupportedDeviceStatus) {
         GTEST_SKIP();
@@ -1258,7 +1278,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_018, TestSize.L
  * EnvConditions: NA
  * CaseDescription: test errorCode with abnormal branches
  */
-HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_019, TestSize.Level1)
+HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_019, TestSize.Level0)
 {
     if (g_isSupportedDeviceStatus) {
         GTEST_SKIP();
@@ -1288,7 +1308,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_019, TestSize.L
  * EnvConditions: NA
  * CaseDescription: test errorCode with abnormal branches
  */
-HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_020, TestSize.Level1)
+HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_020, TestSize.Level0)
 {
     if (g_isSupportedDeviceStatus) {
         GTEST_SKIP();
@@ -1314,7 +1334,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_020, TestSize.L
  * EnvConditions: NA
  * CaseDescription: test errorCode with abnormal branches
  */
-HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_021, TestSize.Level1)
+HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_021, TestSize.Level0)
 {
     if (g_isSupportedDeviceStatus) {
         GTEST_SKIP();
@@ -1337,7 +1357,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_021, TestSize.L
  * EnvConditions: NA
  * CaseDescription: test errorCode with abnormal branches
  */
-HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_022, TestSize.Level1)
+HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_022, TestSize.Level0)
 {
     if (g_isSupportedDeviceStatus) {
         GTEST_SKIP();
@@ -1373,7 +1393,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_022, TestSize.L
  * EnvConditions: NA
  * CaseDescription: test errorCode with abnormal branches
  */
-HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_023, TestSize.Level1)
+HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_023, TestSize.Level0)
 {
     if (g_isSupportedDeviceStatus) {
         GTEST_SKIP();
@@ -1406,7 +1426,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_023, TestSize.L
  * EnvConditions: NA
  * CaseDescription: test errorCode with abnormal branches
  */
-HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_024, TestSize.Level1)
+HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_024, TestSize.Level0)
 {
     if (g_isSupportedDeviceStatus) {
         GTEST_SKIP();
@@ -1436,7 +1456,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_024, TestSize.L
  * EnvConditions: NA
  * CaseDescription: test errorCode with abnormal branches
  */
-HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_025, TestSize.Level1)
+HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_025, TestSize.Level0)
 {
     if (g_isSupportedDeviceStatus) {
         GTEST_SKIP();
@@ -1462,7 +1482,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_025, TestSize.L
  * EnvConditions: NA
  * CaseDescription: test errorCode with abnormal branches
  */
-HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_026, TestSize.Level1)
+HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_026, TestSize.Level0)
 {
     if (g_isSupportedDeviceStatus) {
         GTEST_SKIP();

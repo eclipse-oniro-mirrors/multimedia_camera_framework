@@ -34,6 +34,8 @@ public:
     static void VideoSessionNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
     static napi_value VideoSessionNapiConstructor(napi_env env, napi_callback_info info);
 
+    static napi_value SetQualityPrioritization(napi_env env, napi_callback_info info);
+
     napi_env env_;
     sptr<VideoSession> videoSession_;
     static thread_local napi_ref sConstructor_;
@@ -46,6 +48,10 @@ protected:
         napi_value callback, const std::vector<napi_value>& args, bool isOnce) override;
     void UnregisterControlCenterEffectStatusCallbackListener(const std::string& eventName, napi_env env,
         napi_value callback, const std::vector<napi_value>& args) override;
+    void RegisterCameraSwitchRequestCallbackListener(const std::string &eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value> &args, bool isOnce) override;
+    void UnregisterCameraSwitchRequestCallbackListener(
+        const std::string &eventName, napi_env env, napi_value callback, const std::vector<napi_value> &args) override;
 };
 }
 }
