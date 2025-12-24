@@ -47,6 +47,16 @@ public:
     {
         return 0;
     }
+
+    int32_t OnFramePaused() override
+    {
+        return 0;
+    }
+
+    int32_t OnFrameResumed() override
+    {
+        return 0;
+    }
 };
 class HStreamRepeatCallbackStubFuzzer {
 public:
@@ -55,6 +65,8 @@ public:
     static void HStreamRepeatCallbackStubFuzzTest2(FuzzedDataProvider &fdp);
     static void HStreamRepeatCallbackStubFuzzTest3(FuzzedDataProvider &fdp);
     static void HStreamRepeatCallbackStubFuzzTest4(FuzzedDataProvider &fdp);
+    static void HStreamRepeatCallbackStubFuzzTest5();
+    static void HStreamRepeatCallbackStubFuzzTest6();
 };
 }  // namespace CameraStandard
 }  // namespace OHOS

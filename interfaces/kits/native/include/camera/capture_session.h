@@ -973,57 +973,65 @@ Camera_ErrorCode OH_CaptureSession_UnregisterSystemPressureLevelChangeCallback(C
  *         {@link #CAMERA_SESSION_NOT_CONFIG} if the capture session not config.
  * @since 17
  */
-Camera_ErrorCode OH_CaptureSession_IsMacroSupported(Camera_CaptureSession* session, bool* isSupported);
+ Camera_ErrorCode OH_CaptureSession_IsMacroSupported(Camera_CaptureSession* session, bool* isSupported);
 
-/**
- * @brief Enable macro ability or not for the camera device.
- *
- * @param session the {@link Camera_CaptureSession} instance.
- * @param enabled the flag of enable macro ability or not.
- * @return {@link #CAMERA_OK} if the method call succeeds.
- *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
- *         {@link #CAMERA_SESSION_NOT_CONFIG} if the capture session not config.
- *         {@link #CAMERA_OPERATION_NOT_ALLOWED} if operation not allowed.
- * @since 17
- */
-Camera_ErrorCode OH_CaptureSession_EnableMacro(Camera_CaptureSession* session, bool enabled);
+ /**
+  * @brief Enable macro ability or not for the camera device.
+  *
+  * @param session the {@link Camera_CaptureSession} instance.
+  * @param enabled the flag of enable macro ability or not.
+  * @return {@link #CAMERA_OK} if the method call succeeds.
+  *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+  *         {@link #CAMERA_SESSION_NOT_CONFIG} if the capture session not config.
+  *         {@link #CAMERA_OPERATION_NOT_ALLOWED} if operation not allowed.
+  * @since 17
+  */
+ Camera_ErrorCode OH_CaptureSession_EnableMacro(Camera_CaptureSession *session, bool enabled);
 
-Camera_ErrorCode OH_CaptureSession_IsWhiteBalanceModeSupported(
-    Camera_CaptureSession* session, Camera_WhiteBalanceMode whiteBalanceMode, bool* isSupported);
+ Camera_ErrorCode OH_CaptureSession_IsWhiteBalanceModeSupported(
+     Camera_CaptureSession *session, Camera_WhiteBalanceMode whiteBalanceMode, bool *isSupported);
 
-Camera_ErrorCode OH_CaptureSession_GetWhiteBalanceMode(Camera_CaptureSession* session,
-    Camera_WhiteBalanceMode* whiteBalanceMode);
+ Camera_ErrorCode OH_CaptureSession_GetWhiteBalanceMode(
+     Camera_CaptureSession *session, Camera_WhiteBalanceMode *whiteBalanceMode);
 
-Camera_ErrorCode OH_CaptureSession_GetWhiteBalanceRange(Camera_CaptureSession* session, int32_t *minColorTemperature,
-    int32_t *maxColorTemperature);
+ Camera_ErrorCode OH_CaptureSession_GetWhiteBalanceRange(
+     Camera_CaptureSession *session, int32_t *minColorTemperature, int32_t *maxColorTemperature);
 
-Camera_ErrorCode OH_CaptureSession_GetWhiteBalance(Camera_CaptureSession* session, int32_t *colorTemperature);
+ Camera_ErrorCode OH_CaptureSession_GetWhiteBalance(Camera_CaptureSession *session, int32_t *colorTemperature);
 
-Camera_ErrorCode OH_CaptureSession_SetWhiteBalance(Camera_CaptureSession* session, int32_t colorTemperature);
+ Camera_ErrorCode OH_CaptureSession_SetWhiteBalance(Camera_CaptureSession *session, int32_t colorTemperature);
 
-Camera_ErrorCode OH_CaptureSession_SetWhiteBalanceMode(Camera_CaptureSession* session,
-     Camera_WhiteBalanceMode whiteBalanceMode);
+ Camera_ErrorCode OH_CaptureSession_SetWhiteBalanceMode(
+     Camera_CaptureSession *session, Camera_WhiteBalanceMode whiteBalanceMode);
 
-Camera_ErrorCode OH_CaptureSession_IsControlCenterSupported(Camera_CaptureSession* session, bool* isSupported);
+ Camera_ErrorCode OH_CaptureSession_IsControlCenterSupported(Camera_CaptureSession* session, bool* isSupported);
 
-Camera_ErrorCode OH_CaptureSession_GetSupportedEffectTypes(
-    Camera_CaptureSession* session, Camera_ControlCenterEffectType** types, uint32_t* size);
+ Camera_ErrorCode OH_CaptureSession_GetSupportedEffectTypes(
+    Camera_CaptureSession* session,Camera_ControlCenterEffectType** types, uint32_t* size);
 
-Camera_ErrorCode OH_CaptureSession_DeleteSupportedEffectTypes(Camera_CaptureSession* session,
+ Camera_ErrorCode OH_CaptureSession_DeleteSupportedEffectTypes(Camera_CaptureSession* session,
     Camera_ControlCenterEffectType* types, uint32_t size);
 
 Camera_ErrorCode OH_CaptureSession_EnableControlCenter(Camera_CaptureSession* session, bool enabled);
 
-typedef void (*OH_CaptureSession_OnControlCenterEffectStatusChange)(Camera_CaptureSession* session,
+ typedef void (*OH_CaptureSession_OnControlCenterEffectStatusChange)(Camera_CaptureSession* session,
     Camera_ControlCenterStatusInfo* controlCenterStatusInfo);
 
-Camera_ErrorCode OH_CaptureSession_RegisterControlCenterEffectStatusChangeCallback(Camera_CaptureSession* session,
+ Camera_ErrorCode OH_CaptureSession_RegisterControlCenterEffectStatusChangeCallback(Camera_CaptureSession* session,
     OH_CaptureSession_OnControlCenterEffectStatusChange controlCenterEffectStatusChange);
 
-Camera_ErrorCode OH_CaptureSession_UnregisterControlCenterEffectStatusChangeCallback(Camera_CaptureSession* session,
+ Camera_ErrorCode OH_CaptureSession_UnregisterControlCenterEffectStatusChangeCallback(Camera_CaptureSession* session,
     OH_CaptureSession_OnControlCenterEffectStatusChange controlCenterEffectStatusChange);
 
-typedef void (*OH_CaptureSession_OnMacroStatusChange)(Camera_CaptureSession* session, bool isMacroActive);
+ typedef void (*OH_CaptureSession_OnCameraSwitchRequest)(Camera_CaptureSession *session, Camera_Device *device);
+
+ Camera_ErrorCode OH_CaptureSession_RegisterCameraSwitchRequestCallback(
+    Camera_CaptureSession *session, OH_CaptureSession_OnCameraSwitchRequest cameraSwitchRequest);
+
+ Camera_ErrorCode OH_CaptureSession_UnregisterRemoteDeviceSwitchCallback(
+    Camera_CaptureSession *session, OH_CaptureSession_OnCameraSwitchRequest cameraSwitchRequest);
+
+typedef void (*OH_CaptureSession_OnMacroStatusChange)(Camera_CaptureSession *session, bool isMacroActive);
 
 Camera_ErrorCode OH_CaptureSession_RegisterMacroStatusChangeCallback(
     Camera_CaptureSession* session, OH_CaptureSession_OnMacroStatusChange macroStatusChange);

@@ -15,10 +15,10 @@
 
 #ifndef OHOS_CAMERA_UTIL_H
 #define OHOS_CAMERA_UTIL_H
-#define EXPORT_API __attribute__((visibility("default")))
-
 #include <array>
 #include <map>
+#define EXPORT_API __attribute__((visibility("default")))
+
 #include <cstdint>
 #include <iostream>
 #include <iterator>
@@ -34,6 +34,7 @@
 #include "v1_1/types.h"
 #include "v1_2/types.h"
 #include "v1_3/types.h"
+#include "v1_4/types.h"
 #include "camera_hdi_const.h"
 
 namespace OHOS {
@@ -80,6 +81,7 @@ static const int32_t CONTROL_CENTER_STATUS_INDEX = 0;
 static const int32_t CONTROL_CENTER_BEAUTY_INDEX = 1;
 static const int32_t CONTROL_CENTER_APERTURE_INDEX = 2;
 static const int32_t CONTROL_CENTER_DATA_PRECISION = 9;
+static constexpr int32_t UID_CAMERA = 1047;
 
 enum CamType {
     SYSTEM = 0,
@@ -88,8 +90,7 @@ enum CamType {
 
 enum CamStatus {
     CAMERA_OPEN = 0,
-    CAMERA_CLOSE,
-    CAMERA_START_OPEN,
+    CAMERA_CLOSE
 };
 
 enum CamServiceError {
@@ -136,11 +137,6 @@ enum DeviceType {
 
 enum FallingState {
     FALLING_STATE = 1008,
-};
-
-enum VideoCodecType : int32_t {
-    VIDEO_ENCODE_TYPE_AVC = 0,
-    VIDEO_ENCODE_TYPE_HEVC,
 };
 
 extern std::unordered_map<int32_t, int32_t> g_cameraToPixelFormat;

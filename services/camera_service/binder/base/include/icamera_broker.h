@@ -20,6 +20,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
+
 /**
  * @brief Camera service remote request code for DH IPC.
  *

@@ -29,7 +29,7 @@
 namespace OHOS {
 namespace CameraStandard {
 
-enum VideoMetaType {
+enum class VideoMetaType : int32_t {
     VIDEO_META_MAKER_INFO = 0,
 };
 
@@ -90,11 +90,6 @@ public:
     int32_t Stop();
 
     /**
-     * @brief get the video rotation angle.
-     */
-    int32_t GetVideoRotation(int32_t imageRotation);
-
-    /**
      * @brief Pause the video capture.
      */
     int32_t Pause();
@@ -103,6 +98,11 @@ public:
      * @brief Resume the paused video capture.
      */
     int32_t Resume();
+
+    /**
+     * @brief get the video rotation angle.
+     */
+    int32_t GetVideoRotation(int32_t imageRotation);
 
     /**
      * @brief Get the application callback information.
@@ -296,7 +296,9 @@ public:
      */
     int32_t OnSketchStatusChanged(SketchStatus status) override;
 
-    int32_t OnDeferredVideoEnhancementInfo(const CaptureEndedInfoExt &captureEndedInfo) override;
+    int32_t OnDeferredVideoEnhancementInfo(const CaptureEndedInfoExt& captureEndedInfo) override;
+    int32_t OnFramePaused() override;
+    int32_t OnFrameResumed() override;
 };
 } // namespace CameraStandard
 } // namespace OHOS

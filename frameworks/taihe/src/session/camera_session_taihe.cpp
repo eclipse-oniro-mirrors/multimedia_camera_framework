@@ -176,12 +176,12 @@ void SessionImpl::AddOutput(weak::CameraOutput cameraOutput)
 
 void SessionImpl::RemoveOutput(weak::CameraOutput cameraOutput)
 {
-    CHECK_RETURN_ELOG(captureSession_ == nullptr, "AddOutput captureSession_ is null");
+    CHECK_RETURN_ELOG(captureSession_ == nullptr, "RemoveOutput captureSession_ is null");
     Ani::Camera::CameraOutputImpl* outputImpl =
         reinterpret_cast<Ani::Camera::CameraOutputImpl *>(cameraOutput->GetSpecificImplPtr());
-    CHECK_RETURN_ELOG(outputImpl == nullptr, "AddOutput CameraOutputImpl is null");
+    CHECK_RETURN_ELOG(outputImpl == nullptr, "RemoveOutput CameraOutputImpl is null");
     sptr<OHOS::CameraStandard::CaptureOutput> captureOutput = outputImpl->GetCameraOutput();
-    CHECK_RETURN_ELOG(captureOutput == nullptr, "AddOutput captureOutput is null");
+    CHECK_RETURN_ELOG(captureOutput == nullptr, "RemoveOutput captureOutput is null");
     int32_t ret = captureSession_->RemoveOutput(captureOutput);
     CHECK_RETURN(!CameraUtilsTaihe::CheckError(ret));
 }
@@ -909,8 +909,31 @@ void SessionImpl::UnregisterEffectSuggestionCallbackListener(
 {
     CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
         "SystemApi off effectSuggestionChange is called!");
-    CHECK_RETURN_ELOG(effectSuggestionCallback_ == nullptr, "macroStatusCallback is null");
+    CHECK_RETURN_ELOG(effectSuggestionCallback_ == nullptr, "effectSuggestionCallback is null");
     effectSuggestionCallback_->RemoveCallbackRef(eventName, callback);
+}
+
+void SessionImpl::OnZoomInfoChange(callback_view<void(uintptr_t, ZoomInfo const&)> callback)
+{
+    ListenerTemplate<SessionImpl>::On(this, callback, "zoomInfoChange");
+}
+
+void SessionImpl::OffZoomInfoChange(optional_view<callback<void(uintptr_t, ZoomInfo const&)>> callback)
+{
+    ListenerTemplate<SessionImpl>::Off(this, callback, "zoomInfoChange");
+}
+
+void SessionImpl::RegisterZoomInfoCbListener(
+    const std::string& eventName, std::shared_ptr<uintptr_t> callback, bool isOnce)
+{
+    CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "this type callback can not be registered in current session!");
+}
+void SessionImpl::UnregisterZoomInfoCbListener(
+    const std::string& eventName, std::shared_ptr<uintptr_t> callback)
+{
+    CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "this type callback can not be unregistered in current session!");
 }
 
 void EffectSuggestionCallbackListener::OnEffectSuggestionChange(
@@ -986,6 +1009,9 @@ const SessionImpl::EmitterFunctions SessionImpl::fun_map_ = {
     { "systemPressureLevelChange", {
         &SessionImpl::RegisterPressureStatusCallbackListener,
         &SessionImpl::UnregisterPressureStatusCallbackListener } },
+    {"zoomInfoChange", {
+        &SessionImpl::RegisterZoomInfoCbListener,
+        &SessionImpl::UnregisterZoomInfoCbListener } },
 };
 const SessionImpl::EmitterFunctions& SessionImpl::GetEmitterFunctions()
 {

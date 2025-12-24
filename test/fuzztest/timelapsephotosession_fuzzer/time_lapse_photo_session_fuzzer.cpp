@@ -15,18 +15,14 @@
 
 #include <fuzzer/FuzzedDataProvider.h>
 
-#include "accesstoken_kit.h"
+#include "time_lapse_photo_session_fuzzer.h"
 #include "camera_log.h"
 #include "camera_output_capability.h"
 #include "input/camera_manager.h"
 #include "input/camera_manager_for_sys.h"
 #include "message_parcel.h"
-#include "nativetoken_kit.h"
-#include "test_token.h"
 #include "time_lapse_photo_session.h"
-#include "time_lapse_photo_session_fuzzer.h"
-#include "token_setproc.h"
-
+#include "test_token.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -466,11 +462,11 @@ void TestMetadataResultProcessor()
     s->Release();
 }
 
-void Test(uint8_t *rawData, size_t size)
+void Test(uint8_t *data, size_t size)
 {
-    FuzzedDataProvider fdp(rawData, size);
+    FuzzedDataProvider fdp(data, size);
     if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
-         return;
+        return;
     }
     CHECK_RETURN_ELOG(!TestToken().GetAllCameraPermission(), "GetPermission error");
     manager = CameraManager::GetInstance();

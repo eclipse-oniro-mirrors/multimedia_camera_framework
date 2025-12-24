@@ -26,7 +26,7 @@ using namespace ohos::multimedia::camera;
 array<PortraitPhotoFunctions> CreateFunctionsPortraitPhotoFunctionsArray(
     std::vector<sptr<OHOS::CameraStandard::CameraAbility>> functionsList)
 {
-    MEDIA_DEBUG_LOG("CreateFunctionsJSArray is called");
+    MEDIA_DEBUG_LOG("CreateFunctionsPortraitPhotoFunctionsArray is called");
     CHECK_PRINT_ELOG(functionsList.empty(), "functionsList is empty");
     std::vector<PortraitPhotoFunctions> functionsArray;
     for (size_t i = 0; i < functionsList.size(); i++) {
@@ -38,7 +38,7 @@ array<PortraitPhotoFunctions> CreateFunctionsPortraitPhotoFunctionsArray(
 array<PortraitPhotoConflictFunctions> CreateFunctionsPortraitPhotoConflictFunctionsArray(
     std::vector<sptr<OHOS::CameraStandard::CameraAbility>> conflictFunctionsList)
 {
-    MEDIA_DEBUG_LOG("CreateFunctionsJSArray is called");
+    MEDIA_DEBUG_LOG("CreateFunctionsPortraitPhotoConflictFunctionsArray is called");
     CHECK_PRINT_ELOG(conflictFunctionsList.empty(), "conflictFunctionsList is empty");
     std::vector<PortraitPhotoConflictFunctions> functionsArray;
     for (size_t i = 0; i < conflictFunctionsList.size(); i++) {
@@ -82,8 +82,8 @@ array<PortraitEffect> PortraitPhotoSessionImpl::GetSupportedPortraitEffects()
         array<PortraitEffect>(nullptr, 0), "SystemApi GetSupportedPortraitEffects is called!");
     CHECK_RETURN_RET_ELOG(portraitSession_ == nullptr, array<PortraitEffect>(nullptr, 0),
         "GetSupportedPortraitEffects portraitSession_ is null");
-    std::vector<OHOS::CameraStandard::PortraitEffect> PortraitEffects = portraitSession_->GetSupportedPortraitEffects();
-    return CameraUtilsTaihe::ToTaiheArrayEnum<PortraitEffect, OHOS::CameraStandard::PortraitEffect>(PortraitEffects);
+    std::vector<OHOS::CameraStandard::PortraitEffect> portraitEffects = portraitSession_->GetSupportedPortraitEffects();
+    return CameraUtilsTaihe::ToTaiheArrayEnum<PortraitEffect, OHOS::CameraStandard::PortraitEffect>(portraitEffects);
 }
 
 void PortraitPhotoSessionImpl::SetPortraitEffect(PortraitEffect effect)
@@ -104,8 +104,8 @@ PortraitEffect PortraitPhotoSessionImpl::GetPortraitEffect()
     CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), errType,
         "SystemApi GetPortraitEffect is called!");
     CHECK_RETURN_RET_ELOG(portraitSession_ == nullptr, errType, "GetPortraitEffect portraitSession_ is null");
-    OHOS::CameraStandard::PortraitEffect portaitEffect = portraitSession_->GetPortraitEffect();
-    return PortraitEffect(static_cast<PortraitEffect::key_t>(portaitEffect));
+    OHOS::CameraStandard::PortraitEffect portraitEffect = portraitSession_->GetPortraitEffect();
+    return PortraitEffect(static_cast<PortraitEffect::key_t>(portraitEffect));
 }
 } // namespace Camera
 } // namespace Ani

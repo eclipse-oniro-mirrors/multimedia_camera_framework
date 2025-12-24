@@ -261,6 +261,7 @@ void CameraMovingPhotoModuleTest::SetUp()
     auto device = input_->GetCameraDevice();
     ASSERT_NE(device, nullptr);
     device->SetMdmCheck(false);
+
     EXPECT_EQ(input_->Open(), SUCCESS);
 
     UpdateCameraOutputCapability();
@@ -320,16 +321,13 @@ void CameraMovingPhotoModuleTest::UpdateCameraOutputCapability(int32_t modeName)
 int32_t CameraMovingPhotoModuleTest::RegisterPhotoAssetAvailableCallback(
     PhotoOutputTest_PhotoAssetAvailable callback)
 {
-    CHECK_RETURN_RET_ELOG(photoSurface_ == nullptr, INVALID_ARGUMENT,
-        "Photo surface is invalid");
+    CHECK_RETURN_RET_ELOG(photoSurface_ == nullptr, INVALID_ARGUMENT, "Photo surface is invalid");
     if (photoListener_ == nullptr) {
         photoListener_ = new (std::nothrow) PhotoListenerTest(photoOutput_, photoSurface_);
-        CHECK_RETURN_RET_ELOG(photoListener_ == nullptr, SERVICE_FATL_ERROR,
-            "Create photo listener failed");
+        CHECK_RETURN_RET_ELOG(photoListener_ == nullptr, SERVICE_FATL_ERROR, "Create photo listener failed");
 
         SurfaceError ret = photoSurface_->RegisterConsumerListener((sptr<IBufferConsumerListener>&)photoListener_);
-        CHECK_RETURN_RET_ELOG(ret != SURFACE_ERROR_OK, SERVICE_FATL_ERROR,
-            "Register surface consumer listener failed");
+        CHECK_RETURN_RET_ELOG(ret != SURFACE_ERROR_OK, SERVICE_FATL_ERROR, "Register surface consumer listener failed");
     }
     photoListener_->SetPhotoAssetAvailableCallback(callback);
     callbackFlag_ |= CAPTURE_PHOTO_ASSET;
@@ -370,8 +368,7 @@ int32_t CameraMovingPhotoModuleTest::CreatePhotoOutputWithoutSurface(Profile &pr
     sptr<PhotoOutput> &photoOutput)
 {
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer(DEFAULT_SURFACEID);
-    CHECK_RETURN_RET_ELOG(surface == nullptr, INVALID_ARGUMENT,
-        "Failed to get photoOutput surface");
+    CHECK_RETURN_RET_ELOG(surface == nullptr, INVALID_ARGUMENT, "Failed to get photoOutput surface");
 
     photoSurface_ = surface;
     surface->SetUserData(CameraManager::surfaceFormat, std::to_string(profile.GetCameraFormat()));
@@ -379,8 +376,8 @@ int32_t CameraMovingPhotoModuleTest::CreatePhotoOutputWithoutSurface(Profile &pr
     CHECK_RETURN_RET_ELOG(surfaceProducer == nullptr, SERVICE_FATL_ERROR, "Get producer failed");
 
     int32_t retCode = manager_->CreatePhotoOutput(profile, surfaceProducer, &photoOutput_);
-    CHECK_RETURN_RET_ELOG((retCode != CameraErrorCode::SUCCESS || photoOutput_ == nullptr),
-        SERVICE_FATL_ERROR, "Create photo output failed");
+    CHECK_RETURN_RET_ELOG((retCode != CameraErrorCode::SUCCESS || photoOutput_ == nullptr), SERVICE_FATL_ERROR,
+        "Create photo output failed");
 
     photoOutput_->SetNativeSurface(true);
     return SUCCESS;
@@ -441,16 +438,15 @@ int32_t CameraMovingPhotoModuleTest::MediaAssetManagerRequestMovingPhoto(
     OH_MediaLibrary_OnMovingPhotoDataPrepared callback)
 {
     mediaAssetManager_ = OH_MediaAssetManager_Create();
-    CHECK_RETURN_RET_ELOG(mediaAssetManager_ == nullptr, SERVICE_FATL_ERROR,
-        "Create media asset manager failed");
+    CHECK_RETURN_RET_ELOG(mediaAssetManager_ == nullptr, SERVICE_FATL_ERROR, "Create media asset manager failed");
 
     MediaLibrary_RequestId requestId;
     MediaLibrary_RequestOptions requestOptions;
     requestOptions.deliveryMode = MEDIA_LIBRARY_HIGH_QUALITY_MODE;
     int32_t result = OH_MediaAssetManager_RequestMovingPhoto(mediaAssetManager_, mediaAsset_, requestOptions,
         &requestId, callback);
-    CHECK_RETURN_RET_ELOG(result != MEDIA_LIBRARY_OK, SERVICE_FATL_ERROR,
-        "media asset manager request moving photo failed");
+    CHECK_RETURN_RET_ELOG(
+        result != MEDIA_LIBRARY_OK, SERVICE_FATL_ERROR, "media asset manager request moving photo failed");
     return SUCCESS;
 }
 
@@ -548,7 +544,7 @@ HWTEST_F(CameraMovingPhotoModuleTest, camera_moving_photo_moduletest_002, TestSi
  * CaseDescription: Test the normal scenario of movingphoto,Call the EnableMovingPhotoMirror function
  * after submitting the camera settings,and expect the movingphotomirror feature can be turned on successfully.
  */
-HWTEST_F(CameraMovingPhotoModuleTest, camera_moving_photo_moduletest_003, TestSize.Level1)
+HWTEST_F(CameraMovingPhotoModuleTest, camera_moving_photo_moduletest_003, TestSize.Level0)
 {
     EXPECT_EQ(session_->BeginConfig(), SUCCESS);
     EXPECT_EQ(session_->AddInput((sptr<CaptureInput>&)input_), SUCCESS);
@@ -581,7 +577,7 @@ HWTEST_F(CameraMovingPhotoModuleTest, camera_moving_photo_moduletest_003, TestSi
  * CaseDescription: Test the normal scenario of movingphoto,Call the EnableMovingPhotoMirror function then tunrn off
  * after submitting the camera settings,and expect the movingphotomirror feature can be turned on successfully.
  */
-HWTEST_F(CameraMovingPhotoModuleTest, camera_moving_photo_moduletest_004, TestSize.Level1)
+HWTEST_F(CameraMovingPhotoModuleTest, camera_moving_photo_moduletest_004, TestSize.Level0)
 {
     EXPECT_EQ(session_->BeginConfig(), SUCCESS);
     EXPECT_EQ(session_->AddInput((sptr<CaptureInput>&)input_), SUCCESS);
@@ -615,7 +611,7 @@ HWTEST_F(CameraMovingPhotoModuleTest, camera_moving_photo_moduletest_004, TestSi
  * CaseDescription: Test the abnormal scenario of movingphoto,Call the EnableMovingPhoto function
  * before starting the camera settings,and expect the movingphoto feature can not be turned on successfully.
  */
-HWTEST_F(CameraMovingPhotoModuleTest, camera_moving_photo_moduletest_005, TestSize.Level1)
+HWTEST_F(CameraMovingPhotoModuleTest, camera_moving_photo_moduletest_005, TestSize.Level0)
 {
     if (session_->IsMovingPhotoSupported()) {
         session_->LockForControl();
@@ -647,7 +643,7 @@ HWTEST_F(CameraMovingPhotoModuleTest, camera_moving_photo_moduletest_005, TestSi
  * CaseDescription: Test the abnormal scenario of movingphoto,Call the EnableMovingPhoto function
  * before submitting the camera settings,and expect the movingphoto feature can not be turned on successfully.
  */
-HWTEST_F(CameraMovingPhotoModuleTest, camera_moving_photo_moduletest_006, TestSize.Level1)
+HWTEST_F(CameraMovingPhotoModuleTest, camera_moving_photo_moduletest_006, TestSize.Level0)
 {
     EXPECT_EQ(session_->BeginConfig(), SUCCESS);
     EXPECT_EQ(session_->AddInput((sptr<CaptureInput>&)input_), SUCCESS);
@@ -677,7 +673,7 @@ HWTEST_F(CameraMovingPhotoModuleTest, camera_moving_photo_moduletest_006, TestSi
  * EnvConditions: NA
  * CaseDescription: Test the normal scenario of movingphoto.
  */
-HWTEST_F(CameraMovingPhotoModuleTest, camera_moving_photo_moduletest_007, TestSize.Level1)
+HWTEST_F(CameraMovingPhotoModuleTest, camera_moving_photo_moduletest_007, TestSize.Level0)
 {
     EXPECT_EQ(session_->BeginConfig(), SUCCESS);
     EXPECT_EQ(session_->AddInput((sptr<CaptureInput>&)input_), SUCCESS);
@@ -721,7 +717,7 @@ HWTEST_F(CameraMovingPhotoModuleTest, camera_moving_photo_moduletest_007, TestSi
  * EnvConditions: NA
  * CaseDescription: Test the normal scenario of movingphoto with enable moving photo mirror.
  */
-HWTEST_F(CameraMovingPhotoModuleTest, camera_moving_photo_moduletest_008, TestSize.Level1)
+HWTEST_F(CameraMovingPhotoModuleTest, camera_moving_photo_moduletest_008, TestSize.Level0)
 {
     EXPECT_EQ(session_->BeginConfig(), SUCCESS);
     EXPECT_EQ(session_->AddInput((sptr<CaptureInput>&)input_), SUCCESS);
@@ -766,7 +762,7 @@ HWTEST_F(CameraMovingPhotoModuleTest, camera_moving_photo_moduletest_008, TestSi
  * EnvConditions: NA
  * CaseDescription: Test the abnormal scenario of movingphoto with PhotoAssetAvailableCallback is null.
  */
-HWTEST_F(CameraMovingPhotoModuleTest, camera_moving_photo_moduletest_009, TestSize.Level1)
+HWTEST_F(CameraMovingPhotoModuleTest, camera_moving_photo_moduletest_009, TestSize.Level0)
 {
     EXPECT_EQ(session_->BeginConfig(), SUCCESS);
     EXPECT_EQ(session_->AddInput((sptr<CaptureInput>&)input_), SUCCESS);
@@ -803,7 +799,7 @@ HWTEST_F(CameraMovingPhotoModuleTest, camera_moving_photo_moduletest_009, TestSi
  * EnvConditions: NA
  * CaseDescription: Test the abnormal scenario of movingphoto with MovingPhotoDataPrepared is null.
  */
-HWTEST_F(CameraMovingPhotoModuleTest, camera_moving_photo_moduletest_010, TestSize.Level1)
+HWTEST_F(CameraMovingPhotoModuleTest, camera_moving_photo_moduletest_010, TestSize.Level0)
 {
     EXPECT_EQ(session_->BeginConfig(), SUCCESS);
     EXPECT_EQ(session_->AddInput((sptr<CaptureInput>&)input_), SUCCESS);
@@ -849,7 +845,7 @@ HWTEST_F(CameraMovingPhotoModuleTest, camera_moving_photo_moduletest_010, TestSi
  * EnvConditions: NA
  * CaseDescription: Test the abnormal scenario of movingphoto with disable moving photo.
  */
-HWTEST_F(CameraMovingPhotoModuleTest, camera_moving_photo_moduletest_011, TestSize.Level1)
+HWTEST_F(CameraMovingPhotoModuleTest, camera_moving_photo_moduletest_011, TestSize.Level0)
 {
     EXPECT_EQ(session_->BeginConfig(), SUCCESS);
     EXPECT_EQ(session_->AddInput((sptr<CaptureInput>&)input_), SUCCESS);
@@ -893,7 +889,7 @@ HWTEST_F(CameraMovingPhotoModuleTest, camera_moving_photo_moduletest_011, TestSi
  * EnvConditions: NA
  * CaseDescription: Test the abnormal scenario of movingphoto with UnregisterPhotoAssetAvailableCallback.
  */
-HWTEST_F(CameraMovingPhotoModuleTest, camera_moving_photo_moduletest_012, TestSize.Level1)
+HWTEST_F(CameraMovingPhotoModuleTest, camera_moving_photo_moduletest_012, TestSize.Level0)
 {
     EXPECT_EQ(session_->BeginConfig(), SUCCESS);
     EXPECT_EQ(session_->AddInput((sptr<CaptureInput>&)input_), SUCCESS);

@@ -14,7 +14,10 @@
  */
 
 #include "video_job_repository_fuzzer.h"
-#include "camera_log.h"
+
+#include <fcntl.h>
+
+#include "dp_log.h"
 #include "message_parcel.h"
 #include "ipc_file_descriptor.h"
 #include "securec.h"
@@ -30,6 +33,8 @@ static const uint8_t* RAW_DATA = nullptr;
 const size_t THRESHOLD = 10;
 static size_t g_dataSize = 0;
 static size_t g_pos;
+const char* TEST_FILE_PATH_1 = "/data/test/VideoJobRepositoryFuzzTest_test_file1.mp4";
+const char* TEST_FILE_PATH_2 = "/data/test/VideoJobRepositoryFuzzTest_test_file2.mp4";
 
 /*
 * describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
@@ -55,7 +60,7 @@ template<class T>
 uint32_t GetArrLength(T& arr)
 {
     if (arr == nullptr) {
-        MEDIA_INFO_LOG("%{public}s: The array length is equal to 0", __func__);
+        DP_INFO_LOG("%{public}s: The array length is equal to 0", __func__);
         return 0;
     }
     return sizeof(arr) / sizeof(arr[0]);
@@ -68,8 +73,8 @@ void VideoJobRepositoryFuzzer::VideoJobRepositoryFuzzTest()
     }
 
     int32_t userId = GetData<int32_t>();
-    fuzz_ = std::make_shared<DeferredProcessing::VideoJobRepository>(userId);
-    CHECK_RETURN_ELOG(!fuzz_, "Create fuzz_ Error");
+    fuzz_ = VideoJobRepository::Create(userId);
+    DP_CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
     uint8_t randomNum = GetData<uint8_t>();
     std::vector<std::string> testStrings = {"test1", "test2"};
     std::string videoId(testStrings[randomNum % testStrings.size()]);
@@ -80,22 +85,25 @@ void VideoJobRepositoryFuzzer::VideoJobRepositoryFuzzTest()
     fuzz_->SetJobPause(videoId);
     fuzz_->SetJobError(videoId);
     fuzz_->GetJob();
-    fuzz_->GetRunningJobCounts();
     std::vector<std::string> list = {"fuzz1", "fuzz2"};
     fuzz_->GetRunningJobList(list);
-    auto statusChanged = GetData<bool>();
     std::string videoId_(testStrings[randomNum % testStrings.size()]);
-    sptr<IPCFileDescriptor> srcFd = sptr<IPCFileDescriptor>::MakeSptr(GetData<int>());
-    sptr<IPCFileDescriptor> dstFd = sptr<IPCFileDescriptor>::MakeSptr(GetData<int>());
-    DeferredVideoJobPtr jobPtr = std::make_shared<DeferredVideoJob>(videoId_, srcFd, dstFd);
-    fuzz_->NotifyJobChangedUnLocked(statusChanged, jobPtr);
+    int sfd = open(TEST_FILE_PATH_1, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+    int dfd = open(TEST_FILE_PATH_2, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+    DpsFdPtr inputFd = std::make_shared<DpsFd>(sfd);
+    DpsFdPtr outFd = std::make_shared<DpsFd>(dfd);
+    DeferredVideoJobPtr jobPtr = std::make_shared<DeferredVideoJob>(videoId_, inputFd, outFd, nullptr, nullptr);
+    fuzz_->NotifyJobChangedUnLocked(videoId);
+
+    remove(TEST_FILE_PATH_1);
+    remove(TEST_FILE_PATH_2);
 }
 
 void Test()
 {
     auto videoJobRepository = std::make_unique<VideoJobRepositoryFuzzer>();
     if (videoJobRepository == nullptr) {
-        MEDIA_INFO_LOG("videoJobRepository is null");
+        DP_INFO_LOG("videoJobRepository is null");
         return;
     }
     videoJobRepository->VideoJobRepositoryFuzzTest();
@@ -119,7 +127,7 @@ bool FuzzTest(const uint8_t* rawData, size_t size)
     if (len > 0) {
         g_testFuncs[code % len]();
     } else {
-        MEDIA_INFO_LOG("%{public}s: The len length is equal to 0", __func__);
+        DP_INFO_LOG("%{public}s: The len length is equal to 0", __func__);
     }
 
     return true;

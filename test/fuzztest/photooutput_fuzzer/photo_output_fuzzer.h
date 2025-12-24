@@ -16,7 +16,6 @@
 #ifndef PHOTO_OUTPUT_FUZZER_H
 #define PHOTO_OUTPUT_FUZZER_H
 
-#include <fuzzer/FuzzedDataProvider.h>
 #include "output/photo_output.h"
 
 namespace OHOS {
@@ -34,6 +33,7 @@ public:
     void OnEstimatedCaptureDuration(const int32_t duration) const override {}
     void OnCaptureError(const int32_t captureId, const int32_t errorCode) const override {}
     void OnOfflineDeliveryFinished(const int32_t captureId) const override {}
+    void OnConstellationDrawingState(const int32_t drawingState) const override {};
 };
 
 class IBufferConsumerListenerMock : public IBufferConsumerListener {
@@ -47,7 +47,7 @@ void TestOutput2(sptr<PhotoOutput> output, uint8_t *rawData, size_t size);
 void CaptureSetting(std::shared_ptr<PhotoCaptureSetting> setting, uint8_t *rawData, size_t size);
 void CaptureCallback(sptr<HStreamCaptureCallbackImpl> callback, uint8_t *rawData, size_t size);
 
-}
+} //PhotoOutputFuzzer
 } //CameraStandard
 } //OHOS
 #endif //PHOTO_OUTPUT_FUZZER_H

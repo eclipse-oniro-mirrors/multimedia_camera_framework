@@ -17,14 +17,10 @@
 
 #include "dp_log.h"
 #include "events_info.h"
-#include "state_factory.h"
 
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-REGISTER_STATE(PhotoTemperatureState, PHOTO_THERMAL_LEVEL_STATE,
-    ConvertPhotoThermalLevel(EventsInfo::GetInstance().GetThermalLevel()));
-
 PhotoTemperatureState::PhotoTemperatureState(SchedulerType type, int32_t stateValue)
     : IState(type, stateValue)
 {

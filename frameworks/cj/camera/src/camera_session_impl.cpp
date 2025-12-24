@@ -209,7 +209,7 @@ int32_t CJSession::SetExposureMode(ExposureMode mode)
     return ret;
 }
 
-int32_t CJSession::GetMeteringPoint(CameraPoint &point)
+int32_t CJSession::GetMeteringPoint(Point &point)
 {
     if (session_ == nullptr) {
         return CameraError::CAMERA_SERVICE_ERROR;
@@ -220,7 +220,7 @@ int32_t CJSession::GetMeteringPoint(CameraPoint &point)
     return ret;
 }
 
-int32_t CJSession::SetMeteringPoint(CameraPoint point)
+int32_t CJSession::SetMeteringPoint(Point point)
 {
     if (session_ == nullptr) {
         return CameraError::CAMERA_SERVICE_ERROR;
@@ -352,7 +352,7 @@ int32_t CJSession::GetFocusMode(FocusMode &mode)
     return ret;
 }
 
-int32_t CJSession::SetFocusPoint(CameraPoint point)
+int32_t CJSession::SetFocusPoint(Point point)
 {
     if (session_ == nullptr) {
         return CameraError::CAMERA_SERVICE_ERROR;
@@ -363,7 +363,7 @@ int32_t CJSession::SetFocusPoint(CameraPoint point)
     return ret;
 }
 
-int32_t CJSession::GetFocusPoint(CameraPoint &point)
+int32_t CJSession::GetFocusPoint(Point &point)
 {
     if (session_ == nullptr) {
         return CameraError::CAMERA_SERVICE_ERROR;

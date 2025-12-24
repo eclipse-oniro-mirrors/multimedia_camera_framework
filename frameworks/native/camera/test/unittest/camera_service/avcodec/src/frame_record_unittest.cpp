@@ -18,6 +18,7 @@
 #include "common/frame_record.h"
 #include "hcamera_service.h"
 #include "surface_buffer.h"
+#include "moving_photo_surface_wrapper.h"
 
 using namespace testing::ext;
 namespace OHOS {
@@ -39,7 +40,7 @@ void FrameRecordtUnit::TearDown() {}
  * EnvConditions: NA
  * CaseDescription: Test ReleaseSurfaceBuffer with a null wrapper. Verify videoBuffer is set to nullptr.
  */
-HWTEST_F(FrameRecordtUnit, frame_record_unittest_001, TestSize.Level1)
+HWTEST_F(FrameRecordtUnit, frame_record_unittest_001, TestSize.Level0)
 {
     sptr<SurfaceBuffer> videoBuffer = SurfaceBuffer::Create();
     ASSERT_NE(videoBuffer, nullptr);
@@ -62,7 +63,7 @@ HWTEST_F(FrameRecordtUnit, frame_record_unittest_001, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test ReleaseSurfaceBuffer with a valid wrapper. Verify videoBuffer is set to nullptr.
  */
-HWTEST_F(FrameRecordtUnit, frame_record_unittest_002, TestSize.Level1)
+HWTEST_F(FrameRecordtUnit, frame_record_unittest_002, TestSize.Level0)
 {
     sptr<SurfaceBuffer> videoBuffer = SurfaceBuffer::Create();
     ASSERT_NE(videoBuffer, nullptr);
@@ -73,7 +74,8 @@ HWTEST_F(FrameRecordtUnit, frame_record_unittest_002, TestSize.Level1)
     ASSERT_NE(frameRecord, nullptr);
     int32_t width = 1;
     int32_t height = 1;
-    sptr<MovingPhotoSurfaceWrapper> moving = MovingPhotoSurfaceWrapper::CreateMovingPhotoSurfaceWrapper(width, height);
+    sptr<Surface> videoSurface = Surface::CreateSurfaceAsConsumer("movingPhoto");
+    auto moving = MovingPhotoSurfaceWrapper::CreateMovingPhotoSurfaceWrapper(videoSurface, width, height);
     ASSERT_NE(moving, nullptr);
     sptr<MovingPhotoSurfaceWrapper> surfaceWrapper = moving;
     frameRecord->videoBuffer_ = videoBuffer;
@@ -89,7 +91,7 @@ HWTEST_F(FrameRecordtUnit, frame_record_unittest_002, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test ReleaseSurfaceBuffer with a null videoBuffer. Verify videoBuffer remains nullptr.
  */
-HWTEST_F(FrameRecordtUnit, frame_record_unittest_003, TestSize.Level1)
+HWTEST_F(FrameRecordtUnit, frame_record_unittest_003, TestSize.Level0)
 {
     sptr<SurfaceBuffer> videoBuffer = SurfaceBuffer::Create();
     ASSERT_NE(videoBuffer, nullptr);
@@ -112,7 +114,7 @@ HWTEST_F(FrameRecordtUnit, frame_record_unittest_003, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test ReleaseMetaBuffer with reuse set to true. Verify metaBuffer is not set to nullptr.
  */
-HWTEST_F(FrameRecordtUnit, frame_record_unittest_004, TestSize.Level1)
+HWTEST_F(FrameRecordtUnit, frame_record_unittest_004, TestSize.Level0)
 {
     sptr<SurfaceBuffer> videoBuffer = SurfaceBuffer::Create();
     ASSERT_NE(videoBuffer, nullptr);
@@ -141,7 +143,7 @@ HWTEST_F(FrameRecordtUnit, frame_record_unittest_004, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test ReleaseMetaBuffer with reuse set to false. Verify metaBuffer remains nullptr.
  */
-HWTEST_F(FrameRecordtUnit, frame_record_unittest_005, TestSize.Level1)
+HWTEST_F(FrameRecordtUnit, frame_record_unittest_005, TestSize.Level0)
 {
     sptr<SurfaceBuffer> videoBuffer = SurfaceBuffer::Create();
     ASSERT_NE(videoBuffer, nullptr);
@@ -170,7 +172,7 @@ HWTEST_F(FrameRecordtUnit, frame_record_unittest_005, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test DeepCopyBuffer with the same buffer. Verify newSurfaceBuffer width matches original.
  */
-HWTEST_F(FrameRecordtUnit, frame_record_unittest_006, TestSize.Level1)
+HWTEST_F(FrameRecordtUnit, frame_record_unittest_006, TestSize.Level0)
 {
     sptr<SurfaceBuffer> videoBuffer = SurfaceBuffer::Create();
     ASSERT_NE(videoBuffer, nullptr);
@@ -251,7 +253,8 @@ HWTEST_F(FrameRecordtUnit, frame_record_unittest_009, TestSize.Level1)
     ASSERT_NE(frameRecord, nullptr);
     int32_t width = 1;
     int32_t height = 1;
-    sptr<MovingPhotoSurfaceWrapper> moving = MovingPhotoSurfaceWrapper::CreateMovingPhotoSurfaceWrapper(width, height);
+    sptr<Surface> videoSurface = Surface::CreateSurfaceAsConsumer("movingPhoto");
+    auto moving = MovingPhotoSurfaceWrapper::CreateMovingPhotoSurfaceWrapper(videoSurface, width, height);
     ASSERT_NE(moving, nullptr);
     sptr<MovingPhotoSurfaceWrapper> surfaceWrapper = moving;
     frameRecord->status = FrameRecord::STATUS_READY_CONVERT;

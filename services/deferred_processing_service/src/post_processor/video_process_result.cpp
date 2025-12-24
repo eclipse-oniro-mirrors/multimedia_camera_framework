@@ -33,7 +33,7 @@ VideoProcessResult::~VideoProcessResult()
 {
     DP_DEBUG_LOG("entered.");
 }
-
+// LCOV_EXCL_START
 void VideoProcessResult::OnProcessDone(const std::string& videoId)
 {
     DP_DEBUG_LOG("DPS_VIDEO: OnProcessDone videoId: %{public}s", videoId.c_str());
@@ -97,6 +97,7 @@ int32_t VideoProcessResult::ProcessVideoInfo(const std::string& videoId,
     OnProcessDone(videoId, std::move(userInfo));
     return DP_OK;
 }
+// LCOV_EXCL_STOP
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS

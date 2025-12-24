@@ -94,8 +94,8 @@ public:
     int32_t GetExposureBiasRange(CArrFloat32 &ranges);
     int32_t GetExposureMode(ExposureMode &mode);
     int32_t SetExposureMode(ExposureMode mode);
-    int32_t GetMeteringPoint(CameraPoint &point);
-    int32_t SetMeteringPoint(CameraPoint point);
+    int32_t GetMeteringPoint(Point &point);
+    int32_t SetMeteringPoint(Point point);
     int32_t SetExposureBias(float value);
     int32_t GetExposureValue(float &value);
 
@@ -114,8 +114,8 @@ public:
     int32_t IsFocusModeSupported(FocusMode mode, bool &isSupported);
     int32_t SetFocusMode(FocusMode mode);
     int32_t GetFocusMode(FocusMode &mode);
-    int32_t SetFocusPoint(CameraPoint point);
-    int32_t GetFocusPoint(CameraPoint &point);
+    int32_t SetFocusPoint(Point point);
+    int32_t GetFocusPoint(Point &point);
     int32_t GetFocalLength(float &focalLength);
 
     // stabilization

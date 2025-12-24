@@ -37,7 +37,7 @@ public:
     void UpdateRunningJob(const std::string& imageId, bool running) override;
     void UpdatePriorityJob(JobPriority cur, JobPriority pre) override;
     void UpdateJobSize() override;
-    void TryDoNextJob(const std::string& imageId, bool isTyrDo) override;
+    void TryDoNextJob(const std::string& imageId, bool isTryDo) override;
 
 private:
     std::weak_ptr<PhotoJobRepository> repository_;
@@ -60,7 +60,7 @@ public:
     JobPriority GetJobRunningPriority(const std::string& imageId);
     uint32_t GetJobTimerId(const std::string& imageId);
     int32_t GetBackgroundJobSize();
-    int GetBackgroundIdleJobSize();
+    int32_t GetBackgroundIdleJobSize();
     int32_t GetOfflineJobSize();
     int32_t GetOfflineIdleJobSize();
     bool IsBackgroundJob(const std::string& imageId);
@@ -70,9 +70,9 @@ public:
     bool HasRunningJob();
     bool IsRunningJob(const std::string& imageId);
     void UpdateRunningJobUnLocked(const std::string& imageId, bool running);
-    void UpdatePriotyNumUnLocked(JobPriority cur, JobPriority pre);
+    void UpdatePriorityNumUnLocked(JobPriority cur, JobPriority pre);
     void UpdateJobSizeUnLocked();
-    void NotifyJobChanged(const std::string& imageId, bool isTyrDo);
+    void NotifyJobChanged(const std::string& imageId, bool isTryDo);
 
 protected:
     explicit PhotoJobRepository(const int32_t userId);
@@ -85,7 +85,7 @@ private:
     std::shared_ptr<PhotoJobStateListener> jobChangeListener_ {nullptr};
     std::unordered_set<std::string> runningJob_ {};
     std::unordered_map<std::string, DeferredPhotoJobPtr> backgroundJobMap_ {};
-    std::unordered_map<JobPriority, int32_t> priotyToNum_ = {
+    std::unordered_map<JobPriority, int32_t> priorityToNum_ = {
         {JobPriority::HIGH, 0},
         {JobPriority::LOW, 0},
         {JobPriority::NORMAL, 0},

@@ -70,11 +70,8 @@ void CameraCaptureOutputUnit::TearDown()
 sptr<CaptureOutput> CameraCaptureOutputUnit::CreatePhotoOutput(int32_t width, int32_t height)
 {
     std::vector<Profile> photoProfile = {};
-    if (!cameraManager_) {
-        return nullptr;
-    }
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
-    if (cameras.empty()) {
+    if (!cameraManager_ || cameras.empty()) {
         return nullptr;
     }
     auto outputCapability = cameraManager_->GetSupportedOutputCapability(cameras[0], 0);
@@ -104,7 +101,7 @@ sptr<CaptureOutput> CameraCaptureOutputUnit::CreatePhotoOutput(int32_t width, in
  * CaseDescription: Test captureoutput with RegisterStreamBinderDied and UnregisterStreamBinderDied
  *        for abnormal branches
  */
-HWTEST_F(CameraCaptureOutputUnit, capture_output_unittest_001, TestSize.Level1)
+HWTEST_F(CameraCaptureOutputUnit, capture_output_unittest_001, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -157,7 +154,7 @@ HWTEST_F(CameraCaptureOutputUnit, capture_output_unittest_001, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test captureoutput with GetOutputTypeString IsStreamCreated and ClearProfiles
  */
-HWTEST_F(CameraCaptureOutputUnit, capture_output_unittest_002, TestSize.Level1)
+HWTEST_F(CameraCaptureOutputUnit, capture_output_unittest_002, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -191,7 +188,7 @@ HWTEST_F(CameraCaptureOutputUnit, capture_output_unittest_002, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test captureoutput with AddTag and RemoveTag
  */
-HWTEST_F(CameraCaptureOutputUnit, capture_output_unittest_003, TestSize.Level1)
+HWTEST_F(CameraCaptureOutputUnit, capture_output_unittest_003, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());

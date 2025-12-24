@@ -41,7 +41,7 @@ void CameraAppManagerClientUnit::TearDown() {}
  * CaseDescription: Test the behavior of CameraAppManagerClient when the instance is set to nullptr and then
  *re-obtained. The expected result is that the instance should be re-created and not be nullptr.
  */
-HWTEST_F(CameraAppManagerClientUnit, camera_app_manager_client_unittest_001, TestSize.Level1)
+HWTEST_F(CameraAppManagerClientUnit, camera_app_manager_client_unittest_001, TestSize.Level0)
 {
     sptr<CameraAppManagerClient> client = CameraAppManagerClient::GetInstance();
     ASSERT_NE(client, nullptr);
@@ -59,7 +59,7 @@ HWTEST_F(CameraAppManagerClientUnit, camera_app_manager_client_unittest_001, Tes
  * CaseDescription: Test the behavior of CameraAppManagerClient when the instance is set to itself and then re-obtained.
  *The expected result is that the instance should remain valid and not be nullptr.
  */
-HWTEST_F(CameraAppManagerClientUnit, camera_app_manager_client_unittest_002, TestSize.Level1)
+HWTEST_F(CameraAppManagerClientUnit, camera_app_manager_client_unittest_002, TestSize.Level0)
 {
     sptr<CameraAppManagerClient> client = CameraAppManagerClient::GetInstance();
     ASSERT_NE(client, nullptr);

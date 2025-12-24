@@ -29,16 +29,15 @@ extern "C" {
 Camera_ErrorCode OH_PreviewOutput_RegisterCallback(Camera_PreviewOutput* previewOutput,
     PreviewOutput_Callbacks* callback)
 {
-    CHECK_RETURN_RET_ELOG(previewOutput == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, previewOutput is null!");
-    CHECK_RETURN_RET_ELOG(callback == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, callback is null!");
-    CHECK_RETURN_RET_ELOG(callback->onFrameStart == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, callback onFrameStart is null!");
-    CHECK_RETURN_RET_ELOG(callback->onFrameEnd == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, callback onFrameEnd is null!");
-    CHECK_RETURN_RET_ELOG(callback->onError == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, callback onError is null!");
+    CHECK_RETURN_RET_ELOG(
+        previewOutput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, previewOutput is null!");
+    CHECK_RETURN_RET_ELOG(callback == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, callback is null!");
+    CHECK_RETURN_RET_ELOG(
+        callback->onFrameStart == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, callback onFrameStart is null!");
+    CHECK_RETURN_RET_ELOG(
+        callback->onFrameEnd == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, callback onFrameEnd is null!");
+    CHECK_RETURN_RET_ELOG(
+        callback->onError == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, callback onError is null!");
 
     previewOutput->RegisterCallback(callback);
     return CAMERA_OK;
@@ -51,16 +50,15 @@ Camera_ErrorCode OH_PreviewOutput_RegisterCallback(Camera_PreviewOutput* preview
 Camera_ErrorCode OH_PreviewOutput_UnregisterCallback(Camera_PreviewOutput* previewOutput,
     PreviewOutput_Callbacks* callback)
 {
-    CHECK_RETURN_RET_ELOG(previewOutput == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, previewOutput is null!");
-    CHECK_RETURN_RET_ELOG(callback == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, callback is null!");
-    CHECK_RETURN_RET_ELOG(callback->onFrameStart == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, callback onFrameStart is null!");
-    CHECK_RETURN_RET_ELOG(callback->onFrameEnd == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, callback onFrameEnd is null!");
-    CHECK_RETURN_RET_ELOG(callback->onError == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, callback onError is null!");
+    CHECK_RETURN_RET_ELOG(
+        previewOutput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, previewOutput is null!");
+    CHECK_RETURN_RET_ELOG(callback == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, callback is null!");
+    CHECK_RETURN_RET_ELOG(
+        callback->onFrameStart == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, callback onFrameStart is null!");
+    CHECK_RETURN_RET_ELOG(
+        callback->onFrameEnd == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, callback onFrameEnd is null!");
+    CHECK_RETURN_RET_ELOG(
+        callback->onError == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, callback onError is null!");
 
     previewOutput->UnregisterCallback(callback);
     return CAMERA_OK;
@@ -72,8 +70,8 @@ Camera_ErrorCode OH_PreviewOutput_UnregisterCallback(Camera_PreviewOutput* previ
  */
 Camera_ErrorCode OH_PreviewOutput_Start(Camera_PreviewOutput* previewOutput)
 {
-    CHECK_RETURN_RET_ELOG(previewOutput == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, previewOutput is null!");
+    CHECK_RETURN_RET_ELOG(
+        previewOutput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, previewOutput is null!");
 
     return previewOutput->Start();
 }
@@ -84,8 +82,8 @@ Camera_ErrorCode OH_PreviewOutput_Start(Camera_PreviewOutput* previewOutput)
  */
 Camera_ErrorCode OH_PreviewOutput_Stop(Camera_PreviewOutput* previewOutput)
 {
-    CHECK_RETURN_RET_ELOG(previewOutput == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, previewOutput is null!");
+    CHECK_RETURN_RET_ELOG(
+        previewOutput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, previewOutput is null!");
 
     return previewOutput->Stop();
 }
@@ -96,8 +94,8 @@ Camera_ErrorCode OH_PreviewOutput_Stop(Camera_PreviewOutput* previewOutput)
  */
 Camera_ErrorCode OH_PreviewOutput_Release(Camera_PreviewOutput* previewOutput)
 {
-    CHECK_RETURN_RET_ELOG(previewOutput == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, previewOutput is null!");
+    CHECK_RETURN_RET_ELOG(
+        previewOutput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, previewOutput is null!");
 
     Camera_ErrorCode retCode = previewOutput->Release();
     if (previewOutput != nullptr) {
@@ -113,10 +111,9 @@ Camera_ErrorCode OH_PreviewOutput_Release(Camera_PreviewOutput* previewOutput)
 Camera_ErrorCode OH_PreviewOutput_GetActiveProfile(Camera_PreviewOutput* previewOutput, Camera_Profile** profile)
 {
     MEDIA_DEBUG_LOG("OH_PreviewOutput_GetActiveProfile is called.");
-    CHECK_RETURN_RET_ELOG(previewOutput == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, previewOutput is null!");
-    CHECK_RETURN_RET_ELOG(profile == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, profile is null!");
+    CHECK_RETURN_RET_ELOG(
+        previewOutput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, previewOutput is null!");
+    CHECK_RETURN_RET_ELOG(profile == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, profile is null!");
 
     return previewOutput->GetActiveProfile(profile);
 }
@@ -128,8 +125,7 @@ Camera_ErrorCode OH_PreviewOutput_GetActiveProfile(Camera_PreviewOutput* preview
 Camera_ErrorCode OH_PreviewOutput_DeleteProfile(Camera_Profile* profile)
 {
     MEDIA_DEBUG_LOG("OH_PreviewOutput_DeleteProfile is called.");
-    CHECK_RETURN_RET_ELOG(profile == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, profile is null!");
+    CHECK_RETURN_RET_ELOG(profile == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, profile is null!");
 
     delete profile;
     profile = nullptr;
@@ -143,12 +139,11 @@ Camera_ErrorCode OH_PreviewOutput_DeleteProfile(Camera_Profile* profile)
 Camera_ErrorCode OH_PreviewOutput_GetSupportedFrameRates(Camera_PreviewOutput* previewOutput,
     Camera_FrameRateRange** frameRateRange, uint32_t* size)
 {
-    CHECK_RETURN_RET_ELOG(previewOutput == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, previewOutput is null!");
-    CHECK_RETURN_RET_ELOG(frameRateRange == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, frameRateRange is null!");
-    CHECK_RETURN_RET_ELOG(size == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, size is null!");
+    CHECK_RETURN_RET_ELOG(
+        previewOutput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, previewOutput is null!");
+    CHECK_RETURN_RET_ELOG(
+        frameRateRange == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, frameRateRange is null!");
+    CHECK_RETURN_RET_ELOG(size == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, size is null!");
 
     return previewOutput->GetSupportedFrameRates(frameRateRange, size);
 }
@@ -160,10 +155,10 @@ Camera_ErrorCode OH_PreviewOutput_GetSupportedFrameRates(Camera_PreviewOutput* p
 Camera_ErrorCode OH_PreviewOutput_DeleteFrameRates(Camera_PreviewOutput* previewOutput,
     Camera_FrameRateRange* frameRateRange)
 {
-    CHECK_RETURN_RET_ELOG(previewOutput == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, previewOutput is null!");
-    CHECK_RETURN_RET_ELOG(frameRateRange == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, frameRateRange is null!");
+    CHECK_RETURN_RET_ELOG(
+        previewOutput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, previewOutput is null!");
+    CHECK_RETURN_RET_ELOG(
+        frameRateRange == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, frameRateRange is null!");
 
     return previewOutput->DeleteFrameRates(frameRateRange);
 }
@@ -175,8 +170,8 @@ Camera_ErrorCode OH_PreviewOutput_DeleteFrameRates(Camera_PreviewOutput* preview
 Camera_ErrorCode OH_PreviewOutput_SetFrameRate(Camera_PreviewOutput* previewOutput,
     int32_t minFps, int32_t maxFps)
 {
-    CHECK_RETURN_RET_ELOG(previewOutput == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, previewOutput is null!");
+    CHECK_RETURN_RET_ELOG(
+        previewOutput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, previewOutput is null!");
 
     return previewOutput->SetFrameRate(minFps, maxFps);
 }
@@ -188,10 +183,10 @@ Camera_ErrorCode OH_PreviewOutput_SetFrameRate(Camera_PreviewOutput* previewOutp
 Camera_ErrorCode OH_PreviewOutput_GetActiveFrameRate(Camera_PreviewOutput* previewOutput,
     Camera_FrameRateRange* frameRateRange)
 {
-    CHECK_RETURN_RET_ELOG(previewOutput == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, previewOutput is null!");
-    CHECK_RETURN_RET_ELOG(frameRateRange == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, frameRateRange is null!");
+    CHECK_RETURN_RET_ELOG(
+        previewOutput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, previewOutput is null!");
+    CHECK_RETURN_RET_ELOG(
+        frameRateRange == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, frameRateRange is null!");
 
     return previewOutput->GetActiveFrameRate(frameRateRange);
 }
@@ -200,10 +195,10 @@ Camera_ErrorCode OH_PreviewOutput_GetPreviewRotation(Camera_PreviewOutput* previ
     Camera_ImageRotation* imageRotation)
 {
     MEDIA_DEBUG_LOG("OH_PreviewOutput_GetPreviewRotation is called.");
-    CHECK_RETURN_RET_ELOG(previewOutput == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, previewOutput is null!");
-    CHECK_RETURN_RET_ELOG(imageRotation == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, imageRotation is null!");
+    CHECK_RETURN_RET_ELOG(
+        previewOutput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, previewOutput is null!");
+    CHECK_RETURN_RET_ELOG(
+        imageRotation == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, imageRotation is null!");
     return previewOutput->GetPreviewRotation(displayRotation, imageRotation);
 }
 
@@ -211,10 +206,30 @@ Camera_ErrorCode OH_PreviewOutput_SetPreviewRotation(Camera_PreviewOutput* previ
     Camera_ImageRotation previewRotation, bool isDisplayLocked)
 {
     MEDIA_DEBUG_LOG("OH_PreviewOutput_SetPreviewRotation is called.");
-    CHECK_RETURN_RET_ELOG(previewOutput == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, previewOutput is null!");
+    CHECK_RETURN_RET_ELOG(
+        previewOutput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, previewOutput is null!");
     return previewOutput->SetPreviewRotation(previewRotation, isDisplayLocked);
 }
+
+Camera_ErrorCode OH_PreviewOutput_IsBandwidthCompressionSupported(Camera_PreviewOutput* previewOutput,
+    bool* isSupported)
+{
+    MEDIA_DEBUG_LOG("OH_PreviewOutput_IsBandwidthCompressionSupported is called.");
+    CHECK_RETURN_RET_ELOG(
+        previewOutput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, previewOutput is null!");
+    CHECK_RETURN_RET_ELOG(
+        isSupported == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, isSupported is null!");
+    return previewOutput->IsBandwidthCompressionSupported(isSupported);
+}
+
+Camera_ErrorCode OH_PreviewOutput_EnableBandwidthCompression(Camera_PreviewOutput* previewOutput, bool enabled)
+{
+    MEDIA_DEBUG_LOG("OH_PreviewOutput_EnableBandwidthCompression is called.");
+    CHECK_RETURN_RET_ELOG(
+        previewOutput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, previewOutput is null!");
+    return previewOutput->EnableBandwidthCompression(enabled);
+}
+
 #ifdef __cplusplus
 }
 #endif

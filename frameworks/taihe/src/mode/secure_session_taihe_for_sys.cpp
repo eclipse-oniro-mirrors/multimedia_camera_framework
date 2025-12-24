@@ -27,7 +27,7 @@ using namespace ohos::multimedia::camera;
 void SecureSessionForSysImpl::AddSecureOutput(ohos::multimedia::camera::weak::PreviewOutput previewOutput)
 {
     MEDIA_INFO_LOG("AddSecureOutput is called");
-    CHECK_RETURN_DLOG(secureCameraSessionForSys_ == nullptr, "secureCameraSessionForSys_ is nullptr");
+    CHECK_RETURN_ELOG(secureCameraSessionForSys_ == nullptr, "secureCameraSessionForSys_ is nullptr");
     Ani::Camera::PreviewOutputImpl* outputImpl =
         reinterpret_cast<PreviewOutputImpl*>(CameraOutput(PreviewOutput(previewOutput))->GetSpecificImplPtr());
     CHECK_RETURN_ELOG(outputImpl == nullptr, "AddSecureOutput outputImpl is null");

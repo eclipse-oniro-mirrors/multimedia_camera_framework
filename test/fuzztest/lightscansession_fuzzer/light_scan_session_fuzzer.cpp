@@ -17,7 +17,7 @@
 #include "message_parcel.h"
 #include "securec.h"
 #include <memory>
-#include "timer/camera_deferred_timer.h"
+#include "timer.h"
 #include "input/camera_manager.h"
 #include "input/camera_manager_for_sys.h"
 #include "system_ability_definition.h"
@@ -25,7 +25,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
-static constexpr int32_t MIN_SIZE_NUM = 8;
+static constexpr int32_t MIN_SIZE_NUM = 16;
 sptr<LightPaintingSession> LightScanSessionFuzzer::fuzzLight_{nullptr};
 sptr<ScanSession> LightScanSessionFuzzer::fuzzScan_{nullptr};
 

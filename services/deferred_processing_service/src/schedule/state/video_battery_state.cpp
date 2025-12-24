@@ -17,14 +17,10 @@
 
 #include "dp_log.h"
 #include "events_info.h"
-#include "parameters.h"
-#include "state_factory.h"
 
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-REGISTER_STATE(VideoBatteryState, BATTERY_STATE, EventsInfo::GetInstance().GetBatteryState());
-
 VideoBatteryState::VideoBatteryState(SchedulerType type, int32_t stateValue)
     : IState(type, stateValue)
 {
@@ -33,9 +29,6 @@ VideoBatteryState::VideoBatteryState(SchedulerType type, int32_t stateValue)
 
 SchedulerInfo VideoBatteryState::ReevaluateSchedulerInfo()
 {
-    bool ignore = system::GetBoolParameter(IGNORE_BATTERY, false);
-    DP_CHECK_ERROR_RETURN_RET_LOG(ignore, {false}, "ignore VideoBatteryState: %{public}d", stateValue_);
-
     DP_DEBUG_LOG("VideoBatteryState: %{public}d", stateValue_);
     bool isNeedStop = stateValue_ == BatteryStatus::BATTERY_LOW;
     return {isNeedStop};

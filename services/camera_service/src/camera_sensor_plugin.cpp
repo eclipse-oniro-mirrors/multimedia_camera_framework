@@ -25,10 +25,7 @@ static void *g_handle = nullptr;
 
 bool LoadMotionSensor(void)
 {
-    if (g_handle != nullptr) {
-        MEDIA_INFO_LOG("motion plugin has already exits.");
-        return true;
-    }
+    CHECK_RETURN_RET_ILOG(g_handle != nullptr, true, "motion plugin has already exits.");
     int32_t cnt = 0;
     int32_t retryTimes = 3;
     do {

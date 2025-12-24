@@ -41,7 +41,7 @@ napi_status NapiRefManager::CreateMemSafetyRef(napi_env env, napi_value value, n
     mpRefSet.insert(*result);
     MEDIA_DEBUG_LOG("NapiRefManager::CreateMemSafetyRef map.size: %{public}d, set.size: %{public}d",
         static_cast<int32_t>(envToRefMap_.size()), static_cast<int32_t>(mpRefSet.size()));
-    // Add an environment cleanup hook
+    // Add an environment cleanup hook for the first time
     if (mpRefSet.size() == 1) {
         status = napi_add_env_cleanup_hook(env, NapiRefManager::CleanUpHook, &pr);
         CHECK_PRINT_WLOG(status != napi_ok,

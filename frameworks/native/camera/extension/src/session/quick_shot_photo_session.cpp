@@ -19,8 +19,8 @@
 
 namespace OHOS {
 namespace CameraStandard {
-QuickShotPhotoSession::QuickShotPhotoSession(sptr<ICaptureSession>& captureSession)
-    : CaptureSessionForSys(captureSession) {}
+QuickShotPhotoSession::QuickShotPhotoSession(sptr<ICaptureSession>& captureSession) :
+    CaptureSessionForSys(captureSession) {}
 
 bool QuickShotPhotoSession::CanAddOutput(sptr<CaptureOutput>& output)
 {

@@ -17,8 +17,11 @@
 
 #include "bundle_mgr_interface.h"
 #include "camera_log.h"
+#include "ipc_skeleton.h"
 #include "iservice_registry.h"
+#include "parameters.h"
 #include "system_ability_definition.h"
+#include "tokenid_kit.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -36,8 +39,7 @@ uint32_t GetApiVersion()
     OHOS::sptr<OHOS::IRemoteObject> remoteObject =
         systemAbilityManager->GetSystemAbility(BUNDLE_MGR_SERVICE_SYS_ABILITY_ID);
     sptr<AppExecFwk::IBundleMgr> iBundleMgr = OHOS::iface_cast<AppExecFwk::IBundleMgr>(remoteObject);
-    CHECK_RETURN_RET_ELOG(iBundleMgr == nullptr, g_apiCompatibleVersion,
-        "GetApiCompatibleVersion iBundleMgr is null");
+    CHECK_RETURN_RET_ELOG(iBundleMgr == nullptr, g_apiCompatibleVersion, "GetApiCompatibleVersion iBundleMgr is null");
     AppExecFwk::BundleInfo bundleInfo;
     if (iBundleMgr->GetBundleInfoForSelf(0, bundleInfo) == ERR_OK) {
         g_apiCompatibleVersion = bundleInfo.targetVersion % API_DEFAULT_VERSION;

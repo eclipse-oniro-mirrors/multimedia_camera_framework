@@ -28,7 +28,9 @@ QuickShotPhotoSessionNapi::QuickShotPhotoSessionNapi() : env_(nullptr), wrapper_
 QuickShotPhotoSessionNapi::~QuickShotPhotoSessionNapi()
 {
     MEDIA_DEBUG_LOG("~QuickShotPhotoSessionNapi is called");
-    CHECK_EXECUTE(wrapper_ != nullptr, napi_delete_reference(env_, wrapper_));
+    if (wrapper_ != nullptr) {
+        napi_delete_reference(env_, wrapper_);
+    }
 }
 
 void QuickShotPhotoSessionNapi::QuickShotPhotoSessionNapiDestructor(
@@ -80,20 +82,20 @@ napi_value QuickShotPhotoSessionNapi::CreateCameraSession(napi_env env)
         sCameraSessionForSys_ =
             CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(SceneMode::QUICK_SHOT_PHOTO);
         if (sCameraSessionForSys_ == nullptr) {
-            MEDIA_ERR_LOG("QuickShotPhotoSessionNapi::CreateCameraSession Failed to create instance");
+            MEDIA_ERR_LOG("Failed to create Photo session instance");
             napi_get_undefined(env, &result);
             return result;
         }
         status = napi_new_instance(env, constructor, 0, nullptr, &result);
         sCameraSessionForSys_ = nullptr;
         if (status == napi_ok && result != nullptr) {
-            MEDIA_DEBUG_LOG("QuickShotPhotoSessionNapi::CreateCameraSession success to create napi instance");
+            MEDIA_DEBUG_LOG("success to create Photo session napi instance");
             return result;
         } else {
-            MEDIA_ERR_LOG("QuickShotPhotoSessionNapi::CreateCameraSession Failed  to create napi instance");
+            MEDIA_ERR_LOG("Failed to create Photo session napi instance");
         }
     }
-    MEDIA_ERR_LOG("QuickShotPhotoSessionNapi::CreateCameraSession Failed to create napi instance last");
+    MEDIA_ERR_LOG("Failed to create Photo session napi instance last");
     napi_get_undefined(env, &result);
     return result;
 }

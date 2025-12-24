@@ -92,6 +92,7 @@ static const std::unordered_map<std::string, int32_t> mapCameraType = {
     {"CAMERA_TYPE_ULTRA_WIDE", 2},
     {"CAMERA_TYPE_TELEPHOTO", 3},
     {"CAMERA_TYPE_TRUE_DEPTH", 4},
+    {"CAMERA_TYPE_SUPER_TELEPHOTO", 5},
 };
 
 static const std::unordered_map<std::string, int32_t> mapConnectionType = {
@@ -153,12 +154,26 @@ static const std::unordered_map<std::string, int32_t> mapHostNameType = {
     {"UNKNOWN", 0x00},
     {"PHONE", 0x0E},
     {"TABLE", 0x11},
+    {"GLASSES", 0xA31},
+    {"TV", 0x9C},
+    {"CAR", 0x83},
+    {"TWO_IN_ONE", 0xA2F},
+    {"WATCH", 0x6D},
+    {"SMART_DISPLAY", 0xA02},
+    {"WIFI_CAMERA", 0x08},
 };
 
 static const std::unordered_map<std::string, int32_t> mapHostDeviceType = {
     {"UNKNOWN_TYPE", 0x00},
     {"PHONE", 0x0E},
     {"TABLET", 0x11},
+    {"GLASSES", 0xA31},
+    {"TV", 0x9C},
+    {"CAR", 0x83},
+    {"TWO_IN_ONE", 0xA2F},
+    {"WATCH", 0x6D},
+    {"SMART_DISPLAY", 0xA02},
+    {"WIFI_CAMERA", 0x08},
 };
 
 static const std::unordered_map<std::string, int32_t> mapLightStatus = {
@@ -192,6 +207,8 @@ static const std::unordered_map<std::string, int32_t> mapSceneMode = {
     {"PANORAMA_PHOTO", JS_PANORAMA_PHOTO},
     {"TIME_LAPSE_PHOTO", JS_TIMELAPSE_PHOTO},
     {"FLUORESCENCE_PHOTO", JS_FLUORESCENCE_PHOTO},
+    {"STITCHING_PHOTO", JS_STITCHING_PHOTO},
+    {"CINEMATIC_VIDEO", JS_CINEMATIC_VIDEO},
 };
 
 static const std::unordered_map<std::string, int32_t> mapPreconfigType = {
@@ -224,6 +241,12 @@ static const std::unordered_map<std::string, int32_t> mapBeautyType = {
     {"SKIN_SMOOTH", 1},
     {"FACE_SLENDER", 2},
     {"SKIN_TONE", 3},
+    {"SKIN_TONEBRIGHT", 4},
+    {"EYE_BIGEYES", 5},
+    {"HAIR_HAIRLINE", 6},
+    {"FACE_MAKEUP", 7},
+    {"HEAD_SHRINK", 8},
+    {"NOSE_SLENDER", 9},
 };
 
 static const std::unordered_map<std::string, int32_t> mapPortraitEffect = {
@@ -299,7 +322,7 @@ static const std::unordered_map<std::string, int32_t> mapMetadataObjectType = {
     {"DOG_BODY", 5},
     {"SALIENT_DETECTION", 6},
     {"BAR_CODE_DETECTION", 7},
-    {"BASIC_FACE_DETECTION", 8}
+    {"HUMAN_HEAD", 10}
 };
 
 static const std::unordered_map<std::string, int32_t> mapMetaFaceEmotion = {
@@ -329,6 +352,8 @@ static const std::unordered_map<std::string, int32_t> mapColorEffectType = {
     {"BRIGHT", 1},
     {"SOFT", 2},
     {"BLACK_WHITE", 3},
+    {"CLASSIC", 4},
+    {"MODERN", 5}
 };
 
 static const std::unordered_map<std::string, int32_t> mapRestoreParamType = {
@@ -361,6 +386,7 @@ static const std::unordered_map<std::string, int32_t> mapSceneFeatureType = {
     { "MOON_CAPTURE_BOOST", FEATURE_MOON_CAPTURE_BOOST },
     { "TRIPOD_DETECTION", FEATURE_TRIPOD_DETECTION },
     { "LOW_LIGHT_BOOST", FEATURE_LOW_LIGHT_BOOST },
+    { "CONSTELLATION_DRAWING", FEATURE_CONSTELLATION_DRAWING },
     { "MACRO", FEATURE_MACRO },
 };
 
@@ -401,8 +427,8 @@ static const std::unordered_map<std::string, int32_t> mapTimeLapsePreviewType = 
 };
 
 static const std::unordered_map<std::string, int32_t> mapVideoCodecType = {
-    {"AVC", VideoCodecType::VIDEO_ENCODE_TYPE_AVC},
-    {"HEVC", VideoCodecType::VIDEO_ENCODE_TYPE_HEVC},
+    {"AVC", static_cast<int32_t>(VideoCodecType::VIDEO_ENCODE_TYPE_AVC)},
+    {"HEVC", static_cast<int32_t>(VideoCodecType::VIDEO_ENCODE_TYPE_HEVC)},
 };
 
 static const std::unordered_map<std::string, int32_t> mapVideoMetaType = {
@@ -412,7 +438,7 @@ static const std::unordered_map<std::string, int32_t> mapVideoMetaType = {
 static const std::unordered_map<std::string, int32_t> mapTripodStatus = {
     { "INVALID", 0 },
     { "ACTIVE", 1 },
-    { "ENTER", 2},
+    { "ENTER", 2 },
     { "ENTERING", 2 },
     { "EXITING", 3 },
 };
@@ -432,6 +458,11 @@ static const std::unordered_map<std::string, int32_t> mapQualityPrioritization =
     {"POWER_BALANCE", 1},
 };
 
+static const std::unordered_map<std::string, int32_t> mapStitchingCaptureState = {
+    {"STITCHING_CAPTURE_BEGIN", 1},
+    {"STITCHING_CAPTURE_END", 2},
+};
+
 static const std::unordered_map<std::string, int32_t> mapFocusRangeType = {
     {"AUTO", 0},
     {"NEAR", 1},
@@ -449,6 +480,20 @@ static const std::unordered_map<std::string, int32_t> mapColorReservationType = 
 
 static const std::unordered_map<std::string, int32_t> mapFocusTrackingMode = {
     {"AUTO", FOCUS_TRACKING_MODE_AUTO},
+    {"LOCKED", FOCUS_TRACKING_MODE_LOCKED},
+};
+
+static const std::unordered_map<std::string, int32_t> mapCompositionEndInfo = {
+    {"COMPOSITION_SUCCESS", 0},
+    {"COMPOSITION_TIMEOUT", 1},
+    {"COMPOSITION_INTERRUPTED", 2},
+};
+
+static const std::unordered_map<std::string, int32_t> mapNightSubModeType = {
+    {"DEFAULT", 0},
+    {"SUPER_MOON", 1},
+    {"STARRY_SKY", 2},
+    {"STARRY_SKY_PORTRAIT", 3},
 };
 
 static const std::unordered_map<std::string, int32_t> mapCameraConcurrentType = {
@@ -482,6 +527,25 @@ static const std::unordered_map<std::string, int32_t> mapWhiteBalanceMode = {
     {"DAYLIGHT", 4},
     {"MANUAL", 5},
     {"LOCKED", 6},
+};
+
+static const std::unordered_map<std::string, int32_t> mapCalibrationStatus = {
+    {"INACTIVE", 0},
+    {"CALIBRATING", 1},
+    {"CALIBRATION_SUCCESS", 2},
+};
+
+static const std::unordered_map<std::string, int32_t> mapConstellationDrawingState = {
+    {"PROCESSING", 0},
+    {"SUCCEEDED", 1},
+    {"FAILED_OVERBRIGHT", 2},
+    {"FAILED_INSUFFICIENT_STARS", 3},
+};
+
+static const std::unordered_map<std::string, int32_t> mapApertureEffect = {
+    {"EFFECT_NORMAL", 0},
+    {"EFFECT_LOWLIGHT", 1},
+    {"EFFECT_MACRO", 2},
 };
 
 static const std::unordered_map<std::string, int32_t> mapPhotoQualityPrioritization = {

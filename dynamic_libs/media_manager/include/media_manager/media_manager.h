@@ -24,8 +24,6 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-static constexpr int32_t DEFAULT_MARK_INPUT_SIZE = 1024 * 28;
-
 class MediaManager {
 public:
     MediaManager() = default;
@@ -37,7 +35,6 @@ public:
     MediaManagerError ReadSample(Media::Plugins::MediaType type, std::shared_ptr<AVBuffer>& sample);
     MediaManagerError WriteSample(Media::Plugins::MediaType type, const std::shared_ptr<AVBuffer>& sample);
     void AddUserMeta(const std::shared_ptr<Meta>& userMeta);
-    void SetMarkSize(int32_t size);
 
     inline void GetMediaInfo(std::shared_ptr<MediaInfo>& mediaInfo)
     {
@@ -48,8 +45,8 @@ private:
     MediaManagerError InitReader();
     MediaManagerError InitWriter();
     MediaManagerError Recover(const int64_t size);
-    MediaManagerError RecoverDebugInfo();
-    MediaManagerError CopyAudioTrack();
+    MediaManagerError RecoverDebugInfo(const int64_t size);
+    MediaManagerError CopyAudioTrack(Media::Plugins::MediaType type);
     MediaManagerError InitRecoverReader(const int64_t size, int64_t& duration, int64_t& bitRate);
     MediaManagerError GetRecoverInfo(const int64_t size);
 
@@ -58,15 +55,15 @@ private:
     int32_t tempFileFd_ {-1};
     int64_t recoverPts_ {-1};
     int64_t pausePts_ {-1};
-    int64_t prePFramePts_ {-1};
+    int64_t curIFramePts_ {-1};
     int64_t finalPtsToDrop_ {-1};
     bool hasAudio_ {false};
+    bool hasRawAudio_ {false};
     bool started_ {false};
     std::shared_ptr<Reader> inputReader_ {nullptr};
     std::shared_ptr<Reader> recoverReader_ {nullptr};
     std::shared_ptr<Writer> outputWriter_ {nullptr};
     std::shared_ptr<MediaInfo> mediaInfo_ {nullptr};
-    int32_t markSize_ {DEFAULT_MARK_INPUT_SIZE};
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

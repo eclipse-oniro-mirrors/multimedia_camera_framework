@@ -318,26 +318,6 @@ HWTEST_F(HCameraDeviceManagerUnitTest, hcamera_device_manager_unittest_017, Test
 
 /*
  * Feature: Framework
- * Function: Test DetermineHighestPriorityOwner.
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test DetermineHighestPriorityOwner.
- */
-HWTEST_F(HCameraDeviceManagerUnitTest, hcamera_device_manager_unittest_018, TestSize.Level0)
-{
-    sptr<CameraProcessPriority> requestPriority = new (std::nothrow) CameraProcessPriority(1, 1, 1);
-    int32_t highestPriority = 0;
-    int32_t owner = 0;
-    HCameraDeviceManager::GetInstance()->DetermineHighestPriorityOwner(highestPriority, owner, requestPriority);
-    ASSERT_NE(highestPriority, 0);
-    highestPriority = 100;
-    HCameraDeviceManager::GetInstance()->DetermineHighestPriorityOwner(highestPriority, owner, requestPriority);
-    EXPECT_NE(highestPriority, 0);
-}
-
-/*
- * Feature: Framework
  * Function: Test WouldEvict with nullptr.
  * SubFunction: NA
  * FunctionPoints: NA

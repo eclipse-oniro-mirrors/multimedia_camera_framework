@@ -16,6 +16,7 @@
 #include "session_command.h"
 
 #include "dps.h"
+#include "events_info.h"
 #include "events_monitor.h"
 
 namespace OHOS {
@@ -52,19 +53,19 @@ AddPhotoSessionCommand::AddPhotoSessionCommand(const sptr<PhotoSessionInfo>& inf
 int32_t AddPhotoSessionCommand::Executing()
 {
     int32_t ret = Initialize();
-    if (ret != DP_OK) {
-        return ret;
-    }
+    DP_CHECK_RETURN_RET(ret != DP_OK, ret);
 
     sessionManager_->AddPhotoSession(photoInfo_);
     if (photoInfo_->isCreate_) {
         schedulerManager_->CreatePhotoProcessor(photoInfo_->GetUserId());
     }
+    // 设置媒体库状态为空闲
+    EventsInfo::GetInstance().SetMediaLibraryState(MediaLibraryStatus::MEDIA_LIBRARY_IDLE);
     EventsMonitor::GetInstance().NotifyEventToObervers(EventType::MEDIA_LIBRARY_STATUS_EVENT,
         MEDIA_LIBRARY_AVAILABLE);
     return DP_OK;
 }
-
+// LCOV_EXCL_START
 DeletePhotoSessionCommand::DeletePhotoSessionCommand(const sptr<PhotoSessionInfo>& info) : photoInfo_(info)
 {
     DP_DEBUG_LOG("entered.");
@@ -73,16 +74,14 @@ DeletePhotoSessionCommand::DeletePhotoSessionCommand(const sptr<PhotoSessionInfo
 int32_t DeletePhotoSessionCommand::Executing()
 {
     int32_t ret = Initialize();
-    if (ret != DP_OK) {
-        return ret;
-    }
+    DP_CHECK_RETURN_RET(ret != DP_OK, ret);
     
     sessionManager_->DeletePhotoSession(photoInfo_->GetUserId());
     EventsMonitor::GetInstance().NotifyEventToObervers(EventType::MEDIA_LIBRARY_STATUS_EVENT,
         MEDIA_LIBRARY_DISCONNECTED);
     return DP_OK;
 }
-
+// LCOV_EXCL_STOP
 AddVideoSessionCommand::AddVideoSessionCommand(const sptr<VideoSessionInfo>& info) : videoInfo_(info)
 {
     DP_DEBUG_LOG("entered.");
@@ -91,17 +90,12 @@ AddVideoSessionCommand::AddVideoSessionCommand(const sptr<VideoSessionInfo>& inf
 int32_t AddVideoSessionCommand::Executing()
 {
     int32_t ret = Initialize();
-    if (ret != DP_OK) {
-        return ret;
-    }
+    DP_CHECK_RETURN_RET(ret != DP_OK, ret);
     
-    auto coordinator = sessionManager_->GetSessionCoordinator();
-    DP_CHECK_ERROR_RETURN_RET_LOG(coordinator == nullptr, DP_NULL_POINTER, "SessionCoordinator is nullptr.");
-    
+    sessionManager_->AddVideoSession(videoInfo_);
     if (videoInfo_->isCreate_) {
-        schedulerManager_->CreateVideoProcessor(videoInfo_->GetUserId(), coordinator->GetVideoProcCallbacks());
+        schedulerManager_->CreateVideoProcessor(videoInfo_->GetUserId());
     }
-    coordinator->AddVideoSession(videoInfo_);
     EventsMonitor::GetInstance().NotifyEventToObervers(EventType::MEDIA_LIBRARY_STATUS_EVENT,
         MEDIA_LIBRARY_AVAILABLE);
     return DP_OK;
@@ -111,21 +105,18 @@ DeleteVideoSessionCommand::DeleteVideoSessionCommand(const sptr<VideoSessionInfo
 {
     DP_DEBUG_LOG("entered.");
 }
-
+// LCOV_EXCL_START
 int32_t DeleteVideoSessionCommand::Executing()
 {
     int32_t ret = Initialize();
-    if (ret != DP_OK) {
-        return ret;
-    }
+    DP_CHECK_RETURN_RET(ret != DP_OK, ret);
     
-    auto coordinator = sessionManager_->GetSessionCoordinator();
-    DP_CHECK_ERROR_RETURN_RET_LOG(coordinator == nullptr, DP_NULL_POINTER, "SessionCoordinator is nullptr.");
-    coordinator->DeleteVideoSession(videoInfo_->GetUserId());
+    sessionManager_->DeleteVideoSession(videoInfo_->GetUserId());
     EventsMonitor::GetInstance().NotifyEventToObervers(EventType::MEDIA_LIBRARY_STATUS_EVENT,
         MEDIA_LIBRARY_DISCONNECTED);
     return DP_OK;
 }
+// LCOV_EXCL_STOP
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS

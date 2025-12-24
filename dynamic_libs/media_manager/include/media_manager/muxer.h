@@ -41,18 +41,22 @@ public:
 
 private:
     int32_t GetTrackId(Media::Plugins::MediaType trackType);
-    MediaManagerError CheckAndAddMetaTrack(const std::shared_ptr<Track>& track);
+    MediaManagerError CheckAddTrack(const std::shared_ptr<Track>& track);
+    MediaManagerError CheckAddMetaTrack(const std::shared_ptr<Track>& track);
+    MediaManagerError CheckAddRawAudioTrack(const std::shared_ptr<Track>& track);
 
     std::shared_ptr<AVMuxer> muxer_ {nullptr};
     std::unordered_map<Media::Plugins::MediaType, int32_t> trackIds_ = {
         {Media::Plugins::MediaType::AUDIO, INVALID_TRACK_ID},
         {Media::Plugins::MediaType::VIDEO, INVALID_TRACK_ID},
-        {Media::Plugins::MediaType::TIMEDMETA, INVALID_TRACK_ID}
+        {Media::Plugins::MediaType::TIMEDMETA, INVALID_TRACK_ID},
+        {Media::Plugins::MediaType::AUXILIARY, INVALID_TRACK_ID},
     };
     std::vector<Media::Plugins::MediaType> trackList_ = {
         Media::Plugins::MediaType::VIDEO,
         Media::Plugins::MediaType::TIMEDMETA,
-        Media::Plugins::MediaType::AUDIO
+        Media::Plugins::MediaType::AUDIO,
+        Media::Plugins::MediaType::AUXILIARY
     };
 };
 

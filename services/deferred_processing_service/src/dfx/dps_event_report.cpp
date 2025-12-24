@@ -48,6 +48,16 @@ void DPSEventReport::ReportOperateImage(const std::string& imageId, int32_t user
         EVENT_KEY_TEMPERATURELEVEL, temperatureLevel_);
 }
 
+void DPSEventReport::ReportImageProcessCaptureFlag(uint32_t captureFlag)
+{
+   DP_DEBUG_LOG("ReportImageProcessCaptureFlag enter.");
+   HiSysEventWrite(
+        CAMERA_FWK_UE,
+        "DPS_IMAGE_PROCESS_CAPTURE_FLAG",
+        HiviewDFX::HiSysEvent::EventType::BEHAVIOR,
+        EVENT_KEY_CAPTUREFLAG, captureFlag);
+}
+
 void DPSEventReport::ReportImageProcessResult(const std::string& imageId, int32_t userId, uint64_t endTime)
 {
     DP_DEBUG_LOG("ReportImageProcessResult enter.");
@@ -137,7 +147,7 @@ void DPSEventReport::ReportPartitionUsage()
 
 void DPSEventReport::SetEventInfo(const std::string& imageId, int32_t userId)
 {
-    std::unique_lock<std::recursive_mutex> lock(mutex_);
+    std::unique_lock<std::mutex> lock(mutex_);
     DPSEventInfo dpsEventInfo;
     dpsEventInfo.imageId = imageId;
     dpsEventInfo.userId = userId;
@@ -179,7 +189,7 @@ void DPSEventReport::SetEventInfo(const std::string& imageId, int32_t userId)
 
 void DPSEventReport::SetEventInfo(DPSEventInfo& dpsEventInfo)
 {
-    std::unique_lock<std::recursive_mutex> lock(mutex_);
+    std::unique_lock<std::mutex> lock(mutex_);
     auto imageIdToEventInfoTemp = userIdToImageIdEventInfo.find(dpsEventInfo.userId);
     if (imageIdToEventInfoTemp != userIdToImageIdEventInfo.end()) {
         (imageIdToEventInfoTemp->second)[dpsEventInfo.imageId] = dpsEventInfo;
@@ -192,7 +202,7 @@ void DPSEventReport::SetEventInfo(DPSEventInfo& dpsEventInfo)
 
 void DPSEventReport::UpdateEventInfo(DPSEventInfo& dpsEventInfo)
 {
-    std::unique_lock<std::recursive_mutex> lock(mutex_);
+    std::unique_lock<std::mutex> lock(mutex_);
     auto imageIdToEventInfoTemp = userIdToImageIdEventInfo.find(dpsEventInfo.userId);
     if (imageIdToEventInfoTemp == userIdToImageIdEventInfo.end()) {
         std::map<std::string, DPSEventInfo> imageIdToEventInfo;
@@ -230,7 +240,7 @@ void DPSEventReport::SetEventType(EventType eventType)
 
 DPSEventInfo DPSEventReport::GetEventInfo(const std::string& imageId, int32_t userId)
 {
-    std::unique_lock<std::recursive_mutex> lock(mutex_);
+    std::unique_lock<std::mutex> lock(mutex_);
     DPSEventInfo dpsEventInfo;
     auto imageIdToEventInfo = userIdToImageIdEventInfo.find(userId);
     if (imageIdToEventInfo != userIdToImageIdEventInfo.end()) {
@@ -248,7 +258,7 @@ DPSEventInfo DPSEventReport::GetEventInfo(const std::string& imageId, int32_t us
 
 void DPSEventReport::RemoveEventInfo(const std::string& imageId, int32_t userId)
 {
-    std::unique_lock<std::recursive_mutex> lock(mutex_);
+    std::unique_lock<std::mutex> lock(mutex_);
     DPSEventInfo dpsEventInfo;
     auto imageIdToEventInfo = userIdToImageIdEventInfo.find(userId);
     if (imageIdToEventInfo != userIdToImageIdEventInfo.end()) {
@@ -266,7 +276,7 @@ void DPSEventReport::RemoveEventInfo(const std::string& imageId, int32_t userId)
 
 void DPSEventReport::UpdateProcessDoneTime(const std::string& imageId, int32_t userId)
 {
-    std::unique_lock<std::recursive_mutex> lock(mutex_);
+    std::unique_lock<std::mutex> lock(mutex_);
     auto imageIdToEventInfoTemp = userIdToImageIdEventInfo.find(userId);
     if (imageIdToEventInfoTemp != userIdToImageIdEventInfo.end()) {
         uint64_t currentTime = GetTimestampMilli();
@@ -327,7 +337,6 @@ void DPSEventReport::UpdateRestoreTime(DPSEventInfo& dpsEventInfo, DPSEventInfo&
 
 void DPSEventReport::UpdateRemoveTime(const std::string& imageId, int32_t userId)
 {
-    std::unique_lock<std::recursive_mutex> lock(mutex_);
     auto imageIdToEventInfoTemp = userIdToImageIdEventInfo.find(userId);
     if (imageIdToEventInfoTemp != userIdToImageIdEventInfo.end()) {
         uint64_t currentTime = GetTimestampMilli();
@@ -358,7 +367,7 @@ void DPSEventReport::UpdateTrailingTime(DPSEventInfo& dpsEventInfo, DPSEventInfo
 
 void DPSEventReport::UpdateExecutionMode(const std::string& imageId, int32_t userId, ExecutionMode executionMode)
 {
-    std::unique_lock<std::recursive_mutex> lock(mutex_);
+    std::unique_lock<std::mutex> lock(mutex_);
     auto imageIdToEventInfoTemp = userIdToImageIdEventInfo.find(userId);
     if (imageIdToEventInfoTemp != userIdToImageIdEventInfo.end()) {
         (imageIdToEventInfoTemp->second)[imageId].executionMode = executionMode;
@@ -406,12 +415,12 @@ uint64_t DPSEventReport::GetFolderSize(const std::string& path)
                 (std::string(entry->d_name) != "." && std::string(entry->d_name) != "..")) {
                 totalSize += GetFolderSize(filePath);
             } else if (stat(filePath.c_str(), &st) == 0) {
-                totalSize += st.st_size;
+                totalSize += static_cast<uint64_t>(st.st_size);
             }
         }
         closedir(dir);
     } else {
-        totalSize = st.st_size;
+        totalSize = static_cast<uint64_t>(st.st_size);
     }
     return totalSize;
 }

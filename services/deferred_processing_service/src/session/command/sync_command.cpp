@@ -60,9 +60,7 @@ PhotoSyncCommand::~PhotoSyncCommand()
 int32_t PhotoSyncCommand::Executing()
 {
     int32_t ret = Initialize();
-    if (ret != DP_OK) {
-        return ret;
-    }
+    DP_CHECK_RETURN_RET(ret != DP_OK, ret);
 
     auto processor = schedulerManager_->GetPhotoProcessor(userId_);
     DP_CHECK_ERROR_RETURN_RET_LOG(processor == nullptr, DP_NULL_POINTER, "PhotoProcessor is nullptr.");
@@ -87,8 +85,10 @@ int32_t PhotoSyncCommand::Executing()
     auto info = sessionManager_->GetPhotoInfo(userId_);
     if (info != nullptr) {
         auto callbacks =  info->GetRemoteCallback();
-        for (const auto& it : imageIds_) {
-            callbacks->OnError(it.first, ErrorCode::ERROR_IMAGE_PROC_INVALID_PHOTO_ID);
+        if (callbacks) {
+            for (const auto& it : imageIds_) {
+                callbacks->OnError(it.first, ErrorCode::ERROR_IMAGE_PROC_INVALID_PHOTO_ID);
+            }
         }
     }
     hdiImageIds.clear();
@@ -97,7 +97,7 @@ int32_t PhotoSyncCommand::Executing()
 // LCOV_EXCL_STOP
 
 VideoSyncCommand::VideoSyncCommand(const int32_t userId,
-    const std::unordered_map<std::string, std::shared_ptr<DeferredVideoProcessingSession::VideoInfo>>& videoIds)
+    const std::unordered_map<std::string, std::shared_ptr<VideoInfo>>& videoIds)
     : SyncCommand(userId), videoIds_(videoIds)
 {
     DP_DEBUG_LOG("VideoSyncCommand, video job num: %{public}d", static_cast<int32_t>(videoIds_.size()));
@@ -112,9 +112,7 @@ VideoSyncCommand::~VideoSyncCommand()
 int32_t VideoSyncCommand::Executing()
 {
     int32_t ret = Initialize();
-    if (ret != DP_OK) {
-        return ret;
-    }
+    DP_CHECK_RETURN_RET(ret != DP_OK, ret);
 
     auto processor = schedulerManager_->GetVideoProcessor(userId_);
     DP_CHECK_ERROR_RETURN_RET_LOG(processor == nullptr, DP_NULL_POINTER, "VideoProcessor is nullptr.");
@@ -123,30 +121,32 @@ int32_t VideoSyncCommand::Executing()
     bool isSuccess = processor->GetPendingVideos(hdiVideoIds);
     if (!isSuccess) {
         for (const auto& it : videoIds_) {
-            processor->AddVideo(it.first, it.second->srcFd_, it.second->dstFd_);
+            processor->AddVideo(it.first, it.second);
         }
         return DP_OK;
     }
 
+    // LCOV_EXCL_START
     for (const auto& videoId : hdiVideoIds) {
-        // LCOV_EXCL_START
         auto item = videoIds_.find(videoId);
         if (item != videoIds_.end()) {
-            processor->AddVideo(videoId, item->second->srcFd_, item->second->dstFd_);
+            processor->AddVideo(videoId, item->second);
             videoIds_.erase(videoId);
         }
-        // LCOV_EXCL_STOP
     }
 
     auto info = sessionManager_->GetVideoInfo(userId_);
     if (info != nullptr) {
         auto callbacks =  info->GetRemoteCallback();
-        for (const auto& it : videoIds_) {
-            callbacks->OnError(it.first, static_cast<int32_t>(ErrorCode::ERROR_VIDEO_PROC_INVALID_VIDEO_ID));
+        if (callbacks) {
+            for (const auto& it : videoIds_) {
+                callbacks->OnError(it.first, ErrorCode::ERROR_VIDEO_PROC_INVALID_VIDEO_ID);
+            }
         }
     }
     hdiVideoIds.clear();
     return DP_OK;
+    // LCOV_EXCL_STOP
 }
 } // namespace DeferredProcessing
 } // namespace CameraStandard

@@ -80,7 +80,6 @@ ohos_fuzztest("AudioEncoderFuzzTest") {
     "${multimedia_camera_framework_path}/services/camera_service:camera_service",
     "${multimedia_camera_framework_path}/dynamic_libs:camera_dynamic_moving_photo",
   ]
-
   external_deps = [
     "ability_base:want",
     "access_token:libaccesstoken_sdk",

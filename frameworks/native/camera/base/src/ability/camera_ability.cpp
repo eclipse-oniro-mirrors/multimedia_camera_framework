@@ -97,8 +97,7 @@ std::vector<BeautyType> CameraAbility::GetSupportedBeautyTypes()
 std::vector<int32_t> CameraAbility::GetSupportedBeautyRange(BeautyType beautyType)
 {
     auto it = supportedBeautyRangeMap_.find(beautyType);
-    CHECK_RETURN_RET(it != supportedBeautyRangeMap_.end(), it->second);
-    return {};
+    return it != supportedBeautyRangeMap_.end() ? it->second : std::vector<int32_t> {};
 }
 
 std::vector<ColorEffect> CameraAbility::GetSupportedColorEffects()
@@ -171,6 +170,36 @@ bool CameraAbility::IsLcdFlashSupported()
     return isLcdFlashSupported_;
 }
 
+bool CameraAbility::IsImageStabilizationGuideSupported()
+{
+    return isImageStabilizationGuideSupported_;
+}
+
+std::vector<NightSubMode> CameraAbility::GetSupportedNightSubModeTypes()
+{
+    return supportedNightSubModes_;
+}
+
+bool CameraAbility::IsConstellationDrawingSupported()
+{
+    return isConstellationDrawingSupported;
+}
+
+std::vector<uint32_t> CameraAbility::GetExposureRange()
+{
+    return supportedManalExposureRange_;
+}
+
+std::vector<PortraitThemeType> CameraAbility::GetSupportedPortraitThemeTypes()
+{
+    return supportedPortraitThemeTypes_;
+}
+
+bool CameraAbility::IsPortraitThemeSupported()
+{
+    return isPortraitThemeSupported_;
+}
+
 void CameraAbility::DumpCameraAbilityInfo()
 {
     auto logFunc = [](const std::string& label, const auto& container) {
@@ -189,41 +218,21 @@ void CameraAbility::DumpCameraAbilityInfo()
     logFunc("Supported Beauty Types", supportedBeautyTypes_);
     logFunc("Supported Exposure Range", supportedExposureRange_);
     logFunc("Supported Scene Feature", supportedSceneFeature_);
-
+    logFunc("sketchFovRatio data", sketchFovRatio_);
+    logFunc("Supported night manal exposure range", supportedManalExposureRange_);
+    logFunc("Zoom Ratio Range", zoomRatioRange_.value_or(std::vector<float>{}));
+    logFunc("Depth Fusion Threshold", getDepthFusionThreshold_.value_or(std::vector<float>{}));
+    logFunc("Supported Virtual Apertures", supportedVirtualApertures_);
     for (const auto& [type, range] : supportedBeautyRangeMap_) {
         std::string vecStr = Container2String(range.begin(), range.end());
         MEDIA_DEBUG_LOG("Beauty Types: %{public}d Supported Beauty Ranges: %{public}s", type, vecStr.c_str());
     }
-
-    logFunc("Supported Virtual Apertures", supportedVirtualApertures_);
-
     for (const auto& apertureList : supportedPhysicalApertures_) {
         logFunc("Supported Physical Apertures", apertureList);
     }
-
-    if (zoomRatioRange_.has_value()) {
-        logFunc("Zoom Ratio Range", zoomRatioRange_.value());
-    } else {
-        MEDIA_DEBUG_LOG("Zoom Ratio Range: Not supported");
-    }
-
-    if (isMacroSupported_.has_value()) {
-        MEDIA_DEBUG_LOG("Macro Supported: %{public}d", isMacroSupported_.value());
-    } else {
-        MEDIA_DEBUG_LOG("Macro Supported: Not supported");
-    }
-
-    if (isDepthFusionSupported_.has_value()) {
-        MEDIA_DEBUG_LOG("Depth Fusion Supported: %{public}d", isDepthFusionSupported_.value());
-    } else {
-        MEDIA_DEBUG_LOG("Depth Fusion Supported: Not supported");
-    }
-
-    if (getDepthFusionThreshold_.has_value()) {
-        logFunc("Depth Fusion Threshold", getDepthFusionThreshold_.value());
-    } else {
-        MEDIA_DEBUG_LOG("Depth Fusion Threshold: Not supported");
-    }
+    MEDIA_DEBUG_LOG("Macro Supported: %{public}d", isMacroSupported_.value_or(false));
+    MEDIA_DEBUG_LOG("Depth Fusion Supported: %{public}d", isDepthFusionSupported_.value_or(false));
+    MEDIA_DEBUG_LOG("Sketch Supported: %{public}d", isSketchSupported_);
 }
 
 CameraAbilityContainer::~CameraAbilityContainer()
@@ -253,18 +262,14 @@ void CameraAbilityContainer::PrepareSpecMaximumValue(std::vector<sptr<CameraAbil
     std::optional<std::vector<float>> tempRange;
 
     for (const auto& ability : abilities) {
-        if (!ability) {
-            continue;
-        }
+        CHECK_CONTINUE(!ability);
 
         if (!IsMacroSupportedInSpec_) {
             IsMacroSupportedInSpec_ = ability->IsMacroSupported();
         }
 
         auto range = ability->GetZoomRatioRange();
-        if (!g_isValidZoomRaioRange(range)) {
-            continue;
-        }
+        CHECK_CONTINUE(!g_isValidZoomRaioRange(range));
         if (!tempRange.has_value()) {
             tempRange = range;
         } else {
@@ -274,51 +279,93 @@ void CameraAbilityContainer::PrepareSpecMaximumValue(std::vector<sptr<CameraAbil
             tempRange = std::vector<float>{min, max};
             // LCOV_EXCL_STOP
         }
+        
+        if (ability->GetSupportedNightSubModeTypes().size() > nightSubModesInSpec_.size()) {
+            nightSubModesInSpec_ = ability->GetSupportedNightSubModeTypes();
+        }
+
+        if (ability->GetSupportedFlashModes().size() > supportedFlashModesInSpec_.size()) {
+            supportedFlashModesInSpec_ = ability->GetSupportedFlashModes();
+        }
+
+        if (ability->GetSupportedColorEffects().size() > supportedColorEffectsInSpec_.size()) {
+            supportedColorEffectsInSpec_ = ability->GetSupportedColorEffects();
+        }
+
+        if (ability->GetSupportedColorSpaces().size() > supportedColorSpacesInSpec_.size()) {
+            supportedColorSpacesInSpec_ = ability->GetSupportedColorSpaces();
+        }
+
+        if (ability->GetExposureRange().size() > supportedManalExposureRangeInSpec_.size()) {
+            supportedManalExposureRangeInSpec_ = ability->GetExposureRange();
+        }
+
+        if (!isConstellationDrawingSupportedInSpec_) {
+            isConstellationDrawingSupportedInSpec_ = ability->IsConstellationDrawingSupported();
+        }
+
+        if (!hasFlashInSpec_) {
+            hasFlashInSpec_ = ability->HasFlash();
+        }
     }
 
     zoomRatioRangeInSpec_ = tempRange.value_or(std::vector<float>{1.0, 1.0});
     abilities.clear();
 }
 
+// LCOV_EXCL_START
 void CameraAbilityContainer::FilterByZoomRatio(float zoomRatio)
 {
     zoomRatioSet_ = zoomRatio;
-    if (lastIsMacroSupported_.has_value()) {
-        // LCOV_EXCL_START
-        bool oldValue = lastIsMacroSupported_.value();
-        bool newValue = IsMacroSupported();
-        MEDIA_INFO_LOG("CameraAbilityContainer macroValue %{public}d", static_cast<int32_t>(newValue));
-        CHECK_EXECUTE(oldValue != newValue, OnAbilityChange());
-        // LCOV_EXCL_STOP
+    CHECK_RETURN(!lastIsMacroSupported_.has_value());
+    bool oldValue = lastIsMacroSupported_.value();
+    bool newValue = IsMacroSupported();
+    MEDIA_INFO_LOG("CameraAbilityContainer macroValue %{public}d", static_cast<int32_t>(newValue));
+    if (oldValue != newValue) {
+        OnAbilityChange();
     }
 }
 
-// LCOV_EXCL_START
 void CameraAbilityContainer::FilterByMacro(bool enableMacro)
 {
     enableMacroSet_ = enableMacro;
-    if (lastGetZoomRatioRange_.has_value()) {
-        std::vector<float> oldValue = lastGetZoomRatioRange_.value();
-        std::vector<float> newValue = GetZoomRatioRange();
-        MEDIA_INFO_LOG("CameraAbilityContainer zoomValue %{public}f %{public}f", newValue[0], newValue[1]);
-        CHECK_EXECUTE(oldValue[0] != newValue[0] || oldValue[1] != newValue[1], OnAbilityChange());
+    CHECK_RETURN(!lastGetZoomRatioRange_.has_value());
+    std::vector<float> oldValue = lastGetZoomRatioRange_.value();
+    std::vector<float> newValue = GetZoomRatioRange();
+    MEDIA_INFO_LOG("CameraAbilityContainer zoomValue %{public}f %{public}f", newValue[0], newValue[1]);
+    if (oldValue[0] != newValue[0] || oldValue[1] != newValue[1]) {
+        OnAbilityChange();
     }
 }
-// LCOV_EXCL_STOP
+
+void CameraAbilityContainer::FilterByNightSubMode(NightSubMode nightSubMode)
+{
+    nightSubModeSet_ = nightSubMode;
+    for (const auto &ability : conflictAbilities_) {
+        CHECK_CONTINUE(ability == nullptr);
+        std::vector<NightSubMode> subModes = ability->GetSupportedNightSubModeTypes();
+        if (subModes.size() == 1 && nightSubMode == subModes[0]) {
+            nightSubModeAbility_ = ability;
+        }
+    }
+    OnAbilityChange();
+}
 
 std::vector<float> CameraAbilityContainer::GetZoomRatioRange()
 {
+    if (nightSubModeSet_.has_value()) {
+        return nightSubModeAbility_ ? nightSubModeAbility_->GetZoomRatioRange() : std::vector<float>{1.0f, 1.0f};
+    }
     bool enableMacro = enableMacroSet_.value_or(false);
     if (!g_isValidZoomRaioRange(zoomRatioRangeInSpec_)) {
         MEDIA_ERR_LOG("zoomRatioRangeInSpec_ invalid data");
         return std::vector<float>{1.0f, 1.0f};
     }
     for (const auto& ability : conflictAbilities_) {
-        if (ability == nullptr) {
-            continue;
-        }
+        CHECK_CONTINUE(ability == nullptr);
         std::vector<float> range = ability->GetZoomRatioRange();
-        if (enableMacro == ability->IsMacroSupported() && g_isValidZoomRaioRange(range)) {
+        bool isValidRange = enableMacro == ability->IsMacroSupported() && g_isValidZoomRaioRange(range);
+        if (isValidRange) {
             float min = std::max(zoomRatioRangeInSpec_[0], range[0]);
             float max = std::min(zoomRatioRangeInSpec_[1], range[1]);
             lastGetZoomRatioRange_ = {min, max};
@@ -333,11 +380,10 @@ bool CameraAbilityContainer::IsMacroSupported()
 {
     float zoomRatio = zoomRatioSet_.value_or(1.0f);
     for (const auto& ability : conflictAbilities_) {
-        if (ability == nullptr) {
-            continue;
-        }
+        CHECK_CONTINUE(ability == nullptr);
         std::vector<float> range = ability->GetZoomRatioRange();
-        if (g_isValidZoomRaioRange(range) && ability->IsMacroSupported()) {
+        bool isValidRange = g_isValidZoomRaioRange(range) && ability->IsMacroSupported();
+        if (isValidRange) {
             bool isSupport = IsMacroSupportedInSpec_ && (range[0] <= zoomRatio && zoomRatio <= range[1]);
             lastIsMacroSupported_ = isSupport;
             return isSupport;
@@ -346,5 +392,47 @@ bool CameraAbilityContainer::IsMacroSupported()
     lastIsMacroSupported_ = IsMacroSupportedInSpec_;
     return IsMacroSupportedInSpec_;
 }
+
+std::vector<NightSubMode> CameraAbilityContainer::GetSupportedNightSubModeTypes()
+{
+    return nightSubModesInSpec_;
+}
+
+bool CameraAbilityContainer::IsConstellationDrawingSupported()
+{
+    CHECK_RETURN_RET(!nightSubModeSet_.has_value(), isConstellationDrawingSupportedInSpec_);
+    return nightSubModeAbility_ ? nightSubModeAbility_->IsConstellationDrawingSupported() : false;
+}
+
+bool CameraAbilityContainer::HasFlash()
+{
+    CHECK_RETURN_RET(!nightSubModeSet_.has_value(), hasFlashInSpec_);
+    return nightSubModeAbility_ ? nightSubModeAbility_->HasFlash() : false;
+}
+
+std::vector<FlashMode> CameraAbilityContainer::GetSupportedFlashModes()
+{
+    CHECK_RETURN_RET(!nightSubModeSet_.has_value(), supportedFlashModesInSpec_);
+    return nightSubModeAbility_ ? nightSubModeAbility_->GetSupportedFlashModes() : std::vector<FlashMode>{};
+}
+
+std::vector<uint32_t> CameraAbilityContainer::GetExposureRange()
+{
+    CHECK_RETURN_RET(!nightSubModeSet_.has_value(), supportedManalExposureRangeInSpec_);
+    return nightSubModeAbility_ ? nightSubModeAbility_->GetExposureRange() : std::vector<uint32_t>{};
+}
+
+std::vector<ColorEffect> CameraAbilityContainer::GetSupportedColorEffects()
+{
+    CHECK_RETURN_RET(!nightSubModeSet_.has_value(), supportedColorEffectsInSpec_);
+    return nightSubModeAbility_ ? nightSubModeAbility_->GetSupportedColorEffects() : std::vector<ColorEffect>{};
+}
+
+std::vector<ColorSpace> CameraAbilityContainer::GetSupportedColorSpaces()
+{
+    CHECK_RETURN_RET(!nightSubModeSet_.has_value(), supportedColorSpacesInSpec_);
+    return nightSubModeAbility_ ? nightSubModeAbility_->GetSupportedColorSpaces() : std::vector<ColorSpace>{};
+}
+// LCOV_EXCL_STOP
 } // namespace CameraStandard
 } // namespace OHOS

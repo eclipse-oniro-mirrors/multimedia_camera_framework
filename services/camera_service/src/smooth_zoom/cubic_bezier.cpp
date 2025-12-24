@@ -62,11 +62,8 @@ std::vector<float> CubicBezier::GetZoomArray(const float& currentZoom, const flo
 
 float CubicBezier::GetDuration(const float& currentZoom, const float& targetZoom)
 {
-    if (currentZoom == 0) {
-        return 0;
-    } else {
-        return (DURATION_SLOP * DURATION_POWER * abs(log(targetZoom / currentZoom)) + mDurationBase);
-    }
+    CHECK_RETURN_RET(currentZoom == 0, 0);
+    return (DURATION_SLOP * DURATION_POWER * abs(log(targetZoom / currentZoom)) + mDurationBase);
 }
 
 bool CubicBezier::SetBezierValue(const std::vector<float>& zoomBezierValue)

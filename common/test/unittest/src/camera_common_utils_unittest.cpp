@@ -15,6 +15,7 @@
 #include "camera_common_utils_unittest.h"
 
 #include <chrono>
+#include <fcntl.h>
 #include <gtest/gtest.h>
 #include <thread>
 
@@ -24,63 +25,32 @@
 #include "camera_simple_timer.h"
 #include "av_codec_proxy.h"
 #include "av_codec_adapter.h"
+#include "dps_fd.h"
 #include "sample_info.h"
-#include "image_source_proxy.h"
 #include "media_manager_proxy.h"
 #include "ipc_file_descriptor.h"
 #include "moving_photo_proxy.h"
 #include "camera_server_photo_proxy.h"
 #include "picture_proxy.h"
+#include "frame_record.h"
 
 using namespace OHOS::CameraStandard;
 using namespace testing::ext;
 
 namespace OHOS {
 namespace CameraStandard {
-
-constexpr uint32_t MAX_SOURCE_SIZE = 300 * 1024 * 1024;
 constexpr int VIDEO_REQUEST_FD_ID = 1;
 static const int64_t VIDEO_FRAMERATE = 1280;
+constexpr int64_t VIDEO_HIGH = 1080;
+constexpr int64_t VIDEO_WIDTH = 1920;
 
-void CameraCommonUtilsUnitTest::SetUpTestCase(void)
-{}
+void CameraCommonUtilsUnitTest::SetUpTestCase(void) {}
 
-void CameraCommonUtilsUnitTest::TearDownTestCase(void)
-{}
+void CameraCommonUtilsUnitTest::TearDownTestCase(void) {}
 
-void CameraCommonUtilsUnitTest::SetUp(void)
-{}
+void CameraCommonUtilsUnitTest::SetUp(void) {}
 
-void CameraCommonUtilsUnitTest::TearDown(void)
-{}
-
-class CoderCallback : public MediaCodecCallback {
-public:
-    CoderCallback() {}
-    ~CoderCallback() {}
-    void OnError(MediaAVCodec::AVCodecErrorType errorType, int32_t errorCode) {}
-    void OnOutputFormatChanged(const Format &format) {}
-    void OnInputBufferAvailable(uint32_t index, std::shared_ptr<AVBuffer> buffer) {}
-    void OnOutputBufferAvailable(uint32_t index, std::shared_ptr<AVBuffer> buffer) {}
-};
-
-class AVSourceTest : public AVSource {
-public:
-    AVSourceTest() {}
-    ~AVSourceTest() {}
-    int32_t GetSourceFormat(OHOS::Media::Format& format)
-    {
-        return 0;
-    }
-    int32_t GetTrackFormat(OHOS::Media::Format& format, uint32_t trackIndex)
-    {
-        return 0;
-    }
-    int32_t GetUserMeta(OHOS::Media::Format& format)
-    {
-        return 0;
-    }
-};
+void CameraCommonUtilsUnitTest::TearDown(void) {}
 
 /*
  * Feature: SimpleTimer
@@ -463,710 +433,6 @@ HWTEST_F(CameraCommonUtilsUnitTest, CameraDynamicLoader_TestErrorCases, TestSize
 }
 
 /*
- * Feature: AVCodecProxy
- * Function: Test AVMuxerSetParameter and AVMuxerSetUserMeta
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test AVMuxerSetParameter and AVMuxerSetUserMeta when AVMuter create fail.
- */
-HWTEST_F(CameraCommonUtilsUnitTest, CameraAVCodecProxy_Test_001, TestSize.Level0)
-{
-    MEDIA_INFO_LOG("CameraAVCodecProxy_Test_001 start");
-    auto avCodecProxy = AVCodecProxy::CreateAVCodecProxy();
-    ASSERT_NE(avCodecProxy, nullptr);
-    avCodecProxy->CreateAVMuxer(-1, static_cast<Media::Plugins::OutputFormat>(0));
-    std::shared_ptr<Meta> param = std::make_shared<Meta>();
-    int32_t ret = avCodecProxy->AVMuxerSetParameter(param);
-    EXPECT_EQ(ret, AV_ERR_FAILED);
-    ret = avCodecProxy->AVMuxerSetUserMeta(param);
-    EXPECT_EQ(ret, AV_ERR_FAILED);
-    MEDIA_INFO_LOG("CameraAVCodecProxy_Test_001 End");
-}
-
-/*
- * Feature: AVCodecProxy
- * Function: Test AVMuxerSetParameter
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test AVMuxerSetParameter when parameter is nullptr.
- */
-HWTEST_F(CameraCommonUtilsUnitTest, CameraAVCodecProxy_Test_002, TestSize.Level0)
-{
-    MEDIA_INFO_LOG("CameraAVCodecProxy_Test_002 start");
-    auto avCodecProxy = AVCodecProxy::CreateAVCodecProxy();
-    ASSERT_NE(avCodecProxy, nullptr);
-    std::shared_ptr<Meta> param = nullptr;
-    int32_t ret = avCodecProxy->AVMuxerSetParameter(param);
-    EXPECT_EQ(ret, AV_ERR_INVALID_VAL);
-    avCodecProxy->avcodecIntf_ = nullptr;
-    ret = avCodecProxy->AVMuxerSetParameter(param);
-    EXPECT_EQ(ret, AV_ERR_INVALID_VAL);
-    MEDIA_INFO_LOG("CameraAVCodecProxy_Test_002 End");
-}
-
-/*
- * Feature: AVCodecProxy
- * Function: Test AVMuxerSetUserMeta
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test AVMuxerSetUserMeta when parameter is nullptr.
- */
-HWTEST_F(CameraCommonUtilsUnitTest, CameraAVCodecProxy_Test_003, TestSize.Level0)
-{
-    MEDIA_INFO_LOG("CameraAVCodecProxy_Test_003 Start");
-    auto avCodecProxy = AVCodecProxy::CreateAVCodecProxy();
-    ASSERT_NE(avCodecProxy, nullptr);
-    std::shared_ptr<Meta> param = nullptr;
-    int32_t ret = avCodecProxy->AVMuxerSetUserMeta(param);
-    EXPECT_EQ(ret, AV_ERR_INVALID_VAL);
-    avCodecProxy->avcodecIntf_ = nullptr;
-    ret = avCodecProxy->AVMuxerSetUserMeta(param);
-    EXPECT_EQ(ret, AV_ERR_INVALID_VAL);
-    MEDIA_INFO_LOG("CameraAVCodecProxy_Test_003 End");
-}
-
-/*
- * Feature: AVCodecProxy
- * Function: Test AVMuxer related interfaces
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test AVMuxer related interfaces when AVMuter create fail.
- */
-HWTEST_F(CameraCommonUtilsUnitTest, CameraAVCodecProxy_Test_004, TestSize.Level0)
-{
-    MEDIA_INFO_LOG("CameraAVCodecProxy_Test_004 start");
-    auto avCodecProxy = AVCodecProxy::CreateAVCodecProxy();
-    ASSERT_NE(avCodecProxy, nullptr);
-    avCodecProxy->CreateAVMuxer(-1, static_cast<Media::Plugins::OutputFormat>(0));
-
-    std::shared_ptr<Meta> trackDesc = std::make_shared<Meta>();
-    int32_t ret = avCodecProxy->AVMuxerStart();
-    EXPECT_EQ(ret, AV_ERR_FAILED);
-    int32_t trackIndex = 1;
-    ret = avCodecProxy->AVMuxerAddTrack(trackIndex, trackDesc);
-    EXPECT_EQ(ret, AV_ERR_FAILED);
-    std::shared_ptr<AVBuffer> sample = std::make_shared<AVBuffer>();
-    ret = avCodecProxy->AVMuxerWriteSample(1, sample);
-    EXPECT_EQ(ret, AV_ERR_FAILED);
-    ret = avCodecProxy->AVMuxerStop();
-    EXPECT_EQ(ret, AV_ERR_FAILED);
-    MEDIA_INFO_LOG("CameraAVCodecProxy_Test_004 End");
-}
-
-/*
- * Feature: AVCodecProxy
- * Function: Test AVMuxer related interfaces
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test AVMuxer related interfaces when parameter is nullptr.
- */
-HWTEST_F(CameraCommonUtilsUnitTest, CameraAVCodecProxy_Test_005, TestSize.Level0)
-{
-    MEDIA_INFO_LOG("CameraAVCodecProxy_Test_005 start");
-    auto avCodecProxy = AVCodecProxy::CreateAVCodecProxy();
-    ASSERT_NE(avCodecProxy, nullptr);
-    std::shared_ptr<Meta> trackDesc = nullptr;
-    int32_t trackIndex = 1;
-    int32_t ret = avCodecProxy->AVMuxerAddTrack(trackIndex, trackDesc);
-    EXPECT_EQ(ret, AV_ERR_INVALID_VAL);
-    std::shared_ptr<AVBuffer> sample = nullptr;
-    ret = avCodecProxy->AVMuxerWriteSample(1, sample);
-    EXPECT_EQ(ret, AV_ERR_INVALID_VAL);
-
-    avCodecProxy->avcodecIntf_ = nullptr;
-    ret = avCodecProxy->AVMuxerStart();
-    EXPECT_EQ(ret, AV_ERR_INVALID_VAL);
-    ret = avCodecProxy->AVMuxerAddTrack(trackIndex, trackDesc);
-    EXPECT_EQ(ret, AV_ERR_INVALID_VAL);
-    ret = avCodecProxy->AVMuxerWriteSample(1, sample);
-    EXPECT_EQ(ret, AV_ERR_INVALID_VAL);
-    ret = avCodecProxy->AVMuxerStop();
-    EXPECT_EQ(ret, AV_ERR_INVALID_VAL);
-    MEDIA_INFO_LOG("CameraAVCodecProxy_Test_005 End");
-}
-
-/*
- * Feature: AVCodecProxy
- * Function: Test AVCodecVideoEncoder
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test AVCodecVideoEncoder when AVCodecVideoEncoder has not been created.
- */
-HWTEST_F(CameraCommonUtilsUnitTest, CameraAVCodecProxy_Test_006, TestSize.Level0)
-{
-    MEDIA_INFO_LOG("CameraAVCodecProxy_Test_006 start");
-    auto avCodecProxy = AVCodecProxy::CreateAVCodecProxy();
-    ASSERT_NE(avCodecProxy, nullptr);
-    int32_t ret = avCodecProxy->AVCodecVideoEncoderStart();
-    EXPECT_EQ(ret, AV_ERR_FAILED);
-    ret = avCodecProxy->AVCodecVideoEncoderStop();
-    EXPECT_EQ(ret, AV_ERR_FAILED);
-    MEDIA_INFO_LOG("CameraAVCodecProxy_Test_006 End");
-}
-
-/*
- * Feature: AVCodecProxy
- * Function: Test AVCodecVideoEncoder
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test AVCodecVideoEncoder when paramenter is normal.
- */
-HWTEST_F(CameraCommonUtilsUnitTest, CameraAVCodecProxy_Test_007, TestSize.Level0)
-{
-    MEDIA_INFO_LOG("CameraAVCodecProxy_Test_007 Start");
-    auto avCodecProxy = AVCodecProxy::CreateAVCodecProxy();
-    ASSERT_NE(avCodecProxy, nullptr);
-    int32_t ret = avCodecProxy->CreateAVCodecVideoEncoder(MIME_VIDEO_AVC.data());
-    EXPECT_EQ(ret, AV_ERR_OK);
-    ret = avCodecProxy->AVCodecVideoEncoderPrepare();
-    EXPECT_EQ(ret, AV_ERR_OK);
-    bool isExisted = avCodecProxy->IsVideoEncoderExisted();
-    EXPECT_TRUE(isExisted);
-    ret = avCodecProxy->AVCodecVideoEncoderRelease();
-    EXPECT_EQ(ret, AV_ERR_OK);
-    MEDIA_INFO_LOG("CameraAVCodecProxy_Test_007 End");
-}
-
-/*
- * Feature: AVCodecProxy
- * Function: Test AVCodecVideoEncoder
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test Test AVCodecVideoEncoder when parameter is nullptr.
- */
-HWTEST_F(CameraCommonUtilsUnitTest, CameraAVCodecProxy_Test_008, TestSize.Level0)
-{
-    MEDIA_INFO_LOG("CameraAVCodecProxy_Test_008 start");
-    auto avCodecProxy = AVCodecProxy::CreateAVCodecProxy();
-    ASSERT_NE(avCodecProxy, nullptr);
-    int32_t ret = avCodecProxy->CreateAVCodecVideoEncoder(MIME_VIDEO_AVC.data());
-    EXPECT_EQ(ret, AV_ERR_OK);
-    avCodecProxy->avcodecIntf_ = nullptr;
-    bool isExisted = avCodecProxy->IsVideoEncoderExisted();
-    EXPECT_FALSE(isExisted);
-    ret = avCodecProxy->AVCodecVideoEncoderPrepare();
-    EXPECT_EQ(ret, AV_ERR_INVALID_VAL);
-    ret = avCodecProxy->AVCodecVideoEncoderStart();
-    EXPECT_EQ(ret, AV_ERR_INVALID_VAL);
-    ret = avCodecProxy->AVCodecVideoEncoderStop();
-    EXPECT_EQ(ret, AV_ERR_INVALID_VAL);
-    ret = avCodecProxy->AVCodecVideoEncoderRelease();
-    EXPECT_EQ(ret, AV_ERR_INVALID_VAL);
-    MEDIA_INFO_LOG("CameraAVCodecProxy_Test_008 End");
-}
-
-/*
- * Feature: AVCodecProxy
- * Function: Test AVCodecVideoEncoder
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test AVCodecVideoEncoder when AVCodecVideoEncoder has not been created.
- */
-HWTEST_F(CameraCommonUtilsUnitTest, CameraAVCodecProxy_Test_009, TestSize.Level0)
-{
-    MEDIA_INFO_LOG("CameraAVCodecProxy_Test_009 start");
-    auto avCodecProxy = AVCodecProxy::CreateAVCodecProxy();
-    ASSERT_NE(avCodecProxy, nullptr);
-    bool isExisted = avCodecProxy->IsVideoEncoderExisted();
-    EXPECT_FALSE(isExisted);
-    int32_t ret = avCodecProxy->AVCodecVideoEncoderPrepare();
-    EXPECT_EQ(ret, AV_ERR_FAILED);
-    ret = avCodecProxy->AVCodecVideoEncoderStart();
-    EXPECT_EQ(ret, AV_ERR_FAILED);
-    ret = avCodecProxy->AVCodecVideoEncoderStop();
-    EXPECT_EQ(ret, AV_ERR_FAILED);
-    ret = avCodecProxy->AVCodecVideoEncoderRelease();
-    EXPECT_EQ(ret, AV_ERR_FAILED);
-    MEDIA_INFO_LOG("CameraAVCodecProxy_Test_009 End");
-}
-
-/*
- * Feature: AVCodecProxy
- * Function: Test AVCodecVideoEncoder
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test AVCodecVideoEncoder when AVCodecVideoEncoder has not been created.
- */
-HWTEST_F(CameraCommonUtilsUnitTest, CameraAVCodecProxy_Test_010, TestSize.Level0)
-{
-    MEDIA_INFO_LOG("CameraAVCodecProxy_Test_010 start");
-    auto avCodecProxy = AVCodecProxy::CreateAVCodecProxy();
-    ASSERT_NE(avCodecProxy, nullptr);
-    sptr<Surface> surface = avCodecProxy->CreateInputSurface();
-    EXPECT_EQ(surface, nullptr);
-    int32_t ret = avCodecProxy->QueueInputBuffer(1);
-    EXPECT_EQ(ret, AV_ERR_FAILED);
-    ret = avCodecProxy->AVCodecVideoEncoderNotifyEos();
-    EXPECT_EQ(ret, AV_ERR_FAILED);
-    ret = avCodecProxy->ReleaseOutputBuffer(1);
-    EXPECT_EQ(ret, AV_ERR_FAILED);
-    MEDIA_INFO_LOG("CameraAVCodecProxy_Test_010 End");
-}
-
-/*
- * Feature: AVCodecProxy
- * Function: Test AVCodecVideoEncoder
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test AVCodecVideoEncoder when parameter is nullptr.
- */
-HWTEST_F(CameraCommonUtilsUnitTest, CameraAVCodecProxy_Test_011, TestSize.Level0)
-{
-    MEDIA_INFO_LOG("CameraAVCodecProxy_Test_011 start");
-    auto avCodecProxy = AVCodecProxy::CreateAVCodecProxy();
-    ASSERT_NE(avCodecProxy, nullptr);
-    int32_t ret = avCodecProxy->CreateAVCodecVideoEncoder(MIME_VIDEO_AVC.data());
-    EXPECT_EQ(ret, AV_ERR_OK);
-    avCodecProxy->avcodecIntf_ = nullptr;
-    sptr<Surface> surface = avCodecProxy->CreateInputSurface();
-    EXPECT_EQ(surface, nullptr);
-    ret = avCodecProxy->QueueInputBuffer(1);
-    EXPECT_EQ(ret, AV_ERR_INVALID_VAL);
-    ret = avCodecProxy->AVCodecVideoEncoderNotifyEos();
-    EXPECT_EQ(ret, AV_ERR_INVALID_VAL);
-    ret = avCodecProxy->ReleaseOutputBuffer(1);
-    EXPECT_EQ(ret, AV_ERR_INVALID_VAL);
-    MEDIA_INFO_LOG("CameraAVCodecProxy_Test_011 End");
-}
-
-/*
- * Feature: AVCodecProxy
- * Function: Test AVCodecVideoEncoderSetCallback
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test AVCodecVideoEncoderSetCallback when param is normal.
- */
-HWTEST_F(CameraCommonUtilsUnitTest, CameraAVCodecProxy_Test_012, TestSize.Level0)
-{
-    MEDIA_INFO_LOG("CameraAVCodecProxy_Test_012 Start");
-    auto avCodecProxy = AVCodecProxy::CreateAVCodecProxy();
-    ASSERT_NE(avCodecProxy, nullptr);
-    int32_t ret = avCodecProxy->CreateAVCodecVideoEncoder(MIME_VIDEO_AVC.data());
-    EXPECT_EQ(ret, AV_ERR_OK);
-    std::shared_ptr<MediaCodecCallback> callback = std::make_shared<CoderCallback>();
-    ret = avCodecProxy->AVCodecVideoEncoderSetCallback(callback);
-    EXPECT_EQ(ret, AV_ERR_OK);
-    MEDIA_INFO_LOG("CameraAVCodecProxy_Test_012 End");
-}
-
-/*
- * Feature: AVCodecProxy
- * Function: Test AVCodecVideoEncoder
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test AVCodecVideoEncoder when parameter is nullptr.
- */
-HWTEST_F(CameraCommonUtilsUnitTest, CameraAVCodecProxy_Test_013, TestSize.Level0)
-{
-    MEDIA_INFO_LOG("CameraAVCodecProxy_Test_013 Start");
-    auto avCodecProxy = AVCodecProxy::CreateAVCodecProxy();
-    ASSERT_NE(avCodecProxy, nullptr);
-    int32_t ret = avCodecProxy->CreateAVCodecVideoEncoder(MIME_VIDEO_AVC.data());
-    EXPECT_EQ(ret, AV_ERR_OK);
-    avCodecProxy->avcodecIntf_ = nullptr;
-    Format format;
-    ret = avCodecProxy->AVCodecVideoEncoderSetParameter(format);
-    EXPECT_EQ(ret, AV_ERR_INVALID_VAL);
-    ret = avCodecProxy->AVCodecVideoEncoderConfigure(format);
-    EXPECT_EQ(ret, AV_ERR_INVALID_VAL);
-    std::shared_ptr<MediaCodecCallback> callback = std::make_shared<CoderCallback>();
-    ret = avCodecProxy->AVCodecVideoEncoderSetCallback(callback);
-    EXPECT_EQ(ret, AV_ERR_INVALID_VAL);
-    MEDIA_INFO_LOG("CameraAVCodecProxy_Test_013 End");
-}
-
-/*
- * Feature: AVCodecProxy
- * Function: Test AVCodecVideoEncoder
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test AVCodecVideoEncoder when AVCodecVideoEncoder has not been created.
- */
-HWTEST_F(CameraCommonUtilsUnitTest, CameraAVCodecProxy_Test_014, TestSize.Level0)
-{
-    MEDIA_INFO_LOG("CameraAVCodecProxy_Test_014 Start");
-    auto avCodecProxy = AVCodecProxy::CreateAVCodecProxy();
-    ASSERT_NE(avCodecProxy, nullptr);
-    Format format;
-    int32_t ret = avCodecProxy->AVCodecVideoEncoderSetParameter(format);
-    EXPECT_EQ(ret, AV_ERR_FAILED);
-    ret = avCodecProxy->AVCodecVideoEncoderConfigure(format);
-    EXPECT_EQ(ret, AV_ERR_FAILED);
-    std::shared_ptr<MediaCodecCallback> callback = std::make_shared<CoderCallback>();
-    ret = avCodecProxy->AVCodecVideoEncoderSetCallback(callback);
-    EXPECT_EQ(ret, AV_ERR_FAILED);
-    MEDIA_INFO_LOG("CameraAVCodecProxy_Test_014 End");
-}
-
-/*
- * Feature: AVCodecProxy
- * Function: Test AVSource
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test AVSource when param is nullptr.
- */
-HWTEST_F(CameraCommonUtilsUnitTest, CameraAVCodecProxy_Test_015, TestSize.Level0)
-{
-    MEDIA_INFO_LOG("CameraAVCodecProxy_Test_015 Start");
-    auto avCodecProxy = AVCodecProxy::CreateAVCodecProxy();
-    ASSERT_NE(avCodecProxy, nullptr);
-    avCodecProxy->avcodecIntf_ = nullptr;
-    Format format;
-    int32_t ret = avCodecProxy->AVSourceGetSourceFormat(format);
-    EXPECT_EQ(ret, AV_ERR_INVALID_VAL);
-    ret = avCodecProxy->AVSourceGetUserMeta(format);
-    EXPECT_EQ(ret, AV_ERR_INVALID_VAL);
-    ret = avCodecProxy->AVSourceGetTrackFormat(format, 1);
-    EXPECT_EQ(ret, AV_ERR_INVALID_VAL);
-    MEDIA_INFO_LOG("CameraAVCodecProxy_Test_015 End");
-}
-
-/*
- * Feature: AVCodecProxy
- * Function: Test AVSource
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test AVSource when param is normal.
- */
-HWTEST_F(CameraCommonUtilsUnitTest, CameraAVCodecProxy_Test_016, TestSize.Level0)
-{
-    MEDIA_INFO_LOG("CameraAVCodecProxy_Test_016 Start");
-    auto avCodecProxy = AVCodecProxy::CreateAVCodecProxy();
-    ASSERT_NE(avCodecProxy, nullptr);
-    std::shared_ptr<AVSource> source = std::make_shared<AVSourceTest>();
-    ASSERT_NE(source, nullptr);
-    std::shared_ptr<AVBuffer> sample = std::make_shared<AVBuffer>();
-    ASSERT_NE(sample, nullptr);
-    source->mediaDemuxer = std::make_shared<Media::MediaDemuxer>();
-    ASSERT_NE(source->mediaDemuxer, nullptr);
-    avCodecProxy->CreateAVDemuxer(source);
-    int32_t ret = avCodecProxy->AVDemuxerSeekToTime(1, static_cast<SeekMode>(0));
-    EXPECT_EQ(ret, AV_ERR_OK);
-    MEDIA_INFO_LOG("CameraAVCodecProxy_Test_016 End");
-}
-
-/*
- * Feature: AVCodecProxy
- * Function: Test AVDemuxer
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test AVDemuxer when param is nullptr.
- */
-HWTEST_F(CameraCommonUtilsUnitTest, CameraAVCodecProxy_Test_017, TestSize.Level0)
-{
-    MEDIA_INFO_LOG("CameraAVCodecProxy_Test_017 Start");
-    auto avCodecProxy = AVCodecProxy::CreateAVCodecProxy();
-    ASSERT_NE(avCodecProxy, nullptr);
-    std::shared_ptr<AVSource> source = std::make_shared<AVSourceTest>();
-    ASSERT_NE(source, nullptr);
-    avCodecProxy->CreateAVDemuxer(source);
-    std::shared_ptr<AVBuffer> sample = nullptr;
-    int32_t ret = avCodecProxy->ReadSampleBuffer(1, sample);
-    EXPECT_EQ(ret, AV_ERR_INVALID_VAL);
-
-    sample = std::make_shared<AVBuffer>();
-    ASSERT_NE(sample, nullptr);
-    avCodecProxy->avcodecIntf_ = nullptr;
-    avCodecProxy->CreateAVDemuxer(source);
-    ret = avCodecProxy->ReadSampleBuffer(1, sample);
-    EXPECT_EQ(ret, AV_ERR_INVALID_VAL);
-    ret = avCodecProxy->AVDemuxerSeekToTime(1, static_cast<SeekMode>(0));
-    EXPECT_EQ(ret, AV_ERR_INVALID_VAL);
-    ret = avCodecProxy->AVDemuxerSelectTrackByID(1);
-    EXPECT_EQ(ret, AV_ERR_INVALID_VAL);
-    MEDIA_INFO_LOG("CameraAVCodecProxy_Test_017 End");
-}
-
-/*
- * Feature: AVCodecProxy
- * Function: Test AVDemuxer
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test AVDemuxer when not CreateAVMuxer
- */
-HWTEST_F(CameraCommonUtilsUnitTest, CameraAVCodecProxy_Test_018, TestSize.Level0)
-{
-    MEDIA_INFO_LOG("CameraAVCodecProxy_Test_018 Start");
-    auto avCodecProxy = AVCodecProxy::CreateAVCodecProxy();
-    ASSERT_NE(avCodecProxy, nullptr);
-    std::shared_ptr<AVSource> source = std::make_shared<AVSourceTest>();
-    ASSERT_NE(source, nullptr);
-    std::shared_ptr<AVBuffer> sample = std::make_shared<AVBuffer>();
-    ASSERT_NE(sample, nullptr);
-    int32_t ret = avCodecProxy->ReadSampleBuffer(1, sample);
-    EXPECT_EQ(ret, AV_ERR_FAILED);
-    ret = avCodecProxy->AVDemuxerSeekToTime(1, static_cast<SeekMode>(0));
-    EXPECT_EQ(ret, AV_ERR_FAILED);
-    ret = avCodecProxy->AVDemuxerSelectTrackByID(1);
-    EXPECT_EQ(ret, AV_ERR_FAILED);
-    MEDIA_INFO_LOG("CameraAVCodecProxy_Test_018 End");
-}
-
-/*
- * Feature: ImageSourceProxy
- * Function: Test ImageSource
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test ImageSource when param is normal.
- */
-HWTEST_F(CameraCommonUtilsUnitTest, CameraImageSourceProxy_Test_001, TestSize.Level0)
-{
-    MEDIA_INFO_LOG("CameraImageSourceProxy_Test_001 Start");
-    auto imageSourceProxy = ImageSourceProxy::CreateImageSourceProxy();
-    ASSERT_NE(imageSourceProxy, nullptr);
-
-    uint32_t errorCode = 0;
-    Media::SourceOptions opts;
-    size_t width = 256;
-    size_t height = 256;
-    size_t blockNum = ((width + 4 - 1) / 4) * ((height + 4 - 1) / 4);
-    size_t size = blockNum * 16 + 16;
-    uint8_t* data = (uint8_t*)malloc(size);
-    int32_t ret = imageSourceProxy->CreateImageSource(data, size, opts, errorCode);
-    EXPECT_EQ(ret, 0);
-    EXPECT_EQ(errorCode, 0);
-    MEDIA_INFO_LOG("CameraImageSourceProxy_Test_001 End");
-}
-
-/*
- * Feature: ImageSourceProxy
- * Function: Test ImageSource
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test ImageSource when ImageSource not be Created;
- */
-HWTEST_F(CameraCommonUtilsUnitTest, CameraImageSourceProxy_Test_002, TestSize.Level0)
-{
-    MEDIA_INFO_LOG("CameraImageSourceProxy_Test_002 Start");
-    auto imageSourceProxy = ImageSourceProxy::CreateImageSourceProxy();
-    ASSERT_NE(imageSourceProxy, nullptr);
-
-    uint32_t errorCode = 0;
-    Media::DecodeOptions decodeOpts;
-    std::unique_ptr<Media::PixelMap> pixelMap = imageSourceProxy->CreatePixelMap(decodeOpts, errorCode);
-    EXPECT_EQ(pixelMap, nullptr);
-    MEDIA_INFO_LOG("CameraImageSourceProxy_Test_002 End");
-}
-
-/*
- * Feature: ImageSourceProxy
- * Function: Test ImageSource
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test ImageSource when param is nullptr;
- */
-HWTEST_F(CameraCommonUtilsUnitTest, CameraImageSourceProxy_Test_003, TestSize.Level0)
-{
-    MEDIA_INFO_LOG("CameraImageSourceProxy_Test_003 Start");
-    auto imageSourceProxy = ImageSourceProxy::CreateImageSourceProxy();
-    ASSERT_NE(imageSourceProxy, nullptr);
-    imageSourceProxy->imageSourceIntf_ = nullptr;
-    uint32_t errorCode = 0;
-    Media::SourceOptions opts;
-    size_t width = 256;
-    size_t height = 256;
-    size_t blockNum = ((width + 4 - 1) / 4) * ((height + 4 - 1) / 4);
-    size_t size = blockNum * 16 + 16;
-    uint8_t* data = (uint8_t*)malloc(size);
-    int32_t ret = imageSourceProxy->CreateImageSource(data, size, opts, errorCode);
-    EXPECT_EQ(ret, -1);
-    Media::DecodeOptions decodeOpts;
-    std::unique_ptr<Media::PixelMap> pixelMap = imageSourceProxy->CreatePixelMap(decodeOpts, errorCode);
-    EXPECT_EQ(pixelMap, nullptr);
-    MEDIA_INFO_LOG("CameraImageSourceProxy_Test_003 End");
-}
-
-/*
- * Feature: ImageSourceProxy
- * Function: Test CreateImageSource
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test CreateImageSource when size is too large.
- */
-HWTEST_F(CameraCommonUtilsUnitTest, CameraImageSourceProxy_Test_004, TestSize.Level0)
-{
-    MEDIA_INFO_LOG("CameraImageSourceProxy_Test_004 Start");
-    auto imageSourceProxy = ImageSourceProxy::CreateImageSourceProxy();
-    ASSERT_NE(imageSourceProxy, nullptr);
-    imageSourceProxy->imageSourceIntf_ = nullptr;
-    uint32_t errorCode = 0;
-    Media::SourceOptions opts;
-    size_t size = MAX_SOURCE_SIZE + 1;
-    uint8_t* data = (uint8_t*)malloc(size);
-    int32_t ret = imageSourceProxy->CreateImageSource(data, size, opts, errorCode);
-    EXPECT_EQ(ret, -1);
-    MEDIA_INFO_LOG("CameraImageSourceProxy_Test_004 End");
-}
-
-/*
- * Feature: MediaManagerProxy
- * Function: Test MpegManager
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test MpegManager when param is normal.
- */
-HWTEST_F(CameraCommonUtilsUnitTest, CameraMediaManagerProxy_Test_001, TestSize.Level0)
-{
-    MEDIA_INFO_LOG("CameraMediaManagerProxy_Test_001 Start");
-    auto mediaManagerProxy = DeferredProcessing::MediaManagerProxy::CreateMediaManagerProxy();
-    ASSERT_NE(mediaManagerProxy, nullptr);
-
-    uint8_t randomNum = 1;
-    std::vector<std::string> testStrings = {"test1", "test2"};
-    std::string requestId(testStrings[randomNum % testStrings.size()]);
-    sptr<IPCFileDescriptor> inputFd = sptr<IPCFileDescriptor>::MakeSptr(dup(VIDEO_REQUEST_FD_ID));
-    ASSERT_NE(inputFd, nullptr);
-    mediaManagerProxy->MpegAcquire(requestId, inputFd);
-    EXPECT_EQ(mediaManagerProxy->MpegRelease(), DP_OK);
-    MEDIA_INFO_LOG("CameraMediaManagerProxy_Test_001 End");
-}
-
-/*
- * Feature: MediaManagerProxy
- * Function: Test MpegManager
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test MpegManager when param is nullptr.
- */
-HWTEST_F(CameraCommonUtilsUnitTest, CameraMediaManagerProxy_Test_002, TestSize.Level0)
-{
-    MEDIA_INFO_LOG("CameraMediaManagerProxy_Test_002 Start");
-    auto mediaManagerProxy = DeferredProcessing::MediaManagerProxy::CreateMediaManagerProxy();
-    ASSERT_NE(mediaManagerProxy, nullptr);
-    mediaManagerProxy->mediaManagerIntf_ = nullptr;
-    uint8_t randomNum = 1;
-    std::vector<std::string> testStrings = {"test1", "test2"};
-    std::string requestId(testStrings[randomNum % testStrings.size()]);
-    sptr<IPCFileDescriptor> inputFd = sptr<IPCFileDescriptor>::MakeSptr(dup(VIDEO_REQUEST_FD_ID));
-    ASSERT_NE(inputFd, nullptr);
-    mediaManagerProxy->MpegAcquire(requestId, inputFd);
-
-    int32_t ret = mediaManagerProxy->MpegUnInit(1);
-    EXPECT_EQ(ret, DP_ERR);
-    EXPECT_EQ(mediaManagerProxy->MpegRelease(), DP_ERR);
-    MEDIA_INFO_LOG("CameraMediaManagerProxy_Test_002 End");
-}
-
-/*
- * Feature: MediaManagerProxy
- * Function: Test CreateImageSource
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test CreateImageSource when param is nullptr.
- */
-HWTEST_F(CameraCommonUtilsUnitTest, CameraMediaManagerProxy_Test_003, TestSize.Level0)
-{
-    MEDIA_INFO_LOG("CameraMediaManagerProxy_Test_003 Start");
-    auto mediaManagerProxy = DeferredProcessing::MediaManagerProxy::CreateMediaManagerProxy();
-    ASSERT_NE(mediaManagerProxy, nullptr);
-    mediaManagerProxy->mediaManagerIntf_ = nullptr;
-    sptr<IPCFileDescriptor> fd = mediaManagerProxy->MpegGetResultFd();
-    EXPECT_EQ(fd, nullptr);
-
-    sptr<Surface> surface = mediaManagerProxy->MpegGetSurface();
-    EXPECT_EQ(surface, nullptr);
-    surface = mediaManagerProxy->MpegGetMakerSurface();
-    EXPECT_EQ(surface, nullptr);
-    MEDIA_INFO_LOG("CameraMediaManagerProxy_Test_003 End");
-}
-
-/*
- * Feature: MediaManagerProxy
- * Function: Test CreateImageSource
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test CreateImageSource when param is normal.
- */
-HWTEST_F(CameraCommonUtilsUnitTest, CameraMediaManagerProxy_Test_004, TestSize.Level0)
-{
-    MEDIA_INFO_LOG("CameraMediaManagerProxy_Test_004 Start");
-    auto mediaManagerProxy = DeferredProcessing::MediaManagerProxy::CreateMediaManagerProxy();
-    ASSERT_NE(mediaManagerProxy, nullptr);
-    uint8_t randomNum = 1;
-    std::vector<std::string> testStrings = {"test1", "test2"};
-    std::string requestId(testStrings[randomNum % testStrings.size()]);
-    sptr<IPCFileDescriptor> inputFd = sptr<IPCFileDescriptor>::MakeSptr(dup(VIDEO_REQUEST_FD_ID));
-    ASSERT_NE(inputFd, nullptr);
-    mediaManagerProxy->MpegAcquire(requestId, inputFd);
-    std::unique_ptr<DeferredProcessing::MediaUserInfo> userInfo = std::make_unique<DeferredProcessing::MediaUserInfo>();
-    mediaManagerProxy->MpegAddUserMeta(std::move(userInfo));
-
-    uint64_t ret = mediaManagerProxy->MpegGetProcessTimeStamp();
-    EXPECT_EQ(ret, DP_OK);
-    mediaManagerProxy->MpegSetMarkSize(1);
-    EXPECT_EQ(mediaManagerProxy->MpegRelease(), DP_OK);
-    MEDIA_INFO_LOG("CameraMediaManagerProxy_Test_004 End");
-}
-
-/*
- * Feature: MediaManagerProxy
- * Function: Test CreateImageSource
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test CreateImageSource when param is nullptr.
- */
-HWTEST_F(CameraCommonUtilsUnitTest, CameraMediaManagerProxy_Test_005, TestSize.Level0)
-{
-    MEDIA_INFO_LOG("CameraMediaManagerProxy_Test_005 Start");
-    auto mediaManagerProxy = DeferredProcessing::MediaManagerProxy::CreateMediaManagerProxy();
-    ASSERT_NE(mediaManagerProxy, nullptr);
-    mediaManagerProxy->mediaManagerIntf_ = nullptr;
-    std::unique_ptr<DeferredProcessing::MediaUserInfo> userInfo = std::make_unique<DeferredProcessing::MediaUserInfo>();
-    mediaManagerProxy->MpegAddUserMeta(std::move(userInfo));
-
-    uint64_t ret = mediaManagerProxy->MpegGetProcessTimeStamp();
-    EXPECT_EQ(ret, 0);
-    mediaManagerProxy->MpegSetMarkSize(1);
-    MEDIA_INFO_LOG("CameraMediaManagerProxy_Test_005 End");
-}
-
- 
-/*
- * Feature: MediaManagerProxy
- * Function: Test MpegGetDuration
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test MpegGetDuration
- */
-HWTEST_F(CameraCommonUtilsUnitTest, CameraMediaManagerProxy_Test_006, TestSize.Level0)
-{
-    MEDIA_INFO_LOG("CameraMediaManagerProxy_Test_005 Start");
-    auto mediaManagerProxy = DeferredProcessing::MediaManagerProxy::CreateMediaManagerProxy();
-    ASSERT_NE(mediaManagerProxy, nullptr);
-    uint32_t duration = mediaManagerProxy->MpegGetDuration();
-    EXPECT_EQ(duration, 0);
-    MEDIA_INFO_LOG("CameraMediaManagerProxy_Test_006 End");
-}
-
-/*
  * Feature: MovingPhotoVideoCacheProxy
  * Function: Test GetFrameCachedResult
  * SubFunction: NA
@@ -1177,9 +443,6 @@ HWTEST_F(CameraCommonUtilsUnitTest, CameraMediaManagerProxy_Test_006, TestSize.L
 HWTEST_F(CameraCommonUtilsUnitTest, CameraMovingPhotoProxy_Test_001, TestSize.Level0)
 {
     MEDIA_INFO_LOG("CameraMovingPhotoProxy_Test_001 Start");
-    auto movingPhotoVideoCacheProxy = MovingPhotoVideoCacheProxy::CreateMovingPhotoVideoCacheProxy();
-    ASSERT_NE(movingPhotoVideoCacheProxy, nullptr);
-    EXPECT_NE(movingPhotoVideoCacheProxy->movingPhotoVideoCacheIntf_, nullptr);
     auto aVCodecTaskManagerProxy = AvcodecTaskManagerProxy::CreateAvcodecTaskManagerProxy();
     ASSERT_NE(aVCodecTaskManagerProxy, nullptr);
     ASSERT_NE(aVCodecTaskManagerProxy->avcodecTaskManagerIntf_, nullptr);
@@ -1194,20 +457,6 @@ HWTEST_F(CameraCommonUtilsUnitTest, CameraMovingPhotoProxy_Test_001, TestSize.Le
     int32_t colorSpace = 0;
     retCode = aVCodecTaskManagerProxy->CreateAvcodecTaskManager(audioCapturerSessionProxy, type, colorSpace);
     EXPECT_EQ(retCode, 0);
-
-    retCode = movingPhotoVideoCacheProxy->CreateMovingPhotoVideoCache(aVCodecTaskManagerProxy);
-    EXPECT_EQ(retCode, 0);
-    std::vector<sptr<FrameRecord>> frameRecords;
-    uint64_t taskName = 0;
-    int32_t rotation = 0;
-    int32_t captureId = 0;
-    movingPhotoVideoCacheProxy->GetFrameCachedResult(frameRecords, taskName, rotation, captureId);
-    EXPECT_NE(frameRecords.empty(), false);
-
-    movingPhotoVideoCacheProxy->movingPhotoVideoCacheIntf_ = nullptr;
-    movingPhotoVideoCacheProxy->CreateMovingPhotoVideoCache(aVCodecTaskManagerProxy->avcodecTaskManagerIntf_);
-    movingPhotoVideoCacheProxy->GetFrameCachedResult(frameRecords, taskName, rotation, captureId);
-    EXPECT_EQ(frameRecords.empty(), true);
     MEDIA_INFO_LOG("CameraMovingPhotoProxy_Test_001 End");
 }
 
@@ -1222,9 +471,6 @@ HWTEST_F(CameraCommonUtilsUnitTest, CameraMovingPhotoProxy_Test_001, TestSize.Le
 HWTEST_F(CameraCommonUtilsUnitTest, CameraMovingPhotoProxy_Test_002, TestSize.Level0)
 {
     MEDIA_INFO_LOG("CameraMovingPhotoProxy_Test_002 Start");
-    auto movingPhotoVideoCacheProxy = MovingPhotoVideoCacheProxy::CreateMovingPhotoVideoCacheProxy();
-    ASSERT_NE(movingPhotoVideoCacheProxy, nullptr);
-    EXPECT_NE(movingPhotoVideoCacheProxy->movingPhotoVideoCacheIntf_, nullptr);
     auto aVCodecTaskManagerProxy = AvcodecTaskManagerProxy::CreateAvcodecTaskManagerProxy();
     ASSERT_NE(aVCodecTaskManagerProxy, nullptr);
     EXPECT_NE(aVCodecTaskManagerProxy->avcodecTaskManagerIntf_, nullptr);
@@ -1239,17 +485,6 @@ HWTEST_F(CameraCommonUtilsUnitTest, CameraMovingPhotoProxy_Test_002, TestSize.Le
     int32_t colorSpace = 0;
     retCode = aVCodecTaskManagerProxy->CreateAvcodecTaskManager(audioCapturerSessionProxy, type, colorSpace);
     EXPECT_EQ(retCode, 0);
-
-    int32_t ret = movingPhotoVideoCacheProxy->CreateMovingPhotoVideoCache(aVCodecTaskManagerProxy);
-    EXPECT_EQ(ret, 0);
-    sptr<SurfaceBuffer> videoBuffer = SurfaceBuffer::Create();
-    int64_t timestamp = 0;
-    GraphicTransformType types = GraphicTransformType::GRAPHIC_FLIP_H_ROT90;
-    sptr<FrameRecord> frame = new FrameRecord(videoBuffer, timestamp, types);
-    movingPhotoVideoCacheProxy->OnDrainFrameRecord(frame);
-
-    movingPhotoVideoCacheProxy->movingPhotoVideoCacheIntf_ = nullptr;
-    movingPhotoVideoCacheProxy->OnDrainFrameRecord(frame);
     MEDIA_INFO_LOG("CameraMovingPhotoProxy_Test_002 End");
 }
 
@@ -1269,13 +504,12 @@ HWTEST_F(CameraCommonUtilsUnitTest, CameraMovingPhotoProxy_Test_003, TestSize.Le
     EXPECT_NE(audioCapturerSessionProxy->audioCapturerSessionIntf_, nullptr);
     int32_t retCode = audioCapturerSessionProxy->CreateAudioSession();
     EXPECT_EQ(retCode, 0);
-    bool ret = audioCapturerSessionProxy->StartAudioCapture();
-    EXPECT_EQ(ret, true);
+    audioCapturerSessionProxy->StartAudioCapture();
     audioCapturerSessionProxy->StopAudioCapture();
 
     audioCapturerSessionProxy->audioCapturerSessionIntf_ = nullptr;
     audioCapturerSessionProxy->CreateAudioSession();
-    ret = audioCapturerSessionProxy->StartAudioCapture();
+    int32_t ret = audioCapturerSessionProxy->StartAudioCapture();
     EXPECT_EQ(ret, false);
     audioCapturerSessionProxy->StopAudioCapture();
     MEDIA_INFO_LOG("CameraMovingPhotoProxy_Test_003 End");
@@ -1375,17 +609,12 @@ HWTEST_F(CameraCommonUtilsUnitTest, CameraMovingPhotoProxy_Test_006, TestSize.Le
     retCode = aVCodecTaskManagerProxy->CreateAvcodecTaskManager(audioCapturerSessionProxy, type, colorSpace);
     EXPECT_EQ(retCode, 0);
     std::vector<sptr<FrameRecord>> frameRecords;
-    uint64_t taskName = 0;
-    int32_t rotation = 0;
     int32_t captureId = 0;
-    aVCodecTaskManagerProxy->DoMuxerVideo(frameRecords, taskName, rotation, captureId);
     sptr<SurfaceBuffer> videoBuffer = SurfaceBuffer::Create();
     ASSERT_NE(videoBuffer, nullptr);
     int64_t timestamp = VIDEO_FRAMERATE;
     GraphicTransformType graphicType = GRAPHIC_ROTATE_90;
     sptr<FrameRecord> frameRecord = new (std::nothrow) FrameRecord(videoBuffer, timestamp, graphicType);
-    CacheCbFunc cacheCallback;
-    aVCodecTaskManagerProxy->EncodeVideoBuffer(frameRecord, cacheCallback);
     uint32_t preBufferCount = 0;
     uint32_t postBufferCount = 0;
     aVCodecTaskManagerProxy->SetVideoBufferDuration(preBufferCount, postBufferCount);
@@ -1413,14 +642,11 @@ HWTEST_F(CameraCommonUtilsUnitTest, CameraMovingPhotoProxy_Test_007, TestSize.Le
 
     aVCodecTaskManagerProxy->avcodecTaskManagerIntf_ = nullptr;
     std::vector<sptr<FrameRecord>> frameRecords;
-    aVCodecTaskManagerProxy->DoMuxerVideo(frameRecords, 0, 0, 0);
     sptr<SurfaceBuffer> videoBuffer = SurfaceBuffer::Create();
     ASSERT_NE(videoBuffer, nullptr);
     int64_t timestamp = VIDEO_FRAMERATE;
     GraphicTransformType type = GRAPHIC_ROTATE_90;
     sptr<FrameRecord> frameRecord = new (std::nothrow) FrameRecord(videoBuffer, timestamp, type);
-    CacheCbFunc cacheCallback;
-    aVCodecTaskManagerProxy->EncodeVideoBuffer(frameRecord, cacheCallback);
     std::shared_ptr<PhotoAssetIntf> photoAssetProxy;
     aVCodecTaskManagerProxy->SetVideoFd(0, photoAssetProxy, 0);
     aVCodecTaskManagerProxy->SetVideoBufferDuration(0, 0);
@@ -1491,7 +717,7 @@ HWTEST_F(CameraCommonUtilsUnitTest, CameraMovingPhotoProxy_Test_009, TestSize.Le
 
 /*
  * Feature: AvcodecTaskManagerProxy
- * Function: Test RecordVideoType
+ * Function: Test RecordVideoType 
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
@@ -1519,6 +745,149 @@ HWTEST_F(CameraCommonUtilsUnitTest, CameraMovingPhotoProxy_Test_010, TestSize.Le
 }
 
 /*
+ * Feature: MediaManagerProxy
+ * Function: Test MpegManager
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test MpegManager when param is normal.
+ */
+HWTEST_F(CameraCommonUtilsUnitTest, CameraMediaManagerProxy_Test_001, TestSize.Level0)
+{
+    MEDIA_INFO_LOG("CameraMediaManagerProxy_Test_001 Start");
+    auto mediaManagerProxy = DeferredProcessing::MediaManagerProxy::CreateMediaManagerProxy();
+    ASSERT_NE(mediaManagerProxy, nullptr);
+
+    uint8_t randomNum = 1;
+    std::vector<std::string> testStrings = { "test1", "test2" };
+    std::string requestId(testStrings[randomNum % testStrings.size()]);
+    auto inputFd = std::make_shared<DeferredProcessing::DpsFd>(dup(VIDEO_REQUEST_FD_ID));
+    ASSERT_NE(inputFd, nullptr);
+    mediaManagerProxy->MpegAcquire(requestId, inputFd, VIDEO_WIDTH, VIDEO_HIGH);
+    EXPECT_EQ(mediaManagerProxy->MpegRelease(), DP_OK);
+    MEDIA_INFO_LOG("CameraMediaManagerProxy_Test_001 End");
+}
+
+/*
+ * Feature: MediaManagerProxy
+ * Function: Test MpegManager
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test MpegManager when param is nullptr.
+ */
+HWTEST_F(CameraCommonUtilsUnitTest, CameraMediaManagerProxy_Test_002, TestSize.Level0)
+{
+    MEDIA_INFO_LOG("CameraMediaManagerProxy_Test_002 Start");
+    auto mediaManagerProxy = DeferredProcessing::MediaManagerProxy::CreateMediaManagerProxy();
+    ASSERT_NE(mediaManagerProxy, nullptr);
+    mediaManagerProxy->mediaManagerIntf_ = nullptr;
+    uint8_t randomNum = 1;
+    std::vector<std::string> testStrings = { "test1", "test2" };
+    std::string requestId(testStrings[randomNum % testStrings.size()]);
+    auto inputFd = std::make_shared<DeferredProcessing::DpsFd>(dup(VIDEO_REQUEST_FD_ID));
+    ASSERT_NE(inputFd, nullptr);
+    mediaManagerProxy->MpegAcquire(requestId, inputFd, VIDEO_WIDTH, VIDEO_HIGH);
+
+    int32_t ret = mediaManagerProxy->MpegUnInit(1);
+    EXPECT_EQ(ret, DP_ERR);
+    EXPECT_EQ(mediaManagerProxy->MpegRelease(), DP_ERR);
+    MEDIA_INFO_LOG("CameraMediaManagerProxy_Test_002 End");
+}
+
+/*
+ * Feature: MediaManagerProxy
+ * Function: Test CreateImageSource
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CreateImageSource when param is nullptr.
+ */
+HWTEST_F(CameraCommonUtilsUnitTest, CameraMediaManagerProxy_Test_003, TestSize.Level0)
+{
+    MEDIA_INFO_LOG("CameraMediaManagerProxy_Test_003 Start");
+    auto mediaManagerProxy = DeferredProcessing::MediaManagerProxy::CreateMediaManagerProxy();
+    ASSERT_NE(mediaManagerProxy, nullptr);
+    mediaManagerProxy->mediaManagerIntf_ = nullptr;
+    auto fd = mediaManagerProxy->MpegGetResultFd();
+    EXPECT_EQ(fd, nullptr);
+
+    sptr<Surface> surface = mediaManagerProxy->MpegGetSurface();
+    EXPECT_EQ(surface, nullptr);
+    surface = mediaManagerProxy->MpegGetMakerSurface();
+    EXPECT_EQ(surface, nullptr);
+    MEDIA_INFO_LOG("CameraMediaManagerProxy_Test_003 End");
+}
+
+/*
+ * Feature: MediaManagerProxy
+ * Function: Test CreateImageSource
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CreateImageSource when param is normal.
+ */
+HWTEST_F(CameraCommonUtilsUnitTest, CameraMediaManagerProxy_Test_004, TestSize.Level0)
+{
+    MEDIA_INFO_LOG("CameraMediaManagerProxy_Test_004 Start");
+    auto mediaManagerProxy = DeferredProcessing::MediaManagerProxy::CreateMediaManagerProxy();
+    ASSERT_NE(mediaManagerProxy, nullptr);
+    uint8_t randomNum = 1;
+    std::vector<std::string> testStrings = { "test1", "test2" };
+    std::string requestId(testStrings[randomNum % testStrings.size()]);
+    auto inputFd = std::make_shared<DeferredProcessing::DpsFd>(dup(VIDEO_REQUEST_FD_ID));
+    ASSERT_NE(inputFd, nullptr);
+    mediaManagerProxy->MpegAcquire(requestId, inputFd, VIDEO_WIDTH, VIDEO_HIGH);
+    std::unique_ptr<DeferredProcessing::MediaUserInfo> userInfo = std::make_unique<DeferredProcessing::MediaUserInfo>();
+    mediaManagerProxy->MpegAddUserMeta(std::move(userInfo));
+
+    uint64_t ret = mediaManagerProxy->MpegGetProcessTimeStamp();
+    EXPECT_EQ(ret, DP_OK);
+    EXPECT_EQ(mediaManagerProxy->MpegRelease(), DP_OK);
+    MEDIA_INFO_LOG("CameraMediaManagerProxy_Test_004 End");
+}
+
+/*
+ * Feature: MediaManagerProxy
+ * Function: Test CreateImageSource
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CreateImageSource when param is nullptr.
+ */
+HWTEST_F(CameraCommonUtilsUnitTest, CameraMediaManagerProxy_Test_005, TestSize.Level0)
+{
+    MEDIA_INFO_LOG("CameraMediaManagerProxy_Test_005 Start");
+    auto mediaManagerProxy = DeferredProcessing::MediaManagerProxy::CreateMediaManagerProxy();
+    ASSERT_NE(mediaManagerProxy, nullptr);
+    mediaManagerProxy->mediaManagerIntf_ = nullptr;
+    std::unique_ptr<DeferredProcessing::MediaUserInfo> userInfo = std::make_unique<DeferredProcessing::MediaUserInfo>();
+    mediaManagerProxy->MpegAddUserMeta(std::move(userInfo));
+
+    uint64_t ret = mediaManagerProxy->MpegGetProcessTimeStamp();
+    EXPECT_EQ(ret, 0);
+    MEDIA_INFO_LOG("CameraMediaManagerProxy_Test_005 End");
+}
+
+/*
+ * Feature: MediaManagerProxy
+ * Function: Test MpegGetDuration
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test MpegGetDuration
+ */
+HWTEST_F(CameraCommonUtilsUnitTest, CameraMediaManagerProxy_Test_006, TestSize.Level0)
+{
+    MEDIA_INFO_LOG("CameraMediaManagerProxy_Test_005 Start");
+    auto mediaManagerProxy = DeferredProcessing::MediaManagerProxy::CreateMediaManagerProxy();
+    ASSERT_NE(mediaManagerProxy, nullptr);
+    uint32_t duration = mediaManagerProxy->MpegGetDuration();
+    EXPECT_EQ(duration, 0);
+    MEDIA_INFO_LOG("CameraMediaManagerProxy_Test_006 End");
+}
+
+/*
  * Feature: PictureProxy
  * Function: Test PictureProxy related interface
  * SubFunction: NA
@@ -1534,7 +903,6 @@ HWTEST_F(CameraCommonUtilsUnitTest, CameraPictureProxy_Test_001, TestSize.Level0
 
     pictureProxy->pictureIntf_ = nullptr;
     sptr<SurfaceBuffer> surfaceBuffer = SurfaceBuffer::Create();
-    pictureProxy->CreateWithDeepCopySurfaceBuffer(surfaceBuffer);
     pictureProxy->SetAuxiliaryPicture(surfaceBuffer, static_cast<CameraAuxiliaryPictureType>(0));
 
     Parcel data;
@@ -1595,33 +963,5 @@ HWTEST_F(CameraCommonUtilsUnitTest, CameraPictureProxy_Test_003, TestSize.Level0
     pictureProxy->RotatePicture();
     MEDIA_INFO_LOG("CameraPictureProxy_Test_003 End");
 }
-
-/*
- * Feature: PictureProxy
- * Function: Test PictureProxy related interface
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test PictureProxy related interface when param is normal.
- */
-HWTEST_F(CameraCommonUtilsUnitTest, CameraPictureProxy_Test_004, TestSize.Level0)
-{
-    MEDIA_INFO_LOG("CameraPictureProxy_Test_004 Start");
-    auto pictureProxy = PictureProxy::CreatePictureProxy();
-    ASSERT_NE(pictureProxy, nullptr);
-    ASSERT_NE(pictureProxy->pictureIntf_, nullptr);
-
-    sptr<SurfaceBuffer> pictureSurfaceBuffer = SurfaceBuffer::Create();
-    pictureProxy->Create(pictureSurfaceBuffer);
-
-    sptr<SurfaceBuffer> surfaceBuffer = SurfaceBuffer::Create();
-    pictureProxy->CreateWithDeepCopySurfaceBuffer(surfaceBuffer);
-    pictureProxy->SetAuxiliaryPicture(surfaceBuffer, static_cast<CameraAuxiliaryPictureType>(0));
-
-    Parcel data;
-    pictureProxy->Marshalling(data);
-    pictureProxy->UnmarshallingPicture(data);
-    MEDIA_INFO_LOG("CameraPictureProxy_Test_004 End");
-}
-}  // namespace CameraStandard
-}  // namespace OHOS
+} // namespace CameraStandard
+} // namespace OHOS

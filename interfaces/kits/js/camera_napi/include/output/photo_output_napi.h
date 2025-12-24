@@ -18,7 +18,6 @@
 
 #include <cstdint>
 #include <memory>
-#include <mutex>
 
 #include "camera_napi_event_emitter.h"
 #include "camera_napi_template_utils.h"
@@ -50,6 +49,7 @@ static const std::string CONST_CAPTURE_FRAME_SHUTTER_END = "frameShutterEnd";
 static const std::string CONST_CAPTURE_READY = "captureReady";
 static const std::string CONST_CAPTURE_ESTIMATED_CAPTURE_DURATION = "estimatedCaptureDuration";
 static const std::string CONST_CAPTURE_START_WITH_INFO = "captureStartWithInfo";
+static const std::string CONST_CAPTURE_CONSTELLATION_DRAWING_STATE_CHANGE = "constellationDrawingStateChange";
 
 static const std::string CONST_CAPTURE_QUICK_THUMBNAIL = "quickThumbnail";
 static const char CAMERA_PHOTO_OUTPUT_NAPI_CLASS_NAME[] = "PhotoOutput";
@@ -66,6 +66,7 @@ struct CallbackInfo {
     int32_t frameCount = 0;
     int32_t errorCode;
     int32_t duration;
+    int32_t drawingState;
     std::shared_ptr<Media::NativeImage> nativeImage;
     std::shared_ptr<Media::Picture> picture;
     std::shared_ptr<Media::PixelMap> pixelMap;
@@ -74,7 +75,6 @@ struct CallbackInfo {
     std::string uri;
     int32_t cameraShotType;
     std::string burstKey;
-    WatermarkInfo watermarkInfo;
 };
 
 enum PhotoOutputEventType {
@@ -91,7 +91,8 @@ enum PhotoOutputEventType {
     CAPTURE_THUMBNAIL_AVAILABLE,
     CAPTURE_ESTIMATED_CAPTURE_DURATION,
     CAPTURE_START_WITH_INFO,
-    CAPTURE_OFFLINE_DELIVERY_FINISHED
+    CAPTURE_OFFLINE_DELIVERY_FINISHED,
+    CAPTURE_CONSTELLATION_DRAWING_STATE_CHANGE,
 };
 
 static EnumHelper<PhotoOutputEventType> PhotoOutputEventTypeHelper({
@@ -107,7 +108,8 @@ static EnumHelper<PhotoOutputEventType> PhotoOutputEventTypeHelper({
         {CAPTURE_READY, CONST_CAPTURE_READY},
         {CAPTURE_ESTIMATED_CAPTURE_DURATION, CONST_CAPTURE_ESTIMATED_CAPTURE_DURATION},
         {CAPTURE_START_WITH_INFO, CONST_CAPTURE_START_WITH_INFO},
-        {CAPTURE_OFFLINE_DELIVERY_FINISHED, CONST_CAPTURE_OFFLINE_DELIVERY_FINISHED}
+        {CAPTURE_OFFLINE_DELIVERY_FINISHED, CONST_CAPTURE_OFFLINE_DELIVERY_FINISHED},
+        {CAPTURE_CONSTELLATION_DRAWING_STATE_CHANGE, CONST_CAPTURE_CONSTELLATION_DRAWING_STATE_CHANGE}
     },
     PhotoOutputEventType::CAPTURE_INVALID_TYPE
 );
@@ -147,13 +149,14 @@ public:
     void OnCaptureError(const int32_t captureId, const int32_t errorCode) const override;
     void OnEstimatedCaptureDuration(const int32_t duration) const override;
     void OnOfflineDeliveryFinished(const int32_t captureId) const override;
+    void OnConstellationDrawingState(const int32_t drawingState) const override;
     void OnPhotoAvailable(
         const std::shared_ptr<Media::NativeImage> nativeImage, const bool isRaw = false) const override;
     void OnPhotoAvailable(const std::shared_ptr<Media::Picture> picture) const override;
     void OnPhotoAssetAvailable(const int32_t captureId, const std::string &uri, const int32_t cameraShotType,
         const std::string &burstKey) const override;
-    void OnThumbnailAvailable(const WatermarkInfo &watermarkInfo,
-        unique_ptr<Media::PixelMap> pixelMap) const override;
+    void OnThumbnailAvailable(
+        const int32_t captureId, const int64_t timestamp, unique_ptr<Media::PixelMap> pixelMap) const override;
 
 private:
     void UpdateJSCallback(PhotoOutputEventType eventType, const CallbackInfo& info) const;
@@ -167,6 +170,7 @@ private:
     void ExecuteCaptureReadyCb(const CallbackInfo& info) const;
     void ExecuteEstimatedCaptureDurationCb(const CallbackInfo& info) const;
     void ExecuteOfflineDeliveryFinishedCb(const CallbackInfo& info) const;
+    void ExecuteConstellationDrawingStateChangedCb(const CallbackInfo& info) const;
     void ExecutePhotoAvailableCb(const CallbackInfo& info) const;
     void ExecutePhotoAssetAvailableCb(const CallbackInfo& info) const;
     void ExecuteThumbnailAvailableCb(const CallbackInfo& info) const;
@@ -181,6 +185,7 @@ struct PhotoOutputCallbackInfo {
         : eventType_(eventType), info_(info), listener_(listener)
     {}
 };
+
 
 struct PhotoOutputAsyncContext;
 class PhotoOutputNapi : public CameraNapiEventEmitter<PhotoOutputNapi> {
@@ -211,19 +216,25 @@ public:
     static napi_value On(napi_env env, napi_callback_info info);
     static napi_value Once(napi_env env, napi_callback_info info);
     static napi_value Off(napi_env env, napi_callback_info info);
+    static napi_value GetPhotoRotation(napi_env env, napi_callback_info info);
+
     static napi_value OnPhotoAvailable(napi_env env, napi_callback_info info);
     static napi_value OffPhotoAvailable(napi_env env, napi_callback_info info);
     static napi_value IsAutoHighQualityPhotoSupported(napi_env env, napi_callback_info info);
     static napi_value EnableAutoHighQualityPhoto(napi_env env, napi_callback_info info);
+
     static napi_value IsAutoCloudImageEnhancementSupported(napi_env env, napi_callback_info info);
     static napi_value EnableAutoCloudImageEnhancement(napi_env env, napi_callback_info info);
     static napi_value IsMovingPhotoSupported(napi_env env, napi_callback_info info);
     static napi_value EnableMovingPhoto(napi_env env, napi_callback_info info);
-    static napi_value GetPhotoRotation(napi_env env, napi_callback_info info);
     static napi_value IsAutoAigcPhotoSupported(napi_env env, napi_callback_info info);
     static napi_value EnableAutoAigcPhoto(napi_env env, napi_callback_info info);
     static napi_value IsOfflineSupported(napi_env env, napi_callback_info info);
     static napi_value EnableOfflinePhoto(napi_env env, napi_callback_info info);
+    static napi_value IsAutoMotionBoostDeliverySupported(napi_env env, napi_callback_info info);
+    static napi_value EnableAutoMotionBoostDelivery(napi_env env, napi_callback_info info);
+    static napi_value IsAutoBokehDataDeliverySupported(napi_env env, napi_callback_info info);
+    static napi_value EnableAutoBokehDataDelivery(napi_env env, napi_callback_info info);
     static napi_value IsPhotoQualityPrioritizationSupported(napi_env env, napi_callback_info info);
     static napi_value SetPhotoQualityPrioritization(napi_env env, napi_callback_info info);
 
@@ -238,7 +249,6 @@ public:
 private:
     static void PhotoOutputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
     static napi_value PhotoOutputNapiConstructor(napi_env env, napi_callback_info info);
-
     void CreateMultiChannelPictureLisenter(napi_env env);
     void CreateSingleChannelPhotoLisenter(napi_env env);
     void RegisterQuickThumbnailCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
@@ -293,6 +303,10 @@ private:
         const std::string& eventName, napi_env env, napi_value callback,
         const std::vector<napi_value>& args, bool isOnce);
     void UnregisterOfflineDeliveryFinishedCallbackListener(
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterConstellationDrawingStateChangeCallbackListener(const std::string& eventName, napi_env env,
+        napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterConstellationDrawingStateChangeCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
 
     static thread_local napi_ref sConstructor_;

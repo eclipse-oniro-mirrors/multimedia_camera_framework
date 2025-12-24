@@ -50,6 +50,7 @@ public:
     Camera_Device *cameraDevice = nullptr;
     uint32_t cameraDeviceSize = 0;
     std::shared_ptr<Media::ImageReceiver> imageReceiver;
+
     void InitCamera(void);
     void ReleaseCamera(void);
     void ReleaseImageReceiver(void);
@@ -70,8 +71,11 @@ public:
         Camera_SmoothZoomInfo* smoothZoomInfo);
     static void CameraCaptureSessionAutoDeviceSwitchStatusCb(Camera_CaptureSession* session,
         Camera_AutoDeviceSwitchStatusInfo* smoothZoomInfo);
-    static void CameraCaptureSessionSystemPressureLevelCb(Camera_CaptureSession* session,
+    static void CameraCaptureSessionSystemPressureLevelCb(Camera_CaptureSession* session, 
         Camera_SystemPressureLevel pressureLevel);
+    static void CameraSwitchRequestCb(Camera_CaptureSession *session, Camera_Device *device);
+    static void ControlCenterEffectStatusCb(Camera_CaptureSession* session,
+        Camera_ControlCenterStatusInfo* statusInfo);
     static void CameraManagerOnCameraStatusCb(Camera_Manager* cameraManager, Camera_StatusInfo* status);
     static void CameraManagerOnCameraTorchStatusCb(Camera_Manager* cameraManager, Camera_TorchStatusInfo* status);
     static void CameraManagerOnCameraFoldStatusCb(Camera_Manager* cameraManager, Camera_FoldStatusInfo* status);

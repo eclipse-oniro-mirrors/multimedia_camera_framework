@@ -34,7 +34,7 @@ void AvcodecTaskManagerFuzzer::AvcodecTaskManagerFuzzTest(FuzzedDataProvider& fd
 {
     sptr<AudioCapturerSession> session = new AudioCapturerSession();
     VideoCodecType mode = static_cast<VideoCodecType>(fdp.ConsumeIntegral<uint8_t>()
-        % (VideoCodecType::VIDEO_ENCODE_TYPE_HEVC + CONST_2));
+        % (static_cast<int32_t>(VideoCodecType::VIDEO_ENCODE_TYPE_HEVC) + CONST_2));
     ColorSpace color = static_cast<ColorSpace>(fdp.ConsumeIntegral<uint8_t>()
         % (ColorSpace::DISPLAY_P3 + CONST_2));
     fuzz_ = std::make_shared<AvcodecTaskManager>(session, mode, color);
@@ -58,10 +58,11 @@ void AvcodecTaskManagerFuzzer::AvcodecTaskManagerFuzzTest(FuzzedDataProvider& fd
     fuzz_->DoMuxerVideo(frameRecords, taskName, captureRotation, captureId);
     vector<sptr<FrameRecord>> choosedBuffer;
     int64_t shutterTime = fdp.ConsumeIntegral<int64_t>();
-    fuzz_->ChooseVideoBuffer(frameRecords, choosedBuffer, shutterTime, captureId);
+    int64_t timeStamp;
+    fuzz_->ChooseVideoBuffer(frameRecords, choosedBuffer, shutterTime, captureId, timeStamp);
     vector<sptr<AudioRecord>> audioRecordVec;
     sptr<AudioVideoMuxer> muxer;
-    fuzz_->CollectAudioBuffer(audioRecordVec, muxer);
+    fuzz_->CollectAudioBuffer(audioRecordVec, muxer, true);
     fuzz_->videoEncoder_ = nullptr;
     fuzz_->audioEncoder_ = make_unique<AudioEncoder>();
     fuzz_->Stop();

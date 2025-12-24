@@ -40,6 +40,16 @@ private:
     void OnSlowMotionStateCb(const OHOS::CameraStandard::SlowMotionState state) const;
 };
 
+class SlowMotionZoomInfoListener : public OHOS::CameraStandard::ZoomInfoCallback, public ListenerBase,
+    public std::enable_shared_from_this<SlowMotionZoomInfoListener> {
+public:
+    explicit SlowMotionZoomInfoListener(ani_env* env) : ListenerBase(env) {};
+    ~SlowMotionZoomInfoListener() = default;
+    void OnZoomInfoChange(const std::vector<float> zoomInfoRange) override;
+private:
+    void OnZoomInfoChangeCb(const std::vector<float> zoomInfoRange) const;
+};
+
 class SlowMotionVideoSessionImpl : public SessionImpl, public FlashImpl, public ZoomImpl, public FocusImpl,
                                    public AutoExposureImpl, public ColorEffectImpl {
 public:
@@ -53,11 +63,16 @@ public:
     bool IsSlowMotionDetectionSupported();
     void SetSlowMotionDetectionArea(ohos::multimedia::camera::Rect const& area);
     std::shared_ptr<SlowMotionStateListener> slowMotionState_ = nullptr;
+    std::shared_ptr<SlowMotionZoomInfoListener> zoomInfoListener_ = nullptr;
 private:
     sptr<OHOS::CameraStandard::SlowMotionSession> slowMotionSession_ = nullptr;
     void RegisterSlowMotionStateCb(const std::string& eventName, std::shared_ptr<uintptr_t> callback,
         bool isOnce) override;
     void UnregisterSlowMotionStateCb(
+        const std::string& eventName, std::shared_ptr<uintptr_t> callback) override;
+    void RegisterZoomInfoCbListener(const std::string& eventName, std::shared_ptr<uintptr_t> callback,
+        bool isOnce) override;
+    void UnregisterZoomInfoCbListener(
         const std::string& eventName, std::shared_ptr<uintptr_t> callback) override;
 };
 } // namespace Camera

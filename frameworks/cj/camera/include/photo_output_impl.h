@@ -44,6 +44,7 @@ public:
     void OnCaptureError(const int32_t captureId, const int32_t errorCode) const override;
     void OnEstimatedCaptureDuration(const int32_t duration) const override;
     void OnOfflineDeliveryFinished(const int32_t captureId) const override;
+    void OnConstellationDrawingState(const int32_t drawingState) const override;
     void OnPhotoAvailable(
         const std::shared_ptr<Media::NativeImage> nativeImage, const bool isRaw = false) const override;
     void OnPhotoAvailable(const std::shared_ptr<Media::Picture> picture) const override;

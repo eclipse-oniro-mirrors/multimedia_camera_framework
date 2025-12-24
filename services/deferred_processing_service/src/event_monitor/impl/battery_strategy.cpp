@@ -12,12 +12,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+// LCOV_EXCL_START
 #include "battery_strategy.h"
 
 #include "basic_definitions.h"
 #include "common_event_support.h"
 #include "events_monitor.h"
+#include "parameters.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -34,6 +35,9 @@ BatteryStrategy::~BatteryStrategy()
 
 void BatteryStrategy::handleEvent(const EventFwk::CommonEventData& data)
 {
+    bool ignore = system::GetBoolParameter(IGNORE_BATTERY, false);
+    DP_CHECK_ERROR_RETURN_LOG(ignore, "ignore VideoBatteryState");
+
     auto action = data.GetWant().GetAction();
     int32_t batteryState = BatteryStatus::BATTERY_LOW;
     if (action == EventFwk::CommonEventSupport::COMMON_EVENT_BATTERY_LOW) {
@@ -47,3 +51,4 @@ void BatteryStrategy::handleEvent(const EventFwk::CommonEventData& data)
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS
+// LCOV_EXCL_STOP

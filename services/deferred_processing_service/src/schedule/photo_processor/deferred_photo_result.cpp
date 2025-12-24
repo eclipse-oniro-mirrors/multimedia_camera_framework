@@ -66,22 +66,22 @@ void DeferredPhotoResult::OnSuccess(const std::string& imageId)
     ResetTimeoutCount();
 }
 
-ErrorType DeferredPhotoResult::OnError(const std::string& imageId, DpsError& error, bool isHighJob)
+JobErrorType DeferredPhotoResult::OnError(const std::string& imageId, DpsError& error, bool isHighJob)
 {
     DP_INFO_LOG("entered imageId: %{public}s, error: %{public}d, isHighJob: %{public}d",
         imageId.c_str(), error, isHighJob);
     DP_CHECK_EXECUTE(error == DpsError::DPS_ERROR_SESSION_NOT_READY_TEMPORARILY, CheckCrashCount(imageId, error));
     DP_CHECK_EXECUTE(error != DpsError::DPS_ERROR_IMAGE_PROC_TIMEOUT, ResetTimeoutCount());
-    DP_CHECK_RETURN_RET(IsFatalError(error), ErrorType::FATAL_NOTIFY);
+    DP_CHECK_RETURN_RET(IsFatalError(error), JobErrorType::FATAL_NOTIFY);
 
     if (isHighJob) {
         bool isNeedRetry = error == DpsError::DPS_ERROR_IMAGE_PROC_INTERRUPTED && highImages_.count(imageId) != 0;
-        DP_CHECK_RETURN_RET_LOG(isNeedRetry, ErrorType::RETRY,
+        DP_CHECK_RETURN_RET_LOG(isNeedRetry, JobErrorType::RETRY,
             "High priority job %{public}s already in retry", imageId.c_str());
-        return ErrorType::HIGH_FAILED;
+        return JobErrorType::HIGH_FAILED;
     }
-    DP_CHECK_RETURN_RET(error == DpsError::DPS_ERROR_IMAGE_PROC_HIGH_TEMPERATURE, ErrorType::FAILED_NOTIFY);
-    return ErrorType::NORMAL_FAILED;
+    DP_CHECK_RETURN_RET(error == DpsError::DPS_ERROR_IMAGE_PROC_HIGH_TEMPERATURE, JobErrorType::FAILED_NOTIFY);
+    return JobErrorType::NORMAL_FAILED;
 }
 
 void DeferredPhotoResult::RecordResult(const std::string& imageId,
@@ -102,19 +102,14 @@ void DeferredPhotoResult::DeRecordResult(const std::string& imageId)
 std::shared_ptr<ImageInfo> DeferredPhotoResult::GetCacheResult(const std::string& imageId)
 {
     auto it = cacheMap_.find(imageId);
-    if (it != cacheMap_.end()) {
-        return it->second;
-    }
-    return nullptr;
+    return it != cacheMap_.end() ? it->second : nullptr;
 }
 
 void DeferredPhotoResult::CheckCrashCount(const std::string& imageId, DpsError& error)
 {
     auto image = imageId2CrashCount_.find(imageId);
-    if (image == imageId2CrashCount_.end()) {
-        imageId2CrashCount_.emplace(imageId, 1);
-        return;
-    }
+    DP_CHECK_EXECUTE_AND_RETURN(image == imageId2CrashCount_.end(), imageId2CrashCount_.emplace(imageId, 1));
+
     image->second += 1;
     DP_CHECK_EXECUTE(image->second >= MAX_CONSECUTIVE_CRASH_COUNT, error = DPS_ERROR_IMAGE_PROC_FAILED);
 }
@@ -126,7 +121,7 @@ bool DeferredPhotoResult::IsFatalError(DpsError error) const
 
 bool DeferredPhotoResult::IsNeedReset()
 {
-    processTimeoutCount_++;
+    processTimeoutCount_.fetch_add(1);
     if (processTimeoutCount_.load() >= DEFAULT_TIMEOUT_COUNT) {
         processTimeoutCount_.store(DEFAULT_COUNT);
         return true;

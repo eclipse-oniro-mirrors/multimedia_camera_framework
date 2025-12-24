@@ -14,10 +14,11 @@
  */
 
 package OHOS.CameraStandard.DeferredProcessing;
-sequenceable IpcFileDescriptor..OHOS.IPCFileDescriptor;
+import DeferredProcessingTypes;
 
 [callback] interface IDeferredVideoProcessingSessionCallback{
-  [ipccode 1, oneway] void OnProcessVideoDone([in] String videoId, [in] sptr<IPCFileDescriptor> fd);
-  [ipccode 2, oneway] void OnError([in] String videoId, [in] int errorCode);
-  [ipccode 3, oneway] void OnStateChanged([in] int status);
+  [ipccode 1, oneway] void OnProcessVideoDone([in] String videoId);
+  [ipccode 2, oneway] void OnError([in] String videoId, [in] ErrorCode errorCode);
+  [ipccode 3, oneway] void OnStateChanged([in] StatusCode status);
+  [ipccode 4, oneway] void OnProcessingProgress([in] String videoId, [in] float progress);
 }

@@ -19,6 +19,7 @@
 #include "camera_util.h"
 #include "input/camera_manager.h"
 #include "session/aperture_video_session.h"
+#include "session/cinematic_video_session.h"
 #include "session/light_painting_session.h"
 #include "session/quick_shot_photo_session.h"
 #include "session/capture_session.h"
@@ -33,6 +34,7 @@
 #include "session/profession_session.h"
 #include "session/secure_camera_session_for_sys.h"
 #include "session/slow_motion_session.h"
+#include "session/stitching_photo_session.h"
 #include "session/time_lapse_photo_session.h"
 #include "session/video_session_for_sys.h"
 
@@ -70,6 +72,8 @@ sptr<CaptureSessionForSys> CameraManagerForSys::CreateCaptureSessionForSysImpl(S
             return new (std::nothrow) VideoSessionForSys(session);
         case SceneMode::CAPTURE:
             return new (std::nothrow) PhotoSessionForSys(session);
+        case SceneMode::CINEMATIC_VIDEO:
+            return new (std::nothrow) CinematicVideoSession(session);
         case SceneMode::PORTRAIT:
             return new (std::nothrow) PortraitSession(session);
         case SceneMode::PROFESSIONAL_VIDEO:
@@ -100,6 +104,8 @@ sptr<CaptureSessionForSys> CameraManagerForSys::CreateCaptureSessionForSysImpl(S
                 CameraManager::GetInstance()->GetCameraDeviceList());
         case SceneMode::FLUORESCENCE_PHOTO:
             return new(std::nothrow) FluorescencePhotoSession(session);
+        case SceneMode::STITCHING_PHOTO:
+            return new (std::nothrow) StitchingPhotoSession(session);
         default:
             return new (std::nothrow) CaptureSessionForSys(session);
     }

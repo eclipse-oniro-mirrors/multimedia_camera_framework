@@ -18,7 +18,6 @@
 #include "camera_util.h"
 #include "gmock/gmock.h"
 #include "hstream_capture.h"
-#include "stream_capture_callback_stub.h"
 #include "hstream_operator_unittest.h"
 #include "ipc_skeleton.h"
 #include "iservice_registry.h"
@@ -63,7 +62,7 @@ sptr<HStreamCapture> HStreamOperatorUnitTest::GenStreamCapture(int32_t w, int32_
     return stream;
 }
 
-sptr<HStreamMetadata> HStreamOperatorUnitTest::GenSteamMetadata(std::vector<int32_t> metadataTypes)
+sptr<HStreamMetadata> HStreamOperatorUnitTest::GenStreamMetadata(std::vector<int32_t> metadataTypes)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     sptr<IConsumerSurface> surface = IConsumerSurface::Create();
@@ -74,7 +73,7 @@ sptr<HStreamMetadata> HStreamOperatorUnitTest::GenSteamMetadata(std::vector<int3
     return stream;
 }
 
-sptr<HStreamRepeat> HStreamOperatorUnitTest::GenSteamRepeat(RepeatStreamType type, int32_t w, int32_t h)
+sptr<HStreamRepeat> HStreamOperatorUnitTest::GenStreamRepeat(RepeatStreamType type, int32_t w, int32_t h)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     sptr<IConsumerSurface> surface = IConsumerSurface::Create();
@@ -85,7 +84,7 @@ sptr<HStreamRepeat> HStreamOperatorUnitTest::GenSteamRepeat(RepeatStreamType typ
     return stream;
 }
 
-sptr<HStreamDepthData> HStreamOperatorUnitTest::GenSteamDepthData(int32_t w, int32_t h)
+sptr<HStreamDepthData> HStreamOperatorUnitTest::GenStreamDepthData(int32_t w, int32_t h)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     sptr<IConsumerSurface> surface = IConsumerSurface::Create();
@@ -99,12 +98,12 @@ sptr<HStreamDepthData> HStreamOperatorUnitTest::GenSteamDepthData(int32_t w, int
 /**
  * @tc.name  : Test GetCurrentStreamInfos API
  * @tc.number: GetCurrentStreamInfos_001
- * @tc.desc  : Test GetCurrentStreamInfos API, when steamType == METADATA
+ * @tc.desc  : Test GetCurrentStreamInfos API, when StreamType == METADATA
  */
 HWTEST_F(HStreamOperatorUnitTest, GetCurrentStreamInfos_001, TestSize.Level1)
 {
-    streamOp_->streamContainer_.AddStream(GenSteamMetadata());
-    std::vector<StreamInfo_V1_1> streamInfos;
+    streamOp_->streamContainer_.AddStream(GenStreamMetadata());
+    std::vector<StreamInfo_V1_5> streamInfos;
     auto rc = streamOp_->GetCurrentStreamInfos(streamInfos);
     EXPECT_EQ(rc, CAMERA_OK);
     EXPECT_TRUE(streamInfos.empty());
@@ -113,12 +112,12 @@ HWTEST_F(HStreamOperatorUnitTest, GetCurrentStreamInfos_001, TestSize.Level1)
 /**
  * @tc.name  : Test GetCurrentStreamInfos API
  * @tc.number: GetCurrentStreamInfos_002
- * @tc.desc  : Test GetCurrentStreamInfos API, when steamType == METADATA
+ * @tc.desc  : Test GetCurrentStreamInfos API, when StreamType == CAPTURE
  */
 HWTEST_F(HStreamOperatorUnitTest, GetCurrentStreamInfos_002, TestSize.Level1)
 {
     streamOp_->streamContainer_.AddStream(GenStreamCapture());
-    std::vector<StreamInfo_V1_1> streamInfos;
+    std::vector<StreamInfo_V1_5> streamInfos;
     auto rc = streamOp_->GetCurrentStreamInfos(streamInfos);
     EXPECT_EQ(rc, CAMERA_OK);
     EXPECT_EQ(streamInfos.size(), 1);
@@ -131,8 +130,10 @@ HWTEST_F(HStreamOperatorUnitTest, GetCurrentStreamInfos_002, TestSize.Level1)
  */
 HWTEST_F(HStreamOperatorUnitTest, StartMovingPhotoStream_001, TestSize.Level0)
 {
-    streamOp_->streamContainer_.AddStream(GenSteamRepeat(RepeatStreamType::PREVIEW));
-    streamOp_->streamContainer_.AddStream(GenSteamRepeat(RepeatStreamType::LIVEPHOTO));
+    auto ret = streamOp_->streamContainer_.AddStream(GenStreamRepeat(RepeatStreamType::PREVIEW));
+    EXPECT_TRUE(ret);
+    ret = streamOp_->streamContainer_.AddStream(GenStreamRepeat(RepeatStreamType::LIVEPHOTO));
+    EXPECT_TRUE(ret);
     streamOp_->isSetMotionPhoto_ = true;
     streamOp_->StartMovingPhotoStream(nullptr);
 }
@@ -140,12 +141,14 @@ HWTEST_F(HStreamOperatorUnitTest, StartMovingPhotoStream_001, TestSize.Level0)
 /**
  * @tc.name  : Test StartMovingPhotoStream API
  * @tc.number: StartMovingPhotoStream_002
- * @tc.desc  : Test StartMovingPhotoStream API, when isSetMotionPhoto_ is true
+ * @tc.desc  : Test StartMovingPhotoStream API, when isSetMotionPhoto_ is false
  */
 HWTEST_F(HStreamOperatorUnitTest, StartMovingPhotoStream_002, TestSize.Level0)
 {
-    streamOp_->streamContainer_.AddStream(GenSteamRepeat(RepeatStreamType::PREVIEW));
-    streamOp_->streamContainer_.AddStream(GenSteamRepeat(RepeatStreamType::LIVEPHOTO));
+    auto ret = streamOp_->streamContainer_.AddStream(GenStreamRepeat(RepeatStreamType::PREVIEW));
+    EXPECT_TRUE(ret);
+    ret = streamOp_->streamContainer_.AddStream(GenStreamRepeat(RepeatStreamType::LIVEPHOTO));
+    EXPECT_TRUE(ret);
     streamOp_->isSetMotionPhoto_ = false;
     streamOp_->StartMovingPhotoStream(nullptr);
 }
@@ -159,7 +162,7 @@ HWTEST_F(HStreamOperatorUnitTest, RegisterDisplayListener_001, TestSize.Level0)
 {
     sptr<HStreamOperator::DisplayRotationListener> listener(new HStreamOperator::DisplayRotationListener());
     streamOp_->displayListener_ = listener;
-    streamOp_->RegisterDisplayListener(GenSteamRepeat(RepeatStreamType::PREVIEW));
+    streamOp_->RegisterDisplayListener(GenStreamRepeat(RepeatStreamType::PREVIEW));
     EXPECT_NE(streamOp_->displayListener_, nullptr);
 }
 
@@ -171,7 +174,8 @@ HWTEST_F(HStreamOperatorUnitTest, RegisterDisplayListener_001, TestSize.Level0)
 HWTEST_F(HStreamOperatorUnitTest, RegisterDisplayListener_002, TestSize.Level0)
 {
     streamOp_->displayListener_ = nullptr;
-    streamOp_->RegisterDisplayListener(GenSteamRepeat(RepeatStreamType::PREVIEW));
+    streamOp_->RegisterDisplayListener(GenStreamRepeat(RepeatStreamType::PREVIEW));
+    EXPECT_NE(streamOp_->displayListener_, nullptr);
 }
 
 /**
@@ -220,32 +224,62 @@ HWTEST_F(HStreamOperatorUnitTest, RemoveOutput_002, TestSize.Level1)
 
 /**
  * @tc.name  : Test RemoveOutput API
- * @tc.number: RemoveOutput_002
+ * @tc.number: RemoveOutput_003
  * @tc.desc  : Test RemoveOutput API, when StreamType is METAdATA
  */
 HWTEST_F(HStreamOperatorUnitTest, RemoveOutput_003, TestSize.Level1)
 {
-    auto streamMetadata = GenSteamMetadata();
+    auto streamMetadata = GenStreamMetadata();
     auto rc = streamOp_->RemoveOutput(StreamType::METADATA, streamMetadata);
     EXPECT_EQ(rc, CAMERA_INVALID_SESSION_CFG);
 }
 
 /**
- * @tc.name  : Test CreateMovingPhotoStreamRepeat API
- * @tc.number: CreateMovingPhotoStreamRepeat_001
- * @tc.desc  : Test CreateMovingPhotoStreamRepeat API, when CreateMovingPhotoStreamRepeat is not nullptr
+ * @tc.name  : Test RemoveOutput API
+ * @tc.number: RemoveOutput_004
+ * @tc.desc  : Test RemoveOutput API, when StreamType is CAPTURE
  */
-HWTEST_F(HStreamOperatorUnitTest, CreateMovingPhotoStreamRepeat_001, TestSize.Level1)
+HWTEST_F(HStreamOperatorUnitTest, RemoveOutput_004, TestSize.Level1)
 {
-    streamOp_->livePhotoStreamRepeat_ = GenSteamRepeat(RepeatStreamType::LIVEPHOTO);
-    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
-    ASSERT_NE(surface, nullptr);
-    sptr<IBufferProducer> producer = surface->GetProducer();
-    ASSERT_NE(producer, nullptr);
-    ASSERT_EQ(streamOp_->metaSurface_, nullptr);
-    auto rc = streamOp_->CreateMovingPhotoStreamRepeat(0, PHOTO_DEFAULT_WIDTH, PHOTO_DEFAULT_HEIGHT, producer);
-    EXPECT_EQ(rc, CAMERA_INVALID_STATE);
-    EXPECT_NE(streamOp_->livePhotoStreamRepeat_, nullptr);
+    auto streamCapture = GenStreamCapture();
+    auto rc = streamOp_->RemoveOutput(StreamType::CAPTURE, streamCapture);
+    EXPECT_EQ(rc, CAMERA_INVALID_SESSION_CFG);
+}
+
+/**
+ * @tc.name  : Test GetStreamOperator API
+ * @tc.number: GetStreamOperator_001
+ * @tc.desc  : Test GetStreamOperator API, when cameraDevice_ is nullptr
+ */
+HWTEST_F(HStreamOperatorUnitTest, GetStreamOperator_001, TestSize.Level1)
+{
+    streamOp_->cameraDevice_ = nullptr;
+    streamOp_->GetStreamOperator();
+    EXPECT_EQ(streamOp_->cameraDevice_, nullptr);
+}
+
+/**
+ * @tc.name  : Test GetHdiStreamByStreamID API
+ * @tc.number: GetHdiStreamByStreamID_001
+ * @tc.desc  : Test GetHdiStreamByStreamID API, when stream is nullptr(not found stream by id)
+ */
+HWTEST_F(HStreamOperatorUnitTest, GetHdiStreamByStreamID_001, TestSize.Level1)
+{
+    streamOp_->streamContainer_.Clear();
+    auto ret = streamOp_->GetHdiStreamByStreamID(0);
+    EXPECT_EQ(ret, nullptr);
+}
+
+/**
+ * @tc.name  : Test SetColorSpace API
+ * @tc.number: SetColorSpace_001
+ * @tc.desc  : Test SetColorSpace API, when result is CAMERA_OK
+ */
+HWTEST_F(HStreamOperatorUnitTest, SetColorSpace_001, TestSize.Level1)
+{
+    streamOp_->currColorSpace_ = COLOR_SPACE_UNKNOWN;
+    auto rc = streamOp_->SetColorSpace(ColorSpace::BT709, true);
+    EXPECT_EQ(rc, CAMERA_OK);
 }
 
 /**
@@ -258,8 +292,8 @@ HWTEST_F(HStreamOperatorUnitTest, CancelStreamsAndGetStreamInfos_001, TestSize.L
     streamOp_->isSessionStarted_ = true;
 
     streamOp_->streamContainer_.AddStream(GenStreamCapture());
-    streamOp_->streamContainer_.AddStream(GenSteamRepeat(RepeatStreamType::PREVIEW));
-    std::vector<StreamInfo_V1_1> streamInfos;
+    streamOp_->streamContainer_.AddStream(GenStreamRepeat(RepeatStreamType::PREVIEW));
+    std::vector<StreamInfo_V1_5> streamInfos;
     streamOp_->CancelStreamsAndGetStreamInfos(streamInfos);
     EXPECT_FALSE(streamInfos.empty());
 }
@@ -274,10 +308,37 @@ HWTEST_F(HStreamOperatorUnitTest, CancelStreamsAndGetStreamInfos_002, TestSize.L
     streamOp_->isSessionStarted_ = false;
 
     streamOp_->streamContainer_.AddStream(GenStreamCapture());
-    streamOp_->streamContainer_.AddStream(GenSteamRepeat(RepeatStreamType::PREVIEW));
-    std::vector<StreamInfo_V1_1> streamInfos;
+    streamOp_->streamContainer_.AddStream(GenStreamRepeat(RepeatStreamType::PREVIEW));
+    std::vector<StreamInfo_V1_5> streamInfos;
     streamOp_->CancelStreamsAndGetStreamInfos(streamInfos);
     EXPECT_FALSE(streamInfos.empty());
+}
+
+/**
+ * @tc.name  : Test StartPreviewStream API
+ * @tc.number: StartPreviewStream_001
+ * @tc.desc  : Test StartPreviewStream API, when repeatType != PREVIEW or LIVEPHOTO
+ */
+HWTEST_F(HStreamOperatorUnitTest, StartPreviewStream_001, TestSize.Level1)
+{
+    auto streamRep = GenStreamRepeat(RepeatStreamType::SKETCH);
+    streamOp_->streamContainer_.AddStream(streamRep);
+    auto rc = streamOp_->StartPreviewStream(nullptr, camera_position_enum_t::OHOS_CAMERA_POSITION_BACK);
+    EXPECT_EQ(rc, CAMERA_OK);
+}
+
+/**
+ * @tc.name  : Test StartPreviewStream API
+ * @tc.number: StartPreviewStream_002
+ * @tc.desc  : Test StartPreviewStream API, when repeatType == PREVIEW and CaptureId != CAPTURE_ID_UNSET
+ */
+HWTEST_F(HStreamOperatorUnitTest, StartPreviewStream_002, TestSize.Level1)
+{
+    auto streamRep = GenStreamRepeat(RepeatStreamType::PREVIEW);
+    streamRep->curCaptureID_ = 999;
+    streamOp_->streamContainer_.AddStream(streamRep);
+    auto rc = streamOp_->StartPreviewStream(nullptr, camera_position_enum_t::OHOS_CAMERA_POSITION_BACK);
+    EXPECT_EQ(rc, CAMERA_OK);
 }
 
 /**
@@ -287,7 +348,7 @@ HWTEST_F(HStreamOperatorUnitTest, CancelStreamsAndGetStreamInfos_002, TestSize.L
  */
 HWTEST_F(HStreamOperatorUnitTest, Stop_001, TestSize.Level1)
 {
-    streamOp_->streamContainer_.AddStream(GenSteamDepthData());
+    streamOp_->streamContainer_.AddStream(GenStreamDepthData());
     auto rc = streamOp_->Stop();
     EXPECT_EQ(rc, CAMERA_OK);
 }
@@ -295,13 +356,13 @@ HWTEST_F(HStreamOperatorUnitTest, Stop_001, TestSize.Level1)
 /**
  * @tc.name  : Test Stop API
  * @tc.number: Stop_002
- * @tc.desc  : Test Stop API, when StreamType is Invalid
+ * @tc.desc  : Test Stop API, when StreamType is invalid
  */
 HWTEST_F(HStreamOperatorUnitTest, Stop_002, TestSize.Level1)
 {
-    auto stream = GenSteamDepthData();
-    stream->streamType_ = static_cast<StreamType>(0);
-    streamOp_->streamContainer_.AddStream(GenSteamDepthData());
+    auto streamDepth = GenStreamDepthData();
+    streamDepth->streamType_ = static_cast<StreamType>(0);
+    streamOp_->streamContainer_.AddStream(streamDepth);
     auto rc = streamOp_->Stop();
     EXPECT_EQ(rc, CAMERA_OK);
 }
@@ -309,15 +370,57 @@ HWTEST_F(HStreamOperatorUnitTest, Stop_002, TestSize.Level1)
 /**
  * @tc.name  : Test ReleaseStreams API
  * @tc.number: ReleaseStreams_001
- * @tc.desc  : Test ReleaseStreams API, when stream->IsHasSwitchToOffline() is true
+ * @tc.desc  : Test ReleaseStreams API, when stream IsHasSwitchToOffline
  */
 HWTEST_F(HStreamOperatorUnitTest, ReleaseStreams_001, TestSize.Level1)
 {
-    auto stream = GenStreamCapture();
-    stream->mSwitchToOfflinePhoto_ = true;
-    streamOp_->streamContainer_.AddStream(GenSteamDepthData());
+    auto streamCap = GenStreamCapture();
+    streamCap->mSwitchToOfflinePhoto_ = true;
     streamOp_->ReleaseStreams();
-    EXPECT_NE(streamOp_->streamContainer_.Size(), 0);
+    EXPECT_TRUE(streamCap->mSwitchToOfflinePhoto_);
+}
+
+/**
+ * @tc.name  : Test ReleaseStreams API
+ * @tc.number: ReleaseStreams_002
+ * @tc.desc  : Test ReleaseStreams API, when IsHasSwitchToOffline is false and fwkStreamId == STREAM_ID_UNSET
+ */
+HWTEST_F(HStreamOperatorUnitTest, ReleaseStreams_002, TestSize.Level1)
+{
+    auto streamCap = GenStreamCapture();
+    streamCap->mSwitchToOfflinePhoto_ = false;
+    streamCap->fwkStreamId_ = STREAM_ID_UNSET;
+    streamOp_->ReleaseStreams();
+    EXPECT_EQ(streamCap->fwkStreamId_, STREAM_ID_UNSET);
+}
+
+/**
+ * @tc.name  : Test ReleaseStreams API
+ * @tc.number: ReleaseStreams_003
+ * @tc.desc  : Test ReleaseStreams API, when fwkStreamId != STREAM_ID_UNSET and hdiStreamId != STREAM_ID_UNSET
+ */
+HWTEST_F(HStreamOperatorUnitTest, ReleaseStreams_003, TestSize.Level1)
+{
+    auto streamCap = GenStreamCapture();
+    streamCap->mSwitchToOfflinePhoto_ = false;
+    streamCap->fwkStreamId_ = 100;
+    streamCap->hdiStreamId_ = 200;
+    streamOp_->ReleaseStreams();
+    EXPECT_NE(streamCap->hdiStreamId_, STREAM_ID_UNSET);
+}
+
+/**
+ * @tc.name  : Test ReleaseStreams API
+ * @tc.number: ReleaseStreams_004
+ * @tc.desc  : Test ReleaseStreams API, when streamType is't CAPTURE
+ */
+HWTEST_F(HStreamOperatorUnitTest, ReleaseStreams_004, TestSize.Level1)
+{
+    auto streamDepth = GenStreamDepthData();
+    streamDepth->fwkStreamId_ = 100;
+    streamDepth->hdiStreamId_ = 200;
+    streamOp_->ReleaseStreams();
+    EXPECT_NE(streamDepth->hdiStreamId_, STREAM_ID_UNSET);
 }
 
 /**
@@ -328,8 +431,83 @@ HWTEST_F(HStreamOperatorUnitTest, ReleaseStreams_001, TestSize.Level1)
 HWTEST_F(HStreamOperatorUnitTest, EnableMovingPhotoMirror_001, TestSize.Level1)
 {
     auto rc = streamOp_->EnableMovingPhotoMirror(true, false);
+    EXPECT_NE(rc, CAMERA_OK);
+    EXPECT_NE(streamOp_->isMovingPhotoMirror_, true);
+}
+
+/**
+ * @tc.name  : Test OnCaptureStarted API
+ * @tc.number: OnCaptureStarted_001
+ * @tc.desc  : Test OnCaptureStarted API, when streamType is invalid(DEPTH)
+ */
+HWTEST_F(HStreamOperatorUnitTest, OnCaptureStarted_001, TestSize.Level1)
+{
+    auto depthStream = GenStreamDepthData();
+    const int32_t STREAM_ID = 999;
+    depthStream->hdiStreamId_ = STREAM_ID;
+    streamOp_->streamContainer_.AddStream(depthStream);
+    auto rc = streamOp_->OnCaptureStarted(1, { STREAM_ID });
     EXPECT_EQ(rc, CAMERA_OK);
-    EXPECT_EQ(streamOp_->isMovingPhotoMirror_, true);
+}
+
+/**
+ * @tc.name  : Test OnCaptureStarted_V1_2 API
+ * @tc.number: OnCaptureStarted_V1_2_001
+ * @tc.desc  : Test OnCaptureStarted_V1_2 API, when StreamType is't CAPTURE
+ */
+HWTEST_F(HStreamOperatorUnitTest, OnCaptureStarted_V1_2_001, TestSize.Level1)
+{
+    const int32_t STREAM_ID = 999;
+    const std::vector<OHOS::HDI::Camera::V1_2::CaptureStartedInfo> infos { { STREAM_ID, 0 } };
+
+    auto depthStream = GenStreamDepthData();
+    depthStream->hdiStreamId_ = STREAM_ID;
+    streamOp_->streamContainer_.AddStream(depthStream);
+    auto rc = streamOp_->OnCaptureStarted_V1_2(0, infos);
+    EXPECT_EQ(rc, CAMERA_OK);
+}
+
+/**
+ * @tc.name  : Test GetOutputStatus API
+ * @tc.number: GetOutputStatus_001
+ * @tc.desc  : Test GetOutputStatus API, when streamType != VIDEO
+ */
+HWTEST_F(HStreamOperatorUnitTest, GetOutputStatus_001, TestSize.Level1)
+{
+    auto streamRep = GenStreamRepeat(RepeatStreamType::LIVEPHOTO);
+    int32_t status = 0;
+    streamOp_->GetOutputStatus(status);
+    EXPECT_EQ(status, 0);
+}
+
+/**
+ * @tc.name  : Test GetOutputStatus API
+ * @tc.number: GetOutputStatus_002
+ * @tc.desc  : Test GetOutputStatus API, when streamType == VIDEO and captureId == CAPTURE_ID_UNSET
+ */
+HWTEST_F(HStreamOperatorUnitTest, GetOutputStatus_002, TestSize.Level1)
+{
+    auto streamRep = GenStreamRepeat(RepeatStreamType::VIDEO);
+    streamRep->curCaptureID_ = CAPTURE_ID_UNSET;
+    streamOp_->streamContainer_.AddStream(streamRep);
+    int32_t status = 0;
+    streamOp_->GetOutputStatus(status);
+    EXPECT_EQ(status, 0);
+}
+
+/**
+ * @tc.name  : Test GetOutputStatus API
+ * @tc.number: GetOutputStatus_002
+ * @tc.desc  : Test GetOutputStatus API, when streamType == VIDEO and captureId != CAPTURE_ID_UNSET
+ */
+HWTEST_F(HStreamOperatorUnitTest, GetOutputStatus_003, TestSize.Level0)
+{
+    auto streamRep = GenStreamRepeat(RepeatStreamType::VIDEO);
+    streamRep->curCaptureID_ = 1;
+    streamOp_->streamContainer_.AddStream(streamRep);
+    int32_t status = 0;
+    streamOp_->GetOutputStatus(status);
+    EXPECT_EQ(status, 2);
 }
 
 /**
@@ -340,6 +518,18 @@ HWTEST_F(HStreamOperatorUnitTest, EnableMovingPhotoMirror_001, TestSize.Level1)
 HWTEST_F(HStreamOperatorUnitTest, RegisterSensorCallback_001, TestSize.Level1)
 {
     streamOp_->isRegisterSensorSuccess_ = true;
+    streamOp_->RegisterSensorCallback();
+    EXPECT_EQ(streamOp_->isRegisterSensorSuccess_, true);
+}
+
+/**
+ * @tc.name  : Test RegisterSensorCallback API
+ * @tc.number: RegisterSensorCallback_002
+ * @tc.desc  : Test RegisterSensorCallback API, when isRegisterSensorSuccess_ is false
+ */
+HWTEST_F(HStreamOperatorUnitTest, RegisterSensorCallback_002, TestSize.Level1)
+{
+    streamOp_->isRegisterSensorSuccess_ = false;
     streamOp_->RegisterSensorCallback();
     EXPECT_EQ(streamOp_->isRegisterSensorSuccess_, true);
 }
@@ -408,7 +598,7 @@ HWTEST_F(HStreamOperatorUnitTest, CalcSensorRotation_005, TestSize.Level1)
 /**
  * @tc.name  : Test CalcRotationDegree API
  * @tc.number: CalcRotationDegree_001
- * @tc.desc  : Test CalcRotationDegree API, when return invalid degree
+ * @tc.desc  : Test CalcRotationDegree API, when fn return invalid degree
  */
 HWTEST_F(HStreamOperatorUnitTest, CalcRotationDegree_001, TestSize.Level1)
 {
@@ -419,7 +609,7 @@ HWTEST_F(HStreamOperatorUnitTest, CalcRotationDegree_001, TestSize.Level1)
 /**
  * @tc.name  : Test CalcRotationDegree API
  * @tc.number: CalcRotationDegree_002
- * @tc.desc  : Test CalcRotationDegree API, when return normal degree
+ * @tc.desc  : Test CalcRotationDegree API, when fn return normal degree
  */
 HWTEST_F(HStreamOperatorUnitTest, CalcRotationDegree_002, TestSize.Level0)
 {
@@ -459,17 +649,141 @@ HWTEST_F(HStreamOperatorUnitTest, StartMovingPhotoEncode_002, TestSize.Level1)
  */
 HWTEST_F(HStreamOperatorUnitTest, SetCameraPhotoProxyInfo_001, TestSize.Level1)
 {
-    sptr<CameraServerPhotoProxy> cameraPhotoProxy = new CameraServerPhotoProxy();
+    sptr<CameraServerPhotoProxy> proxy{new CameraServerPhotoProxy()};
     int32_t cameraShotType;
     bool isBursting;
     std::string burstKey;
 
     auto capStream = GenStreamCapture();
-    capStream->burstkeyMap_[cameraPhotoProxy->GetCaptureId()] = "key";
+    capStream->burstkeyMap_[proxy->GetCaptureId()] = "key";
     streamOp_->streamContainer_.AddStream(capStream);
-    streamOp_->SetCameraPhotoProxyInfo(cameraPhotoProxy, cameraShotType, isBursting, burstKey);
+    streamOp_->SetCameraPhotoProxyInfo(proxy, cameraShotType, isBursting, burstKey);
     EXPECT_EQ(burstKey, "key");
 }
 
+/**
+ * @tc.name  : Test OnCaptureError API
+ * @tc.number: OnCaptureError_001
+ * @tc.desc  : Test OnCaptureError API, when StreamType is REPEAT
+ */
+HWTEST_F(HStreamOperatorUnitTest, OnCaptureError_001, TestSize.Level1)
+{
+    auto streamRep = GenStreamRepeat(RepeatStreamType::PREVIEW);
+    const int32_t STREAM_ID = 999;
+    streamRep->hdiStreamId_ = STREAM_ID;
+    streamOp_->streamContainer_.AddStream(streamRep);
+
+    std::vector<CaptureErrorInfo> infos { { .streamId_ = STREAM_ID,
+        .error_ = OHOS::HDI::Camera::V1_0::StreamError::UNKNOWN_ERROR } };
+    auto rc = streamOp_->OnCaptureError(0, infos);
+    EXPECT_EQ(rc, CAMERA_OK);
+}
+
+/**
+ * @tc.name  : Test OnCaptureError API
+ * @tc.number: OnCaptureError_002
+ * @tc.desc  : Test OnCaptureError API, when StreamType is CAPTURE
+ */
+HWTEST_F(HStreamOperatorUnitTest, OnCaptureError_002, TestSize.Level1)
+{
+    auto streamCap = GenStreamCapture();
+    const int32_t STREAM_ID = 999;
+    streamCap->hdiStreamId_ = STREAM_ID;
+    streamOp_->streamContainer_.AddStream(streamCap);
+
+    std::vector<CaptureErrorInfo> infos { { .streamId_ = STREAM_ID,
+        .error_ = OHOS::HDI::Camera::V1_0::StreamError::UNKNOWN_ERROR } };
+    auto rc = streamOp_->OnCaptureError(0, infos);
+    EXPECT_EQ(rc, CAMERA_OK);
+}
+
+/**
+ * @tc.name  : Test OnCaptureError API
+ * @tc.number: OnCaptureError_003
+ * @tc.desc  : Test OnCaptureError API, when StreamType is INVALID
+ */
+HWTEST_F(HStreamOperatorUnitTest, OnCaptureError_003, TestSize.Level1)
+{
+    auto streamCap = GenStreamCapture();
+    streamCap->streamType_ = static_cast<StreamType>(0);
+    const int32_t STREAM_ID = 999;
+    streamCap->hdiStreamId_ = STREAM_ID;
+    streamOp_->streamContainer_.AddStream(streamCap);
+
+    std::vector<CaptureErrorInfo> infos { { .streamId_ = STREAM_ID,
+        .error_ = OHOS::HDI::Camera::V1_0::StreamError::UNKNOWN_ERROR } };
+    auto rc = streamOp_->OnCaptureError(0, infos);
+    EXPECT_EQ(rc, CAMERA_OK);
+}
+
+/**
+ * @tc.name  : Test AddStream API
+ * @tc.number: AddStream_001
+ * @tc.desc  : Test AddStream API, when stream is added twice
+ */
+HWTEST_F(HStreamOperatorUnitTest, AddStream_001, TestSize.Level0)
+{
+    auto depthStream = GenStreamDepthData();
+    auto rc = streamOp_->streamContainer_.AddStream(depthStream);
+    EXPECT_EQ(rc, true);
+    // add twice
+    rc = streamOp_->streamContainer_.AddStream(depthStream);
+    EXPECT_EQ(rc, false);
+}
+
+/**
+ * @tc.name  : Test GetStream API
+ * @tc.number: GetStream_001
+ * @tc.desc  : Test GetStream API, when stream is found
+ */
+HWTEST_F(HStreamOperatorUnitTest, GetStream_001, TestSize.Level0)
+{
+    auto streamCap = GenStreamCapture();
+    const int32_t STREAM_ID = 999;
+    streamCap->fwkStreamId_ = STREAM_ID;
+    auto rc = streamOp_->streamContainer_.AddStream(streamCap);
+    ASSERT_TRUE(rc);
+    auto ret = streamOp_->streamContainer_.GetStream(STREAM_ID);
+    EXPECT_NE(ret, nullptr);
+}
+
+/**
+ * @tc.name  : Test GetStream API
+ * @tc.number: GetStream_002
+ * @tc.desc  : Test GetStream API, when stream is't found
+ */
+HWTEST_F(HStreamOperatorUnitTest, GetStream_002, TestSize.Level0)
+{
+    auto streamCap = GenStreamCapture();
+    const int32_t STREAM_ID = 999;
+    streamCap->fwkStreamId_ = STREAM_ID;
+    auto rc = streamOp_->streamContainer_.AddStream(streamCap);
+    ASSERT_TRUE(rc);
+    auto ret = streamOp_->streamContainer_.GetStream(0);
+    EXPECT_EQ(ret, nullptr);
+}
+
+/**
+ * @tc.name  : Test GetSupportRedoXtStyle API
+ * @tc.number: GetSupportRedoXtStyle_001
+ * @tc.desc  : Test GetSupportRedoXtStyle API, supportXtStyleRedoFlag_ is already initialized
+ */
+HWTEST_F(HStreamOperatorUnitTest, GetSupportRedoXtStyle_001, TestSize.Level0)
+{
+    streamOp_->supportXtStyleRedoFlag_ = ColorStylePhotoType::EFFECT;
+    EXPECT_EQ(streamOp_->GetSupportRedoXtStyle(), ColorStylePhotoType::EFFECT);
+}
+
+/**
+ * @tc.name  : Test GetSupportRedoXtStyle API
+ * @tc.number: GetSupportRedoXtStyle_002
+ * @tc.desc  : Test GetSupportRedoXtStyle API, cameraDevice_  is nullptr
+ */
+HWTEST_F(HStreamOperatorUnitTest, GetSupportRedoXtStyle_002, TestSize.Level0)
+{
+    streamOp_->cameraDevice_ = nullptr;
+    ColorStylePhotoType flag = streamOp_->GetSupportRedoXtStyle();
+    EXPECT_EQ(flag, ColorStylePhotoType::UNSET);
+}
 } // namespace CameraStandard
 } // namespace OHOS

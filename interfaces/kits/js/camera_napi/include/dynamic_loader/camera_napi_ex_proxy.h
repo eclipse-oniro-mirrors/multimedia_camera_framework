@@ -31,6 +31,7 @@ public:
     napi_value CreateSessionForSys(napi_env env, int32_t jsModeName);
     napi_value CreateDeprecatedSessionForSys(napi_env env);
     napi_value CreateDepthDataOutput(napi_env env, DepthProfile& depthProfile);
+    napi_value CreateMovieFileOutput(napi_env env, VideoProfile& videoProfile);
     napi_value CreateModeManager(napi_env env);
 
     bool CheckAndGetOutput(napi_env env, napi_value obj, sptr<CaptureOutput> &output);

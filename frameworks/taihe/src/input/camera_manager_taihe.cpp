@@ -26,6 +26,7 @@
 #include "macro_photo_session_taihe.h"
 #include "macro_video_session_taihe.h"
 #include "metadata_output_taihe.h"
+#include "movie_file_output_taihe.h"
 #include "night_photo_session_taihe.h"
 #include "panorama_photo_session_taihe.h"
 #include "photo_session_taihe.h"
@@ -37,6 +38,7 @@
 #include "secure_session_taihe.h"
 #include "slow_motion_video_session_taihe.h"
 #include "time_lapse_photo_session_taihe.h"
+#include "unify_movie_file_output_taihe.h"
 #include "video_session_taihe.h"
 #include "video_session_for_sys_taihe.h"
 #include "depth_data_output_taihe.h"
@@ -199,7 +201,7 @@ CameraManagerImpl::CameraManagerImpl()
 array<CameraDevice> CameraManagerImpl::GetSupportedCameras()
 {
     CHECK_RETURN_RET_ELOG(cameraManager_ == nullptr, array<CameraDevice>(nullptr, 0),
-        "failed to getSupportedCameras, cameraManager is nullprt");
+        "failed to getSupportedCameras, cameraManager is nullptr");
     std::vector<sptr<OHOS::CameraStandard::CameraDevice>> cameraObjList = cameraManager_->GetSupportedCameras();
     return CameraUtilsTaihe::ToTaiheArrayCameraDevice(cameraObjList);
 }
@@ -207,7 +209,7 @@ array<CameraDevice> CameraManagerImpl::GetSupportedCameras()
 array<SceneMode> CameraManagerImpl::GetSupportedSceneModes(CameraDevice const& camera)
 {
     CHECK_RETURN_RET_ELOG(cameraManager_ == nullptr, array<SceneMode>(nullptr, 0),
-        "failed to getSupportedSceneModes, cameraManager is nullprt");
+        "failed to getSupportedSceneModes, cameraManager is nullptr");
 
     sptr<OHOS::CameraStandard::CameraDevice> cameraDevice =
         cameraManager_->GetCameraDeviceFromId(std::string(camera.cameraId));
@@ -305,7 +307,7 @@ CameraOutputCapability CameraManagerImpl::GetSupportedOutputCapability(CameraDev
         .videoProfiles = array<VideoProfile>(nullptr, 0),
     };
     CHECK_RETURN_RET_ELOG(cameraManager_ == nullptr, nullImpl,
-        "failed to GetSupportedOutputCapability, cameraManager is nullprt");
+        "failed to GetSupportedOutputCapability, cameraManager is nullptr");
     std::string cameraId = std::string(camera.cameraId);
 
     sptr<OHOS::CameraStandard::CameraDevice> cameraInfo = cameraManager_->GetCameraDeviceFromId(cameraId);
@@ -320,7 +322,7 @@ CameraOutputCapability CameraManagerImpl::GetSupportedOutputCapability(CameraDev
     if (itr != aniToNativeMap.end()) {
         sceneMode = itr->second;
     } else {
-        MEDIA_ERR_LOG("CreateCameraSessionInstance mode = %{public}d not supported", sceneMode);
+        MEDIA_ERR_LOG("GetSupportedOutputCapability mode = %{public}d not supported", modeValue);
         CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT, "Not support the input mode");
         return nullImpl;
     }
@@ -402,7 +404,7 @@ void CameraManagerImpl::Prelaunch()
 {
     CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
         "SystemApi PrelaunchCamera is called!");
-    CHECK_RETURN_ELOG(cameraManager_ == nullptr, "failed to Prelaunch, cameraManager is nullprt");
+    CHECK_RETURN_ELOG(cameraManager_ == nullptr, "failed to Prelaunch, cameraManager is nullptr");
     int32_t retCode = cameraManager_->PrelaunchCamera();
     CHECK_RETURN(!CameraUtilsTaihe::CheckError(retCode));
 }
@@ -411,7 +413,7 @@ void CameraManagerImpl::PreSwitchCamera(string_view cameraId)
 {
     CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
         "SystemApi PreSwitchCamera is called!");
-    CHECK_RETURN_ELOG(cameraManager_ == nullptr, "failed to PreSwitchCamera, cameraManager is nullprt");
+    CHECK_RETURN_ELOG(cameraManager_ == nullptr, "failed to PreSwitchCamera, cameraManager is nullptr");
     int32_t retCode = cameraManager_->PreSwitchCamera(std::string(cameraId));
     CHECK_RETURN(!CameraUtilsTaihe::CheckError(retCode));
 }
@@ -419,14 +421,14 @@ void CameraManagerImpl::PreSwitchCamera(string_view cameraId)
 bool CameraManagerImpl::IsTorchSupported()
 {
     CHECK_RETURN_RET_ELOG(cameraManager_ == nullptr, false,
-        "failed to IsTorchSupported, cameraManager is nullprt");
+        "failed to IsTorchSupported, cameraManager is nullptr");
     return cameraManager_->IsTorchSupported();
 }
 
 bool CameraManagerImpl::IsCameraMuted()
 {
     CHECK_RETURN_RET_ELOG(cameraManager_ == nullptr, false,
-        "failed to IsCameraMuted, cameraManager is nullprt");
+        "failed to IsCameraMuted, cameraManager is nullptr");
     return cameraManager_->IsCameraMuted();
 }
 
@@ -435,7 +437,7 @@ bool CameraManagerImpl::IsCameraMuteSupported()
     CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), false,
         "SystemApi IsCameraMuteSupported is called!");
     CHECK_RETURN_RET_ELOG(cameraManager_ == nullptr, false,
-        "failed to IsCameraMuteSupported, cameraManager is nullprt");
+        "failed to IsCameraMuteSupported, cameraManager is nullptr");
     return cameraManager_->IsCameraMuteSupported();
 }
 
@@ -444,7 +446,7 @@ bool CameraManagerImpl::IsPrelaunchSupported(CameraDevice const& camera)
     CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), false,
         "SystemApi IsPrelaunchSupported is called!");
     CHECK_RETURN_RET_ELOG(cameraManager_ == nullptr, false,
-        "failed to IsPrelaunchSupported, cameraManager is nullprt");
+        "failed to IsPrelaunchSupported, cameraManager is nullptr");
     std::string nativeStr(camera.cameraId);
     sptr<OHOS::CameraStandard::CameraDevice> cameraInfo = cameraManager_->GetCameraDeviceFromId(nativeStr);
     if (cameraInfo != nullptr) {
@@ -459,7 +461,7 @@ bool CameraManagerImpl::IsPrelaunchSupported(CameraDevice const& camera)
 TorchMode CameraManagerImpl::GetTorchMode()
 {
     CHECK_RETURN_RET_ELOG(cameraManager_ == nullptr, TorchMode(static_cast<TorchMode::key_t>(-1)),
-        "failed to GetTorchMode, cameraManager is nullprt");
+        "failed to GetTorchMode, cameraManager is nullptr");
     return TorchMode(static_cast<TorchMode::key_t>(cameraManager_->GetTorchMode()));
 }
 
@@ -841,37 +843,22 @@ PhotoOutput CameraManagerImpl::CreatePhotoOutput(optional_view<Profile> profile)
     auto Result = [](OHOS::sptr<OHOS::CameraStandard::CaptureOutput> output) {
         return make_holder<PhotoOutputImpl, PhotoOutput>(output);
     };
-    OHOS::sptr<OHOS::Surface> photoSurface = OHOS::Surface::CreateSurfaceAsConsumer("photoOutput");
-    CHECK_RETURN_RET_ELOG(photoSurface == nullptr,
-        Result(nullptr), "failed to get surface");
     if (profile.has_value()) {
         OHOS::CameraStandard::Profile innerProfile{
             static_cast<OHOS::CameraStandard::CameraFormat>(profile.value().format.get_value()),
             OHOS::CameraStandard::Size{ profile.value().size.width, profile.value().size.height }
         };
-        photoSurface->SetUserData(OHOS::CameraStandard::CameraManager::surfaceFormat,
-            std::to_string(innerProfile.GetCameraFormat()));
-        OHOS::sptr<OHOS::IBufferProducer> surfaceProducer = photoSurface->GetProducer();
-        MEDIA_INFO_LOG("profile width: %{public}d, height: %{public}d, format = %{public}d, "
-            "surface width: %{public}d, height: %{public}d", innerProfile.GetSize().width,
-            innerProfile.GetSize().height, static_cast<int32_t>(innerProfile.GetCameraFormat()),
-            photoSurface->GetDefaultWidth(), photoSurface->GetDefaultHeight());
         OHOS::sptr<OHOS::CameraStandard::PhotoOutput> photoOutput = nullptr;
         int retCode = OHOS::CameraStandard::CameraManager::GetInstance()->CreatePhotoOutput(
-            innerProfile, surfaceProducer, &photoOutput, photoSurface);
+            innerProfile, &photoOutput);
         CHECK_EXECUTE(retCode != OHOS::CameraStandard::CameraErrorCode::SUCCESS,
             CameraUtilsTaihe::ThrowError(retCode, "failed to create photo output"));
         CHECK_RETURN_RET_ELOG(photoOutput == nullptr, Result(nullptr), "failed to create photo output");
         photoOutput->SetNativeSurface(true);
-        CHECK_EXECUTE(photoOutput->IsYuvOrHeifPhoto(), photoOutput->CreateMultiChannel());
         return Result(photoOutput);
     } else {
-        OHOS::sptr<OHOS::IBufferProducer> surfaceProducer = photoSurface->GetProducer();
-        MEDIA_INFO_LOG("surface width: %{public}d, height: %{public}d", photoSurface->GetDefaultWidth(),
-            photoSurface->GetDefaultHeight());
         OHOS::sptr<OHOS::CameraStandard::PhotoOutput> photoOutput = nullptr;
-        int retCode = OHOS::CameraStandard::CameraManager::GetInstance()->CreatePhotoOutputWithoutProfile(
-            surfaceProducer, &photoOutput, photoSurface);
+        int retCode = OHOS::CameraStandard::CameraManager::GetInstance()->CreatePhotoOutputWithoutProfile(&photoOutput);
         CHECK_EXECUTE(retCode != OHOS::CameraStandard::CameraErrorCode::SUCCESS,
             CameraUtilsTaihe::ThrowError(retCode, "failed to create photo output"));
         CHECK_RETURN_RET_ELOG(photoOutput == nullptr, Result(nullptr), "failed to create photo output");
@@ -1015,6 +1002,27 @@ DepthDataOutput CameraManagerImpl::CreateDepthDataOutput(DepthProfile const& pro
     return Result(depthDataOutput, depthDataSurface);
 }
 
+MovieFileOutput CameraManagerImpl::CreateMovieFileOutput(optional_view<VideoProfile> profile)
+ {
+     auto Result = [](OHOS::sptr<OHOS::CameraStandard::MovieFileOutput> output) {
+         return make_holder<MovieFileOutputImpl, MovieFileOutput>(output);
+     };
+    CHECK_RETURN_RET_ELOG(!(profile.has_value()), Result(nullptr), "CreateMovieFileOutput args is invalid!");
+     CHECK_RETURN_RET_ELOG(cameraManager_ == nullptr, Result(nullptr), "cameraManager_ is nullptr");
+     OHOS::CameraStandard::VideoProfile videoProfile{
+        static_cast<OHOS::CameraStandard::CameraFormat>(profile.value().base.format.get_value()),
+        OHOS::CameraStandard::Size{ profile.value().base.size.width, profile.value().base.size.height },
+        { static_cast<int32_t>(profile.value().frameRateRange.min),
+            static_cast<int32_t>(profile.value().frameRateRange.max) }
+    };
+    OHOS::sptr<OHOS::CameraStandard::MovieFileOutput> movieFileOutput = nullptr;
+    int retCode = cameraManager_->CreateMovieFileOutput(videoProfile, &movieFileOutput);
+    CHECK_RETURN_RET_ELOG(!CameraUtilsTaihe::CheckError(retCode), Result(nullptr),
+        "CameraManagerImpl::CreateMovieFileOutput fail %{public}d", retCode);
+    CHECK_RETURN_RET_ELOG(movieFileOutput == nullptr, Result(nullptr), "failed to create MovieFileOutput");
+    return Result(movieFileOutput);
+}
+
 void CameraManagerImpl::ProcessCameraInfo(OHOS::sptr<OHOS::CameraStandard::CameraManager>& cameraManager,
     const OHOS::CameraStandard::CameraPosition cameraPosition, const OHOS::CameraStandard::CameraType cameraType,
     OHOS::sptr<OHOS::CameraStandard::CameraDevice>& cameraInfo)
@@ -1069,7 +1077,7 @@ void CameraManagerImpl::SetPrelaunchConfig(PrelaunchConfig const& prelaunchConfi
 {
     CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
         "SystemApi SetPrelaunchConfig is called!");
-    CHECK_RETURN_ELOG(cameraManager_ == nullptr, "failed to SetPrelaunchConfig, cameraManager is nullprt");
+    CHECK_RETURN_ELOG(cameraManager_ == nullptr, "failed to SetPrelaunchConfig, cameraManager is nullptr");
     std::string cameraId(prelaunchConfig.cameraDevice.cameraId);
     OHOS::CameraStandard::EffectParam effectParam;
     OHOS::CameraStandard::PrelaunchConfig prelaunchConfigNative;
@@ -1119,7 +1127,9 @@ array<CameraConcurrentInfo> CameraManagerImpl::GetCameraConcurrentInfos(array_vi
 
     std::vector<sptr<OHOS::CameraStandard::CameraDevice>> cameraDeviceArray = {};
     for (auto cameraIdOnly : cameraIdv) {
-        cameraDeviceArray.push_back(cameraManager_->GetCameraDeviceFromId(cameraIdOnly));
+        sptr<OHOS::CameraStandard::CameraDevice> cameraDevicePtr = cameraManager_->GetCameraDeviceFromId(cameraIdOnly);
+        CHECK_CONTINUE_ELOG(!cameraDevicePtr, "cameraDevicePtr is nullptr");
+        cameraDeviceArray.push_back(cameraDevicePtr);
     }
 
     bool isSupported = cameraManager_->GetConcurrentType(cameraDeviceArray, cameraConcurrentType);
@@ -1195,7 +1205,7 @@ int64_t CameraManagerImpl::GetCameraStorageSizeSync()
         "SystemApi GetCameraStorageSize is called!");
     std::unique_ptr<CameraManagerAsyncContext> asyncContext = std::make_unique<CameraManagerAsyncContext>(
         "CameraManagerImpl::GetCameraStorageSizeSync", CameraUtilsTaihe::IncrementAndGet(cameraManagerTaskId_));
-    CHECK_RETURN_RET_ELOG(cameraManager_ == nullptr, 0, "failed to GetCameraStorageSize, cameraManager is nullprt");
+    CHECK_RETURN_RET_ELOG(cameraManager_ == nullptr, 0, "failed to GetCameraStorageSize, cameraManager is nullptr");
     asyncContext->queueTask =
         CameraTaiheWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueTask(
             "CameraManagerImpl::GetCameraStorageSizeSync");

@@ -39,14 +39,18 @@ enum PreviewOutputEventType {
     PREVIEW_FRAME_END,
     PREVIEW_FRAME_ERROR,
     SKETCH_STATUS_CHANGED,
-    PREVIEW_INVALID_TYPE
+    PREVIEW_INVALID_TYPE,
+    PREVIEW_FRAME_PAUSE,
+    PREVIEW_FRAME_RESUME,
 };
 
 static EnumHelper<PreviewOutputEventType> PreviewOutputEventTypeHelper({
         {PREVIEW_FRAME_START, CONST_PREVIEW_FRAME_START},
         {PREVIEW_FRAME_END, CONST_PREVIEW_FRAME_END},
         {PREVIEW_FRAME_ERROR, CONST_PREVIEW_FRAME_ERROR},
-        {SKETCH_STATUS_CHANGED, CONST_SKETCH_STATUS_CHANGED}
+        {SKETCH_STATUS_CHANGED, CONST_SKETCH_STATUS_CHANGED},
+        {PREVIEW_FRAME_PAUSE, CONST_PREVIEW_FRAME_PAUSE},
+        {PREVIEW_FRAME_RESUME, CONST_PREVIEW_FRAME_RESUME},
     },
     PreviewOutputEventType::PREVIEW_INVALID_TYPE
 );
@@ -62,7 +66,8 @@ public:
     void OnFrameEnded(const int32_t frameCount) const override;
     void OnError(const int32_t errorCode) const override;
     void OnSketchStatusDataChanged(const SketchStatusData& sketchStatusData) const override;
-
+    void OnFramePaused() const override;
+    void OnFrameResumed() const override;
 private:
     void UpdateJSCallback(PreviewOutputEventType eventType, const int32_t value) const;
     void UpdateJSCallbackAsync(PreviewOutputEventType eventType, const int32_t value) const;
@@ -117,6 +122,10 @@ public:
     static napi_value Off(napi_env env, napi_callback_info info);
     static napi_value GetPreviewRotation(napi_env env, napi_callback_info info);
     static napi_value SetPreviewRotation(napi_env env, napi_callback_info info);
+    static napi_value IsLogAssistanceSupported(napi_env env, napi_callback_info info);
+    static napi_value EnableLogAssistance(napi_env env, napi_callback_info info);
+    static napi_value IsBandwidthCompressionSupported(napi_env env, napi_callback_info info);
+    static napi_value EnableBandwidthCompression(napi_env env, napi_callback_info info);
 
     const EmitterFunctions& GetEmitterFunctions() override;
 
@@ -138,6 +147,14 @@ private:
     void RegisterSketchStatusChangedCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
         const std::vector<napi_value>& args, bool isOnce);
     void UnregisterSketchStatusChangedCallbackListener(
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterFramePauseCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterFramePauseCallbackListener(
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterFrameResumeChangedCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterFrameResumeChangedCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
 
     napi_env env_;

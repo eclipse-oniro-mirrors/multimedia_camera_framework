@@ -229,6 +229,10 @@ void FuzzTest(const uint8_t *rawData, size_t size)
         return;
     }
     CameraDeviceServiceStubFuzzer::fuzz_ = std::make_shared<CameraDeviceServiceStubFuzz>();
+    if (CameraDeviceServiceStubFuzzer::fuzz_ == nullptr) {
+        MEDIA_INFO_LOG("fuzz_ is null");
+        return;
+    }
     cameraDeviceServiceStub->CameraDeviceServiceStubFuzzTest1();
     cameraDeviceServiceStub->CameraDeviceServiceStubFuzzTest2();
     cameraDeviceServiceStub->CameraDeviceServiceStubFuzzTest3();

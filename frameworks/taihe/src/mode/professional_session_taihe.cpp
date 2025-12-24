@@ -132,6 +132,7 @@ ExposureMeteringMode ProfessionalSessionImpl::GetExposureMeteringMode()
 void ProfessionalSessionImpl::RegisterIsoInfoCallbackListener(const std::string& eventName,
     std::shared_ptr<uintptr_t> callback, bool isOnce)
 {
+    CHECK_RETURN_ELOG(professionSession_ == nullptr, "professionSession_ is null!");
     if (isoInfoCallback_ == nullptr) {
         ani_env *env = get_env();
         isoInfoCallback_ = std::make_shared<IsoInfoCallbackListener>(env);
@@ -170,6 +171,7 @@ void IsoInfoCallbackListener::OnIsoInfoChangedCallback(OHOS::CameraStandard::Iso
 void ProfessionalSessionImpl::RegisterExposureInfoCallbackListener(const std::string& eventName,
     std::shared_ptr<uintptr_t> callback, bool isOnce)
 {
+    CHECK_RETURN_ELOG(professionSession_ == nullptr, "professionSession_ is null!");
     if (exposureInfoCallback_ == nullptr) {
         ani_env *env = get_env();
         exposureInfoCallback_ = std::make_shared<ExposureInfoCallbackListener>(env);
@@ -207,6 +209,7 @@ void ExposureInfoCallbackListener::OnExposureInfoChangedCallback(OHOS::CameraSta
 void ProfessionalSessionImpl::RegisterApertureInfoCallbackListener(const std::string& eventName,
     std::shared_ptr<uintptr_t> callback, bool isOnce)
 {
+    CHECK_RETURN_ELOG(professionSession_ == nullptr, "professionSession_ is null!");
     if (apertureInfoCallback_ == nullptr) {
         ani_env *env = get_env();
         apertureInfoCallback_ = std::make_shared<ApertureInfoCallbackListener>(env);
@@ -244,6 +247,7 @@ void ApertureInfoCallbackListener::OnApertureInfoChangedCallback(OHOS::CameraSta
 void ProfessionalSessionImpl::RegisterLuminationInfoCallbackListener(const std::string& eventName,
     std::shared_ptr<uintptr_t> callback, bool isOnce)
 {
+    CHECK_RETURN_ELOG(professionSession_ == nullptr, "professionSession_ is null!");
     if (luminationInfoCallback_ == nullptr) {
         OHOS::CameraStandard::ExposureHintMode mode = OHOS::CameraStandard::EXPOSURE_HINT_MODE_ON;
         professionSession_->LockForControl();

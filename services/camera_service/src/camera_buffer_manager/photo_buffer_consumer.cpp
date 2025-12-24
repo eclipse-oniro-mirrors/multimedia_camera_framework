@@ -58,6 +58,7 @@ void PhotoBufferConsumer::OnBufferAvailable()
 
 void PhotoBufferConsumer::ExecuteOnBufferAvailable()
 {
+
     MEDIA_INFO_LOG("P_ExecuteOnBufferAvailable E");
     CAMERA_SYNC_TRACE;
     sptr<HStreamCapture> streamCapture = streamCapture_.promote();

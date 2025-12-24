@@ -63,12 +63,13 @@ private:
     void HandleHalEvent(int32_t value);
     void HandleMedialLibraryEvent(int32_t value);
     void HandleTemperatureEvent(int32_t value);
+    void HandleInterruptEvent(int32_t value);
     void HandleCacheEvent(int32_t value);
     void UpdateValue(SchedulerType type, int32_t value);
     SchedulerInfo ReevaluateSchedulerInfo();
     SchedulerInfo GetSchedulerInfo(SchedulerType type);
     std::shared_ptr<IState> GetSchedulerState(SchedulerType type);
-    ExecutionMode GetExecutionMode(JobPriority priority);
+    ExecutionMode GetExecutionMode(const JobPriority priority);
 
     bool isNeedStop_ {true};
     std::shared_ptr<PhotoEventsListener> eventsListener_ {nullptr};

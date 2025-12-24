@@ -42,6 +42,10 @@ protected:
         const std::vector<napi_value>& args, bool isOnce) override;
     void UnregisterPressureStatusCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
+    void RegisterCameraSwitchRequestCallbackListener(const std::string &eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value> &args, bool isOnce) override;
+    void UnregisterCameraSwitchRequestCallbackListener(
+        const std::string &eventName, napi_env env, napi_value callback, const std::vector<napi_value> &args) override;
 };
 }
 }

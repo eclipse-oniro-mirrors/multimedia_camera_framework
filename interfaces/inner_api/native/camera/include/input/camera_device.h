@@ -45,7 +45,8 @@ enum CameraType {
     CAMERA_TYPE_WIDE_ANGLE,
     CAMERA_TYPE_ULTRA_WIDE,
     CAMERA_TYPE_TELEPHOTO,
-    CAMERA_TYPE_TRUE_DEPTH
+    CAMERA_TYPE_TRUE_DEPTH,
+    CAMERA_TYPE_SUPER_TELEPHOTO
 };
 
 enum ConnectionType {
@@ -182,7 +183,7 @@ public:
     CameraPosition GetPosition();
 
     /**
-    * @brief Get the ised as position of the camera.
+    * @brief Get the used as position of the camera.
     *
     * @return Returns the used as position of the camera.
     */
@@ -301,6 +302,12 @@ public:
     void SetCameraDeviceUsedAsPosition(CameraPosition usedAsPosition);
 
     /**
+    * @brief Get the camera is support spec search.
+    *
+    */
+    bool IsSupportSpecSearch();
+
+    /**
     * @brief Get sensor module type
     *
     * @return moduleType sensor module type.
@@ -354,13 +361,34 @@ public:
         return maxSizeProfile;
     }
 
+    inline void ClearModeVideoDeferredType()
+    {
+        std::lock_guard<std::mutex> lock(modeVideoDeferredTypeMtx_);
+        modeVideoDeferredType_.clear();
+    }
+
+    inline void InsertModeVideoDeferredType(int32_t key, int32_t value)
+    {
+        std::lock_guard<std::mutex> lock(modeVideoDeferredTypeMtx_);
+        modeVideoDeferredType_[key] = value;
+    }
+
+    inline int32_t GetModeVideoDeferredType(int32_t key)
+    {
+        std::lock_guard<std::mutex> lock(modeVideoDeferredTypeMtx_);
+        auto it = modeVideoDeferredType_.find(key);
+        if (it == modeVideoDeferredType_.end()) {
+            return OHOS_CAMERA_NOT_SUPPORTED;
+        }
+        return it->second;
+    }
+
     std::unordered_map<int32_t, std::vector<Profile>> modePreviewProfiles_ = {};
     std::unordered_map<int32_t, std::vector<Profile>> modePhotoProfiles_ = {};
     std::unordered_map<int32_t, std::vector<VideoProfile>> modeVideoProfiles_ = {};
     std::unordered_map<int32_t, std::vector<DepthProfile>> modeDepthProfiles_ = {};
     std::unordered_map<int32_t, DeferredDeliveryImageType> modeDeferredType_ = {};
     CameraPosition usedAsCameraPosition_ = CAMERA_POSITION_UNSPECIFIED;
-    std::unordered_map<int32_t, int32_t> modeVideoDeferredType_ = {};
     CameraConcurrentLimtedCapability limtedCapabilitySave_;
     int32_t isConcurrentLimted_ = 0;
 private:
@@ -382,6 +410,7 @@ private:
     std::vector<SceneMode> supportedModes_ = {};
     std::vector<MetadataObjectType> objectTypes_ = {};
     bool isPrelaunch_ = false;
+    bool supportSpecSearch_ = false;
     dmDeviceInfo dmDeviceInfo_ = {};
     std::vector<float> zoomRatioRange_;
     std::vector<float> exposureBiasRange_;
@@ -395,6 +424,9 @@ private:
     bool isFindModuleTypeTag(uint32_t &tagId);
     bool isConcurrentDevice_ = false;
     bool usePhysicalCameraOrientation_ = false;
+    
+    std::mutex modeVideoDeferredTypeMtx_;
+    std::unordered_map<int32_t, int32_t> modeVideoDeferredType_ = {};
 };
 } // namespace CameraStandard
 } // namespace OHOS

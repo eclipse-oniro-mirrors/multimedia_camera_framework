@@ -13,7 +13,8 @@
  * limitations under the License.
  */
 
-#include "timer/steady_clock.h"
+#include "steady_clock.h"
+
 #include "camera_log.h"
 
 namespace OHOS {

@@ -43,6 +43,7 @@ ohos_fuzztest("StreamCaptureProxyFuzzTest") {
 
   deps = [
     "../../../services/camera_service:camera_service",
+    "${multimedia_camera_framework_path}/common:camera_utils",
     "${multimedia_camera_framework_path}/services/camera_service/idls:camera_idl_sa_proxy",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/idls:camera_deferred_idl_sa_proxy",
   ]

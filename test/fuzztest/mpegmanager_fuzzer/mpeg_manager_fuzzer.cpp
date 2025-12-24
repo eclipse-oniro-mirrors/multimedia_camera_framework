@@ -22,7 +22,7 @@
 namespace OHOS {
 namespace CameraStandard {
 using namespace DeferredProcessing;
-static constexpr int32_t MIN_SIZE_NUM = 64;
+static constexpr int32_t MIN_SIZE_NUM = 128;
 const size_t MAX_LENGTH_STRING = 64;
 std::shared_ptr<MpegManager> MpegManagerFuzzer::fuzz_{nullptr};
 
@@ -41,7 +41,9 @@ void MpegManagerFuzzer::MpegManagerFuzzTest(FuzzedDataProvider& fdp)
     fuzz_->GetMakerSurface();
     fuzz_->GetProcessTimeStamp();
     fuzz_->GetResultFd();
-    fuzz_->InitVideoCodec();
+    int64_t width = fdp.ConsumeIntegralInRange<int32_t>(0, 8960);
+    int64_t height = fdp.ConsumeIntegralInRange<int32_t>(0, 8960);
+    fuzz_->InitVideoCodec(width, height);
     fuzz_->UnInitVideoCodec();
     fuzz_->InitVideoMakerSurface();
     fuzz_->UnInitVideoMaker();

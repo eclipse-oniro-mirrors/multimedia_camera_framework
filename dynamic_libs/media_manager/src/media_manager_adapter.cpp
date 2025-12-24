@@ -31,10 +31,11 @@ MediaManagerAdapter::~MediaManagerAdapter()
     DP_DEBUG_LOG("MediaManagerAdapter destructor");
 }
 
-int32_t MediaManagerAdapter::MpegAcquire(const std::string& requestId, const sptr<IPCFileDescriptor>& inputFd)
+int32_t MediaManagerAdapter::MpegAcquire(const std::string& requestId,
+    const DpsFdPtr& inputFd, int32_t width, int32_t height)
 {
     DP_DEBUG_LOG("MpegAcquire called with requestId: %{public}s", requestId.c_str());
-    mpegManager_ = MpegManagerFactory::GetInstance().Acquire(requestId, inputFd);
+    mpegManager_ = MpegManagerFactory::GetInstance().Acquire(requestId, inputFd, width, height);
     DP_CHECK_ERROR_RETURN_RET_LOG(mpegManager_ == nullptr, DP_ERR, "mpeg manager is nullptr.");
     DP_DEBUG_LOG("DPS_VIDEO: Acquire MpegManager.");
     return DP_OK;
@@ -48,7 +49,7 @@ int32_t MediaManagerAdapter::MpegUnInit(const int32_t result)
     return ret == OK ? DP_OK : DP_ERR;
 }
 
-sptr<IPCFileDescriptor> MediaManagerAdapter::MpegGetResultFd()
+DpsFdPtr MediaManagerAdapter::MpegGetResultFd()
 {
     DP_DEBUG_LOG("MpegGetResultFd called");
     DP_CHECK_ERROR_RETURN_RET_LOG(mpegManager_ == nullptr, nullptr, "mpeg manager is nullptr.");
@@ -84,20 +85,26 @@ sptr<Surface> MediaManagerAdapter::MpegGetMakerSurface()
     return mpegManager_->GetMakerSurface();
 }
 
-void MediaManagerAdapter::MpegSetMarkSize(int32_t size)
-{
-    DP_DEBUG_LOG("MpegSetMarkSize called with size: %{public}d", size);
-    DP_CHECK_ERROR_RETURN_LOG(mpegManager_ == nullptr, "mpeg manager is nullptr.");
-    mpegManager_->SetMarkSize(size);
-}
-
 int32_t MediaManagerAdapter::MpegRelease()
 {
-    DP_DEBUG_LOG("MpegRelease called");
     MpegManagerFactory::GetInstance().Release(mpegManager_);
     mpegManager_.reset();
     DP_INFO_LOG("DPS_VIDEO: Release MpegManager.");
     return DP_OK; // Success
+}
+
+uint32_t MediaManagerAdapter::MpegGetDuration()
+{
+    DP_DEBUG_LOG("MpegGetDuration called");
+    DP_CHECK_ERROR_RETURN_RET_LOG(mpegManager_ == nullptr, 0, "mpeg manager is nullptr.");
+    return mpegManager_->GetDuration();
+}
+
+int32_t MediaManagerAdapter::MpegSetProgressNotifer(std::unique_ptr<MediaProgressNotifier> processNotifer)
+{
+    DP_CHECK_ERROR_RETURN_RET_LOG(mpegManager_ == nullptr, 0, "mpeg manager is nullptr.");
+    mpegManager_->SetProgressNotifer(std::move(processNotifer));
+    return DP_OK;
 }
 
 extern "C" MediaManagerIntf *createMediaManagerIntf()

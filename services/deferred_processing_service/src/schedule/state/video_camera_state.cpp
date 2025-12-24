@@ -16,13 +16,10 @@
 #include "video_camera_state.h"
 
 #include "dp_log.h"
-#include "state_factory.h"
 
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-REGISTER_STATE(VideoCameraState, VIDEO_CAMERA_STATE, SYSTEM_CAMERA_CLOSED);
-
 VideoCameraState::VideoCameraState(SchedulerType type, int32_t stateValue)
     : IState(type, stateValue)
 {

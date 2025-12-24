@@ -69,6 +69,14 @@ public:
     */
     int32_t GetExposure(uint32_t &exposureValue);
 
+    std::vector<NightSubMode> GetSupportedNightSubModeTypes();
+
+    int32_t GetNightSubModeType(NightSubMode& subMode);
+
+    int32_t SetNightSubModeType(NightSubMode subMode);
+
+    int32_t SetLocation(Location &location);
+
     /**
      * @brief Determine if the given Ouput can be added to session.
      *

@@ -206,15 +206,17 @@ bool PhotoSessionForSys::IsPreconfigProfilesLegal(std::shared_ptr<PreconfigProfi
         // Check photo
         bool isPhotoCanPreconfig = IsPhotoProfileLegal(device, configs->photoProfile);
         CHECK_RETURN_RET_ELOG(!isPhotoCanPreconfig, false,
-            "PhotoSessionForSys::IsPreconfigProfilesLegal check photo profile fail, "
-            "no matched photo profiles:%{public}d %{public}dx%{public}d",
+            "PhotoSessionForSys::IsPreconfigProfilesLegal check photo profile fail,"
+            "no matched photo profiles:%{public}d "
+            "%{public}dx%{public}d",
             configs->photoProfile.format_, configs->photoProfile.size_.width, configs->photoProfile.size_.height);
 
         // Check preview
         bool isPreviewCanPreconfig = IsPreviewProfileLegal(device, configs->previewProfile);
         CHECK_RETURN_RET_ELOG(!isPreviewCanPreconfig, false,
-            "PhotoSessionForSys::IsPreconfigProfilesLegal check preview profile fail, "
-            "no matched preview profiles:%{public}d %{public}dx%{public}d",
+            "PhotoSessionForSys::IsPreconfigProfilesLegal check preview profile fail,"
+            "no matched preview profiles:%{public}d "
+            "%{public}dx%{public}d",
             configs->previewProfile.format_, configs->previewProfile.size_.width, configs->previewProfile.size_.height);
         supportedCameraNum++;
     }
@@ -247,7 +249,8 @@ bool PhotoSessionForSys::IsPreviewProfileLegal(sptr<CameraDevice>& device, Profi
 
 bool PhotoSessionForSys::CanPreconfig(PreconfigType preconfigType, ProfileSizeRatio preconfigRatio)
 {
-    MEDIA_INFO_LOG("PhotoSessionForSys::CanPreconfig check type:%{public}d, check ratio:%{public}d",
+    MEDIA_INFO_LOG(
+        "PhotoSessionForSys::CanPreconfig check type:%{public}d, check ratio:%{public}d",
         preconfigType, preconfigRatio);
     std::shared_ptr<PreconfigProfiles> configs = GeneratePreconfigProfiles(preconfigType, preconfigRatio);
     CHECK_RETURN_RET_ELOG(configs == nullptr, false, "PhotoSessionForSys::CanPreconfig get configs fail.");
@@ -271,6 +274,39 @@ int32_t PhotoSessionForSys::Preconfig(PreconfigType preconfigType, ProfileSizeRa
 bool PhotoSessionForSys::CanSetFrameRateRange(int32_t minFps, int32_t maxFps, CaptureOutput* curOutput)
 {
     return CanSetFrameRateRangeForOutput(minFps, maxFps, curOutput) ? true : false;
+}
+
+bool PhotoSessionForSys::IsExternalCameraLensBoostSupported()
+{
+    MEDIA_INFO_LOG("PhotoSessionForSys::IsExternalCameraLensBoostSupported E");
+    bool isSupported = false;
+    auto inputDevice = GetInputDevice();
+    CHECK_RETURN_RET_ELOG(!inputDevice, isSupported,
+        "PhotoSessionForSys::IsExternalCameraLensBoostSupported Failed inputDevice is nullptr");
+    sptr<CameraDevice> cameraObj = inputDevice->GetCameraDeviceInfo();
+    CHECK_RETURN_RET_ELOG(cameraObj == nullptr, isSupported,
+        "PhotoSessionForSys::IsExternalCameraLensBoostSupported error!, cameraObj is nullptr");
+    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetCachedMetadata();
+    CHECK_RETURN_RET_ELOG(metadata == nullptr, isSupported,
+        "PhotoSessionForSys::IsExternalCameraLensBoostSupported error!, metadata is nullptr");
+    camera_metadata_item_t item;
+    int result = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_EXTERNAL_CAMERA_LENS_BOOST, &item);
+    CHECK_RETURN_RET_ELOG(result != CAM_META_SUCCESS || item.count <= 0, isSupported,
+        "PhotoSessionForSys::IsExternalCameraLensBoostSupported error!, FindCameraMetadataItem error");
+    isSupported = static_cast<bool>(item.data.u8[0]);
+    return isSupported;
+}
+
+int32_t PhotoSessionForSys::EnableExternalCameraLensBoost(bool enabled)
+{
+    MEDIA_INFO_LOG("PhotoSessionForSys::EnableExternalCameraLensBoost E");
+    bool isSupported = IsExternalCameraLensBoostSupported();
+    CHECK_RETURN_RET_ELOG(!isSupported, OPERATION_NOT_ALLOWED,
+        "PhotoSessionForSys::EnableExternalCameraLensBoost error!is not supported");
+    LockForControl();
+    int32_t status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_EXTERNAL_CAMERA_LENS_BOOST, &enabled, 1);
+    UnlockForControl();
+    return status;
 }
 } // namespace CameraStandard
 } // namespace OHOS

@@ -16,13 +16,10 @@
 #include "photo_hal_state.h"
 
 #include "dp_log.h"
-#include "state_factory.h"
 
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-REGISTER_STATE(PhotoHalState, PHOTO_HAL_STATE, HDI_DISCONNECTED);
-
 PhotoHalState::PhotoHalState(SchedulerType type, int32_t stateValue)
     : IState(type, stateValue)
 {

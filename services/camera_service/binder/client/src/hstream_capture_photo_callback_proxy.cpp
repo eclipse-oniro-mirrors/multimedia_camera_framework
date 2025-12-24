@@ -46,9 +46,8 @@ int32_t HStreamCapturePhotoCallbackProxy::OnPhotoAvailable(
         data,
         reply,
         option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamCapturePhotoCallbackProxy OnPhotoAvailable failed, error: %{public}d", error);
-    }
+    CHECK_PRINT_ELOG(
+        error != ERR_NONE, "HStreamCapturePhotoCallbackProxy OnPhotoAvailable failed, error: %{public}d", error);
     return error;
 }
 

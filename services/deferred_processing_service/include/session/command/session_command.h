@@ -28,7 +28,7 @@ namespace DeferredProcessing {
 class SessionCommand : public Command {
 public:
     SessionCommand();
-    ~SessionCommand() override;
+    virtual ~SessionCommand() override;
 
 protected:
     int32_t Initialize();

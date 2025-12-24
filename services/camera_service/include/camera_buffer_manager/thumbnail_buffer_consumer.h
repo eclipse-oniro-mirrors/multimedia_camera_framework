@@ -38,4 +38,4 @@ private:
 
 }  // namespace CameraStandard
 }  // namespace OHOS
-#endif
+#endif

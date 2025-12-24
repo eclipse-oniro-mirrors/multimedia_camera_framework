@@ -12,17 +12,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+// LCOV_EXCL_START
 #include "thermal_strategy.h"
 
 #include "dps_event_report.h"
 #include "events_monitor.h"
+#include "parameters.h"
 
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
 namespace {
-    const std::string THERMAL_EVENT_ID = "0";
+    constexpr char THERMAL_EVENT_ID[] = "0";
     constexpr int32_t DEFAULT_LEVEL = 0;
 }
 
@@ -38,6 +39,9 @@ ThermalStrategy::~ThermalStrategy()
 
 void ThermalStrategy::handleEvent(const EventFwk::CommonEventData& data)
 {
+    bool ignore = system::GetBoolParameter(IGNORE_TEMPERATURE, false);
+    DP_CHECK_ERROR_RETURN_LOG(ignore, "ignore VideoTemperatureState");
+
     AAFwk::Want want = data.GetWant();
     int level = want.GetIntParam(THERMAL_EVENT_ID, DEFAULT_LEVEL);
     DPSEventReport::GetInstance().SetTemperatureLevel(level);
@@ -47,3 +51,4 @@ void ThermalStrategy::handleEvent(const EventFwk::CommonEventData& data)
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS
+// LCOV_EXCL_STOP

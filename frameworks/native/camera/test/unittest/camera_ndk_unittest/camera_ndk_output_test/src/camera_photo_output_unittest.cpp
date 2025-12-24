@@ -661,7 +661,7 @@ HWTEST_F(CameraPhotoOutputUnitTest, camera_photo_output_unittest_013, TestSize.L
  * FunctionPoints: NA
  * EnvConditions: NA
  * CaseDescription: Test register photo available callback,
- * when not using the photoOutput created without surfaceId, registration will fail, return operation is not allowed
+ * when using the photoOutput created without surfaceId, registration will still succeed, return CAMERA_OK
  */
 HWTEST_F(CameraPhotoOutputUnitTest, camera_photo_output_unittest_014, TestSize.Level0)
 {
@@ -687,7 +687,7 @@ HWTEST_F(CameraPhotoOutputUnitTest, camera_photo_output_unittest_014, TestSize.L
     Camera_PhotoOutput *photoOutput = CreatePhotoOutput();
     ASSERT_NE(photoOutput, nullptr);
     ret = OH_PhotoOutput_RegisterPhotoAvailableCallback(photoOutput, CameraPhotoOutptOnPhotoAvailableCb);
-    EXPECT_EQ(ret, CAMERA_OPERATION_NOT_ALLOWED);
+    EXPECT_EQ(ret, CAMERA_OK);
     EXPECT_EQ(OH_CameraInput_Release(cameraInput), CAMERA_OK);
     EXPECT_EQ(OH_PhotoOutput_Release(photoOutput), CAMERA_OK);
     EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
@@ -806,7 +806,7 @@ HWTEST_F(CameraPhotoOutputUnitTest, camera_photo_output_unittest_016, TestSize.L
  * FunctionPoints: NA
  * EnvConditions: NA
  * CaseDescription: Test register photo asset available callback,
- * when not using the photoOutput created without surfaceId, registration will fail, return invalid argument
+ * when using the photoOutput created without surfaceId, registration will still succeed, return CAMERA_OK
  */
 HWTEST_F(CameraPhotoOutputUnitTest, camera_photo_output_unittest_017, TestSize.Level0)
 {
@@ -814,7 +814,7 @@ HWTEST_F(CameraPhotoOutputUnitTest, camera_photo_output_unittest_017, TestSize.L
     EXPECT_NE(photoOutput, nullptr);
     Camera_ErrorCode ret = OH_PhotoOutput_RegisterPhotoAssetAvailableCallback(photoOutput,
         CameraPhotoOutptOnPhotoAssetAvailableCb);
-    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    EXPECT_EQ(ret, CAMERA_OK);
     EXPECT_EQ(OH_PhotoOutput_Release(photoOutput), CAMERA_OK);
 }
 

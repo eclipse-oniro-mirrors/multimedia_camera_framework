@@ -14,11 +14,14 @@
  */
 
 #include "camera_deferred_manager_unittest.h"
+
+#include <fcntl.h>
 #include "demuxer.h"
 #include "media_manager.h"
 #include "mpeg_manager_factory.h"
 #include "track.h"
 #include "gmock/gmock.h"
+#include "test_common.h"
 #include "camera_log.h"
 
 using namespace testing::ext;
@@ -26,7 +29,10 @@ using namespace OHOS::CameraStandard::DeferredProcessing;
 
 namespace OHOS {
 namespace CameraStandard {
-constexpr int VIDEO_REQUEST_FD_ID = 1;
+const std::string MEDIA_ROOT = "/data/test/media/";
+const std::string VIDEO_PATH = MEDIA_ROOT + "test_video.mp4";
+constexpr int32_t VIDEO_WIDTH = 1920;
+constexpr int32_t VIDEO_HIGHT = 1080;
 
 void DeferredManagerUnitTest::SetUpTestCase(void)
 {
@@ -41,11 +47,15 @@ void DeferredManagerUnitTest::TearDownTestCase(void)
 void DeferredManagerUnitTest::SetUp()
 {
     MEDIA_DEBUG_LOG("SetUp");
+    fd_ = open(VIDEO_PATH.c_str(), O_RDONLY);
 }
 
 void DeferredManagerUnitTest::TearDown()
 {
     MEDIA_DEBUG_LOG("DeferredManagerUnitTest::TearDown started!");
+    if (fd_ > 0) {
+        close(fd_);
+    }
 }
 
 /*
@@ -56,7 +66,7 @@ void DeferredManagerUnitTest::TearDown()
  * EnvConditions: NA
  * CaseDescription: Test SetTrackId  for abnormal branch and normal branch
  */
-HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_001, TestSize.Level1)
+HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_001, TestSize.Level0)
 {
     auto demuxer = std::make_shared<Demuxer>();
     ASSERT_NE(demuxer, nullptr);
@@ -77,7 +87,7 @@ HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_001, TestSize
  * EnvConditions: NA
  * CaseDescription: Test WriteSample for abnormal branch
  */
-HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_003, TestSize.Level1)
+HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_003, TestSize.Level0)
 {
     auto mediaManager = std::make_shared<MediaManager>();
     ASSERT_NE(mediaManager, nullptr);
@@ -110,17 +120,17 @@ HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_003, TestSize
  * EnvConditions: NA
  * CaseDescription: Test Acquire for abnormal branch and normal branch
  */
-HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_004, TestSize.Level1)
+HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_004, TestSize.Level0)
 {
     auto mpegManagerFactory = std::make_shared<MpegManagerFactory>();
     ASSERT_NE(mpegManagerFactory, nullptr);
     uint8_t randomNum = 1;
-    std::vector<std::string> testStrings = {"test1", "test2"};
+    std::vector<std::string> testStrings = {"20240101240000000", "20250101240000001"};
     std::string requestId(testStrings[randomNum % testStrings.size()]);
-    sptr<IPCFileDescriptor> inputFd = sptr<IPCFileDescriptor>::MakeSptr(dup(VIDEO_REQUEST_FD_ID));
+    DpsFdPtr inputFd = std::make_shared<DpsFd>(dup(fd_));
     ASSERT_NE(inputFd, nullptr);
-    EXPECT_EQ(mpegManagerFactory->Acquire(requestId, inputFd), nullptr);
-    EXPECT_EQ(mpegManagerFactory->refCount_, 0);
+    EXPECT_NE(mpegManagerFactory->Acquire(requestId, inputFd, VIDEO_WIDTH, VIDEO_HIGHT), nullptr);
+    EXPECT_EQ(mpegManagerFactory->refCount_, 1);
 }
 
 /*
@@ -131,15 +141,14 @@ HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_004, TestSize
  * EnvConditions: NA
  * CaseDescription: Test UnInit, UnInitVideoCodec, GetFileFd for abnormal branch and normal branch
  */
-HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_005, TestSize.Level1)
+HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_005, TestSize.Level0)
 {
     auto mpegManager = std::make_shared<MpegManager>();
     ASSERT_NE(mpegManager, nullptr);
     uint8_t randomNum = 1;
-    std::vector<std::string> testStrings = {"test1", "test2"};
+    std::vector<std::string> testStrings = {"20250101240000000", "20250101240000001"};
     std::string requestId(testStrings[randomNum % testStrings.size()]);
     int flags = 1;
-    EXPECT_NE(mpegManager->GetFileFd(requestId, flags, "_vid_temp"), nullptr);
     EXPECT_NE(mpegManager->GetFileFd(requestId, flags, "_vid"), nullptr);
     mpegManager->isRunning_.store(false);
     mpegManager->UnInitVideoCodec();
@@ -157,24 +166,19 @@ HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_005, TestSize
  * EnvConditions: NA
  * CaseDescription: Test SetFormat, GetFormat for just call
  */
-HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_006, TestSize.Level1)
+HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_006, TestSize.Level0)
 {
-    auto track1 = std::make_shared<Track>();
-    ASSERT_NE(track1, nullptr);
-    std::shared_ptr<Format> format = nullptr;
     int32_t trackId = 1;
-    TrackFormat format1 = {format, trackId};
     Media::Plugins::MediaType type = Media::Plugins::MediaType::AUDIO;
-    track1->SetFormat(format1, type);
-    EXPECT_EQ(track1->GetFormat().format, nullptr);
+    auto track1 = std::make_shared<Track>(trackId, nullptr, type);
+    ASSERT_NE(track1, nullptr);
+    EXPECT_EQ(track1->GetMeta(), nullptr);
 
-    auto track2 = std::make_shared<Track>();
+    auto format = std::make_unique<Format>();
+    auto track2 = std::make_shared<Track>(trackId, std::move(format), type);
     ASSERT_NE(track2, nullptr);
-    format = std::make_shared<Format>();
-    ASSERT_NE(format, nullptr);
-    TrackFormat format2 = {format, trackId};
-    track2->SetFormat(format2, type);
-    EXPECT_NE(track2->GetFormat().format, nullptr);
+    ASSERT_NE(track2->format_, nullptr);
+    EXPECT_NE(track2->GetMeta(), nullptr);
 }
 
 /*
@@ -237,10 +241,11 @@ HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_009, TestSize
     ASSERT_NE(mediaManager, nullptr);
     mediaManager->inputReader_ = std::make_shared<Reader>();
     ASSERT_NE(mediaManager->inputReader_, nullptr);
-    std::shared_ptr<Track> track = std::make_shared<Track>();
+    int32_t trackId = 1;
+    Media::Plugins::MediaType type = Media::Plugins::MediaType::AUDIO;
+    auto format = std::make_unique<Format>();
+    auto track = std::make_shared<Track>(trackId, std::move(format), type);
     mediaManager->inputReader_->tracks_[Media::Plugins::MediaType::AUDIO] = track;
-    //auto medinfo = std::make_shared<DeferredProcessing::MediaInfo>();
-    //struct MediaInfo medinfo;
     mediaManager->mediaInfo_ = std::make_shared<DeferredProcessing::MediaInfo>();
     EXPECT_EQ(mediaManager->InitWriter(), MediaManagerError::ERROR_FAIL);
 }
@@ -253,20 +258,18 @@ HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_009, TestSize
  * EnvConditions: NA
  * CaseDescription: Test Acquire for abnormal branch and normal branch
  */
-HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_011, TestSize.Level0)
+HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_010, TestSize.Level0)
 {
     auto mpegManagerFactory = std::make_shared<MpegManagerFactory>();
     ASSERT_NE(mpegManagerFactory, nullptr);
     uint8_t randomNum = 1;
-    std::vector<std::string> testStrings = {"test1", "test2"};
+    std::vector<std::string> testStrings = {"20250101240000000", "20250101240000001"};
     std::string requestId(testStrings[randomNum % testStrings.size()]);
-    sptr<IPCFileDescriptor> inputFd = sptr<IPCFileDescriptor>::MakeSptr(dup(VIDEO_REQUEST_FD_ID));
+    DpsFdPtr inputFd = std::make_shared<DpsFd>(dup(fd_));
     ASSERT_NE(inputFd, nullptr);
-    auto mpegManager_ = std::make_shared<MpegManager>();
-    EXPECT_EQ(mpegManagerFactory->Acquire(requestId, inputFd), nullptr);
-    EXPECT_EQ(mpegManagerFactory->refCount_, 0);
+    EXPECT_NE(mpegManagerFactory->Acquire(requestId, inputFd, VIDEO_WIDTH, VIDEO_HIGHT), nullptr);
+    EXPECT_EQ(mpegManagerFactory->refCount_, 1);
 }
-
 
 /*
  * Feature: Framework
@@ -276,7 +279,7 @@ HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_011, TestSize
  * EnvConditions: NA
  * CaseDescription: Test SetAuxiliaryType
  */
-HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_012, TestSize.Level0)
+HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_011, TestSize.Level0)
 {
     int32_t trackId = 1;
     Media::Plugins::MediaType type = Media::Plugins::MediaType::AUDIO;

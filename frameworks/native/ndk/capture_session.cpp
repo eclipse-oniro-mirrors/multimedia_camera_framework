@@ -19,6 +19,81 @@
 #include "camera_log.h"
 #include "hilog/log.h"
 
+/**
+ * @since 13
+ * @version 1.0
+ */
+Camera_ErrorCode OH_CaptureSession_RegisterAutoDeviceSwitchStatusCallback(Camera_CaptureSession* session,
+    OH_CaptureSession_OnAutoDeviceSwitchStatusChange autoDeviceSwitchStatusChange)
+{
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    CHECK_RETURN_RET_ELOG(
+        autoDeviceSwitchStatusChange == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, callback is null!");
+    session->RegisterAutoDeviceSwitchStatusCallback(autoDeviceSwitchStatusChange);
+    return CAMERA_OK;
+}
+
+/**
+ * @since 13
+ * @version 1.0
+ */
+Camera_ErrorCode OH_CaptureSession_UnregisterAutoDeviceSwitchStatusCallback(Camera_CaptureSession* session,
+    OH_CaptureSession_OnAutoDeviceSwitchStatusChange autoDeviceSwitchStatusChange)
+{
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    CHECK_RETURN_RET_ELOG(
+        autoDeviceSwitchStatusChange == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, callback is null!");
+    session->UnregisterAutoDeviceSwitchStatusCallback(autoDeviceSwitchStatusChange);
+    return CAMERA_OK;
+}
+
+/**
+ * @since 20
+ * @version 1.0
+ */
+Camera_ErrorCode OH_CaptureSession_RegisterSystemPressureLevelChangeCallback(Camera_CaptureSession* session,
+    OH_CaptureSession_OnSystemPressureLevelChange systemPressureLevel)
+{
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    CHECK_RETURN_RET_ELOG(
+        systemPressureLevel == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, callback is null!");
+    return session->RegisterSystemPressureLevelCallback(systemPressureLevel);
+}
+
+/**
+ * @since 20
+ * @version 1.0
+ */
+Camera_ErrorCode OH_CaptureSession_UnregisterSystemPressureLevelChangeCallback(Camera_CaptureSession* session,
+    OH_CaptureSession_OnSystemPressureLevelChange systemPressureLevel)
+{
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    CHECK_RETURN_RET_ELOG(
+        systemPressureLevel == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, callback is null!");
+    return session->UnregisterSystemPressureLevelCallback(systemPressureLevel);
+}
+
+/**
+ * @since 13
+ * @version 1.0
+ */
+Camera_ErrorCode OH_CaptureSession_IsAutoDeviceSwitchSupported(Camera_CaptureSession* session, bool* isSupported)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_IsAutoDeviceSwitchSupported is called");
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    return session->IsAutoDeviceSwitchSupported(isSupported);
+}
+
+/**
+ * @since 13
+ * @version 1.0
+ */
+Camera_ErrorCode OH_CaptureSession_EnableAutoDeviceSwitch(Camera_CaptureSession* session, bool enabled)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_EnableAutoDeviceSwitch is called");
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    return session->EnableAutoDeviceSwitch(enabled);
+}
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -50,8 +125,8 @@ Camera_ErrorCode OH_CaptureSession_RegisterSmoothZoomInfoCallback(Camera_Capture
     OH_CaptureSession_OnSmoothZoomInfo smoothZoomInfoCallback)
 {
     CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
-    CHECK_RETURN_RET_ELOG(smoothZoomInfoCallback == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, callback is null!");
+    CHECK_RETURN_RET_ELOG(
+        smoothZoomInfoCallback == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, callback is null!");
     session->RegisterSmoothZoomInfoCallback(smoothZoomInfoCallback);
     return CAMERA_OK;
 }
@@ -60,36 +135,9 @@ Camera_ErrorCode OH_CaptureSession_UnregisterSmoothZoomInfoCallback(Camera_Captu
     OH_CaptureSession_OnSmoothZoomInfo smoothZoomInfoCallback)
 {
     CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
-    CHECK_RETURN_RET_ELOG(smoothZoomInfoCallback == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, callback is null!");
+    CHECK_RETURN_RET_ELOG(
+        smoothZoomInfoCallback == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, callback is null!");
     session->UnregisterSmoothZoomInfoCallback(smoothZoomInfoCallback);
-    return CAMERA_OK;
-}
-
-/**
- * @since 20
- * @version 1.0
- */
-Camera_ErrorCode OH_CaptureSession_RegisterSystemPressureLevelChangeCallback(Camera_CaptureSession* session,
-    OH_CaptureSession_OnSystemPressureLevelChange systemPressureLevel)
-{
-    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
-    CHECK_RETURN_RET_ELOG(systemPressureLevel == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, callback is null!");
-    return session->RegisterSystemPressureLevelCallback(systemPressureLevel);
-}
-
-/**
- * @since 20
- * @version 1.0
- */
-Camera_ErrorCode OH_CaptureSession_UnregisterSystemPressureLevelChangeCallback(Camera_CaptureSession* session,
-    OH_CaptureSession_OnSystemPressureLevelChange systemPressureLevel)
-{
-    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
-    CHECK_RETURN_RET_ELOG(systemPressureLevel == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, callback is null!");
-    session->UnRegisterSystemPressureLevelCallback(systemPressureLevel);
     return CAMERA_OK;
 }
 
@@ -103,8 +151,8 @@ Camera_ErrorCode OH_CaptureSession_SetSessionMode(Camera_CaptureSession* session
 Camera_ErrorCode OH_CaptureSession_AddSecureOutput(Camera_CaptureSession* session, Camera_PreviewOutput* previewOutput)
 {
     CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
-    CHECK_RETURN_RET_ELOG(previewOutput == nullptr,
-        CAMERA_INVALID_ARGUMENT, "Invalid argument, previewOutput is null!");
+    CHECK_RETURN_RET_ELOG(
+        previewOutput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, previewOutput is null!");
     return session->AddSecureOutput(previewOutput);
 }
 
@@ -125,8 +173,7 @@ Camera_ErrorCode OH_CaptureSession_CommitConfig(Camera_CaptureSession* session)
 Camera_ErrorCode OH_CaptureSession_AddInput(Camera_CaptureSession* session, Camera_Input* cameraInput)
 {
     CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
-    CHECK_RETURN_RET_ELOG(cameraInput == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, cameraInput is null!");
+    CHECK_RETURN_RET_ELOG(cameraInput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, cameraInput is null!");
 
     return session->AddInput(cameraInput);
 }
@@ -134,8 +181,7 @@ Camera_ErrorCode OH_CaptureSession_AddInput(Camera_CaptureSession* session, Came
 Camera_ErrorCode OH_CaptureSession_RemoveInput(Camera_CaptureSession* session, Camera_Input* cameraInput)
 {
     CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
-    CHECK_RETURN_RET_ELOG(cameraInput == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, cameraInput is null!");
+    CHECK_RETURN_RET_ELOG(cameraInput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, cameraInput is null!");
 
     return session->RemoveInput(cameraInput);
 }
@@ -144,8 +190,8 @@ Camera_ErrorCode OH_CaptureSession_AddPreviewOutput(Camera_CaptureSession* sessi
     Camera_PreviewOutput* previewOutput)
 {
     CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
-    CHECK_RETURN_RET_ELOG(previewOutput == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, previewOutput is null!");
+    CHECK_RETURN_RET_ELOG(
+        previewOutput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, previewOutput is null!");
 
     return session->AddPreviewOutput(previewOutput);
 }
@@ -154,8 +200,8 @@ Camera_ErrorCode OH_CaptureSession_RemovePreviewOutput(Camera_CaptureSession* se
     Camera_PreviewOutput* previewOutput)
 {
     CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
-    CHECK_RETURN_RET_ELOG(previewOutput == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, previewOutput is null!");
+    CHECK_RETURN_RET_ELOG(
+        previewOutput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, previewOutput is null!");
 
     return session->RemovePreviewOutput(previewOutput);
 }
@@ -164,8 +210,7 @@ Camera_ErrorCode OH_CaptureSession_AddPhotoOutput(Camera_CaptureSession* session
 {
     MEDIA_DEBUG_LOG("OH_CaptureSession_AddPhotoOutput is called");
     CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
-    CHECK_RETURN_RET_ELOG(photoOutput == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, photoOutput is null!");
+    CHECK_RETURN_RET_ELOG(photoOutput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, photoOutput is null!");
 
     return session->AddPhotoOutput(photoOutput);
 }
@@ -174,8 +219,7 @@ Camera_ErrorCode OH_CaptureSession_RemovePhotoOutput(Camera_CaptureSession* sess
 {
     MEDIA_DEBUG_LOG("OH_CaptureSession_RemovePhotoOutput is called");
     CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
-    CHECK_RETURN_RET_ELOG(photoOutput == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, photoOutput is null!");
+    CHECK_RETURN_RET_ELOG(photoOutput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, photoOutput is null!");
 
     return session->RemovePhotoOutput(photoOutput);
 }
@@ -185,8 +229,8 @@ Camera_ErrorCode OH_CaptureSession_AddMetadataOutput(Camera_CaptureSession* sess
 {
     MEDIA_DEBUG_LOG("OH_CaptureSession_AddMetadataOutput is called");
     CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
-    CHECK_RETURN_RET_ELOG(metadataOutput == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, metadataOutput is null!");
+    CHECK_RETURN_RET_ELOG(
+        metadataOutput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, metadataOutput is null!");
 
     return session->AddMetaDataOutput(metadataOutput);
 }
@@ -196,8 +240,8 @@ Camera_ErrorCode OH_CaptureSession_RemoveMetadataOutput(Camera_CaptureSession* s
 {
     MEDIA_DEBUG_LOG("OH_CaptureSession_RemoveMetadataOutput is called");
     CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
-    CHECK_RETURN_RET_ELOG(metadataOutput == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, metadataOutput is null!");
+    CHECK_RETURN_RET_ELOG(
+        metadataOutput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, metadataOutput is null!");
 
     return session->RemoveMetaDataOutput(metadataOutput);
 }
@@ -207,14 +251,10 @@ Camera_ErrorCode OH_CaptureSession_IsVideoStabilizationModeSupported(Camera_Capt
 {
     MEDIA_DEBUG_LOG("OH_CaptureSession_IsVideoStabilizationModeSupported is called");
     CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
-    CHECK_RETURN_RET_ELOG(isSupported == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, isSupported is null!");
-    CHECK_RETURN_RET_ELOG(mode != STABILIZATION_MODE_OFF &&
-        mode != STABILIZATION_MODE_LOW &&
-        mode != STABILIZATION_MODE_MIDDLE &&
-        mode != STABILIZATION_MODE_HIGH &&
-        mode != STABILIZATION_MODE_AUTO,
-        CAMERA_INVALID_ARGUMENT, "Invalid argument, mode is invaid!");
+    CHECK_RETURN_RET_ELOG(isSupported == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, isSupported is null!");
+    CHECK_RETURN_RET_ELOG(mode != STABILIZATION_MODE_OFF && mode != STABILIZATION_MODE_LOW &&
+            mode != STABILIZATION_MODE_MIDDLE && mode != STABILIZATION_MODE_HIGH && mode != STABILIZATION_MODE_AUTO,
+        CAMERA_INVALID_ARGUMENT, "Invalid argument, mode is invalid!");
 
     return session->IsVideoStabilizationModeSupported(mode, isSupported);
 }
@@ -234,12 +274,9 @@ Camera_ErrorCode OH_CaptureSession_SetVideoStabilizationMode(Camera_CaptureSessi
 {
     MEDIA_DEBUG_LOG("OH_CaptureSession_SetVideoStabilizationMode is called");
     CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
-    CHECK_RETURN_RET_ELOG(mode != STABILIZATION_MODE_OFF &&
-        mode != STABILIZATION_MODE_LOW &&
-        mode != STABILIZATION_MODE_MIDDLE &&
-        mode != STABILIZATION_MODE_HIGH &&
-        mode != STABILIZATION_MODE_AUTO,
-        CAMERA_INVALID_ARGUMENT, "Invalid argument, mode is invaid!");
+    CHECK_RETURN_RET_ELOG(mode != STABILIZATION_MODE_OFF && mode != STABILIZATION_MODE_LOW &&
+            mode != STABILIZATION_MODE_MIDDLE && mode != STABILIZATION_MODE_HIGH && mode != STABILIZATION_MODE_AUTO,
+        CAMERA_INVALID_ARGUMENT, "Invalid argument, mode is invalid!");
 
     return session->SetVideoStabilizationMode(mode);
 }
@@ -276,13 +313,10 @@ Camera_ErrorCode OH_CaptureSession_IsFocusModeSupported(Camera_CaptureSession* s
 {
     MEDIA_DEBUG_LOG("OH_CaptureSession_IsFocusModeSupported is called");
     CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
-    CHECK_RETURN_RET_ELOG(focusMode != FOCUS_MODE_MANUAL &&
-        focusMode != FOCUS_MODE_CONTINUOUS_AUTO &&
-        focusMode != FOCUS_MODE_AUTO &&
-        focusMode != FOCUS_MODE_LOCKED,
-        CAMERA_INVALID_ARGUMENT, "Invalid argument,focusMode is invaild!");
-    CHECK_RETURN_RET_ELOG(isSupported == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, isSupported is null!");
+    CHECK_RETURN_RET_ELOG(isSupported == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, isSupported is null!");
+    CHECK_RETURN_RET_ELOG(focusMode != FOCUS_MODE_MANUAL && focusMode != FOCUS_MODE_CONTINUOUS_AUTO &&
+            focusMode != FOCUS_MODE_AUTO && focusMode != FOCUS_MODE_LOCKED,
+        CAMERA_INVALID_ARGUMENT, "Invalid argument, focusMode is invalid!");
 
     return session->IsFocusModeSupported(focusMode, isSupported);
 }
@@ -300,11 +334,9 @@ Camera_ErrorCode OH_CaptureSession_SetFocusMode(Camera_CaptureSession* session, 
 {
     MEDIA_DEBUG_LOG("OH_CaptureSession_SetFocusMode is called");
     CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
-    CHECK_RETURN_RET_ELOG(focusMode != FOCUS_MODE_MANUAL &&
-        focusMode != FOCUS_MODE_CONTINUOUS_AUTO &&
-        focusMode != FOCUS_MODE_AUTO &&
-        focusMode != FOCUS_MODE_LOCKED,
-        CAMERA_INVALID_ARGUMENT, "Invalid argument,focusMode is invaild!");
+    CHECK_RETURN_RET_ELOG(focusMode != FOCUS_MODE_MANUAL && focusMode != FOCUS_MODE_CONTINUOUS_AUTO &&
+            focusMode != FOCUS_MODE_AUTO && focusMode != FOCUS_MODE_LOCKED,
+        CAMERA_INVALID_ARGUMENT, "Invalid argument, focusMode is invaild!");
 
     return session->SetFocusMode(focusMode);
 }
@@ -329,8 +361,7 @@ Camera_ErrorCode OH_CaptureSession_GetFocusPoint(Camera_CaptureSession* session,
 Camera_ErrorCode OH_CaptureSession_AddVideoOutput(Camera_CaptureSession* session, Camera_VideoOutput* videoOutput)
 {
     CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
-    CHECK_RETURN_RET_ELOG(videoOutput == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, videoOutput is null!");
+    CHECK_RETURN_RET_ELOG(videoOutput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, videoOutput is null!");
 
     return session->AddVideoOutput(videoOutput);
 }
@@ -338,8 +369,7 @@ Camera_ErrorCode OH_CaptureSession_AddVideoOutput(Camera_CaptureSession* session
 Camera_ErrorCode OH_CaptureSession_RemoveVideoOutput(Camera_CaptureSession* session, Camera_VideoOutput* videoOutput)
 {
     CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
-    CHECK_RETURN_RET_ELOG(videoOutput == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, videoOutput is null!");
+    CHECK_RETURN_RET_ELOG(videoOutput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, videoOutput is null!");
 
     return session->RemoveVideoOutput(videoOutput);
 }
@@ -381,8 +411,7 @@ Camera_ErrorCode OH_CaptureSession_IsFlashModeSupported(Camera_CaptureSession* s
     Camera_FlashMode flashMode, bool* isSupported)
 {
     CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
-    CHECK_RETURN_RET_ELOG(isSupported == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, isSupported is null!");
+    CHECK_RETURN_RET_ELOG(isSupported == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, isSupported is null!");
 
     return session->IsFlashModeSupported(flashMode, isSupported);
 }
@@ -398,11 +427,11 @@ Camera_ErrorCode OH_CaptureSession_GetFlashMode(Camera_CaptureSession* session, 
 Camera_ErrorCode OH_CaptureSession_SetFlashMode(Camera_CaptureSession* session, Camera_FlashMode flashMode)
 {
     CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
-    CHECK_RETURN_RET_ELOG(flashMode != FLASH_MODE_CLOSE &&
-        flashMode != FLASH_MODE_OPEN &&
-        flashMode != FLASH_MODE_AUTO &&
-        flashMode != FLASH_MODE_ALWAYS_OPEN,
-        CAMERA_INVALID_ARGUMENT, "Invalid argument,flashMode is invaild!");
+
+    CHECK_RETURN_RET_ELOG(flashMode != FLASH_MODE_CLOSE && flashMode != FLASH_MODE_OPEN &&
+            flashMode != FLASH_MODE_AUTO && flashMode != FLASH_MODE_ALWAYS_OPEN,
+        CAMERA_INVALID_ARGUMENT, "Invalid argument, flashMode is invalid!");
+
     return session->SetFlashMode(flashMode);
 }
 
@@ -411,12 +440,10 @@ Camera_ErrorCode OH_CaptureSession_IsExposureModeSupported(Camera_CaptureSession
 {
     MEDIA_DEBUG_LOG("OH_CaptureSession_IsExposureModeSupported is called");
     CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
-    CHECK_RETURN_RET_ELOG(isSupported == nullptr,
-        CAMERA_INVALID_ARGUMENT, "Invalid argument, isSupported is null!");
-    CHECK_RETURN_RET_ELOG(exposureMode != EXPOSURE_MODE_LOCKED &&
-        exposureMode != EXPOSURE_MODE_AUTO &&
-        exposureMode != EXPOSURE_MODE_CONTINUOUS_AUTO,
-        CAMERA_INVALID_ARGUMENT, "Invalid argument,exposureMode is invaild!");
+    CHECK_RETURN_RET_ELOG(isSupported == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, isSupported is null!");
+    CHECK_RETURN_RET_ELOG(exposureMode != EXPOSURE_MODE_LOCKED && exposureMode != EXPOSURE_MODE_AUTO &&
+            exposureMode != EXPOSURE_MODE_CONTINUOUS_AUTO,
+        CAMERA_INVALID_ARGUMENT, "Invalid argument, exposureMode is invalid!");
     return session->IsExposureModeSupported(exposureMode, isSupported);
 }
 
@@ -424,8 +451,7 @@ Camera_ErrorCode OH_CaptureSession_GetExposureMode(Camera_CaptureSession* sessio
 {
     MEDIA_DEBUG_LOG("OH_CaptureSession_GetExposureMode is called");
     CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
-    CHECK_RETURN_RET_ELOG(exposureMode == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, exposureMode is null!");
+    CHECK_RETURN_RET_ELOG(exposureMode == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, exposureMode is null!");
     return session->GetExposureMode(exposureMode);
 }
 
@@ -433,11 +459,9 @@ Camera_ErrorCode OH_CaptureSession_SetExposureMode(Camera_CaptureSession* sessio
 {
     MEDIA_DEBUG_LOG("OH_CaptureSession_SetExposureMode is called");
     CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
-    CHECK_RETURN_RET_ELOG(exposureMode != EXPOSURE_MODE_LOCKED &&
-        exposureMode != EXPOSURE_MODE_AUTO &&
-        exposureMode != EXPOSURE_MODE_CONTINUOUS_AUTO,
-        CAMERA_INVALID_ARGUMENT, "Invalid argument,exposureMode is invaild!");
-
+    CHECK_RETURN_RET_ELOG(exposureMode != EXPOSURE_MODE_LOCKED && exposureMode != EXPOSURE_MODE_AUTO &&
+            exposureMode != EXPOSURE_MODE_CONTINUOUS_AUTO,
+        CAMERA_INVALID_ARGUMENT, "Invalid argument, exposureMode is invalid!");
     return session->SetExposureMode(exposureMode);
 }
 
@@ -453,9 +477,7 @@ Camera_ErrorCode OH_CaptureSession_SetMeteringPoint(Camera_CaptureSession* sessi
 {
     MEDIA_DEBUG_LOG("OH_CaptureSession_SetMeteringPoint is called");
     CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
-    CHECK_RETURN_RET_ELOG(point.x < 0 || point.y < 0,
-        CAMERA_INVALID_ARGUMENT, "Invalid argument, point is invaild!");
-
+    CHECK_RETURN_RET_ELOG(point.x < 0 || point.y < 0, CAMERA_INVALID_ARGUMENT, "Invalid argument, point is illegal!");
     return session->SetMeteringPoint(point);
 }
 
@@ -464,10 +486,10 @@ Camera_ErrorCode OH_CaptureSession_GetExposureBiasRange(Camera_CaptureSession* s
 {
     MEDIA_DEBUG_LOG("OH_CaptureSession_GetExposureBiasRange is called");
     CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
-    CHECK_RETURN_RET_ELOG(minExposureBias == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, minExposureBias is null!");
-    CHECK_RETURN_RET_ELOG(maxExposureBias == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, maxExposureBias is null!");
+    CHECK_RETURN_RET_ELOG(
+        minExposureBias == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, minExposureBias is null!");
+    CHECK_RETURN_RET_ELOG(
+        maxExposureBias == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, maxExposureBias is null!");
     CHECK_RETURN_RET_ELOG(step == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, step is null!");
     return session->GetExposureBiasRange(minExposureBias, maxExposureBias, step);
 }
@@ -482,8 +504,7 @@ Camera_ErrorCode OH_CaptureSession_GetExposureBias(Camera_CaptureSession* sessio
 {
     MEDIA_DEBUG_LOG("OH_CaptureSession_GetExposureBias is called");
     CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
-    CHECK_RETURN_RET_ELOG(exposureBias == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, exposureBias is null!");
+    CHECK_RETURN_RET_ELOG(exposureBias == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, exposureBias is null!");
     return session->GetExposureBias(exposureBias);
 }
 
@@ -491,12 +512,9 @@ Camera_ErrorCode OH_CaptureSession_CanAddInput(Camera_CaptureSession* session,
     Camera_Input* cameraInput, bool* isSuccessful)
 {
     MEDIA_DEBUG_LOG("OH_CaptureSession_CanAddInput is called");
-    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, session is null!");
-    CHECK_RETURN_RET_ELOG(cameraInput == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, cameraInput is null!");
-    CHECK_RETURN_RET_ELOG(isSuccessful == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, isSuccessful is null!");
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    CHECK_RETURN_RET_ELOG(cameraInput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, cameraInput is null!");
+    CHECK_RETURN_RET_ELOG(isSuccessful == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, isSuccessful is null!");
 
     return session->CanAddInput(cameraInput, isSuccessful);
 }
@@ -505,12 +523,9 @@ Camera_ErrorCode OH_CaptureSession_CanAddPreviewOutput(Camera_CaptureSession* se
     Camera_PreviewOutput* cameraOutput, bool* isSuccessful)
 {
     MEDIA_DEBUG_LOG("OH_CaptureSession_CanAddPreviewOutput is called");
-    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, session is null!");
-    CHECK_RETURN_RET_ELOG(cameraOutput == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, cameraOutput is null!");
-    CHECK_RETURN_RET_ELOG(isSuccessful == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, isSuccessful is null!");
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    CHECK_RETURN_RET_ELOG(cameraOutput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, cameraOutput is null!");
+    CHECK_RETURN_RET_ELOG(isSuccessful == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, isSuccessful is null!");
 
     return session->CanAddPreviewOutput(cameraOutput, isSuccessful);
 }
@@ -519,12 +534,9 @@ Camera_ErrorCode OH_CaptureSession_CanAddPhotoOutput(Camera_CaptureSession* sess
     Camera_PhotoOutput* cameraOutput, bool* isSuccessful)
 {
     MEDIA_DEBUG_LOG("OH_CaptureSession_CanAddPhotoOutput is called");
-    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, session is null!");
-    CHECK_RETURN_RET_ELOG(cameraOutput == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, cameraOutput is null!");
-    CHECK_RETURN_RET_ELOG(isSuccessful == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, isSuccessful is null!");
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    CHECK_RETURN_RET_ELOG(cameraOutput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, cameraOutput is null!");
+    CHECK_RETURN_RET_ELOG(isSuccessful == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, isSuccessful is null!");
 
     return session->CanAddPhotoOutput(cameraOutput, isSuccessful);
 }
@@ -533,12 +545,9 @@ Camera_ErrorCode OH_CaptureSession_CanAddVideoOutput(Camera_CaptureSession* sess
     Camera_VideoOutput* cameraOutput, bool* isSuccessful)
 {
     MEDIA_DEBUG_LOG("OH_CaptureSession_CanAddVideoOutput is called");
-    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, session is null!");
-    CHECK_RETURN_RET_ELOG(cameraOutput == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, cameraOutput is null!");
-    CHECK_RETURN_RET_ELOG(isSuccessful == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, isSuccessful is null!");
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    CHECK_RETURN_RET_ELOG(cameraOutput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, cameraOutput is null!");
+    CHECK_RETURN_RET_ELOG(isSuccessful == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, isSuccessful is null!");
 
     return session->CanAddVideoOutput(cameraOutput, isSuccessful);
 }
@@ -547,10 +556,8 @@ Camera_ErrorCode OH_CaptureSession_CanPreconfig(Camera_CaptureSession* session,
     Camera_PreconfigType preconfigType, bool* canPreconfig)
 {
     MEDIA_DEBUG_LOG("OH_CaptureSession_CanPreconfig is called.");
-    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, session is null!");
-    CHECK_RETURN_RET_ELOG(canPreconfig == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, canPreconfig is null!");
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    CHECK_RETURN_RET_ELOG(canPreconfig == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, canPreconfig is null!");
 
     return session->CanPreconfig(preconfigType, canPreconfig);
 }
@@ -559,10 +566,8 @@ Camera_ErrorCode OH_CaptureSession_CanPreconfigWithRatio(Camera_CaptureSession* 
     Camera_PreconfigType preconfigType, Camera_PreconfigRatio preconfigRatio, bool* canPreconfig)
 {
     MEDIA_DEBUG_LOG("OH_CaptureSession_CanPreconfigWithRatio is called.");
-    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, session is null!");
-    CHECK_RETURN_RET_ELOG(canPreconfig == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, canPreconfig is null!");
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    CHECK_RETURN_RET_ELOG(canPreconfig == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, canPreconfig is null!");
 
     return session->CanPreconfigWithRatio(preconfigType, preconfigRatio, canPreconfig);
 }
@@ -570,8 +575,7 @@ Camera_ErrorCode OH_CaptureSession_CanPreconfigWithRatio(Camera_CaptureSession* 
 Camera_ErrorCode OH_CaptureSession_Preconfig(Camera_CaptureSession* session, Camera_PreconfigType preconfigType)
 {
     MEDIA_DEBUG_LOG("OH_CaptureSession_Preconfig is called.");
-    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, session is null!");
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
 
     return session->Preconfig(preconfigType);
 }
@@ -580,8 +584,7 @@ Camera_ErrorCode OH_CaptureSession_PreconfigWithRatio(Camera_CaptureSession* ses
     Camera_PreconfigType preconfigType, Camera_PreconfigRatio preconfigRatio)
 {
     MEDIA_DEBUG_LOG("OH_CaptureSession_PreconfigWithRatio is called.");
-    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, session is null!");
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
 
     return session->PreconfigWithRatio(preconfigType, preconfigRatio);
 }
@@ -593,10 +596,9 @@ Camera_ErrorCode OH_CaptureSession_PreconfigWithRatio(Camera_CaptureSession* ses
 Camera_ErrorCode OH_CaptureSession_GetExposureValue(Camera_CaptureSession* session, float* exposureValue)
 {
     MEDIA_DEBUG_LOG("OH_CaptureSession_GetExposureValue is called");
-    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, session is null!");
-    CHECK_RETURN_RET_ELOG(exposureValue == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, exposureValue is null!");
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    CHECK_RETURN_RET_ELOG(
+        exposureValue == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, exposureValue is null!");
 
     return session->GetExposureValue(exposureValue);
 }
@@ -608,10 +610,8 @@ Camera_ErrorCode OH_CaptureSession_GetExposureValue(Camera_CaptureSession* sessi
 Camera_ErrorCode OH_CaptureSession_GetFocalLength(Camera_CaptureSession* session, float* focalLength)
 {
     MEDIA_DEBUG_LOG("OH_CaptureSession_GetFocalLength is called");
-    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, session is null!");
-    CHECK_RETURN_RET_ELOG(focalLength == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, focalLength is null!");
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    CHECK_RETURN_RET_ELOG(focalLength == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, focalLength is null!");
 
     return session->GetFocalLength(focalLength);
 }
@@ -624,8 +624,7 @@ Camera_ErrorCode OH_CaptureSession_SetSmoothZoom(Camera_CaptureSession *session,
     Camera_SmoothZoomMode smoothZoomMode)
 {
     MEDIA_DEBUG_LOG("OH_CaptureSession_SetSmoothZoom is called");
-    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, session is null!");
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
 
     return session->SetSmoothZoom(targetZoom, smoothZoomMode);
 }
@@ -638,12 +637,9 @@ Camera_ErrorCode OH_CaptureSession_GetSupportedColorSpaces(Camera_CaptureSession
     OH_NativeBuffer_ColorSpace** colorSpace, uint32_t* size)
 {
     MEDIA_DEBUG_LOG("OH_CaptureSession_GetSupportedColorSpaces is called");
-    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, session is null!");
-    CHECK_RETURN_RET_ELOG(colorSpace == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, colorSpace is null!");
-    CHECK_RETURN_RET_ELOG(size == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, size is null!");
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    CHECK_RETURN_RET_ELOG(colorSpace == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, colorSpace is null!");
+    CHECK_RETURN_RET_ELOG(size == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, size is null!");
 
     return session->GetSupportedColorSpaces(colorSpace, size);
 }
@@ -656,10 +652,8 @@ Camera_ErrorCode OH_CaptureSession_DeleteColorSpaces(Camera_CaptureSession* sess
     OH_NativeBuffer_ColorSpace* colorSpace)
 {
     MEDIA_DEBUG_LOG("OH_CaptureSession_DeleteSupportedColorSpaces is called");
-    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, session is null!");
-    CHECK_RETURN_RET_ELOG(colorSpace == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, colorSpace is null!");
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    CHECK_RETURN_RET_ELOG(colorSpace == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, colorSpace is null!");
 
     return session->DeleteColorSpaces(colorSpace);
 }
@@ -672,10 +666,8 @@ Camera_ErrorCode OH_CaptureSession_GetActiveColorSpace(Camera_CaptureSession* se
     OH_NativeBuffer_ColorSpace* colorSpace)
 {
     MEDIA_DEBUG_LOG("OH_CaptureSession_GetActiveColorSpace is called");
-    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, session is null!");
-    CHECK_RETURN_RET_ELOG(colorSpace == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, colorSpace is null!");
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    CHECK_RETURN_RET_ELOG(colorSpace == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, colorSpace is null!");
 
     return session->GetActiveColorSpace(colorSpace);
 }
@@ -688,62 +680,9 @@ Camera_ErrorCode OH_CaptureSession_SetActiveColorSpace(Camera_CaptureSession* se
     OH_NativeBuffer_ColorSpace colorSpace)
 {
     MEDIA_DEBUG_LOG("OH_CaptureSession_SetActiveColorSpace is called");
-    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, session is null!");
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
 
     return session->SetActiveColorSpace(colorSpace);
-}
-
-/**
- * @since 13
- * @version 1.0
- */
-Camera_ErrorCode OH_CaptureSession_RegisterAutoDeviceSwitchStatusCallback(Camera_CaptureSession* session,
-    OH_CaptureSession_OnAutoDeviceSwitchStatusChange autoDeviceSwitchStatusChange)
-{
-    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
-    CHECK_RETURN_RET_ELOG(autoDeviceSwitchStatusChange == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, callback is null!");
-    session->RegisterAutoDeviceSwitchStatusCallback(autoDeviceSwitchStatusChange);
-    return CAMERA_OK;
-}
-
-/**
- * @since 13
- * @version 1.0
- */
-Camera_ErrorCode OH_CaptureSession_UnregisterAutoDeviceSwitchStatusCallback(Camera_CaptureSession* session,
-    OH_CaptureSession_OnAutoDeviceSwitchStatusChange autoDeviceSwitchStatusChange)
-{
-    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
-    CHECK_RETURN_RET_ELOG(autoDeviceSwitchStatusChange == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, callback is null!");
-    session->UnregisterAutoDeviceSwitchStatusCallback(autoDeviceSwitchStatusChange);
-    return CAMERA_OK;
-}
-
-/**
- * @since 13
- * @version 1.0
- */
-Camera_ErrorCode OH_CaptureSession_IsAutoDeviceSwitchSupported(Camera_CaptureSession* session, bool* isSupported)
-{
-    MEDIA_DEBUG_LOG("OH_CaptureSession_IsAutoDeviceSwitchSupported is called");
-    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, session is null!");
-    return session->IsAutoDeviceSwitchSupported(isSupported);
-}
-
-/**
- * @since 13
- * @version 1.0
- */
-Camera_ErrorCode OH_CaptureSession_EnableAutoDeviceSwitch(Camera_CaptureSession* session, bool enabled)
-{
-    MEDIA_DEBUG_LOG("OH_CaptureSession_EnableAutoDeviceSwitch is called");
-    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, session is null!");
-    return session->EnableAutoDeviceSwitch(enabled);
 }
 
 /**
@@ -785,8 +724,7 @@ Camera_ErrorCode OH_CaptureSession_IsWhiteBalanceModeSupported(
     Camera_CaptureSession* session, Camera_WhiteBalanceMode whiteBalanceMode, bool* isSupported)
 {
     MEDIA_DEBUG_LOG("OH_CaptureSession_IsWhiteBalanceModeSupported is called");
-    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, session is null!");
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
 
     return session->IsWhiteBalanceModeSupported(whiteBalanceMode, isSupported);
 }
@@ -795,8 +733,7 @@ Camera_ErrorCode OH_CaptureSession_GetWhiteBalanceMode(
     Camera_CaptureSession* session, Camera_WhiteBalanceMode* whiteBalanceMode)
 {
     MEDIA_DEBUG_LOG("OH_CaptureSession_GetWhiteBalanceMode is called");
-    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, session is null!");
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
 
     return session->GetWhiteBalanceMode(whiteBalanceMode);
 }
@@ -834,21 +771,18 @@ Camera_ErrorCode OH_CaptureSession_SetWhiteBalanceMode(Camera_CaptureSession* se
 Camera_ErrorCode OH_CaptureSession_IsControlCenterSupported(Camera_CaptureSession* session, bool* isSupported)
 {
     MEDIA_DEBUG_LOG("OH_CaptureSession_IsControlCenterSupported is called");
-    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, session is null!");
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    CHECK_RETURN_RET_ELOG(isSupported == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, isSupported is null!");
     return session->IsControlCenterSupported(isSupported);
 }
 
 Camera_ErrorCode OH_CaptureSession_GetSupportedEffectTypes(
-    Camera_CaptureSession* session, Camera_ControlCenterEffectType** types, uint32_t* size)
+    Camera_CaptureSession* session,Camera_ControlCenterEffectType** types, uint32_t* size)
 {
     MEDIA_DEBUG_LOG("OH_CaptureSession_GetSupportedEffectTypes is called");
-    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, session is null!");
-    CHECK_RETURN_RET_ELOG(types == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, types is null!");
-    CHECK_RETURN_RET_ELOG(size == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, size is null!");
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    CHECK_RETURN_RET_ELOG(types == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, types is null!");
+    CHECK_RETURN_RET_ELOG(size == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, size is null!");
 
     return session->GetSupportedEffectTypes(types, size);
 }
@@ -857,10 +791,8 @@ Camera_ErrorCode OH_CaptureSession_DeleteSupportedEffectTypes(Camera_CaptureSess
     Camera_ControlCenterEffectType* types, uint32_t size)
 {
     MEDIA_DEBUG_LOG("OH_CaptureSession_DeleteSupportedEffectTypes is called");
-    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, session is null!");
-    CHECK_RETURN_RET_ELOG(types == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, colorSpace is null!");
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    CHECK_RETURN_RET_ELOG(types == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, types is null!");
 
     return session->DeleteEffectTypes(types);
 }
@@ -873,26 +805,23 @@ Camera_ErrorCode OH_CaptureSession_EnableControlCenter(Camera_CaptureSession* se
     return session->EnableControlCenter(enabled);
 }
 
+
 Camera_ErrorCode OH_CaptureSession_RegisterControlCenterEffectStatusChangeCallback(
-    Camera_CaptureSession* session,
-    OH_CaptureSession_OnControlCenterEffectStatusChange controlCenterEffectStatusChange)
+    Camera_CaptureSession* session,OH_CaptureSession_OnControlCenterEffectStatusChange controlCenterEffectStatusChange)
 {
     CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
-    CHECK_RETURN_RET_ELOG(controlCenterEffectStatusChange == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, callback is null!");
-    session->RegisterControlCenterEffectStatusChangeCallback(controlCenterEffectStatusChange);
-    return CAMERA_OK;
+    CHECK_RETURN_RET_ELOG(
+        controlCenterEffectStatusChange == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, callback is null!");
+    return session->RegisterControlCenterEffectStatusChangeCallback(controlCenterEffectStatusChange);
 }
 
 Camera_ErrorCode OH_CaptureSession_UnregisterControlCenterEffectStatusChangeCallback(
-    Camera_CaptureSession* session,
-    OH_CaptureSession_OnControlCenterEffectStatusChange controlCenterEffectStatusChange)
+    Camera_CaptureSession* session, OH_CaptureSession_OnControlCenterEffectStatusChange controlCenterEffectStatusChange)
 {
     CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
-    CHECK_RETURN_RET_ELOG(controlCenterEffectStatusChange == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, callback is null!");
-    session->UnregisterControlCenterEffectStatusChangeCallback(controlCenterEffectStatusChange);
-    return CAMERA_OK;
+    CHECK_RETURN_RET_ELOG(
+        controlCenterEffectStatusChange == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, callback is null!");
+    return session->UnregisterControlCenterEffectStatusChangeCallback(controlCenterEffectStatusChange);
 }
 
 Camera_ErrorCode OH_CaptureSession_RegisterMacroStatusChangeCallback(
@@ -921,7 +850,8 @@ Camera_ErrorCode OH_CaptureSession_RegisterIsoChangeCallback(
     CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
     CHECK_RETURN_RET_ELOG(
         isoInfoChange == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, callback is null!");
-    return session->RegisterIsoInfoCallback(isoInfoChange);
+    session->RegisterIsoInfoCallback(isoInfoChange);
+    return CAMERA_OK;
 }
 
 Camera_ErrorCode OH_CaptureSession_UnregisterIsoChangeCallback(
@@ -930,7 +860,30 @@ Camera_ErrorCode OH_CaptureSession_UnregisterIsoChangeCallback(
     CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
     CHECK_RETURN_RET_ELOG(
         isoInfoChange == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, callback is null!");
-    return session->UnregisterIsoInfoCallback(isoInfoChange);
+    session->UnregisterIsoInfoCallback(isoInfoChange);
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode OH_CaptureSession_RegisterCameraSwitchRequestCallback(
+    Camera_CaptureSession *session, OH_CaptureSession_OnCameraSwitchRequest cameraSwitchRequest)
+{
+    MEDIA_INFO_LOG("Camera_ErrorCode::OH_CaptureSession_RegisterCameraSwitchRequestCallback enter");
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    CHECK_RETURN_RET_ELOG(
+        cameraSwitchRequest == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, callback is null!");
+    session->RegisterCameraSwitchRequestCallback(cameraSwitchRequest);
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode OH_CaptureSession_UnregisterRemoteDeviceSwitchCallback(
+    Camera_CaptureSession *session, OH_CaptureSession_OnCameraSwitchRequest cameraSwitchRequest)
+{
+    MEDIA_INFO_LOG("Camera_ErrorCode::OH_CaptureSession_UnregisterRemoteDeviceSwitchCallback enter");
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    CHECK_RETURN_RET_ELOG(
+        cameraSwitchRequest == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, callback is null!");
+    session->UnregisterRemoteDeviceSwitchCallback(cameraSwitchRequest);
+    return CAMERA_OK;
 }
 
 #ifdef __cplusplus

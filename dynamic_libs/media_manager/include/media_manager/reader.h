@@ -44,34 +44,16 @@ private:
     MediaManagerError GetSourceFormat();
     MediaManagerError GetUserMeta();
     void GetSourceMediaInfo(std::shared_ptr<MediaInfo>& mediaInfo) const;
-    MediaManagerError GetTrackMediaInfo(const TrackFormat& trackFormat, std::shared_ptr<MediaInfo>& mediaInfo) const;
+    void GetUserMediaInfo(std::shared_ptr<MediaInfo>& mediaInfo) const;
+    void GetTrackMediaInfo(const std::shared_ptr<Media::Meta>& trackMeta,
+        std::shared_ptr<MediaInfo>& mediaInfo) const;
     MediaManagerError InitTracksAndDemuxer();
-    static int32_t FixFPS(const double fps);
-    Media::Plugins::VideoEncodeBitrateMode MapVideoBitrateMode(const std::string& modeName) const;
-
-    template <typename T>
-    bool CheckAndGetValue(const std::shared_ptr<Format>& format, const std::string_view& key, T& value) const
-    {
-        bool ret = false;
-        if (format == nullptr) {
-            return ret;
-        }
-
-        if constexpr (std::is_same_v<T, int32_t>) {
-            ret = format->GetIntValue(key, value);
-        } else if constexpr (std::is_same_v<T, float>) {
-            ret = format->GetFloatValue(key, value);
-        } else if constexpr (std::is_same_v<T, double>) {
-            ret = format->GetDoubleValue(key, value);
-        } else if constexpr (std::is_same_v<T, int64_t>) {
-            ret = format->GetLongValue(key, value);
-        } else if constexpr (std::is_same_v<T, std::string>) {
-            ret = format->GetStringValue(key, value);
-        }
-        return ret;
-    }
 
 private:
+    int32_t FixFPS(const double fps) const;
+    Media::Plugins::VideoEncodeBitrateMode MapVideoBitrateMode(const std::string& modeName) const;
+    Media::Plugins::VideoEncodeBFrameGopMode MapVideoBFrameGopMode(const std::string& modeName) const;
+
     std::shared_ptr<AVSource> source_ {nullptr};
     std::shared_ptr<Format> sourceFormat_ {nullptr};
     std::shared_ptr<Format> userFormat_ {nullptr};

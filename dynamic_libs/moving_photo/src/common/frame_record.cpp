@@ -16,7 +16,6 @@
 #include "frame_record.h"
 
 #include "moving_photo_surface_wrapper.h"
-#include "video_key_info.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -43,11 +42,11 @@ void FrameRecord::ReleaseSurfaceBuffer(sptr<MovingPhotoSurfaceWrapper> surfaceWr
 {
     // LCOV_EXCL_START
     std::unique_lock<std::mutex> lock(mutex_);
-    if (videoBuffer_ && IsIdle()) {
-        CHECK_EXECUTE(surfaceWrapper != nullptr, surfaceWrapper->RecycleBuffer(videoBuffer_));
-        videoBuffer_ = nullptr;
-        MEDIA_DEBUG_LOG("release buffer end %{public}s", frameId_.c_str());
-    }
+    bool canRecycleBuffer = videoBuffer_ && IsIdle();
+    CHECK_RETURN(!canRecycleBuffer);
+    CHECK_EXECUTE(surfaceWrapper != nullptr, surfaceWrapper->RecycleBuffer(videoBuffer_));
+    videoBuffer_ = nullptr;
+    MEDIA_DEBUG_LOG("release buffer end %{public}s", frameId_.c_str());
     // LCOV_EXCL_STOP
 }
 
@@ -56,22 +55,21 @@ void FrameRecord::ReleaseMetaBuffer(sptr<Surface> surface, bool reuse)
     // LCOV_EXCL_START
     std::unique_lock<std::mutex> lock(metaBufferMutex_);
     sptr<SurfaceBuffer> buffer = nullptr;
-    if (status != STATUS_NONE && metaBuffer_) {
+    bool isStatusValidAndMetaBufferExists = status != STATUS_NONE && metaBuffer_;
+    if (isStatusValidAndMetaBufferExists) {
         buffer = SurfaceBuffer::Create();
         DeepCopyBuffer(buffer, metaBuffer_);
     }
-    if (metaBuffer_) {
-        if (reuse) {
-            SurfaceError surfaceRet = surface->AttachBufferToQueue(metaBuffer_);
-            CHECK_RETURN_ELOG(surfaceRet != SURFACE_ERROR_OK,
-                "Failed to attach meta buffer %{public}d", surfaceRet);
-            surfaceRet = surface->ReleaseBuffer(metaBuffer_, -1);
-            CHECK_RETURN_ELOG(surfaceRet != SURFACE_ERROR_OK,
-                "Failed to Release meta Buffer %{public}d", surfaceRet);
-        }
-        metaBuffer_ = buffer;
-        MEDIA_DEBUG_LOG("release meta buffer end %{public}s", frameId_.c_str());
+    CHECK_RETURN(!metaBuffer_);
+    if (reuse) {
+        CHECK_RETURN_ELOG(surface == nullptr, "FrameRecord::ReleaseMetaBuffer surface is null");
+        SurfaceError surfaceRet = surface->AttachBufferToQueue(metaBuffer_);
+        CHECK_RETURN_ELOG(surfaceRet != SURFACE_ERROR_OK, "Failed to attach meta buffer %{public}d", surfaceRet);
+        surfaceRet = surface->ReleaseBuffer(metaBuffer_, -1);
+        CHECK_RETURN_ELOG(surfaceRet != SURFACE_ERROR_OK, "Failed to Release meta Buffer %{public}d", surfaceRet);
     }
+    metaBuffer_ = buffer;
+    MEDIA_DEBUG_LOG("release meta buffer end %{public}s", frameId_.c_str());
     // LCOV_EXCL_STOP
 }
 
@@ -86,17 +84,12 @@ void FrameRecord::NotifyBufferRelease()
 
 void FrameRecord::DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<SurfaceBuffer> surfaceBuffer) const
 {
-    CAMERA_SYNC_TRACE;
-    int32_t actualMetaBfSize = surfaceBuffer->GetSize();
-    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::dataSize, actualMetaBfSize);
-    MEDIA_DEBUG_LOG("FrameRecord::DeepCopyBuffer actualMetaBfSize: %{public}d", actualMetaBfSize);
-    MEDIA_DEBUG_LOG("FrameRecord::DeepCopyBuffer originMetaBfSize GetSize: %{public}d, w: %{public}d, h: %{public}d",
-        surfaceBuffer->GetSize(), surfaceBuffer->GetWidth(), surfaceBuffer->GetHeight());
+    // LCOV_EXCL_START
     BufferRequestConfig requestConfig = {
-        .width = actualMetaBfSize,
-        .height = 1,
-        .strideAlignment = 0x8,
-        .format = GRAPHIC_PIXEL_FMT_BLOB,
+        .width = surfaceBuffer->GetWidth(),
+        .height = surfaceBuffer->GetHeight(),
+        .strideAlignment = 0x8, // default stride is 8 Bytes.
+        .format = surfaceBuffer->GetFormat(),
         .usage = surfaceBuffer->GetUsage(),
         .timeout = 0,
         .colorGamut = surfaceBuffer->GetSurfaceBufferColorGamut(),
@@ -104,9 +97,11 @@ void FrameRecord::DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<Surf
     };
     auto allocErrorCode = newSurfaceBuffer->Alloc(requestConfig);
     CHECK_RETURN_ELOG(allocErrorCode != GSERROR_OK, "SurfaceBuffer alloc ret: %d", allocErrorCode);
-    MEDIA_DEBUG_LOG("FrameRecord::DeepCopyBuffer newSBf GetSize: %{public}d", newSurfaceBuffer->GetSize());
-    CHECK_RETURN_ELOG(memcpy_s(newSurfaceBuffer->GetVirAddr(), newSurfaceBuffer->GetSize(), surfaceBuffer->GetVirAddr(),
-        actualMetaBfSize) != EOK, "SurfaceBuffer memcpy_s failed");
+    if (memcpy_s(newSurfaceBuffer->GetVirAddr(), newSurfaceBuffer->GetSize(),
+        surfaceBuffer->GetVirAddr(), surfaceBuffer->GetSize()) != EOK) {
+        MEDIA_ERR_LOG("SurfaceBuffer memcpy_s failed");
+    }
+    // LCOV_EXCL_STOP
 }
 } // namespace CameraStandard
 } // namespace OHOS

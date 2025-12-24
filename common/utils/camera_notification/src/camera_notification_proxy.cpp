@@ -63,4 +63,4 @@ int32_t CameraNotificationProxy::CancelBeautyNotification()
     return cameraNotificationIntf_->CancelBeautyNotification();
 }
 }  // namespace CameraStandard
-}  // namespace OHOS
+}  // namespace OHOS

@@ -70,7 +70,8 @@ void AudioVideoMuxerFuzzer::AudioVideoMuxerFuzzTest1(FuzzedDataProvider& fdp)
     ;
     fuzz_->Create(static_cast<OH_AVOutputFormat>(randomNum), photoAssetProxy);
     int32_t bitrate = fdp.ConsumeIntegral<int32_t>();
-    fuzz_->SetSqr(bitrate);
+    bool isBframeEnable = fdp.ConsumeBool();
+    fuzz_->SetSqr(bitrate, isBframeEnable);
 }
 
 void Test(uint8_t* data, size_t size)

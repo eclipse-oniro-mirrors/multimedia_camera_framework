@@ -46,10 +46,6 @@ namespace {
         {
             MEDIA_DEBUG_LOG("OnInfo Type is %{public}d, extra is  %{public}d", type, extra);
         }
-        void OnAudioCaptureChange(const AudioRecorderChangeInfo &audioRecorderChangeInfo)
-        {
-            MEDIA_DEBUG_LOG("OnAudioCaptureChange");
-        }
     };
 
     bool ConfigureVideoParams(const std::shared_ptr<Recorder> &recorder,

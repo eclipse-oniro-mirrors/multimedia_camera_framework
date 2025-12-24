@@ -13,20 +13,13 @@
  * limitations under the License.
  */
 
-#ifndef DEFERREDPROCESSING_FUZZER_H
-#define DEFERREDPROCESSING_FUZZER_H
+#ifndef VIDEO_JOB_QUEUE_FUZZER_H
+#define VIDEO_JOB_QUEUE_FUZZER_H
 
-#include "video_job_repository.h"
 #include "video_job_queue.h"
 
 namespace OHOS {
 namespace CameraStandard {
-
-class DeferredVideoWorkFuzzer {
-public:
-static std::shared_ptr<DeferredProcessing::DeferredVideoWork> fuzz_;
-static void Initialization();
-};
 
 class VideoJobQueueFuzzer {
 public:
@@ -35,4 +28,4 @@ static void VideoJobQueueFuzzTest();
 };
 } //CameraStandard
 } //OHOS
-#endif //DeferredVideoWorkFuzzer
+#endif //VIDEO_JOB_QUEUE_FUZZER_H

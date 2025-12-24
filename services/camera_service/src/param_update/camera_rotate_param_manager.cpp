@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -31,7 +31,7 @@ namespace CameraStandard {
 namespace {
 static int32_t RETRY_SUBSCRIBER = 3;
 static const int8_t DECIMAL = 10;
-const bool NEED_PARAM_VERIFY = true;
+bool NEED_PARAM_VERIFY = true;
 const std::string CONFIG_FILE_NAME = "camera_rotate_strategy.xml";
 const std::string CAMERA_CFG_PATH = "/sys_prod/etc/camera/" + CONFIG_FILE_NAME;
 const std::string EVENT_INFO_TYPE = "type";
@@ -82,7 +82,7 @@ void CameraRoateParamManager::ReloadParam()
     MEDIA_DEBUG_LOG("called");
     CHECK_RETURN_ELOG(paramReader == nullptr, "paramReader is nullptr");
     std::string path = paramReader->GetConfigFilePath();
-    MEDIA_INFO_LOG("GetConfigFilePath, path: %{public}s ", path.c_str());
+    MEDIA_INFO_LOG("GetConfigFilePath, path: %{private}s ", path.c_str());
     // 判断是路径是否在下载路径, 下载路径需要增加安全校验
     if (NEED_PARAM_VERIFY && path.find(PARAM_UPDATE_ABS_PATH) != std::string::npos) {
         VerifyCloudFile(PARAM_SERVICE_INSTALL_PATH + CAMERA_ROTATE_CFG_DIR);
@@ -190,9 +190,7 @@ void CameraRoateParamManager::Destroy()
 bool CameraRoateParamManager::ParseInternal(std::shared_ptr<CameraXmlNode> curNode)
 {
     for (; curNode->IsNodeValid(); curNode->MoveToNext()) {
-        if (!curNode->IsElementNode()) {
-            continue;
-        }
+        CHECK_CONTINUE(!curNode->IsElementNode());
         if (curNode->CompareName(XML_CAMERA_STRATEGY)) {
             ParserStrategyInfo(curNode->GetCopyNode());
         } else {
@@ -205,7 +203,8 @@ bool CameraRoateParamManager::ParseInternal(std::shared_ptr<CameraXmlNode> curNo
 void CameraRoateParamManager::ParserStrategyInfo(std::shared_ptr<CameraXmlNode> curNode)
 {
     std::lock_guard<std::mutex> lock(strategyInfosMutex_);
-    if (curNode->IsNodeValid() && curNode->IsElementNode()) {
+    bool isNodeValidAndIsElementNode = curNode->IsNodeValid() && curNode->IsElementNode();
+    if (isNodeValidAndIsElementNode) {
         CameraRotateStrategyInfo info = {};
         curNode->GetProp(XML_CAMERA_BUDLE_NAME, info.bundleName);
 
@@ -311,10 +310,7 @@ void CameraRoateParamManager::OnReceiveEvent(const AAFwk::Want &want)
 {
     std::string action = want.GetAction();
     auto it = eventHandles_.find(action);
-    if (it == eventHandles_.end()) {
-        MEDIA_INFO_LOG("Ignore event: %{public}s", action.c_str());
-        return;
-    }
+    CHECK_RETURN_ILOG(it == eventHandles_.end(), "Ignore event: %{public}s", action.c_str());
     MEDIA_INFO_LOG("Handle event: %{public}s", action.c_str());
     it->second(want);
 }
@@ -330,7 +326,7 @@ void CameraRoateParamManager::HandleParamUpdate(const AAFwk::Want &want) const
         MEDIA_ERR_LOG("invalid param update info: %{public}s, %{public}s, %{public}s",
             action.c_str(), type.c_str(), subtype.c_str());
         return;
-    }
+     }
     CameraRoateParamManager::GetInstance().InitParam();
 }
 // LCOV_EXCL_STOP

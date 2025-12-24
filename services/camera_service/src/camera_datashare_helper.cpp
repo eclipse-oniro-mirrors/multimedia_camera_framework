@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+// LCOV_EXCL_START
 #include "camera_datashare_helper.h"
 
 #include "camera_log.h"
@@ -61,7 +61,7 @@ int32_t CameraDataShareHelper::QueryOnce(const std::string key, std::string &val
     resultSet->GetString(columnIndex, value);
     resultSet->Close();
     dataShareHelper->Release();
-    MEDIA_INFO_LOG("CameraDataShareHelper query success,value=%{private}s", value.c_str());
+    MEDIA_INFO_LOG("CameraDataShareHelper query success,value=%{public}s", value.c_str());
     return CAMERA_OK;
 }
 
@@ -92,9 +92,7 @@ int32_t CameraDataShareHelper::UpdateOnce(const std::string key, std::string val
 
 bool CameraDataShareHelper::IsDataShareReady()
 {
-    if (isDataShareReady_) {
-        return true;
-    }
+    CHECK_RETURN_RET(isDataShareReady_, true);
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     CHECK_RETURN_RET_ELOG(samgr == nullptr, false, "CameraDataShareHelper GetSystemAbilityManager failed.");
     sptr<IRemoteObject> remoteObj = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
@@ -118,4 +116,4 @@ bool CameraDataShareHelper::IsDataShareReady()
 }
 } // namespace CameraStandard
 } // namespace OHOS
-
+// LCOV_EXCL_STOP

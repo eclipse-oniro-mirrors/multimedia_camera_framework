@@ -16,13 +16,10 @@
 #include "video_hal_state.h"
 
 #include "dp_log.h"
-#include "state_factory.h"
 
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-REGISTER_STATE(VideoHalState, VIDEO_HAL_STATE, HDI_DISCONNECTED);
-
 VideoHalState::VideoHalState(SchedulerType type, int32_t stateValue)
     : IState(type, stateValue)
 {

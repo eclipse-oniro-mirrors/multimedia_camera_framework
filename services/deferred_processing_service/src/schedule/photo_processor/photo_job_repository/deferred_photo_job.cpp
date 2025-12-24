@@ -136,8 +136,7 @@ bool DeferredPhotoJob::SetJobPriority(JobPriority priority)
     DP_CHECK_EXECUTE(priority == JobPriority::HIGH, UpdateTime());
     DP_CHECK_RETURN_RET(priority_ == priority, false);
     auto listener = jobChangeListener_.lock();
-    DP_CHECK_ERROR_RETURN_RET_LOG(listener == nullptr, true, "Joblistener is nullptr.");
-    listener->UpdatePriorityJob(priority, priority_);
+    DP_CHECK_EXECUTE(listener, listener->UpdatePriorityJob(priority, priority_));
     priority_ = priority;
     return true;
 }

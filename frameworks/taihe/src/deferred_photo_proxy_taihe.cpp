@@ -38,7 +38,7 @@ ImageTaihe::PixelMap DeferredPhotoProxyImpl::GetThumbnailSync()
     opts.srcPixelFormat = Media::PixelFormat::RGBA_8888;
     opts.pixelFormat = Media::PixelFormat::RGBA_8888;
     opts.size = { .width = thumbnailWidth, .height = thumbnailHeight };
-    MEDIA_INFO_LOG("thumbnailWidth:%{public}d, thumbnailheight: %{public}d",
+    MEDIA_INFO_LOG("thumbnailWidth:%{public}d, thumbnailHeight: %{public}d",
         thumbnailWidth, thumbnailHeight);
     auto pixelMap = Media::PixelMap::Create(static_cast<const uint32_t*>(fdAddr),
         thumbnailWidth * thumbnailHeight * 4, 0, thumbnailWidth, opts, true);

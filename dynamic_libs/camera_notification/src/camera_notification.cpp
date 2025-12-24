@@ -17,7 +17,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
-
+using OHOS::Media::ImageSource;
 static constexpr int32_t CAMERA_UID = 1047;
 const int BEAUTY_NOTIFICATION_ID = 1047001;
 const std::string BEAUTY_NOTIFICATION_TITLE = "title_adjust_beauty";
@@ -133,9 +133,9 @@ void CameraNotification::SetActionButton(const std::string& buttonName,
 std::string CameraNotification::GetSystemStringByName(const std::string& name)
 {
     InitResourceManager();
+    CHECK_RETURN_RET_ELOG(!resourceManager_, "", "resourceManager_ is nullptr");
     std::string result;
     std::string identity = IPCSkeleton::ResetCallingIdentity();
-    CHECK_RETURN_RET_ELOG(!resourceManager_, "", "resourceManager_ is nullptr");
     resourceManager_->GetStringByName(name.c_str(), result);
     IPCSkeleton::SetCallingIdentity(identity);
     MEDIA_DEBUG_LOG("name: %{public}s, result: %{public}s", name.c_str(), result.c_str());
@@ -153,16 +153,14 @@ void CameraNotification::GetPixelMap()
 
     OHOS::Media::SourceOptions opts;
     uint32_t errorCode = 0;
-    std::shared_ptr<ImageSourceProxy> imageSourceProxy = ImageSourceProxy::CreateImageSourceProxy();
-    CHECK_RETURN_ELOG(imageSourceProxy == nullptr, "CreateImageSourceProxy failed");
-    auto ret = imageSourceProxy->CreateImageSource(data.get(), len, opts, errorCode);
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(data.get(), len, opts, errorCode);
     MEDIA_INFO_LOG("CreateImageSource errorCode: %{public}d", static_cast<int32_t>(errorCode));
-    CHECK_RETURN_ELOG(ret != 0, "CreateImageSource failed");
+    CHECK_RETURN_ELOG(imageSource == nullptr, "CreateImageSource failed");
     OHOS::Media::DecodeOptions decodeOpts;
     decodeOpts.desiredSize = {ICON_WIDTH, ICON_HEIGHT};
     decodeOpts.desiredPixelFormat = OHOS::Media::PixelFormat::BGRA_8888;
-    std::unique_ptr<Media::PixelMap> pixelMap = imageSourceProxy->CreatePixelMap(decodeOpts, errorCode);
-    MEDIA_INFO_LOG("CreateImageSource errorCode: %{public}d", static_cast<int32_t>(errorCode));
+    std::unique_ptr<Media::PixelMap> pixelMap = imageSource->CreatePixelMap(decodeOpts, errorCode);
+    MEDIA_INFO_LOG("CreatePixelMap errorCode: %{public}d", static_cast<int32_t>(errorCode));
     CHECK_RETURN_ELOG(pixelMap == nullptr, "Create icon pixel map failed,pixelMap is nullptr");
     iconPixelMap_ = std::move(pixelMap);
 }
@@ -189,7 +187,7 @@ void CameraNotification::InitResourceManager()
     }
     RefreshResConfig();
 }
- 
+
 void CameraNotification::RefreshResConfig()
 {
     std::string language = Global::I18n::LocaleConfig::GetSystemLanguage();
@@ -212,4 +210,4 @@ extern "C" CameraNotificationIntf *createCameraNotificationIntf()
 }
 } // namespace CameraStandard
 } // namespace OHOS
-// LCOV_EXCL_STOP
+// LCOV_EXCL_STOP

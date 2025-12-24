@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -30,7 +30,7 @@ const std::string PARAM_SERVICE_INSTALL_PATH = "/data/service/el1/public/update/
 const std::string CAMERA_ROTATE_CFG_DIR = "/etc/camera/";
 const std::string PUB_KEY_NAME = "hwkey_param_upgrade_v1.pem";
 const std::string VERSION_FILE_NAME = "version.txt";
-const std::string DEFAULT_VERSION = "1.0.0.0"; // 版本号非硬编
+const std::string DEFAULT_VERSION = "1.0.0.0";
 }
 
 class CameraRoateParamReader {

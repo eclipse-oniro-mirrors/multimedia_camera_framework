@@ -14,6 +14,7 @@
  */
 
 #include "video_strategy_center_fuzzer.h"
+#include "basic_definitions.h"
 #include "camera_log.h"
 #include "message_parcel.h"
 #include "ipc_file_descriptor.h"
@@ -22,16 +23,56 @@
 namespace OHOS {
 namespace CameraStandard {
 using namespace DeferredProcessing;
-std::shared_ptr<VideoStrategyCenter> VideoStrategyCenterFuzzer::fuzz_ { nullptr };
-const size_t MAX_LENGTH_STRING = 64;
-const size_t THRESHOLD = MAX_LENGTH_STRING + 24;
+std::shared_ptr<VideoStrategyCenter> VideoStrategyCenterFuzzer::fuzz_{nullptr};
+static constexpr int32_t MAX_CODE_LEN  = 512;
+static constexpr int32_t MIN_SIZE_NUM = 4;
+static const uint8_t* RAW_DATA = nullptr;
+const size_t THRESHOLD = 10;
+static size_t g_dataSize = 0;
+static size_t g_pos;
 
-void VideoStrategyCenterFuzzer::VideoStrategyCenterFuzzTest(FuzzedDataProvider& fdp)
+/*
+* describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
+* tips: only support basic type
+*/
+template<class T>
+T GetData()
 {
-    auto userId = fdp.ConsumeIntegral<int32_t>();
-    auto repository = std::make_shared<VideoJobRepository>(userId);
+    T object {};
+    size_t objectSize = sizeof(object);
+    if (RAW_DATA == nullptr || objectSize > g_dataSize - g_pos) {
+        return object;
+    }
+    errno_t ret = memcpy_s(&object, objectSize, RAW_DATA + g_pos, objectSize);
+    if (ret != EOK) {
+        return {};
+    }
+    g_pos += objectSize;
+    return object;
+}
+
+template<class T>
+uint32_t GetArrLength(T& arr)
+{
+    if (arr == nullptr) {
+        MEDIA_INFO_LOG("%{public}s: The array length is equal to 0", __func__);
+        return 0;
+    }
+    return sizeof(arr) / sizeof(arr[0]);
+}
+
+void VideoStrategyCenterFuzzer::VideoStrategyCenterFuzzTest()
+{
+    if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
+        return;
+    }
+
+    auto userId = GetData<int32_t>();
+    uint8_t randomNum = GetData<uint8_t>();
+    std::vector<std::string> testStrings = {"test1", "test2"};
+    std::string videoId(testStrings[randomNum % testStrings.size()]);
+    std::shared_ptr<VideoJobRepository> repository = VideoJobRepository::Create(userId);
     CHECK_RETURN_ELOG(!repository, "Create repository Error");
-    std::string videoId(fdp.ConsumeRandomLengthString(MAX_LENGTH_STRING));
     repository->SetJobPending(videoId);
     repository->SetJobRunning(videoId);
     repository->SetJobCompleted(videoId);
@@ -39,44 +80,51 @@ void VideoStrategyCenterFuzzer::VideoStrategyCenterFuzzTest(FuzzedDataProvider& 
     repository->SetJobPause(videoId);
     repository->SetJobError(videoId);
 
-    fuzz_ = std::make_shared<DeferredProcessing::VideoStrategyCenter>(repository);
+    fuzz_ = VideoStrategyCenter::Create(repository);
     CHECK_RETURN_ELOG(!fuzz_, "Create fuzz_ Error");
-    fuzz_->GetWork();
     fuzz_->GetJob();
-    fuzz_->GetExecutionMode();
-    {
-        auto value = fdp.ConsumeIntegral<int32_t>();
-        fuzz_->HandleCameraEvent(value);
-    }
-    {
-        auto value = fdp.ConsumeIntegral<int32_t>();
-        fuzz_->HandleMedialLibraryEvent(value);
-    }
-    {
-        auto value = fdp.ConsumeIntegral<int32_t>();
-        fuzz_->HandleScreenEvent(value);
-    }
-    {
-        auto value = fdp.ConsumeIntegral<int32_t>();
-        fuzz_->HandleChargingEvent(value);
-    }
-    {
-        auto value = fdp.ConsumeIntegral<int32_t>();
-        fuzz_->HandleBatteryEvent(value);
-    }
+    fuzz_->GetExecutionMode(JobPriority::NORMAL);
+    auto value = GetData<int32_t>();
+    fuzz_->HandleCameraEvent(value);
+    fuzz_->HandleMedialLibraryEvent(value);
+    fuzz_->HandleScreenEvent(value);
+    fuzz_->HandleChargingEvent(value);
+    fuzz_->HandleBatteryEvent(value);
 }
 
-void Test(uint8_t* data, size_t size)
+void Test()
 {
-    FuzzedDataProvider fdp(data, size);
     auto VideoStrategyCenter = std::make_unique<VideoStrategyCenterFuzzer>();
     if (VideoStrategyCenter == nullptr) {
         MEDIA_INFO_LOG("VideoStrategyCenter is null");
         return;
     }
-    VideoStrategyCenter->VideoStrategyCenterFuzzTest(fdp);
+    VideoStrategyCenter->VideoStrategyCenterFuzzTest();
 }
 
+typedef void (*TestFuncs[1])();
+
+TestFuncs g_testFuncs = {
+    Test,
+};
+
+bool FuzzTest(const uint8_t* rawData, size_t size)
+{
+    // initialize data
+    RAW_DATA = rawData;
+    g_dataSize = size;
+    g_pos = 0;
+
+    uint32_t code = GetData<uint32_t>();
+    uint32_t len = GetArrLength(g_testFuncs);
+    if (len > 0) {
+        g_testFuncs[code % len]();
+    } else {
+        MEDIA_INFO_LOG("%{public}s: The len length is equal to 0", __func__);
+    }
+
+    return true;
+}
 } // namespace CameraStandard
 } // namespace OHOS
 
@@ -87,6 +135,6 @@ extern "C" int LLVMFuzzerTestOneInput(uint8_t* data, size_t size)
         return 0;
     }
 
-    OHOS::CameraStandard::Test(data, size);
+    OHOS::CameraStandard::FuzzTest(data, size);
     return 0;
 }

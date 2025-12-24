@@ -42,11 +42,8 @@ using namespace OHOS::HDI::Camera::V1_1;
 sptr<CaptureOutput> SecureCameraSessionUnitTest::CreatePreviewOutput()
 {
     previewProfile_ = {};
-    if (!cameraManager_) {
-        return nullptr;
-    }
-    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
-    if (cameras.empty()) {
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    if (!cameraManager_ || cameras.empty()) {
         return nullptr;
     }
     preIsSupportedSecuremode_ = false;
@@ -105,10 +102,12 @@ void SecureCameraSessionUnitTest::TearDown()
 * EnvConditions: NA
 * CaseDescription: Test normal branch that is add secure output flag
 */
-HWTEST_F(SecureCameraSessionUnitTest, camera_securecamera_unittest_001, TestSize.Level1)
+HWTEST_F(SecureCameraSessionUnitTest, camera_securecamera_unittest_001, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_NE(cameras.size(), 0);
+    cameras[0]->supportedModes_.clear();
+    cameras[0]->supportedModes_.push_back(NORMAL);
     for (sptr<CameraDevice> camDevice : cameras) {
         std::vector<SceneMode> modes = cameraManager_->GetSupportedModes(camDevice);
 
@@ -330,7 +329,7 @@ HWTEST_F(SecureCameraSessionUnitTest, camera_securecamera_unittest_004, TestSize
 * EnvConditions: NA
 * CaseDescription: Test abnormal branch that is add secure output flag twice
 */
-HWTEST_F(SecureCameraSessionUnitTest, camera_securecamera_unittest_005, TestSize.Level1)
+HWTEST_F(SecureCameraSessionUnitTest, camera_securecamera_unittest_005, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_NE(cameras.size(), 0);
@@ -392,7 +391,7 @@ HWTEST_F(SecureCameraSessionUnitTest, camera_securecamera_unittest_005, TestSize
 * EnvConditions: NA
 * CaseDescription: Test abnormal branch that is add secure output flag twice
 */
-HWTEST_F(SecureCameraSessionUnitTest, camera_securecamera_unittest_006, TestSize.Level1)
+HWTEST_F(SecureCameraSessionUnitTest, camera_securecamera_unittest_006, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_NE(cameras.size(), 0);
@@ -452,7 +451,7 @@ HWTEST_F(SecureCameraSessionUnitTest, camera_securecamera_unittest_006, TestSize
  * EnvConditions: NA
  * CaseDescription: Test AddSecureOutput for just call.
  */
-HWTEST_F(SecureCameraSessionUnitTest, secure_camera_session_function_unittest_001, TestSize.Level1)
+HWTEST_F(SecureCameraSessionUnitTest, secure_camera_session_function_unittest_001, TestSize.Level0)
 {
     sptr<CaptureSession> secureSessionForSys =
                 CameraManagerForSys::GetInstance()->CreateCaptureSessionForSys(SceneMode::SECURE);
@@ -483,5 +482,6 @@ HWTEST_F(SecureCameraSessionUnitTest, secure_camera_session_function_unittest_00
     //recover cameraManager_
     cameraManager_->InitCameraManager();
 }
+
 }
 }

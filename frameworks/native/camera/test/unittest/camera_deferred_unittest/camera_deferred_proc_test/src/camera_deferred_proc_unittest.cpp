@@ -14,24 +14,22 @@
  */
 
 #include "camera_deferred_proc_unittest.h"
+
+#include "deferred_processing_types.h"
+#include "camera_error_code.h"
+#include "camera_log.h"
 #include "deferred_video_proc_session.h"
-
-#include "dp_log.h"
-#include "picture_proxy.h"
+#include "gtest/gtest.h"
+#include "input/camera_manager.h"
+#include "picture_interface.h"
 #include "pixel_map.h"
-
+#include "test_common.h"
+#include "test_token.h"
+#include "dps_metadata_info.h"
+#include "deferred_video_proc_session.h"
+#include "input/camera_manager.h"
 #include "access_token.h"
 #include "accesstoken_kit.h"
-
-#include "gtest/gtest.h"
-#include "hap_token_info.h"
-#include "ipc_skeleton.h"
-#include "nativetoken_kit.h"
-#include "os_account_manager.h"
-
-#include "token_setproc.h"
-#include "picture_interface.h"
-#include "test_token.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -43,40 +41,15 @@ constexpr int32_t SIZE_HEIGHT = 3;
 constexpr int32_t BUFFER_LENGTH = 8;
 constexpr int VIDEO_REQUEST_FD_ID = 1;
 
-class TestDeferredPhotoProcSessionCallback : public IDeferredPhotoProcSessionCallback {
-public:
-    void OnProcessImageDone(const std::string &imageId, std::shared_ptr<PictureIntf> picture,
-        uint32_t cloudImageEnhanceFlag) {}
-    void OnDeliveryLowQualityImage(const std::string &imageId, std::shared_ptr<PictureIntf> picture) {}
-    void OnProcessImageDone(const std::string& imageId, const uint8_t* addr, const long bytes,
-        uint32_t cloudImageEnhanceFlag) {}
-    void OnError(const std::string& imageId, const DpsErrorCode errorCode) {}
-    void OnStateChanged(const DpsStatusCode status) {}
-};
-
-class TestDeferredVideoProcSessionCallback : public IDeferredVideoProcSessionCallback {
-public:
-    void OnProcessVideoDone(const std::string& videoId, const sptr<IPCFileDescriptor> ipcFd) {}
-    void OnError(const std::string& videoId, const DpsErrorCode errorCode) {}
-    void OnStateChanged(const DpsStatusCode status) {}
-};
-
-std::shared_ptr<PictureIntf> GetPictureIntfInstance()
-{
-    auto pictureProxy = PictureProxy::CreatePictureProxy();
-    DP_CHECK_ERROR_PRINT_LOG(pictureProxy == nullptr || pictureProxy.use_count() != 1,
-        "pictureProxy use count is not 1");
-    return pictureProxy;
-}
-
 void DeferredProcUnitTest::SetUpTestCase(void)
 {
+    MEDIA_DEBUG_LOG("DeferredProcUnitTest::SetUpTestCase started!");
     ASSERT_TRUE(TestToken().GetAllCameraPermission());
 }
 
 void DeferredProcUnitTest::TearDownTestCase(void)
 {
-    DP_DEBUG_LOG("DeferredProcUnitTest::TearDownTestCase started!");
+    MEDIA_DEBUG_LOG("DeferredProcUnitTest::TearDownTestCase started!");
 }
 
 void DeferredProcUnitTest::SetUp()
@@ -100,9 +73,8 @@ void DeferredProcUnitTest::SetUp()
 
 void DeferredProcUnitTest::TearDown()
 {
-    DP_DEBUG_LOG("DeferredProcUnitTest::TearDown started!");
+    MEDIA_DEBUG_LOG("DeferredProcUnitTest::TearDown started!");
 }
-
 /*
  * Feature: Framework
  * Function: Test is that the class calls the function function correctly and functions properly.
@@ -113,9 +85,11 @@ void DeferredProcUnitTest::TearDown()
  */
 HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_001, TestSize.Level0)
 {
-    sptr<DeferredPhotoProcSession> deferredProcSession =
-        new(std::nothrow) DeferredPhotoProcSession(userId_, std::make_shared<TestDeferredPhotoProcSessionCallback>());
+    sptr<DeferredPhotoProcSession> deferredProcSession = {nullptr};
+    deferredProcSession = CameraManager::GetInstance()->CreateDeferredPhotoProcessingSession(
+        userId_, std::make_shared<TestDeferredPhotoProcSessionCallback>());
     ASSERT_NE(deferredProcSession, nullptr);
+    ASSERT_NE(deferredProcSession->remoteSession_, nullptr);
     deferredProcSession->BeginSynchronize();
 
     std::string imageId = "testImageId";
@@ -192,25 +166,30 @@ HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_002, TestSize.Level
  */
 HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_003, TestSize.Level0)
 {
-    sptr<DeferredPhotoProcSession> deferredProcSession =
-        new(std::nothrow) DeferredPhotoProcSession(userId_, std::make_shared<TestDeferredPhotoProcSessionCallback>());
+    sptr<DeferredPhotoProcSession> deferredProcSession = {nullptr};
+    deferredProcSession = deferredProcSession = CameraManager::GetInstance()->CreateDeferredPhotoProcessingSession(
+        userId_, std::make_shared<TestDeferredPhotoProcSessionCallback>());
     ASSERT_NE(deferredProcSession, nullptr);
+    EXPECT_NE(deferredProcSession->remoteSession_, nullptr);
     sptr<DeferredPhotoProcessingSessionCallback> remoteCallback =
         new(std::nothrow) DeferredPhotoProcessingSessionCallback(deferredProcSession);
     ASSERT_NE(remoteCallback, nullptr);
 
     std::string imageId = "testImageId";
-    bool restorable = true;
+    uint32_t captureFlag = 1;
+    DpsMetadata metadata;
+    metadata.Set("captureEnhancementFlag", captureFlag);
     int32_t ret = 0;
-    ret = remoteCallback->OnProcessImageDone(imageId, nullptr, restorable);
+    ret = remoteCallback->OnProcessImageDone(imageId, nullptr, metadata);
     EXPECT_EQ(ret, 0);
 
-    ret = remoteCallback->OnProcessImageDone(imageId, picture_, restorable);
+    ret = remoteCallback->OnProcessImageDone(imageId, picture_, metadata);
     EXPECT_EQ(ret, 0);
 
     sptr<IPCFileDescriptor> ipcFd = sptr<IPCFileDescriptor>::MakeSptr(dup(VIDEO_REQUEST_FD_ID));
     EXPECT_NE(ipcFd, nullptr);
     long bytes = sizeof(ipcFd);
+    bool restorable = true;
     ret = remoteCallback->OnProcessImageDone(imageId, ipcFd, bytes, restorable);
     EXPECT_EQ(ret, 0);
 
@@ -236,16 +215,22 @@ HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_003, TestSize.Level
  */
 HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_004, TestSize.Level0)
 {
-    sptr<DeferredPhotoProcSession> deferredProcSession = new(std::nothrow) DeferredPhotoProcSession(userId_, nullptr);
+    sptr<DeferredPhotoProcSession> deferredProcSession = {nullptr};
+    deferredProcSession = deferredProcSession = CameraManager::GetInstance()->CreateDeferredPhotoProcessingSession(
+        userId_, nullptr);
     ASSERT_NE(deferredProcSession, nullptr);
+    EXPECT_NE(deferredProcSession->remoteSession_, nullptr);
     sptr<DeferredPhotoProcessingSessionCallback> remoteCallback =
         new(std::nothrow) DeferredPhotoProcessingSessionCallback(deferredProcSession);
     ASSERT_NE(remoteCallback, nullptr);
 
     std::string imageId = "testImageId";
     bool restorable = true;
+    uint32_t captureFlag = 1;
+    DpsMetadata metadata;
+    metadata.Set("captureEnhancementFlag", captureFlag);
     int32_t ret = 0;
-    ret = remoteCallback->OnProcessImageDone(imageId, picture_, restorable);
+    ret = remoteCallback->OnProcessImageDone(imageId, picture_, metadata);
     EXPECT_EQ(ret, 0);
 
     sptr<IPCFileDescriptor> ipcFd = sptr<IPCFileDescriptor>::MakeSptr(dup(VIDEO_REQUEST_FD_ID));
@@ -276,17 +261,22 @@ HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_004, TestSize.Level
  */
 HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_005, TestSize.Level0)
 {
-    sptr<DeferredPhotoProcSession> deferredProcSession =
-        new(std::nothrow) DeferredPhotoProcSession(userId_, std::make_shared<TestDeferredPhotoProcSessionCallback>());
+    sptr<DeferredPhotoProcSession> deferredProcSession = {nullptr};
+    deferredProcSession = deferredProcSession = CameraManager::GetInstance()->CreateDeferredPhotoProcessingSession(
+        userId_, std::make_shared<TestDeferredPhotoProcSessionCallback>());
     ASSERT_NE(deferredProcSession, nullptr);
+    EXPECT_NE(deferredProcSession->remoteSession_, nullptr);
     sptr<DeferredPhotoProcessingSessionCallback> remoteCallback =
         new(std::nothrow) DeferredPhotoProcessingSessionCallback();
     ASSERT_NE(remoteCallback, nullptr);
 
     std::string imageId = "testImageId";
+    uint32_t captureFlag = 1;
+    DpsMetadata metadata;
+    metadata.Set("captureEnhancementFlag", captureFlag);
     bool restorable = true;
     int32_t ret = 0;
-    ret = remoteCallback->OnProcessImageDone(imageId, picture_, restorable);
+    ret = remoteCallback->OnProcessImageDone(imageId, picture_, metadata);
     EXPECT_EQ(ret, 0);
 
     sptr<IPCFileDescriptor> ipcFd = sptr<IPCFileDescriptor>::MakeSptr(dup(VIDEO_REQUEST_FD_ID));
@@ -314,16 +304,23 @@ HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_005, TestSize.Level
  */
 HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_006, TestSize.Level0)
 {
-    sptr<DeferredPhotoProcSession> deferredProcSession = new(std::nothrow) DeferredPhotoProcSession(userId_, nullptr);
+    sptr<DeferredPhotoProcSession> deferredProcSession = {nullptr};
+    deferredProcSession = deferredProcSession = CameraManager::GetInstance()->CreateDeferredPhotoProcessingSession(
+        userId_, nullptr);
     ASSERT_NE(deferredProcSession, nullptr);
+    EXPECT_NE(deferredProcSession->remoteSession_, nullptr);
     sptr<DeferredPhotoProcessingSessionCallback> remoteCallback =
         new(std::nothrow) DeferredPhotoProcessingSessionCallback();
     ASSERT_NE(remoteCallback, nullptr);
 
     std::string imageId = "testImageId";
+        uint32_t captureFlag = 1;
+    DpsMetadata metadata;
+    metadata.Set("captureEnhancementFlag", captureFlag);
     bool restorable = true;
     int32_t ret = 0;
-    ret = remoteCallback->OnProcessImageDone(imageId, picture_, restorable);
+    ret = remoteCallback->OnProcessImageDone(imageId, picture_, metadata);
+    EXPECT_EQ(ret, 0);
     EXPECT_EQ(ret, 0);
 
     sptr<IPCFileDescriptor> ipcFd = sptr<IPCFileDescriptor>::MakeSptr(dup(VIDEO_REQUEST_FD_ID));
@@ -351,9 +348,12 @@ HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_006, TestSize.Level
  */
 HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_007, TestSize.Level0)
 {
-    sptr<DeferredVideoProcSession> deferredProcSession =
-        new(std::nothrow) DeferredVideoProcSession(userId_, std::make_shared<TestDeferredVideoProcSessionCallback>());
+    sptr<DeferredVideoProcSession> deferredProcSession = {nullptr};
+    deferredProcSession = deferredProcSession = CameraManager::GetInstance()->CreateDeferredVideoProcessingSession(
+        userId_, std::make_shared<TestDeferredVideoProcSessionCallback>());
     ASSERT_NE(deferredProcSession, nullptr);
+    ASSERT_NE(deferredProcSession->remoteSession_, nullptr);
+
     deferredProcSession->BeginSynchronize();
 
     std::string videoId = "testVideoId";
@@ -418,25 +418,24 @@ HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_008, TestSize.Level
  */
 HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_009, TestSize.Level0)
 {
-    sptr<DeferredVideoProcSession> deferredProcSession =
-        new(std::nothrow) DeferredVideoProcSession(userId_, std::make_shared<TestDeferredVideoProcSessionCallback>());
+    sptr<DeferredVideoProcSession> deferredProcSession = {nullptr};
+    deferredProcSession = deferredProcSession = CameraManager::GetInstance()->CreateDeferredVideoProcessingSession(
+        userId_, std::make_shared<TestDeferredVideoProcSessionCallback>());
     ASSERT_NE(deferredProcSession, nullptr);
+    ASSERT_NE(deferredProcSession->remoteSession_, nullptr);
 
     sptr<DeferredVideoProcessingSessionCallback> remoteCallback =
         new(std::nothrow) DeferredVideoProcessingSessionCallback(deferredProcSession);
     ASSERT_NE(remoteCallback, nullptr);
     std::string videoId = "testVideoId";
-    sptr<IPCFileDescriptor> ipcFileDescriptor;
     int32_t ret = 0;
-    ret = remoteCallback->OnProcessVideoDone(videoId, ipcFileDescriptor);
+    ret = remoteCallback->OnProcessVideoDone(videoId);
     EXPECT_EQ(ret, 0);
 
-    int32_t errorCode = 0;
-    ret = remoteCallback->OnError(videoId, errorCode);
+    ret = remoteCallback->OnError(videoId, ErrorCode::ERROR_SESSION_SYNC_NEEDED);
     EXPECT_EQ(ret, 0);
 
-    int32_t status = 0;
-    ret = remoteCallback->OnStateChanged(status);
+    ret = remoteCallback->OnStateChanged(StatusCode::SESSION_STATE_IDLE);
     EXPECT_EQ(ret, 0);
 }
 
@@ -450,24 +449,24 @@ HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_009, TestSize.Level
  */
 HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_010, TestSize.Level0)
 {
-    sptr<DeferredVideoProcSession> deferredProcSession =
-        new(std::nothrow) DeferredVideoProcSession(userId_, std::make_shared<TestDeferredVideoProcSessionCallback>());
+    sptr<DeferredVideoProcSession> deferredProcSession = {nullptr};
+    deferredProcSession = deferredProcSession = CameraManager::GetInstance()->CreateDeferredVideoProcessingSession(
+        userId_, std::make_shared<TestDeferredVideoProcSessionCallback>());
     ASSERT_NE(deferredProcSession, nullptr);
+    ASSERT_NE(deferredProcSession->remoteSession_, nullptr);
+
     sptr<DeferredVideoProcessingSessionCallback> remoteCallback =
         new(std::nothrow) DeferredVideoProcessingSessionCallback();
     ASSERT_NE(remoteCallback, nullptr);
     std::string videoId = "testVideoId";
-    sptr<IPCFileDescriptor> ipcFileDescriptor;
     int32_t ret = 0;
-    ret = remoteCallback->OnProcessVideoDone(videoId, ipcFileDescriptor);
+    ret = remoteCallback->OnProcessVideoDone(videoId);
     EXPECT_EQ(ret, 0);
 
-    int32_t errorCode = 0;
-    ret = remoteCallback->OnError(videoId, errorCode);
+    ret = remoteCallback->OnError(videoId, ErrorCode::ERROR_SESSION_SYNC_NEEDED);
     EXPECT_EQ(ret, 0);
 
-    int32_t status = 0;
-    ret = remoteCallback->OnStateChanged(status);
+    ret = remoteCallback->OnStateChanged(StatusCode::SESSION_STATE_IDLE);
     EXPECT_EQ(ret, 0);
 }
 
@@ -481,24 +480,24 @@ HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_010, TestSize.Level
  */
 HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_011, TestSize.Level0)
 {
-    sptr<DeferredVideoProcSession> deferredProcSession = new(std::nothrow) DeferredVideoProcSession(userId_, nullptr);
+    sptr<DeferredVideoProcSession> deferredProcSession = {nullptr};
+    deferredProcSession = deferredProcSession = CameraManager::GetInstance()->CreateDeferredVideoProcessingSession(
+        userId_, nullptr);
     ASSERT_NE(deferredProcSession, nullptr);
+    ASSERT_NE(deferredProcSession->remoteSession_, nullptr);
 
     sptr<DeferredVideoProcessingSessionCallback> remoteCallback =
         new(std::nothrow) DeferredVideoProcessingSessionCallback(deferredProcSession);
     ASSERT_NE(remoteCallback, nullptr);
     std::string videoId = "testVideoId";
-    sptr<IPCFileDescriptor> ipcFileDescriptor;
     int32_t ret = 0;
-    ret = remoteCallback->OnProcessVideoDone(videoId, ipcFileDescriptor);
+    ret = remoteCallback->OnProcessVideoDone(videoId);
     EXPECT_EQ(ret, 0);
 
-    int32_t errorCode = 0;
-    ret = remoteCallback->OnError(videoId, errorCode);
+    ret = remoteCallback->OnError(videoId, ErrorCode::ERROR_SESSION_SYNC_NEEDED);
     EXPECT_EQ(ret, 0);
 
-    int32_t status = 0;
-    ret = remoteCallback->OnStateChanged(status);
+    ret = remoteCallback->OnStateChanged(StatusCode::SESSION_STATE_IDLE);
     EXPECT_EQ(ret, 0);
 }
 
@@ -512,24 +511,24 @@ HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_011, TestSize.Level
  */
 HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_012, TestSize.Level0)
 {
-    sptr<DeferredVideoProcSession> deferredProcSession = new(std::nothrow) DeferredVideoProcSession(userId_, nullptr);
+    sptr<DeferredVideoProcSession> deferredProcSession = {nullptr};
+    deferredProcSession = deferredProcSession = CameraManager::GetInstance()->CreateDeferredVideoProcessingSession(
+        userId_, nullptr);
     ASSERT_NE(deferredProcSession, nullptr);
+    ASSERT_NE(deferredProcSession->remoteSession_, nullptr);
 
     sptr<DeferredVideoProcessingSessionCallback> remoteCallback =
         new(std::nothrow) DeferredVideoProcessingSessionCallback();
     ASSERT_NE(remoteCallback, nullptr);
     std::string videoId = "testVideoId";
-    sptr<IPCFileDescriptor> ipcFileDescriptor;
     int32_t ret = 0;
-    ret = remoteCallback->OnProcessVideoDone(videoId, ipcFileDescriptor);
+    ret = remoteCallback->OnProcessVideoDone(videoId);
     EXPECT_EQ(ret, 0);
 
-    int32_t errorCode = 0;
-    ret = remoteCallback->OnError(videoId, errorCode);
+    ret = remoteCallback->OnError(videoId, ErrorCode::ERROR_SESSION_SYNC_NEEDED);
     EXPECT_EQ(ret, 0);
 
-    int32_t status = 0;
-    ret = remoteCallback->OnStateChanged(status);
+    ret = remoteCallback->OnStateChanged(StatusCode::SESSION_STATE_IDLE);
     EXPECT_EQ(ret, 0);
 }
 

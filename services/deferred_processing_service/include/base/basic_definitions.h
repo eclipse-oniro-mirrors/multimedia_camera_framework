@@ -18,8 +18,8 @@
 
 #include <cstdint>
 
-#include "ideferred_photo_processing_session_callback.h"
-#include "v1_4/types.h"
+#include "deferred_processing_types.h"
+#include "v1_5/types.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -35,6 +35,9 @@ constexpr int32_t INVALID_TRACK_ID = -1;
 inline constexpr char PATH[] = "/data/service/el1/public/camera_service/";
 inline constexpr char TEMP_TAG[] = "_vid_temp";
 inline constexpr char OUT_TAG[] = "_vid";
+inline constexpr char IGNORE_TEMPERATURE[] = "ohos.dps.ignore_temperature";
+inline constexpr char IGNORE_BATTERY[] = "ohos.dps.ignore_battery";
+inline constexpr char IGNORE_BATTERY_LEVEL[] = "ohos.dps.ignore_battery_level";
 
 enum EventType : int32_t {
     CAMERA_SESSION_STATUS_EVENT = 1,
@@ -50,6 +53,7 @@ enum EventType : int32_t {
     TRAILING_STATUS_EVENT,
     USER_INITIATED_EVENT,
     AVAILABLE_CONCURRENT_EVENT,
+    INTERRUPT_EVENT,
     PHOTO_CACHE_EVENT,
 };
 
@@ -139,6 +143,16 @@ enum TrigerMode : int32_t {
     TRIGER_PASSIVE = 1,
 };
 
+enum InterruptStatus : int32_t {
+    IS_INTERRUPT = 0,
+    NO_INTERRUPT = 1,
+};
+
+enum VideoProcessTimeStatus : int32_t {
+    UNAVAILABLE_TIME = 0,
+    AVAILABLE_TIME = 1,
+};
+
 enum ExceptionCause : int32_t {
     HDI_SERVICE_DIED = 0,
     HDI_JPEG_ERROR,
@@ -159,7 +173,7 @@ enum ExceptionSource: int32_t {
 };
 
 enum DpsError : int32_t {
-    DPS_ERROR_UNKNOW = -1,
+    DPS_ERROR_UNKNOWN = -1,
     DPS_NO_ERROR = 0,
     // session specific error code
     DPS_ERROR_SESSION_SYNC_NEEDED = 1,
@@ -206,6 +220,7 @@ enum SchedulerType : int32_t {
     PHOTO_HAL_STATE,
     PHOTO_MEDIA_LIBRARY_STATE,
     PHOTO_THERMAL_LEVEL_STATE,
+    PHOTO_INTERRUPT_STATE,
     PHOTO_CACHE_STATE,
     VIDEO_CAMERA_STATE,
     VIDEO_HAL_STATE,
@@ -216,7 +231,9 @@ enum SchedulerType : int32_t {
     BATTERY_STATE,
     BATTERY_LEVEL_STATE,
     PHOTO_PROCESS_STATE,
-    NORMAL_TIME_STATE
+    NORMAL_TIME_STATE,
+    INTERRUPT_STATE,
+    VIDEO_CANCEL_PROCESS_STATE
 };
 
 enum MediaManagerError : int32_t {
@@ -256,10 +273,10 @@ enum class JobState {
 };
 
 enum class JobPriority {
+    NONE = -1,
     LOW = 0,
     NORMAL,
-    HIGH,
-    NONE
+    HIGH
 };
 
 enum class PhotoJobType {
@@ -267,9 +284,26 @@ enum class PhotoJobType {
     OFFLINE
 };
 
+enum class VideoJobType {
+    NORMAL = 0,
+    MOVIE,
+    LIVE_PHOTO
+};
+
+enum class JobErrorType {
+    RETRY = 0,
+    PAUSE,
+    NORMAL_FAILED,
+    HIGH_FAILED,
+    FATAL_NOTIFY,
+    FAILED_NOTIFY,
+    PAUSE_NOTIFY,
+};
+
 ErrorCode MapDpsErrorCode(DpsError errorCode);
 StatusCode MapDpsStatus(DpsStatus statusCode);
 DpsError MapHdiError(HDI::Camera::V1_2::ErrorCode errorCode);
+DpsError MapHdiVideoError(HDI::Camera::V1_2::ErrorCode errorCode);
 HdiStatus MapHdiStatus(HDI::Camera::V1_2::SessionStatus statusCode);
 HDI::Camera::V1_2::ExecutionMode MapToHdiExecutionMode(ExecutionMode executionMode);
 SystemPressureLevel ConvertPhotoThermalLevel(int32_t level);

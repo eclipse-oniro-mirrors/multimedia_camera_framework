@@ -55,9 +55,7 @@ AddPhotoCommand::AddPhotoCommand(const int32_t userId, const std::string& photoI
 int32_t AddPhotoCommand::Executing()
 {
     int32_t ret = Initialize();
-    if (ret != DP_OK) {
-        return ret;
-    }
+    DP_CHECK_RETURN_RET(ret != DP_OK, ret);
 
     processor_->AddImage(photoId_, discardable_, metadata_, bundleName_);
     return DP_OK;
@@ -72,10 +70,8 @@ RemovePhotoCommand::RemovePhotoCommand(const int32_t userId, const std::string& 
 int32_t RemovePhotoCommand::Executing()
 {
     int32_t ret = Initialize();
-    if (ret != DP_OK) {
-        return ret;
-    }
-    
+    DP_CHECK_RETURN_RET(ret != DP_OK, ret);
+
     processor_->RemoveImage(photoId_, restorable_);
     return DP_OK;
 }
@@ -83,9 +79,7 @@ int32_t RemovePhotoCommand::Executing()
 int32_t RestorePhotoCommand::Executing()
 {
     int32_t ret = Initialize();
-    if (ret != DP_OK) {
-        return ret;
-    }
+    DP_CHECK_RETURN_RET(ret != DP_OK, ret);
 
     processor_->RestoreImage(photoId_);
     return DP_OK;
@@ -94,15 +88,13 @@ int32_t RestorePhotoCommand::Executing()
 ProcessPhotoCommand::ProcessPhotoCommand(const int32_t userId, const std::string& photoId, const std::string& appName)
     : PhotoCommand(userId, photoId), appName_(appName)
 {
-    DP_DEBUG_LOG("ProcessPhotoCommand, photoId: %{public}s, appName: %{public}s", photoId_.c_str(), appName.c_str());
+    DP_DEBUG_LOG("ProcessPhotoCommand, photoId: %{public}s, appName: %{private}s", photoId_.c_str(), appName.c_str());
 }
 
 int32_t ProcessPhotoCommand::Executing()
 {
     int32_t ret = Initialize();
-    if (ret != DP_OK) {
-        return ret;
-    }
+    DP_CHECK_RETURN_RET(ret != DP_OK, ret);
 
     processor_->ProcessImage(appName_, photoId_);
     return DP_OK;
@@ -111,9 +103,7 @@ int32_t ProcessPhotoCommand::Executing()
 int32_t CancelProcessPhotoCommand::Executing()
 {
     int32_t ret = Initialize();
-    if (ret != DP_OK) {
-        return ret;
-    }
+    DP_CHECK_RETURN_RET(ret != DP_OK, ret);
 
     processor_->CancelProcessImage(photoId_);
     return DP_OK;

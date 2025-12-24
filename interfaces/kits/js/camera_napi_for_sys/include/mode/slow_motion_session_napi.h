@@ -44,6 +44,25 @@ struct SlowMotionStateListenerInfo {
         : state_(state), listener_(listener) {}
 };
 
+class SlowMotionZoomInfoListener : public ZoomInfoCallback, public ListenerBase,
+    public std::enable_shared_from_this<SlowMotionZoomInfoListener> {
+public:
+    explicit SlowMotionZoomInfoListener(napi_env env) : ListenerBase(env) {};
+    ~SlowMotionZoomInfoListener() = default;
+    void OnZoomInfoChange(const std::vector<float> zoomRatioRange) override;
+private:
+    void OnSlowMotionZoomInfoChange(const std::vector<float> zoomRatioRange) const;
+    void OnSlowMotionZoomInfoChangeAsync(const std::vector<float> zoomRatioRange) const;
+};
+
+struct SlowMotionZoomInfoListenerInfo {
+    std::vector<float> zoomRatioRange_;
+    weak_ptr<const SlowMotionZoomInfoListener> listener_;
+    SlowMotionZoomInfoListenerInfo(std::vector<float> zoomRatioRange,
+    shared_ptr<const SlowMotionZoomInfoListener> listener)
+        : zoomRatioRange_(zoomRatioRange), listener_(listener) {}
+};
+
 class SlowMotionSessionNapi : public CameraSessionForSysNapi {
 public:
     static void Init(napi_env env);
@@ -59,12 +78,17 @@ public:
     sptr<SlowMotionSession> slowMotionSession_;
     static thread_local napi_ref sConstructor_;
     std::shared_ptr<SlowMotionStateListener> slowMotionStateListener_;
+    std::shared_ptr<SlowMotionZoomInfoListener> zoomInfoListener_;
 private:
     static napi_value GetDoubleProperty(napi_env env, napi_value param, const std::string& propertyName,
         double& propertyValue);
     void RegisterSlowMotionStateCb(const std::string& eventName, napi_env env, napi_value callback,
         const std::vector<napi_value>& args, bool isOnce) override;
     void UnregisterSlowMotionStateCb(
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
+    void RegisterZoomInfoCbListener(const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce) override;
+    void UnregisterZoomInfoCbListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
 };
 }

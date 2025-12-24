@@ -1219,8 +1219,7 @@ class CameraService {
       try {
         let range: Array<number> = this.photoSession.getZoomRatioRange();
         Logger.info(TAG, `getZoomRatioRange:${range}`);
-        let zoomRangeLength = 2;
-        if (range && range.length === zoomRangeLength) {
+        if (range) {
           AppStorage.setOrCreate('zoomRatioMin', range[0]);
           AppStorage.setOrCreate('zoomRatioMax', range[1]);
         }

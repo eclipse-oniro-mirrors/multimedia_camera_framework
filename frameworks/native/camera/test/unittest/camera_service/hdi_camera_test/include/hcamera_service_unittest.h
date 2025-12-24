@@ -17,6 +17,7 @@
 #define HCAMERA_SERVICE_UNITTEST_H
 
 #include "gtest/gtest.h"
+#include <cstdint>
 #include "hcamera_service.h"
 #include "icontrol_center_status_callback.h"
 #include "input/camera_manager.h"
@@ -125,6 +126,26 @@ public:
     };
 
     DECLARE_INTERFACE_DESCRIPTOR(u"ICameraServiceCallbackTest");
+};
+
+class AppCameraSwitchSessionCallback : public CameraSwitchCallback {
+public:
+    void OnCameraActive(const std::string &cameraId, bool isRegisterCameraSwitchCallback,
+        const CaptureSessionInfo &sessionInfo) override
+    {
+        MEDIA_INFO_LOG("AppCameraSwitchSessionCallback::OnCameraActive ");
+        return;
+    }
+    void OnCameraUnactive(const std::string &cameraId) override
+    {
+        MEDIA_INFO_LOG("AppCameraSwitchSessionCallback::OnCameraUnactive ");
+        return;
+    }
+    virtual void OnCameraSwitch(const std::string &oriCameraId, const std::string &destCameraId, bool status) override
+    {
+        MEDIA_INFO_LOG("AppCameraSwitchSessionCallback::OnCameraSwitch ");
+        return;
+    }
 };
 
 class HCameraServiceUnit :  public testing::Test {

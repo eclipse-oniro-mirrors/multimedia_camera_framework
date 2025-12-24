@@ -29,6 +29,7 @@
 #include "ability/camera_ability.h"
 #include "ability/camera_ability_parse_util.h"
 #include "session/capture_session.h"
+#include "capture_scene_const.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -38,24 +39,41 @@ using namespace std;
 class CameraAbilityBuilder : public RefBase {
 public:
     virtual ~CameraAbilityBuilder() = default;
+    typedef void (CameraAbilityBuilder::*ExecuteFunc)(MultiTypeArray&, sptr<CameraAbility>);
+    typedef std::unordered_map<uint32_t, ExecuteFunc> ExecuteFunctions;
 
     std::vector<sptr<CameraAbility>> GetAbility(int32_t modeName, common_metadata_header_t* metadata,
         const std::set<int32_t>& specIds, sptr<CaptureSession> session, bool isForApp = true);
 
     std::vector<sptr<CameraAbility>> GetConflictAbility(int32_t modeName, common_metadata_header_t* metadata);
 
-private:
-    std::vector<int32_t> GetData(int32_t modeName, common_metadata_header_t* metadata, uint32_t tagId, int32_t specId);
+    MultiTypeArray GetData(int32_t modeName, common_metadata_header_t* metadata, uint32_t tagId, int32_t specId);
 
+private:
+    const ExecuteFunctions& GetExecuteFunctions();
+    bool CanAddColorSpace(ColorSpace colorSpace);
     std::vector<float> GetValidZoomRatioRange(const std::vector<int32_t>& data);
     bool IsSupportMacro(const std::vector<int32_t>& data);
+    std::vector<ColorSpace> GetValidColorSpaces(const std::vector<int32_t>& data);
+
+    void FillConstellationDrawing(MultiTypeArray &dataArray, sptr<CameraAbility> ability);
+    void FillNightModeExposureTime(MultiTypeArray &dataArray, sptr<CameraAbility> ability);
+    void FillSketchEnableRatio(MultiTypeArray &dataArray, sptr<CameraAbility> ability);
+    void FillSketchReferenceFovRatio(MultiTypeArray &dataArray, sptr<CameraAbility> ability);
+    void FillZoomRatioRange(MultiTypeArray &dataArray, sptr<CameraAbility> ability);
+    void FillMacro(MultiTypeArray &dataArray, sptr<CameraAbility> ability);
+    void FillNightSubModes(MultiTypeArray &dataArray, sptr<CameraAbility> ability);
+    void FillColorSpaces(MultiTypeArray &dataArray, sptr<CameraAbility> ability);
+    void FillColorEffects(MultiTypeArray &dataArray, sptr<CameraAbility> ability);
+    void FillFlashModes(MultiTypeArray &dataArray, sptr<CameraAbility> ability);
 
     void SetModeSpecTagField(sptr<CameraAbility> ability, int32_t modeName, common_metadata_header_t* metadata,
         uint32_t tagId, int32_t specId);
     void SetOtherTag(sptr<CameraAbility> ability, int32_t modeName, sptr<CaptureSession> session);
 
-    std::map<uint32_t, std::map<int32_t, std::vector<int32_t>>> cacheTagDataMap_;
+    std::map<uint32_t, std::map<int32_t, MultiTypeArray>> cacheTagDataMap_;
     std::set<uint32_t> cachedTagSet_;
+    SceneMode sceneMode_ = SceneMode::CAPTURE;
 };
 } // namespace CameraStandard
 } // namespace OHOS

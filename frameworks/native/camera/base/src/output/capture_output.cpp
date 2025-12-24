@@ -17,7 +17,9 @@
 #include <memory>
 #include <mutex>
 
+#include "camera_error_code.h"
 #include "camera_log.h"
+#include "camera_manager.h"
 #include "capture_session.h"
 
 namespace OHOS {
@@ -57,14 +59,18 @@ void CaptureOutput::RegisterStreamBinderDied()
 
 sptr<IBufferProducer> CaptureOutput::GetBufferProducer()
 {
+    // LCOV_EXCL_START
     std::lock_guard<std::mutex> lock(bufferProducerMutex_);
     return bufferProducer_;
+    // LCOV_EXCL_STOP
 }
 
 std::string CaptureOutput::GetPhotoSurfaceId()
 {
+    // LCOV_EXCL_START
     std::lock_guard<std::mutex> lock(bufferProducerMutex_);
     return surfaceId_;
+    // LCOV_EXCL_STOP
 }
 
 void CaptureOutput::UnregisterStreamBinderDied()
@@ -80,8 +86,10 @@ void CaptureOutput::UnregisterStreamBinderDied()
 
 void CaptureOutput::OnCameraServerDied(pid_t pid)
 {
+    // LCOV_EXCL_START
     CameraServerDied(pid);
     UnregisterStreamBinderDied();
+    // LCOV_EXCL_STOP
 }
 
 CaptureOutput::~CaptureOutput()
@@ -94,9 +102,19 @@ CaptureOutputType CaptureOutput::GetOutputType()
     return outputType_;
 }
 
+bool CaptureOutput::IsVideoProfileType()
+{
+    // LCOV_EXCL_START
+    return outputType_ == CAPTURE_OUTPUT_TYPE_VIDEO || outputType_ == CAPTURE_OUTPUT_TYPE_MOVIE_FILE ||
+           outputType_ == CAPTURE_OUTPUT_TYPE_UNIFY_MOVIE_FILE;
+    // LCOV_EXCL_STOP
+}
+
 const char* CaptureOutput::GetOutputTypeString()
 {
+    // LCOV_EXCL_START
     return g_captureOutputTypeString[outputType_];
+    // LCOV_EXCL_STOP
 }
 
 StreamType CaptureOutput::GetStreamType()
@@ -106,8 +124,10 @@ StreamType CaptureOutput::GetStreamType()
 
 bool CaptureOutput::IsStreamCreated()
 {
+    // LCOV_EXCL_START
     std::lock_guard<std::mutex> lock(streamMutex_);
     return stream_ != nullptr;
+    // LCOV_EXCL_STOP
 }
 
 sptr<IStreamCommon> CaptureOutput::GetStream()
@@ -187,17 +207,22 @@ std::shared_ptr<VideoProfile> CaptureOutput::GetVideoProfile()
 void CaptureOutput::SetDepthProfile(DepthProfile& depthProfile)
 {
     std::lock_guard<std::mutex> lock(depthProfileMutex_);
+    // LCOV_EXCL_START
     depthProfile_ = std::make_shared<DepthProfile>(depthProfile);
+    // LCOV_EXCL_STOP
 }
 
 std::shared_ptr<DepthProfile> CaptureOutput::GetDepthProfile()
 {
+    // LCOV_EXCL_START
     std::lock_guard<std::mutex> lock(depthProfileMutex_);
     return depthProfile_;
+    // LCOV_EXCL_STOP
 }
 
 void CaptureOutput::ClearProfiles()
 {
+    // LCOV_EXCL_START
     {
         std::lock_guard<std::mutex> lock(previewProfileMutex_);
         previewProfile_ = nullptr;
@@ -210,18 +235,23 @@ void CaptureOutput::ClearProfiles()
         std::lock_guard<std::mutex> lock(videoProfileMutex_);
         videoProfile_ = nullptr;
     }
+    // LCOV_EXCL_STOP
 }
 
 void CaptureOutput::AddTag(Tag tag)
 {
+    // LCOV_EXCL_START
     std::lock_guard<std::mutex> lock(tagsMutex_);
     tags_.insert(tag);
+    // LCOV_EXCL_STOP
 }
 
 void CaptureOutput::RemoveTag(Tag tag)
 {
+    // LCOV_EXCL_START
     std::lock_guard<std::mutex> lock(tagsMutex_);
     tags_.erase(tag);
+    // LCOV_EXCL_STOP
 }
 
 bool CaptureOutput::IsTagSetted(Tag tag)
@@ -232,7 +262,15 @@ bool CaptureOutput::IsTagSetted(Tag tag)
 
 bool CaptureOutput::IsHasEnableOfflinePhoto()
 {
+    // LCOV_EXCL_START
     return mIsHasEnableOfflinePhoto_;
+    // LCOV_EXCL_STOP
 }
+
+bool CaptureOutput::IsMultiStreamOutput()
+{
+    return outputType_ == CaptureOutputType::CAPTURE_OUTPUT_TYPE_UNIFY_MOVIE_FILE;
+}
+
 } // CameraStandard
 } // OHOS

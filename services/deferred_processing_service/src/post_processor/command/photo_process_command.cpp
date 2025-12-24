@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 
+// LCOV_EXCL_START
 #include "photo_process_command.h"
 
 #include "dp_utils.h"
@@ -52,9 +53,7 @@ PhotoProcessSuccessCommand::PhotoProcessSuccessCommand(const int32_t userId, con
 int32_t PhotoProcessSuccessCommand::Executing()
 {
     int32_t ret = Initialize();
-    if (ret != DP_OK) {
-        return ret;
-    }
+    DP_CHECK_RETURN_RET(ret != DP_OK, ret);
 
     photoProcessor_->OnProcessSuccess(userId_, imageId_, std::move(imageInfo_));
     return DP_OK;
@@ -70,9 +69,7 @@ PhotoProcessFailedCommand::PhotoProcessFailedCommand(const int32_t userId,
 int32_t PhotoProcessFailedCommand::Executing()
 {
     int32_t ret = Initialize();
-    if (ret != DP_OK) {
-        return ret;
-    }
+    DP_CHECK_RETURN_RET(ret != DP_OK, ret);
 
     photoProcessor_->OnProcessError(userId_, imageId_, error_);
     return DP_OK;
@@ -80,7 +77,7 @@ int32_t PhotoProcessFailedCommand::Executing()
 
 int32_t PhotoProcessTimeOutCommand::Executing()
 {
-        if (int32_t ret = Initialize() != DP_OK) {
+    if (int32_t ret = Initialize() != DP_OK) {
         return ret;
     }
 
@@ -90,3 +87,4 @@ int32_t PhotoProcessTimeOutCommand::Executing()
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS
+// LCOV_EXCL_STOP

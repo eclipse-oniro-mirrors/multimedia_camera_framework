@@ -18,6 +18,7 @@
 
 #include <functional>
 
+#include "enable_shared_create.h"
 #include "istate.h"
 #include "istate_change_listener.h"
 #include "video_job_repository.h"
@@ -25,48 +26,32 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-constexpr uint32_t TIME_OK = 0b0;
 using EventCallback = std::function<void(const int32_t)>;
 using VideoStateListener = IStateChangeListener<SchedulerType, SchedulerInfo>;
 
-class VideoStrategyCenter : public std::enable_shared_from_this<VideoStrategyCenter> {
+class VideoStrategyCenter : public EnableSharedCreateInit<VideoStrategyCenter> {
 public:
     ~VideoStrategyCenter();
 
-    void Initialize();
+    int32_t Initialize() override;
     void InitHandleEvent();
+    void InitScheduleState();
     void RegisterStateChangeListener(const std::weak_ptr<VideoStateListener>& listener);
-    DeferredVideoWorkPtr GetWork();
     DeferredVideoJobPtr GetJob();
-    ExecutionMode GetExecutionMode();
+    ExecutionMode GetExecutionMode(const JobPriority priority);
     void UpdateSingleTime(bool isOk);
-    void UpdateAvailableTime(bool isNeedReset, int32_t useTime);
-
-    inline int32_t GetAvailableTime()
-    {
-        return availableTime_;
-    }
-
-    inline bool IsReady()
-    {
-        DP_INFO_LOG("DPS_VIDEO: SchedulerOk is: %{public}d",  !isNeedStop_);
-        return !isNeedStop_;
-    }
-
-    inline bool IsTimeReady()
-    {
-        DP_INFO_LOG("DPS_VIDEO: TimeOk is: %{public}u", isTimeOk_);
-        return isTimeOk_ == TIME_OK;
-    }
+    void UpdateAvailableTime(int32_t useTime = -1);
+    bool IsReady();
+    bool IsTimeReady();
+    int32_t GetAvailableTime();
 
     inline bool isCharging()
     {
-        DP_INFO_LOG("DPS_VIDEO: Charging is: %{public}d", isCharging_);
         return isCharging_;
     }
 
 protected:
-    VideoStrategyCenter(const std::shared_ptr<VideoJobRepository>& repository);
+    explicit VideoStrategyCenter(const std::shared_ptr<VideoJobRepository>& repository);
 
 private:
     class EventsListener;
@@ -81,6 +66,7 @@ private:
     void HandleBatteryLevelEvent(int32_t value);
     void HandleTemperatureEvent(int32_t value);
     void HandlePhotoProcessEvent(int32_t value);
+    void HandleInterruptEvent(int32_t value);
     void UpdateValue(SchedulerType type, int32_t value);
     SchedulerInfo ReevaluateSchedulerInfo();
     SchedulerInfo GetSchedulerInfo(SchedulerType type);
@@ -96,6 +82,7 @@ private:
     bool isNeedStop_ {true};
     uint32_t isTimeOk_ {0};
     int32_t availableTime_ {TOTAL_PROCESS_TIME};
+    int32_t singleTime_ {ONCE_PROCESS_TIME};
     std::shared_ptr<EventsListener> eventsListener_ {nullptr};
     std::shared_ptr<VideoJobRepository> repository_ {nullptr};
     std::weak_ptr<VideoStateListener> videoStateChangeListener_;

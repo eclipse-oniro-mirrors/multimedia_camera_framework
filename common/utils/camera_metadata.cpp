@@ -39,7 +39,7 @@ std::shared_ptr<camera_metadata_item_t> GetMetadataItem(const common_metadata_he
     CHECK_RETURN_RET(src == nullptr, nullptr);
     auto item = std::make_shared<camera_metadata_item_t>();
     int32_t ret = OHOS::Camera::CameraMetadata::FindCameraMetadataItem(src, tag, item.get());
-    CHECK_RETURN_RET(ret != CAM_META_SUCCESS, nullptr);
+    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS, nullptr, "GetMetadataItem failed ret: %{public}d", ret);
     return item;
 }
 

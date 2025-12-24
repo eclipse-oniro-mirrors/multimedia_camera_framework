@@ -27,7 +27,7 @@ array<LightPaintingType> LightPaintingPhotoSessionImpl::GetSupportedLightPaintin
         array<LightPaintingType>(nullptr, 0), "SystemApi GetSupportedLightPaintings is called!");
     if (lightPaintingSession_ == nullptr) {
         CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT,
-            "failed to SetLightPaintingType, lightPaintingSession_ is nullptr");
+            "failed to GetSupportedLightPaintingTypes, lightPaintingSession_ is nullptr");
         return array<LightPaintingType>(nullptr, 0);
     }
     std::vector<OHOS::CameraStandard::LightPaintingType> lightPaintingTypes;
@@ -61,7 +61,7 @@ LightPaintingType LightPaintingPhotoSessionImpl::GetLightPaintingType()
         LightPaintingType(static_cast<LightPaintingType::key_t>(-1)), "SystemApi GetLightPaintingType is called!");
     if (lightPaintingSession_ == nullptr) {
         CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT,
-            "failed to SetLightPaintingType, lightPaintingSession_ is nullptr");
+            "failed to GetLightPaintingType, lightPaintingSession_ is nullptr");
         return LightPaintingType(static_cast<LightPaintingType::key_t>(-1));
     }
     OHOS::CameraStandard::LightPaintingType lightPainting;

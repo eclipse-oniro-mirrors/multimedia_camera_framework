@@ -25,14 +25,14 @@
 #include "ipc_skeleton.h"
 #include "token_setproc.h"
 #include "camera_util.h"
-
+ 
 #include <utility>
  
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
  
-static constexpr int32_t MIN_SIZE_NUM = 4;
+static constexpr int32_t MIN_SIZE_NUM = 60;
  
 std::shared_ptr<CameraStrategy> EventMonitorFuzzer::camerastrategyfuzz_ = nullptr;
 std::shared_ptr<BatteryLevelStrategy> EventMonitorFuzzer::batterylevelstrategyfuzz_ = nullptr;
@@ -81,7 +81,7 @@ void EventMonitorFuzzer::EventMonitorCameraStrategyFuzzTest(FuzzedDataProvider& 
     eventsinfofuzz_->GetChargingState();
     eventsinfofuzz_->GetBatteryLevel();
     eventsinfofuzz_->GetThermalLevel();
-    eventsinfofuzz_->GetCameraStatus();
+    eventsinfofuzz_->GetCameraState();
     enumval = fdp.ConsumeIntegralInRange<int32_t>(0, 3);
     CameraSessionStatus camerasessionstatus = static_cast<CameraSessionStatus>(enumval);
     eventsinfofuzz_->SetCameraState(camerasessionstatus);
@@ -124,13 +124,13 @@ void EventMonitorFuzzer::EventMonitorCameraStrategyFuzzTest(FuzzedDataProvider& 
 
 void Test(uint8_t* data, size_t size)
 {
-    auto eventMonitor = std::make_unique<EventMonitorFuzzer>();
-    if (eventMonitor == nullptr) {
-        MEDIA_INFO_LOG("eventMonitor is null");
-        return;
-    }
     FuzzedDataProvider fdp(data, size);
     if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
+        return;
+    }
+    auto eventMonitor = std::make_unique<EventMonitorFuzzer>();
+    if (eventMonitor == nullptr) {
+        MEDIA_ERR_LOG("eventMonitor is null");
         return;
     }
     eventMonitor->EventMonitorCameraStrategyFuzzTest(fdp);

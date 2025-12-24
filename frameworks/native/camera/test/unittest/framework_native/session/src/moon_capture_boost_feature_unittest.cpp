@@ -65,7 +65,7 @@ void MoonCaptureBoostUnitTest::TearDown()
  * EnvConditions: NA
  * CaseDescription: Test GetSketchReferenceFovRatio, GetSketchEnableRatio for just call.
  */
-HWTEST_F(MoonCaptureBoostUnitTest, moon_capture_boost_function_unittest_001, TestSize.Level1)
+HWTEST_F(MoonCaptureBoostUnitTest, moon_capture_boost_function_unittest_001, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_NE(cameras.size(), 0);

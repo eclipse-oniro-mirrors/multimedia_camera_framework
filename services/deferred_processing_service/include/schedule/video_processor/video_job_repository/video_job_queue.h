@@ -21,31 +21,34 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-constexpr uint32_t DEFAULT = 0;
 class VideoJobQueue {
 public:
-    typedef std::function<bool(DeferredVideoJobPtr, DeferredVideoJobPtr)> Comparator;
+    typedef std::function<bool(const DeferredVideoJobPtr&, const DeferredVideoJobPtr&)> Comparator;
     explicit VideoJobQueue(Comparator comp);
     ~VideoJobQueue();
 
-    bool Contains(DeferredVideoJobPtr obj) const;
+    bool Contains(const DeferredVideoJobPtr& obj) const;
     DeferredVideoJobPtr Peek() const;
-    void Push(DeferredVideoJobPtr obj);
+    void Push(const DeferredVideoJobPtr& obj);
     DeferredVideoJobPtr Pop();
-    void Remove(DeferredVideoJobPtr obj);
-    void Update(DeferredVideoJobPtr obj);
-    std::vector<DeferredVideoJobPtr> GetAllElements() const;
+    void Remove(const DeferredVideoJobPtr& obj);
+    void Update(const DeferredVideoJobPtr& obj);
     void Clear();
+    DeferredVideoJobPtr GetJobById(const std::string& id);
+
+    inline std::vector<DeferredVideoJobPtr> GetAllElements() const
+    {
+        return heap_;
+    }
 
     inline bool IsEmpty()
     {
-        return size_ == DEFAULT;
+        return heap_.empty();
     }
 
     inline int32_t GetSize()
     {
-        DP_DEBUG_LOG("entered, size is %{public}d", size_);
-        return size_;
+        return heap_.size();
     }
 
 private:
@@ -53,10 +56,10 @@ private:
     void Heapify(uint32_t index);
     void Swap(uint32_t x, uint32_t y);
 
-    uint32_t size_ {0};
-    Comparator comp_;
+    Comparator comp_ {nullptr};
     std::vector<DeferredVideoJobPtr> heap_ {};
-    std::unordered_map<DeferredVideoJobPtr, int32_t> indexMap_ {};
+    std::unordered_map<DeferredVideoJobPtr, uint32_t> indexMap_ {};
+    std::unordered_map<std::string, DeferredVideoJobPtr> catchMap_ {};
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

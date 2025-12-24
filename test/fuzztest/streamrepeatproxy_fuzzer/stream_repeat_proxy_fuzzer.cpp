@@ -51,6 +51,11 @@ void StreamRepeatProxyFuzz::StreamRepeatProxyFuzzTest(FuzzedDataProvider &fdp)
     fuzz_->AttachMetaSurface(producer, videoMetaType);
     int32_t rotation = fdp.ConsumeIntegral<int32_t>();
     fuzz_->SetCameraRotation(isEnable, rotation);
+    fuzz_->SetBandwidthCompression(isEnable);
+    std::vector<int32_t> supportedVideoCodecTypes;
+    fuzz_->GetSupportedVideoCodecTypes(supportedVideoCodecTypes);
+    MovieSettings movieSettings;
+    fuzz_->SetOutputSettings(movieSettings);
     fuzz_->GetMirror(isEnable);
     fuzz_->UnSetCallback();
 }

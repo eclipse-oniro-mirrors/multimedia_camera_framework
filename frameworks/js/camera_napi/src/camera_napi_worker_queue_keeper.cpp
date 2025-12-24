@@ -43,9 +43,13 @@ void CameraNapiWorkerQueueKeeper::WorkerQueueTasksResetCreateTimeNoLock(NapiWork
 
 std::shared_ptr<CameraNapiWorkerQueueKeeper> CameraNapiWorkerQueueKeeper::GetInstance()
 {
-    CHECK_RETURN_RET(g_WorkerQueueKeeper != nullptr, g_WorkerQueueKeeper);
+    if (g_WorkerQueueKeeper != nullptr) {
+        return g_WorkerQueueKeeper;
+    }
     std::lock_guard<std::mutex> lock(g_WorkerQueueKeeperMutex);
-    CHECK_RETURN_RET(g_WorkerQueueKeeper != nullptr, g_WorkerQueueKeeper);
+    if (g_WorkerQueueKeeper != nullptr) {
+        return g_WorkerQueueKeeper;
+    }
 
     g_WorkerQueueKeeper = std::make_shared<CameraNapiWorkerQueueKeeper>();
     return g_WorkerQueueKeeper;
@@ -69,11 +73,17 @@ bool CameraNapiWorkerQueueKeeper::WorkerLockCondition(std::shared_ptr<NapiWorker
         return true;
     }
     auto firstTask = workerQueueTasks_.front();
-    CHECK_RETURN_RET(firstTask == queueTask, true);
-    CHECK_RETURN_RET(firstTask->queueStatus == RUNNING, false);
+    if (firstTask == queueTask) {
+        return true;
+    }
+    if (firstTask->queueStatus == RUNNING) {
+        return false;
+    }
     auto now = std::chrono::steady_clock::now();
     auto diffTime = std::chrono::duration_cast<std::chrono::milliseconds>(now - firstTask->createTimePoint);
-    CHECK_RETURN_RET(diffTime < std::chrono::milliseconds(WORKER_TIMEOUT), false);
+    if (diffTime < std::chrono::milliseconds(WORKER_TIMEOUT)) {
+        return false;
+    }
     if (queueTask->waitCount < WORKER_TASK_WAIT_COUNT_MAX) {
         queueTask->waitCount++;
         return false;
@@ -83,7 +93,9 @@ bool CameraNapiWorkerQueueKeeper::WorkerLockCondition(std::shared_ptr<NapiWorker
         queueTask->taskName.c_str(), firstTask->taskName.c_str(), diffTime.count());
     workerQueueTasks_.pop_front();
     auto frontTask = workerQueueTasks_.front();
-    CHECK_RETURN_RET(frontTask == queueTask, true);
+    if (frontTask == queueTask) {
+        return true;
+    }
     MEDIA_INFO_LOG("CameraNapiWorkerQueueKeeper::WorkerLockCondition current task not equal front task,%{public}s "
                    "vs %{public}s, continue wait.",
         queueTask->taskName.c_str(), frontTask->taskName.c_str());
@@ -95,7 +107,9 @@ bool CameraNapiWorkerQueueKeeper::WorkerLockCondition(std::shared_ptr<NapiWorker
 bool CameraNapiWorkerQueueKeeper::ConsumeWorkerQueueTask(
     std::shared_ptr<NapiWorkerQueueTask> queueTask, std::function<void(void)> func)
 {
-    CHECK_RETURN_RET(queueTask == nullptr, false);
+    if (queueTask == nullptr) {
+        return false;
+    }
     std::unique_lock<std::mutex> lock(workerQueueMutex_);
     {
         std::lock_guard<std::mutex> lock(workerQueueTaskMutex_);

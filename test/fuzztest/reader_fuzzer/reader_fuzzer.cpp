@@ -19,17 +19,18 @@
 #include "foundation/multimedia/camera_framework/common/utils/camera_log.h"
 #include "securec.h"
 #include <memory>
-#include <fuzzer/FuzzedDataProvider.h>
 
 namespace OHOS {
 namespace CameraStandard {
 using namespace DeferredProcessing;
-static constexpr int32_t MIN_SIZE_NUM = 10;
-
-std::shared_ptr<Reader> ReaderFuzzer::fuzz_{nullptr};
+static constexpr int32_t MAX_CODE_LEN  = 512;
+static constexpr int32_t MIN_SIZE_NUM = 4;
 static const uint8_t* RAW_DATA = nullptr;
+const size_t THRESHOLD = 10;
 static size_t g_dataSize = 0;
 static size_t g_pos;
+
+std::shared_ptr<Reader> ReaderFuzzer::fuzz_{nullptr};
 
 /*
 * describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
@@ -51,40 +52,71 @@ T GetData()
     return object;
 }
 
-void ReaderFuzzer::ReaderFuzzTest(FuzzedDataProvider& fdp)
+template<class T>
+uint32_t GetArrLength(T& arr)
 {
+    if (arr == nullptr) {
+        MEDIA_INFO_LOG("%{public}s: The array length is equal to 0", __func__);
+        return 0;
+    }
+    return sizeof(arr) / sizeof(arr[0]);
+}
+
+void ReaderFuzzer::ReaderFuzzTest()
+{
+    if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
+        return;
+    }
     fuzz_ = std::make_shared<Reader>();
     CHECK_RETURN_ELOG(!fuzz_, "Create fuzz_ Error");
     fuzz_->GetSourceFormat();
     Format sourceFormat;
     fuzz_->sourceFormat_ = std::make_shared<Format>(sourceFormat);
+    Format userFormat;
+    fuzz_->userFormat_ = std::make_shared<Format>(userFormat);
     fuzz_->InitTracksAndDemuxer();
     auto mediaInfo = std::make_shared<MediaInfo>();
     fuzz_->GetMediaInfo(mediaInfo);
     fuzz_->GetSourceMediaInfo(mediaInfo);
     
-    int32_t trackType = fdp.ConsumeIntegralInRange<int32_t>(0, 300);
-    int32_t trackIndex = fdp.ConsumeIntegralInRange<int32_t>(0, 300);
-    TrackFormat formatOfIndex;
+    int32_t trackType = GetData<int32_t>();
     Format trackFormat;
-    trackFormat.GetIntValue(Media::Tag::MEDIA_TYPE, trackType);
-    formatOfIndex.format = std::make_shared<Format>(trackFormat);
-    formatOfIndex.trackId = trackIndex;
-    fuzz_->GetTrackMediaInfo(formatOfIndex, mediaInfo);
+    trackFormat.PutIntValue(Media::Tag::MEDIA_TYPE, trackType);
+    fuzz_->GetTrackMediaInfo(trackFormat.GetMeta(), mediaInfo);
 }
 
-void Test(uint8_t* data, size_t size)
+void Test()
 {
-    FuzzedDataProvider fdp(data, size);
-    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
-        return;
-    }
     auto reader = std::make_unique<ReaderFuzzer>();
     if (reader == nullptr) {
         MEDIA_INFO_LOG("mpegManager is null");
         return;
     }
-        reader->ReaderFuzzTest(fdp);
+    reader->ReaderFuzzTest();
+}
+
+typedef void (*TestFuncs[1])();
+
+TestFuncs g_testFuncs = {
+    Test,
+};
+
+bool FuzzTest(const uint8_t* rawData, size_t size)
+{
+    // initialize data
+    RAW_DATA = rawData;
+    g_dataSize = size;
+    g_pos = 0;
+
+    uint32_t code = GetData<uint32_t>();
+    uint32_t len = GetArrLength(g_testFuncs);
+    if (len > 0) {
+        g_testFuncs[code % len]();
+    } else {
+        MEDIA_INFO_LOG("%{public}s: The len length is equal to 0", __func__);
+    }
+
+    return true;
 }
 } // namespace CameraStandard
 } // namespace OHOS
@@ -92,6 +124,10 @@ void Test(uint8_t* data, size_t size)
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(uint8_t* data, size_t size)
 {
-    OHOS::CameraStandard::Test(data, size);
+    if (size < OHOS::CameraStandard::THRESHOLD) {
+        return 0;
+    }
+
+    OHOS::CameraStandard::FuzzTest(data, size);
     return 0;
 }

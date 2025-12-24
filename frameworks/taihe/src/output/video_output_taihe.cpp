@@ -297,12 +297,12 @@ void VideoOutputImpl::AttachMetaSurface(string_view surfaceId, VideoMetaType typ
 {
     CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
         "SystemApi AttachMetaSurface is called!");
-    CHECK_PRINT_ELOG(videoOutput_ == nullptr, "AttachMetaSurface failed, videoOutput_ is nullptr");
+    CHECK_RETURN_ELOG(videoOutput_ == nullptr, "AttachMetaSurface failed, videoOutput_ is nullptr");
     uint64_t iSurfaceId;
     std::istringstream iss((std::string(surfaceId)));
     iss >> iSurfaceId;
     sptr<Surface> surface = SurfaceUtils::GetInstance()->GetSurface(iSurfaceId);
-    CHECK_PRINT_ELOG(surface == nullptr, "failed to get surface from SurfaceUtils");
+    CHECK_RETURN_ELOG(surface == nullptr, "failed to get surface from SurfaceUtils");
     videoOutput_->AttachMetaSurface(surface, static_cast<OHOS::CameraStandard::VideoMetaType>(type.get_value()));
 }
 
@@ -324,7 +324,7 @@ void VideoCallbackListener::OnError(int32_t errorCode) const
 
 void VideoCallbackListener::OnErrorCallback(int32_t errorCode) const
 {
-    MEDIA_INFO_LOG("OnErrorCallback is called, errorCode: %{public}d", errorCode);
+    MEDIA_DEBUG_LOG("OnErrorCallback is called, errorCode: %{public}d", errorCode);
     auto sharePtr = shared_from_this();
     auto task = [errorCode, sharePtr]() {
         CHECK_EXECUTE(sharePtr != nullptr, sharePtr->ExecuteErrorCallback("error", errorCode));
@@ -343,7 +343,7 @@ void VideoCallbackListener::OnFrameStartedCallback() const
 {
     MEDIA_DEBUG_LOG("OnFrameStartedCallback is called");
     auto sharePtr = shared_from_this();
-    auto task = [sharePtr, this]() {
+    auto task = [sharePtr]() {
         uintptr_t undefined = CameraUtilsTaihe::GetUndefined(get_env());
         CHECK_EXECUTE(sharePtr != nullptr,
             sharePtr->ExecuteAsyncCallback("frameStart", 0, "Callback is OK", undefined));
@@ -362,7 +362,7 @@ void VideoCallbackListener::OnFrameEndedCallback(const int32_t frameCount) const
 {
     MEDIA_DEBUG_LOG("OnFrameEndedCallback is called");
     auto sharePtr = shared_from_this();
-    auto task = [sharePtr, this]() {
+    auto task = [sharePtr]() {
         uintptr_t undefined = CameraUtilsTaihe::GetUndefined(get_env());
         CHECK_EXECUTE(sharePtr != nullptr,
             sharePtr->ExecuteAsyncCallback("frameEnd", 0, "Callback is OK", undefined));
@@ -395,6 +395,7 @@ void VideoCallbackListener::OnDeferredVideoEnhancementInfo(
 void VideoOutputImpl::RegisterVideoOutputErrorCallbackListener(
     const std::string& eventName, std::shared_ptr<uintptr_t> callback, bool isOnce)
 {
+    CHECK_RETURN_ELOG(videoOutput_ == nullptr, "videoOutput_ is null!");
     if (videoCallback_ == nullptr) {
         ani_env *env = get_env();
         videoCallback_ = std::make_shared<VideoCallbackListener>(env);
@@ -415,6 +416,7 @@ void VideoOutputImpl::RegisterDeferredVideoCallbackListener(
 {
     CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
         "SystemApi on deferredVideoEnhancementInfo is called!");
+    CHECK_RETURN_ELOG(videoOutput_ == nullptr, "videoOutput_ is null!");
     if (videoCallback_ == nullptr) {
         ani_env *env = get_env();
         videoCallback_ = std::make_shared<VideoCallbackListener>(env);
@@ -435,6 +437,7 @@ void VideoOutputImpl::UnregisterDeferredVideoCallbackListener(
 void VideoOutputImpl::RegisterFrameStartCallbackListener(const std::string& eventName,
     std::shared_ptr<uintptr_t> callback, bool isOnce)
 {
+    CHECK_RETURN_ELOG(videoOutput_ == nullptr, "videoOutput_ is null!");
     if (videoCallback_ == nullptr) {
         ani_env *env = get_env();
         videoCallback_ = std::make_shared<VideoCallbackListener>(env);
@@ -453,6 +456,7 @@ void VideoOutputImpl::UnregisterFrameStartCallbackListener(const std::string& ev
 void VideoOutputImpl::RegisterFrameEndCallbackListener(const std::string& eventName,
     std::shared_ptr<uintptr_t> callback, bool isOnce)
 {
+    CHECK_RETURN_ELOG(videoOutput_ == nullptr, "videoOutput_ is null!");
     if (videoCallback_ == nullptr) {
         ani_env *env = get_env();
         videoCallback_ = std::make_shared<VideoCallbackListener>(env);
@@ -512,25 +516,21 @@ void VideoOutputImpl::OffDeferredVideoEnhancementInfo(
 
 void VideoOutputImpl::OnFrameStart(callback_view<void(uintptr_t, uintptr_t)> callback)
 {
-    MEDIA_ERR_LOG("VideoOutputImpl::OnFrameStart");
     ListenerTemplate<VideoOutputImpl>::On(this, callback, "frameStart");
 }
 
 void VideoOutputImpl::OffFrameStart(optional_view<callback<void(uintptr_t, uintptr_t)>> callback)
 {
-    MEDIA_ERR_LOG("VideoOutputImpl::OffFrameStart");
     ListenerTemplate<VideoOutputImpl>::Off(this, callback, "frameStart");
 }
 
 void VideoOutputImpl::OnFrameEnd(callback_view<void(uintptr_t, uintptr_t)> callback)
 {
-    MEDIA_ERR_LOG("VideoOutputImpl::OnFrameEnd");
     ListenerTemplate<VideoOutputImpl>::On(this, callback, "frameEnd");
 }
 
 void VideoOutputImpl::OffFrameEnd(optional_view<callback<void(uintptr_t, uintptr_t)>> callback)
 {
-    MEDIA_ERR_LOG("VideoOutputImpl::OffFrameEnd");
     ListenerTemplate<VideoOutputImpl>::Off(this, callback, "frameEnd");
 }
 

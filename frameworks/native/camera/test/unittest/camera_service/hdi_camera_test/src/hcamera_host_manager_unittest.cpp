@@ -69,7 +69,7 @@ void HCameraHostManagerUnit::TearDown()
  *  The expected result is that the CaptureInput object remains valid after the deletion operation,
  *  and this operation does not cause any exceptions or errors.
  */
-HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_001, TestSize.Level1)
+HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_001, TestSize.Level0)
 {
     const std::string svcName;
     cameraHostManager_->RemoveCameraHost(svcName);
@@ -97,7 +97,7 @@ HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_001, TestSize.Lev
  *  call the Prelaunch method. The expected result is that the Prelaunch method returns 2,
  *  indicating that the pre-launch operation is successful or has reached the expected state.
  */
-HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_002, TestSize.Level1)
+HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_002, TestSize.Level0)
 {
     int notifyType = 1;
     int deviceState = 2;
@@ -122,7 +122,7 @@ HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_002, TestSize.Lev
  *  The expected result is that the camera device can be successfully
  *  added to the map without causing any exceptions or errors.
  */
-HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_003, TestSize.Level1)
+HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_003, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_NE(cameras.size(), 0);
@@ -155,7 +155,7 @@ HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_003, TestSize.Lev
  *  the HCameraHostManager object can correctly respond to service state changes,
  *  and will not cause any exceptions or errors during the operation.
  */
-HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_004, TestSize.Level1)
+HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_004, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_NE(cameras.size(), 0);
@@ -200,7 +200,7 @@ HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_004, TestSize.Lev
  *  object can correctly handle the camera devices in the map, and will not cause any
  *  exceptions or errors during the operation.
  */
-HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_005, TestSize.Level1)
+HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_005, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_NE(cameras.size(), 0);
@@ -229,7 +229,7 @@ HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_005, TestSize.Lev
  * EnvConditions: NA
  * CaseDescription: Test HCameraHostManager with anomalous branch.
  */
-HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_006, TestSize.Level1)
+HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_006, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
@@ -248,10 +248,10 @@ HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_006, TestSize.Lev
 
     std::string cameraId = cameras[0]->GetID();
     EXPECT_EQ(cameraHostManager_->HCameraHostManager::GetCameras(cameraIds), 0);
-    cameraHostManager_->RemoveCameraHost(HCameraHostManager::LOCAL_SERVICE_NAME);
+    cameraHostManager_->RemoveCameraHost( HCameraHostManager::LOCAL_SERVICE_NAME);
     std::shared_ptr<OHOS::Camera::CameraMetadata> ability;
     EXPECT_EQ(cameraHostManager_->HCameraHostManager::GetCameraAbility(cameraId, ability), CAMERA_INVALID_ARG);
-    EXPECT_EQ(cameraHostManager_->HCameraHostManager::SetFlashlight(cameraId, false), CAMERA_UNKNOWN_ERROR);
+    EXPECT_EQ(cameraHostManager_->HCameraHostManager::SetFlashlight(cameraId, false), CAMERA_INVALID_ARG);
 
     cameraId = "HCameraHostManager";
 
@@ -284,13 +284,41 @@ HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_006, TestSize.Lev
 
 /*
  * Feature: Framework
+ * Function: Test EntireCloseDevice.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test EntireCloseDevice.
+ */
+HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_007, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
+    std::vector<std::string> cameraIds = {};
+    cameraHostManager_->Init();
+    ASSERT_NE(cameraHostManager_, nullptr);
+
+    std::string cameraId = "123465";
+    cameraHostManager_->EntireCloseDevice(cameraId);
+}
+
+/*
+ * Feature: Framework
  * Function: Test UpdateRestoreParam.
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
  * CaseDescription: Test UpdateRestoreParam normal branches.
  */
-HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_007, TestSize.Level1)
+HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_008, TestSize.Level1)
 {
     const std::string clientName1 = "testClientName1";
     const std::string clientName2 = "testClientName2";

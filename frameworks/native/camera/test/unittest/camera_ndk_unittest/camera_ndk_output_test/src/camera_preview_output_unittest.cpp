@@ -568,6 +568,121 @@ HWTEST_F(CameraPreviewOutputUnitTest, camera_preview_output_unittest_012, TestSi
     EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_CaptureSession_CommitConfig(captureSession);
     EXPECT_EQ(ret, CAMERA_OK);
+
+    EXPECT_EQ(OH_CameraInput_Release(cameraInput), CAMERA_OK);
+    EXPECT_EQ(OH_PreviewOutput_Release(previewOutput), CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test IsBandwidthCompressionSupported and EnableBandwidthCompression
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsBandwidthCompressionSupported and EnableBandwidthCompression with normal branch
+ */
+HWTEST_F(CameraPreviewOutputUnitTest, camera_preview_output_unittest_013, TestSize.Level0)
+{
+    bool enableCompression = true;
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+
+    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_PHOTO);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    ret = OH_CaptureSession_BeginConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    Camera_Input *cameraInput = nullptr;
+    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(cameraInput, nullptr);
+
+    OHOS::sptr<OHOS::CameraStandard::CameraInput> innerCameraInput = cameraInput->GetInnerCameraInput();
+    auto device = innerCameraInput->GetCameraDevice();
+    device->SetMdmCheck(false);
+
+    EXPECT_EQ(OH_CameraInput_Open(cameraInput), CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_AddInput(captureSession, cameraInput), CAMERA_OK);
+
+    Camera_PreviewOutput *previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+
+    ret = OH_CaptureSession_AddPreviewOutput(captureSession, previewOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+
+    bool isSupported = false;
+    ret = OH_PreviewOutput_IsBandwidthCompressionSupported(previewOutput, &isSupported);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    if (isSupported) {
+        ret = OH_PreviewOutput_EnableBandwidthCompression(previewOutput, enableCompression);
+        EXPECT_EQ(ret, CAMERA_OK);
+
+        bool disableCompression = false;
+        ret = OH_PreviewOutput_EnableBandwidthCompression(previewOutput, disableCompression);
+        EXPECT_EQ(ret, CAMERA_OK);
+    }
+    EXPECT_EQ(OH_CaptureSession_CommitConfig(captureSession), CAMERA_OK);
+
+    EXPECT_EQ(OH_CameraInput_Release(cameraInput), CAMERA_OK);
+    EXPECT_EQ(OH_PreviewOutput_Release(previewOutput), CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test IsBandwidthCompressionSupported and EnableBandwidthCompression
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsBandwidthCompressionSupported and EnableBandwidthCompression with abnormal branch
+ */
+HWTEST_F(CameraPreviewOutputUnitTest, camera_preview_output_unittest_014, TestSize.Level0)
+{
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+
+    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_PHOTO);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    ret = OH_CaptureSession_BeginConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    Camera_Input *cameraInput = nullptr;
+    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(cameraInput, nullptr);
+
+    OHOS::sptr<OHOS::CameraStandard::CameraInput> innerCameraInput = cameraInput->GetInnerCameraInput();
+    auto device = innerCameraInput->GetCameraDevice();
+    device->SetMdmCheck(false);
+
+    EXPECT_EQ(OH_CameraInput_Open(cameraInput), CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_AddInput(captureSession, cameraInput), CAMERA_OK);
+
+    Camera_PreviewOutput *previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+
+    ret = OH_CaptureSession_AddPreviewOutput(captureSession, previewOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+
+    ret = OH_PreviewOutput_IsBandwidthCompressionSupported(previewOutput, nullptr);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+
+    bool enableCompression = false;
+    ret = OH_PreviewOutput_EnableBandwidthCompression(nullptr, enableCompression);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+
+    EXPECT_EQ(OH_CaptureSession_CommitConfig(captureSession), CAMERA_OK);
+
     EXPECT_EQ(OH_CameraInput_Release(cameraInput), CAMERA_OK);
     EXPECT_EQ(OH_PreviewOutput_Release(previewOutput), CAMERA_OK);
     EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);

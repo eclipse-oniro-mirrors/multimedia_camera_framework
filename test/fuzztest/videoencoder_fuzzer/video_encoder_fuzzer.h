@@ -18,14 +18,13 @@
 
 #include "video_encoder.h"
 #include <memory>
-#include <fuzzer/FuzzedDataProvider.h>
 
 namespace OHOS {
 namespace CameraStandard {
 class VideoEncoderFuzzer {
 public:
 static std::shared_ptr<VideoEncoder> fuzz_;
-static void VideoEncoderFuzzTest(FuzzedDataProvider& fdp);
+static void VideoEncoderFuzzTest();
 };
 } //CameraStandard
 } //OHOS

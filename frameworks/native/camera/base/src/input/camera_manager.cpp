@@ -30,7 +30,6 @@
 
 #include "ability/camera_ability_parse_util.h"
 #include "bundle_mgr_interface.h"
-#include "camera_counting_timer.h"
 #include "camera_device.h"
 #include "camera_device_ability_items.h"
 #include "camera_error_code.h"
@@ -45,7 +44,8 @@
 #include "capture_scene_const.h"
 #include "control_center_session.h"
 #include "deferred_photo_proc_session.h"
-#include "display_manager.h"
+#include "display_manager_lite.h"
+#include "dps_metadata_info.h"
 #include "icamera_service_callback.h"
 #include "icamera_util.h"
 #include "icapture_session.h"
@@ -53,19 +53,23 @@
 #include "ipc_skeleton.h"
 #include "iservice_registry.h"
 #include "istream_capture.h"
+#include "istream_common.h"
 #include "refbase.h"
 #include "session/capture_session.h"
+#include "session/mech_session.h"
+#include "session/cameraSwitch_session.h"
 #include "session/photo_session.h"
 #include "session/scan_session.h"
 #include "session/secure_camera_session.h"
 #include "session/video_session.h"
 #include "system_ability_definition.h"
-#include "anonymization.h"
+#include "unify_movie_file_output.h"
+#include "v1_5/types.h"
 
 using namespace std;
 namespace OHOS {
 namespace CameraStandard {
-using OHOS::HDI::Camera::V1_3::OperationMode;
+using OHOS::HDI::Camera::V1_5::OperationMode;
 sptr<CameraManager> CameraManager::g_cameraManager = nullptr;
 std::mutex CameraManager::g_instanceMutex;
 
@@ -174,15 +178,6 @@ CameraManager::~CameraManager()
     MEDIA_INFO_LOG("CameraManager::~CameraManager() called");
     RemoveServiceProxyDeathRecipient();
     UnSubscribeSystemAbility();
-    auto serviceProxy = GetServiceProxy();
-    if (serviceProxy) {
-        serviceProxy->UnSetListenerObject();
-        UnSetCameraServiceCallback();
-        UnSetCameraMuteServiceCallback();
-        UnSetTorchServiceCallback();
-        UnSetFoldServiceCallback();
-        UnSetControlCenterStatusCallback();
-    }
 }
 
 int32_t CameraManager::CreateListenerObject()
@@ -213,11 +208,11 @@ int32_t CameraStatusListenerManager::OnCameraStatusChanged(
     // LCOV_EXCL_STOP
     sptr<CameraDevice> cameraInfo = cameraManager->GetCameraDeviceFromId(cameraId);
     cameraStatusInfo.cameraDevice = cameraInfo;
-    CHECK_EXECUTE(status == static_cast<int32_t>(CameraStatus::CAMERA_STATUS_DISAPPEAR),
-        cameraManager->RemoveCameraDeviceFromCache(cameraId));
+    if (status == static_cast<int32_t>(CameraStatus::CAMERA_STATUS_DISAPPEAR)) {
+        cameraManager->RemoveCameraDeviceFromCache(cameraId);
+    }
     cameraStatusInfo.cameraStatus = static_cast<CameraStatus>(status);
     cameraStatusInfo.bundleName = bundleName;
-
     CHECK_EXECUTE(!CheckCameraStatusValid(cameraInfo), return CAMERA_OK);
     if (cameraStatusInfo.cameraDevice) {
         auto listenerManager = cameraManager->GetCameraStatusListenerManager();
@@ -233,8 +228,7 @@ int32_t CameraStatusListenerManager::OnFlashlightStatusChanged(const std::string
 {
     MEDIA_INFO_LOG("cameraId: %{public}s, status: %{public}d", cameraId.c_str(), status);
     auto cameraManager = GetCameraManager();
-    CHECK_RETURN_RET_ELOG(
-        cameraManager == nullptr, CAMERA_OK, "OnFlashlightStatusChanged CameraManager is nullptr");
+    CHECK_RETURN_RET_ELOG(cameraManager == nullptr, CAMERA_OK, "OnFlashlightStatusChanged CameraManager is nullptr");
     auto listenerManager = cameraManager->GetCameraStatusListenerManager();
     MEDIA_DEBUG_LOG("CameraStatusListenerManager listeners size: %{public}zu", listenerManager->GetListenerCount());
     listenerManager->TriggerListener([&](auto listener) {
@@ -248,20 +242,19 @@ bool CameraStatusListenerManager::CheckCameraStatusValid(sptr<CameraDevice> came
 {
     // LCOV_EXCL_START
     auto cameraManager = GetCameraManager();
-    CHECK_RETURN_RET_ELOG(cameraManager == nullptr || cameraInfo == nullptr,
-        false, "CheckCameraStatusValid CameraManager is nullptr");
+    CHECK_RETURN_RET_ELOG(
+        cameraManager == nullptr || cameraInfo == nullptr, false, "CheckCameraStatusValid CameraManager is nullptr");
+    FoldStatus curFoldStatus = cameraManager->GetFoldStatus();
     std::string foldScreenType = cameraManager->GetFoldScreenType();
     if (!foldScreenType.empty() && foldScreenType[0] == '4' &&
         cameraInfo->GetPosition() == CAMERA_POSITION_BACK &&
         cameraInfo->GetConnectionType() == CAMERA_CONNECTION_BUILT_IN) {
+        CHECK_EXECUTE(curFoldStatus == FoldStatus::UNKNOWN_FOLD, return true);
         std::string bundleName_ = system::GetParameter("const.camera.folded_lens_change", "default");
-        FoldStatus curFoldStatus = cameraManager->GetFoldStatus();
         auto supportedFoldStatus = cameraInfo->GetSupportedFoldStatus();
         auto it = g_metaToFwCameraFoldStatus_.find(static_cast<CameraFoldStatus>(supportedFoldStatus));
-        CHECK_RETURN_RET_DLOG(it == g_metaToFwCameraFoldStatus_.end(), false,
-            "No supported fold status is found");
-        CHECK_RETURN_RET_DLOG(it->second != curFoldStatus, false,
-            "current foldstatus is inconsistency");
+        CHECK_RETURN_RET_DLOG(it == g_metaToFwCameraFoldStatus_.end(), false, "No supported fold status is found");
+        CHECK_RETURN_RET_DLOG(it->second != curFoldStatus, false, "current foldstatus is inconsistency");
         bool isSpecialScene = it->second == curFoldStatus && curFoldStatus == FoldStatus::FOLDED &&
             bundleName_ != "default" && cameraManager->GetBundleName() != bundleName_;
         MEDIA_DEBUG_LOG("curFoldStatus %{public}d it->second= %{public}d cameraid = %{public}s",
@@ -277,8 +270,8 @@ sptr<CaptureSession> CameraManager::CreateCaptureSession()
     CAMERA_SYNC_TRACE;
     sptr<CaptureSession> captureSession = nullptr;
     int ret = CreateCaptureSession(captureSession, SceneMode::NORMAL);
-    CHECK_RETURN_RET_ELOG(ret != CameraErrorCode::SUCCESS, nullptr,
-        "Failed to CreateCaptureSession with error code:%{public}d", ret);
+    CHECK_RETURN_RET_ELOG(
+        ret != CameraErrorCode::SUCCESS, nullptr, "Failed to CreateCaptureSession with error code:%{public}d", ret);
     return captureSession;
 }
 
@@ -290,10 +283,10 @@ sptr<CaptureSession> CameraManager::CreateCaptureSessionImpl(SceneMode mode, spt
             return new (std::nothrow) VideoSession(session);
         case SceneMode::CAPTURE:
             return new (std::nothrow) PhotoSession(session);
-        case SceneMode::SECURE:
-            return new (std::nothrow) SecureCameraSession(session);
         case SceneMode::SCAN:
             return new (std::nothrow) ScanSession(session);
+        case SceneMode::SECURE:
+            return new (std::nothrow) SecureCameraSession(session);
         default:
             return new (std::nothrow) CaptureSession(session);
     }
@@ -320,7 +313,8 @@ int32_t CameraManager::CreateCaptureSessionFromService(sptr<ICaptureSession>& se
     int32_t retCode = serviceProxy->CreateCaptureSession(sessionTmp, opMode);
     CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, ServiceToCameraError(retCode),
         "CreateCaptureSessionFromService Failed to get captureSession object from hcamera service! "
-        "%{public}d", retCode);
+        "%{public}d",
+        retCode);
     CHECK_RETURN_RET_ELOG(sessionTmp == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "CreateCaptureSessionFromService Failed to CreateCaptureSession with session is null");
     session = sessionTmp;
@@ -342,7 +336,8 @@ int32_t CameraManager::CreateCaptureSession(sptr<CaptureSession>& pCaptureSessio
     int32_t retCode = serviceProxy->CreateCaptureSession(session, opMode);
     CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, ServiceToCameraError(retCode),
         "CreateCaptureSession(pCaptureSession) Failed to get captureSession object from hcamera service! "
-        "%{public}d", retCode);
+        "%{public}d",
+        retCode);
     CHECK_RETURN_RET_ELOG(session == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "CreateCaptureSession(pCaptureSession) Failed to CreateCaptureSession with session is null");
     captureSession = CreateCaptureSessionImpl(mode, session);
@@ -378,8 +373,8 @@ int CameraManager::CreateDeferredPhotoProcessingSession(int userId,
     CHECK_RETURN_RET_ELOG(samgr == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "CreateDeferredPhotoProcessingSession Failed to get System ability manager");
     sptr<IRemoteObject> object = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
-    CHECK_RETURN_RET_ELOG(object == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
-        "CreateDeferredPhotoProcessingSession object is null");
+    CHECK_RETURN_RET_ELOG(
+        object == nullptr, CameraErrorCode::SERVICE_FATL_ERROR, "CreateDeferredPhotoProcessingSession object is null");
     sptr<ICameraService> serviceProxy = iface_cast<ICameraService>(object);
     CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "CreateDeferredPhotoProcessingSession serviceProxy is null");
@@ -395,8 +390,8 @@ int CameraManager::CreateDeferredPhotoProcessingSession(int userId,
 
     sptr<DeferredProcessing::IDeferredPhotoProcessingSession> session = nullptr;
     int32_t retCode = serviceProxy->CreateDeferredPhotoProcessingSession(userId, remoteCallback, session);
-    CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, ServiceToCameraError(retCode),
-        "Failed to get photo session!, %{public}d", retCode);
+    CHECK_RETURN_RET_ELOG(
+        retCode != CAMERA_OK, ServiceToCameraError(retCode), "Failed to get photo session!, %{public}d", retCode);
     CHECK_RETURN_RET_ELOG(session == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "CreateDeferredPhotoProcessingSession Failed to CreateDeferredPhotoProcessingSession as session is null");
 
@@ -410,11 +405,9 @@ sptr<DeferredVideoProcSession> CameraManager::CreateDeferredVideoProcessingSessi
 {
     CAMERA_SYNC_TRACE;
     sptr<DeferredVideoProcSession> deferredVideoProcSession = nullptr;
-    int ret = CreateDeferredVideoProcessingSession(userId, callback, &deferredVideoProcSession);
-    if (ret != CameraErrorCode::SUCCESS) {
-        MEDIA_ERR_LOG("Failed to CreateDeferredVideoProcessingSession with error code:%{public}d", ret);
-        return nullptr;
-    }
+    int32_t retCode = CreateDeferredVideoProcessingSession(userId, callback, &deferredVideoProcSession);
+    CHECK_RETURN_RET_ELOG(retCode != CameraErrorCode::SUCCESS, nullptr,
+        "Failed to CreateDeferredVideoProcessingSession with error code:%{public}d", retCode);
     return deferredVideoProcSession;
 }
 
@@ -427,8 +420,8 @@ int CameraManager::CreateDeferredVideoProcessingSession(int userId,
     CHECK_RETURN_RET_ELOG(samgr == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "CreateDeferredVideoProcessingSession Failed to get System ability manager");
     sptr<IRemoteObject> object = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
-    CHECK_RETURN_RET_ELOG(object == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
-        "CreateDeferredVideoProcessingSession object is null");
+    CHECK_RETURN_RET_ELOG(
+        object == nullptr, CameraErrorCode::SERVICE_FATL_ERROR, "CreateDeferredVideoProcessingSession object is null");
     sptr<ICameraService> serviceProxy = iface_cast<ICameraService>(object);
     CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "CreateDeferredVideoProcessingSession serviceProxy is null");
@@ -443,8 +436,8 @@ int CameraManager::CreateDeferredVideoProcessingSession(int userId,
 
     sptr<DeferredProcessing::IDeferredVideoProcessingSession> session = nullptr;
     int32_t retCode = serviceProxy->CreateDeferredVideoProcessingSession(userId, remoteCallback, session);
-    CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, ServiceToCameraError(retCode),
-        "Failed to get video session!, %{public}d", retCode);
+    CHECK_RETURN_RET_ELOG(
+        retCode != CAMERA_OK, ServiceToCameraError(retCode), "Failed to get video session!, %{public}d", retCode);
     CHECK_RETURN_RET_ELOG(session == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "CreateDeferredVideoProcessingSession Failed to CreateDeferredVideoProcessingSession as session is null");
 
@@ -476,14 +469,13 @@ int CameraManager::CreateMechSession(int userId, sptr<MechSession>* pMechSession
     CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, CameraErrorCode::INVALID_ARGUMENT,
         "CreateMechSession(pMechSession) serviceProxy is nullptr");
     int32_t retCode = serviceProxy->CreateMechSession(userId, session);
-    CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, retCode,
-        "Failed to get mech session!, %{public}d", retCode);
-    CHECK_RETURN_RET_ELOG(session == nullptr, retCode,
-        "CreateMechSession Failed to CreateMechSession as session is null");
+    CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, retCode, "Failed to get mech session!, %{public}d", retCode);
+    CHECK_RETURN_RET_ELOG(
+        session == nullptr, retCode, "CreateMechSession Failed to CreateMechSession as session is null");
 
     mechSession = new(std::nothrow) MechSession(session);
-    CHECK_RETURN_RET_ELOG(mechSession == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
-        "CreateMechSession failed to new MechSession!");
+    CHECK_RETURN_RET_ELOG(
+        mechSession == nullptr, CameraErrorCode::SERVICE_FATL_ERROR, "CreateMechSession failed to new MechSession!");
 
     *pMechSession = mechSession;
     return CameraErrorCode::SUCCESS;
@@ -495,18 +487,46 @@ bool CameraManager::IsMechSupported()
     // LCOV_EXCL_START
     bool isMechSupported = false;
     bool cacheResult = GetCameraDeviceAbilitySupportValue(CAMERA_ABILITY_SUPPORT_MECH, isMechSupported);
-    if (cacheResult) {
-        return isMechSupported;
-    }
+    CHECK_RETURN_RET(cacheResult, isMechSupported);
 
     auto serviceProxy = GetServiceProxy();
     CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, false, "IsMechSupported serviceProxy is null");
     int32_t retCode = serviceProxy->IsMechSupported(isMechSupported);
-    CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, false, "IsMechSupported call failed, retCode: %{public}d",
-        retCode);
+    CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, false, "IsMechSupported call failed, retCode: %{public}d", retCode);
     CacheCameraDeviceAbilitySupportValue(CAMERA_ABILITY_SUPPORT_MECH, isMechSupported);
     return isMechSupported;
     // LCOV_EXCL_STOP
+}
+
+sptr<CameraSwitchSession> CameraManager::CreateCameraSwitchSession()
+{
+    CAMERA_SYNC_TRACE;
+    sptr<CameraSwitchSession> cameraSwitchSession = nullptr;
+    int32_t retCode = CreateCameraSwitchSession(&cameraSwitchSession);
+    CHECK_RETURN_RET_ELOG(retCode != CameraErrorCode::SUCCESS, nullptr,
+        "Failed to CreateCameraSwitchSession with error code:%{public}d", retCode);
+    return cameraSwitchSession;
+}
+
+int CameraManager::CreateCameraSwitchSession(sptr<CameraSwitchSession>* switchSession)
+{
+    CAMERA_SYNC_TRACE;
+    sptr<ICameraSwitchSession> session = nullptr;
+    sptr<CameraSwitchSession> cameraSession = nullptr;
+
+    auto serviceProxy = GetServiceProxy();
+    CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, CameraErrorCode::INVALID_ARGUMENT,
+        "CreateCameraSwitchSession(switchSession) serviceProxy is nullptr");
+    int32_t retCode = serviceProxy->CreateCameraSwitchSession(session);
+    CHECK_RETURN_RET_ELOG(
+        retCode != CAMERA_OK, retCode, "Failed to CreateCameraSwitchSession camera session!, %{public}d", retCode);
+    CHECK_RETURN_RET_ELOG(session == nullptr, retCode,
+        "CreateCameraSwitchSession Failed to CreateCameraSwitchSession as session is null");
+    cameraSession = new(std::nothrow) CameraSwitchSession(session);
+    CHECK_RETURN_RET_ELOG(cameraSession == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
+        "CreateCameraSwitchSession failed to new switchSession!");
+    *switchSession = cameraSession;
+    return CameraErrorCode::SUCCESS;
 }
 
 sptr<PhotoOutput> CameraManager::CreatePhotoOutput(sptr<IBufferProducer> &surface)
@@ -693,9 +713,9 @@ int CameraManager::CreatePreviewOutput(Profile &profile, sptr<Surface> surface, 
     auto serviceProxy = GetServiceProxy();
     CHECK_RETURN_RET_ELOG((serviceProxy == nullptr) || (surface == nullptr), CameraErrorCode::INVALID_ARGUMENT,
         "CreatePreviewOutput serviceProxy is null or previewOutputSurface/profile is null");
-    CHECK_RETURN_RET_ELOG((profile.GetCameraFormat() == CAMERA_FORMAT_INVALID) || (profile.GetSize().width == 0)
-        || (profile.GetSize().height == 0), CameraErrorCode::INVALID_ARGUMENT,
-        "CreatePreviewOutput invalid fomrat or width or height is zero");
+    CHECK_RETURN_RET_ELOG((profile.GetCameraFormat() == CAMERA_FORMAT_INVALID) || (profile.GetSize().width == 0) ||
+            (profile.GetSize().height == 0),
+        CameraErrorCode::INVALID_ARGUMENT, "CreatePreviewOutput invalid format or width or height is zero");
 
     camera_format_t metaFormat = GetCameraMetadataFormat(profile.GetCameraFormat());
     sptr<IStreamRepeat> streamRepeat = nullptr;
@@ -710,6 +730,7 @@ int CameraManager::CreatePreviewOutput(Profile &profile, sptr<Surface> surface, 
     previewOutput->SetSize(profile.GetSize());
     previewOutput->SetPreviewProfile(profile);
     *pPreviewOutput = previewOutput;
+
     bool resolutionCondition = profile.GetSize().height <= CONTROL_CENTER_RESOLUTION_HEIGHT_MAX
         && profile.GetSize().width <= CONTROL_CENTER_RESOLUTION_WIDTH_MAX;
     SetControlCenterResolutionCondition(resolutionCondition);
@@ -753,7 +774,8 @@ int32_t CameraManager::CreatePhotoOutputStream(
         producer, metaFormat, profile.GetSize().width, profile.GetSize().height, streamPtr);
     CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, ServiceToCameraError(retCode),
         "CameraManager::CreatePhotoOutputStream Failed to get stream capture object from hcamera service! "
-        "%{public}d", retCode);
+        "%{public}d",
+        retCode);
     return CameraErrorCode::SUCCESS;
     // LCOV_EXCL_STOP
 }
@@ -765,13 +787,15 @@ int32_t CameraManager::CreatePhotoOutputStream(
     auto serviceProxy = GetServiceProxy();
     CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, CameraErrorCode::INVALID_ARGUMENT,
         "CameraManager::CreatePhotoOutputStream serviceProxy is null or producer is null");
+
     CameraFormat yuvFormat = profile.GetCameraFormat();
     auto metaFormat = GetCameraMetadataFormat(yuvFormat);
     auto retCode =
         serviceProxy->CreatePhotoOutput(metaFormat, profile.GetSize().width, profile.GetSize().height, streamPtr);
     CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, ServiceToCameraError(retCode),
         "CameraManager::CreatePhotoOutputStream Failed to get stream capture object from hcamera service! "
-        "%{public}d", retCode);
+        "%{public}d",
+        retCode);
     return CameraErrorCode::SUCCESS;
     // LCOV_EXCL_STOP
 }
@@ -781,9 +805,9 @@ int32_t CameraManager::ValidCreateOutputStream(Profile& profile, const sptr<OHOS
     // LCOV_EXCL_START
     CHECK_RETURN_RET_ELOG(producer == nullptr, CameraErrorCode::INVALID_ARGUMENT,
         "CameraManager::ValidCreateOutputStream producer is null");
-    CHECK_RETURN_RET_ELOG((profile.GetCameraFormat() == CAMERA_FORMAT_INVALID) || (profile.GetSize().width == 0)
-        || (profile.GetSize().height == 0), CameraErrorCode::INVALID_ARGUMENT,
-        "CameraManager::ValidCreateOutputStream width or height is zero");
+    CHECK_RETURN_RET_ELOG((profile.GetCameraFormat() == CAMERA_FORMAT_INVALID) || (profile.GetSize().width == 0) ||
+            (profile.GetSize().height == 0),
+        CameraErrorCode::INVALID_ARGUMENT, "CameraManager::ValidCreateOutputStream width or height is zero");
     return CameraErrorCode::SUCCESS;
     // LCOV_EXCL_STOP
 }
@@ -808,9 +832,9 @@ int CameraManager::CreateDeferredPreviewOutput(Profile &profile, sptr<PreviewOut
     auto serviceProxy = GetServiceProxy();
     CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, CameraErrorCode::INVALID_ARGUMENT,
         "CameraManager::CreateDeferredPreviewOutput serviceProxy is null");
-    CHECK_RETURN_RET_ELOG((profile.GetCameraFormat() == CAMERA_FORMAT_INVALID) || (profile.GetSize().width == 0)
-        || (profile.GetSize().height == 0), CameraErrorCode::INVALID_ARGUMENT,
-        "CreateDeferredPreviewOutput invalid fomrat or width or height is zero");
+    CHECK_RETURN_RET_ELOG((profile.GetCameraFormat() == CAMERA_FORMAT_INVALID) || (profile.GetSize().width == 0) ||
+            (profile.GetSize().height == 0),
+        CameraErrorCode::INVALID_ARGUMENT, "CreateDeferredPreviewOutput invalid format or width or height is zero");
 
     camera_format_t metaFormat = GetCameraMetadataFormat(profile.GetCameraFormat());
     sptr<IStreamRepeat> streamRepeat = nullptr;
@@ -823,6 +847,7 @@ int CameraManager::CreateDeferredPreviewOutput(Profile &profile, sptr<PreviewOut
     previewOutput->SetStream(streamRepeat);
     previewOutput->SetPreviewProfile(profile);
     *pPreviewOutput = previewOutput;
+
     bool resolutionCondition = profile.GetSize().height <= CONTROL_CENTER_RESOLUTION_HEIGHT_MAX
         && profile.GetSize().width <= CONTROL_CENTER_RESOLUTION_WIDTH_MAX;
     SetControlCenterResolutionCondition(resolutionCondition);
@@ -838,6 +863,14 @@ sptr<PreviewOutput> CameraManager::CreatePreviewOutput(const sptr<OHOS::IBufferP
 }
 
 sptr<PreviewOutput> CameraManager::CreateCustomPreviewOutput(sptr<Surface> surface, int32_t width, int32_t height)
+{
+    CAMERA_SYNC_TRACE;
+    sptr<PreviewOutput> result = nullptr;
+    return result;
+}
+
+sptr<PreviewOutput> CameraManager::CreateCustomPreviewOutput(
+    const sptr<OHOS::IBufferProducer>& producer, int32_t format, int32_t width, int32_t height)
 {
     CAMERA_SYNC_TRACE;
     sptr<PreviewOutput> result = nullptr;
@@ -880,7 +913,7 @@ int CameraManager::GetStreamDepthDataFromService(DepthProfile& depthProfile, spt
     if ((depthProfile.GetCameraFormat() == CAMERA_FORMAT_INVALID) ||
         (depthProfile.GetSize().width == 0) ||
         (depthProfile.GetSize().height == 0)) {
-        MEDIA_ERR_LOG("invalid fomrat or width or height is zero");
+        MEDIA_ERR_LOG("invalid format or width or height is zero");
         return CameraErrorCode::INVALID_ARGUMENT;
     }
 
@@ -932,7 +965,8 @@ int32_t CameraManager::CreateVideoOutputStream(
         producer, metaFormat, profile.GetSize().width, profile.GetSize().height, streamPtr);
     CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, ServiceToCameraError(retCode),
         "CameraManager::CreateVideoOutputStream Failed to get stream capture object from hcamera service! "
-        "%{public}d", retCode);
+        "%{public}d",
+        retCode);
     return CameraErrorCode::SUCCESS;
     // LCOV_EXCL_STOP
 }
@@ -959,9 +993,9 @@ int CameraManager::CreateVideoOutput(VideoProfile &profile, sptr<Surface> &surfa
     auto serviceProxy = GetServiceProxy();
     CHECK_RETURN_RET_ELOG((serviceProxy == nullptr) || (surface == nullptr), CameraErrorCode::INVALID_ARGUMENT,
         "CameraManager::CreateVideoOutput serviceProxy is null or VideoOutputSurface/profile is null");
-    CHECK_RETURN_RET_ELOG((profile.GetCameraFormat() == CAMERA_FORMAT_INVALID) || (profile.GetSize().width == 0)
-        || (profile.GetSize().height == 0), CameraErrorCode::INVALID_ARGUMENT,
-        "CreateVideoOutput invalid format or width or height is zero");
+    CHECK_RETURN_RET_ELOG((profile.GetCameraFormat() == CAMERA_FORMAT_INVALID) || (profile.GetSize().width == 0) ||
+            (profile.GetSize().height == 0),
+        CameraErrorCode::INVALID_ARGUMENT, "CreateVideoOutput invalid format or width or height is zero");
 
     camera_format_t metaFormat = GetCameraMetadataFormat(profile.GetCameraFormat());
     auto [width, height] = profile.GetSize();
@@ -981,7 +1015,8 @@ int CameraManager::CreateVideoOutput(VideoProfile &profile, sptr<Surface> &surfa
         surface->GetProducer(), metaFormat, profile.GetSize().width, profile.GetSize().height, streamRepeat);
     CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, ServiceToCameraError(retCode),
         "CameraManager::CreateVideoOutput Failed to get stream capture object from hcamera service! "
-        "%{public}d", retCode);
+        "%{public}d",
+        retCode);
     sptr<VideoOutput> videoOutput = new(std::nothrow) VideoOutput(surface->GetProducer());
     CHECK_RETURN_RET(videoOutput == nullptr, CameraErrorCode::SERVICE_FATL_ERROR);
     videoOutput->SetStream(streamRepeat);
@@ -993,17 +1028,79 @@ int CameraManager::CreateVideoOutput(VideoProfile &profile, sptr<Surface> &surfa
     return CameraErrorCode::SUCCESS;
 }
 
+int CameraManager::CreateMovieFileOutput(VideoProfile &profile, sptr<MovieFileOutput> *pMovieFileOutput)
+{
+    CAMERA_SYNC_TRACE;
+    auto serviceProxy = GetServiceProxy();
+    CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, CameraErrorCode::INVALID_ARGUMENT,
+        "CreateMovieFileOutput failed, serviceProxy is null");
+    // check format, resolution and frame rate
+    CHECK_RETURN_RET_ELOG((profile.GetCameraFormat() == CAMERA_FORMAT_INVALID) || (profile.GetSize().width == 0) ||
+            (profile.GetSize().height == 0),
+        CameraErrorCode::INVALID_ARGUMENT, "CreateMovieFileOutput failed, format or resolution is invalid");
+    constexpr int32_t validSize = 2;
+    CHECK_RETURN_RET_ELOG(profile.GetFrameRates().size() < validSize, CameraErrorCode::INVALID_ARGUMENT,
+        "CreateMovieFileOutput failed, frameRate is invalid");
+
+    camera_format_t metaFormat = GetCameraMetadataFormat(profile.GetCameraFormat());
+    sptr<IStreamRepeat> movieFileStream = nullptr;
+    int32_t retCode = serviceProxy->CreateMovieFileOutput(metaFormat, profile.GetSize().width, profile.GetSize().height,
+        movieFileStream);
+    CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, ServiceToCameraError(retCode),
+        "CreateMovieFileOutput failed, hcamera service failed to create stream, rc: %{public}d", retCode);
+    sptr<MovieFileOutput> movieFileOutput = new(std::nothrow) MovieFileOutput();
+    CHECK_RETURN_RET(movieFileOutput == nullptr, CameraErrorCode::SERVICE_FATL_ERROR);
+    movieFileOutput->SetStream(movieFileStream);
+    movieFileOutput->SetVideoProfile(profile);
+    *pMovieFileOutput = movieFileOutput;
+    return CameraErrorCode::SUCCESS;
+}
+
+int CameraManager::CreateMovieFileOutput(VideoProfile& profile, sptr<UnifyMovieFileOutput>* pMovieFileOutput)
+{
+    constexpr int32_t MIN_FRAME_RATE_INDEX = 0;
+    constexpr int32_t MAX_FRAME_RATE_INDEX = 1;
+    auto serviceProxy = GetServiceProxy();
+    CHECK_RETURN_RET_ELOG(
+        serviceProxy == nullptr, CameraErrorCode::INVALID_ARGUMENT, "CreateUnifyMovieFileOutput serviceProxy is null");
+    CHECK_RETURN_RET_ELOG((profile.GetCameraFormat() == CAMERA_FORMAT_INVALID) || (profile.GetSize().width == 0) ||
+            (profile.GetSize().height == 0),
+        CameraErrorCode::INVALID_ARGUMENT, "CreateUnifyMovieFileOutput invalid format or width or height is zero");
+
+    camera_format_t metaFormat = GetCameraMetadataFormat(profile.GetCameraFormat());
+    sptr<IMovieFileOutput> movieFileOutputProxy = nullptr;
+    constexpr int32_t validSize = 2;
+    CHECK_RETURN_RET_ELOG(
+        profile.framerates_.size() < validSize, CameraErrorCode::INVALID_ARGUMENT, "frameRate inValid");
+    IpcVideoProfile ipcVideoProfile {
+        .format = metaFormat,
+        .width = profile.GetSize().width,
+        .height = profile.GetSize().height,
+        .minFrameRate = profile.framerates_[MIN_FRAME_RATE_INDEX],
+        .maxFrameRate = profile.framerates_[MAX_FRAME_RATE_INDEX]
+    };
+    int32_t retCode = serviceProxy->CreateMovieFileOutput(ipcVideoProfile, movieFileOutputProxy);
+    CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, ServiceToCameraError(retCode),
+        "CreateUnifyMovieFileOutput Failed to get stream capture object from hcamera service! %{public}d", retCode);
+    sptr<UnifyMovieFileOutput> movieFileOutput = new (std::nothrow) UnifyMovieFileOutput(movieFileOutputProxy);
+    CHECK_RETURN_RET(movieFileOutput == nullptr, CameraErrorCode::SERVICE_FATL_ERROR);
+    movieFileOutput->SetVideoProfile(profile);
+    *pMovieFileOutput = movieFileOutput;
+    return CameraErrorCode::SUCCESS;
+}
+
 void CameraManager::InitCameraManager()
 {
     CAMERA_SYNC_TRACE;
     int32_t retCode = SubscribeSystemAbility();
     CHECK_RETURN_ELOG(retCode != CameraErrorCode::SUCCESS, "failed to SubscribeSystemAbilityd");
     retCode = RefreshServiceProxy();
-    CHECK_RETURN_ELOG(retCode != CameraErrorCode::SUCCESS, "RefreshServiceProxy fail , ret = %{public}d",
-        retCode);
+    CHECK_RETURN_ELOG(retCode != CameraErrorCode::SUCCESS, "RefreshServiceProxy fail , ret = %{public}d", retCode);
     retCode = AddServiceProxyDeathRecipient();
-    CHECK_RETURN_ELOG(retCode != CameraErrorCode::SUCCESS, "AddServiceProxyDeathRecipient fail ,"
-        "ret = %{public}d", retCode);
+    CHECK_RETURN_ELOG(retCode != CameraErrorCode::SUCCESS,
+        "AddServiceProxyDeathRecipient fail ,"
+        "ret = %{public}d",
+        retCode);
     retCode = CreateListenerObject();
     CHECK_RETURN_ELOG(retCode != CAMERA_OK, "failed to new CameraListenerStub, ret = %{public}d", retCode);
     foldScreenType_ = system::GetParameter("const.window.foldscreen.type", "");
@@ -1175,7 +1272,9 @@ void CameraManager::RemoveServiceProxyDeathRecipient()
 {
     std::lock_guard<std::mutex> lock(deathRecipientMutex_);
     auto serviceProxy = GetServiceProxy();
-    CHECK_EXECUTE(serviceProxy != nullptr, (void)serviceProxy->AsObject()->RemoveDeathRecipient(deathRecipient_));
+    if (serviceProxy != nullptr) {
+        (void)serviceProxy->AsObject()->RemoveDeathRecipient(deathRecipient_);
+    }
     deathRecipient_ = nullptr;
 }
 
@@ -1188,7 +1287,7 @@ int CameraManager::CreateCameraDevice(std::string cameraId, sptr<ICameraDeviceSe
     sptr<ICameraDeviceService> device = nullptr;
     int32_t retCode = serviceProxy->CreateCameraDevice(cameraId, device);
     CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK,
-        retCode == CAMERA_NO_PERMISSION ? CAMERA_NO_PERMISSION: ServiceToCameraError(retCode),
+        retCode == CAMERA_NO_PERMISSION ? CAMERA_NO_PERMISSION : ServiceToCameraError(retCode),
         "CameraManager::CreateCameraDevice Failed to create camera device from hcamera service! %{public}d", retCode);
     *pICameraDeviceService = device;
     return CameraErrorCode::SUCCESS;
@@ -1205,14 +1304,6 @@ void CameraManager::SetCameraIdTransform(sptr<ICameraDeviceService> deviceObj, s
 void CameraManager::SetCallback(std::shared_ptr<CameraManagerCallback> listener)
 {
     RegisterCameraStatusCallback(listener);
-}
-
-void CameraManager::GetCameraStatusData(std::vector<CameraStatusData> &cameraStatusDataList)
-{
-    auto serviceProxy = GetServiceProxy();
-    CHECK_RETURN_ELOG(serviceProxy == nullptr, "GetCameraStatusData serviceProxy is null");
-    int32_t retCode = serviceProxy->GetCameraStatusData(cameraStatusDataList);
-    CHECK_RETURN_ELOG(retCode != CAMERA_OK, "GetCameraStatusData call failed, retCode: %{public}d", retCode);
 }
 
 void CameraManager::RegisterCameraStatusCallback(shared_ptr<CameraManagerCallback> listener)
@@ -1232,32 +1323,15 @@ void CameraManager::RegisterCameraStatusCallback(shared_ptr<CameraManagerCallbac
     // Non-First register, async callback by cache data.
     auto cachedStatus = cameraStatusListenerManager_->GetCachedCameraStatus();
     auto cachedFlashStatus = cameraStatusListenerManager_->GetCachedFlashStatus();
-    std::vector<CameraStatusData> cameraStatusDataList;
-    GetCameraStatusData(cameraStatusDataList);
     cameraStatusListenerManager_->TriggerTargetListenerAsync(
-        listener, [cachedStatus, cachedFlashStatus, cameraStatusDataList](auto listener) {
+        listener, [cachedStatus, cachedFlashStatus](auto listener) {
             MEDIA_INFO_LOG("CameraManager::RegisterCameraStatusCallback async trigger status");
             for (auto& status : cachedStatus) {
-                CHECK_CONTINUE(status == nullptr || status->cameraDevice == nullptr);
-                auto cameraId = status->cameraDevice->GetID();
-                auto it = std::find_if(cameraStatusDataList.begin(), cameraStatusDataList.end(),
-                    [&cameraId](const CameraStatusData &data) {
-                        return data.cameraId == cameraId;
-                    });
-                CHECK_EXECUTE(it != cameraStatusDataList.end(),
-                    status->cameraStatus = static_cast<CameraStatus>(it->cameraStatus));
+                CHECK_CONTINUE(status == nullptr);
                 listener->OnCameraStatusChanged(*status);
             }
             for (auto& status : cachedFlashStatus) {
-                auto cameraId = status.first;
-                auto it = std::find_if(cameraStatusDataList.begin(), cameraStatusDataList.end(),
-                    [&cameraId](const CameraStatusData &data) {
-                        return data.cameraId == cameraId;
-                    });
-                CHECK_EXECUTE(it == cameraStatusDataList.end(),
-                    listener->OnFlashlightStatusChanged(status.first, status.second));
-                CHECK_EXECUTE(it != cameraStatusDataList.end(),
-                    listener->OnFlashlightStatusChanged(status.first, static_cast<FlashStatus>(it->flashStatus)));
+                listener->OnFlashlightStatusChanged(status.first, status.second);
             }
         });
     // LCOV_EXCL_STOP
@@ -1451,11 +1525,9 @@ std::vector<dmDeviceInfo> CameraManager::GetDmDeviceInfo()
     for (int i = 0; i < size; i++) {
         // LCOV_EXCL_START
         std::string deviceInfoStr = deviceInfos[i];
-        MEDIA_INFO_LOG("CameraManager::GetDmDeviceInfo deviceInfo: %{public}s",
-            OHOS::CameraStandard::Anonymization::AnonymizeString(deviceInfoStr).c_str());
+        MEDIA_INFO_LOG("CameraManager::GetDmDeviceInfo deviceInfo: %{private}s", deviceInfoStr.c_str());
         if (!nlohmann::json::accept(deviceInfoStr)) {
-            MEDIA_ERR_LOG("Failed to verify the deviceInfo format, deviceInfo is: %{public}s",
-                OHOS::CameraStandard::Anonymization::AnonymizeString(deviceInfoStr).c_str());
+            MEDIA_ERR_LOG("Failed to verify the deviceInfo format, deviceInfo is: %{private}s", deviceInfoStr.c_str());
         } else {
             nlohmann::json deviceInfoJson = nlohmann::json::parse(deviceInfoStr);
             if ((deviceInfoJson.contains("deviceName") && deviceInfoJson.contains("deviceTypeId") &&
@@ -1475,8 +1547,7 @@ std::vector<dmDeviceInfo> CameraManager::GetDmDeviceInfo()
 void CameraManager::GetCameraOutputStatus(int32_t pid, int32_t &status)
 {
     auto serviceProxy = GetServiceProxy();
-    CHECK_RETURN_ELOG(
-        serviceProxy == nullptr, "CameraManager::GetCameraOutputStatus serviceProxy is null");
+    CHECK_RETURN_ELOG(serviceProxy == nullptr, "CameraManager::GetCameraOutputStatus serviceProxy is null");
 
     int32_t retCode = serviceProxy->GetCameraOutputStatus(pid, status);
     CHECK_RETURN_ELOG(
@@ -1514,16 +1585,11 @@ std::vector<sptr<CameraDevice>> CameraManager::GetCameraDeviceListFromServer()
             MEDIA_DEBUG_LOG("InitCameraList cameraId= %{public}s", cameraId.c_str());
             std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility;
             retCode = serviceProxy->GetCameraAbility(cameraId, cameraAbility);
-            if (retCode != CAMERA_OK) {
-                continue;
-            }
+            CHECK_CONTINUE(retCode != CAMERA_OK);
 
             auto dmDeviceInfo = GetDmDeviceInfo(cameraId, dmDeviceInfoList);
             sptr<CameraDevice> cameraObj = new (std::nothrow) CameraDevice(cameraId, dmDeviceInfo, cameraAbility);
-            if (cameraObj == nullptr) {
-                MEDIA_ERR_LOG("failed to new CameraDevice!");
-                continue;
-            }
+            CHECK_CONTINUE_ELOG(cameraObj == nullptr, "failed to new CameraDevice!");
             SetProfile(cameraObj, cameraAbility);
             deviceInfoList.emplace_back(cameraObj);
         }
@@ -1546,12 +1612,50 @@ std::vector<sptr<CameraDevice>> CameraManager::GetCameraDeviceListFromServer()
     return deviceInfoList;
 }
 
-void CameraManager::ProcessModeAndOutputCapability(std::vector<std::vector<SceneMode>> &modes,
-    std::vector<SceneMode> modeofThis, std::vector<std::vector<sptr<CameraOutputCapability>>> &outputCapabilities,
-    std::vector<sptr<CameraOutputCapability>> outputCapabilitiesofThis)
+bool CameraManager::GetIsFoldable()
 {
-    modes.push_back(modeofThis);
-    outputCapabilities.push_back(outputCapabilitiesofThis);
+    return !foldScreenType_.empty();
+}
+
+std::string CameraManager::GetFoldScreenType()
+{
+    return foldScreenType_;
+}
+
+FoldStatus CameraManager::GetFoldStatus()
+{
+    auto curFoldStatus = (FoldStatus)OHOS::Rosen::DisplayManagerLite::GetInstance().GetFoldStatus();
+    if (curFoldStatus == FoldStatus::HALF_FOLD) {
+        curFoldStatus = FoldStatus::EXPAND;
+    }
+    return curFoldStatus;
+}
+
+uint32_t CameraManager::DisplayModeToFoldStatus(uint32_t displayMode)
+{
+    uint32_t foldStatus = static_cast<uint32_t>(OHOS::Rosen::FoldStatus::UNKNOWN);
+    switch (displayMode) {
+        case static_cast<uint32_t>(OHOS::Rosen::FoldDisplayMode::MAIN): {
+            foldStatus = static_cast<uint32_t>(OHOS::Rosen::FoldStatus::FOLDED);
+            break;
+        }
+        case static_cast<uint32_t>(OHOS::Rosen::FoldDisplayMode::COORDINATION):
+        case static_cast<uint32_t>(OHOS::Rosen::FoldDisplayMode::FULL): {
+            foldStatus = static_cast<uint32_t>(OHOS::Rosen::FoldStatus::EXPAND);
+            break;
+        }
+        case static_cast<uint32_t>(OHOS::Rosen::FoldDisplayMode::GLOBAL_FULL): {
+            foldStatus = static_cast<uint32_t>(OHOS::Rosen::FoldStatus::FOLD_STATE_EXPAND_WITH_SECOND_EXPAND);
+            break;
+        }
+        default: {
+            foldStatus = static_cast<uint32_t>(OHOS::Rosen::DisplayManagerLite::GetInstance().GetFoldStatus());
+            break;
+        }
+    }
+    MEDIA_DEBUG_LOG("CameraManager::DisplayModeToFoldStatus, displayMode: %{public}d , foldStatus: %{public}d",
+        displayMode, foldStatus);
+    return foldStatus;
 }
 
 void CameraManager::GetCameraConcurrentInfos(std::vector<sptr<CameraDevice>> cameraDeviceArrray,
@@ -1572,7 +1676,8 @@ void CameraManager::GetCameraConcurrentInfos(std::vector<sptr<CameraDevice>> cam
         CameraPosition cameraPosition = cameraDev->GetPosition();
         auto iter = fwToMetaCameraPosition_.find(cameraPosition);
         if (iter == fwToMetaCameraPosition_.end()) {
-            ProcessModeAndOutputCapability(modes, modeofThis, outputCapabilities, outputCapabilitiesofThis);
+            modes.push_back(modeofThis);
+            outputCapabilities.push_back(outputCapabilitiesofThis);
             continue;
         }
         string idOfThis = {};
@@ -1582,7 +1687,8 @@ void CameraManager::GetCameraConcurrentInfos(std::vector<sptr<CameraDevice>> cam
         std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility;
         retCode = serviceProxy->GetConcurrentCameraAbility(idOfThis, cameraAbility);
         if (retCode != CAMERA_OK) {
-            ProcessModeAndOutputCapability(modes, modeofThis, outputCapabilities, outputCapabilitiesofThis);
+            modes.push_back(modeofThis);
+            outputCapabilities.push_back(outputCapabilitiesofThis);
             index++;
             continue;
         }
@@ -1594,7 +1700,8 @@ void CameraManager::GetCameraConcurrentInfos(std::vector<sptr<CameraDevice>> cam
             if (retCode == CAM_META_SUCCESS) {
                 GetMetadataInfos(item, modeofThis, outputCapabilitiesofThis, cameraAbility);
             }
-            ProcessModeAndOutputCapability(modes, modeofThis, outputCapabilities, outputCapabilitiesofThis);
+            modes.push_back(modeofThis);
+            outputCapabilities.push_back(outputCapabilitiesofThis);
         } else {
             retCode = Camera::FindCameraMetadataItem(cameraAbility->get(),
                 OHOS_ABILITY_CAMERA_LIMITED_CAPABILITIES, &item);
@@ -1603,7 +1710,8 @@ void CameraManager::GetCameraConcurrentInfos(std::vector<sptr<CameraDevice>> cam
             } else {
                 MEDIA_ERR_LOG("GetCameraConcurrentInfos error");
             }
-            ProcessModeAndOutputCapability(modes, modeofThis, outputCapabilities, outputCapabilitiesofThis);
+            modes.push_back(modeofThis);
+            outputCapabilities.push_back(outputCapabilitiesofThis);
         }
         index++;
     }
@@ -1618,8 +1726,7 @@ void CameraManager::ParsingCameraConcurrentLimted(camera_metadata_item_t &item,
     MEDIA_INFO_LOG("CameraManager::ParsingCameraConcurrentLimted start");
     double* originInfo = item.data.d;
     uint32_t count = item.count;
-    CHECK_RETURN_ELOG(
-        cameraDevNow == nullptr, "CameraManager::ParsingCameraConcurrentLimted cameraDevNow is null");
+    CHECK_RETURN_ELOG(cameraDevNow == nullptr, "CameraManager::ParsingCameraConcurrentLimted cameraDevNow is null");
     cameraDevNow->limtedCapabilitySave_.flashmodes.count = 0;
     cameraDevNow->limtedCapabilitySave_.flashmodes.mode.clear();
     cameraDevNow->limtedCapabilitySave_.exposuremodes.count = 0;
@@ -1704,9 +1811,7 @@ void CameraManager::FindConcurrentLimtedEnd(double* originInfo, int32_t i, int c
 {
     // LCOV_EXCL_START
     for (int32_t j = i + STEP_ONE; j < count; j++) {
-        if (static_cast<camera_device_metadata_tag>(originInfo[j]) == OHOS_ABILITY_AVAILABLE_PROFILE_LEVEL) {
-            break;
-        }
+        CHECK_BREAK(static_cast<camera_device_metadata_tag>(originInfo[j]) == OHOS_ABILITY_AVAILABLE_PROFILE_LEVEL);
         countl++;
     }
     // LCOV_EXCL_STOP
@@ -1762,7 +1867,7 @@ void CameraManager::GetMetadataInfos(camera_metadata_item_t item,
             j++;
         }
     }
-    int32_t mCount = 0;
+    int32_t modecount = 0;
     for (auto &modeInfo : modeInfosum) {
         std::vector<SpecInfo> specInfos;
         ProfilesWrapper profilesWrapper;
@@ -1773,11 +1878,11 @@ void CameraManager::GetMetadataInfos(camera_metadata_item_t item,
                 CreateProfileLevel4StreamType(profilesWrapper, specInfo.specId, streamInfo);
             }
         }
-        int32_t modename = modeofThis[mCount];
+        int32_t modename = modeofThis[modecount];
         SetCameraOutputCapabilityofthis(cameraOutputCapability, profilesWrapper,
             modename, cameraAbility);
         outputCapabilitiesofThis.push_back(cameraOutputCapability);
-        mCount++;
+        modecount++;
     }
     // LCOV_EXCL_STOP
 }
@@ -1790,8 +1895,7 @@ void CameraManager::SetCameraOutputCapabilityofthis(sptr<CameraOutputCapability>
     if (IsSystemApp()) {
         FillSupportPhotoFormats(profilesWrapper.photoProfiles);
     }
-    CHECK_RETURN_ELOG(
-        cameraOutputCapability == nullptr, "cameraOutputCapability is null");
+    CHECK_RETURN_ELOG(cameraOutputCapability == nullptr, "cameraOutputCapability is null");
     cameraOutputCapability->SetPhotoProfiles(profilesWrapper.photoProfiles);
     MEDIA_INFO_LOG("SetPhotoProfiles size = %{public}zu", profilesWrapper.photoProfiles.size());
     cameraOutputCapability->SetPreviewProfiles(profilesWrapper.previewProfiles);
@@ -1811,8 +1915,8 @@ void CameraManager::SetCameraOutputCapabilityofthis(sptr<CameraOutputCapability>
         for (uint32_t index = 0; index < metadataItem.count; index++) {
             auto iterator =
                 g_metaToFwCameraMetaDetect_.find(static_cast<StatisticsDetectType>(metadataItem.data.u8[index]));
-            CHECK_PRINT_ELOG(iterator == g_metaToFwCameraMetaDetect_.end(),
-                "Not supported metadataItem %{public}d", metadataItem.data.u8[index]);
+            CHECK_PRINT_ELOG(iterator == g_metaToFwCameraMetaDetect_.end(), "Not supported metadataItem %{public}d",
+                metadataItem.data.u8[index]);
             if (iterator != g_metaToFwCameraMetaDetect_.end()) {
                 objectTypes.push_back(iterator->second);
             }
@@ -1851,13 +1955,11 @@ bool CameraManager::GetConcurrentType(std::vector<sptr<CameraDevice>> cameraDevi
         auto iter = fwToMetaCameraPosition_.find(cameraPosition);
         serviceProxy->GetIdforCameraConcurrentType(iter->second, idofthis);
 
-        std::shared_ptr<OHOS::Camera::CameraMetadata> camAbility;
-        retCode = serviceProxy->GetConcurrentCameraAbility(idofthis, camAbility);
-        if (retCode != CAMERA_OK) {
-            continue;
-        }
+        std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility;
+        retCode = serviceProxy->GetConcurrentCameraAbility(idofthis, cameraAbility);
+        CHECK_CONTINUE(retCode != CAMERA_OK);
         camera_metadata_item_t item;
-        retCode = Camera::FindCameraMetadataItem(camAbility->get(), OHOS_ABILITY_CAMERA_CONCURRENT_TYPE, &item);
+        retCode = Camera::FindCameraMetadataItem(cameraAbility->get(), OHOS_ABILITY_CAMERA_CONCURRENT_TYPE, &item);
         if (retCode != CAMERA_OK) {
             cameraConcurrentType.clear();
             MEDIA_ERR_LOG("cameraAbility not support OHOS_ABILITY_CAMERA_CONCURRENT_TYPE");
@@ -1870,7 +1972,7 @@ bool CameraManager::GetConcurrentType(std::vector<sptr<CameraDevice>> cameraDevi
         MEDIA_INFO_LOG("cameraid is %{public}s, type is %{public}d", idofthis.c_str(), cameratype);
         cameraConcurrentType.push_back(cameratype);
     }
-    return true;
+    return cameraConcurrentType.size() != 0;
     // LCOV_EXCL_STOP
 }
 
@@ -1902,7 +2004,7 @@ bool CameraManager::CheckConcurrentExecution(std::vector<sptr<CameraDevice>> cam
     CHECK_RETURN_RET_ELOG(
         serviceProxy == nullptr, false, "CameraManager::InitCameraList serviceProxy is null, returning empty list!");
     int32_t retCode;
-    
+
     for (auto cameraDev : cameraDeviceArrray) {
         CameraPosition cameraPosition = cameraDev->GetPosition();
         string idofthis;
@@ -1934,9 +2036,7 @@ bool CameraManager::CheckConcurrentExecution(std::vector<sptr<CameraDevice>> cam
             idmap[std::to_string(originInfo[i])]++;
         }
     }
-    if (CheckCameraConcurrentId(idmap, cameraIdv)) {
-        return true;
-    }
+    CHECK_RETURN_RET(CheckCameraConcurrentId(idmap, cameraIdv), true);
     return false;
     // LCOV_EXCL_STOP
 }
@@ -1987,7 +2087,7 @@ void CameraManager::GetMetadataInfosfordouble(camera_metadata_item_t &item, doub
         int32_t modename = modeofThis[modecount];
         SetCameraOutputCapabilityofthis(cameraOutputCapability, profilesWrapper,
             modename, cameraAbility);
-        
+
         outputCapabilitiesofThis.push_back(cameraOutputCapability);
         modecount++;
     }
@@ -2005,8 +2105,9 @@ void CameraManager::GetSpecInfofordouble(double *originInfo, uint32_t start, uin
             j = j + STEP_THREE;
             continue;
         }
-        if (static_cast<int32_t>(originInfo[j - STEP_ONE]) == INT_MAX &&
-            static_cast<int32_t>(originInfo[j - STEP_TWO]) == INT_MAX) {
+        bool isSpecInfo = static_cast<int32_t>(originInfo[j - STEP_ONE]) == INT_MAX &&
+            static_cast<int32_t>(originInfo[j - STEP_TWO]) == INT_MAX;
+        if (isSpecInfo) {
             std::pair<uint32_t, uint32_t> indexPair(i, j);
             specIndexRange.push_back(indexPair);
             i = j + STEP_ONE;
@@ -2101,8 +2202,7 @@ void CameraManager::GetDetailInfofordouble(double *originInfo, uint32_t start, u
 
 void CameraManager::SetProfile(sptr<CameraDevice>& cameraObj, std::shared_ptr<OHOS::Camera::CameraMetadata> metadata)
 {
-    CHECK_RETURN_ELOG(
-        cameraObj == nullptr, "CameraManager::SetProfile cameraObj is null");
+    CHECK_RETURN_ELOG(cameraObj == nullptr, "CameraManager::SetProfile cameraObj is null");
     std::vector<SceneMode> supportedModes = GetSupportedModes(cameraObj);
     if (supportedModes.empty()) {
         // LCOV_EXCL_START
@@ -2118,58 +2218,11 @@ void CameraManager::SetProfile(sptr<CameraDevice>& cameraObj, std::shared_ptr<OH
     }
 }
 
-bool CameraManager::GetIsFoldable()
-{
-    return !foldScreenType_.empty();
-}
-
-std::string CameraManager::GetFoldScreenType()
-{
-    return foldScreenType_;
-}
-
-FoldStatus CameraManager::GetFoldStatus()
-{
-    auto curFoldStatus = (FoldStatus)OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus();
-    if (curFoldStatus == FoldStatus::HALF_FOLD) {
-        curFoldStatus = FoldStatus::EXPAND;
-    }
-    return curFoldStatus;
-}
-
-uint32_t CameraManager::DisplayModeToFoldStatus(uint32_t displayMode)
-{
-    uint32_t foldStatus = static_cast<uint32_t>(OHOS::Rosen::FoldStatus::UNKNOWN);
-    switch (displayMode) {
-        case static_cast<uint32_t>(OHOS::Rosen::FoldDisplayMode::MAIN): {
-            foldStatus = static_cast<uint32_t>(OHOS::Rosen::FoldStatus::FOLDED);
-            break;
-        }
-        case static_cast<uint32_t>(OHOS::Rosen::FoldDisplayMode::COORDINATION):
-        case static_cast<uint32_t>(OHOS::Rosen::FoldDisplayMode::FULL): {
-            foldStatus = static_cast<uint32_t>(OHOS::Rosen::FoldStatus::EXPAND);
-            break;
-        }
-        case static_cast<uint32_t>(OHOS::Rosen::FoldDisplayMode::GLOBAL_FULL): {
-            foldStatus = static_cast<uint32_t>(OHOS::Rosen::FoldStatus::FOLD_STATE_EXPAND_WITH_SECOND_EXPAND);
-            break;
-        }
-        default: {
-            foldStatus = static_cast<uint32_t>(OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus());
-            break;
-        }
-    }
-    MEDIA_DEBUG_LOG("CameraManager::DisplayModeToFoldStatus, displayMode: %{public}d , foldStatus: %{public}d",
-        displayMode, foldStatus);
-    return foldStatus;
-}
-
 void CameraManager::CheckWhiteList()
 {
     // LCOV_EXCL_START
     auto serviceProxy = GetServiceProxy();
-    CHECK_RETURN_ELOG(
-        serviceProxy == nullptr, "CameraManager::CheckWhitelist serviceProxy is null");
+    CHECK_RETURN_ELOG(serviceProxy == nullptr, "CameraManager::CheckWhitelist serviceProxy is null");
     serviceProxy->CheckWhiteList(isInWhiteList_);
     // LCOV_EXCL_STOP
 }
@@ -2198,8 +2251,8 @@ std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCamerasList()
     bool isFoldable = GetIsFoldable();
     CHECK_RETURN_RET(!isFoldable, cameraDeviceList);
     MEDIA_INFO_LOG("fold status: %{public}d", curFoldStatus);
-    CHECK_RETURN_RET(curFoldStatus == FoldStatus::UNKNOWN_FOLD &&
-        !foldScreenType_.empty() && foldScreenType_[0] == '4', cameraDeviceList);
+    CHECK_RETURN_RET(curFoldStatus == FoldStatus::UNKNOWN_FOLD && !foldScreenType_.empty() && foldScreenType_[0] == '4',
+        cameraDeviceList);
     std::vector<sptr<CameraDevice>> supportedCameraDeviceList;
     uint32_t apiCompatibleVersion = CameraApiVersion::GetApiVersion();
     // LCOV_EXCL_START
@@ -2220,9 +2273,7 @@ std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCamerasList()
                 [&deviceInfo](sptr<CameraDevice> cameraDevice) {
                 return cameraDevice->GetPosition() == deviceInfo->GetPosition();
             });
-            if (it != supportedCameraDeviceList.end()) {
-                continue;
-            }
+            CHECK_CONTINUE(it != supportedCameraDeviceList.end());
             supportedCameraDeviceList.emplace_back(deviceInfo);
             continue;
         }
@@ -2240,7 +2291,6 @@ std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCamerasList()
         }
 
         auto supportedFoldStatus = deviceInfo->GetSupportedFoldStatus();
-
         auto it = g_metaToFwCameraFoldStatus_.find(static_cast<CameraFoldStatus>(supportedFoldStatus));
         if (it == g_metaToFwCameraFoldStatus_.end()) {
             MEDIA_INFO_LOG("No supported fold status is found, fold status: %{public}d", curFoldStatus);
@@ -2252,7 +2302,9 @@ std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCamerasList()
             && bundleName_ != curBundleName_) {
             continue;
         }
-        CHECK_EXECUTE(it->second == curFoldStatus, supportedCameraDeviceList.emplace_back(deviceInfo));
+        if (it->second == curFoldStatus) {
+            supportedCameraDeviceList.emplace_back(deviceInfo);
+        }
     }
     // LCOV_EXCL_STOP
     return supportedCameraDeviceList;
@@ -2312,15 +2364,20 @@ void CameraManager::AlignVideoFpsProfile(std::vector<sptr<CameraDevice>>& camera
     }
     const uint32_t minIndex = 0;
     const uint32_t maxIndex = 1;
-    CHECK_RETURN_ELOG(!(frontVideoProfiles.size() && backVideoProfiles.size()),
-        "CameraManager::AlignVideoFpsProfile failed! frontVideoSize = %{public}zu, "
-        "frontVideoSize = %{public}zu", frontVideoProfiles.size(), backVideoProfiles.size());
+    if (!(frontVideoProfiles.size() && backVideoProfiles.size())) {
+        MEDIA_ERR_LOG("CameraManager::AlignVideoFpsProfile failed! frontVideoSize = %{public}zu, "
+                      "frontVideoSize = %{public}zu", frontVideoProfiles.size(), backVideoProfiles.size());
+        return;
+    }
     std::vector<VideoProfile> alignFrontVideoProfiles = frontVideoProfiles;
     for (auto &backProfile : backVideoProfiles) {
         for (auto &frontProfile : frontVideoProfiles) {
-            if (backProfile.GetSize().width == frontProfile.GetSize().width &&
-                backProfile.GetSize().height == frontProfile.GetSize().height) {
-                if (backProfile.framerates_[minIndex] == alignFps && backProfile.framerates_[maxIndex] == alignFps) {
+            bool isProfileSizeEqual = backProfile.GetSize().width == frontProfile.GetSize().width &&
+                backProfile.GetSize().height == frontProfile.GetSize().height;
+            if (isProfileSizeEqual) {
+                bool isProfileFpsEqual =
+                    backProfile.framerates_[minIndex] == alignFps && backProfile.framerates_[maxIndex] == alignFps;
+                if (isProfileFpsEqual) {
                     alignFrontVideoProfiles.push_back(backProfile);
                     MEDIA_INFO_LOG("CameraManager::AlignVideoFpsProfile backProfile w(%{public}d),h(%{public}d), "
                                    "frontProfile w(%{public}d),h(%{public}d)",
@@ -2343,9 +2400,10 @@ void CameraManager::AlignVideoFpsProfile(std::vector<sptr<CameraDevice>>& camera
 SceneMode CameraManager::GetFallbackConfigMode(SceneMode profileMode, ProfilesWrapper& profilesWrapper)
 {
     MEDIA_DEBUG_LOG("CameraManager::GetFallbackConfigMode profileMode:%{public}d", profileMode);
+    bool isProfilesEmpty = profilesWrapper.photoProfiles.empty() && profilesWrapper.previewProfiles.empty() &&
+        profilesWrapper.vidProfiles.empty();
     // LCOV_EXCL_START
-    if (profilesWrapper.photoProfiles.empty() && profilesWrapper.previewProfiles.empty() &&
-        profilesWrapper.vidProfiles.empty()) {
+    if (isProfilesEmpty) {
         switch (profileMode) {
             case CAPTURE_MACRO:
                 return CAPTURE;
@@ -2404,9 +2462,11 @@ void CameraManager::ReportEvent(const string& cameraId)
 int CameraManager::CreateCameraInput(sptr<CameraDevice> &camera, sptr<CameraInput> *pCameraInput)
 {
     CAMERA_SYNC_TRACE;
-    CHECK_RETURN_RET_ELOG(camera == nullptr, CameraErrorCode::INVALID_ARGUMENT,
-        "CameraManager::CreateCameraInput Camera object is null");
-    CHECK_EXECUTE(camera->GetPosition() == CameraPosition::CAMERA_POSITION_FOLD_INNER, ReportEvent(camera->GetID()));
+    CHECK_RETURN_RET_ELOG(
+        camera == nullptr, CameraErrorCode::INVALID_ARGUMENT, "CameraManager::CreateCameraInput Camera object is null");
+    if (camera->GetPosition() == CameraPosition::CAMERA_POSITION_FOLD_INNER) {
+        ReportEvent(camera->GetID());
+    }
 
     // Check for API compatibility
     FoldStatus curFoldStatus = GetFoldStatus();
@@ -2424,8 +2484,9 @@ int CameraManager::CreateCameraInput(sptr<CameraDevice> &camera, sptr<CameraInpu
         std::vector<sptr<CameraDevice>> cameraObjList = GetSupportedCameras();
         sptr<CameraDevice> cameraInfo;
         for (const auto& cameraDevice : cameraObjList) {
-            if (cameraDevice != nullptr &&
-                cameraDevice->GetPosition() == CameraPosition::CAMERA_POSITION_FOLD_INNER) {
+            bool isFindDevice =
+                cameraDevice != nullptr && cameraDevice->GetPosition() == CameraPosition::CAMERA_POSITION_FOLD_INNER;
+            if (isFindDevice) {
                 camera = cameraDevice;
                 break;
             }
@@ -2467,7 +2528,9 @@ int CameraManager::CreateCameraInput(CameraPosition position, CameraType cameraT
         MEDIA_DEBUG_LOG("CreateCameraInput position:%{public}d, Camera Type:%{public}d",
             cameraDeviceList[i]->GetPosition(), cameraDeviceList[i]->GetCameraType());
         // LCOV_EXCL_START
-        if ((cameraDeviceList[i]->GetPosition() == position) && (cameraDeviceList[i]->GetCameraType() == cameraType)) {
+        bool isFindDevice =
+            (cameraDeviceList[i]->GetPosition() == position) && (cameraDeviceList[i]->GetCameraType() == cameraType);
+        if (isFindDevice) {
             cameraDeviceList[i]->SetUsePhysicalCameraOrientation(false);
             cameraInput = CreateCameraInput(cameraDeviceList[i]);
             break;
@@ -2488,7 +2551,8 @@ bool g_isCapabilitySupported(std::shared_ptr<OHOS::Camera::CameraMetadata> metad
     CHECK_RETURN_RET(metadata == nullptr, false);
     bool isSupport = true;
     int32_t retCode = Camera::FindCameraMetadataItem(metadata->get(), metadataTag, &item);
-    if (retCode != CAM_META_SUCCESS || item.count == 0) {
+    bool isNotFindItem = retCode != CAM_META_SUCCESS || item.count == 0;
+    if (isNotFindItem) {
         MEDIA_DEBUG_LOG("Failed get metadata info tag = %{public}d, retCode = %{public}d, count = %{public}d",
             metadataTag, retCode, item.count);
         isSupport = false;
@@ -2521,9 +2585,7 @@ void CameraManager::ParseBasicCapability(ProfilesWrapper& profilesWrapper,
         size.height = static_cast<uint32_t>(item.data.i32[i + heightOffset]);
         Profile profile = Profile(format, size);
 #ifdef CAMERA_EMULATOR
-        if (format != CAMERA_FORMAT_RGBA_8888) {
-            continue;
-        }
+        CHECK_CONTINUE(format != CAMERA_FORMAT_RGBA_8888);
         profilesWrapper.photoProfiles.push_back(profile);
 #else
         if (format == CAMERA_FORMAT_JPEG || format == CAMERA_FORMAT_YUV_420_SP) {
@@ -2534,9 +2596,7 @@ void CameraManager::ParseBasicCapability(ProfilesWrapper& profilesWrapper,
         profilesWrapper.previewProfiles.push_back(profile);
         camera_metadata_item_t fpsItem;
         int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_FPS_RANGES, &fpsItem);
-        if (ret != CAM_META_SUCCESS) {
-            continue;
-        }
+        CHECK_CONTINUE(ret != CAM_META_SUCCESS);
         for (uint32_t j = 0; j < (fpsItem.count - 1); j += FPS_STEP) {
             std::vector<int32_t> fps = { fpsItem.data.i32[j], fpsItem.data.i32[j + 1] };
             VideoProfile vidProfile = VideoProfile(format, size, fps);
@@ -2556,11 +2616,9 @@ void CameraManager::ParseExtendCapability(ProfilesWrapper& profilesWrapper, cons
     if (modeName == SceneMode::VIDEO) {
         for (uint32_t i = 0; i < extendInfo.modeCount; i++) {
             SceneMode scMode = SceneMode::NORMAL;
-            CHECK_PRINT_ELOG(!ConvertMetaToFwkMode(static_cast<OperationMode>(extendInfo.modeInfo[i].modeName),
-                scMode), "ParseExtendCapability mode = %{public}d", extendInfo.modeInfo[i].modeName);
-            if (SceneMode::HIGH_FRAME_RATE != scMode) {
-                continue;
-            }
+            CHECK_PRINT_ELOG(!ConvertMetaToFwkMode(static_cast<OperationMode>(extendInfo.modeInfo[i].modeName), scMode),
+                "ParseExtendCapability mode = %{public}d", extendInfo.modeInfo[i].modeName);
+            CHECK_CONTINUE(SceneMode::HIGH_FRAME_RATE != scMode);
             for (uint32_t j = 0; j < extendInfo.modeInfo[i].streamTypeCount; j++) {
                 OutputCapStreamType streamType =
                     static_cast<OutputCapStreamType>(extendInfo.modeInfo[i].streamInfo[j].streamType);
@@ -2570,8 +2628,8 @@ void CameraManager::ParseExtendCapability(ProfilesWrapper& profilesWrapper, cons
     }
     for (uint32_t i = 0; i < extendInfo.modeCount; i++) {
         SceneMode scMode = SceneMode::NORMAL;
-        CHECK_PRINT_ELOG(!ConvertMetaToFwkMode(static_cast<OperationMode>(extendInfo.modeInfo[i].modeName),
-            scMode), "ParseExtendCapability mode = %{public}d", extendInfo.modeInfo[i].modeName);
+        CHECK_PRINT_ELOG(!ConvertMetaToFwkMode(static_cast<OperationMode>(extendInfo.modeInfo[i].modeName), scMode),
+            "ParseExtendCapability mode = %{public}d", extendInfo.modeInfo[i].modeName);
         if (modeName == scMode) {
             for (uint32_t j = 0; j < extendInfo.modeInfo[i].streamTypeCount; j++) {
                 OutputCapStreamType streamType =
@@ -2645,7 +2703,8 @@ void CameraManager::ParseProfileLevel(ProfilesWrapper& profilesWrapper, const in
 {
     std::vector<SpecInfo> specInfos;
     ProfileLevelInfo modeInfo = {};
-    if (IsSystemApp() && modeName == SceneMode::VIDEO) {
+    bool isSystemVideo = IsSystemApp() && modeName == SceneMode::VIDEO;
+    if (isSystemVideo) {
         // LCOV_EXCL_START
         CameraAbilityParseUtil::GetModeInfo(SceneMode::HIGH_FRAME_RATE, item, modeInfo);
         specInfos.insert(specInfos.end(), modeInfo.specInfos.begin(), modeInfo.specInfos.end());
@@ -2680,9 +2739,7 @@ void CameraManager::CreateProfileLevel4StreamType(
 
     for (const auto &detailInfo : streamInfo.detailInfos) {
         CameraFormat format = getCameraFormat(static_cast<camera_format_t>(detailInfo.format));
-        if (format == CAMERA_FORMAT_INVALID) {
-            continue;
-        }
+        CHECK_CONTINUE(format == CAMERA_FORMAT_INVALID);
         Size size{detailInfo.width, detailInfo.height};
         Fps fps{detailInfo.fixedFps, detailInfo.minFps, detailInfo.maxFps};
         std::vector<uint32_t> abilityId = detailInfo.abilityIds;
@@ -2815,7 +2872,9 @@ sptr<CameraOutputCapability> CameraManager::ParseSupportedOutputCapability(sptr<
     if (profileMode != fallbackMode) {
         ParseCapability(profilesWrapper, camera, fallbackMode, item, cameraAbility);
     }
-    FillSupportPhotoFormats(profilesWrapper.photoProfiles);
+    if (IsSystemApp()) {
+        FillSupportPhotoFormats(profilesWrapper.photoProfiles);
+    }
     CHECK_EXECUTE(!IsSystemApp() && modeName == static_cast<int32_t>(SceneMode::CAPTURE),
         FillSupportPreviewFormats(profilesWrapper.previewProfiles));
     cameraOutputCapability->SetPhotoProfiles(profilesWrapper.photoProfiles);
@@ -2841,8 +2900,8 @@ vector<CameraFormat> CameraManager::GetSupportPhotoFormat(const int32_t modeName
     int32_t metadataTag = OHOS_STREAM_AVAILABLE_FORMATS;
     int32_t retCode = OHOS::Camera::FindCameraMetadataItem(metadata->get(), metadataTag, &item);
     CHECK_RETURN_RET_ELOG(retCode != CAM_META_SUCCESS || item.count == 0, photoFormats,
-        "Failed get metadata info tag = %{public}d, retCode = %{public}d, count = %{public}d",
-        metadataTag, retCode, item.count);
+        "Failed get metadata info tag = %{public}d, retCode = %{public}d, count = %{public}d", metadataTag, retCode,
+        item.count);
     vector<int32_t> formats = {};
     std::map<int32_t, vector<int32_t> > modePhotoFormats = {};
     for (uint32_t i = 0; i < item.count; i++) {
@@ -2858,8 +2917,9 @@ vector<CameraFormat> CameraManager::GetSupportPhotoFormat(const int32_t modeName
         "GetSupportPhotoFormat not support mode = %{public}d", modeName);
     for (auto &val : modePhotoFormats[modeName]) {
         camera_format_t hdiFomart = static_cast<camera_format_t>(val);
-        CHECK_EXECUTE(metaToFwCameraFormat_.count(hdiFomart),
-            photoFormats.push_back(metaToFwCameraFormat_.at(hdiFomart)));
+        if (metaToFwCameraFormat_.count(hdiFomart)) {
+            photoFormats.push_back(metaToFwCameraFormat_.at(hdiFomart));
+        }
     }
     MEDIA_DEBUG_LOG("GetSupportPhotoFormat, mode = %{public}d, formats = %{public}s", modeName,
         Container2String(photoFormats.begin(), photoFormats.end()).c_str());
@@ -2880,13 +2940,14 @@ void CameraManager::CreateProfile4StreamType(ProfilesWrapper& profilesWrapper, O
     for (uint32_t k = 0; k < extendInfo.modeInfo[modeIndex].streamInfo[streamIndex].detailInfoCount; k++) {
         const auto& detailInfo = extendInfo.modeInfo[modeIndex].streamInfo[streamIndex].detailInfo[k];
         // Skip profiles with unsupported frame rates for non-system apps
-        if ((detailInfo.minFps == frameRate120 || detailInfo.minFps == frameRate240) && !IsSystemApp()) {
-            continue;
-        }
+        bool isSkipProfile = (detailInfo.minFps == frameRate120 || detailInfo.minFps == frameRate240) && !IsSystemApp();
+        CHECK_CONTINUE(isSkipProfile);
         CameraFormat format = CAMERA_FORMAT_INVALID;
         auto itr = metaToFwCameraFormat_.find(static_cast<camera_format_t>(detailInfo.format));
         if (itr != metaToFwCameraFormat_.end()) {
             format = itr->second;
+            MEDIA_DEBUG_LOG("CameraManager::CreateProfile4StreamType THE FORMAT IS %{public}u, %{public}u",
+                itr->first, format);
         } else {
             MEDIA_ERR_LOG("CreateProfile4StreamType failed format = %{public}d",
                 extendInfo.modeInfo[modeIndex].streamInfo[streamIndex].detailInfo[k].format);
@@ -2895,7 +2956,7 @@ void CameraManager::CreateProfile4StreamType(ProfilesWrapper& profilesWrapper, O
         }
         Size size { static_cast<uint32_t>(detailInfo.width), static_cast<uint32_t>(detailInfo.height) };
         Fps fps { static_cast<uint32_t>(detailInfo.fixedFps), static_cast<uint32_t>(detailInfo.minFps),
-            static_cast<uint32_t>(detailInfo.maxFps) };
+                static_cast<uint32_t>(detailInfo.maxFps) };
         std::vector<uint32_t> abilityId = detailInfo.abilityId;
         std::string abilityIds = Container2String(abilityId.begin(), abilityId.end());
         if (streamType == OutputCapStreamType::PREVIEW) {
@@ -3113,9 +3174,8 @@ int32_t CameraManager::UnSetControlCenterStatusCallback()
 {
     // LCOV_EXCL_START
     auto serviceProxy = GetServiceProxy();
-    CHECK_RETURN_RET_ELOG(
-        serviceProxy == nullptr, CAMERA_UNKNOWN_ERROR,
-            "CameraManager::UnSetControlCenterStatusCallback serviceProxy is null");
+    CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, CAMERA_UNKNOWN_ERROR,
+        "CameraManager::UnSetControlCenterStatusCallback serviceProxy is null");
     int32_t retCode = serviceProxy->UnSetControlCenterStatusCallback();
     CHECK_RETURN_RET_ELOG(
         retCode != CAMERA_OK, retCode, "UnSetControlCenterStatusCallback failed, retCode: %{public}d", retCode);
@@ -3128,61 +3188,62 @@ bool CameraManager::IsControlCenterActive()
     // LCOV_EXCL_START
     bool status = false;
     auto serviceProxy = GetServiceProxy();
-    CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, CAMERA_UNKNOWN_ERROR,
-        "CameraManager::IsControlCenterActive serviceProxy is null");
+    CHECK_RETURN_RET_ELOG(
+        serviceProxy == nullptr, CAMERA_UNKNOWN_ERROR, "CameraManager::IsControlCenterActive serviceProxy is null");
     if (!GetIsControlCenterSupported()) {
         MEDIA_INFO_LOG("CameraManager::IsControlCenterActive control center not supported");
         return false;
     }
-    
     int32_t retCode = serviceProxy->GetControlCenterStatus(status);
-    CHECK_RETURN_RET_ELOG(retCode!=CAMERA_OK, false, "CameraManager::IsControlCenterActive failed");
+    CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, false, "CameraManager::IsControlCenterActive failed");
     MEDIA_INFO_LOG("CameraManager::IsControlCenterActive status: %{public}d", status);
     return status;
     // LCOV_EXCL_STOP
 }
- 
+
 int32_t CameraManager::CreateControlCenterSession(sptr<ControlCenterSession>& pControlCenterSession)
 {
     // LCOV_EXCL_START
-    pControlCenterSession = new (std::nothrow) ControlCenterSession();
     MEDIA_INFO_LOG("CameraManager::CreateControlCenterSession");
-    auto serviceProxy = GetServiceProxy();
+    pControlCenterSession = new (std::nothrow) ControlCenterSession();
     CHECK_RETURN_RET_ELOG(
-        serviceProxy == nullptr, CAMERA_UNKNOWN_ERROR,
-        "CameraManager::CreateControlCenterSession serviceProxy is null");
-    int32_t retCode = serviceProxy->CheckControlCenterPermission();
-    CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, false, "CameraManager::CreateControlCenterSession failed");
+        pControlCenterSession == nullptr, CAMERA_ALLOC_ERROR, "CameraManager::CreateControlCenterSession failed.");
     return CAMERA_OK;
     // LCOV_EXCL_STOP
 }
-    
+
 void CameraManager::SetControlCenterFrameCondition(bool frameCondition)
 {
+    // LCOV_EXCL_START
     MEDIA_INFO_LOG("SetControlCenterFrameCondition: %{public}d", frameCondition);
     controlCenterFrameCondition_ = frameCondition;
     UpdateControlCenterPrecondition();
+    // LCOV_EXCL_STOP
 }
-    
+
 void CameraManager::SetControlCenterResolutionCondition(bool resolutionCondition)
 {
+    // LCOV_EXCL_START
     MEDIA_INFO_LOG("SetControlCenterResolutionCondition: %{public}d", resolutionCondition);
     controlCenterResolutionCondition_ = resolutionCondition;
     UpdateControlCenterPrecondition();
+    // LCOV_EXCL_STOP
 }
-    
+
 void CameraManager::SetControlCenterPositionCondition(bool positionCondition)
 {
+    // LCOV_EXCL_START
     MEDIA_INFO_LOG("SetControlCenterPositionCondition: %{public}d", positionCondition);
     controlCenterPositionCondition_ = positionCondition;
     UpdateControlCenterPrecondition();
+    // LCOV_EXCL_STOP
 }
 
 void CameraManager::UpdateControlCenterPrecondition()
 {
     MEDIA_INFO_LOG("UpdateControlCenterPrecondition:  %{public}d,%{public}d,%{public}d,%{public}d",
         controlCenterPrecondition_, controlCenterFrameCondition_,
-        controlCenterResolutionCondition_, controlCenterPositionCondition_);
+        controlCenterResolutionCondition_,controlCenterPositionCondition_);
     auto serviceProxy = GetServiceProxy();
     CHECK_RETURN_ELOG(serviceProxy == nullptr, "UpdateControlCenterPrecondition serviceProxy is null");
     if (controlCenterPrecondition_
@@ -3195,8 +3256,8 @@ void CameraManager::UpdateControlCenterPrecondition()
     if (!controlCenterPrecondition_
         && (controlCenterFrameCondition_ && controlCenterResolutionCondition_ && controlCenterPositionCondition_)) {
         controlCenterPrecondition_ = true;
+        serviceProxy->SetControlCenterPrecondition(controlCenterPrecondition_);
     }
-    serviceProxy->SetControlCenterPrecondition(controlCenterPrecondition_);
     // LCOV_EXCL_STOP
     return;
 }
@@ -3208,14 +3269,11 @@ bool CameraManager::GetControlCenterPrecondition()
 
 void CameraManager::SetIsControlCenterSupported(bool isSupported)
 {
-    // LCOV_EXCL_START
     MEDIA_DEBUG_LOG("CameraManager::SetIsControlCenterSupported, isSupported: %{public}d", isSupported);
-
     auto serviceProxy = GetServiceProxy();
     CHECK_RETURN_ELOG(serviceProxy == nullptr, "SetIsControlCenterSupported serviceProxy is null");
     int32_t retCode = serviceProxy->SetDeviceControlCenterAbility(isSupported);
     CHECK_RETURN_ELOG(retCode != CAMERA_OK, "IsControlCenterSupported call failed, retCode: %{public}d", retCode);
-    // LCOV_EXCL_STOP
 }
 
 bool CameraManager::GetIsControlCenterSupported()
@@ -3226,9 +3284,10 @@ bool CameraManager::GetIsControlCenterSupported()
     int32_t retCode = serviceProxy->GetDeviceControlCenterAbility(isSupported);
     CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, false,
         "GetIsControlCenterSupported call failed, retCode: %{public}d", retCode);
-    MEDIA_INFO_LOG("WRK GetIsControlCenterSupported: %{public}d", isSupported);
+    MEDIA_INFO_LOG("GetIsControlCenterSupported: %{public}d", isSupported);
     return isSupported;
 }
+
 
 int32_t CameraMuteListenerManager::OnCameraMute(bool muteMode)
 {
@@ -3250,8 +3309,8 @@ bool CameraManager::IsCameraMuteSupported()
     auto serviceProxy = GetServiceProxy();
     CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, false, "IsCameraMuteSupported serviceProxy is null");
     int32_t retCode = serviceProxy->IsCameraMuteSupported(isCameraMuteSupported);
-    CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, false, "IsCameraMuteSupported call failed, retCode: %{public}d",
-        retCode);
+    CHECK_RETURN_RET_ELOG(
+        retCode != CAMERA_OK, false, "IsCameraMuteSupported call failed, retCode: %{public}d", retCode);
     CacheCameraDeviceAbilitySupportValue(CAMERA_ABILITY_SUPPORT_MUTE, isCameraMuteSupported);
     return isCameraMuteSupported;
 }
@@ -3282,8 +3341,8 @@ int32_t CameraManager::MuteCameraPersist(PolicyType policyType, bool muteMode)
 {
     // LCOV_EXCL_START
     auto serviceProxy = GetServiceProxy();
-    CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, SERVICE_FATL_ERROR,
-        "CameraManager::MuteCameraPersist serviceProxy is null");
+    CHECK_RETURN_RET_ELOG(
+        serviceProxy == nullptr, SERVICE_FATL_ERROR, "CameraManager::MuteCameraPersist serviceProxy is null");
     int32_t retCode = serviceProxy->MuteCameraPersist(policyType, muteMode);
     CHECK_PRINT_ELOG(retCode != CAMERA_OK, "MuteCameraPersist call failed, retCode: %{public}d", retCode);
     return ServiceToCameraError(retCode);
@@ -3337,8 +3396,7 @@ bool CameraManager::IsTorchSupported()
     auto serviceProxy = GetServiceProxy();
     CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, false, "IsTorchSupported serviceProxy is null");
     int32_t retCode = serviceProxy->IsTorchSupported(isCameraTorchSupported);
-    CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, false, "IsTorchSupported call failed, retCode: %{public}d",
-        retCode);
+    CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, false, "IsTorchSupported call failed, retCode: %{public}d", retCode);
     CacheCameraDeviceAbilitySupportValue(CAMERA_ABILITY_SUPPORT_TORCH, isCameraTorchSupported);
     return isCameraTorchSupported;
 }
@@ -3354,8 +3412,7 @@ TorchMode CameraManager::GetTorchMode()
     CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, torchMode_, "GetTorchMode serviceProxy is null");
     int32_t status = 0;
     int32_t retCode = serviceProxy->GetTorchStatus(status);
-    CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, torchMode_, "GetTorchMode call failed, retCode: %{public}d",
-        retCode);
+    CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, torchMode_, "GetTorchMode call failed, retCode: %{public}d", retCode);
     torchMode_ = (status == static_cast<int32_t>(TorchStatus::TORCH_STATUS_ON)) ? TORCH_MODE_ON : TORCH_MODE_OFF;
     return torchMode_;
 }
@@ -3379,7 +3436,9 @@ int32_t CameraManager::SetTorchMode(TorchMode mode)
         default:
             MEDIA_ERR_LOG("Invalid or unsupported torchMode value received from application");
     }
-    CHECK_EXECUTE(retCode == CAMERA_OK, UpdateTorchMode(mode));
+    if (retCode == CAMERA_OK) {
+        UpdateTorchMode(mode);
+    }
     return ServiceToCameraError(retCode);
 }
 
@@ -3402,7 +3461,7 @@ int32_t CameraManager::SetTorchLevel(float level)
 int32_t CameraManager::SetPrelaunchConfig(
     std::string cameraId, RestoreParamTypeOhos restoreParamType, int activeTime, EffectParam effectParam)
 {
-    // LCOV_EXCL_START
+     // LCOV_EXCL_START
     auto serviceProxy = GetServiceProxy();
     CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, SERVICE_FATL_ERROR, "SetPrelaunchConfig serviceProxy is null");
     int32_t retCode = serviceProxy->SetPrelaunchConfig(
@@ -3414,15 +3473,12 @@ int32_t CameraManager::SetPrelaunchConfig(
 
 int32_t CameraManager::GetCameraStorageSize(int64_t& size)
 {
-    // LCOV_EXCL_START
     auto serviceProxy = GetServiceProxy();
-    CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, SERVICE_FATL_ERROR,
-        "GetCameraStorageSize serviceProxy is null");
+    CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, SERVICE_FATL_ERROR, "GetCameraStorageSize serviceProxy is null");
     int32_t retCode = serviceProxy->GetCameraStorageSize(size);
     CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, ServiceToCameraError(retCode),
         "GetStorageInfo call failed, retCode: %{public}d", retCode);
     return ServiceToCameraError(retCode);
-    // LCOV_EXCL_STOP
 }
 
 void CameraManager::SetCameraManagerNull()
@@ -3516,11 +3572,11 @@ int32_t CameraManager::CreateMetadataOutputInternal(sptr<MetadataOutput>& pMetad
         // LCOV_EXCL_STOP
     }
     auto serviceProxy = GetServiceProxy();
-    CHECK_RETURN_RET_ELOG(serviceProxy == nullptr,  CameraErrorCode::SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "CameraManager::CreateMetadataOutput serviceProxy is null");
 
     sptr<IConsumerSurface> surface = IConsumerSurface::Create();
-    CHECK_RETURN_RET_ELOG(surface == nullptr,  CameraErrorCode::SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_ELOG(surface == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "CameraManager::CreateMetadataOutput Failed to create MetadataOutputSurface");
     // only for face recognize
     int32_t format = OHOS_CAMERA_FORMAT_YCRCB_420_SP;
@@ -3543,8 +3599,8 @@ int32_t CameraManager::CreateMetadataOutputInternal(sptr<MetadataOutput>& pMetad
     CHECK_RETURN_RET_ELOG(bufferConsumerListener == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "CreateMetadataOutput Failed to new bufferConsumerListener!");
     SurfaceError ret = surface->RegisterConsumerListener(bufferConsumerListener);
-    CHECK_PRINT_ELOG(ret != SURFACE_ERROR_OK,
-        "MetadataOutputSurface consumer listener registration failed:%{public}d", ret);
+    CHECK_PRINT_ELOG(
+        ret != SURFACE_ERROR_OK, "MetadataOutputSurface consumer listener registration failed:%{public}d", ret);
     return CameraErrorCode::SUCCESS;
 }
 
@@ -3582,6 +3638,26 @@ std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCamerasWithFoldStatus
     }
     return supportedCameraDeviceList;
     // LCOV_EXCL_STOP
+}
+
+void CameraManager::RegisterTimeforDevice(const std::string& cameraId, const uint32_t& timestmp)
+{
+    std::lock_guard<std::mutex> lock(registerTime_);
+    MEDIA_INFO_LOG("Enter Into CameraInput::RegisterTimeforDevice");
+    std::queue<uint32_t>& queueforRegister = timeQueueforDevice_[cameraId];
+    queueforRegister.push(timestmp);
+}
+
+void CameraManager::UnregisterTimeforDevice(const std::string& cameraId)
+{
+    std::lock_guard<std::mutex> lock(registerTime_);
+    MEDIA_INFO_LOG("Enter Into CameraInput::UnregisterTimeforDevice");
+    std::queue<uint32_t>& queueforUnregister = timeQueueforDevice_[cameraId];
+    while (!queueforUnregister.empty()) {
+        uint32_t timeIdFirst = queueforUnregister.front();
+        queueforUnregister.pop();
+        CameraTimer::GetInstance().Unregister(timeIdFirst);
+    }
 }
 
 void CameraManager::SaveOldCameraId(std::string realCameraId, std::string oldCameraId)

@@ -17,6 +17,7 @@
 
 #include "media_manager_interface.h"
 #include "camera_dynamic_loader.h"
+
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
@@ -26,15 +27,17 @@ public:
         std::shared_ptr<Dynamiclib> mediaManagerLib, std::shared_ptr<MediaManagerIntf> mediaManagerIntf);
     static std::shared_ptr<MediaManagerProxy> CreateMediaManagerProxy();
     ~MediaManagerProxy() override;
-    int32_t MpegAcquire(const std::string& requestId, const sptr<IPCFileDescriptor>& inputFd) override;
+    int32_t MpegAcquire(const std::string& requestId, const DpsFdPtr& inputFd,
+        int32_t width, int32_t height) override;
     int32_t MpegUnInit(const int32_t result) override;
-    sptr<IPCFileDescriptor> MpegGetResultFd() override;
+    DpsFdPtr MpegGetResultFd() override;
     void MpegAddUserMeta(std::unique_ptr<MediaUserInfo> userInfo) override;
     uint64_t MpegGetProcessTimeStamp() override;
     sptr<Surface> MpegGetSurface() override;
     sptr<Surface> MpegGetMakerSurface() override;
-    void MpegSetMarkSize(int32_t size) override;
     int32_t MpegRelease() override;
+    uint32_t MpegGetDuration() override;
+    int32_t MpegSetProgressNotifer(std::unique_ptr<MediaProgressNotifier> processNotifer) override;
 private:
     std::shared_ptr<Dynamiclib> mediaManagerLib_ = {nullptr};
     std::shared_ptr<MediaManagerIntf> mediaManagerIntf_ = {nullptr};

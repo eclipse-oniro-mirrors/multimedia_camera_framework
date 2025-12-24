@@ -12,11 +12,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+// LCOV_EXCL_START
 #include "track_factory.h"
 
 #include "basic_definitions.h"
 #include "dp_log.h"
+#include "media_format.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -25,7 +26,8 @@ namespace {
     static const std::unordered_set<Media::Plugins::MediaType> TRACK_TYPES = {
         Media::Plugins::MediaType::AUDIO,
         Media::Plugins::MediaType::VIDEO,
-        Media::Plugins::MediaType::TIMEDMETA
+        Media::Plugins::MediaType::TIMEDMETA,
+        Media::Plugins::MediaType::AUXILIARY,
     };
 }
 
@@ -43,21 +45,24 @@ std::shared_ptr<Track> TrackFactory::CreateTrack(const std::shared_ptr<AVSource>
 {
     DP_CHECK_ERROR_RETURN_RET_LOG(source == nullptr, nullptr, "AVSource is nullptr.");
     Format trackFormat;
-    int32_t trackType = -1;
     auto ret = source->GetTrackFormat(trackFormat, trackIndex);
     DP_CHECK_ERROR_RETURN_RET_LOG(ret != static_cast<int32_t>(OK), nullptr, "Get track format failed.");
-    DP_CHECK_ERROR_RETURN_RET_LOG(!trackFormat.GetIntValue(Media::Tag::MEDIA_TYPE, trackType),
+    auto trackMeta = trackFormat.GetMeta();
+    DP_CHECK_ERROR_RETURN_RET_LOG(trackMeta == nullptr, nullptr, "Get track meta failed.");
+    Media::Plugins::MediaType trackType;
+    DP_CHECK_ERROR_RETURN_RET_LOG(!trackMeta->Get<Media::Tag::MEDIA_TYPE>(trackType),
         nullptr, "Get track type failed.");
 
     DP_INFO_LOG("CreateTrack data: %{public}s", trackFormat.Stringify().c_str());
-    auto type = static_cast<Media::Plugins::MediaType>(trackType);
-    DP_CHECK_ERROR_RETURN_RET_LOG(!CheckTrackFormat(type), nullptr, "Track type: %{public}d is not supported.", type);
+    DP_CHECK_ERROR_RETURN_RET_LOG(!CheckTrackFormat(trackType), nullptr,
+        "Track type: %{public}d is not supported.", trackType);
 
-    auto track = std::make_shared<Track>();
-    TrackFormat formatOfIndex;
-    formatOfIndex.format = std::make_shared<Format>(trackFormat);
-    formatOfIndex.trackId = trackIndex;
-    track->SetFormat(formatOfIndex, type);
+    auto format = std::make_unique<Format>(trackFormat);
+    auto track = std::make_shared<Track>(trackIndex, std::move(format), trackType);
+    std::string desc;
+    DP_CHECK_EXECUTE(trackType == Media::Plugins::MediaType::AUXILIARY &&
+        trackMeta->Get<Media::Tag::TRACK_DESCRIPTION>(desc),
+        track->SetAuxiliaryType(ParseAuxiliaryType(desc)));
     return track;
 }
 
@@ -65,6 +70,14 @@ bool TrackFactory::CheckTrackFormat(Media::Plugins::MediaType type)
 {
     return TRACK_TYPES.find(type) != TRACK_TYPES.end();
 }
+
+AuxiliaryType TrackFactory::ParseAuxiliaryType(const std::string& input)
+{
+    DP_CHECK_RETURN_RET(input.find("audiomode") != std::string::npos, AuxiliaryType::RAW_AUDIO);
+    DP_CHECK_RETURN_RET(input.find("videomode") != std::string::npos, AuxiliaryType::VIDEO);
+    return AuxiliaryType::UNKNOWN;
+}
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS
+// LCOV_EXCL_STOP

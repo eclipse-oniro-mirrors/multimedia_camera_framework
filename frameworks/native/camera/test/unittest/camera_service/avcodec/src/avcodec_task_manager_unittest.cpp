@@ -62,7 +62,7 @@ void AvcodecTaskManagerUnitTest::TearDown()
  * EnvConditions: NA
  * CaseDescription: Test WriteSampleBuffer abnormal branches.
  */
-HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_001, TestSize.Level1)
+HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_001, TestSize.Level0)
 {
     sptr<AudioCapturerSession> session = new AudioCapturerSession();
     VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
@@ -94,7 +94,7 @@ HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_001, TestSize
  * EnvConditions: NA
  * CaseDescription: Test HdiToServiceError normal branches with different parameters.
  */
-HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_002, TestSize.Level1)
+HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_002, TestSize.Level0)
 {
     sptr<AudioCapturerSession> session = new AudioCapturerSession();
     VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
@@ -119,7 +119,7 @@ HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_002, TestSize
  * EnvConditions: NA
  * CaseDescription: Test CollectAudioBuffer abnormal branches.
  */
-HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_003, TestSize.Level1)
+HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_003, TestSize.Level0)
 {
     sptr<AudioCapturerSession> session = new AudioCapturerSession();
     VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
@@ -130,11 +130,12 @@ HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_003, TestSize
     vector<sptr<FrameRecord>> choosedBuffer;
     int64_t shutterTime = 1;
     int32_t captureId = 1;
-    taskManager->ChooseVideoBuffer(frameRecords, choosedBuffer, shutterTime, captureId);
+    int64_t timeStamp = 0;
+    taskManager->ChooseVideoBuffer(frameRecords, choosedBuffer, shutterTime, captureId, timeStamp);
     EXPECT_EQ(choosedBuffer.size(), 0);
     vector<sptr<AudioRecord>> audioRecordVec;
     sptr<AudioVideoMuxer> muxer;
-    taskManager->CollectAudioBuffer(audioRecordVec, muxer);
+    taskManager->CollectAudioBuffer(audioRecordVec, muxer, true);
     EXPECT_EQ(audioRecordVec.size(), 0);
 }
 
@@ -146,7 +147,7 @@ HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_003, TestSize
  * EnvConditions: NA
  * CaseDescription: Test Stop abnormal branches while videoEncoder_ is nullptr.
  */
-HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_004, TestSize.Level1)
+HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_004, TestSize.Level0)
 {
     sptr<AudioCapturerSession> session = new AudioCapturerSession();
     VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
@@ -167,7 +168,7 @@ HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_004, TestSize
  * EnvConditions: NA
  * CaseDescription: Test Stop abnormal branches while audioEncoder_ is nullptr.
  */
-HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_005, TestSize.Level1)
+HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_005, TestSize.Level0)
 {
     sptr<AudioCapturerSession> session = new AudioCapturerSession();
     VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
@@ -341,7 +342,6 @@ HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_011, TestSize
     taskManager->timerId_ = 0;
 
     taskManager->Release();
-    EXPECT_FALSE(taskManager->videoEncoder_->isStarted_);
     EXPECT_EQ(taskManager->audioEncoder_, nullptr);
     EXPECT_EQ(taskManager->timerId_, 0);
 }
@@ -369,7 +369,6 @@ HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_012, TestSize
 
     taskManager->Release();
     EXPECT_EQ(taskManager->videoEncoder_, nullptr);
-    EXPECT_FALSE(taskManager->audioEncoder_->isStarted_);
     EXPECT_EQ(taskManager->timerId_, 0);
 }
 
@@ -413,7 +412,7 @@ HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_013, TestSize
     int32_t captureId = 1;
     int64_t clearVideoEndTime = shutterTime + taskManager->preBufferDuration_;
     size_t ret = taskManager->FindIdrFrameIndex(frameRecords, clearVideoEndTime, shutterTime, captureId);
-    EXPECT_EQ(ret, 1);
+    EXPECT_EQ(ret, 0);
 }
 
 /*
@@ -514,21 +513,16 @@ HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_016, TestSize
     GraphicTransformType types = GraphicTransformType::GRAPHIC_FLIP_H_ROT90;
     sptr<FrameRecord> frame1 = new FrameRecord(videoBuffer1, timestamp1, types);
     frame1->SetIDRProperty(true);
-    std::shared_ptr<Media::AVBuffer> IDRBuffer = Media::AVBuffer::CreateAVBuffer(videoBuffer1);
-    IDRBuffer->pts_ = timestamp1;
-    frame1->CacheBuffer(IDRBuffer);
     frameRecords.emplace_back(frame1);
     sptr<SurfaceBuffer> videoBuffer2 = SurfaceBuffer::Create();
     int64_t timestamp2 = 3200000001LL;
     sptr<FrameRecord> frame2 = new FrameRecord(videoBuffer2, timestamp2, types);
     frame2->SetIDRProperty(false);
-    std::shared_ptr<Media::AVBuffer> PBuffer = Media::AVBuffer::CreateAVBuffer(videoBuffer2);
-    IDRBuffer->pts_ = timestamp2;
-    frame2->CacheBuffer(PBuffer);
     vector<sptr<FrameRecord>> choosedBuffer;
     int64_t shutterTime = 1600000000LL;
     int32_t captureId = 1;
-    taskManager->ChooseVideoBuffer(frameRecords, choosedBuffer, shutterTime, captureId);
+    int64_t timeStamp;
+    taskManager->ChooseVideoBuffer(frameRecords, choosedBuffer, shutterTime, captureId, timeStamp);
     EXPECT_EQ(choosedBuffer.size(), 1);
 }
 
