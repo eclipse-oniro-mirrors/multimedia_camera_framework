@@ -23,8 +23,8 @@
 #include "camera_util.h"
 #include "image_type.h"
 #include "video_key_info.h"
-#include <drivers/interface/display/graphic/common/v1_0/cm_color_space.h>
-#include <drivers/interface/display/graphic/common/v2_1/cm_color_space.h>
+#include "v1_0/cm_color_space.h"
+#include "v2_1/cm_color_space.h"
 #include "metadata_helper.h"
 #include <pixel_map.h>
 #include "hdr_type.h"

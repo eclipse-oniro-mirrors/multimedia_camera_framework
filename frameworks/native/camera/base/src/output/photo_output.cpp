@@ -30,8 +30,8 @@
 #include "session/capture_session.h"
 #include "task_manager.h"
 #include "watch_dog.h"
-#include <drivers/interface/display/graphic/common/v1_0/cm_color_space.h>
-#include <drivers/interface/display/graphic/common/v2_1/cm_color_space.h>
+#include "v1_0/cm_color_space.h"
+#include "v2_1/cm_color_space.h"
 #include <pixel_map.h>
 #include "metadata_common_utils.h"
 #include "photo_asset_interface.h"
