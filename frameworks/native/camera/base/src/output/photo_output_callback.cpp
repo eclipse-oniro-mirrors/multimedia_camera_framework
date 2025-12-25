@@ -15,16 +15,12 @@
 
 #include "output/photo_output_callback.h"
 
-#include <cmath>
-#include <ctime>
-#include <iomanip>
 #include <mutex>
 #include <securec.h>
 
 #include "photo_output.h"
 #include "camera_log.h"
 #include "camera_util.h"
-#include "exif_metadata.h"
 #include "image_type.h"
 #include "video_key_info.h"
 #include <drivers/interface/display/graphic/common/v1_0/cm_color_space.h>
@@ -35,6 +31,8 @@
 #include "camera_surface_buffer_util.h"
 #include "task_manager.h"
 #include "hstream_common.h"
+#include "watermark_exif_metadata_proxy.h"
+#include "camera_watermark_info.h"
 using namespace std;
 
 namespace OHOS {
@@ -80,10 +78,6 @@ static constexpr int32_t PLANE_U = 1;
 static constexpr uint8_t PIXEL_SIZE_HDR_YUV = 3;
 static constexpr uint8_t HDR_PIXEL_SIZE = 2;
 static constexpr uint8_t SDR_PIXEL_SIZE = 1;
-static constexpr int64_t EXPOTIME_UNIT = 1000000000;
-static constexpr int64_t EXPOTIME_USHRT_MAX = 65535;
-static constexpr int64_t SENSITIVITY_TYPE = 2;
-static constexpr int64_t EXPOTIME_BOUNDARY = 250000000;
 
 int32_t HStreamCapturePhotoCallbackImpl::OnPhotoAvailable(
     sptr<SurfaceBuffer> surfaceBuffer, int64_t timestamp, bool isRaw)
@@ -177,64 +171,6 @@ void ThumbnailSetColorSpaceAndRotate(std::unique_ptr<Media::PixelMap> &pixelMap,
     }
 }
 
-std::string TransFractionString(int64_t minNum, int64_t maxNum)
-{
-    CHECK_RETURN_RET(minNum <= 0 || maxNum <= 0, "");
-    int64_t numerator = 1;
-    double tempValue = static_cast<double>(maxNum) / minNum;
-
-    if (minNum > EXPOTIME_BOUNDARY) {
-        double value = static_cast<double>(minNum) / maxNum;
-        std::ostringstream oss;
-        oss << std::fixed << std::setprecision(1) << value;
-        return oss.str();
-    } else {
-        int64_t denominator = static_cast<int64_t>(std::roundl(tempValue));
-        return std::to_string(numerator) + "/" + std::to_string(denominator);
-    }
-}
-
-std::string TimestampToDateTimeString(int64_t timestamp)
-{
-    std::time_t timeDate = static_cast<std::time_t>(timestamp);
-    std::tm* time = std::localtime(&timeDate);
-    constexpr size_t iLen = 20;
-    char* dateTimeStr = reinterpret_cast<char*>(malloc(iLen));
-    if (dateTimeStr != nullptr) {
-        CHECK_PRINT_ELOG(memset_s(dateTimeStr, iLen, 0, iLen) != 0, "memset_s return error");
-        int ret = snprintf_s(dateTimeStr, iLen, iLen - 1, "%04d:%02d:%02d %02d:%02d:%02d",
-            time->tm_year + 1900,
-            time->tm_mon + 1, time->tm_mday, time->tm_hour, time->tm_min, time->tm_sec);
-        CHECK_PRINT_ELOG(ret < 0, "snprintf_s return error");
-    }
-    std::string dateTime(dateTimeStr);
-    free(dateTimeStr);
-    MEDIA_DEBUG_LOG("dateTime is %{public}s", dateTime.c_str());
-    return dateTime;
-}
-
-void SetWaterInfoExifMetaData(std::shared_ptr<Media::ExifMetadata> exifData, const WatermarkInfo &info)
-{
-    std::string expoTimeStr = TransFractionString(info.expoTime, EXPOTIME_UNIT);
-    exifData->SetValue("ExposureTime", expoTimeStr);
-    exifData->SetValue("FNumber", std::to_string(info.expoFNumber));
-    exifData->SetValue("FocalLengthIn35mmFilm", std::to_string(static_cast<int64_t>(info.expoEfl)));
-    std::string dataTimeString = TimestampToDateTimeString(info.captureTime);
-    exifData->SetValue("DateTimeOriginal", dataTimeString);
-
-    if (info.expoIso > static_cast<int>(EXPOTIME_USHRT_MAX)) {
-        exifData->SetValue("ISOSpeedRatings", std::to_string(EXPOTIME_USHRT_MAX));
-        exifData->SetValue("SensitivityType", std::to_string(SENSITIVITY_TYPE));
-        exifData->SetValue("RecommendedExposureIndex", std::to_string(info.expoIso));
-    } else {
-        exifData->SetValue("ISOSpeedRatings", std::to_string(info.expoIso));
-    }
-    MEDIA_DEBUG_LOG("SetWaterInfoExifMetaData expoTime:%{public}s, expoIso: %{public}s, expoFNumber: %{public}s,"
-        "expoEfl: %{public}s, captureTime: %{public}s",
-        expoTimeStr.c_str(), std::to_string(info.expoIso).c_str(), std::to_string(info.expoFNumber).c_str(),
-        std::to_string(static_cast<int64_t>(info.expoEfl)).c_str(), dataTimeString.c_str());
-}
-
 int32_t HStreamCaptureThumbnailCallbackImpl::OnThumbnailAvailable(sptr<SurfaceBuffer> surfaceBuffer, int64_t timestamp)
 {
     CAMERA_SYNC_TRACE;
@@ -274,14 +210,9 @@ int32_t HStreamCaptureThumbnailCallbackImpl::OnThumbnailAvailable(sptr<SurfaceBu
     CHECK_PRINT_ELOG(pixelMap == nullptr, "ThumbnailListener create pixelMap is nullptr");
     ThumbnailSetColorSpaceAndRotate(pixelMap, surfaceBuffer, colorSpace);
 
-    std::shared_ptr<Media::ExifMetadata> exifMetaData = std::make_shared<Media::ExifMetadata>();
-    if (exifMetaData != nullptr) {
-        bool result = exifMetaData->CreateExifdata();
-        CHECK_PRINT_ELOG(!result, "CreateExifdata failed");
-        SetWaterInfoExifMetaData(exifMetaData, info);
-        pixelMap->SetExifMetadata(exifMetaData);
-    }
-
+    std::shared_ptr<WatermarkExifMetadataIntf> watermarkExifMetadataProxy = WatermarkExifMetadataProxy::CreateWatermarkExifMetadataProxy();
+    watermarkExifMetadataProxy->SetWatermarkExifMetadata(std::move(pixelMap), info);
+    WatermarkExifMetadataProxy::FreeWatermarkExifMetadataDynamiclib();
     callback->OnThumbnailAvailable(info.captureID, timestamp, std::move(pixelMap));
     return CAMERA_OK;
 }
