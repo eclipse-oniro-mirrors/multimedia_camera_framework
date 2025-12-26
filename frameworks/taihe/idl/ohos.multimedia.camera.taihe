@@ -19,7 +19,6 @@
 static { loadLibrary("camera_taihe.z"); }
 """)
 
-from ohos.multimedia.image.image use Picture;
 from ohos.multimedia.image.image use PixelMap;
 from ohos.multimedia.image.image use Image;
 
@@ -432,16 +431,6 @@ interface Photo {
   @get GetDepthData(): Optional<DepthData>;
   @set SetCaptureId(captureId: i32): void;
   @get GetCaptureId(): i32;
-  @gen_promise("release")
-  ReleaseSync(): void;
-}
-
-interface PhotoEx {
-  GetSpecificImplPtr(): i64;
-  @set SetMain(main: Image): void;
-  @get GetMain(): Image;
-  @set SetPicture(main: Picture): void;
-  @get GetPicture(): Picture;
   @gen_promise("release")
   ReleaseSync(): void;
 }
@@ -2194,17 +2183,8 @@ interface PhotoOutput : CameraOutput {
   OffFrameShutterEnd(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: FrameShutterEndInfo)=> void>): void;
   OnEstimatedCaptureDuration(callback:(err: @sts_type("BusinessError<void>") Opaque, data: f64)=> void): void;
   OffEstimatedCaptureDuration(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: f64)=> void>): void;
-
-  @overload("onPhotoAvailable")
   OnPhotoAvailable(callback:(err: @sts_type("BusinessError<void>") Opaque, data: Photo)=> void): void;
-  @overload("offPhotoAvailable")
   OffPhotoAvailable(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: Photo)=> void>): void;
-
-  @overload("onPhotoAvailable")
-  OnPhotoAvailableEx(callback:(data: PhotoEx)=> void): void;
-  @overload("offPhotoAvailable")
-  OffPhotoAvailableEx(callback: Optional<(data: PhotoEx)=> void>): void;
-
   OnDeferredPhotoProxyAvailable(callback:(err: @sts_type("BusinessError<void>") Opaque, data: DeferredPhotoProxy)=> void): void;
   OffDeferredPhotoProxyAvailable(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: DeferredPhotoProxy)=> void>): void;
   OnOfflineDeliveryFinished(callback:(err: @sts_type("BusinessError<void>") Opaque, data: @sts_type("undefined") Opaque)=> void): void;
