@@ -34,6 +34,7 @@ namespace CameraStandard {
 static const int32_t TIME_FOR_CAMERA_RECOVERY_8 = 8;
 static const int32_t TIME_FOR_CAMERA_RECOVERY_10 = 10;
 static const int32_t TIME_FOR_CAMERA_RECOVERY_16 = 16;
+static const double PRESESSION = 0.1;
 
 void TestCameraMuteListener::OnCameraMute(bool muteMode) const
 {
@@ -189,7 +190,7 @@ int32_t GetProfileIndex(double ratio, std::vector<Profile> profiles)
     int index = 0;
     for (; index < profiles.size(); index ++) {
         double temp = profiles[index].size_.width / profiles[index].size_.height;
-        if (fabs(ratio - temp) <= 0.1) {
+        if (fabs(ratio - temp) <= PRESESSION) {
             return index;
         }
     }
