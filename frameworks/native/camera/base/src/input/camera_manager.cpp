@@ -3524,6 +3524,7 @@ void CameraManager::FillExtendedSupportPhotoFormats(vector<Profile>& photoProfil
 {
     CHECK_RETURN(photoFormats_.size() == 0 || photoProfiles.size() == 0);
     std::vector<Profile> extendProfiles = {};
+    bool heifSupport = find(photoFormats_.begin(), photoFormats_.end(), CAMERA_FORMAT_HEIC) != photoFormats_.end();
     for (const auto& profile : photoProfiles) {
         if (profile.format_ == CAMERA_FORMAT_YUV_420_SP) {
             extendProfiles.push_back(profile);
@@ -3533,6 +3534,11 @@ void CameraManager::FillExtendedSupportPhotoFormats(vector<Profile>& photoProfil
         extendProfiles.push_back(extendedPhotoProfile);
         extendedPhotoProfile.format_ = CAMERA_FORMAT_YUV_420_SP;
         extendProfiles.push_back(extendedPhotoProfile);
+        if (profile.format_ == CAMERA_FORMAT_JPEG && heifSupport) {
+            Profile extendHeifPhotoProfile = profile;
+            extendHeifPhotoProfile.format_ = CAMERA_FORMAT_HEIC;
+            extendProfiles.push_back(extendHeifPhotoProfile);
+        }
     }
     photoProfiles = extendProfiles;
 }
