@@ -561,6 +561,7 @@ void PhotoOutputCallback::ExecutePhotoAvailableCb(const CallbackInfo& info) cons
 {
     MEDIA_INFO_LOG("ExecutePhotoAvailableCb");
     bool isAsync = !g_callbackExtendFlag;
+    MEDIA_DEBUG_LOG("ExecutePhotoAvailableCb isAsync: %{public}d", isAsync);
     ExecuteCallbackScopeSafe(CONST_CAPTURE_PHOTO_AVAILABLE, [&]() {
         napi_value errCode = CameraNapiUtils::GetUndefinedValue(env_);
         napi_value callbackObj = CameraNapiUtils::GetUndefinedValue(env_);
@@ -1928,7 +1929,6 @@ const PhotoOutputNapi::EmitterFunctions& PhotoOutputNapi::GetEmitterFunctions()
 
 napi_value PhotoOutputNapi::On(napi_env env, napi_callback_info info)
 {
-    g_callbackExtendFlag = false;
     return ListenerTemplate<PhotoOutputNapi>::On(env, info);
 }
 
@@ -1950,6 +1950,7 @@ napi_value PhotoOutputNapi::OnPhotoAvailable(napi_env env, napi_callback_info in
 
 napi_value PhotoOutputNapi::OffPhotoAvailable(napi_env env, napi_callback_info info)
 {
+    g_callbackExtendFlag = false;
     return ListenerTemplate<PhotoOutputNapi>::Off(env, info, CONST_CAPTURE_PHOTO_AVAILABLE);
 }
 

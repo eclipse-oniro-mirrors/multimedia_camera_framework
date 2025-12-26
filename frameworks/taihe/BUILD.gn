@@ -91,7 +91,6 @@ taihe_shared_library("camera_taihe") {
     "src/mode/night_photo_session_taihe.cpp",
     "src/mode/slow_motion_video_session_taihe.cpp",
     "src/photo_taihe.cpp",
-    "src/photo_ex_taihe.cpp",
     "src/transfer/camera_transfer_taihe.cpp",
   ]
 
