@@ -13,12 +13,8 @@
  * limitations under the License.
  */
 #include "video_output_taihe.h"
-#include "camera_utils_taihe.h"
-#include "camera_log.h"
 #include "camera_security_utils_taihe.h"
 #include "camera_template_utils_taihe.h"
-#include "camera_error_code.h"
-#include "camera_event_emitter_taihe.h"
 
 using namespace taihe;
 using namespace ohos::multimedia::camera;
@@ -207,7 +203,7 @@ VideoProfile VideoOutputImpl::GetActiveProfile()
     CHECK_RETURN_RET_ELOG(videoOutput_ == nullptr, res, "GetActiveProfile failed, videoOutput_ is nullptr");
     auto profile = videoOutput_->GetVideoProfile();
     CHECK_RETURN_RET_ELOG(profile == nullptr, res, "GetActiveProfile failed, profile is nullptr");
-    CameraFormat cameraFormat = CameraUtilsTaihe::ToTaiheCameraFormat(profile->GetCameraFormat());
+    CameraFormat cameraFormat = CameraFormat::from_value(static_cast<int32_t>(profile->GetCameraFormat()));
     res.base.size.height = static_cast<int32_t>(profile->GetSize().height);
     res.base.size.width = static_cast<int32_t>(profile->GetSize().width);
     res.base.format = cameraFormat;

@@ -13,8 +13,6 @@
  * limitations under the License.
  */
 #include "camera_security_utils_taihe.h"
-#include "camera_error_code.h"
-#include "camera_log.h"
 #include "camera_security_utils.h"
 #include "camera_utils_taihe.h"
 

@@ -16,13 +16,7 @@
 #ifndef FRAMEWORKS_TAIHE_INCLUDE_CAMERA_AUTO_REF_TAIHE_H
 #define FRAMEWORKS_TAIHE_INCLUDE_CAMERA_AUTO_REF_TAIHE_H
 
-#include <cstddef>
-#include <cstdint>
-#include <memory>
-
-#include "taihe/runtime.hpp"
 #include "camera_utils_taihe.h"
-#include "camera_log.h"
 
 namespace Ani::Camera {
 struct AutoRef {

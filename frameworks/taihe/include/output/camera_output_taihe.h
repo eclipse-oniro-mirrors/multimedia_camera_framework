@@ -16,13 +16,7 @@
 #ifndef FRAMEWORKS_TAIHE_INCLUDE_OUTPUT_CAMERA_OUTPUT_TAIHE_H
 #define FRAMEWORKS_TAIHE_INCLUDE_OUTPUT_CAMERA_OUTPUT_TAIHE_H
 
-#include "ohos.multimedia.camera.proj.hpp"
-#include "ohos.multimedia.camera.impl.hpp"
-#include "taihe/runtime.hpp"
-#include "camera_output_capability.h"
 #include "capture_output.h"
-
-#include "refbase.h"
 
 namespace Ani {
 namespace Camera {

@@ -14,10 +14,7 @@
  */
 
 #include "depth_data_taihe.h"
-#include "camera_utils_taihe.h"
 #include "camera_security_utils_taihe.h"
-#include "camera_log.h"
-
 
 namespace Ani {
 namespace Camera {
@@ -45,15 +42,15 @@ void DepthDataImpl::ReleaseSync()
 
 CameraFormat DepthDataImpl::GetFormat()
 {
-    return CameraUtilsTaihe::ToTaiheCameraFormat(format_);
+    return CameraFormat::from_value(static_cast<int32_t>(format_));
 }
 DepthDataQualityLevel DepthDataImpl::GetQualityLevel()
 {
-    return CameraUtilsTaihe::ToTaiheDepthDataQualityLevel(qualityLevel_);
+    return DepthDataQualityLevel::from_value(static_cast<int32_t>(qualityLevel_));
 }
 DepthDataAccuracy DepthDataImpl::GetDataAccuracy()
 {
-    return CameraUtilsTaihe::ToTaiheDepthDataAccuracy(dataAccuracy_);
+    return DepthDataAccuracy::from_value(static_cast<int32_t>(dataAccuracy_));
 }
 
 ImageTaihe::PixelMap DepthDataImpl::GetDepthMap()

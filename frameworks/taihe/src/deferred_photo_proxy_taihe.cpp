@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 #include "deferred_photo_proxy_taihe.h"
-#include "camera_log.h"
 #include "camera_security_utils_taihe.h"
 
 using namespace taihe;

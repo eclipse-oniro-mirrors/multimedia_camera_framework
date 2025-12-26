@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 #include "photo_taihe.h"
-#include "camera_log.h"
 
 using namespace taihe;
 using namespace OHOS;

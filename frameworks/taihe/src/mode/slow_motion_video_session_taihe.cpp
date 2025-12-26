@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include  "camera_security_utils_taihe.h"
+#include "camera_security_utils_taihe.h"
 #include "slow_motion_video_session_taihe.h"
 
 namespace Ani {
@@ -31,7 +31,7 @@ void SlowMotionStateListener::OnSlowMotionStateCb(const OHOS::CameraStandard::Sl
     MEDIA_DEBUG_LOG("SlowMotionStateListener::OnSlowMotionStateCb is called");
     auto sharePtr = shared_from_this();
     auto task = [state, sharePtr]() {
-        auto taiheState = CameraUtilsTaihe::ToTaiheSlowMotionState(state);
+        auto taiheState = SlowMotionStatus::from_value(static_cast<int32_t>(state));
         CHECK_EXECUTE(sharePtr != nullptr,
             sharePtr->ExecuteAsyncCallback("slowMotionStatus", 0, "Callback is OK", taiheState));
     };

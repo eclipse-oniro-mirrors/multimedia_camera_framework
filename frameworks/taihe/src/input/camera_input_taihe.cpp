@@ -15,7 +15,6 @@
 
 #include "camera_input_taihe.h"
 #include "camera_utils_taihe.h"
-#include "camera_log.h"
 #include "camera_security_utils_taihe.h"
 #include "camera_template_utils_taihe.h"
 

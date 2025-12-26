@@ -16,8 +16,6 @@
 #include "preview_output_taihe.h"
 
 #include "camera_manager.h"
-#include "camera_utils_taihe.h"
-#include "camera_log.h"
 #include "camera_security_utils_taihe.h"
 #include "camera_template_utils_taihe.h"
 #include "image_receiver.h"
@@ -237,7 +235,7 @@ Profile PreviewOutputImpl::GetActiveProfile()
     CHECK_RETURN_RET_ELOG(previewOutput_ == nullptr, res, "GetActiveProfile failed, previewOutput_ is nullptr");
     auto profile = previewOutput_->GetPreviewProfile();
     CHECK_RETURN_RET_ELOG(profile == nullptr, res, "GetActiveProfile failed, profile is nullptr");
-    CameraFormat cameraFormat = CameraUtilsTaihe::ToTaiheCameraFormat(profile->GetCameraFormat());
+    CameraFormat cameraFormat = CameraFormat::from_value(static_cast<int32_t>(profile->GetCameraFormat()));
     res.size.height = profile->GetSize().height;
     res.size.width = profile->GetSize().width;
     res.format = cameraFormat;

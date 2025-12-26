@@ -16,22 +16,12 @@
 #ifndef FRAMEWORKS_TAIHE_INCLUDE_OUTPUT_DEPTH_DATA_OUTPUT_TAIHE_H
 #define FRAMEWORKS_TAIHE_INCLUDE_OUTPUT_DEPTH_DATA_OUTPUT_TAIHE_H
 
-#include "ohos.multimedia.camera.proj.hpp"
-#include "ohos.multimedia.camera.impl.hpp"
-#include "taihe/runtime.hpp"
 #include "camera_event_emitter_taihe.h"
 #include "camera_output_taihe.h"
 #include "camera_worker_queue_keeper_taihe.h"
 #include "listener_base_taihe.h"
 
-#include "camera_output_capability.h"
-#include "capture_output.h"
 #include "output/depth_data_output.h"
-
-#include "ibuffer_consumer_listener.h"
-#include "refbase.h"
-#include "surface_buffer.h"
-#include "surface_utils.h"
 
 namespace Ani {
 namespace Camera {
