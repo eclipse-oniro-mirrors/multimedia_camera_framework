@@ -51,11 +51,17 @@ void HCameraHostManagerUnit::SetUp()
 void HCameraHostManagerUnit::TearDown()
 {
     MEDIA_INFO_LOG("TearDown start");
+    if (cameraHostManager_ != nullptr) {
+        if (cameraHostManager_->GetRegisterServStatListener() != nullptr) {
+            cameraHostManager_->DeInit();
+        }
+        if (!cameraHostManager_->IsCameraHostInfoAdded(HCameraHostManager::LOCAL_SERVICE_NAME)) {
+            cameraHostManager_->AddCameraHost(HCameraHostManager::LOCAL_SERVICE_NAME);
+        }
+        cameraHostManager_ = nullptr;
+    }
     if (cameraManager_ != nullptr) {
         cameraManager_ = nullptr;
-    }
-    if (cameraHostManager_ != nullptr) {
-        cameraHostManager_ = nullptr;
     }
 }
 
@@ -531,5 +537,624 @@ HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_015, TestSize.Lev
     cameraHostManager_->NotifyDeviceStateChangeInfo(1, 2);
 }
 
+/*
+ * Feature: Framework
+ * Function: Test GetRestoreParam with persistent param
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetRestoreParam when persistent param exists.
+ */
+HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_016, TestSize.Level1)
+{
+    const std::string clientName = "testClientName";
+    const std::string cameraId = "123";
+    sptr<HCameraRestoreParam> cameraRestoreParam = cameraHostManager_->GetRestoreParam(clientName, cameraId);
+    ASSERT_NE(cameraRestoreParam, nullptr);
+    
+    cameraHostManager_->persistentParamMap_.emplace(clientName,
+        std::map<std::string, sptr<HCameraRestoreParam>>{{cameraId, cameraRestoreParam}});
+    
+    sptr<HCameraRestoreParam> result = cameraHostManager_->GetRestoreParam(clientName, cameraId);
+    ASSERT_NE(result, nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetRestoreParam with transitent param
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetRestoreParam when only transitent param exists.
+ */
+HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_017, TestSize.Level1)
+{
+    const std::string clientName = "testClientName";
+    const std::string cameraId = "123";
+    sptr<HCameraRestoreParam> cameraRestoreParam = cameraHostManager_->GetRestoreParam(clientName, cameraId);
+    ASSERT_NE(cameraRestoreParam, nullptr);
+    
+    cameraHostManager_->transitentParamMap_.emplace(clientName, cameraRestoreParam);
+    
+    sptr<HCameraRestoreParam> result = cameraHostManager_->GetRestoreParam(clientName, cameraId);
+    ASSERT_NE(result, nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetTransitentParam with valid clientName and cameraId
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetTransitentParam when transitent param exists and cameraId matches.
+ */
+HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_018, TestSize.Level1)
+{
+    const std::string clientName = "testClientName";
+    const std::string cameraId = "123";
+    sptr<HCameraRestoreParam> cameraRestoreParam = cameraHostManager_->GetRestoreParam(clientName, cameraId);
+    ASSERT_NE(cameraRestoreParam, nullptr);
+    
+    cameraHostManager_->transitentParamMap_.emplace(clientName, cameraRestoreParam);
+    
+    sptr<HCameraRestoreParam> result = cameraHostManager_->GetTransitentParam(clientName, cameraId);
+    ASSERT_NE(result, nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetTransitentParam with non-existent clientName
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetTransitentParam when transitent param does not exist.
+ */
+HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_019, TestSize.Level1)
+{
+    const std::string clientName = "testClientName";
+    const std::string cameraId = "123";
+    
+    sptr<HCameraRestoreParam> result = cameraHostManager_->GetTransitentParam(clientName, cameraId);
+    ASSERT_NE(result, nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetTransitentParam with mismatched cameraId
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetTransitentParam when cameraId does not match.
+ */
+HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_020, TestSize.Level1)
+{
+    const std::string clientName = "testClientName";
+    const std::string cameraId1 = "123";
+    const std::string cameraId2 = "456";
+    sptr<HCameraRestoreParam> cameraRestoreParam = cameraHostManager_->GetRestoreParam(clientName, cameraId1);
+    ASSERT_NE(cameraRestoreParam, nullptr);
+    
+    cameraHostManager_->transitentParamMap_.emplace(clientName, cameraRestoreParam);
+    
+    sptr<HCameraRestoreParam> result = cameraHostManager_->GetTransitentParam(clientName, cameraId2);
+    ASSERT_NE(result, nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test UpdateRestoreParam with isSupportExposureSet == true and timeInterval < threshold
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test UpdateRestoreParam when exposure is supported and time interval is less than threshold.
+ */
+HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_021, TestSize.Level1)
+{
+    const std::string clientName = "testClientName";
+    const std::string cameraId = "123";
+    sptr<HCameraRestoreParam> cameraRestoreParam = cameraHostManager_->GetRestoreParam(clientName, cameraId);
+    ASSERT_NE(cameraRestoreParam, nullptr);
+    
+    timeval closeTime;
+    gettimeofday(&closeTime, nullptr);
+    cameraRestoreParam->SetCloseCameraTime(closeTime);
+    cameraRestoreParam->SetStartActiveTime(100);
+    
+    cameraHostManager_->persistentParamMap_.emplace(clientName,
+        std::map<std::string, sptr<HCameraRestoreParam>>{{cameraId, cameraRestoreParam}});
+    
+    cameraHostManager_->UpdateRestoreParam(cameraRestoreParam);
+    ASSERT_NE(cameraRestoreParam, nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test UpdateRestoreParam with isSupportExposureSet == true and timeInterval >= threshold
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test UpdateRestoreParam when exposure is supported and time interval is greater than threshold.
+ */
+HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_022, TestSize.Level1)
+{
+    const std::string clientName = "testClientName";
+    const std::string cameraId = "123";
+    sptr<HCameraRestoreParam> cameraRestoreParam = cameraHostManager_->GetRestoreParam(clientName, cameraId);
+    ASSERT_NE(cameraRestoreParam, nullptr);
+    
+    timeval closeTime;
+    gettimeofday(&closeTime, nullptr);
+    closeTime.tv_sec -= 200;
+    cameraRestoreParam->SetCloseCameraTime(closeTime);
+    cameraRestoreParam->SetStartActiveTime(1);
+    
+    cameraHostManager_->persistentParamMap_.emplace(clientName,
+        std::map<std::string, sptr<HCameraRestoreParam>>{{cameraId, cameraRestoreParam}});
+    
+    cameraHostManager_->UpdateRestoreParam(cameraRestoreParam);
+    ASSERT_NE(cameraRestoreParam, nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test UpdateRestoreParam with usec_diff < 0
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test UpdateRestoreParam when usec_diff is negative.
+ */
+HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_023, TestSize.Level1)
+{
+    const std::string clientName = "testClientName";
+    const std::string cameraId = "123";
+    sptr<HCameraRestoreParam> cameraRestoreParam = cameraHostManager_->GetRestoreParam(clientName, cameraId);
+    ASSERT_NE(cameraRestoreParam, nullptr);
+    
+    timeval closeTime;
+    gettimeofday(&closeTime, nullptr);
+    closeTime.tv_sec -= 1;
+    closeTime.tv_usec += 1000000;
+    cameraRestoreParam->SetCloseCameraTime(closeTime);
+    cameraRestoreParam->SetStartActiveTime(100);
+    
+    cameraHostManager_->persistentParamMap_.emplace(clientName,
+        std::map<std::string, sptr<HCameraRestoreParam>>{{cameraId, cameraRestoreParam}});
+    
+    cameraHostManager_->UpdateRestoreParam(cameraRestoreParam);
+    ASSERT_NE(cameraRestoreParam, nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test Prelaunch with muteMode == true
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test Prelaunch when muteMode is true, which will call UpdateMuteSetting.
+ */
+HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_024, TestSize.Level1)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+    
+    cameraHostManager_->Init();
+    ASSERT_NE(cameraHostManager_, nullptr);
+    
+    const std::string cameraId = cameras[0]->GetID();
+    std::string clientName = "testClientName";
+    sptr<HCameraRestoreParam> cameraRestoreParam = cameraHostManager_->GetRestoreParam(clientName, cameraId);
+    ASSERT_NE(cameraRestoreParam, nullptr);
+    
+    std::shared_ptr<OHOS::Camera::CameraMetadata> settings = 
+        std::make_shared<OHOS::Camera::CameraMetadata>(10, 100);
+    cameraRestoreParam->SetSetting(settings);
+    cameraRestoreParam->SetRestoreParamType(RestoreParamTypeOhos::TRANSIENT_ACTIVE_PARAM_OHOS);
+    
+    cameraHostManager_->SetMuteMode(true);
+    int32_t result = cameraHostManager_->Prelaunch(cameraId, clientName);
+    EXPECT_TRUE(result >= 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test Prelaunch with muteMode == false
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test Prelaunch when muteMode is false.
+ */
+HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_025, TestSize.Level1)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+    
+    cameraHostManager_->Init();
+    ASSERT_NE(cameraHostManager_, nullptr);
+    
+    const std::string cameraId = cameras[0]->GetID();
+    std::string clientName = "testClientName";
+    sptr<HCameraRestoreParam> cameraRestoreParam = cameraHostManager_->GetRestoreParam(clientName, cameraId);
+    ASSERT_NE(cameraRestoreParam, nullptr);
+    
+    std::shared_ptr<OHOS::Camera::CameraMetadata> settings = 
+        std::make_shared<OHOS::Camera::CameraMetadata>(10, 100);
+    cameraRestoreParam->SetSetting(settings);
+    cameraRestoreParam->SetRestoreParamType(RestoreParamTypeOhos::TRANSIENT_ACTIVE_PARAM_OHOS);
+    
+    cameraHostManager_->SetMuteMode(false);
+    int32_t result = cameraHostManager_->Prelaunch(cameraId, clientName);
+    EXPECT_TRUE(result >= 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test Prelaunch with setting == nullptr and muteMode == true
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test Prelaunch when setting is nullptr and muteMode is true, which will test UpdateMuteSetting with nullptr.
+ */
+HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_026, TestSize.Level1)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+    
+    cameraHostManager_->Init();
+    ASSERT_NE(cameraHostManager_, nullptr);
+    
+    const std::string cameraId = cameras[0]->GetID();
+    std::string clientName = "testClientName";
+    sptr<HCameraRestoreParam> cameraRestoreParam = cameraHostManager_->GetRestoreParam(clientName, cameraId);
+    ASSERT_NE(cameraRestoreParam, nullptr);
+    
+    std::shared_ptr<OHOS::Camera::CameraMetadata> nullSettings = nullptr;
+    cameraRestoreParam->SetSetting(nullSettings);
+    cameraRestoreParam->SetRestoreParamType(RestoreParamTypeOhos::TRANSIENT_ACTIVE_PARAM_OHOS);
+    
+    cameraHostManager_->SetMuteMode(true);
+    int32_t result = cameraHostManager_->Prelaunch(cameraId, clientName);
+    EXPECT_TRUE(result >= 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test Prelaunch with opMode == 0
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test Prelaunch when opMode is 0, which will test IsNeedRestore with opMode == 0.
+ */
+HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_027, TestSize.Level1)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+    
+    cameraHostManager_->Init();
+    ASSERT_NE(cameraHostManager_, nullptr);
+    
+    const std::string cameraId = cameras[0]->GetID();
+    std::string clientName = "testClientName";
+    sptr<HCameraRestoreParam> cameraRestoreParam = cameraHostManager_->GetRestoreParam(clientName, cameraId);
+    ASSERT_NE(cameraRestoreParam, nullptr);
+    
+    std::shared_ptr<OHOS::Camera::CameraMetadata> settings = 
+        std::make_shared<OHOS::Camera::CameraMetadata>(10, 100);
+    cameraRestoreParam->SetSetting(settings);
+    cameraRestoreParam->SetCameraOpMode(0);
+    cameraRestoreParam->SetRestoreParamType(RestoreParamTypeOhos::TRANSIENT_ACTIVE_PARAM_OHOS);
+    
+    cameraHostManager_->SetMuteMode(false);
+    int32_t result = cameraHostManager_->Prelaunch(cameraId, clientName);
+    EXPECT_TRUE(result >= 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test Prelaunch with opMode != 0
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test Prelaunch when opMode is not 0, which will test IsNeedRestore with opMode != 0.
+ */
+HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_028, TestSize.Level1)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+    
+    cameraHostManager_->Init();
+    ASSERT_NE(cameraHostManager_, nullptr);
+    
+    const std::string cameraId = cameras[0]->GetID();
+    std::string clientName = "testClientName";
+    sptr<HCameraRestoreParam> cameraRestoreParam = cameraHostManager_->GetRestoreParam(clientName, cameraId);
+    ASSERT_NE(cameraRestoreParam, nullptr);
+    
+    std::shared_ptr<OHOS::Camera::CameraMetadata> settings = 
+        std::make_shared<OHOS::Camera::CameraMetadata>(10, 100);
+    cameraRestoreParam->SetSetting(settings);
+    cameraRestoreParam->SetCameraOpMode(1);
+    cameraRestoreParam->SetRestoreParamType(RestoreParamTypeOhos::TRANSIENT_ACTIVE_PARAM_OHOS);
+    
+    cameraHostManager_->SetMuteMode(false);
+    int32_t result = cameraHostManager_->Prelaunch(cameraId, clientName);
+    EXPECT_TRUE(result >= 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetRestoreParam with empty persistentParamMap and empty transitentParamMap
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetRestoreParam when both persistentParamMap and transitentParamMap are empty.
+ */
+HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_029, TestSize.Level1)
+{
+    const std::string clientName = "testClientName";
+    const std::string cameraId = "123";
+    
+    sptr<HCameraRestoreParam> result = cameraHostManager_->GetRestoreParam(clientName, cameraId);
+    ASSERT_NE(result, nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test UpdateRestoreParam with isSupportExposureSet == false
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test UpdateRestoreParam when isSupportExposureSet is false.
+ */
+HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_030, TestSize.Level1)
+{
+    const std::string clientName = "testClientName";
+    const std::string cameraId = "123";
+    sptr<HCameraRestoreParam> cameraRestoreParam = cameraHostManager_->GetRestoreParam(clientName, cameraId);
+    ASSERT_NE(cameraRestoreParam, nullptr);
+    
+    timeval closeTime = {0, 0};
+    cameraRestoreParam->SetCloseCameraTime(closeTime);
+    
+    cameraHostManager_->persistentParamMap_.emplace(clientName,
+        std::map<std::string, sptr<HCameraRestoreParam>>{{cameraId, cameraRestoreParam}});
+    
+    cameraHostManager_->UpdateRestoreParam(cameraRestoreParam);
+    ASSERT_NE(cameraRestoreParam, nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test UpdateRestoreParam with mismatched cameraId
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test UpdateRestoreParam when cameraId does not match.
+ */
+HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_031, TestSize.Level1)
+{
+    const std::string clientName = "testClientName";
+    const std::string cameraId1 = "123";
+    const std::string cameraId2 = "456";
+    sptr<HCameraRestoreParam> cameraRestoreParam1 = cameraHostManager_->GetRestoreParam(clientName, cameraId1);
+    ASSERT_NE(cameraRestoreParam1, nullptr);
+    sptr<HCameraRestoreParam> cameraRestoreParam2 = cameraHostManager_->GetRestoreParam(clientName, cameraId2);
+    ASSERT_NE(cameraRestoreParam2, nullptr);
+    
+    timeval closeTime;
+    gettimeofday(&closeTime, nullptr);
+    cameraRestoreParam1->SetCloseCameraTime(closeTime);
+    cameraRestoreParam1->SetStartActiveTime(100);
+    
+    cameraHostManager_->persistentParamMap_.emplace(clientName,
+        std::map<std::string, sptr<HCameraRestoreParam>>{{cameraId1, cameraRestoreParam1}});
+    
+    cameraHostManager_->UpdateRestoreParam(cameraRestoreParam2);
+    ASSERT_NE(cameraRestoreParam2, nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test Prelaunch with ret == 0 and PERSISTENT_DEFAULT_PARAM_OHOS
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test Prelaunch when ret == 0 and restoreParamType is PERSISTENT_DEFAULT_PARAM_OHOS.
+ */
+HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_032, TestSize.Level1)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+    
+    cameraHostManager_->Init();
+    ASSERT_NE(cameraHostManager_, nullptr);
+    
+    const std::string cameraId = cameras[0]->GetID();
+    std::string clientName = "testClientName";
+    sptr<HCameraRestoreParam> cameraRestoreParam = cameraHostManager_->GetRestoreParam(clientName, cameraId);
+    ASSERT_NE(cameraRestoreParam, nullptr);
+    
+    std::shared_ptr<OHOS::Camera::CameraMetadata> settings = 
+        std::make_shared<OHOS::Camera::CameraMetadata>(10, 100);
+    cameraRestoreParam->SetSetting(settings);
+    cameraRestoreParam->SetRestoreParamType(RestoreParamTypeOhos::PERSISTENT_DEFAULT_PARAM_OHOS);
+    
+    cameraHostManager_->SetMuteMode(false);
+    int32_t result = cameraHostManager_->Prelaunch(cameraId, clientName);
+    EXPECT_TRUE(result >= 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test Prelaunch with ret == 0 and TRANSIENT_ACTIVE_PARAM_OHOS
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test Prelaunch when ret == 0 and restoreParamType is TRANSIENT_ACTIVE_PARAM_OHOS.
+ */
+HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_033, TestSize.Level1)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+    
+    cameraHostManager_->Init();
+    ASSERT_NE(cameraHostManager_, nullptr);
+    
+    const std::string cameraId = cameras[0]->GetID();
+    std::string clientName = "testClientName";
+    sptr<HCameraRestoreParam> cameraRestoreParam = cameraHostManager_->GetRestoreParam(clientName, cameraId);
+    ASSERT_NE(cameraRestoreParam, nullptr);
+    
+    std::shared_ptr<OHOS::Camera::CameraMetadata> settings = 
+        std::make_shared<OHOS::Camera::CameraMetadata>(10, 100);
+    cameraRestoreParam->SetSetting(settings);
+    cameraRestoreParam->SetRestoreParamType(RestoreParamTypeOhos::TRANSIENT_ACTIVE_PARAM_OHOS);
+    cameraHostManager_->transitentParamMap_.emplace(clientName, cameraRestoreParam);
+    
+    cameraHostManager_->SetMuteMode(false);
+    int32_t result = cameraHostManager_->Prelaunch(cameraId, clientName);
+    EXPECT_TRUE(result >= 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test Prelaunch with it != transitentParamMap_.end() and CheckCameraId returns true
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test Prelaunch when transitent param exists and cameraId matches.
+ */
+HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_034, TestSize.Level1)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+    
+    cameraHostManager_->Init();
+    ASSERT_NE(cameraHostManager_, nullptr);
+    
+    const std::string cameraId = cameras[0]->GetID();
+    std::string clientName = "testClientName";
+    sptr<HCameraRestoreParam> cameraRestoreParam = cameraHostManager_->GetRestoreParam(clientName, cameraId);
+    ASSERT_NE(cameraRestoreParam, nullptr);
+    
+    std::shared_ptr<OHOS::Camera::CameraMetadata> settings = 
+        std::make_shared<OHOS::Camera::CameraMetadata>(10, 100);
+    cameraRestoreParam->SetSetting(settings);
+    cameraRestoreParam->SetRestoreParamType(RestoreParamTypeOhos::TRANSIENT_ACTIVE_PARAM_OHOS);
+    cameraHostManager_->transitentParamMap_.emplace(clientName, cameraRestoreParam);
+    
+    cameraHostManager_->SetMuteMode(false);
+    int32_t result = cameraHostManager_->Prelaunch(cameraId, clientName);
+    EXPECT_TRUE(result >= 0);
+    EXPECT_NE(cameraHostManager_->transitentParamMap_.find(clientName), cameraHostManager_->transitentParamMap_.end());
+}
+
+/*
+ * Feature: Framework
+ * Function: Test Prelaunch with it == transitentParamMap_.end()
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test Prelaunch when transitent param does not exist.
+ */
+HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_035, TestSize.Level1)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+    
+    cameraHostManager_->Init();
+    ASSERT_NE(cameraHostManager_, nullptr);
+    
+    const std::string cameraId = cameras[0]->GetID();
+    std::string clientName = "testClientName";
+    sptr<HCameraRestoreParam> cameraRestoreParam = cameraHostManager_->GetRestoreParam(clientName, cameraId);
+    ASSERT_NE(cameraRestoreParam, nullptr);
+    
+    std::shared_ptr<OHOS::Camera::CameraMetadata> settings = 
+        std::make_shared<OHOS::Camera::CameraMetadata>(10, 100);
+    cameraRestoreParam->SetSetting(settings);
+    cameraRestoreParam->SetRestoreParamType(RestoreParamTypeOhos::TRANSIENT_ACTIVE_PARAM_OHOS);
+    
+    cameraHostManager_->SetMuteMode(false);
+    int32_t result = cameraHostManager_->Prelaunch(cameraId, clientName);
+    EXPECT_TRUE(result >= 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test Prelaunch with CheckCameraId returns false
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test Prelaunch when transitent param exists but cameraId does not match.
+ */
+HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_036, TestSize.Level1)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+    
+    cameraHostManager_->Init();
+    ASSERT_NE(cameraHostManager_, nullptr);
+    
+    const std::string cameraId1 = cameras[0]->GetID();
+    const std::string cameraId2 = "different_camera_id";
+    std::string clientName = "testClientName";
+    sptr<HCameraRestoreParam> cameraRestoreParam = cameraHostManager_->GetRestoreParam(clientName, cameraId1);
+    ASSERT_NE(cameraRestoreParam, nullptr);
+    
+    std::shared_ptr<OHOS::Camera::CameraMetadata> settings = 
+        std::make_shared<OHOS::Camera::CameraMetadata>(10, 100);
+    cameraRestoreParam->SetSetting(settings);
+    cameraRestoreParam->SetRestoreParamType(RestoreParamTypeOhos::TRANSIENT_ACTIVE_PARAM_OHOS);
+    cameraHostManager_->transitentParamMap_.emplace(clientName, cameraRestoreParam);
+    
+    cameraHostManager_->SetMuteMode(false);
+    int32_t result = cameraHostManager_->Prelaunch(cameraId2, clientName);
+    EXPECT_TRUE(result >= 0);
+    EXPECT_NE(cameraHostManager_->transitentParamMap_.find(clientName), cameraHostManager_->transitentParamMap_.end());
+}
+
+/*
+ * Feature: Framework
+ * Function: Test NotifyDeviceStateChangeInfo with cameraHostProxyV1_3_ != nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test NotifyDeviceStateChangeInfo when cameraHostProxyV1_3_ is not nullptr.
+ */
+HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_037, TestSize.Level1)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+    
+    cameraHostManager_->Init();
+    ASSERT_NE(cameraHostManager_, nullptr);
+    
+    cameraHostManager_->NotifyDeviceStateChangeInfo(1, 2);
+    ASSERT_NE(cameraHostManager_, nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test NotifyDeviceStateChangeInfo with cameraHostProxyV1_2_ != nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test NotifyDeviceStateChangeInfo when cameraHostProxyV1_2_ is not nullptr.
+ */
+HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_038, TestSize.Level1)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+    
+    cameraHostManager_->Init();
+    ASSERT_NE(cameraHostManager_, nullptr);
+    
+    cameraHostManager_->RemoveCameraHost(HCameraHostManager::LOCAL_SERVICE_NAME);
+    cameraHostManager_->AddCameraHost(HCameraHostManager::LOCAL_SERVICE_NAME);
+    ASSERT_NE(cameraHostManager_, nullptr);
+    
+    cameraHostManager_->NotifyDeviceStateChangeInfo(1, 2);
+    ASSERT_NE(cameraHostManager_, nullptr);
+}
 } // CameraStandard
 } // OHOS
