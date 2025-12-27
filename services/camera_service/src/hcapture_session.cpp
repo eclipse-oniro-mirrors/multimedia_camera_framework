@@ -264,6 +264,17 @@ int32_t HCaptureSession::SetHasFitedRotation(bool isHasFitedRotation)
     return CAMERA_OK;
 }
 
+#ifdef CAMERA_USE_SENSOR
+int32_t HCaptureSession::GetSensorRotationOnce(int32_t& sensorRotation)
+{
+    auto hStreamOperatorSptr = GetStreamOperator();
+    CHECK_RETURN_RET_ELOG(hStreamOperatorSptr == nullptr, CAMERA_INVALID_ARG,
+        "HCaptureSession::GetSensorRotationOnce hStreamOperatorSptr is null");
+    sensorRotation = hStreamOperatorSptr->GetSensorRotation();
+    return CAMERA_OK;
+}
+#endif
+
 int32_t HCaptureSession::BeginConfig()
 {
     CAMERA_SYNC_TRACE;
@@ -407,7 +418,8 @@ public:
     void OnDestroy(OHOS::Rosen::DisplayId) override {}
     void OnChange(OHOS::Rosen::DisplayId displayId) override
     {
-        sptr<Rosen::DisplayLite> display = Rosen::DisplayManagerLite::GetInstance().GetDefaultDisplay();
+        CHECK_RETURN(!OHOS::Rosen::DisplayManagerLite::GetInstance().IsOnboardDisplay(displayId));
+        auto display = Rosen::DisplayManagerLite::GetInstance().GetDisplayById(displayId);
         if (display == nullptr) {
             MEDIA_INFO_LOG("Get display info failed, display:%{public}" PRIu64 "", displayId);
             display = Rosen::DisplayManagerLite::GetInstance().GetDisplayById(0);
@@ -1337,6 +1349,9 @@ int32_t HCaptureSession::CommitConfig()
         errorCode = LinkInputAndOutputs();
         CHECK_RETURN_ELOG(errorCode != CAMERA_OK,
             "HCaptureSession::CommitConfig() Failed to commit config. rc: %{public}d", errorCode);
+#ifdef CAMERA_USE_SENSOR
+        hStreamOperatorSptr->RegisterSensorCallback();
+#endif
         stateMachine_.Transfer(CaptureSessionState::SESSION_CONFIG_COMMITTED);
     });
     if (errorCode != CAMERA_OK) {

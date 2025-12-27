@@ -1126,6 +1126,52 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_033, TestSize.Level0)
     EXPECT_EQ(result, CameraDeviceUtils ::CalculateImageRotation(input, imageRotation, isMirror));
 }
 
+/*
+ * Feature: Framework
+ * Function: Test previewoutput with Set and GetPreviewRotation
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test previewoutput with Set and GetPreviewRotation
+ */
+HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_034, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
 
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    sptr<CaptureOutput> preview = CreatePreviewOutput();
+    ASSERT_NE(preview, nullptr);
+    sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)preview;
+
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+    EXPECT_EQ(session->Start(), 0);
+
+    sptr<CameraDevice> cameraObj = previewOutput->session_->GetInputDevice()->GetCameraDeviceInfo();
+    cameraObj->cameraOrientation_ = 90;
+    int32_t imageRotation = 90;
+    bool isDisplayLocked = false;
+    int32_t ret = previewOutput->SetPreviewRotation(imageRotation, isDisplayLocked);
+    EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
+    ret = previewOutput->GetPreviewRotation();
+    EXPECT_EQ(ret % 90, 0);
+
+    EXPECT_EQ(preview->Release(), 0);
+    EXPECT_EQ(input->Release(), 0);
+    EXPECT_EQ(session->Release(), 0);
+    session->Stop();
+}
 }
 }

@@ -348,6 +348,16 @@ Camera_ErrorCode Camera_PhotoOutput::EnableMovingPhoto(bool enableMovingPhoto)
     return FrameworkToNdkCameraError(ret);
 }
 
+Camera_ErrorCode Camera_PhotoOutput::GetPhotoRotationWithoutDeviceDegree(Camera_ImageRotation* cameraImageRotation)
+{
+    CHECK_RETURN_RET_ELOG(cameraImageRotation == nullptr, CAMERA_SERVICE_FATAL_ERROR, "GetCameraImageRotation failed");
+    int32_t cameraOutputRotation = innerPhotoOutput_->GetPhotoRotation();
+    CHECK_RETURN_RET_ELOG(cameraOutputRotation == CAMERA_SERVICE_FATAL_ERROR, CAMERA_SERVICE_FATAL_ERROR,
+        "Camera_PhotoOutput::GetPhotoRotation failed to get photo rotation! ret: %{public}d", cameraOutputRotation);
+    *cameraImageRotation = static_cast<Camera_ImageRotation>(cameraOutputRotation);
+    return CAMERA_OK;
+}
+
 Camera_ErrorCode Camera_PhotoOutput::GetPhotoRotation(int32_t imageRotation, Camera_ImageRotation* cameraImageRotation)
 {
     CHECK_RETURN_RET_ELOG(cameraImageRotation == nullptr, CAMERA_SERVICE_FATAL_ERROR, "GetCameraImageRotation failed");

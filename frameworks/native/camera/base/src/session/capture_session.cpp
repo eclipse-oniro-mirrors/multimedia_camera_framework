@@ -6293,6 +6293,18 @@ int32_t CaptureSession::SetHasFitedRotation(bool isHasFitedRotation)
     return errCode;
 }
 
+#ifdef CAMERA_USE_SENSOR
+int32_t CaptureSession::GetSensorRotationOnce(int32_t& sensorRotation)
+{
+    auto captureSession = GetCaptureSession();
+    CHECK_RETURN_RET_ELOG(!captureSession, CameraErrorCode::SERVICE_FATL_ERROR,
+        "CaptureSession::GetSensorRotationOnce captureSession is nullptr");
+    int32_t errCode = captureSession->GetSensorRotationOnce(sensorRotation);
+    CHECK_PRINT_ELOG(errCode != CAMERA_OK, "Failed to GetSensorRotationOnce!, %{public}d", errCode);
+    return errCode;
+}
+#endif
+
 int32_t CaptureSession::EnableAutoMotionBoostDelivery(bool isEnable)
 {
     MEDIA_INFO_LOG("CaptureSession::EnableAutoMotionBoostDelivery is called, isEnable: %{public}d",

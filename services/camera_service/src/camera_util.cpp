@@ -416,8 +416,17 @@ void AddCameraPermissionUsedRecord(const uint32_t callingTokenId, const std::str
 bool IsVerticalDevice()
 {
     bool isVerticalDevice = true;
-    auto display = OHOS::Rosen::DisplayManagerLite::GetInstance().GetDefaultDisplay();
-    CHECK_RETURN_RET_ELOG(display == nullptr, isVerticalDevice, "IsVerticalDevice GetDefaultDisplay failed");
+    sptr<OHOS::Rosen::DisplayLite> display;
+    auto displayIds = OHOS::Rosen::DisplayManagerLite::GetInstance().GetAllDisplayIds();
+    MEDIA_DEBUG_LOG(
+        "IsVerticalDevice displayIds: %{public}s", Container2String(displayIds.begin(), displayIds.end()).c_str());
+    for (auto displayId : displayIds) {
+        MEDIA_DEBUG_LOG("IsVerticalDevice displayId: %{public}" PRIu64 "", displayId);
+        CHECK_CONTINUE(!OHOS::Rosen::DisplayManagerLite::GetInstance().IsOnboardDisplay(displayId));
+        display = OHOS::Rosen::DisplayManagerLite::GetInstance().GetDisplayById(displayId);
+        break;
+    }
+    CHECK_RETURN_RET_ELOG(display == nullptr, isVerticalDevice, "IsVerticalDevice display is nullptr");
     MEDIA_DEBUG_LOG("GetDefaultDisplay:W(%{public}d),H(%{public}d),Rotation(%{public}d)",
         display->GetWidth(), display->GetHeight(), display->GetRotation());
     bool isScreenVertical = display->GetRotation() == OHOS::Rosen::Rotation::ROTATION_0 ||
@@ -429,17 +438,17 @@ bool IsVerticalDevice()
     return isVerticalDevice;
 }
 
-int32_t GetStreamRotation(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition, int& disPlayRotation,
+int32_t GetStreamRotation(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition, int& displayRotation,
     std::string& deviceClass)
 {
     int32_t streamRotation = sensorOrientation;
     int degrees = 0;
 
-    switch (disPlayRotation) {
-        case DISPALY_ROTATE_0: degrees = STREAM_ROTATE_0; break;
-        case DISPALY_ROTATE_1: degrees = STREAM_ROTATE_90; break;
-        case DISPALY_ROTATE_2: degrees = STREAM_ROTATE_180; break;
-        case DISPALY_ROTATE_3: degrees = STREAM_ROTATE_270; break; // 逆时针转90
+    switch (displayRotation) {
+        case DISPLAY_ROTATE_0: degrees = STREAM_ROTATE_0; break;
+        case DISPLAY_ROTATE_1: degrees = STREAM_ROTATE_90; break;
+        case DISPLAY_ROTATE_2: degrees = STREAM_ROTATE_180; break;
+        case DISPLAY_ROTATE_3: degrees = STREAM_ROTATE_270; break; // 逆时针转90
     }
 
     g_tablet = (deviceClass == "tablet");
@@ -452,7 +461,7 @@ int32_t GetStreamRotation(int32_t& sensorOrientation, camera_position_enum_t& ca
         streamRotation = (STREAM_ROTATE_360 - streamRotation) % STREAM_ROTATE_360;
     }
     MEDIA_DEBUG_LOG("HStreamRepeat::SetStreamTransform filp streamRotation %{public}d, rotate %{public}d",
-        streamRotation, disPlayRotation);
+        streamRotation, displayRotation);
     return streamRotation;
 }
 
@@ -676,7 +685,6 @@ int32_t GetPhysicalCameraOrientation(std::shared_ptr<OHOS::Camera::CameraMetadat
     return ret;
 }
 
-// camera orientation behind simulated bar-type
 int32_t GetCorrectedCameraOrientation(bool usePhysicalCameraOrientation,
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility, int32_t& sensorOrientation, int32_t displayMode)
 {
@@ -692,6 +700,24 @@ int32_t GetCorrectedCameraOrientation(bool usePhysicalCameraOrientation,
         "sensor orientation failed");
     sensorOrientation = item.data.i32[0];
     return ret;
+}
+
+int32_t GetDisplayRotation(int32_t& displayRotation)
+{
+    auto displayIds = OHOS::Rosen::DisplayManagerLite::GetInstance().GetAllDisplayIds();
+    MEDIA_DEBUG_LOG("GetDisplayRotation displayIds: %{public}s",
+        Container2String(displayIds.begin(), displayIds.end()).c_str());
+    for (auto displayId : displayIds) {
+        MEDIA_DEBUG_LOG("GetDisplayRotation displayId: %{public}" PRIu64 "", displayId);
+        CHECK_CONTINUE(!OHOS::Rosen::DisplayManagerLite::GetInstance().IsOnboardDisplay(displayId));
+        auto display = OHOS::Rosen::DisplayManagerLite::GetInstance().GetDisplayById(displayId);
+        CHECK_RETURN_RET_ELOG(
+            display == nullptr, CAMERA_INVALID_STATE, "GetDisplayRotation display is nullptr");
+        displayRotation = static_cast<int32_t>(display->GetRotation());
+        return CAMERA_OK;
+    }
+    MEDIA_ERR_LOG("GetDisplayRotation Get Display Failed");
+    return CAMERA_INVALID_STATE;
 }
 } // namespace CameraStandard
 } // namespace OHOS

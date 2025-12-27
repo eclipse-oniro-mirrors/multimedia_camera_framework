@@ -191,6 +191,17 @@ Camera_ErrorCode OH_PreviewOutput_GetActiveFrameRate(Camera_PreviewOutput* previ
     return previewOutput->GetActiveFrameRate(frameRateRange);
 }
 
+Camera_ErrorCode OH_PreviewOutput_GetPreviewRotationWithoutDisplayRotation(Camera_PreviewOutput* previewOutput,
+    Camera_ImageRotation* imageRotation)
+{
+    MEDIA_DEBUG_LOG("OH_PreviewOutput_GetPreviewRotationWithoutDisplayRotation is called.");
+    CHECK_RETURN_RET_ELOG(
+        previewOutput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, previewOutput is null!");
+    CHECK_RETURN_RET_ELOG(
+        imageRotation == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, imageRotation is null!");
+    return previewOutput->GetPreviewRotationWithoutDisplayRotation(imageRotation);
+}
+
 Camera_ErrorCode OH_PreviewOutput_GetPreviewRotation(Camera_PreviewOutput* previewOutput, int displayRotation,
     Camera_ImageRotation* imageRotation)
 {

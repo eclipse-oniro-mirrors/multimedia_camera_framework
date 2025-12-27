@@ -345,6 +345,8 @@ public:
 
     Camera_ErrorCode GetActiveProfile(Camera_Profile** profile);
 
+    Camera_ErrorCode GetPhotoRotationWithoutDeviceDegree(Camera_ImageRotation* cameraImageRotation);
+
     Camera_ErrorCode GetPhotoRotation(int32_t imageRotation, Camera_ImageRotation* cameraImageRotation);
 
     Camera_ErrorCode IsPhotoQualityPrioritizationSupported(

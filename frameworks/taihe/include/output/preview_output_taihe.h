@@ -72,6 +72,7 @@ public:
     Profile GetActiveProfile();
     FrameRateRange GetActiveFrameRate();
     void SetFrameRate(int32_t minFps, int32_t maxFps);
+    ImageRotation GetPreviewRotation();
     ImageRotation GetPreviewRotation(int32_t displayRotation);
     void SetPreviewRotation(ImageRotation previewRotation, optional_view<bool> isDisplayLocked);
     void AttachSketchSurface(string_view surfaceId);

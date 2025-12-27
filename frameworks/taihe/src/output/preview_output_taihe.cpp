@@ -256,6 +256,20 @@ void PreviewOutputImpl::SetFrameRate(int32_t minFps, int32_t maxFps)
         "PreviewOutputImpl::SetFrameRate fail %{public}d", retCode);
 }
 
+ImageRotation PreviewOutputImpl::GetPreviewRotation()
+{
+    CHECK_RETURN_RET_ELOG(previewOutput_ == nullptr, ImageRotation(static_cast<ImageRotation::key_t>(-1)),
+        "GetPreviewRotation failed, previewOutput_ is nullptr");
+    int32_t retCode = previewOutput_->GetPreviewRotation();
+    if (retCode == OHOS::CameraStandard::SERVICE_FATL_ERROR) {
+        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::SERVICE_FATL_ERROR,
+            "GetPreviewRotation Camera service fatal error.");
+        return ImageRotation(static_cast<ImageRotation::key_t>(-1));
+    }
+    int32_t taiheRetCode = CameraUtilsTaihe::ToTaiheImageRotation(retCode);
+    return ImageRotation(static_cast<ImageRotation::key_t>(taiheRetCode));
+}
+
 ImageRotation PreviewOutputImpl::GetPreviewRotation(int32_t displayRotation)
 {
     CHECK_RETURN_RET_ELOG(previewOutput_ == nullptr, ImageRotation(static_cast<ImageRotation::key_t>(-1)),

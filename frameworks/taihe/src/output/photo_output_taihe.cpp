@@ -882,6 +882,20 @@ bool PhotoOutputImpl::IsMovingPhotoSupported()
     return session->IsMovingPhotoSupported();
 }
 
+ImageRotation PhotoOutputImpl::GetPhotoRotation()
+{
+    CHECK_RETURN_RET_ELOG(photoOutput_ == nullptr, ImageRotation(static_cast<ImageRotation::key_t>(-1)),
+        "GetPhotoRotation failed, photoOutput_ is nullptr");
+    int32_t retCode = photoOutput_->GetPhotoRotation();
+    if (retCode == OHOS::CameraStandard::SERVICE_FATL_ERROR) {
+        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::SERVICE_FATL_ERROR,
+            "GetPhotoRotation Camera service fatal error.");
+        return ImageRotation(static_cast<ImageRotation::key_t>(-1));
+    }
+    int32_t taiheRetCode = CameraUtilsTaihe::ToTaiheImageRotation(retCode);
+    return ImageRotation(static_cast<ImageRotation::key_t>(taiheRetCode));
+}
+
 ImageRotation PhotoOutputImpl::GetPhotoRotation(int32_t deviceDegree)
 {
     CHECK_RETURN_RET_ELOG(photoOutput_ == nullptr, ImageRotation(static_cast<ImageRotation::key_t>(-1)),

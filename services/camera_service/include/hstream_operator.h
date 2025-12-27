@@ -250,6 +250,11 @@ public:
         return deferredFlag_;
     }
 
+    int32_t GetSensorRotation();
+#ifdef CAMERA_USE_SENSOR
+    void RegisterSensorCallback();
+#endif
+
     class DisplayRotationListener : public Rosen::DisplayManagerLite::IDisplayListener {
     public:
         explicit DisplayRotationListener() {};
@@ -324,7 +329,6 @@ private:
 #ifdef CAMERA_USE_SENSOR
     std::mutex sensorLock_;
     bool isRegisterSensorSuccess_ = false;
-    void RegisterSensorCallback();
     void UnRegisterSensorCallback();
     static void SensorRotationCallbackImpl(const OHOS::Rosen::MotionSensorEvent &motionData);
     static void GravityDataCallbackImpl(SensorEvent* event);

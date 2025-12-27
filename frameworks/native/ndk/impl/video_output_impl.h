@@ -51,6 +51,8 @@ public:
 
     Camera_ErrorCode EnableMirror(bool mirrorMode);
 
+    Camera_ErrorCode GetVideoRotationWithoutDeviceDegree(Camera_ImageRotation* cameraImageRotation);
+
     Camera_ErrorCode GetVideoRotation(int32_t imageRotation, Camera_ImageRotation* cameraImageRotation);
 
 private:

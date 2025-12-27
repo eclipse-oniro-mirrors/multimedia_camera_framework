@@ -202,6 +202,18 @@ Camera_ErrorCode Camera_PreviewOutput::GetActiveFrameRate(Camera_FrameRateRange*
 
     return CAMERA_OK;
 }
+
+Camera_ErrorCode Camera_PreviewOutput::GetPreviewRotationWithoutDisplayRotation(
+    Camera_ImageRotation* cameraImageRotation)
+{
+    CHECK_RETURN_RET_ELOG(cameraImageRotation == nullptr, CAMERA_SERVICE_FATAL_ERROR, "GetCameraImageRotation failed");
+    int32_t cameraOutputRotation = innerPreviewOutput_->GetPreviewRotation();
+    CHECK_RETURN_RET_ELOG(cameraOutputRotation == CAMERA_SERVICE_FATAL_ERROR, CAMERA_SERVICE_FATAL_ERROR,
+        "Camera_PreviewOutput::GetPreviewRotation camera service fatal error! ret: %{public}d", cameraOutputRotation);
+    *cameraImageRotation = static_cast<Camera_ImageRotation>(cameraOutputRotation);
+    return CAMERA_OK;
+}
+
 Camera_ErrorCode Camera_PreviewOutput::GetPreviewRotation(int32_t imageRotation,
     Camera_ImageRotation* cameraImageRotation)
 {

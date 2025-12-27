@@ -1968,5 +1968,54 @@ HWTEST_F(CameraPhotoOutputUnit, SetPhotoQualityPrioritization_001, TestSize.Leve
     input->Release();
     MEDIA_INFO_LOG("SetPhotoQualityPrioritization_001: END");
 }
+
+/*
+ * Feature: Framework
+ * Function: Test photooutput with GetPhotoRotation
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test photooutput with GetPhotoRotation
+ */
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_032, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+    ASSERT_NE(phtOutput->GetStream().GetRefPtr(), nullptr);
+
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    session->BeginConfig();
+    session->AddInput(input);
+    session->AddOutput(photoOutput);
+    session->CommitConfig();
+    session->Start();
+
+    sptr<CameraDevice> cameraObj = phtOutput->session_->GetInputDevice()->GetCameraDeviceInfo();
+    cameraObj->cameraPosition_ = CAMERA_POSITION_BACK;
+    cameraObj->cameraOrientation_ = 90;
+    int32_t ret = phtOutput->GetPhotoRotation();
+    EXPECT_EQ(ret % 90, 0);
+
+    cameraObj->cameraPosition_ = CAMERA_POSITION_FRONT;
+    ret = phtOutput->GetPhotoRotation();
+    EXPECT_EQ(ret % 90, 0);
+
+    input->Close();
+    session->Stop();
+    session->Release();
+    input->Release();
+}
 }
 }

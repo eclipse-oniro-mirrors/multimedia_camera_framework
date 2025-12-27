@@ -347,6 +347,16 @@ Camera_ErrorCode OH_PhotoOutput_IsMovingPhotoSupported(Camera_PhotoOutput* photo
     return photoOutput->IsMovingPhotoSupported(isSupported);
 }
 
+Camera_ErrorCode OH_PhotoOutput_GetPhotoRotationWithoutDeviceDegree(Camera_PhotoOutput* photoOutput,
+    Camera_ImageRotation* imageRotation)
+{
+    MEDIA_DEBUG_LOG("OH_PhotoOutput_GetPhotoRotationWithoutDeviceDegree is called.");
+    CHECK_RETURN_RET_ELOG(photoOutput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, photoOutput is null!");
+    CHECK_RETURN_RET_ELOG(
+        imageRotation == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, cameraImageRotation is null!");
+    return photoOutput->GetPhotoRotationWithoutDeviceDegree(imageRotation);
+}
+
 Camera_ErrorCode OH_PhotoOutput_GetPhotoRotation(Camera_PhotoOutput* photoOutput, int deviceDegree,
     Camera_ImageRotation* imageRotation)
 {
