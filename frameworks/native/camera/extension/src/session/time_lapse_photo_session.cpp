@@ -478,13 +478,6 @@ int32_t TimeLapsePhotoSession::GetSupportedExposureRange(vector<uint32_t>& resul
     return CameraErrorCode::SUCCESS;
 }
 
-const std::unordered_map<camera_meter_mode_t, MeteringMode> TimeLapsePhotoSession::metaMeteringModeMap_ = {
-    {OHOS_CAMERA_SPOT_METERING,             METERING_MODE_SPOT},
-    {OHOS_CAMERA_REGION_METERING,           METERING_MODE_REGION},
-    {OHOS_CAMERA_OVERALL_METERING,          METERING_MODE_OVERALL},
-    {OHOS_CAMERA_CENTER_WEIGHTED_METERING,  METERING_MODE_CENTER_WEIGHTED}
-};
-
 int32_t TimeLapsePhotoSession::GetSupportedMeteringModes(vector<MeteringMode>& result)
 {
     result.clear();
@@ -543,13 +536,6 @@ int32_t TimeLapsePhotoSession::GetExposureMeteringMode(MeteringMode& result)
     }
     return CameraErrorCode::SUCCESS;
 }
-
-const std::unordered_map<MeteringMode, camera_meter_mode_t> TimeLapsePhotoSession::fwkMeteringModeMap_ = {
-    {METERING_MODE_SPOT,                    OHOS_CAMERA_SPOT_METERING},
-    {METERING_MODE_REGION,                  OHOS_CAMERA_REGION_METERING},
-    {METERING_MODE_OVERALL,                 OHOS_CAMERA_OVERALL_METERING},
-    {METERING_MODE_CENTER_WEIGHTED,         OHOS_CAMERA_CENTER_WEIGHTED_METERING}
-};
 
 int32_t TimeLapsePhotoSession::SetExposureMeteringMode(MeteringMode mode)
 {

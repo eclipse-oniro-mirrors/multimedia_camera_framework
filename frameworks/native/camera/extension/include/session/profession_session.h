@@ -35,12 +35,6 @@ namespace CameraStandard {
 class ExposureInfoCallback;
 class ApertureInfoCallback;
 class LuminationInfoCallback;
-typedef enum {
-    METERING_MODE_REGION = 0,
-    METERING_MODE_CENTER_WEIGHTED,
-    METERING_MODE_SPOT,
-    METERING_MODE_OVERALL,
-} MeteringMode;
 
 typedef enum {
     FOCUS_ASSIST_FLASH_MODE_OFF = 0,
@@ -363,9 +357,6 @@ public:
      */
     bool CanAddOutput(sptr<CaptureOutput>& output) override;
 protected:
-    static const std::unordered_map<camera_meter_mode_t, MeteringMode> metaMeteringModeMap_;
-    static const std::unordered_map<MeteringMode, camera_meter_mode_t> fwkMeteringModeMap_;
-
     static const std::unordered_map<camera_focus_assist_flash_mode_enum_t, FocusAssistFlashMode>
         metaFocusAssistFlashModeMap_;
     static const std::unordered_map<FocusAssistFlashMode, camera_focus_assist_flash_mode_enum_t>

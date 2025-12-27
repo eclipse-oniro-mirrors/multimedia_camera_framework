@@ -277,6 +277,23 @@ const std::unordered_map<CaptureOutputType, std::string> CaptureSession::CameraD
     {CAPTURE_OUTPUT_TYPE_MOVIE_FILE, REPEAT_STREAM_TYPE_MOVIE_FILE},
 };
 
+// metering mode
+const std::unordered_map<camera_meter_mode_t, MeteringMode> CaptureSession::metaMeteringModeMap_ = {
+    {OHOS_CAMERA_SPOT_METERING,             METERING_MODE_SPOT},
+    {OHOS_CAMERA_REGION_METERING,           METERING_MODE_REGION},
+    {OHOS_CAMERA_OVERALL_METERING,          METERING_MODE_OVERALL},
+    {OHOS_CAMERA_CENTER_WEIGHTED_METERING,  METERING_MODE_CENTER_WEIGHTED},
+    {OHOS_CAMERA_CENTER_HIGHLIGHT_WEIGHTED, METERING_MODE_CENTER_HIGHLIGHT_WEIGHTED},
+};
+
+const std::unordered_map<MeteringMode, camera_meter_mode_t> CaptureSession::fwkMeteringModeMap_ = {
+    {METERING_MODE_SPOT,                    OHOS_CAMERA_SPOT_METERING},
+    {METERING_MODE_REGION,                  OHOS_CAMERA_REGION_METERING},
+    {METERING_MODE_OVERALL,                 OHOS_CAMERA_OVERALL_METERING},
+    {METERING_MODE_CENTER_WEIGHTED,         OHOS_CAMERA_CENTER_WEIGHTED_METERING},
+    {METERING_MODE_CENTER_HIGHLIGHT_WEIGHTED, OHOS_CAMERA_CENTER_HIGHLIGHT_WEIGHTED},
+};
+
 const std::unordered_set<SceneMode> CaptureSession::videoModeSet_ = {
     SceneMode::VIDEO,          SceneMode::SLOW_MOTION,    SceneMode::VIDEO_MACRO, SceneMode::PROFESSIONAL_VIDEO,
     SceneMode::APERTURE_VIDEO, SceneMode::CINEMATIC_VIDEO
@@ -6584,6 +6601,28 @@ int32_t CaptureSession::SetParameters(std::vector<std::pair<std::string, std::st
         }
     }
     return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::SetExposureMeteringMode(MeteringMode mode)
+{
+    CAMERA_SYNC_TRACE;
+    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+        "CaptureSession::SetExposureMeteringMode Session is not Commited");
+    CHECK_RETURN_RET_ELOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
+        "CaptureSession::SetExposureMeteringMode Need to call LockForControl() before setting camera properties");
+    // LCOV_EXCL_START
+    camera_meter_mode_t meteringMode = OHOS_CAMERA_SPOT_METERING;
+    auto itr = fwkMeteringModeMap_.find(mode);
+    if (itr == fwkMeteringModeMap_.end()) {
+        MEDIA_ERR_LOG("CaptureSession::SetExposureMeteringMode Unknown exposure mode");
+    } else {
+        meteringMode = itr->second;
+    }
+    MEDIA_DEBUG_LOG("CaptureSession::SetExposureMeteringMode metering mode: %{public}d", meteringMode);
+    bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_METER_MODE, &meteringMode, 1);
+    CHECK_PRINT_ELOG(!status, "CaptureSession::SetExposureMeteringMode Failed to set focus mode");
+    return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 } // namespace CameraStandard
 } // namespace OHOS

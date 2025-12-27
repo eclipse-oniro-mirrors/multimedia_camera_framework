@@ -61,8 +61,6 @@ public:
     static const unordered_map<ExposureHintMode, camera_exposure_hint_mode_enum_t> fwkExposureHintModeMap_;
     static const unordered_map<camera_awb_mode_t, WhiteBalanceMode> metaWhiteBalanceModeMap_;
     static const unordered_map<WhiteBalanceMode, camera_awb_mode_t> fwkWhiteBalanceModeMap_;
-    static const unordered_map<MeteringMode, camera_meter_mode_t> fwkMeteringModeMap_;
-    static const unordered_map<camera_meter_mode_t, MeteringMode> metaMeteringModeMap_;
 
     explicit TimeLapsePhotoSession(sptr<ICaptureSession> &session, vector<sptr<CameraDevice>> devices)
         : CaptureSessionForSys(session)

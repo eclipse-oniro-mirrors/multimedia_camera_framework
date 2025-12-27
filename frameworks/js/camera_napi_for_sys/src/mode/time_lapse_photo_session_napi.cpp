@@ -663,13 +663,16 @@ napi_value TimeLapsePhotoSessionNapi::SetExposureMeteringMode(napi_env env, napi
 {
     MEDIA_DEBUG_LOG("%{public}s: Enter", __FUNCTION__);
     TimeLapsePhotoSessionNapi* obj;
-    int32_t mode;
+    int32_t mode = 0;
     CameraNapiParamParser parser(env, info, obj, mode);
     if (!parser.AssertStatus(INVALID_ARGUMENT, "Invalid argument!")) {
         MEDIA_ERR_LOG("%{public}s: Read Params Error", __FUNCTION__);
         return nullptr;
     }
     MEDIA_DEBUG_LOG("mode = %{public}d", mode);
+    if (mode == static_cast<int32_t>(CameraSessionNapi::ExposureMeteringModeofSdk::CENTER_HIGHLIGHT_WEIGHTED)) {
+        mode = static_cast<int32_t>(MeteringMode::METERING_MODE_CENTER_HIGHLIGHT_WEIGHTED);
+    }
     obj->timeLapsePhotoSession_->LockForControl();
     int32_t ret = obj->timeLapsePhotoSession_->SetExposureMeteringMode(static_cast<MeteringMode>(mode));
     obj->timeLapsePhotoSession_->UnlockForControl();

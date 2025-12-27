@@ -300,8 +300,11 @@ napi_value ProfessionSessionNapi::SetMeteringMode(napi_env env, napi_callback_in
     ProfessionSessionNapi* professionSessionNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&professionSessionNapi));
     if (status == napi_ok && professionSessionNapi != nullptr && professionSessionNapi->professionSession_ != nullptr) {
-        int32_t value;
+        int32_t value = 0;
         napi_get_value_int32(env, argv[PARAM0], &value);
+        if (value == static_cast<int32_t>(CameraSessionNapi::ExposureMeteringModeofSdk::CENTER_HIGHLIGHT_WEIGHTED)) {
+            value = static_cast<int32_t>(MeteringMode::METERING_MODE_CENTER_HIGHLIGHT_WEIGHTED);
+        }
         MeteringMode mode = static_cast<MeteringMode>(value);
         professionSessionNapi->professionSession_->LockForControl();
         professionSessionNapi->professionSession_->
