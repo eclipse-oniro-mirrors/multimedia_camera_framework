@@ -3794,7 +3794,8 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_092, Test
     EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_CaptureSession_CommitConfig(captureSession);
     EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CaptureSession_IsFocusModeSupported(captureSession, Camera_FocusMode::FOCUS_MODE_CONTINUOUS_AUTO, &isSupported);
+    ret = OH_CaptureSession_IsFocusModeSupported(captureSession,
+        Camera_FocusMode::FOCUS_MODE_CONTINUOUS_AUTO, &isSupported);
     EXPECT_EQ(ret, CAMERA_OK);
     if (isSupported) {
         ret = OH_CaptureSession_SetFocusMode(captureSession, Camera_FocusMode::FOCUS_MODE_CONTINUOUS_AUTO);
@@ -3919,70 +3920,6 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_094, Test
 
 /*
  * Feature: Framework
- * Function: Test SetFocusMode multiple times with different modes
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test set focus mode multiple times with different modes,
- * when valid parameters are entered, all set successfully
- */
-HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_095, TestSize.Level0)
-{
-    Camera_ErrorCode ret = CAMERA_OK;
-    Camera_Input *cameraInput = nullptr;
-    bool isSupported = false;
-    Camera_FocusMode focusMode = Camera_FocusMode::FOCUS_MODE_MANUAL;
-    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
-    EXPECT_EQ(ret, CAMERA_OK);
-    EXPECT_EQ(CameraNdkCommon::DisMdmOpenCheck(cameraInput), CAMERA_OK);
-    ret = OH_CameraInput_Open(cameraInput);
-    EXPECT_EQ(ret, CAMERA_OK);
-    Camera_CaptureSession* captureSession = nullptr;
-    ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
-    EXPECT_EQ(ret, CAMERA_OK);
-    EXPECT_NE(captureSession, nullptr);
-    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_PHOTO);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CaptureSession_BeginConfig(captureSession);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
-    EXPECT_EQ(ret, CAMERA_OK);
-    Camera_PreviewOutput* previewOutput = CreatePreviewOutput();
-    ASSERT_NE(previewOutput, nullptr);
-    ret = OH_CaptureSession_AddPreviewOutput(captureSession, previewOutput);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CaptureSession_CommitConfig(captureSession);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CaptureSession_IsFocusModeSupported(captureSession, Camera_FocusMode::FOCUS_MODE_MANUAL, &isSupported);
-    EXPECT_EQ(ret, CAMERA_OK);
-    if (isSupported) {
-        ret = OH_CaptureSession_SetFocusMode(captureSession, Camera_FocusMode::FOCUS_MODE_MANUAL);
-        EXPECT_EQ(ret, CAMERA_OK);
-        ret = OH_CaptureSession_GetFocusMode(captureSession, &focusMode);
-        EXPECT_EQ(ret, CAMERA_OK);
-    }
-    ret = OH_CaptureSession_IsFocusModeSupported(captureSession, Camera_FocusMode::FOCUS_MODE_AUTO, &isSupported);
-    EXPECT_EQ(ret, CAMERA_OK);
-    if (isSupported) {
-        ret = OH_CaptureSession_SetFocusMode(captureSession, Camera_FocusMode::FOCUS_MODE_AUTO);
-        EXPECT_EQ(ret, CAMERA_OK);
-    }
-    ret = OH_CaptureSession_IsFocusModeSupported(captureSession, Camera_FocusMode::FOCUS_MODE_CONTINUOUS_AUTO, &isSupported);
-    EXPECT_EQ(ret, CAMERA_OK);
-    if (isSupported) {
-        ret = OH_CaptureSession_SetFocusMode(captureSession, Camera_FocusMode::FOCUS_MODE_CONTINUOUS_AUTO);
-        EXPECT_EQ(ret, CAMERA_OK);
-    }
-    ret = OH_PreviewOutput_Release(previewOutput);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CameraInput_Release(cameraInput);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CaptureSession_Release(captureSession);
-    EXPECT_EQ(ret, CAMERA_OK);
-}
-
-/*
- * Feature: Framework
  * Function: Test SetFocusMode with all focus modes
  * SubFunction: NA
  * FunctionPoints: NA
@@ -3990,7 +3927,7 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_095, Test
  * CaseDescription: Test set all available focus modes (MANUAL, AUTO, CONTINUOUS_AUTO, LOCKED),
  * when valid parameters are entered, set successfully
  */
-HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_096, TestSize.Level0)
+HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_095, TestSize.Level0)
 {
     Camera_ErrorCode ret = CAMERA_OK;
     Camera_Input *cameraInput = nullptr;
@@ -4048,7 +3985,7 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_096, Test
  * CaseDescription: Test set focus mode that is not supported,
  * when unsupported mode is set, operation not allowed error is returned
  */
-HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_097, TestSize.Level0)
+HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_096, TestSize.Level0)
 {
     Camera_ErrorCode ret = CAMERA_OK;
     Camera_Input *cameraInput = nullptr;
@@ -4097,7 +4034,7 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_097, Test
  * CaseDescription: Test set focus mode before BeginConfig,
  * when session is not configured, service fatal error is returned
  */
-HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_09298, TestSize.Level0)
+HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_097, TestSize.Level0)
 {
     Camera_ErrorCode ret = CAMERA_OK;
     Camera_CaptureSession* captureSession = nullptr;
@@ -4121,7 +4058,7 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_09298, Te
  * CaseDescription: Test set focus mode and then get focus mode to verify,
  * when valid parameters are entered, get returns the set value
  */
-HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_099, TestSize.Level0)
+HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_098, TestSize.Level0)
 {
     Camera_ErrorCode ret = CAMERA_OK;
     Camera_Input *cameraInput = nullptr;
@@ -4164,71 +4101,6 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_099, Test
     ret = OH_CaptureSession_Release(captureSession);
     EXPECT_EQ(ret, CAMERA_OK);
     ReleaseImageReceiver();
-}
-
-/*
- * Feature: Framework
- * Function: Test SetFocusMode during session running
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test set focus mode multiple times during session running,
- * when valid parameters are entered, all set successfully
- */
-HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_100, TestSize.Level0)
-{
-    Camera_ErrorCode ret = CAMERA_OK;
-    Camera_Input *cameraInput = nullptr;
-    bool isSupported = false;
-    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
-    EXPECT_EQ(ret, CAMERA_OK);
-    EXPECT_EQ(CameraNdkCommon::DisMdmOpenCheck(cameraInput), CAMERA_OK);
-    ret = OH_CameraInput_Open(cameraInput);
-    EXPECT_EQ(ret, CAMERA_OK);
-    Camera_CaptureSession* captureSession = nullptr;
-    ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
-    EXPECT_EQ(ret, CAMERA_OK);
-    EXPECT_NE(captureSession, nullptr);
-    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_PHOTO);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CaptureSession_BeginConfig(captureSession);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
-    EXPECT_EQ(ret, CAMERA_OK);
-    Camera_PreviewOutput* previewOutput = CreatePreviewOutput();
-    ASSERT_NE(previewOutput, nullptr);
-    ret = OH_CaptureSession_AddPreviewOutput(captureSession, previewOutput);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CaptureSession_CommitConfig(captureSession);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CaptureSession_Start(captureSession);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CaptureSession_IsFocusModeSupported(captureSession, Camera_FocusMode::FOCUS_MODE_MANUAL, &isSupported);
-    EXPECT_EQ(ret, CAMERA_OK);
-    if (isSupported) {
-        ret = OH_CaptureSession_SetFocusMode(captureSession, Camera_FocusMode::FOCUS_MODE_MANUAL);
-        EXPECT_EQ(ret, CAMERA_OK);
-    }
-    ret = OH_CaptureSession_IsFocusModeSupported(captureSession, Camera_FocusMode::FOCUS_MODE_AUTO, &isSupported);
-    EXPECT_EQ(ret, CAMERA_OK);
-    if (isSupported) {
-        ret = OH_CaptureSession_SetFocusMode(captureSession, Camera_FocusMode::FOCUS_MODE_AUTO);
-        EXPECT_EQ(ret, CAMERA_OK);
-    }
-    ret = OH_CaptureSession_IsFocusModeSupported(captureSession, Camera_FocusMode::FOCUS_MODE_LOCKED, &isSupported);
-    EXPECT_EQ(ret, CAMERA_OK);
-    if (isSupported) {
-        ret = OH_CaptureSession_SetFocusMode(captureSession, Camera_FocusMode::FOCUS_MODE_LOCKED);
-        EXPECT_EQ(ret, CAMERA_OK);
-    }
-    ret = OH_CaptureSession_Stop(captureSession);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_PreviewOutput_Release(previewOutput);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CameraInput_Release(cameraInput);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CaptureSession_Release(captureSession);
-    EXPECT_EQ(ret, CAMERA_OK);
 }
 
 /*

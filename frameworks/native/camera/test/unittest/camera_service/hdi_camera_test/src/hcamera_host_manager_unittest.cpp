@@ -745,7 +745,7 @@ HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_024, TestSize.Lev
     sptr<HCameraRestoreParam> cameraRestoreParam = cameraHostManager_->GetRestoreParam(clientName, cameraId);
     ASSERT_NE(cameraRestoreParam, nullptr);
     
-    std::shared_ptr<OHOS::Camera::CameraMetadata> settings = 
+    std::shared_ptr<OHOS::Camera::CameraMetadata> settings =
         std::make_shared<OHOS::Camera::CameraMetadata>(10, 100);
     cameraRestoreParam->SetSetting(settings);
     cameraRestoreParam->SetRestoreParamType(RestoreParamTypeOhos::TRANSIENT_ACTIVE_PARAM_OHOS);
@@ -776,7 +776,7 @@ HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_025, TestSize.Lev
     sptr<HCameraRestoreParam> cameraRestoreParam = cameraHostManager_->GetRestoreParam(clientName, cameraId);
     ASSERT_NE(cameraRestoreParam, nullptr);
     
-    std::shared_ptr<OHOS::Camera::CameraMetadata> settings = 
+    std::shared_ptr<OHOS::Camera::CameraMetadata> settings =
         std::make_shared<OHOS::Camera::CameraMetadata>(10, 100);
     cameraRestoreParam->SetSetting(settings);
     cameraRestoreParam->SetRestoreParamType(RestoreParamTypeOhos::TRANSIENT_ACTIVE_PARAM_OHOS);
@@ -792,7 +792,7 @@ HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_025, TestSize.Lev
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test Prelaunch when setting is nullptr and muteMode is true, which will test UpdateMuteSetting with nullptr.
+ * CaseDescription: Test Prelaunch when setting is nullptr and muteMode is true.
  */
 HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_026, TestSize.Level1)
 {
@@ -837,7 +837,7 @@ HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_027, TestSize.Lev
     sptr<HCameraRestoreParam> cameraRestoreParam = cameraHostManager_->GetRestoreParam(clientName, cameraId);
     ASSERT_NE(cameraRestoreParam, nullptr);
     
-    std::shared_ptr<OHOS::Camera::CameraMetadata> settings = 
+    std::shared_ptr<OHOS::Camera::CameraMetadata> settings =
         std::make_shared<OHOS::Camera::CameraMetadata>(10, 100);
     cameraRestoreParam->SetSetting(settings);
     cameraRestoreParam->SetCameraOpMode(0);
@@ -869,7 +869,7 @@ HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_028, TestSize.Lev
     sptr<HCameraRestoreParam> cameraRestoreParam = cameraHostManager_->GetRestoreParam(clientName, cameraId);
     ASSERT_NE(cameraRestoreParam, nullptr);
     
-    std::shared_ptr<OHOS::Camera::CameraMetadata> settings = 
+    std::shared_ptr<OHOS::Camera::CameraMetadata> settings =
         std::make_shared<OHOS::Camera::CameraMetadata>(10, 100);
     cameraRestoreParam->SetSetting(settings);
     cameraRestoreParam->SetCameraOpMode(1);
@@ -973,7 +973,7 @@ HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_032, TestSize.Lev
     sptr<HCameraRestoreParam> cameraRestoreParam = cameraHostManager_->GetRestoreParam(clientName, cameraId);
     ASSERT_NE(cameraRestoreParam, nullptr);
     
-    std::shared_ptr<OHOS::Camera::CameraMetadata> settings = 
+    std::shared_ptr<OHOS::Camera::CameraMetadata> settings =
         std::make_shared<OHOS::Camera::CameraMetadata>(10, 100);
     cameraRestoreParam->SetSetting(settings);
     cameraRestoreParam->SetRestoreParamType(RestoreParamTypeOhos::PERSISTENT_DEFAULT_PARAM_OHOS);
@@ -1004,7 +1004,7 @@ HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_033, TestSize.Lev
     sptr<HCameraRestoreParam> cameraRestoreParam = cameraHostManager_->GetRestoreParam(clientName, cameraId);
     ASSERT_NE(cameraRestoreParam, nullptr);
     
-    std::shared_ptr<OHOS::Camera::CameraMetadata> settings = 
+    std::shared_ptr<OHOS::Camera::CameraMetadata> settings =
         std::make_shared<OHOS::Camera::CameraMetadata>(10, 100);
     cameraRestoreParam->SetSetting(settings);
     cameraRestoreParam->SetRestoreParamType(RestoreParamTypeOhos::TRANSIENT_ACTIVE_PARAM_OHOS);
@@ -1036,7 +1036,7 @@ HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_034, TestSize.Lev
     sptr<HCameraRestoreParam> cameraRestoreParam = cameraHostManager_->GetRestoreParam(clientName, cameraId);
     ASSERT_NE(cameraRestoreParam, nullptr);
     
-    std::shared_ptr<OHOS::Camera::CameraMetadata> settings = 
+    std::shared_ptr<OHOS::Camera::CameraMetadata> settings =
         std::make_shared<OHOS::Camera::CameraMetadata>(10, 100);
     cameraRestoreParam->SetSetting(settings);
     cameraRestoreParam->SetRestoreParamType(RestoreParamTypeOhos::TRANSIENT_ACTIVE_PARAM_OHOS);
@@ -1069,7 +1069,7 @@ HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_035, TestSize.Lev
     sptr<HCameraRestoreParam> cameraRestoreParam = cameraHostManager_->GetRestoreParam(clientName, cameraId);
     ASSERT_NE(cameraRestoreParam, nullptr);
     
-    std::shared_ptr<OHOS::Camera::CameraMetadata> settings = 
+    std::shared_ptr<OHOS::Camera::CameraMetadata> settings =
         std::make_shared<OHOS::Camera::CameraMetadata>(10, 100);
     cameraRestoreParam->SetSetting(settings);
     cameraRestoreParam->SetRestoreParamType(RestoreParamTypeOhos::TRANSIENT_ACTIVE_PARAM_OHOS);
@@ -1101,7 +1101,7 @@ HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_036, TestSize.Lev
     sptr<HCameraRestoreParam> cameraRestoreParam = cameraHostManager_->GetRestoreParam(clientName, cameraId1);
     ASSERT_NE(cameraRestoreParam, nullptr);
     
-    std::shared_ptr<OHOS::Camera::CameraMetadata> settings = 
+    std::shared_ptr<OHOS::Camera::CameraMetadata> settings =
         std::make_shared<OHOS::Camera::CameraMetadata>(10, 100);
     cameraRestoreParam->SetSetting(settings);
     cameraRestoreParam->SetRestoreParamType(RestoreParamTypeOhos::TRANSIENT_ACTIVE_PARAM_OHOS);
