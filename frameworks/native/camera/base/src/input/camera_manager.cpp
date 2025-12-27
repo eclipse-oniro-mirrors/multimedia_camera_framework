@@ -1512,7 +1512,7 @@ std::vector<dmDeviceInfo> CameraManager::GetDmDeviceInfo()
     CHECK_RETURN_RET_ELOG(
         serviceProxy == nullptr, {}, "CameraManager::GetDmDeviceInfo serviceProxy is null, returning empty list!");
 
-    std::vector<std::string> deviceInfos;
+    std::vector<dmDeviceInfo> deviceInfos;
     int32_t retCode = serviceProxy->GetDmDeviceInfo(deviceInfos);
     CHECK_RETURN_RET_ELOG(
         retCode != CAMERA_OK, {}, "CameraManager::GetDmDeviceInfo failed!, retCode: %{public}d", retCode);
@@ -1520,28 +1520,7 @@ std::vector<dmDeviceInfo> CameraManager::GetDmDeviceInfo()
     int size = static_cast<int>(deviceInfos.size());
     MEDIA_INFO_LOG("CameraManager::GetDmDeviceInfo size=%{public}d", size);
     CHECK_RETURN_RET(size < 0, {});
-
-    std::vector<dmDeviceInfo> distributedCamInfo(size);
-    for (int i = 0; i < size; i++) {
-        // LCOV_EXCL_START
-        std::string deviceInfoStr = deviceInfos[i];
-        MEDIA_INFO_LOG("CameraManager::GetDmDeviceInfo deviceInfo: %{private}s", deviceInfoStr.c_str());
-        if (!nlohmann::json::accept(deviceInfoStr)) {
-            MEDIA_ERR_LOG("Failed to verify the deviceInfo format, deviceInfo is: %{private}s", deviceInfoStr.c_str());
-        } else {
-            nlohmann::json deviceInfoJson = nlohmann::json::parse(deviceInfoStr);
-            if ((deviceInfoJson.contains("deviceName") && deviceInfoJson.contains("deviceTypeId") &&
-                    deviceInfoJson.contains("networkId")) &&
-                (deviceInfoJson["deviceName"].is_string() && deviceInfoJson["networkId"].is_string() &&
-                    deviceInfoJson["deviceTypeId"].is_number_unsigned())) {
-                distributedCamInfo[i].deviceName = deviceInfoJson["deviceName"];
-                distributedCamInfo[i].deviceTypeId = deviceInfoJson["deviceTypeId"];
-                distributedCamInfo[i].networkId = deviceInfoJson["networkId"];
-            }
-        }
-        // LCOV_EXCL_STOP
-    }
-    return distributedCamInfo;
+    return deviceInfos;
 }
 
 void CameraManager::GetCameraOutputStatus(int32_t pid, int32_t &status)

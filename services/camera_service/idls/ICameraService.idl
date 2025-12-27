@@ -70,7 +70,7 @@ interface ICameraService{
   [ipccode 25] void MuteCameraPersist([in] PolicyType policyType, [in] boolean isMute);
   [ipccode 26] void ProxyForFreeze([in] Set<int> pidList, [in] boolean isProxy);
   [ipccode 27] void ResetAllFreezeStatus();
-  [ipccode 28] void GetDmDeviceInfo([out] List<String> deviceInfos);
+  [ipccode 28] void GetDmDeviceInfo([out] List<dmDeviceInfo> deviceInfos);
   [ipccode 29] void SetFoldStatusCallback([in] IFoldServiceCallback callbackFunc, [in] boolean isInnerCallback);
   [ipccode 30] void GetCameraOutputStatus([in] int pid, [out] int status);
   [ipccode 31] void CreateDepthDataOutput([in] IBufferProducer producer, [in] int format, [in] int width, [in] int height, [out] IStreamDepthData depthDataOutput);

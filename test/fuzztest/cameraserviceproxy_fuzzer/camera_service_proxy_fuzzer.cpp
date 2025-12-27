@@ -283,8 +283,7 @@ void CameraServiceProxyFuzz::CameraServiceProxyTest13(FuzzedDataProvider &fdp)
     bool isProxy = fdp.ConsumeBool();
     fuzz_->ProxyForFreeze(pidList, isProxy);
     fuzz_->ResetAllFreezeStatus();
-    std::vector<std::string> deviceInfos = {"deviceInfo1",
-        "deviceInfo2", "deviceInfo3", "deviceInfo4", "deviceInfo5"};
+    std::vector<dmDeviceInfo> deviceInfos = {};
     fuzz_->GetDmDeviceInfo(deviceInfos);
 }
 
