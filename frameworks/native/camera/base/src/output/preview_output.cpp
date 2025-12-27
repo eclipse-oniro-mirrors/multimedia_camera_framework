@@ -862,6 +862,71 @@ int32_t PreviewOutput::canSetFrameRateRange(int32_t minFrameRate, int32_t maxFra
     // LCOV_EXCL_STOP
 }
 
+int32_t PreviewOutput::GetImageRotation(int32_t& imageRotation)
+{
+    int32_t ret = CAMERA_UNKNOWN_ERROR;
+    auto displayIds = OHOS::Rosen::DisplayManagerLite::GetInstance().GetAllDisplayIds();
+    MEDIA_DEBUG_LOG("PreviewOutput::GetImageRotation displayIds: %{public}s",
+        Container2String(displayIds.begin(), displayIds.end()).c_str());
+    for (auto displayId : displayIds) {
+        MEDIA_DEBUG_LOG("PreviewOutput::GetImageRotation displayId: %{public}" PRIu64 "", displayId);
+        CHECK_CONTINUE(!OHOS::Rosen::DisplayManagerLite::GetInstance().IsOnboardDisplay(displayId));
+        auto display = OHOS::Rosen::DisplayManagerLite::GetInstance().GetDisplayById(displayId);
+        CHECK_BREAK_ELOG(display == nullptr, "PreviewOutput::GetImageRotation display is nullptr");
+        imageRotation = static_cast<int32_t>(display->GetRotation()) * ROTATION_90_DEGREES;
+        MEDIA_INFO_LOG("PreviewOutput::GetImageRotation imageRotation: %{public}d", imageRotation);
+        return CAMERA_OK;
+    }
+    MEDIA_ERR_LOG("PreviewOutput::GetImageRotation from displayId failed");
+#ifdef CAMERA_USE_SENSOR
+    auto session = GetSession();
+    CHECK_RETURN_RET_ELOG(
+        session == nullptr, SERVICE_FATL_ERROR, "PreviewOutput GetImageRotation error!, session is nullptr");
+    int32_t sensorRotation = 0;
+    ret = session->GetSensorRotationOnce(sensorRotation);
+    CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, SERVICE_FATL_ERROR,
+        "PreviewOutput::GetImageRotation GetSensorRotationOnce failed");
+    imageRotation = sensorRotation;
+    MEDIA_INFO_LOG("PreviewOutput::GetImageRotation sensorRotation: %{public}d", sensorRotation);
+#endif
+    return ret;
+}
+
+int32_t PreviewOutput::GetPreviewRotation()
+{
+    MEDIA_INFO_LOG("PreviewOutput GetPreviewRotation without imageRotation is called");
+    int32_t sensorOrientation = 0;
+    int32_t imageRotation = 0;
+    ImageRotation result = ImageRotation::ROTATION_0;
+    sptr<CameraDevice> cameraObj;
+    auto session = GetSession();
+    CHECK_RETURN_RET_ELOG(
+        session == nullptr, SERVICE_FATL_ERROR, "PreviewOutput GetPreviewRotation error!, session is nullptr");
+    // LCOV_EXCL_START
+    auto inputDevice = session->GetInputDevice();
+    CHECK_RETURN_RET_ELOG(
+        inputDevice == nullptr, SERVICE_FATL_ERROR, "PreviewOutput GetPreviewRotation error!, inputDevice is nullptr");
+    cameraObj = inputDevice->GetCameraDeviceInfo();
+    CHECK_RETURN_RET_ELOG(
+        cameraObj == nullptr, SERVICE_FATL_ERROR, "PreviewOutput GetPreviewRotation error!, cameraObj is nullptr");
+    ConnectionType connectionType = cameraObj->GetConnectionType();
+    if (connectionType == CAMERA_CONNECTION_BUILT_IN) {
+        int32_t ret = GetImageRotation(imageRotation);
+        CHECK_RETURN_RET_ELOG(
+            ret != CAMERA_OK, SERVICE_FATL_ERROR, "PreviewOutput GetPreviewRotation GetImageRotation failed");
+    }
+    uint32_t apiCompatibleVersion = CameraApiVersion::GetApiVersion();
+    if (apiCompatibleVersion < CameraApiVersion::APIVersion::API_FOURTEEN) {
+        imageRotation = JudegRotationFunc(imageRotation);
+    }
+    sensorOrientation = static_cast<int32_t>(cameraObj->GetCameraOrientation());
+    result = (ImageRotation)((imageRotation + sensorOrientation) % CAPTURE_ROTATION_BASE);
+    MEDIA_INFO_LOG("GetPreviewRotation: result %{public}d, imageRotation %{public}d, sensorOrientation %{public}d",
+        result, imageRotation, sensorOrientation);
+    return result;
+    // LCOV_EXCL_STOP
+}
+
 int32_t PreviewOutput::GetPreviewRotation(int32_t imageRotation)
 {
     MEDIA_INFO_LOG("PreviewOutput GetPreviewRotation is called, imageRotation: %{public}d", imageRotation);
@@ -956,13 +1021,10 @@ int32_t PreviewOutput::SetPreviewRotation(int32_t imageRotation, bool isDisplayL
 bool PreviewOutput::IsXComponentSwap()
 {
     // LCOV_EXCL_START
-    sptr<OHOS::Rosen::DisplayLite> display = OHOS::Rosen::DisplayManagerLite::GetInstance().GetDefaultDisplay();
-    if (display == nullptr) {
-        MEDIA_ERR_LOG("Get display info failed");
-        display = OHOS::Rosen::DisplayManagerLite::GetInstance().GetDisplayById(0);
-        CHECK_RETURN_RET_ELOG(display == nullptr, true, "Get display info failed, display is nullptr");
-    }
-    uint32_t currentRotation = static_cast<uint32_t>(display->GetRotation()) * 90;
+    int32_t imageRotation = 0;
+    CHECK_RETURN_RET_ELOG(
+        GetImageRotation(imageRotation) != CAMERA_OK, true, "Get display info failed");
+    uint32_t currentRotation = static_cast<uint32_t>(imageRotation);
     std::string deviceType = OHOS::system::GetDeviceType();
     uint32_t apiCompatibleVersion = CameraApiVersion::GetApiVersion();
     MEDIA_INFO_LOG("deviceType=%{public}s, apiCompatibleVersion=%{public}d", deviceType.c_str(), apiCompatibleVersion);

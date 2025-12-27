@@ -270,6 +270,20 @@ array<ImageRotation> VideoOutputImpl::GetSupportedRotations()
     return CameraUtilsTaihe::ToTaiheArrayEnum<ImageRotation, int32_t>(supportedRotations);
 }
 
+ImageRotation VideoOutputImpl::GetVideoRotation()
+{
+    CHECK_RETURN_RET_ELOG(videoOutput_ == nullptr, ImageRotation(static_cast<ImageRotation::key_t>(-1)),
+        "GetVideoRotation failed, videoOutput_ is nullptr");
+    int32_t retCode = videoOutput_->GetVideoRotation();
+    if (retCode == OHOS::CameraStandard::SERVICE_FATL_ERROR) {
+        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::SERVICE_FATL_ERROR,
+            "GetVideoRotation Camera service fatal error.");
+        return ImageRotation(static_cast<ImageRotation::key_t>(-1));
+    }
+    int32_t taiheRetCode = CameraUtilsTaihe::ToTaiheImageRotation(retCode);
+    return ImageRotation(static_cast<ImageRotation::key_t>(taiheRetCode));
+}
+
 ImageRotation VideoOutputImpl::GetVideoRotation(int32_t deviceDegree)
 {
     CHECK_RETURN_RET_ELOG(videoOutput_ == nullptr, ImageRotation(static_cast<ImageRotation::key_t>(-1)),

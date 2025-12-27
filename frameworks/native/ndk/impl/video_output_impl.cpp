@@ -209,6 +209,17 @@ Camera_ErrorCode Camera_VideoOutput::EnableMirror(bool mirrorMode)
     return FrameworkToNdkCameraError(ret);
 }
 
+Camera_ErrorCode Camera_VideoOutput::GetVideoRotationWithoutDeviceDegree(Camera_ImageRotation* cameraImageRotation)
+{
+    CHECK_RETURN_RET_ELOG(cameraImageRotation == nullptr, CAMERA_SERVICE_FATAL_ERROR, "GetCameraImageRotation failed");
+    CHECK_RETURN_RET_ELOG(innerVideoOutput_ == nullptr, CAMERA_SERVICE_FATAL_ERROR, "innerVideoOutput_ is nullptr");
+    int32_t cameraOutputRotation = innerVideoOutput_->GetVideoRotation();
+    CHECK_RETURN_RET_ELOG(cameraOutputRotation == CAMERA_SERVICE_FATAL_ERROR, CAMERA_SERVICE_FATAL_ERROR,
+        "Camera_VideoOutput::GetVideoRotation camera service fatal error! ret: %{public}d", cameraOutputRotation);
+    *cameraImageRotation = static_cast<Camera_ImageRotation>(cameraOutputRotation);
+    return CAMERA_OK;
+}
+
 Camera_ErrorCode Camera_VideoOutput::GetVideoRotation(int32_t imageRotation, Camera_ImageRotation* cameraImageRotation)
 {
     CHECK_RETURN_RET_ELOG(cameraImageRotation == nullptr, CAMERA_SERVICE_FATAL_ERROR, "GetCameraImageRotation failed");

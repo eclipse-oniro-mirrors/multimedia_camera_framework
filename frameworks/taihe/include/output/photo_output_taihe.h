@@ -152,6 +152,7 @@ public:
     bool IsOfflineSupported();
     void EnableMovingPhoto(bool enabled);
     bool IsMovingPhotoSupported();
+    ImageRotation GetPhotoRotation();
     ImageRotation GetPhotoRotation(int32_t deviceDegree);
     void EnableQuickThumbnail(bool enabled);
     OHOS::sptr<OHOS::CameraStandard::PhotoOutput> GetPhotoOutput();

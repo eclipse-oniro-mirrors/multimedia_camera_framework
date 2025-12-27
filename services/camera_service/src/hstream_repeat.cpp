@@ -1090,14 +1090,15 @@ void HStreamRepeat::SyncTransformToSketch()
     CHECK_RETURN_ELOG(ret != GSERROR_OK, "HStreamRepeat::SyncTransformToSketch SetTransform fail %{public}d", ret);
 }
 
-void HStreamRepeat::SetStreamTransform(int disPlayRotation)
+void HStreamRepeat::SetStreamTransform(int displayRotation)
 {
     InitWhiteList();
     camera_metadata_item_t item;
     int32_t sensorOrientation;
     camera_position_enum_t cameraPosition = OHOS_CAMERA_POSITION_BACK;
-    auto display = OHOS::Rosen::DisplayManagerLite::GetInstance().GetDefaultDisplay();
-    CHECK_RETURN_ELOG(display == nullptr, "HStreamRepeat::SetStreamTransform GetDefaultDisplay failed");
+    int32_t curDisplayRotation = 0;
+    int32_t ret = GetDisplayRotation(curDisplayRotation);
+    CHECK_RETURN_ELOG(ret != CAMERA_OK, "HStreamRepeat::SetStreamTransform GetDisplayRotation Failed");
     {
         std::lock_guard<std::mutex> lock(cameraAbilityLock_);
         CHECK_RETURN(cameraAbility_ == nullptr);
@@ -1125,12 +1126,11 @@ void HStreamRepeat::SetStreamTransform(int disPlayRotation)
         ProcessVerticalCameraPosition(sensorOrientation, cameraPosition);
         return;
     }
-    int mOritation = disPlayRotation;
+    int mOritation = displayRotation;
     if (enableStreamRotate_) {
         if (mOritation == -1) {
-            CHECK_RETURN_ELOG(producer_ == nullptr || display == nullptr,
-                "HStreamRepeat::SetStreamTransform failed, producer is null or GetDefaultDisplay failed");
-            mOritation = static_cast<int>(display->GetRotation());
+            CHECK_RETURN_ELOG(producer_ == nullptr, "HStreamRepeat::SetStreamTransform failed, producer is null");
+            mOritation = curDisplayRotation;
         }
         int32_t streamRotation = GetStreamRotation(sensorOrientation, cameraPosition, mOritation, deviceClass_);
         ProcessCameraPosition(streamRotation, cameraPosition);

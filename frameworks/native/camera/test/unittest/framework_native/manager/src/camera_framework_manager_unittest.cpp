@@ -2086,5 +2086,32 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_095, Test
     ASSERT_EQ(result.size(), 1);
     cameraManager_->cameraDeviceList_.clear();
 }
+
+/*
+ * Feature: Framework
+ * Function: Test DisplayModeToFoldStatus
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test DisplayModeToFoldStatus
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_096, TestSize.Level0)
+{
+    uint32_t displayMode = 1;
+    uint32_t foldStatus = cameraManager_->DisplayModeToFoldStatus(displayMode);
+    EXPECT_EQ(foldStatus, 1);
+
+    displayMode = 2;
+    foldStatus = cameraManager_->DisplayModeToFoldStatus(displayMode);
+    EXPECT_EQ(foldStatus, 2);
+
+    displayMode = 4;
+    foldStatus = cameraManager_->DisplayModeToFoldStatus(displayMode);
+    EXPECT_EQ(foldStatus, 1);
+
+    displayMode = 5;
+    foldStatus = cameraManager_->DisplayModeToFoldStatus(displayMode);
+    EXPECT_EQ(foldStatus, 11);
+}
 }
 }

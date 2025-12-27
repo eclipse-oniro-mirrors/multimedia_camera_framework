@@ -1745,6 +1745,15 @@ public:
      */
     int32_t SetHasFitedRotation(bool isHasFitedRotation);
 
+#ifdef CAMERA_USE_SENSOR
+    /**
+     * @brief Get Sensor Rotation Once.
+     * @param sensorRotation Sensor Rotation.
+     * @return errCode
+     */
+    int32_t GetSensorRotationOnce(int32_t& sensorRotation);
+#endif
+
     /**
      * @brief Get Session Functions.
      *

@@ -913,40 +913,42 @@ napi_value PreviewOutputNapi::EnableSketch(napi_env env, napi_callback_info info
 napi_value PreviewOutputNapi::GetPreviewRotation(napi_env env, napi_callback_info info)
 {
     MEDIA_DEBUG_LOG("GetPreviewRotation is called!");
-    napi_status status;
     napi_value result = nullptr;
-    size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE] = {0};
-    napi_value thisVar = nullptr;
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+    int32_t retCode = 0;
+    size_t napiArgsSize = CameraNapiUtils::GetNapiArgs(env, info);
 
     napi_get_undefined(env, &result);
     PreviewOutputNapi* previewOutputNapi = nullptr;
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&previewOutputNapi));
-    if (status == napi_ok && previewOutputNapi != nullptr) {
-        int32_t value;
-        napi_status ret = napi_get_value_int32(env, argv[PARAM0], &value);
-        if (ret != napi_ok) {
-            CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT,
-                "GetPreviewRotation parameter missing or parameter type incorrect.");
+    if (napiArgsSize == ARGS_ZERO) {
+        MEDIA_DEBUG_LOG("GetPreviewRotation arg 0");
+        CameraNapiParamParser jsParamParser(env, info, previewOutputNapi);
+        if (!jsParamParser.AssertStatus(SERVICE_FATL_ERROR, "parse parameter occur error")) {
+            MEDIA_ERR_LOG("PreviewOutputNapi::GetPreviewRotation parse 0 parameter occur error");
             return result;
         }
-        int32_t retCode = previewOutputNapi->previewOutput_->GetPreviewRotation(value);
-        if (retCode == SERVICE_FATL_ERROR) {
-            CameraNapiUtils::ThrowError(env, SERVICE_FATL_ERROR,
-                "GetPreviewRotation Camera service fatal error.");
+        retCode = previewOutputNapi->previewOutput_->GetPreviewRotation();
+    } else if (napiArgsSize == ARGS_ONE) {
+        MEDIA_DEBUG_LOG("GetPreviewRotation arg 1");
+        int32_t displayRotation;
+        CameraNapiParamParser jsParamParser(env, info, previewOutputNapi, displayRotation);
+        if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+            MEDIA_ERR_LOG("PreviewOutputNapi::GetPreviewRotation parse 1 parameter occur error");
             return result;
         }
+        retCode = previewOutputNapi->previewOutput_->GetPreviewRotation(displayRotation);
         if (retCode == INVALID_ARGUMENT) {
-            CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT,
-                "GetPreviewRotation Camera invalid argument.");
+            CameraNapiUtils::ThrowError(
+                env, INVALID_ARGUMENT, "GetPreviewRotation Camera invalid argument.");
             return result;
         }
-        napi_create_int32(env, retCode, &result);
-        MEDIA_INFO_LOG("PreviewOutputNapi GetPreviewRotation! %{public}d", retCode);
-    } else {
-        MEDIA_ERR_LOG("PreviewOutputNapi GetPreviewRotation! called failed!");
     }
+    if (retCode == SERVICE_FATL_ERROR) {
+        CameraNapiUtils::ThrowError(
+            env, SERVICE_FATL_ERROR, "GetPreviewRotation Camera service fatal error.");
+        return result;
+    }
+    napi_create_int32(env, retCode, &result);
+    MEDIA_INFO_LOG("PreviewOutputNapi GetPreviewRotation! %{public}d", retCode);
     return result;
 }
 

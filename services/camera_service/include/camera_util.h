@@ -47,10 +47,10 @@ static const int32_t STREAM_ROTATE_90 = 90;
 static const int32_t STREAM_ROTATE_180 = 180;
 static const int32_t STREAM_ROTATE_270 = 270;
 static const int32_t STREAM_ROTATE_360 = 360;
-static const int32_t DISPALY_ROTATE_0 = 0;
-static const int32_t DISPALY_ROTATE_1 = 1;
-static const int32_t DISPALY_ROTATE_2 = 2;
-static const int32_t DISPALY_ROTATE_3 = 3;
+static const int32_t DISPLAY_ROTATE_0 = 0;
+static const int32_t DISPLAY_ROTATE_1 = 1;
+static const int32_t DISPLAY_ROTATE_2 = 2;
+static const int32_t DISPLAY_ROTATE_3 = 3;
 static const int32_t CAMERA_ORIENTATION_0 = 0;
 static const int32_t CAMERA_FRONT_ORIENTATION = 270;
 static const std::string OHOS_PERMISSION_CAMERA = "ohos.permission.CAMERA";
@@ -192,7 +192,7 @@ EXPORT_API int32_t CheckPermission(std::string permissionName, uint32_t callerTo
 
 void AddCameraPermissionUsedRecord(const uint32_t callingTokenId, const std::string permissionName);
 
-int32_t GetStreamRotation(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition, int& disPlayRotation,
+int32_t GetStreamRotation(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition, int& displayRotation,
     std::string& deviceClass);
 
 bool CheckSystemApp();
@@ -260,6 +260,7 @@ int32_t GetCorrectedCameraOrientation(bool usePhysicalCameraOrientation,
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility, int32_t& sensorOrientation, int32_t displayMode = -1);
 int32_t GetPhysicalCameraOrientation(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility,
     int32_t& sensorOrientation, int32_t displayMode = -1);
+int32_t GetDisplayRotation(int32_t& displayRotation);
 } // namespace CameraStandard
 } // namespace OHOS
 #endif // OHOS_CAMERA_UTIL_H
