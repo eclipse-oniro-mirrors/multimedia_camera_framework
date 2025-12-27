@@ -4011,7 +4011,8 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_096, Test
     EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_CaptureSession_CommitConfig(captureSession);
     EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CaptureSession_IsFocusModeSupported(captureSession, Camera_FocusMode::FOCUS_MODE_CONTINUOUS_AUTO, &isSupported);
+    ret = OH_CaptureSession_IsFocusModeSupported(captureSession,
+        Camera_FocusMode::FOCUS_MODE_CONTINUOUS_AUTO, &isSupported);
     EXPECT_EQ(ret, CAMERA_OK);
     if (!isSupported) {
         ret = OH_CaptureSession_SetFocusMode(captureSession, Camera_FocusMode::FOCUS_MODE_CONTINUOUS_AUTO);
