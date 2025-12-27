@@ -67,4 +67,5 @@ interface ICaptureSession{
   [ipccode 38] void SetCameraSwitchRequestCallback([in] ICameraSwitchSessionCallback callbackFunc);
   [ipccode 39] void UnSetCameraSwitchRequestCallback();
   [ipccode 40] void GetCompositionStream([out] IRemoteObject compositionStreamRemote);
+  [ipccode 41] void GetSensorRotationOnce([out] int sensorRotation);
 }

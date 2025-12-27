@@ -115,7 +115,7 @@ public:
     int32_t SetBandwidthCompression(bool isEnable) override;
     int32_t SetPreviewRotation(std::string &deviceClass);
     bool SetMirrorForLivePhoto(bool isEnable, int32_t mode);
-    void SetStreamTransform(int disPlayRotation = -1);
+    void SetStreamTransform(int displayRotation = -1);
     void SetUsedAsPosition(camera_position_enum_t cameraPosition);
     int32_t AttachMetaSurface(const sptr<OHOS::IBufferProducer>& producer, int32_t videoMetaType) override;
     // 兼容老接口，业务可能和SetMetaProducer 重复需要梳理SetMetaProducer逻辑重新整理，videoMetaType 参考 VideoMetaType

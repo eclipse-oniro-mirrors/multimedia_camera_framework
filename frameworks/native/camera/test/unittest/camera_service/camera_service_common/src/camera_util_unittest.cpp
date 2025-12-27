@@ -206,22 +206,22 @@ HWTEST_F(CameraUtilUnitTest, camera_util_unittest_004, TestSize.Level0)
  */
 HWTEST_F(CameraUtilUnitTest, camera_util_unittest_005, TestSize.Level0)
 {
-    int32_t sensorOrientation = DISPALY_ROTATE_0;
+    int32_t sensorOrientation = DISPLAY_ROTATE_0;
     camera_position_enum_t cameraPosition = OHOS_CAMERA_POSITION_BACK;
     int disPlayRotation = 1;
     std::string deviceClass = "phone";
     int32_t ret = GetStreamRotation(sensorOrientation, cameraPosition, disPlayRotation, deviceClass);
     EXPECT_EQ(ret, TEST_STREAM_ROTATION_1);
 
-    sensorOrientation = DISPALY_ROTATE_1;
+    sensorOrientation = DISPLAY_ROTATE_1;
     ret = GetStreamRotation(sensorOrientation, cameraPosition, disPlayRotation, deviceClass);
     EXPECT_EQ(ret, TEST_STREAM_ROTATION_2);
 
-    sensorOrientation = DISPALY_ROTATE_2;
+    sensorOrientation = DISPLAY_ROTATE_2;
     ret = GetStreamRotation(sensorOrientation, cameraPosition, disPlayRotation, deviceClass);
     EXPECT_EQ(ret, TEST_STREAM_ROTATION_3);
 
-    sensorOrientation = DISPALY_ROTATE_3;
+    sensorOrientation = DISPLAY_ROTATE_3;
     ret = GetStreamRotation(sensorOrientation, cameraPosition, disPlayRotation, deviceClass);
     EXPECT_EQ(ret, TEST_STREAM_ROTATION_4);
 
@@ -230,17 +230,17 @@ HWTEST_F(CameraUtilUnitTest, camera_util_unittest_005, TestSize.Level0)
     EXPECT_EQ(ret, TEST_STREAM_ROTATION_5);
 
 
-    sensorOrientation = DISPALY_ROTATE_0;
+    sensorOrientation = DISPLAY_ROTATE_0;
     cameraPosition = OHOS_CAMERA_POSITION_BACK;
-    disPlayRotation = DISPALY_ROTATE_0;
+    disPlayRotation = DISPLAY_ROTATE_0;
     ret = GetStreamRotation(sensorOrientation, cameraPosition, disPlayRotation, deviceClass);
     EXPECT_EQ(ret, STREAM_ROTATE_0);
 
-    disPlayRotation = DISPALY_ROTATE_2;
+    disPlayRotation = DISPLAY_ROTATE_2;
     ret = GetStreamRotation(sensorOrientation, cameraPosition, disPlayRotation, deviceClass);
     EXPECT_EQ(ret, STREAM_ROTATE_180);
 
-    disPlayRotation = DISPALY_ROTATE_3;
+    disPlayRotation = DISPLAY_ROTATE_3;
     ret = GetStreamRotation(sensorOrientation, cameraPosition, disPlayRotation, deviceClass);
     EXPECT_EQ(ret, STREAM_ROTATE_90);
 }

@@ -8182,6 +8182,18 @@ function getCameraManager(context: Context): CameraManager;
      */
     getPreviewRotation(displayRotation: number): ImageRotation;
 
+    /**
+     * Gets the preview rotation angle.
+     *
+     * @returns { ImageRotation } The preview rotation angle.
+     * @throws { BusinessError } 7400201 - Camera service fatal error.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @stagemodelonly
+     * @atomicservice
+     * @since 23 dynamic&static
+     */
+    getPreviewRotation(): ImageRotation
+
      /**
       * Sets the preview rotation angle.
       *
@@ -9401,6 +9413,18 @@ function getCameraManager(context: Context): CameraManager;
     getPhotoRotation(deviceDegree: number): ImageRotation;
 
     /**
+     * Gets the photo rotation angle.
+     *
+     * @returns { ImageRotation } The photo rotation angle.
+     * @throws { BusinessError } 7400201 - Camera service fatal error.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @stagemodelonly
+     * @atomicservice
+     * @since 23 dynamic&static
+     */
+    getPhotoRotation(): ImageRotation
+
+    /**
      * Confirm if auto aigc photo supported.
      *
      * @returns { boolean } TRUE if auto aigc photo is supported.
@@ -9777,6 +9801,18 @@ function getCameraManager(context: Context): CameraManager;
      * @since 12
      */
     getVideoRotation(deviceDegree: number): ImageRotation;
+
+    /**
+     * Gets the video rotation angle.
+     *
+     * @returns { ImageRotation } The video rotation angle.
+     * @throws { BusinessError } 7400201 - Camera service fatal error.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @stagemodelonly
+     * @atomicservice
+     * @since 23 dynamic&static
+     */
+    getVideoRotation(): ImageRotation
 
     /**
      * Confirm if auto deferred video enhancement is supported in the specific device.

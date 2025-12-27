@@ -100,6 +100,11 @@ public:
     int32_t Resume();
 
     /**
+     * @brief get the video rotation angle without imageRotation.
+     */
+    int32_t GetVideoRotation();
+
+    /**
      * @brief get the video rotation angle.
      */
     int32_t GetVideoRotation(int32_t imageRotation);

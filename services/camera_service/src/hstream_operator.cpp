@@ -289,7 +289,8 @@ void HStreamOperator::StartMovingPhotoStream(const std::shared_ptr<OHOS::Camera:
 
 void HStreamOperator::DisplayRotationListener::OnChange(OHOS::Rosen::DisplayId displayId)
 {
-    sptr<Rosen::DisplayLite> display = Rosen::DisplayManagerLite::GetInstance().GetDefaultDisplay();
+    CHECK_RETURN(!OHOS::Rosen::DisplayManagerLite::GetInstance().IsOnboardDisplay(displayId));
+    auto display = Rosen::DisplayManagerLite::GetInstance().GetDisplayById(displayId);
     if (display == nullptr) { // LCOV_EXCL_LINE
         MEDIA_INFO_LOG("Get display info failed, display:%{public}" PRIu64 "", displayId);
         display = Rosen::DisplayManagerLite::GetInstance().GetDisplayById(0);
@@ -1066,9 +1067,6 @@ int32_t HStreamOperator::StartPreviewStream(const std::shared_ptr<OHOS::Camera::
         CHECK_BREAK_ELOG(
             movingPhotoErrorCode != CAMERA_OK, "Failed to start movingPhoto, rc: %{public}d", movingPhotoErrorCode);
     }
-#ifdef CAMERA_USE_SENSOR
-    RegisterSensorCallback();
-#endif
     return errorCode;
 }
 
@@ -2471,6 +2469,12 @@ void HStreamOperator::SetMechCallback(std::function<void(int32_t,
 {
     std::lock_guard<std::mutex> lock(mechCallbackLock_);
     mechCallback_ = callback;
+}
+
+int32_t HStreamOperator::GetSensorRotation()
+{
+    MEDIA_INFO_LOG("GetSensorRotation is called, current sensorRotation: %{public}d", sensorRotation);
+    return sensorRotation;
 }
 } // namespace CameraStandard
 } // namespace OHOS

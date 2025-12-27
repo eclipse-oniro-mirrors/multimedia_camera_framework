@@ -331,6 +331,7 @@ private:
     static void GravityDataCallbackImpl(SensorEvent* event);
     static int32_t CalcSensorRotation(int32_t sensorDegree);
     static int32_t CalcRotationDegree(GravityData data);
+    int32_t GetSensorRotationOnce(int32_t& sensorRotation) override;
 #endif
 
     std::string GetConcurrentCameraIds(pid_t pid);

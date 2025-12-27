@@ -11330,5 +11330,24 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_100, TestSize.Level0)
     EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
     session->UnSetCompositionEffectReceiveCallback();
 }
+
+/*
+ * Feature: Framework
+ * Function: Test GetSensorRotationOnce when session is not configured
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetSensorRotationOnce when session is not configured
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_104, TestSize.Level0)
+{
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(sessionForSys, nullptr);
+ 
+    int32_t sensorRotation = 0;
+    int32_t ret = sessionForSys->GetSensorRotationOnce(sensorRotation);
+    EXPECT_EQ(errCode, CameraErrorCode::SUCCESS);
+}
 }
 }

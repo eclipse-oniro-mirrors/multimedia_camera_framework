@@ -1238,6 +1238,57 @@ void PhotoOutput::CameraServerDied(pid_t pid)
     }
 }
 
+int32_t PhotoOutput::GetPhotoRotation()
+{
+    MEDIA_DEBUG_LOG("PhotoOutput GetPhotoRotation without imageRotation is called");
+    int32_t sensorOrientation = 0;
+    int32_t imageRotation = 0;
+    CameraPosition cameraPosition;
+    ImageRotation result = ImageRotation::ROTATION_0;
+    sptr<CameraDevice> cameraObj;
+    auto session = GetSession();
+    // LCOV_EXCL_START
+    CHECK_RETURN_RET_ELOG(
+        session == nullptr, SERVICE_FATL_ERROR, "PhotoOutput GetPhotoRotation error!, session is nullptr");
+    auto inputDevice = session->GetInputDevice();
+    CHECK_RETURN_RET_ELOG(
+        inputDevice == nullptr, SERVICE_FATL_ERROR, "PhotoOutput GetPhotoRotation error!, inputDevice is nullptr");
+    cameraObj = inputDevice->GetCameraDeviceInfo();
+    CHECK_RETURN_RET_ELOG(
+        cameraObj == nullptr, SERVICE_FATL_ERROR, "PhotoOutput GetPhotoRotation error!, cameraObj is nullptr");
+    cameraPosition = cameraObj->GetPosition();
+    CHECK_RETURN_RET_ELOG(cameraPosition == CAMERA_POSITION_UNSPECIFIED, SERVICE_FATL_ERROR,
+        "PhotoOutput GetPhotoRotation error!, cameraPosition is unspecified");
+    sensorOrientation = static_cast<int32_t>(cameraObj->GetCameraOrientation());
+#ifdef CAMERA_USE_SENSOR
+    ConnectionType connectionType = cameraObj->GetConnectionType();
+    if (connectionType == CAMERA_CONNECTION_BUILT_IN) {
+        int32_t ret = session->GetSensorRotationOnce(imageRotation);
+        CHECK_RETURN_RET_ELOG(
+            ret != CAMERA_OK, SERVICE_FATL_ERROR, "PhotoOutput::GetPhotoRotation GetSensorRotationOnce failed");
+    }
+#endif
+    if (cameraPosition == CAMERA_POSITION_BACK) {
+        result = (ImageRotation)((imageRotation + sensorOrientation) % CAPTURE_ROTATION_BASE);
+    } else if (cameraPosition == CAMERA_POSITION_FRONT || cameraPosition == CAMERA_POSITION_FOLD_INNER) {
+        result = (ImageRotation)((sensorOrientation - imageRotation + CAPTURE_ROTATION_BASE) % CAPTURE_ROTATION_BASE);
+    }
+    auto streamCapturePtr = CastStream<IStreamCapture>(GetStream());
+    int32_t errCode = CAMERA_UNKNOWN_ERROR;
+    if (streamCapturePtr) {
+        errCode = streamCapturePtr->SetCameraPhotoRotation(true);
+        CHECK_RETURN_RET_ELOG(
+            errCode != CAMERA_OK, SERVICE_FATL_ERROR, "Failed to SetCameraRotation! , errCode: %{public}d", errCode);
+    } else {
+        MEDIA_ERR_LOG("PhotoOutput::SetCameraRotation() itemStream is nullptr");
+        return CameraErrorCode::SERVICE_FATL_ERROR;
+    }
+    MEDIA_INFO_LOG("GetPhotoRotation :result %{public}d, imageRotation %{public}d, sensorOrientation:%{public}d",
+        result, imageRotation, sensorOrientation);
+    return result;
+    // LCOV_EXCL_STOP
+}
+
 int32_t PhotoOutput::GetPhotoRotation(int32_t imageRotation)
 {
     MEDIA_DEBUG_LOG("PhotoOutput GetPhotoRotation is called");

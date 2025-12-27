@@ -491,6 +491,58 @@ int32_t VideoOutput::canSetFrameRateRange(int32_t minFrameRate, int32_t maxFrame
     // LCOV_EXCL_STOP
 }
 
+int32_t VideoOutput::GetVideoRotation()
+{
+    MEDIA_DEBUG_LOG("VideoOutput GetVideoRotation without imageRotation is called");
+    int32_t sensorOrientation = 0;
+    int32_t imageRotation = 0;
+    CameraPosition cameraPosition;
+    ImageRotation result = ImageRotation::ROTATION_0;
+    sptr<CameraDevice> cameraObj;
+    auto session = GetSession();
+    CHECK_RETURN_RET_ELOG(
+        session == nullptr, SERVICE_FATL_ERROR, "VideoOutput GetVideoRotation error!, session is nullptr");
+    // LCOV_EXCL_START
+    auto inputDevice = session->GetInputDevice();
+    CHECK_RETURN_RET_ELOG(
+        inputDevice == nullptr, SERVICE_FATL_ERROR, "VideoOutput GetVideoRotation error!, inputDevice is nullptr");
+    cameraObj = inputDevice->GetCameraDeviceInfo();
+    CHECK_RETURN_RET_ELOG(
+        cameraObj == nullptr, SERVICE_FATL_ERROR, "VideoOutput GetVideoRotation error!, cameraObj is nullptr");
+    cameraPosition = cameraObj->GetPosition();
+    CHECK_RETURN_RET_ELOG(cameraPosition == CAMERA_POSITION_UNSPECIFIED, SERVICE_FATL_ERROR,
+        "VideoOutput GetVideoRotation error!, cameraPosition is unspecified");
+    sensorOrientation = static_cast<int32_t>(cameraObj->GetCameraOrientation());
+#ifdef CAMERA_USE_SENSOR
+    ConnectionType connectionType = cameraObj->GetConnectionType();
+    if (connectionType == CAMERA_CONNECTION_BUILT_IN) {
+        int32_t ret = session->GetSensorRotationOnce(imageRotation);
+        CHECK_RETURN_RET_ELOG(
+            ret != CAMERA_OK, SERVICE_FATL_ERROR, "VideoOutput::GetVideoRotation GetSensorRotationOnce failed");
+    }
+#endif
+    if (cameraPosition == CAMERA_POSITION_BACK) {
+        result = (ImageRotation)((imageRotation + sensorOrientation) % CAPTURE_ROTATION_BASE);
+    } else if (cameraPosition == CAMERA_POSITION_FRONT || cameraPosition == CAMERA_POSITION_FOLD_INNER) {
+        result = (ImageRotation)((sensorOrientation - imageRotation + CAPTURE_ROTATION_BASE) % CAPTURE_ROTATION_BASE);
+    }
+    bool isMirrorEnabled = false;
+    if (result != ImageRotation::ROTATION_0 && result != ImageRotation::ROTATION_180 && IsMirrorSupported()) {
+        auto stream = GetStream();
+        sptr<IStreamRepeat> itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
+        if (itemStream != nullptr) {
+            int32_t ret = itemStream->GetMirror(isMirrorEnabled);
+            CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, ServiceToCameraError(ret), "VideoOutput::getMirror failed");
+            result = (isMirrorEnabled == false) ? result :
+                (ImageRotation)((result + ImageRotation::ROTATION_180) % CAPTURE_ROTATION_BASE);
+        }
+    }
+    MEDIA_INFO_LOG("GetVideoRotation :result %{public}d, imageRotation %{public}d, sensorOrientation:%{public}d, "
+        "isMirrorEnabled%{public}d", result, imageRotation, sensorOrientation, isMirrorEnabled);
+    return result;
+    // LCOV_EXCL_STOP
+}
+
 int32_t VideoOutput::GetVideoRotation(int32_t imageRotation)
 {
     MEDIA_DEBUG_LOG("VideoOutput GetVideoRotation is called");

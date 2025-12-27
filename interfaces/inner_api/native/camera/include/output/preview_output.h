@@ -152,6 +152,13 @@ public:
     float GetSketchRatio();
 
     /**
+     * @brief get the preview rotation angle without imageRotation.
+     *
+     * @return result of the preview rotation angle.
+     */
+    int32_t GetPreviewRotation();
+
+    /**
      * @brief get the preview rotation angle.
      *
      * @return result of the photo rotation angle.
@@ -318,6 +325,7 @@ private:
     int32_t CreateSketchWrapper(Size sketchSize);
     int32_t StartSketch();
     int32_t StopSketch();
+    int32_t GetImageRotation(int32_t& imageRotation);
     void InitWhiteList();
     bool CheckInWhiteList();
     void CameraServerDied(pid_t pid) override;
