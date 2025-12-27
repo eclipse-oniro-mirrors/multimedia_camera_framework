@@ -13,20 +13,11 @@
  * limitations under the License.
  */
 
-#include <cstring>
 #include "ani_base_context.h"
 #include "bool_wrapper.h"
-#include "ohos.multimedia.cameraPicker.proj.hpp"
-#include "ohos.multimedia.cameraPicker.impl.hpp"
-#include "taihe/runtime.hpp"
-#include "stdexcept"
 #include "int_wrapper.h"
 #include "camera_picker_taihe.h"
-#include "camera_utils_taihe.h"
-#include "camera_log.h"
 #include "parameters.h"
-#include "string_wrapper.h"
-#include "camera_worker_queue_keeper_taihe.h"
 
 using namespace taihe;
 using namespace ohos::multimedia::cameraPicker;

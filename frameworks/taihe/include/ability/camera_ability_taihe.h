@@ -16,9 +16,6 @@
 #ifndef CAMERA_ABILITY_TAIHE_H
 #define CAMERA_ABILITY_TAIHE_H
 
-#include "ohos.multimedia.camera.proj.hpp"
-#include "ohos.multimedia.camera.impl.hpp"
-#include "taihe/runtime.hpp"
 #include "ability/camera_ability.h"
 #include "camera_query_taihe.h"
 

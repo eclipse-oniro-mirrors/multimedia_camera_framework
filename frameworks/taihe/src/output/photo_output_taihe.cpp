@@ -14,27 +14,10 @@
  */
 
 #include "photo_output_taihe.h"
-#include "camera_buffer_handle_utils.h"
-#include "camera_utils_taihe.h"
-#include "camera_log.h"
-#include "camera_manager.h"
 #include "camera_security_utils_taihe.h"
-#include "camera_template_utils_taihe.h"
-#include "picture_proxy.h"
-#include "task_manager.h"
 #include "video_key_info.h"
-#include "buffer_extra_data_impl.h"
-#include "dp_utils.h"
-#include "deferred_photo_proxy_taihe.h"
-#include "video_key_info.h"
-#include "image_taihe.h"
-#include "image_receiver.h"
-#include "hdr_type.h"
 #include "photo_taihe.h"
-#include "pixel_map_taihe.h"
 #include "media_library_comm_ani.h"
-#include "metadata_helper.h"
-#include "photo_output_callback.h"
 
 namespace Ani {
 namespace Camera {
@@ -854,7 +837,7 @@ Profile PhotoOutputImpl::GetActiveProfile()
     CHECK_RETURN_RET_ELOG(photoOutput_ == nullptr, res, "GetActiveProfile failed, photoOutput_ is nullptr");
     auto profile = photoOutput_->GetPhotoProfile();
     CHECK_RETURN_RET_ELOG(profile == nullptr, res, "GetActiveProfile failed, profile is nullptr");
-    CameraFormat cameraFormat = CameraUtilsTaihe::ToTaiheCameraFormat(profile->GetCameraFormat());
+    CameraFormat cameraFormat = CameraFormat::from_value(static_cast<int32_t>(profile->GetCameraFormat()));
     res.size.height = profile->GetSize().height;
     res.size.width = profile->GetSize().width;
     res.format = cameraFormat;

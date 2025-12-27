@@ -18,6 +18,8 @@
 #include "taihe/runtime.hpp"
 #include "ohos.multimedia.camera.proj.hpp"
 #include "ohos.multimedia.camera.impl.hpp"
+#include "ohos.multimedia.cameraPicker.proj.hpp"
+#include "ohos.multimedia.cameraPicker.impl.hpp"
 #include "camera_output_capability.h"
 #include "camera_device.h"
 #include "capture_session.h"
@@ -27,6 +29,7 @@
 #include "video_output.h"
 #include "time_lapse_photo_session.h"
 #include "slow_motion_session.h"
+#include "camera_log.h"
 
 namespace Ani::Camera {
 using namespace taihe;
@@ -36,20 +39,12 @@ using namespace OHOS;
 class CameraUtilsTaihe {
 public:
     static string ToTaiheString(const std::string &src);
-    static CameraPosition ToTaihePosition(OHOS::CameraStandard::CameraPosition position);
-    static CameraType ToTaiheCameraType(OHOS::CameraStandard::CameraType type);
     static CameraDevice ToTaiheCameraDevice(sptr<OHOS::CameraStandard::CameraDevice> &obj);
     static CameraDevice GetNullCameraDevice();
     static array<CameraDevice> GetNullCameraDeviceArray();
-    static ConnectionType ToTaiheConnectionType(OHOS::CameraStandard::ConnectionType type);
-    static CameraFormat ToTaiheCameraFormat(OHOS::CameraStandard::CameraFormat format);
-    static DepthDataQualityLevel ToTaiheDepthDataQualityLevel(int32_t level);
-    static DepthDataAccuracy ToTaiheDepthDataAccuracy(OHOS::CameraStandard::DepthDataAccuracy dataAccuracy);
     static array<DepthProfile> ToTaiheArrayDepthProfiles(std::vector<OHOS::CameraStandard::DepthProfile> profiles);
     static array<MetadataObjectType> ToTaiheArrayMetadataTypes(
         std::vector<OHOS::CameraStandard::MetadataObjectType> types);
-    static FocusState ToTaiheFocusState(OHOS::CameraStandard::FocusCallback::FocusState format);
-    static MetadataObjectType ToTaiheMetadataObjectType(OHOS::CameraStandard::MetadataObjectType format);
     static array<MetadataObject> ToTaiheMetadataObjectsAvailableData(
         const std::vector<sptr<OHOS::CameraStandard::MetadataObject>> metadataObjList);
     static array<Profile> ToTaiheArrayProfiles(std::vector<OHOS::CameraStandard::Profile> profile);
@@ -60,17 +55,7 @@ public:
     static CameraOutputCapability ToTaiheCameraOutputCapability(
         sptr<OHOS::CameraStandard::CameraOutputCapability> &src);
     static SketchStatusData ToTaiheSketchStatusData(const OHOS::CameraStandard::SketchStatusData& sketchStatusData);
-    static SceneFeatureType ToTaiheSceneFeatureType(OHOS::CameraStandard::SceneFeature type);
     static bool ToTaiheMacroStatus(OHOS::CameraStandard::MacroStatusCallback::MacroStatus status);
-    static ohos::multimedia::camera::TimeLapsePreviewType ToTaiheTimeLapsePreviewType(
-        OHOS::CameraStandard::TimeLapsePreviewType type);
-    static SlowMotionStatus ToTaiheSlowMotionState(OHOS::CameraStandard::SlowMotionState type);
-    static EffectSuggestionType ToTaiheEffectSuggestionType(
-        OHOS::CameraStandard::EffectSuggestionType effectSuggestionType);
-    static SystemPressureLevel ToTaiheSystemPressureLevel(
-        OHOS::CameraStandard::PressureStatus systemPressureLevel);
-    static LightStatus ToTaiheLightStatus(int32_t status);
-    static FocusTrackingMode ToTaiheFocusTrackingMode(OHOS::CameraStandard::FocusTrackingMode mode);
     static array<FrameRateRange> ToTaiheArrayFrameRateRange(std::vector<std::vector<int32_t>> ratesRange);
     static array<PhysicalAperture> ToTaiheArrayPhysicalAperture(std::vector<std::vector<float>> physicalApertures);
     static array<ZoomPointInfo> ToTaiheArrayZoomPointInfo(

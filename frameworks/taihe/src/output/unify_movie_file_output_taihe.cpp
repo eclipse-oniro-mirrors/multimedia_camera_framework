@@ -653,7 +653,7 @@ VideoProfile UnifyMovieFileOutputImpl::GetActiveVideoProfile()
         "GetActiveVideoProfile failed, unifyMovieFileOutput_ is nullptr");
     auto profile = unifyMovieFileOutput_->GetVideoProfile();
     CHECK_RETURN_RET_ELOG(profile == nullptr, res, "GetActiveVideoProfile failed, profile is nullptr");
-    CameraFormat cameraFormat = CameraUtilsTaihe::ToTaiheCameraFormat(profile->GetCameraFormat());
+    CameraFormat cameraFormat = CameraFormat::from_value(static_cast<int32_t>(profile->GetCameraFormat()));
     res.base.size.height = profile->GetSize().height;
     res.base.size.width = profile->GetSize().width;
     res.base.format = cameraFormat;

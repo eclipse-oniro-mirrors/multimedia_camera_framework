@@ -14,7 +14,6 @@
  */
 
 #include "camera_output_taihe.h"
-#include "camera_log.h"
 
 namespace Ani {
 namespace Camera {

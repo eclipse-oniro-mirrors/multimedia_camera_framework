@@ -16,12 +16,8 @@
 #ifndef FRAMEWORKS_TAIHE_INCLUDE_METADATA_OUTPUT_TAIHE_H
 #define FRAMEWORKS_TAIHE_INCLUDE_METADATA_OUTPUT_TAIHE_H
 
-#include "ohos.multimedia.camera.proj.hpp"
-#include "ohos.multimedia.camera.impl.hpp"
-#include "taihe/runtime.hpp"
 #include "camera_worker_queue_keeper_taihe.h"
 #include "camera_output_taihe.h"
-#include "input/camera_manager.h"
 #include "metadata_output.h"
 #include "camera_event_emitter_taihe.h"
 #include "listener_base_taihe.h"

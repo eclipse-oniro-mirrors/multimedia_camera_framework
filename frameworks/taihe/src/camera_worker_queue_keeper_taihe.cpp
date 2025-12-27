@@ -15,14 +15,6 @@
 
 #include "camera_worker_queue_keeper_taihe.h"
 
-#include <algorithm>
-#include <chrono>
-#include <cstdint>
-#include <memory>
-#include <mutex>
-#include <new>
-
-#include "camera_log.h"
 #include "camera_utils_taihe.h"
 namespace Ani {
 namespace Camera {

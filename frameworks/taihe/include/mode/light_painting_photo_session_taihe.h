@@ -16,11 +16,8 @@
 #ifndef FRAMEWORKS_TAIHE_INCLUDE_LIGHT_PAINTING_PHOTO_SESSION_TAIHE_H
 #define FRAMEWORKS_TAIHE_INCLUDE_LIGHT_PAINTING_PHOTO_SESSION_TAIHE_H
 
-#include "ohos.multimedia.camera.proj.hpp"
-#include "ohos.multimedia.camera.impl.hpp"
 #include "session/camera_session_taihe.h"
 #include "session/light_painting_session.h"
-#include "taihe/runtime.hpp"
 
 namespace Ani {
 namespace Camera {

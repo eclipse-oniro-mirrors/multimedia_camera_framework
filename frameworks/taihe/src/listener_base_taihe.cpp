@@ -13,9 +13,6 @@
  * limitations under the License.
  */
 #include "listener_base_taihe.h"
-#include "camera_utils_taihe.h"
-#include "camera_log.h"
-#include "event_handler.h"
 
 using namespace taihe;
 using namespace ohos::multimedia::camera;

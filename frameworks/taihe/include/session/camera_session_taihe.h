@@ -16,11 +16,6 @@
 #ifndef FRAMEWORKS_TAIHE_INCLUDE_CAMERA_SESSION_TAIHE_H
 #define FRAMEWORKS_TAIHE_INCLUDE_CAMERA_SESSION_TAIHE_H
 
-#include "ohos.multimedia.camera.proj.hpp"
-#include "ohos.multimedia.camera.impl.hpp"
-#include "taihe/runtime.hpp"
-#include "session/capture_session.h"
-#include "session/capture_session_for_sys.h"
 #include "camera_worker_queue_keeper_taihe.h"
 #include "camera_event_emitter_taihe.h"
 #include "listener_base_taihe.h"

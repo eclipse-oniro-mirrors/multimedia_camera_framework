@@ -16,8 +16,6 @@
 #include "camera_transfer_taihe.h"
 
 #include "camera_lib_manager_taihe.h"
-#include "camera_log.h"
-#include "image_taihe.h"
 #include "camera_input_taihe.h"
 #include "photo_output_taihe.h"
 #include "preview_output_taihe.h"

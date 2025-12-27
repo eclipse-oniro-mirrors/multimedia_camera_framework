@@ -14,17 +14,9 @@
  */
 
 #include "camera_const_ability_taihe.h"
-#include "camera_utils_taihe.h"
-#include "camera_template_utils_taihe.h"
-#include "session/camera_session_taihe.h"
-#include "camera_log.h"
-#include "camera_error_code.h"
 #include "camera_input_taihe.h"
-#include "camera_output_taihe.h"
-#include "camera_input.h"
 #include "camera_security_utils_taihe.h"
 #include "camera_query_taihe.h"
-#include "capture_session_for_sys.h"
 
 namespace Ani {
 namespace Camera {

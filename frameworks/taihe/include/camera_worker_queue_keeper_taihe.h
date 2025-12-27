@@ -16,11 +16,7 @@
 #ifndef FRAMEWORKS_TAIHE_INCLUDE_CAMERA_WORKER_QUEUE_KEEPER_TAIHE_H
 #define FRAMEWORKS_TAIHE_INCLUDE_CAMERA_WORKER_QUEUE_KEEPER_TAIHE_H
 
-#include <cstdint>
-#include <functional>
-#include <condition_variable>
 #include <list>
-#include <memory>
 #include <mutex>
 
 namespace Ani {
