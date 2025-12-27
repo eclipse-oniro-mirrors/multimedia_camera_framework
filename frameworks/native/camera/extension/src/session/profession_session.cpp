@@ -39,20 +39,6 @@ ProfessionSession::~ProfessionSession()
     apertureInfoCallback_ = nullptr;
     luminationInfoCallback_ = nullptr;
 }
-// metering mode
-const std::unordered_map<camera_meter_mode_t, MeteringMode> ProfessionSession::metaMeteringModeMap_ = {
-    {OHOS_CAMERA_SPOT_METERING,             METERING_MODE_SPOT},
-    {OHOS_CAMERA_REGION_METERING,           METERING_MODE_REGION},
-    {OHOS_CAMERA_OVERALL_METERING,          METERING_MODE_OVERALL},
-    {OHOS_CAMERA_CENTER_WEIGHTED_METERING,  METERING_MODE_CENTER_WEIGHTED}
-};
-
-const std::unordered_map<MeteringMode, camera_meter_mode_t> ProfessionSession::fwkMeteringModeMap_ = {
-    {METERING_MODE_SPOT,                    OHOS_CAMERA_SPOT_METERING},
-    {METERING_MODE_REGION,                  OHOS_CAMERA_REGION_METERING},
-    {METERING_MODE_OVERALL,                 OHOS_CAMERA_OVERALL_METERING},
-    {METERING_MODE_CENTER_WEIGHTED,         OHOS_CAMERA_CENTER_WEIGHTED_METERING}
-};
 
 // FocusAssistFlash mode
 const std::unordered_map<camera_focus_assist_flash_mode_enum_t, FocusAssistFlashMode>

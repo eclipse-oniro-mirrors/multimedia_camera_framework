@@ -366,6 +366,7 @@ static const std::unordered_map<std::string, int32_t> mapExposureMeteringMode = 
     {"MATRIX", 0},
     {"CENTER", 1},
     {"SPOT", 2},
+    {"CENTER_HIGHLIGHT_WEIGHTED", 3},
 };
 
 static const std::unordered_map<std::string, int32_t> mapEffectSuggestionType = {

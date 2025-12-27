@@ -538,6 +538,7 @@ public:
     static napi_value OffIsoInfoChange(napi_env env, napi_callback_info info);
 
     static napi_value SetParameters(napi_env env, napi_callback_info info);
+    static napi_value SetExposureMeteringMode(napi_env env, napi_callback_info info);
 
     napi_env env_;
     sptr<CaptureSession> cameraSession_;
@@ -737,7 +738,12 @@ protected:
         napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce) {}
     virtual void UnregisterStitchingCaptureStateCallbackListener(const std::string& eventName,
         napi_env env, napi_value callback, const std::vector<napi_value>& args) {}
-
+    typedef enum {
+        MATRIX = 0,
+        CENTER = 1,
+        SPOT = 2,
+        CENTER_HIGHLIGHT_WEIGHTED = 3
+    } ExposureMeteringModeofSdk;
 };
 
 struct CameraSessionAsyncContext : public AsyncContext {

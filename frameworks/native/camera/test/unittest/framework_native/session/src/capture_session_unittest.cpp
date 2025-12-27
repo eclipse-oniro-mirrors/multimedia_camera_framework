@@ -11330,5 +11330,41 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_100, TestSize.Level0)
     EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
     session->UnSetCompositionEffectReceiveCallback();
 }
+
+/*
+ *Feature: Framework
+ *Function: Test CaptureSession with SetExposureMeteringMode.
+ *SubFunction: NA
+ *FunctionPoints: NA
+ *EnvConditions: NA
+ *CaseDescription: Test CaptureSession with SetExposureMeteringMode.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_103, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+ 
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+    MeteringMode mode = MeteringMode::METERING_MODE_SPOT;
+    EXPECT_NE(session->SetExposureMeteringMode(mode), 0);
+ 
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    EXPECT_EQ(session->SetExposureMeteringMode(mode), 0);
+ 
+    session->LockForControl();
+    EXPECT_EQ(session->SetExposureMeteringMode(mode), 0);
+    session->UnlockForControl();
+}
 }
 }
