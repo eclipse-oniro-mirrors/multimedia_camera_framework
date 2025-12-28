@@ -6543,13 +6543,6 @@ std::vector<NightSubMode> CaptureSession::GetSupportedNightSubModeTypes()
     return abilityContainer->GetSupportedNightSubModeTypes();
 }
 
-void CaptureSession::SetMacroStatusCallback(std::shared_ptr<MacroStatusCallback> callback)
-{
-    MEDIA_DEBUG_LOG("CaptureSession::SetMacroStatusCallback ENTER");
-    std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
-    macroStatusCallback_ = callback;
-}
-
 void CaptureSession::SetPhotoQualityPrioritization(camera_photo_quality_prioritization_t quality)
 {
     MEDIA_INFO_LOG("CaptureSession::SetPhotoQualityPrioritization quality:%{public}d", quality);

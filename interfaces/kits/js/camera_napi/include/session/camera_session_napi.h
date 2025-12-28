@@ -374,28 +374,6 @@ struct CameraSwitchRequestCallbackInfoCameraId {
         : cameraId_(cameraId), listener_(listener) {}
 };
 
-class MacroStatusCallbackListener : public MacroStatusCallback, public ListenerBase,
-    public std::enable_shared_from_this<MacroStatusCallbackListener> {
-public:
-    MacroStatusCallbackListener(napi_env env) : ListenerBase(env) {}
-    ~MacroStatusCallbackListener() = default;
-    void OnMacroStatusChanged(MacroStatus status) override;
-
-private:
-    void OnMacroStatusCallback(MacroStatus status) const;
-    void OnMacroStatusCallbackAsync(MacroStatus status) const;
-};
-
-struct MacroStatusCallbackInfo {
-    MacroStatusCallback::MacroStatus status_;
-    weak_ptr<const MacroStatusCallbackListener> listener_;
-    MacroStatusCallbackInfo(
-        MacroStatusCallback::MacroStatus status,
-            shared_ptr<const MacroStatusCallbackListener> listener)
-        : status_(status), listener_(listener)
-    {}
-};
-
 class CameraSessionNapi : public CameraNapiEventEmitter<CameraSessionNapi> {
 private:
     sptr<CaptureSession> GetSession()
@@ -559,7 +537,6 @@ public:
     std::shared_ptr<CompositionEndCallbackListener> compositionEndCallback_;
     std::shared_ptr<ImageStabilizationGuideCallbackListener> imageStabilizationGuideCallback_;
     std::shared_ptr<ApertureEffectChangeCallbackListener> apertureEffectChangeCallbackListener_;
-    std::shared_ptr<MacroStatusCallbackListener> macroStatusCallback_ = nullptr;
     std::shared_ptr<CameraSwitchRequestCallbackListener> cameraSwitchSessionNapiCallback_;
 
     static thread_local napi_ref sConstructor_;

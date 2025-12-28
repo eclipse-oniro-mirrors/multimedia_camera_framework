@@ -1834,6 +1834,23 @@ void CameraSessionForSysNapi::UnregisterEffectSuggestionCallbackListener(
     }
 }
 
+void CameraSessionForSysNapi::RegisterMacroStatusCallbackListener(
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+{
+    if (macroStatusCallback_ == nullptr) {
+        macroStatusCallback_ = std::make_shared<MacroStatusCallbackListener>(env);
+        cameraSessionForSys_->SetMacroStatusCallback(macroStatusCallback_);
+    }
+    macroStatusCallback_->SaveCallbackReference(eventName, callback, isOnce);
+}
+
+void CameraSessionForSysNapi::UnregisterMacroStatusCallbackListener(
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
+{
+    CHECK_RETURN_ELOG(macroStatusCallback_ == nullptr, "macroStatusCallback is null");
+    macroStatusCallback_->RemoveCallbackRef(eventName, callback);
+}
+
 void CameraSessionForSysNapi::RegisterFeatureDetectionStatusListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
@@ -1998,6 +2015,43 @@ void LcdFlashStatusCallbackListener::OnLcdFlashStatusChanged(LcdFlashStatusInfo 
     MEDIA_DEBUG_LOG("OnLcdFlashStatusChanged is called, isLcdFlashNeeded: %{public}d, lcdCompensation: %{public}d",
         lcdFlashStatusInfo.isLcdFlashNeeded, lcdFlashStatusInfo.lcdCompensation);
     OnLcdFlashStatusCallbackAsync(lcdFlashStatusInfo);
+}
+
+void MacroStatusCallbackListener::OnMacroStatusCallbackAsync(MacroStatus status) const
+{
+    MEDIA_DEBUG_LOG("OnMacroStatusCallbackAsync is called");
+    auto callbackInfo = std::make_unique<MacroStatusCallbackInfo>(status, shared_from_this());
+    MacroStatusCallbackInfo *event = callbackInfo.get();
+    auto task = [event]() {
+        auto callbackInfo = reinterpret_cast<MacroStatusCallbackInfo*>(event);
+        if (callbackInfo) {
+            auto listener = callbackInfo->listener_.lock();
+            CHECK_EXECUTE(listener != nullptr, listener->OnMacroStatusCallback(callbackInfo->status_));
+            delete callbackInfo;
+        }
+    };
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
+        MEDIA_ERR_LOG("failed to execute work");
+    } else {
+        callbackInfo.release();
+    }
+}
+
+void MacroStatusCallbackListener::OnMacroStatusCallback(MacroStatus status) const
+{
+    MEDIA_DEBUG_LOG("OnMacroStatusCallback is called");
+    napi_value result[ARGS_TWO] = { nullptr, nullptr };
+    napi_value retVal;
+    napi_get_undefined(env_, &result[PARAM0]);
+    napi_get_boolean(env_, status == MacroStatus::ACTIVE, &result[PARAM1]);
+    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
+    ExecuteCallback("macroStatusChanged", callbackNapiPara);
+}
+
+void MacroStatusCallbackListener::OnMacroStatusChanged(MacroStatus status)
+{
+    MEDIA_DEBUG_LOG("OnMacroStatusChanged is called, status: %{public}d", status);
+    OnMacroStatusCallbackAsync(status);
 }
 
 void FeatureDetectionStatusCallbackListener::OnFeatureDetectionStatusChangedCallbackAsync(
