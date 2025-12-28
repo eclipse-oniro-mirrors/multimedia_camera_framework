@@ -65,6 +65,15 @@ std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles1_1(PreconfigType pr
             configs->photoProfile.sizeRatio_ = RATIO_1_1;
             configs->photoProfile.sizeFollowSensorMax_ = true;
             break;
+        case PRECONFIG_HIGH_QUALITY_PHOTOSESSION_BT2020:
+            configs->colorSpace = ColorSpace::BT2020_HLG;
+            configs->previewProfile = { CameraFormat::CAMERA_FORMAT_YCRCB_P010, { .width = 1440, .height = 1440 } };
+            configs->previewProfile.fps_ = { .fixedFps = 30, .minFps = 12, .maxFps = 30 };
+
+            configs->photoProfile = { CameraFormat::CAMERA_FORMAT_JPEG, { .width = 0, .height = 0 } };
+            configs->photoProfile.sizeRatio_ = RATIO_1_1;
+            configs->photoProfile.sizeFollowSensorMax_ = true;
+            break;
         default:
             MEDIA_ERR_LOG(
                 "PhotoSessionForSys::GeneratePreconfigProfiles1_1 not support this config:%{public}d", preconfigType);
@@ -109,6 +118,15 @@ std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles4_3(PreconfigType pr
             configs->photoProfile.sizeRatio_ = RATIO_4_3;
             configs->photoProfile.sizeFollowSensorMax_ = true;
             break;
+        case PRECONFIG_HIGH_QUALITY_PHOTOSESSION_BT2020:
+            configs->colorSpace = ColorSpace::BT2020_HLG;
+            configs->previewProfile = { CameraFormat::CAMERA_FORMAT_YCRCB_P010, { .width = 1920, .height = 1440 } };
+            configs->previewProfile.fps_ = { .fixedFps = 30, .minFps = 12, .maxFps = 30 };
+
+            configs->photoProfile = { CameraFormat::CAMERA_FORMAT_JPEG, { .width = 0, .height = 0 } };
+            configs->photoProfile.sizeRatio_ = RATIO_4_3;
+            configs->photoProfile.sizeFollowSensorMax_ = true;
+            break;
         default:
             MEDIA_ERR_LOG(
                 "PhotoSessionForSys::GeneratePreconfigProfiles4_3 not support this config:%{public}d", preconfigType);
@@ -147,6 +165,15 @@ std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles16_9(PreconfigType p
             break;
         case PRECONFIG_HIGH_QUALITY:
             configs->previewProfile = { CameraFormat::CAMERA_FORMAT_YUV_420_SP, { .width = 2560, .height = 1440 } };
+            configs->previewProfile.fps_ = { .fixedFps = 30, .minFps = 12, .maxFps = 30 };
+
+            configs->photoProfile = { CameraFormat::CAMERA_FORMAT_JPEG, { .width = 0, .height = 0 } };
+            configs->photoProfile.sizeRatio_ = RATIO_16_9;
+            configs->photoProfile.sizeFollowSensorMax_ = true;
+            break;
+        case PRECONFIG_HIGH_QUALITY_PHOTOSESSION_BT2020:
+            configs->colorSpace = ColorSpace::BT2020_HLG;
+            configs->previewProfile = { CameraFormat::CAMERA_FORMAT_YCRCB_P010, { .width = 2560, .height = 1440 } };
             configs->previewProfile.fps_ = { .fixedFps = 30, .minFps = 12, .maxFps = 30 };
 
             configs->photoProfile = { CameraFormat::CAMERA_FORMAT_JPEG, { .width = 0, .height = 0 } };
@@ -267,7 +294,7 @@ int32_t PhotoSessionForSys::Preconfig(PreconfigType preconfigType, ProfileSizeRa
     CHECK_RETURN_RET_ELOG(!IsPreconfigProfilesLegal(configs), SERVICE_FATL_ERROR,
         "PhotoSessionForSys::Preconfig preconfigProfile is illegal.");
     SetPreconfigProfiles(configs);
-    MEDIA_INFO_LOG("PhotoSessionForSys::Preconfig %s", configs->ToString().c_str());
+    MEDIA_INFO_LOG("PhotoSessionForSys::Preconfig profile info\n%{public}s", configs->ToString().c_str());
     return SUCCESS;
 }
 

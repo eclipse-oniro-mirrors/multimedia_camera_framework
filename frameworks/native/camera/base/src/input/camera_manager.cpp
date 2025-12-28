@@ -2807,7 +2807,10 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<Ca
     std::vector<Profile> curPhotoProfiles = camera->modePhotoProfiles_[modeName];
     CHECK_EXECUTE(!IsSystemApp(), RemoveExtendedSupportPhotoFormats(curPhotoProfiles));
     cameraOutputCapability->SetPhotoProfiles(curPhotoProfiles);
-    cameraOutputCapability->SetPreviewProfiles(camera->modePreviewProfiles_[modeName]);
+    std::vector<Profile> curPreviewProfiles = camera->modePreviewProfiles_[modeName];
+    CHECK_EXECUTE(!IsSystemApp() && modeName == static_cast<int32_t>(SceneMode::CAPTURE),
+        FillSupportPreviewFormats(curPreviewProfiles));
+    cameraOutputCapability->SetPreviewProfiles(curPreviewProfiles);
     if (!isPhotoMode_.count(modeName)) {
         cameraOutputCapability->SetVideoProfiles(camera->modeVideoProfiles_[modeName]);
     }
@@ -2846,6 +2849,10 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedFullOutputCapability(spt
     CHECK_RETURN_RET(camera == nullptr, nullptr);
     sptr<CameraOutputCapability> cameraOutputCapability = GetSupportedFullOutputCapability(camera, modeName);
     CHECK_RETURN_RET(cameraOutputCapability == nullptr, nullptr);
+    // report full preview capabilities in this interface
+    cameraOutputCapability->SetPreviewProfiles(camera->GetFullPreviewProfiles(modeName));
+    MEDIA_INFO_LOG("GetFullPreviewProfiles size = %{public}zu",
+                   cameraOutputCapability->GetPreviewProfiles().size());
     std::vector<Profile> photoProfiles = cameraOutputCapability->GetPhotoProfiles();
     CHECK_EXECUTE(!IsSystemApp(), FillExtendedSupportPhotoFormats(photoProfiles));
     cameraOutputCapability->SetPhotoProfiles(photoProfiles);
@@ -2875,6 +2882,9 @@ sptr<CameraOutputCapability> CameraManager::ParseSupportedOutputCapability(sptr<
     if (IsSystemApp()) {
         FillSupportPhotoFormats(profilesWrapper.photoProfiles);
     }
+    // save full preview capabilities in camera device
+    camera->SetFullPreviewProfiles(modeName, profilesWrapper.previewProfiles);
+    // remove preview hdr capabilities for non-sys apps
     CHECK_EXECUTE(!IsSystemApp() && modeName == static_cast<int32_t>(SceneMode::CAPTURE),
         FillSupportPreviewFormats(profilesWrapper.previewProfiles));
     cameraOutputCapability->SetPhotoProfiles(profilesWrapper.photoProfiles);

@@ -36,7 +36,9 @@ const std::unordered_map<Camera_PreconfigType, PreconfigType> g_ndkToFwPreconfig
     {Camera_PreconfigType::PRECONFIG_720P, PreconfigType::PRECONFIG_720P},
     {Camera_PreconfigType::PRECONFIG_1080P, PreconfigType::PRECONFIG_1080P},
     {Camera_PreconfigType::PRECONFIG_4K, PreconfigType::PRECONFIG_4K},
-    {Camera_PreconfigType::PRECONFIG_HIGH_QUALITY, PreconfigType::PRECONFIG_HIGH_QUALITY}
+    {Camera_PreconfigType::PRECONFIG_HIGH_QUALITY, PreconfigType::PRECONFIG_HIGH_QUALITY},
+    {Camera_PreconfigType::PRECONFIG_HIGH_QUALITY_PHOTOSESSION_BT2020,
+        PreconfigType::PRECONFIG_HIGH_QUALITY_PHOTOSESSION_BT2020}
 };
 const std::unordered_map<Camera_PreconfigRatio, ProfileSizeRatio> g_ndkToFwPreconfigRatio = {
     {Camera_PreconfigRatio::PRECONFIG_RATIO_1_1, ProfileSizeRatio::RATIO_1_1},

@@ -3153,6 +3153,8 @@ napi_value CameraSessionNapi::CanPreconfig(napi_env env, napi_callback_info info
     MEDIA_INFO_LOG("CameraSessionNapi::CanPreconfig: %{public}d, ratioType:%{public}d", configType, profileSizeRatio);
     bool result = cameraSessionNapi->cameraSession_->CanPreconfig(
         static_cast<PreconfigType>(configType), static_cast<ProfileSizeRatio>(profileSizeRatio));
+    MEDIA_INFO_LOG("CameraSessionNapi::CanPreconfig result: %{public}d, configType: %{public}d, ratioType:%{public}d",
+                   result, configType, profileSizeRatio);
     return CameraNapiUtils::GetBooleanValue(env, result);
 }
 
@@ -3178,6 +3180,8 @@ napi_value CameraSessionNapi::Preconfig(napi_env env, napi_callback_info info)
     }
     int32_t retCode = cameraSessionNapi->cameraSession_->Preconfig(
         static_cast<PreconfigType>(configType), static_cast<ProfileSizeRatio>(profileSizeRatio));
+    MEDIA_INFO_LOG("CameraSessionNapi::Preconfig is called, configType: %{public}d, profileSizeRatio: %{public}d",
+                   configType, profileSizeRatio);
     if (!CameraNapiUtils::CheckError(env, retCode)) {
         return nullptr;
     }

@@ -541,5 +541,36 @@ bool CameraDevice::GetUsePhysicalCameraOrientation()
     std::lock_guard<std::mutex> lock(usePhysicalCameraOrientationMutex_);
     return usePhysicalCameraOrientation_;
 }
+
+void CameraDevice::SetFullPreviewProfiles(int32_t modename, std::vector<Profile> previewProfiles)
+{
+    MEDIA_INFO_LOG("Set full preview profiles for mode: %{public}d, profile size: %{public}zu", modename,
+                   previewProfiles.size());
+    std::lock_guard<std::mutex> lock(modeFullPreviewProfilesMutex_);
+    modeFullPreviewProfiles_[modename] = previewProfiles;
+    std::stringstream ss;
+    ss << "Dump SetFullPreviewProfiles, mode: " << modename << " -";
+    for (const auto& profile : modeFullPreviewProfiles_[modename]) {
+        profile.DumpProfile(ss.str());
+    }
+}
+
+std::vector<Profile> CameraDevice::GetFullPreviewProfiles(int32_t modename)
+{
+    MEDIA_INFO_LOG("Get full preview profiles for mode: %{public}d", modename);
+    std::lock_guard<std::mutex> lock(modeFullPreviewProfilesMutex_);
+    if (!modeFullPreviewProfiles_.count(modename)) {
+        MEDIA_ERR_LOG(
+            "Get full preview profiles for mode: %{public}d failed, current mode is not saved in map, return empty",
+            modename);
+        return {};
+    }
+    std::stringstream ss;
+    ss << "Dump GetFullPreviewProfiles, mode: " << modename << " -";
+    for (const auto& profile : modeFullPreviewProfiles_[modename]) {
+        profile.DumpProfile(ss.str());
+    }
+    return modeFullPreviewProfiles_[modename];
+}
 } // namespace CameraStandard
 } // namespace OHOS

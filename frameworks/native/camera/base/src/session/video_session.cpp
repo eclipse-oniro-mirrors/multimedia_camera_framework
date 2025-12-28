@@ -294,7 +294,7 @@ int32_t VideoSession::Preconfig(PreconfigType preconfigType, ProfileSizeRatio pr
     CHECK_RETURN_RET_ELOG(
         !IsPreconfigProfilesLegal(configs), SERVICE_FATL_ERROR, "VideoSession::Preconfig preconfigProfile is illegal.");
     SetPreconfigProfiles(configs);
-    MEDIA_INFO_LOG("VideoSession::Preconfig %s", configs->ToString().c_str());
+    MEDIA_INFO_LOG("VideoSession::Preconfig profile info\n%{public}s", configs->ToString().c_str());
     return SUCCESS;
     // LCOV_EXCL_STOP
 }
