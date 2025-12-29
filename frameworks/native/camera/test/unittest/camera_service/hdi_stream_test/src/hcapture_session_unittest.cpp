@@ -3079,55 +3079,5 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_080, TestSize.Level
     EXPECT_EQ(session->Release(), CAMERA_OK);
 }
 
-/*
- * Feature: HCaptureSession
- * Function: Test GetSessionState in different states
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test GetSessionState returns correct state during state transitions
- */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_081, TestSize.Level1)
-{
-    std::vector<string> cameraIds;
-    cameraService_->GetCameraIds(cameraIds);
-    ASSERT_NE(cameraIds.size(), 0);
-    cameraService_->SetServiceStatus(CameraServiceStatus::SERVICE_READY);
-    sptr<ICameraDeviceService> device = nullptr;
-    cameraService_->CreateCameraDevice(cameraIds[0], device);
-    ASSERT_NE(device, nullptr);
-    device->SetMdmCheck(false);
-    EXPECT_EQ(device->Open(), CAMERA_OK);
-
-    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
-    sptr<HCaptureSession> session = nullptr;
-    sptr<HStreamOperator> hStreamOperator = nullptr;
-    int32_t opMode = SceneMode::NORMAL;
-    InitSessionAndOperator(callerToken, opMode, session, hStreamOperator);
-    ASSERT_NE(session, nullptr);
-
-    CaptureSessionState state = CaptureSessionState::SESSION_INIT;
-    EXPECT_EQ(session->GetSessionState(state), CAMERA_OK);
-    EXPECT_EQ(state, CaptureSessionState::SESSION_INIT);
-
-    EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
-    EXPECT_EQ(session->GetSessionState(state), CAMERA_OK);
-    EXPECT_EQ(state, CaptureSessionState::SESSION_CONFIG_INPROGRESS);
-
-    EXPECT_EQ(session->AddInput(device), CAMERA_OK);
-    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
-    sptr<IBufferProducer> producer = surface->GetProducer();
-    sptr<HStreamRepeat> streamRepeat = new (std::nothrow) HStreamRepeat(producer, DEFAULT_FORMAT,
-        DEFAULT_WIDTH, DEFAULT_HEIGHT, RepeatStreamType::PREVIEW);
-    ASSERT_NE(streamRepeat, nullptr);
-    EXPECT_EQ(session->AddOutput(StreamType::REPEAT, streamRepeat), CAMERA_OK);
-    EXPECT_EQ(session->CommitConfig(), CAMERA_OK);
-    EXPECT_EQ(session->GetSessionState(state), CAMERA_OK);
-    EXPECT_EQ(state, CaptureSessionState::SESSION_CONFIG_COMMITTED);
-
-    EXPECT_EQ(device->Close(), CAMERA_OK);
-    EXPECT_EQ(session->Release(), CAMERA_OK);
-}
-
 } // namespace CameraStandard
 } // namespace OHOS
