@@ -68,23 +68,21 @@ void HCameraDeviceManagerUnitTest::TearDown()
 {
     MEDIA_DEBUG_LOG("HCameraDeviceManagerUnitTest::TearDown started!");
     auto deviceManager = HCameraDeviceManager::GetInstance();
-    if (deviceManager != nullptr) {
-        std::vector<sptr<HCameraDeviceHolder>> activeHolders = deviceManager->GetActiveCameraHolders();
-        for (const auto& holder : activeHolders) {
-            if (holder != nullptr) {
-                sptr<HCameraDevice> device = holder->GetDevice();
-                if (device != nullptr) {
-                    std::string cameraId = device->GetCameraId();
-                    deviceManager->RemoveDevice(cameraId);
-                }
-            }
-        }
-        deviceManager->SetStateOfACamera("", 1);
-        deviceManager->UnsetPeerCallback();
-#ifdef CAMERA_LIVE_SCENE_RECOGNITION
-        deviceManager->SetLiveScene(false);
-#endif
+    CHECK_RETURN_ELOG(deviceManager != nullptr ,"Failed to get HCameraDeviceManager instance");
+    std::vector<sptr<HCameraDeviceHolder>> activeHolders = deviceManager->GetActiveCameraHolders();
+    for (const auto& holder : activeHolders) {
+        CHECK_CONTINUE(holder == nullptr);
+        sptr<HCameraDevice> device = holder->GetDevice();
+        if (device != nullptr) {
+            std::string cameraId = device->GetCameraId();
+            deviceManager->RemoveDevice(cameraId);
+        }  
     }
+    deviceManager->SetStateOfACamera("", 1);
+    deviceManager->UnsetPeerCallback();
+#ifdef CAMERA_LIVE_SCENE_RECOGNITION
+    deviceManager->SetLiveScene(false);
+#endif
 }
 
 /*
