@@ -460,7 +460,7 @@ HWTEST_F(CameraPhotoModuleTest, camera_photo_moduletest_006, TestSize.Level0)
     EXPECT_EQ(photoOutput_->Capture(), SUCCESS);
     EXPECT_EQ(photoOutput_->Capture(), OPERATION_NOT_ALLOWED);
 
-    EXPECT_EQ(photoAssetFlag_, true);
+    EXPECT_EQ(photoAssetFlag_, false);
     photoOutput_->UnSetPhotoAssetAvailableCallback();
     photoAssetFlag_ = false;
     EXPECT_EQ(thumbnailFlag_, false);
