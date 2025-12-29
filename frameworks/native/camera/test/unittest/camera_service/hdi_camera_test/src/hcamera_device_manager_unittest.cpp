@@ -786,7 +786,8 @@ HWTEST_F(HCameraDeviceManagerUnitTest, hcamera_device_manager_unittest_033, Test
     HCameraDeviceManager::GetInstance()->AddDevice(pidRequest1, camDevice1);
     
     std::vector<sptr<HCameraDevice>> cameraNeedEvict;
-    sptr<HCameraDevice> cameraRequestOpen = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId2, pidRequest2);
+    sptr<HCameraDevice> cameraRequestOpen =
+        new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId2, pidRequest2);
     ASSERT_NE(cameraRequestOpen, nullptr);
     int32_t type = 1;
     HCameraDeviceManager::GetInstance()->GetConflictDevices(cameraNeedEvict, cameraRequestOpen, type);
