@@ -784,7 +784,6 @@ void SessionImpl::RegisterMacroStatusCallbackListener(
     if (macroStatusCallback_ == nullptr) {
         ani_env *env = get_env();
         macroStatusCallback_ = std::make_shared<MacroStatusCallbackListener>(env);
-        captureSession_->SetMacroStatusCallback(macroStatusCallback_);
     }
     macroStatusCallback_->SaveCallbackReference(eventName, callback, isOnce);
 }
