@@ -68,7 +68,7 @@ void HCameraDeviceManagerUnitTest::TearDown()
 {
     MEDIA_DEBUG_LOG("HCameraDeviceManagerUnitTest::TearDown started!");
     auto deviceManager = HCameraDeviceManager::GetInstance();
-    CHECK_RETURN_ELOG(deviceManager != nullptr ,"Failed to get HCameraDeviceManager instance");
+    CHECK_RETURN_ELOG(deviceManager != nullptr, "Failed to get HCameraDeviceManager instance");
     std::vector<sptr<HCameraDeviceHolder>> activeHolders = deviceManager->GetActiveCameraHolders();
     for (const auto& holder : activeHolders) {
         CHECK_CONTINUE(holder == nullptr);
@@ -76,7 +76,7 @@ void HCameraDeviceManagerUnitTest::TearDown()
         if (device != nullptr) {
             std::string cameraId = device->GetCameraId();
             deviceManager->RemoveDevice(cameraId);
-        }  
+        }
     }
     deviceManager->SetStateOfACamera("", 1);
     deviceManager->UnsetPeerCallback();
