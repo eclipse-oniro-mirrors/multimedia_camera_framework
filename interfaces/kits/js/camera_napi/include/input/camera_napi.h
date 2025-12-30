@@ -216,6 +216,7 @@ static const std::unordered_map<std::string, int32_t> mapPreconfigType = {
     {"PRECONFIG_1080P", PRECONFIG_1080P},
     {"PRECONFIG_4K", PRECONFIG_4K},
     {"PRECONFIG_HIGH_QUALITY", PRECONFIG_HIGH_QUALITY},
+    {"PRECONFIG_HIGH_QUALITY_PHOTOSESSION_BT2020", PRECONFIG_HIGH_QUALITY_PHOTOSESSION_BT2020},
 };
 
 static const std::unordered_map<std::string, int32_t> mapPreconfigRatio = {

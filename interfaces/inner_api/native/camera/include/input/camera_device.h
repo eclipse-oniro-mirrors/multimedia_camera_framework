@@ -336,6 +336,10 @@ public:
 
     bool GetUsePhysicalCameraOrientation();
 
+    void SetFullPreviewProfiles(int32_t modename, std::vector<Profile> previewProfiles);
+
+    std::vector<Profile> GetFullPreviewProfiles(int32_t modename);
+
     template<typename T, typename = std::enable_if_t<std::is_same_v<T, Profile> || std::is_same_v<T, VideoProfile>>>
     std::shared_ptr<T> GetMaxSizeProfile(std::vector<T>& profiles, float profileRatioValue, CameraFormat format)
     {
@@ -426,7 +430,9 @@ private:
     bool usePhysicalCameraOrientation_ = false;
     
     std::mutex modeVideoDeferredTypeMtx_;
+    std::mutex modeFullPreviewProfilesMutex_;
     std::unordered_map<int32_t, int32_t> modeVideoDeferredType_ = {};
+    std::unordered_map<int32_t, std::vector<Profile>> modeFullPreviewProfiles_ = {};
 };
 } // namespace CameraStandard
 } // namespace OHOS

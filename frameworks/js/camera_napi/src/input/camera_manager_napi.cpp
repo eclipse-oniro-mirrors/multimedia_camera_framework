@@ -92,14 +92,14 @@ void CacheSupportedOutputCapability(napi_env env, const std::string& cameraId, i
 
 void CacheSupportedFullOutputCapability(napi_env env, const std::string& cameraId, int32_t mode, napi_value value)
 {
-    std::string key = "OutputCapability:" + cameraId + ":\t" + to_string(mode);
+    std::string key = "FullOutputCapability:" + cameraId + ":\t" + to_string(mode);
     CacheNapiValue(env, key, value);
     MEDIA_DEBUG_LOG("CacheSupportedFullOutputCapability cache->%{public}s:%{public}d", key.c_str(), mode);
 }
 
 napi_value GetCachedSupportedOutputCapability(napi_env env, const std::string& cameraId, int32_t mode)
 {
-    std::string key = "OutputCapability:" + cameraId + ":\t" + to_string(mode);
+    std::string key = "FullOutputCapability:" + cameraId + ":\t" + to_string(mode);
     napi_value result = GetCacheNapiValue(env, key);
     if (result != nullptr) {
         MEDIA_DEBUG_LOG("GetCachedSupportedOutputCapability hit cache->%{public}s:%{public}d", key.c_str(), mode);

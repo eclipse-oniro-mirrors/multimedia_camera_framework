@@ -68,6 +68,15 @@ std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles1_1(PreconfigType pr
             configs->photoProfile.sizeRatio_ = RATIO_1_1;
             configs->photoProfile.sizeFollowSensorMax_ = true;
             break;
+        case PRECONFIG_HIGH_QUALITY_PHOTOSESSION_BT2020:
+            configs->colorSpace = ColorSpace::BT2020_HLG;
+            configs->previewProfile = { CameraFormat::CAMERA_FORMAT_YCRCB_P010, { .width = 1440, .height = 1440 } };
+            configs->previewProfile.fps_ = { .fixedFps = 30, .minFps = 12, .maxFps = 30 };
+
+            configs->photoProfile = { CameraFormat::CAMERA_FORMAT_JPEG, { .width = 0, .height = 0 } };
+            configs->photoProfile.sizeRatio_ = RATIO_1_1;
+            configs->photoProfile.sizeFollowSensorMax_ = true;
+            break;
         default:
             MEDIA_ERR_LOG(
                 "PhotoSession::GeneratePreconfigProfiles1_1 not support this config:%{public}d", preconfigType);
@@ -112,6 +121,15 @@ std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles4_3(PreconfigType pr
             configs->photoProfile.sizeRatio_ = RATIO_4_3;
             configs->photoProfile.sizeFollowSensorMax_ = true;
             break;
+        case PRECONFIG_HIGH_QUALITY_PHOTOSESSION_BT2020:
+            configs->colorSpace = ColorSpace::BT2020_HLG;
+            configs->previewProfile = { CameraFormat::CAMERA_FORMAT_YCRCB_P010, { .width = 1920, .height = 1440 } };
+            configs->previewProfile.fps_ = { .fixedFps = 30, .minFps = 12, .maxFps = 30 };
+
+            configs->photoProfile = { CameraFormat::CAMERA_FORMAT_JPEG, { .width = 0, .height = 0 } };
+            configs->photoProfile.sizeRatio_ = RATIO_4_3;
+            configs->photoProfile.sizeFollowSensorMax_ = true;
+            break;
         default:
             MEDIA_ERR_LOG(
                 "PhotoSession::GeneratePreconfigProfiles4_3 not support this config:%{public}d", preconfigType);
@@ -150,6 +168,15 @@ std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles16_9(PreconfigType p
             break;
         case PRECONFIG_HIGH_QUALITY:
             configs->previewProfile = { CameraFormat::CAMERA_FORMAT_YUV_420_SP, { .width = 2560, .height = 1440 } };
+            configs->previewProfile.fps_ = { .fixedFps = 30, .minFps = 12, .maxFps = 30 };
+
+            configs->photoProfile = { CameraFormat::CAMERA_FORMAT_JPEG, { .width = 0, .height = 0 } };
+            configs->photoProfile.sizeRatio_ = RATIO_16_9;
+            configs->photoProfile.sizeFollowSensorMax_ = true;
+            break;
+        case PRECONFIG_HIGH_QUALITY_PHOTOSESSION_BT2020:
+            configs->colorSpace = ColorSpace::BT2020_HLG;
+            configs->previewProfile = { CameraFormat::CAMERA_FORMAT_YCRCB_P010, { .width = 2560, .height = 1440 } };
             configs->previewProfile.fps_ = { .fixedFps = 30, .minFps = 12, .maxFps = 30 };
 
             configs->photoProfile = { CameraFormat::CAMERA_FORMAT_JPEG, { .width = 0, .height = 0 } };
@@ -246,8 +273,18 @@ bool PhotoSession::IsPreviewProfileLegal(sptr<CameraDevice>& device, Profile& pr
     CHECK_RETURN_RET_ELOG(previewProfilesIt == device->modePreviewProfiles_.end(), false,
         "PhotoSession::CanPreconfig check preview profile fail, empty preview profiles");
     auto previewProfiles = previewProfilesIt->second;
-    return std::any_of(previewProfiles.begin(), previewProfiles.end(),
+    bool isPreviewProfileLegal =  std::any_of(previewProfiles.begin(), previewProfiles.end(),
         [&previewProfile](auto& profile) { return profile == previewProfile; });
+    CHECK_RETURN_RET(isPreviewProfileLegal, true);
+    // check if profile is in full preview capabilities
+    previewProfiles = device->GetFullPreviewProfiles(SceneMode::CAPTURE);
+    CHECK_RETURN_RET_ELOG(previewProfiles.empty(), false, "Check preview profile failed, empty full preview profile");
+    isPreviewProfileLegal = std::any_of(previewProfiles.begin(), previewProfiles.end(),
+                                        [&previewProfile](auto &profile) { return profile == previewProfile; });
+    MEDIA_INFO_LOG("IsPreviewProfileLegal check profile is in full capabilities: %{public}d.", isPreviewProfileLegal);
+    // set full preview profiles for device if app preconfig highest quality, so photo output can be added
+    CHECK_EXECUTE(isPreviewProfileLegal, device->modePreviewProfiles_[SceneMode::CAPTURE] = previewProfiles);
+    return isPreviewProfileLegal;
     // LCOV_EXCL_STOP
 }
 
@@ -272,7 +309,7 @@ int32_t PhotoSession::Preconfig(PreconfigType preconfigType, ProfileSizeRatio pr
     CHECK_RETURN_RET_ELOG(
         !IsPreconfigProfilesLegal(configs), SERVICE_FATL_ERROR, "PhotoSession::Preconfig preconfigProfile is illegal.");
     SetPreconfigProfiles(configs);
-    MEDIA_INFO_LOG("PhotoSession::Preconfig %s", configs->ToString().c_str());
+    MEDIA_INFO_LOG("PhotoSession::Preconfig profile info\n%{public}s", configs->ToString().c_str());
     return SUCCESS;
     // LCOV_EXCL_STOP
 }

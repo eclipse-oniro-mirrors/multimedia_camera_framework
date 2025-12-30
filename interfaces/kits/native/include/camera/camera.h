@@ -633,7 +633,13 @@ typedef enum Camera_PreconfigType {
     /**
      * The preconfig type is high quality.
      */
-    PRECONFIG_HIGH_QUALITY = 3
+    PRECONFIG_HIGH_QUALITY = 3,
+
+    /**
+     * The preconfig type is high quality photo session with BT2020.
+     * @since 23
+     */
+    PRECONFIG_HIGH_QUALITY_PHOTOSESSION_BT2020 = 4
 } Camera_PreconfigType;
 
 /**
