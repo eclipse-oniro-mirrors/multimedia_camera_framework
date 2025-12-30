@@ -77,8 +77,11 @@ void PhotoAssetBufferConsumer::ExecuteOnBufferAvailable()
     streamCapture->surface_->ReleaseBuffer(surfaceBuffer, -1);
     CHECK_RETURN_ELOG(newSurfaceBuffer == nullptr, "DeepCopyBuffer faild");
     int32_t captureId = CameraSurfaceBufferUtil::GetMaskCaptureId(newSurfaceBuffer);
-    CameraReportDfxUtils::GetInstance()->SetFirstBufferEndInfo(captureId);
-    CameraReportDfxUtils::GetInstance()->SetPrepareProxyStartInfo(captureId);
+    int32_t unMaskedCaptureId = CameraSurfaceBufferUtil::GetCaptureId(newSurfaceBuffer);
+    CameraReportDfxUtils::GetInstance()->SetCaptureState(CaptureState::PHOTO_AVAILABLE, unMaskedCaptureId);
+    MEDIA_DEBUG_LOG("OnBufferAvailable unMaskedCaptureId:%{public}d", unMaskedCaptureId);
+    CameraReportDfxUtils::GetInstance()->SetFirstBufferEndInfo(unMaskedCaptureId);
+    CameraReportDfxUtils::GetInstance()->SetPrepareProxyStartInfo(unMaskedCaptureId);
     int32_t auxiliaryCount = CameraSurfaceBufferUtil::GetImageCount(newSurfaceBuffer);
     MEDIA_INFO_LOG("OnBufferAvailable captureId:%{public}d auxiliaryCount:%{public}d", captureId, auxiliaryCount);
     // create photoProxy
@@ -122,7 +125,12 @@ void PhotoAssetBufferConsumer::StartWaitAuxiliaryTask(
 
         // create and save pictureProxy
         std::shared_ptr<PictureIntf> pictureProxy = PictureProxy::CreatePictureProxy();
-        CHECK_RETURN_ELOG(pictureProxy == nullptr, "pictureProxy is nullptr");
+        if (pictureProxy == nullptr) {
+            int32_t unMaskedCaptureId = CameraSurfaceBufferUtil::GetCaptureId(newSurfaceBuffer);
+            CameraReportDfxUtils::GetInstance()->SetCaptureState(CaptureState::MEDIALIBRARY_ERROR, unMaskedCaptureId);
+            MEDIA_ERR_LOG("pictureProxy is nullptr");
+            return;
+        }
         pictureProxy->Create(newSurfaceBuffer);
         MEDIA_INFO_LOG(
             "PhotoAssetBufferConsumer StartWaitAuxiliaryTask MainSurface w=%{public}d, h=%{public}d, f=%{public}d",

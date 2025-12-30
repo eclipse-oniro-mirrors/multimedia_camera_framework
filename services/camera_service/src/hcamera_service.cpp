@@ -40,6 +40,7 @@
 #include "camera_info_dumper.h"
 #include "camera_log.h"
 #include "camera_report_uitls.h"
+#include "camera_report_dfx_uitls.h"
 #include "camera_util.h"
 #include "camera_common_event_manager.h"
 #include "camera_metadata.h"
@@ -576,7 +577,7 @@ int32_t HCameraService::GetCameras(
     return ret;
 }
 
-shared_ptr<CameraMetaInfo>HCameraService::GetCameraMetaInfo(std::string &cameraId,
+shared_ptr<CameraMetaInfo> HCameraService::GetCameraMetaInfo(std::string &cameraId,
     shared_ptr<OHOS::Camera::CameraMetadata>cameraAbility)
 {
     camera_metadata_item_t item;
@@ -2548,6 +2549,7 @@ void HCameraService::ClearCameraListenerByPid(pid_t pid)
         CHECK_EXECUTE(cameraListenerTmp != nullptr && cameraListenerTmp->AsObject() != nullptr,
             cameraListenerTmp->RemoveCameraDeathRecipient());
         cameraListenerMap_.Erase(pid);
+        CameraReportDfxUtils::GetInstance()->UpdateAliveClient(pid, ClientState::DIED);
     }
 }
 
@@ -2596,6 +2598,7 @@ int HCameraService::SetListenerObject(const sptr<IRemoteObject>& object)
     });
     cameraListener->AddCameraDeathRecipient(deathRecipient);
     cameraListenerMap_.EnsureInsert(pid, cameraListener);
+    CameraReportDfxUtils::GetInstance()->UpdateAliveClient(pid, ClientState::ALIVE);
     return CAMERA_OK;
 }
 
