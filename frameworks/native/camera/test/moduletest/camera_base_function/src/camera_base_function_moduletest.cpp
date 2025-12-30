@@ -6859,5 +6859,1327 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_200, Test
         captureSession->Release();
     }
 }
+
+/*
+ * Feature: Camera base function
+ * Function: Test Quick Thumbnail with T/F
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test Quick Thumbnail with T/F
+ */
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_230, TestSize.Level0)
+{
+    sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
+    ASSERT_NE(camManagerObj, nullptr);
+    std::vector<sptr<CameraDevice>> cameraDevices = camManagerObj->GetSupportedCameras();
+    ASSERT_TRUE(!cameraDevices.empty());
+    sptr<CameraInput> cameraInput = camManagerObj->CreateCameraInput(cameraDevices[0]);
+    ASSERT_NE(cameraInput, nullptr);
+    sptr<CameraOutputCapability> outputCapability = camManagerObj->GetSupportedOutputCapability(cameraDevices[0], 1);
+    ASSERT_NE(outputCapability, nullptr);
+    std::vector<Profile> previewProfiles = outputCapability->GetPreviewProfiles();
+    ASSERT_TRUE(!previewProfiles.empty());
+    double ratio = previewProfiles[0].size_.width / previewProfiles[0].size_.height;
+    std::vector<Profile> photoProfiles = outputCapability->GetPhotoProfiles();
+    ASSERT_TRUE(!photoProfiles.empty());
+    int32_t index = GetProfileIndex(ratio, photoProfiles);
+    EXPECT_NE(index, -1);
+
+    sptr<IConsumerSurface> previewSurface = IConsumerSurface::Create();
+    sptr<SurfaceListener> listener = new SurfaceListener("Preview", SurfaceType::PREVIEW, previewFd_, previewSurface);
+    previewSurface->RegisterConsumerListener((sptr<IBufferConsumerListener>&)listener);
+    previewSurface->SetUserData(CameraManager::surfaceFormat, std::to_string(previewProfiles[0].GetCameraFormat()));
+    previewSurface->SetDefaultWidthAndHeight(previewProfiles[0].GetSize().width, previewProfiles[0].GetSize().height);
+
+    sptr<IBufferProducer> bp = previewSurface->GetProducer();
+    sptr<Surface> pSurface = Surface::CreateSurfaceAsProducer(bp);
+    auto previewOutput = camManagerObj->CreatePreviewOutput(previewProfiles[0], pSurface);
+    sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
+    bp = photoSurface->GetProducer();
+    auto photoOutput = camManagerObj->CreatePhotoOutput(photoProfiles[index], bp);
+    auto captureSession = camManagerObj->CreateCaptureSession();
+    EXPECT_NE(captureSession, nullptr);
+
+    EXPECT_EQ(cameraInput->Open(), SUCCESS);
+    EXPECT_EQ(captureSession->BeginConfig(), SUCCESS);
+    EXPECT_EQ(captureSession->AddInput((sptr<CaptureInput>&)cameraInput), SUCCESS);
+    EXPECT_EQ(captureSession->AddOutput((sptr<CaptureOutput>&)previewOutput), SUCCESS);
+    EXPECT_EQ(captureSession->AddOutput((sptr<CaptureOutput>&)photoOutput), SUCCESS);
+    EXPECT_EQ(captureSession->CommitConfig(), SUCCESS);
+
+    bool isSupported = photoOutput->IsQuickThumbnailSupported();
+    if (isSupported) {
+        EXPECT_EQ(photoOutput->SetThumbnail(true), SUCCESS);
+    }
+
+    if (cameraInput) {
+        cameraInput->Release();
+        WAIT(DURATION_AFTER_DEVICE_CLOSE);
+    }
+    if (captureSession) {
+        captureSession->Release();
+    }
+}
+
+/*
+ * Feature: Camera base function
+ * Function: Test Quick Thumbnail with T/F
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test Quick Thumbnail with T/F
+ */
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_231, TestSize.Level0)
+{
+    sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
+    ASSERT_NE(camManagerObj, nullptr);
+    std::vector<sptr<CameraDevice>> cameraDevices = camManagerObj->GetSupportedCameras();
+    ASSERT_TRUE(!cameraDevices.empty());
+    sptr<CameraInput> cameraInput = camManagerObj->CreateCameraInput(cameraDevices[0]);
+    ASSERT_NE(cameraInput, nullptr);
+    sptr<CameraOutputCapability> outputCapability = camManagerObj->GetSupportedOutputCapability(cameraDevices[0], 1);
+    ASSERT_NE(outputCapability, nullptr);
+    std::vector<Profile> previewProfiles = outputCapability->GetPreviewProfiles();
+    ASSERT_TRUE(!previewProfiles.empty());
+    double ratio = previewProfiles[0].size_.width / previewProfiles[0].size_.height;
+    std::vector<Profile> photoProfiles = outputCapability->GetPhotoProfiles();
+    ASSERT_TRUE(!photoProfiles.empty());
+    int32_t index = GetProfileIndex(ratio, photoProfiles);
+    EXPECT_NE(index, -1);
+
+    sptr<IConsumerSurface> previewSurface = IConsumerSurface::Create();
+    sptr<SurfaceListener> listener = new SurfaceListener("Preview", SurfaceType::PREVIEW, previewFd_, previewSurface);
+    previewSurface->RegisterConsumerListener((sptr<IBufferConsumerListener>&)listener);
+    previewSurface->SetUserData(CameraManager::surfaceFormat, std::to_string(previewProfiles[0].GetCameraFormat()));
+    previewSurface->SetDefaultWidthAndHeight(previewProfiles[0].GetSize().width, previewProfiles[0].GetSize().height);
+
+    sptr<IBufferProducer> bp = previewSurface->GetProducer();
+    sptr<Surface> pSurface = Surface::CreateSurfaceAsProducer(bp);
+    auto previewOutput = camManagerObj->CreatePreviewOutput(previewProfiles[0], pSurface);
+    sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
+    bp = photoSurface->GetProducer();
+    auto photoOutput = camManagerObj->CreatePhotoOutput(photoProfiles[index], bp);
+    auto captureSession = camManagerObj->CreateCaptureSession();
+    EXPECT_NE(captureSession, nullptr);
+
+    EXPECT_EQ(cameraInput->Open(), SUCCESS);
+    EXPECT_EQ(captureSession->BeginConfig(), SUCCESS);
+    EXPECT_EQ(captureSession->AddInput((sptr<CaptureInput>&)cameraInput), SUCCESS);
+    EXPECT_EQ(captureSession->AddOutput((sptr<CaptureOutput>&)previewOutput), SUCCESS);
+    EXPECT_EQ(captureSession->AddOutput((sptr<CaptureOutput>&)photoOutput), SUCCESS);
+    EXPECT_EQ(captureSession->CommitConfig(), SUCCESS);
+
+    bool isSupported = photoOutput->IsQuickThumbnailSupported();
+    if (isSupported) {
+        EXPECT_EQ(photoOutput->SetThumbnail(false), SUCCESS);
+    }
+
+    if (cameraInput) {
+        cameraInput->Release();
+        WAIT(DURATION_AFTER_DEVICE_CLOSE);
+    }
+    if (captureSession) {
+        captureSession->Release();
+    }
+}
+
+/*
+ * Feature: Camera base function
+ * Function: Test PhotoOutput Mirror with T/F
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test PhotoOutput Mirror with T/F
+ */
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_232, TestSize.Level0)
+{
+    sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
+    ASSERT_NE(camManagerObj, nullptr);
+    std::vector<sptr<CameraDevice>> cameraDevices = camManagerObj->GetSupportedCameras();
+    ASSERT_TRUE(!cameraDevices.empty());
+    sptr<CameraInput> cameraInput = camManagerObj->CreateCameraInput(cameraDevices[0]);
+    ASSERT_NE(cameraInput, nullptr);
+    sptr<CameraOutputCapability> outputCapability = camManagerObj->GetSupportedOutputCapability(cameraDevices[0], 1);
+    ASSERT_NE(outputCapability, nullptr);
+    std::vector<Profile> previewProfiles = outputCapability->GetPreviewProfiles();
+    ASSERT_TRUE(!previewProfiles.empty());
+    double ratio = previewProfiles[0].size_.width / previewProfiles[0].size_.height;
+    std::vector<Profile> photoProfiles = outputCapability->GetPhotoProfiles();
+    ASSERT_TRUE(!photoProfiles.empty());
+    int32_t index = GetProfileIndex(ratio, photoProfiles);
+    EXPECT_NE(index, -1);
+
+    sptr<IConsumerSurface> previewSurface = IConsumerSurface::Create();
+    sptr<SurfaceListener> listener = new SurfaceListener("Preview", SurfaceType::PREVIEW, previewFd_, previewSurface);
+    previewSurface->RegisterConsumerListener((sptr<IBufferConsumerListener>&)listener);
+    previewSurface->SetUserData(CameraManager::surfaceFormat, std::to_string(previewProfiles[0].GetCameraFormat()));
+    previewSurface->SetDefaultWidthAndHeight(previewProfiles[0].GetSize().width, previewProfiles[0].GetSize().height);
+
+    sptr<IBufferProducer> bp = previewSurface->GetProducer();
+    sptr<Surface> pSurface = Surface::CreateSurfaceAsProducer(bp);
+    auto previewOutput = camManagerObj->CreatePreviewOutput(previewProfiles[0], pSurface);
+    sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
+    bp = photoSurface->GetProducer();
+    auto photoOutput = camManagerObj->CreatePhotoOutput(photoProfiles[index], bp);
+    auto captureSession = camManagerObj->CreateCaptureSession();
+    EXPECT_NE(captureSession, nullptr);
+
+    EXPECT_EQ(cameraInput->Open(), SUCCESS);
+    EXPECT_EQ(captureSession->BeginConfig(), SUCCESS);
+    EXPECT_EQ(captureSession->AddInput((sptr<CaptureInput>&)cameraInput), SUCCESS);
+    EXPECT_EQ(captureSession->AddOutput((sptr<CaptureOutput>&)previewOutput), SUCCESS);
+    EXPECT_EQ(captureSession->AddOutput((sptr<CaptureOutput>&)photoOutput), SUCCESS);
+    EXPECT_EQ(captureSession->CommitConfig(), SUCCESS);
+
+    bool isSupported = photoOutput->IsMirrorSupported();
+    if (isSupported) {
+        EXPECT_EQ(photoOutput->EnableMirror(true), SUCCESS);
+    }
+
+    if (cameraInput) {
+        cameraInput->Release();
+        WAIT(DURATION_AFTER_DEVICE_CLOSE);
+    }
+    if (captureSession) {
+        captureSession->Release();
+    }
+}
+
+/*
+ * Feature: Camera base function
+ * Function: Test PhotoOutput Mirror with T/F
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test PhotoOutput Mirror with T/F
+ */
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_233, TestSize.Level0)
+{
+    sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
+    ASSERT_NE(camManagerObj, nullptr);
+    std::vector<sptr<CameraDevice>> cameraDevices = camManagerObj->GetSupportedCameras();
+    ASSERT_TRUE(!cameraDevices.empty());
+    sptr<CameraInput> cameraInput = camManagerObj->CreateCameraInput(cameraDevices[0]);
+    ASSERT_NE(cameraInput, nullptr);
+    sptr<CameraOutputCapability> outputCapability = camManagerObj->GetSupportedOutputCapability(cameraDevices[0], 1);
+    ASSERT_NE(outputCapability, nullptr);
+    std::vector<Profile> previewProfiles = outputCapability->GetPreviewProfiles();
+    ASSERT_TRUE(!previewProfiles.empty());
+    double ratio = previewProfiles[0].size_.width / previewProfiles[0].size_.height;
+    std::vector<Profile> photoProfiles = outputCapability->GetPhotoProfiles();
+    ASSERT_TRUE(!photoProfiles.empty());
+    int32_t index = GetProfileIndex(ratio, photoProfiles);
+    EXPECT_NE(index, -1);
+
+    sptr<IConsumerSurface> previewSurface = IConsumerSurface::Create();
+    sptr<SurfaceListener> listener = new SurfaceListener("Preview", SurfaceType::PREVIEW, previewFd_, previewSurface);
+    previewSurface->RegisterConsumerListener((sptr<IBufferConsumerListener>&)listener);
+    previewSurface->SetUserData(CameraManager::surfaceFormat, std::to_string(previewProfiles[0].GetCameraFormat()));
+    previewSurface->SetDefaultWidthAndHeight(previewProfiles[0].GetSize().width, previewProfiles[0].GetSize().height);
+
+    sptr<IBufferProducer> bp = previewSurface->GetProducer();
+    sptr<Surface> pSurface = Surface::CreateSurfaceAsProducer(bp);
+    auto previewOutput = camManagerObj->CreatePreviewOutput(previewProfiles[0], pSurface);
+    sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
+    bp = photoSurface->GetProducer();
+    auto photoOutput = camManagerObj->CreatePhotoOutput(photoProfiles[index], bp);
+    auto captureSession = camManagerObj->CreateCaptureSession();
+    EXPECT_NE(captureSession, nullptr);
+
+    EXPECT_EQ(cameraInput->Open(), SUCCESS);
+    EXPECT_EQ(captureSession->BeginConfig(), SUCCESS);
+    EXPECT_EQ(captureSession->AddInput((sptr<CaptureInput>&)cameraInput), SUCCESS);
+    EXPECT_EQ(captureSession->AddOutput((sptr<CaptureOutput>&)previewOutput), SUCCESS);
+    EXPECT_EQ(captureSession->AddOutput((sptr<CaptureOutput>&)photoOutput), SUCCESS);
+    EXPECT_EQ(captureSession->CommitConfig(), SUCCESS);
+
+    bool isSupported = photoOutput->IsMirrorSupported();
+    if (isSupported) {
+        EXPECT_EQ(photoOutput->EnableMirror(false), SUCCESS);
+    }
+
+    if (cameraInput) {
+        cameraInput->Release();
+        WAIT(DURATION_AFTER_DEVICE_CLOSE);
+    }
+    if (captureSession) {
+        captureSession->Release();
+    }
+}
+
+/*
+ * Feature: Camera base function
+ * Function: Test PhotoOutput RawDelivery with T/F
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test PhotoOutput RawDelivery with T/F
+ */
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_234, TestSize.Level0)
+{
+    sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
+    ASSERT_NE(camManagerObj, nullptr);
+    std::vector<sptr<CameraDevice>> cameraDevices = camManagerObj->GetSupportedCameras();
+    ASSERT_TRUE(!cameraDevices.empty());
+    sptr<CameraInput> cameraInput = camManagerObj->CreateCameraInput(cameraDevices[0]);
+    ASSERT_NE(cameraInput, nullptr);
+    sptr<CameraOutputCapability> outputCapability = camManagerObj->GetSupportedOutputCapability(cameraDevices[0], 1);
+    ASSERT_NE(outputCapability, nullptr);
+    std::vector<Profile> previewProfiles = outputCapability->GetPreviewProfiles();
+    ASSERT_TRUE(!previewProfiles.empty());
+    double ratio = previewProfiles[0].size_.width / previewProfiles[0].size_.height;
+    std::vector<Profile> photoProfiles = outputCapability->GetPhotoProfiles();
+    ASSERT_TRUE(!photoProfiles.empty());
+    int32_t index = GetProfileIndex(ratio, photoProfiles);
+    EXPECT_NE(index, -1);
+
+    sptr<IConsumerSurface> previewSurface = IConsumerSurface::Create();
+    sptr<SurfaceListener> listener = new SurfaceListener("Preview", SurfaceType::PREVIEW, previewFd_, previewSurface);
+    previewSurface->RegisterConsumerListener((sptr<IBufferConsumerListener>&)listener);
+    previewSurface->SetUserData(CameraManager::surfaceFormat, std::to_string(previewProfiles[0].GetCameraFormat()));
+    previewSurface->SetDefaultWidthAndHeight(previewProfiles[0].GetSize().width, previewProfiles[0].GetSize().height);
+
+    sptr<IBufferProducer> bp = previewSurface->GetProducer();
+    sptr<Surface> pSurface = Surface::CreateSurfaceAsProducer(bp);
+    auto previewOutput = camManagerObj->CreatePreviewOutput(previewProfiles[0], pSurface);
+    sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
+    bp = photoSurface->GetProducer();
+    auto photoOutput = camManagerObj->CreatePhotoOutput(photoProfiles[index], bp);
+    auto captureSession = camManagerObj->CreateCaptureSession();
+    EXPECT_NE(captureSession, nullptr);
+
+    EXPECT_EQ(cameraInput->Open(), SUCCESS);
+    EXPECT_EQ(captureSession->BeginConfig(), SUCCESS);
+    EXPECT_EQ(captureSession->AddInput((sptr<CaptureInput>&)cameraInput), SUCCESS);
+    EXPECT_EQ(captureSession->AddOutput((sptr<CaptureOutput>&)previewOutput), SUCCESS);
+    EXPECT_EQ(captureSession->AddOutput((sptr<CaptureOutput>&)photoOutput), SUCCESS);
+    EXPECT_EQ(captureSession->CommitConfig(), SUCCESS);
+
+    bool isSupported = false;
+    EXPECT_EQ(photoOutput->IsRawDeliverySupported(isSupported), SUCCESS);
+    if (isSupported) {
+        EXPECT_EQ(photoOutput->EnableRawDelivery(true), SUCCESS);
+    }
+
+    if (cameraInput) {
+        cameraInput->Release();
+        WAIT(DURATION_AFTER_DEVICE_CLOSE);
+    }
+    if (captureSession) {
+        captureSession->Release();
+    }
+}
+
+/*
+ * Feature: Camera base function
+ * Function: Test PhotoOutput RawDelivery with T/F
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test PhotoOutput RawDelivery with T/F
+ */
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_235, TestSize.Level0)
+{
+    sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
+    ASSERT_NE(camManagerObj, nullptr);
+    std::vector<sptr<CameraDevice>> cameraDevices = camManagerObj->GetSupportedCameras();
+    ASSERT_TRUE(!cameraDevices.empty());
+    sptr<CameraInput> cameraInput = camManagerObj->CreateCameraInput(cameraDevices[0]);
+    ASSERT_NE(cameraInput, nullptr);
+    sptr<CameraOutputCapability> outputCapability = camManagerObj->GetSupportedOutputCapability(cameraDevices[0], 1);
+    ASSERT_NE(outputCapability, nullptr);
+    std::vector<Profile> previewProfiles = outputCapability->GetPreviewProfiles();
+    ASSERT_TRUE(!previewProfiles.empty());
+    double ratio = previewProfiles[0].size_.width / previewProfiles[0].size_.height;
+    std::vector<Profile> photoProfiles = outputCapability->GetPhotoProfiles();
+    ASSERT_TRUE(!photoProfiles.empty());
+    int32_t index = GetProfileIndex(ratio, photoProfiles);
+    EXPECT_NE(index, -1);
+
+    sptr<IConsumerSurface> previewSurface = IConsumerSurface::Create();
+    sptr<SurfaceListener> listener = new SurfaceListener("Preview", SurfaceType::PREVIEW, previewFd_, previewSurface);
+    previewSurface->RegisterConsumerListener((sptr<IBufferConsumerListener>&)listener);
+    previewSurface->SetUserData(CameraManager::surfaceFormat, std::to_string(previewProfiles[0].GetCameraFormat()));
+    previewSurface->SetDefaultWidthAndHeight(previewProfiles[0].GetSize().width, previewProfiles[0].GetSize().height);
+
+    sptr<IBufferProducer> bp = previewSurface->GetProducer();
+    sptr<Surface> pSurface = Surface::CreateSurfaceAsProducer(bp);
+    auto previewOutput = camManagerObj->CreatePreviewOutput(previewProfiles[0], pSurface);
+    sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
+    bp = photoSurface->GetProducer();
+    auto photoOutput = camManagerObj->CreatePhotoOutput(photoProfiles[index], bp);
+    auto captureSession = camManagerObj->CreateCaptureSession();
+    EXPECT_NE(captureSession, nullptr);
+
+    EXPECT_EQ(cameraInput->Open(), SUCCESS);
+    EXPECT_EQ(captureSession->BeginConfig(), SUCCESS);
+    EXPECT_EQ(captureSession->AddInput((sptr<CaptureInput>&)cameraInput), SUCCESS);
+    EXPECT_EQ(captureSession->AddOutput((sptr<CaptureOutput>&)previewOutput), SUCCESS);
+    EXPECT_EQ(captureSession->AddOutput((sptr<CaptureOutput>&)photoOutput), SUCCESS);
+    EXPECT_EQ(captureSession->CommitConfig(), SUCCESS);
+
+    bool isSupported = false;
+    EXPECT_EQ(photoOutput->IsRawDeliverySupported(isSupported), SUCCESS);
+    if (isSupported) {
+        EXPECT_EQ(photoOutput->EnableRawDelivery(false), SUCCESS);
+    }
+
+    if (cameraInput) {
+        cameraInput->Release();
+        WAIT(DURATION_AFTER_DEVICE_CLOSE);
+    }
+    if (captureSession) {
+        captureSession->Release();
+    }
+}
+
+/*
+ * Feature: Camera base function
+ * Function: Test PhotoOutput AutoHighQualityPhoto with T/F
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test PhotoOutput AutoHighQualityPhoto with T/F
+ */
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_236, TestSize.Level0)
+{
+    sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
+    ASSERT_NE(camManagerObj, nullptr);
+    std::vector<sptr<CameraDevice>> cameraDevices = camManagerObj->GetSupportedCameras();
+    ASSERT_TRUE(!cameraDevices.empty());
+    sptr<CameraInput> cameraInput = camManagerObj->CreateCameraInput(cameraDevices[0]);
+    ASSERT_NE(cameraInput, nullptr);
+    sptr<CameraOutputCapability> outputCapability = camManagerObj->GetSupportedOutputCapability(cameraDevices[0], 1);
+    ASSERT_NE(outputCapability, nullptr);
+    std::vector<Profile> previewProfiles = outputCapability->GetPreviewProfiles();
+    ASSERT_TRUE(!previewProfiles.empty());
+    double ratio = previewProfiles[0].size_.width / previewProfiles[0].size_.height;
+    std::vector<Profile> photoProfiles = outputCapability->GetPhotoProfiles();
+    ASSERT_TRUE(!photoProfiles.empty());
+    int32_t index = GetProfileIndex(ratio, photoProfiles);
+    EXPECT_NE(index, -1);
+
+    sptr<IConsumerSurface> previewSurface = IConsumerSurface::Create();
+    sptr<SurfaceListener> listener = new SurfaceListener("Preview", SurfaceType::PREVIEW, previewFd_, previewSurface);
+    previewSurface->RegisterConsumerListener((sptr<IBufferConsumerListener>&)listener);
+    previewSurface->SetUserData(CameraManager::surfaceFormat, std::to_string(previewProfiles[0].GetCameraFormat()));
+    previewSurface->SetDefaultWidthAndHeight(previewProfiles[0].GetSize().width, previewProfiles[0].GetSize().height);
+
+    sptr<IBufferProducer> bp = previewSurface->GetProducer();
+    sptr<Surface> pSurface = Surface::CreateSurfaceAsProducer(bp);
+    auto previewOutput = camManagerObj->CreatePreviewOutput(previewProfiles[0], pSurface);
+    sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
+    bp = photoSurface->GetProducer();
+    auto photoOutput = camManagerObj->CreatePhotoOutput(photoProfiles[index], bp);
+    auto captureSession = camManagerObj->CreateCaptureSession();
+    EXPECT_NE(captureSession, nullptr);
+
+    EXPECT_EQ(cameraInput->Open(), SUCCESS);
+    EXPECT_EQ(captureSession->BeginConfig(), SUCCESS);
+    EXPECT_EQ(captureSession->AddInput((sptr<CaptureInput>&)cameraInput), SUCCESS);
+    EXPECT_EQ(captureSession->AddOutput((sptr<CaptureOutput>&)previewOutput), SUCCESS);
+    EXPECT_EQ(captureSession->AddOutput((sptr<CaptureOutput>&)photoOutput), SUCCESS);
+    EXPECT_EQ(captureSession->CommitConfig(), SUCCESS);
+
+    int32_t isSupported = false;
+    EXPECT_EQ(photoOutput->IsAutoHighQualityPhotoSupported(isSupported), SUCCESS);
+    if (isSupported) {
+        EXPECT_EQ(photoOutput->EnableAutoHighQualityPhoto(true), SUCCESS);
+    }
+
+    if (cameraInput) {
+        cameraInput->Release();
+        WAIT(DURATION_AFTER_DEVICE_CLOSE);
+    }
+    if (captureSession) {
+        captureSession->Release();
+    }
+}
+
+/*
+ * Feature: Camera base function
+ * Function: Test PhotoOutput AutoHighQualityPhoto with T/F
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test PhotoOutput AutoHighQualityPhoto with T/F
+ */
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_237, TestSize.Level0)
+{
+    sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
+    ASSERT_NE(camManagerObj, nullptr);
+    std::vector<sptr<CameraDevice>> cameraDevices = camManagerObj->GetSupportedCameras();
+    ASSERT_TRUE(!cameraDevices.empty());
+    sptr<CameraInput> cameraInput = camManagerObj->CreateCameraInput(cameraDevices[0]);
+    ASSERT_NE(cameraInput, nullptr);
+    sptr<CameraOutputCapability> outputCapability = camManagerObj->GetSupportedOutputCapability(cameraDevices[0], 1);
+    ASSERT_NE(outputCapability, nullptr);
+    std::vector<Profile> previewProfiles = outputCapability->GetPreviewProfiles();
+    ASSERT_TRUE(!previewProfiles.empty());
+    double ratio = previewProfiles[0].size_.width / previewProfiles[0].size_.height;
+    std::vector<Profile> photoProfiles = outputCapability->GetPhotoProfiles();
+    ASSERT_TRUE(!photoProfiles.empty());
+    int32_t index = GetProfileIndex(ratio, photoProfiles);
+    EXPECT_NE(index, -1);
+
+    sptr<IConsumerSurface> previewSurface = IConsumerSurface::Create();
+    sptr<SurfaceListener> listener = new SurfaceListener("Preview", SurfaceType::PREVIEW, previewFd_, previewSurface);
+    previewSurface->RegisterConsumerListener((sptr<IBufferConsumerListener>&)listener);
+    previewSurface->SetUserData(CameraManager::surfaceFormat, std::to_string(previewProfiles[0].GetCameraFormat()));
+    previewSurface->SetDefaultWidthAndHeight(previewProfiles[0].GetSize().width, previewProfiles[0].GetSize().height);
+
+    sptr<IBufferProducer> bp = previewSurface->GetProducer();
+    sptr<Surface> pSurface = Surface::CreateSurfaceAsProducer(bp);
+    auto previewOutput = camManagerObj->CreatePreviewOutput(previewProfiles[0], pSurface);
+    sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
+    bp = photoSurface->GetProducer();
+    auto photoOutput = camManagerObj->CreatePhotoOutput(photoProfiles[index], bp);
+    auto captureSession = camManagerObj->CreateCaptureSession();
+    EXPECT_NE(captureSession, nullptr);
+
+    EXPECT_EQ(cameraInput->Open(), SUCCESS);
+    EXPECT_EQ(captureSession->BeginConfig(), SUCCESS);
+    EXPECT_EQ(captureSession->AddInput((sptr<CaptureInput>&)cameraInput), SUCCESS);
+    EXPECT_EQ(captureSession->AddOutput((sptr<CaptureOutput>&)previewOutput), SUCCESS);
+    EXPECT_EQ(captureSession->AddOutput((sptr<CaptureOutput>&)photoOutput), SUCCESS);
+    EXPECT_EQ(captureSession->CommitConfig(), SUCCESS);
+
+    int32_t isSupported = false;
+    EXPECT_EQ(photoOutput->IsAutoHighQualityPhotoSupported(isSupported), SUCCESS);
+    if (isSupported) {
+        EXPECT_EQ(photoOutput->EnableAutoHighQualityPhoto(false), SUCCESS);
+    }
+
+    if (cameraInput) {
+        cameraInput->Release();
+        WAIT(DURATION_AFTER_DEVICE_CLOSE);
+    }
+    if (captureSession) {
+        captureSession->Release();
+    }
+}
+
+/*
+ * Feature: Camera base function
+ * Function: Test PhotoOutput AutoCloudImageEnhancement with T/F
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test PhotoOutput AutoCloudImageEnhancement with T/F
+ */
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_238, TestSize.Level0)
+{
+    sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
+    ASSERT_NE(camManagerObj, nullptr);
+    std::vector<sptr<CameraDevice>> cameraDevices = camManagerObj->GetSupportedCameras();
+    ASSERT_TRUE(!cameraDevices.empty());
+    sptr<CameraInput> cameraInput = camManagerObj->CreateCameraInput(cameraDevices[0]);
+    ASSERT_NE(cameraInput, nullptr);
+    sptr<CameraOutputCapability> outputCapability = camManagerObj->GetSupportedOutputCapability(cameraDevices[0], 1);
+    ASSERT_NE(outputCapability, nullptr);
+    std::vector<Profile> previewProfiles = outputCapability->GetPreviewProfiles();
+    ASSERT_TRUE(!previewProfiles.empty());
+    double ratio = previewProfiles[0].size_.width / previewProfiles[0].size_.height;
+    std::vector<Profile> photoProfiles = outputCapability->GetPhotoProfiles();
+    ASSERT_TRUE(!photoProfiles.empty());
+    int32_t index = GetProfileIndex(ratio, photoProfiles);
+    EXPECT_NE(index, -1);
+
+    sptr<IConsumerSurface> previewSurface = IConsumerSurface::Create();
+    sptr<SurfaceListener> listener = new SurfaceListener("Preview", SurfaceType::PREVIEW, previewFd_, previewSurface);
+    previewSurface->RegisterConsumerListener((sptr<IBufferConsumerListener>&)listener);
+    previewSurface->SetUserData(CameraManager::surfaceFormat, std::to_string(previewProfiles[0].GetCameraFormat()));
+    previewSurface->SetDefaultWidthAndHeight(previewProfiles[0].GetSize().width, previewProfiles[0].GetSize().height);
+
+    sptr<IBufferProducer> bp = previewSurface->GetProducer();
+    sptr<Surface> pSurface = Surface::CreateSurfaceAsProducer(bp);
+    auto previewOutput = camManagerObj->CreatePreviewOutput(previewProfiles[0], pSurface);
+    sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
+    bp = photoSurface->GetProducer();
+    auto photoOutput = camManagerObj->CreatePhotoOutput(photoProfiles[index], bp);
+    auto captureSession = camManagerObj->CreateCaptureSession();
+    EXPECT_NE(captureSession, nullptr);
+
+    EXPECT_EQ(cameraInput->Open(), SUCCESS);
+    EXPECT_EQ(captureSession->BeginConfig(), SUCCESS);
+    EXPECT_EQ(captureSession->AddInput((sptr<CaptureInput>&)cameraInput), SUCCESS);
+    EXPECT_EQ(captureSession->AddOutput((sptr<CaptureOutput>&)previewOutput), SUCCESS);
+    EXPECT_EQ(captureSession->AddOutput((sptr<CaptureOutput>&)photoOutput), SUCCESS);
+    EXPECT_EQ(captureSession->CommitConfig(), SUCCESS);
+
+    bool isSupported = false;
+    EXPECT_EQ(photoOutput->IsAutoCloudImageEnhancementSupported(isSupported), SUCCESS);
+    if (isSupported) {
+        EXPECT_EQ(photoOutput->EnableAutoCloudImageEnhancement(true), SUCCESS);
+    }
+
+    if (cameraInput) {
+        cameraInput->Release();
+        WAIT(DURATION_AFTER_DEVICE_CLOSE);
+    }
+    if (captureSession) {
+        captureSession->Release();
+    }
+}
+
+/*
+ * Feature: Camera base function
+ * Function: Test PhotoOutput AutoCloudImageEnhancement with T/F
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test PhotoOutput AutoCloudImageEnhancement with T/F
+ */
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_239, TestSize.Level0)
+{
+    sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
+    ASSERT_NE(camManagerObj, nullptr);
+    std::vector<sptr<CameraDevice>> cameraDevices = camManagerObj->GetSupportedCameras();
+    ASSERT_TRUE(!cameraDevices.empty());
+    sptr<CameraInput> cameraInput = camManagerObj->CreateCameraInput(cameraDevices[0]);
+    ASSERT_NE(cameraInput, nullptr);
+    sptr<CameraOutputCapability> outputCapability = camManagerObj->GetSupportedOutputCapability(cameraDevices[0], 1);
+    ASSERT_NE(outputCapability, nullptr);
+    std::vector<Profile> previewProfiles = outputCapability->GetPreviewProfiles();
+    ASSERT_TRUE(!previewProfiles.empty());
+    double ratio = previewProfiles[0].size_.width / previewProfiles[0].size_.height;
+    std::vector<Profile> photoProfiles = outputCapability->GetPhotoProfiles();
+    ASSERT_TRUE(!photoProfiles.empty());
+    int32_t index = GetProfileIndex(ratio, photoProfiles);
+    EXPECT_NE(index, -1);
+
+    sptr<IConsumerSurface> previewSurface = IConsumerSurface::Create();
+    sptr<SurfaceListener> listener = new SurfaceListener("Preview", SurfaceType::PREVIEW, previewFd_, previewSurface);
+    previewSurface->RegisterConsumerListener((sptr<IBufferConsumerListener>&)listener);
+    previewSurface->SetUserData(CameraManager::surfaceFormat, std::to_string(previewProfiles[0].GetCameraFormat()));
+    previewSurface->SetDefaultWidthAndHeight(previewProfiles[0].GetSize().width, previewProfiles[0].GetSize().height);
+
+    sptr<IBufferProducer> bp = previewSurface->GetProducer();
+    sptr<Surface> pSurface = Surface::CreateSurfaceAsProducer(bp);
+    auto previewOutput = camManagerObj->CreatePreviewOutput(previewProfiles[0], pSurface);
+    sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
+    bp = photoSurface->GetProducer();
+    auto photoOutput = camManagerObj->CreatePhotoOutput(photoProfiles[index], bp);
+    auto captureSession = camManagerObj->CreateCaptureSession();
+    EXPECT_NE(captureSession, nullptr);
+
+    EXPECT_EQ(cameraInput->Open(), SUCCESS);
+    EXPECT_EQ(captureSession->BeginConfig(), SUCCESS);
+    EXPECT_EQ(captureSession->AddInput((sptr<CaptureInput>&)cameraInput), SUCCESS);
+    EXPECT_EQ(captureSession->AddOutput((sptr<CaptureOutput>&)previewOutput), SUCCESS);
+    EXPECT_EQ(captureSession->AddOutput((sptr<CaptureOutput>&)photoOutput), SUCCESS);
+    EXPECT_EQ(captureSession->CommitConfig(), SUCCESS);
+
+    bool isSupported = false;
+    EXPECT_EQ(photoOutput->IsAutoCloudImageEnhancementSupported(isSupported), SUCCESS);
+    if (isSupported) {
+        EXPECT_EQ(photoOutput->EnableAutoCloudImageEnhancement(false), SUCCESS);
+    }
+
+    if (cameraInput) {
+        cameraInput->Release();
+        WAIT(DURATION_AFTER_DEVICE_CLOSE);
+    }
+    if (captureSession) {
+        captureSession->Release();
+    }
+}
+
+/*
+ * Feature: Camera base function
+ * Function: Test PhotoOutput DepthDataDelivery with T/F
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test PhotoOutput DepthDataDelivery with T/F
+ */
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_240, TestSize.Level0)
+{
+    sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
+    ASSERT_NE(camManagerObj, nullptr);
+    std::vector<sptr<CameraDevice>> cameraDevices = camManagerObj->GetSupportedCameras();
+    ASSERT_TRUE(!cameraDevices.empty());
+    sptr<CameraInput> cameraInput = camManagerObj->CreateCameraInput(cameraDevices[0]);
+    ASSERT_NE(cameraInput, nullptr);
+    sptr<CameraOutputCapability> outputCapability = camManagerObj->GetSupportedOutputCapability(cameraDevices[0], 1);
+    ASSERT_NE(outputCapability, nullptr);
+    std::vector<Profile> previewProfiles = outputCapability->GetPreviewProfiles();
+    ASSERT_TRUE(!previewProfiles.empty());
+    double ratio = previewProfiles[0].size_.width / previewProfiles[0].size_.height;
+    std::vector<Profile> photoProfiles = outputCapability->GetPhotoProfiles();
+    ASSERT_TRUE(!photoProfiles.empty());
+    int32_t index = GetProfileIndex(ratio, photoProfiles);
+    EXPECT_NE(index, -1);
+
+    sptr<IConsumerSurface> previewSurface = IConsumerSurface::Create();
+    sptr<SurfaceListener> listener = new SurfaceListener("Preview", SurfaceType::PREVIEW, previewFd_, previewSurface);
+    previewSurface->RegisterConsumerListener((sptr<IBufferConsumerListener>&)listener);
+    previewSurface->SetUserData(CameraManager::surfaceFormat, std::to_string(previewProfiles[0].GetCameraFormat()));
+    previewSurface->SetDefaultWidthAndHeight(previewProfiles[0].GetSize().width, previewProfiles[0].GetSize().height);
+
+    sptr<IBufferProducer> bp = previewSurface->GetProducer();
+    sptr<Surface> pSurface = Surface::CreateSurfaceAsProducer(bp);
+    auto previewOutput = camManagerObj->CreatePreviewOutput(previewProfiles[0], pSurface);
+    sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
+    bp = photoSurface->GetProducer();
+    auto photoOutput = camManagerObj->CreatePhotoOutput(photoProfiles[index], bp);
+    auto captureSession = camManagerObj->CreateCaptureSession();
+    EXPECT_NE(captureSession, nullptr);
+
+    EXPECT_EQ(cameraInput->Open(), SUCCESS);
+    EXPECT_EQ(captureSession->BeginConfig(), SUCCESS);
+    EXPECT_EQ(captureSession->AddInput((sptr<CaptureInput>&)cameraInput), SUCCESS);
+    EXPECT_EQ(captureSession->AddOutput((sptr<CaptureOutput>&)previewOutput), SUCCESS);
+    EXPECT_EQ(captureSession->AddOutput((sptr<CaptureOutput>&)photoOutput), SUCCESS);
+    EXPECT_EQ(captureSession->CommitConfig(), SUCCESS);
+
+    bool isSupported = photoOutput->IsDepthDataDeliverySupported();
+    if (isSupported) {
+        EXPECT_EQ(photoOutput->EnableDepthDataDelivery(true), SUCCESS);
+    }
+
+    if (cameraInput) {
+        cameraInput->Release();
+        WAIT(DURATION_AFTER_DEVICE_CLOSE);
+    }
+    if (captureSession) {
+        captureSession->Release();
+    }
+}
+
+/*
+ * Feature: Camera base function
+ * Function: Test PhotoOutput DepthDataDelivery with T/F
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test PhotoOutput DepthDataDelivery with T/F
+ */
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_241, TestSize.Level0)
+{
+    sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
+    ASSERT_NE(camManagerObj, nullptr);
+    std::vector<sptr<CameraDevice>> cameraDevices = camManagerObj->GetSupportedCameras();
+    ASSERT_TRUE(!cameraDevices.empty());
+    sptr<CameraInput> cameraInput = camManagerObj->CreateCameraInput(cameraDevices[0]);
+    ASSERT_NE(cameraInput, nullptr);
+    sptr<CameraOutputCapability> outputCapability = camManagerObj->GetSupportedOutputCapability(cameraDevices[0], 1);
+    ASSERT_NE(outputCapability, nullptr);
+    std::vector<Profile> previewProfiles = outputCapability->GetPreviewProfiles();
+    ASSERT_TRUE(!previewProfiles.empty());
+    double ratio = previewProfiles[0].size_.width / previewProfiles[0].size_.height;
+    std::vector<Profile> photoProfiles = outputCapability->GetPhotoProfiles();
+    ASSERT_TRUE(!photoProfiles.empty());
+    int32_t index = GetProfileIndex(ratio, photoProfiles);
+    EXPECT_NE(index, -1);
+
+    sptr<IConsumerSurface> previewSurface = IConsumerSurface::Create();
+    sptr<SurfaceListener> listener = new SurfaceListener("Preview", SurfaceType::PREVIEW, previewFd_, previewSurface);
+    previewSurface->RegisterConsumerListener((sptr<IBufferConsumerListener>&)listener);
+    previewSurface->SetUserData(CameraManager::surfaceFormat, std::to_string(previewProfiles[0].GetCameraFormat()));
+    previewSurface->SetDefaultWidthAndHeight(previewProfiles[0].GetSize().width, previewProfiles[0].GetSize().height);
+
+    sptr<IBufferProducer> bp = previewSurface->GetProducer();
+    sptr<Surface> pSurface = Surface::CreateSurfaceAsProducer(bp);
+    auto previewOutput = camManagerObj->CreatePreviewOutput(previewProfiles[0], pSurface);
+    sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
+    bp = photoSurface->GetProducer();
+    auto photoOutput = camManagerObj->CreatePhotoOutput(photoProfiles[index], bp);
+    auto captureSession = camManagerObj->CreateCaptureSession();
+    EXPECT_NE(captureSession, nullptr);
+
+    EXPECT_EQ(cameraInput->Open(), SUCCESS);
+    EXPECT_EQ(captureSession->BeginConfig(), SUCCESS);
+    EXPECT_EQ(captureSession->AddInput((sptr<CaptureInput>&)cameraInput), SUCCESS);
+    EXPECT_EQ(captureSession->AddOutput((sptr<CaptureOutput>&)previewOutput), SUCCESS);
+    EXPECT_EQ(captureSession->AddOutput((sptr<CaptureOutput>&)photoOutput), SUCCESS);
+    EXPECT_EQ(captureSession->CommitConfig(), SUCCESS);
+
+    bool isSupported = photoOutput->IsDepthDataDeliverySupported();
+    if (isSupported) {
+        EXPECT_EQ(photoOutput->EnableDepthDataDelivery(false), SUCCESS);
+    }
+
+    if (cameraInput) {
+        cameraInput->Release();
+        WAIT(DURATION_AFTER_DEVICE_CLOSE);
+    }
+    if (captureSession) {
+        captureSession->Release();
+    }
+}
+
+/*
+ * Feature: Camera base function
+ * Function: Test PhotoOutput AutoAigcPhoto with T/F
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test PhotoOutput AutoAigcPhoto with T/F
+ */
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_242, TestSize.Level0)
+{
+    sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
+    ASSERT_NE(camManagerObj, nullptr);
+    std::vector<sptr<CameraDevice>> cameraDevices = camManagerObj->GetSupportedCameras();
+    ASSERT_TRUE(!cameraDevices.empty());
+    sptr<CameraInput> cameraInput = camManagerObj->CreateCameraInput(cameraDevices[0]);
+    ASSERT_NE(cameraInput, nullptr);
+    sptr<CameraOutputCapability> outputCapability = camManagerObj->GetSupportedOutputCapability(cameraDevices[0], 1);
+    ASSERT_NE(outputCapability, nullptr);
+    std::vector<Profile> previewProfiles = outputCapability->GetPreviewProfiles();
+    ASSERT_TRUE(!previewProfiles.empty());
+    double ratio = previewProfiles[0].size_.width / previewProfiles[0].size_.height;
+    std::vector<Profile> photoProfiles = outputCapability->GetPhotoProfiles();
+    ASSERT_TRUE(!photoProfiles.empty());
+    int32_t index = GetProfileIndex(ratio, photoProfiles);
+    EXPECT_NE(index, -1);
+
+    sptr<IConsumerSurface> previewSurface = IConsumerSurface::Create();
+    sptr<SurfaceListener> listener = new SurfaceListener("Preview", SurfaceType::PREVIEW, previewFd_, previewSurface);
+    previewSurface->RegisterConsumerListener((sptr<IBufferConsumerListener>&)listener);
+    previewSurface->SetUserData(CameraManager::surfaceFormat, std::to_string(previewProfiles[0].GetCameraFormat()));
+    previewSurface->SetDefaultWidthAndHeight(previewProfiles[0].GetSize().width, previewProfiles[0].GetSize().height);
+
+    sptr<IBufferProducer> bp = previewSurface->GetProducer();
+    sptr<Surface> pSurface = Surface::CreateSurfaceAsProducer(bp);
+    auto previewOutput = camManagerObj->CreatePreviewOutput(previewProfiles[0], pSurface);
+    sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
+    bp = photoSurface->GetProducer();
+    auto photoOutput = camManagerObj->CreatePhotoOutput(photoProfiles[index], bp);
+    auto captureSession = camManagerObj->CreateCaptureSession();
+    EXPECT_NE(captureSession, nullptr);
+
+    EXPECT_EQ(cameraInput->Open(), SUCCESS);
+    EXPECT_EQ(captureSession->BeginConfig(), SUCCESS);
+    EXPECT_EQ(captureSession->AddInput((sptr<CaptureInput>&)cameraInput), SUCCESS);
+    EXPECT_EQ(captureSession->AddOutput((sptr<CaptureOutput>&)previewOutput), SUCCESS);
+    EXPECT_EQ(captureSession->AddOutput((sptr<CaptureOutput>&)photoOutput), SUCCESS);
+    EXPECT_EQ(captureSession->CommitConfig(), SUCCESS);
+
+    bool isSupported = false;
+    EXPECT_EQ(photoOutput->IsAutoAigcPhotoSupported(isSupported), SUCCESS);
+    if (isSupported) {
+        EXPECT_EQ(photoOutput->EnableAutoAigcPhoto(true), SUCCESS);
+    }
+
+    if (cameraInput) {
+        cameraInput->Release();
+        WAIT(DURATION_AFTER_DEVICE_CLOSE);
+    }
+    if (captureSession) {
+        captureSession->Release();
+    }
+}
+
+/*
+ * Feature: Camera base function
+ * Function: Test PhotoOutput AutoAigcPhoto with T/F
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test PhotoOutput AutoAigcPhoto with T/F
+ */
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_243, TestSize.Level0)
+{
+    sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
+    ASSERT_NE(camManagerObj, nullptr);
+    std::vector<sptr<CameraDevice>> cameraDevices = camManagerObj->GetSupportedCameras();
+    ASSERT_TRUE(!cameraDevices.empty());
+    sptr<CameraInput> cameraInput = camManagerObj->CreateCameraInput(cameraDevices[0]);
+    ASSERT_NE(cameraInput, nullptr);
+    sptr<CameraOutputCapability> outputCapability = camManagerObj->GetSupportedOutputCapability(cameraDevices[0], 1);
+    ASSERT_NE(outputCapability, nullptr);
+    std::vector<Profile> previewProfiles = outputCapability->GetPreviewProfiles();
+    ASSERT_TRUE(!previewProfiles.empty());
+    double ratio = previewProfiles[0].size_.width / previewProfiles[0].size_.height;
+    std::vector<Profile> photoProfiles = outputCapability->GetPhotoProfiles();
+    ASSERT_TRUE(!photoProfiles.empty());
+    int32_t index = GetProfileIndex(ratio, photoProfiles);
+    EXPECT_NE(index, -1);
+
+    sptr<IConsumerSurface> previewSurface = IConsumerSurface::Create();
+    sptr<SurfaceListener> listener = new SurfaceListener("Preview", SurfaceType::PREVIEW, previewFd_, previewSurface);
+    previewSurface->RegisterConsumerListener((sptr<IBufferConsumerListener>&)listener);
+    previewSurface->SetUserData(CameraManager::surfaceFormat, std::to_string(previewProfiles[0].GetCameraFormat()));
+    previewSurface->SetDefaultWidthAndHeight(previewProfiles[0].GetSize().width, previewProfiles[0].GetSize().height);
+
+    sptr<IBufferProducer> bp = previewSurface->GetProducer();
+    sptr<Surface> pSurface = Surface::CreateSurfaceAsProducer(bp);
+    auto previewOutput = camManagerObj->CreatePreviewOutput(previewProfiles[0], pSurface);
+    sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
+    bp = photoSurface->GetProducer();
+    auto photoOutput = camManagerObj->CreatePhotoOutput(photoProfiles[index], bp);
+    auto captureSession = camManagerObj->CreateCaptureSession();
+    EXPECT_NE(captureSession, nullptr);
+
+    EXPECT_EQ(cameraInput->Open(), SUCCESS);
+    EXPECT_EQ(captureSession->BeginConfig(), SUCCESS);
+    EXPECT_EQ(captureSession->AddInput((sptr<CaptureInput>&)cameraInput), SUCCESS);
+    EXPECT_EQ(captureSession->AddOutput((sptr<CaptureOutput>&)previewOutput), SUCCESS);
+    EXPECT_EQ(captureSession->AddOutput((sptr<CaptureOutput>&)photoOutput), SUCCESS);
+    EXPECT_EQ(captureSession->CommitConfig(), SUCCESS);
+
+    bool isSupported = false;
+    EXPECT_EQ(photoOutput->IsAutoAigcPhotoSupported(isSupported), SUCCESS);
+    if (isSupported) {
+        EXPECT_EQ(photoOutput->EnableAutoAigcPhoto(false), SUCCESS);
+    }
+
+    if (cameraInput) {
+        cameraInput->Release();
+        WAIT(DURATION_AFTER_DEVICE_CLOSE);
+    }
+    if (captureSession) {
+        captureSession->Release();
+    }
+}
+
+/*
+ * Feature: Camera base function
+ * Function: Test PhotoOutput OfflinePhoto
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test PhotoOutput OfflinePhoto
+ */
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_244, TestSize.Level0)
+{
+    sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
+    ASSERT_NE(camManagerObj, nullptr);
+    std::vector<sptr<CameraDevice>> cameraDevices = camManagerObj->GetSupportedCameras();
+    ASSERT_TRUE(!cameraDevices.empty());
+    sptr<CameraInput> cameraInput = camManagerObj->CreateCameraInput(cameraDevices[0]);
+    ASSERT_NE(cameraInput, nullptr);
+    sptr<CameraOutputCapability> outputCapability = camManagerObj->GetSupportedOutputCapability(cameraDevices[0], 1);
+    ASSERT_NE(outputCapability, nullptr);
+    std::vector<Profile> previewProfiles = outputCapability->GetPreviewProfiles();
+    ASSERT_TRUE(!previewProfiles.empty());
+    double ratio = previewProfiles[0].size_.width / previewProfiles[0].size_.height;
+    std::vector<Profile> photoProfiles = outputCapability->GetPhotoProfiles();
+    ASSERT_TRUE(!photoProfiles.empty());
+    int32_t index = GetProfileIndex(ratio, photoProfiles);
+    EXPECT_NE(index, -1);
+
+    sptr<IConsumerSurface> previewSurface = IConsumerSurface::Create();
+    sptr<SurfaceListener> listener = new SurfaceListener("Preview", SurfaceType::PREVIEW, previewFd_, previewSurface);
+    previewSurface->RegisterConsumerListener((sptr<IBufferConsumerListener>&)listener);
+    previewSurface->SetUserData(CameraManager::surfaceFormat, std::to_string(previewProfiles[0].GetCameraFormat()));
+    previewSurface->SetDefaultWidthAndHeight(previewProfiles[0].GetSize().width, previewProfiles[0].GetSize().height);
+
+    sptr<IBufferProducer> bp = previewSurface->GetProducer();
+    sptr<Surface> pSurface = Surface::CreateSurfaceAsProducer(bp);
+    auto previewOutput = camManagerObj->CreatePreviewOutput(previewProfiles[0], pSurface);
+    sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
+    bp = photoSurface->GetProducer();
+    auto photoOutput = camManagerObj->CreatePhotoOutput(photoProfiles[index], bp);
+    auto captureSession = camManagerObj->CreateCaptureSession();
+    EXPECT_NE(captureSession, nullptr);
+
+    EXPECT_EQ(cameraInput->Open(), SUCCESS);
+    EXPECT_EQ(captureSession->BeginConfig(), SUCCESS);
+    EXPECT_EQ(captureSession->AddInput((sptr<CaptureInput>&)cameraInput), SUCCESS);
+    EXPECT_EQ(captureSession->AddOutput((sptr<CaptureOutput>&)previewOutput), SUCCESS);
+    EXPECT_EQ(captureSession->AddOutput((sptr<CaptureOutput>&)photoOutput), SUCCESS);
+    EXPECT_EQ(captureSession->CommitConfig(), SUCCESS);
+
+    bool isSupported = photoOutput->IsOfflineSupported();
+    if (isSupported) {
+        EXPECT_EQ(photoOutput->EnableOfflinePhoto(), SUCCESS);
+    }
+
+    if (cameraInput) {
+        cameraInput->Release();
+        WAIT(DURATION_AFTER_DEVICE_CLOSE);
+    }
+    if (captureSession) {
+        captureSession->Release();
+    }
+}
+
+/*
+ * Feature: Camera base function
+ * Function: Test PhotoOutput AutoMotionBoostDelivery with T/F
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test PhotoOutput AutoMotionBoostDelivery with T/F
+ */
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_245, TestSize.Level0)
+{
+    sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
+    ASSERT_NE(camManagerObj, nullptr);
+    std::vector<sptr<CameraDevice>> cameraDevices = camManagerObj->GetSupportedCameras();
+    ASSERT_TRUE(!cameraDevices.empty());
+    sptr<CameraInput> cameraInput = camManagerObj->CreateCameraInput(cameraDevices[0]);
+    ASSERT_NE(cameraInput, nullptr);
+    sptr<CameraOutputCapability> outputCapability = camManagerObj->GetSupportedOutputCapability(cameraDevices[0], 1);
+    ASSERT_NE(outputCapability, nullptr);
+    std::vector<Profile> previewProfiles = outputCapability->GetPreviewProfiles();
+    ASSERT_TRUE(!previewProfiles.empty());
+    double ratio = previewProfiles[0].size_.width / previewProfiles[0].size_.height;
+    std::vector<Profile> photoProfiles = outputCapability->GetPhotoProfiles();
+    ASSERT_TRUE(!photoProfiles.empty());
+    int32_t index = GetProfileIndex(ratio, photoProfiles);
+    EXPECT_NE(index, -1);
+
+    sptr<IConsumerSurface> previewSurface = IConsumerSurface::Create();
+    sptr<SurfaceListener> listener = new SurfaceListener("Preview", SurfaceType::PREVIEW, previewFd_, previewSurface);
+    previewSurface->RegisterConsumerListener((sptr<IBufferConsumerListener>&)listener);
+    previewSurface->SetUserData(CameraManager::surfaceFormat, std::to_string(previewProfiles[0].GetCameraFormat()));
+    previewSurface->SetDefaultWidthAndHeight(previewProfiles[0].GetSize().width, previewProfiles[0].GetSize().height);
+
+    sptr<IBufferProducer> bp = previewSurface->GetProducer();
+    sptr<Surface> pSurface = Surface::CreateSurfaceAsProducer(bp);
+    auto previewOutput = camManagerObj->CreatePreviewOutput(previewProfiles[0], pSurface);
+    sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
+    bp = photoSurface->GetProducer();
+    auto photoOutput = camManagerObj->CreatePhotoOutput(photoProfiles[index], bp);
+    auto captureSession = camManagerObj->CreateCaptureSession();
+    EXPECT_NE(captureSession, nullptr);
+
+    EXPECT_EQ(cameraInput->Open(), SUCCESS);
+    EXPECT_EQ(captureSession->BeginConfig(), SUCCESS);
+    EXPECT_EQ(captureSession->AddInput((sptr<CaptureInput>&)cameraInput), SUCCESS);
+    EXPECT_EQ(captureSession->AddOutput((sptr<CaptureOutput>&)previewOutput), SUCCESS);
+    EXPECT_EQ(captureSession->AddOutput((sptr<CaptureOutput>&)photoOutput), SUCCESS);
+    EXPECT_EQ(captureSession->CommitConfig(), SUCCESS);
+
+    bool isSupported = false;
+    EXPECT_EQ(photoOutput->IsAutoMotionBoostDeliverySupported(isSupported), SUCCESS);
+    if (isSupported) {
+        EXPECT_EQ(photoOutput->EnableAutoMotionBoostDelivery(true), SUCCESS);
+    }
+
+    if (cameraInput) {
+        cameraInput->Release();
+        WAIT(DURATION_AFTER_DEVICE_CLOSE);
+    }
+    if (captureSession) {
+        captureSession->Release();
+    }
+}
+
+/*
+ * Feature: Camera base function
+ * Function: Test PhotoOutput AutoMotionBoostDelivery with T/F
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test PhotoOutput AutoMotionBoostDelivery with T/F
+ */
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_246, TestSize.Level0)
+{
+    sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
+    ASSERT_NE(camManagerObj, nullptr);
+    std::vector<sptr<CameraDevice>> cameraDevices = camManagerObj->GetSupportedCameras();
+    ASSERT_TRUE(!cameraDevices.empty());
+    sptr<CameraInput> cameraInput = camManagerObj->CreateCameraInput(cameraDevices[0]);
+    ASSERT_NE(cameraInput, nullptr);
+    sptr<CameraOutputCapability> outputCapability = camManagerObj->GetSupportedOutputCapability(cameraDevices[0], 1);
+    ASSERT_NE(outputCapability, nullptr);
+    std::vector<Profile> previewProfiles = outputCapability->GetPreviewProfiles();
+    ASSERT_TRUE(!previewProfiles.empty());
+    double ratio = previewProfiles[0].size_.width / previewProfiles[0].size_.height;
+    std::vector<Profile> photoProfiles = outputCapability->GetPhotoProfiles();
+    ASSERT_TRUE(!photoProfiles.empty());
+    int32_t index = GetProfileIndex(ratio, photoProfiles);
+    EXPECT_NE(index, -1);
+
+    sptr<IConsumerSurface> previewSurface = IConsumerSurface::Create();
+    sptr<SurfaceListener> listener = new SurfaceListener("Preview", SurfaceType::PREVIEW, previewFd_, previewSurface);
+    previewSurface->RegisterConsumerListener((sptr<IBufferConsumerListener>&)listener);
+    previewSurface->SetUserData(CameraManager::surfaceFormat, std::to_string(previewProfiles[0].GetCameraFormat()));
+    previewSurface->SetDefaultWidthAndHeight(previewProfiles[0].GetSize().width, previewProfiles[0].GetSize().height);
+
+    sptr<IBufferProducer> bp = previewSurface->GetProducer();
+    sptr<Surface> pSurface = Surface::CreateSurfaceAsProducer(bp);
+    auto previewOutput = camManagerObj->CreatePreviewOutput(previewProfiles[0], pSurface);
+    sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
+    bp = photoSurface->GetProducer();
+    auto photoOutput = camManagerObj->CreatePhotoOutput(photoProfiles[index], bp);
+    auto captureSession = camManagerObj->CreateCaptureSession();
+    EXPECT_NE(captureSession, nullptr);
+
+    EXPECT_EQ(cameraInput->Open(), SUCCESS);
+    EXPECT_EQ(captureSession->BeginConfig(), SUCCESS);
+    EXPECT_EQ(captureSession->AddInput((sptr<CaptureInput>&)cameraInput), SUCCESS);
+    EXPECT_EQ(captureSession->AddOutput((sptr<CaptureOutput>&)previewOutput), SUCCESS);
+    EXPECT_EQ(captureSession->AddOutput((sptr<CaptureOutput>&)photoOutput), SUCCESS);
+    EXPECT_EQ(captureSession->CommitConfig(), SUCCESS);
+
+    bool isSupported = false;
+    EXPECT_EQ(photoOutput->IsAutoMotionBoostDeliverySupported(isSupported), SUCCESS);
+    if (isSupported) {
+        EXPECT_EQ(photoOutput->EnableAutoMotionBoostDelivery(false), SUCCESS);
+    }
+
+    if (cameraInput) {
+        cameraInput->Release();
+        WAIT(DURATION_AFTER_DEVICE_CLOSE);
+    }
+    if (captureSession) {
+        captureSession->Release();
+    }
+}
+
+/*
+ * Feature: Camera base function
+ * Function: Test PhotoOutput AutoBokehDataDelivery with T/F
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test PhotoOutput AutoBokehDataDelivery with T/F
+ */
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_247, TestSize.Level0)
+{
+    sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
+    ASSERT_NE(camManagerObj, nullptr);
+    std::vector<sptr<CameraDevice>> cameraDevices = camManagerObj->GetSupportedCameras();
+    ASSERT_TRUE(!cameraDevices.empty());
+    sptr<CameraInput> cameraInput = camManagerObj->CreateCameraInput(cameraDevices[0]);
+    ASSERT_NE(cameraInput, nullptr);
+    sptr<CameraOutputCapability> outputCapability = camManagerObj->GetSupportedOutputCapability(cameraDevices[0], 1);
+    ASSERT_NE(outputCapability, nullptr);
+    std::vector<Profile> previewProfiles = outputCapability->GetPreviewProfiles();
+    ASSERT_TRUE(!previewProfiles.empty());
+    double ratio = previewProfiles[0].size_.width / previewProfiles[0].size_.height;
+    std::vector<Profile> photoProfiles = outputCapability->GetPhotoProfiles();
+    ASSERT_TRUE(!photoProfiles.empty());
+    int32_t index = GetProfileIndex(ratio, photoProfiles);
+    EXPECT_NE(index, -1);
+
+    sptr<IConsumerSurface> previewSurface = IConsumerSurface::Create();
+    sptr<SurfaceListener> listener = new SurfaceListener("Preview", SurfaceType::PREVIEW, previewFd_, previewSurface);
+    previewSurface->RegisterConsumerListener((sptr<IBufferConsumerListener>&)listener);
+    previewSurface->SetUserData(CameraManager::surfaceFormat, std::to_string(previewProfiles[0].GetCameraFormat()));
+    previewSurface->SetDefaultWidthAndHeight(previewProfiles[0].GetSize().width, previewProfiles[0].GetSize().height);
+
+    sptr<IBufferProducer> bp = previewSurface->GetProducer();
+    sptr<Surface> pSurface = Surface::CreateSurfaceAsProducer(bp);
+    auto previewOutput = camManagerObj->CreatePreviewOutput(previewProfiles[0], pSurface);
+    sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
+    bp = photoSurface->GetProducer();
+    auto photoOutput = camManagerObj->CreatePhotoOutput(photoProfiles[index], bp);
+    auto captureSession = camManagerObj->CreateCaptureSession();
+    EXPECT_NE(captureSession, nullptr);
+
+    EXPECT_EQ(cameraInput->Open(), SUCCESS);
+    EXPECT_EQ(captureSession->BeginConfig(), SUCCESS);
+    EXPECT_EQ(captureSession->AddInput((sptr<CaptureInput>&)cameraInput), SUCCESS);
+    EXPECT_EQ(captureSession->AddOutput((sptr<CaptureOutput>&)previewOutput), SUCCESS);
+    EXPECT_EQ(captureSession->AddOutput((sptr<CaptureOutput>&)photoOutput), SUCCESS);
+    EXPECT_EQ(captureSession->CommitConfig(), SUCCESS);
+
+    bool isSupported = false;
+    EXPECT_EQ(photoOutput->IsAutoBokehDataDeliverySupported(isSupported), SUCCESS);
+    if (isSupported) {
+        EXPECT_EQ(photoOutput->EnableAutoBokehDataDelivery(true), SUCCESS);
+    }
+
+    if (cameraInput) {
+        cameraInput->Release();
+        WAIT(DURATION_AFTER_DEVICE_CLOSE);
+    }
+    if (captureSession) {
+        captureSession->Release();
+    }
+}
+
+/*
+ * Feature: Camera base function
+ * Function: Test PhotoOutput AutoBokehDataDelivery with T/F
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test PhotoOutput AutoBokehDataDelivery with T/F
+ */
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_248, TestSize.Level0)
+{
+    sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
+    ASSERT_NE(camManagerObj, nullptr);
+    std::vector<sptr<CameraDevice>> cameraDevices = camManagerObj->GetSupportedCameras();
+    ASSERT_TRUE(!cameraDevices.empty());
+    sptr<CameraInput> cameraInput = camManagerObj->CreateCameraInput(cameraDevices[0]);
+    ASSERT_NE(cameraInput, nullptr);
+    sptr<CameraOutputCapability> outputCapability = camManagerObj->GetSupportedOutputCapability(cameraDevices[0], 1);
+    ASSERT_NE(outputCapability, nullptr);
+    std::vector<Profile> previewProfiles = outputCapability->GetPreviewProfiles();
+    ASSERT_TRUE(!previewProfiles.empty());
+    double ratio = previewProfiles[0].size_.width / previewProfiles[0].size_.height;
+    std::vector<Profile> photoProfiles = outputCapability->GetPhotoProfiles();
+    ASSERT_TRUE(!photoProfiles.empty());
+    int32_t index = GetProfileIndex(ratio, photoProfiles);
+    EXPECT_NE(index, -1);
+
+    sptr<IConsumerSurface> previewSurface = IConsumerSurface::Create();
+    sptr<SurfaceListener> listener = new SurfaceListener("Preview", SurfaceType::PREVIEW, previewFd_, previewSurface);
+    previewSurface->RegisterConsumerListener((sptr<IBufferConsumerListener>&)listener);
+    previewSurface->SetUserData(CameraManager::surfaceFormat, std::to_string(previewProfiles[0].GetCameraFormat()));
+    previewSurface->SetDefaultWidthAndHeight(previewProfiles[0].GetSize().width, previewProfiles[0].GetSize().height);
+
+    sptr<IBufferProducer> bp = previewSurface->GetProducer();
+    sptr<Surface> pSurface = Surface::CreateSurfaceAsProducer(bp);
+    auto previewOutput = camManagerObj->CreatePreviewOutput(previewProfiles[0], pSurface);
+    sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
+    bp = photoSurface->GetProducer();
+    auto photoOutput = camManagerObj->CreatePhotoOutput(photoProfiles[index], bp);
+    auto captureSession = camManagerObj->CreateCaptureSession();
+    EXPECT_NE(captureSession, nullptr);
+
+    EXPECT_EQ(cameraInput->Open(), SUCCESS);
+    EXPECT_EQ(captureSession->BeginConfig(), SUCCESS);
+    EXPECT_EQ(captureSession->AddInput((sptr<CaptureInput>&)cameraInput), SUCCESS);
+    EXPECT_EQ(captureSession->AddOutput((sptr<CaptureOutput>&)previewOutput), SUCCESS);
+    EXPECT_EQ(captureSession->AddOutput((sptr<CaptureOutput>&)photoOutput), SUCCESS);
+    EXPECT_EQ(captureSession->CommitConfig(), SUCCESS);
+
+    bool isSupported = false;
+    EXPECT_EQ(photoOutput->IsAutoBokehDataDeliverySupported(isSupported), SUCCESS);
+    if (isSupported) {
+        EXPECT_EQ(photoOutput->EnableAutoBokehDataDelivery(false), SUCCESS);
+    }
+
+    if (cameraInput) {
+        cameraInput->Release();
+        WAIT(DURATION_AFTER_DEVICE_CLOSE);
+    }
+    if (captureSession) {
+        captureSession->Release();
+    }
+}
+
+/*
+ * Feature: Camera base function
+ * Function: Test PhotoOutput PhotoQualityPrioritization HIGH_QUALITY
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test PhotoOutput PhotoQualityPrioritization HIGH_QUALITY
+ */
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_249, TestSize.Level0)
+{
+    sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
+    ASSERT_NE(camManagerObj, nullptr);
+    std::vector<sptr<CameraDevice>> cameraDevices = camManagerObj->GetSupportedCameras();
+    ASSERT_TRUE(!cameraDevices.empty());
+    sptr<CameraInput> cameraInput = camManagerObj->CreateCameraInput(cameraDevices[0]);
+    ASSERT_NE(cameraInput, nullptr);
+    sptr<CameraOutputCapability> outputCapability = camManagerObj->GetSupportedOutputCapability(cameraDevices[0], 1);
+    ASSERT_NE(outputCapability, nullptr);
+    std::vector<Profile> previewProfiles = outputCapability->GetPreviewProfiles();
+    ASSERT_TRUE(!previewProfiles.empty());
+    double ratio = previewProfiles[0].size_.width / previewProfiles[0].size_.height;
+    std::vector<Profile> photoProfiles = outputCapability->GetPhotoProfiles();
+    ASSERT_TRUE(!photoProfiles.empty());
+    int32_t index = GetProfileIndex(ratio, photoProfiles);
+    EXPECT_NE(index, -1);
+
+    sptr<IConsumerSurface> previewSurface = IConsumerSurface::Create();
+    sptr<SurfaceListener> listener = new SurfaceListener("Preview", SurfaceType::PREVIEW, previewFd_, previewSurface);
+    previewSurface->RegisterConsumerListener((sptr<IBufferConsumerListener>&)listener);
+    previewSurface->SetUserData(CameraManager::surfaceFormat, std::to_string(previewProfiles[0].GetCameraFormat()));
+    previewSurface->SetDefaultWidthAndHeight(previewProfiles[0].GetSize().width, previewProfiles[0].GetSize().height);
+
+    sptr<IBufferProducer> bp = previewSurface->GetProducer();
+    sptr<Surface> pSurface = Surface::CreateSurfaceAsProducer(bp);
+    auto previewOutput = camManagerObj->CreatePreviewOutput(previewProfiles[0], pSurface);
+    sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
+    bp = photoSurface->GetProducer();
+    auto photoOutput = camManagerObj->CreatePhotoOutput(photoProfiles[index], bp);
+    auto captureSession = camManagerObj->CreateCaptureSession();
+    EXPECT_NE(captureSession, nullptr);
+
+    EXPECT_EQ(cameraInput->Open(), SUCCESS);
+    EXPECT_EQ(captureSession->BeginConfig(), SUCCESS);
+    EXPECT_EQ(captureSession->AddInput((sptr<CaptureInput>&)cameraInput), SUCCESS);
+    EXPECT_EQ(captureSession->AddOutput((sptr<CaptureOutput>&)previewOutput), SUCCESS);
+    EXPECT_EQ(captureSession->AddOutput((sptr<CaptureOutput>&)photoOutput), SUCCESS);
+    EXPECT_EQ(captureSession->CommitConfig(), SUCCESS);
+
+    int32_t quality = 0;
+    bool isSupported = photoOutput->IsPhotoQualityPrioritizationSupported(
+        static_cast<PhotoOutput::PhotoQualityPrioritization>(quality));
+    
+    if (isSupported) {
+        EXPECT_EQ(photoOutput->SetPhotoQualityPrioritization(
+            static_cast<PhotoOutput::PhotoQualityPrioritization>(quality)), SUCCESS);
+    }
+
+    if (cameraInput) {
+        cameraInput->Release();
+        WAIT(DURATION_AFTER_DEVICE_CLOSE);
+    }
+    if (captureSession) {
+        captureSession->Release();
+    }
+}
+
+/*
+ * Feature: Camera base function
+ * Function: Test PhotoOutput PhotoQualityPrioritization SPEED
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test PhotoOutput PhotoQualityPrioritization SPEED
+ */
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_250, TestSize.Level0)
+{
+    sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
+    ASSERT_NE(camManagerObj, nullptr);
+    std::vector<sptr<CameraDevice>> cameraDevices = camManagerObj->GetSupportedCameras();
+    ASSERT_TRUE(!cameraDevices.empty());
+    sptr<CameraInput> cameraInput = camManagerObj->CreateCameraInput(cameraDevices[0]);
+    ASSERT_NE(cameraInput, nullptr);
+    sptr<CameraOutputCapability> outputCapability = camManagerObj->GetSupportedOutputCapability(cameraDevices[0], 1);
+    ASSERT_NE(outputCapability, nullptr);
+    std::vector<Profile> previewProfiles = outputCapability->GetPreviewProfiles();
+    ASSERT_TRUE(!previewProfiles.empty());
+    double ratio = previewProfiles[0].size_.width / previewProfiles[0].size_.height;
+    std::vector<Profile> photoProfiles = outputCapability->GetPhotoProfiles();
+    ASSERT_TRUE(!photoProfiles.empty());
+    int32_t index = GetProfileIndex(ratio, photoProfiles);
+    EXPECT_NE(index, -1);
+
+    sptr<IConsumerSurface> previewSurface = IConsumerSurface::Create();
+    sptr<SurfaceListener> listener = new SurfaceListener("Preview", SurfaceType::PREVIEW, previewFd_, previewSurface);
+    previewSurface->RegisterConsumerListener((sptr<IBufferConsumerListener>&)listener);
+    previewSurface->SetUserData(CameraManager::surfaceFormat, std::to_string(previewProfiles[0].GetCameraFormat()));
+    previewSurface->SetDefaultWidthAndHeight(previewProfiles[0].GetSize().width, previewProfiles[0].GetSize().height);
+
+    sptr<IBufferProducer> bp = previewSurface->GetProducer();
+    sptr<Surface> pSurface = Surface::CreateSurfaceAsProducer(bp);
+    auto previewOutput = camManagerObj->CreatePreviewOutput(previewProfiles[0], pSurface);
+    sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
+    bp = photoSurface->GetProducer();
+    auto photoOutput = camManagerObj->CreatePhotoOutput(photoProfiles[index], bp);
+    auto captureSession = camManagerObj->CreateCaptureSession();
+    EXPECT_NE(captureSession, nullptr);
+
+    EXPECT_EQ(cameraInput->Open(), SUCCESS);
+    EXPECT_EQ(captureSession->BeginConfig(), SUCCESS);
+    EXPECT_EQ(captureSession->AddInput((sptr<CaptureInput>&)cameraInput), SUCCESS);
+    EXPECT_EQ(captureSession->AddOutput((sptr<CaptureOutput>&)previewOutput), SUCCESS);
+    EXPECT_EQ(captureSession->AddOutput((sptr<CaptureOutput>&)photoOutput), SUCCESS);
+    EXPECT_EQ(captureSession->CommitConfig(), SUCCESS);
+
+    int32_t quality = 1;
+    bool isSupported = photoOutput->IsPhotoQualityPrioritizationSupported(
+        static_cast<PhotoOutput::PhotoQualityPrioritization>(quality));
+    
+    if (isSupported) {
+        EXPECT_EQ(photoOutput->SetPhotoQualityPrioritization(
+            static_cast<PhotoOutput::PhotoQualityPrioritization>(quality)), SUCCESS);
+    }
+
+    if (cameraInput) {
+        cameraInput->Release();
+        WAIT(DURATION_AFTER_DEVICE_CLOSE);
+    }
+    if (captureSession) {
+        captureSession->Release();
+    }
+}
 } // namespace CameraStandard
 } // namespace OHOS
