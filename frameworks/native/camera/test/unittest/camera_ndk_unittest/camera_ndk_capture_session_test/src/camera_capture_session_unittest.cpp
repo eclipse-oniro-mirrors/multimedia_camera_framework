@@ -4685,12 +4685,12 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_112, Test
 
 /*
  * Feature: Framework
- * Function: Test SetSmoothZoom during session running multiple times
+ * Function: Test SetSmoothZoom with GetZoomRatio combination
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test set smooth zoom multiple times during session running,
- * when valid parameters are entered, all set successfully
+ * CaseDescription: Test set smooth zoom and then get zoom ratio to verify,
+ * when valid parameters are entered, get returns the set value
  */
 HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_113, TestSize.Level0)
 {
@@ -4711,27 +4711,29 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_113, Test
     EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
-    Camera_PreviewOutput* previewOutput = CreatePreviewOutput();
-    ASSERT_NE(previewOutput, nullptr);
-    ret = OH_CaptureSession_AddPreviewOutput(captureSession, previewOutput);
+    Camera_PhotoOutput* photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    ret = OH_CaptureSession_AddPhotoOutput(captureSession, photoOutput);
     EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_CaptureSession_CommitConfig(captureSession);
     EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_CaptureSession_Start(captureSession);
     EXPECT_EQ(ret, CAMERA_OK);
-    float zoomValues[] = {1.0f, 1.3f, 1.6f, 2.0f};
-    for (size_t i = 0; i < sizeof(zoomValues) / sizeof(zoomValues[0]); i++) {
-        ret = OH_CaptureSession_SetSmoothZoom(captureSession, zoomValues[i], CAMERA_SMOOTH_ZOOM_MODE_NORMAL);
-        EXPECT_EQ(ret, CAMERA_OK);
-    }
+    float targetZoom = 1.7f;
+    ret = OH_CaptureSession_SetSmoothZoom(captureSession, targetZoom, CAMERA_SMOOTH_ZOOM_MODE_NORMAL);
+    EXPECT_EQ(ret, CAMERA_OK);
+    float currentZoom = 0.0f;
+    ret = OH_CaptureSession_GetZoomRatio(captureSession, &currentZoom);
+    EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_CaptureSession_Stop(captureSession);
     EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_PreviewOutput_Release(previewOutput);
+    ret = OH_PhotoOutput_Release(photoOutput);
     EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_CameraInput_Release(cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_CaptureSession_Release(captureSession);
     EXPECT_EQ(ret, CAMERA_OK);
+    ReleaseImageReceiver();
 }
 
 /*
@@ -4789,6 +4791,110 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_114, Test
 
 /*
  * Feature: Framework
+ * Function: Test SetSmoothZoom during session running multiple times
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test set smooth zoom multiple times during session running,
+ * when valid parameters are entered, all set successfully
+ */
+HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_115, TestSize.Level0)
+{
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_PHOTO);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_Input *cameraInput = nullptr;
+    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(cameraInput, nullptr);
+    EXPECT_EQ(CameraNdkCommon::DisMdmOpenCheck(cameraInput), CAMERA_OK);
+    ret = OH_CameraInput_Open(cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_BeginConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_PreviewOutput* previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+    ret = OH_CaptureSession_AddPreviewOutput(captureSession, previewOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_CommitConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_Start(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    float zoomValues[] = {1.0f, 1.3f, 1.6f, 2.0f};
+    for (size_t i = 0; i < sizeof(zoomValues) / sizeof(zoomValues[0]); i++) {
+        ret = OH_CaptureSession_SetSmoothZoom(captureSession, zoomValues[i], CAMERA_SMOOTH_ZOOM_MODE_NORMAL);
+        EXPECT_EQ(ret, CAMERA_OK);
+    }
+    ret = OH_CaptureSession_Stop(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_PreviewOutput_Release(previewOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CameraInput_Release(cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_Release(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test SetExposureBias in video session mode
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test set exposure bias in NORMAL_VIDEO session mode,
+ * when valid parameters are entered, set successfully
+ */
+HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_116, TestSize.Level0)
+{
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_VIDEO);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_Input *cameraInput = nullptr;
+    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(cameraInput, nullptr);
+    EXPECT_EQ(CameraNdkCommon::DisMdmOpenCheck(cameraInput), CAMERA_OK);
+    ret = OH_CameraInput_Open(cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_BeginConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_VideoOutput* videoOutput = CreateVideoOutput();
+    ASSERT_NE(videoOutput, nullptr);
+    ret = OH_CaptureSession_AddVideoOutput(captureSession, videoOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_CommitConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    float minExposureBias = 0.0f, maxExposureBias = 0.0f, step = 0.0f;
+    ret = OH_CaptureSession_GetExposureBiasRange(captureSession, &minExposureBias, &maxExposureBias, &step);
+    EXPECT_EQ(ret, CAMERA_OK);
+    if (minExposureBias != 0.0f || maxExposureBias != 0.0f) {
+        float exposureBias = (minExposureBias + maxExposureBias) / 2.0f;
+        ret = OH_CaptureSession_SetExposureBias(captureSession, exposureBias);
+        EXPECT_EQ(ret, CAMERA_OK);
+        float exposureBiasGet = 0.0f;
+        ret = OH_CaptureSession_GetExposureBias(captureSession, &exposureBiasGet);
+        EXPECT_EQ(ret, CAMERA_OK);
+    }
+    ret = OH_VideoOutput_Release(videoOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CameraInput_Release(cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_Release(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
  * Function: Test SetExposureBias after Start session
  * SubFunction: NA
  * FunctionPoints: NA
@@ -4796,7 +4902,7 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_114, Test
  * CaseDescription: Test set exposure bias after session started,
  * when valid parameters are entered, set successfully
  */
-HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_115, TestSize.Level0)
+HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_117, TestSize.Level0)
 {
     Camera_CaptureSession* captureSession = nullptr;
     Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
@@ -4839,6 +4945,125 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_115, Test
     EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_CaptureSession_Release(captureSession);
     EXPECT_EQ(ret, CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test SetExposureBias during session running multiple times
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test set exposure bias multiple times during session running,
+ * when valid parameters are entered, all set successfully
+ */
+HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_118, TestSize.Level0)
+{
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_PHOTO);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_Input *cameraInput = nullptr;
+    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(cameraInput, nullptr);
+    EXPECT_EQ(CameraNdkCommon::DisMdmOpenCheck(cameraInput), CAMERA_OK);
+    ret = OH_CameraInput_Open(cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_BeginConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_PreviewOutput* previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+    ret = OH_CaptureSession_AddPreviewOutput(captureSession, previewOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_CommitConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_Start(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    float minExposureBias = 0.0f, maxExposureBias = 0.0f, step = 0.0f;
+    ret = OH_CaptureSession_GetExposureBiasRange(captureSession, &minExposureBias, &maxExposureBias, &step);
+    EXPECT_EQ(ret, CAMERA_OK);
+    if (minExposureBias != 0.0f || maxExposureBias != 0.0f) {
+        float exposureBias1 = minExposureBias + 0.3f;
+        ret = OH_CaptureSession_SetExposureBias(captureSession, exposureBias1);
+        EXPECT_EQ(ret, CAMERA_OK);
+        float exposureBias2 = (minExposureBias + maxExposureBias) / 2.0f;
+        ret = OH_CaptureSession_SetExposureBias(captureSession, exposureBias2);
+        EXPECT_EQ(ret, CAMERA_OK);
+        float exposureBias3 = maxExposureBias - 0.3f;
+        ret = OH_CaptureSession_SetExposureBias(captureSession, exposureBias3);
+        EXPECT_EQ(ret, CAMERA_OK);
+        float exposureBiasGet = 0.0f;
+        ret = OH_CaptureSession_GetExposureBias(captureSession, &exposureBiasGet);
+        EXPECT_EQ(ret, CAMERA_OK);
+    }
+    ret = OH_CaptureSession_Stop(captureSession);
+    ret = OH_PreviewOutput_Release(previewOutput);
+    ret = OH_CameraInput_Release(cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_Release(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test SetExposureBias after Stop session
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test set exposure bias after session stopped,
+ * when valid parameters are entered, set successfully
+ */
+HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_119, TestSize.Level0)
+{
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_PHOTO);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_Input *cameraInput = nullptr;
+    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(cameraInput, nullptr);
+    EXPECT_EQ(CameraNdkCommon::DisMdmOpenCheck(cameraInput), CAMERA_OK);
+    ret = OH_CameraInput_Open(cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_BeginConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_PhotoOutput* photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    ret = OH_CaptureSession_AddPhotoOutput(captureSession, photoOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_CommitConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_Start(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_Stop(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    float minExposureBias = 0.0f, maxExposureBias = 0.0f, step = 0.0f;
+    ret = OH_CaptureSession_GetExposureBiasRange(captureSession, &minExposureBias, &maxExposureBias, &step);
+    EXPECT_EQ(ret, CAMERA_OK);
+    if (minExposureBias != 0.0f || maxExposureBias != 0.0f) {
+        float exposureBias = maxExposureBias - 0.5f;
+        ret = OH_CaptureSession_SetExposureBias(captureSession, exposureBias);
+        EXPECT_EQ(ret, CAMERA_OK);
+        float exposureBiasGet = 0.0f;
+        ret = OH_CaptureSession_GetExposureBias(captureSession, &exposureBiasGet);
+        EXPECT_EQ(ret, CAMERA_OK);
+    }
+    ret = OH_PhotoOutput_Release(photoOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CameraInput_Release(cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_Release(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ReleaseImageReceiver();
 }
 } // CameraStandard
 } // OHOS
