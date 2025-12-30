@@ -91,6 +91,8 @@ constexpr OutputFormatType DEFAULT_MUXER_OUTPUT_FORMAT = FORMAT_MPEG_4;
 constexpr int32_t RAW_VIDEO_TYPE = 1;
 constexpr int32_t MOVIE_VIDEO_TYPE = 2;
 constexpr int32_t WAIT_MUXER_DONE_TIMEOUT_MS = 2000; // 2000ms
+// time
+constexpr int64_t SEC_TO_NS = 1000000000; // 1s = 1e9 ns
 }
 
 class RecorderEngineCEventReceiver : public CEventReceiver {
@@ -446,11 +448,12 @@ Status RecorderEngine::StopRecording()
     Status ret = Status::OK;
     CHECK_RETURN_RET(curState_ == StateId::INIT, Status::OK);
 
-    CHECK_EXECUTE(audioCaptureFilter_, audioCaptureFilter_->SendEos());
-    CHECK_EXECUTE(movieEncoderFilter_, movieEncoderFilter_->SetStopTime());
-    CHECK_EXECUTE(rawEncoderFilter_, rawEncoderFilter_->SetStopTime());
-    CHECK_EXECUTE(depthEncoderFilter_, depthEncoderFilter_->SetStopTime());
-    CHECK_EXECUTE(preyEncoderFilter_, preyEncoderFilter_->SetStopTime());
+    int64_t currentTime = GetCurrentTime();
+    CHECK_EXECUTE(audioCaptureFilter_, audioCaptureFilter_->SendEos(currentTime));
+    CHECK_EXECUTE(movieEncoderFilter_, movieEncoderFilter_->SetStopTime(currentTime));
+    CHECK_EXECUTE(rawEncoderFilter_, rawEncoderFilter_->SetStopTime(currentTime));
+    CHECK_EXECUTE(depthEncoderFilter_, depthEncoderFilter_->SetStopTime(currentTime));
+    CHECK_EXECUTE(preyEncoderFilter_, preyEncoderFilter_->SetStopTime(currentTime));
 
     auto recorder = recorder_.promote();
     int64_t firstTimestamp;
@@ -1957,6 +1960,13 @@ void RecorderEngine::WaitForRawMuxerDone()
     CHECK_PRINT_ELOG(waitStatus == std::cv_status::timeout, "RecorderEngine::WaitForRawMuxerDone wait timeout");
     MEDIA_INFO_LOG("RecorderEngine::WaitForRawMuxerDone notified");
     needWaitForRawMuxerDone_ = false;
+}
+
+int64_t RecorderEngine::GetCurrentTime()
+{
+    struct timespec timestamp = {0, 0};
+    clock_gettime(CLOCK_MONOTONIC, &timestamp);
+    return static_cast<int64_t>(timestamp.tv_sec) * SEC_TO_NS + static_cast<int64_t>(timestamp.tv_nsec);
 }
 }
 }

@@ -181,10 +181,11 @@ Status VideoEncoderAdapter::SetWatermark(std::shared_ptr<AVBuffer> &waterMarkBuf
     return Status::OK;
 }
 
-Status VideoEncoderAdapter::SetStopTime()
+Status VideoEncoderAdapter::SetStopTime(int64_t stopTime)
 {
-    GetCurrentTime(stopTime_);
-    MEDIA_INFO_LOG("SetStopTime: %{public}" PRId64, stopTime_);
+    stopTime_ = stopTime;
+    CHECK_EXECUTE(stopTime_ <= 0, GetCurrentTime(stopTime_));
+    MEDIA_INFO_LOG("SetStopTime name: %{public}s, stopTime: %{public}" PRId64, name_.c_str(), stopTime_);
     return Status::OK;
 }
 
@@ -713,8 +714,10 @@ void VideoEncoderAdapter::OnInputParameterWithAttrAvailable(uint32_t index, std:
         if (!isDroppedFrames) {
             int64_t mappingTime = adjustPts - startBufferTime_;
             MEDIA_DEBUG_LOG("name: %{public}s, mappingTime: %{public}" PRId64, name_.c_str(), mappingTime);
-            preKeyFramePts_ = currentKeyFramePts_;
-            currentKeyFramePts_ = currentPts;
+            if (!hasReceivedEOS_) {
+                preKeyFramePts_ = currentKeyFramePts_;
+                currentKeyFramePts_ = currentPts;
+            }
             AddStartPts(currentPts);
             AddPauseResumePts(currentPts);
             parameter->PutLongValue(Tag::VIDEO_ENCODE_SET_FRAME_PTS, mappingTime);
