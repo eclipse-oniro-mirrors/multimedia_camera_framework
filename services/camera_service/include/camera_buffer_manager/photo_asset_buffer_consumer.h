@@ -34,9 +34,9 @@ public:
 
 private:
     void ExecuteOnBufferAvailable();
-    void StartWaitAuxiliaryTask(
-        const int32_t captureId, const int32_t auxiliaryCount, int64_t timestamp, sptr<SurfaceBuffer> &surfaceBuffer);
-    void AssembleDeferredPicture(int64_t timestamp, int32_t captureId);
+    void StartWaitAuxiliaryTask(const int32_t originCaptureId, const int32_t captureId, const int32_t auxiliaryCount,
+        int64_t timestamp, sptr<SurfaceBuffer> &surfaceBuffer);
+    void AssembleDeferredPicture(int64_t timestamp, int32_t captureId, int32_t originCaptureId);
     void CleanAfterTransPicture(int32_t captureId);
 
     wptr<HStreamCapture> streamCapture_ = nullptr;
