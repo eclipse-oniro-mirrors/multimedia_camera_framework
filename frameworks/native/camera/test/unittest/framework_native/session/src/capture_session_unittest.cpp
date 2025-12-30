@@ -13034,5 +13034,1511 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_131, TestSize.Level0)
         captureSession->Release();
     }
 }
+
+/*
+ * Feature: Framework
+ * Function: Test TriggerSmartCapture.
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test TriggerSmartCapture with session not committed.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_trigger_smart_capture_001, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    
+    int32_t result = session->TriggerSmartCapture();
+    EXPECT_EQ(result, CameraErrorCode::SESSION_NOT_CONFIG);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test TriggerSmartCapture.
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test TriggerSmartCapture with valid session.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_trigger_smart_capture_002, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(input, nullptr);
+    
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
+    
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
+    ASSERT_NE(photo, nullptr);
+    
+    int32_t errCode  = session->BeginConfig();
+    EXPECT_EQ(errCode, CameraErrorCode::SUCCESS);
+
+    errCode = session->AddInput(input);
+    EXPECT_EQ(errCode, CameraErrorCode::SUCCESS);
+    
+    errCode = session->AddOutput(photo);
+    EXPECT_EQ(errCode, CameraErrorCode::SUCCESS);
+    
+    
+    errCode = session->CommitConfig();
+    EXPECT_EQ(errCode, CameraErrorCode::SUCCESS);
+    
+    errCode = session->TriggerSmartCapture();
+    EXPECT_EQ(errCode, CameraErrorCode::SUCCESS);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test TriggerSmartCapture.
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test TriggerSmartCapture multiple times.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_trigger_smart_capture_003, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(input, nullptr);
+    
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
+    
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
+    ASSERT_NE(photo, nullptr);
+
+        
+    int32_t errCode  = session->BeginConfig();
+    EXPECT_EQ(errCode, CameraErrorCode::SUCCESS);
+   
+    errCode = session->AddInput(input);
+    EXPECT_EQ(errCode, CameraErrorCode::SUCCESS);
+    
+    errCode = session->AddOutput(photo);
+    EXPECT_EQ(errCode, CameraErrorCode::SUCCESS);
+    
+    errCode = session->CommitConfig();
+    EXPECT_EQ(errCode, CameraErrorCode::SUCCESS);
+    
+    errCode = session->TriggerSmartCapture();
+    EXPECT_EQ(errCode, CameraErrorCode::SUCCESS);
+    
+    errCode = session->TriggerSmartCapture();
+    EXPECT_EQ(errCode, CameraErrorCode::SUCCESS);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test TriggerSmartCapture.
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test TriggerSmartCapture with invalid session state.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_trigger_smart_capture_004, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    
+    int32_t result = session->TriggerSmartCapture();
+    EXPECT_EQ(result, CameraErrorCode::SESSION_NOT_CONFIG);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test TriggerSmartCapture.
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test TriggerSmartCapture with session configured but no inputs.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_trigger_smart_capture_005, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    
+    int32_t errCode = session->BeginConfig();
+    EXPECT_EQ(errCode, CameraErrorCode::SUCCESS);
+    
+    errCode = session->CommitConfig();
+    EXPECT_EQ(errCode, CameraErrorCode::SERVICE_FATL_ERROR);
+    
+    errCode = session->TriggerSmartCapture();
+    EXPECT_EQ(errCode, CameraErrorCode::SESSION_NOT_CONFIG);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test TriggerSmartCapture.
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test TriggerSmartCapture with session and inputs but no outputs.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_trigger_smart_capture_006, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(input, nullptr);
+    
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
+    
+    int32_t errCode  = session->BeginConfig();
+    EXPECT_EQ(errCode, CameraErrorCode::SUCCESS);
+
+    errCode = session->AddInput(input);
+    EXPECT_EQ(errCode, CameraErrorCode::SUCCESS);
+    
+    errCode = session->CommitConfig();
+    EXPECT_EQ(errCode, CameraErrorCode::SERVICE_FATL_ERROR);
+    
+    errCode = session->TriggerSmartCapture();
+    EXPECT_EQ(errCode, CameraErrorCode::SESSION_NOT_CONFIG);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test TriggerSmartCapture.
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test TriggerSmartCapture with session and outputs but no inputs.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_trigger_smart_capture_007, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
+    ASSERT_NE(photo, nullptr);
+
+    
+    int32_t errCode  = session->BeginConfig();
+    EXPECT_EQ(errCode, CameraErrorCode::SUCCESS);
+   
+    errCode = session->AddOutput(photo);
+    EXPECT_EQ(errCode, CameraErrorCode::SERVICE_FATL_ERROR);
+    
+    errCode = session->CommitConfig();
+    EXPECT_EQ(errCode, CameraErrorCode::SERVICE_FATL_ERROR);
+    
+    errCode = session->TriggerSmartCapture();
+    EXPECT_EQ(errCode, CameraErrorCode::SESSION_NOT_CONFIG);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test TriggerSmartCapture.
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test TriggerSmartCapture with session in different states.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_trigger_smart_capture_009, TestSize.Level0)
+{
+
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(input, nullptr);
+    
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
+    
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
+    ASSERT_NE(photo, nullptr);
+    
+    int32_t errCode  = session->BeginConfig();
+    EXPECT_EQ(errCode, CameraErrorCode::SUCCESS);
+    
+    errCode = session->AddInput(input);
+    EXPECT_EQ(errCode, CameraErrorCode::SUCCESS);
+    
+    int32_t result = session->TriggerSmartCapture();
+    EXPECT_EQ(result, CameraErrorCode::SESSION_NOT_CONFIG);
+    
+    errCode = session->AddOutput(photo);
+    EXPECT_EQ(errCode, CameraErrorCode::SUCCESS);
+    
+    errCode = session->CommitConfig();
+    EXPECT_EQ(errCode, CameraErrorCode::SUCCESS);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test TriggerSmartCapture.
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test TriggerSmartCapture with session that has been released.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_trigger_smart_capture_010, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(input, nullptr);
+    
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
+    
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
+    ASSERT_NE(photo, nullptr);
+    int32_t errCode  = session->BeginConfig();
+    EXPECT_EQ(errCode, CameraErrorCode::SUCCESS);
+
+    errCode = session->AddInput(input);
+    EXPECT_EQ(errCode, CameraErrorCode::SUCCESS);
+    
+    errCode = session->AddOutput(photo);
+    EXPECT_EQ(errCode, CameraErrorCode::SUCCESS);
+
+    
+    errCode = session->CommitConfig();
+    EXPECT_EQ(errCode, CameraErrorCode::SUCCESS);
+    
+    session->Release();
+    
+    errCode = session->TriggerSmartCapture();
+    EXPECT_EQ(errCode, CameraErrorCode::SESSION_NOT_CONFIG);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test IsPoseSuggestionSupported.
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsPoseSuggestionSupported with null camera device.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_is_pose_suggestion_supported_001, TestSize.Level0)
+{
+    sptr<CaptureSessionForSys> session = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(session, nullptr);
+    
+    session->IsPoseSuggestionSupported();
+    
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test IsPoseSuggestionSupported.
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsPoseSuggestionSupported with valid session configuration.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_is_pose_suggestion_supported_002, TestSize.Level0)
+{
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(input, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
+    ASSERT_NE(photo, nullptr);
+
+    sptr<CaptureSessionForSys> session = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(session, nullptr);
+
+    int32_t ret = session->BeginConfig();
+    EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
+    ret = session->AddInput(input);
+    EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
+    ret = session->AddOutput(photo);
+    EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
+    ret = session->CommitConfig();
+    EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
+
+    session->IsPoseSuggestionSupported();
+
+    session->RemoveInput(input);
+    session->RemoveOutput(photo);
+    photo->Release();
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test IsPoseSuggestionSupported.
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsPoseSuggestionSupported with session not configured.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_is_pose_suggestion_supported_003, TestSize.Level0)
+{
+    sptr<CaptureSessionForSys> session = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(session, nullptr);
+    
+    session->IsPoseSuggestionSupported();
+    
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test IsPoseSuggestionSupported.
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsPoseSuggestionSupported with different scene modes.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_is_pose_suggestion_supported_004, TestSize.Level0)
+{
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(input, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
+    ASSERT_NE(photo, nullptr);
+
+    sptr<CaptureSessionForSys> session = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::NORMAL);
+    ASSERT_NE(session, nullptr);
+
+    int32_t ret = session->BeginConfig();
+    EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
+    ret = session->AddInput(input);
+    EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
+    ret = session->AddOutput(photo);
+    EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
+    ret = session->CommitConfig();
+    EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
+
+    session->IsPoseSuggestionSupported();
+
+    session->RemoveInput(input);
+    session->RemoveOutput(photo);
+    photo->Release();
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test IsPoseSuggestionSupported.
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsPoseSuggestionSupported with session that has been released.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_is_pose_suggestion_supported_005, TestSize.Level0)
+{
+    sptr<CaptureSessionForSys> session = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(session, nullptr);
+    
+    session->Release();
+    
+    session->IsPoseSuggestionSupported();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test IsPoseSuggestionSupported.
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsPoseSuggestionSupported with multiple calls.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_is_pose_suggestion_supported_006, TestSize.Level0)
+{
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(input, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
+    ASSERT_NE(photo, nullptr);
+
+    sptr<CaptureSessionForSys> session = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(session, nullptr);
+
+    int32_t ret = session->BeginConfig();
+    EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
+    ret = session->AddInput(input);
+    EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
+    ret = session->AddOutput(photo);
+    EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
+    ret = session->CommitConfig();
+    EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
+
+    session->IsPoseSuggestionSupported();
+    session->IsPoseSuggestionSupported();
+
+    session->RemoveInput(input);
+    session->RemoveOutput(photo);
+    photo->Release();
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test IsPoseSuggestionSupported.
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsPoseSuggestionSupported with session in different states.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_is_pose_suggestion_supported_007, TestSize.Level0)
+{
+    sptr<CaptureSessionForSys> session = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(session, nullptr);
+    
+    // Test before configuration
+    session->IsPoseSuggestionSupported();
+    
+    // Test after configuration
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(input, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
+    ASSERT_NE(photo, nullptr);
+
+    int32_t ret = session->BeginConfig();
+    EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
+    ret = session->AddInput(input);
+    EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
+    ret = session->AddOutput(photo);
+    EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
+    ret = session->CommitConfig();
+    EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
+
+    session->IsPoseSuggestionSupported();
+
+    session->RemoveInput(input);
+    session->RemoveOutput(photo);
+    photo->Release();
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test IsPoseSuggestionSupported.
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsPoseSuggestionSupported with session that has inputs but no outputs.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_is_pose_suggestion_supported_008, TestSize.Level0)
+{
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(input, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureSessionForSys> session = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(session, nullptr);
+
+    int32_t ret = session->BeginConfig();
+    EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
+    ret = session->AddInput(input);
+    EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
+    ret = session->CommitConfig();
+    EXPECT_EQ(ret, CameraErrorCode::SERVICE_FATL_ERROR);
+
+    session->IsPoseSuggestionSupported();
+
+    session->RemoveInput(input);
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test IsPoseSuggestionSupported.
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsPoseSuggestionSupported with session that has outputs but no inputs.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_is_pose_suggestion_supported_009, TestSize.Level0)
+{
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
+    ASSERT_NE(photo, nullptr);
+
+    sptr<CaptureSessionForSys> session = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(session, nullptr);
+
+    int32_t ret = session->BeginConfig();
+    EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
+    ret = session->AddOutput(photo);
+    EXPECT_EQ(ret, CameraErrorCode::SERVICE_FATL_ERROR);
+    ret = session->CommitConfig();
+    EXPECT_EQ(ret, CameraErrorCode::SERVICE_FATL_ERROR);
+
+    session->IsPoseSuggestionSupported();
+
+    session->RemoveOutput(photo);
+    photo->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test IsPoseSuggestionSupported.
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsPoseSuggestionSupported with session that has invalid configuration.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_is_pose_suggestion_supported_010, TestSize.Level0)
+{
+    sptr<CaptureSessionForSys> session = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::CAPTURE);
+    ASSERT_NE(session, nullptr);
+    
+    // Test with invalid configuration
+    int32_t ret = session->BeginConfig();
+    EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
+    
+    // Don't add any inputs or outputs
+    
+    ret = session->CommitConfig();
+    EXPECT_EQ(ret, CameraErrorCode::SERVICE_FATL_ERROR);
+
+    session->IsPoseSuggestionSupported();
+    
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CaptureSession with SetSmartCaptureChangeCallback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetSmartCaptureChangeCallback for nullptr
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_266, TestSize.Level1)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    session->SetSmartCaptureChangeCallback(nullptr);
+
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CaptureSession with GetActiveExposureScene
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetActiveExposureScene for default session
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_147, TestSize.Level1)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    ExposureScene exposureScene = session->GetActiveExposureScene();
+    EXPECT_GE(static_cast<int32_t>(exposureScene), 0);
+
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CaptureSession with GetActiveExposureScene
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetActiveExposureScene for CAPTURE scene mode
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_148, TestSize.Level1)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::CAPTURE);
+    ASSERT_NE(session, nullptr);
+
+    ExposureScene exposureScene = session->GetActiveExposureScene();
+    EXPECT_GE(static_cast<int32_t>(exposureScene), 0);
+
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CaptureSession with GetActiveExposureScene
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetActiveExposureScene for NORMAL scene mode
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_149, TestSize.Level1)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::NORMAL);
+    ASSERT_NE(session, nullptr);
+
+    ExposureScene exposureScene = session->GetActiveExposureScene();
+    EXPECT_GE(static_cast<int32_t>(exposureScene), 0);
+
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CaptureSession with GetActiveExposureScene
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetActiveExposureScene for VIDEO scene mode
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_150, TestSize.Level1)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::VIDEO);
+    ASSERT_NE(session, nullptr);
+
+    ExposureScene exposureScene = session->GetActiveExposureScene();
+    EXPECT_GE(static_cast<int32_t>(exposureScene), 0);
+
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CaptureSession with GetActiveExposureScene
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetActiveExposureScene for PORTRAIT scene mode
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_151, TestSize.Level1)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::PORTRAIT);
+    ASSERT_NE(session, nullptr);
+
+    ExposureScene exposureScene = session->GetActiveExposureScene();
+    EXPECT_GE(static_cast<int32_t>(exposureScene), 0);
+
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CaptureSession with GetActiveExposureScene
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetActiveExposureScene for NIGHT scene mode
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_152, TestSize.Level1)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::NIGHT);
+    ASSERT_NE(session, nullptr);
+
+    ExposureScene exposureScene = session->GetActiveExposureScene();
+    EXPECT_GE(static_cast<int32_t>(exposureScene), 0);
+
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CaptureSession with GetActiveExposureScene
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetActiveExposureScene for committed session
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_153, TestSize.Level1)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+
+    ExposureScene exposureScene1 = session->GetActiveExposureScene();
+    EXPECT_GE(static_cast<int32_t>(exposureScene1), 0);
+
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    ExposureScene exposureScene2 = session->GetActiveExposureScene();
+    EXPECT_GE(static_cast<int32_t>(exposureScene2), 0);
+
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CaptureSession with GetActiveExposureScene
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetActiveExposureScene for session with photo output
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_154, TestSize.Level1)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::CAPTURE);
+    ASSERT_NE(session, nullptr);
+
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
+    ASSERT_NE(photo, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(photo), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    ExposureScene exposureScene = session->GetActiveExposureScene();
+    EXPECT_GE(static_cast<int32_t>(exposureScene), 0);
+
+    input->Close();
+    photo->Release();
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CaptureSession with GetActiveExposureScene
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetActiveExposureScene for session with video output
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_155, TestSize.Level1)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::VIDEO);
+    ASSERT_NE(session, nullptr);
+
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> video = CreateVideoOutput(videoProfile_[0]);
+    ASSERT_NE(video, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(video), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    ExposureScene exposureScene = session->GetActiveExposureScene();
+    EXPECT_GE(static_cast<int32_t>(exposureScene), 0);
+
+    input->Close();
+    video->Release();
+    input->Release();
+    session->Release();
+}
+
+
+/*
+ * Feature: Framework
+ * Function: Test CaptureSession with GetActiveExposureScene
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetActiveExposureScene for session with multiple outputs
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_156, TestSize.Level1)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::CAPTURE);
+    ASSERT_NE(session, nullptr);
+
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+    sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfile_[0]);
+    ASSERT_NE(photo, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(session->AddOutput(photo), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    ExposureScene exposureScene = session->GetActiveExposureScene();
+    EXPECT_GE(static_cast<int32_t>(exposureScene), 0);
+
+    input->Close();
+    preview->Release();
+    photo->Release();
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CaptureSession with GetActiveExposureScene
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetActiveExposureScene for session after Start
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_157, TestSize.Level1)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::CAPTURE);
+    ASSERT_NE(session, nullptr);
+
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+    EXPECT_EQ(session->Start(), 0);
+
+    ExposureScene exposureScene = session->GetActiveExposureScene();
+    EXPECT_GE(static_cast<int32_t>(exposureScene), 0);
+
+    session->Stop();
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CaptureSession with GetActiveExposureScene
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetActiveExposureScene for session not committed
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_158, TestSize.Level1)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    ASSERT_NE(input, nullptr);
+    input->Open();
+
+    ExposureScene exposureScene = session->GetActiveExposureScene();
+    EXPECT_GE(static_cast<int32_t>(exposureScene), 0);
+
+    input->Close();
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CaptureSession with GetActiveExposureScene
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetActiveExposureScene for BeginConfig but not CommitConfig
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_159, TestSize.Level1)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+
+    ExposureScene exposureScene = session->GetActiveExposureScene();
+    EXPECT_GE(static_cast<int32_t>(exposureScene), 0);
+
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CaptureSession with GetActiveExposureScene
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetActiveExposureScene multiple times on same session
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_160, TestSize.Level1)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::CAPTURE);
+    ASSERT_NE(session, nullptr);
+
+    ExposureScene exposureScene1 = session->GetActiveExposureScene();
+    EXPECT_GE(static_cast<int32_t>(exposureScene1), 0);
+
+    ExposureScene exposureScene2 = session->GetActiveExposureScene();
+    EXPECT_GE(static_cast<int32_t>(exposureScene2), 0);
+
+    ExposureScene exposureScene3 = session->GetActiveExposureScene();
+    EXPECT_GE(static_cast<int32_t>(exposureScene3), 0);
+
+    EXPECT_EQ(exposureScene1, exposureScene2);
+    EXPECT_EQ(exposureScene2, exposureScene3);
+
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CaptureSession with GetActiveExposureScene
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetActiveExposureScene for different camera device
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_161, TestSize.Level1)
+{
+    if (cameras_.size() < 2) {
+        return;
+    }
+
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::CAPTURE);
+    ASSERT_NE(session, nullptr);
+
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[1]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    ExposureScene exposureScene = session->GetActiveExposureScene();
+    EXPECT_GE(static_cast<int32_t>(exposureScene), 0);
+
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CaptureSession with GetActiveExposureScene
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetActiveExposureScene for session after SetMode
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_162, TestSize.Level1)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::CAPTURE);
+    ASSERT_NE(session, nullptr);
+
+    ExposureScene exposureScene1 = session->GetActiveExposureScene();
+    EXPECT_GE(static_cast<int32_t>(exposureScene1), 0);
+
+    session->SetMode(SceneMode::NORMAL);
+    ExposureScene exposureScene2 = session->GetActiveExposureScene();
+    EXPECT_GE(static_cast<int32_t>(exposureScene2), 0);
+
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CaptureSession with GetActiveExposureScene
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetActiveExposureScene for PROFESSIONAL scene mode
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_163, TestSize.Level1)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::PROFESSIONAL);
+    ASSERT_NE(session, nullptr);
+
+    ExposureScene exposureScene = session->GetActiveExposureScene();
+    EXPECT_GE(static_cast<int32_t>(exposureScene), 0);
+
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CaptureSession with GetActiveExposureScene
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetActiveExposureScene for SLOW_MOTION scene mode
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_164, TestSize.Level1)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::SLOW_MOTION);
+    ASSERT_NE(session, nullptr);
+
+    ExposureScene exposureScene = session->GetActiveExposureScene();
+    EXPECT_GE(static_cast<int32_t>(exposureScene), 0);
+
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CaptureSession with GetActiveExposureScene
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetActiveExposureScene for CAPTURE_MACRO scene mode
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_165, TestSize.Level1)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::CAPTURE_MACRO);
+    ASSERT_NE(session, nullptr);
+
+    ExposureScene exposureScene = session->GetActiveExposureScene();
+    EXPECT_GE(static_cast<int32_t>(exposureScene), 0);
+
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CaptureSession with GetActiveExposureScene
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetActiveExposureScene for session after Stop
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_166, TestSize.Level1)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::CAPTURE);
+    ASSERT_NE(session, nullptr);
+
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+    EXPECT_EQ(session->Start(), 0);
+    EXPECT_EQ(session->Stop(), 0);
+
+    ExposureScene exposureScene = session->GetActiveExposureScene();
+    EXPECT_GE(static_cast<int32_t>(exposureScene), 0);
+
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CaptureSession with GetActiveExposureScene
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetActiveExposureScene for session with inputDevice null
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_167, TestSize.Level1)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    session->SetInputDevice(nullptr);
+    ExposureScene exposureScene = session->GetActiveExposureScene();
+    EXPECT_GE(static_cast<int32_t>(exposureScene), 0);
+
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CaptureSession with GetActiveExposureScene
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetActiveExposureScene for LIGHT_PAINTING scene mode
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_168, TestSize.Level1)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::LIGHT_PAINTING);
+    ASSERT_NE(session, nullptr);
+
+    ExposureScene exposureScene = session->GetActiveExposureScene();
+    EXPECT_GE(static_cast<int32_t>(exposureScene), 0);
+
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CaptureSession with GetActiveExposureScene
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetActiveExposureScene for HIGH_RES_PHOTO scene mode
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_169, TestSize.Level1)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::HIGH_RES_PHOTO);
+    ASSERT_NE(session, nullptr);
+
+    ExposureScene exposureScene = session->GetActiveExposureScene();
+    EXPECT_GE(static_cast<int32_t>(exposureScene), 0);
+
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CaptureSession with SetExposureScene
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetExposureScene for IsExposureSceneSupported is false
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_170, TestSize.Level1)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    ExposureScene exposureScene = static_cast<ExposureScene>(0);
+    int32_t result = session->SetExposureScene(exposureScene);
+    EXPECT_EQ(result, CameraErrorCode::OPERATION_NOT_ALLOWED);
+
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CaptureSession with SetExposureScene
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetExposureScene for session not committed
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_171, TestSize.Level1)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    ASSERT_NE(input, nullptr);
+    input->Open();
+
+    ExposureScene exposureScene = static_cast<ExposureScene>(0);
+    int32_t result = session->SetExposureScene(exposureScene);
+    EXPECT_EQ(result, CameraErrorCode::OPERATION_NOT_ALLOWED);
+
+    input->Close();
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CaptureSession with SetExposureScene
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetExposureScene for BeginConfig but not CommitConfig
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_172, TestSize.Level1)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+
+    ExposureScene exposureScene = static_cast<ExposureScene>(0);
+    int32_t result = session->SetExposureScene(exposureScene);
+    EXPECT_EQ(result, CameraErrorCode::OPERATION_NOT_ALLOWED);
+
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CaptureSession with SetExposureScene
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetExposureScene for different exposure scene values
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_173, TestSize.Level1)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    ExposureScene exposureScene1 = static_cast<ExposureScene>(0);
+    int32_t result1 = session->SetExposureScene(exposureScene1);
+    EXPECT_EQ(result1, CameraErrorCode::OPERATION_NOT_ALLOWED);
+
+    ExposureScene exposureScene2 = static_cast<ExposureScene>(1);
+    int32_t result2 = session->SetExposureScene(exposureScene2);
+    EXPECT_EQ(result2, CameraErrorCode::OPERATION_NOT_ALLOWED);
+
+    ExposureScene exposureScene3 = static_cast<ExposureScene>(2);
+    int32_t result3 = session->SetExposureScene(exposureScene3);
+    EXPECT_EQ(result3, CameraErrorCode::OPERATION_NOT_ALLOWED);
+
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CaptureSession with SetExposureScene
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetExposureScene for CAPTURE scene mode
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_174, TestSize.Level1)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::CAPTURE);
+    ASSERT_NE(session, nullptr);
+
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    ExposureScene exposureScene = static_cast<ExposureScene>(0);
+    int32_t result = session->SetExposureScene(exposureScene);
+    EXPECT_EQ(result, CameraErrorCode::OPERATION_NOT_ALLOWED);
+
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CaptureSession with SetExposureScene
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetExposureScene for NORMAL scene mode
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_175, TestSize.Level1)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::NORMAL);
+    ASSERT_NE(session, nullptr);
+
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    ExposureScene exposureScene = static_cast<ExposureScene>(0);
+    int32_t result = session->SetExposureScene(exposureScene);
+    EXPECT_EQ(result, CameraErrorCode::OPERATION_NOT_ALLOWED);
+
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
+
 }
 }
