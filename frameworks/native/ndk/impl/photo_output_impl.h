@@ -349,10 +349,6 @@ public:
 
     Camera_ErrorCode GetPhotoRotation(int32_t imageRotation, Camera_ImageRotation* cameraImageRotation);
 
-    Camera_ErrorCode IsPhotoQualityPrioritizationSupported(
-        Camera_PhotoQualityPrioritization qualityPrioritization, bool* isSupported);
-    Camera_ErrorCode SetPhotoQualityPrioritization(
-        Camera_PhotoQualityPrioritization qualityPrioritization);
 private:
 
     OHOS::sptr<OHOS::CameraStandard::PhotoOutput> innerPhotoOutput_ = nullptr;

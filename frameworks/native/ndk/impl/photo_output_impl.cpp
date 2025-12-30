@@ -282,7 +282,7 @@ Camera_ErrorCode Camera_PhotoOutput::EnableMirror(bool enableMirror)
 {
     int32_t ret = innerPhotoOutput_->EnableMirror(enableMirror);
     isMirrorEnable_ = (ret == napi_ok) ? enableMirror : isMirrorEnable_;
-
+    
     return FrameworkToNdkCameraError(ret);
 }
 
@@ -366,26 +366,4 @@ Camera_ErrorCode Camera_PhotoOutput::GetPhotoRotation(int32_t imageRotation, Cam
         "Camera_PhotoOutput::GetPhotoRotation failed to get photo profile! ret: %{public}d", cameraOutputRotation);
     *cameraImageRotation = static_cast<Camera_ImageRotation>(cameraOutputRotation);
     return CAMERA_OK;
-}
-
-Camera_ErrorCode Camera_PhotoOutput::IsPhotoQualityPrioritizationSupported(
-    Camera_PhotoQualityPrioritization qualityPrioritization, bool* isSupported)
-{
-    CHECK_RETURN_RET_ELOG(isSupported == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Camera_PhotoOutput::IsPhotoQualityPrioritizationSupported failed, isSupported is null");
-    CHECK_RETURN_RET_ELOG(innerPhotoOutput_ == nullptr, CAMERA_SERVICE_FATAL_ERROR,
-        "Camera_PhotoOutput::IsPhotoQualityPrioritizationSupported failed, innerPhotoOutput_ is null");
-    *isSupported = innerPhotoOutput_->IsPhotoQualityPrioritizationSupported(
-        static_cast<PhotoOutput::PhotoQualityPrioritization>(qualityPrioritization));
-    return CAMERA_OK;
-}
-
-Camera_ErrorCode Camera_PhotoOutput::SetPhotoQualityPrioritization(
-    Camera_PhotoQualityPrioritization qualityPrioritization)
-{
-    CHECK_RETURN_RET_ELOG(innerPhotoOutput_ == nullptr, CAMERA_SERVICE_FATAL_ERROR,
-        "Camera_PhotoOutput::SetPhotoQualityPrioritization failed, innerPhotoOutput_ is null");
-    int32_t ret = innerPhotoOutput_->SetPhotoQualityPrioritization(
-        static_cast<PhotoOutput::PhotoQualityPrioritization>(qualityPrioritization));
-    return FrameworkToNdkCameraError(ret);
 }

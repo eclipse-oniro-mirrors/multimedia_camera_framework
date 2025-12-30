@@ -271,10 +271,6 @@ constexpr int32_t ROTATION_45_DEGREES = 45;
 constexpr int32_t ROTATION_90_DEGREES = 90;
 class PhotoOutput : public CaptureOutput {
 public:
-    enum PhotoQualityPrioritization {
-        HIGH_QUALITY = 0,
-        SPEED = 1
-    };
     explicit PhotoOutput();
     explicit PhotoOutput(sptr<IBufferProducer> bufferProducer);
     explicit PhotoOutput(sptr<IBufferProducer> bufferProducer, sptr<Surface> photoSurface);
@@ -556,10 +552,6 @@ public:
     
     void ReportCaptureEnhanceEnabled(const std::string &str, bool enable, int32_t result);
 
-    bool IsPhotoQualityPrioritizationSupported(PhotoQualityPrioritization quality);
-
-    int32_t SetPhotoQualityPrioritization(PhotoQualityPrioritization quality);
-
     /**
      * @brief Get photo buffer.
      */
@@ -617,8 +609,6 @@ private:
     sptr<IStreamCaptureThumbnailCallback> svcThumbnailCallback_;
     std::shared_ptr<PhotoCaptureSetting> defaultCaptureSetting_;
     sptr<PhotoNativeConsumer> photoNativeConsumer_;
-    static const std::unordered_map<PhotoQualityPrioritization, camera_photo_quality_prioritization_t>
-        g_photoQualityPrioritizationMap_;
     void CameraServerDied(pid_t pid) override;
     bool mIsHasEnableOfflinePhoto_ = false;
     bool isHasSwitched_ = false;
@@ -629,9 +619,6 @@ private:
     void SetPhotoNativeConsumer();
     void SetPhotoAvailableInSvc();
     void SetPhotoAssetAvailableInSvc();
-    bool ParseQualityPrioritization(int32_t modeName, common_metadata_header_t* metadata,
-        camera_photo_quality_prioritization_t type);
-    bool IsQualityPrioritizationTypeSupported(int32_t* originInfo, uint32_t start, uint32_t end, int32_t type);
 };
 
 class HStreamCaptureCallbackImpl : public StreamCaptureCallbackStub {
