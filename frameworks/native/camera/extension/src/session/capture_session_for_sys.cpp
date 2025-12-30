@@ -546,13 +546,6 @@ int32_t CaptureSessionForSys::EnableStageBoost(bool isEnable)
     return CameraErrorCode::SUCCESS;
 }
 
-void CaptureSessionForSys::SetMacroStatusCallback(std::shared_ptr<MacroStatusCallback> callback)
-{
-    std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
-    macroStatusCallback_ = callback;
-    return;
-}
-
 void CaptureSessionForSys::SetFeatureDetectionStatusCallback(std::shared_ptr<FeatureDetectionStatusCallback> callback)
 {
     // LCOV_EXCL_START

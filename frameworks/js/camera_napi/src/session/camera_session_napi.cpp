@@ -3607,15 +3607,21 @@ void CameraSessionNapi::UnregisterFocusCallbackListener(
 void CameraSessionNapi::RegisterMacroStatusCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
-    CameraNapiUtils::ThrowError(env, CameraErrorCode::NO_SYSTEM_APP_PERMISSION,
-        "SystemApi on macroStatusChanged is called");
+    if (macroStatusCallback_ == nullptr) {
+        MEDIA_DEBUG_LOG("CameraSessionNapi::RegisterMacroStatusCallbackListener SET CALLBACK");
+        macroStatusCallback_ = std::make_shared<MacroStatusCallbackListener>(env);
+        CHECK_RETURN_ELOG(macroStatusCallback_ == nullptr,
+            "CameraSessionNapi::RegisterMacroStatusCallbackListener THE CALLBACK IS NULL");
+        cameraSession_->SetMacroStatusCallback(macroStatusCallback_);
+    }
+    macroStatusCallback_->SaveCallbackReference(eventName, callback, isOnce);
 }
 
 void CameraSessionNapi::UnregisterMacroStatusCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
-    CameraNapiUtils::ThrowError(env, CameraErrorCode::NO_SYSTEM_APP_PERMISSION,
-        "SystemApi off macroStatusChanged is called");
+    CHECK_RETURN_ELOG(macroStatusCallback_ == nullptr, "macroStatusCallback is null");
+    macroStatusCallback_->RemoveCallbackRef(eventName, callback);
 }
 
 void CameraSessionNapi::RegisterMoonCaptureBoostCallbackListener(
@@ -4556,6 +4562,48 @@ void ApertureEffectChangeCallbackListener::OnApertureEffectChange(ApertureEffect
 {
     MEDIA_DEBUG_LOG("OnApertureEffectChange is called, apertureEffectType: %{public}d", apertureEffectType);
     OnApertureEffectChangeCallbackAsync(apertureEffectType);
+}
+
+void MacroStatusCallbackListener::OnMacroStatusCallbackAsync(MacroStatus status) const
+{
+    MEDIA_DEBUG_LOG("OnMacroStatusCallbackAsync is called");
+    auto callbackInfo = std::make_unique<MacroStatusCallbackInfo>(status, shared_from_this());
+    MacroStatusCallbackInfo *event = callbackInfo.get();
+    auto task = [event]() {
+        auto callbackInfo = reinterpret_cast<MacroStatusCallbackInfo*>(event);
+        if (callbackInfo) {
+            auto listener = callbackInfo->listener_.lock();
+            CHECK_EXECUTE(listener != nullptr, listener->OnMacroStatusCallback(callbackInfo->status_));
+            delete callbackInfo;
+        }
+    };
+    std::unordered_map<std::string, std::string> params = {
+        {"status", std::to_string(status)},
+    };
+    std::string taskName = CameraNapiUtils::GetTaskName(
+        "MacroStatusCallbackListener::OnMacroStatusCallbackAsync", params);
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
+        MEDIA_ERR_LOG("failed to execute work");
+    } else {
+        callbackInfo.release();
+    }
+}
+
+void MacroStatusCallbackListener::OnMacroStatusCallback(MacroStatus status) const
+{
+    MEDIA_DEBUG_LOG("OnMacroStatusCallback is called");
+    ExecuteCallbackScopeSafe("macroStatusChanged", [&]() {
+        napi_value result;
+        napi_value errCode = CameraNapiUtils::GetUndefinedValue(env_);
+        napi_get_boolean(env_, status == MacroStatus::ACTIVE, &result);
+        return ExecuteCallbackData(env_, errCode, result);
+    });
+}
+
+void MacroStatusCallbackListener::OnMacroStatusChanged(MacroStatus status)
+{
+    MEDIA_DEBUG_LOG("OnMacroStatusChanged is called, status: %{public}d", status);
+    OnMacroStatusCallbackAsync(status);
 }
 
 void CameraSwitchRequestCallbackListener::OnAppCameraSwitch(const std::string &cameraId)

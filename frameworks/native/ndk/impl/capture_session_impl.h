@@ -203,6 +203,10 @@ public:
 
     Camera_ErrorCode UnregisterRemoteDeviceSwitchCallback(OH_CaptureSession_OnCameraSwitchRequest cameraSwitchRequest);
 
+    Camera_ErrorCode RegisterMacroStatusCallback(OH_CaptureSession_OnMacroStatusChange controlMacroStatusChange);
+
+    Camera_ErrorCode UnregisterMacroStatusCallback(OH_CaptureSession_OnMacroStatusChange controlMacroStatusChange);
+
     Camera_ErrorCode RegisterIsoInfoCallback(OH_CaptureSession_OnIsoChange isoInfoChange);
 
     Camera_ErrorCode UnregisterIsoInfoCallback(OH_CaptureSession_OnIsoChange isoInfoChange);
