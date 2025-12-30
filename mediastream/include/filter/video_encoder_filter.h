@@ -37,7 +37,7 @@ public:
         const std::shared_ptr<CFilterCallback>& callback) override;
     Status Configure(const std::shared_ptr<Meta>& parameter);
     Status SetWatermark(std::shared_ptr<AVBuffer>& waterMarkBuffer);
-    Status SetStopTime();
+    Status SetStopTime(int64_t stopTime = -1);
     Status SetTransCoderMode();
     sptr<Surface> GetInputSurface() override;
     Status DoPrepare() override;

@@ -331,12 +331,13 @@ void AudioCaptureFilter::SetAudioSource(int32_t source)
     }
 }
 
-Status AudioCaptureFilter::SendEos()
+Status AudioCaptureFilter::SendEos(int64_t stopTime)
 {
     MEDIA_INFO_LOG("SendEos");
     Status ret = Status::OK;
     eos_ = true;
-    GetCurrentTime(stopTime_);
+    stopTime_ = stopTime;
+    CHECK_EXECUTE(stopTime_ <= 0, GetCurrentTime(stopTime_));
     MEDIA_INFO_LOG("[audio] stopTime: %{public}" PRId64, stopTime_);
     if (outputBufferQueue_) {
         if (!cachedAudioDataDeque_.empty()) {

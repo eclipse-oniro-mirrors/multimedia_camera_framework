@@ -183,6 +183,8 @@ private:
 
     bool IsWatermarkSupportedByAvCodec();
 
+    int64_t GetCurrentTime();
+
     AudioChannel GetMicNum();
 
     int32_t appUid_{0};

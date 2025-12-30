@@ -67,7 +67,7 @@ public:
     Status Init(const std::string& mime, bool isEncoder);
     Status Configure(const std::shared_ptr<Meta>& meta);
     Status SetWatermark(std::shared_ptr<AVBuffer>& waterMarkBuffer);
-    Status SetStopTime();
+    Status SetStopTime(int64_t stopTime = -1);
     Status SetOutputBufferQueue(const sptr<AVBufferQueueProducer>& bufferQueueProducer);
     Status SetEncoderAdapterCallback(const std::shared_ptr<EncoderAdapterCallback>& encoderAdapterCallback);
     Status SetEncoderAdapterKeyFramePtsCallback(

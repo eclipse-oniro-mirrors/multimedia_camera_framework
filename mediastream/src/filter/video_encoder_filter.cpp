@@ -110,11 +110,11 @@ Status VideoEncoderFilter::SetWatermark(std::shared_ptr<AVBuffer> &waterMarkBuff
     return mediaCodec_->SetWatermark(waterMarkBuffer);
 }
 
-Status VideoEncoderFilter::SetStopTime()
+Status VideoEncoderFilter::SetStopTime(int64_t stopTime)
 {
     MEDIA_INFO_LOG("SetStopTime");
     CHECK_RETURN_RET_ELOG(mediaCodec_ == nullptr, Status::ERROR_UNKNOWN, "mediaCodec_ is nullptr");
-    return mediaCodec_->SetStopTime();
+    return mediaCodec_->SetStopTime(stopTime);
 }
 
 Status VideoEncoderFilter::SetTransCoderMode()
