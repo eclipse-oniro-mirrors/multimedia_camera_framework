@@ -765,6 +765,7 @@ int32_t HCameraService::CreateCaptureSession(sptr<ICaptureSession>& session, int
     std::lock_guard<std::mutex> lock(mutex_);
     int32_t rc = CAMERA_OK;
     HILOG_COMM_INFO("HCameraService::CreateCaptureSession opMode_= %{public}d", opMode);
+    CameraReportUtils::GetInstance().updateModeChangePerfInfo(opMode, CameraReportUtils::GetCallerInfo());
 
     OHOS::Security::AccessToken::AccessTokenID callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCaptureSession> captureSession = nullptr;
