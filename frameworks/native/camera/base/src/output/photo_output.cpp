@@ -40,13 +40,6 @@ using namespace std;
 namespace OHOS {
 namespace CameraStandard {
 constexpr uint32_t CAPTURE_TIMEOUT = 1;
-
-const std::unordered_map<PhotoOutput::PhotoQualityPrioritization, camera_photo_quality_prioritization_t>
-    PhotoOutput::g_photoQualityPrioritizationMap_ = {
-    {PhotoOutput::PhotoQualityPrioritization::HIGH_QUALITY, OHOS_CAMERA_PHOTO_QUALITY_PRIORITIZATION_HIGH_QUALITY},
-    {PhotoOutput::PhotoQualityPrioritization::SPEED, OHOS_CAMERA_PHOTO_QUALITY_PRIORITIZATION_SPEED}
-};
-
 PhotoCaptureSetting::PhotoCaptureSetting()
 {
     int32_t items = 10;
@@ -1729,103 +1722,6 @@ void PhotoOutput::CreateMediaLibrary(sptr<CameraPhotoProxy> photoProxy, std::str
         MEDIA_ERR_LOG("PhotoOutput::CreateMediaLibrary itemStream is nullptr");
     }
     MEDIA_INFO_LOG("PhotoOutput::CreateMediaLibrary X");
-}
-
-bool PhotoOutput::ParseQualityPrioritization(int32_t modeName, common_metadata_header_t* metadataHeader,
-    camera_photo_quality_prioritization_t type)
-{
-    CHECK_RETURN_RET_ELOG(metadataHeader == nullptr, false,
-        "PhotoOutput ParseQualityPrioritization error!, metadataHeader is nullptr");
-    camera_metadata_item_t item;
-    int result = Camera::FindCameraMetadataItem(metadataHeader, OHOS_ABILITY_PHOTO_QUALITY_PRIORITIZATION, &item);
-    CHECK_RETURN_RET_ELOG(result != CAM_META_SUCCESS || item.count <= 0, false,
-        "PhotoOutput ParseQualityPrioritization error!, FindCameraMetadataItem error");
-    int32_t* originInfo = item.data.i32;
-    uint32_t count = item.count;
-    CHECK_RETURN_RET_ELOG(count == 0 || originInfo == nullptr, false,
-        "PhotoOutput ParseQualityPrioritization error!, count is zero");
-    uint32_t i = 0;
-    uint32_t j = STEP_ONE;
-    bool ret = false;
-    while (j < count) {
-        if (originInfo[j] != MODE_END) {
-            j = j + STEP_TWO;
-            continue;
-        }
-        if (originInfo[j - 1] == TAG_END) {
-            if (originInfo[i] == modeName) {
-                ret = IsQualityPrioritizationTypeSupported(originInfo, i + 1, j - 1, static_cast<int32_t>(type));
-                break;
-            } else {
-                i = j + STEP_ONE;
-                j = i + STEP_ONE;
-            }
-        } else {
-            j++;
-        }
-    }
-    return ret;
-}
-
-bool PhotoOutput::IsQualityPrioritizationTypeSupported(int32_t* originInfo, uint32_t start, uint32_t end, int32_t type)
-{
-    CHECK_RETURN_RET_ELOG(originInfo == nullptr, false,
-        "PhotoOutput IsQualityPrioritizationTypeSupported error!, originInfo is nullptr");
-    CHECK_RETURN_RET_ELOG(start >= end, false,
-        "PhotoOutput IsQualityPrioritizationTypeSupported error!, start is greater than end");
-    for (uint32_t i = start; i < end; i++) {
-        if (originInfo[i] == type) {
-            return true;
-        }
-    }
-    return false;
-}
-
-bool PhotoOutput::IsPhotoQualityPrioritizationSupported(PhotoQualityPrioritization quality)
-{
-    MEDIA_INFO_LOG("PhotoOutput::IsPhotoQualityPrioritizationSupported E");
-    bool isSupported = false;
-    auto itr = g_photoQualityPrioritizationMap_.find(quality);
-    CHECK_RETURN_RET_ELOG(itr == g_photoQualityPrioritizationMap_.end(),
-        isSupported, "PhotoOutput IsPhotoQualityPrioritizationSupported error!, unknown quality type");
-    auto session = GetSession();
-    CHECK_RETURN_RET_ELOG(session == nullptr, isSupported,
-        "PhotoOutput IsPhotoQualityPrioritizationSupported error!, session is nullptr");
-    auto inputDevice = session->GetInputDevice();
-    CHECK_RETURN_RET_ELOG(inputDevice == nullptr, isSupported,
-        "PhotoOutput IsPhotoQualityPrioritizationSupported error!, inputDevice is nullptr");
-    sptr<CameraDevice> cameraObj = inputDevice->GetCameraDeviceInfo();
-    CHECK_RETURN_RET_ELOG(cameraObj == nullptr, isSupported,
-        "PhotoOutput IsPhotoQualityPrioritizationSupported error!, cameraObj is nullptr");
-    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetCachedMetadata();
-    CHECK_RETURN_RET_ELOG(metadata == nullptr, isSupported,
-        "PhotoOutput IsPhotoQualityPrioritizationSupported error!, metadata is nullptr");
-    camera_photo_quality_prioritization_t qualityPrioritization = itr->second;
-    int32_t sessionMode = session->GetMode();
-    isSupported = ParseQualityPrioritization(sessionMode, metadata->get(), qualityPrioritization);
-    return isSupported;
-}
-
-int32_t PhotoOutput::SetPhotoQualityPrioritization(PhotoQualityPrioritization quality)
-{
-    MEDIA_INFO_LOG("PhotoOutput::SetPhotoQualityPrioritization E");
-    bool isSupported = IsPhotoQualityPrioritizationSupported(quality);
-    CHECK_RETURN_RET_ELOG(!isSupported, OPERATION_NOT_ALLOWED,
-        "PhotoOutput SetPhotoQualityPrioritization error!, ParseQualityPrioritization failed");
-    auto session = GetSession();
-    CHECK_RETURN_RET_ELOG(session == nullptr, SERVICE_FATL_ERROR,
-        "PhotoOutput SetPhotoQualityPrioritization error!, session is nullptr");
-    auto itr = g_photoQualityPrioritizationMap_.find(quality);
-    CHECK_RETURN_RET_ELOG(itr == g_photoQualityPrioritizationMap_.end(), SERVICE_FATL_ERROR,
-        "PhotoOutput SetPhotoQualityPrioritization error!, unknown quality type");
-    camera_photo_quality_prioritization_t qualityPrioritization = itr->second;
-    session->LockForControl();
-    session->SetPhotoQualityPrioritization(qualityPrioritization);
-    int32_t ret = session->UnlockForControl();
-    CHECK_PRINT_ELOG(ret != CameraErrorCode::SUCCESS,
-        "CaptureSession::SetPhotoQualityPrioritization Failed to UnlockForControl");
-    MEDIA_DEBUG_LOG("CaptureSession::SetPhotoQualityPrioritization succeeded");
-    return ret;
 }
 } // namespace CameraStandard
 } // namespace OHOS

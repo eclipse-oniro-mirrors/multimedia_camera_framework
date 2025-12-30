@@ -766,9 +766,7 @@ napi_value PhotoOutputNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("isAutoMotionBoostDeliverySupported", IsAutoMotionBoostDeliverySupported),
         DECLARE_NAPI_FUNCTION("enableAutoMotionBoostDelivery", EnableAutoMotionBoostDelivery),
         DECLARE_NAPI_FUNCTION("isAutoBokehDataDeliverySupported", IsAutoBokehDataDeliverySupported),
-        DECLARE_NAPI_FUNCTION("enableAutoBokehDataDelivery", EnableAutoBokehDataDelivery),
-        DECLARE_NAPI_FUNCTION("isPhotoQualityPrioritizationSupported", IsPhotoQualityPrioritizationSupported),
-        DECLARE_NAPI_FUNCTION("setPhotoQualityPrioritization", SetPhotoQualityPrioritization)
+        DECLARE_NAPI_FUNCTION("enableAutoBokehDataDelivery", EnableAutoBokehDataDelivery)
     };
 
     status = napi_define_class(env, CAMERA_PHOTO_OUTPUT_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH, PhotoOutputNapiConstructor,
@@ -886,7 +884,7 @@ napi_value PhotoOutputNapi::CreatePhotoOutput(napi_env env, Profile& profile, st
     MEDIA_ERR_LOG("CreatePhotoOutput call Failed!");
     return result;
 }
-
+ 
 napi_value PhotoOutputNapi::CreatePhotoOutput(napi_env env, std::string surfaceId)
 {
     MEDIA_INFO_LOG("CreatePhotoOutput with only surfaceId is called");
@@ -2359,50 +2357,6 @@ napi_value PhotoOutputNapi::EnableAutoBokehDataDelivery(napi_env env, napi_callb
         return nullptr;
     }
     return CameraNapiUtils::GetUndefinedValue(env);
-}
-
-napi_value PhotoOutputNapi::IsPhotoQualityPrioritizationSupported(napi_env env, napi_callback_info info)
-{
-    MEDIA_INFO_LOG("PhotoOutputNapi::IsPhotoQualityPrioritizationSupported is called");
-    PhotoOutputNapi* photoOutputNapi = nullptr;
-    int32_t quality = 0;
-    auto result = CameraNapiUtils::GetUndefinedValue(env);
-    CameraNapiParamParser jsParamParser(env, info, photoOutputNapi, quality);
-    if (!jsParamParser.AssertStatus(PARAMETER_ERROR, "parameter occur error")) {
-        MEDIA_ERR_LOG("PhotoOutputNapi::IsPhotoQualityPrioritizationSupported parse parameter occur error");
-        return result;
-    }
-    if (photoOutputNapi != nullptr && photoOutputNapi->photoOutput_ != nullptr) {
-        bool isSupported = photoOutputNapi->photoOutput_->IsPhotoQualityPrioritizationSupported(
-            static_cast<PhotoOutput::PhotoQualityPrioritization>(quality));
-        napi_get_boolean(env, isSupported, &result);
-    } else {
-        MEDIA_ERR_LOG("PhotoOutputNapi::IsPhotoQualityPrioritizationSupported get native object fail");
-        CameraNapiUtils::ThrowError(env, PARAMETER_ERROR, "get native object fail");
-    }
-    return result;
-}
-
-napi_value PhotoOutputNapi::SetPhotoQualityPrioritization(napi_env env, napi_callback_info info)
-{
-    MEDIA_INFO_LOG("PhotoOutputNapi::SetPhotoQualityPrioritization is called");
-    PhotoOutputNapi* photoOutputNapi = nullptr;
-    int32_t quality = 0;
-    auto result = CameraNapiUtils::GetUndefinedValue(env);
-    CameraNapiParamParser jsParamParser(env, info, photoOutputNapi, quality);
-    if (!jsParamParser.AssertStatus(PARAMETER_ERROR, "parameter occur error")) {
-        MEDIA_ERR_LOG("PhotoOutputNapi::SetPhotoQualityPrioritization parse parameter occur error");
-        return result;
-    }
-    if (photoOutputNapi != nullptr && photoOutputNapi->photoOutput_ != nullptr) {
-        int32_t ret = photoOutputNapi->photoOutput_->SetPhotoQualityPrioritization(
-            static_cast<PhotoOutput::PhotoQualityPrioritization>(quality));
-        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, ret), result);
-    } else {
-        MEDIA_ERR_LOG("PhotoOutputNapi::SetPhotoQualityPrioritization get native object fail");
-        CameraNapiUtils::ThrowError(env, PARAMETER_ERROR, "get native object fail");
-    }
-    return result;
 }
 
 extern "C" {

@@ -235,8 +235,6 @@ public:
     static napi_value EnableAutoMotionBoostDelivery(napi_env env, napi_callback_info info);
     static napi_value IsAutoBokehDataDeliverySupported(napi_env env, napi_callback_info info);
     static napi_value EnableAutoBokehDataDelivery(napi_env env, napi_callback_info info);
-    static napi_value IsPhotoQualityPrioritizationSupported(napi_env env, napi_callback_info info);
-    static napi_value SetPhotoQualityPrioritization(napi_env env, napi_callback_info info);
 
     PhotoOutputNapi();
     ~PhotoOutputNapi() override;

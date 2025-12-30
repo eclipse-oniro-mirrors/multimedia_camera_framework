@@ -6543,16 +6543,6 @@ std::vector<NightSubMode> CaptureSession::GetSupportedNightSubModeTypes()
     return abilityContainer->GetSupportedNightSubModeTypes();
 }
 
-void CaptureSession::SetPhotoQualityPrioritization(camera_photo_quality_prioritization_t quality)
-{
-    MEDIA_INFO_LOG("CaptureSession::SetPhotoQualityPrioritization quality:%{public}d", quality);
-    CHECK_RETURN_ELOG(changedMetadata_ == nullptr,
-        "CaptureSession::SetPhotoQualityPrioritization changedMetadata_ is NULL");
-    bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_PHOTO_QUALITY_PRIORITIZATION, &quality, 1);
-    CHECK_PRINT_ELOG(!status, "CaptureSession::SetPhotoQualityPrioritization Failed to AddOrUpdateMetadata!");
-    return;
-}
-
 void CaptureSession::SetZoomRatioForAudio(float zoomRatio)
 {
     CAMERA_SYNC_TRACE;

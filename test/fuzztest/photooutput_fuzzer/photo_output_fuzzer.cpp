@@ -111,10 +111,6 @@ void TestOutput1(sptr<PhotoOutput> output, uint8_t *rawData, size_t size)
     output->IsAutoAigcPhotoSupported(isAutoAigcPhotoSupported);
     data.RewindRead(0);
     output->EnableAutoHighQualityPhoto(data.ReadBool());
-    PhotoOutput::PhotoQualityPrioritization quality =
-        static_cast<PhotoOutput::PhotoQualityPrioritization>(data.ReadInt32() % 1);
-    output->IsPhotoQualityPrioritizationSupported(quality);
-    output->SetPhotoQualityPrioritization(quality);
     output->Release();
 }
 
