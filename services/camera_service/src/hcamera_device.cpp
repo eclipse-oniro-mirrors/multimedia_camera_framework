@@ -932,8 +932,9 @@ int32_t HCameraDevice::CloseDevice()
         cameraHostManager_->UpdateRestoreParamCloseTime(GetClientName(), cameraID_);
     }
     SetDeviceServiceCallback(nullptr);
-    POWERMGR_SYSEVENT_CAMERA_DISCONNECT(cameraID_.c_str(),
-        DeferredProcessing::SteadyClock::GetTimestampMilli() - openCamTime_);
+    uint64_t currentTime = DeferredProcessing::SteadyClock::GetTimestampMilli();
+    CHECK_EXECUTE(currentTime > openCamTime_,
+        POWERMGR_SYSEVENT_CAMERA_DISCONNECT(cameraID_.c_str(), currentTime - openCamTime_));
     MEDIA_DEBUG_LOG("HCameraDevice::CloseDevice end");
     NotifyCameraStatus(CAMERA_CLOSE);
 #ifdef MEMMGR_OVERRID
@@ -1955,8 +1956,9 @@ void HCameraDevice::RemoveResourceWhenHostDied()
         cameraHostManager_->RemoveCameraDevice(cameraID_);
         cameraHostManager_->UpdateRestoreParamCloseTime(GetClientName(), cameraID_);
     }
-    POWERMGR_SYSEVENT_CAMERA_DISCONNECT(cameraID_.c_str(),
-        DeferredProcessing::SteadyClock::GetTimestampMilli() - openCamTime_);
+    uint64_t currentTime = DeferredProcessing::SteadyClock::GetTimestampMilli();
+    CHECK_EXECUTE(currentTime > openCamTime_,
+        POWERMGR_SYSEVENT_CAMERA_DISCONNECT(cameraID_.c_str(), currentTime - openCamTime_));
     NotifyCameraStatus(CAMERA_CLOSE);
     HandlePrivacyAfterCloseDevice();
 #ifdef MEMMGR_OVERRID
