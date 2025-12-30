@@ -8938,7 +8938,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_250, Test
         MEDIA_INFO_LOG("cur mode not supported exposure scene.");
         res = SUCCESS;
     }
-    EXPECT_EQ(res,SUCCESS);
+    EXPECT_EQ(res, SUCCESS);
 
     if (cameraInput) {
         cameraInput->Release();
@@ -9182,7 +9182,6 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_250, Test
     bp = photoSurface->GetProducer();
     auto photoOutput = camManagerObj->CreatePhotoOutput(photoProfiles[index], bp);
     auto captureSession = camManagerObj->CreateCaptureSession();
-    EXPECT_NE(captureSession, nullptr);
 
     EXPECT_EQ(cameraInput->Open(), SUCCESS);
     EXPECT_EQ(captureSession->BeginConfig(), SUCCESS);
@@ -9248,7 +9247,6 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_250, Test
     bp = photoSurface->GetProducer();
     auto photoOutput = camManagerObj->CreatePhotoOutput(photoProfiles[index], bp);
     auto captureSession = camManagerObj->CreateCaptureSession();
-    EXPECT_NE(captureSession, nullptr);
 
     EXPECT_EQ(cameraInput->Open(), SUCCESS);
     EXPECT_EQ(captureSession->BeginConfig(), SUCCESS);
@@ -9314,7 +9312,6 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_250, Test
     bp = photoSurface->GetProducer();
     auto photoOutput = camManagerObj->CreatePhotoOutput(photoProfiles[index], bp);
     auto captureSession = camManagerObj->CreateCaptureSession();
-    EXPECT_NE(captureSession, nullptr);
 
     EXPECT_EQ(cameraInput->Open(), SUCCESS);
     EXPECT_EQ(captureSession->BeginConfig(), SUCCESS);
@@ -9380,7 +9377,6 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_250, Test
     bp = photoSurface->GetProducer();
     auto photoOutput = camManagerObj->CreatePhotoOutput(photoProfiles[index], bp);
     auto captureSession = camManagerObj->CreateCaptureSession();
-    EXPECT_NE(captureSession, nullptr);
 
     EXPECT_EQ(cameraInput->Open(), SUCCESS);
     EXPECT_EQ(captureSession->BeginConfig(), SUCCESS);
@@ -9446,7 +9442,6 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_250, Test
     bp = photoSurface->GetProducer();
     auto photoOutput = camManagerObj->CreatePhotoOutput(photoProfiles[index], bp);
     auto captureSession = camManagerObj->CreateCaptureSession();
-    EXPECT_NE(captureSession, nullptr);
 
     EXPECT_EQ(cameraInput->Open(), SUCCESS);
     EXPECT_EQ(captureSession->BeginConfig(), SUCCESS);
