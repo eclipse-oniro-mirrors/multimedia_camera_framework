@@ -76,6 +76,7 @@ void PhotoAssetBufferConsumer::ExecuteOnBufferAvailable()
     // release surfaceBuffer to bufferQueue
     streamCapture->surface_->ReleaseBuffer(surfaceBuffer, -1);
     CHECK_RETURN_ELOG(newSurfaceBuffer == nullptr, "DeepCopyBuffer faild");
+    int32_t originCaptureId = CameraSurfaceBufferUtil::GetCaptureId(newSurfaceBuffer);
     int32_t captureId = CameraSurfaceBufferUtil::GetMaskCaptureId(newSurfaceBuffer);
     CameraReportDfxUtils::GetInstance()->SetFirstBufferEndInfo(captureId);
     CameraReportDfxUtils::GetInstance()->SetPrepareProxyStartInfo(captureId);
@@ -91,18 +92,18 @@ void PhotoAssetBufferConsumer::ExecuteOnBufferAvailable()
     bool isYuv = streamCapture->isYuvCapture_;
     MEDIA_INFO_LOG("CreateMediaLibrary captureId:%{public}d isYuv::%{public}d", captureId, isYuv);
     if (isYuv) {
-        StartWaitAuxiliaryTask(captureId, auxiliaryCount, timestamp, newSurfaceBuffer);
+        StartWaitAuxiliaryTask(originCaptureId, captureId, auxiliaryCount, timestamp, newSurfaceBuffer);
     } else {
         streamCapture->CreateMediaLibrary(cameraPhotoProxy, uri, cameraShotType, burstKey, timestamp);
         MEDIA_INFO_LOG("CreateMediaLibrary uri:%{public}s", uri.c_str());
-        streamCapture->OnPhotoAssetAvailable(captureId, uri, cameraShotType, burstKey);
+        streamCapture->OnPhotoAssetAvailable(originCaptureId, uri, cameraShotType, burstKey);
     }
 
     MEDIA_INFO_LOG("PA_ExecuteOnBufferAvailable X");
 }
 // LCOV_EXCL_START
-void PhotoAssetBufferConsumer::StartWaitAuxiliaryTask(
-    const int32_t captureId, const int32_t auxiliaryCount, int64_t timestamp, sptr<SurfaceBuffer> &newSurfaceBuffer)
+void PhotoAssetBufferConsumer::StartWaitAuxiliaryTask(const int32_t originCaptureId, const int32_t captureId,
+    const int32_t auxiliaryCount, int64_t timestamp, sptr<SurfaceBuffer> &newSurfaceBuffer)
 {
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("StartWaitAuxiliaryTask E, captureId:%{public}d", captureId);
@@ -135,7 +136,7 @@ void PhotoAssetBufferConsumer::StartWaitAuxiliaryTask(
             MEDIA_INFO_LOG(
                 "PhotoAssetBufferConsumer StartWaitAuxiliaryTask auxiliaryCount is complete, StopMonitor DoTimeout "
                 "captureId = %{public}d",  captureId);
-            AssembleDeferredPicture(timestamp, captureId);
+            AssembleDeferredPicture(timestamp, captureId, originCaptureId);
         } else {
             // start timeer to do assamble
             uint32_t pictureHandle = 0;
@@ -145,13 +146,13 @@ void PhotoAssetBufferConsumer::StartWaitAuxiliaryTask(
                 captureId);
             auto thisPtr = wptr<PhotoAssetBufferConsumer>(this);
             DeferredProcessing::Watchdog::GetGlobalWatchdog().StartMonitor(
-                pictureHandle, delayMilli, [thisPtr, captureId, timestamp](uint32_t handle) {
+                pictureHandle, delayMilli, [thisPtr, captureId, originCaptureId, timestamp](uint32_t handle) {
                     MEDIA_INFO_LOG(
                         "PhotoAssetBufferConsumer PhotoAssetBufferConsumer-Watchdog executed, handle: %{public}d, "
                         "captureId=%{public}d", static_cast<int>(handle), captureId);
                     auto ptr = thisPtr.promote();
                     CHECK_RETURN(ptr == nullptr);
-                    ptr->AssembleDeferredPicture(timestamp, captureId);
+                    ptr->AssembleDeferredPicture(timestamp, captureId, originCaptureId);
                     auto streamCapture = ptr->streamCapture_.promote();
                     if (streamCapture && streamCapture->captureIdAuxiliaryCountMap_.count(captureId)) {
                         streamCapture->captureIdAuxiliaryCountMap_[captureId] = -1;
@@ -196,7 +197,7 @@ void PhotoAssetBufferConsumer::CleanAfterTransPicture(int32_t captureId)
     streamCapture->captureIdHandleMap_.erase(captureId);
 }
 
-void PhotoAssetBufferConsumer::AssembleDeferredPicture(int64_t timestamp, int32_t captureId)
+void PhotoAssetBufferConsumer::AssembleDeferredPicture(int64_t timestamp, int32_t captureId, int32_t originCaptureId)
 {
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("AssembleDeferredPicture E, captureId:%{public}d", captureId);
@@ -241,7 +242,7 @@ void PhotoAssetBufferConsumer::AssembleDeferredPicture(int64_t timestamp, int32_
         picture, streamCapture->photoProxyMap_[captureId], uri, cameraShotType, burstKey, timestamp);
     MEDIA_DEBUG_LOG("AssembleDeferredPicture CreateMediaLibrary X");
     MEDIA_INFO_LOG("CreateMediaLibrary result %{public}s, type %{public}d", uri.c_str(), cameraShotType);
-    streamCapture->OnPhotoAssetAvailable(captureId, uri, cameraShotType, burstKey);
+    streamCapture->OnPhotoAssetAvailable(originCaptureId, uri, cameraShotType, burstKey);
     CleanAfterTransPicture(captureId);
     MEDIA_INFO_LOG("AssembleDeferredPicture X, captureId:%{public}d", captureId);
 }
