@@ -16,6 +16,7 @@
 #ifndef OHOS_CAMERA_H_STREAM_CAPTURE_H
 #define OHOS_CAMERA_H_STREAM_CAPTURE_H
 #include <condition_variable>
+#include <memory>
 #define EXPORT_API __attribute__((visibility("default")))
 
 #include <atomic>
@@ -30,19 +31,43 @@
 #include "v1_2/istream_operator.h"
 #include "safe_map.h"
 #include "icamera_ipc_checker.h"
+#include "sp_holder.h"
 
+namespace OHOS::Media {
+    class Picture;
+}
 namespace OHOS {
 namespace CameraStandard {
 using OHOS::HDI::Camera::V1_0::BufferProducerSequenceable;
 using namespace OHOS::HDI::Camera::V1_0;
 class PhotoAssetIntf;
-class PictureIntf;
 class CameraServerPhotoProxy;
 class HStreamOperator;
 class PictureAssembler;
 namespace DeferredProcessing {
 class TaskManager;
 }
+class PhotoLevelManager {
+public:
+    static PhotoLevelManager& GetInstance()
+    {
+        static PhotoLevelManager instance;
+        return instance;
+    }
+
+    void SetPhotoLevelInfo(int32_t pictureId, bool level);
+    bool GetPhotoLevelInfo(int32_t pictureId);
+    void ClearPhotoLevelInfo();
+
+private:
+    PhotoLevelManager() = default;
+    ~PhotoLevelManager() = default;
+    PhotoLevelManager(const PhotoLevelManager&) = delete;
+    PhotoLevelManager& operator=(const PhotoLevelManager&) = delete;
+
+    std::unordered_map<int32_t, bool> photoLevelMap_;
+};
+
 class ConcurrentMap {
 public:
     void Insert(const int32_t& key, const std::shared_ptr<PhotoAssetIntf>& value);
@@ -60,6 +85,11 @@ private:
     std::map<int32_t, std::shared_ptr<std::condition_variable>> cv_;
     std::mutex map_mutex_;
 };
+class HStreamOperator;
+class PictureAssembler;
+namespace DeferredProcessing {
+class TaskManager;
+}
 constexpr const char* BURST_UUID_UNSET = "";
 class EXPORT_API HStreamCapture : public StreamCaptureStub, public HStreamCommon, public ICameraIpcChecker {
 public:
@@ -69,7 +99,7 @@ public:
 
     int32_t LinkInput(wptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator,
         std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility) override;
-    void SetStreamInfo(StreamInfo_V1_1 &streamInfo) override;
+    void SetStreamInfo(StreamInfo_V1_5 &streamInfo) override;
     int32_t SetThumbnail(bool isEnabled) override;
     int32_t EnableRawDelivery(bool enabled) override;
     int32_t EnableMovingPhoto(bool enabled) override;
@@ -96,6 +126,7 @@ public:
     int32_t OnFrameShutterEnd(int32_t captureId, uint64_t timestamp);
     int32_t OnCaptureReady(int32_t captureId, uint64_t timestamp);
     int32_t OnOfflineDeliveryFinished(int32_t captureId);
+    int32_t OnPhotoAvailable(std::shared_ptr<PictureIntf> picture);
     int32_t OnPhotoAvailable(sptr<SurfaceBuffer> surfaceBuffer, const int64_t timestamp, bool isRaw);
     int32_t OnPhotoAssetAvailable(
         const int32_t captureId, const std::string &uri, int32_t cameraShotType, const std::string &burstKey);
@@ -122,6 +153,7 @@ public:
     int32_t CreateMediaLibraryPhotoAssetProxy(int32_t captureId);
     int32_t UpdateMediaLibraryPhotoAssetProxy(sptr<CameraServerPhotoProxy> photoProxy);
     std::shared_ptr<PhotoAssetIntf> GetPhotoAssetInstance(int32_t captureId);
+    std::shared_ptr<PhotoAssetIntf> GetPhotoAssetInstanceForPub(int32_t captureId);
     bool GetAddPhotoProxyEnabled();
     int32_t AcquireBufferToPrepareProxy(int32_t captureId);
     int32_t EnableOfflinePhoto(bool isEnable) override;
@@ -136,21 +168,21 @@ public:
     int32_t CreateMediaLibrary(std::shared_ptr<PictureIntf> picture, sptr<CameraServerPhotoProxy> &photoProxy,
         std::string &uri, int32_t &cameraShotType, std::string& burstKey, int64_t timestamp);
     int32_t RequireMemorySize(int32_t memSize);
-
+    void ElevateThreadPriority();
     bool isYuvCapture_ = false;
-    sptr<Surface> gainmapSurface_;
-    sptr<Surface> deepSurface_;
-    sptr<Surface> exifSurface_;
-    sptr<Surface> debugSurface_;
-    sptr<Surface> rawSurface_;
-    sptr<Surface> thumbnailSurface_;
+    SpHolder<sptr<Surface>> gainmapSurface_;
+    SpHolder<sptr<Surface>> deepSurface_;
+    SpHolder<sptr<Surface>> exifSurface_;
+    SpHolder<sptr<Surface>> debugSurface_;
+    SpHolder<sptr<Surface>> rawSurface_;
+    SpHolder<sptr<Surface>> thumbnailSurface_;
     sptr<IBufferConsumerListener> gainmapListener_ = nullptr;
     sptr<IBufferConsumerListener> deepListener_ = nullptr;
     sptr<IBufferConsumerListener> exifListener_ = nullptr;
     sptr<IBufferConsumerListener> debugListener_ = nullptr;
     sptr<PictureAssembler> pictureAssembler_;
     std::map<int32_t, std::shared_ptr<PictureIntf>> captureIdPictureMap_;
-    std::shared_ptr<DeferredProcessing::TaskManager> photoTask_ = nullptr;
+    SpHolder<std::shared_ptr<DeferredProcessing::TaskManager>> photoTask_;
     std::shared_ptr<DeferredProcessing::TaskManager> photoSubTask_ = nullptr;
     std::shared_ptr<DeferredProcessing::TaskManager> thumbnailTask_ = nullptr;
 
@@ -169,7 +201,7 @@ public:
 private:
     int32_t CheckBurstCapture(const std::shared_ptr<OHOS::Camera::CameraMetadata>& captureSettings,
                               const int32_t &preparedCaptureId);
-    void SetDataSpaceForCapture(StreamInfo_V1_1 &streamInfo);
+    void SetDataSpaceForCapture(StreamInfo_V1_5 &streamInfo);
     int32_t PrepareBurst(int32_t captureId);
     void ResetBurst();
     void ResetBurstKey(int32_t captureId);
@@ -178,31 +210,31 @@ private:
         const std::shared_ptr<OHOS::Camera::CameraMetadata>& captureSettings, int32_t captureId);
     void SetCameraPhotoProxyInfo(sptr<CameraServerPhotoProxy> cameraPhotoProxy);
     sptr<IStreamCaptureCallback> streamCaptureCallback_;
-    sptr<IStreamCapturePhotoCallback> photoAvaiableCallback_;
+    SpHolder<sptr<IStreamCapturePhotoCallback>> photoAvaiableCallback_;
     sptr<IStreamCapturePhotoAssetCallback> photoAssetAvaiableCallback_;
     sptr<IStreamCaptureThumbnailCallback> thumbnailAvaiableCallback_;
-    void FillingPictureExtendStreamInfos(StreamInfo_V1_1 &streamInfo, int32_t format);
-    void FillingRawAndThumbnailStreamInfo(StreamInfo_V1_1 &streamInfo);
+    void FillingPictureExtendStreamInfos(StreamInfo_V1_5 &streamInfo, int32_t format);
+    void FillingRawAndThumbnailStreamInfo(StreamInfo_V1_5 &streamInfo);
     void UpdateJpegBasicInfo(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureMetadataSetting,
         int32_t& rotation);
     void RegisterAuxiliaryConsumers();
     void CreateCaptureSurface();
     void CreateAuxiliarySurfaces();
     void InitCaptureThread();
-    void SetRawCallback();
+    void SetRawCallbackUnLock();
     void GetLocation(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureMetadataSetting);
     std::mutex callbackLock_;
     int32_t thumbnailSwitch_;
-    int32_t rawDeliverySwitch_;
+    std::atomic<int32_t> rawDeliverySwitch_;
     int32_t movingPhotoSwitch_;
     std::condition_variable testDelay_;
     std::mutex testDelayMutex_;
-    sptr<BufferProducerSequenceable> thumbnailBufferQueue_;
-    sptr<BufferProducerSequenceable> rawBufferQueue_;
-    sptr<BufferProducerSequenceable> gainmapBufferQueue_;
-    sptr<BufferProducerSequenceable> deepBufferQueue_;
-    sptr<BufferProducerSequenceable> exifBufferQueue_;
-    sptr<BufferProducerSequenceable> debugBufferQueue_;
+    SpHolder<sptr<BufferProducerSequenceable>> thumbnailBufferQueue_;
+    SpHolder<sptr<BufferProducerSequenceable>> rawBufferQueue_;
+    SpHolder<sptr<BufferProducerSequenceable>> gainmapBufferQueue_;
+    SpHolder<sptr<BufferProducerSequenceable>> deepBufferQueue_;
+    SpHolder<sptr<BufferProducerSequenceable>> exifBufferQueue_;
+    SpHolder<sptr<BufferProducerSequenceable>> debugBufferQueue_;
     int32_t modeName_;
     int32_t deferredPhotoSwitch_;
     int32_t deferredVideoSwitch_;
@@ -218,14 +250,14 @@ private:
     int32_t videoCodecType_ = 0;
     std::mutex photoAssetLock_;
     ConcurrentMap photoAssetProxy_;
+    std::map<int32_t, std::unique_ptr<std::mutex>> mutexMap;
     bool mEnableOfflinePhoto_ = false;
     bool mSwitchToOfflinePhoto_ = false;
     int32_t mlastCaptureId = 0;
     wptr<HStreamOperator> hStreamOperator_;
-    std::map<int32_t, std::unique_ptr<std::mutex>> mutexMap;
     std::mutex photoCallbackLock_;
     std::mutex thumbnailCallbackLock_;
-    sptr<IBufferConsumerListener> photoListener_ = nullptr;
+    SpHolder<sptr<IBufferConsumerListener>> photoListener_;
     sptr<IBufferConsumerListener> photoAssetListener_ = nullptr;
     sptr<IBufferConsumerListener> thumbnailListener_ = nullptr;
     double latitude_ = 0.0;
