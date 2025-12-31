@@ -16328,14 +16328,12 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_195, TestSize.Level0)
     ASSERT_TRUE(!photoProfiles.empty());
     int32_t index = GetProfileIndex(ratio, photoProfiles);
     EXPECT_NE(index, -1);
-
     sptr<IConsumerSurface> previewSurface = IConsumerSurface::Create();
     int32_t previewFd_ = -1;
     sptr<SurfaceListener> listener = new SurfaceListener("Preview", SurfaceType::PREVIEW, previewFd_, previewSurface);
     previewSurface->RegisterConsumerListener((sptr<IBufferConsumerListener>&)listener);
     previewSurface->SetUserData(CameraManager::surfaceFormat, std::to_string(previewProfiles[0].GetCameraFormat()));
     previewSurface->SetDefaultWidthAndHeight(previewProfiles[0].GetSize().width, previewProfiles[0].GetSize().height);
-
     sptr<IBufferProducer> bp = previewSurface->GetProducer();
     sptr<Surface> pSurface = Surface::CreateSurfaceAsProducer(bp);
     auto previewOutput = camManagerObj->CreatePreviewOutput(previewProfiles[0], pSurface);
@@ -16350,7 +16348,6 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_195, TestSize.Level0)
     EXPECT_EQ(captureSession->AddOutput((sptr<CaptureOutput>&)previewOutput), SUCCESS);
     EXPECT_EQ(captureSession->AddOutput((sptr<CaptureOutput>&)photoOutput), SUCCESS);
     EXPECT_EQ(captureSession->CommitConfig(), SUCCESS);
-
     bool isSupported = captureSession->IsSmartCaptureSupported();
     if (isSupported) {
         res = captureSession->EnableSmartCapture(true);
