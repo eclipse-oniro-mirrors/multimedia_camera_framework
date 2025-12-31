@@ -340,7 +340,9 @@ void DPSEventReport::UpdateRemoveTime(const std::string& imageId, int32_t userId
     {
         std::unique_lock<std::mutex> lock(mutex_);
         auto imageIdToEventInfoTemp = userIdToImageIdEventInfo.find(userId);
-        CHECK_RETURN(imageIdToEventInfoTemp == userIdToImageIdEventInfo.end());
+        if (imageIdToEventInfoTemp == userIdToImageIdEventInfo.end()) {
+            return;
+        }
         uint64_t currentTime = GetTimestampMilli();
         (imageIdToEventInfoTemp->second)[imageId].removeTimeEndTime = currentTime;
     }
