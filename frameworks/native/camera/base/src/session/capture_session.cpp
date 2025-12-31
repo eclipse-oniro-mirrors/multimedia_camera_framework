@@ -6543,6 +6543,13 @@ std::vector<NightSubMode> CaptureSession::GetSupportedNightSubModeTypes()
     return abilityContainer->GetSupportedNightSubModeTypes();
 }
 
+void CaptureSession::SetMacroStatusCallback(std::shared_ptr<MacroStatusCallback> callback)
+{
+    MEDIA_DEBUG_LOG("CaptureSession::SetMacroStatusCallback ENTER");
+    std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
+    macroStatusCallback_ = callback;
+}
+
 void CaptureSession::SetZoomRatioForAudio(float zoomRatio)
 {
     CAMERA_SYNC_TRACE;

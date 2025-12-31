@@ -2142,6 +2142,14 @@ public:
     int32_t SetRecommendedInfoLanguage(const std::string& language);
     int32_t EnableCompositionEffectPreview(bool isEnable);
 
+    /**
+     * @brief Set the macro status callback.
+     * which will be called when there is macro state change.
+     *
+     * @param The MacroStatusCallback pointer.
+     */
+    void SetMacroStatusCallback(std::shared_ptr<MacroStatusCallback> callback);
+
     void SetImageStabilizationGuideCallback(std::shared_ptr<ImageStabilizationGuideCallback> callback);
 
     void SetCompositionPositionCalibrationCallback(std::shared_ptr<CompositionPositionCalibrationCallback> callback);
