@@ -18,7 +18,6 @@
 #include "camera_log.h"
 #include "task_manager.h"
 #include "camera_surface_buffer_util.h"
-#include "camera_report_dfx_uitls.h"
 #include "hstream_capture.h"
 #include "task_manager.h"
 #include "picture_assembler.h"
@@ -85,6 +84,7 @@ void PhotoBufferConsumer::ExecuteOnBufferAvailable()
     surface->ReleaseBuffer(surfaceBuffer, -1);
     CHECK_RETURN_ELOG(newSurfaceBuffer == nullptr, "newSurfaceBuffer is null");
     int32_t captureId = CameraSurfaceBufferUtil::GetCaptureId(newSurfaceBuffer);
+    CameraReportDfxUtils::GetInstance()->SetCaptureState(CaptureState::PHOTO_AVAILABLE, captureId);
     CameraReportDfxUtils::GetInstance()->SetFirstBufferEndInfo(captureId);
     CameraReportDfxUtils::GetInstance()->SetPrepareProxyStartInfo(captureId);
     bool isSystemApp = PhotoLevelManager::GetInstance().GetPhotoLevelInfo(captureId);
@@ -113,7 +113,11 @@ void PhotoBufferConsumer::StartWaitAuxiliaryTask(
 
         // create and save pictureProxy
         std::shared_ptr<PictureIntf> pictureProxy = PictureProxy::CreatePictureProxy();
-        CHECK_RETURN_ELOG(pictureProxy == nullptr, "pictureProxy is nullptr");
+        if (pictureProxy == nullptr) {
+            CameraReportDfxUtils::GetInstance()->SetCaptureState(CaptureState::MEDIALIBRARY_ERROR, captureId);
+            MEDIA_ERR_LOG("pictureProxy is nullptr");
+            return;
+        }
         pictureProxy->Create(newSurfaceBuffer);
         MEDIA_INFO_LOG(
             "PhotoBufferConsumer StartWaitAuxiliaryTask MainSurface w=%{public}d, h=%{public}d, f=%{public}d",

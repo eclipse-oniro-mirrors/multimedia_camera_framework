@@ -17,14 +17,33 @@
 #define OHOS_CAMERA_REPORT_DFX_UITLS_H
  
 #include <map>
+#include <safe_map.h>
+#include <unordered_set>
 #include <mutex>
 #include <refbase.h>
  
 namespace OHOS {
 namespace CameraStandard {
+static const uint64_t REPORT_TIME_INTERVAL = 24 * 60 * 60 * 1000L; // 24 hour in milliseconds
+static const uint64_t WAIT_CALLBACK_TIME_INTERVAL = 2 * 1000L;
+
+enum ClientState {
+    ALIVE = 0,
+    DIED
+};
+
+enum CaptureState {
+    CAPTURE_FWK = 0,
+    HAL_ERROR,
+    HAL_ON_ERROR,
+    PHOTO_AVAILABLE,
+    MEDIALIBRARY_ERROR,
+    CAPTURE_START
+};
 
 struct CaptureDfxInfo {
     int32_t captureId;
+    int32_t pid;
     std::string bundleName;
     std::string pictureId;
     bool isSystemApp;
@@ -34,6 +53,15 @@ struct CaptureDfxInfo {
     uint64_t prepareProxyEndTime;
     uint64_t addProxyStartTime;
     uint64_t addProxyEndTime;
+};
+
+struct CaptureStateCount {
+    int32_t captureFwk = 0;
+    int32_t halError = 0;
+    int32_t callback = 0;
+    int32_t appNoSave = 0;
+    int32_t mediaLibraryError = 0;
+    int32_t captureStart = 0;
 };
 
 class CameraReportDfxUtils : public RefBase {
@@ -50,7 +78,10 @@ public:
  
     void SetAddProxyStartInfo(int32_t captureId);
     void SetAddProxyEndInfo(int32_t captureId);
-    
+
+    void SetCaptureState(const CaptureState state, const int32_t captureId);
+    void UpdateAliveClient(const pid_t pid, const ClientState state);
+
 private:
     std::mutex mutex_;
 
@@ -58,8 +89,24 @@ private:
     static std::mutex instanceMutex_;
 
     std::map<int32_t, CaptureDfxInfo> captureList_;
+    SafeMap<std::string, CaptureStateCount> reportCaptureStateMap_;
+    SafeMap<std::string, CaptureStateCount> reportCaptureStateTempMap_;
+    std::unordered_set<pid_t> aliveClientSet_;
+    uint64_t lastCaptureStateReportTime_ = 0;
+    uint64_t lastSatisfiedTime_ = 0;
+    int32_t waitForCallbackStartId_ = 0;
+    int32_t waitForCallbackEndId_ = 0;
+    int32_t lastReportCallbackId_ = 0;
+    bool isReporting_ = false;
  
     void ReportPerformanceDeferredPhoto(CaptureDfxInfo captureInfo);
+    void ReportCaptureState();
+    std::string GetBundleName(const int32_t captureId);
+    bool IsCaptureStateNeedReport();
+    bool SatisfiedReportCondition(CaptureState state, int32_t captureId);
+    bool IsClientDied(const int32_t captureId);
+    bool IsMatchedCallback(CaptureState state, int32_t captureId);
+    void InsertIntoMap(SafeMap<std::string, CaptureStateCount> &map, CaptureState state, int32_t captureId);
 };
 } // namespace CameraStandard
 } // namespace OHOS

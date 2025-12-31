@@ -707,6 +707,7 @@ int32_t HStreamCapture::CreateMediaLibraryPhotoAssetProxy(int32_t captureId)
         cameraShotType, IPCSkeleton::GetCallingUid(), IPCSkeleton::GetCallingTokenID());
     if (photoAssetProxy == nullptr) {
         HILOG_COMM_ERROR("HStreamCapture::CreateMediaLibraryPhotoAssetProxy get photoAssetProxy fail");
+        CameraReportDfxUtils::GetInstance()->SetCaptureState(CaptureState::MEDIALIBRARY_ERROR, captureId);
         return CAMERA_ALLOC_ERROR;
     }
     photoAssetProxy_.Insert(captureId, photoAssetProxy);
@@ -757,6 +758,7 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
 {
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("HStreamCapture::Capture Entry, streamId:%{public}d", GetFwkStreamId());
+    CameraReportDfxUtils::GetInstance()->SetCaptureState(CaptureState::CAPTURE_FWK, CAPTURE_ID_UNSET);
     auto streamOperator = GetStreamOperator();
     CHECK_RETURN_RET(streamOperator == nullptr, CAMERA_INVALID_STATE);
     // LCOV_EXCL_START
@@ -774,6 +776,7 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
 
     CaptureDfxInfo captureDfxInfo;
     captureDfxInfo.captureId = preparedCaptureId;
+    captureDfxInfo.pid = IPCSkeleton::GetCallingPid();
     captureDfxInfo.isSystemApp = CheckSystemApp();
     captureDfxInfo.bundleName = BmsAdapter::GetInstance()->GetBundleName(IPCSkeleton::GetCallingUid());
     CameraReportDfxUtils::GetInstance()->SetFirstBufferStartInfo(captureDfxInfo);
@@ -798,6 +801,8 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
     rotationMap_.Find(preparedCaptureId, rotation);
     captureInfo.rotation = rotation;
     CameraReportUtils::GetInstance().SetCapturePerfStartInfo(captureInfo);
+    CameraReportDfxUtils::GetInstance()->SetCaptureState(CaptureState::CAPTURE_START, preparedCaptureId);
+    MEDIA_DEBUG_LOG("HStreamCapture::Capture is Bursting_ %{public}d", isBursting_);
     HILOG_COMM_INFO("HStreamCapture::Capture Starting photo capture with capture ID: %{public}d", preparedCaptureId);
     HStreamCommon::PrintCaptureDebugLog(captureMetadataSetting_);
     bool isSystemApp = CheckSystemApp();
@@ -820,6 +825,7 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
         }
         CameraReportUtils::ReportCameraErrorForUsb(
             "HStreamCapture::Capture", rc, true, std::to_string(connectionType), CameraReportUtils::GetCallerInfo());
+        CameraReportDfxUtils::GetInstance()->SetCaptureState(CaptureState::HAL_ERROR, preparedCaptureId);
         ret = HdiToServiceError(rc);
     }
     camera_metadata_item_t item;
@@ -1341,6 +1347,7 @@ int32_t HStreamCapture::OnCaptureError(int32_t captureId, int32_t errorCode)
         streamCaptureCallback_->OnCaptureError(captureId, captureErrorCode);
         // LCOV_EXCL_STOP
     }
+    CameraReportDfxUtils::GetInstance()->SetCaptureState(CaptureState::HAL_ON_ERROR, captureId);
     auto preparedCaptureId = GetPreparedCaptureId();
     if (preparedCaptureId != CAPTURE_ID_UNSET) {
         // LCOV_EXCL_START
@@ -1426,7 +1433,8 @@ int32_t HStreamCapture::OnPhotoAssetAvailable(
 {
     // LCOV_EXCL_START
     CAMERA_SYNC_TRACE;
-    MEDIA_INFO_LOG("HStreamCapture::OnPhotoAssetAvailable is called!");
+    MEDIA_INFO_LOG("HStreamCapture::OnPhotoAssetAvailable is called! captureId = %{public}d, "
+        "burstKey = %{public}s", captureId, burstKey.c_str());
     std::lock_guard<std::mutex> lock(photoCallbackLock_);
     if (photoAssetAvaiableCallback_ != nullptr) {
         photoAssetAvaiableCallback_->OnPhotoAssetAvailable(captureId, uri, cameraShotType, burstKey);

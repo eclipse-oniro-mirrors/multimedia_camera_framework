@@ -1709,8 +1709,11 @@ int32_t HStreamOperator::CreateMediaLibrary(sptr<CameraServerPhotoProxy>& camera
     SetCameraPhotoProxyInfo(cameraPhotoProxy, cameraShotType, isBursting, burstKey);
     std::shared_ptr<PhotoAssetProxy> photoAssetProxy =
         PhotoAssetProxy::GetPhotoAssetProxy(cameraShotType, uid_, callerToken_);
-    CHECK_RETURN_RET_ELOG(
-        photoAssetProxy == nullptr, CAMERA_ALLOC_ERROR, "HStreamOperator::CreateMediaLibrary get photoAssetProxy fail");
+    if (photoAssetProxy == nullptr) {
+        CameraReportDfxUtils::GetInstance()->SetCaptureState(CaptureState::MEDIALIBRARY_ERROR, captureId);
+        MEDIA_ERR_LOG("HStreamOperator::CreateMediaLibrary get photoAssetProxy fail");
+        return CAMERA_ALLOC_ERROR;
+    }
     photoAssetProxy->AddPhotoProxy((sptr<PhotoProxy>&)cameraPhotoProxy);
     uri = photoAssetProxy->GetPhotoAssetUri();
     if (!isBursting && isSetMotionPhoto) {
@@ -1768,6 +1771,9 @@ std::shared_ptr<PhotoAssetIntf> HStreamOperator::ProcessPhotoProxy(int32_t captu
     if (isBursting) {
         int32_t cameraShotType = 3;
         photoAssetProxy = PhotoAssetProxy::GetPhotoAssetProxy(cameraShotType, uid_, callerToken_);
+        if (photoAssetProxy == nullptr) {
+            CameraReportDfxUtils::GetInstance()->SetCaptureState(CaptureState::MEDIALIBRARY_ERROR, captureId);
+        }
     } else {
         if (isSystemApp) {
             photoAssetProxy = captureStream->GetPhotoAssetInstance(captureId);
