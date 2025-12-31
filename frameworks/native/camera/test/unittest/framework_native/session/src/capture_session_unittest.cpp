@@ -16230,12 +16230,8 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_195, TestSize.Level0)
         res = SUCCESS;
     }
     EXPECT_EQ(res, SUCCESS);
-    if (cameraInput) {
-        cameraInput->Release();
-    }
-    if (captureSession) {
-        captureSession->Release();
-    }
+    cameraInput->Release();
+    captureSession->Release();
 }
 
 /*
@@ -16356,12 +16352,8 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_195, TestSize.Level0)
         res = SUCCESS;
     }
     EXPECT_EQ(res, SUCCESS);
-    if (cameraInput) {
-        cameraInput->Release();
-    }
-    if (captureSession) {
-        captureSession->Release();
-    }
+    cameraInput->Release();
+    captureSession->Release();
 }
 
 /*
@@ -16420,12 +16412,8 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_195, TestSize.Level0)
         res = SUCCESS;
     }
     EXPECT_EQ(res, SUCCESS);
-    if (cameraInput) {
-        cameraInput->Release();
-    }
-    if (captureSession) {
-        captureSession->Release();
-    }
+    cameraInput->Release();
+    captureSession->Release();
 }
 }
 }
