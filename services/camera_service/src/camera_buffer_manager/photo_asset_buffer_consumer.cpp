@@ -12,7 +12,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "photo_asset_buffer_consumer.h"
 
 #include "camera_log.h"
@@ -21,10 +20,10 @@
 #include "hstream_capture.h"
 #include "task_manager.h"
 #include "picture_assembler.h"
+#include "dp_utils.h"
 #include "camera_server_photo_proxy.h"
 #include "picture_proxy.h"
 #include "camera_report_dfx_uitls.h"
-#include "watch_dog.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -63,7 +62,6 @@ void PhotoAssetBufferConsumer::ExecuteOnBufferAvailable()
     sptr<HStreamCapture> streamCapture = streamCapture_.promote();
     CHECK_RETURN_ELOG(streamCapture == nullptr, "streamCapture is null");
     CHECK_RETURN_ELOG(streamCapture->surface_ == nullptr, "surface is null");
-    streamCapture->ElevateThreadPriority();
     sptr<SurfaceBuffer> surfaceBuffer = nullptr;
     int32_t fence = -1;
     int64_t timestamp;
@@ -76,7 +74,6 @@ void PhotoAssetBufferConsumer::ExecuteOnBufferAvailable()
     // release surfaceBuffer to bufferQueue
     streamCapture->surface_->ReleaseBuffer(surfaceBuffer, -1);
     CHECK_RETURN_ELOG(newSurfaceBuffer == nullptr, "DeepCopyBuffer faild");
-    int32_t originCaptureId = CameraSurfaceBufferUtil::GetCaptureId(newSurfaceBuffer);
     int32_t captureId = CameraSurfaceBufferUtil::GetMaskCaptureId(newSurfaceBuffer);
     CameraReportDfxUtils::GetInstance()->SetFirstBufferEndInfo(captureId);
     CameraReportDfxUtils::GetInstance()->SetPrepareProxyStartInfo(captureId);
@@ -92,18 +89,18 @@ void PhotoAssetBufferConsumer::ExecuteOnBufferAvailable()
     bool isYuv = streamCapture->isYuvCapture_;
     MEDIA_INFO_LOG("CreateMediaLibrary captureId:%{public}d isYuv::%{public}d", captureId, isYuv);
     if (isYuv) {
-        StartWaitAuxiliaryTask(originCaptureId, captureId, auxiliaryCount, timestamp, newSurfaceBuffer);
+        StartWaitAuxiliaryTask(captureId, auxiliaryCount, timestamp, newSurfaceBuffer);
     } else {
         streamCapture->CreateMediaLibrary(cameraPhotoProxy, uri, cameraShotType, burstKey, timestamp);
         MEDIA_INFO_LOG("CreateMediaLibrary uri:%{public}s", uri.c_str());
-        streamCapture->OnPhotoAssetAvailable(originCaptureId, uri, cameraShotType, burstKey);
+        streamCapture->OnPhotoAssetAvailable(captureId, uri, cameraShotType, burstKey);
     }
 
     MEDIA_INFO_LOG("PA_ExecuteOnBufferAvailable X");
 }
-// LCOV_EXCL_START
-void PhotoAssetBufferConsumer::StartWaitAuxiliaryTask(const int32_t originCaptureId, const int32_t captureId,
-    const int32_t auxiliaryCount, int64_t timestamp, sptr<SurfaceBuffer> &newSurfaceBuffer)
+
+void PhotoAssetBufferConsumer::StartWaitAuxiliaryTask(
+    const int32_t captureId, const int32_t auxiliaryCount, int64_t timestamp, sptr<SurfaceBuffer> &newSurfaceBuffer)
 {
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("StartWaitAuxiliaryTask E, captureId:%{public}d", captureId);
@@ -136,23 +133,23 @@ void PhotoAssetBufferConsumer::StartWaitAuxiliaryTask(const int32_t originCaptur
             MEDIA_INFO_LOG(
                 "PhotoAssetBufferConsumer StartWaitAuxiliaryTask auxiliaryCount is complete, StopMonitor DoTimeout "
                 "captureId = %{public}d",  captureId);
-            AssembleDeferredPicture(timestamp, captureId, originCaptureId);
+            AssembleDeferredPicture(timestamp, captureId);
         } else {
             // start timeer to do assamble
-            uint32_t pictureHandle = 0;
+            uint32_t pictureHandle;
             constexpr uint32_t delayMilli = 1 * 1000;
             MEDIA_INFO_LOG(
                 "PhotoAssetBufferConsumer StartWaitAuxiliaryTask GetGlobalWatchdog StartMonitor, captureId=%{public}d",
                 captureId);
             auto thisPtr = wptr<PhotoAssetBufferConsumer>(this);
-            DeferredProcessing::Watchdog::GetGlobalWatchdog().StartMonitor(
-                pictureHandle, delayMilli, [thisPtr, captureId, originCaptureId, timestamp](uint32_t handle) {
+            DeferredProcessing::GetGlobalWatchdog().StartMonitor(
+                pictureHandle, delayMilli, [thisPtr, captureId, timestamp](uint32_t handle) {
                     MEDIA_INFO_LOG(
                         "PhotoAssetBufferConsumer PhotoAssetBufferConsumer-Watchdog executed, handle: %{public}d, "
                         "captureId=%{public}d", static_cast<int>(handle), captureId);
                     auto ptr = thisPtr.promote();
                     CHECK_RETURN(ptr == nullptr);
-                    ptr->AssembleDeferredPicture(timestamp, captureId, originCaptureId);
+                    ptr->AssembleDeferredPicture(timestamp, captureId);
                     auto streamCapture = ptr->streamCapture_.promote();
                     if (streamCapture && streamCapture->captureIdAuxiliaryCountMap_.count(captureId)) {
                         streamCapture->captureIdAuxiliaryCountMap_[captureId] = -1;
@@ -197,7 +194,7 @@ void PhotoAssetBufferConsumer::CleanAfterTransPicture(int32_t captureId)
     streamCapture->captureIdHandleMap_.erase(captureId);
 }
 
-void PhotoAssetBufferConsumer::AssembleDeferredPicture(int64_t timestamp, int32_t captureId, int32_t originCaptureId)
+void PhotoAssetBufferConsumer::AssembleDeferredPicture(int64_t timestamp, int32_t captureId)
 {
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("AssembleDeferredPicture E, captureId:%{public}d", captureId);
@@ -242,10 +239,9 @@ void PhotoAssetBufferConsumer::AssembleDeferredPicture(int64_t timestamp, int32_
         picture, streamCapture->photoProxyMap_[captureId], uri, cameraShotType, burstKey, timestamp);
     MEDIA_DEBUG_LOG("AssembleDeferredPicture CreateMediaLibrary X");
     MEDIA_INFO_LOG("CreateMediaLibrary result %{public}s, type %{public}d", uri.c_str(), cameraShotType);
-    streamCapture->OnPhotoAssetAvailable(originCaptureId, uri, cameraShotType, burstKey);
+    streamCapture->OnPhotoAssetAvailable(captureId, uri, cameraShotType, burstKey);
     CleanAfterTransPicture(captureId);
     MEDIA_INFO_LOG("AssembleDeferredPicture X, captureId:%{public}d", captureId);
 }
 }  // namespace CameraStandard
 }  // namespace OHOS
-// LCOV_EXCL_STOP
