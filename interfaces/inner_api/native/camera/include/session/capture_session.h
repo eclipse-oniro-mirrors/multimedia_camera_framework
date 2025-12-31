@@ -2180,6 +2180,7 @@ public:
     void ProcessApertureEffectChange(const std::shared_ptr<OHOS::Camera::CameraMetadata> &result);
     int32_t GetSupportedVideoCodecTypes(std::vector<int32_t>& supportedVideoCodecTypes);
     std::vector<NightSubMode> GetSupportedNightSubModeTypes();
+    void SetPhotoQualityPrioritization(camera_photo_quality_prioritization_t quality);
     uint32_t GetIsoValue();
     int32_t SetParameters(std::vector<std::pair<std::string, std::string>>& kvPairs);
     int32_t SetExposureMeteringMode(MeteringMode mode);
