@@ -28,7 +28,6 @@ namespace OHOS {
 namespace CameraStandard {
 static constexpr int32_t MIN_SIZE_NUM = 64;
 static constexpr int32_t NUM_1 = 1;
-static constexpr int32_t NUM_2 = 2;
 
 sptr<AvcodecTaskManagerIntf> MovingPhotoProxyFuzzer::taskManagerfuzz_ { nullptr };
 sptr<AudioCapturerSessionIntf> MovingPhotoProxyFuzzer::capturerSessionfuzz_ { nullptr };
@@ -99,10 +98,7 @@ void MovingPhotoProxyFuzzer::MovingPhotoProxyFuzzTest(FuzzedDataProvider& fdp)
     taskManagerfuzz_->SetVideoBufferDuration(preBufferCount, postBufferCount);
     int32_t timestamp = fdp.ConsumeIntegral<int32_t>();
     int32_t captureId = fdp.ConsumeIntegral<int32_t>();
-    std::shared_ptr<PhotoAssetIntf> photoAssetProxy =
-        PhotoAssetProxy::GetPhotoAssetProxy(NUM_2, IPCSkeleton::GetCallingUid(), IPCSkeleton::GetCallingTokenID());
-    ;
-    taskManagerfuzz_->SetVideoFd(timestamp, photoAssetProxy, captureId);
+    taskManagerfuzz_->SetVideoFd(timestamp, nullptr, captureId);
 
     GraphicTransformType type_ = graphicType[fdp.ConsumeIntegral<uint16_t>() % graphicType.size()];
     sptr<SurfaceBuffer> videoBuffer = SurfaceBuffer::Create();
