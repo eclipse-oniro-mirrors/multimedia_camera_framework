@@ -44,7 +44,11 @@
 #include "v1_5/istream_operator.h"
 #include "v1_3/istream_operator_callback.h"
 #include "v1_5/istream_operator_callback.h"
+#ifdef CAMERA_MOVING_PHOTO
 #include "moving_photo_proxy.h"
+#else
+#include "output/camera_output_capability.h"
+#endif
 #include "safe_map.h"
 #include "display_manager.h"
 #include "photo_asset_interface.h"
@@ -67,9 +71,11 @@ constexpr uint32_t OPERATOR_DEFAULT_ENCODER_THREAD_NUMBER = 1;
 class PermissionStatusChangeCb;
 class CameraUseStateChangeCb;
 class CameraServerPhotoProxy;
+#ifdef CAMERA_MOVING_PHOTO
 class AvcodecTaskManagerIntf;
 class AudioCapturerSessionIntf;
 class MovingPhotoVideoCacheIntf;
+#endif
 
 bool IsHdr(ColorSpace colorSpace);
 
@@ -104,11 +110,20 @@ public:
     int32_t AddOutput(StreamType streamType, sptr<IStreamCommon> stream);
     int32_t Stop();
     int32_t Release();
+#ifdef CAMERA_MOVING_PHOTO
     int32_t EnableMovingPhoto(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings,
         bool isEnable, int32_t sensorOritation);
+    int32_t EnableMovingPhotoMirror(bool isMirror, bool isConfig);
+    void StartMovingPhotoEncode(int32_t rotation, uint64_t timestamp, int32_t format, int32_t captureId);
+    void ReleaseMovingphotoStreams();
+    void ReleaseTargetMovingphotoStream(VideoType type);
+    void StopMovingPhoto(VideoType type = VideoType::ORIGIN_VIDEO);
+    void ExpandXtStyleMovingPhotoRepeatStream();
+    void ExpandMovingPhotoRepeatStream(VideoType type);
+    void ClearMovingPhotoRepeatStream(VideoType type = VideoType::ORIGIN_VIDEO);
+#endif
     int32_t GetCurrentStreamInfos(std::vector<StreamInfo_V1_5>& streamInfos);
     std::list<sptr<HStreamCommon>> GetAllStreams();
-    int32_t EnableMovingPhotoMirror(bool isMirror, bool isConfig);
     int32_t CreateMediaLibrary(sptr<CameraServerPhotoProxy>& photoProxy, std::string& uri, int32_t& cameraShotType,
         std::string& burstKey, int64_t timestamp);
     int32_t CreateMediaLibrary(std::shared_ptr<PictureIntf> picture, sptr<CameraServerPhotoProxy> &photoProxy,
@@ -118,13 +133,9 @@ public:
     int32_t LinkInputAndOutputs(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings, int32_t opMode);
     const sptr<HStreamCommon> GetStreamByStreamID(int32_t streamId);
     const sptr<HStreamCommon> GetHdiStreamByStreamID(int32_t streamId);
-    void StartMovingPhotoEncode(int32_t rotation, uint64_t timestamp, int32_t format, int32_t captureId);
     void GetOutputStatus(int32_t &status);
     int32_t SetPreviewRotation(const std::string &deviceClass);
     void ReleaseStreams();
-    void ReleaseMovingphotoStreams();
-    void ReleaseTargetMovingphotoStream(VideoType type);
-    void StopMovingPhoto(VideoType type = VideoType::ORIGIN_VIDEO);
     int32_t GetActiveColorSpace(ColorSpace& colorSpace);
     int32_t SetColorSpace(ColorSpace colorSpace, bool isNeedUpdate);
     void SetColorSpaceForStreams();
@@ -153,7 +164,9 @@ public:
         int32_t captureId, const std::vector<OHOS::HDI::Camera::V1_3::CaptureEndedInfoExt>& infos) override;
     int32_t OnCaptureEndedExt_V1_4(
         int32_t captureId, const std::vector<OHOS::HDI::Camera::V1_5::CaptureEndedInfoExt_v1_4>& infos) override;
+#ifdef CAMERA_MOVING_PHOTO
     void SetDeferredVideoEnhanceFlag(int32_t captureId, uint32_t deferredVideoEnhanceFlag, std::string videoId);
+#endif
     int32_t OnCaptureError(int32_t captureId, const std::vector<CaptureErrorInfo>& infos) override;
     int32_t OnFrameShutter(int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp) override;
     int32_t OnFrameShutterEnd(int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp) override;
@@ -170,9 +183,6 @@ public:
     void ExpandCompositionRepeatStream();
     std::vector<sptr<HStreamRepeat>> GetCompositionStreams();
 
-    void ExpandXtStyleMovingPhotoRepeatStream();
-    void ExpandMovingPhotoRepeatStream(VideoType type);
-    void ClearMovingPhotoRepeatStream(VideoType type = VideoType::ORIGIN_VIDEO);
     void GetStreamOperator();
     bool IsOfflineCapture();
     bool GetDeferredImageDeliveryEnabled();
@@ -223,13 +233,14 @@ public:
         MEDIA_INFO_LOG("xtStyleStatus: %{public}d", isXtStyleEnabled_);
         return isXtStyleEnabled_;
     }
-
+#ifdef CAMERA_MOVING_PHOTO
     inline bool IsLivephotoStreamExist()
     {
         return movingPhotoStreamStruct_.streamRepeat != nullptr;
     }
 
     void StartMovingPhotoStream(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
+#endif
     int32_t GetOfflineOutptSize();
 
     std::vector<int32_t> GetFrameRateRange();
@@ -287,7 +298,9 @@ private:
     string lastBurstPrefix_ = "";
     int32_t saveIndex = 0;
     int32_t streamOperatorId_ = -1;
+#ifdef CAMERA_MOVING_PHOTO
     volatile bool isMovingPhotoMirror_ = false;
+#endif
     volatile bool isSetMotionPhoto_ = false;
     std::mutex livePhotoStreamLock_; // Guard livePhotoStreamRepeat_
     std::mutex releaseOperatorLock_;
@@ -309,15 +322,17 @@ private:
     string CreateDisplayName(const std::string& suffix);
     string CreateBurstDisplayName(int32_t imageSeqId, int32_t seqId);
     int32_t AddOutputStream(sptr<HStreamCommon> stream);
+#ifdef CAMERA_MOVING_PHOTO
     int32_t CreateMovingPhotoStreamRepeat(int32_t format, int32_t width, int32_t height, VideoType videoType);
-    void CancelStreamsAndGetStreamInfos(std::vector<StreamInfo_V1_5>& streamInfos);
-    void RestartStreams(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
     void StartMovingPhoto(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings,
         sptr<HStreamRepeat>& curStreamRepeat);
-    void UpdateMuteSetting(bool muteMode, std::shared_ptr<OHOS::Camera::CameraMetadata> &settings);
-    int32_t GetSensorOritation();
     int32_t GetMovingPhotoBufferDuration();
     void GetMovingPhotoStartAndEndTime();
+#endif
+    void CancelStreamsAndGetStreamInfos(std::vector<StreamInfo_V1_5>& streamInfos);
+    void RestartStreams(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
+    void UpdateMuteSetting(bool muteMode, std::shared_ptr<OHOS::Camera::CameraMetadata> &settings);
+    int32_t GetSensorOritation();
     bool IsIpsRotateSupported();
     void ProcessRepeatStream(const sptr<HStreamRepeat>& repeatStream, int32_t captureId,
         const OHOS::HDI::Camera::V1_5::CaptureEndedInfoExt_v1_4& captureInfo);
@@ -363,7 +378,7 @@ private:
     std::map<int32_t, bool> curMotionPhotoStatus_;
     std::mutex motionPhotoStatusLock_;
     std::map<int32_t, std::pair<int32_t, int32_t>> lifecycleMap_;
-
+#ifdef CAMERA_MOVING_PHOTO
     SpHolder<sptr<MovingPhotoManagerProxy>> movingPhotoManagerProxy_;
     struct MovingPhotoStreamStruct {
         sptr<HStreamRepeat> streamRepeat = nullptr;
@@ -381,6 +396,7 @@ private:
     MovingPhotoStreamStruct movingPhotoStreamStruct_;
     MovingPhotoStreamStruct xtStyleMovingPhotoStreamStruct_;
     void UnloadMovingPhoto();
+#endif
     std::shared_ptr<PhotoAssetIntf> photoAssetProxy_;
     std::once_flag photoStateFlag_;
     std::function<void(int32_t)> photoStateCallback_ = nullptr;

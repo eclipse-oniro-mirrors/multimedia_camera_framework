@@ -82,6 +82,7 @@ int32_t DeletePhotoSessionCommand::Executing()
     return DP_OK;
 }
 // LCOV_EXCL_STOP
+#ifdef CAMERA_DEFERRED
 AddVideoSessionCommand::AddVideoSessionCommand(const sptr<VideoSessionInfo>& info) : videoInfo_(info)
 {
     DP_DEBUG_LOG("entered.");
@@ -116,6 +117,7 @@ int32_t DeleteVideoSessionCommand::Executing()
         MEDIA_LIBRARY_DISCONNECTED);
     return DP_OK;
 }
+#endif
 // LCOV_EXCL_STOP
 } // namespace DeferredProcessing
 } // namespace CameraStandard

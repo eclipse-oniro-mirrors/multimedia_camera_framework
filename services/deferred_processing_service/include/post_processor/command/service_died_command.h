@@ -45,6 +45,7 @@ protected:
     int32_t Executing() override;
 };
 
+#ifdef CAMERA_DEFERRED
 class VideoDiedCommand : public ServiceDiedCommand {
     DECLARE_CMD_CLASS(VideoDiedCommand);
 public:
@@ -53,6 +54,7 @@ public:
 protected:
     int32_t Executing() override;
 };
+#endif
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS

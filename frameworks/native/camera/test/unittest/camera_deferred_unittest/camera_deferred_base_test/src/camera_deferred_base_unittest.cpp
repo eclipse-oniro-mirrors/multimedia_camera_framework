@@ -504,6 +504,7 @@ HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_021, TestSize.Level
     EXPECT_EQ(result, HdiStatus::HDI_DISCONNECTED);
 }
 
+#ifdef CAMERA_DEFERRED
 HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_022, TestSize.Level0) {
     int32_t level = ThermalLevel::LEVEL_0;
     VideoThermalLevel result = ConvertVideoThermalLevel(level);
@@ -515,6 +516,7 @@ HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_022, TestSize.Level
     result = ConvertVideoThermalLevel(level);
     EXPECT_EQ(result, VideoThermalLevel::HOT);
 }
+#endif
 
 HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_023, TestSize.Level0) {
     EXPECT_EQ(MapDpsErrorCode(DpsError::DPS_ERROR_SESSION_SYNC_NEEDED), ErrorCode::ERROR_SESSION_SYNC_NEEDED);
@@ -524,10 +526,12 @@ HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_023, TestSize.Level
     EXPECT_EQ(MapDpsErrorCode(DpsError::DPS_ERROR_IMAGE_PROC_TIMEOUT), ErrorCode::ERROR_IMAGE_PROC_TIMEOUT);
     EXPECT_EQ(MapDpsErrorCode(DpsError::DPS_ERROR_IMAGE_PROC_ABNORMAL), ErrorCode::ERROR_IMAGE_PROC_ABNORMAL);
     EXPECT_EQ(MapDpsErrorCode(DpsError::DPS_ERROR_IMAGE_PROC_INTERRUPTED), ErrorCode::ERROR_IMAGE_PROC_INTERRUPTED);
+#ifdef CAMERA_DEFERRED
     EXPECT_EQ(MapDpsErrorCode(DpsError::DPS_ERROR_VIDEO_PROC_INVALID_VIDEO_ID), ErrorCode::ERROR_VIDEO_PROC_INVALID_VIDEO_ID);
     EXPECT_EQ(MapDpsErrorCode(DpsError::DPS_ERROR_VIDEO_PROC_FAILED), ErrorCode::ERROR_VIDEO_PROC_FAILED);
     EXPECT_EQ(MapDpsErrorCode(DpsError::DPS_ERROR_VIDEO_PROC_TIMEOUT), ErrorCode::ERROR_VIDEO_PROC_TIMEOUT);
     EXPECT_EQ(MapDpsErrorCode(DpsError::DPS_ERROR_VIDEO_PROC_INTERRUPTED), ErrorCode::ERROR_VIDEO_PROC_INTERRUPTED);
+#endif
 }
 
 /*

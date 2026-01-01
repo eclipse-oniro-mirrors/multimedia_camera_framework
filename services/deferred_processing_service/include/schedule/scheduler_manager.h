@@ -17,7 +17,9 @@
 #define OHOS_CAMERA_DPS_SCHEDULE_MANAGER_H
 
 #include "deferred_photo_controller.h"
+#ifdef CAMERA_DEFERRED
 #include "deferred_video_controller.h"
+#endif
 #include "enable_shared_create.h"
 
 namespace OHOS {
@@ -33,16 +35,19 @@ public:
     std::shared_ptr<DeferredPhotoProcessor> GetPhotoProcessor(const int32_t userId);
     std::shared_ptr<DeferredPhotoController> GetPhotoController(const int32_t userId);
     void CreateVideoProcessor(const int32_t userId);
+#ifdef CAMERA_DEFERRED
     std::shared_ptr<VideoPostProcessor> GetVideoPostProcessor(const int32_t userId);
     std::shared_ptr<DeferredVideoProcessor> GetVideoProcessor(const int32_t userId);
     std::shared_ptr<DeferredVideoController> GetVideoController(const int32_t userId);
-
+#endif
 protected:
     SchedulerManager();
 
 private:
     std::unordered_map<int32_t, std::shared_ptr<DeferredPhotoController>> photoController_ {};
+#ifdef CAMERA_DEFERRED
     std::unordered_map<int32_t, std::shared_ptr<DeferredVideoController>> videoController_ {};
+#endif
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

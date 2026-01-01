@@ -25,6 +25,13 @@ multimedia_media_library_path = "//foundation/multimedia/media_library"
 declare_args() {
   camera_framework_feature_camera_rotate_plugin = false
   camera_framework_feature_camera_live_scene_recognition = false
+  camera_framework_feature_moving_photo = true
+  camera_framework_feature_beauty_notification = true
+  camera_framework_feature_movie_file = true
+  camera_framework_feature_media_stream = true
+  camera_framework_feature_deferred = true
+  camera_framework_feature_xcomponent_toast = false
+  camera_framework_feature_rotate_param_update = false
 }
 use_sensor = false
 if (defined(global_parts_info) && defined(global_parts_info.sensors_sensor)) {
@@ -64,5 +71,5 @@ if (defined(global_parts_info) &&
 gen_camera_picker = true
 hicollie_enable = true
 declare_args() {
-  fwk_no_hidden = true
+  fwk_no_hidden = false
 }

@@ -51,7 +51,9 @@
 #include "hcamera_device_manager.h"
 #include "hstream_operator_manager.h"
 #include "hcamera_preconfig.h"
+#ifdef CAMERA_MOVIE_FILE
 #include "hcamera_movie_file_output.h"
+#endif
 #include "hcamera_session_manager.h"
 #include "icamera_service_callback.h"
 #include "hcamera_switch_session.h"
@@ -69,7 +71,9 @@
 #include "mem_mgr_client.h"
 #include "mem_mgr_constant.h"
 #endif
+#ifdef CAMERA_ROTATE_PARAM_UPDATE
 #include "camera_rotate_param_manager.h"
+#endif
 #include "camera_xcollie.h"
 #include "res_type.h"
 #include "res_sched_client.h"
@@ -162,8 +166,12 @@ void HCameraService::OnStart()
     } else {
         MEDIA_INFO_LOG("HCameraService publish OnStart failed");
     }
-    CameraRoateParamManager::GetInstance().InitParam(); // 先初始化再监听
-    CameraRoateParamManager::GetInstance().SubscriberEvent();
+#ifdef CAMERA_ROTATE_PARAM_UPDATE
+    if (g_isFoldScreen) {
+        CameraRoateParamManager::GetInstance().InitParam(); // 先初始化再监听
+        CameraRoateParamManager::GetInstance().SubscriberEvent();
+    }
+#endif
     MEDIA_INFO_LOG("HCameraService OnStart end");
 }
 
@@ -752,8 +760,12 @@ int32_t HCameraService::CreateCameraDevice(const string& cameraId, sptr<ICameraD
         }
         device = cameraDevice;
         cameraDevice->SetDeviceMuteMode(muteModeStored_);
-        cameraDevice->SetCameraRotateStrategyInfos(
-            CameraRoateParamManager::GetInstance().GetCameraRotateStrategyInfos());
+#ifdef CAMERA_ROTATE_PARAM_UPDATE
+        if (g_isFoldScreen) {
+            cameraDevice->SetCameraRotateStrategyInfos(
+                CameraRoateParamManager::GetInstance().GetCameraRotateStrategyInfos());
+        }
+#endif
     }
     CAMERA_SYSEVENT_STATISTIC(CreateMsg("CameraManager_CreateCameraInput CameraId:%s", cameraId.c_str()));
     MEDIA_INFO_LOG("HCameraService::CreateCameraDevice execute success");
@@ -1116,6 +1128,7 @@ int32_t HCameraService::CreateVideoOutput(const sptr<OHOS::IBufferProducer>& pro
 int32_t HCameraService::CreateMovieFileOutput(
     int32_t format, int32_t width, int32_t height, sptr<IStreamRepeat>& movieFileStream)
 {
+#ifdef CAMERA_FRAMEWORK_FEATURE_MEDIA_STREAM
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("CreateMovieFileOutput is called");
     CHECK_RETURN_RET_ELOG(
@@ -1133,11 +1146,15 @@ int32_t HCameraService::CreateMovieFileOutput(
         movieFileStreamRepeat == nullptr, CAMERA_ALLOC_ERROR, "nullptr check failed, movieFileStreamRepeat is null");
     movieFileStream = movieFileStreamRepeat;
     return rc;
+#else
+    return CAMERA_OK;
+#endif
 }
 
 int32_t HCameraService::CreateMovieFileOutput(
     const IpcVideoProfile& videoProfile, sptr<IMovieFileOutput>& movieFileOutput)
 {
+#ifdef CAMERA_MOVIE_FILE
     int32_t rc = CAMERA_OK;
     MEDIA_INFO_LOG("HCameraService::CreateMovieFileOutput start");
     if (videoProfile.width <= 0 || videoProfile.height <= 0) {
@@ -1152,6 +1169,9 @@ int32_t HCameraService::CreateMovieFileOutput(
     CHECK_RETURN_RET_ELOG(movieFileOutput == nullptr, CAMERA_ALLOC_ERROR,
         "HCameraService::CreateMovieFileOutput movieFileOutput alloc failed");
     return rc;
+#else
+    return CAMERA_OK;
+#endif
 }
 
 bool HCameraService::ShouldSkipStatusUpdates(pid_t pid)

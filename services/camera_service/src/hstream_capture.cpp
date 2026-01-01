@@ -90,7 +90,9 @@ HStreamCapture::HStreamCapture(sptr<OHOS::IBufferProducer> producer, int32_t for
     deferredPhotoSwitch_ = 0;
     deferredVideoSwitch_ = 0;
     burstNum_ = 0;
+#ifdef CAMERA_MOVING_PHOTO
     movingPhotoSwitch_ = 0;
+#endif
 }
 
 HStreamCapture::HStreamCapture(int32_t format, int32_t width, int32_t height)
@@ -107,7 +109,9 @@ HStreamCapture::HStreamCapture(int32_t format, int32_t width, int32_t height)
     deferredPhotoSwitch_ = 0;
     deferredVideoSwitch_ = 0;
     burstNum_ = 0;
+#ifdef CAMERA_MOVING_PHOTO
     movingPhotoSwitch_ = 0;
+#endif
     isYuvCapture_ = format == OHOS_CAMERA_FORMAT_YCRCB_420_SP;
     CreateCaptureSurface();
     // LCOV_EXCL_STOP
@@ -380,11 +384,13 @@ int32_t HStreamCapture::EnableRawDelivery(bool enabled)
 // LCOV_EXCL_START
 int32_t HStreamCapture::EnableMovingPhoto(bool enabled)
 {
+#ifdef CAMERA_MOVING_PHOTO
     if (enabled) {
         movingPhotoSwitch_ = 1;
     } else {
         movingPhotoSwitch_ = 0;
     }
+#endif
     return CAMERA_OK;
 }
 // LCOV_EXCL_STOP
@@ -695,14 +701,22 @@ int32_t HStreamCapture::CreateMediaLibraryPhotoAssetProxy(int32_t captureId)
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("HStreamCapture CreateMediaLibraryPhotoAssetProxy E");
     constexpr int32_t imageShotType = 0;
+#ifdef CAMERA_MOVING_PHOTO
     constexpr int32_t movingPhotoShotType = 2;
+#endif
     constexpr int32_t burstShotType = 3;
     int32_t cameraShotType = imageShotType;
+#ifdef CAMERA_MOVING_PHOTO
     if (movingPhotoSwitch_) {
         cameraShotType = movingPhotoShotType;
     } else if (isBursting_) {
         cameraShotType = burstShotType;
     }
+#else
+    if (isBursting_) {
+        cameraShotType = burstShotType;
+    }
+#endif
     auto photoAssetProxy = PhotoAssetProxy::GetPhotoAssetProxy(
         cameraShotType, IPCSkeleton::GetCallingUid(), IPCSkeleton::GetCallingTokenID());
     if (photoAssetProxy == nullptr) {
@@ -1319,8 +1333,13 @@ int32_t HStreamCapture::OnCaptureEnded(int32_t captureId, int32_t frameCount)
     auto hStreamOperatorSptr_ = hStreamOperator_.promote();
     CHECK_EXECUTE(hStreamOperatorSptr_ != nullptr,
         isDeferredImageDeliveryEnabled = hStreamOperatorSptr_->GetDeferredImageDeliveryEnabled());
+#ifdef CAMERA_MOVING_PHOTO
     CameraReportUtils::GetInstance().SetCapturePerfEndInfo(captureId, mSwitchToOfflinePhoto_, offlineOutputCnt,
         movingPhotoSwitch_, isDeferredImageDeliveryEnabled);
+#else
+    CameraReportUtils::GetInstance().SetCapturePerfEndInfo(captureId, mSwitchToOfflinePhoto_, offlineOutputCnt,
+        false, isDeferredImageDeliveryEnabled);
+#endif
     auto preparedCaptureId = GetPreparedCaptureId();
     if (preparedCaptureId != CAPTURE_ID_UNSET) {
         MEDIA_INFO_LOG("HStreamCapture::OnCaptureEnded capturId = %{public}d already used, need release",
@@ -1561,16 +1580,20 @@ int32_t HStreamCapture::IsDeferredVideoEnabled()
     return deferredVideoSwitch_ == 1 ? 1 : 0;
 }
 
+#ifdef CAMERA_MOVING_PHOTO
 int32_t HStreamCapture::GetMovingPhotoVideoCodecType()
 {
     MEDIA_INFO_LOG("HStreamCapture GetMovingPhotoVideoCodecType videoCodecType_: %{public}d", videoCodecType_);
     return videoCodecType_;
 }
+#endif
 
 int32_t HStreamCapture::SetMovingPhotoVideoCodecType(int32_t videoCodecType)
 {
+#ifdef CAMERA_MOVING_PHOTO
     MEDIA_INFO_LOG("HStreamCapture SetMovingPhotoVideoCodecType videoCodecType_: %{public}d", videoCodecType);
     videoCodecType_ = videoCodecType;
+#endif
     return 0;
 }
 

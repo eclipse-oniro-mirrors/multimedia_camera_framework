@@ -29,8 +29,10 @@
 #include "service_died_command.h"
 #include "token_setproc.h"
 #include "v1_5/ivideo_process_session.h"
+#ifdef CAMERA_DEFERRED
 #include "video_process_command.h"
 #include "video_post_processor.h"
+#endif
 #include "dp_utils.h"
 #include "dps.h"
 #include "v1_5/iimage_process_service.h"
@@ -50,10 +52,12 @@ namespace {
     const std::string VIDEO_PATH = MEDIA_ROOT + "test_video.mp4";
     const std::string VIDEO_TEMP_PATH = MEDIA_ROOT + "test_video_temp.mp4";
     const std::string VIDEO_ID = "20240101240000000";
+#ifdef CAMERA_DEFERRED
     constexpr int32_t OK = 0;
     constexpr int32_t ERROR = -1;
     constexpr int32_t VIDEO_WIDTH = 1920;
     constexpr int32_t VIDEO_HIGHT = 1080;
+#endif
 }
 
 void DeferredPostPorcessorUnitTest::SetUpTestCase(void)
@@ -79,6 +83,7 @@ void DeferredPostPorcessorUnitTest::TearDown()
     }
 }
 
+#ifdef CAMERA_DEFERRED
 class VideoPostProcessor::VideoProcessListener : public HDI::Camera::V1_4::IVideoProcessCallback {
 public:
     explicit VideoProcessListener(const std::weak_ptr<VideoProcessResult>& processResult)
@@ -128,6 +133,7 @@ public:
         ON_CALL(*this, Reset).WillByDefault(Return(OK));
     }
 };
+#endif
 
 /*
  * Feature: Framework
@@ -212,14 +218,17 @@ HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_006, Te
     EXPECT_EQ(failedCommand->Executing(), DP_NULL_POINTER);
     auto photoDiedCommand = CreateShared<PhotoDiedCommand>(userId_);
     EXPECT_EQ(photoDiedCommand->Executing(), DP_NULL_POINTER);
+#ifdef CAMERA_DEFERRED
     auto videoDiedCommand = CreateShared<VideoDiedCommand>(userId_);
     EXPECT_EQ(videoDiedCommand->Executing(), DP_NULL_POINTER);
     auto videoProcessSuccessCommand = CreateShared<VideoProcessSuccessCommand>(userId_, imageId);
     EXPECT_EQ(videoProcessSuccessCommand->Executing(), DP_NULL_POINTER);
     auto videoProcessFailedCommand = CreateShared<VideoProcessFailedCommand>(userId_, imageId, errorCode);
     EXPECT_EQ(videoProcessFailedCommand->Executing(), DP_NULL_POINTER);
+#endif
 }
 
+#ifdef CAMERA_DEFERRED
 /*
  * Feature: Framework
  * Function: Test OnError with abnormal branch
@@ -881,6 +890,7 @@ HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_033, Te
     EXPECT_EQ(postProcessor->runningId_.size(), 0);
     postProcessor->sessionV1_3_ = nullptr;
 }
+#endif
 
 /*
  * Feature: Framework

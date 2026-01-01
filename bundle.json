@@ -15,7 +15,14 @@
         "syscap": ["SystemCapability.Multimedia.Camera.Core"],
         "features": [
           "camera_framework_feature_camera_rotate_plugin",
-          "camera_framework_feature_camera_live_scene_recognition"
+          "camera_framework_feature_camera_live_scene_recognition",
+          "camera_framework_feature_moving_photo",
+          "camera_framework_feature_beauty_notification",
+          "camera_framework_feature_movie_file",
+          "camera_framework_feature_rotate_param_update",
+          "camera_framework_feature_media_stream",
+          "camera_framework_feature_deferred",
+          "camera_framework_feature_xcomponent_toast"
         ],
         "adapted_system_type": [ "standard" ],
         "rom": "",

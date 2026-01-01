@@ -48,6 +48,7 @@ int32_t PhotoDiedCommand::Executing()
     return DP_OK;
 }
 
+#ifdef CAMERA_DEFERRED
 int32_t VideoDiedCommand::Executing()
 {
     int32_t ret = Initialize();
@@ -63,6 +64,7 @@ int32_t VideoDiedCommand::Executing()
     controller->HandleServiceDied();
     return DP_OK;
 }
+#endif
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS

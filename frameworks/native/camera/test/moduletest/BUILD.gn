@@ -222,7 +222,11 @@ ohos_moduletest("camera_moving_photo_moduletest") {
     "${multimedia_camera_framework_path}/interfaces/inner_api/native/test",
   ]
 
-  sources = [ "camera_moving_photo/src/camera_moving_photo_moduletest.cpp" ]
+  sources = []
+  
+  if (camera_framework_feature_moving_photo) {
+    sources += [ "camera_moving_photo/src/camera_moving_photo_moduletest.cpp" ]
+  }
 
   deps = [
     "${multimedia_camera_framework_path}/frameworks/native/camera/base:camera_framework",

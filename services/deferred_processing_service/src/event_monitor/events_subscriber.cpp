@@ -71,6 +71,7 @@ std::shared_ptr<EventSubscriber> EventSubscriber::Create()
 
 void EventSubscriber::Initialize()
 {
+#ifdef CAMERA_DEFERRED
     DP_DEBUG_LOG("entered.");
     eventStrategy_[OHOS::EventFwk::CommonEventSupport::COMMON_EVENT_THERMAL_LEVEL_CHANGED]
         = std::make_shared<ThermalStrategy>();
@@ -92,6 +93,7 @@ void EventSubscriber::Initialize()
     eventStrategy_[OHOS::EventFwk::CommonEventSupport::COMMON_EVENT_BATTERY_CHANGED]
         = std::make_shared<BatteryLevelStrategy>();
     eventStrategy_[COMMON_EVENT_CAMERA_STATUS] = std::make_shared<CameraStrategy>();
+#endif
 }
 
 void EventSubscriber::Subcribe()

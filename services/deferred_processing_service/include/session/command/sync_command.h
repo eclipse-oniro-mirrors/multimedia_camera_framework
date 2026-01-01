@@ -51,6 +51,7 @@ protected:
     std::unordered_map<std::string, std::shared_ptr<DeferredPhotoProcessingSession::PhotoInfo>> imageIds_ {};
 };
 
+#ifdef CAMERA_DEFERRED
 class VideoSyncCommand : public SyncCommand {
     DECLARE_CMD_CLASS(VideoSyncCommand)
 public:
@@ -63,6 +64,7 @@ protected:
 
     std::unordered_map<std::string, std::shared_ptr<VideoInfo>> videoIds_ {};
 };
+#endif
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS

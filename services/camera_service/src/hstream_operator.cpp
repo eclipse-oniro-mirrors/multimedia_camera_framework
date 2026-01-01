@@ -65,7 +65,10 @@
 #include "photo_asset_proxy.h"
 #include "picture_interface.h"
 #include "metadata_utils.h"
+#ifdef CAMERA_MOVING_PHOTO
 #include "moving_photo_proxy.h"
+#include "moving_photo_interface.h"
+#endif
 #include "parameters.h"
 #include "refbase.h"
 #include "smooth_zoom.h"
@@ -77,7 +80,6 @@
 #include "camera_report_dfx_uitls.h"
 #include "hstream_operator_manager.h"
 #include "camera_device_ability_items.h"
-#include "moving_photo_interface.h"
 #ifdef HOOK_CAMERA_OPERATOR
 #include "camera_rotate_plugin.h"
 #endif
@@ -130,7 +132,9 @@ int32_t HStreamOperator::Initialize(const uint32_t callerToken, int32_t opMode)
     opMode_ = opMode;
     MEDIA_INFO_LOG("HStreamOperator::Initialize opMode_= %{public}d", opMode_);
     InitDefaultColortSpace(static_cast<SceneMode>(opMode));
+#ifdef CAMERA_MOVING_PHOTO
     movingPhotoManagerProxy_.Set(MovingPhotoManagerProxy::CreateMovingPhotoManagerProxy());
+#endif
     photoStateCallback_ = HStreamOperator::OnPhotoStateCallback;
     return CAMERA_OK;
 }
@@ -206,9 +210,12 @@ HStreamOperator::~HStreamOperator()
         curMotionPhotoStatus_.clear();
     }
     Release();
+#ifdef CAMERA_MOVING_PHOTO
     UnloadMovingPhoto();
+#endif
 }
 
+#ifdef CAMERA_MOVING_PHOTO
 void HStreamOperator::UnloadMovingPhoto()
 {
     auto videoSurface = movingPhotoStreamStruct_.videoSurface;
@@ -223,6 +230,7 @@ void HStreamOperator::UnloadMovingPhoto()
     xtStyleMovingPhotoStreamStruct_= {};
     movingPhotoManagerProxy_.Set(nullptr);
 }
+#endif
 
 int32_t HStreamOperator::GetCurrentStreamInfos(std::vector<StreamInfo_V1_5>& streamInfos)
 {
@@ -260,6 +268,7 @@ int32_t HStreamOperator::AddOutputStream(sptr<HStreamCommon> stream)
     return CAMERA_OK;
 }
 
+#ifdef CAMERA_MOVING_PHOTO
 void HStreamOperator::StartMovingPhotoStream(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings)
 {
     int32_t errorCode = 0;
@@ -286,6 +295,7 @@ void HStreamOperator::StartMovingPhotoStream(const std::shared_ptr<OHOS::Camera:
     }
     MEDIA_INFO_LOG("HStreamOperator::StartMovingPhotoStream result:%{public}d", errorCode);
 }
+#endif
 
 void HStreamOperator::DisplayRotationListener::OnChange(OHOS::Rosen::DisplayId displayId)
 {
@@ -720,6 +730,7 @@ Size HStreamOperator::FindNearestRatioSize(Size toFitSize,const std::vector<Size
     return supportedSizes[matchedIndex];
 }
 
+#ifdef CAMERA_MOVING_PHOTO
 int32_t HStreamOperator::GetMovingPhotoBufferDuration()
 {
     auto movingPhotoManagerProxy = movingPhotoManagerProxy_.Get();
@@ -748,17 +759,6 @@ void HStreamOperator::GetMovingPhotoStartAndEndTime()
         auto manager = movingPhotoManagerProxy_.Get();
         CHECK_EXECUTE(manager, manager->InsertEndTime(captureId, endTimeStamp));
     });
-}
-
-sptr<HStreamRepeat> HStreamOperator::FindPreviewStreamRepeat()
-{
-    auto repeatStreams = streamContainer_.GetStreams(StreamType::REPEAT);
-    for (auto& stream : repeatStreams) {
-        auto streamRepeat = CastStream<HStreamRepeat>(stream);
-        CHECK_RETURN_RET(
-            streamRepeat && streamRepeat->GetRepeatStreamType() == RepeatStreamType::PREVIEW, streamRepeat);
-    }
-    return nullptr;
 }
 
 void HStreamOperator::ExpandXtStyleMovingPhotoRepeatStream()
@@ -816,6 +816,18 @@ int32_t HStreamOperator::CreateMovingPhotoStreamRepeat(int32_t format, int32_t w
     MEDIA_INFO_LOG("HCameraService::CreateLivePhotoStreamRepeat end");
     return CAMERA_OK;
 }
+#endif
+
+sptr<HStreamRepeat> HStreamOperator::FindPreviewStreamRepeat()
+{
+    auto repeatStreams = streamContainer_.GetStreams(StreamType::REPEAT);
+    for (auto& stream : repeatStreams) {
+        auto streamRepeat = CastStream<HStreamRepeat>(stream);
+        CHECK_RETURN_RET(
+            streamRepeat && streamRepeat->GetRepeatStreamType() == RepeatStreamType::PREVIEW, streamRepeat);
+    }
+    return nullptr;
+}
 
 const sptr<HStreamCommon> HStreamOperator::GetStreamByStreamID(int32_t streamId)
 {
@@ -870,6 +882,7 @@ void HStreamOperator::ClearCompositionRepeatStream()
     MEDIA_DEBUG_LOG("Exit HStreamOperator::ClearCompositionRepeatStream()");
 }
 
+#ifdef CAMERA_MOVING_PHOTO
 void HStreamOperator::ChangeListenerXtstyleType()
 {
     auto movingPhotoManagerProxy = movingPhotoManagerProxy_.Get();
@@ -900,6 +913,7 @@ void HStreamOperator::StopMovingPhoto(VideoType type) __attribute__((no_sanitize
     CHECK_RETURN_ELOG(movingPhotoManagerProxy == nullptr, "not support moving photo");
     movingPhotoManagerProxy->StopMovingPhoto(type);
 }
+#endif
 
 int32_t HStreamOperator::GetActiveColorSpace(ColorSpace& colorSpace)
 {
@@ -1007,6 +1021,7 @@ int32_t HStreamOperator::CheckIfColorSpaceMatchesFormat(ColorSpace colorSpace)
     return CAMERA_OK;
 }
 
+#ifdef CAMERA_MOVING_PHOTO
 int32_t HStreamOperator::EnableMovingPhoto(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings,
     bool isEnable, int32_t sensorOritation)
 {
@@ -1030,13 +1045,16 @@ void HStreamOperator::StartMovingPhoto(const std::shared_ptr<OHOS::Camera::Camer
         sessionPtr->StartMovingPhotoStream(settings);
     });
 }
+#endif
 
 int32_t HStreamOperator::StartPreviewStream(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings,
     camera_position_enum_t cameraPosition)
 {
     int32_t errorCode = CAMERA_OK;
     auto repeatStreams = streamContainer_.GetStreams(StreamType::REPEAT);
+#ifdef CAMERA_MOVING_PHOTO
     bool hasDerferedPreview = false;
+#endif
     // start preview
     for (auto& item : repeatStreams) {
         auto curStreamRepeat = CastStream<HStreamRepeat>(item);
@@ -1045,14 +1063,17 @@ int32_t HStreamOperator::StartPreviewStream(const std::shared_ptr<OHOS::Camera::
         CHECK_CONTINUE(curStreamRepeat->GetPreparedCaptureId() != CAPTURE_ID_UNSET);
         curStreamRepeat->SetUsedAsPosition(cameraPosition);
         errorCode = curStreamRepeat->Start(settings);
+#ifdef CAMERA_MOVING_PHOTO
         hasDerferedPreview = curStreamRepeat->producer_ == nullptr;
         bool isMotionPhotoWithDeferredPreview = isSetMotionPhoto_ && hasDerferedPreview;
         if (isMotionPhotoWithDeferredPreview) {
             StartMovingPhoto(settings, curStreamRepeat);
         }
+#endif
         CHECK_BREAK_ELOG(
             errorCode != CAMERA_OK, "HStreamOperator::Start(), Failed to start preview, rc: %{public}d", errorCode);
     }
+#ifdef CAMERA_MOVING_PHOTO
     // start movingPhoto
     for (auto& item : repeatStreams) {
         auto curStreamRepeat = CastStream<HStreamRepeat>(item);
@@ -1067,6 +1088,7 @@ int32_t HStreamOperator::StartPreviewStream(const std::shared_ptr<OHOS::Camera::
         CHECK_BREAK_ELOG(
             movingPhotoErrorCode != CAMERA_OK, "Failed to start movingPhoto, rc: %{public}d", movingPhotoErrorCode);
     }
+#endif
     return errorCode;
 }
 
@@ -1143,7 +1165,9 @@ int32_t HStreamOperator::Stop()
                 errorCode = repeatStream->Stop();
             } else if (repeatStream->IsLivephotoStream()) {
                 repeatStream->Stop();
+#ifdef CAMERA_MOVING_PHOTO
                 StopMovingPhoto();
+#endif
             } else {
                 repeatStream->Stop();
             }
@@ -1165,6 +1189,7 @@ int32_t HStreamOperator::Stop()
     return errorCode;
 }
 
+#ifdef CAMERA_MOVING_PHOTO
 void HStreamOperator::ReleaseTargetMovingphotoStream(VideoType type)
 {
     CAMERA_SYNC_TRACE;
@@ -1208,6 +1233,7 @@ void HStreamOperator::ReleaseMovingphotoStreams()
         ReleaseStreams(hdiStreamIds);
     }
 }
+#endif
 
 void HStreamOperator::ReleaseStreams()
 {
@@ -1287,9 +1313,11 @@ int32_t HStreamOperator::Release()
         }
         HStreamOperatorManager::GetInstance()->RemoveStreamOperator(streamOperatorId_);
     }
+#ifdef CAMERA_MOVING_PHOTO
     auto manager = movingPhotoManagerProxy_.Get();
     CHECK_EXECUTE(manager, manager->Release());
     HStreamOperatorManager::GetInstance()->RemoveTaskManager(streamOperatorId_);
+#endif
 
 #ifdef CAMERA_USE_SENSOR
     UnRegisterSensorCallback();
@@ -1390,6 +1418,7 @@ int32_t HStreamOperator::CommitStreams(
 }
 // LCOV_EXCL_STOP
 
+#ifdef CAMERA_MOVING_PHOTO
 int32_t HStreamOperator::EnableMovingPhotoMirror(bool isMirror, bool isConfig)
 {
     auto movingPhotoManagerProxy = movingPhotoManagerProxy_.Get();
@@ -1414,6 +1443,7 @@ int32_t HStreamOperator::EnableMovingPhotoMirror(bool isMirror, bool isConfig)
     return CAMERA_OK;
     // LCOV_EXCL_STOP
 }
+#endif
 
 void HStreamOperator::GetOutputStatus(int32_t &status)
 {
@@ -1516,6 +1546,7 @@ int32_t HStreamOperator::CalcRotationDegree(GravityData data)
 }
 #endif
 
+#ifdef CAMERA_MOVING_PHOTO
 void HStreamOperator::StartMovingPhotoEncode(int32_t rotation, uint64_t timestamp, int32_t format, int32_t captureId)
 {
     auto movingPhotoManagerProxy = movingPhotoManagerProxy_.Get();
@@ -1534,6 +1565,7 @@ void HStreamOperator::StartMovingPhotoEncode(int32_t rotation, uint64_t timestam
     movingPhotoManagerProxy->StartRecord(timestamp, rotation, captureId, GetSupportRedoXtStyle(), isXtStyleEnabled_);
     // LCOV_EXCL_STOP
 }
+#endif
 
 void HStreamOperator::UpdateOrientationBaseGravity(int32_t rotationValue, int32_t sensorOrientation,
     int32_t cameraPosition, int32_t& rotation)
@@ -1717,8 +1749,10 @@ int32_t HStreamOperator::CreateMediaLibrary(sptr<CameraServerPhotoProxy>& camera
     photoAssetProxy->AddPhotoProxy((sptr<PhotoProxy>&)cameraPhotoProxy);
     uri = photoAssetProxy->GetPhotoAssetUri();
     if (!isBursting && isSetMotionPhoto) {
+#ifdef CAMERA_MOVING_PHOTO
         auto manager = movingPhotoManagerProxy_.Get();
         CHECK_EXECUTE(manager, manager->SetVideoFd(timestamp, photoAssetProxy, captureId));
+#endif
     } else {
         photoAssetProxy.reset();
     }
@@ -1848,8 +1882,10 @@ int32_t HStreamOperator::CreateMediaLibrary(
         ProcessPhotoProxy(captureId, picture, isBursting, photoProxy, uri);
     CHECK_RETURN_RET_ELOG(photoAssetProxy == nullptr, CAMERA_INVALID_ARG, "photoAssetProxy is null");
     if (!isBursting && isSetMotionPhoto) {
+#ifdef CAMERA_MOVING_PHOTO
         auto manager = movingPhotoManagerProxy_.Get();
         CHECK_EXECUTE(manager, manager->SetVideoFd(timestamp, photoAssetProxy, captureId));
+#endif
     } else {
         photoAssetProxy.reset();
     }
@@ -2110,7 +2146,9 @@ int32_t HStreamOperator::OnCaptureEndedExt_V1_4(
                 int ret = captureInfo.metadata_->Get("deferredVideoEnhanceFlag", deferredFlag);
                 MEDIA_DEBUG_LOG("GET deferredVideoEnhanceFlag result: %{public}d", ret);
             }
+#ifdef CAMERA_MOVING_PHOTO
             SetDeferredVideoEnhanceFlag(captureId, deferredFlag, videoId);
+#endif
         }
     }
     return CAMERA_OK;
@@ -2140,6 +2178,7 @@ void HStreamOperator::ProcessRepeatStream(const sptr<HStreamRepeat>& repeatStrea
         captureId, extInfo.videoId.c_str(), extInfo.isDeferredVideoEnhancementAvailable,
         extInfo.deferredVideoEnhanceFlag);
     repeatStream->OnDeferredVideoEnhancementInfo(extInfo);
+#ifdef CAMERA_FRAMEWORK_FEATURE_MEDIA_STREAM     
     if (repeatStream->GetRepeatStreamType() == RepeatStreamType::MOVIE_FILE_RAW_VIDEO) {
         MEDIA_DEBUG_LOG("Process Stream Type of MOVIE_FILE_RAW_VIDEO");
         CHECK_RETURN_ELOG(cameraDevice_ == nullptr, "cameraDevice is nullptr.");
@@ -2159,9 +2198,11 @@ void HStreamOperator::ProcessRepeatStream(const sptr<HStreamRepeat>& repeatStrea
         repeatStream->SetRecorderUserMeta("com.openharmony.deferredVideoEnhanceFlag",
             std::to_string(extInfo.deferredVideoEnhanceFlag));
     }
+#endif    
     // LCOV_EXCL_STOP
 }
 
+#ifdef CAMERA_MOVING_PHOTO
 void HStreamOperator::SetDeferredVideoEnhanceFlag(
     int32_t captureId, uint32_t deferredVideoEnhanceFlag, std::string videoId)
 {
@@ -2173,6 +2214,7 @@ void HStreamOperator::SetDeferredVideoEnhanceFlag(
         captureId, deferredVideoEnhanceFlag, videoId, GetSupportRedoXtStyle(), isXtStyleEnabled_);
     // LCOV_EXCL_STOP
 }
+#endif
 
 int32_t HStreamOperator::OnCaptureError(int32_t captureId, const std::vector<CaptureErrorInfo>& infos)
 {
@@ -2210,7 +2252,9 @@ int32_t HStreamOperator::OnFrameShutter(
             auto captureStream = CastStream<HStreamCapture>(curStream);
             int32_t rotation = 0;
             captureStream->rotationMap_.Find(captureId, rotation);
+#ifdef CAMERA_MOVING_PHOTO
             StartMovingPhotoEncode(rotation, timestamp, captureStream->format_, captureId);
+#endif
             captureStream->OnFrameShutter(captureId, timestamp);
             // LCOV_EXCL_STOP
         } else {

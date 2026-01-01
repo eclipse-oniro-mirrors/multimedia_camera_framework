@@ -63,7 +63,9 @@
 #include "session/secure_camera_session.h"
 #include "session/video_session.h"
 #include "system_ability_definition.h"
+#ifdef CAMERA_MOVIE_FILE
 #include "unify_movie_file_output.h"
+#endif
 #include "v1_5/types.h"
 
 using namespace std;
@@ -1030,6 +1032,7 @@ int CameraManager::CreateVideoOutput(VideoProfile &profile, sptr<Surface> &surfa
 
 int CameraManager::CreateMovieFileOutput(VideoProfile &profile, sptr<MovieFileOutput> *pMovieFileOutput)
 {
+#ifdef CAMERA_FRAMEWORK_FEATURE_MEDIA_STREAM
     CAMERA_SYNC_TRACE;
     auto serviceProxy = GetServiceProxy();
     CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, CameraErrorCode::INVALID_ARGUMENT,
@@ -1053,11 +1056,13 @@ int CameraManager::CreateMovieFileOutput(VideoProfile &profile, sptr<MovieFileOu
     movieFileOutput->SetStream(movieFileStream);
     movieFileOutput->SetVideoProfile(profile);
     *pMovieFileOutput = movieFileOutput;
+#endif
     return CameraErrorCode::SUCCESS;
 }
 
 int CameraManager::CreateMovieFileOutput(VideoProfile& profile, sptr<UnifyMovieFileOutput>* pMovieFileOutput)
 {
+#ifdef CAMERA_MOVIE_FILE
     constexpr int32_t MIN_FRAME_RATE_INDEX = 0;
     constexpr int32_t MAX_FRAME_RATE_INDEX = 1;
     auto serviceProxy = GetServiceProxy();
@@ -1086,6 +1091,7 @@ int CameraManager::CreateMovieFileOutput(VideoProfile& profile, sptr<UnifyMovieF
     CHECK_RETURN_RET(movieFileOutput == nullptr, CameraErrorCode::SERVICE_FATL_ERROR);
     movieFileOutput->SetVideoProfile(profile);
     *pMovieFileOutput = movieFileOutput;
+#endif
     return CameraErrorCode::SUCCESS;
 }
 

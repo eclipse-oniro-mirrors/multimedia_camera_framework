@@ -19,7 +19,9 @@
 #include "camera_util.h"
 #include "input/camera_manager.h"
 #include "session/aperture_video_session.h"
+#ifdef CAMERA_FRAMEWORK_FEATURE_MEDIA_STREAM
 #include "session/cinematic_video_session.h"
+#endif
 #include "session/light_painting_session.h"
 #include "session/quick_shot_photo_session.h"
 #include "session/capture_session.h"
@@ -72,8 +74,10 @@ sptr<CaptureSessionForSys> CameraManagerForSys::CreateCaptureSessionForSysImpl(S
             return new (std::nothrow) VideoSessionForSys(session);
         case SceneMode::CAPTURE:
             return new (std::nothrow) PhotoSessionForSys(session);
+#ifdef CAMERA_FRAMEWORK_FEATURE_MEDIA_STREAM            
         case SceneMode::CINEMATIC_VIDEO:
             return new (std::nothrow) CinematicVideoSession(session);
+#endif            
         case SceneMode::PORTRAIT:
             return new (std::nothrow) PortraitSession(session);
         case SceneMode::PROFESSIONAL_VIDEO:

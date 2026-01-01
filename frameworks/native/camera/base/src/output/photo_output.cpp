@@ -750,6 +750,7 @@ int32_t PhotoOutput::EnableRawDelivery(bool enabled)
 
 int32_t PhotoOutput::EnableMovingPhoto(bool enabled)
 {
+#ifdef CAMERA_MOVING_PHOTO
     CAMERA_SYNC_TRACE;
     int32_t ret = CAMERA_OK;
     MEDIA_DEBUG_LOG("enter into EnableMovingPhoto");
@@ -762,6 +763,9 @@ int32_t PhotoOutput::EnableMovingPhoto(bool enabled)
     CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, SERVICE_FATL_ERROR, "PhotoOutput::EnableMovingPhoto Failed");
     return ret;
     // LCOV_EXCL_STOP
+#else
+    return CAMERA_OK;
+#endif
 }
 
 std::shared_ptr<PhotoStateCallback> PhotoOutput::GetApplicationCallback()
@@ -986,6 +990,7 @@ bool PhotoOutput::IsMirrorSupported()
 
 int32_t PhotoOutput::EnableMirror(bool isEnable)
 {
+#ifdef CAMERA_MOVING_PHOTO
     MEDIA_INFO_LOG("PhotoOutput::EnableMirror enter, isEnable: %{public}d", isEnable);
     auto session = GetSession();
     CHECK_RETURN_RET_ELOG(session == nullptr, CameraErrorCode::SESSION_NOT_RUNNING,
@@ -1003,6 +1008,9 @@ int32_t PhotoOutput::EnableMirror(bool isEnable)
     }
     return ret;
     // LCOV_EXCL_STOP
+#else
+    return CAMERA_UNKNOWN_ERROR;
+#endif
 }
 
 int32_t PhotoOutput::IsQuickThumbnailSupported()
@@ -1199,6 +1207,7 @@ std::shared_ptr<PhotoCaptureSetting> PhotoOutput::GetDefaultCaptureSetting()
 
 int32_t PhotoOutput::SetMovingPhotoVideoCodecType(int32_t videoCodecType)
 {
+#ifdef CAMERA_MOVING_PHOTO
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
     MEDIA_DEBUG_LOG("Enter Into PhotoOutput::SetMovingPhotoVideoCodecType");
     CHECK_RETURN_RET_ELOG(GetStream() == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
@@ -1217,6 +1226,9 @@ int32_t PhotoOutput::SetMovingPhotoVideoCodecType(int32_t videoCodecType)
         errCode);
     return ServiceToCameraError(errCode);
     // LCOV_EXCL_STOP
+#else
+    return ServiceToCameraError(CAMERA_UNKNOWN_ERROR);
+#endif
 }
 
 void PhotoOutput::CameraServerDied(pid_t pid)

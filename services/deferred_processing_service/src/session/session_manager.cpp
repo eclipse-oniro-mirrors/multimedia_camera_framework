@@ -31,7 +31,9 @@ SessionManager::~SessionManager()
 {
     DP_INFO_LOG("entered.");
     photoSessionInfos_.clear();
+#ifdef CAMERA_DEFERRED
     videoSessionInfos_.clear();
+#endif
 }
 
 int32_t SessionManager::Initialize()
@@ -105,6 +107,7 @@ sptr<IDeferredPhotoProcessingSessionCallback> SessionManager::GetCallback(const 
     return nullptr;
 }
 
+#ifdef CAMERA_DEFERRED
 sptr<IDeferredVideoProcessingSession> SessionManager::CreateDeferredVideoProcessingSession(const int32_t userId,
     const sptr<IDeferredVideoProcessingSessionCallback>& callback)
 {
@@ -152,6 +155,7 @@ void SessionManager::DeleteVideoSession(const int32_t userId)
         DP_INFO_LOG("Delete video session userId: %{public}d", userId);
     }
 }
+#endif
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS

@@ -507,6 +507,7 @@ void SetXtStyleStatus(FuzzedDataProvider& fdp, sptr<HCaptureSession>& session)
     session->SetXtStyleStatus(fdp.ConsumeBool());
 }
 
+#ifdef CAMERA_MOVING_PHOTO
 void SetMovingPhotoStatus(FuzzedDataProvider& fdp, sptr<HCaptureSession>& session)
 {
     session->SetMovingPhotoStatus(fdp.ConsumeBool());
@@ -516,6 +517,7 @@ void GetMovingPhotoStatus(FuzzedDataProvider& fdp, sptr<HCaptureSession>& sessio
 {
     session->GetMovingPhotoStatus();
 }
+#endif
 
 void SetHasFitedRotation(FuzzedDataProvider& fdp, sptr<HCaptureSession>& session)
 {
@@ -641,8 +643,10 @@ void Test(FuzzedDataProvider& fdp)
         SetCommitConfigFlag,
         CreateRecorder,
         SetXtStyleStatus,
+#ifdef CAMERA_MOVING_PHOTO
         SetMovingPhotoStatus,
         GetMovingPhotoStatus,
+#endif
         SetHasFitedRotation,
         GetVirtualApertureMetadata,
         GetVirtualApertureValue,

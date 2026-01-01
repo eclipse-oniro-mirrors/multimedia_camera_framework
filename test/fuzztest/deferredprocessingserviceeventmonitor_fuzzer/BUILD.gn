@@ -70,7 +70,11 @@ ohos_fuzztest("DeferredProcessingServiceEventMonitor") {
     "-fno-omit-frame-pointer",
     "-fno-access-control",
   ]
- 
+
+  if(camera_framework_feature_deferred) {
+    defines += [ "CAMERA_DEFERRED" ]
+  }
+
   sources = [ "deferred_processingservice_event_monitor_fuzzer.cpp" ]
  
   deps = [

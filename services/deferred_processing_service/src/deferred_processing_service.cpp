@@ -74,6 +74,7 @@ sptr<IDeferredPhotoProcessingSession> DeferredProcessingService::CreateDeferredP
 sptr<IDeferredVideoProcessingSession> DeferredProcessingService::CreateDeferredVideoProcessingSession(
     const int32_t userId, const sptr<IDeferredVideoProcessingSessionCallback>& callbacks)
 {
+#ifdef CAMERA_DEFERRED
     DP_CHECK_RETURN_RET(!initialized_.load(), nullptr);
 
     DP_INFO_LOG("Create video session for userId: %{public}d", userId);
@@ -81,6 +82,9 @@ sptr<IDeferredVideoProcessingSession> DeferredProcessingService::CreateDeferredV
     DP_CHECK_ERROR_RETURN_RET_LOG(sessionManager == nullptr, nullptr,
         "SessionManager is null, userId: %{public}d", userId);
     return sessionManager->CreateDeferredVideoProcessingSession(userId, callbacks);
+#endif
+    DP_ERR_LOG("Deferred video processing feature is not enabled.");
+    return nullptr;
 }
 
 void DeferredProcessingService::NotifyInterrupt()

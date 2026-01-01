@@ -57,7 +57,6 @@ ohos_shared_library("camera_framework_ex") {
     "src/output/depth_data_output.cpp",
     "src/session/aperture_video_session.cpp",
     "src/session/capture_session_for_sys.cpp",
-    "src/session/cinematic_video_session.cpp",
     "src/session/fluorescence_photo_session.cpp",
     "src/session/high_res_photo_session.cpp",
     "src/session/light_painting_session.cpp",
@@ -145,6 +144,17 @@ ohos_shared_library("camera_framework_ex") {
 
   if (is_emulator) {
     defines += [ "CAMERA_EMULATOR" ]
+  }
+
+  if (camera_framework_feature_moving_photo) {
+    defines += [ "CAMERA_MOVING_PHOTO" ]
+  }
+
+  if (camera_framework_feature_media_stream) {
+    defines += [ "CAMERA_FRAMEWORK_FEATURE_MEDIA_STREAM" ]
+    sources += [
+      "src/session/cinematic_video_session.cpp",
+    ]
   }
 
   cflags_cc = cflags

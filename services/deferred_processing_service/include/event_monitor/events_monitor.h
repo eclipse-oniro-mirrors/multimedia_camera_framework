@@ -41,7 +41,9 @@ public:
     void Initialize();
     void NotifyCameraSessionStatus(CameraSessionStatus status);
     void NotifyImageEnhanceStatus(int32_t status);
+#ifdef CAMERA_DEFERRED
     void NotifyVideoEnhanceStatus(int32_t status);
+#endif
     void NotifyScreenStatus(int32_t status);
     void NotifyChargingStatus(int32_t status);
     void NotifyBatteryStatus(int32_t status);
