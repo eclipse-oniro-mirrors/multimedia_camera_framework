@@ -25,7 +25,6 @@ namespace OHOS {
 namespace CameraStandard {
 static constexpr int32_t MIN_SIZE_NUM = 6;
 static constexpr int32_t NUM_1 = 1;
-static constexpr int32_t NUM_2 = 2;
 std::shared_ptr<AudioVideoMuxer> AudioVideoMuxerFuzzer::fuzz_{nullptr};
 
 /*
@@ -65,10 +64,7 @@ void AudioVideoMuxerFuzzer::AudioVideoMuxerFuzzTest1(FuzzedDataProvider& fdp)
     fuzz_ = std::make_shared<AudioVideoMuxer>();
     CHECK_RETURN_ELOG(!fuzz_, "Create fuzz_ Error");
     uint8_t randomNum = fdp.ConsumeIntegral<uint8_t>();
-    std::shared_ptr<PhotoAssetIntf> photoAssetProxy =
-        PhotoAssetProxy::GetPhotoAssetProxy(NUM_2, IPCSkeleton::GetCallingUid(), IPCSkeleton::GetCallingTokenID());
-    ;
-    fuzz_->Create(static_cast<OH_AVOutputFormat>(randomNum), photoAssetProxy);
+    fuzz_->Create(static_cast<OH_AVOutputFormat>(randomNum), nullptr);
     int32_t bitrate = fdp.ConsumeIntegral<int32_t>();
     bool isBframeEnable = fdp.ConsumeBool();
     fuzz_->SetSqr(bitrate, isBframeEnable);
