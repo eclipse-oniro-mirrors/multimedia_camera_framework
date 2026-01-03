@@ -17,7 +17,7 @@
 #define CAMERA_PHOTO_ASSET_INTERFACE_H
 
 #include "photo_asset_interface.h"
-#include "media_library_manager.h"
+#include "media_library_camera_manager.h"
 namespace OHOS {
 namespace CameraStandard {
 

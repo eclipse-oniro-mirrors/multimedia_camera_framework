@@ -247,7 +247,7 @@ ohos_moduletest("camera_moving_photo_moduletest") {
     "image_framework:image_source",
     "image_framework:ohimage",
     "ipc:ipc_core",
-    "media_library:media_library",
+    "media_library:media_library_camera_helper",
     "media_library:media_library_asset_manager",
     "media_library:media_library_manager",
     "media_library:native_media_asset_manager",
