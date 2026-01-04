@@ -91,7 +91,7 @@ public:
     Camera_ErrorCode CreateVideoOutputUsedInPreconfig(const char* surfaceId, Camera_VideoOutput** videoOutput);
 
     Camera_ErrorCode CreateMetadataOutput(const Camera_MetadataObjectType* type,
-        Camera_MetadataOutput** metadataOutput);
+        Camera_MetadataOutput** metadataOutput, uint32_t size);
 
     Camera_ErrorCode IsTorchSupported(bool* isTorchSupported);
 

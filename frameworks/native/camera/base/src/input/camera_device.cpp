@@ -186,6 +186,7 @@ void CameraDevice::init(common_metadata_header_t* metadata)
             auto iterator = g_metaToFwCameraMetaDetect_.find(static_cast<StatisticsDetectType>(item.data.u8[i]));
             if (iterator != g_metaToFwCameraMetaDetect_.end()) {
                 objectTypes_.push_back(iterator->second);
+                MEDIA_INFO_LOG("type:%d", static_cast<int32_t>(iterator->second));
             }
         }
     }

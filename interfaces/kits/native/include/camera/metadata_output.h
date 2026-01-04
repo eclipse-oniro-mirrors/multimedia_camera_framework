@@ -157,6 +157,34 @@ Camera_ErrorCode OH_MetadataOutput_Stop(Camera_MetadataOutput* metadataOutput);
  */
 Camera_ErrorCode OH_MetadataOutput_Release(Camera_MetadataOutput* metadataOutput);
 
+/**
+ * @brief metadata output add metadataobject types.
+ *
+ * @param metadataOutput the {@link Camera_MetadataOutput} instance
+ * @param types the {@link Camera_MetadataObjectType} types
+ * @param size the count of the types.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
+ * @since 23
+ */
+Camera_ErrorCode OH_MetadataOutput_AddMetadataObjectTypes(Camera_MetadataOutput* metadataOutput, 
+    Camera_MetadataObjectType* types, uint32_t size);
+ 
+/**
+ * @brief metadata output remove metadataobject types.
+ *
+ * @param metadataOutput the {@link Camera_MetadataOutput} instance.
+ * @param types the {@link Camera_MetadataObjectType} types
+ * @param size the count of the types.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
+ * @since 23
+ */
+Camera_ErrorCode OH_MetadataOutput_RemoveMetadataObjectTypes(Camera_MetadataOutput* metadataOutput, 
+    Camera_MetadataObjectType* types, uint32_t size);
+ 
 #ifdef __cplusplus
 }
 #endif

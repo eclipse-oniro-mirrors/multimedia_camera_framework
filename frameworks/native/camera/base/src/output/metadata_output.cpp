@@ -169,13 +169,14 @@ void MetadataOutput::SetCapturingMetadataObjectTypes(std::vector<MetadataObjectT
 
 int32_t MetadataOutput::AddMetadataObjectTypes(std::vector<MetadataObjectType> metadataObjectTypes)
 {
-    const size_t maxSize4NonSystemApp  = 1;
+    const size_t maxSize4NonSystemApp  = 2;
     // LCOV_EXCL_START
     if (!CameraSecurity::CheckSystemApp()) {
         MEDIA_DEBUG_LOG("public calling for metadataOutput");
         if (metadataObjectTypes.size() > maxSize4NonSystemApp ||
             std::any_of(metadataObjectTypes.begin(), metadataObjectTypes.end(),
-                [](MetadataObjectType type) { return type != MetadataObjectType::FACE; })) {
+                [](MetadataObjectType type) { return type != MetadataObjectType::FACE && 
+                                                     type != MetadataObjectType::HUMAN_BODY; })) {
             return CameraErrorCode::INVALID_ARGUMENT;
         }
     }
@@ -215,13 +216,14 @@ int32_t MetadataOutput::AddMetadataObjectTypes(std::vector<MetadataObjectType> m
 
 int32_t MetadataOutput::RemoveMetadataObjectTypes(std::vector<MetadataObjectType> metadataObjectTypes)
 {
-    const size_t maxSize4NonSystemApp  = 1;
+    const size_t maxSize4NonSystemApp  = 2;
     // LCOV_EXCL_START
     if (!CameraSecurity::CheckSystemApp()) {
         MEDIA_DEBUG_LOG("public calling for metadataOutput");
         if (metadataObjectTypes.size() > maxSize4NonSystemApp ||
             std::any_of(metadataObjectTypes.begin(), metadataObjectTypes.end(),
-                [](MetadataObjectType type) { return type != MetadataObjectType::FACE; })) {
+                [](MetadataObjectType type) { return type != MetadataObjectType::FACE && 
+                                                     type != MetadataObjectType::HUMAN_BODY; })) {
             return CameraErrorCode::INVALID_ARGUMENT;
         }
     }
@@ -528,6 +530,9 @@ int32_t HStreamMetadataCallbackImpl::OnMetadataResult(const int32_t streamId,
     auto objectCallback = metadataOutput->GetAppObjectCallback();
     auto focusTrackingMetaInfoCallback = metadataOutput->GetFocusTrackingMetaInfoCallback();
     if ((metadataOutput->reportFaceResults_ || metadataOutput->reportLastFaceResults_) && objectCallback) {
+        for (auto object : metaObjects) {
+            object->SetSize(session->GetPreviewSize());
+        }
         objectCallback->OnMetadataObjectsAvailable(metaObjects);
     }
     if (focusTrackingMetaInfoCallback) {

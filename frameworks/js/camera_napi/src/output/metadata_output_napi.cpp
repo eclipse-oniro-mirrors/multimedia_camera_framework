@@ -68,7 +68,7 @@ MetadataOutputCallback::MetadataOutputCallback(napi_env env) : ListenerBase(env)
 
 void MetadataOutputCallback::OnMetadataObjectsAvailable(const std::vector<sptr<MetadataObject>> metadataObjList) const
 {
-    MEDIA_DEBUG_LOG("OnMetadataObjectsAvailable is called");
+    MEDIA_DEBUG_LOG("MetadataOutputCallback::OnMetadataObjectsAvailable");
     std::unique_ptr<MetadataOutputCallbackInfo> callbackInfo =
         std::make_unique<MetadataOutputCallbackInfo>(metadataObjList, shared_from_this());
     MetadataOutputCallbackInfo *event = callbackInfo.get();
@@ -114,6 +114,9 @@ napi_value MetadataOutputCallback::CreateMetadataObjJSArray(napi_env env,
         if (isSystemApp) {
             AddMetadataObjExtending(env, metadataObjList[i], metadataObj);
         }
+        if (!isSystemApp && metadataObjList[i]->GetType() == MetadataObjectType::HUMAN_BODY) {
+            AddMetadataObjExtending(env, metadataObjList[i], metadataObj);
+        }
         if ((metadataObj == nullptr) || napi_set_element(env, metadataObjArray, j++, metadataObj) != napi_ok) {
             MEDIA_ERR_LOG("CreateMetadataObjJSArray: Failed to create metadata face object napi wrapper object");
             return nullptr;
@@ -140,9 +143,34 @@ void MetadataOutputCallback::AddMetadataObjExtending(napi_env env, sptr<Metadata
         case MetadataObjectType::DOG_FACE:
             CreateDogFaceMetaData(env, metadataObj, metadataNapiObj);
             break;
+        case MetadataObjectType::HUMAN_BODY:
+            CreateHumanBodyMetaData(env, metadataObj, metadataNapiObj);
+            break;
         default:
             return;
     }
+}
+
+void MetadataOutputCallback::CreateHumanBodyMetaData(napi_env env, sptr<MetadataObject> metadataObj,
+    napi_value &metadataNapiObj) const
+{
+    MEDIA_DEBUG_LOG("MetadataOutputCallback::CreateHumanBodyMetaData");
+    napi_value metadataObjResult = nullptr;
+    napi_value numberNapiObj = nullptr;
+
+    napi_get_undefined(env, &metadataObjResult);
+    if (metadataObj == nullptr && metadataNapiObj == nullptr) {
+        return;
+    }
+    MetadataHumanBodyObject* humanBodyObjectPtr = static_cast<MetadataHumanBodyObject*>(metadataObj.GetRefPtr());
+    if (humanBodyObjectPtr == nullptr) {
+        MEDIA_DEBUG_LOG("humanBodyObjectPtr get nullptr");
+        return ;
+    }
+    double intToDouble = 100;
+    double confidence = humanBodyObjectPtr->GetConfidence() / intToDouble;
+    napi_create_double(env, confidence, &numberNapiObj);
+    napi_set_named_property(env, metadataNapiObj, "confidence", numberNapiObj);
 }
 
 void MetadataOutputCallback::CreateHumanFaceMetaData(napi_env env, sptr<MetadataObject> metadataObj,
