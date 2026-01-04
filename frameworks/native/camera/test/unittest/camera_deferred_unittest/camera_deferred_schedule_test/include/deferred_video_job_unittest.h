@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-#ifdef CAMERA_DEFERRED
 #ifndef DEFERRED_VIDEO_JOB_UNITTEST_H
 #define DEFERRED_VIDEO_JOB_UNITTEST_H
 
@@ -50,4 +49,3 @@ public:
 } // CameraStandard
 } // OHOS
 #endif // DEFERRED_VIDEO_JOB_UNITTEST_H
-#endif

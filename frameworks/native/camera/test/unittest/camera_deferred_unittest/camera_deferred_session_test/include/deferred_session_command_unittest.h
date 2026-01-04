@@ -23,10 +23,8 @@
 #include "gtest/gtest.h"
 #include "video_session_info.h"
 #include "photo_session_info.h"
-#ifdef CAMERA_DEFERRED
 #include "deferred_video_processor.h"
 #include "video_post_processor.h"
-#endif
 
 namespace OHOS {
 namespace CameraStandard {
@@ -46,19 +44,15 @@ public:
     /* TearDown:Execute after each test case */
     void TearDown();
 
-#ifdef CAMERA_DEFERRED
     void PrepareVideoInfo(const std::string& videoId);
-#endif
 
     void InitProcessor(int32_t userId);
 
     void InitSessionInfo(int32_t userId);
 
-#ifdef CAMERA_DEFERRED
     std::unordered_map<std::string, std::shared_ptr<VideoInfo>> videoInfoMap_;
     std::shared_ptr<DeferredVideoProcessor> processor_ {nullptr};
     sptr<VideoSessionInfo> sessionInfo_ {nullptr};
-#endif
 
     std::shared_ptr<DeferredPhotoProcessor> photoProcessor_ {nullptr};
     sptr<PhotoSessionInfo> photoSessionInfo_ {nullptr};

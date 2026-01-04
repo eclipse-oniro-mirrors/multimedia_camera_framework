@@ -31,11 +31,11 @@ int HStreamCapturePhotoCallbackStub::OnRemoteRequest(
         case static_cast<uint32_t>(StreamCapturePhotoCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_PHOTO_AVAILABLE):
             errCode = HandleOnPhotoAvailable(data);
             break;
-    #ifdef CAMERA_CAPTURE_YUV
+#ifdef CAMERA_CAPTURE_YUV
         case static_cast<uint32_t>(StreamCapturePhotoCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_PICTURE_AVAILABLE):
             errCode = HandleOnPictureAvailable(data);
             break;
-    #endif
+#endif
         default:
             MEDIA_ERR_LOG("HStreamCaptureCallbackStub request code %{public}u not handled", code);
             errCode = IPCObjectStub::OnRemoteRequest(code, data, reply, option);

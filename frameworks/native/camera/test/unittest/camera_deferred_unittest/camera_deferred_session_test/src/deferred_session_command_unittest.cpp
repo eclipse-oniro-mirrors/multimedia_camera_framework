@@ -23,9 +23,7 @@
 #include "iremote_object.h"
 #include "session_command.h"
 #include "sync_command.h"
-#ifdef CAMERA_DEFERRED
 #include "video_command.h"
-#endif
 #include "photo_command.h"
 #include "video_session_info.h"
 #include "dp_log.h"
@@ -55,9 +53,7 @@ void DeferredSessionCommandUnitTest::SetUp(void)
 
 void DeferredSessionCommandUnitTest::TearDown(void)
 {
-#ifdef CAMERA_DEFERRED
     videoInfoMap_.clear();
-#endif
     if (srcFd_ > 0) {
         close(srcFd_);
     }
@@ -66,7 +62,6 @@ void DeferredSessionCommandUnitTest::TearDown(void)
     }
 }
 
-#ifdef CAMERA_DEFERRED
 void DeferredSessionCommandUnitTest::PrepareVideoInfo(const std::string& videoId)
 {
     DpsFdPtr inputFd = std::make_shared<DpsFd>(dup(srcFd_));
@@ -85,20 +80,17 @@ void DeferredSessionCommandUnitTest::InitProcessor(int32_t userId)
     processor_ = DeferredVideoProcessor::Create(userId, repository, postProcessor);
     ASSERT_NE(processor_, nullptr);
 }
-#endif
 
 void DeferredSessionCommandUnitTest::InitSessionInfo(int32_t userId)
 {
     std::u16string descriptor = u"test";
     sptr<IRemoteObject> remoteObj = sptr<IRemoteObjectUnitTest>::MakeSptr(descriptor);
     ASSERT_NE(remoteObj, nullptr);
-#ifdef CAMERA_DEFERRED
     sptr<DeferredVideoProcessingSessionCallbackProxy> cb =
         sptr<DeferredVideoProcessingSessionCallbackProxy>::MakeSptr(remoteObj);
     ASSERT_NE(cb, nullptr);
     sessionInfo_ = sptr<VideoSessionInfo>::MakeSptr(userId, cb);
     ASSERT_NE(sessionInfo_, nullptr);
-#endif
     sptr<DeferredPhotoProcessingSessionCallbackProxy> photoCb =
         sptr<DeferredPhotoProcessingSessionCallbackProxy>::MakeSptr(remoteObj);
     ASSERT_NE(photoCb, nullptr);
@@ -106,7 +98,6 @@ void DeferredSessionCommandUnitTest::InitSessionInfo(int32_t userId)
     ASSERT_NE(photoSessionInfo_, nullptr);
 }
 
-#ifdef CAMERA_DEFERRED
 /*
  * Feature: Framework
  * Function: Test functions in class SessionCommand by using its derived class AddVideoSessionCommand.
@@ -352,7 +343,6 @@ HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_012, 
     std::shared_ptr<RemoveVideoCommand> removeVideoCmd = std::make_shared<RemoveVideoCommand>(USER_ID, videoId, true);
     EXPECT_NE(removeVideoCmd->Executing(), DP_NULL_POINTER);
 }
-#endif
 
 /*
  * Feature: Framework

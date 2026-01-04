@@ -118,8 +118,4 @@ group("camera_fuzz_test") {
       "fuzztest/videostrategycenter_fuzzer:fuzztest",
     ]
   }
-
-  if (camera_framework_feature_movie_file) {
-    deps += [ "fuzztest/hcameramoviefileoutput_fuzzer:fuzztest", ]
-  }
 }

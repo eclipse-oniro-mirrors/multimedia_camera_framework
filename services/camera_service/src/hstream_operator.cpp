@@ -2327,11 +2327,11 @@ int32_t HStreamOperator::OnCaptureReady(
         sptr<HStreamCommon> curStream = GetHdiStreamByStreamID(streamId);
         bool isCaptureStream = (curStream != nullptr) && (curStream->GetStreamType() == StreamType::CAPTURE);
         if (isCaptureStream) {
-        #ifdef CAMERA_CAPTURE_YUV 
+#ifdef CAMERA_CAPTURE_YUV 
             NotifyCaptureReady(captureId, curStream, timestamp);
-        #else
+#else
             CastStream<HStreamCapture>(curStream)->OnCaptureReady(captureId, timestamp);
-        #endif
+#endif
         } else {
             MEDIA_ERR_LOG("HStreamOperator::OnCaptureReady StreamId: %{public}d not found", streamId);
             return CAMERA_INVALID_ARG;
