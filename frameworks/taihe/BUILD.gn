@@ -115,7 +115,7 @@ taihe_shared_library("camera_taihe") {
     "image_framework:image_native",
     "image_framework:image_taihe",
     "ipc:ipc_core",
-    "media_library:media_library",
+    "media_library:media_library_camera_helper",
     "media_library:medialibrary_ani_utils",
     "napi:ace_napi",
     "runtime_core:ani_helpers",
