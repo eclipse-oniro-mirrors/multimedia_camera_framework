@@ -78,8 +78,9 @@ bool CameraRotatePlugin::HookCameraAbility(const std::string& cameraId,
 {
     CHECK_RETURN_RET(inability == nullptr, false);
     ParameterMap param;
-    int uid = IPCSkeleton::GetCallingUid();
-    InitParam(GetClientBundle(uid), inability, cameraId, param);
+    int tokenId = static_cast<int32_t>(IPCSkeleton::GetCallingTokenID());
+    std::string clientName = GetClientNameByToken(tokenId);
+    InitParam(clientName, inability, cameraId, param);
 
     camera_metadata_item_t item;
     int32_t ret = OHOS::Camera::FindCameraMetadataItem(inability->get(), OHOS_ABILITY_CAMERA_POSITION, &item);
