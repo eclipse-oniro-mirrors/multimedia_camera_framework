@@ -120,10 +120,7 @@ int32_t HStreamMetadata::OperatePermissionCheck(uint32_t interfaceCode)
             break;
         }
         case IStreamMetadataIpcCode::COMMAND_ENABLE_METADATA_TYPE:
-        case IStreamMetadataIpcCode::COMMAND_DISABLE_METADATA_TYPE: {
-            CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION, "HStreamMetadata::CheckSystemApp fail");
-            break;
-        }
+        case IStreamMetadataIpcCode::COMMAND_DISABLE_METADATA_TYPE:
         default:
             break;
     }

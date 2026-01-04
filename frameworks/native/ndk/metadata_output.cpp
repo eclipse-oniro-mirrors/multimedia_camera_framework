@@ -17,6 +17,7 @@
 #include "impl/metadata_output_impl.h"
 #include "camera_log.h"
 #include "hilog/log.h"
+#include "impl/camera_manager_impl.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -99,6 +100,35 @@ Camera_ErrorCode OH_MetadataOutput_Release(Camera_MetadataOutput* metadataOutput
     }
     return retCode;
 }
+
+/**
+ * @since 23
+ * @version 1.0
+ */
+Camera_ErrorCode OH_MetadataOutput_AddMetadataObjectTypes(Camera_MetadataOutput* metadataOutput, 
+    Camera_MetadataObjectType* types, uint32_t size) 
+{
+    CHECK_RETURN_RET_ELOG(
+        metadataOutput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, metadataOutput is null!");
+    MEDIA_DEBUG_LOG("OH_MetadataOutput_AddMetadataObjectTypes"); 
+    Camera_ErrorCode retCode = metadataOutput->AddMetadataObjectTypes(types, size);
+    return retCode;
+}
+
+/**
+ * @since 23
+ * @version 1.0
+ */
+Camera_ErrorCode OH_MetadataOutput_RemoveMetadataObjectTypes(Camera_MetadataOutput* metadataOutput, 
+    Camera_MetadataObjectType* types, uint32_t size)
+{
+    CHECK_RETURN_RET_ELOG(
+        metadataOutput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, metadataOutput is null!");
+    MEDIA_DEBUG_LOG("OH_MetadataOutput_RemoveMetadataObjectTypes"); 
+    Camera_ErrorCode retCode = metadataOutput->RemoveMetadataObjectTypes(types, size);
+    return retCode;
+}
+
 #ifdef __cplusplus
 }
 #endif

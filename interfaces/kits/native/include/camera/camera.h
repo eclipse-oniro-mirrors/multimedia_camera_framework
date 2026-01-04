@@ -543,7 +543,19 @@ typedef enum Camera_MetadataObjectType {
     /**
      * Face detection.
      */
-    FACE_DETECTION = 0
+    FACE_DETECTION = 0,
+    
+    /**
+     * Face detection type.
+     * @since 23
+     */
+    CAMERA_METADATA_OBJECT_TYPE_FACE_DETECTION = 0,
+ 
+    /**
+     * Human body detection type.
+     * @since 23
+     */
+    CAMERA_METADATA_OBJECT_TYPE_HUMAN_BODY = 1
 } Camera_MetadataObjectType;
 
 /**
