@@ -293,6 +293,9 @@ private:
 #ifdef CAMERA_MOVING_PHOTO
     void ExpandMovingPhotoRepeatStream();
     void ExpandXtStyleMovingPhotoRepeatStream();
+    void ClearMovingPhotoRepeatStream();
+    bool isMovingPhotoEnabled_ = false;
+    std::mutex movingPhotoStatusMutex_;
 #endif
     int32_t SetVirtualApertureToDataShareHelper(float value);
     int32_t GetVirtualApertureFromDataShareHelper(float &value);
@@ -309,9 +312,7 @@ private:
     std::string GetSessionState();
     void DynamicConfigStream();
     bool IsNeedDynamicConfig();
-#ifdef CAMERA_MOVING_PHOTO
-    void ClearMovingPhotoRepeatStream();
-#endif
+
     int32_t SetHasFitedRotation(bool isHasFitedRotation) override;
     void InitialHStreamOperator();
     void UpdateSettingForSpecialBundle();
@@ -383,10 +384,6 @@ private:
     bool isHasFitedRotation_ = false;
     bool isXtStyleEnabled_ = false;
     std::mutex xtStyleStatusMutex_;
-#ifdef CAMERA_MOVING_PHOTO
-    bool isMovingPhotoEnabled_ = false;
-    std::mutex movingPhotoStatusMutex_;
-#endif
     std::string bundleName_ = "";
     std::mutex cameraRotateUpdateBasicInfo_;
     int32_t userId_ = 0;

@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-#ifdef CAMERA_DEFERRED
 #ifndef OHOS_CAMERA_DPS_VIDEO_REPORT_H
 #define OHOS_CAMERA_DPS_VIDEO_REPORT_H
 
@@ -64,4 +63,3 @@ private:
 } // namespace CameraStandard
 } // namespace OHOS
 #endif // OHOS_CAMERA_DPS_VIDEO_REPORT_H
-#endif

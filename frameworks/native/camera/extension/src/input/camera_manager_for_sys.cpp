@@ -74,10 +74,10 @@ sptr<CaptureSessionForSys> CameraManagerForSys::CreateCaptureSessionForSysImpl(S
             return new (std::nothrow) VideoSessionForSys(session);
         case SceneMode::CAPTURE:
             return new (std::nothrow) PhotoSessionForSys(session);
-#ifdef CAMERA_FRAMEWORK_FEATURE_MEDIA_STREAM            
+#ifdef CAMERA_FRAMEWORK_FEATURE_MEDIA_STREAM
         case SceneMode::CINEMATIC_VIDEO:
             return new (std::nothrow) CinematicVideoSession(session);
-#endif            
+#endif
         case SceneMode::PORTRAIT:
             return new (std::nothrow) PortraitSession(session);
         case SceneMode::PROFESSIONAL_VIDEO:

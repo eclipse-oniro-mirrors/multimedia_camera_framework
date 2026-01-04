@@ -93,8 +93,9 @@ public:
     ~HStreamCapturePhotoCallbackImpl() = default;
 
     int32_t OnPhotoAvailable(sptr<SurfaceBuffer> surfaceBuffer, int64_t timestamp, bool isRaw) override;
-
+#ifdef CAMERA_CAPTURE_YUV
     int32_t OnPhotoAvailable(std::shared_ptr<PictureIntf> pictureProxy) override;
+#endif
 
     inline sptr<PhotoOutput> GetPhotoOutput()
     {

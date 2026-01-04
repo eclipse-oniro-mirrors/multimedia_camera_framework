@@ -26,7 +26,6 @@ namespace OHOS {
 namespace CameraStandard {
 class PhotoAssetProxy : public PhotoAssetIntf {
 public:
-    static std::string GetBundleName(int32_t callingUid);
     static std::shared_ptr<PhotoAssetProxy> GetPhotoAssetProxy(
         int32_t shotType, int32_t callingUid, uint32_t callingTokenID, int32_t photoCount = 1);
     explicit PhotoAssetProxy(
@@ -40,8 +39,11 @@ public:
     int32_t GetUserId() override;
     int32_t OpenAsset() override;
     void UpdatePhotoProxy(const sptr<Media::PhotoProxy> &photoProxy) override;
+#ifdef CAMERA_CAPTURE_YUV
+    static std::string GetBundleName(int32_t callingUid);
     void RegisterPhotoStateCallback(const std::function<void(int32_t)> &callback) override;
     void UnregisterPhotoStateCallback() override;
+#endif
 
 private:
     std::mutex opMutex_;

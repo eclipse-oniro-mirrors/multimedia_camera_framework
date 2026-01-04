@@ -48,7 +48,9 @@
 #include "metadata_utils.h"
 #include "v1_0/types.h"
 #include "os_account_manager.h"
+#ifdef CAMERA_DEFERRED
 #include "deferred_processing_service.h"
+#endif
 #include "iservice_registry.h"
 #include "system_ability_definition.h"
 #include "camera_timer.h"
@@ -348,13 +350,6 @@ int32_t HCameraDevice::GetVideoStabilizationMode()
 {
     return videoStabilizationMode_;
 }
-
-#ifdef CAMERA_MOVING_PHOTO
-void HCameraDevice::EnableMovingPhoto(bool isMovingPhotoEnabled)
-{
-    isMovingPhotoEnabled_ = isMovingPhotoEnabled;
-}
-#endif
 
 void HCameraDevice::CreateMuteSetting(std::shared_ptr<OHOS::Camera::CameraMetadata>& settings)
 {
@@ -1102,6 +1097,50 @@ bool HCameraDevice::CheckMovingPhotoSupported(int32_t mode)
     }
     return std::find(modes.begin(), modes.end(), mode) != modes.end();
 }
+
+void HCameraDevice::EnableMovingPhoto(bool isMovingPhotoEnabled)
+{
+    isMovingPhotoEnabled_ = isMovingPhotoEnabled;
+}
+
+void HCameraDevice::GetMovingPhotoStartAndEndTime(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult)
+{
+    MEDIA_DEBUG_LOG("HCameraDevice::GetMovingPhotoStartAndEndTime enter.");
+    {
+        std::lock_guard<std::mutex> lock(movingPhotoStartTimeCallbackLock_);
+        if (movingPhotoStartTimeCallback_) {
+            camera_metadata_item_t item;
+            int ret = OHOS::Camera::FindCameraMetadataItem(cameraResult->get(), OHOS_MOVING_PHOTO_START, &item);
+            if (ret == CAM_META_SUCCESS && item.count != 0) {
+                int64_t captureId = item.data.i64[0];
+                int64_t startTime = item.data.i64[1];
+                movingPhotoStartTimeCallback_(static_cast<int32_t>(captureId), startTime);
+            }
+        }
+    }
+    std::lock_guard<std::mutex> lock(movingPhotoEndTimeCallbackLock_);
+    CHECK_RETURN(!movingPhotoEndTimeCallback_);
+    camera_metadata_item_t item;
+    int ret = OHOS::Camera::FindCameraMetadataItem(cameraResult->get(), OHOS_MOVING_PHOTO_END, &item);
+    bool canMovingPhoto = ret == CAM_META_SUCCESS && item.count != 0;
+    if (canMovingPhoto) {
+        int64_t captureId = item.data.i64[0];
+        int64_t endTime = item.data.i64[1];
+        movingPhotoEndTimeCallback_(static_cast<int32_t>(captureId), endTime);
+    }
+}
+
+void HCameraDevice::SetMovingPhotoStartTimeCallback(std::function<void(int64_t, int64_t)> callback)
+{
+    std::lock_guard<std::mutex> lock(movingPhotoStartTimeCallbackLock_);
+    movingPhotoStartTimeCallback_ = callback;
+}
+
+void HCameraDevice::SetMovingPhotoEndTimeCallback(std::function<void(int64_t, int64_t)> callback)
+{
+    std::lock_guard<std::mutex> lock(movingPhotoEndTimeCallbackLock_);
+    movingPhotoEndTimeCallback_ = callback;
+}
 #endif
 
 void HCameraDevice::ResetZoomTimer()
@@ -1801,47 +1840,6 @@ int32_t HCameraDevice::OnResult(const uint64_t timestamp, const std::vector<uint
 #endif
     return CAMERA_OK;
 }
-
-#ifdef CAMERA_MOVING_PHOTO
-void HCameraDevice::GetMovingPhotoStartAndEndTime(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult)
-{
-    MEDIA_DEBUG_LOG("HCameraDevice::GetMovingPhotoStartAndEndTime enter.");
-    {
-        std::lock_guard<std::mutex> lock(movingPhotoStartTimeCallbackLock_);
-        if (movingPhotoStartTimeCallback_) {
-            camera_metadata_item_t item;
-            int ret = OHOS::Camera::FindCameraMetadataItem(cameraResult->get(), OHOS_MOVING_PHOTO_START, &item);
-            if (ret == CAM_META_SUCCESS && item.count != 0) {
-                int64_t captureId = item.data.i64[0];
-                int64_t startTime = item.data.i64[1];
-                movingPhotoStartTimeCallback_(static_cast<int32_t>(captureId), startTime);
-            }
-        }
-    }
-    std::lock_guard<std::mutex> lock(movingPhotoEndTimeCallbackLock_);
-    CHECK_RETURN(!movingPhotoEndTimeCallback_);
-    camera_metadata_item_t item;
-    int ret = OHOS::Camera::FindCameraMetadataItem(cameraResult->get(), OHOS_MOVING_PHOTO_END, &item);
-    bool canMovingPhoto = ret == CAM_META_SUCCESS && item.count != 0;
-    if (canMovingPhoto) {
-        int64_t captureId = item.data.i64[0];
-        int64_t endTime = item.data.i64[1];
-        movingPhotoEndTimeCallback_(static_cast<int32_t>(captureId), endTime);
-    }
-}
-
-void HCameraDevice::SetMovingPhotoStartTimeCallback(std::function<void(int64_t, int64_t)> callback)
-{
-    std::lock_guard<std::mutex> lock(movingPhotoStartTimeCallbackLock_);
-    movingPhotoStartTimeCallback_ = callback;
-}
-
-void HCameraDevice::SetMovingPhotoEndTimeCallback(std::function<void(int64_t, int64_t)> callback)
-{
-    std::lock_guard<std::mutex> lock(movingPhotoEndTimeCallbackLock_);
-    movingPhotoEndTimeCallback_ = callback;
-}
-#endif
 
 void HCameraDevice::ReportZoomInfos(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult)
 {

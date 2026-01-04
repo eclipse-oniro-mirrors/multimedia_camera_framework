@@ -15,14 +15,17 @@
 #include "photo_asset_proxy.h"
 #include "camera_log.h"
 #include "photo_proxy.h"
+#ifdef CAMERA_CAPTURE_YUV
 #include "iservice_registry.h"
 #include "bundle_mgr_interface.h"
 #include "system_ability_definition.h"
+#endif
 
 namespace OHOS {
 namespace CameraStandard {
 typedef PhotoAssetIntf* (*CreatePhotoAssetIntf)(int32_t, int32_t, uint32_t, int32_t, std::string);
 
+#ifdef CAMERA_CAPTURE_YUV
 std::string PhotoAssetProxy::GetBundleName(int32_t callingUid)
 {
     std::string bundleName = "";
@@ -39,6 +42,7 @@ std::string PhotoAssetProxy::GetBundleName(int32_t callingUid)
     MEDIA_INFO_LOG("bundleName: [%{public}s]", bundleName.c_str());
     return bundleName;
 }
+#endif
 
 std::shared_ptr<PhotoAssetProxy> PhotoAssetProxy::GetPhotoAssetProxy(
     int32_t shootType, int32_t callingUid, uint32_t callingTokenID, int32_t photoCount)
@@ -54,7 +58,11 @@ std::shared_ptr<PhotoAssetProxy> PhotoAssetProxy::GetPhotoAssetProxy(
         HILOG_COMM_ERROR("PhotoAssetProxy::GetPhotoAssetProxy get createPhotoAssetIntf fail");
         return nullptr;
     }
+#ifdef CAMERA_CAPTURE_YUV
     std::string bundleName = GetBundleName(callingUid);
+#else
+    std::string bundleName = "";
+#endif
     MEDIA_DEBUG_LOG("GetPhotoAssetProxy bundleName:%{public}s", bundleName.c_str());
     PhotoAssetIntf* photoAssetIntf = createPhotoAssetIntf(
         shootType, callingUid, callingTokenID, photoCount, bundleName);
@@ -127,6 +135,7 @@ void PhotoAssetProxy::UpdatePhotoProxy(const sptr<Media::PhotoProxy> &photoProxy
     photoAssetIntf_->UpdatePhotoProxy(photoProxy);
 }
 
+#ifdef CAMERA_CAPTURE_YUV
 void PhotoAssetProxy::RegisterPhotoStateCallback(const std::function<void(int32_t)> &callback)
 {
     MEDIA_DEBUG_LOG("PhotoAssetProxy::RegisterPhotoStateCallback is called");
@@ -142,6 +151,7 @@ void PhotoAssetProxy::UnregisterPhotoStateCallback()
         photoAssetIntf_ == nullptr, "PhotoAssetProxy::UnregisterPhotoStateCallback photoAssetIntf_ is null");
     photoAssetIntf_->UnregisterPhotoStateCallback();
 }
+#endif
 // LCOV_EXCL_STOP
 } // namespace CameraStandard
 } // namespace OHOS

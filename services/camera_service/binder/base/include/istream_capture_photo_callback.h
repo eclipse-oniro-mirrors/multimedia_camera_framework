@@ -18,21 +18,25 @@
 
 #include "iremote_broker.h"
 #include "surface_buffer.h"
+#ifdef CAMERA_CAPTURE_YUV
 #include "picture_interface.h"
+#endif
 
 namespace OHOS {
 namespace CameraStandard {
 enum StreamCapturePhotoCallbackInterfaceCode {
     CAMERA_STREAM_CAPTURE_ON_PHOTO_AVAILABLE,
+#ifdef CAMERA_CAPTURE_YUV
     CAMERA_STREAM_CAPTURE_ON_PICTURE_AVAILABLE,
+#endif
 };
 
 class IStreamCapturePhotoCallback : public IRemoteBroker {
 public:
     virtual int32_t OnPhotoAvailable(sptr<SurfaceBuffer> surfaceBuffer, int64_t timestamp, bool isRaw) = 0;
-
+#ifdef CAMERA_CAPTURE_YUV
     virtual int32_t OnPhotoAvailable(std::shared_ptr<PictureIntf> picture) = 0;
-
+#endif
     DECLARE_INTERFACE_DESCRIPTOR(u"IStreamCapturePhotoCallback");
 };
 } // namespace CameraStandard

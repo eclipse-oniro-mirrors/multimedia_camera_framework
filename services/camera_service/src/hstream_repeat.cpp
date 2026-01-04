@@ -168,9 +168,7 @@ bool HStreamRepeat::CheckVideoModeForSystemApp(int32_t sceneMode)
         HIGH_FRAME_RATE,
         TIMELAPSE_PHOTO,
         APERTURE_VIDEO,
-#ifdef CAMERA_FRAMEWORK_FEATURE_MEDIA_STREAM
         CINEMATIC_VIDEO
-#endif
     };
     auto iterator = std::find(videoModeVec.begin(), videoModeVec.end(), static_cast<SceneMode>(sceneMode));
     CHECK_RETURN_RET_ILOG(iterator != videoModeVec.end(), true,
@@ -785,7 +783,7 @@ int32_t HStreamRepeat::OnDeferredVideoEnhancementInfo(CaptureEndedInfoExt captur
             streamRepeatCallback_->OnDeferredVideoEnhancementInfo(captureEndedInfo);
         }
     }
-#ifdef CAMERA_FRAMEWORK_FEATURE_MEDIA_STREAM     
+#ifdef CAMERA_FRAMEWORK_FEATURE_MEDIA_STREAM
     else if (repeatStreamType_ == RepeatStreamType::MOVIE_FILE_RAW_VIDEO) {
         auto recorder = recorder_.Get();
         CHECK_RETURN_RET_ELOG(
@@ -793,7 +791,7 @@ int32_t HStreamRepeat::OnDeferredVideoEnhancementInfo(CaptureEndedInfoExt captur
         MEDIA_DEBUG_LOG("update the videoId and enhancementType of photo proxy");
         recorder->UpdatePhotoProxy(captureEndedInfo.videoId, captureEndedInfo.isDeferredVideoEnhancementAvailable);
     }
-#endif    
+#endif
     return CAMERA_OK;
 }
 

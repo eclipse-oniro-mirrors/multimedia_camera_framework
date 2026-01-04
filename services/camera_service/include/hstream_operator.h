@@ -65,7 +65,9 @@ namespace CameraStandard {
 using OHOS::HDI::Camera::V1_0::CaptureEndedInfo;
 using OHOS::HDI::Camera::V1_0::CaptureErrorInfo;
 using namespace std::chrono;
+#ifdef CAMERA_DEFERRED
 using namespace DeferredProcessing;
+#endif
 using namespace Media;
 constexpr uint32_t OPERATOR_DEFAULT_ENCODER_THREAD_NUMBER = 1;
 class PermissionStatusChangeCb;
@@ -121,6 +123,13 @@ public:
     void ExpandXtStyleMovingPhotoRepeatStream();
     void ExpandMovingPhotoRepeatStream(VideoType type);
     void ClearMovingPhotoRepeatStream(VideoType type = VideoType::ORIGIN_VIDEO);
+    inline bool IsLivephotoStreamExist()
+    {
+        return movingPhotoStreamStruct_.streamRepeat != nullptr;
+    }
+    
+    void StartMovingPhotoStream(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
+    void SetDeferredVideoEnhanceFlag(int32_t captureId, uint32_t deferredVideoEnhanceFlag, std::string videoId);
 #endif
     int32_t GetCurrentStreamInfos(std::vector<StreamInfo_V1_5>& streamInfos);
     std::list<sptr<HStreamCommon>> GetAllStreams();
@@ -143,7 +152,9 @@ public:
     int32_t StartPreviewStream(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings,
         camera_position_enum_t cameraPosition);
     int32_t UpdateSettingForFocusTrackingMech(bool isEnableMech);
+#ifdef CAMERA_CAPTURE_YUV
     static void OnPhotoStateCallback(int32_t photoNum);
+#endif
 
     int32_t CreateStreams(std::vector<HDI::Camera::V1_5::StreamInfo_V1_5>& streamInfos);
     int32_t CommitStreams(const std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceSettings, int32_t operationMode);
@@ -164,14 +175,13 @@ public:
         int32_t captureId, const std::vector<OHOS::HDI::Camera::V1_3::CaptureEndedInfoExt>& infos) override;
     int32_t OnCaptureEndedExt_V1_4(
         int32_t captureId, const std::vector<OHOS::HDI::Camera::V1_5::CaptureEndedInfoExt_v1_4>& infos) override;
-#ifdef CAMERA_MOVING_PHOTO
-    void SetDeferredVideoEnhanceFlag(int32_t captureId, uint32_t deferredVideoEnhanceFlag, std::string videoId);
-#endif
     int32_t OnCaptureError(int32_t captureId, const std::vector<CaptureErrorInfo>& infos) override;
     int32_t OnFrameShutter(int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp) override;
     int32_t OnFrameShutterEnd(int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp) override;
     int32_t OnCaptureReady(int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp) override;
+#ifdef CAMERA_CAPTURE_YUV
     void NotifyCaptureReady(int32_t captureId, sptr<HStreamCommon> curStream, uint64_t timestamp);
+#endif
     int32_t OnResult(int32_t streamId, const std::vector<uint8_t>& result) override;
     int32_t OnCapturePaused(int32_t captureId, const std::vector<int32_t>& streamIds) override;
     int32_t OnCaptureResumed(int32_t captureId, const std::vector<int32_t>& streamIds) override;
@@ -233,14 +243,6 @@ public:
         MEDIA_INFO_LOG("xtStyleStatus: %{public}d", isXtStyleEnabled_);
         return isXtStyleEnabled_;
     }
-#ifdef CAMERA_MOVING_PHOTO
-    inline bool IsLivephotoStreamExist()
-    {
-        return movingPhotoStreamStruct_.streamRepeat != nullptr;
-    }
-
-    void StartMovingPhotoStream(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
-#endif
     int32_t GetOfflineOutptSize();
 
     std::vector<int32_t> GetFrameRateRange();
@@ -300,6 +302,28 @@ private:
     int32_t streamOperatorId_ = -1;
 #ifdef CAMERA_MOVING_PHOTO
     volatile bool isMovingPhotoMirror_ = false;
+    int32_t CreateMovingPhotoStreamRepeat(int32_t format, int32_t width, int32_t height, VideoType videoType);
+    void StartMovingPhoto(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings,
+        sptr<HStreamRepeat>& curStreamRepeat);
+    int32_t GetMovingPhotoBufferDuration();
+    void GetMovingPhotoStartAndEndTime();
+    SpHolder<sptr<MovingPhotoManagerProxy>> movingPhotoManagerProxy_;
+    struct MovingPhotoStreamStruct {
+        sptr<HStreamRepeat> streamRepeat = nullptr;
+        sptr<Surface> videoSurface = nullptr;
+        sptr<Surface> metaSurface = nullptr;
+    };
+    inline MovingPhotoStreamStruct &GetMovingPhotoStreamStruct(VideoType videoType)
+    {
+        return videoType == XT_ORIGIN_VIDEO ? xtStyleMovingPhotoStreamStruct_ : movingPhotoStreamStruct_;
+    }
+    inline RepeatStreamType GetRepeatStreamType(VideoType videoType)
+    {
+        return videoType == XT_ORIGIN_VIDEO ? RepeatStreamType::LIVEPHOTO_XTSTYLE_RAW : RepeatStreamType::LIVEPHOTO;
+    }
+    MovingPhotoStreamStruct movingPhotoStreamStruct_;
+    MovingPhotoStreamStruct xtStyleMovingPhotoStreamStruct_;
+    void UnloadMovingPhoto();
 #endif
     volatile bool isSetMotionPhoto_ = false;
     std::mutex livePhotoStreamLock_; // Guard livePhotoStreamRepeat_
@@ -322,13 +346,6 @@ private:
     string CreateDisplayName(const std::string& suffix);
     string CreateBurstDisplayName(int32_t imageSeqId, int32_t seqId);
     int32_t AddOutputStream(sptr<HStreamCommon> stream);
-#ifdef CAMERA_MOVING_PHOTO
-    int32_t CreateMovingPhotoStreamRepeat(int32_t format, int32_t width, int32_t height, VideoType videoType);
-    void StartMovingPhoto(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings,
-        sptr<HStreamRepeat>& curStreamRepeat);
-    int32_t GetMovingPhotoBufferDuration();
-    void GetMovingPhotoStartAndEndTime();
-#endif
     void CancelStreamsAndGetStreamInfos(std::vector<StreamInfo_V1_5>& streamInfos);
     void RestartStreams(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
     void UpdateMuteSetting(bool muteMode, std::shared_ptr<OHOS::Camera::CameraMetadata> &settings);
@@ -378,28 +395,11 @@ private:
     std::map<int32_t, bool> curMotionPhotoStatus_;
     std::mutex motionPhotoStatusLock_;
     std::map<int32_t, std::pair<int32_t, int32_t>> lifecycleMap_;
-#ifdef CAMERA_MOVING_PHOTO
-    SpHolder<sptr<MovingPhotoManagerProxy>> movingPhotoManagerProxy_;
-    struct MovingPhotoStreamStruct {
-        sptr<HStreamRepeat> streamRepeat = nullptr;
-        sptr<Surface> videoSurface = nullptr;
-        sptr<Surface> metaSurface = nullptr;
-    };
-    inline MovingPhotoStreamStruct &GetMovingPhotoStreamStruct(VideoType videoType)
-    {
-        return videoType == XT_ORIGIN_VIDEO ? xtStyleMovingPhotoStreamStruct_ : movingPhotoStreamStruct_;
-    }
-    inline RepeatStreamType GetRepeatStreamType(VideoType videoType)
-    {
-        return videoType == XT_ORIGIN_VIDEO ? RepeatStreamType::LIVEPHOTO_XTSTYLE_RAW : RepeatStreamType::LIVEPHOTO;
-    }
-    MovingPhotoStreamStruct movingPhotoStreamStruct_;
-    MovingPhotoStreamStruct xtStyleMovingPhotoStreamStruct_;
-    void UnloadMovingPhoto();
-#endif
+#ifdef CAMERA_CAPTURE_YUV
     std::shared_ptr<PhotoAssetIntf> photoAssetProxy_;
     std::once_flag photoStateFlag_;
     std::function<void(int32_t)> photoStateCallback_ = nullptr;
+#endif
 };
 } // namespace CameraStandard
 } // namespace OHOS

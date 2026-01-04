@@ -29,9 +29,7 @@ SchedulerManager::~SchedulerManager()
 {
     DP_INFO_LOG("entered.");
     photoController_.clear();
-#ifdef CAMERA_DEFERRED
     videoController_.clear();
-#endif
 }
 
 int32_t SchedulerManager::Initialize()
@@ -78,7 +76,6 @@ void SchedulerManager::CreatePhotoProcessor(const int32_t userId)
     photoController_[userId] = photoController;
 }
 
-#ifdef CAMERA_DEFERRED
 std::shared_ptr<VideoPostProcessor> SchedulerManager::GetVideoPostProcessor(const int32_t userId)
 {
     auto process = GetVideoProcessor(userId);
@@ -115,7 +112,6 @@ void SchedulerManager::CreateVideoProcessor(const int32_t userId)
     auto videoController = DeferredVideoController::Create(userId, videoProcessor);
     videoController_[userId] = videoController;
 }
-#endif
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS

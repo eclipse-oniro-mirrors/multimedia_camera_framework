@@ -133,10 +133,12 @@ std::vector<std::shared_ptr<PictureIntf>> PhotoProcessResult::AssemblePictureLis
     return pictures;
 }
 
+#ifdef CAMERA_CAPTURE_YUV
 void PhotoProcessResult::SetBundleName(const std::string& bundleName)
 {
     bundleName_ = bundleName;
 }
+#endif
 
 std::unique_ptr<ImageInfo> PhotoProcessResult::CreateFromMeta(int32_t defaultSize,
     const sptr<HDI::Camera::V1_0::MapDataSequenceable>& metadata)
@@ -190,11 +192,15 @@ std::shared_ptr<PictureIntf> PhotoProcessResult::AssemblePicture(const HDI::Came
 
     AssemleAuxilaryPicture(buffer, picture);
     DP_CHECK_ERROR_RETURN_RET_LOG(rotationInIps, picture, "HAL rotationInIps");
+#ifdef CAMERA_CAPTURE_YUV
     DP_INFO_LOG("DPS_PHOTO rotate picture user id: %{public}d, bundle name: %{public}s",
         userId_, bundleName_.c_str());
     if (bundleName_ == SYSTEM_CAMERA) {
         picture->RotatePicture();
     }
+#else
+    picture->RotatePicture();
+#endif
     return picture;
 }
 
@@ -237,11 +243,15 @@ std::shared_ptr<PictureIntf> PhotoProcessResult::AssemblePictureV4(
     }
     AssemleAuxilaryPictureV4(buffer, picture);
     DP_CHECK_ERROR_RETURN_RET_LOG(rotationInIps, picture, "HAL rotationInIps");
+#ifdef CAMERA_CAPTURE_YUV
     DP_INFO_LOG("DPS_PHOTO rotate picture user id: %{public}d, bundle name: %{public}s",
         userId_, bundleName_.c_str());
     if (bundleName_ == SYSTEM_CAMERA) {
         picture->RotatePicture();
     }
+#else
+    picture->RotatePicture();
+#endif
     return picture;
 }
 

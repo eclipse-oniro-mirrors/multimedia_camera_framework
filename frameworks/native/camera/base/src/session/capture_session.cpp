@@ -2577,7 +2577,7 @@ int32_t CaptureSession::SetFocusPoint(Point focusPoint)
         "CaptureSession::SetFocusPoint Need to call LockForControl() before setting camera properties");
     FocusMode focusMode;
     GetFocusMode(focusMode);
-#ifdef CAMERA_FRAMEWORK_FEATURE_MEDIA_STREAM    
+#ifdef CAMERA_FRAMEWORK_FEATURE_MEDIA_STREAM
     CHECK_RETURN_RET_ELOG(focusMode == FOCUS_MODE_CONTINUOUS_AUTO && GetMode() != SceneMode::CINEMATIC_VIDEO,
         CameraErrorCode::SUCCESS, "The current mode does not support setting the focus point.");
 #else

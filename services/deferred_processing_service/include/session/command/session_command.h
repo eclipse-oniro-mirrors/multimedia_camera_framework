@@ -60,7 +60,6 @@ protected:
     sptr<PhotoSessionInfo> photoInfo_;
 };
 
-#ifdef CAMERA_DEFERRED
 class AddVideoSessionCommand : public SessionCommand {
     DECLARE_CMD_CLASS(AddVideoSessionCommand)
 public:
@@ -82,7 +81,6 @@ protected:
 
     sptr<VideoSessionInfo> videoInfo_;
 };
-#endif
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS

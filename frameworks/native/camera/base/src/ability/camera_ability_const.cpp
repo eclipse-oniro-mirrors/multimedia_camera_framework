@@ -270,9 +270,9 @@ const std::unordered_map<SceneMode, OperationMode> g_fwToMetaSupportedMode_ = {
     {TIMELAPSE_PHOTO, OperationMode::TIMELAPSE_PHOTO},
     {FLUORESCENCE_PHOTO, OperationMode::FLUORESCENCE_PHOTO},
     {STITCHING_PHOTO, OperationMode::STITCHING_PHOTO},
-#ifdef CAMERA_FRAMEWORK_FEATURE_MEDIA_STREAM    
+#ifdef CAMERA_FRAMEWORK_FEATURE_MEDIA_STREAM
     {CINEMATIC_VIDEO, OperationMode::CINEMATIC_VIDEO},
-#endif    
+#endif
 };
 
 const std::unordered_map<StatisticsDetectType, MetadataObjectType> g_metaToFwCameraMetaDetect_ = {

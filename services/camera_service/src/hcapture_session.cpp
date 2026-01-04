@@ -50,7 +50,9 @@
 #include "camera_timer.h"
 #include "camera_util.h"
 #include "datetime_ex.h"
+#ifdef CAMERA_DEFERRED
 #include "deferred_processing_service.h"
+#endif
 #include "display/composer/v1_1/display_composer_type.h"
 #include "display_lite.h"
 #include "display_manager_lite.h"
@@ -1145,6 +1147,18 @@ int32_t HCaptureSession::GetCompositionStream(sptr<IRemoteObject>& compositionSt
 }
 
 #ifdef CAMERA_MOVING_PHOTO
+void HCaptureSession::SetMovingPhotoStatus(bool status)
+{
+    std::lock_guard<mutex> lock(movingPhotoStatusMutex_);
+    isMovingPhotoEnabled_ = status;
+}
+
+bool HCaptureSession::GetMovingPhotoStatus()
+{
+    std::lock_guard<mutex> lock(movingPhotoStatusMutex_);
+    return isMovingPhotoEnabled_;
+}
+
 void HCaptureSession::ExpandMovingPhotoRepeatStream()
 {
     CAMERA_SYNC_TRACE;
@@ -1178,6 +1192,15 @@ void HCaptureSession::ExpandXtStyleMovingPhotoRepeatStream()
     hStreamOperatorSptr->ExpandXtStyleMovingPhotoRepeatStream();
     MEDIA_INFO_LOG("ExpandXtStyleMovingPhotoRepeatStream Exit");
 }
+
+void HCaptureSession::ClearMovingPhotoRepeatStream()
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_INFO_LOG("Enter HCaptureSession::ClearMovingPhotoRepeatStream()");
+    auto hStreamOperatorSptr = GetStreamOperator();
+    CHECK_RETURN_ELOG(hStreamOperatorSptr == nullptr, "hStreamOperator is nullptr");
+    return hStreamOperatorSptr->ClearMovingPhotoRepeatStream();
+}
 #endif
 
 void HCaptureSession::ClearSketchRepeatStream()
@@ -1197,17 +1220,6 @@ void HCaptureSession::ClearCompositionRepeatStream()
     CHECK_RETURN_ELOG(hStreamOperatorSptr == nullptr, "hStreamOperator is nullptr");
     return hStreamOperatorSptr->ClearCompositionRepeatStream();
 }
-
-#ifdef CAMERA_MOVING_PHOTO
-void HCaptureSession::ClearMovingPhotoRepeatStream()
-{
-    CAMERA_SYNC_TRACE;
-    MEDIA_INFO_LOG("Enter HCaptureSession::ClearMovingPhotoRepeatStream()");
-    auto hStreamOperatorSptr = GetStreamOperator();
-    CHECK_RETURN_ELOG(hStreamOperatorSptr == nullptr, "hStreamOperator is nullptr");
-    return hStreamOperatorSptr->ClearMovingPhotoRepeatStream();
-}
-#endif
 
 int32_t HCaptureSession::ValidateSession()
 {
@@ -1305,7 +1317,7 @@ void HCaptureSession::ConfigRawVideoStream(sptr<HStreamRepeat>& rawVideoStreamRe
 
 int32_t HCaptureSession::CreateRecorder(const sptr<IRemoteObject>& remoteObj, sptr<ICameraRecorder>& recorder)
 {
-#ifdef CAMERA_FRAMEWORK_FEATURE_MEDIA_STREAM    
+#ifdef CAMERA_FRAMEWORK_FEATURE_MEDIA_STREAM
     MEDIA_INFO_LOG("HCameraService::CreateRecorder start");
     sptr<IStreamCommon> stream = iface_cast<IStreamRepeat>(remoteObj);
     CHECK_RETURN_RET_ELOG(stream == nullptr, CAMERA_INVALID_ARG, "stream is null");
@@ -1314,7 +1326,7 @@ int32_t HCaptureSession::CreateRecorder(const sptr<IRemoteObject>& remoteObj, sp
     return CreateRecorder4CinematicVideo(stream, recorder);
 #else
     return CAMERA_UNSUPPORTED;
-#endif    
+#endif
 }
 
 int32_t HCaptureSession::CommitConfig()
@@ -1869,20 +1881,6 @@ int32_t HCaptureSession::EnableMovingPhoto(bool isEnable)
 #endif
     return CAMERA_OK;
 }
-
-#ifdef CAMERA_MOVING_PHOTO
-void HCaptureSession::SetMovingPhotoStatus(bool status)
-{
-    std::lock_guard<mutex> lock(movingPhotoStatusMutex_);
-    isMovingPhotoEnabled_ = status;
-}
-
-bool HCaptureSession::GetMovingPhotoStatus()
-{
-    std::lock_guard<mutex> lock(movingPhotoStatusMutex_);
-    return isMovingPhotoEnabled_;
-}
-#endif
 
 int32_t HCaptureSession::SetXtStyleStatus(bool status)
 {

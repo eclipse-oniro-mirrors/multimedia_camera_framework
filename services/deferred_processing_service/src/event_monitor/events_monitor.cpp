@@ -74,13 +74,11 @@ void EventsMonitor::NotifyImageEnhanceStatus(int32_t status)
     NotifyObserversUnlocked(EventType::PHOTO_HDI_STATUS_EVENT, status);
 }
 
-#ifdef CAMERA_DEFERRED
 void EventsMonitor::NotifyVideoEnhanceStatus(int32_t status)
 {
     DP_INFO_LOG("DPS_EVENT: VideoEnhanceStatus: %{public}d", status);
     NotifyObserversUnlocked(EventType::VIDEO_HDI_STATUS_EVENT, status);
 }
-#endif
 
 void EventsMonitor::NotifyScreenStatus(int32_t status)
 {

@@ -245,6 +245,10 @@ ohos_shared_library("camera_service") {
     ]
   }
 
+  if (camera_framework_feature_deferred) {
+    defines += [ "CAMERA_DEFERRED" ]
+  }
+
   if (camera_framework_feature_moving_photo) {
     defines += [ "CAMERA_MOVING_PHOTO" ]
   }
@@ -272,6 +276,10 @@ ohos_shared_library("camera_service") {
     defines += [ "HOOK_CAMERA_OPERATOR" ]
     sources += [ "src/rotate_plugin/camera_rotate_plugin.cpp" ]
     include_dirs += [ "${multimedia_camera_framework_path}/services/camera_service/include/rotate_plugin" ]
+  }
+
+  if (camera_framework_feature_camera_capture_yuv) {
+    defines += [ "CAMERA_CAPTURE_YUV" ]
   }
 
   cflags_cc = cflags

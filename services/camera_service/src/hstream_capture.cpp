@@ -589,6 +589,32 @@ int32_t HStreamCapture::CheckBurstCapture(const std::shared_ptr<OHOS::Camera::Ca
     return CAM_META_SUCCESS;
 }
 
+#ifdef CAMERA_CAPTURE_YUV
+int32_t HStreamCapture::OnPhotoAvailable(std::shared_ptr<PictureIntf> picture)
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_INFO_LOG("HStreamCapture::OnPhotoAvailable picture is called!");
+    std::lock_guard<std::mutex> lock(photoCallbackLock_);
+    auto photoAvaiableCallback = photoAvaiableCallback_.Get();
+    if (photoAvaiableCallback != nullptr) {
+        photoAvaiableCallback->OnPhotoAvailable(picture);
+    }
+    return CAMERA_OK;
+}
+
+std::shared_ptr<PhotoAssetIntf> HStreamCapture::GetPhotoAssetInstanceForPub(int32_t captureId)
+{
+    CAMERA_SYNC_TRACE;
+    const int32_t getPhotoAssetStep = 1;
+    if (!photoAssetProxy_.WaitForUnlock(captureId, getPhotoAssetStep, GetMode(), std::chrono::seconds(1))) {
+        MEDIA_ERR_LOG("GetPhotoAsset faild wait timeout, captureId:%{public}d", captureId);
+        return nullptr;
+    }
+    std::shared_ptr<PhotoAssetIntf> proxy = photoAssetProxy_.Get(captureId);
+    photoAssetProxy_.Erase(captureId);
+    return proxy;
+}
+
 void PhotoLevelManager::SetPhotoLevelInfo(int32_t pictureId, bool level)
 {
     photoLevelMap_[pictureId] = level;
@@ -607,6 +633,7 @@ void PhotoLevelManager::ClearPhotoLevelInfo()
 {
     photoLevelMap_.clear();
 }
+#endif
 
 void ConcurrentMap::Insert(const int32_t& key, const std::shared_ptr<PhotoAssetIntf>& value)
 {
@@ -693,7 +720,9 @@ void ConcurrentMap::Release()
     mutexes_.clear();
     cv_.clear();
     step_.clear();
+#ifdef CAMERA_CAPTURE_YUV
     PhotoLevelManager::GetInstance().ClearPhotoLevelInfo();
+#endif
 }
 
 int32_t HStreamCapture::CreateMediaLibraryPhotoAssetProxy(int32_t captureId)
@@ -701,12 +730,10 @@ int32_t HStreamCapture::CreateMediaLibraryPhotoAssetProxy(int32_t captureId)
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("HStreamCapture CreateMediaLibraryPhotoAssetProxy E");
     constexpr int32_t imageShotType = 0;
-#ifdef CAMERA_MOVING_PHOTO
-    constexpr int32_t movingPhotoShotType = 2;
-#endif
     constexpr int32_t burstShotType = 3;
     int32_t cameraShotType = imageShotType;
 #ifdef CAMERA_MOVING_PHOTO
+    constexpr int32_t movingPhotoShotType = 2;
     if (movingPhotoSwitch_) {
         cameraShotType = movingPhotoShotType;
     } else if (isBursting_) {
@@ -736,19 +763,6 @@ std::shared_ptr<PhotoAssetIntf> HStreamCapture::GetPhotoAssetInstance(int32_t ca
     CHECK_RETURN_RET_ELOG(!photoAssetProxy_.WaitForUnlock(
                               captureId, getPhotoAssetStep, GetMode(), std::chrono::seconds(PHOTO_ASSET_TIMEOUT)),
         nullptr, "GetPhotoAsset faild wait timeout, captureId:%{public}d", captureId);
-    std::shared_ptr<PhotoAssetIntf> proxy = photoAssetProxy_.Get(captureId);
-    photoAssetProxy_.Erase(captureId);
-    return proxy;
-}
-
-std::shared_ptr<PhotoAssetIntf> HStreamCapture::GetPhotoAssetInstanceForPub(int32_t captureId)
-{
-    CAMERA_SYNC_TRACE;
-    const int32_t getPhotoAssetStep = 1;
-    if (!photoAssetProxy_.WaitForUnlock(captureId, getPhotoAssetStep, GetMode(), std::chrono::seconds(1))) {
-        MEDIA_ERR_LOG("GetPhotoAsset faild wait timeout, captureId:%{public}d", captureId);
-        return nullptr;
-    }
     std::shared_ptr<PhotoAssetIntf> proxy = photoAssetProxy_.Get(captureId);
     photoAssetProxy_.Erase(captureId);
     return proxy;
@@ -819,10 +833,12 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
     MEDIA_DEBUG_LOG("HStreamCapture::Capture is Bursting_ %{public}d", isBursting_);
     HILOG_COMM_INFO("HStreamCapture::Capture Starting photo capture with capture ID: %{public}d", preparedCaptureId);
     HStreamCommon::PrintCaptureDebugLog(captureMetadataSetting_);
+#ifdef CAMERA_CAPTURE_YUV
     bool isSystemApp = CheckSystemApp();
     PhotoLevelManager::GetInstance().SetPhotoLevelInfo(preparedCaptureId, isSystemApp);
     MEDIA_DEBUG_LOG("HStreamCapture::Capture SetPhotoLevelInfo captureId:%{public}d isSystemApp:%{public}d",
         preparedCaptureId, isSystemApp);
+#endif
     CamRetCode rc = (CamRetCode)(streamOperator->Capture(preparedCaptureId, captureInfoPhoto, isBursting_));
     if (rc != HDI::Camera::V1_0::NO_ERROR) {
         ResetCaptureId();
@@ -1140,7 +1156,9 @@ int32_t HStreamCapture::SetPhotoAvailableCallback(const sptr<IStreamCapturePhoto
     CHECK_EXECUTE(photoTask == nullptr, InitCaptureThread());
     CHECK_PRINT_ELOG(ret != SURFACE_ERROR_OK, "register photoConsume failed:%{public}d", ret);
     // register auxiliary buffer consumer
+#ifdef CAMERA_CAPTURE_YUV
     CHECK_EXECUTE(!CheckSystemApp() && isYuvCapture_, RegisterAuxiliaryConsumers());
+#endif
     return CAMERA_OK;
     // LCOV_EXCL_STOP
 }
@@ -1417,18 +1435,6 @@ int32_t HStreamCapture::OnCaptureReady(int32_t captureId, uint64_t timestamp)
     if (IsBurstCapture(captureId)) {
         burstNumMap_[captureId] = burstNum_;
         ResetBurst();
-    }
-    return CAMERA_OK;
-}
-
-int32_t HStreamCapture::OnPhotoAvailable(std::shared_ptr<PictureIntf> picture)
-{
-    CAMERA_SYNC_TRACE;
-    MEDIA_INFO_LOG("HStreamCapture::OnPhotoAvailable picture is called!");
-    std::lock_guard<std::mutex> lock(photoCallbackLock_);
-    auto photoAvaiableCallback = photoAvaiableCallback_.Get();
-    if (photoAvaiableCallback != nullptr) {
-        photoAvaiableCallback->OnPhotoAvailable(picture);
     }
     return CAMERA_OK;
 }

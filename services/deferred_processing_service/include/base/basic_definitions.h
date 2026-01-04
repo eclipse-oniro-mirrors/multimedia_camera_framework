@@ -284,13 +284,11 @@ enum class PhotoJobType {
     OFFLINE
 };
 
-#ifdef CAMERA_DEFERRED
 enum class VideoJobType {
     NORMAL = 0,
     MOVIE,
     LIVE_PHOTO
 };
-#endif
 
 enum class JobErrorType {
     RETRY = 0,
@@ -305,15 +303,11 @@ enum class JobErrorType {
 ErrorCode MapDpsErrorCode(DpsError errorCode);
 StatusCode MapDpsStatus(DpsStatus statusCode);
 DpsError MapHdiError(HDI::Camera::V1_2::ErrorCode errorCode);
-#ifdef CAMERA_DEFERRED
 DpsError MapHdiVideoError(HDI::Camera::V1_2::ErrorCode errorCode);
-#endif
 HdiStatus MapHdiStatus(HDI::Camera::V1_2::SessionStatus statusCode);
 HDI::Camera::V1_2::ExecutionMode MapToHdiExecutionMode(ExecutionMode executionMode);
 SystemPressureLevel ConvertPhotoThermalLevel(int32_t level);
-#ifdef CAMERA_DEFERRED
 VideoThermalLevel ConvertVideoThermalLevel(int32_t level);
-#endif
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS

@@ -32,6 +32,7 @@ declare_args() {
   camera_framework_feature_deferred = true
   camera_framework_feature_xcomponent_toast = false
   camera_framework_feature_rotate_param_update = false
+  camera_framework_feature_camera_capture_yuv = true
 }
 use_sensor = false
 if (defined(global_parts_info) && defined(global_parts_info.sensors_sensor)) {

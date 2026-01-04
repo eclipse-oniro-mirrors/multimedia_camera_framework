@@ -22,7 +22,8 @@
           "camera_framework_feature_rotate_param_update",
           "camera_framework_feature_media_stream",
           "camera_framework_feature_deferred",
-          "camera_framework_feature_xcomponent_toast"
+          "camera_framework_feature_xcomponent_toast",
+          "camera_framework_feature_camera_capture_yuv"
         ],
         "adapted_system_type": [ "standard" ],
         "rom": "",

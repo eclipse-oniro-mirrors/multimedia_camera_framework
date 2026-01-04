@@ -41,7 +41,9 @@ public:
 
     void OnPhotoAvailable(
         const std::shared_ptr<Media::NativeImage> nativeImage, const bool isRaw = false) const override;
+#ifdef CAMERA_CAPTURE_YUV
     void OnPhotoAvailable(const std::shared_ptr<Media::Picture> picture) const override;
+#endif
     void OnPhotoAssetAvailable(const int32_t captureId, const std::string &uri, const int32_t cameraShotType,
         const std::string &burstKey) const override;
     void OnThumbnailAvailable(

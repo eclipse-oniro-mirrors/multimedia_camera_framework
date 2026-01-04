@@ -95,7 +95,6 @@ int32_t PhotoSyncCommand::Executing()
     return DP_OK;
 }
 // LCOV_EXCL_STOP
-#ifdef CAMERA_DEFERRED
 VideoSyncCommand::VideoSyncCommand(const int32_t userId,
     const std::unordered_map<std::string, std::shared_ptr<VideoInfo>>& videoIds)
     : SyncCommand(userId), videoIds_(videoIds)
@@ -148,7 +147,6 @@ int32_t VideoSyncCommand::Executing()
     return DP_OK;
     // LCOV_EXCL_STOP
 }
-#endif
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS

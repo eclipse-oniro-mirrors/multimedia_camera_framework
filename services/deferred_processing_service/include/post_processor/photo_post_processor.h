@@ -43,7 +43,9 @@ public:
     void Interrupt();
     void Reset();
     void OnSessionDied();
+#ifdef CAMERA_CAPTURE_YUV
     void SetProcessBundleNameResult(const std::string& bundleName);
+#endif
 
 protected:
     PhotoPostProcessor(const int32_t userId);
