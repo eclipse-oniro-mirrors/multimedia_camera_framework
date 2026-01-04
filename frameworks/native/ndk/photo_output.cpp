@@ -366,6 +366,24 @@ Camera_ErrorCode OH_PhotoOutput_GetPhotoRotation(Camera_PhotoOutput* photoOutput
         imageRotation == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, cameraImageRotation is null!");
     return photoOutput->GetPhotoRotation(deviceDegree, imageRotation);
 }
+
+Camera_ErrorCode OH_PhotoOutput_IsPhotoQualityPrioritizationSupported(
+    Camera_PhotoOutput* photoOutput, Camera_PhotoQualityPrioritization qualityPrioritization, bool* isSupported)
+{
+    CHECK_RETURN_RET_ELOG(photoOutput == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, photoOutput is null!");
+    CHECK_RETURN_RET_ELOG(isSupported == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, isSupported is null!");
+    return photoOutput->IsPhotoQualityPrioritizationSupported(qualityPrioritization, isSupported);
+}
+
+Camera_ErrorCode OH_PhotoOutput_SetPhotoQualityPrioritization(
+    Camera_PhotoOutput* photoOutput, Camera_PhotoQualityPrioritization qualityPrioritization)
+{
+    CHECK_RETURN_RET_ELOG(photoOutput == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, photoOutput is null!");
+    return photoOutput->SetPhotoQualityPrioritization(qualityPrioritization);
+}
 #ifdef __cplusplus
 }
 #endif
