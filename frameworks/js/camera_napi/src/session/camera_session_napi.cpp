@@ -1413,6 +1413,9 @@ napi_value CameraSessionNapi::AddInput(napi_env env, napi_callback_info info)
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+    if (thisVar == nullptr) {
+        return result;
+    }
     if (!CameraNapiUtils::CheckInvalidArgument(env, argc, ARGS_ONE, argv, ADD_INPUT)) {
         return result;
     }
