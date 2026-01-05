@@ -782,16 +782,17 @@ int32_t HStreamRepeat::OnDeferredVideoEnhancementInfo(CaptureEndedInfoExt captur
         if (streamRepeatCallback_ != nullptr) {
             streamRepeatCallback_->OnDeferredVideoEnhancementInfo(captureEndedInfo);
         }
-    }
+    } else {
 #ifdef CAMERA_FRAMEWORK_FEATURE_MEDIA_STREAM
-    else if (repeatStreamType_ == RepeatStreamType::MOVIE_FILE_RAW_VIDEO) {
-        auto recorder = recorder_.Get();
-        CHECK_RETURN_RET_ELOG(
-            recorder == nullptr, CAMERA_UNKNOWN_ERROR, "recorder_ is null, failed to update photo proxy");
-        MEDIA_DEBUG_LOG("update the videoId and enhancementType of photo proxy");
-        recorder->UpdatePhotoProxy(captureEndedInfo.videoId, captureEndedInfo.isDeferredVideoEnhancementAvailable);
-    }
+        if (repeatStreamType_ == RepeatStreamType::MOVIE_FILE_RAW_VIDEO) {
+            auto recorder = recorder_.Get();
+            CHECK_RETURN_RET_ELOG(
+                recorder == nullptr, CAMERA_UNKNOWN_ERROR, "recorder_ is null, failed to update photo proxy");
+            MEDIA_DEBUG_LOG("update the videoId and enhancementType of photo proxy");
+            recorder->UpdatePhotoProxy(captureEndedInfo.videoId, captureEndedInfo.isDeferredVideoEnhancementAvailable);
+        }
 #endif
+    }
     return CAMERA_OK;
 }
 

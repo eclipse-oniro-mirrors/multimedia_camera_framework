@@ -2327,7 +2327,7 @@ int32_t HStreamOperator::OnCaptureReady(
         sptr<HStreamCommon> curStream = GetHdiStreamByStreamID(streamId);
         bool isCaptureStream = (curStream != nullptr) && (curStream->GetStreamType() == StreamType::CAPTURE);
         if (isCaptureStream) {
-#ifdef CAMERA_CAPTURE_YUV 
+#ifdef CAMERA_CAPTURE_YUV
             NotifyCaptureReady(captureId, curStream, timestamp);
 #else
             CastStream<HStreamCapture>(curStream)->OnCaptureReady(captureId, timestamp);
