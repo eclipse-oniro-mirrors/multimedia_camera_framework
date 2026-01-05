@@ -18,12 +18,12 @@
 
 #include "deferred_video_processing_session.h"
 #include "deferred_photo_processing_session.h"
+#include "deferred_video_processor.h"
 #include "deferred_photo_processor.h"
 #include "errors.h"
 #include "gtest/gtest.h"
 #include "video_session_info.h"
 #include "photo_session_info.h"
-#include "deferred_video_processor.h"
 #include "video_post_processor.h"
 
 namespace OHOS {
@@ -52,9 +52,8 @@ public:
 
     std::unordered_map<std::string, std::shared_ptr<VideoInfo>> videoInfoMap_;
     std::shared_ptr<DeferredVideoProcessor> processor_ {nullptr};
-    sptr<VideoSessionInfo> sessionInfo_ {nullptr};
-
     std::shared_ptr<DeferredPhotoProcessor> photoProcessor_ {nullptr};
+    sptr<VideoSessionInfo> sessionInfo_ {nullptr};
     sptr<PhotoSessionInfo> photoSessionInfo_ {nullptr};
     int32_t srcFd_ {-1};
     int32_t dtsFd_ {-1};
