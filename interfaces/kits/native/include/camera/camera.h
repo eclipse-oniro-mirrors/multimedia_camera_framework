@@ -1414,6 +1414,24 @@ typedef enum Camera_PhotoQualityPrioritization {
      */
     CAMERA_PHOTO_QUALITY_PRIORITIZATION_SPEED = 1,
 } Camera_PhotoQualityPrioritization;
+
+/**
+ * @brief Camera Occlusion Detection Result.
+ *
+ * @since 23
+ * @version 1.0
+ */
+typedef struct Camera_OcclusionDetectionResult {
+    /**
+     * Check whether camera is occluded.
+     */
+    bool isCameraOccluded;
+
+    /**
+     * Check whether camera lens is dirty.
+     */
+    bool isCameraLensDirty;
+} Camera_OcclusionDetectionResult;
 #ifdef __cplusplus
 }
 #endif

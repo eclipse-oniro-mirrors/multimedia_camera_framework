@@ -47,6 +47,12 @@ public:
 
     Camera_ErrorCode UsePhysicalCameraOrientation(bool isUsed);
 
+    Camera_ErrorCode RegisterOcclusionDetectionCallback(
+        OH_CameraInput_OnOcclusionDetectionCallback occlusionDetectionCallback);
+
+    Camera_ErrorCode UnregisterOcclusionDetectionCallback(
+        OH_CameraInput_OnOcclusionDetectionCallback occlusionDetectionCallback);
+
 private:
     OHOS::sptr<OHOS::CameraStandard::CameraInput> innerCameraInput_;
 };
