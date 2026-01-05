@@ -16,6 +16,7 @@ import("./../multimedia_camera_framework.gni")
 group("camera_fuzz_test") {
   testonly = true
   deps = [
+    "fuzztest/hcameramoviefileoutput_fuzzer:fuzztest",
     "fuzztest/hcameraservice_fuzzer:fuzztest",
     "fuzztest/hcameraswitchsession_fuzzer:fuzztest",
     "fuzztest/hmechsession_fuzzer:fuzztest",

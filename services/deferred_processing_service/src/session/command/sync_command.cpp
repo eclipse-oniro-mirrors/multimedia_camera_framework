@@ -95,6 +95,7 @@ int32_t PhotoSyncCommand::Executing()
     return DP_OK;
 }
 // LCOV_EXCL_STOP
+
 VideoSyncCommand::VideoSyncCommand(const int32_t userId,
     const std::unordered_map<std::string, std::shared_ptr<VideoInfo>>& videoIds)
     : SyncCommand(userId), videoIds_(videoIds)

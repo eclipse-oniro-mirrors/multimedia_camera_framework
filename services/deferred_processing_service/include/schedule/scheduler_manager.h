@@ -36,6 +36,7 @@ public:
     std::shared_ptr<VideoPostProcessor> GetVideoPostProcessor(const int32_t userId);
     std::shared_ptr<DeferredVideoProcessor> GetVideoProcessor(const int32_t userId);
     std::shared_ptr<DeferredVideoController> GetVideoController(const int32_t userId);
+
 protected:
     SchedulerManager();
 

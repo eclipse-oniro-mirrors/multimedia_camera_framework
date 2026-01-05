@@ -79,6 +79,7 @@ public:
 
 protected:
     int32_t Executing() override;
+
     const std::string appName_;
 };
 
