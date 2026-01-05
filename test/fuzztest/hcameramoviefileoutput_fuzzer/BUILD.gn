@@ -74,6 +74,8 @@ ohos_fuzztest("HCameraMovieFileOutputFuzzTest") {
     "-fno-access-control",
   ]
 
+  sources = [ "hcamera_movie_file_output_fuzzer.cpp" ]
+
   deps = [
     "${multimedia_camera_framework_path}/common:camera_utils",
     "${multimedia_camera_framework_path}/frameworks/native/camera/base:camera_framework",
