@@ -88,6 +88,7 @@ int32_t HStreamRepeat::LinkInput(wptr<OHOS::HDI::Camera::V1_0::IStreamOperator> 
         }
 #endif
     }
+#ifdef CAMERA_FRAMEWORK_FEATURE_MEDIA_STREAM
     if (repeatStreamType_ == RepeatStreamType::MOVIE_FILE_CINEMATIC_VIDEO) {
         streamRepeatDeathRecipient_.Set(new StreamRepeatDeathRecipient(this));
         const sptr<IRemoteObject> &remote =
@@ -96,6 +97,7 @@ int32_t HStreamRepeat::LinkInput(wptr<OHOS::HDI::Camera::V1_0::IStreamOperator> 
         CHECK_PRINT_ELOG(!remote->AddDeathRecipient(streamRepeatDeathRecipient),
                          "AddDeathRecipient for IStreamOperator failed.");
     }
+#endif
     return CAMERA_OK;
 }
 
@@ -462,11 +464,13 @@ void HStreamRepeat::SetMetaProducer(sptr<OHOS::IBufferProducer> metaProducer)
     metaProducer_ = metaProducer;
 }
 
+#ifdef CAMERA_MOVING_PHOTO
 void HStreamRepeat::SetMovingPhotoStartCallback(std::function<void()> callback)
 {
     std::lock_guard<std::mutex> lock(movingPhotoCallbackLock_);
     startMovingPhotoCallback_ = callback;
 }
+#endif
 
 void HStreamRepeat::UpdateSketchStatus(SketchStatus status)
 {
@@ -551,10 +555,14 @@ int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> setti
         OpenVideoDfxSwitch(dynamicSetting);
     }
     bool isNeedUpdateVideoSetting = repeatStreamType_ == RepeatStreamType::VIDEO
+#ifdef CAMERA_FRAMEWORK_FEATURE_MEDIA_STREAM
         || IsLivephotoStream()
         || repeatStreamType_ == RepeatStreamType::MOVIE_FILE
         || repeatStreamType_ == RepeatStreamType::MOVIE_FILE_CINEMATIC_VIDEO
         || repeatStreamType_ == RepeatStreamType::MOVIE_FILE_RAW_VIDEO;
+#else
+        || IsLivephotoStream();
+#endif
     if (isNeedUpdateVideoSetting) {
         UpdateVideoSettings(dynamicSetting, enableMirror_);
     }
@@ -774,12 +782,16 @@ int32_t HStreamRepeat::OnDeferredVideoEnhancementInfo(CaptureEndedInfoExt captur
         if (streamRepeatCallback_ != nullptr) {
             streamRepeatCallback_->OnDeferredVideoEnhancementInfo(captureEndedInfo);
         }
-    } else if (repeatStreamType_ == RepeatStreamType::MOVIE_FILE_RAW_VIDEO) {
-        auto recorder = recorder_.Get();
-        CHECK_RETURN_RET_ELOG(
-            recorder == nullptr, CAMERA_UNKNOWN_ERROR, "recorder_ is null, failed to update photo proxy");
-        MEDIA_DEBUG_LOG("update the videoId and enhancementType of photo proxy");
-        recorder->UpdatePhotoProxy(captureEndedInfo.videoId, captureEndedInfo.isDeferredVideoEnhancementAvailable);
+    } else {
+#ifdef CAMERA_FRAMEWORK_FEATURE_MEDIA_STREAM
+        if (repeatStreamType_ == RepeatStreamType::MOVIE_FILE_RAW_VIDEO) {
+            auto recorder = recorder_.Get();
+            CHECK_RETURN_RET_ELOG(
+                recorder == nullptr, CAMERA_UNKNOWN_ERROR, "recorder_ is null, failed to update photo proxy");
+            MEDIA_DEBUG_LOG("update the videoId and enhancementType of photo proxy");
+            recorder->UpdatePhotoProxy(captureEndedInfo.videoId, captureEndedInfo.isDeferredVideoEnhancementAvailable);
+        }
+#endif
     }
     return CAMERA_OK;
 }
@@ -851,11 +863,13 @@ int32_t HStreamRepeat::AddDeferredSurface(const sptr<OHOS::IBufferProducer>& pro
     CHECK_PRINT_ELOG(rc != HDI::Camera::V1_0::NO_ERROR,
         "HStreamRepeat::AttachBufferQueue(), Failed to AttachBufferQueue %{public}d", rc);
     MEDIA_INFO_LOG("HStreamRepeat::AddDeferredSurface end %{public}d", rc);
+#ifdef CAMERA_MOVING_PHOTO
     std::lock_guard<std::mutex> lock(movingPhotoCallbackLock_);
     if (startMovingPhotoCallback_) {
         startMovingPhotoCallback_();
         startMovingPhotoCallback_ = nullptr;
     }
+#endif
     return CAMERA_OK;
 }
 
@@ -1624,9 +1638,11 @@ void HStreamRepeat::SetRecorderUserMeta(std::string key, std::string val)
     MEDIA_INFO_LOG("HStreamRepeat::SetRecorderUserMeta is called");
     auto recorder = recorder_.Get();
     CHECK_RETURN_ELOG(recorder == nullptr, "HStreamRepeat::SetRecorderUserMeta failed, recorder_ is null");
+#ifdef CAMERA_FRAMEWORK_FEATURE_MEDIA_STREAM
     if (repeatStreamType_ == RepeatStreamType::MOVIE_FILE_RAW_VIDEO) {
         recorder->SetUserMeta(key, val);
     }
+#endif
 }
 
 void HStreamRepeat::SetRecorderUserMeta(std::string key, std::vector<uint8_t> val)
@@ -1634,9 +1650,11 @@ void HStreamRepeat::SetRecorderUserMeta(std::string key, std::vector<uint8_t> va
     MEDIA_INFO_LOG("HStreamRepeat::SetRecorderUserMeta is called");
     auto recorder = recorder_.Get();
     CHECK_RETURN_ELOG(recorder == nullptr, "HStreamRepeat::SetRecorderUserMeta failed, recorder_ is null");
+#ifdef CAMERA_FRAMEWORK_FEATURE_MEDIA_STREAM
     if (repeatStreamType_ == RepeatStreamType::MOVIE_FILE_RAW_VIDEO) {
         recorder->SetUserMeta(key, val);
     }
+#endif
 }
 
 sptr<ICameraRecorder> HStreamRepeat::GetCameraRecorder()
@@ -1672,10 +1690,12 @@ int32_t HStreamRepeat::UnlinkInput()
 {
     MEDIA_DEBUG_LOG("HStreamRepeat::UnlinkInput is called");
     auto recorder = recorder_.Get();
+#ifdef CAMERA_FRAMEWORK_FEATURE_MEDIA_STREAM
     if (repeatStreamType_ == RepeatStreamType::MOVIE_FILE_CINEMATIC_VIDEO && recorder) {
         MEDIA_DEBUG_LOG("HStreamRepeat::UnlinkInput start release recorder");
         recorder->Release();
     }
+#endif
     return HStreamCommon::UnlinkInput();
 }
 

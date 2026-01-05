@@ -170,6 +170,10 @@ ohos_static_library("camera_utils_static") {
     defines += [ "CAMERA_USE_POWER" ]
   }
 
+  if (camera_framework_feature_camera_capture_yuv) {
+    defines += [ "CAMERA_CAPTURE_YUV" ]
+  }
+
   public_configs = [
     ":camera_utils_config",
     "../services/camera_service/idls:camera_sa_idl_config",

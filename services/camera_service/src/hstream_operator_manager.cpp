@@ -78,6 +78,7 @@ void HStreamOperatorManager::RemoveStreamOperator(int32_t& hStreamOperatorId)
     return;
 }
 
+#ifdef CAMERA_MOVING_PHOTO
 void HStreamOperatorManager::AddTaskManager(int32_t& hStreamOperatorId,
     sptr<AvcodecTaskManagerIntf> avcodecTaskManagerProxy)
 {
@@ -107,6 +108,7 @@ void HStreamOperatorManager::RemoveTaskManager(int32_t& hStreamOperatorId)
     taskManagerMap_.Erase(hStreamOperatorId);
     asyncThread.detach();
 }
+#endif
 
 void HStreamOperatorManager::UpdateStreamOperator(int32_t& hStreamOperatorId)
 {

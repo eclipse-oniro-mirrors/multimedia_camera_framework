@@ -31,7 +31,9 @@ private:
     int HandleOnPhotoAvailable(MessageParcel& data);
     int32_t HandleAddMetadataType(MessageParcel& data);
     int32_t HandleRemoveMetadataType(MessageParcel& data);
+#ifdef CAMERA_CAPTURE_YUV
     int HandleOnPictureAvailable(MessageParcel& data);
+#endif
 };
 } // namespace CameraStandard
 } // namespace OHOS

@@ -124,6 +124,7 @@ void PhotoAssetAdapter::UpdatePhotoProxy(const sptr<Media::PhotoProxy> &photoPro
     }
 }
 
+#ifdef CAMERA_CAPTURE_YUV
 void PhotoAssetAdapter::RegisterPhotoStateCallback(const std::function<void(int32_t)> &callback)
 {
     MEDIA_DEBUG_LOG("PhotoAssetAdapter::RegisterPhotoStateCallback is called");
@@ -135,6 +136,7 @@ void PhotoAssetAdapter::UnregisterPhotoStateCallback()
     MEDIA_DEBUG_LOG("PhotoAssetAdapter::UnregisterPhotoStateCallback is called");
     CHECK_EXECUTE(photoAssetProxy_ != nullptr, photoAssetProxy_->UnregisterPhotoStateCallback());
 }
+#endif
 
 // LCOV_EXCL_STOP
 extern "C" PhotoAssetIntf *createPhotoAssetIntf(

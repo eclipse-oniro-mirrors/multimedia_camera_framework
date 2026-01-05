@@ -87,17 +87,22 @@ void PhotoBufferConsumer::ExecuteOnBufferAvailable()
     CameraReportDfxUtils::GetInstance()->SetCaptureState(CaptureState::PHOTO_AVAILABLE, captureId);
     CameraReportDfxUtils::GetInstance()->SetFirstBufferEndInfo(captureId);
     CameraReportDfxUtils::GetInstance()->SetPrepareProxyStartInfo(captureId);
+#ifdef CAMERA_CAPTURE_YUV
     bool isSystemApp = PhotoLevelManager::GetInstance().GetPhotoLevelInfo(captureId);
     if (!isSystemApp && streamCapture_->isYuvCapture_) {
         int32_t auxiliaryCount = CameraSurfaceBufferUtil::GetImageCount(newSurfaceBuffer);
         MEDIA_INFO_LOG("OnBufferAvailable captureId:%{public}d auxiliaryCount:%{public}d", captureId, auxiliaryCount);
         StartWaitAuxiliaryTask(captureId, auxiliaryCount, timestamp, newSurfaceBuffer);
     } else {
+#endif
         streamCapture->OnPhotoAvailable(newSurfaceBuffer, timestamp, isRaw_);
+#ifdef CAMERA_CAPTURE_YUV
     }
+#endif
     MEDIA_INFO_LOG("P_ExecuteOnBufferAvailable X");
 }
 
+#ifdef CAMERA_CAPTURE_YUV
 void PhotoBufferConsumer::StartWaitAuxiliaryTask(
     const int32_t captureId, const int32_t auxiliaryCount, int64_t timestamp, sptr<SurfaceBuffer> &newSurfaceBuffer)
 {
@@ -233,5 +238,6 @@ void PhotoBufferConsumer::AssembleDeferredPicture(int64_t timestamp, int32_t cap
     CleanAfterTransPicture(captureId);
     MEDIA_INFO_LOG("AssembleDeferredPicture X, captureId:%{public}d", captureId);
 }
+#endif
 }  // namespace CameraStandard
 }  // namespace OHOS

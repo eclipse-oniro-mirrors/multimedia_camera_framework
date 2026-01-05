@@ -4290,8 +4290,10 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_004, TestSize
     sessionForSys->isDepthFusionEnable_ = false;
     EXPECT_FALSE(sessionForSys->IsDepthFusionEnabled());
 
+#ifdef CAMERA_MOVING_PHOTO
     sessionForSys->isMovingPhotoEnabled_ = false;
     EXPECT_FALSE(sessionForSys->IsMovingPhotoEnabled());
+#endif
 
     sessionForSys->SetMacroStatusCallback(nullptr);
     EXPECT_EQ(sessionForSys->GetMacroStatusCallback(), nullptr);
@@ -9734,6 +9736,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_166, TestSize.Level0)
     EXPECT_EQ(previewOutput->IsXComponentSwap(), false);
 }
 
+#ifdef CAMERA_MOVIE_FILE
 /*
  * Feature: Framework
  * Function: Test ConfigureMovieFileOutput and ConfigureUnifyMovieFileOutput
@@ -9871,6 +9874,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_169, TestSize.Level0)
     input->Release();
     session->Release();
 }
+#endif
 
 /*
  * Feature: Framework

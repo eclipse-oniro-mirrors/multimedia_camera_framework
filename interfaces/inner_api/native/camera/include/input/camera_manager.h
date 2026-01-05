@@ -1104,8 +1104,10 @@ private:
     vector<CameraFormat> GetSupportPhotoFormat(const int32_t modeName,
         std::shared_ptr<OHOS::Camera::CameraMetadata> metadata);
     void FillSupportPhotoFormats(std::vector<Profile>& profiles);
+#ifdef CAMERA_CAPTURE_YUV
     void FillExtendedSupportPhotoFormats(std::vector<Profile>& profiles);
     void RemoveExtendedSupportPhotoFormats(std::vector<Profile>& photoProfiles);
+#endif
     void FillSupportPreviewFormats(std::vector<Profile>& previewProfiles);
     inline void SetServiceProxy(sptr<ICameraService> proxy)
     {

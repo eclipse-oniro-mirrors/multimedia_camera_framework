@@ -78,8 +78,6 @@ common_sources = [
   "src/output/sketch_wrapper.cpp",
   "src/output/video_output.cpp",
   "src/output/video_capability.cpp",
-  "src/output/movie_file_output.cpp",
-  "src/output/unify_movie_file_output.cpp",
   "src/session/capture_session.cpp",
   "src/session/control_center_session.cpp",
   "src/session/features/composition_feature.cpp",
@@ -199,6 +197,32 @@ ohos_shared_library("camera_framework") {
 
   if (is_emulator) {
     defines += [ "CAMERA_EMULATOR" ]
+  }
+
+  if (camera_framework_feature_media_stream) {
+    defines += [ "CAMERA_FRAMEWORK_FEATURE_MEDIA_STREAM" ]
+    sources += [ "src/output/movie_file_output.cpp", ]
+  } else {
+    sources += [ "src/output/movie_file_output_mock.cpp", ]
+  }
+
+  if (camera_framework_feature_deferred) {
+    defines += [ "CAMERA_DEFERRED" ]
+  }
+
+  if (camera_framework_feature_moving_photo) {
+    defines += [ "CAMERA_MOVING_PHOTO" ]
+  }
+
+  if (camera_framework_feature_movie_file) {
+    defines += [ "CAMERA_MOVIE_FILE" ]
+    sources += [ "src/output/unify_movie_file_output.cpp", ]
+  } else {
+    sources += [ "src/output/unify_movie_file_output_mock.cpp", ]
+  }
+
+  if (camera_framework_feature_camera_capture_yuv) {
+    defines += [ "CAMERA_CAPTURE_YUV" ]
   }
 
   cflags_cc = cflags

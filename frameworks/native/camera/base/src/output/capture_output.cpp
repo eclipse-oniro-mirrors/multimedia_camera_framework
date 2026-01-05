@@ -105,8 +105,12 @@ CaptureOutputType CaptureOutput::GetOutputType()
 bool CaptureOutput::IsVideoProfileType()
 {
     // LCOV_EXCL_START
+#ifdef CAMERA_MOVIE_FILE
     return outputType_ == CAPTURE_OUTPUT_TYPE_VIDEO || outputType_ == CAPTURE_OUTPUT_TYPE_MOVIE_FILE ||
            outputType_ == CAPTURE_OUTPUT_TYPE_UNIFY_MOVIE_FILE;
+#else
+    return outputType_ == CAPTURE_OUTPUT_TYPE_VIDEO;
+#endif
     // LCOV_EXCL_STOP
 }
 
@@ -267,10 +271,12 @@ bool CaptureOutput::IsHasEnableOfflinePhoto()
     // LCOV_EXCL_STOP
 }
 
+#ifdef CAMERA_MOVIE_FILE
 bool CaptureOutput::IsMultiStreamOutput()
 {
     return outputType_ == CaptureOutputType::CAPTURE_OUTPUT_TYPE_UNIFY_MOVIE_FILE;
 }
+#endif
 
 } // CameraStandard
 } // OHOS

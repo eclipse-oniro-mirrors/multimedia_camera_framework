@@ -113,5 +113,8 @@ ohos_fuzztest("HCameraMovieFileOutputFuzzTest") {
 
 group("fuzztest") {
   testonly = true
-  deps = [ ":HCameraMovieFileOutputFuzzTest" ]
+  deps = []
+  if (camera_framework_feature_movie_file) {
+    deps += [ ":HCameraMovieFileOutputFuzzTest" ]
+  }
 }

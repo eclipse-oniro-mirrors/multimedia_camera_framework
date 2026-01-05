@@ -2106,6 +2106,7 @@ HWTEST_F(HCameraServiceUnit, NotifyDeviceStateChangeInfo_001, TestSize.Level0)
         PressureStatus::SYSTEM_PRESSURE_NORMAL);
 }
 
+#ifdef NOTIFICATION_ENABLE
 /**
  * @tc.name  : Test SetBeauty_001 API
  * @tc.number: SetBeauty_001
@@ -2164,6 +2165,7 @@ HWTEST_F(HCameraServiceUnit, SetBeauty_001, TestSize.Level0)
     device->Close();
     deviceManager->activeCameras_.clear();
 }
+#endif
 
 /**
  * @tc.name  : Test AllowOpenByOHSide_001 API
@@ -2396,6 +2398,7 @@ HWTEST_F(HCameraServiceUnit, Dump_001, TestSize.Level1)
     device->Close();
 }
 
+#ifdef NOTIFICATION_ENABLE
 /*
  * Feature: CameraService
  * Function: Test SetBeauty in class HCameraService
@@ -2422,6 +2425,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_056, TestSize.Level0)
     device->Release();
     device->Close();
 }
+#endif
 
 /*
  * Feature: CameraService

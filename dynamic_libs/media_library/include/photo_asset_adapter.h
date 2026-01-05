@@ -33,8 +33,10 @@ public:
     int32_t GetUserId() override;
     int32_t OpenAsset() override;
     void UpdatePhotoProxy(const sptr<Media::PhotoProxy> &photoProxy) override;
+#ifdef CAMERA_CAPTURE_YUV
     void RegisterPhotoStateCallback(const std::function<void(int32_t)> &callback) override;
     void UnregisterPhotoStateCallback() override;
+#endif
 private:
     std::shared_ptr<Media::PhotoAssetProxy> photoAssetProxy_ = nullptr;
     int32_t userId_ = -1;

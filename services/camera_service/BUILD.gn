@@ -51,7 +51,6 @@ ohos_shared_library("camera_service") {
     "src/hcamera_device.cpp",
     "src/hcamera_device_manager.cpp",
     "src/hcamera_host_manager.cpp",
-    "src/hcamera_movie_file_output.cpp",
     "src/hcamera_preconfig.cpp",
     "src/hcamera_restore_param.cpp",
     "src/hcamera_service.cpp",
@@ -66,11 +65,6 @@ ohos_shared_library("camera_service") {
     "src/hstream_operator.cpp",
     "src/hstream_operator_manager.cpp",
     "src/hstream_repeat.cpp",
-    "src/camera_dialog_manager.cpp",
-    "src/camera_dialog_connection.cpp",
-    "src/param_update/camera_rotate_param_manager.cpp",
-    "src/param_update/camera_rotate_param_reader.cpp",
-    "src/param_update/camera_rotate_param_sign_tools.cpp",
     "src/recorder/movie_file_recorder.cpp",
     "src/rss/suspend_state_observer.cpp",
     "src/smooth_zoom/cubic_bezier.cpp",
@@ -124,7 +118,6 @@ ohos_shared_library("camera_service") {
     "${multimedia_camera_framework_path}/services/camera_service/include/recorder",
     "${multimedia_camera_framework_path}/services/camera_service/include/rss",
     "${multimedia_camera_framework_path}/services/camera_service/include/smooth_zoom",
-    "${multimedia_camera_framework_path}/services/camera_service/include/param_update",
     "${multimedia_camera_framework_path}/services/camera_service/include/window_manager_utils",
     "${multimedia_camera_framework_path}/services/camera_service/binder/base/include",
     "${multimedia_camera_framework_path}/services/camera_service/binder/client/include",
@@ -222,17 +215,57 @@ ohos_shared_library("camera_service") {
     defines += [ "HICOLLIE_ENABLE" ]
   }
 
-  if (defined(global_parts_info) &&
-      defined(
-          global_parts_info.notification_distributed_notification_service)) {
-    defines += [ "NOTIFICATION_ENABLE" ]
-    sources += [ "src/camera_beauty_notification.cpp" ]
+  if (camera_framework_feature_beauty_notification) {
+    if (defined(global_parts_info) &&
+        defined(
+            global_parts_info.notification_distributed_notification_service)) {
+      defines += [ "NOTIFICATION_ENABLE" ]
+      sources += [ "src/camera_beauty_notification.cpp" ]
+    }
+  }
+
+  if (camera_framework_feature_media_stream) {
+    defines += [ "CAMERA_FRAMEWORK_FEATURE_MEDIA_STREAM" ]
   }
 
   if (use_musl) {
     if (musl_use_jemalloc && musl_use_jemalloc_dfx_intf) {
       cflags += [ "-DCONFIG_USE_JEMALLOC_DFX_INTF" ]
     }
+  }
+
+  if (camera_framework_feature_rotate_param_update) {
+    defines += [ "CAMERA_ROTATE_PARAM_UPDATE" ]
+    sources += [
+      "src/param_update/camera_rotate_param_manager.cpp",
+      "src/param_update/camera_rotate_param_reader.cpp",
+      "src/param_update/camera_rotate_param_sign_tools.cpp"
+    ]
+    include_dirs += [ "${multimedia_camera_framework_path}/services/camera_service/include/param_update" 
+    ]
+  }
+
+  if (camera_framework_feature_deferred) {
+    defines += [ "CAMERA_DEFERRED" ]
+  }
+
+  if (camera_framework_feature_moving_photo) {
+    defines += [ "CAMERA_MOVING_PHOTO" ]
+  }
+
+  if (camera_framework_feature_xcomponent_toast) {
+    defines += [ "CAMERA_XCOMPONENT_TOAST" ]
+    sources += [
+      "src/camera_dialog_manager.cpp",
+      "src/camera_dialog_connection.cpp"
+    ]
+  }
+
+  if (camera_framework_feature_movie_file) {
+    defines += [ "CAMERA_MOVIE_FILE" ]
+    sources += [
+      "src/hcamera_movie_file_output.cpp",
+    ]
   }
 
   if (camera_framework_feature_camera_live_scene_recognition) {
@@ -243,6 +276,10 @@ ohos_shared_library("camera_service") {
     defines += [ "HOOK_CAMERA_OPERATOR" ]
     sources += [ "src/rotate_plugin/camera_rotate_plugin.cpp" ]
     include_dirs += [ "${multimedia_camera_framework_path}/services/camera_service/include/rotate_plugin" ]
+  }
+
+  if (camera_framework_feature_camera_capture_yuv) {
+    defines += [ "CAMERA_CAPTURE_YUV" ]
   }
 
   cflags_cc = cflags

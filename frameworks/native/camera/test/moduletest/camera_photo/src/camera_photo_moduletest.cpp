@@ -215,12 +215,13 @@ void TestCaptureCallback::OnPhotoAvailable(const std::shared_ptr<Media::NativeIm
     photoFlag_ = true;
 }
 
+#ifdef CAMERA_CAPTURE_YUV
 void TestCaptureCallback::OnPhotoAvailable(const std::shared_ptr<Media::Picture> picture) const
 {
     MEDIA_DEBUG_LOG("TestCaptureCallback::OnPhotoAvailable (Picture) is called!");
     photoFlag_ = true;
 }
-
+#endif
 void TestCaptureCallback::OnPhotoAssetAvailable(
     const int32_t captureId, const std::string &uri, int32_t cameraShotType, const std::string &burstKey) const
 {

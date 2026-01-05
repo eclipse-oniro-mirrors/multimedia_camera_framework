@@ -77,5 +77,8 @@ ohos_fuzztest("CommandServerFuzzTest") {
 
 group("fuzztest") {
   testonly = true
-  deps = [ ":CommandServerFuzzTest" ]
+  deps = []
+  if (camera_framework_feature_deferred) {
+    deps += [ ":CommandServerFuzzTest" ]
+  }
 }

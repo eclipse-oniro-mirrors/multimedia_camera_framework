@@ -94,16 +94,30 @@ void PhotoAssetBufferConsumer::ExecuteOnBufferAvailable()
     std::string burstKey;
     bool isYuv = streamCapture->isYuvCapture_;
     MEDIA_INFO_LOG("CreateMediaLibrary captureId:%{public}d isYuv::%{public}d", captureId, isYuv);
+#ifdef CAMERA_CAPTURE_YUV
     if (isYuv) {
         StartWaitAuxiliaryTask(originCaptureId, captureId, auxiliaryCount, timestamp, newSurfaceBuffer);
     } else {
+#endif
         streamCapture->CreateMediaLibrary(cameraPhotoProxy, uri, cameraShotType, burstKey, timestamp);
         MEDIA_INFO_LOG("CreateMediaLibrary uri:%{public}s", uri.c_str());
         streamCapture->OnPhotoAssetAvailable(originCaptureId, uri, cameraShotType, burstKey);
+#ifdef CAMERA_CAPTURE_YUV
     }
+#endif
 
     MEDIA_INFO_LOG("PA_ExecuteOnBufferAvailable X");
 }
+
+inline void LoggingSurfaceBufferInfo(sptr<SurfaceBuffer> buffer, std::string bufName)
+{
+    if (buffer) {
+        MEDIA_INFO_LOG("LoggingSurfaceBufferInfo %{public}s w=%{public}d, h=%{public}d, f=%{public}d",
+            bufName.c_str(), buffer->GetWidth(), buffer->GetHeight(), buffer->GetFormat());
+    }
+};
+
+#ifdef CAMERA_CAPTURE_YUV
 // LCOV_EXCL_START
 void PhotoAssetBufferConsumer::StartWaitAuxiliaryTask(const int32_t originCaptureId, const int32_t captureId,
     const int32_t auxiliaryCount, int64_t timestamp, sptr<SurfaceBuffer> &newSurfaceBuffer)
@@ -180,14 +194,6 @@ void PhotoAssetBufferConsumer::StartWaitAuxiliaryTask(const int32_t originCaptur
     MEDIA_INFO_LOG("StartWaitAuxiliaryTask X");
 }
 
-inline void LoggingSurfaceBufferInfo(sptr<SurfaceBuffer> buffer, std::string bufName)
-{
-    if (buffer) {
-        MEDIA_INFO_LOG("LoggingSurfaceBufferInfo %{public}s w=%{public}d, h=%{public}d, f=%{public}d",
-            bufName.c_str(), buffer->GetWidth(), buffer->GetHeight(), buffer->GetFormat());
-    }
-};
-
 void PhotoAssetBufferConsumer::CleanAfterTransPicture(int32_t captureId)
 {
     MEDIA_INFO_LOG("CleanAfterTransPicture E, captureId:%{public}d", captureId);
@@ -254,6 +260,7 @@ void PhotoAssetBufferConsumer::AssembleDeferredPicture(int64_t timestamp, int32_
     CleanAfterTransPicture(captureId);
     MEDIA_INFO_LOG("AssembleDeferredPicture X, captureId:%{public}d", captureId);
 }
+#endif
 }  // namespace CameraStandard
 }  // namespace OHOS
 // LCOV_EXCL_STOP
