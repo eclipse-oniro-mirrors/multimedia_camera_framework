@@ -252,17 +252,6 @@ public:
         const std::shared_ptr<OHOS::Camera::CameraMetadata>&)> callback);
     std::mutex mechCallbackLock_;
     std::function<void(int32_t, const std::shared_ptr<OHOS::Camera::CameraMetadata>&)> mechCallback_;
-
-    inline void SetDeferredFlag(uint32_t flag)
-    {
-        deferredFlag_ = flag;
-    }
-
-    inline uint32_t GetDeferredFlag()
-    {
-        return deferredFlag_;
-    }
-
     int32_t GetSensorRotation();
 #ifdef CAMERA_USE_SENSOR
     void RegisterSensorCallback();
@@ -334,7 +323,6 @@ private:
     int32_t deviceSensorOritation_ = 0;
     ColorStylePhotoType supportXtStyleRedoFlag_ = ColorStylePhotoType::UNSET;
     bool isXtStyleEnabled_ = false;
-    std::atomic<uint32_t> deferredFlag_ = 0;
     std::mutex lastDisplayNameMutex_;
     std::string GetLastDisplayName();
     void SetLastDisplayName(std::string& lastDisplayName);
