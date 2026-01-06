@@ -168,9 +168,10 @@ void HStreamCapture::CreateAuxiliarySurfaces()
 
 HStreamCapture::~HStreamCapture()
 {
-    if (photoTask_ != nullptr) {
-        photoTask_->CancelAllTasks();
-        photoTask_ = nullptr;
+    auto photoTask = photoTask_.Get();
+    if (photoTask != nullptr) {
+        photoTask->CancelAllTasks();
+        photoTask_.Set(nullptr);
     }
     if (photoSubTask_ != nullptr) {
         photoSubTask_->CancelAllTasks();
@@ -202,21 +203,21 @@ void HStreamCapture::FillingPictureExtendStreamInfos(StreamInfo_V1_1 &streamInfo
         .height = height_,
         .format = format, // HDR:NV21 P3:NV21
         .dataspace = dataSpace_, // HDR:BT2020_HLG_FULL P3:P3_FULL
-        .bufferQueue = gainmapBufferQueue_,
+        .bufferQueue = gainmapBufferQueue_.Get(),
     };
     HDI::Camera::V1_1::ExtendedStreamInfo deepExtendedStreamInfo = {
         .type = static_cast<HDI::Camera::V1_1::ExtendedStreamInfoType>(HDI::Camera::V1_3::EXTENDED_STREAM_INFO_DEPTH),
         .width = width_,
         .height = height_,
         .format = format,
-        .bufferQueue = deepBufferQueue_,
+        .bufferQueue = deepBufferQueue_.Get(),
     };
     HDI::Camera::V1_1::ExtendedStreamInfo exifExtendedStreamInfo = {
         .type = static_cast<HDI::Camera::V1_1::ExtendedStreamInfoType>(HDI::Camera::V1_3::EXTENDED_STREAM_INFO_EXIF),
         .width = width_,
         .height = height_,
         .format = format,
-        .bufferQueue = exifBufferQueue_,
+        .bufferQueue = exifBufferQueue_.Get(),
     };
     HDI::Camera::V1_1::ExtendedStreamInfo debugExtendedStreamInfo = {
         .type =
@@ -224,7 +225,7 @@ void HStreamCapture::FillingPictureExtendStreamInfos(StreamInfo_V1_1 &streamInfo
         .width = width_,
         .height = height_,
         .format = format,
-        .bufferQueue = debugBufferQueue_,
+        .bufferQueue = debugBufferQueue_.Get(),
     };
     std::vector<HDI::Camera::V1_1::ExtendedStreamInfo> extendedStreams = { gainmapExtendedStreamInfo,
         deepExtendedStreamInfo, exifExtendedStreamInfo, debugExtendedStreamInfo };
@@ -242,7 +243,7 @@ void HStreamCapture::FillingRawAndThumbnailStreamInfo(StreamInfo_V1_1 &streamInf
             .height = height_,
             .format = streamInfo.v1_0.format_,
             .dataspace = 0,
-            .bufferQueue = rawBufferQueue_,
+            .bufferQueue = rawBufferQueue_.Get(),
         };
         streamInfo.extendedStreamInfos.push_back(extendedStreamInfo);
     }
@@ -337,15 +338,16 @@ int32_t HStreamCapture::EnableRawDelivery(bool enabled)
     int32_t ret = CAMERA_OK;
     if (enabled) {
         rawDeliverySwitch_ = 1;
-        rawSurface_ = nullptr;
+        rawSurface_.Set(nullptr);
         std::string bufferName = "rawImage";
-        rawSurface_ = Surface::CreateSurfaceAsConsumer(bufferName);
-        CHECK_RETURN_RET_ELOG(rawSurface_ == nullptr, CAMERA_OK, "raw surface create faild");
-        ret = SetBufferProducerInfo(bufferName, rawSurface_->GetProducer());
+        rawSurface_.Set(Surface::CreateSurfaceAsConsumer(bufferName));
+        auto rawSurface = rawSurface_.Get();
+        CHECK_RETURN_RET_ELOG(rawSurface == nullptr, CAMERA_OK, "raw surface create faild");
+        ret = SetBufferProducerInfo(bufferName, rawSurface->GetProducer());
         SetRawCallback();
     } else {
         rawDeliverySwitch_ = 0;
-        rawSurface_ = nullptr;
+        rawSurface_.Set(nullptr);
     }
     return ret;
 }
@@ -367,41 +369,41 @@ int32_t HStreamCapture::SetBufferProducerInfo(const std::string& bufName, const 
     std::string resStr = "";
     if (bufName == "rawImage") {
         if (producer != nullptr) {
-            rawBufferQueue_ = new BufferProducerSequenceable(producer);
+            rawBufferQueue_.Set(new BufferProducerSequenceable(producer));
         } else {
-            rawBufferQueue_ = nullptr;
+            rawBufferQueue_.Set(nullptr);
             resStr += bufName + ",";
         }
     }
     if (bufName == "gainmapImage") {
         if (producer != nullptr) {
-            gainmapBufferQueue_ = new BufferProducerSequenceable(producer);
+            gainmapBufferQueue_.Set(new BufferProducerSequenceable(producer));
         } else {
-            gainmapBufferQueue_ = nullptr;
+            gainmapBufferQueue_.Set(nullptr);
             resStr += bufName + ",";
         }
     }
     if (bufName == "deepImage") {
         if (producer != nullptr) {
-            deepBufferQueue_ = new BufferProducerSequenceable(producer);
+            deepBufferQueue_.Set(new BufferProducerSequenceable(producer));
         } else {
-            deepBufferQueue_ = nullptr;
+            deepBufferQueue_.Set(nullptr);
             resStr += bufName + ",";
         }
     }
     if (bufName == "exifImage") {
         if (producer != nullptr) {
-            exifBufferQueue_ = new BufferProducerSequenceable(producer);
+            exifBufferQueue_.Set(new BufferProducerSequenceable(producer));
         } else {
-            exifBufferQueue_ = nullptr;
+            exifBufferQueue_.Set(nullptr);
             resStr += bufName + ",";
         }
     }
     if (bufName == "debugImage") {
         if (producer != nullptr) {
-            debugBufferQueue_ = new BufferProducerSequenceable(producer);
+            debugBufferQueue_.Set(new BufferProducerSequenceable(producer));
         } else {
-            debugBufferQueue_ = nullptr;
+            debugBufferQueue_.Set(nullptr);
             resStr += bufName + ",";
         }
     }
@@ -1032,13 +1034,15 @@ int32_t HStreamCapture::SetPhotoAvailableCallback(const sptr<IStreamCapturePhoto
     CHECK_RETURN_RET_ELOG(
         callback == nullptr, CAMERA_INVALID_ARG, "HSetPhotoAvailableCallback callback is null");
     std::lock_guard<std::mutex> lock(photoCallbackLock_);
-    photoAvaiableCallback_ = callback;
+    photoAvaiableCallback_.Set(callback);
     CHECK_RETURN_RET_ELOG(photoAssetListener_ != nullptr, CAMERA_OK, "wait to set raw callback");
-    photoListener_ = nullptr;
-    photoListener_ = new (std::nothrow) PhotoBufferConsumer(this, false);
+    photoListener_.Set(nullptr);
+    photoListener_.Set(new (std::nothrow) PhotoBufferConsumer(this, false));
     surface_->UnregisterConsumerListener();
-    SurfaceError ret = surface_->RegisterConsumerListener((sptr<IBufferConsumerListener> &)photoListener_);
-    CHECK_EXECUTE(photoTask_ == nullptr, InitCaptureThread());
+    auto photoListener = photoListener_.Get();
+    SurfaceError ret = surface_->RegisterConsumerListener((sptr<IBufferConsumerListener> &)photoListener);
+    auto photoTask = photoTask_.Get();
+    CHECK_EXECUTE(photoTask == nullptr, InitCaptureThread());
     photoSubTask_ = nullptr;
     CHECK_PRINT_ELOG(ret != SURFACE_ERROR_OK, "register photoConsume failed:%{public}d", ret);
     return CAMERA_OK;
@@ -1048,21 +1052,25 @@ int32_t HStreamCapture::UnSetPhotoAvailableCallback()
 {
     MEDIA_INFO_LOG("HUnSetPhotoAvailableCallback E");
     std::lock_guard<std::mutex> lock(photoCallbackLock_);
-    photoAvaiableCallback_ = nullptr;
-    photoListener_ = nullptr;
+    photoAvaiableCallback_.Set(nullptr);
+    photoListener_.Set(nullptr);
     return CAMERA_OK;
 }
 
 void HStreamCapture::SetRawCallback()
 {
     MEDIA_INFO_LOG("HStreamCapture::SetRawCallback E");
-    CHECK_RETURN_ELOG(photoAvaiableCallback_ == nullptr, "SetRawCallback callback is null");
-    CHECK_RETURN_ELOG(rawSurface_ == nullptr, "HStreamCapture::SetRawCallback callback is null");
-    photoListener_ = nullptr;
-    photoListener_ = new (std::nothrow) PhotoBufferConsumer(this, true);
-    rawSurface_->UnregisterConsumerListener();
-    SurfaceError ret = rawSurface_->RegisterConsumerListener((sptr<IBufferConsumerListener> &)photoListener_);
-    CHECK_EXECUTE(photoTask_ == nullptr, InitCaptureThread());
+    auto photoAvaiableCallback = photoAvaiableCallback_.Get();
+    CHECK_RETURN_ELOG(photoAvaiableCallback == nullptr, "SetRawCallbackUnLock callback is null");
+    auto rawSurface = rawSurface_.Get();
+    CHECK_RETURN_ELOG(rawSurface == nullptr, "HStreamCapture::SetRawCallbackUnLock callback is null");
+    photoListener_.Set(nullptr);
+    photoListener_.Set(new (std::nothrow) PhotoBufferConsumer(this, true));
+    rawSurface->UnregisterConsumerListener();
+    auto photoListener = photoListener_.Get();
+    SurfaceError ret = rawSurface->RegisterConsumerListener((sptr<IBufferConsumerListener> &)photoListener);
+    auto photoTask = photoTask_.Get();
+    CHECK_EXECUTE(photoTask == nullptr, InitCaptureThread());
     CHECK_PRINT_ELOG(ret != SURFACE_ERROR_OK, "register rawConsumer failed:%{public}d", ret);
     return;
 }
@@ -1082,7 +1090,8 @@ int32_t HStreamCapture::SetPhotoAssetAvailableCallback(const sptr<IStreamCapture
     }
     surface_->UnregisterConsumerListener();
     SurfaceError ret = surface_->RegisterConsumerListener((sptr<IBufferConsumerListener> &)photoAssetListener_);
-    CHECK_EXECUTE(photoTask_ == nullptr, InitCaptureThread());
+    auto photoTask = photoTask_.Get();
+    CHECK_EXECUTE(photoTask == nullptr, InitCaptureThread());
     CHECK_PRINT_ELOG(ret != SURFACE_ERROR_OK, "registerConsumerListener failed:%{public}d", ret);
     // register auxiliary buffer consumer
     CHECK_EXECUTE(isYuvCapture_, RegisterAuxiliaryConsumers());
@@ -1151,8 +1160,9 @@ int32_t HStreamCapture::UnSetThumbnailCallback()
 void HStreamCapture::InitCaptureThread()
 {
     MEDIA_INFO_LOG("HStreamCapture::InitCaptureThread E");
-    if (photoTask_ == nullptr) {
-        photoTask_ = std::make_shared<DeferredProcessing::TaskManager>("photoTask", TASKMANAGER_ONE, false);
+    auto photoTask = photoTask_.Get();
+    if (photoTask == nullptr) {
+        photoTask_.Set(std::make_shared<DeferredProcessing::TaskManager>("photoTask", TASKMANAGER_ONE, false));
     }
     if (isYuvCapture_ && photoSubTask_ == nullptr) {
         photoSubTask_ = std::make_shared<DeferredProcessing::TaskManager>("photoSubTask", TASKMANAGER_FOUR, false);
@@ -1286,8 +1296,9 @@ int32_t HStreamCapture::OnPhotoAvailable(sptr<SurfaceBuffer> surfaceBuffer, cons
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("HStreamCapture::OnPhotoAvailable is called!");
     std::lock_guard<std::mutex> lock(photoCallbackLock_);
-    if (photoAvaiableCallback_ != nullptr) {
-        photoAvaiableCallback_->OnPhotoAvailable(surfaceBuffer, timestamp, isRaw);
+    auto photoAvaiableCallback = photoAvaiableCallback_.Get();
+    if (photoAvaiableCallback != nullptr) {
+        photoAvaiableCallback->OnPhotoAvailable(surfaceBuffer, timestamp, isRaw);
     }
     return CAMERA_OK;
 }

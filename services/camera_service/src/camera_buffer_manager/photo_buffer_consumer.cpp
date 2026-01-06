@@ -40,9 +40,10 @@ void PhotoBufferConsumer::OnBufferAvailable()
     MEDIA_INFO_LOG("PhotoBufferConsumer OnBufferAvailable E");
     sptr<HStreamCapture> streamCapture = streamCapture_.promote();
     CHECK_RETURN_ELOG(streamCapture == nullptr, "streamCapture is null");
-    CHECK_RETURN_ELOG(streamCapture->photoTask_ == nullptr, "photoTask is null");
+    auto photoTask = streamCapture->photoTask_.Get();
+    CHECK_RETURN_ELOG(photoTask == nullptr, "photoTask is null");
     wptr<PhotoBufferConsumer> thisPtr(this);
-    streamCapture->photoTask_->SubmitTask([thisPtr]() {
+    photoTask->SubmitTask([thisPtr]() {
         auto listener = thisPtr.promote();
         CHECK_EXECUTE(listener, listener->ExecuteOnBufferAvailable());
     });
@@ -57,7 +58,7 @@ void PhotoBufferConsumer::ExecuteOnBufferAvailable()
     CHECK_RETURN_ELOG(streamCapture == nullptr, "streamCapture is null");
     sptr<Surface> surface;
     if (isRaw_) {
-        surface = streamCapture->rawSurface_;
+        surface = streamCapture->rawSurface_.Get();
     } else {
         surface = streamCapture->surface_;
     }

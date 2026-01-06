@@ -44,9 +44,10 @@ void PhotoAssetBufferConsumer::OnBufferAvailable()
     CAMERA_SYNC_TRACE;
     sptr<HStreamCapture> streamCapture = streamCapture_.promote();
     CHECK_RETURN_ELOG(streamCapture == nullptr, "streamCapture is null");
-    CHECK_RETURN_ELOG(streamCapture->photoTask_ == nullptr, "photoTask is null");
+    auto photoTask = streamCapture->photoTask_.Get();
+    CHECK_RETURN_ELOG(photoTask == nullptr, "photoTask is null");
     wptr<PhotoAssetBufferConsumer> thisPtr(this);
-    streamCapture->photoTask_->SubmitTask([thisPtr]() {
+    photoTask->SubmitTask([thisPtr]() {
         auto listener = thisPtr.promote();
         CHECK_EXECUTE(listener, listener->ExecuteOnBufferAvailable());
     });
