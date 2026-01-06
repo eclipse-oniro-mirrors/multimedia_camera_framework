@@ -2465,6 +2465,7 @@ protected:
      */
     void ProcessSmoothZoomDurationChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result);
     void SetZoomRatioForAudio(float zoomRatio);
+    void SetDefaultColorSpace();
 };
 } // namespace CameraStandard
 } // namespace OHOS

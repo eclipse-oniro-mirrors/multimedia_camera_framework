@@ -148,6 +148,7 @@ public:
     int32_t GetActiveColorSpace(ColorSpace& colorSpace);
     int32_t SetColorSpace(ColorSpace colorSpace, bool isNeedUpdate);
     void SetColorSpaceForStreams();
+    int32_t VerifyCaptureModeColorSpace(ColorSpace colorSpace);
     int32_t CheckIfColorSpaceMatchesFormat(ColorSpace colorSpace);
     int32_t StartPreviewStream(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings,
         camera_position_enum_t cameraPosition);
