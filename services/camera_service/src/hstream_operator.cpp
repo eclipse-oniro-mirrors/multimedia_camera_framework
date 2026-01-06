@@ -2211,11 +2211,10 @@ void HStreamOperator::ProcessRepeatStream(const sptr<HStreamRepeat>& repeatStrea
     extInfo.isDeferredVideoEnhancementAvailable =
         captureInfo.captureEndedInfoExt.isDeferredVideoEnhancementAvailable_;
     extInfo.videoId = captureInfo.captureEndedInfoExt.videoId_;
-    extInfo.deferredVideoEnhanceFlag = GetDeferredFlag();
+    extInfo.deferredVideoEnhanceFlag = 0;
     if (captureInfo.metadata_) {
         int ret = captureInfo.metadata_->Get("deferredVideoEnhanceFlag", extInfo.deferredVideoEnhanceFlag);
         MEDIA_DEBUG_LOG("GET deferredVideoEnhanceFlag result: %{public}d", ret);
-        SetDeferredFlag(extInfo.deferredVideoEnhanceFlag);
     }
     MEDIA_INFO_LOG("HStreamOperator::OnCaptureEndedExt_V1_4 captureId:%{public}d videoId:%{public}s "
                     "isDeferredVideo:%{public}d, deferredVideoEnhanceFlag:%{public}u",
