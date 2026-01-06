@@ -22,6 +22,8 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
+constexpr int32_t DEFAULT_USER = 100;
+
 class EventsInfo : public Singleton<EventsInfo> {
     DECLARE_SINGLETON(EventsInfo);
     
@@ -37,6 +39,9 @@ public:
     int32_t GetAvailableMemory();
     void SetMediaLibraryState(MediaLibraryStatus state);
     bool IsMediaBusy();
+    void SetCurrentUser(const int32_t userId);
+    int32_t GetCurrentUser();
+    bool IsAllowedToSchedule(const int32_t userId);
 
 private:
     std::mutex mutex_;
@@ -49,6 +54,8 @@ private:
     CameraSessionStatus cameraState_ {SYSTEM_CAMERA_CLOSED};
     std::mutex mediaStateMutex_;
     MediaLibraryStatus mediaState_ {MEDIA_LIBRARY_IDLE};
+    std::mutex userMutex_;
+    int32_t userId_ {DEFAULT_USER};
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

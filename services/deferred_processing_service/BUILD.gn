@@ -204,6 +204,7 @@ ohos_shared_library("deferred_processing_service") {
       "src/event_monitor/impl/charging_strategy.cpp",
       "src/event_monitor/impl/screen_strategy.cpp",
       "src/event_monitor/impl/thermal_strategy.cpp",
+      "src/event_monitor/impl/user_strategy.cpp",
       "src/post_processor/command/photo_process_command.cpp",
       "src/post_processor/command/service_died_command.cpp",
       "src/post_processor/command/video_process_command.cpp",

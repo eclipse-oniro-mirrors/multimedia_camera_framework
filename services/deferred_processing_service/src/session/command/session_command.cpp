@@ -75,8 +75,9 @@ int32_t DeletePhotoSessionCommand::Executing()
 {
     int32_t ret = Initialize();
     DP_CHECK_RETURN_RET(ret != DP_OK, ret);
-    
-    sessionManager_->DeletePhotoSession(photoInfo_->GetUserId());
+    int32_t userId = photoInfo_->GetUserId();
+    sessionManager_->DeletePhotoSession(userId);
+    DP_CHECK_RETURN_RET(!EventsInfo::GetInstance().IsAllowedToSchedule(userId), ret);
     EventsMonitor::GetInstance().NotifyEventToObervers(EventType::MEDIA_LIBRARY_STATUS_EVENT,
         MEDIA_LIBRARY_DISCONNECTED);
     return DP_OK;
@@ -110,8 +111,9 @@ int32_t DeleteVideoSessionCommand::Executing()
 {
     int32_t ret = Initialize();
     DP_CHECK_RETURN_RET(ret != DP_OK, ret);
-    
-    sessionManager_->DeleteVideoSession(videoInfo_->GetUserId());
+    int32_t userId = videoInfo_->GetUserId();
+    sessionManager_->DeleteVideoSession(userId);
+    DP_CHECK_RETURN_RET(!EventsInfo::GetInstance().IsAllowedToSchedule(userId), ret);
     EventsMonitor::GetInstance().NotifyEventToObervers(EventType::MEDIA_LIBRARY_STATUS_EVENT,
         MEDIA_LIBRARY_DISCONNECTED);
     return DP_OK;

@@ -74,6 +74,11 @@ public:
     void UpdateJobSizeUnLocked();
     void NotifyJobChanged(const std::string& imageId, bool isTryDo);
 
+    inline int32_t GetUserId() const
+    {
+        return userId_;
+    }
+
 protected:
     explicit PhotoJobRepository(const int32_t userId);
 
