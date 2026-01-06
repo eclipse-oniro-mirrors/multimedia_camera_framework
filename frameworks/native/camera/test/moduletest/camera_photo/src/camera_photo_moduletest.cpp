@@ -215,12 +215,13 @@ void TestCaptureCallback::OnPhotoAvailable(const std::shared_ptr<Media::NativeIm
     photoFlag_ = true;
 }
 
+#ifdef CAMERA_CAPTURE_YUV
 void TestCaptureCallback::OnPhotoAvailable(const std::shared_ptr<Media::Picture> picture) const
 {
     MEDIA_DEBUG_LOG("TestCaptureCallback::OnPhotoAvailable (Picture) is called!");
     photoFlag_ = true;
 }
-
+#endif
 void TestCaptureCallback::OnPhotoAssetAvailable(
     const int32_t captureId, const std::string &uri, int32_t cameraShotType, const std::string &burstKey) const
 {
@@ -347,6 +348,709 @@ HWTEST_F(CameraPhotoModuleTest, camera_photo_moduletest_003, TestSize.Level0)
     EXPECT_EQ(thumbnailFlag_, true);
     photoOutput_->UnSetThumbnailAvailableCallback();
     thumbnailFlag_ = false;
+}
+
+/*
+ * Feature: Framework
+ * Function: Test thumbnail callback without commit config
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test thumbnail callback without commit config
+ */
+HWTEST_F(CameraPhotoModuleTest, camera_photo_moduletest_004, TestSize.Level0)
+{
+    EXPECT_EQ(CreateYuvPhotoOutput(), SUCCESS);
+    EXPECT_EQ(CreateYuvPreviewOutput(), SUCCESS);
+    EXPECT_EQ(photoOutput_->IsQuickThumbnailSupported(), SESSION_NOT_RUNNING);
+
+    EXPECT_EQ(session_->BeginConfig(), SUCCESS);
+    EXPECT_EQ(session_->AddInput((sptr<CaptureInput> &)input_), SUCCESS);
+    EXPECT_EQ(session_->AddOutput((sptr<CaptureOutput> &)previewOutput_), SUCCESS);
+    EXPECT_EQ(session_->AddOutput((sptr<CaptureOutput> &)photoOutput_), SUCCESS);
+
+    CHECK_RETURN_ELOG(photoOutput_->IsQuickThumbnailSupported() != SUCCESS, "device not support!");
+    EXPECT_EQ(photoOutput_->SetThumbnail(true), SUCCESS);
+    std::shared_ptr<TestCaptureCallback> callback = std::make_shared<TestCaptureCallback>();
+    photoOutput_->SetThumbnailCallback(callback);
+    photoOutput_->SetPhotoAssetAvailableCallback(callback);
+    callbackFlag_ |= CAPTURE_PHOTO_ASSET;
+    photoOutput_->SetCallbackFlag(callbackFlag_);
+
+    sleep(WAIT_TIME_AFTER_START);
+
+    EXPECT_EQ(photoOutput_->Capture(), SESSION_NOT_RUNNING);
+    sleep(WAIT_TIME_AFTER_CAPTURE);
+
+    EXPECT_EQ(photoAssetFlag_, false);
+    photoOutput_->UnSetPhotoAssetAvailableCallback();
+    EXPECT_EQ(thumbnailFlag_, false);
+    photoOutput_->UnSetThumbnailAvailableCallback();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test thumbnail callback without start stream
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test thumbnail callback without start stream
+ */
+HWTEST_F(CameraPhotoModuleTest, camera_photo_moduletest_005, TestSize.Level0)
+{
+    EXPECT_EQ(CreateYuvPhotoOutput(), SUCCESS);
+    EXPECT_EQ(CreateYuvPreviewOutput(), SUCCESS);
+    EXPECT_EQ(photoOutput_->IsQuickThumbnailSupported(), SESSION_NOT_RUNNING);
+
+    EXPECT_EQ(session_->BeginConfig(), SUCCESS);
+    EXPECT_EQ(session_->AddInput((sptr<CaptureInput> &)input_), SUCCESS);
+    EXPECT_EQ(session_->AddOutput((sptr<CaptureOutput> &)previewOutput_), SUCCESS);
+    EXPECT_EQ(session_->AddOutput((sptr<CaptureOutput> &)photoOutput_), SUCCESS);
+
+    CHECK_RETURN_ELOG(photoOutput_->IsQuickThumbnailSupported() != SUCCESS, "device not support!");
+    EXPECT_EQ(photoOutput_->SetThumbnail(true), SUCCESS);
+    std::shared_ptr<TestCaptureCallback> callback = std::make_shared<TestCaptureCallback>();
+    photoOutput_->SetThumbnailCallback(callback);
+    photoOutput_->SetPhotoAssetAvailableCallback(callback);
+    callbackFlag_ |= CAPTURE_PHOTO_ASSET;
+    photoOutput_->SetCallbackFlag(callbackFlag_);
+    EXPECT_EQ(session_->CommitConfig(), SUCCESS);
+    sleep(WAIT_TIME_AFTER_START);
+
+    EXPECT_EQ(photoOutput_->Capture(), SUCCESS);
+    sleep(WAIT_TIME_AFTER_CAPTURE);
+
+    EXPECT_EQ(photoAssetFlag_, true);
+    photoOutput_->UnSetPhotoAssetAvailableCallback();
+    photoAssetFlag_ = false;
+    EXPECT_EQ(thumbnailFlag_, true);
+    photoOutput_->UnSetThumbnailAvailableCallback();
+    thumbnailFlag_ = false;
+}
+
+/*
+ * Feature: Framework
+ * Function: Test thumbnail callback without start stream
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test thumbnail callback without start stream
+ */
+HWTEST_F(CameraPhotoModuleTest, camera_photo_moduletest_006, TestSize.Level0)
+{
+    EXPECT_EQ(CreateYuvPhotoOutput(), SUCCESS);
+    EXPECT_EQ(CreateYuvPreviewOutput(), SUCCESS);
+    EXPECT_EQ(photoOutput_->IsQuickThumbnailSupported(), SESSION_NOT_RUNNING);
+
+    EXPECT_EQ(session_->BeginConfig(), SUCCESS);
+    EXPECT_EQ(session_->AddInput((sptr<CaptureInput> &)input_), SUCCESS);
+    EXPECT_EQ(session_->AddOutput((sptr<CaptureOutput> &)previewOutput_), SUCCESS);
+    EXPECT_EQ(session_->AddOutput((sptr<CaptureOutput> &)photoOutput_), SUCCESS);
+
+    CHECK_RETURN_ELOG(photoOutput_->IsQuickThumbnailSupported() != SUCCESS, "device not support!");
+    EXPECT_EQ(photoOutput_->SetThumbnail(true), SUCCESS);
+    std::shared_ptr<TestCaptureCallback> callback = std::make_shared<TestCaptureCallback>();
+    photoOutput_->SetThumbnailCallback(callback);
+    photoOutput_->SetPhotoAssetAvailableCallback(callback);
+    callbackFlag_ |= CAPTURE_PHOTO_ASSET;
+    photoOutput_->SetCallbackFlag(callbackFlag_);
+    EXPECT_EQ(session_->CommitConfig(), SUCCESS);
+    EXPECT_EQ(session_->Start(), SUCCESS);
+    sleep(WAIT_TIME_AFTER_START);
+
+    EXPECT_EQ(photoOutput_->Capture(), SUCCESS);
+    EXPECT_EQ(photoOutput_->Capture(), OPERATION_NOT_ALLOWED);
+
+    EXPECT_EQ(photoAssetFlag_, false);
+    photoOutput_->UnSetPhotoAssetAvailableCallback();
+    photoAssetFlag_ = false;
+    EXPECT_EQ(thumbnailFlag_, false);
+    photoOutput_->UnSetThumbnailAvailableCallback();
+    thumbnailFlag_ = false;
+}
+
+/*
+ * Feature: Framework
+ * Function: Test BurstCapture callback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test BurstCapture callback
+ */
+HWTEST_F(CameraPhotoModuleTest, camera_photo_moduletest_007, TestSize.Level0)
+{
+    EXPECT_EQ(CreateYuvPhotoOutput(), SUCCESS);
+    EXPECT_EQ(CreateYuvPreviewOutput(), SUCCESS);
+    EXPECT_EQ(photoOutput_->IsQuickThumbnailSupported(), SESSION_NOT_RUNNING);
+
+    EXPECT_EQ(session_->BeginConfig(), SUCCESS);
+    EXPECT_EQ(session_->AddInput((sptr<CaptureInput> &)input_), SUCCESS);
+    EXPECT_EQ(session_->AddOutput((sptr<CaptureOutput> &)previewOutput_), SUCCESS);
+    EXPECT_EQ(session_->AddOutput((sptr<CaptureOutput> &)photoOutput_), SUCCESS);
+
+    CHECK_RETURN_ELOG(photoOutput_->IsQuickThumbnailSupported() != SUCCESS, "device not support!");
+    EXPECT_EQ(photoOutput_->SetThumbnail(true), SUCCESS);
+    std::shared_ptr<TestCaptureCallback> callback = std::make_shared<TestCaptureCallback>();
+    photoOutput_->SetThumbnailCallback(callback);
+    photoOutput_->SetPhotoAssetAvailableCallback(callback);
+    callbackFlag_ |= CAPTURE_PHOTO_ASSET;
+    photoOutput_->SetCallbackFlag(callbackFlag_);
+    EXPECT_EQ(session_->CommitConfig(), SUCCESS);
+    EXPECT_EQ(session_->Start(), SUCCESS);
+    sleep(WAIT_TIME_AFTER_START);
+
+    EXPECT_EQ(photoOutput_->Capture(), SUCCESS);
+    sleep(WAIT_TIME_AFTER_CAPTURE);
+    EXPECT_EQ(photoOutput_->CancelCapture(), SUCCESS);
+
+    EXPECT_EQ(photoAssetFlag_, true);
+    photoOutput_->UnSetPhotoAssetAvailableCallback();
+    photoAssetFlag_ = false;
+    EXPECT_EQ(thumbnailFlag_, true);
+    photoOutput_->UnSetThumbnailAvailableCallback();
+    thumbnailFlag_ = false;
+}
+
+/*
+ * Feature: Framework
+ * Function: Test BurstCapture callback without commitConfig
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test BurstCapture callback without commitConfig
+ */
+HWTEST_F(CameraPhotoModuleTest, camera_photo_moduletest_008, TestSize.Level0)
+{
+    EXPECT_EQ(CreateYuvPhotoOutput(), SUCCESS);
+    EXPECT_EQ(CreateYuvPreviewOutput(), SUCCESS);
+    EXPECT_EQ(photoOutput_->IsQuickThumbnailSupported(), SESSION_NOT_RUNNING);
+
+    EXPECT_EQ(session_->BeginConfig(), SUCCESS);
+    EXPECT_EQ(session_->AddInput((sptr<CaptureInput> &)input_), SUCCESS);
+    EXPECT_EQ(session_->AddOutput((sptr<CaptureOutput> &)previewOutput_), SUCCESS);
+    EXPECT_EQ(session_->AddOutput((sptr<CaptureOutput> &)photoOutput_), SUCCESS);
+
+    CHECK_RETURN_ELOG(photoOutput_->IsQuickThumbnailSupported() != SUCCESS, "device not support!");
+    EXPECT_EQ(photoOutput_->SetThumbnail(true), SUCCESS);
+    std::shared_ptr<TestCaptureCallback> callback = std::make_shared<TestCaptureCallback>();
+    photoOutput_->SetThumbnailCallback(callback);
+    photoOutput_->SetPhotoAssetAvailableCallback(callback);
+    callbackFlag_ |= CAPTURE_PHOTO_ASSET;
+    photoOutput_->SetCallbackFlag(callbackFlag_);
+    sleep(WAIT_TIME_AFTER_START);
+
+    EXPECT_EQ(photoOutput_->Capture(), 7400104);
+    sleep(WAIT_TIME_AFTER_CAPTURE);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test BurstCapture callback without start
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test BurstCapture callback without start
+ */
+HWTEST_F(CameraPhotoModuleTest, camera_photo_moduletest_009, TestSize.Level0)
+{
+    EXPECT_EQ(CreateYuvPhotoOutput(), SUCCESS);
+    EXPECT_EQ(CreateYuvPreviewOutput(), SUCCESS);
+    EXPECT_EQ(photoOutput_->IsQuickThumbnailSupported(), SESSION_NOT_RUNNING);
+
+    EXPECT_EQ(session_->BeginConfig(), SUCCESS);
+    EXPECT_EQ(session_->AddInput((sptr<CaptureInput> &)input_), SUCCESS);
+    EXPECT_EQ(session_->AddOutput((sptr<CaptureOutput> &)previewOutput_), SUCCESS);
+    EXPECT_EQ(session_->AddOutput((sptr<CaptureOutput> &)photoOutput_), SUCCESS);
+
+    CHECK_RETURN_ELOG(photoOutput_->IsQuickThumbnailSupported() != SUCCESS, "device not support!");
+    EXPECT_EQ(photoOutput_->SetThumbnail(true), SUCCESS);
+    std::shared_ptr<TestCaptureCallback> callback = std::make_shared<TestCaptureCallback>();
+    photoOutput_->SetThumbnailCallback(callback);
+    photoOutput_->SetPhotoAssetAvailableCallback(callback);
+    callbackFlag_ |= CAPTURE_PHOTO_ASSET;
+    photoOutput_->SetCallbackFlag(callbackFlag_);
+    EXPECT_EQ(session_->CommitConfig(), SUCCESS);
+    sleep(WAIT_TIME_AFTER_START);
+
+    EXPECT_EQ(photoOutput_->Capture(), SUCCESS);
+    sleep(WAIT_TIME_AFTER_CAPTURE);
+    EXPECT_EQ(photoOutput_->CancelCapture(), SUCCESS);
+
+    EXPECT_EQ(photoAssetFlag_, true);
+    photoOutput_->UnSetPhotoAssetAvailableCallback();
+    photoAssetFlag_ = false;
+    EXPECT_EQ(thumbnailFlag_, true);
+    photoOutput_->UnSetThumbnailAvailableCallback();
+    thumbnailFlag_ = false;
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CancelCapture callback without commit config
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CancelCapture callback without commit config
+ */
+HWTEST_F(CameraPhotoModuleTest, camera_photo_moduletest_010, TestSize.Level0)
+{
+    EXPECT_EQ(CreateYuvPhotoOutput(), SUCCESS);
+    EXPECT_EQ(CreateYuvPreviewOutput(), SUCCESS);
+    EXPECT_EQ(photoOutput_->IsQuickThumbnailSupported(), SESSION_NOT_RUNNING);
+
+    EXPECT_EQ(session_->BeginConfig(), SUCCESS);
+    EXPECT_EQ(session_->AddInput((sptr<CaptureInput> &)input_), SUCCESS);
+    EXPECT_EQ(session_->AddOutput((sptr<CaptureOutput> &)previewOutput_), SUCCESS);
+    EXPECT_EQ(session_->AddOutput((sptr<CaptureOutput> &)photoOutput_), SUCCESS);
+
+    CHECK_RETURN_ELOG(photoOutput_->IsQuickThumbnailSupported() != SUCCESS, "device not support!");
+    EXPECT_EQ(photoOutput_->SetThumbnail(true), SUCCESS);
+    std::shared_ptr<TestCaptureCallback> callback = std::make_shared<TestCaptureCallback>();
+    photoOutput_->SetThumbnailCallback(callback);
+    photoOutput_->SetPhotoAssetAvailableCallback(callback);
+    callbackFlag_ |= CAPTURE_PHOTO_ASSET;
+    photoOutput_->SetCallbackFlag(callbackFlag_);
+    sleep(WAIT_TIME_AFTER_START);
+
+    EXPECT_EQ(photoOutput_->CancelCapture(), 7400104);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CancelCapture callback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CancelCapture callback
+ */
+HWTEST_F(CameraPhotoModuleTest, camera_photo_moduletest_011, TestSize.Level0)
+{
+    EXPECT_EQ(CreateYuvPhotoOutput(), SUCCESS);
+    EXPECT_EQ(CreateYuvPreviewOutput(), SUCCESS);
+    EXPECT_EQ(photoOutput_->IsQuickThumbnailSupported(), SESSION_NOT_RUNNING);
+
+    EXPECT_EQ(session_->BeginConfig(), SUCCESS);
+    EXPECT_EQ(session_->AddInput((sptr<CaptureInput> &)input_), SUCCESS);
+    EXPECT_EQ(session_->AddOutput((sptr<CaptureOutput> &)previewOutput_), SUCCESS);
+    EXPECT_EQ(session_->AddOutput((sptr<CaptureOutput> &)photoOutput_), SUCCESS);
+
+    CHECK_RETURN_ELOG(photoOutput_->IsQuickThumbnailSupported() != SUCCESS, "device not support!");
+    EXPECT_EQ(photoOutput_->SetThumbnail(true), SUCCESS);
+    std::shared_ptr<TestCaptureCallback> callback = std::make_shared<TestCaptureCallback>();
+    photoOutput_->SetThumbnailCallback(callback);
+    photoOutput_->SetPhotoAssetAvailableCallback(callback);
+    callbackFlag_ |= CAPTURE_PHOTO_ASSET;
+    photoOutput_->SetCallbackFlag(callbackFlag_);
+    EXPECT_EQ(session_->CommitConfig(), SUCCESS);
+    EXPECT_EQ(session_->Start(), SUCCESS);
+    sleep(WAIT_TIME_AFTER_START);
+
+    EXPECT_EQ(photoOutput_->CancelCapture(), SUCCESS);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test EnableAutoHighQualityPhoto callback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test EnableAutoHighQualityPhoto callback
+ */
+HWTEST_F(CameraPhotoModuleTest, camera_photo_moduletest_012, TestSize.Level0)
+{
+    EXPECT_EQ(CreateYuvPhotoOutput(), SUCCESS);
+    EXPECT_EQ(CreateYuvPreviewOutput(), SUCCESS);
+    EXPECT_EQ(photoOutput_->IsQuickThumbnailSupported(), SESSION_NOT_RUNNING);
+
+    EXPECT_EQ(session_->BeginConfig(), SUCCESS);
+    EXPECT_EQ(session_->AddInput((sptr<CaptureInput> &)input_), SUCCESS);
+    EXPECT_EQ(session_->AddOutput((sptr<CaptureOutput> &)previewOutput_), SUCCESS);
+    EXPECT_EQ(session_->AddOutput((sptr<CaptureOutput> &)photoOutput_), SUCCESS);
+
+    CHECK_RETURN_ELOG(photoOutput_->IsQuickThumbnailSupported() != SUCCESS, "device not support!");
+    EXPECT_EQ(photoOutput_->SetThumbnail(true), SUCCESS);
+    std::shared_ptr<TestCaptureCallback> callback = std::make_shared<TestCaptureCallback>();
+    photoOutput_->SetThumbnailCallback(callback);
+    photoOutput_->SetPhotoAssetAvailableCallback(callback);
+    callbackFlag_ |= CAPTURE_PHOTO_ASSET;
+    photoOutput_->SetCallbackFlag(callbackFlag_);
+    EXPECT_EQ(session_->CommitConfig(), SUCCESS);
+    EXPECT_EQ(session_->Start(), SUCCESS);
+    sleep(WAIT_TIME_AFTER_START);
+
+    int32_t isAutoHigh = -1;
+    EXPECT_EQ(photoOutput_->IsAutoHighQualityPhotoSupported(isAutoHigh), SUCCESS);
+    if (isAutoHigh == 0) {
+        EXPECT_EQ(photoOutput_->EnableAutoHighQualityPhoto(true), SUCCESS);
+    }
+}
+
+/*
+ * Feature: Framework
+ * Function: Test EnableAutoHighQualityPhoto callback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test EnableAutoHighQualityPhoto callback
+ */
+HWTEST_F(CameraPhotoModuleTest, camera_photo_moduletest_013, TestSize.Level0)
+{
+    EXPECT_EQ(CreateYuvPhotoOutput(), SUCCESS);
+    EXPECT_EQ(CreateYuvPreviewOutput(), SUCCESS);
+    EXPECT_EQ(photoOutput_->IsQuickThumbnailSupported(), SESSION_NOT_RUNNING);
+
+    EXPECT_EQ(session_->BeginConfig(), SUCCESS);
+    EXPECT_EQ(session_->AddInput((sptr<CaptureInput> &)input_), SUCCESS);
+    EXPECT_EQ(session_->AddOutput((sptr<CaptureOutput> &)previewOutput_), SUCCESS);
+    EXPECT_EQ(session_->AddOutput((sptr<CaptureOutput> &)photoOutput_), SUCCESS);
+
+    CHECK_RETURN_ELOG(photoOutput_->IsQuickThumbnailSupported() != SUCCESS, "device not support!");
+    EXPECT_EQ(photoOutput_->SetThumbnail(true), SUCCESS);
+    std::shared_ptr<TestCaptureCallback> callback = std::make_shared<TestCaptureCallback>();
+    photoOutput_->SetThumbnailCallback(callback);
+    photoOutput_->SetPhotoAssetAvailableCallback(callback);
+    callbackFlag_ |= CAPTURE_PHOTO_ASSET;
+    photoOutput_->SetCallbackFlag(callbackFlag_);
+    EXPECT_EQ(session_->CommitConfig(), SUCCESS);
+    EXPECT_EQ(session_->Start(), SUCCESS);
+    sleep(WAIT_TIME_AFTER_START);
+
+    int32_t isAutoHigh = -1;
+    EXPECT_EQ(photoOutput_->IsAutoHighQualityPhotoSupported(isAutoHigh), SUCCESS);
+    if (isAutoHigh == 0) {
+        EXPECT_EQ(photoOutput_->EnableAutoHighQualityPhoto(false), SUCCESS);
+    }
+}
+
+/*
+ * Feature: Framework
+ * Function: Test IsOfflineSupported callback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsOfflineSupported callback
+ */
+HWTEST_F(CameraPhotoModuleTest, camera_photo_moduletest_014, TestSize.Level0)
+{
+    EXPECT_EQ(CreateYuvPhotoOutput(), SUCCESS);
+    EXPECT_EQ(CreateYuvPreviewOutput(), SUCCESS);
+    EXPECT_EQ(photoOutput_->IsQuickThumbnailSupported(), SESSION_NOT_RUNNING);
+
+    EXPECT_EQ(session_->BeginConfig(), SUCCESS);
+    EXPECT_EQ(session_->AddInput((sptr<CaptureInput> &)input_), SUCCESS);
+    EXPECT_EQ(session_->AddOutput((sptr<CaptureOutput> &)previewOutput_), SUCCESS);
+    EXPECT_EQ(session_->AddOutput((sptr<CaptureOutput> &)photoOutput_), SUCCESS);
+
+    CHECK_RETURN_ELOG(photoOutput_->IsQuickThumbnailSupported() != SUCCESS, "device not support!");
+    EXPECT_EQ(photoOutput_->SetThumbnail(true), SUCCESS);
+    std::shared_ptr<TestCaptureCallback> callback = std::make_shared<TestCaptureCallback>();
+    photoOutput_->SetThumbnailCallback(callback);
+    photoOutput_->SetPhotoAssetAvailableCallback(callback);
+    callbackFlag_ |= CAPTURE_PHOTO_ASSET;
+    photoOutput_->SetCallbackFlag(callbackFlag_);
+    EXPECT_EQ(session_->CommitConfig(), SUCCESS);
+    EXPECT_EQ(session_->Start(), SUCCESS);
+    sleep(WAIT_TIME_AFTER_START);
+
+    bool offlineSup = false;
+    offlineSup = photoOutput_->IsOfflineSupported();
+    if (offlineSup) {
+        EXPECT_EQ(photoOutput_->EnableOfflinePhoto(), SUCCESS);
+    }
+}
+
+/*
+ * Feature: Framework
+ * Function: Test IsOfflineSupported callback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsOfflineSupported callback
+ */
+HWTEST_F(CameraPhotoModuleTest, camera_photo_moduletest_015, TestSize.Level0)
+{
+    EXPECT_EQ(CreateYuvPhotoOutput(), SUCCESS);
+    EXPECT_EQ(CreateYuvPreviewOutput(), SUCCESS);
+    EXPECT_EQ(photoOutput_->IsQuickThumbnailSupported(), SESSION_NOT_RUNNING);
+
+    EXPECT_EQ(session_->BeginConfig(), SUCCESS);
+    EXPECT_EQ(session_->AddInput((sptr<CaptureInput> &)input_), SUCCESS);
+    EXPECT_EQ(session_->AddOutput((sptr<CaptureOutput> &)previewOutput_), SUCCESS);
+    EXPECT_EQ(session_->AddOutput((sptr<CaptureOutput> &)photoOutput_), SUCCESS);
+
+    CHECK_RETURN_ELOG(photoOutput_->IsQuickThumbnailSupported() != SUCCESS, "device not support!");
+    EXPECT_EQ(photoOutput_->SetThumbnail(true), SUCCESS);
+    std::shared_ptr<TestCaptureCallback> callback = std::make_shared<TestCaptureCallback>();
+    photoOutput_->SetThumbnailCallback(callback);
+    photoOutput_->SetPhotoAssetAvailableCallback(callback);
+    callbackFlag_ |= CAPTURE_PHOTO_ASSET;
+    photoOutput_->SetCallbackFlag(callbackFlag_);
+    EXPECT_EQ(session_->CommitConfig(), SUCCESS);
+    EXPECT_EQ(session_->Start(), SUCCESS);
+    sleep(WAIT_TIME_AFTER_START);
+
+    bool offlineSup = false;
+    offlineSup = photoOutput_->IsOfflineSupported();
+    if (offlineSup) {
+        EXPECT_EQ(photoOutput_->EnableOfflinePhoto(), SUCCESS);
+    }
+    EXPECT_EQ(photoOutput_->IsHasEnableOfflinePhoto(), offlineSup);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test IsOfflineSupported callback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsOfflineSupported callback
+ */
+HWTEST_F(CameraPhotoModuleTest, camera_photo_moduletest_016, TestSize.Level0)
+{
+    EXPECT_EQ(CreateYuvPhotoOutput(), SUCCESS);
+    EXPECT_EQ(CreateYuvPreviewOutput(), SUCCESS);
+    EXPECT_EQ(photoOutput_->IsQuickThumbnailSupported(), SESSION_NOT_RUNNING);
+
+    EXPECT_EQ(session_->BeginConfig(), SUCCESS);
+    EXPECT_EQ(session_->AddInput((sptr<CaptureInput> &)input_), SUCCESS);
+    EXPECT_EQ(session_->AddOutput((sptr<CaptureOutput> &)previewOutput_), SUCCESS);
+    EXPECT_EQ(session_->AddOutput((sptr<CaptureOutput> &)photoOutput_), SUCCESS);
+
+    CHECK_RETURN_ELOG(photoOutput_->IsQuickThumbnailSupported() != SUCCESS, "device not support!");
+    EXPECT_EQ(photoOutput_->SetThumbnail(true), SUCCESS);
+    std::shared_ptr<TestCaptureCallback> callback = std::make_shared<TestCaptureCallback>();
+    photoOutput_->SetThumbnailCallback(callback);
+    photoOutput_->SetPhotoAssetAvailableCallback(callback);
+    callbackFlag_ |= CAPTURE_PHOTO_ASSET;
+    photoOutput_->SetCallbackFlag(callbackFlag_);
+    EXPECT_EQ(session_->CommitConfig(), SUCCESS);
+    EXPECT_EQ(session_->Start(), SUCCESS);
+    sleep(WAIT_TIME_AFTER_START);
+
+    bool isMotionBoostSup = false;
+    EXPECT_EQ(photoOutput_->IsAutoMotionBoostDeliverySupported(isMotionBoostSup), SUCCESS);
+    if (isMotionBoostSup) {
+        EXPECT_EQ(photoOutput_->EnableAutoMotionBoostDelivery(true), SUCCESS);
+    }
+}
+
+/*
+ * Feature: Framework
+ * Function: Test IsOfflineSupported callback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsOfflineSupported callback
+ */
+HWTEST_F(CameraPhotoModuleTest, camera_photo_moduletest_017, TestSize.Level0)
+{
+    EXPECT_EQ(CreateYuvPhotoOutput(), SUCCESS);
+    EXPECT_EQ(CreateYuvPreviewOutput(), SUCCESS);
+    EXPECT_EQ(photoOutput_->IsQuickThumbnailSupported(), SESSION_NOT_RUNNING);
+
+    EXPECT_EQ(session_->BeginConfig(), SUCCESS);
+    EXPECT_EQ(session_->AddInput((sptr<CaptureInput> &)input_), SUCCESS);
+    EXPECT_EQ(session_->AddOutput((sptr<CaptureOutput> &)previewOutput_), SUCCESS);
+    EXPECT_EQ(session_->AddOutput((sptr<CaptureOutput> &)photoOutput_), SUCCESS);
+
+    CHECK_RETURN_ELOG(photoOutput_->IsQuickThumbnailSupported() != SUCCESS, "device not support!");
+    EXPECT_EQ(photoOutput_->SetThumbnail(true), SUCCESS);
+    std::shared_ptr<TestCaptureCallback> callback = std::make_shared<TestCaptureCallback>();
+    photoOutput_->SetThumbnailCallback(callback);
+    photoOutput_->SetPhotoAssetAvailableCallback(callback);
+    callbackFlag_ |= CAPTURE_PHOTO_ASSET;
+    photoOutput_->SetCallbackFlag(callbackFlag_);
+    EXPECT_EQ(session_->CommitConfig(), SUCCESS);
+    EXPECT_EQ(session_->Start(), SUCCESS);
+    sleep(WAIT_TIME_AFTER_START);
+
+    bool isMotionBoostSup = false;
+    EXPECT_EQ(photoOutput_->IsAutoMotionBoostDeliverySupported(isMotionBoostSup), SUCCESS);
+    if (isMotionBoostSup) {
+        EXPECT_EQ(photoOutput_->EnableAutoMotionBoostDelivery(false), SUCCESS);
+    }
+}
+
+/*
+ * Feature: Framework
+ * Function: Test IsOfflineSupported callback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsOfflineSupported callback
+ */
+HWTEST_F(CameraPhotoModuleTest, camera_photo_moduletest_018, TestSize.Level0)
+{
+    EXPECT_EQ(CreateYuvPhotoOutput(), SUCCESS);
+    EXPECT_EQ(CreateYuvPreviewOutput(), SUCCESS);
+    EXPECT_EQ(photoOutput_->IsQuickThumbnailSupported(), SESSION_NOT_RUNNING);
+
+    EXPECT_EQ(session_->BeginConfig(), SUCCESS);
+    EXPECT_EQ(session_->AddInput((sptr<CaptureInput> &)input_), SUCCESS);
+    EXPECT_EQ(session_->AddOutput((sptr<CaptureOutput> &)previewOutput_), SUCCESS);
+    EXPECT_EQ(session_->AddOutput((sptr<CaptureOutput> &)photoOutput_), SUCCESS);
+
+    CHECK_RETURN_ELOG(photoOutput_->IsQuickThumbnailSupported() != SUCCESS, "device not support!");
+    EXPECT_EQ(photoOutput_->SetThumbnail(true), SUCCESS);
+    std::shared_ptr<TestCaptureCallback> callback = std::make_shared<TestCaptureCallback>();
+    photoOutput_->SetThumbnailCallback(callback);
+    photoOutput_->SetPhotoAssetAvailableCallback(callback);
+    callbackFlag_ |= CAPTURE_PHOTO_ASSET;
+    photoOutput_->SetCallbackFlag(callbackFlag_);
+    EXPECT_EQ(session_->CommitConfig(), SUCCESS);
+    EXPECT_EQ(session_->Start(), SUCCESS);
+    sleep(WAIT_TIME_AFTER_START);
+
+    bool isSup = false;
+    EXPECT_EQ(photoOutput_->IsAutoBokehDataDeliverySupported(isSup), SUCCESS);
+    if (isSup) {
+        EXPECT_EQ(photoOutput_->EnableAutoBokehDataDelivery(true), SUCCESS);
+    }
+}
+
+/*
+ * Feature: Framework
+ * Function: Test IsOfflineSupported callback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsOfflineSupported callback
+ */
+HWTEST_F(CameraPhotoModuleTest, camera_photo_moduletest_019, TestSize.Level0)
+{
+    EXPECT_EQ(CreateYuvPhotoOutput(), SUCCESS);
+    EXPECT_EQ(CreateYuvPreviewOutput(), SUCCESS);
+    EXPECT_EQ(photoOutput_->IsQuickThumbnailSupported(), SESSION_NOT_RUNNING);
+
+    EXPECT_EQ(session_->BeginConfig(), SUCCESS);
+    EXPECT_EQ(session_->AddInput((sptr<CaptureInput> &)input_), SUCCESS);
+    EXPECT_EQ(session_->AddOutput((sptr<CaptureOutput> &)previewOutput_), SUCCESS);
+    EXPECT_EQ(session_->AddOutput((sptr<CaptureOutput> &)photoOutput_), SUCCESS);
+
+    CHECK_RETURN_ELOG(photoOutput_->IsQuickThumbnailSupported() != SUCCESS, "device not support!");
+    EXPECT_EQ(photoOutput_->SetThumbnail(true), SUCCESS);
+    std::shared_ptr<TestCaptureCallback> callback = std::make_shared<TestCaptureCallback>();
+    photoOutput_->SetThumbnailCallback(callback);
+    photoOutput_->SetPhotoAssetAvailableCallback(callback);
+    callbackFlag_ |= CAPTURE_PHOTO_ASSET;
+    photoOutput_->SetCallbackFlag(callbackFlag_);
+    EXPECT_EQ(session_->CommitConfig(), SUCCESS);
+    EXPECT_EQ(session_->Start(), SUCCESS);
+    sleep(WAIT_TIME_AFTER_START);
+
+    bool isSup = false;
+    EXPECT_EQ(photoOutput_->IsAutoBokehDataDeliverySupported(isSup), SUCCESS);
+    if (isSup) {
+        EXPECT_EQ(photoOutput_->EnableAutoBokehDataDelivery(false), SUCCESS);
+    }
+}
+
+/*
+ * Feature: Framework
+ * Function: Test IsOfflineSupported callback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsOfflineSupported callback
+ */
+HWTEST_F(CameraPhotoModuleTest, camera_photo_moduletest_020, TestSize.Level0)
+{
+    EXPECT_EQ(CreateYuvPhotoOutput(), SUCCESS);
+    EXPECT_EQ(CreateYuvPreviewOutput(), SUCCESS);
+    EXPECT_EQ(photoOutput_->IsQuickThumbnailSupported(), SESSION_NOT_RUNNING);
+
+    EXPECT_EQ(session_->BeginConfig(), SUCCESS);
+    EXPECT_EQ(session_->AddInput((sptr<CaptureInput> &)input_), SUCCESS);
+    EXPECT_EQ(session_->AddOutput((sptr<CaptureOutput> &)previewOutput_), SUCCESS);
+    EXPECT_EQ(session_->AddOutput((sptr<CaptureOutput> &)photoOutput_), SUCCESS);
+
+    CHECK_RETURN_ELOG(photoOutput_->IsQuickThumbnailSupported() != SUCCESS, "device not support!");
+    EXPECT_EQ(photoOutput_->SetThumbnail(true), SUCCESS);
+    std::shared_ptr<TestCaptureCallback> callback = std::make_shared<TestCaptureCallback>();
+    photoOutput_->SetThumbnailCallback(callback);
+    photoOutput_->SetPhotoAssetAvailableCallback(callback);
+    callbackFlag_ |= CAPTURE_PHOTO_ASSET;
+    photoOutput_->SetCallbackFlag(callbackFlag_);
+    EXPECT_EQ(session_->CommitConfig(), SUCCESS);
+    EXPECT_EQ(session_->Start(), SUCCESS);
+    sleep(WAIT_TIME_AFTER_START);
+
+    bool isSup = false;
+    isSup = photoOutput_->IsMirrorSupported();
+    if (isSup) {
+        EXPECT_EQ(photoOutput_->EnableMirror(true), SUCCESS);
+    }
+}
+
+/*
+ * Feature: Framework
+ * Function: Test IsOfflineSupported callback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsOfflineSupported callback
+ */
+HWTEST_F(CameraPhotoModuleTest, camera_photo_moduletest_021, TestSize.Level0)
+{
+    EXPECT_EQ(CreateYuvPhotoOutput(), SUCCESS);
+    EXPECT_EQ(CreateYuvPreviewOutput(), SUCCESS);
+    EXPECT_EQ(photoOutput_->IsQuickThumbnailSupported(), SESSION_NOT_RUNNING);
+
+    EXPECT_EQ(session_->BeginConfig(), SUCCESS);
+    EXPECT_EQ(session_->AddInput((sptr<CaptureInput> &)input_), SUCCESS);
+    EXPECT_EQ(session_->AddOutput((sptr<CaptureOutput> &)previewOutput_), SUCCESS);
+    EXPECT_EQ(session_->AddOutput((sptr<CaptureOutput> &)photoOutput_), SUCCESS);
+
+    CHECK_RETURN_ELOG(photoOutput_->IsQuickThumbnailSupported() != SUCCESS, "device not support!");
+    EXPECT_EQ(photoOutput_->SetThumbnail(true), SUCCESS);
+    std::shared_ptr<TestCaptureCallback> callback = std::make_shared<TestCaptureCallback>();
+    photoOutput_->SetThumbnailCallback(callback);
+    photoOutput_->SetPhotoAssetAvailableCallback(callback);
+    callbackFlag_ |= CAPTURE_PHOTO_ASSET;
+    photoOutput_->SetCallbackFlag(callbackFlag_);
+    EXPECT_EQ(session_->CommitConfig(), SUCCESS);
+    EXPECT_EQ(session_->Start(), SUCCESS);
+    sleep(WAIT_TIME_AFTER_START);
+
+    bool isSup = false;
+    isSup = photoOutput_->IsMirrorSupported();
+    if (isSup) {
+        EXPECT_EQ(photoOutput_->EnableMirror(false), SUCCESS);
+    }
+}
+
+/*
+ * Feature: Framework
+ * Function: Test IsOfflineSupported callback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsOfflineSupported callback
+ */
+HWTEST_F(CameraPhotoModuleTest, camera_photo_moduletest_022, TestSize.Level0)
+{
+    EXPECT_EQ(CreateYuvPhotoOutput(), SUCCESS);
+    EXPECT_EQ(CreateYuvPreviewOutput(), SUCCESS);
+    EXPECT_EQ(photoOutput_->IsQuickThumbnailSupported(), SESSION_NOT_RUNNING);
+
+    EXPECT_EQ(session_->BeginConfig(), SUCCESS);
+    EXPECT_EQ(session_->AddInput((sptr<CaptureInput> &)input_), SUCCESS);
+    EXPECT_EQ(session_->AddOutput((sptr<CaptureOutput> &)previewOutput_), SUCCESS);
+    EXPECT_EQ(session_->AddOutput((sptr<CaptureOutput> &)photoOutput_), SUCCESS);
+
+    CHECK_RETURN_ELOG(photoOutput_->IsQuickThumbnailSupported() != SUCCESS, "device not support!");
+    EXPECT_EQ(photoOutput_->SetThumbnail(true), SUCCESS);
+    std::shared_ptr<TestCaptureCallback> callback = std::make_shared<TestCaptureCallback>();
+    photoOutput_->SetThumbnailCallback(callback);
+    photoOutput_->SetPhotoAssetAvailableCallback(callback);
+    callbackFlag_ |= CAPTURE_PHOTO_ASSET;
+    photoOutput_->SetCallbackFlag(callbackFlag_);
+    EXPECT_EQ(session_->CommitConfig(), SUCCESS);
+    EXPECT_EQ(session_->Start(), SUCCESS);
+    sleep(WAIT_TIME_AFTER_START);
+
+    bool isSup = false;
+    EXPECT_EQ(photoOutput_->IsRawDeliverySupported(isSup), SUCCESS);
 }
 }  // namespace CameraStandard
 }  // namespace OHOS

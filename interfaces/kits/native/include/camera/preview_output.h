@@ -243,6 +243,19 @@ Camera_ErrorCode OH_PreviewOutput_GetActiveFrameRate(Camera_PreviewOutput* previ
     Camera_FrameRateRange* frameRateRange);
 
 /**
+ * @brief Gets the preview rotation angle without display rotation.
+ *
+ * @param previewOutput the {@link Camera_PreviewOutput} instance which used to get the preview rotation angle.
+ * @param imageRotation the {@link Camera_ImageRotation} result of preview rotation angle.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
+ * @since 23
+ */
+Camera_ErrorCode OH_PreviewOutput_GetPreviewRotationWithoutDisplayRotation(Camera_PreviewOutput* previewOutput,
+    Camera_ImageRotation* imageRotation);
+
+/**
  * @brief Gets the preview rotation angle.
  *
  * @param previewOutput the {@link Camera_PreviewOutput} instance which used to get the preview rotation angle.

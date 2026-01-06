@@ -27,7 +27,8 @@ const std::unordered_map<CameraFormat, Camera_Format> g_fwToNdkCameraFormat = {
     {CameraFormat::CAMERA_FORMAT_YUV_420_SP, Camera_Format::CAMERA_FORMAT_YUV_420_SP},
     {CameraFormat::CAMERA_FORMAT_JPEG, Camera_Format::CAMERA_FORMAT_JPEG},
     {CameraFormat::CAMERA_FORMAT_YCBCR_P010, Camera_Format::CAMERA_FORMAT_YCBCR_P010},
-    {CameraFormat::CAMERA_FORMAT_YCRCB_P010, Camera_Format::CAMERA_FORMAT_YCRCB_P010}
+    {CameraFormat::CAMERA_FORMAT_YCRCB_P010, Camera_Format::CAMERA_FORMAT_YCRCB_P010},
+    {CameraFormat::CAMERA_FORMAT_HEIC, Camera_Format::CAMERA_FORMAT_HEIC},
 };
 
 Camera_PhotoOutput::Camera_PhotoOutput(sptr<PhotoOutput> &innerPhotoOutput) : innerPhotoOutput_(innerPhotoOutput)
@@ -345,6 +346,16 @@ Camera_ErrorCode Camera_PhotoOutput::EnableMovingPhoto(bool enableMovingPhoto)
     session->UnlockForControl();
 
     return FrameworkToNdkCameraError(ret);
+}
+
+Camera_ErrorCode Camera_PhotoOutput::GetPhotoRotationWithoutDeviceDegree(Camera_ImageRotation* cameraImageRotation)
+{
+    CHECK_RETURN_RET_ELOG(cameraImageRotation == nullptr, CAMERA_SERVICE_FATAL_ERROR, "GetCameraImageRotation failed");
+    int32_t cameraOutputRotation = innerPhotoOutput_->GetPhotoRotation();
+    CHECK_RETURN_RET_ELOG(cameraOutputRotation == CAMERA_SERVICE_FATAL_ERROR, CAMERA_SERVICE_FATAL_ERROR,
+        "Camera_PhotoOutput::GetPhotoRotation failed to get photo rotation! ret: %{public}d", cameraOutputRotation);
+    *cameraImageRotation = static_cast<Camera_ImageRotation>(cameraOutputRotation);
+    return CAMERA_OK;
 }
 
 Camera_ErrorCode Camera_PhotoOutput::GetPhotoRotation(int32_t imageRotation, Camera_ImageRotation* cameraImageRotation)

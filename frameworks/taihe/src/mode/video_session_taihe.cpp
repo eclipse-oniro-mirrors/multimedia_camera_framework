@@ -14,8 +14,6 @@
  */
 
 #include "camera_ability_taihe.h"
-#include "camera_log.h"
-#include "camera_utils_taihe.h"
 #include "video_session_taihe.h"
 
 namespace Ani {

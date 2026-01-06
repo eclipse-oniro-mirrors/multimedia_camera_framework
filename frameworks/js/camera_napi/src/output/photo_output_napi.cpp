@@ -561,6 +561,7 @@ void PhotoOutputCallback::ExecutePhotoAvailableCb(const CallbackInfo& info) cons
 {
     MEDIA_INFO_LOG("ExecutePhotoAvailableCb");
     bool isAsync = !g_callbackExtendFlag;
+    MEDIA_DEBUG_LOG("ExecutePhotoAvailableCb isAsync: %{public}d", isAsync);
     ExecuteCallbackScopeSafe(CONST_CAPTURE_PHOTO_AVAILABLE, [&]() {
         napi_value errCode = CameraNapiUtils::GetUndefinedValue(env_);
         napi_value callbackObj = CameraNapiUtils::GetUndefinedValue(env_);
@@ -1272,35 +1273,37 @@ napi_value PhotoOutputNapi::IsDeferredImageDeliverySupported(napi_env env, napi_
 napi_value PhotoOutputNapi::GetPhotoRotation(napi_env env, napi_callback_info info)
 {
     MEDIA_DEBUG_LOG("GetPhotoRotation is called!");
-    napi_status status;
     napi_value result = nullptr;
-    size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE] = {0};
-    napi_value thisVar = nullptr;
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+    int32_t retCode = 0;
+    size_t napiArgsSize = CameraNapiUtils::GetNapiArgs(env, info);
 
     napi_get_undefined(env, &result);
     PhotoOutputNapi* photoOutputNapi = nullptr;
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&photoOutputNapi));
-    if (status == napi_ok && photoOutputNapi != nullptr) {
-        int32_t value;
-        napi_status ret = napi_get_value_int32(env, argv[PARAM0], &value);
-        if (ret != napi_ok) {
-            CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT,
-                "GetPhotoRotation parameter missing or parameter type incorrect.");
+    if (napiArgsSize == ARGS_ZERO) {
+        MEDIA_DEBUG_LOG("GetPhotoRotation arg 0");
+        CameraNapiParamParser jsParamParser(env, info, photoOutputNapi);
+        if (!jsParamParser.AssertStatus(SERVICE_FATL_ERROR, "parse parameter occur error")) {
+            MEDIA_ERR_LOG("PhotoOutputNapi::GetPhotoRotation parse 0 parameter occur error");
             return result;
         }
-        int32_t retCode = photoOutputNapi->photoOutput_->GetPhotoRotation(value);
-        if (retCode == SERVICE_FATL_ERROR) {
-            CameraNapiUtils::ThrowError(env, SERVICE_FATL_ERROR,
-                "GetPhotoRotation Camera service fatal error.");
+        retCode = photoOutputNapi->photoOutput_->GetPhotoRotation();
+    } else if (napiArgsSize == ARGS_ONE) {
+        MEDIA_DEBUG_LOG("GetPhotoRotation arg 1");
+        int32_t deviceRotation;
+        CameraNapiParamParser jsParamParser(env, info, photoOutputNapi, deviceRotation);
+        if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+            MEDIA_ERR_LOG("PhotoOutputNapi::GetPhotoRotation parse 1 parameter occur error");
             return result;
         }
-        napi_create_int32(env, retCode, &result);
-        MEDIA_INFO_LOG("PhotoOutputNapi GetPhotoRotation! %{public}d", retCode);
-    } else {
-        MEDIA_ERR_LOG("PhotoOutputNapi GetPhotoRotation! called failed!");
+        retCode = photoOutputNapi->photoOutput_->GetPhotoRotation(deviceRotation);
     }
+    if (retCode == SERVICE_FATL_ERROR) {
+        CameraNapiUtils::ThrowError(
+            env, SERVICE_FATL_ERROR, "GetPhotoRotation Camera service fatal error.");
+        return result;
+    }
+    napi_create_int32(env, retCode, &result);
+    MEDIA_INFO_LOG("PhotoOutputNapi GetPhotoRotation! %{public}d", retCode);
     return result;
 }
 
@@ -1928,7 +1931,6 @@ const PhotoOutputNapi::EmitterFunctions& PhotoOutputNapi::GetEmitterFunctions()
 
 napi_value PhotoOutputNapi::On(napi_env env, napi_callback_info info)
 {
-    g_callbackExtendFlag = false;
     return ListenerTemplate<PhotoOutputNapi>::On(env, info);
 }
 
@@ -1950,6 +1952,7 @@ napi_value PhotoOutputNapi::OnPhotoAvailable(napi_env env, napi_callback_info in
 
 napi_value PhotoOutputNapi::OffPhotoAvailable(napi_env env, napi_callback_info info)
 {
+    g_callbackExtendFlag = false;
     return ListenerTemplate<PhotoOutputNapi>::Off(env, info, CONST_CAPTURE_PHOTO_AVAILABLE);
 }
 

@@ -16,13 +16,9 @@
 #ifndef FRAMEWORKS_TAIHE_INCLUDE_OUTPUT_DEPTH_DATA_TAIHE_H
 #define FRAMEWORKS_TAIHE_INCLUDE_OUTPUT_DEPTH_DATA_TAIHE_H
 
-#include "ohos.multimedia.camera.proj.hpp"
-#include "ohos.multimedia.camera.impl.hpp"
-#include "taihe/runtime.hpp"
-
 #include "camera_worker_queue_keeper_taihe.h"
+#include "camera_utils_taihe.h"
 #include "pixel_map_taihe.h"
-#include "camera_output_capability.h"
 
 namespace Ani {
 namespace Camera {

@@ -1799,6 +1799,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_077, Test
     ASSERT_EQ(ret, true);
 }
 
+#ifdef CAMERA_MOVIE_FILE
 /*
  * Feature: Framework
  * Function: Test cameraManager with CreateMovieFileOutput
@@ -1828,6 +1829,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_078, Test
 
     EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
 }
+#endif
 
 /*
  * Feature: Framework
@@ -1846,6 +1848,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_079, Test
     EXPECT_EQ(ret, CAMERA_OK);
 }
 
+#ifdef CAMERA_MOVIE_FILE
 /*
  * Feature: Framework
  * Function: Test cameraManager CreateMovieFileOutput
@@ -1864,6 +1867,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_082, Test
     sptr<UnifyMovieFileOutput> *pMovieFileOutput2 = nullptr;
     EXPECT_NE(cameraManager_->CreateMovieFileOutput(videoProfile, pMovieFileOutput2), 0);
 }
+#endif
 
 /*
  * Feature: Framework
@@ -2085,6 +2089,33 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_095, Test
     result = cameraManager_->GetCameraDevices();
     ASSERT_EQ(result.size(), 1);
     cameraManager_->cameraDeviceList_.clear();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test DisplayModeToFoldStatus
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test DisplayModeToFoldStatus
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_096, TestSize.Level0)
+{
+    uint32_t displayMode = 1;
+    uint32_t foldStatus = cameraManager_->DisplayModeToFoldStatus(displayMode);
+    EXPECT_EQ(foldStatus, 1);
+
+    displayMode = 2;
+    foldStatus = cameraManager_->DisplayModeToFoldStatus(displayMode);
+    EXPECT_EQ(foldStatus, 2);
+
+    displayMode = 4;
+    foldStatus = cameraManager_->DisplayModeToFoldStatus(displayMode);
+    EXPECT_EQ(foldStatus, 1);
+
+    displayMode = 5;
+    foldStatus = cameraManager_->DisplayModeToFoldStatus(displayMode);
+    EXPECT_EQ(foldStatus, 11);
 }
 }
 }

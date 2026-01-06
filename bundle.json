@@ -15,7 +15,15 @@
         "syscap": ["SystemCapability.Multimedia.Camera.Core"],
         "features": [
           "camera_framework_feature_camera_rotate_plugin",
-          "camera_framework_feature_camera_live_scene_recognition"
+          "camera_framework_feature_camera_live_scene_recognition",
+          "camera_framework_feature_moving_photo",
+          "camera_framework_feature_beauty_notification",
+          "camera_framework_feature_movie_file",
+          "camera_framework_feature_rotate_param_update",
+          "camera_framework_feature_media_stream",
+          "camera_framework_feature_deferred",
+          "camera_framework_feature_xcomponent_toast",
+          "camera_framework_feature_camera_capture_yuv"
         ],
         "adapted_system_type": [ "standard" ],
         "rom": "",
@@ -100,6 +108,7 @@
               "//foundation/multimedia/camera_framework/dynamic_libs:camera_dynamic_picture",
               "//foundation/multimedia/camera_framework/dynamic_libs:camera_dynamic_xcomponent_controller",
               "//foundation/multimedia/camera_framework/dynamic_libs:camera_dynamic_image_effect",
+              "//foundation/multimedia/camera_framework/dynamic_libs:camera_dynamic_watermark_exif_metadata",
               "//foundation/multimedia/camera_framework/mediastream:media_stream",
               "//foundation/multimedia/camera_framework/moviefile:movie_file",
               "//foundation/multimedia/camera_framework/sa_profile:camera_service_sa_profile",

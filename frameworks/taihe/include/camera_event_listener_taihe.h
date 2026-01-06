@@ -19,7 +19,6 @@
 #include <memory>
 
 #include "camera_utils_taihe.h"
-#include "camera_log.h"
 #include "listener_base_taihe.h"
 
 namespace Ani {

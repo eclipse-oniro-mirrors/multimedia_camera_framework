@@ -708,5 +708,67 @@ HWTEST_F(CameraVideoOutputUnitTest, camera_video_output_unittest_015, TestSize.L
     EXPECT_EQ(ret, CAMERA_OK);
 }
 
+/*
+ * Feature: Framework
+ * Function: Test get video rotation
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test get video and photo rotation, an internal system error is
+ * returned when the session is not committed
+ */
+HWTEST_F(CameraVideoOutputUnitTest, camera_video_output_unittest_016, TestSize.Level0)
+{
+    Camera_ImageRotation imageRotation = IAMGE_ROTATION_180;
+    Camera_VideoOutput* videoOutput = CreateVideoOutput();
+    ASSERT_NE(videoOutput, nullptr);
+    Camera_PhotoOutput *photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    Camera_ErrorCode ret = OH_VideoOutput_GetVideoRotationWithoutDeviceDegree(videoOutput, &imageRotation);
+    EXPECT_NE(ret, CAMERA_OK);
+    ret = OH_PhotoOutput_GetPhotoRotationWithoutDeviceDegree(photoOutput, &imageRotation);
+    EXPECT_NE(ret, CAMERA_OK);
+    EXPECT_EQ(OH_VideoOutput_Release(videoOutput), CAMERA_OK);
+    EXPECT_EQ(OH_PhotoOutput_Release(photoOutput), CAMERA_OK);
+    ReleaseImageReceiver();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test get video rotation
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test get video rotation,  when entered valid parameters, get success
+ */
+HWTEST_F(CameraVideoOutputUnitTest, camera_video_output_unittest_017, TestSize.Level0)
+{
+    Camera_ImageRotation imageRotation = IAMGE_ROTATION_180;
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_VIDEO);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_BeginConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_Input *cameraInput = nullptr;
+    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(cameraInput, nullptr);
+    EXPECT_EQ(CameraNdkCommon::DisMdmOpenCheck(cameraInput), CAMERA_OK);
+    EXPECT_EQ(OH_CameraInput_Open(cameraInput), CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_AddInput(captureSession, cameraInput), CAMERA_OK);
+    Camera_VideoOutput* videoOutput = CreateVideoOutput();
+    ASSERT_NE(videoOutput, nullptr);
+    ret = OH_CaptureSession_AddVideoOutput(captureSession, videoOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_CommitConfig(captureSession), CAMERA_OK);
+    ret = OH_VideoOutput_GetVideoRotationWithoutDeviceDegree(videoOutput, &imageRotation);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(OH_VideoOutput_Release(videoOutput), CAMERA_OK);
+    EXPECT_EQ(OH_CameraInput_Release(cameraInput), CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
+}
 } // CameraStandard
 } // OHOS

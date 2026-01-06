@@ -15,9 +15,6 @@
 
 #include <unordered_map>
 #include "camera_manager_taihe.h"
-#include "camera_utils_taihe.h"
-#include "camera_log.h"
-#include "camera_security_utils_taihe.h"
 #include "camera_const_ability_taihe.h"
 #include "aperture_video_session_taihe.h"
 #include "fluorescence_photo_session_taihe.h"
@@ -39,21 +36,14 @@
 #include "slow_motion_video_session_taihe.h"
 #include "time_lapse_photo_session_taihe.h"
 #include "unify_movie_file_output_taihe.h"
-#include "video_session_taihe.h"
 #include "video_session_for_sys_taihe.h"
 #include "depth_data_output_taihe.h"
 #include "preview_output_taihe.h"
 #include "photo_output_taihe.h"
 #include "video_output_taihe.h"
 #include "camera_input_taihe.h"
-#include "camera_manager.h"
 #include "input/camera_manager_for_sys.h"
-#include "camera_device.h"
-#include "camera_error_code.h"
-#include "camera_template_utils_taihe.h"
 #include "input/prelaunch_config.h"
-#include "image_receiver.h"
-#include "surface_utils.h"
 #include "event_handler.h"
 #include "secure_session_for_sys_taihe.h"
 
@@ -256,13 +246,6 @@ CameraOutputCapability GetCachedSupportedOutputCapability(const std::string& cam
     return result;
 }
 
-CameraOutputCapability GetCachedSupportedFullOutputCapability(const std::string& cameraId, int32_t mode, bool &isFound)
-{
-    std::string key = "OutputCapability:" + cameraId + ":\t" + std::to_string(mode);
-    CameraOutputCapability result = GetCacheAniValue(key, isFound);
-    return result;
-}
-
 void CameraManagerImpl::GetSupportedOutputCapabilityAdaptNormalMode(OHOS::CameraStandard::SceneMode fwkMode,
     sptr<OHOS::CameraStandard::CameraDevice>& cameraInfo,
     sptr<OHOS::CameraStandard::CameraOutputCapability>& outputCapability)
@@ -289,14 +272,6 @@ void CacheSupportedOutputCapability(const std::string& cameraId, int32_t mode,
     std::string key = "OutputCapability:" + cameraId + ":\t" + std::to_string(mode);
     CacheAniValue(key, value);
     MEDIA_DEBUG_LOG("CacheSupportedOutputCapability cache->%{public}s:%{public}d", key.c_str(), mode);
-}
-
-void CacheSupportedFullOutputCapability(const std::string& cameraId, int32_t mode,
-    sptr<OHOS::CameraStandard::CameraOutputCapability> &value)
-{
-    std::string key = "OutputCapability:" + cameraId + ":\t" + std::to_string(mode);
-    CacheAniValue(key, value);
-    MEDIA_DEBUG_LOG("CacheSupportedFullOutputCapability cache->%{public}s:%{public}d", key.c_str(), mode);
 }
 
 CameraOutputCapability CameraManagerImpl::GetSupportedOutputCapability(CameraDevice const& camera, SceneMode mode)
@@ -346,56 +321,6 @@ CameraOutputCapability CameraManagerImpl::GetSupportedOutputCapability(CameraDev
     GetSupportedOutputCapabilityAdaptNormalMode(sceneMode, cameraInfo, outputCapability);
 
     CacheSupportedOutputCapability(cameraId, sceneMode, outputCapability);
-    CameraOutputCapability result = CameraUtilsTaihe::ToTaiheCameraOutputCapability(outputCapability);
-    return result;
-}
-
-CameraOutputCapability CameraManagerImpl::GetSupportedFullOutputCapability(CameraDevice const& camera, SceneMode mode)
-{
-    CameraOutputCapability nullImpl {
-        .previewProfiles = array<Profile>(nullptr, 0),
-        .photoProfiles = array<Profile>(nullptr, 0),
-        .videoProfiles = array<VideoProfile>(nullptr, 0),
-    };
-    CHECK_RETURN_RET_ELOG(cameraManager_ == nullptr, nullImpl,
-        "failed to GetSupportedFullOutputCapability, cameraManager is nullprt");
-    std::string cameraId = std::string(camera.cameraId);
-
-    sptr<OHOS::CameraStandard::CameraDevice> cameraInfo = cameraManager_->GetCameraDeviceFromId(cameraId);
-    OHOS::CameraStandard::SceneMode sceneMode = OHOS::CameraStandard::NORMAL;
-    std::unordered_map<int32_t, OHOS::CameraStandard::SceneMode> aniToNativeMap = g_aniToNativeSupportedMode;
-    if (OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(false)) {
-        aniToNativeMap = g_aniToNativeSupportedModeSys;
-    }
-    int32_t modeValue = mode.get_value();
-    MEDIA_INFO_LOG("GetSupportedFullOutputCapability SceneMode mode = %{public}d ", modeValue);
-    auto itr = aniToNativeMap.find(modeValue);
-    if (itr != aniToNativeMap.end()) {
-        sceneMode = itr->second;
-    } else {
-        MEDIA_ERR_LOG("CreateCameraSessionInstance mode = %{public}d not supported", sceneMode);
-        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT, "Not support the input mode");
-        return nullImpl;
-    }
-    MEDIA_INFO_LOG("GetSupportedFullOutputCapability SceneMode sceneMode = %{public}d ", sceneMode);
-    if (cameraInfo == nullptr) {
-        MEDIA_ERR_LOG("CameraManagerImpl::GetSupportedFullOutputCapability get camera info fail");
-        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT, "Get camera info fail");
-        return nullImpl;
-    }
-    auto foldType = cameraManager_->GetFoldScreenType();
-    if (!(!foldType.empty() && foldType[0] == '4')) {
-        bool isFound = false;
-        CameraOutputCapability cachedResult = GetCachedSupportedFullOutputCapability(cameraId, sceneMode, isFound);
-        CHECK_RETURN_RET(isFound, cachedResult);
-    }
-    auto outputCapability = cameraManager_->GetSupportedFullOutputCapability(cameraInfo, sceneMode);
-    CHECK_RETURN_RET_ELOG(outputCapability == nullptr, nullImpl,
-        "failed to create CreateCameraOutputCapability");
-    outputCapability->RemoveDuplicatesProfiles();
-    GetSupportedOutputCapabilityAdaptNormalMode(sceneMode, cameraInfo, outputCapability);
-
-    CacheSupportedFullOutputCapability(cameraId, sceneMode, outputCapability);
     CameraOutputCapability result = CameraUtilsTaihe::ToTaiheCameraOutputCapability(outputCapability);
     return result;
 }

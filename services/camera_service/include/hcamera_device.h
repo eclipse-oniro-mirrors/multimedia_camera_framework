@@ -104,7 +104,12 @@ public:
     float GetZoomRatio();
     int32_t GetFocusMode();
     int32_t GetVideoStabilizationMode();
+#ifdef CAMERA_MOVING_PHOTO
     void EnableMovingPhoto(bool isMovingPhotoEnabled);
+    bool CheckMovingPhotoSupported(int32_t mode);
+    void SetMovingPhotoStartTimeCallback(std::function<void(int64_t, int64_t)> callback);
+    void SetMovingPhotoEndTimeCallback(std::function<void(int64_t, int64_t)> callback);
+#endif
     static void DeviceEjectCallBack();
     static void DeviceFaultCallBack();
 
@@ -136,8 +141,6 @@ public:
 
     int64_t GetSecureCameraSeq(uint64_t* secureSeqId);
 
-    bool CheckMovingPhotoSupported(int32_t mode);
-
     void NotifyCameraStatus(int32_t state, int32_t msg = 0);
 
     int32_t CloseDevice();
@@ -145,10 +148,6 @@ public:
     bool GetCameraResourceCost(int32_t &cost, std::set<std::string> &conflicting);
 
     int32_t closeDelayedDevice();
-
-    void SetMovingPhotoStartTimeCallback(std::function<void(int64_t, int64_t)> callback);
-
-    void SetMovingPhotoEndTimeCallback(std::function<void(int64_t, int64_t)> callback);
 
     void SetZoomInfoCallback(std::function<void(ZoomInfo)> callback);
 
@@ -307,7 +306,14 @@ private:
 #ifdef MEMMGR_OVERRID
     int32_t RequireMemory(const std::string& reason);
 #endif
+#ifdef CAMERA_MOVING_PHOTO
     void GetMovingPhotoStartAndEndTime(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult);
+    bool isMovingPhotoEnabled_ = false;
+    std::mutex movingPhotoStartTimeCallbackLock_;
+    std::mutex movingPhotoEndTimeCallbackLock_;
+    std::function<void(int32_t, int64_t)> movingPhotoStartTimeCallback_;
+    std::function<void(int32_t, int64_t)> movingPhotoEndTimeCallback_;
+#endif
     std::vector<CameraRotateStrategyInfo> GetCameraRotateStrategyInfos();
     void ReportDeviceProtectionStatus(const std::shared_ptr<OHOS::Camera::CameraMetadata> &metadata);
     bool CanReportDeviceProtectionStatus(int32_t status);
@@ -317,9 +323,9 @@ private:
     void UnRegisterSensorCallback();
     static void DropDetectionDataCallbackImpl(const OHOS::Rosen::MotionSensorEvent &motionData);
     void ReportZoomInfos(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult);
+#ifdef CAMERA_FRAMEWORK_FEATURE_MEDIA_STREAM
     void SaveKeyFrameInfo(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult);
-
-    bool isMovingPhotoEnabled_ = false;
+#endif
     std::vector<int32_t> frameRateRange_ = {0, 0};
     std::mutex clientNameMutex_;
     std::mutex lastDisplayModeLock_;
@@ -327,10 +333,6 @@ private:
     std::mutex originCameraIdLock_;
     std::mutex usePhysicalCameraOrientationMutex_;
     std::mutex dataShareHelperMutex_;
-    std::mutex movingPhotoStartTimeCallbackLock_;
-    std::mutex movingPhotoEndTimeCallbackLock_;
-    std::function<void(int32_t, int64_t)> movingPhotoStartTimeCallback_;
-    std::function<void(int32_t, int64_t)> movingPhotoEndTimeCallback_;
     std::mutex sensorLock_;
     std::mutex cameraCloseListenerMutex_;
     std::mutex foldStateListenerMutex_;

@@ -114,11 +114,20 @@ bool CameraAbilityBuilder::CanAddColorSpace(ColorSpace colorSpace)
 std::vector<ColorSpace> CameraAbilityBuilder::GetValidColorSpaces(const std::vector<int32_t>& data)
 {
     std::vector<ColorSpace> validColorSpaces;
+    std::vector<ColorSpace> supplementaryColorSpaces;
     for (size_t i = 0; i < data.size(); i++) {
         auto it = g_metaColorSpaceMap_.find(static_cast<CM_ColorSpaceType>(data[i]));
-        if (it != g_metaColorSpaceMap_.end() && CanAddColorSpace(it->second)) {
-            validColorSpaces.emplace_back(it->second);
+        if (it != g_metaColorSpaceMap_.end()) {
+            if (CanAddColorSpace(it->second)) {
+                validColorSpaces.emplace_back(it->second);
+            } else {
+                supplementaryColorSpaces.emplace_back(it->second);
+            }
         }
+    }
+    // ensure compatibility
+    for (const auto& colorSpace : supplementaryColorSpaces) {
+        validColorSpaces.emplace_back(colorSpace);
     }
     return validColorSpaces;
 }

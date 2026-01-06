@@ -95,7 +95,8 @@ enum PreconfigType : int32_t {
     PRECONFIG_720P = 0,
     PRECONFIG_1080P = 1,
     PRECONFIG_4K = 2,
-    PRECONFIG_HIGH_QUALITY = 3
+    PRECONFIG_HIGH_QUALITY = 3,
+    PRECONFIG_HIGH_QUALITY_PHOTOSESSION_BT2020 = 4
 };
 
 enum UsageType {
@@ -106,6 +107,14 @@ enum FocusTrackingMode : int32_t {
     FOCUS_TRACKING_MODE_AUTO = 0,
     FOCUS_TRACKING_MODE_LOCKED,
 };
+
+typedef enum {
+    METERING_MODE_REGION = 0,
+    METERING_MODE_CENTER_WEIGHTED,
+    METERING_MODE_SPOT,
+    METERING_MODE_OVERALL,
+    METERING_MODE_CENTER_HIGHLIGHT_WEIGHTED,
+} MeteringMode;
 
 class CalculationHelper {
 public:
@@ -1737,6 +1746,15 @@ public:
      */
     int32_t SetHasFitedRotation(bool isHasFitedRotation);
 
+#ifdef CAMERA_USE_SENSOR
+    /**
+     * @brief Get Sensor Rotation Once.
+     * @param sensorRotation Sensor Rotation.
+     * @return errCode
+     */
+    int32_t GetSensorRotationOnce(int32_t& sensorRotation);
+#endif
+
     /**
      * @brief Get Session Functions.
      *
@@ -2165,6 +2183,7 @@ public:
     void SetPhotoQualityPrioritization(camera_photo_quality_prioritization_t quality);
     uint32_t GetIsoValue();
     int32_t SetParameters(std::vector<std::pair<std::string, std::string>>& kvPairs);
+    int32_t SetExposureMeteringMode(MeteringMode mode);
 protected:
     static const std::unordered_map<camera_awb_mode_t, WhiteBalanceMode> metaWhiteBalanceModeMap_;
     static const std::unordered_map<WhiteBalanceMode, camera_awb_mode_t> fwkWhiteBalanceModeMap_;
@@ -2175,6 +2194,8 @@ protected:
     static const std::unordered_map<camera_constellation_drawing_state, ConstellationDrawingState> drawingStateMap_;
 
     static const std::unordered_map<std::string, camera_device_metadata_tag_t> parametersMap_;
+    static const std::unordered_map<camera_meter_mode_t, MeteringMode> metaMeteringModeMap_;
+    static const std::unordered_map<MeteringMode, camera_meter_mode_t> fwkMeteringModeMap_;
 
     static const std::unordered_map<camera_focus_tracking_mode_t, FocusTrackingMode> metaToFwFocusTrackingMode_;
     static const std::unordered_map<FocusTrackingMode, camera_focus_tracking_mode_t> fwkToMetaFocusTrackingMode_;

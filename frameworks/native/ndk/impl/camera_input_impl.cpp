@@ -20,7 +20,7 @@
 using namespace std;
 using namespace OHOS;
 using namespace OHOS::CameraStandard;
-
+namespace OHOS::CameraStandard {
 class InnerCameraInputCallback : public ErrorCallback {
 public:
     InnerCameraInputCallback(Camera_Input* cameraInput, CameraInput_Callbacks* callback)
@@ -37,6 +37,28 @@ private:
     Camera_Input* cameraInput_;
     CameraInput_Callbacks callback_;
 };
+
+class InnerCameraOcclusionDetectCallback : public CameraOcclusionDetectCallback {
+public:
+    InnerCameraOcclusionDetectCallback(Camera_Input* cameraInput, OH_CameraInput_OnOcclusionDetectionCallback callback)
+        : cameraInput_(cameraInput), callback_(callback) {}
+    ~InnerCameraOcclusionDetectCallback() = default;
+    void OnCameraOcclusionDetected(const uint8_t isCameraOcclusion, const uint8_t isCameraLensDirty) const override
+    {
+        MEDIA_DEBUG_LOG("OnCameraOcclusionDetected is called! isOcclusion[%{public}d] isLensDirty[%{public}d]",
+            isCameraOcclusion, isCameraLensDirty);
+        CHECK_RETURN(cameraInput_ == nullptr || callback_ == nullptr);
+        Camera_OcclusionDetectionResult result {
+            static_cast<bool>(isCameraOcclusion),
+            static_cast<bool>(isCameraLensDirty)};
+        callback_(cameraInput_, result);
+    }
+
+private:
+    Camera_Input* cameraInput_;
+    OH_CameraInput_OnOcclusionDetectionCallback callback_;
+};
+}
 
 Camera_Input::Camera_Input(sptr<CameraInput> &innerCameraInput) : innerCameraInput_(innerCameraInput)
 {
@@ -116,4 +138,19 @@ Camera_ErrorCode Camera_Input::UsePhysicalCameraOrientation(bool isUsed)
 {
     int32_t ret = innerCameraInput_->SetUsePhysicalCameraOrientation(isUsed);
     return FrameworkToNdkCameraError(ret);
+}
+
+Camera_ErrorCode Camera_Input::RegisterOcclusionDetectionCallback(
+    OH_CameraInput_OnOcclusionDetectionCallback occlusionDetectionCallback)
+{
+    auto innerCallback = std::make_shared<InnerCameraOcclusionDetectCallback>(this, occlusionDetectionCallback);
+    innerCameraInput_->SetOcclusionDetectCallback(innerCallback);
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_Input::UnregisterOcclusionDetectionCallback(
+    OH_CameraInput_OnOcclusionDetectionCallback occlusionDetectionCallback)
+{
+    innerCameraInput_->SetOcclusionDetectCallback(nullptr);
+    return CAMERA_OK;
 }

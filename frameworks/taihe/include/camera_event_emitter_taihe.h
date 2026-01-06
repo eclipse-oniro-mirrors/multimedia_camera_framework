@@ -18,7 +18,6 @@
 
 #include <cstdint>
 
-#include "camera_log.h"
 #include "camera_utils_taihe.h"
 
 namespace Ani {

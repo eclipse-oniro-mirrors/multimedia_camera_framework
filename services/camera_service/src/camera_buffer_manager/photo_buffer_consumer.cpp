@@ -18,7 +18,6 @@
 #include "camera_log.h"
 #include "task_manager.h"
 #include "camera_surface_buffer_util.h"
-#include "camera_report_dfx_uitls.h"
 #include "hstream_capture.h"
 #include "task_manager.h"
 #include "picture_assembler.h"
@@ -85,19 +84,25 @@ void PhotoBufferConsumer::ExecuteOnBufferAvailable()
     surface->ReleaseBuffer(surfaceBuffer, -1);
     CHECK_RETURN_ELOG(newSurfaceBuffer == nullptr, "newSurfaceBuffer is null");
     int32_t captureId = CameraSurfaceBufferUtil::GetCaptureId(newSurfaceBuffer);
+    CameraReportDfxUtils::GetInstance()->SetCaptureState(CaptureState::PHOTO_AVAILABLE, captureId);
     CameraReportDfxUtils::GetInstance()->SetFirstBufferEndInfo(captureId);
     CameraReportDfxUtils::GetInstance()->SetPrepareProxyStartInfo(captureId);
+#ifdef CAMERA_CAPTURE_YUV
     bool isSystemApp = PhotoLevelManager::GetInstance().GetPhotoLevelInfo(captureId);
     if (!isSystemApp && streamCapture_->isYuvCapture_) {
         int32_t auxiliaryCount = CameraSurfaceBufferUtil::GetImageCount(newSurfaceBuffer);
         MEDIA_INFO_LOG("OnBufferAvailable captureId:%{public}d auxiliaryCount:%{public}d", captureId, auxiliaryCount);
         StartWaitAuxiliaryTask(captureId, auxiliaryCount, timestamp, newSurfaceBuffer);
     } else {
+#endif
         streamCapture->OnPhotoAvailable(newSurfaceBuffer, timestamp, isRaw_);
+#ifdef CAMERA_CAPTURE_YUV
     }
+#endif
     MEDIA_INFO_LOG("P_ExecuteOnBufferAvailable X");
 }
 
+#ifdef CAMERA_CAPTURE_YUV
 void PhotoBufferConsumer::StartWaitAuxiliaryTask(
     const int32_t captureId, const int32_t auxiliaryCount, int64_t timestamp, sptr<SurfaceBuffer> &newSurfaceBuffer)
 {
@@ -113,7 +118,11 @@ void PhotoBufferConsumer::StartWaitAuxiliaryTask(
 
         // create and save pictureProxy
         std::shared_ptr<PictureIntf> pictureProxy = PictureProxy::CreatePictureProxy();
-        CHECK_RETURN_ELOG(pictureProxy == nullptr, "pictureProxy is nullptr");
+        if (pictureProxy == nullptr) {
+            CameraReportDfxUtils::GetInstance()->SetCaptureState(CaptureState::MEDIALIBRARY_ERROR, captureId);
+            MEDIA_ERR_LOG("pictureProxy is nullptr");
+            return;
+        }
         pictureProxy->Create(newSurfaceBuffer);
         MEDIA_INFO_LOG(
             "PhotoBufferConsumer StartWaitAuxiliaryTask MainSurface w=%{public}d, h=%{public}d, f=%{public}d",
@@ -229,5 +238,6 @@ void PhotoBufferConsumer::AssembleDeferredPicture(int64_t timestamp, int32_t cap
     CleanAfterTransPicture(captureId);
     MEDIA_INFO_LOG("AssembleDeferredPicture X, captureId:%{public}d", captureId);
 }
+#endif
 }  // namespace CameraStandard
 }  // namespace OHOS

@@ -14,15 +14,10 @@
  */
 
 #include "camera_const_ability_taihe.h"
-#include "camera_utils_taihe.h"
 #include "camera_template_utils_taihe.h"
 #include "session/camera_session_taihe.h"
-#include "camera_log.h"
-#include "camera_error_code.h"
 #include "camera_input_taihe.h"
 #include "camera_output_taihe.h"
-#include "camera_input.h"
-#include "camera_security_utils_taihe.h"
 #include "event_handler.h"
 
 namespace Ani {
@@ -329,7 +324,7 @@ void PressureCallbackListener::OnSystemPressureLevelCallback(
     MEDIA_INFO_LOG("OnSystemPressureLevelCallback is called");
     auto sharePtr = shared_from_this();
     auto task = [systemPressureLevel, sharePtr]() {
-        auto aniSystemPressureLevel = CameraUtilsTaihe::ToTaiheSystemPressureLevel(systemPressureLevel);
+        auto aniSystemPressureLevel = SystemPressureLevel::from_value(static_cast<int32_t>(systemPressureLevel));
         CHECK_EXECUTE(sharePtr != nullptr, sharePtr->ExecuteAsyncCallback(
             "systemPressureLevelChange", 0, "Callback is OK", aniSystemPressureLevel));
     };
@@ -349,7 +344,8 @@ void FocusCallbackListener::OnFocusStateCallback(OHOS::CameraStandard::FocusCall
     MEDIA_DEBUG_LOG("OnFocusStateCallback is called, state: %{public}d", state);
     auto sharePtr = shared_from_this();
     auto task = [state, sharePtr]() {
-        ohos::multimedia::camera::FocusState taiheState = CameraUtilsTaihe::ToTaiheFocusState(state);
+        ohos::multimedia::camera::FocusState taiheState = ohos::multimedia::camera::FocusState::from_value(
+            static_cast<int32_t>(state));
         CHECK_EXECUTE(sharePtr != nullptr,
             sharePtr->ExecuteAsyncCallback("focusStateChange", 0, "Callback is OK", taiheState));
     };
@@ -750,7 +746,7 @@ void FeatureDetectionStatusCallbackListener::OnFeatureDetectionStatusChangedCall
     auto task = [feature, status, sharePtr]() {
         std::string eventName = "featureDetection" + std::to_string(static_cast<int32_t>(feature));
         std::string eventNameOld = "featureDetectionStatus" + std::to_string(static_cast<int32_t>(feature));
-        auto featureType = CameraUtilsTaihe::ToTaiheSceneFeatureType(feature);
+        auto featureType = SceneFeatureType::from_value(static_cast<int32_t>(feature));
         SceneFeatureDetectionResult sceneFeatureDetectionResult = {
             featureType,
             status
@@ -949,7 +945,7 @@ void EffectSuggestionCallbackListener::OnEffectSuggestionCallback(
     MEDIA_DEBUG_LOG("OnEffectSuggestionCallback is called");
     auto sharePtr = shared_from_this();
     auto task = [effectSuggestionType, sharePtr]() {
-        auto aniEffectSuggestionType = CameraUtilsTaihe::ToTaiheEffectSuggestionType(effectSuggestionType);
+        auto aniEffectSuggestionType = EffectSuggestionType::from_value(static_cast<int32_t>(effectSuggestionType));
         CHECK_EXECUTE(sharePtr != nullptr, sharePtr->ExecuteAsyncCallback(
             "effectSuggestionChange", 0, "Callback is OK", aniEffectSuggestionType));
     };

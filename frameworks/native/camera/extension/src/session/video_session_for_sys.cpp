@@ -293,7 +293,7 @@ int32_t VideoSessionForSys::Preconfig(PreconfigType preconfigType, ProfileSizeRa
     CHECK_RETURN_RET_ELOG(!IsPreconfigProfilesLegal(configs), SERVICE_FATL_ERROR,
         "VideoSessionForSys::Preconfig preconfigProfile is illegal.");
     SetPreconfigProfiles(configs);
-    MEDIA_INFO_LOG("VideoSessionForSys::Preconfig %s", configs->ToString().c_str());
+    MEDIA_INFO_LOG("VideoSessionForSys::Preconfig profile info\n%{public}s", configs->ToString().c_str());
     return SUCCESS;
 }
 

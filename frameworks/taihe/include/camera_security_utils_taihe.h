@@ -16,8 +16,6 @@
 #ifndef CAMERA_SECURITY_UTILS_TAIHE_H
 #define CAMERA_SECURITY_UTILS_TAIHE_H
 
-#include <map>
-
 namespace OHOS {
 namespace CameraStandard {
 namespace CameraAniSecurity {

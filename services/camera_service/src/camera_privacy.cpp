@@ -53,7 +53,9 @@ void DisablePolicyChangeCb::PermDisablePolicyCallback(const Security::AccessToke
             auto session = CastToSession(device->GetStreamOperatorCallback());
             if (session) {
                 session->ReleaseStreams();
+#ifdef CAMERA_MOVING_PHOTO
                 session->StopMovingPhoto();
+#endif
             }
             device->CloseDevice();
         }
@@ -74,7 +76,9 @@ void PermissionStatusChangeCb::PermStateChangeCallback(Security::AccessToken::Pe
             auto session = CastToSession(device->GetStreamOperatorCallback());
             if (session) {
                 session->ReleaseStreams();
+#ifdef CAMERA_MOVING_PHOTO
                 session->StopMovingPhoto();
+#endif
             }
             device->CloseDevice();
             device->OnError(DEVICE_PREEMPT, 0);
@@ -104,7 +108,9 @@ void CameraUseStateChangeCb::StateChangeNotify(Security::AccessToken::AccessToke
                 auto session = CastToSession(device->GetStreamOperatorCallback());
                 if (session) {
                     session->ReleaseStreams();
+#ifdef CAMERA_MOVING_PHOTO
                     session->StopMovingPhoto();
+#endif
                 }
                 device->CloseDevice();
             }

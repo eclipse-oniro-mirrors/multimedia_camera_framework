@@ -16,11 +16,8 @@
 #include "depth_data_output_taihe.h"
 #include "depth_data_taihe.h"
 #include "camera_template_utils_taihe.h"
-#include "camera_utils_taihe.h"
-#include "camera_log.h"
 #include "camera_security_utils_taihe.h"
 #include "video_key_info.h"
-#include "pixel_map.h"
 
 namespace Ani {
 namespace Camera {

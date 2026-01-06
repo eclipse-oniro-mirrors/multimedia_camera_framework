@@ -84,7 +84,6 @@ ohos_unittest("camera_service_unittest") {
       "avcodec/src/moving_photo_video_cache_unittest.cpp",
       "avcodec/src/video_encoder_unittest.cpp",
       "camera_service_common/src/camera_app_manager_client_unittest.cpp",
-      "camera_service_common/src/camera_beauty_notification_unittest.cpp",
       "camera_service_common/src/camera_fwk_metadata_utils_unittest.cpp",
       "camera_service_common/src/camera_info_dumper_unittest.cpp",
       "camera_service_common/src/camera_privacy_unittest.cpp",
@@ -149,8 +148,7 @@ ohos_unittest("camera_service_unittest") {
     "ipc:ipc_core",
     "media_foundation:media_foundation",
     "media_foundation:native_media_core",
-    "media_library:media_library",
-    "media_library:media_library_manager",
+    "media_library:media_library_camera_helper",
     "memmgr:memmgrclient",
     "napi:ace_napi",
     "openssl:libcrypto_shared",
@@ -177,17 +175,18 @@ ohos_unittest("camera_service_unittest") {
     defines += [ "CAMERA_LIVE_SCENE_RECOGNITION" ]
   }
 
-  if (defined(global_parts_info) &&
-      defined(
-          global_parts_info.notification_distributed_notification_service)) {
-    external_deps += [ "distributed_notification_service:ans_innerkits" ]
+  if (camera_framework_feature_moving_photo) {
+    defines += [ "CAMERA_MOVING_PHOTO" ]
   }
 
-  if (defined(global_parts_info) &&
+  if (camera_framework_feature_beauty_notification) {
+    if (defined(global_parts_info) &&
       defined(
           global_parts_info.notification_distributed_notification_service)) {
-    external_deps += [ "distributed_notification_service:ans_innerkits" ]
-    defines += [ "NOTIFICATION_ENABLE" ]
+      external_deps += [ "distributed_notification_service:ans_innerkits" ]
+      defines += [ "NOTIFICATION_ENABLE" ]
+      sources += [ "camera_service_common/src/camera_beauty_notification_unittest.cpp" ]
+    }
   }
 
   cflags = [

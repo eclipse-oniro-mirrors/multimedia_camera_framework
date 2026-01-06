@@ -13,12 +13,8 @@
  * limitations under the License.
  */
 #include "metadata_output_taihe.h"
-#include "camera_utils_taihe.h"
-#include "camera_log.h"
 #include "camera_template_utils_taihe.h"
-#include "camera_const_ability_taihe.h"
 #include "camera_security_utils_taihe.h"
-#include "metadata_output.h"
 
 using namespace taihe;
 using namespace ohos::multimedia::camera;

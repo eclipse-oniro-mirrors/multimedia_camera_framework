@@ -50,13 +50,17 @@
 #include "camera_timer.h"
 #include "camera_util.h"
 #include "datetime_ex.h"
+#ifdef CAMERA_DEFERRED
 #include "deferred_processing_service.h"
+#endif
 #include "display/composer/v1_1/display_composer_type.h"
 #include "display_lite.h"
 #include "display_manager_lite.h"
 #include "errors.h"
 #include "hcamera_device_manager.h"
+#ifdef CAMERA_MOVIE_FILE
 #include "hcamera_movie_file_output.h"
+#endif
 #include "hcamera_restore_param.h"
 #include "hcamera_service.h"
 #include "hcamera_session_manager.h"
@@ -77,7 +81,9 @@
 #include "photo_asset_interface.h"
 #include "photo_asset_proxy.h"
 #include "metadata_utils.h"
+#ifdef CAMERA_MOVING_PHOTO
 #include "moving_photo_proxy.h"
+#endif
 #include "parameters.h"
 #include "refbase.h"
 #include "smooth_zoom.h"
@@ -264,6 +270,17 @@ int32_t HCaptureSession::SetHasFitedRotation(bool isHasFitedRotation)
     return CAMERA_OK;
 }
 
+#ifdef CAMERA_USE_SENSOR
+int32_t HCaptureSession::GetSensorRotationOnce(int32_t& sensorRotation)
+{
+    auto hStreamOperatorSptr = GetStreamOperator();
+    CHECK_RETURN_RET_ELOG(hStreamOperatorSptr == nullptr, CAMERA_INVALID_ARG,
+        "HCaptureSession::GetSensorRotationOnce hStreamOperatorSptr is null");
+    sensorRotation = hStreamOperatorSptr->GetSensorRotation();
+    return CAMERA_OK;
+}
+#endif
+
 int32_t HCaptureSession::BeginConfig()
 {
     CAMERA_SYNC_TRACE;
@@ -288,7 +305,9 @@ int32_t HCaptureSession::BeginConfig()
         if (isClearStream) {
             UnlinkInputAndOutputs();
             ClearSketchRepeatStream();
+#ifdef CAMERA_MOVING_PHOTO
             ClearMovingPhotoRepeatStream();
+#endif
             ClearCompositionRepeatStream();
         }
     });
@@ -407,7 +426,8 @@ public:
     void OnDestroy(OHOS::Rosen::DisplayId) override {}
     void OnChange(OHOS::Rosen::DisplayId displayId) override
     {
-        sptr<Rosen::DisplayLite> display = Rosen::DisplayManagerLite::GetInstance().GetDefaultDisplay();
+        CHECK_RETURN(!OHOS::Rosen::DisplayManagerLite::GetInstance().IsOnboardDisplay(displayId));
+        auto display = Rosen::DisplayManagerLite::GetInstance().GetDisplayById(displayId);
         if (display == nullptr) {
             MEDIA_INFO_LOG("Get display info failed, display:%{public}" PRIu64 "", displayId);
             display = Rosen::DisplayManagerLite::GetInstance().GetDisplayById(0);
@@ -541,6 +561,7 @@ int32_t HCaptureSession::AddOutputInner(StreamType streamType, const sptr<IStrea
 
 int32_t HCaptureSession::AddMultiStreamOutput(const sptr<IRemoteObject>& multiStreamOutput, int32_t opMode)
 {
+#ifdef CAMERA_MOVIE_FILE
     MEDIA_INFO_LOG("HCaptureSession::AddMultiStreamOutput opMode:%{public}d", opMode);
     sptr<HCameraMovieFileOutput> hMovieFileoutput = static_cast<HCameraMovieFileOutput*>(multiStreamOutput.GetRefPtr());
     CHECK_RETURN_RET_ELOG(hMovieFileoutput == nullptr, CAMERA_UNKNOWN_ERROR,
@@ -554,11 +575,13 @@ int32_t HCaptureSession::AddMultiStreamOutput(const sptr<IRemoteObject>& multiSt
         AddOutput(StreamType::REPEAT, stream);
     }
     MEDIA_INFO_LOG("HCaptureSession::AddMultiStreamOutput stream size:%{public}zu", streams.size());
+#endif
     return CAMERA_OK;
 }
 
 int32_t HCaptureSession::RemoveMultiStreamOutput(const sptr<IRemoteObject>& multiStreamOutput)
 {
+#ifdef CAMERA_MOVIE_FILE
     MEDIA_INFO_LOG("HCaptureSession::RemoveMultiStreamOutput");
     sptr<HCameraMovieFileOutput> hMovieFileoutput = static_cast<HCameraMovieFileOutput*>(multiStreamOutput.GetRefPtr());
     CHECK_RETURN_RET_ELOG(hMovieFileoutput == nullptr, CAMERA_UNKNOWN_ERROR,
@@ -572,6 +595,7 @@ int32_t HCaptureSession::RemoveMultiStreamOutput(const sptr<IRemoteObject>& mult
         RemoveOutput(StreamType::REPEAT, stream);
     }
     MEDIA_INFO_LOG("HCaptureSession::RemoveMultiStreamOutput stream size%{public}zu", streams.size());
+#endif
     return CAMERA_OK;
 }
 
@@ -603,7 +627,9 @@ int32_t HCaptureSession::RemoveInput(const sptr<ICameraDeviceService>& cameraDev
             UnlinkInputAndOutputs();
             ClearSketchRepeatStream();
             ClearCompositionRepeatStream();
+#ifdef CAMERA_MOVING_PHOTO
             ClearMovingPhotoRepeatStream();
+#endif
         }
         auto currentDevice = GetCameraDevice();
         bool isSupportCurrentDevice = currentDevice != nullptr && cameraDevice->AsObject() == currentDevice->AsObject();
@@ -729,10 +755,12 @@ int32_t HCaptureSession::LinkInputAndOutputs()
         "HCaptureSession::LinkInputAndOutputs IsValidMode false");
     device->SetFrameRateRange(hStreamOperatorSptr->GetFrameRateRange());
     device->UpdateCameraRotateAngle();
+#ifdef CAMERA_MOVIE_FILE
     auto hcameraMovieFileOutput = weakCameraMovieFileOutput_.promote();
     if (hcameraMovieFileOutput) {
        hcameraMovieFileOutput->SetCameraPosition(device->GetCameraPosition());
     }
+#endif
     rc = hStreamOperatorSptr->LinkInputAndOutputs(settings, GetopMode());
     MEDIA_INFO_LOG("HCaptureSession::LinkInputAndOutputs execute success");
     return rc;
@@ -1118,6 +1146,19 @@ int32_t HCaptureSession::GetCompositionStream(sptr<IRemoteObject>& compositionSt
     return CAMERA_OK;
 }
 
+#ifdef CAMERA_MOVING_PHOTO
+void HCaptureSession::SetMovingPhotoStatus(bool status)
+{
+    std::lock_guard<mutex> lock(movingPhotoStatusMutex_);
+    isMovingPhotoEnabled_ = status;
+}
+
+bool HCaptureSession::GetMovingPhotoStatus()
+{
+    std::lock_guard<mutex> lock(movingPhotoStatusMutex_);
+    return isMovingPhotoEnabled_;
+}
+
 void HCaptureSession::ExpandMovingPhotoRepeatStream()
 {
     CAMERA_SYNC_TRACE;
@@ -1152,6 +1193,16 @@ void HCaptureSession::ExpandXtStyleMovingPhotoRepeatStream()
     MEDIA_INFO_LOG("ExpandXtStyleMovingPhotoRepeatStream Exit");
 }
 
+void HCaptureSession::ClearMovingPhotoRepeatStream()
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_INFO_LOG("Enter HCaptureSession::ClearMovingPhotoRepeatStream()");
+    auto hStreamOperatorSptr = GetStreamOperator();
+    CHECK_RETURN_ELOG(hStreamOperatorSptr == nullptr, "hStreamOperator is nullptr");
+    return hStreamOperatorSptr->ClearMovingPhotoRepeatStream();
+}
+#endif
+
 void HCaptureSession::ClearSketchRepeatStream()
 {
     MEDIA_DEBUG_LOG("Enter HCaptureSession::ClearSketchRepeatStream(), sessionID: %{public}d", GetSessionId());
@@ -1170,15 +1221,6 @@ void HCaptureSession::ClearCompositionRepeatStream()
     return hStreamOperatorSptr->ClearCompositionRepeatStream();
 }
 
-void HCaptureSession::ClearMovingPhotoRepeatStream()
-{
-    CAMERA_SYNC_TRACE;
-    MEDIA_INFO_LOG("Enter HCaptureSession::ClearMovingPhotoRepeatStream()");
-    auto hStreamOperatorSptr = GetStreamOperator();
-    CHECK_RETURN_ELOG(hStreamOperatorSptr == nullptr, "hStreamOperator is nullptr");
-    return hStreamOperatorSptr->ClearMovingPhotoRepeatStream();
-}
-
 int32_t HCaptureSession::ValidateSession()
 {
     int32_t errorCode = CAMERA_OK;
@@ -1194,6 +1236,7 @@ int32_t HCaptureSession::SetCommitConfigFlag(bool isNeedCommitting)
     return CAMERA_OK;
 }
 
+#ifdef CAMERA_FRAMEWORK_FEATURE_MEDIA_STREAM
 int32_t HCaptureSession::CreateRecorder4CinematicVideo(sptr<IStreamCommon> stream, sptr<ICameraRecorder> &movieRecorder)
 {
     CAMERA_SYNC_TRACE;
@@ -1270,15 +1313,20 @@ void HCaptureSession::ConfigRawVideoStream(sptr<HStreamRepeat>& rawVideoStreamRe
     CHECK_EXECUTE(rawDebugProducer != nullptr,
                   rawVideoStreamRepeat->SetRawDebugProducer(rawDebugProducer->GetProducer()));
 }
+#endif
 
 int32_t HCaptureSession::CreateRecorder(const sptr<IRemoteObject>& remoteObj, sptr<ICameraRecorder>& recorder)
 {
+#ifdef CAMERA_FRAMEWORK_FEATURE_MEDIA_STREAM
     MEDIA_INFO_LOG("HCameraService::CreateRecorder start");
     sptr<IStreamCommon> stream = iface_cast<IStreamRepeat>(remoteObj);
     CHECK_RETURN_RET_ELOG(stream == nullptr, CAMERA_INVALID_ARG, "stream is null");
     constexpr int32_t cinematicVideoMode = 24;
     CHECK_RETURN_RET_ELOG(GetopMode() != cinematicVideoMode, CAMERA_UNSUPPORTED, "current not cinematicVideoMode");
     return CreateRecorder4CinematicVideo(stream, recorder);
+#else
+    return CAMERA_UNSUPPORTED;
+#endif
 }
 
 int32_t HCaptureSession::CommitConfig()
@@ -1303,11 +1351,15 @@ int32_t HCaptureSession::CommitConfig()
         errorCode = ValidateSession();
         CHECK_RETURN(errorCode != CAMERA_OK);
         if (!IsNeedDynamicConfig()) {
+#ifdef CAMERA_MOVING_PHOTO
             ExpandMovingPhotoRepeatStream();
+#endif
             ExpandSketchRepeatStream();
             ExpandCompositionRepeatStream();
         }
+#ifdef CAMERA_MOVING_PHOTO
         ExpandXtStyleMovingPhotoRepeatStream();
+#endif
         auto device = GetCameraDevice();
         if (device == nullptr) {
             MEDIA_ERR_LOG("HCaptureSession::CommitConfig() Failed to commit config. "
@@ -1337,6 +1389,9 @@ int32_t HCaptureSession::CommitConfig()
         errorCode = LinkInputAndOutputs();
         CHECK_RETURN_ELOG(errorCode != CAMERA_OK,
             "HCaptureSession::CommitConfig() Failed to commit config. rc: %{public}d", errorCode);
+#ifdef CAMERA_USE_SENSOR
+        hStreamOperatorSptr->RegisterSensorCallback();
+#endif
         stateMachine_.Transfer(CaptureSessionState::SESSION_CONFIG_COMMITTED);
     });
     if (errorCode != CAMERA_OK) {
@@ -1766,7 +1821,7 @@ int32_t HCaptureSession::SetSmoothZoom(
     // LCOV_EXCL_STOP
     std::vector<uint32_t> zoomAndTimeArray {};
     for (int i = 0; i < static_cast<int>(array.size()); i++) {
-        zoomAndTimeArray.push_back(static_cast<uint32_t>(array[i]));
+        zoomAndTimeArray.push_back(static_cast<uint32_t>(std::round(array[i])));
         zoomAndTimeArray.push_back(static_cast<uint32_t>(i * frameIntervalMs + waitTime));
         MEDIA_DEBUG_LOG("HCaptureSession::SetSmoothZoom() zoom %{public}d, waitMs %{public}d.",
             static_cast<uint32_t>(array[i]), static_cast<uint32_t>(i * frameIntervalMs + waitTime));
@@ -1797,8 +1852,10 @@ void HCaptureSession::DynamicConfigCommit()
     CommitConfig();
 }
 
+
 int32_t HCaptureSession::EnableMovingPhoto(bool isEnable)
 {
+#ifdef CAMERA_MOVING_PHOTO
     auto hStreamOperatorSptr = GetStreamOperator();
     CHECK_RETURN_RET_ELOG(hStreamOperatorSptr == nullptr, CAMERA_OK, "hStreamOperatorSptr is null");
     SetMovingPhotoStatus(isEnable);
@@ -1821,19 +1878,8 @@ int32_t HCaptureSession::EnableMovingPhoto(bool isEnable)
     if (device != nullptr) {
         device->EnableMovingPhoto(isEnable);
     }
+#endif
     return CAMERA_OK;
-}
-
-void HCaptureSession::SetMovingPhotoStatus(bool status)
-{
-    std::lock_guard<mutex> lock(movingPhotoStatusMutex_);
-    isMovingPhotoEnabled_ = status;
-}
-
-bool HCaptureSession::GetMovingPhotoStatus()
-{
-    std::lock_guard<mutex> lock(movingPhotoStatusMutex_);
-    return isMovingPhotoEnabled_;
 }
 
 int32_t HCaptureSession::SetXtStyleStatus(bool status)
@@ -1847,6 +1893,7 @@ int32_t HCaptureSession::SetXtStyleStatus(bool status)
     isXtStyleEnabled_ = status;
     // 状态变化时需要启/停流
     if (hStreamOperatorSptr->GetSupportRedoXtStyle() == ORIGIN_AND_EFFECT) {
+        #ifdef CAMERA_MOVING_PHOTO
         hStreamOperatorSptr->ChangeListenerXtstyleType();
         if (isXtStyleEnabled_ && GetMovingPhotoStatus()) {
             MEDIA_INFO_LOG("expand xtStyle movingphoto stream while movingphoto enabled");
@@ -1862,6 +1909,7 @@ int32_t HCaptureSession::SetXtStyleStatus(bool status)
             hStreamOperatorSptr->ClearMovingPhotoRepeatStream(VideoType::XT_ORIGIN_VIDEO);
             DynamicConfigCommit();
         }
+#endif
     }
     return CAMERA_OK;
 }
@@ -2055,8 +2103,10 @@ int32_t HCaptureSession::Release(CaptureSessionReleaseType type)
         }
         auto hStreamOperatorSptr = GetStreamOperator();
         CHECK_RETURN_ELOG(hStreamOperatorSptr == nullptr, "hStreamOperatorSptr is null");
+#ifdef CAMERA_MOVING_PHOTO
         // stop movingPhoto
         hStreamOperatorSptr->StopMovingPhoto();
+#endif
 
         // Clear outputs
         hStreamOperatorSptr->ReleaseStreams();
@@ -2272,13 +2322,17 @@ void HCaptureSession::DumpSessionInfo(CameraInfoDumper& infoDumper)
     }
 }
 
+
 int32_t HCaptureSession::EnableMovingPhotoMirror(bool isMirror, bool isConfig)
 {
+#ifdef CAMERA_MOVING_PHOTO
     auto hStreamOperatorSptr = GetStreamOperator();
     CHECK_RETURN_RET_ELOG(hStreamOperatorSptr == nullptr, CAMERA_OK, "hStreamOperatorSptr is null");
     hStreamOperatorSptr->EnableMovingPhotoMirror(isMirror, isConfig);
+#endif
     return CAMERA_OK;
 }
+
 
 void HCaptureSession::GetOutputStatus(int32_t& status)
 {

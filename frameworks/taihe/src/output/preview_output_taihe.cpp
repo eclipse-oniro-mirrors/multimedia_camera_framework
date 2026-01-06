@@ -16,8 +16,6 @@
 #include "preview_output_taihe.h"
 
 #include "camera_manager.h"
-#include "camera_utils_taihe.h"
-#include "camera_log.h"
 #include "camera_security_utils_taihe.h"
 #include "camera_template_utils_taihe.h"
 #include "image_receiver.h"
@@ -237,7 +235,7 @@ Profile PreviewOutputImpl::GetActiveProfile()
     CHECK_RETURN_RET_ELOG(previewOutput_ == nullptr, res, "GetActiveProfile failed, previewOutput_ is nullptr");
     auto profile = previewOutput_->GetPreviewProfile();
     CHECK_RETURN_RET_ELOG(profile == nullptr, res, "GetActiveProfile failed, profile is nullptr");
-    CameraFormat cameraFormat = CameraUtilsTaihe::ToTaiheCameraFormat(profile->GetCameraFormat());
+    CameraFormat cameraFormat = CameraFormat::from_value(static_cast<int32_t>(profile->GetCameraFormat()));
     res.size.height = profile->GetSize().height;
     res.size.width = profile->GetSize().width;
     res.format = cameraFormat;
@@ -254,6 +252,20 @@ void PreviewOutputImpl::SetFrameRate(int32_t minFps, int32_t maxFps)
     int32_t retCode = previewOutput_->SetFrameRate(minFps, maxFps);
     CHECK_PRINT_ELOG(!CameraUtilsTaihe::CheckError(retCode),
         "PreviewOutputImpl::SetFrameRate fail %{public}d", retCode);
+}
+
+ImageRotation PreviewOutputImpl::GetPreviewRotation()
+{
+    CHECK_RETURN_RET_ELOG(previewOutput_ == nullptr, ImageRotation(static_cast<ImageRotation::key_t>(-1)),
+        "GetPreviewRotation failed, previewOutput_ is nullptr");
+    int32_t retCode = previewOutput_->GetPreviewRotation();
+    if (retCode == OHOS::CameraStandard::SERVICE_FATL_ERROR) {
+        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::SERVICE_FATL_ERROR,
+            "GetPreviewRotation Camera service fatal error.");
+        return ImageRotation(static_cast<ImageRotation::key_t>(-1));
+    }
+    int32_t taiheRetCode = CameraUtilsTaihe::ToTaiheImageRotation(retCode);
+    return ImageRotation(static_cast<ImageRotation::key_t>(taiheRetCode));
 }
 
 ImageRotation PreviewOutputImpl::GetPreviewRotation(int32_t displayRotation)

@@ -106,7 +106,7 @@ ohos_shared_library("movie_file") {
     "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
     "drivers_interface_camera:libmap_data_sequenceable_1.0",
     "drivers_interface_camera:metadata",
-    "media_library:media_library_manager",
+    "media_library:media_library_camera_helper",
     "drivers_interface_camera:libcamera_proxy_1.0",
     "init:libbegetutil",
     "window_manager:libdm_lite",

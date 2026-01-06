@@ -91,7 +91,6 @@ taihe_shared_library("camera_taihe") {
     "src/mode/night_photo_session_taihe.cpp",
     "src/mode/slow_motion_video_session_taihe.cpp",
     "src/photo_taihe.cpp",
-    "src/photo_ex_taihe.cpp",
     "src/transfer/camera_transfer_taihe.cpp",
   ]
 
@@ -116,7 +115,7 @@ taihe_shared_library("camera_taihe") {
     "image_framework:image_native",
     "image_framework:image_taihe",
     "ipc:ipc_core",
-    "media_library:media_library",
+    "media_library:media_library_camera_helper",
     "media_library:medialibrary_ani_utils",
     "napi:ace_napi",
     "runtime_core:ani_helpers",
@@ -167,11 +166,12 @@ taihe_shared_library("camera_picker_taihe") {
   taihe_generated_file_path = "${taihe_generated_file_path_cameraPicker}"
   subsystem_name = "$subsystem_name"
   part_name = "$part_name"
+  shlib_type = "ani"
+  version_script = "camera_framework.versionscript"
 
   include_dirs = [
     "include",
     "include/picker",
-    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include",
   ]
 
   sources = get_target_outputs(":camera_picker_run_taihe")
@@ -215,8 +215,20 @@ taihe_shared_library("camera_picker_taihe") {
   }
   cflags = [
     "-fPIC",
+    "-fdata-sections",
+    "-ffunction-sections",
+    "-fstack-protector-strong",
+    "-fno-asynchronous-unwind-tables",
+    "-fno-unwind-tables",
+    "-fvisibility=hidden",
     "-DIMAGE_COLORSPACE_FLAG",
     "-Os",
+  ]
+  cflags_cc = cflags 
+
+  ldflags = [
+    "-Wl,--exclude-libs=ALL",
+    "-Wl,--gc-sections",
   ]
 }
 

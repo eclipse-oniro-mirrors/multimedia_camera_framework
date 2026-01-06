@@ -16,22 +16,12 @@
 #ifndef FRAMEWORKS_TAIHE_INCLUDE_OUTPUT_PHOTO_OUTPUT_TAIHE_H
 #define FRAMEWORKS_TAIHE_INCLUDE_OUTPUT_PHOTO_OUTPUT_TAIHE_H
 
-#include "ohos.multimedia.camera.proj.hpp"
-#include "ohos.multimedia.camera.impl.hpp"
-#include "taihe/runtime.hpp"
-#include "camera_output_capability.h"
 #include "photo_output.h"
 #include "photo_output_callback.h"
-#include "capture_output.h"
 #include "camera_output_taihe.h"
 #include "camera_template_utils_taihe.h"
 #include "camera_worker_queue_keeper_taihe.h"
-#include "camera_event_emitter_taihe.h"
 #include "camera_event_listener_taihe.h"
-#include "native_image.h"
-#include "pixel_map.h"
-
-#include "refbase.h"
 
 namespace Ani {
 namespace Camera {
@@ -142,8 +132,6 @@ public:
     void OffEstimatedCaptureDuration(optional_view<callback<void(uintptr_t, double)>> callback);
     void OnPhotoAvailable(callback_view<void(uintptr_t, weak::Photo)> callback);
     void OffPhotoAvailable(optional_view<callback<void(uintptr_t, weak::Photo)>> callback);
-    void OnPhotoAvailableEx(callback_view<void(weak::PhotoEx data)> callback);
-    void OffPhotoAvailableEx(optional_view<callback<void(weak::PhotoEx data)>> callback);
     void OnDeferredPhotoProxyAvailable(callback_view<void(uintptr_t, weak::DeferredPhotoProxy)> callback);
     void OffDeferredPhotoProxyAvailable(optional_view<callback<void(uintptr_t, weak::DeferredPhotoProxy)>> callback);
     void OnOfflineDeliveryFinished(callback_view<void(uintptr_t, uintptr_t)> callback);
@@ -164,6 +152,7 @@ public:
     bool IsOfflineSupported();
     void EnableMovingPhoto(bool enabled);
     bool IsMovingPhotoSupported();
+    ImageRotation GetPhotoRotation();
     ImageRotation GetPhotoRotation(int32_t deviceDegree);
     void EnableQuickThumbnail(bool enabled);
     OHOS::sptr<OHOS::CameraStandard::PhotoOutput> GetPhotoOutput();

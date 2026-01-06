@@ -16,11 +16,8 @@
 #ifndef FRAMEWORKS_TAIHE_INCLUDE_DEFERRED_PHOTO_PROXY_TAIHE_H
 #define FRAMEWORKS_TAIHE_INCLUDE_DEFERRED_PHOTO_PROXY_TAIHE_H
 
-
-#include "taihe/runtime.hpp"
 #include "camera_log.h"
 #include "deferred_photo_proxy.h"
-#include "image_taihe.h"
 #include "pixel_map_taihe.h"
 
 namespace Ani::Camera {

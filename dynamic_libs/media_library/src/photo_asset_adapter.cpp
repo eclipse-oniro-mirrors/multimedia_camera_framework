@@ -25,7 +25,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
-Media::MediaLibraryManager *g_mediaLibraryManager = nullptr;
+Media::MediaLibraryCameraManager *g_mediaLibraryManager = nullptr;
 PhotoAssetAdapter::PhotoAssetAdapter(
     int32_t cameraShotType, int32_t uid, uint32_t callingTokenID, int32_t photoCount,
     std::string bundleName)
@@ -33,15 +33,15 @@ PhotoAssetAdapter::PhotoAssetAdapter(
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("PhotoAssetAdapter ctor");
     if (g_mediaLibraryManager == nullptr) {
-        g_mediaLibraryManager = Media::MediaLibraryManager::GetMediaLibraryManager();
+        g_mediaLibraryManager = Media::MediaLibraryCameraManager::GetMediaLibraryCameraManager();
         CHECK_EXECUTE(g_mediaLibraryManager == nullptr, CameraReportUtils::GetInstance().ReportCameraCreateNullptr(
-            "PhotoAssetAdapter::PhotoAssetAdapter", "Media::MediaLibraryManager::GetMediaLibraryManager"));
+            "PhotoAssetAdapter::PhotoAssetAdapter", "Media::MediaLibraryCameraManager::GetMediaLibraryCameraManager"));
         CHECK_RETURN_ELOG(g_mediaLibraryManager == nullptr, "GetMediaLibraryManager failed!");
         auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
         CHECK_RETURN_ELOG(samgr == nullptr, "Failed to get System ability manager!");
         sptr<IRemoteObject> object = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
         CHECK_RETURN_ELOG(object == nullptr, "object is null!");
-        g_mediaLibraryManager->InitMediaLibraryManager(object);
+        g_mediaLibraryManager->InitMediaLibraryCameraManager(object);
     }
     const static int32_t INVALID_UID = -1;
     const static int32_t BASE_USER_RANGE = 200000;
@@ -56,9 +56,9 @@ PhotoAssetAdapter::PhotoAssetAdapter(
         .packageName = bundleName
     };
     photoAssetProxy_ = g_mediaLibraryManager->CreatePhotoAssetProxy(
-        callerInfo, static_cast<Media::CameraShotType>(cameraShotType));// wait for media_lib
+        callerInfo, static_cast<Media::CameraShotType>(cameraShotType), photoCount);
     CHECK_EXECUTE(!photoAssetProxy_, CameraReportUtils::GetInstance().ReportCameraCreateNullptr(
-        "PhotoAssetAdapter::PhotoAssetAdapter", "Media::MediaLibraryManager::CreatePhotoAssetProxy"));
+        "PhotoAssetAdapter::PhotoAssetAdapter", "Media::MediaLibraryCameraManager::CreatePhotoAssetProxy"));
 }
 // LCOV_EXCL_START
 void PhotoAssetAdapter::AddPhotoProxy(sptr<Media::PhotoProxy> photoProxy)
@@ -82,7 +82,7 @@ int32_t PhotoAssetAdapter::GetVideoFd(VideoType videoType)
 {
     int32_t res = -1;
     CHECK_RETURN_RET(!photoAssetProxy_, res);
-    res = photoAssetProxy_->GetVideoFd();// wait for media_lib
+    res = photoAssetProxy_->GetVideoFd(static_cast<Media::VideoType>(videoType));
     CHECK_EXECUTE(res == -1, CameraReportUtils::GetInstance().ReportCameraFail(
         "PhotoAssetAdapter::GetVideoFd", "Media::PhotoAssetProxy::GetVideoFd"));
     return res;
@@ -96,7 +96,7 @@ int32_t PhotoAssetAdapter::GetUserId()
 void PhotoAssetAdapter::NotifyVideoSaveFinished(VideoType videoType)
 {
     if (photoAssetProxy_) {
-        photoAssetProxy_->NotifyVideoSaveFinished();// wait for media_lib
+        photoAssetProxy_->NotifyVideoSaveFinished(static_cast<Media::VideoType>(videoType));
     }
 }
 
@@ -120,10 +120,11 @@ void PhotoAssetAdapter::UpdatePhotoProxy(const sptr<Media::PhotoProxy> &photoPro
 {
     MEDIA_INFO_LOG("PhotoAssetAdapter::UpdatePhotoProxy is called");
     if (photoAssetProxy_) {
-        MEDIA_ERR_LOG("not apply: photoAssetProxy_->UpdatePhotoProxy(photoProxy);");// wait for media_lib
+        photoAssetProxy_->UpdatePhotoProxy(photoProxy);
     }
 }
 
+#ifdef CAMERA_CAPTURE_YUV
 void PhotoAssetAdapter::RegisterPhotoStateCallback(const std::function<void(int32_t)> &callback)
 {
     MEDIA_DEBUG_LOG("PhotoAssetAdapter::RegisterPhotoStateCallback is called");
@@ -135,6 +136,7 @@ void PhotoAssetAdapter::UnregisterPhotoStateCallback()
     MEDIA_DEBUG_LOG("PhotoAssetAdapter::UnregisterPhotoStateCallback is called");
     CHECK_EXECUTE(photoAssetProxy_ != nullptr, photoAssetProxy_->UnregisterPhotoStateCallback());
 }
+#endif
 
 // LCOV_EXCL_STOP
 extern "C" PhotoAssetIntf *createPhotoAssetIntf(

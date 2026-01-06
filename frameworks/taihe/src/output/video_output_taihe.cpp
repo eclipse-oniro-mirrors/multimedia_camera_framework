@@ -13,12 +13,8 @@
  * limitations under the License.
  */
 #include "video_output_taihe.h"
-#include "camera_utils_taihe.h"
-#include "camera_log.h"
 #include "camera_security_utils_taihe.h"
 #include "camera_template_utils_taihe.h"
-#include "camera_error_code.h"
-#include "camera_event_emitter_taihe.h"
 
 using namespace taihe;
 using namespace ohos::multimedia::camera;
@@ -207,7 +203,7 @@ VideoProfile VideoOutputImpl::GetActiveProfile()
     CHECK_RETURN_RET_ELOG(videoOutput_ == nullptr, res, "GetActiveProfile failed, videoOutput_ is nullptr");
     auto profile = videoOutput_->GetVideoProfile();
     CHECK_RETURN_RET_ELOG(profile == nullptr, res, "GetActiveProfile failed, profile is nullptr");
-    CameraFormat cameraFormat = CameraUtilsTaihe::ToTaiheCameraFormat(profile->GetCameraFormat());
+    CameraFormat cameraFormat = CameraFormat::from_value(static_cast<int32_t>(profile->GetCameraFormat()));
     res.base.size.height = static_cast<int32_t>(profile->GetSize().height);
     res.base.size.width = static_cast<int32_t>(profile->GetSize().width);
     res.base.format = cameraFormat;
@@ -272,6 +268,20 @@ array<ImageRotation> VideoOutputImpl::GetSupportedRotations()
     int32_t retCode = videoOutput_->GetSupportedRotations(supportedRotations);
     CHECK_RETURN_RET(!CameraUtilsTaihe::CheckError(retCode), array<ImageRotation>(nullptr, 0));
     return CameraUtilsTaihe::ToTaiheArrayEnum<ImageRotation, int32_t>(supportedRotations);
+}
+
+ImageRotation VideoOutputImpl::GetVideoRotation()
+{
+    CHECK_RETURN_RET_ELOG(videoOutput_ == nullptr, ImageRotation(static_cast<ImageRotation::key_t>(-1)),
+        "GetVideoRotation failed, videoOutput_ is nullptr");
+    int32_t retCode = videoOutput_->GetVideoRotation();
+    if (retCode == OHOS::CameraStandard::SERVICE_FATL_ERROR) {
+        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::SERVICE_FATL_ERROR,
+            "GetVideoRotation Camera service fatal error.");
+        return ImageRotation(static_cast<ImageRotation::key_t>(-1));
+    }
+    int32_t taiheRetCode = CameraUtilsTaihe::ToTaiheImageRotation(retCode);
+    return ImageRotation(static_cast<ImageRotation::key_t>(taiheRetCode));
 }
 
 ImageRotation VideoOutputImpl::GetVideoRotation(int32_t deviceDegree)

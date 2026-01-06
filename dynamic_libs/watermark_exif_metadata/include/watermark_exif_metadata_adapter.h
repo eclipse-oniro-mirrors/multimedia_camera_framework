@@ -16,7 +16,6 @@
 #ifndef OHOS_CAMERA_WATERMARK_EXIF_METADATA_ADAPTER_H
 #define OHOS_CAMERA_WATERMARK_EXIF_METADATA_ADAPTER_H
 
-#include <string>
 #include "watermark_exif_metadata_interface.h"
 
 namespace OHOS::CameraStandard {
@@ -25,7 +24,7 @@ public:
     WatermarkExifMetadataAdapter();
     virtual ~WatermarkExifMetadataAdapter() = default;
 
-    void SetWatermarkExifMetadata(std::unique_ptr<Media::PixelMap> pixelMap, const WatermarkInfo &info) override;
+    void SetWatermarkExifMetadata(std::unique_ptr<Media::PixelMap> &pixelMap, const WatermarkInfo &info) override;
 };
 } // namespace OHOS::CameraStandard
 #endif // OHOS_CAMERA_WATERMARK_EXIF_METADATA_ADAPTER_H

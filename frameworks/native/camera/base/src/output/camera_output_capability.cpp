@@ -134,8 +134,8 @@ bool CameraOutputCapability::IsMatchPreviewProfiles(std::vector<Profile>& previe
     for (auto& profile : previewProfiles) {
         auto it = std::find(previewProfiles_.begin(), previewProfiles_.end(), profile);
         if (it == previewProfiles_.end()) {
-            MEDIA_DEBUG_LOG("IsMatchPreviewProfiles previewProfile [format : %{public}d, width: %{public}d, "
-                "height: %{public}d] cant match", profile.GetCameraFormat(), profile.GetSize().width,
+            MEDIA_ERR_LOG("IsMatchPreviewProfiles previewProfile [format : %{public}d, width: %{public}d, "
+                "height: %{public}d] can't match", profile.GetCameraFormat(), profile.GetSize().width,
                 profile.GetSize().height);
             return false;
         }

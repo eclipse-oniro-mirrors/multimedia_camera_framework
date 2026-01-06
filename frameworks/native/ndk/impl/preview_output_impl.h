@@ -55,6 +55,8 @@ public:
 
     Camera_ErrorCode GetActiveFrameRate(Camera_FrameRateRange* frameRateRange);
 
+    Camera_ErrorCode GetPreviewRotationWithoutDisplayRotation(Camera_ImageRotation* cameraImageRotation);
+
     Camera_ErrorCode GetPreviewRotation(int32_t imageRotation, Camera_ImageRotation* cameraImageRotation);
 
     Camera_ErrorCode SetPreviewRotation(int32_t imageRotation, bool isDisplayLocked);

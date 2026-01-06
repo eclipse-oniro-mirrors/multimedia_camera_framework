@@ -18,9 +18,6 @@
 
 namespace OHOS {
 namespace CameraStandard {
-// water mark
-using namespace Media;
-
 struct WatermarkInfo {
     int32_t captureID = 0;
     uint64_t timestamp = 0;

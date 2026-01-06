@@ -16,12 +16,9 @@
 #define FRAMEWORKS_TAIHE_PICKER_CAMERA_PICKER_TAIHE_H
 #include <utility>
 
-#include "ohos.multimedia.cameraPicker.proj.hpp"
-#include "ohos.multimedia.cameraPicker.impl.hpp"
-#include "taihe/runtime.hpp"
+#include "camera_utils_taihe.h"
 #include "ability_context.h"
 #include "ui_content.h"
-#include "camera_log.h"
 #include "ui_extension_base/ui_extension_context.h"
 
 namespace Ani {

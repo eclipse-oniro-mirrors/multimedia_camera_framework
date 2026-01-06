@@ -29,10 +29,9 @@ public:
     ~WatermarkExifMetadataProxy() override;
     static std::shared_ptr<WatermarkExifMetadataProxy> CreateWatermarkExifMetadataProxy();
     static void FreeWatermarkExifMetadataDynamiclib();
-    void SetWatermarkExifMetadata(std::unique_ptr<Media::PixelMap> pixelMap, const WatermarkInfo &info) override;
+    void SetWatermarkExifMetadata(std::unique_ptr<Media::PixelMap> &pixelMap, const WatermarkInfo &info) override;
 
 private:
-    // Keep the order of members in this class, the bottom member will be destroyed first
     std::shared_ptr<Dynamiclib> watermarkExifMetadataProxyLib_ = {nullptr};
     std::shared_ptr<WatermarkExifMetadataIntf> watermarkExifMetadataIntf_ = {nullptr};
 };

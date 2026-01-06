@@ -104,7 +104,9 @@ public:
     void SetMovieDebugProducer(sptr<OHOS::IBufferProducer> movieDebugProducer);
     void SetRawDebugProducer(sptr<OHOS::IBufferProducer> rawDebugProducer);
     void SetMetaProducer(sptr<OHOS::IBufferProducer> metaProducer);
+#ifdef CAMERA_MOVING_PHOTO
     void SetMovingPhotoStartCallback(std::function<void()> callback);
+#endif
     void DumpStreamInfo(CameraInfoDumper& infoDumper) override;
     int32_t OperatePermissionCheck(uint32_t interfaceCode) override;
     int32_t CallbackEnter([[maybe_unused]] uint32_t code) override;
@@ -115,7 +117,7 @@ public:
     int32_t SetBandwidthCompression(bool isEnable) override;
     int32_t SetPreviewRotation(std::string &deviceClass);
     bool SetMirrorForLivePhoto(bool isEnable, int32_t mode);
-    void SetStreamTransform(int disPlayRotation = -1);
+    void SetStreamTransform(int displayRotation = -1);
     void SetUsedAsPosition(camera_position_enum_t cameraPosition);
     int32_t AttachMetaSurface(const sptr<OHOS::IBufferProducer>& producer, int32_t videoMetaType) override;
     // 兼容老接口，业务可能和SetMetaProducer 重复需要梳理SetMetaProducer逻辑重新整理，videoMetaType 参考 VideoMetaType
@@ -208,8 +210,10 @@ private:
     uint32_t apiCompatibleVersion_ = 0;
     std::string deviceClass_ = "phone";
     sptr<OHOS::IBufferProducer> metaProducer_;
+#ifdef CAMERA_MOVING_PHOTO
     std::mutex movingPhotoCallbackLock_;
     std::function<void()> startMovingPhotoCallback_;
+#endif
     std::vector<int32_t> streamFrameRateRange_ = {};
     std::set<std::string> whiteList_;
     SpHolder<sptr<BufferProducerSequenceable>> metaSurfaceBufferQueueHolder;

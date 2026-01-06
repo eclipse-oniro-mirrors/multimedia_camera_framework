@@ -104,6 +104,8 @@ public:
     static napi_value IsPhysicalCameraOrientationVariable(napi_env env, napi_callback_info info);
     static napi_value GetPhysicalCameraOrientation(napi_env env, napi_callback_info info);
     static napi_value UsePhysicalCameraOrientation(napi_env env, napi_callback_info info);
+    static napi_value OnCameraOcclusionDetection(napi_env env, napi_callback_info info);
+    static napi_value OffCameraOcclusionDetection(napi_env env, napi_callback_info info);
 
     const EmitterFunctions& GetEmitterFunctions() override;
 

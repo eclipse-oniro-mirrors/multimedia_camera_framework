@@ -38,8 +38,10 @@ public:
     bool SetMaintenanceData(sptr<SurfaceBuffer> &surfaceBuffer) override;
     void RotatePicture() override;
     uint32_t SetXtStyleMetadataBlob(const uint8_t *source, const uint32_t bufferSize) override;
-    std::shared_ptr<Media::Picture> GetPicture() const override;
     std::shared_ptr<PictureIntf> GetPictureIntf() const;
+#ifdef CAMERA_CAPTURE_YUV
+    std::shared_ptr<Media::Picture> GetPicture() const override;
+#endif
 private:
     // Keep the order of members in this class, the bottom member will be destroyed first
     std::shared_ptr<Dynamiclib> pictureLib_ = nullptr;

@@ -16,6 +16,7 @@
 #ifndef OHOS_CAMERA_SURFACE_BUFFER_UTIL_H
 #define OHOS_CAMERA_SURFACE_BUFFER_UTIL_H
 
+#include "camera_log.h"
 #include "inttypes.h"
 #include "surface.h"
 #include "video_key_info.h"

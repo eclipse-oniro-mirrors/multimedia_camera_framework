@@ -111,5 +111,8 @@ ohos_fuzztest("VideoJobQueueFuzzTest") {
 
 group("fuzztest") {
   testonly = true
-  deps = [ ":VideoJobQueueFuzzTest" ]
+  deps =[]
+  if(camera_framework_feature_deferred) {
+    deps += [ ":VideoJobQueueFuzzTest" ]
+  }
 }

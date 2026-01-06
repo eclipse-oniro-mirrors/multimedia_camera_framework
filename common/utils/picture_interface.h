@@ -50,7 +50,9 @@ public:
     virtual bool SetMaintenanceData(sptr<SurfaceBuffer> &surfaceBuffer) = 0;
     virtual void RotatePicture() = 0;
     virtual uint32_t SetXtStyleMetadataBlob(const uint8_t *source, const uint32_t bufferSize) = 0;
+#ifdef CAMERA_CAPTURE_YUV
     virtual std::shared_ptr<Media::Picture> GetPicture() const = 0;
+#endif
 };
 typedef PictureIntf* (*GetPictureAdapter)();
 } // namespace OHOS::CameraStandard

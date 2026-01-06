@@ -14,29 +14,10 @@
  */
 
 #include "photo_output_taihe.h"
-#include "camera_buffer_handle_utils.h"
-#include "camera_utils_taihe.h"
-#include "camera_log.h"
-#include "camera_manager.h"
 #include "camera_security_utils_taihe.h"
-#include "camera_template_utils_taihe.h"
-#include "picture_proxy.h"
-#include "picture_taihe.h"
-#include "task_manager.h"
 #include "video_key_info.h"
-#include "buffer_extra_data_impl.h"
-#include "dp_utils.h"
-#include "deferred_photo_proxy_taihe.h"
-#include "video_key_info.h"
-#include "image_taihe.h"
-#include "image_receiver.h"
-#include "hdr_type.h"
 #include "photo_taihe.h"
-#include "photo_ex_taihe.h"
-#include "pixel_map_taihe.h"
 #include "media_library_comm_ani.h"
-#include "metadata_helper.h"
-#include "photo_output_callback.h"
 
 namespace Ani {
 namespace Camera {
@@ -45,7 +26,6 @@ using namespace taihe;
 using namespace ohos::multimedia::camera;
 static std::mutex g_photoImageMutex;
 static std::mutex g_assembleImageMutex;
-static bool g_callbackExtendFlag = false;
 uint32_t PhotoOutputImpl::photoOutputTaskId_ = CAMERA_PHOTO_OUTPUT_TASKID;
 
 void PhotoOutputCallbackAni::OnCaptureStartedWithInfoCallback(const int32_t captureId, uint32_t exposureTime) const
@@ -78,34 +58,11 @@ void PhotoOutputCallbackAni::OnPhotoAvailableCallback(const std::shared_ptr<Medi
         errCode = -1;
         message = "ImageTaihe Create failed";
     }
+    Photo photoValue = make_holder<Ani::Camera::PhotoImpl, Photo>(mainImage, isRaw);
     auto sharePtr = shared_from_this();
-    auto task = [mainImage, isRaw, errCode, message, sharePtr]() {
-        if (g_callbackExtendFlag) {
-            PhotoEx photoExValue = make_holder<Ani::Camera::PhotoExImpl, PhotoEx>();
-            photoExValue->SetMain(mainImage);
-            CHECK_EXECUTE(sharePtr != nullptr, sharePtr->ExecuteCallback(
-                CONST_CAPTURE_PHOTO_AVAILABLE, photoExValue));
-        } else {
-            Photo photoValue = make_holder<Ani::Camera::PhotoImpl, Photo>(mainImage, isRaw);
-            CHECK_EXECUTE(sharePtr != nullptr, sharePtr->ExecuteAsyncCallback(
-                CONST_CAPTURE_PHOTO_AVAILABLE, errCode, message, photoValue));
-        }
-    };
-    CHECK_RETURN_ELOG(mainHandler_ == nullptr, "callback failed, mainHandler_ is nullptr!");
-    mainHandler_->PostTask(task, "OnPhotoAvailableCallback", 0, OHOS::AppExecFwk::EventQueue::Priority::IMMEDIATE, {});
-}
-
-void PhotoOutputCallbackAni::OnPhotoAvailableCallback(const std::shared_ptr<Media::Picture> picture) const
-{
-    MEDIA_INFO_LOG("PhotoOutputCallbackAni::OnPhotoAvailableCallback");
-    ohos::multimedia::image::image::Picture mainPicture = ANI::Image::PictureImpl::CreatePicture(picture);
-    if (has_error()) {
-        reset_error();
-    }
-    auto sharePtr = shared_from_this();
-    auto task = [mainPicture, sharePtr]() {
-        CHECK_EXECUTE(sharePtr != nullptr, sharePtr->ExecuteCallback(
-            CONST_CAPTURE_PHOTO_AVAILABLE, mainPicture));
+    auto task = [photoValue, errCode, message, sharePtr]() {
+        CHECK_EXECUTE(sharePtr != nullptr, sharePtr->ExecuteAsyncCallback(
+            CONST_CAPTURE_PHOTO_AVAILABLE, errCode, message, photoValue));
     };
     CHECK_RETURN_ELOG(mainHandler_ == nullptr, "callback failed, mainHandler_ is nullptr!");
     mainHandler_->PostTask(task, "OnPhotoAvailableCallback", 0, OHOS::AppExecFwk::EventQueue::Priority::IMMEDIATE, {});
@@ -323,7 +280,6 @@ void PhotoOutputCallbackAni::OnPhotoAvailable(const std::shared_ptr<Media::Nativ
 void PhotoOutputCallbackAni::OnPhotoAvailable(const std::shared_ptr<Media::Picture> picture) const
 {
     MEDIA_DEBUG_LOG("OnPhotoAvailable is called!");
-    OnPhotoAvailableCallback(picture);
 }
 
 void PhotoOutputCallbackAni::OnPhotoAssetAvailable(const int32_t captureId, const std::string &uri,
@@ -793,26 +749,11 @@ void PhotoOutputImpl::OffEstimatedCaptureDuration(optional_view<callback<void(ui
 
 void PhotoOutputImpl::OnPhotoAvailable(callback_view<void(uintptr_t, weak::Photo)> callback)
 {
-    MEDIA_ERR_LOG("PhotoOutputImpl::OnPhotoAvailable");
-    g_callbackExtendFlag = false;
     ListenerTemplate<PhotoOutputImpl>::On(this, callback, CONST_CAPTURE_PHOTO_AVAILABLE);
 }
 
 void PhotoOutputImpl::OffPhotoAvailable(optional_view<callback<void(uintptr_t, weak::Photo)>> callback)
 {
-    ListenerTemplate<PhotoOutputImpl>::Off(this, callback, CONST_CAPTURE_PHOTO_AVAILABLE);
-}
-
-void PhotoOutputImpl::OnPhotoAvailableEx(callback_view<void(weak::PhotoEx)> callback)
-{
-    MEDIA_ERR_LOG("PhotoOutputImpl::OnPhotoAvailableEx");
-    g_callbackExtendFlag = true;
-    ListenerTemplate<PhotoOutputImpl>::On(this, callback, CONST_CAPTURE_PHOTO_AVAILABLE);
-}
-
-void PhotoOutputImpl::OffPhotoAvailableEx(optional_view<callback<void(weak::PhotoEx)>> callback)
-{
-    MEDIA_ERR_LOG("PhotoOutputImpl::OffPhotoAvailableEx");
     ListenerTemplate<PhotoOutputImpl>::Off(this, callback, CONST_CAPTURE_PHOTO_AVAILABLE);
 }
 
@@ -896,7 +837,7 @@ Profile PhotoOutputImpl::GetActiveProfile()
     CHECK_RETURN_RET_ELOG(photoOutput_ == nullptr, res, "GetActiveProfile failed, photoOutput_ is nullptr");
     auto profile = photoOutput_->GetPhotoProfile();
     CHECK_RETURN_RET_ELOG(profile == nullptr, res, "GetActiveProfile failed, profile is nullptr");
-    CameraFormat cameraFormat = CameraUtilsTaihe::ToTaiheCameraFormat(profile->GetCameraFormat());
+    CameraFormat cameraFormat = CameraFormat::from_value(static_cast<int32_t>(profile->GetCameraFormat()));
     res.size.height = profile->GetSize().height;
     res.size.width = profile->GetSize().width;
     res.format = cameraFormat;
@@ -922,6 +863,20 @@ bool PhotoOutputImpl::IsMovingPhotoSupported()
     auto session = photoOutput_->GetSession();
     CHECK_RETURN_RET_ELOG(session == nullptr, false, "EnableMovingPhoto session is null");
     return session->IsMovingPhotoSupported();
+}
+
+ImageRotation PhotoOutputImpl::GetPhotoRotation()
+{
+    CHECK_RETURN_RET_ELOG(photoOutput_ == nullptr, ImageRotation(static_cast<ImageRotation::key_t>(-1)),
+        "GetPhotoRotation failed, photoOutput_ is nullptr");
+    int32_t retCode = photoOutput_->GetPhotoRotation();
+    if (retCode == OHOS::CameraStandard::SERVICE_FATL_ERROR) {
+        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::SERVICE_FATL_ERROR,
+            "GetPhotoRotation Camera service fatal error.");
+        return ImageRotation(static_cast<ImageRotation::key_t>(-1));
+    }
+    int32_t taiheRetCode = CameraUtilsTaihe::ToTaiheImageRotation(retCode);
+    return ImageRotation(static_cast<ImageRotation::key_t>(taiheRetCode));
 }
 
 ImageRotation PhotoOutputImpl::GetPhotoRotation(int32_t deviceDegree)

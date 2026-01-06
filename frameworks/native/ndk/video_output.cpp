@@ -200,6 +200,20 @@ Camera_ErrorCode OH_VideoOutput_EnableMirror(Camera_VideoOutput* videoOutput, bo
 }
 
 /**
+ * @since 23
+ * @version 1.0
+ */
+Camera_ErrorCode OH_VideoOutput_GetVideoRotationWithoutDeviceDegree(Camera_VideoOutput* videoOutput,
+    Camera_ImageRotation* imageRotation)
+{
+    MEDIA_DEBUG_LOG("OH_VideoOutput_GetVideoRotationWithoutDeviceDegree without deviceDegree is called.");
+    CHECK_RETURN_RET_ELOG(videoOutput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, videoOutput is null!");
+    CHECK_RETURN_RET_ELOG(
+        imageRotation == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, imageRotation is null!");
+    return videoOutput->GetVideoRotationWithoutDeviceDegree(imageRotation);
+}
+
+/**
  * @since 12
  * @version 1.0
  */

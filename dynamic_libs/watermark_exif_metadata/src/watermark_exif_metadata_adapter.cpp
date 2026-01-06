@@ -14,14 +14,15 @@
  */
 
 #include "watermark_exif_metadata_adapter.h"
-#include "exif_metadata.h"
-#include "camera_log.h"
+
 #include <cmath>
 #include <ctime>
 #include <iomanip>
+#include <securec.h>
+
+#include "camera_log.h"
+#include "camera_watermark_info.h"
 #include "exif_metadata.h"
-#include "watermark_util.h"
-#include "watermark_exif_metadata_proxy.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -58,12 +59,19 @@ std::string TimestampToDateTimeString(int64_t timestamp)
     std::tm* time = std::localtime(&timeDate);
     constexpr size_t iLen = 20;
     char* dateTimeStr = reinterpret_cast<char*>(malloc(iLen));
-    if (dateTimeStr != nullptr) {
-        CHECK_PRINT_ELOG(memset_s(dateTimeStr, iLen, 0, iLen) != 0, "memset_s return error");
-        int ret = snprintf_s(dateTimeStr, iLen, iLen - 1, "%04d:%02d:%02d %02d:%02d:%02d",
-            time->tm_year + 1900,
-            time->tm_mon + 1, time->tm_mday, time->tm_hour, time->tm_min, time->tm_sec);
-        CHECK_PRINT_ELOG(ret < 0, "snprintf_s return error");
+    CHECK_RETURN_RET_ELOG(dateTimeStr == nullptr, "", "malloc failed");
+    if (memset_s(dateTimeStr, iLen, 0, iLen) != 0) {
+        MEDIA_ERR_LOG("memset_s return error");
+        free(dateTimeStr);
+        return "";
+    }
+    int ret = snprintf_s(dateTimeStr, iLen, iLen - 1, "%04d:%02d:%02d %02d:%02d:%02d",
+        time->tm_year + 1900,
+        time->tm_mon + 1, time->tm_mday, time->tm_hour, time->tm_min, time->tm_sec);
+    if (ret < 0) {
+        MEDIA_ERR_LOG("snprintf_s return error");
+        free(dateTimeStr);
+        return "";
     }
     std::string dateTime(dateTimeStr);
     free(dateTimeStr);
@@ -93,7 +101,8 @@ void SetWaterInfoExifMetaData(std::shared_ptr<Media::ExifMetadata> exifData, con
         std::to_string(static_cast<int64_t>(info.expoEfl)).c_str(), dataTimeString.c_str());
 }
 
-void WatermarkExifMetadataAdapter::SetWatermarkExifMetadata(std::unique_ptr<Media::PixelMap> pixelMap, const WatermarkInfo &info)
+void WatermarkExifMetadataAdapter::SetWatermarkExifMetadata(
+    std::unique_ptr<Media::PixelMap> &pixelMap, const WatermarkInfo &info)
 {
     MEDIA_INFO_LOG("WatermarkExifMetadataAdapter::SetWatermarkExifMetadata called");
     std::shared_ptr<Media::ExifMetadata> exifMetaData = std::make_shared<Media::ExifMetadata>();
@@ -110,5 +119,5 @@ extern "C" WatermarkExifMetadataIntf *createWatermarkExifMetadataIntf()
 {
     return new  WatermarkExifMetadataAdapter();
 }
-}  // namespace AVSession
+}  // namespace CameraStandard
 }  // namespace OHOS

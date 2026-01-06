@@ -150,7 +150,8 @@ const std::vector<napi_property_descriptor> CameraSessionNapi::auto_exposure_pro
     DECLARE_NAPI_FUNCTION("setExposureBias", CameraSessionNapi::SetExposureBias),
     DECLARE_NAPI_FUNCTION("getExposureValue", CameraSessionNapi::GetExposureValue),
     DECLARE_NAPI_FUNCTION("getMeteringPoint", CameraSessionNapi::GetMeteringPoint),
-    DECLARE_NAPI_FUNCTION("setMeteringPoint", CameraSessionNapi::SetMeteringPoint)
+    DECLARE_NAPI_FUNCTION("setMeteringPoint", CameraSessionNapi::SetMeteringPoint),
+    DECLARE_NAPI_FUNCTION("setExposureMeteringMode", CameraSessionNapi::SetExposureMeteringMode),
 };
 
 const std::vector<napi_property_descriptor> CameraSessionNapi::focus_props = {
@@ -1412,6 +1413,9 @@ napi_value CameraSessionNapi::AddInput(napi_env env, napi_callback_info info)
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+    if (thisVar == nullptr) {
+        return result;
+    }
     if (!CameraNapiUtils::CheckInvalidArgument(env, argc, ARGS_ONE, argv, ADD_INPUT)) {
         return result;
     }
@@ -2636,7 +2640,12 @@ napi_value CameraSessionNapi::SetSmoothZoom(napi_env env, napi_callback_info inf
         int32_t smoothZoomType;
         napi_get_value_double(env, argv[PARAM0], &targetZoomRatio);
         napi_get_value_int32(env, argv[PARAM1], &smoothZoomType);
-        cameraSessionNapi->cameraSession_->SetSmoothZoom((float)targetZoomRatio, smoothZoomType);
+        cameraSessionNapi->cameraSession_->LockForControl();
+        int32_t retCode = cameraSessionNapi->cameraSession_->SetSmoothZoom((float)targetZoomRatio, smoothZoomType);
+        cameraSessionNapi->cameraSession_->UnlockForControl();
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
     } else {
         MEDIA_ERR_LOG("SetSmoothZoom call Failed!");
     }
@@ -3153,6 +3162,8 @@ napi_value CameraSessionNapi::CanPreconfig(napi_env env, napi_callback_info info
     MEDIA_INFO_LOG("CameraSessionNapi::CanPreconfig: %{public}d, ratioType:%{public}d", configType, profileSizeRatio);
     bool result = cameraSessionNapi->cameraSession_->CanPreconfig(
         static_cast<PreconfigType>(configType), static_cast<ProfileSizeRatio>(profileSizeRatio));
+    MEDIA_INFO_LOG("CameraSessionNapi::CanPreconfig result: %{public}d, configType: %{public}d, ratioType:%{public}d",
+                   result, configType, profileSizeRatio);
     return CameraNapiUtils::GetBooleanValue(env, result);
 }
 
@@ -3178,6 +3189,8 @@ napi_value CameraSessionNapi::Preconfig(napi_env env, napi_callback_info info)
     }
     int32_t retCode = cameraSessionNapi->cameraSession_->Preconfig(
         static_cast<PreconfigType>(configType), static_cast<ProfileSizeRatio>(profileSizeRatio));
+    MEDIA_INFO_LOG("CameraSessionNapi::Preconfig is called, configType: %{public}d, profileSizeRatio: %{public}d",
+                   configType, profileSizeRatio);
     if (!CameraNapiUtils::CheckError(env, retCode)) {
         return nullptr;
     }
@@ -4665,6 +4678,38 @@ void CameraSwitchRequestCallbackListener::OnAppCameraSwitchCallback(std::string 
 
     ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
     ExecuteCallback("cameraSwitchRequest", callbackNapiPara);
+}
+
+napi_value CameraSessionNapi::SetExposureMeteringMode(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("SetExposureMeteringMode is called");
+    CAMERA_SYNC_TRACE;
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+        int32_t value = 0;
+        napi_get_value_int32(env, argv[PARAM0], &value);
+        if (value == static_cast<int32_t>(CameraSessionNapi::ExposureMeteringModeofSdk::CENTER_HIGHLIGHT_WEIGHTED)) {
+            value = static_cast<int32_t>(MeteringMode::METERING_MODE_CENTER_HIGHLIGHT_WEIGHTED);
+        }
+        MeteringMode mode = static_cast<MeteringMode>(value);
+        cameraSessionNapi->cameraSession_->LockForControl();
+        cameraSessionNapi->cameraSession_->SetExposureMeteringMode(static_cast<MeteringMode>(mode));
+        MEDIA_INFO_LOG("SetExposureMeteringMode SetExposureMeteringMode set meteringMode %{public}d!", mode);
+        cameraSessionNapi->cameraSession_->UnlockForControl();
+    } else {
+        MEDIA_ERR_LOG("SetExposureMeteringMode call Failed!");
+    }
+    return result;
 }
 } // namespace CameraStandard
 } // namespace OHOS

@@ -17,7 +17,6 @@
 #include "input/camera_manager_taihe.h"
 #include "camera_utils_taihe.h"
 #include "camera_security_utils_taihe.h"
-#include "camera_log.h"
 
 namespace Ani::Camera {
 
@@ -46,116 +45,12 @@ string CameraUtilsTaihe::ToTaiheString(const std::string &src)
     return ::taihe::string(src);
 }
 
-CameraPosition CameraUtilsTaihe::ToTaihePosition(OHOS::CameraStandard::CameraPosition position)
-{
-    auto itr = g_nativeToAniCameraPosition.find(position);
-    if (itr == g_nativeToAniCameraPosition.end()) {
-        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT, "ToTaihePosition fail");
-        return CameraPosition::key_t::CAMERA_POSITION_UNSPECIFIED;
-    }
-    MEDIA_DEBUG_LOG("ToTaihePosition itr->second position = %{public}d ", itr->second.get_value());
-    return itr->second;
-}
-
-CameraType CameraUtilsTaihe::ToTaiheCameraType(OHOS::CameraStandard::CameraType type)
-{
-    auto itr = g_nativeToAniCameraType.find(type);
-    if (itr == g_nativeToAniCameraType.end()) {
-        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT, "ToTaiheCameraType fail");
-        return CameraType::key_t::CAMERA_TYPE_DEFAULT;
-    }
-    return itr->second;
-}
-
-SceneFeatureType CameraUtilsTaihe::ToTaiheSceneFeatureType(OHOS::CameraStandard::SceneFeature type)
-{
-    auto itr = g_nativeToAniSceneFeatureType.find(type);
-    if (itr == g_nativeToAniSceneFeatureType.end()) {
-        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT, "ToTaiheSceneFeatureType fail");
-        return SceneFeatureType::key_t::MOON_CAPTURE_BOOST;
-    }
-    return itr->second;
-}
-
 bool CameraUtilsTaihe::ToTaiheMacroStatus(OHOS::CameraStandard::MacroStatusCallback::MacroStatus status)
 {
     auto itr = g_nativeToAniMacroStatus.find(status);
     if (itr == g_nativeToAniMacroStatus.end()) {
         CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT, "ToTaiheMacroStatus fail");
         return false;
-    }
-    return itr->second;
-}
-
-ohos::multimedia::camera::TimeLapsePreviewType CameraUtilsTaihe::ToTaiheTimeLapsePreviewType(
-    OHOS::CameraStandard::TimeLapsePreviewType type)
-{
-    auto itr = g_nativeToAniTimeLapsePreviewType.find(type);
-    if (itr == g_nativeToAniTimeLapsePreviewType.end()) {
-        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT, "ToTaiheTimeLapsePreviewType fail");
-        return ohos::multimedia::camera::TimeLapsePreviewType::key_t::DARK;
-    }
-    return itr->second;
-}
-
-EffectSuggestionType CameraUtilsTaihe::ToTaiheEffectSuggestionType(
-    OHOS::CameraStandard::EffectSuggestionType effectSuggestionType)
-{
-    auto itr = g_nativeToAniEffectSuggestionType.find(effectSuggestionType);
-    if (itr == g_nativeToAniEffectSuggestionType.end()) {
-        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT, "ToTaiheEffectSuggestionType fail");
-        return EffectSuggestionType::key_t::EFFECT_SUGGESTION_NONE;
-    }
-    return itr->second;
-}
-
-SystemPressureLevel CameraUtilsTaihe::ToTaiheSystemPressureLevel(
-    OHOS::CameraStandard::PressureStatus systemPressureLevel)
-{
-    auto itr = g_nativeToAniSystemPressureLevel.find(systemPressureLevel);
-    if (itr == g_nativeToAniSystemPressureLevel.end()) {
-        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT, "ToTaiheSystemPressureLevel fail");
-        return SystemPressureLevel::key_t::SYSTEM_PRESSURE_NORMAL;
-    }
-    return itr->second;
-}
-
-SlowMotionStatus CameraUtilsTaihe::ToTaiheSlowMotionState(OHOS::CameraStandard::SlowMotionState type)
-{
-    auto itr = g_nativeToAniSlowMotionState.find(type);
-    if (itr == g_nativeToAniSlowMotionState.end()) {
-        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT, "ToTaiheSlowMotionState fail");
-        return SlowMotionStatus::key_t::DISABLED;
-    }
-    return itr->second;
-}
-
-ConnectionType CameraUtilsTaihe::ToTaiheConnectionType(OHOS::CameraStandard::ConnectionType type)
-{
-    auto itr = g_nativeToAniConnectionType.find(type);
-    if (itr == g_nativeToAniConnectionType.end()) {
-        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT, "ToTaiheConnectionType fail");
-        return ConnectionType::key_t::CAMERA_CONNECTION_BUILT_IN;
-    }
-    return itr->second;
-}
-
-LightStatus CameraUtilsTaihe::ToTaiheLightStatus(int32_t status)
-{
-    auto itr = g_nativeToAniLightStatus.find(status);
-    if (itr == g_nativeToAniLightStatus.end()) {
-        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT, "ToTaiheLightStatus fail");
-        return LightStatus::key_t::NORMAL;
-    }
-    return itr->second;
-}
-
-FocusTrackingMode CameraUtilsTaihe::ToTaiheFocusTrackingMode(OHOS::CameraStandard::FocusTrackingMode mode)
-{
-    auto itr = g_nativeToAniFocusTrackingMode.find(mode);
-    if (itr == g_nativeToAniFocusTrackingMode.end()) {
-        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT, "ToTaiheFocusTrackingMode fail");
-        return FocusTrackingMode::key_t::AUTO;
     }
     return itr->second;
 }
@@ -247,9 +142,9 @@ CameraDevice CameraUtilsTaihe::ToTaiheCameraDevice(sptr<OHOS::CameraStandard::Ca
     CameraDevice cameraTaihe = CameraUtilsTaihe::GetNullCameraDevice();
     CHECK_RETURN_RET_ELOG(!obj, cameraTaihe, "obj is null");
     cameraTaihe.cameraId = ToTaiheString(obj->GetID());
-    cameraTaihe.cameraPosition = ToTaihePosition(obj->GetPosition());
-    cameraTaihe.cameraType = ToTaiheCameraType(obj->GetCameraType());
-    cameraTaihe.connectionType = ToTaiheConnectionType(obj->GetConnectionType());
+    cameraTaihe.cameraPosition = CameraPosition::from_value(static_cast<int32_t>(obj->GetPosition()));
+    cameraTaihe.cameraType = CameraType::from_value(static_cast<int32_t>(obj->GetCameraType()));
+    cameraTaihe.connectionType = ConnectionType::from_value(static_cast<int32_t>(obj->GetConnectionType()));
     cameraTaihe.isRetractable = optional<bool>::make(obj->GetisRetractable());
     cameraTaihe.hostDeviceType = HostDeviceType::from_value(static_cast<int32_t>(obj->GetDeviceType()));
     cameraTaihe.hostDeviceName = ToTaiheString(obj->GetHostName());
@@ -326,56 +221,6 @@ ohos::multimedia::camera::CameraConcurrentType CameraUtilsTaihe::ToTaiheCameraCo
         ohos::multimedia::camera::CameraConcurrentType::key_t::CAMERA_LIMITED_CAPABILITY;
 }
 
-CameraFormat CameraUtilsTaihe::ToTaiheCameraFormat(OHOS::CameraStandard::CameraFormat format)
-{
-    auto itr = g_nativeToAniCameraFormat.find(format);
-    if (itr != g_nativeToAniCameraFormat.end()) {
-        return CameraFormat(itr->second);
-    }
-    CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT, "ToTaiheCameraFormat fail");
-    return CameraFormat::key_t::CAMERA_FORMAT_YUV_420_SP;
-}
-
-DepthDataQualityLevel CameraUtilsTaihe::ToTaiheDepthDataQualityLevel(int32_t level)
-{
-    auto itr = g_nativeToAniDepthDataQualityLevel.find(level);
-    if (itr != g_nativeToAniDepthDataQualityLevel.end()) {
-        return DepthDataQualityLevel(itr->second);
-    }
-    CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT, "ToTaiheDepthDataQualityLevel fail");
-    return DepthDataQualityLevel::key_t::DEPTH_DATA_QUALITY_BAD;
-}
-
-DepthDataAccuracy CameraUtilsTaihe::ToTaiheDepthDataAccuracy(OHOS::CameraStandard::DepthDataAccuracy dataAccuracy)
-{
-    auto itr = g_nativeToAniDepthDataAccuracy.find(dataAccuracy);
-    if (itr != g_nativeToAniDepthDataAccuracy.end()) {
-        return DepthDataAccuracy(itr->second);
-    }
-    CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT, "ToTaiheDepthDataAccuracy fail");
-    return DepthDataAccuracy::key_t::DEPTH_DATA_ACCURACY_RELATIVE;
-}
-
-FocusState CameraUtilsTaihe::ToTaiheFocusState(OHOS::CameraStandard::FocusCallback::FocusState format)
-{
-    auto itr = g_nativeToAniFocusState.find(format);
-    if (itr != g_nativeToAniFocusState.end()) {
-        return FocusState(itr->second);
-    }
-    CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT, "ToTaiheFocusState fail");
-    return FocusState::key_t::FOCUS_STATE_SCAN;
-}
-
-MetadataObjectType CameraUtilsTaihe::ToTaiheMetadataObjectType(OHOS::CameraStandard::MetadataObjectType format)
-{
-    auto itr = g_nativeToAniMetadataObjectType.find(format);
-    if (itr != g_nativeToAniMetadataObjectType.end()) {
-        return MetadataObjectType(itr->second);
-    }
-    CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT, "ToTaiheMetadataObjectType fail");
-    return MetadataObjectType::key_t::FACE_DETECTION;
-}
-
 int32_t CameraUtilsTaihe::ToTaiheImageRotation(int32_t retCode)
 {
     switch (retCode) {
@@ -400,7 +245,7 @@ array<MetadataObject> CameraUtilsTaihe::ToTaiheMetadataObjectsAvailableData(
     for (auto &it : metadataObjList) {
         OHOS::CameraStandard::Rect boundingbox = it->GetBoundingBox();
         MetadataObject aniMetadataObject = {
-            .type = CameraUtilsTaihe::ToTaiheMetadataObjectType(it->GetType()),
+            .type = MetadataObjectType::from_value(static_cast<int32_t>(it->GetType())),
             .timestamp = it->GetTimestamp(),
             .boundingBox = ohos::multimedia::camera::Rect { boundingbox.topLeftX, boundingbox.topLeftY,
                                                             boundingbox.width, boundingbox.height },
@@ -415,7 +260,7 @@ array<Profile> CameraUtilsTaihe::ToTaiheArrayProfiles(std::vector<OHOS::CameraSt
 {
     std::vector<Profile> vec;
     for (auto &item : profiles) {
-        CameraFormat cameraFormat = CameraUtilsTaihe::ToTaiheCameraFormat(item.GetCameraFormat());
+        CameraFormat cameraFormat = CameraFormat::from_value(static_cast<int32_t>(item.GetCameraFormat()));
         Profile aniProfile {
             .size = {
                 .height = item.GetSize().height,
@@ -436,7 +281,7 @@ array<VideoProfile> CameraUtilsTaihe::ToTaiheArrayVideoProfiles(
         auto frameRates = item.GetFrameRates();
         CHECK_CONTINUE_ELOG(frameRates.size() < FRAME_RATES_SIZE,
             "ToTaiheArrayVideoProfiles failed, frameRates is error");
-        CameraFormat cameraFormat = CameraUtilsTaihe::ToTaiheCameraFormat(item.GetCameraFormat());
+        CameraFormat cameraFormat = CameraFormat::from_value(static_cast<int32_t>(item.GetCameraFormat()));
         VideoProfile aniProfile {
             .base = {
                 .size = {
@@ -460,14 +305,14 @@ array<DepthProfile> CameraUtilsTaihe::ToTaiheArrayDepthProfiles(
 {
     std::vector<DepthProfile> vec;
     for (auto &item : profiles) {
-        CameraFormat cameraFormat = CameraUtilsTaihe::ToTaiheCameraFormat(item.GetCameraFormat());
+        CameraFormat cameraFormat = CameraFormat::from_value(static_cast<int32_t>(item.GetCameraFormat()));
         DepthProfile aniProfile {
             .size = {
                 .height = item.GetSize().height,
                 .width = item.GetSize().width,
             },
             .format = cameraFormat,
-            .dataAccuracy = ToTaiheDepthDataAccuracy(item.GetDataAccuracy()),
+            .dataAccuracy = DepthDataAccuracy::from_value(static_cast<int32_t>(item.GetDataAccuracy())),
         };
         vec.emplace_back(aniProfile);
     }

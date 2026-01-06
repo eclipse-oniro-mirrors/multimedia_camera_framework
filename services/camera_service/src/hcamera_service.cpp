@@ -40,17 +40,22 @@
 #include "camera_info_dumper.h"
 #include "camera_log.h"
 #include "camera_report_uitls.h"
+#include "camera_report_dfx_uitls.h"
 #include "camera_util.h"
 #include "camera_common_event_manager.h"
 #include "camera_metadata.h"
 #include "datashare_predicates.h"
 #include "datashare_result_set.h"
+#ifdef CAMERA_DEFERRED
 #include "deferred_processing_service.h"
+#endif
 #include "display_manager_lite.h"
 #include "hcamera_device_manager.h"
 #include "hstream_operator_manager.h"
 #include "hcamera_preconfig.h"
+#ifdef CAMERA_MOVIE_FILE
 #include "hcamera_movie_file_output.h"
+#endif
 #include "hcamera_session_manager.h"
 #include "icamera_service_callback.h"
 #include "hcamera_switch_session.h"
@@ -68,7 +73,9 @@
 #include "mem_mgr_client.h"
 #include "mem_mgr_constant.h"
 #endif
+#ifdef CAMERA_ROTATE_PARAM_UPDATE
 #include "camera_rotate_param_manager.h"
+#endif
 #include "camera_xcollie.h"
 #include "res_type.h"
 #include "res_sched_client.h"
@@ -148,8 +155,10 @@ void HCameraService::OnStart()
     MEDIA_INFO_LOG("HCameraService OnStart begin");
     CHECK_PRINT_ELOG(
         cameraHostManager_->Init() != CAMERA_OK, "HCameraService OnStart failed to init camera host manager.");
+#ifdef CAMERA_DEFERRED
     // initialize deferred processing service.
     DeferredProcessing::DeferredProcessingService::GetInstance().Initialize();
+#endif
     cameraDataShareHelper_ = std::make_shared<CameraDataShareHelper>();
     AddSystemAbilityListener(DISTRIBUTED_KV_DATA_SERVICE_ABILITY_ID);
 #ifdef NOTIFICATION_ENABLE
@@ -161,8 +170,12 @@ void HCameraService::OnStart()
     } else {
         MEDIA_INFO_LOG("HCameraService publish OnStart failed");
     }
-    CameraRoateParamManager::GetInstance().InitParam(); // 先初始化再监听
-    CameraRoateParamManager::GetInstance().SubscriberEvent();
+#ifdef CAMERA_ROTATE_PARAM_UPDATE
+    if (g_isFoldScreen) {
+        CameraRoateParamManager::GetInstance().InitParam(); // 先初始化再监听
+        CameraRoateParamManager::GetInstance().SubscriberEvent();
+    }
+#endif
     MEDIA_INFO_LOG("HCameraService OnStart end");
 }
 
@@ -576,7 +589,7 @@ int32_t HCameraService::GetCameras(
     return ret;
 }
 
-shared_ptr<CameraMetaInfo>HCameraService::GetCameraMetaInfo(std::string &cameraId,
+shared_ptr<CameraMetaInfo> HCameraService::GetCameraMetaInfo(std::string &cameraId,
     shared_ptr<OHOS::Camera::CameraMetadata>cameraAbility)
 {
     camera_metadata_item_t item;
@@ -751,8 +764,12 @@ int32_t HCameraService::CreateCameraDevice(const string& cameraId, sptr<ICameraD
         }
         device = cameraDevice;
         cameraDevice->SetDeviceMuteMode(muteModeStored_);
-        cameraDevice->SetCameraRotateStrategyInfos(
-            CameraRoateParamManager::GetInstance().GetCameraRotateStrategyInfos());
+#ifdef CAMERA_ROTATE_PARAM_UPDATE
+        if (g_isFoldScreen) {
+            cameraDevice->SetCameraRotateStrategyInfos(
+                CameraRoateParamManager::GetInstance().GetCameraRotateStrategyInfos());
+        }
+#endif
     }
     CAMERA_SYSEVENT_STATISTIC(CreateMsg("CameraManager_CreateCameraInput CameraId:%s", cameraId.c_str()));
     MEDIA_INFO_LOG("HCameraService::CreateCameraDevice execute success");
@@ -765,6 +782,7 @@ int32_t HCameraService::CreateCaptureSession(sptr<ICaptureSession>& session, int
     std::lock_guard<std::mutex> lock(mutex_);
     int32_t rc = CAMERA_OK;
     HILOG_COMM_INFO("HCameraService::CreateCaptureSession opMode_= %{public}d", opMode);
+    CameraReportUtils::GetInstance().updateModeChangePerfInfo(opMode, CameraReportUtils::GetCallerInfo());
 
     OHOS::Security::AccessToken::AccessTokenID callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCaptureSession> captureSession = nullptr;
@@ -821,6 +839,7 @@ int32_t HCameraService::CreateDeferredPhotoProcessingSession(int32_t userId,
     const sptr<DeferredProcessing::IDeferredPhotoProcessingSessionCallback>& callback,
     sptr<DeferredProcessing::IDeferredPhotoProcessingSession>& session)
 {
+#ifdef CAMERA_DEFERRED
     CAMERA_SYNC_TRACE;
     CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION, "HCameraService::CheckSystemApp fail");
     CameraXCollie cameraXCollie = CameraXCollie("HCameraService::CreateDeferredPhotoProcessingSession");
@@ -833,6 +852,7 @@ int32_t HCameraService::CreateDeferredPhotoProcessingSession(int32_t userId,
         DeferredProcessing::DeferredProcessingService::GetInstance().CreateDeferredPhotoProcessingSession(userId,
         callback);
     session = photoSession;
+#endif
     return CAMERA_OK;
 }
 
@@ -840,6 +860,7 @@ int32_t HCameraService::CreateDeferredVideoProcessingSession(int32_t userId,
     const sptr<DeferredProcessing::IDeferredVideoProcessingSessionCallback>& callback,
     sptr<DeferredProcessing::IDeferredVideoProcessingSession>& session)
 {
+#ifdef CAMERA_DEFERRED
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("HCameraService::CreateDeferredVideoProcessingSession enter.");
     sptr<DeferredProcessing::IDeferredVideoProcessingSession> videoSession;
@@ -850,6 +871,7 @@ int32_t HCameraService::CreateDeferredVideoProcessingSession(int32_t userId,
         DeferredProcessing::DeferredProcessingService::GetInstance().CreateDeferredVideoProcessingSession(userId,
         callback);
     session = videoSession;
+#endif
     return CAMERA_OK;
 }
 
@@ -1114,6 +1136,7 @@ int32_t HCameraService::CreateVideoOutput(const sptr<OHOS::IBufferProducer>& pro
 int32_t HCameraService::CreateMovieFileOutput(
     int32_t format, int32_t width, int32_t height, sptr<IStreamRepeat>& movieFileStream)
 {
+#ifdef CAMERA_FRAMEWORK_FEATURE_MEDIA_STREAM
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("CreateMovieFileOutput is called");
     CHECK_RETURN_RET_ELOG(
@@ -1131,11 +1154,15 @@ int32_t HCameraService::CreateMovieFileOutput(
         movieFileStreamRepeat == nullptr, CAMERA_ALLOC_ERROR, "nullptr check failed, movieFileStreamRepeat is null");
     movieFileStream = movieFileStreamRepeat;
     return rc;
+#else
+    return CAMERA_OK;
+#endif
 }
 
 int32_t HCameraService::CreateMovieFileOutput(
     const IpcVideoProfile& videoProfile, sptr<IMovieFileOutput>& movieFileOutput)
 {
+#ifdef CAMERA_MOVIE_FILE
     int32_t rc = CAMERA_OK;
     MEDIA_INFO_LOG("HCameraService::CreateMovieFileOutput start");
     if (videoProfile.width <= 0 || videoProfile.height <= 0) {
@@ -1150,6 +1177,9 @@ int32_t HCameraService::CreateMovieFileOutput(
     CHECK_RETURN_RET_ELOG(movieFileOutput == nullptr, CAMERA_ALLOC_ERROR,
         "HCameraService::CreateMovieFileOutput movieFileOutput alloc failed");
     return rc;
+#else
+    return CAMERA_OK;
+#endif
 }
 
 bool HCameraService::ShouldSkipStatusUpdates(pid_t pid)
@@ -1825,8 +1855,10 @@ int32_t HCameraService::PrelaunchCamera(int32_t flag)
     #endif
     // only touch up and no flag enable prelaunch
     CHECK_RETURN_RET((flag != 1) && (flag != -1), CAMERA_OK);
+#ifdef CAMERA_DEFERRED
     // notify deferredprocess stop
     DeferredProcessing::DeferredProcessingService::GetInstance().NotifyInterrupt();
+#endif
     MEDIA_INFO_LOG("HCameraService::PrelaunchCamera E");
     CHECK_RETURN_RET_ELOG(HCameraDeviceManager::GetInstance()->GetCameraStateOfASide().Size() != 0,
         CAMERA_DEVICE_CONFLICT, "HCameraService::PrelaunchCamera there is a device active in A side, abort!");
@@ -2548,6 +2580,7 @@ void HCameraService::ClearCameraListenerByPid(pid_t pid)
         CHECK_EXECUTE(cameraListenerTmp != nullptr && cameraListenerTmp->AsObject() != nullptr,
             cameraListenerTmp->RemoveCameraDeathRecipient());
         cameraListenerMap_.Erase(pid);
+        CameraReportDfxUtils::GetInstance()->UpdateAliveClient(pid, ClientState::DIED);
     }
 }
 
@@ -2596,6 +2629,7 @@ int HCameraService::SetListenerObject(const sptr<IRemoteObject>& object)
     });
     cameraListener->AddCameraDeathRecipient(deathRecipient);
     cameraListenerMap_.EnsureInsert(pid, cameraListener);
+    CameraReportDfxUtils::GetInstance()->UpdateAliveClient(pid, ClientState::ALIVE);
     return CAMERA_OK;
 }
 

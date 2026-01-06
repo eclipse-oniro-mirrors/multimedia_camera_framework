@@ -16,14 +16,13 @@
 #ifndef OHOS_CAMERA_WATERMARK_EXIF_METADATA_INTERFACE_H
 #define OHOS_CAMERA_WATERMARK_EXIF_METADATA_INTERFACE_H
 
-#include <string>
 #include "pixel_map.h"
 #include "camera_watermark_info.h"
 
 namespace OHOS::CameraStandard {
 class WatermarkExifMetadataIntf {
 public:
-    virtual void SetWatermarkExifMetadata(std::unique_ptr<Media::PixelMap> pixelMap, const WatermarkInfo &info) = 0;
+    virtual void SetWatermarkExifMetadata(std::unique_ptr<Media::PixelMap> &pixelMap, const WatermarkInfo &info) = 0;
     virtual ~WatermarkExifMetadataIntf() = default;
 };
 } // namespace OHOS::CameraStandard

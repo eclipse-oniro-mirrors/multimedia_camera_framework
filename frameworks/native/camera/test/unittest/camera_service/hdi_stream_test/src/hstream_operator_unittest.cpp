@@ -123,6 +123,7 @@ HWTEST_F(HStreamOperatorUnitTest, GetCurrentStreamInfos_002, TestSize.Level1)
     EXPECT_EQ(streamInfos.size(), 1);
 }
 
+#ifdef CAMERA_MOVING_PHOTO
 /**
  * @tc.name  : Test StartMovingPhotoStream API
  * @tc.number: StartMovingPhotoStream_001
@@ -152,6 +153,7 @@ HWTEST_F(HStreamOperatorUnitTest, StartMovingPhotoStream_002, TestSize.Level0)
     streamOp_->isSetMotionPhoto_ = false;
     streamOp_->StartMovingPhotoStream(nullptr);
 }
+#endif
 
 /**
  * @tc.name  : Test RegisterDisplayListener API
@@ -423,6 +425,7 @@ HWTEST_F(HStreamOperatorUnitTest, ReleaseStreams_004, TestSize.Level1)
     EXPECT_NE(streamDepth->hdiStreamId_, STREAM_ID_UNSET);
 }
 
+#ifdef CAMERA_MOVING_PHOTO
 /**
  * @tc.name  : Test EnableMovingPhotoMirror API
  * @tc.number: EnableMovingPhotoMirror_001
@@ -434,6 +437,7 @@ HWTEST_F(HStreamOperatorUnitTest, EnableMovingPhotoMirror_001, TestSize.Level1)
     EXPECT_NE(rc, CAMERA_OK);
     EXPECT_NE(streamOp_->isMovingPhotoMirror_, true);
 }
+#endif
 
 /**
  * @tc.name  : Test OnCaptureStarted API
@@ -617,6 +621,7 @@ HWTEST_F(HStreamOperatorUnitTest, CalcRotationDegree_002, TestSize.Level0)
     EXPECT_NE(streamOp_->CalcRotationDegree(data), -1);
 }
 
+#ifdef CAMERA_MOVING_PHOTO
 /**
  * @tc.name  : Test StartMovingPhotoEncode API
  * @tc.number: StartMovingPhotoEncode_001
@@ -641,6 +646,7 @@ HWTEST_F(HStreamOperatorUnitTest, StartMovingPhotoEncode_002, TestSize.Level1)
     streamOp_->StartMovingPhotoEncode(STREAM_ROTATE_0, 0, 0, 0);
     EXPECT_TRUE(streamOp_->isSetMotionPhoto_);
 }
+#endif
 
 /**
  * @tc.name  : Test SetCameraPhotoProxyInfo API

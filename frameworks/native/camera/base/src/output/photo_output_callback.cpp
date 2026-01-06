@@ -21,10 +21,11 @@
 #include "photo_output.h"
 #include "camera_log.h"
 #include "camera_util.h"
+#include "camera_watermark_info.h"
 #include "image_type.h"
 #include "video_key_info.h"
-#include <drivers/interface/display/graphic/common/v1_0/cm_color_space.h>
-#include <drivers/interface/display/graphic/common/v2_1/cm_color_space.h>
+#include "v1_0/cm_color_space.h"
+#include "v2_1/cm_color_space.h"
 #include "metadata_helper.h"
 #include <pixel_map.h>
 #include "hdr_type.h"
@@ -32,7 +33,7 @@
 #include "task_manager.h"
 #include "hstream_common.h"
 #include "watermark_exif_metadata_proxy.h"
-#include "camera_watermark_info.h"
+
 using namespace std;
 
 namespace OHOS {
@@ -100,6 +101,7 @@ int32_t HStreamCapturePhotoCallbackImpl::OnPhotoAvailable(
     return CAMERA_OK;
 }
 
+#ifdef CAMERA_CAPTURE_YUV
 int32_t HStreamCapturePhotoCallbackImpl::OnPhotoAvailable(std::shared_ptr<PictureIntf> pictureProxy)
 {
     CAMERA_SYNC_TRACE;
@@ -117,6 +119,7 @@ int32_t HStreamCapturePhotoCallbackImpl::OnPhotoAvailable(std::shared_ptr<Pictur
     MEDIA_INFO_LOG("HStreamCapturePhotoCallbackImpl OnPhotoAvailable X");
     return CAMERA_OK;
 }
+#endif
 
 int32_t HStreamCapturePhotoAssetCallbackImpl::OnPhotoAssetAvailable(
     const int32_t captureId, const std::string &uri, int32_t cameraShotType, const std::string &burstKey)
@@ -210,9 +213,12 @@ int32_t HStreamCaptureThumbnailCallbackImpl::OnThumbnailAvailable(sptr<SurfaceBu
     CHECK_PRINT_ELOG(pixelMap == nullptr, "ThumbnailListener create pixelMap is nullptr");
     ThumbnailSetColorSpaceAndRotate(pixelMap, surfaceBuffer, colorSpace);
 
-    std::shared_ptr<WatermarkExifMetadataIntf> watermarkExifMetadataProxy = WatermarkExifMetadataProxy::CreateWatermarkExifMetadataProxy();
-    watermarkExifMetadataProxy->SetWatermarkExifMetadata(std::move(pixelMap), info);
-    WatermarkExifMetadataProxy::FreeWatermarkExifMetadataDynamiclib();
+    std::shared_ptr<WatermarkExifMetadataIntf> watermarkExifMetadataProxy =
+        WatermarkExifMetadataProxy::CreateWatermarkExifMetadataProxy();
+    if (watermarkExifMetadataProxy != nullptr) {
+        watermarkExifMetadataProxy->SetWatermarkExifMetadata(pixelMap, info);
+        WatermarkExifMetadataProxy::FreeWatermarkExifMetadataDynamiclib();
+    }
     callback->OnThumbnailAvailable(info.captureID, timestamp, std::move(pixelMap));
     return CAMERA_OK;
 }
@@ -352,15 +358,19 @@ void PhotoNativeConsumer::ExecutePhotoAvailable(sptr<SurfaceBuffer> surfaceBuffe
     CHECK_RETURN_ELOG(!photoOutput, "ExecutePhotoAvailable photoOutput is null");
     auto callback = photoOutput->GetAppPhotoCallback();
     CHECK_RETURN_ELOG(callback == nullptr, "ExecutePhotoAvailable callback is nullptr");
+#ifdef CAMERA_CAPTURE_YUV
     if (surfaceBuffer->GetFormat() == GRAPHIC_PIXEL_FMT_YCRCB_420_SP) {
         std::unique_ptr<Media::Picture> picture = Media::Picture::Create(surfaceBuffer);
         callback->OnPhotoAvailable(std::move(picture));
     } else {
+#endif
         std::shared_ptr<CameraBufferProcessor> bufferProcessor;
         std::shared_ptr<Media::NativeImage> image =
             std::make_shared<Media::NativeImage>(surfaceBuffer, bufferProcessor, timestamp);
         callback->OnPhotoAvailable(image, false);
+#ifdef CAMERA_CAPTURE_YUV
     }
+#endif
     MEDIA_INFO_LOG("PN_ExecutePhotoAvailable X");
 }
 

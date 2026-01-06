@@ -16,13 +16,9 @@
 #ifndef FRAMEWORKS_TAIHE_INCLUDE_LISTENER_BASE_TAIHE_H
 #define FRAMEWORKS_TAIHE_INCLUDE_LISTENER_BASE_TAIHE_H
 
-#include <list>
-#include <memory>
-#include <mutex>
 #include <unordered_map>
 
 #include "camera_auto_ref_taihe.h"
-#include "camera_utils_taihe.h"
 #include "event_handler.h"
 namespace Ani {
 namespace Camera {

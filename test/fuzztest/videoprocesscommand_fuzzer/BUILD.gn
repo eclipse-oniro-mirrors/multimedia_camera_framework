@@ -140,5 +140,8 @@ ohos_fuzztest("VideoProcessCommandFuzzTest") {
 
 group("fuzztest") {
   testonly = true
-  deps = [ ":VideoProcessCommandFuzzTest" ]
+  deps =[]
+  if(camera_framework_feature_deferred) {
+    deps += [ ":VideoProcessCommandFuzzTest" ]
+  }
 }

@@ -58,7 +58,9 @@ int32_t DeferredPhotoProcessor::Initialize()
 void DeferredPhotoProcessor::AddImage(const std::string& imageId, bool discardable, DpsMetadata& metadata,
     const std::string& bundleName)
 {
+#ifdef CAMERA_CAPTURE_YUV
     DP_CHECK_EXECUTE(postProcessor_, postProcessor_->SetProcessBundleNameResult(bundleName));
+#endif
     bool isProcess = ProcessCatchResults(imageId);
     DP_CHECK_RETURN(isProcess);
     repository_->AddDeferredJob(imageId, discardable, metadata);

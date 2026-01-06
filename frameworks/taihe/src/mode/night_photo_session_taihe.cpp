@@ -13,9 +13,6 @@
  * limitations under the License.
  */
 
-#include "camera_log.h"
-#include "camera_utils_taihe.h"
-#include "camera_security_utils_taihe.h"
 #include "night_photo_session_taihe.h"
 
 namespace Ani {

@@ -15,10 +15,7 @@
 #ifndef FRAMEWORKS_TAIHE_INCLUDE_PHOTO_TAIHE_H
 #define FRAMEWORKS_TAIHE_INCLUDE_PHOTO_TAIHE_H
 
-#include "taihe/runtime.hpp"
-#include "camera_log.h"
 #include "image_taihe.h"
-#include "pixel_map_taihe.h"
 #include "depth_data_taihe.h"
 
 namespace Ani::Camera {

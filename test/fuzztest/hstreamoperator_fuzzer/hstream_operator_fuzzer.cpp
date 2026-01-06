@@ -45,13 +45,15 @@ void HStreamOperatorFuzzer::HStreamOperatorFuzzTest(FuzzedDataProvider& fdp)
     CHECK_RETURN_ELOG(!fuzz_, "NewInstance Error");
     int32_t streamId = fdp.ConsumeIntegral<int32_t>();
     fuzz_->GetStreamByStreamID(streamId);
-    int32_t rotation = fdp.ConsumeIntegral<int32_t>();
-    int32_t format = fdp.ConsumeIntegral<int32_t>();
     int32_t captureId = fdp.ConsumeIntegral<int32_t>();
     int64_t timestamp = fdp.ConsumeIntegral<int64_t>();
+#ifdef CAMERA_MOVING_PHOTO
+    int32_t rotation = fdp.ConsumeIntegral<int32_t>();
+    int32_t format = fdp.ConsumeIntegral<int32_t>();
     fuzz_->StartMovingPhotoEncode(rotation, timestamp, format, captureId);
-    fuzz_->GetHdiStreamByStreamID(streamId);
     fuzz_->EnableMovingPhotoMirror(fdp.ConsumeBool(), fdp.ConsumeBool());
+#endif
+    fuzz_->GetHdiStreamByStreamID(streamId);
     ColorSpace getColorSpace;
     fuzz_->GetActiveColorSpace(getColorSpace);
     constexpr int32_t executionModeCount = static_cast<int32_t>(ColorSpace::P3_PQ_LIMIT) + NUM_1;

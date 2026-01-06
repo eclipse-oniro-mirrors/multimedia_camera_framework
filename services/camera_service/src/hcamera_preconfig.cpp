@@ -43,12 +43,23 @@ enum PreconfigType {
     PRECONFIG_TYPE_1080P,
     PRECONFIG_TYPE_4K,
     PRECONFIG_TYPE_HIGH_QUALITY,
+    PRECONFIG_TYPE_HIGH_QUALITY_PHOTOSESSION_BT2020,
 };
 
 enum PreconfigRatio {
     RATIO_1_1,
     RATIO_4_3,
     RATIO_16_9,
+};
+
+std::map<PreconfigType, std::string> preconfigTypeMap = {
+    {PRECONFIG_TYPE_720P, "PRECONFIG_720P"}, {PRECONFIG_TYPE_1080P, "PRECONFIG_1080P"},
+    {PRECONFIG_TYPE_4K, "PRECONFIG_4K"}, {PRECONFIG_TYPE_HIGH_QUALITY, "PRECONFIG_HIGH_QUALITY"},
+    {PRECONFIG_TYPE_HIGH_QUALITY_PHOTOSESSION_BT2020, "PRECONFIG_TYPE_HIGH_QUALITY_PHOTOSESSION_BT2020"}
+};
+
+std::map<PreconfigRatio, std::string> preconfigRatioMap = {
+    {RATIO_1_1, "ratio 1:1"}, {RATIO_4_3, "ratio 4:3"}, {RATIO_16_9, "ratio 16:9"}
 };
 
 struct CameraInfo {
@@ -214,6 +225,11 @@ PhotoSessionPreconfig GeneratePhotoSessionPreconfigRatio1v1(PreconfigType precon
             sessionPreconfig.previewProfile = { "CAMERA_FORMAT_YUV_420_SP", 1440, 1440, 12, 30, 30 };
             sessionPreconfig.photoProfile = { "CAMERA_FORMAT_JPEG", 0, 0, 0, 0, 0, true, RATIO_1_1 };
             break;
+        case PRECONFIG_TYPE_HIGH_QUALITY_PHOTOSESSION_BT2020:
+            sessionPreconfig.colorSpace = "BT2020_HLG";
+            sessionPreconfig.previewProfile = { "CAMERA_FORMAT_YCRCB_P010", 1440, 1440, 12, 30, 30 };
+            sessionPreconfig.photoProfile = { "CAMERA_FORMAT_JPEG", 0, 0, 0, 0, 0, true, RATIO_1_1 };
+            break;
         default:
             return sessionPreconfig;
     }
@@ -240,6 +256,11 @@ PhotoSessionPreconfig GeneratePhotoSessionPreconfigRatio4v3(PreconfigType precon
             sessionPreconfig.previewProfile = { "CAMERA_FORMAT_YUV_420_SP", 1920, 1440, 12, 30, 30 };
             sessionPreconfig.photoProfile = { "CAMERA_FORMAT_JPEG", 0, 0, 0, 0, 0, true, RATIO_4_3 };
             break;
+        case PRECONFIG_TYPE_HIGH_QUALITY_PHOTOSESSION_BT2020:
+            sessionPreconfig.colorSpace = "BT2020_HLG";
+            sessionPreconfig.previewProfile = { "CAMERA_FORMAT_YCRCB_P010", 1920, 1440, 12, 30, 30 };
+            sessionPreconfig.photoProfile = { "CAMERA_FORMAT_JPEG", 0, 0, 0, 0, 0, true, RATIO_4_3 };
+            break;
         default:
             return sessionPreconfig;
     }
@@ -264,6 +285,11 @@ PhotoSessionPreconfig GeneratePhotoSessionPreconfigRatio16v9(PreconfigType preco
             break;
         case PRECONFIG_TYPE_HIGH_QUALITY:
             sessionPreconfig.previewProfile = { "CAMERA_FORMAT_YUV_420_SP", 2560, 1440, 12, 30, 30 };
+            sessionPreconfig.photoProfile = { "CAMERA_FORMAT_JPEG", 0, 0, 0, 0, 0, true, RATIO_16_9 };
+            break;
+        case PRECONFIG_TYPE_HIGH_QUALITY_PHOTOSESSION_BT2020:
+            sessionPreconfig.colorSpace = "BT2020_HLG";
+            sessionPreconfig.previewProfile = { "CAMERA_FORMAT_YCRCB_P010", 2560, 1440, 12, 30, 30 };
             sessionPreconfig.photoProfile = { "CAMERA_FORMAT_JPEG", 0, 0, 0, 0, 0, true, RATIO_16_9 };
             break;
         default:
@@ -361,11 +387,6 @@ VideoSessionPreconfig GenerateVideoSessionPreconfigRatio16v9(PreconfigType preco
 
 void DumpPreconfigInfo(CameraInfoDumper& infoDumper, sptr<HCameraHostManager>& hostManager)
 {
-    std::map<PreconfigType, std::string> preconfigTypeMap = { { PRECONFIG_TYPE_720P, "PRECONFIG_720P" },
-        { PRECONFIG_TYPE_1080P, "PRECONFIG_1080P" }, { PRECONFIG_TYPE_4K, "PRECONFIG_4K" },
-        { PRECONFIG_TYPE_HIGH_QUALITY, "PRECONFIG_HIGH_QUALITY" } };
-    std::map<PreconfigRatio, std::string> preconfigRatioMap = { { RATIO_1_1, "ratio 1:1" }, { RATIO_4_3, "ratio 4:3" },
-        { RATIO_16_9, "ratio 16:9" } };
     std::vector<std::string> cameraIds;
     std::vector<CameraInfo> cameraInfos;
     hostManager->GetCameras(cameraIds);
@@ -402,10 +423,15 @@ void DumpPreconfigInfo(CameraInfoDumper& infoDumper, sptr<HCameraHostManager>& h
             infoDumper.Msg("[Preview]\t" + photoPreconfig.previewProfile.toString());
             infoDumper.Msg("[Photo]\t" + photoPreconfig.photoProfile.toString(cameraInfos, HDI::Camera::V1_3::CAPTURE));
             infoDumper.Title("VideoSession:");
-            infoDumper.Msg("Colorspace:" + videoPreconfig.colorSpace);
-            infoDumper.Msg("[Preview]\t" + videoPreconfig.previewProfile.toString());
-            infoDumper.Msg("[Video]\t" + videoPreconfig.videoProfile.toString());
-            infoDumper.Msg("[Photo]\t" + videoPreconfig.photoProfile.toString(cameraInfos, HDI::Camera::V1_3::VIDEO));
+            if (typePair.first != PreconfigType::PRECONFIG_TYPE_HIGH_QUALITY_PHOTOSESSION_BT2020) {
+                infoDumper.Msg("Colorspace:" + videoPreconfig.colorSpace);
+                infoDumper.Msg("[Preview]\t" + videoPreconfig.previewProfile.toString());
+                infoDumper.Msg("[Video]\t" + videoPreconfig.videoProfile.toString());
+                infoDumper.Msg("[Photo]\t" +
+                               videoPreconfig.photoProfile.toString(cameraInfos, HDI::Camera::V1_3::VIDEO));
+            } else {
+                infoDumper.Msg("Not Supported");
+            }
             infoDumper.Pop();
         }
     }

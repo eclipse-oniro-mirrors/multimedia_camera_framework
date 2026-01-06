@@ -217,7 +217,9 @@ napi_value CameraInputNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("controlAuxiliary", ControlAuxiliary),
         DECLARE_NAPI_FUNCTION("isPhysicalCameraOrientationVariable", IsPhysicalCameraOrientationVariable),
         DECLARE_NAPI_FUNCTION("getPhysicalCameraOrientation", GetPhysicalCameraOrientation),
-        DECLARE_NAPI_FUNCTION("usePhysicalCameraOrientation", UsePhysicalCameraOrientation)
+        DECLARE_NAPI_FUNCTION("usePhysicalCameraOrientation", UsePhysicalCameraOrientation),
+        DECLARE_NAPI_FUNCTION("onCameraOcclusionDetection", OnCameraOcclusionDetection),
+        DECLARE_NAPI_FUNCTION("offCameraOcclusionDetection", OffCameraOcclusionDetection)
     };
 
     status = napi_define_class(env, CAMERA_INPUT_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
@@ -592,10 +594,6 @@ void CameraInputNapi::UnregisterErrorCallbackListener(
 void CameraInputNapi::RegisterOcclusionDetectCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
-    if (!CameraNapiSecurity::CheckSystemApp(env)) {
-        MEDIA_ERR_LOG("SystemApi RegisterOcclusionDetectCallbackListener is called!");
-        return;
-    }
     if (occlusionDetectCallback_ == nullptr) {
         occlusionDetectCallback_ = make_shared<OcclusionDetectCallbackListener>(env);
         cameraInput_->SetOcclusionDetectCallback(occlusionDetectCallback_);
@@ -607,16 +605,23 @@ void CameraInputNapi::RegisterOcclusionDetectCallbackListener(
 void CameraInputNapi::UnregisterOcclusionDetectCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
-    if (!CameraNapiSecurity::CheckSystemApp(env)) {
-        MEDIA_ERR_LOG("SystemApi UnregisterOcclusionDetectCallbackListener is called!");
-        return;
-    }
-    if (occlusionDetectCallback_ == nullptr) {
-        MEDIA_ERR_LOG("occlusionDetectCallback is null");
-        return;
-    }
+    CHECK_RETURN_ELOG(occlusionDetectCallback_ == nullptr, "occlusionDetectCallback is null");
     occlusionDetectCallback_->RemoveCallbackRef(eventName, callback);
-    MEDIA_INFO_LOG("CameraInputNapi::RegisterOcclusionDetectCallbackListener success");
+    MEDIA_INFO_LOG("CameraInputNapi::UnregisterOcclusionDetectCallbackListener success");
+}
+
+napi_value CameraInputNapi::OnCameraOcclusionDetection(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("CameraInputNapi::OnCameraOcclusionDetection is called");
+    const std::string eventName = "cameraOcclusionDetection";
+    return ListenerTemplate<CameraInputNapi>::On(env, info, eventName);
+}
+
+napi_value CameraInputNapi::OffCameraOcclusionDetection(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("CameraInputNapi::OffCameraOcclusionDetection is called");
+    const std::string eventName = "cameraOcclusionDetection";
+    return ListenerTemplate<CameraInputNapi>::Off(env, info, eventName);
 }
 
 const CameraInputNapi::EmitterFunctions& CameraInputNapi::GetEmitterFunctions()

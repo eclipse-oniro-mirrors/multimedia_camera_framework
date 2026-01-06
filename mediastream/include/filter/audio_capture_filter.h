@@ -42,7 +42,7 @@ public:
     Status LinkNext(const std::shared_ptr<CFilter>& nextFilter, CStreamType outType) override;
     Status UpdateNext(const std::shared_ptr<CFilter>& nextFilter, CStreamType outType) override;
     Status UnLinkNext(const std::shared_ptr<CFilter>& nextFilter, CStreamType outType) override;
-    Status SendEos();
+    Status SendEos(int64_t stopTime = -1);
     CFilterType GetFilterType();
     void SetAudioSource(int32_t source);
     void OnLinkedResult(const sptr<AVBufferQueueProducer>& queue, std::shared_ptr<Meta>& meta);

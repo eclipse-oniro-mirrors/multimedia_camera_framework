@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-#include "camera_error_code.h"
 #include "camera_security_utils_taihe.h"
 #include "time_lapse_photo_session_taihe.h"
 
@@ -91,7 +90,8 @@ void TryAEInfoCallbackListener::OnTryAEInfoChangedCallback(OHOS::CameraStandard:
     MEDIA_DEBUG_LOG("OnTryAEInfoChangedCallback is called");
     auto sharePtr = shared_from_this();
     auto task = [info, sharePtr]() {
-        auto timePreviewType = CameraUtilsTaihe::ToTaiheTimeLapsePreviewType(info.previewType);
+        auto timePreviewType = ohos::multimedia::camera::TimeLapsePreviewType::from_value(
+            static_cast<int32_t>(info.previewType));
         TryAEInfo jsTryAEInfo = {
             .isTryAEDone = info.isTryAEDone,
             .isTryAEHintNeeded = optional<bool>::make(info.isTryAEHintNeeded),

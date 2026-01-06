@@ -19,7 +19,6 @@
 #include "ohos.multimedia.camera.proj.hpp"
 #include "ohos.multimedia.camera.impl.hpp"
 #include "taihe/runtime.hpp"
-#include "session/capture_session.h"
 #include "capture_session_for_sys.h"
 
 namespace Ani {

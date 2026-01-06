@@ -19,7 +19,8 @@
 namespace OHOS {
 namespace CameraStandard {
 WatermarkExifMetadataProxy::WatermarkExifMetadataProxy(std::shared_ptr<Dynamiclib> lib,
-    std::shared_ptr<WatermarkExifMetadataIntf> intf) : watermarkExifMetadataProxyLib_ (lib), watermarkExifMetadataIntf_ (intf)
+    std::shared_ptr<WatermarkExifMetadataIntf> intf)
+    : watermarkExifMetadataProxyLib_ (lib), watermarkExifMetadataIntf_ (intf)
 {
     MEDIA_DEBUG_LOG("WatermarkExifMetadataProxy constructor");
     CHECK_RETURN_ELOG(watermarkExifMetadataProxyLib_  == nullptr, "watermarkExifMetadataProxyLib_  is nullptr");
@@ -47,11 +48,12 @@ std::shared_ptr<WatermarkExifMetadataProxy> WatermarkExifMetadataProxy::CreateWa
     return watermarkExifMetadataProxy;
 }
 
-void WatermarkExifMetadataProxy::SetWatermarkExifMetadata(std::unique_ptr<Media::PixelMap> pixelMap, const WatermarkInfo &info)
+void WatermarkExifMetadataProxy::SetWatermarkExifMetadata(
+    std::unique_ptr<Media::PixelMap> &pixelMap, const WatermarkInfo &info)
 {
     MEDIA_DEBUG_LOG("WatermarkExifMetadataProxy::SetWatermarkExifMetadata");
     CHECK_RETURN_ELOG(watermarkExifMetadataIntf_ == nullptr, "watermarkExifMetadataIntf_ is nullptr");
-    watermarkExifMetadataIntf_->SetWatermarkExifMetadata(std::move(pixelMap), info);
+    watermarkExifMetadataIntf_->SetWatermarkExifMetadata(pixelMap, info);
 }
 
 void WatermarkExifMetadataProxy::FreeWatermarkExifMetadataDynamiclib()

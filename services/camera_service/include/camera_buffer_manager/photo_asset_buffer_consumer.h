@@ -17,7 +17,9 @@
 #define OHOS_CAMERA_PHOTO_ASSET_BUFFER_CONSUMER_H
 
 #include "ibuffer_consumer_listener.h"
+#ifdef CAMERA_CAPTURE_YUV
 #include "surface.h"
+#endif
 #include <mutex>
 
 namespace OHOS {
@@ -34,10 +36,12 @@ public:
 
 private:
     void ExecuteOnBufferAvailable();
-    void StartWaitAuxiliaryTask(
-        const int32_t captureId, const int32_t auxiliaryCount, int64_t timestamp, sptr<SurfaceBuffer> &surfaceBuffer);
-    void AssembleDeferredPicture(int64_t timestamp, int32_t captureId);
+#ifdef CAMERA_CAPTURE_YUV
+    void StartWaitAuxiliaryTask(const int32_t originCaptureId, const int32_t captureId, const int32_t auxiliaryCount,
+        int64_t timestamp, sptr<SurfaceBuffer> &surfaceBuffer);
+    void AssembleDeferredPicture(int64_t timestamp, int32_t captureId, int32_t originCaptureId);
     void CleanAfterTransPicture(int32_t captureId);
+#endif
 
     wptr<HStreamCapture> streamCapture_ = nullptr;
     std::mutex taskManagerMutex_;

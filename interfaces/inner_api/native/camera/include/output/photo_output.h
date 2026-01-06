@@ -311,6 +311,13 @@ public:
     int32_t EnableRawDelivery(bool enabled);
 
     /**
+     * @brief Get the photo rotation without imageRotation.
+     *
+     * @return result of the photo rotation angle.
+     */
+    int32_t GetPhotoRotation();
+
+    /**
      * @brief Get the photo rotation.
      *
      * @return result of the photo rotation angle.

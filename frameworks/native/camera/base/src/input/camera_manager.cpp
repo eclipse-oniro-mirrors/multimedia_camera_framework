@@ -63,7 +63,9 @@
 #include "session/secure_camera_session.h"
 #include "session/video_session.h"
 #include "system_ability_definition.h"
+#ifdef CAMERA_MOVIE_FILE
 #include "unify_movie_file_output.h"
+#endif
 #include "v1_5/types.h"
 
 using namespace std;
@@ -368,6 +370,7 @@ int CameraManager::CreateDeferredPhotoProcessingSession(int userId,
     std::shared_ptr<IDeferredPhotoProcSessionCallback> callback,
     sptr<DeferredPhotoProcSession> *pDeferredPhotoProcSession)
 {
+#ifdef CAMERA_DEFERRED
     CAMERA_SYNC_TRACE;
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     CHECK_RETURN_RET_ELOG(samgr == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
@@ -397,6 +400,7 @@ int CameraManager::CreateDeferredPhotoProcessingSession(int userId,
 
     deferredPhotoProcSession->SetDeferredPhotoSession(session);
     *pDeferredPhotoProcSession = deferredPhotoProcSession;
+#endif
     return CameraErrorCode::SUCCESS;
 }
 
@@ -415,6 +419,7 @@ int CameraManager::CreateDeferredVideoProcessingSession(int userId,
     std::shared_ptr<IDeferredVideoProcSessionCallback> callback,
     sptr<DeferredVideoProcSession> *pDeferredVideoProcSession)
 {
+#ifdef CAMERA_DEFERRED
     CAMERA_SYNC_TRACE;
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     CHECK_RETURN_RET_ELOG(samgr == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
@@ -443,6 +448,7 @@ int CameraManager::CreateDeferredVideoProcessingSession(int userId,
 
     deferredVideoProcSession->SetDeferredVideoSession(session);
     *pDeferredVideoProcSession = deferredVideoProcSession;
+#endif
     return CameraErrorCode::SUCCESS;
 }
 
@@ -1030,6 +1036,7 @@ int CameraManager::CreateVideoOutput(VideoProfile &profile, sptr<Surface> &surfa
 
 int CameraManager::CreateMovieFileOutput(VideoProfile &profile, sptr<MovieFileOutput> *pMovieFileOutput)
 {
+#ifdef CAMERA_FRAMEWORK_FEATURE_MEDIA_STREAM
     CAMERA_SYNC_TRACE;
     auto serviceProxy = GetServiceProxy();
     CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, CameraErrorCode::INVALID_ARGUMENT,
@@ -1053,11 +1060,13 @@ int CameraManager::CreateMovieFileOutput(VideoProfile &profile, sptr<MovieFileOu
     movieFileOutput->SetStream(movieFileStream);
     movieFileOutput->SetVideoProfile(profile);
     *pMovieFileOutput = movieFileOutput;
+#endif
     return CameraErrorCode::SUCCESS;
 }
 
 int CameraManager::CreateMovieFileOutput(VideoProfile& profile, sptr<UnifyMovieFileOutput>* pMovieFileOutput)
 {
+#ifdef CAMERA_MOVIE_FILE
     constexpr int32_t MIN_FRAME_RATE_INDEX = 0;
     constexpr int32_t MAX_FRAME_RATE_INDEX = 1;
     auto serviceProxy = GetServiceProxy();
@@ -1086,6 +1095,7 @@ int CameraManager::CreateMovieFileOutput(VideoProfile& profile, sptr<UnifyMovieF
     CHECK_RETURN_RET(movieFileOutput == nullptr, CameraErrorCode::SERVICE_FATL_ERROR);
     movieFileOutput->SetVideoProfile(profile);
     *pMovieFileOutput = movieFileOutput;
+#endif
     return CameraErrorCode::SUCCESS;
 }
 
@@ -2805,9 +2815,14 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<Ca
     sptr<CameraOutputCapability> cameraOutputCapability = new (std::nothrow) CameraOutputCapability();
     CHECK_RETURN_RET(cameraOutputCapability == nullptr, nullptr);
     std::vector<Profile> curPhotoProfiles = camera->modePhotoProfiles_[modeName];
+#ifdef CAMERA_CAPTURE_YUV
     CHECK_EXECUTE(!IsSystemApp(), RemoveExtendedSupportPhotoFormats(curPhotoProfiles));
+#endif
     cameraOutputCapability->SetPhotoProfiles(curPhotoProfiles);
-    cameraOutputCapability->SetPreviewProfiles(camera->modePreviewProfiles_[modeName]);
+    std::vector<Profile> curPreviewProfiles = camera->modePreviewProfiles_[modeName];
+    CHECK_EXECUTE(!IsSystemApp() && modeName == static_cast<int32_t>(SceneMode::CAPTURE),
+        FillSupportPreviewFormats(curPreviewProfiles));
+    cameraOutputCapability->SetPreviewProfiles(curPreviewProfiles);
     if (!isPhotoMode_.count(modeName)) {
         cameraOutputCapability->SetVideoProfiles(camera->modeVideoProfiles_[modeName]);
     }
@@ -2833,6 +2848,7 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedFullOutputCapability(spt
     int32_t modeName) __attribute__((no_sanitize("cfi")))
 {
     MEDIA_DEBUG_LOG("GetSupportedFullOutputCapability mode = %{public}d", modeName);
+#ifdef CAMERA_CAPTURE_YUV
     auto camera = cameraDevice;
     auto innerCamera = GetInnerCamera();
     CHECK_RETURN_RET(innerCamera == nullptr, nullptr);
@@ -2846,11 +2862,18 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedFullOutputCapability(spt
     CHECK_RETURN_RET(camera == nullptr, nullptr);
     sptr<CameraOutputCapability> cameraOutputCapability = GetSupportedFullOutputCapability(camera, modeName);
     CHECK_RETURN_RET(cameraOutputCapability == nullptr, nullptr);
+    // report full preview capabilities in this interface
+    cameraOutputCapability->SetPreviewProfiles(camera->GetFullPreviewProfiles(modeName));
+    MEDIA_INFO_LOG("GetFullPreviewProfiles size = %{public}zu",
+                   cameraOutputCapability->GetPreviewProfiles().size());
     std::vector<Profile> photoProfiles = cameraOutputCapability->GetPhotoProfiles();
     CHECK_EXECUTE(!IsSystemApp(), FillExtendedSupportPhotoFormats(photoProfiles));
     cameraOutputCapability->SetPhotoProfiles(photoProfiles);
     camera->SetProfile(cameraOutputCapability, modeName);
     return cameraOutputCapability;
+#else
+    return GetSupportedOutputCapability(cameraDevice, modeName);
+#endif
 }
 
 sptr<CameraOutputCapability> CameraManager::ParseSupportedOutputCapability(sptr<CameraDevice>& camera, int32_t modeName,
@@ -2875,6 +2898,9 @@ sptr<CameraOutputCapability> CameraManager::ParseSupportedOutputCapability(sptr<
     if (IsSystemApp()) {
         FillSupportPhotoFormats(profilesWrapper.photoProfiles);
     }
+    // save full preview capabilities in camera device
+    camera->SetFullPreviewProfiles(modeName, profilesWrapper.previewProfiles);
+    // remove preview hdr capabilities for non-sys apps
     CHECK_EXECUTE(!IsSystemApp() && modeName == static_cast<int32_t>(SceneMode::CAPTURE),
         FillSupportPreviewFormats(profilesWrapper.previewProfiles));
     cameraOutputCapability->SetPhotoProfiles(profilesWrapper.photoProfiles);
@@ -3520,10 +3546,12 @@ void CameraManager::FillSupportPhotoFormats(std::vector<Profile>& photoProfiles)
     // LCOV_EXCL_STOP
 }
 
+#ifdef CAMERA_CAPTURE_YUV
 void CameraManager::FillExtendedSupportPhotoFormats(vector<Profile>& photoProfiles)
 {
     CHECK_RETURN(photoFormats_.size() == 0 || photoProfiles.size() == 0);
     std::vector<Profile> extendProfiles = {};
+    bool heifSupport = find(photoFormats_.begin(), photoFormats_.end(), CAMERA_FORMAT_HEIC) != photoFormats_.end();
     for (const auto& profile : photoProfiles) {
         if (profile.format_ == CAMERA_FORMAT_YUV_420_SP) {
             extendProfiles.push_back(profile);
@@ -3533,6 +3561,11 @@ void CameraManager::FillExtendedSupportPhotoFormats(vector<Profile>& photoProfil
         extendProfiles.push_back(extendedPhotoProfile);
         extendedPhotoProfile.format_ = CAMERA_FORMAT_YUV_420_SP;
         extendProfiles.push_back(extendedPhotoProfile);
+        if (profile.format_ == CAMERA_FORMAT_JPEG && heifSupport) {
+            Profile extendHeifPhotoProfile = profile;
+            extendHeifPhotoProfile.format_ = CAMERA_FORMAT_HEIC;
+            extendProfiles.push_back(extendHeifPhotoProfile);
+        }
     }
     photoProfiles = extendProfiles;
 }
@@ -3549,6 +3582,7 @@ void CameraManager::RemoveExtendedSupportPhotoFormats(std::vector<Profile>& phot
     }
     photoProfiles = preserveProfiles;
 }
+#endif
 
 int32_t CameraManager::CreateMetadataOutputInternal(sptr<MetadataOutput>& pMetadataOutput,
     const std::vector<MetadataObjectType>& metadataObjectTypes)

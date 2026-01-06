@@ -1870,7 +1870,35 @@ function getCameraManager(context: Context): CameraManager;
      * @systemapi
      * @since 12
      */
+    /**
+     * Subscribes to camera occlusion detection results.
+     *
+     * @param { 'cameraOcclusionDetection' } type - Event type.
+     * @param { AsyncCallback<CameraOcclusionDetectionResult> } callback - Callback used to get detection results.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @atomicservice
+     * @since 23 dynamic
+     */
     on(type: 'cameraOcclusionDetection', callback: AsyncCallback<CameraOcclusionDetectionResult>): void;
+
+    /**
+     * Subscribes to camera occlusion detection results.
+     * 
+     * @param { AsyncCallback<CameraOcclusionDetectionResult> } callback - Callback used to get detection results.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 22 static
+     */
+    /**
+     * Subscribes to camera occlusion detection results.
+     *
+     * @param { AsyncCallback<CameraOcclusionDetectionResult> } callback - Callback used to get detection results.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @atomicservice
+     * @since 23 static
+     */
+    onCameraOcclusionDetection(callback: AsyncCallback<CameraOcclusionDetectionResult>): void;
 
     /**
      * Unsubscribes from camera occlusion detection results.
@@ -1882,7 +1910,35 @@ function getCameraManager(context: Context): CameraManager;
      * @systemapi
      * @since 12
      */
+    /**
+     * Unsubscribes from camera occlusion detection results.
+     *
+     * @param { 'cameraOcclusionDetection' } type - Event type.
+     * @param { AsyncCallback<CameraOcclusionDetectionResult> } callback - Callback used to get detection results.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @atomicservice
+     * @since 23 dynamic
+     */    
     off(type: 'cameraOcclusionDetection', callback?: AsyncCallback<CameraOcclusionDetectionResult>): void;
+
+    /**
+     * Subscribes to camera occlusion detection results.
+     * 
+     * @param { AsyncCallback<CameraOcclusionDetectionResult> } callback - Callback used to get detection results.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 22 static
+     */
+    /**
+     * Unsubscribes from camera occlusion detection results.
+     *
+     * @param { AsyncCallback<CameraOcclusionDetectionResult> } callback - Callback used to get detection results.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @atomicservice
+     * @since 23 static
+     */    
+    offCameraOcclusionDetection(callback?: AsyncCallback<CameraOcclusionDetectionResult>): void;
 
     /**
      * Query whether physical sensor orientation is variable under different fold status.
@@ -4942,7 +4998,17 @@ function getCameraManager(context: Context): CameraManager;
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @since 12
      */
-    PRECONFIG_HIGH_QUALITY = 3
+    PRECONFIG_HIGH_QUALITY = 3,
+
+    /**
+     * high quality photo session with BT2020 for preconfig
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @stagemodelonly
+     * @atomicservice
+     * @since 23 dynamic&static
+     */
+    PRECONFIG_HIGH_QUALITY_PHOTOSESSION_BT2020 = 4
   }
 
   /**
@@ -8182,6 +8248,18 @@ function getCameraManager(context: Context): CameraManager;
      */
     getPreviewRotation(displayRotation: number): ImageRotation;
 
+    /**
+     * Gets the preview rotation angle.
+     *
+     * @returns { ImageRotation } The preview rotation angle.
+     * @throws { BusinessError } 7400201 - Camera service fatal error.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @stagemodelonly
+     * @atomicservice
+     * @since 23 dynamic&static
+     */
+    getPreviewRotation(): ImageRotation
+
      /**
       * Sets the preview rotation angle.
       *
@@ -9401,6 +9479,18 @@ function getCameraManager(context: Context): CameraManager;
     getPhotoRotation(deviceDegree: number): ImageRotation;
 
     /**
+     * Gets the photo rotation angle.
+     *
+     * @returns { ImageRotation } The photo rotation angle.
+     * @throws { BusinessError } 7400201 - Camera service fatal error.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @stagemodelonly
+     * @atomicservice
+     * @since 23 dynamic&static
+     */
+    getPhotoRotation(): ImageRotation
+
+    /**
      * Confirm if auto aigc photo supported.
      *
      * @returns { boolean } TRUE if auto aigc photo is supported.
@@ -9777,6 +9867,18 @@ function getCameraManager(context: Context): CameraManager;
      * @since 12
      */
     getVideoRotation(deviceDegree: number): ImageRotation;
+
+    /**
+     * Gets the video rotation angle.
+     *
+     * @returns { ImageRotation } The video rotation angle.
+     * @throws { BusinessError } 7400201 - Camera service fatal error.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @stagemodelonly
+     * @atomicservice
+     * @since 23 dynamic&static
+     */
+    getVideoRotation(): ImageRotation
 
     /**
      * Confirm if auto deferred video enhancement is supported in the specific device.
@@ -10431,7 +10533,16 @@ function getCameraManager(context: Context): CameraManager;
    * @typedef CameraOcclusionDetectionResult
    * @syscap SystemCapability.Multimedia.Camera.Core
    * @systemapi
-   * @since 12
+   * @since 12 dynamic
+   * @since 22 static
+   */
+  /**
+   * Camera Occlusion Detection Result.
+   *
+   * @typedef CameraOcclusionDetectionResult
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @atomicservice
+   * @since 23 dynamic&static
    */
   interface CameraOcclusionDetectionResult {
     /**
@@ -10441,7 +10552,17 @@ function getCameraManager(context: Context): CameraManager;
      * @readonly
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
-     * @since 12
+     * @since 12 dynamic
+     * @since 22 static
+     */
+    /**
+     * Check whether camera is occluded.
+     *
+     * @type { boolean }
+     * @readonly
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @atomicservice
+     * @since 23 dynamic&static
      */
     readonly isCameraOccluded: boolean;
 
@@ -10452,8 +10573,18 @@ function getCameraManager(context: Context): CameraManager;
      * @readonly
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
-     * @since 13
+     * @since 13 dynamic
+     * @since 22 static
      */
+    /**
+     * Check whether camera lens is dirty.
+     *
+     * @type { boolean }
+     * @readonly
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @atomicservice
+     * @since 23 dynamic&static
+     */    
     readonly isCameraLensDirty: boolean;
   }
 

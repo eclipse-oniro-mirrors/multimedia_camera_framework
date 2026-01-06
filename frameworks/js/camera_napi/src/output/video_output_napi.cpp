@@ -674,36 +674,37 @@ napi_value VideoOutputNapi::GetSupportedFrameRates(napi_env env, napi_callback_i
 napi_value VideoOutputNapi::GetVideoRotation(napi_env env, napi_callback_info info)
 {
     MEDIA_DEBUG_LOG("GetVideoRotation is called!");
-    CAMERA_SYNC_TRACE;
-    napi_status status;
     napi_value result = nullptr;
-    size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE] = {0};
-    napi_value thisVar = nullptr;
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+    int32_t retCode = 0;
+    size_t napiArgsSize = CameraNapiUtils::GetNapiArgs(env, info);
 
     napi_get_undefined(env, &result);
     VideoOutputNapi* videoOutputNapi = nullptr;
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&videoOutputNapi));
-    if (status == napi_ok && videoOutputNapi != nullptr) {
-        int32_t imageRotation;
-        napi_status ret = napi_get_value_int32(env, argv[PARAM0], &imageRotation);
-        if (ret != napi_ok) {
-            CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT,
-                "GetVideoRotation parameter missing or parameter type incorrect.");
+    if (napiArgsSize == ARGS_ZERO) {
+        MEDIA_DEBUG_LOG("GetVideoRotation arg 0");
+        CameraNapiParamParser jsParamParser(env, info, videoOutputNapi);
+        if (!jsParamParser.AssertStatus(SERVICE_FATL_ERROR, "parse parameter occur error")) {
+            MEDIA_ERR_LOG("VideoOutputNapi::GetVideoRotation parse 0 parameter occur error");
             return result;
         }
-        int32_t retCode = videoOutputNapi->videoOutput_->GetVideoRotation(imageRotation);
-        if (retCode == SERVICE_FATL_ERROR) {
-            CameraNapiUtils::ThrowError(env, SERVICE_FATL_ERROR,
-                "GetVideoRotation Camera service fatal error.");
+        retCode = videoOutputNapi->videoOutput_->GetVideoRotation();
+    } else if (napiArgsSize == ARGS_ONE) {
+        MEDIA_DEBUG_LOG("GetVideoRotation arg 1");
+        int32_t deviceRotation;
+        CameraNapiParamParser jsParamParser(env, info, videoOutputNapi, deviceRotation);
+        if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+            MEDIA_ERR_LOG("VideoOutputNapi::GetVideoRotation parse 1 parameter occur error");
             return result;
         }
-        napi_create_int32(env, retCode, &result);
-        MEDIA_INFO_LOG("VideoOutputNapi GetVideoRotation! %{public}d", retCode);
-    } else {
-        MEDIA_ERR_LOG("VideoOutputNapi GetVideoRotation! called failed!");
+        retCode = videoOutputNapi->videoOutput_->GetVideoRotation(deviceRotation);
     }
+    if (retCode == SERVICE_FATL_ERROR) {
+        CameraNapiUtils::ThrowError(
+            env, SERVICE_FATL_ERROR, "GetVideoRotation Camera service fatal error.");
+        return result;
+    }
+    napi_create_int32(env, retCode, &result);
+    MEDIA_INFO_LOG("VideoOutputNapi GetVideoRotation! %{public}d", retCode);
     return result;
 }
 
