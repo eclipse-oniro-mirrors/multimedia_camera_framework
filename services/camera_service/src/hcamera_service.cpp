@@ -161,9 +161,7 @@ void HCameraService::OnStart()
 #endif
     cameraDataShareHelper_ = std::make_shared<CameraDataShareHelper>();
     AddSystemAbilityListener(DISTRIBUTED_KV_DATA_SERVICE_ABILITY_ID);
-#ifdef NOTIFICATION_ENABLE
     AddSystemAbilityListener(COMMON_EVENT_SERVICE_ID);
-#endif
     AddSystemAbilityListener(RES_SCHED_SYS_ABILITY_ID);
     if (Publish(this)) {
         MEDIA_INFO_LOG("HCameraService publish OnStart sucess");
@@ -516,12 +514,12 @@ void HCameraService::OnAddSystemAbility(int32_t systemAbilityId, const std::stri
             break;
         case COMMON_EVENT_SERVICE_ID:
             MEDIA_INFO_LOG("OnAddSystemAbility COMMON_EVENT_SERVICE");
-            CameraCommonEventManager::GetInstance()->SubscribeCommonEvent(COMMON_EVENT_DATA_SHARE_READY,
-                std::bind(&HCameraService::OnReceiveEvent, this, std::placeholders::_1));
 #ifdef NOTIFICATION_ENABLE
             CameraCommonEventManager::GetInstance()->SubscribeCommonEvent(EVENT_CAMERA_BEAUTY_NOTIFICATION,
                 std::bind(&HCameraService::OnReceiveEvent, this, std::placeholders::_1), NOTIFICATION_PERMISSION);
 #endif
+            CameraCommonEventManager::GetInstance()->SubscribeCommonEvent(COMMON_EVENT_DATA_SHARE_READY,
+                std::bind(&HCameraService::OnReceiveEvent, this, std::placeholders::_1));
             CameraCommonEventManager::GetInstance()->SubscribeCommonEvent(COMMON_EVENT_SCREEN_LOCKED,
                 std::bind(&HCameraService::OnReceiveEvent, this, std::placeholders::_1));
             CameraCommonEventManager::GetInstance()->SubscribeCommonEvent(COMMON_EVENT_SCREEN_UNLOCKED,
