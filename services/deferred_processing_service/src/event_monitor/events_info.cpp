@@ -173,6 +173,24 @@ bool EventsInfo::IsMediaBusy()
     std::lock_guard lock(mediaStateMutex_);
     return mediaState_ == MediaLibraryStatus::MEDIA_LIBRARY_BUSY;
 }
+
+void EventsInfo::SetCurrentUser(const int32_t userId)
+{
+    std::lock_guard lock(userMutex_);
+    userId_ = userId;
+}
+
+int32_t EventsInfo::GetCurrentUser()
+{
+    std::lock_guard lock(userMutex_);
+    return userId_;
+}
+
+bool EventsInfo::IsAllowedToSchedule(const int32_t userId)
+{
+    std::lock_guard lock(userMutex_);
+    return userId == userId_;
+}
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS

@@ -104,6 +104,10 @@ sptr<IDeferredVideoProcessingSessionCallback> VideoSessionInfo::GetRemoteCallbac
 
 void VideoSessionInfo::OnCallbackDied()
 {
+    {
+        std::lock_guard lock(callbackMutex_);
+        callback_ = nullptr;
+    }
     auto ret = DPS_SendUrgentCommand<DeleteVideoSessionCommand>(this);
     DP_CHECK_ERROR_PRINT_LOG(ret != DP_OK, "DeleteVideoSession failed.");
 }
