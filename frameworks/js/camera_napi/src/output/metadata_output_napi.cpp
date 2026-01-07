@@ -68,19 +68,10 @@ MetadataOutputCallback::MetadataOutputCallback(napi_env env) : ListenerBase(env)
 
 void MetadataOutputCallback::OnMetadataObjectsAvailable(const std::vector<sptr<MetadataObject>> metadataObjList) const
 {
-<<<<<<< HEAD
-    MEDIA_DEBUG_LOG("MetadataOutputCallback::OnMetadataObjectsAvailable");
-    std::unique_ptr<MetadataOutputCallbackInfo> callbackInfo =
-        std::make_unique<MetadataOutputCallbackInfo>(metadataObjList, shared_from_this());
-    MetadataOutputCallbackInfo *event = callbackInfo.get();
-    auto task = [event]() {
-        MetadataOutputCallbackInfo* callbackInfo = reinterpret_cast<MetadataOutputCallbackInfo *>(event);
-=======
     MEDIA_DEBUG_LOG("OnMetadataObjectsAvailable is called");
     std::shared_ptr<MetadataOutputCallbackInfo> callbackInfo =
         std::make_shared<MetadataOutputCallbackInfo>(metadataObjList, shared_from_this());
     auto task = [callbackInfo]() {
->>>>>>> 212970ad5112177d8dc661b002856a9f671a69ec
         if (callbackInfo) {
             auto listener = callbackInfo->listener_.lock();
             if (listener) {
