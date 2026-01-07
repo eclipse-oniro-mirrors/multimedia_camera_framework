@@ -3177,6 +3177,11 @@ int32_t CaptureSession::SetSmoothZoom(float targetZoomRatio, uint32_t smoothZoom
     std::vector<float> zoomRange = GetZoomRatioRange();
     CHECK_RETURN_RET_ELOG(
         zoomRange.empty(), CameraErrorCode::SUCCESS, "CaptureSession::SetSmoothZoom Zoom range is empty");
+    if (!CameraSecurity::CheckSystemApp()) {
+        MEDIA_DEBUG_LOG("third party call SetSmoothZoom");
+        CHECK_PRINT_ELOG(PrepareZoom() != CameraErrorCode::SUCCESS, "SetSmoothZoom:: failed to PrepareZoom!");
+        UpdateSetting(changedMetadata_);
+    }
     float tempZoomRatio = std::clamp(targetZoomRatio, zoomRange[minIndex], zoomRange[maxIndex]);
     MEDIA_DEBUG_LOG("origin zoomRatioValue: %{public}f, after clamp value: %{public}f", targetZoomRatio, tempZoomRatio);
     targetZoomRatio = tempZoomRatio;
@@ -3206,6 +3211,11 @@ int32_t CaptureSession::SetSmoothZoom(float targetZoomRatio, uint32_t smoothZoom
         }
     } else {
         MEDIA_ERR_LOG("CaptureSession::SetSmoothZoom() captureSession is nullptr");
+    }
+    if (!CameraSecurity::CheckSystemApp()) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(SETZOOMSLEEP));
+        CHECK_PRINT_ELOG(UnPrepareZoom() != CameraErrorCode::SUCCESS, "SetSmoothZoom:: failed to UnPrepareZoom!");
+        UpdateSetting(changedMetadata_);
     }
     return CameraErrorCode::SUCCESS;
 }

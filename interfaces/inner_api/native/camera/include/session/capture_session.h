@@ -2381,6 +2381,7 @@ protected:
     atomic<bool> isColorStyleWorking_ = false;
     atomic<bool> isApertureSupported_ = false;
     const int32_t physicalAperturesIndex_ = 2;
+    const int32_t SETZOOMSLEEP = 100;
     std::vector<std::vector<float>> matchedRanges;
 
     // Only for the SceneMode::CAPTURE and SceneMode::VIDEO mode
