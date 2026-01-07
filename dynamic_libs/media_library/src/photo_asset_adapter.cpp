@@ -125,19 +125,41 @@ void PhotoAssetAdapter::UpdatePhotoProxy(const sptr<Media::PhotoProxy> &photoPro
 }
 
 #ifdef CAMERA_CAPTURE_YUV
-void PhotoAssetAdapter::RegisterPhotoStateCallback(const std::function<void(int32_t)> &callback)
+MediaLibraryManagerAdapter::MediaLibraryManagerAdapter()
 {
-    MEDIA_DEBUG_LOG("PhotoAssetAdapter::RegisterPhotoStateCallback is called");
-    CHECK_EXECUTE(photoAssetProxy_ != nullptr, photoAssetProxy_->RegisterPhotoStateCallback(callback));
+    CAMERA_SYNC_TRACE;
+    MEDIA_INFO_LOG("MediaLibraryManagerAdapter ctor");
+    if (g_mediaLibraryManager == nullptr) {
+        g_mediaLibraryManager = Media::MediaLibraryCameraManager::GetMediaLibraryCameraManager();
+        CHECK_EXECUTE(g_mediaLibraryManager == nullptr, CameraReportUtils::GetInstance().ReportCameraCreateNullptr(
+            "MediaLibraryManagerAdapter::MediaLibraryManagerAdapter",
+            "Media::MediaLibraryCameraManager::GetMediaLibraryCameraManager"));
+        CHECK_RETURN_ELOG(g_mediaLibraryManager == nullptr, "GetMediaLibraryManager failed!");
+        auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+        CHECK_RETURN_ELOG(samgr == nullptr, "Failed to get System ability manager!");
+        sptr<IRemoteObject> object = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
+        CHECK_RETURN_ELOG(object == nullptr, "object is null!");
+        g_mediaLibraryManager->InitMediaLibraryCameraManager(object);
+    }
 }
 
-void PhotoAssetAdapter::UnregisterPhotoStateCallback()
+void MediaLibraryManagerAdapter::RegisterPhotoStateCallback(const std::function<void(int32_t)> &callback)
 {
-    MEDIA_DEBUG_LOG("PhotoAssetAdapter::UnregisterPhotoStateCallback is called");
-    CHECK_EXECUTE(photoAssetProxy_ != nullptr, photoAssetProxy_->UnregisterPhotoStateCallback());
+    MEDIA_DEBUG_LOG("MediaLibraryManagerAdapter::RegisterPhotoStateCallback is called");
+    CHECK_EXECUTE(g_mediaLibraryManager != nullptr, g_mediaLibraryManager->RegisterPhotoStateCallback(callback));
+}
+
+void MediaLibraryManagerAdapter::UnregisterPhotoStateCallback()
+{
+    MEDIA_DEBUG_LOG("MediaLibraryManagerAdapter::UnregisterPhotoStateCallback is called");
+    CHECK_EXECUTE(g_mediaLibraryManager != nullptr, g_mediaLibraryManager->UnregisterPhotoStateCallback());
+}
+
+extern "C" MediaLibraryManagerIntf *createMediaLibraryManagerIntf()
+{
+    return new MediaLibraryManagerAdapter();
 }
 #endif
-
 // LCOV_EXCL_STOP
 extern "C" PhotoAssetIntf *createPhotoAssetIntf(
     int32_t cameraShotType, int32_t uid, uint32_t callingTokenID, int32_t photoCount,
@@ -145,6 +167,5 @@ extern "C" PhotoAssetIntf *createPhotoAssetIntf(
 {
     return new PhotoAssetAdapter(cameraShotType, uid, callingTokenID, photoCount, bundleName);
 }
-
 }  // namespace AVSession
 }  // namespace OHOS

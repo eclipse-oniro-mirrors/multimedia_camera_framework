@@ -177,6 +177,9 @@ public:
         std::string &uri, int32_t &cameraShotType, std::string& burstKey, int64_t timestamp);
     int32_t RequireMemorySize(int32_t memSize);
     void ElevateThreadPriority();
+#ifdef CAMERA_CAPTURE_YUV
+    static void OnPhotoStateCallback(int32_t photoNum);
+#endif
     bool isYuvCapture_ = false;
     SpHolder<sptr<Surface>> gainmapSurface_;
     SpHolder<sptr<Surface>> deepSurface_;
@@ -273,6 +276,10 @@ private:
     double latitude_ = 0.0;
     double longitude_ = 0.0;
     double altitude_ = 0.0;
+#ifdef CAMERA_CAPTURE_YUV
+    std::once_flag photoStateFlag_;
+    std::function<void(int32_t)> photoStateCallback_ = nullptr;
+#endif
 };
 } // namespace CameraStandard
 } // namespace OHOS

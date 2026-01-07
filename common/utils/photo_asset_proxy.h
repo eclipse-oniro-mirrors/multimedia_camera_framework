@@ -41,16 +41,30 @@ public:
     void UpdatePhotoProxy(const sptr<Media::PhotoProxy> &photoProxy) override;
 #ifdef CAMERA_CAPTURE_YUV
     static std::string GetBundleName(int32_t callingUid);
-    void RegisterPhotoStateCallback(const std::function<void(int32_t)> &callback) override;
-    void UnregisterPhotoStateCallback() override;
 #endif
-
 private:
     std::mutex opMutex_;
     // Keep the order of members in this class, the bottom member will be destroyed first
     std::shared_ptr<Dynamiclib> mediaLibraryLib_;
     std::shared_ptr<PhotoAssetIntf> photoAssetIntf_;
 };
+
+#ifdef CAMERA_CAPTURE_YUV
+class MediaLibraryManagerProxy : public MediaLibraryManagerIntf {
+public:
+    static std::shared_ptr<MediaLibraryManagerProxy> GetMediaLibraryManagerProxy();
+    static void LoadMediaLibraryDynamiclibAsync();
+    static void FreeMediaLibraryDynamiclibDelayed();
+    explicit MediaLibraryManagerProxy(
+        std::shared_ptr<Dynamiclib> mediaLibraryLib, std::shared_ptr<MediaLibraryManagerIntf> mediaLibraryManagerIntf);
+    ~MediaLibraryManagerProxy() override = default;
+    void RegisterPhotoStateCallback(const std::function<void(int32_t)> &callback) override;
+    void UnregisterPhotoStateCallback() override;
+private:
+    std::shared_ptr<Dynamiclib> mediaLibraryLib_;
+    std::shared_ptr<MediaLibraryManagerIntf> mediaLibraryManagerIntf_;
+};
+#endif
 } // namespace CameraStandard
 } // namespace OHOS
 #endif

@@ -153,10 +153,6 @@ public:
     int32_t StartPreviewStream(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings,
         camera_position_enum_t cameraPosition);
     int32_t UpdateSettingForFocusTrackingMech(bool isEnableMech);
-#ifdef CAMERA_CAPTURE_YUV
-    static void OnPhotoStateCallback(int32_t photoNum);
-#endif
-
     int32_t CreateStreams(std::vector<HDI::Camera::V1_5::StreamInfo_V1_5>& streamInfos);
     int32_t CommitStreams(const std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceSettings, int32_t operationMode);
     int32_t ReleaseStreams(std::vector<int32_t>& releaseStreamIds);
@@ -180,9 +176,6 @@ public:
     int32_t OnFrameShutter(int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp) override;
     int32_t OnFrameShutterEnd(int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp) override;
     int32_t OnCaptureReady(int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp) override;
-#ifdef CAMERA_CAPTURE_YUV
-    void NotifyCaptureReady(int32_t captureId, sptr<HStreamCommon> curStream, uint64_t timestamp);
-#endif
     int32_t OnResult(int32_t streamId, const std::vector<uint8_t>& result) override;
     int32_t OnCapturePaused(int32_t captureId, const std::vector<int32_t>& streamIds) override;
     int32_t OnCaptureResumed(int32_t captureId, const std::vector<int32_t>& streamIds) override;
@@ -384,11 +377,6 @@ private:
     std::map<int32_t, bool> curMotionPhotoStatus_;
     std::mutex motionPhotoStatusLock_;
     std::map<int32_t, std::pair<int32_t, int32_t>> lifecycleMap_;
-#ifdef CAMERA_CAPTURE_YUV
-    std::shared_ptr<PhotoAssetIntf> photoAssetProxy_;
-    std::once_flag photoStateFlag_;
-    std::function<void(int32_t)> photoStateCallback_ = nullptr;
-#endif
 };
 } // namespace CameraStandard
 } // namespace OHOS
