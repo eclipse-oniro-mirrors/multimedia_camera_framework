@@ -40,7 +40,9 @@
 #include "camera_photo_proxy.h"
 #include "iconsumer_surface.h"
 #include "blocking_queue.h"
+#ifdef CAMERA_MOVING_PHOTO
 #include "moving_photo_proxy.h"
+#endif
 #include "safe_map.h"
 #ifdef CAMERA_USE_SENSOR
 #include "sensor_agent.h"
@@ -96,8 +98,12 @@ using MetaElementType = std::pair<int64_t, sptr<SurfaceBuffer>>;
 using UpdateControlCenterCallback = std::function<void(bool)>;
 
 class CameraInfoDumper;
+#ifdef CAMERA_FRAMEWORK_FEATURE_MEDIA_STREAM
 class MovieFileRecorder;
+#endif
+#ifdef CAMERA_MOVIE_FILE
 class HCameraMovieFileOutput;
+#endif
 
 class EXPORT_API HCaptureSession : public CaptureSessionStub, public IHCameraCloseListener, public ICameraIpcChecker {
 public:
@@ -158,6 +164,11 @@ public:
     void AddZoomAndTimeArray(
         std::vector<uint32_t> &zoomAndTimeArray, std::vector<float> array, float frameIntervalMs, float waitTime);
     int32_t EnableMovingPhoto(bool isEnable) override;
+    int32_t EnableMovingPhotoMirror(bool isMirror, bool isConfig) override;
+#ifdef CAMERA_MOVING_PHOTO
+    void SetMovingPhotoStatus(bool status);
+    bool GetMovingPhotoStatus();
+#endif
     pid_t GetPid();
     int32_t GetSessionId();
     int32_t GetCurrentStreamInfos(std::vector<StreamInfo_V1_5>& streamInfos);
@@ -166,16 +177,16 @@ public:
     int32_t OperatePermissionCheck(uint32_t interfaceCode) override;
     int32_t CallbackEnter([[maybe_unused]] uint32_t code) override;
     int32_t CallbackExit([[maybe_unused]] uint32_t code, [[maybe_unused]] int32_t result) override;
-    int32_t EnableMovingPhotoMirror(bool isMirror, bool isConfig) override;
     int32_t SetFeatureMode(int32_t featureMode) override;
     void GetOutputStatus(int32_t &status);
     int32_t SetPreviewRotation(const std::string &deviceClass) override;
     int32_t SetCommitConfigFlag(bool isNeedCommitting) override;
     int32_t CreateRecorder(const sptr<IRemoteObject>& stream, sptr<ICameraRecorder>& recorder) override;
+#ifdef CAMERA_FRAMEWORK_FEATURE_MEDIA_STREAM
     int32_t CreateRecorder4CinematicVideo(sptr<IStreamCommon> stream, sptr<ICameraRecorder> &movieRecorder);
+#endif
     int32_t SetXtStyleStatus(bool status) override;
-    void SetMovingPhotoStatus(bool status);
-    bool GetMovingPhotoStatus();
+    
 
     void DumpSessionInfo(CameraInfoDumper& infoDumper);
     static void DumpSessions(CameraInfoDumper& infoDumper);
@@ -279,10 +290,13 @@ private:
     void ExpandSketchRepeatStream();
     void ExpandCompositionRepeatStream();
     int32_t GetCompositionStream(sptr<IRemoteObject>& compositionStreamRemote) override;
-
+#ifdef CAMERA_MOVING_PHOTO
     void ExpandMovingPhotoRepeatStream();
     void ExpandXtStyleMovingPhotoRepeatStream();
-
+    void ClearMovingPhotoRepeatStream();
+    bool isMovingPhotoEnabled_ = false;
+    std::mutex movingPhotoStatusMutex_;
+#endif
     int32_t SetVirtualApertureToDataShareHelper(float value);
     int32_t GetVirtualApertureFromDataShareHelper(float &value);
 
@@ -298,14 +312,16 @@ private:
     std::string GetSessionState();
     void DynamicConfigStream();
     bool IsNeedDynamicConfig();
-    void ClearMovingPhotoRepeatStream();
+
     int32_t SetHasFitedRotation(bool isHasFitedRotation) override;
     void InitialHStreamOperator();
     void UpdateSettingForSpecialBundle();
     int32_t UpdateSettingForFocusTrackingMech(bool isEnableMech);
     void UpdateSettingForFocusTrackingMechBeforeStart(std::shared_ptr<OHOS::Camera::CameraMetadata> &settings);
     void SetDeviceMechCallback();
+#ifdef CAMERA_FRAMEWORK_FEATURE_MEDIA_STREAM
     void ConfigRawVideoStream(sptr<HStreamRepeat>& rawVideoStreamRepeat, const sptr<MovieFileRecorder>& recorder);
+#endif
     StateMachine stateMachine_;
     sptr<IPressureStatusCallback> innerPressureCallback_;
     sptr<IControlCenterEffectStatusCallback> innerControlCenterEffectCallback_;
@@ -368,16 +384,15 @@ private:
     bool isHasFitedRotation_ = false;
     bool isXtStyleEnabled_ = false;
     std::mutex xtStyleStatusMutex_;
-    bool isMovingPhotoEnabled_ = false;
-    std::mutex movingPhotoStatusMutex_;
     std::string bundleName_ = "";
     std::mutex cameraRotateUpdateBasicInfo_;
     int32_t userId_ = 0;
     std::mutex mechDeliveryStateLock_;
     MechDeliveryState mechDeliveryState_ = MechDeliveryState::NOT_ENABLED;
     UpdateControlCenterCallback updateControlCenterCallback_;
-
+#ifdef CAMERA_MOVIE_FILE
     wptr<HCameraMovieFileOutput> weakCameraMovieFileOutput_;
+#endif
 };
 } // namespace CameraStandard
 } // namespace OHOS

@@ -51,6 +51,7 @@ int32_t HStreamCapturePhotoCallbackProxy::OnPhotoAvailable(
     return error;
 }
 
+#ifdef CAMERA_CAPTURE_YUV
 int32_t HStreamCapturePhotoCallbackProxy::OnPhotoAvailable(std::shared_ptr<PictureIntf> picture)
 {
     MEDIA_INFO_LOG("HStreamCapturePhotoCallbackProxy::OnPhotoAvailable is called!");
@@ -72,5 +73,6 @@ int32_t HStreamCapturePhotoCallbackProxy::OnPhotoAvailable(std::shared_ptr<Pictu
     }
     return error;
 }
+#endif
 }  // namespace CameraStandard
 }  // namespace OHOS

@@ -108,5 +108,8 @@ ohos_fuzztest("DeferredProcessingStubFuzzTest") {
 
 group("fuzztest") {
   testonly = true
-  deps = [ ":DeferredProcessingStubFuzzTest" ]
+  deps = []
+  if (camera_framework_feature_deferred) {
+    deps += [ ":DeferredProcessingStubFuzzTest" ]
+  }
 }

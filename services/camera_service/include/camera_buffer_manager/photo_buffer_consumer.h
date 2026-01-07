@@ -31,10 +31,12 @@ public:
 
 private:
     void ExecuteOnBufferAvailable();
+#ifdef CAMERA_CAPTURE_YUV
     void StartWaitAuxiliaryTask(
         const int32_t captureId, const int32_t auxiliaryCount, int64_t timestamp, sptr<SurfaceBuffer> &surfaceBuffer);
     void AssembleDeferredPicture(int64_t timestamp, int32_t captureId);
     void CleanAfterTransPicture(int32_t captureId);
+#endif
 
     wptr<HStreamCapture> streamCapture_ = nullptr;
     bool isRaw_ = false;

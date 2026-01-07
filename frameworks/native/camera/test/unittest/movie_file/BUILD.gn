@@ -49,11 +49,13 @@ ohos_unittest("camera_movie_file_unittest") {
     "${multimedia_camera_framework_path}/mediastream/include/filter"
   ]
 
-  if (fwk_no_hidden || use_clang_coverage) {
-  sources = [
-    "${multimedia_camera_framework_path}/interfaces/inner_api/native/test/test_common.cpp",
-    "src/hcamera_movie_file_output_unittest.cpp",
-  ]
+  if (camera_framework_feature_movie_file) {
+    if (fwk_no_hidden || use_clang_coverage) {
+      sources = [
+        "${multimedia_camera_framework_path}/interfaces/inner_api/native/test/test_common.cpp",
+        "src/hcamera_movie_file_output_unittest.cpp",
+      ]
+    }
   }
 
   deps = [
@@ -97,8 +99,7 @@ ohos_unittest("camera_movie_file_unittest") {
     "ipc:ipc_core",
     "media_foundation:media_foundation",
     "media_foundation:native_media_core",
-    "media_library:media_library",
-    "media_library:media_library_manager",
+    "media_library:media_library_camera_helper",
     "os_account:os_account_innerkits",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",

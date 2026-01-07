@@ -57,7 +57,7 @@ ohos_unittest("camera_common_utils_test") {
     "hitrace:hitrace_meter",
     "image_framework:image_native",
     "ipc:ipc_core",
-    "media_library:media_library",
+    "media_library:media_library_camera_helper",
     "resource_management:librawfile",
     "safwk:system_ability_fwk",
   ]

@@ -295,8 +295,12 @@ const std::unordered_map<MeteringMode, camera_meter_mode_t> CaptureSession::fwkM
 };
 
 const std::unordered_set<SceneMode> CaptureSession::videoModeSet_ = {
-    SceneMode::VIDEO,          SceneMode::SLOW_MOTION,    SceneMode::VIDEO_MACRO, SceneMode::PROFESSIONAL_VIDEO,
-    SceneMode::APERTURE_VIDEO, SceneMode::CINEMATIC_VIDEO
+    SceneMode::VIDEO,
+    SceneMode::SLOW_MOTION,
+    SceneMode::VIDEO_MACRO,
+    SceneMode::PROFESSIONAL_VIDEO,
+    SceneMode::APERTURE_VIDEO,
+    SceneMode::CINEMATIC_VIDEO
 };
 
 int32_t CaptureSessionCallback::OnError(int32_t errorCode)
@@ -488,14 +492,7 @@ int32_t CaptureSession::CommitConfig()
         return CameraErrorCode::OPERATION_NOT_ALLOWED;
     }
     CHECK_PRINT_DLOG(!CheckLightStatus(), "CaptureSession::CommitConfig the camera can't support light status!");
-
-    if (!isColorSpaceSetted_) {
-        HILOG_COMM_INFO("CaptureSession::CommitConfig is not setColorSpace");
-        auto preconfigProfiles = GetPreconfigProfiles();
-        if (preconfigProfiles != nullptr) {
-            SetColorSpace(preconfigProfiles->colorSpace);
-        }
-    }
+    SetDefaultColorSpace();
     // DELIVERY_PHOTO for default when commit
     if (photoOutput_ && !isDeferTypeSetted_) {
         sptr<PhotoOutput> photoOutput = (sptr<PhotoOutput>&)photoOutput_;
@@ -1139,6 +1136,7 @@ int32_t CaptureSession::ConfigureVideoOutput(sptr<CaptureOutput>& output)
 
 int32_t CaptureSession::ConfigureMovieFileOutput(sptr<CaptureOutput>& output)
 {
+#ifdef CAMERA_FRAMEWORK_FEATURE_MEDIA_STREAM
     MEDIA_INFO_LOG("CaptureSession::ConfigureMovieFileOutput enter");
     auto videoProfile = output->GetVideoProfile();
     std::vector<int32_t> frameRateRange = videoProfile->GetFrameRates();
@@ -1153,17 +1151,20 @@ int32_t CaptureSession::ConfigureMovieFileOutput(sptr<CaptureOutput>& output)
         }
     }
     SetGuessMode(SceneMode::CINEMATIC_VIDEO);
+#endif
     return CameraErrorCode::SUCCESS;
 }
 
 int32_t CaptureSession::ConfigureUnifyMovieFileOutput(sptr<CaptureOutput>& output)
 {
+#ifdef CAMERA_MOVIE_FILE
     SetGuessMode(SceneMode::VIDEO);
     auto videoProfile = output->GetVideoProfile();
     auto frameRateRange = videoProfile->GetFrameRates();
     if (frameRateRange.size() >= 2) { // 2 is range min size
         SetFrameRateRange(videoProfile->GetFrameRates());
     }
+#endif
     return CameraErrorCode::SUCCESS;
 }
 
@@ -1180,10 +1181,14 @@ int32_t CaptureSession::ConfigureOutput(sptr<CaptureOutput>& output)
             return ConfigurePhotoOutput(output);
         case CAPTURE_OUTPUT_TYPE_VIDEO:
             return ConfigureVideoOutput(output);
+#ifdef CAMERA_FRAMEWORK_FEATURE_MEDIA_STREAM
         case CAPTURE_OUTPUT_TYPE_MOVIE_FILE:
             return ConfigureMovieFileOutput(output);
+#endif
+#ifdef CAMERA_MOVIE_FILE
         case CAPTURE_OUTPUT_TYPE_UNIFY_MOVIE_FILE:
             return ConfigureUnifyMovieFileOutput(output);
+#endif
         default:
             // do nothing.
             break;
@@ -1260,7 +1265,9 @@ int32_t CaptureSession::AddOutput(sptr<CaptureOutput>& output, bool isVerifyOutp
 
 int32_t CaptureSession::AddOutputInner(sptr<ICaptureSession>& captureSession, sptr<CaptureOutput>& output)
 {
+#ifdef CAMERA_MOVIE_FILE
     if (!output->IsMultiStreamOutput()) {
+#endif
         int32_t errCode = CAMERA_UNKNOWN_ERROR;
         CHECK_EXECUTE(output->GetStream() != nullptr,
             errCode = captureSession->AddOutput(output->GetStreamType(), output->GetStream()->AsObject()));
@@ -1268,6 +1275,7 @@ int32_t CaptureSession::AddOutputInner(sptr<ICaptureSession>& captureSession, sp
         MEDIA_INFO_LOG("CaptureSession::AddOutputInner StreamType = %{public}d", output->GetStreamType());
         CHECK_RETURN_RET_ELOG(
             errCode != CAMERA_OK, ServiceToCameraError(errCode), "Failed to AddOutput!, %{public}d", errCode);
+#ifdef CAMERA_MOVIE_FILE
     } else {
         int32_t opMode = 0;
         auto it = g_fwToMetaSupportedMode_.find(GetFeaturesMode().GetFeaturedMode());
@@ -1283,6 +1291,7 @@ int32_t CaptureSession::AddOutputInner(sptr<ICaptureSession>& captureSession, sp
             "CaptureSession::AddOutputInner movieFileOutput proxy is nullptr!");
         captureSession->AddMultiStreamOutput(proxy->AsObject(), opMode);
     }
+#endif
     return CameraErrorCode::SUCCESS;
 }
 
@@ -1351,11 +1360,13 @@ bool CaptureSession::CanAddOutput(sptr<CaptureOutput>& output)
             profilePtr = output->IsTagSetted(CaptureOutput::DYNAMIC_PROFILE) ? GetPreconfigVideoProfile()
                                                                              : output->GetVideoProfile();
             break;
+#ifdef CAMERA_MOVIE_FILE
         case CAPTURE_OUTPUT_TYPE_MOVIE_FILE:
         // fall-through
         case CAPTURE_OUTPUT_TYPE_UNIFY_MOVIE_FILE:
             profilePtr = output->GetVideoProfile();
             break;
+#endif
         case CAPTURE_OUTPUT_TYPE_DEPTH_DATA:
             profilePtr = output->GetDepthProfile();
             break;
@@ -1444,10 +1455,13 @@ int32_t CaptureSession::RemoveOutput(sptr<CaptureOutput>& output)
         if (isSetOfflinePhoto) {
             ((sptr<PhotoOutput>&)photoOutput_)->SetSwitchOfflinePhotoOutput(true);
         }
+#ifdef CAMERA_MOVIE_FILE
         if (!output->IsMultiStreamOutput()) {
+#endif
             CHECK_EXECUTE(output->GetStream() != nullptr,
                 errCode = captureSession->RemoveOutput(output->GetStreamType(), output->GetStream()->AsObject()));
             CHECK_PRINT_ELOG(errCode != CAMERA_OK, "Failed to RemoveOutput!, %{public}d", errCode);
+#ifdef CAMERA_MOVIE_FILE
         } else {
             sptr<UnifyMovieFileOutput> unifyMovieFileOutput = static_cast<UnifyMovieFileOutput*>(output.GetRefPtr());
             CHECK_RETURN_RET_ELOG(unifyMovieFileOutput == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
@@ -1457,6 +1471,7 @@ int32_t CaptureSession::RemoveOutput(sptr<CaptureOutput>& output)
                 "CaptureSession::RemoveOutput movieFileOutput proxy is nullptr!");
             captureSession->RemoveMultiStreamOutput(proxy->AsObject());
         }
+#endif
     } else {
         MEDIA_ERR_LOG("CaptureSession::RemoveOutput() captureSession is nullptr");
     }
@@ -2555,8 +2570,13 @@ int32_t CaptureSession::SetFocusPoint(Point focusPoint)
         "CaptureSession::SetFocusPoint Need to call LockForControl() before setting camera properties");
     FocusMode focusMode;
     GetFocusMode(focusMode);
+#ifdef CAMERA_FRAMEWORK_FEATURE_MEDIA_STREAM
     CHECK_RETURN_RET_ELOG(focusMode == FOCUS_MODE_CONTINUOUS_AUTO && GetMode() != SceneMode::CINEMATIC_VIDEO,
         CameraErrorCode::SUCCESS, "The current mode does not support setting the focus point.");
+#else
+    CHECK_RETURN_RET_ELOG(focusMode == FOCUS_MODE_CONTINUOUS_AUTO, CameraErrorCode::SUCCESS,
+        "The current focus mode does not support setting the focus point.");
+#endif
     Point focusVerifyPoint = VerifyFocusCorrectness(focusPoint);
     Point unifyFocusPoint = CoordinateTransform(focusVerifyPoint);
     std::vector<float> focusArea = { unifyFocusPoint.x, unifyFocusPoint.y };
@@ -4521,6 +4541,7 @@ int32_t CaptureSession::EnableFeature(SceneFeature feature, bool isEnable)
 
 bool CaptureSession::IsMovingPhotoSupported()
 {
+#ifdef CAMERA_MOVING_PHOTO
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("Enter IsMovingPhotoSupported");
     auto inputDevice = GetInputDevice();
@@ -4546,10 +4567,14 @@ bool CaptureSession::IsMovingPhotoSupported()
         }
     }
     return std::find(modes.begin(), modes.end(), GetMode()) != modes.end();
+#else
+    return false;
+#endif
 }
 
 int32_t CaptureSession::EnableMovingPhoto(bool isEnable)
 {
+#ifdef CAMERA_MOVING_PHOTO
     CAMERA_SYNC_TRACE;
     HILOG_COMM_INFO("Enter EnableMovingPhoto, isEnable:%{public}d", isEnable);
     CHECK_RETURN_RET_ELOG(
@@ -4575,6 +4600,9 @@ int32_t CaptureSession::EnableMovingPhoto(bool isEnable)
     CHECK_RETURN_RET_ELOG(errCode != CAMERA_OK, errCode, "Failed to EnableMovingPhoto!, %{public}d", errCode);
     isMovingPhotoEnabled_ = isEnable;
     return CameraErrorCode::SUCCESS;
+#else
+    return CameraErrorCode::SERVICE_FATL_ERROR;
+#endif
 }
 
 bool CaptureSession::IsMovingPhotoEnabled()
@@ -4584,6 +4612,7 @@ bool CaptureSession::IsMovingPhotoEnabled()
 
 int32_t CaptureSession::EnableMovingPhotoMirror(bool isMirror, bool isConfig)
 {
+#ifdef CAMERA_MOVING_PHOTO
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("EnableMovingPhotoMirror enter, isMirror: %{public}d", isMirror);
     CHECK_RETURN_RET_ELOG(
@@ -4594,6 +4623,9 @@ int32_t CaptureSession::EnableMovingPhotoMirror(bool isMirror, bool isConfig)
     int32_t errCode = captureSession->EnableMovingPhotoMirror(isMirror, isConfig);
     CHECK_PRINT_ELOG(errCode != CAMERA_OK, "Failed to StartMovingPhotoCapture!, %{public}d", errCode);
     return CameraErrorCode::SUCCESS;
+#else
+    return CameraErrorCode::SERVICE_FATL_ERROR;
+#endif
 }
 
 void CaptureSession::SetMoonCaptureBoostStatusCallback(std::shared_ptr<MoonCaptureBoostStatusCallback> callback)
@@ -4774,6 +4806,7 @@ bool CaptureSession::ValidateOutputProfile(Profile& outputProfile, CaptureOutput
             auto profiles = inputDeviceInfo->modeVideoProfiles_[modeName];
             return validateOutputProfileFunc(outputProfile, profiles);
         }
+#ifdef CAMERA_MOVIE_FILE
         case CAPTURE_OUTPUT_TYPE_MOVIE_FILE:
         // Fall-througn
         case CAPTURE_OUTPUT_TYPE_UNIFY_MOVIE_FILE: {
@@ -4781,6 +4814,7 @@ bool CaptureSession::ValidateOutputProfile(Profile& outputProfile, CaptureOutput
             MEDIA_INFO_LOG("CaptureSession::ValidateOutputProfile CaptureOutputType MovieFile");
             return validateOutputProfileFunc(outputProfile, profiles);
         }
+#endif
         default:
             MEDIA_ERR_LOG("CaptureSession::ValidateOutputProfile CaptureOutputType unknown");
             return false;
@@ -6564,6 +6598,23 @@ std::vector<NightSubMode> CaptureSession::GetSupportedNightSubModeTypes()
     return abilityContainer->GetSupportedNightSubModeTypes();
 }
 
+void CaptureSession::SetMacroStatusCallback(std::shared_ptr<MacroStatusCallback> callback)
+{
+    MEDIA_DEBUG_LOG("CaptureSession::SetMacroStatusCallback ENTER");
+    std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
+    macroStatusCallback_ = callback;
+}
+
+void CaptureSession::SetPhotoQualityPrioritization(camera_photo_quality_prioritization_t quality)
+{
+    MEDIA_INFO_LOG("CaptureSession::SetPhotoQualityPrioritization quality:%{public}d", quality);
+    CHECK_RETURN_ELOG(changedMetadata_ == nullptr,
+        "CaptureSession::SetPhotoQualityPrioritization changedMetadata_ is NULL");
+    bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_PHOTO_QUALITY_PRIORITIZATION, &quality, 1);
+    CHECK_PRINT_ELOG(!status, "CaptureSession::SetPhotoQualityPrioritization Failed to AddOrUpdateMetadata!");
+    return;
+}
+
 void CaptureSession::SetZoomRatioForAudio(float zoomRatio)
 {
     CAMERA_SYNC_TRACE;
@@ -6627,6 +6678,31 @@ int32_t CaptureSession::SetExposureMeteringMode(MeteringMode mode)
     CHECK_PRINT_ELOG(!status, "CaptureSession::SetExposureMeteringMode Failed to set focus mode");
     return CameraErrorCode::SUCCESS;
     // LCOV_EXCL_STOP
+}
+
+void CaptureSession::SetDefaultColorSpace()
+{
+    CHECK_RETURN(isColorSpaceSetted_);
+    HILOG_COMM_INFO("CaptureSession::CommitConfig is not setColorSpace");
+    // set preconfig color space
+    auto preconfigProfiles = GetPreconfigProfiles();
+    if (preconfigProfiles != nullptr) {
+        SetColorSpace(preconfigProfiles->colorSpace);
+        return;
+    }
+    // if preview P010 format is used and color space is not set in photo session,
+    // BT2020_HLG will be set as default color space
+    CHECK_RETURN(GetMode() != SceneMode::CAPTURE);
+    CameraFormat previewFormat = CameraFormat::CAMERA_FORMAT_INVALID;
+    for (const auto& output : captureOutputSets_) {
+        CHECK_EXECUTE(output->GetOutputType() == CaptureOutputType::CAPTURE_OUTPUT_TYPE_PREVIEW,
+                      previewFormat = output->GetPreviewProfile()->GetCameraFormat());
+    }
+    if (previewFormat == CameraFormat::CAMERA_FORMAT_YCBCR_P010 ||
+        previewFormat == CameraFormat::CAMERA_FORMAT_YCRCB_P010) {
+        MEDIA_INFO_LOG("Set default color space for HDR capture when CommitConfig.");
+        SetColorSpace(ColorSpace::BT2020_HLG);
+    }
 }
 } // namespace CameraStandard
 } // namespace OHOS

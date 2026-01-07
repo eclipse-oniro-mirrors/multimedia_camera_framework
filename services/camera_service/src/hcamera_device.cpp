@@ -48,7 +48,9 @@
 #include "metadata_utils.h"
 #include "v1_0/types.h"
 #include "os_account_manager.h"
+#ifdef CAMERA_DEFERRED
 #include "deferred_processing_service.h"
+#endif
 #include "iservice_registry.h"
 #include "system_ability_definition.h"
 #include "camera_timer.h"
@@ -61,7 +63,9 @@
 #ifdef HOOK_CAMERA_OPERATOR
 #include "camera_rotate_plugin.h"
 #endif
+#ifdef CAMERA_XCOMPONENT_TOAST
 #include "camera_dialog_manager.h"
+#endif
 #include "tokenid_kit.h"
 #ifdef CAMERA_LIVE_SCENE_RECOGNITION
 #include "camera_metadata.h"
@@ -133,9 +137,11 @@ class HCameraDevice::FoldScreenListener : public OHOS::Rosen::DisplayManagerLite
 public:
     explicit FoldScreenListener(sptr<HCameraDevice> cameraDevice, sptr<HCameraHostManager> &cameraHostManager,
         const std::string cameraId, const bool isSystemApp)
-        : cameraDevice_(cameraDevice), cameraHostManager_(cameraHostManager), cameraId_(cameraId),
-        isSystemApp_(isSystemApp)
+        : cameraDevice_(cameraDevice), cameraHostManager_(cameraHostManager), cameraId_(cameraId)
     {
+#ifdef CAMERA_XCOMPONENT_TOAST
+        isSystemApp_ = isSystemApp;
+#endif
         MEDIA_DEBUG_LOG("FoldScreenListener enter, cameraID: %{public}s", cameraId_.c_str());
     }
 
@@ -155,6 +161,7 @@ public:
         int32_t cameraPosition = cameraDevice_->GetCameraPosition();
         POWERMGR_SYSEVENT_FOLD_STATE(bundleName, static_cast<uint>(mLastFoldStatus),
             static_cast<uint>(currentFoldStatus), cameraId_, static_cast<uint>(cameraPosition));
+#ifdef CAMERA_XCOMPONENT_TOAST
         if (!foldScreenType.empty() && foldScreenType[0] == '6' && position == OHOS_CAMERA_POSITION_FRONT &&
             ((currentFoldStatus == FoldStatusRosen::EXPAND &&
             (mLastFoldStatus == FoldStatusRosen::HALF_FOLD || mLastFoldStatus == FoldStatusRosen::FOLDED)) ||
@@ -163,6 +170,7 @@ public:
             MEDIA_DEBUG_LOG("HCameraDevice::OnFoldStatusChanged dialog start");
             NoFrontCameraDialog::GetInstance()->ShowCameraDialog();
         }
+#endif
         mLastFoldStatus = currentFoldStatus;
         MEDIA_INFO_LOG("OnFoldStatusChanged, foldStatus: %{public}d", foldStatus);
         cameraHostManager_->NotifyDeviceStateChangeInfo(DeviceType::FOLD_TYPE, (int)currentFoldStatus);
@@ -172,7 +180,9 @@ private:
     sptr<HCameraDevice> cameraDevice_;
     sptr<HCameraHostManager> cameraHostManager_;
     std::string cameraId_;
+#ifdef CAMERA_XCOMPONENT_TOAST
     bool isSystemApp_ = false;
+#endif
     FoldStatusRosen mLastFoldStatus = OHOS::Rosen::DisplayManagerLite::GetInstance().GetFoldStatus();
     int32_t position = OHOS_CAMERA_POSITION_BACK;
 };
@@ -240,6 +250,7 @@ HCameraDevice::~HCameraDevice()
     UnPrepareZoom();
     CameraTimer::GetInstance().Unregister(zoomTimerId_);
     SetCameraPrivacy(nullptr);
+#ifdef CAMERA_MOVING_PHOTO
     {
         std::lock_guard<std::mutex> lock(movingPhotoStartTimeCallbackLock_);
         movingPhotoStartTimeCallback_ = nullptr;
@@ -248,6 +259,7 @@ HCameraDevice::~HCameraDevice()
         std::lock_guard<std::mutex> lock(movingPhotoEndTimeCallbackLock_);
         movingPhotoEndTimeCallback_ = nullptr;
     }
+#endif
     MEDIA_INFO_LOG("HCameraDevice::~HCameraDevice Destructor Camera: %{public}s", cameraID_.c_str());
 }
 
@@ -337,11 +349,6 @@ int32_t HCameraDevice::GetFocusMode()
 int32_t HCameraDevice::GetVideoStabilizationMode()
 {
     return videoStabilizationMode_;
-}
-
-void HCameraDevice::EnableMovingPhoto(bool isMovingPhotoEnabled)
-{
-    isMovingPhotoEnabled_ = isMovingPhotoEnabled;
 }
 
 void HCameraDevice::CreateMuteSetting(std::shared_ptr<OHOS::Camera::CameraMetadata>& settings)
@@ -462,11 +469,13 @@ int32_t HCameraDevice::Open()
     auto foldStatus = OHOS::Rosen::DisplayManagerLite::GetInstance().GetFoldStatus();
     auto foldScreenType = system::GetParameter("const.window.foldscreen.type", "");
     MEDIA_INFO_LOG("HCameraDevice::Open %{public}d, %{public}d", position, foldStatus);
+#ifdef CAMERA_XCOMPONENT_TOAST
     if (!foldScreenType.empty() && foldScreenType[0] == '6' && position == OHOS_CAMERA_POSITION_FRONT &&
         foldStatus == OHOS::Rosen::FoldStatus::EXPAND) {
         MEDIA_DEBUG_LOG("HCameraDevice::Open dialog start");
         NoFrontCameraDialog::GetInstance()->ShowCameraDialog();
     }
+#endif
 	std::unordered_map<std::string, std::string> mapPayload;
     pidForLiveScene_ = std::to_string(IPCSkeleton::GetCallingPid());
     uidForLiveScene_ = std::to_string(IPCSkeleton::GetCallingUid());
@@ -1065,6 +1074,7 @@ void HCameraDevice::CheckVideoStabilizationChange(const std::shared_ptr<OHOS::Ca
     videoStabilizationMode_ = videoStabilizationMode;
 }
 
+#ifdef CAMERA_MOVING_PHOTO
 bool HCameraDevice::CheckMovingPhotoSupported(int32_t mode)
 {
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility;
@@ -1087,6 +1097,51 @@ bool HCameraDevice::CheckMovingPhotoSupported(int32_t mode)
     }
     return std::find(modes.begin(), modes.end(), mode) != modes.end();
 }
+
+void HCameraDevice::EnableMovingPhoto(bool isMovingPhotoEnabled)
+{
+    isMovingPhotoEnabled_ = isMovingPhotoEnabled;
+}
+
+void HCameraDevice::GetMovingPhotoStartAndEndTime(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult)
+{
+    MEDIA_DEBUG_LOG("HCameraDevice::GetMovingPhotoStartAndEndTime enter.");
+    {
+        std::lock_guard<std::mutex> lock(movingPhotoStartTimeCallbackLock_);
+        if (movingPhotoStartTimeCallback_) {
+            camera_metadata_item_t item;
+            int ret = OHOS::Camera::FindCameraMetadataItem(cameraResult->get(), OHOS_MOVING_PHOTO_START, &item);
+            if (ret == CAM_META_SUCCESS && item.count != 0) {
+                int64_t captureId = item.data.i64[0];
+                int64_t startTime = item.data.i64[1];
+                movingPhotoStartTimeCallback_(static_cast<int32_t>(captureId), startTime);
+            }
+        }
+    }
+    std::lock_guard<std::mutex> lock(movingPhotoEndTimeCallbackLock_);
+    CHECK_RETURN(!movingPhotoEndTimeCallback_);
+    camera_metadata_item_t item;
+    int ret = OHOS::Camera::FindCameraMetadataItem(cameraResult->get(), OHOS_MOVING_PHOTO_END, &item);
+    bool canMovingPhoto = ret == CAM_META_SUCCESS && item.count != 0;
+    if (canMovingPhoto) {
+        int64_t captureId = item.data.i64[0];
+        int64_t endTime = item.data.i64[1];
+        movingPhotoEndTimeCallback_(static_cast<int32_t>(captureId), endTime);
+    }
+}
+
+void HCameraDevice::SetMovingPhotoStartTimeCallback(std::function<void(int64_t, int64_t)> callback)
+{
+    std::lock_guard<std::mutex> lock(movingPhotoStartTimeCallbackLock_);
+    movingPhotoStartTimeCallback_ = callback;
+}
+
+void HCameraDevice::SetMovingPhotoEndTimeCallback(std::function<void(int64_t, int64_t)> callback)
+{
+    std::lock_guard<std::mutex> lock(movingPhotoEndTimeCallbackLock_);
+    movingPhotoEndTimeCallback_ = callback;
+}
+#endif
 
 void HCameraDevice::ResetZoomTimer()
 {
@@ -1772,53 +1827,18 @@ int32_t HCameraDevice::OnResult(const uint64_t timestamp, const std::vector<uint
     if (IsCameraDebugOn()) {
         CheckOnResultData(cameraResult);
     }
+#ifdef CAMERA_MOVING_PHOTO
     if (isMovingPhotoEnabled_) {
         GetMovingPhotoStartAndEndTime(cameraResult);
     }
+#endif
     ReportZoomInfos(cameraResult);
+#ifdef CAMERA_FRAMEWORK_FEATURE_MEDIA_STREAM
     if (isKeyFrameReportEnabled_.load()) {
         SaveKeyFrameInfo(cameraResult);
     }
+#endif
     return CAMERA_OK;
-}
-
-void HCameraDevice::GetMovingPhotoStartAndEndTime(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult)
-{
-    MEDIA_DEBUG_LOG("HCameraDevice::GetMovingPhotoStartAndEndTime enter.");
-    {
-        std::lock_guard<std::mutex> lock(movingPhotoStartTimeCallbackLock_);
-        if (movingPhotoStartTimeCallback_) {
-            camera_metadata_item_t item;
-            int ret = OHOS::Camera::FindCameraMetadataItem(cameraResult->get(), OHOS_MOVING_PHOTO_START, &item);
-            if (ret == CAM_META_SUCCESS && item.count != 0) {
-                int64_t captureId = item.data.i64[0];
-                int64_t startTime = item.data.i64[1];
-                movingPhotoStartTimeCallback_(static_cast<int32_t>(captureId), startTime);
-            }
-        }
-    }
-    std::lock_guard<std::mutex> lock(movingPhotoEndTimeCallbackLock_);
-    CHECK_RETURN(!movingPhotoEndTimeCallback_);
-    camera_metadata_item_t item;
-    int ret = OHOS::Camera::FindCameraMetadataItem(cameraResult->get(), OHOS_MOVING_PHOTO_END, &item);
-    bool canMovingPhoto = ret == CAM_META_SUCCESS && item.count != 0;
-    if (canMovingPhoto) {
-        int64_t captureId = item.data.i64[0];
-        int64_t endTime = item.data.i64[1];
-        movingPhotoEndTimeCallback_(static_cast<int32_t>(captureId), endTime);
-    }
-}
-
-void HCameraDevice::SetMovingPhotoStartTimeCallback(std::function<void(int64_t, int64_t)> callback)
-{
-    std::lock_guard<std::mutex> lock(movingPhotoStartTimeCallbackLock_);
-    movingPhotoStartTimeCallback_ = callback;
-}
-
-void HCameraDevice::SetMovingPhotoEndTimeCallback(std::function<void(int64_t, int64_t)> callback)
-{
-    std::lock_guard<std::mutex> lock(movingPhotoEndTimeCallbackLock_);
-    movingPhotoEndTimeCallback_ = callback;
 }
 
 void HCameraDevice::ReportZoomInfos(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult)
@@ -2074,6 +2094,7 @@ std::vector<uint8_t> HCameraDevice::GetKeyFrameInfoBuffer(int64_t firstFrameTime
     return res;
 }
 
+#ifdef CAMERA_FRAMEWORK_FEATURE_MEDIA_STREAM
 void HCameraDevice::SaveKeyFrameInfo(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult)
 {
     camera_metadata_item_t item;
@@ -2097,6 +2118,7 @@ void HCameraDevice::SaveKeyFrameInfo(std::shared_ptr<OHOS::Camera::CameraMetadat
                     keyFrameTimestamp, keyFrameType);
     keyFrameInfoMap_[keyFrameTimestamp] = keyFrameType;
 }
+#endif
 
 int32_t HCameraDevice::SetMdmCheck(bool mdmCheck)
 {

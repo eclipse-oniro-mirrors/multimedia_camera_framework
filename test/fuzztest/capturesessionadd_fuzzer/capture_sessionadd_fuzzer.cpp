@@ -231,7 +231,9 @@ void TestOther(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
     session->IsSetEnableMacro();
     session->GetMetaOutput();
     session->GetMetadata();
+#ifdef CAMERA_MOVING_PHOTO
     session->IsMovingPhotoEnabled();
+#endif
     session->IsImageDeferred();
     session->CanSetFrameRateRange(fdp.ConsumeIntegral<int32_t>(), fdp.ConsumeIntegral<int32_t>(), curOutput);
     session->CanSetFrameRateRangeForOutput(fdp.ConsumeIntegral<int32_t>(), fdp.ConsumeIntegral<int32_t>(), curOutput);

@@ -46,13 +46,15 @@ void EventsMonitor::Initialize()
     initialized_.store(true);
 }
 
-void EventsMonitor::RegisterEventsListener(const std::vector<EventType>& events,
+void EventsMonitor::RegisterEventsListener(int32_t userId, const std::vector<EventType>& events,
     const std::weak_ptr<IEventsListener>& listener)
 {
     DP_INFO_LOG("RegisterEventsListener enter.");
     std::lock_guard<std::mutex> lock(eventMutex_);
-    for (const auto& event : events) {
-        eventListenerList_[event].push_back(listener);
+    auto& listenersMap = userIdToeventListeners_;
+    auto& currentListeners = listenersMap[userId];
+    for (const auto &event : events) {
+        currentListeners[event].push_back(listener);
     }
 }
 
@@ -118,6 +120,11 @@ void EventsMonitor::NotifyInterrupt()
     NotifyObserversUnlocked(EventType::INTERRUPT_EVENT, IS_INTERRUPT);
 }
 
+void EventsMonitor::NotifyUserSwitched(int32_t userId)
+{
+    EventsInfo::GetInstance().SetCurrentUser(userId);
+}
+
 void EventsMonitor::NotifyObserversUnlocked(EventType event, int32_t value)
 {
     int32_t ret = DPS_SendUrgentCommand<EventStatusChangeCommand>(event, value);
@@ -127,12 +134,15 @@ void EventsMonitor::NotifyObserversUnlocked(EventType event, int32_t value)
 void EventsMonitor::NotifyEventToObervers(EventType event, int32_t value)
 {
     DP_DEBUG_LOG("EventType: %{public}d, value: %{public}d", event, value);
-    auto iter = eventListenerList_.find(event);
-    if (iter == eventListenerList_.end()) {
+    int32_t userId = EventsInfo::GetInstance().GetCurrentUser();
+    auto eventListeners = userIdToeventListeners_.find(userId);
+    DP_CHECK_ERROR_RETURN_LOG(eventListeners == userIdToeventListeners_.end(),
+        "Not find user[%{private}d] listener", userId);
+    auto iter = eventListeners->second.find(event);
+    if (iter == eventListeners->second.end()) {
         DP_ERR_LOG("unexpect event: %{public}d", event);
         return;
     }
-
     auto& observers = iter->second;
     for (auto it = observers.begin(); it != observers.end();) {
         auto observer = it->lock();

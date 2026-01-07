@@ -25,6 +25,7 @@
 #include "dp_utils.h"
 #include "screen_strategy.h"
 #include "thermal_strategy.h"
+#include "user_strategy.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -42,6 +43,7 @@ const std::vector<std::string> EventSubscriber::events_ = {
     OHOS::EventFwk::CommonEventSupport::COMMON_EVENT_BATTERY_OKAY,
     OHOS::EventFwk::CommonEventSupport::COMMON_EVENT_BATTERY_LOW,
     OHOS::EventFwk::CommonEventSupport::COMMON_EVENT_BATTERY_CHANGED,
+    OHOS::EventFwk::CommonEventSupport::COMMON_EVENT_USER_SWITCHED,
     COMMON_EVENT_CAMERA_STATUS,
 };
 
@@ -91,6 +93,8 @@ void EventSubscriber::Initialize()
         = batteryState;
     eventStrategy_[OHOS::EventFwk::CommonEventSupport::COMMON_EVENT_BATTERY_CHANGED]
         = std::make_shared<BatteryLevelStrategy>();
+    eventStrategy_[OHOS::EventFwk::CommonEventSupport::COMMON_EVENT_USER_SWITCHED]
+        = std::make_shared<UserStrategy>();
     eventStrategy_[COMMON_EVENT_CAMERA_STATUS] = std::make_shared<CameraStrategy>();
 }
 

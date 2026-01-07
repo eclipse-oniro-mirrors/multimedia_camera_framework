@@ -50,6 +50,11 @@ public:
     bool IsRunningJob(const std::string& videoId);
     bool IsNeedStopJob();
 
+    inline int32_t GetUserId() const
+    {
+        return userId_;
+    }
+
 protected:
     explicit VideoJobRepository(const int32_t userId);
 

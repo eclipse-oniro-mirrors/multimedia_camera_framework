@@ -1870,7 +1870,35 @@ function getCameraManager(context: Context): CameraManager;
      * @systemapi
      * @since 12
      */
+    /**
+     * Subscribes to camera occlusion detection results.
+     *
+     * @param { 'cameraOcclusionDetection' } type - Event type.
+     * @param { AsyncCallback<CameraOcclusionDetectionResult> } callback - Callback used to get detection results.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @atomicservice
+     * @since 23 dynamic
+     */
     on(type: 'cameraOcclusionDetection', callback: AsyncCallback<CameraOcclusionDetectionResult>): void;
+
+    /**
+     * Subscribes to camera occlusion detection results.
+     * 
+     * @param { AsyncCallback<CameraOcclusionDetectionResult> } callback - Callback used to get detection results.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 22 static
+     */
+    /**
+     * Subscribes to camera occlusion detection results.
+     *
+     * @param { AsyncCallback<CameraOcclusionDetectionResult> } callback - Callback used to get detection results.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @atomicservice
+     * @since 23 static
+     */
+    onCameraOcclusionDetection(callback: AsyncCallback<CameraOcclusionDetectionResult>): void;
 
     /**
      * Unsubscribes from camera occlusion detection results.
@@ -1882,7 +1910,35 @@ function getCameraManager(context: Context): CameraManager;
      * @systemapi
      * @since 12
      */
+    /**
+     * Unsubscribes from camera occlusion detection results.
+     *
+     * @param { 'cameraOcclusionDetection' } type - Event type.
+     * @param { AsyncCallback<CameraOcclusionDetectionResult> } callback - Callback used to get detection results.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @atomicservice
+     * @since 23 dynamic
+     */    
     off(type: 'cameraOcclusionDetection', callback?: AsyncCallback<CameraOcclusionDetectionResult>): void;
+
+    /**
+     * Subscribes to camera occlusion detection results.
+     * 
+     * @param { AsyncCallback<CameraOcclusionDetectionResult> } callback - Callback used to get detection results.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 22 static
+     */
+    /**
+     * Unsubscribes from camera occlusion detection results.
+     *
+     * @param { AsyncCallback<CameraOcclusionDetectionResult> } callback - Callback used to get detection results.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @atomicservice
+     * @since 23 static
+     */    
+    offCameraOcclusionDetection(callback?: AsyncCallback<CameraOcclusionDetectionResult>): void;
 
     /**
      * Query whether physical sensor orientation is variable under different fold status.
@@ -10477,7 +10533,16 @@ function getCameraManager(context: Context): CameraManager;
    * @typedef CameraOcclusionDetectionResult
    * @syscap SystemCapability.Multimedia.Camera.Core
    * @systemapi
-   * @since 12
+   * @since 12 dynamic
+   * @since 22 static
+   */
+  /**
+   * Camera Occlusion Detection Result.
+   *
+   * @typedef CameraOcclusionDetectionResult
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @atomicservice
+   * @since 23 dynamic&static
    */
   interface CameraOcclusionDetectionResult {
     /**
@@ -10487,7 +10552,17 @@ function getCameraManager(context: Context): CameraManager;
      * @readonly
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
-     * @since 12
+     * @since 12 dynamic
+     * @since 22 static
+     */
+    /**
+     * Check whether camera is occluded.
+     *
+     * @type { boolean }
+     * @readonly
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @atomicservice
+     * @since 23 dynamic&static
      */
     readonly isCameraOccluded: boolean;
 
@@ -10498,8 +10573,18 @@ function getCameraManager(context: Context): CameraManager;
      * @readonly
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
-     * @since 13
+     * @since 13 dynamic
+     * @since 22 static
      */
+    /**
+     * Check whether camera lens is dirty.
+     *
+     * @type { boolean }
+     * @readonly
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @atomicservice
+     * @since 23 dynamic&static
+     */    
     readonly isCameraLensDirty: boolean;
   }
 

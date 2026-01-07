@@ -337,12 +337,16 @@ void DPSEventReport::UpdateRestoreTime(DPSEventInfo& dpsEventInfo, DPSEventInfo&
 
 void DPSEventReport::UpdateRemoveTime(const std::string& imageId, int32_t userId)
 {
-    auto imageIdToEventInfoTemp = userIdToImageIdEventInfo.find(userId);
-    if (imageIdToEventInfoTemp != userIdToImageIdEventInfo.end()) {
+    {
+        std::unique_lock<std::mutex> lock(mutex_);
+        auto imageIdToEventInfoTemp = userIdToImageIdEventInfo.find(userId);
+        if (imageIdToEventInfoTemp == userIdToImageIdEventInfo.end()) {
+            return;
+        }
         uint64_t currentTime = GetTimestampMilli();
         (imageIdToEventInfoTemp->second)[imageId].removeTimeEndTime = currentTime;
-        ReportImageProcessResult(imageId, userId);
     }
+    ReportImageProcessResult(imageId, userId);
 }
 
 void DPSEventReport::UpdateRemoveTime(DPSEventInfo& dpsEventInfo, DPSEventInfo& dpsEventInfoSrc)

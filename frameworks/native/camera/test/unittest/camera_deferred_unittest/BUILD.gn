@@ -72,27 +72,29 @@ ohos_unittest("camera_deferred_unittest") {
 
   sources = [
     "${multimedia_camera_framework_path}/interfaces/inner_api/native/test/test_common.cpp",
-    "camera_deferred_proc_test/src/camera_deferred_proc_unittest.cpp",
   ]
 
-  if (fwk_no_hidden || use_clang_coverage) {
-    sources += [
-      "camera_deferred_base_test/src/camera_deferred_base_unittest.cpp",
-      "camera_deferred_dfx_test/src/dps_event_report_unittest.cpp",
-      "camera_deferred_dfx_test/src/dps_video_report_unittest.cpp",
-      "camera_deferred_manager_test/src/camera_deferred_manager_unittest.cpp",
-      "camera_deferred_post_processor_test/src/camera_deferred_post_processor_unittest.cpp",
-      "camera_deferred_schedule_test/src/deferred_photo_job_unittest.cpp",
-      "camera_deferred_schedule_test/src/deferred_photo_processor_stratety_unittest.cpp",
-      "camera_deferred_schedule_test/src/deferred_photo_processor_unittest.cpp",
-      "camera_deferred_schedule_test/src/deferred_video_job_unittest.cpp",
-      "camera_deferred_schedule_test/src/deferred_video_processor_stratety_unittest.cpp",
-      "camera_deferred_schedule_test/src/deferred_video_processor_unittest.cpp",
-      "camera_deferred_session_test/src/deferred_photo_session_unittest.cpp",
-      "camera_deferred_session_test/src/deferred_session_command_unittest.cpp",
-      "camera_deferred_session_test/src/deferred_video_session_unittest.cpp",
-      "camera_deferred_utils_test/src/deferred_utils_unittest.cpp",
-    ]
+  if (camera_framework_feature_deferred) {
+    sources += [ "camera_deferred_proc_test/src/camera_deferred_proc_unittest.cpp" ]
+    if (fwk_no_hidden || use_clang_coverage) {
+      sources += [
+        "camera_deferred_base_test/src/camera_deferred_base_unittest.cpp",
+        "camera_deferred_dfx_test/src/dps_event_report_unittest.cpp",
+        "camera_deferred_dfx_test/src/dps_video_report_unittest.cpp",
+        "camera_deferred_manager_test/src/camera_deferred_manager_unittest.cpp",
+        "camera_deferred_post_processor_test/src/camera_deferred_post_processor_unittest.cpp",
+        "camera_deferred_schedule_test/src/deferred_photo_job_unittest.cpp",
+        "camera_deferred_schedule_test/src/deferred_photo_processor_stratety_unittest.cpp",
+        "camera_deferred_schedule_test/src/deferred_photo_processor_unittest.cpp",
+        "camera_deferred_schedule_test/src/deferred_video_job_unittest.cpp",
+        "camera_deferred_schedule_test/src/deferred_video_processor_stratety_unittest.cpp",
+        "camera_deferred_schedule_test/src/deferred_video_processor_unittest.cpp",
+        "camera_deferred_session_test/src/deferred_photo_session_unittest.cpp",
+        "camera_deferred_session_test/src/deferred_session_command_unittest.cpp",
+        "camera_deferred_session_test/src/deferred_video_session_unittest.cpp",
+        "camera_deferred_utils_test/src/deferred_utils_unittest.cpp",
+      ]
+    }
   }
 
   deps = [

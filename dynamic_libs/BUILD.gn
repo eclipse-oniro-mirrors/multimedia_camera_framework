@@ -54,10 +54,15 @@ ohos_shared_library("camera_dynamic_medialibrary") {
     "hitrace:hitrace_meter",
     "image_framework:image_native",
     "ipc:ipc_single",
-    "media_library:media_library",
-    "media_library:media_library_manager",
+    "media_library:media_library_camera_helper",
     "samgr:samgr_proxy",
   ]
+
+  defines = []
+
+  if (camera_framework_feature_capture_yuv) {
+    defines += [ "CAMERA_CAPTURE_YUV" ]
+  }
 
   cflags_cc = cflags
 
@@ -253,7 +258,7 @@ ohos_shared_library("camera_dynamic_moving_photo") {
     "ipc:ipc_core",
     "media_foundation:media_foundation",
     "media_foundation:native_media_core",
-    "media_library:media_library",
+    "media_library:media_library_camera_helper",
     "samgr:samgr_proxy",
   ]
   defines = []

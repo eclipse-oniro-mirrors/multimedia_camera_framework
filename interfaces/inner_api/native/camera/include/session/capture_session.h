@@ -2144,6 +2144,14 @@ public:
     int32_t SetRecommendedInfoLanguage(const std::string& language);
     int32_t EnableCompositionEffectPreview(bool isEnable);
 
+    /**
+     * @brief Set the macro status callback.
+     * which will be called when there is macro state change.
+     *
+     * @param The MacroStatusCallback pointer.
+     */
+    void SetMacroStatusCallback(std::shared_ptr<MacroStatusCallback> callback);
+
     void SetImageStabilizationGuideCallback(std::shared_ptr<ImageStabilizationGuideCallback> callback);
 
     void SetCompositionPositionCalibrationCallback(std::shared_ptr<CompositionPositionCalibrationCallback> callback);
@@ -2174,6 +2182,7 @@ public:
     void ProcessApertureEffectChange(const std::shared_ptr<OHOS::Camera::CameraMetadata> &result);
     int32_t GetSupportedVideoCodecTypes(std::vector<int32_t>& supportedVideoCodecTypes);
     std::vector<NightSubMode> GetSupportedNightSubModeTypes();
+    void SetPhotoQualityPrioritization(camera_photo_quality_prioritization_t quality);
     uint32_t GetIsoValue();
     int32_t SetParameters(std::vector<std::pair<std::string, std::string>>& kvPairs);
     int32_t SetExposureMeteringMode(MeteringMode mode);
@@ -2458,6 +2467,7 @@ protected:
      */
     void ProcessSmoothZoomDurationChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result);
     void SetZoomRatioForAudio(float zoomRatio);
+    void SetDefaultColorSpace();
 };
 } // namespace CameraStandard
 } // namespace OHOS

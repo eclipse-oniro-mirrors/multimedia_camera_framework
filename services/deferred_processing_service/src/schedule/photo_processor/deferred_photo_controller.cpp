@@ -16,6 +16,7 @@
 #include "deferred_photo_controller.h"
 
 #include "camera_dynamic_loader.h"
+#include "events_info.h"
 #include "dp_utils.h"
 #include "dp_log.h"
 #include "dps_event_report.h"
@@ -106,6 +107,7 @@ void DeferredPhotoController::OnSchedulerChanged(const SchedulerType& type, cons
 
 void DeferredPhotoController::TryDoSchedule()
 {
+    DP_CHECK_RETURN(!EventsInfo::GetInstance().IsAllowedToSchedule(userId_));
     auto job = photoStrategyCenter_->GetJob();
     DP_INFO_LOG("DPS_PHOTO: strategy get work: %{public}d", job != nullptr);
     NotifyScheduleState(job != nullptr);

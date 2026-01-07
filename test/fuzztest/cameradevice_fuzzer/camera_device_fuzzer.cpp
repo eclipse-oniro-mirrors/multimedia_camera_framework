@@ -198,7 +198,9 @@ void CameraDeviceFuzzTest2(FuzzedDataProvider& fdp)
     if (fuzzCameraDevice) {
         fuzzCameraDevice->OperatePermissionCheck(fdp.ConsumeIntegral<uint32_t>());
         fuzzCameraDevice->Open();
+#ifdef CAMERA_MOVING_PHOTO
         fuzzCameraDevice->CheckMovingPhotoSupported(fdp.ConsumeIntegral<int32_t>());
+#endif
         fuzzCameraDevice->NotifyCameraStatus(fdp.ConsumeIntegral<int32_t>());
         fuzzCameraDevice->RemoveResourceWhenHostDied();
         CameraDeviceFuzzTest2Case1();

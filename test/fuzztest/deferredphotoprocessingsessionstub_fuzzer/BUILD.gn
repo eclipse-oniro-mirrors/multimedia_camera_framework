@@ -118,5 +118,8 @@ ohos_fuzztest("DeferredPhotoProcessingSessionStubFuzzTest") {
 
 group("fuzztest") {
   testonly = true
-  deps = [ ":DeferredPhotoProcessingSessionStubFuzzTest" ]
+  deps =[]
+  if (camera_framework_feature_deferred) {
+    deps += [ ":DeferredPhotoProcessingSessionStubFuzzTest" ]
+  }
 }

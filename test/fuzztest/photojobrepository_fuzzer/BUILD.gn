@@ -147,5 +147,8 @@ ohos_fuzztest("PhotoJobRepositoryFuzzTest") {
 
 group("fuzztest") {
   testonly = true
-  deps = [ ":PhotoJobRepositoryFuzzTest" ]
+  deps =[]
+  if (camera_framework_feature_deferred) {
+    deps += [ ":PhotoJobRepositoryFuzzTest" ]
+  }
 }

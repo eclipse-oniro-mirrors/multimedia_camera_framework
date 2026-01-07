@@ -222,7 +222,11 @@ ohos_moduletest("camera_moving_photo_moduletest") {
     "${multimedia_camera_framework_path}/interfaces/inner_api/native/test",
   ]
 
-  sources = [ "camera_moving_photo/src/camera_moving_photo_moduletest.cpp" ]
+  sources = []
+  
+  if (camera_framework_feature_moving_photo) {
+    sources += [ "camera_moving_photo/src/camera_moving_photo_moduletest.cpp" ]
+  }
 
   deps = [
     "${multimedia_camera_framework_path}/frameworks/native/camera/base:camera_framework",
@@ -247,7 +251,7 @@ ohos_moduletest("camera_moving_photo_moduletest") {
     "image_framework:image_source",
     "image_framework:ohimage",
     "ipc:ipc_core",
-    "media_library:media_library",
+    "media_library:media_library_camera_helper",
     "media_library:media_library_asset_manager",
     "media_library:media_library_manager",
     "media_library:native_media_asset_manager",
@@ -363,6 +367,10 @@ ohos_moduletest("camera_photo_moduletest") {
     "safwk:system_ability_fwk",
   ]
 
+  if (camera_framework_feature_capture_yuv) {
+    defines += [ "CAMERA_CAPTURE_YUV" ]
+  }
+  
   cflags = [ "-fPIC" ]
   cflags_cc = cflags
   sanitize = {

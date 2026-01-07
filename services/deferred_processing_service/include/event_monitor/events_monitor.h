@@ -50,19 +50,20 @@ public:
     void NotifyPhotoProcessSize(int32_t offlineSize, int32_t backSize);
     void NotifyTrailingStatus(int32_t status);
     void NotifyInterrupt();
-    void NotifyEventToObervers(EventType event, int value);
-    void RegisterEventsListener(const std::vector<EventType>& events,
+    void NotifyUserSwitched(int32_t userId);
+    void NotifyEventToObervers(EventType event, int32_t value);
+    void RegisterEventsListener(int32_t userId, const std::vector<EventType>& events,
         const std::weak_ptr<IEventsListener>& listener);
 
 private:
-    void NotifyObserversUnlocked(EventType event, int value);
+    void NotifyObserversUnlocked(EventType event, int32_t value);
     int32_t SubscribeSystemAbility();
     int32_t UnSubscribeSystemAbility();
 
     std::mutex eventMutex_;
     std::atomic_bool initialized_ {false};
     std::atomic_int numActiveSessions_ {0};
-    std::map<EventType, std::vector<std::weak_ptr<IEventsListener>>> eventListenerList_ {};
+    std::map<int32_t, std::map<EventType, std::vector<std::weak_ptr<IEventsListener>>>> userIdToeventListeners_ {};
     sptr<CommonEventListener> ceListener_ {nullptr};
 };
 } // namespace DeferredProcessing

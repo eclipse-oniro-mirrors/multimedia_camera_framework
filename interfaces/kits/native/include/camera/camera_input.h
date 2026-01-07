@@ -206,6 +206,40 @@ Camera_ErrorCode OH_CameraInput_GetPhysicalCameraOrientation(Camera_Input* camer
  */
 Camera_ErrorCode OH_CameraInput_UsePhysicalCameraOrientation(Camera_Input* cameraInput, bool isUsed);
 
+/**
+ * @brief Camera input occlusionDetectionResult callback
+ *
+ * @param cameraInput the {@link Camera_Input} which deliver the callback.
+ * @param occlusionDetectionResult the {@link Camera_OcclusionDetectionResult} of the camera.
+ * @since 23
+ */
+typedef void (*OH_CameraInput_OnOcclusionDetectionCallback)(const Camera_Input* cameraInput,
+    Camera_OcclusionDetectionResult occlusionDetectionResult);
+
+/**
+ * @brief Subscribes to  occlusion detection callback.
+ *
+ * @param cameraInput the {@link Camera_Input} instance.
+ * @param occlusionDetectionCallback callback used for subscription.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ * @since 23
+ */
+Camera_ErrorCode OH_CameraInput_RegisterOcclusionDetectionCallback(Camera_Input* cameraInput,
+    OH_CameraInput_OnOcclusionDetectionCallback occlusionDetectionCallback);
+
+/**
+ * @brief Unsubscribes from occlusion detection callback.
+ *
+ * @param cameraInput the {@link Camera_Input} instance.
+ * @param occlusionDetectionCallback callback used for unsubscription.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ * @since 23
+ */
+Camera_ErrorCode OH_CameraInput_UnregisterOcclusionDetectionCallback(Camera_Input* cameraInput,
+    OH_CameraInput_OnOcclusionDetectionCallback occlusionDetectionCallback);
+
 #ifdef __cplusplus
 }
 #endif
