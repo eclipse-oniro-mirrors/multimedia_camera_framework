@@ -136,7 +136,11 @@ Camera_ErrorCode Camera_MetadataOutput::AddMetadataObjectTypes(Camera_MetadataOb
 {
     std::vector<MetadataObjectType> temp;
     for (int i = 0 ; i < size ; i++) {
-        temp.push_back(convert(types[i]));
+        auto type = convert(types[i]);
+        if (type == MetadataObjectType::INVALID) {
+            return CAMERA_INVALID_ARGUMENT;
+        }
+        temp.push_back(type);
     }
     MEDIA_DEBUG_LOG("Camera_MetadataOutput::AddMetadataObjectTypes");
     int32_t ret = innerMetadataOutput_->AddMetadataObjectTypes(temp);
@@ -147,7 +151,11 @@ Camera_ErrorCode Camera_MetadataOutput::RemoveMetadataObjectTypes(Camera_Metadat
 {
     std::vector<MetadataObjectType> temp;
     for (int i = 0 ; i < size ; i++) {
-        temp.push_back(convert(types[i]));
+        auto type = convert(types[i]);
+        if (type == MetadataObjectType::INVALID) {
+            return CAMERA_INVALID_ARGUMENT;
+        }
+        temp.push_back(type);
     }
     MEDIA_DEBUG_LOG("Camera_MetadataOutput::RemoveMetadataObjectTypes");
     int32_t ret = innerMetadataOutput_->RemoveMetadataObjectTypes(temp);
@@ -160,5 +168,8 @@ MetadataObjectType Camera_MetadataOutput::convert(Camera_MetadataObjectType type
         {Camera_MetadataObjectType::CAMERA_METADATA_OBJECT_TYPE_FACE_DETECTION, MetadataObjectType::FACE},
         {Camera_MetadataObjectType::CAMERA_METADATA_OBJECT_TYPE_HUMAN_BODY, MetadataObjectType::HUMAN_BODY},
         {Camera_MetadataObjectType::FACE_DETECTION, MetadataObjectType::FACE}};
+    if (convertMap.find(type) == convertMap.end()) {
+        return MetadataObjectType::INVALID;
+    }
     return convertMap[type];
 }
