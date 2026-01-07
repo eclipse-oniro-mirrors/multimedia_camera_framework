@@ -110,6 +110,10 @@ Camera_ErrorCode OH_MetadataOutput_AddMetadataObjectTypes(Camera_MetadataOutput*
 {
     CHECK_RETURN_RET_ELOG(
         metadataOutput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, metadataOutput is null!");
+    CHECK_RETURN_RET_ELOG(
+        types == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, types is null!");
+    CHECK_RETURN_RET_ELOG(
+        size == 0, CAMERA_INVALID_ARGUMENT, "Invalid argument, size is 0!");
     MEDIA_DEBUG_LOG("OH_MetadataOutput_AddMetadataObjectTypes"); 
     Camera_ErrorCode retCode = metadataOutput->AddMetadataObjectTypes(types, size);
     return retCode;
@@ -125,6 +129,10 @@ Camera_ErrorCode OH_MetadataOutput_RemoveMetadataObjectTypes(Camera_MetadataOutp
     CHECK_RETURN_RET_ELOG(
         metadataOutput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, metadataOutput is null!");
     MEDIA_DEBUG_LOG("OH_MetadataOutput_RemoveMetadataObjectTypes"); 
+    CHECK_RETURN_RET_ELOG(
+        types == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, types is null!");
+    CHECK_RETURN_RET_ELOG(
+        size == 0, CAMERA_INVALID_ARGUMENT, "Invalid argument, size is 0!");
     Camera_ErrorCode retCode = metadataOutput->RemoveMetadataObjectTypes(types, size);
     return retCode;
 }
