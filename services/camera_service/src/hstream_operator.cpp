@@ -1052,7 +1052,6 @@ int32_t HStreamOperator::SetColorSpace(ColorSpace colorSpace, bool isNeedUpdate)
         colorSpace == currColorSpace_, result, "HStreamOperator::SetColorSpace() colorSpace no need to update.");
     MEDIA_INFO_LOG("HStreamOperator::SetColorSpace() old ColorSpace: %{public}d, new ColorSpace: %{public}d",
         currColorSpace_, colorSpace);
-    currColorSpace_ = colorSpace;
     result = CheckIfColorSpaceMatchesFormat(colorSpace);
     if (result != CAMERA_OK) {
         CHECK_RETURN_RET_ELOG(opMode_ != static_cast<int32_t>(SceneMode::VIDEO) || isNeedUpdate, result,
@@ -1061,6 +1060,8 @@ int32_t HStreamOperator::SetColorSpace(ColorSpace colorSpace, bool isNeedUpdate)
         MEDIA_ERR_LOG("HStreamOperator::SetColorSpace() %{public}d, format and colorSpace: %{public}d not match.",
             result, colorSpace);
         currColorSpace_ = ColorSpace::BT709;
+    } else {
+        currColorSpace_ = colorSpace;
     }
     SetColorSpaceForStreams();
     MEDIA_INFO_LOG("HStreamOperator::SetColorSpace() colorSpace: %{public}d, isNeedUpdate: %{public}d",
@@ -1117,8 +1118,30 @@ int32_t HStreamOperator::UpdateStreamInfos(const std::shared_ptr<OHOS::Camera::C
     return CAMERA_OK;
 }
 
+int32_t HStreamOperator::VerifyCaptureModeColorSpace(ColorSpace colorSpace)
+{
+    // check format and color space pair for capture mode
+    int32_t result = CAMERA_OK;
+    CHECK_RETURN_RET(opMode_ != static_cast<int32_t>(SceneMode::CAPTURE), result);
+    bool isBT2020ColorSpace = colorSpace == ColorSpace::BT2020_HLG || colorSpace == ColorSpace::BT2020_PQ ||
+                              colorSpace == ColorSpace::BT2020_HLG_LIMIT || colorSpace == ColorSpace::BT2020_PQ_LIMIT;
+    auto repStreams = streamContainer_.GetStreams(StreamType::REPEAT);
+    for (const auto& repStream : repStreams) {
+        bool isP010Format = repStream->format_ == OHOS_CAMERA_FORMAT_YCBCR_P010 ||
+                            repStream->format_ == OHOS_CAMERA_FORMAT_YCRCB_P010;
+        bool isValidPair = (isBT2020ColorSpace == isP010Format);
+        CHECK_RETURN_RET_ELOG(!isValidPair, CAMERA_OPERATION_NOT_ALLOWED,
+                              "SetColorSpace failed, for StreamType %{public}d: Format - %{public}d and ColorSpace - "
+                              "%{public}d is not a valid pair",
+                              repStream->GetStreamType(), repStream->format_, colorSpace);
+    }
+    return result;
+}
+
 int32_t HStreamOperator::CheckIfColorSpaceMatchesFormat(ColorSpace colorSpace)
 {
+    int32_t result = VerifyCaptureModeColorSpace(colorSpace);
+    CHECK_RETURN_RET_ELOG(result != CAMERA_OK, result, "VerifyCaptureModeColorSpace failed, ret: %{public}d", result);
     CHECK_RETURN_RET(!(colorSpace == ColorSpace::BT2020_HLG || colorSpace == ColorSpace::BT2020_PQ ||
                          colorSpace == ColorSpace::BT2020_HLG_LIMIT || colorSpace == ColorSpace::BT2020_PQ_LIMIT),
         CAMERA_OK);

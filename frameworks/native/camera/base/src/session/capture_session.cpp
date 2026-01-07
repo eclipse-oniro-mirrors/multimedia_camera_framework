@@ -492,14 +492,7 @@ int32_t CaptureSession::CommitConfig()
         return CameraErrorCode::OPERATION_NOT_ALLOWED;
     }
     CHECK_PRINT_DLOG(!CheckLightStatus(), "CaptureSession::CommitConfig the camera can't support light status!");
-
-    if (!isColorSpaceSetted_) {
-        HILOG_COMM_INFO("CaptureSession::CommitConfig is not setColorSpace");
-        auto preconfigProfiles = GetPreconfigProfiles();
-        if (preconfigProfiles != nullptr) {
-            SetColorSpace(preconfigProfiles->colorSpace);
-        }
-    }
+    SetDefaultColorSpace();
     // DELIVERY_PHOTO for default when commit
     if (photoOutput_ && !isDeferTypeSetted_) {
         sptr<PhotoOutput> photoOutput = (sptr<PhotoOutput>&)photoOutput_;
@@ -6664,6 +6657,31 @@ int32_t CaptureSession::SetExposureMeteringMode(MeteringMode mode)
     CHECK_PRINT_ELOG(!status, "CaptureSession::SetExposureMeteringMode Failed to set focus mode");
     return CameraErrorCode::SUCCESS;
     // LCOV_EXCL_STOP
+}
+
+void CaptureSession::SetDefaultColorSpace()
+{
+    CHECK_RETURN(isColorSpaceSetted_);
+    HILOG_COMM_INFO("CaptureSession::CommitConfig is not setColorSpace");
+    // set preconfig color space
+    auto preconfigProfiles = GetPreconfigProfiles();
+    if (preconfigProfiles != nullptr) {
+        SetColorSpace(preconfigProfiles->colorSpace);
+        return;
+    }
+    // if preview P010 format is used and color space is not set in photo session,
+    // BT2020_HLG will be set as default color space
+    CHECK_RETURN(GetMode() != SceneMode::CAPTURE);
+    CameraFormat previewFormat = CameraFormat::CAMERA_FORMAT_INVALID;
+    for (const auto& output : captureOutputSets_) {
+        CHECK_EXECUTE(output->GetOutputType() == CaptureOutputType::CAPTURE_OUTPUT_TYPE_PREVIEW,
+                      previewFormat = output->GetPreviewProfile()->GetCameraFormat());
+    }
+    if (previewFormat == CameraFormat::CAMERA_FORMAT_YCBCR_P010 ||
+        previewFormat == CameraFormat::CAMERA_FORMAT_YCRCB_P010) {
+        MEDIA_INFO_LOG("Set default color space for HDR capture when CommitConfig.");
+        SetColorSpace(ColorSpace::BT2020_HLG);
+    }
 }
 } // namespace CameraStandard
 } // namespace OHOS

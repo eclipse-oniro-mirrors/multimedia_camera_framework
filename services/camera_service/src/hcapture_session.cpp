@@ -736,6 +736,12 @@ int32_t HCaptureSession::ValidateSessionOutputs()
     auto hStreamOperatorSptr = GetStreamOperator();
     CHECK_RETURN_RET_ELOG((hStreamOperatorSptr == nullptr || hStreamOperatorSptr->GetStreamsSize() == 0),
         CAMERA_INVALID_SESSION_CFG, "HCaptureSession::ValidateSessionOutputs No outputs present");
+    CHECK_RETURN_RET(opMode_ != static_cast<int32_t>(SceneMode::CAPTURE), CAMERA_OK);
+    ColorSpace colorSpace = ColorSpace::COLOR_SPACE_UNKNOWN;
+    hStreamOperatorSptr->GetActiveColorSpace(colorSpace);
+    int32_t result = hStreamOperatorSptr->VerifyCaptureModeColorSpace(colorSpace);
+    CHECK_RETURN_RET_ELOG(result != CAMERA_OK, CAMERA_INVALID_SESSION_CFG,
+        "HCaptureSession::ValidateSessionOutputs VerifyCaptureModeColorSpace failed, ret: %{public}d", result);
     return CAMERA_OK;
 }
 
