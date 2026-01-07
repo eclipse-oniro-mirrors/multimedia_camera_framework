@@ -735,6 +735,7 @@ Camera_ErrorCode Camera_Manager::CreateMetadataOutput(const Camera_MetadataObjec
 {
     MEDIA_ERR_LOG("Camera_Manager CreateMetadataOutput is called");
     sptr<MetadataOutput> innerMetadataOutput = nullptr;
+    vector<MetadataObjectType> metadataObjectTypes = {};
     for (uint32_t i = 0; i < size; ++i) {
         Camera_MetadataObjectType currentType = type[i];
         if (*currentType == Camera_MetadataObjectType::FACE_DETECTION || 
