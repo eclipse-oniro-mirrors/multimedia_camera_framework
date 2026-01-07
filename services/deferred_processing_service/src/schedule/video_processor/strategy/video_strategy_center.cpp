@@ -81,11 +81,12 @@ VideoStrategyCenter::~VideoStrategyCenter()
 
 int32_t VideoStrategyCenter::Initialize()
 {
+    DP_CHECK_ERROR_RETURN_RET_LOG(repository_ == nullptr, DP_NULL_POINTER, "VideoJobRepository is nullptr.");
     InitHandleEvent();
     auto state = EventsInfo::GetInstance().GetChargingState();
     isCharging_ = state == ChargingStatus::CHARGING;
     eventsListener_ = std::make_shared<EventsListener>(weak_from_this());
-    EventsMonitor::GetInstance().RegisterEventsListener({
+    EventsMonitor::GetInstance().RegisterEventsListener(repository_->GetUserId(), {
         CAMERA_SESSION_STATUS_EVENT,
         VIDEO_HDI_STATUS_EVENT,
         MEDIA_LIBRARY_STATUS_EVENT,

@@ -119,12 +119,14 @@ void PictureProxy::RotatePicture()
     pictureIntf->RotatePicture();
 }
 
+#ifdef CAMERA_CAPTURE_YUV
 std::shared_ptr<Media::Picture> PictureProxy::GetPicture() const
 {
     std::shared_ptr<PictureIntf> pictureIntf = GetPictureIntf();
     CHECK_RETURN_RET_ELOG(!pictureIntf, nullptr, "PictureProxy::GetPicture pictureIntf is nullptr");
     return pictureIntf->GetPicture();
 }
+#endif
 // LCOV_EXCL_STOP
 }  // namespace CameraStandard
 }  // namespace OHOS

@@ -17,6 +17,7 @@
 
 #include "camera_timer.h"
 #include "dp_power_manager.h"
+#include "events_info.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -113,6 +114,7 @@ void DeferredVideoController::OnSchedulerChanged(const SchedulerType& type, cons
 
 void DeferredVideoController::TryDoSchedule()
 {
+    DP_CHECK_RETURN(!EventsInfo::GetInstance().IsAllowedToSchedule(userId_));
     DP_CHECK_ERROR_RETURN_LOG(videoProcessor_ == nullptr || videoProcessor_->HasRunningJob(), "Not schedule job.");
 
     auto job = videoStrategyCenter_->GetJob();

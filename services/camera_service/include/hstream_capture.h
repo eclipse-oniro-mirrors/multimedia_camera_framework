@@ -47,6 +47,7 @@ class PictureAssembler;
 namespace DeferredProcessing {
 class TaskManager;
 }
+#ifdef CAMERA_CAPTURE_YUV
 class PhotoLevelManager {
 public:
     static PhotoLevelManager& GetInstance()
@@ -67,6 +68,7 @@ private:
 
     std::unordered_map<int32_t, bool> photoLevelMap_;
 };
+#endif
 
 class ConcurrentMap {
 public:
@@ -126,7 +128,9 @@ public:
     int32_t OnFrameShutterEnd(int32_t captureId, uint64_t timestamp);
     int32_t OnCaptureReady(int32_t captureId, uint64_t timestamp);
     int32_t OnOfflineDeliveryFinished(int32_t captureId);
+#ifdef CAMERA_CAPTURE_YUV
     int32_t OnPhotoAvailable(std::shared_ptr<PictureIntf> picture);
+#endif
     int32_t OnPhotoAvailable(sptr<SurfaceBuffer> surfaceBuffer, const int64_t timestamp, bool isRaw);
     int32_t OnPhotoAssetAvailable(
         const int32_t captureId, const std::string &uri, int32_t cameraShotType, const std::string &burstKey);
@@ -138,7 +142,9 @@ public:
     int32_t IsDeferredPhotoEnabled() override;
     int32_t IsDeferredVideoEnabled() override;
     int32_t SetMovingPhotoVideoCodecType(int32_t videoCodecType) override;
+#ifdef CAMERA_MOVING_PHOTO
     int32_t GetMovingPhotoVideoCodecType();
+#endif
     int32_t OperatePermissionCheck(uint32_t interfaceCode) override;
     int32_t CallbackEnter([[maybe_unused]] uint32_t code) override;
     int32_t CallbackExit([[maybe_unused]] uint32_t code, [[maybe_unused]] int32_t result) override;
@@ -153,7 +159,9 @@ public:
     int32_t CreateMediaLibraryPhotoAssetProxy(int32_t captureId);
     int32_t UpdateMediaLibraryPhotoAssetProxy(sptr<CameraServerPhotoProxy> photoProxy);
     std::shared_ptr<PhotoAssetIntf> GetPhotoAssetInstance(int32_t captureId);
+#ifdef CAMERA_CAPTURE_YUV
     std::shared_ptr<PhotoAssetIntf> GetPhotoAssetInstanceForPub(int32_t captureId);
+#endif
     bool GetAddPhotoProxyEnabled();
     int32_t AcquireBufferToPrepareProxy(int32_t captureId);
     int32_t EnableOfflinePhoto(bool isEnable) override;
@@ -226,7 +234,10 @@ private:
     std::mutex callbackLock_;
     int32_t thumbnailSwitch_;
     std::atomic<int32_t> rawDeliverySwitch_;
+#ifdef CAMERA_MOVING_PHOTO
     int32_t movingPhotoSwitch_;
+    int32_t videoCodecType_ = 0;
+#endif
     std::condition_variable testDelay_;
     std::mutex testDelayMutex_;
     SpHolder<sptr<BufferProducerSequenceable>> thumbnailBufferQueue_;
@@ -247,7 +258,6 @@ private:
     std::map<int32_t, int32_t> burstNumMap_;
     mutable std::mutex burstLock_;
     int32_t burstNum_;
-    int32_t videoCodecType_ = 0;
     std::mutex photoAssetLock_;
     ConcurrentMap photoAssetProxy_;
     std::map<int32_t, std::unique_ptr<std::mutex>> mutexMap;

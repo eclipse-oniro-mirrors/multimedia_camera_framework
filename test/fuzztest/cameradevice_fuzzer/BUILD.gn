@@ -58,6 +58,12 @@ ohos_fuzztest("CameraDeviceFuzzTest") {
 
   sources = [ "camera_device_fuzzer.cpp" ]
 
+  defines = []
+
+  if (camera_framework_feature_moving_photo) {
+    defines += [ "CAMERA_MOVING_PHOTO" ]
+  }
+
   deps = [
     "${multimedia_camera_framework_path}/common:camera_utils",
     "${multimedia_camera_framework_path}/frameworks/native/camera/base:camera_framework",

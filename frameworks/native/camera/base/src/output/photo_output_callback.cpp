@@ -106,6 +106,7 @@ int32_t HStreamCapturePhotoCallbackImpl::OnPhotoAvailable(
     return CAMERA_OK;
 }
 
+#ifdef CAMERA_CAPTURE_YUV
 int32_t HStreamCapturePhotoCallbackImpl::OnPhotoAvailable(std::shared_ptr<PictureIntf> pictureProxy)
 {
     CAMERA_SYNC_TRACE;
@@ -123,6 +124,7 @@ int32_t HStreamCapturePhotoCallbackImpl::OnPhotoAvailable(std::shared_ptr<Pictur
     MEDIA_INFO_LOG("HStreamCapturePhotoCallbackImpl OnPhotoAvailable X");
     return CAMERA_OK;
 }
+#endif
 
 int32_t HStreamCapturePhotoAssetCallbackImpl::OnPhotoAssetAvailable(
     const int32_t captureId, const std::string &uri, int32_t cameraShotType, const std::string &burstKey)
@@ -421,15 +423,19 @@ void PhotoNativeConsumer::ExecutePhotoAvailable(sptr<SurfaceBuffer> surfaceBuffe
     CHECK_RETURN_ELOG(!photoOutput, "ExecutePhotoAvailable photoOutput is null");
     auto callback = photoOutput->GetAppPhotoCallback();
     CHECK_RETURN_ELOG(callback == nullptr, "ExecutePhotoAvailable callback is nullptr");
+#ifdef CAMERA_CAPTURE_YUV
     if (surfaceBuffer->GetFormat() == GRAPHIC_PIXEL_FMT_YCRCB_420_SP) {
         std::unique_ptr<Media::Picture> picture = Media::Picture::Create(surfaceBuffer);
         callback->OnPhotoAvailable(std::move(picture));
     } else {
+#endif
         std::shared_ptr<CameraBufferProcessor> bufferProcessor;
         std::shared_ptr<Media::NativeImage> image =
             std::make_shared<Media::NativeImage>(surfaceBuffer, bufferProcessor, timestamp);
         callback->OnPhotoAvailable(image, false);
+#ifdef CAMERA_CAPTURE_YUV
     }
+#endif
     MEDIA_INFO_LOG("PN_ExecutePhotoAvailable X");
 }
 

@@ -21,13 +21,8 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-EventStatusChangeCommand::EventStatusChangeCommand(const EventType event, const int value)
+EventStatusChangeCommand::EventStatusChangeCommand(const EventType event, const int32_t value)
     : eventId_(event), value_(value)
-{
-    DP_DEBUG_LOG("entered.");
-}
-
-EventStatusChangeCommand::~EventStatusChangeCommand()
 {
     DP_DEBUG_LOG("entered.");
 }

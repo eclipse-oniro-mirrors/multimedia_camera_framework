@@ -451,6 +451,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_007, TestSize.Level
     EXPECT_EQ(session->Release(), CAMERA_OK);
 }
 
+#ifdef CAMERA_MOVING_PHOTO
 /*
  * Feature: HCaptureSession
  * Function: Test in the case of EnableMovingPhoto, live photo stream can start, preview and null streams can not
@@ -516,6 +517,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_008, TestSize.Level
     EXPECT_EQ(device->Close(), CAMERA_OK);
     EXPECT_EQ(session->Release(), CAMERA_OK);
 }
+#endif
 
 /*
  * Feature: HCaptureSession
@@ -1214,6 +1216,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_024, TestSize.Level
     EXPECT_EQ(session->Release(), CAMERA_OK);
 }
 
+#ifdef CAMERA_MOVING_PHOTO
 /*
  * Feature: HCaptureSession
  * Function: Test EnableMovingPhotoMirror with preview stream and livephoto stream, interface call is normal
@@ -1265,6 +1268,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_025, TestSize.Level
     EXPECT_EQ(device->Close(), CAMERA_OK);
     EXPECT_EQ(session->Release(), CAMERA_OK);
 }
+#endif
 
 /*
  * Feature: HCaptureSession
@@ -2573,6 +2577,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_065, TestSize.Level
     EXPECT_EQ(camSession->Release(), CAMERA_OK);
 }
 
+#ifdef CAMERA_MOVING_PHOTO
 /*
  * Feature: Framework
  * Function: Test EnableMovingPhoto
@@ -2604,6 +2609,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_066, TestSize.Level
     EXPECT_EQ(device->Close(), CAMERA_OK);
     EXPECT_EQ(session->Release(), CAMERA_OK);
 }
+#endif
 
 /*
  * Feature: Framework

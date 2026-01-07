@@ -217,6 +217,26 @@ private:
     OH_CaptureSession_OnCameraSwitchRequest cameraSwitchRequest_ = nullptr;
 };
 
+class InnerCaptureSessionMacroStatusCallback : public MacroStatusCallback {
+public:
+    InnerCaptureSessionMacroStatusCallback(Camera_CaptureSession* captureSession,
+        OH_CaptureSession_OnMacroStatusChange macroStatusCallback)
+        : captureSession_(captureSession), macroStatusCallback_(macroStatusCallback) {};
+    ~InnerCaptureSessionMacroStatusCallback() = default;
+
+    void OnMacroStatusChanged(MacroStatus status) override
+    {
+        MEDIA_DEBUG_LOG("OnMacroStatusCallbackChange is called!");
+        CHECK_RETURN(captureSession_ == nullptr || macroStatusCallback_ == nullptr);
+        bool macroStatus = (status == MacroStatus::ACTIVE ? true : false);
+        macroStatusCallback_(captureSession_, macroStatus);
+    }
+
+private:
+    Camera_CaptureSession* captureSession_;
+    OH_CaptureSession_OnMacroStatusChange macroStatusCallback_ = nullptr;
+};
+
 class InnerCaptureSessionIsoInfoCallback : public IsoInfoSyncCallback {
 public:
     InnerCaptureSessionIsoInfoCallback(Camera_CaptureSession* captureSession,
@@ -1095,6 +1115,25 @@ Camera_ErrorCode Camera_CaptureSession::SetWhiteBalanceMode(Camera_WhiteBalanceM
     innerCaptureSession_->LockForControl();
     innerCaptureSession_->SetWhiteBalanceMode(static_cast<WhiteBalanceMode>(whiteBalanceMode));
     innerCaptureSession_->UnlockForControl();
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_CaptureSession::RegisterMacroStatusCallback(
+    OH_CaptureSession_OnMacroStatusChange controlMacroStatusChange)
+{
+    shared_ptr<InnerCaptureSessionMacroStatusCallback> innerMacroStatusCallback =
+        make_shared<InnerCaptureSessionMacroStatusCallback>(this, controlMacroStatusChange);
+    CHECK_RETURN_RET_ELOG(
+        innerMacroStatusCallback == nullptr, CAMERA_SERVICE_FATAL_ERROR, "create innerCallback failed!");
+    innerCaptureSession_->SetMacroStatusCallback(innerMacroStatusCallback);
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_CaptureSession::UnregisterMacroStatusCallback(
+        OH_CaptureSession_OnMacroStatusChange controlMacroStatusChange)
+{
+    MEDIA_INFO_LOG("Camera_CaptureSession::UnregisterMacroStatusCallback");
+    innerCaptureSession_->SetMacroStatusCallback(nullptr);
     return CAMERA_OK;
 }
 

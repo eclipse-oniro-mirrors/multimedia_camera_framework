@@ -217,7 +217,9 @@ void StreamCaptureFuzzTest1(FuzzedDataProvider& fdp)
     GetInstance().IsDeferredVideoEnabled();
     auto videoCodecType = fdp.ConsumeIntegral<int32_t>();
     GetInstance().SetMovingPhotoVideoCodecType(videoCodecType);
+#ifdef CAMERA_MOVING_PHOTO
     GetInstance().GetMovingPhotoVideoCodecType();
+#endif
     GetInstance().SetCameraPhotoRotation(fdp.ConsumeBool());
 }
 

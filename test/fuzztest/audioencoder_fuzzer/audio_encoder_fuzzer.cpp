@@ -70,9 +70,10 @@ void AudioEncoderFuzzer::AudioEncoderFuzzTest()
     std::string codecMime(testStrings[randomNum % testStrings.size()]);
     fuzz_->Create(codecMime);
     fuzz_->Config();
-    fuzz_->Start();
-    vector<sptr<AudioRecord>> audioRecords;
-    fuzz_->EncodeAudioBuffer(audioRecords);
+    if (fuzz_->Start() == 0) {
+        vector<sptr<AudioRecord>> audioRecords;
+        fuzz_->EncodeAudioBuffer(audioRecords);
+    }
     fuzz_->Stop();
 }
 

@@ -132,6 +132,14 @@ ohos_unittest("camera_framework_native_unittest") {
     defines += [ "CAMERA_USE_SENSOR" ]
   }
 
+  if (camera_framework_feature_moving_photo) {
+    defines += [ "CAMERA_MOVING_PHOTO" ]
+  }
+
+  if (camera_framework_feature_movie_file) {
+    defines += [ "CAMERA_MOVIE_FILE" ]
+  }
+
   cflags = [
     "-fPIC",
     "-Werror=unused",

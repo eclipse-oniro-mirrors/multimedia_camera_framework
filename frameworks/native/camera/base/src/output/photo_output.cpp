@@ -24,7 +24,6 @@
 #include "camera_manager.h"
 #include "camera_output_capability.h"
 #include "camera_util.h"
-#include "camera_security_utils.h"
 #include "capture_scene_const.h"
 #include "input/camera_device.h"
 #include "session/capture_session.h"
@@ -35,11 +34,21 @@
 #include <pixel_map.h>
 #include "metadata_common_utils.h"
 #include "photo_asset_interface.h"
+#ifdef CAMERA_CAPTURE_YUV
+#include "camera_security_utils.h"
+#endif
 using namespace std;
 
 namespace OHOS {
 namespace CameraStandard {
 constexpr uint32_t CAPTURE_TIMEOUT = 1;
+
+const std::unordered_map<PhotoOutput::PhotoQualityPrioritization, camera_photo_quality_prioritization_t>
+    PhotoOutput::g_photoQualityPrioritizationMap_ = {
+    {PhotoOutput::PhotoQualityPrioritization::HIGH_QUALITY, OHOS_CAMERA_PHOTO_QUALITY_PRIORITIZATION_HIGH_QUALITY},
+    {PhotoOutput::PhotoQualityPrioritization::SPEED, OHOS_CAMERA_PHOTO_QUALITY_PRIORITIZATION_SPEED}
+};
+
 PhotoCaptureSetting::PhotoCaptureSetting()
 {
     int32_t items = 10;
@@ -750,6 +759,7 @@ int32_t PhotoOutput::EnableRawDelivery(bool enabled)
 
 int32_t PhotoOutput::EnableMovingPhoto(bool enabled)
 {
+#ifdef CAMERA_MOVING_PHOTO
     CAMERA_SYNC_TRACE;
     int32_t ret = CAMERA_OK;
     MEDIA_DEBUG_LOG("enter into EnableMovingPhoto");
@@ -762,6 +772,9 @@ int32_t PhotoOutput::EnableMovingPhoto(bool enabled)
     CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, SERVICE_FATL_ERROR, "PhotoOutput::EnableMovingPhoto Failed");
     return ret;
     // LCOV_EXCL_STOP
+#else
+    return CAMERA_OK;
+#endif
 }
 
 std::shared_ptr<PhotoStateCallback> PhotoOutput::GetApplicationCallback()
@@ -806,10 +819,12 @@ int32_t PhotoOutput::Capture(std::shared_ptr<PhotoCaptureSetting> photoCaptureSe
     // LCOV_EXCL_START
     CHECK_RETURN_RET_ELOG(GetStream() == nullptr,
         CameraErrorCode::SERVICE_FATL_ERROR, "PhotoOutput Failed to Capture with setting, GetStream is nullptr");
+#ifdef CAMERA_CAPTURE_YUV
     bool isSystemCapture = CameraSecurity::CheckSystemApp();
     std::shared_ptr<OHOS::Camera::CameraMetadata> metaData = photoCaptureSettings->GetCaptureMetadataSetting();
     bool result = AddOrUpdateMetadata(metaData, OHOS_CONTROL_SYSTEM_CAPTURE, &isSystemCapture, 1);
     MEDIA_INFO_LOG("AddOrUpdateMetadata isSystemCapture: %{public}d, result: %{public}d", isSystemCapture, result);
+#endif
     defaultCaptureSetting_ = photoCaptureSettings;
     auto itemStream = CastStream<IStreamCapture>(GetStream());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
@@ -986,6 +1001,7 @@ bool PhotoOutput::IsMirrorSupported()
 
 int32_t PhotoOutput::EnableMirror(bool isEnable)
 {
+#ifdef CAMERA_MOVING_PHOTO
     MEDIA_INFO_LOG("PhotoOutput::EnableMirror enter, isEnable: %{public}d", isEnable);
     auto session = GetSession();
     CHECK_RETURN_RET_ELOG(session == nullptr, CameraErrorCode::SESSION_NOT_RUNNING,
@@ -1003,6 +1019,9 @@ int32_t PhotoOutput::EnableMirror(bool isEnable)
     }
     return ret;
     // LCOV_EXCL_STOP
+#else
+    return CAMERA_UNKNOWN_ERROR;
+#endif
 }
 
 int32_t PhotoOutput::IsQuickThumbnailSupported()
@@ -1199,6 +1218,7 @@ std::shared_ptr<PhotoCaptureSetting> PhotoOutput::GetDefaultCaptureSetting()
 
 int32_t PhotoOutput::SetMovingPhotoVideoCodecType(int32_t videoCodecType)
 {
+#ifdef CAMERA_MOVING_PHOTO
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
     MEDIA_DEBUG_LOG("Enter Into PhotoOutput::SetMovingPhotoVideoCodecType");
     CHECK_RETURN_RET_ELOG(GetStream() == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
@@ -1217,6 +1237,9 @@ int32_t PhotoOutput::SetMovingPhotoVideoCodecType(int32_t videoCodecType)
         errCode);
     return ServiceToCameraError(errCode);
     // LCOV_EXCL_STOP
+#else
+    return ServiceToCameraError(CAMERA_UNKNOWN_ERROR);
+#endif
 }
 
 void PhotoOutput::CameraServerDied(pid_t pid)
@@ -1722,6 +1745,103 @@ void PhotoOutput::CreateMediaLibrary(sptr<CameraPhotoProxy> photoProxy, std::str
         MEDIA_ERR_LOG("PhotoOutput::CreateMediaLibrary itemStream is nullptr");
     }
     MEDIA_INFO_LOG("PhotoOutput::CreateMediaLibrary X");
+}
+
+bool PhotoOutput::ParseQualityPrioritization(int32_t modeName, common_metadata_header_t* metadataHeader,
+    camera_photo_quality_prioritization_t type)
+{
+    CHECK_RETURN_RET_ELOG(metadataHeader == nullptr, false,
+        "PhotoOutput ParseQualityPrioritization error!, metadataHeader is nullptr");
+    camera_metadata_item_t item;
+    int result = Camera::FindCameraMetadataItem(metadataHeader, OHOS_ABILITY_PHOTO_QUALITY_PRIORITIZATION, &item);
+    CHECK_RETURN_RET_ELOG(result != CAM_META_SUCCESS || item.count <= 0, false,
+        "PhotoOutput ParseQualityPrioritization error!, FindCameraMetadataItem error");
+    int32_t* originInfo = item.data.i32;
+    uint32_t count = item.count;
+    CHECK_RETURN_RET_ELOG(count == 0 || originInfo == nullptr, false,
+        "PhotoOutput ParseQualityPrioritization error!, count is zero");
+    uint32_t i = 0;
+    uint32_t j = STEP_ONE;
+    bool ret = false;
+    while (j < count) {
+        if (originInfo[j] != MODE_END) {
+            j = j + STEP_TWO;
+            continue;
+        }
+        if (originInfo[j - 1] == TAG_END) {
+            if (originInfo[i] == modeName) {
+                ret = IsQualityPrioritizationTypeSupported(originInfo, i + 1, j - 1, static_cast<int32_t>(type));
+                break;
+            } else {
+                i = j + STEP_ONE;
+                j = i + STEP_ONE;
+            }
+        } else {
+            j++;
+        }
+    }
+    return ret;
+}
+
+bool PhotoOutput::IsQualityPrioritizationTypeSupported(int32_t* originInfo, uint32_t start, uint32_t end, int32_t type)
+{
+    CHECK_RETURN_RET_ELOG(originInfo == nullptr, false,
+        "PhotoOutput IsQualityPrioritizationTypeSupported error!, originInfo is nullptr");
+    CHECK_RETURN_RET_ELOG(start >= end, false,
+        "PhotoOutput IsQualityPrioritizationTypeSupported error!, start is greater than end");
+    for (uint32_t i = start; i < end; i++) {
+        if (originInfo[i] == type) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool PhotoOutput::IsPhotoQualityPrioritizationSupported(PhotoQualityPrioritization quality)
+{
+    MEDIA_INFO_LOG("PhotoOutput::IsPhotoQualityPrioritizationSupported E");
+    bool isSupported = false;
+    auto itr = g_photoQualityPrioritizationMap_.find(quality);
+    CHECK_RETURN_RET_ELOG(itr == g_photoQualityPrioritizationMap_.end(),
+        isSupported, "PhotoOutput IsPhotoQualityPrioritizationSupported error!, unknown quality type");
+    auto session = GetSession();
+    CHECK_RETURN_RET_ELOG(session == nullptr, isSupported,
+        "PhotoOutput IsPhotoQualityPrioritizationSupported error!, session is nullptr");
+    auto inputDevice = session->GetInputDevice();
+    CHECK_RETURN_RET_ELOG(inputDevice == nullptr, isSupported,
+        "PhotoOutput IsPhotoQualityPrioritizationSupported error!, inputDevice is nullptr");
+    sptr<CameraDevice> cameraObj = inputDevice->GetCameraDeviceInfo();
+    CHECK_RETURN_RET_ELOG(cameraObj == nullptr, isSupported,
+        "PhotoOutput IsPhotoQualityPrioritizationSupported error!, cameraObj is nullptr");
+    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetCachedMetadata();
+    CHECK_RETURN_RET_ELOG(metadata == nullptr, isSupported,
+        "PhotoOutput IsPhotoQualityPrioritizationSupported error!, metadata is nullptr");
+    camera_photo_quality_prioritization_t qualityPrioritization = itr->second;
+    int32_t sessionMode = session->GetMode();
+    isSupported = ParseQualityPrioritization(sessionMode, metadata->get(), qualityPrioritization);
+    return isSupported;
+}
+
+int32_t PhotoOutput::SetPhotoQualityPrioritization(PhotoQualityPrioritization quality)
+{
+    MEDIA_INFO_LOG("PhotoOutput::SetPhotoQualityPrioritization E");
+    bool isSupported = IsPhotoQualityPrioritizationSupported(quality);
+    CHECK_RETURN_RET_ELOG(!isSupported, OPERATION_NOT_ALLOWED,
+        "PhotoOutput SetPhotoQualityPrioritization error!, ParseQualityPrioritization failed");
+    auto session = GetSession();
+    CHECK_RETURN_RET_ELOG(session == nullptr, SERVICE_FATL_ERROR,
+        "PhotoOutput SetPhotoQualityPrioritization error!, session is nullptr");
+    auto itr = g_photoQualityPrioritizationMap_.find(quality);
+    CHECK_RETURN_RET_ELOG(itr == g_photoQualityPrioritizationMap_.end(), SERVICE_FATL_ERROR,
+        "PhotoOutput SetPhotoQualityPrioritization error!, unknown quality type");
+    camera_photo_quality_prioritization_t qualityPrioritization = itr->second;
+    session->LockForControl();
+    session->SetPhotoQualityPrioritization(qualityPrioritization);
+    int32_t ret = session->UnlockForControl();
+    CHECK_PRINT_ELOG(ret != CameraErrorCode::SUCCESS,
+        "CaptureSession::SetPhotoQualityPrioritization Failed to UnlockForControl");
+    MEDIA_DEBUG_LOG("CaptureSession::SetPhotoQualityPrioritization succeeded");
+    return ret;
 }
 } // namespace CameraStandard
 } // namespace OHOS

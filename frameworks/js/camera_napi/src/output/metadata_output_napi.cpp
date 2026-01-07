@@ -68,25 +68,29 @@ MetadataOutputCallback::MetadataOutputCallback(napi_env env) : ListenerBase(env)
 
 void MetadataOutputCallback::OnMetadataObjectsAvailable(const std::vector<sptr<MetadataObject>> metadataObjList) const
 {
+<<<<<<< HEAD
     MEDIA_DEBUG_LOG("MetadataOutputCallback::OnMetadataObjectsAvailable");
     std::unique_ptr<MetadataOutputCallbackInfo> callbackInfo =
         std::make_unique<MetadataOutputCallbackInfo>(metadataObjList, shared_from_this());
     MetadataOutputCallbackInfo *event = callbackInfo.get();
     auto task = [event]() {
         MetadataOutputCallbackInfo* callbackInfo = reinterpret_cast<MetadataOutputCallbackInfo *>(event);
+=======
+    MEDIA_DEBUG_LOG("OnMetadataObjectsAvailable is called");
+    std::shared_ptr<MetadataOutputCallbackInfo> callbackInfo =
+        std::make_shared<MetadataOutputCallbackInfo>(metadataObjList, shared_from_this());
+    auto task = [callbackInfo]() {
+>>>>>>> 212970ad5112177d8dc661b002856a9f671a69ec
         if (callbackInfo) {
             auto listener = callbackInfo->listener_.lock();
             if (listener) {
                 listener->OnMetadataObjectsAvailableCallback(callbackInfo->info_);
             }
-            delete callbackInfo;
         }
     };
     if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate,
         "MetadataOutputCallback::OnMetadataObjectsAvailable")) {
         MEDIA_ERR_LOG("failed to execute work");
-    }  else {
-        callbackInfo.release();
     }
 }
 
@@ -263,17 +267,14 @@ MetadataStateCallbackNapi::MetadataStateCallbackNapi(napi_env env) : ListenerBas
 void MetadataStateCallbackNapi::OnErrorCallbackAsync(const int32_t errorType) const
 {
     MEDIA_DEBUG_LOG("OnErrorCallbackAsync is called");
-    std::unique_ptr<MetadataStateCallbackInfo> callbackInfo =
-        std::make_unique<MetadataStateCallbackInfo>(errorType, shared_from_this());
-    MetadataStateCallbackInfo *event = callbackInfo.get();
-    auto task = [event]() {
-        MetadataStateCallbackInfo* callbackInfo = reinterpret_cast<MetadataStateCallbackInfo *>(event);
+    std::shared_ptr<MetadataStateCallbackInfo> callbackInfo =
+        std::make_shared<MetadataStateCallbackInfo>(errorType, shared_from_this());
+    auto task = [callbackInfo]() {
         if (callbackInfo) {
             auto listener = callbackInfo->listener_.lock();
             if (listener) {
                 listener->OnErrorCallback(callbackInfo->errorType_);
             }
-            delete callbackInfo;
         }
     };
     std::unordered_map<std::string, std::string> params = {
@@ -282,8 +283,6 @@ void MetadataStateCallbackNapi::OnErrorCallbackAsync(const int32_t errorType) co
     std::string taskName = CameraNapiUtils::GetTaskName("MetadataStateCallbackNapi::OnErrorCallbackAsync", params);
     if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
         MEDIA_ERR_LOG("failed to execute work");
-    } else {
-        callbackInfo.release();
     }
 }
 
@@ -726,24 +725,19 @@ void FocusTrackingMetaInfoCallbackListener::OnFocusTrackingMetaInfoAvailableCall
     FocusTrackingMetaInfo focusTrackingMetaInfo) const
 {
     MEDIA_DEBUG_LOG("OnFocusTrackingMetaInfoAvailableCallbackAsync is called");
-    std::unique_ptr<FocusTrackingMetaCallbackInfo> callbackInfo =
-        std::make_unique<FocusTrackingMetaCallbackInfo>(focusTrackingMetaInfo, shared_from_this());
-    FocusTrackingMetaCallbackInfo* event = callbackInfo.get();
-    auto task = [event]() {
-        FocusTrackingMetaCallbackInfo* callbackInfo = reinterpret_cast<FocusTrackingMetaCallbackInfo*>(event);
+    std::shared_ptr<FocusTrackingMetaCallbackInfo> callbackInfo =
+        std::make_shared<FocusTrackingMetaCallbackInfo>(focusTrackingMetaInfo, shared_from_this());
+    auto task = [callbackInfo]() {
         if (callbackInfo) {
             auto listener = callbackInfo->listener_.lock();
             if (listener != nullptr) {
                 listener->OnFocusTrackingMetaInfoAvailableCallback(callbackInfo->focusTrackingMetaInfo_);
             }
-            delete callbackInfo;
         }
     };
     if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate,
         "FocusTrackingMetaInfoCallbackListener::OnFocusTrackingMetaInfoAvailableCallbackAsync")) {
         MEDIA_ERR_LOG("failed to execute work");
-    } else {
-        (void)callbackInfo.release();
     }
 }
 

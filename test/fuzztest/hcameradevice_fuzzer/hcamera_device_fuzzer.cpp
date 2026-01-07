@@ -196,7 +196,9 @@ void HCameraDeviceFuzzTest3(FuzzedDataProvider& fdp)
     g_hCameraDevice->GetCameraType();
     g_hCameraDevice->IsOpenedCameraDevice();
     bool isMoving = fdp.ConsumeIntegral<int32_t>() % 2;
+#ifdef CAMERA_MOVING_PHOTO
     g_hCameraDevice->EnableMovingPhoto(isMoving);
+#endif
     g_hCameraDevice->SetDeviceMuteMode(isMoving);
     g_hCameraDevice->ResetDeviceSettings();
     g_hCameraDevice->DispatchDefaultSettingToHdi();
@@ -214,8 +216,10 @@ void HCameraDeviceFuzzTest3(FuzzedDataProvider& fdp)
     g_hCameraDevice->HandlePrivacyAfterCloseDevice();
     g_hCameraDevice->OpenDevice(true);
     g_hCameraDevice->CloseDevice();
+#ifdef CAMERA_MOVING_PHOTO
     int32_t mode = fdp.ConsumeIntegral<int32_t>();
     g_hCameraDevice->CheckMovingPhotoSupported(mode);
+#endif
     g_hCameraDevice->ResetZoomTimer();
     int32_t DEFAULT_ITEMS = 3;
     int32_t DEFAULT_DATA_LENGTH = 200;
@@ -238,6 +242,7 @@ void HCameraDeviceFuzzTest3(FuzzedDataProvider& fdp)
 
 void HCameraDeviceFuzzTest4(FuzzedDataProvider& fdp)
 {
+#ifdef CAMERA_MOVING_PHOTO
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult;
     cameraResult = std::make_shared<OHOS::Camera::CameraMetadata>(NUM_10, NUM_100);
     std::function<void(int64_t, int64_t)> callback = [](int64_t start, int64_t end) {
@@ -246,6 +251,7 @@ void HCameraDeviceFuzzTest4(FuzzedDataProvider& fdp)
     g_hCameraDevice->SetMovingPhotoStartTimeCallback(callback);
     g_hCameraDevice->SetMovingPhotoEndTimeCallback(callback);
     g_hCameraDevice->GetMovingPhotoStartAndEndTime(cameraResult);
+#endif
     g_hCameraDevice->GetCallerToken();
     g_hCameraDevice->RemoveResourceWhenHostDied();
     int32_t state = fdp.ConsumeIntegral<int32_t>();

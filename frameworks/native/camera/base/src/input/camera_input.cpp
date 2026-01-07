@@ -531,8 +531,6 @@ void CameraInput::ControlAuxiliary(AuxiliaryType type, AuxiliaryStatus status)
 void CameraInput::SetOcclusionDetectCallback(
     std::shared_ptr<CameraOcclusionDetectCallback> cameraOcclusionDetectCallback)
 {
-    CHECK_PRINT_ELOG(cameraOcclusionDetectCallback == nullptr,
-        "SetOcclusionDetectCallback:SetOcclusionDetectCallback error cameraOcclusionDetectCallback");
     MEDIA_DEBUG_LOG("CameraInput::SetOcclusionDetectCallback callback");
     std::lock_guard<std::mutex> lock(occlusionCallbackMutex_);
     cameraOcclusionDetectCallback_ = cameraOcclusionDetectCallback;

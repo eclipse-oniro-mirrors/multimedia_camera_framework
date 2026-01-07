@@ -62,10 +62,9 @@ int32_t PhotoStrategyCenter::Initialize()
 {
     DP_DEBUG_LOG("entered.");
     DP_CHECK_ERROR_RETURN_RET_LOG(repository_ == nullptr, DP_NULL_POINTER, "PhotoRepository is nullptr");
-
     InitHandleEvent();
     eventsListener_ = std::make_shared<PhotoEventsListener>(weak_from_this());
-    EventsMonitor::GetInstance().RegisterEventsListener({
+    EventsMonitor::GetInstance().RegisterEventsListener(repository_->GetUserId(), {
         CAMERA_SESSION_STATUS_EVENT,
         TRAILING_STATUS_EVENT,
         PHOTO_HDI_STATUS_EVENT,

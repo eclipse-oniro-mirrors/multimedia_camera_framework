@@ -736,6 +736,7 @@ Camera_ErrorCode Camera_Manager::CreateMetadataOutput(const Camera_MetadataObjec
     MEDIA_ERR_LOG("Camera_Manager CreateMetadataOutput is called");
     sptr<MetadataOutput> innerMetadataOutput = nullptr;
     for (uint32_t i = 0; i < size; ++i) {
+<<<<<<< HEAD
         Camera_MetadataObjectType currentType = type[i];
         if (*currentType == Camera_MetadataObjectType::FACE_DETECTION || 
             *currentType == Camera_MetadataObjectType::CAMERA_METADATA_OBJECT_TYPE_FACE_DETECTION) {
@@ -743,6 +744,14 @@ Camera_ErrorCode Camera_Manager::CreateMetadataOutput(const Camera_MetadataObjec
             metadataObjectTypes.push_back(MetadataObjectType::FACE);
         }
         if (*currentType == Camera_MetadataObjectType::CAMERA_METADATA_OBJECT_TYPE_HUMAN_BODY) {
+=======
+        if (*type == Camera_MetadataObjectType::FACE_DETECTION || 
+            *type == Camera_MetadataObjectType::CAMERA_METADATA_OBJECT_TYPE_FACE_DETECTION) {
+            MEDIA_DEBUG_LOG("FACE_DETECTION");
+            metadataObjectTypes.push_back(MetadataObjectType::FACE);
+        }
+        if (*type == Camera_MetadataObjectType::CAMERA_METADATA_OBJECT_TYPE_HUMAN_BODY) {
+>>>>>>> 212970ad5112177d8dc661b002856a9f671a69ec
             MEDIA_DEBUG_LOG("CAMERA_METADATA_OBJECT_TYPE_HUMAN_BODY");
             metadataObjectTypes.push_back(MetadataObjectType::HUMAN_BODY);
         }

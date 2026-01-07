@@ -276,10 +276,12 @@ void PhotoPostProcessor::OnSessionDied()
     NotifyHalStateChanged(HdiStatus::HDI_DISCONNECTED);
 }
 
+#ifdef CAMERA_CAPTURE_YUV
 void PhotoPostProcessor::SetProcessBundleNameResult(const std::string& bundleName)
 {
     DP_CHECK_EXECUTE(processResult_, processResult_->SetBundleName(bundleName));
 }
+#endif
 
 void PhotoPostProcessor::ConnectService()
 {
