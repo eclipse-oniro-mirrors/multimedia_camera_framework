@@ -95,7 +95,7 @@ void EventMonitorFuzzer::EventMonitorCameraStrategyFuzzTest(FuzzedDataProvider& 
     eventsmonitorfuzz_->Initialize();
     std::vector<EventType>events;
     std::weak_ptr<IEventsListener>listener;
-    eventsmonitorfuzz_->RegisterEventsListener(events, listener);
+    eventsmonitorfuzz_->RegisterEventsListener(100, events, listener);
     int32_t level = fdp.ConsumeIntegral<int32_t>();
     eventsmonitorfuzz_->NotifyThermalLevel(level);
     enumval = fdp.ConsumeIntegralInRange<int32_t>(0, 3);
