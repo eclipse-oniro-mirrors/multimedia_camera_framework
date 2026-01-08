@@ -260,6 +260,7 @@ int32_t GetCorrectedCameraOrientation(bool usePhysicalCameraOrientation,
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility, int32_t& sensorOrientation, int32_t displayMode = -1);
 int32_t GetPhysicalCameraOrientation(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility,
     int32_t& sensorOrientation, int32_t displayMode = -1);
+int32_t GetDisplayId(int32_t& displayId);
 int32_t GetDisplayRotation(int32_t& displayRotation);
 } // namespace CameraStandard
 } // namespace OHOS

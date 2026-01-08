@@ -233,6 +233,7 @@ public:
     int32_t GetCameraStorageSize(int64_t& size) override;
     int32_t CallbackEnter([[maybe_unused]] uint32_t code) override;
     int32_t CallbackExit([[maybe_unused]] uint32_t code, [[maybe_unused]] int32_t result) override;
+    int32_t GetOnBoardDisplayId(int32_t& displayId) override;
     int32_t SetUsePhysicalCameraOrientation(bool isUsed) override;
     bool GetUsePhysicalCameraOrientation();
     inline void SetSessionForControlCenter(sptr<HCaptureSession> session)

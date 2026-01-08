@@ -544,8 +544,7 @@ int32_t HStreamOperator::AddOutputStream(sptr<HStreamCommon> stream)
 
 void HStreamOperator::DisplayRotationListener::OnChange(OHOS::Rosen::DisplayId displayId)
 {
-    CHECK_RETURN(!OHOS::Rosen::DisplayManagerLite::GetInstance().IsOnboardDisplay(displayId));
-    auto display = Rosen::DisplayManagerLite::GetInstance().GetDisplayById(displayId);
+    sptr<Rosen::DisplayLite> display = Rosen::DisplayManagerLite::GetInstance().GetDefaultDisplay();
     if (display == nullptr) { // LCOV_EXCL_LINE
         MEDIA_INFO_LOG("Get display info failed, display:%{public}" PRIu64 "", displayId);
         display = Rosen::DisplayManagerLite::GetInstance().GetDisplayById(0);

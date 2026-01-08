@@ -867,13 +867,17 @@ bool PhotoOutputImpl::IsMovingPhotoSupported()
 
 ImageRotation PhotoOutputImpl::GetPhotoRotation()
 {
-    CHECK_RETURN_RET_ELOG(photoOutput_ == nullptr, ImageRotation(static_cast<ImageRotation::key_t>(-1)),
-        "GetPhotoRotation failed, photoOutput_ is nullptr");
+    if (photoOutput_ == nullptr) {
+        MEDIA_ERR_LOG("GetPhotoRotation failed, photoOutput_ is nullptr");
+        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::SERVICE_FATL_ERROR,
+            "GetPhotoRotation Camera service fatal error.");
+        return ImageRotation(static_cast<ImageRotation::key_t>(0));
+    }
     int32_t retCode = photoOutput_->GetPhotoRotation();
     if (retCode == OHOS::CameraStandard::SERVICE_FATL_ERROR) {
         CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::SERVICE_FATL_ERROR,
             "GetPhotoRotation Camera service fatal error.");
-        return ImageRotation(static_cast<ImageRotation::key_t>(-1));
+        return ImageRotation(static_cast<ImageRotation::key_t>(0));
     }
     int32_t taiheRetCode = CameraUtilsTaihe::ToTaiheImageRotation(retCode);
     return ImageRotation(static_cast<ImageRotation::key_t>(taiheRetCode));
@@ -881,13 +885,17 @@ ImageRotation PhotoOutputImpl::GetPhotoRotation()
 
 ImageRotation PhotoOutputImpl::GetPhotoRotation(int32_t deviceDegree)
 {
-    CHECK_RETURN_RET_ELOG(photoOutput_ == nullptr, ImageRotation(static_cast<ImageRotation::key_t>(-1)),
-        "GetPhotoRotation failed, photoOutput_ is nullptr");
+    if (photoOutput_ == nullptr) {
+        MEDIA_ERR_LOG("GetPhotoRotation failed, photoOutput_ is nullptr");
+        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::SERVICE_FATL_ERROR,
+            "GetPhotoRotation Camera service fatal error.");
+        return ImageRotation(static_cast<ImageRotation::key_t>(0));
+    }
     int32_t retCode = photoOutput_->GetPhotoRotation(deviceDegree);
     if (retCode == OHOS::CameraStandard::SERVICE_FATL_ERROR) {
         CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::SERVICE_FATL_ERROR,
             "GetPhotoRotation Camera service fatal error.");
-        return ImageRotation(static_cast<ImageRotation::key_t>(-1));
+        return ImageRotation(static_cast<ImageRotation::key_t>(0));
     }
     int32_t taiheRetCode = CameraUtilsTaihe::ToTaiheImageRotation(retCode);
     return ImageRotation(static_cast<ImageRotation::key_t>(taiheRetCode));

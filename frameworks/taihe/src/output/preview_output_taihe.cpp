@@ -256,13 +256,17 @@ void PreviewOutputImpl::SetFrameRate(int32_t minFps, int32_t maxFps)
 
 ImageRotation PreviewOutputImpl::GetPreviewRotation()
 {
-    CHECK_RETURN_RET_ELOG(previewOutput_ == nullptr, ImageRotation(static_cast<ImageRotation::key_t>(-1)),
-        "GetPreviewRotation failed, previewOutput_ is nullptr");
+    if (previewOutput_ == nullptr) {
+        MEDIA_ERR_LOG("GetPreviewRotation failed, previewOutput_ is nullptr");
+        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::SERVICE_FATL_ERROR,
+            "GetPreviewRotation Camera service fatal error.");
+        return ImageRotation(static_cast<ImageRotation::key_t>(0));
+    }
     int32_t retCode = previewOutput_->GetPreviewRotation();
     if (retCode == OHOS::CameraStandard::SERVICE_FATL_ERROR) {
         CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::SERVICE_FATL_ERROR,
             "GetPreviewRotation Camera service fatal error.");
-        return ImageRotation(static_cast<ImageRotation::key_t>(-1));
+        return ImageRotation(static_cast<ImageRotation::key_t>(0));
     }
     int32_t taiheRetCode = CameraUtilsTaihe::ToTaiheImageRotation(retCode);
     return ImageRotation(static_cast<ImageRotation::key_t>(taiheRetCode));
@@ -270,18 +274,22 @@ ImageRotation PreviewOutputImpl::GetPreviewRotation()
 
 ImageRotation PreviewOutputImpl::GetPreviewRotation(int32_t displayRotation)
 {
-    CHECK_RETURN_RET_ELOG(previewOutput_ == nullptr, ImageRotation(static_cast<ImageRotation::key_t>(-1)),
-        "GetPreviewRotation failed, previewOutput_ is nullptr");
+    if (previewOutput_ == nullptr) {
+        MEDIA_ERR_LOG("GetPreviewRotation failed, previewOutput_ is nullptr");
+        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::SERVICE_FATL_ERROR,
+            "GetPreviewRotation Camera service fatal error.");
+        return ImageRotation(static_cast<ImageRotation::key_t>(0));
+    }
     int32_t retCode = previewOutput_->GetPreviewRotation(displayRotation);
     if (retCode == OHOS::CameraStandard::SERVICE_FATL_ERROR) {
         CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::SERVICE_FATL_ERROR,
             "GetPreviewRotation Camera service fatal error.");
-        return ImageRotation(static_cast<ImageRotation::key_t>(-1));
+        return ImageRotation(static_cast<ImageRotation::key_t>(0));
     }
     if (retCode == OHOS::CameraStandard::INVALID_ARGUMENT) {
         CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT,
             "GetPreviewRotation Camera invalid argument.");
-        return ImageRotation(static_cast<ImageRotation::key_t>(-1));
+        return ImageRotation(static_cast<ImageRotation::key_t>(0));
     }
     int32_t taiheRetCode = CameraUtilsTaihe::ToTaiheImageRotation(retCode);
     return ImageRotation(static_cast<ImageRotation::key_t>(taiheRetCode));

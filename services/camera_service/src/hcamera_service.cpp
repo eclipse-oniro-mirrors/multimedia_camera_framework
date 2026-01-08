@@ -735,6 +735,12 @@ int32_t HCameraService::GetCameraAbility(const std::string& cameraId,
     return ret;
 }
 
+int32_t HCameraService::GetOnBoardDisplayId(int32_t& displayId)
+{
+    MEDIA_DEBUG_LOG("HCameraService::GetOnBoardDisplayId is called");
+    return GetDisplayId(displayId);
+}
+
 int32_t HCameraService::CreateCameraDevice(const string& cameraId, sptr<ICameraDeviceService>& device)
 {
     CAMERA_SYNC_TRACE;
