@@ -3180,7 +3180,6 @@ int32_t CaptureSession::SetSmoothZoom(float targetZoomRatio, uint32_t smoothZoom
     CHECK_EXECUTE(!CameraSecurity::CheckSystemApp(),
                   CHECK_PRINT_ELOG(PrepareZoom() != CameraErrorCode::SUCCESS, "failed to PrepareZoom!");
                   UpdateSetting(changedMetadata_));
-    }
     float tempZoomRatio = std::clamp(targetZoomRatio, zoomRange[minIndex], zoomRange[maxIndex]);
     MEDIA_DEBUG_LOG("origin zoomRatioValue: %{public}f, after clamp value: %{public}f", targetZoomRatio, tempZoomRatio);
     targetZoomRatio = tempZoomRatio;
@@ -3215,7 +3214,6 @@ int32_t CaptureSession::SetSmoothZoom(float targetZoomRatio, uint32_t smoothZoom
                   std::this_thread::sleep_for(std::chrono::milliseconds(SETZOOMSLEEP));
                   CHECK_PRINT_ELOG(UnPrepareZoom() != CameraErrorCode::SUCCESS, failed to UnPrepareZoom!");
                   UpdateSetting(changedMetadata_));
-    }
     return CameraErrorCode::SUCCESS;
 }
 
