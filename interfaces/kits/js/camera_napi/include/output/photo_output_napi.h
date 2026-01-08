@@ -218,8 +218,8 @@ public:
     static napi_value Off(napi_env env, napi_callback_info info);
     static napi_value GetPhotoRotation(napi_env env, napi_callback_info info);
 
-    static napi_value OnPhotoAvailable(napi_env env, napi_callback_info info);
-    static napi_value OffPhotoAvailable(napi_env env, napi_callback_info info);
+    static napi_value OnCapturePhotoAvailable(napi_env env, napi_callback_info info);
+    static napi_value OffCapturePhotoAvailable(napi_env env, napi_callback_info info);
     static napi_value IsAutoHighQualityPhotoSupported(napi_env env, napi_callback_info info);
     static napi_value EnableAutoHighQualityPhoto(napi_env env, napi_callback_info info);
 

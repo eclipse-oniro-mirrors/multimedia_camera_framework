@@ -132,6 +132,8 @@ public:
     void OffEstimatedCaptureDuration(optional_view<callback<void(uintptr_t, double)>> callback);
     void OnPhotoAvailable(callback_view<void(uintptr_t, weak::Photo)> callback);
     void OffPhotoAvailable(optional_view<callback<void(uintptr_t, weak::Photo)>> callback);
+    void OnCapturePhotoAvailable(callback_view<void(weak::CapturePhoto)> callback);
+    void OffCapturePhotoAvailable(optional_view<callback<void(weak::CapturePhoto)>> callback);
     void OnDeferredPhotoProxyAvailable(callback_view<void(uintptr_t, weak::DeferredPhotoProxy)> callback);
     void OffDeferredPhotoProxyAvailable(optional_view<callback<void(uintptr_t, weak::DeferredPhotoProxy)>> callback);
     void OnOfflineDeliveryFinished(callback_view<void(uintptr_t, uintptr_t)> callback);

@@ -19,6 +19,7 @@
 static { loadLibrary("camera_taihe.z"); }
 """)
 
+from ohos.multimedia.image.image use Picture;
 from ohos.multimedia.image.image use PixelMap;
 from ohos.multimedia.image.image use Image;
 
@@ -432,6 +433,16 @@ interface Photo {
   @get GetDepthData(): Optional<DepthData>;
   @set SetCaptureId(captureId: i32): void;
   @get GetCaptureId(): i32;
+  @gen_promise("release")
+  ReleaseSync(): void;
+}
+
+interface CapturePhoto {
+  GetSpecificImplPtr(): i64;
+  @set SetMain(main: Image): void;
+  @get GetMain(): Image;
+  @set SetPicture(main: Picture): void;
+  @get GetPicture(): Picture;
   @gen_promise("release")
   ReleaseSync(): void;
 }
@@ -1633,6 +1644,7 @@ interface CameraManager {
   GetSupportedCameras(): Array<CameraDevice>;
   GetSupportedSceneModes(camera: CameraDevice): Array<SceneMode>;
   GetSupportedOutputCapability(camera: CameraDevice, mode: SceneMode): CameraOutputCapability;
+  GetSupportedFullOutputCapability(camera: CameraDevice, mode: SceneMode): CameraOutputCapability;
   Prelaunch(): void;
   PreSwitchCamera(cameraId: String): void;
   IsTorchSupported(): bool;
@@ -2186,6 +2198,8 @@ interface PhotoOutput : CameraOutput {
   OffEstimatedCaptureDuration(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: f64)=> void>): void;
   OnPhotoAvailable(callback:(err: @sts_type("BusinessError<void>") Opaque, data: Photo)=> void): void;
   OffPhotoAvailable(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: Photo)=> void>): void;
+  OnCapturePhotoAvailable(callback:(data: CapturePhoto)=> void): void;
+  OffCapturePhotoAvailable(callback: Optional<(data: CapturePhoto)=> void>): void;
   OnDeferredPhotoProxyAvailable(callback:(err: @sts_type("BusinessError<void>") Opaque, data: DeferredPhotoProxy)=> void): void;
   OffDeferredPhotoProxyAvailable(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: DeferredPhotoProxy)=> void>): void;
   OnOfflineDeliveryFinished(callback:(err: @sts_type("BusinessError<void>") Opaque, data: @sts_type("undefined") Opaque)=> void): void;

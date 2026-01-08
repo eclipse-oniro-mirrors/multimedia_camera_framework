@@ -30,7 +30,7 @@
    OHOS::CameraStandard::CameraNapi::Init*;
    OHOS::CameraStandard::MetadataOutputNapi::Init*;
    OHOS::CameraStandard::PhotoNapi::Init*;
-   OHOS::CameraStandard::PhotoExNapi::Init*;
+   OHOS::CameraStandard::CapturePhotoNapi::Init*;
    OHOS::CameraStandard::UnifyMovieFileOutputNapi::Init*;
    OHOS::CameraStandard::VideoCapabilityNapi::CreateVideoCapability*;
    OHOS::CameraStandard::NapiRefManager::CreateMemSafetyRef*;

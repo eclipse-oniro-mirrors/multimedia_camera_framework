@@ -617,11 +617,13 @@ std::shared_ptr<PhotoAssetIntf> HStreamCapture::GetPhotoAssetInstanceForPub(int3
 
 void PhotoLevelManager::SetPhotoLevelInfo(int32_t pictureId, bool level)
 {
+    std::lock_guard<std::mutex> lock(mapMutex_);
     photoLevelMap_[pictureId] = level;
 }
 
 bool PhotoLevelManager::GetPhotoLevelInfo(int32_t pictureId)
 {
+    std::lock_guard<std::mutex> lock(mapMutex_);
     auto it = photoLevelMap_.find(pictureId);
     if (it != photoLevelMap_.end()) {
         return it->second;
@@ -631,6 +633,7 @@ bool PhotoLevelManager::GetPhotoLevelInfo(int32_t pictureId)
 
 void PhotoLevelManager::ClearPhotoLevelInfo()
 {
+    std::lock_guard<std::mutex> lock(mapMutex_);
     photoLevelMap_.clear();
 }
 #endif

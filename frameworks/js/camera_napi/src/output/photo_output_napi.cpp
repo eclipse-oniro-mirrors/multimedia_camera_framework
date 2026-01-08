@@ -41,7 +41,7 @@
 #include "js_native_api_types.h"
 #include "listener_base.h"
 #include "media_library_comm_napi.h"
-#include "output/photo_ex_napi.h"
+#include "output/capture_photo_napi.h"
 #include "output/photo_napi.h"
 #include "photo_output.h"
 #include "picture_napi.h"
@@ -577,7 +577,7 @@ void PhotoOutputCallback::ExecutePhotoAvailableCb(const CallbackInfo& info) cons
                 // bind pictureBuffer life cycle with photoNapiObj
                 pictureBuffer = info.picture->GetMaintenanceData();
             }
-            callbackObj = PhotoExNapi::CreatePicture(env_, picture, pictureBuffer);
+            callbackObj = CapturePhotoNapi::CreatePicture(env_, picture, pictureBuffer);
         } else {
             napi_value mainImage = Media::ImageNapi::Create(env_, info.nativeImage);
             if (mainImage == nullptr) {
@@ -590,7 +590,7 @@ void PhotoOutputCallback::ExecutePhotoAvailableCb(const CallbackInfo& info) cons
                 imageBuffer = info.nativeImage->GetBuffer();
             }
             callbackObj = g_callbackExtendFlag ?
-                PhotoExNapi::CreatePhoto(env_, mainImage, imageBuffer) :
+                CapturePhotoNapi::CreatePhoto(env_, mainImage, imageBuffer) :
                 PhotoNapi::CreatePhoto(env_, mainImage, info.isRaw, imageBuffer);
         }
         return ExecuteCallbackData(env_, errCode, callbackObj);
@@ -745,8 +745,8 @@ napi_value PhotoOutputNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("on", On),
         DECLARE_NAPI_FUNCTION("once", Once),
         DECLARE_NAPI_FUNCTION("off", Off),
-        DECLARE_NAPI_FUNCTION("onPhotoAvailable", OnPhotoAvailable),
-        DECLARE_NAPI_FUNCTION("offPhotoAvailable", OffPhotoAvailable),
+        DECLARE_NAPI_FUNCTION("onCapturePhotoAvailable", OnCapturePhotoAvailable),
+        DECLARE_NAPI_FUNCTION("offCapturePhotoAvailable", OffCapturePhotoAvailable),
         DECLARE_NAPI_FUNCTION("deferImageDelivery", DeferImageDeliveryFor),
         DECLARE_NAPI_FUNCTION("deferImageDeliveryFor", DeferImageDeliveryFor),
         DECLARE_NAPI_FUNCTION("isDeferredImageDeliverySupported", IsDeferredImageDeliverySupported),
@@ -1944,13 +1944,13 @@ napi_value PhotoOutputNapi::Off(napi_env env, napi_callback_info info)
     return ListenerTemplate<PhotoOutputNapi>::Off(env, info);
 }
 
-napi_value PhotoOutputNapi::OnPhotoAvailable(napi_env env, napi_callback_info info)
+napi_value PhotoOutputNapi::OnCapturePhotoAvailable(napi_env env, napi_callback_info info)
 {
     g_callbackExtendFlag = true;
     return ListenerTemplate<PhotoOutputNapi>::On(env, info, CONST_CAPTURE_PHOTO_AVAILABLE);
 }
 
-napi_value PhotoOutputNapi::OffPhotoAvailable(napi_env env, napi_callback_info info)
+napi_value PhotoOutputNapi::OffCapturePhotoAvailable(napi_env env, napi_callback_info info)
 {
     g_callbackExtendFlag = false;
     return ListenerTemplate<PhotoOutputNapi>::Off(env, info, CONST_CAPTURE_PHOTO_AVAILABLE);
