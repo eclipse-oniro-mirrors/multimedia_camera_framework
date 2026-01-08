@@ -3212,7 +3212,7 @@ int32_t CaptureSession::SetSmoothZoom(float targetZoomRatio, uint32_t smoothZoom
     }
     CHECK_EXECUTE(!CameraSecurity::CheckSystemApp(),
                   std::this_thread::sleep_for(std::chrono::milliseconds(SETZOOMSLEEP));
-                  CHECK_PRINT_ELOG(UnPrepareZoom() != CameraErrorCode::SUCCESS, failed to UnPrepareZoom!");
+                  CHECK_PRINT_ELOG(UnPrepareZoom() != CameraErrorCode::SUCCESS, "failed to UnPrepareZoom!");
                   UpdateSetting(changedMetadata_));
     return CameraErrorCode::SUCCESS;
 }
