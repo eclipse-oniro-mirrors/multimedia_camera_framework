@@ -530,6 +530,7 @@ int32_t HCameraHostManager::CameraHostInfo::Prelaunch(sptr<HCameraRestoreParam> 
     return CAMERA_OK;
 }
 
+
 bool HCameraHostManager::CameraHostInfo::IsNeedRestore(int32_t opMode,
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraSettings, std::string& cameraId)
 {
@@ -1111,6 +1112,42 @@ int32_t HCameraHostManager::Prelaunch(const std::string& cameraId, std::string c
         transitentParamMap_.erase(clientName);
     }
     return 0;
+}
+
+void HCameraHostManager::ParseJsonFileToMap(const std::string& filePath,
+                                            std::string& clientName, std::string& cameraId)
+{
+    MEDIA_INFO_LOG("Parse JsonFile To Map Begin!");
+    std::lock_guard<std::mutex> lock(saveRestoreMutex_);
+    bool isParseSucc = JsonCacheConverter::ParseJsonFileToMap(filePath,
+                                                              persistentParamMap_,
+                                                              transitentParamMap_,
+                                                              clientName, cameraId);
+    CHECK_EXECUTE(!isParseSucc,
+                  persistentParamMap_.clear();
+                  transitentParamMap_.clear();
+                  clientName.clear();
+                  cameraId.clear();
+                  MEDIA_ERR_LOG("Failed to Parse JsonFile To Map");
+                  return);
+    MEDIA_INFO_LOG("Parse JsonFile To Map Succ!");
+}
+
+void HCameraHostManager::SaveMapToJsonFile(const std::string& filePath,
+                                           const std::string& clientName, const std::string& cameraId)
+{
+    MEDIA_INFO_LOG("Save Map To JsonFile Begin!");
+    std::lock_guard<std::mutex> lock(saveRestoreMutex_);
+    bool isSaveSucc = JsonCacheConverter::SaveMapToJsonFile(filePath,
+                                                            persistentParamMap_,
+                                                            transitentParamMap_,
+                                                            clientName, cameraId);
+    CHECK_EXECUTE(!isSaveSucc,
+                  MEDIA_ERR_LOG("Failed to Save Map To JsonFile");
+                  CHECK_EXECUTE(remove(filePath.c_str()) != 0,
+                                std::ofstream ofs(filePath, std::ios::out | std::ios::trunc));
+                  return);
+    MEDIA_INFO_LOG("Save Map To JsonFile Succ!");
 }
 
 int32_t HCameraHostManager::PreSwitchCamera(const std::string& cameraId)
