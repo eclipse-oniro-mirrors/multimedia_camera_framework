@@ -23,8 +23,9 @@ bool JsonCacheConverter::ParseJsonFileToMap(const std::string& jsonFilePath,
     std::string& clientName, std::string& cameraId)
 {
     MEDIA_DEBUG_LOG("Parse JsonFile: To Map Begin!");
-    CHECK_RETURN_RET_ELOG(!std::filesystem::exists(jsonFilePath) ||
-                          !std::filesystem::is_regular_file(jsonFilePath),
+    std::error_code ec;
+    CHECK_RETURN_RET_ELOG(!std::filesystem::exists(jsonFilePath, ec) ||
+                          !std::filesystem::is_regular_file(jsonFilePath, ec),
                           false,
                           "invalid jsonFilePath");
     pMap.clear();
