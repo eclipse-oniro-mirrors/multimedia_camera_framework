@@ -13,33 +13,33 @@
  * limitations under the License.
  */
 
-#ifndef PHOTO_EX_NAPI_H_
-#define PHOTO_EX_NAPI_H_
+#ifndef CAPTURE_PHOTO_NAPI_H_
+#define CAPTURE_PHOTO_NAPI_H_
 
 #include "camera_napi_utils.h"
 #include "surface_buffer.h"
 
 namespace OHOS {
 namespace CameraStandard {
-static const char PHOTO_EX_NAPI_CLASS_NAME[] = "PhotoEx";
+static const char CAPTURE_PHOTO_NAPI_CLASS_NAME[] = "CapturePhoto";
 
-class PhotoExNapi {
+class CapturePhotoNapi {
 public:
     static napi_value Init(napi_env env, napi_value exports);
     static napi_value CreatePhoto(
         napi_env env, napi_value mainImage, sptr<SurfaceBuffer> imageBuffer = nullptr);
     static napi_value CreatePicture(
         napi_env env, napi_value picture, sptr<SurfaceBuffer> pictureBuffer = nullptr);
-    PhotoExNapi();
-    ~PhotoExNapi();
+    CapturePhotoNapi();
+    ~CapturePhotoNapi();
 
     static napi_value GetMain(napi_env env, napi_callback_info info);
     static napi_value Release(napi_env env, napi_callback_info info);
     static void SafeDeleteReference(napi_env env, napi_ref& ref);
 
 private:
-    static void PhotoExNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
-    static napi_value PhotoExNapiConstructor(napi_env env, napi_callback_info info);
+    static void CapturePhotoNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
+    static napi_value CapturePhotoNapiConstructor(napi_env env, napi_callback_info info);
 
     static thread_local napi_ref sConstructor_;
     static thread_local napi_ref sMainImageRef_;
@@ -53,14 +53,14 @@ private:
     napi_ref pictureRef_;
 };
 
-struct PictureAsyncContext : public AsyncContext {
-    PhotoExNapi* objectInfo;
+struct CapturePhotoAsyncContext : public AsyncContext {
+    CapturePhotoNapi* objectInfo;
 
-    ~PictureAsyncContext()
+    ~CapturePhotoAsyncContext()
     {
         objectInfo = nullptr;
     }
 };
 } // namespace CameraStandard
 } // namespace OHOS
-#endif /* PHOTO_EX_NAPI_H_ */
+#endif /* CAPTURE_PHOTO_NAPI_H_ */

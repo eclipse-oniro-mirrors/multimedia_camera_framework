@@ -65,6 +65,7 @@ taihe_shared_library("camera_taihe") {
     "src/camera_security_utils_taihe.cpp",
     "src/camera_utils_taihe.cpp",
     "src/camera_worker_queue_keeper_taihe.cpp",
+    "src/capture_photo_taihe.cpp",
     "src/listener_base_taihe.cpp",
     "src/output/camera_output_taihe.cpp",
     "src/output/depth_data_output_taihe.cpp",

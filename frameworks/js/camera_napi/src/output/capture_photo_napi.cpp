@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "output/photo_ex_napi.h"
+#include "output/capture_photo_napi.h"
 
 #include "camera_log.h"
 #include "hilog/log.h"
@@ -23,24 +23,24 @@
 
 namespace OHOS {
 namespace CameraStandard {
-thread_local napi_ref PhotoExNapi::sConstructor_ = nullptr;
-thread_local napi_ref PhotoExNapi::sMainImageRef_ = nullptr;
-thread_local napi_ref PhotoExNapi::sPictureRef_ = nullptr;
-sptr<SurfaceBuffer> PhotoExNapi::imageBuffer_ = nullptr;
-thread_local uint32_t PhotoExNapi::photoTaskId = PHOTO_TASKID;
-bool PhotoExNapi::isCompressed_ = false;
+thread_local napi_ref CapturePhotoNapi::sConstructor_ = nullptr;
+thread_local napi_ref CapturePhotoNapi::sMainImageRef_ = nullptr;
+thread_local napi_ref CapturePhotoNapi::sPictureRef_ = nullptr;
+sptr<SurfaceBuffer> CapturePhotoNapi::imageBuffer_ = nullptr;
+thread_local uint32_t CapturePhotoNapi::photoTaskId = PHOTO_TASKID;
+bool CapturePhotoNapi::isCompressed_ = false;
 
-PhotoExNapi::PhotoExNapi() : env_(nullptr), mainImageRef_(nullptr), pictureRef_(nullptr) {}
+CapturePhotoNapi::CapturePhotoNapi() : env_(nullptr), mainImageRef_(nullptr), pictureRef_(nullptr) {}
 
-PhotoExNapi::~PhotoExNapi()
+CapturePhotoNapi::~CapturePhotoNapi()
 {
-    MEDIA_DEBUG_LOG("~PhotoExNapi is called");
+    MEDIA_DEBUG_LOG("~CapturePhotoNapi is called");
 }
 
 // Constructor callback
-napi_value PhotoExNapi::PhotoExNapiConstructor(napi_env env, napi_callback_info info)
+napi_value CapturePhotoNapi::CapturePhotoNapiConstructor(napi_env env, napi_callback_info info)
 {
-    MEDIA_DEBUG_LOG("PhotoExNapiConstructor is called");
+    MEDIA_DEBUG_LOG("CapturePhotoNapiConstructor is called");
     napi_status status;
     napi_value result = nullptr;
     napi_value thisVar = nullptr;
@@ -49,12 +49,12 @@ napi_value PhotoExNapi::PhotoExNapiConstructor(napi_env env, napi_callback_info 
     CAMERA_NAPI_GET_JS_OBJ_WITH_ZERO_ARGS(env, info, status, thisVar);
 
     if (status == napi_ok && thisVar != nullptr) {
-        std::unique_ptr<PhotoExNapi> obj = std::make_unique<PhotoExNapi>();
+        std::unique_ptr<CapturePhotoNapi> obj = std::make_unique<CapturePhotoNapi>();
         obj->env_ = env;
         obj->mainImageRef_ = sMainImageRef_;
         obj->pictureRef_ = sPictureRef_;
         status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
-                           PhotoExNapi::PhotoExNapiDestructor, nullptr, nullptr);
+                           CapturePhotoNapi::CapturePhotoNapiDestructor, nullptr, nullptr);
         if (status == napi_ok) {
             obj.release();
             return thisVar;
@@ -62,38 +62,38 @@ napi_value PhotoExNapi::PhotoExNapiConstructor(napi_env env, napi_callback_info 
             MEDIA_ERR_LOG("Failure wrapping js to native napi");
         }
     }
-    MEDIA_ERR_LOG("PhotoExNapiConstructor call Failed!");
+    MEDIA_ERR_LOG("CapturePhotoNapiConstructor call Failed!");
     return result;
 }
 
-void PhotoExNapi::PhotoExNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)
+void CapturePhotoNapi::CapturePhotoNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)
 {
-    MEDIA_DEBUG_LOG("PhotoExNapiDestructor is called");
-    PhotoExNapi* photo = reinterpret_cast<PhotoExNapi*>(nativeObject);
+    MEDIA_DEBUG_LOG("CapturePhotoNapiDestructor is called");
+    CapturePhotoNapi* photo = reinterpret_cast<CapturePhotoNapi*>(nativeObject);
     if (photo != nullptr) {
         delete photo;
     }
 }
 
-napi_value PhotoExNapi::Init(napi_env env, napi_value exports)
+napi_value CapturePhotoNapi::Init(napi_env env, napi_value exports)
 {
     MEDIA_DEBUG_LOG("Init is called");
     napi_status status;
     napi_value ctorObj;
 
     napi_property_descriptor photo_properties[] = {
-        // PhotoEx
+        // CapturePhoto
         DECLARE_NAPI_GETTER("main", GetMain),
         DECLARE_NAPI_FUNCTION("release", Release),
     };
 
-    status = napi_define_class(env, PHOTO_EX_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
-                               PhotoExNapiConstructor, nullptr,
+    status = napi_define_class(env, CAPTURE_PHOTO_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
+                               CapturePhotoNapiConstructor, nullptr,
                                sizeof(photo_properties) / sizeof(photo_properties[PARAM0]),
                                photo_properties, &ctorObj);
     if (status == napi_ok) {
         if (NapiRefManager::CreateMemSafetyRef(env, ctorObj, &sConstructor_) == napi_ok) {
-            status = napi_set_named_property(env, exports, PHOTO_EX_NAPI_CLASS_NAME, ctorObj);
+            status = napi_set_named_property(env, exports, CAPTURE_PHOTO_NAPI_CLASS_NAME, ctorObj);
             CHECK_RETURN_RET(status == napi_ok, exports);
         }
     }
@@ -101,7 +101,7 @@ napi_value PhotoExNapi::Init(napi_env env, napi_value exports)
     return nullptr;
 }
 
-napi_value PhotoExNapi::CreatePhoto(napi_env env, napi_value mainImage, sptr<SurfaceBuffer> imageBuffer)
+napi_value CapturePhotoNapi::CreatePhoto(napi_env env, napi_value mainImage, sptr<SurfaceBuffer> imageBuffer)
 {
     MEDIA_DEBUG_LOG("CreatePhoto is called");
     CAMERA_SYNC_TRACE;
@@ -132,7 +132,7 @@ napi_value PhotoExNapi::CreatePhoto(napi_env env, napi_value mainImage, sptr<Sur
     return result;
 }
 
-napi_value PhotoExNapi::CreatePicture(napi_env env, napi_value picture, sptr<SurfaceBuffer> pictureBuffer)
+napi_value CapturePhotoNapi::CreatePicture(napi_env env, napi_value picture, sptr<SurfaceBuffer> pictureBuffer)
 {
     MEDIA_DEBUG_LOG("CreatePicture is called");
     CAMERA_SYNC_TRACE;
@@ -161,7 +161,7 @@ napi_value PhotoExNapi::CreatePicture(napi_env env, napi_value picture, sptr<Sur
     return result;
 }
 
-napi_value PhotoExNapi::GetMain(napi_env env, napi_callback_info info)
+napi_value CapturePhotoNapi::GetMain(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("GetMain is called");
     napi_status status;
@@ -170,29 +170,29 @@ napi_value PhotoExNapi::GetMain(napi_env env, napi_callback_info info)
     napi_value argv[ARGS_ZERO];
     napi_value thisVar = nullptr;
 
-    MEDIA_DEBUG_LOG("PhotoExNapi::GetMain get js args");
+    MEDIA_DEBUG_LOG("CapturePhotoNapi::GetMain get js args");
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
 
     napi_get_undefined(env, &result);
-    PhotoExNapi* photoExNapi = nullptr;
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&photoExNapi));
-    if (status == napi_ok && photoExNapi != nullptr) {
-        napi_value photoEx;
-        if (PhotoExNapi::isCompressed_) {
-            napi_get_reference_value(env, photoExNapi->mainImageRef_, &photoEx);
+    CapturePhotoNapi* CapturePhotoNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&CapturePhotoNapi));
+    if (status == napi_ok && CapturePhotoNapi != nullptr) {
+        napi_value CapturePhoto;
+        if (CapturePhotoNapi::isCompressed_) {
+            napi_get_reference_value(env, CapturePhotoNapi->mainImageRef_, &CapturePhoto);
         } else {
-            napi_get_reference_value(env, photoExNapi->pictureRef_, &photoEx);
+            napi_get_reference_value(env, CapturePhotoNapi->pictureRef_, &CapturePhoto);
         }
-        result = photoEx;
-        MEDIA_ERR_LOG("PhotoExNapi::GetMain Success");
+        result = CapturePhoto;
+        MEDIA_ERR_LOG("CapturePhotoNapi::GetMain Success");
         return result;
     }
     napi_get_undefined(env, &result);
-    MEDIA_ERR_LOG("PhotoExNapi::GetMain call Failed");
+    MEDIA_ERR_LOG("CapturePhotoNapi::GetMain call Failed");
     return result;
 }
 
-napi_value PhotoExNapi::Release(napi_env env, napi_callback_info info)
+napi_value CapturePhotoNapi::Release(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("Release is called");
     napi_status status;
@@ -205,7 +205,7 @@ napi_value PhotoExNapi::Release(napi_env env, napi_callback_info info)
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
     imageBuffer_ = nullptr;
     napi_get_undefined(env, &result);
-    std::unique_ptr<PictureAsyncContext> asyncContext = std::make_unique<PictureAsyncContext>();
+    std::unique_ptr<CapturePhotoAsyncContext> asyncContext = std::make_unique<CapturePhotoAsyncContext>();
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
     if (status == napi_ok && asyncContext->objectInfo != nullptr) {
         CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
@@ -214,10 +214,10 @@ napi_value PhotoExNapi::Release(napi_env env, napi_callback_info info)
         status = napi_create_async_work(
             env, nullptr, resource,
             [](napi_env env, void* data) {
-                auto context = static_cast<PictureAsyncContext*>(data);
+                auto context = static_cast<CapturePhotoAsyncContext*>(data);
                 context->status = false;
                 // Start async trace
-                context->funcName = "PhotoExNapi::Release";
+                context->funcName = "CapturePhotoNapi::Release";
                 context->taskId = CameraNapiUtils::IncrementAndGet(photoTaskId);
                 CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
                 if (context->objectInfo != nullptr) {
@@ -227,30 +227,30 @@ napi_value PhotoExNapi::Release(napi_env env, napi_callback_info info)
                 }
             },
             [](napi_env env, napi_status status, void* data) {
-                auto context = static_cast<PictureAsyncContext*>(data);
+                auto context = static_cast<CapturePhotoAsyncContext*>(data);
                 CAMERA_FINISH_ASYNC_TRACE(context->funcName, context->taskId);
                 napi_value result = nullptr;
-                PhotoExNapi::SafeDeleteReference(env, context->objectInfo->mainImageRef_);
-                PhotoExNapi::SafeDeleteReference(env, context->objectInfo->pictureRef_);
+                CapturePhotoNapi::SafeDeleteReference(env, context->objectInfo->mainImageRef_);
+                CapturePhotoNapi::SafeDeleteReference(env, context->objectInfo->pictureRef_);
                 napi_get_undefined(env, &result);
                 napi_resolve_deferred(env, context->deferred, result);
                 napi_delete_async_work(env, context->work);
                 delete context;
             }, static_cast<void*>(asyncContext.get()), &asyncContext->work);
         if (status != napi_ok) {
-            MEDIA_ERR_LOG("Failed to create napi_create_async_work for PhotoExNapi::Release");
+            MEDIA_ERR_LOG("Failed to create napi_create_async_work for CapturePhotoNapi::Release");
             napi_get_undefined(env, &result);
         } else {
             napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
             asyncContext.release();
         }
     } else {
-        MEDIA_ERR_LOG("PhotoExNapi::Release call Failed!");
+        MEDIA_ERR_LOG("CapturePhotoNapi::Release call Failed!");
     }
     return result;
 }
 
-void PhotoExNapi::SafeDeleteReference(napi_env env, napi_ref& ref)
+void CapturePhotoNapi::SafeDeleteReference(napi_env env, napi_ref& ref)
 {
     if (ref != nullptr) {
         napi_delete_reference(env, ref);

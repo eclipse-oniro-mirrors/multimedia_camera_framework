@@ -21,8 +21,8 @@
 #include "mode/photo_session_napi.h"
 #include "mode/secure_camera_session_napi.h"
 #include "mode/video_session_napi.h"
+#include "output/capture_photo_napi.h"
 #include "output/photo_napi.h"
-#include "output/photo_ex_napi.h"
 #include "output/photo_output_napi.h"
 #include "output/preview_output_napi.h"
 #include "output/unify_movie_file_output_napi.h"
@@ -47,7 +47,7 @@ static napi_value Export(napi_env env, napi_value exports)
     UnifyMovieFileOutputNapi::Init(env, exports);
     VideoSessionNapi::Init(env, exports);
     PhotoNapi::Init(env, exports);
-    PhotoExNapi::Init(env, exports);
+    CapturePhotoNapi::Init(env, exports);
     SecureCameraSessionNapi::Init(env, exports);
     MEDIA_DEBUG_LOG("Export is end");
     return exports;

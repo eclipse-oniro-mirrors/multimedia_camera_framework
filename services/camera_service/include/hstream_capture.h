@@ -67,6 +67,7 @@ private:
     PhotoLevelManager& operator=(const PhotoLevelManager&) = delete;
 
     std::unordered_map<int32_t, bool> photoLevelMap_;
+    std::mutex mapMutex_;
 };
 #endif
 
