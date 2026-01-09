@@ -57,6 +57,7 @@ public:
             CallbackInvoker invoker = CallbackInvoker::CAMERA_HOST) = 0;
         virtual void OnFlashlightStatus(const std::string& cameraId, FlashStatus status) = 0;
         virtual void OnTorchStatus(TorchStatus status) = 0;
+        virtual void clearPreScanConfig() = 0;
     };
     class CameraHostDeadCallback {
     public:

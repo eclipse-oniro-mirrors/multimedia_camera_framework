@@ -3363,6 +3363,18 @@ int32_t CameraManager::PrelaunchCamera(int32_t flag)
     return ServiceToCameraError(retCode);
 }
 
+int32_t CameraManager::PrelaunchScanCamera(const std::string bundleName, const std::string pageName,
+    PrelaunchScanModeOhos prelaunchScanMode)
+{
+     // LCOV_EXCL_START
+    auto serviceProxy = GetServiceProxy();
+    CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, SERVICE_FATL_ERROR, "PrelaunchScanCamera serviceProxy is null");
+    int32_t retCode = serviceProxy->PrelaunchScanCamera(bundleName, pageName, prelaunchScanMode);
+    CHECK_PRINT_ELOG(retCode != CAMERA_OK, "PrelaunchScanCamera call failed, retCode: %{public}d", retCode);
+    return ServiceToCameraError(retCode);
+    // LCOV_EXCL_STOP
+}
+
 int32_t CameraManager::ResetRssPriority()
 {
     MEDIA_INFO_LOG("CameraManager::ResetRssPriority");

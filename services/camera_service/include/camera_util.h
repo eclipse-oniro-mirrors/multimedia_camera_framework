@@ -93,6 +93,12 @@ enum CamStatus {
     CAMERA_CLOSE
 };
 
+enum PrelaunchScanStatus {
+    PRE_SCAN_OK = 0,
+    UID_NO_PERMISSION,
+    PRE_SCAN_MODE_UNSUPPORTED,
+};
+
 enum CamServiceError {
     CAMERA_OK = 0,
     CAMERA_ALLOC_ERROR,

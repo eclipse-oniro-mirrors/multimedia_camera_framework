@@ -21,6 +21,12 @@ enum RestoreParamTypeOhos {
     TRANSIENT_ACTIVE_PARAM_OHOS = 2,
 };
 
+enum PrelaunchScanModeOhos {
+    NO_NEED_PRE_CAMERA = 0,
+    PRE_CAMERA_NO_STREAM = 1,
+    PRE_CAMERA_AND_RESTORE = 2,
+};
+
 struct EffectParam {
     int skinSmoothLevel;
     int faceSlender;

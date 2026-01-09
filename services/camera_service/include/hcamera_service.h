@@ -182,6 +182,8 @@ public:
     int32_t CheckControlCenterPermission() override;
     int32_t MuteCameraPersist(PolicyType policyType, bool isMute) override;
     int32_t PrelaunchCamera(int32_t flag) override;
+    int32_t PrelaunchScanCamera(const std::string& bundleName, const std::string& pageName,
+        PrelaunchScanModeOhos prelaunchScanMode) override;
     int32_t ResetRssPriority() override;
     int32_t PreSwitchCamera(const std::string& cameraId) override;
     int32_t SetPrelaunchConfig(const string& cameraId, RestoreParamTypeOhos restoreParamType, int activeTime,
@@ -209,6 +211,7 @@ public:
                         CallbackInvoker invoker) override;
     void OnFlashlightStatus(const string& cameraId, FlashStatus status) override;
     void OnTorchStatus(TorchStatus status) override;
+    void clearPreScanConfig() override;
     // for resource proxy
     [[deprecated]] int32_t ProxyForFreeze(const std::set<int32_t>& pidList, bool isProxy) override;
     [[deprecated]] int32_t ResetAllFreezeStatus() override;
@@ -254,6 +257,7 @@ private:
     void RegisterSuspendObserver();
     void UnregisterSuspendObserver();
     void ClearFreezedPidList();
+    string GetPreScanBundleNameKey();
 
 #ifdef CAMERA_LIVE_SCENE_RECOGNITION
     void RegisterEventListenerToRss();
@@ -316,6 +320,13 @@ private:
                 cameraService->OnTorchStatus(status);
             }
         }
+        void clearPreScanConfig() override
+        {
+            auto cameraService = cameraService_.promote();
+            if (cameraService != nullptr) {
+                cameraService->clearPreScanConfig();
+            }
+        }
 
     private:
         wptr<HCameraService> cameraService_;
@@ -361,8 +372,10 @@ private:
     int32_t UnSetCameraCallback(pid_t pid);
     int32_t UnSetMuteCallback(pid_t pid);
     int32_t UnSetTorchCallback(pid_t pid);
-    int32_t SaveCurrentParamForRestore(string cameraId, RestoreParamTypeOhos restoreParamType, int activeTime,
-        EffectParam effectParam, sptr<HCaptureSession> captureSession);
+    int32_t SaveCurrentParamForRestore(sptr<HCameraRestoreParam> cameraRestoreParam,
+        RestoreParamTypeOhos restoreParamType, int activeTime, EffectParam effectParam,
+        sptr<HCaptureSession> captureSession);
+    void SetPrelaunchScanCameraConfig(const std::string& bundleName);
 
     mutex mutex_;
     mutex cameraCbMutex_;
@@ -405,6 +418,10 @@ private:
     std::shared_ptr<CameraDataShareHelper> cameraDataShareHelper_;
     CameraServiceStatus serviceStatus_ = CameraServiceStatus::SERVICE_READY;
 
+    std::string preScanCameraBundleName_;
+    std::string preScanCameraPageName_;
+    PrelaunchScanModeOhos preScanCameraMode_ = PrelaunchScanModeOhos::NO_NEED_PRE_CAMERA;
+
     std::mutex peerCallbackMutex_;
     sptr<ICameraBroker> peerCallback_;
 
@@ -416,6 +433,7 @@ private:
     std::set<int32_t> freezedPidList_;
     std::map<uint32_t, std::map<string, std::function<void()>>> delayCbtaskMap_;
     std::map<uint32_t, std::function<void()>> delayFoldStatusCbTaskMap;
+    std::mutex preCameraMutex_;
 
     std::mutex observerMutex_;
     sptr<SuspendStateObserver> suspendStateObserver_ {nullptr};

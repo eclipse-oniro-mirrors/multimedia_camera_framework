@@ -106,4 +106,5 @@ interface ICameraService{
   [ipccode 102, oneway] void NotifyCameraState([in] String cameraId, [in] int state);
   [ipccode 104] void SetPeerCallback([in] ICameraBroker callbackFunc);
   [ipccode 105] void UnsetPeerCallback();
+  [ipccode 106] void PrelaunchScanCamera([in] String bundleName, [in] String pageName, [in] PrelaunchScanModeOhos prelaunchScanMode);
 }

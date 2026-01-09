@@ -935,6 +935,7 @@ void HCameraHostManager::RemoveCameraDevice(const std::string& cameraId, std::st
     if (statusCallback) {
         string reportCameraId = (originCameraId != cameraId) ? originCameraId : cameraId;
         statusCallback->OnCameraStatus(reportCameraId, CAMERA_STATUS_AVAILABLE, CallbackInvoker::APPLICATION);
+        statusCallback->clearPreScanConfig();
     }
     std::lock_guard<std::mutex> lockl(openPrelaunchMutex_);
     if (cameraDevices_.size() == 0) {
@@ -1075,7 +1076,8 @@ int32_t HCameraHostManager::Prelaunch(const std::string& cameraId, std::string c
 {
     MEDIA_DEBUG_LOG("HCameraHostManager::Prelaunch start");
     int32_t uid = IPCSkeleton::GetCallingUid();
-    CHECK_RETURN_RET_ELOG(uid < MAX_SYS_UID, CAMERA_INVALID_ARG, "HCameraHostManager::Prelaunch is not allowed.");
+    CHECK_RETURN_RET_ELOG(uid < MAX_SYS_UID && uid != RSS_UID, CAMERA_INVALID_ARG,
+        "HCameraHostManager::Prelaunch is not allowed.");
     auto cameraHostInfo = FindCameraHostInfo(cameraId);
     CHECK_RETURN_RET_ELOG(
         cameraHostInfo == nullptr, CAMERA_INVALID_ARG, "HCameraHostManager::Prelaunch failed with invalid device info");
@@ -1263,8 +1265,9 @@ void HCameraHostManager::UpdateRestoreParam(sptr<HCameraRestoreParam> &cameraRes
     while (iter != (persistentParamMap_[clientName]).end()) {
         auto restoreParam = iter->second;
         timeval closeTime = restoreParam->GetCloseCameraTime();
+        bool isSystemCamera = clientName == SYSTEM_CAMERA;
         MEDIA_DEBUG_LOG("HCameraHostManager::UpdateRestoreParam closeTime.tv_sec");
-        bool isSupportExposureSet = closeTime.tv_sec != 0 && CheckCameraId(restoreParam, cameraId);
+        bool isSupportExposureSet = (closeTime.tv_sec != 0 || !isSystemCamera) && CheckCameraId(restoreParam, cameraId);
         if (isSupportExposureSet) {
             timeval openTime;
             gettimeofday(&openTime, nullptr);
