@@ -97,6 +97,12 @@ constexpr int32_t TOUCH_CANCEL = 2;
 static sptr<HCameraService> g_cameraServiceHolder = nullptr;
 static bool g_isFoldScreen = system::GetParameter("const.window.foldscreen.type", "") != "";
 const std::string NOTIFICATION_PERMISSION = "ohos.permission.CAMERA";
+const std::string PRE_CAMERA_DEFAULT_ID = "device/0";
+const std::string KEY_SEPARATOR= "_";
+const std::string NO_NEED_RESTORE_NAME = "no_save_restore";
+const std::string PRE_SCAN_REASON = "SCAN_PRELAUNCH";
+const std::string PRE_SCAN_NAME = "camera_service";
+constexpr int32_t ACTIVE_TIME_DEFAULT = 0;
 
 std::vector<uint32_t> restoreMetadataTag { // item.type is uint8
     OHOS_CONTROL_VIDEO_STABILIZATION_MODE,
@@ -826,6 +832,11 @@ int32_t HCameraService::CreateCaptureSession(sptr<ICaptureSession>& session, int
     if (mechSession != nullptr && mechSession->IsEnableMech()) {
         captureSession->SetMechDeliveryState(MechDeliveryState::NEED_ENABLE);
     }
+    captureSession->registerSessionStartCallback([this](string bundleName) {
+        std::lock_guard<std::mutex> lock(preCameraMutex_);
+        SetPrelaunchScanCameraConfig(bundleName);
+        clearPreScanConfig();
+    });
     return rc;
 }
 
@@ -1850,6 +1861,7 @@ int32_t HCameraService::MuteCameraPersist(PolicyType policyType, bool isMute)
 int32_t HCameraService::PrelaunchCamera(int32_t flag)
 {
     CAMERA_SYNC_TRACE;
+    std::lock_guard<std::mutex> lock(preCameraMutex_);
     CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION, "HCameraService::CheckSystemApp fail");
     CameraXCollie cameraXCollie = CameraXCollie("HCameraService::PrelaunchCamera");
     MEDIA_INFO_LOG("HCameraService::PrelaunchCamera");
@@ -2022,7 +2034,9 @@ int32_t HCameraService::SetPrelaunchConfig(const string& cameraId, RestoreParamT
         pid_t pid = IPCSkeleton::GetCallingPid();
         auto &sessionManager = HCameraSessionManager::GetInstance();
         captureSession_ = sessionManager.GetGroupDefaultSession(pid);
-        SaveCurrentParamForRestore(cameraId, static_cast<RestoreParamTypeOhos>(restoreParamType), activeTime,
+        preCameraClient_ = GetClientBundle(IPCSkeleton::GetCallingUid());
+        sptr<HCameraRestoreParam> cameraRestoreParam = new HCameraRestoreParam(preCameraClient_, cameraId);
+        SaveCurrentParamForRestore(cameraRestoreParam, static_cast<RestoreParamTypeOhos>(restoreParamType), activeTime,
             effectParam, captureSession_);
     } else {
         MEDIA_ERR_LOG("HCameraService::SetPrelaunchConfig illegal");
@@ -2638,14 +2652,12 @@ int HCameraService::SetListenerObject(const sptr<IRemoteObject>& object)
     return CAMERA_OK;
 }
 
-int32_t HCameraService::SaveCurrentParamForRestore(std::string cameraId, RestoreParamTypeOhos restoreParamType,
-    int activeTime, EffectParam effectParam, sptr<HCaptureSession> captureSession)
+int32_t HCameraService::SaveCurrentParamForRestore(sptr<HCameraRestoreParam> cameraRestoreParam,
+    RestoreParamTypeOhos restoreParamType, int activeTime, EffectParam effectParam,
+    sptr<HCaptureSession> captureSession)
 {
     MEDIA_INFO_LOG("HCameraService::SaveCurrentParamForRestore enter");
     int32_t rc = CAMERA_OK;
-    preCameraClient_ = GetClientBundle(IPCSkeleton::GetCallingUid());
-    sptr<HCameraRestoreParam> cameraRestoreParam = new HCameraRestoreParam(
-        preCameraClient_, cameraId);
     cameraRestoreParam->SetRestoreParamType(restoreParamType);
     cameraRestoreParam->SetStartActiveTime(activeTime);
     int foldStatus = static_cast<int>(OHOS::Rosen::DisplayManagerLite::GetInstance().GetFoldStatus());
@@ -2947,6 +2959,90 @@ void HCameraService::ExecuteDelayCallbackTask(const std::vector<int32_t>& pidLis
         }
         delayCbtaskMap_.erase(pidIt);
     });
+}
+
+int32_t HCameraService::PrelaunchScanCamera(const std::string& bundleName, const std::string& pageName,
+    PrelaunchScanModeOhos preCameraMode)
+{
+    CAMERA_SYNC_TRACE;
+    std::lock_guard<std::mutex> lock(preCameraMutex_);
+    bool isValidParameter = !bundleName.empty() && (preCameraMode == PrelaunchScanModeOhos::PRE_CAMERA_NO_STREAM ||
+        preCameraMode == PrelaunchScanModeOhos::PRE_CAMERA_AND_RESTORE);
+    CHECK_RETURN_RET_ELOG(!isValidParameter, PRE_SCAN_MODE_UNSUPPORTED,
+        "HCameraService::PrelaunchScanCamera not need");
+    CHECK_RETURN_RET_ELOG(IPCSkeleton::GetCallingUid() != RSS_UID, UID_NO_PERMISSION,
+        "HCameraService::PrelaunchScanCamera no permission");
+    CameraXCollie cameraXCollie = CameraXCollie("HCameraService::PrelaunchScanCamera");
+    MEDIA_INFO_LOG("HCameraService::PrelaunchScanCamera");
+    #ifdef MEMMGR_OVERRID
+    int32_t requiredMemSizeKB = 0;
+    Memory::MemMgrClient::GetInstance()
+        .RequireBigMem(getpid(), PRE_SCAN_REASON, requiredMemSizeKB, PRE_SCAN_NAME);
+    #endif
+    // notify deferredprocess stop
+    DeferredProcessing::DeferredProcessingService::GetInstance().NotifyInterrupt();
+    CHECK_RETURN_RET_ELOG(HCameraDeviceManager::GetInstance()->GetCameraStateOfASide().Size() != 0,
+        CAMERA_DEVICE_CONFLICT, "HCameraService::PrelaunchScanCamera there is a device active in A side, abort!");
+    std::string preCameraId = PRE_CAMERA_DEFAULT_ID;
+    preScanCameraBundleName_ = bundleName;
+    preScanCameraPageName_ = pageName;
+    preScanCameraMode_ = preCameraMode;
+    CAMERA_SYSEVENT_STATISTIC(CreateMsg("Scan Camera Prelaunch CameraId:%s", preCameraId.c_str()));
+    CameraReportUtils::GetInstance().SetOpenCamPerfPreInfo(preCameraId.c_str(), CameraReportUtils::GetCallerInfo());
+    int32_t ret = cameraHostManager_->Prelaunch(preCameraId, GetPreScanBundleNameKey());
+    CHECK_PRINT_ELOG(ret != PRE_SCAN_OK, "HCameraService::PrelaunchScanCamera failed");
+    return ret;
+}
+
+void HCameraService::SetPrelaunchScanCameraConfig(const std::string& bundleName)
+{
+    CAMERA_SYNC_TRACE;
+    bool isNeedSave = !preScanCameraBundleName_.empty() && preScanCameraBundleName_ == bundleName &&
+        preScanCameraMode_ == PrelaunchScanModeOhos::PRE_CAMERA_AND_RESTORE;
+    CHECK_RETURN_ELOG(!isNeedSave, "HCameraService::SetPrelaunchScanCameraConfig no need save: %{public}s",
+        bundleName.c_str());
+     CameraXCollie cameraXCollie = CameraXCollie("HCameraService::SetPrelaunchScanCameraConfig");
+      OHOS::Security::AccessToken::AccessTokenID callerToken = IPCSkeleton::GetCallingTokenID();
+    string permissionName = OHOS_PERMISSION_CAMERA;
+    int32_t ret = CheckPermission(permissionName, callerToken);
+     CHECK_RETURN_ELOG(ret != CAMERA_OK, "HCameraService::SetPrelaunchScanCameraConfig failed permission is: %{public}s",
+        permissionName.c_str());
+    string preCameraId = PRE_CAMERA_DEFAULT_ID;
+    int activeTime = ACTIVE_TIME_DEFAULT;
+    CameraStandard::RestoreParamTypeOhos restoreParamType{RestoreParamTypeOhos::PERSISTENT_DEFAULT_PARAM_OHOS};
+    CameraStandard::EffectParam effectParam;
+    vector<string> cameraIds_;
+    cameraHostManager_->GetCameras(cameraIds_);
+    bool isFindCameraIds = (find(cameraIds_.begin(), cameraIds_.end(), preCameraId) != cameraIds_.end()) &&
+        IsPrelaunchSupported(preCameraId);
+    if (isFindCameraIds) {
+        MEDIA_INFO_LOG("HCameraService::SetPreluanchScanCameraConfig start");
+        sptr<HCaptureSession> captureSession_ = nullptr;
+        pid_t pid = IPCSkeleton::GetCallingPid();
+        auto &sessionManager = HCameraSessionManager::GetInstance();
+        captureSession_ = sessionManager.GetGroupDefaultSession(pid);
+        sptr<HCameraRestoreParam> cameraRestoreParam = new HCameraRestoreParam(GetPreScanBundleNameKey(), preCameraId);
+        SaveCurrentParamForRestore(cameraRestoreParam, static_cast<RestoreParamTypeOhos>(restoreParamType), activeTime,
+            effectParam, captureSession_);
+    } else {
+        MEDIA_ERR_LOG("HCameraService::SetPrelaunchScanCameraConfig not find cameraId");
+    }
+}
+
+std::string HCameraService::GetPreScanBundleNameKey()
+{
+    return (preScanCameraMode_ != PrelaunchScanModeOhos::PRE_CAMERA_AND_RESTORE) ? NO_NEED_RESTORE_NAME :
+      preScanCameraBundleName_ + KEY_SEPARATOR + preScanCameraPageName_;
+}
+
+void HCameraService::clearPreScanConfig()
+{
+    if (!preScanCameraBundleName_.empty()) {
+        MEDIA_INFO_LOG("HCameraService::clearPreScanConfig");
+        preScanCameraBundleName_.clear();
+        preScanCameraPageName_.clear();
+        preScanCameraMode_ = PrelaunchScanModeOhos::NO_NEED_PRE_CAMERA;
+    }
 }
 
 #ifdef CAMERA_LIVE_SCENE_RECOGNITION

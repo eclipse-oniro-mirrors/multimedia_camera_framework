@@ -1990,6 +1990,8 @@ int32_t HCaptureSession::Start()
     });
     MEDIA_INFO_LOG("HCaptureSession::Start execute success, sessionID: %{public}d", GetSessionId());
     MEDIA_INFO_LOG("%{public}s", GetConcurrentCameraIds(pid_).c_str());
+    CHECK_EXECUTE(bundleName_ == "", bundleName_ = GetClientBundle(IPCSkeleton::GetCallingUid()));
+    triggerSessionStartEvent(bundleName_);
     return errorCode;
 }
 

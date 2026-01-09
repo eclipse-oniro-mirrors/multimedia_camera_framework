@@ -808,6 +808,14 @@ public:
     int32_t PrelaunchCamera(int32_t flag = -1);
 
     /**
+     * @brief prelaunch the camera for scan
+     *
+     * @return Server error code.
+     */
+    int32_t PrelaunchScanCamera(const std::string bundleName, const std::string pageName,
+        PrelaunchScanModeOhos prelaunchScanMode);
+
+    /**
      * @brief reset rss priority
      *
      * @return Server error code.

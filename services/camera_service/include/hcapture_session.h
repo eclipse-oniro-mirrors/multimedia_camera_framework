@@ -96,6 +96,7 @@ private:
 };
 using MetaElementType = std::pair<int64_t, sptr<SurfaceBuffer>>;
 using UpdateControlCenterCallback = std::function<void(bool)>;
+using CallbackFunction = std::function<void(string)>;
 
 class CameraInfoDumper;
 #ifdef CAMERA_FRAMEWORK_FEATURE_MEDIA_STREAM
@@ -259,7 +260,19 @@ public:
         return appNotRegisterCameraSwitchSessionId;
     }
 
+    void registerSessionStartCallback(CallbackFunction callback)
+    {
+        callback_ = callback;
+    }
+    void triggerSessionStartEvent(string bundleName)
+    {
+        if (callback_) {
+            callback_(bundleName);
+        }
+    }
+
 private:
+    CallbackFunction callback_;
     void InitDefaultColortSpace(SceneMode opMode);
     explicit HCaptureSession(const uint32_t callingTokenId, int32_t opMode);
     void UpdateBasicInfoForStream(std::map<int32_t, std::string> ParameterMap,
