@@ -71,21 +71,6 @@ enum AuxiliaryStatus {
     AUXILIARY_OFF
 };
 
-typedef struct dmDeviceInfo {
-    /**
-     * Device name of the device.
-     */
-    std::string deviceName;
-    /**
-     * Device type of the device.
-     */
-    uint16_t deviceTypeId;
-    /**
-     * NetworkId of the device.
-     */
-    std::string networkId;
-} dmDeviceInfo;
-
 struct flashmode {
     int count = 0;
     std::vector<int32_t> mode = {};

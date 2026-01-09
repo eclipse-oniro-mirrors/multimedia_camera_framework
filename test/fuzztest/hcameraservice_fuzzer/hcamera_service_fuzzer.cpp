@@ -291,7 +291,7 @@ void ResetAllFreezeStatus(FuzzedDataProvider& provider)
 
 void GetDmDeviceInfo(FuzzedDataProvider& provider)
 {
-    std::vector<std::string> deviceInfos;
+    std::vector<dmDeviceInfo> deviceInfos;
     GetInstance().GetDmDeviceInfo(deviceInfos);
 }
 

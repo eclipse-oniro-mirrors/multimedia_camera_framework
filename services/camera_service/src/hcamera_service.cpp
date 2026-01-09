@@ -2767,7 +2767,7 @@ int32_t HCameraService::ResetAllFreezeStatus()
     return CAMERA_OPERATION_NOT_ALLOWED;
 }
 
-int32_t HCameraService::GetDmDeviceInfo(std::vector<std::string> &deviceInfos)
+int32_t HCameraService::GetDmDeviceInfo(std::vector<dmDeviceInfo> &deviceInfos)
 {
 #ifdef DEVICE_MANAGER
     lock_guard<mutex> lock(g_dmDeviceInfoMutex);
@@ -2780,18 +2780,15 @@ int32_t HCameraService::GetDmDeviceInfo(std::vector<std::string> &deviceInfos)
     deviceManager.RegisterDevStateCallback(pkgName, extraInfo, NULL);
     deviceManager.GetTrustedDeviceList(pkgName, extraInfo, deviceInfoList);
     deviceManager.UnInitDeviceManager(pkgName);
-    int size = static_cast<int>(deviceInfoList.size());
+    int32_t size = static_cast<int32_t>(deviceInfoList.size());
     MEDIA_INFO_LOG("HCameraService::GetDmDeviceInfo size=%{public}d", size);
-    if (size > 0) { // LCOV_LINE_EXCL
-        for (int i = 0; i < size; i++) {
-            nlohmann::json deviceInfo;
-            deviceInfo["deviceName"] = deviceInfoList[i].deviceName;
-            deviceInfo["deviceTypeId"] = deviceInfoList[i].deviceTypeId;
-            deviceInfo["networkId"] = deviceInfoList[i].networkId;
-            std::string deviceInfoStr = deviceInfo.dump();
-            MEDIA_INFO_LOG("HCameraService::GetDmDeviceInfo deviceInfo:%{private}s", deviceInfoStr.c_str());
-            deviceInfos.emplace_back(deviceInfoStr);
-        }
+    CHECK_RETURN_RET(size == 0, CAMERA_OK);
+    for (int32_t i = 0; i < size; i++) {
+        dmDeviceInfo deviceInfo;
+        deviceInfo.deviceName = deviceInfoList[i].deviceName;
+        deviceInfo.deviceTypeId = deviceInfoList[i].deviceTypeId;
+        deviceInfo.networkId = deviceInfoList[i].networkId;
+        deviceInfos.emplace_back(deviceInfo);
     }
 #endif
     return CAMERA_OK;

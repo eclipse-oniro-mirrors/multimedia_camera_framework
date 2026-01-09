@@ -202,3 +202,9 @@ struct CameraStatusData {
     int cameraStatus;
     int flashStatus;
 };
+
+struct dmDeviceInfo {
+    String deviceName;
+    int deviceTypeId;
+    String networkId;
+};
