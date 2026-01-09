@@ -506,3 +506,46 @@ ohos_shared_library("camera_dynamic_image_effect") {
   part_name = "camera_framework"
   subsystem_name = "multimedia"
 }
+
+ohos_shared_library("camera_dynamic_watermark_exif_metadata") {
+  install_enable = true
+  sources = [
+    "${multimedia_camera_framework_path}/dynamic_libs/watermark_exif_metadata/src/watermark_exif_metadata_adapter.cpp"
+  ]
+  cflags = [
+    "-fPIC",
+    "-Wall",
+    "-Os",
+  ]
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+  include_dirs = [
+    "${multimedia_camera_framework_path}/common/utils",
+    "${multimedia_camera_framework_path}/common/utils/watermark_exif_metadata/include",
+    "${multimedia_camera_framework_path}/dynamic_libs/watermark_exif_metadata/include"
+  ]
+
+  deps = [
+    "${multimedia_camera_framework_path}/common:camera_utils",
+  ]
+
+  if (target_cpu == "arm") {
+    cflags += [ "-DBINDER_IPC_32BIT" ]
+  }
+
+  external_deps = [
+    "image_framework:image_native",
+    "hilog:libhilog",
+    "hisysevent:libhisysevent",
+    "libexif:libexif",
+  ]
+  defines = []
+  cflags_cc = cflags
+  cflags_cc += ["-std=c++11",]
+
+  part_name = "camera_framework"
+  subsystem_name = "multimedia"
+}

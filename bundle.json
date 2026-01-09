@@ -108,6 +108,7 @@
               "//foundation/multimedia/camera_framework/dynamic_libs:camera_dynamic_picture",
               "//foundation/multimedia/camera_framework/dynamic_libs:camera_dynamic_xcomponent_controller",
               "//foundation/multimedia/camera_framework/dynamic_libs:camera_dynamic_image_effect",
+              "//foundation/multimedia/camera_framework/dynamic_libs:camera_dynamic_watermark_exif_metadata",
               "//foundation/multimedia/camera_framework/mediastream:media_stream",
               "//foundation/multimedia/camera_framework/moviefile:movie_file",
               "//foundation/multimedia/camera_framework/sa_profile:camera_service_sa_profile",

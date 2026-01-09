@@ -126,7 +126,6 @@ common_external_deps = [
   "image_framework:image_native",
   "init:libbegetutil",
   "ipc:ipc_core",
-  "libexif:libexif",
   "media_library:media_library_camera_helper",
   "napi:ace_napi",
   "os_account:libaccountkits",
