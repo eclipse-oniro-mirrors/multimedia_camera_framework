@@ -36,8 +36,7 @@ enum ReturnValues {
     RETURN_VAL_0 = 0,
     RETURN_VAL_1 = 1,
     RETURN_VAL_2 = 2,
-    RETURN_VAL_3 = 3,
-    RETURN_VAL_DEFAULT = -1
+    RETURN_VAL_3 = 3
 };
 
 string CameraUtilsTaihe::ToTaiheString(const std::string &src)
@@ -233,7 +232,7 @@ int32_t CameraUtilsTaihe::ToTaiheImageRotation(int32_t retCode)
         case ROTATION_270:
             return RETURN_VAL_3;
         default:
-            return RETURN_VAL_DEFAULT;
+            return RETURN_VAL_0;
     }
 }
 

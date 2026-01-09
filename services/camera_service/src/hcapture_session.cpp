@@ -426,8 +426,7 @@ public:
     void OnDestroy(OHOS::Rosen::DisplayId) override {}
     void OnChange(OHOS::Rosen::DisplayId displayId) override
     {
-        CHECK_RETURN(!OHOS::Rosen::DisplayManagerLite::GetInstance().IsOnboardDisplay(displayId));
-        auto display = Rosen::DisplayManagerLite::GetInstance().GetDisplayById(displayId);
+        sptr<Rosen::DisplayLite> display = Rosen::DisplayManagerLite::GetInstance().GetDefaultDisplay();
         if (display == nullptr) {
             MEDIA_INFO_LOG("Get display info failed, display:%{public}" PRIu64 "", displayId);
             display = Rosen::DisplayManagerLite::GetInstance().GetDisplayById(0);

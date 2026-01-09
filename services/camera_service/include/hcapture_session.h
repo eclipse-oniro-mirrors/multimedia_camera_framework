@@ -186,7 +186,9 @@ public:
     int32_t CreateRecorder4CinematicVideo(sptr<IStreamCommon> stream, sptr<ICameraRecorder> &movieRecorder);
 #endif
     int32_t SetXtStyleStatus(bool status) override;
-    
+#ifdef CAMERA_USE_SENSOR
+    int32_t GetSensorRotationOnce(int32_t& sensorRotation) override;
+#endif
 
     void DumpSessionInfo(CameraInfoDumper& infoDumper);
     static void DumpSessions(CameraInfoDumper& infoDumper);
@@ -347,7 +349,6 @@ private:
     static void GravityDataCallbackImpl(SensorEvent* event);
     static int32_t CalcSensorRotation(int32_t sensorDegree);
     static int32_t CalcRotationDegree(GravityData data);
-    int32_t GetSensorRotationOnce(int32_t& sensorRotation) override;
 #endif
 
     std::string GetConcurrentCameraIds(pid_t pid);

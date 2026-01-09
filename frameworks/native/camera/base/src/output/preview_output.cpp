@@ -865,17 +865,19 @@ int32_t PreviewOutput::canSetFrameRateRange(int32_t minFrameRate, int32_t maxFra
 int32_t PreviewOutput::GetImageRotation(int32_t& imageRotation)
 {
     int32_t ret = CAMERA_UNKNOWN_ERROR;
-    auto displayIds = OHOS::Rosen::DisplayManagerLite::GetInstance().GetAllDisplayIds();
-    MEDIA_DEBUG_LOG("PreviewOutput::GetImageRotation displayIds: %{public}s",
-        Container2String(displayIds.begin(), displayIds.end()).c_str());
-    for (auto displayId : displayIds) {
-        MEDIA_DEBUG_LOG("PreviewOutput::GetImageRotation displayId: %{public}" PRIu64 "", displayId);
-        CHECK_CONTINUE(!OHOS::Rosen::DisplayManagerLite::GetInstance().IsOnboardDisplay(displayId));
-        auto display = OHOS::Rosen::DisplayManagerLite::GetInstance().GetDisplayById(displayId);
-        CHECK_BREAK_ELOG(display == nullptr, "PreviewOutput::GetImageRotation display is nullptr");
-        imageRotation = static_cast<int32_t>(display->GetRotation()) * ROTATION_90_DEGREES;
-        MEDIA_INFO_LOG("PreviewOutput::GetImageRotation imageRotation: %{public}d", imageRotation);
-        return CAMERA_OK;
+    auto serviceProxy = CameraManager::GetInstance()->GetServiceProxy();
+    CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, ServiceToCameraError(CAMERA_INVALID_ARG),
+        "PreviewOutput::GetImageRotation serviceProxy is null");
+    int32_t displayId = -1;
+    ret = serviceProxy->GetOnBoardDisplayId(displayId);
+    if (ret == CAMERA_OK && displayId != -1) {
+        auto innerDisplayId = static_cast<OHOS::Rosen::DisplayId>(displayId);
+        auto display = OHOS::Rosen::DisplayManagerLite::GetInstance().GetDisplayById(innerDisplayId);
+        if (display != nullptr) {
+            imageRotation = static_cast<int32_t>(display->GetRotation()) * ROTATION_90_DEGREES;
+            MEDIA_DEBUG_LOG("PreviewOutput::GetImageRotation imageRotation: %{public}d", imageRotation);
+            return ret;
+        }
     }
     MEDIA_ERR_LOG("PreviewOutput::GetImageRotation from displayId failed");
 #ifdef CAMERA_USE_SENSOR

@@ -1111,8 +1111,7 @@ void HStreamRepeat::SetStreamTransform(int displayRotation)
     int32_t sensorOrientation;
     camera_position_enum_t cameraPosition = OHOS_CAMERA_POSITION_BACK;
     int32_t curDisplayRotation = 0;
-    int32_t ret = GetDisplayRotation(curDisplayRotation);
-    CHECK_RETURN_ELOG(ret != CAMERA_OK, "HStreamRepeat::SetStreamTransform GetDisplayRotation Failed");
+    int32_t retCode = GetDisplayRotation(curDisplayRotation);
     {
         std::lock_guard<std::mutex> lock(cameraAbilityLock_);
         CHECK_RETURN(cameraAbility_ == nullptr);
@@ -1144,6 +1143,7 @@ void HStreamRepeat::SetStreamTransform(int displayRotation)
     if (enableStreamRotate_) {
         if (mOritation == -1) {
             CHECK_RETURN_ELOG(producer_ == nullptr, "HStreamRepeat::SetStreamTransform failed, producer is null");
+            CHECK_RETURN_ELOG(retCode != CAMERA_OK, "HStreamRepeat::SetStreamTransform GetDisplayRotation Failed");
             mOritation = curDisplayRotation;
         }
         int32_t streamRotation = GetStreamRotation(sensorOrientation, cameraPosition, mOritation, deviceClass_);

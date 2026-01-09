@@ -272,13 +272,17 @@ array<ImageRotation> VideoOutputImpl::GetSupportedRotations()
 
 ImageRotation VideoOutputImpl::GetVideoRotation()
 {
-    CHECK_RETURN_RET_ELOG(videoOutput_ == nullptr, ImageRotation(static_cast<ImageRotation::key_t>(-1)),
-        "GetVideoRotation failed, videoOutput_ is nullptr");
+    if (videoOutput_ == nullptr) {
+        MEDIA_ERR_LOG("GetVideoRotation failed, videoOutput_ is nullptr");
+        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::SERVICE_FATL_ERROR,
+            "GetVideoRotation Camera service fatal error.");
+        return ImageRotation(static_cast<ImageRotation::key_t>(0));
+    }
     int32_t retCode = videoOutput_->GetVideoRotation();
     if (retCode == OHOS::CameraStandard::SERVICE_FATL_ERROR) {
         CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::SERVICE_FATL_ERROR,
             "GetVideoRotation Camera service fatal error.");
-        return ImageRotation(static_cast<ImageRotation::key_t>(-1));
+        return ImageRotation(static_cast<ImageRotation::key_t>(0));
     }
     int32_t taiheRetCode = CameraUtilsTaihe::ToTaiheImageRotation(retCode);
     return ImageRotation(static_cast<ImageRotation::key_t>(taiheRetCode));
@@ -286,18 +290,22 @@ ImageRotation VideoOutputImpl::GetVideoRotation()
 
 ImageRotation VideoOutputImpl::GetVideoRotation(int32_t deviceDegree)
 {
-    CHECK_RETURN_RET_ELOG(videoOutput_ == nullptr, ImageRotation(static_cast<ImageRotation::key_t>(-1)),
-        "GetVideoRotation failed, videoOutput_ is nullptr");
+    if (videoOutput_ == nullptr) {
+        MEDIA_ERR_LOG("GetVideoRotation failed, videoOutput_ is nullptr");
+        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::SERVICE_FATL_ERROR,
+            "GetVideoRotation Camera service fatal error.");
+        return ImageRotation(static_cast<ImageRotation::key_t>(0));
+    }
     int32_t retCode = videoOutput_->GetVideoRotation(deviceDegree);
     if (retCode == OHOS::CameraStandard::SERVICE_FATL_ERROR) {
         CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::SERVICE_FATL_ERROR,
             "GetVideoRotation Camera service fatal error.");
-        return ImageRotation(static_cast<ImageRotation::key_t>(-1));
+        return ImageRotation(static_cast<ImageRotation::key_t>(0));
     }
     if (retCode == OHOS::CameraStandard::INVALID_ARGUMENT) {
         CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::INVALID_ARGUMENT,
             "GetVideoRotation Camera invalid argument.");
-        return ImageRotation(static_cast<ImageRotation::key_t>(-1));
+        return ImageRotation(static_cast<ImageRotation::key_t>(0));
     }
     int32_t taiheRetCode = CameraUtilsTaihe::ToTaiheImageRotation(retCode);
     return ImageRotation(static_cast<ImageRotation::key_t>(taiheRetCode));

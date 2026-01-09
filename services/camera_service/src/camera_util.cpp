@@ -417,14 +417,11 @@ bool IsVerticalDevice()
 {
     bool isVerticalDevice = true;
     sptr<OHOS::Rosen::DisplayLite> display;
-    auto displayIds = OHOS::Rosen::DisplayManagerLite::GetInstance().GetAllDisplayIds();
-    MEDIA_DEBUG_LOG(
-        "IsVerticalDevice displayIds: %{public}s", Container2String(displayIds.begin(), displayIds.end()).c_str());
-    for (auto displayId : displayIds) {
-        MEDIA_DEBUG_LOG("IsVerticalDevice displayId: %{public}" PRIu64 "", displayId);
-        CHECK_CONTINUE(!OHOS::Rosen::DisplayManagerLite::GetInstance().IsOnboardDisplay(displayId));
-        display = OHOS::Rosen::DisplayManagerLite::GetInstance().GetDisplayById(displayId);
-        break;
+    int32_t displayId = -1;
+    auto ret = GetDisplayId(displayId);
+    if (ret == CAMERA_OK && displayId != -1) {
+        auto innerDisplayId = static_cast<OHOS::Rosen::DisplayId>(displayId);
+        display = OHOS::Rosen::DisplayManagerLite::GetInstance().GetDisplayById(innerDisplayId);
     }
     CHECK_RETURN_RET_ELOG(display == nullptr, isVerticalDevice, "IsVerticalDevice display is nullptr");
     MEDIA_DEBUG_LOG("GetDefaultDisplay:W(%{public}d),H(%{public}d),Rotation(%{public}d)",
@@ -702,6 +699,26 @@ int32_t GetCorrectedCameraOrientation(bool usePhysicalCameraOrientation,
     return ret;
 }
 
+int32_t GetDisplayId(int32_t& displayId)
+{
+    auto displayIds = OHOS::Rosen::DisplayManagerLite::GetInstance().GetAllDisplayIds();
+    MEDIA_DEBUG_LOG("GetDisplayId displayIds: %{public}s",
+        Container2String(displayIds.begin(), displayIds.end()).c_str());
+    for (auto innerDisplayId : displayIds) {
+        MEDIA_DEBUG_LOG("GetDisplayId displayId: %{public}" PRIu64 "", innerDisplayId);
+        bool isOnboardDisplay = false;
+        auto retCode = OHOS::Rosen::DisplayManagerLite::GetInstance().IsOnboardDisplay(innerDisplayId,
+            isOnboardDisplay);
+        MEDIA_DEBUG_LOG("GetDisplayId IsOnboardDisplay retCode: %{public}d, isOnboardDisplay: %{public}d",
+            retCode, isOnboardDisplay);
+        CHECK_CONTINUE(retCode != OHOS::Rosen::DMError::DM_OK || !isOnboardDisplay);
+        displayId = static_cast<int32_t>(innerDisplayId);
+        return CAMERA_OK;
+    }
+    MEDIA_ERR_LOG("GetDisplayId Get Display Failed");
+    return CAMERA_INVALID_STATE;
+}
+
 int32_t GetDisplayRotation(int32_t& displayRotation)
 {
     auto displayIds = OHOS::Rosen::DisplayManagerLite::GetInstance().GetAllDisplayIds();
@@ -709,7 +726,11 @@ int32_t GetDisplayRotation(int32_t& displayRotation)
         Container2String(displayIds.begin(), displayIds.end()).c_str());
     for (auto displayId : displayIds) {
         MEDIA_DEBUG_LOG("GetDisplayRotation displayId: %{public}" PRIu64 "", displayId);
-        CHECK_CONTINUE(!OHOS::Rosen::DisplayManagerLite::GetInstance().IsOnboardDisplay(displayId));
+        bool isOnboardDisplay = false;
+        auto retCode = OHOS::Rosen::DisplayManagerLite::GetInstance().IsOnboardDisplay(displayId, isOnboardDisplay);
+        MEDIA_DEBUG_LOG("GetDisplayRotation IsOnboardDisplay retCode: %{public}d, isOnboardDisplay: %{public}d",
+            retCode, isOnboardDisplay);
+        CHECK_CONTINUE(retCode != OHOS::Rosen::DMError::DM_OK || !isOnboardDisplay);
         auto display = OHOS::Rosen::DisplayManagerLite::GetInstance().GetDisplayById(displayId);
         CHECK_RETURN_RET_ELOG(
             display == nullptr, CAMERA_INVALID_STATE, "GetDisplayRotation display is nullptr");
