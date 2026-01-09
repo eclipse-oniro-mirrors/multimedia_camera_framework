@@ -174,6 +174,7 @@ void HCameraService::OnStart()
         CameraRoateParamManager::GetInstance().SubscriberEvent();
     }
 #endif
+    cameraHostManager_->ParseJsonFileToMap(SAVE_RESTORE_FILE_PATH, preCameraClient_, preCameraId_);
     MEDIA_INFO_LOG("HCameraService OnStart end");
 }
 

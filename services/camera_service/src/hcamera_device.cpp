@@ -939,6 +939,7 @@ int32_t HCameraDevice::CloseDevice()
     if (cameraHostManager_) {
         cameraHostManager_->RemoveCameraDevice(cameraID_, GetCameraIdTransform());
         cameraHostManager_->UpdateRestoreParamCloseTime(GetClientName(), cameraID_);
+        cameraHostManager_->SaveMapToJsonFile(SAVE_RESTORE_FILE_PATH, GetClientName(),  cameraID_);
     }
     SetDeviceServiceCallback(nullptr);
     uint64_t currentTime = DeferredProcessing::SteadyClock::GetTimestampMilli();
@@ -1975,6 +1976,7 @@ void HCameraDevice::RemoveResourceWhenHostDied()
     if (cameraHostManager_) {
         cameraHostManager_->RemoveCameraDevice(cameraID_);
         cameraHostManager_->UpdateRestoreParamCloseTime(GetClientName(), cameraID_);
+        cameraHostManager_->SaveMapToJsonFile(SAVE_RESTORE_FILE_PATH, GetClientName(),  cameraID_);
     }
     uint64_t currentTime = DeferredProcessing::SteadyClock::GetTimestampMilli();
     CHECK_EXECUTE(currentTime > openCamTime_,

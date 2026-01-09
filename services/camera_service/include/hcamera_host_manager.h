@@ -25,6 +25,7 @@
 #include <mutex>
 #include <string>
 #include <vector>
+#include "json_cache_converter/json_cache_converter.h"
 #include "camera_log.h"
 #include "camera_metadata_info.h"
 #include "v1_0/icamera_device.h"
@@ -101,6 +102,10 @@ public:
     virtual int32_t SetTorchLevel(float level);
     void NotifyDeviceStateChangeInfo(int notifyType, int deviceState);
 
+    void ParseJsonFileToMap(const std::string& filePath, std::string& clientName,
+                                       std::string& cameraId);
+    void SaveMapToJsonFile(const std::string& filePath, const std::string& clientName,
+                                       const std::string& cameraId);
     void SaveRestoreParam(sptr<HCameraRestoreParam> cameraRestoreParam);
 
     void UpdateRestoreParamCloseTime(const std::string& clientName, const std::string& cameraId);
