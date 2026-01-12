@@ -37,10 +37,14 @@ public:
     virtual int32_t OpenAsset();
     virtual void UpdatePhotoProxy(const sptr<Media::PhotoProxy> &photoProxy);
     virtual ~PhotoAssetIntf() = default;
+};
 #ifdef CAMERA_CAPTURE_YUV
+class MediaLibraryManagerIntf {
+public:
+    virtual ~MediaLibraryManagerIntf() = default;
     virtual void RegisterPhotoStateCallback(const std::function<void(int32_t)> &callback);
     virtual void UnregisterPhotoStateCallback();
-#endif
 };
+#endif
 } // namespace OHOS::CameraStandard
 #endif

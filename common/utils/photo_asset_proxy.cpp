@@ -24,8 +24,8 @@
 namespace OHOS {
 namespace CameraStandard {
 typedef PhotoAssetIntf* (*CreatePhotoAssetIntf)(int32_t, int32_t, uint32_t, int32_t, std::string);
-
 #ifdef CAMERA_CAPTURE_YUV
+typedef MediaLibraryManagerIntf* (*CreateMediaLibraryManagerIntf)();
 std::string PhotoAssetProxy::GetBundleName(int32_t callingUid)
 {
     std::string bundleName = "";
@@ -136,20 +136,71 @@ void PhotoAssetProxy::UpdatePhotoProxy(const sptr<Media::PhotoProxy> &photoProxy
 }
 
 #ifdef CAMERA_CAPTURE_YUV
-void PhotoAssetProxy::RegisterPhotoStateCallback(const std::function<void(int32_t)> &callback)
+std::shared_ptr<MediaLibraryManagerProxy> MediaLibraryManagerProxy::GetMediaLibraryManagerProxy()
 {
-    MEDIA_DEBUG_LOG("PhotoAssetProxy::RegisterPhotoStateCallback is called");
-    CHECK_RETURN_ELOG(
-        photoAssetIntf_ == nullptr, "PhotoAssetProxy::RegisterPhotoStateCallback photoAssetIntf_ is null");
-    photoAssetIntf_->RegisterPhotoStateCallback(callback);
+    MEDIA_DEBUG_LOG("GetMediaLibraryManagerProxy E");
+    auto dynamiclib = CameraDynamicLoader::GetDynamiclib(MEDIA_LIB_SO);
+    if (dynamiclib == nullptr) {
+        HILOG_COMM_ERROR("MediaLibraryManagerProxy::GetMediaLibraryManagerProxy get dynamiclib fail");
+        return nullptr;
+    }
+    CreateMediaLibraryManagerIntf createMediaLibraryManagerIntf =
+        (CreateMediaLibraryManagerIntf)dynamiclib->GetFunction("createMediaLibraryManagerIntf");
+    if (createMediaLibraryManagerIntf == nullptr) {
+        HILOG_COMM_ERROR(
+            "MediaLibraryManagerProxy::GetMediaLibraryManagerProxy get createMediaLibraryManagerIntf fail");
+        return nullptr;
+    }
+    MediaLibraryManagerIntf* mediaLibraryManagerIntf = createMediaLibraryManagerIntf();
+    if (mediaLibraryManagerIntf == nullptr) {
+        HILOG_COMM_ERROR(
+            "MediaLibraryManagerProxy::GetMediaLibraryManagerProxy get mediaLibraryManagerIntf fail");
+        return nullptr;
+    }
+    std::shared_ptr<MediaLibraryManagerProxy> mediaLibraryManagerProxy =
+        std::make_shared<MediaLibraryManagerProxy>(
+            dynamiclib, std::shared_ptr<MediaLibraryManagerIntf>(mediaLibraryManagerIntf));
+    return mediaLibraryManagerProxy;
 }
 
-void PhotoAssetProxy::UnregisterPhotoStateCallback()
+void MediaLibraryManagerProxy::LoadMediaLibraryDynamiclibAsync()
 {
-    MEDIA_DEBUG_LOG("PhotoAssetProxy::UnregisterPhotoStateCallback is called");
+    MEDIA_DEBUG_LOG("MediaLibraryManagerProxy::LoadMediaLibraryDynamiclibAsync");
+    CameraDynamicLoader::LoadDynamiclibAsync(MEDIA_LIB_SO);
+}
+
+void MediaLibraryManagerProxy::FreeMediaLibraryDynamiclibDelayed()
+{
+    MEDIA_DEBUG_LOG("MediaLibraryManagerProxy::FreeMediaLibraryDynamiclibDelayed");
+    CameraDynamicLoader::FreeDynamicLibDelayed(MEDIA_LIB_SO);
+}
+
+MediaLibraryManagerProxy::MediaLibraryManagerProxy(
+    std::shared_ptr<Dynamiclib> mediaLibraryLib,
+    std::shared_ptr<MediaLibraryManagerIntf> mediaLibraryManagerIntf)
+    : mediaLibraryLib_(mediaLibraryLib), mediaLibraryManagerIntf_(mediaLibraryManagerIntf)
+{
+    CHECK_RETURN_ELOG(mediaLibraryLib_ == nullptr, "MediaLibraryManagerProxy construct mediaLibraryLib is null");
     CHECK_RETURN_ELOG(
-        photoAssetIntf_ == nullptr, "PhotoAssetProxy::UnregisterPhotoStateCallback photoAssetIntf_ is null");
-    photoAssetIntf_->UnregisterPhotoStateCallback();
+        mediaLibraryManagerIntf_ == nullptr, "MediaLibraryManagerProxy construct mediaLibraryManagerIntf is null");
+}
+
+void MediaLibraryManagerProxy::RegisterPhotoStateCallback(const std::function<void(int32_t)> &callback)
+{
+    MEDIA_DEBUG_LOG("MediaLibraryManagerProxy::RegisterPhotoStateCallback is called");
+    CHECK_RETURN_ELOG(
+        mediaLibraryManagerIntf_ == nullptr,
+        "MediaLibraryManagerProxy::RegisterPhotoStateCallback mediaLibraryManagerIntf_ is null");
+    mediaLibraryManagerIntf_->RegisterPhotoStateCallback(callback);
+}
+
+void MediaLibraryManagerProxy::UnregisterPhotoStateCallback()
+{
+    MEDIA_DEBUG_LOG("MediaLibraryManagerProxy::UnregisterPhotoStateCallback is called");
+    CHECK_RETURN_ELOG(
+        mediaLibraryManagerIntf_ == nullptr,
+        "MediaLibraryManagerProxy::UnregisterPhotoStateCallback mediaLibraryManagerIntf_ is null");
+    mediaLibraryManagerIntf_->UnregisterPhotoStateCallback();
 }
 #endif
 // LCOV_EXCL_STOP

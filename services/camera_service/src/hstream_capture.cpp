@@ -65,6 +65,10 @@ static const std::string BURST_UUID_BEGIN = "";
 static std::string g_currentBurstUuid = BURST_UUID_BEGIN;
 static const uint32_t TASKMANAGER_ONE = 1;
 static const uint32_t TASKMANAGER_FOUR = 4;
+#ifdef CAMERA_CAPTURE_YUV
+static const uint32_t PHOTO_SAVE_MAX_NUM = 3;
+static std::atomic<uint32_t> g_unsavedPhotoCount = 0;
+#endif
 
 static std::string GenerateBurstUuid()
 {
@@ -113,6 +117,9 @@ HStreamCapture::HStreamCapture(int32_t format, int32_t width, int32_t height)
     movingPhotoSwitch_ = 0;
 #endif
     isYuvCapture_ = format == OHOS_CAMERA_FORMAT_YCRCB_420_SP;
+#ifdef CAMERA_CAPTURE_YUV
+    g_unsavedPhotoCount = 0;
+#endif
     CreateCaptureSurface();
     // LCOV_EXCL_STOP
 }
@@ -900,6 +907,22 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
         CHECK_PRINT_ELOG(CreateMediaLibraryPhotoAssetProxy(preparedCaptureId) != CAMERA_OK,
             "HStreamCapture::Capture Failed with CreateMediaLibraryPhotoAssetProxy");
         MEDIA_DEBUG_LOG("HStreamCapture::Capture CreateMediaLibraryPhotoAssetProxy X");
+#ifdef CAMERA_CAPTURE_YUV
+        if (!isSystemApp && isYuvCapture_) {
+            g_unsavedPhotoCount++;
+            MEDIA_INFO_LOG("HStreamCapture::Capture current unsaved photo count: %{public}d",
+                g_unsavedPhotoCount.load());
+            CHECK_EXECUTE(photoStateCallback_ == nullptr,
+                photoStateCallback_ = HStreamCapture::OnPhotoStateCallback);
+            auto mediaLibraryManagerProxy = MediaLibraryManagerProxy::GetMediaLibraryManagerProxy();
+            CHECK_RETURN_RET_ELOG(mediaLibraryManagerProxy == nullptr, CAMERA_ALLOC_ERROR,
+                "HStreamCapture::Capture get MediaLibraryManagerProxy fail");
+            std::call_once(photoStateFlag_, [&]() {
+                MEDIA_DEBUG_LOG("HStreamCapture::Capture RegisterPhotoStateCallback is called");
+                mediaLibraryManagerProxy->RegisterPhotoStateCallback(photoStateCallback_);
+            });
+        }
+#endif
     }
     return ret;
     // LCOV_EXCL_STOP
@@ -1116,6 +1139,16 @@ int32_t HStreamCapture::ReleaseStream(bool isDelay)
         std::lock_guard<std::mutex> lock(callbackLock_);
         streamCaptureCallback_ = nullptr;
     }
+#ifdef CAMERA_CAPTURE_YUV
+    if (photoStateCallback_) {
+        MEDIA_DEBUG_LOG("HStreamCapture::Release UnregisterPhotoStateCallback is called");
+        auto mediaLibraryManagerProxy = MediaLibraryManagerProxy::GetMediaLibraryManagerProxy();
+        CHECK_EXECUTE(mediaLibraryManagerProxy,
+            mediaLibraryManagerProxy->UnregisterPhotoStateCallback());
+        photoStateCallback_ = nullptr;
+    }
+    MediaLibraryManagerProxy::FreeMediaLibraryDynamiclibDelayed();
+#endif
     int32_t errorCode = HStreamCommon::ReleaseStream(isDelay);
     auto hStreamOperatorSptr_ = hStreamOperator_.promote();
     bool isSwitchToOfflinePhoto = hStreamOperatorSptr_ && mSwitchToOfflinePhoto_;
@@ -1430,10 +1463,31 @@ int32_t HStreamCapture::OnCaptureReady(int32_t captureId, uint64_t timestamp)
     CAMERA_SYNC_TRACE;
     std::lock_guard<std::mutex> lock(callbackLock_);
     MEDIA_INFO_LOG("HStreamCapture::Capture, notify OnCaptureReady with capture ID: %{public}d", captureId);
+#ifdef CAMERA_CAPTURE_YUV
+    bool isDeffered = (photoAssetAvaiableCallback_ != nullptr && !isBursting_);
+    bool isSystemApp = PhotoLevelManager::GetInstance().GetPhotoLevelInfo(captureId);
+    MEDIA_DEBUG_LOG("HStreamCapture::OnCaptureReady with isDeffered:%{public}d, isSystemApp:%{public}d",
+        isDeffered, isSystemApp);
+    if (!isSystemApp && isYuvCapture_ && isDeffered) {
+        MEDIA_DEBUG_LOG("HStreamCapture::OnCaptureReady need limit photoes number, current photoes number:%{public}d",
+            g_unsavedPhotoCount.load());
+        if (g_unsavedPhotoCount.load() < PHOTO_SAVE_MAX_NUM) {
+            isCaptureReady_ = true;
+            CHECK_EXECUTE(streamCaptureCallback_ != nullptr,
+                streamCaptureCallback_->OnCaptureReady(captureId, timestamp));
+        }
+    } else {
+        isCaptureReady_ = true;
+        if (streamCaptureCallback_ != nullptr) {
+            streamCaptureCallback_->OnCaptureReady(captureId, timestamp);
+        }
+    }
+#else
     isCaptureReady_ = true;
     if (streamCaptureCallback_ != nullptr) {
         streamCaptureCallback_->OnCaptureReady(captureId, timestamp);
     }
+#endif
     std::lock_guard<std::mutex> burstLock(burstLock_);
     if (IsBurstCapture(captureId)) {
         burstNumMap_[captureId] = burstNum_;
@@ -1739,6 +1793,14 @@ void HStreamCapture::ElevateThreadPriority()
     uint32_t type = OHOS::ResourceSchedule::ResType::RES_TYPE_THREAD_QOS_CHANGE;
     OHOS::ResourceSchedule::ResSchedClient::GetInstance().ReportData(type, 0, mapPayLoad);  // 异步IPC，优先级提升到41
 }
+
+#ifdef CAMERA_CAPTURE_YUV
+void HStreamCapture::OnPhotoStateCallback(int32_t photoNum)
+{
+    MEDIA_DEBUG_LOG("OnPhotoStateCallback, photoNum:%{public}d", photoNum);
+    g_unsavedPhotoCount = photoNum;
+}
+#endif
 // LCOV_EXCL_STOP
 } // namespace CameraStandard
 } // namespace OHOS
