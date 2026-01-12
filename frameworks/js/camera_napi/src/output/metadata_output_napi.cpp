@@ -203,7 +203,7 @@ void MetadataOutputCallback::OnMetadataObjectsAvailableCallback(
     napi_get_undefined(env_, &result[PARAM0]);
     napi_get_undefined(env_, &result[PARAM1]);
     result[PARAM1] = CreateMetadataObjJSArray(env_, metadataObjList);
-    MEDIA_INFO_LOG("OnMetadataObjectsAvailableCallback metadataObjList size = %{public}zu", metadataObjList.size());
+    MEDIA_DEBUG_LOG("OnMetadataObjectsAvailableCallback metadataObjList size = %{public}zu", metadataObjList.size());
     CHECK_RETURN_ELOG(result[PARAM1] == nullptr, "invoke CreateMetadataObjJSArray failed");
 
     ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };

@@ -249,7 +249,7 @@ int32_t HCameraHostManager::CameraHostInfo::GetCameras(std::vector<std::string>&
 {
     std::lock_guard<std::mutex> lock(mutex_);
     for (auto id : cameraIds_) {
-        MEDIA_INFO_LOG("CameraHostInfo::GetCameras, current camera %{public}s", id.c_str());
+        MEDIA_DEBUG_LOG("CameraHostInfo::GetCameras, current camera %{public}s", id.c_str());
     }
     cameraIds.insert(cameraIds.end(), cameraIds_.begin(), cameraIds_.end());
     return CAMERA_OK;
@@ -701,7 +701,7 @@ std::shared_ptr<HCameraHostManager::CameraDeviceInfo> HCameraHostManager::Camera
     std::vector<std::shared_ptr<CameraDeviceInfo>>::iterator it = std::find_if(devices_.begin(), devices_.end(),
         [cameraId](const auto& deviceInfo) { return deviceInfo->cameraId == cameraId; });
     if (it != devices_.end()) {
-        MEDIA_INFO_LOG("CameraHostInfo::FindCameraDeviceInfo succeed for %{public}s", cameraId.c_str());
+        MEDIA_DEBUG_LOG("CameraHostInfo::FindCameraDeviceInfo succeed for %{public}s", cameraId.c_str());
         return (*it);
     }
     MEDIA_WARNING_LOG("CameraHostInfo::FindCameraDeviceInfo failed for %{public}s", cameraId.c_str());
