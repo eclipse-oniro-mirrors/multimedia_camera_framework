@@ -51,7 +51,10 @@ HWTEST_F(PhotoAssetAdapterUnit, photo_asset_adapter_unittest_001, TestSize.Level
 {
     int32_t cameraShotType = 0;
     int32_t uid = 1;
-    std::unique_ptr<PhotoAssetAdapter> photoAssetAdapterTest = std::make_unique<PhotoAssetAdapter>(cameraShotType, uid, IPCSkeleton::GetCallingTokenID());
+    int32_t photoCount = 1;
+    std::string bundleName = "com.example.camera";
+    std::unique_ptr<PhotoAssetAdapter> photoAssetAdapterTest = std::make_unique<PhotoAssetAdapter>(cameraShotType, uid,
+        IPCSkeleton::GetCallingTokenID(), photoCount, bundleName);
     sptr<Media::PhotoProxy> photoProxy;
     photoAssetAdapterTest->photoAssetProxy_ = nullptr;
     photoAssetAdapterTest->AddPhotoProxy(photoProxy);
@@ -84,8 +87,11 @@ HWTEST_F(PhotoAssetAdapterUnit, photo_asset_adapter_unittest_002, TestSize.Level
 {
     int32_t cameraShotType = 0;
     int32_t uid = 1;
+    int32_t photoCount = 1;
+    std::string bundleName = "com.example.camera";
     std::unique_ptr<PhotoAssetAdapter> photoAssetAdapterTest =
-        std::make_unique<PhotoAssetAdapter>(cameraShotType, uid, IPCSkeleton::GetCallingTokenID());
+        std::make_unique<PhotoAssetAdapter>(cameraShotType, uid, IPCSkeleton::GetCallingTokenID(),
+        photoCount, bundleName);
     EXPECT_NE(photoAssetAdapterTest, nullptr);
 
     std::shared_ptr<DataShare::DataShareHelper> dataShareHelper;
@@ -155,5 +161,31 @@ HWTEST_F(PhotoAssetAdapterUnit, photo_asset_adapter_unittest_004, TestSize.Level
         pictureAdapterUse);
     EXPECT_EQ(surfaceBuffer, nullptr);
 }
+
+#ifdef CAMERA_CAPTURE_YUV
+/*
+ * Feature: MediaLibraryManagerAdapter
+ * Function: RegisterPhotoStateCallback / UnregisterPhotoStateCallback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Callback registration methods should not crash even if g_mediaLibraryManager is null.
+ */
+HWTEST_F(PhotoAssetAdapterUnit, media_library_manager_adapter_test_001, TestSize.Level0)
+{
+    MEDIA_INFO_LOG("media_library_manager_adapter_test_001 Start");
+
+    MediaLibraryManagerAdapter adapter;
+
+    auto callback = [](int32_t state) {
+        MEDIA_INFO_LOG("Photo state callback invoked: %{public}d", state);
+    };
+
+    adapter.RegisterPhotoStateCallback(callback);
+    adapter.UnregisterPhotoStateCallback();
+
+    MEDIA_INFO_LOG("media_library_manager_adapter_test_001 End");
+}
+#endif
 }
 }

@@ -100,6 +100,16 @@ ohos_fuzztest("HStreamRepeatFuzzTest") {
     "data_share:datashare_common",
     "data_share:datashare_consumer",
   ]
+
+  defines = []
+
+  if (camera_framework_feature_beauty_notification) {
+    if (defined(global_parts_info) &&
+      defined(
+          global_parts_info.notification_distributed_notification_service)) {
+      defines += [ "NOTIFICATION_ENABLE" ]
+    }
+  }
 }
 
 group("fuzztest") {

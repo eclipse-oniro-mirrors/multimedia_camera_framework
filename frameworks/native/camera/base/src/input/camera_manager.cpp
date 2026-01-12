@@ -2839,7 +2839,7 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedFullOutputCapability(spt
         camera = innerCamera;
     }
     CHECK_RETURN_RET(camera == nullptr, nullptr);
-    sptr<CameraOutputCapability> cameraOutputCapability = GetSupportedFullOutputCapability(camera, modeName);
+    sptr<CameraOutputCapability> cameraOutputCapability = GetSupportedOutputCapability(camera, modeName);
     CHECK_RETURN_RET(cameraOutputCapability == nullptr, nullptr);
     // report full preview capabilities in this interface
     cameraOutputCapability->SetPreviewProfiles(camera->GetFullPreviewProfiles(modeName));

@@ -81,6 +81,7 @@ ohos_unittest("camera_ndk_test") {
     "hitrace:hitrace_meter",
     "image_framework:image_native",
     "image_framework:ohimage",
+    "image_framework:picture",
     "ipc:ipc_core",
     "media_foundation:media_foundation",
     "media_foundation:native_media_core",
@@ -96,6 +97,10 @@ ohos_unittest("camera_ndk_test") {
   ]
 
   defines = [ "private=public" ]
+
+  if (camera_framework_feature_capture_yuv) {
+    defines += [ "CAMERA_CAPTURE_YUV" ]
+  }
 
   cflags = [
     "-fPIC",

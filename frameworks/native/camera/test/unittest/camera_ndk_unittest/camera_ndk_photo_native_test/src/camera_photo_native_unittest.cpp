@@ -93,5 +93,28 @@ HWTEST_F(PhotoNativeUnitTest, camera_photo_native_unittest_003, TestSize.Level0)
     photoNative->SetRawImage(rawImage);
     EXPECT_EQ(OH_PhotoNative_Release(photoNative), CAMERA_OK);
 }
+
+#ifdef CAMERA_CAPTURE_YUV
+/*
+* Feature: Framework
+* Function: Test get uncompressed image in photo native
+* SubFunction: NA
+* FunctionPoints: NA
+* EnvConditions: NA
+* CaseDescription: Test OH_PhotoNative_GetUncompressedImage with valid and invalid arguments
+*/
+HWTEST_F(PhotoNativeUnitTest, camera_photo_native_unittest_004, TestSize.Level0)
+{
+    OH_PhotoNative* photoNative = new OH_PhotoNative();
+    OH_PictureNative* picture = nullptr;
+    Camera_ErrorCode ret = OH_PhotoNative_GetUncompressedImage(photoNative, &picture);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_PhotoNative_GetUncompressedImage(nullptr, &picture);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    ret = OH_PhotoNative_GetUncompressedImage(photoNative, nullptr);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    EXPECT_EQ(OH_PhotoNative_Release(photoNative), CAMERA_OK);
+}
+#endif
 } // CameraStandard
 } // OHOS

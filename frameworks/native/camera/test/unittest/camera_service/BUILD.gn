@@ -20,6 +20,7 @@ ohos_unittest("camera_service_unittest") {
   module_out_path = module_output_path
   include_dirs = [
     "./avcodec/include",
+    "./camera_buffer_manager/include",
     "./camera_service_common/include",
     "./client/include/",
     "./hdi_camera_test/include",
@@ -27,7 +28,9 @@ ohos_unittest("camera_service_unittest") {
     "./media_library/include",
     "./pipeline/include",
     "./smooth_zoom/include",
+    "${multimedia_camera_framework_path}/common/utils",
     "${multimedia_camera_framework_path}/services/camera_service/include",
+    "${multimedia_camera_framework_path}/dynamic_libs/media_library/include",
     "${multimedia_camera_framework_path}/dynamic_libs/moving_photo/include/avcodec",
     "${multimedia_camera_framework_path}/dynamic_libs/moving_photo/include/common",
     "${multimedia_camera_framework_path}/services/camera_service/include/app_manager_utils",
@@ -57,13 +60,13 @@ ohos_unittest("camera_service_unittest") {
     "${multimedia_camera_framework_path}/interfaces",
     "${multimedia_camera_framework_path}/dynamic_libs/dfx/include",
     "${multimedia_camera_framework_path}/dynamic_libs/image_framework/include",
-    "${multimedia_camera_framework_path}/dynamic_libs/media_library/include",
   ]
   sources = [
     "${multimedia_camera_framework_path}/dynamic_libs/dfx/src/dfx_report.cpp",
     "${multimedia_camera_framework_path}/dynamic_libs/image_framework/src/picture_adapter.cpp",
     "${multimedia_camera_framework_path}/dynamic_libs/media_library/src/photo_asset_adapter.cpp",
     "${multimedia_camera_framework_path}/interfaces/inner_api/native/test/test_common.cpp",
+    "camera_buffer_manager/src/photo_buffer_consumer_unittest.cpp",
     "hdi_camera_test/src/hcamera_host_manager_unittest.cpp",
     "hdi_stream_test/src/hcapture_session_unittest.cpp",
     "hdi_stream_test/src/hstream_capture_unittest.cpp",
@@ -180,13 +183,18 @@ ohos_unittest("camera_service_unittest") {
   }
 
   if (camera_framework_feature_beauty_notification) {
-    if (defined(global_parts_info) &&
-      defined(
-          global_parts_info.notification_distributed_notification_service)) {
-      external_deps += [ "distributed_notification_service:ans_innerkits" ]
-      defines += [ "NOTIFICATION_ENABLE" ]
-      sources += [ "camera_service_common/src/camera_beauty_notification_unittest.cpp" ]
+    if (fwk_no_hidden || use_clang_coverage) {
+        if (defined(global_parts_info) &&
+          defined(global_parts_info.notification_distributed_notification_service)) {
+            external_deps += [ "distributed_notification_service:ans_innerkits" ]
+            defines += [ "NOTIFICATION_ENABLE" ]
+            sources += [ "camera_service_common/src/camera_beauty_notification_unittest.cpp" ]
+          }
     }
+  }
+
+  if (camera_framework_feature_capture_yuv) {
+    defines += [ "CAMERA_CAPTURE_YUV" ]
   }
 
   cflags = [

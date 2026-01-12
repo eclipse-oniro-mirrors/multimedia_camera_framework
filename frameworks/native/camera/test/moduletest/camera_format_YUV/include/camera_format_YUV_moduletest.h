@@ -30,15 +30,38 @@
 #include "hap_token_info.h"
 #include "nativetoken_kit.h"
 #include "surface.h"
-#include "system_ability_definition.h"
 #include "test_common.h"
 #include "token_setproc.h"
+#ifdef CAMERA_CAPTURE_YUV
+#include "photo_output_callback.h"
+#endif
 
 namespace OHOS {
 namespace CameraStandard {
 
 const int32_t WAIT_TIME_AFTER_CAPTURE = 1;
 const int32_t WAIT_TIME_AFTER_START = 2;
+#ifdef CAMERA_CAPTURE_YUV
+bool photoFlag_ = false;
+bool photoAssetFlag_ = false;
+bool thumbnailFlag_ = false;
+
+class TestCaptureCallback : public PhotoAvailableCallback,
+                            public PhotoAssetAvailableCallback,
+                            public ThumbnailCallback {
+public:
+    TestCaptureCallback() = default;
+    ~TestCaptureCallback() = default;
+
+    void OnPhotoAvailable(
+        const std::shared_ptr<Media::NativeImage> nativeImage, const bool isRaw = false) const override;
+    void OnPhotoAvailable(const std::shared_ptr<Media::Picture> picture) const override;
+    void OnPhotoAssetAvailable(const int32_t captureId, const std::string &uri, const int32_t cameraShotType,
+        const std::string &burstKey) const override;
+    void OnThumbnailAvailable(
+        int32_t captureId, int64_t timestamp, std::unique_ptr<Media::PixelMap> pixelMap) const override;
+};
+#endif
 
 class AppAbilityCallback : public AbilityCallback {
 public:
@@ -85,7 +108,30 @@ public:
 protected:
     std::vector<Profile> previewProfile_ = {};
     std::vector<Profile> photoProfile_ = {};
+#ifdef CAMERA_CAPTURE_YUV
+    sptr<PreviewOutput> previewOutput_;
+    sptr<PhotoOutput> photoOutput_;
+    Profile yuvPhotoProfile_;
+    sptr<IBufferConsumerListener> previewListener_ = nullptr;
+    sptr<Surface> previewSurface_ = nullptr;
+    uint8_t callbackFlag_ = 0;
+    void UpdateCameraFullOutputCapability(int32_t modeName = 0);
+    void CreatePreviewOutput(Profile &profile, sptr<PreviewOutput> &previewOutput);
+    void CreateYuvPhotoOutput();
+#endif
 };
+
+#ifdef CAMERA_CAPTURE_YUV
+class TestPreviewConsumer : public IBufferConsumerListener {
+public:
+    TestPreviewConsumer(wptr<Surface> surface);
+    ~TestPreviewConsumer() override;
+
+    void OnBufferAvailable() override;
+private:
+    wptr<Surface> surface_ = nullptr;
+};
+#endif
 } // namespace CameraStandard
 } // namespace OHOS
 
