@@ -194,9 +194,16 @@ ohos_moduletest("camera_format_YUV_moduletest") {
     "graphic_surface:surface",
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
+    "image_framework:image_native",
     "ipc:ipc_core",
     "os_account:os_account_innerkits",
   ]
+
+  defines = []
+
+  if (camera_framework_feature_capture_yuv) {
+    defines += [ "CAMERA_CAPTURE_YUV" ]
+  }
 
   cflags = [
     "-fPIC",
@@ -366,6 +373,8 @@ ohos_moduletest("camera_photo_moduletest") {
     "resource_management:librawfile",
     "safwk:system_ability_fwk",
   ]
+
+  defines = []
 
   if (camera_framework_feature_capture_yuv) {
     defines += [ "CAMERA_CAPTURE_YUV" ]

@@ -29,6 +29,11 @@
 #include "sample_info.h"
 #include "media_manager_proxy.h"
 #include "ipc_file_descriptor.h"
+#ifdef CAMERA_CAPTURE_YUV
+#include "ipc_skeleton.h"
+#include "photo_asset_proxy.h"
+#include "photo_asset_interface.h"
+#endif
 #include "moving_photo_proxy.h"
 #include "camera_server_photo_proxy.h"
 #include "picture_proxy.h"
@@ -963,5 +968,109 @@ HWTEST_F(CameraCommonUtilsUnitTest, CameraPictureProxy_Test_003, TestSize.Level0
     pictureProxy->RotatePicture();
     MEDIA_INFO_LOG("CameraPictureProxy_Test_003 End");
 }
-} // namespace CameraStandard
-} // namespace OHOS
+
+/*
+ * Feature: PictureProxy
+ * Function: Test PictureProxy related interface
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test PictureProxy related interface when param is normal.
+ */
+HWTEST_F(CameraCommonUtilsUnitTest, CameraPictureProxy_Test_004, TestSize.Level0)
+{
+    MEDIA_INFO_LOG("CameraPictureProxy_Test_004 Start");
+    auto pictureProxy = PictureProxy::CreatePictureProxy();
+    ASSERT_NE(pictureProxy, nullptr);
+    ASSERT_NE(pictureProxy->pictureIntf_, nullptr);
+
+    sptr<SurfaceBuffer> surfaceBuffer = SurfaceBuffer::Create();
+    EXPECT_NE(surfaceBuffer, nullptr);
+    pictureProxy->Create(surfaceBuffer);
+    pictureProxy->SetAuxiliaryPicture(surfaceBuffer, static_cast<CameraAuxiliaryPictureType>(0));
+
+    Parcel data;
+    pictureProxy->Marshalling(data);
+    pictureProxy->UnmarshallingPicture(data);
+    MEDIA_INFO_LOG("CameraPictureProxy_Test_004 End");
+}
+
+#ifdef CAMERA_CAPTURE_YUV
+/*
+ * Feature: PhotoAssetProxy
+ * Function: Test GetBundleName interface
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetBundleName interface.
+ */
+HWTEST_F(CameraCommonUtilsUnitTest, PhotoAssetProxy_Test_001, TestSize.Level0)
+{
+    MEDIA_INFO_LOG("PhotoAssetProxy_Test_001 Start");
+
+    int32_t callingUid = IPCSkeleton::GetCallingUid();
+    std::string bundleName = PhotoAssetProxy::GetBundleName(callingUid);
+    EXPECT_TRUE(bundleName.empty());
+
+    MEDIA_INFO_LOG("PhotoAssetProxy_Test_001 End");
+}
+
+/*
+ * Feature: MediaLibraryManagerProxy
+ * Function: RegisterPhotoStateCallback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: mediaLibraryManagerIntf_ is not null, RegisterPhotoStateCallback can be called normally.
+ */
+HWTEST_F(CameraCommonUtilsUnitTest, MediaLibraryManagerProxy_Test_001, TestSize.Level0)
+{
+    MEDIA_INFO_LOG("MediaLibraryManagerProxy_Test_001 Start");
+    MediaLibraryManagerProxy::LoadMediaLibraryDynamiclibAsync();
+    auto proxy = MediaLibraryManagerProxy::GetMediaLibraryManagerProxy();
+    ASSERT_NE(proxy, nullptr);
+    ASSERT_NE(proxy->mediaLibraryManagerIntf_, nullptr);
+    ASSERT_NE(proxy->mediaLibraryLib_, nullptr);
+
+    auto callback = [](int32_t state) {
+        MEDIA_INFO_LOG("MediaLibraryManagerProxy_Test_001 callback, state = %{public}d", state);
+    };
+
+    proxy->RegisterPhotoStateCallback(callback);
+    proxy->UnregisterPhotoStateCallback();
+    MediaLibraryManagerProxy::FreeMediaLibraryDynamiclibDelayed();
+    MEDIA_INFO_LOG("PhotoAssetPrMediaLibraryManagerProxy_Test_001oxy_Test_002 End");
+}
+
+/*
+ * Feature: MediaLibraryManagerProxy
+ * Function: UnregisterPhotoStateCallback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: mediaLibraryManagerIntf_ is null, UnregisterPhotoStateCallback should return
+ * immediately without crash.
+ */
+HWTEST_F(CameraCommonUtilsUnitTest, MediaLibraryManagerProxy_Test_002, TestSize.Level0)
+{
+    MEDIA_INFO_LOG("MediaLibraryManagerProxy_Test_002 Start");
+    MediaLibraryManagerProxy::LoadMediaLibraryDynamiclibAsync();
+    auto proxy = MediaLibraryManagerProxy::GetMediaLibraryManagerProxy();
+    ASSERT_NE(proxy, nullptr);
+
+    proxy->mediaLibraryManagerIntf_.reset();
+
+    auto callback = [](int32_t state) {
+        MEDIA_INFO_LOG("MediaLibraryManagerProxy_Test_002 callback, state = %{public}d", state);
+    };
+
+    proxy->RegisterPhotoStateCallback(callback);
+    proxy->UnregisterPhotoStateCallback();
+
+    EXPECT_EQ(proxy->mediaLibraryManagerIntf_, nullptr);
+    MediaLibraryManagerProxy::FreeMediaLibraryDynamiclibDelayed();
+    MEDIA_INFO_LOG("MediaLibraryManagerProxy_Test_002 End");
+}
+#endif
+}  // namespace CameraStandard
+}  // namespace OHOS

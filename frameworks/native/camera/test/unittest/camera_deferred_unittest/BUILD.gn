@@ -161,6 +161,10 @@ ohos_unittest("camera_deferred_unittest") {
     defines += [ "CAMERA_USE_SENSOR" ]
   }
 
+  if (camera_framework_feature_capture_yuv) {
+    defines += [ "CAMERA_CAPTURE_YUV" ]
+  }
+
   cflags = [
     "-fPIC",
     "-Werror=unused",

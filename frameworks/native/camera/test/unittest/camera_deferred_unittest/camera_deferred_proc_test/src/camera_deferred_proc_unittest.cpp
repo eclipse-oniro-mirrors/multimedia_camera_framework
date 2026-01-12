@@ -93,9 +93,10 @@ HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_001, TestSize.Level
     deferredProcSession->BeginSynchronize();
 
     std::string imageId = "testImageId";
+    std::string bundleName = "testBundleName";
     DpsMetadata metadata;
     bool discardable = true;
-    deferredProcSession->AddImage(imageId, metadata, discardable);
+    deferredProcSession->AddImage(imageId, metadata, discardable, bundleName);
 
     bool restorable = true;
     deferredProcSession->RemoveImage(imageId, restorable);
@@ -134,9 +135,10 @@ HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_002, TestSize.Level
     deferredProcSession->BeginSynchronize();
 
     std::string imageId = "testImageId";
+    std::string bundleName = "testBundleName";
     DpsMetadata metadata;
     bool discardable = true;
-    deferredProcSession->AddImage(imageId, metadata, discardable);
+    deferredProcSession->AddImage(imageId, metadata, discardable, bundleName);
 
     bool restorable = true;
     deferredProcSession->RemoveImage(imageId, restorable);

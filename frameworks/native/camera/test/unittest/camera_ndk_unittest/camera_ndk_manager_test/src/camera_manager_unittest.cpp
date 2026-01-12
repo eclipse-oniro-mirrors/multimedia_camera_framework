@@ -1343,6 +1343,73 @@ HWTEST_F(CameraManagerUnitTest, camera_manager_unittest_036, TestSize.Level0)
     EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
 }
 
+#ifdef CAMERA_CAPTURE_YUV
+/*
+ * Feature: Framework
+ * Function: Test getSupportedFullOutPutCapabilities with scene mode
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: When valid parameters are entered, Test specified camera
+ * can getSupportedFullOutPutCapabilities in three modes (NORMAL_PHOTO, NORMAL_VIDEO, SECURE_PHOTO)
+ */
+HWTEST_F(CameraManagerUnitTest, camera_manager_unittest_037, TestSize.Level0)
+{
+    Camera_ErrorCode ret = CAMERA_OK;
+    Camera_OutputCapability *outputCapability = nullptr;
+    ret = OH_CameraManager_GetSupportedFullCameraOutputCapabilityWithSceneMode(cameraManager, cameraDevice,
+    NORMAL_PHOTO, &outputCapability);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_NE(outputCapability, nullptr);
+
+    ret = OH_CameraManager_GetSupportedFullCameraOutputCapabilityWithSceneMode(cameraManager, cameraDevice,
+    NORMAL_VIDEO, &outputCapability);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_NE(outputCapability, nullptr);
+
+    ret = OH_CameraManager_GetSupportedFullCameraOutputCapabilityWithSceneMode(cameraManager, cameraDevice,
+    SECURE_PHOTO, &outputCapability);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_NE(outputCapability, nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test get supported full output capabilities with scene mode
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: When invalid parameters are entered, Test specified camera
+ * cannot get supported full capabilities
+ */
+HWTEST_F(CameraManagerUnitTest, camera_manager_unittest_038, TestSize.Level0)
+{
+    Camera_ErrorCode ret = CAMERA_OK;
+    Camera_OutputCapability *outputCapability = nullptr;
+    Camera_SceneMode mode = NORMAL_PHOTO;
+
+    ret = OH_CameraManager_GetSupportedFullCameraOutputCapabilityWithSceneMode(nullptr, cameraDevice, mode,
+        &outputCapability);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    EXPECT_EQ(outputCapability, nullptr);
+
+    ret = OH_CameraManager_GetSupportedFullCameraOutputCapabilityWithSceneMode(cameraManager, nullptr, mode,
+        &outputCapability);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    EXPECT_EQ(outputCapability, nullptr);
+
+    ret = OH_CameraManager_GetSupportedFullCameraOutputCapabilityWithSceneMode(cameraManager, cameraDevice,
+        static_cast<Camera_SceneMode>(-1), &outputCapability);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    EXPECT_EQ(outputCapability, nullptr);
+
+    ret = OH_CameraManager_GetSupportedFullCameraOutputCapabilityWithSceneMode(cameraManager, cameraDevice, mode,
+        nullptr);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    EXPECT_EQ(outputCapability, nullptr);
+}
+#endif
+
 /*
  * Feature: Framework
  * Function: Test cameraManager by registering multiple state callbacks,

@@ -2117,5 +2117,84 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_096, Test
     foldStatus = cameraManager_->DisplayModeToFoldStatus(displayMode);
     EXPECT_EQ(foldStatus, 11);
 }
+
+#ifdef CAMERA_CAPTURE_YUV
+/*
+ * Feature: Framework
+ * Function: Test cameraManager GetSupportedFullOutputCapability with yuv photo
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetSupportedFullOutputCapability with yuv photo
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_097, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+
+    SceneMode mode = PORTRAIT;
+    cameras[0]->supportedModes_.clear();
+    cameras[0]->supportedModes_.push_back(PORTRAIT);
+    std::vector<SceneMode> modes = cameraManager_->GetSupportedModes(cameras[0]);
+    ASSERT_FALSE(modes.empty());
+
+    sptr<CameraOutputCapability> ability = cameraManager_->GetSupportedFullOutputCapability(cameras[0], mode);
+    ASSERT_NE(ability, nullptr);
+
+    vector<Profile> photoProfiles = ability->GetPhotoProfiles();
+
+    mode = SceneMode::CAPTURE;
+    ability = cameraManager_->GetSupportedFullOutputCapability(cameras[0], mode);
+    ASSERT_NE(ability, nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameramanager with FillExtendedSupportPhotoFormats
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test FillExtendedSupportPhotoFormats
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_098, TestSize.Level0)
+{
+    cameraManager_->photoFormats_.clear();
+    std::vector<Profile> photoProfiles = {};
+    cameraManager_->FillExtendedSupportPhotoFormats(photoProfiles);
+    EXPECT_EQ(photoProfiles.size(), 0);
+
+    cameraManager_->photoFormats_ = {CAMERA_FORMAT_HEIC};
+    cameraManager_->FillExtendedSupportPhotoFormats(photoProfiles);
+    EXPECT_EQ(photoProfiles.size(), 0);
+
+    photoProfiles = {
+        Profile(CAMERA_FORMAT_JPEG, {1920, 1080}),
+        Profile(CAMERA_FORMAT_YUV_420_SP, {1280, 720})
+    };
+    cameraManager_->FillExtendedSupportPhotoFormats(photoProfiles);
+    EXPECT_NE(photoProfiles.size(), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameramanager with RemoveExtendedSupportPhotoFormats
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test RemoveExtendedSupportPhotoFormats to remove YUV format
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_099, TestSize.Level0)
+{
+    std::vector<Profile> photoProfiles = {};
+    cameraManager_->RemoveExtendedSupportPhotoFormats(photoProfiles);
+    EXPECT_EQ(photoProfiles.size(), 0);
+
+    photoProfiles = {
+        Profile(CAMERA_FORMAT_JPEG, {1920, 1080}),
+        Profile(CAMERA_FORMAT_YUV_420_SP, {1280, 720})
+    };
+    cameraManager_->RemoveExtendedSupportPhotoFormats(photoProfiles);
+    EXPECT_EQ(photoProfiles.size(), 1);
+}
+#endif
 }
 }

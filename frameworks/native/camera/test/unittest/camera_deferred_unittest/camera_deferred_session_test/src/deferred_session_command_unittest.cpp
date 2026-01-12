@@ -356,7 +356,8 @@ HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_013, 
 {
     std::string photoId = "testPhotoId";
     DpsMetadata metadata;
-    std::shared_ptr<AddPhotoCommand> addPhotoCmd = std::make_shared<AddPhotoCommand>(USER_ID, photoId, metadata, true);
+    std::shared_ptr<AddPhotoCommand> addPhotoCmd = std::make_shared<AddPhotoCommand>(
+        USER_ID, photoId, metadata, true, "");
     EXPECT_EQ(addPhotoCmd->Executing(), DP_NULL_POINTER);
     std::shared_ptr<RestorePhotoCommand> restorePhotoCmd = std::make_shared<RestorePhotoCommand>(USER_ID, photoId);
     EXPECT_EQ(restorePhotoCmd->Executing(), DP_NULL_POINTER);

@@ -148,6 +148,10 @@ HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_001, Te
     postProcessor->Reset();
     postProcessor->SetExecutionMode(ExecutionMode::HIGH_PERFORMANCE);
     postProcessor->DisconnectService();
+#ifdef CAMERA_CAPTURE_YUV
+    std::string testBundleName = "com.example.camera.test";
+    postProcessor->SetProcessBundleNameResult(testBundleName);
+#endif
     int32_t ret = postProcessor->GetConcurrency(ExecutionMode::HIGH_PERFORMANCE);
     EXPECT_EQ(ret, 1);
 }

@@ -136,7 +136,7 @@ HWTEST_F(PhotoSessionUnitTest, photo_session_unittest_007, TestSize.Level0)
     std::string imageId = "imageIdtest";
     DpsMetadata metadata;
     metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_BACKGROUND);
-    auto ret = photoProcessing->AddImage(imageId, metadata, false);
+    auto ret = photoProcessing->AddImage(imageId, metadata, false, "");
     EXPECT_EQ(ret, 0);
 }
 
@@ -147,7 +147,7 @@ HWTEST_F(PhotoSessionUnitTest, photo_session_unittest_008, TestSize.Level0)
     std::string imageId = "imageIdtest";
     DpsMetadata metadata;
     metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
-    auto ret = photoProcessing->AddImage(imageId, metadata, false);
+    auto ret = photoProcessing->AddImage(imageId, metadata, false, "");
     EXPECT_EQ(ret, 0);
 }
 
@@ -158,7 +158,7 @@ HWTEST_F(PhotoSessionUnitTest, photo_session_unittest_009, TestSize.Level0)
     std::string imageId = "imageIdtest";
     DpsMetadata metadata;
     metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
-    auto ret = photoProcessing->AddImage(imageId, metadata, false);
+    auto ret = photoProcessing->AddImage(imageId, metadata, false, "");
     EXPECT_EQ(ret, 0);
     ret = photoProcessing->RemoveImage(imageId, true);
     EXPECT_EQ(ret, 0);
@@ -173,7 +173,7 @@ HWTEST_F(PhotoSessionUnitTest, photo_session_unittest_010, TestSize.Level0)
     std::string imageId = "imageIdtest";
     DpsMetadata metadata;
     metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_BACKGROUND);
-    auto ret = photoProcessing->AddImage(imageId, metadata, false);
+    auto ret = photoProcessing->AddImage(imageId, metadata, false, "");
     EXPECT_EQ(ret, 0);
     ret = photoProcessing->RemoveImage(imageId, false);
     EXPECT_EQ(ret, 0);
@@ -186,7 +186,7 @@ HWTEST_F(PhotoSessionUnitTest, photo_session_unittest_011, TestSize.Level0)
     std::string imageId = "imageIdtest";
     DpsMetadata metadata;
     metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
-    auto ret = photoProcessing->AddImage(imageId, metadata, false);
+    auto ret = photoProcessing->AddImage(imageId, metadata, false, "");
     EXPECT_EQ(ret, 0);
     ret = photoProcessing->RemoveImage(imageId, false);
     EXPECT_EQ(ret, 0);
@@ -202,7 +202,7 @@ HWTEST_F(PhotoSessionUnitTest, photo_session_unittest_012, TestSize.Level0)
     std::string appName = "imagetest";
     DpsMetadata metadata;
     metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
-    auto ret = photoProcessing->AddImage(imageId, metadata, false);
+    auto ret = photoProcessing->AddImage(imageId, metadata, false, "");
     EXPECT_EQ(ret, 0);
     ret = photoProcessing->ProcessImage(appName, imageId);
     EXPECT_EQ(ret, 0);
@@ -216,7 +216,7 @@ HWTEST_F(PhotoSessionUnitTest, photo_session_unittest_013, TestSize.Level0)
     std::string appName = "imagetest";
     DpsMetadata metadata;
     metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
-    auto ret = photoProcessing->AddImage(imageId, metadata, false);
+    auto ret = photoProcessing->AddImage(imageId, metadata, false, "");
     EXPECT_EQ(ret, 0);
     ret = photoProcessing->ProcessImage(appName, imageId);
     EXPECT_EQ(ret, 0);
@@ -234,7 +234,7 @@ HWTEST_F(PhotoSessionUnitTest, photo_session_unittest_014, TestSize.Level0)
     metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
     auto ret = photoProcessing->BeginSynchronize();
     EXPECT_EQ(ret, 0);
-    ret = photoProcessing->AddImage(imageId, metadata, false);
+    ret = photoProcessing->AddImage(imageId, metadata, false, "");
     EXPECT_EQ(ret, 0);
     ret = photoProcessing->ProcessImage(appName, imageId);
     EXPECT_EQ(ret, 0);

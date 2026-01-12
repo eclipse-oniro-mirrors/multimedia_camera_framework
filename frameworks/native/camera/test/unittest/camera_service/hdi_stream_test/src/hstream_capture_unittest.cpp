@@ -21,6 +21,9 @@
 #include "iservice_registry.h"
 #include "gmock/gmock.h"
 #include "stream_capture_callback_stub.h"
+#ifdef CAMERA_CAPTURE_YUV
+#include "photo_asset_proxy.h"
+#endif
 
 using namespace testing::ext;
 using ::testing::Return;
@@ -131,6 +134,27 @@ public:
     MOCK_METHOD1(OnOfflineDeliveryFinished, int32_t(int32_t captureId));
     ~MockHStreamCaptureCallbackStub() {}
 };
+
+#ifdef CAMERA_CAPTURE_YUV
+class MockStreamCapturePhotoCallback : public IStreamCapturePhotoCallback {
+public:
+    MOCK_METHOD3(OnPhotoAvailable, int32_t(sptr<SurfaceBuffer> surfaceBuffer, int64_t timestamp, bool isRaw));
+    MOCK_METHOD1(OnPhotoAvailable, int32_t(std::shared_ptr<PictureIntf> picture));
+    sptr<IRemoteObject> AsObject() override
+    {
+        return nullptr;
+    }
+};
+
+class MockStreamCapturePhotoAssetCallback
+    : public OHOS::CameraStandard::IStreamCapturePhotoAssetCallback {
+public:
+    MOCK_METHOD4(OnPhotoAssetAvailable,
+        ErrCode(int32_t captureId, const std::string& uri, int32_t cameraShotType,
+                const std::string& burstKey));
+    sptr<IRemoteObject> AsObject() override { return nullptr; }
+};
+#endif
 
 void HStreamCaptureUnitTest::SetUpTestCase(void)
 {
@@ -1144,6 +1168,46 @@ HWTEST_F(HStreamCaptureUnitTest, OnCaptureReady002, TestSize.Level0)
     streamCapture->Release();
 }
 
+#ifdef CAMERA_CAPTURE_YUV
+/*
+ * Feature: Framework
+ * Function: Test HStreamCapture::OnCaptureReady under YUV capture mode.
+ * SubFunction: Photo saving limit logic.
+ * FunctionPoints: OnCaptureReady, photo count limit.
+ * EnvConditions: NA
+ * CaseDescription: When unsaved photo count is below limit, OnCaptureReady callback should be invoked.
+ */
+HWTEST_F(HStreamCaptureUnitTest, OnCaptureReady003, TestSize.Level0)
+{
+    int32_t format = CAMERA_FORMAT_YUV_420_SP;
+    int32_t width = PHOTO_DEFAULT_WIDTH;
+    int32_t height = PHOTO_DEFAULT_HEIGHT;
+    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
+    ASSERT_NE(surface, nullptr);
+    sptr<IBufferProducer> producer = surface->GetProducer();
+    ASSERT_NE(producer, nullptr);
+
+    sptr<HStreamCapture> streamCapture = new(std::nothrow) HStreamCapture(producer, format, width, height);
+    ASSERT_NE(streamCapture, nullptr);
+
+    streamCapture->isYuvCapture_ = true;
+    auto mockPhotoAssetCallback = new (std::nothrow) MockStreamCapturePhotoAssetCallback();
+    ASSERT_NE(mockPhotoAssetCallback, nullptr);
+    streamCapture->photoAssetAvaiableCallback_ = mockPhotoAssetCallback;
+    streamCapture->isBursting_ = false;
+    int32_t captureId = 999;
+    uint64_t timestamp = 123456789ULL;
+    streamCapture->OnPhotoStateCallback(2);
+    auto mockCallback = new (std::nothrow) MockHStreamCaptureCallbackStub();
+    ASSERT_NE(mockCallback, nullptr);
+    streamCapture->streamCaptureCallback_ = mockCallback;
+    EXPECT_CALL(*mockCallback, OnCaptureReady(captureId, timestamp)).Times(1);
+    auto ret = streamCapture->OnCaptureReady(captureId, timestamp);
+    EXPECT_EQ(ret, CAMERA_OK);
+    streamCapture->Release();
+}
+#endif
+
 /*
  * Feature: Framework
  * Function: Test DumpStreamInfo.
@@ -1567,5 +1631,128 @@ HWTEST_F(HStreamCaptureUnitTest, camera_fwcoverage_hstream_capture_001, TestSize
     EXPECT_EQ(streamCapture->OnFrameShutterEnd(captureId, timestamp), CAMERA_OK);
     EXPECT_EQ(streamCapture->OnCaptureReady(captureId, timestamp), CAMERA_OK);
 }
+
+#ifdef CAMERA_CAPTURE_YUV
+/*
+ * Feature: Framework
+ * Function: Test HStreamCapture
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: test HStreamCapture PhotoLevelInfo functions
+ */
+HWTEST_F(HStreamCaptureUnitTest, hstream_capture_photoLevelInfo_001, TestSize.Level0)
+{
+    PhotoLevelManager manager;
+
+    manager.SetPhotoLevelInfo(1, true);
+    manager.SetPhotoLevelInfo(2, false);
+
+    EXPECT_TRUE(manager.GetPhotoLevelInfo(1));
+    EXPECT_FALSE(manager.GetPhotoLevelInfo(2));
+
+    EXPECT_FALSE(manager.GetPhotoLevelInfo(3));
+}
+
+/*
+ * Feature: Framework
+ * Function: Test HStreamCapture
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: test HStreamCapture PhotoLevelInfo functions
+ */
+HWTEST_F(HStreamCaptureUnitTest, hstream_capture_photoLevelInfo_002, TestSize.Level0)
+{
+    PhotoLevelManager manager;
+
+    manager.SetPhotoLevelInfo(1, true);
+    manager.SetPhotoLevelInfo(1, false);
+    EXPECT_FALSE(manager.GetPhotoLevelInfo(1));
+}
+
+/*
+ * Feature: Framework
+ * Function: Test HStreamCapture
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: test HStreamCapture PhotoLevelInfo functions
+ */
+HWTEST_F(HStreamCaptureUnitTest, hstream_capture_photoLevelInfo_003, TestSize.Level0)
+{
+    PhotoLevelManager manager;
+
+    manager.SetPhotoLevelInfo(1, true);
+    EXPECT_TRUE(manager.GetPhotoLevelInfo(1));
+    manager.ClearPhotoLevelInfo();
+
+    EXPECT_FALSE(manager.GetPhotoLevelInfo(1));
+    EXPECT_FALSE(manager.GetPhotoLevelInfo(2));
+}
+
+/*
+ * Feature: Framework
+ * Function: Test HStreamCapture
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: When WaitForUnlock returns false (timeout), GetPhotoAssetInstanceForPub should return nullptr.
+ */
+HWTEST_F(HStreamCaptureUnitTest, hstream_capture_getPhotoAssetInstanceForPub_001, TestSize.Level0)
+{
+    int32_t format = CAMERA_FORMAT_YUV_420_SP;
+    int32_t width = PHOTO_DEFAULT_WIDTH;
+    int32_t height = PHOTO_DEFAULT_HEIGHT;
+    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
+    ASSERT_NE(surface, nullptr);
+    sptr<IBufferProducer> producer = surface->GetProducer();
+    ASSERT_NE(producer, nullptr);
+    sptr<HStreamCapture> streamCapture = new(std::nothrow) HStreamCapture(producer, format, width, height);
+    ASSERT_NE(streamCapture, nullptr);
+    int32_t captureId = 1;
+    std::shared_ptr<PhotoAssetIntf> proxy = streamCapture->GetPhotoAssetInstanceForPub(captureId);
+    EXPECT_EQ(proxy, nullptr);
+}
+
+/*
+ * Feature: Camera Framework
+ * Function: Test HStreamCapture::OnPhotoAvailable
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test that OnPhotoAvailable(std::shared_ptr<PictureIntf>) correctly invokes the registered callback.
+ */
+HWTEST_F(HStreamCaptureUnitTest, OnPhotoAvailable_PictureIntfVersion, TestSize.Level0)
+{
+    int32_t format = CAMERA_FORMAT_YUV_420_SP;
+    int32_t width = 1920;
+    int32_t height = 1080;
+    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
+    ASSERT_NE(surface, nullptr);
+    sptr<IBufferProducer> producer = surface->GetProducer();
+    ASSERT_NE(producer, nullptr);
+
+    sptr<HStreamCapture> streamCapture = new(std::nothrow) HStreamCapture(producer, format, width, height);
+    ASSERT_NE(streamCapture, nullptr);
+
+    streamCapture->CreateCaptureSurface();
+
+    auto mockCallback = new (std::nothrow) MockStreamCapturePhotoCallback();
+    ASSERT_NE(mockCallback, nullptr);
+    sptr<MockStreamCapturePhotoCallback> callbackSp = mockCallback;
+
+    int32_t ret = streamCapture->SetPhotoAvailableCallback(callbackSp);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    std::shared_ptr<PictureIntf> picture = nullptr;
+    EXPECT_CALL(*mockCallback, OnPhotoAvailable(picture)).Times(1);
+    ret = streamCapture->OnPhotoAvailable(picture);
+    EXPECT_EQ(ret, CAMERA_OK);
+    streamCapture->OnPhotoStateCallback(1);
+    streamCapture->UnSetPhotoAvailableCallback();
+    streamCapture->Release();
+}
+#endif
 }
 }
