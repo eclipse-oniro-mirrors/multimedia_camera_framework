@@ -205,10 +205,6 @@ ohos_shared_library("camera_framework") {
     sources += [ "src/output/movie_file_output_mock.cpp", ]
   }
 
-  if (camera_framework_feature_deferred) {
-    defines += [ "CAMERA_DEFERRED" ]
-  }
-
   if (camera_framework_feature_moving_photo) {
     defines += [ "CAMERA_MOVING_PHOTO" ]
   }

@@ -149,8 +149,5 @@ ohos_fuzztest("DeferredVideoControllerFuzzTest") {
 
 group("fuzztest") {
   testonly = true
-  deps =[]
-  if(camera_framework_feature_deferred) {
-    deps += [ ":DeferredVideoControllerFuzzTest" ]
-  }
+  deps = [ ":DeferredVideoControllerFuzzTest" ]
 }

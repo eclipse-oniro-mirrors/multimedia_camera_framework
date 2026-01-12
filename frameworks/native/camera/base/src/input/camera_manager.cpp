@@ -370,7 +370,6 @@ int CameraManager::CreateDeferredPhotoProcessingSession(int userId,
     std::shared_ptr<IDeferredPhotoProcSessionCallback> callback,
     sptr<DeferredPhotoProcSession> *pDeferredPhotoProcSession)
 {
-#ifdef CAMERA_DEFERRED
     CAMERA_SYNC_TRACE;
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     CHECK_RETURN_RET_ELOG(samgr == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
@@ -400,7 +399,6 @@ int CameraManager::CreateDeferredPhotoProcessingSession(int userId,
 
     deferredPhotoProcSession->SetDeferredPhotoSession(session);
     *pDeferredPhotoProcSession = deferredPhotoProcSession;
-#endif
     return CameraErrorCode::SUCCESS;
 }
 
@@ -419,7 +417,6 @@ int CameraManager::CreateDeferredVideoProcessingSession(int userId,
     std::shared_ptr<IDeferredVideoProcSessionCallback> callback,
     sptr<DeferredVideoProcSession> *pDeferredVideoProcSession)
 {
-#ifdef CAMERA_DEFERRED
     CAMERA_SYNC_TRACE;
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     CHECK_RETURN_RET_ELOG(samgr == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
@@ -448,7 +445,6 @@ int CameraManager::CreateDeferredVideoProcessingSession(int userId,
 
     deferredVideoProcSession->SetDeferredVideoSession(session);
     *pDeferredVideoProcSession = deferredVideoProcSession;
-#endif
     return CameraErrorCode::SUCCESS;
 }
 

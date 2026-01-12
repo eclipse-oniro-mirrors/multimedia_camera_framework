@@ -35,13 +35,11 @@ namespace DeferredProcessing {
 static constexpr int32_t MIN_SIZE_NUM = 60;
  
 std::shared_ptr<CameraStrategy> EventMonitorFuzzer::camerastrategyfuzz_ = nullptr;
-#ifdef CAMERA_DEFERRED
 std::shared_ptr<BatteryLevelStrategy> EventMonitorFuzzer::batterylevelstrategyfuzz_ = nullptr;
 std::shared_ptr<BatteryStrategy> EventMonitorFuzzer::batterystrategyfuzz_ = nullptr;
 std::shared_ptr<ChargingStrategy> EventMonitorFuzzer::chargingstrategyfuzz_ = nullptr;
 std::shared_ptr<ScreenStrategy> EventMonitorFuzzer::screenstrategyfuzz_ = nullptr;
 std::shared_ptr<ThermalStrategy> EventMonitorFuzzer::thermalstrategyfuzz_ = nullptr;
-#endif
 std::shared_ptr<EventStatusChangeCommand> EventMonitorFuzzer::eventstatuschangecommandfuzz_ = nullptr;
 std::shared_ptr<EventsInfo> EventMonitorFuzzer::eventsinfofuzz_ = nullptr;
 std::shared_ptr<EventsMonitor> EventMonitorFuzzer::eventsmonitorfuzz_ = nullptr;
@@ -55,7 +53,6 @@ void EventMonitorFuzzer::EventMonitorCameraStrategyFuzzTest(FuzzedDataProvider& 
     EventFwk::CommonEventData CommonEventData { want };
     camerastrategyfuzz_->handleEvent(CommonEventData);
  
-#ifdef CAMERA_DEFERRED
     batterylevelstrategyfuzz_ = std::make_shared<BatteryLevelStrategy>();
     batterylevelstrategyfuzz_->handleEvent(CommonEventData);
  
@@ -70,7 +67,6 @@ void EventMonitorFuzzer::EventMonitorCameraStrategyFuzzTest(FuzzedDataProvider& 
  
     thermalstrategyfuzz_ = std::make_shared<ThermalStrategy>();
     thermalstrategyfuzz_->handleEvent(CommonEventData);
-#endif
 
     int32_t value = 1;
     int32_t enumval = fdp.ConsumeIntegralInRange<int32_t>(1, 13);
@@ -103,10 +99,8 @@ void EventMonitorFuzzer::EventMonitorCameraStrategyFuzzTest(FuzzedDataProvider& 
     eventsmonitorfuzz_->NotifyCameraSessionStatus(camerasessionstatus);
     int32_t status = fdp.ConsumeIntegral<int32_t>();
     eventsmonitorfuzz_->NotifyImageEnhanceStatus(status);
-#ifdef CAMERA_DEFERRED
     status = fdp.ConsumeIntegral<int32_t>();
     eventsmonitorfuzz_->NotifyVideoEnhanceStatus(status);
-#endif
     status = fdp.ConsumeIntegral<int32_t>();
     eventsmonitorfuzz_->NotifyScreenStatus(status);
     status = fdp.ConsumeIntegral<int32_t>();

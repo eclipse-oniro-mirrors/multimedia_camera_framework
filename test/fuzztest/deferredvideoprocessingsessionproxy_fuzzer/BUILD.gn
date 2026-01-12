@@ -111,8 +111,5 @@ ohos_fuzztest("DeferredVideoProcessingSessionProxyFuzzTest") {
 
 group("fuzztest") {
   testonly = true
-  deps = []
-  if (camera_framework_feature_deferred) {
-    deps += [ ":DeferredVideoProcessingSessionProxyFuzzTest" ]
-  }
+  deps = [ ":DeferredVideoProcessingSessionProxyFuzzTest" ]
 }

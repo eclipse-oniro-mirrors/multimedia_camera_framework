@@ -67,9 +67,7 @@ namespace OHOS {
 namespace CameraStandard {
 using namespace std;
 using namespace OHOS::HDI::Camera::V1_0;
-#ifdef CAMERA_DEFERRED
 using namespace DeferredProcessing;
-#endif
 struct CameraMetaInfo {
     string cameraId;
     uint8_t cameraType;

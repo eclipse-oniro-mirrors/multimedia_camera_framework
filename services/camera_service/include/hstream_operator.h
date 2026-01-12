@@ -65,9 +65,7 @@ namespace CameraStandard {
 using OHOS::HDI::Camera::V1_0::CaptureEndedInfo;
 using OHOS::HDI::Camera::V1_0::CaptureErrorInfo;
 using namespace std::chrono;
-#ifdef CAMERA_DEFERRED
 using namespace DeferredProcessing;
-#endif
 using namespace Media;
 constexpr uint32_t OPERATOR_DEFAULT_ENCODER_THREAD_NUMBER = 1;
 class PermissionStatusChangeCb;
