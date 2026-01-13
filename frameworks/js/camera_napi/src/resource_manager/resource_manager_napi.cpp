@@ -418,7 +418,7 @@ napi_value ResourceManagerNapi::QueryFeatureInfo(napi_env env, napi_callback_inf
         return result;
     }
     if (argc != ARGS_TWO) {
-        MEDIA_ERR_LOG("ResourceManagerNapi::QueryFeatureInfo argsize error");
+        MEDIA_ERR_LOG("ResourceManagerNapi::QueryFeatureInfo Invalid input parameters");
         return result;
     }
     napi_valuetype res = napi_undefined;
@@ -470,7 +470,7 @@ napi_value ResourceManagerNapi::RequestFeatureInfo(napi_env env, napi_callback_i
         return result;
     }
     if (argc != ARGS_TWO && argc != ARGS_THREE) {
-        MEDIA_ERR_LOG("ResourceManagerNapi::RequestFeatureInfo argsize error");
+        MEDIA_ERR_LOG("ResourceManagerNapi::RequestFeatureInfo Invalid input parameters");
         return result;
     }
     napi_valuetype resParam = napi_undefined;
@@ -522,7 +522,7 @@ napi_value ResourceManagerNapi::Destroy(napi_env env, napi_callback_info info)
         return result;
     }
     if (argc != ARGS_ONE) {
-        MEDIA_ERR_LOG("ResourceManagerNapi::Destroy argsize error");
+        MEDIA_ERR_LOG("ResourceManagerNapi::Destroy Invalid input parameters");
         return result;
     }
     RequestBodyParams requestBody;
@@ -579,7 +579,7 @@ napi_value ResourceManagerNapi::PauseTask(napi_env env, napi_callback_info info)
         return result;
     }
     if (argc != ARGS_ONE) {
-        MEDIA_ERR_LOG("ResourceManagerNapi::PauseTask arg size error");
+        MEDIA_ERR_LOG("ResourceManagerNapi::PauseTask Invalid input parameters");
         return result;
     }
     RequestBodyParams requestBody;
@@ -634,7 +634,7 @@ napi_value ResourceManagerNapi::ResumeTask(napi_env env, napi_callback_info info
         return result;
     }
     if (argc != ARGS_ONE) {
-        MEDIA_ERR_LOG("ResourceManagerNapi::ResumeTask argsize error");
+        MEDIA_ERR_LOG("ResourceManagerNapi::ResumeTask Invalid input parameters");
         return result;
     }
     RequestBodyParams requestBody;
