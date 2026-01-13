@@ -79,7 +79,6 @@ void PhotoAssetBufferConsumer::ExecuteOnBufferAvailable()
     int32_t originCaptureId = CameraSurfaceBufferUtil::GetCaptureId(newSurfaceBuffer);
     int32_t captureId = CameraSurfaceBufferUtil::GetMaskCaptureId(newSurfaceBuffer);
     int32_t unMaskedCaptureId = CameraSurfaceBufferUtil::GetCaptureId(newSurfaceBuffer);
-    CameraReportDfxUtils::GetInstance()->SetCaptureState(CaptureState::PHOTO_AVAILABLE, unMaskedCaptureId);
     MEDIA_DEBUG_LOG("OnBufferAvailable unMaskedCaptureId:%{public}d", unMaskedCaptureId);
     CameraReportDfxUtils::GetInstance()->SetFirstBufferEndInfo(unMaskedCaptureId);
     CameraReportDfxUtils::GetInstance()->SetPrepareProxyStartInfo(unMaskedCaptureId);

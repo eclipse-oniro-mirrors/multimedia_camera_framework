@@ -124,10 +124,8 @@ void AuxiliaryBufferConsumer::ExecuteOnBufferAvailable()
             MEDIA_INFO_LOG("AuxiliaryBufferConsumer StopMonitor, surfaceName=%{public}s, pictureHandle = %{public}d, "
                            "captureId = %{public}d",
                 surfaceName_.c_str(), pictureHandle, captureId);
-#ifdef CAMERA_DEFERRED
             DeferredProcessing::Watchdog::GetGlobalWatchdog().DoTimeout(pictureHandle);
             DeferredProcessing::Watchdog::GetGlobalWatchdog().StopMonitor(pictureHandle);
-#endif
             streamCapture->captureIdAuxiliaryCountMap_[captureId] = -1;
             MEDIA_INFO_LOG("AuxiliaryBufferConsumer captureIdAuxiliaryCountMap_ = -1");
         }

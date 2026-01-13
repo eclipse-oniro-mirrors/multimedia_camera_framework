@@ -46,9 +46,7 @@
 #include "camera_metadata.h"
 #include "datashare_predicates.h"
 #include "datashare_result_set.h"
-#ifdef CAMERA_DEFERRED
 #include "deferred_processing_service.h"
-#endif
 #include "display_manager_lite.h"
 #include "hcamera_device_manager.h"
 #include "hstream_operator_manager.h"
@@ -161,10 +159,8 @@ void HCameraService::OnStart()
     MEDIA_INFO_LOG("HCameraService OnStart begin");
     CHECK_PRINT_ELOG(
         cameraHostManager_->Init() != CAMERA_OK, "HCameraService OnStart failed to init camera host manager.");
-#ifdef CAMERA_DEFERRED
     // initialize deferred processing service.
     DeferredProcessing::DeferredProcessingService::GetInstance().Initialize();
-#endif
     cameraDataShareHelper_ = std::make_shared<CameraDataShareHelper>();
     AddSystemAbilityListener(DISTRIBUTED_KV_DATA_SERVICE_ABILITY_ID);
     AddSystemAbilityListener(COMMON_EVENT_SERVICE_ID);
@@ -855,7 +851,6 @@ int32_t HCameraService::CreateDeferredPhotoProcessingSession(int32_t userId,
     const sptr<DeferredProcessing::IDeferredPhotoProcessingSessionCallback>& callback,
     sptr<DeferredProcessing::IDeferredPhotoProcessingSession>& session)
 {
-#ifdef CAMERA_DEFERRED
     CAMERA_SYNC_TRACE;
     CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION, "HCameraService::CheckSystemApp fail");
     CameraXCollie cameraXCollie = CameraXCollie("HCameraService::CreateDeferredPhotoProcessingSession");
@@ -868,7 +863,6 @@ int32_t HCameraService::CreateDeferredPhotoProcessingSession(int32_t userId,
         DeferredProcessing::DeferredProcessingService::GetInstance().CreateDeferredPhotoProcessingSession(userId,
         callback);
     session = photoSession;
-#endif
     return CAMERA_OK;
 }
 
@@ -876,7 +870,6 @@ int32_t HCameraService::CreateDeferredVideoProcessingSession(int32_t userId,
     const sptr<DeferredProcessing::IDeferredVideoProcessingSessionCallback>& callback,
     sptr<DeferredProcessing::IDeferredVideoProcessingSession>& session)
 {
-#ifdef CAMERA_DEFERRED
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("HCameraService::CreateDeferredVideoProcessingSession enter.");
     sptr<DeferredProcessing::IDeferredVideoProcessingSession> videoSession;
@@ -887,7 +880,6 @@ int32_t HCameraService::CreateDeferredVideoProcessingSession(int32_t userId,
         DeferredProcessing::DeferredProcessingService::GetInstance().CreateDeferredVideoProcessingSession(userId,
         callback);
     session = videoSession;
-#endif
     return CAMERA_OK;
 }
 
@@ -1872,10 +1864,8 @@ int32_t HCameraService::PrelaunchCamera(int32_t flag)
     #endif
     // only touch up and no flag enable prelaunch
     CHECK_RETURN_RET((flag != 1) && (flag != -1), CAMERA_OK);
-#ifdef CAMERA_DEFERRED
     // notify deferredprocess stop
     DeferredProcessing::DeferredProcessingService::GetInstance().NotifyInterrupt();
-#endif
     MEDIA_INFO_LOG("HCameraService::PrelaunchCamera E");
     CHECK_RETURN_RET_ELOG(HCameraDeviceManager::GetInstance()->GetCameraStateOfASide().Size() != 0,
         CAMERA_DEVICE_CONFLICT, "HCameraService::PrelaunchCamera there is a device active in A side, abort!");

@@ -42,9 +42,7 @@
 #include "camera_timer.h"
 #include "camera_util.h"
 #include "datetime_ex.h"
-#ifdef CAMERA_DEFERRED
 #include "deferred_processing_service.h"
-#endif
 #include "display/composer/v1_1/display_composer_type.h"
 #include "display_lite.h"
 #include "display_manager_lite.h"

@@ -48,9 +48,7 @@
 #include "metadata_utils.h"
 #include "v1_0/types.h"
 #include "os_account_manager.h"
-#ifdef CAMERA_DEFERRED
 #include "deferred_processing_service.h"
-#endif
 #include "iservice_registry.h"
 #include "system_ability_definition.h"
 #include "camera_timer.h"

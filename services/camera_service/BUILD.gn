@@ -248,10 +248,6 @@ ohos_shared_library("camera_service") {
     ]
   }
 
-  if (camera_framework_feature_deferred) {
-    defines += [ "CAMERA_DEFERRED" ]
-  }
-
   if (camera_framework_feature_moving_photo) {
     defines += [ "CAMERA_MOVING_PHOTO" ]
   }

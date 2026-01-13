@@ -111,8 +111,5 @@ ohos_fuzztest("DeferredVideoProcessingSessionCallBackStubFuzzTest") {
 
 group("fuzztest") {
   testonly = true
-  deps = []
-  if (camera_framework_feature_deferred) {
-    deps += [ ":DeferredVideoProcessingSessionCallBackStubFuzzTest" ]
-  }
+  deps = [ ":DeferredVideoProcessingSessionCallBackStubFuzzTest" ]
 }

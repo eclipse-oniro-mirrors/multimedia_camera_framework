@@ -110,8 +110,5 @@ ohos_fuzztest("DeferredProcessingServiceEventMonitor") {
  
 group("fuzztest") {
   testonly = true
-  deps =[]
-  if (camera_framework_feature_deferred) {
-    deps += [ ":DeferredProcessingServiceEventMonitor" ]
-  }
+  deps = [ ":DeferredProcessingServiceEventMonitor" ]
 }

@@ -138,8 +138,5 @@ ohos_fuzztest("VideoStrategyCenterFuzzTest") {
 
 group("fuzztest") {
   testonly = true
-  deps =[]
-  if(camera_framework_feature_deferred) {
-    deps += [ ":VideoStrategyCenterFuzzTest" ]
-  }
+  deps = [ ":VideoStrategyCenterFuzzTest" ]
 }
