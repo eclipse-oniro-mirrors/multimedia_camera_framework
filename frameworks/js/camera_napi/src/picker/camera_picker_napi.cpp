@@ -36,9 +36,9 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace {
-constexpr char CAMERA_PICKER_BUNDLE_HAP_NAME[] = "com.huawei.hmos.camera";
+constexpr char CAMERA_PICKER_BUNDLE_HAP_NAME[] = "com.ohos.camera";
 constexpr char CAMERA_PICKER_BUNDLE_ABILITY_NAME[] = "PickerAbility";
-constexpr char CAMERA_PICKER_BUNDLE_ABILITY_NAME_FOR_UIEXTENSION[] = "com.huawei.hmos.camera.ExtensionPickerAbility";
+constexpr char CAMERA_PICKER_BUNDLE_ABILITY_NAME_FOR_UIEXTENSION[] = "com.ohos.camera.ExtensionPickerAbility";
 constexpr char CAMERA_PICKER_ABILITY_ACTION_PHOTO[] = "ohos.want.action.imageCapture";
 constexpr char CAMERA_PICKER_ABILITY_ACTION_VIDEO[] = "ohos.want.action.videoCapture";
 const std::map<std::string, PickerMediaType> PICKER_MEDIA_TYPE_MAP = {
