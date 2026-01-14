@@ -83,7 +83,7 @@ std::string BmsAdapter::GetBundleName(int uid)
     CHECK_RETURN_RET_ELOG(samgr == nullptr, bundleName, "GetClientBundle Get ability manager failed");
     OHOS::sptr<OHOS::IRemoteObject> remoteObject = samgr->GetSystemAbility(BUNDLE_MGR_SERVICE_SYS_ABILITY_ID);
     CHECK_RETURN_RET_ELOG(remoteObject == nullptr, bundleName, "GetClientBundle object is NULL.");
-    sptr<AppExecFwk::IBundleMgr> bms = OHOS::iface_castAppExecFwk::IBundleMgr(remoteObject);
+    sptr<AppExecFwk::IBundleMgr> bms = OHOS::iface_cast<AppExecFwk::IBundleMgr>(remoteObject);
     CHECK_RETURN_RET_ELOG(bms == nullptr, bundleName, "GetClientBundle bundle manager service is NULL.");
     AppExecFwk::BundleInfo bundleInfo;
     auto ret = bms->GetBundleInfoForSelf(0, bundleInfo);
