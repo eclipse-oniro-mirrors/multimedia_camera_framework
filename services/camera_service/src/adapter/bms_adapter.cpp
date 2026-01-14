@@ -76,16 +76,19 @@ void BmsAdapter::SetBms(sptr<OHOS::AppExecFwk::IBundleMgr> bms)
 
 std::string BmsAdapter::GetBundleName(int uid)
 {
-    std::string bundleName = "";
-    CHECK_RETURN_RET_DLOG(cacheMap.Get(uid, bundleName), bundleName,
-        "GetBundleName by cache, uid: %{public}d bundleName is %{public}s", uid, bundleName.c_str());
-    auto bms = GetBms();
-    CHECK_RETURN_RET_ELOG(bms == nullptr, "", "bms is null");
-    auto result = bms->GetNameForUid(uid, bundleName);
-    CHECK_RETURN_RET_DLOG(result != ERR_OK, "", "GetNameForUid fail, ret: %{public}d", result);
-    MEDIA_DEBUG_LOG("GetBundleName by GetNameForUid, uid: %{public}d bundleName is %{public}s",
-        uid, bundleName.c_str());
-    cacheMap.Put(uid, bundleName);
+    auto bundleName = "";
+    OHOS::sptr<OHOS::ISystemAbilityManager> samgr =
+        OHOS::SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    CHECK_RETURN_RET_ELOG(samgr == nullptr, bundleName, "GetClientBundle Get ability manager failed");
+    OHOS::sptr<OHOS::IRemoteObject> remoteObject = samgr->GetSystemAbility(BUNDLE_MGR_SERVICE_SYS_ABILITY_ID);
+    CHECK_RETURN_RET_ELOG(remoteObject == nullptr, bundleName, "GetClientBundle object is NULL.");
+    sptr<AppExecFwk::IBundleMgr> bms = OHOS::iface_cast<AppExecFwk::IBundleMgr>(remoteObject);
+    CHECK_RETURN_RET_ELOG(bms == nullptr, bundleName, "GetClientBundle bundle manager service is NULL.");
+    AppExecFwk::BundleInfo bundleInfo;
+    auto ret = bms->GetBundleInfoForSelf(0, bundleInfo);
+    CHECK_RETURN_RET_ELOG(ret != ERR_OK, bundleName, "GetBundleInfoForSelf failed.");
+    bundleName = bundleInfo.name.c_str();
+    MEDIA_INFO_LOG("bundleName: [%{private}s]", bundleName);
     return bundleName;
 }
 
