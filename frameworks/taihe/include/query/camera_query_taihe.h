@@ -123,6 +123,7 @@ public:
     Point GetFocusPoint();
     void SetFocusPoint(Point const& point);
     double GetFocalLength();
+    bool GetFocusAssist();
     FocusMode GetFocusMode();
     void SetFocusMode(FocusMode afMode);
 };

@@ -464,6 +464,11 @@ double FocusImpl::GetFocalLength()
     return static_cast<double>(focalLength);
 }
 
+bool FocusImpl::GetFocusAssist()
+{
+    return false;
+}
+
 void FocusImpl::SetFocusMode(FocusMode afMode)
 {
     MEDIA_DEBUG_LOG("SetFocusMode is called");

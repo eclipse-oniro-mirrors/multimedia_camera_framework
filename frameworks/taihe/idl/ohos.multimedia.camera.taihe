@@ -413,8 +413,8 @@ interface CameraOutput {
 struct SketchStatusData {
   status: i32;
   sketchRatio: f64;
+  centerPointOffset: Point;
 }
-
 
 interface DeferredPhotoProxy {
   @gen_promise("getThumbnail")
@@ -1610,7 +1610,8 @@ interface TimeLapsePhotoSession : Session, Focus, ManualFocus, AutoExposure, Man
   SetTimeLapseInterval(interval: i32): void;
   GetTimeLapseInterval(): i32;
   SetTimeLapseRecordState(state: TimeLapseRecordState): void;
-  //GetTimeLapseRecordState(): TimeLapseRecordState;
+  GetTimeLapseRecordState(): TimeLapseRecordState;
+  GetTimeLapsePreviewType(): TimeLapsePreviewType;
   GetSupportedTimeLapseIntervalRange(): Array<i32>;
   IsTryAENeeded(): bool;
   StartTryAE(): void;
@@ -2244,11 +2245,18 @@ interface PhotoOutput : CameraOutput {
   IsQuickThumbnailSupported(): bool;
   DeferImageDelivery(type: DeferredDeliveryImageType): void;
   IsDeferredImageDeliveryEnabled(type: DeferredDeliveryImageType): bool;
+  IsPhotoQualityPrioritizationSupported(qualityPrioritization: PhotoQualityPrioritization): bool;
+  SetPhotoQualityPrioritization(qualityPrioritization: PhotoQualityPrioritization): void;
 }
 
 enum VideoCodecType : i32{
   AVC = 0,
   HEVC = 1
+}
+
+enum PhotoQualityPrioritization : i32{
+  HIGH_QUALITY = 0,
+  SPEED = 1
 }
 
 struct ZoomRange {
@@ -2337,6 +2345,7 @@ interface Focus : FocusQuery {
   GetFocusPoint(): Point;
   SetFocusPoint(point: Point): void;
   GetFocalLength(): f64;
+  GetFocusAssist(): bool;
 }
 
 interface StabilizationQuery {
@@ -2692,6 +2701,14 @@ struct MetadataBasicFaceObject {
 
 interface VideoCapability {
   IsBFrameSupported(): bool;
+}
+
+interface QuickThumbnail {
+  @get GetCaptureId(): i32;
+  @set SetThumbnailImage(thumbnailImage: PixelMap): void;
+  @get GetThumbnailImage(): PixelMap;
+  @gen_promise("release")
+  ReleaseSync(): void;
 }
 
 // transfer functions

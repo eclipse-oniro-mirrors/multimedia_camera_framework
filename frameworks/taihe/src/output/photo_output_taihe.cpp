@@ -1290,5 +1290,23 @@ void PhotoOutputImpl::DeferImageDelivery(DeferredDeliveryImageType type)
         static_cast<OHOS::CameraStandard::DeferredDeliveryImageType>(type.get_value()));
     isDeferredPhotoEnabled_ = type.get_value() == OHOS::CameraStandard::DeferredDeliveryImageType::DELIVERY_PHOTO;
 }
+
+bool PhotoOutputImpl::IsPhotoQualityPrioritizationSupported(PhotoQualityPrioritization qualityPrioritization)
+{
+    MEDIA_DEBUG_LOG("IsPhotoQualityPrioritizationSupported is called");
+    CHECK_RETURN_RET_ELOG(photoOutput_ == nullptr,
+        false, "IsPhotoQualityPrioritizationSupported failed, photoOutput_ is nullptr");
+    bool isSupported = photoOutput_->IsPhotoQualityPrioritizationSupported(
+        static_cast<OHOS::CameraStandard::PhotoOutput::PhotoQualityPrioritization>(qualityPrioritization.get_value()));
+    return isSupported;
+}
+
+void PhotoOutputImpl::SetPhotoQualityPrioritization(PhotoQualityPrioritization qualityPrioritization)
+{
+    MEDIA_DEBUG_LOG("SetPhotoQualityPrioritization is called");
+    CHECK_RETURN_ELOG(photoOutput_ == nullptr, "SetPhotoQualityPrioritization photoOutput_ is nullptr");
+    photoOutput_->SetPhotoQualityPrioritization(
+        static_cast<OHOS::CameraStandard::PhotoOutput::PhotoQualityPrioritization>(qualityPrioritization.get_value()));
+}
 } // namespace Camera
 } // namespace Ani

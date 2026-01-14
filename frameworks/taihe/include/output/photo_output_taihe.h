@@ -174,6 +174,8 @@ public:
     bool IsDeferredImageDeliveryEnabled(DeferredDeliveryImageType type);
     bool IsQuickThumbnailSupported();
     void DeferImageDelivery(DeferredDeliveryImageType type);
+    bool IsPhotoQualityPrioritizationSupported(PhotoQualityPrioritization qualityPrioritization);
+    void SetPhotoQualityPrioritization(PhotoQualityPrioritization qualityPrioritization);
 
     static uint32_t photoOutputTaskId_;
 private:
