@@ -18,6 +18,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
+using namespace OHOS::AppExecFwk;
 sptr<BmsAdapter> BmsAdapter::bmsAdapter_;
 std::mutex BmsAdapter::instanceMutex_;
 
