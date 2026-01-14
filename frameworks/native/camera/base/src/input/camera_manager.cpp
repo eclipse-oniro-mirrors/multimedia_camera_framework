@@ -2825,24 +2825,17 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedFullOutputCapability(spt
     MEDIA_DEBUG_LOG("GetSupportedFullOutputCapability mode = %{public}d", modeName);
 #ifdef CAMERA_CAPTURE_YUV
     auto camera = cameraDevice;
-    auto innerCamera = GetInnerCamera();
-    CHECK_RETURN_RET(innerCamera == nullptr, nullptr);
-    if (!foldScreenType_.empty() && foldScreenType_[0] == '4' &&
-        camera->GetPosition() == CAMERA_POSITION_FRONT && innerCamera && !GetIsInWhiteList() &&
-        (GetFoldStatus() == FoldStatus::EXPAND || GetFoldStatus() == FoldStatus::UNKNOWN_FOLD)) {
-        MEDIA_DEBUG_LOG("GetSupportedFullOutputCapability innerCamera Position = %{public}d",
-            innerCamera->GetPosition());
-        camera = innerCamera;
-    }
     CHECK_RETURN_RET(camera == nullptr, nullptr);
     sptr<CameraOutputCapability> cameraOutputCapability = GetSupportedOutputCapability(camera, modeName);
-    CHECK_RETURN_RET(cameraOutputCapability == nullptr, nullptr);
+    CHECK_RETURN_RET_ELOG(cameraOutputCapability == nullptr, nullptr,
+        "GetSupportedOutputCapability failed, cameraOutputCapability is nullptr");
     // report full preview capabilities in this interface
     cameraOutputCapability->SetPreviewProfiles(camera->GetFullPreviewProfiles(modeName));
     MEDIA_INFO_LOG("GetFullPreviewProfiles size = %{public}zu",
                    cameraOutputCapability->GetPreviewProfiles().size());
     std::vector<Profile> photoProfiles = cameraOutputCapability->GetPhotoProfiles();
     CHECK_EXECUTE(!IsSystemApp(), FillExtendedSupportPhotoFormats(photoProfiles));
+    MEDIA_DEBUG_LOG("SetPhotoProfiles size = %{public}zu", photoProfiles.size());
     cameraOutputCapability->SetPhotoProfiles(photoProfiles);
     camera->SetProfile(cameraOutputCapability, modeName);
     return cameraOutputCapability;
