@@ -6679,13 +6679,20 @@ void CaptureSession::SetDefaultColorSpace()
     // if preview P010 format is used and color space is not set in photo session,
     // BT2020_HLG will be set as default color space
     CHECK_RETURN(GetMode() != SceneMode::CAPTURE);
-    CameraFormat previewFormat = CameraFormat::CAMERA_FORMAT_INVALID;
+    bool hasPreview = false;
+    bool isAllPreviewP010 = true;
     for (const auto& output : captureOutputSets_) {
-        CHECK_EXECUTE(output->GetOutputType() == CaptureOutputType::CAPTURE_OUTPUT_TYPE_PREVIEW,
-                      previewFormat = output->GetPreviewProfile()->GetCameraFormat());
+        CHECK_CONTINUE(output->GetOutputType() != CaptureOutputType::CAPTURE_OUTPUT_TYPE_PREVIEW);
+        hasPreview = true;
+        CameraFormat previewFormat = CAMERA_FORMAT_INVALID;
+        CHECK_EXECUTE(output->GetPreviewProfile(), previewFormat = output->GetPreviewProfile()->GetCameraFormat());
+        if (previewFormat != CameraFormat::CAMERA_FORMAT_YCBCR_P010 &&
+            previewFormat != CameraFormat::CAMERA_FORMAT_YCRCB_P010) {
+            isAllPreviewP010 = false;
+            break;
+        }
     }
-    if (previewFormat == CameraFormat::CAMERA_FORMAT_YCBCR_P010 ||
-        previewFormat == CameraFormat::CAMERA_FORMAT_YCRCB_P010) {
+    if (hasPreview && isAllPreviewP010) {
         MEDIA_INFO_LOG("Set default color space for HDR capture when CommitConfig.");
         SetColorSpace(ColorSpace::BT2020_HLG);
     }
