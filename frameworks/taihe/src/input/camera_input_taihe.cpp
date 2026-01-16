@@ -253,8 +253,6 @@ void CameraInputImpl::RegisterOcclusionDetectCallbackListener(const std::string&
 {
     CHECK_RETURN_ELOG(cameraInput_ == nullptr,
         "failed to RegisterOcclusionDetectCallbackListener, cameraInput is nullptr");
-    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
-        "SystemApi On cameraOcclusionDetection is called!");
     if (occlusionDetectCallback_ == nullptr) {
         ani_env *env = get_env();
         occlusionDetectCallback_ = std::make_shared<OcclusionDetectCallbackListenerAni>(env);
@@ -267,8 +265,6 @@ void CameraInputImpl::RegisterOcclusionDetectCallbackListener(const std::string&
 void CameraInputImpl::UnregisterOcclusionDetectCallbackListener(const std::string& eventName,
     std::shared_ptr<uintptr_t> callback)
 {
-    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
-        "SystemApi Off cameraOcclusionDetection is called!");
     CHECK_RETURN_ELOG(occlusionDetectCallback_ == nullptr, "occlusionDetectCallback is null");
     occlusionDetectCallback_->RemoveCallbackRef(eventName, callback);
     MEDIA_INFO_LOG("CameraInputImpl::UnregisterOcclusionDetectCallbackListener success");
