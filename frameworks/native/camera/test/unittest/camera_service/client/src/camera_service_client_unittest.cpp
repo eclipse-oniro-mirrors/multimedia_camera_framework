@@ -1207,7 +1207,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_016, TestSize.L
     hCameraServiceCallbackProxy->OnFlashlightStatusChanged(cameras_[0]->GetID(),
         static_cast<int32_t>(FlashStatus::FLASH_STATUS_OFF));
     hCameraMuteServiceCallbackProxy->OnCameraMute(true);
-    hCameraMuteServiceCallbackProxy->OnCameraMute(false);
+    hCameraMuteServiceCallbackProxy->OnCameraMute(false, 0);
     hTorchServiceCallbackProxy->OnTorchStatusChange(TorchStatus::TORCH_STATUS_OFF);
 }
 
@@ -1414,7 +1414,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_023, TestSize.L
     hCameraServiceCallbackProxy->OnFlashlightStatusChanged(cameras_[0]->GetID(),
         static_cast<int32_t>(FlashStatus::FLASH_STATUS_OFF));
     hCameraMuteServiceCallbackProxy->OnCameraMute(true);
-    hCameraMuteServiceCallbackProxy->OnCameraMute(false);
+    hCameraMuteServiceCallbackProxy->OnCameraMute(false, 0);
     hTorchServiceCallbackProxy->OnTorchStatusChange(TorchStatus::TORCH_STATUS_OFF);
 }
 

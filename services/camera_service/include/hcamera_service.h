@@ -386,6 +386,7 @@ private:
     recursive_mutex torchCbMutex_;
     recursive_mutex foldCbMutex_;
     TorchStatus torchStatus_ = TorchStatus::TORCH_STATUS_UNAVAILABLE;
+    float torchlevel_ = 0.0;
     FoldStatus preFoldStatus_ = FoldStatus::UNKNOWN_FOLD;
     sptr<HCameraHostManager> cameraHostManager_;
     std::shared_ptr<StatusCallback> statusCallback_;

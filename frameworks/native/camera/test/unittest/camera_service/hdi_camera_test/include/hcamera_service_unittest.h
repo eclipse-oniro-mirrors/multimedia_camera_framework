@@ -34,7 +34,7 @@ namespace CameraStandard {
 
 class ITorchServiceCallbackTest : public ITorchServiceCallback {
 public:
-    virtual int32_t OnTorchStatusChange(const TorchStatus status)
+    virtual int32_t OnTorchStatusChange(const TorchStatus status, const float level)
     {
         return 0;
     };

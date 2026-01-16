@@ -669,14 +669,14 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_025, Test
 
     EXPECT_NE(listenerManager->GetCameraManager(), nullptr);
     EXPECT_TRUE(listenerManager->GetListenerCount() == 0);
-    auto ret = listenerManager->OnTorchStatusChange(status1);
+    auto ret = listenerManager->OnTorchStatusChange(status1, 0);
     EXPECT_EQ(cameraManager_->torchMode_, TORCH_MODE_OFF);
     EXPECT_EQ(ret, CAMERA_OK);
 
     std::shared_ptr<TorchListener> listener = std::make_shared<TorchListenerImpl>();
     cameraManager_->RegisterTorchListener(listener);
     EXPECT_FALSE(listenerManager->GetListenerCount() == 0);
-    ret = listenerManager->OnTorchStatusChange(status2);
+    ret = listenerManager->OnTorchStatusChange(status2, 1);
     EXPECT_EQ(ret, CAMERA_OK);
 }
 

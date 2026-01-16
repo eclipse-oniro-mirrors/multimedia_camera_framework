@@ -1294,7 +1294,7 @@ class TorchServiceListenerManager : public CameraManagerGetter,
                                     public TorchServiceCallbackStub,
                                     public CameraListenerManager<TorchListener> {
 public:
-    int32_t OnTorchStatusChange(const TorchStatus status) override;
+    int32_t OnTorchStatusChange(const TorchStatus status, const float level) override;
 
     inline TorchStatusInfo GetCachedTorchStatus()
     {

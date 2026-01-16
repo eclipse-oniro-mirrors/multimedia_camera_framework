@@ -1307,7 +1307,8 @@ void HCameraService::OnTorchStatus(TorchStatus status)
             "HCameraService::OnTorchtStatus pid:%{public}d torchServiceCallback is null", it.first);
         uint32_t pid = it.first;
         CHECK_CONTINUE(ShouldSkipStatusUpdates(pid));
-        it.second->OnTorchStatusChange(status);
+        MEDIA_INFO_LOG("HCameraService::OnTorchStatus level = %{public}f", torchlevel_);
+        it.second->OnTorchStatusChange(status, torchlevel_);
     }
 }
 
@@ -1490,9 +1491,9 @@ int32_t HCameraService::SetTorchCallback(const sptr<ITorchServiceCallback>& call
     MEDIA_INFO_LOG("HCameraService::SetTorchCallback pid = %{public}d", pid);
     CHECK_RETURN_RET_ELOG(callback == nullptr, CAMERA_INVALID_ARG, "HCameraService::SetTorchCallback callback is null");
     torchServiceCallbacks_.insert(make_pair(pid, callback));
-
-    MEDIA_INFO_LOG("HCameraService::SetTorchCallback notify pid = %{public}d", pid);
-    callback->OnTorchStatusChange(torchStatus_);
+    MEDIA_INFO_LOG("HCameraService::SetTorchCallback notify pid = %{public}d, Torchlevel = %{public}f",
+        pid, torchlevel_);
+    callback->OnTorchStatusChange(torchStatus_, torchlevel_);
     return CAMERA_OK;
 }
 
@@ -2037,8 +2038,14 @@ int32_t HCameraService::SetPrelaunchConfig(const string& cameraId, RestoreParamT
 
 int32_t HCameraService::SetTorchLevel(float level)
 {
+    float oldlevel = torchlevel_;
+    torchlevel_ = level;
     int32_t ret = cameraHostManager_->SetTorchLevel(level);
-    CHECK_PRINT_ELOG(ret != CAMERA_OK, "Failed to SetTorchLevel");
+    if (ret != CAMERA_OK) {
+        MEDIA_ERR_LOG("Failed to SetTorchLevel");
+        torchlevel_ = oldlevel;
+    }
+    MEDIA_INFO_LOG("HCameraService::SetTorchLevelBack = %{public}f", torchlevel_);
     return ret;
 }
 

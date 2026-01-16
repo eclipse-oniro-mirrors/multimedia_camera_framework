@@ -2993,12 +2993,12 @@ sptr<CameraManager> CameraManagerGetter::GetCameraManager()
     return cameraManager_.promote();
 }
 
-int32_t TorchServiceListenerManager::OnTorchStatusChange(const TorchStatus status)
+int32_t TorchServiceListenerManager::OnTorchStatusChange(const TorchStatus status, const float level)
 {
-    MEDIA_DEBUG_LOG("TorchStatus is %{public}d", status);
+    MEDIA_DEBUG_LOG("TorchStatus is %{public}d, Torchlevel is %{public}f", status, level);
     auto cameraManager = GetCameraManager();
     CHECK_RETURN_RET_ELOG(cameraManager == nullptr, CAMERA_OK, "OnTorchStatusChange CameraManager is nullptr");
-
+ 
     TorchStatusInfo torchStatusInfo;
     if (status == TorchStatus::TORCH_STATUS_UNAVAILABLE) {
         torchStatusInfo.isTorchAvailable = false;
@@ -3009,7 +3009,7 @@ int32_t TorchServiceListenerManager::OnTorchStatusChange(const TorchStatus statu
         // LCOV_EXCL_START
         torchStatusInfo.isTorchAvailable = true;
         torchStatusInfo.isTorchActive = true;
-        torchStatusInfo.torchLevel = 1;
+        torchStatusInfo.torchLevel = level;
         cameraManager->UpdateTorchMode(TORCH_MODE_ON);
         // LCOV_EXCL_STOP
     } else if (status == TorchStatus::TORCH_STATUS_OFF) {
@@ -3021,6 +3021,7 @@ int32_t TorchServiceListenerManager::OnTorchStatusChange(const TorchStatus statu
     auto listener = cameraManager->GetTorchServiceListenerManager();
     listener->TriggerListener([&](auto listener) { listener->OnTorchStatusChange(torchStatusInfo); });
     listener->cachedTorchStatus_ = torchStatusInfo;
+    MEDIA_INFO_LOG("torchStatusInfo.torchLevel is %{public}f", torchStatusInfo.torchLevel);
     return CAMERA_OK;
 }
 
@@ -3459,6 +3460,7 @@ int32_t CameraManager::SetTorchLevel(float level)
 {
     auto serviceProxy = GetServiceProxy();
     CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, SERVICE_FATL_ERROR, "SetTorchLevel serviceProxy is null");
+    MEDIA_INFO_LOG("CameraManager::SetTorchLevel is %{public}f", level);
     int32_t retCode = serviceProxy->SetTorchLevel(level);
     CHECK_PRINT_ELOG(retCode != CAMERA_OK, "SetTorchLevel call failed, retCode: %{public}d", retCode);
     return retCode;
