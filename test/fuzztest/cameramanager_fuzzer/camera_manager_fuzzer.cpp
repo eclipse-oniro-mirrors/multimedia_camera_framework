@@ -129,7 +129,7 @@ void CameraManagerFuzzer::CameraManagerFuzzTest3(FuzzedDataProvider& fdp)
     CHECK_RETURN_ELOG(!manager, "GetInstance Error");
     ITorchServiceCallbackFuzz torchServiceCallback;
     TorchStatus torchStatus = TorchStatus::TORCH_STATUS_ON;
-    torchServiceCallback.OnTorchStatusChange(torchStatus);
+    torchServiceCallback.OnTorchStatusChange(torchStatus, 1);
     IFoldServiceCallbackFuzz foldServiceCallback;
     FoldStatus foldStatus = FoldStatus::EXPAND;
     foldServiceCallback.OnFoldStatusChanged(foldStatus);

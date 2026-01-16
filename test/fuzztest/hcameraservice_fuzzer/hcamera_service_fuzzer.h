@@ -48,7 +48,7 @@ public:
 
 class MockTorchServiceCallback : public TorchServiceCallbackStub {
 public:
-    ErrCode OnTorchStatusChange(TorchStatus status) override
+    ErrCode OnTorchStatusChange(TorchStatus status, float level) override
     {
         return 0;
     }

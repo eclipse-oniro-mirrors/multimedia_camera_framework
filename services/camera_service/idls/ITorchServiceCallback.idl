@@ -17,5 +17,5 @@ package OHOS.CameraStandard;
 import CameraTypes;
 
 interface ITorchServiceCallback {
-  [ipccode 0, oneway] void OnTorchStatusChange([in] TorchStatus status);
+  [ipccode 0, oneway] void OnTorchStatusChange([in] TorchStatus status, [in] float level);
 }

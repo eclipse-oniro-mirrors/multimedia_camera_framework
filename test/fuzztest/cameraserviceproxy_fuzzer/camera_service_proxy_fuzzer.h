@@ -25,7 +25,7 @@ namespace OHOS {
 namespace CameraStandard {
 class ITorchServiceCallbackFuzz : public ITorchServiceCallback {
 public:
-    int32_t OnTorchStatusChange(const TorchStatus status) override
+    int32_t OnTorchStatusChange(const TorchStatus status, const float level) override
     {
         return 0;
     }
