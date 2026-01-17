@@ -133,7 +133,6 @@ private:
     void SetupPipeline(std::shared_ptr<MovieFileConsumer> movieFileConsumer);
 
     AudioStandard::AudioStreamInfo CreateAudioStreamInfo();
-    void CheckExternalMicrophone();
     void SelectTargetAudioInputDevice();
     void DeselectTargetAudioInputDevice();
     void ConfigAudioCapture();
