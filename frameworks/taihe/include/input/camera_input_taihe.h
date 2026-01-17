@@ -67,6 +67,9 @@ public:
     OHOS::sptr<OHOS::CameraStandard::CameraInput> GetCameraInput();
     void CloseDelayedSync(int32_t time);
     void UsedAsPosition(CameraPosition position);
+    bool IsPhysicalCameraOrientationVariable();
+    int32_t GetPhysicalCameraOrientation();
+    void UsePhysicalCameraOrientation(bool isUsed);
     inline int64_t GetSpecificImplPtr()
     {
         return reinterpret_cast<uintptr_t>(this);

@@ -537,6 +537,9 @@ interface CameraInput {
   @gen_promise("closeDelayed")
   CloseDelayedSync(time: i32): void;
   UsedAsPosition(position: CameraPosition): void;
+  IsPhysicalCameraOrientationVariable(): bool;
+  GetPhysicalCameraOrientation(): i32;
+  UsePhysicalCameraOrientation(isUsed: bool): void; 
 
   GetSpecificImplPtr(): i64;
 

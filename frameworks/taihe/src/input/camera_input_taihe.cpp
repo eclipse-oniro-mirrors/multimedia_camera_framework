@@ -208,6 +208,43 @@ void CameraInputImpl::UsedAsPosition(CameraPosition position)
     return;
 }
 
+bool CameraInputImpl::IsPhysicalCameraOrientationVariable()
+{
+    MEDIA_DEBUG_LOG("CameraInputImpl::IsPhysicalCameraOrientationVariable is called");
+    bool isVariable = false;
+    CHECK_RETURN_RET_ELOG(cameraInput_ == nullptr, isVariable, "cameraInput_ is nullptr");
+    cameraInput_->IsPhysicalCameraOrientationVariable(&isVariable);
+    return isVariable;
+}
+
+int32_t CameraInputImpl::GetPhysicalCameraOrientation()
+{
+    MEDIA_DEBUG_LOG("CameraInputImpl::GetPhysicalCameraOrientation is called");
+    uint32_t orientation = 0;
+    CHECK_RETURN_RET_ELOG(cameraInput_ == nullptr, orientation, "cameraInput_ is nullptr");
+    cameraInput_->GetPhysicalCameraOrientation(&orientation);
+    return static_cast<int32_t>(orientation);
+}
+
+void CameraInputImpl::UsePhysicalCameraOrientation(bool isUsed)
+{
+    MEDIA_DEBUG_LOG("CameraInputImpl::UsePhysicalCameraOrientation is called, isUsed: %{public}d", isUsed);
+    if (cameraInput_ == nullptr) {
+        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::SERVICE_FATL_ERROR,
+            "UsePhysicalCameraOrientation service error.");
+        return;
+    }
+    int32_t ret = cameraInput_->SetUsePhysicalCameraOrientation(isUsed);
+    if (ret == OHOS::CameraStandard::OPERATION_NOT_ALLOWED) {
+        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::OPERATION_NOT_ALLOWED,
+            "UsePhysicalCameraOrientation operation not allowed.");
+    }
+    if (ret == OHOS::CameraStandard::SERVICE_FATL_ERROR) {
+        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::SERVICE_FATL_ERROR,
+            "UsePhysicalCameraOrientation service error.");
+    }
+}
+
 OHOS::sptr<OHOS::CameraStandard::CameraInput> CameraInputImpl::GetCameraInput()
 {
     return cameraInput_;
