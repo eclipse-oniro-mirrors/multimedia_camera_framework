@@ -174,7 +174,6 @@ private:
     void CloseMovieFd();
     void CloseRawFd();
 
-    void CheckExternalMicrophone();
     void SelectTargetAudioInputDevice();
 
     void OnStateChanged(StateId state);

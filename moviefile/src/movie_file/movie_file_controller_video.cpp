@@ -62,60 +62,24 @@ AudioStandard::AudioStreamInfo MovieFileControllerVideo::CreateAudioStreamInfo()
     return audioCaptureStreamInfo;
 }
 
-void MovieFileControllerVideo::CheckExternalMicrophone()
-{
-    if (!isEnableRawAudio_) {
-        MEDIA_INFO_LOG(
-            "MovieFileControllerVideo::CheckExternalMicrophone not enable audio edit, skip CheckExternalMicrophone");
-        return;
-    }
-    auto audioRoutingManager = AudioStandard::AudioRoutingManager::GetInstance();
-    if (audioRoutingManager == nullptr) {
-        MEDIA_WARNING_LOG("MovieFileControllerVideo::CheckExternalMicrophone audioRoutingManager is null");
-        return;
-    }
-    AudioStandard::AudioCapturerInfo captureInfo;
-    captureInfo.sourceType = AudioStandard::SOURCE_TYPE_CAMCORDER;
-    std::vector<std::shared_ptr<AudioStandard::AudioDeviceDescriptor>> descs;
-    audioRoutingManager->GetPreferredInputDeviceForCapturerInfo(captureInfo, descs);
-    for (auto& desc : descs) {
-        CHECK_CONTINUE(!desc);
-        auto type = desc->getType();
-        auto typeStr = desc->GetDeviceTypeString();
-        MEDIA_DEBUG_LOG("MovieFileControllerVideo::CheckExternalMicrophone device type:%{public}d--%{public}s", type,
-            typeStr.c_str());
-        if (desc->getType() == AudioStandard::DEVICE_TYPE_MIC) {
-            MEDIA_INFO_LOG("MovieFileControllerVideo::CheckExternalMicrophone enable raw audio capture");
-            return;
-        }
-    }
-    isEnableRawAudio_ = false;
-}
-
 void MovieFileControllerVideo::SelectTargetAudioInputDevice()
 {
-    if (!isEnableRawAudio_) {
-        MEDIA_INFO_LOG("MovieFileControllerVideo::SelectTargetAudioInputDevice not enable audio edit, skip "
-                       "SelectTargetAudioInputDevice");
-        return;
-    }
-    auto audioSessionManager = AudioStandard::AudioSessionManager::GetInstance();
-    auto devices = audioSessionManager->GetAvailableDevices(AudioStandard::AudioDeviceUsage::MEDIA_INPUT_DEVICES);
-    std::shared_ptr<AudioStandard::AudioDeviceDescriptor> targetDevice = nullptr;
-    for (auto& device : devices) {
-        CHECK_CONTINUE(!device);
-        MEDIA_DEBUG_LOG("MovieFileControllerVideo::SelectTargetAudioInputDevice find device %{public}s type:%{public}d "
-                        "typeStr:%{public}s",
-            device->deviceName_.c_str(), device->getType(), device->GetDeviceTypeString().c_str());
-        if (device->getType() == AudioStandard::DEVICE_TYPE_MIC) {
-            targetDevice = device;
-        }
-    }
-    if (targetDevice) {
-        MEDIA_INFO_LOG("MovieFileControllerVideo::SelectTargetAudioInputDevice type:%{public}d "
-                       "typeStr:%{public}s ",
-            targetDevice->getType(), targetDevice->GetDeviceTypeString().c_str());
-        audioSessionManager->SelectInputDevice(targetDevice);
+    CHECK_RETURN_ILOG(!isEnableRawAudio_,
+                      "SelectTargetAudioInputDevice not enable audio edit, skip SelectTargetAudioInputDevice");
+    auto audioRoutingManager = AudioStandard::AudioRoutingManager::GetInstance();
+    CHECK_RETURN_WLOG(!audioRoutingManager, "SelectTargetAudioInputDevice audioRoutingManager is null");
+    std::vector<std::shared_ptr<AudioStandard::AudioDeviceDescriptor>> descs;
+    AudioStandard::RecommendInputDevices recommendDevice = audioRoutingManager->GetRecommendInputDevices(descs);
+    MEDIA_INFO_LOG("GetRecommendInputDevices return recommendDevice: %{public}d.", recommendDevice);
+    isEnableRawAudio_ = false;
+    if (recommendDevice == AudioStandard::RecommendInputDevices::RECOMMEND_BUILT_IN_MIC) {
+        CHECK_RETURN_ELOG(descs.size() != 1, "GetRecommendInputDevices return invalid data, descs size: %{public}zu",
+                          descs.size());
+        auto audioSessionManager = AudioStandard::AudioSessionManager::GetInstance();
+        int32_t ret = audioSessionManager->SelectInputDevice(descs[0]);
+        CHECK_RETURN_ELOG(ret != 0, "SelectInputDevice failed, ret: %{public}d", ret);
+        MEDIA_INFO_LOG("Audio post audio is supported, and built in mic is selected.");
+        isEnableRawAudio_ = true;
     }
 }
 
@@ -131,7 +95,6 @@ void MovieFileControllerVideo::ConfigAudioCapture()
     isEnableRawAudio_ = isEnableAudioEdit;
     MEDIA_INFO_LOG("MovieFileControllerVideo::ConfigAudioCapture isEnableAudioEdit is :%{public}d", isEnableAudioEdit);
 
-    CheckExternalMicrophone();
     SelectTargetAudioInputDevice();
     sharedAudioCaptureStreamInfo_ = nullptr;
     sharedAudioEffectStreamInfo_ = nullptr;

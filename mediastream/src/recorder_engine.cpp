@@ -1877,7 +1877,6 @@ int32_t RecorderEngine::GetFirstFrameTimestamp(int64_t& firstFrameTimestamp)
 Status RecorderEngine::CheckAudioPostEditAbility()
 {
     isAudioPostEditEnabled_ = system::GetBoolParameter("const.photo.audio_post_edit.enable", false);
-    CheckExternalMicrophone();
     SelectTargetAudioInputDevice();
     MEDIA_INFO_LOG("isAudioPostEditEnabled_:%{public}d", isAudioPostEditEnabled_);
     return Status::OK;
@@ -1906,47 +1905,24 @@ AudioChannel RecorderEngine::GetMicNum()
     return static_cast<AudioChannel>(micNum + oddFlag);
 }
 
-void RecorderEngine::CheckExternalMicrophone()
-{
-    CHECK_RETURN_ILOG(!isAudioPostEditEnabled_,
-                      "CheckExternalMicrophone not enable audio edit, skip CheckExternalMicrophone");
-    auto audioRoutingManager = AudioStandard::AudioRoutingManager::GetInstance();
-    CHECK_RETURN_WLOG(!audioRoutingManager, "CheckExternalMicrophone audioRoutingManager is null");
-    AudioStandard::AudioCapturerInfo captureInfo;
-    captureInfo.sourceType = AudioStandard::SOURCE_TYPE_CAMCORDER;
-    std::vector<std::shared_ptr<AudioStandard::AudioDeviceDescriptor>> descs;
-    audioRoutingManager->GetPreferredInputDeviceForCapturerInfo(captureInfo, descs);
-    for (auto& desc : descs) {
-        CHECK_CONTINUE(!desc);
-        auto type = desc->getType();
-        auto typeStr = desc->GetDeviceTypeString();
-        MEDIA_DEBUG_LOG("CheckExternalMicrophone device type:%{public}d--%{public}s", type,
-            typeStr.c_str());
-        CHECK_RETURN_ILOG(desc->getType() == AudioStandard::DEVICE_TYPE_MIC,
-                          "CheckExternalMicrophone enable raw audio capture");
-    }
-    isAudioPostEditEnabled_ = false;
-}
-
 void RecorderEngine::SelectTargetAudioInputDevice()
 {
     CHECK_RETURN_ILOG(!isAudioPostEditEnabled_,
                       "SelectTargetAudioInputDevice not enable audio edit, skip SelectTargetAudioInputDevice");
-    auto audioSessionManager = AudioStandard::AudioSessionManager::GetInstance();
-    auto devices = audioSessionManager->GetAvailableDevices(AudioStandard::AudioDeviceUsage::MEDIA_INPUT_DEVICES);
-    std::shared_ptr<AudioStandard::AudioDeviceDescriptor> targetDevice = nullptr;
-    for (auto& device : devices) {
-        CHECK_CONTINUE(!device);
-        MEDIA_DEBUG_LOG("SelectTargetAudioInputDevice find device %{public}s type:%{public}d "
-                        "typeStr:%{public}s",
-            device->deviceName_.c_str(), device->getType(), device->GetDeviceTypeString().c_str());
-        CHECK_EXECUTE(device->getType() == AudioStandard::DEVICE_TYPE_MIC, targetDevice = device);
-    }
-    if (targetDevice) {
-        MEDIA_INFO_LOG("SelectTargetAudioInputDevice type:%{public}d "
-                       "typeStr:%{public}s ",
-            targetDevice->getType(), targetDevice->GetDeviceTypeString().c_str());
-        audioSessionManager->SelectInputDevice(targetDevice);
+    auto audioRoutingManager = AudioStandard::AudioRoutingManager::GetInstance();
+    CHECK_RETURN_WLOG(!audioRoutingManager, "SelectTargetAudioInputDevice audioRoutingManager is null");
+    std::vector<std::shared_ptr<AudioStandard::AudioDeviceDescriptor>> descs;
+    RecommendInputDevices recommendDevice = audioRoutingManager->GetRecommendInputDevices(descs);
+    MEDIA_INFO_LOG("GetRecommendInputDevices return recommendDevice: %{public}d.", recommendDevice);
+    isAudioPostEditEnabled_ = false;
+    if (recommendDevice == RecommendInputDevices::RECOMMEND_BUILT_IN_MIC) {
+        CHECK_RETURN_ELOG(descs.size() != 1, "GetRecommendInputDevices return invalid data, descs size: %{public}zu",
+                          descs.size());
+        auto audioSessionManager = AudioStandard::AudioSessionManager::GetInstance();
+        int32_t ret = audioSessionManager->SelectInputDevice(descs[0]);
+        CHECK_RETURN_ELOG(ret != 0, "SelectInputDevice failed, ret: %{public}d", ret);
+        MEDIA_INFO_LOG("Audio post audio is supported, and built in mic is selected.");
+        isAudioPostEditEnabled_ = true;
     }
 }
 
