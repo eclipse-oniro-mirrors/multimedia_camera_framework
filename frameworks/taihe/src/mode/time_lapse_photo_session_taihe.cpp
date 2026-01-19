@@ -233,6 +233,16 @@ int32_t TimeLapsePhotoSessionImpl::GetTimeLapseInterval()
     return interval;
 }
 
+ohos::multimedia::camera::TimeLapseRecordState TimeLapsePhotoSessionImpl::GetTimeLapseRecordState()
+{
+    return ohos::multimedia::camera::TimeLapseRecordState::from_value(static_cast<int32_t>(TIME_LAPSE_IDLE));
+}
+
+ohos::multimedia::camera::TimeLapsePreviewType TimeLapsePhotoSessionImpl::GetTimeLapsePreviewType()
+{
+    return ohos::multimedia::camera::TimeLapsePreviewType::from_value(static_cast<int32_t>(TIME_LAPSE_PREVIEW_DARK));
+}
+
 array<int32_t> TimeLapsePhotoSessionImpl::GetSupportedTimeLapseIntervalRange()
 {
     CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), array<int32_t>(nullptr, 0),
