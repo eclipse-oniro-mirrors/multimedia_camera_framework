@@ -2196,6 +2196,14 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_099, Test
     EXPECT_EQ(photoProfiles.size(), 1);
 }
 
+/*
+ * Feature: Framework
+ * Function: Test cameramanager with serviceProxy_ is nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test cameramanager with serviceProxy_ is nullptr
+ */
 HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_101, TestSize.Level0)
 {
     sptr<ICameraServiceCallback> callback = cameraManager_->GetCameraStatusListenerManager();
