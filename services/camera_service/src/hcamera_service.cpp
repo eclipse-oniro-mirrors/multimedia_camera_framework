@@ -723,6 +723,9 @@ int32_t HCameraService::GetCameraIds(vector<string>& cameraIds)
     std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList;
     ret = GetCameras(cameraIds, cameraAbilityList);
     CHECK_PRINT_ELOG(ret != CAMERA_OK, "HCameraService::GetCameraIds failed");
+    for (auto id : cameraIds) {
+        MEDIA_INFO_LOG("HCameraService::GetCameraIds cameraId:%{public}s", id.c_str());
+    }
     return ret;
 }
 
@@ -2803,6 +2806,8 @@ int32_t HCameraService::GetDmDeviceInfo(std::vector<dmDeviceInfo> &deviceInfos)
         deviceInfo.deviceName = deviceInfoList[i].deviceName;
         deviceInfo.deviceTypeId = deviceInfoList[i].deviceTypeId;
         deviceInfo.networkId = deviceInfoList[i].networkId;
+        MEDIA_INFO_LOG("HCameraService::GetDmDeviceInfo deviceName=%{public}s, networkId=%{public}s",
+            deviceInfo.deviceName.c_str(), deviceInfo.networkId.c_str());
         deviceInfos.emplace_back(deviceInfo);
     }
 #endif
