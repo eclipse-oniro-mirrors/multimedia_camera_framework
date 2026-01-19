@@ -2234,6 +2234,49 @@ HWTEST_F(HCameraServiceUnit, IsTorchSupported_001, TestSize.Level0)
 }
 
 /**
+ * @tc.name  : Test IsTorchLevelControlSupported_001 API
+ * @tc.number: IsTorchLevelControlSupported_001
+ * @tc.desc  : Test IsTorchLevelControlSupported_001 API, when error on finding tag
+ */
+HWTEST_F(HCameraServiceUnit, IsTorchLevelControlSupported_001, TestSize.Level0)
+{
+    std::vector<string> cameraIds;
+    cameraService_->GetCameraIds(cameraIds);
+    ASSERT_NE(cameraIds.size(), 0);
+    cameraService_->SetServiceStatus(CameraServiceStatus::SERVICE_READY);
+    sptr<ICameraDeviceService> device = nullptr;
+    cameraService_->CreateCameraDevice(cameraIds[BACK_CAM], device);
+    ASSERT_NE(device, nullptr);
+    device->SetMdmCheck(false);
+    device->Open();
+ 
+    std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList;
+    cameraService_->GetCameras(cameraIds, cameraAbilityList);
+    ASSERT_NE(cameraIds.size(), 0);
+    ASSERT_NE(cameraAbilityList.size(), 0);
+ 
+    bool isTorchLevelControlSupported = false;
+    int32_t rc = cameraService_->IsTorchLevelControlSupported(isTorchLevelControlSupported);
+    EXPECT_EQ(rc, CAMERA_OK);
+ 
+    bool expectedValue = false;
+    for (auto& cameraAbility : cameraAbilityList) {
+        camera_metadata_item_t item;
+        int ret = OHOS::Camera::FindCameraMetadataItem(cameraAbility->get(),
+            OHOS_ABILITY_FLASHLIGHT_ADJUST_SUPPORTED, &item);
+        if (ret == CAM_META_SUCCESS && item.count > 0) {
+            expectedValue = (item.data.u8[0] == 1);
+            break;
+        }
+    }
+ 
+    EXPECT_EQ(isTorchLevelControlSupported, expectedValue);
+
+    device->Release();
+    device->Close();
+}
+
+/**
  * @tc.name  : Test DumpCameraAbility_001 API
  * @tc.number: DumpCameraAbility_001
  * @tc.desc  : Test DumpCameraAbility_001 API, when tags are'n found
