@@ -136,7 +136,8 @@ void HMechSession::HandleOnCaptureSessionConfiged(const sptr<IMechSessionCallbac
     for (size_t i = 0; i < userSessions.size(); i++) {
         sptr<HCaptureSession> captureSession = userSessions[i];
         CaptureSessionInfo sessionInfo;
-        if (captureSession->GetCaptureSessionInfo(sessionInfo)) {
+        if (captureSession->GetCaptureSessionInfo(sessionInfo) && sessionInfo.sessionStatus
+            && !sessionInfo.cameraId.empty()) {
             callback->OnCaptureSessionConfiged(sessionInfo);
         }
     }
