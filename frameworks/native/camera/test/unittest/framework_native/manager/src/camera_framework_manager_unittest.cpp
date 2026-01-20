@@ -2195,6 +2195,59 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_099, Test
     cameraManager_->RemoveExtendedSupportPhotoFormats(photoProfiles);
     EXPECT_EQ(photoProfiles.size(), 1);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test cameramanager with serviceProxy_ is nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test cameramanager with serviceProxy_ is nullptr
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_101, TestSize.Level0)
+{
+    sptr<ICameraServiceCallback> callback = cameraManager_->GetCameraStatusListenerManager();
+    ASSERT_NE(callback, nullptr);
+ 
+    pid_t pid = 0;
+    cameraManager_->SetServiceProxy(nullptr);
+    cameraManager_->CameraServerDied(pid);
+    sptr<ICameraServiceCallback> cameraServiceCallback = nullptr;
+    cameraManager_->SetCameraServiceCallback(cameraServiceCallback);
+    sptr<ITorchServiceCallback> torchServiceCallback = nullptr;
+    cameraManager_->SetTorchServiceCallback(torchServiceCallback);
+    sptr<ICameraMuteServiceCallback> cameraMuteServiceCallback = nullptr;
+    cameraManager_->SetCameraMuteServiceCallback(cameraMuteServiceCallback);
+ 
+    string cameraId = "";
+    cameraManager_->GetCameraDeviceFromId(cameraId);
+    bool isTorchLevelControlSupported = cameraManager_->IsTorchLevelControlSupported();
+    EXPECT_EQ(isTorchLevelControlSupported, false);
+}
+ 
+/*
+ * Feature: Framework
+ * Function: Test SetTorchModeOnWithLevel
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetTorchModeOnWithLevel
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_102, TestSize.Level0)
+{
+    int32_t result = cameraManager_->SetTorchModeOnWithLevel(TorchMode::TORCH_MODE_ON, 1);
+    if (result != CAMERA_OK) {
+        GTEST_SKIP();
+    }
+    EXPECT_EQ(result, CAMERA_OK);
+    TorchMode ret = cameraManager_->GetTorchMode();
+    EXPECT_EQ(ret, TorchMode::TORCH_MODE_ON);
+    result = cameraManager_->SetTorchModeOnWithLevel(TorchMode::TORCH_MODE_OFF, 0);
+    EXPECT_EQ(result, CAMERA_OK);
+    ret = cameraManager_->GetTorchMode();
+    EXPECT_EQ(ret, TorchMode::TORCH_MODE_OFF);
+}
+
 #endif
 }
 }
