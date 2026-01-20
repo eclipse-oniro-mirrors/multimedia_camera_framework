@@ -122,6 +122,9 @@ MpegManager::~MpegManager()
         } else {
             DP_INFO_LOG("Rename %{public}s to %{public}s success.", outPath_.c_str(), tempPath_.c_str());
         }
+    } else {
+        remove(outPath_.c_str());
+        DP_INFO_LOG("Reremove %{public}s success.", outPath_.c_str());
     }
     DPSEventReport::GetInstance().ReportPartitionUsage();
 }
