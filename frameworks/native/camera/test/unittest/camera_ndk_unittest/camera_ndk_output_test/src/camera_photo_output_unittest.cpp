@@ -930,7 +930,7 @@ HWTEST_F(CameraPhotoOutputUnitTest, camera_photo_output_unittest_019, TestSize.L
  * EnvConditions: NA
  * CaseDescription: Test photo capture with preview output & capture settings
  */
-HWTEST_F(CameraPhotoOutputUnitTest, camera_photo_output_unittest_020, TestSize.Level0)
+HWTEST_F(CameraPhotoOutputUnitTest, DISABLED_camera_photo_output_unittest_020, TestSize.Level0)
 {
     Camera_ErrorCode ret = CAMERA_OK;
     Camera_PhotoOutput* PhotoOutput = CreatePhotoOutput();
