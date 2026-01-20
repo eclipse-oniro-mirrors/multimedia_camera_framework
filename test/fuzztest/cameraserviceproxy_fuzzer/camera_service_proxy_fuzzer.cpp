@@ -453,6 +453,23 @@ void CameraServiceProxyFuzz::CameraServiceProxyTest23()
     fuzz_->SetPeerCallback(callback);
 }
 
+void CameraServiceProxyFuzz::CameraServiceProxyTest24(uzzedDataProvider &fdp)
+{
+    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    CHECK_RETURN_ELOG(!samgr, "samgr is nullptr");
+    auto remote = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
+    CHECK_RETURN_ELOG(!remote, "remote is nullptr");
+    fuzz_ = std::make_shared<CameraServiceProxy>(remote);
+    CHECK_RETURN_ELOG(!fuzz_, "fuzz_ is nullptr");
+    int32_t maxLength = 30;
+    std::string bundleName = fpd.ConsumeRandomLengthString().substr(0, maxLength);
+    std::string pageName = fpd.ConsumeRandomLengthString().substr(0, maxLength);
+    int32_t preScanMode = fpd.ConsumeIntegral<int32_t>(0, 2);
+    fuzz->PrelaunchScanCamera(bundleName, pageName
+        static_cast<PrelaunchScanModeOhos>(preScanMode));
+}
+}
+
 void FuzzTest(const uint8_t *rawData, size_t size)
 {
     FuzzedDataProvider fdp(rawData, size);

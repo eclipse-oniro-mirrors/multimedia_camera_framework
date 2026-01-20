@@ -198,6 +198,7 @@ public:
     static void CameraServiceProxyTest21(FuzzedDataProvider &fdp);
     static void CameraServiceProxyTest22(FuzzedDataProvider &fdp);
     static void CameraServiceProxyTest23();
+    static void CameraServiceProxyTest24(FuzzedDataProvider &fdp);
 };
 }  // namespace CameraStandard
 }  // namespace OHOS

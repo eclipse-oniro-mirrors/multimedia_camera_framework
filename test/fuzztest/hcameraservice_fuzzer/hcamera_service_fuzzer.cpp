@@ -481,6 +481,16 @@ void UnsetPeerCallback(FuzzedDataProvider& provider)
     GetInstance().UnsetPeerCallback();
 }
 
+void PrelaunchScanCamera(FuzzedDataProvider& provider)
+{
+    int32_t maxLength = 30;
+    std::string bundleName = fpd.ConsumeRandomLengthString().substr(0, maxLength);
+    std::string pageName = fpd.ConsumeRandomLengthString().substr(0, maxLength);
+    int32_t preScanMode = fpd.ConsumeIntegral<int32_t>(0, 2);
+    GetInstance().PrelaunchScanCamera(bundleName, pageName
+        static_cast<PrelaunchScanModeOhos>(preScanMode));
+}
+
 void Init()
 {
     CHECK_RETURN_ELOG(!TestToken().GetAllCameraPermission(), "Get permission fail");
@@ -544,6 +554,7 @@ void Test(FuzzedDataProvider& fdp)
         NotifyCameraState,
         SetPeerCallback,
         UnsetPeerCallback,
+        PrelaunchScanCamera,
     });
     func(fdp);
 }
