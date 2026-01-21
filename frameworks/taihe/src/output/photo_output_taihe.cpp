@@ -905,7 +905,7 @@ bool PhotoOutputImpl::IsMovingPhotoSupported()
     return session->IsMovingPhotoSupported();
 }
 
-ImageRotation PhotoOutputImpl::GetPhotoRotation()
+ImageRotation PhotoOutputImpl::GetPhotoRotation(optional_view<int32_t> deviceDegree)
 {
     if (photoOutput_ == nullptr) {
         MEDIA_ERR_LOG("GetPhotoRotation failed, photoOutput_ is nullptr");
@@ -913,25 +913,13 @@ ImageRotation PhotoOutputImpl::GetPhotoRotation()
             "GetPhotoRotation Camera service fatal error.");
         return ImageRotation(static_cast<ImageRotation::key_t>(0));
     }
-    int32_t retCode = photoOutput_->GetPhotoRotation();
-    if (retCode == OHOS::CameraStandard::SERVICE_FATL_ERROR) {
-        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::SERVICE_FATL_ERROR,
-            "GetPhotoRotation Camera service fatal error.");
-        return ImageRotation(static_cast<ImageRotation::key_t>(0));
+    int32_t retCode = OHOS::CameraStandard::SERVICE_FATL_ERROR;
+    if (deviceDegree.has_value()) {
+        int32_t deviceDegreeValue = deviceDegree.value();
+        retCode = photoOutput_->GetPhotoRotation(deviceDegreeValue);
+    } else {
+        retCode = photoOutput_->GetPhotoRotation();
     }
-    int32_t taiheRetCode = CameraUtilsTaihe::ToTaiheImageRotation(retCode);
-    return ImageRotation(static_cast<ImageRotation::key_t>(taiheRetCode));
-}
-
-ImageRotation PhotoOutputImpl::GetPhotoRotation(int32_t deviceDegree)
-{
-    if (photoOutput_ == nullptr) {
-        MEDIA_ERR_LOG("GetPhotoRotation failed, photoOutput_ is nullptr");
-        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::SERVICE_FATL_ERROR,
-            "GetPhotoRotation Camera service fatal error.");
-        return ImageRotation(static_cast<ImageRotation::key_t>(0));
-    }
-    int32_t retCode = photoOutput_->GetPhotoRotation(deviceDegree);
     if (retCode == OHOS::CameraStandard::SERVICE_FATL_ERROR) {
         CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::SERVICE_FATL_ERROR,
             "GetPhotoRotation Camera service fatal error.");

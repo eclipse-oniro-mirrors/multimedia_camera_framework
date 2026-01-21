@@ -75,8 +75,7 @@ public:
     void SetRotation(ImageRotation rotation);
     bool IsRotationSupported();
     array<ImageRotation> GetSupportedRotations();
-    ImageRotation GetVideoRotation();
-    ImageRotation GetVideoRotation(int32_t deviceDegree);
+    ImageRotation GetVideoRotation(optional_view<int32_t> deviceDegree);
     void AttachMetaSurface(string_view surfaceId, VideoMetaType type);
     array<VideoMetaType> GetSupportedVideoMetaTypes();
     void EnableAutoDeferredVideoEnhancement(bool enabled);
