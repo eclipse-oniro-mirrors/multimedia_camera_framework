@@ -507,7 +507,7 @@ interface PreviewOutput : CameraOutput {
   GetSupportedFrameRates(): Array<FrameRateRange>;
   GetActiveFrameRate(): FrameRateRange;
   SetFrameRate(minFps: i32, maxFps: i32): void;
-  GetPreviewRotation(displayRotation: i32): ImageRotation;
+  GetPreviewRotation(displayRotation: Optional<i32>): ImageRotation;
   SetPreviewRotation(previewRotation: ImageRotation, isDisplayLocked: Optional<bool>): void;
   AttachSketchSurface(surfaceId: String): void;
   EnableSketch(enabled: bool): void;
@@ -1760,7 +1760,7 @@ interface VideoOutput : CameraOutput {
   GetSupportedRotations(): Array<ImageRotation>;
   GetActiveProfile(): VideoProfile;
   SetFrameRate(minFps: i32, maxFps: i32): void;
-  GetVideoRotation(deviceDegree: i32): ImageRotation;
+  GetVideoRotation(deviceDegree: Optional<i32>): ImageRotation;
   GetSupportedVideoMetaTypes(): Array<VideoMetaType>;
   AttachMetaSurface(surfaceId: String, type: VideoMetaType): void;
   EnableAutoDeferredVideoEnhancement(enabled: bool): void;
@@ -2231,7 +2231,7 @@ interface PhotoOutput : CameraOutput {
   IsOfflineSupported(): bool;
   EnableMovingPhoto(enabled: bool): void;
   IsMovingPhotoSupported(): bool;
-  GetPhotoRotation(deviceDegree: i32): ImageRotation;
+  GetPhotoRotation(deviceDegree: Optional<i32>): ImageRotation;
   EnableAutoCloudImageEnhancement(enabled: bool): void;
   IsAutoCloudImageEnhancementSupported(): bool;
   EnableQuickThumbnail(enabled: bool): void;
