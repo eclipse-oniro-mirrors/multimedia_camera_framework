@@ -1535,5 +1535,28 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_027, TestSize.L
     EXPECT_EQ(intResult, 7400201);
 }
 
+/*
+ * Feature: Framework
+ * Function: Test pre  scan camera
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: test PrelaunchScanCamera the camera with serviceProxy_ null anomalous branch
+ */
+HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_028, TestSize.Level0)
+{
+    if (g_isSupportedDeviceStatus) {
+        GTEST_SKIP();
+    }
+    sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
+    ASSERT_NE(camManagerObj, nullptr);
+    std::string bundleName = "com.tencent.wechat";
+    std::string pageName = "scan_page";
+    int preScanMode = 2;
+    int32_t preResult = camManagerObj->PrelaunchScanCamera(bundleName, pageName
+        static_cast<PrelaunchScanModeOhos>(preScanMode));
+    EXPECT_EQ(preResult, 0);
+}
+
 }
 }
