@@ -1553,7 +1553,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_028, TestSize.L
     std::string bundleName = "com.tencent.wechat";
     std::string pageName = "scan_page";
     int preScanMode = 2;
-    int32_t preResult = camManagerObj->PrelaunchScanCamera(bundleName, pageName
+    int32_t preResult = camManagerObj->PrelaunchScanCamera(bundleName, pageName,
         static_cast<PrelaunchScanModeOhos>(preScanMode));
     EXPECT_EQ(preResult, 0);
 }

@@ -156,8 +156,8 @@ void CameraManagerFuzzer::CameraManagerFuzzTest3(FuzzedDataProvider& fdp)
     int32_t maxLength = 30;
     std::string bundleName = fdp.ConsumeRandomLengthString().substr(0, maxLength);
     std::string pageName = fdp.ConsumeRandomLengthString().substr(0, maxLength);
-    int32_t preScanMode = fdp.ConsumeIntegral<int32_t>(0, 2);
-    manager->PrelaunchScanCamera(bundleName, pageName
+    int32_t preScanMode = fdp.ConsumeIntegralInRange<int32_t>(0, 2);
+    manager->PrelaunchScanCamera(bundleName, pageName,
         static_cast<PrelaunchScanModeOhos>(preScanMode));
 }
 }

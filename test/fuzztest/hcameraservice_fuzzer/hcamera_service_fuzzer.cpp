@@ -484,10 +484,10 @@ void UnsetPeerCallback(FuzzedDataProvider& provider)
 void PrelaunchScanCamera(FuzzedDataProvider& provider)
 {
     int32_t maxLength = 30;
-    std::string bundleName = fpd.ConsumeRandomLengthString().substr(0, maxLength);
-    std::string pageName = fpd.ConsumeRandomLengthString().substr(0, maxLength);
-    int32_t preScanMode = fpd.ConsumeIntegral<int32_t>(0, 2);
-    GetInstance().PrelaunchScanCamera(bundleName, pageName
+    std::string bundleName = provider.ConsumeRandomLengthString().substr(0, maxLength);
+    std::string pageName = provider.ConsumeRandomLengthString().substr(0, maxLength);
+    int32_t preScanMode = provider.ConsumeIntegralInRange<int32_t>(0, 2);
+    GetInstance().PrelaunchScanCamera(bundleName, pageName,
         static_cast<PrelaunchScanModeOhos>(preScanMode));
 }
 
