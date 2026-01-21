@@ -272,7 +272,7 @@ void VideoPostProcessor::RemoveRequest(const std::string& videoId)
         return;
     }
     std::string path = PATH + videoId + OUT_TAG;
-    DP_CHECK_ERROR_PRINT_LOG(remove(path.c_str()) != 0, "Failed to remove file at path: %{private}s", path.c_str());
+    remove(path.c_str());
     auto ret = session->RemoveVideo(videoId);
     DP_INFO_LOG("DPS_VIDEO: Remove video to ive, videoId: %{public}s, ret: %{public}d", videoId.c_str(), ret);
 }

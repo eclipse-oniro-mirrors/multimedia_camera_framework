@@ -19,7 +19,7 @@
 #include <cstdint>
 
 #include "deferred_processing_types.h"
-#include "v1_5/types.h"
+#include "v1_4/types.h"
 
 namespace OHOS {
 namespace CameraStandard {

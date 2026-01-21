@@ -111,12 +111,12 @@ void DeferredPhotoController::TryDoSchedule()
     auto job = photoStrategyCenter_->GetJob();
     DP_INFO_LOG("DPS_PHOTO: strategy get work: %{public}d", job != nullptr);
     NotifyScheduleState(job != nullptr);
+    DP_CHECK_RETURN(photoProcessor_->HasRunningJob());
     if (job == nullptr) {
         // 重置底层性能模式，避免功耗增加
         SetDefaultExecutionMode();
         return;
     }
-    DP_CHECK_RETURN(photoProcessor_->HasRunningJob());
     DP_INFO_LOG("DPS_PHOTO: imageId: %{public}s, status: %{public}d, priority: %{public}d",
         job->GetImageId().c_str(), job->GetCurStatus(), job->GetCurPriority());
     DoProcess(job);
