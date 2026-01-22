@@ -227,6 +227,7 @@ void MovingPhotoManager::StopMovingPhoto(VideoType type)
     CHECK_PRINT_ILOG(!audioCapturerSessionProxy_, "audioCapturerSessionProxy_ is nullptr");
     auto audioCaptureSessionProxy = sptr<AudioCapturerSessionIntf>(audioCapturerSessionProxy_);
     std::thread asyncAudioReleaseThread = thread([audioCaptureSessionProxy]() {
+         CHECK_PRINT_ELOG(!audioCaptureSessionProxy, "audioCapturerSessionProxy is nullptr");
         CHECK_EXECUTE(audioCaptureSessionProxy, audioCaptureSessionProxy->StopAudioCapture());
     });
     asyncAudioReleaseThread.detach();

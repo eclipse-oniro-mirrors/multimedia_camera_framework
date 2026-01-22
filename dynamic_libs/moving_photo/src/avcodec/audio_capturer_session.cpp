@@ -216,7 +216,8 @@ void AudioCapturerSession::Release()
     if (audioCapturer != nullptr) {
         // LCOV_EXCL_START
         MEDIA_INFO_LOG("Audio capture Release enter");
-        audioCapturer->Release();
+        bool ret = audioCapturer->Release();
+        CHECK_PRINT_ELOG(!ret, "audioCapturer release failed");
         // LCOV_EXCL_STOP
     }
     SetAudioCapturer(nullptr);
