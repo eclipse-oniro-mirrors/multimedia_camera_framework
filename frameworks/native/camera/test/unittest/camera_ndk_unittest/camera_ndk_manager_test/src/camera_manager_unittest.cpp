@@ -1497,8 +1497,9 @@ HWTEST_F(CameraManagerUnitTest, camera_manager_register_callback_unittest_001, T
  * EnvConditions: NA
  * CaseDescription: Test GetCameraDevice
  */
-HWTEST_F(CameraManagerUnitTest, DISABLED_camera_manager_getcameradevice_001, TestSize.Level0)
+HWTEST_F(CameraManagerUnitTest, camera_manager_getcameradevice_001, TestSize.Level0)
 {
+    GTEST_SKIP();
     Camera_Device* cameranow = nullptr;
     Camera_ErrorCode ret = cameraManager->GetCameraDevice(
         Camera_Position::CAMERA_POSITION_BACK, Camera_Type::CAMERA_TYPE_DEFAULT, cameranow);
@@ -1515,8 +1516,9 @@ HWTEST_F(CameraManagerUnitTest, DISABLED_camera_manager_getcameradevice_001, Tes
  * EnvConditions: NA
  * CaseDescription: Test GetCameraDevices and DeleteCameraDevices
  */
-HWTEST_F(CameraManagerUnitTest, DISABLED_camera_manager_getcameradevices_001, TestSize.Level0)
+HWTEST_F(CameraManagerUnitTest, camera_manager_getcameradevices_001, TestSize.Level0)
 {
+    GTEST_SKIP();
     Camera_Type* types = new Camera_Type[4];
     types[0] = Camera_Type::CAMERA_TYPE_TELEPHOTO;
     types[1] = Camera_Type::CAMERA_TYPE_WIDE_ANGLE;
