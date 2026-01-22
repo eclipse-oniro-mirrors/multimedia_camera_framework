@@ -76,7 +76,7 @@ void BmsAdapter::SetBms(sptr<OHOS::AppExecFwk::IBundleMgr> bms)
 
 std::string BmsAdapter::GetBundleName(int uid)
 {
-    str::string bundleName = "";
+    std::string bundleName = "";
     OHOS::sptr<OHOS::ISystemAbilityManager> samgr =
         OHOS::SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     CHECK_RETURN_RET_ELOG(samgr == nullptr, bundleName, "GetClientBundle Get ability manager failed");
