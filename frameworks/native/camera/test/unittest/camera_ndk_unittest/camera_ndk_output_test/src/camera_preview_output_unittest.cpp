@@ -51,8 +51,9 @@ void CameraPreviewOutputUnitTest::TearDown(void)
  * EnvConditions: NA
  * CaseDescription: Test capture session start and stop preview multiple times
  */
-HWTEST_F(CameraPreviewOutputUnitTest, DISABLED_camera_preview_output_unittest_001, TestSize.Level0)
+HWTEST_F(CameraPreviewOutputUnitTest, camera_preview_output_unittest_001, TestSize.Level0)
 {
+    GTEST_SKIP();
     Camera_CaptureSession* captureSession = nullptr;
     Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
     EXPECT_EQ(ret, CAMERA_OK);
@@ -104,8 +105,9 @@ HWTEST_F(CameraPreviewOutputUnitTest, DISABLED_camera_preview_output_unittest_00
  * EnvConditions: NA
  * CaseDescription: Test get active profile of priview output and delete profile of priview output
  */
-HWTEST_F(CameraPreviewOutputUnitTest, DISABLED_camera_preview_output_unittest_002, TestSize.Level0)
+HWTEST_F(CameraPreviewOutputUnitTest, camera_preview_output_unittest_002, TestSize.Level0)
 {
+    GTEST_SKIP();
     Camera_Profile *profile = nullptr;
     Camera_CaptureSession* captureSession = nullptr;
     Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
@@ -152,8 +154,9 @@ HWTEST_F(CameraPreviewOutputUnitTest, DISABLED_camera_preview_output_unittest_00
  * EnvConditions: NA
  * CaseDescription: Test get supported framerates delete framerates in preview output
  */
-HWTEST_F(CameraPreviewOutputUnitTest, DISABLED_camera_preview_output_unittest_003, TestSize.Level0)
+HWTEST_F(CameraPreviewOutputUnitTest, camera_preview_output_unittest_003, TestSize.Level0)
 {
+    GTEST_SKIP();
     uint32_t size = 0;
     int32_t minFps = 0;
     int32_t maxFps = 0;
@@ -236,8 +239,9 @@ HWTEST_F(CameraPreviewOutputUnitTest, camera_preview_output_unittest_004, TestSi
  * EnvConditions: NA
  * CaseDescription: Test set framerate in preview output
  */
-HWTEST_F(CameraPreviewOutputUnitTest, DISABLED_camera_preview_output_unittest_005, TestSize.Level0)
+HWTEST_F(CameraPreviewOutputUnitTest, camera_preview_output_unittest_005, TestSize.Level0)
 {
+    GTEST_SKIP();
     uint32_t size = 0;
     int32_t minFps = 0;
     int32_t maxFps = 0;
@@ -294,8 +298,9 @@ HWTEST_F(CameraPreviewOutputUnitTest, DISABLED_camera_preview_output_unittest_00
  * EnvConditions: NA
  * CaseDescription: Test get active framerate in preview output
  */
-HWTEST_F(CameraPreviewOutputUnitTest, DISABLED_camera_preview_output_unittest_006, TestSize.Level0)
+HWTEST_F(CameraPreviewOutputUnitTest, camera_preview_output_unittest_006, TestSize.Level0)
 {
+    GTEST_SKIP();
     uint32_t size = 0;
     int32_t minFps = 0;
     int32_t maxFps = 0;
@@ -354,8 +359,9 @@ HWTEST_F(CameraPreviewOutputUnitTest, DISABLED_camera_preview_output_unittest_00
  * EnvConditions: NA
  * CaseDescription: Test get and set preview rotation, get and set successfully when valid parameters are entered
  */
-HWTEST_F(CameraPreviewOutputUnitTest, DISABLED_camera_preview_output_unittest_007, TestSize.Level0)
+HWTEST_F(CameraPreviewOutputUnitTest, camera_preview_output_unittest_007, TestSize.Level0)
 {
+    GTEST_SKIP();
     int displayRotation = 0;
     Camera_ImageRotation imageRotation = IAMGE_ROTATION_180;
     bool isDisplayLocked = false;
@@ -521,8 +527,9 @@ HWTEST_F(CameraPreviewOutputUnitTest, camera_preview_output_unittest_011, TestSi
  * EnvConditions: NA
  * CaseDescription: Test get and set preview rotation, get and set successfully when valid parameters are entered
  */
-HWTEST_F(CameraPreviewOutputUnitTest, DISABLED_camera_preview_output_unittest_012, TestSize.Level0)
+HWTEST_F(CameraPreviewOutputUnitTest, camera_preview_output_unittest_012, TestSize.Level0)
 {
+    GTEST_SKIP();
     bool isDisplayLocked = false;
     Camera_CaptureSession* captureSession = nullptr;
     Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
@@ -582,8 +589,9 @@ HWTEST_F(CameraPreviewOutputUnitTest, DISABLED_camera_preview_output_unittest_01
  * EnvConditions: NA
  * CaseDescription: Test IsBandwidthCompressionSupported and EnableBandwidthCompression with normal branch
  */
-HWTEST_F(CameraPreviewOutputUnitTest, DISABLED_camera_preview_output_unittest_013, TestSize.Level0)
+HWTEST_F(CameraPreviewOutputUnitTest, camera_preview_output_unittest_013, TestSize.Level0)
 {
+    GTEST_SKIP();
     bool enableCompression = true;
     Camera_CaptureSession* captureSession = nullptr;
     Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
@@ -642,8 +650,9 @@ HWTEST_F(CameraPreviewOutputUnitTest, DISABLED_camera_preview_output_unittest_01
  * EnvConditions: NA
  * CaseDescription: Test IsBandwidthCompressionSupported and EnableBandwidthCompression with abnormal branch
  */
-HWTEST_F(CameraPreviewOutputUnitTest, DISABLED_camera_preview_output_unittest_014, TestSize.Level0)
+HWTEST_F(CameraPreviewOutputUnitTest, camera_preview_output_unittest_014, TestSize.Level0)
 {
+    GTEST_SKIP();
     Camera_CaptureSession* captureSession = nullptr;
     Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
     EXPECT_EQ(ret, CAMERA_OK);
@@ -696,8 +705,9 @@ HWTEST_F(CameraPreviewOutputUnitTest, DISABLED_camera_preview_output_unittest_01
  * EnvConditions: NA
  * CaseDescription: Test get and set preview rotation, get and set successfully when valid parameters are entered
  */
-HWTEST_F(CameraPreviewOutputUnitTest, DISABLED_camera_preview_output_unittest_015, TestSize.Level0)
+HWTEST_F(CameraPreviewOutputUnitTest, camera_preview_output_unittest_015, TestSize.Level0)
 {
+    GTEST_SKIP();
     Camera_ImageRotation imageRotation = IAMGE_ROTATION_180;
     bool isDisplayLocked = false;
     Camera_CaptureSession* captureSession = nullptr;
@@ -762,8 +772,9 @@ HWTEST_F(CameraPreviewOutputUnitTest, camera_preview_output_unittest_016, TestSi
  * EnvConditions: NA
  * CaseDescription: Test get and set preview rotation, get and set successfully when valid parameters are entered
  */
-HWTEST_F(CameraPreviewOutputUnitTest, DISABLED_camera_preview_output_unittest_017, TestSize.Level0)
+HWTEST_F(CameraPreviewOutputUnitTest, camera_preview_output_unittest_017, TestSize.Level0)
 {
+    GTEST_SKIP();
     bool isDisplayLocked = false;
     Camera_CaptureSession* captureSession = nullptr;
     Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
