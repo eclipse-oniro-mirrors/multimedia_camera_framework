@@ -130,6 +130,22 @@ private:
     void OnSystemPressureLevelCallback(OHOS::CameraStandard::PressureStatus systemPressureLevel) const;
 };
 
+class ControlCenterEffectStatusCallbackListener
+    : public OHOS::CameraStandard::ControlCenterEffectCallback,
+      public ListenerBase,
+      public std::enable_shared_from_this<ControlCenterEffectStatusCallbackListener> {
+public:
+    ControlCenterEffectStatusCallbackListener(ani_env *env) : ListenerBase(env)
+    {}
+    ~ControlCenterEffectStatusCallbackListener() = default;
+    void OnControlCenterEffectStatusChanged(
+        OHOS::CameraStandard::ControlCenterStatusInfo controlCenterStatusInfo) override;
+
+private:
+    void OnControlCenterEffectStatusCallback(
+        OHOS::CameraStandard::ControlCenterStatusInfo controlCenterStatusInfo) const;
+};
+
 class SessionImpl : public CameraAniEventEmitter<SessionImpl>,
                     virtual public SessionBase {
 public:
@@ -200,6 +216,13 @@ public:
     void OffSystemPressureLevelChange(optional_view<callback<void(uintptr_t, SystemPressureLevel)>> callback);
     void OnZoomInfoChange(callback_view<void(uintptr_t, ZoomInfo const&)> callback);
     void OffZoomInfoChange(optional_view<callback<void(uintptr_t, ZoomInfo const&)>> callback);
+    void OnControlCenterEffectStatusChange(callback_view<void(uintptr_t, ControlCenterStatusInfo const&)> callback);
+    void OffControlCenterEffectStatusChange(
+        optional_view<callback<void(uintptr_t, ControlCenterStatusInfo const &)>> callback);
+
+    bool IsControlCenterSupported();
+    array<ControlCenterEffectType> GetSupportedEffectTypes();
+    void EnableControlCenter(bool enabled);
 
     std::shared_ptr<SessionCallbackListener> sessionCallback_ = nullptr;
     std::shared_ptr<FocusCallbackListener> focusCallback_ = nullptr;
@@ -209,6 +232,7 @@ public:
     std::shared_ptr<FeatureDetectionStatusCallbackListener> featureDetectionCallback_ = nullptr;
     std::shared_ptr<MacroStatusCallbackListener> macroStatusCallback_ = nullptr;
     std::shared_ptr<EffectSuggestionCallbackListener> effectSuggestionCallback_ = nullptr;
+    std::shared_ptr<ControlCenterEffectStatusCallbackListener> controlCenterEffectStatusCallback_ = nullptr;
     
     static uint32_t cameraSessionTaskId_;
     int32_t featureType_;
@@ -237,6 +261,10 @@ private:
     void RegisterEffectSuggestionCallbackListener(const std::string& eventName, std::shared_ptr<uintptr_t> callback,
         bool isOnce);
     void UnregisterEffectSuggestionCallbackListener(const std::string& eventName, std::shared_ptr<uintptr_t> callback);
+    virtual void RegisterControlCenterEffectStatusCallbackListener(const std::string& eventName,
+        std::shared_ptr<uintptr_t> callback, bool isOnce);
+    virtual void UnregisterControlCenterEffectStatusCallbackListener(const std::string& eventName,
+        std::shared_ptr<uintptr_t> callback);
 
     static const EmitterFunctions fun_map_;
 

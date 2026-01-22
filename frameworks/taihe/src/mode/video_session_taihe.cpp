@@ -130,5 +130,30 @@ void VideoSessionImpl::UnregisterPressureStatusCallbackListener(
     }
     pressureCallback_->RemoveCallbackRef(eventName, callback);
 }
+
+void VideoSessionImpl::RegisterControlCenterEffectStatusCallbackListener(
+    const std::string& eventName, std::shared_ptr<uintptr_t> callback, bool isOnce)
+{
+    MEDIA_INFO_LOG("VideoSessionImpl::RegisterControlCenterEffectStatusCallbackListener");
+    CHECK_RETURN_ELOG(!videoSession_, "videoSession_ is null, cannot register pressure status callback listener");
+    if (controlCenterEffectStatusCallback_ == nullptr) {
+        ani_env *env = get_env();
+        controlCenterEffectStatusCallback_ = std::make_shared<ControlCenterEffectStatusCallbackListener>(env);
+        videoSession_->SetControlCenterEffectStatusCallback(controlCenterEffectStatusCallback_);
+    }
+    controlCenterEffectStatusCallback_->SaveCallbackReference(eventName, callback, isOnce);
+}
+
+void VideoSessionImpl::UnregisterControlCenterEffectStatusCallbackListener(
+    const std::string& eventName, std::shared_ptr<uintptr_t> callback)
+{
+    MEDIA_INFO_LOG("VideoSessionImpl::UnregisterControlCenterEffectStatusCallbackListener");
+    if (controlCenterEffectStatusCallback_ == nullptr) {
+        MEDIA_INFO_LOG("controlCenterEffectStatusCallback is null");
+        return;
+    }
+    controlCenterEffectStatusCallback_->RemoveCallbackRef(eventName, callback);
+}
+
 } // namespace Camera
 } // namespace Ani

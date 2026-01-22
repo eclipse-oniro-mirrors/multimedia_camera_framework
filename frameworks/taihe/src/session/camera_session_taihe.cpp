@@ -217,6 +217,44 @@ array<CameraOutputCapability> SessionImpl::GetCameraOutputCapabilities(CameraDev
     return array<CameraOutputCapability>(vec);
 }
 
+bool SessionImpl::IsControlCenterSupported()
+{
+    bool isSupported = false;
+    MEDIA_INFO_LOG("IsControlCenterSupported is called.");
+    if (captureSession_ != nullptr) {
+        isSupported = captureSession_->IsControlCenterSupported();
+    } else {
+        MEDIA_ERR_LOG("IsControlCenterSupported call Failed!");
+    }
+    return isSupported;
+}
+
+array<ControlCenterEffectType> SessionImpl::GetSupportedEffectTypes()
+{
+    MEDIA_INFO_LOG("GetSupportedEffectTypes is called.");
+    std::vector<OHOS::CameraStandard::ControlCenterEffectType> effectTypes = {};
+    std::vector<ControlCenterEffectType> vec;
+    if (captureSession_ != nullptr) {
+        effectTypes = captureSession_->GetSupportedEffectTypes();
+        for (size_t i = 0; i < effectTypes.size(); i++) {
+            vec.push_back(ControlCenterEffectType::from_value(static_cast<int32_t>(effectTypes[i])));
+        }
+    } else {
+        MEDIA_ERR_LOG("GetSupportedEffectTypes call Failed!");
+    }
+    return array<ControlCenterEffectType>(vec);
+}
+
+void SessionImpl::EnableControlCenter(bool enabled)
+{
+    MEDIA_INFO_LOG("EnableControlCenter is called.");
+    if (captureSession_ != nullptr) {
+        captureSession_->EnableControlCenter(enabled);
+    } else {
+        MEDIA_ERR_LOG("EnableControlCenter call Failed!");
+    }
+}
+
 void SessionImpl::OnError(callback_view<void(uintptr_t)> callback)
 {
     ListenerTemplate<SessionImpl>::On(this, callback, "error");
@@ -953,6 +991,57 @@ void EffectSuggestionCallbackListener::OnEffectSuggestionCallback(
     mainHandler_->PostTask(task, "OnEffectSuggestionChange", 0, OHOS::AppExecFwk::EventQueue::Priority::IMMEDIATE, {});
 }
 
+void SessionImpl::RegisterControlCenterEffectStatusCallbackListener(
+    const std::string& eventName, std::shared_ptr<uintptr_t> callback, bool isOnce)
+{
+    CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "this type callback can not be registered in current session!");
+}
+
+void SessionImpl::UnregisterControlCenterEffectStatusCallbackListener(
+    const std::string& eventName, std::shared_ptr<uintptr_t> callback)
+{
+    CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "this type callback can not be unregistered in current session!");
+}
+
+void SessionImpl::OnControlCenterEffectStatusChange(
+    callback_view<void(uintptr_t, ControlCenterStatusInfo const &)> callback)
+{
+    ListenerTemplate<SessionImpl>::On(this, callback, "controlCenterEffectStatusChange");
+}
+
+void SessionImpl::OffControlCenterEffectStatusChange(
+    optional_view<callback<void(uintptr_t, ControlCenterStatusInfo const&)>> callback)
+{
+    ListenerTemplate<SessionImpl>::Off(this, callback, "controlCenterEffectStatusChange");
+}
+
+void ControlCenterEffectStatusCallbackListener::OnControlCenterEffectStatusCallback(
+    OHOS::CameraStandard::ControlCenterStatusInfo controlCenterStatusInfo) const
+{
+    MEDIA_INFO_LOG("OnControlCenterEffectStatusCallback is called");
+    auto sharePtr = shared_from_this();
+    auto task = [controlCenterStatusInfo, sharePtr]() {
+        ControlCenterStatusInfo aniControlCenterStatusInfo = {
+            .effectType = ControlCenterEffectType::from_value(static_cast<int32_t>(controlCenterStatusInfo.effectType)),
+            .isActive = controlCenterStatusInfo.isActive
+        };
+        CHECK_EXECUTE(sharePtr != nullptr, sharePtr->ExecuteAsyncCallback(
+            "controlCenterEffectStatusChange", 0, "Callback is OK", aniControlCenterStatusInfo));
+    };
+    CHECK_RETURN_ELOG(mainHandler_ == nullptr, "callback failed, mainHandler_ is nullptr!");
+    mainHandler_->PostTask(task, "OnControlCenterEffectStatusChange",
+        0, OHOS::AppExecFwk::EventQueue::Priority::IMMEDIATE, {});
+}
+
+void ControlCenterEffectStatusCallbackListener::OnControlCenterEffectStatusChanged(
+    OHOS::CameraStandard::ControlCenterStatusInfo controlCenterStatusInfo)
+{
+    MEDIA_DEBUG_LOG("OnControlCenterEffectStatusChanged is called");
+    OnControlCenterEffectStatusCallback(controlCenterStatusInfo);
+}
+
 const SessionImpl::EmitterFunctions SessionImpl::fun_map_ = {
     { "focusStateChange", {
         &SessionImpl::RegisterFocusCallbackListener,
@@ -1008,6 +1097,9 @@ const SessionImpl::EmitterFunctions SessionImpl::fun_map_ = {
     {"zoomInfoChange", {
         &SessionImpl::RegisterZoomInfoCbListener,
         &SessionImpl::UnregisterZoomInfoCbListener } },
+    { "controlCenterEffectStatusChange", {
+        &SessionImpl::RegisterControlCenterEffectStatusCallbackListener,
+        &SessionImpl::UnregisterControlCenterEffectStatusCallbackListener } },
 };
 const SessionImpl::EmitterFunctions& SessionImpl::GetEmitterFunctions()
 {

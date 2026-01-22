@@ -54,6 +54,10 @@ protected:
         std::shared_ptr<uintptr_t> callback, bool isOnce) override;
     void UnregisterPressureStatusCallbackListener(
         const std::string& eventName, std::shared_ptr<uintptr_t> callback) override;
+    void RegisterControlCenterEffectStatusCallbackListener(const std::string& eventName,
+            std::shared_ptr<uintptr_t> callback, bool isOnce) override;
+    void UnregisterControlCenterEffectStatusCallbackListener(
+        const std::string& eventName, std::shared_ptr<uintptr_t> callback) override;
 };
 } // namespace Camera
 } // namespace Ani
