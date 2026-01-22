@@ -1180,6 +1180,7 @@ int32_t CameraManager::UnSubscribeSystemAbility()
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     CHECK_RETURN_RET_ELOG(samgr == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "CameraManager::UnSubscribeSystemAbility Failed to get System ability manager");
+    std::lock_guard<std::mutex> lock(saListenerMuxtex_);
     CHECK_RETURN_RET(saListener_ == nullptr, CameraErrorCode::SUCCESS);
     sptr<ISystemAbilityStatusChange> listener = static_cast<ISystemAbilityStatusChange*>(saListener_.GetRefPtr());
     int32_t ret = samgr->UnSubscribeSystemAbility(CAMERA_SERVICE_ID, listener);

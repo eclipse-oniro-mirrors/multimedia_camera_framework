@@ -153,6 +153,7 @@ void MovieFileVideoEncodedBufferProducer::EncoderWarp::UpdateConfig(const VideoE
             Media::Plugins::VideoEncodeBFrameGopMode::VIDEO_ENCODE_GOP_ADAPTIVE_B_MODE);
         format.PutIntValue(Media::Tag::VIDEO_ENCODER_ENABLE_B_FRAME, config.isBFrame);
     }
+    CHECK_RETURN_ELOG(!encoder_, "encoder_ is null");
     int32_t ret = encoder_->Configure(format);
     CHECK_RETURN_ELOG(ret != AVCS_ERR_OK, "EncoderWarp configure encoder fail:%{public}d", ret);
 
