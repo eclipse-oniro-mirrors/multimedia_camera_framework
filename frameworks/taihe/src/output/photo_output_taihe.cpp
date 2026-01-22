@@ -67,7 +67,8 @@ void PhotoOutputCallbackAni::OnPhotoAvailableCallback(const std::shared_ptr<Medi
             g_callbackExtendFlag.load());
         if (g_callbackExtendFlag) {
             CapturePhoto capturePhotoValue = make_holder<Ani::Camera::CapturePhotoImpl, CapturePhoto>();
-            capturePhotoValue->SetMain(mainImage);
+            ImageType imageType = ImageType::make_image(mainImage);
+            capturePhotoValue->SetMain(imageType);
             CHECK_EXECUTE(sharePtr != nullptr, sharePtr->ExecuteCallback(
                 CONST_CAPTURE_PHOTO_AVAILABLE, capturePhotoValue));
         } else {
@@ -89,8 +90,11 @@ void PhotoOutputCallbackAni::OnPhotoAvailableCallback(const std::shared_ptr<Medi
     }
     auto sharePtr = shared_from_this();
     auto task = [mainPicture, sharePtr]() {
+        CapturePhoto capturePhotoValue = make_holder<Ani::Camera::CapturePhotoImpl, CapturePhoto>();
+        ImageType imageType = ImageType::make_picture(mainPicture);
+        capturePhotoValue->SetMain(imageType);
         CHECK_EXECUTE(sharePtr != nullptr, sharePtr->ExecuteCallback(
-            CONST_CAPTURE_PHOTO_AVAILABLE, mainPicture));
+            CONST_CAPTURE_PHOTO_AVAILABLE, capturePhotoValue));
     };
     CHECK_RETURN_ELOG(mainHandler_ == nullptr, "callback failed, mainHandler_ is nullptr!");
     mainHandler_->PostTask(task, "OnPhotoAvailableCallback", 0, OHOS::AppExecFwk::EventQueue::Priority::IMMEDIATE, {});

@@ -437,12 +437,15 @@ interface Photo {
   ReleaseSync(): void;
 }
 
+union ImageType {
+  image: Image;
+  picture: Picture;
+}
+
 interface CapturePhoto {
   GetSpecificImplPtr(): i64;
-  @set SetMain(main: Image): void;
-  @get GetMain(): Image;
-  @set SetPicture(main: Picture): void;
-  @get GetPicture(): Picture;
+  @set SetMain(main: ImageType): void;
+  @get GetMain(): ImageType;
   @gen_promise("release")
   ReleaseSync(): void;
 }

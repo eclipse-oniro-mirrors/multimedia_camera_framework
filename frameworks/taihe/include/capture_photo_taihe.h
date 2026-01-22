@@ -28,18 +28,15 @@ namespace ImageTaihe = ohos::multimedia::image::image;
 
 class CapturePhotoImpl {
 public:
-    CapturePhotoImpl() = default;
+    CapturePhotoImpl();
     ~CapturePhotoImpl() = default;
     int64_t GetSpecificImplPtr();
-    void SetMain(ImageTaihe::weak::Image mainImage);
-    ImageTaihe::Image GetMain();
-    void SetPicture(ImageTaihe::weak::Picture picture);
-    ImageTaihe::Picture GetPicture();
+    void SetMain(ImageType const& main);
+    ImageType GetMain();
     void ReleaseSync();
 
 private:
-    ImageTaihe::Image mainImage_ = make_holder<ANI::Image::ImageImpl, ImageTaihe::Image>();
-    ImageTaihe::Picture picture_ = make_holder<ANI::Image::PictureImpl, ImageTaihe::Picture>();
+    ImageType imageTypeValue_;
 };
 } // namespace Ani::Camera
 #endif //FRAMEWORKS_TAIHE_INCLUDE_CAPTURE_PHOTO_TAIHE_H

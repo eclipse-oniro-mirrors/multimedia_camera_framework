@@ -24,35 +24,32 @@ using namespace taihe;
 using namespace ohos::multimedia::camera;
 using namespace ohos::multimedia::image;
 namespace ImageTaihe = ohos::multimedia::image::image;
+CapturePhotoImpl::CapturePhotoImpl()
+    : imageTypeValue_(ImageType::make_image(ANI::Image::ImageImpl::Create(nullptr)))
+{
+    MEDIA_DEBUG_LOG("CapturePhotoImpl ctor");
+}
+
 int64_t CapturePhotoImpl::GetSpecificImplPtr()
 {
     return reinterpret_cast<uintptr_t>(this);
 }
 
-void CapturePhotoImpl::SetMain(ImageTaihe::weak::Image mainImage)
+void CapturePhotoImpl::SetMain(ImageType const& main)
 {
-    mainImage_ = mainImage;
+    MEDIA_DEBUG_LOG("CapturePhotoImpl::SetMain is uncompressed image: %{public}d", main.holds_picture());
+    imageTypeValue_ = main;
 }
 
-ImageTaihe::Image CapturePhotoImpl::GetMain()
+ImageType CapturePhotoImpl::GetMain()
 {
-    return mainImage_;
-}
-
-void CapturePhotoImpl::SetPicture(ImageTaihe::weak::Picture picture)
-{
-    picture_ = picture;
-}
-
-ImageTaihe::Picture CapturePhotoImpl::GetPicture()
-{
-    return picture_;
+    MEDIA_DEBUG_LOG("CapturePhotoImpl::GetMain is uncompressed image: %{public}d", imageTypeValue_.holds_picture());
+    return imageTypeValue_;
 }
 
 void CapturePhotoImpl::ReleaseSync()
 {
-    mainImage_->ReleaseSync();
-    picture_->Release();
+    MEDIA_DEBUG_LOG("CapturePhotoImpl::ReleaseSync is called");
 }
 } // namespace Camera
 } // namespace Ani
