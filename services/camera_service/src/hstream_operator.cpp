@@ -360,9 +360,20 @@ void HStreamOperator::ClearMovingPhotoRepeatStream(VideoType videoType)
 
 void HStreamOperator::StopMovingPhoto(VideoType type) __attribute__((no_sanitize("cfi")))
 {
+    // LCOV_EXCL_START
     auto movingPhotoManagerProxy = movingPhotoManagerProxy_.Get();
     CHECK_RETURN_ELOG(movingPhotoManagerProxy == nullptr, "not support moving photo");
-    movingPhotoManagerProxy->StopMovingPhoto(type);
+    auto allStreams = streamContainer_.GetAllStreams();
+    for (auto& item : allStreams) {
+        if (item->GetStreamType() == StreamType::REPEAT) {
+            auto repeatStream = CastStream<HStreamRepeat>(item);
+            CHECK_RETURN_ELOG(repeatStream == nullptr, "current repeatStream is nullptr.");
+            if (repeatStream->IsLivephotoStream() && isSetMotionPhoto_) {
+                movingPhotoManagerProxy->StopMovingPhoto(type);
+            }
+        }
+    }
+    // LCOV_EXCL_STOP
 }
 
 int32_t HStreamOperator::GetMovingPhotoBufferDuration()

@@ -78,7 +78,7 @@ void MovieFileControllerVideo::SelectTargetAudioInputDevice()
         auto audioSessionManager = AudioStandard::AudioSessionManager::GetInstance();
         int32_t ret = audioSessionManager->SelectInputDevice(descs[0]);
         CHECK_RETURN_ELOG(ret != 0, "SelectInputDevice failed, ret: %{public}d", ret);
-        MEDIA_INFO_LOG("Audio post audio is supported, and built in mic is selected.");
+        MEDIA_INFO_LOG("Audio post edit is supported, and built in mic is selected.");
         isEnableRawAudio_ = true;
     }
 }
