@@ -110,7 +110,8 @@ void WatermarkExifMetadataAdapter::SetWatermarkExifMetadata(
         bool result = exifMetaData->CreateExifdata();
         CHECK_PRINT_ELOG(!result, "CreateExifdata failed");
         SetWaterInfoExifMetaData(exifMetaData, info);
-        pixelMap->SetExifMetadata(exifMetaData);
+        auto metadataPtr = exifMetaData->Clone();
+        pixelMap->SetExifMetadata(metadataPtr);
     }
 }
 
