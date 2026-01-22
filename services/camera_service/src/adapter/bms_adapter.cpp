@@ -84,9 +84,9 @@ std::string BmsAdapter::GetBundleName(int uid)
     CHECK_RETURN_RET_ELOG(remoteObject == nullptr, bundleName, "GetClientBundle object is NULL.");
     sptr<AppExecFwk::IBundleMgr> bms = OHOS::iface_cast<AppExecFwk::IBundleMgr>(remoteObject);
     CHECK_RETURN_RET_ELOG(bms == nullptr, bundleName, "GetClientBundle bundle manager service is NULL.");
-    auto ret = bms->GetNameForUid(uid, bundleInfo);
+    auto ret = bms->GetNameForUid(uid, bundleName);
     CHECK_RETURN_RET_ELOG(ret != ERR_OK, bundleName, "GetBundleInfoForSelf failed.");
-    MEDIA_INFO_LOG("bundleName: [%{private}s]", bundleName);
+    MEDIA_INFO_LOG("bundleName: [%{private}s]", bundleName.c_str());
     return bundleName;
 }
 
