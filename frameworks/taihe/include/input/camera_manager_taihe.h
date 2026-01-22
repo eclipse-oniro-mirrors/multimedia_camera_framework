@@ -74,10 +74,33 @@ private:
     void OnFoldStatusChangedCallback(const OHOS::CameraStandard::FoldStatusInfo &foldStatusInfo) const;
 };
 
+class ControlCenterStatusListenerAni : public OHOS::CameraStandard::ControlCenterStatusListener,
+                                       public ListenerBase,
+                                       public std::enable_shared_from_this<ControlCenterStatusListenerAni> {
+public:
+    explicit ControlCenterStatusListenerAni(ani_env *env);
+    virtual ~ControlCenterStatusListenerAni();
+    void OnControlCenterStatusChanged(bool status) const override;
+
+private:
+    void OnControlCenterStatusCallback(bool status) const;
+};
+
+struct ControlCenterStatusCallbackInfoAni {
+    bool controlCenterStatus_;
+    std::weak_ptr<const ControlCenterStatusListenerAni> listener_;
+    ControlCenterStatusCallbackInfoAni(bool status, std::shared_ptr<const ControlCenterStatusListenerAni> listener)
+        : controlCenterStatus_(status), listener_(listener)
+    {}
+    ~ControlCenterStatusCallbackInfoAni()
+    {}
+};
+
 class CameraManagerImpl : public CameraAniEventEmitter<CameraManagerImpl>,
                           public CameraAniEventListener<TorchListenerAni>,
                           public CameraAniEventListener<CameraMuteListenerAni>,
                           public CameraAniEventListener<CameraManagerCallbackAni>,
+                          public CameraAniEventListener<ControlCenterStatusListenerAni>,
                           public CameraAniEventListener<FoldListenerAni>  {
 public:
     CameraManagerImpl();
@@ -105,6 +128,8 @@ public:
     void OffFoldStatusChange(optional_view<callback<void(uintptr_t, FoldStatusInfo const&)>> callback);
     void OnTorchStatusChange(callback_view<void(uintptr_t, TorchStatusInfo const&)> callback);
     void OffTorchStatusChange(optional_view<callback<void(uintptr_t, TorchStatusInfo const&)>> callback);
+    void OnControlCenterStatusChange(callback_view<void(uintptr_t, bool)> callback);
+    void OffControlCenterStatusChange(optional_view<callback<void(uintptr_t, bool)>> callback);
     PreviewOutput CreatePreviewOutput(Profile const& profile, string_view surfaceId) ;
     PreviewOutput CreatePreviewOutputWithoutProfile(string_view surfaceId);
     PreviewOutput CreateDeferredPreviewOutput(optional_view<Profile> profile);
@@ -113,6 +138,7 @@ public:
     VideoOutput CreateVideoOutputWithoutProfile(string_view surfaceId);
     CameraInput CreateCameraInputWithCameraDevice(CameraDevice const& camera);
     CameraInput CreateCameraInputWithPosition(CameraPosition position, CameraType type);
+    ControlCenterSession CreateControlCenterSession();
     DepthDataOutput CreateDepthDataOutput(DepthProfile const& profile);
     MetadataOutput CreateMetadataOutput(array_view<MetadataObjectType> metadataObjectTypes);
     MovieFileOutput CreateMovieFileOutput(optional_view<VideoProfile> profile);
@@ -134,8 +160,13 @@ public:
     void RegisterFoldStatusCallbackListener(const std::string& eventName,
         std::shared_ptr<uintptr_t> callback, bool isOnce);
     void UnregisterFoldStatusCallbackListener(const std::string& eventName, std::shared_ptr<uintptr_t> callback);
+    void RegisterControlCenterStatusCallbackListener(
+        const std::string &eventName, std::shared_ptr<uintptr_t> callback, bool isOnce);
+    void UnregisterControlCenterStatusCallbackListener(
+        const std::string &eventName, std::shared_ptr<uintptr_t> callback);
     virtual const EmitterFunctions& GetEmitterFunctions() override;
     bool IsTorchModeSupported(TorchMode mode);
+    bool IsControlCenterActive();
 
     static uint32_t cameraManagerTaskId_;
 private:

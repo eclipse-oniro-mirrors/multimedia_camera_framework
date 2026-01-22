@@ -46,12 +46,53 @@
 #include "input/prelaunch_config.h"
 #include "event_handler.h"
 #include "secure_session_for_sys_taihe.h"
+#include "control_center_session_taihe.h"
 
 using namespace OHOS;
 namespace Ani {
 namespace Camera {
 uint32_t CameraManagerImpl::cameraManagerTaskId_ = CAMERA_MANAGER_TASKID;
 thread_local std::unordered_map<std::string, sptr<OHOS::CameraStandard::CameraOutputCapability>> g_aniValueCacheMap {};
+
+ControlCenterStatusListenerAni::ControlCenterStatusListenerAni(ani_env *env) : ListenerBase(env)
+{
+    MEDIA_DEBUG_LOG("ControlCenterStatusListenerAni is called.");
+}
+
+
+ControlCenterStatusListenerAni::~ControlCenterStatusListenerAni()
+{
+    MEDIA_DEBUG_LOG("~ControlCenterStatusListenerAni is called.");
+}
+
+void ControlCenterStatusListenerAni::OnControlCenterStatusCallback(bool status) const
+{
+    auto sharePtr = shared_from_this();
+    auto task = [status, sharePtr]() {
+        CHECK_EXECUTE(sharePtr != nullptr,
+            sharePtr->ExecuteAsyncCallback("controlCenterStatusChange", 0, "Callback is OK", status));
+    };
+    CHECK_RETURN_ELOG(mainHandler_ == nullptr, "callback failed, mainHandler_ is nullptr!");
+    mainHandler_->PostTask(
+        task, "OnControlCenterStatusChanged", 0, OHOS::AppExecFwk::EventQueue::Priority::IMMEDIATE, {});
+    MEDIA_DEBUG_LOG("OnControlCenterStatusCallback is called, status: %{public}d", status);
+}
+
+void ControlCenterStatusListenerAni::OnControlCenterStatusChanged(bool status) const
+{
+    MEDIA_INFO_LOG("OnControlCenterStatusChanged is called, status: %{public}d", status);
+    OnControlCenterStatusCallback(status);
+}
+
+void CameraManagerImpl::OnControlCenterStatusChange(callback_view<void(uintptr_t, bool)> callback)
+{
+    ListenerTemplate<CameraManagerImpl>::On(this, callback, "controlCenterStatusChange");
+}
+
+void CameraManagerImpl::OffControlCenterStatusChange(optional_view<callback<void(uintptr_t, bool)>> callback)
+{
+    ListenerTemplate<CameraManagerImpl>::Off(this, callback, "controlCenterStatusChange");
+}
 
 CameraMuteListenerAni::CameraMuteListenerAni(ani_env* env): ListenerBase(env)
 {
@@ -603,6 +644,35 @@ void CameraManagerImpl::UnregisterFoldStatusCallbackListener(
     }
 }
 
+void CameraManagerImpl::RegisterControlCenterStatusCallbackListener(
+    const std::string &eventName, std::shared_ptr<uintptr_t> callback, bool isOnce)
+{
+    CHECK_RETURN_ELOG(
+        cameraManager_ == nullptr, "failed to RegisterControlCenterStatusCallbackListener, cameraManager is nullptr");
+    CHECK_RETURN_ELOG(
+        !OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), "SystemApi On ControlCenterStatus is called!");
+    ani_env *env = get_env();
+    auto listener = CameraAniEventListener<ControlCenterStatusListenerAni>::RegisterCallbackListener(
+        eventName, env, callback, isOnce);
+    CHECK_RETURN_ELOG(
+        listener == nullptr, "CameraManagerImpl::RegisterControlCenterStatusCallbackListener listener is null");
+    cameraManager_->RegisterControlCenterStatusListener(listener);
+}
+
+void CameraManagerImpl::UnregisterControlCenterStatusCallbackListener(
+    const std::string &eventName, std::shared_ptr<uintptr_t> callback)
+{
+    CHECK_RETURN_ELOG(
+        !OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), "SystemApi On ControlCenterStatus is called!");
+    ani_env *env = get_env();
+    auto listener =
+        CameraAniEventListener<ControlCenterStatusListenerAni>::UnregisterCallbackListener(eventName, env, callback);
+    CHECK_RETURN(listener == nullptr);
+    if (listener->IsEmpty(eventName)) {
+        cameraManager_->UnregisterControlCenterStatusListener(listener);
+    }
+}
+
 const CameraManagerImpl::EmitterFunctions& CameraManagerImpl::GetEmitterFunctions()
 {
     static const EmitterFunctions funMap = {
@@ -617,7 +687,10 @@ const CameraManagerImpl::EmitterFunctions& CameraManagerImpl::GetEmitterFunction
             &CameraManagerImpl::UnregisterTorchStatusCallbackListener } },
         { "foldStatusChange", {
             &CameraManagerImpl::RegisterFoldStatusCallbackListener,
-            &CameraManagerImpl::UnregisterFoldStatusCallbackListener } }
+            &CameraManagerImpl::UnregisterFoldStatusCallbackListener } },
+        {"controlCenterStatusChange", {
+            &CameraManagerImpl::RegisterControlCenterStatusCallbackListener,
+            &CameraManagerImpl::UnregisterControlCenterStatusCallbackListener} },
         };
     return funMap;
 }
@@ -1102,6 +1175,31 @@ bool CameraManagerImpl::IsTorchModeSupported(TorchMode mode)
         static_cast<OHOS::CameraStandard::TorchMode>(mode.get_value()));
     MEDIA_DEBUG_LOG("IsTorchModeSupported : %{public}d", isTorchModeSupported);
     return isTorchModeSupported;
+}
+
+bool CameraManagerImpl::IsControlCenterActive()
+{
+    MEDIA_INFO_LOG("isControlCenterActive is called");
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        false,
+        "SystemApi isControlCenterActive is called!");
+    bool isControlCenterActive = OHOS::CameraStandard::CameraManager::GetInstance()->IsControlCenterActive();
+    MEDIA_DEBUG_LOG("isControlCenterActive : %{public}d", isControlCenterActive);
+    return isControlCenterActive;
+}
+
+ControlCenterSession CameraManagerImpl::CreateControlCenterSession()
+{
+    MEDIA_INFO_LOG("CameraManagerNapi::CreateControlCenterSession is called");
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        (make_holder<ControlCenterSessionImpl, ControlCenterSession>(nullptr)),
+        "SystemApi CreateControlCenterSession is called!");
+    OHOS::sptr<OHOS::CameraStandard::ControlCenterSession> controlCenterSession = nullptr;
+    int retCode = cameraManager_->CreateControlCenterSession(controlCenterSession);
+    CHECK_RETURN_RET_ELOG(retCode != 0 || controlCenterSession == nullptr,
+        (make_holder<ControlCenterSessionImpl, ControlCenterSession>(nullptr)),
+        "failed to create CreateControlCenterSession");
+    return make_holder<ControlCenterSessionImpl, ControlCenterSession>(controlCenterSession);
 }
 
 array<CameraConcurrentInfo> CameraManagerImpl::GetCameraConcurrentInfos(array_view<CameraDevice> cameras)

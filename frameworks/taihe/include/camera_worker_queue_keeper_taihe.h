@@ -37,6 +37,7 @@ enum CameraTaskId {
     CAMERA_METADATA_OUTPUT_TASKID = 0x0D000000,
     CAMERA_MOVIE_FILE_OUTPUT_TASKID = 0x0E000000,
     CAMERA_UNIFY_MOVIE_FILE_OUTPUT_TASKID = 0x0F000000,
+    CAMERA_CONTROL_CENTER_TASKID = 0x10000000,
 };
 
 typedef std::chrono::time_point<std::chrono::steady_clock, std::chrono::nanoseconds> TaiheWorkerQueueTaskTimePoint;

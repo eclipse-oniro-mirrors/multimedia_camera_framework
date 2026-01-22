@@ -402,6 +402,11 @@ enum AuxiliaryStatus : i32 {
   OFF = 2
 }
 
+enum ControlCenterEffectType : i32 {
+    BEAUTY = 0,
+    PORTRAIT = 1,
+}
+
 interface CameraOutput {
   GetSpecificImplPtr(): i64;
 
@@ -615,6 +620,15 @@ interface Zoom : ZoomQuery {
   SetSmoothZoom(targetRatio: f64, mode: Optional<SmoothZoomMode>): void;
   GetZoomCenterPoint(): Point;
   SetZoomCenterPoint(point: Point): void;
+}
+
+interface ControlCenterQuery {
+  IsControlCenterSupported(): bool;
+  GetSupportedEffectTypes(): Array<ControlCenterEffectType>;
+}
+
+interface ControlCenter : ControlCenterQuery {
+  EnableControlCenter(enabled: bool): void;
 }
 
 interface Session {
@@ -898,7 +912,12 @@ struct FocusTrackingInfo {
   trackingRegion: Rect;
 }
 
-interface VideoSession : Session, Flash, Zoom, Stabilization, ColorManagement, AutoExposure, AutoDeviceSwitch, Focus, WhiteBalance, Macro {
+struct ControlCenterStatusInfo {
+  @readonly effectType: ControlCenterEffectType;
+  @readonly isActive: bool;
+}
+
+interface VideoSession : Session, Flash, Zoom, Stabilization, ColorManagement, AutoExposure, AutoDeviceSwitch, Focus, WhiteBalance, Macro, ControlCenter {
   Preconfig(preconfigType: PreconfigType, preconfigRatio: Optional<PreconfigRatio>): void;
   CanPreconfig(preconfigType: PreconfigType, preconfigRatio: Optional<PreconfigRatio>): bool;
   @!sts_inject_into_interface("on(type: string, callback: (data: object)=> void): void;")
@@ -987,6 +1006,8 @@ interface VideoSession : Session, Flash, Zoom, Stabilization, ColorManagement, A
 
   OnSystemPressureLevelChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: SystemPressureLevel)=> void): void;
   OffSystemPressureLevelChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: SystemPressureLevel)=> void>): void;
+  OnControlCenterEffectStatusChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: ControlCenterStatusInfo)=> void): void;
+  OffControlCenterEffectStatusChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: ControlCenterStatusInfo)=> void>): void;
 
   SetQualityPrioritization(quality : QualityPrioritization) : void;
   GetSessionFunctions(outputCapability: CameraOutputCapability): Array<VideoFunctions>;
@@ -1621,6 +1642,11 @@ interface TimeLapsePhotoSession : Session, Focus, ManualFocus, AutoExposure, Man
   StopTryAE(): void;
 }
 
+interface ControlCenterSession : Beauty, Aperture {
+  @gen_promise("release")
+  ReleaseSync(): void;
+}
+
 union SessionUnion {
   photoSession : PhotoSession;
   photoSessionForSys : PhotoSessionForSys;
@@ -1731,6 +1757,10 @@ interface CameraManager {
   OffFoldStatusChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: FoldStatusInfo)=> void>): void;
   OnTorchStatusChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: TorchStatusInfo)=> void): void;
   OffTorchStatusChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: TorchStatusInfo)=> void>): void;
+  OnControlCenterStatusChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: bool)=> void): void;
+  OffControlCenterStatusChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: bool)=> void>): void;
+  IsControlCenterActive(): bool;
+  CreateControlCenterSession(): ControlCenterSession;
 }
 
 struct DeferredVideoEnhancementInfo {

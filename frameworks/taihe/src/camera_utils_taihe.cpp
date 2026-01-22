@@ -378,6 +378,10 @@ SketchStatusData CameraUtilsTaihe::ToTaiheSketchStatusData(
     SketchStatusData aniSketchStatusData {
         .status = static_cast<int32_t>(sketchStatusData.status),
         .sketchRatio = sketchStatusData.sketchRatio,
+        .centerPointOffset = {
+            .x = static_cast<double>(sketchStatusData.offsetx),
+            .y = static_cast<double>(sketchStatusData.offsety),
+        },
     };
     return aniSketchStatusData;
 }
