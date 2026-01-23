@@ -67,7 +67,10 @@ static const uint32_t TASKMANAGER_ONE = 1;
 static const uint32_t TASKMANAGER_FOUR = 4;
 #ifdef CAMERA_CAPTURE_YUV
 static const uint32_t PHOTO_SAVE_MAX_NUM = 3;
+static const uint32_t PHOTO_STATE_TIMEOUT = 20; // 20s
 static std::atomic<uint32_t> g_unsavedPhotoCount = 0;
+static std::mutex g_captureReadyMutex;
+static std::condition_variable g_captureReadyCv;
 #endif
 
 static std::string GenerateBurstUuid()
@@ -1469,13 +1472,16 @@ int32_t HStreamCapture::OnCaptureReady(int32_t captureId, uint64_t timestamp)
     MEDIA_DEBUG_LOG("HStreamCapture::OnCaptureReady with isDeffered:%{public}d, isSystemApp:%{public}d",
         isDeffered, isSystemApp);
     if (!isSystemApp && isYuvCapture_ && isDeffered) {
+        std::unique_lock<std::mutex> lock(g_captureReadyMutex);
         MEDIA_DEBUG_LOG("HStreamCapture::OnCaptureReady need limit photoes number, current photoes number:%{public}d",
             g_unsavedPhotoCount.load());
-        if (g_unsavedPhotoCount.load() < PHOTO_SAVE_MAX_NUM) {
-            isCaptureReady_ = true;
-            CHECK_EXECUTE(streamCaptureCallback_ != nullptr,
-                streamCaptureCallback_->OnCaptureReady(captureId, timestamp));
+        if (!g_captureReadyCv.wait_for(lock, std::chrono::seconds(PHOTO_STATE_TIMEOUT),
+            [=] { return g_unsavedPhotoCount.load() < PHOTO_SAVE_MAX_NUM; })) {
+            MEDIA_INFO_LOG("HStreamCapture::OnCaptureReady wait timeout, continue to process");
         }
+        isCaptureReady_ = true;
+        CHECK_EXECUTE(streamCaptureCallback_ != nullptr,
+            streamCaptureCallback_->OnCaptureReady(captureId, timestamp));
     } else {
         isCaptureReady_ = true;
         if (streamCaptureCallback_ != nullptr) {
@@ -1798,7 +1804,9 @@ void HStreamCapture::ElevateThreadPriority()
 void HStreamCapture::OnPhotoStateCallback(int32_t photoNum)
 {
     MEDIA_DEBUG_LOG("OnPhotoStateCallback, photoNum:%{public}d", photoNum);
+    std::lock_guard<std::mutex> lock(g_captureReadyMutex);
     g_unsavedPhotoCount = photoNum;
+    g_captureReadyCv.notify_all();
 }
 #endif
 // LCOV_EXCL_STOP
